@@ -13,21 +13,43 @@ import type {
 } from "../interfaces.js";
 
 /**
+ * Represents a directory node in the oracle's model
+ * @internal
+ */
+interface DirectoryNode {
+	/**
+	 * Keys directly contained in this directory
+	 */
+	keys: Map<string, unknown>;
+	/**
+	 * Subdirectories of this directory
+	 */
+	subdirectories: Map<string, DirectoryNode>;
+}
+
+/**
  * Oracle for directory
  * @internal
  */
 export class SharedDirectoryOracle {
-	// Model updated via valueChanged events
-	private readonly modelFromValueChanged = new Map<string, unknown>();
+	// Model updated via valueChanged events (nested structure)
+	private readonly modelFromValueChanged: DirectoryNode = {
+		keys: new Map(),
+		subdirectories: new Map(),
+	};
 
-	// Model updated via containedValueChanged events
-	private readonly modelFromContainedValueChanged = new Map<string, unknown>();
+	// Model updated via containedValueChanged events (nested structure)
+	private readonly modelFromContainedValueChanged: DirectoryNode = {
+		keys: new Map(),
+		subdirectories: new Map(),
+	};
 
 	// Track all directories we've attached listeners to for proper cleanup
 	private readonly attachedDirectories = new Set<IDirectory>();
 
 	public constructor(private readonly sharedDir: ISharedDirectory) {
-		this.snapshotCurrentState(this.sharedDir);
+		this.snapshotCurrentState(this.sharedDir, this.modelFromValueChanged);
+		this.snapshotCurrentState(this.sharedDir, this.modelFromContainedValueChanged);
 
 		// valueChanged fires globally on the root for ALL changes anywhere in the tree
 		// Only needs one listener on the root (includes 'path' field to indicate location)
@@ -36,18 +58,93 @@ export class SharedDirectoryOracle {
 		this.sharedDir.on("subDirectoryCreated", this.onSubDirCreated);
 		this.sharedDir.on("subDirectoryDeleted", this.onSubDirDeleted);
 
-		// containedValueChanged fires locally on each directory for its own changes
-		// Needs separate listeners on every subdirectory (no 'path' field, uses target.absolutePath)
-		// disposed/undisposed events are also attached to subdirectories for rollback support
 		this.attachToAllDirectories(sharedDir);
 	}
 
+	/**
+	 * Get or create a directory node at the given path in the model
+	 */
+	private getOrCreateDirNode(model: DirectoryNode, path: string): DirectoryNode {
+		if (path === "/" || path === "") {
+			return model;
+		}
+
+		const parts = path.split("/").filter((p) => p.length > 0);
+		let current = model;
+
+		for (const part of parts) {
+			if (!current.subdirectories.has(part)) {
+				current.subdirectories.set(part, {
+					keys: new Map(),
+					subdirectories: new Map(),
+				});
+			}
+			const next = current.subdirectories.get(part);
+			assert(next !== undefined, "Subdirectory should exist after being created");
+			current = next;
+		}
+
+		return current;
+	}
+
+	/**
+	 * Get a directory node at the given path, or undefined if it doesn't exist
+	 */
+	private getDirNode(model: DirectoryNode, path: string): DirectoryNode | undefined {
+		if (path === "/" || path === "") {
+			return model;
+		}
+
+		const parts = path.split("/").filter((p) => p.length > 0);
+		let current: DirectoryNode | undefined = model;
+
+		for (const part of parts) {
+			current = current.subdirectories.get(part);
+			if (!current) {
+				return undefined;
+			}
+		}
+
+		return current;
+	}
+
+	/**
+	 * Delete a subdirectory and all its contents from the model
+	 */
+	private deleteSubDirectory(model: DirectoryNode, path: string): void {
+		if (path === "/" || path === "") {
+			// Can't delete root
+			return;
+		}
+
+		const parts = path.split("/").filter((p) => p.length > 0);
+		if (parts.length === 0) {
+			return;
+		}
+
+		// Navigate to parent directory
+		const parentPath = parts.slice(0, -1).join("/");
+		const dirName = parts[parts.length - 1];
+		const parentNode = this.getDirNode(model, parentPath);
+
+		if (parentNode) {
+			parentNode.subdirectories.delete(dirName);
+		}
+	}
+
 	private attachToAllDirectories(dir: IDirectory): void {
+		// Prevent attaching listeners multiple times for the same directory
+		if (this.attachedDirectories.has(dir)) {
+			return;
+		}
+
 		// Track this directory for cleanup
 		this.attachedDirectories.add(dir);
 
 		// Attach containedValueChanged listener to this directory
 		dir.on("containedValueChanged", this.onContainedValueChanged);
+		dir.on("subDirectoryCreated", this.onDirSubDirCreated);
+		dir.on("subDirectoryDeleted", this.onDirSubDirDeleted);
 
 		// Attach disposed/undisposed listeners for rollback support
 		dir.on("disposed", this.onDisposed);
@@ -69,36 +166,46 @@ export class SharedDirectoryOracle {
 			"valueChanged event should be emitted from root SharedDirectory",
 		);
 
-		const { key } = change;
-		const path = change.path ?? "";
-
-		const pathKey = path === "/" ? `/${key}` : `${path}/${key}`;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const { key, previousValue } = change;
+		const path = change.path ?? "/";
 
 		const fuzzDir = this.sharedDir.getWorkingDirectory(path);
 		if (!fuzzDir) return;
 
+		const dirNode = this.getOrCreateDirNode(this.modelFromValueChanged, path);
+
+		// Assert that previousValue matches what we had in the oracle
+		if (local && previousValue !== undefined && dirNode.keys.has(key)) {
+			assert.deepStrictEqual(
+				previousValue,
+				dirNode.keys.get(key),
+				`[valueChanged] previousValue mismatch for key "${key}" in directory "${path}": event.previousValue=${previousValue}, oracle=${dirNode.keys.get(key)}`,
+			);
+		}
+
 		if (fuzzDir.has(key)) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const value = fuzzDir.get(key);
-			this.modelFromValueChanged.set(pathKey, value);
+			dirNode.keys.set(key, value);
 		} else {
-			this.modelFromValueChanged.delete(pathKey);
+			dirNode.keys.delete(key);
 		}
 	};
 
 	private readonly onClear = (local: boolean): void => {
-		for (const key of [...this.modelFromValueChanged.keys()]) {
-			const parts = key.split("/").filter((p) => p.length > 0);
-			if (parts.length === 1) {
-				// Root-level key like "/key1"
-				this.modelFromValueChanged.delete(key);
-			}
+		// Remove root-level keys
+		this.modelFromValueChanged.keys.clear();
+		this.modelFromContainedValueChanged.keys.clear();
+
+		// Remove only single-segment subdirectories under root
+		for (const child of [...this.modelFromValueChanged.subdirectories.keys()]) {
+			// child is the name (no leading slash) because getOrCreate stores by part names
+			// remove only top-level subdirectories
+			this.modelFromValueChanged.subdirectories.delete(child);
 		}
-		for (const key of [...this.modelFromContainedValueChanged.keys()]) {
-			const parts = key.split("/").filter((p) => p.length > 0);
-			if (parts.length === 1) {
-				this.modelFromContainedValueChanged.delete(key);
-			}
+		for (const child of [...this.modelFromContainedValueChanged.subdirectories.keys()]) {
+			this.modelFromContainedValueChanged.subdirectories.delete(child);
 		}
 	};
 
@@ -112,16 +219,12 @@ export class SharedDirectoryOracle {
 			"subDirectoryCreated event should be emitted from root SharedDirectory",
 		);
 
-		// path is relative from root, e.g., "dir1" or "dir1/dir2"
+		// Create the subdirectory node in both models
 		const subdirPath = path.startsWith("/") ? path : `/${path}`;
-		if (!this.modelFromValueChanged.has(subdirPath)) {
-			this.modelFromValueChanged.set(subdirPath, undefined);
-		}
-		if (!this.modelFromContainedValueChanged.has(subdirPath)) {
-			this.modelFromContainedValueChanged.set(subdirPath, undefined);
-		}
+		this.getOrCreateDirNode(this.modelFromValueChanged, subdirPath);
+		this.getOrCreateDirNode(this.modelFromContainedValueChanged, subdirPath);
 
-		// Attach to the newly created subdirectory and all its nested subdirectoriesto listen for containedValueChanged events
+		// Attach to the newly created subdirectory and all its nested subdirectories to listen for containedValueChanged events
 		const newSubDir = this.sharedDir.getWorkingDirectory(path);
 		if (newSubDir) {
 			this.attachToAllDirectories(newSubDir);
@@ -130,20 +233,40 @@ export class SharedDirectoryOracle {
 
 	private readonly onSubDirDeleted = (path: string): void => {
 		const absPath = path.startsWith("/") ? path : `/${path}`;
-		const prefix = `${absPath}/`;
+		this.deleteSubDirectory(this.modelFromValueChanged, absPath);
+		this.deleteSubDirectory(this.modelFromContainedValueChanged, absPath);
+	};
 
-		for (const key of [...this.modelFromValueChanged.keys()]) {
-			// Delete the subdirectory itself and all keys under it
-			// Use exact match for the directory, or prefix match with "/" separator
-			if (key === absPath || key.startsWith(prefix)) {
-				this.modelFromValueChanged.delete(key);
-			}
+	private readonly onDirSubDirCreated = (
+		path: string,
+		local: boolean,
+		target: IDirectory,
+	): void => {
+		// Handle subdirectory creation events from individual IDirectory instances
+		// This complements the root-level handler
+		const { absolutePath } = target;
+		const fullPath = absolutePath === "/" ? `/${path}` : `${absolutePath}/${path}`;
+
+		this.getOrCreateDirNode(this.modelFromValueChanged, fullPath);
+		this.getOrCreateDirNode(this.modelFromContainedValueChanged, fullPath);
+
+		// Attach to the newly created subdirectory
+		const newSubDir = target.getSubDirectory(path);
+		if (newSubDir) {
+			this.attachToAllDirectories(newSubDir);
 		}
-		for (const key of [...this.modelFromContainedValueChanged.keys()]) {
-			if (key === absPath || key.startsWith(prefix)) {
-				this.modelFromContainedValueChanged.delete(key);
-			}
-		}
+	};
+
+	private readonly onDirSubDirDeleted = (
+		path: string,
+		local: boolean,
+		target: IDirectory,
+	): void => {
+		// Handle subdirectory deletion events from individual IDirectory instances
+		const { absolutePath } = target;
+		const fullPath = absolutePath === "/" ? `/${path}` : `${absolutePath}/${path}`;
+		this.deleteSubDirectory(this.modelFromValueChanged, fullPath);
+		this.deleteSubDirectory(this.modelFromContainedValueChanged, fullPath);
 	};
 
 	private readonly onContainedValueChanged = (
@@ -151,46 +274,45 @@ export class SharedDirectoryOracle {
 		local: boolean,
 		target: IDirectory,
 	): void => {
-		const { key } = change;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const { key, previousValue } = change;
 		const { absolutePath } = target;
 
-		const pathKey = absolutePath === "/" ? `/${key}` : `${absolutePath}/${key}`;
+		const dirNode = this.getOrCreateDirNode(this.modelFromContainedValueChanged, absolutePath);
+
+		// Assert that previousValue matches what we had in the oracle
+		if (local && previousValue !== undefined && dirNode.keys.has(key)) {
+			assert.deepStrictEqual(
+				previousValue,
+				dirNode.keys.get(key),
+				`[containedValueChanged] previousValue mismatch for key "${key}" in directory "${absolutePath}": event.previousValue=${previousValue}, oracle=${dirNode.keys.get(key)}, local=${local}`,
+			);
+		}
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const newValue = target.get(key);
 
 		if (newValue === undefined) {
-			this.modelFromContainedValueChanged.delete(pathKey);
+			dirNode.keys.delete(key);
 		} else {
-			this.modelFromContainedValueChanged.set(pathKey, newValue);
+			dirNode.keys.set(key, newValue);
 		}
 	};
 
 	private readonly onDisposed = (target: IDirectory): void => {
-		// When a subdirectory is disposed (during rollback), clear all keys under it from oracle
+		// When a subdirectory is disposed (during rollback), remove it from the oracle models
 		const absPath = target.absolutePath;
 
-		// For root directory "/", we need to clear all keys that start with "/"
-		// For subdirectories like "/dir1", we clear keys that start with "/dir1/"
-		const shouldDelete = (key: string): boolean => {
-			if (absPath === "/") {
-				// For root, delete all keys
-				return key.startsWith("/");
-			}
-			// For subdirectories, delete keys under them
-			const prefix = `${absPath}/`;
-			return key.startsWith(prefix);
-		};
-
-		for (const key of [...this.modelFromValueChanged.keys()]) {
-			if (shouldDelete(key)) {
-				this.modelFromValueChanged.delete(key);
-			}
-		}
-		for (const key of [...this.modelFromContainedValueChanged.keys()]) {
-			if (shouldDelete(key)) {
-				this.modelFromContainedValueChanged.delete(key);
-			}
+		if (absPath === "/") {
+			// Clear root directory - all keys and subdirectories
+			this.modelFromValueChanged.keys.clear();
+			this.modelFromValueChanged.subdirectories.clear();
+			this.modelFromContainedValueChanged.keys.clear();
+			this.modelFromContainedValueChanged.subdirectories.clear();
+		} else {
+			// Delete this subdirectory from parent
+			this.deleteSubDirectory(this.modelFromValueChanged, absPath);
+			this.deleteSubDirectory(this.modelFromContainedValueChanged, absPath);
 		}
 	};
 
@@ -198,27 +320,27 @@ export class SharedDirectoryOracle {
 		// When a directory is undisposed (after rollback), we need to re-snapshot its state
 		// because the rollback has restored it to its previous state, but our oracle was cleared
 		// by the disposed event. Re-snapshotting ensures the oracle matches the restored state.
-		this.snapshotCurrentState(target);
+		this.snapshotCurrentState(target, this.modelFromValueChanged);
+		this.snapshotCurrentState(target, this.modelFromContainedValueChanged);
 	};
 
-	private snapshotCurrentState(dir: IDirectory): void {
+	private snapshotCurrentState(dir: IDirectory, model: DirectoryNode): void {
 		const { absolutePath } = dir;
+		const dirNode = this.getOrCreateDirNode(model, absolutePath);
 
 		// Snapshot all keys in this directory
 		for (const [key, value] of dir.entries()) {
-			const pathKey = absolutePath === "/" ? `/${key}` : `${absolutePath}/${key}`;
-			this.modelFromValueChanged.set(pathKey, value);
-			this.modelFromContainedValueChanged.set(pathKey, value);
+			dirNode.keys.set(key, value);
 		}
 
 		// Recursively snapshot subdirectories
 		for (const [, subdir] of dir.subdirectories()) {
-			this.snapshotCurrentState(subdir);
+			this.snapshotCurrentState(subdir, model);
 		}
 	}
 
 	public validate(): void {
-		// Validate both models against the actual directory to ensure both event work correctly
+		// Validate both models against the actual directory to ensure both events work correctly
 		this.validateDirectory(this.sharedDir, "valueChanged", this.modelFromValueChanged);
 		this.validateDirectory(
 			this.sharedDir,
@@ -227,25 +349,25 @@ export class SharedDirectoryOracle {
 		);
 	}
 
-	private validateDirectory(
-		dir: IDirectory,
-		modelName: string,
-		model: Map<string, unknown>,
-	): void {
+	private validateDirectory(dir: IDirectory, modelName: string, model: DirectoryNode): void {
 		const { absolutePath } = dir;
+		const dirNode = this.getDirNode(model, absolutePath);
+
+		if (!dirNode) {
+			// If the directory doesn't exist in the model, we haven't received events for it yet
+			return;
+		}
 
 		// Check all keys in this directory
 		for (const [key, value] of dir.entries()) {
-			const pathKey = absolutePath === "/" ? `/${key}` : `${absolutePath}/${key}`;
-
 			// Only validate keys that the oracle is tracking
 			// (keys loaded from snapshots may not fire events)
-			if (model.has(pathKey)) {
+			if (dirNode.keys.has(key)) {
 				// Verify oracle has the correct value
 				assert.deepStrictEqual(
-					model.get(pathKey),
+					dirNode.keys.get(key),
 					value,
-					`[${modelName}] Value mismatch for key "${pathKey}": oracle=${model.get(pathKey)}, actual=${value}`,
+					`[${modelName}] Value mismatch for key "${key}" in directory "${absolutePath}": oracle=${dirNode.keys.get(key)}, actual=${value}`,
 				);
 			}
 		}
@@ -266,13 +388,17 @@ export class SharedDirectoryOracle {
 		// Remove listeners from all directories (including root)
 		for (const dir of this.attachedDirectories) {
 			dir.off("containedValueChanged", this.onContainedValueChanged);
+			dir.off("subDirectoryCreated", this.onDirSubDirCreated);
+			dir.off("subDirectoryDeleted", this.onDirSubDirDeleted);
 			dir.off("disposed", this.onDisposed);
 			dir.off("undisposed", this.onUndisposed);
 		}
 
 		// Clear tracked state
 		this.attachedDirectories.clear();
-		this.modelFromValueChanged.clear();
-		this.modelFromContainedValueChanged.clear();
+		this.modelFromValueChanged.keys.clear();
+		this.modelFromValueChanged.subdirectories.clear();
+		this.modelFromContainedValueChanged.keys.clear();
+		this.modelFromContainedValueChanged.subdirectories.clear();
 	}
 }
