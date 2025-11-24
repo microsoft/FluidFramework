@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { PathLike, Stats, BigIntStats } from "fs";
-import * as path from "path";
+import type { PathLike, Stats, BigIntStats } from "node:fs";
+import * as path from "node:path";
+import { Stream } from "node:stream";
 
 import {
 	type IGetRefParamsExternal,
@@ -33,7 +34,6 @@ import {
 	BaseGitRestTelemetryProperties,
 	GitRestLumberEventName,
 } from "./gitrestTelemetryDefinitions";
-import { Stream } from "stream";
 
 /**
  * Validates that the input encoding is valid
