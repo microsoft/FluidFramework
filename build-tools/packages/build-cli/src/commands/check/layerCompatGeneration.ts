@@ -122,9 +122,7 @@ export default class CheckLayerCompatGenerationCommand extends PackageCommand<
 		}
 
 		this.log(
-			`Layer generation check passed for ${
-				this.filteredPackages?.length ?? 0
-			} packages (${this.packagesNeedingUpdate.length} updates needed).`,
+			`Layer generation check passed for ${this.filteredPackages?.length ?? 0} packages.`,
 		);
 	}
 }
