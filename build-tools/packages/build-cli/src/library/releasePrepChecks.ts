@@ -228,3 +228,46 @@ export const CheckNoUntaggedAsserts: CheckFunction = async (
 		};
 	}
 };
+
+/**
+ * Runs the compatibility layer generation command and checks if it made any changes to the repository.
+ * This is a shared helper function used by both the prepare command checks and the state machine checks.
+ *
+ * @param context - The repository context.
+ * @returns `true` if no changes were made (i.e., layer generation is up to date), `false` otherwise.
+ */
+export async function runCompatLayerGenerationCheck(context: Context): Promise<boolean> {
+	// layerGeneration:gen should be run from the root. It will only update packages that have the layerGeneration:gen
+	// script defined in their package.json.
+	await execa("pnpm", ["run", "-r", "layerGeneration:gen"], {
+		cwd: context.root,
+	});
+
+	// check if the command made any changes
+	const gitRepo = await context.getGitRepository();
+	const afterGenStatus = await gitRepo.gitClient.status();
+	const isClean = afterGenStatus.isClean();
+
+	// Reset any changes that were made
+	if (!isClean) {
+		await gitRepo.gitClient.reset(ResetMode.HARD);
+	}
+
+	return isClean;
+}
+
+/**
+ * Checks that the compatibility layer generation is up to date. Any necessary changes will return a failure result.
+ */
+export const CheckCompatLayerGeneration: CheckFunction = async (
+	context: Context,
+): Promise<CheckResult> => {
+	const isUpToDate = await runCompatLayerGenerationCheck(context);
+
+	if (!isUpToDate) {
+		return {
+			message: "Layer generation needs to be updated.",
+			fixCommand: "pnpm run -r layerGeneration:gen",
+		};
+	}
+};
