@@ -385,7 +385,7 @@ export function sizeof(
 	if (ArrayBuffer.isView(data)) {
 		return data.byteLength;
 	}
-	if (data[Symbol.iterator] === "function") {
+	if (data[Symbol.iterator] !== undefined) {
 		let total = 0;
 		for (const item of data as Iterable<string | NodeJS.ArrayBufferView>) {
 			total += sizeof(item);
@@ -395,7 +395,7 @@ export function sizeof(
 	// AsyncIterables and Streams cannot be sized without consuming them.
 	// However, they are included in the function typing for compatibility with FS APIs.
 	// We do not currently use them in any size-limited write operations.
-	if (data[Symbol.asyncIterator] === "function") {
+	if (data[Symbol.asyncIterator] !== undefined) {
 		return -1; // Can't determine size of async iterable without consuming it.
 	}
 	return -1; // Unknown size (can't consume stream to determine size, or other unknown type).

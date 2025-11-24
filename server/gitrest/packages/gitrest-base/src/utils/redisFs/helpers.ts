@@ -5,7 +5,7 @@
 
 import { getRandomInt } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { sizeof } from "../helpers";
+import sizeof from "object-sizeof";
 
 import type { ISystemError } from "../fileSystemHelper";
 
