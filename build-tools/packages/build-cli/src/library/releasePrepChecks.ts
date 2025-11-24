@@ -261,7 +261,7 @@ export async function runCompatLayerGenerationCheck(context: Context): Promise<b
  */
 export const CheckCompatLayerGeneration: CheckFunction = async (
 	context: Context,
-	releaseGroupOrPackage: MonoRepo | Package,
+	_releaseGroupOrPackage: MonoRepo | Package,
 ): Promise<CheckResult> => {
 	const isUpToDate = await runCompatLayerGenerationCheck(context);
 
