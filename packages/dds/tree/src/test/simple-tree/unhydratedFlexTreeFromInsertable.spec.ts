@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import {
 	MockHandle,
 	validateAssertionError,
+	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { deepCopyMapTree, EmptyKey, type FieldKey, type MapTree } from "../../core/index.js";
@@ -41,7 +42,6 @@ import {
 	MockNodeIdentifierManager,
 	type FlexTreeHydratedContextMinimal,
 } from "../../feature-libraries/index.js";
-import { validateUsageError } from "../utils.js";
 import {
 	CompatibilityLevel,
 	contentSchemaSymbol,
@@ -172,7 +172,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 
 		assert.throws(
 			() => unhydratedFlexTreeFromInsertable(tree, Foo),
-			(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
+			validateAssertionError(/Encountered an undefined schema/),
 		);
 	});
 
@@ -181,11 +181,9 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 
 		assert.throws(
 			() => unhydratedFlexTreeFromInsertable("Hello world", [schemaFactory.number]),
-			(error: Error) =>
-				validateAssertionError(
-					error,
-					/The provided data is incompatible with all of the types allowed by the schema/,
-				),
+			validateAssertionError(
+				/The provided data is incompatible with all of the types allowed by the schema/,
+			),
 		);
 	});
 

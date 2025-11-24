@@ -5,7 +5,12 @@
 
 import { unreachableCase, fail } from "@fluidframework/core-utils/internal";
 
-import { NodeKind, type TreeNodeSchema, type AllowedTypesFull } from "../core/index.js";
+import {
+	NodeKind,
+	type TreeNodeSchema,
+	type AllowedTypesFull,
+	SchemaUpgrade,
+} from "../core/index.js";
 import {
 	type FieldSchema,
 	type FieldSchemaAlpha,
@@ -91,7 +96,7 @@ function generateAllowedTypes(
 ): AllowedTypesFull {
 	const types = Array.from(allowed.entries(), ([id, attributes]) => {
 		const schema = context.get(id) ?? fail(0xb5a /* Missing schema */);
-		return (attributes.isStaged ?? false) ? factory.staged(schema) : schema;
+		return attributes.isStaged instanceof SchemaUpgrade ? factory.staged(schema) : schema;
 	});
 	// TODO: AB#53315: `AllowedTypesFullFromMixed` does not correctly handle the `(AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]` case.
 	// We have to cast here in order to produce an allowed types list that can be used in tree node factory methods (e.g., `SchemaFactoryAlpha.objectAlpha`).

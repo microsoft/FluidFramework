@@ -6,6 +6,11 @@
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
+	getConfigForMinVersionForCollab,
+	lowestMinVersionForCollab,
+} from "@fluidframework/runtime-utils/internal";
+
+import {
 	type CodecTree,
 	type CodecWriteOptions,
 	type DependentFormatVersion,
@@ -15,6 +20,7 @@ import {
 	type ICodecOptions,
 	type IJsonCodec,
 	makeCodecFamily,
+	makeDiscontinuedCodecVersion,
 	makeVersionDispatchingCodec,
 } from "../codec/index.js";
 import type {
@@ -45,10 +51,12 @@ export function clientVersionToMessageFormatVersion(
 	clientVersion: MinimumVersionForCollab,
 	writeVersionOverride?: MessageFormatVersion,
 ): MessageFormatVersion {
-	const compatibleVersion: MessageFormatVersion =
-		clientVersion < FluidClientVersion.v2_43
-			? brand(MessageFormatVersion.v3)
-			: brand(MessageFormatVersion.v4);
+	const compatibleVersion: MessageFormatVersion = brand(
+		getConfigForMinVersionForCollab(clientVersion, {
+			[lowestMinVersionForCollab]: MessageFormatVersion.v3,
+			[FluidClientVersion.v2_43]: MessageFormatVersion.v4,
+		}),
+	);
 	return writeVersionOverride ?? compatibleVersion;
 }
 
@@ -123,29 +131,36 @@ export function makeMessageCodecs<TChangeset>(
 			MessageEncodingContext
 		>,
 	][] = Array.from(messageFormatVersions).map((version) => {
-		const changeCodec = changeCodecs.resolve(
-			dependentChangeFormatVersion.lookup(version),
-		).json;
 		switch (version) {
 			case MessageFormatVersion.undefined:
 			case MessageFormatVersion.v1:
-			case MessageFormatVersion.v2:
-			case MessageFormatVersion.v3:
-			case MessageFormatVersion.v4:
+			case MessageFormatVersion.v2: {
+				const versionOrUndefined =
+					version === MessageFormatVersion.undefined ? undefined : version;
 				return [
-					version === MessageFormatVersion.undefined ? undefined : version,
-					makeV1ToV4CodecWithVersion(
-						changeCodec,
-						revisionTagCodec,
-						options,
-						version === MessageFormatVersion.undefined ? MessageFormatVersion.v1 : version,
-					),
+					versionOrUndefined,
+					makeDiscontinuedCodecVersion(options, versionOrUndefined, "2.73.0"),
 				];
-			case MessageFormatVersion.v5:
+			}
+			case MessageFormatVersion.v3:
+			case MessageFormatVersion.v4: {
+				const changeCodec = changeCodecs.resolve(
+					dependentChangeFormatVersion.lookup(version),
+				).json;
+				return [
+					version,
+					makeV1ToV4CodecWithVersion(changeCodec, revisionTagCodec, options, version),
+				];
+			}
+			case MessageFormatVersion.v5: {
+				const changeCodec = changeCodecs.resolve(
+					dependentChangeFormatVersion.lookup(version),
+				).json;
 				return [
 					version,
 					makeV5CodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
+			}
 			default:
 				unreachableCase(version);
 		}

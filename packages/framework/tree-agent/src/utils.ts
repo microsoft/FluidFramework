@@ -27,6 +27,7 @@ import { NodeKind, normalizeFieldSchema } from "@fluidframework/tree/internal";
 import { z } from "zod";
 
 import { FunctionWrapper } from "./methodBinding.js";
+import { PropertyDef } from "./propertyBinding.js";
 
 /**
  * Subset of Map interface.
@@ -421,6 +422,24 @@ export function getZodSchemaAsTypeScript(
 		}
 	}
 
+	function appendBoundProperties(type: z.ZodType): void {
+		const property = (type as unknown as { property?: PropertyDef }).property;
+
+		if (!(property instanceof PropertyDef)) {
+			if (type.description !== undefined && type.description !== "") {
+				append(` // ${type.description}`);
+			}
+			return;
+		}
+
+		if (property.readOnly === true) {
+			append(" // readonly");
+		}
+		if (property.description !== undefined && property.description !== "") {
+			append(` - ${property.description}`);
+		}
+	}
+
 	function appendArrayType(arrayType: z.ZodType) {
 		appendType((arrayType._def as z.ZodArrayDef).type, TypePrecedence.Object);
 		append("[]");
@@ -433,6 +452,7 @@ export function getZodSchemaAsTypeScript(
 		// eslint-disable-next-line prefer-const
 		for (let [name, type] of Object.entries((objectType._def as z.ZodObjectDef).shape())) {
 			const method = (type as unknown as { method: object | undefined }).method;
+
 			if (method === undefined || !(method instanceof FunctionWrapper)) {
 				append(name);
 				if (getTypeKind(type) === z.ZodFirstPartyTypeKind.ZodOptional) {
@@ -442,8 +462,7 @@ export function getZodSchemaAsTypeScript(
 				append(": ");
 				appendType(type);
 				append(";");
-				const comment = type.description;
-				if (comment !== undefined && comment !== "") append(` // ${comment}`);
+				appendBoundProperties(type);
 				appendNewLine();
 			}
 		}

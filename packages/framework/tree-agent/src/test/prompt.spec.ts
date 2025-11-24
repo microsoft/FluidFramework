@@ -18,6 +18,7 @@ import { z } from "zod";
 
 import { buildFunc, exposeMethodsSymbol, type ExposedMethods } from "../methodBinding.js";
 import { getPrompt } from "../prompt.js";
+import { exposePropertiesSymbol, type ExposedProperties } from "../propertyBinding.js";
 import { Subtree } from "../subtree.js";
 import type { TreeView } from "../api.js";
 
@@ -106,6 +107,48 @@ describe("Prompt generation", () => {
 		}
 	});
 
+	it("acknowledges the presence of properties if present", () => {
+		{
+			const view = getView(sf.object("Object", {}), {});
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				editToolName: "EditTreeTool",
+			});
+			assert.ok(
+				!prompt.includes(
+					"Some schema types expose additional helper properties directly on the objects (including readonly properties).",
+				),
+			);
+		}
+		{
+			class ObjWithProperty extends sf.object("ObjWithProperty", {}) {
+				public readonly testProperty: string = "testProperty";
+				public get name(): string {
+					return this.testProperty;
+				}
+
+				public static [exposePropertiesSymbol](properties: ExposedProperties): void {
+					properties.exposeProperty(ObjWithProperty, "name", {
+						schema: z.string(),
+						readOnly: true,
+					});
+					properties.exposeProperty(ObjWithProperty, "testProperty", {
+						schema: z.string(),
+						readOnly: true,
+					});
+				}
+			}
+
+			const view = getView(ObjWithProperty, {});
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				editToolName: "EditTreeTool",
+			});
+			assert.ok(prompt.includes("name: string; // readonly"));
+			assert.ok(prompt.includes("testProperty: string; // readonly"));
+		}
+	});
+
 	it("acknowledges the presence of arrays in the schema if present", () => {
 		// If no arrays, then the prompt shouldn't mention them
 		{
@@ -177,6 +220,20 @@ describe("Prompt snapshot", () => {
 				);
 			}
 
+			public static [exposePropertiesSymbol](properties: ExposedProperties): void {
+				properties.exposeProperty(TestMap, "testProperty", {
+					schema: z.string(),
+					readOnly: true,
+				});
+				properties.exposeProperty(TestMap, "property", { schema: z.string(), readOnly: true });
+			}
+
+			public readonly testProperty: string = "testProperty";
+
+			public get property(): string {
+				return this.testProperty;
+			}
+
 			public length(): NumberValue {
 				return new NumberValue({ value: this.size });
 			}
@@ -188,6 +245,22 @@ describe("Prompt snapshot", () => {
 					"print",
 					buildFunc({ returns: z.string() }, ["radix", z.number()]),
 				);
+			}
+			public static [exposePropertiesSymbol](properties: ExposedProperties): void {
+				properties.exposeProperty(NumberValue, "testProperty", {
+					schema: z.string(),
+					readOnly: true,
+				});
+				properties.exposeProperty(NumberValue, "property", {
+					schema: z.string(),
+					readOnly: true,
+				});
+			}
+
+			public readonly testProperty: string = "testProperty";
+
+			public get property(): string {
+				return this.testProperty;
 			}
 
 			public print(radix: number): string {

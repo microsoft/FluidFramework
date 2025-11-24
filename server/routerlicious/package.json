@@ -139,10 +139,12 @@
 	"pnpm": {
 		"commentsOverrides": [
 			"@types/node is overridden to v18 to ensure all packages are building using the v18 types.",
+			"node types >= 22 are bumped down to 20.x to work around issues with packages using different types.",
 			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently."
 		],
 		"overrides": {
 			"@types/node@<18": "^18.19.39",
+			"@types/node@>=22": "^20.0.0",
 			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
 			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",
 			"qs": "^6.11.0",
