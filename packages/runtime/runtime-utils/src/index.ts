@@ -65,6 +65,7 @@ export {
 	configValueToMinVersionForCollab,
 	defaultMinVersionForCollab,
 	validateConfigMapOverrides,
+	getConfigForMinVersionForCollab,
 	getConfigsForMinVersionForCollab,
 	isValidMinVersionForCollab,
 	validateMinimumVersionForCollab,

@@ -19,12 +19,31 @@ import {
 	checkValidMinVersionForCollabVerbose,
 	cleanedPackageVersion,
 	validateMinimumVersionForCollab,
+	getConfigForMinVersionForCollab,
 } from "../compatibilityBase.js";
 import { pkgVersion } from "../packageVersion.js";
 
 describe("compatibilityBase", () => {
 	it("cleanedPackageVersion", () => {
 		validateMinimumVersionForCollab(cleanedPackageVersion);
+	});
+
+	// The getConfigsForMinVersionForCollab tests provide a lot of coverage for this function as well.
+	describe("getConfigForMinVersionForCollab", () => {
+		it("minimal", () => {
+			const config = getConfigForMinVersionForCollab("2.2.0", { "1.0.0": "X" });
+			assert.equal(config, "X");
+		});
+		it("sorting", () => {
+			// These checks are designed to fail if the items are not sorted according to semver, and are either left as ordered or sorted lexically.
+			const config = { "1.0.0": "A", "1.500.0": "D", "1.58.0": "B", "1.60.0": "C" };
+			assert.equal(getConfigForMinVersionForCollab("1.50.0", config), "A");
+			assert.equal(getConfigForMinVersionForCollab("1.58.0", config), "B");
+			assert.equal(getConfigForMinVersionForCollab("1.59.0", config), "B");
+			assert.equal(getConfigForMinVersionForCollab("1.60.0", config), "C");
+			assert.equal(getConfigForMinVersionForCollab("1.400.0", config), "C");
+			assert.equal(getConfigForMinVersionForCollab("1.500.0", config), "D");
+		});
 	});
 
 	describe("getConfigsForMinVersionForCollab", () => {

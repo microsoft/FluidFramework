@@ -6,6 +6,11 @@
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
+	getConfigForMinVersionForCollab,
+	lowestMinVersionForCollab,
+} from "@fluidframework/runtime-utils/internal";
+
+import {
 	type CodecTree,
 	type CodecWriteOptions,
 	type DependentFormatVersion,
@@ -46,10 +51,12 @@ export function clientVersionToMessageFormatVersion(
 	clientVersion: MinimumVersionForCollab,
 	writeVersionOverride?: MessageFormatVersion,
 ): MessageFormatVersion {
-	const compatibleVersion: MessageFormatVersion =
-		clientVersion < FluidClientVersion.v2_43
-			? brand(MessageFormatVersion.v3)
-			: brand(MessageFormatVersion.v4);
+	const compatibleVersion: MessageFormatVersion = brand(
+		getConfigForMinVersionForCollab(clientVersion, {
+			[lowestMinVersionForCollab]: MessageFormatVersion.v3,
+			[FluidClientVersion.v2_43]: MessageFormatVersion.v4,
+		}),
+	);
 	return writeVersionOverride ?? compatibleVersion;
 }
 
