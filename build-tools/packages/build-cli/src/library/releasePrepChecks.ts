@@ -8,13 +8,15 @@ import path from "node:path";
 import { MonoRepo, type Package } from "@fluidframework/build-tools";
 import execa from "execa";
 import { ResetMode } from "simple-git";
+import type { Context } from "./context.js";
 import {
+	DEFAULT_GENERATION_DIR,
+	DEFAULT_GENERATION_FILE_NAME,
+	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
 	generateLayerFileContent,
 	isCurrentPackageVersionPatch,
 	maybeGetNewGeneration,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../commands/generate/layerCompatGeneration.js";
-import type { Context } from "./context.js";
+} from "./layerCompatGeneration.js";
 import { getPreReleaseDependencies } from "./package.js";
 
 /**
@@ -251,12 +253,13 @@ export const CheckLayerCompatGeneration: CheckFunction = async (
 			: [releaseGroupOrPackage];
 
 	const packagesNeedingUpdate: { pkg: Package; reason: string }[] = [];
-	const minimumCompatWindowMonths = 3; // Default from generate command
 
 	for (const pkg of packagesToCheck) {
-		const generationDir = "./src";
-		const outFile = "layerGenerationState.ts";
-		const generationFileFullPath = path.join(pkg.directory, generationDir, outFile);
+		const generationFileFullPath = path.join(
+			pkg.directory,
+			DEFAULT_GENERATION_DIR,
+			DEFAULT_GENERATION_FILE_NAME,
+		);
 
 		const currentPkgVersion = pkg.version;
 
@@ -283,19 +286,10 @@ export const CheckLayerCompatGeneration: CheckFunction = async (
 		}
 
 		// Check if a new generation should be created based on version/time
-		const mockLogger = {
-			log: (): void => {},
-			info: (): void => {},
-			warning: (): void => {},
-			errorLog: (): void => {},
-			verbose: (): void => {},
-		};
-
 		const newGeneration = maybeGetNewGeneration(
 			currentPkgVersion,
 			fluidCompatMetadata,
-			minimumCompatWindowMonths,
-			mockLogger,
+			DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
 		);
 
 		if (newGeneration !== undefined) {
@@ -317,11 +311,17 @@ export const CheckLayerCompatGeneration: CheckFunction = async (
 	}
 
 	if (packagesNeedingUpdate.length > 0) {
+		// Build fix command with release group option if applicable
+		const fixCommand =
+			releaseGroupOrPackage instanceof MonoRepo
+				? `pnpm flub generate layerCompatGeneration -g ${releaseGroupOrPackage.kind}`
+				: "pnpm flub generate layerCompatGeneration";
+
 		return {
 			message: `Some packages need layer generation updates:\n${packagesNeedingUpdate
 				.map(({ pkg, reason }) => `  - ${pkg.name}: ${reason}`)
 				.join("\n")}`,
-			fixCommand: "pnpm flub generate layerCompatGeneration",
+			fixCommand,
 		};
 	}
 };

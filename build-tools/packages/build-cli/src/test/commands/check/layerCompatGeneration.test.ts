@@ -9,11 +9,11 @@ import { formatISO } from "date-fns";
 import { describe, it } from "mocha";
 
 import {
-	daysInMonthApproximation,
+	DAYS_IN_MONTH_APPROXIMATION,
 	generateLayerFileContent,
 	isCurrentPackageVersionPatch,
 	maybeGetNewGeneration,
-} from "../../../commands/generate/layerCompatGeneration.js";
+} from "../../../library/layerCompatGeneration.js";
 
 describe("check:layerCompatGeneration", () => {
 	const minimumCompatWindowMonths = 3;
@@ -42,7 +42,9 @@ describe("check:layerCompatGeneration", () => {
 
 		// Create a date monthsSincePreviousRelease months ago
 		const oldDate = new Date();
-		oldDate.setDate(oldDate.getDate() - monthsSincePreviousRelease * daysInMonthApproximation);
+		oldDate.setDate(
+			oldDate.getDate() - monthsSincePreviousRelease * DAYS_IN_MONTH_APPROXIMATION,
+		);
 		const oldDateString = formatISO(oldDate, { representation: "date" });
 		const mockMetadata: IFluidCompatibilityMetadata = {
 			generation: previousGeneration,

@@ -10,10 +10,14 @@ import { Flags } from "@oclif/core";
 import { PackageCommand } from "../../BasePackageCommand.js";
 import type { PackageSelectionDefault } from "../../flags.js";
 import {
+	DEFAULT_GENERATION_DIR,
+	DEFAULT_GENERATION_FILE_NAME,
+	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
 	generateLayerFileContent,
 	isCurrentPackageVersionPatch,
 	maybeGetNewGeneration,
-} from "../generate/layerCompatGeneration.js";
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../library/layerCompatGeneration.js";
 
 export default class CheckLayerCompatGenerationCommand extends PackageCommand<
 	typeof CheckLayerCompatGenerationCommand
@@ -24,17 +28,17 @@ export default class CheckLayerCompatGenerationCommand extends PackageCommand<
 	static readonly flags = {
 		generationDir: Flags.directory({
 			description: "The directory where the generation file is located.",
-			default: "./src",
+			default: DEFAULT_GENERATION_DIR,
 			exists: false, // Don't require it to exist since we're checking
 		}),
 		outFile: Flags.string({
 			description: "Name of the generation file to check.",
-			default: "layerGenerationState.ts",
+			default: DEFAULT_GENERATION_FILE_NAME,
 		}),
 		minimumCompatWindowMonths: Flags.integer({
 			description:
 				"The minimum compatibility window in months that is supported across all Fluid layers.",
-			default: 3,
+			default: DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
 		}),
 		...PackageCommand.flags,
 	} as const;
