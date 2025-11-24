@@ -235,7 +235,7 @@
 				"description": "Modify commands are used to modify projects to add or remove dependencies, update Fluid imports, etc."
 			},
 			"release": {
-				"description": "Release commands are used to manage the Fluid Release process."
+				"description": "Release commands are used to manage the Fluid release process."
 			},
 			"publish": {
 				"description": "Publish commands are used to publish packages to an npm registry."
