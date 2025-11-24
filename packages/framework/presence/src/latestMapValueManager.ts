@@ -43,6 +43,23 @@ import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
 /**
+ * A validator function that can optionally be provided to do runtime validation
+ * of the custom key listed in a {@link LatestMap}.
+ *
+ * @param unvalidatedKey - The unknown key that should be validated.
+ *
+ * @returns True if the key is valid.
+ *
+ * @beta
+ */
+export type KeySchemaValidator<Keys extends string | number> = (
+	/**
+	 * Unknown key that should be validated.
+	 */
+	unvalidatedKey: string | number,
+) => unvalidatedKey is Keys;
+
+/**
  * Collection of validatable optional values in a "map" structure.
  *
  * @remarks
@@ -443,6 +460,12 @@ export type LatestMapRaw<T, Keys extends string | number = string | number> = La
 	RawValueAccessor<T>
 >;
 
+function anyKeyIsValid<Keys extends string | number>(
+	unvalidatedKey: string | number,
+): unvalidatedKey is Keys {
+	return true;
+}
+
 class LatestMapValueManagerImpl<
 	T,
 	RegistrationKey extends string,
@@ -465,7 +488,7 @@ class LatestMapValueManagerImpl<
 		public readonly value: InternalTypes.MapValueState<T, Keys>,
 		controlSettings: BroadcastControlSettings | undefined,
 		private readonly validator: StateSchemaValidator<T> | undefined,
-		private readonly keyValidator: StateSchemaValidator<Keys> | undefined,
+		private readonly isValidKey: KeySchemaValidator<Keys> = anyKeyIsValid,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
 
@@ -481,7 +504,7 @@ class LatestMapValueManagerImpl<
 	}
 
 	private isInvalidKey(key: Keys): boolean {
-		return this.keyValidator !== undefined && this.keyValidator(key) === undefined;
+		return !this.isValidKey(key);
 	}
 
 	public get presence(): Presence {
@@ -548,7 +571,6 @@ class LatestMapValueManagerImpl<
 		// Accumulate individual update keys
 		const updatedItemKeys: Keys[] = [];
 		for (const [key, item] of objectEntries(value.items)) {
-			// TODO: Key validation needs to be added here.
 			const validKey = key as Keys;
 			if (!(key in currentState.items) || currentState.items[validKey].rev < item.rev) {
 				updatedItemKeys.push(validKey);
@@ -569,7 +591,7 @@ class LatestMapValueManagerImpl<
 		};
 		const postUpdateActions: PostUpdateAction[] = [];
 		for (const key of updatedItemKeys) {
-			if (this.isInvalidKey(key)) {
+			if (!this.isValidKey(key)) {
 				continue;
 			}
 			const item = value.items[key];
@@ -643,9 +665,9 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
 	/**
 	 * An optional function that will be called at runtime to validate the presence
 	 * data key. A runtime validator is strongly recommended when key type is not
-	 * simply `string | number`. See {@link StateSchemaValidator}.
+	 * simply `string | number`. See {@link KeySchemaValidator}.
 	 */
-	keyValidator?: StateSchemaValidator<Keys>;
+	keyValidator?: KeySchemaValidator<Keys>;
 }
 
 // #region factory function overloads

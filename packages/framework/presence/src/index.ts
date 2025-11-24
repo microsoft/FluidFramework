@@ -51,6 +51,7 @@ export {
 } from "./datastorePresenceManagerFactory.js";
 
 export type {
+	KeySchemaValidator,
 	LatestMap,
 	LatestMapArguments,
 	LatestMapArgumentsRaw,

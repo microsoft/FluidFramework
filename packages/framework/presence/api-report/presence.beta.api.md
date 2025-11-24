@@ -118,6 +118,10 @@ export namespace InternalTypes {
     }
 }
 
+// @beta
+export type KeySchemaValidator<Keys extends string | number> = (
+unvalidatedKey: string | number) => unvalidatedKey is Keys;
+
 // @beta @sealed
 export interface Latest<T, TRemoteAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
     readonly controls: BroadcastControls;
@@ -181,7 +185,7 @@ export interface LatestMap<T, Keys extends string | number = string | number, TR
 
 // @beta @input
 export interface LatestMapArguments<T, Keys extends string | number = string | number> extends LatestMapArgumentsRaw<T, Keys> {
-    keyValidator?: StateSchemaValidator<Keys>;
+    keyValidator?: KeySchemaValidator<Keys>;
     validator: StateSchemaValidator<T>;
 }
 
