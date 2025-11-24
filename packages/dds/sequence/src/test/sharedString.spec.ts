@@ -19,6 +19,7 @@ import {
 	reservedMarkerSimpleTypeKey,
 	reservedTileLabelsKey,
 	revertMergeTreeDeltaRevertibles,
+	type ISegmentInternal,
 } from "@fluidframework/merge-tree/internal";
 import {
 	MockContainerRuntimeFactory,
@@ -185,6 +186,35 @@ describe("SharedString", () => {
 					`Properties are not empty at position ${i}`,
 				);
 			}
+		});
+
+		it("can annotate single multi-character segment in a local SharedString", () => {
+			sharedString.insertText(0, "Blocker");
+			sharedString.annotateRange(0, 7, { bold: true });
+			let segmentCount = 0;
+			const segmentLengths: number[] = [];
+			sharedString.walkSegments(
+				(segment: ISegmentInternal) => {
+					segmentCount++;
+					segmentLengths.push(segment.cachedLength);
+					return true;
+				},
+				0,
+				sharedString.getLength(),
+				undefined,
+				true,
+			);
+			assert.equal(segmentCount, 1, `Expected one segment, saw ${segmentCount} segments`);
+			assert.equal(
+				segmentLengths.length,
+				1,
+				`Expected one segment length, saw ${segmentLengths.length} lengths`,
+			);
+			assert.equal(
+				segmentLengths[0],
+				7,
+				`Expected segment length 7, saw ${segmentLengths[0]}`,
+			);
 		});
 
 		it("can insert marker", () => {
@@ -573,6 +603,62 @@ describe("SharedString", () => {
 					"Could not annotate props in remote string",
 				);
 			}
+		});
+
+		it("can annotate single multi-character segment with a remote SharedString", () => {
+			sharedString.insertText(0, "Blocker");
+			sharedString.annotateRange(0, 7, { bold: true });
+			containerRuntimeFactory.processAllMessages();
+
+			let segmentCount = 0;
+			const segmentLengths: number[] = [];
+			sharedString.walkSegments(
+				(segment: ISegmentInternal) => {
+					segmentCount++;
+					segmentLengths.push(segment.cachedLength);
+					return true;
+				},
+				0,
+				sharedString.getLength(),
+				undefined,
+				true,
+			);
+			assert.equal(segmentCount, 1, `Expected one segment, saw ${segmentCount} segments`);
+			assert.equal(
+				segmentLengths.length,
+				1,
+				`Expected one segment length, saw ${segmentLengths.length} lengths`,
+			);
+			assert.equal(
+				segmentLengths[0],
+				7,
+				`Expected segment length 7, saw ${segmentLengths[0]}`,
+			);
+
+			segmentCount = 0;
+			const segmentLengths2: number[] = [];
+			sharedString2.walkSegments(
+				(segment: ISegmentInternal) => {
+					segmentCount++;
+					segmentLengths2.push(segment.cachedLength);
+					return true;
+				},
+				0,
+				sharedString.getLength(),
+				undefined,
+				true,
+			);
+			assert.equal(segmentCount, 1, `Expected one segment, saw ${segmentCount} segments`);
+			assert.equal(
+				segmentLengths2.length,
+				1,
+				`Expected one segment length, saw ${segmentLengths2.length} lengths`,
+			);
+			assert.equal(
+				segmentLengths2[0],
+				7,
+				`Expected segment length 7, saw ${segmentLengths2[0]}`,
+			);
 		});
 
 		it("can insert marker", () => {
