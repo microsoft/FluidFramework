@@ -3,40 +3,58 @@
  * Licensed under the MIT License.
  */
 
+import { readFile, writeFile } from "node:fs/promises";
+import {
+	type VersionBumpType,
+	bumpVersionScheme,
+	isInternalVersionScheme,
+} from "@fluid-tools/version-tools";
+import { FluidRepo, type Package } from "@fluidframework/build-tools";
 import { ux } from "@oclif/core";
 import { command as execCommand } from "execa";
-import { parse } from "semver";
+import { inc } from "semver";
+import { CleanOptions } from "simple-git";
 
-import { setVersion } from "@fluid-tools/build-infrastructure";
-import { releaseGroupNameFlag, semverFlag } from "../../../flags.js";
-// eslint-disable-next-line import/no-internal-modules
-import { updateChangelogs } from "../../../library/changelogs.js";
+import { checkFlags, releaseGroupFlag, semverFlag } from "../../../flags.js";
 // eslint-disable-next-line import/no-internal-modules
 import { canonicalizeChangesets } from "../../../library/changesets.js";
-import { BaseCommandWithBuildProject } from "../../../library/index.js";
+import { BaseCommand } from "../../../library/index.js";
+import { isReleaseGroup } from "../../../releaseGroups.js";
+
+async function replaceInFile(
+	search: string,
+	replace: string,
+	filePath: string,
+): Promise<void> {
+	const content = await readFile(filePath, "utf8");
+	const newContent = content.replace(new RegExp(search, "g"), replace);
+	await writeFile(filePath, newContent, "utf8");
+}
 
 /**
- * Generate a changelog for packages based on changesets. Note that this process deletes the changeset files!
- *
- * The reason we use a search/replace approach to update the version strings in the changelogs is largely because of
- * https://github.com/changesets/changesets/issues/595. What we would like to do is generate the changelogs without
- * doing version bumping, but that feature does not exist in the changeset tools.
+ * @deprecated This command is deprecated. Use 'flub generate changelog' instead.
  */
-export default class GenerateChangeLogCommand extends BaseCommandWithBuildProject<
+export default class GenerateChangeLogCommand extends BaseCommand<
 	typeof GenerateChangeLogCommand
 > {
 	static readonly description =
-		"Generate a changelog for packages based on changesets. Note that this process deletes the changeset files!";
+		"[DEPRECATED] Generate a changelog for packages based on changesets. Use 'flub generate changelog' instead.";
 
-	static readonly aliases = ["vnext:generate:changelogs"];
+	static readonly deprecateAliases = true;
+	static readonly deprecated = {
+		message: "This command is deprecated. Use 'flub generate changelog' instead.",
+	};
 
 	static readonly flags = {
-		releaseGroup: releaseGroupNameFlag({ required: true }),
+		releaseGroup: releaseGroupFlag({
+			required: true,
+		}),
 		version: semverFlag({
 			description:
 				"The version for which to generate the changelog. If this is not provided, the version of the package according to package.json will be used.",
 		}),
-		...BaseCommandWithBuildProject.flags,
+		install: checkFlags.install,
+		...BaseCommand.flags,
 	} as const;
 
 	static readonly examples = [
@@ -46,23 +64,50 @@ export default class GenerateChangeLogCommand extends BaseCommandWithBuildProjec
 		},
 	];
 
+	private async processPackage(pkg: Package, bumpType: VersionBumpType): Promise<void> {
+		const { directory, version: pkgVersion } = pkg;
+
+		// This is the version that the changesets tooling calculates by default. It does a bump of the highest semver type
+		// in the changesets on the current version. We search for that version in the generated changelog and replace it
+		// with the one that we want.
+		const changesetsCalculatedVersion = isInternalVersionScheme(pkgVersion)
+			? bumpVersionScheme(pkgVersion, bumpType, "internal")
+			: inc(pkgVersion, bumpType);
+		const versionToUse = this.flags.version?.version ?? pkgVersion;
+
+		// Replace the changeset version with the correct version.
+		await replaceInFile(
+			`## ${changesetsCalculatedVersion}\n`,
+			`## ${versionToUse}\n`,
+			`${directory}/CHANGELOG.md`,
+		);
+
+		// For changelogs that had no changesets applied to them, add in a 'dependency updates only' section.
+		await replaceInFile(
+			`## ${versionToUse}\n\n## `,
+			`## ${versionToUse}\n\nDependency updates only.\n\n## `,
+			`${directory}/CHANGELOG.md`,
+		);
+	}
+
 	public async run(): Promise<void> {
-		const buildProject = this.getBuildProject();
+		const context = await this.getContext();
 
-		const { releaseGroup: releaseGroupName, version: versionOverride } = this.flags;
+		const gitRoot = context.root;
 
-		const releaseGroup = buildProject.releaseGroups.get(releaseGroupName);
+		const { install, releaseGroup } = this.flags;
+
 		if (releaseGroup === undefined) {
-			this.error(`Can't find release group named '${releaseGroupName}'`, { exit: 1 });
+			this.error("ReleaseGroup is possibly 'undefined'");
 		}
 
-		const releaseGroupRoot = releaseGroup.workspace.directory;
-		const releaseGroupVersion = parse(releaseGroup.version);
-		if (releaseGroupVersion === null) {
-			this.error(`Version isn't a valid semver string: '${releaseGroup.version}'`, {
-				exit: 1,
-			});
+		const monorepo =
+			releaseGroup === undefined ? undefined : context.repo.releaseGroups.get(releaseGroup);
+		if (monorepo === undefined) {
+			this.error(`Release group ${releaseGroup} not found in repo config`, { exit: 1 });
 		}
+
+		const releaseGroupRoot = monorepo?.directory ?? gitRoot;
 
 		// Strips additional custom metadata from the source files before we call `changeset version`,
 		// because the changeset tools - like @changesets/cli - only work on canonical changesets.
@@ -73,19 +118,32 @@ export default class GenerateChangeLogCommand extends BaseCommandWithBuildProjec
 		await execCommand("pnpm exec changeset version", { cwd: releaseGroupRoot });
 		ux.action.stop();
 
-		const packagesToCheck = releaseGroup.packages;
+		const packagesToCheck = isReleaseGroup(releaseGroup)
+			? context.packagesInReleaseGroup(releaseGroup)
+			: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				[context.fullPackageMap.get(releaseGroup)!];
 
-		// restore the package versions that were changed by `changeset version`
-		await setVersion(packagesToCheck, releaseGroupVersion);
+		if (install) {
+			const installed = await FluidRepo.ensureInstalled(packagesToCheck);
 
-		// Extract the version string from the SemVer object if provided
-		const versionString = versionOverride?.version;
+			if (!installed) {
+				this.error(`Error installing dependencies for: ${releaseGroup}`);
+			}
+		}
+
+		const repo = await context.getGitRepository();
+
+		// git add the deleted changesets (`changeset version` deletes them)
+		await repo.gitClient.add(".changeset/**");
+
+		// git restore the package.json files that were changed by `changeset version`
+		await repo.gitClient.raw("restore", "**package.json");
 
 		// Calls processPackage on all packages.
 		ux.action.start("Processing changelog updates");
 		const processPromises: Promise<void>[] = [];
 		for (const pkg of packagesToCheck) {
-			processPromises.push(updateChangelogs(pkg, bumpType, versionString));
+			processPromises.push(this.processPackage(pkg, bumpType));
 		}
 		const results = await Promise.allSettled(processPromises);
 		const failures = results.filter((p) => p.status === "rejected");
@@ -97,6 +155,15 @@ export default class GenerateChangeLogCommand extends BaseCommandWithBuildProjec
 				{ exit: 1 },
 			);
 		}
+
+		// git add the changelog changes
+		await repo.gitClient.add("**CHANGELOG.md");
+
+		// Cleanup: git restore any edits that aren't staged
+		await repo.gitClient.raw("restore", ".");
+
+		// Cleanup: git clean any untracked files
+		await repo.gitClient.clean(CleanOptions.RECURSIVE + CleanOptions.FORCE);
 		ux.action.stop();
 
 		this.log("Commit and open a PR!");
