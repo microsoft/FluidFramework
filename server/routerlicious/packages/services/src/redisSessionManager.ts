@@ -131,11 +131,11 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 		return this.getFullSession(key, JSON.parse(sessionJson));
 	}
 
-	public async getAllSessions(): Promise<ICollaborationSession[]> {
+	public async getAllSessions(limit?: number): Promise<ICollaborationSession[]> {
 		const sessions: ICollaborationSession[] = [];
 		await this.iterateAllSessions(async (session: ICollaborationSession) => {
 			sessions.push(session);
-		});
+		}, limit);
 		return sessions;
 	}
 

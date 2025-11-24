@@ -137,7 +137,7 @@ export interface ICollaborationSessionManager {
 	/**
 	 * Get a list of all active sessions.
 	 */
-	getAllSessions(): Promise<ICollaborationSession[]>;
+	getAllSessions(limit?: number): Promise<ICollaborationSession[]>;
 	/**
 	 * Iterate over all active sessions, calling the provided callback for each session.
 	 *
