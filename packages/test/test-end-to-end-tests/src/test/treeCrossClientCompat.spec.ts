@@ -69,10 +69,10 @@ describeCompat("TreeDataObject", "FullCompat", (getTestObjectProvider, apis: Com
 	let provider: ITestObjectProvider;
 
 	beforeEach(function () {
-		// SharedTree requires version 2.0.0 or higher.
-		// Skip all cross-client compat tests in this suite for older versions.
-		// Even though the test framework uses latest SharedTree for these older versions, idCompressor
-		// is not supported in those versions, which causes issues.
+		// SharedTree was added in version 2.0.0. Skip all cross-client compat tests in this suite for older versions.
+		// The test framework installs the latest SharedTree version for these older versions as a workaround
+		// so, technically these tests could work. However, idCompressor is not supported by the runtime in these versions,
+		// which causes the tests to fail.
 		const version = apis.containerRuntime.version;
 		const versionForLoading = apis.containerRuntimeForLoading?.version;
 		if (

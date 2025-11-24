@@ -126,17 +126,12 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 	function convertRegistry(registry: ChannelFactoryRegistry = []): ChannelFactoryRegistry {
 		const oldRegistry: [string | undefined, IChannelFactory][] = [];
 		for (const [key, factory] of registry) {
-			if (factory.type === "https://graph.microsoft.com/types/tree") {
-				oldRegistry.push([key, factory]);
-			} else {
-				const oldFactory = registryMapping[factory.type];
-				if (oldFactory === undefined) {
-					throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
-				}
-				oldRegistry.push([key, oldFactory]);
+			const oldFactory = registryMapping[factory.type];
+			if (oldFactory === undefined) {
+				throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
 			}
+			oldRegistry.push([key, oldFactory]);
 		}
-
 		return oldRegistry;
 	}
 
