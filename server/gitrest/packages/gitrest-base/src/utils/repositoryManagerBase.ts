@@ -7,7 +7,7 @@ import type * as git from "@fluidframework/gitresources";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { executeApiWithMetric } from "@fluidframework/server-services-utils";
-import sizeof from "object-sizeof";
+import { sizeof } from "./helpers";
 
 import type { IExternalWriterConfig, IRepositoryManager } from "./definitions";
 import {

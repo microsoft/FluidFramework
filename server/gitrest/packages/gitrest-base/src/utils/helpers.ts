@@ -33,6 +33,7 @@ import {
 	BaseGitRestTelemetryProperties,
 	GitRestLumberEventName,
 } from "./gitrestTelemetryDefinitions";
+import { Stream } from "stream";
 
 /**
  * Validates that the input encoding is valid
@@ -350,4 +351,52 @@ export async function checkSoftDeleted(
 		);
 		throw error;
 	}
+}
+
+/**
+ * A simple sizeof implementation to estimate the size of data being written.
+ *
+ * The library 'object-sizeof' was removed due to its inconsistency and hidden size multipliers.
+ * Additionally, it had proven performance issues in certain large object scenarios.
+ *
+ * @remarks
+ * This function provides size estimations for strings, Buffers, ArrayBufferViews, and Iterables of these types.
+ * It returns -1 for AsyncIterables and Streams, as their sizes cannot be determined without consumption.
+ * Streams and AsyncIterables are included in the typing for compatibility with FS APIs, but are not used within this project.
+ *
+ * @param data - The data to check size of.
+ * @returns The estimated size of the data in bytes, or -1 if the size cannot be determined.
+ */
+export function sizeof(
+	data:
+		| string
+		| Buffer
+		| NodeJS.ArrayBufferView
+		| Iterable<string | NodeJS.ArrayBufferView>
+		| AsyncIterable<string | NodeJS.ArrayBufferView>
+		| Stream,
+): number {
+	if (typeof data === "string") {
+		return data.length;
+	}
+	if (Buffer.isBuffer(data)) {
+		return data.byteLength;
+	}
+	if (ArrayBuffer.isView(data)) {
+		return data.byteLength;
+	}
+	if (data[Symbol.iterator] === "function") {
+		let total = 0;
+		for (const item of data as Iterable<string | NodeJS.ArrayBufferView>) {
+			total += sizeof(item);
+		}
+		return total;
+	}
+	// AsyncIterables and Streams cannot be sized without consuming them.
+	// However, they are included in the function typing for compatibility with FS APIs.
+	// We do not currently use them in any size-limited write operations.
+	if (data[Symbol.asyncIterator] === "function") {
+		return -1; // Can't determine size of async iterable without consuming it.
+	}
+	return -1; // Unknown size (can't consume stream to determine size, or other unknown type).
 }
