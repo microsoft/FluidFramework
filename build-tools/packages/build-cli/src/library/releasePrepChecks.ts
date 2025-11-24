@@ -3,9 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { MonoRepo, type Package } from "@fluidframework/build-tools";
 import execa from "execa";
 import { ResetMode } from "simple-git";
+import {
+	generateLayerFileContent,
+	isCurrentPackageVersionPatch,
+	maybeGetNewGeneration,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../commands/generate/layerCompatGeneration.js";
 import type { Context } from "./context.js";
 import { getPreReleaseDependencies } from "./package.js";
 
@@ -225,6 +233,95 @@ export const CheckNoUntaggedAsserts: CheckFunction = async (
 		return {
 			message: "Found some untagged asserts. These should be tagged before release.",
 			fixCommand: "pnpm run policy-check:asserts",
+		};
+	}
+};
+
+/**
+ * Checks that packages with layer compatibility metadata have up-to-date generation files.
+ * This check is lenient - packages without metadata or generation files are skipped.
+ */
+export const CheckLayerCompatGeneration: CheckFunction = async (
+	_context: Context,
+	releaseGroupOrPackage: MonoRepo | Package,
+): Promise<CheckResult> => {
+	const packagesToCheck =
+		releaseGroupOrPackage instanceof MonoRepo
+			? releaseGroupOrPackage.packages
+			: [releaseGroupOrPackage];
+
+	const packagesNeedingUpdate: { pkg: Package; reason: string }[] = [];
+	const minimumCompatWindowMonths = 3; // Default from generate command
+
+	for (const pkg of packagesToCheck) {
+		const generationDir = "./src";
+		const outFile = "layerGenerationState.ts";
+		const generationFileFullPath = path.join(pkg.directory, generationDir, outFile);
+
+		const currentPkgVersion = pkg.version;
+
+		// Skip patch versions (they don't trigger generation updates)
+		if (isCurrentPackageVersionPatch(currentPkgVersion)) {
+			continue;
+		}
+
+		// Check if package has the required metadata
+		const { fluidCompatMetadata } = pkg.packageJson;
+		if (fluidCompatMetadata === undefined) {
+			// Lenient check - skip packages without metadata
+			continue;
+		}
+
+		// Check if the generation file exists
+		let fileContent: string;
+		try {
+			// eslint-disable-next-line no-await-in-loop -- Need to check files sequentially
+			fileContent = await readFile(generationFileFullPath, "utf8");
+		} catch {
+			// Lenient check - skip packages without generation files
+			continue;
+		}
+
+		// Check if a new generation should be created based on version/time
+		const mockLogger = {
+			log: (): void => {},
+			info: (): void => {},
+			warning: (): void => {},
+			errorLog: (): void => {},
+			verbose: (): void => {},
+		};
+
+		const newGeneration = maybeGetNewGeneration(
+			currentPkgVersion,
+			fluidCompatMetadata,
+			minimumCompatWindowMonths,
+			mockLogger,
+		);
+
+		if (newGeneration !== undefined) {
+			packagesNeedingUpdate.push({
+				pkg,
+				reason: `Generation should be updated from ${fluidCompatMetadata.generation} to ${newGeneration}`,
+			});
+			continue;
+		}
+
+		// Verify the file content matches the expected generation
+		const expectedContent = generateLayerFileContent(fluidCompatMetadata.generation);
+		if (fileContent !== expectedContent) {
+			packagesNeedingUpdate.push({
+				pkg,
+				reason: `Generation file content does not match expected content for generation ${fluidCompatMetadata.generation}`,
+			});
+		}
+	}
+
+	if (packagesNeedingUpdate.length > 0) {
+		return {
+			message: `Some packages need layer generation updates:\n${packagesNeedingUpdate
+				.map(({ pkg, reason }) => `  - ${pkg.name}: ${reason}`)
+				.join("\n")}`,
+			fixCommand: "pnpm flub generate layerCompatGeneration",
 		};
 	}
 };
