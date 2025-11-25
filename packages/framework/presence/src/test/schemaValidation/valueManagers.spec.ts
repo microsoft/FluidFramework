@@ -553,7 +553,7 @@ describe("Presence", () => {
 		});
 
 		describe("LatestMap with validation", () => {
-			let latestMap: LatestMap<Point3D, string>;
+			let latestMap: LatestMap<Point3D, `key${string}`>;
 
 			/**
 			 * This beforeEach sets up the presence workspace itself and gets a
@@ -605,6 +605,7 @@ describe("Presence", () => {
 					latestMap: StateFactory.latestMap({
 						local: { "key1": { x: 0, y: 0, z: 0 }, "key2": { x: 0, y: 0, z: 0 } },
 						validator: point3DValidatorFunction,
+						keyValidator: (key: string): key is `key${string}` => key.startsWith("key"),
 						settings: { allowableUpdateLatencyMs: 0 },
 					}),
 				});
