@@ -6,7 +6,12 @@
 // eslint-disable-next-line import-x/no-unassigned-import
 import "ses";
 
-import type { AsynchronousEditor } from "@fluidframework/tree-agent/alpha";
+import type { ImplicitFieldSchema } from "@fluidframework/tree";
+import {
+	createContext,
+	type AsynchronousEditor,
+	type ViewOrTree,
+} from "@fluidframework/tree-agent/alpha";
 
 /**
  * Used to track whether the SES `lockdown` function has already been called by this module.
@@ -21,10 +26,10 @@ const lockdownSymbol = Symbol.for("tree-agent.ses.locked");
  * @remarks This function will call the SES `lockdown` API the first time it is invoked. For best performance, create the executor once during application initialization.
  * @alpha
  */
-export function createSesEditExecutor(options?: {
+export function createSesEditExecutor<TSchema extends ImplicitFieldSchema>(options?: {
 	compartmentOptions?: { globals?: Map<string, unknown>; [key: string]: unknown };
 	lockdownOptions?: Record<string, unknown>;
-}): AsynchronousEditor {
+}): AsynchronousEditor<TSchema> {
 	const optionsGlobals: Map<string, unknown> =
 		options?.compartmentOptions?.globals ?? new Map<string, unknown>();
 
@@ -57,12 +62,12 @@ export function createSesEditExecutor(options?: {
 		}
 	}
 
-	return async (context: Record<string, unknown>, code: string) => {
+	return async (tree: ViewOrTree<TSchema>, code: string) => {
 		const compartmentOptions = {
 			...options?.compartmentOptions,
 			globals: {
 				...Object.fromEntries(optionsGlobals),
-				context,
+				context: createContext(tree),
 			},
 		};
 

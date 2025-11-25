@@ -17,7 +17,7 @@ import type {
 	SimpleRecordNodeSchema,
 	SimpleTreeSchema,
 } from "../simpleSchema.js";
-import { NodeKind } from "../core/index.js";
+import { createSchemaUpgrade, NodeKind, SchemaUpgrade } from "../core/index.js";
 import type { FieldKind } from "../fieldSchema.js";
 import type { ValueSchema } from "../../core/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -153,9 +153,8 @@ function encodeSimpleAllowedTypes(
 ): Format.SimpleAllowedTypesFormat {
 	const encodedAllowedTypes: Format.SimpleAllowedTypesFormat = {};
 	for (const [identifier, attributes] of simpleAllowedTypes) {
-		encodedAllowedTypes[identifier] = {
-			isStaged: attributes.isStaged,
-		};
+		const isStaged = attributes.isStaged instanceof SchemaUpgrade ? true : attributes.isStaged;
+		encodedAllowedTypes[identifier] = { isStaged };
 	}
 	return encodedAllowedTypes;
 }
@@ -350,11 +349,13 @@ function decodeSimpleAllowedTypes(
 ): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
 	const untypedMap = objectToMap(encodedAllowedTypes);
 
-	const simpleAllowedTypes = transformMapValues(untypedMap, (value) => {
-		return {
-			isStaged: value.isStaged,
-		} satisfies SimpleAllowedTypeAttributes;
-	});
+	const simpleAllowedTypes = transformMapValues(
+		untypedMap,
+		(value): SimpleAllowedTypeAttributes => {
+			const isStaged = value.isStaged === true ? createSchemaUpgrade() : value.isStaged;
+			return { isStaged };
+		},
+	);
 
 	return simpleAllowedTypes;
 }

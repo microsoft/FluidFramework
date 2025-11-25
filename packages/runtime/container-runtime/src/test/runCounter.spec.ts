@@ -95,17 +95,14 @@ describe("BatchRunCounter", () => {
 
 		it("should not allow reentrancy if outer call sets resubmitInfo", () => {
 			const batchRunCounter = new BatchRunCounter();
-			assert.throws(
-				() => {
-					batchRunCounter.run(
-						() => {
-							batchRunCounter.run(() => {});
-						},
-						{ batchId: "foo", staged: true },
-					);
-				},
-				(e) => validateAssertionError(e as Error, "Reentrancy not allowed in BatchRunCounter"),
-			);
+			assert.throws(() => {
+				batchRunCounter.run(
+					() => {
+						batchRunCounter.run(() => {});
+					},
+					{ batchId: "foo", staged: true },
+				);
+			}, validateAssertionError("Reentrancy not allowed in BatchRunCounter"));
 		});
 	});
 });

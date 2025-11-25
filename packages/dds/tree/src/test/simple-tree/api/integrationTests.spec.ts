@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	SchemaFactory,
@@ -15,7 +16,7 @@ import type {
 	ValidateRecursiveSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/schemaFactoryRecursive.js";
-import { getView, validateUsageError } from "../../utils.js";
+import { getView } from "../../utils.js";
 
 const sf = new SchemaFactory("integration");
 

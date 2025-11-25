@@ -98,9 +98,9 @@ describe("FluidDataStoreRuntime Tests", () => {
 					throw new Error("This shouldn't be called during the test");
 				},
 			);
-		assert.throws(codeBlock, (e: Error) =>
+		assert.throws(
+			codeBlock,
 			validateAssertionError(
-				e,
 				"Id cannot contain slashes. DataStoreContext should have validated this.",
 			),
 		);

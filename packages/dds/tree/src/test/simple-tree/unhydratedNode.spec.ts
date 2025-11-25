@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { isStableId } from "@fluidframework/id-compressor/internal";
 
@@ -25,7 +26,6 @@ import type {
 } from "../../simple-tree/fieldSchema.js";
 import { hydrate } from "./utils.js";
 import { TreeStatus } from "../../feature-libraries/index.js";
-import { validateUsageError } from "../utils.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
 import { singleJsonCursor } from "../json/index.js";

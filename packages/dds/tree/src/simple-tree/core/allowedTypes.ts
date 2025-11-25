@@ -262,7 +262,7 @@ export class AnnotatedAllowedTypesInternal<
 		const simpleAllowedTypes = new Map<string, SimpleAllowedTypeAttributes>();
 		for (const type of annotatedAllowedTypes.evaluate().types) {
 			simpleAllowedTypes.set(type.type.identifier, {
-				isStaged: type.metadata.stagedSchemaUpgrade !== undefined,
+				isStaged: type.metadata.stagedSchemaUpgrade ?? false,
 			});
 		}
 		return simpleAllowedTypes;

@@ -91,9 +91,14 @@ interface TestTree {
  */
 export interface TestDocument extends TestTree, Omit<TestSimpleTree, "root"> {
 	/**
-	 * True if and only if the document had content in unknown optional fields.
+	 * True if and only if the document has content in unknown optional fields.
 	 */
 	readonly hasUnknownOptionalFields?: true;
+
+	/**
+	 * True if and only if the documents schema has unknown optional fields in the stored schema.
+	 */
+	readonly hasUnknownOptionalFieldSchema?: true;
 
 	/**
 	 * True if and only if the document had staged allowed types.
@@ -472,6 +477,7 @@ export const testDocuments: readonly TestDocument[] = [
 		ambiguous: false,
 		name: "AllowsUnknownOptionalFields",
 		schema: HasUnknownOptionalFields,
+		hasUnknownOptionalFieldSchema: true,
 		// Unknown optional fields are allowed but empty in this document.
 		policy: defaultSchemaPolicy,
 		schemaData: toInitialSchema(HasUnknownOptionalFieldsV2),
@@ -483,6 +489,7 @@ export const testDocuments: readonly TestDocument[] = [
 		name: "HasUnknownOptionalFields",
 		schema: HasUnknownOptionalFields,
 		hasUnknownOptionalFields: true,
+		hasUnknownOptionalFieldSchema: true,
 		policy: defaultSchemaPolicy,
 		schemaData: toInitialSchema(HasUnknownOptionalFieldsV2),
 		treeFactory: () =>

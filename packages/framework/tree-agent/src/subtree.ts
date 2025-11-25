@@ -11,45 +11,40 @@ import type {
 	TreeFieldFromImplicitField,
 	TreeMapNode,
 	TreeArrayNode,
-	TreeNodeSchema,
 } from "@fluidframework/tree";
 import { TreeAlpha } from "@fluidframework/tree/alpha";
 import type {
-	UnsafeUnknownSchema,
 	ReadableField,
 	TreeRecordNode,
-	ReadSchema,
 	TreeBranchAlpha,
 } from "@fluidframework/tree/alpha";
 
 import { getNodeOnBranch } from "./getNodeOnBranch.js";
-import type { TreeView } from "./utils.js";
+import type { TreeView, ViewOrTree } from "./api.js";
 
 /**
  * Wraps either a {@link TreeView} or a {@link TreeNode} and provides a common interface over them.
  */
-export class Subtree<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> {
-	public constructor(
-		private readonly viewOrNode: TreeView<TRoot> | (ReadableField<TRoot> & TreeNode),
-	) {
-		if (viewOrNode instanceof TreeNode && TreeAlpha.branch(viewOrNode) === undefined) {
+export class Subtree<TRoot extends ImplicitFieldSchema> {
+	public constructor(public readonly viewOrTree: ViewOrTree<TRoot>) {
+		if (viewOrTree instanceof TreeNode && TreeAlpha.branch(viewOrTree) === undefined) {
 			throw new UsageError("The provided node must belong to a branch.");
 		}
 	}
 
 	public get branch(): TreeBranchAlpha {
-		return this.viewOrNode instanceof TreeNode
-			? (TreeAlpha.branch(this.viewOrNode) ?? fail("Node cannot be raw."))
-			: this.viewOrNode;
+		return this.viewOrTree instanceof TreeNode
+			? (TreeAlpha.branch(this.viewOrTree) ?? fail("Node cannot be raw."))
+			: this.viewOrTree;
 	}
 
 	public get field(): ReadableField<TRoot> {
-		return this.viewOrNode instanceof TreeNode ? this.viewOrNode : this.viewOrNode.root;
+		return this.viewOrTree instanceof TreeNode ? this.viewOrTree : this.viewOrTree.root;
 	}
 
-	public set field(value: TreeFieldFromImplicitField<ReadSchema<TRoot>>) {
-		if (this.viewOrNode instanceof TreeNode) {
-			const parent = Tree.parent(this.viewOrNode);
+	public set field(value: TreeFieldFromImplicitField<TRoot>) {
+		if (this.viewOrTree instanceof TreeNode) {
+			const parent = Tree.parent(this.viewOrTree);
 			if (parent === undefined) {
 				// In general, this is not a correct cast, but we know that the root of the branch at least allows the type of `value`
 				const view = this.branch as TreeView<TRoot>;
@@ -58,12 +53,12 @@ export class Subtree<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> {
 				const schema = Tree.schema(parent);
 				switch (schema.kind) {
 					case NodeKind.Object: {
-						const key = Tree.key(this.viewOrNode) as string;
+						const key = Tree.key(this.viewOrTree) as string;
 						(parent as unknown as Record<string, unknown>)[key] = value;
 						break;
 					}
 					case NodeKind.Record: {
-						const key = Tree.key(this.viewOrNode) as string;
+						const key = Tree.key(this.viewOrTree) as string;
 						if (value === undefined) {
 							// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 							delete (parent as TreeRecordNode)[key];
@@ -73,7 +68,7 @@ export class Subtree<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> {
 						break;
 					}
 					case NodeKind.Map: {
-						const key = Tree.key(this.viewOrNode) as string;
+						const key = Tree.key(this.viewOrTree) as string;
 						if (value === undefined) {
 							(parent as TreeMapNode).delete(key);
 						} else {
@@ -82,7 +77,7 @@ export class Subtree<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> {
 						break;
 					}
 					case NodeKind.Array: {
-						const index = Tree.key(this.viewOrNode) as number;
+						const index = Tree.key(this.viewOrTree) as number;
 						const arrayNode = parent as TreeArrayNode;
 						if (value === undefined) {
 							arrayNode.removeAt(index);
@@ -99,26 +94,28 @@ export class Subtree<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> {
 				}
 			}
 		} else {
-			this.viewOrNode.root = value;
+			this.viewOrTree.root = value;
 		}
 	}
 
-	public get schema(): TreeNodeSchema | ReadSchema<TRoot> {
-		return this.viewOrNode instanceof TreeNode
-			? Tree.schema(this.viewOrNode)
-			: this.viewOrNode.schema;
+	public get schema(): TRoot {
+		return (
+			this.viewOrTree instanceof TreeNode
+				? Tree.schema(this.viewOrTree)
+				: this.viewOrTree.schema
+		) as TRoot;
 	}
 
 	public fork(): Subtree<TRoot> {
-		if (this.viewOrNode instanceof TreeNode) {
-			const branch = TreeAlpha.branch(this.viewOrNode) ?? fail("Node cannot be raw.");
+		if (this.viewOrTree instanceof TreeNode) {
+			const branch = TreeAlpha.branch(this.viewOrTree) ?? fail("Node cannot be raw.");
 			const node =
-				getNodeOnBranch(this.viewOrNode, branch.fork()) ??
+				getNodeOnBranch(this.viewOrTree, branch.fork()) ??
 				fail("Expected node to be on new fork.");
 
 			return new Subtree<TRoot>(node);
 		} else {
-			return new Subtree<TRoot>(this.viewOrNode.fork());
+			return new Subtree<TRoot>(this.viewOrTree.fork());
 		}
 	}
 }

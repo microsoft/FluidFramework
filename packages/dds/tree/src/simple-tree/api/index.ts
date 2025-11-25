@@ -171,3 +171,8 @@ export {
 	encodeSimpleSchema,
 	decodeSimpleSchema,
 } from "./simpleSchemaCodec.js";
+export {
+	exportCompatibilitySchemaSnapshot,
+	importCompatibilitySchemaSnapshot,
+	checkCompatibility,
+} from "./snapshotCompatibilityChecker.js";

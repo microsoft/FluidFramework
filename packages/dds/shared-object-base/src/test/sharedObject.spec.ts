@@ -128,9 +128,7 @@ describe("SharedObject", () => {
 	it("rejects slashes in id", () => {
 		const invalidId = "beforeSlash/afterSlash";
 		const codeBlock = (): SharedObject => new MySharedObject(invalidId);
-		assert.throws(codeBlock, (e: Error) =>
-			validateAssertionError(e, "Id cannot contain slashes"),
-		);
+		assert.throws(codeBlock, validateAssertionError("Id cannot contain slashes"));
 	});
 });
 
@@ -138,9 +136,7 @@ describe("SharedObjectCore", () => {
 	it("rejects slashes in id", () => {
 		const invalidId = "beforeSlash/afterSlash";
 		const codeBlock = (): SharedObjectCore => new MySharedObjectCore({ id: invalidId });
-		assert.throws(codeBlock, (e: Error) =>
-			validateAssertionError(e, "Id cannot contain slashes"),
-		);
+		assert.throws(codeBlock, validateAssertionError("Id cannot contain slashes"));
 	});
 
 	describe("handle encoding in submitLocalMessage", () => {

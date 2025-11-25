@@ -65,6 +65,7 @@ export {
 	createSchemaUpgrade,
 	AnnotatedAllowedTypesInternal,
 	normalizeAllowedTypesInternal,
+	SchemaUpgrade,
 } from "./allowedTypes.js";
 export type {
 	AnnotatedAllowedType,
@@ -80,7 +81,6 @@ export type {
 	AllowedTypeMetadata,
 	AnnotatedAllowedTypes,
 	AnnotateAllowedTypesList,
-	SchemaUpgrade,
 	AllowedTypesFullInternal,
 	AllowedTypesFull,
 	AllowedTypesFullFromMixed,
@@ -117,4 +117,6 @@ export {
 	type StoredSchemaGenerationOptions,
 	convertAllowedTypes,
 	allowedTypeFilter,
+	type StoredFromViewSchemaGenerationOptions,
+	ExpectStored,
 } from "./toStored.js";

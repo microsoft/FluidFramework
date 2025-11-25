@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 
@@ -27,7 +28,6 @@ import {
 	expectNoRemovedRoots,
 	makeTreeFromJson,
 	moveWithin,
-	validateUsageError,
 	type TreeStoredContentStrict,
 } from "../utils.js";
 import { insert, makeTreeFromJsonSequence, remove } from "../sequenceRootUtils.js";

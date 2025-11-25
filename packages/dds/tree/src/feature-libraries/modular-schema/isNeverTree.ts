@@ -13,12 +13,11 @@ import {
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	Multiplicity,
+	type SchemaPolicy,
 } from "../../core/index.js";
 
-import type { FullSchemaPolicy } from "./fieldKind.js";
-
 export function isNeverField(
-	policy: FullSchemaPolicy,
+	policy: SchemaPolicy,
 	originalData: TreeStoredSchema,
 	field: TreeFieldStoredSchema,
 ): boolean {
@@ -26,7 +25,7 @@ export function isNeverField(
 }
 
 export function isNeverFieldRecursive(
-	policy: FullSchemaPolicy,
+	policy: SchemaPolicy,
 	originalData: TreeStoredSchema,
 	field: TreeFieldStoredSchema,
 	parentTypeStack: Set<TreeNodeStoredSchema>,
@@ -54,29 +53,29 @@ export function isNeverFieldRecursive(
 	}
 	return false;
 }
+
 /**
  * Returns true iff there are no possible trees that could meet this schema.
  * Trees which are infinite (like endless linked lists) are considered impossible.
  *
  * `undefined` means the schema is not present and thus a NeverTree.
  */
-
 export function isNeverTree(
-	policy: FullSchemaPolicy,
+	policy: SchemaPolicy,
 	originalData: TreeStoredSchema,
 	treeNode: TreeNodeStoredSchema | undefined,
 ): boolean {
 	return isNeverTreeRecursive(policy, originalData, treeNode, new Set());
 }
+
 /**
  * Returns true iff there are no possible trees that could meet this schema.
  * Trees which are infinite (like endless linked lists) are considered impossible.
  *
  * `undefined` means the schema is not present and thus a NeverTree.
  */
-
 export function isNeverTreeRecursive(
-	policy: FullSchemaPolicy,
+	policy: SchemaPolicy,
 	originalData: TreeStoredSchema,
 	treeNode: TreeNodeStoredSchema | undefined,
 	parentTypeStack: Set<TreeNodeStoredSchema>,

@@ -19,8 +19,8 @@ import type {
 	NodeEncoder,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
-import {
-	type EncodedFieldBatch,
+import type {
+	EncodedFieldBatch,
 	FieldBatchFormatVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
@@ -46,7 +46,7 @@ export function checkNodeEncode(
 	nodeEncoder.encodeNode(cursor, context, buffer);
 
 	// Check round-trip
-	checkDecode([buffer], [[tree]], undefined, incrementalDecoder);
+	checkDecode([buffer], [[tree]], context.version, undefined, incrementalDecoder);
 
 	return buffer.slice(1);
 }
@@ -63,7 +63,7 @@ export function checkFieldEncode(
 	fieldEncoder.encodeField(cursor, context, buffer);
 
 	// Check round-trip
-	checkDecode([buffer], [tree], idCompressor, incrementalDecoder);
+	checkDecode([buffer], [tree], context.version, idCompressor, incrementalDecoder);
 
 	return buffer.slice(1);
 }
@@ -71,12 +71,13 @@ export function checkFieldEncode(
 function checkDecode(
 	buffer: BufferFormat[],
 	tree: JsonableTree[][],
+	version: FieldBatchFormatVersion,
 	idCompressor?: IIdCompressor,
 	incrementalDecoder?: IncrementalDecoder,
 ): void {
 	// Check round-trips with identifiers inline and out of line
-	testDecode(buffer, tree, () => false, idCompressor, incrementalDecoder);
-	testDecode(buffer, tree, () => true, idCompressor, incrementalDecoder);
+	testDecode(buffer, tree, () => false, version, idCompressor, incrementalDecoder);
+	testDecode(buffer, tree, () => true, version, idCompressor, incrementalDecoder);
 }
 
 /**
@@ -90,11 +91,12 @@ function testDecode(
 	buffer: BufferFormat[],
 	expectedTree: JsonableTree[][],
 	identifierFilter: CounterFilter<string>,
+	version: FieldBatchFormatVersion,
 	idCompressor?: IIdCompressor,
 	incrementalDecoder?: IncrementalDecoder,
 ): EncodedFieldBatch {
 	const chunk = updateShapesAndIdentifiersEncoding(
-		FieldBatchFormatVersion.v1,
+		version,
 		cloneArrays(buffer),
 		identifierFilter,
 	);

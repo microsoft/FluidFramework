@@ -12,10 +12,9 @@ import type { InternalTreeNode, Unhydrated } from "./types.js";
 import type { UnionToIntersection } from "../../util/index.js";
 import type { AllowedTypesFullEvaluated, AllowedTypesFull } from "./allowedTypes.js";
 import type { Context } from "./context.js";
-import type { FieldKey, NodeData, TreeNodeStoredSchema } from "../../core/index.js";
+import type { FieldKey, NodeData } from "../../core/index.js";
 import type { UnhydratedFlexTreeField } from "./unhydratedFlexTree.js";
 import type { FactoryContent } from "../unhydratedFlexTreeFromInsertable.js";
-import type { StoredSchemaGenerationOptions } from "./toStored.js";
 
 /**
  * Schema for a {@link TreeNode} or {@link TreeLeafValue}.
@@ -389,11 +388,6 @@ export interface TreeNodeSchemaPrivateData {
 	 * Idempotent initialization function that pre-caches data and can dereference lazy schema references.
 	 */
 	idempotentInitialize(): TreeNodeSchemaInitializedData;
-
-	/**
-	 * Converts a the schema into a {@link TreeNodeStoredSchema}.
-	 */
-	toStored(options: StoredSchemaGenerationOptions): TreeNodeStoredSchema;
 }
 
 /**

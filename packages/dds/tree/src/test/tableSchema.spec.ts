@@ -4,6 +4,7 @@
  */
 
 import { strict as assert, fail } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { Tree, TreeAlpha } from "../shared-tree/index.js";
 import {
@@ -21,7 +22,6 @@ import type {
 	JsonCompatibleReadOnly,
 	requireTrue,
 } from "../util/index.js";
-import { validateUsageError } from "./utils.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshots/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { describeHydration } from "./simple-tree/utils.js";
@@ -97,51 +97,6 @@ describe("TableFactory unit tests", () => {
 			const column = new MyColumn({ id: "column-0", props: "Column 0" });
 			assert.equal(column.props, "Column 0");
 		});
-
-		it("getCells", () => {
-			const table = initializeTree(Table, Table.empty());
-
-			// Calling `getCells` on a column that has not been inserted into the table throws an error.
-			const column0 = new Column({ id: "column-0", props: {} });
-			assert.throws(
-				() => column0.getCells(),
-				validateUsageError(/Column with ID "column-0" is not contained in a table./),
-			);
-
-			table.insertColumns({ columns: [column0] });
-
-			// No rows or cells have been inserted yet.
-			assert.equal(column0.getCells().length, 0);
-
-			table.insertRows({
-				rows: [
-					{ id: "row-0", cells: {} },
-					{ id: "row-1", cells: {} },
-					{ id: "row-2", cells: {} },
-				],
-			});
-			table.setCell({
-				key: {
-					column: column0,
-					row: "row-0",
-				},
-				cell: { value: "0-0" },
-			});
-			table.setCell({
-				key: {
-					column: column0,
-					row: "row-2",
-				},
-				cell: { value: "2-0" },
-			});
-
-			const cells = column0.getCells();
-			assert.equal(cells.length, 2);
-			assert.equal(cells[0].rowId, "row-0");
-			assertEqualTrees(cells[0].cell, { value: "0-0" });
-			assert.equal(cells[1].rowId, "row-2");
-			assertEqualTrees(cells[1].cell, { value: "2-0" });
-		});
 	});
 
 	describeHydration("Row Schema", (initializeTree) => {
@@ -170,45 +125,6 @@ describe("TableFactory unit tests", () => {
 
 			const column = initializeTree(MyRow, { id: "row-0", cells: {}, props: "Row 0" });
 			assert.equal(column.props, "Row 0");
-		});
-
-		it("getCells", () => {
-			const table = initializeTree(Table, Table.empty());
-
-			const row = new Row({ id: "row-0", cells: {} });
-			table.insertRows({ rows: [row] });
-
-			// No columns or cells have been inserted yet.
-			assert.equal(row.getCells().length, 0);
-
-			table.insertColumns({
-				columns: [
-					{ id: "column-0", props: { label: "Column 0" } },
-					{ id: "column-1", props: { label: "Column 0" } },
-					{ id: "column-2", props: { label: "Column 0" } },
-				],
-			});
-			table.setCell({
-				key: {
-					row: row.id,
-					column: "column-0",
-				},
-				cell: { value: "0-0" },
-			});
-			table.setCell({
-				key: {
-					row: row.id,
-					column: "column-2",
-				},
-				cell: { value: "0-2" },
-			});
-
-			const cells = row.getCells();
-			assert.equal(cells.length, 2);
-			assert.equal(cells[0].columnId, "column-0");
-			assertEqualTrees(cells[0].cell, { value: "0-0" });
-			assert.equal(cells[1].columnId, "column-2");
-			assertEqualTrees(cells[1].cell, { value: "0-2" });
 		});
 	});
 
@@ -1000,19 +916,21 @@ describe("TableFactory unit tests", () => {
 			assert.throws(
 				() => table.removeColumns(-1, undefined),
 				validateUsageError(
-					/Start index out of bounds. Expected index to be on \[0, 1], but got -1/,
+					/Expected non-negative index passed to Table.removeColumns, got -1./,
 				),
 			);
 
 			assert.throws(
 				() => table.removeColumns(1, -1),
-				validateUsageError(/Expected non-negative count. Got -1./),
+				validateUsageError(
+					/Malformed range passed to Table.removeColumns. Start index 1 is greater than end index 0./,
+				),
 			);
 
 			assert.throws(
 				() => table.removeColumns(0, 5),
 				validateUsageError(
-					/End index out of bounds. Expected end to be on \[0, 2], but got 5/,
+					/Index value passed to Table.removeColumns is out of bounds. Expected at most 2, got 5./,
 				),
 			);
 
@@ -1188,20 +1106,20 @@ describe("TableFactory unit tests", () => {
 
 			assert.throws(
 				() => table.removeRows(-1, undefined),
-				validateUsageError(
-					/Start index out of bounds. Expected index to be on \[0, 1], but got -1/,
-				),
+				validateUsageError(/Expected non-negative index passed to Table.removeRows, got -1./),
 			);
 
 			assert.throws(
 				() => table.removeRows(1, -1),
-				validateUsageError(/Expected non-negative count. Got -1./),
+				validateUsageError(
+					/Malformed range passed to Table.removeRows. Start index 1 is greater than end index 0./,
+				),
 			);
 
 			assert.throws(
 				() => table.removeRows(0, 5),
 				validateUsageError(
-					/End index out of bounds. Expected end to be on \[0, 2], but got 5/,
+					/Index value passed to Table.removeRows is out of bounds. Expected at most 2, got 5./,
 				),
 			);
 

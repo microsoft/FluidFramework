@@ -575,70 +575,12 @@ export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 }
 
 /**
- * Format versions supported by SharedTree.
- *
- * Each version documents a required minimum version of the \@fluidframework/tree package.
- * @alpha
- */
-export const SharedTreeFormatVersion = {
-	/**
-	 * Requires \@fluidframework/tree \>= 2.0.0.
-	 *
-	 * @deprecated FF does not currently plan on supporting this format long-term.
-	 * Do not write production documents using this format, as they may not be loadable in the future.
-	 */
-	v1: 1,
-
-	/**
-	 * Requires \@fluidframework/tree \>= 2.0.0.
-	 */
-	v2: 2,
-
-	/**
-	 * Requires \@fluidframework/tree \>= 2.0.0.
-	 */
-	v3: 3,
-
-	/**
-	 * Requires \@fluidframework/tree \>= 2.0.0.
-	 */
-	v5: 5,
-
-	/**
-	 * For testing purposes only.
-	 */
-	vSharedBranches: 100,
-} as const;
-
-/**
- * Format versions supported by SharedTree.
- *
- * Each version documents a required minimum version of the \@fluidframework/tree package.
- * @alpha
- * @privateRemarks
- * See packages/dds/tree/docs/main/compatibility.md for information on how to add support for a new format.
- *
- * TODO: Before this gets promoted past Alpha,
- * a separate abstraction more suited for use in the public API should be adopted rather than reusing the same types used internally.
- * Such an abstraction should probably be in the form of a Fluid-Framework wide compatibility enum.
- */
-export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
-
-/**
  * Defines for each EditManagerFormatVersion the SharedTreeChangeFormatVersion to use.
  * This is an arbitrary mapping that is injected in the EditManger codec.
  * Once an entry is defined and used in production, it cannot be changed.
  * This is because the format for SharedTree changes are not explicitly versioned.
  */
 export const changeFormatVersionForEditManager = DependentFormatVersion.fromPairs([
-	[
-		brand<EditManagerFormatVersion>(EditManagerFormatVersion.v1),
-		brand<SharedTreeChangeFormatVersion>(1),
-	],
-	[
-		brand<EditManagerFormatVersion>(EditManagerFormatVersion.v2),
-		brand<SharedTreeChangeFormatVersion>(2),
-	],
 	[
 		brand<EditManagerFormatVersion>(EditManagerFormatVersion.v3),
 		brand<SharedTreeChangeFormatVersion>(3),
@@ -660,18 +602,6 @@ export const changeFormatVersionForEditManager = DependentFormatVersion.fromPair
  * This is because the format for SharedTree changes are not explicitly versioned.
  */
 export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs([
-	[
-		brand<MessageFormatVersion>(MessageFormatVersion.undefined),
-		brand<SharedTreeChangeFormatVersion>(1),
-	],
-	[
-		brand<MessageFormatVersion>(MessageFormatVersion.v1),
-		brand<SharedTreeChangeFormatVersion>(1),
-	],
-	[
-		brand<MessageFormatVersion>(MessageFormatVersion.v2),
-		brand<SharedTreeChangeFormatVersion>(2),
-	],
 	[
 		brand<MessageFormatVersion>(MessageFormatVersion.v3),
 		brand<SharedTreeChangeFormatVersion>(3),

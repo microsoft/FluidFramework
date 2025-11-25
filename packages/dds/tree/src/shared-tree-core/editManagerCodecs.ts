@@ -5,6 +5,10 @@
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	getConfigForMinVersionForCollab,
+	lowestMinVersionForCollab,
+} from "@fluidframework/runtime-utils/internal";
 
 import {
 	type CodecTree,
@@ -16,6 +20,7 @@ import {
 	type ICodecOptions,
 	type IJsonCodec,
 	makeCodecFamily,
+	makeDiscontinuedCodecVersion,
 } from "../codec/index.js";
 import { makeVersionDispatchingCodec } from "../codec/index.js";
 import type {
@@ -49,10 +54,13 @@ export function clientVersionToEditManagerFormatVersion(
 	clientVersion: MinimumVersionForCollab,
 	writeVersionOverride?: EditManagerFormatVersion,
 ): EditManagerFormatVersion {
-	const compatibleVersion: EditManagerFormatVersion =
-		clientVersion < FluidClientVersion.v2_43
-			? brand(EditManagerFormatVersion.v3)
-			: brand(EditManagerFormatVersion.v4);
+	const compatibleVersion: EditManagerFormatVersion = brand(
+		getConfigForMinVersionForCollab(clientVersion, {
+			[lowestMinVersionForCollab]: EditManagerFormatVersion.v3,
+			[FluidClientVersion.v2_43]: EditManagerFormatVersion.v4,
+		}),
+	);
+
 	return writeVersionOverride ?? compatibleVersion;
 }
 
@@ -125,21 +133,25 @@ export function makeEditManagerCodecs<TChangeset>(
 			EditManagerEncodingContext
 		>,
 	][] = Array.from(editManagerFormatVersions, (version) => {
-		const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
 		switch (version) {
 			case EditManagerFormatVersion.v1:
 			case EditManagerFormatVersion.v2:
+				return [version, makeDiscontinuedCodecVersion(options, version, "2.73.0")];
 			case EditManagerFormatVersion.v3:
-			case EditManagerFormatVersion.v4:
+			case EditManagerFormatVersion.v4: {
+				const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
 				return [
 					version,
 					makeV1CodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
-			case EditManagerFormatVersion.v5:
+			}
+			case EditManagerFormatVersion.v5: {
+				const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
 				return [
 					version,
 					makeV5CodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
+			}
 			default:
 				unreachableCase(version);
 		}

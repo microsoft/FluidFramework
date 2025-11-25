@@ -67,7 +67,7 @@ describe.skip("SES edit executor", () => {
 			editToolName: "EditTreeTool",
 			async query({ edit }) {
 				const editResult = await edit("Object.prototype.polluted = 'hacked!';");
-				assert.equal(editResult.type, "executionError", editResult.message);
+				assert.equal(editResult.type, "editingError", editResult.message);
 				return editResult.message;
 			},
 		};

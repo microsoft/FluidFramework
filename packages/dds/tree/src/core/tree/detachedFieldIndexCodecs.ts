@@ -5,6 +5,10 @@
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import {
+	getConfigForMinVersionForCollab,
+	lowestMinVersionForCollab,
+} from "@fluidframework/runtime-utils/internal";
 
 import {
 	type CodecTree,
@@ -31,9 +35,12 @@ import { brand } from "../../util/index.js";
 function clientVersionToDetachedFieldVersion(
 	clientVersion: MinimumVersionForCollab,
 ): DetachedFieldIndexFormatVersion {
-	return clientVersion < FluidClientVersion.v2_52
-		? brand(DetachedFieldIndexFormatVersion.v1)
-		: brand(DetachedFieldIndexFormatVersion.v2);
+	return brand(
+		getConfigForMinVersionForCollab(clientVersion, {
+			[lowestMinVersionForCollab]: DetachedFieldIndexFormatVersion.v1,
+			[FluidClientVersion.v2_52]: DetachedFieldIndexFormatVersion.v2,
+		}),
+	);
 }
 
 export function makeDetachedFieldIndexCodec(

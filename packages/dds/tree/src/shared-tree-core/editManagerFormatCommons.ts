@@ -126,14 +126,12 @@ export const EncodedSharedBranch = <ChangeSchema extends TSchema>(tChange: Chang
 export const EditManagerFormatVersion = {
 	/**
 	 * Introduced and retired prior to 2.0.
-	 * Reading capability is currently maintained for backwards compatibility, but it could be removed in the future.
-	 * Writing capability need not be maintained.
+	 * Reading and writing capability removed in 2.73.0.
 	 */
 	v1: 1,
 	/**
 	 * Introduced and retired prior to 2.0.
-	 * Reading capability is currently maintained for backwards compatibility, but it could be removed in the future.
-	 * Writing capability need not be maintained.
+	 * Reading and writing capability removed in 2.73.0.
 	 */
 	v2: 2,
 	/**
@@ -159,12 +157,13 @@ export type EditManagerFormatVersion = Brand<
 	(typeof EditManagerFormatVersion)[keyof typeof EditManagerFormatVersion],
 	"EditManagerFormatVersion"
 >;
-export const editManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> = new Set([
-	EditManagerFormatVersion.v1,
-	EditManagerFormatVersion.v2,
-	EditManagerFormatVersion.v3,
-	EditManagerFormatVersion.v4,
-	EditManagerFormatVersion.v5,
-] as EditManagerFormatVersion[]);
-
+export const supportedEditManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> =
+	new Set([
+		EditManagerFormatVersion.v3,
+		EditManagerFormatVersion.v4,
+		EditManagerFormatVersion.v5,
+	] as EditManagerFormatVersion[]);
+export const editManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> = new Set(
+	Object.values(EditManagerFormatVersion) as EditManagerFormatVersion[],
+);
 /* eslint-enable @typescript-eslint/explicit-function-return-type */

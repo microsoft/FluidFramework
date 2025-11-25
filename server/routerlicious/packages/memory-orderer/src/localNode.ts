@@ -138,7 +138,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 			null,
 		);
 
-		// eslint-disable-next-line import/namespace
+		// eslint-disable-next-line import-x/namespace
 		const result = _.clone(existing);
 		result.expiration = newExpiration;
 

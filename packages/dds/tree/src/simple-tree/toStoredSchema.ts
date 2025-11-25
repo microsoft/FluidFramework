@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase, fail } from "@fluidframework/core-utils/internal";
+import {
+	unreachableCase,
+	fail,
+	transformMapValues,
+} from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -17,7 +21,6 @@ import {
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
-	type TreeTypeSet,
 } from "../core/index.js";
 import { FieldKinds, type FlexFieldKind } from "../feature-libraries/index.js";
 import { brand, getOrCreate, type JsonCompatibleReadOnlyObject } from "../util/index.js";
@@ -25,23 +28,23 @@ import { brand, getOrCreate, type JsonCompatibleReadOnlyObject } from "../util/i
 import {
 	allowedTypeFilter,
 	convertAllowedTypes,
-	getTreeNodeSchemaPrivateData,
-	isClassBasedSchema,
+	ExpectStored,
 	NodeKind,
 	type SimpleNodeSchemaBase,
+	type StoredFromViewSchemaGenerationOptions,
 	type StoredSchemaGenerationOptions,
 } from "./core/index.js";
-import {
-	FieldKind,
-	FieldSchemaAlpha,
-	normalizeFieldSchema,
-	type ImplicitFieldSchema,
-} from "./fieldSchema.js";
-import type { SimpleFieldSchema, SimpleNodeSchema } from "./simpleSchema.js";
+import { FieldKind, normalizeFieldSchema, type ImplicitFieldSchema } from "./fieldSchema.js";
+import type {
+	SimpleAllowedTypes,
+	SimpleFieldSchema,
+	SimpleNodeSchema,
+	SimpleTreeSchema,
+} from "./simpleSchema.js";
 import { walkFieldSchema } from "./walkFieldSchema.js";
 
 const viewToStoredCache = new WeakMap<
-	StoredSchemaGenerationOptions,
+	StoredFromViewSchemaGenerationOptions,
 	WeakMap<ImplicitFieldSchema, TreeStoredSchema>
 >();
 
@@ -85,6 +88,9 @@ export const toUnhydratedSchema = permissiveStoredSchemaGenerationOptions;
  * TODO:#38722 When runtime schema upgrades are implemented, this will need to be updated to check if
  * a staged allowed type has been upgraded and if so, include it in the conversion.
  *
+ * Even if this took in a SimpleTreeSchema,
+ * it would still need to walk the schema to avoid including schema that become unreachable due to filtered out staged schema.
+ *
  * @throws
  * Throws a `UsageError` if multiple schemas are encountered with the same identifier.
  */
@@ -114,7 +120,11 @@ export function toStoredSchema(
 					),
 				);
 			},
-			allowedTypeFilter: (allowedType) => allowedTypeFilter(allowedType, options),
+			allowedTypeFilter: (allowedType) =>
+				allowedTypeFilter(
+					{ isStaged: allowedType.metadata.stagedSchemaUpgrade ?? false },
+					options,
+				),
 		});
 
 		const result: TreeStoredSchema = {
@@ -126,24 +136,35 @@ export function toStoredSchema(
 }
 
 /**
- * Normalizes an {@link ImplicitFieldSchema} into a {@link TreeFieldSchema}.
+ * Convert a {@link SimpleTreeSchema} for a stored schema into a {@link TreeStoredSchema}.
+ * @remarks
+ * This only supports simple schemas that are already logically stored schemas.
+ * @privateRemarks
+ * To correctly support view schema here, this would need to filter out unreferenced schema after excluding staged schema.
+ * @see {@link ExpectStored}.
+ */
+export function simpleStoredSchemaToStoredSchema(
+	treeSchema: SimpleTreeSchema,
+): TreeStoredSchema {
+	const result: TreeStoredSchema = {
+		nodeSchema: transformMapValues(treeSchema.definitions, (schema) =>
+			getStoredSchema(schema, ExpectStored),
+		) as Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>,
+		rootFieldSchema: convertField(treeSchema.root, ExpectStored),
+	};
+	return result;
+}
+
+/**
+ * Convert a {@link SimpleFieldSchema} into a {@link TreeFieldStoredSchema}.
  */
 export function convertField(
-	schema: SimpleFieldSchema | FieldSchemaAlpha,
+	schema: SimpleFieldSchema,
 	options: StoredSchemaGenerationOptions,
 ): TreeFieldStoredSchema {
 	const kind: FieldKindIdentifier =
 		convertFieldKind.get(schema.kind)?.identifier ?? fail(0xae3 /* Invalid field kind */);
-	let types: TreeTypeSet;
-	// eslint-disable-next-line unicorn/prefer-ternary
-	if (schema instanceof FieldSchemaAlpha) {
-		types = convertAllowedTypes(schema.allowedTypes, options);
-	} else {
-		const allowedTypesIdentifiers: ReadonlySet<string> = new Set(
-			schema.simpleAllowedTypes.keys(),
-		);
-		types = allowedTypesIdentifiers as TreeTypeSet;
-	}
+	const types = convertAllowedTypes(schema.simpleAllowedTypes, options);
 	return { kind, types, persistedMetadata: schema.persistedMetadata };
 }
 
@@ -168,9 +189,6 @@ export function getStoredSchema(
 	schema: SimpleNodeSchema,
 	options: StoredSchemaGenerationOptions,
 ): TreeNodeStoredSchema {
-	if (isClassBasedSchema(schema)) {
-		return getTreeNodeSchemaPrivateData(schema).toStored(options);
-	}
 	const kind = schema.kind;
 	switch (kind) {
 		case NodeKind.Leaf: {
@@ -178,10 +196,7 @@ export function getStoredSchema(
 		}
 		case NodeKind.Map:
 		case NodeKind.Record: {
-			const allowedTypesIdentifiers: ReadonlySet<string> = new Set(
-				schema.simpleAllowedTypes.keys(),
-			);
-			const types = allowedTypesIdentifiers as TreeTypeSet;
+			const types = convertAllowedTypes(schema.simpleAllowedTypes, options);
 			return new MapNodeStoredSchema(
 				{
 					kind: FieldKinds.optional.identifier,
@@ -193,11 +208,11 @@ export function getStoredSchema(
 			);
 		}
 		case NodeKind.Array: {
-			const allowedTypesIdentifiers: ReadonlySet<string> = new Set(
-				schema.simpleAllowedTypes.keys(),
+			return arrayNodeStoredSchema(
+				schema.simpleAllowedTypes,
+				options,
+				schema.persistedMetadata,
 			);
-			const types = allowedTypesIdentifiers as TreeTypeSet;
-			return arrayNodeStoredSchema(types, schema.persistedMetadata);
 		}
 		case NodeKind.Object: {
 			const fields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
@@ -213,12 +228,13 @@ export function getStoredSchema(
 }
 
 export function arrayNodeStoredSchema(
-	types: TreeTypeSet,
+	schema: SimpleAllowedTypes,
+	options: StoredSchemaGenerationOptions,
 	persistedMetadata: JsonCompatibleReadOnlyObject | undefined,
 ): ObjectNodeStoredSchema {
 	const field = {
 		kind: FieldKinds.sequence.identifier,
-		types,
+		types: convertAllowedTypes(schema, options),
 		persistedMetadata,
 	};
 	const fields = new Map([[EmptyKey, field]]);

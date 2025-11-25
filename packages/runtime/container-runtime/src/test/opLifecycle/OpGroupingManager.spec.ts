@@ -141,17 +141,14 @@ describe("OpGroupingManager", () => {
 				contentSizeInBytes: 0,
 				referenceSequenceNumber: 0,
 			};
-			assert.throws(
-				() => {
-					new OpGroupingManager(
-						{
-							groupedBatchingEnabled: true,
-						},
-						mockLogger,
-					).groupBatch(emptyBatch);
-				},
-				(e: Error) => validateAssertionError(e, "Unexpected attempt to group an empty batch"),
-			);
+			assert.throws(() => {
+				new OpGroupingManager(
+					{
+						groupedBatchingEnabled: true,
+					},
+					mockLogger,
+				).groupBatch(emptyBatch);
+			}, validateAssertionError("Unexpected attempt to group an empty batch"));
 		});
 
 		it("singleton batch is returned as-is", () => {
