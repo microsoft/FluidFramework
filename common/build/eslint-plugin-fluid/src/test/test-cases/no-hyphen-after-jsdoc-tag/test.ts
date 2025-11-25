@@ -17,7 +17,7 @@ function invalid<T>(param1: string, param2: T): string {
  * I am a test function with pretty standard docs, and none of my tags have hyphens after them :)
  * \@tag - Escaped tags should be valid since the @ is escaped.
  * `@tag - in a code block` - This should also be valid.
- * I also have an {@link @foo/bar} - This should not trigger the rule.
+ * I also have a {@link @foo/bar | link} - This should not trigger the rule.
  * @remarks Here are some remarks.
  * @deprecated This function is deprecated, use something else.
  * @returns The concatenated string.
