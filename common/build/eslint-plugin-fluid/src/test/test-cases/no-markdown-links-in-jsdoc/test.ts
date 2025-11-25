@@ -37,4 +37,15 @@ const blockCommentWithMarkdownLink = "valid";
 // Line comment with link using Markdown syntax: [bing](https://bing.com).
 const lineCommentWithMarkdownLink = "valid";
 
+// Link syntax in code blocks should not be flagged
+/**
+ * `[bing](https://bing.com)`
+ *
+ * @example
+ * ```
+ * [bing](https://bing.com)
+ * ```
+ */
+const linkInCodeBlocks = "valid";
+
 // #endregion
