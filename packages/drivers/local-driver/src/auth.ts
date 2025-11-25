@@ -50,7 +50,7 @@ export function generateToken(
 
 export function generateUser(): IUser {
 	const userId = uuid();
-	const match = userId.match(/^([\da-f]{8})-([\da-f]{4})/);
+	const match = /^([\da-f]{8})-([\da-f]{4})/.exec(userId);
 	const userName = match !== null ? match[0] : userId; // Just use the first two segments of the (fake) userId as a fake name.
 
 	const randomUser = {
