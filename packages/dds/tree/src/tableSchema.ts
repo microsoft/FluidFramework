@@ -13,7 +13,7 @@ import {
 	type InsertableObjectFromSchemaRecord,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeKind,
-	type SchemaFactoryBeta,
+	SchemaFactoryBeta,
 	type ScopedSchemaName,
 	TreeArrayNode,
 	type TreeNode,
@@ -40,9 +40,9 @@ import { validateIndex, validateIndexRange } from "./util/index.js";
 // - Add constraint APIs to make it possible to avoid situations that could yield "orphaned" cells.
 
 /**
- * The sub-scope applied to user-provided {@link SchemaFactory}s by table schema factories.
+ * Sub-scope used in all schema created by these factories.
  */
-const tableSchemaFactorySubScope = "table";
+const tableSchemaFactoryScopeRoot = "com.fluidframework.table";
 
 /**
  * A private symbol put on table schema to help identify them.
@@ -141,8 +141,8 @@ export namespace System_TableSchema {
 		const TCellSchema extends ImplicitAllowedTypes,
 		const TPropsSchema extends ImplicitFieldSchema,
 	>(inputSchemaFactory: SchemaFactoryBeta<TInputScope>, propsSchema: TPropsSchema) {
-		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
-		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
+		const schemaFactory = scopedFactoryForTableSchema(inputSchemaFactory);
+		type Scope = typeof schemaFactory.scope;
 
 		// Note: `columnFields` is broken into two parts to work around a TypeScript bug
 		// that results in broken `.d.ts` output.
@@ -285,8 +285,8 @@ export namespace System_TableSchema {
 		cellSchema: TCellSchema,
 		propsSchema: TPropsSchema,
 	) {
-		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
-		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
+		const schemaFactory = scopedFactoryForTableSchema(inputSchemaFactory);
+		type Scope = typeof schemaFactory.scope;
 
 		// Note: `rowFields` is broken into two parts to work around a TypeScript bug
 		// that results in broken `.d.ts` output.
@@ -439,8 +439,8 @@ export namespace System_TableSchema {
 		columnSchema: TColumnSchema,
 		rowSchema: TRowSchema,
 	) {
-		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
-		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
+		const schemaFactory = scopedFactoryForTableSchema(inputSchemaFactory);
+		type Scope = typeof schemaFactory.scope;
 
 		type CellValueType = TreeNodeFromImplicitAllowedTypes<TCellSchema>;
 		type ColumnValueType = TreeNodeFromImplicitAllowedTypes<TColumnSchema>;
@@ -959,6 +959,20 @@ function removeRangeFromArray<TNodeSchema extends ImplicitAllowedTypes>(
 	array.removeRange(startIndex, endIndex);
 
 	return removedRows;
+}
+
+/**
+ * Creates a scoped schema factory for table schema that combines the scope of the user-provided factory
+ * with the built-in table schema scoping.
+ * @remarks The produced scope will take the form: `${TUserScope}/com.fluidframework.table.<node-kind>`.
+ */
+function scopedFactoryForTableSchema<
+	TUserScope extends string | undefined,
+	TName extends number | string,
+>(
+	userFactory: SchemaFactoryBeta<TUserScope, TName>,
+): SchemaFactoryBeta<`${TUserScope}/${typeof tableSchemaFactoryScopeRoot}`, TName> {
+	return new SchemaFactoryBeta(`${userFactory.scope}/${tableSchemaFactoryScopeRoot}`);
 }
 
 /**
