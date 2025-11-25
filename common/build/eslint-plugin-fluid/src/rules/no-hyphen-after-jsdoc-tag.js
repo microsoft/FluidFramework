@@ -31,8 +31,7 @@ function doesCommentBodyStartWithHyphen(commentBodyNode) {
 	// If it's plain text, and starts with a hyphen, return true.
 	// Otherwise, return false.
 	if (commentBodyNode.kind === DocNodeKind.PlainText) {
-		// @ts-ignore
-		return doesTextNodeStartWithHyphen(commentBodyNode);
+		return doesTextNodeStartWithHyphen(/** @type {DocPlainText} */ (commentBodyNode));
 	}
 
 	const childNodes = commentBodyNode.getChildNodes();
@@ -69,11 +68,10 @@ const rule = {
 				const comments = sourceCode
 					.getAllComments()
 					// Filter to only JSDoc/TSDoc style block comments
-					// @ts-ignore
 					.filter((comment) => comment.type === "Block" && comment.value.startsWith("*"));
 
 				for (const comment of comments) {
-					if(comment.range === undefined) {
+					if (comment.range === undefined) {
 						continue;
 					}
 
