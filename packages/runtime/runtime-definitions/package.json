@@ -111,7 +111,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.60.0",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
-		"@fluidframework/runtime-definitions-previous": "npm:@fluidframework/runtime-definitions@2.71.0",
+		"@fluidframework/runtime-definitions-previous": "npm:@fluidframework/runtime-definitions@2.73.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
