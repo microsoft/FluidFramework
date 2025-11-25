@@ -641,15 +641,15 @@ importers:
       azure-devops-node-api:
         specifier: ^11.2.0
         version: 11.2.0
+      fflate:
+        specifier: ^0.8.2
+        version: 0.8.2
       jszip:
         specifier: ^3.10.1
         version: 3.10.1
       msgpack-lite:
         specifier: ^0.1.26
         version: 0.1.26
-      pako:
-        specifier: ^2.1.0
-        version: 2.1.0
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -678,9 +678,6 @@ importers:
       '@types/node':
         specifier: ^22.8.0
         version: 22.8.0
-      '@types/pako':
-        specifier: ^2.0.3
-        version: 2.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -1835,9 +1832,6 @@ packages:
 
   '@types/normalize-package-data@2.4.1':
     resolution: {integrity: sha512-Gj7cI7z+98M282Tqmp2K5EIsoouUEzbBJhQQzDE3jSIRk6r9gsz0oUokqIUR4u1R3dMHo0pDHM7sNOHyhulypw==}
-
-  '@types/pako@2.0.3':
-    resolution: {integrity: sha512-bq0hMV9opAcrmE0Byyo0fY3Ew4tgOevJmQ9grUhpXQhYfyLJ1Kqg3P33JT5fdbT2AjeAjR51zqqVjAL/HMkx7Q==}
 
   '@types/prettier@2.7.3':
     resolution: {integrity: sha512-+68kP9yzs4LMp7VNh8gdzMSPZFL44MLGqiHWvttYJe+6qnuVr4Ek9wSBQoveqY/r+LwjCcU29kNVkidwim+kYA==}
@@ -8574,8 +8568,6 @@ snapshots:
       undici-types: 6.19.8
 
   '@types/normalize-package-data@2.4.1': {}
-
-  '@types/pako@2.0.3': {}
 
   '@types/prettier@2.7.3': {}
 
