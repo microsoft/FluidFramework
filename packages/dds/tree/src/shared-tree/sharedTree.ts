@@ -677,7 +677,7 @@ export interface SharedTreeOptions
 }
 
 export interface SharedTreeOptionsInternal
-	extends Partial<SharedTreeOptions>,
+	extends SharedTreeOptions,
 		Partial<SharedTreeCoreOptionsInternal> {
 	disposeForksAfterTransaction?: boolean;
 }
