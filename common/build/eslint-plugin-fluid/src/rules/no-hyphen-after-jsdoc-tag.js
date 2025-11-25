@@ -45,13 +45,13 @@ module.exports = {
 	meta: {
 		type: "problem",
 		docs: {
-			description: "Disallow hyphen character immediately following JSDoc tag",
+			description: "Disallow hyphen character immediately following JSDoc/TSDoc block tag",
 			category: "Best Practices",
 			recommended: false,
 		},
 		messages: {
 			hyphenAfterTag:
-				"JSDoc/TSDoc block tags should not be followed by a hyphen character ('-').",
+				"JSDoc/TSDoc block tags must not be followed by a hyphen character (`-`).",
 		},
 		schema: [],
 	},
@@ -68,8 +68,7 @@ module.exports = {
 					.filter((comment) => comment.type === "Block" && comment.value.startsWith("*"));
 
 				for (const comment of comments) {
-					// +2 for the leading "/*", which is omitted by `comment.value`, but included in `comment.range`.
-					const commentStartIndex = comment.range[0] + 2;
+					const commentStartIndex = comment.range[0];
 
 					// TSDoc parser requires the surrounding "/**" and "*/", but eslint strips those off in `comment.value`.
 					const parserContext = parser.parseString(`/**${comment.value}*/`);
@@ -92,17 +91,29 @@ module.exports = {
 						blocksToCheck.push(parsedComment.returnsBlock);
 					}
 
+					// Note: the TSDoc format makes it difficult to extract the range information for the block content specifically.
+					// Instead, we just report the range for the tag itself.
 					for (const block of blocksToCheck) {
 						if (doesCommentBodyStartWithHyphen(block.content)) {
-							const startIndex = sourceCode.getLocFromIndex(commentStartIndex + parserContext.commentRange.pos);
-							const endIndex = sourceCode.getLocFromIndex(commentStartIndex + parserContext.commentRange.end);
+							const tagTextRange = block.blockTag
+								.getTokenSequence()
+								.getContainingTextRange();
+							const tagTextRangeStart = tagTextRange.pos - 1; // Include the `@`
+							const tagTextRangeEnd = tagTextRange.end;
+							const startIndex = sourceCode.getLocFromIndex(
+								commentStartIndex + tagTextRangeStart,
+							);
+							const endIndex = sourceCode.getLocFromIndex(
+								commentStartIndex + tagTextRangeEnd,
+							);
+
 							context.report({
-							loc: {
-								start: startIndex,
-								end: endIndex,
-							},
-							messageId: "hyphenAfterTag",
-						});
+								loc: {
+									start: startIndex,
+									end: endIndex,
+								},
+								messageId: "hyphenAfterTag",
+							});
 						}
 					}
 				}

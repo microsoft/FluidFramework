@@ -28,7 +28,7 @@ describe(`Do not allow \`-\` following JSDoc/TSDoc tags (eslint ${eslintVersion}
 	}
 
 	const expectedErrorMessage =
-		"JSDoc/TSDoc block tags should not be followed by a hyphen character ('-').";
+		"JSDoc/TSDoc block tags must not be followed by a hyphen character (`-`).";
 
 	it("Should report errors JSDoc/TSDoc tags followed by a hyphen", async function () {
 		const result = await lintFile("test.ts");
@@ -39,32 +39,20 @@ describe(`Do not allow \`-\` following JSDoc/TSDoc tags (eslint ${eslintVersion}
 		assert.strictEqual(error1.message, expectedErrorMessage);
 		assert.strictEqual(error1.line, 8);
 		assert.strictEqual(error1.column, 4); // 1-based, inclusive
-		assert.strictEqual(error1.endColumn, 37); // 1-based, exclusive
-		assert(error1.fix !== undefined);
-		assert.strictEqual(error1.fix.text, "@remarks Here are some remarks.");
-		assert.deepEqual(error1.fix.range, [226, 259]); // 0-based global character index in the file. The start is inclusive, and the end is exclusive.
+		assert.strictEqual(error1.endColumn, 13); // 1-based, exclusive
 
 		// Error 2
 		const error2 = result.messages[1];
 		assert.strictEqual(error2.message, expectedErrorMessage);
 		assert.strictEqual(error2.line, 9);
 		assert.strictEqual(error2.column, 4); // 1-based, inclusive
-		assert.strictEqual(error2.endColumn, 65); // 1-based, exclusive
-		assert(error2.fix !== undefined);
-		assert.strictEqual(
-			error2.fix.text,
-			"@deprecated This function is deprecated, use something else.",
-		);
-		assert.deepEqual(error2.fix.range, [263, 324]); // 0-based global character index in the file. The start is inclusive, and the end is exclusive.
+		assert.strictEqual(error2.endColumn, 16); // 1-based, exclusive
 
 		// Error 3
 		const error3 = result.messages[2];
 		assert.strictEqual(error3.message, expectedErrorMessage);
 		assert.strictEqual(error3.line, 10);
 		assert.strictEqual(error3.column, 4); // 1-based, inclusive
-		assert.strictEqual(error3.endColumn, 39); // 1-based, exclusive
-		assert(error3.fix !== undefined);
-		assert.strictEqual(error3.fix.text, "@returns The concatenated string.");
-		assert.deepEqual(error3.fix.range, [328, 363]); // 0-based global character index in the file. The start is inclusive, and the end is exclusive.
+		assert.strictEqual(error3.endColumn, 13); // 1-based, exclusive
 	});
 });
