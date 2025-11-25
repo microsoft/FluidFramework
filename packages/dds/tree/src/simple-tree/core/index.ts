@@ -16,7 +16,12 @@ export {
 	SimpleContextSlot,
 	withBufferedTreeEvents,
 } from "./treeNodeKernel.js";
-export { type WithType, typeNameSymbol, typeSchemaSymbol } from "./withType.js";
+export {
+	type WithType,
+	typeNameSymbol,
+	typeSchemaSymbol,
+	contentSchemaSymbol,
+} from "./withType.js";
 export {
 	type Unhydrated,
 	type InternalTreeNode,
@@ -60,6 +65,7 @@ export {
 	createSchemaUpgrade,
 	AnnotatedAllowedTypesInternal,
 	normalizeAllowedTypesInternal,
+	SchemaUpgrade,
 } from "./allowedTypes.js";
 export type {
 	AnnotatedAllowedType,
@@ -75,7 +81,6 @@ export type {
 	AllowedTypeMetadata,
 	AnnotatedAllowedTypes,
 	AnnotateAllowedTypesList,
-	SchemaUpgrade,
 	AllowedTypesFullInternal,
 	AllowedTypesFull,
 	AllowedTypesFullFromMixed,
@@ -112,4 +117,6 @@ export {
 	type StoredSchemaGenerationOptions,
 	convertAllowedTypes,
 	allowedTypeFilter,
+	type StoredFromViewSchemaGenerationOptions,
+	ExpectStored,
 } from "./toStored.js";

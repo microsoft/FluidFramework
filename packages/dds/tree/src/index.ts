@@ -60,7 +60,6 @@ export {
 	type SharedTreeOptionsBeta,
 	type ForestType,
 	type SharedTreeFormatOptions,
-	SharedTreeFormatVersion,
 	Tree,
 	type RunTransaction,
 	type ForestOptions,
@@ -73,6 +72,8 @@ export {
 	type ObservationResults,
 	type TreeIdentifierUtils,
 	independentView,
+	createIndependentTreeBeta,
+	createIndependentTreeAlpha,
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
@@ -93,6 +94,7 @@ export {
 	type TreeViewEvents,
 	SchemaFactory,
 	SchemaFactoryBeta,
+	type SchemaStaticsBeta,
 	SchemaFactoryAlpha,
 	type ObjectSchemaOptionsAlpha,
 	type ObjectSchemaOptions,
@@ -123,6 +125,7 @@ export {
 	type WithType,
 	type NodeChangedData,
 	type SchemaUpgrade,
+	contentSchemaSymbol,
 	// Types not really intended for public use, but used in links.
 	// Can not be moved to internalTypes since doing so causes app code to throw errors like:
 	// Error: src/simple-tree/objectNode.ts:72:1 - (ae-unresolved-link) The @link reference could not be resolved: The package "@fluidframework/tree" does not have an export "TreeNodeApi"
@@ -164,6 +167,7 @@ export {
 	singletonSchema,
 	type UnsafeUnknownSchema,
 	type TreeViewAlpha,
+	type TreeViewBeta,
 	type InsertableField,
 	type Insertable,
 	type InsertableContent,
@@ -177,7 +181,6 @@ export {
 	type AllowedTypeMetadata,
 	type AllowedTypesMetadata,
 	type UnannotateAllowedTypesList,
-	type SchemaStaticsAlpha,
 	type AnnotateAllowedTypesList,
 	type AllowedTypesFull,
 	type AllowedTypesFullFromMixed,
@@ -234,6 +237,7 @@ export {
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,
 	type TreeBranch,
+	type TreeBranchAlpha,
 	type TreeBranchEvents,
 	asTreeViewAlpha,
 	type NodeSchemaOptions,
@@ -277,6 +281,12 @@ export {
 	type TreeParsingOptions,
 	type SchemaFactory_base,
 	type NumberKeys,
+	type SimpleAllowedTypeAttributes,
+	encodeSimpleSchema,
+	decodeSimpleSchema,
+	exportCompatibilitySchemaSnapshot,
+	importCompatibilitySchemaSnapshot,
+	checkCompatibility,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
@@ -337,4 +347,4 @@ export type { MapNodeInsertableData } from "./simple-tree/index.js";
 export { JsonAsTree } from "./jsonDomainSchema.js";
 export { FluidSerializableAsTree } from "./serializableDomainSchema.js";
 export { TableSchema, type System_TableSchema } from "./tableSchema.js";
-export { asAlpha } from "./api.js";
+export { asAlpha, asBeta } from "./api.js";

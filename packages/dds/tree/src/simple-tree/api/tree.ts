@@ -126,37 +126,10 @@ export interface ITreeAlpha extends ITree {
  * A collection of functionality associated with a (version-control-style) branch of a SharedTree.
  * @remarks A `TreeBranch` allows for the {@link TreeBranch.fork | creation of branches} and for those branches to later be {@link TreeBranch.merge | merged}.
  *
- * The `TreeBranch` for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.branch`.
- *
- * A branch does not necessarily know the schema of its SharedTree - to convert a branch to a {@link TreeViewAlpha | view with a schema}, use {@link TreeBranch.hasRootSchema | hasRootSchema()}.
- *
  * The branch associated directly with the {@link ITree | SharedTree} is the "main" branch, and all other branches fork (directly or transitively) from that main branch.
- * @sealed @alpha
+ * @sealed @beta
  */
 export interface TreeBranch extends IDisposable {
-	/**
-	 * Events for the branch
-	 */
-	readonly events: Listenable<TreeBranchEvents>;
-
-	/**
-	 * Returns true if this branch has the given schema as its root schema.
-	 * @remarks This is a type guard which allows this branch to become strongly typed as a {@link TreeViewAlpha | view} of the given schema.
-	 *
-	 * To succeed, the given schema must be invariant to the schema of the view - it must include exactly the same allowed types.
-	 * For example, a schema of `Foo | Bar` will not match a view schema of `Foo`, and likewise a schema of `Foo` will not match a view schema of `Foo | Bar`.
-	 * @example
-	 * ```typescript
-	 * if (branch.hasRootSchema(MySchema)) {
-	 *   const { root } = branch; // `branch` is now a TreeViewAlpha<MySchema>
-	 *   // ...
-	 * }
-	 * ```
-	 */
-	hasRootSchema<TSchema extends ImplicitFieldSchema>(
-		schema: TSchema,
-	): this is TreeViewAlpha<TSchema>;
-
 	/**
 	 * Fork a new branch off of this branch which is based off of this branch's current state.
 	 * @remarks Any changes to the tree on the new branch will not apply to this branch until the new branch is e.g. {@link TreeBranch.merge | merged} back into this branch.
@@ -186,6 +159,54 @@ export interface TreeBranch extends IDisposable {
 	 * The {@link TreeBranch | main branch} cannot be rebased onto another branch - attempting to do so will throw an error.
 	 */
 	rebaseOnto(branch: TreeBranch): void;
+
+	/**
+	 * Dispose of this branch, cleaning up any resources associated with it.
+	 * @param error - Optional error indicating the reason for the disposal, if the object was disposed as the result of an error.
+	 * @remarks Branches can also be automatically disposed when {@link TreeBranch.merge | they are merged} into another branch.
+	 *
+	 * Disposing branches is important to avoid consuming memory unnecessarily.
+	 * In particular, the SharedTree retains all sequenced changes made to the tree since the "most-behind" branch was created or last {@link TreeBranch.rebaseOnto | rebased}.
+	 *
+	 * The {@link TreeBranch | main branch} cannot be disposed - attempting to do so will have no effect.
+	 */
+	dispose(error?: Error): void;
+}
+
+/**
+ * {@link TreeBranch} with alpha-level APIs.
+ * @remarks
+ * The `TreeBranch` for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.branch`.
+ *
+ * A branch does not necessarily know the schema of its SharedTree - to convert a branch to a {@link TreeViewAlpha | view with a schema}, use {@link TreeBranchAlpha.hasRootSchema | hasRootSchema()}.
+ * @sealed @alpha
+ */
+export interface TreeBranchAlpha extends TreeBranch {
+	/**
+	 * Events for the branch
+	 */
+	readonly events: Listenable<TreeBranchEvents>;
+
+	/**
+	 * Returns true if this branch has the given schema as its root schema.
+	 * @remarks This is a type guard which allows this branch to become strongly typed as a {@link TreeViewAlpha | view} of the given schema.
+	 *
+	 * To succeed, the given schema must be invariant to the schema of the view - it must include exactly the same allowed types.
+	 * For example, a schema of `Foo | Bar` will not match a view schema of `Foo`, and likewise a schema of `Foo` will not match a view schema of `Foo | Bar`.
+	 * @example
+	 * ```typescript
+	 * if (branch.hasRootSchema(MySchema)) {
+	 *   const { root } = branch; // `branch` is now a TreeViewAlpha<MySchema>
+	 *   // ...
+	 * }
+	 * ```
+	 */
+	hasRootSchema<TSchema extends ImplicitFieldSchema>(
+		schema: TSchema,
+	): this is TreeViewAlpha<TSchema>;
+
+	// Override the base fork method to return the alpha variant.
+	fork(): TreeBranchAlpha;
 
 	/**
 	 * Run a transaction which applies one or more edits to the tree as a single atomic unit.
@@ -261,18 +282,6 @@ export interface TreeBranch extends IDisposable {
 		transaction: () => VoidTransactionCallbackStatus | void,
 		params?: RunTransactionParams,
 	): TransactionResult;
-
-	/**
-	 * Dispose of this branch, cleaning up any resources associated with it.
-	 * @param error - Optional error indicating the reason for the disposal, if the object was disposed as the result of an error.
-	 * @remarks Branches can also be automatically disposed when {@link TreeBranch.merge | they are merged} into another branch.
-	 *
-	 * Disposing branches is important to avoid consuming memory unnecessarily.
-	 * In particular, the SharedTree retains all sequenced changes made to the tree since the "most-behind" branch was created or last {@link TreeBranch.rebaseOnto | rebased}.
-	 *
-	 * The {@link TreeBranch | main branch} cannot be disposed - attempting to do so will have no effect.
-	 */
-	dispose(error?: Error): void;
 }
 
 /**
@@ -371,18 +380,29 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
  */
 export interface TreeViewAlpha<
 	in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
-> extends Omit<TreeView<ReadSchema<TSchema>>, "root" | "initialize">,
-		TreeBranch {
+> extends Omit<TreeViewBeta<ReadSchema<TSchema>>, "root" | "initialize" | "fork">,
+		TreeBranchAlpha {
 	get root(): ReadableField<TSchema>;
 
 	set root(newRoot: InsertableField<TSchema>);
 
-	readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
-
 	initialize(content: InsertableField<TSchema>): void;
 
-	// Override the base branch method to return a typed view rather than merely a branch.
+	readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
+
+	// Override the base fork method to return a TreeViewAlpha.
 	fork(): ReturnType<TreeBranch["fork"]> & TreeViewAlpha<TSchema>;
+}
+
+/**
+ * {@link TreeView} with additional beta APIs.
+ * @sealed @beta
+ */
+export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
+	extends TreeView<TSchema>,
+		TreeBranch {
+	// Override the base branch method to return a typed view rather than merely a branch.
+	fork(): ReturnType<TreeBranch["fork"]> & TreeViewBeta<TSchema>;
 }
 
 /**
@@ -411,7 +431,7 @@ export interface SchemaCompatibilityStatus {
 	 *
 	 * Note that other content in the stored schema that does not impact document compatibility, like {@link NodeSchemaOptionsAlpha.persistedMetadata}, does not affect this field.
 	 *
-	 * For the computation of this equivalence, {@link SchemaStaticsAlpha.staged | staged} schemas are not included.
+	 * For the computation of this equivalence, {@link SchemaStaticsBeta.staged | staged} schemas are not included.
 	 * If there are any unknown optional fields, even if allowed by {@link ObjectSchemaOptions.allowUnknownOptionalFields}, `isEquivalent` will be false.
 	 */
 	readonly isEquivalent: boolean;
@@ -425,7 +445,7 @@ export interface SchemaCompatibilityStatus {
 	 *
 	 * - An object node with {@link ObjectSchemaOptions.allowUnknownOptionalFields} to set to true that has additional optional fields in the stored schema beyond those mentioned in its view schema.
 	 *
-	 * - An additional type allowed at a location in the stored schema where it is {@link SchemaStaticsAlpha.staged | staged} in the view schema.
+	 * - An additional type allowed at a location in the stored schema where it is {@link SchemaStaticsBeta.staged | staged} in the view schema.
 	 *
 	 * In these cases `canUpgrade` and `isEquivalent` will be false.
 	 *
@@ -557,7 +577,7 @@ export interface TreeViewEvents {
 /**
  * Retrieve the {@link TreeViewAlpha | alpha API} for a {@link TreeView}.
  * @alpha
- * @deprecated Use {@link asAlpha} instead.
+ * @deprecated Use {@link (asAlpha:1)} instead.
  * @privateRemarks Despite being deprecated, this function should be used within the tree package (outside of tests) rather than `asAlpha` in order to avoid circular import dependencies.
  */
 export function asTreeViewAlpha<TSchema extends ImplicitFieldSchema>(

@@ -6,6 +6,7 @@
 export {
 	typeNameSymbol,
 	typeSchemaSymbol,
+	contentSchemaSymbol,
 	type WithType,
 	type TreeNodeSchema,
 	type AnnotatedAllowedType,
@@ -43,7 +44,7 @@ export {
 	type UnannotateAllowedTypesList,
 	type AllowedTypeMetadata,
 	type AnnotatedAllowedTypes,
-	type SchemaUpgrade,
+	SchemaUpgrade,
 	type LazyItem,
 	type FlexList,
 	type FlexListToUnion,
@@ -58,6 +59,8 @@ export {
 	type AllowedTypesFullFromMixed,
 	AnnotatedAllowedTypesInternal,
 	type NumberKeys,
+	ExpectStored,
+	createSchemaUpgrade,
 } from "./core/index.js";
 export { walkFieldSchema } from "./walkFieldSchema.js";
 export type { UnsafeUnknownSchema, Insertable } from "./unsafeUnknownSchema.js";
@@ -73,6 +76,7 @@ export {
 	type ITreeConfigurationOptions,
 	SchemaFactory,
 	SchemaFactoryBeta,
+	type SchemaStaticsBeta,
 	SchemaFactoryAlpha,
 	type ObjectSchemaOptionsAlpha,
 	type ObjectSchemaOptions,
@@ -135,7 +139,9 @@ export {
 	type UnannotateAllowedTypesListUnsafe,
 	type AnnotateAllowedTypesListUnsafe,
 	type TreeViewAlpha,
+	type TreeViewBeta,
 	type TreeBranch,
+	type TreeBranchAlpha,
 	type TreeBranchEvents,
 	getPropertyKeyFromStoredKey,
 	getStoredKey,
@@ -177,9 +183,10 @@ export {
 	type TreeChangeEvents,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
-	type SchemaStaticsAlpha,
 	KeyEncodingOptions,
 	type TreeParsingOptions,
+	incrementalSummaryHint,
+	getShouldIncrementallySummarizeAllowedTypes,
 	type SchemaFactory_base,
 } from "./api/index.js";
 export type {
@@ -193,6 +200,7 @@ export type {
 	SimpleNodeSchemaBaseAlpha,
 	SimpleObjectFieldSchema,
 	SimpleRecordNodeSchema,
+	SimpleAllowedTypeAttributes,
 } from "./simpleSchema.js";
 export {
 	type ImplicitFieldSchema,
@@ -274,3 +282,10 @@ export {
 	nullSchema,
 } from "./leafNodeSchema.js";
 export type { LeafSchema } from "./leafNodeSchema.js";
+export {
+	encodeSimpleSchema,
+	decodeSimpleSchema,
+	exportCompatibilitySchemaSnapshot,
+	importCompatibilitySchemaSnapshot,
+	checkCompatibility,
+} from "./api/index.js";

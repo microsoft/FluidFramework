@@ -29,9 +29,9 @@ import type {
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	AllowedTypesFull,
 } from "./core/index.js";
-import { normalizeAllowedTypes } from "./core/index.js";
+import { AnnotatedAllowedTypesInternal, normalizeAllowedTypes } from "./core/index.js";
 
-import type { SimpleFieldSchema } from "./simpleSchema.js";
+import type { SimpleAllowedTypeAttributes, SimpleFieldSchema } from "./simpleSchema.js";
 import type { UnsafeUnknownSchema } from "./unsafeUnknownSchema.js";
 import type { InsertableContent } from "./unhydratedFlexTreeFromInsertable.js";
 
@@ -410,6 +410,10 @@ export class FieldSchemaAlpha<
 
 	public get allowedTypesIdentifiers(): ReadonlySet<string> {
 		return this.allowedTypesFull.evaluateIdentifiers();
+	}
+
+	public get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
+		return AnnotatedAllowedTypesInternal.evaluateSimpleAllowedTypes(this.allowedTypesFull);
 	}
 
 	protected constructor(

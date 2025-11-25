@@ -8,23 +8,14 @@ import type {
 	ITree,
 	ISignalMessage,
 	ISequencedDocumentMessage,
-	IDocumentStorageServicePolicies,
-	IVersion,
-	ISnapshotTree,
-	ISnapshotFetchOptions,
-	ISnapshot,
-	FetchSource,
-	ICreateBlobResponse,
-	ISummaryTree,
-	ISummaryHandle,
-	ISummaryContext,
 } from "@fluidframework/driver-definitions/internal";
 
 /**
  * An envelope wraps the contents with the intended target
  * @legacy @beta
  */
-export interface IEnvelope {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
+export interface IEnvelope<TContents = any> {
 	/**
 	 * The target for the envelope
 	 */
@@ -33,8 +24,7 @@ export interface IEnvelope {
 	/**
 	 * The contents of the envelope
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
-	contents: any;
+	contents: TContents;
 }
 
 /**
@@ -133,6 +123,31 @@ export interface IRuntimeMessageCollection {
 }
 
 /**
+ * Outgoing {@link IFluidDataStoreChannel} message structures.
+ * @internal
+ *
+ * @privateRemarks
+ * Future use opportunity:
+ * - Change {@link IFluidDataStoreChannel} and {@link IFluidParentContext},
+ * to have a generic specifying `T extends FluidDataStoreMessage` and uses
+ * `T["type"]` and `T["content"]` to qualify message related methods,
+ * preferably where `submitMessage`, `reSubmit`, and `rollback` have
+ * overloads to ensure callers pair values correctly.
+ * - A further improvement would be to reshape `submitMessage`, `reSubmit`,
+ * and `rollback` to accept `T` as `message` parameter instead of `type`
+ * and `content` parameters that are hard to convince TypeScript must be
+ * paired in implementations.
+ * - Caveat to enhanced type safety is that a user that changes their own
+ * `FluidDataStoreMessage` definition over time needs to account for
+ * protocol changes. So `unknown` should continue to be used for incoming
+ * message methods (where messages are not known to originate locally).
+ */
+export interface FluidDataStoreMessage {
+	type: string;
+	content: unknown;
+}
+
+/**
  * Interface to provide access to snapshot blobs to DataStore layer.
  *
  * @legacy @beta
@@ -142,73 +157,4 @@ export interface IRuntimeStorageService {
 	 * Reads the object with the given ID, returns content in arrayBufferLike
 	 */
 	readBlob(id: string): Promise<ArrayBufferLike>;
-
-	/**
-	 * Whether or not the object has been disposed.
-	 * If true, the object should be considered invalid, and its other state should be disregarded.
-	 *
-	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned as
-	 * it is unused in the DataStore layer.
-	 */
-	readonly disposed?: boolean;
-
-	/**
-	 * Dispose of the object and its resources.
-	 * @param error - Optional error indicating the reason for the disposal, if the object was
-	 * disposed as the result of an error.
-	 *
-	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned as
-	 * it is unused in the DataStore layer.
-	 */
-	dispose?(error?: Error): void;
-
-	/**
-	 * @deprecated - This will be removed in a future release. No replacement is planned as
-	 * it is unused in the DataStore layer.
-	 */
-	readonly policies?: IDocumentStorageServicePolicies | undefined;
-
-	/**
-	 * @deprecated - This will be removed in a future release. No replacement is planned as
-	 * it is unused in the DataStore layer.
-	 */
-	// eslint-disable-next-line @rushstack/no-new-null
-	getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
-
-	/**
-	 * @deprecated - This will be removed in a future release. No replacement is planned as
-	 * it is unused in the DataStore layer.
-	 */
-	getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
-
-	/**
-	 * @deprecated - This will be removed in a future release. No replacement is planned as
-	 * it is unused in the DataStore layer.
-	 */
-	getVersions(
-		// TODO: use `undefined` instead.
-		// eslint-disable-next-line @rushstack/no-new-null
-		versionId: string | null,
-		count: number,
-		scenarioName?: string,
-		fetchSource?: FetchSource,
-	): Promise<IVersion[]>;
-
-	/**
-	 * @deprecated - This will be removed in a future release. No replacement is planned as
-	 * it is unused in the DataStore layer.
-	 */
-	createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
-
-	/**
-	 * @deprecated - This will be removed in a future release. No replacement is planned as
-	 * it is unused in the DataStore layer.
-	 */
-	uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
-
-	/**
-	 * @deprecated - This will be removed in a future release. No replacement is planned as
-	 * it is unused in the DataStore layer.
-	 */
-	downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
 }

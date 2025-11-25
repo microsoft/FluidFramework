@@ -10,7 +10,7 @@ import type { FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
 import type {
 	IChannel,
 	IFluidDataStoreRuntime,
-	IFluidDataStoreRuntimeExperimental,
+	IFluidDataStoreRuntimeAlpha,
 } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
@@ -40,7 +40,7 @@ type Patch<T, U> = Omit<T, keyof U> & U;
 // testing purposes. The patching is in no way type safe and is not recommended.
 type FluidDataStoreRuntime_ForTesting = Patch<
 	FluidDataStoreRuntime,
-	IFluidDataStoreRuntimeExperimental & {
+	IFluidDataStoreRuntimeAlpha & {
 		contexts: Map<unknown, unknown>;
 		submit(type: DataStoreMessageType, content: unknown, localOpMetadata?: unknown): void;
 	}
@@ -98,9 +98,9 @@ describe("FluidDataStoreRuntime Tests", () => {
 					throw new Error("This shouldn't be called during the test");
 				},
 			);
-		assert.throws(codeBlock, (e: Error) =>
+		assert.throws(
+			codeBlock,
 			validateAssertionError(
-				e,
 				"Id cannot contain slashes. DataStoreContext should have validated this.",
 			),
 		);

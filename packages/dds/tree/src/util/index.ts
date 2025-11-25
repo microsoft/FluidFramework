@@ -4,11 +4,18 @@
  */
 
 export {
+	validateIndex,
+	validateIndexRange,
+	validatePositiveIndex,
+	validateSafeInteger,
+} from "./arrayUtilities.js";
+export {
 	brand,
 	type Brand,
 	BrandedType,
 	type NameFromBranded,
 	type ValueFromBranded,
+	brandConst,
 } from "./brand.js";
 export { brandedNumberType, brandedStringType } from "./typeboxBrand.js";
 export {
@@ -78,7 +85,7 @@ export {
 	assertNonNegativeSafeInteger,
 	objectToMap,
 	invertMap,
-	oneFromSet,
+	oneFromIterable,
 	type Named,
 	compareNamed,
 	disposeSymbol,

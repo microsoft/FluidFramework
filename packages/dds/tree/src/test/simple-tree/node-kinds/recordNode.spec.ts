@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { describeHydration } from "../utils.js";
 import {
@@ -16,7 +17,6 @@ import {
 	type TreeNode,
 	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
-import { validateUsageError } from "../../utils.js";
 import { Tree } from "../../../shared-tree/index.js";
 
 const schemaFactory = new SchemaFactoryAlpha("RecordNodeTest");
@@ -228,6 +228,13 @@ describe("RecordNode", () => {
 
 				record.baz = 4;
 				assert.equal(record.baz, 4);
+			});
+
+			it("setting value to undefined behaves as a delete", () => {
+				const record = init(schemaType, { foo: 1 });
+				assert.equal(record.foo, 1);
+				(record as Record<string, number | undefined>).foo = undefined;
+				assert.equal(record.foo, undefined);
 			});
 
 			it("can delete values", () => {

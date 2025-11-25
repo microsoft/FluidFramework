@@ -1541,8 +1541,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				() => getGCStateFromSummary(summary2.summaryTree),
 				// Assertion error message text changed in Node 20.18.1 to append the failed comparison info.
 				// This validation can be made more strict again once the repo requires Node >= 20.18.1
-				(e: Error) =>
-					validateAssertionError(e, /^getGCStateFromSummary: GC state is not a blob/),
+				validateAssertionError(/^getGCStateFromSummary: GC state is not a blob/),
 			);
 			const tombstoneState = getGCTombstoneStateFromSummary(summary2.summaryTree);
 			assert(
@@ -1556,11 +1555,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				() => getGCTombstoneStateFromSummary(summary3.summaryTree),
 				// Assertion error message text changed in Node 20.18.1 to append the failed comparison info.
 				// This validation can be made more strict again once the repo requires Node >= 20.18.1
-				(e: Error) =>
-					validateAssertionError(
-						e,
-						/^getGCTombstoneStateFromSummary: GC data should be a tree/,
-					),
+				validateAssertionError(/^getGCTombstoneStateFromSummary: GC data should be a tree/),
 			);
 		});
 

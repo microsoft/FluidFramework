@@ -7,7 +7,7 @@ import type { SessionId } from "@fluidframework/id-compressor";
 
 import type { ChangeEncodingContext } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { makeEditManagerCodecs } from "../../../shared-tree-core/editManagerCodecs.js";
 import type { SharedBranchSummaryData, SummaryData } from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
@@ -211,7 +211,8 @@ export function testCodec() {
 			family,
 			testCases,
 			assertEquivalentSummaryDataIgnoreOriginator,
-			[1, 2, 3, 4],
+			[3, 4],
+			[1, 2],
 		);
 
 		makeEncodingTestSuite(family, testCases, undefined, [5]);

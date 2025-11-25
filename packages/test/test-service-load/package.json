@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-service-load",
-	"version": "2.70.0",
+	"version": "2.74.0",
 	"description": "Service load tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -27,8 +27,8 @@
 		"debug": "node --inspect-brk ./dist/main.js --debug",
 		"debug:mini": "node --inspect-brk ./dist/main.js --debug --profile mini",
 		"debug:runner": "node ./dist/main.js --debug --profile debug",
-		"eslint": "eslint --format stylish src",
-		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"eslint": "eslint --quiet --format stylish src",
+		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
 		"full": "node ./dist/main.js --profile full",
@@ -108,10 +108,10 @@
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.58.3",
+		"@fluid-tools/build-cli": "^0.60.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.58.3",
-		"@fluidframework/eslint-config-fluid": "^6.1.0",
+		"@fluidframework/build-tools": "^0.60.0",
+		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"c8": "^10.1.3",
