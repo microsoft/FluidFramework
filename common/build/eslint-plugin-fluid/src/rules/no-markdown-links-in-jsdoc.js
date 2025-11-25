@@ -122,7 +122,8 @@ const rule = {
 					}
 
 					/**
-					 * @param {DocNode} node
+					 * Checks the provided comment block for Markdown-syntax links and report eslint errors for them.
+					 * @param {DocNode} node - The comment block to check.
 					 * @returns {void}
 					 */
 					function checkCommentBlock(node) {
