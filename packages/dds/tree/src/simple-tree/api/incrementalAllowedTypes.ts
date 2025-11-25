@@ -48,7 +48,7 @@ function isIncrementalSummaryHintInAllowedTypes(allowedTypes: AllowedTypesFull):
  * This helper function {@link incrementalEncodingPolicyForAllowedTypes} can be used to generate a callback function
  * of type {@link IncrementalEncodingPolicy}. It determines if each {@link AllowedTypes} in a schema should be
  * incrementally summarized.
- * This callback can be passed as the value for {@link SharedTreeOptionsAlpha.shouldEncodeIncrementally} parameter
+ * This callback can be passed as the value for {@link SharedTreeOptions.shouldEncodeIncrementally} parameter
  * when creating the tree.
  *
  * @param rootSchema - The schema for the root of the tree.

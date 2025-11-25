@@ -58,7 +58,6 @@ export {
 export {
 	type ITreeInternal,
 	type SharedTreeOptions,
-	type SharedTreeOptionsAlpha,
 	type SharedTreeOptionsBeta,
 	type ForestType,
 	type SharedTreeFormatOptions,

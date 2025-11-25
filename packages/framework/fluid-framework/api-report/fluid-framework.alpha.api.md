@@ -180,7 +180,7 @@ export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidH
 export function configuredSharedTree(options: SharedTreeOptions): SharedObjectKind<ITree>;
 
 // @alpha
-export function configuredSharedTreeAlpha(options: SharedTreeOptionsAlpha): SharedObjectKind<ITree>;
+export function configuredSharedTreeAlpha(options: SharedTreeOptions): SharedObjectKind<ITree>;
 
 // @beta
 export function configuredSharedTreeBeta(options: SharedTreeOptionsBeta): SharedObjectKind<ITree>;
@@ -1413,12 +1413,8 @@ export interface SharedTreeFormatOptions {
 }
 
 // @alpha @input
-export interface SharedTreeOptions extends Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions>, SharedTreeOptionsBeta {
+export interface SharedTreeOptions extends SharedTreeOptionsBeta, Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions> {
     readonly enableSharedBranches?: boolean;
-}
-
-// @alpha @input
-export interface SharedTreeOptionsAlpha extends SharedTreeOptionsBeta, SharedTreeFormatOptions {
     shouldEncodeIncrementally?: IncrementalEncodingPolicy;
 }
 

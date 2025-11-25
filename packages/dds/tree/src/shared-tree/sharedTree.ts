@@ -74,7 +74,7 @@ import {
 	type ClonableSchemaAndPolicy,
 	getCodecTreeForEditManagerFormatWithChange,
 	getCodecTreeForMessageFormatWithChange,
-	type SharedTreCoreOptionsInternal,
+	type SharedTreeCoreOptionsInternal,
 	MessageFormatVersion,
 	SharedTreeCore,
 	EditManagerFormatVersion,
@@ -655,28 +655,19 @@ export function getCodecTreeForSharedTreeFormat(
 export type SharedTreeOptionsBeta = ForestOptions;
 
 /**
- * Configuration options for SharedTree.
+ * Configuration options for SharedTree with alpha features.
  * @alpha @input
  */
 export interface SharedTreeOptions
-	extends Partial<CodecWriteOptions>,
-		Partial<SharedTreeFormatOptions>,
-		SharedTreeOptionsBeta {
+	extends SharedTreeOptionsBeta,
+		Partial<CodecWriteOptions>,
+		Partial<SharedTreeFormatOptions> {
 	/**
 	 * Experimental feature flag to enable shared branches.
 	 * This feature is not yet complete and should not be used in production.
 	 * Defaults to false.
 	 */
 	readonly enableSharedBranches?: boolean;
-}
-
-/**
- * Configuration options for SharedTree with alpha features.
- * @alpha @input
- */
-export interface SharedTreeOptionsAlpha
-	extends SharedTreeOptionsBeta,
-		SharedTreeFormatOptions {
 	/**
 	 * Returns whether a node / field should be incrementally encoded.
 	 * @remarks
@@ -686,9 +677,8 @@ export interface SharedTreeOptionsAlpha
 }
 
 export interface SharedTreeOptionsInternal
-	extends Partial<SharedTreCoreOptionsInternal>,
-		Partial<ForestOptions>,
-		Partial<SharedTreeOptionsAlpha> {
+	extends Partial<SharedTreeOptions>,
+		Partial<SharedTreeCoreOptionsInternal> {
 	disposeForksAfterTransaction?: boolean;
 }
 
@@ -817,6 +807,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
 	editManagerFormatSelector: clientVersionToEditManagerFormatVersion,
 	messageFormatSelector: clientVersionToMessageFormatVersion,
+	enableSharedBranches: false,
 };
 
 /**

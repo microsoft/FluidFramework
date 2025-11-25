@@ -20,7 +20,6 @@ import {
 	SharedTreeKernel,
 	type ITreePrivate,
 	type SharedTreeOptions,
-	type SharedTreeOptionsAlpha,
 	type SharedTreeOptionsBeta,
 	type SharedTreeOptionsInternal,
 	type SharedTreeKernelView,
@@ -150,11 +149,11 @@ export function configuredSharedTreeBetaLegacy(
 }
 
 /**
- * {@link configuredSharedTreeBeta} but including {@link SharedTreeOptionsAlpha} options.
+ * {@link configuredSharedTreeBeta} but including the alpha {@link SharedTreeOptions}.
  * @alpha
  */
 export function configuredSharedTreeAlpha(
-	options: SharedTreeOptionsAlpha,
+	options: SharedTreeOptions,
 ): SharedObjectKind<ITree> {
 	return configuredSharedTreeInternal(options);
 }
@@ -206,10 +205,9 @@ export function resolveOptions(options: SharedTreeOptions): SharedTreeOptionsInt
 	const internal: SharedTreeOptionsInternal = {
 		...resolveSharedBranchesOptions(options.enableSharedBranches),
 	};
-	copyProperty(options, "forest", internal);
-	copyProperty(options, "jsonValidator", internal);
-	copyProperty(options, "minVersionForCollab", internal);
-	copyProperty(options, "treeEncodeType", internal);
+	for (const optionName of Object.keys(options)) {
+		copyProperty(options, optionName, internal);
+	}
 	return internal;
 }
 
