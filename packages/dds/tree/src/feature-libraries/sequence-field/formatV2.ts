@@ -16,6 +16,7 @@ const CellCount = Type.Number({ multipleOf: 1, minimum: 1 });
 const MoveId = ChangesetLocalIdSchema;
 const HasMoveId = Type.Object({ id: MoveId });
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const IdRange = Type.Tuple([ChangesetLocalIdSchema, CellCount]);
 
 export const CellId = EncodedChangeAtomId;
