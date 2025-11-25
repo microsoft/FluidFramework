@@ -20,6 +20,7 @@ import {
 	SharedTreeKernel,
 	type ITreePrivate,
 	type SharedTreeOptions,
+	type SharedTreeOptionsAlpha,
 	type SharedTreeOptionsBeta,
 	type SharedTreeOptionsInternal,
 	type SharedTreeKernelView,
@@ -146,6 +147,16 @@ export function configuredSharedTreeBetaLegacy(
 	options: SharedTreeOptionsBeta,
 ): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
 	return configuredSharedTree(options);
+}
+
+/**
+ * {@link configuredSharedTreeBeta} but including {@link SharedTreeOptionsAlpha} options.
+ * @alpha
+ */
+export function configuredSharedTreeAlpha(
+	options: SharedTreeOptionsAlpha,
+): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
+	return configuredSharedTreeInternal(options);
 }
 
 /**

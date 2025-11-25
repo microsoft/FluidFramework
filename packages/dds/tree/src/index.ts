@@ -52,11 +52,13 @@ export {
 	type TreeIndex,
 	type TreeIndexKey,
 	type TreeIndexNodes,
+	type IncrementalEncodingPolicy,
 } from "./feature-libraries/index.js";
 
 export {
 	type ITreeInternal,
 	type SharedTreeOptions,
+	type SharedTreeOptionsAlpha,
 	type SharedTreeOptionsBeta,
 	type ForestType,
 	type SharedTreeFormatOptions,
@@ -287,10 +289,13 @@ export {
 	exportCompatibilitySchemaSnapshot,
 	importCompatibilitySchemaSnapshot,
 	checkCompatibility,
+	incrementalSummaryHint,
+	incrementalEncodingPolicyForAllowedTypes,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
 	configuredSharedTree,
+	configuredSharedTreeAlpha,
 	configuredSharedTreeBeta,
 	configuredSharedTreeBetaLegacy,
 } from "./treeFactory.js";

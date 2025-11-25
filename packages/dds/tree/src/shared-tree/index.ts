@@ -7,6 +7,7 @@ export {
 	type ITreePrivate,
 	type SharedTreeOptionsInternal,
 	type SharedTreeOptions,
+	type SharedTreeOptionsAlpha,
 	type SharedTreeOptionsBeta,
 	SharedTreeKernel,
 	getBranch,
