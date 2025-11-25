@@ -155,7 +155,7 @@ export function configuredSharedTreeBetaLegacy(
 export function configuredSharedTreeAlpha(
 	options: SharedTreeOptions,
 ): SharedObjectKind<ITree> {
-	return configuredSharedTreeInternal(options);
+	return configuredSharedTree(options);
 }
 
 /**
