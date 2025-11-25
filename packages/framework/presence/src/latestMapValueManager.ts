@@ -617,7 +617,11 @@ class LatestMapValueManagerImpl<
 			}
 		}
 		this.datastore.update(this.key, attendeeId, currentState);
-		postUpdateActions.push(() => this.events.emit("remoteUpdated", allUpdates));
+		// Only emit remoteUpdated if there are any individual updates, which
+		// accounts for the case where all updates were for invalid keys.
+		if (postUpdateActions.length > 0) {
+			postUpdateActions.push(() => this.events.emit("remoteUpdated", allUpdates));
+		}
 		return postUpdateActions;
 	}
 }
