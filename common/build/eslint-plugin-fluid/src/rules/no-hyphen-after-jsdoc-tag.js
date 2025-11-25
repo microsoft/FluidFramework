@@ -4,8 +4,13 @@
  */
 
 //@ts-check
+/**
+ * @typedef {import("eslint").Rule.RuleModule} RuleModule
+ * @typedef {import('@microsoft/tsdoc').DocNode} DocNode
+ * @typedef {import('@microsoft/tsdoc').DocPlainText} DocPlainText
+ */
 
-const { DocNode, DocNodeKind, TSDocParser, DocPlainText } = require("@microsoft/tsdoc");
+const { DocNodeKind, TSDocParser } = require("@microsoft/tsdoc");
 
 const parser = new TSDocParser();
 
@@ -40,8 +45,9 @@ function doesCommentBodyStartWithHyphen(commentBodyNode) {
 
 /**
  * JSDoc/TSDoc tags do not require a hyphen after them.
+ * @type {RuleModule}
  */
-module.exports = {
+const rule = {
 	meta: {
 		type: "problem",
 		docs: {
@@ -56,7 +62,6 @@ module.exports = {
 		schema: [],
 	},
 
-	// @ts-ignore
 	create(context) {
 		return {
 			Program() {
@@ -68,6 +73,10 @@ module.exports = {
 					.filter((comment) => comment.type === "Block" && comment.value.startsWith("*"));
 
 				for (const comment of comments) {
+					if(comment.range === undefined) {
+						continue;
+					}
+
 					const commentStartIndex = comment.range[0];
 
 					// TSDoc parser requires the surrounding "/**" and "*/", but eslint strips those off in `comment.value`.
@@ -121,3 +130,5 @@ module.exports = {
 		};
 	},
 };
+
+module.exports = rule;
