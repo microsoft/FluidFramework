@@ -5,7 +5,7 @@
 
 const assert = require("assert");
 const path = require("path");
-const { createESLintConfig, eslintVersion, ESLint } = require("../eslintConfigHelper.cjs");
+const { createESLintConfig, eslintVersion, ESLint } = require("./eslintConfigHelper.cjs");
 
 describe(`Do not allow \`-\` following JSDoc/TSDoc tags (eslint ${eslintVersion})`, function () {
 	/**
@@ -21,7 +21,7 @@ describe(`Do not allow \`-\` following JSDoc/TSDoc tags (eslint ${eslintVersion}
 		});
 
 		const eslint = new ESLint(eslintOptions);
-		const fileToLint = path.join(__dirname, "../example/no-hyphen-after-jsdoc-tag", file);
+		const fileToLint = path.join(__dirname, "./test-cases/no-hyphen-after-jsdoc-tag", file);
 		const results = await eslint.lintFiles([fileToLint]);
 		assert.equal(results.length, 1, "Expected a single result for linting a single file.");
 		return results[0];
