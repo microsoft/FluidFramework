@@ -56,14 +56,14 @@
 		"multimatch": "^5.0.0",
 		"picocolors": "^1.1.1",
 		"picomatch": "^2.3.1",
-		"picospinner": "^2.0.0",
+		"picospinner": "^2.1.0",
 		"rimraf": "^4.4.1",
 		"semver": "^7.7.3",
 		"sort-package-json": "1.57.0",
-		"ts-deepmerge": "^7.0.1",
+		"ts-deepmerge": "^7.0.3",
 		"type-fest": "^2.19.0",
 		"typescript": "~5.4.5",
-		"yaml": "^2.6.0"
+		"yaml": "^2.8.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.4",
@@ -79,7 +79,7 @@
 		"@types/rimraf": "^2.0.5",
 		"@types/semver": "^7.7.1",
 		"eslint": "~8.57.0",
-		"json-schema-to-typescript": "^15.0.2",
+		"json-schema-to-typescript": "^15.0.4",
 		"mocha": "^10.8.2"
 	},
 	"engines": {
