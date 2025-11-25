@@ -11,26 +11,26 @@ const parser = new TSDocParser();
 
 /**
  * Checks if a comment text starts with a hyphen.
- * @param {DocPlainText} commentBody - The plain text node to check.
+ * @param {DocPlainText} plainTextNode - The plain text node to check.
  */
-function doesTextNodeStartWithHyphen(commentBody) {
-	return commentBody.text.trimStart().startsWith("-");
+function doesTextNodeStartWithHyphen(plainTextNode) {
+	return plainTextNode.text.trimStart().startsWith("-");
 }
 
 /**
  * Checks if a comment body starts with a hyphen.
- * @param { DocNode } commentBody - The doc section to check.
+ * @param { DocNode } commentBodyNode - The doc node representing the body of the comment.
  */
-function doesCommentBodyStartWithHyphen(commentBody) {
+function doesCommentBodyStartWithHyphen(commentBodyNode) {
 	// Walk down first node of the tree until we find a leaf.
 	// If it's plain text, and starts with a hyphen, return true.
 	// Otherwise, return false.
-	if (commentBody.kind === DocNodeKind.PlainText) {
+	if (commentBodyNode.kind === DocNodeKind.PlainText) {
 		// @ts-ignore
-		return doesTextNodeStartWithHyphen(commentBody);
+		return doesTextNodeStartWithHyphen(commentBodyNode);
 	}
 
-	const childNodes = commentBody.getChildNodes();
+	const childNodes = commentBodyNode.getChildNodes();
 	if (childNodes.length === 0) {
 		return false;
 	}
