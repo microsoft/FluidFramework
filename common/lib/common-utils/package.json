@@ -146,11 +146,9 @@
 		"ignoredBuiltDependencies": ["core-js"],
 		"onlyBuiltDependencies": ["puppeteer"],
 		"overridesComments": [
-			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix",
-			"glob 10.4.5 has a security vulnerability that is fixed in 10.5.0."
+			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix"
 		],
 		"overrides": {
-			"glob": "^10.5.0",
 			"sharp": "^0.33.2"
 		},
 		"patchedDependencies": {
