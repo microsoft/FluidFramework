@@ -6,6 +6,7 @@ settings:
 
 overrides:
   '@types/node': ^22.8.0
+  glob: ^10.5.0
   json5@<1.0.2: ^1.0.2
   json5@>=2.0.0 <2.2.2: ^2.2.2
   qs: ^6.11.0
@@ -31,7 +32,7 @@ importers:
         version: 17.8.1(commitizen@4.3.1(typescript@5.4.5))(inquirer@8.2.6)
       '@fluid-tools/build-cli':
         specifier: ~0.60.0
-        version: 0.60.0(@types/node@22.8.0)(encoding@0.1.13)(typescript@5.4.5)
+        version: 0.60.0(@types/node@22.8.0)(typescript@5.4.5)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -542,8 +543,8 @@ importers:
         specifier: ^11.2.0
         version: 11.3.0
       glob:
-        specifier: ^7.2.3
-        version: 7.2.3
+        specifier: ^10.5.0
+        version: 10.5.0
       globby:
         specifier: ^11.1.0
         version: 11.1.0
@@ -3760,9 +3761,6 @@ packages:
     resolution: {integrity: sha512-2GAfyfoaCDRrM6jaOS3UsBts8yJ55VioXdWcOL7dK9zdAuKT71+WBA4ifnNYqVjYv+4SsPxjK0JT4yIIn4cA/g==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
 
-  fs.realpath@1.0.0:
-    resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
-
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -3868,22 +3866,9 @@ packages:
   glob-to-regexp@0.4.1:
     resolution: {integrity: sha512-lkX1HJXwyMcprw/5YUZc2s7DrpAiHB21/V+E1rHUrVNokkvB6bqMzT0VfV6/86ZNabt1k14YOIaT7nDvOX3Iiw==}
 
-  glob@10.4.5:
-    resolution: {integrity: sha512-7Bv8RF0k6xjo7d4A/PxYLbUCfb6c+Vpd2/mB2yRDlew7Jb5hEXiCD9ibfO7wpk8i4sevK6DFny9h7EYbM3/sHg==}
+  glob@10.5.0:
+    resolution: {integrity: sha512-DfXN8DfhJ7NH3Oe7cFmu3NCu1wKbkReJ8TorzSAFbSKrlNaQSKfIzqYqVY8zlbs2NLBbWpRiU52GX2PbaBVNkg==}
     hasBin: true
-
-  glob@7.2.3:
-    resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
-    deprecated: Glob versions prior to v9 are no longer supported
-
-  glob@8.1.0:
-    resolution: {integrity: sha512-r8hpEjiQEYlF2QU0df3dS+nxxSIreXQS1qRhMJM0Q5NDdR386C7jb7Hwwod8Fgiuex+k0GFjgft18yvxm5XoCQ==}
-    engines: {node: '>=12'}
-    deprecated: Glob versions prior to v9 are no longer supported
-
-  glob@9.3.0:
-    resolution: {integrity: sha512-EAZejC7JvnQINayvB/7BJbpZpNOJ8Lrw2OZNEvQxe0vaLn1SuwMcfV7/MNaX8L/T0wmptBFI4YMtDvSBxYDc7w==}
-    engines: {node: '>=16 || 14 >=14.17'}
 
   global-dirs@0.1.1:
     resolution: {integrity: sha512-NknMLn7F2J7aflwFOlGdNIuCDpN3VGoSoB+aap3KABFWbHVn1TCgFC+np23J8W2BiZbjfEw3BFBycSMv1AFblg==}
@@ -4176,10 +4161,6 @@ packages:
 
   infer-owner@1.0.4:
     resolution: {integrity: sha512-IClj+Xz94+d7irH5qRyfJonOdfTzuDaifE6ZPWfx0N0+/ATZCbuTPq2prFl526urkQd90WyUKIh1DfBQ2hMz9A==}
-
-  inflight@1.0.6:
-    resolution: {integrity: sha512-k92I/b08q4wvFscXCLvqfsHCrjrF7yiXsQuIVvVE7N82W3+aqpzuUdBbfhWcy/FZR3/4IgflMgKLOsvPDrGCJA==}
-    deprecated: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
 
   inherits@2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
@@ -5159,10 +5140,6 @@ packages:
     resolution: {integrity: sha512-DxiNidxSEK+tHG6zOIklvNOwm3hvCrbUrdtzY74U6HKTJxvIDfOUL5W5P2Ghd3DTkhhKPYGqeNUIh5qcM4YBfw==}
     engines: {node: '>=8'}
 
-  minipass@4.2.5:
-    resolution: {integrity: sha512-+yQl7SX3bIT83Lhb4BVorMAHVuqsskxRdlmO9kTpyukp8vsm2Sn/fUOV9xlnG8/a5JsypJzap21lz/y3FBMJ8Q==}
-    engines: {node: '>=8'}
-
   minipass@5.0.0:
     resolution: {integrity: sha512-3FnjYuehv9k6ovOEbyOswadCDPX1piCfhV8ncmYtHOjuPwylVWsghTLo7rabjC3Rx5xD4HDx8Wm1xnMF7S5qFQ==}
     engines: {node: '>=8'}
@@ -5600,10 +5577,6 @@ packages:
   path-exists@5.0.0:
     resolution: {integrity: sha512-RjhtfwJOxzcFmNOi6ltcbcu4Iu+FL3zEj83dk4kAS+fVpTxXLO1b38RvJgT/0QwvV/L3aY9TAnyv0EOqW4GoMQ==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
-
-  path-is-absolute@1.0.1:
-    resolution: {integrity: sha512-AVbw3UJ2e9bq64vSaS9Am0fje1Pa8pbGqTTsmXfaIiMpnr5DlDhfJOuLj9Sf95ZPVDAUerDfEk88MPmPe7UCQg==}
-    engines: {node: '>=0.10.0'}
 
   path-key@3.1.1:
     resolution: {integrity: sha512-ojmeN0qd+y0jszEtoY48r0Peq5dwMEkIlCOu6Q5f41lfkswXuKtYrhgoTpLnyIcHm24Uhqx+5Tqm2InSwLhE6Q==}
@@ -7383,7 +7356,7 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@fluid-tools/build-cli@0.60.0(@types/node@22.8.0)(encoding@0.1.13)(typescript@5.4.5)':
+  '@fluid-tools/build-cli@0.60.0(@types/node@22.8.0)(typescript@5.4.5)':
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
       '@fluid-tools/build-infrastructure': 0.60.0(@types/node@22.8.0)
@@ -7533,7 +7506,7 @@ snapshots:
       detect-indent: 6.1.0
       find-up: 7.0.0
       fs-extra: 11.3.0
-      glob: 7.2.3
+      glob: 10.5.0
       globby: 11.1.0
       ignore: 5.3.2
       json5: 2.2.3
@@ -7567,7 +7540,7 @@ snapshots:
       detect-indent: 6.1.0
       find-up: 7.0.0
       fs-extra: 11.3.0
-      glob: 7.2.3
+      glob: 10.5.0
       globby: 11.1.0
       ignore: 5.3.2
       json5: 2.2.3
@@ -7610,7 +7583,7 @@ snapshots:
       '@rushstack/eslint-patch': 1.12.0
       '@rushstack/eslint-plugin': 0.19.0(eslint@8.57.0)(typescript@5.4.5)
       '@rushstack/eslint-plugin-security': 0.11.0(eslint@8.57.0)(typescript@5.4.5)
-      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5)
+      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5)
       '@typescript-eslint/parser': 7.18.0(eslint@8.57.0)(typescript@5.4.5)
       eslint-config-biome: 2.1.3
       eslint-config-prettier: 10.1.8(eslint@8.57.0)
@@ -7623,7 +7596,7 @@ snapshots:
       eslint-plugin-react-hooks: 5.2.0(eslint@8.57.0)
       eslint-plugin-tsdoc: 0.4.0
       eslint-plugin-unicorn: 48.0.1(eslint@8.57.0)
-      eslint-plugin-unused-imports: 4.2.0(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)
+      eslint-plugin-unused-imports: 4.2.0(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)
     transitivePeerDependencies:
       - eslint
       - eslint-import-resolver-webpack
@@ -8628,10 +8601,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5)':
+  '@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5)':
     dependencies:
       '@eslint-community/regexpp': 4.10.0
-      '@typescript-eslint/parser': 6.21.0(eslint@8.57.0)(typescript@5.4.5)
+      '@typescript-eslint/parser': 7.18.0(eslint@8.57.0)(typescript@5.4.5)
       '@typescript-eslint/scope-manager': 7.18.0
       '@typescript-eslint/type-utils': 7.18.0(eslint@8.57.0)(typescript@5.4.5)
       '@typescript-eslint/utils': 7.18.0(eslint@8.57.0)(typescript@5.4.5)
@@ -9293,7 +9266,7 @@ snapshots:
       '@npmcli/move-file': 2.0.1
       chownr: 2.0.0
       fs-minipass: 2.1.0
-      glob: 8.1.0
+      glob: 10.5.0
       infer-owner: 1.0.4
       lru-cache: 7.18.3
       minipass: 3.3.6
@@ -9314,7 +9287,7 @@ snapshots:
     dependencies:
       '@npmcli/fs': 3.1.0
       fs-minipass: 3.0.2
-      glob: 10.4.5
+      glob: 10.5.0
       lru-cache: 7.18.3
       minipass: 5.0.0
       minipass-collect: 1.0.2
@@ -9620,7 +9593,7 @@ snapshots:
       find-node-modules: 2.1.3
       find-root: 1.1.0
       fs-extra: 9.1.0
-      glob: 7.2.3
+      glob: 10.5.0
       inquirer: 8.2.5
       is-utf8: 0.2.1
       lodash: 4.17.21
@@ -9817,7 +9790,7 @@ snapshots:
 
   copyfiles@2.4.1:
     dependencies:
-      glob: 7.2.3
+      glob: 10.5.0
       minimatch: 3.1.2
       mkdirp: 1.0.4
       noms: 0.0.0
@@ -10296,8 +10269,8 @@ snapshots:
       '@typescript-eslint/eslint-plugin': 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5)
       '@typescript-eslint/parser': 6.21.0(eslint@8.57.0)(typescript@5.4.5)
       eslint-config-xo-space: 0.35.0(eslint@8.57.0)
-      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint-plugin-import@2.31.0)(eslint@8.57.0)
-      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.57.0)
+      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0))(eslint@8.57.0)
+      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0))(eslint@8.57.0))(eslint@8.57.0)
       eslint-plugin-mocha: 10.5.0(eslint@8.57.0)
       eslint-plugin-n: 15.7.0(eslint@8.57.0)
       eslint-plugin-perfectionist: 2.11.0(eslint@8.57.0)(typescript@5.4.5)
@@ -10355,19 +10328,19 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint-plugin-import@2.31.0)(eslint@8.57.0):
+  eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0))(eslint@8.57.0):
     dependencies:
       '@nolyfill/is-core-module': 1.0.39
       debug: 4.4.3(supports-color@8.1.1)
       enhanced-resolve: 5.17.1
       eslint: 8.57.0
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.57.0)
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0))(eslint@8.57.0))(eslint@8.57.0)
       fast-glob: 3.3.3
       get-tsconfig: 4.10.1
       is-bun-module: 1.2.1
       is-glob: 4.0.3
     optionalDependencies:
-      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.57.0)
+      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0))(eslint@8.57.0))(eslint@8.57.0)
     transitivePeerDependencies:
       - '@typescript-eslint/parser'
       - eslint-import-resolver-node
@@ -10389,14 +10362,14 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.57.0):
+  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0))(eslint@8.57.0))(eslint@8.57.0):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 6.21.0(eslint@8.57.0)(typescript@5.4.5)
       eslint: 8.57.0
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint-plugin-import@2.31.0)(eslint@8.57.0)
+      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0))(eslint@8.57.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -10444,7 +10417,7 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.57.0):
+  eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0))(eslint@8.57.0))(eslint@8.57.0):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.8
@@ -10455,7 +10428,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 8.57.0
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.57.0)
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0))(eslint@8.57.0))(eslint@8.57.0)
       hasown: 2.0.2
       is-core-module: 2.15.1
       is-glob: 4.0.3
@@ -10574,11 +10547,11 @@ snapshots:
       semver: 7.7.2
       strip-indent: 3.0.0
 
-  eslint-plugin-unused-imports@4.2.0(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0):
+  eslint-plugin-unused-imports@4.2.0(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0):
     dependencies:
       eslint: 8.57.0
     optionalDependencies:
-      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5)
+      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5)
 
   eslint-scope@5.1.1:
     dependencies:
@@ -10888,8 +10861,6 @@ snapshots:
     dependencies:
       minipass: 5.0.0
 
-  fs.realpath@1.0.0: {}
-
   fsevents@2.3.3:
     optional: true
 
@@ -11004,37 +10975,13 @@ snapshots:
 
   glob-to-regexp@0.4.1: {}
 
-  glob@10.4.5:
+  glob@10.5.0:
     dependencies:
       foreground-child: 3.1.1
       jackspeak: 3.4.3
       minimatch: 9.0.5
       minipass: 7.1.2
       package-json-from-dist: 1.0.1
-      path-scurry: 1.11.1
-
-  glob@7.2.3:
-    dependencies:
-      fs.realpath: 1.0.0
-      inflight: 1.0.6
-      inherits: 2.0.4
-      minimatch: 3.1.2
-      once: 1.4.0
-      path-is-absolute: 1.0.1
-
-  glob@8.1.0:
-    dependencies:
-      fs.realpath: 1.0.0
-      inflight: 1.0.6
-      inherits: 2.0.4
-      minimatch: 5.1.6
-      once: 1.4.0
-
-  glob@9.3.0:
-    dependencies:
-      fs.realpath: 1.0.0
-      minimatch: 7.4.6
-      minipass: 4.2.5
       path-scurry: 1.11.1
 
   global-dirs@0.1.1:
@@ -11074,7 +11021,7 @@ snapshots:
       array-union: 2.1.0
       dir-glob: 3.0.1
       fast-glob: 3.3.3
-      glob: 7.2.3
+      glob: 10.5.0
       ignore: 5.3.2
       merge2: 1.4.1
       slash: 3.0.0
@@ -11438,11 +11385,6 @@ snapshots:
   indent-string@5.0.0: {}
 
   infer-owner@1.0.4: {}
-
-  inflight@1.0.6:
-    dependencies:
-      once: 1.4.0
-      wrappy: 1.0.2
 
   inherits@2.0.4: {}
 
@@ -11853,7 +11795,7 @@ snapshots:
       '@apidevtools/json-schema-ref-parser': 11.7.0
       '@types/json-schema': 7.0.15
       '@types/lodash': 4.17.12
-      glob: 10.4.5
+      glob: 10.5.0
       is-glob: 4.0.3
       js-yaml: 4.1.0
       lodash: 4.17.21
@@ -11910,7 +11852,7 @@ snapshots:
       ansi-256-colors: 1.1.0
       better_git_changelog: 1.6.2
       commander: 4.1.1
-      glob: 7.2.3
+      glob: 10.5.0
       jssm-viz: 5.104.1
       sharp: 0.33.2
     transitivePeerDependencies:
@@ -12656,8 +12598,6 @@ snapshots:
     dependencies:
       yallist: 4.0.0
 
-  minipass@4.2.5: {}
-
   minipass@5.0.0: {}
 
   minipass@7.1.2: {}
@@ -12692,7 +12632,7 @@ snapshots:
       diff: 5.2.0
       escape-string-regexp: 4.0.0
       find-up: 5.0.0
-      glob: 8.1.0
+      glob: 10.5.0
       he: 1.2.0
       js-yaml: 4.1.0
       log-symbols: 4.1.0
@@ -12778,7 +12718,7 @@ snapshots:
   node-gyp@9.3.1:
     dependencies:
       env-paths: 2.2.1
-      glob: 7.2.3
+      glob: 10.5.0
       graceful-fs: 4.2.11
       make-fetch-happen: 10.2.1
       nopt: 6.0.0
@@ -13235,8 +13175,6 @@ snapshots:
 
   path-exists@5.0.0: {}
 
-  path-is-absolute@1.0.1: {}
-
   path-key@3.1.1: {}
 
   path-parse@1.0.7: {}
@@ -13383,7 +13321,7 @@ snapshots:
 
   read-package-json@6.0.4:
     dependencies:
-      glob: 10.4.5
+      glob: 10.5.0
       json-parse-even-better-errors: 3.0.0
       normalize-package-data: 5.0.0
       npm-normalize-package-bin: 3.0.1
@@ -13551,7 +13489,7 @@ snapshots:
   replace-in-file@7.2.0:
     dependencies:
       chalk: 4.1.2
-      glob: 8.1.0
+      glob: 10.5.0
       yargs: 17.7.2
 
   require-directory@2.1.1: {}
@@ -13626,19 +13564,19 @@ snapshots:
 
   rimraf@2.6.3:
     dependencies:
-      glob: 7.2.3
+      glob: 10.5.0
 
   rimraf@3.0.2:
     dependencies:
-      glob: 7.2.3
+      glob: 10.5.0
 
   rimraf@4.4.1:
     dependencies:
-      glob: 9.3.0
+      glob: 10.5.0
 
   rimraf@5.0.5:
     dependencies:
-      glob: 10.4.5
+      glob: 10.5.0
 
   run-async@2.4.1: {}
 
@@ -14211,7 +14149,7 @@ snapshots:
   test-exclude@7.0.1:
     dependencies:
       '@istanbuljs/schema': 0.1.3
-      glob: 10.4.5
+      glob: 10.5.0
       minimatch: 9.0.5
 
   test-value@2.1.0:
@@ -14227,7 +14165,7 @@ snapshots:
     dependencies:
       cli-color: 1.4.0
       command-line-args: 4.0.7
-      glob: 7.2.3
+      glob: 10.5.0
       txt_tocfill: 0.5.1
 
   thingies@1.21.0(tslib@2.8.0):

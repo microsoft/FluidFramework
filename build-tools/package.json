@@ -147,10 +147,12 @@
 		},
 		"overrideComments": [
 			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently.",
-			"@types/node: To avoid duplicating the oclif package and adding a bunch of dependencies, force @types/node to a single version. For some reason version 22.8.0 can't be overridden, so use that to ensure a single version"
+			"@types/node: To avoid duplicating the oclif package and adding a bunch of dependencies, force @types/node to a single version. For some reason version 22.8.0 can't be overridden, so use that to ensure a single version",
+			"glob 10.4.5 has a security vulnerability that is fixed in 10.5.0."
 		],
 		"overrides": {
 			"@types/node": "^22.8.0",
+			"glob": "^10.5.0",
 			"json5@<1.0.2": "^1.0.2",
 			"json5@>=2.0.0 <2.2.2": "^2.2.2",
 			"qs": "^6.11.0",
