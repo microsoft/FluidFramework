@@ -591,12 +591,14 @@ class LatestMapValueManagerImpl<
 		};
 		const postUpdateActions: PostUpdateAction[] = [];
 		for (const key of updatedItemKeys) {
-			if (!this.isValidKey(key)) {
-				continue;
-			}
 			const item = value.items[key];
 			const hadPriorValue = currentState.items[key]?.value;
 			currentState.items[key] = item;
+
+			// Prepare update events, but only for valid keys.
+			if (!this.isValidKey(key)) {
+				continue;
+			}
 			const metadata = {
 				revision: item.rev,
 				timestamp: item.timestamp,
