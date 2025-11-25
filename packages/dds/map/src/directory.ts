@@ -1594,7 +1594,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			// Emit internal event with path for oracle tracking on root
 			this.directory.emit("clearInternal", this.absolutePath, true, this.directory);
 			// Also emit on this subdirectory for listeners attached to it
-			this.emit("clearInternal", this.absolutePath, true, this);
+			// this.emit("clearInternal", this.absolutePath, true, this);
 			return;
 		}
 
@@ -1609,7 +1609,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// Emit internal event with path for oracle tracking on root
 		this.directory.emit("clearInternal", this.absolutePath, true, this.directory);
 		// Also emit on this subdirectory for listeners attached to it
-		this.emit("clearInternal", this.absolutePath, true, this);
+		// this.emit("clearInternal", this.absolutePath, true, this);
 		const op: IDirectoryOperation = {
 			type: "clear",
 			path: this.absolutePath,
@@ -1939,7 +1939,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				// Emit internal event with path for oracle tracking on root
 				this.directory.emit("clearInternal", this.absolutePath, local, this.directory);
 				// Also emit on this subdirectory for listeners attached to it
-				this.emit("clearInternal", this.absolutePath, local, this);
+				// this.emit("clearInternal", this.absolutePath, local, this);
 			}
 
 			// For pending set operations, emit valueChanged events
@@ -2052,27 +2052,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			if (pendingEntry.keySets.length === 0) {
 				this.pendingStorageData.splice(pendingEntryIndex, 1);
 			}
-			const previousValue: unknown = this.sequencedStorageData.get(key);
 			this.sequencedStorageData.set(key, pendingKeySet.value);
-			// Emit internal event with sequenced previous value (never suppressed)
-			const internalEvent: IDirectoryValueChanged = {
-				key,
-				path: this.absolutePath,
-				previousValue,
-			};
-			this.directory.emit("valueChangedInternal", internalEvent, local, this.directory);
 		} else {
 			// Get the previous value before setting the new value
 			const previousValue: unknown = this.sequencedStorageData.get(key);
 			this.sequencedStorageData.set(key, value);
-
-			// Emit internal event with sequenced previous value (never suppressed)
-			const internalEvent: IDirectoryValueChanged = {
-				key,
-				path: this.absolutePath,
-				previousValue,
-			};
-			this.directory.emit("valueChangedInternal", internalEvent, local, this.directory);
 
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 			if (

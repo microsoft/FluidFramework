@@ -150,7 +150,7 @@ export class SharedDirectoryOracle {
 		// The root-level listeners already handle ALL subdirectory operations in the tree with absolute
 		// paths. Listening on individual directories would cause duplicate processing or confusion
 		// between relative and absolute paths.
-		dir.on("clearInternal", this.onClearInternal);
+		// dir.on("clearInternal", this.onClearInternal);
 
 		// Attach disposed/undisposed listeners for rollback support
 		dir.on("disposed", this.onDisposed);
@@ -181,8 +181,11 @@ export class SharedDirectoryOracle {
 
 		const dirNode = this.getOrCreateDirNode(this.modelFromValueChanged, path);
 
-		// Assert that previousValue matches what we had in the oracle
-		if (local && previousValue !== undefined && dirNode.keys.has(key)) {
+		// Assert that previousValue matches what we had in the oracle.
+		// For local operations, this should always match.
+		// For remote operations, previousValue might differ from oracle when there are pending local
+		// operations on the same key (oracle has optimistic value, event has sequenced value).
+		if (local) {
 			assert.deepStrictEqual(
 				previousValue,
 				dirNode.keys.get(key),
@@ -210,6 +213,11 @@ export class SharedDirectoryOracle {
 		}
 		if (dirNode2) {
 			dirNode2.keys.clear();
+		}
+
+		if (!local) {
+			this.snapshotCurrentState(this.sharedDir, this.modelFromValueChanged);
+			this.snapshotCurrentState(this.sharedDir, this.modelFromContainedValueChanged);
 		}
 	};
 
@@ -264,9 +272,11 @@ export class SharedDirectoryOracle {
 
 		const dirNode = this.getOrCreateDirNode(this.modelFromContainedValueChanged, absolutePath);
 
-		// Assert that previousValue matches what we had in the oracle
-		if (local && previousValue !== undefined && dirNode.keys.has(key)) {
-			// if (local) {
+		// Assert that previousValue matches what we had in the oracle.
+		// For local operations, this should always match.
+		// For remote operations, previousValue might differ from oracle when there are pending local
+		// operations on the same key (oracle has optimistic value, event has sequenced value).
+		if (local) {
 			assert.deepStrictEqual(
 				previousValue,
 				dirNode.keys.get(key),
@@ -427,7 +437,7 @@ export class SharedDirectoryOracle {
 		for (const dir of this.attachedDirectories) {
 			dir.off("containedValueChanged", this.onContainedValueChanged);
 			// Note: subDirectoryCreated and subDirectoryDeleted were never attached to individual directories
-			dir.off("clearInternal", this.onClearInternal);
+			// dir.off("clearInternal", this.onClearInternal);
 			dir.off("disposed", this.onDisposed);
 			dir.off("undisposed", this.onUndisposed);
 		}

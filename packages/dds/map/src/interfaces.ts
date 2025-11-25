@@ -294,25 +294,6 @@ export interface IDirectoryEvents extends IEvent {
 	 * - `target` - The {@link IDirectory} itself.
 	 */
 	(event: "undisposed", listener: (target: IEventThisPlaceHolder) => void);
-
-	/**
-	 * Internal event emitted when a directory is cleared, including the path.
-	 * This is used for internal tracking and testing purposes.
-	 *
-	 * @remarks Listener parameters:
-	 *
-	 * - `path` - The absolute path to the directory that was cleared.
-	 *
-	 * - `local` - Whether the clear originated from this client.
-	 *
-	 * - `target` - The {@link ISharedDirectory} itself.
-	 *
-	 * @internal
-	 */
-	(
-		event: "clearInternal",
-		listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void,
-	);
 }
 
 /**
