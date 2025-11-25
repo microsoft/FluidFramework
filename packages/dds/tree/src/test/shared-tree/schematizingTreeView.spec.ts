@@ -4,6 +4,7 @@
  */
 
 import { strict as assert, fail } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -33,7 +34,6 @@ import {
 	fieldCursorFromInsertable,
 	getView,
 	TestTreeProviderLite,
-	validateUsageError,
 	validateViewConsistency,
 	type TreeStoredContentStrict,
 } from "../utils.js";

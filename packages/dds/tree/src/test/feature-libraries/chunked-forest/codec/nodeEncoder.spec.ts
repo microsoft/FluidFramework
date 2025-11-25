@@ -28,6 +28,9 @@ import { brand } from "../../../../util/index.js";
 
 import { checkNodeEncode } from "./checkEncode.js";
 import { testIdCompressor } from "../../../utils.js";
+import { FieldBatchFormatVersion } from "../../../../feature-libraries/index.js";
+
+const fieldBatchVersion = brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v1);
 
 describe("nodeShape", () => {
 	describe("NodeShapeBasedEncoder", () => {
@@ -43,6 +46,7 @@ describe("nodeShape", () => {
 				fieldKinds,
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
+				fieldBatchVersion,
 			);
 
 			const buffer = checkNodeEncode(shape, context, {
@@ -62,6 +66,7 @@ describe("nodeShape", () => {
 				fieldKinds,
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
+				fieldBatchVersion,
 			);
 
 			const encodedChunk = checkNodeEncode(shape, context, {
@@ -78,6 +83,7 @@ describe("nodeShape", () => {
 				fieldKinds,
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
+				fieldBatchVersion,
 			);
 
 			const fieldShapeLocal = context.nestedArrayEncoder(
@@ -115,6 +121,7 @@ describe("nodeShape", () => {
 				fieldKinds,
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
+				fieldBatchVersion,
 			);
 
 			// Shape which encodes to nothing.

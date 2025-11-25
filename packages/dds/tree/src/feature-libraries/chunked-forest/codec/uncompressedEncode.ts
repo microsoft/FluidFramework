@@ -8,16 +8,35 @@ import {
 	forEachField,
 	forEachNode,
 } from "../../../core/index.js";
+import { brand } from "../../../util/index.js";
 import type { FluidSerializableReadOnly } from "../../valueUtilities.js";
 
 import type { FieldBatch } from "./fieldBatch.js";
 import {
 	FieldBatchFormatVersion,
 	type EncodedFieldBatch,
+	type EncodedFieldBatchV1,
+	type EncodedFieldBatchV2,
 	type EncodedNestedArrayShape,
 	type EncodedNodeShape,
 } from "./format.js";
 import type { ShapeIndex } from "./formatGeneric.js";
+
+/**
+ * Encode data from `cursor` in the simplest way supported by `EncodedChunk` using {@link FieldBatchFormatVersion.v1}.
+ * @remarks See {@link uncompressedEncode} for more details.
+ */
+export function uncompressedEncodeV1(batch: FieldBatch): EncodedFieldBatchV1 {
+	return uncompressedEncode(batch, brand(FieldBatchFormatVersion.v1));
+}
+
+/**
+ * Encode data from `cursor` in the simplest way supported by `EncodedChunk` using {@link FieldBatchFormatVersion.v2}.
+ * @remarks See {@link uncompressedEncode} for more details.
+ */
+export function uncompressedEncodeV2(batch: FieldBatch): EncodedFieldBatchV2 {
+	return uncompressedEncode(batch, brand(FieldBatchFormatVersion.v2));
+}
 
 /**
  * Encode data from `cursor` in the simplest way supported by `EncodedChunk`.
@@ -27,10 +46,13 @@ import type { ShapeIndex } from "./formatGeneric.js";
  *
  * This is intended as a simple reference implementation with minimal code and dependencies.
  */
-export function uncompressedEncode(batch: FieldBatch): EncodedFieldBatch {
+function uncompressedEncode(
+	batch: FieldBatch,
+	version: FieldBatchFormatVersion,
+): EncodedFieldBatch {
 	const rootFields = batch.map(encodeSequence);
 	return {
-		version: FieldBatchFormatVersion.v1,
+		version,
 		identifiers: [],
 		// A single shape used to encode all fields.
 		shapes: [{ c: anyNodeShape }, { a: anyArray }],

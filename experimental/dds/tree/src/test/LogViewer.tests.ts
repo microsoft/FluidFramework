@@ -307,27 +307,21 @@ describe('CachingLogViewer', () => {
 	runLogViewerCorrectnessTests(getCachingLogViewerAssumeAppliedEdits);
 
 	it('detects non-integer revisions when setting revision views', async () => {
-		assert.throws(
-			() => {
-				return getCachingLogViewerAssumeAppliedEdits(simpleLog, simpleLogBaseView, undefined, undefined, [
-					2.4,
-					simpleLogInitialView,
-				]);
-			},
-			(e: Error) => validateAssertionError(e, 'revision must be an integer')
-		);
+		assert.throws(() => {
+			return getCachingLogViewerAssumeAppliedEdits(simpleLog, simpleLogBaseView, undefined, undefined, [
+				2.4,
+				simpleLogInitialView,
+			]);
+		}, validateAssertionError('revision must be an integer'));
 	});
 
 	it('detects out-of-bounds revisions when setting revision views', async () => {
-		assert.throws(
-			() => {
-				return getCachingLogViewerAssumeAppliedEdits(simpleLog, simpleLogBaseView, undefined, undefined, [
-					1000,
-					simpleLogInitialView,
-				]);
-			},
-			(e: Error) => validateAssertionError(e, 'revision must correspond to the result of a SequencedEdit')
-		);
+		assert.throws(() => {
+			return getCachingLogViewerAssumeAppliedEdits(simpleLog, simpleLogBaseView, undefined, undefined, [
+				1000,
+				simpleLogInitialView,
+			]);
+		}, validateAssertionError('revision must correspond to the result of a SequencedEdit'));
 	});
 
 	it('can be created with an initial revision', async () => {

@@ -430,7 +430,7 @@ export const checkPolicy: StateHandlerFunction = async (
 };
 
 /**
- * Checks that a release branch exists.
+ * Checks whether assert tagging has been done.
  *
  * @param state - The current state machine state.
  * @param machine - The state machine.
@@ -901,5 +901,56 @@ export const checkValidReleaseGroup: StateHandlerFunction = async (
 		BaseStateHandler.signalFailure(machine, state);
 	}
 
+	return true;
+};
+
+/**
+ * Checks whether the compatibility generation value for Fluid's layers need to been updated.
+ *
+ * @param state - The current state machine state.
+ * @param machine - The state machine.
+ * @param testMode - Set to true to run function in test mode.
+ * @param log - A logger that the function can use for logging.
+ * @param data - An object with handler-specific contextual data.
+ * @returns True if the state was handled; false otherwise.
+ */
+export const checkCompatLayerGeneration: StateHandlerFunction = async (
+	state: MachineState,
+	machine: Machine<unknown>,
+	testMode: boolean,
+	log: CommandLogger,
+	data: FluidReleaseStateHandlerData,
+): Promise<boolean> => {
+	if (testMode) return true;
+
+	const { context, bumpType } = data;
+
+	if (bumpType === "patch") {
+		log.verbose(`Skipping layer compat generation check for patch release.`);
+		BaseStateHandler.signalSuccess(machine, state);
+		return true;
+	}
+
+	// layerGeneration:gen should be run from the root. It will only update packages that have the layerGeneration:gen
+	// script defined in their package.json.
+	const result = await execa.command(`pnpm run -r layerGeneration:gen`, {
+		cwd: context.root,
+	});
+	log.verbose(result.stdout);
+
+	// check for policy check violation
+	const gitRepo = await context.getGitRepository();
+	const afterPolicyCheckStatus = await gitRepo.gitClient.status();
+	const isClean = afterPolicyCheckStatus.isClean();
+	if (!isClean) {
+		log.logHr();
+		log.errorLog(
+			`Layer generation needs to be updated. Please create a PR for the changes and merge before retrying.\n${afterPolicyCheckStatus.files.map((fileStatus) => `${fileStatus.index} ${fileStatus.path}`).join("\n")}`,
+		);
+		BaseStateHandler.signalFailure(machine, state);
+		return false;
+	}
+
+	BaseStateHandler.signalSuccess(machine, state);
 	return true;
 };

@@ -260,7 +260,6 @@ export function isClassBasedSchema(
 export function createTreeNodeSchemaPrivateData(
 	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
 	childAllowedTypes: readonly AllowedTypesFull[],
-	toStored: TreeNodeSchemaPrivateData["toStored"],
 ): TreeNodeSchemaPrivateData {
 	const schemaValid = schemaAsTreeNodeValid(schema);
 	// Since this closes over the schema, ensure this schema is marked as most derived
@@ -270,7 +269,6 @@ export function createTreeNodeSchemaPrivateData(
 	return {
 		idempotentInitialize: () => schemaValid.oneTimeInitialize().oneTimeInitialized,
 		childAllowedTypes,
-		toStored,
 	};
 }
 

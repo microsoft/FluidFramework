@@ -13,7 +13,6 @@ import type {
 import {
 	createMockLoggerExt,
 	type IMockLoggerExt,
-	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
@@ -35,6 +34,7 @@ import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
+	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type ChannelFactoryRegistry,
@@ -1053,10 +1053,11 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 	family: ICodecFamily<TDecoded, TContext>,
 	encodingTestData: EncodingTestData<TDecoded, TEncoded, TContext>,
 	assertEquivalent: (a: TDecoded, b: TDecoded) => void = assertDeepEqual,
-	versions?: FormatVersion[],
+	supportedVersions?: FormatVersion[],
+	discontinuedVersions?: FormatVersion[],
 ): void {
-	const versionsToTest = versions ?? family.getSupportedFormats();
-	for (const version of versionsToTest) {
+	const supportedVersionsToTest = supportedVersions ?? family.getSupportedFormats();
+	for (const version of supportedVersionsToTest) {
 		describe(`version ${version}`, () => {
 			const codec = family.resolve(version);
 			// A common pattern to avoid validating the same portion of encoded data multiple times
@@ -1117,6 +1118,35 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 				});
 			}
 		});
+	}
+	if (discontinuedVersions !== undefined) {
+		for (const version of discontinuedVersions) {
+			describe(`discontinued version ${version}`, () => {
+				const codec = family.resolve(version);
+				const jsonCodec =
+					codec.json.encodedSchema !== undefined
+						? withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic)
+						: codec.json;
+				it("throws when encoding", () => {
+					assert(encodingTestData.successes.length > 0);
+					const [name, data, context] = encodingTestData.successes[0];
+					assert.throws(
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						() => jsonCodec.encode(data, context!),
+						validateUsageError(/Cannot encode data to format/),
+					);
+				});
+				it("throws when decoding", () => {
+					assert(encodingTestData.successes.length > 0);
+					const [name, data, context] = encodingTestData.successes[0];
+					assert.throws(
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						() => jsonCodec.decode({ version }, context!),
+						validateUsageError(/Cannot decode data to format/),
+					);
+				});
+			});
+		}
 	}
 }
 
@@ -1394,44 +1424,6 @@ export class MockTreeCheckout implements ITreeCheckout {
 	public locate(anchor: Anchor): AnchorNode | undefined {
 		throw new Error("Method 'locate' not implemented in MockTreeCheckout.");
 	}
-}
-
-/**
- * {@link validateError} for `UsageError`.
- */
-export function validateUsageError(expectedErrorMsg: string | RegExp): (error: Error) => true {
-	return validateError(expectedErrorMsg, UsageError);
-}
-
-/**
- * {@link validateError} for `TypeError`.
- */
-export function validateTypeError(expectedErrorMsg: string | RegExp): (error: Error) => true {
-	return validateError(expectedErrorMsg, TypeError);
-}
-
-/**
- * Validates that a specific kind of error was thrown with the expected message.
- *
- * Intended for use with NodeJS's `assert.throws`.
- */
-export function validateError(
-	expectedErrorMsg: string | RegExp,
-	errorType: new (...args: any[]) => Error = Error,
-): (error: Error) => true {
-	return (error: Error) => {
-		assert(error instanceof errorType, `Expected ${errorType.name}, got ${error}`);
-		if (
-			typeof expectedErrorMsg === "string"
-				? error.message !== expectedErrorMsg
-				: !expectedErrorMsg.test(error.message)
-		) {
-			throw new Error(
-				`Unexpected ${errorType.name} thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
-			);
-		}
-		return true;
-	};
 }
 
 function normalizeNewFieldContent(

@@ -4,18 +4,34 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { SchemaFactory, SchemaFactoryAlpha } from "../../simple-tree/index.js";
+import {
+	createSchemaUpgrade,
+	ExpectStored,
+	FieldKind,
+	generateSchemaFromSimpleSchema,
+	SchemaFactory,
+	SchemaFactoryAlpha,
+	type SimpleFieldSchema,
+} from "../../simple-tree/index.js";
 import {
 	convertField,
 	getStoredSchema,
 	permissiveStoredSchemaGenerationOptions,
 	restrictiveStoredSchemaGenerationOptions,
 	toInitialSchema,
+	simpleStoredSchemaToStoredSchema,
 	toStoredSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/toStoredSchema.js";
-import { FieldKinds } from "../../feature-libraries/index.js";
+import {
+	cursorForJsonableTreeField,
+	defaultSchemaPolicy,
+	FieldKinds,
+	isFieldInSchema,
+	mapTreeFieldFromCursor,
+} from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import {
 	HasStagedAllowedTypes,
@@ -23,6 +39,7 @@ import {
 	testDocuments,
 } from "../testTrees.js";
 import { EmptyKey } from "../../core/index.js";
+import { exportSimpleSchema } from "../../shared-tree/index.js";
 
 describe("toStoredSchema", () => {
 	describe("toStoredSchema", () => {
@@ -54,12 +71,132 @@ describe("toStoredSchema", () => {
 			assert.equal(schema.number, schema2.number);
 		});
 
-		for (const testCase of testDocuments) {
-			it(testCase.name, () => {
-				toStoredSchema(testCase.schema, restrictiveStoredSchemaGenerationOptions);
-				toStoredSchema(testCase.schema, permissiveStoredSchemaGenerationOptions);
-			});
-		}
+		describe("test documents", () => {
+			for (const testCase of testDocuments) {
+				describe(testCase.name, () => {
+					if (
+						testCase.requiresStagedSchema === true ||
+						testCase.hasUnknownOptionalFieldSchema === true
+					) {
+						// If the document is relying on forwards compatibility options (staged schema or unknown optional fields),
+						// then we do not expect to be able to get the same stored schema as in the document by deriving a stored schema from the view schema.
+						// For cases just using staged schema, this validates that the staged schema is being discarded due to restrictiveStoredSchemaGenerationOptions,
+						// but the main reason for this conditional is to avoid these cases breaking the "Matches document" case below.
+						it("Does not match document", () => {
+							const restrictive = toStoredSchema(
+								testCase.schema,
+								restrictiveStoredSchemaGenerationOptions,
+							);
+							assert.notDeepEqual(restrictive, testCase.schemaData);
+						});
+					} else {
+						// Ensure that the stored schema captured in these test documents matches what we would generate from the view schema.
+						// We can only test this in cases where the document is not relying on forwards compatibility options.
+						it("Matches document", () => {
+							const restrictive = toStoredSchema(
+								testCase.schema,
+								restrictiveStoredSchemaGenerationOptions,
+							);
+							assert.deepEqual(restrictive, testCase.schemaData);
+						});
+					}
+
+					it("Restrictive and Permissive", () => {
+						const restrictive = toStoredSchema(
+							testCase.schema,
+							restrictiveStoredSchemaGenerationOptions,
+						);
+						const permissive = toStoredSchema(
+							testCase.schema,
+							permissiveStoredSchemaGenerationOptions,
+						);
+
+						// The restrictive case, used for initial schemas and upgrades, does not include any staged allowed types.
+						// The permissive case, used for unhydrated trees, includes all staged allowed types.
+						// They should be equal if an only if there are no staged allowed types.
+						if (testCase.hasStagedSchema) {
+							assert.notDeepEqual(restrictive, permissive);
+						} else {
+							assert.deepEqual(restrictive, permissive);
+						}
+
+						const tree = mapTreeFieldFromCursor(
+							cursorForJsonableTreeField(testCase.treeFactory()),
+						);
+
+						// Our test case has an actual tree which is known to comply with its existing stored schema, and the test case's view schema.
+						// Therefore, the tree must be in schema for the permissive case, with the exception of any unknown optional fields.
+						// We can assert this here.
+						// This is a sanity check that the produced permissive schema actually allows the trees it's supposed to.
+						// This could catch bugs where simple to stored to simple round trip is correct, but the corresponding stored schema is wrong.
+						isFieldInSchema(
+							tree,
+							permissive.rootFieldSchema,
+							{
+								schema: permissive,
+								policy: defaultSchemaPolicy,
+							},
+							() => {
+								assert(testCase.hasUnknownOptionalFields);
+								return true;
+							},
+						);
+
+						const restrictiveOutOfSchema = isFieldInSchema(
+							tree,
+							restrictive.rootFieldSchema,
+							{
+								schema: restrictive,
+								policy: defaultSchemaPolicy,
+							},
+							() => true,
+						);
+						// Similar to above, we check the produced restrictive schema actually behaves correctly for the test tree.
+						assert.equal(
+							restrictiveOutOfSchema === true,
+							testCase.requiresStagedSchema === true ||
+								testCase.hasUnknownOptionalFields === true,
+						);
+
+						// These aren't the tests for "exportSimpleSchema", but toStored should work with them, so we can use them to check consistency and round trip.
+						const simpleFromRestrictive = exportSimpleSchema(restrictive);
+						const simpleFromPermissive = exportSimpleSchema(permissive);
+
+						if (testCase.hasStagedSchema) {
+							assert.notDeepEqual(simpleFromRestrictive, simpleFromPermissive);
+						} else {
+							assert.deepEqual(simpleFromRestrictive, simpleFromPermissive);
+						}
+
+						const restrictive2 = simpleStoredSchemaToStoredSchema(simpleFromRestrictive);
+						const permissive2 = simpleStoredSchemaToStoredSchema(simpleFromPermissive);
+
+						assert.deepEqual(restrictive2, restrictive);
+						assert.deepEqual(permissive2, permissive);
+
+						// To further ensure toStoredSchema works with the other schema transforming APIs,
+						// validate it with generateSchemaFromSimpleSchema to round trip through view schema.
+						// View schema generated from stored schema will never contain staged schema:
+						// they will either have been removed, or baked in (with the fact they were staged having been lost).
+						const restrictive3 = toStoredSchema(
+							generateSchemaFromSimpleSchema(simpleFromRestrictive).root,
+							{
+								includeStaged: () => assert.fail(),
+							},
+						);
+						const permissive3 = toStoredSchema(
+							generateSchemaFromSimpleSchema(simpleFromPermissive).root,
+							{
+								includeStaged: () => assert.fail(),
+							},
+						);
+
+						assert.deepEqual(restrictive3, restrictive);
+						assert.deepEqual(permissive3, permissive);
+					});
+				});
+			}
+		});
 	});
 
 	describe("toInitialSchema with staged schema", () => {
@@ -136,6 +273,81 @@ describe("toStoredSchema", () => {
 			assert.deepEqual(storedRestrictive.types, new Set([]));
 			assert.equal(storedPermissive.kind, FieldKinds.required.identifier);
 			assert.deepEqual(storedPermissive.types, new Set([SchemaFactory.number.identifier]));
+		});
+
+		it(" StoredSchemaGenerationOptions cases", () => {
+			const stagedFalse: SimpleFieldSchema = {
+				kind: FieldKind.Optional,
+				simpleAllowedTypes: new Map([["X", { isStaged: false }]]),
+				metadata: {},
+			};
+
+			const upgrade = createSchemaUpgrade();
+			const stagedUpgrade: SimpleFieldSchema = {
+				kind: FieldKind.Optional,
+				simpleAllowedTypes: new Map([["X", { isStaged: upgrade }]]),
+				metadata: {},
+			};
+
+			const stagedUndefined: SimpleFieldSchema = {
+				kind: FieldKind.Optional,
+				simpleAllowedTypes: new Map([["X", { isStaged: undefined }]]),
+				metadata: {},
+			};
+
+			// Valid cases:
+			const f1 = convertField(stagedFalse, { includeStaged: () => assert.fail() });
+			const f2 = convertField(stagedUpgrade, {
+				includeStaged: (u) => {
+					assert.equal(u, upgrade);
+					return true;
+				},
+			});
+			const f3 = convertField(stagedUpgrade, {
+				includeStaged: (u) => {
+					assert.equal(u, upgrade);
+					return false;
+				},
+			});
+			const f4 = convertField(stagedUndefined, ExpectStored);
+			assert.deepEqual(f1, {
+				kind: "Optional",
+				persistedMetadata: undefined,
+				types: new Set(["X"]),
+			});
+			assert.deepEqual(f2, {
+				kind: "Optional",
+				persistedMetadata: undefined,
+				types: new Set(["X"]),
+			});
+			assert.deepEqual(f3, {
+				kind: "Optional",
+				persistedMetadata: undefined,
+				types: new Set(),
+			});
+			assert.deepEqual(f4, {
+				kind: "Optional",
+				persistedMetadata: undefined,
+				types: new Set(["X"]),
+			});
+
+			// invalid cases
+			assert.throws(
+				() => convertField(stagedFalse, ExpectStored),
+				validateUsageError(
+					/use of `ExpectStored`, but view schema specific content was encountered/,
+				),
+			);
+			assert.throws(
+				() => convertField(stagedUpgrade, ExpectStored),
+				validateUsageError(
+					/use of `ExpectStored`, but view schema specific content was encountered/,
+				),
+			);
+			assert.throws(
+				() => convertField(stagedUndefined, { includeStaged: () => assert.fail() }),
+				validateUsageError(/view schema was actually a stored schema/),
+			);
 		});
 	});
 

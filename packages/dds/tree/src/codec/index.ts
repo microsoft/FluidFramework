@@ -39,4 +39,5 @@ export {
 	makeVersionedCodec,
 	makeVersionedValidatedCodec,
 	makeVersionDispatchingCodec,
+	makeDiscontinuedCodecVersion,
 } from "./versioned/index.js";

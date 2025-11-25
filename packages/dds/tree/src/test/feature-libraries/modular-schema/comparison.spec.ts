@@ -31,8 +31,6 @@ import {
 } from "../../../feature-libraries/modular-schema/comparison.js";
 import { brand } from "../../../util/index.js";
 import { fieldSchema } from "../../utils.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { withEditor } from "../../../feature-libraries/modular-schema/fieldKindWithEditor.js";
 
 describe("Schema Comparison", () => {
 	const numberLeaf: TreeNodeStoredSchema = new LeafNodeStoredSchema(ValueSchema.Number);
@@ -187,7 +185,7 @@ describe("Schema Comparison", () => {
 		updateTreeSchema(repo, emptyTree.name, emptyTree.schema);
 		const identifierField = fieldSchema(FieldKinds.identifier, [emptyTree.name]);
 		{
-			const result = withEditor(FieldKinds.required).allowsFieldSuperset(
+			const result = FieldKinds.required.allowsFieldSuperset(
 				defaultSchemaPolicy,
 				repo,
 				new Set([emptyTree.name]),
@@ -196,7 +194,7 @@ describe("Schema Comparison", () => {
 			assert.equal(result, false);
 		}
 		{
-			const result = withEditor(FieldKinds.identifier).allowsFieldSuperset(
+			const result = FieldKinds.identifier.allowsFieldSuperset(
 				defaultSchemaPolicy,
 				repo,
 				new Set([emptyTree.name]),

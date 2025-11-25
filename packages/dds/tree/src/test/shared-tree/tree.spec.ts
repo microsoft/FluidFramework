@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+import { MockHandle, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	SchemaFactory,
@@ -19,12 +19,7 @@ import {
 	type TransactionConstraint,
 	type rollback,
 } from "../../simple-tree/index.js";
-import {
-	TestTreeProviderLite,
-	createTestUndoRedoStacks,
-	getView,
-	validateUsageError,
-} from "../utils.js";
+import { TestTreeProviderLite, createTestUndoRedoStacks, getView } from "../utils.js";
 
 // eslint-disable-next-line import-x/no-internal-modules
 import { hydrate } from "../simple-tree/utils.js";

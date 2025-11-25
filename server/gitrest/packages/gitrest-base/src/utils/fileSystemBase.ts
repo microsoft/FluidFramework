@@ -8,10 +8,9 @@ import type { Mode, ObjectEncodingOptions, OpenMode, PathLike } from "node:fs";
 import type fsPromises from "node:fs/promises";
 import type { Stream } from "node:stream";
 
-import sizeof from "object-sizeof";
-
 import type { IFileSystemPromises } from "./definitions";
 import { filepathToString, FilesystemError, SystemErrors } from "./fileSystemHelper";
+import { sizeof } from "./helpers";
 
 export abstract class FsPromisesBase implements IFileSystemPromises {
 	public readonly promises?: IFileSystemPromises;

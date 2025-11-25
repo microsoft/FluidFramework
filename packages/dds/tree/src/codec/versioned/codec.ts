@@ -5,7 +5,8 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { TSchema } from "@sinclair/typebox";
+import type { SemanticVersion } from "@fluidframework/runtime-utils/internal";
+import { Type, type TSchema } from "@sinclair/typebox";
 
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import {
@@ -66,7 +67,7 @@ export function makeVersionedValidatedCodec<
 	TContext = void,
 >(
 	options: ICodecOptions,
-	supportedVersions: Set<number>,
+	supportedVersions: Set<FormatVersion>,
 	schema: EncodedSchema,
 	codec: IJsonCodec<TDecoded, TEncoded, TValidate, TContext>,
 ): IJsonCodec<TDecoded, TEncoded, TValidate, TContext> {
@@ -75,6 +76,43 @@ export function makeVersionedValidatedCodec<
 		options,
 		withSchemaValidation(schema, codec, options.jsonValidator),
 	);
+}
+
+/**
+ * Creates a codec which always throws a UsageError when encoding or decoding, indicating that the format version is discontinued.
+ */
+export function makeDiscontinuedCodecVersion<
+	TDecoded,
+	TEncoded extends Versioned = JsonCompatibleReadOnly & Versioned,
+	TContext = unknown,
+>(
+	options: ICodecOptions,
+	discontinuedVersion: FormatVersion,
+	discontinuedSince: SemanticVersion,
+): IJsonCodec<TDecoded, TEncoded, TEncoded, TContext> {
+	const schema = Type.Object(
+		{
+			version:
+				discontinuedVersion === undefined
+					? Type.Undefined()
+					: Type.Literal(discontinuedVersion),
+		},
+		// Using `additionalProperties: true` allows this schema to be used when loading data encoded by older versions even though they contain additional properties.
+		{ additionalProperties: true },
+	);
+	const codec: IJsonCodec<TDecoded, TEncoded, TEncoded, TContext> = {
+		encode: (_: TDecoded): TEncoded => {
+			throw new UsageError(
+				`Cannot encode data to format ${discontinuedVersion}. The codec was discontinued in FF version ${discontinuedSince}.`,
+			);
+		},
+		decode: (data: TEncoded): TDecoded => {
+			throw new UsageError(
+				`Cannot decode data to format ${data.version}. The codec was discontinued in FF version ${discontinuedSince}.`,
+			);
+		},
+	};
+	return makeVersionedValidatedCodec(options, new Set([discontinuedVersion]), schema, codec);
 }
 
 /**

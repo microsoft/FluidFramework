@@ -5,11 +5,12 @@
 
 import type { ImplicitFieldSchema, TreeNode } from "@fluidframework/tree";
 // These are used for doc links
-import type { FactoryContentObject, ReadableField } from "@fluidframework/tree/alpha";
-
-// This is used for doc links
-// eslint-disable-next-line unused-imports/no-unused-imports
-import type { bindEditor, defaultEditor } from "./agent.js";
+import type {
+	FactoryContentObject,
+	ReadableField,
+	TreeBranchAlpha,
+	TreeViewAlpha,
+} from "@fluidframework/tree/alpha";
 
 /**
  * Logger interface for logging events from a {@link SharedTreeSemanticAgent}.
@@ -23,9 +24,30 @@ export interface Logger {
 }
 
 /**
+ * A SharedTree view for use by a {@link SharedTreeSemanticAgent}.
+ * @alpha
+ * @privateRemarks This is a subset of the TreeViewAlpha functionality because if take it wholesale, it causes problems with invariance of the generic parameters.
+ */
+export type TreeView<TRoot extends ImplicitFieldSchema> = Pick<
+	TreeViewAlpha<TRoot>,
+	"root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"
+> &
+	TreeBranchAlpha;
+
+/**
+ * A value that is either a {@link TreeView} or a subtree within a {@link TreeView}.
+ * @alpha
+ */
+export type ViewOrTree<TSchema extends ImplicitFieldSchema> =
+	| TreeView<TSchema>
+	| (ReadableField<TSchema> & TreeNode);
+
+/**
  * The context object available to generated code when editing a tree.
  * @remarks This object is provided to JavaScript code executed by the {@link SynchronousEditor | editor} as a variable named `context`.
  * It contains the current state of the tree and utilities for creating and inspecting tree nodes.
+ *
+ * Use {@link createContext} to create a context.
  * @alpha
  */
 export interface Context<TSchema extends ImplicitFieldSchema> {
@@ -97,21 +119,39 @@ export interface Context<TSchema extends ImplicitFieldSchema> {
 
 /**
  * A synchronous function that executes a string of JavaScript code to perform an edit within a {@link SharedTreeSemanticAgent}.
- * @param context - An object that must be provided to the generated code as a variable named "context" in its top-level scope.
+ * @param tree - The tree to edit.
  * @param code - The JavaScript code that should be executed.
- * @remarks To simulate the execution of an editor outside of an {@link SharedTreeSemanticAgent | agent}, you can use {@link bindEditor | bindEditor} to bind an editor to a specific subtree.
+ * @throws Any error thrown by the executed code.
+ * @remarks The code expects a variable named `context` to be in scope, which provides access to the tree and utilities for creating and inspecting nodes.
+ * A context can be created for a given tree via the {@link createContext} function.
+ * @example
+ * ```ts
+ * // A simple editor implementation that runs the provided code via a JavaScript Function.
+ * new Function("context", code)(createContext(tree));
+ * ```
  * @alpha
  */
-export type SynchronousEditor = (context: Record<string, unknown>, code: string) => void;
+export type SynchronousEditor<TSchema extends ImplicitFieldSchema> = (
+	tree: ViewOrTree<TSchema>,
+	code: string,
+) => void;
+
 /**
  * An asynchronous function that executes a string of JavaScript code to perform an edit within a {@link SharedTreeSemanticAgent}.
- * @param context - An object that must be provided to the generated code as a variable named "context" in its top-level scope.
+ * @param tree - The tree to edit.
  * @param code - The JavaScript code that should be executed.
- * @remarks To simulate the execution of an editor outside of an {@link SharedTreeSemanticAgent | agent}, you can use {@link bindEditor | bindEditor} to bind an editor to a specific subtree.
+ * @throws Any error thrown by the executed code.
+ * @remarks The code expects a variable named `context` to be in scope, which provides access to the tree and utilities for creating and inspecting nodes.
+ * A context can be created for a given tree via the {@link createContext} function.
+ * @example
+ * ```ts
+ * // A simple editor implementation that runs the provided code via a JavaScript Function.
+ * await new Function("context", code)(createContext(tree));
+ * ```
  * @alpha
  */
-export type AsynchronousEditor = (
-	context: Record<string, unknown>,
+export type AsynchronousEditor<TSchema extends ImplicitFieldSchema> = (
+	tree: ViewOrTree<TSchema>,
 	code: string,
 ) => Promise<void>;
 
@@ -119,7 +159,7 @@ export type AsynchronousEditor = (
  * Options used to parameterize the creation of a {@link SharedTreeSemanticAgent}.
  * @alpha
  */
-export interface SemanticAgentOptions {
+export interface SemanticAgentOptions<TSchema extends ImplicitFieldSchema> {
 	/**
 	 * Additional information about the application domain that will be included in the context provided to the {@link SharedTreeChatModel | model}.
 	 */
@@ -127,12 +167,10 @@ export interface SemanticAgentOptions {
 	/**
 	 * Executes any generated JavaScript created by the {@link SharedTreeChatModel.editToolName | model's editing tool}.
 	 * @remarks If an error is thrown while executing the code, it will be caught and the message will be forwarded to the {@link SharedTreeChatModel | model} for debugging.
-	 * @remarks If this function is not provided, the generated code will be executed using a {@link defaultEditor | simple default} which may not provide sufficient security guarantees for some environments.
-	 * Use a library such as SES to provide a more secure implementation - see `@fluidframework/tree-agent-ses` for a drop-in implementation.
-	 *
-	 * To simulate the execution of an editor outside of an {@link SharedTreeSemanticAgent | agent}, you can use {@link bindEditor | bindEditor} to bind an editor to a specific subtree.
+	 * @remarks If this function is not provided, the generated code will be executed using a simple JavaScript eval which may not provide sufficient security guarantees for some environments.
+	 * Run the code in a sandboxed environment or use a library such as SES to provide a more secure implementation - see `@fluidframework/tree-agent-ses` for a drop-in implementation.
 	 */
-	editor?: SynchronousEditor | AsynchronousEditor;
+	editor?: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
 	/**
 	 * The maximum number of sequential edits the LLM can make before we assume it's stuck in a loop.
 	 */
@@ -234,14 +272,3 @@ export interface SharedTreeChatModel {
 	 */
 	query(message: SharedTreeChatQuery): Promise<string>;
 }
-
-/**
- * A function that edits a SharedTree.
- */
-export type EditFunction<TSchema extends ImplicitFieldSchema> = ({
-	root,
-	create,
-}: {
-	root: ReadableField<TSchema>;
-	create: Record<string, (input: FactoryContentObject) => TreeNode>;
-}) => void | Promise<void>;

@@ -86,7 +86,7 @@ import {
 	type FactoryContentObject,
 	type InsertableContent,
 } from "../../unhydratedFlexTreeFromInsertable.js";
-import { convertField, convertFieldKind } from "../../toStoredSchema.js";
+import { convertFieldKind } from "../../toStoredSchema.js";
 import type { ObjectSchemaOptionsAlpha } from "../../api/index.js";
 
 /**
@@ -585,20 +585,6 @@ export function objectSchema<
 			return (privateData ??= createTreeNodeSchemaPrivateData(
 				this,
 				Array.from(CustomObjectNode.fields.values(), (schema) => schema.allowedTypesFull),
-				(storedOptions) => {
-					const fields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
-					for (const fieldSchema of flexKeyMap.values()) {
-						assert(
-							fieldSchema.schema instanceof FieldSchemaAlpha,
-							0xc19 /* Expected FieldSchemaAlpha */,
-						);
-						fields.set(
-							brand(fieldSchema.storedKey),
-							convertField(fieldSchema.schema, storedOptions),
-						);
-					}
-					return new ObjectNodeStoredSchema(fields, nodeOptions.persistedMetadata);
-				},
 			));
 		}
 	}
@@ -650,9 +636,8 @@ function assertUniqueKeys<
 }
 
 /**
- * {@link TreeNodeSchemaInitializedData.toFlexContent} for Map nodes.
+ * {@link TreeNodeSchemaInitializedData.toFlexContent} for object nodes.
  *
- * Transforms data under an Object schema.
  * @param data - The tree data to be transformed. Must be a Record-like object.
  * @param schema - The schema to comply with.
  */

@@ -24,7 +24,7 @@ import {
 import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
-	type FieldKindWithEditor,
+	type FlexFieldKind,
 	type ModularChangeset,
 	type SequenceField as SF,
 	type EditDescription,
@@ -62,7 +62,7 @@ import { assertEqual, Change, removeAliases } from "./modular-schema/modularChan
 // eslint-disable-next-line import-x/no-internal-modules
 import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
 
-const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map([
+const fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> = new Map([
 	[sequence.identifier, sequence],
 ]);
 

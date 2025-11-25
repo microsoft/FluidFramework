@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
 
@@ -26,10 +27,8 @@ import {
 	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
-	validateUsageError,
 } from "../utils.js";
 import { currentVersion, DependentFormatVersion } from "../../codec/index.js";
-import { MessageFormatVersion } from "../../shared-tree-core/index.js";
 
 const commit1 = {
 	revision: mintRevisionTag(),
@@ -151,7 +150,7 @@ describe("message codec", () => {
 		},
 	);
 
-	makeEncodingTestSuite(family, testCases);
+	makeEncodingTestSuite(family, testCases, undefined, [3, 4, 5], [undefined, 1, 2]);
 
 	describe("dispatching codec", () => {
 		const codec = makeMessageCodec(
@@ -190,55 +189,6 @@ describe("message codec", () => {
 					change: TestChange.mint([], 1),
 				},
 			});
-		});
-
-		it("accepts unversioned messages as version 1", () => {
-			const revision = 1 as EncodedRevisionTag;
-			const originatorId = createSessionId();
-			const encoded = JSON.stringify({
-				revision,
-				originatorId,
-				changeset: {},
-			} satisfies Message);
-			const actual = codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor });
-			assert.deepEqual(actual, {
-				type: "commit",
-				commit: {
-					revision: testRevisionTagCodec.decode(revision, {
-						originatorId,
-						revision: undefined,
-						idCompressor: testIdCompressor,
-					}),
-					change: {},
-				},
-				sessionId: originatorId,
-				branchId: "main",
-			} satisfies DecodedMessage<unknown>);
-		});
-
-		it("accepts version 1 messages as version 1", () => {
-			const revision = 1 as EncodedRevisionTag;
-			const originatorId = createSessionId();
-			const encoded = JSON.stringify({
-				revision,
-				originatorId,
-				changeset: {},
-				version: MessageFormatVersion.v1,
-			} satisfies Message);
-			const actual = codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor });
-			assert.deepEqual(actual, {
-				type: "commit",
-				commit: {
-					revision: testRevisionTagCodec.decode(revision, {
-						originatorId,
-						revision: undefined,
-						idCompressor: testIdCompressor,
-					}),
-					change: {},
-				},
-				sessionId: originatorId,
-				branchId: "main",
-			} satisfies DecodedMessage<unknown>);
 		});
 
 		it("rejects messages with invalid versions", () => {

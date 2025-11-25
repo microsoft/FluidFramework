@@ -61,20 +61,11 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 | `build` | `npm run print-config` |
 | `build:readme:disabled` | `markdown-magic --files "**/*.md"` |
 | `clean` | `rimraf --glob dist` |
-| `cleanup-printed-configs` | Clean up the printed configs. Removes the `parser` property and sorts the JSON. |
 | `format` | `npm run prettier:fix` |
 | `prettier` | `prettier --check .` |
 | `prettier:fix` | `prettier --write .` |
-| `print-config` | Print all the eslint configs. |
-| `print-config:default` | Print the eslint config for regular TypeScript files (`eslint --config index.js --print-config src/file.ts`). |
-| `print-config:minimal` | `eslint --config ./minimal-deprecated.js --print-config ./src/file.ts > ./printed-configs/minimal.json` |
-| `print-config:react` | `eslint --config ./index.js --print-config ./src/file.tsx > ./printed-configs/react.json` |
-| `print-config:recommended` | `eslint --config ./recommended.js --print-config ./src/file.ts > ./printed-configs/recommended.json` |
-| `print-config:strict` | `eslint --config ./strict.js --print-config ./src/file.ts > ./printed-configs/strict.json` |
-| `print-config:strict-biome` | `eslint --config ./strict-biome.js --print-config ./src/file.ts > ./printed-configs/strict-biome.json` |
-| `print-config:test` | Print the eslint config for test files (`eslint --config index.js --print-config src/test/file.ts`). |
+| `print-configs` | `tsx scripts/print-configs.ts printed-configs` |
 | `test` | `echo TODO: add tests in @fluidframework/eslint-config-fluid` |
-| `tsc` | `npm run build` |
 
 <!-- prettier-ignore-end -->
 

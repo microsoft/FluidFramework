@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "identifiers": [],
+  "shapes": [
+    {
+      "c": {
+        "type": "test.recursiveType",
+        "value": false,
+        "fields": [
+          [
+            "field",
+            1
+          ]
+        ]
+      }
+    },
+    {
+      "a": 0
+    }
+  ],
+  "data": [
+    [
+      0,
+      0
+    ]
+  ]
+}

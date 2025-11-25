@@ -43,25 +43,6 @@ export function failUsage(message: string): never {
 }
 
 /**
- * Validates that the error is a UsageError with the expected error message.
- */
-export function validateUsageError(expectedErrorMsg: string | RegExp): (error: Error) => true {
-	return (error: Error) => {
-		assert(error instanceof UsageError);
-		if (
-			typeof expectedErrorMsg === "string"
-				? error.message !== expectedErrorMsg
-				: !expectedErrorMsg.test(error.message)
-		) {
-			throw new Error(
-				`Unexpected assertion thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
-			);
-		}
-		return true;
-	};
-}
-
-/**
  * The LLM providers supported by {@link createLlmClient}.
  */
 export type LlmProvider = "openai" | "anthropic" | "gemini";

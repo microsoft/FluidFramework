@@ -28,8 +28,6 @@ resources:
       branches:
       - release/*
       - main
-      - next
-      - lts
   - pipeline: routerlicious
     source: server-routerlicious
     branch: main # Default branch for manual/scheduled triggers if none is selected

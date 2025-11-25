@@ -19,7 +19,8 @@ jobs:
     name: Validate CODEOWNERS
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
+      # release notes: https://github.com/actions/checkout/releases/tag/v5.0.0
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # ratchet:actions/checkout@v5
         with:
           persist-credentials: false
       - uses: mszostok/codeowners-validator@7f3f5e28c6d7b8dfae5731e54ce2272ca384592f # ratchet:mszostok/codeowners-validator@v0.7.4

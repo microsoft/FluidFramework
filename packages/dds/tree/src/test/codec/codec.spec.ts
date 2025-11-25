@@ -22,14 +22,14 @@ describe("Codec APIs", () => {
 			it("on encode", () => {
 				assert.throws(
 					() => codec.encode("bad data" as unknown as number),
-					(error: Error) => validateAssertionError(error, /Encoded schema should validate/),
+					validateAssertionError(/Encoded schema should validate/),
 				);
 			});
 
 			it("on decode", () => {
 				assert.throws(
 					() => codec.decode("bad data" as unknown as number),
-					(error: Error) => validateAssertionError(error, /Encoded schema should validate/),
+					validateAssertionError(/Encoded schema should validate/),
 				);
 			});
 		});

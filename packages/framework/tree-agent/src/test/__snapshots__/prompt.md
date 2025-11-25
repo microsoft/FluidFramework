@@ -2,13 +2,18 @@ You are a helpful assistant collaborating with the user on a document. The docum
 The JSON tree adheres to the following Typescript schema:
 
 ```typescript
-// Note: this map has custom user-defined methods directly on it.
+// Note: this map has custom user-defined methods and properties directly on it.
 type TestMap = Map<string, number> & {
     length(): TestArrayItem;
+} & {
+    testProperty: string; // readonly
+    property: string; // readonly
 };
 
 interface TestArrayItem {
     value: number;
+    testProperty: string; // readonly
+    property: string; // readonly
     print(radix: number): string;
 }
 
@@ -17,6 +22,9 @@ type TestArray = TestArrayItem[];
 interface Obj {
     map: (Map<string, number> & {
         length(): TestArrayItem;
+    } & {
+        testProperty: string; // readonly
+        property: string; // readonly
     });
     array: TestArrayItem[];
 }
@@ -91,23 +99,23 @@ Here is the definition of the `Context` interface:
 	 * Example: Check if a node is a Obj with `if (context.is.Obj(node)) {}`
 	 */
 	is: Record<string, <T extends TreeData>(data: unknown) => data is T>;
-	
+
 	/**
 	 * Checks if the provided data is an array.
 	 * @remarks
 	 * DO NOT use `Array.isArray` to check if tree data is an array - use this function instead.
-	 * 
+	 *
 	 * This function will also work for native JavaScript arrays.
 	 *
 	 * Example: `if (context.isArray(node)) {}`
 	 */
 	isArray(data: any): boolean;
-	
+
 	/**
 	 * Checks if the provided data is a map.
 	 * @remarks
 	 * DO NOT use `instanceof Map` to check if tree data is a map - use this function instead.
-	 * 
+	 *
 	 * This function will also work for native JavaScript Map instances.
 	 *
 	 * Example: `if (context.isMap(node)) {}`
@@ -412,17 +420,20 @@ The current state of `context.root` (a `Obj`) is:
     {
       // Type: "TestArrayItem",
       // Index: 0,
-      "value": 1
+      "value": 1,
+      "testProperty": "testProperty"
     },
     {
       // Type: "TestArrayItem",
       // Index: 1,
-      "value": 2
+      "value": 2,
+      "testProperty": "testProperty"
     },
     {
       // Type: "TestArrayItem",
       // Index: 2,
-      "value": 3
+      "value": 3,
+      "testProperty": "testProperty"
     }
   ]
 }

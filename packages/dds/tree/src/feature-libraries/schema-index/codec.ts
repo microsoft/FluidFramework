@@ -4,6 +4,10 @@
  */
 
 import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	getConfigForMinVersionForCollab,
+	lowestMinVersionForCollab,
+} from "@fluidframework/runtime-utils/internal";
 
 import {
 	type CodecTree,
@@ -40,9 +44,12 @@ import type { MinimumVersionForCollab } from "@fluidframework/runtime-definition
 export function clientVersionToSchemaVersion(
 	clientVersion: MinimumVersionForCollab,
 ): SchemaFormatVersion {
-	return clientVersion < FluidClientVersion.v2_43
-		? brand(SchemaFormatVersion.v1)
-		: brand(SchemaFormatVersion.v2);
+	return brand(
+		getConfigForMinVersionForCollab(clientVersion, {
+			[lowestMinVersionForCollab]: SchemaFormatVersion.v1,
+			[FluidClientVersion.v2_43]: SchemaFormatVersion.v2,
+		}),
+	);
 }
 
 export function getCodecTreeForSchemaFormat(

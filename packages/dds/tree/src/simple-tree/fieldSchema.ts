@@ -29,7 +29,7 @@ import type {
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	AllowedTypesFull,
 } from "./core/index.js";
-import { normalizeAllowedTypes } from "./core/index.js";
+import { AnnotatedAllowedTypesInternal, normalizeAllowedTypes } from "./core/index.js";
 
 import type { SimpleAllowedTypeAttributes, SimpleFieldSchema } from "./simpleSchema.js";
 import type { UnsafeUnknownSchema } from "./unsafeUnknownSchema.js";
@@ -413,16 +413,7 @@ export class FieldSchemaAlpha<
 	}
 
 	public get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
-		const types = this.allowedTypesFull.evaluate().types;
-		const info = new Map<string, SimpleAllowedTypeAttributes>();
-
-		for (const type of types) {
-			info.set(type.type.identifier, {
-				isStaged: type.metadata.stagedSchemaUpgrade !== undefined,
-			});
-		}
-
-		return info;
+		return AnnotatedAllowedTypesInternal.evaluateSimpleAllowedTypes(this.allowedTypesFull);
 	}
 
 	protected constructor(

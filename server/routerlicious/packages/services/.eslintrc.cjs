@@ -9,13 +9,13 @@ module.exports = {
 		"prettier",
 	],
 	rules: {
-		"import/no-nodejs-modules": "off",
+		"import-x/no-nodejs-modules": "off",
 		"promise/catch-or-return": ["error", { allowFinally: true }],
 
 		// TODO: remove this override and fix violations
 		"@typescript-eslint/strict-boolean-expressions": "warn",
 
 		// TODO: remove usages of deprecated APIs and remove this override
-		"import/no-deprecated": "warn",
+		"import-x/no-deprecated": "warn",
 	},
 };

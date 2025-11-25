@@ -577,7 +577,7 @@ export interface TreeViewEvents {
 /**
  * Retrieve the {@link TreeViewAlpha | alpha API} for a {@link TreeView}.
  * @alpha
- * @deprecated Use {@link asAlpha} instead.
+ * @deprecated Use {@link (asAlpha:1)} instead.
  * @privateRemarks Despite being deprecated, this function should be used within the tree package (outside of tests) rather than `asAlpha` in order to avoid circular import dependencies.
  */
 export function asTreeViewAlpha<TSchema extends ImplicitFieldSchema>(

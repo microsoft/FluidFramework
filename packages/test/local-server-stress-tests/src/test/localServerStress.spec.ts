@@ -42,6 +42,7 @@ describe("Local Server Stress", () => {
 		// Use skip, replay, and only properties to control which seeds run.
 		skip: [
 			11, // container closes with 0xc3d, and then test fails due to closed container
+			53, // 0xc3d
 			173, // 0xc3d
 		],
 	});

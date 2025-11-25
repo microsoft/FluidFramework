@@ -11,7 +11,7 @@ If your deployment strategy takes time to roll out, you'll want to ensure Fluid 
 
 ### Specifying compatibility mode
 
-In Fluid Framework 2.x, the [createContainer](https://fluidframework.com/docs/api/azure-client/azureclient-class#createcontainer-method) and getContainer APIs on [AzureClient](https://fluidframework.com/docs/api/azure-client/) and [TinyliciousClient](https://fluidframework.com/docs/api/tinylicious-client/) have a new parameter compatibilityMode which may be set to "1" or "2". When set to "1", the 2.x client can safely collaborate with 1.x clients.
+In Fluid Framework 2.x, the [createContainer](./api/azure-client/azureclient-class.md#createcontainer-method) and getContainer APIs on [AzureClient](./api/azure-client/index.md) and [TinyliciousClient](./api/tinylicious-client/index.md) have a new parameter compatibilityMode which may be set to "1" or "2". When set to "1", the 2.x client can safely collaborate with 1.x clients.
 
 ```ts
 const azureClient = new AzureClient(/* ... */);
@@ -36,4 +36,4 @@ Once "2" mode is enabled, clients will use the new 2.x features that will improv
 
 New containers can and should be created directly in "2" mode if clients running 1.x will not need to collaborate on them.
 Moving straight from 1.x to 2.x running in "2" mode is supported, but runs the risk that any 1.x clients will not be able to collaborate until they are upgraded. If your deployment strategy is not concerned with this risk, you can migrate directly from 1.x to 2.x in "2" mode.
-Some features of 2.x must be enabled at container creation and cannot be enabled after attach. Most notably, this includes [id compression](https://fluidframework.com/docs/api/id-compressor) which is a requirement for use of [SharedTree](../docs/data-structures/tree/index.mdx). As a result, SharedTree is not supported on documents created in 1.x or on 2.x running in "1" mode.
+Some features of 2.x must be enabled at container creation and cannot be enabled after attach. Most notably, this includes [id compression](./api/id-compressor/index.md) which is a requirement for use of [SharedTree](./data-structures/tree/index.mdx). As a result, SharedTree is not supported on documents created in 1.x or on 2.x running in "1" mode.
