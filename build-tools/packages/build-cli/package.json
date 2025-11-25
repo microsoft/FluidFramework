@@ -85,7 +85,7 @@
 		"@fluidframework/build-tools": "workspace:~",
 		"@fluidframework/bundle-size-tools": "workspace:~",
 		"@inquirer/prompts": "^8.0.1",
-		"@microsoft/api-extractor": "^7.52.11",
+		"@microsoft/api-extractor": "^7.55.1",
 		"@oclif/core": "^4.8.0",
 		"@oclif/plugin-autocomplete": "^3.2.39",
 		"@oclif/plugin-commands": "^4.1.38",
@@ -144,7 +144,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.4",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^6.1.0",
+		"@fluidframework/eslint-config-fluid": "^8.1.0",
 		"@oclif/test": "^4.1.15",
 		"@types/async": "^3.2.25",
 		"@types/chai": "^5.2.3",
