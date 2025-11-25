@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-base-to-string */
+
 import { strict as assert } from "node:assert";
 
 import type { IMatrixConsumer } from "@tiny-calc/nano";
@@ -159,7 +161,6 @@ export class SharedMatrixOracle {
 				case "conflict": {
 					// Probably cell is not yet set
 					if (actual === undefined) continue;
-					const actualString = JSON.stringify(actual);
 					// Winner must be present in the matrix
 					if (inBounds) {
 						assert.deepStrictEqual(
@@ -167,7 +168,7 @@ export class SharedMatrixOracle {
 							currentValue,
 							`Conflict mismatch at [${row},${col}]:
 					 expected winner=${currentValue},
-					 actual=${actualString},
+					 actual=${actual}, // eslint-disable-line @typescript-eslint/no-base-to-string
 					 loser=${conflictingValue} with cellValue=${cellValue}`,
 						);
 					}
@@ -185,13 +186,12 @@ export class SharedMatrixOracle {
 				case "cellChange": {
 					// Ensure what we recorded matched the matrix state at the time
 					if (inBounds) {
-						const actualString = JSON.stringify(actual);
 						assert.deepStrictEqual(
 							actual,
 							cellValue,
 							`Cell change mismatch at [${row},${col}]:
 					 expected=${cellValue},
-					 actual=${actualString}`,
+					 actual=${actual}`,
 						);
 					}
 					break;
