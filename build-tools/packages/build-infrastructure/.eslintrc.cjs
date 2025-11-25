@@ -18,7 +18,12 @@ module.exports = {
 		"@typescript-eslint/no-unused-vars": "error",
 
 		// This package is exclusively used in a Node.js context
-		"import/no-nodejs-modules": "off",
+		"import-x/no-nodejs-modules": "off",
+
+		// Rules that moved from eslint-plugin-import to eslint-plugin-import-x
+		"import/no-default-export": "off",
+		"import/no-deprecated": "off",
+		"import/no-named-as-default-member": "off",
 
 		"tsdoc/syntax": ["warn"],
 	},
@@ -28,7 +33,7 @@ module.exports = {
 			files: ["*.spec.ts", "src/test/**"],
 			rules: {
 				// Test files can import from anywhere
-				"import/no-internal-modules": "off",
+				"import-x/no-internal-modules": "off",
 
 				// Superseded by chai-friendly/no-unused-expressions
 				"no-unused-expressions": "off",

@@ -137,7 +137,6 @@
 		"strip-ansi": "^7.1.2",
 		"table": "^6.9.0",
 		"ts-morph": "^22.0.0",
-		"type-fest": "^5.2.0",
 		"unist-util-visit": "^5.0.0",
 		"xml2js": "^0.6.2"
 	},
@@ -177,6 +176,7 @@
 		"rimraf": "^6.1.2",
 		"ts-node": "^10.9.2",
 		"tslib": "^2.8.1",
+		"type-fest": "^2.19.0",
 		"typescript": "~5.4.5"
 	},
 	"engines": {

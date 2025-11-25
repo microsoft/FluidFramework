@@ -74,21 +74,29 @@ The following dependencies are pinned to older major versions because newer vers
     - Error: `however, the referenced file is an ECMAScript module and cannot be imported with 'require'`
     - Used in: `build-infrastructure`, `build-tools`
 
+11. **type-fest** - Pinned to `^2.x`
+    - Latest: `^4.x`
+    - Highest compatible: `^2.x` (v3+ is ESM-only)
+    - Issue: Version 3+ is ESM-only
+    - Error: `The current file is a CommonJS module... however, the referenced file is an ECMAScript module and cannot be imported with 'require'`
+    - Used in: `build-cli`, `build-infrastructure`, `build-tools`
+    - Note: v5+ also deprecated the `Opaque` type in favor of `Tagged`
+
 #### Type Compatibility Issues
 
-11. **typescript** - Pinned to `~5.4.5`
+12. **typescript** - Pinned to `~5.4.5`
     - Latest: `~5.7.x`
     - Issue: Version 5.9+ has stricter type checking that exposes issues with @octokit dependencies
     - Error: `Cannot find name 'ErrorOptions'`
     - Used in: `build-cli` (devDependency)
 
-12. **ts-morph** - Pinned to `^22.x`
+13. **ts-morph** - Pinned to `^22.x`
     - Latest: `^24.x`
     - Issue: Version 27+ requires newer TypeScript lib types
     - Error: `Cannot find name 'MapIterator'`
     - Used in: `build-cli`
 
-13. **azure-devops-node-api** - Pinned to `^11.x`
+14. **azure-devops-node-api** - Pinned to `^11.x`
     - Latest: `^15.x`
     - Issue: Version 15 has incompatible type definitions
     - Error: `Types have separate declarations of a private property` and `Type is missing properties`
@@ -96,23 +104,23 @@ The following dependencies are pinned to older major versions because newer vers
 
 #### API/Structure Breaking Changes
 
-14. **eslint** - Pinned to `~8.57.0`
+15. **eslint** - Pinned to `~8.57.0`
     - Latest: `~9.x`
     - Issue: Version 9 uses flat config system incompatible with existing configuration
     - Error: `ESLint configuration is invalid: Unexpected top-level property "__esModule"`
     - Used in: `build-cli` (devDependency)
 
-15. **eslint-config-oclif** - Pinned to `^5.x`
+16. **eslint-config-oclif** - Pinned to `^5.x`
     - Latest: `^6.x`
     - Issue: Version 6 requires ESLint 9
     - Used in: `build-cli`, `version-tools` (devDependency)
 
-16. **@fluidframework/eslint-config-fluid** - Pinned to `^6.x`
+17. **@fluidframework/eslint-config-fluid** - Pinned to `^6.x`
     - Latest: `^8.x`
     - Issue: Version 8 requires ESLint 9
     - Used in: `build-cli`, `build-infrastructure`, `build-tools`, `version-tools` (devDependency)
 
-17. **npm-check-updates** - Pinned to `^16.x`
+18. **npm-check-updates** - Pinned to `^16.x`
     - Latest: `^19.x`
     - Highest compatible: `^16.x` (v17+ changed internal module structure)
     - Issue: Version 17+ changed internal module structure and removed exported types
@@ -147,7 +155,6 @@ The following major version upgrades were successfully applied without breaking 
 - **cosmiconfig**: `^8.x` → `^9.x`
 - **change-case**: `^3.x` → `^5.x`
 - **minimatch**: `^7.x` → `^10.x`
-- **type-fest**: `^2.x` → `^5.x`
 - **@inquirer/prompts**: `^7.x` → `^8.x`
 - **picomatch**: `^2.x` → `^4.x`
 - **ignore**: `^5.x` → `^7.x`
