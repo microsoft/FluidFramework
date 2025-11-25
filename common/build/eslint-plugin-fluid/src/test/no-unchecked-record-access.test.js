@@ -5,7 +5,7 @@
 
 const assert = require("assert");
 const path = require("path");
-const { createESLintConfig, eslintVersion, ESLint } = require("../eslintConfigHelper.cjs");
+const { createESLintConfig, eslintVersion, ESLint } = require("./eslintConfigHelper.cjs");
 
 describe(`ESLint Rule Tests (eslint ${eslintVersion})`, function () {
 	async function lintFile(file) {
@@ -16,7 +16,7 @@ describe(`ESLint Rule Tests (eslint ${eslintVersion})`, function () {
 		});
 
 		const eslint = new ESLint(eslintOptions);
-		const fileToLint = path.join(__dirname, "../example/no-unchecked-record-access", file);
+		const fileToLint = path.join(__dirname, "./test-cases/no-unchecked-record-access", file);
 		const results = await eslint.lintFiles([fileToLint]);
 		return results[0];
 	}

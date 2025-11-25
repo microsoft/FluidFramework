@@ -214,7 +214,7 @@ export class TreeViewConfiguration<
 		assert(
 			// The type cast here is needed to avoid this assert narrowing "this" to never, breaking the code below.
 			(this.constructor as unknown) === TreeViewConfigurationAlpha,
-			"Invalid configuration class constructed.",
+			0xc9e /* Invalid configuration class constructed. */,
 		);
 
 		const config = { ...defaultTreeConfigurationOptions, ...props };

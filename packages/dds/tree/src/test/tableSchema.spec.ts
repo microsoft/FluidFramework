@@ -916,19 +916,21 @@ describe("TableFactory unit tests", () => {
 			assert.throws(
 				() => table.removeColumns(-1, undefined),
 				validateUsageError(
-					/Start index out of bounds. Expected index to be on \[0, 1], but got -1/,
+					/Expected non-negative index passed to Table.removeColumns, got -1./,
 				),
 			);
 
 			assert.throws(
 				() => table.removeColumns(1, -1),
-				validateUsageError(/Expected non-negative count. Got -1./),
+				validateUsageError(
+					/Malformed range passed to Table.removeColumns. Start index 1 is greater than end index 0./,
+				),
 			);
 
 			assert.throws(
 				() => table.removeColumns(0, 5),
 				validateUsageError(
-					/End index out of bounds. Expected end to be on \[0, 2], but got 5/,
+					/Index value passed to Table.removeColumns is out of bounds. Expected at most 2, got 5./,
 				),
 			);
 
@@ -1104,20 +1106,20 @@ describe("TableFactory unit tests", () => {
 
 			assert.throws(
 				() => table.removeRows(-1, undefined),
-				validateUsageError(
-					/Start index out of bounds. Expected index to be on \[0, 1], but got -1/,
-				),
+				validateUsageError(/Expected non-negative index passed to Table.removeRows, got -1./),
 			);
 
 			assert.throws(
 				() => table.removeRows(1, -1),
-				validateUsageError(/Expected non-negative count. Got -1./),
+				validateUsageError(
+					/Malformed range passed to Table.removeRows. Start index 1 is greater than end index 0./,
+				),
 			);
 
 			assert.throws(
 				() => table.removeRows(0, 5),
 				validateUsageError(
-					/End index out of bounds. Expected end to be on \[0, 2], but got 5/,
+					/Index value passed to Table.removeRows is out of bounds. Expected at most 2, got 5./,
 				),
 			);
 
