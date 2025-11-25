@@ -88,25 +88,6 @@ The value passed here should be a filter string for the logger namespace.
 > To print all messages, provide `--log '*'` or `--log 'fluid:*'`. For example, to filter to only Container logs,
 > provide something like: `-l 'fluid:telemetry:Container:*'`.
 
-#### Configuration
-
-You can configure mixed-version testing in `testConfig.json`:
-
-```json
-{
-  "profiles": {
-    "myMixedVersionProfile": {
-      "numClients": 10,
-      "mixedVersions": {
-        "enabled": true,
-        "previousVersionRatio": 0.4,
-        "previousVersionOverride": "2.60.0"
-      }
-    }
-  }
-}
-```
-
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
