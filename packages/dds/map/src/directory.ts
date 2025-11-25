@@ -41,6 +41,7 @@ import type {
 	IDirectoryValueChanged,
 	ISharedDirectory,
 	ISharedDirectoryEvents,
+	ISharedDirectoryEventsInternal,
 	IValueChanged,
 } from "./interfaces.js";
 import type {
@@ -402,7 +403,7 @@ interface SequenceData {
  * @sealed
  */
 export class SharedDirectory
-	extends SharedObject<ISharedDirectoryEvents>
+	extends SharedObject<ISharedDirectoryEvents & ISharedDirectoryEventsInternal>
 	implements ISharedDirectory
 {
 	/**
@@ -852,27 +853,6 @@ export class SharedDirectory
 		// `resubmit`: When resubmitting ops, we use `localOpMetadata` to get a reference to the subdirectory that
 		// the op was originally targeting.
 		this.messageHandlers.set("clear", {
-			process: (
-				msgEnvelope: ISequencedMessageEnvelope,
-				op: IDirectoryClearOperation,
-				local: boolean,
-				localOpMetadata: ClearLocalOpMetadata | undefined,
-				clientSequenceNumber: number,
-			) => {
-				const subdir = this.getSequencedWorkingDirectory(op.path) as SubDirectory | undefined;
-				if (subdir !== undefined && !subdir?.disposed) {
-					subdir.processClearMessage(msgEnvelope, op, local, localOpMetadata);
-				}
-			},
-			resubmit: (op: IDirectoryClearOperation, localOpMetadata: ClearLocalOpMetadata) => {
-				const targetSubdir = localOpMetadata.subdir;
-				if (!targetSubdir.disposed) {
-					targetSubdir.resubmitClearMessage(op, localOpMetadata);
-				}
-			},
-		});
-
-		this.messageHandlers.set("clearInternal", {
 			process: (
 				msgEnvelope: ISequencedMessageEnvelope,
 				op: IDirectoryClearOperation,
