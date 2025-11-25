@@ -153,10 +153,10 @@
 			"@types/node": "^22.8.0",
 			"json5@<1.0.2": "^1.0.2",
 			"json5@>=2.0.0 <2.2.2": "^2.2.2",
-			"qs": "^6.11.0",
-			"sharp": "^0.33.2",
 			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
-			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0"
+			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",
+			"qs": "^6.11.0",
+			"sharp": "^0.33.2"
 		},
 		"updateConfig": {
 			"ignoreDependencies": [
