@@ -43,6 +43,7 @@
 		"check:are-the-types-wrong": "fluid-build --task check:are-the-types-wrong",
 		"check:changesets": "vale .changeset --glob=*-*-*.md",
 		"check:format:repo": "biome check .",
+		"check:references": "workspaces-to-typescript-project-references --check",
 		"check:versions": "flub check buildVersion -g client --path .",
 		"check:versions:fix": "flub check buildVersion -g client --path . --fix",
 		"checks": "fluid-build --task checks",
@@ -67,6 +68,7 @@
 		"clean:root": "rimraf --glob \"*.done.build.log\"",
 		"eslint": "fluid-build --task eslint",
 		"eslint:fix": "fluid-build --task eslint:fix",
+		"fix:references": "workspaces-to-typescript-project-references",
 		"format": "fluid-build --task format",
 		"format:biome": "fluid-build --task format:biome",
 		"format:changed": "npm run format:changed:main",
@@ -180,7 +182,7 @@
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"danger": "^13.0.4",
-		"eslint": "~8.57.1",
+		"eslint": "~9.39.1",
 		"jest": "^29.6.2",
 		"mocha": "^10.8.2",
 		"puppeteer": "^23.6.0",
@@ -188,7 +190,8 @@
 		"run-script-os": "^1.1.6",
 		"syncpack": "^13.0.2",
 		"ts2esm": "^1.4.0",
-		"typescript": "~5.4.5"
+		"typescript": "~5.4.5",
+		"@monorepo-utils/workspaces-to-typescript-project-references": "^2.11.0"
 	},
 	"packageManager": "pnpm@10.18.3+sha512.bbd16e6d7286fd7e01f6b3c0b3c932cda2965c06a908328f74663f10a9aea51f1129eea615134bf992831b009eabe167ecb7008b597f40ff9bc75946aadfb08d",
 	"engines": {

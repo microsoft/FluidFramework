@@ -31,37 +31,37 @@ interface ConfigToPrint {
 const configsToPrint: ConfigToPrint[] = [
 	{
 		name: "default",
-		configPath: path.join(__dirname, "..", "index.js"),
+		configPath: path.join(__dirname, "..", ".eslint-print-configs", "recommended.mjs"),
 		sourceFilePath: path.join(__dirname, "..", "src", "file.ts"),
 	},
 	{
 		name: "minimal",
-		configPath: path.join(__dirname, "..", "minimal-deprecated.js"),
+		configPath: path.join(__dirname, "..", ".eslint-print-configs", "minimal.mjs"),
 		sourceFilePath: path.join(__dirname, "..", "src", "file.ts"),
 	},
 	{
 		name: "react",
-		configPath: path.join(__dirname, "..", "index.js"),
+		configPath: path.join(__dirname, "..", ".eslint-print-configs", "recommended.mjs"),
 		sourceFilePath: path.join(__dirname, "..", "src", "file.tsx"),
 	},
 	{
 		name: "recommended",
-		configPath: path.join(__dirname, "..", "recommended.js"),
+		configPath: path.join(__dirname, "..", ".eslint-print-configs", "recommended.mjs"),
 		sourceFilePath: path.join(__dirname, "..", "src", "file.ts"),
 	},
 	{
 		name: "strict",
-		configPath: path.join(__dirname, "..", "strict.js"),
+		configPath: path.join(__dirname, "..", ".eslint-print-configs", "strict.mjs"),
 		sourceFilePath: path.join(__dirname, "..", "src", "file.ts"),
 	},
 	{
 		name: "strict-biome",
-		configPath: path.join(__dirname, "..", "strict-biome.js"),
+		configPath: path.join(__dirname, "..", ".eslint-print-configs", "strict.mjs"),
 		sourceFilePath: path.join(__dirname, "..", "src", "file.ts"),
 	},
 	{
 		name: "test",
-		configPath: path.join(__dirname, "..", "recommended.js"),
+		configPath: path.join(__dirname, "..", ".eslint-print-configs", "recommended.mjs"),
 		sourceFilePath: path.join(__dirname, "..", "src", "test", "file.ts"),
 	},
 ];
@@ -75,9 +75,23 @@ async function generateConfig(filePath: string, configPath: string): Promise<str
 		overrideConfigFile: configPath,
 	});
 
-	const config = await eslint.calculateConfigForFile(filePath);
-	// Remove the parser property because it's an absolute path and will vary based on the local environment.
-	delete (config as { parser?: unknown }).parser;
+	const config = (await eslint.calculateConfigForFile(filePath)) as any;
+	if (!config) {
+		console.warn("Warning: ESLint returned undefined config for " + filePath);
+		return "{}\n";
+	}
+
+	// Serialize and parse to create a clean copy without any circular references or non-serializable values
+	// that might exist in the ESLint config object (even though JSON.stringify handles them fine,
+	// sort-json may encounter issues with them)
+	const cleanConfig = JSON.parse(JSON.stringify(config));
+
+	// Remove the languageOptions property because it contains environment-specific paths and large
+	// globals objects that cause unnecessary diffs. The actual rules configuration is more important
+	// for tracking changes.
+	if (cleanConfig.languageOptions) {
+		delete cleanConfig.languageOptions;
+	}
 
 	// Generate the new content with sorting applied
 	// Sorting at all is desirable as otherwise changes in the order of common config references may cause large diffs
@@ -86,7 +100,7 @@ async function generateConfig(filePath: string, configPath: string): Promise<str
 	// some eslint settings depend on object key order ("import-x/resolver" being a known one, see
 	// https://github.com/un-ts/eslint-plugin-import-x/blob/master/src/utils/resolve.ts).
 	// Using depth 2 is a nice compromise.
-	const sortedConfig = sortJson(config, { indentSize: 4, depth: 2 });
+	const sortedConfig = sortJson(cleanConfig, { indentSize: 4, depth: 2 });
 	const finalConfig = JSON.stringify(sortedConfig, null, 4);
 
 	// Add a trailing newline to match preferred output formatting
