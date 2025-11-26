@@ -141,12 +141,15 @@ const rule = {
 								},
 								messageId: "markdownLink",
 								fix(fixer) {
-								const trimmedText = link.linkText.trim();
-								const tsdocLink = trimmedText
-									? `{@link ${link.linkTarget} | ${trimmedText}}`
-									: `{@link ${link.linkTarget}}`;
-								return fixer.replaceTextRange([startIndex, endIndex], tsdocLink);
-							},
+									const trimmedText = link.linkText.trim();
+									const tsdocLink = trimmedText
+										? `{@link ${link.linkTarget} | ${trimmedText}}`
+										: `{@link ${link.linkTarget}}`;
+									return fixer.replaceTextRange(
+										[startIndex, endIndex],
+										tsdocLink,
+									);
+								},
 							});
 						}
 					}
