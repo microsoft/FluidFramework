@@ -30,7 +30,7 @@ interface PackageTarget {
 
 async function findLegacyConfigs(): Promise<PackageTarget[]> {
 	const results: PackageTarget[] = [];
-	const topDirs = ["packages", "experimental", "examples", "azure", "tools", "common", "server"];
+	const topDirs = ["packages", "experimental", "examples", "azure", "tools", "server"]; // exclude common/build from traversal
 
 	async function walk(dir: string): Promise<void> {
 		let entries;
@@ -62,8 +62,8 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 				await fs.access(flatPath);
 				const content = await fs.readFile(flatPath, "utf8");
 				let variant: PackageTarget["flatVariant"] = "recommended";
-				if (content.includes("strict")) variant = "strict";
-				else if (content.includes("minimalDeprecated")) variant = "minimalDeprecated";
+				if (/import\s*{\s*strict\s*}/.test(content)) variant = "strict";
+				else if (/import\s*{\s*minimalDeprecated\s*}/.test(content)) variant = "minimalDeprecated";
 				results.push({ packageDir: full, legacyConfigPath: flatPath, flatVariant: variant });
 			} catch {
 				/* no flat config yet */
@@ -89,7 +89,7 @@ async function writeFlatConfigs(targets: PackageTarget[]): Promise<void> {
 	for (const t of targets) {
 		const outPath = path.join(t.packageDir, "eslint.config.mjs");
 		// Always overwrite to ensure import path stays current.
-		const content = buildFlatConfigContent(t.packageDir, t.flatVariant);
+		const content = buildFlatConfigContent(t.packageDir, t.flatVariant); // Always overwrite
 		await fs.writeFile(outPath, content, "utf8");
 	}
 }
