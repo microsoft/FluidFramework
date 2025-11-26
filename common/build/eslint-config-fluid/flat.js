@@ -8,7 +8,12 @@
 // and spread them into their eslint.config.js.
 
 const { FlatCompat } = require("@eslint/eslintrc");
-const compat = new FlatCompat({ baseDirectory: __dirname });
+const { configs } = require("@eslint/js");
+const compat = new FlatCompat({
+	baseDirectory: __dirname,
+	recommendedConfig: configs.recommended,
+	allConfig: configs.all,
+});
 
 /** @type {import("eslint").Linter.FlatConfig[]} */
 const recommended = compat.config({ extends: [require.resolve("./recommended.js")] });
