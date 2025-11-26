@@ -40,77 +40,73 @@ parameters:
 jobs:
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
   displayName: Publish ${{ parameters.environment }}
+  pool: ${{ parameters.pool }}
   environment: ${{ parameters.environment }}
   workspace:
     clean: all
   variables:
-  - group: ado-feeds
-  - name: version
-    value: $[ stageDependencies.build.build.outputs['SetVersion.version']]
-  - name: isLatest
-    value: $[ stageDependencies.build.build.outputs['SetVersion.isLatest']]
-  templateContext:
-    type: releaseJob
-    isProduction: true
-    inputs:
-    - input: pipelineArtifact
-      targetPath: $(System.DefaultWorkingDirectory)/drop
-      artifactName: pack
+    - group: ado-feeds
+    - name: version
+      value: $[ stageDependencies.build.build.outputs['SetVersion.version']]
+    - name: isLatest
+      value: $[ stageDependencies.build.build.outputs['SetVersion.isLatest']]
   strategy:
     runOnce:
-      deploy:
-        steps:
-        - checkout: self
-          clean: true
-          lfs: false
-          submodules: false
-        - task: UseNode@1
-          displayName: Use Node 20.15.1
-          inputs:
-            version: 20.15.1
-        - task: Npm@1
-          displayName: Install npm 10
-          retryCountOnTaskFailure: 4
-          inputs:
-            command: 'custom'
-            customCommand: 'install --global npm@^10'
-            customRegistry: 'useNpmrc'
-        # Install pnpm and dependencies so flub is available for publish steps
-        - template: /tools/pipelines/templates/include-install.yml@self
-          parameters:
-            packageManager: '${{ parameters.packageManager }}'
-            buildDirectory: .
-            packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
-        # Add installed build-tools to CLI
-        - task: Bash@3
-          name: InstallBuildTools
-          displayName: Install Fluid Build Tools (from npm)
-          inputs:
-            targetType: 'inline'
-            workingDirectory: .
-            script: |
-              echo "installing version @${{ parameters.buildToolsVersionToInstall }}"
+        deploy:
+          steps:
+          - download: current
+            artifact: pack
+          - checkout: self
+            clean: true
+            lfs: false
+            submodules: false
+          - task: UseNode@1
+            displayName: Use Node 20.15.1
+            inputs:
+              version: 20.15.1
+          - task: Npm@1
+            displayName: Install npm 10
+            retryCountOnTaskFailure: 4
+            inputs:
+              command: 'custom'
+              customCommand: 'install --global npm@^10'
+              customRegistry: 'useNpmrc'
+          # Install pnpm and dependencies so flub is available for publish steps
+          - template: /tools/pipelines/templates/include-install.yml@self
+            parameters:
+              packageManager: '${{ parameters.packageManager }}'
+              buildDirectory: .
+              packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
+          # Add installed build-tools to CLI
+          - task: Bash@3
+            name: InstallBuildTools
+            displayName: Install Fluid Build Tools (from npm)
+            inputs:
+              targetType: 'inline'
+              workingDirectory: .
+              script: |
+                echo "installing version @${{ parameters.buildToolsVersionToInstall }}"
 
-              npm install --global "@fluid-tools/build-cli@${{ parameters.buildToolsVersionToInstall }}"
+                npm install --global "@fluid-tools/build-cli@${{ parameters.buildToolsVersionToInstall }}"
 
-              # This can be removed once all builds tools are moved to the build-cli library
-              npm install --global "@fluidframework/build-tools@${{ parameters.buildToolsVersionToInstall }}"
-        - task: Bash@3
-          name: BuildToolsInstallCheck
-          displayName: Check Build Tools Installation
-          inputs:
-            targetType: 'inline'
-            workingDirectory: .
-            script: |
-              # Output the help and full command list for debugging purposes
-              flub --help
-              flub commands
-        - template: /tools/pipelines/templates/include-publish-npm-package-steps.yml@self
-          parameters:
-            artifactPath: tarballs
-            feedKind: ${{ parameters.feedKind }}
-            feedUrl: ${{ parameters.feedUrl }}
-            customEndPoint: ${{ parameters.customEndPoint }}
-        - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
-          parameters:
-            tagName: ${{ parameters.tagName }}
+                # This can be removed once all builds tools are moved to the build-cli library
+                npm install --global "@fluidframework/build-tools@${{ parameters.buildToolsVersionToInstall }}"
+          - task: Bash@3
+            name: BuildToolsInstallCheck
+            displayName: Check Build Tools Installation
+            inputs:
+              targetType: 'inline'
+              workingDirectory: .
+              script: |
+                # Output the help and full command list for debugging purposes
+                flub --help
+                flub commands
+          - template: include-publish-npm-package-steps.yml
+            parameters:
+              artifactPath: tarballs
+              feedKind: ${{ parameters.feedKind }}
+              feedUrl: ${{ parameters.feedUrl }}
+              customEndPoint: ${{ parameters.customEndPoint }}
+          - template: include-git-tag-steps.yml
+            parameters:
+              tagName: ${{ parameters.tagName }}

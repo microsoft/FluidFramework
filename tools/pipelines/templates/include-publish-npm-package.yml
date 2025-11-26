@@ -17,7 +17,7 @@ stages:
   displayName: Publish Internal Test Packages
   condition: and(succeeded(), eq(variables['testBuild'], true))
   jobs:
-  - template: /tools/pipelines/templates/include-publish-npm-package-deployment.yml@self
+  - template: include-publish-npm-package-deployment.yml
     parameters:
       feedKind: internal-test
       feedUrl: $(ado-feeds-test)
@@ -31,7 +31,7 @@ stages:
   displayName: Publish Internal Packages
   condition: and(succeeded(), eq(variables['testBuild'], false))
   jobs:
-  - template: /tools/pipelines/templates/include-publish-npm-package-deployment.yml@self
+  - template: include-publish-npm-package-deployment.yml
     parameters:
       feedUrl: $(ado-feeds-build)
       feedKind: internal-build
@@ -45,7 +45,7 @@ stages:
   displayName: Publish Official Packages
   condition: and(succeeded(), or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')))
   jobs:
-  - template: /tools/pipelines/templates/include-publish-npm-package-deployment.yml@self
+  - template: include-publish-npm-package-deployment.yml
     parameters:
       feedKind: public
       feedUrl: https://registry.npmjs.org
