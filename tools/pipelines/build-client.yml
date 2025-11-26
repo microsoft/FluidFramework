@@ -11,17 +11,17 @@ parameters:
   type: string
   default: none
   values:
-    - none
-    - prerelease
-    - release
+  - none
+  - prerelease
+  - release
 - name: publishOverride
   displayName: Publish Override (default = based on branch)
   type: string
   default: default
   values:
-    - default
-    - skip
-    - force
+  - default
+  - skip
+  - force
 - name: buildToolsVersionToInstall
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
@@ -39,9 +39,9 @@ parameters:
   # an environment variable in a bash script (the 'update package versions' step), where it gets coerced back to the
   # empty string.
   values:
-    - "^"
-    - "~"
-    - " "
+  - "^"
+  - "~"
+  - " "
 
 trigger:
   branches:
@@ -102,7 +102,7 @@ schedules:
   always: true
 
 extends:
-  template: templates/build-npm-package.yml@self
+  template: /tools/pipelines/templates/build-npm-package.yml@self
   parameters:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}

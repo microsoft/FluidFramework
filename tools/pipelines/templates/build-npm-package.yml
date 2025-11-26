@@ -105,31 +105,71 @@ variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
   # running terminal.  The log output shown in Azure DevOps job runs only has
   # basic ANSI color support though, so force that in the pipeline
-  - name: FORCE_COLOR
-    value: 1
-  - template: include-vars.yml
-    parameters:
-      publishOverride: '${{ parameters.publishOverride }}'
-      releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
-
-stages:
-  # Install / Build / Test Stage
-  - stage: build
-    displayName: Build Stage
-    jobs:
+- name: FORCE_COLOR
+  value: 1
+- template: /tools/pipelines/templates/include-vars.yml@self
+  parameters:
+    publishOverride: '${{ parameters.publishOverride }}'
+    releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
+resources:
+  repositories:
+  - repository: 1ESPipelineTemplates
+    type: git
+    name: 1ESPipelineTemplates/1ESPipelineTemplates
+    ref: refs/tags/release
+extends:
+  template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
+  parameters:
+    pool:
+      name: 1ESPT-Pool-Name-Placeholder
+      image: pool-image-placeholder
+      os: windows
+    customBuildTags:
+    - ES365AIMigrationTooling
+    stages:
+    # Install / Build / Test Stage
+    - stage: build
+      displayName: Build Stage
+      jobs:
       # Job - Build
       - job: build
         displayName: Build
-        pool: ${{ parameters.poolBuild }}
         variables:
-          - group: ado-feeds
-          - group: storage-vars
-          # Coverage has quality issues in LTS, and root-causing + fixing is not a priority given changes to LTS at this point
-          # will be things like upgrading node or security fixes, not adding new features.
-          - name: testCoverage
-            value: false
-          - name: releaseBuildVar
-            value: $[variables.releaseBuild]
+        - group: ado-feeds
+        - group: storage-vars
+        # Coverage has quality issues in LTS, and root-causing + fixing is not a priority given changes to LTS at this point
+        # will be things like upgrading node or security fixes, not adding new features.
+        - name: testCoverage
+          value: false
+        - name: releaseBuildVar
+          value: $[variables.releaseBuild]
+        templateContext:
+          outputs:
+          - ${{ if ne(parameters.taskPack, false) }}:
+            - output: pipelineArtifact
+              displayName: 'Publish Artifact - pack'
+              targetPath: '$(Build.ArtifactStagingDirectory)/pack'
+              artifactName: 'pack'
+              publishLocation: 'Container'
+          - ${{ if ne(parameters.taskPack, false) }}:
+            - output: pipelineArtifact
+              displayName: 'Publish Artifact - Test Files'
+              targetPath: '$(Build.ArtifactStagingDirectory)/test-files'
+              artifactName: 'test-files'
+              publishLocation: 'Container'
+          - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
+            - output: pipelineArtifact
+              displayName: 'Publish Artifacts - bundle-analysis'
+              condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true) )
+              targetPath: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
+              artifactname: 'bundleAnalysis'
+              publishLocation: 'Container'
+          - ${{ if ne(parameters.taskBuildDocs, false) }}:
+            - output: pipelineArtifact
+              displayName: 'Publish Artifact - _api-extractor-temp'
+              targetPath: '${{ parameters.buildDirectory }}/_api-extractor-temp'
+              artifactName: '_api-extractor-temp'
+              publishLocation: 'Container'
         steps:
         # Setup
         - checkout: self
@@ -218,7 +258,6 @@ stages:
             command: 'custom'
             customCommand: 'install --global npm@^10'
             customRegistry: 'useNpmrc'
-
         # Install pnpm
         - template: /tools/pipelines/templates/include-install.yml@self
           parameters:
@@ -227,7 +266,7 @@ stages:
             packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
 
         # Set version
-        - template: include-set-package-version.yml@self
+        - template: /tools/pipelines/templates/include-set-package-version.yml@self
           parameters:
             buildDirectory: ${{ parameters.buildDirectory }}
             buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
@@ -252,7 +291,6 @@ stages:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run lint'
-
         # Test
         - ${{ if ne(parameters.taskTest, 'false') }}:
           # Run any additional tests first so their results can be copied to the ~/nyc dir and published below
@@ -327,22 +365,6 @@ stages:
               targetType: filePath
               workingDirectory: '${{ parameters.buildDirectory }}'
               filePath: $(Build.SourcesDirectory)/scripts/pack-packages.sh
-
-          - task: PublishBuildArtifacts@1
-            displayName: Publish Artifact - pack
-            inputs:
-              PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack'
-              ArtifactName: 'pack'
-              publishLocation: 'Container'
-
-          - task: PublishBuildArtifacts@1
-            displayName: Publish Artifact - Test Files
-            inputs:
-              PathtoPublish: '$(Build.ArtifactStagingDirectory)/test-files'
-              ArtifactName: 'test-files'
-              publishLocation: 'Container'
-
-        # Collect/publish/run bundle analysis
         - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
           - task: Npm@1
             displayName: npm run bundle-analysis:collect
@@ -350,28 +372,9 @@ stages:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run bundle-analysis:collect'
-
-          - task: PublishBuildArtifacts@1
-            displayName: Publish Artifacts - bundle-analysis
-            condition:
-              and(
-                succeeded(),
-                ne(variables['Build.Reason'], 'PullRequest'),
-                eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true)
-              )
-            inputs:
-              PathtoPublish: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
-              Artifactname: 'bundleAnalysis'
-              publishLocation: 'Container'
-
           - task: Npm@1
             displayName: run bundle size comparison
-            condition:
-              and(
-                succeeded(),
-                eq(variables['Build.Reason'], 'PullRequest'),
-                ne(variables['System.PullRequest.IsFork'], 'true')
-              )
+            condition: and( succeeded(), eq(variables['Build.Reason'], 'PullRequest'), ne(variables['System.PullRequest.IsFork'], 'true') )
             continueOnError: true
             env:
               ADO_API_TOKEN: $(System.AccessToken)
@@ -390,14 +393,6 @@ stages:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run ci:build:docs'
-
-          - task: PublishBuildArtifacts@1
-            displayName: Publish Artifact - _api-extractor-temp
-            inputs:
-              PathtoPublish: '${{ parameters.buildDirectory }}/_api-extractor-temp'
-              ArtifactName: '_api-extractor-temp'
-              publishLocation: 'Container'
-
         - task: Bash@3
           displayName: Check for extraneous modified files
           inputs:
@@ -414,15 +409,12 @@ stages:
       - ${{ if eq(variables.componentDetection, true) }}:
         - job: CG
           displayName: Component Detection
-          pool: ${{ parameters.poolCG }}
           steps:
           - checkout: self
             clean: true
             lfs: false
             submodules: false
-
           - ${{ parameters.preCG }}
-
           - task: ComponentGovernanceComponentDetection@0
             displayName: Component Detection
             inputs:
@@ -431,8 +423,8 @@ stages:
               scanType: Register
               alertWarningLevel: High
 
-  # Publish stage
-  - ${{ if eq(variables.publish, true) }}:
-    - template: include-publish-npm-package.yml
-      parameters:
-        tagName: ${{ parameters.tagName }}
+    # Publish stage
+    - ${{ if eq(variables.publish, true) }}:
+      - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
+        parameters:
+          tagName: ${{ parameters.tagName }}
