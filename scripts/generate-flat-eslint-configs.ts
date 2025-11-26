@@ -30,31 +30,35 @@ interface PackageTarget {
 
 async function findLegacyConfigs(): Promise<PackageTarget[]> {
 	const results: PackageTarget[] = [];
-	// Scan the top-level workspaces we care about
 	const topDirs = ["packages", "experimental", "examples", "azure", "tools", "common", "server"];
-	for (const top of topDirs) {
-		const root = path.join(repoRoot, top);
+
+	async function walk(dir: string): Promise<void> {
+		let entries;
 		try {
-			const entries = await fs.readdir(root, { withFileTypes: true });
-			for (const entry of entries) {
-				if (!entry.isDirectory()) continue;
-				const pkgDir = path.join(root, entry.name);
-				const eslintrc = path.join(pkgDir, ".eslintrc.cjs");
-				try {
-					await fs.access(eslintrc);
-					const content = await fs.readFile(eslintrc, "utf8");
-					// Determine variant
-					let variant: PackageTarget["flatVariant"] = "recommended";
-					if (content.includes("/strict")) variant = "strict";
-					else if (content.includes("minimal-deprecated")) variant = "minimalDeprecated";
-					results.push({ packageDir: pkgDir, legacyConfigPath: eslintrc, flatVariant: variant });
-				} catch {
-					/* no legacy config */
-				}
-			}
+			entries = await fs.readdir(dir, { withFileTypes: true });
 		} catch {
-			/* directory may not exist */
+			return; // Directory does not exist or cannot be read
 		}
+		for (const entry of entries) {
+			if (!entry.isDirectory()) continue;
+			const full = path.join(dir, entry.name);
+			const eslintrc = path.join(full, ".eslintrc.cjs");
+			try {
+				await fs.access(eslintrc);
+				const content = await fs.readFile(eslintrc, "utf8");
+				let variant: PackageTarget["flatVariant"] = "recommended";
+				if (content.includes("/strict")) variant = "strict";
+				else if (content.includes("minimal-deprecated")) variant = "minimalDeprecated";
+				results.push({ packageDir: full, legacyConfigPath: eslintrc, flatVariant: variant });
+			} catch {
+				/* no legacy config here */
+			}
+			await walk(full);
+		}
+	}
+
+	for (const top of topDirs) {
+		await walk(path.join(repoRoot, top));
 	}
 	return results;
 }
