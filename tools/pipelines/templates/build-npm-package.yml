@@ -278,6 +278,7 @@ extends:
             command: 'custom'
             customCommand: 'install --global npm@^10'
             customRegistry: 'useNpmrc'
+
         # Install pnpm
         - template: /tools/pipelines/templates/include-install.yml@self
           parameters:
@@ -385,6 +386,8 @@ extends:
               targetType: filePath
               workingDirectory: '${{ parameters.buildDirectory }}'
               filePath: $(Build.SourcesDirectory)/scripts/pack-packages.sh
+
+        # Collect/publish/run bundle analysis
         - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
           - task: Npm@1
             displayName: npm run bundle-analysis:collect
