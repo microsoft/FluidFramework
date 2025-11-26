@@ -46,9 +46,11 @@ function findMarkdownLinksInPlainText(plainTextNode) {
  * @returns {MarkdownLinkInfo[]} The list of found Markdown links.
  */
 function findMarkdownLinks(commentBodyNode) {
-	// Walk down first node of the tree until we find a leaf.
-	// If it's plain text, and starts with a hyphen, return true.
-	// Otherwise, return false.
+	// Walk down all children to find all plain text nodes.
+	// Search those nodes for Markdown links.
+	// We only search plain text because we want to ignore link syntax that may appear in other
+	// contexts like code spans / code blocks where they would not be interpreted as links, and
+	// where they may exist to serve as examples, etc.
 	if (commentBodyNode.kind === DocNodeKind.PlainText) {
 		return findMarkdownLinksInPlainText(/** @type {DocPlainText} */ (commentBodyNode));
 	}
