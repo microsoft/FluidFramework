@@ -27,7 +27,7 @@ export interface ISharedMapWithOracle extends ISharedMap {
  * Type guard for directory
  * @internal
  */
-export function hasSharedDirectroyOracle(s: SharedDirectory): s is ISharedDirectoryWithOracle {
+export function hasSharedDirectoryOracle(s: SharedDirectory): s is ISharedDirectoryWithOracle {
 	return (
 		"sharedDirectoryOracle" in s && s.sharedDirectoryOracle instanceof SharedDirectoryOracle
 	);

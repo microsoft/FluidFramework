@@ -27,14 +27,14 @@ import {
 	type DirOperation,
 	type DirOperationGenerationConfig,
 } from "./fuzzUtils.js";
-import { hasSharedDirectroyOracle, type ISharedDirectoryWithOracle } from "./oracleUtils.js";
+import { hasSharedDirectoryOracle, type ISharedDirectoryWithOracle } from "./oracleUtils.js";
 
 const oracleEmitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 
 oracleEmitter.on("clientCreate", (client) => {
 	const channel = client.channel as ISharedDirectoryWithOracle;
-	const directroyOracle = new SharedDirectoryOracle(channel);
-	channel.sharedDirectoryOracle = directroyOracle;
+	const directoryOracle = new SharedDirectoryOracle(channel);
+	channel.sharedDirectoryOracle = directoryOracle;
 });
 
 describe("SharedDirectory fuzz Create/Delete concentrated", () => {
@@ -53,11 +53,11 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 		generatorFactory: () => takeAsync(100, makeDirOperationGenerator(options)),
 		reducer: makeDirReducer({ clientIds: ["A", "B", "C"], printConsoleLogs: false }),
 		validateConsistency: async (a, b) => {
-			if (hasSharedDirectroyOracle(a.channel)) {
+			if (hasSharedDirectoryOracle(a.channel)) {
 				a.channel.sharedDirectoryOracle.validate();
 			}
 
-			if (hasSharedDirectroyOracle(b.channel)) {
+			if (hasSharedDirectoryOracle(b.channel)) {
 				b.channel.sharedDirectoryOracle.validate();
 			}
 			return assertEquivalentDirectories(a.channel, b.channel);

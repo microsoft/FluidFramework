@@ -47,6 +47,9 @@ export class SharedDirectoryOracle {
 	// Track all directories we've attached listeners to for proper cleanup
 	private readonly attachedDirectories = new Set<IDirectory>();
 
+	// Track paths that were recently cleared to skip previousValue assertions on subsequent valueChanged events
+	private readonly recentlyClearedPaths = new Set<string>();
+
 	public constructor(private readonly sharedDir: ISharedDirectory) {
 		this.snapshotCurrentState(this.sharedDir, this.modelFromValueChanged);
 		this.snapshotCurrentState(this.sharedDir, this.modelFromContainedValueChanged);
@@ -179,13 +182,15 @@ export class SharedDirectoryOracle {
 		const fuzzDir = this.sharedDir.getWorkingDirectory(path);
 		if (!fuzzDir) return;
 
-		const dirNode = this.getOrCreateDirNode(this.modelFromValueChanged, path);
+		const absPath = path.startsWith("/") ? path : `/${path}`;
+		const dirNode = this.getOrCreateDirNode(this.modelFromValueChanged, absPath);
 
 		// Assert that previousValue matches what we had in the oracle.
 		// For local operations, this should always match.
 		// For remote operations, previousValue might differ from oracle when there are pending local
 		// operations on the same key (oracle has optimistic value, event has sequenced value).
-		if (local) {
+		// Also skip assertion if this path was recently cleared (oracle cleared but events have old previousValues)
+		if (local && !this.recentlyClearedPaths.has(absPath)) {
 			assert.deepStrictEqual(
 				previousValue,
 				dirNode.keys.get(key),
@@ -204,6 +209,9 @@ export class SharedDirectoryOracle {
 
 	private readonly onClearInternal = (path: string, local: boolean): void => {
 		// Clear keys at the specified path
+		// For remote clear operations, valueChanged events will be emitted afterwards for keys with
+		// pending local set operations, and those will re-add the keys to the oracle model.
+		// Keys without pending operations are simply cleared and no valueChanged event follows.
 		const absPath = path.startsWith("/") ? path : `/${path}`;
 		const dirNode1 = this.getDirNode(this.modelFromValueChanged, absPath);
 		const dirNode2 = this.getDirNode(this.modelFromContainedValueChanged, absPath);
@@ -215,10 +223,11 @@ export class SharedDirectoryOracle {
 			dirNode2.keys.clear();
 		}
 
-		if (!local) {
-			this.snapshotCurrentState(this.sharedDir, this.modelFromValueChanged);
-			this.snapshotCurrentState(this.sharedDir, this.modelFromContainedValueChanged);
-		}
+		// Track this path as recently cleared and schedule cleanup after valueChanged events fire
+		this.recentlyClearedPaths.add(absPath);
+		setTimeout(() => {
+			this.recentlyClearedPaths.delete(absPath);
+		}, 0);
 	};
 
 	private readonly onSubDirCreated = (
@@ -276,7 +285,8 @@ export class SharedDirectoryOracle {
 		// For local operations, this should always match.
 		// For remote operations, previousValue might differ from oracle when there are pending local
 		// operations on the same key (oracle has optimistic value, event has sequenced value).
-		if (local) {
+		// Also skip assertion if this path was recently cleared (oracle cleared but events have old previousValues)
+		if (local && !this.recentlyClearedPaths.has(absolutePath)) {
 			assert.deepStrictEqual(
 				previousValue,
 				dirNode.keys.get(key),

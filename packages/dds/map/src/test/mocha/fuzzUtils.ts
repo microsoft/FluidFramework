@@ -29,7 +29,7 @@ import {
 } from "../../index.js";
 
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
-import { hasSharedMapOracle, hasSharedDirectroyOracle } from "./oracleUtils.js";
+import { hasSharedMapOracle, hasSharedDirectoryOracle } from "./oracleUtils.js";
 
 /**
  * Represents a map clear operation.
@@ -519,11 +519,11 @@ export const baseDirModel: DDSFuzzModel<DirectoryFactory, DirOperation> = {
 	generatorFactory: () => takeAsync(100, makeDirOperationGenerator(dirDefaultOptions)),
 	reducer: makeDirReducer({ clientIds: ["A", "B", "C"], printConsoleLogs: false }),
 	validateConsistency: async (a, b) => {
-		if (hasSharedDirectroyOracle(a.channel)) {
+		if (hasSharedDirectoryOracle(a.channel)) {
 			a.channel.sharedDirectoryOracle.validate();
 		}
 
-		if (hasSharedDirectroyOracle(b.channel)) {
+		if (hasSharedDirectoryOracle(b.channel)) {
 			b.channel.sharedDirectoryOracle.validate();
 		}
 		return assertEquivalentDirectories(a.channel, b.channel);
