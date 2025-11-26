@@ -1,8 +1,10 @@
 #!/usr/bin/env tsx
+
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * Minimal script to generate a root TypeScript project references file (tsconfig.build.json).
  * It discovers package directories (by presence of package.json and tsconfig.json) and writes a

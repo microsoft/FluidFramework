@@ -1,8 +1,10 @@
 #!/usr/bin/env tsx
+
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * Generates ESLint 9 flat config files for packages that currently use legacy .eslintrc.cjs configs.
  *
