@@ -75,7 +75,7 @@ async function generateConfig(filePath: string, configPath: string): Promise<str
 		overrideConfigFile: configPath,
 	});
 
-	const config = await eslint.calculateConfigForFile(filePath) as any;
+	const config = (await eslint.calculateConfigForFile(filePath)) as any;
 	if (!config) {
 		console.warn("Warning: ESLint returned undefined config for " + filePath);
 		return "{}\n";
