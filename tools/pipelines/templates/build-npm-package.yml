@@ -425,25 +425,6 @@ extends:
                 exit -1;
               fi
 
-      # Job - Component detection
-      - ${{ if eq(variables.componentDetection, true) }}:
-        - job: CG
-          displayName: Component Detection
-          pool: ${{ parameters.poolCG }}
-          steps:
-          - checkout: self
-            clean: true
-            lfs: false
-            submodules: false
-          - ${{ parameters.preCG }}
-          - task: ComponentGovernanceComponentDetection@0
-            displayName: Component Detection
-            inputs:
-              sourceScanPath: ${{ parameters.buildDirectory }}/${{ parameters.cgSubDirectory }}
-              verbosity: Verbose
-              scanType: Register
-              alertWarningLevel: High
-
     # Publish stage
     - ${{ if eq(variables.publish, true) }}:
       - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
