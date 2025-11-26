@@ -23,9 +23,9 @@ const { DocNodeKind, TSDocParser } = require("@microsoft/tsdoc");
 const parser = new TSDocParser();
 
 /**
- * Checks if a comment text starts with a hyphen.
+ * Finds instances of Markdown-syntax links within the provided plain text.
  * @param {DocPlainText} plainTextNode - The plain text node to check.
- * @returns {MarkdownLinkInfo[]}
+ * @returns {MarkdownLinkInfo[]} The list of found Markdown links.
  */
 function findMarkdownLinksInPlainText(plainTextNode) {
 	const textRange =
@@ -41,9 +41,9 @@ function findMarkdownLinksInPlainText(plainTextNode) {
 }
 
 /**
- * Checks if a comment body starts with a hyphen.
+ * Finds instances of Markdown-syntax links within the provided comment body.
  * @param { DocNode } commentBodyNode - The doc node representing the body of the comment.
- * @returns {MarkdownLinkInfo[]}
+ * @returns {MarkdownLinkInfo[]} The list of found Markdown links.
  */
 function findMarkdownLinks(commentBodyNode) {
 	// Walk down first node of the tree until we find a leaf.
@@ -63,7 +63,9 @@ function findMarkdownLinks(commentBodyNode) {
 }
 
 /**
- * JSDoc/TSDoc tags do not require a hyphen after them.
+ * Eslint rule to disallow Markdown link syntax in JSDoc/TSDoc comments.
+ * `{@link}` syntax should be used instead.
+ *
  * @type {RuleModule}
  */
 const rule = {
