@@ -1,5 +1,19 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## Unreleased
+
+### ESLint 9 Flat Config Support
+
+This package now supports ESLint 9 flat config format via a new `flat.js` export. The flat config wraps existing configs using `FlatCompat` from `@eslint/eslintrc` for backward compatibility.
+
+Key features:
+- New `flat.js` module exports `recommended`, `strict`, and `minimalDeprecated` configs for ESLint 9
+- Automatic handling of type-aware parsing configuration for JavaScript files and test files
+- Generated `eslint.config.mjs` files for all packages in the repository
+- Script to regenerate flat configs: `pnpm tsx scripts/generate-flat-eslint-configs.ts`
+
+All packages in the repository now use `eslint.config.mjs` instead of `.eslintrc.cjs`.
+
 ## [9.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v9.0_0)
 
 ### eslint-plugin-eslint-comments replaced by @eslint-community/eslint-plugin-eslint-comments

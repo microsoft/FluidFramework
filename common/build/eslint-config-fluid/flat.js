@@ -23,6 +23,8 @@ const strict = compat.config({ extends: [require.resolve("./strict.js")] });
 const minimalDeprecated = compat.config({ extends: [require.resolve("./minimal-deprecated.js")] });
 
 // Disable type-aware parsing (parserOptions.project) for test files to avoid project lookup errors.
+// Many test files are not included in tsconfig.json project references, which causes ESLint to fail
+// when trying to generate type information.
 const testDisableProject = {
 	files: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
 	languageOptions: { parserOptions: { project: null } },
@@ -32,6 +34,7 @@ strict.push({ ...testDisableProject });
 minimalDeprecated.push({ ...testDisableProject });
 
 // Global override: disable type-aware project for JS-only files lacking tsconfig.
+// JavaScript files don't have TypeScript type information, so TypeScript-specific parsing must be disabled.
 const jsNoProject = {
 	files: ["**/*.js", "**/*.cjs", "**/*.mjs"],
 	languageOptions: { parserOptions: { project: null } },
@@ -41,6 +44,7 @@ strict.push(jsNoProject);
 minimalDeprecated.push(jsNoProject);
 
 // Disable type-required @typescript-eslint rules for pure JS files (no tsconfig type info).
+// These rules require TypeScript's type-checker, which isn't available for JavaScript files.
 const jsTypeAwareDisable = {
 	files: ["**/*.js", "**/*.cjs", "**/*.mjs"],
 	rules: {
@@ -65,6 +69,8 @@ strict.push(jsTypeAwareDisable);
 minimalDeprecated.push(jsTypeAwareDisable);
 
 // Disable type-required TS rules for TypeScript test files lacking project coverage.
+// Even TypeScript test files often aren't included in tsconfig project references,
+// so we disable type-aware rules for them as well to prevent linting errors.
 const tsTestTypeAwareDisable = {
     files: ["**/src/test/**/*.{ts,tsx}", "**/tests/**/*.{ts,tsx}", "**/*.spec.ts", "**/*.test.ts"],
     rules: {
