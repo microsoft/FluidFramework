@@ -40,4 +40,26 @@ recommended.push(jsNoProject);
 strict.push(jsNoProject);
 minimalDeprecated.push(jsNoProject);
 
+// Disable type-required @typescript-eslint rules for pure JS files (no tsconfig type info).
+const jsTypeAwareDisable = {
+    files: ["**/*.js", "**/*.cjs", "**/*.mjs"],
+    rules: {
+        "@typescript-eslint/await-thenable": "off",
+        "@typescript-eslint/no-floating-promises": "off",
+        "@typescript-eslint/no-misused-promises": "off",
+        "@typescript-eslint/require-await": "off",
+        "@typescript-eslint/restrict-plus-operands": "off",
+        "@typescript-eslint/restrict-template-expressions": "off",
+        "@typescript-eslint/no-unsafe-argument": "off",
+        "@typescript-eslint/no-unsafe-assignment": "off",
+        "@typescript-eslint/no-unsafe-call": "off",
+        "@typescript-eslint/no-unsafe-member-access": "off",
+        "@typescript-eslint/no-unsafe-return": "off",
+        "@typescript-eslint/strict-boolean-expressions": "off",
+    },
+};
+recommended.push(jsTypeAwareDisable);
+strict.push(jsTypeAwareDisable);
+minimalDeprecated.push(jsTypeAwareDisable);
+
 module.exports = { recommended, strict, minimalDeprecated };
