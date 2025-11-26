@@ -65,7 +65,8 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 				const content = await fs.readFile(flatPath, "utf8");
 				let variant: PackageTarget["flatVariant"] = "recommended";
 				if (/import\s*{\s*strict\s*}/.test(content)) variant = "strict";
-				else if (/import\s*{\s*minimalDeprecated\s*}/.test(content)) variant = "minimalDeprecated";
+				else if (/import\s*{\s*minimalDeprecated\s*}/.test(content))
+					variant = "minimalDeprecated";
 				results.push({ packageDir: full, legacyConfigPath: flatPath, flatVariant: variant });
 			} catch {
 				/* no flat config yet */
@@ -81,8 +82,16 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 	return results;
 }
 
-function buildFlatConfigContent(packageDir: string, variant: PackageTarget["flatVariant"]): string {
-	const flatSource = path.relative(packageDir, path.join(repoRoot, "common", "build", "eslint-config-fluid", "flat.mjs")).replace(/\\/g, "/");
+function buildFlatConfigContent(
+	packageDir: string,
+	variant: PackageTarget["flatVariant"],
+): string {
+	const flatSource = path
+		.relative(
+			packageDir,
+			path.join(repoRoot, "common", "build", "eslint-config-fluid", "flat.mjs"),
+		)
+		.replace(/\\/g, "/");
 	const importPath = flatSource.startsWith(".") ? flatSource : `./${flatSource}`;
 	return `/* eslint-disable */\n/**\n * GENERATED FILE - DO NOT EDIT DIRECTLY.\n * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts\n */\nimport { ${variant} } from '${importPath}';\nexport default [...${variant}];\n`;
 }
