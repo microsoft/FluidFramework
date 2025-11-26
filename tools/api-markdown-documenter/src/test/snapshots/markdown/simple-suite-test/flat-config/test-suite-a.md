@@ -1187,8 +1187,7 @@ export declare namespace TestBetaNamespace
 
 <h3 id="testbetanamespace-remarks">Remarks</h3>
 
-Tests release level inheritance. \
-
+Tests release level inheritance.
 
 ### Variables
 
