@@ -19,9 +19,8 @@ module.exports = {
 		// This package is exclusively used in a Node.js context
 		"import-x/no-nodejs-modules": "off",
 
-		// Rules that moved from eslint-plugin-import to eslint-plugin-import-x
-		"import/no-default-export": "off",
-		"import/no-deprecated": "off",
-		"import/no-named-as-default-member": "off",
+		"import-x/no-default-export": "off",
+		"import-x/no-deprecated": "off",
+		"import-x/no-named-as-default-member": "off",
 	},
 };

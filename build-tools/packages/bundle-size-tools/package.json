@@ -40,7 +40,7 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
-		"azure-devops-node-api": "^15.1.1",
+		"azure-devops-node-api": "^11.2.0",
 		"jszip": "^3.10.1",
 		"msgpack-lite": "^0.1.26",
 		"pako": "^2.1.0",

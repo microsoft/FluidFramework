@@ -95,7 +95,7 @@
 		"@octokit/rest": "^22.0.1",
 		"@rushstack/node-core-library": "^5.19.0",
 		"async": "^3.2.6",
-		"azure-devops-node-api": "^15.1.1",
+		"azure-devops-node-api": "^11.2.0",
 		"change-case": "^5.4.4",
 		"cosmiconfig": "^9.0.0",
 		"danger": "^13.0.5",
