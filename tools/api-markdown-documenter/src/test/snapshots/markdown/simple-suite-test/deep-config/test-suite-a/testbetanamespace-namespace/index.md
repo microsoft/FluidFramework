@@ -9,12 +9,14 @@ A namespace tagged as `@beta`.
 <h2 id="testbetanamespace-signature">Signature</h2>
 
 ```typescript
+/** @sealed */
 export declare namespace TestBetaNamespace
 ```
 
 <h2 id="testbetanamespace-remarks">Remarks</h2>
 
-Tests release level inheritance.
+Tests release level inheritance. \
+
 
 ## Variables
 
