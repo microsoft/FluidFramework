@@ -4,4 +4,15 @@
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts
  */
 import { strict } from "../../../common/build/eslint-config-fluid/flat.mjs";
-export default [...strict];
+
+const config = [
+	...strict,
+	{
+		files: ["src/test/*.spec.ts"],
+		rules: {
+			"prefer-arrow-callback": "off",
+		},
+	},
+];
+
+export default config;

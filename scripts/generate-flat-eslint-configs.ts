@@ -12,12 +12,14 @@
  *  - If .eslintrc.cjs extends "@fluidframework/eslint-config-fluid/strict" => use strict flat config.
  *  - If it extends "@fluidframework/eslint-config-fluid/minimal-deprecated" => use minimalDeprecated.
  *  - Otherwise (includes base or recommended) => use recommended.
+ *  - Extracts local rules and overrides from .eslintrc.cjs and includes them in the flat config.
  *
- * Output: eslint.config.cjs alongside the existing .eslintrc.cjs (which is left intact for now).
+ * Output: eslint.config.mjs alongside the existing .eslintrc.cjs (which is left intact for now).
  */
 
 import { promises as fs } from "fs";
 import * as path from "path";
+import { pathToFileURL } from "url";
 
 import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
@@ -28,6 +30,7 @@ interface PackageTarget {
 	packageDir: string;
 	legacyConfigPath: string;
 	flatVariant: "strict" | "minimalDeprecated" | "recommended";
+	legacyConfig?: any;
 }
 
 async function findLegacyConfigs(): Promise<PackageTarget[]> {
@@ -45,7 +48,7 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 			if (!entry.isDirectory()) continue;
 			const full = path.join(dir, entry.name);
 
-			// Legacy .eslintrc.cjs detection
+			// Legacy .eslintrc.cjs detection - only process if legacy config exists
 			const legacyPath = path.join(full, ".eslintrc.cjs");
 			try {
 				await fs.access(legacyPath);
@@ -53,23 +56,29 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 				let variant: PackageTarget["flatVariant"] = "recommended";
 				if (content.includes("/strict")) variant = "strict";
 				else if (content.includes("minimal-deprecated")) variant = "minimalDeprecated";
-				results.push({ packageDir: full, legacyConfigPath: legacyPath, flatVariant: variant });
-			} catch {
-				/* no legacy config here */
-			}
 
-			// Existing eslint.config.mjs detection (rewrite to relative imports)
-			const flatPath = path.join(full, "eslint.config.mjs");
-			try {
-				await fs.access(flatPath);
-				const content = await fs.readFile(flatPath, "utf8");
-				let variant: PackageTarget["flatVariant"] = "recommended";
-				if (/import\s*{\s*strict\s*}/.test(content)) variant = "strict";
-				else if (/import\s*{\s*minimalDeprecated\s*}/.test(content))
-					variant = "minimalDeprecated";
-				results.push({ packageDir: full, legacyConfigPath: flatPath, flatVariant: variant });
+				// Load the legacy config to extract rules and overrides
+				// We'll use a separate Node.js process to require() the CommonJS config
+				let legacyConfig;
+				try {
+					const { execSync } = await import("child_process");
+					const result = execSync(
+						`node -e "console.log(JSON.stringify(require('${legacyPath}')))"`,
+						{ cwd: repoRoot, encoding: "utf8" },
+					);
+					legacyConfig = JSON.parse(result);
+				} catch (e) {
+					console.warn(`Warning: Could not load ${legacyPath}:`, e);
+				}
+
+				results.push({
+					packageDir: full,
+					legacyConfigPath: legacyPath,
+					flatVariant: variant,
+					legacyConfig,
+				});
 			} catch {
-				/* no flat config yet */
+				/* no legacy config here - skip this directory */
 			}
 
 			await walk(full);
@@ -85,6 +94,7 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 function buildFlatConfigContent(
 	packageDir: string,
 	variant: PackageTarget["flatVariant"],
+	legacyConfig?: any,
 ): string {
 	const flatSource = path
 		.relative(
@@ -93,14 +103,51 @@ function buildFlatConfigContent(
 		)
 		.replace(/\\/g, "/");
 	const importPath = flatSource.startsWith(".") ? flatSource : `./${flatSource}`;
-	return `/* eslint-disable */\n/**\n * GENERATED FILE - DO NOT EDIT DIRECTLY.\n * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts\n */\nimport { ${variant} } from '${importPath}';\nexport default [...${variant}];\n`;
+
+	let configContent = `/* eslint-disable */\n/**\n * GENERATED FILE - DO NOT EDIT DIRECTLY.\n * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts\n */\nimport { ${variant} } from '${importPath}';\n\n`;
+
+	// Check if there are local rules or overrides to include
+	const hasLocalRules = legacyConfig?.rules && Object.keys(legacyConfig.rules).length > 0;
+	const hasOverrides = legacyConfig?.overrides && legacyConfig.overrides.length > 0;
+
+	if (!hasLocalRules && !hasOverrides) {
+		// Simple case: no local customizations
+		configContent += `export default [...${variant}];\n`;
+	} else {
+		// Complex case: include local rules/overrides
+		configContent += `const config = [\n\t...${variant},\n`;
+
+		if (hasLocalRules) {
+			configContent += `\t{\n\t\trules: ${JSON.stringify(legacyConfig.rules, null, 2).replace(/\n/g, "\n\t\t")},\n\t},\n`;
+		}
+
+		if (hasOverrides) {
+			for (const override of legacyConfig.overrides) {
+				configContent += `\t{\n`;
+				if (override.files) {
+					configContent += `\t\tfiles: ${JSON.stringify(override.files)},\n`;
+				}
+				if (override.excludedFiles) {
+					configContent += `\t\tignores: ${JSON.stringify(override.excludedFiles)},\n`;
+				}
+				if (override.rules) {
+					configContent += `\t\trules: ${JSON.stringify(override.rules, null, 2).replace(/\n/g, "\n\t\t")},\n`;
+				}
+				configContent += `\t},\n`;
+			}
+		}
+
+		configContent += `];\n\nexport default config;\n`;
+	}
+
+	return configContent;
 }
 
 async function writeFlatConfigs(targets: PackageTarget[]): Promise<void> {
 	for (const t of targets) {
 		const outPath = path.join(t.packageDir, "eslint.config.mjs");
-		// Always overwrite to ensure import path stays current.
-		const content = buildFlatConfigContent(t.packageDir, t.flatVariant); // Always overwrite
+		// Always overwrite if legacy config exists (we only process dirs with .eslintrc.cjs)
+		const content = buildFlatConfigContent(t.packageDir, t.flatVariant, t.legacyConfig);
 		await fs.writeFile(outPath, content, "utf8");
 	}
 }
@@ -108,7 +155,9 @@ async function writeFlatConfigs(targets: PackageTarget[]): Promise<void> {
 async function main() {
 	const targets = await findLegacyConfigs();
 	await writeFlatConfigs(targets);
-	console.log(`Generated ${targets.length} flat config files (skipped existing).`);
+	console.log(
+		`Generated ${targets.length} flat config files from legacy .eslintrc.cjs configs.`,
+	);
 }
 
 main().catch((err) => {

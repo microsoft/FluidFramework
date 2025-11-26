@@ -4,4 +4,19 @@
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts
  */
 import { strict } from "../../../common/build/eslint-config-fluid/flat.mjs";
-export default [...strict];
+
+const config = [
+	...strict,
+	{
+		rules: {
+			"@typescript-eslint/no-non-null-assertion": "off",
+			"@typescript-eslint/no-use-before-define": "off",
+			"@typescript-eslint/strict-boolean-expressions": "off",
+			"@typescript-eslint/promise-function-async": "off",
+			"@typescript-eslint/no-misused-promises": "off",
+			"@typescript-eslint/unbound-method": "off",
+		},
+	},
+];
+
+export default config;

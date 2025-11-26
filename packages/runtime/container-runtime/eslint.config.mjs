@@ -4,4 +4,27 @@
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts
  */
 import { recommended } from "../../../common/build/eslint-config-fluid/flat.mjs";
-export default [...recommended];
+
+const config = [
+	...recommended,
+	{
+		rules: {
+			"@typescript-eslint/unbound-method": "off",
+		},
+	},
+	{
+		files: ["*.spec.ts", "src/test/**"],
+		rules: {
+			"@typescript-eslint/explicit-function-return-type": "off",
+			"unicorn/consistent-function-scoping": "off",
+			"import-x/no-nodejs-modules": [
+				"error",
+				{
+					"allow": ["node:assert", "node:crypto"],
+				},
+			],
+		},
+	},
+];
+
+export default config;

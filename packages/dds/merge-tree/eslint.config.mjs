@@ -4,4 +4,19 @@
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts
  */
 import { strict } from "../../../common/build/eslint-config-fluid/flat.mjs";
-export default [...strict];
+
+const config = [
+	...strict,
+	{
+		rules: {
+			"@typescript-eslint/no-use-before-define": "off",
+			"@typescript-eslint/strict-boolean-expressions": "off",
+			"keyword-spacing": "off",
+			"no-case-declarations": "off",
+			"prefer-arrow/prefer-arrow-functions": "off",
+			"unicorn/no-useless-spread": "off",
+		},
+	},
+];
+
+export default config;

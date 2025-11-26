@@ -4,4 +4,25 @@
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts
  */
 import { strict } from "../../../common/build/eslint-config-fluid/flat.mjs";
-export default [...strict];
+
+const config = [
+	...strict,
+	{
+		rules: {
+			"@typescript-eslint/consistent-indexed-object-style": "off",
+		},
+	},
+	{
+		files: ["*.spec.ts", "src/test/**"],
+		rules: {
+			"import-x/no-internal-modules": [
+				"error",
+				{
+					"allow": ["@fluidframework/*/internal{,/**}"],
+				},
+			],
+		},
+	},
+];
+
+export default config;

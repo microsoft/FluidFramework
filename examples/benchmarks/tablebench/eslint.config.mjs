@@ -4,4 +4,15 @@
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts
  */
 import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mjs";
-export default [...minimalDeprecated];
+
+const config = [
+	...minimalDeprecated,
+	{
+		rules: {
+			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+			"@typescript-eslint/unbound-method": "off",
+		},
+	},
+];
+
+export default config;

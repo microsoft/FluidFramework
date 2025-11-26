@@ -4,4 +4,16 @@
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts
  */
 import { strict } from "../../../common/build/eslint-config-fluid/flat.mjs";
-export default [...strict];
+
+const config = [
+	...strict,
+	{
+		rules: {
+			"@typescript-eslint/prefer-nullish-coalescing": "off",
+			"@typescript-eslint/strict-boolean-expressions": "off",
+			"import-x/no-nodejs-modules": "off",
+		},
+	},
+];
+
+export default config;
