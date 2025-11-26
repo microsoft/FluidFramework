@@ -99,19 +99,6 @@ parameters:
   type: string
   default: "^"
 
-trigger: none
-
-variables:
-  # We use 'chalk' to colorize output, which auto-detects color support in the
-  # running terminal.  The log output shown in Azure DevOps job runs only has
-  # basic ANSI color support though, so force that in the pipeline
-- name: FORCE_COLOR
-  value: 1
-- template: /tools/pipelines/templates/include-vars.yml@self
-  parameters:
-    publishOverride: '${{ parameters.publishOverride }}'
-    releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
-
 resources:
   repositories:
   - repository: 1ESPipelineTemplates
@@ -127,6 +114,10 @@ extends:
       os: linux
     customBuildTags:
     - ES365AIMigrationTooling
+    sdl:
+      sourceAnalysisPool:
+        name: Small-eastus2
+        os: linux
     stages:
     # Install / Build / Test Stage
     - stage: build
@@ -136,6 +127,15 @@ extends:
       - job: build
         displayName: Build
         variables:
+        # We use 'chalk' to colorize output, which auto-detects color support in the
+        # running terminal.  The log output shown in Azure DevOps job runs only has
+        # basic ANSI color support though, so force that in the pipeline
+        - name: FORCE_COLOR
+          value: 1
+        - template: /tools/pipelines/templates/include-vars.yml@self
+          parameters:
+            publishOverride: '${{ parameters.publishOverride }}'
+            releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
         - group: ado-feeds
         - group: storage-vars
         # Coverage has quality issues in LTS, and root-causing + fixing is not a priority given changes to LTS at this point
