@@ -8,6 +8,7 @@
 // TSDoc comment with a Markdown link should be flagged.
 /**
  * TSDoc comment with link using Markdown syntax: [bing](https://bing.com).
+ * And an empty link: []().
  */
 const tsdocCommentWithMarkdownLink = "invalid";
 

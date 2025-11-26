@@ -33,12 +33,12 @@ function findMarkdownLinksInPlainText(plainTextNode) {
 		fail("Expected textExcerpt to be defined.");
 	// RegEx explanation:
 	// \[        - Match the opening square bracket
-	// ([^\]]+)  - Capture group 1: Match one or more characters that are not a closing square bracket (the link text)
+	// ([^\]]*)  - Capture group 1: Match zero or more characters that are not a closing square bracket (the link text)
 	// \]        - Match the closing square bracket
 	// \(        - Match the opening parenthesis
-	// ([^)]+)   - Capture group 2: Match one or more characters that are not a closing parenthesis (the link target)
+	// ([^)]*)   - Capture group 2: Match zero or more characters that are not a closing parenthesis (the link target)
 	// \)        - Match the closing parenthesis
-	const matches = plainTextNode.text.matchAll(/\[([^\]]+)\]\(([^)]+)\)/g);
+	const matches = plainTextNode.text.matchAll(/\[([^\]]*)\]\(([^)]*)\)/g);
 	return Array.from(matches, (match) => ({
 		linkText: match[1],
 		linkTarget: match[2],
@@ -151,7 +151,7 @@ const rule = {
 								messageId: "markdownLink",
 								fix(fixer) {
 									const trimmedText = link.linkText.trim();
-									const tsdocLink = trimmedText
+									const tsdocLink = trimmedText.length > 0
 										? `{@link ${link.linkTarget} | ${trimmedText}}`
 										: `{@link ${link.linkTarget}}`;
 									return fixer.replaceTextRange(
