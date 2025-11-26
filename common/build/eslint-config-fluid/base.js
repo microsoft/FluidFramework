@@ -6,6 +6,7 @@
 /**
  * Base configuration from which all of our exported configs extends.
  */
+const { configs: { recommended: eslintRecommended } } = require("@eslint/js");
 module.exports = {
 	env: {
 		browser: true,
