@@ -52,6 +52,7 @@ export {
 	type TreeIndex,
 	type TreeIndexKey,
 	type TreeIndexNodes,
+	type IncrementalEncodingPolicy,
 } from "./feature-libraries/index.js";
 
 export {
@@ -287,10 +288,13 @@ export {
 	exportCompatibilitySchemaSnapshot,
 	importCompatibilitySchemaSnapshot,
 	checkCompatibility,
+	incrementalSummaryHint,
+	incrementalEncodingPolicyForAllowedTypes,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
 	configuredSharedTree,
+	configuredSharedTreeAlpha,
 	configuredSharedTreeBeta,
 	configuredSharedTreeBetaLegacy,
 } from "./treeFactory.js";

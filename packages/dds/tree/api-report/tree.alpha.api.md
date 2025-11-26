@@ -169,6 +169,9 @@ export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidH
     [key: string]: ConciseTree<THandle>;
 };
 
+// @alpha
+export function configuredSharedTreeAlpha(options: SharedTreeOptions): SharedObjectKind<ITree>;
+
 // @beta
 export function configuredSharedTreeBeta(options: SharedTreeOptionsBeta): SharedObjectKind<ITree>;
 
@@ -426,6 +429,15 @@ export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 
 // @alpha
 export function importCompatibilitySchemaSnapshot(config: JsonCompatibleReadOnly): TreeViewConfiguration;
+
+// @alpha
+export type IncrementalEncodingPolicy = (nodeIdentifier: string | undefined, fieldKey: string) => boolean;
+
+// @alpha
+export function incrementalEncodingPolicyForAllowedTypes(rootSchema: TreeSchema): IncrementalEncodingPolicy;
+
+// @alpha
+export const incrementalSummaryHint: unique symbol;
 
 // @alpha
 export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & ICodecOptions, content: ViewContent): TreeViewAlpha<TSchema>;
@@ -1022,8 +1034,9 @@ export interface SharedTreeFormatOptions {
 }
 
 // @alpha @input
-export interface SharedTreeOptions extends Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions>, SharedTreeOptionsBeta {
+export interface SharedTreeOptions extends SharedTreeOptionsBeta, Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions> {
     readonly enableSharedBranches?: boolean;
+    shouldEncodeIncrementally?: IncrementalEncodingPolicy;
 }
 
 // @beta @input
@@ -1475,6 +1488,7 @@ export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode> extends
 // @alpha
 export enum TreeCompressionStrategy {
     Compressed = 0,
+    CompressedIncremental = 2,
     Uncompressed = 1
 }
 
