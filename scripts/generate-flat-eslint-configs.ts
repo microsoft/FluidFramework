@@ -42,17 +42,33 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 		for (const entry of entries) {
 			if (!entry.isDirectory()) continue;
 			const full = path.join(dir, entry.name);
-			const eslintrc = path.join(full, ".eslintrc.cjs");
+
+			// Legacy .eslintrc.cjs detection
+			const legacyPath = path.join(full, ".eslintrc.cjs");
 			try {
-				await fs.access(eslintrc);
-				const content = await fs.readFile(eslintrc, "utf8");
+				await fs.access(legacyPath);
+				const content = await fs.readFile(legacyPath, "utf8");
 				let variant: PackageTarget["flatVariant"] = "recommended";
 				if (content.includes("/strict")) variant = "strict";
 				else if (content.includes("minimal-deprecated")) variant = "minimalDeprecated";
-				results.push({ packageDir: full, legacyConfigPath: eslintrc, flatVariant: variant });
+				results.push({ packageDir: full, legacyConfigPath: legacyPath, flatVariant: variant });
 			} catch {
 				/* no legacy config here */
 			}
+
+			// Existing eslint.config.mjs detection (rewrite to relative imports)
+			const flatPath = path.join(full, "eslint.config.mjs");
+			try {
+				await fs.access(flatPath);
+				const content = await fs.readFile(flatPath, "utf8");
+				let variant: PackageTarget["flatVariant"] = "recommended";
+				if (content.includes("strict")) variant = "strict";
+				else if (content.includes("minimalDeprecated")) variant = "minimalDeprecated";
+				results.push({ packageDir: full, legacyConfigPath: flatPath, flatVariant: variant });
+			} catch {
+				/* no flat config yet */
+			}
+
 			await walk(full);
 		}
 	}
