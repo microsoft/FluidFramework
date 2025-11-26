@@ -6,7 +6,6 @@
 import { strict as assert, fail } from "node:assert";
 
 import type {
-	FieldKey,
 	ITreeCursorSynchronous,
 	TreeChunk,
 	TreeFieldStoredSchema,
@@ -353,8 +352,8 @@ describe("schemaBasedEncoding", () => {
 			const testReferenceId: ChunkReferenceId = brand(123);
 			const mockIncrementalEncoder: IncrementalEncoder = {
 				shouldEncodeIncrementally: (
-					nodeIdentifier: TreeNodeSchemaIdentifier | undefined,
-					fieldKey: FieldKey,
+					nodeIdentifier: string | undefined,
+					fieldKey: string,
 				): boolean => {
 					return (
 						nodeIdentifier === HasOptionalFields.identifier && fieldKey === "incrementalField"
