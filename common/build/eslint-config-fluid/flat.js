@@ -24,8 +24,8 @@ const minimalDeprecated = compat.config({ extends: [require.resolve("./minimal-d
 
 // Disable type-aware parsing (parserOptions.project) for test files to avoid project lookup errors.
 const testDisableProject = {
-    files: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
-    languageOptions: { parserOptions: { project: null } },
+	files: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
+	languageOptions: { parserOptions: { project: null } },
 };
 recommended.push({ ...testDisableProject });
 strict.push({ ...testDisableProject });
@@ -33,8 +33,8 @@ minimalDeprecated.push({ ...testDisableProject });
 
 // Global override: disable type-aware project for JS-only files lacking tsconfig.
 const jsNoProject = {
-    files: ["**/*.js", "**/*.cjs", "**/*.mjs"],
-    languageOptions: { parserOptions: { project: null } },
+	files: ["**/*.js", "**/*.cjs", "**/*.mjs"],
+	languageOptions: { parserOptions: { project: null } },
 };
 recommended.push(jsNoProject);
 strict.push(jsNoProject);
@@ -42,7 +42,30 @@ minimalDeprecated.push(jsNoProject);
 
 // Disable type-required @typescript-eslint rules for pure JS files (no tsconfig type info).
 const jsTypeAwareDisable = {
-    files: ["**/*.js", "**/*.cjs", "**/*.mjs"],
+	files: ["**/*.js", "**/*.cjs", "**/*.mjs"],
+	rules: {
+		"@typescript-eslint/await-thenable": "off",
+		"@typescript-eslint/no-floating-promises": "off",
+		"@typescript-eslint/no-misused-promises": "off",
+		"@typescript-eslint/require-await": "off",
+		"@typescript-eslint/restrict-plus-operands": "off",
+		"@typescript-eslint/restrict-template-expressions": "off",
+		"@typescript-eslint/no-unsafe-argument": "off",
+		"@typescript-eslint/no-unsafe-assignment": "off",
+		"@typescript-eslint/no-unsafe-call": "off",
+		"@typescript-eslint/no-unsafe-member-access": "off",
+		"@typescript-eslint/no-unsafe-return": "off",
+		"@typescript-eslint/strict-boolean-expressions": "off",
+		"@typescript-eslint/no-array-delete": "off",
+	},
+};
+recommended.push(jsTypeAwareDisable);
+strict.push(jsTypeAwareDisable);
+minimalDeprecated.push(jsTypeAwareDisable);
+
+// Disable type-required TS rules for TypeScript test files lacking project coverage.
+const tsTestTypeAwareDisable = {
+    files: ["**/src/test/**/*.{ts,tsx}", "**/tests/**/*.{ts,tsx}", "**/*.spec.ts", "**/*.test.ts"],
     rules: {
         "@typescript-eslint/await-thenable": "off",
         "@typescript-eslint/no-floating-promises": "off",
@@ -56,11 +79,10 @@ const jsTypeAwareDisable = {
         "@typescript-eslint/no-unsafe-member-access": "off",
         "@typescript-eslint/no-unsafe-return": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
-        "@typescript-eslint/no-array-delete": "off",
     },
 };
-recommended.push(jsTypeAwareDisable);
-strict.push(jsTypeAwareDisable);
-minimalDeprecated.push(jsTypeAwareDisable);
+recommended.push(tsTestTypeAwareDisable);
+strict.push(tsTestTypeAwareDisable);
+minimalDeprecated.push(tsTestTypeAwareDisable);
 
 module.exports = { recommended, strict, minimalDeprecated };
