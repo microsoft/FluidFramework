@@ -78,7 +78,7 @@
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"css-loader": "^7.1.2",
-		"eslint": "~8.57.1",
+		"eslint": "~9.39.1",
 		"expect-puppeteer": "^9.0.2",
 		"html-loader": "^5.1.0",
 		"html-webpack-plugin": "^5.6.0",

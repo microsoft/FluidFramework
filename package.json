@@ -182,7 +182,7 @@
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"danger": "^13.0.4",
-		"eslint": "~8.57.1",
+		"eslint": "~9.39.1",
 		"jest": "^29.6.2",
 		"mocha": "^10.8.2",
 		"puppeteer": "^23.6.0",
@@ -374,8 +374,7 @@
 			"@fluentui/react-positioning>@floating-ui/dom": "~1.5.4",
 			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
 			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",
-			"axios@<0.30.0": "^0.30.0",
-			"eslint": "^9.0.0"
+			"axios@<0.30.0": "^0.30.0"
 		},
 		"peerDependencyComments": [
 			"The react-split-pane package used by devtools-view has a peer dependency on React 16, but it doesn't seem to be maintained and it works fine with React 18. TODO: AB#18876",
