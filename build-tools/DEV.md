@@ -135,18 +135,6 @@ The following package was successfully upgraded to an intermediate version:
 
 Note: execa cannot be upgraded beyond v5 despite v6-v7 being CommonJS-compatible, because they removed default export compatibility that breaks TypeScript module resolution in build-infrastructure.
 
-### Migration Path
-
-To upgrade these dependencies, the build-tools codebase would need to be migrated from CommonJS to ESM. This is a significant undertaking that would involve:
-
-1. Converting all TypeScript source files to use ESM imports/exports
-2. Updating `package.json` to include `"type": "module"`
-3. Changing file extensions or configuring TypeScript to output ESM
-4. Updating all import statements to include file extensions where required by ESM
-5. Handling any CommonJS-only dependencies that don't have ESM equivalents
-6. Updating the build and test infrastructure
-
-Until this migration is completed, these dependencies must remain at their current major versions.
 
 ### Successfully Upgraded Dependencies
 

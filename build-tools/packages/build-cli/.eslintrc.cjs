@@ -34,12 +34,6 @@ module.exports = {
 		// Set to warn because we're not ready to enforce this rule for much of build-cli yet. It is enabled for new code.
 		"import-x/no-deprecated": "warn",
 
-		// Rules that moved from eslint-plugin-import to eslint-plugin-import-x
-		"import/no-default-export": "off",
-		"import/no-deprecated": "off",
-		"import/no-named-as-default-member": "off",
-		"import/no-internal-modules": "off",
-
 		"import-x/no-internal-modules": [
 			"error",
 			{
