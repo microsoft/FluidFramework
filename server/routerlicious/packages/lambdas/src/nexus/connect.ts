@@ -27,7 +27,6 @@ import {
 	type ICollaborationSessionClient,
 	clusterDrainingRetryTimeInMs,
 	type IDenyList,
-	StageTrace,
 } from "@fluidframework/server-services-core";
 import {
 	CommonProperties,
@@ -48,7 +47,7 @@ import type {
 } from "./interfaces";
 import { ProtocolVersions, checkProtocolVersion } from "./protocol";
 import { checkThrottleAndUsage, getSocketConnectThrottleId } from "./throttleAndUsage";
-import { sampleMessages } from "./trace";
+import { StageTrace, sampleMessages } from "./trace";
 import {
 	getMessageMetadata,
 	handleServerErrorAndConvertToNetworkError,

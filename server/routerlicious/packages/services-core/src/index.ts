@@ -169,7 +169,6 @@ export {
 	ThrottlingError,
 } from "./throttler";
 export type { TokenGenerator } from "./token";
-export { StageTrace, IStageTrace } from "./trace";
 export {
 	clientConnectivityStorageId,
 	type IUsageData,
