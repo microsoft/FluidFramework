@@ -12,7 +12,7 @@ For flat config (ESLint 9), import from `@fluidframework/eslint-config-fluid/fla
 
 ```javascript
 // eslint.config.mjs
-import { strict } from '@fluidframework/eslint-config-fluid/flat.mjs';
+import { strict } from "@fluidframework/eslint-config-fluid/flat.mjs";
 export default [...strict];
 ```
 

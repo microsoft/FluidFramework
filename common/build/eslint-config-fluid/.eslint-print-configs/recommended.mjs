@@ -1,2 +1,2 @@
-import { recommended } from '../flat.mjs';
+import { recommended } from "../flat.mjs";
 export default [...recommended];

@@ -1,2 +1,2 @@
-import { minimalDeprecated } from '../flat.mjs';
+import { minimalDeprecated } from "../flat.mjs";
 export default [...minimalDeprecated];

@@ -82,17 +82,21 @@ async function generateConfig(filePath: string, configPath: string): Promise<str
 	}
 
 	// Serialize to JSON first to remove circular references and non-serializable properties
-	const serialized = JSON.stringify(config, (key, value) => {
-		// Remove parser path as it's environment-specific
-		if (key === 'parser' && typeof value === 'string') {
-			return undefined;
-		}
-		// Skip other problematic properties that cause circular references
-		if (key === 'program' || key === 'tsconfigRootDir') {
-			return undefined;
-		}
-		return value;
-	}, 4);
+	const serialized = JSON.stringify(
+		config,
+		(key, value) => {
+			// Remove parser path as it's environment-specific
+			if (key === "parser" && typeof value === "string") {
+				return undefined;
+			}
+			// Skip other problematic properties that cause circular references
+			if (key === "program" || key === "tsconfigRootDir") {
+				return undefined;
+			}
+			return value;
+		},
+		4,
+	);
 
 	// Parse back to object for sorting
 	const cleanConfig = JSON.parse(serialized);

@@ -26,7 +26,9 @@ const recommended = compat.config({ extends: [path.join(__dirname, "recommended.
 /** @type {import("eslint").Linter.FlatConfig[]} */
 const strict = compat.config({ extends: [path.join(__dirname, "strict.js")] });
 /** @type {import("eslint").Linter.FlatConfig[]} */
-const minimalDeprecated = compat.config({ extends: [path.join(__dirname, "minimal-deprecated.js")] });
+const minimalDeprecated = compat.config({
+	extends: [path.join(__dirname, "minimal-deprecated.js")],
+});
 
 // Disable type-aware parsing (parserOptions.project) for test files to avoid project lookup errors.
 // Many test files are not included in tsconfig.json project references, which causes ESLint to fail
