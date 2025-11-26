@@ -63,21 +63,18 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 	return results;
 }
 
-function buildFlatConfigContent(variant: PackageTarget["flatVariant"]): string {
-	return `/* eslint-disable */\n/**\n * GENERATED FILE - DO NOT EDIT DIRECTLY.\n * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts\n */\nimport { ${variant} } from '@fluidframework/eslint-config-fluid/flat';\nexport default [...${variant}];\n`;
+function buildFlatConfigContent(packageDir: string, variant: PackageTarget["flatVariant"]): string {
+	const flatSource = path.relative(packageDir, path.join(repoRoot, "common", "build", "eslint-config-fluid", "flat.js")).replace(/\\/g, "/");
+	const importPath = flatSource.startsWith(".") ? flatSource : `./${flatSource}`;
+	return `/* eslint-disable */\n/**\n * GENERATED FILE - DO NOT EDIT DIRECTLY.\n * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts\n */\nimport { ${variant} } from '${importPath}';\nexport default [...${variant}];\n`;
 }
 
 async function writeFlatConfigs(targets: PackageTarget[]): Promise<void> {
 	for (const t of targets) {
 		const outPath = path.join(t.packageDir, "eslint.config.mjs");
-		try {
-			await fs.access(outPath);
-			// Already exists; skip.
-			continue;
-		} catch {
-			const content = buildFlatConfigContent(t.flatVariant);
-			await fs.writeFile(outPath, content, "utf8");
-		}
+		// Always overwrite to ensure import path stays current.
+		const content = buildFlatConfigContent(t.packageDir, t.flatVariant);
+		await fs.writeFile(outPath, content, "utf8");
 	}
 }
 
