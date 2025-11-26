@@ -40,7 +40,6 @@ import type {
 	IDirectoryEvents,
 	IDirectoryValueChanged,
 	ISharedDirectory,
-	ISharedDirectoryEvents,
 	ISharedDirectoryEventsInternal,
 	IValueChanged,
 } from "./interfaces.js";
@@ -403,7 +402,7 @@ interface SequenceData {
  * @sealed
  */
 export class SharedDirectory
-	extends SharedObject<ISharedDirectoryEvents & ISharedDirectoryEventsInternal>
+	extends SharedObject<ISharedDirectoryEventsInternal>
 	implements ISharedDirectory
 {
 	/**
