@@ -31,6 +31,13 @@ function findMarkdownLinksInPlainText(plainTextNode) {
 	const textRange =
 		plainTextNode.textExcerpt?.getContainingTextRange() ??
 		fail("Expected textExcerpt to be defined.");
+	// RegEx explanation:
+	// \[        - Match the opening square bracket
+	// ([^\]]+)  - Capture group 1: Match one or more characters that are not a closing square bracket (the link text)
+	// \]        - Match the closing square bracket
+	// \(        - Match the opening parenthesis
+	// ([^)]+)   - Capture group 2: Match one or more characters that are not a closing parenthesis (the link target)
+	// \)        - Match the closing parenthesis
 	const matches = plainTextNode.text.matchAll(/\[([^\]]+)\]\(([^)]+)\)/g);
 	return Array.from(matches, (match) => ({
 		linkText: match[1],
