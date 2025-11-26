@@ -81,25 +81,15 @@ async function generateConfig(filePath: string, configPath: string): Promise<str
 		return "{}\n";
 	}
 
-	// Serialize to JSON first to remove circular references and non-serializable properties
-	const serialized = JSON.stringify(
-		config,
-		(key, value) => {
-			// Remove parser path as it's environment-specific
-			if (key === "parser" && typeof value === "string") {
-				return undefined;
-			}
-			// Skip other problematic properties that cause circular references
-			if (key === "program" || key === "tsconfigRootDir") {
-				return undefined;
-			}
-			return value;
-		},
-		4,
-	);
+	// Remove the parser property because it's an absolute path and will vary based on the local environment.
+	if (config.languageOptions?.parser) {
+		delete config.languageOptions.parser;
+	}
 
-	// Parse back to object for sorting
-	const cleanConfig = JSON.parse(serialized);
+	// Serialize and parse to create a clean copy without any circular references or non-serializable values
+	// that might exist in the ESLint config object (even though JSON.stringify handles them fine,
+	// sort-json may encounter issues with them)
+	const cleanConfig = JSON.parse(JSON.stringify(config));
 
 	// Generate the new content with sorting applied
 	// Sorting at all is desirable as otherwise changes in the order of common config references may cause large diffs
