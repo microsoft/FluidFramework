@@ -31,4 +31,13 @@ recommended.push({ ...testDisableProject });
 strict.push({ ...testDisableProject });
 minimalDeprecated.push({ ...testDisableProject });
 
+// Global override: disable type-aware project for JS-only files lacking tsconfig.
+const jsNoProject = {
+    files: ["**/*.js", "**/*.cjs", "**/*.mjs"],
+    languageOptions: { parserOptions: { project: null } },
+};
+recommended.push(jsNoProject);
+strict.push(jsNoProject);
+minimalDeprecated.push(jsNoProject);
+
 module.exports = { recommended, strict, minimalDeprecated };
