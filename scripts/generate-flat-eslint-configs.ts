@@ -64,12 +64,12 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 }
 
 function buildFlatConfigContent(variant: PackageTarget["flatVariant"]): string {
-	return `/* eslint-disable */\n/**\n * GENERATED FILE - DO NOT EDIT DIRECTLY.\n * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts\n */\nconst { ${variant} } = require('@fluidframework/eslint-config-fluid/flat');\nmodule.exports = [...${variant}];\n`;
+	return `/* eslint-disable */\n/**\n * GENERATED FILE - DO NOT EDIT DIRECTLY.\n * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts\n */\nimport { ${variant} } from '@fluidframework/eslint-config-fluid/flat';\nexport default [...${variant}];\n`;
 }
 
 async function writeFlatConfigs(targets: PackageTarget[]): Promise<void> {
 	for (const t of targets) {
-		const outPath = path.join(t.packageDir, "eslint.config.cjs");
+		const outPath = path.join(t.packageDir, "eslint.config.mjs");
 		try {
 			await fs.access(outPath);
 			// Already exists; skip.
