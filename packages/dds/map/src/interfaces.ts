@@ -281,7 +281,7 @@ export interface IDirectoryEvents extends IEvent {
  * Internal events for {@link ISharedDirectory}.
  * @internal
  */
-export interface ISharedDirectoryEventsInternal extends IEvent {
+export interface ISharedDirectoryEventsInternal extends ISharedDirectoryEvents {
 	/**
 	 * Emitted when the {@link ISharedDirectory} is cleared.
 	 *
