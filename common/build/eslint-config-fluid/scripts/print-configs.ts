@@ -75,9 +75,15 @@ async function generateConfig(filePath: string, configPath: string): Promise<str
 		overrideConfigFile: configPath,
 	});
 
-	const config = await eslint.calculateConfigForFile(filePath);
+	const config = await eslint.calculateConfigForFile(filePath) as any;
+	if (!config) {
+		console.warn("Warning: ESLint returned undefined config for " + filePath);
+		return "{}\n";
+	}
 	// Remove the parser property because it's an absolute path and will vary based on the local environment.
-	delete (config as { parser?: unknown }).parser;
+	if (config.parser) {
+		delete config.parser;
+	}
 
 	// Generate the new content with sorting applied
 	// Sorting at all is desirable as otherwise changes in the order of common config references may cause large diffs
