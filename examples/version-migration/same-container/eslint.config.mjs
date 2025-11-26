@@ -3,5 +3,5 @@
  * GENERATED FILE - DO NOT EDIT DIRECTLY.
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts
  */
-import { minimalDeprecated } from '../../../common/build/eslint-config-fluid/flat.js';
+import { minimalDeprecated } from '../../../common/build/eslint-config-fluid/flat.mjs';
 export default [...minimalDeprecated];

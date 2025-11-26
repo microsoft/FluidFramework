@@ -7,20 +7,26 @@
 // Consumers can import { recommended, strict, minimalDeprecated } from this module
 // and spread them into their eslint.config.js.
 
-const { FlatCompat } = require("@eslint/eslintrc");
-const { configs } = require("@eslint/js");
+import { FlatCompat } from "@eslint/eslintrc";
+import eslintJs from "@eslint/js";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const compat = new FlatCompat({
 	baseDirectory: __dirname,
-	recommendedConfig: configs.recommended,
-	allConfig: configs.all,
+	recommendedConfig: eslintJs.configs.recommended,
+	allConfig: eslintJs.configs.all,
 });
 
 /** @type {import("eslint").Linter.FlatConfig[]} */
-const recommended = compat.config({ extends: [require.resolve("./recommended.js")] });
+const recommended = compat.config({ extends: [path.join(__dirname, "recommended.js")] });
 /** @type {import("eslint").Linter.FlatConfig[]} */
-const strict = compat.config({ extends: [require.resolve("./strict.js")] });
+const strict = compat.config({ extends: [path.join(__dirname, "strict.js")] });
 /** @type {import("eslint").Linter.FlatConfig[]} */
-const minimalDeprecated = compat.config({ extends: [require.resolve("./minimal-deprecated.js")] });
+const minimalDeprecated = compat.config({ extends: [path.join(__dirname, "minimal-deprecated.js")] });
 
 // Disable type-aware parsing (parserOptions.project) for test files to avoid project lookup errors.
 // Many test files are not included in tsconfig.json project references, which causes ESLint to fail
@@ -72,24 +78,24 @@ minimalDeprecated.push(jsTypeAwareDisable);
 // Even TypeScript test files often aren't included in tsconfig project references,
 // so we disable type-aware rules for them as well to prevent linting errors.
 const tsTestTypeAwareDisable = {
-    files: ["**/src/test/**/*.{ts,tsx}", "**/tests/**/*.{ts,tsx}", "**/*.spec.ts", "**/*.test.ts"],
-    rules: {
-        "@typescript-eslint/await-thenable": "off",
-        "@typescript-eslint/no-floating-promises": "off",
-        "@typescript-eslint/no-misused-promises": "off",
-        "@typescript-eslint/require-await": "off",
-        "@typescript-eslint/restrict-plus-operands": "off",
-        "@typescript-eslint/restrict-template-expressions": "off",
-        "@typescript-eslint/no-unsafe-argument": "off",
-        "@typescript-eslint/no-unsafe-assignment": "off",
-        "@typescript-eslint/no-unsafe-call": "off",
-        "@typescript-eslint/no-unsafe-member-access": "off",
-        "@typescript-eslint/no-unsafe-return": "off",
-        "@typescript-eslint/strict-boolean-expressions": "off",
-    },
+	files: ["**/src/test/**/*.{ts,tsx}", "**/tests/**/*.{ts,tsx}", "**/*.spec.ts", "**/*.test.ts"],
+	rules: {
+		"@typescript-eslint/await-thenable": "off",
+		"@typescript-eslint/no-floating-promises": "off",
+		"@typescript-eslint/no-misused-promises": "off",
+		"@typescript-eslint/require-await": "off",
+		"@typescript-eslint/restrict-plus-operands": "off",
+		"@typescript-eslint/restrict-template-expressions": "off",
+		"@typescript-eslint/no-unsafe-argument": "off",
+		"@typescript-eslint/no-unsafe-assignment": "off",
+		"@typescript-eslint/no-unsafe-call": "off",
+		"@typescript-eslint/no-unsafe-member-access": "off",
+		"@typescript-eslint/no-unsafe-return": "off",
+		"@typescript-eslint/strict-boolean-expressions": "off",
+	},
 };
 recommended.push(tsTestTypeAwareDisable);
 strict.push(tsTestTypeAwareDisable);
 minimalDeprecated.push(tsTestTypeAwareDisable);
 
-module.exports = { recommended, strict, minimalDeprecated };
+export { recommended, strict, minimalDeprecated };

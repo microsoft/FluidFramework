@@ -4,10 +4,10 @@
 
 ### ESLint 9 Flat Config Support
 
-This package now supports ESLint 9 flat config format via a new `flat.js` export. The flat config wraps existing configs using `FlatCompat` from `@eslint/eslintrc` for backward compatibility.
+This package now supports ESLint 9 flat config format via a new `flat.mjs` export. The flat config wraps existing configs using `FlatCompat` from `@eslint/eslintrc` for backward compatibility.
 
 Key features:
-- New `flat.js` module exports `recommended`, `strict`, and `minimalDeprecated` configs for ESLint 9
+- New `flat.mjs` module exports `recommended`, `strict`, and `minimalDeprecated` configs for ESLint 9
 - Automatic handling of type-aware parsing configuration for JavaScript files and test files
 - Generated `eslint.config.mjs` files for all packages in the repository
 - Script to regenerate flat configs: `pnpm tsx scripts/generate-flat-eslint-configs.ts`

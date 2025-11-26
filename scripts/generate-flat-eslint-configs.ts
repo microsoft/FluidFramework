@@ -80,7 +80,7 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 }
 
 function buildFlatConfigContent(packageDir: string, variant: PackageTarget["flatVariant"]): string {
-	const flatSource = path.relative(packageDir, path.join(repoRoot, "common", "build", "eslint-config-fluid", "flat.js")).replace(/\\/g, "/");
+	const flatSource = path.relative(packageDir, path.join(repoRoot, "common", "build", "eslint-config-fluid", "flat.mjs")).replace(/\\/g, "/");
 	const importPath = flatSource.startsWith(".") ? flatSource : `./${flatSource}`;
 	return `/* eslint-disable */\n/**\n * GENERATED FILE - DO NOT EDIT DIRECTLY.\n * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts\n */\nimport { ${variant} } from '${importPath}';\nexport default [...${variant}];\n`;
 }
