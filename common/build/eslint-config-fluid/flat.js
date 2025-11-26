@@ -57,6 +57,7 @@ const jsTypeAwareDisable = {
 		"@typescript-eslint/no-unsafe-return": "off",
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"@typescript-eslint/no-array-delete": "off",
+		"@typescript-eslint/no-base-to-string": "off",
 	},
 };
 recommended.push(jsTypeAwareDisable);
