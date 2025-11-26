@@ -121,9 +121,8 @@ extends:
   template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
   parameters:
     pool:
-      name: 1ESPT-Pool-Name-Placeholder
-      image: pool-image-placeholder
-      os: windows
+      name: Small-eastus2
+      os: linux
     customBuildTags:
     - ES365AIMigrationTooling
     stages:
