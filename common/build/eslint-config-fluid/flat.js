@@ -22,4 +22,13 @@ const strict = compat.config({ extends: [require.resolve("./strict.js")] });
 /** @type {import("eslint").Linter.FlatConfig[]} */
 const minimalDeprecated = compat.config({ extends: [require.resolve("./minimal-deprecated.js")] });
 
+// Disable type-aware parsing (parserOptions.project) for test files to avoid project lookup errors.
+const testDisableProject = {
+    files: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
+    languageOptions: { parserOptions: { project: null } },
+};
+recommended.push({ ...testDisableProject });
+strict.push({ ...testDisableProject });
+minimalDeprecated.push({ ...testDisableProject });
+
 module.exports = { recommended, strict, minimalDeprecated };
