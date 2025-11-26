@@ -81,15 +81,17 @@ async function generateConfig(filePath: string, configPath: string): Promise<str
 		return "{}\n";
 	}
 
-	// Remove the parser property because it's an absolute path and will vary based on the local environment.
-	if (config.languageOptions?.parser) {
-		delete config.languageOptions.parser;
-	}
-
 	// Serialize and parse to create a clean copy without any circular references or non-serializable values
 	// that might exist in the ESLint config object (even though JSON.stringify handles them fine,
 	// sort-json may encounter issues with them)
 	const cleanConfig = JSON.parse(JSON.stringify(config));
+
+	// Remove the languageOptions property because it contains environment-specific paths and large
+	// globals objects that cause unnecessary diffs. The actual rules configuration is more important
+	// for tracking changes.
+	if (cleanConfig.languageOptions) {
+		delete cleanConfig.languageOptions;
+	}
 
 	// Generate the new content with sorting applied
 	// Sorting at all is desirable as otherwise changes in the order of common config references may cause large diffs
