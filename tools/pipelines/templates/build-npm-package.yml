@@ -117,8 +117,6 @@ extends:
     pool:
       name: Small-eastus2
       os: linux
-    customBuildTags:
-    - ES365AIMigrationTooling
     sdl:
       ${{ if eq(variables['System.TeamProject'], 'internal') }}:
         arrow:
