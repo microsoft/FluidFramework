@@ -34,6 +34,7 @@
 	"devDependencies": {
 		"@fluid-tools/markdown-magic": "file:../../../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
+		"@types/eslint": "^9.6.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~9.37.0",
 		"eslint8": "npm:eslint@~8.57.1",

@@ -180,7 +180,7 @@ export function isNamedSchema(schemaIdentifier: string): boolean {
 		return false;
 	}
 
-	return schemaIdentifier.match(/(?:Array|Map|Record)<\["(.*)"]>/) === null;
+	return /(?:Array|Map|Record)<\["(.*)"]>/.exec(schemaIdentifier) === null;
 }
 
 /**
@@ -190,7 +190,7 @@ export function isNamedSchema(schemaIdentifier: string): boolean {
  */
 export function unqualifySchema(schemaIdentifier: string): string {
 	// Get the unqualified name by removing the scope (everything before the last dot).
-	const matches = schemaIdentifier.match(/[^.]+$/);
+	const matches = /[^.]+$/.exec(schemaIdentifier);
 	if (matches === null) {
 		return schemaIdentifier; // Return the original name if it is unscoped.
 	}

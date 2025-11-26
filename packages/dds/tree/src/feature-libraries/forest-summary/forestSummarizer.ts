@@ -48,7 +48,7 @@ import {
 	ForestIncrementalSummaryBuilder,
 	forestSummaryContentKey,
 } from "./incrementalSummaryBuilder.js";
-import { TreeCompressionStrategyExtended } from "../treeCompressionUtils.js";
+import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 /**
@@ -85,7 +85,7 @@ export class ForestSummarizer implements Summarizable {
 		this.codec = makeForestSummarizerCodec(options, fieldBatchCodec);
 		this.incrementalSummaryBuilder = new ForestIncrementalSummaryBuilder(
 			encoderContext.encodeType ===
-				TreeCompressionStrategyExtended.CompressedIncremental /* enableIncrementalSummary */,
+				TreeCompressionStrategy.CompressedIncremental /* enableIncrementalSummary */,
 			(cursor: ITreeCursorSynchronous) => this.forest.chunkField(cursor),
 			shouldEncodeIncrementally,
 			initialSequenceNumber,
