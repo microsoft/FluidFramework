@@ -11,7 +11,6 @@ import type { CommentThreadStatus } from 'azure-devops-node-api/interfaces/GitIn
 import { Compiler } from 'webpack';
 import type JSZip from 'jszip';
 import { jszip } from 'jszip';
-import { PagedList } from 'azure-devops-node-api/interfaces/common/VSSInterfaces';
 import type { StatsCompilation } from 'webpack';
 import { WebApi } from 'azure-devops-node-api';
 import type Webpack from 'webpack';
@@ -178,7 +177,7 @@ export interface GetBuildOptions {
 }
 
 // @public
-export function getBuilds(adoConnection: WebApi, options: GetBuildOptions): Promise<PagedList<Build>>;
+export function getBuilds(adoConnection: WebApi, options: GetBuildOptions): Promise<Build[]>;
 
 // @public
 export function getBuildTagForCommit(commitHash: string): string;

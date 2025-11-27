@@ -148,9 +148,11 @@
 		},
 		"overrideComments": [
 			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently.",
-			"@types/node: To avoid duplicating the oclif package and adding a bunch of dependencies, force @types/node to a single version. For some reason version 22.8.0 can't be overridden, so use that to ensure a single version"
+			"@types/node: To avoid duplicating the oclif package and adding a bunch of dependencies, force @types/node to a single version. For some reason version 22.8.0 can't be overridden, so use that to ensure a single version",
+			"@types/minimatch: @types/glob@7.x uses minimatch.IOptions and minimatch.IMinimatch interfaces. Force @types/minimatch@5 which includes these legacy type definitions."
 		],
 		"overrides": {
+			"@types/glob>@types/minimatch": "~5.1.2",
 			"@types/node": "^22.19.1",
 			"json5@<1.0.2": "^1.0.2",
 			"json5@>=2.0.0 <2.2.2": "^2.2.2",

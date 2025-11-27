@@ -84,19 +84,27 @@ The following dependencies are pinned to older major versions because newer vers
 
 #### Type Compatibility Issues
 
-12. **typescript** - Pinned to `~5.4.5`
+12. **@types/minimatch** - Pinned to `~5.1.2` for `@types/glob` dependency (via pnpm override)
+    - Latest: `^6.x`
+    - Issue: `@types/glob@7.x` uses `minimatch.IOptions` and `minimatch.IMinimatch` interfaces that were removed in `@types/minimatch@6.x`
+    - Dependency chain: `sort-package-json@1.57.0 → globby@10.0.0 → @types/glob@7.2.0 → @types/minimatch@6.0.0`
+    - Error: `Namespace has no exported member 'IOptions'` and `has no exported member named 'IMinimatch'`
+    - Solution: pnpm override `@types/glob>@types/minimatch@~5.1.2` only affects the @types/glob dependency chain
+    - Note: Targeted override allows rest of codebase to use modern minimatch/types while maintaining compatibility for glob types
+
+13. **typescript** - Pinned to `~5.4.5`
     - Latest: `~5.7.x`
     - Issue: Version 5.9+ has stricter type checking that exposes issues with @octokit dependencies
     - Error: `Cannot find name 'ErrorOptions'`
     - Used in: `build-cli` (devDependency)
 
-13. **ts-morph** - Pinned to `^22.x`
+14. **ts-morph** - Pinned to `^22.x`
     - Latest: `^24.x`
     - Issue: Version 27+ requires newer TypeScript lib types
     - Error: `Cannot find name 'MapIterator'`
     - Used in: `build-cli`
 
-14. **azure-devops-node-api** - Pinned to `^11.x`
+15. **azure-devops-node-api** - Pinned to `^11.x`
     - Latest: `^15.x`
     - Issue: Version 15 has incompatible type definitions and breaks bundle size analysis tools
     - Error: `Types have separate declarations of a private property` and `Type is missing properties`
@@ -105,23 +113,23 @@ The following dependencies are pinned to older major versions because newer vers
 
 #### API/Structure Breaking Changes
 
-15. **eslint** - Pinned to `~8.57.0`
+16. **eslint** - Pinned to `~8.57.0`
     - Latest: `~9.x`
     - Issue: Version 9 uses flat config system incompatible with existing configuration
     - Error: `ESLint configuration is invalid: Unexpected top-level property "__esModule"`
     - Used in: `build-cli` (devDependency)
 
-16. **eslint-config-oclif** - Pinned to `^5.x`
+17. **eslint-config-oclif** - Pinned to `^5.x`
     - Latest: `^6.x`
     - Issue: Version 6 requires ESLint 9
     - Used in: `build-cli`, `version-tools` (devDependency)
 
-17. **@fluidframework/eslint-config-fluid** - Pinned to `^6.x`
+18. **@fluidframework/eslint-config-fluid** - Pinned to `^6.x`
     - Latest: `^8.x`
     - Issue: Version 8 requires ESLint 9
     - Used in: `build-cli`, `build-infrastructure`, `build-tools`, `version-tools` (devDependency)
 
-18. **npm-check-updates** - Pinned to `^16.x`
+19. **npm-check-updates** - Pinned to `^16.x`
     - Latest: `^19.x`
     - Highest compatible: `^16.x` (v17+ changed internal module structure)
     - Issue: Version 17+ changed internal module structure and removed exported types
@@ -143,7 +151,6 @@ The following major version upgrades were successfully applied without breaking 
 
 - **cosmiconfig**: `^8.x` → `^9.x`
 - **change-case**: `^3.x` → `^5.x`
-- **minimatch**: `^7.x` → `^10.x`
 - **@inquirer/prompts**: `^7.x` → `^8.x`
 - **picomatch**: `^2.x` → `^4.x`
 - **ignore**: `^5.x` → `^7.x`
