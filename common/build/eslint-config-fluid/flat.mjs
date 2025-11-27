@@ -41,20 +41,22 @@ recommended.push({ ...testDisableProject });
 strict.push({ ...testDisableProject });
 minimalDeprecated.push({ ...testDisableProject });
 
-// Global override: disable type-aware project for JS-only files lacking tsconfig.
+// Global override: disable type-aware project for JS-only files and .d.ts files lacking tsconfig.
 // JavaScript files don't have TypeScript type information, so TypeScript-specific parsing must be disabled.
+// .d.ts files are often not included in tsconfig.json project references.
 const jsNoProject = {
-	files: ["**/*.js", "**/*.cjs", "**/*.mjs"],
+	files: ["**/*.js", "**/*.cjs", "**/*.mjs", "**/*.d.ts"],
 	languageOptions: { parserOptions: { project: null } },
 };
 recommended.push(jsNoProject);
 strict.push(jsNoProject);
 minimalDeprecated.push(jsNoProject);
 
-// Disable type-required @typescript-eslint rules for pure JS files (no tsconfig type info).
+// Disable type-required @typescript-eslint rules for pure JS files and .d.ts files (no tsconfig type info).
 // These rules require TypeScript's type-checker, which isn't available for JavaScript files.
+// .d.ts files are declaration files and shouldn't be linted with type-aware rules.
 const jsTypeAwareDisable = {
-	files: ["**/*.js", "**/*.cjs", "**/*.mjs"],
+	files: ["**/*.js", "**/*.cjs", "**/*.mjs", "**/*.d.ts"],
 	rules: {
 		"@typescript-eslint/await-thenable": "off",
 		"@typescript-eslint/consistent-return": "off",

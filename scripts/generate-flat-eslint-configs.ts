@@ -54,8 +54,17 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 				await fs.access(legacyPath);
 				const content = await fs.readFile(legacyPath, "utf8");
 				let variant: PackageTarget["flatVariant"] = "recommended";
-				if (content.includes("/strict")) variant = "strict";
-				else if (content.includes("minimal-deprecated")) variant = "minimalDeprecated";
+
+				// Check the extends array specifically to avoid false matches from rule names
+				const extendsMatch = content.match(/extends:\s*\[([^\]]+)\]/s);
+				if (extendsMatch) {
+					const extendsContent = extendsMatch[1];
+					if (extendsContent.includes("eslint-config-fluid/strict")) {
+						variant = "strict";
+					} else if (extendsContent.includes("eslint-config-fluid/minimal-deprecated")) {
+						variant = "minimalDeprecated";
+					}
+				}
 
 				// Load the legacy config to extract rules and overrides
 				// We'll use a separate Node.js process to require() the CommonJS config

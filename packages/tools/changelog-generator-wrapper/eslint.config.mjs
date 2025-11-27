@@ -8,9 +8,11 @@ import { recommended } from "../../../common/build/eslint-config-fluid/flat.mjs"
 const config = [
 	...recommended,
 	{
+		files: ["**/*.js"],
 		rules: {
-			"@typescript-eslint/strict-boolean-expressions": "off",
-			"react/no-deprecated": "off",
+			"@typescript-eslint/explicit-function-return-type": "off",
+			"@typescript-eslint/no-require-imports": "off",
+			"unicorn/prefer-module": "off",
 		},
 	},
 ];

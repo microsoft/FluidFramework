@@ -1376,14 +1376,11 @@
             0
         ],
         "max-len": [
-            2,
+            0,
             {
-                "code": 120,
-                "ignoreTrailingComments": true,
-                "ignoreUrls": true,
-                "ignoreStrings": true,
-                "ignoreTemplateLiterals": true,
-                "ignoreRegExpLiterals": true
+                "ignoreRegExpLiterals": false,
+                "ignoreStrings": false,
+                "code": 120
             }
         ],
         "max-lines": [
