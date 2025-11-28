@@ -2359,7 +2359,7 @@ describe("SharedTree", () => {
 	});
 
 	describe("Identifiers", () => {
-		it("Can use identifiers and the static Tree Apis", () => {
+		it("can use identifiers and the static Tree Apis", () => {
 			const sf = new SchemaFactory("com.example");
 			class Widget extends sf.object("Widget", { id: sf.identifier }) {}
 
@@ -2376,6 +2376,27 @@ describe("SharedTree", () => {
 			// Checks that the shortId returns the correct types and values.
 			assert.equal(typeof Tree.shortId(widget), "number");
 			assert.equal(Tree.shortId(fidget), "fidget");
+		});
+
+		it.only("synchronizes correctly", async () => {
+			const provider = await TestTreeProvider.create(2);
+
+			const sf = new SchemaFactory("com.example")
+
+			class Widget extends sf.object("Widget", {id: sf.identifier}) {}
+
+			// Apply an edit to the first tree which inserts a node with a value
+			const view = provider.trees[0].viewWith(
+				new TreeViewConfiguration({
+					schema: Widget,
+					enableSchemaValidation,
+				}),
+			);
+			view.initialize({});
+
+			// Ensure that the second tree receives the expected state from the first tree
+			await provider.ensureSynchronized();
+			validateTreeConsistency(provider.trees[0], provider.trees[1]);
 		});
 	});
 
