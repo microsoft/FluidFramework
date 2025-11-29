@@ -50,14 +50,9 @@ export class IntervalCollectionOracle {
 	}
 
 	private readonly addInterval = (interval: SequenceInterval, local: boolean, op: any) => {
-		assert(interval, "addInterval event received with undefined interval");
 		assert(
-			typeof local === "boolean",
-			`addInterval 'local' parameter must be boolean, got ${typeof local}`,
-		);
-		assert(
-			!this.intervals.has(interval.getIntervalId()),
-			`addInterval event for interval ${interval.getIntervalId()} that already exists in oracle`,
+			interval,
+			"BUG: addInterval event received with undefined interval - violates API contract",
 		);
 		this.intervals.set(interval.getIntervalId(), {
 			id: interval.getIntervalId(),
@@ -68,15 +63,9 @@ export class IntervalCollectionOracle {
 	};
 
 	private readonly deleteInterval = (interval: SequenceInterval, local: boolean, op: any) => {
-		assert(interval, "deleteInterval event received with undefined interval");
 		assert(
-			typeof local === "boolean",
-			`deleteInterval 'local' parameter must be boolean, got ${typeof local}`,
-		);
-		const existing = this.intervals.get(interval.getIntervalId());
-		assert(
-			existing,
-			`deleteInterval event for interval ${interval.getIntervalId()} that doesn't exist in oracle`,
+			interval,
+			"BUG: deleteInterval event received with undefined interval - violates API contract",
 		);
 		this.intervals.delete(interval.getIntervalId());
 	};
@@ -88,26 +77,19 @@ export class IntervalCollectionOracle {
 		op: any,
 		slide: boolean,
 	) => {
+		// API contract: both intervals must never be undefined
 		assert(
 			interval,
-			"changeInterval event received with undefined interval - violates ISequenceIntervalCollectionEvents contract",
+			"BUG: changeInterval event received with undefined interval - violates API contract",
 		);
 		assert(
 			previousInterval,
-			"changeInterval event received with undefined previousInterval - violates ISequenceIntervalCollectionEvents contract",
-		);
-		assert(
-			typeof local === "boolean",
-			`changeInterval 'local' parameter must be boolean, got ${typeof local}`,
-		);
-		assert(
-			typeof slide === "boolean",
-			`changeInterval 'slide' parameter must be boolean, got ${typeof slide}`,
+			"BUG: changeInterval event received with undefined previousInterval - violates API contract",
 		);
 		const existing = this.intervals.get(interval.getIntervalId());
 		assert(
 			existing,
-			`changeInterval event received for interval ${interval.getIntervalId()} that doesn't exist in oracle - interval may have been deleted`,
+			`BUG: changeInterval event for interval ${interval.getIntervalId()} that doesn't exist in oracle - missed addInterval event or events out of order`,
 		);
 		existing.start = interval.start;
 		existing.end = interval.end;
@@ -120,37 +102,24 @@ export class IntervalCollectionOracle {
 		local: boolean,
 		op: any,
 	) => {
-		// Oracle strict validation: The 'interval' parameter should NEVER be undefined per ISequenceIntervalCollectionEvents.
-		// However, there's a bug in intervalCollection.ts ackChange() where latestInterval can be undefined when:
-		// 1. An interval has been deleted from the collection (latestInterval = undefined)
-		// 2. But property changes are still being acknowledged from pending ops (intervalToChange exists from consensus)
-		// 3. The code emits events with undefined latestInterval, violating the type contract
-		// This assertion catches that bug during fuzz testing.
+		// API contract: interval must never be undefined
 		assert(
 			interval,
-			"propertyChanged event received with undefined interval - violates ISequenceIntervalCollectionEvents contract. " +
-				"See intervalCollection.ts ackChange() line 1439 where latestInterval can be undefined.",
-		);
-		assert(
-			typeof local === "boolean",
-			`propertyChanged 'local' parameter must be boolean, got ${typeof local}`,
+			"BUG: propertyChanged event received with undefined interval - violates API contract",
 		);
 		assert(
 			propertyDeltas && typeof propertyDeltas === "object",
-			"propertyChanged 'propertyDeltas' must be a non-null object",
+			"BUG: propertyChanged 'propertyDeltas' must be a non-null object - violates API contract",
 		);
 		const existing = this.intervals.get(interval.getIntervalId());
 		assert(
 			existing,
-			`propertyChanged event received for interval ${interval.getIntervalId()} that doesn't exist in oracle - interval may have been deleted`,
+			`BUG: propertyChanged event for interval ${interval.getIntervalId()} that doesn't exist in oracle - missed addInterval event or events out of order`,
 		);
-		if (propertyDeltas) {
-			for (const key of Object.keys(propertyDeltas)) {
-				existing.properties[key] = interval.properties[key];
-			}
+		for (const key of Object.keys(propertyDeltas)) {
+			existing.properties[key] = interval.properties[key];
 		}
 	};
-
 	private readonly changed = (
 		interval: SequenceInterval,
 		propertyDeltas: any,
@@ -158,49 +127,31 @@ export class IntervalCollectionOracle {
 		local: boolean,
 		slide: boolean,
 	) => {
-		// Oracle strict validation: The 'interval' parameter should NEVER be undefined per ISequenceIntervalCollectionEvents.
-		// Note: 'previousInterval' (3rd param) CAN legitimately be undefined for property-only changes.
-		// However, there's a bug in intervalCollection.ts ackChange() where latestInterval can be undefined when:
-		// 1. An interval has been deleted from the collection (latestInterval = undefined)
-		// 2. But property changes are still being acknowledged from pending ops (intervalToChange exists from consensus)
-		// 3. The code emits events with undefined latestInterval, violating the type contract
-		// This assertion catches that bug during fuzz testing.
 		assert(
 			interval,
-			"changed event received with undefined interval - violates ISequenceIntervalCollectionEvents contract. " +
-				"See intervalCollection.ts ackChange() line 1440 where latestInterval can be undefined.",
+			"BUG: changed event received with undefined interval - violates API contract",
 		);
 		assert(
-			typeof local === "boolean",
-			`changed 'local' parameter must be boolean, got ${typeof local}`,
+			previousInterval !== undefined || propertyDeltas !== undefined,
+			"BUG: changed event has both previousInterval and propertyDeltas undefined - violates API contract",
 		);
-		assert(
-			typeof slide === "boolean",
-			`changed 'slide' parameter must be boolean, got ${typeof slide}`,
-		);
-		// Validate previousInterval is undefined only for property-only changes
-		if (previousInterval === undefined && propertyDeltas === undefined) {
-			assert.fail(
-				"changed event has both previousInterval and propertyDeltas undefined - at least one should be defined",
-			);
-		}
 		const existing = this.intervals.get(interval.getIntervalId());
 		assert(
 			existing,
-			`changed event received for interval ${interval.getIntervalId()} that doesn't exist in oracle - interval may have been deleted`,
+			`BUG: changed event for interval ${interval.getIntervalId()} that doesn't exist in oracle - missed addInterval event or events out of order`,
 		);
-		if (previousInterval) {
+		if (previousInterval !== undefined) {
 			existing.start = interval.start;
 			existing.end = interval.end;
 		}
-		if (propertyDeltas) {
+		if (propertyDeltas !== undefined && propertyDeltas !== null) {
 			for (const key of Object.keys(propertyDeltas)) {
 				existing.properties[key] = interval.properties[key];
 			}
 		}
 	};
-
 	validate(sharedString: SharedString) {
+		// First check: all intervals in oracle should exist in collection
 		for (const [id, snapshot] of this.intervals) {
 			const actual = this.collection.getIntervalById(id);
 			assert(
@@ -217,13 +168,22 @@ export class IntervalCollectionOracle {
 			assert.strictEqual(expectedStart, actualStart, `Interval ${id} start mismatch`);
 			assert.strictEqual(expectedEnd, actualEnd, `Interval ${id} end mismatch`);
 
-			// compare properties structurally
+			// compare properties
 			assert.deepStrictEqual(
 				this.normalizeProps(snapshot.properties),
 				this.normalizeProps(actual.properties),
 				`Interval ${id} properties mismatch\n  oracle=${JSON.stringify(
 					snapshot.properties,
 				)}\n  actual=${JSON.stringify(actual.properties)}`,
+			);
+		}
+
+		// Second check: all intervals in collection should exist in oracle
+		for (const interval of this.collection) {
+			const id = interval.getIntervalId();
+			assert(
+				this.intervals.has(id),
+				`Interval ${id} exists in collection but not in oracle - oracle missed an addInterval event or is out of sync`,
 			);
 		}
 	}

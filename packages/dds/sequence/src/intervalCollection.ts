@@ -1431,13 +1431,9 @@ export class IntervalCollection
 				}
 			}
 
-			if (deltaProps !== undefined && Object.keys(deltaProps).length > 0) {
-				// Use newInterval instead of latestInterval because latestInterval can be undefined
-				// when the interval has been deleted from the collection but property changes are
-				// still being acknowledged from pending ops. newInterval is guaranteed to be defined
-				// because it comes from intervalToChange which was validated earlier.
-				this.emit("propertyChanged", newInterval, deltaProps, local, op);
-				this.emit("changed", newInterval, deltaProps, undefined, local, false);
+			if (isLatestInterval && deltaProps !== undefined && Object.keys(deltaProps).length > 0) {
+				this.emit("propertyChanged", latestInterval, deltaProps, local, op);
+				this.emit("changed", latestInterval, deltaProps, undefined, local, false);
 			}
 			return newInterval;
 		}
@@ -1486,13 +1482,13 @@ export class IntervalCollection
 		const rebasedEndpoint = this.computeRebasedPositions(localOpMetadata, squash);
 		const localInterval = this.getIntervalById(id);
 
-		// if the interval slid off the string, rebase the op to be a noop and delete the interval.
+		// if the interval slides off the string, rebase the op to be a noop and delete the interval.
 		if (rebasedEndpoint === "detached") {
 			if (
 				localInterval !== undefined &&
 				(localInterval === interval || localOpMetadata.type === "add")
 			) {
-				this.localCollection?.removeExistingInterval(localInterval);
+				this.deleteExistingInterval({ interval: localInterval, local: true });
 			}
 			return undefined;
 		}
