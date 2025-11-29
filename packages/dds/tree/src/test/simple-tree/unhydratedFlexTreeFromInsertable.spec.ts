@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import {
 	MockHandle,
-	validateAssertionError2 as validateAssertionError,
+	validateAssertionError,
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
