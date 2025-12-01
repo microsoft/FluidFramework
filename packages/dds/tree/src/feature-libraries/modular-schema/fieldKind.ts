@@ -104,7 +104,7 @@ export interface FieldKindOptions<TFieldChangeHandler> {
 	/**
 	 * True if a client should be able to {@link TreeView.upgradeSchema} from a field schema using this field kind and `originalTypes` to `superset`.
 	 * @remarks
-	 * Must return false if such an upgrade could violate any invariants of `superset` any document which is compatible with this + `originalTypes`.
+	 * Must return false if such an upgrade could violate any invariants of `superset` for any document which is compatible with `this` + `originalTypes`.
 	 *
 	 * Unlike the rest of the FieldKind API, this function may change over time without changing the FieldKind identifier without causing decoherence between clients.
 	 * It has a different set of constraints:
