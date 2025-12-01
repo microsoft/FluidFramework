@@ -25,7 +25,7 @@ import {
 } from "../util/index.js";
 
 import type { SharedBranchSummaryData, SummaryData } from "./editManager.js";
-import { EncodedEditManager } from "./editManagerFormatV5.js";
+import { EncodedEditManager } from "./editManagerFormatVSharedBranches.js";
 import { decodeSharedBranch, encodeSharedBranch } from "./editManagerCodecsCommons.js";
 import type { EncodedSharedBranch } from "./editManagerFormatCommons.js";
 import type { BranchId } from "./branch.js";
@@ -35,7 +35,7 @@ export interface EditManagerEncodingContext {
 	readonly schema?: SchemaAndPolicy;
 }
 
-export function makeV5CodecWithVersion<TChangeset>(
+export function makeSharedBranchesCodecWithVersion<TChangeset>(
 	changeCodec: IMultiFormatCodec<
 		TChangeset,
 		JsonCompatibleReadOnly,

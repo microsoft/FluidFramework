@@ -27,22 +27,21 @@ export const MessageFormatVersion = {
 	v2: 2,
 	/**
 	 * Introduced prior to 2.0 and used beyond.
-	 * Reading capability is currently maintained for backwards compatibility, but it could be removed in the future.
-	 * Writing capability needs to be maintained.
+	 * Reading capability must be maintained for backwards compatibility.
+	 * Writing capability needs to be maintained for cross-version compatibility, may be removed in FF 3.0.
 	 */
 	v3: 3,
 	/**
 	 * Was inadvertently released in 2.43.0 (through usages of configuredSharedTree) and remains available.
 	 * Reading capability must be maintained for backwards compatibility.
 	 * Writing capability needs to be maintained.
-	 * @privateRemarks TODO: stop writing this version.
 	 */
 	v4: 4,
 	/**
 	 * Not yet released.
 	 * Only used for testing shared branches.
 	 */
-	v5: 5,
+	vSharedBranches: "shared-branches|v0.1",
 } as const;
 export type MessageFormatVersion = Brand<
 	(typeof MessageFormatVersion)[keyof typeof MessageFormatVersion],
@@ -51,7 +50,7 @@ export type MessageFormatVersion = Brand<
 export const supportedMessageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set([
 	MessageFormatVersion.v3,
 	MessageFormatVersion.v4,
-	MessageFormatVersion.v5,
+	MessageFormatVersion.vSharedBranches,
 ] as MessageFormatVersion[]);
 export const messageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set(
 	Object.values(MessageFormatVersion) as MessageFormatVersion[],

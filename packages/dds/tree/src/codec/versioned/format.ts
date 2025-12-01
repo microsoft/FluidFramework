@@ -6,6 +6,7 @@
 import { type Static, Type } from "@sinclair/typebox";
 
 export const Versioned = Type.Object({
-	version: Type.Number(),
+	// String versions are used for formats that are not yet officially supported.
+	version: Type.Union([Type.Number(), Type.String()]),
 });
 export type Versioned = Static<typeof Versioned>;
