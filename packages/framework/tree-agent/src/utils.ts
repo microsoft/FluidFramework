@@ -197,16 +197,16 @@ export function isNamedSchema(schemaIdentifier: string): boolean {
 export function unqualifySchema(schemaIdentifier: string): string {
 	// Get the unqualified name by removing the scope (everything before the last dot).
 	const matches = /[^.]+$/.exec(schemaIdentifier);
-	const unqualifiedName = matches === null ? schemaIdentifier : matches[0]
+	const unqualifiedName = matches === null ? schemaIdentifier : matches[0];
 
-	let sanitizedName = unqualifiedName
+	let sanitizedName = unqualifiedName;
 
 	// Replace invalid characters with "_".
 	sanitizedName = sanitizedName.replace(/[^\w$]/g, "_");
 
 	// If the first character is a number, prefix it with "_".
-	if(!/^[$A-Z_a-z]/.test(sanitizedName)) {
-		sanitizedName = `_${sanitizedName}`
+	if (!/^[$A-Z_a-z]/.test(sanitizedName)) {
+		sanitizedName = `_${sanitizedName}`;
 	}
 	return sanitizedName;
 }

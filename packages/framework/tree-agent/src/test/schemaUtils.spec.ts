@@ -18,8 +18,8 @@ class NamedStringMap extends sf.map("NamedStringMap", sf.string) {}
 class NamedStringRecord extends sf.record("NamedStringRecord", sf.string) {}
 
 // Schema objects with invalid typescript type characters.
-class InvalidCharacters extends sf.object("Test-Object!", {value: sf.string}){}
-class LeadingDigit extends sf.object("1TestObject", {value: sf.string}){}
+class InvalidCharacters extends sf.object("Test-Object!", { value: sf.string }) {}
+class LeadingDigit extends sf.object("1TestObject", { value: sf.string }) {}
 
 describe("getFriendlyName", () => {
 	it("returns the name for a named object schema", () => {
@@ -58,7 +58,7 @@ describe("getFriendlyName", () => {
 		assert.equal(getFriendlyName(ArrayOfObjects), "TestObject[]");
 
 		// Object with invalid characters
-		const ArrayOfObjectsWithInvalidCharacters = sf.array(InvalidCharacters)
+		const ArrayOfObjectsWithInvalidCharacters = sf.array(InvalidCharacters);
 		assert.equal(getFriendlyName(ArrayOfObjectsWithInvalidCharacters), "Test_Object_[]");
 	});
 
@@ -161,12 +161,12 @@ describe("getFriendlyName", () => {
 	});
 
 	it("sanitizes invalid characters to underscores.", () => {
-		assert.equal(getFriendlyName(InvalidCharacters), "Test_Object_")
-	})
+		assert.equal(getFriendlyName(InvalidCharacters), "Test_Object_");
+	});
 
 	it("prefixes an underscore when the name starts with an invalid character", () => {
-		assert.equal(getFriendlyName(LeadingDigit), "_1TestObject")
-	})
+		assert.equal(getFriendlyName(LeadingDigit), "_1TestObject");
+	});
 });
 
 describe("unqualifySchema", () => {
@@ -180,27 +180,27 @@ describe("unqualifySchema", () => {
 
 	it("sanitizes invalid characters to underscores.", () => {
 		// With strings
-		assert.equal(unqualifySchema("Test-Object"), "Test_Object")
-		assert.equal(unqualifySchema("Test Object"), "Test_Object")
+		assert.equal(unqualifySchema("Test-Object"), "Test_Object");
+		assert.equal(unqualifySchema("Test Object"), "Test_Object");
 
 		// With schema identifiers from schemafactory,
-		assert.equal(unqualifySchema(InvalidCharacters.identifier), "Test_Object_")
-	})
+		assert.equal(unqualifySchema(InvalidCharacters.identifier), "Test_Object_");
+	});
 
 	it("prefixes an underscore when the name starts with an invalid character", () => {
 		// With strings
-		assert.equal(unqualifySchema("1TestObject"), "_1TestObject")
-		assert.equal(unqualifySchema("-TestObject"), "_TestObject")
+		assert.equal(unqualifySchema("1TestObject"), "_1TestObject");
+		assert.equal(unqualifySchema("-TestObject"), "_TestObject");
 
 		// With schema identifiers from schemafactory,
-		assert.equal(unqualifySchema(LeadingDigit.identifier), "_1TestObject")
-	})
+		assert.equal(unqualifySchema(LeadingDigit.identifier), "_1TestObject");
+	});
 
 	it("returns stable names for valid identifiers", () => {
-		assert.equal(unqualifySchema("TestObject"), "TestObject")
-		assert.equal(unqualifySchema("com.fluidframework.TestObject"), "TestObject")
-		assert.equal(unqualifySchema("ABC123_$"), "ABC123_$")
-	})
+		assert.equal(unqualifySchema("TestObject"), "TestObject");
+		assert.equal(unqualifySchema("com.fluidframework.TestObject"), "TestObject");
+		assert.equal(unqualifySchema("ABC123_$"), "ABC123_$");
+	});
 });
 
 describe("isNamedSchema", () => {
