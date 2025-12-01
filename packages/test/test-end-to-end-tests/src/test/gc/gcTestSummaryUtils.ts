@@ -149,6 +149,7 @@ export const waitForContainerWriteModeConnectionWrite = async (container: IConta
 	if (!container.deltaManager.active) {
 		await new Promise<void>((resolve, reject) => {
 			container.on("connected", () => resolveIfActive(resolve));
+			// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 			container.once("closed", (error) => reject(error));
 		});
 	}
