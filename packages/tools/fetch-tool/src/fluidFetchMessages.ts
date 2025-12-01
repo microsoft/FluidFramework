@@ -116,7 +116,7 @@ async function* loadAllSequencedMessages(
 		const { responseMessage } = props;
 		const [_, seq] =
 			typeof responseMessage === "string"
-				? (responseMessage.match(/GenesisSequenceNumber '(\d+)'/) ?? [])
+				? (/GenesisSequenceNumber '(\d+)'/.exec(responseMessage) ?? [])
 				: [];
 		if (seq !== undefined) {
 			lastSeq = parseInt(seq, 10);

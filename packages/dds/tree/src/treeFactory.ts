@@ -149,6 +149,16 @@ export function configuredSharedTreeBetaLegacy(
 }
 
 /**
+ * {@link configuredSharedTreeBeta} but including the alpha {@link SharedTreeOptions}.
+ * @alpha
+ */
+export function configuredSharedTreeAlpha(
+	options: SharedTreeOptions,
+): SharedObjectKind<ITree> {
+	return configuredSharedTree(options);
+}
+
+/**
  * {@link configuredSharedTreeBetaLegacy} but including `@alpha` options.
  *
  * @example
@@ -195,10 +205,9 @@ export function resolveOptions(options: SharedTreeOptions): SharedTreeOptionsInt
 	const internal: SharedTreeOptionsInternal = {
 		...resolveSharedBranchesOptions(options.enableSharedBranches),
 	};
-	copyProperty(options, "forest", internal);
-	copyProperty(options, "jsonValidator", internal);
-	copyProperty(options, "minVersionForCollab", internal);
-	copyProperty(options, "treeEncodeType", internal);
+	for (const optionName of Object.keys(options)) {
+		copyProperty(options, optionName, internal);
+	}
 	return internal;
 }
 

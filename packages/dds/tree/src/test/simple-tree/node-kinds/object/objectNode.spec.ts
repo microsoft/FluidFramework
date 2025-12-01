@@ -94,7 +94,7 @@ const schemaFactory = new SchemaFactory("Test");
 
 	// Empty case
 	{
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 		type result = InsertableObjectFromSchemaRecord<{}>;
 		type _check = requireAssignableTo<result, Record<string, never>>;
 	}
@@ -175,7 +175,7 @@ const schemaFactory = new SchemaFactory("Test");
 	// Generic case
 	{
 		type result = ObjectFromSchemaRecord<RestrictiveStringRecord<ImplicitFieldSchema>>;
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 		type _check = requireTrue<areSafelyAssignable<{}, result>>;
 
 		type _check3 = requireTrue<isAssignableTo<{ x: unknown }, result>>;
@@ -183,9 +183,9 @@ const schemaFactory = new SchemaFactory("Test");
 
 	// Empty case
 	{
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 		type result = ObjectFromSchemaRecord<{}>;
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 		type _check = requireTrue<areSafelyAssignable<{}, result>>;
 		type _check2 = requireFalse<isAssignableTo<result, { x: unknown }>>;
 
@@ -204,7 +204,7 @@ describeHydration(
 					// constructor is a special case, since one is built in on the derived type.
 					// Check that it is exposed as expected based on type:
 					const x = n.constructor;
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 					type check_ = requireAssignableTo<typeof x, Function>;
 					assert.equal(x, Schema);
 				});
@@ -268,7 +268,7 @@ describeHydration(
 				const a = hydrate([Schema, Other], { constructor: 5 });
 				const b = hydrate([Schema, Other], { other: 6 });
 
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 				type check_ = requireAssignableTo<typeof a.constructor, number | Function>;
 				assert.equal(a.constructor, 5);
 				assert.equal(b.constructor, Other);

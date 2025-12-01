@@ -97,7 +97,7 @@ export const semverFlag = Flags.custom<semver.SemVer, { loose?: boolean }>({
 	description:
 		"A semantic versioning (semver) version string. Values are verified to be valid semvers during flag parsing.",
 	parse: async (input, _, opts) => {
-		const parsed = semver.parse(input, opts.loose);
+		const parsed = semver.parse(input, opts.loose ?? false);
 		if (parsed === null) {
 			throw new Error(`Invalid semver: ${input}`);
 		}

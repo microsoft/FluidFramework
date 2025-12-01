@@ -130,6 +130,7 @@ export class SessionIdNormalizer<TRangeObject> {
 				const [alignedLocal, [firstFinal, lastFinal]] = finalRange;
 				if (finalId <= lastFinal) {
 					const finalDelta = finalId - firstFinal;
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-unary-minus
 					return -alignedLocal - 1 + finalDelta;
 				}
 			}

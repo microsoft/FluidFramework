@@ -27,7 +27,7 @@ import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import type { IFluidSerializer } from "../serializer.js";
 import { SharedObject } from "../sharedObject.js";
 
-/* eslint-disable-next-line @typescript-eslint/ban-types, @typescript-eslint/no-unsafe-function-type --
+/* eslint-disable-next-line @typescript-eslint/no-unsafe-function-type --
 	Trying to use specific function signatures here instead of Function makes it so some of the properties of
 	OverridableType below (summarizeCore, loadCore, processMessagesCore) end up not typed correctly */
 type Overridable<T> = T extends Function | string | number | undefined | []
