@@ -4257,13 +4257,28 @@ function rebaseRename(
 			true,
 		);
 	} else {
-		// XXX: What if the base change moved the detach location of this node?
+		const baseOutputDetachLocation = base.rootNodes.outputDetachLocations.getFirst(
+			baseRenameEntry.value,
+			1,
+		).value;
+
+		if (baseOutputDetachLocation !== undefined) {
+			affectedBaseFields.set(fieldIdKeyFromFieldId(baseOutputDetachLocation), true);
+		}
+
+		const detachEntry = newRoots.detachLocations.getFirst(renameEntry.start, count);
+		count = detachEntry.length;
+
+		const detachLocation = baseOutputDetachLocation ?? detachEntry.value;
+
+		// Note that `baseOutputDetachLocation` may contain a node ID from the base changeset.
+		// We will replace the detach location entry with the node ID from the rebased changeset in `fixupRebasedDetachLocations`
 		addNodeRename(
 			rebasedRoots,
 			baseRenameEntry.value,
 			renameEntry.value,
 			count,
-			newRoots.detachLocations.getFirst(renameEntry.start, count).value,
+			detachLocation,
 		);
 	}
 
