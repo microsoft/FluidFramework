@@ -68,6 +68,7 @@ Init 'success'
 => CheckDependenciesInstalled 'success'
 => CheckPolicy 'success'
 => CheckAssertTagging 'success'
+=> checkCompatLayerGeneration 'success'
 => CheckReleaseNotes 'success'
 => CheckChangelogs 'success'
 => CheckHasRemote 'success'
@@ -92,6 +93,10 @@ CheckBranchUpToDate
 [
 CheckPolicy
 CheckAssertTagging
+] 'failure' -> PromptToCommitPolicy;
+
+[
+checkCompatLayerGeneration
 ] 'failure' -> PromptToCommitPolicy;
 
 [

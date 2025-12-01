@@ -15,7 +15,6 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/index.js";
 import {
 	TreeCompressionStrategy,
-	TreeCompressionStrategyExtended,
 	cursorForJsonableTreeField,
 	jsonableTreeFromFieldCursor,
 } from "../../../../feature-libraries/index.js";
@@ -64,7 +63,7 @@ describe("makeFieldBatchCodec", () => {
 		});
 	});
 
-	describe("TreeCompressionStrategyExtended.CompressedIncremental", () => {
+	describe("TreeCompressionStrategy.CompressedIncremental", () => {
 		it("succeeds for minVersionForCollab FluidClientVersion.v2_73", () => {
 			const codec = makeFieldBatchCodec({
 				jsonValidator: ajvValidator,
@@ -73,7 +72,7 @@ describe("makeFieldBatchCodec", () => {
 
 			const input = cursorForJsonableTreeField([simpleTestData]);
 			const context = {
-				encodeType: TreeCompressionStrategyExtended.CompressedIncremental,
+				encodeType: TreeCompressionStrategy.CompressedIncremental,
 				originatorId: testIdCompressor.localSessionId,
 				idCompressor: testIdCompressor,
 			};
@@ -89,7 +88,7 @@ describe("makeFieldBatchCodec", () => {
 
 			const input = cursorForJsonableTreeField([simpleTestData]);
 			const context = {
-				encodeType: TreeCompressionStrategyExtended.CompressedIncremental,
+				encodeType: TreeCompressionStrategy.CompressedIncremental,
 				originatorId: testIdCompressor.localSessionId,
 				idCompressor: testIdCompressor,
 			};

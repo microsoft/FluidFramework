@@ -8,6 +8,7 @@
 // TSDoc comment with a Markdown link should be flagged.
 /**
  * TSDoc comment with link using Markdown syntax: [bing](https://bing.com).
+ * And an empty link: []().
  */
 const tsdocCommentWithMarkdownLink = "invalid";
 
@@ -36,5 +37,16 @@ const blockCommentWithMarkdownLink = "valid";
 // Line comment should not be flagged.
 // Line comment with link using Markdown syntax: [bing](https://bing.com).
 const lineCommentWithMarkdownLink = "valid";
+
+// Link syntax in code blocks should not be flagged
+/**
+ * `[bing](https://bing.com)`
+ *
+ * @example
+ * ```
+ * [bing](https://bing.com)
+ * ```
+ */
+const linkInCodeBlocks = "valid";
 
 // #endregion

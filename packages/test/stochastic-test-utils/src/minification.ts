@@ -238,7 +238,7 @@ export function extractMessage(stack: string): string {
 	for (const line of stackLines.slice(stackTop)) {
 		linesToKeep.push(line);
 		// Heuristically continue including lines if stack line matches this pattern:
-		if (!line.match(/^at (assert|fail) /)) {
+		if (!/^at (assert|fail) /.exec(line)) {
 			break;
 		}
 	}

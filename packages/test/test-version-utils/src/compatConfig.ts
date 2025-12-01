@@ -527,7 +527,7 @@ export async function mochaGlobalSetup() {
 		}
 	}
 	if (error) {
-		// eslint-disable-next-line @typescript-eslint/no-throw-literal -- rethrowing the originally caught value
+		// eslint-disable-next-line @typescript-eslint/only-throw-error -- rethrowing the originally caught value
 		throw error;
 	}
 }
