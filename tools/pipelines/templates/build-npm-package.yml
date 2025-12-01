@@ -104,6 +104,10 @@ parameters:
   type: boolean
   default: false
 
+# Indicates if this run is going to publish npm packages (and run extra steps necessary in that case) or not
+- name: publish
+  type: boolean
+
 resources:
   repositories:
   - repository: 1ESPipelineTemplates
@@ -140,11 +144,6 @@ extends:
     # Install / Build / Test Stage
     - stage: build
       displayName: Build Stage
-      variables:
-      - template: /tools/pipelines/templates/include-vars.yml@self
-        parameters:
-          publishOverride: '${{ parameters.publishOverride }}'
-          releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
       jobs:
       # Job - Build
       - job: build
@@ -156,6 +155,10 @@ extends:
         # basic ANSI color support though, so force that in the pipeline
         - name: FORCE_COLOR
           value: 1
+        - template: /tools/pipelines/templates/include-vars.yml@self
+          parameters:
+            publishOverride: '${{ parameters.publishOverride }}'
+            releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
         - group: ado-feeds
         - group: storage-vars
         # Coverage has quality issues in LTS, and root-causing + fixing is not a priority given changes to LTS at this point
@@ -430,7 +433,7 @@ extends:
               fi
 
     # Publish stage
-    - ${{ if eq(variables.publish, true) }}:
+    - ${{ if eq(parameters.publish, true) }}:
       - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
         parameters:
           tagName: ${{ parameters.tagName }}
