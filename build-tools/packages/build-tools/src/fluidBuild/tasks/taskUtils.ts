@@ -8,6 +8,7 @@ import { readFile, readdir } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import * as path from "path";
 import * as glob from "glob";
+import globby from "globby";
 
 import type { PackageJson } from "../../common/npmPackage";
 import { lookUpDirSync } from "../../common/utils";
@@ -96,4 +97,46 @@ export async function loadModule(modulePath: string, moduleType?: string) {
 		return await import(pathToFileURL(modulePath).toString());
 	}
 	return require(modulePath);
+}
+
+/**
+ * Options for {@link globWithGitignore}.
+ */
+export interface GlobWithGitignoreOptions {
+	/**
+	 * The working directory to use for relative patterns.
+	 */
+	cwd: string;
+
+	/**
+	 * Whether to apply gitignore rules to exclude files.
+	 * @defaultValue true
+	 */
+	gitignore?: boolean;
+}
+
+/**
+ * Glob files with optional gitignore support. This function is used by LeafWithGlobInputOutputDoneFileTask
+ * to get input and output files for tasks.
+ *
+ * @param patterns - Glob patterns to match files.
+ * @param options - Options for the glob operation.
+ * @returns An array of absolute paths to all files that match the globs.
+ *
+ * @remarks
+ * When migrating from globby to tinyglobby, this function will need to be updated to manually
+ * handle gitignore filtering since tinyglobby doesn't have built-in gitignore support.
+ * The approach is to use `git ls-files --others --ignored --exclude-standard` to get ignored files
+ * and add them to the ignore list.
+ */
+export async function globWithGitignore(
+	patterns: readonly string[],
+	options: GlobWithGitignoreOptions,
+): Promise<string[]> {
+	const { cwd, gitignore = true } = options;
+	return globby([...patterns], {
+		cwd,
+		absolute: true,
+		gitignore,
+	});
 }

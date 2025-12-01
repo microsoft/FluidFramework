@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert/strict";
 import path from "node:path";
-import { globFn, toPosixPath } from "../fluidBuild/tasks/taskUtils";
+import { globFn, globWithGitignore, toPosixPath } from "../fluidBuild/tasks/taskUtils";
 import { testDataPath } from "./init";
 
 const globTestDataPath = path.resolve(testDataPath, "glob");
@@ -163,5 +163,92 @@ describe("toPosixPath utility", () => {
 		const input = "src/utils/file.ts";
 		const result = toPosixPath(input);
 		assert(result === input);
+	});
+});
+
+/**
+ * Tests for globWithGitignore function in taskUtils.ts.
+ *
+ * This function is used by LeafWithGlobInputOutputDoneFileTask.getFiles() to get input/output files
+ * for tasks with gitignore support. These tests verify the behavior that must be preserved when
+ * migrating from globby to tinyglobby.
+ *
+ * When migrating to tinyglobby, gitignore support must be implemented manually
+ * (e.g., using `git ls-files --others --ignored --exclude-standard` to get ignored files).
+ */
+describe("globWithGitignore (LeafTask file enumeration)", () => {
+	it("includes gitignored files when gitignore option is false", async () => {
+		const results = await globWithGitignore(["**/*.ts"], {
+			cwd: globTestDataPath,
+			gitignore: false,
+		});
+		const filenames = results.map((f) => path.basename(f));
+		// Without gitignore filtering, should include the ignored file
+		assert(filenames.includes("shouldBeIgnored.ts"), "Should include gitignored files");
+		assert(filenames.includes("tracked.ts"), "Should include tracked files");
+	});
+
+	it("excludes gitignored files when gitignore option is true", async () => {
+		const results = await globWithGitignore(["**/*.ts"], {
+			cwd: globTestDataPath,
+			gitignore: true,
+		});
+		const filenames = results.map((f) => path.basename(f));
+		// With gitignore filtering, should exclude files matching .gitignore patterns
+		assert(!filenames.includes("shouldBeIgnored.ts"), "Should exclude gitignored files");
+		assert(filenames.includes("tracked.ts"), "Should include tracked files");
+	});
+
+	it("excludes gitignored files by default", async () => {
+		const results = await globWithGitignore(["**/*.ts"], {
+			cwd: globTestDataPath,
+		});
+		const filenames = results.map((f) => path.basename(f));
+		// Default behavior should exclude gitignored files
+		assert(!filenames.includes("shouldBeIgnored.ts"), "Should exclude gitignored files by default");
+		assert(filenames.includes("tracked.ts"), "Should include tracked files");
+	});
+
+	it("excludes files matching gitignore patterns", async () => {
+		const results = await globWithGitignore(["**/*"], {
+			cwd: globTestDataPath,
+			gitignore: true,
+		});
+		const filenames = results.map((f) => path.basename(f));
+		// The .gitignore contains "*.ignored" pattern
+		assert(
+			!filenames.includes("test.ignored"),
+			"Should exclude files matching *.ignored pattern",
+		);
+	});
+
+	it("excludes directories matching gitignore patterns", async () => {
+		const results = await globWithGitignore(["**/*.ts"], {
+			cwd: globTestDataPath,
+			gitignore: true,
+		});
+		// The .gitignore contains "gitignored/" pattern
+		const hasGitIgnoredDir = results.some((f) => f.includes("gitignored/"));
+		assert(!hasGitIgnoredDir, "Should exclude files in gitignored directories");
+	});
+
+	it("returns absolute paths", async () => {
+		const results = await globWithGitignore(["*.ts"], {
+			cwd: globTestDataPath,
+			gitignore: false,
+		});
+		for (const result of results) {
+			assert(path.isAbsolute(result), `Expected absolute path: ${result}`);
+		}
+	});
+
+	it("handles multiple glob patterns", async () => {
+		const results = await globWithGitignore(["*.ts", "*.js"], {
+			cwd: globTestDataPath,
+			gitignore: false,
+		});
+		const filenames = results.map((f) => path.basename(f));
+		assert(filenames.includes("file1.ts"), "Should include .ts files");
+		assert(filenames.includes("file3.js"), "Should include .js files");
 	});
 });
