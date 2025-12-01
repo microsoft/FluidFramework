@@ -160,10 +160,6 @@ function composeMarksIgnoreChild(
 		);
 
 		const pinId = getAttachedRootId(baseMark);
-
-		// XXX: This currently has a side effect of removing the detach cross-field key for `baseMark` and so must be called.
-		moveEffects.getNewChangesForBaseDetach(pinId, baseMark.count);
-
 		return newMark.type === "Remove"
 			? {
 					...newMark,
