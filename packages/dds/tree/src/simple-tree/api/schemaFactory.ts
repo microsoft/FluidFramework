@@ -924,7 +924,8 @@ export class SchemaFactory<
 }
 
 /**
- * Generates a structural schema name of the form: `${collectionName}<${typeList}>`. * @remarks
+ * Generates a structural schema name of the form: `${collectionName}<${typeList}>`.
+ * @remarks
  * The order of the types in the output is independent of the order in the input.
  * Additionally, to prevent collisions, type identifiers are JSON stringified to escape any special characters.
  */
