@@ -60,7 +60,7 @@ Six libraries serve similar globbing/matching purposes:
 
 #### Recommended Consolidation
 
-Consolidate on `globby` (which uses `fast-glob` with `micromatch` internally):
+Consolidate on `tiny-globby`, which has a similar api to globby:
 
 1. **Replace `glob` with `globby`** in build-tools/taskUtils.ts
 2. **Replace `minimatch` with `micromatch`** in build-cli
