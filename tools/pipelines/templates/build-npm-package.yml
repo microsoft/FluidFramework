@@ -128,6 +128,10 @@ parameters:
 - name: testBuild
   type: boolean
 
+# Indicates if this build is a release build
+- name: releaseBuild
+  type: string
+
 resources:
   repositories:
   - repository: 1ESPipelineTemplates
@@ -182,7 +186,7 @@ extends:
         - name: testCoverage
           value: false
         - name: releaseBuildVar
-          value: $[coalesce(variables.releaseBuild, 'false')]
+          value: ${{ parameters.releaseBuild }}
         templateContext:
           outputs:
           - ${{ if ne(parameters.taskPack, false) }}:

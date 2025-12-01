@@ -116,6 +116,7 @@ extends:
     componentDetection: ${{ variables.componentDetection }}
     release: ${{ variables.release }}
     testBuild: ${{ variables.testBuild }}
+    releaseBuild: ${{ variables.releaseBuild }}
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     nonScopedPackages: ${{ parameters.nonScopedPackages }}
