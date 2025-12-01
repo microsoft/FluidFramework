@@ -61,7 +61,6 @@ export class FlexFieldKind<
 
 	/**
 	 * True if a client should be able to {@link TreeView.upgradeSchema} from a field schema using this field kind and `originalTypes` to `superset`.
-	 * @remarks
 	 *
 	 * @privateRemarks
 	 * See also {@link FieldKindOptions.allowedMonotonicUpgrade} for constraints on the implementation.
