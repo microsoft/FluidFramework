@@ -149,25 +149,25 @@ extends:
       - job: build
         displayName: Build
         pool: ${{ parameters.poolBuild }}
-        variables:
-        # We use 'chalk' to colorize output, which auto-detects color support in the
-        # running terminal.  The log output shown in Azure DevOps job runs only has
-        # basic ANSI color support though, so force that in the pipeline
-        - name: FORCE_COLOR
-          value: 1
-        - template: /tools/pipelines/templates/include-vars.yml@self
-          parameters:
-            publishOverride: '${{ parameters.publishOverride }}'
-            releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
-        - group: ado-feeds
-        - group: storage-vars
-        # Coverage has quality issues in LTS, and root-causing + fixing is not a priority given changes to LTS at this point
-        # will be things like upgrading node or security fixes, not adding new features.
-        - name: testCoverage
-          value: false
-        - name: releaseBuildVar
-          value: $[variables.releaseBuild]
         templateContext:
+          variables:
+          # We use 'chalk' to colorize output, which auto-detects color support in the
+          # running terminal.  The log output shown in Azure DevOps job runs only has
+          # basic ANSI color support though, so force that in the pipeline
+          - name: FORCE_COLOR
+            value: 1
+          - template: /tools/pipelines/templates/include-vars.yml@self
+            parameters:
+              publishOverride: '${{ parameters.publishOverride }}'
+              releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
+          - group: ado-feeds
+          - group: storage-vars
+          # Coverage has quality issues in LTS, and root-causing + fixing is not a priority given changes to LTS at this point
+          # will be things like upgrading node or security fixes, not adding new features.
+          - name: testCoverage
+            value: false
+          - name: releaseBuildVar
+            value: $[variables.releaseBuild]
           outputs:
           - ${{ if ne(parameters.taskPack, false) }}:
             - output: pipelineArtifact
