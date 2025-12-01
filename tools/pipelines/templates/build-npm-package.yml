@@ -176,8 +176,6 @@ extends:
         # will be things like upgrading node or security fixes, not adding new features.
         - name: testCoverage
           value: false
-        - name: releaseBuildVar
-          value: $[variables.releaseBuild]
         templateContext:
           outputs:
           - ${{ if ne(parameters.taskPack, false) }}:
@@ -221,9 +219,6 @@ extends:
               # Show all task group conditions
 
               echo "
-              Pipeline Variables:
-                releaseBuild=$(releaseBuildVar)
-
               Override Parameters:
                 publishOverride=${{ parameters.publishOverride }}
                 releaseBuildOverride=${{ parameters.releaseBuildOverride }}
