@@ -99,7 +99,7 @@ The following dependencies are pinned to older major versions because newer vers
     - Used in: `build-cli` (devDependency)
 
 14. **ts-morph** - Pinned to `^22.x`
-    - Latest: `^24.x`
+    - Latest: `^27.x`
     - Issue: Version 27+ requires newer TypeScript lib types
     - Error: `Cannot find name 'MapIterator'`
     - Used in: `build-cli`
@@ -124,35 +124,9 @@ The following dependencies are pinned to older major versions because newer vers
     - Issue: Version 6 requires ESLint 9
     - Used in: `build-cli`, `version-tools` (devDependency)
 
-18. **@fluidframework/eslint-config-fluid** - Pinned to `^6.x`
-    - Latest: `^8.x`
-    - Issue: Version 8 requires ESLint 9
-    - Used in: `build-cli`, `build-infrastructure`, `build-tools`, `version-tools` (devDependency)
-
-19. **npm-check-updates** - Pinned to `^16.x`
+18. **npm-check-updates** - Pinned to `^16.x`
     - Latest: `^19.x`
     - Highest compatible: `^16.x` (v17+ changed internal module structure)
     - Issue: Version 17+ changed internal module structure and removed exported types
     - Error: `Cannot find module 'npm-check-updates/build/src/types/IndexType.js'` and type errors
     - Used in: `build-cli`
-
-### Intermediate Version Upgrade Opportunities
-
-The following package was successfully upgraded to an intermediate version:
-
-- **date-fns**: Upgraded from `^2.x` → `^3.x` ✅ (v4+ is ESM-only)
-
-Note: execa cannot be upgraded beyond v5 despite v6-v7 being CommonJS-compatible, because they removed default export compatibility that breaks TypeScript module resolution in build-infrastructure.
-
-
-### Successfully Upgraded Dependencies
-
-The following major version upgrades were successfully applied without breaking changes:
-
-- **cosmiconfig**: `^8.x` → `^9.x`
-- **change-case**: `^3.x` → `^5.x`
-- **@inquirer/prompts**: `^7.x` → `^8.x`
-- **picomatch**: `^2.x` → `^4.x`
-- **ignore**: `^5.x` → `^7.x`
-- **@fluid-tools/api-markdown-documenter**: `^0.17.x` → `^0.23.x`
-- **@microsoft/api-extractor**: `^7.52.x` → `^7.55.x`
