@@ -8,8 +8,14 @@
  * @typedef {import("eslint").Rule.RuleModule} RuleModule
  * @typedef {import('@microsoft/tsdoc').DocNode} DocNode
  * @typedef {import('@microsoft/tsdoc').DocPlainText} DocPlainText
+ *
+ * @typedef {{
+ * 	startIndex: number; // Starting character index of the hyphen pattern (inclusive).
+ * 	endIndex: number; // Ending character index of the hyphen pattern (exclusive).
+ * }} HyphenPatternMatch
  */
 
+const { fail } = require("node:assert");
 const { DocNodeKind, TSDocParser } = require("@microsoft/tsdoc");
 
 const parser = new TSDocParser();
@@ -17,14 +23,32 @@ const parser = new TSDocParser();
 /**
  * Checks if a comment text starts with a hyphen.
  * @param {DocPlainText} plainTextNode - The plain text node to check.
+ * @return {HyphenPatternMatch | undefined} The hyphen pattern match info if found; otherwise, undefined.
  */
 function doesTextNodeStartWithHyphen(plainTextNode) {
-	return plainTextNode.text.trimStart().startsWith("-");
+	// RegEx explanation:
+	// ^\s*    - Match the start of the string, followed by zero or more whitespace characters
+	// -       - Match the `-` character literal
+	// \s*     - Match zero or more whitespace characters
+	const match = plainTextNode.text.match(/^\s*-\s*/);
+
+	if (!match) {
+		return undefined;
+	}
+
+	const textRange =
+		plainTextNode.textExcerpt?.getContainingTextRange() ??
+		fail("Expected textExcerpt to be defined.");
+	return {
+		startIndex: textRange.pos,
+		endIndex: textRange.pos + match[0].length,
+	};
 }
 
 /**
  * Checks if a comment body starts with a hyphen.
  * @param { DocNode } commentBodyNode - The doc node representing the body of the comment.
+ * @return {HyphenPatternMatch | undefined} The hyphen pattern match info if found; otherwise, undefined.
  */
 function doesCommentBodyStartWithHyphen(commentBodyNode) {
 	// Walk down first node of the tree until we find a leaf.
@@ -36,7 +60,7 @@ function doesCommentBodyStartWithHyphen(commentBodyNode) {
 
 	const childNodes = commentBodyNode.getChildNodes();
 	if (childNodes.length === 0) {
-		return false;
+		return undefined;
 	}
 
 	return doesCommentBodyStartWithHyphen(childNodes[0]);
@@ -58,6 +82,7 @@ const rule = {
 			hyphenAfterTag:
 				"JSDoc/TSDoc block tags must not be followed by a hyphen character (`-`).",
 		},
+		fixable: "code",
 		schema: [],
 	},
 
@@ -101,25 +126,20 @@ const rule = {
 					// Note: the TSDoc format makes it difficult to extract the range information for the block content specifically.
 					// Instead, we just report the range for the tag itself.
 					for (const block of blocksToCheck) {
-						if (doesCommentBodyStartWithHyphen(block.content)) {
-							const tagTextRange = block.blockTag
-								.getTokenSequence()
-								.getContainingTextRange();
-							const tagTextRangeStart = tagTextRange.pos - 1; // Include the `@`
-							const tagTextRangeEnd = tagTextRange.end;
-							const startIndex = sourceCode.getLocFromIndex(
-								commentStartIndex + tagTextRangeStart,
-							);
-							const endIndex = sourceCode.getLocFromIndex(
-								commentStartIndex + tagTextRangeEnd,
-							);
+						const hyphenMatch = doesCommentBodyStartWithHyphen(block.content);
+						if (hyphenMatch) {
+							const startIndex = commentStartIndex + hyphenMatch.startIndex - 1;
+							const endIndex = commentStartIndex + hyphenMatch.endIndex - 1;
 
 							context.report({
 								loc: {
-									start: startIndex,
-									end: endIndex,
+									start: sourceCode.getLocFromIndex(startIndex),
+									end: sourceCode.getLocFromIndex(endIndex),
 								},
 								messageId: "hyphenAfterTag",
+								fix(fixer) {
+									return fixer.replaceTextRange([startIndex, endIndex], " ");
+								},
 							});
 						}
 					}
