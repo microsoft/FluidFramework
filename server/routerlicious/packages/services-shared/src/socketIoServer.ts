@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import type * as http from "http";
-import { performance } from "perf_hooks";
+import { EventEmitter } from "node:events";
+import type * as http from "node:http";
 
+import { performance } from "@fluidframework/server-services-client";
 import type * as core from "@fluidframework/server-services-core";
 import {
 	BaseTelemetryProperties,
