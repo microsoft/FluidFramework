@@ -120,6 +120,13 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 
 	const registryMapping = {};
 	for (const value of Object.values(api.dds)) {
+		/**
+		 * Skip dds that may not be available in this version of the api.
+		 * Not all versions have all dds. See {@link PackageToInstall} for details.
+		 */
+		if (value?.getFactory === undefined) {
+			continue;
+		}
 		registryMapping[value.getFactory().type] = value.getFactory();
 	}
 
@@ -170,7 +177,7 @@ export const getDataStoreFactory = createGetDataStoreFactoryFunction(
  * @internal
  */
 export async function getVersionedTestObjectProviderFromApis(
-	apis: Omit<CompatApis, "dds">,
+	apis: Omit<CompatApis, "dds" | "mode">,
 	driverConfig?: {
 		type?: TestDriverTypes;
 		config?: FluidTestDriverConfig;

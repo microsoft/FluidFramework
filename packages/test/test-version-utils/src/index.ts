@@ -58,6 +58,8 @@ export {
 	DataRuntimeApi,
 	ContainerRuntimeApi,
 	LoaderApi,
+	CompatMode,
+	getCompatModeFromKind,
 } from "./testApi.js";
 export {
 	itExpectsSkipsFailureOnSpecificDrivers,

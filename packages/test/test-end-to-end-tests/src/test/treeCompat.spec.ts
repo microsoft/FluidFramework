@@ -65,33 +65,36 @@ async function loadContainerAndGetTreeView(provider: ITestObjectProvider, apis: 
 	return createTreeView(container, dataRuntimeApi);
 }
 
-describeCompat("TreeDataObject", "FullCompat", (getTestObjectProvider, apis: CompatApis) => {
-	let provider: ITestObjectProvider;
+describeCompat(
+	"SharedTree compat tests",
+	"FullCompat",
+	(getTestObjectProvider, apis: CompatApis) => {
+		let provider: ITestObjectProvider;
 
-	beforeEach(function () {
-		// SharedTree was added in version 2.0.0. Skip all cross-client compat tests in this suite for older versions.
-		// The test framework installs the latest SharedTree version for these older versions as a workaround
-		// so, technically these tests could work. However, idCompressor is not supported by the runtime in these versions,
-		// which causes the tests to fail.
-		const version = apis.containerRuntime.version;
-		const versionForLoading = apis.containerRuntimeForLoading?.version;
-		if (
-			versionForLoading !== undefined &&
-			(lt(version, "2.0.0") || lt(versionForLoading, "2.0.0"))
-		) {
-			this.skip();
-		}
+		beforeEach(function () {
+			provider = getTestObjectProvider();
+			// SharedTree was added in version 2.0.0. Skip all cross-client compat tests in this suite for older versions.
+			if (apis.mode === "CrossClientCompat") {
+				const version = apis.dataRuntime.version;
+				const versionForLoading = apis.dataRuntimeForLoading?.version;
+				assert(
+					versionForLoading !== undefined,
+					"Loading version must be defined for cross-client tests",
+				);
+				if (lt(version, "2.0.0") || lt(versionForLoading, "2.0.0")) {
+					this.skip();
+				}
+			}
+		});
 
-		provider = getTestObjectProvider();
-	});
+		it("simple schema", async () => {
+			const treeView1 = await createContainerAndGetTreeView(provider, apis);
+			assert(treeView1.compatibility.canInitialize, "Incompatible schema");
+			treeView1.initialize({ foo: "Hello world" });
 
-	it("simple schema", async () => {
-		const treeView1 = await createContainerAndGetTreeView(provider, apis);
-		assert(treeView1.compatibility.canInitialize, "Incompatible schema");
-		treeView1.initialize({ foo: "Hello world" });
-
-		const treeView2 = await loadContainerAndGetTreeView(provider, apis);
-		await provider.ensureSynchronized();
-		assert.deepEqual(treeView2.root.foo, "Hello world");
-	});
-});
+			const treeView2 = await loadContainerAndGetTreeView(provider, apis);
+			await provider.ensureSynchronized();
+			assert.deepEqual(treeView2.root.foo, "Hello world");
+		});
+	},
+);
