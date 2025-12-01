@@ -4,12 +4,17 @@
  */
 
 /**
- * Policy to determine whether a node / field should be incrementally encoded.
- * @param nodeIdentifier - The identifier of the node containing the field.
- * If undefined, the field is a root field.
- * @param fieldKey - The key of the field to check.
- * @returns whether the node / field should be incrementally encoded.
+ * Policy type to determine whether one of more fields of {@link NodeKind} in a schema should be incrementally encoded.
+ * @param nodeIdentifier - The identifier of the node. The node is one of the kinds defined in {@link NodeKind}.
+ * @param fieldKey - The key of the field in the node's children:
+ * For {@link NodeKind.Object} nodes, this is the key of one of its fields.
+ * For {@link NodeKind.Leaf} nodes, this is not applicable because incremental encoding is not supported.
+ * For all other node kinds, this will be an empty string and the policy will apply to all their fields.
+ * @returns whether the field in the node should be incrementally encoded.
+ *
  * @remarks
+ * See {@link incrementalEncodingPolicyForAllowedTypes} for an example policy implementation.
+ *
  * Incremental encoding has a significant size overhead,
  * but allows reuse of previously encoded unchanged subtrees.
  * Thus it should only be enabled for large subtrees which are modified infrequently.
