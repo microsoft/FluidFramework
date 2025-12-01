@@ -10,8 +10,8 @@ import type {
 	IWriteSummaryResponse,
 	WholeSummaryTreeEntry,
 } from "@fluidframework/server-services-client";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { StageTrace } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 import { GitRestLumberEventName } from "../gitrestTelemetryDefinitions";
 
