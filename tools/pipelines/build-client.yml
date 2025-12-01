@@ -101,16 +101,9 @@ schedules:
     - lts
   always: true
 
-variables:
-  - template: /tools/pipelines/templates/include-vars.yml@self
-    parameters:
-      publishOverride: '${{ parameters.publishOverride }}'
-      releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
-
 extends:
   template: templates/build-npm-package.yml@self
   parameters:
-    publish: ${{ variables.publish }}
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     nonScopedPackages: ${{ parameters.nonScopedPackages }}
