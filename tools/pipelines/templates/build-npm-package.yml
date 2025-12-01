@@ -155,10 +155,6 @@ extends:
         # basic ANSI color support though, so force that in the pipeline
         - name: FORCE_COLOR
           value: 1
-        - template: /tools/pipelines/templates/include-vars.yml@self
-          parameters:
-            publishOverride: '${{ parameters.publishOverride }}'
-            releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
         - group: ado-feeds
         - group: storage-vars
         # Coverage has quality issues in LTS, and root-causing + fixing is not a priority given changes to LTS at this point
@@ -229,18 +225,18 @@ extends:
                 nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
 
               Computed variables:
-                shouldPublish=${{ variables.shouldPublish }}
-                componentDetection=${{ variables.componentDetection }}
-                publish=${{ variables.publish }}
-                canRelease=${{ variables.canRelease }}
+                shouldPublish=$(shouldPublish)
+                componentDetection=$(componentDetection)
+                publish=$(publish)
+                canRelease=$(canRelease)
                 targetBranchName = $(System.PullRequest.TargetBranch)
 
                 release=$(release)"
 
               # Error checking
               if [[ "$(release)" == "release" ]]; then
-                if [[ "${{ variables.canRelease }}" == "False" ]]; then
-                  echo "##vso[task.logissue type=error]Invalid branch ${{ variables['Build.SourceBranch'] }} for release"
+                if [[ "$(canRelease)" == "False" ]]; then
+                  echo "##vso[task.logissue type=error]Invalid branch $(Build.SourceBranch) for release"
                   exit -1;
                 fi
 
@@ -264,7 +260,7 @@ extends:
               fi
 
               if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
-                if [[ "${{ variables.publish }}" != "True" ]]; then
+                if [[ "$(publish)" != "True" ]]; then
                   echo "##vso[task.logissue type=error]'$(release)'' is set but package is not published. Either the branch doesn't default to publish or it is skipped."
                   exit -1;
                 fi
