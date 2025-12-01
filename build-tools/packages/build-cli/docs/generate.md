@@ -8,8 +8,8 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
 * [`flub generate changelog`](#flub-generate-changelog)
 * [`flub generate changeset`](#flub-generate-changeset)
+* [`flub generate compatLayerGeneration`](#flub-generate-compatlayergeneration)
 * [`flub generate entrypoints`](#flub-generate-entrypoints)
-* [`flub generate layerCompatGeneration`](#flub-generate-layercompatgeneration)
 * [`flub generate node10Entrypoints`](#flub-generate-node10entrypoints)
 * [`flub generate packlist`](#flub-generate-packlist)
 * [`flub generate releaseNotes`](#flub-generate-releasenotes)
@@ -86,19 +86,19 @@ USAGE
     [--patch <value>] [--base <value>] [--tag <value>] [-i <value>] [--packageTypes none|alpha|beta|public|untrimmed]
 
 FLAGS
-  -i, --includeInternalVersions=<value>  [env: VERSION_INCLUDE_INTERNAL_VERSIONS] Include Fluid internal versions.
+  -i, --includeInternalVersions=<value>  Include Fluid internal versions.
       --base=<value>                     The base version. This will be read from package.json if not provided.
-      --build=<value>                    (required) [env: VERSION_BUILDNUMBER] The CI build number.
-      --packageTypes=<option>            [default: none, env: PACKAGE_TYPES_FIELD] If provided, the version generated
-                                         will include extra strings based on the TypeScript types that are expected to
-                                         be used. This flag should only be used in the Fluid Framework CI pipeline.
+      --build=<value>                    (required) The CI build number.
+      --packageTypes=<option>            [default: none] If provided, the version generated will include extra strings
+                                         based on the TypeScript types that are expected to be used. This flag should
+                                         only be used in the Fluid Framework CI pipeline.
                                          <options: none|alpha|beta|public|untrimmed>
-      --patch=<value>                    [env: VERSION_PATCH] Indicates the build should use "simple patch versioning"
-                                         where the value of the --build flag is used as the patch version.
-      --release=<option>                 [env: VERSION_RELEASE] Indicates the build is a release build.
+      --patch=<value>                    Indicates the build should use "simple patch versioning" where the value of the
+                                         --build flag is used as the patch version.
+      --release=<option>                 Indicates the build is a release build.
                                          <options: release|prerelease|none>
-      --tag=<value>                      [env: VERSION_TAGNAME] The tag name to use.
-      --testBuild=<value>                [env: TEST_BUILD] Indicates the build is a test build.
+      --tag=<value>                      The tag name to use.
+      --testBuild=<value>                Indicates the build is a test build.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
@@ -226,56 +226,13 @@ EXAMPLES
 
 _See code: [src/commands/generate/changeset.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/changeset.ts)_
 
-## `flub generate entrypoints`
-
-Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.) as found in package.json "exports"
-
-```
-USAGE
-  $ flub generate entrypoints [-v | --quiet] [--mainEntrypoint <value>] [--outDir <value>] [--outFilePrefix <value>]
-    [--outFileAlpha <value>] [--outFileBeta <value>] [--outFilePublic <value>] [--outFileLegacyAlpha <value>]
-    [--outFileLegacyBeta <value>] [--outFileLegacyPublic <value>] [--outFileSuffix <value>] [--node10TypeCompat]
-
-FLAGS
-  --mainEntrypoint=<value>       [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
-  --node10TypeCompat             Optional generation of Node10 resolution compatible type entrypoints matching others.
-  --outDir=<value>               [default: ./lib] Directory to emit entrypoint declaration files.
-  --outFileAlpha=<value>         [default: alpha] Base file name for alpha entrypoint declaration files. To opt out of
-                                 generating this entrypoint, set to `none`.
-  --outFileBeta=<value>          [default: beta] Base file name for beta entrypoint declaration files. To opt out of
-                                 generating this entrypoint, set to `none`.
-  --outFileLegacyAlpha=<value>   Base file name for legacyAlpha entrypoint declaration files. To opt into generating
-                                 this entrypoint, set to a value other than `none`.
-  --outFileLegacyBeta=<value>    Base file name for legacyBeta entrypoint declaration files. To opt into generating this
-                                 entrypoint, set to a value other than `none`.
-  --outFileLegacyPublic=<value>  Base file name for legacyPublic entrypoint declaration files. To opt into generating
-                                 this entrypoint, set to a value other than `none`.
-  --outFilePrefix=<value>        File name prefix for emitting entrypoint declaration files. Pattern of
-                                 '{@unscopedPackageName}' within value will be replaced with the unscoped name of this
-                                 package.
-  --outFilePublic=<value>        [default: public] Base file name for public entrypoint declaration files. To opt out of
-                                 generating this entrypoint, set to `none`.
-  --outFileSuffix=<value>        [default: .d.ts] File name suffix including extension for emitting entrypoint
-                                 declaration files.
-
-LOGGING FLAGS
-  -v, --verbose  Enable verbose logging.
-      --quiet    Disable all logging.
-
-DESCRIPTION
-  Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.) as found in package.json
-  "exports"
-```
-
-_See code: [src/commands/generate/entrypoints.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/entrypoints.ts)_
-
-## `flub generate layerCompatGeneration`
+## `flub generate compatLayerGeneration`
 
 Updates the generation and release date for layer compatibility.
 
 ```
 USAGE
-  $ flub generate layerCompatGeneration [-v | --quiet] [--generationDir <value>] [--outFile <value>] [--minimumCompatWindowMonths
+  $ flub generate compatLayerGeneration [-v | --quiet] [--generationDir <value>] [--outFile <value>] [--minimumCompatWindowMonths
     <value>] [--concurrency <value>] [--branch <value> [--changed | [--all | --dir <value>... | --packages | -g
     client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
     client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... | --skipScope
@@ -321,7 +278,50 @@ DESCRIPTION
   Updates the generation and release date for layer compatibility.
 ```
 
-_See code: [src/commands/generate/layerCompatGeneration.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/layerCompatGeneration.ts)_
+_See code: [src/commands/generate/compatLayerGeneration.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/compatLayerGeneration.ts)_
+
+## `flub generate entrypoints`
+
+Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.) as found in package.json "exports"
+
+```
+USAGE
+  $ flub generate entrypoints [-v | --quiet] [--mainEntrypoint <value>] [--outDir <value>] [--outFilePrefix <value>]
+    [--outFileAlpha <value>] [--outFileBeta <value>] [--outFilePublic <value>] [--outFileLegacyAlpha <value>]
+    [--outFileLegacyBeta <value>] [--outFileLegacyPublic <value>] [--outFileSuffix <value>] [--node10TypeCompat]
+
+FLAGS
+  --mainEntrypoint=<value>       [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
+  --node10TypeCompat             Optional generation of Node10 resolution compatible type entrypoints matching others.
+  --outDir=<value>               [default: ./lib] Directory to emit entrypoint declaration files.
+  --outFileAlpha=<value>         [default: alpha] Base file name for alpha entrypoint declaration files. To opt out of
+                                 generating this entrypoint, set to `none`.
+  --outFileBeta=<value>          [default: beta] Base file name for beta entrypoint declaration files. To opt out of
+                                 generating this entrypoint, set to `none`.
+  --outFileLegacyAlpha=<value>   Base file name for legacyAlpha entrypoint declaration files. To opt into generating
+                                 this entrypoint, set to a value other than `none`.
+  --outFileLegacyBeta=<value>    Base file name for legacyBeta entrypoint declaration files. To opt into generating this
+                                 entrypoint, set to a value other than `none`.
+  --outFileLegacyPublic=<value>  Base file name for legacyPublic entrypoint declaration files. To opt into generating
+                                 this entrypoint, set to a value other than `none`.
+  --outFilePrefix=<value>        File name prefix for emitting entrypoint declaration files. Pattern of
+                                 '{@unscopedPackageName}' within value will be replaced with the unscoped name of this
+                                 package.
+  --outFilePublic=<value>        [default: public] Base file name for public entrypoint declaration files. To opt out of
+                                 generating this entrypoint, set to `none`.
+  --outFileSuffix=<value>        [default: .d.ts] File name suffix including extension for emitting entrypoint
+                                 declaration files.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.) as found in package.json
+  "exports"
+```
+
+_See code: [src/commands/generate/entrypoints.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/entrypoints.ts)_
 
 ## `flub generate node10Entrypoints`
 
