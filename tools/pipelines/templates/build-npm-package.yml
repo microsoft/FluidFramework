@@ -128,10 +128,6 @@ parameters:
 - name: testBuild
   type: boolean
 
-# Indicates if this build is a release build
-- name: releaseBuild
-  type: string
-
 resources:
   repositories:
   - repository: 1ESPipelineTemplates
