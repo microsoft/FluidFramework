@@ -37,6 +37,10 @@ parameters:
   type: string
   default: 'npm ci --unsafe-perm'
 
+- name: release
+  type: string
+  default: ''
+
 jobs:
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
   displayName: Publish ${{ parameters.environment }}
@@ -48,6 +52,8 @@ jobs:
     - group: ado-feeds
     - name: version
       value: $[ stageDependencies.build.build.outputs['SetVersion.version']]
+    - name: release
+      value: ${{ parameters.release }}
     - name: isLatest
       value: $[ stageDependencies.build.build.outputs['SetVersion.isLatest']]
   strategy:
