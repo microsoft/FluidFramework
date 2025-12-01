@@ -114,7 +114,9 @@ export interface FieldKindOptions<TFieldChangeHandler> {
 	 * - The set of implementations of this function across all fields kinds and all client versions must never permit a cycle.
 	 * This prevents applications which simply do an upgrade when possible from being able to have two clients both upgrade where one is actually a down grade and they cause an infinite loop of schema upgrade edits.
 	 *
-	 * To help maintain these invariants, any cases where the allowed document content does not increase (but is the same so the upgrade is still in schema) must be considered carefully.
+	 * To help maintain these invariants, any cases where the set of allowed contents does not increase (but is the same so the upgrade is still in schema) must be considered carefully.
+	 * For example, a migration from `Sequence([])` to `Optional([])`  can be problematic despite being permissible
+	 * as it does not change what content is allowed (the field must be empty either way as no types are allowed in it).
 	 * Such cases, if allowed, could lead to cycles if their inverse is also allowed.
 	 * These cases, if supported, can be removed, but if doing so must be documented and still considered when avoiding cycles.
 	 *
