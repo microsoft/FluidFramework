@@ -112,7 +112,7 @@ export interface FieldKindOptions<TFieldChangeHandler> {
 	 * - This must never allow an upgrade that could violate any invariants of any field kind required by any version of client for any document content (that was not already invalid).
 	 * This prevents a schema upgrade from causing a document to become out of schema.
 	 * - The set of implementations of this function across all fields kinds and all client versions must never permit a cycle.
-	 * This prevents applications which simply do an upgrade when possible from being abler to have two clients both upgrade where one is actually a down grade and they cause an infinite loop of schema upgrade edits.
+	 * This prevents applications which simply do an upgrade when possible from being able to have two clients both upgrade where one is actually a down grade and they cause an infinite loop of schema upgrade edits.
 	 *
 	 * To help maintain these invariants, any cases where the allowed document content does not increase (but is the same so the upgrade is still in schema) must be considered carefully.
 	 * Such cases, if allowed, could lead to cycles if their inverse is also allowed.
