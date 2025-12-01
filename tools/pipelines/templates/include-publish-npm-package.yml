@@ -11,9 +11,11 @@ parameters:
   type: object
   default: Small-eastus2
 
+# Indicates if this build is from a test branch
 - name: testBuild
   type: boolean
 
+# Indicates the type of release (if any)
 - name: release
   type: string
 

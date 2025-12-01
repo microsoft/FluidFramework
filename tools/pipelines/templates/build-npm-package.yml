@@ -108,18 +108,23 @@ parameters:
 - name: publish
   type: boolean
 
+# Indicates if we should or should not skip all publish stages
 - name: shouldPublish
   type: boolean
 
+# Indicates if the build is from a branch that we can release from
 - name: canRelease
   type: boolean
 
+# Indicates if we should run component detection (if we are publishing any artifacts)
 - name: componentDetection
   type: boolean
 
+# Indicates the type of release (if any)
 - name: release
   type: string
 
+# Indicates if this build is from a test branch
 - name: testBuild
   type: boolean
 

@@ -37,6 +37,7 @@ parameters:
   type: string
   default: 'npm ci --unsafe-perm'
 
+# Indicates the type of release (if any)
 - name: release
   type: string
   default: ''
