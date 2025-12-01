@@ -33,7 +33,7 @@ describe("globFn (glob wrapper for task utilities)", () => {
 			const filenames = results.map((f) => path.basename(f));
 			assert(filenames.includes("file1.ts"));
 			assert(filenames.includes("file2.ts"));
-			assert(!filenames.includes("file3.js"));
+			assert(!filenames.includes("file3.mjs"));
 		});
 
 		it("matches all files with *", async () => {
@@ -42,7 +42,7 @@ describe("globFn (glob wrapper for task utilities)", () => {
 			const filenames = results.map((f) => path.basename(f));
 			assert(filenames.includes("file1.ts"));
 			assert(filenames.includes("file2.ts"));
-			assert(filenames.includes("file3.js"));
+			assert(filenames.includes("file3.mjs"));
 		});
 
 		it("matches files in nested directories with **", async () => {
@@ -103,7 +103,7 @@ describe("globFn (glob wrapper for task utilities)", () => {
 			const results = await globFn(pattern, { nodir: true, ignore: ignorePattern });
 			const filenames = results.map((f) => path.basename(f));
 			assert(filenames.includes("include.ts"));
-			assert(filenames.includes("other.js"));
+			assert(filenames.includes("other.mjs"));
 			assert(!filenames.includes("exclude.ts"));
 		});
 
@@ -111,13 +111,13 @@ describe("globFn (glob wrapper for task utilities)", () => {
 			const pattern = path.join(globTestDataPath, "ignore-test/*");
 			const ignorePatterns = [
 				path.join(globTestDataPath, "ignore-test/exclude.ts"),
-				path.join(globTestDataPath, "ignore-test/other.js"),
+				path.join(globTestDataPath, "ignore-test/other.mjs"),
 			];
 			const results = await globFn(pattern, { nodir: true, ignore: ignorePatterns });
 			const filenames = results.map((f) => path.basename(f));
 			assert(filenames.includes("include.ts"));
 			assert(!filenames.includes("exclude.ts"));
-			assert(!filenames.includes("other.js"));
+			assert(!filenames.includes("other.mjs"));
 		});
 	});
 
@@ -205,7 +205,10 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 		});
 		const filenames = results.map((f) => path.basename(f));
 		// Default behavior should exclude gitignored files
-		assert(!filenames.includes("shouldBeIgnored.ts"), "Should exclude gitignored files by default");
+		assert(
+			!filenames.includes("shouldBeIgnored.ts"),
+			"Should exclude gitignored files by default",
+		);
 		assert(filenames.includes("tracked.ts"), "Should include tracked files");
 	});
 
@@ -249,6 +252,6 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 		});
 		const filenames = results.map((f) => path.basename(f));
 		assert(filenames.includes("file1.ts"), "Should include .ts files");
-		assert(filenames.includes("file3.js"), "Should include .js files");
+		assert(filenames.includes("file3.mjs"), "Should include .js files");
 	});
 });
