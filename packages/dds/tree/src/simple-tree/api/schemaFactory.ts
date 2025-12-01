@@ -923,13 +923,29 @@ export class SchemaFactory<
 	}
 }
 
+/**
+ * Generates a structural schema name of the form: `${collectionName}<${typeList}>`. * @remarks
+ * The order of the types in the output is independent of the order in the input.
+ * Additionally, to prevent collisions, type identifiers are JSON stringified to escape any special characters.
+ */
 export function structuralName<const T extends string>(
 	collectionName: T,
 	allowedTypes: TreeNodeSchema | readonly TreeNodeSchema[],
 ): `${T}<${string}>` {
-	let inner: string;
+	return `${collectionName}<${createTypeListForStructuralName(allowedTypes)}>`;
+}
+
+/**
+ * Generates a string representation of the list of allowed types for use in structural schema names.
+ * @remarks
+ * The order of the types in the output is independent of the order in the input.
+ * Additionally, to prevent collisions, type identifiers are JSON stringified to escape any special characters.
+ */
+export function createTypeListForStructuralName(
+	allowedTypes: TreeNodeSchema | readonly TreeNodeSchema[],
+): string {
 	if (!isReadonlyArray(allowedTypes)) {
-		return structuralName(collectionName, [allowedTypes]);
+		return createTypeListForStructuralName([allowedTypes]);
 	} else {
 		const names = allowedTypes.map((t): string => {
 			// Ensure that lazy types (functions) don't slip through here.
@@ -937,14 +953,15 @@ export function structuralName<const T extends string>(
 			markSchemaMostDerived(t);
 			return t.identifier;
 		});
+
 		// Ensure name is order independent
 		names.sort();
+
 		// Ensure name can't have collisions by quoting and escaping any quotes in the names of types.
 		// Using JSON is a simple way to accomplish this.
 		// The outer `[]` around the result were needed so that a single type name "Any" would not collide with the "any" case which used to exist.
-		inner = JSON.stringify(names);
+		return JSON.stringify(names);
 	}
-	return `${collectionName}<${inner}>`;
 }
 
 export function scoped<

@@ -28,6 +28,7 @@ export type {
 export { asTreeViewAlpha } from "./tree.js";
 export { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
 export {
+	createTypeListForStructuralName,
 	SchemaFactory,
 	type ScopedSchemaName,
 	type ObjectSchemaOptionsAlpha,

@@ -8,6 +8,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { TreeAlpha } from "./shared-tree/index.js";
 import {
+	createTypeListForStructuralName,
 	type FieldHasDefault,
 	type ImplicitAllowedTypes,
 	type InsertableObjectFromSchemaRecord,
@@ -28,6 +29,7 @@ import {
 	type ImplicitFieldSchema,
 	withBufferedTreeEvents,
 	type TreeRecordNode,
+	FieldSchema,
 } from "./simple-tree/index.js";
 import { validateIndex, validateIndexRange } from "./util/index.js";
 
@@ -69,6 +71,23 @@ export interface RowPrivate<
 	 * If you update the docs here, please also update the inline type definitions.
 	 */
 	readonly cells: TreeRecordNode<TCell>;
+}
+
+function allowedTypesListStringFromImplicitFieldSchema(
+	fieldSchema: ImplicitFieldSchema,
+): string {
+	if (fieldSchema instanceof FieldSchema) {
+		return allowedTypesListStringFromImplicitAllowedTypes(fieldSchema.allowedTypes);
+	}
+	return allowedTypesListStringFromImplicitAllowedTypes(fieldSchema);
+}
+
+function allowedTypesListStringFromImplicitAllowedTypes(
+	allowedTypes: ImplicitAllowedTypes,
+): string {
+	return createTypeListForStructuralName(
+		allowedTypes as TreeNodeSchema | readonly TreeNodeSchema[],
+	);
 }
 
 /**
@@ -140,8 +159,15 @@ export namespace System_TableSchema {
 		const TInputScope extends string | undefined,
 		const TCellSchema extends ImplicitAllowedTypes,
 		const TPropsSchema extends ImplicitFieldSchema,
-	>(inputSchemaFactory: SchemaFactoryBeta<TInputScope>, propsSchema: TPropsSchema) {
-		const schemaFactory = scopedFactoryForTableSchema(inputSchemaFactory);
+	>(
+		inputSchemaFactory: SchemaFactoryBeta<TInputScope>,
+		cellSchema: TCellSchema,
+		propsSchema: TPropsSchema,
+	) {
+		// Create factory with a scope that looks like: `com.fluidframework.table.Column<cellSchemaTypes, propsSchemaTypes>`
+		const schemaFactory = new SchemaFactoryBeta(
+			`${tableSchemaFactoryScopeRoot}.Column<${allowedTypesListStringFromImplicitAllowedTypes(cellSchema)}, ${allowedTypesListStringFromImplicitFieldSchema(propsSchema)}>`,
+		);
 		type Scope = typeof schemaFactory.scope;
 
 		// Note: `columnFields` is broken into two parts to work around a TypeScript bug
@@ -285,7 +311,10 @@ export namespace System_TableSchema {
 		cellSchema: TCellSchema,
 		propsSchema: TPropsSchema,
 	) {
-		const schemaFactory = scopedFactoryForTableSchema(inputSchemaFactory);
+		// Create factory with a scope that looks like: `com.fluidframework.table.Row<cellSchemaTypes, propsSchemaTypes>`
+		const schemaFactory = new SchemaFactoryBeta(
+			`${tableSchemaFactoryScopeRoot}.Row<${allowedTypesListStringFromImplicitAllowedTypes(cellSchema)}, ${allowedTypesListStringFromImplicitFieldSchema(propsSchema)}>`,
+		);
 		type Scope = typeof schemaFactory.scope;
 
 		// Note: `rowFields` is broken into two parts to work around a TypeScript bug
@@ -435,11 +464,14 @@ export namespace System_TableSchema {
 		const TRowSchema extends RowSchemaBase<TInputScope, TCellSchema>,
 	>(
 		inputSchemaFactory: SchemaFactoryBeta<TInputScope>,
-		_cellSchema: TCellSchema,
+		cellSchema: TCellSchema,
 		columnSchema: TColumnSchema,
 		rowSchema: TRowSchema,
 	) {
-		const schemaFactory = scopedFactoryForTableSchema(inputSchemaFactory);
+		// Create factory with a scope that looks like: `com.fluidframework.table.Table<cellSchemaTypes, columnSchemaTypes, rowSchemaTypes>`
+		const schemaFactory = new SchemaFactoryBeta(
+			`${tableSchemaFactoryScopeRoot}.Table<${allowedTypesListStringFromImplicitAllowedTypes(cellSchema)}, ${allowedTypesListStringFromImplicitAllowedTypes(columnSchema)}, ${allowedTypesListStringFromImplicitAllowedTypes(rowSchema)}>`,
+		);
 		type Scope = typeof schemaFactory.scope;
 
 		type CellValueType = TreeNodeFromImplicitAllowedTypes<TCellSchema>;
@@ -962,20 +994,6 @@ function removeRangeFromArray<TNodeSchema extends ImplicitAllowedTypes>(
 }
 
 /**
- * Creates a scoped schema factory for table schema that combines the scope of the user-provided factory
- * with the built-in table schema scoping.
- * @remarks The produced scope will take the form: `${TUserScope}/com.fluidframework.table.<node-kind>`.
- */
-function scopedFactoryForTableSchema<
-	TUserScope extends string | undefined,
-	TName extends number | string,
->(
-	userFactory: SchemaFactoryBeta<TUserScope, TName>,
-): SchemaFactoryBeta<`${TUserScope}/${typeof tableSchemaFactoryScopeRoot}`, TName> {
-	return new SchemaFactoryBeta(`${userFactory.scope}/${tableSchemaFactoryScopeRoot}`);
-}
-
-/**
  * Contains types and factories for creating schema to represent dynamic tabular data.
  *
  * @remarks
@@ -1162,7 +1180,7 @@ export namespace TableSchema {
 	}: System_TableSchema.CreateColumnOptionsBase & {
 		readonly props?: ImplicitFieldSchema;
 	}): TreeNodeSchema {
-		return System_TableSchema.createColumnSchema(schemaFactory, props);
+		return System_TableSchema.createColumnSchema(schemaFactory, cell, props);
 	}
 
 	// #endregion
