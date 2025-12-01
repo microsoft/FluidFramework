@@ -240,17 +240,17 @@ extends:
                 nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
 
               Computed variables:
-                shouldPublish=$(shouldPublish)
-                componentDetection=$(componentDetection)
-                publish=$(publish)
-                canRelease=$(canRelease)
+                shouldPublish=${{ parameters.shouldPublish }}
+                componentDetection=${{ parameters.componentDetection }}
+                publish=${{ parameters.publish }}
+                canRelease=${{ parameters.canRelease }}
                 targetBranchName = $(System.PullRequest.TargetBranch)
 
-                release=$(release)"
+                release=${{ parameters.release }}"
 
               # Error checking
-              if [[ "$(release)" == "release" ]]; then
-                if [[ "$(canRelease)" == "False" ]]; then
+              if [[ "${{ parameters.release }}" == "release" ]]; then
+                if [[ "${{ parameters.canRelease }}" == "False" ]]; then
                   echo "##vso[task.logissue type=error]Invalid branch $(Build.SourceBranch) for release"
                   exit -1;
                 fi
@@ -267,16 +267,16 @@ extends:
                 fi
               fi
 
-              if [[ "$(release)" == "prerelease" ]]; then
+              if [[ "${{ parameters.release }}" == "prerelease" ]]; then
                 if [[ "${{ parameters.buildNumberInPatch }}" == "true" ]]; then
                   echo "##vso[task.logissue type=error] Prerelease not allow for builds that put build number as the patch version"
                   exit -1;
                 fi
               fi
 
-              if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
-                if [[ "$(publish)" != "True" ]]; then
-                  echo "##vso[task.logissue type=error]'$(release)'' is set but package is not published. Either the branch doesn't default to publish or it is skipped."
+              if [[ "${{ parameters.release }}" != "none" ]] && [[ "${{ parameters.release }}" != "" ]]; then
+                if [[ "${{ parameters.publish }}" != "True" ]]; then
+                  echo "##vso[task.logissue type=error]'${{ parameters.release }}'' is set but package is not published. Either the branch doesn't default to publish or it is skipped."
                   exit -1;
                 fi
               fi
