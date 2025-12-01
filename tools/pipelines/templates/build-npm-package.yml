@@ -108,6 +108,21 @@ parameters:
 - name: publish
   type: boolean
 
+- name: shouldPublish
+  type: boolean
+
+- name: canRelease
+  type: boolean
+
+- name: componentDetection
+  type: boolean
+
+- name: release
+  type: string
+
+- name: testBuild
+  type: boolean
+
 resources:
   repositories:
   - repository: 1ESPipelineTemplates
@@ -433,3 +448,5 @@ extends:
       - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
         parameters:
           tagName: ${{ parameters.tagName }}
+          testBuild: ${{ parameters.testBuild }}
+          release: ${{ parameters.release }}
