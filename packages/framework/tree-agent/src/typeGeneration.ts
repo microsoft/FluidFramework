@@ -50,7 +50,7 @@ import {
  */
 
 /**
- * Cache used to prevent repeatedly generating the same Zod validation objects for the same {@link SimpleTreeSchema} as generate propts for repeated calls to an LLM
+ * Cache used to prevent repeatedly generating the same Zod validation objects for the same {@link SimpleTreeSchema} as generated prompts for repeated calls to an LLM
  */
 const promptSchemaCache = new WeakMap<
 	SimpleTreeSchema,
