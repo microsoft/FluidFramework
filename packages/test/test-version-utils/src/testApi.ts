@@ -536,10 +536,22 @@ export function getDriverApi(requestedStr: string): typeof DriverApi {
 	const { version } = checkInstalled(requestedStr);
 	return driverCache.get(version) ?? throwNotFound("Driver", version);
 }
+
+/**
+ * The compatibility mode that a test is running in. That can be useful in scenarios where the tests
+ * want to alter their behavior based on the compat mode.
+ * For example, some tests may want to run in "LayerCompat" mode but skip running in "CrossClientCompat" mode
+ * because they are the feature they are testing was not available in versions that cross client compat requires.
+ *
+ * @internal
+ */
+export type CompatMode = "None" | "LayerCompat" | "CrossClientCompat";
+
 /**
  * Returns the CompatMode for a given CompatKind.
  * @param kind - The CompatKind to convert.
  * @returns The corresponding CompatMode.
+ *
  * @internal
  */
 export function getCompatModeFromKind(kind: CompatKind): CompatMode {
@@ -553,14 +565,6 @@ export function getCompatModeFromKind(kind: CompatKind): CompatMode {
 	}
 }
 
-/**
- * The compatibility mode that a test is running in. That can be useful in scenarios where the tests
- * want to alter their behavior based on the compat mode.
- * For example, some tests may want to run in "LayerCompat" mode but skip running in "CrossClientCompat" mode
- * because they are the feature they are testing was not available in versions that cross client compat requires.
- * @internal
- */
-export type CompatMode = "None" | "LayerCompat" | "CrossClientCompat";
 /**
  * @internal
  */

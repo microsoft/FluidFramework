@@ -4,6 +4,7 @@
  */
 
 export { mochaGlobalSetup } from "./compatConfig.js";
+export { CompatKind } from "./compatOptions.js";
 export {
 	getDataStoreFactory,
 	getVersionedTestObjectProvider,
