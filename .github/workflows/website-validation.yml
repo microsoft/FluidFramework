@@ -26,8 +26,8 @@ jobs:
     runs-on: ubuntu-latest
     name: Build site
     steps:
-      # release notes: https://github.com/actions/checkout/releases/tag/v5.0.0
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # ratchet:actions/checkout@v5
+      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # ratchet:actions/checkout@v6
         with:
           submodules: false
 
@@ -60,8 +60,8 @@ jobs:
     runs-on: ubuntu-latest
     name: pnpm lint
     steps:
-      # release notes: https://github.com/actions/checkout/releases/tag/v5.0.0
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # ratchet:actions/checkout@v5
+      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # ratchet:actions/checkout@v6
         with:
           submodules: false
 
@@ -85,8 +85,8 @@ jobs:
     name: 🧪 Website Tests
     needs: build_site
     steps:
-      # release notes: https://github.com/actions/checkout/releases/tag/v5.0.0
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # ratchet:actions/checkout@v5
+      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # ratchet:actions/checkout@v6
         with:
           submodules: false
 
@@ -101,8 +101,8 @@ jobs:
           cache-dependency-path: docs/pnpm-lock.yaml
 
       - name: Download site artifact
-        # release notes: https://github.com/actions/download-artifact/releases/tag/v5.0.0
-        uses: actions/download-artifact@a1b6e7e2e2e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1 # ratchet:actions/download-artifact@v5
+        # release notes: https://github.com/actions/download-artifact/releases/tag/v6.0.0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # ratchet:actions/download-artifact@v6
         with:
           name: fluidframework-site
           path: docs/build
@@ -118,8 +118,8 @@ jobs:
     name: 🔗 Broken Link Check
     needs: build_site
     steps:
-      # release notes: https://github.com/actions/checkout/releases/tag/v5.0.0
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # ratchet:actions/checkout@v5
+      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # ratchet:actions/checkout@v6
         with:
           submodules: false
 
@@ -136,8 +136,8 @@ jobs:
         run: mkdir -p ./results
 
       - name: Download site artifact
-        # release notes: https://github.com/actions/download-artifact/releases/tag/v5.0.0
-        uses: actions/download-artifact@a1b1c6e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2 # ratchet:actions/download-artifact@v5
+        # release notes: https://github.com/actions/download-artifact/releases/tag/v6.0.0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # ratchet:actions/download-artifact@v6
         with:
           name: fluidframework-site
           path: docs/build

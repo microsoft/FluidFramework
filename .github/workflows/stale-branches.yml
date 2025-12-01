@@ -26,7 +26,7 @@ jobs:
 
       - name: Run delete-old-branches-action
         # release notes: https://github.com/beatlabs/delete-old-branches-action/releases/tag/v0.0.11
-        uses: beatlabs/delete-old-branches-action@4eeeb8740ff8b3cb310296ddd6b43c3387734588 # ratchet:beatlabs/delete-old-branches-action@v0
+        uses: beatlabs/delete-old-branches-action@4eeeb8740ff8b3cb310296ddd6b43c3387734588 # ratchet:beatlabs/delete-old-branches-action@v0.0.11
         with:
           repo_token: ${{ github.token }}
           date: '6 months ago'

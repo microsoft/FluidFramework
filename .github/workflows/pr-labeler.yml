@@ -48,6 +48,6 @@ jobs:
     name: Label base branches and external contributors
     steps:
       # release notes: https://github.com/srvaroa/labeler/releases/tag/v1.13.0
-      - uses: srvaroa/labeler@0a20eccb8c94a1ee0bed5f16859aece1c45c3e55 # ratchet:srvaroa/labeler@v1
+      - uses: srvaroa/labeler@0a20eccb8c94a1ee0bed5f16859aece1c45c3e55 # ratchet:srvaroa/labeler@v1.13.0
         env:
           GITHUB_TOKEN: "${{ github.token }}"

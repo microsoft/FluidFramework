@@ -107,15 +107,15 @@ jobs:
       # workflow is not directly triggered by the PR.
       - name: Set commit status as pending
         # release notes: https://github.com/myrotvorets/set-commit-status-action/releases/tag/v2.0.1
-        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # ratchet:myrotvorets/set-commit-status-action@v2
+        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # ratchet:myrotvorets/set-commit-status-action@v2.0.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           sha: ${{ needs.metadata.outputs.commit_sha }}
           status: pending
           context: Check PR approval
 
-      # release notes: https://github.com/actions/checkout/releases/tag/v5.0.0
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # ratchet:actions/checkout@v5
+      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # ratchet:actions/checkout@v6
         with:
           # The default ref when triggered by the workflow_run event is the default branch -- main
           # This means the build-tools from the main branch will always be used.
@@ -169,7 +169,7 @@ jobs:
       - name: Set commit status as success
         if: steps.check-pr.outcome == 'success'
         # release notes: https://github.com/myrotvorets/set-commit-status-action/releases/tag/v2.0.1
-        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # ratchet:myrotvorets/set-commit-status-action@v2
+        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # ratchet:myrotvorets/set-commit-status-action@v2.0.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           sha: ${{ needs.metadata.outputs.commit_sha }}
@@ -179,7 +179,7 @@ jobs:
       - name: Set commit status as failure
         if: steps.check-pr.outcome != 'success'
         # release notes: https://github.com/myrotvorets/set-commit-status-action/releases/tag/v2.0.1
-        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # ratchet:myrotvorets/set-commit-status-action@v2
+        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # ratchet:myrotvorets/set-commit-status-action@v2.0.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           sha: ${{ needs.metadata.outputs.commit_sha }}
