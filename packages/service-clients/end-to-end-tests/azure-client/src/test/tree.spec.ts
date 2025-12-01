@@ -112,55 +112,67 @@ for (const testOpts of testMatrix) {
 			};
 		}
 
-		it("can create/load a container with SharedTree and do basic ops", async () => {
-			const { treeData } = await createOrLoad(
-				isEphemeral ? ephemeralSummaryTrees.createContainerWithSharedTree : undefined,
-			);
+		// TODO: Re-enable ephemeral SharedTree tests once the summary tree payloads in
+		// ephemeralSummaryTrees.ts are regenerated with a current FF version.
+		// The current payloads use EditManager format v2, which was discontinued in FF 2.73.0.
+		(isEphemeral ? it.skip : it)(
+			"can create/load a container with SharedTree and do basic ops",
+			async () => {
+				const { treeData } = await createOrLoad(
+					isEphemeral ? ephemeralSummaryTrees.createContainerWithSharedTree : undefined,
+				);
 
-			treeData.root.insertNew("test string 1");
-			assert.strictEqual(treeData.root.length, 1);
-			assert.strictEqual(treeData.root.at(0), "test string 1");
+				treeData.root.insertNew("test string 1");
+				assert.strictEqual(treeData.root.length, 1);
+				assert.strictEqual(treeData.root.at(0), "test string 1");
 
-			treeData.root.insertNew("test string 2");
-			assert.strictEqual(treeData.root.length, 2);
-			assert.strictEqual(treeData.root.at(0), "test string 2");
-			assert.strictEqual(treeData.root.at(1), "test string 1");
+				treeData.root.insertNew("test string 2");
+				assert.strictEqual(treeData.root.length, 2);
+				assert.strictEqual(treeData.root.at(0), "test string 2");
+				assert.strictEqual(treeData.root.at(1), "test string 1");
 
-			treeData.root.removeFirst();
-			assert.strictEqual(treeData.root.length, 1);
-			assert.strictEqual(treeData.root.at(0), "test string 1");
-		});
+				treeData.root.removeFirst();
+				assert.strictEqual(treeData.root.length, 1);
+				assert.strictEqual(treeData.root.at(0), "test string 1");
+			},
+		);
 
-		it("can create/load a container with SharedTree collaborate with basic ops", async () => {
-			const { containerId, treeData } = await createOrLoad(
-				isEphemeral ? ephemeralSummaryTrees.createLoadContainerWithSharedTree : undefined,
-			);
+		// TODO: Re-enable ephemeral SharedTree tests once the summary tree payloads in
+		// ephemeralSummaryTrees.ts are regenerated with a current FF version.
+		// The current payloads use EditManager format v2, which was discontinued in FF 2.73.0.
+		(isEphemeral ? it.skip : it)(
+			"can create/load a container with SharedTree collaborate with basic ops",
+			async () => {
+				const { containerId, treeData } = await createOrLoad(
+					isEphemeral ? ephemeralSummaryTrees.createLoadContainerWithSharedTree : undefined,
+				);
 
-			treeData.root.insertNew("test string 1");
+				treeData.root.insertNew("test string 1");
 
-			const resources = client.getContainer(containerId, schema, "2");
-			await assert.doesNotReject(
-				resources,
-				() => true,
-				"container cannot be retrieved from Azure Fluid Relay",
-			);
-			const { container: container2 } = await resources;
-			assert.deepStrictEqual(
-				Object.keys(container2.initialObjects),
-				Object.keys(schema.initialObjects),
-			);
+				const resources = client.getContainer(containerId, schema, "2");
+				await assert.doesNotReject(
+					resources,
+					() => true,
+					"container cannot be retrieved from Azure Fluid Relay",
+				);
+				const { container: container2 } = await resources;
+				assert.deepStrictEqual(
+					Object.keys(container2.initialObjects),
+					Object.keys(schema.initialObjects),
+				);
 
-			if (container2.connectionState !== ConnectionState.Connected) {
-				await timeoutPromise((resolve) => container2.once("connected", () => resolve()), {
-					durationMs: connectTimeoutMs,
-					errorMsg: "container2 connect() timeout",
-				});
-			}
+				if (container2.connectionState !== ConnectionState.Connected) {
+					await timeoutPromise((resolve) => container2.once("connected", () => resolve()), {
+						durationMs: connectTimeoutMs,
+						errorMsg: "container2 connect() timeout",
+					});
+				}
 
-			const treeData2 = container2.initialObjects.tree1.viewWith(treeConfiguration);
-			assert.strictEqual(treeData2.root.length, 1);
-			assert.strictEqual(treeData2.root.at(0), "test string 1");
-		});
+				const treeData2 = container2.initialObjects.tree1.viewWith(treeConfiguration);
+				assert.strictEqual(treeData2.root.length, 1);
+				assert.strictEqual(treeData2.root.at(0), "test string 1");
+			},
+		);
 
 		if (!isEphemeral) {
 			{
