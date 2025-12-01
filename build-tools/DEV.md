@@ -12,8 +12,8 @@ The following dependencies are pinned to older major versions because newer vers
 
 1. **execa** - Pinned to `^5.x`
    - Latest: `^9.x`
-   - Highest compatible: `^5.x` (v6+ removed default export compatibility)
-   - Issue: Version 6+ removed default export in a way that breaks TypeScript module resolution
+   - Highest compatible: `^5.x` (v6+ is ESM-only)
+   - Issue: Version 6+ is ESM-only and removed default export
    - Error: `Module has no default export` and `Module has no exported member 'command'`
    - Used in: `build-cli`, `build-infrastructure`
 
