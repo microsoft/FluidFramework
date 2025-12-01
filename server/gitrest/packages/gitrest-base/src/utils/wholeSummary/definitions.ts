@@ -48,3 +48,13 @@ export interface IFullGitTree {
 	 */
 	parsedFullTreeBlobs: boolean;
 }
+
+export enum WriteSummaryTraceStage {
+	WriteSummaryStarted = "WriteSummaryStarted",
+	DocRefRetrieved = "DocRefRetrieved",
+	ComputedTreeEntries = "ComputedTreeEntries",
+	WroteSummaryTree = "WroteSummaryTree",
+	CreatedNewSummaryVersion = "CreatedNewSummaryVersion",
+	CreatedOrUpdatedDocRef = "CreatedOrUpdatedDocRef",
+	ConvertedToWholeFlatSummary = "ConvertedToWholeFlatSummary",
+}
