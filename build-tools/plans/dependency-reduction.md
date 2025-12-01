@@ -60,40 +60,57 @@ Six libraries serve similar globbing/matching purposes:
 
 #### Recommended Consolidation
 
-Consolidate on `globby` (which uses `fast-glob` with `micromatch` internally):
+Consolidate on `tinyglobby` for file system globbing and `picomatch` for pattern matching:
 
-1. **Replace `glob` with `globby`** in build-tools/taskUtils.ts
-2. **Replace `minimatch` with `micromatch`** in build-cli
-3. **Replace `multimatch` with `micromatch`** in build-tools
+1. **Replace `glob` with `tinyglobby`** in build-tools/taskUtils.ts
+2. **Replace `minimatch` with `picomatch`** in build-cli/repoConfig.ts
+3. **Replace `multimatch` with `picomatch`** in build-tools/biomeConfig.ts
+
+Note: `picomatch` is already used in `miscTasks.ts` for pattern scanning, so consolidating on it reduces total dependencies rather than adding new ones.
+
+#### API Migration Patterns
+
+| Original | Replacement |
+|----------|-------------|
+| `minimatch(path, pattern)` returns boolean | `picomatch(pattern)(path)` returns boolean |
+| `multimatch(paths, patterns)` returns filtered array | `paths.filter(picomatch(patterns))` |
+| `glob(pattern, options, callback)` | `tinyglobby.glob(pattern, options)` returns Promise |
 
 #### Key Migration Considerations
 
-Option name differences between `glob` and `globby`:
+Option name differences between `glob` and `tinyglobby`:
 
-| glob option | globby/fast-glob equivalent |
-|-------------|----------------------------|
-| `nodir: true` | `onlyFiles: true` (default) |
-| `follow: true` | `followSymbolicLinks: true` |
-| `ignore: "pattern"` | `ignore: ["pattern"]` (array required) |
+| glob option | tinyglobby/fast-glob equivalent | Used in |
+|-------------|----------------------------|---------|
+| `nodir: true` | `onlyFiles: true` (default) | miscTasks.ts, ts2EsmTask.ts |
+| `follow: true` | `followSymbolicLinks: true` | miscTasks.ts (CopyfilesTask) |
+| `ignore: "pattern"` | `ignore: ["pattern"]` (array required) | fluidRepoBuild.ts |
+| `cwd` | `cwd` (same) | prettierTask.ts, ts2EsmTask.ts |
+| `absolute: true` | `absolute: true` (same) | ts2EsmTask.ts |
+| `dot: true` | `dot: true` (same) | miscTasks.ts (CopyfilesTask) |
 
 #### Risk Reduction Steps
 
 1. **Add integration tests for glob-dependent functionality:**
    - Create test cases in `build-tools/src/test/` covering:
-     - `CopyfilesTask` glob behavior with various options
+     - `CopyfilesTask` glob behavior with various options (`dot`, `follow`, `ignore`)
      - `TypeValidationTask` output file discovery
      - `GoodFence` input file enumeration
      - `DepCruiseTask` pattern matching
-   - Test edge cases: dot files, symlinks, nested directories
+   - Test edge cases: dot files, symlinks, nested directories, ignore patterns
 
-2. **Create a compatibility wrapper:**
+2. **Add tests for pattern matching:**
+   - Test `repoConfig.ts` branch pattern matching with various branch names
+   - Test `biomeConfig.ts` include/ignore filtering with multiple patterns
+
+3. **Create a compatibility wrapper:**
    ```typescript
-   // Temporary adapter that accepts old glob options and converts to globby
+   // Temporary adapter that accepts old glob options and converts to tinyglobby
    export function globFn(pattern: string, options: GlobCompatOptions = {}): Promise<string[]> {
-     return globby(pattern, {
+     return glob(pattern, {
        onlyFiles: options.nodir ?? true,
        followSymbolicLinks: options.follow ?? false,
-       ignore: options.ignore ? [options.ignore] : [],
+       ignore: Array.isArray(options.ignore) ? options.ignore : options.ignore ? [options.ignore] : [],
        cwd: options.cwd,
        absolute: options.absolute,
        dot: options.dot,
@@ -101,9 +118,66 @@ Option name differences between `glob` and `globby`:
    }
    ```
 
-3. **Migrate incrementally by file:**
+4. **Migrate incrementally by file:**
    - Start with files that have test coverage
    - Manually verify behavior for untested files
+
+5. **Migration code for minimatch → picomatch** (in repoConfig.ts):
+   ```typescript
+   // Before
+   import { minimatch } from "minimatch";
+   if (minimatch(branch, branchPattern) === true) { ... }
+
+   // After
+   import picomatch from "picomatch";
+   const isMatch = picomatch(branchPattern);
+   if (isMatch(branch)) { ... }
+   ```
+
+6. **Migration code for multimatch → picomatch** (in biomeConfig.ts):
+   ```typescript
+   // Before
+   import multimatch from "multimatch";
+   const includedPaths = multimatch([...gitLsFiles], prefixedIncludes);
+
+   // After
+   import picomatch from "picomatch";
+   const isMatch = picomatch(prefixedIncludes);
+   const includedPaths = [...gitLsFiles].filter(isMatch);
+   ```
+
+7. **Gitignore support with tinyglobby:**
+   
+   Unlike `globby`, `tinyglobby` does not have built-in gitignore support. If gitignore filtering is needed, use this pattern (from [e18e.dev](https://e18e.dev/docs/replacements/globby.html)):
+   
+   ```typescript
+   import { execSync } from 'node:child_process';
+   import { escapePath, glob } from 'tinyglobby';
+
+   async function globWithGitignore(patterns, options = {}) {
+     const { cwd = process.cwd(), ...restOptions } = options;
+
+     try {
+       const gitIgnored = execSync(
+         'git ls-files --others --ignored --exclude-standard --directory',
+         { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }
+       )
+       .split('\n')
+       .filter(Boolean)
+       .map(p => escapePath(p));
+
+       return glob(patterns, {
+         ...restOptions,
+         cwd,
+         ignore: [...(restOptions.ignore || []), ...gitIgnored]
+       });
+     } catch {
+       return glob(patterns, options);
+     }
+   }
+   ```
+   
+   Note: The current `globFn` usage in build-tools does not appear to rely on gitignore support, so this may not be needed for the initial migration.
 
 ---
 
@@ -213,9 +287,9 @@ If desired, these can be replaced with native Node.js equivalents:
 
 ### Phase 3: Glob Consolidation
 - [ ] Create compatibility wrapper for `globFn`
-- [ ] Migrate build-tools from `glob` to `globby`
-- [ ] Replace `minimatch` with `micromatch` in build-cli
-- [ ] Replace `multimatch` with `micromatch` in build-tools
+- [ ] Migrate build-tools from `glob` to `tinyglobby`
+- [ ] Replace `minimatch` with `picomatch` in build-cli
+- [ ] Replace `multimatch` with `picomatch` in build-tools
 - [ ] Remove `glob`, `minimatch`, `multimatch` dependencies
 
 ### Phase 4: Evaluate and Defer
@@ -235,6 +309,7 @@ If desired, these can be replaced with native Node.js equivalents:
 
 ## References
 
-- [globby documentation](https://github.com/sindresorhus/globby)
+- [tinyglobby documentation](https://github.com/SuperchupuDev/tinyglobby)
+- [picomatch documentation](https://github.com/micromatch/picomatch)
 - [fast-glob options](https://github.com/mrmlnc/fast-glob#options-3)
 - [fflate documentation](https://github.com/101arrowz/fflate)
