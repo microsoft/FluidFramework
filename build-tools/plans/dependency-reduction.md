@@ -62,9 +62,9 @@ Six libraries serve similar globbing/matching purposes:
 
 Consolidate on `tiny-globby`, which has a similar api to globby:
 
-1. **Replace `glob` with `globby`** in build-tools/taskUtils.ts
-2. **Replace `minimatch` with `micromatch`** in build-cli
-3. **Replace `multimatch` with `micromatch`** in build-tools
+1. **Replace `glob` with `tinyglobby`** in build-tools/taskUtils.ts
+2. **Replace `minimatch` with `picomatch`** in build-cli
+3. **Replace `multimatch` with `picomatch`** in build-tools
 
 #### Key Migration Considerations
 
