@@ -460,7 +460,7 @@ export const incrementalFieldEncoder: FieldEncoder = {
 		);
 		assert(
 			context.version >= FieldBatchFormatVersion.v2,
-			"Unsupported FieldBatchFormatVersion for incremental encoding; must be v2 or higher",
+			0xca1 /* Unsupported FieldBatchFormatVersion for incremental encoding; must be v2 or higher */,
 		);
 
 		const chunkReferenceIds = context.incrementalEncoder.encodeIncrementalField(

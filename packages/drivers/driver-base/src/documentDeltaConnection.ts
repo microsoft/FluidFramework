@@ -504,6 +504,7 @@ export class DocumentDeltaConnection
 					const normalizedError = this.addPropsToError(failError);
 					this.logger.sendErrorEvent({ eventName: "CloseSocketError" }, normalizedError);
 				}
+				// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 				reject(err);
 			};
 
@@ -514,6 +515,7 @@ export class DocumentDeltaConnection
 					const normalizedError = this.addPropsToError(failError);
 					this.logger.sendErrorEvent({ eventName: "FailConnectionError" }, normalizedError);
 				}
+				// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 				reject(err);
 			};
 

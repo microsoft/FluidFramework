@@ -12,20 +12,17 @@ export const MessageFormatVersion = {
 	/**
 	 * NOTE: this is written as `undefined` rather than `0` in the wire format.
 	 * Introduced and retired prior to 2.0.
-	 * Reading capability is currently maintained for backwards compatibility, but it could be removed in the future.
-	 * Writing capability need not be maintained.
+	 * Reading and writing capability removed in 2.73.0.
 	 */
 	undefined: 0,
 	/**
 	 * Introduced and retired prior to 2.0.
-	 * Reading capability is currently maintained for backwards compatibility, but it could be removed in the future.
-	 * Writing capability need not be maintained.
+	 * Reading and writing capability removed in 2.73.0.
 	 */
 	v1: 1,
 	/**
 	 * Introduced and retired prior to 2.0.
-	 * Reading capability is currently maintained for backwards compatibility, but it could be removed in the future.
-	 * Writing capability need not be maintained.
+	 * Reading and writing capability removed in 2.73.0.
 	 */
 	v2: 2,
 	/**
@@ -51,6 +48,11 @@ export type MessageFormatVersion = Brand<
 	(typeof MessageFormatVersion)[keyof typeof MessageFormatVersion],
 	"MessageFormatVersion"
 >;
+export const supportedMessageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set([
+	MessageFormatVersion.v3,
+	MessageFormatVersion.v4,
+	MessageFormatVersion.v5,
+] as MessageFormatVersion[]);
 export const messageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set(
 	Object.values(MessageFormatVersion) as MessageFormatVersion[],
 );

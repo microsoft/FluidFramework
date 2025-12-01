@@ -10,7 +10,7 @@ module.exports = {
 	],
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off",
-		"import/no-nodejs-modules": "off",
+		"import-x/no-nodejs-modules": "off",
 		"promise/catch-or-return": ["error", { allowFinally: true }],
 
 		// TODO: enable strict null checks in tsconfig and remove this override

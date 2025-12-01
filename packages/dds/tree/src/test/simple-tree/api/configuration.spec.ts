@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
@@ -12,7 +13,6 @@ import {
 	SchemaFactory,
 	SchemaFactoryAlpha,
 } from "../../../simple-tree/index.js";
-import { validateUsageError } from "../../utils.js";
 import { independentView } from "../../../shared-tree/index.js";
 
 import {
