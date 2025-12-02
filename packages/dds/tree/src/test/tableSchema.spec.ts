@@ -21,14 +21,12 @@ import { TableSchema } from "../tableSchema.js";
 import type {
 	areSafelyAssignable,
 	JsonCompatibleReadOnly,
+	requireFalse,
 	requireTrue,
 } from "../util/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshots/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { describeHydration } from "./simple-tree/utils.js";
-
-// Test TODOs:
-// - Verify that nodes constructed from table schema with different input scopes are not assignable to one another.
 
 const schemaFactory = new SchemaFactoryAlpha("test");
 
@@ -68,7 +66,7 @@ class Table extends TableSchema.table({
 	row: Row,
 }) {}
 
-describe.only("TableFactory unit tests", () => {
+describe("TableFactory unit tests", () => {
 	/**
 	 * Compares a tree with an expected "concise" tree representation.
 	 * Fails if they are not equivalent.
@@ -1596,6 +1594,24 @@ describe.only("TableFactory unit tests", () => {
 			takeJsonSnapshot(TreeBeta.exportConcise(table, {}) as unknown as JsonCompatibleReadOnly);
 		});
 	});
+
+	// Type tests validating that table schema scopes correctly prevent cross-scope assignments.
+	{
+		const schemaFactoryA = new SchemaFactoryBeta("scope-a");
+		const schemaFactoryB = new SchemaFactoryBeta("scope-b");
+
+		class TableA extends TableSchema.table({
+			schemaFactory: schemaFactoryA,
+			cell: schemaFactoryA.string,
+		}) {}
+
+		class TableB extends TableSchema.table({
+			schemaFactory: schemaFactoryB,
+			cell: schemaFactoryB.string,
+		}) {}
+
+		type _typeCheck = requireFalse<areSafelyAssignable<TableA, TableB>>;
+	}
 
 	// The code within the following tests is included in TSDoc comments in the source code.
 	// If you need to update any of these, please update the corresponding TSDoc comments as well.
