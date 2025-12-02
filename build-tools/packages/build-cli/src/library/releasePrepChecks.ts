@@ -7,6 +7,7 @@ import { MonoRepo, type Package } from "@fluidframework/build-tools";
 import execa from "execa";
 import { ResetMode } from "simple-git";
 import type { Context } from "./context.js";
+import { isCurrentPackageVersionPatch, maybeGetNewGeneration } from "./layerCompatibility.js";
 import { getPreReleaseDependencies } from "./package.js";
 
 /**
@@ -255,12 +256,6 @@ export const CheckNoUntaggedAsserts: CheckFunction = async (
  * @returns `true` if all configured packages have up-to-date layer generation metadata, `false` if any updates are needed.
  */
 export async function runCompatLayerGenerationCheck(context: Context): Promise<boolean> {
-	const { maybeGetNewGeneration, isCurrentPackageVersionPatch } = await import(
-		// library is overloaded with too much stuff now, and we should consider allowing interior imports.
-		// eslint-disable-next-line import/no-internal-modules
-		"../commands/generate/layerCompatGeneration.js"
-	);
-
 	// Check all packages that have fluidCompatMetadata
 	for (const pkg of context.fullPackageMap.values()) {
 		const { fluidCompatMetadata } = pkg.packageJson;

@@ -22,8 +22,8 @@ import {
 	getPreReleaseDependencies,
 	getReleaseSourceForReleaseGroup,
 	isReleased,
-	runCompatLayerGenerationCheck,
 } from "../library/index.js";
+import { runCompatLayerGenerationCheck } from "../library/releasePrepChecks.js";
 import type { CommandLogger } from "../logging.js";
 import type { MachineState } from "../machines/index.js";
 import { type ReleaseSource, isReleaseGroup } from "../releaseGroups.js";
