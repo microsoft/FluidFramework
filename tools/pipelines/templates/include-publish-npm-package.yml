@@ -11,11 +11,19 @@ parameters:
   type: object
   default: Small-eastus2
 
+# Indicates if this build is from a test branch
+- name: testBuild
+  type: boolean
+
+# Indicates the type of release (if any)
+- name: release
+  type: string
+
 stages:
 - stage: publish_npm_internal_test
   dependsOn: build
   displayName: Publish Internal Test Packages
-  condition: and(succeeded(), eq(variables['testBuild'], true))
+  condition: and(succeeded(), eq(${{ parameters.testBuild }}, true))
   jobs:
   - template: include-publish-npm-package-deployment.yml
     parameters:
@@ -25,11 +33,12 @@ stages:
       pool: ${{ parameters.pool }}
       packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
       packageManager: pnpm
+      release: ${{ parameters.release }}
 
 - stage: publish_npm_internal
   dependsOn: build
   displayName: Publish Internal Packages
-  condition: and(succeeded(), eq(variables['testBuild'], false))
+  condition: and(succeeded(), eq(${{ parameters.testBuild }}, false))
   jobs:
   - template: include-publish-npm-package-deployment.yml
     parameters:
@@ -39,11 +48,12 @@ stages:
       pool: ${{ parameters.pool }}
       packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
       packageManager: pnpm
+      release: ${{ parameters.release }}
 
 - stage: publish_npm_official
   dependsOn: build
   displayName: Publish Official Packages
-  condition: and(succeeded(), or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')))
+  condition: and(succeeded(), or(eq('${{ parameters.release }}', 'release'), eq('${{ parameters.release }}', 'prerelease')))
   jobs:
   - template: include-publish-npm-package-deployment.yml
     parameters:
@@ -55,3 +65,4 @@ stages:
       customEndPoint: npmjs
       tagName: ${{ parameters.tagName }}
       packageManager: pnpm
+      release: ${{ parameters.release }}

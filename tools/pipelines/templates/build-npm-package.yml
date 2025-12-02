@@ -99,37 +99,115 @@ parameters:
   type: string
   default: "^"
 
-trigger: none
+# Indicates if this is a release build that should be shipped to arrow.
+- name: shouldShip
+  type: boolean
+  default: false
 
-variables:
-  # We use 'chalk' to colorize output, which auto-detects color support in the
-  # running terminal.  The log output shown in Azure DevOps job runs only has
-  # basic ANSI color support though, so force that in the pipeline
-  - name: FORCE_COLOR
-    value: 1
-  - template: include-vars.yml
-    parameters:
-      publishOverride: '${{ parameters.publishOverride }}'
-      releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
+# Indicates if this run is going to publish npm packages (and run extra steps necessary in that case) or not
+- name: publish
+  type: boolean
 
-stages:
-  # Install / Build / Test Stage
-  - stage: build
-    displayName: Build Stage
-    jobs:
+# Indicates if we should or should not skip all publish stages
+- name: shouldPublish
+  type: boolean
+
+# Indicates if the build is from a branch that we can release from
+- name: canRelease
+  type: boolean
+
+# Indicates if we should run component detection (if we are publishing any artifacts)
+- name: componentDetection
+  type: boolean
+
+# Indicates the type of release (if any)
+- name: release
+  type: string
+
+# Indicates if this build is from a test branch
+- name: testBuild
+  type: boolean
+
+resources:
+  repositories:
+  - repository: 1ESPipelineTemplates
+    type: git
+    name: 1ESPipelineTemplates/1ESPipelineTemplates
+    ref: refs/tags/release
+
+extends:
+  template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
+  parameters:
+    pool:
+      name: Small-eastus2
+      os: linux
+    sdl:
+      ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+        arrow:
+          # This is the service connection for the Arrow Service Connection in FluidFramework Azure DevOps organization
+          serviceConnection: ff-internal-arrow-sc
+          # This will make sure that the artifacts are published to the Arrow Service Connection if they are release or pre-release
+          isShipped: ${{ parameters.shouldShip }}
+      sourceAnalysisPool:
+        name: Azure-Pipelines-1ESPT-ExDShared
+        image: windows-2022
+        os: windows
+      # Tentative workaround for the occasional Credscan failures
+      credscan:
+        batchSize: 4
+    # Skip tagging if Github PR coming from a fork;  This skips Microsoft security checks that won't work on forks.
+    settings:
+      skipBuildTagsForGitHubPullRequests: true
+    customBuildTags:
+      - ES365AIMigrationTooling
+    stages:
+    # Install / Build / Test Stage
+    - stage: build
+      displayName: Build Stage
+      jobs:
       # Job - Build
       - job: build
         displayName: Build
         pool: ${{ parameters.poolBuild }}
         variables:
-          - group: ado-feeds
-          - group: storage-vars
-          # Coverage has quality issues in LTS, and root-causing + fixing is not a priority given changes to LTS at this point
-          # will be things like upgrading node or security fixes, not adding new features.
-          - name: testCoverage
-            value: false
-          - name: releaseBuildVar
-            value: $[variables.releaseBuild]
+        # We use 'chalk' to colorize output, which auto-detects color support in the
+        # running terminal.  The log output shown in Azure DevOps job runs only has
+        # basic ANSI color support though, so force that in the pipeline
+        - name: FORCE_COLOR
+          value: 1
+        - group: ado-feeds
+        - group: storage-vars
+        # Coverage has quality issues in LTS, and root-causing + fixing is not a priority given changes to LTS at this point
+        # will be things like upgrading node or security fixes, not adding new features.
+        - name: testCoverage
+          value: false
+        templateContext:
+          outputs:
+          - ${{ if ne(parameters.taskPack, false) }}:
+            - output: pipelineArtifact
+              displayName: 'Publish Artifact - pack'
+              targetPath: '$(Build.ArtifactStagingDirectory)/pack'
+              artifactName: 'pack'
+              publishLocation: 'Container'
+          - ${{ if ne(parameters.taskPack, false) }}:
+            - output: pipelineArtifact
+              displayName: 'Publish Artifact - Test Files'
+              targetPath: '$(Build.ArtifactStagingDirectory)/test-files'
+              artifactName: 'test-files'
+              publishLocation: 'Container'
+          - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
+            - output: pipelineArtifact
+              displayName: 'Publish Artifacts - bundle-analysis'
+              condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true) )
+              targetPath: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
+              artifactName: 'bundleAnalysis'
+              publishLocation: 'Container'
+          - ${{ if ne(parameters.taskBuildDocs, false) }}:
+            - output: pipelineArtifact
+              displayName: 'Publish Artifact - _api-extractor-temp'
+              targetPath: '${{ parameters.buildDirectory }}/_api-extractor-temp'
+              artifactName: '_api-extractor-temp'
+              publishLocation: 'Container'
         steps:
         # Setup
         - checkout: self
@@ -146,9 +224,6 @@ stages:
               # Show all task group conditions
 
               echo "
-              Pipeline Variables:
-                releaseBuild=$(releaseBuildVar)
-
               Override Parameters:
                 publishOverride=${{ parameters.publishOverride }}
                 releaseBuildOverride=${{ parameters.releaseBuildOverride }}
@@ -165,18 +240,21 @@ stages:
                 nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
 
               Computed variables:
-                shouldPublish=${{ variables.shouldPublish }}
-                componentDetection=${{ variables.componentDetection }}
-                publish=${{ variables.publish }}
-                canRelease=${{ variables.canRelease }}
-                targetBranchName = $(System.PullRequest.TargetBranch)
+                shouldPublish=${{ parameters.shouldPublish }}
+                componentDetection=${{ parameters.componentDetection }}
+                publish=${{ parameters.publish }}
+                canRelease=${{ parameters.canRelease }}
+                release=${{ parameters.release }}"
 
-                release=$(release)"
+              # Target Branch variable (PR policy related)
+              if [[ "$(Build.Reason)" == "PullRequest" ]]; then
+                echo "TargetBranchName=$(System.PullRequest.TargetBranch)"
+              fi
 
               # Error checking
-              if [[ "$(release)" == "release" ]]; then
-                if [[ "${{ variables.canRelease }}" == "False" ]]; then
-                  echo "##vso[task.logissue type=error]Invalid branch ${{ variables['Build.SourceBranch'] }} for release"
+              if [[ "${{ parameters.release }}" == "release" ]]; then
+                if [[ "${{ parameters.canRelease }}" == "False" ]]; then
+                  echo "##vso[task.logissue type=error]Invalid branch $(Build.SourceBranch) for release"
                   exit -1;
                 fi
 
@@ -192,16 +270,16 @@ stages:
                 fi
               fi
 
-              if [[ "$(release)" == "prerelease" ]]; then
+              if [[ "${{ parameters.release }}" == "prerelease" ]]; then
                 if [[ "${{ parameters.buildNumberInPatch }}" == "true" ]]; then
                   echo "##vso[task.logissue type=error] Prerelease not allow for builds that put build number as the patch version"
                   exit -1;
                 fi
               fi
 
-              if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
-                if [[ "${{ variables.publish }}" != "True" ]]; then
-                  echo "##vso[task.logissue type=error]'$(release)'' is set but package is not published. Either the branch doesn't default to publish or it is skipped."
+              if [[ "${{ parameters.release }}" != "none" ]] && [[ "${{ parameters.release }}" != "" ]]; then
+                if [[ "${{ parameters.publish }}" != "True" ]]; then
+                  echo "##vso[task.logissue type=error]'${{ parameters.release }}'' is set but package is not published. Either the branch doesn't default to publish or it is skipped."
                   exit -1;
                 fi
               fi
@@ -227,7 +305,7 @@ stages:
             packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
 
         # Set version
-        - template: include-set-package-version.yml@self
+        - template: /tools/pipelines/templates/include-set-package-version.yml@self
           parameters:
             buildDirectory: ${{ parameters.buildDirectory }}
             buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
@@ -252,7 +330,6 @@ stages:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run lint'
-
         # Test
         - ${{ if ne(parameters.taskTest, 'false') }}:
           # Run any additional tests first so their results can be copied to the ~/nyc dir and published below
@@ -328,20 +405,6 @@ stages:
               workingDirectory: '${{ parameters.buildDirectory }}'
               filePath: $(Build.SourcesDirectory)/scripts/pack-packages.sh
 
-          - task: PublishBuildArtifacts@1
-            displayName: Publish Artifact - pack
-            inputs:
-              PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack'
-              ArtifactName: 'pack'
-              publishLocation: 'Container'
-
-          - task: PublishBuildArtifacts@1
-            displayName: Publish Artifact - Test Files
-            inputs:
-              PathtoPublish: '$(Build.ArtifactStagingDirectory)/test-files'
-              ArtifactName: 'test-files'
-              publishLocation: 'Container'
-
         # Collect/publish/run bundle analysis
         - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
           - task: Npm@1
@@ -350,28 +413,9 @@ stages:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run bundle-analysis:collect'
-
-          - task: PublishBuildArtifacts@1
-            displayName: Publish Artifacts - bundle-analysis
-            condition:
-              and(
-                succeeded(),
-                ne(variables['Build.Reason'], 'PullRequest'),
-                eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true)
-              )
-            inputs:
-              PathtoPublish: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
-              Artifactname: 'bundleAnalysis'
-              publishLocation: 'Container'
-
           - task: Npm@1
             displayName: run bundle size comparison
-            condition:
-              and(
-                succeeded(),
-                eq(variables['Build.Reason'], 'PullRequest'),
-                ne(variables['System.PullRequest.IsFork'], 'true')
-              )
+            condition: and( succeeded(), eq(variables['Build.Reason'], 'PullRequest'), ne(variables['System.PullRequest.IsFork'], 'true') )
             continueOnError: true
             env:
               ADO_API_TOKEN: $(System.AccessToken)
@@ -390,14 +434,6 @@ stages:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run ci:build:docs'
-
-          - task: PublishBuildArtifacts@1
-            displayName: Publish Artifact - _api-extractor-temp
-            inputs:
-              PathtoPublish: '${{ parameters.buildDirectory }}/_api-extractor-temp'
-              ArtifactName: '_api-extractor-temp'
-              publishLocation: 'Container'
-
         - task: Bash@3
           displayName: Check for extraneous modified files
           inputs:
@@ -410,29 +446,10 @@ stages:
                 exit -1;
               fi
 
-      # Job - Component detection
-      - ${{ if eq(variables.componentDetection, true) }}:
-        - job: CG
-          displayName: Component Detection
-          pool: ${{ parameters.poolCG }}
-          steps:
-          - checkout: self
-            clean: true
-            lfs: false
-            submodules: false
-
-          - ${{ parameters.preCG }}
-
-          - task: ComponentGovernanceComponentDetection@0
-            displayName: Component Detection
-            inputs:
-              sourceScanPath: ${{ parameters.buildDirectory }}/${{ parameters.cgSubDirectory }}
-              verbosity: Verbose
-              scanType: Register
-              alertWarningLevel: High
-
-  # Publish stage
-  - ${{ if eq(variables.publish, true) }}:
-    - template: include-publish-npm-package.yml
-      parameters:
-        tagName: ${{ parameters.tagName }}
+    # Publish stage
+    - ${{ if eq(parameters.publish, true) }}:
+      - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
+        parameters:
+          tagName: ${{ parameters.tagName }}
+          testBuild: ${{ parameters.testBuild }}
+          release: ${{ parameters.release }}

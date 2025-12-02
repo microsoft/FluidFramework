@@ -101,9 +101,21 @@ schedules:
     - lts
   always: true
 
+variables:
+  - template: /tools/pipelines/templates/include-vars.yml@self
+    parameters:
+      publishOverride: '${{ parameters.publishOverride }}'
+      releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
+
 extends:
   template: templates/build-npm-package.yml@self
   parameters:
+    publish: ${{ variables.publish }}
+    shouldPublish: ${{ variables.shouldPublish }}
+    canRelease: ${{ variables.canRelease }}
+    componentDetection: ${{ variables.componentDetection }}
+    release: ${{ variables.release }}
+    testBuild: ${{ variables.testBuild }}
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     nonScopedPackages: ${{ parameters.nonScopedPackages }}
@@ -116,3 +128,4 @@ extends:
     cgSubDirectory: packages
     checkoutSubmodules: true
     taskBundleAnalysis: true
+    shouldShip: ${{ or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')) }}
