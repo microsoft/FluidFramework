@@ -195,7 +195,7 @@ class ExposedMethodsI implements ExposedMethods {
 			methodName,
 			functionDef.description,
 			functionDef.args,
-			// eslint-disable-next-line unicorn/no-null
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			functionDef.rest ?? null,
 			functionDef.returns,
 		);

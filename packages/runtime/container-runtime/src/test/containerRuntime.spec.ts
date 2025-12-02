@@ -2597,7 +2597,7 @@ describe("Runtime", () => {
 					{
 						clientId: "X",
 						clientSequenceNumber: -1,
-						// eslint-disable-next-line unicorn/no-null
+						// eslint-disable-next-line @typescript-eslint/no-restricted-types
 						contents: null,
 						minimumSequenceNumber: 0,
 						referenceSequenceNumber: -1,
@@ -2608,7 +2608,7 @@ describe("Runtime", () => {
 					{
 						clientId: "Y",
 						clientSequenceNumber: -1,
-						// eslint-disable-next-line unicorn/no-null
+						// eslint-disable-next-line @typescript-eslint/no-restricted-types
 						contents: null,
 						minimumSequenceNumber: 0,
 						referenceSequenceNumber: -1,
@@ -2807,7 +2807,7 @@ describe("Runtime", () => {
 					url: "/missingDataStore",
 				});
 				// Mock Datastore runtime will return null when requested for "/".
-				// eslint-disable-next-line unicorn/no-null
+				// eslint-disable-next-line @typescript-eslint/no-restricted-types
 				assert.strictEqual(datastore1, null, "resolveHandle should work fine");
 
 				// Now try to get snapshot for missing data store again from container runtime. It should be returned
@@ -2874,7 +2874,7 @@ describe("Runtime", () => {
 					url: "/missingDataStore",
 				});
 				// Mock Datastore runtime will return null when requested for "/".
-				// eslint-disable-next-line unicorn/no-null
+				// eslint-disable-next-line @typescript-eslint/no-restricted-types
 				assert.strictEqual(missingDataStore, null, "resolveHandle should work fine");
 			});
 

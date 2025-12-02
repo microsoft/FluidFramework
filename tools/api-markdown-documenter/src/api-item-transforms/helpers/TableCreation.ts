@@ -126,7 +126,7 @@ export function createTableFromItems<TItem>(
 	if (alignment !== undefined || columnOptions.some((col) => col.alignment !== undefined)) {
 		table.align = includedColumnIndices.map(
 			(iColumn) =>
-				// eslint-disable-next-line unicorn/no-null -- mdast uses null to not specify alignment
+				// eslint-disable-next-line @typescript-eslint/no-restricted-types -- mdast uses null to not specify alignment
 				columnOptions[iColumn].alignment ?? alignment ?? null,
 		);
 	}

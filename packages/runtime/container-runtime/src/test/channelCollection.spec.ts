@@ -172,7 +172,7 @@ describe("Runtime", () => {
 								url: "routeD",
 							},
 						],
-						// eslint-disable-next-line unicorn/no-null
+						// eslint-disable-next-line @typescript-eslint/no-restricted-types
 						deadEnd: null,
 						number: 1,
 						nothing: undefined,
@@ -193,7 +193,7 @@ describe("Runtime", () => {
 				);
 			});
 			it("null contents", () => {
-				// eslint-disable-next-line unicorn/no-null
+				// eslint-disable-next-line @typescript-eslint/no-restricted-types
 				detectOutboundReferences("foo", null, () => {
 					assert.fail("Should not be called");
 				});

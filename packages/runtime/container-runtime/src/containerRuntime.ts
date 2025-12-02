@@ -5144,7 +5144,7 @@ export class ContainerRuntime
 					snapshotTree = snapshot.snapshotTree;
 				} else {
 					const versions = await this.storage.getVersions(
-						// eslint-disable-next-line unicorn/no-null
+						// eslint-disable-next-line @typescript-eslint/no-restricted-types
 						null,
 						1,
 						scenarioName,

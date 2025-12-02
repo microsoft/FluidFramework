@@ -56,6 +56,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		);
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
 		const id = versionId ? versionId : this.id;
 		const commits = await this.manager.getCommits(id, count);
@@ -66,6 +67,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		}));
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTreeEx | null> {
 		let requestVersion = version;
 		if (!requestVersion) {
@@ -326,6 +328,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 
 	private async getPreviousFullSnapshot(
 		parentHandle: string,
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	): Promise<ISnapshotTreeEx | null | undefined> {
 		return parentHandle
 			? this.getVersions(parentHandle, 1).then(async (versions) => {

@@ -32,6 +32,7 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 	public static async create(
 		tenantId: string,
 		id: string,
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		token: string | null,
 		io: typeof SocketIOClientStatic,
 		client: IClient,

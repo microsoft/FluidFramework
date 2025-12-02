@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable unicorn/no-null */
+/* eslint-disable @typescript-eslint/no-restricted-types */
 
 import { strict as assert } from "node:assert";
 

@@ -219,7 +219,7 @@ export class AgentScheduler
 	public pickedTasks(): string[] {
 		return [...this.runningTasks.values()];
 	}
-	/* eslint-disable unicorn/no-null */
+	/* eslint-disable @typescript-eslint/no-restricted-types */
 	private async registerCore(taskUrls: string[]): Promise<void> {
 		if (taskUrls.length > 0) {
 			const registersP: Promise<void>[] = [];
@@ -382,7 +382,7 @@ export class AgentScheduler
 			}
 		}
 	}
-	/* eslint-enable unicorn/no-null */
+	/* eslint-enable @typescript-eslint/no-restricted-types */
 
 	private isActive(): boolean {
 		// Scheduler should be active in detached container.

@@ -233,7 +233,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	): Promise<ISnapshotTree | null> {
 		if (!this.snapshotUrl) {
-			// eslint-disable-next-line unicorn/no-null
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			return null;
 		}
 		return super.getSnapshotTree(version, scenarioName);

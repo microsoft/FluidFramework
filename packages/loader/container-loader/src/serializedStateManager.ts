@@ -556,7 +556,7 @@ export async function getLatestSnapshotInfo(
 			try {
 				// get the latest non cached snapshot version
 				const specifiedVersion: IVersion[] = await storageAdapter.getVersions(
-					// eslint-disable-next-line unicorn/no-null
+					// eslint-disable-next-line @typescript-eslint/no-restricted-types
 					null,
 					1,
 					"getLatestSnapshotInfo",
@@ -666,7 +666,7 @@ export async function fetchISnapshotTree(
 	specifiedVersion: string | undefined,
 ): Promise<{ snapshot?: ISnapshotTree; version?: IVersion | undefined }> {
 	// API uses null
-	// eslint-disable-next-line unicorn/no-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	const versions = await storageAdapter.getVersions(specifiedVersion ?? null, 1);
 	const version = versions[0];
 

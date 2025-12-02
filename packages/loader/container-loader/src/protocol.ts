@@ -138,7 +138,7 @@ export class ProtocolHandler extends ProtocolOpHandler implements ProtocolHandle
 	): IProcessMessageResult {
 		// Check and report if we're getting messages from a clientId that we previously
 		// flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
-		// eslint-disable-next-line unicorn/no-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		if (message.clientId != null) {
 			const client = this.quorum.getMember(message.clientId);
 

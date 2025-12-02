@@ -89,6 +89,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 	}
 
 	private resolveHelper(
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		documentId: string | null,
 		documentRelativePath: string = "",
 		queryParams: string = "",

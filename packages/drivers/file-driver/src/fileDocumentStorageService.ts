@@ -45,6 +45,7 @@ export class FluidFetchReader
 	extends ReadDocumentStorageServiceBase
 	implements IDocumentStorageService
 {
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	protected docTree: ISnapshotTree | null = null;
 
 	constructor(

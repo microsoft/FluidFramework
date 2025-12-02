@@ -26,7 +26,7 @@ import type {
 import { assertIdenticalTypes, replaceBigInt } from "./testUtils.js";
 
 /* eslint-disable jsdoc/require-jsdoc */
-/* eslint-disable unicorn/no-null */
+/* eslint-disable @typescript-eslint/no-restricted-types */
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
 
 export const boolean: boolean = true as boolean; // Use `as` to avoid type conversion to `true`
@@ -544,15 +544,14 @@ export const objectWithLiterals = {
 	null: null,
 } as const;
 export const tupleWithLiterals = [true, false, 0, "string", null, 1e113] as const;
-export const arrayOfLiterals: readonly (
-	| true
-	| 0
-	| 1
-	| "string"
-	| "hello"
-	// eslint-disable-next-line @typescript-eslint/no-restricted-types
-	| null
-)[] = [true, 0, 1, "string", "hello", null];
+export const arrayOfLiterals: readonly (true | 0 | 1 | "string" | "hello" | null)[] = [
+	true,
+	0,
+	1,
+	"string",
+	"hello",
+	null,
+];
 // #endregion
 
 // #region Class types
@@ -887,5 +886,5 @@ export const jsonStringOfUnknown = JSON.stringify({
 // #endregion
 
 /* eslint-enable @typescript-eslint/consistent-type-definitions */
-/* eslint-enable unicorn/no-null */
+/* eslint-enable @typescript-eslint/no-restricted-types */
 /* eslint-enable jsdoc/require-jsdoc */

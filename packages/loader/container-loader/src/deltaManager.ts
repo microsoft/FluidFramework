@@ -751,7 +751,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 					reason: controller.signal.reason,
 				});
 			}
-			// eslint-disable-next-line unicorn/no-null, unicorn/prefer-add-event-listener
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types, unicorn/prefer-add-event-listener
 			this.closeAbortController.signal.onabort = null;
 			this._inbound.off("push", opListener);
 			assert(!opsFromFetch, 0x289 /* "logic error" */);

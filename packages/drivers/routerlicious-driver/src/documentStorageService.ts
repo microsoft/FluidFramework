@@ -103,6 +103,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 		);
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
 		const tree = await this.internalStorageService.getSnapshotTree(version);
 		if (tree !== null) {

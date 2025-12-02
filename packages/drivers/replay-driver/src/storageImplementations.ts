@@ -57,6 +57,7 @@ export class FileSnapshotReader
 		this.docTree = buildSnapshotTree(json.tree.entries, this.blobs);
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
 		if (this.docId === undefined || this.docId === versionId || versionId === null) {
 			if (versionId !== null) {
@@ -71,6 +72,7 @@ export class FileSnapshotReader
 		throw new Error(`Unknown version ID: ${versionId}`);
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public async getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | null> {
 		if (!versionRequested || versionRequested.id === "latest") {
 			return this.docTree;
@@ -112,12 +114,14 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
 
 	constructor(
 		protected readonly storage: IDocumentStorageService,
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		protected readonly docTree: ISnapshotTree | null,
 	) {
 		super();
 		assert(!!this.docTree, 0x0b0 /* "Missing document snapshot tree!" */);
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
 		if (this.docId === undefined || this.docId === versionId || versionId === null) {
 			if (versionId !== null) {
@@ -128,6 +132,7 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
 		return this.storage.getVersions(versionId, count);
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public async getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | null> {
 		if (versionRequested && versionRequested.id !== "latest") {
 			return this.storage.getSnapshotTree(versionRequested);

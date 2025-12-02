@@ -125,9 +125,8 @@ export class OdspDocumentService
 	private constructor(
 		public readonly odspResolvedUrl: IOdspResolvedUrl,
 		private readonly getAuthHeader: InstrumentedStorageTokenFetcher,
-		private readonly getWebsocketToken:
-			| ((options: TokenFetchOptions) => Promise<string | null>)
-			| undefined,
+		private readonly getWebsocketToken: // eslint-disable-next-line @typescript-eslint/no-restricted-types
+		((options: TokenFetchOptions) => Promise<string | null>) | undefined,
 		logger: ITelemetryLoggerExt,
 		private readonly cache: IOdspCache,
 		hostPolicy: HostStoragePolicy,

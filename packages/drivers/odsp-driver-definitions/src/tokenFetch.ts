@@ -85,6 +85,7 @@ export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
  * @legacy
  * @beta
  */
+// eslint-disable-next-line @typescript-eslint/no-restricted-types
 export type TokenFetcher<T> = (options: T) => Promise<string | TokenResponse | null>;
 
 /**
@@ -94,7 +95,9 @@ export type TokenFetcher<T> = (options: T) => Promise<string | TokenResponse | n
  * @internal
  */
 export const tokenFromResponse = (
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	tokenResponse: string | TokenResponse | null | undefined,
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 ): string | null =>
 	tokenResponse === null || typeof tokenResponse === "string"
 		? tokenResponse
@@ -109,7 +112,9 @@ export const tokenFromResponse = (
  * @internal
  */
 export const authHeaderFromTokenResponse = (
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	tokenResponse: string | TokenResponse | null | undefined,
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 ): string | null => {
 	if (typeof tokenResponse === "object" && tokenResponse?.authorizationHeader !== undefined) {
 		return tokenResponse.authorizationHeader;
@@ -129,6 +134,7 @@ export const authHeaderFromTokenResponse = (
  * @internal
  */
 export const isTokenFromCache = (
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	tokenResponse: string | TokenResponse | null,
 ): boolean | undefined =>
 	tokenResponse === null || typeof tokenResponse === "string"
@@ -161,4 +167,5 @@ export type InstrumentedTokenFetcher = (
 	options: TokenFetchOptions,
 	name: string,
 	alwaysRecordTokenFetchTelemetry?: boolean,
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 ) => Promise<string | null>;

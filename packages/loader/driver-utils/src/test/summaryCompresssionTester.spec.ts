@@ -115,10 +115,12 @@ class InternalTestStorage implements IDocumentStorageService {
 	async getSnapshotTree(
 		version?: IVersion | undefined,
 		scenarioName?: string | undefined,
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	): Promise<ISnapshotTree | null> {
 		return JSON.parse(JSON.stringify(snapshotTree));
 	}
 	async getVersions(
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		versionId: string | null,
 		count: number,
 		scenarioName?: string | undefined,

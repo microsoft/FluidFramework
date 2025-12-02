@@ -92,7 +92,7 @@ describe("Hardware Stats", () => {
 	});
 
 	it("should generate correct hardware stats with null navigator", async () => {
-		// eslint-disable-next-line unicorn/no-null -- testing behavior with global
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types -- testing behavior with global
 		const navigator = null;
 		setNavigator(navigator);
 		// testing function

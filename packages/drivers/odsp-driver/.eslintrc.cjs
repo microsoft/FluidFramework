@@ -39,7 +39,7 @@ module.exports = {
 			files: ["*.spec.ts", "src/test/**"],
 			rules: {
 				// It's valuable for tests to validate handling of `null` values, regardless of our API policies.
-				"unicorn/no-null": "off",
+				"@typescript-eslint/no-restricted-types": "off",
 
 				// Fine for tests to use `__dirname`
 				"unicorn/prefer-module": "off",

@@ -62,7 +62,7 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 [true, false].forEach((immediateClose) => {
 	function getFluidCache(config?: {
 		maxCacheItemAge?: number;
-
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		partitionKey?: string | null;
 	}) {
 		return new FluidCache({

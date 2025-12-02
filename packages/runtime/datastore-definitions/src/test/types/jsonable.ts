@@ -5,7 +5,6 @@
 
 // Tests below intentionally use `any` and `null`
 /* eslint-disable @typescript-eslint/no-restricted-types */
-/* eslint-disable unicorn/no-null */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-redundant-type-constituents */

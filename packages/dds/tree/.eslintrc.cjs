@@ -77,7 +77,7 @@ module.exports = {
 		"unicorn/no-lonely-if": "off",
 		"unicorn/no-negated-condition": "off",
 		"unicorn/no-new-array": "off",
-		"unicorn/no-null": "off",
+		"@typescript-eslint/no-restricted-types": "off",
 		"unicorn/no-object-as-default-parameter": "off",
 		"unicorn/no-useless-fallback-in-spread": "off",
 		"unicorn/no-zero-fractions": "off",

@@ -48,7 +48,7 @@ describe("FluidSerializer", () => {
 
 		// Start with the various JSON-serializable types.  A mix of "truthy" and "falsy" values
 		// are of particular interest.
-		// eslint-disable-next-line unicorn/no-null -- Explicitly testing null.
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types -- Explicitly testing null.
 		const simple = createNestedCases([false, true, 0, 1, "", "x", null, [], {}]);
 
 		simple.push(

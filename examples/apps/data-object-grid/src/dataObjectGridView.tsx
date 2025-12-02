@@ -152,7 +152,7 @@ const DataObjectGridView: React.FC<IDataObjectGridViewProps> = (
 			cols={36}
 			rowHeight={50}
 			width={1800}
-			// eslint-disable-next-line unicorn/no-null -- null is required for the GridLayout
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types -- null is required for the GridLayout
 			compactType={null}
 			isDroppable={editable}
 			isDraggable={editable}

@@ -181,7 +181,7 @@ describe("import tests", () => {
 		});
 
 		const node = new LargeUnionObjectNode({
-			// eslint-disable-next-line unicorn/no-null
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			x: new Empty020({ x: new Empty001({ x: null }) }),
 		});
 	});

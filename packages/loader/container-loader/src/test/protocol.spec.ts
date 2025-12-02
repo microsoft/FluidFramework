@@ -129,7 +129,7 @@ describe("Protocol", () => {
 					clientSequenceNumber: 1,
 					type: MessageType.ClientJoin,
 					// API uses null
-					// eslint-disable-next-line unicorn/no-null
+					// eslint-disable-next-line @typescript-eslint/no-restricted-types
 					clientId: null,
 					referenceSequenceNumber: 0,
 					contents: "test content",
@@ -142,7 +142,7 @@ describe("Protocol", () => {
 					clientSequenceNumber: 2,
 					type: MessageType.ClientJoin,
 					// API uses null
-					// eslint-disable-next-line unicorn/no-null
+					// eslint-disable-next-line @typescript-eslint/no-restricted-types
 					clientId: null,
 					referenceSequenceNumber: 0,
 					contents: "test content",
@@ -211,7 +211,7 @@ describe("Protocol", () => {
 					clientSequenceNumber: 1,
 					type: MessageType.ClientJoin,
 					// API uses null
-					// eslint-disable-next-line unicorn/no-null
+					// eslint-disable-next-line @typescript-eslint/no-restricted-types
 					clientId: null,
 					referenceSequenceNumber: 0,
 					contents: "test content",
@@ -224,7 +224,7 @@ describe("Protocol", () => {
 					clientSequenceNumber: 2,
 					type: MessageType.ClientJoin,
 					// API uses null
-					// eslint-disable-next-line unicorn/no-null
+					// eslint-disable-next-line @typescript-eslint/no-restricted-types
 					clientId: null,
 					referenceSequenceNumber: 0,
 					contents: "test content",

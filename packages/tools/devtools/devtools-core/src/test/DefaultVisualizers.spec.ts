@@ -5,7 +5,7 @@
 
 // Required for testing support of null values
 
-/* eslint-disable unicorn/no-null */
+/* eslint-disable @typescript-eslint/no-restricted-types */
 
 import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";

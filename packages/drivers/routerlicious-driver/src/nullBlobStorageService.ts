@@ -17,10 +17,12 @@ import {
  * Does not read/write anything.
  */
 export class NullBlobStorageService implements IDocumentStorageService {
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
 		return version ? Promise.reject(new Error("Invalid operation")) : null;
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
 		return [];
 	}

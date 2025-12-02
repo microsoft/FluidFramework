@@ -86,7 +86,7 @@ export function generateToken(
 
 	return jsrsasign.jws.JWS.sign(
 		// External API uses null
-		// eslint-disable-next-line unicorn/no-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		null,
 		JSON.stringify({ alg: "HS256", typ: "JWT" }),
 		claims,

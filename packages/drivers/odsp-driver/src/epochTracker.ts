@@ -442,6 +442,7 @@ export class EpochTracker implements IPersistedFileCache {
 
 	private async checkForEpochError(
 		error: unknown,
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		epochFromResponse: string | null | undefined,
 		fetchType: FetchTypeInternal,
 		fromCache: boolean = false,
@@ -472,6 +473,7 @@ export class EpochTracker implements IPersistedFileCache {
 	}
 
 	private checkForEpochErrorCore(
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		epochFromResponse: string | null | undefined,
 	): NonRetryableError<"fileOverwrittenInStorage"> | undefined {
 		// If epoch is undefined, then don't compare it because initially for createNew or TreesLatest

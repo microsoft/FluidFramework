@@ -52,6 +52,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
 
 	protected static async seqFromTree(
 		documentStorageService: IDocumentStorageService,
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		tree: ISnapshotTree | null,
 	): Promise<number> {
 		if (!tree) {

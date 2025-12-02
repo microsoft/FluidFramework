@@ -366,7 +366,7 @@ describe("convertToBasePropertyType", () => {
 		});
 		it("tagged null value", () => {
 			const taggedProperty: Tagged<TelemetryEventPropertyTypeExt> = {
-				// eslint-disable-next-line unicorn/no-null
+				// eslint-disable-next-line @typescript-eslint/no-restricted-types
 				value: null as unknown as TelemetryEventPropertyTypeExt,
 				tag: "tag",
 			};
@@ -411,7 +411,7 @@ describe("convertToBasePropertyType", () => {
 		});
 		it("null", () => {
 			const converted = convertToBasePropertyType(
-				// eslint-disable-next-line unicorn/no-null
+				// eslint-disable-next-line @typescript-eslint/no-restricted-types
 				null as unknown as
 					| TelemetryEventPropertyTypeExt
 					| Tagged<TelemetryEventPropertyTypeExt>,

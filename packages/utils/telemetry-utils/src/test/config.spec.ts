@@ -20,15 +20,15 @@ import { MockLogger } from "../mockLogger.js";
 const getMockStore = (settings: Record<string, string>): Storage => {
 	const ops: string[] = [];
 	return {
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		getItem: (key: string): string | null => {
 			ops.push(key);
-			// eslint-disable-next-line unicorn/no-null
 			return settings[key] ?? null;
 		},
 		getOps: (): readonly string[] => ops,
 		length: Object.keys(settings).length,
 		clear: (): void => {},
-		// eslint-disable-next-line unicorn/no-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		key: (_index: number): string | null => null,
 		removeItem: (_key: string): void => {},
 		setItem: (_key: string, _value: string): void => {},
@@ -202,6 +202,7 @@ describe("Config", () => {
 
 	// #region SettingsProvider
 
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	type SettingType = string | boolean | number | (string | boolean | number)[] | null;
 
 	interface ProvideSettingsProvider {
@@ -225,7 +226,7 @@ describe("Config", () => {
 
 		public getRawConfig(name: string): ConfigTypes {
 			// The point here is to use `getSetting`
-			// eslint-disable-next-line unicorn/no-null
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			const val = this.getSetting(name, null);
 			return val ?? undefined;
 		}

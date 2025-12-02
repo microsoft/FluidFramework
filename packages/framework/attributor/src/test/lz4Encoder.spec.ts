@@ -15,7 +15,7 @@ describe("lz4Encoder", () => {
 		{ name: "numbers", data: 0 },
 		{ name: "objects", data: {} },
 		{ name: "empty lists", data: [] },
-		// eslint-disable-next-line unicorn/no-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		{ name: "null properties", data: { foo: null } },
 		{ name: "more complex objects", data: { foo: { bar: [1, 2] }, baz: 3, bat: "hello" } },
 	];

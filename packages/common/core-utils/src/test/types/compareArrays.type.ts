@@ -12,7 +12,7 @@ import { compareArrays } from "@fluidframework/core-utils/internal";
 compareArrays(undefined, undefined);
 
 // @ts-expect-error 'null' is not an array
-compareArrays(null, null); // eslint-disable-line unicorn/no-null
+compareArrays(null, null); // eslint-disable-line @typescript-eslint/no-restricted-types
 
 const s = Symbol();
 // @ts-expect-error 'Symbol()' is not an array

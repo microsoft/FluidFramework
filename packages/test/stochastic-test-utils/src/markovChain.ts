@@ -94,6 +94,7 @@ export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
 	public initialize(sentences: string[][]) {
 		const initialChain: Record<string, Record<string, number>> = {};
 		sentences.forEach((sentence) => {
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			let prevWord: string | null = null;
 			for (let i = 0; i < sentence.length; i++) {
 				const word = sentence[i];
@@ -230,6 +231,7 @@ export class PerformanceWordMarkovChain extends MarkovChain<string, string> {
 	 */
 	public initialize(sentences: string[][]) {
 		sentences.forEach((sentence) => {
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			let prevWord: string | null = null;
 			for (let i = 0; i < sentence.length; i++) {
 				const word = sentence[i];

@@ -1260,10 +1260,10 @@ describe("ShallowReadonly", () => {
 			assertIdenticalTypes(result, object);
 		});
 		it("`null`", () => {
-			/* eslint-disable unicorn/no-null */
+			/* eslint-disable @typescript-eslint/no-restricted-types */
 			const result = makeReadonly(null);
 			assertIdenticalTypes(result, null);
-			/* eslint-enable unicorn/no-null */
+			/* eslint-enable @typescript-eslint/no-restricted-types */
 		});
 		it("`void`", () => {
 			const result = makeReadonly(voidValue);

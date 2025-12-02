@@ -79,6 +79,7 @@ export interface FluidCacheConfig {
 export class FluidCache implements IPersistedCache {
 	private readonly logger: ITelemetryLoggerExt;
 
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	private readonly partitionKey: string | null;
 
 	private readonly maxCacheItemAge: number;

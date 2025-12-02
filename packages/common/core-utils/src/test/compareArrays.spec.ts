@@ -28,7 +28,7 @@ const tests: [unknown[], unknown[], boolean][] = [
 	[[Number.NaN], [Number.NaN], true],
 	[[0], [-0], false],
 
-	// eslint-disable-next-line unicorn/no-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	[[null], [undefined], false],
 	[[""], [0], false],
 	[[{}], [{}], false],
