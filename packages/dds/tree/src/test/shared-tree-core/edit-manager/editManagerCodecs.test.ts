@@ -9,7 +9,11 @@ import type { ChangeEncodingContext } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { makeEditManagerCodecs } from "../../../shared-tree-core/editManagerCodecs.js";
-import type { SharedBranchSummaryData, SummaryData } from "../../../shared-tree-core/index.js";
+import {
+	EditManagerFormatVersion,
+	type SharedBranchSummaryData,
+	type SummaryData,
+} from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import {
@@ -211,11 +215,13 @@ export function testCodec() {
 			family,
 			testCases,
 			assertEquivalentSummaryDataIgnoreOriginator,
-			[3, 4],
-			[1, 2],
+			[EditManagerFormatVersion.v3, EditManagerFormatVersion.v4],
+			[EditManagerFormatVersion.v1, EditManagerFormatVersion.v2, EditManagerFormatVersion.v5],
 		);
 
-		makeEncodingTestSuite(family, testCases, undefined, [5]);
+		makeEncodingTestSuite(family, testCases, undefined, [
+			EditManagerFormatVersion.vSharedBranches,
+		]);
 
 		// TODO: testing EditManagerSummarizer class itself, specifically for attachment and normal summaries.
 		// TODO: format compatibility tests to detect breaking of existing documents.

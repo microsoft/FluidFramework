@@ -151,7 +151,7 @@ interface TestCase {
 	readonly name: string;
 	readonly data: DetachedFieldSummaryData;
 	/** The set of versions that this test case is valid for */
-	readonly validFor?: ReadonlySet<number>;
+	readonly validFor?: ReadonlySet<number | string>;
 	/** The id compressor to use for this test case */
 	readonly idCompressor: IIdCompressor;
 }

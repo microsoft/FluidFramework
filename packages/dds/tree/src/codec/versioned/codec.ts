@@ -125,7 +125,7 @@ export function makeDiscontinuedCodecVersion<
  */
 export function makeVersionDispatchingCodec<TDecoded, TContext>(
 	family: ICodecFamily<TDecoded, TContext>,
-	options: ICodecOptions & { writeVersion: number },
+	options: ICodecOptions & { writeVersion: number | string },
 ): IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
 	const writeCodec = family.resolve(options.writeVersion).json;
 	const supportedVersions = new Set(family.getSupportedFormats());

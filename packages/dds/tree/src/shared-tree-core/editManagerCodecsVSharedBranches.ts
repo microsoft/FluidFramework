@@ -25,7 +25,7 @@ import {
 } from "../util/index.js";
 
 import type { SharedBranchSummaryData, SummaryData } from "./editManager.js";
-import { EncodedEditManager } from "./editManagerFormatV5.js";
+import { EncodedEditManager } from "./editManagerFormatVSharedBranches.js";
 import { decodeSharedBranch, encodeSharedBranch } from "./editManagerCodecsCommons.js";
 import type { EncodedSharedBranch } from "./editManagerFormatCommons.js";
 import type { BranchId } from "./branch.js";
@@ -35,7 +35,7 @@ export interface EditManagerEncodingContext {
 	readonly schema?: SchemaAndPolicy;
 }
 
-export function makeV5CodecWithVersion<TChangeset>(
+export function makeSharedBranchesCodecWithVersion<TChangeset>(
 	changeCodec: IMultiFormatCodec<
 		TChangeset,
 		JsonCompatibleReadOnly,
@@ -78,7 +78,7 @@ export function makeV5CodecWithVersion<TChangeset>(
 				);
 				assert(
 					data.originator !== undefined,
-					0xc65 /* Cannot encode V5 summary without originator */,
+					"Cannot encode vSharedBranches summary without originator",
 				);
 				const json: Mutable<EncodedEditManager<TChangeset>> = {
 					main: mainBranch,

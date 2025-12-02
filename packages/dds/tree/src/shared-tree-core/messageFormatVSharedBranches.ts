@@ -9,6 +9,7 @@ import { type TSchema, Type } from "@sinclair/typebox";
 import { type EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
 import type { EncodedBranchId } from "./branch.js";
+import { MessageFormatVersion } from "./messageFormat.js";
 
 /**
  * The format of messages that SharedTree sends and receives.
@@ -30,12 +31,9 @@ export interface Message {
 	readonly branchId?: EncodedBranchId;
 
 	/**
-	 * The version of the message. This controls how the message is encoded.
-	 *
-	 * This was not set historically and was added before making any breaking changes to the format.
-	 * For that reason, absence of a 'version' field is synonymous with version 1.
+	 * The version of the message format.
 	 */
-	readonly version?: number;
+	readonly version: typeof MessageFormatVersion.vSharedBranches;
 }
 
 // Return type is intentionally derived.
@@ -46,5 +44,5 @@ export const Message = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 		originatorId: SessionIdSchema,
 		changeset: Type.Optional(tChange),
 		branchId: Type.Optional(Type.Number()),
-		version: Type.Optional(Type.Number()),
+		version: Type.Literal(MessageFormatVersion.vSharedBranches),
 	});

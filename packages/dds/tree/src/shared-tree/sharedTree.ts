@@ -589,7 +589,7 @@ export const changeFormatVersionForEditManager = DependentFormatVersion.fromPair
 		brand<SharedTreeChangeFormatVersion>(4),
 	],
 	[
-		brand<EditManagerFormatVersion>(EditManagerFormatVersion.v5),
+		brand<EditManagerFormatVersion>(EditManagerFormatVersion.vSharedBranches),
 		brand<SharedTreeChangeFormatVersion>(4),
 	],
 ]);
@@ -610,7 +610,7 @@ export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs([
 		brand<SharedTreeChangeFormatVersion>(4),
 	],
 	[
-		brand<MessageFormatVersion>(MessageFormatVersion.v5),
+		brand<MessageFormatVersion>(MessageFormatVersion.vSharedBranches),
 		brand<SharedTreeChangeFormatVersion>(4),
 	],
 ]);

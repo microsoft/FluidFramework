@@ -14,14 +14,14 @@ import type {
 } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
 
-import { Message } from "./messageFormatV5.js";
+import { Message } from "./messageFormatVSharedBranches.js";
 import type { DecodedMessage } from "./messageTypes.js";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { MessageEncodingContext } from "./messageCodecs.js";
 import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
 import type { MessageFormatVersion } from "./messageFormat.js";
 
-export function makeV5CodecWithVersion<TChangeset>(
+export function makeSharedBranchesCodecWithVersion<TChangeset>(
 	changeCodec: ChangeFamilyCodec<TChangeset>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
@@ -30,7 +30,7 @@ export function makeV5CodecWithVersion<TChangeset>(
 		ChangeEncodingContext
 	>,
 	options: ICodecOptions,
-	version: typeof MessageFormatVersion.v5,
+	version: typeof MessageFormatVersion.vSharedBranches,
 ): IJsonCodec<
 	DecodedMessage<TChangeset>,
 	JsonCompatibleReadOnly,

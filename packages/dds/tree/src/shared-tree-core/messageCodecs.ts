@@ -34,7 +34,7 @@ import { brand, type JsonCompatibleReadOnly } from "../util/index.js";
 import type { DecodedMessage } from "./messageTypes.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { makeV1ToV4CodecWithVersion } from "./messageCodecV1ToV4.js";
-import { makeV5CodecWithVersion } from "./messageCodecV5.js";
+import { makeSharedBranchesCodecWithVersion } from "./messageCodecVSharedBranches.js";
 import { MessageFormatVersion, messageFormatVersions } from "./messageFormat.js";
 
 export interface MessageEncodingContext {
@@ -79,7 +79,7 @@ function messageFormatVersionFromOptions(
 export function messageFormatVersionSelectorForSharedBranches(
 	clientVersion: MinimumVersionForCollab,
 ): MessageFormatVersion {
-	return brand(MessageFormatVersion.v5);
+	return brand(MessageFormatVersion.vSharedBranches);
 }
 
 export function makeMessageCodec<TChangeset>(
@@ -152,13 +152,15 @@ export function makeMessageCodecs<TChangeset>(
 					makeV1ToV4CodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
 			}
-			case MessageFormatVersion.v5: {
+			case MessageFormatVersion.v5:
+				return [version, makeDiscontinuedCodecVersion(options, version, "2.74.0")];
+			case MessageFormatVersion.vSharedBranches: {
 				const changeCodec = changeCodecs.resolve(
 					dependentChangeFormatVersion.lookup(version),
 				).json;
 				return [
 					version,
-					makeV5CodecWithVersion(changeCodec, revisionTagCodec, options, version),
+					makeSharedBranchesCodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
 			}
 			default:
