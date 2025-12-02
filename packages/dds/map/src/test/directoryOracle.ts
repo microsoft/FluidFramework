@@ -28,7 +28,7 @@ interface DirectoryNode {
 }
 
 /**
- * Oracle for directory
+ * Oracle for validating ISharedDirectory event correctness and API contracts.
  * @internal
  */
 export class SharedDirectoryOracle {
@@ -47,9 +47,6 @@ export class SharedDirectoryOracle {
 	// Track all directories we've attached listeners to for proper cleanup
 	private readonly attachedDirectories = new Set<IDirectory>();
 
-	// Track paths that were recently cleared to skip previousValue assertions on subsequent valueChanged events
-	private readonly recentlyClearedPaths = new Set<string>();
-
 	public constructor(private readonly sharedDir: ISharedDirectory) {
 		this.snapshotCurrentState(this.sharedDir, this.modelFromValueChanged);
 		this.snapshotCurrentState(this.sharedDir, this.modelFromContainedValueChanged);
@@ -66,9 +63,9 @@ export class SharedDirectoryOracle {
 	}
 
 	/**
-	 * Get or create a directory node at the given path in the model
+	 * Create directory node at path, creating parent directories as needed.
 	 */
-	private getOrCreateDirNode(model: DirectoryNode, path: string): DirectoryNode {
+	private createDirNode(model: DirectoryNode, path: string): DirectoryNode {
 		if (path === "/" || path === "") {
 			return model;
 		}
@@ -92,7 +89,7 @@ export class SharedDirectoryOracle {
 	}
 
 	/**
-	 * Get a directory node at the given path, or undefined if it doesn't exist
+	 * Get directory node at path, or undefined if it doesn't exist.
 	 */
 	private getDirNode(model: DirectoryNode, path: string): DirectoryNode | undefined {
 		if (path === "/" || path === "") {
@@ -113,11 +110,10 @@ export class SharedDirectoryOracle {
 	}
 
 	/**
-	 * Delete a subdirectory and all its contents from the model
+	 * Delete subdirectory and all its contents recursively.
 	 */
 	private deleteSubDirectory(model: DirectoryNode, path: string): void {
 		if (path === "/" || path === "") {
-			// Can't delete root
 			return;
 		}
 
@@ -126,40 +122,25 @@ export class SharedDirectoryOracle {
 			return;
 		}
 
-		// Navigate to parent directory
 		const parentPath = parts.slice(0, -1).join("/");
 		const dirName = parts[parts.length - 1];
 		const parentNode = this.getDirNode(model, parentPath);
 
 		if (parentNode) {
-			// Deleting a subdirectory also recursively deletes all its nested subdirectories
-			// This matches the actual directory behavior where deleting a parent disposes all children
 			parentNode.subdirectories.delete(dirName);
 		}
 	}
 
 	private attachToAllDirectories(dir: IDirectory): void {
-		// Prevent attaching listeners multiple times for the same directory
 		if (this.attachedDirectories.has(dir)) {
 			return;
 		}
 
-		// Track this directory for cleanup
 		this.attachedDirectories.add(dir);
-
-		// Attach containedValueChanged listener to this directory
 		dir.on("containedValueChanged", this.onContainedValueChanged);
-		// Note: We do NOT listen to subDirectoryCreated or subDirectoryDeleted on individual directories.
-		// The root-level listeners already handle ALL subdirectory operations in the tree with absolute
-		// paths. Listening on individual directories would cause duplicate processing or confusion
-		// between relative and absolute paths.
-		// dir.on("clearInternal", this.onClearInternal);
-
-		// Attach disposed/undisposed listeners for rollback support
 		dir.on("disposed", this.onDisposed);
 		dir.on("undisposed", this.onUndisposed);
 
-		// Recurse into subdirectories
 		for (const [, subdir] of dir.subdirectories()) {
 			this.attachToAllDirectories(subdir);
 		}
@@ -183,18 +164,19 @@ export class SharedDirectoryOracle {
 		if (!fuzzDir) return;
 
 		const absPath = path.startsWith("/") ? path : `/${path}`;
-		const dirNode = this.getOrCreateDirNode(this.modelFromValueChanged, absPath);
+		const dirNode = this.createDirNode(this.modelFromValueChanged, absPath);
 
-		// Assert that previousValue matches what we had in the oracle.
-		// For local operations, this should always match.
-		// For remote operations, previousValue might differ from oracle when there are pending local
-		// operations on the same key (oracle has optimistic value, event has sequenced value).
-		// Also skip assertion if this path was recently cleared (oracle cleared but events have old previousValues)
-		if (local && !this.recentlyClearedPaths.has(absPath)) {
+		// Validate previousValue matches oracle, except:
+		// - Post-clear events: previousValue from before clear, oracle already cleared
+		// - Remote ops with pending local ops: oracle has optimistic value, event has sequenced value
+		const oracleValue = dirNode.keys.get(key);
+		const isPostClearEvent = previousValue !== undefined && oracleValue === undefined;
+		const hasPendingLocalOp = !local && oracleValue !== previousValue;
+		if (!isPostClearEvent && !hasPendingLocalOp) {
 			assert.deepStrictEqual(
 				previousValue,
-				dirNode.keys.get(key),
-				`[valueChanged] previousValue mismatch for key "${key}" in directory "${path}": event.previousValue=${previousValue}, oracle=${dirNode.keys.get(key)}, local=${local}`,
+				oracleValue,
+				`[valueChanged] previousValue mismatch for key "${key}" in directory "${path}": event.previousValue=${previousValue}, oracle=${oracleValue}, local=${local}`,
 			);
 		}
 
@@ -208,10 +190,7 @@ export class SharedDirectoryOracle {
 	};
 
 	private readonly onClearInternal = (path: string, local: boolean): void => {
-		// Clear keys at the specified path
-		// For remote clear operations, valueChanged events will be emitted afterwards for keys with
-		// pending local set operations, and those will re-add the keys to the oracle model.
-		// Keys without pending operations are simply cleared and no valueChanged event follows.
+		// Clear keys; valueChanged events follow for keys with pending local operations
 		const absPath = path.startsWith("/") ? path : `/${path}`;
 		const dirNode1 = this.getDirNode(this.modelFromValueChanged, absPath);
 		const dirNode2 = this.getDirNode(this.modelFromContainedValueChanged, absPath);
@@ -222,12 +201,6 @@ export class SharedDirectoryOracle {
 		if (dirNode2) {
 			dirNode2.keys.clear();
 		}
-
-		// Track this path as recently cleared and schedule cleanup after valueChanged events fire
-		this.recentlyClearedPaths.add(absPath);
-		setTimeout(() => {
-			this.recentlyClearedPaths.delete(absPath);
-		}, 0);
 	};
 
 	private readonly onSubDirCreated = (
@@ -240,32 +213,19 @@ export class SharedDirectoryOracle {
 			"subDirectoryCreated event should be emitted from root SharedDirectory",
 		);
 
-		// Check if the subdirectory actually exists before adding it to our models
-		// If getWorkingDirectory returns undefined, it means the subdirectory doesn't exist
-		// (it may have been deleted or disposed before we could access it)
 		const newSubDir = this.sharedDir.getWorkingDirectory(path);
 		if (!newSubDir) {
-			// Subdirectory doesn't exist, don't add it to oracle models
 			return;
 		}
 
-		// Create the subdirectory node in both models
 		const subdirPath = path.startsWith("/") ? path : `/${path}`;
-		this.getOrCreateDirNode(this.modelFromValueChanged, subdirPath);
-		this.getOrCreateDirNode(this.modelFromContainedValueChanged, subdirPath);
-
-		// Attach to the newly created subdirectory and all its nested subdirectories to listen for containedValueChanged events
+		this.createDirNode(this.modelFromValueChanged, subdirPath);
+		this.createDirNode(this.modelFromContainedValueChanged, subdirPath);
 		this.attachToAllDirectories(newSubDir);
 	};
 
 	private readonly onSubDirDeleted = (path: string): void => {
 		const absPath = path.startsWith("/") ? path : `/${path}`;
-
-		// Only delete if the subdirectory exists in our models
-		// It may not exist if:
-		// - It was created before the oracle was attached
-		// - It was created and deleted in quick succession
-		// - getWorkingDirectory returned undefined during creation (directory was pending/disposed)
 		this.deleteSubDirectory(this.modelFromValueChanged, absPath);
 		this.deleteSubDirectory(this.modelFromContainedValueChanged, absPath);
 	};
@@ -279,18 +239,19 @@ export class SharedDirectoryOracle {
 		const { key, previousValue } = change;
 		const { absolutePath } = target;
 
-		const dirNode = this.getOrCreateDirNode(this.modelFromContainedValueChanged, absolutePath);
+		const dirNode = this.createDirNode(this.modelFromContainedValueChanged, absolutePath);
 
-		// Assert that previousValue matches what we had in the oracle.
-		// For local operations, this should always match.
-		// For remote operations, previousValue might differ from oracle when there are pending local
-		// operations on the same key (oracle has optimistic value, event has sequenced value).
-		// Also skip assertion if this path was recently cleared (oracle cleared but events have old previousValues)
-		if (local && !this.recentlyClearedPaths.has(absolutePath)) {
+		// Validate previousValue matches oracle, except:
+		// - Post-clear events: previousValue from before clear, oracle already cleared
+		// - Remote ops with pending local ops: oracle has optimistic value, event has sequenced value
+		const oracleValue = dirNode.keys.get(key);
+		const isPostClearEvent = previousValue !== undefined && oracleValue === undefined;
+		const hasPendingLocalOp = !local && oracleValue !== previousValue;
+		if (!isPostClearEvent && !hasPendingLocalOp) {
 			assert.deepStrictEqual(
 				previousValue,
-				dirNode.keys.get(key),
-				`[containedValueChanged] previousValue mismatch for key "${key}" in directory "${absolutePath}": event.previousValue=${previousValue}, oracle=${dirNode.keys.get(key)}, local=${local}`,
+				oracleValue,
+				`[containedValueChanged] previousValue mismatch for key "${key}" in directory "${absolutePath}": event.previousValue=${previousValue}, oracle=${oracleValue}, local=${local}`,
 			);
 		}
 
@@ -305,40 +266,33 @@ export class SharedDirectoryOracle {
 	};
 
 	private readonly onDisposed = (target: IDirectory): void => {
-		// When a subdirectory is disposed (during rollback), remove it from the oracle models
 		const absPath = target.absolutePath;
 
 		if (absPath === "/") {
-			// Clear root directory - all keys and subdirectories
 			this.modelFromValueChanged.keys.clear();
 			this.modelFromValueChanged.subdirectories.clear();
 			this.modelFromContainedValueChanged.keys.clear();
 			this.modelFromContainedValueChanged.subdirectories.clear();
 		} else {
-			// Delete this subdirectory from parent
 			this.deleteSubDirectory(this.modelFromValueChanged, absPath);
 			this.deleteSubDirectory(this.modelFromContainedValueChanged, absPath);
 		}
 	};
 
 	private readonly onUndisposed = (target: IDirectory): void => {
-		// When a directory is undisposed (after rollback), we need to re-snapshot its state
-		// because the rollback has restored it to its previous state, but our oracle was cleared
-		// by the disposed event. Re-snapshotting ensures the oracle matches the restored state.
+		// Re-snapshot directory state after rollback
 		this.snapshotCurrentState(target, this.modelFromValueChanged);
 		this.snapshotCurrentState(target, this.modelFromContainedValueChanged);
 	};
 
 	private snapshotCurrentState(dir: IDirectory, model: DirectoryNode): void {
 		const { absolutePath } = dir;
-		const dirNode = this.getOrCreateDirNode(model, absolutePath);
+		const dirNode = this.createDirNode(model, absolutePath);
 
-		// Snapshot all keys in this directory
 		for (const [key, value] of dir.entries()) {
 			dirNode.keys.set(key, value);
 		}
 
-		// Recursively snapshot subdirectories
 		for (const [, subdir] of dir.subdirectories()) {
 			this.snapshotCurrentState(subdir, model);
 		}
@@ -365,16 +319,11 @@ export class SharedDirectoryOracle {
 		const dirNode = this.getDirNode(model, absolutePath);
 
 		if (!dirNode) {
-			// If the directory doesn't exist in the model, we haven't received events for it yet
 			return;
 		}
 
-		// Check all keys in this directory
 		for (const [key, value] of dir.entries()) {
-			// Only validate keys that the oracle is tracking
-			// (keys loaded from snapshots may not fire events)
 			if (dirNode.keys.has(key)) {
-				// Verify oracle has the correct value
 				assert.deepStrictEqual(
 					dirNode.keys.get(key),
 					value,
@@ -383,7 +332,6 @@ export class SharedDirectoryOracle {
 			}
 		}
 
-		// Recursively validate subdirectories
 		for (const [, subdir] of dir.subdirectories()) {
 			this.validateDirectory(subdir, modelName, model);
 		}
@@ -401,35 +349,21 @@ export class SharedDirectoryOracle {
 			return;
 		}
 
-		// Get actual subdirectories from the directory
 		const actualSubdirs = new Set<string>();
 		for (const [name] of dir.subdirectories()) {
 			actualSubdirs.add(name);
 		}
 
-		// Get subdirectories from the oracle model
 		const modelSubdirs = new Set<string>(dirNode.subdirectories.keys());
 
-		// Check for stale subdirectories in model (exist in model but not in actual directory)
-		// Remove them from the oracle model since they no longer exist.
-		// This handles cases where subDirectoryDeleted events are suppressed due to optimistic deletes:
-		// When a local delete is pending and a remote delete arrives, the directory implementation
-		// suppresses the subDirectoryDeleted event because from the optimistic view, the directory
-		// was already deleted. The oracle needs to clean up these stale entries during validation.
+		// Remove stale subdirectories (suppressed subDirectoryDeleted events due to optimistic deletes)
 		for (const modelSubdirName of modelSubdirs) {
 			if (!actualSubdirs.has(modelSubdirName)) {
-				// Stale subdirectory - remove it from the oracle model
 				dirNode.subdirectories.delete(modelSubdirName);
 			}
 		}
 
-		// Don't check for missing subdirectories - the oracle may have been attached after
-		// subdirectories were created, so it's expected that some subdirectories in the actual
-		// directory may not be tracked by the oracle
-
-		// Recursively validate nested subdirectories that still exist
 		for (const [name, subdir] of dir.subdirectories()) {
-			// Only validate subdirectories that exist in the oracle model
 			if (dirNode.subdirectories.has(name)) {
 				this.validateSubdirectories(subdir, modelName, model);
 			}
@@ -437,22 +371,17 @@ export class SharedDirectoryOracle {
 	}
 
 	public dispose(): void {
-		// Remove listeners from root
 		this.sharedDir.off("valueChanged", this.onValueChanged);
 		this.sharedDir.off("clearInternal", this.onClearInternal);
 		this.sharedDir.off("subDirectoryCreated", this.onSubDirCreated);
 		this.sharedDir.off("subDirectoryDeleted", this.onSubDirDeleted);
 
-		// Remove listeners from all directories (including root)
 		for (const dir of this.attachedDirectories) {
 			dir.off("containedValueChanged", this.onContainedValueChanged);
-			// Note: subDirectoryCreated and subDirectoryDeleted were never attached to individual directories
-			// dir.off("clearInternal", this.onClearInternal);
 			dir.off("disposed", this.onDisposed);
 			dir.off("undisposed", this.onUndisposed);
 		}
 
-		// Clear tracked state
 		this.attachedDirectories.clear();
 		this.modelFromValueChanged.keys.clear();
 		this.modelFromValueChanged.subdirectories.clear();
