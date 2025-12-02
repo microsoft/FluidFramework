@@ -16,7 +16,7 @@ export function createTreeSchema(rootSchema: ImplicitFieldSchema): TreeSchema {
 		node: (schema) => {
 			if (definitions.has(schema.identifier)) {
 				throw new UsageError(
-					`Multiple schema found with identifier: ${JSON.stringify(schema.identifier)}`,
+					`Multiple schema encountered with the identifier ${JSON.stringify(schema.identifier)}. Remove or rename them to avoid the collision.`,
 				);
 			}
 			definitions.set(

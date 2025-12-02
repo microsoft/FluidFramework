@@ -168,35 +168,41 @@ describe("simple-tree customTree", () => {
 	});
 
 	it("tryStoredSchemaAsArray", () => {
-		const optionalNumber: TreeFieldStoredSchema = {
-			kind: FieldKinds.optional.identifier,
+		const numberSequence: TreeFieldStoredSchema = {
+			kind: FieldKinds.sequence.identifier,
 			types: new Set([brand(numberSchema.identifier)]),
 			persistedMetadata: {},
 		};
 		const arrayCase = tryStoredSchemaAsArray(
-			new ObjectNodeStoredSchema(new Map([[EmptyKey, optionalNumber]])),
+			new ObjectNodeStoredSchema(new Map([[EmptyKey, numberSequence]])),
 		);
 		assert.deepEqual(arrayCase, new Set([schemaFactory.number.identifier]));
 
-		const objectCase = tryStoredSchemaAsArray(
-			new ObjectNodeStoredSchema(new Map([[brand("x"), optionalNumber]])),
+		const namedCase = tryStoredSchemaAsArray(
+			new ObjectNodeStoredSchema(new Map([[brand("x"), numberSequence]])),
 		);
-		assert.deepEqual(objectCase, undefined);
+		assert.deepEqual(namedCase, undefined);
+		const optionalCase = tryStoredSchemaAsArray(
+			new ObjectNodeStoredSchema(
+				new Map([[EmptyKey, { ...numberSequence, kind: FieldKinds.optional.identifier }]]),
+			),
+		);
+		assert.deepEqual(optionalCase, undefined);
 
-		const objectEmptyKeyCase = tryStoredSchemaAsArray(
+		const requiredCase = tryStoredSchemaAsArray(
 			new ObjectNodeStoredSchema(
 				new Map([
 					[
 						EmptyKey,
 						{
-							...optionalNumber,
+							...numberSequence,
 							kind: FieldKinds.required.identifier,
 						},
 					],
 				]),
 			),
 		);
-		assert.deepEqual(objectEmptyKeyCase, undefined);
+		assert.deepEqual(requiredCase, undefined);
 
 		const nonObjectCase = tryStoredSchemaAsArray(
 			new LeafNodeStoredSchema(ValueSchema.Boolean),

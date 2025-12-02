@@ -447,10 +447,10 @@ describe("LazyField", () => {
 			types: new Set([brand(numberSchema.identifier)]),
 			persistedMetadata: undefined,
 		};
-		const schema: TreeStoredSchema = toStoredSchema(
-			numberSchema,
-			restrictiveStoredSchemaGenerationOptions,
-		);
+		const schema: TreeStoredSchema = {
+			...toStoredSchema(numberSchema, restrictiveStoredSchemaGenerationOptions),
+			rootFieldSchema: rootSchema,
+		};
 
 		/**
 		 * Creates a tree with a sequence of numbers at the root, and returns the sequence

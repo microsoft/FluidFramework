@@ -235,10 +235,15 @@ export class RecursiveType extends factory.objectRecursive("recursiveType", {
 
 const allTheFieldsName: TreeNodeSchemaIdentifier = brand("test.allTheFields");
 
-const library = toStoredSchema(
-	[Minimal, schemaStatics.number],
-	restrictiveStoredSchemaGenerationOptions,
-);
+const library = {
+	nodeSchema: new Map([
+		...toStoredSchema(
+			[Minimal, schemaStatics.number],
+			restrictiveStoredSchemaGenerationOptions,
+		).nodeSchema,
+		[allTheFieldsName, allTheFields],
+	]),
+} satisfies Partial<TreeStoredSchema>;
 
 export const testSimpleTrees: readonly TestSimpleTree[] = [
 	testSimpleTree("empty", factory.optional([]), undefined),

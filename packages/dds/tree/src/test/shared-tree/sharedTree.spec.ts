@@ -2493,7 +2493,12 @@ describe("SharedTree", () => {
 		assert.deepEqual(tree.exportVerbose(), undefined);
 		assert.deepEqual(tree.exportSimpleSchema(), {
 			definitions: new Map(),
-			root: { kind: FieldKind.Optional, simpleAllowedTypes: new Map(), metadata: {} },
+			root: {
+				kind: FieldKind.Optional,
+				simpleAllowedTypes: new Map(),
+				metadata: {},
+				persistedMetadata: undefined,
+			},
 		} satisfies SimpleTreeSchema);
 
 		const config = new TreeViewConfiguration({

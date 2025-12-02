@@ -255,7 +255,10 @@ describe("toStoredSchema", () => {
 				SchemaFactoryAlpha.required(SchemaFactory.number).simpleAllowedTypes,
 				restrictiveStoredSchemaGenerationOptions,
 			);
-			assert.deepEqual(stored, new Map([[SchemaFactory.number.identifier, {}]]));
+			assert.deepEqual(
+				stored,
+				new Map([[SchemaFactory.number.identifier, { isStaged: undefined }]]),
+			);
 		});
 
 		it("staged", () => {
@@ -277,7 +280,10 @@ describe("toStoredSchema", () => {
 				Unchanged,
 			);
 			assert.deepEqual(storedRestrictive, new Map());
-			assert.deepEqual(storedPermissive, new Map([[SchemaFactory.number.identifier, {}]]));
+			assert.deepEqual(
+				storedPermissive,
+				new Map([[SchemaFactory.number.identifier, { isStaged: undefined }]]),
+			);
 			assert.deepEqual(
 				view,
 				new Map([

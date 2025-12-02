@@ -162,7 +162,25 @@ export function transformSimpleSchema(
 	for (const identifier of queue) {
 		getOrCreate(definitions, identifier, (id) => {
 			const nodeSchema = schema.definitions.get(id) ?? fail("missing schema");
-			return transformSimpleNodeSchema(nodeSchema, options);
+			const transformed = transformSimpleNodeSchema(nodeSchema, options);
+			const kind = transformed.kind;
+			switch (kind) {
+				case NodeKind.Leaf:
+					break;
+				case NodeKind.Array:
+				case NodeKind.Map:
+				case NodeKind.Record:
+					queue.push(...transformed.simpleAllowedTypes.keys());
+					break;
+				case NodeKind.Object:
+					for (const fieldSchema of transformed.fields.values()) {
+						queue.push(...fieldSchema.simpleAllowedTypes.keys());
+					}
+					break;
+				default:
+					unreachableCase(kind);
+			}
+			return transformed;
 		});
 	}
 	return { root, definitions };

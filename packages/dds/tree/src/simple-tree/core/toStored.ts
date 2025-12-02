@@ -55,7 +55,7 @@ export function filterViewData<T>(
 	options: SimpleSchemaTransformationOptions,
 	data: T,
 ): T | undefined {
-	return preservesViewData(options) ? undefined : data;
+	return preservesViewData(options) ? data : undefined;
 }
 
 export function preservesViewData(options: SimpleSchemaTransformationOptions): boolean {
