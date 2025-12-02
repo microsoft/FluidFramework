@@ -38,6 +38,7 @@ import {
 } from "./core/index.js";
 import { FieldKind, normalizeFieldSchema, type ImplicitFieldSchema } from "./fieldSchema.js";
 import type {
+	SchemaType,
 	SimpleAllowedTypeAttributes,
 	SimpleAllowedTypes,
 	SimpleArrayNodeSchema,
@@ -56,11 +57,12 @@ const viewToStoredCache = new WeakMap<
 	WeakMap<ImplicitFieldSchema, TreeStoredSchema>
 >();
 
-export const restrictiveStoredSchemaGenerationOptions: StoredSchemaGenerationOptions = {
-	includeStaged: () => false,
-};
+export const restrictiveStoredSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions =
+	{
+		includeStaged: () => false,
+	};
 
-export const permissiveStoredSchemaGenerationOptions: StoredSchemaGenerationOptions = {
+export const permissiveStoredSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions = {
 	includeStaged: () => true,
 };
 
@@ -104,7 +106,7 @@ export const toUnhydratedSchema = permissiveStoredSchemaGenerationOptions;
  */
 export function toStoredSchema(
 	root: ImplicitFieldSchema,
-	options: StoredSchemaGenerationOptions,
+	options: StoredFromViewSchemaGenerationOptions,
 ): TreeStoredSchema {
 	const cache = getOrCreate(viewToStoredCache, options, () => new WeakMap());
 	return getOrCreate(cache, root, () => {
@@ -115,17 +117,40 @@ export function toStoredSchema(
 }
 
 /**
- * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema}.
- *
- * @privateRemarks
+ * Converts a {@link SimpleTreeSchema} from `SchemaType.View` to `SchemaType.Stored`.
+ */
+export function transformSimpleSchema(
+	schema: SimpleTreeSchema<SchemaType.View>,
+	options: StoredFromViewSchemaGenerationOptions,
+): SimpleTreeSchema<SchemaType.Stored>;
+
+/**
+ * Copies a `SchemaType.Stored` {@link SimpleTreeSchema}.
+ */
+export function transformSimpleSchema(
+	schema: SimpleTreeSchema<SchemaType.Stored>,
+	options: ExpectStored,
+): SimpleTreeSchema<SchemaType.Stored>;
+
+/**
+ * Copies a {@link SimpleTreeSchema}.
+ */
+export function transformSimpleSchema<T extends SchemaType>(
+	schema: SimpleTreeSchema<T>,
+	options: Unchanged,
+): SimpleTreeSchema<T>;
+
+/**
+ * Converts a {@link SimpleTreeSchema}.
+ */
+export function transformSimpleSchema(
+	schema: SimpleTreeSchema,
+	options: SimpleSchemaTransformationOptions,
+): SimpleTreeSchema;
+
+/**
  * TODO:#38722 When runtime schema upgrades are implemented, this will need to be updated to check if
  * a staged allowed type has been upgraded and if so, include it in the conversion.
- *
- * Even if this took in a SimpleTreeSchema,
- * it would still need to walk the schema to avoid including schema that become unreachable due to filtered out staged schema.
- *
- * @throws
- * Throws a `UsageError` if multiple schemas are encountered with the same identifier.
  */
 export function transformSimpleSchema(
 	schema: SimpleTreeSchema,
@@ -152,7 +177,7 @@ export function transformSimpleSchema(
  * @see {@link ExpectStored}.
  */
 export function simpleStoredSchemaToStoredSchema(
-	treeSchema: SimpleTreeSchema,
+	treeSchema: SimpleTreeSchema<SchemaType.Stored>,
 ): TreeStoredSchema {
 	const result: TreeStoredSchema = {
 		nodeSchema: transformMapValues(treeSchema.definitions, (schema) =>
@@ -166,7 +191,9 @@ export function simpleStoredSchemaToStoredSchema(
 /**
  * Convert a {@link SimpleFieldSchema} into a {@link TreeFieldStoredSchema}.
  */
-function convertField(schema: SimpleFieldSchema): TreeFieldStoredSchema {
+export function convertField(
+	schema: SimpleFieldSchema<SchemaType.Stored>,
+): TreeFieldStoredSchema {
 	const kind: FieldKindIdentifier =
 		convertFieldKind.get(schema.kind)?.identifier ?? fail(0xae3 /* Invalid field kind */);
 	const types = convertAllowedTypes(schema.simpleAllowedTypes);
@@ -190,7 +217,9 @@ export const convertFieldKind: ReadonlyMap<FieldKind, FlexFieldKind> = new Map<
  * @privateRemarks
  * TODO: Persist node metadata once schema FormatV2 is supported.
  */
-function getStoredSchema(schema: SimpleNodeSchema): TreeNodeStoredSchema {
+export function getStoredSchema(
+	schema: SimpleNodeSchema<SchemaType.Stored>,
+): TreeNodeStoredSchema {
 	const kind = schema.kind;
 	switch (kind) {
 		case NodeKind.Leaf: {
@@ -226,9 +255,25 @@ function getStoredSchema(schema: SimpleNodeSchema): TreeNodeStoredSchema {
 }
 
 /**
- * Converts a {@link TreeNodeSchema} into a {@link TreeNodeStoredSchema}.
- * @privateRemarks
+ * Converts a {@link SimpleNodeSchema} from view to stored.
+ */
+export function transformSimpleNodeSchema(
+	schema: SimpleNodeSchema<SchemaType.View>,
+	options: StoredFromViewSchemaGenerationOptions,
+): SimpleNodeSchema<SchemaType.Stored>;
+
+/**
+ * Converts a {@link SimpleNodeSchema}.
+ */
+export function transformSimpleNodeSchema(
+	schema: SimpleNodeSchema,
+	options: SimpleSchemaTransformationOptions,
+): SimpleNodeSchema;
+
+/**
  * TODO: Persist node metadata once schema FormatV2 is supported.
+ *
+ * This is only exported for use by tests: if other users need them more overloads could be provided, but this is currently sufficient.
  */
 export function transformSimpleNodeSchema(
 	schema: SimpleNodeSchema,
@@ -279,7 +324,7 @@ export function transformSimpleNodeSchema(
 }
 
 function arrayNodeStoredSchema(
-	schema: SimpleAllowedTypes,
+	schema: SimpleAllowedTypes<SchemaType.Stored>,
 	persistedMetadata: JsonCompatibleReadOnlyObject | undefined,
 ): ObjectNodeStoredSchema {
 	const field = {
@@ -297,7 +342,7 @@ function arrayNodeStoredSchema(
  * @param options - The options to use for filtering.
  * @returns The converted stored schema.
  */
-function filterAllowedTypes(
+export function filterAllowedTypes(
 	schema: SimpleAllowedTypes,
 	options: SimpleSchemaTransformationOptions,
 ): SimpleAllowedTypes {
@@ -335,7 +380,7 @@ function filterFieldAllowedTypes(
  * @param options - The options to use for filtering.
  * @returns The converted stored schema.
  */
-function convertAllowedTypes(schema: SimpleAllowedTypes): TreeTypeSet {
+function convertAllowedTypes(schema: SimpleAllowedTypes<SchemaType.Stored>): TreeTypeSet {
 	const filtered: TreeNodeSchemaIdentifier[] = [];
 	for (const [type, data] of schema) {
 		if (allowedTypeFilter(data, ExpectStored)) {

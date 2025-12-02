@@ -30,7 +30,7 @@ import {
 import { getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
-import type { SimpleNodeSchema } from "../simpleSchema.js";
+import type { SchemaType, SimpleNodeSchema } from "../simpleSchema.js";
 import { createTreeSchema, type TreeSchema } from "../treeSchema.js";
 
 /**
@@ -245,7 +245,10 @@ export class TreeViewConfigurationAlpha<
 	implements TreeSchema
 {
 	public readonly root: FieldSchemaAlpha;
-	public readonly definitions: ReadonlyMap<string, SimpleNodeSchema & TreeNodeSchema>;
+	public readonly definitions: ReadonlyMap<
+		string,
+		SimpleNodeSchema<SchemaType.View> & TreeNodeSchema
+	>;
 
 	public constructor(props: ITreeViewConfiguration<TSchema>) {
 		super(props);

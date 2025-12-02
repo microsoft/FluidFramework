@@ -5,7 +5,7 @@
 
 import { Unchanged } from "../core/index.js";
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
-import type { SimpleTreeSchema } from "../simpleSchema.js";
+import type { SchemaType, SimpleTreeSchema } from "../simpleSchema.js";
 import { transformSimpleSchema } from "../toStoredSchema.js";
 import { createTreeSchema } from "../treeSchema.js";
 
@@ -24,7 +24,9 @@ import { createTreeSchema } from "../treeSchema.js";
  *
  * @alpha
  */
-export function getSimpleSchema(schema: ImplicitFieldSchema): SimpleTreeSchema {
+export function getSimpleSchema(
+	schema: ImplicitFieldSchema,
+): SimpleTreeSchema<SchemaType.View> {
 	const treeSchema = createTreeSchema(schema);
 	return transformSimpleSchema(treeSchema, Unchanged);
 }

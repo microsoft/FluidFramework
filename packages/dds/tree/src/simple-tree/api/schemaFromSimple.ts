@@ -18,6 +18,7 @@ import {
 	type FieldProps,
 } from "../fieldSchema.js";
 import type {
+	SchemaType,
 	SimpleAllowedTypeAttributes,
 	SimpleFieldSchema,
 	SimpleNodeSchema,
@@ -46,7 +47,7 @@ const factory = new SchemaFactoryAlpha(undefined);
 export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): TreeSchema {
 	const context: Context = new Map(
 		[...simple.definitions].map(
-			([id, schema]): [string, () => TreeNodeSchema & SimpleNodeSchema] => [
+			([id, schema]): [string, () => TreeNodeSchema & SimpleNodeSchema<SchemaType.View>] => [
 				id,
 				// This relies on the caching in evaluateLazySchema so that it only runs once.
 				() => generateNode(id, schema, context),
@@ -54,7 +55,7 @@ export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): TreeSc
 		),
 	);
 	const root = generateFieldSchema(simple.root, context, undefined);
-	const definitions = new Map<string, TreeNodeSchema & SimpleNodeSchema>();
+	const definitions = new Map<string, TreeNodeSchema & SimpleNodeSchema<SchemaType.View>>();
 	for (const [id, lazy] of context) {
 		definitions.set(id, lazy());
 	}
@@ -64,7 +65,7 @@ export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): TreeSc
 	};
 }
 
-type Context = ReadonlyMap<string, () => TreeNodeSchema & SimpleNodeSchema>;
+type Context = ReadonlyMap<string, () => TreeNodeSchema & SimpleNodeSchema<SchemaType.View>>;
 
 function generateFieldSchema(
 	simple: SimpleFieldSchema,
@@ -107,7 +108,7 @@ function generateNode(
 	id: string,
 	schema: SimpleNodeSchema,
 	context: Context,
-): TreeNodeSchema & SimpleNodeSchema {
+): TreeNodeSchema & SimpleNodeSchema<SchemaType.View> {
 	switch (schema.kind) {
 		case NodeKind.Object: {
 			const fields: Record<string, FieldSchema> = {};

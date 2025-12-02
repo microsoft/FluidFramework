@@ -117,7 +117,6 @@ export {
 	type StoredSchemaGenerationOptions,
 	type StoredFromViewSchemaGenerationOptions,
 	ExpectStored,
-	isStoredFromView,
 	filterViewData,
 	type SimpleSchemaTransformationOptions,
 	Unchanged,

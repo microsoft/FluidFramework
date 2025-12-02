@@ -15,13 +15,6 @@ export interface StoredFromViewSchemaGenerationOptions {
 	 * Due to caching, the behavior of this function must be pure.
 	 */
 	includeStaged(upgrade: SchemaUpgrade): boolean;
-
-	/**
-	 * If true, non-stored data (data only relevant to view schema) will be discarded from the resulting stored schema.
-	 * @remarks
-	 * This includes metadata which is not persisted as part of the stored schema.
-	 */
-	discardNonStoredData?: undefined | true;
 }
 
 /**
@@ -39,8 +32,8 @@ export type Unchanged = typeof Unchanged;
 /**
  * Marker type indicating that the input schema is already a stored schema.
  */
-export const ToView = Symbol("ToView");
-export type ToView = typeof ToView;
+// export const ToView = Symbol("ToView");
+// export type ToView = typeof ToView;
 
 export type StoredSchemaGenerationOptions =
 	| StoredFromViewSchemaGenerationOptions
@@ -52,10 +45,10 @@ export type SimpleSchemaTransformationOptions =
 	| Unchanged;
 //	| ToView; // Maybe include this
 
-export function isStoredFromView(
+function isStoredFromView(
 	options: SimpleSchemaTransformationOptions,
 ): options is StoredFromViewSchemaGenerationOptions {
-	return options !== ExpectStored;
+	return typeof options === "object" && "includeStaged" in options;
 }
 
 export function filterViewData<T>(
@@ -66,5 +59,5 @@ export function filterViewData<T>(
 }
 
 export function preservesViewData(options: SimpleSchemaTransformationOptions): boolean {
-	return isStoredFromView(options) && options.discardNonStoredData === true ? false : true;
+	return isStoredFromView(options) ? false : options === Unchanged;
 }

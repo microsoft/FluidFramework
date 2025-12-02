@@ -166,8 +166,8 @@ export {
 	incrementalSummaryHint,
 } from "./incrementalAllowedTypes.js";
 export {
-	encodeSimpleSchema,
-	decodeSimpleSchema,
+	encodeSchemaCompatibilitySnapshot,
+	decodeSchemaCompatibilitySnapshot,
 } from "./simpleSchemaCodec.js";
 export {
 	exportCompatibilitySchemaSnapshot,

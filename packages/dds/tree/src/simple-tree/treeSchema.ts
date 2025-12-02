@@ -5,12 +5,12 @@ import {
 	type ImplicitFieldSchema,
 	normalizeFieldSchema,
 } from "./fieldSchema.js";
-import type { SimpleNodeSchema, SimpleTreeSchema } from "./simpleSchema.js";
+import type { SchemaType, SimpleNodeSchema, SimpleTreeSchema } from "./simpleSchema.js";
 import { walkFieldSchema } from "./walkFieldSchema.js";
 
 export function createTreeSchema(rootSchema: ImplicitFieldSchema): TreeSchema {
 	const root = normalizeFieldSchema(rootSchema);
-	const definitions = new Map<string, SimpleNodeSchema & TreeNodeSchema>();
+	const definitions = new Map<string, SimpleNodeSchema<SchemaType.View> & TreeNodeSchema>();
 
 	walkFieldSchema(root, {
 		node: (schema) => {
@@ -19,7 +19,10 @@ export function createTreeSchema(rootSchema: ImplicitFieldSchema): TreeSchema {
 					`Multiple schema found with identifier: ${JSON.stringify(schema.identifier)}`,
 				);
 			}
-			definitions.set(schema.identifier, schema as SimpleNodeSchema & TreeNodeSchema);
+			definitions.set(
+				schema.identifier,
+				schema as SimpleNodeSchema<SchemaType.View> & TreeNodeSchema,
+			);
 		},
 	});
 
@@ -30,7 +33,7 @@ export function createTreeSchema(rootSchema: ImplicitFieldSchema): TreeSchema {
  * {@link TreeViewConfigurationAlpha}
  * @sealed @alpha
  */
-export interface TreeSchema extends SimpleTreeSchema {
+export interface TreeSchema extends SimpleTreeSchema<SchemaType.View> {
 	/**
 	 * {@inheritDoc SimpleTreeSchema.root}
 	 */
@@ -39,5 +42,8 @@ export interface TreeSchema extends SimpleTreeSchema {
 	/**
 	 * {@inheritDoc SimpleTreeSchema.definitions}
 	 */
-	readonly definitions: ReadonlyMap<string, SimpleNodeSchema & TreeNodeSchema>;
+	readonly definitions: ReadonlyMap<
+		string,
+		SimpleNodeSchema<SchemaType.View> & TreeNodeSchema
+	>;
 }

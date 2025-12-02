@@ -9,7 +9,10 @@ import { TreeViewConfigurationAlpha, TreeViewConfiguration } from "./configurati
 import { createTreeSchema } from "../treeSchema.js";
 import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
 import { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
-import { decodeSimpleSchema, encodeSimpleSchema } from "./simpleSchemaCodec.js";
+import {
+	decodeSchemaCompatibilitySnapshot,
+	encodeSchemaCompatibilitySnapshot,
+} from "./simpleSchemaCodec.js";
 import type { SchemaCompatibilityStatus } from "./tree.js";
 
 /**
@@ -58,6 +61,9 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * @param view - The view being tested to see if it could view tree created or initialized using `viewWhichCreatedStoredSchema`.
  * @returns The compatibility status.
  *
+ * @privateRemarks
+ * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
+ *
  * @alpha
  */
 export function checkCompatibility(
@@ -95,13 +101,16 @@ export function checkCompatibility(
  * fs.writeFileSync("PointSchema.json", encodedSchema);
  * ```
  *
+ * @privateRemarks
+ * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
+ *
  * @alpha
  */
 export function exportCompatibilitySchemaSnapshot(
 	config: Pick<TreeViewConfiguration, "schema">,
 ): JsonCompatibleReadOnly {
 	const treeSchema = createTreeSchema(config.schema);
-	return encodeSimpleSchema(treeSchema);
+	return encodeSchemaCompatibilitySnapshot(treeSchema);
 }
 
 /**
@@ -120,13 +129,14 @@ export function exportCompatibilitySchemaSnapshot(
  * ```ts;
  * const oldViewSchema = importCompatibilitySchemaSnapshot(fs.readFileSync("PointSchema.json", "utf8"));
  * ```
- *
+ * @privateRemarks
+ * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
  * @alpha
  */
 export function importCompatibilitySchemaSnapshot(
 	config: JsonCompatibleReadOnly,
 ): TreeViewConfiguration {
-	const simpleSchema = decodeSimpleSchema(config);
+	const simpleSchema = decodeSchemaCompatibilitySnapshot(config);
 	const viewSchema = generateSchemaFromSimpleSchema(simpleSchema);
 
 	// We construct a TreeViewConfiguration here with the default parameters. The default set of validation parameters are fine for

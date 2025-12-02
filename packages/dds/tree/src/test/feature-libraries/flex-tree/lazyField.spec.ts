@@ -53,9 +53,9 @@ import {
 	numberSchema,
 	SchemaFactory,
 	stringSchema,
-	getStoredSchema,
 	toInitialSchema,
 	restrictiveStoredSchemaGenerationOptions,
+	toStoredSchema,
 } from "../../../simple-tree/index.js";
 import { singleJsonCursor } from "../../json/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
@@ -447,15 +447,10 @@ describe("LazyField", () => {
 			types: new Set([brand(numberSchema.identifier)]),
 			persistedMetadata: undefined,
 		};
-		const schema: TreeStoredSchema = {
-			rootFieldSchema: rootSchema,
-			nodeSchema: new Map([
-				[
-					brand(numberSchema.identifier),
-					getStoredSchema(numberSchema, restrictiveStoredSchemaGenerationOptions),
-				],
-			]),
-		};
+		const schema: TreeStoredSchema = toStoredSchema(
+			numberSchema,
+			restrictiveStoredSchemaGenerationOptions,
+		);
 
 		/**
 		 * Creates a tree with a sequence of numbers at the root, and returns the sequence

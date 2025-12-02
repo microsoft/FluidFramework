@@ -40,7 +40,6 @@ import {
 } from "../shared-tree/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
-	getStoredSchema,
 	numberSchema,
 	SchemaFactoryAlpha,
 	stringSchema,
@@ -62,7 +61,6 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { fieldJsonCursor } from "./json/jsonCursor.js";
 import { brand, Breakable } from "../util/index.js";
-import type { Partial } from "@sinclair/typebox";
 // eslint-disable-next-line import-x/no-internal-modules
 import { isLazy } from "../simple-tree/core/index.js";
 import { fieldCursorFromInsertable, testIdCompressor } from "./utils.js";
@@ -237,19 +235,10 @@ export class RecursiveType extends factory.objectRecursive("recursiveType", {
 
 const allTheFieldsName: TreeNodeSchemaIdentifier = brand("test.allTheFields");
 
-const library = {
-	nodeSchema: new Map([
-		[
-			brand(Minimal.identifier),
-			getStoredSchema(Minimal, restrictiveStoredSchemaGenerationOptions),
-		],
-		[allTheFieldsName, allTheFields],
-		[
-			brand(factory.number.identifier),
-			getStoredSchema(schemaStatics.number, restrictiveStoredSchemaGenerationOptions),
-		],
-	]),
-} satisfies Partial<TreeStoredSchema>;
+const library = toStoredSchema(
+	[Minimal, schemaStatics.number],
+	restrictiveStoredSchemaGenerationOptions,
+);
 
 export const testSimpleTrees: readonly TestSimpleTree[] = [
 	testSimpleTree("empty", factory.optional([]), undefined),

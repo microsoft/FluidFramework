@@ -187,6 +187,11 @@ export {
 	incrementalSummaryHint,
 	incrementalEncodingPolicyForAllowedTypes,
 	type SchemaFactory_base,
+	encodeSchemaCompatibilitySnapshot,
+	decodeSchemaCompatibilitySnapshot,
+	exportCompatibilitySchemaSnapshot,
+	importCompatibilitySchemaSnapshot,
+	checkCompatibility,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,
@@ -200,6 +205,7 @@ export type {
 	SimpleObjectFieldSchema,
 	SimpleRecordNodeSchema,
 	SimpleAllowedTypeAttributes,
+	SchemaType,
 } from "./simpleSchema.js";
 export {
 	type ImplicitFieldSchema,
@@ -279,12 +285,5 @@ export {
 	nullSchema,
 } from "./leafNodeSchema.js";
 export type { LeafSchema } from "./leafNodeSchema.js";
-export {
-	encodeSimpleSchema,
-	decodeSimpleSchema,
-	exportCompatibilitySchemaSnapshot,
-	importCompatibilitySchemaSnapshot,
-	checkCompatibility,
-} from "./api/index.js";
 export { getUnhydratedContext } from "./createContext.js";
-export { type TreeSchema } from "./treeSchema.js";
+export { type TreeSchema, createTreeSchema } from "./treeSchema.js";
