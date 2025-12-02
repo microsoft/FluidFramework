@@ -8,7 +8,9 @@
  * defined as \{ `""`, `undefined`, `null` \}.
  */
 export function areStringsEquivalent(
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	left: string | undefined | null,
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	right: string | undefined | null,
 ) {
 	return !left // If left any of { null, undefined, "" } ...

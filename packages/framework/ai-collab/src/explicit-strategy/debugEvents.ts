@@ -129,6 +129,7 @@ export interface GenerateTreeEditStarted extends EventFlowDebugEvent {
  */
 export interface GenerateTreeEditCompleted<
 	TIsLlmResponseValid = boolean,
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	TEdit = TIsLlmResponseValid extends true ? LlmTreeEdit | null : undefined,
 > extends EventFlowDebugEvent {
 	eventName: "GENERATE_TREE_EDIT_COMPLETED";

@@ -992,6 +992,7 @@ describeCompat("Container connections", "NoCompat", (getTestObjectProvider) => {
 
 	function wrapFactory(
 		deltaStreamHandler: (v: IDocumentDeltaConnection) => Promise<void>,
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		snapshotHandler: (v: ISnapshotTree | null) => Promise<void>,
 	) {
 		return wrapObjectAndOverride<IDocumentServiceFactory>(provider.documentServiceFactory, {
@@ -1129,6 +1130,7 @@ describeCompat("Container connections", "NoCompat", (getTestObjectProvider) => {
 		let connectionCalled = false;
 		let documentServiceFactory: IDocumentServiceFactory | undefined;
 		const deferredConnect = new Deferred<void>();
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		const snapshotP = new Promise<ISnapshotTree | null>((resolve) => {
 			documentServiceFactory = wrapFactory(
 				// deltaStreamHandler

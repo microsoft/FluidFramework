@@ -176,6 +176,7 @@ export function areEqualAttributionKeys(
 
 export class AttributionCollection implements IAttributionCollection<AttributionKey> {
 	private offsets: number[] = [];
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	private keys: (AttributionKey | null)[] = [];
 
 	private channels?: { [name: string]: AttributionCollection };
@@ -415,7 +416,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 			for (const segment of segments) {
 				const attribution = new AttributionCollection(segment.cachedLength);
 				// This function is defined here to allow for the creation of a new collection for each segment.
-				// eslint-disable-next-line unicorn/consistent-function-scoping
+				// eslint-disable-next-line unicorn/consistent-function-scoping, @typescript-eslint/no-restricted-types
 				const pushEntry = (offset: number, seq: AttributionKey | number | null): void => {
 					attribution.offsets.push(offset);
 					attribution.keys.push(
@@ -489,10 +490,13 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		const extractSequenceOffsets = (
 			getSpecEntries: (
 				spec: IAttributionCollectionSpec<AttributionKey>,
+				// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			) => Iterable<{ offset: number; key: AttributionKey | null }>,
 		): SerializedAttributionCollection => {
 			const posBreakpoints: number[] = [];
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			const seqs: (number | AttributionKey | null)[] = [];
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			let mostRecentAttributionKey: AttributionKey | null | undefined;
 			let cumulativePos = 0;
 

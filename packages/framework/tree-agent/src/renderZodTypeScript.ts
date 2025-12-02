@@ -224,6 +224,7 @@ export function renderZodTypeScript(
 			}
 			first = false;
 		}
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		const rest = (tupleType._def as z.ZodTupleDef<z.ZodTupleItems, z.ZodType | null>).rest;
 		if (rest !== null) {
 			if (!first) {

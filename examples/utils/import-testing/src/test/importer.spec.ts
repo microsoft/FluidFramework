@@ -126,11 +126,13 @@ describe("import tests", () => {
 				| boolean
 				| JsonAsTree.JsonObject
 				| JsonAsTree.Array
+				// eslint-disable-next-line @typescript-eslint/no-restricted-types
 				| null
 			)[])[typeof Symbol.iterator]
 		>;
 
 		type ObjectIterator = IterableIterator<
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			[string, string | number | boolean | JsonAsTree.JsonObject | JsonAsTree.Array | null]
 		>;
 

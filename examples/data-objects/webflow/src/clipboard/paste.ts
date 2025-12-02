@@ -38,6 +38,7 @@ const ignoredTags = [TagName.meta];
 function pasteChildren(doc: FlowDocument, root: Node, position: number) {
 	let _position = position;
 
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	for (let child: Node | null = root.firstChild; child !== null; child = child.nextSibling) {
 		switch (child.nodeType) {
 			case document.TEXT_NODE: {

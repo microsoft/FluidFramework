@@ -55,6 +55,7 @@ export async function start(): Promise<{
 	const msalInstance = await authHelper();
 
 	// Handle the login redirect flows
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	const tokenResponse: AuthenticationResult | null =
 		await msalInstance.handleRedirectPromise();
 
@@ -91,6 +92,7 @@ export async function getProfilePhoto(): Promise<string> {
 	const msalInstance = await authHelper();
 
 	// Handle the login redirect flows
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	const tokenResponse: AuthenticationResult | null =
 		await msalInstance.handleRedirectPromise();
 

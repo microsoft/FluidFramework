@@ -811,8 +811,8 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 
 			// Separate internal type prefix from public workspace address
 			const match = /^([^:]):([^:]+:.+)$/.exec(workspaceAddress) as
-				| null
-				| [string, string, WorkspaceAddress];
+				// eslint-disable-next-line @typescript-eslint/no-restricted-types
+				null | [string, string, WorkspaceAddress];
 
 			if (match === null) {
 				continue;

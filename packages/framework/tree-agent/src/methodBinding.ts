@@ -70,6 +70,7 @@ export type Arg<T extends z.ZodTypeAny = z.ZodTypeAny> = readonly [name: string,
 export interface FunctionDef<
 	Args extends readonly Arg[],
 	Return extends z.ZodTypeAny,
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	Rest extends z.ZodTypeAny | null = null,
 > {
 	description?: string;
@@ -82,6 +83,7 @@ export interface FunctionDef<
  * A class that implements the FunctionDef interface.
  */
 export class FunctionWrapper
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	implements FunctionDef<readonly Arg[], z.ZodTypeAny, z.ZodTypeAny | null>
 {
 	public constructor(
@@ -111,6 +113,7 @@ export type ArgsTuple<T extends readonly Arg[]> = T extends readonly [infer Sing
 export function buildFunc<
 	const Return extends z.ZodTypeAny,
 	const Args extends readonly Arg[],
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	const Rest extends z.ZodTypeAny | null = null,
 >(
 	def: { description?: string; returns: Return; rest?: Rest },
@@ -186,6 +189,7 @@ class ExposedMethodsI implements ExposedMethods {
 	public expose<
 		const K extends string & keyof MethodKeys<InstanceType<S>>,
 		S extends BindableSchema & Ctor<Record<K, Infer<Z>>> & IExposedMethods,
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		Z extends FunctionDef<readonly Arg[], z.ZodTypeAny, z.ZodTypeAny | null>,
 	>(schema: S, methodName: K, functionDef: Z): void {
 		if (schema !== this.schemaClass) {

@@ -20,6 +20,7 @@ export class Dom {
 	 * Inserts the given 'newChild' immediately after the given 'refChild'.  If 'refChild' is undefined,
 	 * inserts 'newChild' as the first child of 'parent'.
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public static insertAfter(parent: Node, newChild: Node, refChild: Node | null) {
 		parent.insertBefore(newChild, refChild ? refChild.nextSibling : parent.firstChild);
 	}

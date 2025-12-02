@@ -458,6 +458,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		normalizeToSessionSpace: (id, sessionId) => this.idCompressor.normalizeToSessionSpace(id, sessionId) as NodeId,
 	};
 	/** Temporarily created to apply stashed ops from a previous session */
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	private stashedIdCompressor?: IdCompressor | null;
 
 	// The initial tree's definition isn't included in any op by default but it should still be interned. Including it here ensures that.
