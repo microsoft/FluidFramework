@@ -233,8 +233,8 @@ export async function ensureInstalled(
 	// Adjust package list based on the minVersion for each package. If the requested version is
 	// less than the minVersion, skip that package.
 	const adjustedPackageList = packageList
-		.map((entry) => (semver.gte(version, entry.minVersion) ? entry.pkgName : ""))
-		.filter((pkg) => pkg !== "");
+		.filter((entry) => semver.gte(version, entry.minVersion))
+		.map((entry) => entry.pkgName);
 
 	if (versionHasMovedSparsedMatrix(version)) {
 		adjustedPackageList.push("@fluid-experimental/sequence-deprecated");
