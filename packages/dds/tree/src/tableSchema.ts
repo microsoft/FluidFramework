@@ -1132,7 +1132,11 @@ export namespace TableSchema {
 			SchemaFactoryBeta<TUserScope>,
 			TCell
 		>,
-	): System_TableSchema.ColumnSchemaBase<TUserScope, TCell, System_TableSchema.DefaultPropsType>;
+	): System_TableSchema.ColumnSchemaBase<
+		TUserScope,
+		TCell,
+		System_TableSchema.DefaultPropsType
+	>;
 	/**
 	 * Factory for creating new table column schema.
 	 * @typeParam TUserScope - The {@link SchemaFactory.scope | schema factory scope}.
@@ -1208,8 +1212,15 @@ export namespace TableSchema {
 	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
 	 * @alpha
 	 */
-	export function row<const TUserScope extends string, const TCell extends ImplicitAllowedTypes>(
-		params: System_TableSchema.CreateRowOptionsBase<TUserScope, SchemaFactoryBeta<TUserScope>, TCell>,
+	export function row<
+		const TUserScope extends string,
+		const TCell extends ImplicitAllowedTypes,
+	>(
+		params: System_TableSchema.CreateRowOptionsBase<
+			TUserScope,
+			SchemaFactoryBeta<TUserScope>,
+			TCell
+		>,
 	): System_TableSchema.RowSchemaBase<TUserScope, TCell, System_TableSchema.DefaultPropsType>;
 	/**
 	 * Factory for creating new table row schema.
@@ -1501,7 +1512,10 @@ export namespace TableSchema {
 	 * @typeParam TCell - The type of the cells in the table.
 	 * @alpha
 	 */
-	export function table<const TUserScope extends string, const TCell extends ImplicitAllowedTypes>(
+	export function table<
+		const TUserScope extends string,
+		const TCell extends ImplicitAllowedTypes,
+	>(
 		params: System_TableSchema.TableFactoryOptionsBase<
 			TUserScope,
 			SchemaFactoryBeta<TUserScope>,
@@ -1510,7 +1524,11 @@ export namespace TableSchema {
 	): System_TableSchema.TableSchemaBase<
 		TUserScope,
 		TCell,
-		System_TableSchema.ColumnSchemaBase<TUserScope, TCell, System_TableSchema.DefaultPropsType>,
+		System_TableSchema.ColumnSchemaBase<
+			TUserScope,
+			TCell,
+			System_TableSchema.DefaultPropsType
+		>,
 		System_TableSchema.RowSchemaBase<TUserScope, TCell, System_TableSchema.DefaultPropsType>
 	>;
 	/**
@@ -1562,7 +1580,11 @@ export namespace TableSchema {
 	): System_TableSchema.TableSchemaBase<
 		TUserScope,
 		TCell,
-		System_TableSchema.ColumnSchemaBase<TUserScope, TCell, System_TableSchema.DefaultPropsType>,
+		System_TableSchema.ColumnSchemaBase<
+			TUserScope,
+			TCell,
+			System_TableSchema.DefaultPropsType
+		>,
 		TRow
 	>;
 	/**
