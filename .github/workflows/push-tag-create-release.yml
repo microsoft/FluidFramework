@@ -26,7 +26,7 @@ permissions:
 jobs:
   create-release:
     permissions:
-      contents: write  # for ncipollo/release-action to create a release
+      contents: write # for ncipollo/release-action to create a release
     name: Create GitHub release
     runs-on: ubuntu-latest
     steps:
@@ -76,8 +76,8 @@ jobs:
         run: |
           flub release fromTag $TAG_NAME --json | jq -c > release-metadata.json
       - name: Upload release metadata JSON
-        # release notes: https://github.com/actions/upload-artifact/releases/tag/v4.4.3
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # ratchet:actions/upload-artifact@v4
+        # release notes: https://github.com/actions/upload-artifact/releases/tag/v5.0.0
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # ratchet:actions/upload-artifact@v5
         with:
           name: release-metadata
           path: release-metadata.json
@@ -116,8 +116,8 @@ jobs:
           mkdir reports
           flub release report -g ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }} -o reports
       - name: Upload release reports
-        # release notes: https://github.com/actions/upload-artifact/releases/tag/v4.4.3
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # ratchet:actions/upload-artifact@v4
+        # release notes: https://github.com/actions/upload-artifact/releases/tag/v5.0.0
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # ratchet:actions/upload-artifact@v5
         with:
           name: release-reports
           path: reports
@@ -152,7 +152,8 @@ jobs:
       # Only creates GH releases for client, server, and build-tools releases.
       - name: Create GH release
         if: fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'build-tools' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'server'
-        uses: ncipollo/release-action@2c591bcc8ecdcd2db72b97d6147f871fcd833ba5 # ratchet:ncipollo/release-action@v1
+        # release notes: https://github.com/ncipollo/release-action/releases/tag/v1.20.0
+        uses: ncipollo/release-action@b7eabc95ff50cbeeedec83973935c8f306dfcd0b # ratchet:ncipollo/release-action@v1
         with:
           # Allow updates to existing releases.
           allowUpdates: true

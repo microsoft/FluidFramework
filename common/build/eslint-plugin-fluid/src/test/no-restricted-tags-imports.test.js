@@ -5,10 +5,9 @@
 
 const assert = require("assert");
 const path = require("path");
-const { createESLintInstance, eslintVersion } = require("../eslintConfigHelper.cjs");
+const { createESLintInstance, eslintVersion } = require("./eslintConfigHelper.cjs");
 
 describe(`ESLint Rule Tests (eslint ${eslintVersion})`, function () {
-
 	it("Should report an error for restricted tag imports", async function () {
 		const eslint = createESLintInstance({
 			rules: {
@@ -22,7 +21,7 @@ describe(`ESLint Rule Tests (eslint ${eslintVersion})`, function () {
 			},
 		});
 		const filesToLint = ["fileWithImports.ts", "mockModule.ts"].map((file) =>
-			path.join(__dirname, "../example/no-restricted-tags-imports", file),
+			path.join(__dirname, "./test-cases/no-restricted-tags-imports", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];
@@ -52,11 +51,11 @@ describe(`ESLint Rule Tests (eslint ${eslintVersion})`, function () {
 				],
 			},
 			parserOptions: {
-				project: path.join(__dirname, "../example/tsconfig.json"),
+				project: path.join(__dirname, "./test-cases/tsconfig.json"),
 			},
 		});
 		const filesToLint = ["fileWithExceptionImports.ts", "exceptionFile.ts"].map((file) =>
-			path.join(__dirname, "../example/no-restricted-tags-imports", file),
+			path.join(__dirname, "./test-cases/no-restricted-tags-imports", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];
@@ -79,11 +78,11 @@ describe(`ESLint Rule Tests (eslint ${eslintVersion})`, function () {
 				],
 			},
 			parserOptions: {
-				project: path.join(__dirname, "../example/tsconfig.json"),
+				project: path.join(__dirname, "./test-cases/tsconfig.json"),
 			},
 		});
 		const filesToLint = ["fileWithImports.ts", "mockModule.ts"].map((file) =>
-			path.join(__dirname, "../example/no-restricted-tags-imports", file),
+			path.join(__dirname, "./test-cases/no-restricted-tags-imports", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];

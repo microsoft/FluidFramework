@@ -16,7 +16,7 @@ import {
 	CheckNoPolicyViolations,
 	CheckNoUntaggedAsserts,
 	// library is overloaded with too much stuff now, and we should consider allowing interior imports.
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../library/releasePrepChecks.js";
 
 /**

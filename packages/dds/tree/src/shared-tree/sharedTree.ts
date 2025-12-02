@@ -64,7 +64,6 @@ import {
 	makeSchemaCodec,
 	makeTreeChunker,
 	type IncrementalEncodingPolicy,
-	type TreeCompressionStrategyPrivate,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { FormatV1 } from "../feature-libraries/schema-index/index.js";
@@ -75,7 +74,7 @@ import {
 	type ClonableSchemaAndPolicy,
 	getCodecTreeForEditManagerFormatWithChange,
 	getCodecTreeForMessageFormatWithChange,
-	type SharedTreCoreOptionsInternal,
+	type SharedTreeCoreOptionsInternal,
 	MessageFormatVersion,
 	SharedTreeCore,
 	EditManagerFormatVersion,
@@ -656,32 +655,31 @@ export function getCodecTreeForSharedTreeFormat(
 export type SharedTreeOptionsBeta = ForestOptions;
 
 /**
- * Configuration options for SharedTree.
+ * Configuration options for SharedTree with alpha features.
  * @alpha @input
  */
 export interface SharedTreeOptions
-	extends Partial<CodecWriteOptions>,
-		Partial<SharedTreeFormatOptions>,
-		SharedTreeOptionsBeta {
+	extends SharedTreeOptionsBeta,
+		Partial<CodecWriteOptions>,
+		Partial<SharedTreeFormatOptions> {
 	/**
 	 * Experimental feature flag to enable shared branches.
 	 * This feature is not yet complete and should not be used in production.
 	 * Defaults to false.
 	 */
 	readonly enableSharedBranches?: boolean;
-}
-
-export interface SharedTreeOptionsInternal
-	extends Partial<SharedTreCoreOptionsInternal>,
-		Partial<ForestOptions>,
-		Partial<SharedTreeFormatOptionsInternal> {
-	disposeForksAfterTransaction?: boolean;
 	/**
 	 * Returns whether a node / field should be incrementally encoded.
 	 * @remarks
 	 * See {@link IncrementalEncodingPolicy}.
 	 */
 	shouldEncodeIncrementally?: IncrementalEncodingPolicy;
+}
+
+export interface SharedTreeOptionsInternal
+	extends SharedTreeOptions,
+		Partial<SharedTreeCoreOptionsInternal> {
+	disposeForksAfterTransaction?: boolean;
 }
 
 /**
@@ -705,11 +703,6 @@ export interface SharedTreeFormatOptions {
 	 * default: TreeCompressionStrategy.Compressed
 	 */
 	treeEncodeType: TreeCompressionStrategy;
-}
-
-export interface SharedTreeFormatOptionsInternal
-	extends Omit<SharedTreeFormatOptions, "treeEncodeType"> {
-	treeEncodeType: TreeCompressionStrategyPrivate;
 }
 
 /**
@@ -814,6 +807,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
 	editManagerFormatSelector: clientVersionToEditManagerFormatVersion,
 	messageFormatSelector: clientVersionToMessageFormatVersion,
+	enableSharedBranches: false,
 };
 
 /**

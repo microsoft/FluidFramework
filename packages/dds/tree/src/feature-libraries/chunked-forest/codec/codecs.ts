@@ -29,11 +29,7 @@ import {
 	type Brand,
 	type JsonCompatibleReadOnly,
 } from "../../../util/index.js";
-import {
-	TreeCompressionStrategy,
-	TreeCompressionStrategyExtended,
-	type TreeCompressionStrategyPrivate,
-} from "../../treeCompressionUtils.js";
+import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
 
 import { decode } from "./chunkDecoding.js";
 import type { FieldBatch } from "./fieldBatch.js";
@@ -109,7 +105,7 @@ export interface IncrementalDecoder {
 export interface IncrementalEncoderDecoder extends IncrementalEncoder, IncrementalDecoder {}
 
 export interface FieldBatchEncodingContext {
-	readonly encodeType: TreeCompressionStrategyPrivate;
+	readonly encodeType: TreeCompressionStrategy;
 	readonly idCompressor: IIdCompressor;
 	readonly originatorId: SessionId;
 	readonly schema?: SchemaAndPolicy;
@@ -190,7 +186,7 @@ export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec
 				case TreeCompressionStrategy.Uncompressed:
 					encoded = uncompressedEncodeFn(data);
 					break;
-				case TreeCompressionStrategyExtended.CompressedIncremental:
+				case TreeCompressionStrategy.CompressedIncremental:
 					assert(
 						writeVersion >= FieldBatchFormatVersion.v2,
 						0xca0 /* Unsupported FieldBatchFormatVersion for incremental encoding; must be v2 or higher */,

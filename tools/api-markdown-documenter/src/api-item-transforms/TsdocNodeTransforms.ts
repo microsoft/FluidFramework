@@ -157,7 +157,7 @@ function transformTsdocSectionContent(
  * 2. Remove line break nodes adjacent to paragraph nodes.
  *
  * 3. Remove leading and trailing line breaks within the paragraph (see
- * {@link trimLeadingAndTrailingLineBreaks}).
+ * {@link trimParagraphContents}).
  *
  * 4. Trim leading whitespace from first child if it is plain-text, and trim trailing whitespace from
  * last child if it is plain-text.
@@ -170,8 +170,8 @@ function transformTsdocParagraph(
 	// To ensure we map the content correctly, we should scan the child list for matching open/close tags,
 	// and map the subsequence to an "html" node.
 
-	// Trim leading and trailing line breaks, which are redundant in the context of a paragraph.
-	const adjustedChildren = trimLeadingAndTrailingLineBreaks(node.nodes);
+	// Trim leading and trailing whitespace and line breaks, which are redundant in the context of a paragraph.
+	const adjustedChildren = trimParagraphContents(node.nodes);
 
 	// Transform child items into Documentation domain
 	const transformedChildren: PhrasingContent[] = [];
@@ -698,12 +698,10 @@ function combineAdjacentPlainText(nodes: readonly PhrasingContent[]): PhrasingCo
 }
 
 /**
- * Trims an line break nodes found at the beginning or end of the list.
- *
- * @remarks Useful for cleaning up {@link ParagraphNode} child contents, since leading and trailing
- * newlines are effectively redundant.
+ * Trims any whitespace and line break nodes found at the beginning or end of the list of paragraph contents.
+ * In the context of a Paragraph, such content is redundant.
  */
-function trimLeadingAndTrailingLineBreaks(nodes: readonly DocNode[]): DocNode[] {
+function trimParagraphContents(nodes: readonly DocNode[]): DocNode[] {
 	if (nodes.length === 0) {
 		return [];
 	}
@@ -711,8 +709,18 @@ function trimLeadingAndTrailingLineBreaks(nodes: readonly DocNode[]): DocNode[] 
 	let startIndex = 0;
 	let endIndex = nodes.length - 1;
 
-	for (const node of nodes) {
+	function canTrimNode(node: DocNode): boolean {
 		if (node.kind === DocNodeKind.SoftBreak) {
+			return true;
+		}
+		if (node.kind === DocNodeKind.PlainText) {
+			return (node as DocPlainText).text.trim().length === 0;
+		}
+		return false;
+	}
+
+	for (const node of nodes) {
+		if (canTrimNode(node)) {
 			startIndex++;
 		} else {
 			break;
@@ -720,7 +728,7 @@ function trimLeadingAndTrailingLineBreaks(nodes: readonly DocNode[]): DocNode[] 
 	}
 
 	for (let i = nodes.length - 1; i > startIndex; i--) {
-		if (nodes[i].kind === DocNodeKind.SoftBreak) {
+		if (canTrimNode(nodes[i])) {
 			endIndex--;
 		} else {
 			break;

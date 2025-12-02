@@ -113,5 +113,5 @@ export const valueHandler = {
 export const valueField = new FlexFieldKind(
 	brandConst("Value")<FieldKindIdentifier>(),
 	Multiplicity.Single,
-	{ changeHandler: valueHandler, allowsTreeSupersetOf: (a, b) => false },
+	{ changeHandler: valueHandler, allowedMonotonicUpgrade: (a, b) => false },
 );

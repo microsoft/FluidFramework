@@ -154,7 +154,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.60.0",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
-		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.71.0",
+		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.73.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/diff": "^3.5.1",

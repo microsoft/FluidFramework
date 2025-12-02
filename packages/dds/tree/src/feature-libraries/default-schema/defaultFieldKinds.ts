@@ -82,7 +82,7 @@ const optionalIdentifier = brandConst("Optional")<FieldKindIdentifier>();
  */
 export const optional = new FlexFieldKind(optionalIdentifier, Multiplicity.Optional, {
 	changeHandler: optionalChangeHandler,
-	allowsTreeSupersetOf: (types, other) =>
+	allowedMonotonicUpgrade: (types, other) =>
 		(other.kind === sequence.identifier || other.kind === optionalIdentifier) &&
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
 });
@@ -110,7 +110,7 @@ const requiredIdentifier = brandConst("Value")<FieldKindIdentifier>();
  */
 export const required = new FlexFieldKind(requiredIdentifier, Multiplicity.Single, {
 	changeHandler: requiredFieldChangeHandler,
-	allowsTreeSupersetOf: (types, other) =>
+	allowedMonotonicUpgrade: (types, other) =>
 		// By omitting Identifier here,
 		// this is making a policy choice that a schema upgrade cannot be done from required to identifier.
 		// Since an identifier can be upgraded into a required field,
@@ -129,7 +129,7 @@ const sequenceIdentifier = brandConst("Sequence")<FieldKindIdentifier>();
  */
 export const sequence = new FlexFieldKind(sequenceIdentifier, Multiplicity.Sequence, {
 	changeHandler: sequenceFieldChangeHandler,
-	allowsTreeSupersetOf: (types, other) =>
+	allowedMonotonicUpgrade: (types, other) =>
 		other.kind === sequenceIdentifier &&
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
 });
@@ -141,7 +141,7 @@ const identifierFieldIdentifier = brandConst("Identifier")<FieldKindIdentifier>(
  */
 export const identifier = new FlexFieldKind(identifierFieldIdentifier, Multiplicity.Single, {
 	changeHandler: noChangeHandler,
-	allowsTreeSupersetOf: (types, other) =>
+	allowedMonotonicUpgrade: (types, other) =>
 		// Allows upgrading from identifier to required: which way this upgrade is allowed to go is a subjective policy choice.
 		(other.kind === sequence.identifier ||
 			other.kind === requiredIdentifier ||
@@ -184,7 +184,7 @@ export const forbidden = new FlexFieldKind(
 	{
 		changeHandler: noChangeHandler,
 		// All multiplicities other than Value support empty.
-		allowsTreeSupersetOf: (types, other) =>
+		allowedMonotonicUpgrade: (types, other) =>
 			fieldKinds.get(other.kind)?.multiplicity !== Multiplicity.Single,
 	},
 );

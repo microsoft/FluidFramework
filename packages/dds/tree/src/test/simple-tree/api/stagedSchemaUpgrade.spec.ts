@@ -155,7 +155,7 @@ describe("staged schema upgrade", () => {
 			schema: schemaA,
 		});
 
-		const viewA = independentView(configA, {});
+		const viewA = independentView(configA);
 		viewA.initialize(5);
 
 		assert.deepEqual(viewA.root, 5);

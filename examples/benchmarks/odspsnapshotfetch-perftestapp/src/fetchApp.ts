@@ -123,7 +123,12 @@ function fetchButtonClick(mockLogger: MockLogger, div: HTMLDivElement) {
 						row1?.appendChild(cell1);
 					}
 					const cell2 = document.createElement("td");
-					const cellText2 = document.createTextNode(`${entry[1]}`);
+					const value = entry[1];
+					const cellText2 = document.createTextNode(
+						typeof value === "object" && value !== null
+							? JSON.stringify(value)
+							: String(value),
+					);
 					cell2.appendChild(cellText2);
 					row2.appendChild(cell2);
 				}

@@ -4,89 +4,129 @@
 # see how this config file is used.
 
 "area: build":
-  - ".github/*"
-  - ".github/workflows/**"
-  - "build-tools/**"
-  - "common/build/**"
-  - "tools/markdown-magic/**"
-  - "tools/pipelines/**"
+  changed-files:
+    - any-glob-to-any-file:
+      - ".github/*"
+      - ".github/workflows/**"
+      - "build-tools/**"
+      - "common/build/**"
+      - "tools/markdown-magic/**"
+      - "tools/pipelines/**"
 
 "area: contributor experience":
-  - ".vscode/**"
+  changed-files:
+    - any-glob-to-any-file: ".vscode/**"
 
 "area: dds":
-  - experimental/dds/**
-  - packages/dds/**
+  changed-files:
+    - any-glob-to-any-file:
+      - experimental/dds/**
+      - packages/dds/**
 
 "area: dds: tree":
-  - experimental/dds/tree/**
-  - experimental/dds/tree2/**
-  - packages/dds/tree/**
+  changed-files:
+    - any-glob-to-any-file:
+      - experimental/dds/tree/**
+      - experimental/dds/tree2/**
+      - packages/dds/tree/**
 
 "area: dds: propertydds":
-  - experimental/PropertyDDS/**
+  changed-files:
+    - any-glob-to-any-file: experimental/PropertyDDS/**
 
 "area: dds: sharedstring":
-  - packages/dds/sequence/**
+  changed-files:
+    - any-glob-to-any-file: packages/dds/sequence/**
 
 "area: definitions":
-  - common/lib/container-definitions/**
-  - common/lib/core-interfaces/**
-  - common/lib/driver-definitions/**
+  changed-files:
+    - any-glob-to-any-file:
+      - common/lib/container-definitions/**
+      - common/lib/core-interfaces/**
+      - common/lib/driver-definitions/**
 
 "area: dev experience":
-  - experimental/framework/**
+  changed-files:
+    - any-glob-to-any-file: experimental/framework/**
 
 "area: driver":
-  - packages/drivers/**
+  changed-files:
+    - any-glob-to-any-file: packages/drivers/**
 
 "area: examples":
-  - examples/**
-  - experimental/examples/**
+  changed-files:
+    - any-glob-to-any-file:
+      - examples/**
+      - experimental/examples/**
 
 "area: framework":
-  - packages/framework/**
+  changed-files:
+    - any-glob-to-any-file: packages/framework/**
 
 "area: loader":
-  - packages/loader/**
+  changed-files:
+    - any-glob-to-any-file: packages/loader/**
 
 "area: odsp-driver":
-  - packages/drivers/*odsp*/**
-  - packages/utils/odsp-doclib-utils/**
+  changed-files:
+    - any-glob-to-any-file:
+      - packages/drivers/*odsp*/**
+      - packages/utils/odsp-doclib-utils/**
 
 # Add "area: repo" label to any root or .github changes
 "area: repo":
-  - any: ["*", ".github/**", "!BREAKING.md"]
+  changed-files:
+    - any-glob-to-any-file:
+      - "*"
+      - ".github/**"
+      - "!BREAKING.md"
 
 "area: runtime":
-  - packages/runtime/**
+  changed-files:
+    - any-glob-to-any-file: packages/runtime/**
 
 "area: server":
-  - server/**
+  changed-files:
+    - any-glob-to-any-file: server/**
 
 "area: tests":
-  - packages/test/**
+  changed-files:
+    - any-glob-to-any-file: packages/test/**
 
 "area: tools":
-  - any: ["common/build/**", "tools/**", "!tools/markdown-magic/**"]
+  changed-files:
+    - any-glob-to-any-file:
+      - common/build/**
+      - tools/**
+      - "!tools/markdown-magic/**"
 
 "area: website":
-  - any: ["docs/**", "!docs/content/**"]
+  changed-files:
+    - any-glob-to-any-file:
+      - docs/**
+      - "!docs/content/**"
 
 "breaking change":
-  - BREAKING.md
+  changed-files:
+    - any-glob-to-any-file: BREAKING.md
 
 "changeset-present":
-  - .changeset/**
-  - server/routerlicious/.changeset/**
+  changed-files:
+    - any-glob-to-any-file:
+      - .changeset/**
+      - server/routerlicious/.changeset/**
 
 dependencies:
-  - package-lock.json
-  - pnpm-lock.yaml
+  changed-files:
+    - any-glob-to-any-file:
+      - package-lock.json
+      - pnpm-lock.yaml
 
 documentation:
-  - docs/content/**
+  changed-files:
+    - any-glob-to-any-file: docs/content/**
 
 # flag changes to public APIs so they can be reviewed to see if they're breaking
 "public api change":
-  - "**/api-report/**"
+  changed-files:
+    - any-glob-to-any-file: "**/api-report/**"

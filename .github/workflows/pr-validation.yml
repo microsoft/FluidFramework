@@ -19,10 +19,12 @@ jobs:
     name: Validate CODEOWNERS
     runs-on: ubuntu-latest
     steps:
-      # release notes: https://github.com/actions/checkout/releases/tag/v5.0.0
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # ratchet:actions/checkout@v5
+      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # ratchet:actions/checkout@v6
         with:
           persist-credentials: false
+
+      # release notes: https://github.com/mszostok/codeowners-validator/releases/tag/v0.7.4
       - uses: mszostok/codeowners-validator@7f3f5e28c6d7b8dfae5731e54ce2272ca384592f # ratchet:mszostok/codeowners-validator@v0.7.4
         with:
           github_access_token: "${{ secrets.GITHUB_TOKEN }}"
@@ -35,6 +37,7 @@ jobs:
     name: PR template placeholder content
     runs-on: ubuntu-latest
     steps:
+      # release notes: https://github.com/sitezen/pr-comment-checker/releases/tag/v1.0.1
       - uses: sitezen/pr-comment-checker@f1e956fac00c6d1163d15841886ae80b7ae58ecb # ratchet:sitezen/pr-comment-checker@v1.0.1
         with:
           pr_description_should_not_contain: |

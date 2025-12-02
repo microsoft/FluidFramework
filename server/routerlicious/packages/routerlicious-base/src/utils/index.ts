@@ -9,4 +9,3 @@ export { catch404, handleError } from "./middleware";
 export { getIdFromRequest, getTenantIdFromRequest } from "./params";
 export { getSession, generateCacheKey, setGetSessionResultInCache } from "./sessionHelper";
 export { configureThrottler } from "./throttling";
-export { StageTrace } from "./trace";

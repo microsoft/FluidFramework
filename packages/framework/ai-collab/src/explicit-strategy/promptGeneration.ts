@@ -308,7 +308,7 @@ function getDef(defs: Record<string, JsonNodeSchema>, ref: string): JsonNodeSche
  * TBD
  */
 export function getFriendlySchemaName(schemaName: string): string {
-	const matches = schemaName.match(/[^.]+$/);
+	const matches = /[^.]+$/.exec(schemaName);
 	if (matches === null) {
 		// empty scope
 		return schemaName;

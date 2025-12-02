@@ -810,7 +810,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			}
 
 			// Separate internal type prefix from public workspace address
-			const match = workspaceAddress.match(/^([^:]):([^:]+:.+)$/) as
+			const match = /^([^:]):([^:]+:.+)$/.exec(workspaceAddress) as
 				| null
 				| [string, string, WorkspaceAddress];
 

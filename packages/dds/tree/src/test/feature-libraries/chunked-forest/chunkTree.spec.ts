@@ -592,8 +592,8 @@ describe("chunkTree", () => {
 		});
 		it("incremental", () => {
 			const shouldEncodeIncrementally: IncrementalEncodingPolicy = (
-				nodeIdentifier: TreeNodeSchemaIdentifier | undefined,
-				fieldKey: FieldKey,
+				nodeIdentifier: string | undefined,
+				fieldKey: string,
 			) => {
 				if (nodeIdentifier === structValue.identifier && fieldKey === "x") {
 					return true;
@@ -671,8 +671,8 @@ describe("chunkTree", () => {
 		});
 		it("incrementalField", () => {
 			const shouldEncodeIncrementally: IncrementalEncodingPolicy = (
-				nodeIdentifier: TreeNodeSchemaIdentifier | undefined,
-				fieldKey: FieldKey,
+				nodeIdentifier: string | undefined,
+				fieldKey: string,
 			) => {
 				if (nodeIdentifier === structValue.identifier && fieldKey === "x") {
 					return true;

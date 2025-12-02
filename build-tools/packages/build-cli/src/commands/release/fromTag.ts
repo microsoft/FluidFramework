@@ -14,7 +14,7 @@ import semver from "semver";
 import { sortPackageJson as sortJson } from "sort-package-json";
 
 import { findPackageOrReleaseGroup } from "../../args.js";
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 import { MonoRepoKind, sortVersions } from "../../library/index.js";
 import type { ReleaseGroup, ReleasePackage } from "../../releaseGroups.js";
 import { ReleaseReportBaseCommand, type ReleaseSelectionMode } from "./report.js";
@@ -158,7 +158,7 @@ const getReleaseTitle = (
 	version: semver.SemVer,
 	releaseType: VersionBumpType,
 ): string => {
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	const name = releaseGroup === MonoRepoKind.Client ? "Fluid Framework" : releaseGroup;
 	// e.g. Fluid Framework v2.0.0-internal.4.1.0 (minor)
 	return `${name} v${version.version} (${releaseType})`;
