@@ -185,6 +185,7 @@ export function getNodeEncoder(
 	const schema =
 		storedSchema.nodeSchema.get(schemaName) ?? fail(0xb53 /* missing node schema */);
 
+	// This handles both object and array nodes.
 	if (schema instanceof ObjectNodeStoredSchema) {
 		// TODO:Performance:
 		// consider moving some optional and sequence fields to extra fields if they are commonly empty
@@ -212,8 +213,10 @@ export function getNodeEncoder(
 		);
 		return shape;
 	}
+
+	// This handles both maps and record nodes.
 	if (schema instanceof MapNodeStoredSchema) {
-		const fieldEncoder = shouldEncodeIncrementally(schemaName, "")
+		const fieldEncoder = shouldEncodeIncrementally(schemaName)
 			? incrementalFieldEncoder
 			: fieldBuilder.fieldEncoderFromSchema(schema.mapFields);
 		const shape = new NodeShapeBasedEncoder(schemaName, false, [], fieldEncoder);

@@ -4,16 +4,19 @@
  */
 
 /**
- * Policy type to determine whether one of more fields of {@link NodeKind} in a schema should be incrementally encoded.
+ * Policy type to determine whether one of more fields of a {@link NodeKind | node} in a schema should be incrementally encoded.
  * @param nodeIdentifier - The identifier of the node. The node is one of the kinds defined in {@link NodeKind}.
- * @param fieldKey - The key of the field in the node's children:
- * For {@link NodeKind.Object} nodes, this is the key of one of its fields.
- * For {@link NodeKind.Leaf} nodes, this is not applicable because incremental encoding is not supported.
- * For all other node kinds, this will be an empty string and the policy will apply to all their fields.
- * @returns whether the field in the node should be incrementally encoded.
+ * @param fieldKey - An optional key for fields in the node. It must be one of the following based on the kind of node.
+ * Policy implementations may throw an error if the provided key is invalid for the node kind:
+ * - {@link NodeKind.Object | object} - Must be defined and should be the key of one of its fields. If the object node does not
+ * have a field with the specified key, returns false.
+ * - {@link NodeKind.Array | array} - Must be defined and be the "" (empty string) which is special value for arrays.
+ * - {@link NodeKind.Map | map} and {@link NodeKind.Record | record} - Must be undefined.
+ * - {@link NodeKind.Leaf | leaf} - Must be undefined. Leaf nodes do not support incremental encoding. If called for leaf nodes,
+ * returns false.
  *
  * @remarks
- * See {@link incrementalEncodingPolicyForAllowedTypes} for an example policy implementation.
+ * See {@link incrementalEncodingPolicyForAllowedTypes} for a reference policy implementation.
  *
  * Incremental encoding has a significant size overhead,
  * but allows reuse of previously encoded unchanged subtrees.
@@ -23,7 +26,7 @@
  */
 export type IncrementalEncodingPolicy = (
 	nodeIdentifier: string | undefined,
-	fieldKey: string,
+	fieldKey?: string,
 ) => boolean;
 
 /**
@@ -31,7 +34,7 @@ export type IncrementalEncodingPolicy = (
  */
 export const defaultIncrementalEncodingPolicy: IncrementalEncodingPolicy = (
 	nodeIdentifier: string | undefined,
-	fieldKey: string,
+	fieldKey?: string,
 ): boolean => {
 	return false;
 };
