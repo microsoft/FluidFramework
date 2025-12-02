@@ -236,7 +236,7 @@ export const CheckNoUntaggedAsserts: CheckFunction = async (
 };
 
 /**
- * Checks if any packages need a compatibility layer generation update by directly calling the layer generation logic.
+ * Checks if any packages need a compatibility layer generation update using the layer generation functions directly.
  * This is a shared helper function used by both the prepare command checks and the state machine checks.
  *
  * @param context - The repository context.
@@ -267,6 +267,7 @@ export async function runCompatLayerGenerationCheck(context: Context): Promise<b
 
 		// Use a no-op logger since we don't want verbose output during checks
 		const noopLogger = {
+			log: () => {},
 			verbose: () => {},
 			info: () => {},
 			warning: () => {},
