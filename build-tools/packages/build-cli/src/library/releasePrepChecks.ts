@@ -239,10 +239,21 @@ export const CheckNoUntaggedAsserts: CheckFunction = async (
  * Checks if any packages need a compatibility layer generation update using the layer generation functions directly.
  * This is a shared helper function used by both the prepare command checks and the state machine checks.
  *
+ * When the actual `layerGeneration:gen` command is run as a package script, it processes all packages and will
+ * initialize metadata for packages that don't have it. However, this check function is used to validate that
+ * packages are up-to-date before releasing, so by default it only validates packages that are already configured
+ * with fluidCompatMetadata.
+ *
  * @param context - The repository context.
- * @returns `true` if all packages have up-to-date layer generation metadata, `false` if any updates are needed.
+ * @param onlyConfiguredPackages - If true (default), only checks packages that already have fluidCompatMetadata
+ * configured and skips packages without metadata. If false, treats packages without fluidCompatMetadata as
+ * needing updates (they would get generation 1 when the command runs).
+ * @returns `true` if all (configured) packages have up-to-date layer generation metadata, `false` if any updates are needed.
  */
-export async function runCompatLayerGenerationCheck(context: Context): Promise<boolean> {
+export async function runCompatLayerGenerationCheck(
+	context: Context,
+	onlyConfiguredPackages: boolean = true,
+): Promise<boolean> {
 	const { maybeGetNewGeneration, isCurrentPackageVersionPatch } = await import(
 		// library is overloaded with too much stuff now, and we should consider allowing interior imports.
 		// eslint-disable-next-line import/no-internal-modules
@@ -253,9 +264,16 @@ export async function runCompatLayerGenerationCheck(context: Context): Promise<b
 	for (const pkg of context.fullPackageMap.values()) {
 		const { fluidCompatMetadata } = pkg.packageJson;
 
-		// Skip packages without compatibility metadata
+		// Handle packages without compatibility metadata
 		if (fluidCompatMetadata === undefined) {
-			continue;
+			if (onlyConfiguredPackages) {
+				// Skip packages without metadata when only checking configured packages
+				continue;
+			} else {
+				// Treat packages without metadata as needing updates
+				// (they would get generation 1 when the command runs)
+				return false;
+			}
 		}
 
 		const currentPkgVersion = pkg.version;
