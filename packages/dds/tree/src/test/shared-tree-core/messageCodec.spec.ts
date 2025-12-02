@@ -156,7 +156,7 @@ describe("message codec", () => {
 		testCases,
 		undefined,
 		[MessageFormatVersion.v3, MessageFormatVersion.v4, MessageFormatVersion.vSharedBranches],
-		[undefined, MessageFormatVersion.v1, MessageFormatVersion.v2],
+		[undefined, MessageFormatVersion.v1, MessageFormatVersion.v2, MessageFormatVersion.v5],
 	);
 
 	describe("dispatching codec", () => {

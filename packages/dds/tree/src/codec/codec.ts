@@ -253,6 +253,7 @@ export interface ICodecFamily<TDecoded, TContext = void> {
  * A version stamp for encoded data.
  *
  * Strings are used for formats that are not yet officially supported.
+ * When such formats become officially supported/stable, they will be switched to using a number.
  * Undefined is tolerated to enable the scenario where data was not initially versioned.
  */
 export type FormatVersion = number | string | undefined;
