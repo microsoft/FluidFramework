@@ -17,7 +17,7 @@
         "unused-imports:unused-imports",
         "@fluid-internal/fluid",
         "react",
-        "react-hooks"
+        "react-hooks:eslint-plugin-react-hooks@7.0.0"
     ],
     "rules": {
         "@babel/object-curly-spacing": [
@@ -1840,55 +1840,55 @@
             "always"
         ],
         "react-hooks/component-hook-factories": [
-            "error"
+            2
         ],
         "react-hooks/config": [
-            "error"
+            2
         ],
         "react-hooks/error-boundaries": [
-            "error"
+            2
         ],
         "react-hooks/exhaustive-deps": [
             1
         ],
         "react-hooks/gating": [
-            "error"
+            2
         ],
         "react-hooks/globals": [
-            "error"
+            2
         ],
         "react-hooks/immutability": [
-            "error"
+            2
         ],
         "react-hooks/incompatible-library": [
-            "warn"
+            1
         ],
         "react-hooks/preserve-manual-memoization": [
-            "error"
+            2
         ],
         "react-hooks/purity": [
-            "error"
+            2
         ],
         "react-hooks/refs": [
-            "error"
+            2
         ],
         "react-hooks/rules-of-hooks": [
             2
         ],
         "react-hooks/set-state-in-effect": [
-            "error"
+            2
         ],
         "react-hooks/set-state-in-render": [
-            "error"
+            2
         ],
         "react-hooks/static-components": [
-            "error"
+            2
         ],
         "react-hooks/unsupported-syntax": [
-            "warn"
+            1
         ],
         "react-hooks/use-memo": [
-            "error"
+            2
         ],
         "react/display-name": [
             2
