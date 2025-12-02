@@ -186,7 +186,7 @@ export {
 	KeyEncodingOptions,
 	type TreeParsingOptions,
 	incrementalSummaryHint,
-	getShouldIncrementallySummarizeAllowedTypes,
+	incrementalEncodingPolicyForAllowedTypes,
 	type SchemaFactory_base,
 } from "./api/index.js";
 export type {

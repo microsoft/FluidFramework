@@ -40,6 +40,7 @@ async function resolveHandleWithoutWait(
 		}
 		return response.value as ITestDataObject;
 	} catch (e) {
+		// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 		return Promise.reject(e);
 	}
 }

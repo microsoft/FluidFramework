@@ -8,7 +8,7 @@ import type { TreeNodeSchema, TreeNodeSchemaClass } from "@fluidframework/tree";
 import type { ZodType, ZodTypeAny, ZodTypeDef, infer as ZodInfer } from "zod";
 
 import type { BindableSchema, Ctor } from "./methodBinding.js";
-import { instanceOf } from "./utils.js";
+import { instanceOf } from "./renderZodTypeScript.js";
 
 /**
  * A symbol used to expose properties to the LLM.
@@ -43,6 +43,7 @@ export type IfEquals<X, Y, A = true, B = false> = (<T>() => T extends X ? 1 : 2)
  * @alpha
  */
 export type ReadonlyKeys<T> = {
+	// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
 	[P in keyof T]-?: IfEquals<{ [Q in P]: T[P] }, { -readonly [Q in P]: T[P] }, never, P>;
 }[keyof T];
 

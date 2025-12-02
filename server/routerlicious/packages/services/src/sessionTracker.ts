@@ -217,8 +217,8 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		});
 	}
 
-	public async pruneInactiveSessions(): Promise<void> {
-		return this.pruneInactiveSessionsCore().catch((error) => {
+	public async pruneInactiveSessions(limit?: number): Promise<void> {
+		return this.pruneInactiveSessionsCore(limit).catch((error) => {
 			Lumberjack.error("Failed to prune inactive sessions", undefined, error);
 			throw error;
 		});
@@ -249,7 +249,7 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		return true;
 	}
 
-	private async pruneInactiveSessionsCore(): Promise<void> {
+	private async pruneInactiveSessionsCore(limit?: number): Promise<void> {
 		// Add a buffer to the session activity timeout to prevent pruning sessions that are already
 		// being closed or have just been closed normally.
 		const inactiveSessionPruningBuffer = Math.round(0.1 * this.sessionActivityTimeoutMs);
@@ -273,7 +273,7 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 					error,
 				);
 			});
-		});
+		}, limit);
 	}
 
 	private async getSessionAndClients(

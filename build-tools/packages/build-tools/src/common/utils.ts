@@ -47,9 +47,15 @@ export async function execAsync(
 	pipeStdIn?: string,
 ): Promise<ExecAsyncResult> {
 	return new Promise((resolve) => {
-		const p = child_process.exec(command, options, (error, stdout, stderr) => {
-			resolve({ error, stdout, stderr });
-		});
+		// Explicitly set encoding to "utf8" to ensure stdout/stderr are strings, not Buffers.
+		// This makes the type assertions safe since exec() returns string | Buffer depending on encoding.
+		const p = child_process.exec(
+			command,
+			{ ...options, encoding: "utf8" },
+			(error, stdout, stderr) => {
+				resolve({ error, stdout: stdout as string, stderr: stderr as string });
+			},
+		);
 
 		if (pipeStdIn && p.stdin) {
 			p.stdin.write(pipeStdIn);

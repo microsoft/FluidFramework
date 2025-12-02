@@ -54,6 +54,7 @@ export {
 	parseStorageRoutingId,
 	persistLatestFullSummaryInStorage,
 	retrieveLatestFullSummaryFromStorage,
+	sizeof,
 	validateBlobContent,
 	validateBlobEncoding,
 } from "./helpers";

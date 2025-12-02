@@ -185,7 +185,7 @@ describe("Schema Comparison", () => {
 		updateTreeSchema(repo, emptyTree.name, emptyTree.schema);
 		const identifierField = fieldSchema(FieldKinds.identifier, [emptyTree.name]);
 		{
-			const result = FieldKinds.required.allowsFieldSuperset(
+			const result = FieldKinds.required.allowedMonotonicUpgrade(
 				defaultSchemaPolicy,
 				repo,
 				new Set([emptyTree.name]),
@@ -194,7 +194,7 @@ describe("Schema Comparison", () => {
 			assert.equal(result, false);
 		}
 		{
-			const result = FieldKinds.identifier.allowsFieldSuperset(
+			const result = FieldKinds.identifier.allowedMonotonicUpgrade(
 				defaultSchemaPolicy,
 				repo,
 				new Set([emptyTree.name]),

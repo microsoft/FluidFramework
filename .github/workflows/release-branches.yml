@@ -79,8 +79,8 @@ jobs:
         run: echo ${{ github.event.pull_request.head.sha }} > ./artifacts/commit_sha
 
       - name: Upload artifact
-        # release notes: https://github.com/actions/upload-artifact/releases/tag/v4.4.3
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # ratchet:actions/upload-artifact@v4
+        # release notes: https://github.com/actions/upload-artifact/releases/tag/v5.0.0
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # ratchet:actions/upload-artifact@v5
         with:
           name: release-branch-pr-metadata
           path: ./artifacts

@@ -16,8 +16,8 @@ USAGE
 FLAGS
   --orderFile=<value>  (required) A file with package names that should be promoted. Such files can be created using
                        `flub list`.
-  --token=<value>      (required) Azure DevOps access token. This parameter should be passed using the ADO_API_TOKEN
-                       environment variable for security purposes.
+  --token=<value>      (required) [env: ADO_API_TOKEN] Azure DevOps access token. This parameter should be passed using
+                       the ADO_API_TOKEN environment variable for security purposes.
   --version=<value>    (required) Version of the package to promote.
 
 LOGGING FLAGS

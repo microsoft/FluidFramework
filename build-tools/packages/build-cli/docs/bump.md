@@ -39,11 +39,11 @@ FLAGS
       --[no-]install                   Update lockfiles by running 'npm install' automatically.
       --scheme=<option>                Override the version scheme used by the release group or package.
                                        <options: semver|internal|virtualPatch>
-      --updateAllDeps                  Controls the behavior for updating dependencies in a package. If "false" (the
-                                       default), matching dependencies are only updated if they use the "workspace:"
-                                       protocol. If "true", they are updated regardless of what their version specifier
-                                       says. This flag only exists to allow use of the old behavior (by passing
-                                       `--updateAllDeps).
+      --updateAllDeps                  [env: FLUB_BUMP_UPDATE_ALL_DEPS] Controls the behavior for updating dependencies
+                                       in a package. If "false" (the default), matching dependencies are only updated if
+                                       they use the "workspace:" protocol. If "true", they are updated regardless of
+                                       what their version specifier says. This flag only exists to allow use of the old
+                                       behavior (by passing `--updateAllDeps).
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.

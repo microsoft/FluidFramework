@@ -449,7 +449,7 @@ export interface SchemaCompatibilityStatus {
 	 *
 	 * In these cases `canUpgrade` and `isEquivalent` will be false.
 	 *
-	 * When the documents allowed by the view schema is a strict superset of those by the stored schema,
+	 * When the set of documents allowed by the view schema is a strict superset of those allowed by the stored schema,
 	 * `canView` is false because writes to the document using the view schema could make the document violate its stored schema.
 	 * In this case, the stored schema could be updated to match the provided view schema, allowing read-write access to the tree.
 	 * See {@link SchemaCompatibilityStatus.canUpgrade}.

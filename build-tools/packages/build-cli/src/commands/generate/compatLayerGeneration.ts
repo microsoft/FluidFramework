@@ -21,8 +21,11 @@ import type { PackageSelectionDefault } from "../../flags.js";
 // Approximate month as 33 days to add some buffer and avoid over-counting months in longer spans.
 export const daysInMonthApproximation = 33;
 
-export default class UpdateGenerationCommand extends PackageCommand<
-	typeof UpdateGenerationCommand
+/**
+ * Command to update the generation value of Fluid's compatibility layers.
+ */
+export default class UpdateGenerationLayerCommand extends PackageCommand<
+	typeof UpdateGenerationLayerCommand
 > {
 	static readonly description =
 		"Updates the generation and release date for layer compatibility.";

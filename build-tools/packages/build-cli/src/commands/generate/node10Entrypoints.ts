@@ -8,14 +8,14 @@ import fs from "node:fs/promises";
 import type { PackageJson } from "@fluidframework/build-tools";
 import { ApiLevel, BaseCommand, knownApiLevels } from "../../library/index.js";
 // AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { readPackageJson, readTsConfig } from "../../library/package.js";
 
 import {
 	type Node10CompatExportData,
 	getTypesPathFromPackage,
 	// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../library/packageExports.js";
 import type { CommandLogger } from "../../logging.js";
 

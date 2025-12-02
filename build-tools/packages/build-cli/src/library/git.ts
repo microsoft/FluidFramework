@@ -17,7 +17,7 @@ import { getVersionsFromStrings } from "@fluid-tools/version-tools";
 import { parseISO } from "date-fns";
 import type { CommandLogger } from "../logging.js";
 import type { ReleaseGroup } from "../releaseGroups.js";
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 import { type Context, type VersionDetails, isMonoRepoKind } from "./context.js";
 
 const newlineCrossPlatform = /\r?\n/;
@@ -367,7 +367,7 @@ export class Repository implements GitContext {
 	 * @returns An array of all all the tags for the release group or package.
 	 */
 	public async getTagsForReleaseGroup(releaseGroupOrPackage: string): Promise<string[]> {
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		const prefix = isMonoRepoKind(releaseGroupOrPackage)
 			? releaseGroupOrPackage.toLowerCase()
 			: PackageName.getUnscopedName(releaseGroupOrPackage);

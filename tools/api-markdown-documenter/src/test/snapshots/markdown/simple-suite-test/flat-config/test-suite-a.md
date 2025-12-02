@@ -85,11 +85,11 @@ const foo = bar;
 
 # Namespaces
 
-| Namespace | Alerts | Description |
-| - | - | - |
-| [TestBetaNamespace](docs/test-suite-a#testbetanamespace-namespace) | `Beta` | A namespace tagged as `@beta`. |
-| [TestModule](docs/test-suite-a#testmodule-namespace) | | |
-| [TestNamespace](docs/test-suite-a#testnamespace-namespace) | | Test Namespace |
+| Namespace | Alerts | Modifiers | Description |
+| - | - | - | - |
+| [TestBetaNamespace](docs/test-suite-a#testbetanamespace-namespace) | `Beta` | `sealed` | A namespace tagged as `@beta`. |
+| [TestModule](docs/test-suite-a#testmodule-namespace) | | | |
+| [TestNamespace](docs/test-suite-a#testnamespace-namespace) | | | Test Namespace |
 
 # Interface Details
 
@@ -1181,6 +1181,7 @@ A namespace tagged as `@beta`.
 <h3 id="testbetanamespace-signature">Signature</h3>
 
 ```typescript
+/** @sealed */
 export declare namespace TestBetaNamespace
 ```
 

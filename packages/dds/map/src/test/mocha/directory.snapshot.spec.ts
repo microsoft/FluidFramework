@@ -126,7 +126,7 @@ function generateTestScenarios(): TestScenario[] {
 
 describe("SharedDirectory Snapshot Tests", () => {
 	// Set up the directory path for reading/writing snapshots and generate tests
-	assert(_dirname.match(/(dist|lib)[/\\]test[/\\]mocha$/));
+	assert(/(dist|lib)[/\\]test[/\\]mocha$/.exec(_dirname));
 	const testScenarios = generateTestScenarios();
 	const { takeSnapshot, readSnapshot } = createSnapshotSuite(
 		path.resolve(_dirname, `../../../src/test/mocha/snapshots/`),

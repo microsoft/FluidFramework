@@ -27,7 +27,7 @@ export {
 	type SummaryElementParser,
 	type SummaryElementStringifier,
 	type ClonableSchemaAndPolicy,
-	type SharedTreeCoreOptionsInternal as SharedTreCoreOptionsInternal,
+	type SharedTreeCoreOptionsInternal,
 } from "./sharedTreeCore.js";
 
 export type { ResubmitMachine } from "./resubmitMachine.js";

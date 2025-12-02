@@ -294,6 +294,7 @@ export class TreeNodeKernel {
 	}
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const kernelEvents = ["childrenChangedAfterBatch", "subtreeChangedAfterBatch"] as const;
 
 type KernelEvents = Pick<AnchorEvents, (typeof kernelEvents)[number]>;

@@ -165,7 +165,7 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 const singleNodeField = new FlexFieldKind(
 	brandConst("SingleNode")<FieldKindIdentifier>(),
 	Multiplicity.Single,
-	{ changeHandler: singleNodeHandler, allowsTreeSupersetOf: (a, b) => false },
+	{ changeHandler: singleNodeHandler, allowedMonotonicUpgrade: (a, b) => false },
 );
 
 export const fieldKindConfiguration: FieldKindConfiguration = new Map<
@@ -1172,7 +1172,7 @@ describe("ModularChangeFamily", () => {
 		} as unknown as FieldChangeHandler<HasRemovedRootsRefs, FieldEditor<HasRemovedRootsRefs>>;
 		const hasRemovedRootsRefsField = new FlexFieldKind(fieldKind, Multiplicity.Single, {
 			changeHandler: handler,
-			allowsTreeSupersetOf: (a, b) => false,
+			allowedMonotonicUpgrade: (a, b) => false,
 		});
 		const mockFieldKinds = new Map([[fieldKind, hasRemovedRootsRefsField]]);
 

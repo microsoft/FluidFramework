@@ -17,12 +17,10 @@ import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index
 import {
 	ForestSummarizer,
 	TreeCompressionStrategy,
-	TreeCompressionStrategyExtended,
 	defaultSchemaPolicy,
 	makeFieldBatchCodec,
 	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
-	type TreeCompressionStrategyPrivate,
 } from "../../../feature-libraries/index.js";
 import {
 	checkoutWithContent,
@@ -39,7 +37,7 @@ import {
 	type TreeCheckout,
 } from "../../../shared-tree/index.js";
 import {
-	getShouldIncrementallySummarizeAllowedTypes,
+	incrementalEncodingPolicyForAllowedTypes,
 	incrementalSummaryHint,
 	permissiveStoredSchemaGenerationOptions,
 	SchemaFactory,
@@ -51,11 +49,10 @@ import {
 import { fieldJsonCursor } from "../../json/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { forestSummaryContentKey } from "../../../feature-libraries/forest-summary/incrementalSummaryBuilder.js";
-import type { FieldKey, TreeNodeSchemaIdentifier } from "../../../core/index.js";
 
 function createForestSummarizer(args: {
 	// The encoding strategy to use when summarizing the forest.
-	encodeType: TreeCompressionStrategyPrivate;
+	encodeType: TreeCompressionStrategy;
 	// The type of forest to create.
 	forestType: ForestType;
 	// The content and schema to initialize the forest with. By default, it is an empty forest.
@@ -288,8 +285,8 @@ describe("ForestSummarizer", () => {
 				};
 
 				const shouldEncodeIncrementally = (
-					nodeIdentifier: TreeNodeSchemaIdentifier | undefined,
-					fieldKey: FieldKey,
+					nodeIdentifier: string | undefined,
+					fieldKey: string,
 				): boolean => {
 					if (nodeIdentifier === SimpleObject.identifier && fieldKey === "foo") {
 						return true;
@@ -299,7 +296,7 @@ describe("ForestSummarizer", () => {
 
 				const { forestSummarizer } = createForestSummarizer({
 					initialContent,
-					encodeType: TreeCompressionStrategyExtended.CompressedIncremental,
+					encodeType: TreeCompressionStrategy.CompressedIncremental,
 					forestType: ForestTypeOptimized,
 					shouldEncodeIncrementally,
 				});
@@ -319,7 +316,7 @@ describe("ForestSummarizer", () => {
 				// Validate that the forest can successfully load from the above summary.
 				const mockStorage = MockStorage.createFromSummary(summary.summary);
 				const { forestSummarizer: forestSummarizer2 } = createForestSummarizer({
-					encodeType: TreeCompressionStrategyExtended.CompressedIncremental,
+					encodeType: TreeCompressionStrategy.CompressedIncremental,
 					forestType: ForestTypeOptimized,
 					shouldEncodeIncrementally,
 				});
@@ -363,7 +360,7 @@ describe("ForestSummarizer", () => {
 			 * Sets up the forest summarizer for incremental summarization. It creates a forest and sets up some
 			 * of the fields to support incremental encoding.
 			 * Note that it creates a chunked forest of type `ForestTypeOptimized` with compression strategy
-			 * `TreeCompressionStrategyExtended.CompressedIncremental` since incremental summarization is only
+			 * `TreeCompressionStrategy.CompressedIncremental` since incremental summarization is only
 			 * supported by this combination.
 			 */
 			function setupForestForIncrementalSummarization(initialBoard: Root | undefined) {
@@ -377,9 +374,9 @@ describe("ForestSummarizer", () => {
 
 				return createForestSummarizer({
 					initialContent,
-					encodeType: TreeCompressionStrategyExtended.CompressedIncremental,
+					encodeType: TreeCompressionStrategy.CompressedIncremental,
 					forestType: ForestTypeOptimized,
-					shouldEncodeIncrementally: getShouldIncrementallySummarizeAllowedTypes(
+					shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(
 						new TreeViewConfigurationAlpha({ schema: Root }),
 					),
 				});

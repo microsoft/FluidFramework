@@ -17,7 +17,7 @@ USAGE
     <value>...] [--tarball] [--outFile <value>]
 
 ARGUMENTS
-  PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
+  [PACKAGE_OR_RELEASE_GROUP]  The name of a package or a release group.
 
 FLAGS
   -g, --releaseGroup=<option>  Name of a release group.
