@@ -103,6 +103,7 @@ export namespace System_TableSchema {
 		/**
 		 * Schema factory with which the Column schema will be associated.
 		 * @remarks Can be used to associate the resulting schema with an existing {@link SchemaFactory.scope|scope}.
+		 * The resulting schema will have an identifier of the form: `com.fluidframework.table<${TUserScope}>.<Column|Row|Table>`.
 		 */
 		readonly schemaFactory: TSchemaFactory;
 	}
