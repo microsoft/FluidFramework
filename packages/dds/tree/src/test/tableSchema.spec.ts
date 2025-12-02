@@ -12,6 +12,7 @@ import {
 	getJsonSchema,
 	KeyEncodingOptions,
 	SchemaFactoryAlpha,
+	SchemaFactoryBeta,
 	TreeBeta,
 	type ConciseTree,
 	type TreeNode,
@@ -27,7 +28,6 @@ import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshots/index.js";
 import { describeHydration } from "./simple-tree/utils.js";
 
 // Test TODOs:
-// - Table schema with recursive inner types
 // - Verify that nodes constructed from table schema with different input scopes are not assignable to one another.
 
 const schemaFactory = new SchemaFactoryAlpha("test");
@@ -68,7 +68,7 @@ class Table extends TableSchema.table({
 	row: Row,
 }) {}
 
-describe("TableFactory unit tests", () => {
+describe.only("TableFactory unit tests", () => {
 	/**
 	 * Compares a tree with an expected "concise" tree representation.
 	 * Fails if they are not equivalent.
@@ -1510,6 +1510,51 @@ describe("TableFactory unit tests", () => {
 
 			// Get column (nonexistent ID)
 			assert(table.getColumn("foo") === undefined);
+		});
+	});
+
+	describeHydration("Recursive tables", (initializeTree) => {
+		it("Can create table schema with recursive types", () => {
+			const mySchemaFactory = new SchemaFactoryBeta("test-recursive");
+			class MyCell extends mySchemaFactory.objectRecursive("MyCell", {
+				title: mySchemaFactory.string,
+				subTable: mySchemaFactory.optionalRecursive([() => MyTable]),
+			}) {}
+
+			class MyColumn extends TableSchema.column({
+				schemaFactory: mySchemaFactory,
+				cell: MyCell,
+			}) {}
+
+			class MyRow extends TableSchema.row({
+				schemaFactory: mySchemaFactory,
+				cell: MyCell,
+			}) {}
+
+			class MyTable extends TableSchema.table({
+				schemaFactory: mySchemaFactory,
+				cell: MyCell,
+				column: MyColumn,
+				row: MyRow,
+			}) {}
+
+			initializeTree(MyTable, {
+				columns: [new MyColumn({ id: "column-0" })],
+				rows: [
+					new MyRow({
+						id: "row-0",
+						cells: {
+							"column-0": new MyCell({
+								title: "0-0",
+								subTable: new MyTable({
+									columns: [],
+									rows: [],
+								}),
+							}),
+						},
+					}),
+				],
+			});
 		});
 	});
 
