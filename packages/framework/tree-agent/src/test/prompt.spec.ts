@@ -325,7 +325,7 @@ function getView<TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
 	initialTree: InsertableField<TSchema>,
 ): TreeView<TSchema> {
-	const view = independentView(new TreeViewConfiguration({ schema }), {});
+	const view = independentView(new TreeViewConfiguration({ schema }));
 	view.initialize(initialTree);
 	return view;
 }

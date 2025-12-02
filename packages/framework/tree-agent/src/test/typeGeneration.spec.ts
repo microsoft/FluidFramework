@@ -259,7 +259,7 @@ type MapWithProperty = Map<string, string> & {
 	});
 
 	it("includes TypeScript types for node schema", () => {
-		const view = independentView(new TreeViewConfiguration({ schema: TestTodoAppSchema }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: TestTodoAppSchema }));
 		view.initialize(initialAppState);
 
 		const schema = getSimpleSchema(view.schema);
@@ -288,7 +288,7 @@ function getDomainSchemaString<TSchema extends ImplicitFieldSchema>(
 	schemaClass: TSchema,
 	initialValue: InsertableField<TSchema>,
 ): string {
-	const view = independentView(new TreeViewConfiguration({ schema: schemaClass }), {});
+	const view = independentView(new TreeViewConfiguration({ schema: schemaClass }));
 	view.initialize(initialValue);
 	const schema = getSimpleSchema(view.schema);
 	const { schemaText } = generateEditTypesForPrompt(view.schema, schema);

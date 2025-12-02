@@ -114,7 +114,7 @@ async function queryDomain<TSchema extends ImplicitFieldSchema>(
 		readonly log?: (text: string) => void;
 	},
 ): Promise<TreeView<TSchema>> {
-	const view = independentView(new TreeViewConfiguration({ schema }), {});
+	const view = independentView(new TreeViewConfiguration({ schema }));
 	view.initialize(initialTree);
 	const client = createLangchainChatModel(createLlmClient(provider));
 	const logger = options?.log === undefined ? undefined : { log: options.log };
