@@ -783,8 +783,7 @@ describe("Presence", () => {
 				// Act & Verify
 				assert.throws(
 					() => processUnrecognizedMessage({ optional: false }),
-					(e: Error) =>
-						validateAssertionError(e, /Unrecognized message type in critical message/),
+					validateAssertionError(/Unrecognized message type in critical message/),
 				);
 
 				// Verify

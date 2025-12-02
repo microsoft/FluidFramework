@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.72.0",
+	"version": "2.74.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -166,10 +166,10 @@
 		"@biomejs/biome": "~1.9.3",
 		"@changesets/cli": "^2.27.8",
 		"@fluid-private/changelog-generator-wrapper": "workspace:~",
-		"@fluid-tools/build-cli": "^0.58.3",
+		"@fluid-tools/build-cli": "^0.60.0",
 		"@fluid-tools/markdown-magic": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.58.3",
+		"@fluidframework/build-tools": "^0.60.0",
 		"@fluidframework/eslint-config-fluid": "workspace:^",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@microsoft/api-extractor": "7.52.11",
@@ -403,6 +403,7 @@
 			"@vvago/vale",
 			"classic-level",
 			"core-js",
+			"esbuild",
 			"keytar",
 			"msgpackr-extract",
 			"puppeteer",

@@ -365,6 +365,7 @@ describe("simpleSchemaToJsonSchema", () => {
 						kind: NodeKind.Object,
 						metadata: {},
 						persistedMetadata: undefined,
+						allowUnknownOptionalFields: false,
 						fields: new Map([
 							[
 								"foo",
@@ -510,6 +511,7 @@ describe("simpleSchemaToJsonSchema", () => {
 						kind: NodeKind.Object,
 						metadata: {},
 						persistedMetadata: undefined,
+						allowUnknownOptionalFields: false,
 						fields: new Map([
 							[
 								"id",
@@ -570,6 +572,7 @@ describe("simpleSchemaToJsonSchema", () => {
 						kind: NodeKind.Object,
 						metadata: {},
 						persistedMetadata: undefined,
+						allowUnknownOptionalFields: false,
 						fields: new Map([
 							[
 								"foo",
@@ -640,6 +643,7 @@ describe("simpleSchemaToJsonSchema", () => {
 						kind: NodeKind.Object,
 						metadata: {},
 						persistedMetadata: undefined,
+						allowUnknownOptionalFields: false,
 						fields: new Map([
 							[
 								"foo",

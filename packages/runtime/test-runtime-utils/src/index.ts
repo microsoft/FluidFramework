@@ -28,4 +28,9 @@ export {
 	MockContainerRuntimeForReconnection,
 } from "./mocksForReconnection.js";
 export { MockStorage } from "./mockStorage.js";
-export { validateAssertionError } from "./validateAssertionError.js";
+export {
+	validateAssertionError,
+	validateUsageError,
+	validateTypeError,
+	validateError,
+} from "./validateAssertionError.js";

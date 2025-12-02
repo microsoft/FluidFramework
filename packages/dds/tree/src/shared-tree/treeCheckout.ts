@@ -51,7 +51,7 @@ import {
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
-	type TreeCompressionStrategyPrivate,
+	type TreeCompressionStrategy,
 	allowsRepoSuperset,
 	buildForest,
 	createNodeIdentifierManager,
@@ -287,7 +287,7 @@ export function createTreeCheckout(
 		forest?: IEditableForest;
 		fieldBatchCodec?: FieldBatchCodec;
 		removedRoots?: DetachedFieldIndex;
-		chunkCompressionStrategy?: TreeCompressionStrategyPrivate;
+		chunkCompressionStrategy?: TreeCompressionStrategy;
 		logger?: ITelemetryLoggerExt;
 		breaker?: Breakable;
 		disposeForksAfterTransaction?: boolean;

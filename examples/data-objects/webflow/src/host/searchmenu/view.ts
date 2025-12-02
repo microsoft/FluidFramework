@@ -15,7 +15,7 @@ export interface IView<TInit, TProps> {
 	detach(): void;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export abstract class View<TInit extends TProps, TProps = {} | undefined>
 	implements IView<TInit, TProps>
 {

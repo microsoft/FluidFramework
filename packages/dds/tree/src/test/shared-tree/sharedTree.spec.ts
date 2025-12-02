@@ -12,6 +12,7 @@ import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
+	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type TestFluidObjectInternal,
@@ -29,6 +30,7 @@ import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	EmptyKey,
+	ValueSchema,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
@@ -68,6 +70,10 @@ import {
 	SchemaFactoryAlpha,
 	type ITree,
 	toInitialSchema,
+	NodeKind,
+	type SimpleTreeSchema,
+	FieldKind,
+	type SimpleLeafNodeSchema,
 } from "../../simple-tree/index.js";
 import { brand } from "../../util/index.js";
 import {
@@ -80,7 +86,6 @@ import {
 	expectSchemaEqual,
 	validateTreeConsistency,
 	validateTreeContent,
-	validateUsageError,
 	StringArray,
 	NumberArray,
 	validateViewConsistency,
@@ -2499,14 +2504,29 @@ describe("SharedTree", () => {
 		view.initialize(10);
 
 		assert.deepEqual(tree.exportVerbose(), 10);
-		assert.deepEqual(
-			tree.exportSimpleSchema(),
-			toSimpleTreeSchema(
-				numberSchema,
-				true,
-				false /* Don't process this schema as a view schema (exclude isStaged from simpleAllowedTypes). */,
-			),
-		);
+
+		const expected: SimpleTreeSchema = {
+			root: {
+				kind: FieldKind.Required,
+				simpleAllowedTypes: new Map([
+					["com.fluidframework.leaf.number", { isStaged: undefined }],
+				]),
+				metadata: {},
+				persistedMetadata: undefined,
+			},
+			definitions: new Map([
+				[
+					"com.fluidframework.leaf.number",
+					{
+						kind: NodeKind.Leaf,
+						leafKind: ValueSchema.Number,
+						metadata: {},
+						persistedMetadata: undefined,
+					} satisfies SimpleLeafNodeSchema,
+				],
+			]),
+		};
+		assert.deepEqual(tree.exportSimpleSchema(), expected);
 	});
 
 	it("supports multiple shared branches", () => {
