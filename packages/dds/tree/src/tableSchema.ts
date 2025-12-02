@@ -13,7 +13,7 @@ import {
 	type InsertableObjectFromSchemaRecord,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeKind,
-	type SchemaFactoryBeta,
+	SchemaFactoryBeta,
 	type ScopedSchemaName,
 	TreeArrayNode,
 	type TreeNode,
@@ -31,6 +31,8 @@ import {
 } from "./simple-tree/index.js";
 import { validateIndex, validateIndexRange } from "./util/index.js";
 
+// TODO (before check-in): Rename "TScope" to "TFactoryScope" (or something) to better hint that there is more that goes into the final identifier scope.
+
 // Future improvement TODOs:
 // - Omit `cells` property from Row insertion type.
 // - Record-like type parameters / input parameters?
@@ -40,9 +42,10 @@ import { validateIndex, validateIndexRange } from "./util/index.js";
 // - Add constraint APIs to make it possible to avoid situations that could yield "orphaned" cells.
 
 /**
- * The sub-scope applied to user-provided {@link SchemaFactory}s by table schema factories.
+ * Scope for table schema built-in types.
+ * @remarks User-provided factory scoping will be applied as `com.fluidframework.table<user-scope>`.
  */
-const tableSchemaFactorySubScope = "table";
+const baseSchemaScope = "com.fluidframework.table";
 
 /**
  * A private symbol put on table schema to help identify them.
@@ -127,7 +130,8 @@ export namespace System_TableSchema {
 	 * @system @alpha
 	 */
 	export type CreateColumnOptionsBase<
-		TSchemaFactory extends SchemaFactoryBeta = SchemaFactoryBeta,
+		TScope extends string = string,
+		TSchemaFactory extends SchemaFactoryBeta<TScope> = SchemaFactoryBeta<TScope>,
 		TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	> = OptionsWithSchemaFactory<TSchemaFactory> & OptionsWithCellSchema<TCell>;
 
@@ -137,12 +141,12 @@ export namespace System_TableSchema {
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createColumnSchema<
-		const TInputScope extends string | undefined,
+		const TInputScope extends string,
 		const TCellSchema extends ImplicitAllowedTypes,
 		const TPropsSchema extends ImplicitFieldSchema,
 	>(inputSchemaFactory: SchemaFactoryBeta<TInputScope>, propsSchema: TPropsSchema) {
-		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
-		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
+		const schemaFactory = createTableScopedFactory(inputSchemaFactory);
+		type Scope = typeof schemaFactory.scope;
 
 		// Note: `columnFields` is broken into two parts to work around a TypeScript bug
 		// that results in broken `.d.ts` output.
@@ -252,7 +256,7 @@ export namespace System_TableSchema {
 	 * @sealed @system @alpha
 	 */
 	export type ColumnSchemaBase<
-		TScope extends string | undefined = string | undefined,
+		TScope extends string = string,
 		TCellSchema extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 		TPropsSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
 	> = ReturnType<typeof createColumnSchema<TScope, TCellSchema, TPropsSchema>>;
@@ -267,7 +271,8 @@ export namespace System_TableSchema {
 	 * @system @alpha
 	 */
 	export type CreateRowOptionsBase<
-		TSchemaFactory extends SchemaFactoryBeta = SchemaFactoryBeta,
+		TScope extends string = string,
+		TSchemaFactory extends SchemaFactoryBeta<TScope> = SchemaFactoryBeta<TScope>,
 		TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	> = OptionsWithSchemaFactory<TSchemaFactory> & OptionsWithCellSchema<TCell>;
 
@@ -277,7 +282,7 @@ export namespace System_TableSchema {
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createRowSchema<
-		const TInputScope extends string | undefined,
+		const TInputScope extends string,
 		const TCellSchema extends ImplicitAllowedTypes,
 		const TPropsSchema extends ImplicitFieldSchema,
 	>(
@@ -285,8 +290,8 @@ export namespace System_TableSchema {
 		cellSchema: TCellSchema,
 		propsSchema: TPropsSchema,
 	) {
-		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
-		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
+		const schemaFactory = createTableScopedFactory(inputSchemaFactory);
+		type Scope = typeof schemaFactory.scope;
 
 		// Note: `rowFields` is broken into two parts to work around a TypeScript bug
 		// that results in broken `.d.ts` output.
@@ -404,7 +409,7 @@ export namespace System_TableSchema {
 	 * @sealed @system @alpha
 	 */
 	export type RowSchemaBase<
-		TScope extends string | undefined = string | undefined,
+		TScope extends string = string,
 		TCellSchema extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 		TPropsSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
 	> = ReturnType<typeof createRowSchema<TScope, TCellSchema, TPropsSchema>>;
@@ -419,7 +424,8 @@ export namespace System_TableSchema {
 	 * @system @alpha
 	 */
 	export type TableFactoryOptionsBase<
-		TSchemaFactory extends SchemaFactoryBeta = SchemaFactoryBeta,
+		TScope extends string = string,
+		TSchemaFactory extends SchemaFactoryBeta<TScope> = SchemaFactoryBeta<TScope>,
 		TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	> = OptionsWithSchemaFactory<TSchemaFactory> & OptionsWithCellSchema<TCell>;
 
@@ -429,7 +435,7 @@ export namespace System_TableSchema {
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createTableSchema<
-		const TInputScope extends string | undefined,
+		const TInputScope extends string,
 		const TCellSchema extends ImplicitAllowedTypes,
 		const TColumnSchema extends ColumnSchemaBase<TInputScope, TCellSchema>,
 		const TRowSchema extends RowSchemaBase<TInputScope, TCellSchema>,
@@ -439,8 +445,8 @@ export namespace System_TableSchema {
 		columnSchema: TColumnSchema,
 		rowSchema: TRowSchema,
 	) {
-		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
-		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
+		const schemaFactory = createTableScopedFactory(inputSchemaFactory);
+		type Scope = typeof schemaFactory.scope;
 
 		type CellValueType = TreeNodeFromImplicitAllowedTypes<TCellSchema>;
 		type ColumnValueType = TreeNodeFromImplicitAllowedTypes<TColumnSchema>;
@@ -929,13 +935,19 @@ export namespace System_TableSchema {
 	 * @sealed @system @alpha
 	 */
 	export type TableSchemaBase<
-		TScope extends string | undefined,
+		TScope extends string,
 		TCell extends ImplicitAllowedTypes,
 		TColumn extends ColumnSchemaBase<TScope, TCell>,
 		TRow extends RowSchemaBase<TScope, TCell>,
 	> = ReturnType<typeof createTableSchema<TScope, TCell, TColumn, TRow>>;
 
 	// #endregion
+}
+
+function createTableScopedFactory<TInputScope extends string>(
+	inputSchemaFactory: SchemaFactoryBeta<TInputScope>,
+): SchemaFactoryBeta<`${typeof baseSchemaScope}<${TInputScope}>`> {
+	return new SchemaFactoryBeta(`${baseSchemaScope}<${inputSchemaFactory.scope}>`);
 }
 
 /**
@@ -1114,10 +1126,14 @@ export namespace TableSchema {
 	 * @alpha
 	 */
 	export function column<
-		const TScope extends string | undefined,
+		const TScope extends string,
 		const TCell extends ImplicitAllowedTypes,
 	>(
-		params: System_TableSchema.CreateColumnOptionsBase<SchemaFactoryBeta<TScope>, TCell>,
+		params: System_TableSchema.CreateColumnOptionsBase<
+			TScope,
+			SchemaFactoryBeta<TScope>,
+			TCell
+		>,
 	): System_TableSchema.ColumnSchemaBase<TScope, TCell, System_TableSchema.DefaultPropsType>;
 	/**
 	 * Factory for creating new table column schema.
@@ -1127,11 +1143,15 @@ export namespace TableSchema {
 	 * @alpha
 	 */
 	export function column<
-		const TScope extends string | undefined,
+		const TScope extends string,
 		const TCell extends ImplicitAllowedTypes,
 		const TProps extends ImplicitFieldSchema,
 	>(
-		params: System_TableSchema.CreateColumnOptionsBase<SchemaFactoryBeta<TScope>, TCell> & {
+		params: System_TableSchema.CreateColumnOptionsBase<
+			TScope,
+			SchemaFactoryBeta<TScope>,
+			TCell
+		> & {
 			/**
 			 * Optional column properties.
 			 */
@@ -1190,11 +1210,8 @@ export namespace TableSchema {
 	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
 	 * @alpha
 	 */
-	export function row<
-		const TScope extends string | undefined,
-		const TCell extends ImplicitAllowedTypes,
-	>(
-		params: System_TableSchema.CreateRowOptionsBase<SchemaFactoryBeta<TScope>, TCell>,
+	export function row<const TScope extends string, const TCell extends ImplicitAllowedTypes>(
+		params: System_TableSchema.CreateRowOptionsBase<TScope, SchemaFactoryBeta<TScope>, TCell>,
 	): System_TableSchema.RowSchemaBase<TScope, TCell, System_TableSchema.DefaultPropsType>;
 	/**
 	 * Factory for creating new table row schema.
@@ -1204,11 +1221,15 @@ export namespace TableSchema {
 	 * @alpha
 	 */
 	export function row<
-		const TScope extends string | undefined,
+		const TScope extends string,
 		const TCell extends ImplicitAllowedTypes,
 		const TProps extends ImplicitFieldSchema,
 	>(
-		params: System_TableSchema.CreateRowOptionsBase<SchemaFactoryBeta<TScope>, TCell> & {
+		params: System_TableSchema.CreateRowOptionsBase<
+			TScope,
+			SchemaFactoryBeta<TScope>,
+			TCell
+		> & {
 			/**
 			 * Optional row properties.
 			 */
@@ -1314,7 +1335,7 @@ export namespace TableSchema {
 	 * @sealed @alpha
 	 */
 	export interface Table<
-		TScope extends string | undefined,
+		TScope extends string,
 		TCell extends ImplicitAllowedTypes,
 		TColumn extends System_TableSchema.ColumnSchemaBase<TScope, TCell>,
 		TRow extends System_TableSchema.RowSchemaBase<TScope, TCell>,
@@ -1478,14 +1499,16 @@ export namespace TableSchema {
 	/**
 	 * Factory for creating new table schema.
 	 * @typeParam TScope - The {@link SchemaFactory.scope | schema factory scope}.
+	 * The resulting schema will have an identifier of the form: `com.fluidframework.table<${TScope}>.Table`.
 	 * @typeParam TCell - The type of the cells in the table.
 	 * @alpha
 	 */
-	export function table<
-		const TScope extends string | undefined,
-		const TCell extends ImplicitAllowedTypes,
-	>(
-		params: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryBeta<TScope>, TCell>,
+	export function table<const TScope extends string, const TCell extends ImplicitAllowedTypes>(
+		params: System_TableSchema.TableFactoryOptionsBase<
+			TScope,
+			SchemaFactoryBeta<TScope>,
+			TCell
+		>,
 	): System_TableSchema.TableSchemaBase<
 		TScope,
 		TCell,
@@ -1495,16 +1518,21 @@ export namespace TableSchema {
 	/**
 	 * Factory for creating new table schema with custom column schema.
 	 * @typeParam TScope - The {@link SchemaFactory.scope | schema factory scope}.
+	 * The resulting schema will have an identifier of the form: `com.fluidframework.table<${TScope}>.Table`.
 	 * @typeParam TCell - The type of the cells in the table.
 	 * @typeParam TColumn - The type of the columns in the table.
 	 * @alpha
 	 */
 	export function table<
-		const TScope extends string | undefined,
+		const TScope extends string,
 		const TCell extends ImplicitAllowedTypes,
 		const TColumn extends System_TableSchema.ColumnSchemaBase<TScope, TCell>,
 	>(
-		params: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryBeta<TScope>, TCell> & {
+		params: System_TableSchema.TableFactoryOptionsBase<
+			TScope,
+			SchemaFactoryBeta<TScope>,
+			TCell
+		> & {
 			readonly column: TColumn;
 		},
 	): System_TableSchema.TableSchemaBase<
@@ -1516,16 +1544,21 @@ export namespace TableSchema {
 	/**
 	 * Factory for creating new table schema with custom row schema.
 	 * @typeParam TScope - The {@link SchemaFactory.scope | schema factory scope}.
+	 * The resulting schema will have an identifier of the form: `com.fluidframework.table<${TScope}>.Table`.
 	 * @typeParam TCell - The type of the cells in the table.
 	 * @typeParam TRow - The type of the rows in the table.
 	 * @alpha
 	 */
 	export function table<
-		const TScope extends string | undefined,
+		const TScope extends string,
 		const TCell extends ImplicitAllowedTypes,
 		const TRow extends System_TableSchema.RowSchemaBase<TScope, TCell>,
 	>(
-		params: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryBeta<TScope>, TCell> & {
+		params: System_TableSchema.TableFactoryOptionsBase<
+			TScope,
+			SchemaFactoryBeta<TScope>,
+			TCell
+		> & {
 			readonly row: TRow;
 		},
 	): System_TableSchema.TableSchemaBase<
@@ -1537,18 +1570,23 @@ export namespace TableSchema {
 	/**
 	 * Factory for creating new table schema with custom column and row schema.
 	 * @typeParam TScope - The {@link SchemaFactory.scope | schema factory scope}.
+	 * The resulting schema will have an identifier of the form: `com.fluidframework.table<${TScope}>.Table`.
 	 * @typeParam TCell - The type of the cells in the table.
 	 * @typeParam TColumn - The type of the columns in the table.
 	 * @typeParam TRow - The type of the rows in the table.
 	 * @alpha
 	 */
 	export function table<
-		const TScope extends string | undefined,
+		const TScope extends string,
 		const TCell extends ImplicitAllowedTypes,
 		const TColumn extends System_TableSchema.ColumnSchemaBase<TScope, TCell>,
 		const TRow extends System_TableSchema.RowSchemaBase<TScope, TCell>,
 	>(
-		params: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryBeta<TScope>, TCell> & {
+		params: System_TableSchema.TableFactoryOptionsBase<
+			TScope,
+			SchemaFactoryBeta<TScope>,
+			TCell
+		> & {
 			readonly column: TColumn;
 			readonly row: TRow;
 		},

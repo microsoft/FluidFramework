@@ -26,6 +26,10 @@ import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshots/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { describeHydration } from "./simple-tree/utils.js";
 
+// Test TODOs:
+// - Table schema with recursive inner types
+// - Verify that nodes constructed from table schema with different input scopes are not assignable to one another.
+
 const schemaFactory = new SchemaFactoryAlpha("test");
 
 class Cell extends schemaFactory.object("table-cell", {
