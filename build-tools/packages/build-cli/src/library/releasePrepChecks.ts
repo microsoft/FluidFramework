@@ -230,30 +230,60 @@ export const CheckNoUntaggedAsserts: CheckFunction = async (
 };
 
 /**
- * Runs the compatibility layer generation command and checks if it made any changes to the repository.
+ * Checks if any packages need a compatibility layer generation update.
  * This is a shared helper function used by both the prepare command checks and the state machine checks.
  *
  * @param context - The repository context.
- * @returns `true` if no changes were made (i.e., layer generation is up to date), `false` otherwise.
+ * @returns `true` if all packages have up-to-date layer generation metadata, `false` if any updates are needed.
  */
 export async function runCompatLayerGenerationCheck(context: Context): Promise<boolean> {
-	// layerGeneration:gen should be run from the root. It will only update packages that have the layerGeneration:gen
-	// script defined in their package.json.
-	await execa("pnpm", ["run", "-r", "layerGeneration:gen"], {
-		cwd: context.root,
-	});
+	const { maybeGetNewGeneration, isCurrentPackageVersionPatch } = await import(
+		// library is overloaded with too much stuff now, and we should consider allowing interior imports.
+		// eslint-disable-next-line import/no-internal-modules
+		"../commands/generate/layerCompatGeneration.js"
+	);
 
-	// check if the command made any changes
-	const gitRepo = await context.getGitRepository();
-	const afterGenStatus = await gitRepo.gitClient.status();
-	const isClean = afterGenStatus.isClean();
+	// Check all packages that have fluidCompatMetadata
+	for (const pkg of context.fullPackageMap.values()) {
+		const { fluidCompatMetadata } = pkg.packageJson;
+		
+		// Skip packages without compatibility metadata
+		if (fluidCompatMetadata === undefined) {
+			continue;
+		}
 
-	// Reset any changes that were made
-	if (!isClean) {
-		await gitRepo.gitClient.reset(ResetMode.HARD);
+		const currentPkgVersion = pkg.version;
+		
+		// Skip patch versions as they don't trigger generation updates
+		if (isCurrentPackageVersionPatch(currentPkgVersion)) {
+			continue;
+		}
+
+		// Use a no-op logger since we don't want verbose output during checks
+		const noopLogger = {
+			verbose: () => {},
+			info: () => {},
+			warning: () => {},
+			errorLog: () => {},
+		};
+
+		// Check if this package needs a generation update
+		// Using default minimumCompatWindowMonths of 3 (same as the command default)
+		const newGeneration = maybeGetNewGeneration(
+			currentPkgVersion,
+			fluidCompatMetadata,
+			3, // minimumCompatWindowMonths default
+			noopLogger,
+		);
+
+		// If any package needs an update, return false
+		if (newGeneration !== undefined) {
+			return false;
+		}
 	}
 
-	return isClean;
+	// All packages are up to date
+	return true;
 }
 
 /**
