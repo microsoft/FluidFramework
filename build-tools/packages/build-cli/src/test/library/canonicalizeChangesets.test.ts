@@ -210,17 +210,14 @@ describe("canonicalizeChangesets", () => {
 	});
 
 	it("should write all changesets in parallel", async () => {
-		// Create multiple changesets
-		const writePromises: Promise<void>[] = [];
+		// Create multiple changesets (serially to avoid git lock conflicts)
 		for (let i = 0; i < 10; i++) {
-			writePromises.push(
-				writeChangesetFile(
-					`change-${i}.md`,
-					`---\n"@fluid/package-${i}": patch\n"__custom": "metadata"\n---\n\nChange ${i}\n\nDetailed description.\n`,
-				),
+			// eslint-disable-next-line no-await-in-loop
+			await writeChangesetFile(
+				`change-${i}.md`,
+				`---\n"@fluid/package-${i}": patch\n"__custom": "metadata"\n---\n\nChange ${i}\n\nDetailed description.\n`,
 			);
 		}
-		await Promise.all(writePromises);
 
 		await canonicalizeChangesets(testDir);
 

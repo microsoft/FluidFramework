@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "node:assert/strict";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { afterEach, beforeEach } from "mocha";
 import { globFn, globWithGitignore, toPosixPath } from "../fluidBuild/tasks/taskUtils";
 import { testDataPath } from "./init";
 
@@ -177,6 +179,23 @@ describe("toPosixPath utility", () => {
  * (e.g., using `git ls-files --others --ignored --exclude-standard` to get ignored files).
  */
 describe("globWithGitignore (LeafTask file enumeration)", () => {
+	const gitIgnoredDir = path.join(globTestDataPath, "gitignored");
+	const gitIgnoredFile = path.join(gitIgnoredDir, "shouldBeIgnored.ts");
+
+	beforeEach(async () => {
+		// Create gitignored directory and file for testing
+		await mkdir(gitIgnoredDir, { recursive: true });
+		await writeFile(
+			gitIgnoredFile,
+			"/*!\n * Copyright (c) Microsoft Corporation and contributors. All rights reserved.\n * Licensed under the MIT License.\n */\n\n// This file should be ignored by gitignore\n",
+		);
+	});
+
+	afterEach(async () => {
+		// Clean up gitignored directory
+		await rm(gitIgnoredDir, { recursive: true, force: true });
+	});
+
 	it("includes gitignored files when gitignore option is false", async () => {
 		const results = await globWithGitignore(["**/*.ts"], {
 			cwd: globTestDataPath,
@@ -246,12 +265,12 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 	});
 
 	it("handles multiple glob patterns", async () => {
-		const results = await globWithGitignore(["*.ts", "*.js"], {
+		const results = await globWithGitignore(["*.ts", "*.mjs"], {
 			cwd: globTestDataPath,
 			gitignore: false,
 		});
 		const filenames = results.map((f) => path.basename(f));
 		assert(filenames.includes("file1.ts"), "Should include .ts files");
-		assert(filenames.includes("file3.mjs"), "Should include .js files");
+		assert(filenames.includes("file3.mjs"), "Should include .mjs files");
 	});
 });
