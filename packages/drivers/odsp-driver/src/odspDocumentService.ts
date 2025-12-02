@@ -78,7 +78,7 @@ export class OdspDocumentService
 	public static async create(
 		resolvedUrl: IResolvedUrl,
 		getAuthHeader: InstrumentedStorageTokenFetcher,
-		// eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
 		logger: ITelemetryLoggerExt,
 		cache: IOdspCache,

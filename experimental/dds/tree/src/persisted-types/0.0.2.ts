@@ -357,7 +357,7 @@ export interface SetValueInternal_0_0_2 {
 	/** {@inheritdoc SetValue.nodeToModify } */
 	readonly nodeToModify: StableNodeId;
 	/** {@inheritdoc SetValue.payload } */
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	readonly payload: Payload | null;
 	/** {@inheritdoc SetValue."type" } */
 	readonly type: typeof ChangeTypeInternal.SetValue;

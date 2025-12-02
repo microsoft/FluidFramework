@@ -4,7 +4,7 @@
  */
 
 // JSON type definitions require null.
-/* eslint-disable @rushstack/no-new-null */
+/* eslint-disable @typescript-eslint/no-restricted-types */
 
 /**
  * Type constraint for types that are likely serializable as JSON or have a custom

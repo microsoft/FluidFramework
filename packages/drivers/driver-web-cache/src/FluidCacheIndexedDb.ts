@@ -116,7 +116,7 @@ export interface FluidCacheDBSchema extends DBSchema {
 			 * A string to specify what partition of the cache you wish to use (e.g. a user id).
 			 * Null can be used to explicity indicate no partitioning.
 			 */
-			// eslint-disable-next-line @rushstack/no-new-null
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			partitionKey: string | null;
 
 			/**

@@ -88,7 +88,7 @@ export class FunctionWrapper
 		public readonly name: string,
 		public readonly description: string | undefined,
 		public readonly args: readonly Arg[],
-		// eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		public readonly rest: z.ZodTypeAny | null,
 		public readonly returns: z.ZodTypeAny,
 	) {}

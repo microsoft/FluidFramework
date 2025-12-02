@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @rushstack/no-new-null */
+/* eslint-disable @typescript-eslint/no-restricted-types */
 
 import type { ErasedType } from "./erasedType.js";
 import type { IFluidHandle } from "./handles.js";

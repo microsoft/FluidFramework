@@ -48,7 +48,7 @@ export const OdspServiceReadOnlyErrorCode = "serviceReadOnly";
  * @internal
  */
 export function getSPOAndGraphRequestIdsFromResponse(headers: {
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	get: (id: string) => string | undefined | null;
 }): ITelemetryBaseProperties {
 	interface LoggingHeader {
@@ -462,7 +462,7 @@ export function throwOdspNetworkError(
 	throw networkError;
 }
 
-// eslint-disable-next-line @rushstack/no-new-null
+// eslint-disable-next-line @typescript-eslint/no-restricted-types
 function numberFromHeader(header: string | null): number | undefined {
 	if (header === null) {
 		return undefined;

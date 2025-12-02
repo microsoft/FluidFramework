@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 export function getHeadersWithAuth(
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	authHeader: string | null,
 ): { [index: string]: string } {
 	assert(!!authHeader, 0x936 /* authHeader should not be null or empty */);

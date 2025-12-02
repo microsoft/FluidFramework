@@ -151,7 +151,7 @@ export const privateToken = {};
  * @param base - prototype to search for
  * @returns true iff `base` is in the prototype chain starting at `derived`.
  */
-// eslint-disable-next-line @rushstack/no-new-null
+// eslint-disable-next-line @typescript-eslint/no-restricted-types
 export function inPrototypeChain(derived: object | null, base: object): boolean {
 	let checking = derived;
 	while (checking !== null) {

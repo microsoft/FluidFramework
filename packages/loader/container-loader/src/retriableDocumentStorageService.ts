@@ -52,7 +52,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 	public async getSnapshotTree(
 		version?: IVersion,
 		scenarioName?: string,
-		// eslint-disable-next-line @rushstack/no-new-null -- API used below returns null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types -- API used below returns null
 	): Promise<ISnapshotTree | null> {
 		return this.runWithRetry(
 			async () =>
@@ -87,7 +87,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 
 	public async getVersions(
 		// API used below returns null
-		// eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		versionId: string | null,
 		count: number,
 		scenarioName?: string,

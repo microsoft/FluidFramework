@@ -72,7 +72,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 		});
 	}
 
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
 		if (versionId !== this.id && versionId !== null) {
 			// Blobs/Trees in this scenario will never have multiple versions, so return versionId as is
@@ -162,7 +162,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 		}));
 	}
 
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
 		let requestVersion = version;
 		if (!requestVersion) {

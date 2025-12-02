@@ -173,7 +173,7 @@ export class ContainerStorageAdapter
 		version?: IVersion,
 		scenarioName?: string,
 		// API called below uses null
-		// eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	): Promise<ISnapshotTree | null> {
 		return this._storageService.getSnapshotTree(version, scenarioName);
 	}
@@ -228,7 +228,7 @@ export class ContainerStorageAdapter
 
 	public async getVersions(
 		// API used below uses null
-		// eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		versionId: string | null,
 		count: number,
 		scenarioName?: string,
@@ -279,7 +279,7 @@ class BlobOnlyStorage implements IDocumentStorageService {
 	}
 
 	/* eslint-disable @typescript-eslint/unbound-method */
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public getSnapshotTree: () => Promise<ISnapshotTree | null> = this.notCalled;
 	public getSnapshot: () => Promise<ISnapshot> = this.notCalled;
 	public getVersions: () => Promise<IVersion[]> = this.notCalled;

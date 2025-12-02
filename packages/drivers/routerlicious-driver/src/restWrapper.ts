@@ -85,7 +85,7 @@ function headersToMap(headers: Headers) {
 }
 
 export function getPropsToLogFromResponse(headers: {
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	get: (id: string) => string | undefined | null;
 }) {
 	interface LoggingHeader {

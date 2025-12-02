@@ -20,7 +20,7 @@ const mockPartitionKey = "FAKEPARTITIONKEY";
 
 function getFluidCache(config?: {
 	maxCacheItemAge?: number;
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	partitionKey?: string | null;
 	logger?: MockLogger;
 }) {

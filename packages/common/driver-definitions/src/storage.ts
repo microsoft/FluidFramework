@@ -157,7 +157,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 	 * in debugging purposes to see why this call was made.
 	 */
 	// TODO: use `undefined` instead.
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
 
 	/**
@@ -181,7 +181,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 	 */
 	getVersions(
 		// TODO: use `undefined` instead.
-		// eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		versionId: string | null,
 		count: number,
 		scenarioName?: string,

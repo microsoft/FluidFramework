@@ -219,7 +219,7 @@ export interface ISequencedDocumentMessage {
 	 * The client ID that submitted the message.
 	 * For server generated messages the clientId will be null;
 	 */
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	clientId: string | null;
 
 	/**
@@ -374,7 +374,7 @@ export interface ISignalMessage<TMessage extends TypedMessage = TypedMessage>
 	 * The client ID that submitted the message.
 	 * For server generated messages the clientId will be null.
 	 */
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	clientId: string | null;
 }
 

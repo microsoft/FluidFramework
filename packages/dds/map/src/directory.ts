@@ -1105,7 +1105,7 @@ type StorageLocalOpMetadata = EditLocalOpMetadata | ClearLocalOpMetadata;
  */
 export type DirectoryLocalOpMetadata = StorageLocalOpMetadata | SubDirLocalOpMetadata;
 
-// eslint-disable-next-line @rushstack/no-new-null
+// eslint-disable-next-line @typescript-eslint/no-restricted-types
 function assertNonNullClientId(clientId: string | null): asserts clientId is string {
 	assert(clientId !== null, 0x6af /* client id should never be null */);
 }

@@ -129,7 +129,7 @@ export type RawInboundExtensionMessage<TMessage extends TypedMessage = TypedMess
 					 * The client ID that submitted the message.
 					 * For server generated messages the clientId will be null.
 					 */
-					// eslint-disable-next-line @rushstack/no-new-null
+					// eslint-disable-next-line @typescript-eslint/no-restricted-types
 					clientId: ClientConnectionId | null;
 				}
 			> &
@@ -156,7 +156,7 @@ export type VerifiedInboundExtensionMessage<TMessage extends TypedMessage = Type
 					 * The client ID that submitted the message.
 					 * For server generated messages the clientId will be null.
 					 */
-					// eslint-disable-next-line @rushstack/no-new-null
+					// eslint-disable-next-line @typescript-eslint/no-restricted-types
 					clientId: ClientConnectionId | null;
 				}
 			>

@@ -414,7 +414,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	public override async getSnapshotTree(
 		version?: IVersion | undefined,
 		scenarioName?: string | undefined,
-		// eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	): Promise<ISnapshotTree | null> {
 		const snapshotTree = await super.getSnapshotTree(version, scenarioName);
 		this._isCompressionEnabled =

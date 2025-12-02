@@ -58,7 +58,7 @@ export class FluidFetchReader
 	 * Read the file and returns the snapshot tree.
 	 * @param version - The version contains the path of the file which contains the snapshot tree.
 	 */
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
 		assert(version !== null, 0x092 /* "version input for reading snapshot tree is null!" */);
 		assert(
@@ -98,7 +98,7 @@ export class FluidFetchReader
 	 * @param versionId - version ID.
 	 * @param count - Number of versions to be returned.
 	 */
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
 		if (versionId === FileStorageDocumentName || versionId === null) {
 			if (this.docTree !== null || this.versionName !== undefined) {
@@ -170,7 +170,7 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
 			return super.readBlob(sha);
 		}
 
-		// eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
 			// If we already saved document, that means we are getting here because of snapshot generation.
 			// Not returning tree ensures that IContainerRuntime.snapshot() would regenerate subtrees for
@@ -188,7 +188,7 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
 			return super.getVersions(versionId, count);
 		}
 
-		// eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
 			if (this.latestWriterTree && (!version || version.id === "latest")) {
 				return this.latestWriterTree;

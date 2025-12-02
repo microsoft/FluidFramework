@@ -6,7 +6,7 @@
 /**
  * Primitive JSON Types
  */
-// eslint-disable-next-line @rushstack/no-new-null
+// eslint-disable-next-line @typescript-eslint/no-restricted-types
 export type JsonPrimitive = string | number | boolean | null;
 
 /**

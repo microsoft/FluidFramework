@@ -51,7 +51,7 @@ export interface FluidCacheConfig {
 	 * A null value should only be used when the host can ensure that the cache is not able
 	 * to be shared with multiple users.
 	 */
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	partitionKey: string | null;
 
 	/**

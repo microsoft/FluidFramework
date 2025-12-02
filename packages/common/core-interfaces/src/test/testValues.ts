@@ -550,7 +550,7 @@ export const arrayOfLiterals: readonly (
 	| 1
 	| "string"
 	| "hello"
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	| null
 )[] = [true, 0, 1, "string", "hello", null];
 // #endregion

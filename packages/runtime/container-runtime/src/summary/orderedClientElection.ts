@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @rushstack/no-new-null */
+/* eslint-disable @typescript-eslint/no-restricted-types */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";

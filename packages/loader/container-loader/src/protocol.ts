@@ -34,7 +34,7 @@ interface SystemSignalContent {
 
 interface InboundSystemSignal<TSignalContent extends SystemSignalContent>
 	extends ISignalMessage<{ type: never; content: TSignalContent }> {
-	// eslint-disable-next-line @rushstack/no-new-null -- `null` is used in JSON protocol to indicate system message
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types -- `null` is used in JSON protocol to indicate system message
 	readonly clientId: null;
 }
 

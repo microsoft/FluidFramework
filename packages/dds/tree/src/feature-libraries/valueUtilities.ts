@@ -47,7 +47,7 @@ export type FluidSerializableReadOnly =
 	| string
 	| number
 	| boolean
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	| null
 	| readonly FluidSerializableReadOnly[]
 	| {

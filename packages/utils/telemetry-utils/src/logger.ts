@@ -86,7 +86,7 @@ export interface ITelemetryLoggerPropertyBags {
  *
  * @internal
  */
-// eslint-disable-next-line @rushstack/no-new-null
+// eslint-disable-next-line @typescript-eslint/no-restricted-types
 export function numberFromString(str: string | null | undefined): string | number | undefined {
 	if (str === undefined || str === null) {
 		return undefined;

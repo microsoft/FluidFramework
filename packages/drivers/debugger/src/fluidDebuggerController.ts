@@ -28,7 +28,7 @@ import { Sanitizer } from "./sanitizer.js";
 /**
  * @internal
  */
-// eslint-disable-next-line @rushstack/no-new-null
+// eslint-disable-next-line @typescript-eslint/no-restricted-types
 export type debuggerUIFactory = (controller: IDebuggerController) => IDebuggerUI | null;
 
 /**
@@ -36,7 +36,7 @@ export type debuggerUIFactory = (controller: IDebuggerController) => IDebuggerUI
  * @internal
  */
 export class DebugReplayController extends ReplayController implements IDebuggerController {
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public static create(createUi: debuggerUIFactory): DebugReplayController | null {
 		if (typeof localStorage === "object" && localStorage?.FluidDebugger) {
 			const controller = new DebugReplayController();
@@ -279,7 +279,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
 		throw new Error("Reading blob before storage is setup properly");
 	}
 
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
 		if (this.storage !== undefined) {
 			return this.storage.getVersions(versionId, count);
@@ -287,7 +287,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
 		throw new Error("initStorage() was not called!");
 	}
 
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public async getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | null> {
 		if (this.storage !== undefined) {
 			return this.storage.getSnapshotTree(versionRequested);

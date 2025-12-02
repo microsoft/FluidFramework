@@ -39,7 +39,7 @@ export enum VisualNodeKind {
  *
  * @internal
  */
-// eslint-disable-next-line @rushstack/no-new-null
+// eslint-disable-next-line @typescript-eslint/no-restricted-types
 export type Primitive = number | boolean | null | string | undefined;
 
 /**

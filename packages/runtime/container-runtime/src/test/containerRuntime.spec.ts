@@ -2165,7 +2165,7 @@ describe("Runtime", () => {
 					}
 
 					async getVersions(
-						// eslint-disable-next-line @rushstack/no-new-null -- base signature uses `null`
+						// eslint-disable-next-line @typescript-eslint/no-restricted-types -- base signature uses `null`
 						versionId: string | null,
 						count: number,
 						scenarioName?: string,

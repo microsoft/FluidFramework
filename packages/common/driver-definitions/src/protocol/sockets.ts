@@ -27,7 +27,7 @@ export interface IConnect {
 	 * Authorization token
 	 */
 	// TODO: Update this to use undefined instead of null.
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	token: string | null;
 
 	/**

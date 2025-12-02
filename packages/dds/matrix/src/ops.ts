@@ -28,7 +28,7 @@ export enum SnapshotPath {
  * excluding null.  (However, nulls may be embedded inside objects and arrays.)
  * @legacy @beta
  */
-// eslint-disable-next-line @rushstack/no-new-null -- Using 'null' to disallow 'null'.
+// eslint-disable-next-line @typescript-eslint/no-restricted-types -- Using 'null' to disallow 'null'.
 export type MatrixItem<T> = Serializable<Exclude<T, null>> | undefined;
 
 export interface ISetOp<T> {

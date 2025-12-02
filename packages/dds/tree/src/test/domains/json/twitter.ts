@@ -20,7 +20,7 @@ import type { JsonCompatibleReadOnlyObject } from "../../../util/index.js";
 // This file contains logic to generate a JSON file that is statistically similar to the well-known
 // json benchmarks twitter.json - https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/twitter.json
 
-/* eslint-disable @rushstack/no-new-null */
+/* eslint-disable @typescript-eslint/no-restricted-types */
 export interface TwitterUser {
 	id: number;
 	id_str: string;
