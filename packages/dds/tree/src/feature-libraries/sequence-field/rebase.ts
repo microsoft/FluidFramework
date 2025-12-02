@@ -318,26 +318,8 @@ function rebaseMarkIgnoreChild(
 		rebasedMark = { ...(remains ?? {}), count: baseMark.count };
 		return makeDetachedMark(rebasedMark, cloneCellId(baseCellId));
 	} else if (markFillsCells(baseMark)) {
-		assert(currMark.type !== "Rename", "XXX");
 		return withCellId(currMark, undefined);
 	} else if (isRename(baseMark)) {
-		// XXX: Why does it matter whether currMark is a noop?
-		if (isNoopMark(currMark)) {
-			const newRenameId = moveEffects.getNewRenameForBaseRename(
-				baseMark.idOverride,
-				baseMark.count,
-			).value;
-
-			if (newRenameId !== undefined) {
-				return {
-					type: "Rename",
-					cellId: baseMark.idOverride,
-					count: baseMark.count,
-					idOverride: newRenameId,
-				};
-			}
-		}
-
 		if (currMark.type === "Rename") {
 			const doesBaseMoveAndAttach = moveEffects.doesBaseAttachNodes(
 				baseMark.idOverride,
@@ -356,6 +338,20 @@ function rebaseMarkIgnoreChild(
 				// so we should remove the rename from this location.
 				return { cellId: baseMark.idOverride, count: baseMark.count };
 			}
+		}
+
+		const newRenameId = moveEffects.getNewRenameForBaseRename(
+			baseMark.idOverride,
+			baseMark.count,
+		).value;
+
+		if (newRenameId !== undefined && currMark.type !== "Insert") {
+			return {
+				type: "Rename",
+				cellId: baseMark.idOverride,
+				count: baseMark.count,
+				idOverride: newRenameId,
+			};
 		}
 
 		return withCellId(currMark, getOutputCellId(baseMark));
