@@ -84,8 +84,12 @@ variables:
 # compute the release variable
 - ${{ if eq(parameters.releaseBuildOverride, 'none') }}:
   - ${{ if eq(variables.shouldPublish, true) }}:
-    - name: release
-      value: $[variables.releaseBuild]
+    - ${{ if eq(variables.canRelease, true) }}:
+      - name: release
+        value: release
+    - ${{ if ne(variables.canRelease, true) }}:
+      - name: release
+        value: prerelease
   - ${{ if ne(variables.shouldPublish, true) }}:
     - name: release
       value: none
