@@ -85,7 +85,7 @@ variables:
 - ${{ if eq(parameters.releaseBuildOverride, 'none') }}:
   - ${{ if eq(variables.shouldPublish, true) }}:
     - name: release
-      value: $(release)
+      value: ${{ parameters.releaseBuildOverride }}
   - ${{ if ne(variables.shouldPublish, true) }}:
     - name: release
       value: none
