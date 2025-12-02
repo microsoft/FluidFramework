@@ -38,21 +38,30 @@ describe(`Do not allow \`-\` following JSDoc/TSDoc tags (eslint ${eslintVersion}
 		const error1 = result.messages[0];
 		assert.strictEqual(error1.message, expectedErrorMessage);
 		assert.strictEqual(error1.line, 8);
-		assert.strictEqual(error1.column, 4); // 1-based, inclusive
-		assert.strictEqual(error1.endColumn, 13); // 1-based, exclusive
+		assert.strictEqual(error1.column, 12); // 1-based, inclusive
+		assert.strictEqual(error1.endColumn, 15); // 1-based, exclusive
+		assert.notEqual(error1.fix, undefined);
+		assert.deepEqual(error1.fix.range, [234, 237]); // 0-based global character index in the file. The start is inclusive, and the end is exclusive.
+		assert.deepEqual(error1.fix.text, " "); // Replace hyphen and surrounding whitespace with a single space.
 
 		// Error 2
 		const error2 = result.messages[1];
 		assert.strictEqual(error2.message, expectedErrorMessage);
 		assert.strictEqual(error2.line, 9);
-		assert.strictEqual(error2.column, 4); // 1-based, inclusive
-		assert.strictEqual(error2.endColumn, 16); // 1-based, exclusive
+		assert.strictEqual(error2.column, 15); // 1-based, inclusive
+		assert.strictEqual(error2.endColumn, 19); // 1-based, exclusive
+		assert.notEqual(error2.fix, undefined);
+		assert.deepEqual(error2.fix.range, [274, 278]); // 0-based global character index in the file. The start is inclusive, and the end is exclusive.
+		assert.deepEqual(error2.fix.text, " "); // Replace hyphen and surrounding whitespace with a single space.
 
 		// Error 3
 		const error3 = result.messages[2];
 		assert.strictEqual(error3.message, expectedErrorMessage);
 		assert.strictEqual(error3.line, 10);
-		assert.strictEqual(error3.column, 4); // 1-based, inclusive
-		assert.strictEqual(error3.endColumn, 13); // 1-based, exclusive
+		assert.strictEqual(error3.column, 12); // 1-based, inclusive
+		assert.strictEqual(error3.endColumn, 16); // 1-based, exclusive
+		assert.notEqual(error3.fix, undefined);
+		assert.deepEqual(error3.fix.range, [338, 342]); // 0-based global character index in the file. The start is inclusive, and the end is exclusive.
+		assert.deepEqual(error3.fix.text, " "); // Replace hyphen and surrounding whitespace with a single space.
 	});
 });
