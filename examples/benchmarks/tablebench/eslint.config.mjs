@@ -10,6 +10,12 @@ const config = [
 	{
 		rules: {
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		},
+	},
+	{
+		files: ["**/*.{ts,tsx}"],
+		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
+		rules: {
 			"@typescript-eslint/unbound-method": "off",
 		},
 	},

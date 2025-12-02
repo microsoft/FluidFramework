@@ -9,7 +9,6 @@ const config = [
 	...minimalDeprecated,
 	{
 		rules: {
-			"@typescript-eslint/strict-boolean-expressions": "off",
 			"unicorn/filename-case": [
 				"error",
 				{
@@ -21,6 +20,13 @@ const config = [
 				},
 			],
 			"import-x/no-nodejs-modules": ["error"],
+		},
+	},
+	{
+		files: ["**/*.{ts,tsx}"],
+		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
+		rules: {
+			"@typescript-eslint/strict-boolean-expressions": "off",
 		},
 	},
 	{

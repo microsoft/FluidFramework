@@ -22,12 +22,6 @@ const config = [
 				},
 			],
 			"@typescript-eslint/explicit-member-accessibility": "error",
-			"@typescript-eslint/consistent-type-exports": [
-				"error",
-				{
-					"fixMixedExportsWithInlineTypeSpecifier": true,
-				},
-			],
 			"@typescript-eslint/consistent-type-imports": [
 				"error",
 				{
@@ -36,10 +30,6 @@ const config = [
 			],
 			"@typescript-eslint/no-import-type-side-effects": "error",
 			"@typescript-eslint/explicit-module-boundary-types": "off",
-			"@typescript-eslint/no-unsafe-argument": "off",
-			"@typescript-eslint/no-unsafe-assignment": "off",
-			"@typescript-eslint/no-unsafe-call": "off",
-			"@typescript-eslint/no-unsafe-member-access": "off",
 			"import/order": "off",
 			"jsdoc/multiline-blocks": "off",
 			"jsdoc/require-description": "warn",
@@ -71,6 +61,22 @@ const config = [
 			"unicorn/prefer-string-slice": "off",
 			"unicorn/switch-case-braces": "off",
 			"unicorn/text-encoding-identifier-case": "off",
+		},
+	},
+	{
+		files: ["**/*.{ts,tsx}"],
+		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
+		rules: {
+			"@typescript-eslint/consistent-type-exports": [
+				"error",
+				{
+					"fixMixedExportsWithInlineTypeSpecifier": true,
+				},
+			],
+			"@typescript-eslint/no-unsafe-argument": "off",
+			"@typescript-eslint/no-unsafe-assignment": "off",
+			"@typescript-eslint/no-unsafe-call": "off",
+			"@typescript-eslint/no-unsafe-member-access": "off",
 		},
 	},
 	{

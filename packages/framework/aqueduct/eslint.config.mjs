@@ -8,6 +8,8 @@ import { strict } from "../../../common/build/eslint-config-fluid/flat.mjs";
 const config = [
 	...strict,
 	{
+		files: ["**/*.{ts,tsx}"],
+		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
 		rules: {
 			"@typescript-eslint/strict-boolean-expressions": "off",
 		},

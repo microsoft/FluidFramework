@@ -10,10 +10,16 @@ const config = [
 	{
 		rules: {
 			"@typescript-eslint/no-use-before-define": "off",
-			"@typescript-eslint/strict-boolean-expressions": "off",
 			"import-x/no-nodejs-modules": "off",
 			"no-case-declarations": "off",
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		},
+	},
+	{
+		files: ["**/*.{ts,tsx}"],
+		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
+		rules: {
+			"@typescript-eslint/strict-boolean-expressions": "off",
 		},
 	},
 ];

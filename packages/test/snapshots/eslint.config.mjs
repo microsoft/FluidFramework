@@ -9,9 +9,15 @@ const config = [
 	...minimalDeprecated,
 	{
 		rules: {
+			"import-x/no-nodejs-modules": "off",
+		},
+	},
+	{
+		files: ["**/*.{ts,tsx}"],
+		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
+		rules: {
 			"@typescript-eslint/prefer-nullish-coalescing": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
-			"import-x/no-nodejs-modules": "off",
 		},
 	},
 ];

@@ -11,7 +11,6 @@ const config = [
 		rules: {
 			"@fluid-internal/fluid/no-unchecked-record-access": "off",
 			"@typescript-eslint/class-literal-property-style": "off",
-			"@typescript-eslint/no-unsafe-enum-comparison": "off",
 			"unicorn/prevent-abbreviations": [
 				"error",
 				{
@@ -23,6 +22,13 @@ const config = [
 			"unicorn/prefer-module": "off",
 			"unicorn/prefer-negative-index": "off",
 			"import-x/no-nodejs-modules": "off",
+		},
+	},
+	{
+		files: ["**/*.{ts,tsx}"],
+		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
+		rules: {
+			"@typescript-eslint/no-unsafe-enum-comparison": "off",
 		},
 	},
 	{

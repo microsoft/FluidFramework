@@ -11,15 +11,8 @@ const config = [
 		rules: {
 			"@typescript-eslint/no-non-null-assertion": "off",
 			"@typescript-eslint/no-use-before-define": "off",
-			"@typescript-eslint/strict-boolean-expressions": "off",
 			"unicorn/text-encoding-identifier-case": "off",
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
-			"@typescript-eslint/consistent-type-exports": [
-				"error",
-				{
-					"fixMixedExportsWithInlineTypeSpecifier": true,
-				},
-			],
 			"@typescript-eslint/consistent-type-imports": [
 				"error",
 				{
@@ -27,6 +20,19 @@ const config = [
 				},
 			],
 			"@typescript-eslint/no-import-type-side-effects": "error",
+		},
+	},
+	{
+		files: ["**/*.{ts,tsx}"],
+		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
+		rules: {
+			"@typescript-eslint/strict-boolean-expressions": "off",
+			"@typescript-eslint/consistent-type-exports": [
+				"error",
+				{
+					"fixMixedExportsWithInlineTypeSpecifier": true,
+				},
+			],
 			"@typescript-eslint/unbound-method": "off",
 		},
 	},
@@ -35,6 +41,12 @@ const config = [
 		rules: {
 			"unicorn/no-null": "off",
 			"unicorn/prefer-module": "off",
+			"import-x/no-nodejs-modules": [
+				"error",
+				{
+					"allow": ["node:assert"],
+				},
+			],
 		},
 	},
 ];

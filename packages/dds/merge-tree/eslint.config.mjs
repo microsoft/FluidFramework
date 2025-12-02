@@ -10,11 +10,17 @@ const config = [
 	{
 		rules: {
 			"@typescript-eslint/no-use-before-define": "off",
-			"@typescript-eslint/strict-boolean-expressions": "off",
 			"keyword-spacing": "off",
 			"no-case-declarations": "off",
 			"prefer-arrow/prefer-arrow-functions": "off",
 			"unicorn/no-useless-spread": "off",
+		},
+	},
+	{
+		files: ["**/*.{ts,tsx}"],
+		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
+		rules: {
+			"@typescript-eslint/strict-boolean-expressions": "off",
 		},
 	},
 ];

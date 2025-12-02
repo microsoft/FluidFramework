@@ -10,7 +10,6 @@ const config = [
 	{
 		rules: {
 			"prefer-arrow-callback": "off",
-			"@typescript-eslint/strict-boolean-expressions": "off",
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 			"import-x/no-nodejs-modules": ["error"],
 			"@typescript-eslint/no-restricted-imports": [
@@ -81,6 +80,13 @@ const config = [
 				},
 			],
 			"import-x/no-deprecated": "off",
+		},
+	},
+	{
+		files: ["**/*.{ts,tsx}"],
+		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
+		rules: {
+			"@typescript-eslint/strict-boolean-expressions": "off",
 		},
 	},
 	{

@@ -10,8 +10,14 @@ const config = [
 	{
 		rules: {
 			"react/no-deprecated": "off",
-			"@typescript-eslint/no-unsafe-argument": "off",
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		},
+	},
+	{
+		files: ["**/*.{ts,tsx}"],
+		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
+		rules: {
+			"@typescript-eslint/no-unsafe-argument": "off",
 		},
 	},
 ];

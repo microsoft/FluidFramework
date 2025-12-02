@@ -11,9 +11,15 @@ const config = [
 		rules: {
 			'@typescript-eslint/no-shadow': 'off',
 			'no-shadow': 'off',
-			'@typescript-eslint/no-unsafe-return': 'off',
 			'import-x/no-deprecated': 'off',
 			'@fluid-internal/fluid/no-unchecked-record-access': 'off',
+		},
+	},
+	{
+		files: ['**/*.{ts,tsx}'],
+		ignores: ['**/src/test/**', '**/tests/**', '**/*.spec.ts', '**/*.test.ts'],
+		rules: {
+			'@typescript-eslint/no-unsafe-return': 'off',
 		},
 	},
 	{

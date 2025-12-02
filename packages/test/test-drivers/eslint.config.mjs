@@ -10,6 +10,12 @@ const config = [
 	{
 		rules: {
 			"import-x/no-nodejs-modules": "off",
+		},
+	},
+	{
+		files: ["**/*.{ts,tsx}"],
+		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
+		rules: {
 			"@typescript-eslint/unbound-method": "off",
 		},
 	},

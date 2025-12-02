@@ -11,6 +11,12 @@ const config = [
 		rules: {
 			"@typescript-eslint/no-non-null-assertion": "off",
 			"@typescript-eslint/no-use-before-define": "off",
+		},
+	},
+	{
+		files: ["**/*.{ts,tsx}"],
+		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
+		rules: {
 			"@typescript-eslint/strict-boolean-expressions": "off",
 			"@typescript-eslint/promise-function-async": "off",
 			"@typescript-eslint/no-misused-promises": "off",

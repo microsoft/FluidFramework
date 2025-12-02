@@ -9,9 +9,15 @@ const config = [
 	...minimalDeprecated,
 	{
 		rules: {
-			"@typescript-eslint/strict-boolean-expressions": "off",
 			"import-x/no-deprecated": "off",
 			"import-x/no-nodejs-modules": "off",
+		},
+	},
+	{
+		files: ["**/*.{ts,tsx}"],
+		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
+		rules: {
+			"@typescript-eslint/strict-boolean-expressions": "off",
 		},
 	},
 ];

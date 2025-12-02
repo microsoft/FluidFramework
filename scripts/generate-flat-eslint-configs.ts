@@ -100,6 +100,68 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 	return results;
 }
 
+// List of TypeScript-ESLint rules that require type information
+// These rules should not be applied to test files since the base config disables project for them
+const TYPE_AWARE_RULES = new Set([
+	"@typescript-eslint/await-thenable",
+	"@typescript-eslint/consistent-return",
+	"@typescript-eslint/consistent-type-exports",
+	"@typescript-eslint/dot-notation",
+	"@typescript-eslint/naming-convention",
+	"@typescript-eslint/no-array-delete",
+	"@typescript-eslint/no-base-to-string",
+	"@typescript-eslint/no-confusing-void-expression",
+	"@typescript-eslint/no-deprecated",
+	"@typescript-eslint/no-duplicate-type-constituents",
+	"@typescript-eslint/no-floating-promises",
+	"@typescript-eslint/no-for-in-array",
+	"@typescript-eslint/no-implied-eval",
+	"@typescript-eslint/no-meaningless-void-operator",
+	"@typescript-eslint/no-misused-promises",
+	"@typescript-eslint/no-mixed-enums",
+	"@typescript-eslint/no-redundant-type-constituents",
+	"@typescript-eslint/no-unnecessary-boolean-literal-compare",
+	"@typescript-eslint/no-unnecessary-condition",
+	"@typescript-eslint/no-unnecessary-qualifier",
+	"@typescript-eslint/no-unnecessary-template-expression",
+	"@typescript-eslint/no-unnecessary-type-arguments",
+	"@typescript-eslint/no-unnecessary-type-assertion",
+	"@typescript-eslint/no-unnecessary-type-parameters",
+	"@typescript-eslint/no-unsafe-argument",
+	"@typescript-eslint/no-unsafe-assignment",
+	"@typescript-eslint/no-unsafe-call",
+	"@typescript-eslint/no-unsafe-enum-comparison",
+	"@typescript-eslint/no-unsafe-member-access",
+	"@typescript-eslint/no-unsafe-return",
+	"@typescript-eslint/no-unsafe-type-assertion",
+	"@typescript-eslint/no-unsafe-unary-minus",
+	"@typescript-eslint/non-nullable-type-assertion-style",
+	"@typescript-eslint/only-throw-error",
+	"@typescript-eslint/prefer-destructuring",
+	"@typescript-eslint/prefer-find",
+	"@typescript-eslint/prefer-includes",
+	"@typescript-eslint/prefer-nullish-coalescing",
+	"@typescript-eslint/prefer-optional-chain",
+	"@typescript-eslint/prefer-promise-reject-errors",
+	"@typescript-eslint/prefer-readonly",
+	"@typescript-eslint/prefer-readonly-parameter-types",
+	"@typescript-eslint/prefer-reduce-type-parameter",
+	"@typescript-eslint/prefer-regexp-exec",
+	"@typescript-eslint/prefer-return-this-type",
+	"@typescript-eslint/prefer-string-starts-ends-with",
+	"@typescript-eslint/promise-function-async",
+	"@typescript-eslint/related-getter-setter-pairs",
+	"@typescript-eslint/require-array-sort-compare",
+	"@typescript-eslint/require-await",
+	"@typescript-eslint/restrict-plus-operands",
+	"@typescript-eslint/restrict-template-expressions",
+	"@typescript-eslint/return-await",
+	"@typescript-eslint/strict-boolean-expressions",
+	"@typescript-eslint/switch-exhaustiveness-check",
+	"@typescript-eslint/unbound-method",
+	"@typescript-eslint/use-unknown-in-catch-callback-variable",
+]);
+
 function buildFlatConfigContent(
 	packageDir: string,
 	variant: PackageTarget["flatVariant"],
@@ -127,7 +189,27 @@ function buildFlatConfigContent(
 		configContent += `const config = [\n\t...${variant},\n`;
 
 		if (hasLocalRules) {
-			configContent += `\t{\n\t\trules: ${JSON.stringify(legacyConfig.rules, null, 2).replace(/\n/g, "\n\t\t")},\n\t},\n`;
+			// Split rules into type-aware and non-type-aware
+			const typeAwareRules: Record<string, any> = {};
+			const otherRules: Record<string, any> = {};
+
+			for (const [ruleName, ruleConfig] of Object.entries(legacyConfig.rules)) {
+				if (TYPE_AWARE_RULES.has(ruleName)) {
+					typeAwareRules[ruleName] = ruleConfig;
+				} else {
+					otherRules[ruleName] = ruleConfig;
+				}
+			}
+
+			// Add non-type-aware rules to all files
+			if (Object.keys(otherRules).length > 0) {
+				configContent += `\t{\n\t\trules: ${JSON.stringify(otherRules, null, 2).replace(/\n/g, "\n\t\t")},\n\t},\n`;
+			}
+
+			// Add type-aware rules only to non-test files
+			if (Object.keys(typeAwareRules).length > 0) {
+				configContent += `\t{\n\t\tfiles: ["**/*.{ts,tsx}"],\n\t\tignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],\n\t\trules: ${JSON.stringify(typeAwareRules, null, 2).replace(/\n/g, "\n\t\t")},\n\t},\n`;
+			}
 		}
 
 		if (hasOverrides) {

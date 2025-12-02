@@ -10,7 +10,6 @@ const config = [
 	{
 		rules: {
 			"import-x/no-unassigned-import": "off",
-			"@typescript-eslint/strict-boolean-expressions": "off",
 			"unicorn/prevent-abbreviations": [
 				"error",
 				{
@@ -19,6 +18,13 @@ const config = [
 					},
 				},
 			],
+		},
+	},
+	{
+		files: ["**/*.{ts,tsx}"],
+		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
+		rules: {
+			"@typescript-eslint/strict-boolean-expressions": "off",
 		},
 	},
 	{

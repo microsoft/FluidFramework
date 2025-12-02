@@ -8,6 +8,8 @@ import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/fla
 const config = [
 	...minimalDeprecated,
 	{
+		files: ["**/*.{ts,tsx}"],
+		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
 		rules: {
 			"@typescript-eslint/unbound-method": "off",
 		},

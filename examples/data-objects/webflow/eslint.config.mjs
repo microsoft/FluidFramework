@@ -10,8 +10,6 @@ const config = [
 	{
 		rules: {
 			"@typescript-eslint/no-use-before-define": "off",
-			"@typescript-eslint/prefer-nullish-coalescing": "off",
-			"@typescript-eslint/strict-boolean-expressions": "off",
 			"import-x/no-internal-modules": [
 				"error",
 				{
@@ -29,6 +27,14 @@ const config = [
 			"max-len": "off",
 			"no-bitwise": "off",
 			"no-case-declarations": "off",
+		},
+	},
+	{
+		files: ["**/*.{ts,tsx}"],
+		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
+		rules: {
+			"@typescript-eslint/prefer-nullish-coalescing": "off",
+			"@typescript-eslint/strict-boolean-expressions": "off",
 			"@typescript-eslint/unbound-method": "off",
 		},
 	},

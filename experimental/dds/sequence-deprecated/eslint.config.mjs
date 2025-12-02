@@ -11,6 +11,12 @@ const config = [
 		rules: {
 			"import-x/no-deprecated": "off",
 			"@typescript-eslint/no-use-before-define": "off",
+		},
+	},
+	{
+		files: ["**/*.{ts,tsx}"],
+		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
+		rules: {
 			"@typescript-eslint/strict-boolean-expressions": "off",
 		},
 	},
