@@ -10,6 +10,12 @@ import type { Context } from "./context.js";
 import { getPreReleaseDependencies } from "./package.js";
 
 /**
+ * The default minimum compatibility window in months for layer generation.
+ * This matches the default value used in the layerCompatGeneration command.
+ */
+const DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS = 3;
+
+/**
  * An async function that executes a release preparation check. The function returns a {@link CheckResult} with details
  * about the results of the check.
  *
@@ -268,11 +274,10 @@ export async function runCompatLayerGenerationCheck(context: Context): Promise<b
 		};
 
 		// Check if this package needs a generation update
-		// Using default minimumCompatWindowMonths of 3 (same as the command default)
 		const newGeneration = maybeGetNewGeneration(
 			currentPkgVersion,
 			fluidCompatMetadata,
-			3, // minimumCompatWindowMonths default
+			DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
 			noopLogger,
 		);
 
