@@ -176,7 +176,6 @@ export {
 	allowUnused,
 	type FieldSchemaAlphaUnsafe,
 	getIdentifierFromNode,
-	type TreeSchema,
 	type ValidateRecursiveSchemaTemplate,
 	type FixRecursiveRecursionLimit,
 	schemaStatics,
@@ -265,11 +264,9 @@ export {
 } from "./prepareForInsertion.js";
 export {
 	toStoredSchema,
-	getStoredSchema,
 	convertFieldKind,
 	toUpgradeSchema,
 	toInitialSchema,
-	convertField,
 	toUnhydratedSchema,
 	restrictiveStoredSchemaGenerationOptions,
 	permissiveStoredSchemaGenerationOptions,
@@ -289,3 +286,5 @@ export {
 	importCompatibilitySchemaSnapshot,
 	checkCompatibility,
 } from "./api/index.js";
+export { getUnhydratedContext } from "./createContext.js";
+export { type TreeSchema } from "./treeSchema.js";

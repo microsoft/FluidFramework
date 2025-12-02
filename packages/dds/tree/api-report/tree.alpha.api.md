@@ -1660,7 +1660,6 @@ export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extend
 // @public @sealed
 export class TreeViewConfiguration<const TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> implements Required<ITreeViewConfiguration<TSchema>> {
     constructor(props: ITreeViewConfiguration<TSchema>);
-    protected readonly definitionsInternal: ReadonlyMap<string, TreeNodeSchema>;
     readonly enableSchemaValidation: boolean;
     readonly preventAmbiguity: boolean;
     readonly schema: TSchema;
@@ -1671,7 +1670,9 @@ export class TreeViewConfiguration<const TSchema extends ImplicitFieldSchema = I
 // @alpha @sealed
 export class TreeViewConfigurationAlpha<const TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends TreeViewConfiguration<TSchema> implements TreeSchema {
     constructor(props: ITreeViewConfiguration<TSchema>);
-    get definitions(): ReadonlyMap<string, SimpleNodeSchema & TreeNodeSchema>;
+    // (undocumented)
+    readonly definitions: ReadonlyMap<string, SimpleNodeSchema & TreeNodeSchema>;
+    // (undocumented)
     readonly root: FieldSchemaAlpha;
 }
 

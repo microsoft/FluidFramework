@@ -4,7 +4,6 @@
  */
 
 export type {
-	TreeSchema,
 	ITreeViewConfiguration,
 	ITreeConfigurationOptions,
 } from "./configuration.js";
@@ -161,7 +160,6 @@ export {
 } from "./transactionTypes.js";
 
 export { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
-export { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 export type { TreeChangeEvents } from "./treeChangeEvents.js";
 export {
 	incrementalEncodingPolicyForAllowedTypes,

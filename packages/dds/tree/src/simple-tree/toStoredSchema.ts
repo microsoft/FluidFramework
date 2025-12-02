@@ -21,27 +21,35 @@ import {
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
+	type TreeTypeSet,
 } from "../core/index.js";
 import { FieldKinds, type FlexFieldKind } from "../feature-libraries/index.js";
 import { brand, getOrCreate, type JsonCompatibleReadOnlyObject } from "../util/index.js";
 
 import {
-	allowedTypeFilter,
-	convertAllowedTypes,
 	ExpectStored,
+	filterViewData,
 	NodeKind,
-	type SimpleNodeSchemaBase,
+	preservesViewData,
+	Unchanged,
+	type SimpleSchemaTransformationOptions,
 	type StoredFromViewSchemaGenerationOptions,
 	type StoredSchemaGenerationOptions,
 } from "./core/index.js";
 import { FieldKind, normalizeFieldSchema, type ImplicitFieldSchema } from "./fieldSchema.js";
 import type {
+	SimpleAllowedTypeAttributes,
 	SimpleAllowedTypes,
+	SimpleArrayNodeSchema,
 	SimpleFieldSchema,
+	SimpleLeafNodeSchema,
+	SimpleMapNodeSchema,
 	SimpleNodeSchema,
+	SimpleObjectNodeSchema,
+	SimpleRecordNodeSchema,
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
-import { walkFieldSchema } from "./walkFieldSchema.js";
+import { createTreeSchema } from "./treeSchema.js";
 
 const viewToStoredCache = new WeakMap<
 	StoredFromViewSchemaGenerationOptions,
@@ -100,39 +108,39 @@ export function toStoredSchema(
 ): TreeStoredSchema {
 	const cache = getOrCreate(viewToStoredCache, options, () => new WeakMap());
 	return getOrCreate(cache, root, () => {
-		const normalized = normalizeFieldSchema(root);
-		const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
-		walkFieldSchema(normalized, {
-			node(schema) {
-				if (nodeSchema.has(brand(schema.identifier))) {
-					// Use JSON.stringify to quote and escape identifier string.
-					throw new UsageError(
-						`Multiple schema encountered with the identifier ${JSON.stringify(
-							schema.identifier,
-						)}. Remove or rename them to avoid the collision.`,
-					);
-				}
-				nodeSchema.set(
-					brand(schema.identifier),
-					getStoredSchema(
-						schema as SimpleNodeSchemaBase<NodeKind> as SimpleNodeSchema,
-						options,
-					),
-				);
-			},
-			allowedTypeFilter: (allowedType) =>
-				allowedTypeFilter(
-					{ isStaged: allowedType.metadata.stagedSchemaUpgrade ?? false },
-					options,
-				),
-		});
-
-		const result: TreeStoredSchema = {
-			nodeSchema,
-			rootFieldSchema: convertField(normalized, options),
-		};
-		return result;
+		const treeSchema = createTreeSchema(normalizeFieldSchema(root));
+		const simpleSchema = transformSimpleSchema(treeSchema, options);
+		return simpleStoredSchemaToStoredSchema(simpleSchema);
 	});
+}
+
+/**
+ * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema}.
+ *
+ * @privateRemarks
+ * TODO:#38722 When runtime schema upgrades are implemented, this will need to be updated to check if
+ * a staged allowed type has been upgraded and if so, include it in the conversion.
+ *
+ * Even if this took in a SimpleTreeSchema,
+ * it would still need to walk the schema to avoid including schema that become unreachable due to filtered out staged schema.
+ *
+ * @throws
+ * Throws a `UsageError` if multiple schemas are encountered with the same identifier.
+ */
+export function transformSimpleSchema(
+	schema: SimpleTreeSchema,
+	options: SimpleSchemaTransformationOptions,
+): SimpleTreeSchema {
+	const definitions = new Map<string, SimpleNodeSchema>();
+	const root = filterFieldAllowedTypes(schema.root, options);
+	const queue = Array.from(root.simpleAllowedTypes.keys());
+	for (const identifier of queue) {
+		getOrCreate(definitions, identifier, (id) => {
+			const nodeSchema = schema.definitions.get(id) ?? fail("missing schema");
+			return transformSimpleNodeSchema(nodeSchema, options);
+		});
+	}
+	return { root, definitions };
 }
 
 /**
@@ -148,9 +156,9 @@ export function simpleStoredSchemaToStoredSchema(
 ): TreeStoredSchema {
 	const result: TreeStoredSchema = {
 		nodeSchema: transformMapValues(treeSchema.definitions, (schema) =>
-			getStoredSchema(schema, ExpectStored),
+			getStoredSchema(schema),
 		) as Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>,
-		rootFieldSchema: convertField(treeSchema.root, ExpectStored),
+		rootFieldSchema: convertField(treeSchema.root),
 	};
 	return result;
 }
@@ -158,13 +166,10 @@ export function simpleStoredSchemaToStoredSchema(
 /**
  * Convert a {@link SimpleFieldSchema} into a {@link TreeFieldStoredSchema}.
  */
-export function convertField(
-	schema: SimpleFieldSchema,
-	options: StoredSchemaGenerationOptions,
-): TreeFieldStoredSchema {
+function convertField(schema: SimpleFieldSchema): TreeFieldStoredSchema {
 	const kind: FieldKindIdentifier =
 		convertFieldKind.get(schema.kind)?.identifier ?? fail(0xae3 /* Invalid field kind */);
-	const types = convertAllowedTypes(schema.simpleAllowedTypes, options);
+	const types = convertAllowedTypes(schema.simpleAllowedTypes);
 	return { kind, types, persistedMetadata: schema.persistedMetadata };
 }
 
@@ -185,10 +190,7 @@ export const convertFieldKind: ReadonlyMap<FieldKind, FlexFieldKind> = new Map<
  * @privateRemarks
  * TODO: Persist node metadata once schema FormatV2 is supported.
  */
-export function getStoredSchema(
-	schema: SimpleNodeSchema,
-	options: StoredSchemaGenerationOptions,
-): TreeNodeStoredSchema {
+function getStoredSchema(schema: SimpleNodeSchema): TreeNodeStoredSchema {
 	const kind = schema.kind;
 	switch (kind) {
 		case NodeKind.Leaf: {
@@ -196,7 +198,7 @@ export function getStoredSchema(
 		}
 		case NodeKind.Map:
 		case NodeKind.Record: {
-			const types = convertAllowedTypes(schema.simpleAllowedTypes, options);
+			const types = convertAllowedTypes(schema.simpleAllowedTypes);
 			return new MapNodeStoredSchema(
 				{
 					kind: FieldKinds.optional.identifier,
@@ -208,16 +210,12 @@ export function getStoredSchema(
 			);
 		}
 		case NodeKind.Array: {
-			return arrayNodeStoredSchema(
-				schema.simpleAllowedTypes,
-				options,
-				schema.persistedMetadata,
-			);
+			return arrayNodeStoredSchema(schema.simpleAllowedTypes, schema.persistedMetadata);
 		}
 		case NodeKind.Object: {
 			const fields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
 			for (const fieldSchema of schema.fields.values()) {
-				fields.set(brand(fieldSchema.storedKey), convertField(fieldSchema, options));
+				fields.set(brand(fieldSchema.storedKey), convertField(fieldSchema));
 			}
 			return new ObjectNodeStoredSchema(fields, schema.persistedMetadata);
 		}
@@ -227,16 +225,155 @@ export function getStoredSchema(
 	}
 }
 
-export function arrayNodeStoredSchema(
+/**
+ * Converts a {@link TreeNodeSchema} into a {@link TreeNodeStoredSchema}.
+ * @privateRemarks
+ * TODO: Persist node metadata once schema FormatV2 is supported.
+ */
+export function transformSimpleNodeSchema(
+	schema: SimpleNodeSchema,
+	options: SimpleSchemaTransformationOptions,
+): SimpleNodeSchema {
+	const metadata = {
+		persistedMetadata: schema.persistedMetadata,
+		metadata: preservesViewData(options)
+			? {
+					custom: schema.metadata.custom,
+					description: schema.metadata.description,
+				}
+			: {},
+	};
+	const kind = schema.kind;
+	switch (kind) {
+		case NodeKind.Leaf: {
+			return {
+				kind,
+				leafKind: schema.leafKind,
+				...metadata,
+			} satisfies SimpleLeafNodeSchema;
+		}
+		case NodeKind.Array:
+		case NodeKind.Map:
+		case NodeKind.Record: {
+			return {
+				kind,
+				...metadata,
+				simpleAllowedTypes: filterAllowedTypes(schema.simpleAllowedTypes, options),
+			} satisfies SimpleMapNodeSchema | SimpleRecordNodeSchema | SimpleArrayNodeSchema;
+		}
+		case NodeKind.Object: {
+			return {
+				kind,
+				...metadata,
+				fields: transformMapValues(schema.fields, (f) => ({
+					...filterFieldAllowedTypes(f, options),
+					storedKey: f.storedKey,
+				})),
+				allowUnknownOptionalFields: filterViewData(options, schema.allowUnknownOptionalFields),
+			} satisfies SimpleObjectNodeSchema;
+		}
+		default: {
+			unreachableCase(kind);
+		}
+	}
+}
+
+function arrayNodeStoredSchema(
 	schema: SimpleAllowedTypes,
-	options: StoredSchemaGenerationOptions,
 	persistedMetadata: JsonCompatibleReadOnlyObject | undefined,
 ): ObjectNodeStoredSchema {
 	const field = {
 		kind: FieldKinds.sequence.identifier,
-		types: convertAllowedTypes(schema, options),
+		types: convertAllowedTypes(schema),
 		persistedMetadata,
 	};
 	const fields = new Map([[EmptyKey, field]]);
 	return new ObjectNodeStoredSchema(fields, persistedMetadata);
+}
+
+/**
+ * Converts a {@link SimpleAllowedTypes} to a stored schema.
+ * @param schema - The schema to convert.
+ * @param options - The options to use for filtering.
+ * @returns The converted stored schema.
+ */
+function filterAllowedTypes(
+	schema: SimpleAllowedTypes,
+	options: SimpleSchemaTransformationOptions,
+): SimpleAllowedTypes {
+	const filtered: Map<string, SimpleAllowedTypeAttributes> = new Map();
+	for (const [type, data] of schema) {
+		if (options === Unchanged) {
+			filtered.set(type, { isStaged: data.isStaged });
+		} else if (allowedTypeFilter(data, options)) {
+			filtered.set(type, { isStaged: undefined });
+		}
+	}
+	return filtered;
+}
+
+function filterFieldAllowedTypes(
+	f: SimpleFieldSchema,
+	options: SimpleSchemaTransformationOptions,
+): SimpleFieldSchema {
+	return {
+		kind: f.kind,
+		persistedMetadata: f.persistedMetadata,
+		metadata: preservesViewData(options)
+			? {
+					custom: f.metadata.custom,
+					description: f.metadata.description,
+				}
+			: {},
+		simpleAllowedTypes: filterAllowedTypes(f.simpleAllowedTypes, options),
+	};
+}
+
+/**
+ * Converts a {@link SimpleAllowedTypes} to a stored schema.
+ * @param schema - The schema to convert.
+ * @param options - The options to use for filtering.
+ * @returns The converted stored schema.
+ */
+function convertAllowedTypes(schema: SimpleAllowedTypes): TreeTypeSet {
+	const filtered: TreeNodeSchemaIdentifier[] = [];
+	for (const [type, data] of schema) {
+		if (allowedTypeFilter(data, ExpectStored)) {
+			filtered.push(brand<TreeNodeSchemaIdentifier>(type));
+		}
+	}
+	return new Set(filtered);
+}
+
+/**
+ * Filters an allowed type based on the provided options.
+ * @param allowedType - The allowed type to filter.
+ * @param options - The options to use for filtering.
+ * @returns Whether the allowed type passes the filter.
+ */
+function allowedTypeFilter(
+	data: SimpleAllowedTypeAttributes,
+	options: StoredSchemaGenerationOptions,
+): boolean {
+	if (options === ExpectStored) {
+		if (data.isStaged !== undefined) {
+			throw new UsageError(
+				"Failed to covert view schema to stored schema. The simple schema provided was indicated to be a stored schema by the use of `ExpectStored`, but view schema specific content was encountered which requires a `StoredFromViewSchemaGenerationOptions` to process.",
+			);
+		}
+		return true;
+	}
+
+	if (data.isStaged === undefined) {
+		throw new UsageError(
+			"Failed to covert view schema to stored schema. The simple schema provided as the view schema was actually a stored schema. If this was intended, use `ExpectStored` for the `StoredSchemaGenerationOptions` to indicate the input is already a stored schema and only a format conversion is required.",
+		);
+	}
+
+	// If the allowed type is staged, only include it if the options allow it.
+	if (data.isStaged === false) {
+		return true;
+	}
+
+	return options.includeStaged(data.isStaged);
 }

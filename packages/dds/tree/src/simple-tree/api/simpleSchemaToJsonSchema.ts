@@ -28,7 +28,7 @@ import type {
 	SimpleRecordNodeSchema,
 } from "../simpleSchema.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
-import type { TreeSchema } from "./configuration.js";
+import type { TreeSchema } from "../treeSchema.js";
 import type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
 import {
 	ArrayNodeSchema,

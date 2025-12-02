@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { Unchanged } from "../core/index.js";
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import type { SimpleTreeSchema } from "../simpleSchema.js";
-
-import { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
+import { transformSimpleSchema } from "../toStoredSchema.js";
+import { createTreeSchema } from "../treeSchema.js";
 
 /**
- * Copies data from {@link ImplicitFieldSchema} to create  a {@link SimpleTreeSchema} out of new plain JavaScript objects, Sets and Maps.
+ * Copies data from {@link ImplicitFieldSchema} to create a {@link SimpleTreeSchema} out of new plain JavaScript objects, Sets and Maps.
  *
  * @remarks
  * See also {@link TreeViewConfigurationAlpha} which implements {@link SimpleTreeSchema} as a way to get a `SimpleTreeSchema` without copying the node and field schema and without losing as much type information.
@@ -24,5 +25,6 @@ import { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
  * @alpha
  */
 export function getSimpleSchema(schema: ImplicitFieldSchema): SimpleTreeSchema {
-	return toSimpleTreeSchema(schema, true);
+	const treeSchema = createTreeSchema(schema);
+	return transformSimpleSchema(treeSchema, Unchanged);
 }

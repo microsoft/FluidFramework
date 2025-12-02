@@ -6,11 +6,11 @@
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { toStoredSchema } from "../toStoredSchema.js";
 import { TreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
+import { createTreeSchema } from "../treeSchema.js";
 import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
 import { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
 import { decodeSimpleSchema, encodeSimpleSchema } from "./simpleSchemaCodec.js";
 import type { SchemaCompatibilityStatus } from "./tree.js";
-import { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 
 /**
  * Compute the compatibility of using `view` to {@link ViewableTree.viewWith | view a tree} who's {@link ITreeAlpha.exportSimpleSchema | stored schema} could be derived from `viewWhichCreatedStoredSchema` via either {@link TreeView.initialize} or {@link TreeView.upgradeSchema}.
@@ -100,8 +100,8 @@ export function checkCompatibility(
 export function exportCompatibilitySchemaSnapshot(
 	config: Pick<TreeViewConfiguration, "schema">,
 ): JsonCompatibleReadOnly {
-	const simpleSchema = toSimpleTreeSchema(config.schema, true);
-	return encodeSimpleSchema(simpleSchema);
+	const treeSchema = createTreeSchema(config.schema);
+	return encodeSimpleSchema(treeSchema);
 }
 
 /**
