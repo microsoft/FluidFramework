@@ -594,6 +594,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 					httpServerConfig,
 					socketIoConfig,
 					customizations?.customCreateSocketIoAdapter,
+					customizations?.customSocketIoSetupFunction,
 			  );
 
 		const startupCheck = new StartupCheck();
