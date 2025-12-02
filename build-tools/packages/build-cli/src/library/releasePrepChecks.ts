@@ -230,7 +230,7 @@ export const CheckNoUntaggedAsserts: CheckFunction = async (
 };
 
 /**
- * Checks if any packages need a compatibility layer generation update.
+ * Checks if any packages need a compatibility layer generation update by directly calling the layer generation logic.
  * This is a shared helper function used by both the prepare command checks and the state machine checks.
  *
  * @param context - The repository context.
@@ -246,14 +246,14 @@ export async function runCompatLayerGenerationCheck(context: Context): Promise<b
 	// Check all packages that have fluidCompatMetadata
 	for (const pkg of context.fullPackageMap.values()) {
 		const { fluidCompatMetadata } = pkg.packageJson;
-		
+
 		// Skip packages without compatibility metadata
 		if (fluidCompatMetadata === undefined) {
 			continue;
 		}
 
 		const currentPkgVersion = pkg.version;
-		
+
 		// Skip patch versions as they don't trigger generation updates
 		if (isCurrentPackageVersionPatch(currentPkgVersion)) {
 			continue;
