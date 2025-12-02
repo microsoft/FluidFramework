@@ -164,6 +164,15 @@ export { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
 export { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 export type { TreeChangeEvents } from "./treeChangeEvents.js";
 export {
-	getShouldIncrementallySummarizeAllowedTypes,
+	incrementalEncodingPolicyForAllowedTypes,
 	incrementalSummaryHint,
 } from "./incrementalAllowedTypes.js";
+export {
+	encodeSimpleSchema,
+	decodeSimpleSchema,
+} from "./simpleSchemaCodec.js";
+export {
+	exportCompatibilitySchemaSnapshot,
+	importCompatibilitySchemaSnapshot,
+	checkCompatibility,
+} from "./snapshotCompatibilityChecker.js";

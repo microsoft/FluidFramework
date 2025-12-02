@@ -31,7 +31,7 @@ export const runtimeCoreCompatDetails = {
 	/**
 	 * The current generation of the Runtime layer.
 	 */
-	generation: 1,
+	generation: 2,
 } as const;
 
 /**

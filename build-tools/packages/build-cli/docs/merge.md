@@ -17,8 +17,8 @@ USAGE
 
 FLAGS
   -b, --batchSize=<value>     (required) Maximum number of commits to include in the pull request
-  -p, --pat=<value>           (required) GitHub Personal Access Token. This parameter should be passed using the
-                              GITHUB_PAT environment variable for security purposes.
+  -p, --pat=<value>           (required) [env: GITHUB_PAT] GitHub Personal Access Token. This parameter should be passed
+                              using the GITHUB_PAT environment variable for security purposes.
   -r, --remote=<value>        The name of the upstream remote to use to check for PRs. If not provided, the remote
                               matching the microsoft/FluidFramework repo will be used.
   -s, --source=<value>        (required) Source branch name

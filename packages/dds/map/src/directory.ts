@@ -40,7 +40,7 @@ import type {
 	IDirectoryEvents,
 	IDirectoryValueChanged,
 	ISharedDirectory,
-	ISharedDirectoryEvents,
+	ISharedDirectoryEventsInternal,
 	IValueChanged,
 } from "./interfaces.js";
 import type {
@@ -402,7 +402,7 @@ interface SequenceData {
  * @sealed
  */
 export class SharedDirectory
-	extends SharedObject<ISharedDirectoryEvents>
+	extends SharedObject<ISharedDirectoryEventsInternal>
 	implements ISharedDirectory
 {
 	/**
@@ -1570,6 +1570,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		if (!this.directory.isAttached()) {
 			this.sequencedStorageData.clear();
 			this.directory.emit("clear", true, this.directory);
+			this.directory.emit("clearInternal", this.absolutePath, true, this.directory);
 			return;
 		}
 
@@ -1581,6 +1582,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		this.pendingStorageData.push(pendingClear);
 
 		this.directory.emit("clear", true, this.directory);
+		this.directory.emit("clearInternal", this.absolutePath, true, this.directory);
 		const op: IDirectoryOperation = {
 			type: "clear",
 			path: this.absolutePath,
@@ -1907,6 +1909,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			// is no optimistically-applied local pending clear that would supersede this remote clear.
 			if (!this.pendingStorageData.some((entry) => entry.type === "clear")) {
 				this.directory.emit("clear", local, this.directory);
+				this.directory.emit("clearInternal", this.absolutePath, local, this.directory);
 			}
 
 			// For pending set operations, emit valueChanged events

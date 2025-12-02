@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { hydrate } from "./utils.js";
 import {
@@ -29,11 +30,7 @@ import {
 	type TreeNodeStoredSchema,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
-import {
-	checkoutWithContent,
-	fieldSchema as createFieldSchema,
-	validateUsageError,
-} from "../utils.js";
+import { checkoutWithContent, fieldSchema as createFieldSchema } from "../utils.js";
 import {
 	defaultSchemaPolicy,
 	FieldKinds,
