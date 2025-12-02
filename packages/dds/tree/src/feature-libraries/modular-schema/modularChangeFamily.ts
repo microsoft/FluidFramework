@@ -4587,31 +4587,58 @@ function invertRootTable(change: ModularChangeset, isRollback: boolean): RootNod
 			value: newId,
 			length,
 		} of change.rootNodes.oldToNewId.entries()) {
-			for (const detachEntry of doesChangeDetachNodes(change.crossFieldKeys, newId, length)) {
-				assert(
-					!detachEntry.value,
-					"A changeset should not have a rename and detach for the same node.",
-				);
-			}
-
-			for (const attachEntry of doesChangeAttachNodes(change.crossFieldKeys, newId, length)) {
-				if (!attachEntry.value) {
-					const offsetNewId = offsetChangeAtomId(newId, attachEntry.offset);
-
-					// XXX: Is it possible that this change moves the detached root to a different field?
-					addNodeRename(
-						invertedRoots,
-						offsetNewId,
-						offsetChangeAtomId(oldId, attachEntry.offset),
-						attachEntry.length,
-						change.rootNodes.detachLocations.getFirst(offsetNewId, attachEntry.length).value,
-					);
-				}
-			}
+			invertRename(change, invertedRoots, oldId, newId, length);
 		}
 	}
 
 	return invertedRoots;
+}
+
+function invertRename(
+	change: ModularChangeset,
+	invertedRoots: RootNodeTable,
+	oldId: ChangeAtomId,
+	newId: ChangeAtomId,
+	length: number,
+): void {
+	for (const detachEntry of doesChangeDetachNodes(change.crossFieldKeys, newId, length)) {
+		assert(
+			!detachEntry.value,
+			"A changeset should not have a rename and detach for the same node.",
+		);
+	}
+
+	let countProcessed = length;
+	const attachEntry = getFirstAttachField(change.crossFieldKeys, newId, countProcessed);
+	countProcessed = attachEntry.length;
+	if (attachEntry.value === undefined) {
+		const outputDetachEntry = change.rootNodes.outputDetachLocations.getFirst(
+			newId,
+			countProcessed,
+		);
+		countProcessed = outputDetachEntry.length;
+
+		const inputDetachEntry = change.rootNodes.detachLocations.getFirst(oldId, countProcessed);
+		countProcessed = inputDetachEntry.length;
+
+		addNodeRename(
+			invertedRoots,
+			newId,
+			oldId,
+			countProcessed,
+			outputDetachEntry.value ?? inputDetachEntry.value,
+		);
+	}
+
+	if (countProcessed < length) {
+		invertRename(
+			change,
+			invertedRoots,
+			offsetChangeAtomId(oldId, countProcessed),
+			offsetChangeAtomId(newId, countProcessed),
+			length - countProcessed,
+		);
+	}
 }
 
 function doesChangeAttachNodes(
