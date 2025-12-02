@@ -81,14 +81,6 @@ variables:
       eq(parameters.releaseImage, true)
     )}}
 
-# compute the release variable
-- ${{ if eq(parameters.releaseBuildOverride, 'none') }}:
-  - ${{ if eq(variables.shouldPublish, true) }}:
-    - name: release
-      value: $[variables.releaseBuild]
-  - ${{ if ne(variables.shouldPublish, true) }}:
-    - name: release
-      value: none
-- ${{ if ne(parameters.releaseBuildOverride, 'none') }}:
-  - name: release
-    value: ${{ parameters.releaseBuildOverride }}
+# Release will always eval to the override value. By default it will be none.
+- name: release
+  value: ${{ parameters.releaseBuildOverride }}

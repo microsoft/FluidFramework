@@ -104,6 +104,30 @@ parameters:
   type: boolean
   default: false
 
+# Indicates if this run is going to publish npm packages (and run extra steps necessary in that case) or not
+- name: publish
+  type: boolean
+
+# Indicates if we should or should not skip all publish stages
+- name: shouldPublish
+  type: boolean
+
+# Indicates if the build is from a branch that we can release from
+- name: canRelease
+  type: boolean
+
+# Indicates if we should run component detection (if we are publishing any artifacts)
+- name: componentDetection
+  type: boolean
+
+# Indicates the type of release (if any)
+- name: release
+  type: string
+
+# Indicates if this build is from a test branch
+- name: testBuild
+  type: boolean
+
 resources:
   repositories:
   - repository: 1ESPipelineTemplates
@@ -151,18 +175,12 @@ extends:
         # basic ANSI color support though, so force that in the pipeline
         - name: FORCE_COLOR
           value: 1
-        - template: /tools/pipelines/templates/include-vars.yml@self
-          parameters:
-            publishOverride: '${{ parameters.publishOverride }}'
-            releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
         - group: ado-feeds
         - group: storage-vars
         # Coverage has quality issues in LTS, and root-causing + fixing is not a priority given changes to LTS at this point
         # will be things like upgrading node or security fixes, not adding new features.
         - name: testCoverage
           value: false
-        - name: releaseBuildVar
-          value: $[variables.releaseBuild]
         templateContext:
           outputs:
           - ${{ if ne(parameters.taskPack, false) }}:
@@ -206,9 +224,6 @@ extends:
               # Show all task group conditions
 
               echo "
-              Pipeline Variables:
-                releaseBuild=$(releaseBuildVar)
-
               Override Parameters:
                 publishOverride=${{ parameters.publishOverride }}
                 releaseBuildOverride=${{ parameters.releaseBuildOverride }}
@@ -225,18 +240,21 @@ extends:
                 nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
 
               Computed variables:
-                shouldPublish=${{ variables.shouldPublish }}
-                componentDetection=${{ variables.componentDetection }}
-                publish=${{ variables.publish }}
-                canRelease=${{ variables.canRelease }}
-                targetBranchName = $(System.PullRequest.TargetBranch)
+                shouldPublish=${{ parameters.shouldPublish }}
+                componentDetection=${{ parameters.componentDetection }}
+                publish=${{ parameters.publish }}
+                canRelease=${{ parameters.canRelease }}
+                release=${{ parameters.release }}"
 
-                release=$(release)"
+              # Target Branch variable (PR policy related)
+              if [[ "$(Build.Reason)" == "PullRequest" ]]; then
+                echo "TargetBranchName=$(System.PullRequest.TargetBranch)"
+              fi
 
               # Error checking
-              if [[ "$(release)" == "release" ]]; then
-                if [[ "${{ variables.canRelease }}" == "False" ]]; then
-                  echo "##vso[task.logissue type=error]Invalid branch ${{ variables['Build.SourceBranch'] }} for release"
+              if [[ "${{ parameters.release }}" == "release" ]]; then
+                if [[ "${{ parameters.canRelease }}" == "False" ]]; then
+                  echo "##vso[task.logissue type=error]Invalid branch $(Build.SourceBranch) for release"
                   exit -1;
                 fi
 
@@ -252,16 +270,16 @@ extends:
                 fi
               fi
 
-              if [[ "$(release)" == "prerelease" ]]; then
+              if [[ "${{ parameters.release }}" == "prerelease" ]]; then
                 if [[ "${{ parameters.buildNumberInPatch }}" == "true" ]]; then
                   echo "##vso[task.logissue type=error] Prerelease not allow for builds that put build number as the patch version"
                   exit -1;
                 fi
               fi
 
-              if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
-                if [[ "${{ variables.publish }}" != "True" ]]; then
-                  echo "##vso[task.logissue type=error]'$(release)'' is set but package is not published. Either the branch doesn't default to publish or it is skipped."
+              if [[ "${{ parameters.release }}" != "none" ]] && [[ "${{ parameters.release }}" != "" ]]; then
+                if [[ "${{ parameters.publish }}" != "True" ]]; then
+                  echo "##vso[task.logissue type=error]'${{ parameters.release }}'' is set but package is not published. Either the branch doesn't default to publish or it is skipped."
                   exit -1;
                 fi
               fi
@@ -429,7 +447,9 @@ extends:
               fi
 
     # Publish stage
-    - ${{ if eq(variables.publish, true) }}:
+    - ${{ if eq(parameters.publish, true) }}:
       - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
         parameters:
           tagName: ${{ parameters.tagName }}
+          testBuild: ${{ parameters.testBuild }}
+          release: ${{ parameters.release }}
