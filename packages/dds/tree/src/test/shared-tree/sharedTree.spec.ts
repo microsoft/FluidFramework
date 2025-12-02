@@ -2323,8 +2323,8 @@ describe("SharedTree", () => {
 		});
 	});
 
-	describe("Shared Tree format v5 enablement via `configuredSharedTree`", () => {
-		it("can create a SharedTree with format v5 enabled", async () => {
+	describe("Shared Tree format vSharedBranches enablement via `configuredSharedTree`", () => {
+		it("can create a SharedTree with format vSharedBranches enabled", async () => {
 			// Create and initialize the runtime factory
 			const runtime = new MockSharedTreeRuntime();
 

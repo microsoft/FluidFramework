@@ -78,7 +78,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 				);
 				assert(
 					data.originator !== undefined,
-					0xc65 /* Cannot encode V5 summary without originator */,
+					"Cannot encode vSharedBranches summary without originator",
 				);
 				const json: Mutable<EncodedEditManager<TChangeset>> = {
 					main: mainBranch,
