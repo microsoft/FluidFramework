@@ -137,11 +137,12 @@ export const EditManagerFormatVersion = {
 	/**
 	 * Introduced prior to 2.0 and used beyond.
 	 * Reading capability must be maintained for backwards compatibility.
-	 * Writing capability needs to be maintained so long as {@link lowestMinVersionForCollab} is less than 2.43.0.
+	 * Writing capability needs to be maintained so long as {@link lowestMinVersionForCollab} is less than 2.2.0.
 	 */
 	v3: 3,
 	/**
-	 * Was inadvertently released in 2.43.0 (through usages of configuredSharedTree) and remains available.
+	 * Introduced in 2.2.0.
+	 * Was inadvertently made usable for writing in 2.43.0 (through configuredSharedTree) and remains available.
 	 * Reading capability must be maintained for backwards compatibility.
 	 * Writing capability could be dropped in favor of {@link EditManagerFormatVersion.v3},
 	 * but doing so would make the pattern of writable versions more complex and gain little
@@ -151,7 +152,7 @@ export const EditManagerFormatVersion = {
 	/**
 	 * This version number was used internally for testing shared branches.
 	 * This format was never made stable.
-	 * This version number is kept here solely to avoid reusing the number, it is not supported for either reading or writing.
+	 * This version number is kept here solely to avoid reusing the number: it is not supported for either reading or writing.
 	 * @deprecated - use {@link EditManagerFormatVersion.vSharedBranches} for testing shared branches.
 	 */
 	v5: 5,
