@@ -83,12 +83,12 @@ variables:
 
 # compute the release variable
 - ${{ if eq(parameters.releaseBuildOverride, 'none') }}:
-  - name: release
-    value: none
-- ${{ if ne(parameters.releaseBuildOverride, 'none') }}:
-  - ${{ if and(eq(variables.canRelease, true), eq(variables.shouldPublish, true)) }}:
+  - ${{ if eq(variables.shouldPublish, true) }}:
     - name: release
-      value: ${{ parameters.releaseBuildOverride }}
-  - ${{ if or(ne(variables.canRelease, true), ne(variables.shouldPublish, true)) }}:
+      value: $(release)
+  - ${{ if ne(variables.shouldPublish, true) }}:
     - name: release
       value: none
+- ${{ if ne(parameters.releaseBuildOverride, 'none') }}:
+  - name: release
+    value: ${{ parameters.releaseBuildOverride }}
