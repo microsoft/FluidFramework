@@ -2972,7 +2972,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		count: number,
 		newDetachId: ChangeAtomId | undefined,
 		nodeChange: NodeId | undefined,
-		bonusId?: ChangeAtomId,
+		cellRename?: ChangeAtomId,
 	): void {
 		let countToProcess = count;
 		const attachIdEntry = firstAttachIdFromDetachId(
@@ -3002,7 +3002,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 			setInCrossFieldMap(this.table.entries, baseAttachId, countToProcess, {
 				nodeChange,
 				detachId: newDetachId,
-				bonusId,
+				cellRename: cellRename,
 			});
 
 			if (nodeChange !== undefined || newDetachId !== undefined) {
@@ -3115,8 +3115,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 
 		countToProcess = moveEntry.length;
 		if (moveEntry.value !== undefined) {
-			// XXX
-			return { ...moveEntry, value: moveEntry.value.bonusId ?? moveEntry.value.detachId };
+			return { ...moveEntry, value: moveEntry.value.cellRename ?? moveEntry.value.detachId };
 		}
 
 		return this.table.newChange.rootNodes.oldToNewId.getFirst(inputId, countToProcess);

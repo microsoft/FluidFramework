@@ -499,7 +499,7 @@ function getMovedEffect(
 	const detachId = entry.value?.detachId;
 	if (detachId === undefined) {
 		assert(
-			entry.value?.bonusId === undefined,
+			entry.value?.cellRename === undefined,
 			"Cell detach should be accompanied by node detach",
 		);
 		return undefined;
@@ -510,8 +510,8 @@ function getMovedEffect(
 		revision: detachId.revision,
 		id: detachId.localId,
 	};
-	if (entry.value?.bonusId !== undefined) {
-		detach.detachCellId = entry.value.bonusId;
+	if (entry.value?.cellRename !== undefined) {
+		detach.detachCellId = entry.value.cellRename;
 	}
 
 	return detach;
