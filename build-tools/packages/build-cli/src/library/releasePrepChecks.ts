@@ -239,10 +239,21 @@ export const CheckNoUntaggedAsserts: CheckFunction = async (
  * Checks if any packages need a compatibility layer generation update using the layer generation functions directly.
  * This is a shared helper function used by both the prepare command checks and the state machine checks.
  *
- * When the actual `layerGeneration:gen` command is run as a package script, it processes all packages and will
- * initialize metadata for packages that don't have it. However, this check function is used to validate that
- * packages are up-to-date before releasing, so by default it only validates packages that are already configured
- * with fluidCompatMetadata.
+ * **Setting up a new package for layer compatibility:**
+ * To add layer compatibility to a package that doesn't have it yet:
+ * 1. Add a `layerGeneration:gen` script to the package's package.json:
+ *    `"layerGeneration:gen": "flub generate layerCompatGeneration --dir . -v"`
+ * 2. Run the command to initialize the package: `pnpm run layerGeneration:gen`
+ * 3. The command will create the `fluidCompatMetadata` field in package.json with generation 1
+ *    and generate the layer generation file (e.g., `src/layerGenerationState.ts`)
+ *
+ * **How this check works:**
+ * - When `onlyConfiguredPackages = true` (default): Only validates packages that already have
+ *   `fluidCompatMetadata` configured. This is appropriate for release checks since we only want
+ *   to validate packages that are already participating in layer compatibility.
+ * - When `onlyConfiguredPackages = false`: Treats packages without metadata as needing updates.
+ *   This would fail if any package lacks metadata, which is usually not desired since not all
+ *   packages need layer compatibility.
  *
  * @param context - The repository context.
  * @param onlyConfiguredPackages - If true (default), only checks packages that already have fluidCompatMetadata
