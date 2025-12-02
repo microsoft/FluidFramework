@@ -1328,13 +1328,9 @@ describe("TableFactory unit tests", () => {
 			table.insertRows({ rows: [{ id: "row-0", cells: {}, props: {} }] });
 			assert.equal(eventCount, 1); // Event should not have fired for row insertion
 
-			// Re-order columns
-			table.columns.moveToEnd(0);
-			assert.equal(eventCount, 2);
-
 			// Remove column
 			table.removeColumns(["column-0"]);
-			assert.equal(eventCount, 3);
+			assert.equal(eventCount, 2);
 		});
 	});
 

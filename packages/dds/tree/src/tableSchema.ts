@@ -28,6 +28,7 @@ import {
 	type ImplicitFieldSchema,
 	withBufferedTreeEvents,
 	type TreeRecordNode,
+	type ReadonlyArrayNode,
 } from "./simple-tree/index.js";
 import { validateIndex, validateIndexRange } from "./util/index.js";
 
@@ -1322,12 +1323,20 @@ export namespace TableSchema {
 		/**
 		 * The table's columns.
 		 */
-		readonly columns: TreeArrayNode<TColumn>;
+		readonly columns: ReadonlyArrayNode<
+			[TColumn] extends [ImplicitAllowedTypes]
+				? TreeNodeFromImplicitAllowedTypes<TColumn>
+				: TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>
+		>;
 
 		/**
 		 * The table's rows.
 		 */
-		readonly rows: TreeArrayNode<TRow>;
+		readonly rows: ReadonlyArrayNode<
+			[TRow] extends [ImplicitAllowedTypes]
+				? TreeNodeFromImplicitAllowedTypes<TRow>
+				: TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>
+		>;
 
 		/**
 		 * Gets a table column by its {@link TableSchema.Column.id}.
