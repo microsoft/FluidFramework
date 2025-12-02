@@ -107,32 +107,26 @@ parameters:
 # Indicates if this run is going to publish npm packages (and run extra steps necessary in that case) or not
 - name: publish
   type: boolean
-  default: false
 
 # Indicates if we should or should not skip all publish stages
 - name: shouldPublish
   type: boolean
-  default: false
 
 # Indicates if the build is from a branch that we can release from
 - name: canRelease
   type: boolean
-  default: false
 
 # Indicates if we should run component detection (if we are publishing any artifacts)
 - name: componentDetection
   type: boolean
-  default: false
 
 # Indicates the type of release (if any)
 - name: release
   type: string
-  default: none
 
 # Indicates if this build is from a test branch
 - name: testBuild
   type: boolean
-  default: false
 
 resources:
   repositories:
