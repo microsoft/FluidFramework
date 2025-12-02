@@ -7,6 +7,12 @@ import { MonoRepo, type Package } from "@fluidframework/build-tools";
 import execa from "execa";
 import { ResetMode } from "simple-git";
 import type { Context } from "./context.js";
+import {
+	DEFAULT_GENERATION_DIR,
+	DEFAULT_GENERATION_FILE_NAME,
+	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
+	checkPackageLayerGeneration,
+} from "./layerCompatGeneration.js";
 import { getPreReleaseDependencies } from "./package.js";
 
 /**
@@ -225,6 +231,54 @@ export const CheckNoUntaggedAsserts: CheckFunction = async (
 		return {
 			message: "Found some untagged asserts. These should be tagged before release.",
 			fixCommand: "pnpm run policy-check:asserts",
+		};
+	}
+};
+
+/**
+ * Checks that packages with layer compatibility metadata have up-to-date generation files.
+ * This check is lenient - packages without metadata or generation files are skipped.
+ */
+export const CheckLayerCompatGeneration: CheckFunction = async (
+	_context: Context,
+	releaseGroupOrPackage: MonoRepo | Package,
+): Promise<CheckResult> => {
+	const packagesToCheck =
+		releaseGroupOrPackage instanceof MonoRepo
+			? releaseGroupOrPackage.packages
+			: [releaseGroupOrPackage];
+
+	const packagesNeedingUpdate: { pkg: Package; reason: string }[] = [];
+
+	for (const pkg of packagesToCheck) {
+		// eslint-disable-next-line no-await-in-loop -- Need to check files sequentially
+		const result = await checkPackageLayerGeneration(
+			pkg,
+			DEFAULT_GENERATION_DIR,
+			DEFAULT_GENERATION_FILE_NAME,
+			DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
+		);
+
+		if (result.needsUpdate && result.reason !== undefined) {
+			packagesNeedingUpdate.push({
+				pkg,
+				reason: result.reason,
+			});
+		}
+	}
+
+	if (packagesNeedingUpdate.length > 0) {
+		// Build fix command with release group option if applicable
+		const fixCommand =
+			releaseGroupOrPackage instanceof MonoRepo
+				? `pnpm flub generate layerCompatGeneration -g ${releaseGroupOrPackage.kind}`
+				: "pnpm flub generate layerCompatGeneration";
+
+		return {
+			message: `Some packages need layer generation updates:\n${packagesNeedingUpdate
+				.map(({ pkg, reason }) => `  - ${pkg.name}: ${reason}`)
+				.join("\n")}`,
+			fixCommand,
 		};
 	}
 };

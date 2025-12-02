@@ -161,6 +161,7 @@ DESCRIPTION
   - Has no pre-release Fluid dependencies
   - No repo policy violations
   - No untagged asserts
+  - Layer compatibility generation is up to date
 
 ALIASES
   $ flub release prep

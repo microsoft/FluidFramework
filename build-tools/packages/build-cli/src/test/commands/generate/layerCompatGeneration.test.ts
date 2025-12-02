@@ -8,12 +8,13 @@ import type { IFluidCompatibilityMetadata, Logger } from "@fluidframework/build-
 import { formatISO } from "date-fns";
 import { describe, it } from "mocha";
 
-import UpdateGenerationCommand, {
-	daysInMonthApproximation,
+import UpdateGenerationCommand from "../../../commands/generate/layerCompatGeneration.js";
+import {
+	DAYS_IN_MONTH_APPROXIMATION,
 	generateLayerFileContent,
 	isCurrentPackageVersionPatch,
 	maybeGetNewGeneration,
-} from "../../../commands/generate/layerCompatGeneration.js";
+} from "../../../library/layerCompatGeneration.js";
 
 describe("generate:layerCompatGeneration", () => {
 	const minimumCompatWindowMonths = UpdateGenerationCommand.flags.minimumCompatWindowMonths
@@ -77,7 +78,7 @@ describe("generate:layerCompatGeneration", () => {
 
 		// Create a date 2 months ago (should normally trigger increment)
 		const oldDate = new Date();
-		oldDate.setDate(oldDate.getDate() - 2 * daysInMonthApproximation);
+		oldDate.setDate(oldDate.getDate() - 2 * DAYS_IN_MONTH_APPROXIMATION);
 		const oldDateString = formatISO(oldDate, { representation: "date" });
 		const mockMetadata: IFluidCompatibilityMetadata = {
 			generation: previousGeneration,
@@ -102,7 +103,9 @@ describe("generate:layerCompatGeneration", () => {
 
 		// Create a date monthsSincePreviousRelease months ago
 		const oldDate = new Date();
-		oldDate.setDate(oldDate.getDate() - monthsSincePreviousRelease * daysInMonthApproximation);
+		oldDate.setDate(
+			oldDate.getDate() - monthsSincePreviousRelease * DAYS_IN_MONTH_APPROXIMATION,
+		);
 		const oldDateString = formatISO(oldDate, { representation: "date" });
 		const mockMetadata: IFluidCompatibilityMetadata = {
 			generation: previousGeneration,
@@ -126,7 +129,9 @@ describe("generate:layerCompatGeneration", () => {
 
 		// Create a date monthsSincePreviousRelease months ago
 		const oldDate = new Date();
-		oldDate.setDate(oldDate.getDate() - monthsSincePreviousRelease * daysInMonthApproximation);
+		oldDate.setDate(
+			oldDate.getDate() - monthsSincePreviousRelease * DAYS_IN_MONTH_APPROXIMATION,
+		);
 		const oldDateString = formatISO(oldDate, { representation: "date" });
 		const mockMetadata: IFluidCompatibilityMetadata = {
 			generation: previousGeneration,
