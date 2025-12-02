@@ -25,9 +25,9 @@
 	"dependencies": {
 		"@eslint-community/eslint-plugin-eslint-comments": "~4.5.0",
 		"@eslint/js": "^9.39.1",
-		"@fluid-internal/eslint-plugin-fluid": "^0.4.0",
+		"@fluid-internal/eslint-plugin-fluid": "^0.4.1",
 		"@rushstack/eslint-patch": "~1.12.0",
-		"@rushstack/eslint-plugin": "~0.19.0",
+		"@rushstack/eslint-plugin": "~0.22.1",
 		"@rushstack/eslint-plugin-security": "~0.11.0",
 		"@typescript-eslint/eslint-plugin": "~8.18.2",
 		"@typescript-eslint/parser": "~8.18.2",
@@ -35,13 +35,13 @@
 		"eslint-config-prettier": "~10.1.8",
 		"eslint-import-resolver-typescript": "~4.4.4",
 		"eslint-plugin-import-x": "~4.16.1",
-		"eslint-plugin-jsdoc": "~61.1.12",
+		"eslint-plugin-jsdoc": "~61.4.1",
 		"eslint-plugin-promise": "~7.2.1",
 		"eslint-plugin-react": "~7.37.5",
 		"eslint-plugin-react-hooks": "~7.0.1",
 		"eslint-plugin-tsdoc": "~0.4.0",
 		"eslint-plugin-unicorn": "~54.0.0",
-		"eslint-plugin-unused-imports": "~4.2.0"
+		"eslint-plugin-unused-imports": "~4.3.0"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
@@ -52,7 +52,7 @@
 		"prettier": "~3.6.2",
 		"rimraf": "^4.4.0",
 		"sort-json": "^2.0.1",
-		"tsx": "^4.20.6",
+		"tsx": "^4.21.0",
 		"typescript": "~5.4.5"
 	},
 	"packageManager": "pnpm@10.18.3+sha512.bbd16e6d7286fd7e01f6b3c0b3c932cda2965c06a908328f74663f10a9aea51f1129eea615134bf992831b009eabe167ecb7008b597f40ff9bc75946aadfb08d",
@@ -80,6 +80,7 @@
 			"mocha>serialize-javascript@6.0.0": "^6.0.2"
 		},
 		"onlyBuiltDependencies": [
+			"esbuild",
 			"unrs-resolver"
 		]
 	},
