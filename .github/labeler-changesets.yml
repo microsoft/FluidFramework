@@ -5,4 +5,5 @@
 
 # Require changesets for server public API changes
 "changeset-required":
-  - "**/routerlicious/api-report/**"
+  changed-files:
+    - any-glob-to-any-file: "**/routerlicious/api-report/**"

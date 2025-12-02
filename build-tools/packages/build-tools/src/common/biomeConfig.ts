@@ -10,8 +10,7 @@ import ignore from "ignore";
 import * as JSON5 from "json5";
 import multimatch from "multimatch";
 import { merge } from "ts-deepmerge";
-// Note: in more recent versions of type-fest, this type has been replaced with "Tagged"
-// We are using version 2.x because of this issue: https://github.com/sindresorhus/type-fest/issues/547
+// Opaque is deprecated in newer type-fest versions (replaced by Tagged); we pin type-fest 2.x for current CommonJS
 import type { Opaque } from "type-fest";
 
 import type { Configuration as BiomeConfigRaw } from "./biomeConfigTypes";
