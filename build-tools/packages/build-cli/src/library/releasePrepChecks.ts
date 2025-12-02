@@ -239,6 +239,10 @@ export const CheckNoUntaggedAsserts: CheckFunction = async (
  * Checks if any packages need a compatibility layer generation update using the layer generation functions directly.
  * This is a shared helper function used by both the prepare command checks and the state machine checks.
  *
+ * Only validates packages that already have `fluidCompatMetadata` configured. This is appropriate for
+ * release checks since we only want to validate packages that are already participating in layer compatibility.
+ * Packages without metadata are skipped - not all packages need layer compatibility.
+ *
  * **Setting up a new package for layer compatibility:**
  * To add layer compatibility to a package that doesn't have it yet:
  * 1. Add a `layerGeneration:gen` script to the package's package.json:
@@ -247,24 +251,10 @@ export const CheckNoUntaggedAsserts: CheckFunction = async (
  * 3. The command will create the `fluidCompatMetadata` field in package.json with generation 1
  *    and generate the layer generation file (e.g., `src/layerGenerationState.ts`)
  *
- * **How this check works:**
- * - When `onlyConfiguredPackages = true` (default): Only validates packages that already have
- *   `fluidCompatMetadata` configured. This is appropriate for release checks since we only want
- *   to validate packages that are already participating in layer compatibility.
- * - When `onlyConfiguredPackages = false`: Treats packages without metadata as needing updates.
- *   This would fail if any package lacks metadata, which is usually not desired since not all
- *   packages need layer compatibility.
- *
  * @param context - The repository context.
- * @param onlyConfiguredPackages - If true (default), only checks packages that already have fluidCompatMetadata
- * configured and skips packages without metadata. If false, treats packages without fluidCompatMetadata as
- * needing updates (they would get generation 1 when the command runs).
- * @returns `true` if all (configured) packages have up-to-date layer generation metadata, `false` if any updates are needed.
+ * @returns `true` if all configured packages have up-to-date layer generation metadata, `false` if any updates are needed.
  */
-export async function runCompatLayerGenerationCheck(
-	context: Context,
-	onlyConfiguredPackages: boolean = true,
-): Promise<boolean> {
+export async function runCompatLayerGenerationCheck(context: Context): Promise<boolean> {
 	const { maybeGetNewGeneration, isCurrentPackageVersionPatch } = await import(
 		// library is overloaded with too much stuff now, and we should consider allowing interior imports.
 		// eslint-disable-next-line import/no-internal-modules
@@ -275,16 +265,9 @@ export async function runCompatLayerGenerationCheck(
 	for (const pkg of context.fullPackageMap.values()) {
 		const { fluidCompatMetadata } = pkg.packageJson;
 
-		// Handle packages without compatibility metadata
+		// Skip packages without compatibility metadata - not all packages need layer compatibility
 		if (fluidCompatMetadata === undefined) {
-			if (onlyConfiguredPackages) {
-				// Skip packages without metadata when only checking configured packages
-				continue;
-			} else {
-				// Treat packages without metadata as needing updates
-				// (they would get generation 1 when the command runs)
-				return false;
-			}
+			continue;
 		}
 
 		const currentPkgVersion = pkg.version;
