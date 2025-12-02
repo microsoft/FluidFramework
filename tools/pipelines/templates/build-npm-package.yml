@@ -244,9 +244,12 @@ extends:
                 componentDetection=${{ parameters.componentDetection }}
                 publish=${{ parameters.publish }}
                 canRelease=${{ parameters.canRelease }}
-                targetBranchName = $(System.PullRequest.TargetBranch)
-
                 release=${{ parameters.release }}"
+
+              # Target Branch variable (PR policy related)
+              if [[ "$(Build.Reason)" == "PullRequest" ]]; then
+                echo "TargetBranchName=$(System.PullRequest.TargetBranch)"
+              fi
 
               # Error checking
               if [[ "${{ parameters.release }}" == "release" ]]; then
