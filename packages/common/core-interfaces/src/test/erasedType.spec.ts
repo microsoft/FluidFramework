@@ -5,10 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	type ErasedBaseType,
-	ErasedTypeImplementation,
-} from "../erasedType.js";
+import { ErasedTypeImplementation, type ErasedBaseType } from "../erasedType.js";
 
 describe("erasedType", () => {
 	it("ErasedBaseType", () => {
@@ -82,10 +79,7 @@ describe("erasedType", () => {
 			bar: number;
 		}
 
-		class FooInternal<T>
-			extends ErasedTypeImplementation<Foo<T>>
-			implements Foo<T>
-		{
+		class FooInternal<T> extends ErasedTypeImplementation<Foo<T>> implements Foo<T> {
 			public readonly bar: number = 5;
 			public constructor(public readonly secret: T) {
 				super();
@@ -117,10 +111,7 @@ describe("erasedType", () => {
 			bar: number;
 		}
 
-		class FooInternal<T>
-			extends ErasedTypeImplementation<Foo<T>>
-			implements Foo<T>
-		{
+		class FooInternal<T> extends ErasedTypeImplementation<Foo<T>> implements Foo<T> {
 			public readonly bar: number = 5;
 			private constructor(public readonly secret: T) {
 				super();

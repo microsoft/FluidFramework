@@ -9,9 +9,7 @@ import type {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/test-runtime-utils/legacy";
 
-export function makeUnreachableCodePathProxy<T extends object>(
-	name: string,
-): T {
+export function makeUnreachableCodePathProxy<T extends object>(name: string): T {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	return new Proxy({} as T, {
 		get: (): never => {
@@ -34,11 +32,7 @@ export function reconnectAndSquash(
 	): (() => void) => {
 		// eslint-disable-next-line @typescript-eslint/unbound-method
 		const originalReSubmit = runtime.reSubmit;
-		runtime.reSubmit = (
-			content: unknown,
-			localOpMetadata: unknown,
-			squash?: boolean,
-		) =>
+		runtime.reSubmit = (content: unknown, localOpMetadata: unknown, squash?: boolean) =>
 			originalReSubmit.call(runtime, content, localOpMetadata, options.squash);
 		return () => {
 			runtime.reSubmit = originalReSubmit;

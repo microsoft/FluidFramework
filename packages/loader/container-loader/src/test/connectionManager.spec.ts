@@ -18,18 +18,12 @@ import {
 	type INack,
 	NackErrorType,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	NonRetryableError,
-	RetryableError,
-} from "@fluidframework/driver-utils/internal";
+import { NonRetryableError, RetryableError } from "@fluidframework/driver-utils/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
-import { type SinonFakeTimers, stub, useFakeTimers } from "sinon";
+import { stub, type SinonFakeTimers, useFakeTimers } from "sinon";
 
 import { ConnectionManager } from "../connectionManager.js";
-import {
-	type IConnectionManagerFactoryArgs,
-	ReconnectMode,
-} from "../contracts.js";
+import { type IConnectionManagerFactoryArgs, ReconnectMode } from "../contracts.js";
 import { pkgVersion } from "../packageVersion.js";
 
 describe("connectionManager", () => {
@@ -87,15 +81,10 @@ describe("connectionManager", () => {
 		connectionCount = 0;
 		connectionDeferred = new Deferred<MockDocumentDeltaConnection>();
 		disconnectCount = 0;
-		mockDocumentService = new MockDocumentService(
-			undefined /* deltaStorageFactory */,
-			() => {
-				_mockDeltaConnection = new MockDocumentDeltaConnection(
-					`mock_client_${nextClientId++}`,
-				);
-				return _mockDeltaConnection;
-			},
-		);
+		mockDocumentService = new MockDocumentService(undefined /* deltaStorageFactory */, () => {
+			_mockDeltaConnection = new MockDocumentDeltaConnection(`mock_client_${nextClientId++}`);
+			return _mockDeltaConnection;
+		});
 	});
 
 	afterEach(() => {
@@ -170,15 +159,8 @@ describe("connectionManager", () => {
 			"mock_client_1",
 			"New connection should have expected id",
 		);
-		assert(
-			!closed,
-			"Don't expect closeHandler to be called when connection emits an error",
-		);
-		assert.equal(
-			disconnectCount,
-			1,
-			"Expected 1 disconnect from emitting an error",
-		);
+		assert(!closed, "Don't expect closeHandler to be called when connection emits an error");
+		assert.equal(disconnectCount, 1, "Expected 1 disconnect from emitting an error");
 		assert.equal(
 			connectionCount,
 			2,
@@ -222,19 +204,11 @@ describe("connectionManager", () => {
 			2,
 			"Expected 2 disconnects from emitting an error and disconnect",
 		);
-		assert.equal(
-			connectionCount,
-			3,
-			"Expected 3 connections after the two disconnects",
-		);
+		assert.equal(connectionCount, 3, "Expected 3 connections after the two disconnects");
 
 		// Act III - nonretryable nack
 		const nack: Partial<INack> = {
-			content: {
-				code: 403,
-				type: NackErrorType.BadRequestError,
-				message: "fatalNack",
-			},
+			content: { code: 403, type: NackErrorType.BadRequestError, message: "fatalNack" },
 		};
 		oldConnection = connection;
 		connection.emitNack("docId", [nack]);
@@ -266,39 +240,21 @@ describe("connectionManager", () => {
 		};
 		connection.emitNack("docId", [nack]);
 
-		assert(
-			!closed,
-			"Don't expect closeHandler to be called with retryable Nack",
-		);
+		assert(!closed, "Don't expect closeHandler to be called with retryable Nack");
 		assert(connection.disposed, "Expect connection to be disconnected");
-		assert.strictEqual(
-			disconnectCount,
-			1,
-			"Expect 1 disconnect from emitting a Nack",
-		);
+		assert.strictEqual(disconnectCount, 1, "Expect 1 disconnect from emitting a Nack");
 
 		// Async test we aren't connected within 300 ms
 		clock.tick(300);
-		assert.strictEqual(
-			connectionCount,
-			1,
-			"Expect there to still not be a connection yet",
-		);
+		assert.strictEqual(connectionCount, 1, "Expect there to still not be a connection yet");
 		clock.tick(200);
 		connection = await waitForConnection();
-		assert.strictEqual(
-			connectionCount,
-			2,
-			"Expect there to be a connection after waiting",
-		);
+		assert.strictEqual(connectionCount, 2, "Expect there to be a connection after waiting");
 	});
 
 	it("Does not re-try connection on error if ReconnectMode=Disabled", async () => {
 		// mock connectToDeltaStream method so that it throws a retriable error when connect() is called in connectionManager
-		const stubbedConnectToDeltaStream = stub(
-			mockDocumentService,
-			"connectToDeltaStream",
-		);
+		const stubbedConnectToDeltaStream = stub(mockDocumentService, "connectToDeltaStream");
 		const retryAfter = 3; // seconds
 		stubbedConnectToDeltaStream.throws(
 			// Throw retryable error
@@ -348,10 +304,7 @@ describe("connectionManager", () => {
 
 	it("Does try re-connection on error if ReconnectMode=Enabled", async () => {
 		// mock connectToDeltaStream method so that it throws a retriable error when connect() is called in connectionManager
-		const stubbedConnectToDeltaStream = stub(
-			mockDocumentService,
-			"connectToDeltaStream",
-		);
+		const stubbedConnectToDeltaStream = stub(mockDocumentService, "connectToDeltaStream");
 		const retryAfter = 3; // seconds
 		stubbedConnectToDeltaStream.throws(
 			// Throw retryable error
@@ -380,18 +333,14 @@ describe("connectionManager", () => {
 	describe("readonly", () => {
 		it("default is undefined", () => {
 			const connectionManager = createConnectionManager();
-			assert.deepStrictEqual(connectionManager.readOnlyInfo, {
-				readonly: undefined,
-			});
+			assert.deepStrictEqual(connectionManager.readOnlyInfo, { readonly: undefined });
 		});
 
 		it("force readonly", () => {
 			const connectionManager = createConnectionManager();
 
 			connectionManager.forceReadonly(false);
-			assert.deepStrictEqual(connectionManager.readOnlyInfo, {
-				readonly: undefined,
-			});
+			assert.deepStrictEqual(connectionManager.readOnlyInfo, { readonly: undefined });
 
 			connectionManager.forceReadonly(true);
 			assert.deepStrictEqual(connectionManager.readOnlyInfo, {
@@ -408,9 +357,7 @@ describe("connectionManager", () => {
 
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
 			(connectionManager as any).set_readonlyPermissions(false);
-			assert.deepStrictEqual(connectionManager.readOnlyInfo, {
-				readonly: false,
-			});
+			assert.deepStrictEqual(connectionManager.readOnlyInfo, { readonly: false });
 
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
 			(connectionManager as any).set_readonlyPermissions(true);
@@ -427,9 +374,7 @@ describe("connectionManager", () => {
 			const connectionManager = createConnectionManager();
 			mockDocumentService.policies = { storageOnly: true };
 
-			assert.deepStrictEqual(connectionManager.readOnlyInfo, {
-				readonly: undefined,
-			});
+			assert.deepStrictEqual(connectionManager.readOnlyInfo, { readonly: undefined });
 
 			connectionManager.connect({ text: "test" }, "write");
 			assert.deepStrictEqual(connectionManager.readOnlyInfo, {

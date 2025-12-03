@@ -56,14 +56,9 @@ export function assert(
  * @see {@link assert}
  * @internal
  */
-export function fail(
-	message: string | number,
-	debugMessageBuilder?: () => string,
-): never {
+export function fail(message: string | number, debugMessageBuilder?: () => string): never {
 	let messageString =
-		typeof message === "number"
-			? `0x${message.toString(16).padStart(3, "0")}`
-			: message;
+		typeof message === "number" ? `0x${message.toString(16).padStart(3, "0")}` : message;
 	skipInProduction(() => {
 		if (debugMessageBuilder !== undefined) {
 			messageString = `${messageString}\nDebug Message: ${debugMessageBuilder()}`;
@@ -114,9 +109,7 @@ const firstChanceAssertionHandler = new Set<(error: Error) => void>();
  * ```
  * @alpha
  */
-export function onAssertionFailure(
-	handler: (error: Error) => void,
-): () => void {
+export function onAssertionFailure(handler: (error: Error) => void): () => void {
 	// To avoid issues if the same callback is registered twice (mainly it not triggering twice and the first unregister removing it),
 	// generate a wrapper around the handler.
 	const wrapper = (error: Error): void => {
@@ -161,9 +154,7 @@ export function onAssertionFailure(
  * The default behavior of having debugAsserts enabled helps ensure debugAsserts are effective at catching bugs during development and testing.
  * @internal
  */
-export function debugAssert(
-	predicate: () => true | { toString(): string },
-): void {
+export function debugAssert(predicate: () => true | { toString(): string }): void {
 	// This is valid since the contract for this function is that "predicate" should be side effect free and never return non true in production scenarios:
 	// it returning non-true indicates a bug is present, and that the validation it does to detect the bug is only desired in specific test/debug situations.
 	// Production scenarios, where pure code is removed, should never hit a failing predicate, and thus this code should be side effect free.

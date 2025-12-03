@@ -19,9 +19,12 @@ export type requireAssignableTo<_A extends B, B> = true;
 
 // Type tests for InitialObjects
 {
-	type _a = InitialObjects<ContainerSchema>;
-	type _b = requireAssignableTo<_a, Record<string, unknown>>;
-	type _c = requireAssignableTo<Record<string, IFluidLoadable>, _a>;
+	// ContainerSchema case
+	{
+		type _a = InitialObjects<ContainerSchema>;
+		type _b = requireAssignableTo<_a, Record<string, unknown>>;
+		type _c = requireAssignableTo<Record<string, IFluidLoadable>, _a>;
+	}
 	type ContainerSchemaWith<T extends SharedObjectKind> = ContainerSchema & {
 		initialObjects: { item: T };
 	};
@@ -35,12 +38,18 @@ export type requireAssignableTo<_A extends B, B> = true;
 	interface TestDataObject extends IFluidLoadable {
 		x: number;
 	}
-	type _a = InitialObjects<ContainerSchemaWith<SharedObjectKind>>["item"];
-	type _b = requireAssignableTo<_a, unknown>;
-	type _c = requireAssignableTo<unknown, _a>;
-	type _a = InitialObjects<
-		ContainerSchemaWith<TestSharedObjectFactory>
-	>["item"];
-	type _b = requireAssignableTo<_a, TestSharedObject>;
-	type _c = requireAssignableTo<TestSharedObject, _a>;
+
+	// SharedObjectKind case
+	{
+		type _a = InitialObjects<ContainerSchemaWith<SharedObjectKind>>["item"];
+		type _b = requireAssignableTo<_a, unknown>;
+		type _c = requireAssignableTo<unknown, _a>;
+	}
+
+	// SharedObject case
+	{
+		type _a = InitialObjects<ContainerSchemaWith<TestSharedObjectFactory>>["item"];
+		type _b = requireAssignableTo<_a, TestSharedObject>;
+		type _c = requireAssignableTo<TestSharedObject, _a>;
+	}
 }

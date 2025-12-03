@@ -28,9 +28,7 @@ export class ReplayArgs {
 
 	public checkArgs() {
 		if (this.from > this.to) {
-			throw new Error(
-				`ERROR: --from argument should be less or equal to --to argument`,
-			);
+			throw new Error(`ERROR: --from argument should be less or equal to --to argument`);
 		}
 	}
 }

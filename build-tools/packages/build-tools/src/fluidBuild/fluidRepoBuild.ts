@@ -11,11 +11,7 @@ import chalk from "picocolors";
 import { defaultLogger } from "../common/logging";
 import { MonoRepo } from "../common/monoRepo";
 import { type Package, Packages } from "../common/npmPackage";
-import {
-	type ExecAsyncResult,
-	isSameFileOrDir,
-	lookUpDirSync,
-} from "../common/utils";
+import { type ExecAsyncResult, isSameFileOrDir, lookUpDirSync } from "../common/utils";
 import type { BuildContext } from "./buildContext";
 import { BuildGraph } from "./buildGraph";
 import { FluidRepo } from "./fluidRepo";
@@ -50,18 +46,13 @@ export class FluidRepoBuild extends FluidRepo {
 			removePromise.push(g.uninstall());
 		}
 
-		const r = await Promise.all([
-			cleanPackageNodeModules,
-			Promise.all(removePromise),
-		]);
+		const r = await Promise.all([cleanPackageNodeModules, Promise.all(removePromise)]);
 		return r[0] && !r[1].some((ret) => ret?.error);
 	}
 
 	public setMatched(options: IPackageMatchedOptions) {
 		const hasMatchArgs =
-			options.match.length ||
-			options.dirs.length ||
-			options.releaseGroups.length;
+			options.match.length || options.dirs.length || options.releaseGroups.length;
 
 		if (hasMatchArgs) {
 			let matched = false;

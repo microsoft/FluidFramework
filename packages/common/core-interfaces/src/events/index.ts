@@ -12,7 +12,7 @@ export type {
 
 export type {
 	IsListener,
-	Listenable,
 	Listeners,
+	Listenable,
 	Off,
 } from "./listeners.js";

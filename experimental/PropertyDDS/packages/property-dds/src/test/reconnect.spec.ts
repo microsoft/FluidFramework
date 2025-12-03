@@ -3,19 +3,20 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { DeterministicRandomGenerator } from "@fluid-experimental/property-common";
 import {
-	type Float64Property,
+	Float64Property,
 	PropertyFactory,
-	type StringProperty,
+	StringProperty,
 } from "@fluid-experimental/property-properties";
 import {
 	MockContainerRuntimeFactoryForReconnection,
-	type MockContainerRuntimeForReconnection,
+	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import { strict as assert } from "assert";
 import { expect } from "chai";
 import { v5 as uuidv5 } from "uuid";
 
@@ -32,8 +33,7 @@ describe("PropertyDDS", () => {
 		let runtimes: MockContainerRuntimeForReconnection[] = [];
 
 		function createTrees(number) {
-			containerRuntimeFactory =
-				new MockContainerRuntimeFactoryForReconnection();
+			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 			trees = [];
 			runtimes = [];
 
@@ -68,28 +68,19 @@ describe("PropertyDDS", () => {
 			const tree2 = trees[1];
 
 			// Create a first base commit
-			tree1.root.insert(
-				"base",
-				PropertyFactory.create("String", undefined, "test"),
-			);
+			tree1.root.insert("base", PropertyFactory.create("String", undefined, "test"));
 			tree1.commit();
 
 			// Make sure all clients got this update
 			containerRuntimeFactory.processAllMessages();
 
 			// Create a change on tree1, but do not yet send the update
-			tree1.root.insert(
-				"test",
-				PropertyFactory.create("String", undefined, "test"),
-			);
+			tree1.root.insert("test", PropertyFactory.create("String", undefined, "test"));
 			tree1.commit();
 			runtimes[0].connected = false;
 
 			// Create a large number of conflicting changes in tree2 (to make sure it is out of collab window)
-			tree2.root.insert(
-				"test",
-				PropertyFactory.create("String", undefined, "0"),
-			);
+			tree2.root.insert("test", PropertyFactory.create("String", undefined, "0"));
 			tree2.commit();
 			containerRuntimeFactory.processAllMessages();
 
@@ -154,11 +145,7 @@ describe("PropertyDDS", () => {
 										} else {
 											tree.root.insert(
 												key,
-												PropertyFactory.create(
-													"Float64",
-													undefined,
-													random.irandom(maxValue),
-												),
+												PropertyFactory.create("Float64", undefined, random.irandom(maxValue)),
 											);
 										}
 										tree.commit();
@@ -182,9 +169,7 @@ describe("PropertyDDS", () => {
 									}
 									break;
 								default:
-									throw new Error(
-										`Should never happen. Operation ${operation}`,
-									);
+									throw new Error(`Should never happen. Operation ${operation}`);
 							}
 						}
 
@@ -206,9 +191,7 @@ describe("PropertyDDS", () => {
 					containerRuntimeFactory.processAllMessages();
 
 					for (let j = 1; j < trees.length; j++) {
-						expect(trees[j - 1].root.serialize()).to.deep.equal(
-							trees[j].root.serialize(),
-						);
+						expect(trees[j - 1].root.serialize()).to.deep.equal(trees[j].root.serialize());
 					}
 				}).timeout(10000);
 			}

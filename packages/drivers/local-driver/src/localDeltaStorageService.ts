@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type {
+import {
 	IDocumentDeltaStorageService,
-	ISequencedDocumentMessage,
 	IStream,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { streamFromMessages } from "@fluidframework/driver-utils/internal";
-import type { IDatabaseManager } from "@fluidframework/server-services-core";
+import { IDatabaseManager } from "@fluidframework/server-services-core";
 
 /**
  * Provides access to the underlying delta storage on the server for local driver.
@@ -40,13 +40,8 @@ export class LocalDeltaStorageService implements IDocumentDeltaStorageService {
 		// Need follow up
 		query["operation.sequenceNumber"].$lt = to ?? Number.MAX_SAFE_INTEGER;
 
-		const allDeltas = await this.databaseManager.getDeltaCollection(
-			this.tenantId,
-			this.id,
-		);
-		const dbDeltas = await allDeltas.find(query, {
-			"operation.sequenceNumber": 1,
-		});
+		const allDeltas = await this.databaseManager.getDeltaCollection(this.tenantId, this.id);
+		const dbDeltas = await allDeltas.find(query, { "operation.sequenceNumber": 1 });
 		const messages = dbDeltas.map((delta) => delta.operation);
 		return messages;
 	}

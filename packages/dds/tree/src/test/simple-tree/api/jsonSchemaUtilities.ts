@@ -11,8 +11,7 @@ import type { JsonTreeSchema } from "../../../simple-tree/index.js";
 // The first case here covers the esm mode, and the second the cjs one.
 // Getting correct typing for the cjs case without breaking esm compilation proved to be difficult, so that case uses `any`
 const Ajv =
-	(ajvModuleOrClass as typeof ajvModuleOrClass & { default: unknown })
-		.default ??
+	(ajvModuleOrClass as typeof ajvModuleOrClass & { default: unknown }).default ??
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(ajvModuleOrClass as any);
 

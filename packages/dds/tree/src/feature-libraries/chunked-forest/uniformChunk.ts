@@ -3,38 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import {
-	assert,
-	compareArrays,
-	fail,
-	oob,
-} from "@fluidframework/core-utils/internal";
-import type {
-	IIdCompressor,
-	SessionSpaceCompressedId,
-} from "@fluidframework/id-compressor";
+import { assert, compareArrays, oob, fail } from "@fluidframework/core-utils/internal";
+import type { SessionSpaceCompressedId, IIdCompressor } from "@fluidframework/id-compressor";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	type ChunkedCursor,
 	CursorLocationType,
-	cursorChunk,
-	dummyRoot,
 	type FieldKey,
 	type FieldUpPath,
 	type PathRootPrefix,
-	type TreeChunk,
 	type TreeNodeSchemaIdentifier,
 	type TreeValue,
 	type UpPath,
 	type Value,
+	type ChunkedCursor,
+	type TreeChunk,
+	cursorChunk,
+	dummyRoot,
 } from "../../core/index.js";
-import { hasSome, ReferenceCountedBase } from "../../util/index.js";
-import {
-	prefixFieldPath,
-	prefixPath,
-	SynchronousCursor,
-} from "../treeCursorUtils.js";
+import { ReferenceCountedBase, hasSome } from "../../util/index.js";
+import { SynchronousCursor, prefixFieldPath, prefixPath } from "../treeCursorUtils.js";
 
 /**
  * Create a tree chunk with ref count 1.
@@ -42,10 +30,7 @@ import {
  * @param shape - describes the semantics and layout of `values`.
  * @param values - provides exclusive ownership of this array to this object (which might mutate it in the future).
  */
-export function uniformChunk(
-	shape: ChunkShape,
-	values: TreeValue[],
-): TreeChunk {
+export function uniformChunk(shape: ChunkShape, values: TreeValue[]): TreeChunk {
 	return new UniformChunk(shape, values);
 }
 
@@ -71,8 +56,7 @@ export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 		super();
 		this.idCompressor = idCompressor;
 		assert(
-			shape.treeShape.valuesPerTopLevelNode * shape.topLevelLength ===
-				values.length,
+			shape.treeShape.valuesPerTopLevelNode * shape.topLevelLength === values.length,
 			0x4c3 /* invalid number of values for shape */,
 		);
 	}
@@ -143,16 +127,7 @@ export class TreeShape {
 		const fields: Map<FieldKey, OffsetShape> = new Map();
 		let numberOfValues = hasValue ? 1 : 0;
 		const infos: NodePositionInfo[] = [
-			new NodePositionInfo(
-				undefined,
-				dummyRoot,
-				0,
-				undefined,
-				undefined,
-				this,
-				1,
-				0,
-			),
+			new NodePositionInfo(undefined, dummyRoot, 0, undefined, undefined, this, 1, 0),
 		];
 		let fieldIndex = 0;
 		for (const [k, f, length] of fieldsArray) {
@@ -206,9 +181,7 @@ function clonePositions(
 				: inner.indexOfParentPosition + index * shape.positions.length + offset;
 			outputInto.push(
 				new NodePositionInfo(
-					parentPositionIndex === undefined
-						? undefined
-						: outputInto[parentPositionIndex],
+					parentPositionIndex === undefined ? undefined : outputInto[parentPositionIndex],
 					inner.parentField === dummyRoot ? key : inner.parentField,
 					wasRoot ? index : inner.parentIndex,
 					inner.indexOfParentField ?? indexOfParentField,
@@ -238,10 +211,7 @@ export class ChunkShape {
 		public readonly treeShape: TreeShape,
 		public readonly topLevelLength: number,
 	) {
-		assert(
-			topLevelLength > 0,
-			0x4c6 /* topLevelLength must be greater than 0 */,
-		);
+		assert(topLevelLength > 0, 0x4c6 /* topLevelLength must be greater than 0 */);
 
 		// TODO: avoid duplication from inner loop
 		const positions: (NodePositionInfo | undefined)[] = [undefined];
@@ -251,10 +221,7 @@ export class ChunkShape {
 
 	public equals(other: ChunkShape): boolean {
 		// TODO: either dedup instances and/or store a collision resistant hash for fast compare.
-		return (
-			this.topLevelLength === other.topLevelLength &&
-			this.treeShape === other.treeShape
-		);
+		return this.topLevelLength === other.topLevelLength && this.treeShape === other.treeShape;
 	}
 }
 
@@ -342,14 +309,12 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 
 	public atChunkRoot(): boolean {
 		assert(
-			(this.fieldKey === undefined) ===
-				(this.mode === CursorLocationType.Nodes),
+			(this.fieldKey === undefined) === (this.mode === CursorLocationType.Nodes),
 			0x560 /* expect valid field key */,
 		);
 		return (
 			this.nodePositionInfo === undefined ||
-			(this.nodePositionInfo.parent === undefined &&
-				this.fieldKey === undefined)
+			(this.nodePositionInfo.parent === undefined && this.fieldKey === undefined)
 		);
 	}
 
@@ -374,10 +339,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		this.positionIndex = positionIndex;
 		if (this.nodePositionInfo === undefined) {
 			assert(positionIndex === 0, 0x561 /* expected root at start */);
-			assert(
-				this.mode === CursorLocationType.Fields,
-				0x562 /* expected root to be a field */,
-			);
+			assert(this.mode === CursorLocationType.Fields, 0x562 /* expected root to be a field */);
 		}
 	}
 
@@ -392,10 +354,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 	 * providing this ensures that the caller knows what the results will mean.
 	 */
 	private nodeInfo(requiredMode: CursorLocationType): NodePositionInfo {
-		assert(
-			this.mode === requiredMode,
-			0x4c8 /* tried to access cursor when in wrong mode */,
-		);
+		assert(this.mode === requiredMode, 0x4c8 /* tried to access cursor when in wrong mode */);
 		assert(
 			this.nodePositionInfo !== undefined,
 			0x53e /* can not access nodeInfo in root field */,
@@ -416,14 +375,8 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 	}
 
 	public exitField(): void {
-		assert(
-			this.mode === CursorLocationType.Fields,
-			0x4c9 /* exitField when in wrong mode */,
-		);
-		assert(
-			this.nodePositionInfo !== undefined,
-			0x563 /* can not exit root field */,
-		);
+		assert(this.mode === CursorLocationType.Fields, 0x4c9 /* exitField when in wrong mode */);
+		assert(this.nodePositionInfo !== undefined, 0x563 /* can not exit root field */);
 		this.fieldKey = undefined;
 		this.mode = CursorLocationType.Nodes;
 	}
@@ -440,8 +393,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		if (this.nodePositionInfo === undefined) {
 			return this.shape.topLevelLength;
 		}
-		const fieldInfo =
-			this.nodePositionInfo.shape.fieldsArray[this.indexOfField];
+		const fieldInfo = this.nodePositionInfo.shape.fieldsArray[this.indexOfField];
 		if (fieldInfo === undefined) {
 			return 0;
 		}
@@ -485,10 +437,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 	 * Enter the current field, at `childIndex`.
 	 * @param childIndex - index into current field to navigate to. Must be non-negative integer.
 	 */
-	private enterNodeInner(
-		currentPosition: NodePositionInfo,
-		childIndex: number,
-	): boolean {
+	private enterNodeInner(currentPosition: NodePositionInfo, childIndex: number): boolean {
 		const shape = currentPosition.shape;
 		const fields = shape.fieldsOffsetArray;
 		if (this.indexOfField >= fields.length) {
@@ -500,13 +449,8 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		}
 		this.mode = CursorLocationType.Nodes;
 		this.fieldKey = undefined;
-		this.moveToPosition(
-			this.positionIndex + f.offset + childIndex * f.shape.positions.length,
-		);
-		assert(
-			this.fieldIndex === childIndex,
-			0x4cc /* should be at selected child */,
-		);
+		this.moveToPosition(this.positionIndex + f.offset + childIndex * f.shape.positions.length);
+		assert(this.fieldIndex === childIndex, 0x4cc /* should be at selected child */);
 		return true;
 	}
 
@@ -515,10 +459,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		this.fieldKey = undefined;
 		// 1 for the "undefined" at the beginning of the positions array, then stride by top level tree shape.
 		this.moveToPosition(1 + childIndex * this.shape.treeShape.positions.length);
-		assert(
-			this.fieldIndex === childIndex,
-			0x543 /* should be at selected child */,
-		);
+		assert(this.fieldIndex === childIndex, 0x543 /* should be at selected child */);
 	}
 
 	public getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
@@ -546,9 +487,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		const info = this.nodeInfo(CursorLocationType.Nodes);
 		const index = offset + info.parentIndex;
 		if (index >= 0 && index < info.topLevelLength) {
-			this.moveToPosition(
-				this.positionIndex + offset * info.shape.positions.length,
-			);
+			this.moveToPosition(this.positionIndex + offset * info.shape.positions.length);
 			return true;
 		}
 		this.exitNode();
@@ -582,8 +521,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 	}
 
 	public firstField(): boolean {
-		const fieldsArray = this.nodeInfo(CursorLocationType.Nodes).shape
-			.fieldsArray;
+		const fieldsArray = this.nodeInfo(CursorLocationType.Nodes).shape.fieldsArray;
 		if (!hasSome(fieldsArray)) {
 			return false;
 		}
@@ -600,8 +538,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		this.indexOfField =
 			fieldInfo === undefined
 				? fieldMap.size
-				: (fieldInfo.indexOfParentField ??
-					fail(0xb0c /* children should have parents */));
+				: (fieldInfo.indexOfParentField ?? fail(0xb0c /* children should have parents */));
 		this.fieldKey = key;
 		this.mode = CursorLocationType.Fields;
 	}
@@ -621,8 +558,6 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 				return idCompressor.decompress(value as SessionSpaceCompressedId);
 			}
 		}
-		return info.shape.hasValue
-			? this.chunk.values[info.valueOffset]
-			: undefined;
+		return info.shape.hasValue ? this.chunk.values[info.valueOffset] : undefined;
 	}
 }

@@ -4,11 +4,11 @@
  */
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
-import type {
+import {
+	type IFluidCodeDetails,
+	type ILoaderOptions,
+	type IRuntimeFactory,
 	ICodeDetailsLoader,
-	IFluidCodeDetails,
-	ILoaderOptions,
-	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import type { ILoaderProps } from "@fluidframework/container-loader/internal";
 import type {
@@ -21,11 +21,8 @@ import {
 } from "@fluidframework/local-driver/internal";
 import { SharedMap } from "@fluidframework/map/internal";
 import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
-import type { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import {
-	LocalCodeLoader,
-	TestFluidObjectFactory,
-} from "@fluidframework/test-utils/internal";
+import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { LocalCodeLoader, TestFluidObjectFactory } from "@fluidframework/test-utils/internal";
 
 /**
  * This allows the input object to be general,
@@ -69,8 +66,7 @@ export function createLoader<T extends CreateLoaderParams>(
 ): OptionalToDefault<T, CreateLoaderDefaultResults> {
 	const deltaConnectionServer = opts.deltaConnectionServer;
 	const documentServiceFactory =
-		opts.documentServiceFactory ??
-		new LocalDocumentServiceFactory(deltaConnectionServer);
+		opts.documentServiceFactory ?? new LocalDocumentServiceFactory(deltaConnectionServer);
 
 	const urlResolver = opts.urlResolver ?? new LocalResolver();
 
@@ -83,17 +79,13 @@ export function createLoader<T extends CreateLoaderParams>(
 		new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: defaultDataStoreFactory,
 			registryEntries: [
-				[
-					defaultDataStoreFactory.type,
-					Promise.resolve(defaultDataStoreFactory),
-				],
+				[defaultDataStoreFactory.type, Promise.resolve(defaultDataStoreFactory)],
 			],
 		});
 
 	const codeDetails = opts.codeDetails ?? { package: "test" };
 
-	const codeLoader =
-		opts.codeLoader ?? new LocalCodeLoader([[codeDetails, runtimeFactory]]);
+	const codeLoader = opts.codeLoader ?? new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 
 	const loaderProps = {
 		codeLoader,
@@ -101,16 +93,15 @@ export function createLoader<T extends CreateLoaderParams>(
 		urlResolver,
 	};
 
-	const rtn: OptionalToDefault<CreateLoaderParams, CreateLoaderDefaultResults> =
-		{
-			deltaConnectionServer,
-			documentServiceFactory,
-			urlResolver,
-			codeDetails,
-			defaultDataStoreFactory,
-			runtimeFactory,
-			codeLoader,
-			loaderProps,
-		};
+	const rtn: OptionalToDefault<CreateLoaderParams, CreateLoaderDefaultResults> = {
+		deltaConnectionServer,
+		documentServiceFactory,
+		urlResolver,
+		codeDetails,
+		defaultDataStoreFactory,
+		runtimeFactory,
+		codeLoader,
+		loaderProps,
+	};
 	return rtn as OptionalToDefault<T, CreateLoaderDefaultResults>;
 }

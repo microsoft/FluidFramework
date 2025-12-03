@@ -11,20 +11,9 @@
  * Current version: 2.74.0
  */
 
-import type {
-	FullType,
-	MinimalType,
-	requireAssignableTo,
-	TypeOnly,
-} from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/debugger-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> =
-	| TypeOnly<T>
-	| MinimalType<T>
-	| FullType<T>
-	| typeof old
-	| typeof current
-	| requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;

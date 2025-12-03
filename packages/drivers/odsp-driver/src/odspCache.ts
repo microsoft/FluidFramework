@@ -39,10 +39,7 @@ export interface IPersistedFileCache {
 export class LocalPersistentCache implements IPersistedCache {
 	private readonly cache = new Map<string, unknown>();
 	// For every document id there will be a single expiration entry inspite of the number of cache entries.
-	private readonly docIdExpirationMap = new Map<
-		string,
-		ReturnType<typeof setTimeout>
-	>();
+	private readonly docIdExpirationMap = new Map<string, ReturnType<typeof setTimeout>>();
 
 	public constructor(private readonly snapshotExpiryPolicy = 3600 * 1000) {}
 
@@ -93,15 +90,9 @@ export class LocalPersistentCache implements IPersistedCache {
 		);
 	}
 }
-export class PromiseCacheWithOneHourSlidingExpiry<T> extends PromiseCache<
-	string,
-	T
-> {
+export class PromiseCacheWithOneHourSlidingExpiry<T> extends PromiseCache<string, T> {
 	constructor(removeOnError?: (error: unknown) => boolean) {
-		super({
-			expiry: { policy: "sliding", durationMs: 3600000 },
-			removeOnError,
-		});
+		super({ expiry: { policy: "sliding", durationMs: 3600000 }, removeOnError });
 	}
 }
 
@@ -128,10 +119,7 @@ export interface INonPersistentCache {
 	 * Used to store the snapshot fetch promise if the prefetch has been made using the prefetchLatestSnapshot api.
 	 * This is then used later to look for the promise during the container load.
 	 */
-	readonly snapshotPrefetchResultCache: PromiseCache<
-		string,
-		IPrefetchSnapshotContents
-	>;
+	readonly snapshotPrefetchResultCache: PromiseCache<string, IPrefetchSnapshotContents>;
 }
 
 /**

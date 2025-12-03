@@ -6,11 +6,12 @@
 import * as assert from "node:assert";
 import { existsSync } from "node:fs";
 import { readFile, stat, unlink, writeFile } from "node:fs/promises";
-import type { AsyncPriorityQueue } from "async";
+
 import crypto from "crypto";
+import * as path from "path";
+import type { AsyncPriorityQueue } from "async";
 import registerDebug from "debug";
 import globby from "globby";
-import * as path from "path";
 import chalk from "picocolors";
 
 import { defaultLogger } from "../../../common/logging";
@@ -20,7 +21,7 @@ import {
 	getExecutableFromCommand,
 } from "../../../common/utils";
 import type { BuildContext } from "../../buildContext";
-import type { BuildPackage } from "../../buildGraph";
+import { type BuildPackage } from "../../buildGraph";
 import { BuildResult, summarizeBuildResult } from "../../buildResult";
 import {
 	type GitIgnoreSetting,
@@ -159,8 +160,7 @@ export abstract class LeafTask extends Task {
 		if (this.isTemp) {
 			return true;
 		}
-		const isLintTask =
-			this.executable === "eslint" || this.executable === "prettier";
+		const isLintTask = this.executable === "eslint" || this.executable === "prettier";
 		return (options.nolint && isLintTask) || (options.lintonly && !isLintTask);
 	}
 
@@ -186,23 +186,16 @@ export abstract class LeafTask extends Task {
 			const taskNum = this.node.context.taskStats.leafBuiltCount
 				.toString()
 				.padStart(totalTask.toString().length, " ");
-			log(
-				`[${taskNum}/${totalTask}] ${this.node.pkg.nameColored}: ${this.command}`,
-			);
+			log(`[${taskNum}/${totalTask}] ${this.node.pkg.nameColored}: ${this.command}`);
 		}
 		const startTime = Date.now();
-		if (
-			this.recheckLeafIsUpToDate &&
-			!this.forced &&
-			(await this.checkLeafIsUpToDate())
-		) {
+		if (this.recheckLeafIsUpToDate && !this.forced && (await this.checkLeafIsUpToDate())) {
 			return this.execDone(startTime, BuildResult.UpToDate);
 		}
 		const ret = await this.execCore();
 
 		if (ret.error) {
-			const codeStr =
-				ret.error.code !== undefined ? ` (exit code ${ret.error.code})` : "";
+			const codeStr = ret.error.code !== undefined ? ` (exit code ${ret.error.code})` : "";
 			console.error(
 				`${this.node.pkg.nameColored}: error during command '${this.command}'${codeStr}`,
 			);
@@ -211,9 +204,7 @@ export abstract class LeafTask extends Task {
 		}
 		if (ret.stderr) {
 			// no error code but still error messages, treat them is non fatal warnings
-			console.warn(
-				`${this.node.pkg.nameColored}: warning during command '${this.command}'`,
-			);
+			console.warn(`${this.node.pkg.nameColored}: warning during command '${this.command}'`);
 			console.warn(this.getExecErrors(ret));
 		}
 
@@ -255,9 +246,7 @@ export abstract class LeafTask extends Task {
 					if (workerResult.error.stack) {
 						console.warn(workerResult.error.stack);
 					} else {
-						console.warn(
-							`${workerResult.error.name}: ${workerResult.error.message}`,
-						);
+						console.warn(`${workerResult.error.name}: ${workerResult.error.message}`);
 					}
 				}
 			}
@@ -290,10 +279,7 @@ export abstract class LeafTask extends Task {
 		if (options.vscode) {
 			errorMessages = this.getVsCodeErrorMessages(errorMessages);
 		} else {
-			errorMessages = errorMessages.replace(
-				/\n/g,
-				`\n${this.node.pkg.nameColored}: `,
-			);
+			errorMessages = errorMessages.replace(/\n/g, `\n${this.node.pkg.nameColored}: `);
 			errorMessages = `${this.node.pkg.nameColored}: ${errorMessages}`;
 		}
 		return errorMessages;
@@ -336,9 +322,7 @@ export abstract class LeafTask extends Task {
 		return status;
 	}
 
-	protected async runTask(
-		q: AsyncPriorityQueue<TaskExec>,
-	): Promise<BuildResult> {
+	protected async runTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
 		this.traceExec("Begin Leaf Task");
 
 		// Build all the dependent tasks first
@@ -370,9 +354,7 @@ export abstract class LeafTask extends Task {
 
 		const start = Date.now();
 		const leafIsUpToDate = await this.checkLeafIsUpToDate();
-		traceTaskCheck(
-			`${this.nameColored}: checkLeafIsUpToDate: ${Date.now() - start}ms`,
-		);
+		traceTaskCheck(`${this.nameColored}: checkLeafIsUpToDate: ${Date.now() - start}ms`);
 		if (leafIsUpToDate) {
 			this.node.context.taskStats.leafUpToDateCount++;
 			this.traceExec(`Skipping Leaf Task`);
@@ -385,9 +367,7 @@ export abstract class LeafTask extends Task {
 		const dependentLeafTasks = this.getDependentLeafTasks();
 		for (const dependentLeafTask of dependentLeafTasks) {
 			if (!(await dependentLeafTask.isUpToDate())) {
-				this.traceTrigger(
-					`dependent task ${dependentLeafTask.toString()} not up to date`,
-				);
+				this.traceTrigger(`dependent task ${dependentLeafTask.toString()} not up to date`);
 				return false;
 			}
 		}
@@ -400,10 +380,8 @@ export abstract class LeafTask extends Task {
 		return this.dependentLeafTasks!.values();
 	}
 
-	private async buildDependentTask(
-		q: AsyncPriorityQueue<TaskExec>,
-	): Promise<BuildResult> {
-		const p: Promise<BuildResult>[] = [];
+	private async buildDependentTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
+		const p = new Array<Promise<BuildResult>>();
 		for (const dependentLeafTask of this.getDependentLeafTasks()) {
 			p.push(dependentLeafTask.run(q));
 		}
@@ -678,10 +656,7 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			const srcHashesP = Promise.all(srcFiles.map(mapHash));
 			const dstHashesP = Promise.all(dstFiles.map(mapHash));
 
-			const [srcHashes, dstHashes] = await Promise.all([
-				srcHashesP,
-				dstHashesP,
-			]);
+			const [srcHashes, dstHashes] = await Promise.all([srcHashesP, dstHashesP]);
 
 			// sort by name for determinism
 			srcHashes.sort(sortByName);
@@ -760,10 +735,7 @@ export abstract class LeafWithGlobInputOutputDoneFileTask extends LeafWithFileSt
 	 * @returns An array of absolute paths to all files that match the globs.
 	 */
 	private async getFiles(mode: GitIgnoreSettingValue): Promise<string[]> {
-		const globs =
-			mode === "input"
-				? await this.getInputGlobs()
-				: await this.getOutputGlobs();
+		const globs = mode === "input" ? await this.getInputGlobs() : await this.getOutputGlobs();
 		const excludeGitIgnoredFiles: boolean = this.gitIgnore.includes(mode);
 
 		const files = await globby(globs, {

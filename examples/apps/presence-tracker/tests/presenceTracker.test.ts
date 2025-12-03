@@ -29,10 +29,7 @@ const initializeBrowser = async () => {
  * @param url - The URL to load the presence tracker app from.
  * @returns The session id of the loaded app.
  */
-const loadPresenceTrackerApp = async (
-	page: Page,
-	url: string,
-): Promise<string> => {
+const loadPresenceTrackerApp = async (page: Page, url: string): Promise<string> => {
 	const loadResponse = await page.goto(url, { waitUntil: "load" });
 	// A null response indicates a navigation to the same URL with a different hash
 	// and is not an actual page load (or resetting of state). In this case, we
@@ -47,14 +44,12 @@ const loadPresenceTrackerApp = async (
 	const waitFunction = idMatch
 		? (hash: string) => window["fluidContainerId"] === hash
 		: () => (window["fluidContainerId"] ?? "") !== "";
-	await page
-		.waitForFunction(waitFunction, { timeout: 1500 }, idMatch)
-		.catch(async () => {
-			const after = await page.evaluate(() => `${window["fluidContainerId"]}`);
-			throw new Error(
-				`failed waiting for app load to id ${idMatch ? idMatch : '!== ""'} (after timeout=${after})`,
-			);
-		});
+	await page.waitForFunction(waitFunction, { timeout: 1500 }, idMatch).catch(async () => {
+		const after = await page.evaluate(() => `${window["fluidContainerId"]}`);
+		throw new Error(
+			`failed waiting for app load to id ${idMatch ? idMatch : '!== ""'} (after timeout=${after})`,
+		);
+	});
 
 	return page.evaluate(() => `${window["fluidSessionId"]}`);
 };
@@ -87,9 +82,7 @@ describe("presence-tracker", () => {
 		});
 
 		it("Focus content element exists", async () => {
-			await page.waitForFunction(() =>
-				document.getElementById("focus-content"),
-			);
+			await page.waitForFunction(() => document.getElementById("focus-content"));
 		});
 
 		it("Focus div exists", async () => {
@@ -97,9 +90,7 @@ describe("presence-tracker", () => {
 		});
 
 		it("Mouse position element exists", async () => {
-			await page.waitForFunction(() =>
-				document.getElementById("mouse-position"),
-			);
+			await page.waitForFunction(() => document.getElementById("mouse-position"));
 		});
 
 		it("Current user has focus", async () => {
@@ -115,9 +106,7 @@ describe("presence-tracker", () => {
 
 		it("First client shows single client connected", async () => {
 			// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-return
-			const attendeeCount = await page.evaluate(
-				() => window["fluidSessionAttendeeCount"],
-			);
+			const attendeeCount = await page.evaluate(() => window["fluidSessionAttendeeCount"]);
 			expect(attendeeCount).toBe(1);
 
 			const elementHandle = await page.waitForFunction(() =>
@@ -199,9 +188,7 @@ describe("presence-tracker", () => {
 						attendeeConnectedCalled: `${window["fluidattendeeConnectedCalled"]}`,
 						attendeeDisconnectedCalled: `${window["fluidAttendeeDisconnectedCalled"]}`,
 					}));
-					throw new Error(
-						`${timeoutErrorMessage} (${JSON.stringify(attendeeData)})`,
-					);
+					throw new Error(`${timeoutErrorMessage} (${JSON.stringify(attendeeData)})`);
 				});
 			/* eslint-enable @typescript-eslint/dot-notation */
 		}

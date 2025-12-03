@@ -13,9 +13,9 @@ import {
 
 import {
 	GCSummaryStateTracker,
-	gcStateBlobKey,
-	type IGarbageCollectionState,
 	type IGCStats,
+	type IGarbageCollectionState,
+	gcStateBlobKey,
 	nextGCVersion,
 } from "../../gc/index.js";
 
@@ -61,10 +61,7 @@ describe("GCSummaryStateTracker tests", () => {
 				initialDeletedNodes,
 				initialTombstones,
 			);
-			assert(
-				summary?.summary.type === SummaryType.Handle,
-				"GC summary should be a handle",
-			);
+			assert(summary?.summary.type === SummaryType.Handle, "GC summary should be a handle");
 		});
 
 		it("does incremental summary when only GC state changes", async () => {
@@ -82,10 +79,7 @@ describe("GCSummaryStateTracker tests", () => {
 				initialDeletedNodes,
 				initialTombstones,
 			);
-			assert(
-				summary?.summary.type === SummaryType.Tree,
-				"GC summary should be a tree",
-			);
+			assert(summary?.summary.type === SummaryType.Tree, "GC summary should be a tree");
 			assert(
 				summary.summary.tree[gcStateBlobKey]?.type === SummaryType.Blob,
 				"GC state should be written as a blob",
@@ -110,10 +104,7 @@ describe("GCSummaryStateTracker tests", () => {
 				initialDeletedNodes,
 				newTombstones,
 			);
-			assert(
-				summary?.summary.type === SummaryType.Tree,
-				"GC summary should be a tree",
-			);
+			assert(summary?.summary.type === SummaryType.Tree, "GC summary should be a tree");
 			assert(
 				summary.summary.tree[gcStateBlobKey]?.type === SummaryType.Handle,
 				"GC state should be written as handle",
@@ -131,20 +122,14 @@ describe("GCSummaryStateTracker tests", () => {
 		it("does incremental summary when only deleted nodes change", async () => {
 			// Summarize with the same GC state and tombstone state but different deleted nodes as in the initial.
 			// state. The deleted nodes should be summarized as a summary handle.
-			const newDeletedNodes: Set<string> = new Set(
-				...initialDeletedNodes,
-				nodes[2],
-			);
+			const newDeletedNodes: Set<string> = new Set(...initialDeletedNodes, nodes[2]);
 			const summary = summaryStateTracker.summarize(
 				true /* trackState */,
 				initialGCState,
 				newDeletedNodes,
 				initialTombstones,
 			);
-			assert(
-				summary?.summary.type === SummaryType.Tree,
-				"GC summary should be a tree",
-			);
+			assert(summary?.summary.type === SummaryType.Tree, "GC summary should be a tree");
 			assert(
 				summary.summary.tree[gcStateBlobKey]?.type === SummaryType.Handle,
 				"GC state should be written as handle",
@@ -198,12 +183,7 @@ describe("GCSummaryStateTracker tests", () => {
 		// Call summarize but do not refresh latest summary. This mimics scenarios where summary generation fails
 		// sometime after summarize. This means updatedDSCountSinceLastSummary should be updated incrementally
 		// without resetting it.
-		summaryStateTracker.summarize(
-			true /* trackState */,
-			{ gcNodes: {} },
-			new Set(),
-			[],
-		);
+		summaryStateTracker.summarize(true /* trackState */, { gcNodes: {} }, new Set(), []);
 
 		// Update the stat from GC state again mimicking a GC run after a failed summary.
 		expectedUpdatedDataStoreCount += updatedDataStoreCount;
@@ -216,12 +196,7 @@ describe("GCSummaryStateTracker tests", () => {
 
 		// Call summarize and refresh latest summary. This mimics a successful summary after a failed one. After
 		// this, updatedDSCountSinceLastSummary should be reset to 0.
-		summaryStateTracker.summarize(
-			true /* trackState */,
-			{ gcNodes: {} },
-			new Set(),
-			[],
-		);
+		summaryStateTracker.summarize(true /* trackState */, { gcNodes: {} }, new Set(), []);
 
 		await summaryStateTracker.refreshLatestSummary({
 			isSummaryTracked: true,

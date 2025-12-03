@@ -66,10 +66,7 @@ export abstract class DataObject<
 			}
 		} else {
 			// Create a root directory and register it before calling initializingFirstTime
-			this.internalRoot = SharedDirectory.create(
-				this.runtime,
-				this.rootDirectoryId,
-			);
+			this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
 			this.internalRoot.bindToContext();
 		}
 

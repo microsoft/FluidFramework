@@ -12,8 +12,8 @@ import {
 import { getCommentForCodeCoverageDiff } from "../../codeCoverage/getCommentForCodeCoverage.js";
 import type { IAzureDevopsBuildCoverageConstants } from "../../library/azureDevops/constants.js";
 import {
-	createOrUpdateCommentOnPr,
 	type GitHubProps,
+	createOrUpdateCommentOnPr,
 	getChangedFilePaths,
 	getCommentBody,
 } from "../../library/githubRest.js";
@@ -45,8 +45,7 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 			required: true,
 		}),
 		adoCIBuildDefinitionIdBaseline: Flags.integer({
-			description:
-				"Build definition/pipeline number/id for the baseline build.",
+			description: "Build definition/pipeline number/id for the baseline build.",
 			env: "ADO_CI_BUILD_DEFINITION_ID_BASELINE",
 			required: true,
 		}),
@@ -78,15 +77,14 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 		const { flags } = this;
 
 		const artifactNamePrefix = "Code Coverage Report";
-		const codeCoverageConstantsForBaseline: IAzureDevopsBuildCoverageConstants =
-			{
-				orgUrl: "https://dev.azure.com/fluidframework",
-				projectName: "public",
-				ciBuildDefinitionId: flags.adoCIBuildDefinitionIdBaseline,
-				artifactName: artifactNamePrefix,
-				branch: flags.targetBranchName,
-				buildsToSearch: 50,
-			};
+		const codeCoverageConstantsForBaseline: IAzureDevopsBuildCoverageConstants = {
+			orgUrl: "https://dev.azure.com/fluidframework",
+			projectName: "public",
+			ciBuildDefinitionId: flags.adoCIBuildDefinitionIdBaseline,
+			artifactName: artifactNamePrefix,
+			branch: flags.targetBranchName,
+			buildsToSearch: 50,
+		};
 
 		const codeCoverageConstantsForPR: IAzureDevopsBuildCoverageConstants = {
 			orgUrl: "https://dev.azure.com/fluidframework",
@@ -135,10 +133,7 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 			// Get the paths of the files that have changed in the PR relative to root of the repo.
 			// This is used to determine which packages have been affect so that we can do code coverage
 			// analysis on those packages only.
-			const changedFiles = await getChangedFilePaths(
-				githubProps,
-				flags.githubPRNumber,
-			);
+			const changedFiles = await getChangedFilePaths(githubProps, flags.githubPRNumber);
 
 			let commentMessage: string = "";
 			const report = await getCodeCoverageReport(
@@ -148,17 +143,15 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 				changedFiles,
 				this.logger,
 			).catch((error: Error) => {
-				commentMessage =
-					"## Code Coverage Summary\n\nError getting code coverage report";
+				commentMessage = "## Code Coverage Summary\n\nError getting code coverage report";
 				this.logger.errorLog(`Error getting code coverage report: ${error}`);
 			});
 
 			if (report !== undefined) {
-				const packagesListWithCodeCoverageChanges =
-					getPackagesWithCodeCoverageChanges(
-						report.comparisonData,
-						this.logger,
-					);
+				const packagesListWithCodeCoverageChanges = getPackagesWithCodeCoverageChanges(
+					report.comparisonData,
+					this.logger,
+				);
 
 				success = isCodeCoverageCriteriaPassed(
 					packagesListWithCodeCoverageChanges,

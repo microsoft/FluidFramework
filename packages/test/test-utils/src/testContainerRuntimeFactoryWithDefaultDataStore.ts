@@ -4,12 +4,12 @@
  */
 
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
-import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import type { FluidObject } from "@fluidframework/core-interfaces";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { FluidObject } from "@fluidframework/core-interfaces";
 // eslint-disable-next-line import-x/no-deprecated
-import type { RuntimeRequestHandler } from "@fluidframework/request-handler/internal";
-import type {
+import { RuntimeRequestHandler } from "@fluidframework/request-handler/internal";
+import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
@@ -55,9 +55,7 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 	 * Function that will initialize the entryPoint of the IContainerRuntime instances
 	 * created with this factory
 	 */
-	readonly provideEntryPoint?: (
-		runtime: IContainerRuntime,
-	) => Promise<FluidObject>;
+	readonly provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
 }
 
 /**

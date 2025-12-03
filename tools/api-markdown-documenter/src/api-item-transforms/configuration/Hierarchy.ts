@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type ApiItem,
-	ApiItemKind,
-	type ApiPackage,
-} from "@microsoft/api-extractor-model";
+import { type ApiItem, ApiItemKind, type ApiPackage } from "@microsoft/api-extractor-model";
 
 import {
 	getApiItemKind,
@@ -106,8 +102,7 @@ export enum FolderDocumentPlacement {
  * @sealed
  * @public
  */
-export interface FolderHierarchyConfiguration
-	extends DocumentationHierarchyConfigurationBase {
+export interface FolderHierarchyConfiguration extends DocumentationHierarchyConfigurationBase {
 	/**
 	 * {@inheritDoc DocumentationHierarchyConfigurationBase.kind}
 	 */
@@ -206,18 +201,12 @@ export type HierarchyConfiguration = {
 	/**
 	 * {@inheritDoc HierarchyOptions.getDocumentName}
 	 */
-	readonly getDocumentName: (
-		apiItem: ApiItem,
-		config: HierarchyConfiguration,
-	) => string;
+	readonly getDocumentName: (apiItem: ApiItem, config: HierarchyConfiguration) => string;
 
 	/**
 	 * {@inheritDoc HierarchyOptions.getFolderName}
 	 */
-	readonly getFolderName: (
-		apiItem: ApiItem,
-		config: HierarchyConfiguration,
-	) => string;
+	readonly getFolderName: (apiItem: ApiItem, config: HierarchyConfiguration) => string;
 };
 
 /**
@@ -248,9 +237,7 @@ export type HierarchyOptions = {
 	 * Always its own document. Never introduces folder hierarchy.
 	 * This is an important invariant, as it ensures that there is always at least one document in the output.
 	 */
-	readonly [ApiItemKind.Model]?:
-		| HierarchyKind.Document
-		| DocumentHierarchyConfiguration;
+	readonly [ApiItemKind.Model]?: HierarchyKind.Document | DocumentHierarchyConfiguration;
 
 	/**
 	 * Hierarchy configuration for the `Package` API item kind.
@@ -278,9 +265,7 @@ export type HierarchyOptions = {
 	 * TODO: Allow all hierarchy configurations for packages.
 	 * There isn't a real reason to restrict this, except the way the code is currently structured.
 	 */
-	readonly [ApiItemKind.EntryPoint]?:
-		| HierarchyKind.Document
-		| DocumentHierarchyConfiguration;
+	readonly [ApiItemKind.EntryPoint]?: HierarchyKind.Document | DocumentHierarchyConfiguration;
 
 	/**
 	 * Generate the desired document name for the provided `ApiItem`.
@@ -291,10 +276,7 @@ export type HierarchyOptions = {
 	 *
 	 * @param apiItem - The API item for which the document name is being generated.
 	 */
-	readonly getDocumentName?: (
-		apiItem: ApiItem,
-		config: HierarchyConfiguration,
-	) => string;
+	readonly getDocumentName?: (apiItem: ApiItem, config: HierarchyConfiguration) => string;
 
 	/**
 	 * Generate the desired folder name for the provided `ApiItem`.
@@ -305,10 +287,7 @@ export type HierarchyOptions = {
 	 *
 	 * @param apiItem - The API item for which the folder name is being generated.
 	 */
-	readonly getFolderName?: (
-		apiItem: ApiItem,
-		config: HierarchyConfiguration,
-	) => string;
+	readonly getFolderName?: (apiItem: ApiItem, config: HierarchyConfiguration) => string;
 };
 
 /**
@@ -326,10 +305,7 @@ export namespace DefaultHierarchyConfigurations {
 	 *
 	 * - Package: Use the unscoped package name.
 	 */
-	export function getDocumentName(
-		apiItem: ApiItem,
-		config: HierarchyConfiguration,
-	): string {
+	export function getDocumentName(apiItem: ApiItem, config: HierarchyConfiguration): string {
 		const kind = getApiItemKind(apiItem);
 		switch (kind) {
 			case ApiItemKind.Model:
@@ -352,10 +328,7 @@ export namespace DefaultHierarchyConfigurations {
 	 *
 	 * - Package: Use the unscoped package name.
 	 */
-	export function getFolderName(
-		apiItem: ApiItem,
-		config: HierarchyConfiguration,
-	): string {
+	export function getFolderName(apiItem: ApiItem, config: HierarchyConfiguration): string {
 		const kind = getApiItemKind(apiItem);
 		switch (kind) {
 			case ApiItemKind.Package: {
@@ -437,17 +410,12 @@ export function getHierarchyConfigurationWithDefaults(
 	};
 
 	const hierarchyConfigurations = Object.fromEntries(
-		Object.entries(hierarchyOptions).map(([key, value]) => [
-			key,
-			mapHierarchyOption(value),
-		]),
+		Object.entries(hierarchyOptions).map(([key, value]) => [key, mapHierarchyOption(value)]),
 	) as Omit<HierarchyConfiguration, "getDocumentName" | "getFolderName">;
 
 	return {
-		getDocumentName:
-			getDocumentName ?? DefaultHierarchyConfigurations.getDocumentName,
-		getFolderName:
-			getFolderName ?? DefaultHierarchyConfigurations.getFolderName,
+		getDocumentName: getDocumentName ?? DefaultHierarchyConfigurations.getDocumentName,
+		getFolderName: getFolderName ?? DefaultHierarchyConfigurations.getFolderName,
 		...hierarchyConfigurations,
 	};
 }

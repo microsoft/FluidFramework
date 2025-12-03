@@ -4,11 +4,11 @@
  */
 
 import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
 	getConfigForMinVersionForCollab,
 	lowestMinVersionForCollab,
 } from "@fluidframework/runtime-utils/internal";
+
 import {
 	type CodecTree,
 	type CodecWriteOptions,
@@ -21,18 +21,20 @@ import {
 	makeVersionedValidatedCodec,
 } from "../../codec/index.js";
 import {
-	decodeFieldSchema,
-	encodeFieldSchemaV1,
-	encodeFieldSchemaV2,
 	SchemaFormatVersion,
-	storedSchemaDecodeDispatcher,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
+	decodeFieldSchema,
+	encodeFieldSchemaV1,
+	encodeFieldSchemaV2,
+	storedSchemaDecodeDispatcher,
 } from "../../core/index.js";
 import { brand, type JsonCompatible } from "../../util/index.js";
+
 import { Format as FormatV1 } from "./formatV1.js";
 import { Format as FormatV2 } from "./formatV2.js";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 /**
  * Convert a MinimumVersionForCollab to a SchemaFormatVersion.
@@ -53,10 +55,7 @@ export function clientVersionToSchemaVersion(
 export function getCodecTreeForSchemaFormat(
 	clientVersion: MinimumVersionForCollab,
 ): CodecTree {
-	return {
-		name: "Schema",
-		version: clientVersionToSchemaVersion(clientVersion),
-	};
+	return { name: "Schema", version: clientVersionToSchemaVersion(clientVersion) };
 }
 
 /**
@@ -75,8 +74,7 @@ export function makeSchemaCodec(
 	return makeVersionDispatchingCodec(family, {
 		...options,
 		writeVersion:
-			writeVersionOverride ??
-			clientVersionToSchemaVersion(options.minVersionForCollab),
+			writeVersionOverride ?? clientVersionToSchemaVersion(options.minVersionForCollab),
 	});
 }
 
@@ -85,9 +83,7 @@ export function makeSchemaCodec(
  * @param options - Specifies common codec options, including which `validator` to use.
  * @returns The composed codec family.
  */
-export function makeSchemaCodecs(
-	options: ICodecOptions,
-): ICodecFamily<TreeStoredSchema> {
+export function makeSchemaCodecs(options: ICodecOptions): ICodecFamily<TreeStoredSchema> {
 	return makeCodecFamily([
 		[SchemaFormatVersion.v1, makeSchemaCodecV1(options)],
 		[SchemaFormatVersion.v2, makeSchemaCodecV2(options)],
@@ -146,8 +142,7 @@ function encodeNodeSchema<TFormat>(
 ): Record<string, TFormat> {
 	const nodeSchema: Record<string, TFormat> = Object.create(null);
 	for (const name of [...repo.nodeSchema.keys()].sort()) {
-		const schema =
-			repo.nodeSchema.get(name) ?? fail(0xb28 /* missing schema */);
+		const schema = repo.nodeSchema.get(name) ?? fail(0xb28 /* missing schema */);
 		Object.defineProperty(nodeSchema, name, {
 			enumerable: true,
 			configurable: true,
@@ -160,8 +155,7 @@ function encodeNodeSchema<TFormat>(
 }
 
 function decodeV1(f: FormatV1): TreeStoredSchema {
-	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> =
-		new Map();
+	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
 	for (const [key, schema] of Object.entries(f.nodes)) {
 		const storedSchemaDecoder = storedSchemaDecodeDispatcher.dispatch(schema);
 
@@ -175,12 +169,9 @@ function decodeV1(f: FormatV1): TreeStoredSchema {
 }
 
 function decodeV2(f: FormatV2): TreeStoredSchema {
-	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> =
-		new Map();
+	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
 	for (const [key, schema] of Object.entries(f.nodes)) {
-		const storedSchemaDecoder = storedSchemaDecodeDispatcher.dispatch(
-			schema.kind,
-		);
+		const storedSchemaDecoder = storedSchemaDecodeDispatcher.dispatch(schema.kind);
 
 		// Pass in the node metadata
 		nodeSchema.set(brand(key), storedSchemaDecoder(schema.metadata));
@@ -196,18 +187,11 @@ function decodeV2(f: FormatV2): TreeStoredSchema {
  * @param options - Specifies common codec options, including which `validator` to use.
  * @returns The codec.
  */
-function makeSchemaCodecV1(
-	options: ICodecOptions,
-): IJsonCodec<TreeStoredSchema, FormatV1> {
-	return makeVersionedValidatedCodec(
-		options,
-		new Set([SchemaFormatVersion.v1]),
-		FormatV1,
-		{
-			encode: (data: TreeStoredSchema) => encodeRepoV1(data),
-			decode: (data: FormatV1) => decodeV1(data),
-		},
-	);
+function makeSchemaCodecV1(options: ICodecOptions): IJsonCodec<TreeStoredSchema, FormatV1> {
+	return makeVersionedValidatedCodec(options, new Set([SchemaFormatVersion.v1]), FormatV1, {
+		encode: (data: TreeStoredSchema) => encodeRepoV1(data),
+		decode: (data: FormatV1) => decodeV1(data),
+	});
 }
 
 /**
@@ -215,16 +199,9 @@ function makeSchemaCodecV1(
  * @param options - Specifies common codec options, including which `validator` to use.
  * @returns The codec.
  */
-function makeSchemaCodecV2(
-	options: ICodecOptions,
-): IJsonCodec<TreeStoredSchema, FormatV2> {
-	return makeVersionedValidatedCodec(
-		options,
-		new Set([SchemaFormatVersion.v2]),
-		FormatV2,
-		{
-			encode: (data: TreeStoredSchema) => encodeRepoV2(data),
-			decode: (data: FormatV2) => decodeV2(data),
-		},
-	);
+function makeSchemaCodecV2(options: ICodecOptions): IJsonCodec<TreeStoredSchema, FormatV2> {
+	return makeVersionedValidatedCodec(options, new Set([SchemaFormatVersion.v2]), FormatV2, {
+		encode: (data: TreeStoredSchema) => encodeRepoV2(data),
+		decode: (data: FormatV2) => decodeV2(data),
+	});
 }

@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type ObjectOptions,
-	type Static,
-	type TSchema,
-	Type,
-} from "@sinclair/typebox";
+import { type ObjectOptions, type Static, type TSchema, Type } from "@sinclair/typebox";
 
 import { EncodedChangeAtomId } from "../modular-schema/index.js";
 
@@ -24,9 +19,7 @@ export type EncodedBuild = Static<typeof EncodedBuild>;
 
 // Return type is intentionally derived.
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const EncodedOptionalChangeset = <Schema extends TSchema>(
-	tNodeChange: Schema,
-) =>
+export const EncodedOptionalChangeset = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Object(
 		{
 			// Subtrees being created. They start as detached.
@@ -60,10 +53,6 @@ const EncodedChildChanges = <Schema extends TSchema>(tNodeChange: Schema) =>
 // As such, changesets should not contain duplicated src or dst entries.
 const EncodedMoves = Type.Optional(
 	Type.Array(
-		Type.Tuple([
-			EncodedRegisterId,
-			EncodedRegisterId,
-			Type.Optional(Type.Boolean()),
-		]),
+		Type.Tuple([EncodedRegisterId, EncodedRegisterId, Type.Optional(Type.Boolean())]),
 	),
 );

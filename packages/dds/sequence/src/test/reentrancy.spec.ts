@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { AttachState } from "@fluidframework/container-definitions";
 import {
-	type ISegmentInternal,
 	LocalReferenceCollection,
 	MergeTreeDeltaType,
 	ReferenceType,
+	type ISegmentInternal,
 } from "@fluidframework/merge-tree/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -16,7 +18,6 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import { strict as assert } from "assert";
 
 import { resetReentrancyLogCounter } from "../sequence.js";
 import { SharedString } from "../sequenceFactory.js";
@@ -53,19 +54,13 @@ describe("SharedString op-reentrancy", () => {
 				const sharedString = factory.create(dataStoreRuntime1, "A");
 				sharedString.insertText(0, "abcX");
 
-				sharedString.on(
-					"sequenceDelta",
-					({ deltaOperation, isLocal }, target) => {
-						if (deltaOperation === MergeTreeDeltaType.INSERT && isLocal) {
-							target.removeRange(3, 4);
-						}
-					},
-				);
+				sharedString.on("sequenceDelta", ({ deltaOperation, isLocal }, target) => {
+					if (deltaOperation === MergeTreeDeltaType.INSERT && isLocal) {
+						target.removeRange(3, 4);
+					}
+				});
 
-				assert.throws(
-					() => sharedString.insertText(4, "e"),
-					"Reentrancy detected",
-				);
+				assert.throws(() => sharedString.insertText(4, "e"), "Reentrancy detected");
 			});
 		});
 	}
@@ -112,14 +107,11 @@ describe("SharedString op-reentrancy", () => {
 			sharedString.insertText(0, "abcX");
 			containerRuntimeFactory.processAllMessages();
 
-			sharedString.on(
-				"sequenceDelta",
-				({ deltaOperation, isLocal }, target) => {
-					if (deltaOperation === MergeTreeDeltaType.INSERT && isLocal) {
-						target.removeRange(3, 4);
-					}
-				},
-			);
+			sharedString.on("sequenceDelta", ({ deltaOperation, isLocal }, target) => {
+				if (deltaOperation === MergeTreeDeltaType.INSERT && isLocal) {
+					target.removeRange(3, 4);
+				}
+			});
 
 			sharedString.insertText(4, "e");
 			containerRuntimeFactory.processAllMessages();
@@ -134,31 +126,22 @@ describe("SharedString op-reentrancy", () => {
 			const { segment } = sharedString.getContainingSegment(0);
 			assert(segment);
 			const localRefs = LocalReferenceCollection.setOrGet(segment);
-			const localRef = localRefs.createLocalRef(
-				0,
-				ReferenceType.SlideOnRemove,
-				undefined,
-			);
+			const localRef = localRefs.createLocalRef(0, ReferenceType.SlideOnRemove, undefined);
 
 			assert.notEqual(localRef.getSegment(), undefined);
 
 			containerRuntimeFactory.processAllMessages();
 
-			sharedString.on(
-				"sequenceDelta",
-				({ deltaOperation, isLocal }, target) => {
-					if (deltaOperation === MergeTreeDeltaType.INSERT && isLocal) {
-						const {
-							segment: segment2,
-						}: { segment: ISegmentInternal | undefined } =
-							target.getContainingSegment(0);
-						assert(segment2);
-						assert.equal(segment, segment2);
-						assert(segment2.localRefs);
-						segment2.localRefs.removeLocalRef(localRef);
-					}
-				},
-			);
+			sharedString.on("sequenceDelta", ({ deltaOperation, isLocal }, target) => {
+				if (deltaOperation === MergeTreeDeltaType.INSERT && isLocal) {
+					const { segment: segment2 }: { segment: ISegmentInternal | undefined } =
+						target.getContainingSegment(0);
+					assert(segment2);
+					assert.equal(segment, segment2);
+					assert(segment2.localRefs);
+					segment2.localRefs.removeLocalRef(localRef);
+				}
+			});
 
 			sharedString.insertText(4, "e");
 			containerRuntimeFactory.processAllMessages();
@@ -181,24 +164,17 @@ describe("SharedString op-reentrancy", () => {
 			const { segment } = sharedString.getContainingSegment(0);
 			assert(segment);
 			const localRefs = LocalReferenceCollection.setOrGet(segment);
-			const localRef = localRefs.createLocalRef(
-				0,
-				ReferenceType.Simple,
-				undefined,
-			);
+			const localRef = localRefs.createLocalRef(0, ReferenceType.Simple, undefined);
 
 			assert.notEqual(localRef.getSegment(), undefined);
 
 			containerRuntimeFactory.processAllMessages();
 
-			sharedString.on(
-				"sequenceDelta",
-				({ deltaOperation, isLocal }, target) => {
-					if (deltaOperation === MergeTreeDeltaType.INSERT && isLocal) {
-						target.removeRange(0, 4);
-					}
-				},
-			);
+			sharedString.on("sequenceDelta", ({ deltaOperation, isLocal }, target) => {
+				if (deltaOperation === MergeTreeDeltaType.INSERT && isLocal) {
+					target.removeRange(0, 4);
+				}
+			});
 
 			sharedString.insertText(4, "e");
 			containerRuntimeFactory.processAllMessages();

@@ -4,32 +4,28 @@
  */
 
 import { strict as assert } from "node:assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import {
-	findAncestor,
-	type GraphCommit,
-	type RevisionTag,
-	rootFieldKey,
-	type TaggedChange,
-	tagChange,
-} from "../../core/index.js";
+	SquashingTransactionStack,
+	SharedTreeBranch,
+	TransactionStack,
+	type OnPop,
+} from "../../shared-tree-core/index.js";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import {
 	DefaultChangeFamily,
 	type DefaultChangeset,
 	type DefaultEditBuilder,
 } from "../../feature-libraries/index.js";
+import { chunkFromJsonableTrees, failCodecFamily, mintRevisionTag } from "../utils.js";
 import {
-	type OnPop,
-	SharedTreeBranch,
-	SquashingTransactionStack,
-	TransactionStack,
-} from "../../shared-tree-core/index.js";
+	findAncestor,
+	rootFieldKey,
+	tagChange,
+	type GraphCommit,
+	type RevisionTag,
+	type TaggedChange,
+} from "../../core/index.js";
 import { brand } from "../../util/index.js";
-import {
-	chunkFromJsonableTrees,
-	failCodecFamily,
-	mintRevisionTag,
-} from "../utils.js";
 
 describe("TransactionStacks", () => {
 	it("emit an event after starting a transaction", () => {
@@ -143,18 +139,12 @@ describe("TransactionStacks", () => {
 			() => transaction.isInProgress(),
 			validateAssertionError("Transactor is disposed"),
 		);
-		assert.throws(
-			() => transaction.start(),
-			validateAssertionError("Transactor is disposed"),
-		);
+		assert.throws(() => transaction.start(), validateAssertionError("Transactor is disposed"));
 		assert.throws(
 			() => transaction.commit(),
 			validateAssertionError("Transactor is disposed"),
 		);
-		assert.throws(
-			() => transaction.abort(),
-			validateAssertionError("Transactor is disposed"),
-		);
+		assert.throws(() => transaction.abort(), validateAssertionError("Transactor is disposed"));
 		assert.throws(
 			() => transaction.dispose(),
 			validateAssertionError("Transactor is disposed"),
@@ -268,11 +258,7 @@ describe("SquashingTransactionStacks", () => {
 			revision: initialRevision,
 		};
 
-		return new SharedTreeBranch(
-			initCommit,
-			defaultChangeFamily,
-			mintRevisionTag,
-		);
+		return new SharedTreeBranch(initCommit, defaultChangeFamily, mintRevisionTag);
 	}
 
 	function editBranch(branch: DefaultBranch, value: string): RevisionTag {
@@ -281,19 +267,12 @@ describe("SquashingTransactionStacks", () => {
 	}
 
 	function edit(editor: DefaultEditBuilder, value: string): void {
-		const content = chunkFromJsonableTrees([
-			{ type: brand("TestValue"), value },
-		]);
+		const content = chunkFromJsonableTrees([{ type: brand("TestValue"), value }]);
 		editor.valueField({ parent: undefined, field: rootFieldKey }).set(content);
 	}
 
-	function squash(
-		commits: GraphCommit<DefaultChangeset>[],
-	): TaggedChange<DefaultChangeset> {
-		return tagChange(
-			defaultChangeFamily.rebaser.compose(commits),
-			mintRevisionTag(),
-		);
+	function squash(commits: GraphCommit<DefaultChangeset>[]): TaggedChange<DefaultChangeset> {
+		return tagChange(defaultChangeFamily.rebaser.compose(commits), mintRevisionTag());
 	}
 
 	/** The number of commits on the given branch, not including the initial commit */

@@ -5,7 +5,7 @@
 		"strict": false,
 		"rootDir": "./src",
 		"outDir": "./lib",
-		"exactOptionalPropertyTypes": false
+		"exactOptionalPropertyTypes": false,
 	},
-	"include": ["src/**/*"]
+	"include": ["src/**/*"],
 }

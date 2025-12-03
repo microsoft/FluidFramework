@@ -56,11 +56,11 @@ export function createInstanceOf<T>(): T {
  *
  * In such cases, test for `any` directly.
  */
-type IfAny<
-	T,
-	TIfAny,
-	TIfNotAny = never,
-> = /* test for `any` */ boolean extends (T extends never ? true : false)
+type IfAny<T, TIfAny, TIfNotAny = never> = /* test for `any` */ boolean extends (
+	T extends never
+		? true
+		: false
+)
 	? TIfAny
 	: TIfNotAny;
 
@@ -98,14 +98,8 @@ export type AnyLocations<
 							// K if `T[K]` is `any`
 							K,
 							// K only if `T[K]` has `any` locations
-							AnyLocations<T[K], [...TAncestorTypes, T]> extends never
-								? never
-								: K
-						>]: IfAny<
-							T[K],
-							"'any' found here",
-							AnyLocations<T[K], [...TAncestorTypes, T]>
-						>;
+							AnyLocations<T[K], [...TAncestorTypes, T]> extends never ? never : K
+						>]: IfAny<T[K], "'any' found here", AnyLocations<T[K], [...TAncestorTypes, T]>>;
 					} extends infer LevelResult
 				? /* test if any keys with `any` or nested `any */ keyof LevelResult extends never
 					? /* no keys => no `any` */ never
@@ -145,9 +139,7 @@ export function reviveBigInt(_key: string, value: unknown): unknown {
 /**
  * Helper to return an Opaque Json type version of Json type
  */
-export function castToOpaqueJson<const T>(
-	v: JsonSerializable<T>,
-): JsonTypeToOpaqueJson<T> {
+export function castToOpaqueJson<const T>(v: JsonSerializable<T>): JsonTypeToOpaqueJson<T> {
 	return v as JsonTypeToOpaqueJson<T>;
 }
 
@@ -158,9 +150,7 @@ export function castToOpaqueJson<const T>(
  * {@link JsonSerializableOptions} and {@link JsonDeserializedOptions}).
  */
 export function exposeFromOpaqueJson<
-	TOpaque extends
-		| OpaqueJsonSerializable<unknown>
-		| OpaqueJsonDeserialized<unknown>,
+	TOpaque extends OpaqueJsonSerializable<unknown> | OpaqueJsonDeserialized<unknown>,
 >(v: TOpaque): OpaqueJsonToJsonType<TOpaque> {
 	return v as unknown as OpaqueJsonToJsonType<TOpaque>;
 }
@@ -183,22 +173,10 @@ type RevealOpaqueJsonDeserialized<
 > = T extends OpaqueJsonDeserialized<infer U>
 	? JsonDeserialized<U>
 	: TAncestorTypes extends unknown[]
-		? InternalUtilityTypes.IfExactTypeInTuple<
-				T,
-				TAncestorTypes,
-				true,
-				"no match"
-			> extends true
+		? InternalUtilityTypes.IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true
 			? T
-			: {
-					[Key in keyof T]: RevealOpaqueJsonDeserialized<
-						T[Key],
-						[...TAncestorTypes, T]
-					>;
-				}
-		: {
-				[Key in keyof T]: RevealOpaqueJsonDeserialized<T[Key], TAncestorTypes>;
-			};
+			: { [Key in keyof T]: RevealOpaqueJsonDeserialized<T[Key], [...TAncestorTypes, T]> }
+		: { [Key in keyof T]: RevealOpaqueJsonDeserialized<T[Key], TAncestorTypes> };
 
 /**
  * No-runtime-effect helper to reveal the JSON type from a value's opaque JSON

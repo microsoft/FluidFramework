@@ -3,14 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import {
-	MockContainerRuntimeFactory,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils/internal";
-import { asAlpha } from "../../api.js";
 import {
 	type NormalizedFieldUpPath,
 	type NormalizedUpPath,
@@ -19,21 +11,9 @@ import {
 	rootFieldKey,
 	type TreeChunk,
 } from "../../core/index.js";
-import { combineChunks, FieldKinds } from "../../feature-libraries/index.js";
-import type { ITreeCheckout } from "../../shared-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { initialize } from "../../shared-tree/schematizeTree.js";
-import {
-	SchemaFactory,
-	TreeViewConfiguration,
-} from "../../simple-tree/index.js";
-import { brand, type JsonCompatible } from "../../util/index.js";
 import { fieldJsonCursor } from "../json/index.js";
-import {
-	insert,
-	jsonSequenceRootSchema,
-	remove,
-} from "../sequenceRootUtils.js";
+import type { ITreeCheckout } from "../../shared-tree/index.js";
+import { type JsonCompatible, brand } from "../../util/index.js";
 import {
 	chunkFromJsonTrees,
 	createTestUndoRedoStacks,
@@ -43,6 +23,19 @@ import {
 	moveWithin,
 	TestTreeProviderLite,
 } from "../utils.js";
+import { insert, jsonSequenceRootSchema, remove } from "../sequenceRootUtils.js";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
+import { strict as assert } from "node:assert";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { initialize } from "../../shared-tree/schematizeTree.js";
+import { combineChunks, FieldKinds } from "../../feature-libraries/index.js";
+import { asAlpha } from "../../api.js";
 
 const rootPath: NormalizedUpPath = {
 	detachedNodeId: undefined,
@@ -129,13 +122,7 @@ const testCases: {
 			};
 
 			actedOn.transaction.start();
-			actedOn.editor.move(
-				{ parent: listNode, field: brand("") },
-				0,
-				1,
-				rootField,
-				1,
-			);
+			actedOn.editor.move({ parent: listNode, field: brand("") }, 0, 1, rootField, 1);
 			remove(actedOn, 0, 1);
 			actedOn.transaction.commit();
 		},
@@ -173,9 +160,7 @@ const testCases: {
 	{
 		name: "a remove of content that is concurrently edited",
 		edit: (actedOn, other) => {
-			other.editor
-				.sequenceField({ parent: rootPath, field: brand("child") })
-				.remove(0, 1);
+			other.editor.sequenceField({ parent: rootPath, field: brand("child") }).remove(0, 1);
 			actedOn.editor.sequenceField(rootField).remove(0, 1);
 		},
 		initialState: [{ child: "x" }],
@@ -243,9 +228,7 @@ describe("Undo and redo", () => {
 				const view = createCheckout(initialState, attached);
 				const fork = view.branch();
 
-				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
-					fork.events,
-				);
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(fork.events);
 				edit(fork, view);
 
 				fork.rebaseOnto(view);
@@ -272,9 +255,7 @@ describe("Undo and redo", () => {
 				const view = createCheckout(initialState, attached);
 				const fork = view.branch();
 
-				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
-					fork.events,
-				);
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(fork.events);
 				edit(view, fork);
 
 				fork.rebaseOnto(view);
@@ -300,9 +281,7 @@ describe("Undo and redo", () => {
 				const view = createCheckout(initialState, attached);
 				const fork = view.branch();
 
-				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
-					view.events,
-				);
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 				edit(view, fork);
 
 				view.merge(fork, false);
@@ -329,9 +308,7 @@ describe("Undo and redo", () => {
 				const view = createCheckout(initialState, attached);
 				const fork = view.branch();
 
-				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
-					view.events,
-				);
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 				edit(fork, view);
 
 				view.merge(fork, false);
@@ -357,9 +334,7 @@ describe("Undo and redo", () => {
 				const tree = createCheckout(initialState, attached);
 				const fork = tree.branch();
 
-				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
-					tree.events,
-				);
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 				edit(tree, fork);
 
 				tree.merge(fork, false);
@@ -405,14 +380,16 @@ describe("Undo and redo", () => {
 		it.skip(`can undo after forking a branch (${attachStr})`, () => {
 			const tree1 = createCheckout(["A", "B", "C"], attached);
 
-			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
-				createTestUndoRedoStacks(tree1.events);
+			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(
+				tree1.events,
+			);
 			tree1.editor.sequenceField(rootField).remove(0, 1);
 			tree1.editor.sequenceField(rootField).remove(1, 1);
 
 			const tree2 = tree1.branch();
-			const { undoStack: undoStack2, unsubscribe: unsubscribe2 } =
-				createTestUndoRedoStacks(tree2.events);
+			const { undoStack: undoStack2, unsubscribe: unsubscribe2 } = createTestUndoRedoStacks(
+				tree2.events,
+			);
 			expectJsonTree(tree2, ["B"]);
 			undoStack1.pop()?.revert();
 			expectJsonTree(tree2, ["B", "C"]);
@@ -426,20 +403,18 @@ describe("Undo and redo", () => {
 		it.skip(`can redo after forking a branch (${attachStr})`, () => {
 			const tree1 = createCheckout(["B"], attached);
 
-			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
-				createTestUndoRedoStacks(tree1.events);
-			tree1.editor
-				.sequenceField(rootField)
-				.insert(0, chunkFromJsonTrees(["A"]));
-			tree1.editor
-				.sequenceField(rootField)
-				.insert(2, chunkFromJsonTrees(["C"]));
+			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(
+				tree1.events,
+			);
+			tree1.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees(["A"]));
+			tree1.editor.sequenceField(rootField).insert(2, chunkFromJsonTrees(["C"]));
 			undoStack1.pop()?.revert();
 			undoStack1.pop()?.revert();
 
 			const tree2 = tree1.branch();
-			const { redoStack: redoStack2, unsubscribe: unsubscribe2 } =
-				createTestUndoRedoStacks(tree2.events);
+			const { redoStack: redoStack2, unsubscribe: unsubscribe2 } = createTestUndoRedoStacks(
+				tree2.events,
+			);
 			expectJsonTree(tree2, ["B"]);
 			redoStack2.pop()?.revert();
 			expectJsonTree(tree2, ["A", "B"]);
@@ -452,9 +427,7 @@ describe("Undo and redo", () => {
 		it(`can undo/redo a transaction (${attachStr})`, () => {
 			const tree = createCheckout(["A", "B"], attached);
 
-			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
-				tree.events,
-			);
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 			tree.transaction.start();
 			tree.editor.sequenceField(rootField).insert(2, chunkFromJsonTrees(["C"]));
 			tree.editor.sequenceField(rootField).remove(0, 1);
@@ -471,13 +444,9 @@ describe("Undo and redo", () => {
 		it(`can undo/redo a merge (${attachStr})`, () => {
 			const tree = createCheckout(["A", "B"], attached);
 
-			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
-				tree.events,
-			);
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 			const branch = tree.branch();
-			branch.editor
-				.sequenceField(rootField)
-				.insert(2, chunkFromJsonTrees(["C"]));
+			branch.editor.sequenceField(rootField).insert(2, chunkFromJsonTrees(["C"]));
 			branch.editor.sequenceField(rootField).remove(0, 1);
 			tree.merge(branch);
 
@@ -500,17 +469,13 @@ describe("Undo and redo", () => {
 
 			const branch = tree.branch();
 
-			branch.editor
-				.sequenceField(rootField)
-				.insert(2, chunkFromJsonTrees(["C"]));
+			branch.editor.sequenceField(rootField).insert(2, chunkFromJsonTrees(["C"]));
 			tree.merge(branch, false);
 			expectJsonTree(tree, ["A", "B", "C"]);
 			undoStack.pop()?.revert();
 			expectJsonTree(tree, ["A", "B"]);
 
-			branch.editor
-				.sequenceField(rootField)
-				.insert(2, chunkFromJsonTrees(["C"]));
+			branch.editor.sequenceField(rootField).insert(2, chunkFromJsonTrees(["C"]));
 			tree.merge(branch);
 			expectJsonTree(tree, ["A", "B", "C"]);
 			undoStack.pop()?.revert();
@@ -523,13 +488,9 @@ describe("Undo and redo", () => {
 	it("can undo while detached", () => {
 		const sf = new SchemaFactory(undefined);
 		class Schema extends sf.object("Object", { foo: sf.number }) {}
-		const runtime = new MockFluidDataStoreRuntime({
-			idCompressor: createIdCompressor(),
-		});
+		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 		const tree = DefaultTestSharedTreeKind.getFactory().create(runtime, "tree");
-		const view = asAlpha(
-			tree.viewWith(new TreeViewConfiguration({ schema: Schema })),
-		);
+		const view = asAlpha(tree.viewWith(new TreeViewConfiguration({ schema: Schema })));
 		view.initialize({ foo: 1 });
 		assert.equal(tree.isAttached(), false);
 		let revertible: Revertible | undefined;
@@ -588,18 +549,14 @@ describe("Undo and redo", () => {
 	// TODO:#24414: Enable forkable revertibles tests to run on attached/detached mode.
 	it("reverts original & forked revertibles after making separate changes to the original & forked view", () => {
 		const originalView = createInitializedView();
-		const { undoStack: undoStack1 } = createTestUndoRedoStacks(
-			originalView.events,
-		);
+		const { undoStack: undoStack1 } = createTestUndoRedoStacks(originalView.events);
 
 		assert(originalView.root.child !== undefined);
 		originalView.root.child.propertyOne = 256; // 128 -> 256
 		originalView.root.child.propertyTwo.itemOne = "newItem";
 
 		const forkedView = originalView.fork();
-		const { undoStack: undoStack2 } = createTestUndoRedoStacks(
-			forkedView.events,
-		);
+		const { undoStack: undoStack2 } = createTestUndoRedoStacks(forkedView.events);
 
 		assert(forkedView.root.child !== undefined);
 		forkedView.root.child.propertyOne = 512; // 256 -> 512
@@ -608,12 +565,10 @@ describe("Undo and redo", () => {
 		assert.equal(forkedView.root.child?.propertyOne, 256);
 
 		const undoOriginalPropertyTwo = undoStack1.pop();
-		const clonedUndoOriginalPropertyTwo =
-			undoOriginalPropertyTwo?.clone(forkedView);
+		const clonedUndoOriginalPropertyTwo = undoOriginalPropertyTwo?.clone(forkedView);
 
 		const undoOriginalPropertyOne = undoStack1.pop();
-		const clonedUndoOriginalPropertyOne =
-			undoOriginalPropertyOne?.clone(forkedView);
+		const clonedUndoOriginalPropertyOne = undoOriginalPropertyOne?.clone(forkedView);
 
 		undoOriginalPropertyOne?.revert();
 		undoOriginalPropertyTwo?.revert();
@@ -631,14 +586,8 @@ describe("Undo and redo", () => {
 
 		assert.equal(undoOriginalPropertyOne?.status, RevertibleStatus.Disposed);
 		assert.equal(undoOriginalPropertyTwo?.status, RevertibleStatus.Disposed);
-		assert.equal(
-			clonedUndoOriginalPropertyOne?.status,
-			RevertibleStatus.Disposed,
-		);
-		assert.equal(
-			clonedUndoOriginalPropertyTwo?.status,
-			RevertibleStatus.Disposed,
-		);
+		assert.equal(clonedUndoOriginalPropertyOne?.status, RevertibleStatus.Disposed);
+		assert.equal(clonedUndoOriginalPropertyTwo?.status, RevertibleStatus.Disposed);
 	});
 
 	// TODO:#24414: Enable forkable revertibles tests to run on attached/detached mode.
@@ -663,14 +612,8 @@ describe("Undo and redo", () => {
 		assert.equal(view.root.child?.propertyTwo.itemOne, "");
 		assert.equal(undoOriginalPropertyOne?.status, RevertibleStatus.Disposed);
 		assert.equal(undoOriginalPropertyTwo?.status, RevertibleStatus.Disposed);
-		assert.equal(
-			clonedUndoOriginalPropertyOne?.status,
-			RevertibleStatus.Disposed,
-		);
-		assert.equal(
-			clonedUndoOriginalPropertyTwo?.status,
-			RevertibleStatus.Disposed,
-		);
+		assert.equal(clonedUndoOriginalPropertyOne?.status, RevertibleStatus.Disposed);
+		assert.equal(clonedUndoOriginalPropertyTwo?.status, RevertibleStatus.Disposed);
 	});
 
 	// TODO:#24414: Enable forkable revertibles tests to run on attached/detached mode.
@@ -687,10 +630,8 @@ describe("Undo and redo", () => {
 		const undoOriginalPropertyTwo = undoStack.pop();
 		const undoOriginalPropertyOne = undoStack.pop();
 
-		const clonedUndoOriginalPropertyTwo =
-			undoOriginalPropertyTwo?.clone(forkedView);
-		const clonedUndoOriginalPropertyOne =
-			undoOriginalPropertyOne?.clone(forkedView);
+		const clonedUndoOriginalPropertyTwo = undoOriginalPropertyTwo?.clone(forkedView);
+		const clonedUndoOriginalPropertyOne = undoOriginalPropertyOne?.clone(forkedView);
 
 		clonedUndoOriginalPropertyTwo?.revert();
 		clonedUndoOriginalPropertyOne?.revert();
@@ -701,14 +642,8 @@ describe("Undo and redo", () => {
 		assert.equal(forkedView.root.child?.propertyTwo.itemOne, "");
 		assert.equal(undoOriginalPropertyOne?.status, RevertibleStatus.Valid);
 		assert.equal(undoOriginalPropertyTwo?.status, RevertibleStatus.Valid);
-		assert.equal(
-			clonedUndoOriginalPropertyOne?.status,
-			RevertibleStatus.Disposed,
-		);
-		assert.equal(
-			clonedUndoOriginalPropertyTwo?.status,
-			RevertibleStatus.Disposed,
-		);
+		assert.equal(clonedUndoOriginalPropertyOne?.status, RevertibleStatus.Disposed);
+		assert.equal(clonedUndoOriginalPropertyTwo?.status, RevertibleStatus.Disposed);
 
 		undoOriginalPropertyTwo?.revert();
 		undoOriginalPropertyOne?.revert();
@@ -752,10 +687,7 @@ describe("Undo and redo", () => {
 
 		assert.equal(view.root.child?.propertyOne, 128);
 		assert.equal(undoOriginalPropertyOne?.status, RevertibleStatus.Disposed);
-		assert.equal(
-			clonedUndoOriginalPropertyOne?.status,
-			RevertibleStatus.Disposed,
-		);
+		assert.equal(clonedUndoOriginalPropertyOne?.status, RevertibleStatus.Disposed);
 
 		assert.throws(
 			() => clonedUndoOriginalPropertyOne?.revert(),
@@ -768,23 +700,16 @@ describe("Undo and redo", () => {
  * Create a checkout belonging to a SharedTree with the given JSON data.
  * @param attachTree - whether or not the SharedTree should be attached to the Fluid runtime
  */
-export function createCheckout(
-	json: JsonCompatible[],
-	attachTree: boolean,
-): ITreeCheckout {
+export function createCheckout(json: JsonCompatible[], attachTree: boolean): ITreeCheckout {
 	const sharedTreeFactory = DefaultTestSharedTreeKind.getFactory();
-	const runtime = new MockFluidDataStoreRuntime({
-		idCompressor: createIdCompressor(),
-	});
+	const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 	const tree = sharedTreeFactory.create(runtime, "tree");
 	const runtimeFactory = new MockContainerRuntimeFactory();
 	runtimeFactory.createContainerRuntime(runtime);
 	initialize(tree.kernel.checkout, jsonSequenceRootSchema, () =>
 		initializeSequenceRoot(
 			tree.kernel.checkout,
-			combineChunks(
-				tree.kernel.checkout.forest.chunkField(fieldJsonCursor(json)),
-			),
+			combineChunks(tree.kernel.checkout.forest.chunkField(fieldJsonCursor(json))),
 		),
 	);
 
@@ -804,15 +729,9 @@ let temp: unknown;
 /**
  * Helper for use with `initialize` when the root is a sequence.
  */
-function initializeSequenceRoot(
-	checkout: ITreeCheckout,
-	content: TreeChunk,
-): void {
+function initializeSequenceRoot(checkout: ITreeCheckout, content: TreeChunk): void {
 	const field = { field: rootFieldKey, parent: undefined };
-	assert(
-		checkout.storedSchema.rootFieldSchema.kind ===
-			FieldKinds.sequence.identifier,
-	);
+	assert(checkout.storedSchema.rootFieldSchema.kind === FieldKinds.sequence.identifier);
 	const fieldEditor = checkout.editor.sequenceField(field);
 	// TODO: should do an idempotent edit here.
 	fieldEditor.insert(0, content);

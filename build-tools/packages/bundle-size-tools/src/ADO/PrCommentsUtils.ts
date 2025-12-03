@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getBearerHandler, WebApi } from "azure-devops-node-api";
+import { WebApi, getBearerHandler } from "azure-devops-node-api";
 import type { IGitApi } from "azure-devops-node-api/GitApi";
 import type { CommentThreadStatus } from "azure-devops-node-api/interfaces/GitInterfaces";
 
@@ -35,10 +35,7 @@ export class prCommentsUtils {
 	 * @param message - the message to write on the thread. You can pass HTML
 	 * @param threadType - the identifier of your thread
 	 */
-	public async createOrUpdateThread(
-		message: string,
-		threadType: string | undefined,
-	) {
+	public async createOrUpdateThread(message: string, threadType: string | undefined) {
 		const gitApi = await this.gitApi;
 		const existingThread =
 			(threadType && (await this.getThreadByType(threadType))) || undefined;
@@ -80,21 +77,13 @@ export class prCommentsUtils {
 	 * @param message - the message to write on the thread. You can pass HTML
 	 * @param threadType - the identifier of your thread
 	 */
-	public async createOrReplaceThread(
-		message: string,
-		threadType: string | undefined,
-	) {
+	public async createOrReplaceThread(message: string, threadType: string | undefined) {
 		const gitApi = await this.gitApi;
 		const existingThread =
 			(threadType && (await this.getThreadByType(threadType))) || undefined;
 
 		if (existingThread && existingThread.id) {
-			await gitApi.deleteComment(
-				this.repoId,
-				this.pullRequestId,
-				existingThread.id,
-				1,
-			);
+			await gitApi.deleteComment(this.repoId, this.pullRequestId, existingThread.id, 1);
 		}
 
 		await this.createOrUpdateThread(message, threadType);
@@ -118,12 +107,7 @@ export class prCommentsUtils {
 			content: message,
 		};
 
-		await gitApi.createComment(
-			comment,
-			this.repoId,
-			this.pullRequestId,
-			existingThread.id,
-		);
+		await gitApi.createComment(comment, this.repoId, this.pullRequestId, existingThread.id);
 	}
 
 	/**
@@ -147,12 +131,7 @@ export class prCommentsUtils {
 			status: commentThreadStatus,
 		};
 
-		await gitApi.updateThread(
-			thread,
-			this.repoId,
-			this.pullRequestId,
-			existingThread.id,
-		);
+		await gitApi.updateThread(thread, this.repoId, this.pullRequestId, existingThread.id);
 	}
 
 	private async getThreadByType(threadType: string) {
@@ -160,9 +139,7 @@ export class prCommentsUtils {
 		const threads = await gitApi.getThreads(this.repoId, this.pullRequestId);
 
 		return threads.find((thread) => {
-			return (
-				thread.properties?.type?.$value === threadType && !thread.isDeleted
-			);
+			return thread.properties?.type?.$value === threadType && !thread.isDeleted;
 		});
 	}
 }

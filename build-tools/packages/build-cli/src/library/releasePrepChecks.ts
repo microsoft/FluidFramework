@@ -105,8 +105,7 @@ export const CheckDependenciesInstalled: CheckFunction = async (
 	// If any of the install checks returned false, dependencies need to be installed
 	if (installChecks.includes(false)) {
 		return {
-			message:
-				"Some dependencies aren't installed. Try installing dependencies manually.",
+			message: "Some dependencies aren't installed. Try installing dependencies manually.",
 			fixCommand: "pnpm install",
 		};
 	}
@@ -125,17 +124,13 @@ export const CheckHasRemoteBranchUpToDate: CheckFunction = async (
 
 	if (remote === undefined) {
 		return {
-			message:
-				"No remote found that points to the microsoft/FluidFramework repo.",
+			message: "No remote found that points to the microsoft/FluidFramework repo.",
 		};
 	}
 
 	let succeeded = false;
 	try {
-		succeeded = await gitRepo.isBranchUpToDate(
-			gitRepo.originalBranchName,
-			remote,
-		);
+		succeeded = await gitRepo.isBranchUpToDate(gitRepo.originalBranchName, remote);
 	} catch (error) {
 		return {
 			message: `Error when checking remote branch. Does the remote branch exist? Full error message:\n${
@@ -146,8 +141,7 @@ export const CheckHasRemoteBranchUpToDate: CheckFunction = async (
 
 	if (!succeeded) {
 		return {
-			message:
-				"Branch is out of date with the remote. Try pulling the latest from upstream.",
+			message: "Branch is out of date with the remote. Try pulling the latest from upstream.",
 			fixCommand: "git pull",
 		};
 	}
@@ -204,8 +198,7 @@ export const CheckNoPolicyViolations: CheckFunction = async (
 
 	if (result.exitCode !== 0) {
 		return {
-			message:
-				"Policy check failed. These failures must be fixed before release.",
+			message: "Policy check failed. These failures must be fixed before release.",
 			fixCommand: "pnpm run policy-check:fix",
 		};
 	}
@@ -230,8 +223,7 @@ export const CheckNoUntaggedAsserts: CheckFunction = async (
 	if (!afterPolicyCheckStatus.isClean()) {
 		await gitRepo.gitClient.reset(ResetMode.HARD);
 		return {
-			message:
-				"Found some untagged asserts. These should be tagged before release.",
+			message: "Found some untagged asserts. These should be tagged before release.",
 			fixCommand: "pnpm run policy-check:asserts",
 		};
 	}

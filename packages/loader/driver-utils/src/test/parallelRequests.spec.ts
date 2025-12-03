@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
-import { strict as assert } from "assert";
 
 import { ParallelRequests } from "../parallelRequests.js";
 
@@ -238,11 +239,7 @@ describe("Parallel Requests", () => {
 			10,
 			logger.toTelemetryLogger(),
 			async (request: number, _from: number, _to: number) => {
-				return {
-					cancel: false,
-					partial: false,
-					payload: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-				};
+				return { cancel: false, partial: false, payload: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] };
 			},
 			(deltas: number[]) => {
 				throw new Error("response");

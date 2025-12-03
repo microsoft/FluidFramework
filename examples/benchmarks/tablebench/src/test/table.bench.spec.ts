@@ -9,22 +9,14 @@ import {
 	benchmarkCustom,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
-import type { IChannel } from "@fluidframework/datastore-definitions/legacy";
+import { IChannel } from "@fluidframework/datastore-definitions/legacy";
 import { SharedMatrix } from "@fluidframework/matrix/legacy";
-import {
-	type ITree,
-	type NodeFromSchema,
-	TreeViewConfiguration,
-} from "@fluidframework/tree";
+import { type ITree, NodeFromSchema, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/legacy";
 
-import { generateTable, Table } from "../index.js";
+import { Table, generateTable } from "../index.js";
 
-import {
-	create,
-	measureAttachmentSummary,
-	measureEncodedLength,
-} from "./utils.js";
+import { create, measureAttachmentSummary, measureEncodedLength } from "./utils.js";
 
 const numRows = isInPerformanceTestingMode ? 10000 : 100;
 
@@ -87,9 +79,7 @@ describe("Table", () => {
 				({ channel, processAllMessages } = create(SharedTree.getFactory()));
 				const tree = channel as unknown as ITree;
 
-				const view = tree.viewWith(
-					new TreeViewConfiguration({ schema: Table }),
-				);
+				const view = tree.viewWith(new TreeViewConfiguration({ schema: Table }));
 				view.initialize(data);
 				table = view.root;
 
@@ -134,20 +124,15 @@ describe("Table", () => {
 					},
 					// Create the 'cols' object, pre-initialing each row key with an empty array:
 					//    { "Country": [], "Region": [], ... }
-					Object.keys(rows[0]).reduce<Record<string, unknown[]>>(
-						(cols, key) => {
-							cols[key] = [];
-							return cols;
-						},
-						{},
-					),
+					Object.keys(rows[0]).reduce<Record<string, unknown[]>>((cols, key) => {
+						cols[key] = [];
+						return cols;
+					}, {}),
 				);
 			}
 
 			const rowMajorJsonBytes = measureEncodedLength(JSON.stringify(data));
-			const colMajorJsonBytes = measureEncodedLength(
-				JSON.stringify(transposeTable(data)),
-			);
+			const colMajorJsonBytes = measureEncodedLength(JSON.stringify(transposeTable(data)));
 			let summaryBytes: number;
 
 			benchmarkCustom({
@@ -157,14 +142,8 @@ describe("Table", () => {
 				run: async (reporter) => {
 					summaryBytes = rowMajorJsonBytes;
 					reporter.addMeasurement(`summaryBytes`, summaryBytes);
-					reporter.addMeasurement(
-						`vs row-major:`,
-						summaryBytes / rowMajorJsonBytes,
-					);
-					reporter.addMeasurement(
-						`vs col-major:`,
-						summaryBytes / colMajorJsonBytes,
-					);
+					reporter.addMeasurement(`vs row-major:`, summaryBytes / rowMajorJsonBytes);
+					reporter.addMeasurement(`vs col-major:`, summaryBytes / colMajorJsonBytes);
 				},
 			});
 
@@ -175,14 +154,8 @@ describe("Table", () => {
 				run: async (reporter) => {
 					summaryBytes = colMajorJsonBytes;
 					reporter.addMeasurement(`summaryBytes`, summaryBytes);
-					reporter.addMeasurement(
-						`vs row-major:`,
-						summaryBytes / rowMajorJsonBytes,
-					);
-					reporter.addMeasurement(
-						`vs col-major:`,
-						summaryBytes / colMajorJsonBytes,
-					);
+					reporter.addMeasurement(`vs row-major:`, summaryBytes / rowMajorJsonBytes);
+					reporter.addMeasurement(`vs col-major:`, summaryBytes / colMajorJsonBytes);
 				},
 			});
 
@@ -193,9 +166,7 @@ describe("Table", () => {
 				run: async (reporter) => {
 					const columnNames = Object.keys(data[0]);
 
-					const { channel, processAllMessages } = create(
-						SharedMatrix.getFactory(),
-					);
+					const { channel, processAllMessages } = create(SharedMatrix.getFactory());
 					matrix = channel as SharedMatrix;
 					matrix.insertCols(0, columnNames.length);
 					matrix.insertRows(0, data.length);
@@ -210,14 +181,8 @@ describe("Table", () => {
 					summaryBytes = measureAttachmentSummary(channel);
 
 					reporter.addMeasurement(`summaryBytes`, summaryBytes);
-					reporter.addMeasurement(
-						`vs row-major:`,
-						summaryBytes / rowMajorJsonBytes,
-					);
-					reporter.addMeasurement(
-						`vs col-major:`,
-						summaryBytes / colMajorJsonBytes,
-					);
+					reporter.addMeasurement(`vs row-major:`, summaryBytes / rowMajorJsonBytes);
+					reporter.addMeasurement(`vs col-major:`, summaryBytes / colMajorJsonBytes);
 				},
 			});
 
@@ -226,28 +191,18 @@ describe("Table", () => {
 				type: BenchmarkType.Measurement,
 				title: `SharedTree`,
 				run: async (reporter) => {
-					const { channel, processAllMessages } = create(
-						SharedTree.getFactory(),
-					);
+					const { channel, processAllMessages } = create(SharedTree.getFactory());
 					tree = channel;
 
-					const view = tree.viewWith(
-						new TreeViewConfiguration({ schema: Table }),
-					);
+					const view = tree.viewWith(new TreeViewConfiguration({ schema: Table }));
 					view.initialize(data);
 
 					processAllMessages();
 					summaryBytes = measureAttachmentSummary(channel);
 
 					reporter.addMeasurement(`summaryBytes`, summaryBytes);
-					reporter.addMeasurement(
-						`vs row-major:`,
-						summaryBytes / rowMajorJsonBytes,
-					);
-					reporter.addMeasurement(
-						`vs col-major:`,
-						summaryBytes / colMajorJsonBytes,
-					);
+					reporter.addMeasurement(`vs row-major:`, summaryBytes / rowMajorJsonBytes);
+					reporter.addMeasurement(`vs col-major:`, summaryBytes / colMajorJsonBytes);
 				},
 			});
 		});

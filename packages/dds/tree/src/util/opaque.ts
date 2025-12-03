@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	Brand,
-	BrandedType,
-	NameFromBranded,
-	ValueFromBranded,
-} from "./brand.js";
+import type { Brand, BrandedType, NameFromBranded, ValueFromBranded } from "./brand.js";
 import type { isAny } from "./typeCheck.js";
 
 /**
@@ -29,10 +24,12 @@ import type { isAny } from "./typeCheck.js";
  * ```
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type Opaque<T extends Brand<any, unknown>> =
-	T extends BrandedType<infer ValueType, infer Name>
-		? BrandedType<ValueType, Name>
-		: never;
+export type Opaque<T extends Brand<any, unknown>> = T extends BrandedType<
+	infer ValueType,
+	infer Name
+>
+	? BrandedType<ValueType, Name>
+	: never;
 
 /**
  * See {@link extractFromOpaque}.

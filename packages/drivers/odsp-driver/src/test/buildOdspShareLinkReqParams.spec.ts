@@ -14,13 +14,8 @@ import { buildOdspShareLinkReqParams } from "../odspUtils.js";
 
 describe("buildOdspShareLinkReqParams", () => {
 	it("Should return appropriate query parameters when only scope is provided", async () => {
-		const result = buildOdspShareLinkReqParams({
-			scope: SharingLinkScope.organization,
-		});
-		assert.strictEqual(
-			result,
-			`createLinkScope=${SharingLinkScope.organization}`,
-		);
+		const result = buildOdspShareLinkReqParams({ scope: SharingLinkScope.organization });
+		assert.strictEqual(result, `createLinkScope=${SharingLinkScope.organization}`);
 	});
 
 	it("Should return appropriate query parameters when both scope and link role are provided", async () => {

@@ -84,11 +84,7 @@ function exampleGettingStartedTransform(content, options, config) {
 		options.packageJsonPath,
 	);
 	return formattedGeneratedContentBody(
-		generateExampleGettingStartedSection(
-			packageJsonPath,
-			usesTinylicious,
-			headingOptions,
-		),
+		generateExampleGettingStartedSection(packageJsonPath, usesTinylicious, headingOptions),
 	);
 }
 

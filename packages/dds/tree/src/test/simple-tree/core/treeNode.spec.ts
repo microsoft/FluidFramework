@@ -5,18 +5,20 @@
 
 import { strict as assert } from "node:assert";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
-import { Tree } from "../../../shared-tree/index.js";
+
 import {
-	inPrototypeChain,
 	TreeNode,
+	inPrototypeChain,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/treeNode.js";
+
 import {
-	SchemaFactory,
-	type TreeNodeSchema,
 	typeNameSymbol,
 	typeSchemaSymbol,
+	type TreeNodeSchema,
+	SchemaFactory,
 } from "../../../simple-tree/index.js";
+import { Tree } from "../../../shared-tree/index.js";
 
 describe("simple-tree core types", () => {
 	describe("TreeNode", () => {
@@ -54,9 +56,7 @@ describe("simple-tree core types", () => {
 			// Instances are rejected
 			assert.throws(
 				() => new Subclass(),
-				validateUsageError(
-					"TreeNodes must extend schema classes created by SchemaFactory",
-				),
+				validateUsageError("TreeNodes must extend schema classes created by SchemaFactory"),
 			);
 
 			// Use as schema is rejected
@@ -94,9 +94,7 @@ describe("simple-tree core types", () => {
 
 			// Static inheritance
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			assert(
-				inPrototypeChain(Reflect.getPrototypeOf(B), Reflect.getPrototypeOf(A)!),
-			);
+			assert(inPrototypeChain(Reflect.getPrototypeOf(B), Reflect.getPrototypeOf(A)!));
 			assert.equal(
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				inPrototypeChain(Reflect.getPrototypeOf(A), Reflect.getPrototypeOf(B)!),

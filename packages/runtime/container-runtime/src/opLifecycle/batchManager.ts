@@ -6,8 +6,8 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	LoggingError,
-	TelemetryDataTag,
 	tagData,
+	TelemetryDataTag,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
@@ -15,11 +15,7 @@ import { isContainerMessageDirtyable } from "../containerRuntime.js";
 import { asBatchMetadata, type IBatchMetadata } from "../metadata.js";
 import type { IPendingMessage } from "../pendingStateManager.js";
 
-import type {
-	IBatchCheckpoint,
-	LocalBatch,
-	LocalBatchMessage,
-} from "./definitions.js";
+import type { LocalBatchMessage, IBatchCheckpoint, LocalBatch } from "./definitions.js";
 import { serializeOp } from "./opSerialization.js";
 import type { BatchStartInfo } from "./remoteMessageProcessor.js";
 
@@ -50,10 +46,7 @@ export type BatchId = string;
 /**
  * Compose original client ID and client sequence number into BatchId to stamp on the message during reconnect
  */
-export function generateBatchId(
-	originalClientId: string,
-	batchStartCsn: number,
-): BatchId {
+export function generateBatchId(originalClientId: string, batchStartCsn: number): BatchId {
 	return `${originalClientId}_[${batchStartCsn}]`;
 }
 
@@ -78,10 +71,7 @@ export function getEffectiveBatchId(
 	}
 
 	const batchStart: BatchStartInfo = pendingMessageOrBatchStartInfo;
-	return (
-		batchStart.batchId ??
-		generateBatchId(batchStart.clientId, batchStart.batchStartCsn)
-	);
+	return batchStart.batchId ?? generateBatchId(batchStart.clientId, batchStart.batchStartCsn);
 }
 
 /**
@@ -139,10 +129,7 @@ export class BatchManager {
 	 * Gets the pending batch and clears state for the next batch.
 	 */
 	public popBatch(batchId?: BatchId): LocalBatch {
-		assert(
-			this.pendingBatch[0] !== undefined,
-			0xb8a /* expected non-empty batch */,
-		);
+		assert(this.pendingBatch[0] !== undefined, 0xb8a /* expected non-empty batch */);
 		const batch: LocalBatch = {
 			messages: this.pendingBatch,
 			referenceSequenceNumber: this.referenceSequenceNumber,
@@ -175,9 +162,7 @@ export class BatchManager {
 					throw new LoggingError("Ops generated during rollback", {
 						count,
 						...tagData(TelemetryDataTag.UserData, {
-							ops: serializeOp(
-								this.pendingBatch.slice(startPoint).map((b) => b.runtimeOp),
-							),
+							ops: serializeOp(this.pendingBatch.slice(startPoint).map((b) => b.runtimeOp)),
 						}),
 					});
 				}
@@ -189,16 +174,11 @@ export class BatchManager {
 	 * Does this batch current contain user changes ("dirtyable" ops)?
 	 */
 	public containsUserChanges(): boolean {
-		return this.pendingBatch.some((message) =>
-			isContainerMessageDirtyable(message.runtimeOp),
-		);
+		return this.pendingBatch.some((message) => isContainerMessageDirtyable(message.runtimeOp));
 	}
 }
 
-export const addBatchMetadata = (
-	batch: LocalBatch,
-	batchId?: BatchId,
-): LocalBatch => {
+export const addBatchMetadata = (batch: LocalBatch, batchId?: BatchId): LocalBatch => {
 	const batchEnd = batch.messages.length - 1;
 
 	const firstMsg = batch.messages[0];
@@ -235,8 +215,7 @@ export const sequenceNumbersMatch = (
 	return (
 		(seqNums.referenceSequenceNumber === undefined ||
 			otherSeqNums.referenceSequenceNumber === undefined ||
-			seqNums.referenceSequenceNumber ===
-				otherSeqNums.referenceSequenceNumber) &&
+			seqNums.referenceSequenceNumber === otherSeqNums.referenceSequenceNumber) &&
 		(seqNums.clientSequenceNumber === undefined ||
 			otherSeqNums.clientSequenceNumber === undefined ||
 			seqNums.clientSequenceNumber === otherSeqNums.clientSequenceNumber)

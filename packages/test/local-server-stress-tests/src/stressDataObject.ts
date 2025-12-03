@@ -4,41 +4,34 @@
  */
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import {
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import {
 	AttachState,
 	type IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
-	type IContainerRuntimeOptionsInternal,
 	loadContainerRuntime,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import-x/no-deprecated
 import type { IContainerRuntimeWithResolveHandle_Deprecated } from "@fluidframework/container-runtime-definitions/internal";
 import type {
-	FluidObject,
 	IFluidHandle,
+	FluidObject,
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import {
-	assert,
-	LazyPromise,
-	unreachableCase,
-} from "@fluidframework/core-utils/internal";
+import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 // Valid export as per package.json export map
 // eslint-disable-next-line import-x/no-internal-modules
 import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
-import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import type { StageControlsAlpha } from "@fluidframework/runtime-definitions/internal";
+import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import { type StageControlsAlpha } from "@fluidframework/runtime-definitions/internal";
 import {
-	asLegacyAlpha,
 	RuntimeHeaders,
 	toFluidHandleInternal,
+	asLegacyAlpha,
 } from "@fluidframework/runtime-utils/internal";
 import { timeoutAwait } from "@fluidframework/test-utils/internal";
 
@@ -77,41 +70,33 @@ export type StressDataObjectOperations =
 	| ExitStagingMode;
 
 export class StressDataObject extends DataObject {
-	public static readonly factory: DataObjectFactory<StressDataObject> =
-		new DataObjectFactory({
-			type: "StressDataObject",
-			ctor: StressDataObject,
-			sharedObjects: [...ddsModelMap.values()].map((v) => v.factory),
-			registryEntries: [
-				[
-					"StressDataObject",
-					new LazyPromise(async () => StressDataObject.factory),
-				],
-			],
-			policies: {
-				readonlyInStagingMode: false,
-			},
-		});
+	public static readonly factory: DataObjectFactory<StressDataObject> = new DataObjectFactory({
+		type: "StressDataObject",
+		ctor: StressDataObject,
+		sharedObjects: [...ddsModelMap.values()].map((v) => v.factory),
+		registryEntries: [
+			["StressDataObject", new LazyPromise(async () => StressDataObject.factory)],
+		],
+		policies: {
+			readonlyInStagingMode: false,
+		},
+	});
 
 	get StressDataObject() {
 		return this;
 	}
 
-	private defaultStressObject: DefaultStressDataObject =
-		makeUnreachableCodePathProxy("defaultStressDataObject");
+	private defaultStressObject: DefaultStressDataObject = makeUnreachableCodePathProxy(
+		"defaultStressDataObject",
+	);
 	protected async getDefaultStressDataObject(): Promise<DefaultStressDataObject> {
 		const defaultDataStore =
-			await this.context.containerRuntime.getAliasedDataStoreEntryPoint(
-				"default",
-			);
+			await this.context.containerRuntime.getAliasedDataStoreEntryPoint("default");
 		assert(defaultDataStore !== undefined, "default must exist");
 
 		const maybe: FluidObject<DefaultStressDataObject> | undefined =
 			await defaultDataStore.get();
-		assert(
-			maybe.DefaultStressDataObject !== undefined,
-			"must be DefaultStressDataObject",
-		);
+		assert(maybe.DefaultStressDataObject !== undefined, "must be DefaultStressDataObject");
 		return maybe.DefaultStressDataObject;
 	}
 
@@ -120,8 +105,7 @@ export class StressDataObject extends DataObject {
 	 * about the name of channels which have been created. these created channel
 	 * may or may not be attached and be available
 	 */
-	private channelNameMap: ISharedMap =
-		makeUnreachableCodePathProxy("channelNameMap");
+	private channelNameMap: ISharedMap = makeUnreachableCodePathProxy("channelNameMap");
 	protected async initializingFirstTime(props?: any): Promise<void> {
 		this.channelNameMap = SharedMap.create(this.runtime, "channelNameMap");
 		this.channelNameMap.bindToContext();
@@ -160,9 +144,7 @@ export class StressDataObject extends DataObject {
 	}
 
 	public async uploadBlob(tag: `blob-${number}`, contents: string) {
-		const handle = await this.runtime.uploadBlob(
-			stringToBuffer(contents, "utf-8"),
-		);
+		const handle = await this.runtime.uploadBlob(stringToBuffer(contents, "utf-8"));
 		this.defaultStressObject.registerLocallyCreatedObject({
 			type: "newBlob",
 			handle,
@@ -182,8 +164,7 @@ export class StressDataObject extends DataObject {
 				: StressDataObject.factory.type,
 		);
 
-		const maybe: FluidObject<StressDataObject> | undefined =
-			await dataStore.entryPoint.get();
+		const maybe: FluidObject<StressDataObject> | undefined = await dataStore.entryPoint.get();
 		assert(maybe?.StressDataObject !== undefined, "must be stressDataObject");
 		this.defaultStressObject.registerLocallyCreatedObject({
 			type: "stressDataObject",
@@ -224,15 +205,10 @@ export class DefaultStressDataObject extends StressDataObject {
 	 * as they could be detached, in which can only this instance can access them.
 	 */
 	private readonly _locallyCreatedObjects: ContainerObjects[] = [];
-	public async getContainerObjects(): Promise<
-		readonly Readonly<ContainerObjects>[]
-	> {
-		const containerObjects: Readonly<ContainerObjects>[] = [
-			...this._locallyCreatedObjects,
-		];
+	public async getContainerObjects(): Promise<readonly Readonly<ContainerObjects>[]> {
+		const containerObjects: Readonly<ContainerObjects>[] = [...this._locallyCreatedObjects];
 		const containerRuntime = // eslint-disable-next-line import-x/no-deprecated
-			this.context
-				.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
+			this.context.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
 		for (const [url, entry] of this.containerObjectMap as any as [
 			string,
 			ContainerObjects,
@@ -254,9 +230,7 @@ export class DefaultStressDataObject extends StressDataObject {
 				},
 			);
 			if (resp.status === 200) {
-				const maybe:
-					| FluidObject<IFluidLoadable & StressDataObject>
-					| undefined = resp.value;
+				const maybe: FluidObject<IFluidLoadable & StressDataObject> | undefined = resp.value;
 				const handle = maybe?.IFluidLoadable?.handle;
 				if (handle !== undefined) {
 					const type = entry?.type;
@@ -268,10 +242,7 @@ export class DefaultStressDataObject extends StressDataObject {
 							});
 							break;
 						case "stressDataObject":
-							assert(
-								maybe?.StressDataObject !== undefined,
-								"must be stressDataObject",
-							);
+							assert(maybe?.StressDataObject !== undefined, "must be stressDataObject");
 
 							containerObjects.push({
 								type: "stressDataObject",
@@ -298,14 +269,10 @@ export class DefaultStressDataObject extends StressDataObject {
 	 * about the name of container objects which have been created. these created objects
 	 * may or may not be attached and be available
 	 */
-	private containerObjectMap: ISharedMap =
-		makeUnreachableCodePathProxy("containerObjectMap");
+	private containerObjectMap: ISharedMap = makeUnreachableCodePathProxy("containerObjectMap");
 	protected async initializingFirstTime(props?: any): Promise<void> {
 		await super.initializingFirstTime(props);
-		this.containerObjectMap = SharedMap.create(
-			this.runtime,
-			"containerObjectMap",
-		);
+		this.containerObjectMap = SharedMap.create(this.runtime, "containerObjectMap");
 		this.containerObjectMap.bindToContext();
 
 		this.registerLocallyCreatedObject({
@@ -326,19 +293,14 @@ export class DefaultStressDataObject extends StressDataObject {
 		if (obj.handle !== undefined) {
 			const handle = toFluidHandleInternal(obj.handle);
 			if (this.containerObjectMap.get(handle.absolutePath) === undefined) {
-				this.containerObjectMap.set(handle.absolutePath, {
-					tag: obj.tag,
-					type: obj.type,
-				});
+				this.containerObjectMap.set(handle.absolutePath, { tag: obj.tag, type: obj.type });
 			}
 		}
 		this._locallyCreatedObjects.push(obj);
 	}
 
 	private stageControls: StageControlsAlpha | undefined;
-	private readonly containerRuntimeExp = asLegacyAlpha(
-		this.context.containerRuntime,
-	);
+	private readonly containerRuntimeExp = asLegacyAlpha(this.context.containerRuntime);
 	public enterStagingMode() {
 		assert(
 			this.containerRuntimeExp.enterStagingMode !== undefined,
@@ -372,9 +334,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 		ctor: DefaultStressDataObject,
 		sharedObjects: [...ddsModelMap.values()].map((v) => v.factory),
 
-		registryEntries: [
-			[StressDataObject.factory.type, StressDataObject.factory],
-		],
+		registryEntries: [[StressDataObject.factory.type, StressDataObject.factory]],
 	});
 
 	const runtimeOptions: IContainerRuntimeOptionsInternal = {
@@ -403,10 +363,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 						defaultStressDataObjectFactory.type,
 						Promise.resolve(defaultStressDataObjectFactory),
 					],
-					[
-						StressDataObject.factory.type,
-						Promise.resolve(StressDataObject.factory),
-					],
+					[StressDataObject.factory.type, Promise.resolve(StressDataObject.factory)],
 				],
 				provideEntryPoint: async (rt) => {
 					const aliasedDefault = await rt.getAliasedDataStoreEntryPoint(
@@ -420,10 +377,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 			// id compressor isn't made available via the interface right now.
 			// We could revisit exposing the safe part of its API (IIdCompressor, not IIdCompressorCore) in a way
 			// that would avoid this instanceof check, but most customers shouldn't really have a need for it.
-			assert(
-				runtime instanceof ContainerRuntime,
-				"Expected to create a ContainerRuntime",
-			);
+			assert(runtime instanceof ContainerRuntime, "Expected to create a ContainerRuntime");
 			assert(
 				runtime.idCompressor !== undefined,
 				"IdCompressor should be enabled by stress test options.",
@@ -433,9 +387,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 			modifyClusterSize(runtime.idCompressor, 2);
 
 			if (!existing) {
-				const ds = await runtime.createDataStore(
-					defaultStressDataObjectFactory.type,
-				);
+				const ds = await runtime.createDataStore(defaultStressDataObjectFactory.type);
 				await ds.trySetAlias(DefaultStressDataObject.alias);
 			}
 

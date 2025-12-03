@@ -86,10 +86,7 @@ class UndoRedoStack extends Stack<Stack<IRevertible> | undefined> {
  * @internal
  */
 export class UndoRedoStackManager {
-	private static revert(
-		revertStack: UndoRedoStack,
-		pushStack: UndoRedoStack,
-	): void {
+	private static revert(revertStack: UndoRedoStack, pushStack: UndoRedoStack): void {
 		// Close the pushStack, as it could get new ops
 		// from the revert, and we don't want those combined
 		// with any existing operation
@@ -125,10 +122,8 @@ export class UndoRedoStackManager {
 	private readonly eventEmitter = new EventEmitter();
 
 	constructor() {
-		this.undoStack.itemPushedCallback = () =>
-			this.eventEmitter.emit("changePushed");
-		this.redoStack.itemPushedCallback = () =>
-			this.eventEmitter.emit("changePushed");
+		this.undoStack.itemPushedCallback = () => this.eventEmitter.emit("changePushed");
+		this.redoStack.itemPushedCallback = () => this.eventEmitter.emit("changePushed");
 	}
 
 	public closeCurrentOperation(): void {

@@ -7,37 +7,22 @@ import { strict as assert } from "node:assert";
 
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 
-import {
-	DataCorruptionError,
-	DataProcessingError,
-	UsageError,
-} from "../error.js";
-import {
-	isILoggingError,
-	LoggingError,
-	normalizeError,
-} from "../errorLogging.js";
+import { DataCorruptionError, DataProcessingError, UsageError } from "../error.js";
+import { LoggingError, isILoggingError, normalizeError } from "../errorLogging.js";
 import { isFluidError } from "../fluidErrorBase.js";
 
 describe("Errors", () => {
 	describe("DataProcessingError.create", () => {
 		it("Should yield a DataProcessingError", () => {
-			const dpe = DataProcessingError.create(
-				"Some message",
-				"someCodepath",
-				undefined,
-				{
-					someProp: 1234,
-				},
-			);
+			const dpe = DataProcessingError.create("Some message", "someCodepath", undefined, {
+				someProp: 1234,
+			});
 			assert(dpe instanceof DataProcessingError);
 			assert(dpe.errorType === FluidErrorTypes.dataProcessingError);
 			assert(dpe.message === "Some message");
 			assert(dpe.getTelemetryProperties().someProp === 1234);
 			assert(dpe.getTelemetryProperties().dataProcessingError === 1);
-			assert(
-				dpe.getTelemetryProperties().dataProcessingCodepath === "someCodepath",
-			);
+			assert(dpe.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
 			assert(dpe.getTelemetryProperties().untrustedOrigin === 1);
 		});
 	});
@@ -63,10 +48,7 @@ describe("Errors", () => {
 			assert((coercedError as unknown) === originalError);
 			assert(coercedError.errorType === FluidErrorTypes.dataCorruptionError);
 			assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
-			assert(
-				coercedError.getTelemetryProperties().dataProcessingCodepath ===
-					"someCodepath",
-			);
+			assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
 		});
 		it("Should skip coercion for LoggingError with errorType", () => {
 			const originalError = new LoggingError("Inherited error message", {
@@ -82,10 +64,7 @@ describe("Errors", () => {
 			assert((coercedError as unknown) === originalError);
 			assert(coercedError.errorType === "Some error type");
 			assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
-			assert(
-				coercedError.getTelemetryProperties().dataProcessingCodepath ===
-					"someCodepath",
-			);
+			assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
 		});
 		it("Should coerce normalized external error", () => {
 			const originalError = normalizeError("boo");
@@ -99,10 +78,7 @@ describe("Errors", () => {
 			assert(coercedError instanceof DataProcessingError);
 			assert(coercedError.errorType === FluidErrorTypes.dataProcessingError);
 			assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
-			assert(
-				coercedError.getTelemetryProperties().dataProcessingCodepath ===
-					"someCodepath",
-			);
+			assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
 			assert(coercedError.getTelemetryProperties().untrustedOrigin === 1);
 		});
 		it("Should coerce external error object even with errorType", () => {
@@ -119,10 +95,7 @@ describe("Errors", () => {
 			assert(coercedError instanceof DataProcessingError);
 			assert(coercedError.errorType === FluidErrorTypes.dataProcessingError);
 			assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
-			assert(
-				coercedError.getTelemetryProperties().dataProcessingCodepath ===
-					"someCodepath",
-			);
+			assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
 			assert(coercedError.getTelemetryProperties().untrustedOrigin === 1);
 			assert(coercedError.message === "[object Object]");
 		});
@@ -140,17 +113,11 @@ describe("Errors", () => {
 			assert(coercedError instanceof DataProcessingError);
 			assert(coercedError.errorType === FluidErrorTypes.dataProcessingError);
 			assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
-			assert(
-				coercedError.getTelemetryProperties().dataProcessingCodepath ===
-					"someCodepath",
-			);
-			assert(
-				coercedError.getTelemetryProperties().untrustedOrigin === undefined,
-			);
+			assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
+			assert(coercedError.getTelemetryProperties().untrustedOrigin === undefined);
 			assert(coercedError.message === "Inherited error message");
 			assert(
-				coercedError.getTelemetryProperties().otherProperty ===
-					"some safe-to-log property",
+				coercedError.getTelemetryProperties().otherProperty === "some safe-to-log property",
 				"telemetryProps should be copied when wrapping",
 			);
 		});
@@ -169,17 +136,11 @@ describe("Errors", () => {
 			assert(coercedError instanceof DataProcessingError);
 			assert(coercedError.errorType === FluidErrorTypes.dataProcessingError);
 			assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
-			assert(
-				coercedError.getTelemetryProperties().dataProcessingCodepath ===
-					"someCodepath",
-			);
-			assert(
-				coercedError.getTelemetryProperties().untrustedOrigin === undefined,
-			);
+			assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
+			assert(coercedError.getTelemetryProperties().untrustedOrigin === undefined);
 			assert(coercedError.message === "Inherited error message");
 			assert(
-				coercedError.getTelemetryProperties().otherProperty ===
-					"some safe-to-log property",
+				coercedError.getTelemetryProperties().otherProperty === "some safe-to-log property",
 				"telemetryProps should be copied when wrapping",
 			);
 		});
@@ -198,11 +159,7 @@ describe("Errors", () => {
 				[1, 2, 3],
 			];
 			const coercedErrors = originalMalformations.map((value) =>
-				DataProcessingError.wrapIfUnrecognized(
-					value,
-					"someCodepath",
-					undefined,
-				),
+				DataProcessingError.wrapIfUnrecognized(value, "someCodepath", undefined),
 			);
 
 			assert(
@@ -211,8 +168,7 @@ describe("Errors", () => {
 						typeof error.message === "string" &&
 						error.errorType === FluidErrorTypes.dataProcessingError &&
 						error.getTelemetryProperties().dataProcessingError === 1 &&
-						error.getTelemetryProperties().dataProcessingCodepath ===
-							"someCodepath" &&
+						error.getTelemetryProperties().dataProcessingCodepath === "someCodepath" &&
 						error.getTelemetryProperties().untrustedOrigin === 1,
 				),
 			);
@@ -220,9 +176,7 @@ describe("Errors", () => {
 				!originalMalformations.some(
 					(value) =>
 						typeof value === "string" ||
-						(typeof value === "object" &&
-							!Array.isArray(value) &&
-							value !== null),
+						(typeof value === "object" && !Array.isArray(value) && value !== null),
 				),
 				"Neither strings nor objects are considered malformed",
 			);
@@ -239,10 +193,7 @@ describe("Errors", () => {
 			assert(coercedError.message === originalMessage);
 			assert(coercedError.errorType === FluidErrorTypes.dataProcessingError);
 			assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
-			assert(
-				coercedError.getTelemetryProperties().dataProcessingCodepath ===
-					"someCodepath",
-			);
+			assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
 		});
 
 		it("Should be coercible from a property object (no errorType)", () => {
@@ -258,10 +209,7 @@ describe("Errors", () => {
 			assert(coercedError.message === originalError.message);
 			assert(coercedError.errorType === FluidErrorTypes.dataProcessingError);
 			assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
-			assert(
-				coercedError.getTelemetryProperties().dataProcessingCodepath ===
-					"someCodepath",
-			);
+			assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
 		});
 
 		it("op props should be logged when coerced", () => {
@@ -277,8 +225,7 @@ describe("Errors", () => {
 
 			assert(isILoggingError(coercedError));
 			assert(
-				coercedError.getTelemetryProperties().messageSequenceNumber ===
-					op.sequenceNumber,
+				coercedError.getTelemetryProperties().messageSequenceNumber === op.sequenceNumber,
 			);
 		});
 
@@ -295,8 +242,7 @@ describe("Errors", () => {
 
 			assert(isILoggingError(coercedError));
 			assert(
-				coercedError.getTelemetryProperties().messageSequenceNumber ===
-					op.sequenceNumber,
+				coercedError.getTelemetryProperties().messageSequenceNumber === op.sequenceNumber,
 			);
 		});
 	});

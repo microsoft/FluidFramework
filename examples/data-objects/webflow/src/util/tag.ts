@@ -5,7 +5,7 @@
 
 import { DocSegmentKind } from "../document/index.js";
 
-import type { TagName } from "./tagName.js";
+import { TagName } from "./tagName.js";
 
 const segmentKindToIdPrefix = {
 	[DocSegmentKind.beginTags]: "b:",

@@ -4,8 +4,8 @@
  */
 
 import {
-	benchmarkMemory,
 	type IMemoryTestObject,
+	benchmarkMemory,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";

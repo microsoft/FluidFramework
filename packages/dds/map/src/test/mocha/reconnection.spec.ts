@@ -30,14 +30,12 @@ describe("Reconnection", () => {
 		let map2: ISharedMap;
 
 		beforeEach("createMaps", async () => {
-			containerRuntimeFactory =
-				new MockContainerRuntimeFactoryForReconnection();
+			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 			const factory = SharedMap.getFactory();
 
 			// Create the first SharedMap.
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-			containerRuntime1 =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -47,8 +45,7 @@ describe("Reconnection", () => {
 
 			// Create the second SharedMap.
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-			containerRuntime2 =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -72,16 +69,8 @@ describe("Reconnection", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify that the set value is processed by both clients.
-			assert.equal(
-				map1.get(key),
-				value,
-				"The local client did not process the set",
-			);
-			assert.equal(
-				map2.get(key),
-				value,
-				"The remote client did not process the set",
-			);
+			assert.equal(map1.get(key), value, "The local client did not process the set");
+			assert.equal(map2.get(key), value, "The remote client did not process the set");
 
 			// Delete the value from the second SharedMap.
 			map2.delete(key);
@@ -94,16 +83,8 @@ describe("Reconnection", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify that the deleted value is processed by both clients.
-			assert.equal(
-				map1.get(key),
-				undefined,
-				"The local client did not process the delete",
-			);
-			assert.equal(
-				map2.get(key),
-				undefined,
-				"The remote client did not process the delete",
-			);
+			assert.equal(map1.get(key), undefined, "The local client did not process the delete");
+			assert.equal(map2.get(key), undefined, "The remote client did not process the delete");
 		});
 
 		it("can store ops in disconnected state and resend them on reconnection", async () => {
@@ -123,16 +104,8 @@ describe("Reconnection", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify that the set value is processed by both clients.
-			assert.equal(
-				map1.get(key),
-				value,
-				"The local client did not process the set",
-			);
-			assert.equal(
-				map2.get(key),
-				value,
-				"The remote client did not process the set",
-			);
+			assert.equal(map1.get(key), value, "The local client did not process the set");
+			assert.equal(map2.get(key), value, "The remote client did not process the set");
 
 			// Disconnect the second client.
 			containerRuntime2.connected = false;
@@ -147,16 +120,8 @@ describe("Reconnection", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify that the deleted value is processed by both clients.
-			assert.equal(
-				map1.get(key),
-				undefined,
-				"The local client did not process the delete",
-			);
-			assert.equal(
-				map2.get(key),
-				undefined,
-				"The remote client did not process the delete",
-			);
+			assert.equal(map1.get(key), undefined, "The local client did not process the delete");
+			assert.equal(map2.get(key), undefined, "The remote client did not process the delete");
 		});
 	});
 
@@ -168,14 +133,12 @@ describe("Reconnection", () => {
 		let directory2: ISharedDirectory;
 
 		beforeEach("createDirectories", async () => {
-			containerRuntimeFactory =
-				new MockContainerRuntimeFactoryForReconnection();
+			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 			const factory = SharedDirectory.getFactory();
 
 			// Create the first SharedDirectory.
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-			containerRuntime1 =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -185,8 +148,7 @@ describe("Reconnection", () => {
 
 			// Create the second SharedDirectory.
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-			containerRuntime2 =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -216,16 +178,8 @@ describe("Reconnection", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify that the ops are processed by both clients.
-			assert.equal(
-				directory1.get(key),
-				value,
-				"The local client did not process the set",
-			);
-			assert.equal(
-				directory2.get(key),
-				value,
-				"The remote client did not process the set",
-			);
+			assert.equal(directory1.get(key), value, "The local client did not process the set");
+			assert.equal(directory2.get(key), value, "The remote client did not process the set");
 
 			const subDir1 = directory1.getSubDirectory(subDirName);
 			assert.ok(subDir1);
@@ -281,16 +235,8 @@ describe("Reconnection", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify that the ops are processed by both clients.
-			assert.equal(
-				directory1.get(key),
-				value,
-				"The local client did not process the set",
-			);
-			assert.equal(
-				directory2.get(key),
-				value,
-				"The remote client did not process the set",
-			);
+			assert.equal(directory1.get(key), value, "The local client did not process the set");
+			assert.equal(directory2.get(key), value, "The remote client did not process the set");
 
 			const subDir1 = directory1.getSubDirectory(subDirName);
 			assert.ok(subDir1);
@@ -374,13 +320,9 @@ describe("Reconnection", () => {
 			containerRuntime1.connected = true;
 
 			containerRuntimeFactory.processAllMessages();
+			assert(directory1.getSubDirectory(subDirName) !== undefined, "/subDir should exist");
 			assert(
-				directory1.getSubDirectory(subDirName) !== undefined,
-				"/subDir should exist",
-			);
-			assert(
-				directory1.getSubDirectory(subDirName)?.getSubDirectory(subDirName) ===
-					undefined,
+				directory1.getSubDirectory(subDirName)?.getSubDirectory(subDirName) === undefined,
 				"/subDir/subDir should not exist",
 			);
 			await assertEquivalentDirectories(directory1, directory2);
@@ -405,10 +347,7 @@ describe("Reconnection", () => {
 			containerRuntime1.connected = true;
 
 			containerRuntimeFactory.processAllMessages();
-			assert(
-				directory1.getSubDirectory(subDirName) !== undefined,
-				"/subDir should exist",
-			);
+			assert(directory1.getSubDirectory(subDirName) !== undefined, "/subDir should exist");
 			assert(
 				directory1.getSubDirectory(subDirName)?.get(subDirKey) === undefined,
 				"/subDir(testSubDirKey) should not exist",
@@ -436,20 +375,13 @@ describe("Reconnection", () => {
 			// ack is pending as they will recreated again. Both directories will contain /subDir/subDir but
 			// no /subDir/subDir2.
 			containerRuntimeFactory.processAllMessages();
+			assert(directory1.getSubDirectory(subDirName1) !== undefined, "/subDir should exist");
 			assert(
-				directory1.getSubDirectory(subDirName1) !== undefined,
-				"/subDir should exist",
-			);
-			assert(
-				directory1
-					.getSubDirectory(subDirName1)
-					?.getSubDirectory(subDirName1) !== undefined,
+				directory1.getSubDirectory(subDirName1)?.getSubDirectory(subDirName1) !== undefined,
 				"/subDir/subDir should exist",
 			);
 			assert(
-				directory1
-					.getSubDirectory(subDirName1)
-					?.getSubDirectory(subDirName2) === undefined,
+				directory1.getSubDirectory(subDirName1)?.getSubDirectory(subDirName2) === undefined,
 				"/subDir/subDir2 should not exist",
 			);
 
@@ -476,20 +408,14 @@ describe("Reconnection", () => {
 			// no /subDir/subDir2. It will also not delete pending keys in pending subDirs.
 			containerRuntimeFactory.processAllMessages();
 
+			assert(directory1.getSubDirectory(subDirName) !== undefined, "/subDir should exist");
 			assert(
-				directory1.getSubDirectory(subDirName) !== undefined,
-				"/subDir should exist",
-			);
-			assert(
-				directory1.getSubDirectory(subDirName)?.getSubDirectory(subDirName) !==
-					undefined,
+				directory1.getSubDirectory(subDirName)?.getSubDirectory(subDirName) !== undefined,
 				"/subDir/subDir should exist",
 			);
 			assert(
-				directory1
-					.getSubDirectory(subDirName)
-					?.getSubDirectory(subDirName)
-					?.get(subDirKey) === subDirValue,
+				directory1.getSubDirectory(subDirName)?.getSubDirectory(subDirName)?.get(subDirKey) ===
+					subDirValue,
 				"/subDir/subDir(subDirKey) should exist",
 			);
 			await assertEquivalentDirectories(directory1, directory2);
@@ -514,14 +440,9 @@ describe("Reconnection", () => {
 
 			// /subDir/subDir should exist in the end
 			containerRuntimeFactory.processAllMessages();
+			assert(directory1.getSubDirectory(subDirName1) !== undefined, "/subDir should exist");
 			assert(
-				directory1.getSubDirectory(subDirName1) !== undefined,
-				"/subDir should exist",
-			);
-			assert(
-				directory1
-					.getSubDirectory(subDirName1)
-					?.getSubDirectory(subDirName1) !== undefined,
+				directory1.getSubDirectory(subDirName1)?.getSubDirectory(subDirName1) !== undefined,
 				"/subDir/subDir should exist",
 			);
 			await assertEquivalentDirectories(directory1, directory2);
@@ -544,14 +465,9 @@ describe("Reconnection", () => {
 
 			// /subDir/subDir should not exist in the end as /subDir was deleted after it was created
 			containerRuntimeFactory.processAllMessages();
+			assert(directory1.getSubDirectory(subDirName1) !== undefined, "/subDir should exist");
 			assert(
-				directory1.getSubDirectory(subDirName1) !== undefined,
-				"/subDir should exist",
-			);
-			assert(
-				directory1
-					.getSubDirectory(subDirName1)
-					?.getSubDirectory(subDirName1) === undefined,
+				directory1.getSubDirectory(subDirName1)?.getSubDirectory(subDirName1) === undefined,
 				"/subDir/subDir should not exist",
 			);
 			await assertEquivalentDirectories(directory1, directory2);
@@ -572,14 +488,9 @@ describe("Reconnection", () => {
 
 			// /subDir/subDir should not exist in the end as /subDir was deleted after it was created
 			containerRuntimeFactory.processAllMessages();
+			assert(directory1.getSubDirectory(subDirName1) !== undefined, "/subDir should exist");
 			assert(
-				directory1.getSubDirectory(subDirName1) !== undefined,
-				"/subDir should exist",
-			);
-			assert(
-				directory1
-					.getSubDirectory(subDirName1)
-					?.getSubDirectory(subDirName1) === undefined,
+				directory1.getSubDirectory(subDirName1)?.getSubDirectory(subDirName1) === undefined,
 				"/subDir/subDir should not exist",
 			);
 			await assertEquivalentDirectories(directory1, directory2);

@@ -6,14 +6,14 @@
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type { ITreeCursor, TreeNodeStoredSchema } from "../../core/index.js";
-import type { Context, TreeLeafValue, TreeNodeSchema } from "../core/index.js";
+import type { TreeNodeSchema, TreeLeafValue, Context } from "../core/index.js";
 
 import {
 	customFromCursor,
-	type HandleConverter,
-	KeyEncodingOptions,
 	replaceHandles,
 	type TreeEncodingOptions,
+	type HandleConverter,
+	KeyEncodingOptions,
 } from "./customTree.js";
 
 /**
@@ -63,13 +63,7 @@ function conciseFromCursorInner(
 	storedSchema: ReadonlyMap<string, TreeNodeStoredSchema>,
 	schema: ReadonlyMap<string, TreeNodeSchema>,
 ): ConciseTree {
-	return customFromCursor(
-		reader,
-		options,
-		storedSchema,
-		schema,
-		conciseFromCursorInner,
-	);
+	return customFromCursor(reader, options, storedSchema, schema, conciseFromCursorInner);
 }
 
 /**

@@ -4,8 +4,8 @@
  */
 
 import {
-	getDataStoreEntryPoint,
 	ModelContainerRuntimeFactory,
+	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
 import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
@@ -13,7 +13,7 @@ import type { IContainerRuntime } from "@fluidframework/container-runtime-defini
 import type { IInventoryListAppModel } from "../modelInterfaces.js";
 
 import { InventoryListAppModel } from "./appModel.js";
-import { type InventoryList, InventoryListFactory } from "./inventoryList.js";
+import { InventoryList, InventoryListFactory } from "./inventoryList.js";
 
 export const inventoryListId = "inventory-list";
 
@@ -32,19 +32,14 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-		const inventoryList = await runtime.createDataStore(
-			InventoryListFactory.type,
-		);
+		const inventoryList = await runtime.createDataStore(InventoryListFactory.type);
 		await inventoryList.trySetAlias(inventoryListId);
 	}
 
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
-	protected async createModel(
-		runtime: IContainerRuntime,
-		container: IContainer,
-	) {
+	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
 		const inventoryList = await getDataStoreEntryPoint<InventoryList>(
 			runtime,
 			inventoryListId,

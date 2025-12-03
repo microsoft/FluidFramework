@@ -42,11 +42,7 @@ type FluidDataStoreRuntime_ForTesting = Patch<
 	FluidDataStoreRuntime,
 	IFluidDataStoreRuntimeAlpha & {
 		contexts: Map<unknown, unknown>;
-		submit(
-			type: DataStoreMessageType,
-			content: unknown,
-			localOpMetadata?: unknown,
-		): void;
+		submit(type: DataStoreMessageType, content: unknown, localOpMetadata?: unknown): void;
 	}
 >;
 
@@ -56,9 +52,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 	function createRuntime(
 		context: IFluidDataStoreContext,
 		registry: ISharedObjectRegistry,
-		entrypointInitializationFn?: (
-			rt: IFluidDataStoreRuntime,
-		) => Promise<FluidObject>,
+		entrypointInitializationFn?: (rt: IFluidDataStoreRuntime) => Promise<FluidObject>,
 	): FluidDataStoreRuntime {
 		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
 			context,
@@ -129,10 +123,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 	});
 
 	it("can summarize an empty data store runtime", async () => {
-		const dataStoreRuntime = createRuntime(
-			dataStoreContext,
-			sharedObjectRegistry,
-		);
+		const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
 		const summarizeResult = await dataStoreRuntime.summarize(true, false);
 		assert(
 			summarizeResult.summary.type === SummaryType.Tree,
@@ -149,22 +140,15 @@ describe("FluidDataStoreRuntime Tests", () => {
 		const expectedGCData: IGarbageCollectionData = {
 			gcNodes: { "/": [] },
 		};
-		const dataStoreRuntime = createRuntime(
-			dataStoreContext,
-			sharedObjectRegistry,
-		);
+		const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
 		const gcData = await dataStoreRuntime.getGCData();
 		assert.deepStrictEqual(gcData, expectedGCData, "The GC data is incorrect");
 	});
 
 	it("createChannel rejects ids with slashes", async () => {
-		const dataStoreRuntime = createRuntime(
-			dataStoreContext,
-			sharedObjectRegistry,
-		);
+		const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
 		const invalidId = "beforeSlash/afterSlash";
-		const codeBlock = (): IChannel =>
-			dataStoreRuntime.createChannel(invalidId, "SomeType");
+		const codeBlock = (): IChannel => dataStoreRuntime.createChannel(invalidId, "SomeType");
 		assert.throws(
 			codeBlock,
 			(e: IErrorBase) =>
@@ -174,10 +158,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 	});
 
 	it("createChannel with default guid", async () => {
-		const dataStoreRuntime = createRuntime(
-			dataStoreContext,
-			sharedObjectRegistry,
-		);
+		const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
 		const type = "SomeType";
 		const channel = dataStoreRuntime.createChannel(undefined, type);
 		assert(channel !== undefined, "channel should be created");
@@ -185,10 +166,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 	});
 
 	it("createChannel and then attach to dataStore runtime", async () => {
-		const dataStoreRuntime = createRuntime(
-			dataStoreContext,
-			sharedObjectRegistry,
-		);
+		const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
 		const type = "SomeType";
 		const channel = {
 			id: "id",
@@ -202,10 +180,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 	});
 
 	it("createChannel rejects ids with slashes when channel is created first", async () => {
-		const dataStoreRuntime = createRuntime(
-			dataStoreContext,
-			sharedObjectRegistry,
-		);
+		const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
 		const invalidId = "beforeSlash/afterSlash";
 		const type = "SomeType";
 		const channel = {
@@ -230,10 +205,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 		// Because it's a new use case and haven't added an API for this yet (See AB#50886)
 		const CHANNEL_NOT_FOUND = "Channel does not exist";
 
-		const dataStoreRuntime = createRuntime(
-			dataStoreContext,
-			sharedObjectRegistry,
-		);
+		const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
 
 		await assert.rejects(
 			dataStoreRuntime.getChannel("nonExistentChannel"),
@@ -277,10 +249,7 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 	const ack = ({
 		local,
 		messageCount,
-	}: {
-		local: boolean;
-		messageCount: number;
-	}): IRuntimeMessageCollection => ({
+	}: { local: boolean; messageCount: number }): IRuntimeMessageCollection => ({
 		envelope: {
 			type: "other", // allows us to test top-level logic of runtime.processMessages without actually providing a legit message
 		} satisfies Partial<ISequencedMessageEnvelope> as ISequencedMessageEnvelope,
@@ -294,11 +263,7 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 		assert.strictEqual(runtime.isDirty, false, "Runtime should start clean");
 
 		runtime.submit(DataStoreMessageType.ChannelOp, {}, undefined);
-		assert.strictEqual(
-			runtime.isDirty,
-			true,
-			"Runtime should be dirty after local op",
-		);
+		assert.strictEqual(runtime.isDirty, true, "Runtime should be dirty after local op");
 
 		// Submit a few more
 		runtime.submit(DataStoreMessageType.ChannelOp, {}, undefined);
@@ -337,11 +302,7 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 		assert.strictEqual(runtime.isDirty, false, "Runtime should start clean");
 
 		const submitSingleMessage = (): void =>
-			runtime.submit(
-				DataStoreMessageType.ChannelOp,
-				{ address: "foo" },
-				undefined,
-			);
+			runtime.submit(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined);
 
 		// Simulate a channel context with a reSubmit method for internals of runtime.reSubmit call below
 		sinon
@@ -349,11 +310,7 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 			.get(() => new Map([["foo", { reSubmit: submitSingleMessage }]]));
 
 		// Initial local op
-		runtime.submit(
-			DataStoreMessageType.ChannelOp,
-			{ address: "foo" },
-			undefined,
-		);
+		runtime.submit(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined);
 		assert.strictEqual(
 			runtime.isDirty,
 			true,
@@ -361,11 +318,7 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 		);
 
 		// Resubmit the op (simulating reconnect). Should still be dirty
-		runtime.reSubmit(
-			DataStoreMessageType.ChannelOp,
-			{ address: "foo" },
-			undefined,
-		);
+		runtime.reSubmit(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined);
 		assert.strictEqual(
 			runtime.isDirty,
 			true,
@@ -386,16 +339,10 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 		assert.strictEqual(runtime.isDirty, false, "Runtime should start clean");
 
 		// Simulate a channel context with a reSubmit method that chooses not to submit anything, for internals of runtime.reSubmit call below
-		sinon
-			.stub(runtime, "contexts")
-			.get(() => new Map([["foo", { reSubmit: () => {} }]]));
+		sinon.stub(runtime, "contexts").get(() => new Map([["foo", { reSubmit: () => {} }]]));
 
 		// Initial local op
-		runtime.submit(
-			DataStoreMessageType.ChannelOp,
-			{ address: "foo" },
-			undefined,
-		);
+		runtime.submit(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined);
 		assert.strictEqual(
 			runtime.isDirty,
 			true,
@@ -403,11 +350,7 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 		);
 
 		// Resubmit the op (simulating reconnect). Should be clean since resubmit didn't result in a new op
-		runtime.reSubmit(
-			DataStoreMessageType.ChannelOp,
-			{ address: "foo" },
-			undefined,
-		);
+		runtime.reSubmit(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined);
 		assert.strictEqual(
 			runtime.isDirty,
 			false,
@@ -426,11 +369,7 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 			snapshot: { type: SummaryType.Tree, tree: {} },
 		};
 		runtime.submit(DataStoreMessageType.Attach, attachMessage, undefined);
-		assert.strictEqual(
-			runtime.isDirty,
-			true,
-			"Runtime should be dirty after attach op",
-		);
+		assert.strictEqual(runtime.isDirty, true, "Runtime should be dirty after attach op");
 
 		// Resubmit same attach op
 		runtime.reSubmit(DataStoreMessageType.Attach, attachMessage, undefined);
@@ -443,11 +382,7 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 		// Ack the resubmitted attach op
 		runtime.processMessages(ack({ local: true, messageCount: 1 }));
 
-		assert.strictEqual(
-			runtime.isDirty,
-			false,
-			"Runtime should be clean after all acks",
-		);
+		assert.strictEqual(runtime.isDirty, false, "Runtime should be clean after all acks");
 	});
 
 	it("sets dirty state when applying stashed ops and clears after ack", async () => {
@@ -457,12 +392,7 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 		// Simulate a channel context with applyStashedOp and getChannel methods (don't need to implement them though)
 		sinon
 			.stub(runtime, "contexts")
-			.get(
-				() =>
-					new Map([
-						["foo", { applyStashedOp: () => {}, getChannel: () => ({}) }],
-					]),
-			);
+			.get(() => new Map([["foo", { applyStashedOp: () => {}, getChannel: () => ({}) }]]));
 
 		// Apply a stashed channel op
 		await runtime.applyStashedOp({
@@ -492,20 +422,10 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 		);
 
 		// Simulate a channel context with a rollback method (don't need to implement them though)
-		sinon
-			.stub(runtime, "contexts")
-			.get(() => new Map([["foo", { rollback: () => {} }]]));
+		sinon.stub(runtime, "contexts").get(() => new Map([["foo", { rollback: () => {} }]]));
 
-		runtime.submit(
-			DataStoreMessageType.ChannelOp,
-			{ address: "foo" },
-			undefined,
-		);
-		assert.strictEqual(
-			runtime.isDirty,
-			true,
-			"Runtime should be dirty after local op",
-		);
+		runtime.submit(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined);
+		assert.strictEqual(runtime.isDirty, true, "Runtime should be dirty after local op");
 
 		// Roll back the op
 		runtime.rollback(
@@ -514,11 +434,7 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 			/* localOpMetadata: */ undefined,
 		);
 
-		assert.strictEqual(
-			runtime.isDirty,
-			false,
-			"Runtime should be clean after rollback",
-		);
+		assert.strictEqual(runtime.isDirty, false, "Runtime should be clean after rollback");
 	});
 });
 

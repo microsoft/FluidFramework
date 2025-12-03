@@ -4,11 +4,11 @@
  */
 
 import {
-	// eslint-disable-next-line import-x/no-deprecated
-	ExperimentalPresenceManager,
 	getPresence,
 	// eslint-disable-next-line import-x/no-deprecated
 	getPresenceViaDataObject,
+	// eslint-disable-next-line import-x/no-deprecated
+	ExperimentalPresenceManager,
 } from "@fluidframework/presence/alpha";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 import type { ContainerSchema, IFluidContainer } from "fluid-framework";
@@ -16,11 +16,7 @@ import type { ContainerSchema, IFluidContainer } from "fluid-framework";
 import { FocusTracker } from "./FocusTracker.js";
 import { MouseTracker } from "./MouseTracker.js";
 import { initializeReactions } from "./reactions.js";
-import {
-	renderControlPanel,
-	renderFocusPresence,
-	renderMousePresence,
-} from "./view.js";
+import { renderControlPanel, renderFocusPresence, renderMousePresence } from "./view.js";
 
 // Define the schema of the Fluid container.
 // This example uses the presence features only, so no data object is required.
@@ -67,9 +63,7 @@ async function start() {
 		({ container } = await client.getContainer(id, containerSchema, "2"));
 	}
 
-	const useDataObject = new URLSearchParams(location.search).has(
-		"useDataObject",
-	);
+	const useDataObject = new URLSearchParams(location.search).has("useDataObject");
 	const presence = useDataObject
 		? // Retrieve a reference to the presence APIs via the data object.
 			// eslint-disable-next-line import-x/no-deprecated
@@ -94,14 +88,10 @@ async function start() {
 	const focusDiv = document.getElementById("focus-content") as HTMLDivElement;
 	renderFocusPresence(focusTracker, focusDiv);
 
-	const mouseContentDiv = document.getElementById(
-		"mouse-position",
-	) as HTMLDivElement;
+	const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
 	renderMousePresence(mouseTracker, focusTracker, mouseContentDiv);
 
-	const controlPanelDiv = document.getElementById(
-		"control-panel",
-	) as HTMLDivElement;
+	const controlPanelDiv = document.getElementById("control-panel") as HTMLDivElement;
 	renderControlPanel(mouseTracker, controlPanelDiv);
 
 	// Setting "fluid*" and these helpers are just for our test automation
@@ -132,15 +122,13 @@ async function start() {
 	presence.attendees.events.on("attendeeConnected", (attendee) => {
 		console.log(`Attendee joined: ${attendee.attendeeId}`);
 		window["fluidSessionAttendees"] = buildAttendeeMap();
-		window["fluidSessionAttendeeCount"] =
-			presence.attendees.getAttendees().size;
+		window["fluidSessionAttendeeCount"] = presence.attendees.getAttendees().size;
 		window["fluidattendeeConnectedCalled"] = true;
 	});
 	presence.attendees.events.on("attendeeDisconnected", (attendee) => {
 		console.log(`Attendee left: ${attendee.attendeeId}`);
 		window["fluidSessionAttendees"] = buildAttendeeMap();
-		window["fluidSessionAttendeeCount"] =
-			presence.attendees.getAttendees().size;
+		window["fluidSessionAttendeeCount"] = presence.attendees.getAttendees().size;
 		window["fluidAttendeeDisconnectedCalled"] = true;
 	});
 	window["fluidSessionId"] = presence.attendees.getMyself().attendeeId;

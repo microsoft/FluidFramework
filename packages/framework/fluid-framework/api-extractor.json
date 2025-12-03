@@ -6,8 +6,8 @@
 		"extractorMessageReporting": {
 			// TODO: Fix violations and set logLevel to "error"
 			"ae-undocumented": {
-				"logLevel": "none",
-			},
-		},
-	},
+				"logLevel": "none"
+			}
+		}
+	}
 }

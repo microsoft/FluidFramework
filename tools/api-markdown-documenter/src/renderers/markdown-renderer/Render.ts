@@ -6,8 +6,8 @@
 import type { Nodes as MdastTree } from "mdast";
 import { gfmToMarkdown } from "mdast-util-gfm";
 import {
-	type Options as MdastToMarkdownOptions,
 	toMarkdown as toMarkdownString,
+	type Options as MdastToMarkdownOptions,
 } from "mdast-util-to-markdown";
 
 import type { ApiDocument, RenderedDocument } from "../../ApiDocument.js";
@@ -55,10 +55,7 @@ export function renderDocument(
  * @param document - The document to transform.
  * @param config - Markdown transformation configuration.
  */
-function renderMarkdown(
-	tree: MdastTree,
-	config: RenderMarkdownConfiguration,
-): string {
+function renderMarkdown(tree: MdastTree, config: RenderMarkdownConfiguration): string {
 	const extensions = [
 		gfmToMarkdown({
 			tablePipeAlign: false,

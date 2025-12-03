@@ -51,9 +51,7 @@ export interface ISummarizeResults {
 	/**
 	 * Resolves when we observe our summarize op broadcast.
 	 */
-	readonly summaryOpBroadcasted: Promise<
-		SummarizeResultPart<IBroadcastSummaryResult>
-	>;
+	readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
 	/**
 	 * Resolves when we receive a summaryAck or summaryNack.
 	 */

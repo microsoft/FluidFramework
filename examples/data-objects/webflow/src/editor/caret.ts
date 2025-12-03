@@ -3,15 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	LocalReferencePosition,
-	ReferencePosition,
-} from "@fluidframework/sequence/legacy";
+import { LocalReferencePosition, ReferencePosition } from "@fluidframework/sequence/legacy";
 
 import { DocSegmentKind, getDocSegmentKind } from "../document/index.js";
-import { clamp, Dom, hasTagName, TagName } from "../util/index.js";
+import { Dom, TagName, clamp, hasTagName } from "../util/index.js";
 import { updateRef } from "../util/localref.js";
-import { eotSegment, type Layout } from "../view/layout.js";
+import { Layout, eotSegment } from "../view/layout.js";
 
 import { debug } from "./debug.js";
 
@@ -23,17 +20,11 @@ export class Caret {
 		return clamp(0, this.doc.localRefToPosition(this.endRef), this.doc.length);
 	}
 	public get anchor() {
-		return clamp(
-			0,
-			this.doc.localRefToPosition(this.startRef),
-			this.doc.length,
-		);
+		return clamp(0, this.doc.localRefToPosition(this.startRef), this.doc.length);
 	}
 	public get bounds() {
 		const { focusNode, focusOffset } = window.getSelection();
-		return focusNode === null
-			? undefined
-			: Dom.getClientRect(focusNode, focusOffset);
+		return focusNode === null ? undefined : Dom.getClientRect(focusNode, focusOffset);
 	}
 
 	public get selection() {
@@ -67,11 +58,10 @@ export class Caret {
 
 	public sync() {
 		debug("  Caret.sync()");
-		const { node: startNode, nodeOffset: startOffset } =
-			this.positionToNodeOffset(this.startRef);
-		const { node: endNode, nodeOffset: endOffset } = this.positionToNodeOffset(
-			this.endRef,
+		const { node: startNode, nodeOffset: startOffset } = this.positionToNodeOffset(
+			this.startRef,
 		);
+		const { node: endNode, nodeOffset: endOffset } = this.positionToNodeOffset(this.endRef);
 
 		const selection = window.getSelection();
 		const { anchorNode, anchorOffset, focusNode, focusOffset } = selection;
@@ -81,13 +71,7 @@ export class Caret {
 			startOffset !== anchorOffset ||
 			startNode !== anchorNode
 		) {
-			debug(
-				"    caret set: (%o:%d..%o:%d)",
-				startNode,
-				startOffset,
-				endNode,
-				endOffset,
-			);
+			debug("    caret set: (%o:%d..%o:%d)", startNode, startOffset, endNode, endOffset);
 			this.logWindowSelection("was");
 			selection.setBaseAndExtent(startNode, startOffset, endNode, endOffset);
 			this.logWindowSelection("now");
@@ -102,8 +86,7 @@ export class Caret {
 	}
 
 	private logWindowSelection(title: string) {
-		const { anchorNode, anchorOffset, focusNode, focusOffset } =
-			window.getSelection();
+		const { anchorNode, anchorOffset, focusNode, focusOffset } = window.getSelection();
 		debug(
 			"          %s: (%o:%d..%o:%d)",
 			title,
@@ -115,8 +98,7 @@ export class Caret {
 	}
 
 	private readonly onSelectionChange = () => {
-		const { anchorNode, anchorOffset, focusNode, focusOffset } =
-			window.getSelection();
+		const { anchorNode, anchorOffset, focusNode, focusOffset } = window.getSelection();
 		debug(
 			"Cursor.onSelectionChange(%o:%d..%o:%d)",
 			anchorNode,
@@ -144,10 +126,7 @@ export class Caret {
 		// The position -> { node, offset } mapping places the caret "just before" the content at the given
 		// position.  For text nodes, an offset of 0 is "just before" the first character.
 		if (position === 0 || rightKind === DocSegmentKind.text) {
-			result = this.layout.segmentAndOffsetToNodeAndOffset(
-				rightSegment,
-				rightOffset,
-			);
+			result = this.layout.segmentAndOffsetToNodeAndOffset(rightSegment, rightOffset);
 			debug(
 				"    positionToNodeOffset(@%d,%d:%d) -> %o",
 				position,
@@ -157,17 +136,14 @@ export class Caret {
 			);
 		} else {
 			// For other nodes, the user typical perceives "just before" to be after the preceding segment.
-			const { segment: leftSegment, offset: leftOffset } =
-				this.doc.getSegmentAndOffset(position - 1);
+			const { segment: leftSegment, offset: leftOffset } = this.doc.getSegmentAndOffset(
+				position - 1,
+			);
 
 			// Text nodes are special in that the DOM allows placing the caret just after the last character.
-			const delta =
-				getDocSegmentKind(leftSegment) === DocSegmentKind.text ? 1 : 0;
+			const delta = getDocSegmentKind(leftSegment) === DocSegmentKind.text ? 1 : 0;
 
-			result = this.layout.segmentAndOffsetToNodeAndOffset(
-				leftSegment,
-				leftOffset + delta,
-			);
+			result = this.layout.segmentAndOffsetToNodeAndOffset(leftSegment, leftOffset + delta);
 
 			debug(
 				"    positionToNodeOffset(@%d,%o:%d) -> %o",

@@ -28,9 +28,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 		}
 	}
 
-	public async getSnapshotTree(
-		version?: IVersion,
-	): Promise<ISnapshotTree | null> {
+	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
 		const p = this.internalStorageService.getSnapshotTree(version);
 		if (this.prefetchEnabled) {
 			// We don't care if the prefetch succeeds
@@ -58,8 +56,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 			if (prefetchedBlobP !== undefined) {
 				return prefetchedBlobP;
 			}
-			const prefetchedBlobPFromStorage =
-				this.internalStorageService.readBlob(blobId);
+			const prefetchedBlobPFromStorage = this.internalStorageService.readBlob(blobId);
 			this.prefetchCache.set(
 				blobId,
 				prefetchedBlobPFromStorage.catch((error) => {
@@ -86,11 +83,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 
 	private prefetchTreeCore(tree: ISnapshotTree, secondary: string[]) {
 		for (const [blobKey, blob] of Object.entries(tree.blobs)) {
-			if (
-				blobKey.startsWith(".") ||
-				blobKey === "header" ||
-				blobKey.startsWith("quorum")
-			) {
+			if (blobKey.startsWith(".") || blobKey === "header" || blobKey.startsWith("quorum")) {
 				if (blob !== null) {
 					// We don't care if the prefetch succeeds
 					void this.cachedRead(blob);

@@ -82,7 +82,8 @@ describe("Presence", () => {
 			const attendee1AvgLatency = 20;
 			const attendee1ToLocalTimeDelta =
 				clock.now - (localAvgLatency + attendee1AvgLatency + attendee1UpdateSendTimestamp);
-			localAttendee1ValueRevisionTimestamp = attendee1ValueRevisionTimestamp + attendee1ToLocalTimeDelta;
+			localAttendee1ValueRevisionTimestamp =
+				attendee1ValueRevisionTimestamp + attendee1ToLocalTimeDelta;
 			processSignal(
 				[],
 				{

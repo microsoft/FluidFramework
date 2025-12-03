@@ -16,11 +16,7 @@ import {
 	parsePackageSelectionFlags,
 	selectAndFilterPackages,
 } from "./filter.js";
-import {
-	filterFlags,
-	type PackageSelectionDefault,
-	selectionFlags,
-} from "./flags.js";
+import { type PackageSelectionDefault, filterFlags, selectionFlags } from "./flags.js";
 import { BaseCommand } from "./library/index.js";
 
 /**
@@ -77,10 +73,7 @@ export abstract class PackageCommand<
 	): Promise<void>;
 
 	protected parseFlags(): void {
-		this.selectionOptions = parsePackageSelectionFlags(
-			this.flags,
-			this.defaultSelection,
-		);
+		this.selectionOptions = parsePackageSelectionFlags(this.flags, this.defaultSelection);
 		this.filterOptions = parsePackageFilterFlags(this.flags);
 	}
 
@@ -102,22 +95,13 @@ export abstract class PackageCommand<
 	public async run(): Promise<unknown> {
 		this.parseFlags();
 
-		assert(
-			this.selectionOptions !== undefined,
-			"selectionOptions is undefined",
-		);
+		assert(this.selectionOptions !== undefined, "selectionOptions is undefined");
 		assert(this.filterOptions !== undefined, "filterOptions is undefined");
 
 		await this.selectAndFilterPackages();
 
-		assert(
-			this.selectedPackages !== undefined,
-			"selectedPackages is undefined",
-		);
-		assert(
-			this.filteredPackages !== undefined,
-			"filteredPackages is undefined",
-		);
+		assert(this.selectedPackages !== undefined, "selectedPackages is undefined");
+		assert(this.filteredPackages !== undefined, "filteredPackages is undefined");
 
 		this.info(
 			`Filtered ${this.selectedPackages.length} packages to ${listNames(
@@ -142,9 +126,7 @@ export abstract class PackageCommand<
 	 *
 	 * @returns An array of error strings. If the array is not empty, at least one of the calls to processPackage failed.
 	 */
-	protected async processPackages(
-		packages: PackageWithKind[],
-	): Promise<string[]> {
+	protected async processPackages(packages: PackageWithKind[]): Promise<string[]> {
 		let started = 0;
 		let finished = 0;
 		let succeeded = 0;
@@ -169,33 +151,27 @@ export abstract class PackageCommand<
 		}
 
 		try {
-			await async.mapLimit(
-				packages,
-				this.flags.concurrency,
-				async (pkg: PackageWithKind) => {
-					started += 1;
+			await async.mapLimit(packages, this.flags.concurrency, async (pkg: PackageWithKind) => {
+				started += 1;
+				updateStatus();
+				try {
+					await this.processPackage(pkg, pkg.kind);
+					succeeded += 1;
+				} catch (error: unknown) {
+					const errorString = `Error updating ${pkg.name}: '${error}'\nStack: ${
+						(error as Error).stack
+					}`;
+					errors.push(errorString);
+					this.verbose(errorString);
+				} finally {
+					finished += 1;
 					updateStatus();
-					try {
-						await this.processPackage(pkg, pkg.kind);
-						succeeded += 1;
-					} catch (error: unknown) {
-						const errorString = `Error updating ${pkg.name}: '${error}'\nStack: ${
-							(error as Error).stack
-						}`;
-						errors.push(errorString);
-						this.verbose(errorString);
-					} finally {
-						finished += 1;
-						updateStatus();
-					}
-				},
-			);
+				}
+			});
 		} finally {
 			// Stop the spinner if needed.
 			if (!verbose) {
-				ux.action.stop(
-					`Done. ${packages.length} Packages. ${finished - succeeded} Errors`,
-				);
+				ux.action.stop(`Done. ${packages.length} Packages. ${finished - succeeded} Errors`);
 			}
 		}
 		return errors;

@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	getResolvedFluidRoot,
-	type Package,
-} from "@fluidframework/build-tools";
+import { type Package, getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { expect } from "chai";
 import { describe, it } from "mocha";
 

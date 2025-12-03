@@ -18,28 +18,18 @@ import {
 	LocalReconnectingPerspective,
 	PriorPerspective,
 } from "./perspective.js";
-import {
-	assertInserted,
-	toRemovalInfo,
-	wasRemovedOnInsert,
-} from "./segmentInfos.js";
+import { toRemovalInfo, assertInserted, wasRemovedOnInsert } from "./segmentInfos.js";
 import { SortedSet } from "./sortedSet.js";
 import * as opstampUtils from "./stamps.js";
 
 class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength> {
-	protected compare(
-		a: PartialSequenceLength,
-		b: PartialSequenceLength,
-	): number {
+	protected compare(a: PartialSequenceLength, b: PartialSequenceLength): number {
 		return a.seq - b.seq;
 	}
 
 	public addOrUpdate(
 		newItem: PartialSequenceLength,
-		update?: (
-			existingItem: PartialSequenceLength,
-			newItem: PartialSequenceLength,
-		) => void,
+		update?: (existingItem: PartialSequenceLength, newItem: PartialSequenceLength) => void,
 	): void {
 		if (newItem.seglen === 0) {
 			// Don't bother doing any updates for deltas of 0.
@@ -92,11 +82,7 @@ class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength> {
 	}
 
 	private latestLeqIndex(key: number): number {
-		const { exists, index } = this.findItemPosition({
-			seq: key,
-			len: 0,
-			seglen: 0,
-		});
+		const { exists, index } = this.findItemPosition({ seq: key, len: 0, seglen: 0 });
 		return exists ? index : index - 1;
 	}
 
@@ -263,8 +249,7 @@ export class PartialSequenceLengths {
 	 * `minLength + partialLengths[i].len` gives the length of this block when considering the perspective of an observer
 	 * client who has received edits up to (and including) sequence number `i`.
 	 */
-	private readonly partialLengths: PartialSequenceLengthsSet =
-		new PartialSequenceLengthsSet();
+	private readonly partialLengths: PartialSequenceLengthsSet = new PartialSequenceLengthsSet();
 
 	/**
 	 * perClientAdjustments[clientId] contains a PartialSequenceLengthsSet of adjustments to the observer client's
@@ -399,32 +384,22 @@ export class PartialSequenceLengths {
 
 			const childPartialLengths: PartialSequenceLength[][] = [];
 			const childUnsequencedPartialLengths: PartialSequenceLength[][] = [];
-			const childPerRefSeqAdjustments: Map<
-				number,
-				PartialSequenceLengthsSet
-			>[] = [];
+			const childPerRefSeqAdjustments: Map<number, PartialSequenceLengthsSet>[] = [];
 			for (let i = 0; i < childPartialsLen; i++) {
 				const { segmentCount, minLength, partialLengths, unsequencedRecords } =
 					childPartials[i];
 				combinedPartialLengths.segmentCount += segmentCount;
 				combinedPartialLengths.minLength += minLength;
-				childPartialLengths.push(
-					partialLengths.items as PartialSequenceLength[],
-				);
+				childPartialLengths.push(partialLengths.items as PartialSequenceLength[]);
 				if (unsequencedRecords) {
 					childUnsequencedPartialLengths.push(
 						unsequencedRecords.partialLengths.items as PartialSequenceLength[],
 					);
-					childPerRefSeqAdjustments.push(
-						unsequencedRecords.perRefSeqAdjustments,
-					);
+					childPerRefSeqAdjustments.push(unsequencedRecords.perRefSeqAdjustments);
 				}
 			}
 
-			mergePartialLengths(
-				childPartialLengths,
-				combinedPartialLengths.partialLengths,
-			);
+			mergePartialLengths(childPartialLengths, combinedPartialLengths.partialLengths);
 
 			if (computeLocalPartials) {
 				combinedPartialLengths.unsequencedRecords = {
@@ -436,9 +411,7 @@ export class PartialSequenceLengths {
 				for (const perRefSeq of childPerRefSeqAdjustments) {
 					for (const [refSeq, partials] of perRefSeq) {
 						let combinedPartials =
-							combinedPartialLengths.unsequencedRecords.perRefSeqAdjustments.get(
-								refSeq,
-							);
+							combinedPartialLengths.unsequencedRecords.perRefSeqAdjustments.get(refSeq);
 						if (combinedPartials === undefined) {
 							combinedPartials = new PartialSequenceLengthsSet();
 							combinedPartialLengths.unsequencedRecords.perRefSeqAdjustments.set(
@@ -457,11 +430,7 @@ export class PartialSequenceLengths {
 			for (let i = 0; i < childPartialsLen; i++) {
 				const { perClientAdjustments } = childPartials[i];
 				if (perClientAdjustments.length > 0) {
-					for (
-						let clientId = 0;
-						clientId < perClientAdjustments.length;
-						clientId++
-					) {
+					for (let clientId = 0; clientId < perClientAdjustments.length; clientId++) {
 						const clientAdjustment = perClientAdjustments[clientId];
 						if (clientAdjustment === undefined) {
 							continue;
@@ -623,11 +592,7 @@ export class PartialSequenceLengths {
 					removeSeq !== undefined,
 					0xab8 /* ObliterateOnInsertion implies removeSeq is defined */,
 				);
-				combinedPartialLengths.addClientAdjustment(
-					clientId,
-					removeSeq,
-					cachedLength,
-				);
+				combinedPartialLengths.addClientAdjustment(clientId, removeSeq, cachedLength);
 			}
 		}
 	}
@@ -676,11 +641,7 @@ export class PartialSequenceLengths {
 				len: 0,
 				seglen: segmentLen,
 			});
-			combinedPartialLengths.addClientAdjustment(
-				clientId,
-				seqOrLocalSeq,
-				segmentLen,
-			);
+			combinedPartialLengths.addClientAdjustment(clientId, seqOrLocalSeq, segmentLen);
 		}
 	}
 
@@ -702,10 +663,7 @@ export class PartialSequenceLengths {
 
 		const firstRemove = removalInfo?.removes[0];
 		const minSeqStamp = getMinSeqStamp(collabWindow);
-		if (
-			firstRemove !== undefined &&
-			opstampUtils.lte(firstRemove, minSeqStamp)
-		) {
+		if (firstRemove !== undefined && opstampUtils.lte(firstRemove, minSeqStamp)) {
 			combinedPartialLengths.minLength -= segment.cachedLength;
 			return;
 		}
@@ -716,16 +674,12 @@ export class PartialSequenceLengths {
 		const isLocal = isLocalInsertion || isOnlyLocalRemoval;
 
 		if (isLocalInsertion && !removalIsLocal) {
-			throw new Error(
-				"Should have handled this codepath in wasRemovedOnInsertion",
-			);
+			throw new Error("Should have handled this codepath in wasRemovedOnInsertion");
 		}
 
 		const lenDelta = -segment.cachedLength;
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const seqOrLocalSeq = removalIsLocal
-			? firstRemove.localSeq!
-			: firstRemove.seq;
+		const seqOrLocalSeq = removalIsLocal ? firstRemove.localSeq! : firstRemove.seq;
 		const clientId = firstRemove.clientId;
 
 		const clientsWithRemoveOrObliterate = new Set<number>(
@@ -777,8 +731,7 @@ export class PartialSequenceLengths {
 			for (const id of clientsWithRemoveOrObliterate) {
 				if (id === collabWindow.clientId) {
 					// The local client also removed or obliterated this segment.
-					const { localSeq } =
-						removalInfo.removes[removalInfo.removes.length - 1];
+					const { localSeq } = removalInfo.removes[removalInfo.removes.length - 1];
 					if (localSeq === undefined) {
 						// Sure, the local client did it--but that change was already acked.
 						// No need to account for it in the unsequenced records.
@@ -854,11 +807,7 @@ export class PartialSequenceLengths {
 				} else {
 					// Note that all clients that have a remove or obliterate operation on this segment
 					// use the seq of the winning obliterate in their per-client adjustments!
-					combinedPartialLengths.addClientAdjustment(
-						id,
-						seqOrLocalSeq,
-						lenDelta,
-					);
+					combinedPartialLengths.addClientAdjustment(id, seqOrLocalSeq, lenDelta);
 
 					// Also ensure that all these clients have seen the segment as inserted before being removed
 					// This is technically not necessary for setRemoves (we never ask for the length of this block with
@@ -905,12 +854,7 @@ export class PartialSequenceLengths {
 		// Even if we fix this at the merge-tree level, the same type of issue can crop up with grouped batching enabled.
 		const latest = this.partialLengths.latestLeq(seq);
 		if (latest?.seq === seq) {
-			this.partialLengths.addOrUpdate({
-				seq,
-				len: 0,
-				seglen: -latest.seglen,
-				clientId,
-			});
+			this.partialLengths.addOrUpdate({ seq, len: 0, seglen: -latest.seglen, clientId });
 		}
 
 		// .forEach natively ignores undefined entries.
@@ -948,11 +892,7 @@ export class PartialSequenceLengths {
 						firstRemove !== undefined &&
 						wasRemovedOnInsert(segment)
 					) {
-						this.addClientAdjustment(
-							clientId,
-							firstRemove.seq,
-							segment.cachedLength,
-						);
+						this.addClientAdjustment(clientId, firstRemove.seq, segment.cachedLength);
 						failIncrementalPropagation = true;
 					} else {
 						seqSeglen += segment.cachedLength;
@@ -965,17 +905,10 @@ export class PartialSequenceLengths {
 					if (clientId !== collabWindow.clientId) {
 						this.addClientAdjustment(clientId, seq, -segment.cachedLength);
 						if (
-							opstampUtils.greaterThan(
-								segment.insert,
-								getMinSeqStamp(collabWindow),
-							) &&
+							opstampUtils.greaterThan(segment.insert, getMinSeqStamp(collabWindow)) &&
 							segment.insert.clientId !== clientId
 						) {
-							this.addClientAdjustment(
-								clientId,
-								segment.insert.seq,
-								segment.cachedLength,
-							);
+							this.addClientAdjustment(clientId, segment.insert.seq, segment.cachedLength);
 							failIncrementalPropagation = true;
 						}
 					}
@@ -988,11 +921,7 @@ export class PartialSequenceLengths {
 				const branchPartialLengths = childBlock.partialLengths!;
 				if (branchPartialLengths.lastIncrementalInvalidationSeq === seq) {
 					// Bail out.
-					const newPartials = PartialSequenceLengths.combine(
-						node,
-						collabWindow,
-						false,
-					);
+					const newPartials = PartialSequenceLengths.combine(node, collabWindow, false);
 					newPartials.lastIncrementalInvalidationSeq = seq;
 					node.partialLengths = newPartials;
 					return;
@@ -1006,14 +935,12 @@ export class PartialSequenceLengths {
 
 				// .forEach natively ignores undefined entries.
 				// eslint-disable-next-line unicorn/no-array-for-each
-				branchPartialLengths.perClientAdjustments.forEach(
-					(clientAdjustments) => {
-						const leqBranchPartial = clientAdjustments.latestLeq(seq);
-						if (leqBranchPartial && leqBranchPartial.seq === seq) {
-							this.addClientAdjustment(clientId, seq, leqBranchPartial.seglen);
-						}
-					},
-				);
+				branchPartialLengths.perClientAdjustments.forEach((clientAdjustments) => {
+					const leqBranchPartial = clientAdjustments.latestLeq(seq);
+					if (leqBranchPartial && leqBranchPartial.seq === seq) {
+						this.addClientAdjustment(clientId, seq, leqBranchPartial.seglen);
+					}
+				});
 			}
 		}
 
@@ -1022,12 +949,7 @@ export class PartialSequenceLengths {
 		}
 		this.segmentCount = segCount;
 		this.unsequencedRecords = undefined;
-		this.partialLengths.addOrUpdate({
-			seq,
-			seglen: seqSeglen,
-			len: 0,
-			clientId,
-		});
+		this.partialLengths.addOrUpdate({ seq, seglen: seqSeglen, len: 0, clientId });
 
 		if (PartialSequenceLengths.options.zamboni) {
 			this.zamboni(collabWindow);
@@ -1045,11 +967,7 @@ export class PartialSequenceLengths {
 	 * Note: the local case (where `localSeq !== undefined`) is only supported on a PartialSequenceLength object
 	 * constructed with `computeLocalPartials` set to true and not subsequently updated with `update`.
 	 */
-	public getPartialLength(
-		refSeq: number,
-		clientId: number,
-		localSeq?: number,
-	): number {
+	public getPartialLength(refSeq: number, clientId: number, localSeq?: number): number {
 		let length = this.minLength;
 		length += this.partialLengths.latestLeq(refSeq)?.len ?? 0;
 
@@ -1092,19 +1010,14 @@ export class PartialSequenceLengths {
 	 * we cache the results for a given refSeq in `this.unsequencedRecords.cachedOverlappingByRefSeq` so
 	 * that they can be binary-searched the same way the usual partialLengths lists are.
 	 */
-	private computeOverallRefSeqAdjustment(
-		refSeq: number,
-		localSeq: number,
-	): number {
+	private computeOverallRefSeqAdjustment(refSeq: number, localSeq: number): number {
 		if (this.unsequencedRecords === undefined) {
 			return 0;
 		}
 
-		let cachedAdjustment =
-			this.unsequencedRecords.cachedAdjustmentByRefSeq.get(refSeq);
+		let cachedAdjustment = this.unsequencedRecords.cachedAdjustmentByRefSeq.get(refSeq);
 		if (!cachedAdjustment) {
-			const partials: PartialSequenceLengthsSet =
-				new PartialSequenceLengthsSet();
+			const partials: PartialSequenceLengthsSet = new PartialSequenceLengthsSet();
 			for (const [
 				seq,
 				adjustments,
@@ -1122,10 +1035,7 @@ export class PartialSequenceLengths {
 				}
 			}
 			cachedAdjustment = partials;
-			this.unsequencedRecords.cachedAdjustmentByRefSeq.set(
-				refSeq,
-				cachedAdjustment,
-			);
+			this.unsequencedRecords.cachedAdjustmentByRefSeq.set(refSeq, cachedAdjustment);
 		}
 
 		const overlap = cachedAdjustment.latestLeq(localSeq);
@@ -1168,11 +1078,7 @@ export class PartialSequenceLengths {
 		}
 	}
 
-	private addClientAdjustment(
-		clientId: number,
-		seq: number,
-		seglen: number,
-	): void {
+	private addClientAdjustment(clientId: number, seq: number, seglen: number): void {
 		this.perClientAdjustments[clientId] ??= new PartialSequenceLengthsSet();
 		const cli = this.perClientAdjustments[clientId];
 		cli.addOrUpdate({ seq, len: 0, seglen });
@@ -1182,11 +1088,7 @@ export class PartialSequenceLengths {
 		refSeq,
 		localSeq,
 		seglen,
-	}: {
-		refSeq: number;
-		localSeq: number;
-		seglen: number;
-	}): void {
+	}: { refSeq: number; localSeq: number; seglen: number }): void {
 		assert(
 			this.unsequencedRecords !== undefined,
 			0xabb /* Local adjustment computed without partials */,
@@ -1213,13 +1115,9 @@ export class PartialSequenceLengths {
 	 * Get the partial lengths associated with the most recent change received by `clientId`, or undefined
 	 * if this client has made no changes in this block within the collab window.
 	 */
-	private latestClientEntry(
-		clientId: number,
-	): PartialSequenceLength | undefined {
+	private latestClientEntry(clientId: number): PartialSequenceLength | undefined {
 		const cliSeqs = this.perClientAdjustments[clientId];
-		return cliSeqs && cliSeqs.size > 0
-			? cliSeqs.items[cliSeqs.size - 1]
-			: undefined;
+		return cliSeqs && cliSeqs.size > 0 ? cliSeqs.items[cliSeqs.size - 1] : undefined;
 	}
 }
 
@@ -1248,10 +1146,7 @@ function verifyPartialLengthsInner(
 		);
 
 		// Sequence number should be sorted
-		assert(
-			lastSeqNum < partialLength.seq,
-			0x055 /* "Sequence number is not sorted!" */,
-		);
+		assert(lastSeqNum < partialLength.seq, 0x055 /* "Sequence number is not sorted!" */);
 		lastSeqNum = partialLength.seq;
 
 		// Len is a accumulation of all the seglen adjustments
@@ -1292,18 +1187,13 @@ export function verifyExpectedPartialLengths(
 	localSeq?: number,
 ): void {
 	if (
-		(!mergeTree.collabWindow.collaborating ||
-			mergeTree.collabWindow.clientId === clientId) &&
+		(!mergeTree.collabWindow.collaborating || mergeTree.collabWindow.clientId === clientId) &&
 		(node.isLeaf() || localSeq === undefined)
 	) {
 		return;
 	}
 
-	const partialLen = node.partialLengths?.getPartialLength(
-		refSeq,
-		clientId,
-		localSeq,
-	);
+	const partialLen = node.partialLengths?.getPartialLength(refSeq, clientId, localSeq);
 
 	let expected = 0;
 	const nodesToVisit: IMergeNode[] = [node];
@@ -1346,9 +1236,7 @@ export function verifyExpectedPartialLengths(
 	}
 }
 
-export function verifyPartialLengths(
-	partialSeqLengths: PartialSequenceLengths,
-): void {
+export function verifyPartialLengths(partialSeqLengths: PartialSequenceLengths): void {
 	if (partialSeqLengths["perClientAdjustments"]) {
 		for (const cliSeq of partialSeqLengths["perClientAdjustments"]) {
 			if (cliSeq) {
@@ -1362,11 +1250,7 @@ export function verifyPartialLengths(
 			0x059 /* "Client view exists but flat view does not!" */,
 		);
 
-		verifyPartialLengthsInner(
-			partialSeqLengths,
-			partialSeqLengths["partialLengths"],
-			false,
-		);
+		verifyPartialLengthsInner(partialSeqLengths, partialSeqLengths["partialLengths"], false);
 	} else {
 		// If we don't have a client view, we shouldn't have the flat view either
 		assert(
@@ -1410,9 +1294,7 @@ function mergePartialLengths(
  * This is equivalent to flattening the input list and sorting it by sequence number. If the number of lists to merge is
  * a constant, however, this approach is advantageous asymptotically.
  */
-function mergeSortedListsBySeq<T extends PartialSequenceLength>(
-	lists: T[][],
-): Iterable<T> {
+function mergeSortedListsBySeq<T extends PartialSequenceLength>(lists: T[][]): Iterable<T> {
 	class PartialSequenceLengthIterator {
 		/**
 		 * nextSmallestIndex[i] is the next element of sublists[i] to check.
@@ -1428,9 +1310,7 @@ function mergeSortedListsBySeq<T extends PartialSequenceLength>(
 			}
 		}
 
-		public next():
-			| { value: T; done: false }
-			| { value: undefined; done: true } {
+		public next(): { value: T; done: false } | { value: undefined; done: true } {
 			const len = this.sublists.length;
 			let currentMin: T | undefined;
 			let currentMinIndex: number | undefined;

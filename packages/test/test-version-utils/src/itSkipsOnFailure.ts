@@ -3,16 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
+import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import {
-	type TestObjectProvider,
-	timeoutAwait,
-} from "@fluidframework/test-utils/internal";
+import { TestObjectProvider, timeoutAwait } from "@fluidframework/test-utils/internal";
 // eslint-disable-next-line import-x/no-extraneous-dependencies
-import type { Context } from "mocha";
+import { Context } from "mocha";
 
-import { createExpectsTest, type ExpectedEvents } from "./itExpects.js";
+import { ExpectedEvents, createExpectsTest } from "./itExpects.js";
 
 function createSkippedTestsWithDriverType(
 	skippedDrivers: TestDriverTypes[],
@@ -121,20 +118,19 @@ export type SkippedErrorExpectingTestWithDriverType =
 	};
 
 function createSkippedErrorExpectingTestWithDriver(): SkippedErrorExpectingTestWithDriverType {
-	const skippedErrorExpectingTestWithDriver: SkippedErrorExpectingTestWithDriverType =
-		(
-			name: string,
-			orderedExpectedEvents: ExpectedEvents,
-			skippedDrivers: TestDriverTypes[],
-			test: Mocha.AsyncFunc,
-		) =>
-			it(
-				name,
-				createSkippedTestsWithDriverType(
-					skippedDrivers,
-					createExpectsTest(orderedExpectedEvents, test),
-				),
-			);
+	const skippedErrorExpectingTestWithDriver: SkippedErrorExpectingTestWithDriverType = (
+		name: string,
+		orderedExpectedEvents: ExpectedEvents,
+		skippedDrivers: TestDriverTypes[],
+		test: Mocha.AsyncFunc,
+	) =>
+		it(
+			name,
+			createSkippedTestsWithDriverType(
+				skippedDrivers,
+				createExpectsTest(orderedExpectedEvents, test),
+			),
+		);
 
 	skippedErrorExpectingTestWithDriver.only = (
 		name: string,

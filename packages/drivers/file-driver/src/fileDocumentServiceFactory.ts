@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import type { ISummaryTree } from "@fluidframework/driver-definitions";
-import type {
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
+import {
 	IDocumentDeltaConnection,
 	IDocumentService,
 	IDocumentServiceFactory,
@@ -13,7 +13,7 @@ import type {
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
 
-import type { FileDeltaStorageService } from "./fileDeltaStorageService.js";
+import { FileDeltaStorageService } from "./fileDeltaStorageService.js";
 import { FileDocumentService } from "./fileDocumentService.js";
 
 /**

@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	Presence,
-	StatesWorkspaceSchema,
-} from "@fluidframework/presence/beta";
+import type { Presence, StatesWorkspaceSchema } from "@fluidframework/presence/beta";
 import { StateFactory } from "@fluidframework/presence/beta";
 
 const schema = {
@@ -16,8 +13,7 @@ const schema = {
 } as const satisfies StatesWorkspaceSchema;
 
 export function renderCursorPresence(presence: Presence, div: HTMLDivElement) {
-	const cursorStates = presence.states.getWorkspace("name:app-cursor", schema)
-		.states.cursor;
+	const cursorStates = presence.states.getWorkspace("name:app-cursor", schema).states.cursor;
 
 	const onRemotePositionChanged = () => {
 		div.innerHTML = "";

@@ -5,13 +5,13 @@
 
 import {
 	type BrandVariants,
-	createLightTheme,
 	FluentProvider,
-	makeStyles,
 	Spinner,
-	shorthands,
 	Text,
 	type Theme,
+	createLightTheme,
+	makeStyles,
+	shorthands,
 } from "@fluentui/react-components";
 import {
 	CollaborativeTextArea,
@@ -21,10 +21,10 @@ import {
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import {
 	type ContainerKey,
-	createDevtoolsLogger,
 	type HasContainerKey,
 	type IDevtoolsLogger,
 	type IFluidDevtools,
+	createDevtoolsLogger,
 	initializeDevtools,
 } from "@fluidframework/devtools-core/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
@@ -86,10 +86,7 @@ function useContainerInfo(
 		}
 
 		getSharedFluidData().then((containerInfo) => {
-			if (
-				getContainerIdFromLocation(window.location) !==
-				containerInfo.containerId
-			) {
+			if (getContainerIdFromLocation(window.location) !== containerInfo.containerId) {
 				window.location.hash = containerInfo.containerId;
 				document.title = `Devtools Example Test App - ${containerInfo.containerId}`;
 			}
@@ -197,10 +194,7 @@ export function App(): React.ReactElement {
 	const loader = React.useMemo(() => createLoader(logger), [logger]);
 
 	// Initialize Devtools
-	const devtools = React.useMemo(
-		() => initializeDevtools({ logger }),
-		[logger],
-	);
+	const devtools = React.useMemo(() => initializeDevtools({ logger }), [logger]);
 
 	React.useEffect(() => {
 		// Dispose of devtools resources on teardown to ensure message listeners are notified.
@@ -210,11 +204,7 @@ export function App(): React.ReactElement {
 	}, [devtools]);
 
 	// Load the collaborative SharedString object
-	const { privateContainer, sharedContainer } = useContainerInfo(
-		devtools,
-		logger,
-		loader,
-	);
+	const { privateContainer, sharedContainer } = useContainerInfo(devtools, logger, loader);
 
 	const styles = useStyles();
 
@@ -223,18 +213,12 @@ export function App(): React.ReactElement {
 			{sharedContainer === undefined ? (
 				<LoadingView containerKey={sharedContainerKey} />
 			) : (
-				<AppView
-					appData={sharedContainer.appData}
-					containerKey={sharedContainerKey}
-				/>
+				<AppView appData={sharedContainer.appData} containerKey={sharedContainerKey} />
 			)}
 			{privateContainer === undefined ? (
 				<LoadingView containerKey={privateContainerKey} />
 			) : (
-				<AppView
-					appData={privateContainer.appData}
-					containerKey={privateContainerKey}
-				/>
+				<AppView appData={privateContainer.appData} containerKey={privateContainerKey} />
 			)}
 		</div>
 	);
@@ -303,9 +287,7 @@ function TextView(props: TextViewProps): React.ReactElement {
 		<Spinner />
 	) : (
 		<div className="example-app-text-area">
-			<CollaborativeTextArea
-				sharedStringHelper={new SharedStringHelper(sharedText)}
-			/>
+			<CollaborativeTextArea sharedStringHelper={new SharedStringHelper(sharedText)} />
 		</div>
 	);
 }
@@ -317,11 +299,7 @@ interface CounterViewProps {
 function CounterView(props: CounterViewProps): React.ReactElement {
 	const { sharedCounter } = props;
 
-	return sharedCounter === undefined ? (
-		<Spinner />
-	) : (
-		<CounterWidget counter={sharedCounter} />
-	);
+	return sharedCounter === undefined ? <Spinner /> : <CounterWidget counter={sharedCounter} />;
 }
 
 interface EmojiMatrixViewProps {
@@ -331,11 +309,7 @@ interface EmojiMatrixViewProps {
 function EmojiMatrixView(props: EmojiMatrixViewProps): React.ReactElement {
 	const { emojiMatrix } = props;
 
-	return emojiMatrix === undefined ? (
-		<Spinner />
-	) : (
-		<EmojiGrid emojiMatrix={emojiMatrix} />
-	);
+	return emojiMatrix === undefined ? <Spinner /> : <EmojiGrid emojiMatrix={emojiMatrix} />;
 }
 
 interface TodoAppViewProps {
@@ -345,9 +319,5 @@ interface TodoAppViewProps {
 function TodoAppView(props: TodoAppViewProps): React.ReactElement {
 	const { todoModel } = props;
 
-	return todoModel === undefined ? (
-		<Spinner />
-	) : (
-		<TodoListView todoModel={todoModel} />
-	);
+	return todoModel === undefined ? <Spinner /> : <TodoListView todoModel={todoModel} />;
 }

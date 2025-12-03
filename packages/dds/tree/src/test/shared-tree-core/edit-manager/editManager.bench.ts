@@ -5,32 +5,20 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	type BenchmarkTimer,
-	BenchmarkType,
-	benchmark,
-} from "@fluid-tools/benchmark";
+import { type BenchmarkTimer, BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 
 import {
 	type ChangeFamily,
-	type ChangeFamilyEditor,
 	type RevisionTag,
 	rootFieldKey,
+	type ChangeFamilyEditor,
 } from "../../../core/index.js";
 import { DefaultChangeFamily } from "../../../feature-libraries/index.js";
 import type { Commit } from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
 import { type Editor, makeEditMinter } from "../../editMinter.js";
-import {
-	NoOpChangeRebaser,
-	TestChange,
-	testChangeFamilyFactory,
-} from "../../testChange.js";
-import {
-	chunkFromJsonTrees,
-	failCodecFamily,
-	mintRevisionTag,
-} from "../../utils.js";
+import { NoOpChangeRebaser, TestChange, testChangeFamilyFactory } from "../../testChange.js";
+import { chunkFromJsonTrees, failCodecFamily, mintRevisionTag } from "../../utils.js";
 
 import {
 	editManagerFactory,
@@ -49,41 +37,13 @@ describe("EditManager - Bench", () => {
 
 	const scenarios: Scenario[] = [
 		{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 1 },
-		{
-			type: BenchmarkType.Perspective,
-			rebasedEditCount: 10,
-			trunkEditCount: 1,
-		},
-		{
-			type: BenchmarkType.Perspective,
-			rebasedEditCount: 100,
-			trunkEditCount: 1,
-		},
-		{
-			type: BenchmarkType.Perspective,
-			rebasedEditCount: 1000,
-			trunkEditCount: 1,
-		},
-		{
-			type: BenchmarkType.Perspective,
-			rebasedEditCount: 1,
-			trunkEditCount: 10,
-		},
-		{
-			type: BenchmarkType.Perspective,
-			rebasedEditCount: 1,
-			trunkEditCount: 100,
-		},
-		{
-			type: BenchmarkType.Perspective,
-			rebasedEditCount: 1,
-			trunkEditCount: 1000,
-		},
-		{
-			type: BenchmarkType.Measurement,
-			rebasedEditCount: 100,
-			trunkEditCount: 100,
-		},
+		{ type: BenchmarkType.Perspective, rebasedEditCount: 10, trunkEditCount: 1 },
+		{ type: BenchmarkType.Perspective, rebasedEditCount: 100, trunkEditCount: 1 },
+		{ type: BenchmarkType.Perspective, rebasedEditCount: 1000, trunkEditCount: 1 },
+		{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 10 },
+		{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 100 },
+		{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 1000 },
+		{ type: BenchmarkType.Measurement, rebasedEditCount: 100, trunkEditCount: 100 },
 	];
 
 	interface Family<TChange> {
@@ -162,11 +122,7 @@ describe("EditManager - Bench", () => {
 				}
 			});
 			describe("Peer commit rebasing (fix ref seq#)", () => {
-				for (const {
-					type,
-					rebasedEditCount: peerEditCount,
-					trunkEditCount,
-				} of scenarios) {
+				for (const { type, rebasedEditCount: peerEditCount, trunkEditCount } of scenarios) {
 					if (peerEditCount * trunkEditCount > family.maxEditCount) {
 						continue;
 					}
@@ -250,32 +206,12 @@ describe("EditManager - Bench", () => {
 				}
 
 				const multiPeerScenarios: MultiPeerScenario[] = [
-					{
-						type: BenchmarkType.Perspective,
-						peerCount: 10,
-						editsPerPeerCount: 10,
-					},
-					{
-						type: BenchmarkType.Perspective,
-						peerCount: 10,
-						editsPerPeerCount: 20,
-					},
-					{
-						type: BenchmarkType.Perspective,
-						peerCount: 20,
-						editsPerPeerCount: 10,
-					},
-					{
-						type: BenchmarkType.Measurement,
-						peerCount: 20,
-						editsPerPeerCount: 20,
-					},
+					{ type: BenchmarkType.Perspective, peerCount: 10, editsPerPeerCount: 10 },
+					{ type: BenchmarkType.Perspective, peerCount: 10, editsPerPeerCount: 20 },
+					{ type: BenchmarkType.Perspective, peerCount: 20, editsPerPeerCount: 10 },
+					{ type: BenchmarkType.Measurement, peerCount: 20, editsPerPeerCount: 20 },
 				];
-				for (const {
-					type,
-					peerCount,
-					editsPerPeerCount,
-				} of multiPeerScenarios) {
+				for (const { type, peerCount, editsPerPeerCount } of multiPeerScenarios) {
 					if (peerCount * editsPerPeerCount > family.maxEditCount) {
 						continue;
 					}
@@ -335,9 +271,7 @@ describe("EditManager - Bench", () => {
 							const family = testChangeFamilyFactory(new NoOpChangeRebaser());
 							const manager = editManagerFactory(family);
 							// Subscribe to the local branch to emulate the behavior of SharedTree
-							manager
-								.getLocalBranch("main")
-								.events.on("afterChange", ({ change }) => {});
+							manager.getLocalBranch("main").events.on("afterChange", ({ change }) => {});
 							const sequencedEdits: Commit<TestChange>[] = [];
 							for (let iChange = 0; iChange < count; iChange++) {
 								const revision = mintRevisionTag();

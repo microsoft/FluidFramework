@@ -12,10 +12,7 @@ import type {
 } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions/internal";
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
-import type {
-	IResolvedUrl,
-	IUrlResolver,
-} from "@fluidframework/driver-definitions/internal";
+import type { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import {
 	createChildLogger,
 	isLayerIncompatibilityError,
@@ -52,14 +49,9 @@ function validateFailureProperties(
 	incompatibleLayer: FluidLayer,
 	unsupportedFeatures?: string[],
 ): boolean {
-	assert(
-		isLayerIncompatibilityError(error),
-		"Error should be a layerIncompatibilityError",
-	);
+	assert(isLayerIncompatibilityError(error), "Error should be a layerIncompatibilityError");
 	assert(typeof error.details === "string", "Error details should be present");
-	const detailedProperties = JSON.parse(
-		error.details,
-	) as ITelemetryBaseProperties;
+	const detailedProperties = JSON.parse(error.details) as ITelemetryBaseProperties;
 	assert.strictEqual(
 		detailedProperties.isGenerationCompatible,
 		isGenerationCompatible,
@@ -73,11 +65,7 @@ function validateFailureProperties(
 		"Incompatible layer type not as expected",
 	);
 
-	assert.strictEqual(
-		error.layerVersion,
-		pkgVersion,
-		"Loader version not as expected",
-	);
+	assert.strictEqual(error.layerVersion, pkgVersion, "Loader version not as expected");
 	assert.strictEqual(
 		detailedProperties.layerGeneration,
 		loaderCoreCompatDetails.generation,
@@ -109,15 +97,9 @@ function validateDisposeCall(
 	if (layerType === "runtime") {
 		// In case of "Runtime", the dispose is not called during validation. It is called as part of the overall
 		// container creation / load.
-		assert(
-			disposeFn.notCalled,
-			`Dispose should not be called for ${layerType} layer`,
-		);
+		assert(disposeFn.notCalled, `Dispose should not be called for ${layerType} layer`);
 	} else {
-		assert(
-			disposeFn.calledOnce,
-			`Dispose should be called for ${layerType} layer`,
-		);
+		assert(disposeFn.calledOnce, `Dispose should be called for ${layerType} layer`);
 	}
 }
 
@@ -156,15 +138,11 @@ describe("Loader Layer compatibility", () => {
 			const layerSupportRequirements = testCase.layerSupportRequirements;
 			let originalRequiredFeatures: readonly string[];
 			beforeEach(() => {
-				originalRequiredFeatures = [
-					...layerSupportRequirements.requiredFeatures,
-				];
+				originalRequiredFeatures = [...layerSupportRequirements.requiredFeatures];
 			});
 
 			afterEach(() => {
-				layerSupportRequirements.requiredFeatures = [
-					...originalRequiredFeatures,
-				];
+				layerSupportRequirements.requiredFeatures = [...originalRequiredFeatures];
 			});
 
 			describe(`Validate ${testCase.layerType} Compatibility`, () => {
@@ -172,12 +150,9 @@ describe("Loader Layer compatibility", () => {
 					// Older layer will not have ILayerCompatDetails defined.
 					assert.doesNotThrow(
 						() =>
-							testCase.validateCompatibility(
-								undefined /* maybeCompatDetails */,
-								() => {
-									throw new Error("should not dispose");
-								},
-							),
+							testCase.validateCompatibility(undefined /* maybeCompatDetails */, () => {
+								throw new Error("should not dispose");
+							}),
 						`Loader should be compatible with older ${testCase.layerType} layer`,
 					);
 				});
@@ -187,9 +162,7 @@ describe("Loader Layer compatibility", () => {
 					const layerCompatDetails: ILayerCompatDetails = {
 						pkgVersion,
 						generation: layerSupportRequirements.minSupportedGeneration,
-						supportedFeatures: new Set(
-							layerSupportRequirements.requiredFeatures,
-						),
+						supportedFeatures: new Set(layerSupportRequirements.requiredFeatures),
 					};
 					assert.doesNotThrow(
 						() =>
@@ -203,14 +176,11 @@ describe("Loader Layer compatibility", () => {
 				it(`Loader generation is incompatible with ${testCase.layerType}`, () => {
 					const disposeFn = Sinon.fake();
 					layerSupportRequirements.requiredFeatures = ["feature1", "feature2"];
-					const layerGeneration =
-						layerSupportRequirements.minSupportedGeneration - 1;
+					const layerGeneration = layerSupportRequirements.minSupportedGeneration - 1;
 					const layerCompatDetails: ILayerCompatDetails = {
 						pkgVersion,
 						generation: layerGeneration,
-						supportedFeatures: new Set(
-							layerSupportRequirements.requiredFeatures,
-						),
+						supportedFeatures: new Set(layerSupportRequirements.requiredFeatures),
 					};
 					assert.throws(
 						() => testCase.validateCompatibility(layerCompatDetails, disposeFn),
@@ -228,8 +198,7 @@ describe("Loader Layer compatibility", () => {
 
 				it(`Loader features are incompatible with ${testCase.layerType}`, () => {
 					const disposeFn = Sinon.fake();
-					const layerGeneration =
-						layerSupportRequirements.minSupportedGeneration;
+					const layerGeneration = layerSupportRequirements.minSupportedGeneration;
 					const requiredFeatures = ["feature2", "feature3"];
 					layerSupportRequirements.requiredFeatures = requiredFeatures;
 
@@ -256,8 +225,7 @@ describe("Loader Layer compatibility", () => {
 
 				it(`Loader generation and features are both incompatible with ${testCase.layerType}`, () => {
 					const disposeFn = Sinon.fake();
-					const layerGeneration =
-						layerSupportRequirements.minSupportedGeneration - 1;
+					const layerGeneration = layerSupportRequirements.minSupportedGeneration - 1;
 					const requiredFeatures = ["feature2"];
 					layerSupportRequirements.requiredFeatures = requiredFeatures;
 
@@ -317,9 +285,7 @@ describe("Loader Layer compatibility", () => {
 		});
 
 		async function createAndAttachContainer(loader: Loader): Promise<void> {
-			const container = await loader.createDetachedContainer({
-				package: "none",
-			});
+			const container = await loader.createDetachedContainer({ package: "none" });
 			await container.attach({ url: "none" });
 		}
 
@@ -328,8 +294,7 @@ describe("Loader Layer compatibility", () => {
 				it(`Older ${testCase.layerType} is compatible`, async () => {
 					const loader = new Loader({
 						codeLoader: createTestCodeLoaderProxy(),
-						documentServiceFactory:
-							createTestDocumentServiceFactoryProxy(resolvedUrl),
+						documentServiceFactory: createTestDocumentServiceFactoryProxy(resolvedUrl),
 						urlResolver,
 					});
 					await assert.doesNotReject(
@@ -341,8 +306,7 @@ describe("Loader Layer compatibility", () => {
 				it(`${testCase.layerType} with generation >= minSupportedGeneration is compatible`, async () => {
 					const layerCompatDetails: ILayerCompatDetails = {
 						pkgVersion,
-						generation:
-							testCase.layerSupportRequirements.minSupportedGeneration,
+						generation: testCase.layerSupportRequirements.minSupportedGeneration,
 						supportedFeatures: new Set(),
 					};
 					const loader = new Loader({
@@ -363,8 +327,7 @@ describe("Loader Layer compatibility", () => {
 				});
 
 				it(`${testCase.layerType} with generation < minSupportedGeneration is not compatible`, async () => {
-					const layerGeneration =
-						testCase.layerSupportRequirements.minSupportedGeneration - 1;
+					const layerGeneration = testCase.layerSupportRequirements.minSupportedGeneration - 1;
 					const layerCompatDetails: ILayerCompatDetails = {
 						pkgVersion,
 						generation: layerGeneration,

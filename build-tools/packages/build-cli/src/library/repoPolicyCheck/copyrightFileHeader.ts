@@ -38,9 +38,7 @@ interface IFileConfig {
  * Given an 'IFileConfig' produces a function that detects correct copyright headers
  * and returns an error string if the header is missing or incorrect.
  */
-function makeHandler(
-	config: IFileConfig,
-): (file: string) => Promise<string | undefined> {
+function makeHandler(config: IFileConfig): (file: string) => Promise<string | undefined> {
 	const pre = config.headerStart?.source ?? "";
 	const start = config.lineStart.source;
 	const end = config.lineEnd.source;
@@ -51,10 +49,7 @@ function makeHandler(
 	const toRegex = (text: string): string =>
 		text
 			.split(newline)
-			.map(
-				(line) =>
-					`${start}${line.replace(/[$()*+.?[\\\]^{|}]/g, "\\$&")}${end}`,
-			)
+			.map((line) => `${start}${line.replace(/[$()*+.?[\\\]^{|}]/g, "\\$&")}${end}`)
 			.join("")
 			.replace(/\s*\\r\?\\n/, "\\r?\\n"); // Trim trailing spaces at end-of-line.
 

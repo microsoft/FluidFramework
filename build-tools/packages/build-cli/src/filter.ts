@@ -5,13 +5,9 @@
 
 import path from "node:path";
 import { type MonoRepo, Package } from "@fluidframework/build-tools";
-import type {
-	filterFlags,
-	PackageSelectionDefault,
-	selectionFlags,
-} from "./flags.js";
+import type { PackageSelectionDefault, filterFlags, selectionFlags } from "./flags.js";
 import type { Context } from "./library/index.js";
-import { knownReleaseGroups, type ReleaseGroup } from "./releaseGroups.js";
+import { type ReleaseGroup, knownReleaseGroups } from "./releaseGroups.js";
 
 /**
  * The criteria that should be used for selecting package-like objects from a collection.
@@ -128,9 +124,7 @@ export const parsePackageSelectionFlags = (
  *
  * @param flags - The parsed command flags.
  */
-export const parsePackageFilterFlags = (
-	flags: filterFlags,
-): PackageFilterOptions => {
+export const parsePackageFilterFlags = (flags: filterFlags): PackageFilterOptions => {
 	const options: PackageFilterOptions = {
 		private: flags.private,
 		scope: flags.scope,
@@ -193,12 +187,7 @@ export async function selectPackagesFromContext(
 			kind: PackageKind;
 		},
 	): void {
-		const pkg = Package.load(
-			packageJsonFileName,
-			group,
-			monoRepo,
-			additionalProperties,
-		);
+		const pkg = Package.load(packageJsonFileName, group, monoRepo, additionalProperties);
 		if (!selected.has(pkg.name)) {
 			selected.set(pkg.name, pkg);
 		}
@@ -208,9 +197,7 @@ export async function selectPackagesFromContext(
 		const git = await context.getGitRepository();
 		const remote = await git.getRemote(git.upstreamRemotePartialUrl);
 		if (remote === undefined) {
-			throw new Error(
-				`Can't find a remote with ${git.upstreamRemotePartialUrl}`,
-			);
+			throw new Error(`Can't find a remote with ${git.upstreamRemotePartialUrl}`);
 		}
 		const { packages } = await git.getChangedSinceRef(
 			selection.changedSinceBranch,
@@ -261,9 +248,7 @@ export async function selectPackagesFromContext(
 		}
 
 		if (packages[0].monoRepo === undefined) {
-			throw new Error(
-				`No release group found for package: ${packages[0].name}`,
-			);
+			throw new Error(`No release group found for package: ${packages[0].name}`);
 		}
 
 		const dir = packages[0].monoRepo.directory;
@@ -292,8 +277,7 @@ export async function selectAndFilterPackages(
 	const selected = await selectPackagesFromContext(context, selection);
 
 	// Filter packages if needed
-	const filtered =
-		filter === undefined ? selected : await filterPackages(selected, filter);
+	const filtered = filter === undefined ? selected : await filterPackages(selected, filter);
 
 	return { selected, filtered };
 }

@@ -4,13 +4,10 @@
  */
 
 import { ScopeType } from "@fluidframework/driver-definitions/internal";
-import type {
-	ITokenProvider,
-	ITokenResponse,
-} from "@fluidframework/routerlicious-driver";
+import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 
 import { generateToken } from "./generateToken.js";
-import type { IInsecureUser } from "./insecureUsers.js";
+import { IInsecureUser } from "./insecureUsers.js";
 
 /**
  * Provides an in memory implementation of {@link @fluidframework/routerlicious-driver#ITokenProvider} that can be
@@ -58,26 +55,16 @@ export class InsecureTokenProvider implements ITokenProvider {
 		private readonly attachContainerScopes?: ScopeType[],
 	) {}
 
-	private async fetchToken(
-		tenantId: string,
-		documentId?: string,
-	): Promise<ITokenResponse> {
+	private async fetchToken(tenantId: string, documentId?: string): Promise<ITokenResponse> {
 		const generalScopes = this.scopes ?? [
 			ScopeType.DocRead,
 			ScopeType.DocWrite,
 			ScopeType.SummaryWrite,
 		];
-		const scopes =
-			(documentId ? undefined : this.attachContainerScopes) ?? generalScopes;
+		const scopes = (documentId ? undefined : this.attachContainerScopes) ?? generalScopes;
 		return {
 			fromCache: true,
-			jwt: generateToken(
-				tenantId,
-				this.tenantKey,
-				scopes,
-				documentId,
-				this.user,
-			),
+			jwt: generateToken(tenantId, this.tenantKey, scopes, documentId, this.user),
 		};
 	}
 

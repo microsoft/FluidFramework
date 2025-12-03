@@ -4,18 +4,18 @@
  */
 
 import {
-	type BuildNode,
+	BuildNode,
 	Change,
 	EagerCheckout,
 	SharedTree as LegacySharedTree,
 	StablePlace,
 	StableRange,
-	type TraitLabel,
-	type TreeView,
-	type TreeViewNode,
+	TraitLabel,
+	TreeView,
+	TreeViewNode,
 } from "@fluid-experimental/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 
@@ -71,10 +71,7 @@ export class LegacyTreeInventoryItem
 	}
 }
 
-export class LegacyTreeInventoryList
-	extends DataObject
-	implements IInventoryList
-{
+export class LegacyTreeInventoryList extends DataObject implements IInventoryList {
 	private _tree: LegacySharedTree | undefined;
 	private readonly _inventoryItems = new Map<string, LegacyTreeInventoryItem>();
 
@@ -105,9 +102,7 @@ export class LegacyTreeInventoryList
 				},
 			},
 		};
-		const rootNode = this.tree.currentView.getViewNode(
-			this.tree.currentView.root,
-		);
+		const rootNode = this.tree.currentView.getViewNode(this.tree.currentView.root);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const inventoryNodeId = rootNode.traits.get("inventory" as TraitLabel)![0];
 		this.tree.applyEdit(
@@ -209,22 +204,18 @@ export class LegacyTreeInventoryList
 					const newQuantity = quantityNode.payload as number;
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const inventoryItemNodeId = quantityNode.parentage!.parent;
-					const inventoryItemNode =
-						this.tree.currentView.getViewNode(inventoryItemNodeId);
+					const inventoryItemNode = this.tree.currentView.getViewNode(inventoryItemNodeId);
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const idNodeId = inventoryItemNode.traits.get("id" as TraitLabel)![0];
 					const idNode = this.tree.currentView.getViewNode(idNodeId);
 					const inventoryItemId = idNode.payload as string;
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					this._inventoryItems
-						.get(inventoryItemId)!
-						.handleQuantityUpdate(newQuantity);
+					this._inventoryItems.get(inventoryItemId)!.handleQuantityUpdate(newQuantity);
 				}
 			}
 
 			for (const inventoryNodeId of added) {
-				const inventoryItemNode =
-					this.tree.currentView.getViewNode(inventoryNodeId);
+				const inventoryItemNode = this.tree.currentView.getViewNode(inventoryNodeId);
 				// Filter to just the inventoryItem nodes.  Each addition will result in four added nodes (inventoryItem, id, name, quantity).
 				if (inventoryItemNode.definition === "inventoryItem") {
 					const addedInventoryItem =
@@ -244,8 +235,7 @@ export class LegacyTreeInventoryList
 					const idNodeId = inventoryItemNode.traits.get("id" as TraitLabel)![0];
 					const idNode = before.getViewNode(idNodeId);
 					const inventoryItemId = idNode.payload as string;
-					const deletedInventoryItem =
-						this._inventoryItems.get(inventoryItemId);
+					const deletedInventoryItem = this._inventoryItems.get(inventoryItemId);
 					this._inventoryItems.delete(inventoryItemId);
 					this.emit("itemDeleted", deletedInventoryItem);
 				}
@@ -254,9 +244,7 @@ export class LegacyTreeInventoryList
 
 		// Last step of initializing is to populate our map of InventoryItems.
 		// Note that this.tree.currentView.root is the ID of the root node, not the root node itself.
-		const rootNode = this.tree.currentView.getViewNode(
-			this.tree.currentView.root,
-		);
+		const rootNode = this.tree.currentView.getViewNode(this.tree.currentView.root);
 		const inventoryItemsNodeIds = this.tree.currentView
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			.getViewNode(rootNode.traits.get("inventory" as TraitLabel)![0])
@@ -265,8 +253,7 @@ export class LegacyTreeInventoryList
 		// that case before attempting to iterate over its members.
 		if (inventoryItemsNodeIds !== undefined) {
 			for (const inventoryItemNodeId of inventoryItemsNodeIds) {
-				const inventoryItemNode =
-					this.tree.currentView.getViewNode(inventoryItemNodeId);
+				const inventoryItemNode = this.tree.currentView.getViewNode(inventoryItemNodeId);
 				const newInventoryItem =
 					this.makeInventoryItemFromInventoryItemNode(inventoryItemNode);
 				this._inventoryItems.set(newInventoryItem.id, newInventoryItem);
@@ -293,9 +280,7 @@ export class LegacyTreeInventoryList
 		const name = nameNode.payload as string;
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const quantityNodeId = inventoryItemNode.traits.get(
-			"quantity" as TraitLabel,
-		)![0];
+		const quantityNodeId = inventoryItemNode.traits.get("quantity" as TraitLabel)![0];
 		const quantityNode = this.tree.currentView.getViewNode(quantityNodeId);
 		const quantity = quantityNode.payload as number;
 
@@ -304,18 +289,10 @@ export class LegacyTreeInventoryList
 		};
 
 		const deleteItem = () => {
-			this.tree.applyEdit(
-				Change.delete(StableRange.only(inventoryItemNode.identifier)),
-			);
+			this.tree.applyEdit(Change.delete(StableRange.only(inventoryItemNode.identifier)));
 		};
 
-		return new LegacyTreeInventoryItem(
-			id,
-			name,
-			quantity,
-			setQuantity,
-			deleteItem,
-		);
+		return new LegacyTreeInventoryItem(id, name, quantity, setQuantity, deleteItem);
 	}
 }
 
@@ -324,10 +301,9 @@ export class LegacyTreeInventoryList
  * and the constructor it will call.  The third argument lists the other data structures it will utilize.  In this
  * scenario, the fourth argument is not used.
  */
-export const LegacyTreeInventoryListFactory =
-	new DataObjectFactory<LegacyTreeInventoryList>(
-		"legacy-tree-inventory-list",
-		LegacyTreeInventoryList,
-		[LegacySharedTree.getFactory()],
-		{},
-	);
+export const LegacyTreeInventoryListFactory = new DataObjectFactory<LegacyTreeInventoryList>(
+	"legacy-tree-inventory-list",
+	LegacyTreeInventoryList,
+	[LegacySharedTree.getFactory()],
+	{},
+);

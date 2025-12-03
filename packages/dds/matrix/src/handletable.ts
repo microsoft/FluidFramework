@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export enum Handle {
+export const enum Handle {
 	/**
 	 * Sentinel representing the absence of a valid handle.
 	 */
@@ -21,8 +21,7 @@ export enum Handle {
 	unallocated = -0x80000000,
 }
 
-export const isHandleValid = (handle: Handle): boolean =>
-	handle >= Handle.valid;
+export const isHandleValid = (handle: Handle): boolean => handle >= Handle.valid;
 
 /**
  * A handle table provides a fast mapping from an integer `handle` to a value `T`.

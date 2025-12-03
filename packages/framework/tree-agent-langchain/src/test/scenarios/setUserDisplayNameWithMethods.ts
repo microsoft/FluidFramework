@@ -4,20 +4,12 @@
  */
 
 import { Users } from "../domains/index.js";
-import {
-	type LLMIntegrationTest,
-	type ScorableVerboseTree,
-	scoreSymbol,
-} from "../utils.js";
+import { scoreSymbol, type LLMIntegrationTest, type ScorableVerboseTree } from "../utils.js";
 
 const expected: ScorableVerboseTree = {
 	type: "com.microsoft.fluid.tree-agent.users.Users",
 	[scoreSymbol]: (actual): number => {
-		if (
-			typeof actual !== "object" ||
-			actual === null ||
-			Array.isArray(actual.fields)
-		) {
+		if (typeof actual !== "object" || actual === null || Array.isArray(actual.fields)) {
 			return 0;
 		}
 

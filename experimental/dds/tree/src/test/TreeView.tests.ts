@@ -3,16 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { strict as assert } from 'assert';
+
+import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
-import type { Definition, TraitLabel } from '../Identifiers.js';
-import type { ChangeNode } from '../persisted-types/index.js';
+import { Definition, TraitLabel } from '../Identifiers.js';
 import { RevisionView } from '../RevisionView.js';
+import { ChangeNode } from '../persisted-types/index.js';
 
 import { expectDefined } from './utilities/TestCommon.js';
-import type { TestNode } from './utilities/TestNode.js';
+import { TestNode } from './utilities/TestNode.js';
 import { refreshTestTree } from './utilities/TestUtilities.js';
 
 describe('TreeView', () => {

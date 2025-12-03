@@ -9,20 +9,11 @@ import React from "react";
 
 import "@testing-library/jest-dom";
 
-import {
-	coreErrorMessage,
-	docsLinkUrl,
-	NoDevtoolsErrorBar,
-} from "../components/index.js";
+import { NoDevtoolsErrorBar, coreErrorMessage, docsLinkUrl } from "../components/index.js";
 
 describe("NoDevtoolsErrorBar component tests", () => {
 	it("Displays expected text and contains expected link", async (): Promise<void> => {
-		render(
-			<NoDevtoolsErrorBar
-				dismiss={(): void => {}}
-				retrySearch={(): void => {}}
-			/>,
-		);
+		render(<NoDevtoolsErrorBar dismiss={(): void => {}} retrySearch={(): void => {}} />);
 
 		await screen.findByText(coreErrorMessage); // Will throw if exact text not found
 
@@ -33,9 +24,7 @@ describe("NoDevtoolsErrorBar component tests", () => {
 
 	it("Clicking close button invokes `dismiss`", async (): Promise<void> => {
 		const dismiss = jest.fn();
-		render(
-			<NoDevtoolsErrorBar dismiss={dismiss} retrySearch={(): void => {}} />,
-		);
+		render(<NoDevtoolsErrorBar dismiss={dismiss} retrySearch={(): void => {}} />);
 
 		const dismissButton = await screen.findByRole("button"); // Dismiss button is first button rendered
 		await userEvent.click(dismissButton);
@@ -44,9 +33,7 @@ describe("NoDevtoolsErrorBar component tests", () => {
 
 	it("Clicking retry button invokes `retrySearch`", async (): Promise<void> => {
 		const retrySearch = jest.fn();
-		render(
-			<NoDevtoolsErrorBar dismiss={(): void => {}} retrySearch={retrySearch} />,
-		);
+		render(<NoDevtoolsErrorBar dismiss={(): void => {}} retrySearch={retrySearch} />);
 
 		const retrySearchButton = await screen.findByTestId("retry-search-button");
 		await userEvent.click(retrySearchButton);

@@ -20,11 +20,7 @@ module.exports = {
 		"react-hooks/rules-of-hooks": "error",
 		"react/jsx-key": [
 			"error",
-			{
-				checkFragmentShorthand: true,
-				checkKeyMustBeforeSpread: true,
-				warnOnDuplicates: true,
-			},
+			{ checkFragmentShorthand: true, checkKeyMustBeforeSpread: true, warnOnDuplicates: true },
 		],
 		"react/jsx-boolean-value": ["error", "always"],
 		"react/jsx-fragments": "error",

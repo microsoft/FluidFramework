@@ -51,10 +51,7 @@ export interface Section extends Node {
 export function createSection({
 	children,
 	heading,
-}: {
-	children: SectionContent[];
-	heading?: SectionHeading;
-}): Section {
+}: { children: SectionContent[]; heading?: SectionHeading }): Section {
 	const section: Section = {
 		type: "section",
 		children,

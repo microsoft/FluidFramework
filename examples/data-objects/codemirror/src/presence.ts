@@ -4,9 +4,9 @@
  */
 
 import { EventEmitter } from "@fluid-example/example-utils";
-import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/legacy";
-import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/legacy";
-import type CodeMirror from "codemirror";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/legacy";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/legacy";
+import CodeMirror from "codemirror";
 
 interface IPresenceInfo {
 	userId: string;
@@ -135,8 +135,7 @@ interface ICodeMirrorPresenceInfo {
  * This will be the codemirror specific implementation
  */
 export class CodeMirrorPresenceManager extends EventEmitter {
-	private readonly presenceMap: Map<string, ICodeMirrorPresenceInfo> =
-		new Map();
+	private readonly presenceMap: Map<string, ICodeMirrorPresenceInfo> = new Map();
 
 	private get doc(): CodeMirror.Doc {
 		return this.codeMirror.getDoc();

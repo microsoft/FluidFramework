@@ -84,7 +84,7 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests.js";
  * See: {@link https://dev.azure.com/intentional/intent/_wiki/wikis/NP%20Platform/7146/Nominal-vs-Structural-Types}
  * @sealed @public
  */
-export type MakeNominal = {};
+export interface MakeNominal {}
 
 /**
  * Constrain generic type parameters to Contravariant.
@@ -154,24 +154,22 @@ export type isAssignableTo<Source, Destination> = [Source] extends [Destination]
 /**
  * Returns a type parameter that is true iff Subset is a strict subset of Superset.
  */
-export type isStrictSubset<Subset, Superset> =
-	isAssignableTo<Subset, Superset> extends false
+export type isStrictSubset<Subset, Superset> = isAssignableTo<Subset, Superset> extends false
+	? false
+	: isAssignableTo<Superset, Subset> extends true
 		? false
-		: isAssignableTo<Superset, Subset> extends true
-			? false
-			: true;
+		: true;
 
 /**
  * Returns a type parameter that is true iff A and B are assignable to each other, and neither is any.
  * This is useful for checking if the output of a type meta-function is the expected type.
  * @internal
  */
-export type areSafelyAssignable<A, B> =
-	eitherIsAny<A, B> extends true
-		? false
-		: isAssignableTo<A, B> extends true
-			? isAssignableTo<B, A>
-			: false;
+export type areSafelyAssignable<A, B> = eitherIsAny<A, B> extends true
+	? false
+	: isAssignableTo<A, B> extends true
+		? isAssignableTo<B, A>
+		: false;
 
 /**
  * Returns a type parameter that is true iff A is any or B is any.
@@ -188,9 +186,7 @@ export type eitherIsAny<A, B> = true extends isAny<A> | isAny<B> ? true : false;
  * This can be used to detect `any`.
  * @internal
  */
-export type isAny<T> = boolean extends (T extends never ? true : false)
-	? true
-	: false;
+export type isAny<T> = boolean extends (T extends never ? true : false) ? true : false;
 
 /**
  * Compile time assert that A is assignable to (extends) B.

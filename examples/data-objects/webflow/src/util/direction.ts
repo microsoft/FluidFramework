@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-enum DirectionFlag {
+const enum DirectionFlag {
 	// Bitmasks used to encode Direction as a pair of 2-bit signed integers
 	horizontal = 1 << 0, // DeltaX = 1
 	negativeHorizontal = 1 << 1, // DeltaX = -DeltaX
@@ -17,7 +17,7 @@ enum DirectionFlag {
 	verticalRsh = 32 - 2,
 }
 
-export enum Direction {
+export const enum Direction {
 	none = 0,
 	left = DirectionFlag.horizontal | DirectionFlag.negativeHorizontal,
 	right = DirectionFlag.horizontal,
@@ -25,15 +25,13 @@ export enum Direction {
 	down = DirectionFlag.vertical,
 }
 
-export enum TabDirection {
+export const enum TabDirection {
 	backward = -1,
 	forward = 1,
 }
 
 export function getDeltaX(direction: Direction) {
-	return (
-		(direction << DirectionFlag.horizontalLsh) >> DirectionFlag.horizontalRsh
-	);
+	return (direction << DirectionFlag.horizontalLsh) >> DirectionFlag.horizontalRsh;
 }
 
 export function getDeltaY(direction: Direction) {

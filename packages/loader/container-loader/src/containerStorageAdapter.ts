@@ -5,28 +5,25 @@
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import type {
-	IContainerStorageService,
 	ISnapshotTreeWithBlobContents,
+	IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
 import type { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	FetchSource,
-	ICreateBlobResponse,
 	IDocumentService,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	ISnapshot,
 	ISnapshotFetchOptions,
-	ISnapshotTree,
 	ISummaryContext,
+	ICreateBlobResponse,
+	ISnapshotTree,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	isInstanceOfISnapshot,
-	UsageError,
-} from "@fluidframework/driver-utils/internal";
+import { isInstanceOfISnapshot, UsageError } from "@fluidframework/driver-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { MemoryDetachedBlobStorage } from "./memoryBlobStorage.js";
@@ -95,9 +92,7 @@ export class ContainerStorageAdapter
 		private loadingGroupIdSnapshotsFromPendingState:
 			| Record<string, SerializedSnapshotInfo>
 			| undefined,
-		private readonly addProtocolSummaryIfMissing: (
-			summaryTree: ISummaryTree,
-		) => ISummaryTree,
+		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
 		private readonly enableSummarizeProtocolTree: boolean | undefined,
 	) {
 		this._storageService = new BlobOnlyStorage(detachedBlobStorage, logger);
@@ -115,17 +110,17 @@ export class ContainerStorageAdapter
 		}
 
 		const storageServiceP = service.connectToStorage();
-		const retriableStorage = (this._storageService =
-			new RetriableDocumentStorageService(storageServiceP, this.logger));
+		const retriableStorage = (this._storageService = new RetriableDocumentStorageService(
+			storageServiceP,
+			this.logger,
+		));
 
 		// A storage service wrapper which intercept calls to uploadSummaryWithContext and ensure they include
 		// the protocol summary, provided single-commit summary is enabled.
 		this._storageService = new ProtocolTreeStorageService(
 			retriableStorage,
 			(...props) => {
-				this.logger.sendTelemetryEvent({
-					eventName: "summarizeProtocolTreeEnabled",
-				});
+				this.logger.sendTelemetryEvent({ eventName: "summarizeProtocolTreeEnabled" });
 				return this.addProtocolSummaryIfMissing(...props);
 			},
 			// A callback to ensure we fetch the most updated value of service.policies.summarizeProtocolTree, which could be set
@@ -135,9 +130,7 @@ export class ContainerStorageAdapter
 				// This is determined based on what value is set for serve policy's summariProtocolTree value or the enableSummarizeProtocolTree
 				// retrievd from the loader options or monitoring context config.
 				const shouldSummarizeProtocolTree =
-					service.policies?.summarizeProtocolTree ??
-					this.enableSummarizeProtocolTree ??
-					false;
+					service.policies?.summarizeProtocolTree ?? this.enableSummarizeProtocolTree ?? false;
 
 				if (this._summarizeProtocolTree !== shouldSummarizeProtocolTree) {
 					this.logger.sendTelemetryEvent({
@@ -185,22 +178,15 @@ export class ContainerStorageAdapter
 		return this._storageService.getSnapshotTree(version, scenarioName);
 	}
 
-	public async getSnapshot(
-		snapshotFetchOptions?: ISnapshotFetchOptions,
-	): Promise<ISnapshot> {
+	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
 		let snapshot: ISnapshot;
 		if (
 			this.loadingGroupIdSnapshotsFromPendingState !== undefined &&
 			snapshotFetchOptions?.loadingGroupIds !== undefined
 		) {
 			const localSnapshot =
-				this.loadingGroupIdSnapshotsFromPendingState[
-					snapshotFetchOptions.loadingGroupIds[0]
-				];
-			assert(
-				localSnapshot !== undefined,
-				0x970 /* Local snapshot must be present */,
-			);
+				this.loadingGroupIdSnapshotsFromPendingState[snapshotFetchOptions.loadingGroupIds[0]];
+			assert(localSnapshot !== undefined, 0x970 /* Local snapshot must be present */);
 			snapshot = convertSnapshotInfoToSnapshot(localSnapshot);
 		} else {
 			if (this._storageService.getSnapshot === undefined) {
@@ -248,12 +234,7 @@ export class ContainerStorageAdapter
 		scenarioName?: string,
 		fetchSource?: FetchSource,
 	): Promise<IVersion[]> {
-		return this._storageService.getVersions(
-			versionId,
-			count,
-			scenarioName,
-			fetchSource,
-		);
+		return this._storageService.getVersions(versionId, count, scenarioName, fetchSource);
 	}
 
 	public async uploadSummaryWithContext(
@@ -278,9 +259,7 @@ class BlobOnlyStorage implements IDocumentStorageService {
 		private readonly logger: ITelemetryLoggerExt,
 	) {}
 
-	public async createBlob(
-		content: ArrayBufferLike,
-	): Promise<ICreateBlobResponse> {
+	public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {
 		return this.verifyStorage().createBlob(content);
 	}
 
@@ -290,9 +269,7 @@ class BlobOnlyStorage implements IDocumentStorageService {
 
 	private verifyStorage(): MemoryDetachedBlobStorage {
 		if (this.detachedStorage === undefined) {
-			throw new UsageError(
-				"Real storage calls not allowed in Unattached container",
-			);
+			throw new UsageError("Real storage calls not allowed in Unattached container");
 		}
 		return this.detachedStorage;
 	}
@@ -317,10 +294,7 @@ class BlobOnlyStorage implements IDocumentStorageService {
 			// some browsers may not populate stack unless exception is thrown
 			throw new Error("BlobOnlyStorage not implemented method used");
 		} catch (error) {
-			this.logger.sendTelemetryEvent(
-				{ eventName: "BlobOnlyStorageWrongCall" },
-				error,
-			);
+			this.logger.sendTelemetryEvent({ eventName: "BlobOnlyStorageWrongCall" }, error);
 			throw error;
 		}
 	}
@@ -383,10 +357,7 @@ async function getBlobManagerTreeFromTree(
 	storage: Pick<IDocumentStorageService, "readBlob">,
 ): Promise<void> {
 	const id = tree.blobs[redirectTableBlobName];
-	assert(
-		id !== undefined,
-		0x9ce /* id is undefined in getBlobManagerTreeFromTree */,
-	);
+	assert(id !== undefined, 0x9ce /* id is undefined in getBlobManagerTreeFromTree */);
 	const blob = await storage.readBlob(id);
 	// ArrayBufferLike will not survive JSON.stringify()
 	blobs[id] = bufferToString(blob, "utf8");
@@ -417,10 +388,7 @@ function getBlobContentsFromTreeWithBlobContentsCore(
 	}
 	for (const id of Object.values(tree.blobs)) {
 		const blob = tree.blobsContents?.[id];
-		assert(
-			blob !== undefined,
-			0x2ec /* "Blob must be present in blobsContents" */,
-		);
+		assert(blob !== undefined, 0x2ec /* "Blob must be present in blobsContents" */);
 		// ArrayBufferLike will not survive JSON.stringify()
 		blobs[id] = bufferToString(blob, "utf8");
 	}

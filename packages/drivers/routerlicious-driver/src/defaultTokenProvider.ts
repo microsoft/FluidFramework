@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ITokenProvider, ITokenResponse } from "./tokens.js";
+import { ITokenProvider, ITokenResponse } from "./tokens.js";
 
 /**
  * Default token provider in case the host does not provide one. It simply caches the provided jwt and returns it back.

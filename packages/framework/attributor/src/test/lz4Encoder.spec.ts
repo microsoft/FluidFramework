@@ -17,19 +17,14 @@ describe("lz4Encoder", () => {
 		{ name: "empty lists", data: [] },
 		// eslint-disable-next-line unicorn/no-null
 		{ name: "null properties", data: { foo: null } },
-		{
-			name: "more complex objects",
-			data: { foo: { bar: [1, 2] }, baz: 3, bat: "hello" },
-		},
+		{ name: "more complex objects", data: { foo: { bar: [1, 2] }, baz: 3, bat: "hello" } },
 	];
 
 	describe("correctly round-trips", () => {
 		for (const { name, data } of cases) {
 			it(name, () => {
 				const encoder = makeLZ4Encoder<unknown>();
-				const actual = encoder.decode(
-					encoder.encode(data as JsonableTypeWith<never>),
-				);
+				const actual = encoder.decode(encoder.encode(data as JsonableTypeWith<never>));
 				assert.deepEqual(actual, data);
 			});
 		}

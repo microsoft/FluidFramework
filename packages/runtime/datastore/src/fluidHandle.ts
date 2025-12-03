@@ -6,8 +6,8 @@
 import type { FluidObject } from "@fluidframework/core-interfaces";
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import {
-	FluidHandleBase,
 	generateHandleContextPath,
+	FluidHandleBase,
 } from "@fluidframework/runtime-utils/internal";
 
 /**

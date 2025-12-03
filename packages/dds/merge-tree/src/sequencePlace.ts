@@ -68,8 +68,7 @@ export function endpointPosAndSide(
 } {
 	const startIsPlainEndpoint =
 		typeof start === "number" || start === "start" || start === "end";
-	const endIsPlainEndpoint =
-		typeof end === "number" || end === "start" || end === "end";
+	const endIsPlainEndpoint = typeof end === "number" || end === "start" || end === "end";
 
 	const startSide = startIsPlainEndpoint ? Side.Before : start?.side;
 	const endSide = endIsPlainEndpoint ? Side.Before : end?.side;

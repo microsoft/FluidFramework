@@ -81,9 +81,7 @@ export const serverListenAndHandle = async <T>(
 
 // TODO: Add documentation
 // eslint-disable-next-line jsdoc/require-jsdoc
-export const endResponse = async (
-	response: http.ServerResponse,
-): Promise<void> =>
+export const endResponse = async (response: http.ServerResponse): Promise<void> =>
 	new Promise((resolve, reject) => {
 		try {
 			response.end(resolve);

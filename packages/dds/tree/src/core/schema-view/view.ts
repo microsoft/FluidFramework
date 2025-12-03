@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	TreeNodeSchemaIdentifier,
-	TreeStoredSchema,
-} from "../schema-stored/index.js";
+import type { TreeNodeSchemaIdentifier, TreeStoredSchema } from "../schema-stored/index.js";
 
 /**
  * APIs for applying `view schema` to documents.

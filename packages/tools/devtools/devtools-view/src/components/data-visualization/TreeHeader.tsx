@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { makeStyles, Tooltip, tokens } from "@fluentui/react-components";
+import { Tooltip, makeStyles, tokens } from "@fluentui/react-components";
 import { Info20Regular } from "@fluentui/react-icons";
 import type { VisualChildNode } from "@fluidframework/devtools-core/internal";
 import React from "react";
@@ -55,8 +55,7 @@ const getStyles = makeStyles({
  * Renders the header of the item.
  */
 export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
-	const { label, nodeTypeMetadata, inlineValue, metadata, tooltipContents } =
-		props;
+	const { label, nodeTypeMetadata, inlineValue, metadata, tooltipContents } = props;
 	const { themeInfo } = React.useContext(ThemeContext);
 
 	const styles = getStyles();

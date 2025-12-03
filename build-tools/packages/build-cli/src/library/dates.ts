@@ -9,9 +9,7 @@ import { formatDistanceToNow, formatISO9075 } from "date-fns";
  * Formats a date for display in the terminal.
  */
 export function getDisplayDate(date?: Date): string {
-	return date === undefined
-		? "--no date--"
-		: formatISO9075(date, { representation: "date" });
+	return date === undefined ? "--no date--" : formatISO9075(date, { representation: "date" });
 }
 
 /**

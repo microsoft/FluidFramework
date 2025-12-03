@@ -4,15 +4,15 @@
  */
 
 import { oob } from "@fluidframework/core-utils/internal";
-import type { ImplicitFieldSchema, TreeMapNode } from "@fluidframework/tree";
 import { NodeKind, Tree, TreeNode } from "@fluidframework/tree";
+import type { ImplicitFieldSchema, TreeMapNode } from "@fluidframework/tree";
 import type { ReadableField } from "@fluidframework/tree/alpha";
 import { getSimpleSchema } from "@fluidframework/tree/alpha";
 import { normalizeFieldSchema } from "@fluidframework/tree/internal";
 
 import type { Subtree } from "./subtree.js";
 import { generateEditTypesForPrompt } from "./typeGeneration.js";
-import { communize, findSchemas, getFriendlyName } from "./utils.js";
+import { getFriendlyName, communize, findSchemas } from "./utils.js";
 
 /**
  * Produces a "system" prompt for the tree agent, based on the provided subtree.
@@ -59,8 +59,10 @@ export function getPrompt(args: {
 	}
 
 	const stringified = stringifyTree(field);
-	const { schemaText: typescriptSchemaTypes, hasHelperMethods } =
-		generateEditTypesForPrompt(schema, getSimpleSchema(schema));
+	const { schemaText: typescriptSchemaTypes, hasHelperMethods } = generateEditTypesForPrompt(
+		schema,
+		getSimpleSchema(schema),
+	);
 	const exampleTypeName =
 		nodeTypeUnion === undefined
 			? undefined
@@ -297,9 +299,7 @@ ${stringified}
  * Serializes tree data e.g. to include in a prompt or message.
  * @remarks This includes some extra metadata to make it easier to understand the structure of the tree.
  */
-export function stringifyTree(
-	tree: ReadableField<ImplicitFieldSchema>,
-): string {
+export function stringifyTree(tree: ReadableField<ImplicitFieldSchema>): string {
 	const typeReplacementKey = "_e944da5a5fd04ea2b8b2eb6109e089ed";
 	const indexReplacementKey = "_27bb216b474d45e6aaee14d1ec267b96";
 	const mapReplacementKey = "_a0d98d22a1c644539f07828d3f064d71";

@@ -4,9 +4,9 @@
  */
 
 import {
-	type ImplicitFieldSchema,
 	SchemaFactory,
 	TreeViewConfiguration,
+	type ImplicitFieldSchema,
 	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
 
@@ -540,10 +540,10 @@ describe("largeSchema", () => {
 
 		const schema = new SchemaFactory("com.example");
 
-		function deepObject10<
-			const N extends string,
-			const T extends ImplicitFieldSchema,
-		>(prefix: N, inner: T) {
+		function deepObject10<const N extends string, const T extends ImplicitFieldSchema>(
+			prefix: N,
+			inner: T,
+		) {
 			class Depth009 extends schema.object(`Deep${prefix}9`, { x: inner }) {}
 			class Depth008 extends schema.object(`Deep${prefix}8`, { x: Depth009 }) {}
 			class Depth007 extends schema.object(`Deep${prefix}7`, { x: Depth008 }) {}
@@ -563,10 +563,10 @@ describe("largeSchema", () => {
 			enableSchemaValidation: true,
 		});
 
-		function deepObject20<
-			const N extends string,
-			const T extends ImplicitFieldSchema,
-		>(prefix: N, inner: T) {
+		function deepObject20<const N extends string, const T extends ImplicitFieldSchema>(
+			prefix: N,
+			inner: T,
+		) {
 			return deepObject10(`${prefix}0`, deepObject10(`${prefix}1`, inner));
 		}
 
@@ -1307,7 +1307,10 @@ describe("largeSchema", () => {
 		class Empty002 extends schema.objectRecursive("002", { x: union }) {}
 		class Empty001 extends schema.objectRecursive("001", { x: union }) {}
 		class Empty000 extends schema.objectRecursive("000", { x: union }) {}
-		type _check3 = ValidateRecursiveSchema<typeof Empty000>;
+
+		{
+			type _check3 = ValidateRecursiveSchema<typeof Empty000>;
+		}
 
 		{
 			class ObjectNode extends schema.object("ObjectNode", { x: union }) {}
@@ -1316,9 +1319,7 @@ describe("largeSchema", () => {
 				enableSchemaValidation: true,
 			});
 
-			const node = new ObjectNode({
-				x: new Empty000({ x: new Empty041({ x: null }) }),
-			});
+			const node = new ObjectNode({ x: new Empty000({ x: new Empty041({ x: null }) }) });
 		}
 	});
 });

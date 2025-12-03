@@ -6,5 +6,4 @@
 /**
  * The port used by the mock customer service.
  */
-export const customerServicePort =
-	process.env.MOCK_CUSTOMER_SERVICE_PORT ?? 5237;
+export const customerServicePort = process.env.MOCK_CUSTOMER_SERVICE_PORT ?? 5237;

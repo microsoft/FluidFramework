@@ -16,10 +16,7 @@ interface MarkedEager {
 
 /** Returns true iff the given item is a function and is not a `MarkedEager`. */
 export function isLazy<Item>(item: LazyItem<Item>): item is () => Item {
-	return (
-		typeof item === "function" &&
-		(item as Partial<MarkedEager>)[flexListEager] !== true
-	);
+	return typeof item === "function" && (item as Partial<MarkedEager>)[flexListEager] !== true;
 }
 
 /**
@@ -67,13 +64,12 @@ export type LazyItem<Item = unknown> = Item | (() => Item);
  * Get the `Item` type from a `LazyItem<Item>`.
  * @system @public
  */
-export type ExtractItemType<Item extends LazyItem> =
-	Item extends () => infer Result ? Result : Item;
+export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result
+	? Result
+	: Item;
 
 /**
  * Normalize FlexList type to a union.
  * @system @public
  */
-export type FlexListToUnion<TList extends FlexList> = ExtractItemType<
-	TList[number]
->;
+export type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;

@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { IRequest } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	DriverHeader,
-	type IResolvedUrl,
-	type IUrlResolver,
+	IResolvedUrl,
+	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 
 import Axios from "axios";
@@ -53,9 +53,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 		// If hosts match then we use the local tenant information. Otherwise we make a REST call out to the hosting
 		// service using our bearer token.
 		if (this.isForNodeTest) {
-			const [, documentId, tmpRelativePath] = parsedUrl.pathname
-				.substr(1)
-				.split("/");
+			const [, documentId, tmpRelativePath] = parsedUrl.pathname.substr(1).split("/");
 			const relativePath = tmpRelativePath ?? "";
 			return this.resolveHelper(documentId, relativePath, parsedUrl.search);
 		} else if (parsedUrl.host === window.location.host) {

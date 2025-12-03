@@ -3,18 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import type { AttachState, IAudience } from "@fluidframework/container-definitions";
 import type {
-	AttachState,
-	IAudience,
-} from "@fluidframework/container-definitions";
-import type {
-	ErasedType,
+	IFluidHandle,
 	FluidObject,
 	IDisposable,
 	IEvent,
 	IEventProvider,
-	IFluidHandle,
 	ITelemetryBaseLogger,
+	ErasedType,
 } from "@fluidframework/core-interfaces";
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type { IQuorumClients } from "@fluidframework/driver-definitions";
@@ -37,10 +34,7 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
 	(event: "attaching", listener: () => void);
 	(event: "attached", listener: () => void);
 	(event: "op", listener: (message: ISequencedDocumentMessage) => void);
-	(
-		event: "signal",
-		listener: (message: IInboundSignalMessage, local: boolean) => void,
-	);
+	(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 	(event: "connected", listener: (clientId: string) => void);
 	/*
 	 * The readonly event is fired when the readonly state of the datastore runtime changes.
@@ -158,11 +152,7 @@ export interface IFluidDataStoreRuntime
 	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	submitSignal: (
-		type: string,
-		content: unknown,
-		targetClientId?: string,
-	) => void;
+	submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
 
 	/**
 	 * Returns the current quorum.
@@ -199,10 +189,7 @@ export interface IFluidDataStoreRuntime
 	 * This occurs when operations are being discarded, such as when exiting staging mode without committing changes.
 	 * - `undefined` - No local operation activity is currently in progress.
 	 */
-	readonly activeLocalOperationActivity?:
-		| "applyStashed"
-		| "rollback"
-		| undefined;
+	readonly activeLocalOperationActivity?: "applyStashed" | "rollback" | undefined;
 }
 
 /**

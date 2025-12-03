@@ -11,23 +11,12 @@
  * Current version: 2.74.0
  */
 
-import type {
-	FullType,
-	MinimalType,
-	requireAssignableTo,
-	TypeOnly,
-} from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/shared-summary-block-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> =
-	| TypeOnly<T>
-	| MinimalType<T>
-	| FullType<T>
-	| typeof old
-	| typeof current
-	| requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -36,11 +25,7 @@ declare type MakeUnusedImportErrorsGoAway<T> =
  * typeValidation.broken:
  * "Interface_ISharedSummaryBlock": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISharedSummaryBlock =
-	requireAssignableTo<
-		TypeOnly<old.ISharedSummaryBlock>,
-		TypeOnly<current.ISharedSummaryBlock>
-	>;
+declare type old_as_current_for_Interface_ISharedSummaryBlock = requireAssignableTo<TypeOnly<old.ISharedSummaryBlock>, TypeOnly<current.ISharedSummaryBlock>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -49,11 +34,7 @@ declare type old_as_current_for_Interface_ISharedSummaryBlock =
  * typeValidation.broken:
  * "Interface_ISharedSummaryBlock": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISharedSummaryBlock =
-	requireAssignableTo<
-		TypeOnly<current.ISharedSummaryBlock>,
-		TypeOnly<old.ISharedSummaryBlock>
-	>;
+declare type current_as_old_for_Interface_ISharedSummaryBlock = requireAssignableTo<TypeOnly<current.ISharedSummaryBlock>, TypeOnly<old.ISharedSummaryBlock>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -62,11 +43,7 @@ declare type current_as_old_for_Interface_ISharedSummaryBlock =
  * typeValidation.broken:
  * "TypeAlias_SharedSummaryBlock": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_SharedSummaryBlock =
-	requireAssignableTo<
-		TypeOnly<old.SharedSummaryBlock>,
-		TypeOnly<current.SharedSummaryBlock>
-	>;
+declare type old_as_current_for_TypeAlias_SharedSummaryBlock = requireAssignableTo<TypeOnly<old.SharedSummaryBlock>, TypeOnly<current.SharedSummaryBlock>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -75,11 +52,7 @@ declare type old_as_current_for_TypeAlias_SharedSummaryBlock =
  * typeValidation.broken:
  * "TypeAlias_SharedSummaryBlock": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_SharedSummaryBlock =
-	requireAssignableTo<
-		TypeOnly<current.SharedSummaryBlock>,
-		TypeOnly<old.SharedSummaryBlock>
-	>;
+declare type current_as_old_for_TypeAlias_SharedSummaryBlock = requireAssignableTo<TypeOnly<current.SharedSummaryBlock>, TypeOnly<old.SharedSummaryBlock>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -88,8 +61,4 @@ declare type current_as_old_for_TypeAlias_SharedSummaryBlock =
  * typeValidation.broken:
  * "Variable_SharedSummaryBlock": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_SharedSummaryBlock =
-	requireAssignableTo<
-		TypeOnly<typeof current.SharedSummaryBlock>,
-		TypeOnly<typeof old.SharedSummaryBlock>
-	>;
+declare type current_as_old_for_Variable_SharedSummaryBlock = requireAssignableTo<TypeOnly<typeof current.SharedSummaryBlock>, TypeOnly<typeof old.SharedSummaryBlock>>

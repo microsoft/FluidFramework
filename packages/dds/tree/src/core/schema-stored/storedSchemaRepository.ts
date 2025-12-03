@@ -12,10 +12,10 @@ import { compareStrings } from "../../util/index.js";
 import type { TreeNodeSchemaIdentifier } from "./formatV1.js";
 import {
 	type StoredSchemaCollection,
-	storedEmptyFieldSchema,
 	type TreeFieldStoredSchema,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
+	storedEmptyFieldSchema,
 } from "./schema.js";
 
 /**
@@ -61,10 +61,7 @@ export interface MutableTreeStoredSchema extends TreeStoredSchemaSubscription {
  * Mutable TreeStoredSchema repository.
  */
 export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
-	protected nodeSchemaData: BTree<
-		TreeNodeSchemaIdentifier,
-		TreeNodeStoredSchema
-	>;
+	protected nodeSchemaData: BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 	protected rootFieldSchemaData: TreeFieldStoredSchema;
 	protected readonly _events = createEmitter<SchemaEvents>();
 	public readonly events: Listenable<SchemaEvents> = this._events;
@@ -85,10 +82,10 @@ export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 	public constructor(data?: TreeStoredSchema) {
 		if (data === undefined) {
 			this.rootFieldSchemaData = storedEmptyFieldSchema;
-			this.nodeSchemaData = new BTree<
-				TreeNodeSchemaIdentifier,
-				TreeNodeStoredSchema
-			>([], compareStrings);
+			this.nodeSchemaData = new BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>(
+				[],
+				compareStrings,
+			);
 		} else {
 			if (data instanceof TreeStoredSchemaRepository) {
 				this.rootFieldSchemaData = data.rootFieldSchema;
@@ -100,10 +97,7 @@ export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 		}
 	}
 
-	public get nodeSchema(): ReadonlyMap<
-		TreeNodeSchemaIdentifier,
-		TreeNodeStoredSchema
-	> {
+	public get nodeSchema(): ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
 		// Btree implements iterator, but not in a type-safe way
 		return this.nodeSchemaData as unknown as ReadonlyMap<
 			TreeNodeSchemaIdentifier,
@@ -140,8 +134,5 @@ function cloneNodeSchemaData(
 	const entries: [TreeNodeSchemaIdentifier, TreeNodeStoredSchema][] = [
 		...nodeSchema.entries(),
 	];
-	return new BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>(
-		entries,
-		compareStrings,
-	);
+	return new BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>(entries, compareStrings);
 }

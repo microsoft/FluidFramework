@@ -4,12 +4,12 @@
  */
 
 import { strict as assert } from "node:assert";
-import { CommitKind, type GraphCommit } from "../../core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { BranchCommitEnricher } from "../../shared-tree-core/branchCommitEnricher.js";
 import { TestChange, TestChangeRebaser } from "../testChange.js";
+import { CommitKind, type GraphCommit } from "../../core/index.js";
 import { mintRevisionTag } from "../utils.js";
 import { TestChangeEnricher } from "./utils.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { BranchCommitEnricher } from "../../shared-tree-core/branchCommitEnricher.js";
 
 const rebaser = new TestChangeRebaser();
 const enricher = new TestChangeEnricher();
@@ -67,10 +67,7 @@ const actions = [
 			});
 			const actual = commitEnricher.enrich(commit);
 			const expected = {
-				change: enricher.updateChangeEnrichments(
-					commit.change,
-					commit.revision,
-				),
+				change: enricher.updateChangeEnrichments(commit.change, commit.revision),
 				revision: commit.revision,
 			};
 			assert.deepEqual(actual, expected);
@@ -108,10 +105,7 @@ const actions = [
 			});
 			const actual = commitEnricher.enrich(outerCommit);
 			const expected = {
-				change: enricher.updateChangeEnrichments(
-					innerCommit.change,
-					innerCommit.revision,
-				),
+				change: enricher.updateChangeEnrichments(innerCommit.change, innerCommit.revision),
 				revision: outerCommit.revision,
 			};
 			assert.deepEqual(actual, expected);
@@ -135,10 +129,7 @@ describe("BranchCommitEnricher", () => {
 				describe(d2, () => {
 					for (const { description: d3, action: a3 } of actions) {
 						it(d3, () => {
-							const commitEnricher = new BranchCommitEnricher<TestChange>(
-								rebaser,
-								enricher,
-							);
+							const commitEnricher = new BranchCommitEnricher<TestChange>(rebaser, enricher);
 							a1(commitEnricher);
 							a2(commitEnricher);
 							a3(commitEnricher);

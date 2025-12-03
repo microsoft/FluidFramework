@@ -18,8 +18,8 @@ const { PropertyFactory } = require("..");
 const { BaseProperty } = require("..");
 const { NodeProperty } = require("../properties/nodeProperty");
 
-describe("Utils", () => {
-	before(() => {
+describe("Utils", function () {
+	before(function () {
 		var TaskStatus = {
 			// inherits : 'Enum',
 			typeid: "autodesk.test:utils.spec.task.status-1.0.0",
@@ -74,14 +74,8 @@ describe("Utils", () => {
 			inherits: ["NodeProperty"],
 			typeid: "autodesk.test:utils.spec.pan.sim-1.0.0",
 			properties: [
-				{
-					id: "costEstimated",
-					typeid: "autodesk.test:utils.spec.task.subject-1.0.0",
-				},
-				{
-					id: "costFinal",
-					typeid: "autodesk.test:utils.spec.task.subject-1.0.0",
-				},
+				{ id: "costEstimated", typeid: "autodesk.test:utils.spec.task.subject-1.0.0" },
+				{ id: "costFinal", typeid: "autodesk.test:utils.spec.task.subject-1.0.0" },
 
 				// set by client to start or cancel the simulation
 				{ id: "start", typeid: "Bool", default: false },
@@ -89,14 +83,8 @@ describe("Utils", () => {
 
 				// { id: 'inputs'   , typeid: 'autodesk.test:utils_spec_pan.input-1.0.0' },
 
-				{
-					id: "thermalResults",
-					typeid: "autodesk.test:utils.spec.task.subject-1.0.0",
-				},
-				{
-					id: "mechanicalResults",
-					typeid: "autodesk.test:utils.spec.task.subject-1.0.0",
-				},
+				{ id: "thermalResults", typeid: "autodesk.test:utils.spec.task.subject-1.0.0" },
+				{ id: "mechanicalResults", typeid: "autodesk.test:utils.spec.task.subject-1.0.0" },
 			],
 		};
 
@@ -195,9 +183,9 @@ describe("Utils", () => {
 		PropertyFactory._reregister(StaticNodeChild);
 	});
 
-	describe("Utils.traverseChangeSetRecursively", () => {
+	describe("Utils.traverseChangeSetRecursively", function () {
 		var testRoot, contexts, namedNodePropForSet;
-		it("should report correctly for inserts", () => {
+		it("should report correctly for inserts", function () {
 			testRoot = PropertyFactory.create("NodeProperty");
 			testRoot.insert("string", PropertyFactory.create("String"));
 			testRoot.insert(
@@ -206,10 +194,7 @@ describe("Utils", () => {
 			);
 			testRoot
 				.resolvePath('"test\\"Templated\\"Property".containedMap')
-				.insert(
-					"entry",
-					PropertyFactory.create("autodesk.test:utilsTestContained-1.0.0"),
-				);
+				.insert("entry", PropertyFactory.create("autodesk.test:utilsTestContained-1.0.0"));
 			testRoot.insert("reference", PropertyFactory.create("Reference<String>"));
 
 			// Test an array with a primitive
@@ -233,31 +218,18 @@ describe("Utils", () => {
 
 			// add members
 			// Simple string
-			testRoot._properties.map.insert(
-				"string",
-				PropertyFactory.create("String"),
-			);
+			testRoot._properties.map.insert("string", PropertyFactory.create("String"));
 
 			// String with name that has to be escaped
-			testRoot._properties.map.insert(
-				's"tr"ing',
-				PropertyFactory.create("String"),
-			);
+			testRoot._properties.map.insert('s"tr"ing', PropertyFactory.create("String"));
 
 			// A map in a map
 			testRoot._properties.map.insert("map", PropertyFactory.create("map<>"));
-			testRoot._properties.map
-				.get("map")
-				.insert("string", PropertyFactory.create("String"));
+			testRoot._properties.map.get("map").insert("string", PropertyFactory.create("String"));
 
 			// An array in a map
-			testRoot._properties.map.insert(
-				"array",
-				PropertyFactory.create("array<>"),
-			);
-			testRoot._properties.map
-				.get("array")
-				.insert(0, PropertyFactory.create("NodeProperty"));
+			testRoot._properties.map.insert("array", PropertyFactory.create("array<>"));
+			testRoot._properties.map.get("array").insert(0, PropertyFactory.create("NodeProperty"));
 			testRoot._properties.map
 				.get("array")
 				.get(0)
@@ -270,10 +242,7 @@ describe("Utils", () => {
 			);
 
 			// A NodeProperty
-			testRoot._properties.map.insert(
-				"nodeProperty",
-				PropertyFactory.create("NodeProperty"),
-			);
+			testRoot._properties.map.insert("nodeProperty", PropertyFactory.create("NodeProperty"));
 			testRoot._properties.map
 				.get("nodeProperty")
 				.insert("string", PropertyFactory.create("String"));
@@ -285,29 +254,26 @@ describe("Utils", () => {
 			namedNodePropForSet.insert("string", PropertyFactory.create("String"));
 
 			contexts = [];
-			Utils.traverseChangeSetRecursively(
-				testRoot.serialize({ dirtyOnly: false }),
-				{
-					preCallback: (in_context) => {
-						// Do some basic sanity checks
-						var node = testRoot.resolvePath(in_context.getFullPath() + "*");
-						expect(node).to.be.instanceof(BaseProperty);
-						expect(node.getTypeid()).to.equal(in_context._splitTypeId.typeid);
+			Utils.traverseChangeSetRecursively(testRoot.serialize({ dirtyOnly: false }), {
+				preCallback: function (in_context) {
+					// Do some basic sanity checks
+					var node = testRoot.resolvePath(in_context.getFullPath() + "*");
+					expect(node).to.be.instanceof(BaseProperty);
+					expect(node.getTypeid()).to.equal(in_context._splitTypeId.typeid);
 
-						if (in_context._fullPath !== "") {
-							expect(in_context.getOperationType()).to.equal("insert");
-						} else {
-							expect(in_context.getOperationType()).to.equal("modify");
-						}
+					if (in_context._fullPath !== "") {
+						expect(in_context.getOperationType()).to.equal("insert");
+					} else {
+						expect(in_context.getOperationType()).to.equal("modify");
+					}
 
-						contexts.push(in_context.clone());
-					},
+					contexts.push(in_context.clone());
 				},
-			);
+			});
 			expect(contexts.length).to.equal(38);
 		});
 
-		it("should work for modifications of primitive types", () => {
+		it("should work for modifications of primitive types", function () {
 			// Clean the old modifications
 			testRoot.cleanDirty();
 
@@ -316,10 +282,7 @@ describe("Utils", () => {
 				var modifyNode = testRoot.resolvePath(contexts[i].getFullPath());
 
 				// modify strings
-				if (
-					contexts[i].getTypeid() === "String" &&
-					modifyNode.getId() !== "guid"
-				) {
+				if (contexts[i].getTypeid() === "String" && modifyNode.getId() !== "guid") {
 					modifyNode.setValue("modified");
 					modifiedStringCount++;
 				}
@@ -336,46 +299,43 @@ describe("Utils", () => {
 			testRoot._properties.floatMap.set("new_test", 7);
 
 			var reportedStringModifiedCount = 0;
-			Utils.traverseChangeSetRecursively(
-				testRoot.serialize({ dirtyOnly: true }),
-				{
-					preCallback: (in_context) => {
-						// Do some basic sanity checks
-						var node = testRoot.resolvePath(in_context.getFullPath());
-						expect(node).to.be.instanceof(BaseProperty);
-						expect(node.getTypeid()).to.equal(in_context._splitTypeId.typeid);
-						expect(in_context.getOperationType()).to.equal("modify");
+			Utils.traverseChangeSetRecursively(testRoot.serialize({ dirtyOnly: true }), {
+				preCallback: function (in_context) {
+					// Do some basic sanity checks
+					var node = testRoot.resolvePath(in_context.getFullPath());
+					expect(node).to.be.instanceof(BaseProperty);
+					expect(node.getTypeid()).to.equal(in_context._splitTypeId.typeid);
+					expect(in_context.getOperationType()).to.equal("modify");
 
-						if (node.getTypeid() === "String") {
-							reportedStringModifiedCount++;
-							expect(in_context.getNestedChangeSet()).to.equal("modified");
-						}
+					if (node.getTypeid() === "String") {
+						reportedStringModifiedCount++;
+						expect(in_context.getNestedChangeSet()).to.equal("modified");
+					}
 
-						if (in_context.getTypeid() === "array<Float32>") {
-							expect(in_context.getNestedChangeSet()).to.deep.equal({
-								insert: [[5, [15]]],
-							});
-						}
+					if (in_context.getTypeid() === "array<Float32>") {
+						expect(in_context.getNestedChangeSet()).to.deep.equal({
+							insert: [[5, [15]]],
+						});
+					}
 
-						if (in_context.getTypeid() === "map<Float32>") {
-							expect(in_context.getNestedChangeSet()).to.deep.equal({
-								insert: {
-									new_test: 7,
-								},
-								modify: {
-									test: 5,
-								},
-							});
-						}
-					},
+					if (in_context.getTypeid() === "map<Float32>") {
+						expect(in_context.getNestedChangeSet()).to.deep.equal({
+							insert: {
+								new_test: 7,
+							},
+							modify: {
+								test: 5,
+							},
+						});
+					}
 				},
-			);
+			});
 
 			// Make sure all modified strings have been reported
 			expect(reportedStringModifiedCount).to.equal(modifiedStringCount);
 		});
 
-		it("should work for inserts in strings", () => {
+		it("should work for inserts in strings", function () {
 			// Clean the old modifications
 			testRoot.cleanDirty();
 
@@ -388,27 +348,24 @@ describe("Utils", () => {
 				}
 			}
 
-			Utils.traverseChangeSetRecursively(
-				testRoot.serialize({ dirtyOnly: true }),
-				{
-					preCallback: (in_context) => {
-						// Do some basic sanity checks
-						var node = testRoot.resolvePath(in_context.getFullPath());
-						expect(node).to.be.instanceof(BaseProperty);
-						expect(node.getTypeid()).to.equal(in_context._splitTypeId.typeid);
-						expect(in_context.getOperationType()).to.equal("modify");
+			Utils.traverseChangeSetRecursively(testRoot.serialize({ dirtyOnly: true }), {
+				preCallback: function (in_context) {
+					// Do some basic sanity checks
+					var node = testRoot.resolvePath(in_context.getFullPath());
+					expect(node).to.be.instanceof(BaseProperty);
+					expect(node.getTypeid()).to.equal(in_context._splitTypeId.typeid);
+					expect(in_context.getOperationType()).to.equal("modify");
 
-						if (node.getTypeid() === "String") {
-							expect(in_context.getNestedChangeSet()).to.deep.equal({
-								insert: [[3, "_inserted_"]],
-							});
-						}
-					},
+					if (node.getTypeid() === "String") {
+						expect(in_context.getNestedChangeSet()).to.deep.equal({
+							insert: [[3, "_inserted_"]],
+						});
+					}
 				},
-			);
+			});
 		});
 
-		it("should work for inserts in arrays", () => {
+		it("should work for inserts in arrays", function () {
 			// Clean the old modifications
 			testRoot.cleanDirty();
 
@@ -417,33 +374,27 @@ describe("Utils", () => {
 			newArrayNode.insert("string", PropertyFactory.create("String"));
 			newArrayNode._properties.string.value = "test";
 
-			Utils.traverseChangeSetRecursively(
-				testRoot.serialize({ dirtyOnly: true }),
-				{
-					preCallback: (in_context) => {
-						// Do some basic sanity checks
-						var node = testRoot.resolvePath(in_context.getFullPath());
-						expect(node).to.be.instanceof(BaseProperty);
-						expect(node.getTypeid()).to.equal(in_context._splitTypeId.typeid);
+			Utils.traverseChangeSetRecursively(testRoot.serialize({ dirtyOnly: true }), {
+				preCallback: function (in_context) {
+					// Do some basic sanity checks
+					var node = testRoot.resolvePath(in_context.getFullPath());
+					expect(node).to.be.instanceof(BaseProperty);
+					expect(node.getTypeid()).to.equal(in_context._splitTypeId.typeid);
 
-						if (
-							in_context.getFullPath() !== "" &&
-							in_context.getFullPath() !== "array"
-						) {
-							expect(in_context.getOperationType()).to.equal("insert");
-						} else {
-							expect(in_context.getOperationType()).to.equal("modify");
-						}
+					if (in_context.getFullPath() !== "" && in_context.getFullPath() !== "array") {
+						expect(in_context.getOperationType()).to.equal("insert");
+					} else {
+						expect(in_context.getOperationType()).to.equal("modify");
+					}
 
-						if (node.getTypeid() === "String") {
-							expect(in_context.getNestedChangeSet()).to.equal("test");
-						}
-					},
+					if (node.getTypeid() === "String") {
+						expect(in_context.getNestedChangeSet()).to.equal("test");
+					}
 				},
-			);
+			});
 		});
 
-		it("should work for inserts in sets", () => {
+		it("should work for inserts in sets", function () {
 			// Clean the old modifications
 			testRoot.cleanDirty();
 
@@ -452,33 +403,27 @@ describe("Utils", () => {
 			newSetNode.insert("string", PropertyFactory.create("String"));
 			newSetNode._properties.string.setValue("test");
 
-			Utils.traverseChangeSetRecursively(
-				testRoot.serialize({ dirtyOnly: true }),
-				{
-					preCallback: (in_context) => {
-						// Do some basic sanity checks
-						var node = testRoot.resolvePath(in_context.getFullPath());
-						expect(node).to.be.instanceof(BaseProperty);
-						expect(node.getTypeid()).to.equal(in_context._splitTypeId.typeid);
+			Utils.traverseChangeSetRecursively(testRoot.serialize({ dirtyOnly: true }), {
+				preCallback: function (in_context) {
+					// Do some basic sanity checks
+					var node = testRoot.resolvePath(in_context.getFullPath());
+					expect(node).to.be.instanceof(BaseProperty);
+					expect(node.getTypeid()).to.equal(in_context._splitTypeId.typeid);
 
-						if (
-							in_context.getFullPath() !== "" &&
-							in_context.getFullPath() !== "set"
-						) {
-							expect(in_context.getOperationType()).to.equal("insert");
-						} else {
-							expect(in_context.getOperationType()).to.equal("modify");
-						}
+					if (in_context.getFullPath() !== "" && in_context.getFullPath() !== "set") {
+						expect(in_context.getOperationType()).to.equal("insert");
+					} else {
+						expect(in_context.getOperationType()).to.equal("modify");
+					}
 
-						if (node.getTypeid() === "String") {
-							expect(in_context.getNestedChangeSet()).to.equal(node.value);
-						}
-					},
+					if (node.getTypeid() === "String") {
+						expect(in_context.getNestedChangeSet()).to.equal(node.value);
+					}
 				},
-			);
+			});
 		});
 
-		it("should work for node property removals", () => {
+		it("should work for node property removals", function () {
 			// Clean the old modifications
 			testRoot.cleanDirty();
 
@@ -493,103 +438,80 @@ describe("Utils", () => {
 			}
 
 			var actualStringRemoveCount = 0;
-			Utils.traverseChangeSetRecursively(
-				testRoot.serialize({ dirtyOnly: true }),
-				{
-					preCallback: (in_context) => {
-						var node = testRoot.resolvePath(in_context.getFullPath());
-						if (node) {
-							expect(in_context.getOperationType()).to.equal("modify");
-						} else {
-							expect(in_context.getOperationType()).to.equal("remove");
-							expect(
-								removedStrings.indexOf("/" + in_context.getFullPath()),
-							).to.not.equal(-1);
-							actualStringRemoveCount++;
-						}
-					},
+			Utils.traverseChangeSetRecursively(testRoot.serialize({ dirtyOnly: true }), {
+				preCallback: function (in_context) {
+					var node = testRoot.resolvePath(in_context.getFullPath());
+					if (node) {
+						expect(in_context.getOperationType()).to.equal("modify");
+					} else {
+						expect(in_context.getOperationType()).to.equal("remove");
+						expect(removedStrings.indexOf("/" + in_context.getFullPath())).to.not.equal(-1);
+						actualStringRemoveCount++;
+					}
 				},
-			);
+			});
 			expect(removedStrings.length).to.equal(actualStringRemoveCount);
 		});
 
-		it("should work for array removals", () => {
+		it("should work for array removals", function () {
 			// Clean the old modifications
 			testRoot.cleanDirty();
 
 			testRoot._properties.array.removeRange(0, 2);
 			var arrayRemovalCount = 0;
-			Utils.traverseChangeSetRecursively(
-				testRoot.serialize({ dirtyOnly: true }),
-				{
-					preCallback: (in_context) => {
-						if (
-							in_context.getFullPath() === "" ||
-							in_context.getFullPath() === "array"
-						) {
-							expect(in_context.getOperationType()).to.equal("modify");
-						} else {
-							expect(in_context.getOperationType()).to.equal("remove");
-							arrayRemovalCount++;
-						}
-					},
+			Utils.traverseChangeSetRecursively(testRoot.serialize({ dirtyOnly: true }), {
+				preCallback: function (in_context) {
+					if (in_context.getFullPath() === "" || in_context.getFullPath() === "array") {
+						expect(in_context.getOperationType()).to.equal("modify");
+					} else {
+						expect(in_context.getOperationType()).to.equal("remove");
+						arrayRemovalCount++;
+					}
 				},
-			);
+			});
 			expect(arrayRemovalCount).to.equal(2);
 		});
 
-		it("should work for map removals", () => {
+		it("should work for map removals", function () {
 			// Clean the old modifications
 			testRoot.cleanDirty();
 
 			testRoot._properties.map.remove("string");
 			var mapRemovalCount = 0;
-			Utils.traverseChangeSetRecursively(
-				testRoot.serialize({ dirtyOnly: true }),
-				{
-					preCallback: (in_context) => {
-						if (
-							in_context.getFullPath() === "" ||
-							in_context.getFullPath() === "map"
-						) {
-							expect(in_context.getOperationType()).to.equal("modify");
-						} else {
-							expect(in_context.getOperationType()).to.equal("remove");
-							mapRemovalCount++;
-						}
-					},
+			Utils.traverseChangeSetRecursively(testRoot.serialize({ dirtyOnly: true }), {
+				preCallback: function (in_context) {
+					if (in_context.getFullPath() === "" || in_context.getFullPath() === "map") {
+						expect(in_context.getOperationType()).to.equal("modify");
+					} else {
+						expect(in_context.getOperationType()).to.equal("remove");
+						mapRemovalCount++;
+					}
 				},
-			);
+			});
 			expect(mapRemovalCount).to.equal(1);
 		});
 
-		it("should work for set removals", () => {
+		it("should work for set removals", function () {
 			// Clean the old modifications
 			testRoot.cleanDirty();
 
 			testRoot._properties.set.remove(namedNodePropForSet);
 
 			var setRemovalCount = 0;
-			Utils.traverseChangeSetRecursively(
-				testRoot.serialize({ dirtyOnly: true }),
-				{
-					preCallback: (in_context) => {
-						if (
-							in_context.getFullPath() === "" ||
-							in_context.getFullPath() === "set"
-						) {
-							expect(in_context.getOperationType()).to.equal("modify");
-						} else {
-							expect(in_context.getOperationType()).to.equal("remove");
-							setRemovalCount++;
-						}
-					},
+			Utils.traverseChangeSetRecursively(testRoot.serialize({ dirtyOnly: true }), {
+				preCallback: function (in_context) {
+					if (in_context.getFullPath() === "" || in_context.getFullPath() === "set") {
+						expect(in_context.getOperationType()).to.equal("modify");
+					} else {
+						expect(in_context.getOperationType()).to.equal("remove");
+						setRemovalCount++;
+					}
 				},
-			);
+			});
 			expect(setRemovalCount).to.equal(1);
 		});
 
-		it("should clone the context correctly", () => {
+		it("should clone the context correctly", function () {
 			testRoot.insert("setClone", PropertyFactory.create("set<>"));
 			var namedNodePropForSet1 = PropertyFactory.create("NamedNodeProperty");
 			var namedNodePropForSet2 = PropertyFactory.create("NamedNodeProperty");
@@ -609,30 +531,24 @@ describe("Utils", () => {
 
 			var setRemovalCount = 0;
 			var contextCloneCount = 0;
-			Utils.traverseChangeSetRecursively(
-				testRoot.serialize({ dirtyOnly: true }),
-				{
-					preCallback: (in_context) => {
-						if (
-							in_context.getFullPath() === "" ||
-							in_context.getFullPath() === "setClone"
-						) {
-							expect(in_context.getOperationType()).to.equal("modify");
-						} else {
-							expect(in_context.getOperationType()).to.equal("remove");
-							setRemovalCount++;
-						}
-						var cloneContext = in_context.clone();
-						expect(cloneContext).to.deep.equal(in_context);
-						contextCloneCount++;
-					},
+			Utils.traverseChangeSetRecursively(testRoot.serialize({ dirtyOnly: true }), {
+				preCallback: function (in_context) {
+					if (in_context.getFullPath() === "" || in_context.getFullPath() === "setClone") {
+						expect(in_context.getOperationType()).to.equal("modify");
+					} else {
+						expect(in_context.getOperationType()).to.equal("remove");
+						setRemovalCount++;
+					}
+					var cloneContext = in_context.clone();
+					expect(cloneContext).to.deep.equal(in_context);
+					contextCloneCount++;
 				},
-			);
+			});
 			expect(setRemovalCount).to.equal(3);
 			expect(contextCloneCount >= 3).to.be.true; // we should clone at least 3 times (probably more)
 		});
 
-		it("@regression should work when replacing a map element", () => {
+		it("@regression should work when replacing a map element", function () {
 			// Clean the old modifications
 			testRoot.cleanDirty();
 			testRoot._properties.map.set(
@@ -640,24 +556,21 @@ describe("Utils", () => {
 				PropertyFactory.create("NamedNodeProperty"),
 			);
 			var operationtypes = [];
-			Utils.traverseChangeSetRecursively(
-				testRoot.serialize({ dirtyOnly: true }),
-				{
-					preCallback: (in_context) => {
-						// expect operations to be 'remove' and 'insert'
-						if (in_context.getFullPath() === "map[nodeProperty]") {
-							operationtypes.push(in_context.getOperationType());
-						}
-					},
+			Utils.traverseChangeSetRecursively(testRoot.serialize({ dirtyOnly: true }), {
+				preCallback: function (in_context) {
+					// expect operations to be 'remove' and 'insert'
+					if (in_context.getFullPath() === "map[nodeProperty]") {
+						operationtypes.push(in_context.getOperationType());
+					}
 				},
-			);
+			});
 			expect(operationtypes).to.deep.equal(["remove", "insert"]);
 		});
 	});
 
-	describe("Utils.traverseChangeSetRecursivelyAsync", () => {
+	describe("Utils.traverseChangeSetRecursivelyAsync", function () {
 		var testRoot, contexts, namedNodePropForSet;
-		it("should report correctly for inserts", (done) => {
+		it("should report correctly for inserts", function (done) {
 			testRoot = PropertyFactory.create("NodeProperty");
 			testRoot.insert("string", PropertyFactory.create("String"));
 			testRoot.insert(
@@ -666,10 +579,7 @@ describe("Utils", () => {
 			);
 			testRoot
 				.resolvePath('"test\\"Templated\\"Property".containedMap')
-				.insert(
-					"entry",
-					PropertyFactory.create("autodesk.test:utilsTestContained-1.0.0"),
-				);
+				.insert("entry", PropertyFactory.create("autodesk.test:utilsTestContained-1.0.0"));
 			testRoot.insert("reference", PropertyFactory.create("Reference<String>"));
 
 			// Test an array with a primitive
@@ -693,31 +603,18 @@ describe("Utils", () => {
 
 			// add members
 			// Simple string
-			testRoot._properties.map.insert(
-				"string",
-				PropertyFactory.create("String"),
-			);
+			testRoot._properties.map.insert("string", PropertyFactory.create("String"));
 
 			// String with name that has to be escaped
-			testRoot._properties.map.insert(
-				's"tr"ing',
-				PropertyFactory.create("String"),
-			);
+			testRoot._properties.map.insert('s"tr"ing', PropertyFactory.create("String"));
 
 			// A map in a map
 			testRoot._properties.map.insert("map", PropertyFactory.create("map<>"));
-			testRoot._properties.map
-				.get("map")
-				.insert("string", PropertyFactory.create("String"));
+			testRoot._properties.map.get("map").insert("string", PropertyFactory.create("String"));
 
 			// An array in a map
-			testRoot._properties.map.insert(
-				"array",
-				PropertyFactory.create("array<>"),
-			);
-			testRoot._properties.map
-				.get("array")
-				.insert(0, PropertyFactory.create("NodeProperty"));
+			testRoot._properties.map.insert("array", PropertyFactory.create("array<>"));
+			testRoot._properties.map.get("array").insert(0, PropertyFactory.create("NodeProperty"));
 			testRoot._properties.map
 				.get("array")
 				.get(0)
@@ -730,10 +627,7 @@ describe("Utils", () => {
 			);
 
 			// A NodeProperty
-			testRoot._properties.map.insert(
-				"nodeProperty",
-				PropertyFactory.create("NodeProperty"),
-			);
+			testRoot._properties.map.insert("nodeProperty", PropertyFactory.create("NodeProperty"));
 			testRoot._properties.map
 				.get("nodeProperty")
 				.insert("string", PropertyFactory.create("String"));
@@ -748,7 +642,7 @@ describe("Utils", () => {
 			Utils.traverseChangeSetRecursivelyAsync(
 				testRoot.serialize({ dirtyOnly: false }),
 				{
-					preCallback: (in_context, cb) => {
+					preCallback: function (in_context, cb) {
 						// Do some basic sanity checks
 						var node = testRoot.resolvePath(in_context.getFullPath() + "*");
 						expect(node).to.be.instanceof(BaseProperty);
@@ -764,14 +658,14 @@ describe("Utils", () => {
 						setImmediate(cb);
 					},
 				},
-				() => {
+				function () {
 					expect(contexts.length).to.equal(38);
 					done();
 				},
 			);
 		});
 
-		it("should work for modifications of primitive types", (done) => {
+		it("should work for modifications of primitive types", function (done) {
 			// Clean the old modifications
 			testRoot.cleanDirty();
 
@@ -780,10 +674,7 @@ describe("Utils", () => {
 				var modifyNode = testRoot.resolvePath(contexts[i].getFullPath());
 
 				// modify strings
-				if (
-					contexts[i].getTypeid() === "String" &&
-					modifyNode.getId() !== "guid"
-				) {
+				if (contexts[i].getTypeid() === "String" && modifyNode.getId() !== "guid") {
 					modifyNode.setValue("modified");
 					modifiedStringCount++;
 				}
@@ -803,7 +694,7 @@ describe("Utils", () => {
 			Utils.traverseChangeSetRecursivelyAsync(
 				testRoot.serialize({ dirtyOnly: true }),
 				{
-					preCallback: (in_context, cb) => {
+					preCallback: function (in_context, cb) {
 						// Do some basic sanity checks
 						var node = testRoot.resolvePath(in_context.getFullPath());
 						expect(node).to.be.instanceof(BaseProperty);
@@ -834,7 +725,7 @@ describe("Utils", () => {
 						setImmediate(cb);
 					},
 				},
-				() => {
+				function () {
 					// Make sure all modified strings have been reported
 					expect(reportedStringModifiedCount).to.equal(modifiedStringCount);
 					done();
@@ -842,7 +733,7 @@ describe("Utils", () => {
 			);
 		});
 
-		it("should work for inserts in strings", (done) => {
+		it("should work for inserts in strings", function (done) {
 			// Clean the old modifications
 			testRoot.cleanDirty();
 
@@ -858,7 +749,7 @@ describe("Utils", () => {
 			Utils.traverseChangeSetRecursivelyAsync(
 				testRoot.serialize({ dirtyOnly: true }),
 				{
-					preCallback: (in_context, cb) => {
+					preCallback: function (in_context, cb) {
 						// Do some basic sanity checks
 						var node = testRoot.resolvePath(in_context.getFullPath());
 						expect(node).to.be.instanceof(BaseProperty);
@@ -873,13 +764,13 @@ describe("Utils", () => {
 						setImmediate(cb);
 					},
 				},
-				() => {
+				function () {
 					done();
 				},
 			);
 		});
 
-		it("should work for inserts in arrays", (done) => {
+		it("should work for inserts in arrays", function (done) {
 			// Clean the old modifications
 			testRoot.cleanDirty();
 
@@ -891,16 +782,13 @@ describe("Utils", () => {
 			Utils.traverseChangeSetRecursivelyAsync(
 				testRoot.serialize({ dirtyOnly: true }),
 				{
-					preCallback: (in_context, cb) => {
+					preCallback: function (in_context, cb) {
 						// Do some basic sanity checks
 						var node = testRoot.resolvePath(in_context.getFullPath());
 						expect(node).to.be.instanceof(BaseProperty);
 						expect(node.getTypeid()).to.equal(in_context._splitTypeId.typeid);
 
-						if (
-							in_context.getFullPath() !== "" &&
-							in_context.getFullPath() !== "array"
-						) {
+						if (in_context.getFullPath() !== "" && in_context.getFullPath() !== "array") {
 							expect(in_context.getOperationType()).to.equal("insert");
 						} else {
 							expect(in_context.getOperationType()).to.equal("modify");
@@ -912,13 +800,13 @@ describe("Utils", () => {
 						setImmediate(cb);
 					},
 				},
-				() => {
+				function () {
 					done();
 				},
 			);
 		});
 
-		it("should work for inserts in sets", (done) => {
+		it("should work for inserts in sets", function (done) {
 			// Clean the old modifications
 			testRoot.cleanDirty();
 
@@ -930,16 +818,13 @@ describe("Utils", () => {
 			Utils.traverseChangeSetRecursivelyAsync(
 				testRoot.serialize({ dirtyOnly: true }),
 				{
-					preCallback: (in_context, cb) => {
+					preCallback: function (in_context, cb) {
 						// Do some basic sanity checks
 						var node = testRoot.resolvePath(in_context.getFullPath());
 						expect(node).to.be.instanceof(BaseProperty);
 						expect(node.getTypeid()).to.equal(in_context._splitTypeId.typeid);
 
-						if (
-							in_context.getFullPath() !== "" &&
-							in_context.getFullPath() !== "set"
-						) {
+						if (in_context.getFullPath() !== "" && in_context.getFullPath() !== "set") {
 							expect(in_context.getOperationType()).to.equal("insert");
 						} else {
 							expect(in_context.getOperationType()).to.equal("modify");
@@ -955,7 +840,7 @@ describe("Utils", () => {
 			);
 		});
 
-		it("should work for node property removals", (done) => {
+		it("should work for node property removals", function (done) {
 			// Clean the old modifications
 			testRoot.cleanDirty();
 
@@ -973,28 +858,26 @@ describe("Utils", () => {
 			Utils.traverseChangeSetRecursivelyAsync(
 				testRoot.serialize({ dirtyOnly: true }),
 				{
-					preCallback: (in_context, cb) => {
+					preCallback: function (in_context, cb) {
 						var node = testRoot.resolvePath(in_context.getFullPath());
 						if (node) {
 							expect(in_context.getOperationType()).to.equal("modify");
 						} else {
 							expect(in_context.getOperationType()).to.equal("remove");
-							expect(
-								removedStrings.indexOf("/" + in_context.getFullPath()),
-							).to.not.equal(-1);
+							expect(removedStrings.indexOf("/" + in_context.getFullPath())).to.not.equal(-1);
 							actualStringRemoveCount++;
 						}
 						setImmediate(cb);
 					},
 				},
-				() => {
+				function () {
 					expect(removedStrings.length).to.equal(actualStringRemoveCount);
 					done();
 				},
 			);
 		});
 
-		it("should work for array removals", (done) => {
+		it("should work for array removals", function (done) {
 			// Clean the old modifications
 			testRoot.cleanDirty();
 
@@ -1003,11 +886,8 @@ describe("Utils", () => {
 			Utils.traverseChangeSetRecursivelyAsync(
 				testRoot.serialize({ dirtyOnly: true }),
 				{
-					preCallback: (in_context, cb) => {
-						if (
-							in_context.getFullPath() === "" ||
-							in_context.getFullPath() === "array"
-						) {
+					preCallback: function (in_context, cb) {
+						if (in_context.getFullPath() === "" || in_context.getFullPath() === "array") {
 							expect(in_context.getOperationType()).to.equal("modify");
 						} else {
 							expect(in_context.getOperationType()).to.equal("remove");
@@ -1016,14 +896,14 @@ describe("Utils", () => {
 						setImmediate(cb);
 					},
 				},
-				() => {
+				function () {
 					expect(arrayRemovalCount).to.equal(2);
 					done();
 				},
 			);
 		});
 
-		it("should work for map removals", (done) => {
+		it("should work for map removals", function (done) {
 			// Clean the old modifications
 			testRoot.cleanDirty();
 
@@ -1032,11 +912,8 @@ describe("Utils", () => {
 			Utils.traverseChangeSetRecursivelyAsync(
 				testRoot.serialize({ dirtyOnly: true }),
 				{
-					preCallback: (in_context, cb) => {
-						if (
-							in_context.getFullPath() === "" ||
-							in_context.getFullPath() === "map"
-						) {
+					preCallback: function (in_context, cb) {
+						if (in_context.getFullPath() === "" || in_context.getFullPath() === "map") {
 							expect(in_context.getOperationType()).to.equal("modify");
 						} else {
 							expect(in_context.getOperationType()).to.equal("remove");
@@ -1045,14 +922,14 @@ describe("Utils", () => {
 						setImmediate(cb);
 					},
 				},
-				() => {
+				function () {
 					expect(mapRemovalCount).to.equal(1);
 					done();
 				},
 			);
 		});
 
-		it("should work for set removals", (done) => {
+		it("should work for set removals", function (done) {
 			// Clean the old modifications
 			testRoot.cleanDirty();
 
@@ -1062,11 +939,8 @@ describe("Utils", () => {
 			Utils.traverseChangeSetRecursivelyAsync(
 				testRoot.serialize({ dirtyOnly: true }),
 				{
-					preCallback: (in_context, cb) => {
-						if (
-							in_context.getFullPath() === "" ||
-							in_context.getFullPath() === "set"
-						) {
+					preCallback: function (in_context, cb) {
+						if (in_context.getFullPath() === "" || in_context.getFullPath() === "set") {
 							expect(in_context.getOperationType()).to.equal("modify");
 						} else {
 							expect(in_context.getOperationType()).to.equal("remove");
@@ -1075,14 +949,14 @@ describe("Utils", () => {
 						setImmediate(cb);
 					},
 				},
-				() => {
+				function () {
 					expect(setRemovalCount).to.equal(1);
 					done();
 				},
 			);
 		});
 
-		it("should clone the context correctly", (done) => {
+		it("should clone the context correctly", function (done) {
 			testRoot.insert("setClone", PropertyFactory.create("set<>"));
 			var namedNodePropForSet1 = PropertyFactory.create("NamedNodeProperty");
 			var namedNodePropForSet2 = PropertyFactory.create("NamedNodeProperty");
@@ -1105,11 +979,8 @@ describe("Utils", () => {
 			Utils.traverseChangeSetRecursivelyAsync(
 				testRoot.serialize({ dirtyOnly: true }),
 				{
-					preCallback: (in_context, cb) => {
-						if (
-							in_context.getFullPath() === "" ||
-							in_context.getFullPath() === "setClone"
-						) {
+					preCallback: function (in_context, cb) {
+						if (in_context.getFullPath() === "" || in_context.getFullPath() === "setClone") {
 							expect(in_context.getOperationType()).to.equal("modify");
 						} else {
 							expect(in_context.getOperationType()).to.equal("remove");
@@ -1121,7 +992,7 @@ describe("Utils", () => {
 						setImmediate(cb);
 					},
 				},
-				() => {
+				function () {
 					expect(setRemovalCount).to.equal(3);
 					expect(contextCloneCount >= 3).to.be.true; // we should clone at least 3 times (probably more)
 					done();
@@ -1129,18 +1000,12 @@ describe("Utils", () => {
 			);
 		});
 
-		it("@regression should work for mixed modifications and removals", (done) => {
+		it("@regression should work for mixed modifications and removals", function (done) {
 			// This test uses its own property sets tree
 			var ownRoot = PropertyFactory.create("NodeProperty");
 			var userInfo = PropertyFactory.create("NodeProperty");
-			userInfo.insert(
-				"name",
-				PropertyFactory.create("String", "single", "John Doe"),
-			);
-			userInfo.insert(
-				"isResident",
-				PropertyFactory.create("Bool", "single", true),
-			);
+			userInfo.insert("name", PropertyFactory.create("String", "single", "John Doe"));
+			userInfo.insert("isResident", PropertyFactory.create("Bool", "single", true));
 			ownRoot.insert("userInfo", userInfo);
 			var numberOfResidents = PropertyFactory.create("Int32", "single", 1);
 			ownRoot.insert("numberOfResidents", numberOfResidents);
@@ -1156,7 +1021,7 @@ describe("Utils", () => {
 			Utils.traverseChangeSetRecursivelyAsync(
 				serializedCS,
 				{
-					preCallback: (in_context, cb) => {
+					preCallback: function (in_context, cb) {
 						var node = ownRoot.resolvePath(in_context.getFullPath());
 						if (node) {
 							expect(in_context.getOperationType()).to.equal("modify");
@@ -1173,49 +1038,41 @@ describe("Utils", () => {
 						setImmediate(cb);
 					},
 				},
-				() => {
+				function () {
 					expect(modifiedCount).to.equal(2);
 					done();
 				},
 			);
 		});
 
-		it("@regression should work when replacing a map element", (done) => {
+		it("@regression should work when replacing a map element", function (done) {
 			// Clean the old modifications
 			testRoot.cleanDirty();
 
 			testRoot._properties.map.set(
 				"testParent",
-				PropertyFactory.create(
-					"autodesk.test:utilsTestParent-1.0.0",
-					"single",
-					{
-						errorMsg: "another element",
-						progress: 99,
-					},
-				),
+				PropertyFactory.create("autodesk.test:utilsTestParent-1.0.0", "single", {
+					errorMsg: "another element",
+					progress: 99,
+				}),
 			);
 
 			var operations = [];
 			Utils.traverseChangeSetRecursivelyAsync(
 				testRoot.serialize({ dirtyOnly: true }),
 				{
-					preCallback: (in_context, cb) => {
+					preCallback: function (in_context, cb) {
 						if (in_context.getFullPath() === "map[testParent]") {
 							operations.push(in_context.getOperationType());
-						} else if (
-							in_context.getFullPath() === "map[testParent].errorMsg"
-						) {
+						} else if (in_context.getFullPath() === "map[testParent].errorMsg") {
 							expect(in_context.getNestedChangeSet() === "another element");
-						} else if (
-							in_context.getFullPath() === "map[testParent].progress"
-						) {
+						} else if (in_context.getFullPath() === "map[testParent].progress") {
 							expect(in_context.getNestedChangeSet() === 99);
 						}
 						setImmediate(cb);
 					},
 				},
-				() => {
+				function () {
 					expect(operations).to.deep.equal(["remove", "insert"]);
 					done();
 				},
@@ -1223,7 +1080,7 @@ describe("Utils", () => {
 		});
 	});
 
-	describe("Utils.enumerateSchemas", () => {
+	describe("Utils.enumerateSchemas", function () {
 		var serializedChangeSet = {
 			insertTemplates: {
 				"autodesk.tests:property.set.SimpleNamedPoint-1.0.0": {
@@ -1245,11 +1102,11 @@ describe("Utils", () => {
 			},
 		};
 
-		it("should return the schemas, and then call the finalizer", (done) => {
+		it("should return the schemas, and then call the finalizer", function (done) {
 			var countedTemplates = 0;
 			Utils.enumerateSchemas(
 				serializedChangeSet,
-				(t, cb) => {
+				function (t, cb) {
 					countedTemplates++;
 					if (t.key === "autodesk.tests:property.set.SimpleNamedPoint-1.0.0") {
 						expect(t.value).to.eql(
@@ -1267,7 +1124,7 @@ describe("Utils", () => {
 					}
 					setImmediate(cb);
 				},
-				() => {
+				function () {
 					expect(countedTemplates).to.eql(2);
 					done();
 				},
@@ -1275,11 +1132,9 @@ describe("Utils", () => {
 		});
 	});
 
-	describe("Utils.extractTypeids", () => {
-		it("Should work for a simple templated property", () => {
-			var property = PropertyFactory.create(
-				"autodesk.test:utilsTestParent-1.0.0",
-			);
+	describe("Utils.extractTypeids", function () {
+		it("Should work for a simple templated property", function () {
+			var property = PropertyFactory.create("autodesk.test:utilsTestParent-1.0.0");
 
 			var typeids = Utils.extractTypeids(
 				property.serialize({ dirtyOnly: false, includeRootTypeid: true }),
@@ -1295,7 +1150,7 @@ describe("Utils", () => {
 			]);
 		});
 
-		it("Should work for inserts into a NodePropertý", () => {
+		it("Should work for inserts into a NodePropertý", function () {
 			var property = PropertyFactory.create("NodeProperty");
 			var child = PropertyFactory.create("autodesk.test:utilsTestParent-1.0.0");
 			property.insert("child", child);
@@ -1314,7 +1169,7 @@ describe("Utils", () => {
 			]);
 		});
 
-		it("Should work for inserts into a map", () => {
+		it("Should work for inserts into a map", function () {
 			var property = PropertyFactory.create("map<>");
 			var child = PropertyFactory.create("autodesk.test:utilsTestParent-1.0.0");
 			property.insert("child", child);
@@ -1332,7 +1187,7 @@ describe("Utils", () => {
 			]);
 		});
 
-		it("Should work for inserts into an array", () => {
+		it("Should work for inserts into an array", function () {
 			var property = PropertyFactory.create("array<>");
 			var child = PropertyFactory.create("autodesk.test:utilsTestParent-1.0.0");
 			property.push(child);
@@ -1350,13 +1205,12 @@ describe("Utils", () => {
 			]);
 		});
 
-		it("Should work for modifications of a NodeProperty", () => {
+		it("Should work for modifications of a NodeProperty", function () {
 			var property = PropertyFactory.create("NodeProperty");
 			var child = PropertyFactory.create("autodesk.test:utilsTestParent-1.0.0");
 			property.insert("child", child);
 			property.cleanDirty();
-			property.resolvePath('child.contained."error\\"Msg\\""').value =
-				"modified";
+			property.resolvePath('child.contained."error\\"Msg\\""').value = "modified";
 
 			var typeids = Utils.extractTypeids(
 				property.serialize({ dirtyOnly: true, in_includeRootTypeid: true }),
@@ -1370,13 +1224,12 @@ describe("Utils", () => {
 			]);
 		});
 
-		it("Should work for modifications of a map", () => {
+		it("Should work for modifications of a map", function () {
 			var property = PropertyFactory.create("map<>");
 			var child = PropertyFactory.create("autodesk.test:utilsTestParent-1.0.0");
 			property.insert("child", child);
 			property.cleanDirty();
-			property.resolvePath('[child].contained."error\\"Msg\\""').value =
-				"modified";
+			property.resolvePath('[child].contained."error\\"Msg\\""').value = "modified";
 
 			var typeids = Utils.extractTypeids(property._serialize(true, true));
 			typeids.sort();
@@ -1388,14 +1241,12 @@ describe("Utils", () => {
 			]);
 		});
 
-		it("Should work for modifications of an array", () => {
+		it("Should work for modifications of an array", function () {
 			var property = PropertyFactory.create("array<>");
 			var child = PropertyFactory.create("autodesk.test:utilsTestParent-1.0.0");
 			property.push(child);
 			property.cleanDirty();
-			property
-				.resolvePath('[0].contained."error\\"Msg\\""')
-				.setValue("modified");
+			property.resolvePath('[0].contained."error\\"Msg\\""').setValue("modified");
 
 			var typeids = Utils.extractTypeids(property._serialize(true, true));
 			typeids.sort();
@@ -1407,7 +1258,7 @@ describe("Utils", () => {
 			]);
 		});
 
-		it("Should work for removals", () => {
+		it("Should work for removals", function () {
 			var typeids = Utils.extractTypeids({ remove: ["xxx-yyy-zzz"] });
 
 			expect(typeids).to.have.lengthOf(1);
@@ -1415,18 +1266,14 @@ describe("Utils", () => {
 		});
 	});
 
-	describe("Change set helper functions", () => {
+	describe("Change set helper functions", function () {
 		var root, sim, subject1, subject2, subject3;
 		// Create a simple test data-set
-		before(() => {
+		before(function () {
 			root = PropertyFactory.create("NodeProperty");
 			sim = PropertyFactory.create("autodesk.test:utils.spec.pan.sim-1.0.0");
-			subject1 = PropertyFactory.create(
-				"autodesk.test:utils.spec.task.subject-1.0.0",
-			);
-			subject2 = PropertyFactory.create(
-				"autodesk.test:utils.spec.task.subject-1.0.0",
-			);
+			subject1 = PropertyFactory.create("autodesk.test:utils.spec.task.subject-1.0.0");
+			subject2 = PropertyFactory.create("autodesk.test:utils.spec.task.subject-1.0.0");
 
 			root.insert("simulation", sim);
 			sim.insert("subject1", subject1);
@@ -1434,12 +1281,8 @@ describe("Utils", () => {
 
 			var arrayProp = PropertyFactory.create("array<>");
 			root.insert("array", arrayProp);
-			arrayProp.push(
-				PropertyFactory.create("autodesk.test:utils.spec.task.subject-1.0.0"),
-			);
-			arrayProp.push(
-				PropertyFactory.create("autodesk.test:utils.spec.task.subject-1.0.0"),
-			);
+			arrayProp.push(PropertyFactory.create("autodesk.test:utils.spec.task.subject-1.0.0"));
+			arrayProp.push(PropertyFactory.create("autodesk.test:utils.spec.task.subject-1.0.0"));
 			arrayProp.get(1)._properties.progress.value = 1;
 
 			var mapProp = PropertyFactory.create("map<>");
@@ -1450,16 +1293,14 @@ describe("Utils", () => {
 			);
 		});
 
-		it("should work correctly for inserts", () => {
+		it("should work correctly for inserts", function () {
 			var insertedResults = Utils.getChangesByType(
 				"autodesk.test:utils.spec.task.subject-1.0.0",
 				root.serialize({ dirtyOnly: true }),
 			);
 			assert(_.keys(insertedResults.insert).length === 9);
 			for (var i = 0; i < 9; i++) {
-				assert(
-					root.resolvePath(_.keys(insertedResults.insert)[i]) !== undefined,
-				);
+				assert(root.resolvePath(_.keys(insertedResults.insert)[i]) !== undefined);
 				assert(
 					Utils.getChangesByPath(
 						_.keys(insertedResults.insert)[i],
@@ -1471,7 +1312,7 @@ describe("Utils", () => {
 			}
 		});
 
-		it("should work correctly for the root path", () => {
+		it("should work correctly for the root path", function () {
 			var AnonymousTestPropertyTemplate = {
 				typeid: "autodesk.tests:AnonymousMapTestPropertyID-1.0.0",
 				properties: [{ id: "stringProperty", typeid: "String" }],
@@ -1481,9 +1322,7 @@ describe("Utils", () => {
 			var prop = PropertyFactory.create("NodeProperty");
 			prop.insert(
 				"A",
-				PropertyFactory.create(
-					"autodesk.tests:AnonymousMapTestPropertyID-1.0.0",
-				),
+				PropertyFactory.create("autodesk.tests:AnonymousMapTestPropertyID-1.0.0"),
 			);
 			var result = Utils.getChangesByPath("", null, prop.serialize());
 			expect(result).to.deep.equal({
@@ -1501,7 +1340,7 @@ describe("Utils", () => {
 			});
 		});
 
-		it("should correctly strip typeids in insertions", () => {
+		it("should correctly strip typeids in insertions", function () {
 			var insertionChangeSet = root.serialize({ dirtyOnly: true });
 			Utils._stripTypeids(insertionChangeSet);
 			expect(insertionChangeSet).to.deep.equal({
@@ -1565,15 +1404,13 @@ describe("Utils", () => {
 			});
 		});
 
-		it("should work correctly for modifies", () => {
+		it("should work correctly for modifies", function () {
 			root.cleanDirty(
 				BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE |
 					BaseProperty.MODIFIED_STATE_FLAGS.DIRTY,
 			);
 
-			subject3 = PropertyFactory.create(
-				"autodesk.test:utils.spec.task.subject-1.0.0",
-			);
+			subject3 = PropertyFactory.create("autodesk.test:utils.spec.task.subject-1.0.0");
 			subject2.insert("subject3", subject3);
 
 			subject1._properties.errorMsg.value = "test";
@@ -1638,7 +1475,7 @@ describe("Utils", () => {
 			}
 		});
 
-		it("should correctly strip typeids in modifies", () => {
+		it("should correctly strip typeids in modifies", function () {
 			var modifyChangeSet = root.serialize({ dirtyOnly: true });
 			Utils._stripTypeids(modifyChangeSet);
 			expect(modifyChangeSet).to.deep.equal({
@@ -1715,7 +1552,7 @@ describe("Utils", () => {
 			});
 		});
 
-		it("should correctly work for removes", () => {
+		it("should correctly work for removes", function () {
 			root.cleanDirty(
 				BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE |
 					BaseProperty.MODIFIED_STATE_FLAGS.DIRTY,
@@ -1749,12 +1586,8 @@ describe("Utils", () => {
 				).removed === true,
 			);
 			assert(
-				Utils.getChangesByPath(
-					sim.getId(),
-					root,
-					root.serialize({ dirtyOnly: true }),
-					false,
-				).removed === true,
+				Utils.getChangesByPath(sim.getId(), root, root.serialize({ dirtyOnly: true }), false)
+					.removed === true,
 			);
 
 			root.resolvePath("map").remove("entry2");
@@ -1762,7 +1595,7 @@ describe("Utils", () => {
 			root.resolvePath("array").removeRange(1, 2);
 		});
 
-		it("should correctly strip typeids in removes", () => {
+		it("should correctly strip typeids in removes", function () {
 			var modifyChangeSet = root._serialize(true);
 			Utils._stripTypeids(modifyChangeSet);
 			expect(modifyChangeSet).to.deep.equal({
@@ -1781,10 +1614,8 @@ describe("Utils", () => {
 			});
 		});
 
-		it("should work for nested templates", () => {
-			var nestedTemplate = PropertyFactory.create(
-				"autodesk.tests:nestedTemplate-1.0.0",
-			);
+		it("should work for nested templates", function () {
+			var nestedTemplate = PropertyFactory.create("autodesk.tests:nestedTemplate-1.0.0");
 			nestedTemplate._properties.c.myNestedProp.errorMsg.value = "testString";
 			var changeSet = nestedTemplate._serialize(true);
 
@@ -1792,16 +1623,11 @@ describe("Utils", () => {
 			expect(changes.modify["c.myNestedProp.errorMsg"]).to.equal("testString");
 
 			expect(
-				Utils.getChangesByPath(
-					"c.myNestedProp.errorMsg",
-					nestedTemplate,
-					changeSet,
-					false,
-				),
+				Utils.getChangesByPath("c.myNestedProp.errorMsg", nestedTemplate, changeSet, false),
 			).to.have.keys("modify");
 		});
 
-		it("should work for an object with characters that have to be quoted", () => {
+		it("should work for an object with characters that have to be quoted", function () {
 			var node = PropertyFactory.create(
 				"autodesk.tests:property.with.quotable.characters-1.0.0",
 			);
@@ -1819,43 +1645,27 @@ describe("Utils", () => {
 				'"test[property]".".property.".test',
 			);
 
-			expect(
-				Utils.getChangesByPath("simple_property", node, changeSet, false),
-			).to.have.keys("modify");
-			expect(
-				Utils.getChangesByPath('"test.property"', node, changeSet, false),
-			).to.have.keys("modify");
+			expect(Utils.getChangesByPath("simple_property", node, changeSet, false)).to.have.keys(
+				"modify",
+			);
+			expect(Utils.getChangesByPath('"test.property"', node, changeSet, false)).to.have.keys(
+				"modify",
+			);
 			expect(
 				Utils.getChangesByPath('"test\\"property\\""', node, changeSet, false),
 			).to.have.keys("modify");
 			expect(
-				Utils.getChangesByPath(
-					'"test[property]".".property.".test',
-					node,
-					changeSet,
-					false,
-				),
+				Utils.getChangesByPath('"test[property]".".property.".test', node, changeSet, false),
 			).to.have.keys("modify");
 		});
 
-		it("should work for a node property with characters that have to be quoted", () => {
+		it("should work for a node property with characters that have to be quoted", function () {
 			var node = PropertyFactory.create("NodeProperty");
-			node.insert(
-				"simple_property",
-				PropertyFactory.create("String", undefined, "test"),
-			);
-			node.insert(
-				"test.property",
-				PropertyFactory.create("String", undefined, "test"),
-			);
-			node.insert(
-				'test"property"',
-				PropertyFactory.create("String", undefined, "test"),
-			);
+			node.insert("simple_property", PropertyFactory.create("String", undefined, "test"));
+			node.insert("test.property", PropertyFactory.create("String", undefined, "test"));
+			node.insert('test"property"', PropertyFactory.create("String", undefined, "test"));
 			node.insert("test[property]", PropertyFactory.create("NodeProperty"));
-			node
-				.get("test[property]")
-				.insert(".property.", PropertyFactory.create("NodeProperty"));
+			node.get("test[property]").insert(".property.", PropertyFactory.create("NodeProperty"));
 			node
 				.get("test[property]")
 				.get(".property.")
@@ -1870,30 +1680,25 @@ describe("Utils", () => {
 				'"test[property]".".property.".test',
 			);
 
-			expect(
-				Utils.getChangesByPath("simple_property", node, changeSet, false),
-			).to.have.keys("insert");
-			expect(
-				Utils.getChangesByPath('"test.property"', node, changeSet, false),
-			).to.have.keys("insert");
+			expect(Utils.getChangesByPath("simple_property", node, changeSet, false)).to.have.keys(
+				"insert",
+			);
+			expect(Utils.getChangesByPath('"test.property"', node, changeSet, false)).to.have.keys(
+				"insert",
+			);
 			expect(
 				Utils.getChangesByPath('"test\\"property\\""', node, changeSet, false),
 			).to.have.keys("insert");
 			expect(
-				Utils.getChangesByPath(
-					'"test[property]".".property.".test',
-					node,
-					changeSet,
-					false,
-				),
+				Utils.getChangesByPath('"test[property]".".property.".test', node, changeSet, false),
 			).to.have.keys("insert");
 		});
 	});
 
-	describe("Utils.getChangesToTokenizedPaths", () => {
+	describe("Utils.getChangesToTokenizedPaths", function () {
 		var CS = {
 			insert: {
-				NodeProperty: {
+				"NodeProperty": {
 					nested1: {
 						insert: {
 							NodeProperty: {
@@ -1932,13 +1737,13 @@ describe("Utils", () => {
 						],
 					},
 				},
-				String: {
+				"String": {
 					string: "text",
 				},
 			},
 		};
 
-		it("should work using objects", () => {
+		it("should work using objects", function () {
 			var visitedPaths = [];
 			Utils.getChangesToTokenizedPaths(
 				{
@@ -1947,7 +1752,9 @@ describe("Utils", () => {
 						nested2: {
 							string: {
 								__hidden: {
-									myCallback: () => "hello",
+									myCallback: function () {
+										return "hello";
+									},
 									myValue: 1,
 								},
 							},
@@ -1961,7 +1768,7 @@ describe("Utils", () => {
 					},
 				},
 				CS,
-				(in_context, in_nested, in_tokenizedPath) => {
+				function (in_context, in_nested, in_tokenizedPath) {
 					var currentPath = in_tokenizedPath.join(".");
 					visitedPaths.push(currentPath);
 					if (currentPath === "nested1.nested2.string") {
@@ -1989,7 +1796,7 @@ describe("Utils", () => {
 			]);
 		});
 
-		it("should work using maps", () => {
+		it("should work using maps", function () {
 			var visitedPaths = [];
 			Utils.getChangesToTokenizedPaths(
 				new Map([
@@ -2006,7 +1813,12 @@ describe("Utils", () => {
 											[
 												"__hidden",
 												new Map([
-													["myCallback", () => "hello"],
+													[
+														"myCallback",
+														function () {
+															return "hello";
+														},
+													],
 													["myValue", 1],
 												]),
 											],
@@ -2020,19 +1832,14 @@ describe("Utils", () => {
 					["nestedArray", new Map([["1", new Map([["String", new Map()]])]])],
 				]),
 				CS,
-				(in_context, in_nested, in_tokenizedPath) => {
+				function (in_context, in_nested, in_tokenizedPath) {
 					var currentPath = in_tokenizedPath.join(".");
 					visitedPaths.push(currentPath);
 					if (currentPath === "nested1.nested2.string") {
 						expect(in_nested).to.exist;
 						expect(in_nested).to.have.key("__hidden");
-						expect(in_nested.get("__hidden")).to.have.all.keys(
-							"myCallback",
-							"myValue",
-						);
-						expect(in_nested.get("__hidden").get("myCallback")()).to.eql(
-							"hello",
-						);
+						expect(in_nested.get("__hidden")).to.have.all.keys("myCallback", "myValue");
+						expect(in_nested.get("__hidden").get("myCallback")()).to.eql("hello");
 						expect(in_nested.get("__hidden").get("myValue")).to.eql(1);
 					}
 				},
@@ -2053,7 +1860,7 @@ describe("Utils", () => {
 			]);
 		});
 
-		it("should assume paths as literal when the escapeLeadingDoubleUnderscore flag is off ", () => {
+		it("should assume paths as literal when the escapeLeadingDoubleUnderscore flag is off ", function () {
 			var visitedPaths = [];
 			Utils.getChangesToTokenizedPaths(
 				{
@@ -2064,7 +1871,7 @@ describe("Utils", () => {
 					},
 				},
 				CS,
-				(in_context, in_nested, in_tokenizedPath) => {
+				function (in_context, in_nested, in_tokenizedPath) {
 					visitedPaths.push(in_tokenizedPath.join("."));
 				},
 				{
@@ -2234,13 +2041,13 @@ describe("Utils", () => {
           });
         }); */
 
-	describe("Utils.getFilteredChangeSetByPaths", () => {
+	describe("Utils.getFilteredChangeSetByPaths", function () {
 		var changeSet = {
 			insert: {
-				NodeProperty: {
+				"NodeProperty": {
 					nested1: {
 						insert: {
-							NodeProperty: {
+							"NodeProperty": {
 								nested2: {
 									insert: {
 										String: {
@@ -2315,7 +2122,7 @@ describe("Utils", () => {
 				"Reference<String>": {
 					refProp: "/test.prop",
 				},
-				RepositoryReferenceProperty: {
+				"RepositoryReferenceProperty": {
 					refRepoProp: {
 						Bool: {
 							followBranch: false,
@@ -2327,14 +2134,14 @@ describe("Utils", () => {
 						},
 					},
 				},
-				NamedProperty: {
+				"NamedProperty": {
 					namedProp: {
 						String: {
 							guid: "e763527c-7f49-417c-8df3-9fb7f90a1932",
 						},
 					},
 				},
-				NamedNodeProperty: {
+				"NamedNodeProperty": {
 					namedNodeProp: {
 						String: {
 							guid: "efc68477-53b1-49ac-bd3f-e05a21f85a32",
@@ -2343,7 +2150,7 @@ describe("Utils", () => {
 							"enum<autodesk.core:UnitsEnum-1.0.0>": {
 								enumProp: 0,
 							},
-							String: {
+							"String": {
 								test: "blah",
 							},
 						},
@@ -2351,11 +2158,11 @@ describe("Utils", () => {
 				},
 				"autodesk.test:testProp-1.0.0": {
 					customTemplate: {
-						Uint32: {
+						"Uint32": {
 							a: 922337203685,
 						},
-						String: {
-							b: "hello",
+						"String": {
+							"b": "hello",
 							"nested.c.d.e": "world",
 							"nested.c.d.f": "hello",
 						},
@@ -2374,12 +2181,12 @@ describe("Utils", () => {
 						},
 					},
 				},
-				String: {
+				"String": {
 					emptyString: "",
 				},
 			},
 			modify: {
-				NodeProperty: {
+				"NodeProperty": {
 					nested4: {
 						insert: {
 							Uint32: {
@@ -2398,7 +2205,7 @@ describe("Utils", () => {
 			remove: ["nested7"],
 		};
 
-		it("should filter change sets by paths resolving to all types (NodeProperty, array, map, set, NamedNodeProperty, Reference, Primitive types)", () => {
+		it("should filter change sets by paths resolving to all types (NodeProperty, array, map, set, NamedNodeProperty, Reference, Primitive types)", function () {
 			var filteredCS = Utils.getFilteredChangeSetByPaths(changeSet, [
 				"nested1",
 				"nested4.nested5",
@@ -2409,7 +2216,7 @@ describe("Utils", () => {
 					NodeProperty: {
 						nested1: {
 							insert: {
-								NodeProperty: {
+								"NodeProperty": {
 									nested2: {
 										insert: {
 											String: {
@@ -2514,7 +2321,7 @@ describe("Utils", () => {
 
 			expect(filteredCS).to.eql({
 				insert: {
-					NodeProperty: {
+					"NodeProperty": {
 						nested1: {
 							insert: {
 								"array<>": {
@@ -2601,10 +2408,10 @@ describe("Utils", () => {
 				insert: {
 					"autodesk.test:testProp-1.0.0": {
 						customTemplate: {
-							Uint32: {
+							"Uint32": {
 								a: 922337203685,
 							},
-							String: {
+							"String": {
 								"nested.c.d.e": "world",
 							},
 							"set<NamedProperty>": {
@@ -2632,10 +2439,7 @@ describe("Utils", () => {
 						"customTemplate",
 						new Map([
 							["a", new Map()],
-							[
-								"nested",
-								new Map([["c", new Map([["d", new Map([["e", new Map()]])]])]]),
-							],
+							["nested", new Map([["c", new Map([["d", new Map([["e", new Map()]])]])]])],
 							["nestedSet", new Map()],
 						]),
 					],
@@ -2646,10 +2450,10 @@ describe("Utils", () => {
 				insert: {
 					"autodesk.test:testProp-1.0.0": {
 						customTemplate: {
-							Uint32: {
+							"Uint32": {
 								a: 922337203685,
 							},
-							String: {
+							"String": {
 								"nested.c.d.e": "world",
 							},
 							"set<NamedProperty>": {
@@ -2715,7 +2519,7 @@ describe("Utils", () => {
 					"Reference<String>": {
 						refProp: "/test.prop",
 					},
-					RepositoryReferenceProperty: {
+					"RepositoryReferenceProperty": {
 						refRepoProp: {
 							Bool: {
 								followBranch: false,
@@ -2728,9 +2532,7 @@ describe("Utils", () => {
 				},
 			});
 
-			filteredCS = Utils.getFilteredChangeSetByPaths(changeSet, [
-				"assetMap[1].name",
-			]);
+			filteredCS = Utils.getFilteredChangeSetByPaths(changeSet, ["assetMap[1].name"]);
 			expect(filteredCS).to.eql({
 				insert: {
 					"map<mysample:asset-1.0.0>": {
@@ -2750,9 +2552,7 @@ describe("Utils", () => {
 			});
 
 			// For maps, using dots as separators, instead of brackets, is also supported.
-			filteredCS = Utils.getFilteredChangeSetByPaths(changeSet, [
-				"assetMap.1.name",
-			]);
+			filteredCS = Utils.getFilteredChangeSetByPaths(changeSet, ["assetMap.1.name"]);
 			expect(filteredCS).to.eql({
 				insert: {
 					"map<mysample:asset-1.0.0>": {
@@ -2772,7 +2572,7 @@ describe("Utils", () => {
 			});
 		});
 
-		it("should ignore overlapping paths", () => {
+		it("should ignore overlapping paths", function () {
 			var filteredCS = Utils.getFilteredChangeSetByPaths(changeSet, [
 				"customTemplate",
 				"customTemplate.a",
@@ -2784,11 +2584,11 @@ describe("Utils", () => {
 				insert: {
 					"autodesk.test:testProp-1.0.0": {
 						customTemplate: {
-							Uint32: {
+							"Uint32": {
 								a: 922337203685,
 							},
-							String: {
-								b: "hello",
+							"String": {
+								"b": "hello",
 								"nested.c.d.e": "world",
 								"nested.c.d.f": "hello",
 							},
@@ -2848,11 +2648,11 @@ describe("Utils", () => {
 				insert: {
 					"autodesk.test:testProp-1.0.0": {
 						customTemplate: {
-							Uint32: {
+							"Uint32": {
 								a: 922337203685,
 							},
-							String: {
-								b: "hello",
+							"String": {
+								"b": "hello",
 								"nested.c.d.e": "world",
 								"nested.c.d.f": "hello",
 							},
@@ -2887,11 +2687,11 @@ describe("Utils", () => {
 				insert: {
 					"autodesk.test:testProp-1.0.0": {
 						customTemplate: {
-							Uint32: {
+							"Uint32": {
 								a: 922337203685,
 							},
-							String: {
-								b: "hello",
+							"String": {
+								"b": "hello",
 								"nested.c.d.e": "world",
 								"nested.c.d.f": "hello",
 							},
@@ -2913,9 +2713,7 @@ describe("Utils", () => {
 				},
 			});
 
-			var filteredCS = Utils.getFilteredChangeSetByPaths(changeSet, [
-				"emptyString",
-			]);
+			var filteredCS = Utils.getFilteredChangeSetByPaths(changeSet, ["emptyString"]);
 
 			expect(filteredCS).to.eql({
 				insert: {
@@ -2926,7 +2724,7 @@ describe("Utils", () => {
 			});
 		});
 
-		it("should return an empty change set when filtering by a path that does not exist", () => {
+		it("should return an empty change set when filtering by a path that does not exist", function () {
 			var filteredCS = Utils.getFilteredChangeSetByPaths(changeSet, [
 				"path.that.does.not.exist",
 				"dontExist",
@@ -3003,9 +2801,7 @@ describe("Utils", () => {
 			});
 
 			// Partially matched paths are included
-			var filteredCS = Utils.getFilteredChangeSetByPaths(changeSet, [
-				"assetMap[2]",
-			]);
+			var filteredCS = Utils.getFilteredChangeSetByPaths(changeSet, ["assetMap[2]"]);
 			expect(filteredCS).to.eql({
 				insert: {
 					"map<mysample:asset-1.0.0>": {
@@ -3053,7 +2849,7 @@ describe("Utils", () => {
 				insert: {
 					"autodesk.test:testProp-1.0.0": {
 						customTemplate: {
-							Uint32: {
+							"Uint32": {
 								a: 922337203685,
 							},
 							"set<NamedProperty>": {
@@ -3065,34 +2861,29 @@ describe("Utils", () => {
 			});
 
 			// Make sure, nested removes are treated correctly
-			var filteredCS = Utils.getFilteredChangeSetByPaths(changeSet, [
-				"nested7.abcd",
-			]);
+			var filteredCS = Utils.getFilteredChangeSetByPaths(changeSet, ["nested7.abcd"]);
 			expect(filteredCS).to.eql({
 				remove: ["nested7"],
 			});
 		});
 
-		it("should fail filtering change sets with paths that resolve into arrays and sets", () => {
-			var failedFilteredFunc = Utils.getFilteredChangeSetByPaths.bind(
-				null,
-				changeSet,
-				["nested1.nestedArray[0]"],
-			);
+		it("should fail filtering change sets with paths that resolve into arrays and sets", function () {
+			var failedFilteredFunc = Utils.getFilteredChangeSetByPaths.bind(null, changeSet, [
+				"nested1.nestedArray[0]",
+			]);
 
 			expect(failedFilteredFunc).to.throw(Error, MSG.FILTER_PATH_WITHIN_ARRAY);
 
 			// With valid paths
-			failedFilteredFunc = Utils.getFilteredChangeSetByPaths.bind(
-				null,
-				changeSet,
-				["customTemplate", "nested1.nestedArray[0]"],
-			);
+			failedFilteredFunc = Utils.getFilteredChangeSetByPaths.bind(null, changeSet, [
+				"customTemplate",
+				"nested1.nestedArray[0]",
+			]);
 
 			expect(failedFilteredFunc).to.throw(Error, MSG.FILTER_PATH_WITHIN_ARRAY);
 		});
 
-		it("should work for ChangeSet with segments requiring escapes for NodeProperties", () => {
+		it("should work for ChangeSet with segments requiring escapes for NodeProperties", function () {
 			var node = PropertyFactory.create("NodeProperty");
 			node.insert('."test".', PropertyFactory.create("NodeProperty"));
 			node
@@ -3100,9 +2891,7 @@ describe("Utils", () => {
 				.insert("[abcd]", PropertyFactory.create("String", undefined, "test"));
 
 			var CS = node.serialize();
-			var filteredCS = Utils.getFilteredChangeSetByPaths(CS, [
-				'".\\"test\\"."."[abcd]"',
-			]);
+			var filteredCS = Utils.getFilteredChangeSetByPaths(CS, ['".\\"test\\"."."[abcd]"']);
 			expect(filteredCS).to.deep.equal(CS);
 
 			node.cleanDirty();
@@ -3110,9 +2899,7 @@ describe("Utils", () => {
 
 			// Test a modification
 			CS = node.serialize({ dirtyOnly: true });
-			filteredCS = Utils.getFilteredChangeSetByPaths(CS, [
-				'".\\"test\\"."."[abcd]"',
-			]);
+			filteredCS = Utils.getFilteredChangeSetByPaths(CS, ['".\\"test\\"."."[abcd]"']);
 			expect(filteredCS).to.deep.equal(CS);
 
 			// Test a removal
@@ -3123,7 +2910,7 @@ describe("Utils", () => {
 			expect(filteredCS).to.deep.equal(CS);
 		});
 
-		it("should work for ChangeSet with segments requiring escapes in template", () => {
+		it("should work for ChangeSet with segments requiring escapes in template", function () {
 			var node = PropertyFactory.create(
 				"autodesk.tests:property.with.quotable.characters-1.0.0",
 			);
@@ -3138,7 +2925,7 @@ describe("Utils", () => {
 			expect(filteredCS).to.deep.equal(CS);
 		});
 
-		it("should work for reversible ChangeSet", () => {
+		it("should work for reversible ChangeSet", function () {
 			var originalChangeSet = {
 				insert: {
 					"autodesk.tests:AnonymousMapTestPropertyID-1.0.0": {
@@ -3165,10 +2952,11 @@ describe("Utils", () => {
 			var cs = new ChangeSet(originalChangeSet);
 			cs._toReversibleChangeSet(parentChangeSet);
 
-			var filteredCS = Utils.getFilteredChangeSetByPaths(
-				cs.getSerializedChangeSet(),
-				["A", "B", "F"],
-			);
+			var filteredCS = Utils.getFilteredChangeSetByPaths(cs.getSerializedChangeSet(), [
+				"A",
+				"B",
+				"F",
+			]);
 
 			expect(filteredCS).to.eql({
 				insert: {
@@ -3268,50 +3056,41 @@ describe("Utils", () => {
 		};
 
 		it("should exclude single given path", () => {
-			const res = Utils.excludePathsFromChangeSet(changeset, "assets[Prop3]");
+			let res = Utils.excludePathsFromChangeSet(changeset, "assets[Prop3]");
 			expect(res).to.be.deep.equal(singleExclusion);
 		});
 
 		it("should exclude single given path in array", () => {
-			const res = Utils.excludePathsFromChangeSet(changeset, ["assets[Prop3]"]);
+			let res = Utils.excludePathsFromChangeSet(changeset, ["assets[Prop3]"]);
 			expect(res).to.be.deep.equal(singleExclusion);
 		});
 
 		it("should exclude every given path in array", () => {
-			const res = Utils.excludePathsFromChangeSet(changeset, [
-				"assets[Prop3]",
-				"assets[Prop2]",
-			]);
+			let res = Utils.excludePathsFromChangeSet(changeset, ["assets[Prop3]", "assets[Prop2]"]);
 			expect(res).to.be.deep.equal(multiExclusion);
 		});
 
 		it("should return undefined if no changeset is passed", () => {
-			const res = Utils.excludePathsFromChangeSet(undefined, ["assets[Prop3]"]);
+			let res = Utils.excludePathsFromChangeSet(undefined, ["assets[Prop3]"]);
 			expect(res).to.be.undefined;
 		});
 
 		it("should not exclude if no paths are passed", () => {
-			expect(Utils.excludePathsFromChangeSet(changeset)).to.be.deep.equal(
-				changeset,
-			);
-			expect(Utils.excludePathsFromChangeSet(changeset, "")).to.be.deep.equal(
-				changeset,
-			);
-			expect(Utils.excludePathsFromChangeSet(changeset, [])).to.be.deep.equal(
-				changeset,
-			);
+			expect(Utils.excludePathsFromChangeSet(changeset)).to.be.deep.equal(changeset);
+			expect(Utils.excludePathsFromChangeSet(changeset, "")).to.be.deep.equal(changeset);
+			expect(Utils.excludePathsFromChangeSet(changeset, [])).to.be.deep.equal(changeset);
 		});
 
 		it("should not exclude if an invalid path is passed", () => {
-			expect(
-				Utils.excludePathsFromChangeSet(changeset, ["a.b.c"]),
-			).to.be.deep.equal(changeset);
+			expect(Utils.excludePathsFromChangeSet(changeset, ["a.b.c"])).to.be.deep.equal(
+				changeset,
+			);
 		});
 
 		it("should copy the changeset", () => {
-			expect(
-				Utils.excludePathsFromChangeSet(changeset, ["assets[prop3]"]),
-			).to.not.be.equal(changeset);
+			expect(Utils.excludePathsFromChangeSet(changeset, ["assets[prop3]"])).to.not.be.equal(
+				changeset,
+			);
 		});
 	});
 });

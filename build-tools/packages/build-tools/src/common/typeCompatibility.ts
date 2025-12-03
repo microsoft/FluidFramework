@@ -135,22 +135,19 @@ namespace Test2 {
 	// @ts-expect-error This means that renaming an Enum (even if you also export an alias to it under the old name) would be incorrectly detected as a breaking change.
 	type _check2 = requireAssignableTo<Test1.A, Test2.Renamed>;
 	// TypeOnly prevents this mistake from being flagged as breaking:
-	type _check3 = requireAssignableTo<
-		TypeOnly<Test1.A>,
-		TypeOnly<Test2.Renamed>
-	>;
+	type _check3 = requireAssignableTo<TypeOnly<Test1.A>, TypeOnly<Test2.Renamed>>;
 }
 
 // Const enums
 
 namespace Test3 {
-	export enum A {
+	export const enum A {
 		y = 0,
 	}
 }
 
 namespace Test4 {
-	export enum A {
+	export const enum A {
 		x = 0,
 		y = 1,
 	}
@@ -161,7 +158,7 @@ namespace Test4 {
 }
 
 namespace Test5 {
-	export enum A {
+	export const enum A {
 		y = 0,
 	}
 }
@@ -179,10 +176,7 @@ namespace Test5 {
 	// @ts-expect-error Renaming works the same as with non-const enums.
 	type _check2 = requireAssignableTo<Test3.A, Test4.Renamed>;
 	// TypeOnly prevents this mistake from being flagged as breaking:
-	type _check3 = requireAssignableTo<
-		TypeOnly<Test3.A>,
-		TypeOnly<Test4.Renamed>
-	>;
+	type _check3 = requireAssignableTo<TypeOnly<Test3.A>, TypeOnly<Test4.Renamed>>;
 }
 
 // Classes with protected members
@@ -239,19 +233,13 @@ namespace Test_TypeOnly_Preserves_Primitives {
 	// but the number type is preserved:
 	type brandedNumber = number & { brand: "Number" };
 	type _check_number1 = requireAssignableTo<TypeOnly<brandedNumber>, number>;
-	type _check_number2 = requireAssignableTo<
-		brandedNumber,
-		TypeOnly<brandedNumber>
-	>;
+	type _check_number2 = requireAssignableTo<brandedNumber, TypeOnly<brandedNumber>>;
 
 	// Due to limitations of the current version of TypeOnly, brands on string are lost,
 	// but the string type is preserved:
 	type brandedString = string & { brand: "String" };
 	type _check_string1 = requireAssignableTo<TypeOnly<brandedString>, string>;
-	type _check_string2 = requireAssignableTo<
-		brandedString,
-		TypeOnly<brandedString>
-	>;
+	type _check_string2 = requireAssignableTo<brandedString, TypeOnly<brandedString>>;
 
 	// Due to limitations of the current version of TypeOnly, brands on unions involving
 	// 'string' or 'number' are lost, but the 'string | number' type is preserved:
@@ -267,14 +255,8 @@ namespace Test_TypeOnly_Preserves_Primitives {
 
 	// Other branded primitive types are preserved.
 	type brandedBoolean = boolean & { brand: "Boolean" };
-	type _check_bool1 = requireAssignableTo<
-		TypeOnly<brandedBoolean>,
-		brandedBoolean
-	>;
-	type _check_bool2 = requireAssignableTo<
-		brandedBoolean,
-		TypeOnly<brandedBoolean>
-	>;
+	type _check_bool1 = requireAssignableTo<TypeOnly<brandedBoolean>, brandedBoolean>;
+	type _check_bool2 = requireAssignableTo<brandedBoolean, TypeOnly<brandedBoolean>>;
 
 	type brandedBigInt = bigint & { brand: "BigInt" };
 	type _check_bigint1 = requireAssignableTo<TypeOnly<brandedBigInt>, bigint>;
@@ -295,14 +277,8 @@ namespace Test_TypeOnly_Preserves_Primitives {
 	type brandedUnion = (undefined | null | boolean | bigint) & {
 		brand: "Union";
 	};
-	type _check_union3 = requireAssignableTo<
-		TypeOnly<brandedUnion>,
-		brandedUnion
-	>;
-	type _check_union4 = requireAssignableTo<
-		brandedUnion,
-		TypeOnly<brandedUnion>
-	>;
+	type _check_union3 = requireAssignableTo<TypeOnly<brandedUnion>, brandedUnion>;
+	type _check_union4 = requireAssignableTo<brandedUnion, TypeOnly<brandedUnion>>;
 }
 
 namespace Test_TypeOnly_Symbols {

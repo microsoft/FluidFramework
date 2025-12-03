@@ -8,11 +8,11 @@
 		"noImplicitAny": true,
 		"noUnusedLocals": true,
 		"noImplicitOverride": true,
-		"exactOptionalPropertyTypes": false
+		"exactOptionalPropertyTypes": false,
 	},
 	"references": [
 		{
-			"path": "../.."
-		}
-	]
+			"path": "../..",
+		},
+	],
 }

@@ -29,21 +29,13 @@ function createConnectedPactMap(
 		objectStorage: new MockStorage(),
 	};
 
-	const pactMap = new PactMapClass(
-		id,
-		dataStoreRuntime,
-		PactMapFactory.Attributes,
-	);
+	const pactMap = new PactMapClass(id, dataStoreRuntime, PactMapFactory.Attributes);
 	pactMap.connect(services);
 	return pactMap;
 }
 
 const createLocalPactMap = (id: string): PactMapClass =>
-	new PactMapClass(
-		id,
-		new MockFluidDataStoreRuntime(),
-		PactMapFactory.Attributes,
-	);
+	new PactMapClass(id, new MockFluidDataStoreRuntime(), PactMapFactory.Attributes);
 
 describe("PactMap", () => {
 	describe("Local state", () => {
@@ -118,11 +110,7 @@ describe("PactMap", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			await pactMapAcceptanceP;
-			assert.strictEqual(
-				pactMap.get(expectedKey),
-				expectedValue,
-				"Wrong value in PactMap",
-			);
+			assert.strictEqual(pactMap.get(expectedKey), expectedValue, "Wrong value in PactMap");
 		});
 	});
 
@@ -225,16 +213,8 @@ describe("PactMap", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			await Promise.all([pactMap1AcceptanceP, pactMap2AcceptanceP]);
-			assert.strictEqual(
-				pactMap1.get(expectedKey),
-				expectedValue,
-				"Wrong value in PactMap 1",
-			);
-			assert.strictEqual(
-				pactMap2.get(expectedKey),
-				expectedValue,
-				"Wrong value in PactMap 2",
-			);
+			assert.strictEqual(pactMap1.get(expectedKey), expectedValue, "Wrong value in PactMap 1");
+			assert.strictEqual(pactMap2.get(expectedKey), expectedValue, "Wrong value in PactMap 2");
 		});
 
 		it("Resolves simultaneous sets and deletes with first-write-wins", async () => {
@@ -243,31 +223,15 @@ describe("PactMap", () => {
 			pactMap2.set(targetKey, "unexpected1");
 			containerRuntimeFactory.processAllMessages();
 
-			assert.strictEqual(
-				pactMap1.get(targetKey),
-				"expected",
-				"Unexpected value in pactMap1",
-			);
-			assert.strictEqual(
-				pactMap2.get(targetKey),
-				"expected",
-				"Unexpected value in pactMap2",
-			);
+			assert.strictEqual(pactMap1.get(targetKey), "expected", "Unexpected value in pactMap1");
+			assert.strictEqual(pactMap2.get(targetKey), "expected", "Unexpected value in pactMap2");
 
 			pactMap2.delete(targetKey);
 			pactMap1.set(targetKey, "unexpected2");
 			containerRuntimeFactory.processAllMessages();
 
-			assert.strictEqual(
-				pactMap1.get(targetKey),
-				undefined,
-				"Unexpected value in pactMap1",
-			);
-			assert.strictEqual(
-				pactMap2.get(targetKey),
-				undefined,
-				"Unexpected value in pactMap2",
-			);
+			assert.strictEqual(pactMap1.get(targetKey), undefined, "Unexpected value in pactMap1");
+			assert.strictEqual(pactMap2.get(targetKey), undefined, "Unexpected value in pactMap2");
 		});
 	});
 
@@ -283,15 +247,8 @@ describe("PactMap", () => {
 			const dataStoreRuntime = new MockFluidDataStoreRuntime();
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 
-			const pactMap = new PactMapClass(
-				"pactMap",
-				dataStoreRuntime,
-				PactMapFactory.Attributes,
-			);
-			assert.strict(
-				!pactMap.isAttached(),
-				"PactMap is attached earlier than expected",
-			);
+			const pactMap = new PactMapClass("pactMap", dataStoreRuntime, PactMapFactory.Attributes);
+			assert.strict(!pactMap.isAttached(), "PactMap is attached earlier than expected");
 
 			const accept1P = new Promise<void>((resolve) => {
 				pactMap.on("accepted", (key) => {
@@ -303,11 +260,7 @@ describe("PactMap", () => {
 			pactMap.set("foo", "bar");
 			pactMap.set("baz", "boop");
 			await accept1P;
-			assert.strictEqual(
-				pactMap.get("baz"),
-				"boop",
-				"Couldn't set value in detached state",
-			);
+			assert.strictEqual(pactMap.get("baz"), "boop", "Couldn't set value in detached state");
 
 			const accept2P = new Promise<void>((resolve) => {
 				pactMap.on("accepted", (key) => {
@@ -331,20 +284,9 @@ describe("PactMap", () => {
 			};
 			pactMap.connect(services);
 
-			assert.strict(
-				pactMap.isAttached(),
-				"PactMap is not attached when expected",
-			);
-			assert.strictEqual(
-				pactMap.get("foo"),
-				undefined,
-				"Wrong value in foo after attach",
-			);
-			assert.strictEqual(
-				pactMap.get("baz"),
-				"boop",
-				"Wrong value in baz after attach",
-			);
+			assert.strict(pactMap.isAttached(), "PactMap is not attached when expected");
+			assert.strictEqual(pactMap.get("foo"), undefined, "Wrong value in foo after attach");
+			assert.strictEqual(pactMap.get("baz"), "boop", "Wrong value in baz after attach");
 
 			const accept3P = new Promise<void>((resolve) => {
 				pactMap.on("accepted", (key) => {
@@ -372,37 +314,26 @@ describe("PactMap", () => {
 		let pactMap2: PactMapClass;
 
 		beforeEach(async () => {
-			containerRuntimeFactory =
-				new MockContainerRuntimeFactoryForReconnection();
+			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
 			// Create the first PactMap.
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-			containerRuntime1 =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
-			pactMap1 = new PactMapClass(
-				"pact-map-1",
-				dataStoreRuntime1,
-				PactMapFactory.Attributes,
-			);
+			pactMap1 = new PactMapClass("pact-map-1", dataStoreRuntime1, PactMapFactory.Attributes);
 			pactMap1.connect(services1);
 
 			// Create the second PactMap.
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-			containerRuntime2 =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
-			pactMap2 = new PactMapClass(
-				"pact-map-2",
-				dataStoreRuntime2,
-				PactMapFactory.Attributes,
-			);
+			pactMap2 = new PactMapClass("pact-map-2", dataStoreRuntime2, PactMapFactory.Attributes);
 			pactMap2.connect(services2);
 		});
 

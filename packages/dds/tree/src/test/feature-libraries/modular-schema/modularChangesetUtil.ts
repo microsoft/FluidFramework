@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
-import { BTree } from "@tylerbu/sorted-btree-es6";
 import type {
 	FieldKey,
 	FieldKindIdentifier,
@@ -20,28 +18,30 @@ import type {
 	NodeId,
 } from "../../../feature-libraries/index.js";
 import {
-	getChangeHandler,
-	getParentFieldId,
-	normalizeFieldId,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import {
+	newCrossFieldKeyTable,
 	type ChangeAtomIdBTree,
 	type CrossFieldKeyTable,
 	type FieldChange,
 	type FieldId,
 	type NodeChangeset,
-	newCrossFieldKeyTable,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
-	brand,
 	type IdAllocator,
-	idAllocatorFromMaxId,
 	type Mutable,
+	brand,
+	idAllocatorFromMaxId,
 	newTupleBTree,
 } from "../../../util/index.js";
+import {
+	getChangeHandler,
+	getParentFieldId,
+	normalizeFieldId,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import { strict as assert } from "node:assert";
 import { assertStructuralEquality } from "../../objMerge.js";
+import { BTree } from "@tylerbu/sorted-btree-es6";
 
 export const Change = {
 	build,
@@ -110,10 +110,7 @@ interface BuildArgs {
 	revisions?: RevisionInfo[];
 }
 
-function build(
-	args: BuildArgs,
-	...fields: FieldChangesetDescription[]
-): ModularChangeset {
+function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): ModularChangeset {
 	const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newTupleBTree();
 	const nodeToParent: ChangeAtomIdBTree<FieldId> = newTupleBTree();
 	const crossFieldKeys: CrossFieldKeyTable = newCrossFieldKeyTable();
@@ -180,9 +177,7 @@ function fieldChangeMapFromDescription(
 			field.changeset,
 		);
 
-		for (const { key, count } of changeHandler.getCrossFieldKeys(
-			fieldChangeset,
-		)) {
+		for (const { key, count } of changeHandler.getCrossFieldKeys(fieldChangeset)) {
 			crossFieldKeys.set(key, count, fieldId);
 		}
 
@@ -233,8 +228,7 @@ function addNodeToField(
 	return changeHandler.rebaser.compose(
 		fieldWithChange,
 		fieldChangeset,
-		(node1, node2) =>
-			node1 ?? node2 ?? assert.fail("Should not compose two undefined nodes"),
+		(node1, node2) => node1 ?? node2 ?? assert.fail("Should not compose two undefined nodes"),
 		idAllocator,
 		dummyCrossFieldManager,
 		dummyRevisionMetadata,
@@ -259,9 +253,8 @@ const dummyRevisionMetadata: RevisionMetadataSource = {
 };
 
 export function removeAliases(changeset: ModularChangeset): ModularChangeset {
-	const updatedNodeToParent = changeset.nodeToParent.mapValues(
-		(_field, [revision, localId]) =>
-			getParentFieldId(changeset, { revision, localId }),
+	const updatedNodeToParent = changeset.nodeToParent.mapValues((_field, [revision, localId]) =>
+		getParentFieldId(changeset, { revision, localId }),
 	);
 
 	const updatedCrossFieldKeys: CrossFieldKeyTable = newCrossFieldKeyTable();

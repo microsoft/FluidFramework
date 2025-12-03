@@ -3,39 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import type {
+import {
 	DriverEndpoint,
 	ITestDriver,
 	TestDriverTypes,
 } from "@fluid-internal/test-driver-definitions";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
+	OdspTestDriver,
 	createFluidTestDriver,
 	generateOdspHostStoragePolicy,
-	type OdspTestDriver,
 } from "@fluid-private/test-drivers";
-import type {
-	IContainer,
-	IFluidCodeDetails,
-} from "@fluidframework/container-definitions/internal";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import {
 	createDetachedContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
-import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import type {
-	ConfigTypes,
-	IConfigProviderBase,
-} from "@fluidframework/core-interfaces";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
 
-import {
-	createFluidExport,
-	type ILoadTest,
-	type IRunConfig,
-} from "./loadTestDataStore.js";
+import { createFluidExport, type ILoadTest, type IRunConfig } from "./loadTestDataStore.js";
 import {
 	generateConfigurations,
 	generateLoaderOptions,
@@ -52,9 +42,8 @@ const codeDetails: IFluidCodeDetails = {
 	config: {},
 };
 
-export const createCodeLoader = (
-	options?: IContainerRuntimeOptions | undefined,
-) => new LocalCodeLoader([[codeDetails, createFluidExport(options)]]);
+export const createCodeLoader = (options?: IContainerRuntimeOptions | undefined) =>
+	new LocalCodeLoader([[codeDetails, createFluidExport(options)]]);
 
 export async function initialize(
 	testDriver: ITestDriver,
@@ -71,9 +60,7 @@ export async function initialize(
 		testDriver.endpointName,
 	);
 
-	const loaderOptions = random.pick(
-		generateLoaderOptions(seed, optionsOverride?.loader),
-	);
+	const loaderOptions = random.pick(generateLoaderOptions(seed, optionsOverride?.loader));
 	const containerRuntimeOptions = random.pick(
 		generateRuntimeOptions(seed, optionsOverride?.container),
 	);
@@ -100,10 +87,7 @@ export async function initialize(
 		configProvider: configProvider(configurations),
 	};
 
-	const container: IContainer = await createDetachedContainer({
-		...loaderProps,
-		codeDetails,
-	});
+	const container: IContainer = await createDetachedContainer({ ...loaderProps, codeDetails });
 	if ((testConfig.detachedBlobCount ?? 0) > 0) {
 		assert(
 			testDriver.type === "odsp",
@@ -113,9 +97,7 @@ export async function initialize(
 		const dsm = await ds.detached({ testConfig, verbose, random, logger });
 		if (dsm !== undefined) {
 			await Promise.all(
-				[...Array(testConfig.detachedBlobCount).keys()].map(async (i) =>
-					dsm.writeBlob(i),
-				),
+				[...Array(testConfig.detachedBlobCount).keys()].map(async (i) => dsm.writeBlob(i)),
 			);
 		}
 	}
@@ -124,17 +106,12 @@ export async function initialize(
 	assert(testId !== "", "testId specified cannot be an empty string");
 	const request = testDriver.createCreateNewRequest(testId);
 	await container.attach(request);
-	assert(
-		container.resolvedUrl !== undefined,
-		"Container missing resolved URL after attach",
-	);
+	assert(container.resolvedUrl !== undefined, "Container missing resolved URL after attach");
 	const resolvedUrl = container.resolvedUrl;
 	container.dispose();
 
 	if ((testConfig.detachedBlobCount ?? 0) > 0 && testDriver.type === "odsp") {
-		const url = (testDriver as OdspTestDriver).getUrlFromItemId(
-			(resolvedUrl as any).itemId,
-		);
+		const url = (testDriver as OdspTestDriver).getUrlFromItemId((resolvedUrl as any).itemId);
 		return url;
 	}
 	return testDriver.createContainerUrl(testId, resolvedUrl);
@@ -179,12 +156,9 @@ export const globalConfigurations: Record<string, ConfigTypes> = {
  * @param configs - the supplied configs
  * @returns an instance of a config provider
  */
-export const configProvider = (
-	configs: Record<string, ConfigTypes>,
-): IConfigProviderBase => {
+export const configProvider = (configs: Record<string, ConfigTypes>): IConfigProviderBase => {
 	return {
-		getRawConfig: (name: string): ConfigTypes =>
-			globalConfigurations[name] ?? configs[name],
+		getRawConfig: (name: string): ConfigTypes => globalConfigurations[name] ?? configs[name],
 	};
 };
 

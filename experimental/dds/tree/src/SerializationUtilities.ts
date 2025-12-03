@@ -4,10 +4,10 @@
  */
 
 import { copyPropertyIfDefined, memoizeGetter } from './Common.js';
-import type { NodeId, TraitLabel } from './Identifiers.js';
-import type { NodeIdConverter } from './NodeIdUtilities.js';
-import type { ChangeNode, ChangeNode_0_0_2, TraitMap } from './persisted-types/index.js';
-import type { TreeView } from './TreeView.js';
+import { NodeId, TraitLabel } from './Identifiers.js';
+import { NodeIdConverter } from './NodeIdUtilities.js';
+import { TreeView } from './TreeView.js';
+import { ChangeNode, ChangeNode_0_0_2, TraitMap } from './persisted-types/index.js';
 
 /**
  * Converts this tree view to an equivalent `ChangeNode`.

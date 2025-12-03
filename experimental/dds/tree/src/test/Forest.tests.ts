@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { strict as assert } from 'assert';
+
+import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
-import { compareForestNodes, Forest, type ForestNode } from '../Forest.js';
-import type { NodeId, TraitLabel } from '../Identifiers.js';
-import type { Payload } from '../persisted-types/index.js';
+import { Forest, ForestNode, compareForestNodes } from '../Forest.js';
+import { NodeId, TraitLabel } from '../Identifiers.js';
+import { Payload } from '../persisted-types/index.js';
 
-import type { TestTree } from './utilities/TestNode.js';
+import { TestTree } from './utilities/TestNode.js';
 import { refreshTestTree } from './utilities/TestUtilities.js';
 
 const mainTraitLabel = 'main' as TraitLabel;

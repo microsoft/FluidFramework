@@ -21,20 +21,17 @@ import { ddsModelMap } from "./ddsModels.js";
 import {
 	convertToRealHandles,
 	covertLocalServerStateToDdsState,
-	type DDSModelOp,
 	DDSModelOpGenerator,
 	DDSModelOpReducer,
 	loadAllHandles,
+	type DDSModelOp,
 	type OrderSequentially,
 } from "./ddsOperations";
 import { _dirname } from "./dirname.cjs";
-import type { LocalServerStressState } from "./localServerStressHarness";
+import { type LocalServerStressState } from "./localServerStressHarness";
 import type { StressDataObjectOperations } from "./stressDataObject.js";
 
-export type StressOperations =
-	| StressDataObjectOperations
-	| DDSModelOp
-	| OrderSequentially;
+export type StressOperations = StressDataObjectOperations | DDSModelOp | OrderSequentially;
 
 const orderSequentiallyReducer = async (
 	state: LocalServerStressState,
@@ -61,16 +58,10 @@ const orderSequentiallyReducer = async (
 	}
 };
 
-export const reducer = combineReducersAsync<
-	StressOperations,
-	LocalServerStressState
->({
-	enterStagingMode: async (state, op) =>
-		state.client.entryPoint.enterStagingMode(),
-	exitStagingMode: async (state, op) =>
-		state.client.entryPoint.exitStagingMode(op.commit),
-	createDataStore: async (state, op) =>
-		state.datastore.createDataStore(op.tag, op.asChild),
+export const reducer = combineReducersAsync<StressOperations, LocalServerStressState>({
+	enterStagingMode: async (state, op) => state.client.entryPoint.enterStagingMode(),
+	exitStagingMode: async (state, op) => state.client.entryPoint.exitStagingMode(op.commit),
+	createDataStore: async (state, op) => state.datastore.createDataStore(op.tag, op.asChild),
 	createChannel: async (state, op) => {
 		state.datastore.createChannel(op.tag, op.channelType);
 	},
@@ -79,10 +70,7 @@ export const reducer = combineReducersAsync<
 		// this could potentially cause problems with replay if the blob upload doesn't finish
 		// before its handle is used. this hasn't been seen in practice, but nothing but timing and
 		// the fact that we assume local server is fast prevents it.
-		void state.datastore.uploadBlob(
-			op.tag,
-			state.random.string(state.random.integer(1, 16)),
-		),
+		void state.datastore.uploadBlob(op.tag, state.random.string(state.random.integer(1, 16))),
 	DDSModelOp: DDSModelOpReducer,
 	orderSequentially: orderSequentiallyReducer,
 });
@@ -166,15 +154,9 @@ export function makeGenerator<T extends BaseOperation>(
 
 	return async (state) => asyncGenerator(state);
 }
-export const saveFailures = {
-	directory: path.join(_dirname, "../src/test/results"),
-};
-export const saveSuccesses = {
-	directory: path.join(_dirname, "../src/test/results"),
-};
-export const saveFluidOps = {
-	directory: path.join(_dirname, "../src/test/results"),
-};
+export const saveFailures = { directory: path.join(_dirname, "../src/test/results") };
+export const saveSuccesses = { directory: path.join(_dirname, "../src/test/results") };
+export const saveFluidOps = { directory: path.join(_dirname, "../src/test/results") };
 
 export const ddsModelMinimizers: MinimizationTransform<BaseOperation>[] = [
 	...ddsModelMap.entries(),
@@ -185,10 +167,7 @@ export const ddsModelMinimizers: MinimizationTransform<BaseOperation>[] = [
 	.filter((v): v is Exclude<typeof v, undefined> => v !== undefined)
 	.map(({ channelType, mt }) => {
 		return (op: BaseOperation) => {
-			if (
-				isOperationType<DDSModelOp>("DDSModelOp", op) &&
-				op.channelType === channelType
-			) {
+			if (isOperationType<DDSModelOp>("DDSModelOp", op) && op.channelType === channelType) {
 				mt(op.op);
 			}
 		};

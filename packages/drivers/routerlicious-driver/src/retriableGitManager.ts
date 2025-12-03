@@ -4,22 +4,22 @@
  */
 
 import type {
-	IGitBlob,
 	IGitCommitDetails,
+	IGitBlob,
 	IGitCreateBlobResponse,
 	IGitCreateTreeParams,
 	IGitTree,
 } from "@fluidframework/driver-definitions/internal";
 import { runWithRetry } from "@fluidframework/driver-utils/internal";
-import type {
+import {
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import type { IWholeFlatSnapshot } from "./contracts.js";
-import type { IR11sResponse } from "./restWrapper.js";
-import type { IGitManager } from "./storageContracts.js";
+import { IWholeFlatSnapshot } from "./contracts.js";
+import { IR11sResponse } from "./restWrapper.js";
+import { IGitManager } from "./storageContracts.js";
 
 export class RetriableGitManager implements IGitManager {
 	constructor(
@@ -37,10 +37,7 @@ export class RetriableGitManager implements IGitManager {
 		);
 	}
 
-	public async getTree(
-		root: string,
-		recursive: boolean,
-	): Promise<IR11sResponse<IGitTree>> {
+	public async getTree(root: string, recursive: boolean): Promise<IR11sResponse<IGitTree>> {
 		return this.runWithRetry(
 			async () => this.internalGitManager.getTree(root, recursive),
 			"gitManager_getTree",
@@ -64,9 +61,7 @@ export class RetriableGitManager implements IGitManager {
 		);
 	}
 
-	public async createGitTree(
-		params: IGitCreateTreeParams,
-	): Promise<IR11sResponse<IGitTree>> {
+	public async createGitTree(params: IGitCreateTreeParams): Promise<IR11sResponse<IGitTree>> {
 		return this.runWithRetry(
 			async () => this.internalGitManager.createGitTree(params),
 			"gitManager_createGitTree",
@@ -82,19 +77,14 @@ export class RetriableGitManager implements IGitManager {
 		);
 	}
 
-	public async getSnapshot(
-		sha: string,
-	): Promise<IR11sResponse<IWholeFlatSnapshot>> {
+	public async getSnapshot(sha: string): Promise<IR11sResponse<IWholeFlatSnapshot>> {
 		return this.runWithRetry(
 			async () => this.internalGitManager.getSnapshot(sha),
 			"gitManager_getSummary",
 		);
 	}
 
-	private async runWithRetry<T>(
-		api: () => Promise<T>,
-		callName: string,
-	): Promise<T> {
+	private async runWithRetry<T>(api: () => Promise<T>, callName: string): Promise<T> {
 		return runWithRetry(
 			api,
 			callName,

@@ -31,23 +31,15 @@ describe("semver", () => {
 		});
 
 		it("internal version scheme patch", () => {
-			assert.equal(
-				detectBumpType("2.0.0-internal.4.0.7", "2.0.0-internal.4.0.8"),
-				"patch",
-			);
+			assert.equal(detectBumpType("2.0.0-internal.4.0.7", "2.0.0-internal.4.0.8"), "patch");
 		});
 
 		it("internal -> RC is major", () => {
-			assert.equal(
-				detectBumpType("2.0.0-internal.1.0.7", "2.0.0-rc.2.0.8"),
-				"major",
-			);
+			assert.equal(detectBumpType("2.0.0-internal.1.0.7", "2.0.0-rc.2.0.8"), "major");
 		});
 
 		it("RC -> internal throws", () => {
-			assert.throws(() =>
-				detectBumpType("2.0.0-rc.4.0.7", "2.0.0-internal.5.0.0"),
-			);
+			assert.throws(() => detectBumpType("2.0.0-rc.4.0.7", "2.0.0-internal.5.0.0"));
 		});
 
 		it("premajor", () => {
@@ -79,24 +71,15 @@ describe("semver", () => {
 
 	describe("detectBumpType internal version scheme", () => {
 		it("major", () => {
-			assert.equal(
-				detectBumpType("2.0.0-internal.1.0.0", "2.0.0-internal.2.0.0"),
-				"major",
-			);
+			assert.equal(detectBumpType("2.0.0-internal.1.0.0", "2.0.0-internal.2.0.0"), "major");
 		});
 
 		it("minor", () => {
-			assert.equal(
-				detectBumpType("2.0.0-internal.1.0.0", "2.0.0-internal.1.1.0"),
-				"minor",
-			);
+			assert.equal(detectBumpType("2.0.0-internal.1.0.0", "2.0.0-internal.1.1.0"), "minor");
 		});
 
 		it("patch", () => {
-			assert.equal(
-				detectBumpType("2.0.0-internal.1.0.0", "2.0.0-internal.1.0.1"),
-				"patch",
-			);
+			assert.equal(detectBumpType("2.0.0-internal.1.0.0", "2.0.0-internal.1.0.1"), "patch");
 		});
 
 		it("premajor bump type returns major", () => {
@@ -156,10 +139,7 @@ describe("semver", () => {
 		});
 
 		it("v1 is internal, v2 is rc", () => {
-			assert.equal(
-				detectBumpType("2.0.0-internal.8.0.1", "2.0.0-rc.1.0.0"),
-				"major",
-			);
+			assert.equal(detectBumpType("2.0.0-internal.8.0.1", "2.0.0-rc.1.0.0"), "major");
 		});
 
 		it("v1 is rc, v2 is rc", () => {
@@ -779,10 +759,7 @@ describe("semver", () => {
 
 		it("2.0.0-internal.2.0.0", () => {
 			const input = `2.0.0-internal.2.0.0`;
-			const [expected1, expected2] = [
-				`2.0.0-internal.1.0.0`,
-				`2.0.0-internal.2.0.0`,
-			];
+			const [expected1, expected2] = [`2.0.0-internal.1.0.0`, `2.0.0-internal.2.0.0`];
 			const [result1, result2] = getPreviousVersions(input);
 			assert.equal(result1, expected1, "previous major version mismatch");
 			assert.equal(result2, expected2, "previous minor version mismatch");
@@ -790,10 +767,7 @@ describe("semver", () => {
 
 		it("2.0.0-internal.2.2.0", () => {
 			const input = `2.0.0-internal.2.2.0`;
-			const [expected1, expected2] = [
-				`2.0.0-internal.1.0.0`,
-				`2.0.0-internal.2.1.0`,
-			];
+			const [expected1, expected2] = [`2.0.0-internal.1.0.0`, `2.0.0-internal.2.1.0`];
 			const [result1, result2] = getPreviousVersions(input);
 			assert.equal(result1, expected1, "previous major version mismatch");
 			assert.equal(result2, expected2, "previous minor version mismatch");
@@ -801,10 +775,7 @@ describe("semver", () => {
 
 		it("2.0.0-internal.3.0.0", () => {
 			const input = `2.0.0-internal.3.0.0`;
-			const [expected1, expected2] = [
-				`2.0.0-internal.2.0.0`,
-				`2.0.0-internal.3.0.0`,
-			];
+			const [expected1, expected2] = [`2.0.0-internal.2.0.0`, `2.0.0-internal.3.0.0`];
 			const [result1, result2] = getPreviousVersions(input);
 			assert.equal(result1, expected1, "previous major version mismatch");
 			assert.equal(result2, expected2, "previous minor version mismatch");
@@ -812,10 +783,7 @@ describe("semver", () => {
 
 		it("2.0.0-internal.3.2.0", () => {
 			const input = `2.0.0-internal.3.2.0`;
-			const [expected1, expected2] = [
-				`2.0.0-internal.2.0.0`,
-				`2.0.0-internal.3.1.0`,
-			];
+			const [expected1, expected2] = [`2.0.0-internal.2.0.0`, `2.0.0-internal.3.1.0`];
 			const [result1, result2] = getPreviousVersions(input);
 			assert.equal(result1, expected1, "previous major version mismatch");
 			assert.equal(result2, expected2, "previous minor version mismatch");
@@ -823,10 +791,7 @@ describe("semver", () => {
 
 		it("2.0.0-internal.3.2.2", () => {
 			const input = `2.0.0-internal.3.2.2`;
-			const [expected1, expected2] = [
-				`2.0.0-internal.2.0.0`,
-				`2.0.0-internal.3.1.0`,
-			];
+			const [expected1, expected2] = [`2.0.0-internal.2.0.0`, `2.0.0-internal.3.1.0`];
 			const [result1, result2] = getPreviousVersions(input);
 			assert.equal(result1, expected1, "previous major version mismatch");
 			assert.equal(result2, expected2, "previous minor version mismatch");
@@ -834,10 +799,7 @@ describe("semver", () => {
 
 		it("3.0.0-internal.3.2.2", () => {
 			const input = `3.0.0-internal.3.2.2`;
-			const [expected1, expected2] = [
-				`3.0.0-internal.2.0.0`,
-				`3.0.0-internal.3.1.0`,
-			];
+			const [expected1, expected2] = [`3.0.0-internal.2.0.0`, `3.0.0-internal.3.1.0`];
 			const [result1, result2] = getPreviousVersions(input);
 			assert.equal(result1, expected1, "previous major version mismatch");
 			assert.equal(result2, expected2, "previous minor version mismatch");

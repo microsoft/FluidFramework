@@ -9,10 +9,7 @@ import { createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { describe } from "mocha";
 
 import { _dirname } from "./dirname.cjs";
-import {
-	baseSharedArrayModel,
-	eventEmitterForFuzzHarness,
-} from "./fuzzUtils.js";
+import { baseSharedArrayModel, eventEmitterForFuzzHarness } from "./fuzzUtils.js";
 
 describe("SharedArray fuzz", () => {
 	createDDSFuzzSuite(baseSharedArrayModel, {

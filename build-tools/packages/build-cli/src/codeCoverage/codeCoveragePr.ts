@@ -6,15 +6,12 @@
 import { getAzureDevopsApi } from "@fluidframework/bundle-size-tools";
 import type { IAzureDevopsBuildCoverageConstants } from "../library/azureDevops/constants.js";
 import {
+	type IBuildMetrics,
 	getBaselineBuildMetrics,
 	getBuildArtifactForSpecificBuild,
-	type IBuildMetrics,
 } from "../library/azureDevops/getBaselineBuildMetrics.js";
 import type { CommandLogger } from "../logging.js";
-import {
-	type CodeCoverageComparison,
-	compareCodeCoverage,
-} from "./compareCodeCoverage.js";
+import { type CodeCoverageComparison, compareCodeCoverage } from "./compareCodeCoverage.js";
 import { getCoverageMetricsFromArtifact } from "./getCoverageMetrics.js";
 
 /**
@@ -47,10 +44,7 @@ export async function getCodeCoverageReport(
 	changedFiles: string[],
 	logger?: CommandLogger,
 ): Promise<CodeCoverageReport> {
-	const adoConnection = getAzureDevopsApi(
-		adoToken,
-		codeCoverageConstantsBaseline.orgUrl,
-	);
+	const adoConnection = getAzureDevopsApi(adoToken, codeCoverageConstantsBaseline.orgUrl);
 
 	const baselineBuildInfo = await getBaselineBuildMetrics(
 		codeCoverageConstantsBaseline,
@@ -61,10 +55,7 @@ export async function getCodeCoverageReport(
 		throw error;
 	});
 
-	const adoConnectionForPR = getAzureDevopsApi(
-		adoToken,
-		codeCoverageConstantsPR.orgUrl,
-	);
+	const adoConnectionForPR = getAzureDevopsApi(adoToken, codeCoverageConstantsPR.orgUrl);
 
 	const prBuildInfo = await getBuildArtifactForSpecificBuild(
 		codeCoverageConstantsPR,

@@ -41,10 +41,7 @@ export class DetachedFieldIndexSummarizer implements Summarizable {
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
 	}): ISummaryTreeWithStats {
 		const data = this.detachedFieldIndex.encode();
-		return createSingleBlobSummary(
-			detachedFieldIndexBlobKey,
-			props.stringify(data),
-		);
+		return createSingleBlobSummary(detachedFieldIndexBlobKey, props.stringify(data));
 	}
 
 	public async load(
@@ -52,9 +49,7 @@ export class DetachedFieldIndexSummarizer implements Summarizable {
 		parse: SummaryElementParser,
 	): Promise<void> {
 		if (await services.contains(detachedFieldIndexBlobKey)) {
-			const detachedFieldIndexBuffer = await services.readBlob(
-				detachedFieldIndexBlobKey,
-			);
+			const detachedFieldIndexBuffer = await services.readBlob(detachedFieldIndexBlobKey);
 			const treeBufferString = bufferToString(detachedFieldIndexBuffer, "utf8");
 			const parsed = parse(treeBufferString) as JsonCompatibleReadOnly;
 			this.detachedFieldIndex.loadData(parsed);

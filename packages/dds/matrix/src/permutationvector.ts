@@ -3,14 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	IFluidHandle,
-	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+import type { IFluidHandle, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
+	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
@@ -19,13 +16,13 @@ import {
 	type IJSONSegment,
 	type IMergeTreeDeltaCallbackArgs,
 	type IMergeTreeDeltaOpArgs,
-	type IMergeTreeInsertMsg,
 	type IMergeTreeMaintenanceCallbackArgs,
-	type IMergeTreeRemoveMsg,
 	type ISegment,
 	MergeTreeDeltaType,
 	MergeTreeMaintenanceType,
 	segmentIsRemoved,
+	type IMergeTreeInsertMsg,
+	type IMergeTreeRemoveMsg,
 } from "@fluidframework/merge-tree/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -40,7 +37,7 @@ import { Handle, HandleTable, isHandleValid } from "./handletable.js";
 import { deserializeBlob } from "./serialization.js";
 import type { VectorUndoProvider } from "./undoprovider.js";
 
-enum SnapshotPath {
+const enum SnapshotPath {
 	segments = "segments",
 	handleTable = "handleTable",
 }
@@ -113,9 +110,7 @@ export class PermutationSegment extends BaseSegment {
 
 		const leafSegment = new PermutationSegment(
 			/* length: */ this.cachedLength - pos,
-			/* start: */ this.start === Handle.unallocated
-				? Handle.unallocated
-				: this.start + pos,
+			/* start: */ this.start === Handle.unallocated ? Handle.unallocated : this.start + pos,
 		);
 
 		this.cachedLength = pos;
@@ -149,10 +144,7 @@ export class PermutationVector extends Client {
 	) {
 		super(
 			PermutationSegment.fromJSONObject,
-			createChildLogger({
-				logger,
-				namespace: `Matrix.${path}.MergeTreeClient`,
-			}),
+			createChildLogger({ logger, namespace: `Matrix.${path}.MergeTreeClient` }),
 			{
 				...runtime.options,
 				newMergeTreeSnapshotFormat: true, // Force new snapshot format as it's generally more efficient for matrices.
@@ -164,10 +156,7 @@ export class PermutationVector extends Client {
 		this.on("maintenance", this.onMaintenance);
 	}
 
-	public insert(
-		start: number,
-		length: number,
-	): IMergeTreeInsertMsg | undefined {
+	public insert(start: number, length: number): IMergeTreeInsertMsg | undefined {
 		return this.insertSegmentLocal(start, new PermutationSegment(length));
 	}
 
@@ -255,10 +244,7 @@ export class PermutationVector extends Client {
 		}
 	}
 
-	public handleToPosition(
-		handle: Handle,
-		localSeq = this.getCollabWindow().localSeq,
-	): number {
+	public handleToPosition(handle: Handle, localSeq = this.getCollabWindow().localSeq): number {
 		assert(
 			localSeq <= this.getCollabWindow().localSeq,
 			0x028 /* "'localSeq' for op being resubmitted must be <= the 'localSeq' of the last submitted op." */,
@@ -315,10 +301,7 @@ export class PermutationVector extends Client {
 		// have not yet been submitted.
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return (
-			this.findReconnectionPosition(containingSegment, localSeq) +
-			containingOffset!
-		);
+		return this.findReconnectionPosition(containingSegment, localSeq) + containingOffset!;
 	}
 
 	// Constructs an ISummaryTreeWithStats for the cell data.
@@ -435,9 +418,7 @@ export class PermutationVector extends Client {
 		}
 	};
 
-	private readonly onMaintenance = (
-		args: IMergeTreeMaintenanceCallbackArgs,
-	): void => {
+	private readonly onMaintenance = (args: IMergeTreeMaintenanceCallbackArgs): void => {
 		if (args.operation === MergeTreeMaintenanceType.UNLINK) {
 			let freed: number[] = [];
 
@@ -490,8 +471,7 @@ export function reinsertSegmentIntoVector(
 
 	// (Re)insert the removed number of rows at the original position.
 	const op = vector.insertSegmentLocal(pos, original);
-	const inserted = vector.getContainingSegment(pos)
-		?.segment as PermutationSegment;
+	const inserted = vector.getContainingSegment(pos)?.segment as PermutationSegment;
 
 	// we reuse the original handle here
 	// so if cells exist, they can be found, and re-inserted

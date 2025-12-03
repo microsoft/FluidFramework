@@ -6,8 +6,7 @@
 "use client";
 
 import { Avatar, Badge, styled } from "@mui/material";
-import type React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import type { PresenceManager } from "@/app/presence";
 
@@ -15,9 +14,7 @@ interface UserPresenceProps {
 	presenceManager: PresenceManager;
 }
 
-const UserPresenceGroup: React.FC<UserPresenceProps> = ({
-	presenceManager,
-}): JSX.Element => {
+const UserPresenceGroup: React.FC<UserPresenceProps> = ({ presenceManager }): JSX.Element => {
 	const [invalidations, setInvalidations] = useState(0);
 
 	useEffect(() => {
@@ -95,11 +92,7 @@ const UserPresenceGroup: React.FC<UserPresenceProps> = ({
 							anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
 							variant="dot"
 						>
-							<Avatar
-								alt="User Photo"
-								src={userInfo.photo}
-								sx={{ width: 56, height: 56 }}
-							/>
+							<Avatar alt="User Photo" src={userInfo.photo} sx={{ width: 56, height: 56 }} />
 						</StyledBadge>
 					))}
 					{userInfoList.length > 4 && (

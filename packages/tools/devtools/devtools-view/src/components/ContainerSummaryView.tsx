@@ -6,10 +6,7 @@
 import {
 	Badge,
 	Button,
-	createTableColumn,
 	InfoLabel,
-	makeStyles,
-	shorthands,
 	Table,
 	TableBody,
 	TableCell,
@@ -17,6 +14,9 @@ import {
 	type TableColumnDefinition,
 	type TableColumnSizingOptions,
 	TableRow,
+	createTableColumn,
+	makeStyles,
+	shorthands,
 	useTableColumnSizing_unstable,
 	useTableFeatures,
 } from "@fluentui/react-components";
@@ -35,10 +35,10 @@ import {
 	DisconnectContainer,
 	GetContainerState,
 	type HasContainerKey,
-	handleIncomingMessage,
 	type IMessageRelay,
-	type InboundHandlers,
 	type ISourcedDevtoolsMessage,
+	type InboundHandlers,
+	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
@@ -149,9 +149,7 @@ function DataRow(props: DataRowProps): React.ReactElement {
  * - "success" for healthy states like connected or attached
  * - "subtle" for read-only or unknown states
  */
-function getStatusBadgeColor(
-	status: string,
-): "success" | "warning" | "danger" | "subtle" {
+function getStatusBadgeColor(status: string): "success" | "warning" | "danger" | "subtle" {
 	switch (status) {
 		case "Closed":
 		case "Detached":
@@ -187,9 +185,7 @@ function getStatusBadgeColor(
  * - Multiple status badges are displayed side by side with flexbox layout
  * - Each badge color is determined by getStatusBadgeColor function
  */
-function containerStatusValueCell(
-	statusComponents: string[],
-): React.ReactElement {
+function containerStatusValueCell(statusComponents: string[]): React.ReactElement {
 	// Show all states simultaneously in a single container
 	if (statusComponents.length === 0) {
 		return (
@@ -206,11 +202,7 @@ function containerStatusValueCell(
 		<TableCellLayout>
 			<div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
 				{statusComponents.map((status, index) => (
-					<Badge
-						key={index}
-						shape="rounded"
-						color={getStatusBadgeColor(status)}
-					>
+					<Badge key={index} shape="rounded" color={getStatusBadgeColor(status)}>
 						{status}
 					</Badge>
 				))}
@@ -243,9 +235,7 @@ const useContainerSummaryViewStyles = makeStyles({
 /**
  * View displaying a simple summary of the Container state.
  */
-export function ContainerSummaryView(
-	props: ContainerSummaryViewProps,
-): React.ReactElement {
+export function ContainerSummaryView(props: ContainerSummaryViewProps): React.ReactElement {
 	const { containerKey } = props;
 	const items: Item[] = [];
 	const messageRelay: IMessageRelay = useMessageRelay();
@@ -267,10 +257,9 @@ export function ContainerSummaryView(
 
 	const { containerFeatureFlags } = useContainerFeaturesContext();
 
-	const { columnSizing_unstable, tableRef } = useTableFeatures(
-		{ columns, items },
-		[useTableColumnSizing_unstable({ columnSizingOptions })],
-	);
+	const { columnSizing_unstable, tableRef } = useTableFeatures({ columns, items }, [
+		useTableColumnSizing_unstable({ columnSizingOptions }),
+	]);
 
 	React.useEffect(() => {
 		/**
@@ -321,9 +310,7 @@ export function ContainerSummaryView(
 				containerKey,
 			}),
 		);
-		usageLogger?.sendTelemetryEvent({
-			eventName: "ConnectContainerButtonClicked",
-		});
+		usageLogger?.sendTelemetryEvent({ eventName: "ConnectContainerButtonClicked" });
 	}
 
 	function forceDisconnect(): void {
@@ -333,9 +320,7 @@ export function ContainerSummaryView(
 				/* TODO: Specify devtools reason here once it is supported */
 			}),
 		);
-		usageLogger?.sendTelemetryEvent({
-			eventName: "DisconnectContainerButtonClicked",
-		});
+		usageLogger?.sendTelemetryEvent({ eventName: "DisconnectContainerButtonClicked" });
 	}
 
 	function closeContainer(): void {
@@ -345,9 +330,7 @@ export function ContainerSummaryView(
 				/* TODO: Specify devtools reason here once it is supported */
 			}),
 		);
-		usageLogger?.sendTelemetryEvent({
-			eventName: "CloseContainerButtonClicked",
-		});
+		usageLogger?.sendTelemetryEvent({ eventName: "CloseContainerButtonClicked" });
 	}
 
 	// Build up status string - show all states simultaneously
@@ -363,14 +346,10 @@ export function ContainerSummaryView(
 			containerState.attachState === AttachState.Attached &&
 			containerState.connectionState !== undefined
 		) {
-			statusComponents.push(
-				connectionStateToString(containerState.connectionState),
-			);
+			statusComponents.push(connectionStateToString(containerState.connectionState));
 		} else if (containerState.attachState !== AttachState.Attached) {
 			// If not attached, show disconnected state
-			statusComponents.push(
-				connectionStateToString(ConnectionState.Disconnected),
-			);
+			statusComponents.push(connectionStateToString(ConnectionState.Disconnected));
 		}
 
 		if (containerState.isReadOnly === true) {
@@ -410,9 +389,7 @@ export function ContainerSummaryView(
 			{containerFeatureFlags.canModifyContainerState !== false && (
 				<div className={styles.actions}>
 					<ActionsBar
-						isContainerConnected={
-							containerState.connectionState === ConnectionState.Connected
-						}
+						isContainerConnected={containerState.connectionState === ConnectionState.Connected}
 						containerState={containerState}
 						tryConnect={tryConnect}
 						forceDisconnect={forceDisconnect}
@@ -464,13 +441,8 @@ interface ActionsBarProps extends IContainerActions {
 }
 
 function ActionsBar(props: ActionsBarProps): React.ReactElement {
-	const {
-		isContainerConnected,
-		containerState,
-		tryConnect,
-		forceDisconnect,
-		closeContainer,
-	} = props;
+	const { isContainerConnected, containerState, tryConnect, forceDisconnect, closeContainer } =
+		props;
 	const styles = useActionBarStyles();
 
 	const changeConnectionStateButton = isContainerConnected ? (

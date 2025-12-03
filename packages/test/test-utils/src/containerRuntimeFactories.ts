@@ -9,24 +9,20 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import {
 	FluidDataStoreRegistry,
-	type IContainerRuntimeOptions,
 	loadContainerRuntime,
+	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import type {
 	IContainerRuntime,
 	// eslint-disable-next-line import-x/no-deprecated
 	IContainerRuntimeWithResolveHandle_Deprecated,
 } from "@fluidframework/container-runtime-definitions/internal";
-import type {
-	FluidObject,
-	IRequest,
-	IResponse,
-} from "@fluidframework/core-interfaces";
+import type { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import {
 	// eslint-disable-next-line import-x/no-deprecated
-	buildRuntimeRequestHandler,
-	// eslint-disable-next-line import-x/no-deprecated
 	type RuntimeRequestHandler,
+	// eslint-disable-next-line import-x/no-deprecated
+	buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler/internal";
 import type {
 	IFluidDataStoreFactory,
@@ -35,16 +31,11 @@ import type {
 	MinimumVersionForCollab,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
-import {
-	RequestParser,
-	RuntimeFactoryHelper,
-} from "@fluidframework/runtime-utils/internal";
+import { RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
 
 const defaultDataStoreId = "default";
 
-async function getDefaultFluidObject(
-	runtime: IContainerRuntime,
-): Promise<FluidObject> {
+async function getDefaultFluidObject(runtime: IContainerRuntime): Promise<FluidObject> {
 	const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
 	if (entryPoint === undefined) {
 		throw new Error("default dataStore must exist");
@@ -74,9 +65,7 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 	 * Function that will initialize the entryPoint of the IContainerRuntime instances
 	 * created with this factory
 	 */
-	readonly provideEntryPoint?: (
-		runtime: IContainerRuntime,
-	) => Promise<FluidObject>;
+	readonly provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
 
 	/**
 	 * Minimum version of the FF runtime that is required to collaborate on new documents.
@@ -126,9 +115,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore
 	/**
 	 * {@inheritDoc ContainerRuntimeFactoryWithDefaultDataStoreProps.provideEntryPoint}
 	 */
-	private readonly provideEntryPoint: (
-		runtime: IContainerRuntime,
-	) => Promise<FluidObject>;
+	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
 
 	/**
 	 * {@inheritDoc ContainerRuntimeFactoryWithDefaultDataStoreProps.minVersionForCollab}
@@ -146,9 +133,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore
 			if (parser.pathParts.length === 0) {
 				// This cast is safe as loadContainerRuntime is called in the base class
 				// eslint-disable-next-line import-x/no-deprecated
-				return (
-					runtime as IContainerRuntimeWithResolveHandle_Deprecated
-				).resolveHandle({
+				return (runtime as IContainerRuntimeWithResolveHandle_Deprecated).resolveHandle({
 					url: `/${defaultDataStoreId}${parser.query}`,
 					headers: request.headers,
 				});
@@ -170,9 +155,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore
 		await this.containerHasInitialized(runtime);
 	}
 
-	public async instantiateFromExisting(
-		runtime: IContainerRuntime,
-	): Promise<void> {
+	public async instantiateFromExisting(runtime: IContainerRuntime): Promise<void> {
 		await this.containerHasInitialized(runtime);
 	}
 
@@ -199,9 +182,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore
 	 * @param runtime - The container runtime for the container being initialized.
 	 * @virtual
 	 */
-	protected async containerInitializingFirstTime(
-		runtime: IContainerRuntime,
-	): Promise<void> {
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const dataStore = await runtime.createDataStore(this.defaultFactory.type);
 		await dataStore.trySetAlias(defaultDataStoreId);
 	}
@@ -212,7 +193,5 @@ export class ContainerRuntimeFactoryWithDefaultDataStore
 	 * @param runtime - The container runtime for the container being initialized.
 	 * @virtual
 	 */
-	protected async containerHasInitialized(
-		runtime: IContainerRuntime,
-	): Promise<void> {}
+	protected async containerHasInitialized(runtime: IContainerRuntime): Promise<void> {}
 }

@@ -3,23 +3,24 @@
  * Licensed under the MIT License.
  */
 
+import { existsSync, mkdirSync } from 'fs';
+import { join } from 'path';
+
 import {
-	type AsyncGenerator,
+	AsyncGenerator,
 	chainAsync as chain,
 	describeFuzz,
 	makeRandom,
 	performFuzzActionsAsync as performFuzzActionsBase,
-	type SaveInfo,
 	takeAsync as take,
+	type SaveInfo,
 } from '@fluid-private/stochastic-test-utils';
 import { expect } from 'chai';
-import { existsSync, mkdirSync } from 'fs';
-import { join } from 'path';
 
 import { fail } from '../../Common.js';
 import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities.js';
+import { SharedTree } from '../../SharedTree.js';
 import { WriteFormat } from '../../persisted-types/index.js';
-import type { SharedTree } from '../../SharedTree.js';
 import {
 	setUpLocalServerTestSharedTree,
 	testDocumentsPathBase,
@@ -27,7 +28,7 @@ import {
 } from '../utilities/TestUtilities.js';
 
 import { makeOpGenerator } from './Generators.js';
-import type { EditGenerationConfig, FuzzChange, FuzzTestState, Operation } from './Types.js';
+import { EditGenerationConfig, FuzzChange, FuzzTestState, Operation } from './Types.js';
 
 const directory = join(testDocumentsPathBase, 'fuzz-tests');
 

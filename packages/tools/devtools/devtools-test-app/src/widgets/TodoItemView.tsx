@@ -63,18 +63,14 @@ interface TodoItemViewProps {
  * Todo Item that will be stored in the {@link TodoListView} tree.
  * Contains a title, description and a checkbox to mark it as completed.
  */
-export const TodoItemView: React.FC<TodoItemViewProps> = (
-	props: TodoItemViewProps,
-) => {
+export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => {
 	const { todoItemModel, className } = props;
 	const styles = useStyles();
 
-	const [itemTitle, setItemTitle] = React.useState<SharedString | undefined>(
+	const [itemTitle, setItemTitle] = React.useState<SharedString | undefined>(undefined);
+	const [itemDescription, setItemDescription] = React.useState<SharedString | undefined>(
 		undefined,
 	);
-	const [itemDescription, setItemDescription] = React.useState<
-		SharedString | undefined
-	>(undefined);
 	const [detailsVisible, setDetailsVisible] = React.useState<boolean>(false);
 
 	useTree(todoItemModel);
@@ -101,9 +97,7 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (
 			});
 	}, [todoItemModel.description]);
 
-	const checkChangedHandler = (
-		e: React.ChangeEvent<HTMLInputElement>,
-	): void => {
+	const checkChangedHandler = (e: React.ChangeEvent<HTMLInputElement>): void => {
 		todoItemModel.completed = e.target.checked;
 	};
 
@@ -112,9 +106,7 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (
 	}
 
 	return (
-		<div
-			className={`todo-item${className === undefined ? "" : ` ${className}`}`}
-		>
+		<div className={`todo-item${className === undefined ? "" : ` ${className}`}`}>
 			<h2 className={styles.todoItemHeader}>
 				<input
 					type="checkbox"
@@ -131,10 +123,7 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (
 				>
 					{detailsVisible ? "▲" : "▼"}
 				</button>
-				<CollaborativeInput
-					sharedString={itemTitle}
-					className={styles.todoItemInput}
-				/>
+				<CollaborativeInput sharedString={itemTitle} className={styles.todoItemInput} />
 			</h2>
 			{detailsVisible && (
 				<CollaborativeTextArea

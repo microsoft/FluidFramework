@@ -5,11 +5,11 @@
 
 import { assert } from '@fluidframework/core-utils/internal';
 
-import { compareFiniteNumbers, compareFiniteNumbersReversed, fail, type Mutable } from '../Common.js';
-import type { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from '../Identifiers.js';
+import { Mutable, compareFiniteNumbers, compareFiniteNumbersReversed, fail } from '../Common.js';
+import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from '../Identifiers.js';
 
 import { AppendOnlyDoublySortedMap } from './AppendOnlySortedMap.js';
-import type { SerializedSessionIdNormalizer } from './persisted-types/index.js';
+import { SerializedSessionIdNormalizer } from './persisted-types/index.js';
 
 /**
  * Maps IDs created by a session between their local and final forms (i.e. normalization). These IDs are in a contiguous range.

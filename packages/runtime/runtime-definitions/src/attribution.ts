@@ -60,10 +60,7 @@ export interface LocalAttributionKey {
  * Can be indexed into the ContainerRuntime in order to retrieve {@link AttributionInfo}.
  * @legacy @beta
  */
-export type AttributionKey =
-	| OpAttributionKey
-	| DetachedAttributionKey
-	| LocalAttributionKey;
+export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
 
 /**
  * Attribution information associated with a change.

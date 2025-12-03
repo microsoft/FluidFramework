@@ -14,9 +14,7 @@ export interface IAppViewProps {
 }
 
 export const AppView: FC<IAppViewProps> = ({ groceryList }: IAppViewProps) => {
-	const [inStagingMode, setInStagingMode] = useState<boolean>(
-		groceryList.inStagingMode,
-	);
+	const [inStagingMode, setInStagingMode] = useState<boolean>(groceryList.inStagingMode);
 
 	useEffect(() => {
 		const handleStagingModeChanged = () => {
@@ -46,9 +44,7 @@ export const AppView: FC<IAppViewProps> = ({ groceryList }: IAppViewProps) => {
 		);
 	} else {
 		actions = (
-			<button onClick={groceryList.getSuggestions}>
-				Get suggestions from HealthBot!
-			</button>
+			<button onClick={groceryList.getSuggestions}>Get suggestions from HealthBot!</button>
 		);
 	}
 

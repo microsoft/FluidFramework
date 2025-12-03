@@ -373,9 +373,7 @@ export function getFlubConfig(configPath: string, noCache = false): FlubConfig {
 	const config = configResult?.config as FlubConfig | undefined;
 
 	if (config === undefined) {
-		throw new Error(
-			`No flub configuration found (configPath='${configPath}').`,
-		);
+		throw new Error(`No flub configuration found (configPath='${configPath}').`);
 	}
 
 	// Only version 1 of the config is supported. If any other value is provided, throw an error.
@@ -396,8 +394,7 @@ export function getDefaultInterdependencyRange(
 	releaseGroup: ReleaseGroup | MonoRepo,
 	context: Context,
 ): InterdependencyRange {
-	const releaseGroupName =
-		releaseGroup instanceof MonoRepo ? releaseGroup.name : releaseGroup;
+	const releaseGroupName = releaseGroup instanceof MonoRepo ? releaseGroup.name : releaseGroup;
 
 	// Prefer to use the configuration in the flub config if available.
 	const flubConfigRanges = context.flubConfig.bump?.defaultInterdependencyRange;
@@ -413,15 +410,11 @@ export function getDefaultInterdependencyRange(
 	// This can be removed once we are no longer supporting release branches older than release/client/2.4
 	const fbConfig = context.fluidBuildConfig.repoPackages?.[releaseGroupName];
 	const interdependencyRangeFromFluidBuildConfig =
-		fbConfig !== undefined &&
-		typeof fbConfig === "object" &&
-		!Array.isArray(fbConfig)
+		fbConfig !== undefined && typeof fbConfig === "object" && !Array.isArray(fbConfig)
 			? fbConfig.defaultInterdependencyRange
 			: undefined;
 
 	// Once the back-compat code above is removed, this should change to
 	// return interdependencyRangeFromFlubConfig ?? DEFAULT_INTERDEPENDENCY_RANGE
-	return (
-		interdependencyRangeFromFluidBuildConfig ?? DEFAULT_INTERDEPENDENCY_RANGE
-	);
+	return interdependencyRangeFromFluidBuildConfig ?? DEFAULT_INTERDEPENDENCY_RANGE;
 }

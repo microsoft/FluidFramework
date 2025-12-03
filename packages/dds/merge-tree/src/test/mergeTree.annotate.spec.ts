@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { MergeTree } from "../mergeTree.js";
-import { type ISegmentPrivate, Marker } from "../mergeTreeNodes.js";
+import { Marker, type ISegmentPrivate } from "../mergeTreeNodes.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { LocalDefaultPerspective } from "../perspective.js";
 import { assertMergeNode } from "../segmentInfos.js";
@@ -17,10 +17,7 @@ import { TextSegment } from "../textSegment.js";
 
 import { makeRemoteClient } from "./testUtils.js";
 
-function splitAt(
-	mergeTree: MergeTree,
-	pos: number,
-): ISegmentPrivate | undefined {
+function splitAt(mergeTree: MergeTree, pos: number): ISegmentPrivate | undefined {
 	let segment: ISegmentPrivate | undefined;
 	mergeTree.mapRange(
 		(seg) => {
@@ -45,8 +42,7 @@ describe("MergeTree", () => {
 	const annotateStart = 1;
 	const markerPosition = annotateStart + 2;
 	const annotateEnd = markerPosition + 2;
-	const splitPos =
-		Math.floor((annotateEnd - annotateStart) / 2) + annotateStart;
+	const splitPos = Math.floor((annotateEnd - annotateStart) / 2) + annotateStart;
 
 	beforeEach(() => {
 		mergeTree = new MergeTree();
@@ -492,11 +488,7 @@ describe("MergeTree", () => {
 						annotateStart,
 						annotateEnd,
 						{
-							props: {
-								propertySource: "remote",
-								remoteOnly: 1,
-								secondSource: "remote",
-							},
+							props: { propertySource: "remote", remoteOnly: 1, secondSource: "remote" },
 						},
 						remoteClient.perspectiveAt({ refSeq: currentSequenceNumber }),
 						remoteClient.stampAt({ seq: ++currentSequenceNumber }),
@@ -613,10 +605,7 @@ describe("MergeTree", () => {
 					});
 
 					assert(segmentInfo?.segment?.segmentGroups?.empty);
-					assert.equal(
-						segmentInfo?.segment?.properties?.propertySource,
-						"local",
-					);
+					assert.equal(segmentInfo?.segment?.properties?.propertySource, "local");
 					assert.equal(segmentInfo?.segment?.properties?.remoteProperty, 1);
 				});
 			});
@@ -742,11 +731,7 @@ describe("MergeTree", () => {
 						annotateStart,
 						annotateEnd,
 						{
-							props: {
-								propertySource: "remote",
-								remoteOnly: 1,
-								secondSource: "remote",
-							},
+							props: { propertySource: "remote", remoteOnly: 1, secondSource: "remote" },
 						},
 						remoteClient.perspectiveAt({ refSeq: currentSequenceNumber }),
 						remoteClient.stampAt({ seq: ++currentSequenceNumber }),

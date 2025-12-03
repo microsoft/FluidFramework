@@ -24,11 +24,7 @@ describe("ChannelStorageService", () => {
 			},
 		};
 		const logger = new MockLogger();
-		const ss = new ChannelStorageService(
-			tree,
-			storage,
-			logger.toTelemetryLogger(),
-		);
+		const ss = new ChannelStorageService(tree, storage, logger.toTelemetryLogger());
 
 		assert.strictEqual(await ss.contains("/"), false);
 		assert.deepStrictEqual(await ss.list(""), []);
@@ -49,18 +45,11 @@ describe("ChannelStorageService", () => {
 			},
 		};
 		const logger = new MockLogger();
-		const ss = new ChannelStorageService(
-			tree,
-			storage,
-			logger.toTelemetryLogger(),
-		);
+		const ss = new ChannelStorageService(tree, storage, logger.toTelemetryLogger());
 
 		assert.strictEqual(await ss.contains("foo"), true);
 		assert.deepStrictEqual(await ss.list(""), ["foo"]);
-		assert.deepStrictEqual(
-			await ss.readBlob("foo"),
-			stringToBuffer("bar", "utf8"),
-		);
+		assert.deepStrictEqual(await ss.readBlob("foo"), stringToBuffer("bar", "utf8"));
 		logger.assertMatchNone([{ category: "error" }]);
 		assert.deepStrictEqual(ss.getSnapshotTree(), tree);
 	});
@@ -83,18 +72,11 @@ describe("ChannelStorageService", () => {
 			},
 		};
 		const logger = new MockLogger();
-		const ss = new ChannelStorageService(
-			tree,
-			storage,
-			logger.toTelemetryLogger(),
-		);
+		const ss = new ChannelStorageService(tree, storage, logger.toTelemetryLogger());
 
 		assert.strictEqual(await ss.contains("nested/foo"), true);
 		assert.deepStrictEqual(await ss.list("nested/"), ["foo"]);
-		assert.deepStrictEqual(
-			await ss.readBlob("nested/foo"),
-			stringToBuffer("bar", "utf8"),
-		);
+		assert.deepStrictEqual(await ss.readBlob("nested/foo"), stringToBuffer("bar", "utf8"));
 		logger.assertMatchNone([{ category: "error" }]);
 		assert.deepStrictEqual(ss.getSnapshotTree(), tree);
 	});

@@ -4,19 +4,16 @@
  */
 
 import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
-import type {
-	FluidObject,
-	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
-import type { ISummaryTree } from "@fluidframework/driver-definitions";
-import type {
+import { ITelemetryBaseLogger, type FluidObject } from "@fluidframework/core-interfaces";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
+import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-import type { ReplayController } from "./replayController.js";
+import { ReplayController } from "./replayController.js";
 import { ReplayControllerStatic } from "./replayDocumentDeltaConnection.js";
 import { ReplayDocumentService } from "./replayDocumentService.js";
 

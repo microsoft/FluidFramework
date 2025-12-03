@@ -6,10 +6,7 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEvent } from "@fluidframework/core-interfaces";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree/legacy";
-import type {
-	SequenceDeltaEvent,
-	SharedString,
-} from "@fluidframework/sequence/legacy";
+import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/legacy";
 
 /**
  * @internal
@@ -33,10 +30,7 @@ export interface ISharedStringHelperTextChangedEventArgs {
  * @internal
  */
 export interface ISharedStringHelperEvents extends IEvent {
-	(
-		event: "textChanged",
-		listener: (event: ISharedStringHelperTextChangedEventArgs) => void,
-	);
+	(event: "textChanged", listener: (event: ISharedStringHelperTextChangedEventArgs) => void);
 }
 
 /**
@@ -142,9 +136,7 @@ export class SharedStringHelper extends TypedEventEmitter<ISharedStringHelperEve
 				return newPosition;
 			};
 		} else {
-			throw new Error(
-				"Don't know how to handle op types beyond insert and remove",
-			);
+			throw new Error("Don't know how to handle op types beyond insert and remove");
 		}
 
 		this.emit("textChanged", { isLocal, transformPosition });

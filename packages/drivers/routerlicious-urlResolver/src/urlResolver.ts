@@ -3,15 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { IRequest } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IUser } from "@fluidframework/driver-definitions";
-import type {
-	IResolvedUrl,
-	IUrlResolver,
-} from "@fluidframework/driver-definitions/internal";
+import { IUser } from "@fluidframework/driver-definitions";
+import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 
-import type { Provider } from "./nconf.cjs";
+import { Provider } from "./nconf.cjs";
 
 const r11sServers = [
 	"www.wu2-ppe.prague.office-int.com",
@@ -82,9 +79,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 		let fluidUrl =
 			"https://" +
 			`${
-				this.config
-					? new URL(this.config.provider.get("worker:serverUrl")).host
-					: serverSuffix
+				this.config ? new URL(this.config.provider.get("worker:serverUrl")).host : serverSuffix
 			}/` +
 			`${encodeURIComponent(tenantId)}/` +
 			`${encodeURIComponent(documentId)}`;

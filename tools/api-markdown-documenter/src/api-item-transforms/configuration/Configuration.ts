@@ -141,13 +141,9 @@ export function getApiItemTransformationConfigurationWithDefaults(
 	options: ApiItemTransformationOptions,
 ): ApiItemTransformationConfiguration {
 	const logger = options.logger ?? defaultConsoleLogger;
-	const defaultSectionLayout =
-		options.defaultSectionLayout ?? createSectionForApiItem;
-	const documentationSuiteOptions =
-		getDocumentationSuiteConfigurationWithDefaults(options);
-	const transformations = getApiItemTransformationsWithDefaults(
-		options?.transformations,
-	);
+	const defaultSectionLayout = options.defaultSectionLayout ?? createSectionForApiItem;
+	const documentationSuiteOptions = getDocumentationSuiteConfigurationWithDefaults(options);
+	const transformations = getApiItemTransformationsWithDefaults(options?.transformations);
 	return {
 		...documentationSuiteOptions,
 		transformations,

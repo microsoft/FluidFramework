@@ -3,14 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	AzureClient,
-	type AzureContainerServices,
-} from "@fluidframework/azure-client";
-import {
-	createDevtoolsLogger,
-	initializeDevtools,
-} from "@fluidframework/devtools/beta";
+import { AzureClient, type AzureContainerServices } from "@fluidframework/azure-client";
+import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
 import { getPresence } from "@fluidframework/presence/beta";
 import { createChildLogger } from "@fluidframework/telemetry-utils/legacy";
 import type { IFluidContainer } from "fluid-framework";
@@ -18,10 +12,10 @@ import type { IFluidContainer } from "fluid-framework";
 import { DiceRollerController, type DieValue } from "./controller.js";
 import {
 	connectionConfig,
-	type DiceRollerContainerSchema,
 	diceRollerContainerSchema,
 	initializeAppForNewContainer,
 	loadAppFromExistingContainer,
+	type DiceRollerContainerSchema,
 } from "./fluid.js";
 import { buildDicePresence } from "./presence.js";
 import type { TwoDiceApp } from "./schema.js";
@@ -50,10 +44,7 @@ async function start(): Promise<void> {
 	if (createNew) {
 		// The client will create a new detached container using the schema
 		// A detached container will enable the app to modify the container before attaching it to the client
-		({ container, services } = await client.createContainer(
-			diceRollerContainerSchema,
-			"2",
-		));
+		({ container, services } = await client.createContainer(diceRollerContainerSchema, "2"));
 		// const map1 = container.initialObjects.map1 as ISharedMap;
 		// map1.set("diceValue", 1);
 		// const map2 = container.initialObjects.map1 as ISharedMap;
@@ -72,11 +63,7 @@ async function start(): Promise<void> {
 		id = location.hash.slice(1);
 		// Use the unique container ID to fetch the container created earlier.  It will already be connected to the
 		// collaboration session.
-		({ container, services } = await client.getContainer(
-			id,
-			diceRollerContainerSchema,
-			"2",
-		));
+		({ container, services } = await client.getContainer(id, diceRollerContainerSchema, "2"));
 		appModel = loadAppFromExistingContainer(container);
 	}
 
@@ -99,22 +86,16 @@ async function start(): Promise<void> {
 	});
 
 	// Here we are guaranteed that the maps have already been initialized for use with a DiceRollerController
-	const diceRollerController1 = new DiceRollerController(
-		appModel.dice1,
-		(value) => {
-			lastRoll.die1 = value;
-			states.lastRoll.local = lastRoll;
-			states.lastDiceRolls.local.set("die1", { value });
-		},
-	);
-	const diceRollerController2 = new DiceRollerController(
-		appModel.dice2,
-		(value) => {
-			lastRoll.die2 = value;
-			states.lastRoll.local = lastRoll;
-			states.lastDiceRolls.local.set("die2", { value });
-		},
-	);
+	const diceRollerController1 = new DiceRollerController(appModel.dice1, (value) => {
+		lastRoll.die1 = value;
+		states.lastRoll.local = lastRoll;
+		states.lastDiceRolls.local.set("die1", { value });
+	});
+	const diceRollerController2 = new DiceRollerController(appModel.dice2, (value) => {
+		lastRoll.die2 = value;
+		states.lastRoll.local = lastRoll;
+		states.lastDiceRolls.local.set("die2", { value });
+	});
 
 	// lastDiceRolls is here just to demonstrate an example of LatestMap
 	// Its updates are only logged to the console.

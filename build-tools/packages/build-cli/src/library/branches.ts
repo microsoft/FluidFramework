@@ -3,29 +3,32 @@
  * Licensed under the MIT License.
  */
 
+import { PackageName } from "@rushstack/node-core-library";
+import * as semver from "semver";
+
+import type { Context } from "./context.js";
+
 import {
-	bumpVersionScheme,
 	DEFAULT_PRERELEASE_IDENTIFIER,
+	type ReleaseVersion,
+	type VersionBumpType,
+	type VersionChangeTypeExtended,
+	type VersionScheme,
+	bumpVersionScheme,
 	detectVersionScheme,
 	fromInternalScheme,
 	fromVirtualPatchScheme,
 	isVersionBumpTypeExtended,
-	type ReleaseVersion,
 	toVirtualPatchScheme,
-	type VersionBumpType,
-	type VersionChangeTypeExtended,
-	type VersionScheme,
 } from "@fluid-tools/version-tools";
-import { PackageName } from "@rushstack/node-core-library";
-import * as semver from "semver";
+
 import {
-	isReleaseGroup,
 	type ReleaseGroup,
 	type ReleasePackage,
 	type ReleaseSource,
+	isReleaseGroup,
 } from "../releaseGroups.js";
 import type { DependencyUpdateType } from "./bump.js";
-import type { Context } from "./context.js";
 
 /**
  * Creates an appropriate branch for a release group and bump type. Does not commit!
@@ -47,11 +50,7 @@ export async function createBumpBranch(
 	bumpType: VersionBumpType,
 ): Promise<string> {
 	const version = context.getVersion(releaseGroupOrPackage);
-	const name = generateBumpVersionBranchName(
-		releaseGroupOrPackage,
-		bumpType,
-		version,
-	);
+	const name = generateBumpVersionBranchName(releaseGroupOrPackage, bumpType, version);
 	const gitRepo = await context.getGitRepository();
 	await gitRepo.createBranch(name);
 	return name;
@@ -109,8 +108,7 @@ export function generateBumpDepsBranchName(
 	bumpType: DependencyUpdateType | VersionBumpType,
 	releaseGroup?: ReleaseGroup,
 ): string {
-	const releaseGroupSegment =
-		releaseGroup === undefined ? "" : `_${releaseGroup}`;
+	const releaseGroupSegment = releaseGroup === undefined ? "" : `_${releaseGroup}`;
 	const branchName = `bump_deps_${bumpedDep.toLowerCase()}_${bumpType}${releaseGroupSegment}`;
 	return branchName;
 }
@@ -137,8 +135,7 @@ export function generateReleaseBranchName(
 	const branchPath = ["release"];
 
 	const scheme = detectVersionScheme(version);
-	const schemeIsInternal =
-		scheme === "internal" || scheme === "internalPrerelease";
+	const schemeIsInternal = scheme === "internal" || scheme === "internalPrerelease";
 
 	let branchVersion: string;
 	if (schemeIsInternal === true) {
@@ -159,9 +156,7 @@ export function generateReleaseBranchName(
 			const prereleaseId = fromInternalScheme(version, true)[2];
 			// Checking the prerelease ID is necessary because we used "v2int" instead of "internal" in branch names. This
 			// was a bad decision in retrospect, but we're stuck with it for now.
-			branchPath.push(
-				prereleaseId === DEFAULT_PRERELEASE_IDENTIFIER ? "v2int" : releaseGroup,
-			);
+			branchPath.push(prereleaseId === DEFAULT_PRERELEASE_IDENTIFIER ? "v2int" : releaseGroup);
 		} else {
 			branchPath.push(releaseGroup);
 		}
@@ -171,10 +166,7 @@ export function generateReleaseBranchName(
 
 	let releaseBranchVersion: string;
 	if (schemeIsInternal) {
-		const [publicVersion, internalVersion, prereleaseId] = fromInternalScheme(
-			version,
-			true,
-		);
+		const [publicVersion, internalVersion, prereleaseId] = fromInternalScheme(version, true);
 		releaseBranchVersion =
 			prereleaseId === DEFAULT_PRERELEASE_IDENTIFIER
 				? `${semver.major(branchVersion)}.${semver.minor(branchVersion)}`

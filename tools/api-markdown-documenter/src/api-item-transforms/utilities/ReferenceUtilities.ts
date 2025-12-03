@@ -10,10 +10,7 @@ import type { Link } from "mdast";
 import { resolveSymbolicReference } from "../../utilities/index.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 
-import {
-	getLinkForApiItem,
-	shouldItemBeIncluded,
-} from "./ApiItemTransformUtilities.js";
+import { getLinkForApiItem, shouldItemBeIncluded } from "./ApiItemTransformUtilities.js";
 
 /**
  * Resolves a symbolic link and creates a URL to the target.
@@ -31,11 +28,7 @@ export function resolveSymbolicLink(
 
 	let resolvedReference: ApiItem;
 	try {
-		resolvedReference = resolveSymbolicReference(
-			contextApiItem,
-			codeDestination,
-			apiModel,
-		);
+		resolvedReference = resolveSymbolicReference(contextApiItem, codeDestination, apiModel);
 	} catch (error: unknown) {
 		logger.warning((error as Error).message);
 		return undefined;

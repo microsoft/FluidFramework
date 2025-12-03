@@ -10,22 +10,19 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import {
 	createDetachedContainer,
-	type ILoaderProps,
 	loadExistingContainer,
+	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
-import type {
-	ConfigTypes,
-	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+import type { ConfigTypes, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentServiceFactory,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import type {
-	CompatibilityMode,
 	ContainerSchema,
 	IFluidContainer,
+	CompatibilityMode,
 } from "@fluidframework/fluid-static";
 import {
 	createDOProviderContainerRuntimeFactory,
@@ -35,15 +32,13 @@ import {
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import {
-	createTinyliciousCreateNewRequest,
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,
+	createTinyliciousCreateNewRequest,
 } from "@fluidframework/tinylicious-driver/internal";
-import type {
-	TinyliciousClientProps,
-	TinyliciousContainerServices,
-} from "./interfaces.js";
+
 import { createTinyliciousAudienceMember } from "./TinyliciousAudience.js";
+import type { TinyliciousClientProps, TinyliciousContainerServices } from "./interfaces.js";
 
 /**
  * Provides the ability to have a Fluid object backed by a Tinylicious service.
@@ -105,9 +100,7 @@ export class TinyliciousClient {
 		 */
 		const attach = async (): Promise<string> => {
 			if (container.attachState !== AttachState.Detached) {
-				throw new Error(
-					"Cannot attach container. Container is not in detached state.",
-				);
+				throw new Error("Cannot attach container. Container is not in detached state.");
 			}
 			const request = createTinyliciousCreateNewRequest();
 			await container.attach(request);
@@ -142,10 +135,7 @@ export class TinyliciousClient {
 		services: TinyliciousContainerServices;
 	}> {
 		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
-		const container = await loadExistingContainer({
-			...loaderProps,
-			request: { url: id },
-		});
+		const container = await loadExistingContainer({ ...loaderProps, request: { url: id } });
 		const fluidContainer = await createFluidContainer<TContainerSchema>({
 			container,
 		});
@@ -154,9 +144,7 @@ export class TinyliciousClient {
 	}
 
 	// #region private
-	private getContainerServices(
-		container: IContainer,
-	): TinyliciousContainerServices {
+	private getContainerServices(container: IContainer): TinyliciousContainerServices {
 		return {
 			audience: createServiceAudience({
 				container,
@@ -201,10 +189,7 @@ export class TinyliciousClient {
 			codeLoader,
 			logger: this.logger,
 			options: { client },
-			configProvider: wrapConfigProviderWithDefaults(
-				/* original */ undefined,
-				featureGates,
-			),
+			configProvider: wrapConfigProviderWithDefaults(/* original */ undefined, featureGates),
 		};
 
 		return loaderProps;

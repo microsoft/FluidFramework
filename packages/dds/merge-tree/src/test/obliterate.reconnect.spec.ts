@@ -11,15 +11,9 @@ import { MergeTree } from "../mergeTree.js";
 import { Side } from "../sequencePlace.js";
 
 import { ClientTestHelper } from "./clientTestHelper.js";
-import {
-	itCorrectlyObliterates,
-	useStrictPartialLengthChecks,
-} from "./testUtils.js";
+import { itCorrectlyObliterates, useStrictPartialLengthChecks } from "./testUtils.js";
 
-for (const {
-	incremental,
-	mergeTreeEnableSidedObliterate,
-} of generatePairwiseOptions({
+for (const { incremental, mergeTreeEnableSidedObliterate } of generatePairwiseOptions({
 	incremental: [true, false],
 	mergeTreeEnableSidedObliterate: [
 		false,
@@ -219,17 +213,12 @@ for (const {
 
 describe("sided obliterate reconnect", () => {
 	itCorrectlyObliterates({
-		title:
-			"add text, disconnect, obliterate, reconnect, insert adjacent to obliterated range",
+		title: "add text, disconnect, obliterate, reconnect, insert adjacent to obliterated range",
 		action: (helper) => {
 			helper.insertText("A", 0, "hello world");
 			helper.processAllOps();
 			helper.disconnect("C");
-			helper.obliterateRange(
-				"C",
-				{ pos: 1, side: Side.After },
-				{ pos: 4, side: Side.After },
-			);
+			helper.obliterateRange("C", { pos: 1, side: Side.After }, { pos: 4, side: Side.After });
 			// inserting adjacent to the obliterated range start
 			helper.reconnect("C");
 			helper.insertText("A", 2, "123");
@@ -237,17 +226,12 @@ describe("sided obliterate reconnect", () => {
 		expectedText: "he world",
 	});
 	itCorrectlyObliterates({
-		title:
-			"add text, disconnect, obliterate, insert adjacent to obliterated range, reconnect",
+		title: "add text, disconnect, obliterate, insert adjacent to obliterated range, reconnect",
 		action: (helper) => {
 			helper.insertText("A", 0, "hello world");
 			helper.processAllOps();
 			helper.disconnect("C");
-			helper.obliterateRange(
-				"C",
-				{ pos: 1, side: Side.After },
-				{ pos: 4, side: Side.After },
-			);
+			helper.obliterateRange("C", { pos: 1, side: Side.After }, { pos: 4, side: Side.After });
 			// inserting adjacent to the obliterated range start
 			helper.insertText("A", 2, "123");
 			helper.reconnect("C");
@@ -259,15 +243,12 @@ describe("sided obliterate reconnect", () => {
 		for (const { removalType, getRemoveMethod } of [
 			{
 				removalType: "remove",
-				getRemoveMethod: (
-					helper: ClientTestHelper,
-				): ClientTestHelper["removeRange"] => helper.removeRange.bind(helper),
+				getRemoveMethod: (helper: ClientTestHelper): ClientTestHelper["removeRange"] =>
+					helper.removeRange.bind(helper),
 			},
 			{
 				removalType: "obliterate",
-				getRemoveMethod: (
-					helper: ClientTestHelper,
-				): ClientTestHelper["removeRange"] =>
+				getRemoveMethod: (helper: ClientTestHelper): ClientTestHelper["removeRange"] =>
 					helper.obliterateRange.bind(helper),
 			},
 		]) {
@@ -335,11 +316,7 @@ describe("sided obliterate reconnect", () => {
 			helper.insertText("A", 0, "0123456789");
 			helper.processAllOps();
 			helper.disconnect("B");
-			helper.obliterateRange(
-				"B",
-				{ pos: 3, side: Side.After },
-				{ pos: 8, side: Side.Before },
-			); // 4 through 7
+			helper.obliterateRange("B", { pos: 3, side: Side.After }, { pos: 8, side: Side.Before }); // 4 through 7
 			helper.insertText("A", 7, "inside the original obliterate");
 			helper.removeRange("C", 1, 5); // 1234
 			helper.advanceClients("B");
@@ -357,8 +334,7 @@ describe("sided obliterate reconnect", () => {
 				"outside the original obliterate but in danger of being in the new one",
 			);
 		},
-		expectedText:
-			"0outside the original obliterate but in danger of being in the new one89",
+		expectedText: "0outside the original obliterate but in danger of being in the new one89",
 	});
 
 	itCorrectlyObliterates({
@@ -367,11 +343,7 @@ describe("sided obliterate reconnect", () => {
 			helper.insertText("A", 0, "0123456789");
 			helper.processAllOps();
 			helper.disconnect("B");
-			helper.obliterateRange(
-				"B",
-				{ pos: 3, side: Side.After },
-				{ pos: 8, side: Side.Before },
-			); // 4 through 7
+			helper.obliterateRange("B", { pos: 3, side: Side.After }, { pos: 8, side: Side.Before }); // 4 through 7
 			helper.insertText("A", 7, "inside the original obliterate");
 			helper.removeRange("C", 6, 9); // 678
 			helper.advanceClients("B");
@@ -389,8 +361,7 @@ describe("sided obliterate reconnect", () => {
 				"outside the original obliterate but in danger of being in the new one",
 			);
 		},
-		expectedText:
-			"0123outside the original obliterate but in danger of being in the new one9",
+		expectedText: "0123outside the original obliterate but in danger of being in the new one9",
 	});
 
 	itCorrectlyObliterates({
@@ -399,21 +370,9 @@ describe("sided obliterate reconnect", () => {
 			helper.insertText("A", 0, "ABCDEFGHIJKLMNOPQ");
 			helper.processAllOps();
 			helper.disconnect("B");
-			helper.obliterateRange(
-				"D",
-				{ pos: 0, side: Side.Before },
-				{ pos: 6, side: Side.After },
-			); // ABCDEFG
-			helper.obliterateRange(
-				"C",
-				{ pos: 2, side: Side.Before },
-				{ pos: 8, side: Side.After },
-			); // CDEFGHI
-			helper.obliterateRange(
-				"B",
-				{ pos: 3, side: Side.After },
-				{ pos: 4, side: Side.After },
-			); // D
+			helper.obliterateRange("D", { pos: 0, side: Side.Before }, { pos: 6, side: Side.After }); // ABCDEFG
+			helper.obliterateRange("C", { pos: 2, side: Side.Before }, { pos: 8, side: Side.After }); // CDEFGHI
+			helper.obliterateRange("B", { pos: 3, side: Side.After }, { pos: 4, side: Side.After }); // D
 			// This insertion position by B is critically inside the range that B originally obliterated, but that will no longer be the case
 			// later on when B reconnects, since the region B wanted to obliterate will be gone (so there is no way to specify the same obliterate).
 			helper.insertText("B", 4, "should go away");
@@ -425,11 +384,7 @@ describe("sided obliterate reconnect", () => {
 			// in the event that the new insertion position was obliterated concurrently to the op it's about to (re)submit.
 			helper.reconnect("B");
 			// ... and indeed, in this case A has obliterated a region containing the "should go away" B inserted.
-			helper.obliterateRange(
-				"A",
-				{ pos: 7, side: Side.After },
-				{ pos: 9, side: Side.Before },
-			); // K in '01234567KLMNOPQ', expanding on both ends
+			helper.obliterateRange("A", { pos: 7, side: Side.After }, { pos: 9, side: Side.Before }); // K in '01234567KLMNOPQ', expanding on both ends
 		},
 		expectedText: "01234567LMNOPQ",
 	});
@@ -451,11 +406,7 @@ describe("sided obliterate reconnect", () => {
 				{ pos: 26, side: Side.After },
 			); // I through Z inclusive
 			helper.insertText("B", 3, "e"); // between "B" and "C"
-			helper.obliterateRange(
-				"B",
-				{ pos: 2, side: Side.After },
-				{ pos: 6, side: Side.After },
-			); // the inserted 'e' through F inclusive
+			helper.obliterateRange("B", { pos: 2, side: Side.After }, { pos: 6, side: Side.After }); // the inserted 'e' through F inclusive
 			helper.obliterateRange(
 				"A",
 				{ pos: 4, side: Side.After },

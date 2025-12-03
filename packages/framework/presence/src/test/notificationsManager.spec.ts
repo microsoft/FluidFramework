@@ -60,10 +60,19 @@ describe("Presence", () => {
 			clock.setSystemTime(initialTime);
 
 			// Set up the presence connection
-			({ presence, processSignal } = prepareConnectedPresence(runtime, "attendeeId-2", "client2", clock, logger));
+			({ presence, processSignal } = prepareConnectedPresence(
+				runtime,
+				"attendeeId-2",
+				"client2",
+				clock,
+				logger,
+			));
 
 			// Get a notifications workspace
-			notificationsWorkspace = presence.notifications.getWorkspace("name:testNotificationWorkspace", {});
+			notificationsWorkspace = presence.notifications.getWorkspace(
+				"name:testNotificationWorkspace",
+				{},
+			);
 		});
 
 		afterEach(function (done: Mocha.Done) {
@@ -469,9 +478,12 @@ describe("Presence", () => {
 				fail(`Unexpected unattendedNotification: ${name}`);
 			});
 
-			const disconnect = testEvents.notifications.on("newId", (_attendee: Attendee, _id: number) => {
-				fail(`Unexpected event raised on disconnected listener`);
-			});
+			const disconnect = testEvents.notifications.on(
+				"newId",
+				(_attendee: Attendee, _id: number) => {
+					fail(`Unexpected event raised on disconnected listener`);
+				},
+			);
 			// Remove the listener
 			disconnect();
 

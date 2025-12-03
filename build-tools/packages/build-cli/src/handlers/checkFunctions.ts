@@ -5,11 +5,13 @@
 
 import { strict as assert } from "node:assert";
 import { existsSync } from "node:fs";
-import { bumpVersionScheme } from "@fluid-tools/version-tools";
-import { FluidRepo } from "@fluidframework/build-tools";
+
 import { confirm, rawlist } from "@inquirer/prompts";
 import execa from "execa";
 import type { Machine } from "jssm";
+
+import { bumpVersionScheme } from "@fluid-tools/version-tools";
+import { FluidRepo } from "@fluidframework/build-tools";
 
 import {
 	generateBumpDepsBranchName,
@@ -23,13 +25,10 @@ import {
 } from "../library/index.js";
 import type { CommandLogger } from "../logging.js";
 import type { MachineState } from "../machines/index.js";
-import { isReleaseGroup, type ReleaseSource } from "../releaseGroups.js";
+import { type ReleaseSource, isReleaseGroup } from "../releaseGroups.js";
 import { getRunPolicyCheckDefault } from "../repoConfig.js";
 import type { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
-import {
-	BaseStateHandler,
-	type StateHandlerFunction,
-} from "./stateHandlers.js";
+import { BaseStateHandler, type StateHandlerFunction } from "./stateHandlers.js";
 
 /**
  * Only client and server release groups use changesets and the related release note and per-package changelog
@@ -61,9 +60,7 @@ export const checkBranchName: StateHandlerFunction = async (
 	if (shouldCheckBranch === true) {
 		switch (bumpType) {
 			case "patch": {
-				log.verbose(
-					`Checking if ${gitRepo.originalBranchName} starts with release/`,
-				);
+				log.verbose(`Checking if ${gitRepo.originalBranchName} starts with release/`);
 				if (gitRepo.originalBranchName?.startsWith("release/") !== true) {
 					log.warning(
 						`Patch release should only be done on 'release/*' branches, but current branch is '${gitRepo.originalBranchName}'.\nYou can skip this check with --no-branchCheck.'`,
@@ -76,12 +73,8 @@ export const checkBranchName: StateHandlerFunction = async (
 
 			case "major":
 			case "minor": {
-				log.verbose(
-					`Checking if ${gitRepo.originalBranchName} is 'main', 'next', or 'lts'.`,
-				);
-				if (
-					!["main", "next", "lts"].includes(gitRepo.originalBranchName ?? "")
-				) {
+				log.verbose(`Checking if ${gitRepo.originalBranchName} is 'main', 'next', or 'lts'.`);
+				if (!["main", "next", "lts"].includes(gitRepo.originalBranchName ?? "")) {
 					log.warning(
 						`Release prep should only be done on 'main', 'next', or 'lts' branches, but current branch is '${gitRepo.originalBranchName}'.`,
 					);
@@ -170,8 +163,7 @@ export const checkDoesReleaseFromReleaseBranch: StateHandlerFunction = async (
 
 	const { releaseGroup } = data;
 
-	let releaseSource: ReleaseSource =
-		getReleaseSourceForReleaseGroup(releaseGroup);
+	let releaseSource: ReleaseSource = getReleaseSourceForReleaseGroup(releaseGroup);
 
 	if (releaseSource === "interactive") {
 		releaseSource = await rawlist({
@@ -220,9 +212,7 @@ export const checkHasRemote: StateHandlerFunction = async (
 	const remote = await gitRepo.getRemote(gitRepo.upstreamRemotePartialUrl);
 	if (remote === undefined) {
 		BaseStateHandler.signalFailure(machine, state);
-		log.errorLog(
-			`Unable to find remote for '${gitRepo.upstreamRemotePartialUrl}'`,
-		);
+		log.errorLog(`Unable to find remote for '${gitRepo.upstreamRemotePartialUrl}'`);
 	}
 
 	BaseStateHandler.signalSuccess(machine, state);
@@ -427,9 +417,7 @@ export const checkPolicy: StateHandlerFunction = async (
 			BaseStateHandler.signalFailure(machine, state);
 			return false;
 		}
-	} else if (
-		getRunPolicyCheckDefault(releaseGroup, gitRepo.originalBranchName) === false
-	) {
+	} else if (getRunPolicyCheckDefault(releaseGroup, gitRepo.originalBranchName) === false) {
 		log.verbose(
 			`Skipping policy check for ${releaseGroup} because it does not run on the ${gitRepo.originalBranchName} branch by default. Pass --policyCheck to force it to run.`,
 		);
@@ -489,9 +477,7 @@ export const checkAssertTagging: StateHandlerFunction = async (
 			BaseStateHandler.signalFailure(machine, state);
 			return false;
 		}
-	} else if (
-		getRunPolicyCheckDefault(releaseGroup, gitRepo.originalBranchName) === false
-	) {
+	} else if (getRunPolicyCheckDefault(releaseGroup, gitRepo.originalBranchName) === false) {
 		log.verbose(
 			`Skipping assert tagging for ${releaseGroup} because it does not run on the ${gitRepo.originalBranchName} branch by default. Pass --policyCheck to force it to run.`,
 		);
@@ -596,8 +582,7 @@ export const checkChangelogs: StateHandlerFunction = async (
 		bumpType !== "patch"
 	) {
 		const confirmed = await confirm({
-			message:
-				"Did you generate and commit the CHANGELOG.md files for the release?",
+			message: "Did you generate and commit the CHANGELOG.md files for the release?",
 		});
 
 		if (confirmed !== true) {
@@ -703,12 +688,7 @@ export const checkReleaseIsDone: StateHandlerFunction = async (
 
 	const { context, releaseGroup, releaseVersion } = data;
 
-	const wasReleased = await isReleased(
-		context,
-		releaseGroup,
-		releaseVersion,
-		log,
-	);
+	const wasReleased = await isReleased(context, releaseGroup, releaseVersion, log);
 	if (wasReleased) {
 		BaseStateHandler.signalSuccess(machine, state);
 	} else {
@@ -737,24 +717,15 @@ export const checkShouldCommit: StateHandlerFunction = async (
 ): Promise<boolean> => {
 	if (testMode) return true;
 
-	const { bumpType, context, shouldCommit, releaseGroup, releaseVersion } =
-		data;
+	const { bumpType, context, shouldCommit, releaseGroup, releaseVersion } = data;
 
 	if (shouldCommit !== true) {
 		BaseStateHandler.signalFailure(machine, state);
 		return true;
 	}
 
-	const branchName = generateBumpVersionBranchName(
-		releaseGroup,
-		bumpType,
-		releaseVersion,
-	);
-	const commitMsg = generateBumpVersionCommitMessage(
-		releaseGroup,
-		bumpType,
-		releaseVersion,
-	);
+	const branchName = generateBumpVersionBranchName(releaseGroup, bumpType, releaseVersion);
+	const commitMsg = generateBumpVersionCommitMessage(releaseGroup, bumpType, releaseVersion);
 
 	const gitRepo = await context.getGitRepository();
 	await gitRepo.createBranch(branchName);
@@ -796,15 +767,9 @@ export const checkShouldCommitReleasedDepsBump: StateHandlerFunction = async (
 	await gitRepo.createBranch(branchName);
 
 	log.verbose(`Created bump branch: ${branchName}`);
-	log.info(
-		`${releaseGroup}: Bumped prerelease dependencies to release versions.`,
-	);
+	log.info(`${releaseGroup}: Bumped prerelease dependencies to release versions.`);
 
-	const commitMsg = generateBumpDepsCommitMessage(
-		"prerelease",
-		"latest",
-		releaseGroup,
-	);
+	const commitMsg = generateBumpDepsCommitMessage("prerelease", "latest", releaseGroup);
 	await gitRepo.gitClient.commit(commitMsg);
 	BaseStateHandler.signalSuccess(machine, state);
 	return true;

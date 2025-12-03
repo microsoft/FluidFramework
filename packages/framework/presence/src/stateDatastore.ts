@@ -5,7 +5,11 @@
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { ClientRecord, ValidatableValueDirectoryOrState, ValidatableValueStructure } from "./internalTypes.js";
+import type {
+	ClientRecord,
+	ValidatableValueDirectoryOrState,
+	ValidatableValueStructure,
+} from "./internalTypes.js";
 import type { AttendeeId, PresenceWithNotifications as Presence } from "./presence.js";
 
 // type StateDatastoreSchemaNode<
@@ -44,7 +48,8 @@ export interface LocalStateUpdateOptions {
 export interface StateDatastore<
 	TKey extends string,
 	TUpdateValue extends InternalTypes.ValueDirectoryOrState<unknown>,
-	TStoredValue extends ValidatableValueDirectoryOrState<unknown> = ValidatableValueStructure<TUpdateValue>,
+	TStoredValue extends
+		ValidatableValueDirectoryOrState<unknown> = ValidatableValueStructure<TUpdateValue>,
 > {
 	readonly presence: Presence;
 	localUpdate(
@@ -70,15 +75,21 @@ export function handleFromDatastore<
 	// TSchema extends StateDatastoreSchema,
 	TKey extends string /* & keyof TSchema */,
 	TValue extends InternalTypes.ValueDirectoryOrState<unknown>,
->(datastore: StateDatastore<TKey, TValue>): InternalTypes.StateDatastoreHandle<TKey, Exclude<TValue, undefined>> {
-	return datastore as unknown as InternalTypes.StateDatastoreHandle<TKey, Exclude<TValue, undefined>>;
+>(
+	datastore: StateDatastore<TKey, TValue>,
+): InternalTypes.StateDatastoreHandle<TKey, Exclude<TValue, undefined>> {
+	return datastore as unknown as InternalTypes.StateDatastoreHandle<
+		TKey,
+		Exclude<TValue, undefined>
+	>;
 }
 
 /**
  * Helper to get the datastore back from its handle.
  */
-export function datastoreFromHandle<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<any>>(
-	handle: InternalTypes.StateDatastoreHandle<TKey, TValue>,
-): StateDatastore<TKey, TValue> {
+export function datastoreFromHandle<
+	TKey extends string,
+	TValue extends InternalTypes.ValueDirectoryOrState<any>,
+>(handle: InternalTypes.StateDatastoreHandle<TKey, TValue>): StateDatastore<TKey, TValue> {
 	return handle as unknown as StateDatastore<TKey, TValue>;
 }

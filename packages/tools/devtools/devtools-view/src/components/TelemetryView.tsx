@@ -8,7 +8,6 @@ import {
 	Combobox,
 	type ComboboxProps,
 	CounterBadge,
-	createTableColumn,
 	DataGrid,
 	DataGridBody,
 	DataGridCell,
@@ -17,23 +16,24 @@ import {
 	DataGridRow,
 	Dropdown,
 	type DropdownProps,
-	makeStyles,
 	Option,
-	shorthands,
 	type TableColumnDefinition,
+	createTableColumn,
+	makeStyles,
+	shorthands,
 	tokens,
 } from "@fluentui/react-components";
 import {
 	DevtoolsDisposed,
 	GetTelemetryHistory,
-	handleIncomingMessage,
-	type InboundHandlers,
 	type ISourcedDevtoolsMessage,
 	type ITimestampedTelemetryEvent,
+	type InboundHandlers,
 	TelemetryEvent,
 	TelemetryHistory,
+	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
-import React, { useRef, useState } from "react";
+import React, { useState, useRef } from "react";
 
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
@@ -85,14 +85,10 @@ export function TelemetryView(): React.ReactElement {
 	 * `bufferedEvents` transfers events to `telemetryEvents` in a FIFO (First In First Out) manner.
 	 * If `telemetryEvents` is full, new events accumulate in `bufferedEvents` until more space becomes available.
 	 */
-	const [bufferedEvents, setBufferedEvents] = React.useState<
-		ITimestampedTelemetryEvent[]
-	>([]);
+	const [bufferedEvents, setBufferedEvents] = React.useState<ITimestampedTelemetryEvent[]>([]);
 	const [maxEventsToDisplay, setMaxEventsToDisplay] =
 		React.useState<number>(DEFAULT_PAGE_SIZE);
-	const [selectedIndex, setSelectedIndex] = React.useState<
-		number | undefined
-	>();
+	const [selectedIndex, setSelectedIndex] = React.useState<number | undefined>();
 
 	React.useEffect(() => {
 		/**
@@ -101,10 +97,7 @@ export function TelemetryView(): React.ReactElement {
 		const inboundMessageHandlers: InboundHandlers = {
 			[TelemetryEvent.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as TelemetryEvent.Message;
-				setBufferedEvents((currentBuffer) => [
-					message.data.event,
-					...(currentBuffer ?? []),
-				]);
+				setBufferedEvents((currentBuffer) => [message.data.event, ...(currentBuffer ?? [])]);
 				return true;
 			},
 			[TelemetryHistory.MessageType]: async (untypedMessage) => {
@@ -141,10 +134,7 @@ export function TelemetryView(): React.ReactElement {
 			bufferedEvents.length > 0 &&
 			telemetryEvents.length < maxEventsToDisplay
 		) {
-			const newEvents = bufferedEvents.slice(
-				0,
-				maxEventsToDisplay - telemetryEvents.length,
-			);
+			const newEvents = bufferedEvents.slice(0, maxEventsToDisplay - telemetryEvents.length);
 			const remainingBuffer = bufferedEvents.slice(
 				maxEventsToDisplay - telemetryEvents.length,
 			);
@@ -179,9 +169,7 @@ export function TelemetryView(): React.ReactElement {
 		// Update bufferedEvents to remove the events just moved to telemetryEvents
 		const remainingBuffer = bufferedEvents.slice(newEvents.length);
 		setBufferedEvents(remainingBuffer);
-		usageLogger?.sendTelemetryEvent({
-			eventName: "RefreshTelemetryButtonClicked",
-		});
+		usageLogger?.sendTelemetryEvent({ eventName: "RefreshTelemetryButtonClicked" });
 	};
 
 	return (
@@ -204,11 +192,7 @@ export function TelemetryView(): React.ReactElement {
 					)}
 				</div>
 				<div>
-					<Button
-						aria-label="Refresh Telemetry"
-						onClick={handleLoadMore}
-						size="small"
-					>
+					<Button aria-label="Refresh Telemetry" onClick={handleLoadMore} size="small">
 						Refresh
 					</Button>
 				</div>
@@ -244,9 +228,7 @@ interface ListLengthSelectionProps {
 /**
  * A dropdown menu for selecting how many logs to display on the page.
  */
-function ListLengthSelection(
-	props: ListLengthSelectionProps,
-): React.ReactElement {
+function ListLengthSelection(props: ListLengthSelectionProps): React.ReactElement {
 	const { currentLimit, onChangeSelection } = props;
 	const usageLogger = useLogger();
 
@@ -258,10 +240,7 @@ function ListLengthSelection(
 		{ key: 1000, text: "1000" },
 	];
 
-	const handleMaxEventChange: DropdownProps["onOptionSelect"] = (
-		event,
-		data,
-	) => {
+	const handleMaxEventChange: DropdownProps["onOptionSelect"] = (event, data) => {
 		onChangeSelection(Number(data.optionText));
 		usageLogger?.sendTelemetryEvent({
 			eventName: "MaxTelemetryEventsUpdated",
@@ -315,9 +294,7 @@ interface FilteredTelemetryViewProps {
 	index: number | undefined;
 }
 
-function FilteredTelemetryView(
-	props: FilteredTelemetryViewProps,
-): React.ReactElement {
+function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactElement {
 	const { telemetryEvents, setIndex, index } = props;
 	const usageLogger = useLogger();
 	const [selectedCategory, setSelectedCategory] = useState("");
@@ -363,10 +340,7 @@ function FilteredTelemetryView(
 			// Filter by event name
 			if (customSearch !== "") {
 				filteredEvents = filteredEvents?.filter((event) => {
-					return (
-						event.logContent.eventName.slice("fluid:telemetry:".length) ===
-						customSearch
-					);
+					return event.logContent.eventName.slice("fluid:telemetry:".length) === customSearch;
 				});
 			}
 
@@ -396,9 +370,7 @@ function FilteredTelemetryView(
 	 */
 	function getCategories(): { key: string; text: string }[] {
 		const categories = [
-			...new Set(
-				filteredTelemetryEvents?.map((event) => event.logContent.category),
-			),
+			...new Set(filteredTelemetryEvents?.map((event) => event.logContent.category)),
 		];
 		const dropdownOptions = categories.map((category) => {
 			return {
@@ -410,10 +382,7 @@ function FilteredTelemetryView(
 		return dropdownOptions.sort();
 	}
 
-	const handleCategoryChange: DropdownProps["onOptionSelect"] = (
-		event,
-		data,
-	) => {
+	const handleCategoryChange: DropdownProps["onOptionSelect"] = (event, data) => {
 		const category = data.optionText ?? "";
 		setSelectedCategory(category);
 		const categories: string[] = [];
@@ -447,9 +416,7 @@ function FilteredTelemetryView(
 	 * @param eventCategory - a string representing
 	 * @returns string representing the appropriate color
 	 */
-	const mapEventCategoryToBackgroundColor = (
-		eventCategory: string,
-	): string | undefined => {
+	const mapEventCategoryToBackgroundColor = (eventCategory: string): string | undefined => {
 		if (themeInfo?.name !== ThemeOption.HighContrast) {
 			switch (eventCategory) {
 				case "generic": {
@@ -471,10 +438,7 @@ function FilteredTelemetryView(
 	/**
 	 * Handler for when user selects an option in event name filter.
 	 */
-	const handleEventNameSelect: ComboboxProps["onOptionSelect"] = (
-		event,
-		data,
-	) => {
+	const handleEventNameSelect: ComboboxProps["onOptionSelect"] = (event, data) => {
 		let matchingOption = false;
 		if (data.optionText !== undefined) {
 			matchingOption = eventNameOptions.includes(data.optionText);
@@ -584,19 +548,12 @@ function FilteredTelemetryView(
 					style={{ marginBottom: "10px" }}
 				>
 					{customSearch ? (
-						<Option
-							key="freeform"
-							style={{ overflowWrap: "anywhere" }}
-							text={customSearch}
-						>
+						<Option key="freeform" style={{ overflowWrap: "anywhere" }} text={customSearch}>
 							Search for `{customSearch}`
 						</Option>
 					) : undefined}
 					{matchingOptions.map((option) => (
-						<Option
-							key={option}
-							style={{ fontSize: "10px", overflowWrap: "anywhere" }}
-						>
+						<Option key={option} style={{ fontSize: "10px", overflowWrap: "anywhere" }}>
 							{option}
 						</Option>
 					))}

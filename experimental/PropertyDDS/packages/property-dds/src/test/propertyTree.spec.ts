@@ -4,50 +4,49 @@
  */
 
 import {
-	type ArrayProperty,
+	ArrayProperty,
 	BaseProperty,
-	type NodeProperty,
+	NodeProperty,
 	PropertyFactory,
-	type StringProperty,
+	StringProperty,
 } from "@fluid-experimental/property-properties";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
-import type {
+import {
 	IContainer,
 	IFluidCodeDetails,
 	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
 import {
 	Loader as ContainerLoader,
-	type ILoaderProps,
 	loadExistingContainer,
+	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
-import type { ContainerRuntime } from "@fluidframework/container-runtime/internal";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
 } from "@fluidframework/local-driver/internal";
 import {
-	type ILocalDeltaConnectionServer,
+	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
-	type ChannelFactoryRegistry,
-	createAndAttachContainerUsingProps,
-	createLoaderProps,
-	createSummarizer,
-	type ITestFluidObject,
-	type ITestObjectProvider,
+	ChannelFactoryRegistry,
+	ITestFluidObject,
+	ITestObjectProvider,
 	LoaderContainerTracker,
-	summarizeNow,
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
 	TestObjectProvider,
+	createAndAttachContainerUsingProps,
+	createLoaderProps,
+	createSummarizer,
+	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 import { expect } from "chai";
 import lodash from "lodash";
-
 const { isEmpty, last } = lodash;
 
 import { SharedPropertyTree } from "../propertyTree.js";
@@ -78,8 +77,7 @@ describe("PropertyDDS summarizer", () => {
 		if (withSummarizer) {
 			summarizer = await getSummarizer(container);
 		}
-		const client =
-			await dataObject.getSharedObject<SharedPropertyTree>(propertyDdsId);
+		const client = await dataObject.getSharedObject<SharedPropertyTree>(propertyDdsId);
 		const res: withSummarizer = {
 			summarizer,
 			client,
@@ -100,9 +98,7 @@ describe("PropertyDDS summarizer", () => {
 
 	beforeEach(async () => {
 		const driver = new LocalServerTestDriver();
-		const registry = [
-			[propertyDdsId, new PropertyTreeFactory()],
-		] as ChannelFactoryRegistry;
+		const registry = [[propertyDdsId, new PropertyTreeFactory()]] as ChannelFactoryRegistry;
 
 		objProvider = new TestObjectProvider(
 			ContainerLoader as any,
@@ -152,10 +148,7 @@ describe("PropertyDDS summarizer", () => {
 
 		await objProvider.ensureSynchronized();
 
-		const { dataObject: dataObject2, container: container2 } = await getClient(
-			false,
-			true,
-		);
+		const { dataObject: dataObject2, container: container2 } = await getClient(false, true);
 		await objProvider.ensureSynchronized();
 
 		// We do two changes to a different DDS (the root map), to make sure, that
@@ -215,10 +208,7 @@ describe("PropertyDDS summarizer", () => {
 
 		await objProvider.ensureSynchronized();
 
-		const { dataObject: dataObject2, container: container2 } = await getClient(
-			false,
-			true,
-		);
+		const { dataObject: dataObject2, container: container2 } = await getClient(false, true);
 		await objProvider.ensureSynchronized();
 
 		// We do two changes to a different DDS (the root map), to make sure, that
@@ -235,17 +225,15 @@ describe("PropertyDDS summarizer", () => {
 		await summarizeNow(summarizer.summarizer);
 
 		const runtime = (summarizer.summarizer as any).runtime as ContainerRuntime;
-		const entryPoint = (await runtime.getAliasedDataStoreEntryPoint(
-			"default",
-		)) as IFluidHandle<ITestFluidObject> | undefined;
+		const entryPoint = (await runtime.getAliasedDataStoreEntryPoint("default")) as
+			| IFluidHandle<ITestFluidObject>
+			| undefined;
 		if (entryPoint === undefined) {
 			throw new Error("default dataStore must exist");
 		}
 		const summarizerDataObject = await entryPoint.get();
 		const summarizerClient =
-			await summarizerDataObject.getSharedObject<SharedPropertyTree>(
-				propertyDdsId,
-			);
+			await summarizerDataObject.getSharedObject<SharedPropertyTree>(propertyDdsId);
 
 		// Make changes only on u1, u2 must not advance to make sure
 		// the msn is not advanced
@@ -263,23 +251,16 @@ describe("PropertyDDS summarizer", () => {
 
 		// Make sure the summarizer did not delete any of the unrebased changes
 		expect(summarizerClient.remoteChanges.length).to.equal(2);
-		expect(
-			Object.keys(summarizerClient.unrebasedRemoteChanges).length,
-		).to.equal(2);
+		expect(Object.keys(summarizerClient.unrebasedRemoteChanges).length).to.equal(2);
 	});
 
-	async function synchronizeMSN(
-		container2: IContainer,
-		container1: IContainer,
-	) {
+	async function synchronizeMSN(container2: IContainer, container1: IContainer) {
 		const expectedSequenceNumber = container2.deltaManager.lastSequenceNumber;
 		await new Promise((resolve) => {
 			const waitForMSN = () => {
 				if (
-					container1.deltaManager.minimumSequenceNumber >=
-						expectedSequenceNumber &&
-					container2.deltaManager.minimumSequenceNumber >=
-						expectedSequenceNumber
+					container1.deltaManager.minimumSequenceNumber >= expectedSequenceNumber &&
+					container2.deltaManager.minimumSequenceNumber >= expectedSequenceNumber
 				) {
 					resolve(undefined);
 					return;
@@ -328,9 +309,7 @@ describe("PropertyTree", () => {
 		);
 	});
 
-	const factory3 = new TestFluidObjectFactory([
-		[propertyDdsId, LZ4PropertyTree.getFactory()],
-	]);
+	const factory3 = new TestFluidObjectFactory([[propertyDdsId, LZ4PropertyTree.getFactory()]]);
 	describe("LZ4PropertyTree", () => {
 		executePerPropertyTreeType(
 			codeDetails,
@@ -364,9 +343,7 @@ function executePerPropertyTreeType(
 		localUrlResolver: IUrlResolver,
 		options?: ILoaderOptions,
 	): ILoaderProps {
-		const documentServiceFactory = new LocalDocumentServiceFactory(
-			localDeltaConnectionServer,
-		);
+		const documentServiceFactory = new LocalDocumentServiceFactory(localDeltaConnectionServer);
 
 		return createLoaderProps(
 			packageEntries,
@@ -444,18 +421,18 @@ function executePerPropertyTreeType(
 					PropertyFactory.create("String", undefined, "Magic"),
 				);
 
-				expect(
-					(sharedPropertyTree1.root.get("test") as StringProperty).getValue(),
-				).to.equal("Magic");
+				expect((sharedPropertyTree1.root.get("test") as StringProperty).getValue()).to.equal(
+					"Magic",
+				);
 				expect(sharedPropertyTree2.root.get("test")).to.equal(undefined);
 
 				sharedPropertyTree1.commit();
 
 				await opProcessingController.ensureSynchronized();
 
-				expect(
-					(sharedPropertyTree2.root.get("test") as StringProperty).getValue(),
-				).to.equal("Magic");
+				expect((sharedPropertyTree2.root.get("test") as StringProperty).getValue()).to.equal(
+					"Magic",
+				);
 			});
 
 			it("Can commit with metadata", async () => {
@@ -466,9 +443,9 @@ function executePerPropertyTreeType(
 					PropertyFactory.create("String", undefined, "Magic"),
 				);
 
-				expect(
-					(sharedPropertyTree1.root.get("test") as StringProperty).getValue(),
-				).to.equal("Magic");
+				expect((sharedPropertyTree1.root.get("test") as StringProperty).getValue()).to.equal(
+					"Magic",
+				);
 				expect(sharedPropertyTree2.root.get("test")).to.equal(undefined);
 
 				sharedPropertyTree1.commit({ someKey: "some data" });
@@ -478,9 +455,9 @@ function executePerPropertyTreeType(
 
 				await opProcessingController.ensureSynchronized();
 
-				expect(
-					(sharedPropertyTree2.root.get("test") as StringProperty).getValue(),
-				).to.equal("Magic");
+				expect((sharedPropertyTree2.root.get("test") as StringProperty).getValue()).to.equal(
+					"Magic",
+				);
 				expect(sharedPropertyTree2.activeCommit.metadata).to.deep.equal({
 					someKey: "some data",
 				});
@@ -538,10 +515,7 @@ function executePerPropertyTreeType(
 				await opProcessingController.ensureSynchronized();
 				expect(sharedPropertyTree2.remoteChanges.length).to.equal(1);
 				expect(
-					isEmpty(
-						last((sharedPropertyTree2 as SharedPropertyTree).remoteChanges)
-							?.changeSet,
-					),
+					isEmpty(last((sharedPropertyTree2 as SharedPropertyTree).remoteChanges)?.changeSet),
 				).to.equal(true);
 			});
 
@@ -552,9 +526,9 @@ function executePerPropertyTreeType(
 					PropertyFactory.create("String", undefined, "Magic"),
 				);
 
-				expect(
-					(sharedPropertyTree1.root.get("test") as StringProperty).getValue(),
-				).to.equal("Magic");
+				expect((sharedPropertyTree1.root.get("test") as StringProperty).getValue()).to.equal(
+					"Magic",
+				);
 				expect(sharedPropertyTree2.root.get("test")).to.be.equal(undefined);
 
 				sharedPropertyTree1.commit();
@@ -567,9 +541,9 @@ function executePerPropertyTreeType(
 
 				await opProcessingController.ensureSynchronized();
 
-				expect(
-					(sharedPropertyTree2.root.get("test") as StringProperty).getValue(),
-				).to.equal("Magic");
+				expect((sharedPropertyTree2.root.get("test") as StringProperty).getValue()).to.equal(
+					"Magic",
+				);
 			});
 
 			it("Can emit local modification event", () => {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
+import {
 	ICacheEntry,
 	IFileEntry,
 	IPersistedCache,

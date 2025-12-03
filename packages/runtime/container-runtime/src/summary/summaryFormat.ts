@@ -6,15 +6,15 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
-	ISequencedDocumentMessage,
 	ISnapshotTree,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
+	type ISummaryTreeWithStats,
 	channelsTreeName,
 	gcTreeKey,
 	type IRuntimeStorageService,
-	type ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 
 import { blobsTreeName } from "../blobManager/index.js";
@@ -94,9 +94,7 @@ export type WriteFluidDataStoreAttributes =
 	| IFluidDataStoreAttributes1
 	| IFluidDataStoreAttributes2;
 
-export function getAttributesFormatVersion(
-	attributes: ReadFluidDataStoreAttributes,
-): number {
+export function getAttributesFormatVersion(attributes: ReadFluidDataStoreAttributes): number {
 	if (attributes.summaryFormatVersion) {
 		/**
 		 * Version 2+: Introduces .channels trees for isolation of
@@ -117,21 +115,15 @@ export function getAttributesFormatVersion(
 	return 0;
 }
 
-export function hasIsolatedChannels(
-	attributes: ReadFluidDataStoreAttributes,
-): boolean {
-	return (
-		!!attributes.summaryFormatVersion && !attributes.disableIsolatedChannels
-	);
+export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): boolean {
+	return !!attributes.summaryFormatVersion && !attributes.disableIsolatedChannels;
 }
 
 /**
  * @internal
  */
 
-export interface IContainerRuntimeMetadata
-	extends ICreateContainerMetadata,
-		IGCMetadata {
+export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
 	readonly summaryFormatVersion: 1;
 	/**
 	 * @deprecated used by old (prior to 2.0 RC3) runtimes
@@ -205,9 +197,7 @@ export const extractSummaryMetadataMessage = (
 				type: message.type,
 			};
 
-export function getMetadataFormatVersion(
-	metadata?: IContainerRuntimeMetadata,
-): number {
+export function getMetadataFormatVersion(metadata?: IContainerRuntimeMetadata): number {
 	/**
 	 * Version 2+: Introduces runtime sequence number for data verification.
 	 *
@@ -228,9 +218,7 @@ export const recentBatchInfoBlobName = ".recentBatchInfo";
 export const electedSummarizerBlobName = ".electedSummarizer";
 export const idCompressorBlobName = ".idCompressor";
 
-export function rootHasIsolatedChannels(
-	metadata?: IContainerRuntimeMetadata,
-): boolean {
+export function rootHasIsolatedChannels(metadata?: IContainerRuntimeMetadata): boolean {
 	return !!metadata && !metadata.disableIsolatedChannels;
 }
 
@@ -285,9 +273,7 @@ export const dataStoreAttributesBlobName = ".component";
  *
  * And adds +1 to treeNodeCount in stats.
  */
-export function wrapSummaryInChannelsTree(
-	summarizeResult: ISummaryTreeWithStats,
-): void {
+export function wrapSummaryInChannelsTree(summarizeResult: ISummaryTreeWithStats): void {
 	summarizeResult.summary = {
 		type: SummaryType.Tree,
 		tree: { [channelsTreeName]: summarizeResult.summary },

@@ -6,8 +6,8 @@
 import type {
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelServices,
 	IFluidDataStoreRuntime,
+	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import type {
 	ISharedObject,
@@ -44,18 +44,14 @@ export interface IConsensusOrderedCollectionFactory extends IChannelFactory {
 		attributes: IChannelAttributes,
 	): Promise<IConsensusOrderedCollection>;
 
-	create(
-		document: IFluidDataStoreRuntime,
-		id: string,
-	): IConsensusOrderedCollection;
+	create(document: IFluidDataStoreRuntime, id: string): IConsensusOrderedCollection;
 }
 
 /**
  * Events notifying about addition, acquisition, release and completion of items
  * @legacy @beta
  */
-export interface IConsensusOrderedCollectionEvents<T>
-	extends ISharedObjectEvents {
+export interface IConsensusOrderedCollectionEvents<T> extends ISharedObjectEvents {
 	/**
 	 * Event fires when new item is added to the queue or
 	 * an item previously acquired is returned back to a queue (including client loosing connection)
@@ -80,10 +76,7 @@ export interface IConsensusOrderedCollectionEvents<T>
 	 * @param intentional - indicates whether release was intentional (result of returning
 	 * ConsensusResult.Release from callback) or it happened as result of lost connection.
 	 */
-	(
-		event: "localRelease",
-		listener: (value: T, intentional: boolean) => void,
-	): this;
+	(event: "localRelease", listener: (value: T, intentional: boolean) => void): this;
 }
 
 /**

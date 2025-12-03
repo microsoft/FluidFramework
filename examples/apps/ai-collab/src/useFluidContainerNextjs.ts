@@ -5,7 +5,7 @@
 
 "use client";
 
-import type { ContainerSchema, IFluidContainer } from "fluid-framework";
+import type { IFluidContainer, ContainerSchema } from "fluid-framework";
 import { useEffect, useState } from "react";
 
 /**
@@ -57,18 +57,13 @@ export function useFluidContainerNextJs<T extends ContainerSchema, V>(
 						};
 
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises -- Inside a React effect we can't await promises
-			init().then(
-				(initResult: {
-					container: IFluidContainer<T>;
-					containerId: string;
-				}) => {
-					const dataInner: V = getDataFromContainer(initResult.container);
-					setIsFluidInitialized(true);
-					setContainerId(initResult.containerId);
-					setContainer(initResult.container);
-					setData(dataInner);
-				},
-			);
+			init().then((initResult: { container: IFluidContainer<T>; containerId: string }) => {
+				const dataInner: V = getDataFromContainer(initResult.container);
+				setIsFluidInitialized(true);
+				setContainerId(initResult.containerId);
+				setContainer(initResult.container);
+				setData(dataInner);
+			});
 		}
 	}, [containerId]);
 

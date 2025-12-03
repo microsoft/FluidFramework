@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export {
-	IOdspError,
-	IOdspErrorAugmentations,
-	OdspError,
-	OdspErrorTypes,
-} from "./errors.js";
+export { IOdspError, IOdspErrorAugmentations, OdspError, OdspErrorTypes } from "./errors.js";
 export {
 	HostStoragePolicy,
 	ICollabSessionOptions,
@@ -17,12 +12,12 @@ export {
 } from "./factory.js";
 export {
 	CacheContentType,
-	ICacheEntry,
-	IEntry,
-	IFileEntry,
-	IPersistedCache,
 	snapshotKey,
 	snapshotWithLoadingGroupIdKey,
+	ICacheEntry,
+	IPersistedCache,
+	IFileEntry,
+	IEntry,
 } from "./odspCache.js";
 export {
 	IOdspResolvedUrl,
@@ -34,14 +29,6 @@ export {
 	SharingLinkScope,
 } from "./resolvedUrl.js";
 export {
-	IProvideSessionAwareDriverFactory,
-	IRelaySessionAwareDriverFactory,
-	ISensitivityLabel,
-	ISensitivityLabelsInfo,
-	ISocketStorageDiscovery,
-} from "./sessionProvider.js";
-export {
-	authHeaderFromTokenResponse,
 	IdentityType,
 	InstrumentedStorageTokenFetcher,
 	InstrumentedTokenFetcher,
@@ -49,6 +36,14 @@ export {
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 	TokenFetchOptions,
-	TokenResponse,
+	authHeaderFromTokenResponse,
 	tokenFromResponse,
+	TokenResponse,
 } from "./tokenFetch.js";
+export {
+	IProvideSessionAwareDriverFactory,
+	IRelaySessionAwareDriverFactory,
+	ISensitivityLabel,
+	ISensitivityLabelsInfo,
+	ISocketStorageDiscovery,
+} from "./sessionProvider.js";

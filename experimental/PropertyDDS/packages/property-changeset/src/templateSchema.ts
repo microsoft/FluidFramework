@@ -98,7 +98,7 @@ const NativeTypes = {
 const primitiveTypes = [];
 const reservedTypes = [];
 
-Object.keys(NativeTypes).forEach((key) => {
+Object.keys(NativeTypes).forEach(function (key) {
 	if (NativeTypes[key].primitive) {
 		primitiveTypes.push(key);
 	} else {
@@ -182,7 +182,7 @@ const TemplateSchema = {
 	title: "Property set template schema",
 	$id: "{TEMPLATE_SCHEMA_URL}",
 	$defs: {
-		annotation: {
+		"annotation": {
 			type: "object",
 			properties: {
 				description: { type: "string" },
@@ -207,10 +207,10 @@ const TemplateSchema = {
 			enum: reservedTypes,
 			type: "string",
 		},
-		context: {
+		"context": {
 			enum: ["single", "array", "map", "set"],
 		},
-		typeid: {
+		"typeid": {
 			oneOf: [
 				{ $ref: "#/$defs/primitive-typeid" },
 				{ $ref: "#/$defs/versioned-typeid" },
@@ -218,7 +218,7 @@ const TemplateSchema = {
 				{ $ref: "#/$defs/reserved-typeid" },
 			],
 		},
-		properties: {
+		"properties": {
 			type: "array",
 			items: { $ref: "#/$defs/property-item" },
 		},
@@ -261,7 +261,7 @@ const TemplateSchema = {
 				],
 			},
 		},
-		constants: {
+		"constants": {
 			type: "array",
 			minItems: 1,
 			items: { $ref: "#/$defs/constant-item" },

@@ -9,9 +9,9 @@ import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/inter
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	type AliasResult,
-	asLegacyAlpha,
 	type IDataStore,
 	type IFluidDataStoreChannel,
+	asLegacyAlpha,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	type ITelemetryLoggerExt,
@@ -49,10 +49,9 @@ export const isDataStoreAliasMessage = (
 	maybeDataStoreAliasMessage: unknown,
 ): maybeDataStoreAliasMessage is IDataStoreAliasMessage => {
 	return (
-		typeof (maybeDataStoreAliasMessage as Partial<IDataStoreAliasMessage>)
-			?.internalId === "string" &&
-		typeof (maybeDataStoreAliasMessage as Partial<IDataStoreAliasMessage>)
-			?.alias === "string"
+		typeof (maybeDataStoreAliasMessage as Partial<IDataStoreAliasMessage>)?.internalId ===
+			"string" &&
+		typeof (maybeDataStoreAliasMessage as Partial<IDataStoreAliasMessage>)?.alias === "string"
 	);
 };
 
@@ -61,8 +60,7 @@ export const channelToDataStore = (
 	internalId: string,
 	channelCollection: ChannelCollection,
 	logger: ITelemetryLoggerExt,
-): IDataStore =>
-	new DataStore(fluidDataStoreChannel, internalId, channelCollection, logger);
+): IDataStore => new DataStore(fluidDataStoreChannel, internalId, channelCollection, logger);
 
 enum AliasState {
 	Aliased = "Aliased",
@@ -83,9 +81,7 @@ class DataStore implements IDataStore {
 		if (alias.includes("/")) {
 			throw new UsageError(`The alias cannot contain slashes: '${alias}'`);
 		}
-		if (
-			asLegacyAlpha(this.parentContext.containerRuntime).inStagingMode === true
-		) {
+		if (asLegacyAlpha(this.parentContext.containerRuntime).inStagingMode === true) {
 			throw new UsageError("Cannot set aliases while in staging mode");
 		}
 
@@ -215,9 +211,7 @@ class DataStore implements IDataStore {
 		return new Promise<T>((resolve, reject) => {
 			rejectBecauseDispose = () =>
 				reject(
-					new Error(
-						"ContainerRuntime disposed while this ack-based Promise was pending",
-					),
+					new Error("ContainerRuntime disposed while this ack-based Promise was pending"),
 				);
 
 			if (this.parentContext.containerRuntime.disposed) {

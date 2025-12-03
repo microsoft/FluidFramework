@@ -23,10 +23,7 @@ import {
 	runtimeSupportRequirementsForDataStore,
 	validateRuntimeCompatibility,
 } from "../dataStoreLayerCompatState.js";
-import {
-	FluidDataStoreRuntime,
-	type ISharedObjectRegistry,
-} from "../dataStoreRuntime.js";
+import { FluidDataStoreRuntime, type ISharedObjectRegistry } from "../dataStoreRuntime.js";
 import { pkgVersion } from "../packageVersion.js";
 
 type ILayerCompatSupportRequirementsOverride = Omit<
@@ -39,9 +36,7 @@ type ILayerCompatSupportRequirementsOverride = Omit<
 describe("DataStore Layer compatibility", () => {
 	let originalRequiredFeatures: readonly string[];
 	beforeEach(() => {
-		originalRequiredFeatures = [
-			...runtimeSupportRequirementsForDataStore.requiredFeatures,
-		];
+		originalRequiredFeatures = [...runtimeSupportRequirementsForDataStore.requiredFeatures];
 	});
 
 	afterEach(() => {
@@ -56,17 +51,9 @@ describe("DataStore Layer compatibility", () => {
 		incompatibleLayerGeneration: number,
 		unsupportedFeatures?: string[],
 	): boolean {
-		assert(
-			isLayerIncompatibilityError(error),
-			"Error should be a layerIncompatibilityError",
-		);
-		assert(
-			typeof error.details === "string",
-			"Error details should be present",
-		);
-		const detailedProperties = JSON.parse(
-			error.details,
-		) as ITelemetryBaseProperties;
+		assert(isLayerIncompatibilityError(error), "Error should be a layerIncompatibilityError");
+		assert(typeof error.details === "string", "Error details should be present");
+		const detailedProperties = JSON.parse(error.details) as ITelemetryBaseProperties;
 		assert.strictEqual(
 			detailedProperties.isGenerationCompatible,
 			isGenerationCompatible,
@@ -80,11 +67,7 @@ describe("DataStore Layer compatibility", () => {
 			"Incompatible layer type not as expected",
 		);
 
-		assert.strictEqual(
-			error.layerVersion,
-			pkgVersion,
-			"DataStore version not as expected",
-		);
+		assert.strictEqual(error.layerVersion, pkgVersion, "DataStore version not as expected");
 		assert.strictEqual(
 			detailedProperties.layerGeneration,
 			dataStoreCoreCompatDetails.generation,
@@ -136,11 +119,8 @@ describe("DataStore Layer compatibility", () => {
 			).requiredFeatures = ["feature1", "feature2"];
 			const runtimeCompatDetails: ILayerCompatDetails = {
 				pkgVersion,
-				generation:
-					runtimeSupportRequirementsForDataStore.minSupportedGeneration,
-				supportedFeatures: new Set(
-					runtimeSupportRequirementsForDataStore.requiredFeatures,
-				),
+				generation: runtimeSupportRequirementsForDataStore.minSupportedGeneration,
+				supportedFeatures: new Set(runtimeSupportRequirementsForDataStore.requiredFeatures),
 			};
 			assert.doesNotThrow(
 				() =>
@@ -165,19 +145,12 @@ describe("DataStore Layer compatibility", () => {
 			const runtimeCompatDetails: ILayerCompatDetails = {
 				pkgVersion,
 				generation: runtimeGeneration,
-				supportedFeatures: new Set(
-					runtimeSupportRequirementsForDataStore.requiredFeatures,
-				),
+				supportedFeatures: new Set(runtimeSupportRequirementsForDataStore.requiredFeatures),
 			};
 			assert.throws(
-				() =>
-					validateRuntimeCompatibility(runtimeCompatDetails, disposeFn, logger),
+				() => validateRuntimeCompatibility(runtimeCompatDetails, disposeFn, logger),
 				(e: Error) =>
-					validateFailureProperties(
-						e,
-						false /* isGenerationCompatible */,
-						runtimeGeneration,
-					),
+					validateFailureProperties(e, false /* isGenerationCompatible */, runtimeGeneration),
 				"DataStore should be incompatible with Runtime layer",
 			);
 			assert(disposeFn.calledOnce, "Dispose should be called");
@@ -192,14 +165,12 @@ describe("DataStore Layer compatibility", () => {
 
 			const runtimeCompatDetails: ILayerCompatDetails = {
 				pkgVersion,
-				generation:
-					runtimeSupportRequirementsForDataStore.minSupportedGeneration,
+				generation: runtimeSupportRequirementsForDataStore.minSupportedGeneration,
 				supportedFeatures: new Set(),
 			};
 
 			assert.throws(
-				() =>
-					validateRuntimeCompatibility(runtimeCompatDetails, disposeFn, logger),
+				() => validateRuntimeCompatibility(runtimeCompatDetails, disposeFn, logger),
 				(e: Error) =>
 					validateFailureProperties(
 						e,
@@ -228,8 +199,7 @@ describe("DataStore Layer compatibility", () => {
 			};
 
 			assert.throws(
-				() =>
-					validateRuntimeCompatibility(runtimeCompatDetails, disposeFn, logger),
+				() => validateRuntimeCompatibility(runtimeCompatDetails, disposeFn, logger),
 				(e: Error) =>
 					validateFailureProperties(
 						e,
@@ -289,8 +259,7 @@ describe("DataStore Layer compatibility", () => {
 		it("Runtime with generation >= minSupportedGeneration is compatible", async () => {
 			const runtimeCompatDetails: ILayerCompatDetails = {
 				pkgVersion,
-				generation:
-					runtimeSupportRequirementsForDataStore.minSupportedGeneration,
+				generation: runtimeSupportRequirementsForDataStore.minSupportedGeneration,
 				supportedFeatures: new Set(),
 			};
 

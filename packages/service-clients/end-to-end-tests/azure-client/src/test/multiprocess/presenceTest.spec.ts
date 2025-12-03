@@ -8,10 +8,7 @@ import type { ChildProcess } from "node:child_process";
 import inspector from "node:inspector";
 
 import type { AttendeeId } from "@fluidframework/presence/beta";
-import {
-	timeoutAwait,
-	timeoutPromise,
-} from "@fluidframework/test-utils/internal";
+import { timeoutAwait, timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import type { MessageFromChild } from "./messageTypes.js";
 import {
@@ -127,20 +124,15 @@ describe(`Presence with AzureClient`, () => {
 			/**
 			 * Timeout for presence attendees to join per first child perspective {@link AttendeeConnectedEvent}
 			 */
-			const allAttendeesJoinedTimeoutMs =
-				(1000 + 200 * numClients) * timeoutMultiplier;
+			const allAttendeesJoinedTimeoutMs = (1000 + 200 * numClients) * timeoutMultiplier;
 			/**
 			 * Timeout for presence attendees to fully join (everyone knows about everyone) {@link AttendeeConnectedEvent}
 			 */
-			const allAttendeesFullyJoinedTimeoutMs =
-				(2000 + 300 * numClients) * timeoutMultiplier;
+			const allAttendeesFullyJoinedTimeoutMs = (2000 + 300 * numClients) * timeoutMultiplier;
 
 			for (const writeClients of [numClients, 1]) {
 				it(`announces 'attendeeConnected' when remote client joins session [${numClients} clients, ${writeClients} writers]`, async function testAnnouncesAttendeeConnected() {
-					setTestTimeout(
-						this,
-						childConnectTimeoutMs + allAttendeesJoinedTimeoutMs + 1000,
-					);
+					setTestTimeout(this, childConnectTimeoutMs + allAttendeesJoinedTimeoutMs + 1000);
 
 					// Setup
 					const { children, childErrorPromise } = await forkChildProcesses(
@@ -257,9 +249,7 @@ describe(`Presence with AzureClient`, () => {
 							children.length <= 10
 								? children
 								: // Just those not fully joined
-									children.filter(
-										(_, index) => index === 0 || setNotFullyJoined.has(index),
-									);
+									children.filter((_, index) => index === 0 || setNotFullyJoined.has(index));
 						await timeoutAwait(
 							Promise.race([
 								executeDebugReports(childrenRequestedToReport),
@@ -267,10 +257,7 @@ describe(`Presence with AzureClient`, () => {
 							]),
 							{ durationMs: 20_000, errorMsg: "Debug report timeout" },
 						).catch((debugAwaitError) => {
-							testConsole.error(
-								"Debug report await resulted in",
-								debugAwaitError,
-							);
+							testConsole.error("Debug report await resulted in", debugAwaitError);
 						});
 
 						throw error;
@@ -288,8 +275,7 @@ describe(`Presence with AzureClient`, () => {
 										child.on("message", (msg: MessageFromChild) => {
 											if (
 												msg.event === "attendeeDisconnected" &&
-												msg.attendeeId ===
-													connectResult.containerCreatorAttendeeId
+												msg.attendeeId === connectResult.containerCreatorAttendeeId
 											) {
 												console.log(`Child[${index}] saw creator disconnect`);
 												resolve();
@@ -313,10 +299,7 @@ describe(`Presence with AzureClient`, () => {
 										]),
 										{ durationMs: 20_000, errorMsg: "Debug report timeout" },
 									).catch((debugAwaitError) => {
-										testConsole.error(
-											"Debug report await resulted in",
-											debugAwaitError,
-										);
+										testConsole.error("Debug report await resulted in", debugAwaitError);
 									});
 									throw error;
 								}),
@@ -326,10 +309,7 @@ describe(`Presence with AzureClient`, () => {
 					children[0].send({ command: "disconnectSelf" });
 
 					// Verify - wait for all 'attendeeDisconnected' events
-					await Promise.race([
-						Promise.all(waitForDisconnected),
-						childErrorPromise,
-					]);
+					await Promise.race([Promise.all(waitForDisconnected), childErrorPromise]);
 				});
 			}
 		}
@@ -357,11 +337,9 @@ describe(`Presence with AzureClient`, () => {
 				/**
 				 * Timeout for child processes to connect to container ({@link ConnectedEvent})
 				 */
-				const childConnectTimeoutMs =
-					(4000 + 1000 * numClients) * timeoutMultiplier;
+				const childConnectTimeoutMs = (4000 + 1000 * numClients) * timeoutMultiplier;
 				const testCaseTimeoutMs = 1000;
-				const testSetupAndActTimeoutMs =
-					childConnectTimeoutMs + testCaseTimeoutMs;
+				const testSetupAndActTimeoutMs = childConnectTimeoutMs + testCaseTimeoutMs;
 
 				// These tests use beforeEach to setup complex state that takes a lot of time
 				// and is dependent on number of clients. Keeping the work in beforeEach
@@ -377,46 +355,40 @@ describe(`Presence with AzureClient`, () => {
 					const testValue = "testValue";
 					const workspaceId = "presenceTestWorkspace";
 
-					beforeEach(
-						async function usingLatestStateObject_beforeEach(): Promise<void> {
-							const startTime = performance.now();
-							setTestTimeout(this, testSetupAndActTimeoutMs);
+					beforeEach(async function usingLatestStateObject_beforeEach(): Promise<void> {
+						const startTime = performance.now();
+						setTestTimeout(this, testSetupAndActTimeoutMs);
 
-							({ children, childErrorPromise } = await forkChildProcesses(
-								this.currentTest?.title ?? "",
-								numClients,
-								afterCleanUp,
-							));
-							({ containerCreatorAttendeeId, attendeeIdPromises } =
-								await connectChildProcesses(children, {
-									writeClients: numClients,
-									readyTimeoutMs: childConnectTimeoutMs,
-								}));
-							await Promise.all(attendeeIdPromises);
-							remoteClients = children.filter((_, index) => index !== 0);
-							// NOTE: For testing purposes child clients will expect a Latest value of type string (StateFactory.latest<{ value: string }>).
-							await registerWorkspaceOnChildren(children, workspaceId, {
-								latest: true,
-								timeoutMs: workspaceRegisterTimeoutMs,
-							});
+						({ children, childErrorPromise } = await forkChildProcesses(
+							this.currentTest?.title ?? "",
+							numClients,
+							afterCleanUp,
+						));
+						({ containerCreatorAttendeeId, attendeeIdPromises } = await connectChildProcesses(
+							children,
+							{ writeClients: numClients, readyTimeoutMs: childConnectTimeoutMs },
+						));
+						await Promise.all(attendeeIdPromises);
+						remoteClients = children.filter((_, index) => index !== 0);
+						// NOTE: For testing purposes child clients will expect a Latest value of type string (StateFactory.latest<{ value: string }>).
+						await registerWorkspaceOnChildren(children, workspaceId, {
+							latest: true,
+							timeoutMs: workspaceRegisterTimeoutMs,
+						});
 
-							testConsole.log(
-								`  Setup for "${this.currentTest?.title}" completed in ${performance.now() - startTime}ms`,
-							);
-						},
-					);
+						testConsole.log(
+							`  Setup for "${this.currentTest?.title}" completed in ${performance.now() - startTime}ms`,
+						);
+					});
 
-					it(`allows clients to read Latest state from other clients [${numClients} clients]`, async () => {
+					it(`allows clients to read Latest state from other clients [${numClients} clients]`, async function () {
 						// Setup
 						const updateEventsPromise = waitForLatestValueUpdates(
 							remoteClients,
 							workspaceId,
 							childErrorPromise,
 							stateUpdateTimeoutMs,
-							{
-								fromAttendeeId: containerCreatorAttendeeId,
-								expectedValue: testValue,
-							},
+							{ fromAttendeeId: containerCreatorAttendeeId, expectedValue: testValue },
 						);
 
 						// Act - Trigger the update
@@ -429,10 +401,7 @@ describe(`Presence with AzureClient`, () => {
 
 						// Verify all events are from the expected attendee
 						for (const updateEvent of updateEvents) {
-							assert.strictEqual(
-								updateEvent.attendeeId,
-								containerCreatorAttendeeId,
-							);
+							assert.strictEqual(updateEvent.attendeeId, containerCreatorAttendeeId);
 							assert.deepStrictEqual(updateEvent.value, testValue);
 						}
 
@@ -469,11 +438,9 @@ describe(`Presence with AzureClient`, () => {
 				/**
 				 * Timeout for child processes to connect to container ({@link ConnectedEvent})
 				 */
-				const childConnectTimeoutMs =
-					(4000 + 1000 * numClients) * timeoutMultiplier;
+				const childConnectTimeoutMs = (4000 + 1000 * numClients) * timeoutMultiplier;
 				const testCaseTimeoutMs = 1000;
-				const testSetupAndActTimeoutMs =
-					childConnectTimeoutMs + testCaseTimeoutMs;
+				const testSetupAndActTimeoutMs = childConnectTimeoutMs + testCaseTimeoutMs;
 
 				// These tests use beforeEach to setup complex state that takes a lot of time
 				// and is dependent on number of clients. Keeping the work in beforeEach
@@ -492,35 +459,32 @@ describe(`Presence with AzureClient`, () => {
 					const value1 = { name: "Alice", score: 100 };
 					const value2 = { name: "Bob", score: 200 };
 
-					beforeEach(
-						async function usingLatestMapStateObject_beforeEach(): Promise<void> {
-							const startTime = performance.now();
+					beforeEach(async function usingLatestMapStateObject_beforeEach(): Promise<void> {
+						const startTime = performance.now();
 
-							setTestTimeout(this, testSetupAndActTimeoutMs);
+						setTestTimeout(this, testSetupAndActTimeoutMs);
 
-							({ children, childErrorPromise } = await forkChildProcesses(
-								this.currentTest?.title ?? "",
-								numClients,
-								afterCleanUp,
-							));
-							({ containerCreatorAttendeeId, attendeeIdPromises } =
-								await connectChildProcesses(children, {
-									writeClients: numClients,
-									readyTimeoutMs: childConnectTimeoutMs,
-								}));
-							await Promise.all(attendeeIdPromises);
-							remoteClients = children.filter((_, index) => index !== 0);
-							// NOTE: For testing purposes child clients will expect a LatestMap value of type Record<string, string | number> (StateFactory.latestMap<{ value: Record<string, string | number> }, string>).
-							await registerWorkspaceOnChildren(children, workspaceId, {
-								latestMap: true,
-								timeoutMs: workspaceRegisterTimeoutMs,
-							});
+						({ children, childErrorPromise } = await forkChildProcesses(
+							this.currentTest?.title ?? "",
+							numClients,
+							afterCleanUp,
+						));
+						({ containerCreatorAttendeeId, attendeeIdPromises } = await connectChildProcesses(
+							children,
+							{ writeClients: numClients, readyTimeoutMs: childConnectTimeoutMs },
+						));
+						await Promise.all(attendeeIdPromises);
+						remoteClients = children.filter((_, index) => index !== 0);
+						// NOTE: For testing purposes child clients will expect a LatestMap value of type Record<string, string | number> (StateFactory.latestMap<{ value: Record<string, string | number> }, string>).
+						await registerWorkspaceOnChildren(children, workspaceId, {
+							latestMap: true,
+							timeoutMs: workspaceRegisterTimeoutMs,
+						});
 
-							testConsole.log(
-								`  Setup for "${this.currentTest?.title}" completed in ${performance.now() - startTime}ms`,
-							);
-						},
-					);
+						testConsole.log(
+							`  Setup for "${this.currentTest?.title}" completed in ${performance.now() - startTime}ms`,
+						);
+					});
 
 					it(`allows clients to read LatestMap values from other clients [${numClients} clients]`, async () => {
 						// Setup
@@ -532,10 +496,7 @@ describe(`Presence with AzureClient`, () => {
 							testKey,
 							childErrorPromise,
 							stateUpdateTimeoutMs,
-							{
-								fromAttendeeId: containerCreatorAttendeeId,
-								expectedValue: testValue,
-							},
+							{ fromAttendeeId: containerCreatorAttendeeId, expectedValue: testValue },
 						);
 
 						// Act
@@ -549,10 +510,7 @@ describe(`Presence with AzureClient`, () => {
 
 						// Check all events are from the expected attendee
 						for (const updateEvent of updateEvents) {
-							assert.strictEqual(
-								updateEvent.attendeeId,
-								containerCreatorAttendeeId,
-							);
+							assert.strictEqual(updateEvent.attendeeId, containerCreatorAttendeeId);
 							assert.strictEqual(updateEvent.key, testKey);
 							assert.deepStrictEqual(updateEvent.value, testValue);
 						}
@@ -579,7 +537,7 @@ describe(`Presence with AzureClient`, () => {
 						}
 					});
 
-					it(`returns per-key values on read [${numClients} clients]`, async () => {
+					it(`returns per-key values on read [${numClients} clients]`, async function () {
 						// Setup
 						const allAttendeeIds = await Promise.all(attendeeIdPromises);
 						const attendee0Id = containerCreatorAttendeeId;
@@ -679,18 +637,10 @@ describe(`Presence with AzureClient`, () => {
 						);
 
 						for (const response of key1Responses) {
-							assert.deepStrictEqual(
-								response.value,
-								value1,
-								"Key1 value should match",
-							);
+							assert.deepStrictEqual(response.value, value1, "Key1 value should match");
 						}
 						for (const response of key2Responses) {
-							assert.deepStrictEqual(
-								response.value,
-								value2,
-								"Key2 value should match",
-							);
+							assert.deepStrictEqual(response.value, value2, "Key2 value should match");
 						}
 					});
 				});

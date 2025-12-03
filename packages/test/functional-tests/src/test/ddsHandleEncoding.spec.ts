@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import {
 	type BuildNode,
 	Change,
@@ -13,8 +15,8 @@ import {
 } from "@fluid-experimental/tree";
 import { CellFactory } from "@fluidframework/cell/internal";
 import { detectOutboundReferences } from "@fluidframework/container-runtime/internal";
-import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
-import type { SessionId } from "@fluidframework/id-compressor";
+import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import { SessionId } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	DirectoryFactory,
@@ -31,13 +33,8 @@ import {
 	MockHandle,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import {
-	type ITree,
-	SchemaFactory,
-	TreeViewConfiguration,
-} from "@fluidframework/tree";
+import { ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
-import { strict as assert } from "assert";
 
 /**
  * The purpose of these tests is to demonstrate that DDSes do not do opaque encoding of handles
@@ -84,9 +81,7 @@ describe("DDS Handle Encoding", () => {
 		const name = nameOverride ?? factory.type.split("/").pop()!;
 
 		const dataStoreRuntime = new MockFluidDataStoreRuntime({
-			idCompressor: createIdCompressor(
-				"173cb232-53a2-4327-b690-afa954397989" as SessionId,
-			),
+			idCompressor: createIdCompressor("173cb232-53a2-4327-b690-afa954397989" as SessionId),
 		});
 		const deltaConnection = new MockDeltaConnection(
 			/* submitFn: */ (message) => {
@@ -256,8 +251,7 @@ describe("DDS Handle Encoding", () => {
 	];
 
 	testCases.forEach((testCase) => {
-		const shouldOrShouldNot =
-			testCase.expectedHandles.length > 0 ? "should not" : "should";
+		const shouldOrShouldNot = testCase.expectedHandles.length > 0 ? "should not" : "should";
 		it(`${shouldOrShouldNot} obscure handles in ${testCase.name} message contents`, async () => {
 			testCase.addHandleToDDS();
 

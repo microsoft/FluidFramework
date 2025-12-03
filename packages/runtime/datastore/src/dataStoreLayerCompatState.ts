@@ -8,8 +8,8 @@ import type {
 	ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
 import {
-	type ITelemetryLoggerExt,
 	validateLayerCompatibility,
+	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { pkgVersion } from "./packageVersion.js";
@@ -45,18 +45,17 @@ export const dataStoreCompatDetailsForRuntime: ILayerCompatDetails = {
  * The requirements that the Runtime layer must meet to be compatible with this DataStore.
  * @internal
  */
-export const runtimeSupportRequirementsForDataStore: ILayerCompatSupportRequirements =
-	{
-		/**
-		 * Minimum generation that Runtime must be at to be compatible with DataStore. Note that 0 is used here so
-		 * that Runtime layers before the introduction of the layer compatibility enforcement are compatible.
-		 */
-		minSupportedGeneration: 0,
-		/**
-		 * The features that the Runtime must support to be compatible with DataStore.
-		 */
-		requiredFeatures: [],
-	};
+export const runtimeSupportRequirementsForDataStore: ILayerCompatSupportRequirements = {
+	/**
+	 * Minimum generation that Runtime must be at to be compatible with DataStore. Note that 0 is used here so
+	 * that Runtime layers before the introduction of the layer compatibility enforcement are compatible.
+	 */
+	minSupportedGeneration: 0,
+	/**
+	 * The features that the Runtime must support to be compatible with DataStore.
+	 */
+	requiredFeatures: [],
+};
 
 /**
  * Validates that the Runtime layer is compatible with this DataStore.

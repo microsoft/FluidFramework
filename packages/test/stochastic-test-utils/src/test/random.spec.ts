@@ -11,12 +11,7 @@ import { integer } from "../distributions/index.js";
 import { makeRandom } from "../index.js";
 import { makeUuid4 } from "../random.js";
 
-import {
-	Counter,
-	chiSquaredCriticalValues,
-	computeChiSquared,
-	parseUuid,
-} from "./utils.js";
+import { Counter, chiSquaredCriticalValues, computeChiSquared, parseUuid } from "./utils.js";
 
 // For stochastic tests, we use the following predetermined seeds.
 const testSeeds: [number, number, number, number][] = [
@@ -65,10 +60,7 @@ describe("Random", () => {
 		};
 
 		const generateInteger = (alpha: number, min: number, max: number) => {
-			assert(
-				0 <= alpha && alpha <= 1,
-				`α must be in range [0..1], but got α=${alpha}.`,
-			);
+			assert(0 <= alpha && alpha <= 1, `α must be in range [0..1], but got α=${alpha}.`);
 
 			const actualMin = Math.min(min, max);
 			const actualMax = Math.max(min, max);
@@ -92,11 +84,7 @@ describe("Random", () => {
 			return result;
 		};
 
-		function assert_chi2<T>(
-			generator: () => T,
-			weights: [T, number][],
-			numSamples = 10000,
-		) {
+		function assert_chi2<T>(generator: () => T, weights: [T, number][], numSamples = 10000) {
 			assert(weights.length > 0);
 
 			const counts = new Counter<T>();
@@ -132,9 +120,7 @@ describe("Random", () => {
 
 			assert_chi2(
 				generator,
-				new Array(range)
-					.fill(0)
-					.map<[number, number]>((_, index) => [index + min, 1 / range]),
+				new Array(range).fill(0).map<[number, number]>((_, index) => [index + min, 1 / range]),
 				numSamples,
 			);
 		}
@@ -161,10 +147,7 @@ describe("Random", () => {
 			it(`of default probability 1/2 must be true ~1/2rd of the time`, () => {
 				for (const seeds of testSeeds) {
 					const random = makeRandom(...seeds);
-					assert_chi2_uniform(
-						/* generator: */ random.bool,
-						/* choices: */ [true, false],
-					);
+					assert_chi2_uniform(/* generator: */ random.bool, /* choices: */ [true, false]);
 				}
 			});
 
@@ -188,10 +171,7 @@ describe("Random", () => {
 
 				for (let i = 0; i < 100; i++) {
 					const sample = random.real();
-					assert(
-						0 <= sample && sample < 1,
-						`Must be in range [0..1), but got ${sample}.`,
-					);
+					assert(0 <= sample && sample < 1, `Must be in range [0..1), but got ${sample}.`);
 				}
 			});
 		});
@@ -230,10 +210,7 @@ describe("Random", () => {
 				// Test cases handled by the divide with rejection approach
 				describe("with |max - min| < 2^53", () => {
 					for (let i = 0; i < 10; i++) {
-						const min = random.integer(
-							Number.MIN_SAFE_INTEGER,
-							Number.MAX_SAFE_INTEGER,
-						);
+						const min = random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER);
 						const len = random.integer(0, Number.MAX_SAFE_INTEGER);
 						testLimits(min, min + len);
 					}
@@ -242,10 +219,7 @@ describe("Random", () => {
 				// Test cases that fall back on affine combination
 				describe("with |max - min| >= 2^53", () => {
 					for (let i = 0; i < 10; i++) {
-						const min = random.integer(
-							Number.MIN_SAFE_INTEGER,
-							Number.MAX_SAFE_INTEGER,
-						);
+						const min = random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER);
 						const len = random.integer(
 							Number.MAX_SAFE_INTEGER + 1,
 							Number.MAX_SAFE_INTEGER * 2,
@@ -331,8 +305,7 @@ describe("Random", () => {
 					`UUID v4 must be variant 2, but got '${variant}' for bits [64..65].`,
 				);
 
-				const re =
-					/^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89a-f][\da-f]{3}-[\da-f]{12}$/;
+				const re = /^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89a-f][\da-f]{3}-[\da-f]{12}$/;
 				assert(
 					re.test(uuid),
 					`UUID must be in the form 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', but got '${uuid}'.`,
@@ -503,8 +476,7 @@ describe("Random", () => {
 		});
 
 		describe("string", () => {
-			const base58 =
-				"123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
+			const base58 = "123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
 
 			it("defaults to base58 alphabet", () => {
 				for (const seeds of testSeeds) {
@@ -561,8 +533,7 @@ describe("Random", () => {
 		describe("normal", () => {
 			describe("produces normal distribution", () => {
 				it("with μ = 0, σ = 1 (default)", () => {
-					const clamp = (min, value, max) =>
-						Math.min(Math.max(value, min), max);
+					const clamp = (min, value, max) => Math.min(Math.max(value, min), max);
 
 					for (const seeds of testSeeds) {
 						const random = makeRandom(...seeds);
@@ -583,15 +554,13 @@ describe("Random", () => {
 				});
 
 				it("with μ = -0.5, σ = 1.5", () => {
-					const clamp = (min, value, max) =>
-						Math.min(Math.max(value, min), max);
+					const clamp = (min, value, max) => Math.min(Math.max(value, min), max);
 
 					for (const seeds of testSeeds) {
 						const random = makeRandom(...seeds);
 
 						assert_chi2(
-							/* generator: */ () =>
-								clamp(-5, Math.round(random.normal(-0.5, 1.5)), 4),
+							/* generator: */ () => clamp(-5, Math.round(random.normal(-0.5, 1.5)), 4),
 							/* weights: */ [
 								[-5, 0.0038],
 								[-4, 0.0189],

@@ -36,8 +36,5 @@ export interface IInventoryList extends EventEmitter {
 	/**
 	 * The listChanged event will fire whenever an item is added/removed, either locally or remotely.
 	 */
-	on(
-		event: "itemAdded" | "itemDeleted",
-		listener: (item: IInventoryItem) => void,
-	): this;
+	on(event: "itemAdded" | "itemDeleted", listener: (item: IInventoryItem) => void): this;
 }

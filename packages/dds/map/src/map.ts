@@ -6,17 +6,17 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
+	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
+	ISummaryTreeWithStats,
+	ITelemetryContext,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
-	ISummaryTreeWithStats,
-	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
@@ -39,10 +39,7 @@ const snapshotFileName = "header";
 /**
  * {@inheritDoc ISharedMap}
  */
-export class SharedMap
-	extends SharedObject<ISharedMapEvents>
-	implements ISharedMap
-{
+export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
 	/**
 	 * String representation for the class.
 	 */
@@ -126,9 +123,7 @@ export class SharedMap
 	 */
 	// TODO: Use `unknown` instead (breaking change).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public forEach(
-		callbackFn: (value: any, key: string, map: Map<string, any>) => void,
-	): void {
+	public forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void {
 		// eslint-disable-next-line unicorn/no-array-for-each, unicorn/no-array-callback-reference
 		this.kernel.forEach(callbackFn);
 	}
@@ -209,10 +204,7 @@ export class SharedMap
 		//    This can be improved in the future, without being format breaking change, as loading sequence
 		//    loads all blobs at once and partitioning schema has no impact on that process.
 		for (const [key, value] of Object.entries(data)) {
-			if (
-				value.value &&
-				value.value.length >= MinValueSizeSeparateSnapshotBlob
-			) {
+			if (value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
 				const blobName = `blob${counter}`;
 				counter++;
 				blobs.push(blobName);
@@ -239,10 +231,7 @@ export class SharedMap
 				}
 				headerBlob[key] = {
 					type: value.type,
-					value:
-						value.value === undefined
-							? undefined
-							: (JSON.parse(value.value) as unknown),
+					value: value.value === undefined ? undefined : (JSON.parse(value.value) as unknown),
 				};
 			}
 		}
@@ -285,10 +274,7 @@ export class SharedMap
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
 	 */
-	protected override reSubmitCore(
-		content: unknown,
-		localOpMetadata: unknown,
-	): void {
+	protected override reSubmitCore(content: unknown, localOpMetadata: unknown): void {
 		this.kernel.tryResubmitMessage(content as IMapOperation, localOpMetadata);
 	}
 
@@ -302,9 +288,7 @@ export class SharedMap
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */
-	protected override processMessagesCore(
-		messagesCollection: IRuntimeMessageCollection,
-	): void {
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
 			this.processMessage(envelope, messageContent, local);
@@ -332,10 +316,7 @@ export class SharedMap
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
 	 */
-	protected override rollback(
-		content: unknown,
-		localOpMetadata: unknown,
-	): void {
+	protected override rollback(content: unknown, localOpMetadata: unknown): void {
 		this.kernel.rollback(content, localOpMetadata);
 	}
 }

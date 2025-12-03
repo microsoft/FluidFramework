@@ -3,20 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import {
-	describeE2EDocRun,
-	getCurrentBenchmarkType,
-} from "@fluid-private/test-version-utils";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
-import { delay } from "@fluidframework/core-utils/internal";
-import type { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 import { strict as assert } from "assert";
 
+import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { delay } from "@fluidframework/core-utils/internal";
+import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
+
 import {
+	IBenchmarkParameters,
+	IDocumentLoader,
 	benchmarkAll,
 	createDocument,
-	type IBenchmarkParameters,
-	type IDocumentLoader,
 } from "./DocumentCreator.js";
 
 describeE2EDocRun("Load Document", (getTestObjectProvider, getDocumentInfo) => {

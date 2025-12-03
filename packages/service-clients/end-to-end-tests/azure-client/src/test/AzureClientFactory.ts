@@ -20,21 +20,14 @@ import {
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/legacy";
 import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { ScopeType } from "@fluidframework/driver-definitions/legacy";
-import type {
-	CompatibilityMode,
-	ContainerSchema,
-} from "@fluidframework/fluid-static";
+import type { CompatibilityMode, ContainerSchema } from "@fluidframework/fluid-static";
 import {
+	type MockLogger,
 	createChildLogger,
 	createMultiSinkLogger,
-	type MockLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
-import {
-	default as Axios,
-	type AxiosRequestConfig,
-	type AxiosResponse,
-} from "axios";
+import { default as Axios, type AxiosResponse, type AxiosRequestConfig } from "axios";
 import { v4 as uuid } from "uuid";
 
 import { createAzureTokenProvider } from "./AzureTokenFactory.js";
@@ -86,16 +79,10 @@ export function createAzureClient(
 	// use AzureClient remote mode will run against live Azure Fluid Relay.
 	// Default to running Tinylicious for PR validation
 	// and local testing so it's not hindered by service availability
-	const connectionProps:
-		| AzureRemoteConnectionConfig
-		| AzureLocalConnectionConfig = useAzure
+	const connectionProps: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
 		? {
 				tenantId,
-				tokenProvider: createAzureTokenProvider(
-					id ?? "foo",
-					name ?? "bar",
-					scopes,
-				),
+				tokenProvider: createAzureTokenProvider(id ?? "foo", name ?? "bar", scopes),
 				endpoint: endPoint,
 				type: "remote",
 			}
@@ -158,23 +145,19 @@ export function createAzureClientLegacy(
 	// use AzureClient remote mode will run against live Azure Fluid Relay.
 	// Default to running Tinylicious for PR validation
 	// and local testing so it's not hindered by service availability
-	const connectionProps:
-		| AzureRemoteConnectionConfigLegacy
-		| AzureLocalConnectionConfigLegacy = useAzure
-		? {
-				tenantId,
-				tokenProvider: createAzureTokenProvider(
-					userID ?? "foo",
-					userName ?? "bar",
-				),
-				endpoint: endPoint,
-				type: "remote",
-			}
-		: {
-				tokenProvider: new InsecureTokenProvider("fooBar", user),
-				endpoint: "http://localhost:7071",
-				type: "local",
-			};
+	const connectionProps: AzureRemoteConnectionConfigLegacy | AzureLocalConnectionConfigLegacy =
+		useAzure
+			? {
+					tenantId,
+					tokenProvider: createAzureTokenProvider(userID ?? "foo", userName ?? "bar"),
+					endpoint: endPoint,
+					type: "remote",
+				}
+			: {
+					tokenProvider: new InsecureTokenProvider("fooBar", user),
+					endpoint: "http://localhost:7071",
+					type: "local",
+				};
 	const getLogger = (): ITelemetryBaseLoggerLegacy | undefined => {
 		const testLogger = getTestLogger?.();
 		if (!logger && !testLogger) {
@@ -229,14 +212,10 @@ export async function createContainerFromPayload(
 	const tokenProvider = useAzure
 		? createAzureTokenProvider(userID ?? "foo", userName ?? "bar")
 		: new InsecureTokenProvider("fooBar", user);
-	const ordererToken = await tokenProvider.fetchOrdererToken(
-		tenantId,
-		undefined,
-		false,
-	);
+	const ordererToken = await tokenProvider.fetchOrdererToken(tenantId, undefined, false);
 
 	const headers = {
-		Authorization: `Basic ${ordererToken.jwt}`,
+		"Authorization": `Basic ${ordererToken.jwt}`,
 		"Content-Type": "application/json",
 	};
 
@@ -258,16 +237,11 @@ export async function createContainerFromPayload(
 		if (response.status === 201) {
 			console.log("Container created successfully");
 		} else {
-			throw new Error(
-				`Error creating container. Status code: ${response.status}`,
-			);
+			throw new Error(`Error creating container. Status code: ${response.status}`);
 		}
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		if (
-			response?.data === undefined ||
-			(useAzure && response?.data?.id === undefined)
-		) {
+		if (response?.data === undefined || (useAzure && response?.data?.id === undefined)) {
 			throw new Error(`ID of the created container is undefined`);
 		}
 
@@ -285,9 +259,7 @@ export async function createContainerFromPayload(
  * @param response - A container creation response returned by createContainerFromPayload
  * @returns The ID of the container that was created by createContainerFromPayload
  */
-export function getContainerIdFromPayloadResponse(
-	response: AxiosResponse,
-): string {
+export function getContainerIdFromPayloadResponse(response: AxiosResponse): string {
 	const useAzure = process.env.FLUID_CLIENT === "azure";
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	return (useAzure ? response.data.id : response.data) as string;

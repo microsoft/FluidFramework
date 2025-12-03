@@ -5,12 +5,8 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import type {
-	ChangeAtomId,
-	RevisionTag,
-	TaggedChange,
-} from "../../core/index.js";
-import { brand, type RangeQueryResult } from "../../util/index.js";
+import type { ChangeAtomId, RevisionTag, TaggedChange } from "../../core/index.js";
+import { type RangeQueryResult, brand } from "../../util/index.js";
 import {
 	type CrossFieldManager,
 	CrossFieldTarget,
@@ -18,20 +14,8 @@ import {
 } from "../modular-schema/index.js";
 
 import type { MoveMarkEffect } from "./helperTypes.js";
-import type {
-	CellMark,
-	Detach,
-	Mark,
-	MarkEffect,
-	MoveId,
-	MoveIn,
-	MoveOut,
-} from "./types.js";
-import {
-	isAttachAndDetachEffect,
-	splitMark,
-	splitMarkEffect,
-} from "./utils.js";
+import type { CellMark, Detach, Mark, MarkEffect, MoveId, MoveIn, MoveOut } from "./types.js";
+import { isAttachAndDetachEffect, splitMark, splitMarkEffect } from "./utils.js";
 
 export type MoveEffectTable = CrossFieldManager<MoveEffect>;
 
@@ -120,10 +104,7 @@ export function getMoveEffect(
 ): RangeQueryResult<ChangeAtomId, MoveEffect> {
 	const result = moveEffects.get(target, revision, id, count, addDependency);
 	return result.value !== undefined
-		? {
-				...result,
-				value: adjustMoveEffectBasis(result.value as MoveEffectWithBasis, id),
-			}
+		? { ...result, value: adjustMoveEffectBasis(result.value as MoveEffectWithBasis, id) }
 		: result;
 }
 
@@ -152,10 +133,7 @@ export function getMoveIn(effect: MarkEffect): MoveIn | undefined {
 	}
 }
 
-function adjustMoveEffectBasis(
-	effect: MoveEffectWithBasis,
-	newBasis: MoveId,
-): MoveEffect {
+function adjustMoveEffectBasis(effect: MoveEffectWithBasis, newBasis: MoveId): MoveEffect {
 	if (effect.basis === newBasis) {
 		return effect;
 	}
@@ -169,10 +147,7 @@ function adjustMoveEffectBasis(
 	}
 
 	if (effect.truncatedEndpoint !== undefined) {
-		adjusted.truncatedEndpoint = adjustChangeAtomId(
-			effect.truncatedEndpoint,
-			basisShift,
-		);
+		adjusted.truncatedEndpoint = adjustChangeAtomId(effect.truncatedEndpoint, basisShift);
 	}
 
 	if (effect.truncatedEndpointForInner !== undefined) {
@@ -190,10 +165,7 @@ function adjustMoveEffectBasis(
 	return adjusted;
 }
 
-export function splitMarkForMoveEffects(
-	mark: Mark,
-	effects: MoveEffectTable,
-): Mark[] {
+export function splitMarkForMoveEffects(mark: Mark, effects: MoveEffectTable): Mark[] {
 	const length = getFirstMoveEffectLength(mark, mark.count, effects);
 	return length < mark.count ? splitMark(mark, length) : [mark];
 }
@@ -221,9 +193,7 @@ function getFirstMoveEffectLength(
 	return count;
 }
 
-export function getCrossFieldTargetFromMove(
-	mark: MoveMarkEffect,
-): CrossFieldTarget {
+export function getCrossFieldTargetFromMove(mark: MoveMarkEffect): CrossFieldTarget {
 	const type = mark.type;
 	switch (type) {
 		case "MoveIn":

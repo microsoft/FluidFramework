@@ -12,27 +12,27 @@ import {
 	type ChangeFamily,
 	type ChangeRebaser,
 	type DeltaDetachedNodeId,
-	mapTaggedChange,
 	type RevisionMetadataSource,
 	type RevisionTag,
 	type RevisionTagCodec,
 	type TaggedChange,
+	mapTaggedChange,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
-	fieldKindConfigurations,
-	fieldKinds,
 	ModularChangeFamily,
 	type ModularChangeset,
-	makeModularChangeCodecFamily,
 	type TreeChunk,
 	type TreeCompressionStrategy,
+	fieldKindConfigurations,
+	fieldKinds,
+	makeModularChangeCodecFamily,
 } from "../feature-libraries/index.js";
 import {
-	addToNestedSet,
-	hasSingle,
 	type Mutable,
 	type NestedSet,
+	addToNestedSet,
+	hasSingle,
 	nestedSetContains,
 } from "../util/index.js";
 
@@ -71,10 +71,7 @@ export class SharedTreeChangeFamily
 			codecOptions,
 			chunkCompressionStrategy,
 		);
-		this.modularChangeFamily = new ModularChangeFamily(
-			fieldKinds,
-			modularChangeCodec,
-		);
+		this.modularChangeFamily = new ModularChangeFamily(fieldKinds, modularChangeCodec);
 		this.codecs = makeSharedTreeChangeCodecFamily(
 			this.modularChangeFamily.codecs,
 			codecOptions,
@@ -165,10 +162,7 @@ export class SharedTreeChangeFamily
 		over: TaggedChange<SharedTreeChange>,
 		revisionMetadata: RevisionMetadataSource,
 	): SharedTreeChange {
-		if (
-			change.change.changes.length === 0 ||
-			over.change.changes.length === 0
-		) {
+		if (change.change.changes.length === 0 || over.change.changes.length === 0) {
 			return change.change;
 		}
 
@@ -296,9 +290,7 @@ export function updateRefreshers(
 
 	// The roots that have been included as refreshers across all data changes so far.
 	const includedRoots: NestedSet<RevisionTag | undefined, number> = new Map();
-	function getAndRememberDetachedNode(
-		id: DeltaDetachedNodeId,
-	): TreeChunk | undefined {
+	function getAndRememberDetachedNode(id: DeltaDetachedNodeId): TreeChunk | undefined {
 		addToNestedSet(includedRoots, id.major, id.minor);
 		return getDetachedNode(id);
 	}

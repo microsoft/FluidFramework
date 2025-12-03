@@ -7,7 +7,7 @@
 
 import { strict as assert } from "assert";
 
-import { generatePairwiseOptions, type OptionsMatrix } from "../index.js";
+import { OptionsMatrix, generatePairwiseOptions } from "../index.js";
 
 interface SimpleOptions {
 	oBoolean?: boolean;
@@ -36,9 +36,7 @@ function validateSimpleOption(option: SimpleOptions) {
 
 	assert("oBoolean" in option, `oBoolean not defined:${option}`);
 	assert(
-		option.oBoolean === undefined ||
-			option.oBoolean === true ||
-			option.oBoolean === false,
+		option.oBoolean === undefined || option.oBoolean === true || option.oBoolean === false,
 		`oBoolean not expected value:${optionsToString(option)}`,
 	);
 
@@ -58,8 +56,7 @@ function validateSimpleOption(option: SimpleOptions) {
 	);
 }
 
-const simpleValues =
-	generatePairwiseOptions<SimpleOptions>(simpleOptionsMatrix);
+const simpleValues = generatePairwiseOptions<SimpleOptions>(simpleOptionsMatrix);
 
 interface ComplexOptions {
 	oSimple?: SimpleOptions;
@@ -73,15 +70,12 @@ const complexOptionsMatrix: OptionsMatrix<ComplexOptions> = {
 	rSimple: simpleValues,
 };
 
-const complexValues =
-	generatePairwiseOptions<ComplexOptions>(complexOptionsMatrix);
+const complexValues = generatePairwiseOptions<ComplexOptions>(complexOptionsMatrix);
 
 function validateComplexOption(option: ComplexOptions) {
 	assert("boolean" in option, `boolean not defined:${option}`);
 	assert(
-		option.boolean === undefined ||
-			option.boolean === true ||
-			option.boolean === false,
+		option.boolean === undefined || option.boolean === true || option.boolean === false,
 		`boolean not expected value:${option}`,
 	);
 
@@ -128,11 +122,7 @@ function validatePairsExhaustively<T extends Record<string, any>>(
 
 describe("generatePairwiseOptions", () => {
 	it("SimpleOptions", () => {
-		assert.strictEqual(
-			simpleValues.length,
-			8,
-			optionsToString(...simpleValues),
-		);
+		assert.strictEqual(simpleValues.length, 8, optionsToString(...simpleValues));
 		for (const option of simpleValues) {
 			validateSimpleOption(option);
 		}
@@ -140,20 +130,13 @@ describe("generatePairwiseOptions", () => {
 	});
 
 	it("ComplexOptions", () => {
-		assert.strictEqual(
-			complexValues.length,
-			24,
-			optionsToString(...complexValues),
-		);
+		assert.strictEqual(complexValues.length, 24, optionsToString(...complexValues));
 
 		for (const option of complexValues) {
 			validateComplexOption(option);
 		}
 
-		validatePairsExhaustively<ComplexOptions>(
-			complexOptionsMatrix,
-			complexValues,
-		);
+		validatePairsExhaustively<ComplexOptions>(complexOptionsMatrix, complexValues);
 	});
 
 	it("Generate single option matrix", () => {

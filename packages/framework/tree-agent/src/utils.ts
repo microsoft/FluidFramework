@@ -124,16 +124,10 @@ export function failUsage(message: string): never {
 /**
  * Construct an object node from a schema and value.
  */
-export function constructNode(
-	schema: TreeNodeSchema,
-	value: InsertableContent,
-): TreeNode {
+export function constructNode(schema: TreeNodeSchema, value: InsertableContent): TreeNode {
 	const node = TreeAlpha.create<UnsafeUnknownSchema>(schema, value);
 	assert(
-		node !== undefined &&
-			node !== null &&
-			typeof node === "object" &&
-			!isFluidHandle(node),
+		node !== undefined && node !== null && typeof node === "object" && !isFluidHandle(node),
 		0xc1e /* Expected a constructed node to be an object */,
 	);
 	return node;
@@ -150,9 +144,7 @@ export function getFriendlyName(schema: TreeNodeSchema): string {
 
 	const childNames = Array.from(schema.childTypes, (t) => getFriendlyName(t));
 	if (schema instanceof ArrayNodeSchema) {
-		return childNames.length > 1
-			? `(${childNames.join(" | ")})[]`
-			: `${childNames[0]}[]`;
+		return childNames.length > 1 ? `(${childNames.join(" | ")})[]` : `${childNames[0]}[]`;
 	}
 	if (schema instanceof MapNodeSchema) {
 		return childNames.length > 1

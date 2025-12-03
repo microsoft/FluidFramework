@@ -4,18 +4,12 @@
  */
 
 import { EventEmitter } from "@fluid-example/example-utils";
-import type {
-	IFluidHandle,
-	IFluidLoadable,
-} from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/legacy";
+import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore/legacy";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/legacy";
+import { ISharedMap, SharedMap } from "@fluidframework/map/legacy";
 import {
-	FluidDataStoreRuntime,
-	FluidObjectHandle,
-} from "@fluidframework/datastore/legacy";
-import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/legacy";
-import { type ISharedMap, SharedMap } from "@fluidframework/map/legacy";
-import type {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/legacy";
@@ -59,11 +53,7 @@ export class SmdeDataObject extends EventEmitter implements IFluidLoadable {
 	constructor(private readonly runtime: IFluidDataStoreRuntime) {
 		super();
 
-		this.innerHandle = new FluidObjectHandle(
-			this,
-			"",
-			this.runtime.objectsRoutingContext,
-		);
+		this.innerHandle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
 	}
 
 	private async initialize(existing: boolean) {
@@ -72,9 +62,7 @@ export class SmdeDataObject extends EventEmitter implements IFluidLoadable {
 			const text = SharedString.create(this.runtime);
 
 			// Initial paragraph marker
-			text.insertMarker(0, ReferenceType.Tile, {
-				[reservedTileLabelsKey]: ["pg"],
-			});
+			text.insertMarker(0, ReferenceType.Tile, { [reservedTileLabelsKey]: ["pg"] });
 
 			this.root.set("text", text.handle);
 			this.root.bindToContext();
@@ -96,10 +84,7 @@ export class SmdeFactory implements IFluidDataStoreFactory {
 		return this;
 	}
 
-	public async instantiateDataStore(
-		context: IFluidDataStoreContext,
-		existing: boolean,
-	) {
+	public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
 		return new FluidDataStoreRuntime(
 			context,
 			new Map(
@@ -109,8 +94,7 @@ export class SmdeFactory implements IFluidDataStoreFactory {
 				]),
 			),
 			existing,
-			async (runtime: IFluidDataStoreRuntime) =>
-				SmdeDataObject.load(runtime, existing),
+			async (runtime: IFluidDataStoreRuntime) => SmdeDataObject.load(runtime, existing),
 		);
 	}
 }

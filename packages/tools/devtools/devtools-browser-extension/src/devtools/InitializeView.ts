@@ -19,9 +19,7 @@ import { OneDSLogger } from "./TelemetryLogging.js";
  *
  * @param target - The element into which the devtools view will be rendered.
  */
-export async function initializeDevtoolsView(
-	target: HTMLElement,
-): Promise<void> {
+export async function initializeDevtoolsView(target: HTMLElement): Promise<void> {
 	const connection = await BackgroundConnection.Initialize({
 		// TODO: devtools-panel-specific source
 		messageSource: extensionViewMessageSource,
@@ -41,9 +39,7 @@ export async function initializeDevtoolsView(
 		target,
 		() => {
 			console.log(
-				formatDevtoolsScriptMessageForLogging(
-					"Rendered debug view in devtools window!",
-				),
+				formatDevtoolsScriptMessageForLogging("Rendered debug view in devtools window!"),
 			);
 		},
 	);

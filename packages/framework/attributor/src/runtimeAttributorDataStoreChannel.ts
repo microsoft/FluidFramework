@@ -8,40 +8,32 @@ import {
 	AttachState,
 	type IDeltaManager,
 } from "@fluidframework/container-definitions/internal";
-import type {
-	FluidObject,
-	IRequest,
-	IResponse,
-} from "@fluidframework/core-interfaces";
+import type { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import {
-	assert,
-	Deferred,
-	unreachableCase,
-} from "@fluidframework/core-utils/internal";
+import { assert, Deferred, unreachableCase } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import type { IFluidDataStoreRuntimeEvents } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IDocumentMessage,
-	IQuorumClients,
-	ISequencedDocumentMessage,
 	ISnapshotTree,
+	ISequencedDocumentMessage,
+	IQuorumClients,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	type IGarbageCollectionData,
 	type IFluidDataStoreChannel,
 	type IFluidDataStoreContext,
-	type IGarbageCollectionData,
 	type IInboundSignalMessage,
-	type IRuntimeMessageCollection,
+	VisibilityState,
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
-	VisibilityState,
+	type IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	createChildMonitoringContext,
 	type ITelemetryLoggerExt,
 	type MonitoringContext,
 	raiseConnectedEvent,
+	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { RuntimeAttributor } from "./runtimeAttributor.js";
@@ -135,18 +127,14 @@ export class RuntimeAttributorDataStoreChannel
 	/**
 	 * {@inheritdoc IFluidDataStoreChannel.getAttachSummary}
 	 */
-	public getAttachSummary(
-		telemetryContext?: ITelemetryContext,
-	): ISummaryTreeWithStats {
+	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
 		return this.runtimeAttributor.summarizeOpAttributor();
 	}
 
 	/**
 	 * {@inheritdoc IFluidDataStoreChannel.getAttachGCData}
 	 */
-	public getAttachGCData(
-		telemetryContext?: ITelemetryContext,
-	): IGarbageCollectionData {
+	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
 		return { gcNodes: {} };
 	}
 
@@ -217,11 +205,7 @@ export class RuntimeAttributorDataStoreChannel
 	/**
 	 * {@inheritdoc IFluidDataStoreChannel.rollback}
 	 */
-	public rollback?(
-		type: string,
-		content: unknown,
-		localOpMetadata: unknown,
-	): void {
+	public rollback?(type: string, content: unknown, localOpMetadata: unknown): void {
 		// Should not rollback anything from the attributor as it does not send ops yet.
 		throw new Error("Should not rollback anything from the attributor");
 	}
@@ -242,9 +226,7 @@ export class RuntimeAttributorDataStoreChannel
 	/**
 	 * {@inheritdoc IFluidDataStoreChannel.setAttachState}
 	 */
-	public setAttachState(
-		attachState: AttachState.Attaching | AttachState.Attached,
-	): void {
+	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
 		switch (attachState) {
 			case AttachState.Attaching: {
 				this.attachState = AttachState.Attaching;

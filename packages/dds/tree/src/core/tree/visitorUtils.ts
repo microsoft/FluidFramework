@@ -50,12 +50,7 @@ export function announceDelta(
 	detachedFieldIndex: DetachedFieldIndex,
 ): void {
 	const visitor = deltaProcessor.acquireVisitor();
-	visitDelta(
-		delta,
-		combineVisitors([visitor]),
-		detachedFieldIndex,
-		latestRevision,
-	);
+	visitDelta(delta, combineVisitors([visitor]), detachedFieldIndex, latestRevision);
 	visitor.free();
 }
 
@@ -75,12 +70,8 @@ export type CombinableVisitor =
  * @param visitors - The returned visitor invokes the corresponding events for all these visitors, in order.
  * @returns a DeltaVisitor combining all `visitors`.
  */
-export function combineVisitors(
-	visitors: readonly CombinableVisitor[],
-): CombinedVisitor {
-	const allVisitors = visitors.flatMap((v) =>
-		v.type === "Combined" ? v.visitors : [v],
-	);
+export function combineVisitors(visitors: readonly CombinableVisitor[]): CombinedVisitor {
+	const allVisitors = visitors.flatMap((v) => (v.type === "Combined" ? v.visitors : [v]));
 	const announcedVisitors = allVisitors.filter(
 		(v): v is AnnouncedVisitor => v.type === "Announced",
 	);
@@ -97,9 +88,7 @@ export function combineVisitors(
 			allVisitors.forEach((v) => v.destroy(...args));
 		},
 		attach: (source: FieldKey, count: number, destination: PlaceIndex) => {
-			announcedVisitors.forEach((v) =>
-				v.beforeAttach(source, count, destination),
-			);
+			announcedVisitors.forEach((v) => v.beforeAttach(source, count, destination));
 			allVisitors.forEach((v) => v.attach(source, count, destination));
 			announcedVisitors.forEach((v) =>
 				v.afterAttach(source, {
@@ -114,17 +103,10 @@ export function combineVisitors(
 			id: DetachedNodeId,
 			isReplaced: boolean,
 		) => {
-			announcedVisitors.forEach((v) =>
-				v.beforeDetach(source, destination, isReplaced),
-			);
+			announcedVisitors.forEach((v) => v.beforeDetach(source, destination, isReplaced));
 			allVisitors.forEach((v) => v.detach(source, destination, id, isReplaced));
 			announcedVisitors.forEach((v) =>
-				v.afterDetach(
-					source.start,
-					source.end - source.start,
-					destination,
-					isReplaced,
-				),
+				v.afterDetach(source.start, source.end - source.start, destination, isReplaced),
 			);
 		},
 		enterNode: (...args) => allVisitors.forEach((v) => v.enterNode(...args)),
@@ -143,10 +125,7 @@ export interface AnnouncedVisitor extends DeltaVisitor {
 	/**
 	 * A hook that is called after all nodes have been created.
 	 */
-	afterCreate(
-		content: readonly ITreeCursorSynchronous[],
-		destination: FieldKey,
-	): void;
+	afterCreate(content: readonly ITreeCursorSynchronous[], destination: FieldKey): void;
 	beforeDestroy(field: FieldKey, count: number): void;
 	beforeAttach(source: FieldKey, count: number, destination: PlaceIndex): void;
 	afterAttach(source: FieldKey, destination: Range): void;

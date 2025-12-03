@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	StaticCodeLoader,
-	TinyliciousModelLoader,
-} from "@fluid-example/example-utils";
+import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
 import React from "react";
 import ReactDOM from "react-dom";
 

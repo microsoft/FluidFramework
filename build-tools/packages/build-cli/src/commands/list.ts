@@ -8,10 +8,7 @@ import path from "node:path";
 import { MonoRepo, Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { mkdirpSync } from "fs-extra";
-import {
-	findPackageOrReleaseGroup,
-	packageOrReleaseGroupArg,
-} from "../args.js";
+import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args.js";
 import { filterPackages, parsePackageFilterFlags } from "../filter.js";
 import { filterFlags, releaseGroupFlag } from "../flags.js";
 import { BaseCommand, getTarballName } from "../library/index.js";
@@ -36,8 +33,7 @@ interface ListItem extends PnpmListEntry {
  * seeing errors if they happen to be installing packages while we are publishing a new release.
  */
 export default class ListCommand extends BaseCommand<typeof ListCommand> {
-	static readonly description =
-		`List packages in a release group in topological order.`;
+	static readonly description = `List packages in a release group in topological order.`;
 	static readonly enableJsonFlag = true;
 
 	static readonly args = {
@@ -87,12 +83,7 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 	};
 
 	public async run(): Promise<ListItem[]> {
-		const {
-			feed,
-			outFile,
-			releaseGroup: releaseGroupName,
-			tarball,
-		} = this.flags;
+		const { feed, outFile, releaseGroup: releaseGroupName, tarball } = this.flags;
 		const context = await this.getContext();
 		const lookupName = releaseGroupName ?? this.args.package_or_release_group;
 		if (lookupName === undefined) {
@@ -107,10 +98,7 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 		}
 
 		if (rgOrPackage === undefined || !(rgOrPackage instanceof MonoRepo)) {
-			this.error(
-				`No release group or package found using name '${lookupName}'.`,
-				{ exit: 1 },
-			);
+			this.error(`No release group or package found using name '${lookupName}'.`, { exit: 1 });
 		}
 
 		const filterOptions = parsePackageFilterFlags(this.flags);

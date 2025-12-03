@@ -25,8 +25,7 @@ const SchemaValidatorError = {
 	 * - Adding one or more template attributes is a MINOR change.
 	 * - Removing one or more template attributes is a MAJOR change.
 	 */
-	CHANGE_LEVEL_TOO_LOW_1:
-		"SV-002: Template mutation requires a higher version change level: ",
+	CHANGE_LEVEL_TOO_LOW_1: "SV-002: Template mutation requires a higher version change level: ",
 
 	/**
 	 * methods: PropertyFactory.register
@@ -122,14 +121,12 @@ const SchemaValidatorError = {
 	/**
 	 * Your template has an invalid key for the kind of map it is.
 	 */
-	KEY_MUST_BE_TYPEID:
-		"SV-012: A key of a typeid key map must be a valid typeids. Key: ",
+	KEY_MUST_BE_TYPEID: "SV-012: A key of a typeid key map must be a valid typeids. Key: ",
 
 	/**
 	 * Your template has an invalid contextKeyType parameter.
 	 */
-	INVALID_OPTION_NONE_CONSTANTS:
-		"SV-013: A map with typeids as keys must be constant",
+	INVALID_OPTION_NONE_CONSTANTS: "SV-013: A map with typeids as keys must be constant",
 
 	/**
 	 * You tried to use draft as a versoin when it is not enabled.
@@ -152,8 +149,7 @@ const PropertyError = {
 	 *
 	 * Cannot directly set the array.length or string.length. This is a read-only property.
 	 */
-	MODIFY_READ_ONLY:
-		"PR-001: Trying to modify read only property value (array.length).",
+	MODIFY_READ_ONLY: "PR-001: Trying to modify read only property value (array.length).",
 
 	/**
 	 * methods: Property.getRelativePath
@@ -194,8 +190,7 @@ const PropertyError = {
 	 *
 	 * Your map, set or nodeproperty already contains an entry under in_key.
 	 */
-	PROPERTY_ALREADY_EXISTS:
-		"PR-006: The property already exists in this collection: ",
+	PROPERTY_ALREADY_EXISTS: "PR-006: The property already exists in this collection: ",
 
 	/**
 	 * methods: MapProperty.applyChangeset, NodeProperty.applyChangeset, SetProperty.applyChangeset
@@ -229,8 +224,7 @@ const PropertyError = {
 	 * You cannot insert a property that has a parent.
 	 */
 	INSERTED_ENTRY_WITH_PARENT:
-		"PR-010: Trying to insert into a collection a property that already has " +
-		"a parent.",
+		"PR-010: Trying to insert into a collection a property that already has " + "a parent.",
 
 	/**
 	 * methods: Property.resolvePath, Workspace.resolvePath
@@ -257,8 +251,7 @@ const PropertyError = {
 	 *
 	 * Paths should not end with a ‘.’
 	 */
-	DOT_AT_END:
-		"PR-013: ResolvePath error: Encountered a dot at the end of path: ",
+	DOT_AT_END: "PR-013: ResolvePath error: Encountered a dot at the end of path: ",
 
 	/**
 	 * methods: Property.resolvePath, Workspace.resolvePath
@@ -276,8 +269,7 @@ const PropertyError = {
 	 * It encountered an end to a path segment that was not
 	 * followed by a “.” or a “[“ indicating the beginning of a new segment.
 	 */
-	MISSING_DOT_AT_SEGMENT_START:
-		"PR-015: Missing . or [ at segment start in path: ",
+	MISSING_DOT_AT_SEGMENT_START: "PR-015: Missing . or [ at segment start in path: ",
 
 	/**
 	 * methods: Property.resolvePath, Workspace.resolvePath
@@ -295,8 +287,7 @@ const PropertyError = {
 	 *
 	 * Every opening bracket ([) needs a matching closing bracket (])
 	 */
-	UNCLOSED_BRACKETS:
-		"PR-017: ResolvePath error: Unclosed brackets at the end of path: ",
+	UNCLOSED_BRACKETS: "PR-017: ResolvePath error: Unclosed brackets at the end of path: ",
 
 	/**
 	 * methods: Property.resolvePath, Workspace.resolvePath
@@ -310,8 +301,7 @@ const PropertyError = {
 	/**
 	 * methods: Property.resolvePath, Workspace.resolvePath
 	 */
-	INVALID_ESCAPE_SEQUENCE:
-		"PR-019: Encountered an invalid escape sequence in path: ",
+	INVALID_ESCAPE_SEQUENCE: "PR-019: Encountered an invalid escape sequence in path: ",
 
 	/**
 	 * methods: Property.resolvePath, Workspace.resolvePath
@@ -338,8 +328,7 @@ const PropertyError = {
 	 * }
 	 *```
 	 */
-	CANT_INSERT_NON_NAMED_PROPERTIES:
-		"PR-021: Set can only contain named properties",
+	CANT_INSERT_NON_NAMED_PROPERTIES: "PR-021: Set can only contain named properties",
 
 	/**
 	 * methods: NodeProperty.insert, Workspace.insert
@@ -382,8 +371,7 @@ const PropertyError = {
 	/**
 	 * The changeSet passed to .deserialize was not a valid non-normalized changeset.
 	 */
-	NO_NORMALIZED_CHANGESET:
-		"PR-026: deserialize was called with a non-normalized ChangeSet.",
+	NO_NORMALIZED_CHANGESET: "PR-026: deserialize was called with a non-normalized ChangeSet.",
 
 	/**
 	 * INTERNAL ERROR - If you encounter this error, please contact the development team.
@@ -421,8 +409,7 @@ const PropertyError = {
 	 * The property you passed to workspace.remove or nodeProperty.remove does not exist.
 	 * Check that you passed the correct property, and that it has not yet been removed.
 	 */
-	REMOVING_NON_EXISTING_KEY:
-		"PR-033: Trying to remove something that does not exist: ",
+	REMOVING_NON_EXISTING_KEY: "PR-033: Trying to remove something that does not exist: ",
 
 	/**
 	 * methods: Workspace.get, Property.get
@@ -443,8 +430,7 @@ const PropertyError = {
 	 *
 	 * Property.serialize only takes in one parameter: an options object. That parameter is optional.
 	 */
-	SERIALIZE_TAKES_OBJECT:
-		"PR-035: Argument of serialize() should be an object.",
+	SERIALIZE_TAKES_OBJECT: "PR-035: Argument of serialize() should be an object.",
 
 	/**
 	 * methods: ArrayProperty.insert, ArrayProperty.insertRange
@@ -452,8 +438,7 @@ const PropertyError = {
 	 * The in_position (for .insert) or in_offset (for .insertRange) should not be smaller than 0
 	 * or larger than the length of the array.
 	 */
-	START_OFFSET_INVALID:
-		"PR-036: ArrayProperty: insert range - Start offset is invalid: ",
+	START_OFFSET_INVALID: "PR-036: ArrayProperty: insert range - Start offset is invalid: ",
 
 	// PR-037 removed
 
@@ -494,8 +479,7 @@ const PropertyError = {
 	 * Property.traverseUp and Property.traverseDown take one parameter: a callback function
 	 */
 	CALLBACK_NOT_FCT:
-		"PR-050: traverseUp / traverseDown parameter: in_callback must " +
-		"be a function.",
+		"PR-050: traverseUp / traverseDown parameter: in_callback must " + "be a function.",
 
 	/**
 	 * methods: ArrayProperty.insertRange
@@ -504,8 +488,7 @@ const PropertyError = {
 	 * To pass in only one item, either use .insert(index, item)
 	 * or put that item into an array: .insertRange(index, [item])
 	 */
-	IN_ARRAY_NOT_ARRAY:
-		"PR-051: Parameter error: in_array must be an array for method: ",
+	IN_ARRAY_NOT_ARRAY: "PR-051: Parameter error: in_array must be an array for method: ",
 
 	/**
 	 * methods: EnumProperty.setEnumByString
@@ -626,8 +609,7 @@ const PropertyError = {
 	 * (other items in the array are child paths within the array item at this position).
 	 * This error happens only when in_position is a single position.
 	 */
-	IN_POSITION_MUST_BE_NUMBER:
-		"PR-093: in_position must be a number. This is not valid: ",
+	IN_POSITION_MUST_BE_NUMBER: "PR-093: in_position must be a number. This is not valid: ",
 
 	/**
 	 * methods: Property.getValue
@@ -694,8 +676,7 @@ const PropertyError = {
 	 * the property and then tried to set its value.
 	 */
 	NON_EXISTING_PROPERTY_REPOSITORY_REFERENCE:
-		"PR-111: Internal error: PropertyFactory.create failed to create " +
-		"this property.",
+		"PR-111: Internal error: PropertyFactory.create failed to create " + "this property.",
 
 	/**
 	 * methods: Property.setValues
@@ -703,8 +684,7 @@ const PropertyError = {
 	 * One of the path you used in .setValues leads to a property.
 	 * When passing an object to setValues, make sure that all paths lead to a primitive value.
 	 */
-	SET_VALUES_PATH_PROPERTY:
-		"PR-115: trying to set value to a path leading to a property: ",
+	SET_VALUES_PATH_PROPERTY: "PR-115: trying to set value to a path leading to a property: ",
 
 	/**
 	 * methods: Property.setValues
@@ -719,8 +699,7 @@ const PropertyError = {
 	 * .setValues takes one parameter: an object containing paths to the values to be changed.
 	 * It should be an object (or in the case of ArrayProperty, an array)
 	 */
-	SET_VALUES_PARAM_NOT_OBJECT:
-		"PR-117: setValues parameter: in_properties must be an object.",
+	SET_VALUES_PARAM_NOT_OBJECT: "PR-117: setValues parameter: in_properties must be an object.",
 
 	/**
 	 * methods: PropertyFactory.create
@@ -737,8 +716,7 @@ const PropertyError = {
 	 * which the property is added. It can only be a string or a number. Only in the case of named
 	 * property can it be omitted.
 	 */
-	ID_STRING_OR_NUMBER:
-		"PR-119: id should be a string or a number. This is not valid: ",
+	ID_STRING_OR_NUMBER: "PR-119: id should be a string or a number. This is not valid: ",
 
 	/**
 	 * methods: ValueProperty.deserialize
@@ -787,8 +765,7 @@ const PropertyError = {
 	 * The parameters it received were not objects.
 	 */
 	PROP_CONSTRUCTOR_EXPECTS_OBJECTS:
-		"PR-126: Internal error: Object expected as parameters to " +
-		"BaseProperty constructor",
+		"PR-126: Internal error: Object expected as parameters to " + "BaseProperty constructor",
 
 	/**
 	 * methods: Property.applyChangeSet
@@ -804,8 +781,7 @@ const PropertyError = {
 	 *
 	 * Property.isAncestorOf and .isDescendantOf take one parameter: a property. It cannot be undefined.
 	 */
-	MISSING_IN_OTHERPROP:
-		"PR-132: isAncestorOf parameter: in_otherProperty must be specified.",
+	MISSING_IN_OTHERPROP: "PR-132: isAncestorOf parameter: in_otherProperty must be specified.",
 
 	/**
 	 * methods: StringProperty.insert, StringProperty.push
@@ -834,8 +810,7 @@ const PropertyError = {
 	 *
 	 * If a property is created as a constant, it cannot be changed.
 	 */
-	MODIFICATION_OF_CONSTANT_PROPERTY:
-		"PR-140: Modifications of constants are not allowed.",
+	MODIFICATION_OF_CONSTANT_PROPERTY: "PR-140: Modifications of constants are not allowed.",
 
 	/**
 	 * methods: ArrayProperty.insert, ArrayProperty.insertRange
@@ -867,8 +842,7 @@ const PropertyError = {
 	 * If your map is not a ValueMap, in_property must be an instance of BaseProperty.
 	 * Use PropertyFactory.create to create an instance of a property.
 	 */
-	NONVALUE_MAP_INSERT_PROP:
-		"PR-161: In a map of properties, you can only insert properties.",
+	NONVALUE_MAP_INSERT_PROP: "PR-161: In a map of properties, you can only insert properties.",
 
 	/**
 	 * methods: PropertyFactory.create
@@ -877,8 +851,7 @@ const PropertyError = {
 	 * This error is thrown while creating a Property, when the actual context
 	 * ('array', 'map', 'set' or 'single') is different than what was expected.
 	 */
-	CONTEXT_NOT_AS_EXPECTED:
-		"PR-163: Property context is different than expected: ",
+	CONTEXT_NOT_AS_EXPECTED: "PR-163: Property context is different than expected: ",
 
 	/**
 	 * methods: Property.deserialize
@@ -888,8 +861,7 @@ const PropertyError = {
 	 * Integer64Property must be an array of 2 integers: the low and the high values. Since users cannot yet supply
 	 * their changesets directly, this should not happen.
 	 */
-	INVALID_INT64_CHANGESET:
-		"PR-164: Cannot deserialize invalid change set for Int64 property",
+	INVALID_INT64_CHANGESET: "PR-164: Cannot deserialize invalid change set for Int64 property",
 
 	/**
 	 * methods: StringProperty.set
@@ -919,8 +891,7 @@ const PropertyError = {
 	 * myProp.get('myReference').get(TOKENS.DEREFERENCE_TOKEN)
 	 * ```
 	 */
-	NO_GET_DEREFERENCE_ONLY:
-		"PR-166: Cannot use a dereference token only with .get",
+	NO_GET_DEREFERENCE_ONLY: "PR-166: Cannot use a dereference token only with .get",
 
 	/**
 	 * methods: StringProperty.setValues
@@ -928,8 +899,7 @@ const PropertyError = {
 	 * You cannot call .setValues on a StringProperty. To set the value of the string, use .setValue
 	 * instead.
 	 */
-	NO_VALUE_PROPERTY_SETVALUES:
-		"PR-167: setValues is not a valid method for String Properties",
+	NO_VALUE_PROPERTY_SETVALUES: "PR-167: setValues is not a valid method for String Properties",
 
 	/**
 	 * methods: Property.getRelativePath
@@ -1030,8 +1000,7 @@ const PropertyError = {
 	 *
 	 * The in_value input of ArrayProperty.set should not be an array.
 	 */
-	ARRAY_SET_ONE_ELEMENT:
-		"PR-182: in_value should be a single element. This is not valid: ",
+	ARRAY_SET_ONE_ELEMENT: "PR-182: in_value should be a single element. This is not valid: ",
 
 	CANT_DIRTY_MISSING_PROPERTY: "PR-183: Can't dirty missing property: ",
 
@@ -1040,8 +1009,7 @@ const PropertyError = {
 	 *
 	 * The property you are trying to insert in your map property, set property or node property is a root.
 	 */
-	INSERTED_ROOT_ENTRY:
-		"PR-184: Trying to insert a root property into a collection.",
+	INSERTED_ROOT_ENTRY: "PR-184: Trying to insert a root property into a collection.",
 
 	/**
 	 * methods: MapProperty.insert, MapProperty.set, SetProperty.insert, NodeProperty.insert
@@ -1064,11 +1032,9 @@ const PropertyError = {
 	INSERTED_OUTSIDE_PATHS:
 		"PR-186: Trying to insert a property outside the paths covered by the partial checkout.",
 
-	SHARED_BEFORE_INSERTED:
-		"PR-187: Property must be inserted in the workspace before sharing.",
+	SHARED_BEFORE_INSERTED: "PR-187: Property must be inserted in the workspace before sharing.",
 
-	CUSTOM_ID_NOT_ALLOWED:
-		"PR-188: The following property does not support custom id: ",
+	CUSTOM_ID_NOT_ALLOWED: "PR-188: The following property does not support custom id: ",
 };
 
 const PropertyFactoryError = {
@@ -1102,8 +1068,7 @@ const PropertyFactoryError = {
 	 * This can occur when registering templates through the commit REST interface. At this point
 	 * the data is corrupted and should be reported to the development team
 	 */
-	UNVERSIONED_REMOTE_TEMPLATE:
-		"PF-006: Internal error: Remote template is not versioned.",
+	UNVERSIONED_REMOTE_TEMPLATE: "PF-006: Internal error: Remote template is not versioned.",
 
 	/**
 	 * methods: PropertyFactory.create
@@ -1111,8 +1076,7 @@ const PropertyFactoryError = {
 	 * RepositoryReferences are not yet fully implemented. They will be soon.
 	 */
 	REPOSITORY_REF_NOT_FULLY_IMPLEMENTED:
-		"PF-007: Repository references are not yet fully implemented and may not " +
-		"yet be used",
+		"PF-007: Repository references are not yet fully implemented and may not " + "yet be used",
 
 	/**
 	 * methods: PropertyFactory.create
@@ -1181,8 +1145,7 @@ const PropertyFactoryError = {
 	 *
 	 * Your template’s id field must be a string.
 	 */
-	DEFINITION_ID_MUST_BE_STRING:
-		'PF-024: Value "id" of a definition should be a string. "',
+	DEFINITION_ID_MUST_BE_STRING: 'PF-024: Value "id" of a definition should be a string. "',
 
 	/**
 	 * methods: PropertyFactory.convertToTemplates, PropertyFactory.registerFrom
@@ -1214,8 +1177,7 @@ const PropertyFactoryError = {
 	 *
 	 * In a JSON schema, the properties field must be an object.
 	 */
-	PROPERTIES_SHOULD_BE_OBJECT:
-		'PF-028: The "properties" value should be an object. "',
+	PROPERTIES_SHOULD_BE_OBJECT: 'PF-028: The "properties" value should be an object. "',
 
 	/**
 	 * methods: PropertyFactory.convertToTemplates, PropertyFactory.registerFrom
@@ -1232,8 +1194,7 @@ const PropertyFactoryError = {
 	 *
 	 * oneOf’s value MUST be a non-empty array. Each item of the array MUST be a valid JSON Schema.
 	 */
-	ONE_OF_SHOULD_CONTAIN_OBJECTS:
-		'PF-030: The "oneOf" array should contain objects. "',
+	ONE_OF_SHOULD_CONTAIN_OBJECTS: 'PF-030: The "oneOf" array should contain objects. "',
 
 	/**
 	 * methods: PropertyFactory.convertToTemplates, PropertyFactory.registerFrom
@@ -1247,8 +1208,7 @@ const PropertyFactoryError = {
 	 *
 	 * This keyword's value MUST be a non-empty array. Each item of the array MUST be a valid JSON Schema.
 	 */
-	ALL_OF_SHOULD_CONTAIN_OBJECTS:
-		'PF-032: The "allOf" array should contain objects. Element ',
+	ALL_OF_SHOULD_CONTAIN_OBJECTS: 'PF-032: The "allOf" array should contain objects. Element ',
 
 	/**
 	 * methods: PropertyFactory.convertToTemplates, PropertyFactory.registerFrom
@@ -1266,8 +1226,7 @@ const PropertyFactoryError = {
 	 */
 	UNSUPPORTED_VALUE_TYPE: 'PF-034: Unsupported value of field "type": ',
 
-	REQUIRED_PROPERTY_NAME_NOT_STRING:
-		'PF-035: Required property name should be a string, "',
+	REQUIRED_PROPERTY_NAME_NOT_STRING: 'PF-035: Required property name should be a string, "',
 
 	/**
 	 * This property is required but it is not listed in the properties field.
@@ -1293,8 +1252,7 @@ const PropertyFactoryError = {
 	 * Warning: If you have a ‘length’ field in your template and the context is not set to ‘array’,
 	 * ‘length’ will be ignored.
 	 */
-	IGNORING_LENGTH_NOT_ARRAY:
-		'PF-039: ignoring "length" value since "context" is not "array".',
+	IGNORING_LENGTH_NOT_ARRAY: 'PF-039: ignoring "length" value since "context" is not "array".',
 
 	/**
 	 * methods: PropertyFactory.convertToTemplates, PropertyFactory.registerFrom
@@ -1390,8 +1348,7 @@ const PropertyFactoryError = {
 	 * }
 	 * ```
 	 */
-	ENUM_VALUE_NOT_NUMBER:
-		"PF-047: Enum: value must be a number. This is not valid: ",
+	ENUM_VALUE_NOT_NUMBER: "PF-047: Enum: value must be a number. This is not valid: ",
 
 	/**
 	 * methods: PropertyTemplate.getVersion
@@ -1410,8 +1367,7 @@ const PropertyFactoryError = {
 	 * If they do not match, an error will be thrown letting you know that the templates are incompatible.
 	 * See error PF-004
 	 */
-	REGISTERING_EXISTING_TYPEID:
-		"PF-049: Registering a typeid that already exists typeid = ",
+	REGISTERING_EXISTING_TYPEID: "PF-049: Registering a typeid that already exists typeid = ",
 
 	/**
 	 * methods: PropertyFactory.register
@@ -1473,8 +1429,7 @@ const PropertyFactoryError = {
 	 *
 	 * resolve cannot be called until previous call to resolve has completed.
 	 */
-	DEPENDENCIES_RESOLUTION_IN_PROGRESS:
-		"PF-060: Dependencies resolution already in progress",
+	DEPENDENCIES_RESOLUTION_IN_PROGRESS: "PF-060: Dependencies resolution already in progress",
 
 	/**
 	 * methods: PropertyFactory.create
@@ -1556,8 +1511,7 @@ const RepositoryError = {
 	 * node to check for equality.
 	 */
 	MISSING_IN_NODE_PARAM:
-		"RE-004: BranchNode.isEqual / CommitNode.isEqual missing " +
-		"parameter: in_node",
+		"RE-004: BranchNode.isEqual / CommitNode.isEqual missing " + "parameter: in_node",
 
 	/**
 	 * methods: BranchNode, CommitNode, Workspace.commit
@@ -1594,8 +1548,7 @@ const RepositoryError = {
 	/**
 	 * This error will occur if the repository associated to a branch hasn't been found.
 	 */
-	REPOSITORY_NOT_FOUND:
-		"RE-011: Internal Error: The repository hasn't been found.",
+	REPOSITORY_NOT_FOUND: "RE-011: Internal Error: The repository hasn't been found.",
 
 	/**
 	 * This error will occur if the branch within a repository hasn't been found.
@@ -1624,8 +1577,7 @@ const ChangeSetError = {
 	/**
 	 * INTERNAL ERROR - If you encounter this error, please contact the development team.
 	 */
-	ALREADY_EXISTING_ENTRY:
-		"CS-003: Internal error: Added an already existing entry: ",
+	ALREADY_EXISTING_ENTRY: "CS-003: Internal error: Added an already existing entry: ",
 
 	/**
 	 * INTERNAL ERROR - If you encounter this error, please contact the development team.
@@ -1638,14 +1590,12 @@ const ChangeSetError = {
 
 	NOT_A_VALID_CONTEXT: "NOT_A_VALID_CONTEXT",
 
-	MISSING_PRE_POST_CALLBACK:
-		"Missing callback. Either pre- or postcallback must be provided.",
+	MISSING_PRE_POST_CALLBACK: "Missing callback. Either pre- or postcallback must be provided.",
 };
 
 const UtilsError = {
 	INVALID_PATH_IN_REFERENCE:
-		"UT-001: References may only contain absolute repository references " +
-		"or empty strings",
+		"UT-001: References may only contain absolute repository references " + "or empty strings",
 
 	/**
 	 * methods: Utils.traverseChangesetRecursively
@@ -1659,14 +1609,12 @@ const UtilsError = {
 	 * INTERNAL ERROR - If you encounter this error, please contact the development team.
 	 */
 	NON_PRIMITIVE_ARRAY_NO_TYPEID:
-		"UT-005: Found a non primitive type array without typeids. " +
-		"This should never happen.",
+		"UT-005: Found a non primitive type array without typeids. " + "This should never happen.",
 
 	/**
 	 * Filtering paths within arrays are not supported.
 	 */
-	FILTER_PATH_WITHIN_ARRAY:
-		"UT-006: Filtering paths within arrays are not supported",
+	FILTER_PATH_WITHIN_ARRAY: "UT-006: Filtering paths within arrays are not supported",
 
 	/**
 	 * INTERNAL ERROR - If you encounter this error, please contact the development team.
@@ -1690,16 +1638,14 @@ const UtilsError = {
 	 * You used an experimental feature. It will likely changed in future releases.
 	 * See the custom information if provided.
 	 */
-	EXPERIMENTAL_FEATURE:
-		"UT-010: Feature %s is experimental and subject to future changes.",
+	EXPERIMENTAL_FEATURE: "UT-010: Feature %s is experimental and subject to future changes.",
 };
 
 const PssClientError = {
 	/**
 	 * This error message will be displayed when a repository creation fails
 	 */
-	FAILED_REPOSITORY_CREATION:
-		"PC-001: Server error: Failed to create a repository. ",
+	FAILED_REPOSITORY_CREATION: "PC-001: Server error: Failed to create a repository. ",
 
 	/**
 	 * This error message will be displayed when the deletion of a repository fails
@@ -1734,14 +1680,12 @@ const PssClientError = {
 	/**
 	 * This error message will be displayed when fetching a commit fails
 	 */
-	FAILED_FETCH_COMMIT:
-		"PC-007: Server error: Failed to fetch a commit. Commit guid: ",
+	FAILED_FETCH_COMMIT: "PC-007: Server error: Failed to fetch a commit. Commit guid: ",
 
 	/**
 	 * This error message will be displayed when containers creation fails
 	 */
-	FAILED_CONTAINER_CREATION:
-		"PC-008: Server error: Failed to create containers. ",
+	FAILED_CONTAINER_CREATION: "PC-008: Server error: Failed to create containers. ",
 
 	/**
 	 * This error message will be displayed when a branch creation fails
@@ -1777,8 +1721,7 @@ const PssClientError = {
 	/**
 	 * This error message will be displayed when getting a feature flag fails
 	 */
-	FAILED_TO_GET_FEATURE:
-		"PC-017: Server error: Failed to get feature flag from PSS. ",
+	FAILED_TO_GET_FEATURE: "PC-017: Server error: Failed to get feature flag from PSS. ",
 
 	/**
 	 * This error message will be displayed when getting squashed commit range fails

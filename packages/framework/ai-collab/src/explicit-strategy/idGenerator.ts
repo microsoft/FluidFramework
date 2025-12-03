@@ -4,13 +4,13 @@
  */
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
+import { Tree, NodeKind } from "@fluidframework/tree/internal";
 import type {
+	TreeNode,
 	ImplicitFieldSchema,
 	TreeArrayNode,
 	TreeFieldFromImplicitField,
-	TreeNode,
 } from "@fluidframework/tree/internal";
-import { NodeKind, Tree } from "@fluidframework/tree/internal";
 
 /**
  * Given a tree, generates a set of LLM-friendly, unique IDs for each node in the tree.
@@ -46,9 +46,7 @@ export class IdGenerator {
 		return this.nodeToIdMap.get(node);
 	}
 
-	public assignIds(
-		node: TreeFieldFromImplicitField<ImplicitFieldSchema>,
-	): string | undefined {
+	public assignIds(node: TreeFieldFromImplicitField<ImplicitFieldSchema>): string | undefined {
 		if (typeof node === "object" && node !== null) {
 			const schema = Tree.schema(node as unknown as TreeNode);
 			if (schema.kind === NodeKind.Array) {
@@ -79,8 +77,7 @@ export class IdGenerator {
 
 		// Check if the last segment already exists with a different prefix
 		assert(
-			!this.prefixMap.has(lastSegment) ||
-				this.prefixMap.get(lastSegment) === prefix,
+			!this.prefixMap.has(lastSegment) || this.prefixMap.get(lastSegment) === prefix,
 			0xa7a /* Different scopes not supported yet. */,
 		);
 

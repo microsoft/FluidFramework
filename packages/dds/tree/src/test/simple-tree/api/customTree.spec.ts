@@ -4,8 +4,15 @@
  */
 
 import { strict as assert, fail } from "node:assert";
-import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
+
+import {
+	getStoredSchema,
+	restrictiveStoredSchemaGenerationOptions,
+	SchemaFactoryAlpha,
+	schemaStatics,
+	toInitialSchema,
+} from "../../../simple-tree/index.js";
+
 import {
 	customFromCursor,
 	customFromCursorStored,
@@ -16,14 +23,9 @@ import {
 } from "../../../simple-tree/api/customTree.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
-import {
-	getStoredSchema,
-	restrictiveStoredSchemaGenerationOptions,
-	SchemaFactoryAlpha,
-	schemaStatics,
-	toInitialSchema,
-} from "../../../simple-tree/index.js";
 import { singleJsonCursor } from "../../json/index.js";
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import { fieldCursorFromInsertable } from "../../utils.js";
 
 const schemaFactory = new SchemaFactoryAlpha("Test");
@@ -73,9 +75,7 @@ describe("simple-tree customTree", () => {
 			) {}
 
 			const contextA = getUnhydratedContext(A);
-			const contextUnknownOptionalFieldA = getUnhydratedContext(
-				UnknownOptionalFieldA,
-			);
+			const contextUnknownOptionalFieldA = getUnhydratedContext(UnknownOptionalFieldA);
 			const contentCursor = fieldCursorFromInsertable(A, { a: 1, b: 2 });
 			contentCursor.enterNode(0);
 
@@ -177,18 +177,12 @@ describe("simple-tree customTree", () => {
 			[""]: schemaFactory.number,
 		});
 		const objectEmptyKeyCase = tryStoredSchemaAsArray(
-			getStoredSchema(
-				objectSchemaEmptyKey,
-				restrictiveStoredSchemaGenerationOptions,
-			),
+			getStoredSchema(objectSchemaEmptyKey, restrictiveStoredSchemaGenerationOptions),
 		);
 		assert.deepEqual(objectEmptyKeyCase, undefined);
 
 		const nonObjectCase = tryStoredSchemaAsArray(
-			getStoredSchema(
-				schemaStatics.number,
-				restrictiveStoredSchemaGenerationOptions,
-			),
+			getStoredSchema(schemaStatics.number, restrictiveStoredSchemaGenerationOptions),
 		);
 		assert.deepEqual(nonObjectCase, undefined);
 	});

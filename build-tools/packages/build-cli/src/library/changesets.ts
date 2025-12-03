@@ -160,10 +160,7 @@ interface GitCommit {
  * themselves include a mapping of package to version bump type. This object includes the change type and a single
  * package, effectively flattening the changesets.
  */
-export type ChangesetEntry = Omit<
-	Changeset,
-	"metadata" | "mainPackage" | "changeTypes"
-> & {
+export type ChangesetEntry = Omit<Changeset, "metadata" | "mainPackage" | "changeTypes"> & {
 	/**
 	 * The name of the package this ChangesetEntry applies to.
 	 */
@@ -246,20 +243,15 @@ export async function canonicalizeChangesets(
 /**
  * Compares two changesets by the highlight property of additional metadata if present, then by commit date.
  */
-function compareChangesets<
-	T extends Pick<Changeset, "commit" | "additionalMetadata">,
->(a: T, b: T): number {
+function compareChangesets<T extends Pick<Changeset, "commit" | "additionalMetadata">>(
+	a: T,
+	b: T,
+): number {
 	// Sort highlighted items to the top;
-	if (
-		a.additionalMetadata?.highlight === true &&
-		b.additionalMetadata?.highlight !== true
-	) {
+	if (a.additionalMetadata?.highlight === true && b.additionalMetadata?.highlight !== true) {
 		return -1;
 	}
-	if (
-		a.additionalMetadata?.highlight !== true &&
-		b.additionalMetadata?.highlight === true
-	) {
+	if (a.additionalMetadata?.highlight !== true && b.additionalMetadata?.highlight === true) {
 		return 1;
 	}
 
@@ -277,15 +269,9 @@ function compareChangesets<
  * @param log - An optional logger.
  * @returns An array containing the changesets.
  */
-export async function loadChangesets(
-	dir: string,
-	log?: Logger,
-): Promise<Changeset[]> {
+export async function loadChangesets(dir: string, log?: Logger): Promise<Changeset[]> {
 	const repo = simpleGit({ baseDir: dir });
-	const changesetFiles = await globby(["*.md", "!README.md"], {
-		cwd: dir,
-		absolute: true,
-	});
+	const changesetFiles = await globby(["*.md", "!README.md"], { cwd: dir, absolute: true });
 	const changesets: Changeset[] = [];
 
 	for (const file of changesetFiles) {
@@ -297,9 +283,7 @@ export async function loadChangesets(
 		// git log returns commits ordered newest -> oldest, so we want the last item, which is the earliest commit
 		const rawCommit = results.all?.at(-1);
 		const pullRequest =
-			rawCommit?.message === undefined
-				? undefined
-				: parseGitHubPRs(rawCommit.message);
+			rawCommit?.message === undefined ? undefined : parseGitHubPRs(rawCommit.message);
 
 		const commit: GitCommit = {
 			// Newly added files won't have any results from git log, so default to now.
@@ -323,8 +307,7 @@ export async function loadChangesets(
 			if (key.startsWith("__")) {
 				// Remove __ prefix and add to additional metadata
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				additionalMetadata[key.slice(2) as keyof FluidCustomChangesetMetadata] =
-					value;
+				additionalMetadata[key.slice(2) as keyof FluidCustomChangesetMetadata] = value;
 			} else {
 				packageBumpTypeMetadata[key] = value as VersionBumpType;
 			}
@@ -344,9 +327,7 @@ export async function loadChangesets(
 			metadata: packageBumpTypeMetadata,
 			mainPackage: Object.keys(packageBumpTypeMetadata)[0],
 			additionalMetadata:
-				Object.keys(additionalMetadata).length > 0
-					? additionalMetadata
-					: undefined,
+				Object.keys(additionalMetadata).length > 0 ? additionalMetadata : undefined,
 			body,
 			summary,
 			sourceFile: file,
@@ -375,9 +356,7 @@ export async function loadChangesets(
  * @param changesets - An array of changesets to be grouped.
  * @returns a Map of package names to an array of all the changesets that apply to the package.
  */
-export function groupByPackage(
-	changesets: Changeset[],
-): Map<ReleasePackage, Changeset[]> {
+export function groupByPackage(changesets: Changeset[]): Map<ReleasePackage, Changeset[]> {
 	const changesetMap = new Map<ReleasePackage, Changeset[]>();
 	const flattened = flattenChangesets(changesets);
 	for (const changeset of flattened) {

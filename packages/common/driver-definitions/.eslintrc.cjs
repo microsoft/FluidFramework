@@ -4,10 +4,7 @@
  */
 
 module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/strict"),
-		"prettier",
-	],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
 	rules: {
 		// TODO: Enabling this may require breaking changes.
 		"@typescript-eslint/consistent-indexed-object-style": "off",

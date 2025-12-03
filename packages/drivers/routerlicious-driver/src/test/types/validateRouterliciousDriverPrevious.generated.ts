@@ -11,23 +11,12 @@
  * Current version: 2.74.0
  */
 
-import type {
-	FullType,
-	MinimalType,
-	requireAssignableTo,
-	TypeOnly,
-} from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/routerlicious-driver-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> =
-	| TypeOnly<T>
-	| MinimalType<T>
-	| FullType<T>
-	| typeof old
-	| typeof current
-	| requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -36,11 +25,7 @@ declare type MakeUnusedImportErrorsGoAway<T> =
  * typeValidation.broken:
  * "Function_createRouterliciousDocumentServiceFactory": {"backCompat": false}
  */
-declare type current_as_old_for_Function_createRouterliciousDocumentServiceFactory =
-	requireAssignableTo<
-		TypeOnly<typeof current.createRouterliciousDocumentServiceFactory>,
-		TypeOnly<typeof old.createRouterliciousDocumentServiceFactory>
-	>;
+declare type current_as_old_for_Function_createRouterliciousDocumentServiceFactory = requireAssignableTo<TypeOnly<typeof current.createRouterliciousDocumentServiceFactory>, TypeOnly<typeof old.createRouterliciousDocumentServiceFactory>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -49,11 +34,7 @@ declare type current_as_old_for_Function_createRouterliciousDocumentServiceFacto
  * typeValidation.broken:
  * "Interface_IRouterliciousResolvedUrl": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IRouterliciousResolvedUrl =
-	requireAssignableTo<
-		TypeOnly<old.IRouterliciousResolvedUrl>,
-		TypeOnly<current.IRouterliciousResolvedUrl>
-	>;
+declare type old_as_current_for_Interface_IRouterliciousResolvedUrl = requireAssignableTo<TypeOnly<old.IRouterliciousResolvedUrl>, TypeOnly<current.IRouterliciousResolvedUrl>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -62,11 +43,7 @@ declare type old_as_current_for_Interface_IRouterliciousResolvedUrl =
  * typeValidation.broken:
  * "Interface_IRouterliciousResolvedUrl": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IRouterliciousResolvedUrl =
-	requireAssignableTo<
-		TypeOnly<current.IRouterliciousResolvedUrl>,
-		TypeOnly<old.IRouterliciousResolvedUrl>
-	>;
+declare type current_as_old_for_Interface_IRouterliciousResolvedUrl = requireAssignableTo<TypeOnly<current.IRouterliciousResolvedUrl>, TypeOnly<old.IRouterliciousResolvedUrl>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -75,10 +52,7 @@ declare type current_as_old_for_Interface_IRouterliciousResolvedUrl =
  * typeValidation.broken:
  * "Interface_ITokenProvider": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ITokenProvider = requireAssignableTo<
-	TypeOnly<old.ITokenProvider>,
-	TypeOnly<current.ITokenProvider>
->;
+declare type old_as_current_for_Interface_ITokenProvider = requireAssignableTo<TypeOnly<old.ITokenProvider>, TypeOnly<current.ITokenProvider>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -87,10 +61,7 @@ declare type old_as_current_for_Interface_ITokenProvider = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ITokenProvider": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ITokenProvider = requireAssignableTo<
-	TypeOnly<current.ITokenProvider>,
-	TypeOnly<old.ITokenProvider>
->;
+declare type current_as_old_for_Interface_ITokenProvider = requireAssignableTo<TypeOnly<current.ITokenProvider>, TypeOnly<old.ITokenProvider>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -99,10 +70,7 @@ declare type current_as_old_for_Interface_ITokenProvider = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ITokenResponse": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ITokenResponse = requireAssignableTo<
-	TypeOnly<old.ITokenResponse>,
-	TypeOnly<current.ITokenResponse>
->;
+declare type old_as_current_for_Interface_ITokenResponse = requireAssignableTo<TypeOnly<old.ITokenResponse>, TypeOnly<current.ITokenResponse>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -111,7 +79,4 @@ declare type old_as_current_for_Interface_ITokenResponse = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ITokenResponse": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ITokenResponse = requireAssignableTo<
-	TypeOnly<current.ITokenResponse>,
-	TypeOnly<old.ITokenResponse>
->;
+declare type current_as_old_for_Interface_ITokenResponse = requireAssignableTo<TypeOnly<current.ITokenResponse>, TypeOnly<old.ITokenResponse>>

@@ -4,28 +4,28 @@
  */
 
 import { AttachState } from '@fluidframework/container-definitions';
-import type { IFluidHandle, IFluidLoadable } from '@fluidframework/core-interfaces';
+import { type IFluidHandle, type IFluidLoadable } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
-import type {
-	IChannel,
-	IChannelAttributes,
-	IChannelFactory,
-	IChannelServices,
-	IFluidDataStoreRuntime,
+import {
+	type IChannel,
+	type IChannelAttributes,
+	type IChannelFactory,
+	type IFluidDataStoreRuntime,
+	type IChannelServices,
 } from '@fluidframework/datastore-definitions/internal';
-import type {
-	IExperimentalIncrementalSummaryContext,
-	IGarbageCollectionData,
-	ISummaryTreeWithStats,
-	ITelemetryContext,
+import {
+	type IExperimentalIncrementalSummaryContext,
+	type IGarbageCollectionData,
+	type ISummaryTreeWithStats,
+	type ITelemetryContext,
 } from '@fluidframework/runtime-definitions/internal';
-import type { ITree } from '@fluidframework/tree';
+import { type ITree } from '@fluidframework/tree';
 
 import { SharedTreeShimDeltaHandler } from './sharedTreeDeltaHandler.js';
 import { type IShimChannelServices, NoDeltasChannelServices } from './shimChannelServices.js';
 import { StampDeltaConnection } from './shimDeltaConnection.js';
 import { ShimHandle } from './shimHandle.js';
-import type { IShim } from './types.js';
+import { type IShim } from './types.js';
 
 /**
  * SharedTreeShim is loaded by clients that join after the migration completes, and holds the new SharedTree.

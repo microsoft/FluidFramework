@@ -9,9 +9,9 @@ import {
 	type FieldAnchor,
 	type IEditableForest,
 	type ITreeSubscriptionCursor,
-	rootFieldKey,
 	TreeNavigationResult,
 	TreeStoredSchemaRepository,
+	rootFieldKey,
 } from "../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { Context } from "../../../feature-libraries/flex-tree/context.js";
@@ -20,17 +20,17 @@ import {
 	MockNodeIdentifierManager,
 } from "../../../feature-libraries/index.js";
 import {
+	MockTreeCheckout,
+	fieldCursorFromInsertable,
+	forestWithContent,
+} from "../../utils.js";
+import {
+	toInitialSchema,
 	type ImplicitFieldSchema,
 	type InsertableContent,
 	type InsertableField,
-	toInitialSchema,
 	type UnsafeUnknownSchema,
 } from "../../../simple-tree/index.js";
-import {
-	fieldCursorFromInsertable,
-	forestWithContent,
-	MockTreeCheckout,
-} from "../../utils.js";
 
 export function getReadonlyContext(
 	forest: IEditableForest,
@@ -52,9 +52,7 @@ export function getReadonlyContext(
  *
  * @returns The created context.
  */
-export function contextWithContentReadonly(
-	content: TreeSimpleContent,
-): Context {
+export function contextWithContentReadonly(content: TreeSimpleContent): Context {
 	const cursor = fieldCursorFromInsertable<UnsafeUnknownSchema>(
 		content.schema,
 		content.initialTree,
@@ -104,10 +102,7 @@ export function initializeCursor(
 	return cursor;
 }
 
-export const rootFieldAnchor: FieldAnchor = {
-	parent: undefined,
-	fieldKey: rootFieldKey,
-};
+export const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey };
 
 /**
  * Initializes a readonly test tree, context, and cursor, and moves the cursor to the tree's root.

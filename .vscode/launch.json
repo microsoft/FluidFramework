@@ -207,7 +207,15 @@
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
-			"args": ["bump", "build-tools", "-t", "patch", "--verbose", "--no-commit", "--no-install"],
+			"args": [
+				"bump",
+				"build-tools",
+				"-t",
+				"patch",
+				"--verbose",
+				"--no-commit",
+				"--no-install",
+			],
 		},
 		{
 			"name": "flub bump deps",
@@ -260,7 +268,14 @@
 			"request": "launch",
 			"name": "Matrix Bench",
 			"cwd": "${workspaceFolder}/packages/dds/matrix/bench",
-			"args": ["-r", "ts-node/register", "-r", "source-map-support/register", "src/index.ts", "--runInBand"],
+			"args": [
+				"-r",
+				"ts-node/register",
+				"-r",
+				"source-map-support/register",
+				"src/index.ts",
+				"--runInBand",
+			],
 			"env": {
 				"TS_NODE_PROJECT": "tsconfig.json",
 			},

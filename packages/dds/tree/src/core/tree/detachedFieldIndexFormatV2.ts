@@ -3,18 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { type Static, Type } from "@sinclair/typebox";
-import { brand } from "../../util/index.js";
-import { RevisionTagSchema, StableIdSchema } from "../rebase/index.js";
-import {
-	DetachedFieldIndexFormatVersion,
-	Format,
-} from "./detachedFieldIndexFormatCommon.js";
+import { Type, type Static } from "@sinclair/typebox";
 
-export const StableOrFinalRevisionTag = Type.Union([
-	RevisionTagSchema,
-	StableIdSchema,
-]);
+import { DetachedFieldIndexFormatVersion, Format } from "./detachedFieldIndexFormatCommon.js";
+import { RevisionTagSchema, StableIdSchema } from "../rebase/index.js";
+import { brand } from "../../util/index.js";
+
+export const StableOrFinalRevisionTag = Type.Union([RevisionTagSchema, StableIdSchema]);
 
 export const FormatV2 = Format(
 	brand<DetachedFieldIndexFormatVersion>(DetachedFieldIndexFormatVersion.v2),

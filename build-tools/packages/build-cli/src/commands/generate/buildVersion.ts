@@ -4,8 +4,9 @@
  */
 
 import * as fs from "node:fs";
-import { getIsLatest, getSimpleVersion } from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
+
+import { getIsLatest, getSimpleVersion } from "@fluid-tools/version-tools";
 
 import { semverFlag } from "../../flags.js";
 import { BaseCommand } from "../../library/index.js";
@@ -43,8 +44,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 			env: "VERSION_PATCH",
 		}),
 		base: Flags.string({
-			description:
-				"The base version. This will be read from package.json if not provided.",
+			description: "The base version. This will be read from package.json if not provided.",
 		}),
 		tag: Flags.string({
 			description: "The tag name to use.",
@@ -139,9 +139,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 				? `${simpleVersion}-test-${alphabetaTypePrefix}`
 				: `${simpleVersion}-test`;
 			this.log(`codeVersion=${codeVersion}`);
-			this.log(
-				`##vso[task.setvariable variable=codeVersion;isOutput=true]${codeVersion}`,
-			);
+			this.log(`##vso[task.setvariable variable=codeVersion;isOutput=true]${codeVersion}`);
 		}
 
 		if (isAlphaOrBetaTypes) {
@@ -157,22 +155,13 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		}
 
 		this.log(`version=${version}`);
-		this.log(
-			`##vso[task.setvariable variable=version;isOutput=true]${version}`,
-		);
+		this.log(`##vso[task.setvariable variable=version;isOutput=true]${version}`);
 
 		if (flags.tag !== undefined) {
-			const isLatest = getIsLatest(
-				flags.tag,
-				version,
-				tags,
-				shouldIncludeInternalVersions,
-			);
+			const isLatest = getIsLatest(flags.tag, version, tags, shouldIncludeInternalVersions);
 			this.log(`isLatest=${isLatest}`);
 			if (isRelease && isLatest === true) {
-				this.log(
-					`##vso[task.setvariable variable=isLatest;isOutput=true]${isLatest}`,
-				);
+				this.log(`##vso[task.setvariable variable=isLatest;isOutput=true]${isLatest}`);
 			}
 		}
 	}
@@ -181,8 +170,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		if (fs.existsSync("./package.json")) {
 			return (
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				JSON.parse(fs.readFileSync("./package.json", { encoding: "utf8" }))
-					.version as string
+				JSON.parse(fs.readFileSync("./package.json", { encoding: "utf8" })).version as string
 			);
 		}
 

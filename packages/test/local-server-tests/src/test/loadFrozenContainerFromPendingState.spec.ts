@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	asLegacyAlpha,
@@ -10,17 +12,10 @@ import {
 	loadFrozenContainerFromPendingState,
 } from "@fluidframework/container-loader/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces/internal";
-import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import {
-	isFluidHandle,
-	toFluidHandleInternal,
-} from "@fluidframework/runtime-utils/internal";
+import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
+import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import {
-	type TestFluidObject,
-	timeoutPromise,
-} from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
+import { timeoutPromise, type TestFluidObject } from "@fluidframework/test-utils/internal";
 
 import { createLoader } from "../utils.js";
 
@@ -34,15 +29,10 @@ const toComparableArray = (dir: ISharedMap): [string, unknown][] =>
 const initialize = async () => {
 	const deltaConnectionServer = LocalDeltaConnectionServer.create();
 
-	const {
-		urlResolver,
-		codeDetails,
-		codeLoader,
-		loaderProps,
-		documentServiceFactory,
-	} = createLoader({
-		deltaConnectionServer,
-	});
+	const { urlResolver, codeDetails, codeLoader, loaderProps, documentServiceFactory } =
+		createLoader({
+			deltaConnectionServer,
+		});
 
 	const container = asLegacyAlpha(
 		await createDetachedContainer({
@@ -69,13 +59,8 @@ const initialize = async () => {
 
 describe("loadFrozenContainerFromPendingState", () => {
 	it("loadFrozenContainerFromPendingState", async () => {
-		const {
-			container,
-			ITestFluidObject,
-			urlResolver,
-			codeLoader,
-			documentServiceFactory,
-		} = await initialize();
+		const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+			await initialize();
 
 		for (let i = 0; i < 10; i++) {
 			ITestFluidObject.root.set(`detached-${i}`, i);
@@ -124,9 +109,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			"Expected frozen container entrypoint to be a valid TestFluidObject, but it was undefined",
 		);
 
-		const frozenEntries = toComparableArray(
-			frozenEntryPoint.ITestFluidObject.root,
-		);
+		const frozenEntries = toComparableArray(frozenEntryPoint.ITestFluidObject.root);
 		assert.deepEqual(
 			frozenEntries,
 			toComparableArray(ITestFluidObject.root),
@@ -139,9 +122,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 		}
 
 		if (container.isDirty) {
-			await timeoutPromise((resolve) =>
-				container.once("saved", () => resolve()),
-			);
+			await timeoutPromise((resolve) => container.once("saved", () => resolve()));
 		}
 		assert.notDeepEqual(
 			frozenEntries,
@@ -156,13 +137,8 @@ describe("loadFrozenContainerFromPendingState", () => {
 	});
 
 	it("frozen container loads DDS", async () => {
-		const {
-			container,
-			ITestFluidObject,
-			urlResolver,
-			codeLoader,
-			documentServiceFactory,
-		} = await initialize();
+		const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+			await initialize();
 		const newSharedMap1 = SharedMap.create(ITestFluidObject.runtime);
 		// Set a value while in local state.
 		newSharedMap1.set("newKey", "newValue");
@@ -205,13 +181,8 @@ describe("loadFrozenContainerFromPendingState", () => {
 	});
 
 	it("frozen container loads blob", async () => {
-		const {
-			container,
-			ITestFluidObject,
-			urlResolver,
-			codeLoader,
-			documentServiceFactory,
-		} = await initialize();
+		const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+			await initialize();
 		await container.attach(urlResolver.createCreateNewRequest("test"));
 		const blobHandle = await ITestFluidObject.runtime.uploadBlob(
 			stringToBuffer("test", "utf-8"),
@@ -254,8 +225,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 	});
 
 	it("uploading blob on frozen container", async () => {
-		const { container, urlResolver, codeLoader, documentServiceFactory } =
-			await initialize();
+		const { container, urlResolver, codeLoader, documentServiceFactory } = await initialize();
 		await container.attach(urlResolver.createCreateNewRequest("test"));
 
 		const url = await container.getAbsoluteUrl("");
@@ -295,8 +265,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 	});
 
 	it("trying to attach a frozen container", async () => {
-		const { container, urlResolver, codeLoader, documentServiceFactory } =
-			await initialize();
+		const { container, urlResolver, codeLoader, documentServiceFactory } = await initialize();
 		await container.attach(urlResolver.createCreateNewRequest("test"));
 
 		const url = await container.getAbsoluteUrl("");

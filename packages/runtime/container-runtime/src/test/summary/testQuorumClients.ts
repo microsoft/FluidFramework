@@ -4,10 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type {
-	IQuorumClients,
-	ISequencedClient,
-} from "@fluidframework/driver-definitions";
+import type { IQuorumClients, ISequencedClient } from "@fluidframework/driver-definitions";
 
 export class TestQuorumClients
 	extends TypedEventEmitter<IQuorumClients["on"]>

@@ -4,21 +4,11 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import {
-	MockFluidDataStoreRuntime,
-	validateUsageError,
-} from "@fluidframework/test-runtime-utils/internal";
-import { Tree } from "../../../shared-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { UnhydratedFlexTreeNode } from "../../../simple-tree/core/index.js";
-import {
-	type ConstantFieldProvider,
-	createFieldSchema,
-	FieldKind,
-	getDefaultProvider,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/fieldSchema.js";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -26,6 +16,16 @@ import {
 } from "../../../simple-tree/index.js";
 import { SharedTree } from "../../../treeFactory.js";
 import { getView } from "../../utils.js";
+import { Tree } from "../../../shared-tree/index.js";
+import {
+	createFieldSchema,
+	FieldKind,
+	getDefaultProvider,
+	type ConstantFieldProvider,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/fieldSchema.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { UnhydratedFlexTreeNode } from "../../../simple-tree/core/index.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -37,9 +37,7 @@ const factory = SharedTree.getFactory();
 
 describe("simple-tree tree", () => {
 	it("ListRoot", () => {
-		const config = new TreeViewConfiguration({
-			schema: SchemaFactory.required(NodeList),
-		});
+		const config = new TreeViewConfiguration({ schema: SchemaFactory.required(NodeList) });
 		const view = getView(config);
 		view.initialize(new NodeList(["a", "b"]));
 		assert.deepEqual([...view.root], ["a", "b"]);
@@ -61,10 +59,7 @@ describe("simple-tree tree", () => {
 	// This tests the two main cases for schema validation, initial trees and inserted content.
 	it("default identifier with schema validation", () => {
 		class HasId extends schema.object("hasID", { id: schema.identifier }) {}
-		const config = new TreeViewConfiguration({
-			schema: HasId,
-			enableSchemaValidation: true,
-		});
+		const config = new TreeViewConfiguration({ schema: HasId, enableSchemaValidation: true });
 		const view = getView(config);
 		// Initialize case
 		view.initialize({});
@@ -83,12 +78,11 @@ describe("simple-tree tree", () => {
 	describe("invalid default", () => {
 		// Field providers are assumed to validate their content:
 		// These tests use internal APIs to construct an intentionally invalid one to slip out of schema data into the flex tree.
-		const numberProvider: ConstantFieldProvider =
-			(): UnhydratedFlexTreeNode[] => [
-				// The schema listed here is intentionally incorrect,
-				// it should be a string given how this field is used below.
-				unhydratedFlexTreeFromInsertable(5, schema.number),
-			];
+		const numberProvider: ConstantFieldProvider = (): UnhydratedFlexTreeNode[] => [
+			// The schema listed here is intentionally incorrect,
+			// it should be a string given how this field is used below.
+			unhydratedFlexTreeFromInsertable(5, schema.number),
+		];
 
 		class InvalidDefault extends schema.object("hasID", {
 			id: createFieldSchema(FieldKind.Identifier, schema.string, {
@@ -103,10 +97,7 @@ describe("simple-tree tree", () => {
 
 		it("invalid default - initialize", () => {
 			const view = getView(config);
-			assert.throws(
-				() => view.initialize({}),
-				validateUsageError(/Field_NodeTypeNotAllowed/),
-			);
+			assert.throws(() => view.initialize({}), validateUsageError(/Field_NodeTypeNotAllowed/));
 		});
 
 		it("invalid default - insert", () => {
@@ -126,10 +117,7 @@ describe("simple-tree tree", () => {
 
 	it("custom identifier copied from tree", () => {
 		class HasId extends schema.object("hasID", { id: schema.identifier }) {}
-		const config = new TreeViewConfiguration({
-			schema: HasId,
-			enableSchemaValidation: true,
-		});
+		const config = new TreeViewConfiguration({ schema: HasId, enableSchemaValidation: true });
 		const treeSrc = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
@@ -209,18 +197,14 @@ describe("simple-tree tree", () => {
 	});
 
 	it("Union Root", () => {
-		const config = new TreeViewConfiguration({
-			schema: [schema.string, schema.number],
-		});
+		const config = new TreeViewConfiguration({ schema: [schema.string, schema.number] });
 		const view = getView(config);
 		view.initialize("a");
 		assert.equal(view.root, "a");
 	});
 
 	it("optional Root - initialized to undefined", () => {
-		const config = new TreeViewConfiguration({
-			schema: schema.optional(schema.string),
-		});
+		const config = new TreeViewConfiguration({ schema: schema.optional(schema.string) });
 		const view = getView(config);
 		// Note: the tree's schema hasn't been initialized at this point, so even though the view schema
 		// allows an optional field, explicit initialization must occur.
@@ -230,18 +214,14 @@ describe("simple-tree tree", () => {
 	});
 
 	it("optional Root - initializing only schema", () => {
-		const config = new TreeViewConfiguration({
-			schema: schema.optional(schema.string),
-		});
+		const config = new TreeViewConfiguration({ schema: schema.optional(schema.string) });
 		const view = getView(config);
 		view.upgradeSchema();
 		assert.equal(view.root, undefined);
 	});
 
 	it("optional Root - full", () => {
-		const config = new TreeViewConfiguration({
-			schema: schema.optional(schema.string),
-		});
+		const config = new TreeViewConfiguration({ schema: schema.optional(schema.string) });
 		const view = getView(config);
 		view.initialize("x");
 		assert.equal(view.root, "x");
@@ -264,15 +244,10 @@ describe("simple-tree tree", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				identifier: schema.identifier,
 			});
-			const config = new TreeViewConfiguration({
-				schema: schemaWithIdentifier,
-			});
+			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
 			const view = getView(config);
 			view.initialize({ identifier: undefined });
-			assert.equal(
-				view.root.identifier,
-				"beefbeef-beef-4000-8000-000000000001",
-			);
+			assert.equal(view.root.identifier, "beefbeef-beef-4000-8000-000000000001");
 		});
 
 		it("adds identifier to unpopulated identifier fields.", () => {
@@ -288,25 +263,17 @@ describe("simple-tree tree", () => {
 
 			view.root = toHydrate;
 			assert.equal(toHydrate, view.root);
-			assert.equal(
-				toHydrate.identifier,
-				"beefbeef-beef-4000-8000-000000000004",
-			);
+			assert.equal(toHydrate.identifier, "beefbeef-beef-4000-8000-000000000004");
 
 			view.root = { identifier: undefined };
-			assert.equal(
-				view.root?.identifier,
-				"beefbeef-beef-4000-8000-000000000006",
-			);
+			assert.equal(view.root?.identifier, "beefbeef-beef-4000-8000-000000000006");
 		});
 
 		it("populates field when no field defaulter is provided.", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				testOptionalField: schema.optional(schema.string),
 			});
-			const config = new TreeViewConfiguration({
-				schema: schemaWithIdentifier,
-			});
+			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
 			const view = getView(config);
 			view.initialize({ testOptionalField: undefined });
 			assert.equal(view.root.testOptionalField, undefined);

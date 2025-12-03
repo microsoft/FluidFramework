@@ -25,16 +25,10 @@ export class WebpackTask extends LeafWithDoneFileTask {
 		// where their output might change the webpack's input.
 		assert.strictEqual(this.recheckLeafIsUpToDate, false);
 		try {
-			const config = await loadModule(
-				this.configFileFullPath,
-				this.package.packageJson.type,
-			);
+			const config = await loadModule(this.configFileFullPath, this.package.packageJson.type);
 			const content: DoneFileContent = {
 				version: await this.getVersion(),
-				config:
-					typeof config === "function"
-						? config(this.getEnvArguments())
-						: config,
+				config: typeof config === "function" ? config(this.getEnvArguments()) : config,
 				sources: {},
 			};
 
@@ -42,8 +36,7 @@ export class WebpackTask extends LeafWithDoneFileTask {
 			const srcGlob = toPosixPath(this.node.pkg.directory) + "/src/**/*.*";
 			const srcFiles = await globFn(srcGlob);
 			for (const srcFile of srcFiles) {
-				content.sources[srcFile] =
-					await this.node.context.fileHashCache.getFileHash(srcFile);
+				content.sources[srcFile] = await this.node.context.fileHashCache.getFileHash(srcFile);
 			}
 
 			return JSON.stringify(content);

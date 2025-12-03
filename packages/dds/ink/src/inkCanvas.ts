@@ -46,10 +46,7 @@ class Vector {
 	}
 }
 
-function drawPolygon(
-	context: CanvasRenderingContext2D,
-	points: IPoint[],
-): void {
+function drawPolygon(context: CanvasRenderingContext2D, points: IPoint[]): void {
 	if (points.length === 0) {
 		return;
 	}
@@ -69,11 +66,7 @@ function drawPolygon(
 	context.fill();
 }
 
-function drawCircle(
-	context: CanvasRenderingContext2D,
-	center: IPoint,
-	radius: number,
-): void {
+function drawCircle(context: CanvasRenderingContext2D, center: IPoint, radius: number): void {
 	context.beginPath();
 	context.moveTo(center.x, center.y);
 	context.arc(center.x, center.y, radius, 0, Math.PI * 2);
@@ -87,24 +80,15 @@ function drawShapes(
 	endPoint: IInkPoint,
 	pen: IPen,
 ): void {
-	const dirVector = new Vector(
-		endPoint.x - startPoint.x,
-		endPoint.y - startPoint.y,
-	);
+	const dirVector = new Vector(endPoint.x - startPoint.x, endPoint.y - startPoint.y);
 	const len = dirVector.length();
 
 	const widthAtStart = pen.thickness * startPoint.pressure;
 	const widthAtEnd = pen.thickness * endPoint.pressure;
 
-	if (
-		len + Math.min(widthAtStart, widthAtEnd) >
-		Math.max(widthAtStart, widthAtEnd)
-	) {
+	if (len + Math.min(widthAtStart, widthAtEnd) > Math.max(widthAtStart, widthAtEnd)) {
 		// Circles don't completely overlap, need a trapezoid
-		const normalizedLateralVector = new Vector(
-			-dirVector.y / len,
-			dirVector.x / len,
-		);
+		const normalizedLateralVector = new Vector(-dirVector.y / len, dirVector.x / len);
 
 		const trapezoidP0 = {
 			x: startPoint.x + widthAtStart * normalizedLateralVector.x,
@@ -147,14 +131,8 @@ export class InkCanvas {
 		this.model.on("stylus", this.handleStylus.bind(this));
 		this.canvas.style.touchAction = "none";
 
-		this.canvas.addEventListener(
-			"pointerdown",
-			this.handlePointerDown.bind(this),
-		);
-		this.canvas.addEventListener(
-			"pointermove",
-			this.handlePointerMove.bind(this),
-		);
+		this.canvas.addEventListener("pointerdown", this.handlePointerDown.bind(this));
+		this.canvas.addEventListener("pointermove", this.handlePointerMove.bind(this));
 		this.canvas.addEventListener("pointerup", this.handlePointerUp.bind(this));
 
 		const context = this.canvas.getContext("2d");
@@ -207,10 +185,7 @@ export class InkCanvas {
 
 	private handlePointerDown(evt: PointerEvent): void {
 		// We will accept pen down or mouse left down as the start of a stroke.
-		if (
-			evt.pointerType === "pen" ||
-			(evt.pointerType === "mouse" && evt.button === 0)
-		) {
+		if (evt.pointerType === "pen" || (evt.pointerType === "mouse" && evt.button === 0)) {
 			const strokeId = this.model.createStroke(this.currentPen).id;
 			this.localActiveStrokeMap.set(evt.pointerId, strokeId);
 
@@ -223,8 +198,7 @@ export class InkCanvas {
 	private handlePointerMove(evt: PointerEvent): void {
 		if (this.localActiveStrokeMap.has(evt.pointerId)) {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-			const evts =
-				(evt as any)?.getCoalescedEvents() ?? ([evt] as PointerEvent[]);
+			const evts = (evt as any)?.getCoalescedEvents() ?? ([evt] as PointerEvent[]);
 			for (const e of evts) {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 				this.appendPointerEventToStroke(e);
@@ -253,11 +227,7 @@ export class InkCanvas {
 		this.model.appendPointToStroke(inkPt, strokeId);
 	}
 
-	private animateStroke(
-		stroke: IInkStroke,
-		operationIndex: number,
-		startTime: number,
-	): void {
+	private animateStroke(stroke: IInkStroke, operationIndex: number, startTime: number): void {
 		if (operationIndex >= stroke.points.length) {
 			return;
 		}
@@ -266,9 +236,7 @@ export class InkCanvas {
 		const current = stroke.points[operationIndex];
 		const previous = stroke.points[Math.max(0, operationIndex - 1)];
 		const time =
-			operationIndex === 0
-				? current.time - startTime
-				: current.time - previous.time;
+			operationIndex === 0 ? current.time - startTime : current.time - previous.time;
 
 		setTimeout(() => {
 			this.drawStrokeSegment(stroke.pen, current, previous);
@@ -297,11 +265,7 @@ export class InkCanvas {
 		}
 	}
 
-	private drawStrokeSegment(
-		pen: IPen,
-		current: IInkPoint,
-		previous: IInkPoint,
-	): void {
+	private drawStrokeSegment(pen: IPen, current: IInkPoint, previous: IInkPoint): void {
 		// TODO Consider save/restore context
 		// TODO Consider half-pixel offset
 		this.context.fillStyle = `rgb(${pen.color.r}, ${pen.color.g}, ${pen.color.b})`;

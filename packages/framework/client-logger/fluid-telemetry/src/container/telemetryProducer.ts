@@ -13,10 +13,10 @@ import {
 	IFluidContainerSystemEventNames,
 } from "./containerSystemEvents.js";
 import {
-	type ContainerDisposedTelemetry,
-	type ContainerTelemetryEventName,
 	ContainerTelemetryEventNames,
+	type ContainerTelemetryEventName,
 	type IContainerTelemetry,
+	type ContainerDisposedTelemetry,
 } from "./containerTelemetry.js";
 
 /**
@@ -38,14 +38,10 @@ export class ContainerEventTelemetryProducer {
 	): IContainerTelemetry | undefined {
 		switch (eventName) {
 			case IFluidContainerSystemEventNames.CONNECTED: {
-				return this.produceBaseContainerTelemetry(
-					ContainerTelemetryEventNames.CONNECTED,
-				);
+				return this.produceBaseContainerTelemetry(ContainerTelemetryEventNames.CONNECTED);
 			}
 			case IFluidContainerSystemEventNames.DISCONNECTED: {
-				return this.produceBaseContainerTelemetry(
-					ContainerTelemetryEventNames.DISCONNECTED,
-				);
+				return this.produceBaseContainerTelemetry(ContainerTelemetryEventNames.DISCONNECTED);
 			}
 			case IFluidContainerSystemEventNames.DISPOSED: {
 				const typedPayload = payload as { error?: ICriticalContainerError };

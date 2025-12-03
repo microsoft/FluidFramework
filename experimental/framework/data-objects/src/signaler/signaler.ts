@@ -5,21 +5,18 @@
 
 import { EventEmitter, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
-	createDataObjectKind,
 	DataObject,
 	DataObjectFactory,
+	createDataObjectKind,
 } from "@fluidframework/aqueduct/internal";
-import type {
-	IErrorEvent,
-	IEventProvider,
-} from "@fluidframework/core-interfaces";
+import { IErrorEvent, type IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { Jsonable } from "@fluidframework/datastore-definitions/internal";
+import { Jsonable } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IFluidDataStoreFactory,
-	IInboundSignalMessage,
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
 // TODO:
@@ -76,10 +73,7 @@ export interface ISignaler extends IEventProvider<IErrorEvent> {
  */
 export interface IRuntimeSignaler {
 	connected: boolean;
-	on(
-		event: "signal",
-		listener: (message: IInboundSignalMessage, local: boolean) => void,
-	);
+	on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 	submitSignal(type: string, content: Jsonable<unknown>): void;
 }
 
@@ -92,10 +86,7 @@ export interface IRuntimeSignaler {
  * manage callbacks, and thus will reflect that behavior with regards to callback registration and
  * deregistration.
  */
-class InternalSignaler
-	extends TypedEventEmitter<IErrorEvent>
-	implements ISignaler
-{
+class InternalSignaler extends TypedEventEmitter<IErrorEvent> implements ISignaler {
 	private readonly emitter = new EventEmitter();
 
 	private readonly signalerId: string | undefined;
@@ -117,18 +108,15 @@ class InternalSignaler
 			this.emit("error", error);
 		});
 		this.signalerId = signalerId ? `#${signalerId}` : undefined;
-		this.signaler.on(
-			"signal",
-			(message: IInboundSignalMessage, local: boolean) => {
-				const clientId = message.clientId;
-				// Only call listeners when the runtime is connected and if the signal has an
-				// identifiable sender clientId.  The listener is responsible for deciding how
-				// it wants to handle local/remote signals
-				if (this.signaler.connected && clientId !== null) {
-					this.emitter.emit(message.type, clientId, local, message.content);
-				}
-			},
-		);
+		this.signaler.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+			const clientId = message.clientId;
+			// Only call listeners when the runtime is connected and if the signal has an
+			// identifiable sender clientId.  The listener is responsible for deciding how
+			// it wants to handle local/remote signals
+			if (this.signaler.connected && clientId !== null) {
+				this.emitter.emit(message.type, clientId, local, message.content);
+			}
+		});
 	}
 
 	private getSignalerSignalName(signalName: string): string {
@@ -137,19 +125,13 @@ class InternalSignaler
 
 	// ISignaler methods
 
-	public onSignal<T>(
-		signalName: string,
-		listener: SignalListener<T>,
-	): ISignaler {
+	public onSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler {
 		const signalerSignalName = this.getSignalerSignalName(signalName);
 		this.emitter.on(signalerSignalName, listener);
 		return this;
 	}
 
-	public offSignal<T>(
-		signalName: string,
-		listener: SignalListener<T>,
-	): ISignaler {
+	public offSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler {
 		const signalerSignalName = this.getSignalerSignalName(signalName);
 		this.emitter.off(signalerSignalName, listener);
 		return this;
@@ -173,10 +155,7 @@ class SignalerClass
 {
 	private _signaler: InternalSignaler | undefined;
 	private get signaler(): InternalSignaler {
-		assert(
-			this._signaler !== undefined,
-			0x24b /* "internal signaler should be defined" */,
-		);
+		assert(this._signaler !== undefined, 0x24b /* "internal signaler should be defined" */);
 		return this._signaler;
 	}
 
@@ -196,18 +175,12 @@ class SignalerClass
 
 	// ISignaler methods  Note these are all passthroughs
 
-	public onSignal<T>(
-		signalName: string,
-		listener: SignalListener<T>,
-	): ISignaler {
+	public onSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler {
 		this.signaler.onSignal(signalName, listener);
 		return this;
 	}
 
-	public offSignal<T>(
-		signalName: string,
-		listener: SignalListener<T>,
-	): ISignaler {
+	public offSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler {
 		this.signaler.offSignal(signalName, listener);
 		return this;
 	}

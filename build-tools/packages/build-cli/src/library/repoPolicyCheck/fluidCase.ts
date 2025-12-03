@@ -22,10 +22,7 @@ export const handler: Handler = {
 	resolver: (file: string): { resolved: boolean; message?: string } => {
 		const content = readFile(file);
 		const newContent = content.replace(/([a-z]) fluid ([a-z])/g, "$1 Fluid $2");
-		writeFile(
-			file,
-			newContent.replace(/[Ff]luid framework/g, "Fluid Framework"),
-		);
+		writeFile(file, newContent.replace(/[Ff]luid framework/g, "Fluid Framework"));
 		return { resolved: true };
 	},
 };

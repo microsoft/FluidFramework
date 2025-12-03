@@ -7,11 +7,11 @@ import { strict as assert } from "node:assert";
 
 import {
 	CursorLocationType,
-	compareFieldUpPaths,
 	type DetachedField,
 	type FieldUpPath,
 	type TreeNodeSchemaIdentifier,
 	type UpPath,
+	compareFieldUpPaths,
 } from "../../core/index.js";
 import {
 	PrefixedPath,
@@ -24,9 +24,9 @@ import {
 } from "../../feature-libraries/treeCursorUtils.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { adapter } from "../../feature-libraries/treeTextCursor.js";
-import { numberSchema } from "../../simple-tree/index.js";
 import { brand } from "../../util/index.js";
 import { expectEqualFieldPaths, expectEqualPaths } from "../utils.js";
+import { numberSchema } from "../../simple-tree/index.js";
 
 describe("treeCursorUtils", () => {
 	const root: UpPath = {
@@ -46,10 +46,7 @@ describe("treeCursorUtils", () => {
 			assert.equal(prefixPath(undefined, root), root);
 			assert.equal(prefixPath({}, root), root);
 			assert.equal(
-				prefixPath(
-					{ indexOffset: 1, rootFieldOverride: brand("y") },
-					undefined,
-				),
+				prefixPath({ indexOffset: 1, rootFieldOverride: brand("y") }, undefined),
 				undefined,
 			);
 		});
@@ -71,10 +68,7 @@ describe("treeCursorUtils", () => {
 				parentIndex: 5,
 			});
 			expectEqualPaths(
-				prefixPath(
-					{ indexOffset: 2, rootFieldOverride: brand("y"), parent: child },
-					root,
-				),
+				prefixPath({ indexOffset: 2, rootFieldOverride: brand("y"), parent: child }, root),
 				{
 					parent: child,
 					parentField: brand("y"),
@@ -112,10 +106,7 @@ describe("treeCursorUtils", () => {
 				parentIndex: 10,
 			});
 			expectEqualPaths(
-				prefixPath(
-					{ indexOffset: 2, rootFieldOverride: brand("y"), parent: child },
-					child,
-				),
+				prefixPath({ indexOffset: 2, rootFieldOverride: brand("y"), parent: child }, child),
 				{
 					parent: {
 						parent: child,
@@ -151,10 +142,7 @@ describe("treeCursorUtils", () => {
 		});
 
 		it("double wrapped child", () => {
-			const prefixed = prefixPath(
-				{ indexOffset: 1, rootFieldOverride: brand("c") },
-				child,
-			);
+			const prefixed = prefixPath({ indexOffset: 1, rootFieldOverride: brand("c") }, child);
 			const prefixedAgain = prefixPath({ indexOffset: 2 }, prefixed);
 
 			// Check result is correct
@@ -224,10 +212,7 @@ describe("treeCursorUtils", () => {
 		assert.equal(prefixFieldPath(undefined, rootFieldPath), rootFieldPath);
 		assert.equal(prefixFieldPath({}, rootFieldPath), rootFieldPath);
 		assert.equal(prefixFieldPath(undefined, rootFieldPath), rootFieldPath);
-		assert.equal(
-			prefixFieldPath({ indexOffset: 0 }, rootFieldPath),
-			rootFieldPath,
-		);
+		assert.equal(prefixFieldPath({ indexOffset: 0 }, rootFieldPath), rootFieldPath);
 		assert(
 			compareFieldUpPaths(
 				prefixFieldPath(
@@ -248,10 +233,7 @@ describe("treeCursorUtils", () => {
 
 		assert(
 			compareFieldUpPaths(
-				prefixFieldPath(
-					{ indexOffset: 1, rootFieldOverride: brand("b") },
-					childFieldPath,
-				),
+				prefixFieldPath({ indexOffset: 1, rootFieldOverride: brand("b") }, childFieldPath),
 				{
 					parent: {
 						parent: undefined,
@@ -272,12 +254,7 @@ describe("treeCursorUtils", () => {
 			const cursor = stackTreeNodeCursor(adapter, {
 				type: brand<TreeNodeSchemaIdentifier>("foo"),
 				fields: {
-					bar: [
-						{
-							type: brand<TreeNodeSchemaIdentifier>(numberSchema.identifier),
-							value: 5,
-						},
-					],
+					bar: [{ type: brand<TreeNodeSchemaIdentifier>(numberSchema.identifier), value: 5 }],
 				},
 			});
 			assert.equal(cursor.mode, CursorLocationType.Nodes);
@@ -310,14 +287,8 @@ describe("treeCursorUtils", () => {
 					type: brand<TreeNodeSchemaIdentifier>("dummy"),
 					fields: {
 						key: [
-							{
-								type: brand<TreeNodeSchemaIdentifier>(numberSchema.identifier),
-								value: 5,
-							},
-							{
-								type: brand<TreeNodeSchemaIdentifier>(numberSchema.identifier),
-								value: 6,
-							},
+							{ type: brand<TreeNodeSchemaIdentifier>(numberSchema.identifier), value: 5 },
+							{ type: brand<TreeNodeSchemaIdentifier>(numberSchema.identifier), value: 6 },
 						],
 					},
 				},

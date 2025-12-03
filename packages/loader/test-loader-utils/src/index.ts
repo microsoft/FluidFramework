@@ -4,5 +4,5 @@
  */
 
 export { MockDocumentDeltaStorageService } from "./mockDeltaStorage.js";
-export { MockDocumentDeltaConnection } from "./mockDocumentDeltaConnection.js";
 export { MockDocumentService } from "./mockDocumentService.js";
+export { MockDocumentDeltaConnection } from "./mockDocumentDeltaConnection.js";

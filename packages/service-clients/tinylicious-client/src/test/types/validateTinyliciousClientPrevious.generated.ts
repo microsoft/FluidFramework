@@ -11,23 +11,12 @@
  * Current version: 2.74.0
  */
 
-import type {
-	FullType,
-	MinimalType,
-	requireAssignableTo,
-	TypeOnly,
-} from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/tinylicious-client-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> =
-	| TypeOnly<T>
-	| MinimalType<T>
-	| FullType<T>
-	| typeof old
-	| typeof current
-	| requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -36,10 +25,7 @@ declare type MakeUnusedImportErrorsGoAway<T> =
  * typeValidation.broken:
  * "Class_TinyliciousClient": {"backCompat": false}
  */
-declare type current_as_old_for_Class_TinyliciousClient = requireAssignableTo<
-	TypeOnly<current.TinyliciousClient>,
-	TypeOnly<old.TinyliciousClient>
->;
+declare type current_as_old_for_Class_TinyliciousClient = requireAssignableTo<TypeOnly<current.TinyliciousClient>, TypeOnly<old.TinyliciousClient>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -48,11 +34,7 @@ declare type current_as_old_for_Class_TinyliciousClient = requireAssignableTo<
  * typeValidation.broken:
  * "ClassStatics_TinyliciousClient": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_TinyliciousClient =
-	requireAssignableTo<
-		TypeOnly<typeof current.TinyliciousClient>,
-		TypeOnly<typeof old.TinyliciousClient>
-	>;
+declare type current_as_old_for_ClassStatics_TinyliciousClient = requireAssignableTo<TypeOnly<typeof current.TinyliciousClient>, TypeOnly<typeof old.TinyliciousClient>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -61,11 +43,7 @@ declare type current_as_old_for_ClassStatics_TinyliciousClient =
  * typeValidation.broken:
  * "Interface_TinyliciousClientProps": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_TinyliciousClientProps =
-	requireAssignableTo<
-		TypeOnly<current.TinyliciousClientProps>,
-		TypeOnly<old.TinyliciousClientProps>
-	>;
+declare type current_as_old_for_Interface_TinyliciousClientProps = requireAssignableTo<TypeOnly<current.TinyliciousClientProps>, TypeOnly<old.TinyliciousClientProps>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -74,11 +52,7 @@ declare type current_as_old_for_Interface_TinyliciousClientProps =
  * typeValidation.broken:
  * "Interface_TinyliciousConnectionConfig": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_TinyliciousConnectionConfig =
-	requireAssignableTo<
-		TypeOnly<current.TinyliciousConnectionConfig>,
-		TypeOnly<old.TinyliciousConnectionConfig>
-	>;
+declare type current_as_old_for_Interface_TinyliciousConnectionConfig = requireAssignableTo<TypeOnly<current.TinyliciousConnectionConfig>, TypeOnly<old.TinyliciousConnectionConfig>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -87,11 +61,7 @@ declare type current_as_old_for_Interface_TinyliciousConnectionConfig =
  * typeValidation.broken:
  * "Interface_TinyliciousContainerServices": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_TinyliciousContainerServices =
-	requireAssignableTo<
-		TypeOnly<current.TinyliciousContainerServices>,
-		TypeOnly<old.TinyliciousContainerServices>
-	>;
+declare type current_as_old_for_Interface_TinyliciousContainerServices = requireAssignableTo<TypeOnly<current.TinyliciousContainerServices>, TypeOnly<old.TinyliciousContainerServices>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -100,11 +70,7 @@ declare type current_as_old_for_Interface_TinyliciousContainerServices =
  * typeValidation.broken:
  * "Interface_TinyliciousMember": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_TinyliciousMember =
-	requireAssignableTo<
-		TypeOnly<current.TinyliciousMember>,
-		TypeOnly<old.TinyliciousMember>
-	>;
+declare type current_as_old_for_Interface_TinyliciousMember = requireAssignableTo<TypeOnly<current.TinyliciousMember>, TypeOnly<old.TinyliciousMember>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -113,10 +79,7 @@ declare type current_as_old_for_Interface_TinyliciousMember =
  * typeValidation.broken:
  * "Interface_TinyliciousUser": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_TinyliciousUser = requireAssignableTo<
-	TypeOnly<current.TinyliciousUser>,
-	TypeOnly<old.TinyliciousUser>
->;
+declare type current_as_old_for_Interface_TinyliciousUser = requireAssignableTo<TypeOnly<current.TinyliciousUser>, TypeOnly<old.TinyliciousUser>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -125,11 +88,7 @@ declare type current_as_old_for_Interface_TinyliciousUser = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_CompatibilityMode": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_CompatibilityMode =
-	requireAssignableTo<
-		TypeOnly<old.CompatibilityMode>,
-		TypeOnly<current.CompatibilityMode>
-	>;
+declare type old_as_current_for_TypeAlias_CompatibilityMode = requireAssignableTo<TypeOnly<old.CompatibilityMode>, TypeOnly<current.CompatibilityMode>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -138,11 +97,7 @@ declare type old_as_current_for_TypeAlias_CompatibilityMode =
  * typeValidation.broken:
  * "TypeAlias_CompatibilityMode": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_CompatibilityMode =
-	requireAssignableTo<
-		TypeOnly<current.CompatibilityMode>,
-		TypeOnly<old.CompatibilityMode>
-	>;
+declare type current_as_old_for_TypeAlias_CompatibilityMode = requireAssignableTo<TypeOnly<current.CompatibilityMode>, TypeOnly<old.CompatibilityMode>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -151,8 +106,4 @@ declare type current_as_old_for_TypeAlias_CompatibilityMode =
  * typeValidation.broken:
  * "TypeAlias_ITinyliciousAudience": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_ITinyliciousAudience =
-	requireAssignableTo<
-		TypeOnly<current.ITinyliciousAudience>,
-		TypeOnly<old.ITinyliciousAudience>
-	>;
+declare type current_as_old_for_TypeAlias_ITinyliciousAudience = requireAssignableTo<TypeOnly<current.ITinyliciousAudience>, TypeOnly<old.ITinyliciousAudience>>

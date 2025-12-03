@@ -6,10 +6,7 @@
 import { makeStyles } from "@fluentui/react-components";
 import { CollaborativeInput } from "@fluid-example/example-utils";
 import { useTree } from "@fluidframework/react/internal";
-import type {
-	ISharedString,
-	SharedString,
-} from "@fluidframework/sequence/internal";
+import type { SharedString, ISharedString } from "@fluidframework/sequence/internal";
 import { Tree } from "@fluidframework/tree/internal";
 import React from "react";
 
@@ -85,9 +82,7 @@ export interface TodoListProps {
 export const TodoListView: React.FC<TodoListProps> = (props: TodoListProps) => {
 	const { todoModel } = props;
 	const styles = useStyles();
-	const [titleString, setTitleString] = React.useState<
-		SharedString | undefined
-	>();
+	const [titleString, setTitleString] = React.useState<SharedString | undefined>();
 
 	const newItemTextInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -125,32 +120,24 @@ export const TodoListView: React.FC<TodoListProps> = (props: TodoListProps) => {
 			});
 	};
 
-	const todoItemViews = [...todoModel.treeView.root.items.entries()].map(
-		([id, todoItem]) => (
-			<div className={styles.itemWrap} key={id}>
-				<TodoItemView
-					todoItemModel={todoItem}
-					className={styles.todoItemView}
-				/>
-				<button
-					className={styles.actionButton}
-					onClick={() => {
-						todoModel.treeView.root.items.delete(id);
-						Tree.on(todoModel.treeView.root.items, "treeChanged", () => {});
-					}}
-				>
-					X
-				</button>
-			</div>
-		),
-	);
+	const todoItemViews = [...todoModel.treeView.root.items.entries()].map(([id, todoItem]) => (
+		<div className={styles.itemWrap} key={id}>
+			<TodoItemView todoItemModel={todoItem} className={styles.todoItemView} />
+			<button
+				className={styles.actionButton}
+				onClick={() => {
+					todoModel.treeView.root.items.delete(id);
+					Tree.on(todoModel.treeView.root.items, "treeChanged", () => {});
+				}}
+			>
+				X
+			</button>
+		</div>
+	));
 
 	return (
 		<div className={styles.todoView}>
-			<CollaborativeInput
-				className={styles.todoTitle}
-				sharedString={titleString}
-			/>
+			<CollaborativeInput className={styles.todoTitle} sharedString={titleString} />
 			<form className={styles.newItemForm} onSubmit={handleCreateClick}>
 				<input
 					className={styles.newItemText}
@@ -159,11 +146,7 @@ export const TodoListView: React.FC<TodoListProps> = (props: TodoListProps) => {
 					name="itemName"
 					autoFocus
 				/>
-				<button
-					className={styles.newItemButton}
-					type="submit"
-					name="createItem"
-				>
+				<button className={styles.newItemButton} type="submit" name="createItem">
 					+
 				</button>
 			</form>

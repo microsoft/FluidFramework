@@ -4,11 +4,11 @@
  */
 
 import {
-	type IContainer,
 	isIDeltaManagerFull,
 	LoaderHeader,
+	type IContainer,
 } from "@fluidframework/container-definitions/internal";
-import type { IErrorBase, IRequest } from "@fluidframework/core-interfaces";
+import type { IRequest, IErrorBase } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { GenericError } from "@fluidframework/telemetry-utils/internal";
 
@@ -57,10 +57,7 @@ export async function loadContainerPaused(
 			headers: {
 				...request.headers,
 				// ensure we do not process any ops, such that we can examine container before ops starts to flow.
-				[LoaderHeader.loadMode]: {
-					opsBeforeReturn: undefined,
-					deltaConnection: "none",
-				},
+				[LoaderHeader.loadMode]: { opsBeforeReturn: undefined, deltaConnection: "none" },
 			},
 		},
 	});
@@ -106,8 +103,7 @@ export async function loadContainerPaused(
 	let onClose: (error?: IErrorBase) => void;
 
 	const promise = new Promise<void>((resolve, reject) => {
-		onAbort = (): void =>
-			reject(new GenericError("Canceled due to cancellation request."));
+		onAbort = (): void => reject(new GenericError("Canceled due to cancellation request."));
 		// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 		onClose = (error?: IErrorBase): void => reject(error);
 

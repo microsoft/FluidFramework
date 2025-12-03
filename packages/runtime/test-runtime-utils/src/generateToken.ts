@@ -3,14 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ITokenClaims,
-	ScopeType,
-} from "@fluidframework/driver-definitions/internal";
+import type { ITokenClaims, ScopeType } from "@fluidframework/driver-definitions/internal";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
 
-import type { IInsecureUser } from "./insecureUsers.js";
+import { IInsecureUser } from "./insecureUsers.js";
 
 /**
  * IMPORTANT: This function is duplicated in ./azure/packages/azure-service-utils/src/generateToken.ts. There is no need

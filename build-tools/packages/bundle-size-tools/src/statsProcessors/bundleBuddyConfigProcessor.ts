@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	BundleMetric,
-	ChunkToAnalyze,
-	WebpackStatsProcessor,
-} from "../BundleBuddyTypes";
+import type { BundleMetric, ChunkToAnalyze, WebpackStatsProcessor } from "../BundleBuddyTypes";
 import { getChunkAndDependencySizes } from "../utilities";
 
 export interface BundleBuddyConfigProcessorOptions {

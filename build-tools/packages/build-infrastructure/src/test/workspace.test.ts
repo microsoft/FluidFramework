@@ -60,10 +60,7 @@ describe("workspaces", () => {
 	describe("not installed", () => {
 		beforeEach(async () => {
 			try {
-				await rm(path.join(repo.root, "node_modules"), {
-					recursive: true,
-					force: true,
-				});
+				await rm(path.join(repo.root, "node_modules"), { recursive: true, force: true });
 			} catch {
 				// nothing
 			}

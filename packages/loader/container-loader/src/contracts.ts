@@ -5,27 +5,21 @@
 
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
-	type IConnectionDetails,
 	type IDeltaQueue,
+	type ReadOnlyInfo,
 	type IFluidCodeDetails,
 	isFluidPackage,
-	type ReadOnlyInfo,
+	type IConnectionDetails,
 } from "@fluidframework/container-definitions/internal";
-import type {
-	IErrorBase,
-	ITelemetryBaseProperties,
-} from "@fluidframework/core-interfaces";
+import type { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import type { JsonString } from "@fluidframework/core-interfaces/internal";
+import type { ConnectionMode, IClientDetails } from "@fluidframework/driver-definitions";
 import type {
-	ConnectionMode,
-	IClientDetails,
-} from "@fluidframework/driver-definitions";
-import type {
-	IClientConfiguration,
 	IContainerPackageInfo,
+	IClientConfiguration,
 	IDocumentMessage,
-	ISequencedDocumentMessage,
 	ISignalClient,
+	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 
@@ -35,9 +29,7 @@ export enum ReconnectMode {
 	Enabled = "Enabled",
 }
 
-export interface IConnectionStateChangeReason<
-	T extends IErrorBase = IErrorBase,
-> {
+export interface IConnectionStateChangeReason<T extends IErrorBase = IErrorBase> {
 	text: string;
 	error?: T;
 }
@@ -129,10 +121,7 @@ export interface IConnectionManager {
 	/**
 	 * Initiates connection to relay service (noop if already connected).
 	 */
-	connect(
-		reason: IConnectionStateChangeReason,
-		connectionMode?: ConnectionMode,
-	): void;
+	connect(reason: IConnectionStateChangeReason, connectionMode?: ConnectionMode): void;
 
 	/**
 	 * Disposed connection manager
@@ -151,10 +140,7 @@ export interface IConnectionManagerFactoryArgs {
 	 * Called by connection manager for each incoming op. Some ops maybe delivered before
 	 * connectHandler is called (initial ops on socket connection)
 	 */
-	readonly incomingOpHandler: (
-		messages: ISequencedDocumentMessage[],
-		reason: string,
-	) => void;
+	readonly incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) => void;
 
 	/**
 	 * Called by connection manager for each incoming signal.
@@ -215,16 +201,12 @@ export interface IConnectionManagerFactoryArgs {
 	/**
 	 * Called whenever we try to start establishing a new connection.
 	 */
-	readonly establishConnectionHandler: (
-		reason: IConnectionStateChangeReason,
-	) => void;
+	readonly establishConnectionHandler: (reason: IConnectionStateChangeReason) => void;
 
 	/**
 	 * Called whenever we cancel the connection in progress.
 	 */
-	readonly cancelConnectionHandler: (
-		reason: IConnectionStateChangeReason,
-	) => void;
+	readonly cancelConnectionHandler: (reason: IConnectionStateChangeReason) => void;
 }
 
 /**
@@ -236,9 +218,7 @@ export const getPackageName = (
 ): IContainerPackageInfo => {
 	// TODO: use a real type
 	// This is the normal path that any modern customer would hit
-	const containerPackageName: string | undefined = isFluidPackage(
-		codeDetails?.package,
-	)
+	const containerPackageName: string | undefined = isFluidPackage(codeDetails?.package)
 		? codeDetails?.package.name
 		: codeDetails?.package;
 	return { name: containerPackageName as string };

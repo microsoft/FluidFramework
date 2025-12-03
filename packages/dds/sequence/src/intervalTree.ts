@@ -4,36 +4,27 @@
  */
 
 import {
-	type IRBAugmentation,
-	type IRBMatcher,
-	type RBNode,
-	type RBNodeActions,
+	IRBAugmentation,
+	IRBMatcher,
+	RBNode,
+	RBNodeActions,
 	RedBlackTree,
 } from "@fluidframework/merge-tree/internal";
 
-import type { ISerializableInterval } from "./intervals/index.js";
+import { ISerializableInterval } from "./intervals/index.js";
 
 export interface AugmentedIntervalNode {
 	minmax: ISerializableInterval;
 }
 
-const intervalComparer = (a: ISerializableInterval, b: ISerializableInterval) =>
-	a.compare(b);
+const intervalComparer = (a: ISerializableInterval, b: ISerializableInterval) => a.compare(b);
 
-export type IntervalNode<T extends ISerializableInterval> = RBNode<
-	T,
-	AugmentedIntervalNode
->;
+export type IntervalNode<T extends ISerializableInterval> = RBNode<T, AugmentedIntervalNode>;
 
 export class IntervalTree<T extends ISerializableInterval>
-	implements
-		IRBAugmentation<T, AugmentedIntervalNode>,
-		IRBMatcher<T, AugmentedIntervalNode>
+	implements IRBAugmentation<T, AugmentedIntervalNode>, IRBMatcher<T, AugmentedIntervalNode>
 {
-	public intervals = new RedBlackTree<T, AugmentedIntervalNode>(
-		intervalComparer,
-		this,
-	);
+	public intervals = new RedBlackTree<T, AugmentedIntervalNode>(intervalComparer, this);
 
 	public remove(x: T) {
 		this.intervals.remove(x);
@@ -94,9 +85,7 @@ export class IntervalTree<T extends ISerializableInterval>
 
 	public update(node: IntervalNode<T>) {
 		if (node.left && node.right) {
-			node.data.minmax = node.key.union(
-				node.left.data.minmax.union(node.right.data.minmax),
-			);
+			node.data.minmax = node.key.union(node.left.data.minmax.union(node.right.data.minmax));
 		} else {
 			if (node.left) {
 				node.data.minmax = node.key.union(node.left.data.minmax);

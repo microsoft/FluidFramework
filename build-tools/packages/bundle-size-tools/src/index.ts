@@ -7,17 +7,17 @@ export {
 	ADOSizeComparator,
 	BundleFileData,
 	DefaultStatsProcessors,
-	GetBundleBuddyConfigMapArgs,
-	GetBundleSummariesArgs,
 	getAzureDevopsApi,
 	getBuildTagForCommit,
 	getBundleBuddyConfigFileFromZip,
 	getBundleBuddyConfigFromFileSystem,
 	getBundleBuddyConfigMap,
+	GetBundleBuddyConfigMapArgs,
 	getBundleFilePathsFromFolder,
 	getBundlePathsFromFileSystem,
 	getBundlePathsFromZipObject,
 	getBundleSummaries,
+	GetBundleSummariesArgs,
 	getCommentForBundleDiff,
 	getSimpleComment,
 	getStatsFileFromFileSystem,
@@ -27,6 +27,11 @@ export {
 	prCommentsUtils,
 	totalSizeMetricName,
 } from "./ADO";
+export {
+	BannedModule,
+	BannedModulesPlugin,
+	BannedModulesPluginOptions,
+} from "./bannedModulesPlugin/bannedModulesPlugin";
 export {
 	BundleBuddyConfigWebpackPlugin,
 	BundleBuddyPluginConfig,
@@ -41,11 +46,6 @@ export {
 	ChunkToAnalyze,
 	WebpackStatsProcessor,
 } from "./BundleBuddyTypes";
-export {
-	BannedModule,
-	BannedModulesPlugin,
-	BannedModulesPluginOptions,
-} from "./bannedModulesPlugin/bannedModulesPlugin";
 export { bundlesContainNoChanges, compareBundles } from "./compareBundles";
 export {
 	BundleBuddyConfigProcessorOptions,
@@ -59,9 +59,9 @@ export {
 	AggregatedChunkAnalysis,
 	ChunkSizeInfo,
 	decompressStatsFile,
-	GetBuildOptions,
 	getAllFilesInDirectory,
 	getBaselineCommit,
+	GetBuildOptions,
 	getBuilds,
 	getChunkAndDependencySizes,
 	getChunkParsedSize,

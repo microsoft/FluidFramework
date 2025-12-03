@@ -5,15 +5,7 @@
 
 import { strict as assert } from "node:assert";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
-import { EmptyKey } from "../../core/index.js";
-import {
-	cursorForJsonableTreeField,
-	defaultSchemaPolicy,
-	FieldKinds,
-	isFieldInSchema,
-	mapTreeFieldFromCursor,
-} from "../../feature-libraries/index.js";
-import { exportSimpleSchema } from "../../shared-tree/index.js";
+
 import {
 	createSchemaUpgrade,
 	ExpectStored,
@@ -28,27 +20,33 @@ import {
 	getStoredSchema,
 	permissiveStoredSchemaGenerationOptions,
 	restrictiveStoredSchemaGenerationOptions,
-	simpleStoredSchemaToStoredSchema,
 	toInitialSchema,
+	simpleStoredSchemaToStoredSchema,
 	toStoredSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/toStoredSchema.js";
+import {
+	cursorForJsonableTreeField,
+	defaultSchemaPolicy,
+	FieldKinds,
+	isFieldInSchema,
+	mapTreeFieldFromCursor,
+} from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import {
 	HasStagedAllowedTypes,
 	HasStagedAllowedTypesAfterUpdate,
 	testDocuments,
 } from "../testTrees.js";
+import { EmptyKey } from "../../core/index.js";
+import { exportSimpleSchema } from "../../shared-tree/index.js";
 
 describe("toStoredSchema", () => {
 	describe("toStoredSchema", () => {
 		it("minimal", () => {
 			const schema = new SchemaFactory("com.example");
 			class A extends schema.object("A", {}) {}
-			const stored = toStoredSchema(
-				A,
-				restrictiveStoredSchemaGenerationOptions,
-			);
+			const stored = toStoredSchema(A, restrictiveStoredSchemaGenerationOptions);
 			assert.equal(stored.rootFieldSchema.kind, FieldKinds.required.identifier);
 			assert.deepEqual(stored.rootFieldSchema.types, new Set([A.identifier]));
 			const storedNodeSchema = stored.nodeSchema.get(brand(A.identifier));
@@ -170,11 +168,8 @@ describe("toStoredSchema", () => {
 							assert.deepEqual(simpleFromRestrictive, simpleFromPermissive);
 						}
 
-						const restrictive2 = simpleStoredSchemaToStoredSchema(
-							simpleFromRestrictive,
-						);
-						const permissive2 =
-							simpleStoredSchemaToStoredSchema(simpleFromPermissive);
+						const restrictive2 = simpleStoredSchemaToStoredSchema(simpleFromRestrictive);
+						const permissive2 = simpleStoredSchemaToStoredSchema(simpleFromPermissive);
 
 						assert.deepEqual(restrictive2, restrictive);
 						assert.deepEqual(permissive2, permissive);
@@ -227,8 +222,7 @@ describe("toStoredSchema", () => {
 			) {}
 
 			const converted = toInitialSchema(TestArray);
-			const node =
-				converted.nodeSchema.get(brand(TestArray.identifier)) ?? assert.fail();
+			const node = converted.nodeSchema.get(brand(TestArray.identifier)) ?? assert.fail();
 			const field = node.getFieldSchema(EmptyKey);
 			assert.equal(field.types.size, 1);
 		});
@@ -246,8 +240,7 @@ describe("toStoredSchema", () => {
 				foo: TestArray,
 			}) {}
 			const converted = toInitialSchema(Root);
-			const node =
-				converted.nodeSchema.get(brand(TestArray.identifier)) ?? assert.fail();
+			const node = converted.nodeSchema.get(brand(TestArray.identifier)) ?? assert.fail();
 			const field = node.getFieldSchema(EmptyKey);
 			assert.equal(field.types.size, 1);
 		});
@@ -260,36 +253,26 @@ describe("toStoredSchema", () => {
 				restrictiveStoredSchemaGenerationOptions,
 			);
 			assert.equal(stored.kind, FieldKinds.required.identifier);
-			assert.deepEqual(
-				stored.types,
-				new Set([SchemaFactory.number.identifier]),
-			);
+			assert.deepEqual(stored.types, new Set([SchemaFactory.number.identifier]));
 		});
 
 		it("staged", () => {
 			const storedRestrictive = convertField(
 				SchemaFactoryAlpha.required(
-					SchemaFactoryAlpha.types([
-						SchemaFactoryAlpha.staged(SchemaFactory.number),
-					]),
+					SchemaFactoryAlpha.types([SchemaFactoryAlpha.staged(SchemaFactory.number)]),
 				),
 				restrictiveStoredSchemaGenerationOptions,
 			);
 			const storedPermissive = convertField(
 				SchemaFactoryAlpha.required(
-					SchemaFactoryAlpha.types([
-						SchemaFactoryAlpha.staged(SchemaFactory.number),
-					]),
+					SchemaFactoryAlpha.types([SchemaFactoryAlpha.staged(SchemaFactory.number)]),
 				),
 				permissiveStoredSchemaGenerationOptions,
 			);
 			assert.equal(storedRestrictive.kind, FieldKinds.required.identifier);
 			assert.deepEqual(storedRestrictive.types, new Set([]));
 			assert.equal(storedPermissive.kind, FieldKinds.required.identifier);
-			assert.deepEqual(
-				storedPermissive.types,
-				new Set([SchemaFactory.number.identifier]),
-			);
+			assert.deepEqual(storedPermissive.types, new Set([SchemaFactory.number.identifier]));
 		});
 
 		it(" StoredSchemaGenerationOptions cases", () => {
@@ -313,9 +296,7 @@ describe("toStoredSchema", () => {
 			};
 
 			// Valid cases:
-			const f1 = convertField(stagedFalse, {
-				includeStaged: () => assert.fail(),
-			});
+			const f1 = convertField(stagedFalse, { includeStaged: () => assert.fail() });
 			const f2 = convertField(stagedUpgrade, {
 				includeStaged: (u) => {
 					assert.equal(u, upgrade);
@@ -364,8 +345,7 @@ describe("toStoredSchema", () => {
 				),
 			);
 			assert.throws(
-				() =>
-					convertField(stagedUndefined, { includeStaged: () => assert.fail() }),
+				() => convertField(stagedUndefined, { includeStaged: () => assert.fail() }),
 				validateUsageError(/view schema was actually a stored schema/),
 			);
 		});

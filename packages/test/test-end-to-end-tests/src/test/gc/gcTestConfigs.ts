@@ -4,8 +4,8 @@
  */
 
 import {
+	ITestContainerConfig,
 	createTestConfigProvider,
-	type ITestContainerConfig,
 } from "@fluidframework/test-utils/internal";
 
 /**

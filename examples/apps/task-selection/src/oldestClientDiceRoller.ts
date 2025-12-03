@@ -8,7 +8,7 @@ import { OldestClientObserver } from "@fluid-experimental/oldest-client-observer
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { assert } from "@fluidframework/core-utils/legacy";
 
-import type { IDiceRoller } from "./interface.js";
+import { IDiceRoller } from "./interface.js";
 
 // The root is map-like, so we'll use this key for storing the value.
 const diceValueKey = "diceValue";
@@ -47,10 +47,7 @@ export class OldestClientDiceRoller extends DataObject implements IDiceRoller {
 	}
 
 	private get oldestClientObserver() {
-		assert(
-			this._oldestClientObserver !== undefined,
-			"OldestClientObserver not initialized",
-		);
+		assert(this._oldestClientObserver !== undefined, "OldestClientObserver not initialized");
 		return this._oldestClientObserver;
 	}
 
@@ -109,9 +106,7 @@ export class OldestClientDiceRoller extends DataObject implements IDiceRoller {
  * The DataObjectFactory is used by Fluid Framework to instantiate our DataObject.  We provide it with a unique name
  * and the constructor it will call.  In this scenario, the third and fourth arguments are not used.
  */
-export const OldestClientDiceRollerInstantiationFactory = new DataObjectFactory(
-	{
-		type: "@fluid-example/oldest-client-dice-roller",
-		ctor: OldestClientDiceRoller,
-	},
-);
+export const OldestClientDiceRollerInstantiationFactory = new DataObjectFactory({
+	type: "@fluid-example/oldest-client-dice-roller",
+	ctor: OldestClientDiceRoller,
+});

@@ -7,22 +7,10 @@ import { strict as assert } from "node:assert";
 
 import type { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
-import type {
-	ContainerSchema,
-	IFluidContainer,
-} from "@fluidframework/fluid-static";
+import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-import type {
-	Revertible,
-	TreeView,
-	ValidateRecursiveSchema,
-} from "@fluidframework/tree";
-import {
-	SchemaFactory,
-	Tree,
-	TreeStatus,
-	TreeViewConfiguration,
-} from "@fluidframework/tree";
+import type { Revertible, TreeView, ValidateRecursiveSchema } from "@fluidframework/tree";
+import { SchemaFactory, Tree, TreeStatus, TreeViewConfiguration } from "@fluidframework/tree";
 import { allowUnused, asAlpha } from "@fluidframework/tree/alpha";
 import { SharedTree } from "@fluidframework/tree/legacy";
 import type { AxiosResponse } from "axios";
@@ -81,17 +69,12 @@ for (const testOpts of testMatrix) {
 			client = createAzureClient();
 		});
 
-		async function waitForConnection(
-			container: IFluidContainer,
-		): Promise<void> {
+		async function waitForConnection(container: IFluidContainer): Promise<void> {
 			if (container.connectionState !== ConnectionState.Connected) {
-				await timeoutPromise(
-					(resolve) => container.once("connected", () => resolve()),
-					{
-						durationMs: connectTimeoutMs,
-						errorMsg: "container1 connect() timeout",
-					},
-				);
+				await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+					durationMs: connectTimeoutMs,
+					errorMsg: "container1 connect() timeout",
+				});
 			}
 		}
 
@@ -100,10 +83,7 @@ for (const testOpts of testMatrix) {
 		 */
 		async function createOrLoad(
 			summaryTree?: (typeof ephemeralSummaryTrees)[keyof typeof ephemeralSummaryTrees],
-		): Promise<{
-			containerId: string;
-			treeData: TreeView<typeof StringArray>;
-		}> {
+		): Promise<{ containerId: string; treeData: TreeView<typeof StringArray> }> {
 			let containerId: string;
 			let treeData: TreeView<typeof StringArray>;
 
@@ -114,19 +94,14 @@ for (const testOpts of testMatrix) {
 				containerId = await container.attach();
 				await waitForConnection(container);
 			} else {
-				const containerResponse: AxiosResponse | undefined =
-					await createContainerFromPayload(
-						summaryTree,
-						"test-user-id-1",
-						"test-user-name-1",
-					);
+				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+					summaryTree,
+					"test-user-id-1",
+					"test-user-name-1",
+				);
 
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				const { container } = await client.getContainer(
-					containerId,
-					schema,
-					"2",
-				);
+				const { container } = await client.getContainer(containerId, schema, "2");
 				treeData = container.initialObjects.tree1.viewWith(treeConfiguration);
 				await waitForConnection(container);
 			}
@@ -139,9 +114,7 @@ for (const testOpts of testMatrix) {
 
 		it("can create/load a container with SharedTree and do basic ops", async () => {
 			const { treeData } = await createOrLoad(
-				isEphemeral
-					? ephemeralSummaryTrees.createContainerWithSharedTree
-					: undefined,
+				isEphemeral ? ephemeralSummaryTrees.createContainerWithSharedTree : undefined,
 			);
 
 			treeData.root.insertNew("test string 1");
@@ -160,9 +133,7 @@ for (const testOpts of testMatrix) {
 
 		it("can create/load a container with SharedTree collaborate with basic ops", async () => {
 			const { containerId, treeData } = await createOrLoad(
-				isEphemeral
-					? ephemeralSummaryTrees.createLoadContainerWithSharedTree
-					: undefined,
+				isEphemeral ? ephemeralSummaryTrees.createLoadContainerWithSharedTree : undefined,
 			);
 
 			treeData.root.insertNew("test string 1");
@@ -180,17 +151,13 @@ for (const testOpts of testMatrix) {
 			);
 
 			if (container2.connectionState !== ConnectionState.Connected) {
-				await timeoutPromise(
-					(resolve) => container2.once("connected", () => resolve()),
-					{
-						durationMs: connectTimeoutMs,
-						errorMsg: "container2 connect() timeout",
-					},
-				);
+				await timeoutPromise((resolve) => container2.once("connected", () => resolve()), {
+					durationMs: connectTimeoutMs,
+					errorMsg: "container2 connect() timeout",
+				});
 			}
 
-			const treeData2 =
-				container2.initialObjects.tree1.viewWith(treeConfiguration);
+			const treeData2 = container2.initialObjects.tree1.viewWith(treeConfiguration);
 			assert.strictEqual(treeData2.root.length, 1);
 			assert.strictEqual(treeData2.root.at(0), "test string 1");
 		});
@@ -198,11 +165,7 @@ for (const testOpts of testMatrix) {
 		if (!isEphemeral) {
 			{
 				class Nicknames extends sf.array("Nicknames", sf.string) {}
-				class UserData extends sf.map("UserData", [
-					sf.string,
-					sf.number,
-					sf.boolean,
-				]) {}
+				class UserData extends sf.map("UserData", [sf.string, sf.number, sf.boolean]) {}
 				class User extends sf.object("User", {
 					name: sf.string,
 					nicknames: Nicknames,
@@ -213,10 +176,7 @@ for (const testOpts of testMatrix) {
 					const { container } = await client.createContainer(schema, "2");
 					await container.attach();
 					const view = container.initialObjects.tree1.viewWith(
-						new TreeViewConfiguration({
-							schema: User,
-							enableSchemaValidation: true,
-						}),
+						new TreeViewConfiguration({ schema: User, enableSchemaValidation: true }),
 					);
 
 					const tags: [string, string | number | boolean][] = [
@@ -258,10 +218,7 @@ for (const testOpts of testMatrix) {
 					await container.attach();
 					const view = asAlpha(
 						container.initialObjects.tree1.viewWith(
-							new TreeViewConfiguration({
-								schema: User,
-								enableSchemaValidation: true,
-							}),
+							new TreeViewConfiguration({ schema: User, enableSchemaValidation: true }),
 						),
 					);
 
@@ -345,10 +302,7 @@ for (const testOpts of testMatrix) {
 				const { container } = await client.createContainer(schema, "2");
 				await container.attach();
 				const view = container.initialObjects.tree1.viewWith(
-					new TreeViewConfiguration({
-						schema: Doll,
-						enableSchemaValidation: true,
-					}),
+					new TreeViewConfiguration({ schema: Doll, enableSchemaValidation: true }),
 				);
 
 				// These nodes in the initial tree are unhydrated...

@@ -3,23 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import {
-	describeCompat,
-	type ITestDataObject,
-} from "@fluid-private/test-version-utils";
-import { type BenchmarkTimingOptions, benchmark } from "@fluid-tools/benchmark";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
+import { strict as assert } from "assert";
+
+import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import { benchmark, type BenchmarkTimingOptions } from "@fluid-tools/benchmark";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
-	type ContainerRuntime,
+	ContainerRuntime,
 } from "@fluidframework/container-runtime/internal";
 import {
-	type ITestContainerConfig,
-	type ITestObjectProvider,
-	timeoutPromise,
 	toIDeltaManagerFull,
+	ITestContainerConfig,
+	ITestObjectProvider,
+	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
 
 // NOTE: Changing this will rename the benchmark which will create a new chart on the dashboard
 const batchSize: number = 1000;
@@ -48,10 +46,7 @@ const testContainerConfig: ITestContainerConfig = {
 
 type Patch<T, U> = Omit<T, keyof U> & U;
 
-type ContainerRuntime_WithPrivates = Patch<
-	ContainerRuntime,
-	{ flush: () => void }
->;
+type ContainerRuntime_WithPrivates = Patch<ContainerRuntime, { flush: () => void }>;
 
 describeCompat(
 	"Op Critical Paths - runtime benchmarks",
@@ -68,15 +63,10 @@ describeCompat(
 			testId++;
 			provider = getTestObjectProvider();
 			const loader = provider.makeTestLoader(testContainerConfig);
-			mainContainer = await loader.createDetachedContainer(
-				provider.defaultCodeDetails,
-			);
+			mainContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
-			await mainContainer.attach(
-				provider.driver.createCreateNewRequest(`test-${testId}`),
-			);
-			defaultDataStore =
-				(await mainContainer.getEntryPoint()) as ITestDataObject;
+			await mainContainer.attach(provider.driver.createCreateNewRequest(`test-${testId}`));
+			defaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 			containerRuntime = defaultDataStore._context
 				.containerRuntime as ContainerRuntime_WithPrivates;
 
@@ -109,17 +99,11 @@ describeCompat(
 				// This should not add much time, and is part of the real flow so it's ok to include it in the benchmark.
 				const opsSent = await timeoutPromise<number>(
 					(resolve) => {
-						toIDeltaManagerFull(containerRuntime.deltaManager).outbound.once(
-							"idle",
-							resolve,
-						);
+						toIDeltaManagerFull(containerRuntime.deltaManager).outbound.once("idle", resolve);
 					},
 					{ errorMsg: "container's outbound queue never reached idle state" },
 				);
-				assert(
-					opsSent === 1,
-					"Expecting the single grouped batch op to be sent.",
-				);
+				assert(opsSent === 1, "Expecting the single grouped batch op to be sent.");
 			},
 		});
 
@@ -133,10 +117,7 @@ describeCompat(
 					await setup();
 
 					// (This is about benchmark's "batch", not the batch of ops we are measuring)
-					assert(
-						state.iterationsPerBatch === 1,
-						"Expecting only one iteration per batch",
-					);
+					assert(state.iterationsPerBatch === 1, "Expecting only one iteration per batch");
 
 					// This will get the batch of ops roundtripped and into the inbound queue, but the inbound queue will remain paused
 					await provider.opProcessingController.pauseProcessing();

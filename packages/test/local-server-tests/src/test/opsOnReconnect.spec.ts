@@ -3,56 +3,47 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
-import type {
-	IContainer,
-	IFluidCodeDetails,
-} from "@fluidframework/container-definitions/internal";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
-	type ILoaderProps,
 	loadExistingContainer,
+	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import {
 	ContainerMessageType,
-	type IContainerRuntimeOptions,
+	IContainerRuntimeOptions,
 	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
-import type {
-	IFluidHandle,
-	IFluidLoadable,
-} from "@fluidframework/core-interfaces";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
 } from "@fluidframework/local-driver/internal";
-import {
-	type ISharedMap,
-	SharedDirectory,
-	SharedMap,
-} from "@fluidframework/map/internal";
+import { SharedDirectory, type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import {
 	type FluidDataStoreMessage,
 	FlushMode,
-	type IEnvelope,
+	IEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import {
-	type ILocalDeltaConnectionServer,
+	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
-	createAndAttachContainerUsingProps,
 	createDataStoreFactory,
-	type ITestFluidObject,
+	createAndAttachContainerUsingProps,
+	ITestFluidObject,
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObjectFactory,
 	toIDeltaManagerFull,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
 
 describe("Ops on Reconnect", () => {
 	const documentId = "opsOnReconnectTest";
@@ -78,9 +69,7 @@ describe("Ops on Reconnect", () => {
 	let container1Object1String: SharedString;
 	let receivedValues: any[] = [];
 
-	function createLoaderProps(
-		runtimeOptions?: IContainerRuntimeOptions,
-	): ILoaderProps {
+	function createLoaderProps(runtimeOptions?: IContainerRuntimeOptions): ILoaderProps {
 		const factory: TestFluidObjectFactory = new TestFluidObjectFactory([
 			[map1Id, SharedMap.getFactory()],
 			[map2Id, SharedMap.getFactory()],
@@ -121,22 +110,17 @@ describe("Ops on Reconnect", () => {
 	}
 
 	async function setupFirstContainer(
-		runtimeOptions: IContainerRuntimeOptionsInternal = {
-			flushMode: FlushMode.Immediate,
-		},
+		runtimeOptions: IContainerRuntimeOptionsInternal = { flushMode: FlushMode.Immediate },
 	) {
 		// Create the first container, dataObject and DDSes.
 		container1 = await createContainer(runtimeOptions);
 		container1Object1 = (await container1.getEntryPoint()) as ITestFluidObject;
 
-		container1Object1Map1 =
-			await container1Object1.getSharedObject<ISharedMap>(map1Id);
-		container1Object1Map2 =
-			await container1Object1.getSharedObject<ISharedMap>(map2Id);
+		container1Object1Map1 = await container1Object1.getSharedObject<ISharedMap>(map1Id);
+		container1Object1Map2 = await container1Object1.getSharedObject<ISharedMap>(map2Id);
 		container1Object1Directory =
 			await container1Object1.getSharedObject<SharedDirectory>(directoryId);
-		container1Object1String =
-			await container1Object1.getSharedObject<SharedString>(stringId);
+		container1Object1String = await container1Object1.getSharedObject<SharedString>(stringId);
 	}
 
 	async function setupSecondContainersDataObject(): Promise<ITestFluidObject> {
@@ -149,8 +133,7 @@ describe("Ops on Reconnect", () => {
 		await waitForContainerConnection(container2);
 
 		// Get dataStore1 on the second container.
-		const container2Object1 =
-			(await container2.getEntryPoint()) as ITestFluidObject;
+		const container2Object1 = (await container2.getEntryPoint()) as ITestFluidObject;
 
 		container2Object1.context.containerRuntime.on(
 			"op",
@@ -161,10 +144,8 @@ describe("Ops on Reconnect", () => {
 					// there is value using less `any`. Typing seems wrong even if the
 					// SharedString message, for example, is an IMergeTreeInsertMsg.
 					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments -- explicitly using `any` even if IEnvelope default is later changed to unknown
-					const { address, contents } = envelope.contents
-						.content as IEnvelope<any>;
-					const batch = (message.metadata as { batch?: unknown } | undefined)
-						?.batch;
+					const { address, contents } = envelope.contents.content as IEnvelope<any>;
+					const batch = (message.metadata as { batch?: unknown } | undefined)?.batch;
 					let value1: string | number;
 					let value2: string;
 					// Add special handling for SharedString. SharedMap and SharedDirectory content structure is same.
@@ -186,9 +167,7 @@ describe("Ops on Reconnect", () => {
 	beforeEach(async () => {
 		urlResolver = new LocalResolver();
 		deltaConnectionServer = LocalDeltaConnectionServer.create();
-		documentServiceFactory = new LocalDocumentServiceFactory(
-			deltaConnectionServer,
-		);
+		documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
 		loaderContainerTracker = new LoaderContainerTracker();
 
 		// Wait for the attach ops to get processed.
@@ -208,10 +187,7 @@ describe("Ops on Reconnect", () => {
 
 			// Disconnect the client.
 			assert(container1.clientId);
-			documentServiceFactory.disconnectClient(
-				container1.clientId,
-				"Disconnected for testing",
-			);
+			documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
 			// The Container should be in disconnected state.
 			assert.equal(container1.connectionState, ConnectionState.Disconnected);
@@ -295,10 +271,7 @@ describe("Ops on Reconnect", () => {
 
 			// Disconnect the client.
 			assert(container1.clientId);
-			documentServiceFactory.disconnectClient(
-				container1.clientId,
-				"Disconnected for testing",
-			);
+			documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
 			// The Container should be in disconnected state.
 			assert.equal(container1.connectionState, ConnectionState.Disconnected);
@@ -340,11 +313,8 @@ describe("Ops on Reconnect", () => {
 
 			// Create dataObject2 in the first container.
 			const dataStore =
-				await container1Object1.context.containerRuntime.createDataStore(
-					"dataObject2",
-				);
-			const container1Object2 =
-				(await dataStore.entryPoint.get()) as ITestFluidObject;
+				await container1Object1.context.containerRuntime.createDataStore("dataObject2");
+			const container1Object2 = (await dataStore.entryPoint.get()) as ITestFluidObject;
 
 			// Get the maps in dataStore2.
 			const container1Object2Map1 =
@@ -368,22 +338,16 @@ describe("Ops on Reconnect", () => {
 				await container2Object1.getSharedObject<ISharedMap>(map1Id);
 			assert(container2Object1Map1);
 			const container2Object2Handle =
-				container2Object1Map1.get<
-					IFluidHandle<ITestFluidObject & IFluidLoadable>
-				>("dataStore2Key");
+				container2Object1Map1.get<IFluidHandle<ITestFluidObject & IFluidLoadable>>(
+					"dataStore2Key",
+				);
 			assert(container2Object2Handle);
 			const container2Object2 = await container2Object2Handle.get();
-			assert.ok(
-				container2Object2,
-				"Could not get dataStore2 in the second container",
-			);
+			assert.ok(container2Object2, "Could not get dataStore2 in the second container");
 
 			// Disconnect the client.
 			assert(container1.clientId);
-			documentServiceFactory.disconnectClient(
-				container1.clientId,
-				"Disconnected for testing",
-			);
+			documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
 			// The Container should be in disconnected state.
 			assert.equal(container1.connectionState, ConnectionState.Disconnected);
@@ -441,10 +405,7 @@ describe("Ops on Reconnect", () => {
 
 			// Disconnect the client.
 			assert(container1.clientId);
-			documentServiceFactory.disconnectClient(
-				container1.clientId,
-				"Disconnected for testing",
-			);
+			documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
 			// The Container should be in disconnected state.
 			assert.equal(container1.connectionState, ConnectionState.Disconnected);
@@ -476,11 +437,8 @@ describe("Ops on Reconnect", () => {
 
 			// Create dataObject2 in the first container.
 			const dataStore =
-				await container1Object1.context.containerRuntime.createDataStore(
-					"dataObject2",
-				);
-			const container1Object2 =
-				(await dataStore.entryPoint.get()) as ITestFluidObject;
+				await container1Object1.context.containerRuntime.createDataStore("dataObject2");
+			const container1Object2 = (await dataStore.entryPoint.get()) as ITestFluidObject;
 
 			// Get the maps in dataStore2.
 			const container1Object2Map1 =
@@ -503,15 +461,12 @@ describe("Ops on Reconnect", () => {
 			const container2Object1Map1 =
 				await container2Object1.getSharedObject<ISharedMap>(map1Id);
 			const container2Object2Handle =
-				container2Object1Map1.get<
-					IFluidHandle<ITestFluidObject & IFluidLoadable>
-				>("dataStore2Key");
+				container2Object1Map1.get<IFluidHandle<ITestFluidObject & IFluidLoadable>>(
+					"dataStore2Key",
+				);
 			assert(container2Object2Handle);
 			const container2Object2 = await container2Object2Handle.get();
-			assert.ok(
-				container2Object2,
-				"Could not get dataStore2 in the second container",
-			);
+			assert.ok(container2Object2, "Could not get dataStore2 in the second container");
 
 			// Set values in the DDSes across the two dataStores interleaved with each other.
 			container1Object1.context.containerRuntime.orderSequentially(() => {
@@ -527,10 +482,7 @@ describe("Ops on Reconnect", () => {
 
 			// Disconnect the client.
 			assert(container1.clientId);
-			documentServiceFactory.disconnectClient(
-				container1.clientId,
-				"Disconnected for testing",
-			);
+			documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
 			// The Container should be in disconnected state.
 			assert.equal(container1.connectionState, ConnectionState.Disconnected);
@@ -568,10 +520,7 @@ describe("Ops on Reconnect", () => {
 
 			// Disconnect the client.
 			assert(container1.clientId);
-			documentServiceFactory.disconnectClient(
-				container1.clientId,
-				"Disconnected for testing",
-			);
+			documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
 			// The Container should be in disconnected state.
 			assert.equal(container1.connectionState, ConnectionState.Disconnected);
@@ -618,10 +567,7 @@ describe("Ops on Reconnect", () => {
 
 			// Disconnect the client.
 			assert(container1.clientId);
-			documentServiceFactory.disconnectClient(
-				container1.clientId,
-				"Disconnected for testing",
-			);
+			documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
 			// The Container should be in disconnected state.
 			assert.equal(container1.connectionState, ConnectionState.Disconnected);
@@ -669,10 +615,7 @@ describe("Ops on Reconnect", () => {
 
 			// Disconnect the client.
 			assert(container1.clientId);
-			documentServiceFactory.disconnectClient(
-				container1.clientId,
-				"Disconnected for testing",
-			);
+			documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
 			// The Container should be in disconnected state.
 			assert.equal(container1.connectionState, ConnectionState.Disconnected);
@@ -715,23 +658,13 @@ describe("Ops on Reconnect", () => {
 
 			// Disconnect the client.
 			assert(container1.clientId);
-			documentServiceFactory.disconnectClient(
-				container1.clientId,
-				"Disconnected for testing",
-			);
+			documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
 			// At this point, the delta manager should have the messages
 			// in its buffer but not in its outbound queue,
 			// as ops have not been flushed yet
-			assert.strictEqual(
-				toIDeltaManagerFull(container1.deltaManager).outbound.length,
-				0,
-			);
-			assert.deepStrictEqual(
-				receivedValues,
-				[],
-				"Values have been sent unexpectedly",
-			);
+			assert.strictEqual(toIDeltaManagerFull(container1.deltaManager).outbound.length, 0);
+			assert.deepStrictEqual(receivedValues, [], "Values have been sent unexpectedly");
 
 			// Wait for the Container to get reconnected.
 			await waitForContainerConnection(container1);

@@ -15,9 +15,7 @@ import { ConnectionState } from "@fluidframework/container-loader";
  *
  * @internal
  */
-export function connectionStateToString(
-	connectionState: ConnectionState,
-): string {
+export function connectionStateToString(connectionState: ConnectionState): string {
 	switch (connectionState) {
 		case ConnectionState.CatchingUp: {
 			return "Catching up";
@@ -32,9 +30,7 @@ export function connectionStateToString(
 			return "Establishing connection";
 		}
 		default: {
-			throw new TypeError(
-				`Unrecognized ConnectionState value: "${connectionState}".`,
-			);
+			throw new TypeError(`Unrecognized ConnectionState value: "${connectionState}".`);
 		}
 	}
 }

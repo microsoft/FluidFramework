@@ -9,13 +9,10 @@ import { validateMessages } from "@fluidframework/driver-base/internal";
 import type {
 	IDeltasFetchResult,
 	IDocumentDeltaStorageService,
-	ISequencedDocumentMessage,
 	IStream,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	requestOps,
-	streamObserver,
-} from "@fluidframework/driver-utils/internal";
+import { requestOps, streamObserver } from "@fluidframework/driver-utils/internal";
 import type { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type ITelemetryLoggerExt,
@@ -24,10 +21,7 @@ import {
 
 import { v4 as uuid } from "uuid";
 
-import type {
-	IDeltaStorageGetResponse,
-	ISequencedDeltaOpMessage,
-} from "./contracts.js";
+import type { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts.js";
 import type { EpochTracker } from "./epochTracker.js";
 import type { OdspDocumentStorageService } from "./odspDocumentStorageManager.js";
 import { getWithRetryForTokenRefresh } from "./odspUtils.js";
@@ -113,8 +107,7 @@ export class OdspDeltaStorageService {
 					clearTimeout(timer);
 					const deltaStorageResponse = response.content;
 					const messages =
-						deltaStorageResponse.value.length > 0 &&
-						"op" in deltaStorageResponse.value[0]
+						deltaStorageResponse.value.length > 0 && "op" in deltaStorageResponse.value[0]
 							? (deltaStorageResponse.value as ISequencedDeltaOpMessage[]).map(
 									(operation) => operation.op,
 								)
@@ -162,9 +155,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 		) => Promise<ISequencedDocumentMessage[]>,
 		private readonly requestFromSocket: (from: number, to: number) => void,
 		private readonly opsReceived: (ops: ISequencedDocumentMessage[]) => void,
-		private readonly storageManagerGetter: () =>
-			| OdspDocumentStorageService
-			| undefined,
+		private readonly storageManagerGetter: () => OdspDocumentStorageService | undefined,
 	) {}
 
 	public fetchMessages(
@@ -182,8 +173,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 
 		// Don't use cache for ops is snapshot is fetched from network or if it was not fetched at all.
 		this.useCacheForOps =
-			this.useCacheForOps &&
-			this.storageManagerGetter()?.isFirstSnapshotFromNetwork === false;
+			this.useCacheForOps && this.storageManagerGetter()?.isFirstSnapshotFromNetwork === false;
 		let opsFromSnapshot = 0;
 		let opsFromCache = 0;
 		let opsFromStorage = 0;
@@ -199,9 +189,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 				);
 				validateMessages("cached", messages, from, this.logger);
 				if (messages.length > 0 && messages[0].sequenceNumber === from) {
-					this.snapshotOps = this.snapshotOps.filter(
-						(op) => op.sequenceNumber >= to,
-					);
+					this.snapshotOps = this.snapshotOps.filter((op) => op.sequenceNumber >= to);
 					opsFromSnapshot += messages.length;
 					return { messages, partialResult: true };
 				}
@@ -232,12 +220,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 				return { messages: [], partialResult: false };
 			}
 
-			const ops = await this.getFromStorage(
-				from,
-				to,
-				telemetryProps,
-				fetchReason,
-			);
+			const ops = await this.getFromStorage(from, to, telemetryProps, fetchReason);
 			validateMessages("storage", ops.messages, from, this.logger);
 			opsFromStorage += ops.messages.length;
 			this.opsReceived(ops.messages);
@@ -245,11 +228,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 		};
 
 		const stream = requestOps(
-			async (
-				from: number,
-				to: number,
-				telemetryProps: ITelemetryBaseProperties,
-			) => {
+			async (from: number, to: number, telemetryProps: ITelemetryBaseProperties) => {
 				const result = await requestCallback(from, to, telemetryProps);
 				// Catch all case, just in case
 				validateMessages("catch all", result.messages, from, this.logger);
@@ -267,10 +246,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 		);
 
 		return streamObserver(stream, (result) => {
-			if (
-				result.done &&
-				opsFromSnapshot + opsFromCache + opsFromStorage !== 0
-			) {
+			if (result.done && opsFromSnapshot + opsFromCache + opsFromStorage !== 0) {
 				this.logger.sendPerformanceEvent({
 					eventName: "CacheOpsRetrieved",
 					opsFromSnapshot,

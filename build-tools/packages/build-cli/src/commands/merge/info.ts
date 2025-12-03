@@ -28,9 +28,7 @@ interface BranchMergeInfo {
 	commits: string[];
 }
 
-export default class MergeInfoCommand extends BaseCommand<
-	typeof MergeInfoCommand
-> {
+export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoCommand> {
 	static readonly description =
 		`Get info about the merge status of branches in the repo. Uses "main" and "next" if no branch names are provided. Output the data as JSON using --json.`;
 
@@ -47,8 +45,7 @@ export default class MergeInfoCommand extends BaseCommand<
 
 	static readonly examples = [
 		{
-			description:
-				"Get info about the merge status of the main and next branch in the repo.",
+			description: "Get info about the merge status of the main and next branch in the repo.",
 			command: "<%= config.bin %> <%= command.id %>",
 		},
 		{
@@ -103,10 +100,7 @@ export default class MergeInfoCommand extends BaseCommand<
 
 		const revs = rawRevs.split(/\r?\n/);
 
-		const [b1Log, b2Log] = [
-			chalk.bold(chalk.blue(branch1)),
-			chalk.bold(chalk.blue(branch2)),
-		];
+		const [b1Log, b2Log] = [chalk.bold(chalk.blue(branch1)), chalk.bold(chalk.blue(branch2))];
 
 		this.logHr();
 		this.log(
@@ -117,10 +111,6 @@ export default class MergeInfoCommand extends BaseCommand<
 		this.log();
 
 		// If --json is passed, this object is output to stdout JSON-serialized.
-		return {
-			branches: [branch1, branch2],
-			commits: revs,
-			commitCount: revs.length,
-		};
+		return { branches: [branch1, branch2], commits: revs, commitCount: revs.length };
 	}
 }

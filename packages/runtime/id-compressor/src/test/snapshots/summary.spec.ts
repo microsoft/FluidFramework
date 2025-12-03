@@ -4,16 +4,10 @@
  */
 
 import { strict as assert } from "node:assert";
-import {
-	existsSync,
-	mkdirSync,
-	readFileSync,
-	rmSync,
-	writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-import { createIdCompressor, type SessionId } from "../../index.js";
+import { type SessionId, createIdCompressor } from "../../index.js";
 import { modifyClusterSize } from "../idCompressorTestUtilities.js";
 
 import { _dirname } from "./dirname.cjs";
@@ -51,8 +45,7 @@ function useSnapshotDirectory(dirPath: string = "files"): void {
 	}
 
 	beforeEach(function (): void {
-		currentTestName =
-			this.currentTest?.title.replace(/ /g, "-") ?? assert.fail();
+		currentTestName = this.currentTest?.title.replace(/ /g, "-") ?? assert.fail();
 		currentTestFile = path.join(normalizedDir, currentTestName);
 	});
 
@@ -72,19 +65,14 @@ function takeSnapshot(data: string, suffix: string = ""): void {
 	// Ensure test name doesn't accidentally navigate up directories or things like that.
 	// Done here instead of in beforeEach so errors surface better.
 	if (nameCheck.test(currentTestName) === false) {
-		assert.fail(
-			`Expected test name to pass sanitization: "${currentTestName}"`,
-		);
+		assert.fail(`Expected test name to pass sanitization: "${currentTestName}"`);
 	}
 
 	const fullFile = currentTestFile + suffix;
 
 	const exists = existsSync(fullFile);
 	if (regenerateSnapshots) {
-		assert(
-			exists === false,
-			"snapshot should not already exist: possible name collision.",
-		);
+		assert(exists === false, "snapshot should not already exist: possible name collision.");
 		writeFileSync(fullFile, data);
 	} else {
 		assert(exists, `test snapshot file does not exist: "${fullFile}"`);

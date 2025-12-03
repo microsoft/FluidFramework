@@ -6,13 +6,8 @@
 import { expect } from 'chai';
 
 import { HistoryEditFactoryEvents, revert } from '../HistoryEditFactory.js';
-import type { DetachedSequenceId, TraitLabel } from '../Identifiers.js';
-import {
-	ChangeInternal,
-	type DetachInternal,
-	StablePlaceInternal,
-	StableRangeInternal,
-} from '../persisted-types/index.js';
+import { DetachedSequenceId, TraitLabel } from '../Identifiers.js';
+import { ChangeInternal, DetachInternal, StablePlaceInternal, StableRangeInternal } from '../persisted-types/index.js';
 
 import { expectDefined } from './utilities/TestCommon.js';
 import { refreshTestTree } from './utilities/TestUtilities.js';

@@ -6,10 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import {
-	type ISummaryTree,
-	SummaryType,
-} from "@fluidframework/driver-definitions";
+import { type ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 
 import {
 	combineAppAndProtocolSummary,
@@ -40,7 +37,7 @@ describe("Dehydrate Container", () => {
 						type: SummaryType.Blob,
 						content: JSON.stringify("defaultDataStore"),
 					},
-					root: {
+					"root": {
 						type: SummaryType.Tree,
 						tree: {
 							attributes: {
@@ -49,12 +46,12 @@ describe("Dehydrate Container", () => {
 							},
 						},
 					},
-					unref: {
+					"unref": {
 						type: SummaryType.Tree,
 						tree: {},
 						unreferenced: true,
 					},
-					groupId: {
+					"groupId": {
 						type: SummaryType.Tree,
 						tree: {},
 						groupId: "group",
@@ -65,18 +62,11 @@ describe("Dehydrate Container", () => {
 	};
 
 	it("Summary to baseSnapshot and snapshotBlobs conversion", async () => {
-		const combinedSummary = combineAppAndProtocolSummary(
-			appSummary,
-			protocolSummary,
-		);
+		const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 		const snapshot = getISnapshotFromSerializedContainer(combinedSummary);
 		const baseSnapshot = snapshot.snapshotTree;
 		const snapshotBlobs = snapshot.blobContents;
-		assert.strictEqual(
-			Object.keys(baseSnapshot.trees).length,
-			2,
-			"2 trees should be there",
-		);
+		assert.strictEqual(Object.keys(baseSnapshot.trees).length, 2, "2 trees should be there");
 		assert.strictEqual(
 			Object.keys(baseSnapshot.trees[".protocol"].blobs).length,
 			2,
@@ -84,8 +74,7 @@ describe("Dehydrate Container", () => {
 		);
 
 		// Validate the ".component" blob.
-		const defaultDataStoreBlobId =
-			baseSnapshot.trees.default.blobs[".component"];
+		const defaultDataStoreBlobId = baseSnapshot.trees.default.blobs[".component"];
 		const defaultDataStoreBlob = snapshotBlobs.get(defaultDataStoreBlobId);
 		assert.strict(defaultDataStoreBlob, "defaultDataStoreBlob undefined");
 		assert.strictEqual(
@@ -95,8 +84,7 @@ describe("Dehydrate Container", () => {
 		);
 
 		// Validate "root" sub-tree.
-		const rootAttributesBlobId =
-			baseSnapshot.trees.default.trees.root.blobs.attributes;
+		const rootAttributesBlobId = baseSnapshot.trees.default.trees.root.blobs.attributes;
 		const rootAttributesBlob = snapshotBlobs.get(rootAttributesBlobId);
 		assert.strict(rootAttributesBlob, "rootAttributesBlob undefined");
 		assert.strictEqual(

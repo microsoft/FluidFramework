@@ -10,35 +10,28 @@ import {
 } from "@fluid-experimental/property-changeset";
 import {
 	BaseProperty,
-	type NodeProperty,
+	NodeProperty,
 	PropertyFactory,
 } from "@fluid-experimental/property-properties";
-import {
-	bufferToString,
-	type IsoBuffer,
-	stringToBuffer,
-} from "@fluid-internal/client-utils";
+import { IsoBuffer, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import type {
+import {
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
+	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import {
-	type ISequencedDocumentMessage,
 	MessageType,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import type {
-	IRuntimeMessageCollection,
-	ISequencedMessageEnvelope,
+import {
 	ISummaryTreeWithStats,
+	type IRuntimeMessageCollection,
+	type ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import {
-	type IFluidSerializer,
-	SharedObject,
-} from "@fluidframework/shared-object-base/internal";
+import { SharedObject, IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import axios from "axios";
 import lodash from "lodash";
 import { Packr } from "msgpackr";
@@ -60,15 +53,12 @@ export type SerializedChangeSet = any;
 export type Metadata = any;
 
 type FetchUnrebasedChangeFn = (guid: string) => IRemotePropertyTreeMessage;
-type FetchRebasedChangesFn = (
-	startGuid: string,
-	endGuid?: string,
-) => IPropertyTreeMessage[];
+type FetchRebasedChangesFn = (startGuid: string, endGuid?: string) => IPropertyTreeMessage[];
 
 /**
  * @internal
  */
-export enum OpKind {
+export const enum OpKind {
 	// eslint-disable-next-line @typescript-eslint/no-shadow
 	ChangeSet = 0,
 }
@@ -205,15 +195,8 @@ export class SharedPropertyTree extends SharedObject {
 	 * @param id - optional name of the shared map
 	 * @returns newly create shared map (but not attached yet)
 	 */
-	public static create(
-		runtime: IFluidDataStoreRuntime,
-		id?: string,
-		queryString?: string,
-	) {
-		return runtime.createChannel(
-			id,
-			PropertyTreeFactory.Type,
-		) as SharedPropertyTree;
+	public static create(runtime: IFluidDataStoreRuntime, id?: string, queryString?: string) {
+		return runtime.createChannel(id, PropertyTreeFactory.Type) as SharedPropertyTree;
 	}
 
 	/**
@@ -312,9 +295,7 @@ export class SharedPropertyTree extends SharedObject {
 	 * This method decodes message from the transfer form.
 	 * @param transferChange - The message to be decoded.
 	 */
-	private decodeMessage(
-		transferChange: IPropertyTreeMessage,
-	): IPropertyTreeMessage {
+	private decodeMessage(transferChange: IPropertyTreeMessage): IPropertyTreeMessage {
 		return this.propertyTreeConfig.encDec.messageEncoder.decode(transferChange);
 	}
 
@@ -334,8 +315,7 @@ export class SharedPropertyTree extends SharedObject {
 				this.localChanges.length > 0
 					? this.localChanges[this.localChanges.length - 1].guid
 					: this.headCommitGuid,
-			localBranchStart:
-				this.localChanges.length > 0 ? this.localChanges[0].guid : undefined,
+			localBranchStart: this.localChanges.length > 0 ? this.localChanges[0].guid : undefined,
 			useMH: this.useMH,
 		};
 		this._applyLocalChangeSet(change);
@@ -386,19 +366,14 @@ export class SharedPropertyTree extends SharedObject {
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */
-	protected processMessagesCore(
-		messagesCollection: IRuntimeMessageCollection,
-	): void {
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
 			this.processMessage(envelope, messageContent.contents);
 		}
 	}
 
-	private processMessage(
-		messageEnvelope: ISequencedMessageEnvelope,
-		contents: unknown,
-	) {
+	private processMessage(messageEnvelope: ISequencedMessageEnvelope, contents: unknown) {
 		if (
 			messageEnvelope.type === MessageType.Operation &&
 			messageEnvelope.sequenceNumber > this.skipSequenceNumber
@@ -491,10 +466,7 @@ export class SharedPropertyTree extends SharedObject {
 
 				// If we have a change that refers to the start of the history (remoteHeadGuid === "" or the
 				//  provided remote head guid), we have to keep all remote Changes until this change has been processed
-				if (
-					visitor.remoteHeadGuid === "" ||
-					visitor.remoteHeadGuid === remoteHeadGuid
-				) {
+				if (visitor.remoteHeadGuid === "" || visitor.remoteHeadGuid === remoteHeadGuid) {
 					visitedRemoteChanges.add(remoteChanges[0].guid);
 				}
 			}
@@ -502,10 +474,7 @@ export class SharedPropertyTree extends SharedObject {
 		let pruned = 0;
 		// we can now filter the unrebased changes by removing any changes
 		// we have not visited at all during our traversal
-		const prunedUnrebasedRemoteChanges: Record<
-			string,
-			IRemotePropertyTreeMessage
-		> = {};
+		const prunedUnrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> = {};
 		for (const key of Object.keys(unrebasedRemoteChanges)) {
 			if (visitedUnrebasedRemoteChanges.has(key)) {
 				prunedUnrebasedRemoteChanges[key] = unrebasedRemoteChanges[key];
@@ -516,9 +485,7 @@ export class SharedPropertyTree extends SharedObject {
 
 		// find minimum index
 		const minIndex = Math.min(
-			...[...visitedRemoteChanges].map(
-				(key) => remoteChangeMap.get(key) as number,
-			),
+			...[...visitedRemoteChanges].map((key) => remoteChangeMap.get(key) as number),
 		);
 
 		const prunedRemoteChanges = remoteChanges.slice(minIndex);
@@ -570,9 +537,7 @@ export class SharedPropertyTree extends SharedObject {
 	 * @returns The local summary (snapshot)representation.
 	 */
 	private decodeSummary(serializedSummary): ISnapshotSummary {
-		return this.propertyTreeConfig.encDec.summaryEncoder.decode(
-			serializedSummary,
-		);
+		return this.propertyTreeConfig.encDec.summaryEncoder.decode(serializedSummary);
 	}
 
 	/**
@@ -626,11 +591,7 @@ export class SharedPropertyTree extends SharedObject {
 			const chunkSize = 5000 * 1024; // Default limit seems to be 5MB
 			let totalBlobsSize = 0;
 			const serializedSummary = this.encodeSummary(summary);
-			for (
-				let pos = 0, i = 0;
-				pos < serializedSummary.length;
-				pos += chunkSize, i++
-			) {
+			for (let pos = 0, i = 0; pos < serializedSummary.length; pos += chunkSize, i++) {
 				const summaryBlob = this.encodeSummaryBlob(
 					serializedSummary.slice(pos, pos + chunkSize),
 				);
@@ -664,9 +625,7 @@ export class SharedPropertyTree extends SharedObject {
 				// We load all chunks
 				const chunks: ArrayBufferLike[] = await Promise.all(
 					range(snapshot.numChunks).map(async (i) => {
-						return this.decodeSummaryBlob(
-							await storage.readBlob(`summaryChunk_${i}`),
-						);
+						return this.decodeSummaryBlob(await storage.readBlob(`summaryChunk_${i}`));
 					}),
 				);
 
@@ -692,9 +651,7 @@ export class SharedPropertyTree extends SharedObject {
 						snapshotSummary.remoteChanges.length > 0
 							? // If there are remote changes in the
 								// summary we can deduce the head GUID from these changes.
-								snapshotSummary.remoteChanges[
-									snapshotSummary.remoteChanges.length - 1
-								].guid
+								snapshotSummary.remoteChanges[snapshotSummary.remoteChanges.length - 1].guid
 							: // If no remote head GUID is available, we will fall back to the old behaviour,
 								// where the head GUID was set to an empty string. However, this could lead to
 								// divergence between the clients, if there is still a client in the session
@@ -707,9 +664,7 @@ export class SharedPropertyTree extends SharedObject {
 				this.remoteChanges = snapshotSummary.remoteChanges;
 				this.unrebasedRemoteChanges = snapshotSummary.unrebasedRemoteChanges;
 				this.headCommitGuid = snapshotSummary.remoteHeadGuid;
-				const isPartialCheckoutActive = !!(
-					this.options.clientFiltering && this.options.paths
-				);
+				const isPartialCheckoutActive = !!(this.options.clientFiltering && this.options.paths);
 				if (isPartialCheckoutActive && this.options.paths) {
 					this.remoteTipView = ChangeSetUtils.getFilteredChangeSetByPaths(
 						this.remoteTipView,
@@ -721,9 +676,7 @@ export class SharedPropertyTree extends SharedObject {
 				this.skipSequenceNumber = 0;
 			} else {
 				const { branchGuid, summaryMinimumSequenceNumber } = snapshot;
-				const branchResponse = await axios.get(
-					`http://localhost:3000/branch/${branchGuid}`,
-				);
+				const branchResponse = await axios.get(`http://localhost:3000/branch/${branchGuid}`);
 				this.headCommitGuid = branchResponse.data.headCommitGuid;
 				const {
 					commit: { meta: commitMetadata },
@@ -738,8 +691,7 @@ export class SharedPropertyTree extends SharedObject {
 					)
 				).data;
 
-				const isPartialCheckoutActive =
-					this.options.clientFiltering && this.options.paths;
+				const isPartialCheckoutActive = this.options.clientFiltering && this.options.paths;
 
 				if (isPartialCheckoutActive && this.options.paths) {
 					materializedView = ChangeSetUtils.getFilteredChangeSetByPaths(
@@ -789,11 +741,10 @@ export class SharedPropertyTree extends SharedObject {
 
 						if (remoteChange) {
 							if (isPartialCheckoutActive && this.options.paths) {
-								remoteChange.changeSet =
-									ChangeSetUtils.getFilteredChangeSetByPaths(
-										remoteChange.changeSet,
-										this.options.paths,
-									);
+								remoteChange.changeSet = ChangeSetUtils.getFilteredChangeSetByPaths(
+									remoteChange.changeSet,
+									this.options.paths,
+								);
 							}
 							this.addRemoteChange(remoteChange);
 						}
@@ -858,11 +809,7 @@ export class SharedPropertyTree extends SharedObject {
 		new ChangeSet(pendingChanges)._toReversibleChangeSet(this.tipView);
 
 		const changesToTip: SerializedChangeSet = {};
-		const changesNeeded = this.rebaseLocalChanges(
-			change,
-			pendingChanges,
-			changesToTip,
-		);
+		const changesNeeded = this.rebaseLocalChanges(change, pendingChanges, changesToTip);
 
 		if (changesNeeded) {
 			this.pushNotificationDelayScope();
@@ -882,18 +829,14 @@ export class SharedPropertyTree extends SharedObject {
 	}
 
 	getRebasedChanges(startGuid: string, endGuid?: string) {
-		const startIndex = findIndex(
-			this.remoteChanges,
-			(c) => c.guid === startGuid,
-		);
+		const startIndex = findIndex(this.remoteChanges, (c) => c.guid === startGuid);
 		if (
 			startIndex === -1 &&
 			startGuid !== "" &&
 			// If the start GUID is the referenceGUID of the first change,
 			// we still can get the correct range, because the change with the startGuid itself
 			// if not included in the range.
-			(this.remoteChanges.length === 0 ||
-				startGuid !== this.remoteChanges[0].referenceGuid)
+			(this.remoteChanges.length === 0 || startGuid !== this.remoteChanges[0].referenceGuid)
 		) {
 			// TODO: Consider throwing an error once clients have picked up PR #16277.
 			console.error("Unknown start GUID specified.");
@@ -915,10 +858,7 @@ export class SharedPropertyTree extends SharedObject {
 		const accumulatedChanges: SerializedChangeSet = {};
 		const conflicts = [] as any[];
 
-		if (
-			this.localChanges.length > 0 &&
-			this.localChanges[0].guid === change.guid
-		) {
+		if (this.localChanges.length > 0 && this.localChanges[0].guid === change.guid) {
 			// This is disabled for performance reasons. Only used during debugging
 			// assert(JSON.stringify(this.localChanges[0].changeSet) === JSON.stringify(change.changeSet),
 			//        "Local change different than rebased remote change.");
@@ -938,9 +878,7 @@ export class SharedPropertyTree extends SharedObject {
 				// account by rebasing with respect to the changeset that is obtained by combining the inverse of the
 				// local change with the incoming remote change.
 
-				rebaseBaseChangeSet = new ChangeSet(
-					this.localChanges.shift()?.changeSet,
-				);
+				rebaseBaseChangeSet = new ChangeSet(this.localChanges.shift()?.changeSet);
 				rebaseBaseChangeSet.toInverseChangeSet();
 				rebaseBaseChangeSet.applyChangeSet(change.changeSet);
 			}
@@ -954,9 +892,7 @@ export class SharedPropertyTree extends SharedObject {
 
 			const rebaseMetaInformation = new Map();
 
-			const copiedChangeSet = new ChangeSet(
-				cloneDeep(this.localChanges[i].changeSet),
-			);
+			const copiedChangeSet = new ChangeSet(cloneDeep(this.localChanges[i].changeSet));
 			new ChangeSet(rebaseBaseChangeSet)._rebaseChangeSet(
 				this.localChanges[i].changeSet,
 				conflicts,
@@ -972,9 +908,7 @@ export class SharedPropertyTree extends SharedObject {
 			});
 			rebaseBaseChangeSet = copiedChangeSet.getSerializedChangeSet();
 
-			new ChangeSet(accumulatedChanges).applyChangeSet(
-				this.localChanges[i].changeSet,
-			);
+			new ChangeSet(accumulatedChanges).applyChangeSet(this.localChanges[i].changeSet);
 
 			// Update the reference and head guids
 			this.localChanges[i].remoteHeadGuid = change.guid;
@@ -990,13 +924,9 @@ export class SharedPropertyTree extends SharedObject {
 		deltaToTipCS.toInverseChangeSet();
 
 		// Perform a rebase of the pending changes
-		new ChangeSet(rebaseBaseChangeSet)._rebaseChangeSet(
-			pendingChanges,
-			conflicts,
-			{
-				applyAfterMetaInformation: pendingChangesRebaseMetaInformation,
-			},
-		);
+		new ChangeSet(rebaseBaseChangeSet)._rebaseChangeSet(pendingChanges, conflicts, {
+			applyAfterMetaInformation: pendingChangesRebaseMetaInformation,
+		});
 
 		// Compute the delta between the old tip (including pending changes)
 		// and the new tip (not including the rebased pending changes)
@@ -1024,18 +954,13 @@ export class SharedPropertyTree extends SharedObject {
 		// in our localChanges, because we continuously update those to follow the tip.
 		// Therefore our reSubmitCore function searches for the rebased operation in the
 		// localChanges array and submits this up-to-date version instead of the old operation.
-		const rebasedOperation = find(
-			this.localChanges,
-			(op) => op.guid === content.guid,
-		);
+		const rebasedOperation = find(this.localChanges, (op) => op.guid === content.guid);
 
 		if (rebasedOperation) {
 			this.submitLocalMessage(cloneDeep(rebasedOperation), localOpMetadata);
 		} else {
 			// Could this happen or is there a guard that we will never resubmit an already submitted op?
-			console.warn(
-				"Resubmitting operation which has already been received back.",
-			);
+			console.warn("Resubmitting operation which has already been received back.");
 		}
 	}
 

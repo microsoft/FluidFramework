@@ -3,29 +3,30 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
-	type ContainerRuntime,
-	type ISummaryNackMessage,
-	neverCancelledSummaryToken,
+	ContainerRuntime,
 	SummaryCollection,
+	neverCancelledSummaryToken,
+	type ISummaryNackMessage,
 } from "@fluidframework/container-runtime/internal";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import {
-	type ISequencedDocumentMessage,
 	MessageType,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
+	ITestObjectProvider,
 	createSummarizerFromFactory,
-	type ITestObjectProvider,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
 
 export const TestDataObjectType1 = "@fluid-example/test-dataStore1";
 export const TestDataObjectType2 = "@fluid-example/test-dataStore2";
@@ -37,11 +38,9 @@ describeCompat(
 	"Prepare for Summary with Search Blobs",
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
-		const { DataObject, DataObjectFactory, FluidDataStoreRuntime } =
-			apis.dataRuntime;
+		const { DataObject, DataObjectFactory, FluidDataStoreRuntime } = apis.dataRuntime;
 		const { mixinSummaryHandler } = apis.dataRuntime.packages.datastore;
-		const { ContainerRuntimeFactoryWithDefaultDataStore } =
-			apis.containerRuntime;
+		const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 
 		function createDataStoreRuntime(
 			factory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
@@ -72,15 +71,12 @@ describeCompat(
 
 			protected async initializingFirstTime() {
 				const dataStore2 =
-					await this._context.containerRuntime.createDataStore(
-						TestDataObjectType2,
-					);
+					await this._context.containerRuntime.createDataStore(TestDataObjectType2);
 				this.root.set("ds2", dataStore2.entryPoint);
 			}
 
 			protected async hasInitialized() {
-				const dataStore2Handle =
-					this.root.get<IFluidHandle<TestDataObject2>>("ds2");
+				const dataStore2Handle = this.root.get<IFluidHandle<TestDataObject2>>("ds2");
 				await dataStore2Handle?.get();
 			}
 		}
@@ -94,10 +90,7 @@ describeCompat(
 			ctor: TestDataObject2,
 		});
 
-		const registryStoreEntries = new Map<
-			string,
-			Promise<IFluidDataStoreFactory>
-		>([
+		const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 			[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
 			[dataStoreFactory2.type, Promise.resolve(dataStoreFactory2)],
 		]);
@@ -144,8 +137,7 @@ describeCompat(
 			});
 			// The runtime prop is private to the Summarizer class
 			const containerRuntime = (summarizer as any).runtime as ContainerRuntime;
-			const entryPoint =
-				await containerRuntime.getAliasedDataStoreEntryPoint("default");
+			const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint("default");
 			if (entryPoint === undefined) {
 				throw new Error("default dataStore must exist");
 			}
@@ -159,14 +151,11 @@ describeCompat(
 
 		async function waitForSummaryOp(containerRuntime: ContainerRuntime) {
 			await new Promise<void>((resolve) => {
-				containerRuntime.deltaManager.on(
-					"op",
-					(op: ISequencedDocumentMessage) => {
-						if (op.type === MessageType.Summarize) {
-							resolve();
-						}
-					},
-				);
+				containerRuntime.deltaManager.on("op", (op: ISequencedDocumentMessage) => {
+					if (op.type === MessageType.Summarize) {
+						resolve();
+					}
+				});
 			});
 		}
 
@@ -176,11 +165,9 @@ describeCompat(
 				mainContainer = await provider.createContainer(runtimeFactory);
 				// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
 				// re-sent. Do it here so that the extra events don't mess with rest of the test.
-				mainDataStore =
-					(await mainContainer.getEntryPoint()) as TestDataObject1;
+				mainDataStore = (await mainContainer.getEntryPoint()) as TestDataObject1;
 				mainDataStore._root.set("anytest", "anyvalue");
-				mainContainerRuntime = mainDataStore._context
-					.containerRuntime as ContainerRuntime;
+				mainContainerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
 				await waitForContainerConnection(mainContainer);
 			});
 
@@ -199,8 +186,7 @@ describeCompat(
 				});
 				assert(result.stage === "submit", "The summary was not submitted");
 				await waitForSummaryOp(containerRuntime);
-				const dataStore =
-					await containerRuntime.createDataStore(TestDataObjectType2);
+				const dataStore = await containerRuntime.createDataStore(TestDataObjectType2);
 				await dataStore.entryPoint.get();
 
 				// Wait for the above summary to be ack'd.
@@ -227,10 +213,8 @@ describeCompat(
 				const { summaryVersion } = await summarizeNow(summarizer);
 				mainDataStore._root.set("key", "value");
 
-				const {
-					containerRuntime: containerRuntime2,
-					summaryCollection: summaryCollection2,
-				} = await loadSummarizer(summaryVersion);
+				const { containerRuntime: containerRuntime2, summaryCollection: summaryCollection2 } =
+					await loadSummarizer(summaryVersion);
 				// Wait for all pending ops to be processed by all clients.
 				await provider.ensureSynchronized();
 
@@ -245,8 +229,7 @@ describeCompat(
 
 				await waitForSummaryOp(containerRuntime2);
 
-				const dataStore =
-					await containerRuntime2.createDataStore(TestDataObjectType2);
+				const dataStore = await containerRuntime2.createDataStore(TestDataObjectType2);
 				await dataStore.entryPoint.get();
 
 				// Wait for the above summary to be ack'd.
@@ -275,8 +258,7 @@ describeCompat(
 				);
 
 				// Create a second data store.
-				const ds2 =
-					await mainContainerRuntime.createDataStore(TestDataObjectType2);
+				const ds2 = await mainContainerRuntime.createDataStore(TestDataObjectType2);
 				mainDataStore._root.set("dataStore2", ds2.entryPoint);
 
 				await provider.ensureSynchronized();
@@ -303,12 +285,9 @@ describeCompat(
 				// Before refresh is called, request the second data store in the summarizer. This will create summarizer
 				// nodes for its child DDSes. The data store's summarizer node should update the pending used routes
 				// of the child's summarizer node.
-				const ds2MainDataStore =
-					(await summarizer2.entryPoint) as TestDataObject1;
+				const ds2MainDataStore = (await summarizer2.entryPoint) as TestDataObject1;
 				const ds2MainDataStoreHandle =
-					ds2MainDataStore._root.get<IFluidHandle<TestDataObject2>>(
-						"dataStore2",
-					);
+					ds2MainDataStore._root.get<IFluidHandle<TestDataObject2>>("dataStore2");
 				assert(
 					ds2MainDataStoreHandle !== undefined,
 					"Data store2 handle not present in summarizer",
@@ -316,9 +295,8 @@ describeCompat(
 				await ds2MainDataStoreHandle.get();
 
 				// Wait for the above summary to be ack'd.
-				const ackedSummary = await summarizer2.summaryCollection.waitSummaryAck(
-					summarySequenceNumber,
-				);
+				const ackedSummary =
+					await summarizer2.summaryCollection.waitSummaryAck(summarySequenceNumber);
 				// Refresh the summary. This should not result in any errors.
 				await summarizer2.containerRuntime.refreshLatestSummaryAck({
 					proposalHandle: ackedSummary.summaryOp.contents.handle,

@@ -30,10 +30,7 @@ import { ThemeOption, useThemeContext } from "../../ThemeHelper.js";
 /**
  * Data To be rendered with Op Latency Graph
  */
-export interface GraphDataSet<
-	XKey extends string = string,
-	YKey extends string = string,
-> {
+export interface GraphDataSet<XKey extends string = string, YKey extends string = string> {
 	graphType: "line" | "area" | "bar";
 	schema: {
 		displayName: string;
@@ -175,21 +172,14 @@ const createGraphColorPalette = (
  *
  * @remarks {@link ThemeContext} must be set in order to use this component.
  */
-export function DynamicComposedChart(
-	props: DynamicComposedChartProps,
-): React.ReactElement {
+export function DynamicComposedChart(props: DynamicComposedChartProps): React.ReactElement {
 	const [activeIndex, setActiveIndex] = React.useState<string | undefined>();
 	const { themeInfo } = useThemeContext();
 
-	const graphColorPalette = createGraphColorPalette(
-		themeInfo.name,
-		themeInfo.theme,
-	);
+	const graphColorPalette = createGraphColorPalette(themeInfo.name, themeInfo.theme);
 
 	const handleLegendClick = (e): void => {
-		setActiveIndex(
-			activeIndex === e.dataKey ? undefined : (e.dataKey as string),
-		);
+		setActiveIndex(activeIndex === e.dataKey ? undefined : (e.dataKey as string));
 	};
 
 	/**
@@ -276,13 +266,7 @@ export function DynamicComposedChart(
 
 		return (
 			<g>
-				<text
-					x={x}
-					y={y}
-					textAnchor="end"
-					fill={graphColorPalette.axisTick}
-					fontSize={14}
-				>
+				<text x={x} y={y} textAnchor="end" fill={graphColorPalette.axisTick} fontSize={14}>
 					{`${payload.value}${props.yAxisUnitDisplayName ?? ""}`}
 				</text>
 			</g>
@@ -334,9 +318,7 @@ export function DynamicComposedChart(
 					type="monotone"
 					dataKey={dataKey}
 					fill={hexColor}
-					fillOpacity={
-						activeIndex === undefined || activeIndex === dataKey ? 1 : 0.2
-					}
+					fillOpacity={activeIndex === undefined || activeIndex === dataKey ? 1 : 0.2}
 					stackId={"1"}
 				/>
 			);
@@ -354,9 +336,7 @@ export function DynamicComposedChart(
 						stroke={hexColor}
 						strokeWidth={3}
 						activeDot={{ r: 6 }}
-						strokeOpacity={
-							activeIndex === undefined || activeIndex === dataKey ? 1 : 0.2
-						}
+						strokeOpacity={activeIndex === undefined || activeIndex === dataKey ? 1 : 0.2}
 					/>
 				);
 			}
@@ -383,9 +363,7 @@ export function DynamicComposedChart(
 						type="monotone"
 						dataKey={dataKey}
 						fill={hexColor}
-						fillOpacity={
-							activeIndex === undefined || activeIndex === dataKey ? 1 : 0.2
-						}
+						fillOpacity={activeIndex === undefined || activeIndex === dataKey ? 1 : 0.2}
 					/>
 				);
 			}
@@ -430,10 +408,7 @@ export function DynamicComposedChart(
 				margin={props.margin}
 				data-testId="test-dynamic-composed-chart"
 			>
-				<CartesianGrid
-					strokeDasharray="2 2"
-					stroke={graphColorPalette.cartesianGrid}
-				/>
+				<CartesianGrid strokeDasharray="2 2" stroke={graphColorPalette.cartesianGrid} />
 				<XAxis dataKey={"x"} tick={<CustomizedXAxisTick />}>
 					<Label value="Timestamp" offset={12} position="bottom" />
 				</XAxis>
@@ -445,11 +420,7 @@ export function DynamicComposedChart(
 					}}
 				/>
 				<Legend
-					wrapperStyle={{
-						bottom: "-10px",
-						fontSize: "14px",
-						...props.legendStyle,
-					}}
+					wrapperStyle={{ bottom: "-10px", fontSize: "14px", ...props.legendStyle }}
 					onClick={handleLegendClick}
 					content={renderLegend}
 				/>

@@ -4,41 +4,39 @@
  */
 
 import {
-	type IContainer,
-	type IHostLoader,
+	IContainer,
+	IHostLoader,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
-import type {
+import {
 	// eslint-disable-next-line import-x/no-deprecated
 	IOnDemandSummarizeOptions,
 	ISummarizer,
 	ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
-import type {
+import {
 	IConfigProviderBase,
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions/internal";
-import type {
+import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
+
+import { createTestConfigProvider } from "./TestConfigs.js";
 // eslint-disable-next-line import-x/no-deprecated
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "./containerRuntimeFactories.js";
 import { waitForContainerConnection } from "./containerUtils.js";
-import { createTestConfigProvider } from "./TestConfigs.js";
 import {
 	type ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
-import type {
-	ITestContainerConfig,
-	ITestObjectProvider,
-} from "./testObjectProvider.js";
+import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider.js";
 import { timeoutAwait } from "./timeoutUtils.js";
 
 const summarizerClientType = "summarizer";
@@ -49,9 +47,7 @@ const summarizerClientType = "summarizer";
  * This function can be removed once LTS version of Loader moves to 2.0.0-internal.7.0.0
  * @internal
  */
-async function getSummarizerBackCompat(
-	container: IContainer,
-): Promise<ISummarizer> {
+async function getSummarizerBackCompat(container: IContainer): Promise<ISummarizer> {
 	if (container.getEntryPoint !== undefined) {
 		const entryPoint = await container.getEntryPoint();
 		// Note: We need to also check if the result of `getEntryPoint()` is defined. This is because when running
@@ -62,13 +58,8 @@ async function getSummarizerBackCompat(
 			return entryPoint as ISummarizer;
 		}
 	}
-	const response: IResponse = await (container as any).request({
-		url: "_summarizer",
-	});
-	assert(
-		response.status === 200,
-		"requesting '/' should return default data object",
-	);
+	const response: IResponse = await (container as any).request({ url: "_summarizer" });
+	assert(response.status === 200, "requesting '/' should return default data object");
 	return response.value as ISummarizer;
 }
 
@@ -148,13 +139,10 @@ export async function createSummarizerFromFactory(
 		},
 	);
 
-	const loader = provider.createLoader(
-		[[provider.defaultCodeDetails, runtimeFactory]],
-		{
-			configProvider,
-			logger,
-		},
-	);
+	const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]], {
+		configProvider,
+		logger,
+	});
 	return createSummarizerCore(container, loader, summaryVersion);
 }
 
@@ -176,13 +164,11 @@ export async function createSummarizer(
 		...config,
 		runtimeOptions: {
 			...config?.runtimeOptions,
-			summaryOptions:
-				config?.runtimeOptions?.summaryOptions ?? defaultSummaryOptions,
+			summaryOptions: config?.runtimeOptions?.summaryOptions ?? defaultSummaryOptions,
 		},
 		loaderProps: {
 			...config?.loaderProps,
-			configProvider:
-				config?.loaderProps?.configProvider ?? createTestConfigProvider(),
+			configProvider: config?.loaderProps?.configProvider ?? createTestConfigProvider(),
 			logger,
 		},
 	};
@@ -217,10 +203,7 @@ export async function summarizeNow(
 		submitResult.data.stage === "submit",
 		"on-demand summary submitted data stage should be submit",
 	);
-	assert(
-		submitResult.data.summaryTree !== undefined,
-		"summary tree should exist",
-	);
+	assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
 
 	const broadcastResult = await timeoutAwait(result.summaryOpBroadcasted, {
 		errorMsg: "Promise timed out: summaryOpBroadcasted",

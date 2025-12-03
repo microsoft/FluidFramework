@@ -132,9 +132,7 @@ export function serializeAsMinSupportedVersion(
 		}
 
 		default: {
-			throw new Error(
-				`Unsupported chunk path: ${path} version: ${chunk.version}`,
-			);
+			throw new Error(`Unsupported chunk path: ${path} version: ${chunk.version}`);
 		}
 	}
 	return serializer.stringify(targetChuck, bind);
@@ -165,11 +163,7 @@ export function toLatestVersion(
 				version: "1",
 				length: chunkLegacy.chunkLengthChars,
 				segmentCount: chunkLegacy.chunkSegmentCount,
-				headerMetadata: buildHeaderMetadataForLegacyChunk(
-					path,
-					chunkLegacy,
-					options,
-				),
+				headerMetadata: buildHeaderMetadataForLegacyChunk(path, chunkLegacy, options),
 				segments: chunkLegacy.segmentTexts,
 				startIndex: chunkLegacy.chunkStartSegmentIndex,
 				attribution: chunkLegacy.attribution,
@@ -180,9 +174,7 @@ export function toLatestVersion(
 		}
 
 		default: {
-			throw new Error(
-				`Unsupported chunk path: ${path} version: ${chunk.version}`,
-			);
+			throw new Error(`Unsupported chunk path: ${path} version: ${chunk.version}`);
 		}
 	}
 }
@@ -196,9 +188,7 @@ function buildHeaderMetadataForLegacyChunk(
 		if (chunk.headerMetadata !== undefined) {
 			return chunk.headerMetadata;
 		}
-		const chunkIds: MergeTreeHeaderChunkMetadata[] = [
-			{ id: SnapshotLegacy.header },
-		];
+		const chunkIds: MergeTreeHeaderChunkMetadata[] = [{ id: SnapshotLegacy.header }];
 		if (chunk.chunkLengthChars < chunk.totalLengthChars!) {
 			chunkIds.push({ id: SnapshotLegacy.body });
 		}

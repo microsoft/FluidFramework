@@ -77,20 +77,15 @@ export class EnumArrayProperty extends ValueArrayProperty {
 			);
 		}
 		if (!_.isArray(in_array)) {
-			throw new TypeError(
-				MSG.IN_ARRAY_NOT_ARRAY + "EnumArrayProperty.insertRange",
-			);
+			throw new TypeError(MSG.IN_ARRAY_NOT_ARRAY + "EnumArrayProperty.insertRange");
 		}
 
 		var internalValueArray = [];
-		_.each(in_array, (element) => {
-			internalValueArray.push(this._convertEnumToInternalValue(element));
+		var that = this;
+		_.each(in_array, function (element) {
+			internalValueArray.push(that._convertEnumToInternalValue(element));
 		});
-		ValueArrayProperty.prototype.insertRange.call(
-			this,
-			in_offset,
-			internalValueArray,
-		);
+		ValueArrayProperty.prototype.insertRange.call(this, in_offset, internalValueArray);
 	}
 
 	/**
@@ -128,25 +123,18 @@ export class EnumArrayProperty extends ValueArrayProperty {
 	 */
 	setRange(in_offset, in_array) {
 		if (!_.isNumber(in_offset)) {
-			throw new TypeError(
-				MSG.NOT_NUMBER + "in_offset, method: EnumArray.setRange or .set",
-			);
+			throw new TypeError(MSG.NOT_NUMBER + "in_offset, method: EnumArray.setRange or .set");
 		}
 		if (!_.isArray(in_array)) {
-			throw new TypeError(
-				MSG.IN_ARRAY_NOT_ARRAY + "EnumArrayProperty.setRange",
-			);
+			throw new TypeError(MSG.IN_ARRAY_NOT_ARRAY + "EnumArrayProperty.setRange");
 		}
 
 		var internalValueArray = [];
-		_.each(in_array, (element) => {
-			internalValueArray.push(this._convertEnumToInternalValue(element));
+		var that = this;
+		_.each(in_array, function (element) {
+			internalValueArray.push(that._convertEnumToInternalValue(element));
 		});
-		ValueArrayProperty.prototype.setRange.call(
-			this,
-			in_offset,
-			internalValueArray,
-		);
+		ValueArrayProperty.prototype.setRange.call(this, in_offset, internalValueArray);
 	}
 
 	/**
@@ -175,14 +163,10 @@ export class EnumArrayProperty extends ValueArrayProperty {
 	 */
 	getEnumStrings(in_offset, in_length) {
 		if (!_.isNumber(in_offset)) {
-			throw new TypeError(
-				MSG.NOT_NUMBER + "in_offset, method: EnumArray.getEnumStrings",
-			);
+			throw new TypeError(MSG.NOT_NUMBER + "in_offset, method: EnumArray.getEnumStrings");
 		}
 		if (!_.isNumber(in_length)) {
-			throw new TypeError(
-				MSG.NOT_NUMBER + "in_length, method: EnumArray.getEnumStrings",
-			);
+			throw new TypeError(MSG.NOT_NUMBER + "in_length, method: EnumArray.getEnumStrings");
 		}
 
 		var result = [];

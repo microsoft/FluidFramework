@@ -4,21 +4,21 @@
  */
 
 import {
+	type ITreeCursorSynchronous,
 	forEachField,
 	forEachNode,
-	type ITreeCursorSynchronous,
 } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 import type { FluidSerializableReadOnly } from "../../valueUtilities.js";
 
 import type { FieldBatch } from "./fieldBatch.js";
 import {
+	FieldBatchFormatVersion,
 	type EncodedFieldBatch,
 	type EncodedFieldBatchV1,
 	type EncodedFieldBatchV2,
 	type EncodedNestedArrayShape,
 	type EncodedNodeShape,
-	FieldBatchFormatVersion,
 } from "./format.js";
 import type { ShapeIndex } from "./formatGeneric.js";
 
@@ -76,9 +76,7 @@ const anyArray: EncodedNestedArrayShape = treeIndex;
  * Since this shape contains no information about the actual schema, all schema/shape information is inline in the data:
  * that is why this encoding is called "uncompressed".
  */
-function encodeSequence(
-	cursor: ITreeCursorSynchronous,
-): FluidSerializableReadOnly[] {
+function encodeSequence(cursor: ITreeCursorSynchronous): FluidSerializableReadOnly[] {
 	const data: FluidSerializableReadOnly[] = [];
 	forEachNode(cursor, () => {
 		data.push(cursor.type);

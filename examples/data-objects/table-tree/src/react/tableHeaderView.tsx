@@ -4,21 +4,17 @@
  */
 
 import {
+	TableHeader,
+	TableRow,
+	TableHeaderCell,
+	Input,
 	Button,
 	Dropdown,
-	Input,
 	Option,
-	TableHeader,
-	TableHeaderCell,
-	TableRow,
 } from "@fluentui/react-components";
-import {
-	Add24Regular,
-	Checkmark24Regular,
-	Delete24Regular,
-} from "@fluentui/react-icons";
-import { useTree } from "@fluidframework/react/alpha";
+import { Add24Regular, Checkmark24Regular, Delete24Regular } from "@fluentui/react-icons";
 import React, { type DragEvent, useState } from "react";
+import { useTree } from "@fluidframework/react/alpha";
 
 import { Column, type Table } from "../schema.js";
 
@@ -104,13 +100,9 @@ export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 						onDragOver={onColumnDragOver}
 						onDrop={() => onColumnDrop(index)}
 					>
-						<div
-							style={{ display: "flex", flexDirection: "column", gap: "6px" }}
-						>
+						<div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
 							<div style={{ display: "flex", gap: "4px", width: "100%" }}>
-								<span style={{ wordBreak: "break-word" }}>
-									{col.props.label ?? col.id}
-								</span>
+								<span style={{ wordBreak: "break-word" }}>{col.props.label ?? col.id}</span>
 								<Button
 									appearance="subtle"
 									size="small"

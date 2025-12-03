@@ -14,9 +14,9 @@ export class PropertyUtils {
 	 * @return {Array.<property-properties.BaseProperty>} The list of properties that passed the predicate
 	 * function
 	 */
-	static gatherProperties = (in_rootProperty, in_predicate) => {
+	static gatherProperties = function (in_rootProperty, in_predicate) {
 		var gatheredProperties = {};
-		in_rootProperty.traverseDown((property, path) => {
+		in_rootProperty.traverseDown(function (property, path) {
 			if (in_predicate(property)) {
 				gatheredProperties[path] = property;
 			}

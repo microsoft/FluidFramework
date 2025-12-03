@@ -59,9 +59,7 @@ export interface FieldMapObject<TChild> {
  * Json comparable tree node, generic over child type.
  * Json compatibility assumes `TChild` is also json compatible.
  */
-export interface GenericTreeNode<TChild>
-	extends GenericFieldsNode<TChild>,
-		NodeData {}
+export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, NodeData {}
 
 /**
  * Json comparable field collection, generic over child type.
@@ -92,11 +90,8 @@ export function getGenericTreeField<T>(
 	const children = getGenericTreeFieldMap(node, createIfMissing);
 
 	// Do not just read field and check for undefined: see warning on FieldMapObject.
-	if (Object.hasOwn(children, key)) {
-		return (
-			children[key] ??
-			fail(0xaed /* This wont be undefined due to the check above */)
-		);
+	if (Object.prototype.hasOwnProperty.call(children, key)) {
+		return children[key] ?? fail(0xaed /* This wont be undefined due to the check above */);
 	}
 	// Handle missing field:
 	if (createIfMissing === false) {
@@ -147,9 +142,7 @@ export function setGenericTreeField<T>(
 /**
  * Returns keys for fields of `tree`.
  */
-export function genericTreeKeys<T>(
-	tree: GenericFieldsNode<T>,
-): readonly FieldKey[] {
+export function genericTreeKeys<T>(tree: GenericFieldsNode<T>): readonly FieldKey[] {
 	const fields = tree.fields;
 	// This function is used when iterating through a tree.
 	// This means that this is often called on nodes with no keys
@@ -172,7 +165,7 @@ export function genericTreeDeleteIfEmpty<T>(
 	removeMapObject: boolean,
 ): void {
 	const children = getGenericTreeFieldMap(node, false);
-	if (Object.hasOwn(children, key)) {
+	if (Object.prototype.hasOwnProperty.call(children, key)) {
 		if (children[key]?.length === 0) {
 			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 			delete children[key];

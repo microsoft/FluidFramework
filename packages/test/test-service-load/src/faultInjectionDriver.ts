@@ -4,40 +4,28 @@
  */
 
 import { createEmitter, TypedEventEmitter } from "@fluid-internal/client-utils";
-import type {
-	IDisposable,
-	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IClient, ISummaryTree } from "@fluidframework/driver-definitions";
+import { IClient, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
+	IDocumentDeltaConnection,
+	IDocumentDeltaConnectionEvents,
+	IDocumentDeltaStorageService,
+	IDocumentService,
+	IDocumentServiceEvents,
+	IDocumentServiceFactory,
+	IDocumentStorageService,
+	IResolvedUrl,
+	ISnapshotFetchOptions,
 	DriverErrorTypes,
-	type IDocumentDeltaConnection,
-	type IDocumentDeltaConnectionEvents,
-	type IDocumentDeltaStorageService,
-	type IDocumentMessage,
-	type IDocumentService,
-	type IDocumentServiceEvents,
-	type IDocumentServiceFactory,
-	type IDocumentStorageService,
-	type INack,
-	type IResolvedUrl,
-	type ISnapshotFetchOptions,
+	IDocumentMessage,
+	INack,
 	NackErrorType,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	LoggingError,
-	UsageError,
-	wrapError,
-} from "@fluidframework/telemetry-utils/internal";
+import { LoggingError, UsageError, wrapError } from "@fluidframework/telemetry-utils/internal";
 
-export class FaultInjectionDocumentServiceFactory
-	implements IDocumentServiceFactory
-{
-	private readonly _documentServices = new Map<
-		IResolvedUrl,
-		FaultInjectionDocumentService
-	>();
+export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {
+	private readonly _documentServices = new Map<IResolvedUrl, FaultInjectionDocumentService>();
 
 	public get documentServices() {
 		return this._documentServices;
@@ -56,10 +44,7 @@ export class FaultInjectionDocumentServiceFactory
 			clientIsSummarizer,
 		);
 		const ds = new FaultInjectionDocumentService(internal);
-		assert(
-			!this._documentServices.has(ds.resolvedUrl),
-			"one ds per resolved url instance",
-		);
+		assert(!this._documentServices.has(ds.resolvedUrl), "one ds per resolved url instance");
 		this._documentServices.set(ds.resolvedUrl, ds);
 		return ds;
 	}
@@ -163,9 +148,7 @@ export class FaultInjectionDocumentService
 			this.internalEvents.on("disposed", onDisposed);
 		});
 
-	async connectToDeltaStream(
-		client: IClient,
-	): Promise<IDocumentDeltaConnection> {
+	async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
 		assert(
 			this._currentDeltaStream?.disposed !== false,
 			"Document service factory should only have one open connection",
@@ -182,10 +165,7 @@ export class FaultInjectionDocumentService
 
 	async connectToStorage(): Promise<IDocumentStorageService> {
 		const internal = await this.internal.connectToStorage();
-		this._currentStorage = new FaultInjectionDocumentStorageService(
-			internal,
-			this.online,
-		);
+		this._currentStorage = new FaultInjectionDocumentStorageService(internal, this.online);
 		return this._currentStorage;
 	}
 
@@ -292,9 +272,7 @@ export class FaultInjectionDocumentDeltaConnection
 	 * Disconnects the given delta connection
 	 */
 	public dispose(): void {
-		this.events.forEach((listener, event) =>
-			this.internal.off(event, listener),
-		);
+		this.events.forEach((listener, event) => this.internal.off(event, listener));
 		this.internal.dispose();
 	}
 
@@ -323,10 +301,7 @@ export class FaultInjectionDocumentDeltaConnection
 			this.listenerCount("error") > 0,
 			"emitting error with no listeners will crash the process",
 		);
-		this.emit(
-			"error",
-			new FaultInjectionError("FaultInjectionError", canRetry),
-		);
+		this.emit("error", new FaultInjectionError("FaultInjectionError", canRetry));
 	}
 
 	public injectDisconnect() {
@@ -367,19 +342,11 @@ export class FaultInjectionDocumentDeltaStorageService
 		if (!this.online) {
 			throwOfflineError();
 		}
-		return this.internal.fetchMessages(
-			from,
-			to,
-			abortSignal,
-			cachedOnly,
-			fetchReason,
-		);
+		return this.internal.fetchMessages(from, to, abortSignal, cachedOnly, fetchReason);
 	}
 }
 
-export class FaultInjectionDocumentStorageService
-	implements IDocumentStorageService
-{
+export class FaultInjectionDocumentStorageService implements IDocumentStorageService {
 	constructor(
 		private readonly internal: IDocumentStorageService,
 		private online: boolean,
@@ -417,12 +384,7 @@ export class FaultInjectionDocumentStorageService
 
 	public async getVersions(versionId, count, scenarioName, fetchSource) {
 		this.throwIfOffline();
-		return this.internal.getVersions(
-			versionId,
-			count,
-			scenarioName,
-			fetchSource,
-		);
+		return this.internal.getVersions(versionId, count, scenarioName, fetchSource);
 	}
 
 	public async createBlob(file: ArrayBufferLike) {
@@ -439,10 +401,7 @@ export class FaultInjectionDocumentStorageService
 		return this.internal.readBlob(id);
 	}
 
-	public async uploadSummaryWithContext(
-		summary: ISummaryTree,
-		context,
-	): Promise<string> {
+	public async uploadSummaryWithContext(summary: ISummaryTree, context): Promise<string> {
 		this.throwIfOffline();
 		return this.internal.uploadSummaryWithContext(summary, context);
 	}

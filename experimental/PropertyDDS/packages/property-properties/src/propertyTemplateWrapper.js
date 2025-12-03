@@ -74,8 +74,7 @@ export class PropertyTemplateWrapper {
 	 */
 	getCompiledTemplate(in_propertyFactory) {
 		if (this._compiledPropertyTemplate === undefined) {
-			this._compiledPropertyTemplate =
-				this._contructCompiledTemplate(in_propertyFactory);
+			this._compiledPropertyTemplate = this._contructCompiledTemplate(in_propertyFactory);
 		}
 		return this._compiledPropertyTemplate;
 	}
@@ -124,9 +123,7 @@ export class PropertyTemplateWrapper {
 			if (currentCreationType === undefined) {
 				this._objectCreationType = in_typeid;
 			} else if (currentCreationType !== in_typeid) {
-				throw new Error(
-					MSG.ONLY_ONE_CREATION_TYPE + currentCreationType + ", " + in_typeid,
-				);
+				throw new Error(MSG.ONLY_ONE_CREATION_TYPE + currentCreationType + ", " + in_typeid);
 			}
 		}
 	}
@@ -231,11 +228,7 @@ export class PropertyTemplateWrapper {
 		}
 
 		/* Merges properties from parents into the properties of the child */
-		const constructSubProperties = (
-			in_template,
-			in_parentsPropertiesById,
-			fieldName,
-		) => {
+		const constructSubProperties = (in_template, in_parentsPropertiesById, fieldName) => {
 			const propertyKeys = Object.keys(in_parentsPropertiesById);
 
 			if (in_template[fieldName] === undefined && propertyKeys.length !== 0) {
@@ -325,8 +318,8 @@ export class PropertyTemplateWrapper {
 
 		const mergeSubProperties = (child, parent, fieldName) => {
 			const parentPropertiesById = {};
-			const parentProperties = parent[fieldName];
-			const properties = child[fieldName] || [];
+			let parentProperties = parent[fieldName];
+			let properties = child[fieldName] || [];
 			if (parentProperties) {
 				for (let j = 0; j < parentProperties.length; ++j) {
 					const parentProperty = parentProperties[j];

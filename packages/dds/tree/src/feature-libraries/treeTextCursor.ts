@@ -6,16 +6,16 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	aboveRootPlaceholder,
 	CursorLocationType,
 	type DetachedField,
-	detachedFieldAsKey,
-	genericTreeKeys,
-	getGenericTreeField,
 	type IForestSubscription,
 	type ITreeCursor,
 	type ITreeCursorSynchronous,
 	type JsonableTree,
+	aboveRootPlaceholder,
+	detachedFieldAsKey,
+	genericTreeKeys,
+	getGenericTreeField,
 	mapCursorField,
 	moveToDetachedField,
 	rootField,
@@ -61,9 +61,7 @@ import {
  * this takes in data in a specific format that is json compatible (except for FluidHandle values).
  * That is distinct from treating arbitrary JSON data as a tree in the JSON domain.
  */
-export function cursorForJsonableTreeNode(
-	root: JsonableTree,
-): ITreeCursorSynchronous {
+export function cursorForJsonableTreeNode(root: JsonableTree): ITreeCursorSynchronous {
 	return stackTreeNodeCursor(adapter, root);
 }
 
@@ -94,10 +92,7 @@ export const adapter: CursorAdapter<JsonableTree> = {
  * Extract a JsonableTree from the contents of the given ITreeCursor's current node.
  */
 export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
-	assert(
-		cursor.mode === CursorLocationType.Nodes,
-		0x3ba /* must start at node */,
-	);
+	assert(cursor.mode === CursorLocationType.Nodes, 0x3ba /* must start at node */);
 	const node: JsonableTree =
 		cursor.value !== undefined
 			? {
@@ -109,15 +104,8 @@ export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
 				};
 
 	// Normalize object by only including fields that are required.
-	for (
-		let inFields = cursor.firstField();
-		inFields;
-		inFields = cursor.nextField()
-	) {
-		const field: JsonableTree[] = mapCursorField(
-			cursor,
-			jsonableTreeFromCursor,
-		);
+	for (let inFields = cursor.firstField(); inFields; inFields = cursor.nextField()) {
+		const field: JsonableTree[] = mapCursorField(cursor, jsonableTreeFromCursor);
 		setGenericTreeField(node, cursor.getFieldKey(), field);
 	}
 	return node;
@@ -126,13 +114,8 @@ export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
 /**
  * Extract a JsonableTree from the contents of the given ITreeCursor's current node.
  */
-export function jsonableTreeFromFieldCursor(
-	cursor: ITreeCursor,
-): JsonableTree[] {
-	assert(
-		cursor.mode === CursorLocationType.Fields,
-		0x7ca /* must start at field */,
-	);
+export function jsonableTreeFromFieldCursor(cursor: ITreeCursor): JsonableTree[] {
+	assert(cursor.mode === CursorLocationType.Fields, 0x7ca /* must start at field */);
 	return mapCursorField(cursor, jsonableTreeFromCursor);
 }
 
@@ -142,9 +125,7 @@ export function jsonableTreeFromFieldCursor(
  * This is not a time or memory efficient way to pass around forest content:
  * its intended for debugging and testing purposes when forest content is needed in a human readable serializable format.
  */
-export function jsonableTreeFromForest(
-	forest: IForestSubscription,
-): JsonableTree[] {
+export function jsonableTreeFromForest(forest: IForestSubscription): JsonableTree[] {
 	const readCursor = forest.allocateCursor();
 	moveToDetachedField(forest, readCursor);
 	const jsonable = jsonableTreeFromFieldCursor(readCursor);

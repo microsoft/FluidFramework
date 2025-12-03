@@ -118,8 +118,7 @@ export const getPushRefreshTokenFn = (
 	server: string,
 	clientConfig: IPublicClientConfig,
 	tokens: IOdspTokens,
-): (() => Promise<string>) =>
-	getRefreshTokenFn(pushScope, server, clientConfig, tokens);
+): (() => Promise<string>) => getRefreshTokenFn(pushScope, server, clientConfig, tokens);
 
 // eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
@@ -215,12 +214,9 @@ interface AadOauth2TokenError {
 	correlation_id: string;
 }
 
-function isAccessTokenError(
-	parsedResponse: unknown,
-): parsedResponse is AadOauth2TokenError {
+function isAccessTokenError(parsedResponse: unknown): parsedResponse is AadOauth2TokenError {
 	return (
-		typeof (parsedResponse as Partial<AadOauth2TokenError>).error ===
-			"string" &&
+		typeof (parsedResponse as Partial<AadOauth2TokenError>).error === "string" &&
 		Array.isArray((parsedResponse as Partial<AadOauth2TokenError>).error_codes)
 	);
 }
@@ -265,14 +261,9 @@ export async function authRequestWithRetry(
 	authRequestInfo: IOdspAuthRequestInfo,
 	requestCallback: (config: RequestInit) => Promise<Response>,
 ): Promise<Response> {
-	const result = await requestCallback(
-		createConfig(authRequestInfo.accessToken),
-	);
+	const result = await requestCallback(createConfig(authRequestInfo.accessToken));
 
-	if (
-		authRequestInfo.refreshTokenFn &&
-		(result.status === 401 || result.status === 403)
-	) {
+	if (authRequestInfo.refreshTokenFn && (result.status === 401 || result.status === 403)) {
 		// Unauthorized, try to refresh the token
 		const refreshedAccessToken = await authRequestInfo.refreshTokenFn();
 		return requestCallback(createConfig(refreshedAccessToken));

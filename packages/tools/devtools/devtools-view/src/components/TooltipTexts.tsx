@@ -23,8 +23,8 @@ export const userIdTooltipText =
  */
 export const containerStatusTooltipText = (
 	<div>
-		Represents the current state of the Container with regards to its connection
-		to the Fluid Service. For more information, see{" "}
+		Represents the current state of the Container with regards to its connection to the Fluid
+		Service. For more information, see{" "}
 		<Link
 			href="https://fluidframework.com/docs/build/container-states-events"
 			target="_blank"

@@ -20,14 +20,8 @@ describe("mapTree", () => {
 				depth === 0
 					? []
 					: [
-							[
-								brand("a"),
-								[generateMapTree(depth - 1), generateMapTree(depth - 1)],
-							],
-							[
-								brand("b"),
-								[generateMapTree(depth - 1), generateMapTree(depth - 1)],
-							],
+							[brand("a"), [generateMapTree(depth - 1), generateMapTree(depth - 1)]],
+							[brand("b"), [generateMapTree(depth - 1), generateMapTree(depth - 1)]],
 						],
 			),
 		};

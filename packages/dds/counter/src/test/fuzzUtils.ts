@@ -77,24 +77,17 @@ function makeReducer(): Reducer<CounterOperation, FuzzTestState> {
 }
 
 function assertEqualCounters(a: ISharedCounter, b: ISharedCounter): void {
-	assert.equal(
-		a.value,
-		b.value,
-		`Counter values do not match: ${a.value} !== ${b.value}`,
-	);
+	assert.equal(a.value, b.value, `Counter values do not match: ${a.value} !== ${b.value}`);
 }
 
 /**
  * Base fuzz model for Counter
  */
-export const baseCounterModel: DDSFuzzModel<
-	CounterFactory,
-	CounterOperation,
-	FuzzTestState
-> = {
-	workloadName: "default configuration",
-	generatorFactory: () => take(100, makeOperationGenerator()),
-	reducer: makeReducer(),
-	validateConsistency: (a, b) => assertEqualCounters(a.channel, b.channel),
-	factory: new CounterFactory(),
-};
+export const baseCounterModel: DDSFuzzModel<CounterFactory, CounterOperation, FuzzTestState> =
+	{
+		workloadName: "default configuration",
+		generatorFactory: () => take(100, makeOperationGenerator()),
+		reducer: makeReducer(),
+		validateConsistency: (a, b) => assertEqualCounters(a.channel, b.channel),
+		factory: new CounterFactory(),
+	};

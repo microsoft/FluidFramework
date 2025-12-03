@@ -51,9 +51,7 @@ describe("AudienceHistoryTable component tests", () => {
 			},
 		];
 
-		render(
-			<AudienceHistoryTable audienceHistoryItems={audienceHistoryItems} />,
-		);
+		render(<AudienceHistoryTable audienceHistoryItems={audienceHistoryItems} />);
 
 		const tableBodyRows = await getTableBodyRows();
 		expect(tableBodyRows).toHaveLength(3);
@@ -62,9 +60,7 @@ describe("AudienceHistoryTable component tests", () => {
 
 describe("AudienceHistoryTable Accessibility Check", () => {
 	it("AudienceHistoryTable is accessible", async () => {
-		const { container } = render(
-			<AudienceHistoryTable audienceHistoryItems={[]} />,
-		);
+		const { container } = render(<AudienceHistoryTable audienceHistoryItems={[]} />);
 		await assertNoAccessibilityViolations(container);
 	});
 

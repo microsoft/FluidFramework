@@ -28,10 +28,7 @@ describe("findAncestor", () => {
 		let foundAncestor = findAncestor(descendant, (n) => n === expectedAncestor);
 		assert.equal(foundAncestor, expectedAncestor);
 		const path: Node[] = [];
-		foundAncestor = findAncestor(
-			[descendant, path],
-			(n) => n === expectedAncestor,
-		);
+		foundAncestor = findAncestor([descendant, path], (n) => n === expectedAncestor);
 		assert.equal(foundAncestor, expectedAncestor);
 		assert.deepEqual(path, expectedPath);
 	}
@@ -97,11 +94,7 @@ describe("findCommonAncestor", () => {
 		const foundPathA: Node[] = [];
 		const foundPathB: Node[] = [];
 		const foundAncestor = findCommonAncestor([a, foundPathA], [b, foundPathB]);
-		assert.equal(
-			foundAncestor,
-			expectedAncestor,
-			"Found unexpected ancestor node",
-		);
+		assert.equal(foundAncestor, expectedAncestor, "Found unexpected ancestor node");
 		assert.deepEqual(foundPathA, expectedPathA);
 		assert.deepEqual(foundPathB, expectedPathB);
 	}

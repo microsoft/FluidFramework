@@ -75,11 +75,7 @@ describe("TimeoutPromise", () => {
 					reject: false,
 					value: 1,
 				});
-				assert.equal(
-					value,
-					1,
-					"Timeout should have returned the value given in options",
-				);
+				assert.equal(value, 1, "Timeout should have returned the value given in options");
 			} catch (e: any) {
 				assert(false, `should not have timed out: ${e.message}`);
 			}
@@ -223,9 +219,7 @@ describe("TimeoutPromise", () => {
 		describe("Validate hooks", () => {
 			// This suite makes sure that timeoutPromise works as expected inside mocha hooks.
 
-			async function hookValidationFunction(
-				this: Mocha.Context,
-			): Promise<void> {
+			async function hookValidationFunction(this: Mocha.Context): Promise<void> {
 				this.timeout(25);
 				try {
 					await timeoutPromise((resolve) => {

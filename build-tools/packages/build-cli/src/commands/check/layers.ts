@@ -52,11 +52,7 @@ export class CheckLayers extends BaseCommand<typeof CheckLayers> {
 
 		// Write human-readable package list organized by layer
 		if (flags.md !== undefined) {
-			const packagesMdFilePath: string = path.join(
-				resolvedRoot,
-				flags.md,
-				packagesMdFileName,
-			);
+			const packagesMdFilePath: string = path.join(resolvedRoot, flags.md, packagesMdFileName);
 			await writeFileWithLineFeeds(
 				packagesMdFilePath,
 				layerGraph.generatePackageLayersMarkdown(resolvedRoot),

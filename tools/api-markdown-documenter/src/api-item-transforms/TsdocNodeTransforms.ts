@@ -7,29 +7,29 @@ import type { ApiItem } from "@microsoft/api-extractor-model";
 import {
 	type DocCodeSpan,
 	type DocDeclarationReference,
-	type DocEscapedText,
 	type DocFencedCode,
-	type DocHtmlEndTag,
-	type DocHtmlStartTag,
-	type DocInlineTag,
 	type DocLinkTag,
 	type DocNode,
 	DocNodeKind,
 	type DocParagraph,
 	type DocPlainText,
 	type DocSection,
+	type DocInlineTag,
+	type DocHtmlEndTag,
+	type DocHtmlStartTag,
+	type DocEscapedText,
 } from "@microsoft/tsdoc";
 import type {
-	BlockContent,
 	Break,
+	BlockContent,
 	Code,
 	InlineCode,
-	Link,
 	List,
 	ListItem,
 	Paragraph,
 	PhrasingContent,
 	Text,
+	Link,
 } from "mdast";
 
 import type { LoggingConfiguration } from "../LoggingConfiguration.js";
@@ -45,8 +45,7 @@ import { resolveSymbolicLink } from "./utilities/index.js";
 /**
  * Options for {@link @microsoft/tsdoc#DocNode} transformations.
  */
-export interface TsdocNodeTransformOptions
-	extends Required<LoggingConfiguration> {
+export interface TsdocNodeTransformOptions extends Required<LoggingConfiguration> {
 	/**
 	 * The API item with which the documentation node(s) are associated.
 	 */
@@ -60,9 +59,7 @@ export interface TsdocNodeTransformOptions
 	 * @returns The appropriate URL target if the reference can be resolved.
 	 * Otherwise, `undefined`.
 	 */
-	readonly resolveApiReference: (
-		codeDestination: DocDeclarationReference,
-	) => Link | undefined;
+	readonly resolveApiReference: (codeDestination: DocDeclarationReference) => Link | undefined;
 }
 
 /**
@@ -95,10 +92,7 @@ export function transformTsdoc(
 	contextApiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): BlockContent[] {
-	const tsdocTransformConfig = getTsdocNodeTransformationOptions(
-		contextApiItem,
-		config,
-	);
+	const tsdocTransformConfig = getTsdocNodeTransformationOptions(contextApiItem, config);
 	return transformTsdocSection(node, tsdocTransformConfig);
 }
 
@@ -137,10 +131,7 @@ function transformTsdocSectionContent(
 		}
 		case DocNodeKind.HtmlStartTag:
 		case DocNodeKind.HtmlEndTag: {
-			return transformTsdocHtmlTag(
-				node as DocHtmlStartTag | DocHtmlEndTag,
-				options,
-			);
+			return transformTsdocHtmlTag(node as DocHtmlStartTag | DocHtmlEndTag, options);
 		}
 		case DocNodeKind.Paragraph: {
 			return transformTsdocParagraph(node as DocParagraph, options);
@@ -242,10 +233,7 @@ function transformTsdocParagraphContent(
 		}
 		case DocNodeKind.HtmlStartTag:
 		case DocNodeKind.HtmlEndTag: {
-			return transformTsdocHtmlTag(
-				node as DocHtmlStartTag | DocHtmlEndTag,
-				options,
-			);
+			return transformTsdocHtmlTag(node as DocHtmlStartTag | DocHtmlEndTag, options);
 		}
 		case DocNodeKind.InheritDocTag: {
 			options.logger?.error(
@@ -366,8 +354,7 @@ function transformTsdocLinkTag(
 
 		if (itemLink === undefined) {
 			// If the code link could not be resolved, print the unresolved text in italics.
-			const linkText =
-				input.linkText?.trim() ?? input.codeDestination.emitAsTsdoc().trim();
+			const linkText = input.linkText?.trim() ?? input.codeDestination.emitAsTsdoc().trim();
 			return {
 				type: "emphasis",
 				children: [
@@ -428,9 +415,7 @@ function transformTsdocLinkTag(
  * for use in `{@link}` and `{@inheritDoc}` tags, so we will simply ignore them here. I.e. we
  * will return `undefined`.
  */
-function transformTsdocInlineTag(
-	node: DocInlineTag,
-): PhrasingContent | undefined {
+function transformTsdocInlineTag(node: DocInlineTag): PhrasingContent | undefined {
 	if (node.tagName === "@label") {
 		return undefined;
 	}
@@ -491,10 +476,7 @@ function parseContentAsBlock(nodes: PhrasingContent[]): (Paragraph | List)[] {
 		readonly content: PhrasingContent[];
 	}
 
-	type ParsedLine =
-		| ParsedParagraphLine
-		| ParsedUnorderedListItem
-		| ParsedOrderedListItem;
+	type ParsedLine = ParsedParagraphLine | ParsedUnorderedListItem | ParsedOrderedListItem;
 
 	const parsedSourceLines: ParsedLine[] = [];
 	let currentLineState: ParsedLine | undefined;
@@ -516,13 +498,9 @@ function parseContentAsBlock(nodes: PhrasingContent[]): (Paragraph | List)[] {
 					// Determine if the list item is ordered or unordered.
 					// Note: Markdown does not preserve explicit numbering, so we
 					// don't need to keep track of the parsed numbers here.
-					const orderedListItemDelimiterMatch =
-						listItemDelimiter.match(/^\d+([).])$/);
+					const orderedListItemDelimiterMatch = listItemDelimiter.match(/^\d+([).])$/);
 
-					const leadingWhitespaceModified = leadingWhitespace.replace(
-						/\t/g,
-						"  ",
-					);
+					const leadingWhitespaceModified = leadingWhitespace.replace(/\t/g, "  ");
 					const indentationLevel = leadingWhitespaceModified.length / 2; // Assuming 2 spaces per indentation level
 
 					currentLineState = orderedListItemDelimiterMatch
@@ -659,20 +637,15 @@ function parseContentAsBlock(nodes: PhrasingContent[]): (Paragraph | List)[] {
 				while (
 					iOutput < outputLines.length &&
 					outputLines[iOutput].type === current.type &&
-					(
-						outputLines[iOutput] as
-							| ParsedOrderedListItem
-							| ParsedUnorderedListItem
-					).delimiter === current.delimiter
+					(outputLines[iOutput] as ParsedOrderedListItem | ParsedUnorderedListItem)
+						.delimiter === current.delimiter
 				) {
 					items.push({
 						type: "listItem",
 						children: [
 							{
 								type: "paragraph",
-								children: combineAdjacentPlainText(
-									outputLines[iOutput].content,
-								),
+								children: combineAdjacentPlainText(outputLines[iOutput].content),
 							},
 						],
 					});
@@ -699,9 +672,7 @@ function parseContentAsBlock(nodes: PhrasingContent[]): (Paragraph | List)[] {
  * Collapses adjacent groups of 1+ {@link PlainTextNode}s into a single line break node to reduce clutter
  * in output tree.
  */
-function combineAdjacentPlainText(
-	nodes: readonly PhrasingContent[],
-): PhrasingContent[] {
+function combineAdjacentPlainText(nodes: readonly PhrasingContent[]): PhrasingContent[] {
 	if (nodes.length === 0) {
 		return [];
 	}

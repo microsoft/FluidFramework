@@ -3,12 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-	CollaborativeTextArea,
-	SharedStringHelper,
-} from "@fluid-example/example-utils";
+import { CollaborativeTextArea, SharedStringHelper } from "@fluid-example/example-utils";
 import type { SharedString } from "@fluidframework/sequence/legacy";
-import type React from "react";
+import React from "react";
 
 interface CollaborativeTextProps {
 	text: SharedString;
@@ -18,14 +15,10 @@ interface CollaborativeTextProps {
  * Collaborative text-area component.
  * @internal
  */
-export const CollaborativeTextView = (
-	props: CollaborativeTextProps,
-): React.ReactElement => {
+export const CollaborativeTextView = (props: CollaborativeTextProps): React.ReactElement => {
 	return (
 		<div className="text-area">
-			<CollaborativeTextArea
-				sharedStringHelper={new SharedStringHelper(props.text)}
-			/>
+			<CollaborativeTextArea sharedStringHelper={new SharedStringHelper(props.text)} />
 		</div>
 	);
 };

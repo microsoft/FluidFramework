@@ -62,8 +62,7 @@ export function addHeadingLinks(): (tree: Node) => void {
  * WARNING. It ensures that the pattern is not followed by only whitespace characters until the end of the line.
  * Additionally, it captures any whitespace characters that follow the matched pattern.
  */
-const ADMONITION_REGEX =
-	/(\[!(?:CAUTION|IMPORTANT|NOTE|TIP|WARNING)])(?!\s*$)\s*/gm;
+const ADMONITION_REGEX = /(\[!(?:CAUTION|IMPORTANT|NOTE|TIP|WARNING)])(?!\s*$)\s*/gm;
 
 /**
  * A regular expression to remove single line breaks from text. This is used to remove extraneous line breaks in text
@@ -109,10 +108,10 @@ export function stripSoftBreaks(): (tree: Node) => void {
  *
  * @param options - `heading` is a string or regex that a section's heading must match to be removed.
  */
-export function removeSectionContent(options: {
-	heading: string | RegExp;
-}): (tree: Root) => void {
-	return (tree: Root) => {
+export function removeSectionContent(options: { heading: string | RegExp }): (
+	tree: Root,
+) => void {
+	return function (tree: Root) {
 		headingRange(tree, options.heading, (start, _nodes, end, _info) => {
 			return [
 				start,
@@ -128,18 +127,14 @@ export function removeSectionContent(options: {
  *
  * @param options - The `level` property must be set to the level of heading to remove.
  */
-export function removeHeadingsAtLevel(options: {
-	level: 1 | 2 | 3 | 4 | 5 | 6;
-}): (tree: Root) => void {
+export function removeHeadingsAtLevel(options: { level: 1 | 2 | 3 | 4 | 5 | 6 }): (
+	tree: Root,
+) => void {
 	return (tree: Root) => {
 		visit(
 			tree,
 			"heading",
-			(
-				node: Heading,
-				index: number | undefined,
-				parent: Parent | undefined,
-			) => {
+			(node: Heading, index: number | undefined, parent: Parent | undefined) => {
 				if (node.depth === options.level && index !== undefined) {
 					parent?.children.splice(index, 1);
 					return [SKIP, index];
@@ -155,18 +150,14 @@ export function removeHeadingsAtLevel(options: {
  * @param options - `checkValue` is a string that will be compared against the link text. Only matching nodes will be
  * updated. `newUrl` is the new URL to assign to the link.
  */
-export function updateTocLinks(options: {
-	checkValue: string;
-	newUrl: string;
-}): (tree: Root) => void {
+export function updateTocLinks(options: { checkValue: string; newUrl: string }): (
+	tree: Root,
+) => void {
 	const { checkValue, newUrl } = options;
 
 	return (tree: Root) => {
 		visit(tree, "link", (node: Link) => {
-			if (
-				node.children?.[0].type === "text" &&
-				node.children[0].value === checkValue
-			) {
+			if (node.children?.[0].type === "text" && node.children[0].value === checkValue) {
 				node.url = newUrl;
 			}
 		});

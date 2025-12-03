@@ -10,9 +10,7 @@ const webpack = require("webpack");
 
 module.exports = (env) => {
 	const isProduction = env?.production;
-	const styleLocalIdentName = isProduction
-		? "[hash:base64:5]"
-		: "[local]-[hash:base64:5]";
+	const styleLocalIdentName = isProduction ? "[hash:base64:5]" : "[local]-[hash:base64:5]";
 
 	return merge(
 		{

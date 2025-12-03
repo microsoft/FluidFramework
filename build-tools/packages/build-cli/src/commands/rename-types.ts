@@ -7,11 +7,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { BaseCommand } from "../library/index.js";
 
-function renameFilesInDir(
-	dir: string,
-	extension: string,
-	newExtension: string,
-): void {
+function renameFilesInDir(dir: string, extension: string, newExtension: string): void {
 	const files = fs.readdirSync(dir);
 
 	for (const file of files) {
@@ -21,8 +17,7 @@ function renameFilesInDir(
 		if (fileStat.isDirectory()) {
 			renameFilesInDir(filePath, extension, newExtension); // recurse into directories
 		} else if (filePath.endsWith(extension)) {
-			const newFilePath =
-				filePath.slice(0, filePath.length - extension.length) + newExtension;
+			const newFilePath = filePath.slice(0, filePath.length - extension.length) + newExtension;
 			fs.renameSync(filePath, newFilePath);
 		}
 	}
@@ -34,11 +29,8 @@ function renameFilesInDir(
  * @remarks
  * This command is primarily used in our build system to rename type declarations in ESM builds.
  */
-export default class RenameTypesCommand extends BaseCommand<
-	typeof RenameTypesCommand
-> {
-	static readonly description =
-		`Renames type declaration files from .d.ts to .d.mts.`;
+export default class RenameTypesCommand extends BaseCommand<typeof RenameTypesCommand> {
+	static readonly description = `Renames type declaration files from .d.ts to .d.mts.`;
 	public async run(): Promise<void> {
 		renameFilesInDir("./lib", ".d.ts", ".d.mts");
 	}

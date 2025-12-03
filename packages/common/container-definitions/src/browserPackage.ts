@@ -3,18 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	IFluidPackage,
-	IFluidPackageEnvironment,
-} from "./fluidPackage.js";
+import type { IFluidPackage, IFluidPackageEnvironment } from "./fluidPackage.js";
 import { isFluidPackage } from "./fluidPackage.js";
 
 /**
  * A specific Fluid package environment for browsers
  * @legacy @beta
  */
-export interface IFluidBrowserPackageEnvironment
-	extends IFluidPackageEnvironment {
+export interface IFluidBrowserPackageEnvironment extends IFluidPackageEnvironment {
 	/**
 	 * The Universal Module Definition (umd) target specifics the scripts necessary for
 	 * loading a packages in a browser environment and finding its entry point.

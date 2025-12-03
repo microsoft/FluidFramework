@@ -11,23 +11,12 @@
  * Current version: 2.74.0
  */
 
-import type {
-	FullType,
-	MinimalType,
-	requireAssignableTo,
-	TypeOnly,
-} from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/cell-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> =
-	| TypeOnly<T>
-	| MinimalType<T>
-	| FullType<T>
-	| typeof old
-	| typeof current
-	| requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -36,10 +25,7 @@ declare type MakeUnusedImportErrorsGoAway<T> =
  * typeValidation.broken:
  * "Class_CellFactory": {"backCompat": false}
  */
-declare type current_as_old_for_Class_CellFactory = requireAssignableTo<
-	TypeOnly<current.CellFactory>,
-	TypeOnly<old.CellFactory>
->;
+declare type current_as_old_for_Class_CellFactory = requireAssignableTo<TypeOnly<current.CellFactory>, TypeOnly<old.CellFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -48,10 +34,7 @@ declare type current_as_old_for_Class_CellFactory = requireAssignableTo<
  * typeValidation.broken:
  * "ClassStatics_CellFactory": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_CellFactory = requireAssignableTo<
-	TypeOnly<typeof current.CellFactory>,
-	TypeOnly<typeof old.CellFactory>
->;
+declare type current_as_old_for_ClassStatics_CellFactory = requireAssignableTo<TypeOnly<typeof current.CellFactory>, TypeOnly<typeof old.CellFactory>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -60,11 +43,7 @@ declare type current_as_old_for_ClassStatics_CellFactory = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ICellAttributionOptions": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ICellAttributionOptions =
-	requireAssignableTo<
-		TypeOnly<old.ICellAttributionOptions>,
-		TypeOnly<current.ICellAttributionOptions>
-	>;
+declare type old_as_current_for_Interface_ICellAttributionOptions = requireAssignableTo<TypeOnly<old.ICellAttributionOptions>, TypeOnly<current.ICellAttributionOptions>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -73,11 +52,7 @@ declare type old_as_current_for_Interface_ICellAttributionOptions =
  * typeValidation.broken:
  * "Interface_ICellAttributionOptions": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ICellAttributionOptions =
-	requireAssignableTo<
-		TypeOnly<current.ICellAttributionOptions>,
-		TypeOnly<old.ICellAttributionOptions>
-	>;
+declare type current_as_old_for_Interface_ICellAttributionOptions = requireAssignableTo<TypeOnly<current.ICellAttributionOptions>, TypeOnly<old.ICellAttributionOptions>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -86,10 +61,7 @@ declare type current_as_old_for_Interface_ICellAttributionOptions =
  * typeValidation.broken:
  * "Interface_ICellOptions": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ICellOptions = requireAssignableTo<
-	TypeOnly<old.ICellOptions>,
-	TypeOnly<current.ICellOptions>
->;
+declare type old_as_current_for_Interface_ICellOptions = requireAssignableTo<TypeOnly<old.ICellOptions>, TypeOnly<current.ICellOptions>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -98,10 +70,7 @@ declare type old_as_current_for_Interface_ICellOptions = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ICellOptions": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ICellOptions = requireAssignableTo<
-	TypeOnly<current.ICellOptions>,
-	TypeOnly<old.ICellOptions>
->;
+declare type current_as_old_for_Interface_ICellOptions = requireAssignableTo<TypeOnly<current.ICellOptions>, TypeOnly<old.ICellOptions>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -110,10 +79,7 @@ declare type current_as_old_for_Interface_ICellOptions = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ISharedCell": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISharedCell = requireAssignableTo<
-	TypeOnly<old.ISharedCell>,
-	TypeOnly<current.ISharedCell>
->;
+declare type old_as_current_for_Interface_ISharedCell = requireAssignableTo<TypeOnly<old.ISharedCell>, TypeOnly<current.ISharedCell>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -122,10 +88,7 @@ declare type old_as_current_for_Interface_ISharedCell = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ISharedCell": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISharedCell = requireAssignableTo<
-	TypeOnly<current.ISharedCell>,
-	TypeOnly<old.ISharedCell>
->;
+declare type current_as_old_for_Interface_ISharedCell = requireAssignableTo<TypeOnly<current.ISharedCell>, TypeOnly<old.ISharedCell>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -134,11 +97,7 @@ declare type current_as_old_for_Interface_ISharedCell = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ISharedCellEvents": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISharedCellEvents =
-	requireAssignableTo<
-		TypeOnly<old.ISharedCellEvents<never>>,
-		TypeOnly<current.ISharedCellEvents<never>>
-	>;
+declare type old_as_current_for_Interface_ISharedCellEvents = requireAssignableTo<TypeOnly<old.ISharedCellEvents<never>>, TypeOnly<current.ISharedCellEvents<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -147,11 +106,7 @@ declare type old_as_current_for_Interface_ISharedCellEvents =
  * typeValidation.broken:
  * "Interface_ISharedCellEvents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISharedCellEvents =
-	requireAssignableTo<
-		TypeOnly<current.ISharedCellEvents<never>>,
-		TypeOnly<old.ISharedCellEvents<never>>
-	>;
+declare type current_as_old_for_Interface_ISharedCellEvents = requireAssignableTo<TypeOnly<current.ISharedCellEvents<never>>, TypeOnly<old.ISharedCellEvents<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -160,7 +115,4 @@ declare type current_as_old_for_Interface_ISharedCellEvents =
  * typeValidation.broken:
  * "Variable_SharedCell": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_SharedCell = requireAssignableTo<
-	TypeOnly<typeof current.SharedCell>,
-	TypeOnly<typeof old.SharedCell>
->;
+declare type current_as_old_for_Variable_SharedCell = requireAssignableTo<TypeOnly<typeof current.SharedCell>, TypeOnly<typeof old.SharedCell>>

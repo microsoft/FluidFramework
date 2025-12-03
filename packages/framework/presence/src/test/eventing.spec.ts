@@ -15,9 +15,17 @@ import type { GeneralDatastoreMessageContent, InternalWorkspaceAddress } from ".
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import type { ProcessSignalFunction } from "./testUtils.js";
-import { assertFinalExpectations, prepareConnectedPresence, attendeeId1 } from "./testUtils.js";
+import {
+	assertFinalExpectations,
+	prepareConnectedPresence,
+	attendeeId1,
+} from "./testUtils.js";
 
-import type { LatestRaw, LatestMapRaw, NotificationsManager } from "@fluidframework/presence/alpha";
+import type {
+	LatestRaw,
+	LatestMapRaw,
+	NotificationsManager,
+} from "@fluidframework/presence/alpha";
 import { Notifications, StateFactory } from "@fluidframework/presence/alpha";
 
 const datastoreUpdateType = "Pres:DatastoreUpdate";
@@ -164,7 +172,11 @@ describe("Presence", () => {
 
 		function verifyState(attendee: Attendee, verifications: StateVerification[]): void {
 			assert(attendee !== undefined, "Eventing does not reflect new attendee");
-			assert.strictEqual(attendee.attendeeId, "attendeeId-1", "Eventing does not reflect new attendee's attendeeId");
+			assert.strictEqual(
+				attendee.attendeeId,
+				"attendeeId-1",
+				"Eventing does not reflect new attendee's attendeeId",
+			);
 			assert.strictEqual(
 				attendee.getConnectionId(),
 				"client1",
@@ -174,7 +186,11 @@ describe("Presence", () => {
 			for (const { manager, expectedValue } of verifications) {
 				switch (manager) {
 					case "latest": {
-						assert.deepEqual(latest.getRemote(attendee).value, expectedValue, "Eventing does not reflect latest value");
+						assert.deepEqual(
+							latest.getRemote(attendee).value,
+							expectedValue,
+							"Eventing does not reflect latest value",
+						);
 						break;
 					}
 					case "latestMap": {
@@ -204,7 +220,13 @@ describe("Presence", () => {
 		beforeEach(() => {
 			logger = new EventAndErrorTrackingLogger();
 			runtime = new MockEphemeralRuntime(logger);
-			({ presence, processSignal } = prepareConnectedPresence(runtime, "attendeeId-2", "client2", clock, logger));
+			({ presence, processSignal } = prepareConnectedPresence(
+				runtime,
+				"attendeeId-2",
+				"client2",
+				clock,
+				logger,
+			));
 		});
 
 		afterEach(function (done: Mocha.Done) {
@@ -219,7 +241,9 @@ describe("Presence", () => {
 			clock.restore();
 		});
 
-		function setupSharedStatesWorkspace({ notifications }: { notifications?: true } = {}): void {
+		function setupSharedStatesWorkspace({
+			notifications,
+		}: { notifications?: true } = {}): void {
 			const statesWorkspace = presence.states.getWorkspace("name:testWorkspace", {
 				latest: StateFactory.latest({ local: { x: 0, y: 0, z: 0 } }),
 				latestMap: StateFactory.latestMap({
@@ -255,11 +279,14 @@ describe("Presence", () => {
 		}
 
 		function setupNotificationsWorkspace(): void {
-			const notificationsWorkspace = presence.notifications.getWorkspace("name:testWorkspace", {
-				testEvents: Notifications<{ newId: (id: number) => void }>({
-					newId: (_attendee: Attendee, _id: number) => {},
-				}),
-			});
+			const notificationsWorkspace = presence.notifications.getWorkspace(
+				"name:testWorkspace",
+				{
+					testEvents: Notifications<{ newId: (id: number) => void }>({
+						newId: (_attendee: Attendee, _id: number) => {},
+					}),
+				},
+			);
 			notificationManager = notificationsWorkspace.notifications.testEvents;
 		}
 
@@ -305,9 +332,18 @@ describe("Presence", () => {
 
 				function assertSpies(): void {
 					assert.ok(atteendeeEventSpy.calledOnce, "attendee event not fired exactly once");
-					assert.ok(latestUpdatedEventSpy.calledOnce, "latest update event not fired exactly once");
-					assert.ok(latestMapUpdatedEventSpy.calledOnce, "latestMap update event not fired exactly once");
-					assert.ok(itemUpdatedEventSpy.calledTwice, "latestMap item update event not fired exactly twice");
+					assert.ok(
+						latestUpdatedEventSpy.calledOnce,
+						"latest update event not fired exactly once",
+					);
+					assert.ok(
+						latestMapUpdatedEventSpy.calledOnce,
+						"latestMap update event not fired exactly once",
+					);
+					assert.ok(
+						itemUpdatedEventSpy.calledTwice,
+						"latestMap item update event not fired exactly twice",
+					);
 				}
 
 				function setupSpiesAndListeners(): void {
@@ -401,9 +437,18 @@ describe("Presence", () => {
 					}
 
 					function assertSpies(): void {
-						assert.ok(latestUpdatedEventSpy.calledOnce, `latest update event not fired exactly once`);
-						assert.ok(latestMapUpdatedEventSpy.calledOnce, "latestMap update event not fired exactly once");
-						assert.ok(itemRemovedEventSpy.calledOnce, "latestMap item remove event not fired exactly once");
+						assert.ok(
+							latestUpdatedEventSpy.calledOnce,
+							`latest update event not fired exactly once`,
+						);
+						assert.ok(
+							latestMapUpdatedEventSpy.calledOnce,
+							"latestMap update event not fired exactly once",
+						);
+						assert.ok(
+							itemRemovedEventSpy.calledOnce,
+							"latestMap item remove event not fired exactly once",
+						);
 					}
 
 					it("in a single workspace", async () => {
@@ -464,9 +509,18 @@ describe("Presence", () => {
 					}
 
 					function assertSpies(): void {
-						assert.ok(itemUpdatedEventSpy.calledOnce, `latest update event not fired exactly once`);
-						assert.ok(latestMapUpdatedEventSpy.calledOnce, "latestMap update event not fired exactly once");
-						assert.ok(itemRemovedEventSpy.calledOnce, "latestMap item remove event not fired exactly once");
+						assert.ok(
+							itemUpdatedEventSpy.calledOnce,
+							`latest update event not fired exactly once`,
+						);
+						assert.ok(
+							latestMapUpdatedEventSpy.calledOnce,
+							"latestMap update event not fired exactly once",
+						);
+						assert.ok(
+							itemRemovedEventSpy.calledOnce,
+							"latestMap item remove event not fired exactly once",
+						);
 					}
 
 					it("with removal first", () => {
@@ -609,12 +663,18 @@ describe("Presence", () => {
 				notificationSpy = spy();
 				const workspaceActivatedEventSpy = spy((workspaceAddress: WorkspaceAddress) => {
 					// Once activated, register the notifications workspace and listener for it's event
-					const notificationsWorkspace = presence.notifications.getWorkspace(workspaceAddress, {
-						testEvents: Notifications<{ newId: (id: number) => void }>({
-							newId: (_attendee: Attendee, _id: number) => {},
-						}),
-					});
-					notificationsWorkspace.notifications.testEvents.notifications.on("newId", notificationSpy);
+					const notificationsWorkspace = presence.notifications.getWorkspace(
+						workspaceAddress,
+						{
+							testEvents: Notifications<{ newId: (id: number) => void }>({
+								newId: (_attendee: Attendee, _id: number) => {},
+							}),
+						},
+					);
+					notificationsWorkspace.notifications.testEvents.notifications.on(
+						"newId",
+						notificationSpy,
+					);
 				});
 				presence.events.on("workspaceActivated", (workspaceAddress, type) => {
 					if (workspaceAddress === "name:testWorkspace" && type === "Notifications") {
@@ -628,8 +688,14 @@ describe("Presence", () => {
 				processUpdates(workspace);
 
 				// Verify
-				assert.ok(workspaceActivatedEventSpy.calledOnce, "workspace activated event not fired");
-				assert.ok(notificationSpy.calledOnce, `notification event not fired exactly once ${notificationSpy.callCount}`);
+				assert.ok(
+					workspaceActivatedEventSpy.calledOnce,
+					"workspace activated event not fired",
+				);
+				assert.ok(
+					notificationSpy.calledOnce,
+					`notification event not fired exactly once ${notificationSpy.callCount}`,
+				);
 			});
 
 			it("from an unregistered workspace arrives with state updates", async () => {

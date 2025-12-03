@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/dot-notation */
 
 import { delay } from "@fluidframework/core-utils/internal";
-import type { ICacheEntry } from "@fluidframework/driver-definitions/internal";
+import { ICacheEntry } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { openDB } from "idb";
 
@@ -55,10 +55,7 @@ export function setupDateMock(startMockTime: number) {
 }
 
 // Gets a mock cache entry from an item key, all entries returned will be for the same document.
-function getMockCacheEntry(
-	itemKey: string,
-	options?: { docId: string },
-): ICacheEntry {
+function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICacheEntry {
 	return {
 		file: {
 			docId: options?.docId ?? "myDocument",

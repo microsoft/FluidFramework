@@ -20,8 +20,8 @@ import type {
 } from "./internalInterfaces.js";
 import {
 	type ILocalValue,
-	migrateIfSharedSerializable,
 	serializeValue,
+	migrateIfSharedSerializable,
 } from "./localValues.js";
 import { findLast, findLastIndex } from "./utils.js";
 
@@ -53,10 +53,7 @@ interface IMapMessageHandler {
 /**
  * Union of all possible map operations.
  */
-export type IMapOperation =
-	| IMapSetOperation
-	| IMapDeleteOperation
-	| IMapClearOperation;
+export type IMapOperation = IMapSetOperation | IMapDeleteOperation | IMapClearOperation;
 
 /**
  * Defines the in-memory object structure to be used for the conversion to/from serialized.
@@ -125,8 +122,7 @@ export class MapKernel {
 	/**
 	 * Mapping of op types to message handlers.
 	 */
-	private readonly messageHandlers: ReadonlyMap<string, IMapMessageHandler> =
-		new Map();
+	private readonly messageHandlers: ReadonlyMap<string, IMapMessageHandler> = new Map();
 
 	/**
 	 * The data the map is storing, but only including sequenced values (no local pending
@@ -154,10 +150,7 @@ export class MapKernel {
 	public constructor(
 		private readonly serializer: IFluidSerializer,
 		private readonly handle: IFluidHandle,
-		private readonly submitMessage: (
-			op: unknown,
-			localOpMetadata: unknown,
-		) => void,
+		private readonly submitMessage: (op: unknown, localOpMetadata: unknown) => void,
 		private readonly isAttached: () => boolean,
 		private readonly eventEmitter: TypedEventEmitter<ISharedMapEvents>,
 	) {
@@ -180,9 +173,7 @@ export class MapKernel {
 	 * For this reason, it's important not to internally snapshot the output of the iterator for any purpose that
 	 * does not immediately (synchronously) consume that output and dispose of it.
 	 */
-	private readonly internalIterator = (): IterableIterator<
-		[string, ILocalValue]
-	> => {
+	private readonly internalIterator = (): IterableIterator<[string, ILocalValue]> => {
 		// We perform iteration in two steps - first by iterating over members of the sequenced data that are not
 		// optimistically deleted or cleared, and then over the pending data lifetimes that have not subsequently
 		// been deleted or cleared.  In total, this give an ordering of members based on when they were initially
@@ -199,8 +190,7 @@ export class MapKernel {
 				if (
 					!this.pendingData.some(
 						(entry) =>
-							entry.type === "clear" ||
-							(entry.type === "delete" && entry.key === key),
+							entry.type === "clear" || (entry.type === "delete" && entry.key === key),
 					)
 				) {
 					const optimisticValue = this.getOptimisticLocalValue(key);
@@ -218,8 +208,7 @@ export class MapKernel {
 				const nextPendingEntry = nextPending.value;
 				// A lifetime entry may need to be iterated.
 				if (nextPendingEntry.type === "lifetime") {
-					const nextPendingEntryIndex =
-						this.pendingData.indexOf(nextPendingEntry);
+					const nextPendingEntryIndex = this.pendingData.indexOf(nextPendingEntry);
 					const mostRecentDeleteOrClearIndex = findLastIndex(
 						this.pendingData,
 						(entry) =>
@@ -238,10 +227,7 @@ export class MapKernel {
 							!this.sequencedData.has(nextPendingEntry.key) ||
 							mostRecentDeleteOrClearIndex !== -1
 						) {
-							return {
-								value: [nextPendingEntry.key, latestPendingValue.value],
-								done: false,
-							};
+							return { value: [nextPendingEntry.key, latestPendingValue.value], done: false };
 						}
 					}
 				}
@@ -344,11 +330,7 @@ export class MapKernel {
 	 * @param callbackFn - Callback function
 	 */
 	public forEach(
-		callbackFn: (
-			value: unknown,
-			key: string,
-			map: Map<string, unknown>,
-		) => void,
+		callbackFn: (value: unknown, key: string, map: Map<string, unknown>) => void,
 	): void {
 		// It would be better to iterate over the data without a temp map.  However, we don't have a valid
 		// map to pass for the third argument here (really, it should probably should be a reference to the
@@ -364,9 +346,7 @@ export class MapKernel {
 	 * Compute the optimistic local value for a given key. This combines the sequenced data with
 	 * any pending changes that have not yet been sequenced.
 	 */
-	private readonly getOptimisticLocalValue = (
-		key: string,
-	): ILocalValue | undefined => {
+	private readonly getOptimisticLocalValue = (key: string): ILocalValue | undefined => {
 		const latestPendingEntry = findLast(
 			this.pendingData,
 			(entry) => entry.type === "clear" || entry.key === key,
@@ -537,16 +517,10 @@ export class MapKernel {
 	 * @param serializer - The serializer to use to serialize handles in its values.
 	 * @returns A JSON string containing serialized map data
 	 */
-	public getSerializedStorage(
-		serializer: IFluidSerializer,
-	): IMapDataObjectSerialized {
+	public getSerializedStorage(serializer: IFluidSerializer): IMapDataObjectSerialized {
 		const serializedMapData: IMapDataObjectSerialized = {};
 		for (const [key, localValue] of this.sequencedData.entries()) {
-			serializedMapData[key] = serializeValue(
-				localValue.value,
-				serializer,
-				this.handle,
-			);
+			serializedMapData[key] = serializeValue(localValue.value, serializer, this.handle);
 		}
 		return serializedMapData;
 	}
@@ -572,10 +546,7 @@ export class MapKernel {
 	 * also sent if we are asked to resubmit the message.
 	 * @returns True if the operation was submitted, false otherwise.
 	 */
-	public tryResubmitMessage(
-		op: IMapOperation,
-		localOpMetadata: unknown,
-	): boolean {
+	public tryResubmitMessage(op: IMapOperation, localOpMetadata: unknown): boolean {
 		const handler = this.messageHandlers.get(op.type);
 		if (handler === undefined) {
 			return false;
@@ -629,11 +600,7 @@ export class MapKernel {
 		if (handler === undefined) {
 			return false;
 		}
-		handler.process(
-			op,
-			local,
-			localOpMetadata as PendingLocalOpMetadata | undefined,
-		);
+		handler.process(op, local, localOpMetadata as PendingLocalOpMetadata | undefined);
 		return true;
 	}
 
@@ -676,10 +643,7 @@ export class MapKernel {
 				0xbf3 /* Unexpected pending data for set/delete op */,
 			);
 			if (pendingEntry.type === "delete") {
-				assert(
-					pendingEntry === typedLocalOpMetadata,
-					0xbf4 /* Unexpected delete rollback */,
-				);
+				assert(pendingEntry === typedLocalOpMetadata, 0xbf4 /* Unexpected delete rollback */);
 				this.pendingData.splice(pendingEntryIndex, 1);
 				// Only emit if rolling back the delete actually results in a value becoming visible.
 				if (this.getOptimisticLocalValue(mapOp.key) !== undefined) {
@@ -738,10 +702,7 @@ export class MapKernel {
 					}
 				}
 			},
-			resubmit: (
-				op: IMapClearOperation,
-				localOpMetadata: PendingLocalOpMetadata,
-			) => {
+			resubmit: (op: IMapClearOperation, localOpMetadata: PendingLocalOpMetadata) => {
 				this.submitMessage(op, localOpMetadata);
 			},
 		});
@@ -771,11 +732,7 @@ export class MapKernel {
 					const previousValue: unknown = this.sequencedData.get(key)?.value;
 					this.sequencedData.delete(key);
 					// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
-					if (
-						!this.pendingData.some(
-							(entry) => entry.type === "clear" || entry.key === key,
-						)
-					) {
+					if (!this.pendingData.some((entry) => entry.type === "clear" || entry.key === key)) {
 						this.eventEmitter.emit(
 							"valueChanged",
 							{ key, previousValue },
@@ -785,10 +742,7 @@ export class MapKernel {
 					}
 				}
 			},
-			resubmit: (
-				op: IMapDeleteOperation,
-				localOpMetadata: PendingLocalOpMetadata,
-			) => {
+			resubmit: (op: IMapDeleteOperation, localOpMetadata: PendingLocalOpMetadata) => {
 				this.submitMessage(op, localOpMetadata);
 			},
 		});
@@ -826,11 +780,7 @@ export class MapKernel {
 					this.sequencedData.set(key, localValue);
 
 					// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
-					if (
-						!this.pendingData.some(
-							(entry) => entry.type === "clear" || entry.key === key,
-						)
-					) {
+					if (!this.pendingData.some((entry) => entry.type === "clear" || entry.key === key)) {
 						this.eventEmitter.emit(
 							"valueChanged",
 							{ key, previousValue },
@@ -840,10 +790,7 @@ export class MapKernel {
 					}
 				}
 			},
-			resubmit: (
-				op: IMapSetOperation,
-				localOpMetadata: PendingLocalOpMetadata,
-			) => {
+			resubmit: (op: IMapSetOperation, localOpMetadata: PendingLocalOpMetadata) => {
 				this.submitMessage(op, localOpMetadata);
 			},
 		});

@@ -12,10 +12,7 @@ import {
 	DataObjectFactory,
 	type IDataObjectProps,
 } from "@fluidframework/aqueduct/legacy";
-import type {
-	IErrorEvent,
-	IFluidHandle,
-} from "@fluidframework/core-interfaces";
+import type { IErrorEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/legacy";
 import type { Jsonable } from "@fluidframework/datastore-definitions/legacy";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/legacy";
@@ -48,8 +45,7 @@ class CounterTestDataObjectClass extends DataObject {
 	}
 
 	protected async hasInitialized(): Promise<void> {
-		const counterHandle =
-			this.root.get<IFluidHandle<SharedCounter>>("counter-key");
+		const counterHandle = this.root.get<IFluidHandle<SharedCounter>>("counter-key");
 		this._counter = await counterHandle?.get();
 	}
 
@@ -77,17 +73,13 @@ class CounterTestDataObjectClass extends DataObject {
 	}
 }
 
-export const CounterTestDataObject = createDataObjectKind(
-	CounterTestDataObjectClass,
-);
+export const CounterTestDataObject = createDataObjectKind(CounterTestDataObjectClass);
 export type CounterTestDataObject = CounterTestDataObjectClass;
 
 /**
  * Test implementation of experimental Signaler for testing scenarios working with signals.
  */
-export class SignalerTestDataObjectClass extends DataObject<{
-	Events: IErrorEvent;
-}> {
+export class SignalerTestDataObjectClass extends DataObject<{ Events: IErrorEvent }> {
 	private readonly emitter = new EventEmitter();
 	public static readonly Name = "@fluid-example/signaler-test-data-object";
 
@@ -97,27 +89,21 @@ export class SignalerTestDataObjectClass extends DataObject<{
 	});
 
 	protected async hasInitialized(): Promise<void> {
-		this.runtime.on(
-			"signal",
-			(message: IInboundSignalMessage, local: boolean) => {
-				const clientId = message.clientId;
-				/**
-				 * {@link Signaler} checks `runtime.connected` before allowing a signal to be sent/received.
-				 * However, that is never `true` for "read" clients, so we don't want to check it here.
-				 */
-				if (clientId !== null) {
-					this.emitter.emit(message.type, clientId, local, message.content);
-				}
-			},
-		);
+		this.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+			const clientId = message.clientId;
+			/**
+			 * {@link Signaler} checks `runtime.connected` before allowing a signal to be sent/received.
+			 * However, that is never `true` for "read" clients, so we don't want to check it here.
+			 */
+			if (clientId !== null) {
+				this.emitter.emit(message.type, clientId, local, message.content);
+			}
+		});
 	}
 
 	// ISignaler methods  Note these are all passthroughs
 
-	public onSignal<T>(
-		signalName: string,
-		listener: SignalListener<T>,
-	): SignalerTestDataObject {
+	public onSignal<T>(signalName: string, listener: SignalListener<T>): SignalerTestDataObject {
 		this.emitter.on(signalName, listener);
 		return this;
 	}
@@ -135,7 +121,5 @@ export class SignalerTestDataObjectClass extends DataObject<{
 	}
 }
 
-export const SignalerTestDataObject = createDataObjectKind(
-	SignalerTestDataObjectClass,
-);
+export const SignalerTestDataObject = createDataObjectKind(SignalerTestDataObjectClass);
 export type SignalerTestDataObject = SignalerTestDataObjectClass;

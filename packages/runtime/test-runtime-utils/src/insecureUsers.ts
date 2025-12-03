@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IUser } from "@fluidframework/driver-definitions";
+import { IUser } from "@fluidframework/driver-definitions";
 
 /**
  * Insecure user definition.

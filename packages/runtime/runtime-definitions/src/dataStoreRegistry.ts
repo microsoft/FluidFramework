@@ -18,10 +18,7 @@ export type FluidDataStoreRegistryEntry = Readonly<
  * Registry entries may be dynamically loaded.
  * @legacy @beta
  */
-export type NamedFluidDataStoreRegistryEntry = [
-	string,
-	Promise<FluidDataStoreRegistryEntry>,
-];
+export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
 
 /**
  * An associated pair of an identifier and registry entry.
@@ -36,8 +33,7 @@ export type NamedFluidDataStoreRegistryEntry2 = [
  * An iterable identifier/registry entry pair list
  * @legacy @beta
  */
-export type NamedFluidDataStoreRegistryEntries =
-	Iterable<NamedFluidDataStoreRegistryEntry2>;
+export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry2>;
 
 /**
  * @legacy @beta
@@ -57,8 +53,7 @@ export interface IProvideFluidDataStoreRegistry {
  * entries can be used to create data stores.
  * @legacy @beta
  */
-export interface IFluidDataStoreRegistry
-	extends IProvideFluidDataStoreRegistry {
+export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry {
 	/**
 	 * Retrieves a data store registry entry by its identifier.
 	 *

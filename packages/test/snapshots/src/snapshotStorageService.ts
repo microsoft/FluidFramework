@@ -3,21 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
-	type IDocumentStorageService,
-	type ISummaryContext,
-	type ITree,
+	IDocumentStorageService,
+	ISummaryContext,
+	ITree,
 	TreeEntry,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	buildSnapshotTree,
 	convertSummaryTreeToSnapshotITree,
 } from "@fluidframework/driver-utils/internal";
-import {
-	FileSnapshotReader,
-	type IFileSnapshot,
-} from "@fluidframework/replay-driver/internal";
+import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver/internal";
 
 /**
  * This storage service provides the following functionalities:

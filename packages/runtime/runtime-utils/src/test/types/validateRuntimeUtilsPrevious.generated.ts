@@ -11,23 +11,12 @@
  * Current version: 2.74.0
  */
 
-import type {
-	FullType,
-	MinimalType,
-	requireAssignableTo,
-	TypeOnly,
-} from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/runtime-utils-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> =
-	| TypeOnly<T>
-	| MinimalType<T>
-	| FullType<T>
-	| typeof old
-	| typeof current
-	| requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -36,10 +25,7 @@ declare type MakeUnusedImportErrorsGoAway<T> =
  * typeValidation.broken:
  * "Class_FluidHandleBase": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_FluidHandleBase = requireAssignableTo<
-	TypeOnly<old.FluidHandleBase<never>>,
-	TypeOnly<current.FluidHandleBase<never>>
->;
+declare type old_as_current_for_Class_FluidHandleBase = requireAssignableTo<TypeOnly<old.FluidHandleBase<never>>, TypeOnly<current.FluidHandleBase<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -48,10 +34,7 @@ declare type old_as_current_for_Class_FluidHandleBase = requireAssignableTo<
  * typeValidation.broken:
  * "Class_FluidHandleBase": {"backCompat": false}
  */
-declare type current_as_old_for_Class_FluidHandleBase = requireAssignableTo<
-	TypeOnly<current.FluidHandleBase<never>>,
-	TypeOnly<old.FluidHandleBase<never>>
->;
+declare type current_as_old_for_Class_FluidHandleBase = requireAssignableTo<TypeOnly<current.FluidHandleBase<never>>, TypeOnly<old.FluidHandleBase<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -60,10 +43,7 @@ declare type current_as_old_for_Class_FluidHandleBase = requireAssignableTo<
  * typeValidation.broken:
  * "Class_RequestParser": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_RequestParser = requireAssignableTo<
-	TypeOnly<old.RequestParser>,
-	TypeOnly<current.RequestParser>
->;
+declare type old_as_current_for_Class_RequestParser = requireAssignableTo<TypeOnly<old.RequestParser>, TypeOnly<current.RequestParser>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -72,10 +52,7 @@ declare type old_as_current_for_Class_RequestParser = requireAssignableTo<
  * typeValidation.broken:
  * "Class_RequestParser": {"backCompat": false}
  */
-declare type current_as_old_for_Class_RequestParser = requireAssignableTo<
-	TypeOnly<current.RequestParser>,
-	TypeOnly<old.RequestParser>
->;
+declare type current_as_old_for_Class_RequestParser = requireAssignableTo<TypeOnly<current.RequestParser>, TypeOnly<old.RequestParser>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -84,11 +61,7 @@ declare type current_as_old_for_Class_RequestParser = requireAssignableTo<
  * typeValidation.broken:
  * "Class_RuntimeFactoryHelper": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_RuntimeFactoryHelper =
-	requireAssignableTo<
-		TypeOnly<old.RuntimeFactoryHelper>,
-		TypeOnly<current.RuntimeFactoryHelper>
-	>;
+declare type old_as_current_for_Class_RuntimeFactoryHelper = requireAssignableTo<TypeOnly<old.RuntimeFactoryHelper>, TypeOnly<current.RuntimeFactoryHelper>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -97,11 +70,7 @@ declare type old_as_current_for_Class_RuntimeFactoryHelper =
  * typeValidation.broken:
  * "Class_RuntimeFactoryHelper": {"backCompat": false}
  */
-declare type current_as_old_for_Class_RuntimeFactoryHelper =
-	requireAssignableTo<
-		TypeOnly<current.RuntimeFactoryHelper>,
-		TypeOnly<old.RuntimeFactoryHelper>
-	>;
+declare type current_as_old_for_Class_RuntimeFactoryHelper = requireAssignableTo<TypeOnly<current.RuntimeFactoryHelper>, TypeOnly<old.RuntimeFactoryHelper>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -110,10 +79,7 @@ declare type current_as_old_for_Class_RuntimeFactoryHelper =
  * typeValidation.broken:
  * "Class_SummaryTreeBuilder": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_SummaryTreeBuilder = requireAssignableTo<
-	TypeOnly<old.SummaryTreeBuilder>,
-	TypeOnly<current.SummaryTreeBuilder>
->;
+declare type old_as_current_for_Class_SummaryTreeBuilder = requireAssignableTo<TypeOnly<old.SummaryTreeBuilder>, TypeOnly<current.SummaryTreeBuilder>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -122,10 +88,7 @@ declare type old_as_current_for_Class_SummaryTreeBuilder = requireAssignableTo<
  * typeValidation.broken:
  * "Class_SummaryTreeBuilder": {"backCompat": false}
  */
-declare type current_as_old_for_Class_SummaryTreeBuilder = requireAssignableTo<
-	TypeOnly<current.SummaryTreeBuilder>,
-	TypeOnly<old.SummaryTreeBuilder>
->;
+declare type current_as_old_for_Class_SummaryTreeBuilder = requireAssignableTo<TypeOnly<current.SummaryTreeBuilder>, TypeOnly<old.SummaryTreeBuilder>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -134,11 +97,7 @@ declare type current_as_old_for_Class_SummaryTreeBuilder = requireAssignableTo<
  * typeValidation.broken:
  * "ClassStatics_FluidHandleBase": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_FluidHandleBase =
-	requireAssignableTo<
-		TypeOnly<typeof current.FluidHandleBase>,
-		TypeOnly<typeof old.FluidHandleBase>
-	>;
+declare type current_as_old_for_ClassStatics_FluidHandleBase = requireAssignableTo<TypeOnly<typeof current.FluidHandleBase>, TypeOnly<typeof old.FluidHandleBase>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -147,11 +106,7 @@ declare type current_as_old_for_ClassStatics_FluidHandleBase =
  * typeValidation.broken:
  * "ClassStatics_RequestParser": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_RequestParser =
-	requireAssignableTo<
-		TypeOnly<typeof current.RequestParser>,
-		TypeOnly<typeof old.RequestParser>
-	>;
+declare type current_as_old_for_ClassStatics_RequestParser = requireAssignableTo<TypeOnly<typeof current.RequestParser>, TypeOnly<typeof old.RequestParser>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -160,11 +115,7 @@ declare type current_as_old_for_ClassStatics_RequestParser =
  * typeValidation.broken:
  * "ClassStatics_RuntimeFactoryHelper": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_RuntimeFactoryHelper =
-	requireAssignableTo<
-		TypeOnly<typeof current.RuntimeFactoryHelper>,
-		TypeOnly<typeof old.RuntimeFactoryHelper>
-	>;
+declare type current_as_old_for_ClassStatics_RuntimeFactoryHelper = requireAssignableTo<TypeOnly<typeof current.RuntimeFactoryHelper>, TypeOnly<typeof old.RuntimeFactoryHelper>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -173,11 +124,7 @@ declare type current_as_old_for_ClassStatics_RuntimeFactoryHelper =
  * typeValidation.broken:
  * "ClassStatics_SummaryTreeBuilder": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_SummaryTreeBuilder =
-	requireAssignableTo<
-		TypeOnly<typeof current.SummaryTreeBuilder>,
-		TypeOnly<typeof old.SummaryTreeBuilder>
-	>;
+declare type current_as_old_for_ClassStatics_SummaryTreeBuilder = requireAssignableTo<TypeOnly<typeof current.SummaryTreeBuilder>, TypeOnly<typeof old.SummaryTreeBuilder>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -186,11 +133,7 @@ declare type current_as_old_for_ClassStatics_SummaryTreeBuilder =
  * typeValidation.broken:
  * "Function_compareFluidHandles": {"backCompat": false}
  */
-declare type current_as_old_for_Function_compareFluidHandles =
-	requireAssignableTo<
-		TypeOnly<typeof current.compareFluidHandles>,
-		TypeOnly<typeof old.compareFluidHandles>
-	>;
+declare type current_as_old_for_Function_compareFluidHandles = requireAssignableTo<TypeOnly<typeof current.compareFluidHandles>, TypeOnly<typeof old.compareFluidHandles>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -199,11 +142,7 @@ declare type current_as_old_for_Function_compareFluidHandles =
  * typeValidation.broken:
  * "Function_convertToSummaryTreeWithStats": {"backCompat": false}
  */
-declare type current_as_old_for_Function_convertToSummaryTreeWithStats =
-	requireAssignableTo<
-		TypeOnly<typeof current.convertToSummaryTreeWithStats>,
-		TypeOnly<typeof old.convertToSummaryTreeWithStats>
-	>;
+declare type current_as_old_for_Function_convertToSummaryTreeWithStats = requireAssignableTo<TypeOnly<typeof current.convertToSummaryTreeWithStats>, TypeOnly<typeof old.convertToSummaryTreeWithStats>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -212,10 +151,7 @@ declare type current_as_old_for_Function_convertToSummaryTreeWithStats =
  * typeValidation.broken:
  * "Function_isFluidHandle": {"backCompat": false}
  */
-declare type current_as_old_for_Function_isFluidHandle = requireAssignableTo<
-	TypeOnly<typeof current.isFluidHandle>,
-	TypeOnly<typeof old.isFluidHandle>
->;
+declare type current_as_old_for_Function_isFluidHandle = requireAssignableTo<TypeOnly<typeof current.isFluidHandle>, TypeOnly<typeof old.isFluidHandle>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -224,11 +160,7 @@ declare type current_as_old_for_Function_isFluidHandle = requireAssignableTo<
  * typeValidation.broken:
  * "Function_toDeltaManagerInternal": {"backCompat": false}
  */
-declare type current_as_old_for_Function_toDeltaManagerInternal =
-	requireAssignableTo<
-		TypeOnly<typeof current.toDeltaManagerInternal>,
-		TypeOnly<typeof old.toDeltaManagerInternal>
-	>;
+declare type current_as_old_for_Function_toDeltaManagerInternal = requireAssignableTo<TypeOnly<typeof current.toDeltaManagerInternal>, TypeOnly<typeof old.toDeltaManagerInternal>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -237,11 +169,7 @@ declare type current_as_old_for_Function_toDeltaManagerInternal =
  * typeValidation.broken:
  * "Function_toFluidHandleErased": {"backCompat": false}
  */
-declare type current_as_old_for_Function_toFluidHandleErased =
-	requireAssignableTo<
-		TypeOnly<typeof current.toFluidHandleErased>,
-		TypeOnly<typeof old.toFluidHandleErased>
-	>;
+declare type current_as_old_for_Function_toFluidHandleErased = requireAssignableTo<TypeOnly<typeof current.toFluidHandleErased>, TypeOnly<typeof old.toFluidHandleErased>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -250,11 +178,7 @@ declare type current_as_old_for_Function_toFluidHandleErased =
  * typeValidation.broken:
  * "Function_toFluidHandleInternal": {"backCompat": false}
  */
-declare type current_as_old_for_Function_toFluidHandleInternal =
-	requireAssignableTo<
-		TypeOnly<typeof current.toFluidHandleInternal>,
-		TypeOnly<typeof old.toFluidHandleInternal>
-	>;
+declare type current_as_old_for_Function_toFluidHandleInternal = requireAssignableTo<TypeOnly<typeof current.toFluidHandleInternal>, TypeOnly<typeof old.toFluidHandleInternal>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -263,11 +187,7 @@ declare type current_as_old_for_Function_toFluidHandleInternal =
  * typeValidation.broken:
  * "Variable_create404Response": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_create404Response =
-	requireAssignableTo<
-		TypeOnly<typeof current.create404Response>,
-		TypeOnly<typeof old.create404Response>
-	>;
+declare type current_as_old_for_Variable_create404Response = requireAssignableTo<TypeOnly<typeof current.create404Response>, TypeOnly<typeof old.create404Response>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -276,11 +196,7 @@ declare type current_as_old_for_Variable_create404Response =
  * typeValidation.broken:
  * "Variable_isFluidHandlePayloadPending": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_isFluidHandlePayloadPending =
-	requireAssignableTo<
-		TypeOnly<typeof current.isFluidHandlePayloadPending>,
-		TypeOnly<typeof old.isFluidHandlePayloadPending>
-	>;
+declare type current_as_old_for_Variable_isFluidHandlePayloadPending = requireAssignableTo<TypeOnly<typeof current.isFluidHandlePayloadPending>, TypeOnly<typeof old.isFluidHandlePayloadPending>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -289,8 +205,4 @@ declare type current_as_old_for_Variable_isFluidHandlePayloadPending =
  * typeValidation.broken:
  * "Variable_isLocalFluidHandle": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_isLocalFluidHandle =
-	requireAssignableTo<
-		TypeOnly<typeof current.isLocalFluidHandle>,
-		TypeOnly<typeof old.isLocalFluidHandle>
-	>;
+declare type current_as_old_for_Variable_isLocalFluidHandle = requireAssignableTo<TypeOnly<typeof current.isLocalFluidHandle>, TypeOnly<typeof old.isLocalFluidHandle>>

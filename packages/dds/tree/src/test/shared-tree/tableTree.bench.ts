@@ -5,17 +5,17 @@
 
 import { strict as assert } from "node:assert";
 import {
+	benchmark,
+	BenchmarkType,
+	isInPerformanceTestingMode,
 	type BenchmarkTimer,
 	type BenchmarkTimingOptions,
-	BenchmarkType,
-	benchmark,
-	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 
 import {
 	Column,
-	createTableTree,
 	Row,
+	createTableTree,
 	type TableBenchmarkOptions,
 } from "../tablePerformanceTestUtilities.js";
 
@@ -31,9 +31,7 @@ import {
 /**
  * {@link runBenchmark} configuration.
  */
-interface BenchmarkConfig
-	extends BenchmarkTimingOptions,
-		TableBenchmarkOptions {
+interface BenchmarkConfig extends BenchmarkTimingOptions, TableBenchmarkOptions {
 	readonly maxBenchmarkDurationSeconds: number;
 }
 
@@ -57,11 +55,7 @@ function runBenchmark({
 			let duration: number;
 			do {
 				// Since this setup one collects data from one iteration, assert that this is what is expected.
-				assert.equal(
-					state.iterationsPerBatch,
-					1,
-					"Expected exactly one iteration per batch",
-				);
+				assert.equal(state.iterationsPerBatch, 1, "Expected exactly one iteration per batch");
 
 				// Create table tree
 				const { table, undoRedoStack, cleanUp } = createTableTree({
@@ -115,9 +109,7 @@ describe("SharedTree table APIs execution time", () => {
 		maxBenchmarkDurationSeconds = tableSize === 50 ? 10 : 5;
 
 		// Filter counts to ensure remove operation do not exceed tableSize
-		const validRemoveCounts = operationCounts.filter(
-			(count) => count <= tableSize,
-		);
+		const validRemoveCounts = operationCounts.filter((count) => count <= tableSize);
 
 		// Insert-related tests that are not limited by tableSize
 		for (const count of operationCounts) {
@@ -265,10 +257,7 @@ describe("SharedTree table APIs execution time", () => {
 						operation: (table) => {
 							for (let i = 0; i < count; i++) {
 								const row = new Row({ cells: {} });
-								table.insertRows({
-									index: Math.floor(table.rows.length / 2),
-									rows: [row],
-								});
+								table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
 							}
 						},
 						maxBenchmarkDurationSeconds,
@@ -281,10 +270,7 @@ describe("SharedTree table APIs execution time", () => {
 						beforeOperation: (table, undoRedoManager) => {
 							for (let i = 0; i < count; i++) {
 								const row = new Row({ cells: {} });
-								table.insertRows({
-									index: Math.floor(table.rows.length / 2),
-									rows: [row],
-								});
+								table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
 							}
 							assert(undoRedoManager.canUndo);
 						},
@@ -306,10 +292,7 @@ describe("SharedTree table APIs execution time", () => {
 						beforeOperation: (table, undoRedoManager) => {
 							for (let i = 0; i < count; i++) {
 								const row = new Row({ cells: {} });
-								table.insertRows({
-									index: Math.floor(table.rows.length / 2),
-									rows: [row],
-								});
+								table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
 							}
 							for (let i = 0; i < count; i++) {
 								undoRedoManager.undo();
@@ -338,10 +321,7 @@ describe("SharedTree table APIs execution time", () => {
 						operation: (table) => {
 							table.insertRows({
 								index: Math.floor(table.rows.length / 2),
-								rows: Array.from(
-									{ length: count },
-									() => new Row({ cells: {} }),
-								),
+								rows: Array.from({ length: count }, () => new Row({ cells: {} })),
 							});
 						},
 						maxBenchmarkDurationSeconds,
@@ -354,10 +334,7 @@ describe("SharedTree table APIs execution time", () => {
 						beforeOperation: (table, undoRedoManager) => {
 							table.insertRows({
 								index: Math.floor(table.rows.length / 2),
-								rows: Array.from(
-									{ length: count },
-									() => new Row({ cells: {} }),
-								),
+								rows: Array.from({ length: count }, () => new Row({ cells: {} })),
 							});
 							assert(undoRedoManager.canUndo);
 						},
@@ -378,10 +355,7 @@ describe("SharedTree table APIs execution time", () => {
 						beforeOperation: (table, undoRedoManager) => {
 							table.insertRows({
 								index: Math.floor(table.rows.length / 2),
-								rows: Array.from(
-									{ length: count },
-									() => new Row({ cells: {} }),
-								),
+								rows: Array.from({ length: count }, () => new Row({ cells: {} })),
 							});
 							undoRedoManager.undo();
 							assert(!undoRedoManager.canUndo);
@@ -413,10 +387,7 @@ describe("SharedTree table APIs execution time", () => {
 								index: Math.floor(table.columns.length / 2),
 								columns: [column],
 							});
-							table.insertRows({
-								index: Math.floor(table.rows.length / 2),
-								rows: [row],
-							});
+							table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
 						}
 					},
 					maxBenchmarkDurationSeconds,
@@ -435,10 +406,7 @@ describe("SharedTree table APIs execution time", () => {
 								index: Math.floor(table.columns.length / 2),
 								columns: [column],
 							});
-							table.insertRows({
-								index: Math.floor(table.rows.length / 2),
-								rows: [row],
-							});
+							table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
 						}
 						assert(undoRedoManager.canUndo);
 					},
@@ -508,10 +476,7 @@ describe("SharedTree table APIs execution time", () => {
 								index: Math.floor(table.columns.length / 2),
 								columns: [column],
 							});
-							table.insertRows({
-								index: Math.floor(table.rows.length / 2),
-								rows: [row],
-							});
+							table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
 							table.removeColumns([column]);
 							table.removeRows([row]);
 						}
@@ -606,8 +571,7 @@ describe("SharedTree table APIs execution time", () => {
 						initialCellValue,
 						operation: (table) => {
 							for (let i = 0; i < count; i++) {
-								const column =
-									table.columns[Math.floor(table.columns.length / 2)];
+								const column = table.columns[Math.floor(table.columns.length / 2)];
 								table.removeColumns([column]);
 							}
 						},
@@ -857,8 +821,7 @@ describe("SharedTree table APIs execution time", () => {
 					initialCellValue,
 					operation: (table) => {
 						for (let i = 0; i < count; i++) {
-							const column =
-								table.columns[Math.floor(table.columns.length / 2)];
+							const column = table.columns[Math.floor(table.columns.length / 2)];
 							table.removeColumns([column]);
 							const row = table.rows[Math.floor(table.rows.length / 2)];
 							table.removeRows([row]);
@@ -942,8 +905,7 @@ describe("SharedTree table APIs execution time", () => {
 					operation: (table) => {
 						for (let i = 0; i < count; i++) {
 							const row = table.rows[Math.floor(table.rows.length / 2)];
-							const column =
-								table.columns[Math.floor(table.columns.length / 2)];
+							const column = table.columns[Math.floor(table.columns.length / 2)];
 							table.setCell({
 								key: {
 									row: row.id,
@@ -964,8 +926,7 @@ describe("SharedTree table APIs execution time", () => {
 					beforeOperation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							const row = table.rows[Math.floor(table.rows.length / 2)];
-							const column =
-								table.columns[Math.floor(table.columns.length / 2)];
+							const column = table.columns[Math.floor(table.columns.length / 2)];
 							table.setCell({
 								key: {
 									row: row.id,
@@ -995,8 +956,7 @@ describe("SharedTree table APIs execution time", () => {
 					beforeOperation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							const row = table.rows[Math.floor(table.rows.length / 2)];
-							const column =
-								table.columns[Math.floor(table.columns.length / 2)];
+							const column = table.columns[Math.floor(table.columns.length / 2)];
 							table.setCell({
 								key: {
 									row: row.id,

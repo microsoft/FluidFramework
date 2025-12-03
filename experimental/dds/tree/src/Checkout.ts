@@ -3,30 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import type { IDisposable, IErrorEvent, ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
+import { IDisposable, IErrorEvent, ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
 import {
-	createChildLogger,
+	ITelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
-	type ITelemetryLoggerExt,
+	createChildLogger,
 } from '@fluidframework/telemetry-utils/internal';
 
-import type { Change } from './ChangeTypes.js';
-import { assertWithMessage, fail, type RestOrArray, unwrapRestOrArray } from './Common.js';
+import { Change } from './ChangeTypes.js';
+import { RestOrArray, assertWithMessage, fail, unwrapRestOrArray } from './Common.js';
 import { newEditId } from './EditUtilities.js';
 import { SharedTreeEvent } from './EventTypes.js';
-import type { EditId } from './Identifiers.js';
+import { EditId } from './Identifiers.js';
 import { CachingLogViewer } from './LogViewer.js';
-import { type ChangeInternal, type Edit, EditStatus } from './persisted-types/index.js';
-import type { RevisionView } from './RevisionView.js';
-import type { EditCommittedHandler, SharedTree } from './SharedTree.js';
-import {
-	type EditingResult,
-	type GenericTransaction,
-	TransactionInternal,
-	type ValidEditingResult,
-} from './TransactionInternal.js';
-import type { TreeView } from './TreeView.js';
+import { RevisionView } from './RevisionView.js';
+import { EditCommittedHandler, SharedTree } from './SharedTree.js';
+import { EditingResult, GenericTransaction, TransactionInternal, ValidEditingResult } from './TransactionInternal.js';
+import { TreeView } from './TreeView.js';
+import { ChangeInternal, Edit, EditStatus } from './persisted-types/index.js';
 
 /**
  * An event emitted by a `Checkout` to indicate a state change. See {@link ICheckoutEvents} for event argument information.

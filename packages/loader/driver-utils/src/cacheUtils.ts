@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	FiveDaysMs,
-	ICacheEntry,
-} from "@fluidframework/driver-definitions/internal";
+import type { FiveDaysMs, ICacheEntry } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Must be less than IDocumentStorageServicePolicies.maximumCacheDurationMs policy of 5 days.
@@ -25,7 +22,6 @@ export const maximumCacheDurationMs: FiveDaysMs = 432_000_000; // 5 days in ms
  * @internal
  */
 export function getKeyForCacheEntry(entry: ICacheEntry): string {
-	const version =
-		entry.file.fileVersion !== undefined ? `_${entry.file.fileVersion}` : "";
+	const version = entry.file.fileVersion !== undefined ? `_${entry.file.fileVersion}` : "";
 	return `${entry.file.docId}${version}_${entry.type}_${entry.key}`;
 }

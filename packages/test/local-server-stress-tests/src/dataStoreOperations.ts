@@ -9,10 +9,7 @@ import type { Client } from "./localServerStressHarness";
 
 export const validateAllDataStoresSaved = async (...clients: Client[]) => {
 	for (const client of clients) {
-		assert(
-			client.container.isDirty === false,
-			`[${client.tag}] Container is dirty!`,
-		);
+		assert(client.container.isDirty === false, `[${client.tag}] Container is dirty!`);
 		for (const entry of (await client.entryPoint.getContainerObjects()).filter(
 			(v) => v.type === "stressDataObject",
 		)) {

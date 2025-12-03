@@ -7,13 +7,13 @@ import { expect } from 'chai';
 
 import { StablePlace, StableRange } from '../ChangeTypes.js';
 import { detachRange, insertIntoTrait } from '../EditUtilities.js';
-import type { TraitLabel } from '../Identifiers.js';
-import type { ChangeNode } from '../persisted-types/index.js';
-import { convertTreeNodesToViewNodes, RevisionView } from '../RevisionView.js';
+import { TraitLabel } from '../Identifiers.js';
+import { RevisionView, convertTreeNodesToViewNodes } from '../RevisionView.js';
 import { getChangeNodeFromViewNode } from '../SerializationUtilities.js';
+import { ChangeNode } from '../persisted-types/index.js';
 
 import { expectDefined } from './utilities/TestCommon.js';
-import type { LeafNode, TestNode } from './utilities/TestNode.js';
+import { LeafNode, TestNode } from './utilities/TestNode.js';
 import { refreshTestTree } from './utilities/TestUtilities.js';
 
 describe('RevisionView', () => {

@@ -4,8 +4,8 @@
  */
 
 import type { AxiosRequestConfig, AxiosRequestHeaders } from "./axios.cjs";
-import type { QueryStringType } from "./queryStringUtils.js";
-import type { IR11sResponse } from "./restWrapper.js";
+import { type QueryStringType } from "./queryStringUtils.js";
+import { IR11sResponse } from "./restWrapper.js";
 
 export abstract class RestWrapper {
 	constructor(
@@ -28,12 +28,7 @@ export abstract class RestWrapper {
 		additionalOptions?: Partial<
 			Omit<
 				AxiosRequestConfig,
-				| "baseURL"
-				| "headers"
-				| "maxBodyLength"
-				| "maxContentLength"
-				| "method"
-				| "url"
+				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
@@ -65,12 +60,7 @@ export abstract class RestWrapper {
 		additionalOptions?: Partial<
 			Omit<
 				AxiosRequestConfig,
-				| "baseURL"
-				| "headers"
-				| "maxBodyLength"
-				| "maxContentLength"
-				| "method"
-				| "url"
+				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
@@ -101,12 +91,7 @@ export abstract class RestWrapper {
 		additionalOptions?: Partial<
 			Omit<
 				AxiosRequestConfig,
-				| "baseURL"
-				| "headers"
-				| "maxBodyLength"
-				| "maxContentLength"
-				| "method"
-				| "url"
+				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
@@ -138,12 +123,7 @@ export abstract class RestWrapper {
 		additionalOptions?: Partial<
 			Omit<
 				AxiosRequestConfig,
-				| "baseURL"
-				| "headers"
-				| "maxBodyLength"
-				| "maxContentLength"
-				| "method"
-				| "url"
+				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {

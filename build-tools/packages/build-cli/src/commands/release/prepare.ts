@@ -5,10 +5,7 @@
 
 import chalk from "picocolors";
 
-import {
-	findPackageOrReleaseGroup,
-	packageOrReleaseGroupArg,
-} from "../../args.js";
+import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args.js";
 import { BaseCommand } from "../../library/index.js";
 import {
 	CheckDependenciesInstalled,
@@ -40,9 +37,7 @@ const allChecks: ReadonlyMap<string, CheckFunction> = new Map([
 /**
  * Runs checks on a local branch to verify it is ready to serve as the base for a release branch.
  */
-export class ReleasePrepareCommand extends BaseCommand<
-	typeof ReleasePrepareCommand
-> {
+export class ReleasePrepareCommand extends BaseCommand<typeof ReleasePrepareCommand> {
 	public static readonly summary =
 		`Runs checks on a local branch to verify it is ready to serve as the base for a release branch.`;
 
@@ -80,9 +75,7 @@ export class ReleasePrepareCommand extends BaseCommand<
 				? chalk.bgGreen(chalk.black(" ✔︎ "))
 				: chalk.bgRed(chalk.white(" ✖︎ "));
 
-			this.log(
-				`${icon} ${checkPassed ? name : chalk.red(checkResult.message)}`,
-			);
+			this.log(`${icon} ${checkPassed ? name : chalk.red(checkResult.message)}`);
 			if (!checkPassed) {
 				if (checkResult.fixCommand !== undefined) {
 					this.logIndent(
@@ -93,9 +86,7 @@ export class ReleasePrepareCommand extends BaseCommand<
 					);
 				}
 				if (checkResult.fatal === true) {
-					this.error("Can't do other checks until the failures are resolved.", {
-						exit: 5,
-					});
+					this.error("Can't do other checks until the failures are resolved.", { exit: 5 });
 				}
 			}
 		}

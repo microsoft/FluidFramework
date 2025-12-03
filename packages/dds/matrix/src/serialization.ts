@@ -17,8 +17,7 @@ export const serializeBlob = <T>(
 	path: string,
 	snapshot: Serializable<T>,
 	serializer: IFluidSerializer,
-): BlobTreeEntry =>
-	new BlobTreeEntry(path, serializer.stringify(snapshot, handle));
+): BlobTreeEntry => new BlobTreeEntry(path, serializer.stringify(snapshot, handle));
 
 export async function deserializeBlob(
 	storage: IChannelStorageService,

@@ -7,6 +7,6 @@
 		"outDir": "./lib",
 		"exactOptionalPropertyTypes": false,
 		// TODO: AB#34164 Enable noUncheckedIndexedAccess for packages/drivers/replay-driver
-		"noUncheckedIndexedAccess": false
-	}
+		"noUncheckedIndexedAccess": false,
+	},
 }

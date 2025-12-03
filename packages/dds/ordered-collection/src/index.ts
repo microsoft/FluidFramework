@@ -3,12 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { ConsensusOrderedCollection } from "./consensusOrderedCollection.js";
-export {
-	ConsensusQueue,
-	ConsensusQueueFactory,
-} from "./consensusOrderedCollectionFactory.js";
-export { ConsensusQueueClass } from "./consensusQueue.js";
 export {
 	type ConsensusCallback,
 	ConsensusResult,
@@ -18,9 +12,12 @@ export {
 	type IOrderedCollection,
 	type ISnapshotable,
 } from "./interfaces.js";
+export { ConsensusQueueFactory, ConsensusQueue } from "./consensusOrderedCollectionFactory.js";
+export { ConsensusOrderedCollection } from "./consensusOrderedCollection.js";
+export { ConsensusQueueClass } from "./consensusQueue.js";
 export {
 	acquireAndComplete,
-	acquireAndRelease,
 	waitAcquireAndComplete,
+	acquireAndRelease,
 	waitAcquireAndRelease,
 } from "./testUtils.js";

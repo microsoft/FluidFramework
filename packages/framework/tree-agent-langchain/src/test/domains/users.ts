@@ -6,8 +6,8 @@
 import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 import {
 	buildFunc,
-	type ExposedMethods,
 	exposeMethodsSymbol,
+	type ExposedMethods,
 	type IExposedMethods,
 } from "@fluidframework/tree-agent/alpha";
 import z from "zod";

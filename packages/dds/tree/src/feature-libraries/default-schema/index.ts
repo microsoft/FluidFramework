@@ -4,28 +4,29 @@
  */
 
 export {
-	DefaultChangeFamily,
+	FieldKinds,
+	type Required,
+	type Optional,
+	type Sequence,
+	type Identifier,
+	type Forbidden,
+	fieldKinds,
+	fieldKindConfigurations,
+	getCodecTreeForModularChangeFormat,
+	type ModularChangeFormatVersion,
+	defaultSchemaPolicy,
+} from "./defaultFieldKinds.js";
+
+export {
 	type DefaultChangeset,
+	DefaultChangeFamily,
 	DefaultEditBuilder,
 	type IDefaultEditBuilder,
-	intoDelta,
-	type OptionalFieldEditBuilder,
-	relevantRemovedRoots,
-	type SequenceFieldEditBuilder,
 	type ValueFieldEditBuilder,
+	type OptionalFieldEditBuilder,
+	type SequenceFieldEditBuilder,
+	intoDelta,
+	relevantRemovedRoots,
 } from "./defaultEditBuilder.js";
-export {
-	defaultSchemaPolicy,
-	FieldKinds,
-	type Forbidden,
-	fieldKindConfigurations,
-	fieldKinds,
-	getCodecTreeForModularChangeFormat,
-	type Identifier,
-	type ModularChangeFormatVersion,
-	type Optional,
-	type Required,
-	type Sequence,
-} from "./defaultFieldKinds.js";
 
 export { MappedEditBuilder } from "./mappedEditBuilder.js";

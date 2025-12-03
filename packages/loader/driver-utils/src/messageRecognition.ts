@@ -4,8 +4,8 @@
  */
 
 import {
-	type IDocumentMessage,
-	type ISequencedDocumentMessage,
+	ISequencedDocumentMessage,
+	IDocumentMessage,
 	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 
@@ -28,7 +28,5 @@ export function canBeCoalescedByService(
 ): boolean {
 	// This assumes that in the future relay service may implement coalescing of accept messages,
 	// same way it was doing coalescing of immediate noops in the past.
-	return (
-		message.type === MessageType.NoOp || message.type === MessageType.Accept
-	);
+	return message.type === MessageType.NoOp || message.type === MessageType.Accept;
 }

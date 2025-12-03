@@ -17,17 +17,11 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import {
-	type JsonCompatibleReadOnly,
-	JsonCompatibleReadOnlySchema,
-} from "../util/index.js";
+import { type JsonCompatibleReadOnly, JsonCompatibleReadOnlySchema } from "../util/index.js";
 
 import type { SummaryData } from "./editManager.js";
-import {
-	decodeSharedBranch,
-	encodeSharedBranch,
-} from "./editManagerCodecsCommons.js";
 import { EncodedEditManager } from "./editManagerFormatV1toV4.js";
+import { decodeSharedBranch, encodeSharedBranch } from "./editManagerCodecsCommons.js";
 
 export interface EditManagerEncodingContext {
 	idCompressor: IIdCompressor;

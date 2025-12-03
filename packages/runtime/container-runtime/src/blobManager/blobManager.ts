@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	bufferToString,
-	createEmitter,
-	stringToBuffer,
-} from "@fluid-internal/client-utils";
+import { bufferToString, createEmitter, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	type IContainerStorageService,
@@ -30,30 +26,30 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
 import type {
 	IGarbageCollectionData,
-	ISequencedMessageEnvelope,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	createResponseError,
 	FluidHandleBase,
+	createResponseError,
 	generateHandleContextPath,
 	responseToException,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	createChildMonitoringContext,
 	LoggingError,
 	type MonitoringContext,
 	PerformanceEvent,
+	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { isBlobMetadata } from "../metadata.js";
 
 import {
-	type IBlobManagerLoadInfo,
 	summarizeBlobManagerState,
 	toRedirectTable,
+	type IBlobManagerLoadInfo,
 } from "./blobManagerSnapSum.js";
 
 /**
@@ -221,9 +217,7 @@ export interface IPendingBlobs {
  * Check if for a given uploaded or attaching blob, the TTL is too close to expiry to safely attempt
  * an attach. Currently using a heuristic of half the TTL duration having passed since upload.
  */
-const isTTLTooCloseToExpiry = (
-	blobRecord: UploadedBlob | AttachingBlob,
-): boolean =>
+const isTTLTooCloseToExpiry = (blobRecord: UploadedBlob | AttachingBlob): boolean =>
 	blobRecord.minTTLInSeconds !== undefined &&
 	Date.now() - blobRecord.uploadTime > (blobRecord.minTTLInSeconds / 2) * 1000;
 
@@ -233,8 +227,7 @@ interface IBlobManagerInternalEvents {
 	processedBlobAttach: (localId: string, storageId: string) => void;
 }
 
-const createAbortError = (): LoggingError =>
-	new LoggingError("uploadBlob aborted");
+const createAbortError = (): LoggingError => new LoggingError("uploadBlob aborted");
 
 export const blobManagerBasePath = "_blobs";
 
@@ -266,16 +259,10 @@ export class BlobManager {
 	 */
 	private readonly pendingOnlyLocalIds: Set<string> = new Set();
 
-	private readonly sendBlobAttachMessage: (
-		localId: string,
-		storageId: string,
-	) => void;
+	private readonly sendBlobAttachMessage: (localId: string, storageId: string) => void;
 
 	private readonly routeContext: IFluidHandleContext;
-	private readonly storage: Pick<
-		IContainerStorageService,
-		"createBlob" | "readBlob"
-	>;
+	private readonly storage: Pick<IContainerStorageService, "createBlob" | "readBlob">;
 	// Called when a blob node is requested. blobPath is the path of the blob's node in GC's graph.
 	// blobPath's format - `/<basePath>/<localId>`.
 	private readonly blobRequested: (blobPath: string) => void;
@@ -346,9 +333,7 @@ export class BlobManager {
 		// to access even though they are not shared yet. However, we don't start the share flow until it is
 		// explicitly invoked via sharePendingBlobs() in case we are loaded in a frozen container.
 		if (pendingBlobs !== undefined) {
-			for (const [localId, serializableBlobRecord] of Object.entries(
-				pendingBlobs,
-			)) {
+			for (const [localId, serializableBlobRecord] of Object.entries(pendingBlobs)) {
 				assert(
 					!this.redirectTable.has(localId),
 					0xc7e /* Pending blob already in redirect table */,
@@ -398,10 +383,7 @@ export class BlobManager {
 	 * @param payloadPending - Whether we suspect the payload may be pending and not available yet.
 	 * @returns A promise which resolves to the blob contents
 	 */
-	public async getBlob(
-		localId: string,
-		payloadPending: boolean,
-	): Promise<ArrayBufferLike> {
+	public async getBlob(localId: string, payloadPending: boolean): Promise<ArrayBufferLike> {
 		// Verify that the blob is not deleted, i.e., it has not been garbage collected. If it is, this will throw
 		// an error, failing the call.
 		this.verifyBlobNotDeleted(localId);
@@ -429,10 +411,7 @@ export class BlobManager {
 			// TODO: Fix this violation and remove the disable
 			// eslint-disable-next-line require-atomic-updates
 			storageId = await new Promise<string>((resolve) => {
-				const onProcessBlobAttach = (
-					_localId: string,
-					_storageId: string,
-				): void => {
+				const onProcessBlobAttach = (_localId: string, _storageId: string): void => {
 					if (_localId === localId) {
 						this.internalEvents.off("processedBlobAttach", onProcessBlobAttach);
 						resolve(_storageId);
@@ -461,14 +440,8 @@ export class BlobManager {
 
 	private getNonPayloadPendingBlobHandle(localId: string): BlobHandle {
 		const localBlobRecord = this.localBlobCache.get(localId);
-		assert(
-			localBlobRecord !== undefined,
-			0x384 /* requesting handle for unknown blob */,
-		);
-		assert(
-			localBlobRecord.state === "attached",
-			0xc7f /* Expected blob to be attached */,
-		);
+		assert(localBlobRecord !== undefined, 0x384 /* requesting handle for unknown blob */);
+		assert(localBlobRecord.state === "attached", 0xc7f /* Expected blob to be attached */);
 
 		return new BlobHandle(
 			getGCNodePathFromLocalId(localId),
@@ -487,12 +460,8 @@ export class BlobManager {
 		}
 		if (this.runtime.attachState === AttachState.Attaching) {
 			// blob upload is not supported in "Attaching" state
-			this.mc.logger.sendTelemetryEvent({
-				eventName: "CreateBlobWhileAttaching",
-			});
-			await new Promise<void>((resolve) =>
-				this.runtime.once("attached", resolve),
-			);
+			this.mc.logger.sendTelemetryEvent({ eventName: "CreateBlobWhileAttaching" });
+			await new Promise<void>((resolve) => this.runtime.once("attached", resolve));
 		}
 		assert(
 			this.runtime.attachState === AttachState.Attached,
@@ -619,10 +588,7 @@ export class BlobManager {
 					this.pendingBlobsWithAttachedHandles.delete(localId);
 					reject(createAbortError());
 				};
-				const onProcessedBlobAttach = (
-					_localId: string,
-					_storageId: string,
-				): void => {
+				const onProcessedBlobAttach = (_localId: string, _storageId: string): void => {
 					if (_localId === localId) {
 						removeListeners();
 						uploadHasBecomeIrrelevant = true;
@@ -707,10 +673,7 @@ export class BlobManager {
 				// 2. It will create a local ID to storage ID mapping in all clients which is needed to retrieve the
 				//    blob from the server via the storage ID.
 				return new Promise<boolean>((resolve, reject) => {
-					const onProcessedBlobAttach = (
-						_localId: string,
-						_storageId: string,
-					): void => {
+					const onProcessedBlobAttach = (_localId: string, _storageId: string): void => {
 						if (_localId === localId) {
 							removeListeners();
 							resolve(true);
@@ -732,10 +695,7 @@ export class BlobManager {
 						reject(createAbortError());
 					};
 					const removeListeners = (): void => {
-						this.internalEvents.off(
-							"processedBlobAttach",
-							onProcessedBlobAttach,
-						);
+						this.internalEvents.off("processedBlobAttach", onProcessedBlobAttach);
 						this.internalEvents.off("blobExpired", onBlobExpired);
 						signal?.removeEventListener("abort", onSignalAbort);
 					};
@@ -767,10 +727,7 @@ export class BlobManager {
 	 * @param metadata - message metadata containing storage and/or local IDs
 	 */
 	public reSubmit(metadata: Record<string, unknown> | undefined): void {
-		assert(
-			isBlobMetadata(metadata),
-			0xc01 /* Expected blob metadata for a BlobAttach op */,
-		);
+		assert(isBlobMetadata(metadata), 0xc01 /* Expected blob metadata for a BlobAttach op */);
 		const { localId, blobId: storageId } = metadata;
 		// Any blob that we're actively trying to advance to attached state must be in attaching state.
 		// Decline to resubmit for anything else.
@@ -783,10 +740,7 @@ export class BlobManager {
 		if (localBlobRecord?.state === "attaching") {
 			// If the TTL is expired, we assume it's gone from the storage and so is effectively localOnly again.
 			if (isTTLTooCloseToExpiry(localBlobRecord)) {
-				this.localBlobCache.set(localId, {
-					state: "localOnly",
-					blob: localBlobRecord.blob,
-				});
+				this.localBlobCache.set(localId, { state: "localOnly", blob: localBlobRecord.blob });
 				this.internalEvents.emit("blobExpired", localId);
 			} else {
 				this.sendBlobAttachMessage(localId, storageId);
@@ -794,10 +748,7 @@ export class BlobManager {
 		}
 	}
 
-	public processBlobAttachMessage(
-		message: ISequencedMessageEnvelope,
-		local: boolean,
-	): void {
+	public processBlobAttachMessage(message: ISequencedMessageEnvelope, local: boolean): void {
 		assert(
 			isBlobMetadata(message.metadata),
 			0xc02 /* Expected blob metadata for a BlobAttach op */,
@@ -825,9 +776,7 @@ export class BlobManager {
 		this.internalEvents.emit("processedBlobAttach", localId, storageId);
 	}
 
-	public summarize(
-		telemetryContext?: ITelemetryContext,
-	): ISummaryTreeWithStats {
+	public summarize(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
 		return summarizeBlobManagerState(this.redirectTable);
 	}
 
@@ -868,9 +817,7 @@ export class BlobManager {
 	 * will ensure we don't create an attachment blob for them at the next summary. The service would then delete them
 	 * some time in the future.
 	 */
-	public deleteSweepReadyNodes(
-		sweepReadyBlobRoutes: readonly string[],
-	): readonly string[] {
+	public deleteSweepReadyNodes(sweepReadyBlobRoutes: readonly string[]): readonly string[] {
 		// maybeUnusedStorageIds is used to compute the set of storage IDs that *used to have a local ID*, but that
 		// local ID is being deleted.
 		const maybeUnusedStorageIds: Set<string> = new Set();
@@ -944,9 +891,7 @@ export class BlobManager {
 	 * The provided table must have exactly the same set of pseudo storage IDs as are found in the redirect table.
 	 * @param detachedStorageTable - A map of pseudo storage IDs to real storage IDs.
 	 */
-	public readonly patchRedirectTable = (
-		detachedStorageTable: Map<string, string>,
-	): void => {
+	public readonly patchRedirectTable = (detachedStorageTable: Map<string, string>): void => {
 		assert(
 			this.runtime.attachState === AttachState.Detached,
 			0x252 /* "redirect table can only be set in detached container" */,
@@ -964,10 +909,7 @@ export class BlobManager {
 		const redirectTableEntries = [...this.redirectTable.entries()];
 		for (const [localId, detachedStorageId] of redirectTableEntries) {
 			const newStorageId = detachedStorageTable.get(detachedStorageId);
-			assert(
-				newStorageId !== undefined,
-				0xc53 /* Couldn't find a matching storage ID */,
-			);
+			assert(newStorageId !== undefined, 0xc53 /* Couldn't find a matching storage ID */);
 			this.redirectTable.set(localId, newStorageId);
 			// set identity (id -> id) entry
 			this.redirectTable.set(newStorageId, newStorageId);
@@ -997,10 +939,7 @@ export class BlobManager {
 		const pendingBlobs: IPendingBlobs = {};
 		for (const localId of this.pendingBlobsWithAttachedHandles) {
 			const localBlobRecord = this.localBlobCache.get(localId);
-			assert(
-				localBlobRecord !== undefined,
-				0xc83 /* Pending blob must be in local cache */,
-			);
+			assert(localBlobRecord !== undefined, 0xc83 /* Pending blob must be in local cache */);
 			assert(
 				localBlobRecord.state !== "attached",
 				0xc84 /* Pending blob must not be in attached state */,
@@ -1011,8 +950,7 @@ export class BlobManager {
 			// BlobAttach message will eventually be ack'd. So we assume we'll need to send another message, but also
 			// remain prepared to handle seeing the ack of the original message after loading from pending state.
 			pendingBlobs[localId] =
-				localBlobRecord.state === "localOnly" ||
-				localBlobRecord.state === "uploading"
+				localBlobRecord.state === "localOnly" || localBlobRecord.state === "uploading"
 					? {
 							state: "localOnly",
 							blob: bufferToString(localBlobRecord.blob, "base64"),
@@ -1047,9 +985,7 @@ const getLocalIdFromGCNodePath = (nodePath: string): string => {
 /**
  * Returns whether a given path is for attachment blobs that are in the format - "/blobManagerBasePath/...".
  */
-export const isBlobPath = (
-	path: string,
-): path is `/${typeof blobManagerBasePath}/${string}` =>
+export const isBlobPath = (path: string): path is `/${typeof blobManagerBasePath}/${string}` =>
 	areBlobPathParts(path.split("/"));
 
 const areBlobPathParts = (

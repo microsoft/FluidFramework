@@ -14,11 +14,7 @@ interface IProxy extends Object {
 	[contextSym]: { parent?: IProxy; parentKey: json1.Key };
 }
 
-function getPath(
-	target: IProxy,
-	key: json1.Key,
-	path: json1.Key[] = [],
-): json1.Path {
+function getPath(target: IProxy, key: json1.Key, path: json1.Key[] = []): json1.Path {
 	const { parent, parentKey } = target[contextSym];
 	if (parent !== undefined) {
 		getPath(parent, parentKey, path);
@@ -39,17 +35,14 @@ const arrayPatch = {
 			const start = target.length;
 			consumer(
 				item
-					.map((value, index) =>
-						json1.insertOp([...path, start + index], value),
-					)
+					.map((value, index) => json1.insertOp([...path, start + index], value))
 					// eslint-disable-next-line unicorn/no-array-reduce, unicorn/no-array-callback-reference
 					.reduce(json1.type.compose),
 			);
 			return target.push(...item);
 		},
 	pop:
-		(target: unknown[], consumer: Consumer, receiver: IProxy) =>
-		(): unknown | undefined => {
+		(target: unknown[], consumer: Consumer, receiver: IProxy) => (): unknown | undefined => {
 			const length = target.length;
 
 			if (length > 0) {
@@ -75,29 +68,15 @@ const createObjectProxy = (
 			const value: unknown = target[key];
 
 			return value !== null && typeof value === "object"
-				? getProxy(
-						/* target: */ value,
-						consumer,
-						/* parent: */ receiver,
-						key as string,
-					)
+				? getProxy(/* target: */ value, consumer, /* parent: */ receiver, key as string)
 				: value;
 		},
-		set: (
-			target: IProxy,
-			key: string | symbol,
-			value: json1.Doc,
-			receiver: IProxy,
-		) => {
+		set: (target: IProxy, key: string | symbol, value: json1.Doc, receiver: IProxy) => {
 			const path = getPath(receiver, key as json1.Key);
 
-			if (Object.hasOwn(target, key)) {
+			if (Object.prototype.hasOwnProperty.call(target, key)) {
 				consumer(
-					json1.replaceOp(
-						path,
-						/* oldVal: */ target[key] as json1.Doc,
-						/* newVal: */ value,
-					),
+					json1.replaceOp(path, /* oldVal: */ target[key] as json1.Doc, /* newVal: */ value),
 				);
 			} else {
 				consumer(json1.insertOp(path, value));
@@ -164,7 +143,7 @@ const createArrayProxy = (
 			const indexifiedKey = indexify(key as string) as string;
 			const path = getPath(receiver, indexifiedKey);
 
-			if (Object.hasOwn(target, indexifiedKey)) {
+			if (Object.prototype.hasOwnProperty.call(target, indexifiedKey)) {
 				consumer(
 					json1.replaceOp(
 						path,

@@ -6,8 +6,8 @@
 import type {
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelServices,
 	IFluidDataStoreRuntime,
+	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
@@ -70,11 +70,7 @@ export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
 	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedDirectory {
-		const directory = new SharedDirectoryInternal(
-			id,
-			runtime,
-			DirectoryFactory.Attributes,
-		);
+		const directory = new SharedDirectoryInternal(id, runtime, DirectoryFactory.Attributes);
 		directory.initializeLocal();
 
 		return directory;
@@ -85,8 +81,7 @@ export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
  * Entrypoint for {@link ISharedDirectory} creation.
  * @legacy @beta
  */
-export const SharedDirectory =
-	createSharedObjectKind<ISharedDirectory>(DirectoryFactory);
+export const SharedDirectory = createSharedObjectKind<ISharedDirectory>(DirectoryFactory);
 
 /**
  * Entrypoint for {@link ISharedDirectory} creation.

@@ -3,12 +3,12 @@
 	"compilerOptions": {
 		"rootDir": "./",
 		"outDir": "../../lib/test",
-		"types": ["node", "mocha"]
+		"types": ["node", "mocha"],
 	},
 	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../../tsconfig.json"
-		}
-	]
+			"path": "../../tsconfig.json",
+		},
+	],
 }

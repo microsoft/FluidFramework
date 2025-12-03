@@ -14,27 +14,22 @@ export {
 	Collection,
 	Float32DataArray,
 	Float64DataArray,
-	Int8DataArray,
 	Int16DataArray,
 	Int32DataArray,
 	Int64,
+	Int8DataArray,
 	Integer64,
 	SortedCollection,
 	StringDataArray,
-	Uint8DataArray,
 	Uint16DataArray,
 	Uint32DataArray,
 	Uint64,
+	Uint8DataArray,
 	UniversalDataArray,
 } from "./datastructures";
 export { DeferredPromise } from "./deferredPromise";
 export { DeterministicRandomGenerator } from "./deterministicRandomGenerator";
-export {
-	FlaggedError,
-	HTTPError,
-	HTTPErrorNoStack,
-	OperationError,
-} from "./error_objects";
+export { FlaggedError, HTTPError, HTTPErrorNoStack, OperationError } from "./error_objects";
 export { GuidUtils } from "./guidUtils";
 export { calculateHash } from "./hashCalculator";
 export { joinPaths } from "./joinPaths";

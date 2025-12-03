@@ -7,10 +7,10 @@ import type { IAudienceOwner } from "@fluidframework/container-definitions/inter
 import {
 	type IDocumentAttributes,
 	type IProcessMessageResult,
-	type ISequencedDocumentMessage,
 	type ISignalClient,
-	type ISignalMessage,
 	MessageType,
+	type ISequencedDocumentMessage,
+	type ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { canBeCoalescedByService } from "@fluidframework/driver-utils/internal";
 
@@ -102,10 +102,7 @@ export type InternalProtocolHandlerBuilder = (
 	sendProposal: (key: string, value: any) => number,
 ) => ProtocolHandlerInternal;
 
-export class ProtocolHandler
-	extends ProtocolOpHandler
-	implements ProtocolHandlerInternal
-{
+export class ProtocolHandler extends ProtocolOpHandler implements ProtocolHandlerInternal {
 	constructor(
 		attributes: IDocumentAttributes,
 		quorumSnapshot: IQuorumSnapshot,
@@ -132,9 +129,7 @@ export class ProtocolHandler
 		this.quorum.on("addMember", (clientId, details) =>
 			audience.addMember(clientId, details.client),
 		);
-		this.quorum.on("removeMember", (clientId) =>
-			audience.removeMember(clientId),
-		);
+		this.quorum.on("removeMember", (clientId) => audience.removeMember(clientId));
 	}
 
 	public processMessage(
@@ -155,10 +150,7 @@ export class ProtocolHandler
 			// Here checking canBeCoalescedByService is used as an approximation of "is benign to process despite being unexpected".
 			// It's still not good to see these messages from unexpected clientIds, but since they don't harm the integrity of the
 			// document we don't need to blow up aggressively.
-			if (
-				this.shouldClientHaveLeft(message.clientId) &&
-				!canBeCoalescedByService(message)
-			) {
+			if (this.shouldClientHaveLeft(message.clientId) && !canBeCoalescedByService(message)) {
 				// pre-0.58 error message: messageClientIdShouldHaveLeft
 				throw new Error("Remote message's clientId already should have left");
 			}

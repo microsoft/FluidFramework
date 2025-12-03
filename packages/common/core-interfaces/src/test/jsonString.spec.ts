@@ -6,18 +6,14 @@
 import type { JsonString } from "@fluidframework/core-interfaces/internal";
 import { JsonStringify } from "@fluidframework/core-interfaces/internal";
 
-import {
-	assertIdenticalTypes,
-	createInstanceOf,
-	parameterAcceptedAs,
-} from "./testUtils.js";
+import { assertIdenticalTypes, createInstanceOf, parameterAcceptedAs } from "./testUtils.js";
 import type { ConstHeterogenousEnum, NumericEnum } from "./testValues.js";
 import {
-	jsonStringOfBigInt,
-	jsonStringOfObjectWithArrayOfNumbers,
 	jsonStringOfString,
-	jsonStringOfStringRecordOfNumberOrUndefined,
+	jsonStringOfObjectWithArrayOfNumbers,
 	jsonStringOfStringRecordOfNumbers,
+	jsonStringOfStringRecordOfNumberOrUndefined,
+	jsonStringOfBigInt,
 	jsonStringOfUnknown,
 } from "./testValues.js";
 
@@ -71,13 +67,9 @@ describe("JsonString", () => {
 
 		it("`JsonString<A> | JsonString<B>` is assignable to `JsonString<A | B>`", () => {
 			const jsonStringUnion =
-				Math.random() < 0.5
-					? jsonStringOfString
-					: jsonStringOfObjectWithArrayOfNumbers;
+				Math.random() < 0.5 ? jsonStringOfString : jsonStringOfObjectWithArrayOfNumbers;
 
-			parameterAcceptedAs<JsonString<string | { arrayOfNumbers: number[] }>>(
-				jsonStringUnion,
-			);
+			parameterAcceptedAs<JsonString<string | { arrayOfNumbers: number[] }>>(jsonStringUnion);
 		});
 	});
 
@@ -111,8 +103,9 @@ describe("JsonString", () => {
 		});
 	});
 
-	type ExtractJsonStringBrand<T extends JsonString<unknown>> =
-		T extends string & infer B ? B : never;
+	type ExtractJsonStringBrand<T extends JsonString<unknown>> = T extends string & infer B
+		? B
+		: never;
 
 	// Practically `JsonString<A | B>` is the same as `JsonString<A> | JsonString<B>`
 	// since all encodings are the same and parsing from either produces the same
@@ -128,8 +121,7 @@ describe("JsonString", () => {
 		>();
 		const explicitPostBrandUnion = createInstanceOf<
 			| (string & ExtractJsonStringBrand<JsonString<string>>)
-			| (string &
-					ExtractJsonStringBrand<JsonString<{ arrayOfNumbers: number[] }>>)
+			| (string & ExtractJsonStringBrand<JsonString<{ arrayOfNumbers: number[] }>>)
 		>();
 		assertIdenticalTypes(explicitBrandUnion, explicitPostBrandUnion);
 		assertIdenticalTypes(
@@ -138,42 +130,29 @@ describe("JsonString", () => {
 		);
 		assertIdenticalTypes(
 			explicitPostBrandUnion,
-			createInstanceOf<
-				JsonString<string> | JsonString<{ arrayOfNumbers: number[] }>
-			>(),
+			createInstanceOf<JsonString<string> | JsonString<{ arrayOfNumbers: number[] }>>(),
 		);
 		assertIdenticalTypes(
 			createInstanceOf<JsonString<string | { arrayOfNumbers: number[] }>>(),
-			createInstanceOf<
-				JsonString<string> | JsonString<{ arrayOfNumbers: number[] }>
-			>(),
+			createInstanceOf<JsonString<string> | JsonString<{ arrayOfNumbers: number[] }>>(),
 		);
 		// Act and Verify
-		parameterAcceptedAs<
-			JsonString<string> | JsonString<{ arrayOfNumbers: number[] }>
-		>(jsonStringOfString as JsonString<string | { arrayOfNumbers: number[] }>);
+		parameterAcceptedAs<JsonString<string> | JsonString<{ arrayOfNumbers: number[] }>>(
+			jsonStringOfString as JsonString<string | { arrayOfNumbers: number[] }>,
+		);
 	});
 
 	it("`JsonString<A | B>` is assignable to `JsonString<A> | JsonString<B>` with enums involved", () => {
-		parameterAcceptedAs<
-			JsonString<NumericEnum> | JsonString<{ arrayOfNumbers: number[] }>
-		>(
-			createInstanceOf<
-				JsonString<NumericEnum | { arrayOfNumbers: number[] }>
-			>(),
+		parameterAcceptedAs<JsonString<NumericEnum> | JsonString<{ arrayOfNumbers: number[] }>>(
+			createInstanceOf<JsonString<NumericEnum | { arrayOfNumbers: number[] }>>(),
 		);
 
 		parameterAcceptedAs<
-			| JsonString<NumericEnum | "other">
-			| JsonString<{ arrayOfNumbers: number[] }>
-		>(
-			createInstanceOf<
-				JsonString<NumericEnum | "other" | { arrayOfNumbers: number[] }>
-			>(),
-		);
+			JsonString<NumericEnum | "other"> | JsonString<{ arrayOfNumbers: number[] }>
+		>(createInstanceOf<JsonString<NumericEnum | "other" | { arrayOfNumbers: number[] }>>());
 
-		parameterAcceptedAs<
-			JsonString<NumericEnum> | JsonString<ConstHeterogenousEnum>
-		>(createInstanceOf<JsonString<NumericEnum | ConstHeterogenousEnum>>());
+		parameterAcceptedAs<JsonString<NumericEnum> | JsonString<ConstHeterogenousEnum>>(
+			createInstanceOf<JsonString<NumericEnum | ConstHeterogenousEnum>>(),
+		);
 	});
 });

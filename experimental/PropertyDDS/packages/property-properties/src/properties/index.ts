@@ -28,11 +28,7 @@ import { ReferenceMapProperty } from "./referenceMapProperty";
 import { ReferenceProperty } from "./referenceProperty";
 import { SetProperty } from "./setProperty";
 import { StringProperty } from "./stringProperty";
-import {
-	Uint8Property,
-	Uint16Property,
-	Uint32Property,
-} from "./uintProperties";
+import { Uint8Property, Uint16Property, Uint32Property } from "./uintProperties";
 import {
 	BoolArrayProperty,
 	Float32ArrayProperty,

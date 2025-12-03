@@ -12,9 +12,9 @@
 			"jest-environment-puppeteer",
 			"expect-puppeteer",
 			"react",
-			"react-dom"
+			"react-dom",
 		],
-		"exactOptionalPropertyTypes": false
+		"exactOptionalPropertyTypes": false,
 	},
-	"include": ["src/**/*"]
+	"include": ["src/**/*"],
 }

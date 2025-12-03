@@ -101,10 +101,7 @@ export class SortedCollection<T> extends Collection<T> {
 	 * @param in_key - Key to check against
 	 * @returns The index at which the key would be inserted in
 	 */
-	private _binarySearchNearestIndex(
-		in_array: string[],
-		in_key: string,
-	): number {
+	private _binarySearchNearestIndex(in_array: string[], in_key: string): number {
 		if (this._comparisonFunction === undefined) {
 			return _.sortedIndex(in_array, in_key);
 		} else {
@@ -119,10 +116,7 @@ export class SortedCollection<T> extends Collection<T> {
 					return 0;
 				}
 
-				return this._binarySearchNearestIndex(
-					in_array.slice(0, middleIndex),
-					in_key,
-				);
+				return this._binarySearchNearestIndex(in_array.slice(0, middleIndex), in_key);
 			}
 
 			if (this._comparisonFunction(in_array[middleIndex], in_key) < 0) {

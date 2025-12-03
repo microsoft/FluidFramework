@@ -6,10 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { isObject } from "@fluidframework/core-utils/internal";
-import {
-	isFluidHandle,
-	toFluidHandleInternal,
-} from "@fluidframework/runtime-utils/internal";
+import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 import type { IDirectory } from "../../interfaces.js";
 
@@ -77,10 +74,7 @@ async function assertEventualConsistencyCore(
 	}
 
 	// Check for number of subdirectores with both directories.
-	assert(
-		first.countSubDirectory !== undefined &&
-			second.countSubDirectory !== undefined,
-	);
+	assert(first.countSubDirectory !== undefined && second.countSubDirectory !== undefined);
 	assert.strictEqual(
 		first.countSubDirectory(),
 		second.countSubDirectory(),
@@ -100,11 +94,7 @@ async function assertEventualConsistencyCore(
 	}
 
 	// Check for consistency of subdirectories ordering of both directories
-	const firstSubdirNames = [...first.subdirectories()].map(
-		([dirName, _]) => dirName,
-	);
-	const secondSubdirNames = [...second.subdirectories()].map(
-		([dirName, _]) => dirName,
-	);
+	const firstSubdirNames = [...first.subdirectories()].map(([dirName, _]) => dirName);
+	const secondSubdirNames = [...second.subdirectories()].map(([dirName, _]) => dirName);
 	assert.deepStrictEqual(firstSubdirNames, secondSubdirNames);
 }

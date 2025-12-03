@@ -7,10 +7,10 @@ import { realpathSync } from "node:fs";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import {
-	getTypeTestPreviousPackageDetails,
 	type Logger,
 	type Package,
 	type PackageJson,
+	getTypeTestPreviousPackageDetails,
 } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { PackageName } from "@rushstack/node-core-library";
@@ -40,18 +40,15 @@ import {
 import { getTypesPathFromPackage } from "../../library/packageExports.js";
 // AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 // eslint-disable-next-line import-x/no-internal-modules
-import {
-	buildTestCase,
-	type TestCaseTypeData,
-} from "../../typeValidator/testGeneration.js";
+import { type TestCaseTypeData, buildTestCase } from "../../typeValidator/testGeneration.js";
 // AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 // eslint-disable-next-line import-x/no-internal-modules
 import type { TypeData } from "../../typeValidator/typeData.js";
 import {
 	type BrokenCompatSettings,
 	type BrokenCompatTypes,
-	defaultTypeValidationConfig,
 	type PackageWithTypeTestSettings,
+	defaultTypeValidationConfig,
 	// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../typeValidator/typeValidatorConfig.js";
@@ -59,8 +56,7 @@ import {
 export default class GenerateTypetestsCommand extends PackageCommand<
 	typeof GenerateTypetestsCommand
 > {
-	static readonly description =
-		"Generates type tests for a package or group of packages.";
+	static readonly description = "Generates type tests for a package or group of packages.";
 
 	static readonly flags = {
 		entrypoint: Flags.custom<ApiLevel>({
@@ -96,9 +92,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 			entrypointFlag ??
 			pkgJson.typeValidation?.entrypoint ??
 			defaultTypeValidationConfig.entrypoint;
-		const fallbackLevel = this.flags.publicFallback
-			? ApiLevel.public
-			: undefined;
+		const fallbackLevel = this.flags.publicFallback ? ApiLevel.public : undefined;
 
 		this.verbose(
 			`${pkg.nameColored}: Generating type tests for "${entrypoint}" entrypoint with "${fallbackLevel}" as a fallback.`,
@@ -109,10 +103,8 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		// Do not catch error from opening file since the default behavior is fine (exits process with error showing useful message)
 		const currentPackageJson: PackageWithTypeTestSettings = pkg.packageJson;
 
-		const {
-			name: previousPackageName,
-			packageJsonPath: previousPackageJsonPath,
-		} = getTypeTestPreviousPackageDetails(pkg);
+		const { name: previousPackageName, packageJsonPath: previousPackageJsonPath } =
+			getTypeTestPreviousPackageDetails(pkg);
 		const previousBasePath = path.dirname(previousPackageJsonPath);
 
 		const typeTestOutputFile = getTypeTestFilePath(pkg, outDir, outFile);
@@ -132,27 +124,16 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		}
 
 		ensureDevDependencyExists(currentPackageJson, previousPackageName);
-		this.verbose(
-			`${pkg.nameColored}: Reading package.json at ${previousPackageJsonPath}`,
-		);
-		const previousPackageJson = (await readJson(
-			previousPackageJsonPath,
-		)) as PackageJson;
+		this.verbose(`${pkg.nameColored}: Reading package.json at ${previousPackageJsonPath}`);
+		const previousPackageJson = (await readJson(previousPackageJsonPath)) as PackageJson;
 		// Set the name in the JSON to the calculated previous package name, since the name in the previous package.json is
 		// the same as current. This enables us to pass the package.json object to more general functions but ensure those
 		// functions use the correct name. For example, when we write the `import { foo } from <PACKAGE>/internal`
 		// statements into the type test file, we need to use the previous version name.
 		previousPackageJson.name = previousPackageName;
 
-		const {
-			typesPath: previousTypesPathRelative,
-			entrypointUsed: previousEntrypoint,
-		} = getTypesPathWithFallback(
-			previousPackageJson,
-			entrypoint,
-			this.logger,
-			fallbackLevel,
-		);
+		const { typesPath: previousTypesPathRelative, entrypointUsed: previousEntrypoint } =
+			getTypesPathWithFallback(previousPackageJson, entrypoint, this.logger, fallbackLevel);
 		const previousTypesPath = path.resolve(
 			path.join(previousBasePath, previousTypesPathRelative),
 		);
@@ -209,10 +190,7 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
 `,
 		];
 
-		const testCases = generateCompatibilityTestCases(
-			typeMap,
-			currentPackageJson,
-		);
+		const testCases = generateCompatibilityTestCases(typeMap, currentPackageJson);
 		const output = [...fileHeader, ...testCases].join("\n");
 
 		await mkdir(outDir, { recursive: true });
@@ -236,11 +214,7 @@ function getTypesPathWithFallback(
 ): { typesPath: string; entrypointUsed: ApiLevel } {
 	let chosenEntrypoint: ApiLevel = entrypoint;
 	// First try the requested paths, but fall back to public otherwise if configured.
-	let typesPath: string | undefined = getTypesPathFromPackage(
-		packageJson,
-		entrypoint,
-		log,
-	);
+	let typesPath: string | undefined = getTypesPathFromPackage(packageJson, entrypoint, log);
 
 	if (typesPath === undefined) {
 		// Try the public types if configured to do so. If public types are found adjust the level accordingly.
@@ -267,11 +241,7 @@ function getTypesPathWithFallback(
  *
  * @returns The path to write generated files to.
  */
-function getTypeTestFilePath(
-	pkg: Package,
-	outDir: string,
-	outFile: string,
-): string {
+function getTypeTestFilePath(pkg: Package, outDir: string, outFile: string): string {
 	return path.join(
 		pkg.directory,
 		outDir,
@@ -331,30 +301,19 @@ function addScope(
 	node: NameableNodeSpecific | NamedNodeSpecificBase<Node>,
 ): string {
 	const scope = node.getName();
-	if (scope === undefined)
-		throw new Error("Missing scope where one was expected");
+	if (scope === undefined) throw new Error("Missing scope where one was expected");
 	return addStringScope(namespacePrefix, scope);
 }
 
 /**
  * Prefix `innerName` name with `namespacePrefix` to produce a qualified name.
  */
-function addStringScope(
-	namespacePrefix: string | undefined,
-	innerName: string,
-): string {
-	const name =
-		namespacePrefix === undefined
-			? innerName
-			: `${namespacePrefix}.${innerName}`;
+function addStringScope(namespacePrefix: string | undefined, innerName: string): string {
+	const name = namespacePrefix === undefined ? innerName : `${namespacePrefix}.${innerName}`;
 	return name;
 }
 
-function getNodeTypeData(
-	node: Node,
-	log: Logger,
-	exportedName: string,
-): TypeData[] {
+function getNodeTypeData(node: Node, log: Logger, exportedName: string): TypeData[] {
 	/*
         handles namespaces e.g.
         export namespace foo{
@@ -405,9 +364,7 @@ function getNodeTypeData(
 		Node.isFunctionDeclaration(node)
 	) {
 		const docs = Node.isVariableDeclaration(node)
-			? node
-					.getFirstAncestorByKindOrThrow(SyntaxKind.VariableStatement)
-					.getJsDocs()
+			? node.getFirstAncestorByKindOrThrow(SyntaxKind.VariableStatement).getJsDocs()
 			: node.getJsDocs();
 
 		const typeData: TypeData[] = [];
@@ -513,14 +470,10 @@ export function generateCompatibilityTestCases(
 	// Convert Map entries to an array and sort by key. This is not strictly needed since Maps are iterated in insertion
 	// order, so the type tests should generate in the same order each time. However, explicitly sorting by the test case
 	// name is clearer.
-	const sortedEntries = [...typeMap.entries()].sort((a, b) =>
-		a[0].localeCompare(b[0]),
-	);
+	const sortedEntries = [...typeMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
 
 	for (const [testCaseName, typeData] of sortedEntries) {
-		testString.push(
-			...generateCompatibilityTestCase(typeData, broken[testCaseName]),
-		);
+		testString.push(...generateCompatibilityTestCase(typeData, broken[testCaseName]));
 	}
 	return testString;
 }
@@ -612,9 +565,7 @@ export function generateCompatibilityTestCase(
 /**
  * Returns the name of the type preprocessing type meta-function to use, or undefined if no type test should be generated.
  */
-function selectTypePreprocessor(
-	typeData: Omit<TypeData, "node">,
-): string | undefined {
+function selectTypePreprocessor(typeData: Omit<TypeData, "node">): string | undefined {
 	if (typeData.tags.has("system")) {
 		return undefined;
 	}

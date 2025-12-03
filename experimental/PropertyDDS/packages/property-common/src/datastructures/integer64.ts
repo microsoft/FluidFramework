@@ -48,10 +48,7 @@ export class Integer64 {
 	}
 
 	protected _int64toString(isSigned: boolean, in_radix = 10): string {
-		ConsoleUtils.assert(
-			_.isNumber(in_radix),
-			`${MSG.IN_RADIX_MUST_BE_NUMBER} ${in_radix}`,
-		);
+		ConsoleUtils.assert(_.isNumber(in_radix), `${MSG.IN_RADIX_MUST_BE_NUMBER} ${in_radix}`);
 		ConsoleUtils.assert(
 			in_radix >= 2 && 36 >= in_radix,
 			`${MSG.BASE_OUT_OF_RANGE} ${in_radix}`,
@@ -91,25 +88,12 @@ export class Integer64 {
  *
  * @returns Low and high bits of `Int64`.
  */
-function _stringToInt64(
-	in_signed: boolean,
-	in_string: string,
-	in_radix = 10,
-): number[] {
-	ConsoleUtils.assert(
-		_.isString(in_string),
-		MSG.IN_STRING_MUST_BE_STRING + in_string,
-	);
+function _stringToInt64(in_signed: boolean, in_string: string, in_radix = 10): number[] {
+	ConsoleUtils.assert(_.isString(in_string), MSG.IN_STRING_MUST_BE_STRING + in_string);
 	const string = in_string.trim();
 
-	ConsoleUtils.assert(
-		_.isNumber(in_radix),
-		`${MSG.IN_RADIX_BETWEEN_2_36}  ${in_radix}`,
-	);
-	ConsoleUtils.assert(
-		in_radix >= 2 && 36 >= in_radix,
-		`${MSG.BASE_OUT_OF_RANGE} ${in_radix}`,
-	);
+	ConsoleUtils.assert(_.isNumber(in_radix), `${MSG.IN_RADIX_BETWEEN_2_36}  ${in_radix}`);
+	ConsoleUtils.assert(in_radix >= 2 && 36 >= in_radix, `${MSG.BASE_OUT_OF_RANGE} ${in_radix}`);
 
 	let position = 0;
 	let negative = false;
@@ -120,10 +104,7 @@ function _stringToInt64(
 		position += 1;
 	}
 
-	ConsoleUtils.assert(
-		!negative || in_signed,
-		MSG.CANNOT_UPDATE_TO_NEGATIVE + string,
-	);
+	ConsoleUtils.assert(!negative || in_signed, MSG.CANNOT_UPDATE_TO_NEGATIVE + string);
 
 	while (position < string.length) {
 		const digit = parseInt(string[position++], in_radix);
@@ -153,7 +134,7 @@ function _stringToInt64(
  * @internal
  */
 export class Int64 extends Integer64 {
-	static fromString = (in_string: string, radix = 10) => {
+	static fromString = function (in_string: string, radix = 10) {
 		const [low, high] = _stringToInt64(true, in_string, radix);
 		return new Int64(low, high);
 	};
@@ -173,7 +154,7 @@ export class Int64 extends Integer64 {
  */
 export class Uint64 extends Integer64 {
 	static fromString(in_string: string, in_radix = 10) {
-		const [low, high] = _stringToInt64.call(Uint64, false, in_string, in_radix);
+		const [low, high] = _stringToInt64.call(this, false, in_string, in_radix);
 		return new Uint64(low, high);
 	}
 

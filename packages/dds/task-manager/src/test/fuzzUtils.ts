@@ -15,10 +15,7 @@ import {
 	makeRandom,
 	takeAsync as take,
 } from "@fluid-private/stochastic-test-utils";
-import type {
-	DDSFuzzModel,
-	DDSFuzzTestState,
-} from "@fluid-private/test-dds-utils";
+import type { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 
 import type { ITaskManager } from "../interfaces.js";
 import { TaskManagerFactory } from "../taskManagerFactory.js";
@@ -141,10 +138,7 @@ function makeOperationGenerator(
 	const isAssigned = ({ client, taskId }: OpSelectionState): boolean =>
 		client.channel.assigned(taskId);
 
-	const clientBaseOperationGenerator = createWeightedGenerator<
-		Operation,
-		OpSelectionState
-	>([
+	const clientBaseOperationGenerator = createWeightedGenerator<Operation, OpSelectionState>([
 		[volunteer, 1, canVolunteer],
 		[abandon, 1, isQueued],
 		[subscribe, 1],
@@ -173,9 +167,7 @@ function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
 	for (const client of state.clients) {
 		const taskManager = client.channel;
 		assert(taskManager !== undefined);
-		if (
-			loggingInfo.taskManagerNames.includes(client.containerRuntime.clientId)
-		) {
+		if (loggingInfo.taskManagerNames.includes(client.containerRuntime.clientId)) {
 			console.log(
 				`TaskManager ${taskManager.id} (CanVolunteer: ${taskManager.canVolunteer()}):`,
 			);
@@ -186,17 +178,12 @@ function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
 	}
 }
 
-function makeReducer(
-	loggingInfo?: LoggingInfo,
-): Reducer<Operation, FuzzTestState> {
+function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, FuzzTestState> {
 	const withLogging =
 		<T>(baseReducer: Reducer<T, FuzzTestState>): Reducer<T, FuzzTestState> =>
 		(state, operation) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-			if (
-				loggingInfo !== undefined &&
-				(operation as any).taskId === loggingInfo.taskId
-			) {
+			if (loggingInfo !== undefined && (operation as any).taskId === loggingInfo.taskId) {
 				logCurrentState(state, loggingInfo);
 				console.log("-".repeat(20));
 				console.log("Next operation:", JSON.stringify(operation, undefined, 4));
@@ -231,9 +218,7 @@ function makeReducer(
 				client.channel.complete(taskId);
 			} catch (error: unknown) {
 				// We expect an error to be thrown if we are disconnected while trying to complete
-				const expectedErrors = [
-					"Attempted to complete task in disconnected state",
-				];
+				const expectedErrors = ["Attempted to complete task in disconnected state"];
 				if (
 					error instanceof Object &&
 					"message" in error &&
@@ -254,31 +239,19 @@ function assertEqualTaskManagers(a: ITaskManager, b: ITaskManager): void {
 	const queue2: Map<string, string[]> = (b as any).taskQueues;
 	/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
-	assert.strictEqual(
-		queue1.size,
-		queue2.size,
-		"The number of tasks queues are not the same",
-	);
+	assert.strictEqual(queue1.size, queue2.size, "The number of tasks queues are not the same");
 	for (const [key, val] of queue1) {
 		const testVal = queue2.get(key);
 		if (testVal === undefined) {
 			assert(val === undefined, "Task queues are not both undefined");
 			continue;
 		}
-		assert.strictEqual(
-			testVal.length,
-			val.length,
-			"Task queues are not the same size",
-		);
+		assert.strictEqual(testVal.length, val.length, "Task queues are not the same size");
 		if (testVal.length > 0) {
 			const testValArr = testVal;
 			const valArr = val;
 			for (const [index, task] of testValArr.entries()) {
-				assert.strictEqual(
-					task,
-					valArr[index],
-					`Task queues are not identical`,
-				);
+				assert.strictEqual(task, valArr[index], `Task queues are not identical`);
 			}
 		}
 	}
@@ -287,17 +260,14 @@ function assertEqualTaskManagers(a: ITaskManager, b: ITaskManager): void {
 /**
  * Base fuzz model for TaskManager
  */
-export const baseTaskManagerModel: DDSFuzzModel<
-	TaskManagerFactory,
-	Operation,
-	FuzzTestState
-> = {
-	workloadName: "default configuration",
-	generatorFactory: () => take(100, makeOperationGenerator()),
-	reducer:
-		// makeReducer supports a param for logging output which tracks the provided intervalId over time:
-		// { taskManagerNames: ["A", "B", "C"], taskId: "" },
-		makeReducer(),
-	validateConsistency: (a, b) => assertEqualTaskManagers(a.channel, b.channel),
-	factory: new TaskManagerFactory(),
-};
+export const baseTaskManagerModel: DDSFuzzModel<TaskManagerFactory, Operation, FuzzTestState> =
+	{
+		workloadName: "default configuration",
+		generatorFactory: () => take(100, makeOperationGenerator()),
+		reducer:
+			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
+			// { taskManagerNames: ["A", "B", "C"], taskId: "" },
+			makeReducer(),
+		validateConsistency: (a, b) => assertEqualTaskManagers(a.channel, b.channel),
+		factory: new TaskManagerFactory(),
+	};

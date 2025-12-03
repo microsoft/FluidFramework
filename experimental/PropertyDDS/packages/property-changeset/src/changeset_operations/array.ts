@@ -6,32 +6,28 @@
 /**
  * @fileoverview Helper functions and classes to work with array ChangeSets
  */
-import { ConsoleUtils, constants } from "@fluid-experimental/property-common";
+import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
 
 import cloneDeep from "lodash/cloneDeep.js";
 import isEqual from "lodash/isEqual.js";
 import isNumber from "lodash/isNumber.js";
 import isString from "lodash/isString.js";
 
-// @ts-expect-error
-import type {
-	ApplyChangeSetOptions,
-	ConflictInfo,
-	SerializedChangeSet,
-} from "../changeset.js";
+// @ts-ignore
+import { ApplyChangeSetOptions, ConflictInfo, SerializedChangeSet } from "../changeset.js";
 import { TypeIdHelper } from "../helpers/typeidHelper.js";
 
 import {
 	ArrayChangeSetIterator,
-	type arrayInsertList,
-	type arrayModifyList,
-	type arrayRemoveList,
-	type GenericOperation,
-	type InsertOperation,
-	type ModifyOperation,
-	type NOPOperation,
-	type NoneNOPOperation,
-	type RemoveOperation,
+	GenericOperation,
+	InsertOperation,
+	ModifyOperation,
+	NOPOperation,
+	NoneNOPOperation,
+	RemoveOperation,
+	arrayInsertList,
+	arrayModifyList,
+	arrayRemoveList,
 } from "./arrayChangesetIterator.js";
 import { ConflictType } from "./changesetConflictTypes.js";
 
@@ -85,11 +81,7 @@ enum ArrayChangeSetRangeType {
 	partOfApartOfB,
 }
 
-interface SegmentType<
-	T = GenericOperation,
-	K = GenericOperation,
-	L = GenericOperation,
-> {
+interface SegmentType<T = GenericOperation, K = GenericOperation, L = GenericOperation> {
 	begin?: number;
 	op?: T;
 	flag?: ArrayChangeSetRangeType;
@@ -118,8 +110,7 @@ export interface OperationRangeDescription<T = GenericOperation> {
 /**
  * A range of an insert array operation
  */
-export interface OperationRangeInsert
-	extends OperationRangeDescription<InsertOperation> {
+export interface OperationRangeInsert extends OperationRangeDescription<InsertOperation> {
 	removeInsertOperationB?: arrayInsertList;
 	removeInsertOperation?: arrayInsertList;
 	removeInsertOperationA?: arrayInsertList;
@@ -128,8 +119,7 @@ export interface OperationRangeInsert
 /**
  * A range of a remove array operation
  */
-export interface OperationRangeRemove
-	extends OperationRangeDescription<RemoveOperation> {
+export interface OperationRangeRemove extends OperationRangeDescription<RemoveOperation> {
 	removeInsertOperationB?: arrayRemoveList;
 	removeInsertOperation?: arrayRemoveList;
 	removeInsertOperationA?: arrayRemoveList;
@@ -141,9 +131,7 @@ export interface OperationRangeRemove
 export interface OperationRangeModify
 	extends Omit<
 		OperationRangeDescription<ModifyOperation>,
-		| "removeInsertOperationB"
-		| "removeInsertOperation"
-		| "removeInsertOperationA"
+		"removeInsertOperationB" | "removeInsertOperation" | "removeInsertOperationA"
 	> {}
 
 /**
@@ -152,9 +140,7 @@ export interface OperationRangeModify
 export interface OperationRangeNOP
 	extends Omit<
 		OperationRangeDescription<NOPOperation>,
-		| "removeInsertOperationB"
-		| "removeInsertOperation"
-		| "removeInsertOperationA"
+		"removeInsertOperationB" | "removeInsertOperation" | "removeInsertOperationA"
 	> {}
 
 /**
@@ -173,11 +159,11 @@ export type OperationRange = OperationRangeNoneNOP | OperationRangeNOP;
  * @param in_aOffset - The offset that needs to be added to transform the operation
  * @param io_resultingRange - The computed range
  */
-const getRangeForCurrentStateOperation = (
+const getRangeForCurrentStateOperation = function (
 	io_operation: GenericOperation,
 	in_aOffset: number,
 	io_resultingRange: OperationRange,
-) => {
+) {
 	if (!io_operation) {
 		return;
 	}
@@ -197,8 +183,7 @@ const getRangeForCurrentStateOperation = (
 	switch (io_operation.type) {
 		case ArrayChangeSetIterator.types.INSERT:
 			io_resultingRange.begin = io_operation.operation[0];
-			io_resultingRange.end =
-				io_operation.operation[0] + io_operation.operation[1].length;
+			io_resultingRange.end = io_operation.operation[0] + io_operation.operation[1].length;
 			io_resultingRange.op = io_operation;
 			io_resultingRange.flag = ArrayChangeSetRangeType.completeA;
 			return;
@@ -212,20 +197,16 @@ const getRangeForCurrentStateOperation = (
 			return;
 		case ArrayChangeSetIterator.types.MODIFY:
 			io_resultingRange.begin = io_operation.operation[0];
-			io_resultingRange.end =
-				io_operation.operation[0] + io_operation.operation[1].length;
+			io_resultingRange.end = io_operation.operation[0] + io_operation.operation[1].length;
 			io_resultingRange.op = io_operation;
 			io_resultingRange.flag = ArrayChangeSetRangeType.completeA;
 			return;
 		default:
-			throw new Error(
-				`getRangeForCurrentStateOperation: ${MSG.UNKNOWN_OPERATION}`,
-			);
+			throw new Error(`getRangeForCurrentStateOperation: ${MSG.UNKNOWN_OPERATION}`);
 	}
 };
 
-const getOpLength = (op: arrayRemoveList) =>
-	isNumber(op[1]) ? op[1] : op[1].length;
+const getOpLength = (op: arrayRemoveList) => (isNumber(op[1]) ? op[1] : op[1].length);
 
 /**
  * Computes the impact range for a given operation of the applied change set
@@ -234,12 +215,12 @@ const getOpLength = (op: arrayRemoveList) =>
  * @param in_flag - The flag for the resulting range, default is 'complete B'
  * @param in_options - Optional additional parameters
  */
-const getRangeForAppliedOperation = (
+const getRangeForAppliedOperation = function (
 	in_operation: GenericOperation,
 	io_resultingRange: OperationRangeDescription,
 	in_flag?: ArrayChangeSetRangeType,
 	in_options?: ApplyChangeSetOptions,
-) => {
+) {
 	if (!in_operation || in_operation.type === ArrayChangeSetIterator.types.NOP) {
 		io_resultingRange.begin = undefined;
 		io_resultingRange.end = undefined;
@@ -259,8 +240,7 @@ const getRangeForAppliedOperation = (
 
 	io_resultingRange.begin = in_operation.operation[0];
 	io_resultingRange.op._absoluteBegin = in_operation.operation[0];
-	io_resultingRange.flag =
-		in_flag !== undefined ? in_flag : ArrayChangeSetRangeType.completeB;
+	io_resultingRange.flag = in_flag !== undefined ? in_flag : ArrayChangeSetRangeType.completeB;
 
 	switch (in_operation.type) {
 		case ArrayChangeSetIterator.types.INSERT:
@@ -278,32 +258,24 @@ const getRangeForAppliedOperation = (
 				}
 			}
 			return;
-		case ArrayChangeSetIterator.types.REMOVE: {
-			const numberOfRemovedElements = getOpLength(in_operation.operation);
+		case ArrayChangeSetIterator.types.REMOVE:
+			let numberOfRemovedElements = getOpLength(in_operation.operation);
 
-			io_resultingRange.end =
-				in_operation.operation[0] + numberOfRemovedElements;
-			io_resultingRange.op.operation[1] = Array.isArray(
-				in_operation.operation[1],
-			)
+			io_resultingRange.end = in_operation.operation[0] + numberOfRemovedElements;
+			io_resultingRange.op.operation[1] = Array.isArray(in_operation.operation[1])
 				? in_operation.operation[1].slice()
 				: in_operation.operation[1];
-			io_resultingRange.removeInsertOperation =
-				in_operation.removeInsertOperation;
+			io_resultingRange.removeInsertOperation = in_operation.removeInsertOperation;
 			return;
-		}
 		case ArrayChangeSetIterator.types.MODIFY:
-			io_resultingRange.end =
-				in_operation.operation[0] + in_operation.operation[1].length;
+			io_resultingRange.end = in_operation.operation[0] + in_operation.operation[1].length;
 			io_resultingRange.op.operation[1] = in_operation.operation[1].slice();
 			if (in_operation.operation[2] !== undefined) {
 				io_resultingRange.op.operation[2] = in_operation.operation[2].slice();
 			}
 			return;
 		default:
-			throw new Error(
-				`getRangeForCurrentStateOperation: ${MSG.UNKNOWN_OPERATION}`,
-			);
+			throw new Error(`getRangeForCurrentStateOperation: ${MSG.UNKNOWN_OPERATION}`);
 	}
 };
 
@@ -317,12 +289,12 @@ const getRangeForAppliedOperation = (
  * @param in_start - Index at which the operation is split
  * @private
  */
-const _splitArrayParameter = (
+const _splitArrayParameter = function (
 	in_firstResult: arrayModifyList | arrayRemoveList,
 	in_secondResult: arrayModifyList | arrayRemoveList,
 	in_data: arrayModifyList | arrayRemoveList,
 	in_start: number,
-) => {
+) {
 	let firstTmp: any;
 	if (isString(in_data[1])) {
 		firstTmp = in_data[1].substr(0, in_start);
@@ -366,12 +338,12 @@ const _splitArrayParameter = (
  * @param lengthUsedInResultSegment - The length of the range to split
  * @param in_updateOffset - Should the offset in the target range be updated?
  */
-const _splitOperation = (
+const _splitOperation = function (
 	in_targetRange: OperationRangeDescription<NoneNOPOperation>,
 	in_targetOperation: NoneNOPOperation,
 	lengthUsedInResultSegment: number,
 	in_updateOffset: boolean,
-) => {
+) {
 	_splitArrayParameter(
 		in_targetOperation.operation,
 		in_targetRange.op.operation,
@@ -394,10 +366,10 @@ const _splitOperation = (
  * @param in_sourceOperation - The source operation
  * @param in_targetOperation - The target operation which will be overwritten
  */
-const _copyOperation = (
+const _copyOperation = function (
 	in_sourceOperation: NoneNOPOperation,
 	in_targetOperation: NoneNOPOperation,
-) => {
+) {
 	if (in_sourceOperation.type === ArrayChangeSetIterator.types.REMOVE) {
 		in_targetOperation.operation[1] = in_sourceOperation.operation[1];
 	} else {
@@ -422,22 +394,20 @@ const _copyOperation = (
  * (partial) A or B
  */
 
-const splitOverlapping = (
+const splitOverlapping = function (
 	io_rangeA: OperationRangeInsert | OperationRangeRemove,
 	io_rangeB: OperationRangeInsert | OperationRangeRemove,
 	io_resultingSegment: OperationRangeInsert | OperationRangeRemove,
 	in_rebasing: boolean,
 	in_options?: ApplyChangeSetOptions,
-) => {
+) {
 	if (io_rangeA.removeInsertOperation) {
-		io_resultingSegment.removeInsertOperationA =
-			io_rangeA.removeInsertOperation;
+		io_resultingSegment.removeInsertOperationA = io_rangeA.removeInsertOperation;
 	} else {
 		delete io_resultingSegment.removeInsertOperationA;
 	}
 	if (io_rangeB.removeInsertOperation) {
-		io_resultingSegment.removeInsertOperationB =
-			io_rangeB.removeInsertOperation;
+		io_resultingSegment.removeInsertOperationB = io_rangeB.removeInsertOperation;
 	} else {
 		delete io_resultingSegment.removeInsertOperationB;
 	}
@@ -454,8 +424,7 @@ const splitOverlapping = (
 		io_rangeB.removeInsertOperation &&
 		io_rangeB.op.type === ArrayChangeSetIterator.types.REMOVE &&
 		(io_rangeA.begin === undefined ||
-			io_rangeB.removeInsertOperation[0] <
-				io_rangeA.begin - io_rangeA.op.offset) &&
+			io_rangeB.removeInsertOperation[0] < io_rangeA.begin - io_rangeA.op.offset) &&
 		io_rangeB.removeInsertOperation[0] < io_rangeB.begin &&
 		!io_rangeB.insertAlreadyProcessed
 	) {
@@ -523,28 +492,20 @@ const splitOverlapping = (
 					operationMetaInfo.currentInsertOffset
 				) {
 					startOffset =
-						operationMetaInfo.rebasedRemoveInsertRanges[i]
-							.originalStartPosition -
+						operationMetaInfo.rebasedRemoveInsertRanges[i].originalStartPosition -
 						io_rangeA.op.operation[0] +
 						io_rangeA.op.offset +
 						io_rangeB.op.offset;
 					rangeStart =
 						operationMetaInfo.rebasedRemoveInsertRanges[i].rangeStart -
 						operationMetaInfo.currentInsertOffset;
-					rangeLength =
-						operationMetaInfo.rebasedRemoveInsertRanges[i].rangeLength;
+					rangeLength = operationMetaInfo.rebasedRemoveInsertRanges[i].rangeLength;
 
 					if (
 						io_rangeA.op.operation[1].length - startOffset >= rangeLength &&
 						isEqual(
-							io_rangeA.op.operation[1].slice(
-								startOffset,
-								startOffset + rangeLength,
-							),
-							io_rangeB.op.operation[1].slice(
-								rangeStart,
-								rangeStart + rangeLength,
-							),
+							io_rangeA.op.operation[1].slice(startOffset, startOffset + rangeLength),
+							io_rangeB.op.operation[1].slice(rangeStart, rangeStart + rangeLength),
 						)
 					) {
 						matchFound = true;
@@ -680,8 +641,7 @@ const splitOverlapping = (
 
 	if (
 		io_rangeA.end < io_rangeB.begin || // please see in_rebasing comments in the function description
-		((!in_rebasing ||
-			io_rangeA.op.type === ArrayChangeSetIterator.types.REMOVE) &&
+		((!in_rebasing || io_rangeA.op.type === ArrayChangeSetIterator.types.REMOVE) &&
 			io_rangeA.end === io_rangeB.begin)
 	) {
 		io_resultingSegment.begin = io_rangeA.begin;
@@ -851,12 +811,12 @@ const splitOverlapping = (
  * @param in_targetIndex - The transformed target index offset
  * @returns true if the merge was possible and executed
  */
-const mergeWithLastIfPossible = (
+const mergeWithLastIfPossible = function (
 	in_op: GenericOperation,
 	io_changeset: SerializedChangeSet,
 	in_targetIndex: number,
 	in_options?: ApplyChangeSetOptions,
-): boolean => {
+): boolean {
 	let lastOp;
 	switch (in_op.type) {
 		case ArrayChangeSetIterator.types.INSERT: {
@@ -869,21 +829,14 @@ const mergeWithLastIfPossible = (
 				// sub-ranges of the merged segment
 				let mergedRangeMetaInformation;
 				if (in_options && in_options.applyAfterMetaInformation) {
-					const previousMetaInfo = in_options.applyAfterMetaInformation.get(
-						lastOp[1],
-					);
-					const currentMetaInfo = in_options.applyAfterMetaInformation.get(
-						in_op.operation[1],
-					);
+					const previousMetaInfo = in_options.applyAfterMetaInformation.get(lastOp[1]);
+					const currentMetaInfo = in_options.applyAfterMetaInformation.get(in_op.operation[1]);
 					if (previousMetaInfo || currentMetaInfo) {
 						// Get the range information attached to the segments that get merged
 						const previousRange =
-							(previousMetaInfo &&
-								previousMetaInfo.rebasedRemoveInsertRanges) ||
-							[];
+							(previousMetaInfo && previousMetaInfo.rebasedRemoveInsertRanges) || [];
 						const nextRange =
-							(currentMetaInfo && currentMetaInfo.rebasedRemoveInsertRanges) ||
-							[];
+							(currentMetaInfo && currentMetaInfo.rebasedRemoveInsertRanges) || [];
 
 						// Update the start index
 						for (let i = 0; i < nextRange.length; i++) {
@@ -966,14 +919,14 @@ interface RemoveOpInfo {
  * @param in_lastIteratorARemove - The information about the last remove operation in iterator A
  * @param in_segment - The segment this operation is part of
  */
-const pushOp = (
+const pushOp = function (
 	in_op: GenericOperation,
 	io_changeset: SerializedChangeSet,
 	in_indexOffset: number,
 	in_options?: ApplyChangeSetOptions,
 	in_lastIteratorARemove?: RemoveOpInfo,
 	in_segment?: SegmentType,
-) => {
+) {
 	let writeTargetIndex;
 	if (ArrayChangeSetIterator.types.NOP !== in_op.type) {
 		writeTargetIndex = in_op.operation[0] - in_indexOffset;
@@ -1009,9 +962,7 @@ const pushOp = (
 				!isNumber(in_op.operation[1])
 			) {
 				// If we don't have any meta information yet, we add an entry with the correct offset applied
-				const metaInfo = in_options.applyAfterMetaInformation.get(
-					in_op.operation[1],
-				);
+				const metaInfo = in_options.applyAfterMetaInformation.get(in_op.operation[1]);
 				if (!metaInfo) {
 					in_options.applyAfterMetaInformation.set(in_op.operation[1], {
 						rebasedRemoveInsertRanges: [
@@ -1025,14 +976,7 @@ const pushOp = (
 				}
 			}
 
-			if (
-				!mergeWithLastIfPossible(
-					in_op,
-					io_changeset,
-					writeTargetIndex,
-					in_options,
-				)
-			) {
+			if (!mergeWithLastIfPossible(in_op, io_changeset, writeTargetIndex, in_options)) {
 				io_changeset.insert.push([writeTargetIndex, in_op.operation[1]]);
 			}
 			break;
@@ -1050,20 +994,9 @@ const pushOp = (
 			break;
 		}
 		case ArrayChangeSetIterator.types.MODIFY: {
-			if (
-				!mergeWithLastIfPossible(
-					in_op,
-					io_changeset,
-					writeTargetIndex,
-					in_options,
-				)
-			) {
+			if (!mergeWithLastIfPossible(in_op, io_changeset, writeTargetIndex, in_options)) {
 				if (in_op.operation[2] !== undefined) {
-					io_changeset.modify.push([
-						writeTargetIndex,
-						in_op.operation[1],
-						in_op.operation[2],
-					]);
+					io_changeset.modify.push([writeTargetIndex, in_op.operation[1], in_op.operation[2]]);
 				} else {
 					io_changeset.modify.push([writeTargetIndex, in_op.operation[1]]);
 				}
@@ -1086,10 +1019,7 @@ const pushOp = (
  * @param in_isPrimitiveType - Is it an array of primitive types
  * ATTENTION: We overwrite opB to save garbage (instead of creating a result OP)
  */
-const handleCombinations = function (
-	in_segment: SegmentType,
-	in_isPrimitiveType: boolean,
-) {
+const handleCombinations = function (in_segment: SegmentType, in_isPrimitiveType: boolean) {
 	const opA = in_segment.opA;
 	const opB = in_segment.opB;
 	switch (opA.type) {
@@ -1122,8 +1052,7 @@ const handleCombinations = function (
 					if (in_isPrimitiveType) {
 						// since the length of A and B is equal in here
 						// we can just insert the modified values instead
-						(opB as GenericOperation).type =
-							ArrayChangeSetIterator.types.INSERT;
+						(opB as GenericOperation).type = ArrayChangeSetIterator.types.INSERT;
 					} else {
 						// the array element is a complex types
 						// we have to recursively call the modify
@@ -1143,23 +1072,18 @@ const handleCombinations = function (
 							);
 						}
 						opB.operation = opA.operation;
-						(opB as GenericOperation).type =
-							ArrayChangeSetIterator.types.INSERT;
+						(opB as GenericOperation).type = ArrayChangeSetIterator.types.INSERT;
 					}
 					break;
 				}
 				default:
-					throw new Error(
-						`handleCombinations: ${MSG.UNKNOWN_OPERATION}${opB.type}`,
-					);
+					throw new Error(`handleCombinations: ${MSG.UNKNOWN_OPERATION}${opB.type}`);
 			}
 			break;
 		}
 		case ArrayChangeSetIterator.types.REMOVE: {
 			// this combination is not reachable since this case has already been handled before
-			console.error(
-				"this combination should not occur in handleCombinations - this is a bug",
-			);
+			console.error("this combination should not occur in handleCombinations - this is a bug");
 			break;
 		}
 		case ArrayChangeSetIterator.types.MODIFY: {
@@ -1195,9 +1119,7 @@ const handleCombinations = function (
 			}
 		}
 		default:
-			throw new Error(
-				`handleCombinations: ${MSG.UNKNOWN_OPERATION}${opA.type}`,
-			);
+			throw new Error(`handleCombinations: ${MSG.UNKNOWN_OPERATION}${opA.type}`);
 	}
 };
 
@@ -1208,10 +1130,10 @@ const handleCombinations = function (
  * @param in_arr2 - Second array to compare
  * @returns True if arrays contain the same values, false otherwise
  */
-const arraysHaveSameValues = (
+const arraysHaveSameValues = function (
 	in_arr1: arrayModifyList[1],
 	in_arr2: arrayModifyList[1],
-): boolean => {
+): boolean {
 	// We assume arrays are of same length
 	const len = in_arr1.length;
 	if (len !== in_arr2.length) {
@@ -1324,10 +1246,7 @@ const handleRebaseCombinations = function (
 		}
 	}
 
-	const handleInsert = (
-		insertOp: Omit<InsertOperation, "type">,
-		baseOp: InsertOperation,
-	) => {
+	const handleInsert = (insertOp: Omit<InsertOperation, "type">, baseOp: InsertOperation) => {
 		// conflicting inserts - report conflict, insert both
 		delete insertOp._absoluteBegin;
 		delete baseOp.offset;
@@ -1357,9 +1276,7 @@ const handleRebaseCombinations = function (
 					break;
 				}
 				default:
-					throw new Error(
-						`handleCombinations: ${MSG.UNKNOWN_OPERATION}${opB.type}`,
-					);
+					throw new Error(`handleCombinations: ${MSG.UNKNOWN_OPERATION}${opB.type}`);
 			}
 			break;
 		}
@@ -1415,7 +1332,7 @@ const handleRebaseCombinations = function (
 					if (opB.operation[1].length > 0) {
 						delete opA._absoluteBegin;
 						delete opB.offset;
-						const conflict = {
+						let conflict = {
 							path: in_basePath, // TODO: We have to report the range or per element
 							type: ConflictType.ENTRY_MODIFIED_AFTER_REMOVE,
 							conflictingChange: cloneDeep(opB),
@@ -1429,22 +1346,17 @@ const handleRebaseCombinations = function (
 					break;
 				}
 				default:
-					throw new Error(
-						`handleCombinations: ${MSG.UNKNOWN_OPERATION}${opB.type}`,
-					);
+					throw new Error(`handleCombinations: ${MSG.UNKNOWN_OPERATION}${opB.type}`);
 			}
 			break;
 		}
 		case ArrayChangeSetIterator.types.MODIFY: {
 			if (in_isPrimitiveType) {
 				// just use opB and notify accordingly
-				if (
-					opB.type === ArrayChangeSetIterator.types.MODIFY &&
-					opB.operation[1].length > 0
-				) {
+				if (opB.type === ArrayChangeSetIterator.types.MODIFY && opB.operation[1].length > 0) {
 					delete opA._absoluteBegin;
 					delete opB.offset;
-					const conflict = {
+					let conflict = {
 						path: in_basePath, // TODO: We have to report the range or per element
 						type: ConflictType.COLLIDING_SET,
 						conflictingChange: cloneDeep(opB),
@@ -1472,7 +1384,7 @@ const handleRebaseCombinations = function (
 				) {
 					delete opA._absoluteBegin;
 					delete opB.offset;
-					const conflict = {
+					let conflict = {
 						path: in_basePath, // TODO: We have to report the range or per element
 						type: ConflictType.REMOVE_AFTER_MODIFY,
 						conflictingChange: cloneDeep(opB),
@@ -1505,9 +1417,7 @@ const handleRebaseCombinations = function (
 			}
 		}
 		default:
-			throw new Error(
-				`handleCombinations: ${MSG.UNKNOWN_OPERATION}${opA.type}`,
-			);
+			throw new Error(`handleCombinations: ${MSG.UNKNOWN_OPERATION}${opA.type}`);
 	}
 };
 
@@ -1624,18 +1534,9 @@ export namespace ChangeSetArrayFunctions {
 		in_typeid: string,
 		in_options?: ApplyChangeSetOptions,
 	) {
-		ConsoleUtils.assert(
-			in_typeid,
-			"_performApplyAfterOnPropertyArray: typeid missing",
-		);
-		ConsoleUtils.assert(
-			!isString(io_basePropertyChanges),
-			io_basePropertyChanges,
-		);
-		ConsoleUtils.assert(
-			!isString(in_appliedPropertyChanges),
-			in_appliedPropertyChanges,
-		);
+		ConsoleUtils.assert(in_typeid, "_performApplyAfterOnPropertyArray: typeid missing");
+		ConsoleUtils.assert(!isString(io_basePropertyChanges), io_basePropertyChanges);
+		ConsoleUtils.assert(!isString(in_appliedPropertyChanges), in_appliedPropertyChanges);
 
 		const isPrimitiveTypeid = isPrimitiveType(in_typeid);
 
@@ -1673,10 +1574,7 @@ export namespace ChangeSetArrayFunctions {
 				skipIteratorBOperation = segment.op.operation;
 			} else {
 				iteratorB.next();
-				if (
-					skipIteratorBOperation &&
-					opB.operation === skipIteratorBOperation
-				) {
+				if (skipIteratorBOperation && opB.operation === skipIteratorBOperation) {
 					iteratorB.next();
 				}
 				skipIteratorBOperation = undefined;
@@ -1714,8 +1612,7 @@ export namespace ChangeSetArrayFunctions {
 				isPrimitiveTypeid,
 			);
 			lastOpWasNop =
-				segment.opB !== undefined &&
-				segment.opB.type === ArrayChangeSetIterator.types.NOP;
+				segment.opB !== undefined && segment.opB.type === ArrayChangeSetIterator.types.NOP;
 			if (lastOpWasNop) {
 				canceledSegmentBegin = segment.begin;
 			}
@@ -1732,10 +1629,7 @@ export namespace ChangeSetArrayFunctions {
 				// be placed behind the remove. We detect this case and correct the offset accordingly
 				// in pushOp
 				if (opA.type === ArrayChangeSetIterator.types.REMOVE) {
-					if (
-						!lastIteratorARemove ||
-						lastIteratorARemove.position !== opA.operation[0]
-					) {
+					if (!lastIteratorARemove || lastIteratorARemove.position !== opA.operation[0]) {
 						lastIteratorARemove = {
 							position: opA.operation[0],
 							length: getOpLength(opA.operation),
@@ -1747,19 +1641,14 @@ export namespace ChangeSetArrayFunctions {
 						// we have to adjust the position to the end of this operation (an insert that is
 						// applied at the position of the remove would be shifted behind this insert)
 						if (opA.removeInsertOperation) {
-							if (
-								opA.removeInsertOperation[0] + opA.offset ===
-								lastIteratorARemove.position
-							) {
-								lastIteratorARemove.position += getOpLength(
-									opA.removeInsertOperation,
-								);
+							if (opA.removeInsertOperation[0] + opA.offset === lastIteratorARemove.position) {
+								lastIteratorARemove.position += getOpLength(opA.removeInsertOperation);
 							}
 						}
 					}
 				}
 
-				const moreAs = iteratorA.next();
+				let moreAs = iteratorA.next();
 
 				// The offset will only be incremented as soon as the iterator reaches an operation at a different index.
 				// We detect this case and keep track, whether the remove has already been added to the offset or not.
@@ -1784,7 +1673,7 @@ export namespace ChangeSetArrayFunctions {
 				advanceIteratorB();
 			}
 			if (segment.flag === ArrayChangeSetRangeType.completeAcompleteB) {
-				const moreAs = iteratorA.next();
+				let moreAs = iteratorA.next();
 				getRangeForCurrentStateOperation(opA, moreAs ? opA.offset : 0, rangeA);
 				advanceIteratorB();
 			}
@@ -1811,9 +1700,7 @@ export namespace ChangeSetArrayFunctions {
 		if (resultPropertyChanges.remove.length > 0) {
 			// Merge remove operations (but only, if there is no
 			// insert inbetween the two removes)
-			const insertPosition = new Set(
-				resultPropertyChanges.insert.map((x) => x[0]),
-			);
+			const insertPosition = new Set(resultPropertyChanges.insert.map((x) => x[0]));
 			const mergedRemoves = [];
 			for (const remove of resultPropertyChanges.remove) {
 				const lastRemove = mergedRemoves[mergedRemoves.length - 1];
@@ -1863,19 +1750,9 @@ export namespace ChangeSetArrayFunctions {
 		const opA = iteratorA.opDescription;
 
 		const rangeA: OperationRangeRemove | OperationRangeInsert = {};
-		getRangeForAppliedOperation(
-			opA,
-			rangeA,
-			ArrayChangeSetRangeType.completeA,
-			in_options,
-		);
+		getRangeForAppliedOperation(opA, rangeA, ArrayChangeSetRangeType.completeA, in_options);
 		const rangeB: OperationRangeRemove | OperationRangeInsert = {};
-		getRangeForAppliedOperation(
-			iteratorB.opDescription,
-			rangeB,
-			undefined,
-			in_options,
-		);
+		getRangeForAppliedOperation(iteratorB.opDescription, rangeB, undefined, in_options);
 
 		const resultPropertyChanges: SerializedChangeSet = {};
 		resultPropertyChanges.insert = [];
@@ -1920,12 +1797,7 @@ export namespace ChangeSetArrayFunctions {
 				segment.flag === ArrayChangeSetRangeType.completeBpartOfA
 			) {
 				iteratorB.next();
-				getRangeForAppliedOperation(
-					iteratorB.opDescription,
-					rangeB,
-					undefined,
-					in_options,
-				);
+				getRangeForAppliedOperation(iteratorB.opDescription, rangeB, undefined, in_options);
 			}
 			if (segment.flag === ArrayChangeSetRangeType.completeAcompleteB) {
 				iteratorA.next();
@@ -1936,12 +1808,7 @@ export namespace ChangeSetArrayFunctions {
 					in_options,
 				);
 				iteratorB.next();
-				getRangeForAppliedOperation(
-					iteratorB.opDescription,
-					rangeB,
-					undefined,
-					in_options,
-				);
+				getRangeForAppliedOperation(iteratorB.opDescription, rangeB, undefined, in_options);
 			}
 
 			if (opA.offset !== undefined) {
@@ -1964,9 +1831,7 @@ export namespace ChangeSetArrayFunctions {
 		if (resultPropertyChanges.remove.length > 0) {
 			// Merge remove operations (but only, if there is no
 			// insert in between the two removes)
-			const insertPosition = new Set(
-				resultPropertyChanges.insert.map((x) => x[0]),
-			);
+			const insertPosition = new Set(resultPropertyChanges.insert.map((x) => x[0]));
 			const mergedRemoves = [];
 			for (const remove of resultPropertyChanges.remove) {
 				const lastRemove = mergedRemoves[mergedRemoves.length - 1];
@@ -2057,10 +1922,10 @@ export namespace ChangeSetArrayFunctions {
 		if (
 			isString(io_rebasePropertyChangeSetParent[in_key]) ||
 			(io_rebasePropertyChangeSetParent[in_key] &&
-				Object.hasOwn(io_rebasePropertyChangeSetParent[in_key], "value"))
+				io_rebasePropertyChangeSetParent[in_key].hasOwnProperty("value"))
 		) {
 			// other overwrites any old changes, we ignore them and report the conflict
-			const conflict = {
+			let conflict = {
 				path: in_basePath,
 				type: ConflictType.COLLIDING_SET,
 				conflictingChange: cloneDeep(in_ownPropertyChangeSet),
@@ -2080,12 +1945,11 @@ export namespace ChangeSetArrayFunctions {
 			}
 		} else if (
 			isString(in_ownPropertyChangeSet) ||
-			(in_ownPropertyChangeSet &&
-				Object.hasOwn(in_ownPropertyChangeSet, "value"))
+			(in_ownPropertyChangeSet && in_ownPropertyChangeSet.hasOwnProperty("value"))
 		) {
 			// we have a conflict since we cannot allow insert/remove/modify on an unknown state
 			// we just ignore other's modifications and take own's set
-			const conflict = {
+			let conflict = {
 				path: in_basePath,
 				type: ConflictType.COLLIDING_SET,
 				conflictingChange: cloneDeep(io_rebasePropertyChangeSetParent[in_key]),

@@ -15,7 +15,10 @@
 				"deps": []
 			},
 			"Driver-Definitions": {
-				"packages": ["@fluidframework/driver-definitions", "@fluidframework/odsp-driver-definitions"],
+				"packages": [
+					"@fluidframework/driver-definitions",
+					"@fluidframework/odsp-driver-definitions"
+				],
 				"deps": ["Core-Interfaces"]
 			},
 			"Container-Definitions": {
@@ -58,7 +61,13 @@
 			},
 			"Telemetry-Utils": {
 				"packages": ["@fluidframework/telemetry-utils"],
-				"deps": ["Common-Utils", "Core-Interfaces", "Core-Utils", "Client-Utils", "Driver-Definitions"]
+				"deps": [
+					"Common-Utils",
+					"Core-Interfaces",
+					"Core-Utils",
+					"Client-Utils",
+					"Driver-Definitions"
+				]
 			}
 		}
 	},
@@ -79,7 +88,11 @@
 			},
 			"Framework": {
 				"packages": ["@fluid-experimental/data-objects"],
-				"dirs": ["experimental/framework/", "experimental/PropertyDDS/packages/", "packages/framework/"],
+				"dirs": [
+					"experimental/framework/",
+					"experimental/PropertyDDS/packages/",
+					"packages/framework/"
+				],
 				"deps": ["Loader", "Runtime", "Client-Utils"]
 			},
 			"Examples": {
@@ -108,7 +121,11 @@
 			},
 			"Tests": {
 				"dev": true,
-				"dirs": ["packages/test/", "azure/packages/test/", "packages/service-clients/end-to-end-tests"]
+				"dirs": [
+					"packages/test/",
+					"azure/packages/test/",
+					"packages/service-clients/end-to-end-tests"
+				]
 			},
 			"Test-Utils": {
 				"dev": true,
@@ -137,7 +154,13 @@
 			},
 			"AzureClient": {
 				"dirs": ["azure/packages/"],
-				"deps": ["Container-Definitions", "Framework", "Runtime", "Routerlicious-Driver", "Server-Shared-Utils"]
+				"deps": [
+					"Container-Definitions",
+					"Framework",
+					"Runtime",
+					"Routerlicious-Driver",
+					"Server-Shared-Utils"
+				]
 			},
 			"UberPackage": {
 				"packages": ["fluid-framework"],

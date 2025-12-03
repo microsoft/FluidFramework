@@ -8,16 +8,16 @@ import type { IFluidHandleContext } from "@fluidframework/core-interfaces/intern
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
 	type IDocumentMessage,
-	type ISequencedDocumentMessage,
 	type ISummaryAck,
 	type ISummaryContent,
 	type ISummaryNack,
 	MessageType,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils/internal";
 import {
-	createChildLogger,
 	type ITelemetryLoggerExt,
+	createChildLogger,
 	raiseConnectedEvent,
 } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -100,17 +100,9 @@ export class MockContainerRuntimeForSummarizer
 			this.emit("op", message);
 		});
 
-		this.summarizerClientElection = new MockSummarizerClientElection(
-			this.clientId,
-		);
-		this.connectedState = new MockConnectedState(
-			this.baseLogger,
-			this.clientId,
-		);
-		this.summaryCollection = new SummaryCollection(
-			this.deltaManager,
-			this.baseLogger,
-		);
+		this.summarizerClientElection = new MockSummarizerClientElection(this.clientId);
+		this.connectedState = new MockConnectedState(this.baseLogger, this.clientId);
+		this.summaryCollection = new SummaryCollection(this.deltaManager, this.baseLogger);
 
 		const summaryConfiguration: ISummaryConfiguration = {
 			...DefaultSummaryConfiguration,
@@ -124,10 +116,7 @@ export class MockContainerRuntimeForSummarizer
 			{} as unknown as IFluidHandleContext /* handleContext */,
 			this.summaryCollection,
 			async (runtime: IConnectableRuntime) =>
-				RunWhileConnectedCoordinator.create(
-					runtime,
-					() => this.deltaManager.active,
-				),
+				RunWhileConnectedCoordinator.create(runtime, () => this.deltaManager.active),
 		);
 
 		this.summaryManager = new SummaryManager(
@@ -164,9 +153,7 @@ export class MockContainerRuntimeForSummarizer
 		]);
 	}
 
-	public async submitSummary(
-		options: ISubmitSummaryOptions,
-	): Promise<SubmitSummaryResult> {
+	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
 		const handle = uuid();
 		const summaryMessage: ISummaryContent = {
 			handle,
@@ -223,11 +210,7 @@ export class MockContainerRuntimeForSummarizer
 		};
 	}
 
-	private scheduleAckNack(
-		isNack: boolean,
-		handle: string,
-		summarySequenceNumber: number,
-	) {
+	private scheduleAckNack(isNack: boolean, handle: string, summarySequenceNumber: number) {
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		Promise.resolve().then(() => {
 			const contents: ISummaryAck | ISummaryNack = {
@@ -253,9 +236,7 @@ export class MockContainerRuntimeForSummarizer
 		});
 	}
 
-	public async refreshLatestSummaryAck(
-		options: IRefreshSummaryAckOptions,
-	): Promise<void> {
+	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void> {
 		// Do nothing
 	}
 

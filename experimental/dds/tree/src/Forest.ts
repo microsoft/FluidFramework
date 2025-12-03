@@ -7,9 +7,9 @@ import { assert } from '@fluidframework/core-utils/internal';
 import { BTree } from '@tylerbu/sorted-btree-es6';
 
 import { compareBtrees, compareFiniteNumbers, copyPropertyIfDefined, fail } from './Common.js';
-import type { NodeId, TraitLabel } from './Identifiers.js';
+import { NodeId, TraitLabel } from './Identifiers.js';
 import { comparePayloads } from './PayloadUtilities.js';
-import type { NodeData, Payload } from './persisted-types/index.js';
+import { NodeData, Payload } from './persisted-types/index.js';
 
 /**
  * A node that can be contained within a Forest

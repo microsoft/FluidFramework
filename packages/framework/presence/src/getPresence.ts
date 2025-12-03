@@ -46,12 +46,19 @@ function assertCompatibilityInvariants(compatibility: ExtensionCompatibilityDeta
 		compatibility.generation === presenceCompatibility.generation,
 		0xc97 /* Presence compatibility generation mismatch. */,
 	);
-	assert(compatibility.version.startsWith("2."), 0xc98 /* Registered version is not major version 2. */);
 	assert(
-		Number.parseFloat(compatibility.version.slice(2)) < Number.parseFloat(presenceCompatibility.version.slice(2)),
+		compatibility.version.startsWith("2."),
+		0xc98 /* Registered version is not major version 2. */,
+	);
+	assert(
+		Number.parseFloat(compatibility.version.slice(2)) <
+			Number.parseFloat(presenceCompatibility.version.slice(2)),
 		0xc99 /* Registered version is not less than the current version. */,
 	);
-	assert(presenceCompatibility.capabilities.size === 0, 0xc9a /* Presence capabilities should be empty. */);
+	assert(
+		presenceCompatibility.capabilities.size === 0,
+		0xc9a /* Presence capabilities should be empty. */,
+	);
 }
 
 /**
@@ -60,7 +67,12 @@ function assertCompatibilityInvariants(compatibility: ExtensionCompatibilityDeta
 class ContainerPresenceManager
 	implements
 		ContainerExtension<ExtensionRuntimeProperties>,
-		ReturnType<ContainerExtensionFactory<PresenceWithNotifications, ExtensionRuntimeProperties>["instantiateExtension"]>
+		ReturnType<
+			ContainerExtensionFactory<
+				PresenceWithNotifications,
+				ExtensionRuntimeProperties
+			>["instantiateExtension"]
+		>
 {
 	// ContainerExtensionFactory return elements
 	public readonly compatibility = presenceCompatibility;
@@ -98,7 +110,11 @@ class ContainerPresenceManager
 		// No-op
 	}
 
-	public processSignal(addressChain: string[], message: InboundExtensionMessage<SignalMessages>, local: boolean): void {
+	public processSignal(
+		addressChain: string[],
+		message: InboundExtensionMessage<SignalMessages>,
+		local: boolean,
+	): void {
 		this.manager.processSignal(addressChain, message, local);
 	}
 }
@@ -114,7 +130,11 @@ const ContainerPresenceFactory = {
 	instanceExpectations: { ...presenceCompatibility, version: minimalCompatiblePackageVersion },
 
 	resolvePriorInstantiation(
-		existingInstantiation: ExtensionInstantiationResult<unknown, GenericExtensionRuntimeProperties, unknown[]>,
+		existingInstantiation: ExtensionInstantiationResult<
+			unknown,
+			GenericExtensionRuntimeProperties,
+			unknown[]
+		>,
 	): never {
 		// Validate assumptions about existing instance
 		assertCompatibilityInvariants(existingInstantiation.compatibility);
@@ -130,7 +150,10 @@ const ContainerPresenceFactory = {
 	[Symbol.hasInstance]: (instance: unknown): instance is ContainerPresenceManager => {
 		return instance instanceof ContainerPresenceManager;
 	},
-} as const satisfies ContainerExtensionFactory<PresenceWithNotifications, ExtensionRuntimeProperties>;
+} as const satisfies ContainerExtensionFactory<
+	PresenceWithNotifications,
+	ExtensionRuntimeProperties
+>;
 
 /**
  * Acquire a {@link Presence} from a Fluid Container
@@ -160,7 +183,10 @@ export function getPresenceAlpha(fluidContainer: IFluidContainer): PresenceWithN
 function assertContextHasExtensionProvider(
 	context: IFluidDataStoreContext,
 ): asserts context is FluidDataStoreContextInternal {
-	assert("getExtension" in context, 0xc9c /* Data store context does not implement ContainerExtensionProvider */);
+	assert(
+		"getExtension" in context,
+		0xc9c /* Data store context does not implement ContainerExtensionProvider */,
+	);
 }
 
 /**

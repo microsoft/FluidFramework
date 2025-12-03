@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import {
+	DocumentMatrixPlainInfo,
 	assertDocumentTypeInfo,
-	type DocumentMatrixPlainInfo,
 	isDocumentMatrixPlainInfo,
 } from "@fluid-private/test-version-utils";
 import {
@@ -13,33 +15,29 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
-import {
-	type IContainer,
-	LoaderHeader,
-} from "@fluidframework/container-definitions/internal";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
-	type ContainerRuntime,
-	type IContainerRuntimeOptions,
-	type ISummarizer,
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+	ISummarizer,
 } from "@fluidframework/container-runtime/internal";
-import type {
+import {
 	ConfigTypes,
 	IConfigProviderBase,
 	IFluidHandle,
 	IRequest,
 } from "@fluidframework/core-interfaces";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
-	type ChannelFactoryRegistry,
+	ChannelFactoryRegistry,
+	ITestContainerConfig,
 	createSummarizerFromFactory,
-	type ITestContainerConfig,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
 
-import type {
+import {
 	IDocumentLoaderAndSummarizer,
 	IDocumentProps,
 	ISummarizeResult,
@@ -69,9 +67,7 @@ class TestDataObject extends DataObject {
 	}
 
 	protected async hasInitialized() {
-		const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(
-			this.matrixKey,
-		);
+		const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
 		assert(matrixHandle !== undefined, "SharedMatrix not found");
 		this.matrix = await matrixHandle.get();
 	}
@@ -90,18 +86,14 @@ const runtimeOptions: IContainerRuntimeOptions = {
 	chunkSizeInBytes: 600 * 1024,
 };
 const matrixId = "matrix1";
-const registry: ChannelFactoryRegistry = [
-	[matrixId, SharedMatrix.getFactory()],
-];
+const registry: ChannelFactoryRegistry = [[matrixId, SharedMatrix.getFactory()]];
 const testContainerConfig: ITestContainerConfig = {
 	registry,
 	runtimeOptions,
 	loaderProps: {},
 };
 
-const configProvider = (
-	settings: Record<string, ConfigTypes>,
-): IConfigProviderBase => ({
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 
@@ -132,9 +124,7 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 		return this.props.logger;
 	}
 
-	private async ensureContainerConnectedWriteMode(
-		container: IContainer,
-	): Promise<void> {
+	private async ensureContainerConnectedWriteMode(container: IContainer): Promise<void> {
 		const resolveIfActive = (res: () => void) => {
 			if (container.deltaManager.active) {
 				res();
@@ -152,8 +142,7 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 
 	private generateRandomString(length: number): string {
 		let result = "";
-		const characters =
-			"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+		const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 		const charactersLength = characters.length;
 		for (let i = 0; i < length; i++) {
 			result += characters.charAt(Math.floor(Math.random() * charactersLength));
@@ -186,10 +175,7 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 			runtimeOptions,
 		});
 
-		assertDocumentTypeInfo(
-			this.props.documentTypeInfo,
-			this.props.documentType,
-		);
+		assertDocumentTypeInfo(this.props.documentTypeInfo, this.props.documentType);
 		// Now TypeScript knows that info.documentTypeInfo is either DocumentMapInfo or DocumentMultipleDataStoresInfo
 		// and info.documentType is either "DocumentMap" or "DocumentMultipleDataStores"
 		assert(isDocumentMatrixPlainInfo(this.props.documentTypeInfo));
@@ -220,64 +206,32 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 	 * Sets the corners of the given matrix.
 	 */
 	private setCorners(matrix: SharedMatrix) {
-		matrix.setCell(
-			this.docInfo.beginRow,
-			this.docInfo.beginColumn,
-			"TopLeft" as any,
-		);
-		matrix.setCell(
-			this.docInfo.beginRow,
-			this.docInfo.endColumn,
-			"TopRight" as any,
-		);
-		matrix.setCell(
-			this.docInfo.endRow,
-			this.docInfo.endColumn,
-			"BottomRight" as any,
-		);
-		matrix.setCell(
-			this.docInfo.endRow,
-			this.docInfo.beginColumn,
-			"BottomLeft" as any,
-		);
+		matrix.setCell(this.docInfo.beginRow, this.docInfo.beginColumn, "TopLeft" as any);
+		matrix.setCell(this.docInfo.beginRow, this.docInfo.endColumn, "TopRight" as any);
+		matrix.setCell(this.docInfo.endRow, this.docInfo.endColumn, "BottomRight" as any);
+		matrix.setCell(this.docInfo.endRow, this.docInfo.beginColumn, "BottomLeft" as any);
 	}
 
 	/**
 	 * Checks the corners of the given matrix.
 	 */
 	private checkCorners(matrix: SharedMatrix) {
-		assert.equal(
-			matrix.getCell(this.docInfo.beginRow, this.docInfo.beginColumn),
-			"TopLeft",
-		);
-		assert.equal(
-			matrix.getCell(this.docInfo.beginRow, this.docInfo.endColumn),
-			"TopRight",
-		);
-		assert.equal(
-			matrix.getCell(this.docInfo.endRow, this.docInfo.endColumn),
-			"BottomRight",
-		);
-		assert.equal(
-			matrix.getCell(this.docInfo.endRow, this.docInfo.beginColumn),
-			"BottomLeft",
-		);
+		assert.equal(matrix.getCell(this.docInfo.beginRow, this.docInfo.beginColumn), "TopLeft");
+		assert.equal(matrix.getCell(this.docInfo.beginRow, this.docInfo.endColumn), "TopRight");
+		assert.equal(matrix.getCell(this.docInfo.endRow, this.docInfo.endColumn), "BottomRight");
+		assert.equal(matrix.getCell(this.docInfo.endRow, this.docInfo.beginColumn), "BottomLeft");
 	}
 
 	public async initializeDocument(): Promise<void> {
 		const loader = this.props.provider.createLoader(
 			[[this.props.provider.defaultCodeDetails, this.runtimeFactory]],
-			{
-				logger: this.props.logger,
-				configProvider: configProvider(featureGatesWithGcOff),
-			},
+			{ logger: this.props.logger, configProvider: configProvider(featureGatesWithGcOff) },
 		);
 		this._mainContainer = await loader.createDetachedContainer(
 			this.props.provider.defaultCodeDetails,
 		);
 		this.props.provider.updateDocumentId(this._mainContainer.resolvedUrl);
-		this.mainDataStore =
-			(await this._mainContainer.getEntryPoint()) as TestDataObject;
+		this.mainDataStore = (await this._mainContainer.getEntryPoint()) as TestDataObject;
 		this.mainDataStore._root.set("mode", "write");
 
 		const matrixHandle = this.mainDataStore._root.get("matrix1");
@@ -302,13 +256,10 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 		}
 		this.setCorners(matrix);
 		await this._mainContainer.attach(
-			this.props.provider.driver.createCreateNewRequest(
-				this.props.provider.documentId,
-			),
+			this.props.provider.driver.createCreateNewRequest(this.props.provider.documentId),
 		);
 		await this.waitForContainerSave(this._mainContainer);
-		this.containerRuntime = this.mainDataStore._context
-			.containerRuntime as ContainerRuntime;
+		this.containerRuntime = this.mainDataStore._context.containerRuntime as ContainerRuntime;
 
 		if (this._mainContainer.deltaManager.active) {
 			await this.ensureContainerConnectedWriteMode(this._mainContainer);
@@ -334,10 +285,7 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 
 		const loader = this.props.provider.createLoader(
 			[[this.props.provider.defaultCodeDetails, this.runtimeFactory]],
-			{
-				logger: this.props.logger,
-				configProvider: configProvider(featureGatesWithGcOff),
-			},
+			{ logger: this.props.logger, configProvider: configProvider(featureGatesWithGcOff) },
 		);
 		const container2 = await loader.resolve(request);
 
@@ -364,10 +312,7 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 		closeContainer: boolean = false,
 	): Promise<ISummarizeResult> {
 		try {
-			assert(
-				_container !== undefined,
-				"Container should be initialized before summarize",
-			);
+			assert(_container !== undefined, "Container should be initialized before summarize");
 
 			const { container: containerClient, summarizer: summarizerClient } =
 				await createSummarizerFromFactory(
@@ -384,10 +329,7 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 				);
 
 			const newSummaryVersion = await this.waitForSummary(summarizerClient);
-			assert(
-				newSummaryVersion !== undefined,
-				"summaryVersion needs to be valid.",
-			);
+			assert(newSummaryVersion !== undefined, "summaryVersion needs to be valid.");
 			if (closeContainer) {
 				summarizerClient.close();
 			}

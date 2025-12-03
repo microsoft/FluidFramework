@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import type {
+import {
 	IChannelAttributes,
-	IChannelFactory,
-	IChannelServices,
 	IFluidDataStoreRuntime,
+	type IChannelFactory,
+	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { ConsensusRegisterCollection as ConsensusRegisterCollectionClass } from "./consensusRegisterCollection.js";
-import type { IConsensusRegisterCollection } from "./interfaces.js";
+import { IConsensusRegisterCollection } from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
@@ -22,8 +22,7 @@ import { pkgVersion } from "./packageVersion.js";
 export class ConsensusRegisterCollectionFactory
 	implements IChannelFactory<IConsensusRegisterCollection>
 {
-	public static Type =
-		"https://graph.microsoft.com/types/consensus-register-collection";
+	public static Type = "https://graph.microsoft.com/types/consensus-register-collection";
 
 	public static readonly Attributes: IChannelAttributes = {
 		type: ConsensusRegisterCollectionFactory.Type,
@@ -48,19 +47,12 @@ export class ConsensusRegisterCollectionFactory
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<IConsensusRegisterCollection> {
-		const collection = new ConsensusRegisterCollectionClass(
-			id,
-			runtime,
-			attributes,
-		);
+		const collection = new ConsensusRegisterCollectionClass(id, runtime, attributes);
 		await collection.load(services);
 		return collection;
 	}
 
-	public create(
-		document: IFluidDataStoreRuntime,
-		id: string,
-	): IConsensusRegisterCollection {
+	public create(document: IFluidDataStoreRuntime, id: string): IConsensusRegisterCollection {
 		const collection = new ConsensusRegisterCollectionClass(
 			id,
 			document,

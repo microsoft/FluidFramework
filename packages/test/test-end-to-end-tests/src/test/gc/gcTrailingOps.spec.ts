@@ -3,35 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import {
-	describeCompat,
-	type ITestDataObject,
-	TestDataObjectType,
-} from "@fluid-private/test-version-utils";
-import type { IGCRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import { delay } from "@fluidframework/core-utils/internal";
-import {
-	type ISummaryTree,
-	SummaryType,
-} from "@fluidframework/driver-definitions";
-import {
-	channelsTreeName,
-	gcTreeKey,
-} from "@fluidframework/runtime-definitions/internal";
-import {
-	createSummarizer,
-	createTestConfigProvider,
-	type ITestContainerConfig,
-	type ITestObjectProvider,
-	summarizeNow,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils/internal";
 import { strict as assert } from "assert";
 
 import {
-	getGCDeletedStateFromSummary,
-	getGCStateFromSummary,
-} from "./gcTestSummaryUtils.js";
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+} from "@fluid-private/test-version-utils";
+import { IGCRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { delay } from "@fluidframework/core-utils/internal";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
+import {
+	ITestContainerConfig,
+	ITestObjectProvider,
+	createSummarizer,
+	createTestConfigProvider,
+	summarizeNow,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
+
+import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
  * These tests validate that trailing ops that alters the reference state of an object are successfully
@@ -104,8 +96,7 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 		) {
 			// Validate that the data store is not deleted from the data store summary tree.
 			const dataStoreId = dataStoreNodePath.split("/")[1];
-			const channelsTree = (summaryTree.tree[channelsTreeName] as ISummaryTree)
-				.tree;
+			const channelsTree = (summaryTree.tree[channelsTreeName] as ISummaryTree).tree;
 			assert.equal(
 				Object.keys(channelsTree).includes(dataStoreId),
 				true,
@@ -161,24 +152,16 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 		});
 
 		it(`Trailing op [${when}] transitions data store from [${transition}] without deleting it`, async () => {
-			const mainContainer =
-				await provider.makeTestContainer(testContainerConfig);
-			const mainDataObject =
-				(await mainContainer.getEntryPoint()) as ITestDataObject;
+			const mainContainer = await provider.makeTestContainer(testContainerConfig);
+			const mainDataObject = (await mainContainer.getEntryPoint()) as ITestDataObject;
 			await waitForContainerConnection(mainContainer);
 
 			const newDataStoreKey = "datastore";
 			// Create a data store and reference it.
 			const newDataStore =
-				await mainDataObject._context.containerRuntime.createDataStore(
-					TestDataObjectType,
-				);
-			assert(
-				newDataStore.entryPoint !== undefined,
-				"PRECONDITION: Should have a handle",
-			);
-			const newDataObject =
-				(await newDataStore.entryPoint.get()) as ITestDataObject;
+				await mainDataObject._context.containerRuntime.createDataStore(TestDataObjectType);
+			assert(newDataStore.entryPoint !== undefined, "PRECONDITION: Should have a handle");
+			const newDataObject = (await newDataStore.entryPoint.get()) as ITestDataObject;
 			mainDataObject._root.set(newDataStoreKey, newDataStore.entryPoint);
 
 			// Update the initial reference state of the data store.

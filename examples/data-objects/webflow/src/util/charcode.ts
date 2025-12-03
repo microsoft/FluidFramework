@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export enum CharCode {
+export const enum CharCode {
 	nullCharacter = 0,
 	backspace = 0x08, // \b
 	tab = 0x09, // \t

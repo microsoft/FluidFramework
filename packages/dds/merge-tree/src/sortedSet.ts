@@ -25,10 +25,7 @@ export abstract class SortedSet<T> {
 		return this.sortedItems;
 	}
 
-	public addOrUpdate(
-		newItem: T,
-		update?: (existingItem: T, newItem: T) => void,
-	): void {
+	public addOrUpdate(newItem: T, update?: (existingItem: T, newItem: T) => void): void {
 		const position = this.findItemPosition(newItem);
 		if (position.exists) {
 			update?.(this.sortedItems[position.index], newItem);
@@ -86,10 +83,7 @@ export abstract class SortedSet<T> {
 	 * @param item - The item that is being searched for (argument to `findItemPosition`)
 	 * @param index - The index of the equivalent item in the sorted set
 	 */
-	protected onFindEquivalent(
-		item: T,
-		index: number,
-	): { exists: boolean; index: number } {
+	protected onFindEquivalent(item: T, index: number): { exists: boolean; index: number } {
 		return { exists: true, index };
 	}
 }

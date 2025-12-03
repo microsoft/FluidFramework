@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type {
+import {
 	IChannel,
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelServices,
 	IFluidDataStoreRuntime,
+	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 
 import { SharedJson1 } from "./json1.js";

@@ -5,10 +5,12 @@
 
 import { strict as assert } from "node:assert";
 import process from "node:process";
-import type { IPromiseTimerResult } from "@fluidframework/core-utils/internal";
-import { PromiseTimer, Timer } from "@fluidframework/core-utils/internal";
+
 import type { SinonFakeTimers, SinonSandbox, SinonSpy } from "sinon";
 import { createSandbox, useFakeTimers } from "sinon";
+
+import { PromiseTimer, Timer } from "@fluidframework/core-utils/internal";
+import type { IPromiseTimerResult } from "@fluidframework/core-utils/internal";
 
 const flushPromises = async (): Promise<void> =>
 	new Promise((resolve) => process.nextTick(resolve));
@@ -62,26 +64,15 @@ describe("Timers", () => {
 		const assertShouldNotRunAgainAfterRestart = (): void => {
 			// Make sure only executes once
 			clock.tick(defaultTimeout + 1);
-			assert.strictEqual(
-				runCount,
-				1,
-				"Should not run additional times after restart",
-			);
+			assert.strictEqual(runCount, 1, "Should not run additional times after restart");
 		};
 
-		const testExactTimeout = (
-			time: number,
-			getRunCount = (): number => runCount,
-		): void => {
+		const testExactTimeout = (time: number, getRunCount = (): number => runCount): void => {
 			const initialRunCount = getRunCount();
 			clock.tick(time - 1);
 			assertShouldNotRunYet(initialRunCount, getRunCount);
 			clock.tick(1);
-			assert.strictEqual(
-				getRunCount(),
-				initialRunCount + 1,
-				"Should run exactly once",
-			);
+			assert.strictEqual(getRunCount(), initialRunCount + 1, "Should run exactly once");
 		};
 
 		it("Should timeout at default time", () => {
@@ -371,11 +362,7 @@ describe("Timers", () => {
 			getRunCount = (): number => runCount,
 		): void => {
 			assert.strictEqual(getRunCount(), initialRunCount, "Should not run yet");
-			assert.strictEqual(
-				resolveResult,
-				undefined,
-				"Run promise should not be resolved yet",
-			);
+			assert.strictEqual(resolveResult, undefined, "Run promise should not be resolved yet");
 		};
 
 		const testExactTimeout = async (time: number): Promise<void> => {
@@ -383,11 +370,7 @@ describe("Timers", () => {
 			await tickAndFlush(time - 1);
 			assertShouldNotRunYet(initialRunCount);
 			await tickAndFlush(1);
-			assert.strictEqual(
-				runCount,
-				initialRunCount + 1,
-				"Should run exactly once",
-			);
+			assert.strictEqual(runCount, initialRunCount + 1, "Should run exactly once");
 			assert(resolveResult === "timeout", "Run promise should be resolved");
 		};
 
@@ -417,10 +400,7 @@ describe("Timers", () => {
 
 			timer.clear();
 			await flushPromises();
-			assert(
-				resolveResult === "cancel",
-				"Run promise should be resolved as cancel",
-			);
+			assert(resolveResult === "cancel", "Run promise should be resolved as cancel");
 
 			await tickAndFlush(1);
 			assert.strictEqual(runCount, 0, "Should not run after cleared");

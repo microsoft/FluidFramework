@@ -152,10 +152,8 @@ describe("obliterate", () => {
 
 			const obliterateStart = 0;
 			const obliterateEnd = client.getLength();
-			const startSeg =
-				client.getContainingSegment<ISegmentPrivate>(obliterateStart);
-			const endSeg =
-				client.getContainingSegment<ISegmentPrivate>(obliterateEnd);
+			const startSeg = client.getContainingSegment<ISegmentPrivate>(obliterateStart);
+			const endSeg = client.getContainingSegment<ISegmentPrivate>(obliterateEnd);
 			let seq = refSeq;
 			client.mergeTree.obliterateRange(
 				obliterateStart,
@@ -175,10 +173,7 @@ describe("obliterate", () => {
 
 			startSeg?.segment.localRefs?.walkReferences((ref) => {
 				const oblProps = ref.properties?.obliterate as ObliterateInfo;
-				assert(
-					oblProps?.start !== undefined,
-					"start ref should NOT be removed",
-				);
+				assert(oblProps?.start !== undefined, "start ref should NOT be removed");
 			});
 			endSeg?.segment.localRefs?.walkReferences((ref) => {
 				const oblProps = ref.properties?.obliterate as ObliterateInfo;

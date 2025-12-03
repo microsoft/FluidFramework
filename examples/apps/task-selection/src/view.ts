@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IDiceRoller } from "./interface.js";
+import { IDiceRoller } from "./interface.js";
 
 /**
  * Render an IDiceRoller into a given div as a text character, with a button to roll it.
@@ -39,9 +39,7 @@ export function renderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement) {
 
 	// Just showing visually whether we're the task owner or not.
 	const updateTaskOwner = () => {
-		taskOwnerDiv.textContent = diceRoller.hasTask()
-			? "Task owner"
-			: "Not task owner";
+		taskOwnerDiv.textContent = diceRoller.hasTask() ? "Task owner" : "Not task owner";
 	};
 	updateTaskOwner();
 

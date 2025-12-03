@@ -3,39 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { Off } from "@fluidframework/core-interfaces";
-import {
-	assert,
-	fail,
-	oob,
-	unreachableCase,
-} from "@fluidframework/core-utils/internal";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { assert, oob, fail, unreachableCase } from "@fluidframework/core-utils/internal";
+
 import { EmptyKey, rootFieldKey } from "../../core/index.js";
-import {
-	FieldKinds,
-	isTreeValue,
-	type TreeStatus,
-} from "../../feature-libraries/index.js";
+import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
 import { extractFromOpaque } from "../../util/index.js";
-import {
-	getInnerNode,
-	getKernel,
-	getOrCreateNodeFromInnerNode,
-	type ImplicitAllowedTypes,
-	isTreeNode,
-	NodeKind,
-	normalizeAllowedTypes,
-	type TreeLeafValue,
-	type TreeNode,
-	type TreeNodeFromImplicitAllowedTypes,
-	type TreeNodeSchema,
-	tryGetTreeNodeSchema,
-	typeSchemaSymbol,
-} from "../core/index.js";
-import { FieldSchema, type ImplicitFieldSchema } from "../fieldSchema.js";
-import { tryGetTreeNodeForField } from "../getTreeNodeForField.js";
+import { type ImplicitFieldSchema, FieldSchema } from "../fieldSchema.js";
 import {
 	booleanSchema,
 	handleSchema,
@@ -43,8 +16,27 @@ import {
 	numberSchema,
 	stringSchema,
 } from "../leafNodeSchema.js";
-import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import type { Off } from "@fluidframework/core-interfaces";
+import {
+	getKernel,
+	isTreeNode,
+	type TreeNodeSchema,
+	NodeKind,
+	type TreeNode,
+	tryGetTreeNodeSchema,
+	getOrCreateNodeFromInnerNode,
+	typeSchemaSymbol,
+	getInnerNode,
+	type TreeLeafValue,
+	type ImplicitAllowedTypes,
+	type TreeNodeFromImplicitAllowedTypes,
+	normalizeAllowedTypes,
+} from "../core/index.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
+import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
+import { tryGetTreeNodeForField } from "../getTreeNodeForField.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -187,31 +179,25 @@ export const treeNodeApi: TreeNodeApi = {
 			case "nodeChanged": {
 				const nodeSchema = kernel.schema;
 				if (isObjectNodeSchema(nodeSchema)) {
-					return kernel.events.on(
-						"childrenChangedAfterBatch",
-						({ changedFields }) => {
-							const changedProperties = new Set(
-								Array.from(
-									changedFields,
-									(field) =>
-										nodeSchema.storedKeyToPropertyKey.get(field) ??
-										fail(0xb36 /* Could not find stored key in schema. */),
-								),
-							);
-							listener({ changedProperties });
-						},
-					);
+					return kernel.events.on("childrenChangedAfterBatch", ({ changedFields }) => {
+						const changedProperties = new Set(
+							Array.from(
+								changedFields,
+								(field) =>
+									nodeSchema.storedKeyToPropertyKey.get(field) ??
+									fail(0xb36 /* Could not find stored key in schema. */),
+							),
+						);
+						listener({ changedProperties });
+					});
 				} else if (isArrayNodeSchema(nodeSchema)) {
 					return kernel.events.on("childrenChangedAfterBatch", () => {
 						listener({ changedProperties: undefined });
 					});
 				} else {
-					return kernel.events.on(
-						"childrenChangedAfterBatch",
-						({ changedFields }) => {
-							listener({ changedProperties: changedFields });
-						},
-					);
+					return kernel.events.on("childrenChangedAfterBatch", ({ changedFields }) => {
+						listener({ changedProperties: changedFields });
+					});
 				}
 			}
 			case "treeChanged": {
@@ -329,15 +315,9 @@ export function getIdentifierFromNode(
 		case 1: {
 			const key = identifierFieldKeys[0] ?? oob();
 			const identifierField = flexNode.tryGetField(key);
-			assert(
-				identifierField !== undefined,
-				0xbb5 /* missing identifier field */,
-			);
+			assert(identifierField !== undefined, 0xbb5 /* missing identifier field */);
 			const identifierValue = tryGetTreeNodeForField(identifierField);
-			assert(
-				typeof identifierValue === "string",
-				0xbb6 /* identifier not a string */,
-			);
+			assert(typeof identifierValue === "string", 0xbb6 /* identifier not a string */);
 
 			const context = flexNode.context;
 			switch (compression) {
@@ -356,9 +336,7 @@ export function getIdentifierFromNode(
 					if (context.isHydrated()) {
 						const localNodeKey =
 							context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
-						return localNodeKey !== undefined
-							? extractFromOpaque(localNodeKey)
-							: undefined;
+						return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : undefined;
 					} else {
 						return undefined;
 					}
@@ -394,10 +372,7 @@ export function getStoredKey(node: TreeNode): string | number {
 	}
 
 	// The parent of `node` is an object, a map, or undefined. If undefined, then `node` is a root/detached node.
-	assert(
-		parentField.index === 0,
-		0xa29 /* When using field key as key, index should be 0 */,
-	);
+	assert(parentField.index === 0, 0xa29 /* When using field key as key, index should be 0 */);
 	return parentField.parent.key;
 }
 
@@ -422,10 +397,7 @@ export function getPropertyKeyFromStoredKey(
 	// To find the property key associated with the provided stored key, first check for any stored key matches (which are optionally populated).
 	// If we don't find any, then search for a matching property key.
 	for (const [propertyKey, fieldSchema] of Object.entries(fields)) {
-		if (
-			fieldSchema instanceof FieldSchema &&
-			fieldSchema.props?.key === storedKey
-		) {
+		if (fieldSchema instanceof FieldSchema && fieldSchema.props?.key === storedKey) {
 			return propertyKey;
 		}
 	}

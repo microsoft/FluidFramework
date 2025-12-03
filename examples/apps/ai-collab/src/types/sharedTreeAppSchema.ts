@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Tree,
-	type TreeNode,
-	TreeViewConfiguration,
-} from "@fluidframework/tree";
+import { Tree, type TreeNode, TreeViewConfiguration } from "@fluidframework/tree";
 import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 import { SharedTree } from "fluid-framework";
 
@@ -87,10 +83,7 @@ export class SharedTreeEngineer extends sf.objectAlpha(
 	},
 ) {}
 
-export class SharedTreeEngineerList extends sf.array(
-	"EngineerList",
-	SharedTreeEngineer,
-) {}
+export class SharedTreeEngineerList extends sf.array("EngineerList", SharedTreeEngineer) {}
 
 export class SharedTreeTaskGroup extends sf.objectAlpha(
 	"TaskGroup",
@@ -119,16 +112,12 @@ export class SharedTreeTaskGroup extends sf.objectAlpha(
 	},
 	{
 		metadata: {
-			description:
-				"A collection of tasks and engineers to whom tasks may be assigned.",
+			description: "A collection of tasks and engineers to whom tasks may be assigned.",
 		},
 	},
 ) {}
 
-export class SharedTreeTaskGroupList extends sf.array(
-	"TaskGroupList",
-	SharedTreeTaskGroup,
-) {}
+export class SharedTreeTaskGroupList extends sf.array("TaskGroupList", SharedTreeTaskGroup) {}
 
 export class SharedTreeAppState extends sf.object("AppState", {
 	taskGroups: sf.required(SharedTreeTaskGroupList, {
@@ -202,8 +191,7 @@ export const INITIAL_APP_STATE = {
 				{
 					name: "Charlie",
 					maxCapacity: 7,
-					skills:
-						"Junior engineer capable of handling simple tasks. Versed in Node.JS",
+					skills: "Junior engineer capable of handling simple tasks. Versed in Node.JS",
 				},
 			],
 		},
@@ -225,9 +213,7 @@ export const TREE_CONFIGURATION = new TreeViewConfiguration({
  * for the 'status' and 'priority' fields of a given Task as this is a common mistake LLM's make despite describing the fields as enums in their metadata.
  */
 function validateLlmTask(task: SharedTreeTask): void {
-	if (
-		Object.values(TaskStatuses).includes(task.status as TaskStatus) === false
-	) {
+	if (Object.values(TaskStatuses).includes(task.status as TaskStatus) === false) {
 		const errorMessage = `The Task status value "${task.status}" is not valid. The accepted values are '${Object.values(TaskStatuses).join(", ")}".`;
 		console.log(
 			`The LLM Produced an invalid Task. Sending the LLM the following error and feedback:`,
@@ -236,10 +222,7 @@ function validateLlmTask(task: SharedTreeTask): void {
 		throw new Error(errorMessage);
 	}
 
-	if (
-		Object.values(TaskPriorities).includes(task.priority as TaskPriority) ===
-		false
-	) {
+	if (Object.values(TaskPriorities).includes(task.priority as TaskPriority) === false) {
 		const errorMessage = `The Task priority value "${task.priority}" is not valid. The accepted values are "${Object.values(TaskPriorities).join(", ")}".`;
 		console.log(
 			`The LLM Produced an invalid Task. Sending the LLM the following error and feedback:`,

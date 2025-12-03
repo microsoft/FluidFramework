@@ -3,14 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Button,
-	Checkbox,
-	makeStyles,
-	shorthands,
-	tokens,
-} from "@fluentui/react-components";
-import type React from "react";
+import { Button, Checkbox, makeStyles, shorthands, tokens } from "@fluentui/react-components";
+import React from "react";
 
 import { useTelemetryOptIn } from "../TelemetryUtils.js";
 
@@ -66,10 +60,8 @@ export function TelemetryConsentModal(props: ModalProps): React.ReactElement {
 			<div className={styles.modal}>
 				<h2>Welcome to the Fluid Framework Developer Tools!</h2>
 				<p>
-					To enhance your debugging experience, we collect anonymous usage data.{" "}
-					<br />
-					This helps us understand how you use our tools and improve their
-					performance.
+					To enhance your debugging experience, we collect anonymous usage data. <br />
+					This helps us understand how you use our tools and improve their performance.
 					<br />
 					Rest assured, your privacy is our priority. <br />
 					Thank you for helping us improve Fluid Framework Dev Tools!
@@ -77,9 +69,8 @@ export function TelemetryConsentModal(props: ModalProps): React.ReactElement {
 				<div className={styles.optOut}>
 					<h2>Opt in to usage telemetry</h2>
 					<p>
-						We collect usage telemetry to improve the developer experience.{" "}
-						<br /> You can opt out of this telemetry collection at any time in
-						the Settings screen.
+						We collect usage telemetry to improve the developer experience. <br /> You can opt
+						out of this telemetry collection at any time in the Settings screen.
 					</p>
 					<Checkbox
 						label={

@@ -6,7 +6,7 @@
 import type { AsyncPriorityQueue } from "async";
 
 import type { BuildContext } from "../buildContext";
-import type { BuildPackage } from "../buildGraph";
+import { type BuildPackage } from "../buildGraph";
 import { BuildResult } from "../buildResult";
 import type { LeafTask } from "./leaf/leafTask";
 import { Task, type TaskExec } from "./task";
@@ -73,7 +73,7 @@ export class GroupTask extends Task {
 	}
 
 	protected async checkIsUpToDate(): Promise<boolean> {
-		const taskUpToDateP: Promise<boolean>[] = [];
+		const taskUpToDateP = new Array<Promise<boolean>>();
 		for (const task of this.subTasks) {
 			taskUpToDateP.push(task.isUpToDate());
 		}
@@ -86,11 +86,9 @@ export class GroupTask extends Task {
 		return true;
 	}
 
-	protected async runTask(
-		q: AsyncPriorityQueue<TaskExec>,
-	): Promise<BuildResult> {
+	protected async runTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
 		this.traceExec(`Begin Group Task`);
-		const taskP: Promise<BuildResult>[] = [];
+		const taskP = new Array<Promise<BuildResult>>();
 		for (const task of this.subTasks) {
 			taskP.push(task.run(q));
 		}

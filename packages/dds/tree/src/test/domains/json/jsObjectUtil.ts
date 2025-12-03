@@ -4,11 +4,11 @@
  */
 
 import {
-	isReadonlyArray,
 	type JsonCompatible,
 	type JsonCompatibleObject,
 	type JsonCompatibleReadOnly,
 	type JsonCompatibleReadOnlyObject,
+	isReadonlyArray,
 } from "../../../util/index.js";
 
 function cloneObject(
@@ -42,7 +42,5 @@ function cloneObject(
 export function clone(value: JsonCompatibleReadOnly): JsonCompatible {
 	// PERF: Separate clone vs. cloneObject yields showed improvements with 'canada.json' in the past,
 	// but for the current code the difference is within noise ( < 3%) (node 14 x64).
-	return typeof value !== "object" || value === null
-		? value
-		: cloneObject(value);
+	return typeof value !== "object" || value === null ? value : cloneObject(value);
 }

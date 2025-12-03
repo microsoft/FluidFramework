@@ -35,8 +35,7 @@ export async function initApp() {
 		const measurement = performance.measure("run", "start", "end");
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		document.getElementById("result")!.innerText =
-			`Time: ${measurement.duration}ms`;
+		document.getElementById("result")!.innerText = `Time: ${measurement.duration}ms`;
 	});
 }
 

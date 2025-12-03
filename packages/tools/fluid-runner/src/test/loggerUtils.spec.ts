@@ -19,15 +19,8 @@ import { _dirname } from "./dirname.cjs";
 
 describe("logger utils", () => {
 	const folderRoot = path.join(_dirname, "../../src/test");
-	const telemetryFile = path.join(
-		folderRoot,
-		"outputFolder",
-		"telemetryFile.txt",
-	);
-	const expectedOutputFolder = path.join(
-		folderRoot,
-		"telemetryExpectedOutputs",
-	);
+	const telemetryFile = path.join(folderRoot, "outputFolder", "telemetryFile.txt");
+	const expectedOutputFolder = path.join(folderRoot, "telemetryExpectedOutputs");
 
 	describe("telemetry file validation", () => {
 		it("empty", () => {
@@ -150,10 +143,7 @@ describe("logger utils", () => {
 			});
 
 			it("multiple whitespace", () => {
-				const result = validateAndParseTelemetryOptions(undefined, [
-					"    prop1",
-					"value1  ",
-				]);
+				const result = validateAndParseTelemetryOptions(undefined, ["    prop1", "value1  "]);
 				if (!result.success) {
 					assert.fail(`unexpected error [${result.error}]`);
 				}
@@ -163,10 +153,7 @@ describe("logger utils", () => {
 			});
 
 			it("special characters", () => {
-				const result = validateAndParseTelemetryOptions(undefined, [
-					"prop1=aaa",
-					'aaa"bbb',
-				]);
+				const result = validateAndParseTelemetryOptions(undefined, ["prop1=aaa", 'aaa"bbb']);
 				if (!result.success) {
 					assert.fail(`unexpected error [${result.error}]`);
 				}
@@ -177,11 +164,7 @@ describe("logger utils", () => {
 		});
 
 		it("invalid eventsPerFlush", () => {
-			const result = validateAndParseTelemetryOptions(
-				undefined,
-				undefined,
-				NaN,
-			);
+			const result = validateAndParseTelemetryOptions(undefined, undefined, NaN);
 			assert(!result.success, "expected invalid eventsPerFlush");
 			assert(
 				result.error.includes("eventsPerFlush"),

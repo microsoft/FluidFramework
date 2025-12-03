@@ -3,54 +3,57 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryBaseEvent, ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { strict as assert } from 'assert';
+
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { SummaryType } from '@fluidframework/driver-definitions';
-import type { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import {
-	type MockContainerRuntime,
-	type MockContainerRuntimeFactory,
+	MockContainerRuntime,
+	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	validateAssertionError,
 } from '@fluidframework/test-runtime-utils/internal';
-import { strict as assert } from 'assert';
 import { expect } from 'chai';
 
-import { type BuildNode, Change, ChangeType, StablePlace, StableRange } from '../../ChangeTypes.js';
+import { BuildNode, Change, ChangeType, StablePlace, StableRange } from '../../ChangeTypes.js';
 import { assertArrayOfOne, assertNotUndefined, fail, isSharedTreeEvent } from '../../Common.js';
-import { EditLog, type OrderedEditSet } from '../../EditLog.js';
+import { EditLog, OrderedEditSet } from '../../EditLog.js';
 import { convertTreeNodes, deepCompareNodes } from '../../EditUtilities.js';
 import { SharedTreeEvent } from '../../EventTypes.js';
 import { convertNodeDataIds } from '../../IdConversion.js';
-import type { EditId, NodeId, TraitLabel } from '../../Identifiers.js';
+import { EditId, NodeId, TraitLabel } from '../../Identifiers.js';
 import { initialTree } from '../../InitialTree.js';
-import type { CachingLogViewer } from '../../LogViewer.js';
+import { CachingLogViewer } from '../../LogViewer.js';
 import { useFailedSequencedEditTelemetry } from '../../MergeHealth.js';
 import { sequencedIdNormalizer } from '../../NodeIdUtilities.js';
-import {
-	type ChangeInternal,
-	type ChangeNode,
-	type ChangeNode_0_0_2,
-	ChangeTypeInternal,
-	EditStatus,
-	type SharedTreeEditOp,
-	type SharedTreeSummary,
-	type SharedTreeSummary_0_0_2,
-	type SharedTreeSummaryBase,
-	WriteFormat,
-} from '../../persisted-types/index.js';
 import { getChangeNodeFromView } from '../../SerializationUtilities.js';
-import type { EditCommittedEventArguments, SequencedEditAppliedEventArguments, SharedTree } from '../../SharedTree.js';
+import { EditCommittedEventArguments, SequencedEditAppliedEventArguments, SharedTree } from '../../SharedTree.js';
 import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from '../../SharedTreeEncoder.js';
 import { MutableStringInterner } from '../../StringInterner.js';
-import { type SummaryContents, serialize } from '../../Summary.js';
+import { SummaryContents, serialize } from '../../Summary.js';
 import { deserialize } from '../../SummaryBackCompatibility.js';
 import { InterningTreeCompressor } from '../../TreeCompressor.js';
 import { TreeNodeHandle } from '../../TreeNodeHandle.js';
 import { generateStableId, nilUuid } from '../../UuidUtilities.js';
+import {
+	ChangeInternal,
+	ChangeNode,
+	ChangeNode_0_0_2,
+	ChangeTypeInternal,
+	EditStatus,
+	SharedTreeEditOp,
+	SharedTreeSummary,
+	SharedTreeSummaryBase,
+	SharedTreeSummary_0_0_2,
+	WriteFormat,
+} from '../../persisted-types/index.js';
 
-import { buildLeaf, SimpleTestTree, type TestTree } from './TestNode.js';
+import { SimpleTestTree, TestTree, buildLeaf } from './TestNode.js';
 import { TestFluidHandle, TestFluidSerializer } from './TestSerializer.js';
 import {
+	SharedTreeTestingComponents,
+	SharedTreeTestingOptions,
 	areNodesEquivalent,
 	assertNoDelta,
 	getEditLogInternal,
@@ -58,8 +61,6 @@ import {
 	normalizeEdit,
 	normalizeId,
 	normalizeIds,
-	type SharedTreeTestingComponents,
-	type SharedTreeTestingOptions,
 	setUpTestTree,
 	spyOnSubmittedOps,
 	testTrait,
@@ -1287,7 +1288,11 @@ export function runSharedTreeOperationsTests(
 				});
 
 				it('compress summaries via interning and tree compression on save and decompress on load', () => {
-					const { sharedTree: tree, testTree, containerRuntimeFactory } = createSimpleTestTree({ writeFormat });
+					const {
+						sharedTree: tree,
+						testTree: testTree,
+						containerRuntimeFactory,
+					} = createSimpleTestTree({ writeFormat });
 
 					const newNode = testTree.buildLeaf(testTree.generateNodeId());
 					tree.applyEdit(...Change.insertTree(newNode, StablePlace.after(testTree.left)));

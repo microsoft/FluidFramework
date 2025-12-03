@@ -11,11 +11,10 @@ import {
 import { useTree } from "@fluidframework/react/alpha";
 import type { IFluidContainer, IFluidHandle } from "fluid-framework";
 import type { ISharedString } from "fluid-framework/legacy";
-import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import { createTodoItem, type TodoListContainerSchema } from "./fluid.js";
-import type { TodoItem, TodoList } from "./schema.js";
+import type { TodoList, TodoItem } from "./schema.js";
 
 // eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";
@@ -130,17 +129,11 @@ interface TodoItemViewProps {
 /**
  * To-do list item view component.
  */
-const TodoItemView: React.FC<TodoItemViewProps> = (
-	props: TodoItemViewProps,
-) => {
+const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => {
 	const { todoItem } = props;
 
-	const [itemTitle, setItemTitle] = useState<ISharedString | undefined>(
-		undefined,
-	);
-	const [itemDescription, setItemDescription] = useState<
-		ISharedString | undefined
-	>(undefined);
+	const [itemTitle, setItemTitle] = useState<ISharedString | undefined>(undefined);
+	const [itemDescription, setItemDescription] = useState<ISharedString | undefined>(undefined);
 	const [detailsVisible, setDetailsVisible] = useState<boolean>(false);
 
 	useTree(todoItem);
@@ -158,8 +151,7 @@ const TodoItemView: React.FC<TodoItemViewProps> = (
 			});
 	}, [todoItemTitleHandle]);
 
-	const todoItemDescriptionHandle =
-		todoItem.description as IFluidHandle<ISharedString>;
+	const todoItemDescriptionHandle = todoItem.description as IFluidHandle<ISharedString>;
 	useEffect(() => {
 		todoItemDescriptionHandle
 			.get()
@@ -172,9 +164,7 @@ const TodoItemView: React.FC<TodoItemViewProps> = (
 			});
 	}, [todoItemDescriptionHandle]);
 
-	const checkChangedHandler = (
-		e: React.ChangeEvent<HTMLInputElement>,
-	): void => {
+	const checkChangedHandler = (e: React.ChangeEvent<HTMLInputElement>): void => {
 		todoItem.completed = e.target.checked;
 	};
 
@@ -200,10 +190,7 @@ const TodoItemView: React.FC<TodoItemViewProps> = (
 				>
 					{detailsVisible ? "▲" : "▼"}
 				</button>
-				<CollaborativeInput
-					sharedString={itemTitle}
-					className="todo-item-input"
-				/>
+				<CollaborativeInput sharedString={itemTitle} className="todo-item-input" />
 			</h2>
 			{detailsVisible && (
 				<CollaborativeTextArea

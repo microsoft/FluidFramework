@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
+import {
 	ICodeDetailsLoader,
 	IFluidCodeDetails,
 	IFluidModuleWithDetails,
@@ -18,9 +18,7 @@ import type {
 export class StaticCodeLoader implements ICodeDetailsLoader {
 	public constructor(private readonly runtimeFactory: IRuntimeFactory) {}
 
-	public async load(
-		details: IFluidCodeDetails,
-	): Promise<IFluidModuleWithDetails> {
+	public async load(details: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
 		return {
 			module: { fluidExport: this.runtimeFactory },
 			details,

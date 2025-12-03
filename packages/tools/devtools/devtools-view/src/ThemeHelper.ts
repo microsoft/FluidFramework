@@ -20,7 +20,7 @@ teamsHighContrastTheme.colorNeutralForegroundDisabled = "#D3D3D3";
 /**
  * An enum with options for the DevTools themes.
  */
-export enum ThemeOption {
+export const enum ThemeOption {
 	Light = "Light",
 	Dark = "Dark",
 	HighContrast = "High Contrast",
@@ -108,9 +108,7 @@ export interface ThemeContextValue {
 export const ThemeContext = React.createContext<ThemeContextValue>({
 	themeInfo: getFluentUIThemeToUse(),
 	setTheme: () => {
-		console.warn(
-			"Attempting to set context theme before context has been initialized.",
-		);
+		console.warn("Attempting to set context theme before context has been initialized.");
 	},
 });
 

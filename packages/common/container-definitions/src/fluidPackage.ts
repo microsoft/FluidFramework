@@ -111,8 +111,7 @@ export const isFluidCodeDetails = (
 		typeof maybeCodeDetails === "object" &&
 		(typeof maybeCodeDetails?.package === "string" ||
 			isFluidPackage(maybeCodeDetails?.package)) &&
-		(maybeCodeDetails?.config === undefined ||
-			typeof maybeCodeDetails?.config === "object")
+		(maybeCodeDetails?.config === undefined || typeof maybeCodeDetails?.config === "object")
 	);
 };
 
@@ -133,18 +132,14 @@ export interface IProvideFluidCodeDetailsComparer {
  * Provides capability to compare Fluid code details.
  * @legacy @beta
  */
-export interface IFluidCodeDetailsComparer
-	extends IProvideFluidCodeDetailsComparer {
+export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsComparer {
 	/**
 	 * Determines if the `candidate` code details satisfy the constraints specified in `constraint` code details.
 	 *
 	 * Similar semantics to:
 	 * {@link https://github.com/npm/node-semver#usage}
 	 */
-	satisfies(
-		candidate: IFluidCodeDetails,
-		constraint: IFluidCodeDetails,
-	): Promise<boolean>;
+	satisfies(candidate: IFluidCodeDetails, constraint: IFluidCodeDetails): Promise<boolean>;
 
 	/**
 	 * Return a number representing the ascending sort order of the `a` and `b` code details:
@@ -160,8 +155,5 @@ export interface IFluidCodeDetailsComparer
 	 * Similar semantics to:
 	 * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#description | Array.sort}
 	 */
-	compare(
-		a: IFluidCodeDetails,
-		b: IFluidCodeDetails,
-	): Promise<number | undefined>;
+	compare(a: IFluidCodeDetails, b: IFluidCodeDetails): Promise<number | undefined>;
 }

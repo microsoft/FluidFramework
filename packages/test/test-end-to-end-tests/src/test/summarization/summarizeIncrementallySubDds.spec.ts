@@ -3,49 +3,41 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
+import { describeCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import {
-	describeCompat,
-	getContainerRuntimeApi,
-} from "@fluid-private/test-version-utils";
-import {
-	type IContainer,
-	LoaderHeader,
-} from "@fluidframework/container-definitions/internal";
-import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import type {
 	IChannelAttributes,
 	IChannelFactory,
+	IFluidDataStoreRuntime,
 	IChannelServices,
 	IChannelStorageService,
-	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	type SummaryObject,
-	SummaryType,
-} from "@fluidframework/driver-definitions";
+import { SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
+	IExperimentalIncrementalSummaryContext,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+	IRuntimeMessageCollection,
 	channelsTreeName,
-	type IExperimentalIncrementalSummaryContext,
-	type IRuntimeMessageCollection,
-	type ISummaryTreeWithStats,
-	type ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import {
-	createSharedObjectKind,
-	type IFluidSerializer,
+	IFluidSerializer,
 	SharedObject,
+	createSharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
 import {
-	createSummarizerFromFactory,
-	type ITestFluidObject,
-	type ITestObjectProvider,
-	summarizeNow,
+	ITestFluidObject,
+	ITestObjectProvider,
 	TestFluidObjectFactory,
+	createSummarizerFromFactory,
+	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
 
 import { pkgVersion } from "../../packageVersion.js";
 
@@ -86,16 +78,8 @@ class TestBlobDDSFactory implements IChannelFactory {
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
 	 */
-	public create(
-		document: IFluidDataStoreRuntime,
-		id: string,
-	): TestIncrementalSummaryBlobDDS {
-		return new TestIncrementalSummaryBlobDDS(
-			id,
-			document,
-			this.attributes,
-			"TestBlobDDS",
-		);
+	public create(document: IFluidDataStoreRuntime, id: string): TestIncrementalSummaryBlobDDS {
+		return new TestIncrementalSummaryBlobDDS(id, document, this.attributes, "TestBlobDDS");
 	}
 }
 
@@ -125,9 +109,7 @@ class TestIncrementalSummaryBlobDDS extends SharedObject {
 	protected summarizeCore(
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext | undefined,
-		incrementalSummaryContext?:
-			| IExperimentalIncrementalSummaryContext
-			| undefined,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
 	): ISummaryTreeWithStats {
 		const builder = new SummaryTreeBuilder();
 
@@ -139,13 +121,11 @@ class TestIncrementalSummaryBlobDDS extends SharedObject {
 		for (const [blobName, blobContent] of this.blobMap.entries()) {
 			if (
 				incrementalSummaryContext &&
-				blobContent.seqNumber <=
-					incrementalSummaryContext.latestSummarySequenceNumber
+				blobContent.seqNumber <= incrementalSummaryContext.latestSummarySequenceNumber
 			) {
 				// This is an example assert that detects that the system behaving incorrectly.
 				assert(
-					blobContent.seqNumber <=
-						incrementalSummaryContext.summarySequenceNumber,
+					blobContent.seqNumber <= incrementalSummaryContext.summarySequenceNumber,
 					"Ops processed beyond the summarySequenceNumber!",
 				);
 				builder.addHandle(
@@ -172,9 +152,7 @@ class TestIncrementalSummaryBlobDDS extends SharedObject {
 			this.blobMap.set(blob, blobContent);
 		}
 	}
-	protected processMessagesCore(
-		messagesCollection: IRuntimeMessageCollection,
-	): void {
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
 			if (envelope.type === MessageType.Operation) {
@@ -211,9 +189,7 @@ class TestIncrementalSummaryBlobDDS extends SharedObject {
 }
 
 // Test DDS factory for the tree dds
-class TestTreeDDSFactory
-	implements IChannelFactory<TestIncrementalSummaryTreeDDS>
-{
+class TestTreeDDSFactory implements IChannelFactory<TestIncrementalSummaryTreeDDS> {
 	public static readonly Type = "incrementalTreeDDS";
 
 	public static readonly Attributes: IChannelAttributes = {
@@ -249,10 +225,7 @@ class TestTreeDDSFactory
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
 	 */
-	public create(
-		document: IFluidDataStoreRuntime,
-		id: string,
-	): TestIncrementalSummaryTreeDDS {
+	public create(document: IFluidDataStoreRuntime, id: string): TestIncrementalSummaryTreeDDS {
 		return new TestIncrementalSummaryTreeDDSClass(
 			id,
 			document,
@@ -280,8 +253,7 @@ interface ICreateTreeNodeOp {
 	type: "treeOp";
 }
 
-const TestIncrementalSummaryTreeDDS =
-	createSharedObjectKind(TestTreeDDSFactory);
+const TestIncrementalSummaryTreeDDS = createSharedObjectKind(TestTreeDDSFactory);
 export type TestIncrementalSummaryTreeDDS = TestIncrementalSummaryTreeDDSClass;
 
 // Creates trees that can be incrementally summarized
@@ -301,9 +273,7 @@ class TestIncrementalSummaryTreeDDSClass extends SharedObject {
 	protected summarizeCore(
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext | undefined,
-		incrementalSummaryContext?:
-			| IExperimentalIncrementalSummaryContext
-			| undefined,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
 	): ISummaryTreeWithStats {
 		// Technically, we can just return what summarizeNode returns.
 		// It turns out, the logic for the root node gets a little challenging, and it's easier to simply make the tree
@@ -326,9 +296,7 @@ class TestIncrementalSummaryTreeDDSClass extends SharedObject {
 	// Creates a summary tree for a node
 	private summarizeNode(
 		node: ITreeNode,
-		incrementalSummaryContext?:
-			| IExperimentalIncrementalSummaryContext
-			| undefined,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
 		path?: string,
 	): ISummaryTreeWithStats {
 		const builder = new SummaryTreeBuilder();
@@ -352,8 +320,7 @@ class TestIncrementalSummaryTreeDDSClass extends SharedObject {
 			// Determine if the child has changed, generate a handle if that's the case
 			if (
 				incrementalSummaryContext !== undefined &&
-				childNode.seqNumber <=
-					incrementalSummaryContext.latestSummarySequenceNumber
+				childNode.seqNumber <= incrementalSummaryContext.latestSummarySequenceNumber
 			) {
 				// Generate a handle
 				assert(childPath !== undefined, "Path should be defined!");
@@ -398,18 +365,13 @@ class TestIncrementalSummaryTreeDDSClass extends SharedObject {
 			seqNumber: nodeData.seqNumber,
 		};
 		for (const childTreeName of nodeData.children) {
-			const childNode = await this.loadTreeNode(
-				storage,
-				`${path}/${childTreeName}`,
-			);
+			const childNode = await this.loadTreeNode(storage, `${path}/${childTreeName}`);
 			node.children.push(childNode);
 		}
 		return node;
 	}
 
-	protected processMessagesCore(
-		messagesCollection: IRuntimeMessageCollection,
-	): void {
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
 			if (envelope.type === MessageType.Operation) {
@@ -506,8 +468,7 @@ describeCompat(
 	"Incremental summaries can be generated for DDS content",
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
-		const { ContainerRuntimeFactoryWithDefaultDataStore } =
-			apis.containerRuntime;
+		const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 
 		let provider: ITestObjectProvider;
 		const defaultFactory = new TestFluidObjectFactory([
@@ -539,17 +500,13 @@ describeCompat(
 			});
 		}
 
-		async function createSummarizer(
-			container: IContainer,
-			summaryVersion?: string,
-		) {
+		async function createSummarizer(container: IContainer, summaryVersion?: string) {
 			const createSummarizerResult = await createSummarizerFromFactory(
 				provider,
 				container,
 				defaultFactory,
 				summaryVersion,
-				getContainerRuntimeApi(pkgVersion)
-					.ContainerRuntimeFactoryWithDefaultDataStore,
+				getContainerRuntimeApi(pkgVersion).ContainerRuntimeFactoryWithDefaultDataStore,
 			);
 			return createSummarizerResult.summarizer;
 		}
@@ -586,10 +543,9 @@ describeCompat(
 		it("can create summary handles for blobs in DDSes that do not change", async () => {
 			const container = await createContainer();
 			const datastore = (await container.getEntryPoint()) as ITestFluidObject;
-			const dds =
-				await datastore.getSharedObject<TestIncrementalSummaryBlobDDS>(
-					TestIncrementalSummaryBlobDDS.getFactory().type,
-				);
+			const dds = await datastore.getSharedObject<TestIncrementalSummaryBlobDDS>(
+				TestIncrementalSummaryBlobDDS.getFactory().type,
+			);
 			// Each op leads to the creation of a new blob in the summary.
 			// Older blobs never are modified in this case for simplicity sake.
 			dds.createBlobOp("test data 1");
@@ -611,8 +567,7 @@ describeCompat(
 				summaryTree.tree[".channels"].type === SummaryType.Tree,
 				"Runtime summary tree not created for blob dds test",
 			);
-			const dataObjectTree =
-				summaryTree.tree[".channels"].tree[datastore.runtime.id];
+			const dataObjectTree = summaryTree.tree[".channels"].tree[datastore.runtime.id];
 			assert(
 				dataObjectTree.type === SummaryType.Tree,
 				"Data store summary tree not created for blob dds test",
@@ -624,48 +579,23 @@ describeCompat(
 			);
 			const ddsTree = dataObjectChannelsTree.tree[dds.id];
 			assert(ddsTree.type === SummaryType.Tree, "Blob dds tree not created");
-			validateHandle(
-				ddsTree.tree["0"],
-				datastore.context.id,
-				dds.id,
-				"0",
-				"Blob 0",
-			);
-			validateHandle(
-				ddsTree.tree["1"],
-				datastore.context.id,
-				dds.id,
-				"1",
-				"Blob 1",
-			);
-			validateHandle(
-				ddsTree.tree["2"],
-				datastore.context.id,
-				dds.id,
-				"2",
-				"Blob 2",
-			);
-			assert(
-				ddsTree.tree["3"].type === SummaryType.Blob,
-				"Blob 3 should be a blob",
-			);
+			validateHandle(ddsTree.tree["0"], datastore.context.id, dds.id, "0", "Blob 0");
+			validateHandle(ddsTree.tree["1"], datastore.context.id, dds.id, "1", "Blob 1");
+			validateHandle(ddsTree.tree["2"], datastore.context.id, dds.id, "2", "Blob 2");
+			assert(ddsTree.tree["3"].type === SummaryType.Blob, "Blob 3 should be a blob");
 		});
 
 		it("can create summary handles for trees in DDSes that do not change", async function () {
 			// Skip this test for standard r11s as its summarization timing is flaky.
 			// This test is covering client logic and the coverage from other drivers/endpoints is sufficient.
-			if (
-				provider.driver.type === "r11s" &&
-				provider.driver.endpointName !== "frs"
-			) {
+			if (provider.driver.type === "r11s" && provider.driver.endpointName !== "frs") {
 				this.skip();
 			}
 			const container = await createContainer();
 			const datastore = (await container.getEntryPoint()) as ITestFluidObject;
-			const dds =
-				await datastore.getSharedObject<TestIncrementalSummaryTreeDDS>(
-					TestIncrementalSummaryTreeDDS.getFactory().type,
-				);
+			const dds = await datastore.getSharedObject<TestIncrementalSummaryTreeDDS>(
+				TestIncrementalSummaryTreeDDS.getFactory().type,
+			);
 			// Tree starts with a root with name rootNodeName
 			// The next ops create this tree
 			//   root
@@ -697,8 +627,7 @@ describeCompat(
 				summaryTree.tree[".channels"].type === SummaryType.Tree,
 				"Runtime summary1 tree not created for tree dds test",
 			);
-			const dataObjectTree =
-				summaryTree.tree[".channels"].tree[datastore.runtime.id];
+			const dataObjectTree = summaryTree.tree[".channels"].tree[datastore.runtime.id];
 			assert(
 				dataObjectTree.type === SummaryType.Tree,
 				"Data store summary1 tree not created for tree dds test",
@@ -709,10 +638,7 @@ describeCompat(
 				"Data store summary1 channels tree not created for tree dds test",
 			);
 			const ddsTree = dataObjectChannelsTree.tree[dds.id];
-			assert(
-				ddsTree.type === SummaryType.Tree,
-				"Summary1 tree not created for tree dds",
-			);
+			assert(ddsTree.type === SummaryType.Tree, "Summary1 tree not created for tree dds");
 			const rootNode = ddsTree.tree[dds.rootNodeName];
 			assert(
 				rootNode.type === SummaryType.Tree,
@@ -744,10 +670,9 @@ describeCompat(
 			// Test that we can load from multiple containers
 			const container2 = await loadContainer(summaryVersion);
 			const datastore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-			const dds2 =
-				await datastore2.getSharedObject<TestIncrementalSummaryTreeDDS>(
-					TestIncrementalSummaryTreeDDS.getFactory().type,
-				);
+			const dds2 = await datastore2.getSharedObject<TestIncrementalSummaryTreeDDS>(
+				TestIncrementalSummaryTreeDDS.getFactory().type,
+			);
 
 			// This tree gets updated this way
 			//   root
@@ -767,8 +692,7 @@ describeCompat(
 				summaryTree2.tree[".channels"].type === SummaryType.Tree,
 				"Runtime summary2 tree not created for tree dds test",
 			);
-			const dataObjectTree2 =
-				summaryTree2.tree[".channels"].tree[datastore2.runtime.id];
+			const dataObjectTree2 = summaryTree2.tree[".channels"].tree[datastore2.runtime.id];
 			assert(
 				dataObjectTree2.type === SummaryType.Tree,
 				"Data store summary2 tree not created for tree dds test",
@@ -779,10 +703,7 @@ describeCompat(
 				"Data store summary2 channels tree not created for tree dds test",
 			);
 			const ddsTree2 = dataObjectChannelsTree2.tree[dds2.id];
-			assert(
-				ddsTree2.type === SummaryType.Tree,
-				"Summary2 tree not created for tree dds",
-			);
+			assert(ddsTree2.type === SummaryType.Tree, "Summary2 tree not created for tree dds");
 			const rootNode2 = ddsTree2.tree[dds.rootNodeName];
 			assert(
 				rootNode2.type === SummaryType.Tree,

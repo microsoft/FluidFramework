@@ -3,23 +3,24 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
-import type { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import type { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import {
-	type ChannelFactoryRegistry,
+	ChannelFactoryRegistry,
 	DataObjectFactoryType,
-	type ITestContainerConfig,
-	type ITestFluidObject,
-	type ITestObjectProvider,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
 
 describeCompat(
 	"Op reentry and rebasing during pending batches",
@@ -62,23 +63,16 @@ describeCompat(
 		const setupContainers = async () => {
 			const configWithFeatureGates = {
 				...testContainerConfig,
-				runtimeOptions: {
-					enableGroupedBatching: true,
-					flushMode: FlushMode.Immediate,
-				},
+				runtimeOptions: { enableGroupedBatching: true, flushMode: FlushMode.Immediate },
 			};
 			container = await provider.makeTestContainer(configWithFeatureGates);
 			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			sharedMap = await dataObject.getSharedObject<ISharedMap>("map");
-			sharedString =
-				await dataObject.getSharedObject<SharedString>("sharedString");
-			sharedDirectory =
-				await dataObject.getSharedObject<SharedDirectory>("sharedDirectory");
+			sharedString = await dataObject.getSharedObject<SharedString>("sharedString");
+			sharedDirectory = await dataObject.getSharedObject<SharedDirectory>("sharedDirectory");
 			sharedCell = await dataObject.getSharedObject<ISharedCell>("sharedCell");
-			sharedCounter =
-				await dataObject.getSharedObject<SharedCounter>("sharedCounter");
-			sharedMatrix =
-				await dataObject.getSharedObject<SharedMatrix>("sharedMatrix");
+			sharedCounter = await dataObject.getSharedObject<SharedCounter>("sharedCounter");
+			sharedMatrix = await dataObject.getSharedObject<SharedMatrix>("sharedMatrix");
 
 			await provider.ensureSynchronized();
 		};
@@ -170,10 +164,9 @@ describeCompat(
 			 * - the DDS must be able to receive the ops, reconcile its internal state  and reconstruct the
 			 * original changes from both batches in the expected order
 			 */
-			it(`Pending batches with reentry - ${test.name}`, async () => {
+			it(`Pending batches with reentry - ${test.name}`, async function () {
 				await setupContainers();
-				const containerRuntime = dataObject.context
-					.containerRuntime as ContainerRuntime;
+				const containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
 
 				test.initial();
 				containerRuntime.orderSequentially(() => {

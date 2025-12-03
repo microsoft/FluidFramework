@@ -11,23 +11,12 @@
  * Current version: 2.74.0
  */
 
-import type {
-	FullType,
-	MinimalType,
-	requireAssignableTo,
-	TypeOnly,
-} from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/task-manager-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> =
-	| TypeOnly<T>
-	| MinimalType<T>
-	| FullType<T>
-	| typeof old
-	| typeof current
-	| requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -36,10 +25,7 @@ declare type MakeUnusedImportErrorsGoAway<T> =
  * typeValidation.broken:
  * "Interface_ITaskManager": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ITaskManager = requireAssignableTo<
-	TypeOnly<old.ITaskManager>,
-	TypeOnly<current.ITaskManager>
->;
+declare type old_as_current_for_Interface_ITaskManager = requireAssignableTo<TypeOnly<old.ITaskManager>, TypeOnly<current.ITaskManager>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -48,10 +34,7 @@ declare type old_as_current_for_Interface_ITaskManager = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ITaskManager": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ITaskManager = requireAssignableTo<
-	TypeOnly<current.ITaskManager>,
-	TypeOnly<old.ITaskManager>
->;
+declare type current_as_old_for_Interface_ITaskManager = requireAssignableTo<TypeOnly<current.ITaskManager>, TypeOnly<old.ITaskManager>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -60,11 +43,7 @@ declare type current_as_old_for_Interface_ITaskManager = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ITaskManagerEvents": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ITaskManagerEvents =
-	requireAssignableTo<
-		TypeOnly<old.ITaskManagerEvents>,
-		TypeOnly<current.ITaskManagerEvents>
-	>;
+declare type old_as_current_for_Interface_ITaskManagerEvents = requireAssignableTo<TypeOnly<old.ITaskManagerEvents>, TypeOnly<current.ITaskManagerEvents>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -73,11 +52,7 @@ declare type old_as_current_for_Interface_ITaskManagerEvents =
  * typeValidation.broken:
  * "Interface_ITaskManagerEvents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ITaskManagerEvents =
-	requireAssignableTo<
-		TypeOnly<current.ITaskManagerEvents>,
-		TypeOnly<old.ITaskManagerEvents>
-	>;
+declare type current_as_old_for_Interface_ITaskManagerEvents = requireAssignableTo<TypeOnly<current.ITaskManagerEvents>, TypeOnly<old.ITaskManagerEvents>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -86,11 +61,7 @@ declare type current_as_old_for_Interface_ITaskManagerEvents =
  * typeValidation.broken:
  * "TypeAlias_TaskEventListener": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_TaskEventListener =
-	requireAssignableTo<
-		TypeOnly<old.TaskEventListener>,
-		TypeOnly<current.TaskEventListener>
-	>;
+declare type old_as_current_for_TypeAlias_TaskEventListener = requireAssignableTo<TypeOnly<old.TaskEventListener>, TypeOnly<current.TaskEventListener>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -99,11 +70,7 @@ declare type old_as_current_for_TypeAlias_TaskEventListener =
  * typeValidation.broken:
  * "TypeAlias_TaskEventListener": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_TaskEventListener =
-	requireAssignableTo<
-		TypeOnly<current.TaskEventListener>,
-		TypeOnly<old.TaskEventListener>
-	>;
+declare type current_as_old_for_TypeAlias_TaskEventListener = requireAssignableTo<TypeOnly<current.TaskEventListener>, TypeOnly<old.TaskEventListener>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -112,10 +79,7 @@ declare type current_as_old_for_TypeAlias_TaskEventListener =
  * typeValidation.broken:
  * "TypeAlias_TaskManager": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_TaskManager = requireAssignableTo<
-	TypeOnly<old.TaskManager>,
-	TypeOnly<current.TaskManager>
->;
+declare type old_as_current_for_TypeAlias_TaskManager = requireAssignableTo<TypeOnly<old.TaskManager>, TypeOnly<current.TaskManager>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -124,10 +88,7 @@ declare type old_as_current_for_TypeAlias_TaskManager = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_TaskManager": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_TaskManager = requireAssignableTo<
-	TypeOnly<current.TaskManager>,
-	TypeOnly<old.TaskManager>
->;
+declare type current_as_old_for_TypeAlias_TaskManager = requireAssignableTo<TypeOnly<current.TaskManager>, TypeOnly<old.TaskManager>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -136,7 +97,4 @@ declare type current_as_old_for_TypeAlias_TaskManager = requireAssignableTo<
  * typeValidation.broken:
  * "Variable_TaskManager": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_TaskManager = requireAssignableTo<
-	TypeOnly<typeof current.TaskManager>,
-	TypeOnly<typeof old.TaskManager>
->;
+declare type current_as_old_for_Variable_TaskManager = requireAssignableTo<TypeOnly<typeof current.TaskManager>, TypeOnly<typeof old.TaskManager>>

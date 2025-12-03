@@ -11,53 +11,53 @@ import { assertWithMessage, fail } from './Common.js';
 import { EditLog } from './EditLog.js';
 import { convertTreeNodes, newEdit } from './EditUtilities.js';
 import { convertEditIds, convertNodeDataIds } from './IdConversion.js';
-import type { AttributionId, DetachedSequenceId, FinalNodeId, OpSpaceNodeId, TraitLabel } from './Identifiers.js';
+import { AttributionId, DetachedSequenceId, FinalNodeId, OpSpaceNodeId, TraitLabel } from './Identifiers.js';
 import { initialTree } from './InitialTree.js';
 import {
-	createSessionId,
-	hasOngoingSession,
-	IdCompressor,
-	type IdCreationRange,
-	type SerializedIdCompressorWithNoSession,
-} from './id-compressor/index.js';
-import {
-	type ContextualizedNodeIdNormalizer,
+	ContextualizedNodeIdNormalizer,
+	NodeIdContext,
+	NodeIdConverter,
+	NodeIdGenerator,
+	NodeIdNormalizer,
 	getNodeIdContext,
-	type NodeIdContext,
-	type NodeIdConverter,
-	type NodeIdGenerator,
-	type NodeIdNormalizer,
 	scopeIdNormalizer,
 	sequencedIdNormalizer,
 } from './NodeIdUtilities.js';
+import { RevisionView } from './RevisionView.js';
+import { getChangeNodeFromView, getChangeNode_0_0_2FromView } from './SerializationUtilities.js';
+import { MutableStringInterner, StringInterner } from './StringInterner.js';
+import { SummaryContents } from './Summary.js';
+import { InterningTreeCompressor } from './TreeCompressor.js';
+import {
+	IdCompressor,
+	IdCreationRange,
+	SerializedIdCompressorWithNoSession,
+	createSessionId,
+	hasOngoingSession,
+} from './id-compressor/index.js';
 import {
 	ChangeInternal,
-	type ChangeInternal_0_0_2,
-	type ChangeNode,
-	type ChangeNode_0_0_2,
+	ChangeInternal_0_0_2,
+	ChangeNode,
+	ChangeNode_0_0_2,
 	ChangeTypeInternal,
-	type CompressedChangeInternal,
-	type Edit,
-	type EditChunkContents,
-	type EditChunkContents_0_1_1,
-	type EditLogSummary,
-	type EditWithoutId,
-	type FluidEditHandle,
-	reservedIdCount,
-	type SharedTreeEditOp,
-	type SharedTreeEditOp_0_0_2,
+	CompressedChangeInternal,
+	Edit,
+	EditChunkContents,
+	EditChunkContents_0_1_1,
+	EditLogSummary,
+	EditWithoutId,
+	FluidEditHandle,
+	SharedTreeEditOp,
+	SharedTreeEditOp_0_0_2,
 	SharedTreeOpType,
-	type SharedTreeSummary,
-	type SharedTreeSummary_0_0_2,
+	SharedTreeSummary,
+	SharedTreeSummary_0_0_2,
 	Side,
 	StablePlaceInternal,
 	WriteFormat,
+	reservedIdCount,
 } from './persisted-types/index.js';
-import type { RevisionView } from './RevisionView.js';
-import { getChangeNode_0_0_2FromView, getChangeNodeFromView } from './SerializationUtilities.js';
-import { MutableStringInterner, type StringInterner } from './StringInterner.js';
-import type { SummaryContents } from './Summary.js';
-import { InterningTreeCompressor } from './TreeCompressor.js';
 
 /**
  * Object capable of converting between the current internal representation for 0.1.1 edits and their wire format.

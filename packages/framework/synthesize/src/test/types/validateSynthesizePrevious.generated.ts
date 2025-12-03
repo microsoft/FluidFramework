@@ -11,23 +11,12 @@
  * Current version: 2.74.0
  */
 
-import type {
-	FullType,
-	MinimalType,
-	requireAssignableTo,
-	TypeOnly,
-} from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/synthesize-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> =
-	| TypeOnly<T>
-	| MinimalType<T>
-	| FullType<T>
-	| typeof old
-	| typeof current
-	| requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -36,10 +25,7 @@ declare type MakeUnusedImportErrorsGoAway<T> =
  * typeValidation.broken:
  * "Class_DependencyContainer": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_DependencyContainer = requireAssignableTo<
-	TypeOnly<old.DependencyContainer<never>>,
-	TypeOnly<current.DependencyContainer<never>>
->;
+declare type old_as_current_for_Class_DependencyContainer = requireAssignableTo<TypeOnly<old.DependencyContainer<never>>, TypeOnly<current.DependencyContainer<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -48,10 +34,7 @@ declare type old_as_current_for_Class_DependencyContainer = requireAssignableTo<
  * typeValidation.broken:
  * "Class_DependencyContainer": {"backCompat": false}
  */
-declare type current_as_old_for_Class_DependencyContainer = requireAssignableTo<
-	TypeOnly<current.DependencyContainer<never>>,
-	TypeOnly<old.DependencyContainer<never>>
->;
+declare type current_as_old_for_Class_DependencyContainer = requireAssignableTo<TypeOnly<current.DependencyContainer<never>>, TypeOnly<old.DependencyContainer<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -60,11 +43,7 @@ declare type current_as_old_for_Class_DependencyContainer = requireAssignableTo<
  * typeValidation.broken:
  * "ClassStatics_DependencyContainer": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_DependencyContainer =
-	requireAssignableTo<
-		TypeOnly<typeof current.DependencyContainer>,
-		TypeOnly<typeof old.DependencyContainer>
-	>;
+declare type current_as_old_for_ClassStatics_DependencyContainer = requireAssignableTo<TypeOnly<typeof current.DependencyContainer>, TypeOnly<typeof old.DependencyContainer>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -73,11 +52,7 @@ declare type current_as_old_for_ClassStatics_DependencyContainer =
  * typeValidation.broken:
  * "Interface_IFluidDependencySynthesizer": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IFluidDependencySynthesizer =
-	requireAssignableTo<
-		TypeOnly<old.IFluidDependencySynthesizer>,
-		TypeOnly<current.IFluidDependencySynthesizer>
-	>;
+declare type old_as_current_for_Interface_IFluidDependencySynthesizer = requireAssignableTo<TypeOnly<old.IFluidDependencySynthesizer>, TypeOnly<current.IFluidDependencySynthesizer>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -86,11 +61,7 @@ declare type old_as_current_for_Interface_IFluidDependencySynthesizer =
  * typeValidation.broken:
  * "Interface_IFluidDependencySynthesizer": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IFluidDependencySynthesizer =
-	requireAssignableTo<
-		TypeOnly<current.IFluidDependencySynthesizer>,
-		TypeOnly<old.IFluidDependencySynthesizer>
-	>;
+declare type current_as_old_for_Interface_IFluidDependencySynthesizer = requireAssignableTo<TypeOnly<current.IFluidDependencySynthesizer>, TypeOnly<old.IFluidDependencySynthesizer>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -99,11 +70,7 @@ declare type current_as_old_for_Interface_IFluidDependencySynthesizer =
  * typeValidation.broken:
  * "Interface_IProvideFluidDependencySynthesizer": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IProvideFluidDependencySynthesizer =
-	requireAssignableTo<
-		TypeOnly<old.IProvideFluidDependencySynthesizer>,
-		TypeOnly<current.IProvideFluidDependencySynthesizer>
-	>;
+declare type old_as_current_for_Interface_IProvideFluidDependencySynthesizer = requireAssignableTo<TypeOnly<old.IProvideFluidDependencySynthesizer>, TypeOnly<current.IProvideFluidDependencySynthesizer>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -112,11 +79,7 @@ declare type old_as_current_for_Interface_IProvideFluidDependencySynthesizer =
  * typeValidation.broken:
  * "Interface_IProvideFluidDependencySynthesizer": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IProvideFluidDependencySynthesizer =
-	requireAssignableTo<
-		TypeOnly<current.IProvideFluidDependencySynthesizer>,
-		TypeOnly<old.IProvideFluidDependencySynthesizer>
-	>;
+declare type current_as_old_for_Interface_IProvideFluidDependencySynthesizer = requireAssignableTo<TypeOnly<current.IProvideFluidDependencySynthesizer>, TypeOnly<old.IProvideFluidDependencySynthesizer>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -125,11 +88,7 @@ declare type current_as_old_for_Interface_IProvideFluidDependencySynthesizer =
  * typeValidation.broken:
  * "TypeAlias_AsyncFluidObjectProvider": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_AsyncFluidObjectProvider =
-	requireAssignableTo<
-		TypeOnly<old.AsyncFluidObjectProvider<never>>,
-		TypeOnly<current.AsyncFluidObjectProvider<never>>
-	>;
+declare type old_as_current_for_TypeAlias_AsyncFluidObjectProvider = requireAssignableTo<TypeOnly<old.AsyncFluidObjectProvider<never>>, TypeOnly<current.AsyncFluidObjectProvider<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -138,11 +97,7 @@ declare type old_as_current_for_TypeAlias_AsyncFluidObjectProvider =
  * typeValidation.broken:
  * "TypeAlias_AsyncFluidObjectProvider": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_AsyncFluidObjectProvider =
-	requireAssignableTo<
-		TypeOnly<current.AsyncFluidObjectProvider<never>>,
-		TypeOnly<old.AsyncFluidObjectProvider<never>>
-	>;
+declare type current_as_old_for_TypeAlias_AsyncFluidObjectProvider = requireAssignableTo<TypeOnly<current.AsyncFluidObjectProvider<never>>, TypeOnly<old.AsyncFluidObjectProvider<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -151,11 +106,7 @@ declare type current_as_old_for_TypeAlias_AsyncFluidObjectProvider =
  * typeValidation.broken:
  * "TypeAlias_AsyncOptionalFluidObjectProvider": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_AsyncOptionalFluidObjectProvider =
-	requireAssignableTo<
-		TypeOnly<old.AsyncOptionalFluidObjectProvider<never>>,
-		TypeOnly<current.AsyncOptionalFluidObjectProvider<never>>
-	>;
+declare type old_as_current_for_TypeAlias_AsyncOptionalFluidObjectProvider = requireAssignableTo<TypeOnly<old.AsyncOptionalFluidObjectProvider<never>>, TypeOnly<current.AsyncOptionalFluidObjectProvider<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -164,11 +115,7 @@ declare type old_as_current_for_TypeAlias_AsyncOptionalFluidObjectProvider =
  * typeValidation.broken:
  * "TypeAlias_AsyncOptionalFluidObjectProvider": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_AsyncOptionalFluidObjectProvider =
-	requireAssignableTo<
-		TypeOnly<current.AsyncOptionalFluidObjectProvider<never>>,
-		TypeOnly<old.AsyncOptionalFluidObjectProvider<never>>
-	>;
+declare type current_as_old_for_TypeAlias_AsyncOptionalFluidObjectProvider = requireAssignableTo<TypeOnly<current.AsyncOptionalFluidObjectProvider<never>>, TypeOnly<old.AsyncOptionalFluidObjectProvider<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -177,11 +124,7 @@ declare type current_as_old_for_TypeAlias_AsyncOptionalFluidObjectProvider =
  * typeValidation.broken:
  * "TypeAlias_AsyncRequiredFluidObjectProvider": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_AsyncRequiredFluidObjectProvider =
-	requireAssignableTo<
-		TypeOnly<old.AsyncRequiredFluidObjectProvider<never>>,
-		TypeOnly<current.AsyncRequiredFluidObjectProvider<never>>
-	>;
+declare type old_as_current_for_TypeAlias_AsyncRequiredFluidObjectProvider = requireAssignableTo<TypeOnly<old.AsyncRequiredFluidObjectProvider<never>>, TypeOnly<current.AsyncRequiredFluidObjectProvider<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -190,11 +133,7 @@ declare type old_as_current_for_TypeAlias_AsyncRequiredFluidObjectProvider =
  * typeValidation.broken:
  * "TypeAlias_AsyncRequiredFluidObjectProvider": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_AsyncRequiredFluidObjectProvider =
-	requireAssignableTo<
-		TypeOnly<current.AsyncRequiredFluidObjectProvider<never>>,
-		TypeOnly<old.AsyncRequiredFluidObjectProvider<never>>
-	>;
+declare type current_as_old_for_TypeAlias_AsyncRequiredFluidObjectProvider = requireAssignableTo<TypeOnly<current.AsyncRequiredFluidObjectProvider<never>>, TypeOnly<old.AsyncRequiredFluidObjectProvider<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -203,11 +142,7 @@ declare type current_as_old_for_TypeAlias_AsyncRequiredFluidObjectProvider =
  * typeValidation.broken:
  * "TypeAlias_FluidObjectProvider": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_FluidObjectProvider =
-	requireAssignableTo<
-		TypeOnly<old.FluidObjectProvider<never>>,
-		TypeOnly<current.FluidObjectProvider<never>>
-	>;
+declare type old_as_current_for_TypeAlias_FluidObjectProvider = requireAssignableTo<TypeOnly<old.FluidObjectProvider<never>>, TypeOnly<current.FluidObjectProvider<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -216,11 +151,7 @@ declare type old_as_current_for_TypeAlias_FluidObjectProvider =
  * typeValidation.broken:
  * "TypeAlias_FluidObjectProvider": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_FluidObjectProvider =
-	requireAssignableTo<
-		TypeOnly<current.FluidObjectProvider<never>>,
-		TypeOnly<old.FluidObjectProvider<never>>
-	>;
+declare type current_as_old_for_TypeAlias_FluidObjectProvider = requireAssignableTo<TypeOnly<current.FluidObjectProvider<never>>, TypeOnly<old.FluidObjectProvider<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -229,11 +160,7 @@ declare type current_as_old_for_TypeAlias_FluidObjectProvider =
  * typeValidation.broken:
  * "TypeAlias_FluidObjectSymbolProvider": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_FluidObjectSymbolProvider =
-	requireAssignableTo<
-		TypeOnly<old.FluidObjectSymbolProvider<never>>,
-		TypeOnly<current.FluidObjectSymbolProvider<never>>
-	>;
+declare type old_as_current_for_TypeAlias_FluidObjectSymbolProvider = requireAssignableTo<TypeOnly<old.FluidObjectSymbolProvider<never>>, TypeOnly<current.FluidObjectSymbolProvider<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -242,11 +169,7 @@ declare type old_as_current_for_TypeAlias_FluidObjectSymbolProvider =
  * typeValidation.broken:
  * "TypeAlias_FluidObjectSymbolProvider": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_FluidObjectSymbolProvider =
-	requireAssignableTo<
-		TypeOnly<current.FluidObjectSymbolProvider<never>>,
-		TypeOnly<old.FluidObjectSymbolProvider<never>>
-	>;
+declare type current_as_old_for_TypeAlias_FluidObjectSymbolProvider = requireAssignableTo<TypeOnly<current.FluidObjectSymbolProvider<never>>, TypeOnly<old.FluidObjectSymbolProvider<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -255,8 +178,4 @@ declare type current_as_old_for_TypeAlias_FluidObjectSymbolProvider =
  * typeValidation.broken:
  * "Variable_IFluidDependencySynthesizer": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_IFluidDependencySynthesizer =
-	requireAssignableTo<
-		TypeOnly<typeof current.IFluidDependencySynthesizer>,
-		TypeOnly<typeof old.IFluidDependencySynthesizer>
-	>;
+declare type current_as_old_for_Variable_IFluidDependencySynthesizer = requireAssignableTo<TypeOnly<typeof current.IFluidDependencySynthesizer>, TypeOnly<typeof old.IFluidDependencySynthesizer>>

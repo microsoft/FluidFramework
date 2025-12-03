@@ -48,8 +48,7 @@ const isIInventoryListAppModel = (
 	return model.version === "one" || model.version === "two";
 };
 
-const getUrlForContainerId = (containerId: string): string =>
-	`/#${containerId}`;
+const getUrlForContainerId = (containerId: string): string => `/#${containerId}`;
 
 const loaderProps: ILoaderProps = {
 	urlResolver: createInsecureTinyliciousTestUrlResolver(),
@@ -68,18 +67,14 @@ const importDataCallback: ImportDataCallback = async (
 	destinationContainer: IContainer,
 	exportedData: unknown,
 ) => {
-	const destinationModel =
-		await getModelFromContainer<IMigratableModel>(destinationContainer);
+	const destinationModel = await getModelFromContainer<IMigratableModel>(destinationContainer);
 	// If the migrated model already supports the data format, go ahead with the migration.
 	// Otherwise, try using the dataTransformationCallback if provided to get the exported data into
 	// a format that we can import.
 	// TODO: Error paths in case the format isn't ingestible.
 	const transformedData = destinationModel.supportsDataFormat(exportedData)
 		? exportedData
-		: await inventoryListDataTransformationCallback(
-				exportedData,
-				destinationModel.version,
-			);
+		: await inventoryListDataTransformationCallback(exportedData, destinationModel.version);
 	await destinationModel.importData(transformedData);
 };
 const migrationCallback = makeSeparateContainerMigrationCallback(
@@ -91,9 +86,7 @@ const migrationCallback = makeSeparateContainerMigrationCallback(
  * Helper function for casting the container's entrypoint to the expected type.  Does a little extra
  * type checking for added safety.
  */
-const getModelFromContainer = async <ModelType>(
-	container: IContainer,
-): Promise<ModelType> => {
+const getModelFromContainer = async <ModelType>(container: IContainer): Promise<ModelType> => {
 	const entryPoint = (await container.getEntryPoint()) as {
 		model: ModelType;
 	};
@@ -101,9 +94,7 @@ const getModelFromContainer = async <ModelType>(
 	// If the user tries to use this with an incompatible container runtime, we want to give them
 	// a comprehensible error message.  So distrust the type by default and do some basic type checking.
 	if (typeof entryPoint.model !== "object") {
-		throw new TypeError(
-			"Incompatible container runtime: doesn't provide model",
-		);
+		throw new TypeError("Incompatible container runtime: doesn't provide model");
 	}
 
 	return entryPoint.model;
@@ -156,8 +147,7 @@ const setupContainer = async (
 	// In this example, our container code mixes in an IMigratorEntryPoint to the container entryPoint.  The getMigrator
 	// function lets us construct an IMigrator by providing the necessary external tools it needs to operate.  The IMigrator
 	// is an object we can use to watch migration status, propose a migration, and discover the migration result.
-	const { getMigrator } =
-		(await container.getEntryPoint()) as IMigratorEntryPoint;
+	const { getMigrator } = (await container.getEntryPoint()) as IMigratorEntryPoint;
 	const migrator: IMigrator = await getMigrator(
 		// Note that the LoadSourceContainerCallback must load a new instance of the container.  We cannot simply return the
 		// container reference we already got above since it may contain local un-ack'd changes.
@@ -165,8 +155,7 @@ const setupContainer = async (
 		migrationCallback,
 	);
 	migrator.events.on("migrated", () => {
-		const newContainerId =
-			migrator.migrationResult as SeparateContainerMigrationResult;
+		const newContainerId = migrator.migrationResult as SeparateContainerMigrationResult;
 		container.dispose();
 		setupContainer(newContainerId).catch(console.error);
 	});

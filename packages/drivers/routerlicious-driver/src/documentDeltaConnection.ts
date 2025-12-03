@@ -4,24 +4,24 @@
  */
 
 import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
-import type { IClient } from "@fluidframework/driver-definitions";
-import type {
+import { IClient } from "@fluidframework/driver-definitions";
+import {
+	IDocumentDeltaConnection,
 	IAnyDriverError,
 	IConnect,
-	IDocumentDeltaConnection,
 } from "@fluidframework/driver-definitions/internal";
 import type { DriverErrorTelemetryProps } from "@fluidframework/driver-utils/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import type { Socket } from "socket.io-client";
 
 import {
+	IR11sSocketError,
 	errorObjectFromSocketError,
 	getUrlForTelemetry,
-	type IR11sSocketError,
 	socketIoPath,
 } from "./errorUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
-import type { SocketIOClientStatic } from "./socketModule.js";
+import { SocketIOClientStatic } from "./socketModule.js";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 
@@ -58,10 +58,9 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 			tenantId,
 			token, // Token is going to indicate tenant level information, etc...
 			versions: protocolVersions,
-			relayUserAgent: [
-				client.details.environment,
-				` driverVersion:${driverVersion}`,
-			].join(";"),
+			relayUserAgent: [client.details.environment, ` driverVersion:${driverVersion}`].join(
+				";",
+			),
 		};
 
 		const deltaConnection = new R11sDocumentDeltaConnection(
@@ -89,17 +88,11 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 	/**
 	 * Error raising for socket.io issues
 	 */
-	protected createErrorObject(
-		handler: string,
-		error?: any,
-		canRetry = true,
-	): IAnyDriverError {
+	protected createErrorObject(handler: string, error?: any, canRetry = true): IAnyDriverError {
 		// Note: we suspect the incoming error object is either:
 		// - a socketError: add it to the R11sError object for driver to be able to parse it and reason over it.
 		// - anything else: let base class handle it
-		return canRetry &&
-			Number.isInteger(error?.code) &&
-			typeof error?.message === "string"
+		return canRetry && Number.isInteger(error?.code) && typeof error?.message === "string"
 			? errorObjectFromSocketError(
 					error as IR11sSocketError,
 					handler,
@@ -108,9 +101,7 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 			: super.createErrorObject(handler, error, canRetry);
 	}
 
-	protected getAdditionalErrorProps(
-		handler: string,
-	): DriverErrorTelemetryProps {
+	protected getAdditionalErrorProps(handler: string): DriverErrorTelemetryProps {
 		return {
 			...super.getAdditionalErrorProps(handler),
 			url: getUrlForTelemetry(this.url, socketIoPath),
@@ -123,15 +114,9 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 	protected disconnectCore(err: IAnyDriverError): void {
 		if (
 			this.socket.connected &&
-			err.message !==
-				DocumentDeltaConnection.errorMessageForClientDisposeWithoutError
+			err.message !== DocumentDeltaConnection.errorMessageForClientDisposeWithoutError
 		) {
-			this.socket.emit(
-				"client_disconnect",
-				this.clientId,
-				this.documentId,
-				err.message,
-			);
+			this.socket.emit("client_disconnect", this.clientId, this.documentId, err.message);
 		}
 		super.disconnectCore(err);
 	}

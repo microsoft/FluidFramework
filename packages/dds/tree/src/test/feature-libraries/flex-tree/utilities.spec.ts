@@ -120,10 +120,7 @@ describe("flex-tree utilities", () => {
 			};
 			// Calls treeStatusFromAnchorCache and checks if cache is updated.
 			treeStatusFromAnchorCache(anchorNode0);
-			assert.deepEqual(
-				anchorNode0.slots.get(detachedFieldSlot),
-				expectedUpdatedCache,
-			);
+			assert.deepEqual(anchorNode0.slots.get(detachedFieldSlot), expectedUpdatedCache);
 		});
 	});
 

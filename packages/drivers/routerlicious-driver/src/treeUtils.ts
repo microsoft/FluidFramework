@@ -5,14 +5,10 @@
 
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	type ISummaryTree,
-	type SummaryObject,
-	SummaryType,
-} from "@fluidframework/driver-definitions";
-import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 
-import type { INormalizedWholeSnapshot } from "./contracts.js";
+import { INormalizedWholeSnapshot } from "./contracts.js";
 
 /**
  * Summary tree assembler props
@@ -82,10 +78,7 @@ export class SummaryTreeAssembler {
 	 * Add attachment to summary
 	 */
 	public addAttachment(id: string) {
-		this.summaryTree[this.attachmentCounter++] = {
-			id,
-			type: SummaryType.Attachment,
-		};
+		this.summaryTree[this.attachmentCounter++] = { id, type: SummaryType.Attachment };
 	}
 }
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
+import {
 	IContainer,
 	IFluidModuleWithDetails,
 	IRuntimeFactory,
@@ -24,18 +24,16 @@ import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server"
 
 import { DiceRollerController } from "../src/controller.js";
 import {
-	type DiceRollerContainerSchema,
 	diceRollerContainerSchema,
 	initializeAppForNewContainer,
 	loadAppFromExistingContainer,
+	type DiceRollerContainerSchema,
 } from "../src/fluid.js";
 import type { TwoDiceApp } from "../src/schema.js";
 import { makeAppView } from "../src/view.js";
 
 // The local server needs to be shared across the Loader instances for collaboration to happen
-const localServer = LocalDeltaConnectionServer.create(
-	new LocalSessionStorageDbFactory(),
-);
+const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
 
 const urlResolver = new LocalResolver();
 
@@ -49,10 +47,7 @@ export async function getSessionStorageContainer(
 	containerId: string,
 	containerRuntimeFactory: IRuntimeFactory,
 	createNew: boolean,
-): Promise<{
-	container: IContainer;
-	attach: (() => Promise<void>) | undefined;
-}> {
+): Promise<{ container: IContainer; attach: (() => Promise<void>) | undefined }> {
 	const documentServiceFactory = new LocalDocumentServiceFactory(localServer);
 	const url = `${window.location.origin}/${containerId}`;
 
@@ -80,10 +75,7 @@ export async function getSessionStorageContainer(
 		// We're not actually using the code proposal (our code loader always loads the same module regardless of the
 		// proposal), but the IContainer will only give us a NullRuntime if there's no proposal.  So we'll use a fake
 		// proposal.
-		container = await loader.createDetachedContainer({
-			package: "",
-			config: {},
-		});
+		container = await loader.createDetachedContainer({ package: "", config: {} });
 		attach = async (): Promise<void> => container.attach({ url });
 	} else {
 		container = await loader.resolve({ url });
@@ -118,9 +110,7 @@ async function createContainerAndRenderInElement(
 	);
 
 	// Get the Default Object from the Container
-	const fluidContainer = await createFluidContainer<DiceRollerContainerSchema>({
-		container,
-	});
+	const fluidContainer = await createFluidContainer<DiceRollerContainerSchema>({ container });
 
 	let appModel: TwoDiceApp;
 	if (createNewFlag) {
@@ -130,14 +120,8 @@ async function createContainerAndRenderInElement(
 		appModel = loadAppFromExistingContainer(fluidContainer);
 	}
 
-	const diceRollerController = new DiceRollerController(
-		appModel.dice1,
-		() => {},
-	);
-	const diceRollerController2 = new DiceRollerController(
-		appModel.dice2,
-		() => {},
-	);
+	const diceRollerController = new DiceRollerController(appModel.dice1, () => {});
+	const diceRollerController2 = new DiceRollerController(appModel.dice2, () => {});
 
 	element.append(makeAppView([diceRollerController, diceRollerController2]));
 }

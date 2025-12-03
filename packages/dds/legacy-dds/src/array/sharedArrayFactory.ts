@@ -4,10 +4,10 @@
  */
 
 import type {
-	IChannelAttributes,
-	IChannelFactory,
 	IChannelServices,
+	IChannelAttributes,
 	IFluidDataStoreRuntime,
+	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	createSharedObjectKind,
@@ -17,10 +17,7 @@ import {
 
 import { pkgVersion } from "../packageVersion.js";
 
-import type {
-	ISharedArray,
-	SerializableTypeForSharedArray,
-} from "./interfaces.js";
+import type { ISharedArray, SerializableTypeForSharedArray } from "./interfaces.js";
 import { SharedArrayClass } from "./sharedArray.js";
 
 /**
@@ -73,13 +70,9 @@ export class SharedArrayFactory<T extends SerializableTypeForSharedArray>
  * Entrypoint for {@link ISharedArray} creation.
  * @legacy @beta
  */
-export const SharedArray: ISharedObjectKind<
-	ISharedArray<SerializableTypeForSharedArray>
-> &
+export const SharedArray: ISharedObjectKind<ISharedArray<SerializableTypeForSharedArray>> &
 	SharedObjectKind<ISharedArray<SerializableTypeForSharedArray>> =
-	createSharedObjectKind<ISharedArray<SerializableTypeForSharedArray>>(
-		SharedArrayFactory,
-	);
+	createSharedObjectKind<ISharedArray<SerializableTypeForSharedArray>>(SharedArrayFactory);
 
 /**
  * Entrypoint for {@link ISharedArray} creation.

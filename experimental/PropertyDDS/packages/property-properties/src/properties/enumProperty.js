@@ -90,10 +90,7 @@ export class EnumProperty extends Int32Property {
 	 * @throws if no entry is found for in_stringId
 	 */
 	setEnumByString(in_stringId) {
-		ConsoleUtils.assert(
-			_.isString(in_stringId),
-			MSG.STRING_ID_MUST_BE_STRING + in_stringId,
-		);
+		ConsoleUtils.assert(_.isString(in_stringId), MSG.STRING_ID_MUST_BE_STRING + in_stringId);
 		var internalEnum = this._enumDictionary.enumEntriesById[in_stringId];
 		if (!internalEnum) {
 			throw new Error(MSG.UNKNOWN_ENUM + in_stringId);

@@ -6,16 +6,9 @@
 import { performanceNow } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
-import {
-	type ITelemetryLoggerExt,
-	isFluidError,
-} from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt, isFluidError } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	canRetryOnError,
-	getRetryDelayFromError,
-	NonRetryableError,
-} from "./network.js";
+import { NonRetryableError, canRetryOnError, getRetryDelayFromError } from "./network.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
@@ -165,8 +158,7 @@ export function calculateMaxWaitTime(delayMs: number, error: unknown): number {
 	let newDelayMs = Math.max(retryDelayFromError ?? 0, delayMs * 2);
 	newDelayMs = Math.min(
 		newDelayMs,
-		isFluidError(error) &&
-			error.getTelemetryProperties().endpointReached === true
+		isFluidError(error) && error.getTelemetryProperties().endpointReached === true
 			? MaxReconnectDelayInMsWhenEndpointIsReachable
 			: MaxReconnectDelayInMsWhenEndpointIsNotReachable,
 	);

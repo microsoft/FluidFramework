@@ -8,9 +8,9 @@
 import { strict as assert } from "node:assert";
 
 import {
-	createWeightedGenerator,
 	type Generator,
 	type IRandom,
+	createWeightedGenerator,
 	makeRandom,
 	performFuzzActions,
 	take,
@@ -189,9 +189,7 @@ describe("AttributionCollection", () => {
 					{ offset: 3, key: opKey(101) },
 				]);
 				assert.equal(collection.length, 5);
-				assert.deepEqual(splitCollection.getAll().root, [
-					{ offset: 0, key: opKey(102) },
-				]);
+				assert.deepEqual(splitCollection.getAll().root, [{ offset: 0, key: opKey(102) }]);
 				assert.equal(splitCollection.length, 1);
 			});
 		});
@@ -201,12 +199,8 @@ describe("AttributionCollection", () => {
 			const splitCollection = collection.splitAt(3);
 			assert.equal(collection.length, 3);
 			assert.equal(splitCollection.length, 2);
-			assert.deepEqual(collection.getAll().root, [
-				{ offset: 0, key: opKey(100) },
-			]);
-			assert.deepEqual(splitCollection.getAll().root, [
-				{ offset: 0, key: opKey(100) },
-			]);
+			assert.deepEqual(collection.getAll().root, [{ offset: 0, key: opKey(100) }]);
+			assert.deepEqual(splitCollection.getAll().root, [{ offset: 0, key: opKey(100) }]);
 		});
 
 		it("splits channels", () => {
@@ -225,9 +219,7 @@ describe("AttributionCollection", () => {
 	describe(".append", () => {
 		it("modifies the receiving collection", () => {
 			const collection = new AttributionCollection(2, opKey(100));
-			assert.deepEqual(collection.getAll().root, [
-				{ offset: 0, key: opKey(100) },
-			]);
+			assert.deepEqual(collection.getAll().root, [{ offset: 0, key: opKey(100) }]);
 			collection.append(new AttributionCollection(1, opKey(101)));
 			assert.deepEqual(collection.getAll().root, [
 				{ offset: 0, key: opKey(100) },
@@ -238,21 +230,15 @@ describe("AttributionCollection", () => {
 		it("does not modify the argument collection", () => {
 			const collection = new AttributionCollection(2, opKey(100));
 			const appendedCollection = new AttributionCollection(1, opKey(101));
-			assert.deepEqual(appendedCollection.getAll().root, [
-				{ offset: 0, key: opKey(101) },
-			]);
+			assert.deepEqual(appendedCollection.getAll().root, [{ offset: 0, key: opKey(101) }]);
 			collection.append(appendedCollection);
-			assert.deepEqual(appendedCollection.getAll().root, [
-				{ offset: 0, key: opKey(101) },
-			]);
+			assert.deepEqual(appendedCollection.getAll().root, [{ offset: 0, key: opKey(101) }]);
 		});
 
 		it("coalesces referentially equal values at the join point", () => {
 			const collection = new AttributionCollection(2, opKey(100));
 			collection.append(new AttributionCollection(7, opKey(100)));
-			assert.deepEqual(collection.getAll().root, [
-				{ offset: 0, key: opKey(100) },
-			]);
+			assert.deepEqual(collection.getAll().root, [{ offset: 0, key: opKey(100) }]);
 			assert.equal(collection.length, 9);
 		});
 
@@ -395,8 +381,7 @@ describe("AttributionCollection", () => {
 					cachedLength: 5,
 				},
 			] as unknown as ISegment[];
-			const blob =
-				AttributionCollection.serializeAttributionCollections(segments);
+			const blob = AttributionCollection.serializeAttributionCollections(segments);
 			assert.deepEqual(blob, {
 				posBreakpoints: [0],
 				seqs: [0],
@@ -407,8 +392,7 @@ describe("AttributionCollection", () => {
 
 	describe("serializeAttributionCollections and populateAttributionCollections round-trip", () => {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-		const seg = (length: number): ISegment =>
-			({ cachedLength: length }) as ISegment;
+		const seg = (length: number): ISegment => ({ cachedLength: length }) as ISegment;
 		const testCases: {
 			name: string;
 			blob: SerializedAttributionCollection;
@@ -502,19 +486,14 @@ describe("AttributionCollection", () => {
 
 		it("copies channels", () => {
 			const collection = makeCollectionWithChannel({ length: 2, seq: 25 });
-			const appendedCollection = makeCollectionWithChannel({
-				length: 3,
-				seq: 26,
-			});
+			const appendedCollection = makeCollectionWithChannel({ length: 3, seq: 26 });
 			const copy = collection.clone();
 			collection.append(appendedCollection);
 			assert.deepEqual(collection.getAll().channels?.foo, [
 				{ offset: 0, key: opKey(25) },
 				{ offset: 2, key: opKey(26) },
 			]);
-			assert.deepEqual(copy.getAll().channels?.foo, [
-				{ offset: 0, key: opKey(25) },
-			]);
+			assert.deepEqual(copy.getAll().channels?.foo, [{ offset: 0, key: opKey(25) }]);
 		});
 	});
 
@@ -555,9 +534,7 @@ describe("AttributionCollection", () => {
 		});
 
 		it("doesn't tolerate updates to channels having inconsistent length fields", () => {
-			assert.throws(() =>
-				collection.update("foo", new AttributionCollection(3, null)),
-			);
+			assert.throws(() => collection.update("foo", new AttributionCollection(3, null)));
 		});
 	});
 
@@ -615,14 +592,8 @@ describe("AttributionCollection", () => {
 		for (let seed = 0; seed < 10; seed++) {
 			const segmentCount = 100;
 			it(`with randomly generated segments, seed ${seed}`, () => {
-				const generateAttributionKey = (
-					random: IRandom,
-				): AttributionKey | null =>
-					random.bool(0.8)
-						? opKey(random.integer(0, 10))
-						: random.bool()
-							? detachedKey
-							: null;
+				const generateAttributionKey = (random: IRandom): AttributionKey | null =>
+					random.bool(0.8) ? opKey(random.integer(0, 10)) : random.bool() ? detachedKey : null;
 
 				const channelNamePool = ["ch1", "ch2", "ch3"];
 				const insertGenerator: Generator<InsertAction, State> = take(
@@ -638,10 +609,7 @@ describe("AttributionCollection", () => {
 								if (random.bool()) {
 									collection.update(
 										channel,
-										new AttributionCollection(
-											length,
-											generateAttributionKey(random),
-										),
+										new AttributionCollection(length, generateAttributionKey(random)),
 									);
 								}
 							}
@@ -684,19 +652,13 @@ describe("AttributionCollection", () => {
 						offset,
 					};
 				};
-				const append: Generator<AppendAction, State> = ({
-					random,
-					segments,
-				}) => {
+				const append: Generator<AppendAction, State> = ({ random, segments }) => {
 					return {
 						type: "append",
 						segIndex: random.integer(0, segments.length - 2),
 					};
 				};
-				const finalState = performFuzzActions<
-					SplitAction | AppendAction,
-					State
-				>(
+				const finalState = performFuzzActions<SplitAction | AppendAction, State>(
 					take(
 						segmentCount,
 						// Note: if playing around with constants in this test, it may be necessary to
@@ -725,9 +687,7 @@ describe("AttributionCollection", () => {
 				);
 
 				assert.deepEqual(
-					AttributionCollection.serializeAttributionCollections(
-						finalState.segments,
-					),
+					AttributionCollection.serializeAttributionCollections(finalState.segments),
 					expected,
 				);
 			});

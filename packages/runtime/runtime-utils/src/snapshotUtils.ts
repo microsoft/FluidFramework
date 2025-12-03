@@ -28,10 +28,7 @@ export function isSnapshotFetchRequiredForLoadingGroupId(
 		// tree with current loading groupId. Note: Child with no loading groupId, will fall under parent with
 		// a loading groupId as it does not have its own loading groupId.
 		if (childTree.groupId === undefined) {
-			const value = isSnapshotFetchRequiredForLoadingGroupId(
-				childTree,
-				blobContents,
-			);
+			const value = isSnapshotFetchRequiredForLoadingGroupId(childTree, blobContents);
 			if (value) {
 				return true;
 			}

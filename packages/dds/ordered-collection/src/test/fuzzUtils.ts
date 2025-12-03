@@ -23,10 +23,7 @@ import type {
 } from "@fluid-private/test-dds-utils";
 
 import { ConsensusQueueFactory } from "../consensusOrderedCollectionFactory.js";
-import type {
-	IConsensusOrderedCollection,
-	IOrderedCollection,
-} from "../interfaces.js";
+import type { IConsensusOrderedCollection, IOrderedCollection } from "../interfaces.js";
 import { ConsensusResult } from "../interfaces.js";
 
 import { _dirname } from "./dirname.cjs";
@@ -78,9 +75,7 @@ export interface AcquireOperation {
 /**
  * Represents ConsensusOrderedCollection operation types for fuzz testing
  */
-export type ConsensusOrderedCollectionOperation =
-	| AddOperation
-	| AcquireOperation;
+export type ConsensusOrderedCollectionOperation = AddOperation | AcquireOperation;
 
 function makeOperationGenerator(): Generator<
 	ConsensusOrderedCollectionOperation,
@@ -109,10 +104,7 @@ function makeOperationGenerator(): Generator<
 	async function acquire(state: OpSelectionState): Promise<AcquireOperation> {
 		return {
 			type: "acquire",
-			result: state.random.pick([
-				ConsensusResult.Complete,
-				ConsensusResult.Release,
-			]),
+			result: state.random.pick([ConsensusResult.Complete, ConsensusResult.Release]),
 		};
 	}
 
@@ -135,14 +127,8 @@ function makeOperationGenerator(): Generator<
 // Track async errors that occur during fire-and-forget operations
 let pendingAsyncError: Error | undefined;
 
-function makeReducer(): Reducer<
-	ConsensusOrderedCollectionOperation,
-	FuzzTestState
-> {
-	const reducer = combineReducers<
-		ConsensusOrderedCollectionOperation,
-		FuzzTestState
-	>({
+function makeReducer(): Reducer<ConsensusOrderedCollectionOperation, FuzzTestState> {
+	const reducer = combineReducers<ConsensusOrderedCollectionOperation, FuzzTestState>({
 		add: ({ client }, { value }) => {
 			client.channel.add(value).catch((error: Error) => {
 				pendingAsyncError = error;
@@ -170,11 +156,7 @@ function assertEqualConsensusOrderedCollections(
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 	const bData = (b as any).data as IOrderedCollection<string>;
 	assert.equal(aData.size, bData.size, "Data sizes should be equal");
-	assert.deepEqual(
-		aData.asArray(),
-		bData.asArray(),
-		"Data contents should be equal",
-	);
+	assert.deepEqual(aData.asArray(), bData.asArray(), "Data contents should be equal");
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 	const aJobTracking = (a as any).jobTracking as Map<
@@ -187,18 +169,10 @@ function assertEqualConsensusOrderedCollections(
 		{ value: string; clientId: string | undefined }
 	>;
 
-	assert.equal(
-		aJobTracking.size,
-		bJobTracking.size,
-		"Job tracking sizes should be equal",
-	);
+	assert.equal(aJobTracking.size, bJobTracking.size, "Job tracking sizes should be equal");
 	for (const [key, aJob] of aJobTracking.entries()) {
 		const bJob = bJobTracking.get(key);
-		assert.deepEqual(
-			aJob,
-			bJob,
-			`Job tracking entry for key ${key} should be equal`,
-		);
+		assert.deepEqual(aJob, bJob, `Job tracking entry for key ${key} should be equal`);
 	}
 }
 

@@ -33,16 +33,8 @@ describe("MergeTree.ordinals", () => {
 					(count) => {
 						let previous: string = "";
 						for (let i = 0; i < count; i++) {
-							const current = computeHierarchicalOrdinal(
-								max,
-								count,
-								parentOrdinal,
-								previous,
-							);
-							assert(
-								current > previous,
-								"subsequent ordinal should be greater than previous",
-							);
+							const current = computeHierarchicalOrdinal(max, count, parentOrdinal, previous);
+							assert(current > previous, "subsequent ordinal should be greater than previous");
 							assert(
 								current.length > parentOrdinal.length,
 								"child ordinals should be  more than parent",
@@ -59,7 +51,7 @@ describe("MergeTree.ordinals", () => {
 	it("numericOrdinal", () => {
 		// eslint-disable-next-line unicorn/prefer-code-point
 		let previous = String.fromCharCode(0);
-		for (let i = 2; i < Number.MAX_SAFE_INTEGER; i = i ** 2) {
+		for (let i = 2; i < Number.MAX_SAFE_INTEGER; i = Math.pow(i, 2)) {
 			const current = computeNumericOrdinal(i);
 			assert(
 				current > previous,

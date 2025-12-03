@@ -10,27 +10,19 @@ import {
 	type ChangeFamilyEditor,
 	type ChangeRebaser,
 	type DeltaRoot,
-	emptyDelta,
 	type RevisionTag,
+	emptyDelta,
 } from "../../../core/index.js";
 import { type Commit, EditManager } from "../../../shared-tree-core/index.js";
+import { type RecursiveReadonly, brand, makeArray } from "../../../util/index.js";
 import {
-	brand,
-	makeArray,
-	type RecursiveReadonly,
-} from "../../../util/index.js";
-import {
-	asDelta,
 	TestChange,
 	type TestChangeFamily,
+	asDelta,
 	testChangeFamilyFactory,
 } from "../../testChange.js";
 import { mintRevisionTag, testIdCompressor } from "../../utils.js";
-export type TestEditManager = EditManager<
-	ChangeFamilyEditor,
-	TestChange,
-	TestChangeFamily
->;
+export type TestEditManager = EditManager<ChangeFamilyEditor, TestChange, TestChangeFamily>;
 
 export function testChangeEditManagerFactory(options: {
 	rebaser?: ChangeRebaser<TestChange>;
@@ -53,11 +45,7 @@ export function editManagerFactory<TChange = TestChange>(
 	options: {
 		sessionId?: SessionId;
 	} = {},
-): EditManager<
-	ChangeFamilyEditor,
-	TChange,
-	ChangeFamily<ChangeFamilyEditor, TChange>
-> {
+): EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>> {
 	const genId = () => testIdCompressor.generateCompressedId();
 	const manager = new EditManager<
 		ChangeFamilyEditor,
@@ -92,11 +80,7 @@ export function editManagerFactory<TChange = TestChange>(
 export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	localEditCount: number,
 	trunkEditCount: number,
-	manager: EditManager<
-		ChangeFamilyEditor,
-		TChange,
-		ChangeFamily<ChangeFamilyEditor, TChange>
-	>,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
 	mintChange: (revision: RevisionTag | undefined) => TChange,
 ): void;
 /**
@@ -126,11 +110,7 @@ export function rebaseLocalEditsOverTrunkEdits<TChange>(
 export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	localEditCount: number,
 	trunkEditCount: number,
-	manager: EditManager<
-		ChangeFamilyEditor,
-		TChange,
-		ChangeFamily<ChangeFamilyEditor, TChange>
-	>,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
 	mintChange: (revision: RevisionTag | undefined) => TChange,
 	defer: true,
 	bunchCommits?: boolean,
@@ -138,11 +118,7 @@ export function rebaseLocalEditsOverTrunkEdits<TChange>(
 export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	localEditCount: number,
 	trunkEditCount: number,
-	manager: EditManager<
-		ChangeFamilyEditor,
-		TChange,
-		ChangeFamily<ChangeFamilyEditor, TChange>
-	>,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
 	mintChange: (revision: RevisionTag | undefined) => TChange,
 	defer: boolean = false,
 	bunchCommits: boolean = false,
@@ -150,9 +126,7 @@ export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	subscribeToLocalBranch(manager);
 	for (let iChange = 0; iChange < localEditCount; iChange++) {
 		const revision = mintRevisionTag();
-		manager
-			.getLocalBranch("main")
-			.apply({ change: mintChange(undefined), revision });
+		manager.getLocalBranch("main").apply({ change: mintChange(undefined), revision });
 	}
 	const trunkSessionId = "trunk" as SessionId;
 	const trunkEdits = makeArray(trunkEditCount, () => {
@@ -166,13 +140,7 @@ export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	const run = () => {
 		// If bunchCommits is true, send all trunk edit commits to the EditManager together.
 		if (bunchCommits) {
-			manager.addSequencedChanges(
-				trunkEdits,
-				trunkSessionId,
-				brand(1),
-				brand(0),
-				"main",
-			);
+			manager.addSequencedChanges(trunkEdits, trunkSessionId, brand(1), brand(0), "main");
 		} else {
 			for (let iChange = 0; iChange < trunkEditCount; iChange++) {
 				const commit = trunkEdits[iChange];
@@ -212,11 +180,7 @@ export function rebaseLocalEditsOverTrunkEdits<TChange>(
 export function rebasePeerEditsOverTrunkEdits<TChange>(
 	peerEditCount: number,
 	trunkEditCount: number,
-	manager: EditManager<
-		ChangeFamilyEditor,
-		TChange,
-		ChangeFamily<ChangeFamilyEditor, TChange>
-	>,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
 	mintChange: () => TChange,
 ): void;
 /**
@@ -246,11 +210,7 @@ export function rebasePeerEditsOverTrunkEdits<TChange>(
 export function rebasePeerEditsOverTrunkEdits<TChange>(
 	peerEditCount: number,
 	trunkEditCount: number,
-	manager: EditManager<
-		ChangeFamilyEditor,
-		TChange,
-		ChangeFamily<ChangeFamilyEditor, TChange>
-	>,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
 	mintChange: (revision: RevisionTag | undefined) => TChange,
 	defer: true,
 	bunchCommits?: boolean,
@@ -258,11 +218,7 @@ export function rebasePeerEditsOverTrunkEdits<TChange>(
 export function rebasePeerEditsOverTrunkEdits<TChange>(
 	peerEditCount: number,
 	trunkEditCount: number,
-	manager: EditManager<
-		ChangeFamilyEditor,
-		TChange,
-		ChangeFamily<ChangeFamilyEditor, TChange>
-	>,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
 	mintChange: (revision: RevisionTag | undefined) => TChange,
 	defer: boolean = false,
 	bunchCommits: boolean = false,
@@ -342,11 +298,7 @@ export function rebasePeerEditsOverTrunkEdits<TChange>(
  */
 export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 	editCount: number,
-	manager: EditManager<
-		ChangeFamilyEditor,
-		TChange,
-		ChangeFamily<ChangeFamilyEditor, TChange>
-	>,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
 	mintChange: () => TChange,
 ): void;
 /**
@@ -376,21 +328,13 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
  */
 export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 	editCount: number,
-	manager: EditManager<
-		ChangeFamilyEditor,
-		TChange,
-		ChangeFamily<ChangeFamilyEditor, TChange>
-	>,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
 	mintChange: (revision: RevisionTag | undefined) => TChange,
 	defer: true,
 ): () => void;
 export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 	editCount: number,
-	manager: EditManager<
-		ChangeFamilyEditor,
-		TChange,
-		ChangeFamily<ChangeFamilyEditor, TChange>
-	>,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
 	mintChange: (revision: RevisionTag | undefined) => TChange,
 	defer: boolean = false,
 ): void | (() => void) {
@@ -456,11 +400,7 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 export function rebaseConcurrentPeerEdits<TChange>(
 	peerCount: number,
 	editsPerPeerCount: number,
-	manager: EditManager<
-		ChangeFamilyEditor,
-		TChange,
-		ChangeFamily<ChangeFamilyEditor, TChange>
-	>,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
 	mintChange: (revision: RevisionTag | undefined) => TChange,
 	defer: true,
 ): () => void;
@@ -489,21 +429,13 @@ export function rebaseConcurrentPeerEdits<TChange>(
 export function rebaseConcurrentPeerEdits<TChange>(
 	peerCount: number,
 	editsPerPeerCount: number,
-	manager: EditManager<
-		ChangeFamilyEditor,
-		TChange,
-		ChangeFamily<ChangeFamilyEditor, TChange>
-	>,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
 	mintChange: (revision: RevisionTag | undefined) => TChange,
 ): void;
 export function rebaseConcurrentPeerEdits<TChange>(
 	peerCount: number,
 	editsPerPeerCount: number,
-	manager: EditManager<
-		ChangeFamilyEditor,
-		TChange,
-		ChangeFamily<ChangeFamilyEditor, TChange>
-	>,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
 	mintChange: (revision: RevisionTag | undefined) => TChange,
 	defer: boolean = false,
 ): void | (() => void) {
@@ -534,16 +466,11 @@ export function rebaseConcurrentPeerEdits<TChange>(
 	return defer ? run : run();
 }
 
-export function checkChangeList(
-	manager: TestEditManager,
-	intentions: number[],
-): void {
+export function checkChangeList(manager: TestEditManager, intentions: number[]): void {
 	TestChange.checkChangeList(getAllChanges(manager), intentions);
 }
 
-export function getAllChanges(
-	manager: TestEditManager,
-): RecursiveReadonly<TestChange>[] {
+export function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestChange>[] {
 	return manager
 		.getTrunkChanges("main")
 		.concat(manager.getLocalCommits("main").map((c) => c.change));
@@ -569,11 +496,7 @@ export function addSequencedChanges(
 
 /** Subscribe to the local branch to emulate the behavior of SharedTree */
 function subscribeToLocalBranch<TChange>(
-	manager: EditManager<
-		ChangeFamilyEditor,
-		TChange,
-		ChangeFamily<ChangeFamilyEditor, TChange>
-	>,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
 ): void {
 	manager.getLocalBranch("main").events.on("afterChange", (branchChange) => {
 		// Reading the change property causes lazy computation to occur, and is important to accurately emulate SharedTree behavior

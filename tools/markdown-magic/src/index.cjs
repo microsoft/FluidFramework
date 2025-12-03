@@ -53,9 +53,7 @@ markdownMagic(matchPattern, config).then(
 	},
 	(error) => {
 		console.error(
-			chalk.red(
-				"FAILURE: Markdown Magic could not be completed due to an error: ",
-			),
+			chalk.red("FAILURE: Markdown Magic could not be completed due to an error: "),
 			error,
 		);
 		process.exit(1);

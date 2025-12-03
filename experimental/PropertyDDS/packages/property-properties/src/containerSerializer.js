@@ -12,9 +12,7 @@ const { PathHelper } = require("@fluid-experimental/property-changeset");
 const {
 	AbstractStaticCollectionProperty,
 } = require("./properties/abstractStaticCollectionProperty");
-const {
-	LazyLoadedProperties: Property,
-} = require("./properties/lazyLoadedProperties");
+const { LazyLoadedProperties: Property } = require("./properties/lazyLoadedProperties");
 
 var MSG = {
 	NOTHING_TO_DESERIALIZE: "Repository deserialize(), no input given",
@@ -80,8 +78,7 @@ export function serialize(in_psets, in_dirtyOnly) {
 		if (!documentData[rootTypeid]) {
 			documentData[rootTypeid] = {};
 		}
-		documentData[rootTypeid][keys[i]] =
-			in_psets[keys[i]].serialize(in_dirtyOnly);
+		documentData[rootTypeid][keys[i]] = in_psets[keys[i]].serialize(in_dirtyOnly);
 	}
 
 	return documentData;
@@ -105,7 +102,7 @@ export function deserialize(in_data, in_scope, in_filteringOptions) {
 	// From the given filtering options, keep only what is relevant for this property.
 	let baseFilteringOptions;
 	if (in_filteringOptions) {
-		const pathCoverage = PathHelper.getPathCoverage(
+		let pathCoverage = PathHelper.getPathCoverage(
 			in_filteringOptions.basePath,
 			in_filteringOptions.paths,
 		);
@@ -137,7 +134,7 @@ export function deserialize(in_data, in_scope, in_filteringOptions) {
 		var classKeys = Object.keys(classed);
 		for (var iClass = 0; iClass < classKeys.length; iClass++) {
 			// reconstruct entity
-			const filteringOptions = baseFilteringOptions && {
+			let filteringOptions = baseFilteringOptions && {
 				basePath: PathHelper.getChildAbsolutePathCanonical(
 					baseFilteringOptions.basePath,
 					classKeys[iClass],

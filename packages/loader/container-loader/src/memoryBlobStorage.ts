@@ -38,16 +38,10 @@ export function tryInitializeMemoryDetachedBlobStorage(
 	detachedStorage: MemoryDetachedBlobStorage,
 	attachmentBlobs: string,
 ): void {
-	assert(
-		detachedStorage.size === 0,
-		0x99e /* Blob storage already initialized */,
-	);
+	assert(detachedStorage.size === 0, 0x99e /* Blob storage already initialized */);
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const maybeAttachmentBlobs = JSON.parse(attachmentBlobs);
-	assert(
-		Array.isArray(maybeAttachmentBlobs),
-		0x99f /* Invalid attachmentBlobs */,
-	);
+	assert(Array.isArray(maybeAttachmentBlobs), 0x99f /* Invalid attachmentBlobs */);
 
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 	detachedStorage.initialize(maybeAttachmentBlobs);
@@ -63,9 +57,7 @@ export function tryInitializeMemoryDetachedBlobStorage(
 export function createMemoryDetachedBlobStorage(): MemoryDetachedBlobStorage {
 	const blobs: ArrayBufferLike[] = [];
 	const storage: MemoryDetachedBlobStorage = {
-		createBlob: async (
-			file: ArrayBufferLike,
-		): Promise<ICreateBlobResponse> => ({
+		createBlob: async (file: ArrayBufferLike): Promise<ICreateBlobResponse> => ({
 			id: `${blobs.push(file) - 1}`,
 		}),
 		readBlob: async (id: string): Promise<ArrayBufferLike> =>
@@ -80,11 +72,7 @@ export function createMemoryDetachedBlobStorage(): MemoryDetachedBlobStorage {
 				? JSON.stringify(blobs.map((b) => bufferToString(b, "utf8")))
 				: undefined,
 		initialize: (attachmentBlobs: string[]) =>
-			blobs.push(
-				...attachmentBlobs.map((maybeBlob) =>
-					stringToBuffer(maybeBlob, "utf8"),
-				),
-			),
+			blobs.push(...attachmentBlobs.map((maybeBlob) => stringToBuffer(maybeBlob, "utf8"))),
 	};
 	return storage;
 }

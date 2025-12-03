@@ -17,9 +17,7 @@ console.log(
 );
 console.log(`default data/large.concise.json string:10,item:100`);
 console.log();
-console.log(
-	`Example to load data/large.concise.json, and log it to the console:`,
-);
+console.log(`Example to load data/large.concise.json, and log it to the console:`);
 console.log(`data/large.concise.json`);
 console.log();
 console.log(

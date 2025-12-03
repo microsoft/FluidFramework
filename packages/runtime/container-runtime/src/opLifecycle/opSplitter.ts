@@ -8,8 +8,8 @@ import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	createChildLogger,
 	DataCorruptionError,
+	createChildLogger,
 	extractSafePropertiesFromMessage,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
@@ -36,10 +36,7 @@ interface IChunkedContents {
 }
 
 function isChunkedContents(contents: unknown): contents is IChunkedContents {
-	return (
-		(contents as Partial<IChunkedContents>)?.type ===
-		ContainerMessageType.ChunkedOp
-	);
+	return (contents as Partial<IChunkedContents>)?.type === ContainerMessageType.ChunkedOp;
 }
 
 /**
@@ -65,8 +62,7 @@ export class OpSplitter {
 
 	public get isBatchChunkingEnabled(): boolean {
 		return (
-			this.chunkSizeInBytes < Number.POSITIVE_INFINITY &&
-			this.submitBatchFn !== undefined
+			this.chunkSizeInBytes < Number.POSITIVE_INFINITY && this.submitBatchFn !== undefined
 		);
 	}
 
@@ -132,13 +128,8 @@ export class OpSplitter {
 	 * @param batch - the compressed batch which needs to be split into chunks before being sent over the wire
 	 * @returns A batch with the last chunk in place of the original complete compressed content
 	 */
-	public splitSingletonBatchMessage(
-		batch: OutboundSingletonBatch,
-	): OutboundSingletonBatch {
-		assert(
-			this.isBatchChunkingEnabled,
-			0x513 /* Chunking needs to be enabled */,
-		);
+	public splitSingletonBatchMessage(batch: OutboundSingletonBatch): OutboundSingletonBatch {
+		assert(this.isBatchChunkingEnabled, 0x513 /* Chunking needs to be enabled */);
 		assert(
 			batch.contentSizeInBytes > 0 && batch.messages.length > 0,
 			0x514 /* Batch needs to be non-empty */,
@@ -147,10 +138,7 @@ export class OpSplitter {
 			batch.referenceSequenceNumber !== undefined,
 			0x58a /* Batch must have a reference sequence number if non-empty */,
 		);
-		assert(
-			this.chunkSizeInBytes !== 0,
-			0x515 /* Chunk size needs to be non-zero */,
-		);
+		assert(this.chunkSizeInBytes !== 0, 0x515 /* Chunk size needs to be non-zero */);
 		assert(
 			this.chunkSizeInBytes < this.maxBatchSizeInBytes,
 			0x516 /* Chunk size needs to be smaller than the max batch size */,
@@ -174,10 +162,7 @@ export class OpSplitter {
 			socketSize >= this.maxBatchSizeInBytes,
 		);
 
-		assert(
-			this.submitBatchFn !== undefined,
-			0x519 /* We don't support old loaders */,
-		);
+		assert(this.submitBatchFn !== undefined, 0x519 /* We don't support old loaders */);
 		// Send the first N-1 chunks immediately
 		for (const chunk of chunks.slice(0, -1)) {
 			this.submitBatchFn(
@@ -212,10 +197,7 @@ export class OpSplitter {
 	}
 
 	public processChunk(message: ISequencedDocumentMessage): ProcessChunkResult {
-		assert(
-			isChunkedContents(message.contents),
-			0x948 /* message not of type ChunkedOp */,
-		);
+		assert(isChunkedContents(message.contents), 0x948 /* message not of type ChunkedOp */);
 		const contents: IChunkedContents = message.contents;
 
 		// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)

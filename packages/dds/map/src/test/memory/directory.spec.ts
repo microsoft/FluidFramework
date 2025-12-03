@@ -4,8 +4,8 @@
  */
 
 import {
-	benchmarkMemory,
 	type IMemoryTestObject,
+	benchmarkMemory,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
@@ -77,8 +77,7 @@ describe("SharedDirectory memory usage", () => {
 
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
-				public readonly title =
-					`Add ${x} integers to a local directory, clear it`;
+				public readonly title = `Add ${x} integers to a local directory, clear it`;
 				private dir: ISharedDirectory = createLocalDirectory("testDirectory");
 
 				public async run(): Promise<void> {

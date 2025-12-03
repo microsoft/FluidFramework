@@ -17,10 +17,7 @@ import type {
 // eslint-disable-next-line import-x/no-deprecated
 import type { IProvideFluidHandle } from "@fluidframework/core-interfaces/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
-import type {
-	ISharedObject,
-	SharedObject,
-} from "@fluidframework/shared-object-base/internal";
+import type { ISharedObject, SharedObject } from "@fluidframework/shared-object-base/internal";
 
 import type { FluidObjectId } from "../CommonInterfaces.js";
 import { getKeyForFluidObject } from "../FluidObjectKey.js";
@@ -31,13 +28,13 @@ import {
 	visualizeUnknownSharedObject,
 } from "./DefaultVisualizers.js";
 import {
-	createHandleNode,
 	type FluidObjectNode,
 	type Primitive,
 	type RootHandleNode,
-	unknownObjectNode,
 	type VisualChildNode,
 	VisualNodeKind,
+	createHandleNode,
+	unknownObjectNode,
 } from "./VisualTree.js";
 
 // Ideas:
@@ -95,10 +92,7 @@ export type VisualizeChildData = (data: unknown) => Promise<VisualChildNode>;
 /**
  * Utility type for a union of things that can be visualized.
  */
-export type VisualizableFluidObject =
-	| ISharedObject
-	| DataObject
-	| TreeDataObject;
+export type VisualizableFluidObject = ISharedObject | DataObject | TreeDataObject;
 
 /**
  * Specifies renderers for different {@link @fluidframework/shared-object-base#ISharedObject} types.
@@ -163,9 +157,7 @@ export class DataVisualizerGraph
 	 * Handler for a visualizer node's "update" event.
 	 * Bubbles up the event to graph subscribers.
 	 */
-	private readonly onVisualUpdateHandler = (
-		visualTree: FluidObjectNode,
-	): boolean => {
+	private readonly onVisualUpdateHandler = (visualTree: FluidObjectNode): boolean => {
 		this.emitVisualUpdate(visualTree);
 		return true;
 	};
@@ -222,13 +214,9 @@ export class DataVisualizerGraph
 					);
 					result[key] = unknownObjectNode;
 				} else {
-					const fluidObjectId = await this.registerVisualizerForHandle(
-						value.handle,
-					);
+					const fluidObjectId = await this.registerVisualizerForHandle(value.handle);
 					result[key] =
-						fluidObjectId === undefined
-							? unknownObjectNode
-							: createHandleNode(fluidObjectId);
+						fluidObjectId === undefined ? unknownObjectNode : createHandleNode(fluidObjectId);
 				}
 			}),
 		);
@@ -239,9 +227,7 @@ export class DataVisualizerGraph
 	 * Generates and returns a visual description of the specified Fluid object if it exists in the graph.
 	 * If no such object exists in the graph, returns `undefined`.
 	 */
-	public async render(
-		fluidObjectId: FluidObjectId,
-	): Promise<FluidObjectNode | undefined> {
+	public async render(fluidObjectId: FluidObjectId): Promise<FluidObjectNode | undefined> {
 		// If we don't have anything registered for the requested Fluid object, return `undefined`.
 		// This could indicate a stale data request from an external consumer, or could indicate a bug,
 		// but this library isn't capable of telling the difference.
@@ -264,24 +250,21 @@ export class DataVisualizerGraph
 		let objectId: FluidObjectId;
 
 		if (isDataObj) {
-			rootSharedObject = (
-				visualizableObject as unknown as { readonly root: ISharedDirectory }
-			).root;
+			rootSharedObject = (visualizableObject as unknown as { readonly root: ISharedDirectory })
+				.root;
 			objectId = getKeyForFluidObject(rootSharedObject);
 			visualizationFunction = visualizeDataObject;
 		} else if (isTreeDataObj) {
-			rootSharedObject = (
-				visualizableObject as unknown as { readonly tree: ISharedObject }
-			).tree;
+			rootSharedObject = (visualizableObject as unknown as { readonly tree: ISharedObject })
+				.tree;
 			objectId = getKeyForFluidObject(rootSharedObject);
 			visualizationFunction = visualizeTreeDataObject;
 		} else {
 			rootSharedObject = visualizableObject;
 			objectId = getKeyForFluidObject(visualizableObject);
 			visualizationFunction =
-				(this.visualizers[
-					visualizableObject.attributes.type
-				] as VisualizeSharedObject) ?? visualizeUnknownSharedObject;
+				(this.visualizers[visualizableObject.attributes.type] as VisualizeSharedObject) ??
+				visualizeUnknownSharedObject;
 		}
 
 		if (!this.visualizerNodes.has(objectId)) {
@@ -518,16 +501,12 @@ export async function visualizeChildData(
 		const fluidObjectId = await resolveHandle(handle);
 		// If no ID was found, then the data is not a SharedObject.
 		// In this case, return an "Unknown Data" node so consumers can note this (as desired) to the user.
-		return fluidObjectId === undefined
-			? unknownObjectNode
-			: createHandleNode(fluidObjectId);
+		return fluidObjectId === undefined ? unknownObjectNode : createHandleNode(fluidObjectId);
 	}
 
 	// Assume any other data must be a record of some kind (since DDS contents must be serializable)
 	// and simply recurse over its keys.
-	const childEntries = Object.entries(
-		data as Record<string | number | symbol, unknown>,
-	);
+	const childEntries = Object.entries(data as Record<string | number | symbol, unknown>);
 
 	const children: Record<string, VisualChildNode> = {};
 	await Promise.all(
@@ -572,9 +551,7 @@ function isDataObject(value: unknown): value is DataObject {
 		// If root is missing, throw an error instead of returning false
 		const root = (value as { readonly root?: ISharedDirectory }).root;
 		if (!root) {
-			throw new Error(
-				"DataObject must have a `root` property, but it was undefined.",
-			);
+			throw new Error("DataObject must have a `root` property, but it was undefined.");
 		}
 
 		return true;
@@ -597,14 +574,11 @@ function isTreeDataObject(value: unknown): value is TreeDataObject {
 	if (
 		value instanceof TreeDataObject ||
 		(typeof (value as TreeDataObject).initializeInternal === "function" &&
-			Object.getOwnPropertyDescriptor(Object.getPrototypeOf(value), "tree")
-				?.get !== undefined)
+			Object.getOwnPropertyDescriptor(Object.getPrototypeOf(value), "tree")?.get !== undefined)
 	) {
 		const tree = (value as { readonly tree?: ISharedObject }).tree;
 		if (tree === undefined) {
-			throw new Error(
-				"TreeDataObject must have a `tree` property, but it was undefined.",
-			);
+			throw new Error("TreeDataObject must have a `tree` property, but it was undefined.");
 		}
 
 		return true;

@@ -9,24 +9,24 @@ import { ChangeCompressor, compressEdit, decompressEdit } from '../ChangeCompres
 import { StablePlace, StableRange } from '../ChangeTypes.js';
 import { newEdit, newEditId } from '../EditUtilities.js';
 import { convertStableRangeIds } from '../IdConversion.js';
-import type { DetachedSequenceId, OpSpaceNodeId } from '../Identifiers.js';
-import { type ContextualizedNodeIdNormalizer, scopeIdNormalizer } from '../NodeIdUtilities.js';
+import { DetachedSequenceId, OpSpaceNodeId } from '../Identifiers.js';
+import { ContextualizedNodeIdNormalizer, scopeIdNormalizer } from '../NodeIdUtilities.js';
+import { MutableStringInterner, StringInterner } from '../StringInterner.js';
+import { InterningTreeCompressor, TreeCompressor } from '../TreeCompressor.js';
 import {
-	type BuildInternal,
+	BuildInternal,
 	ChangeInternal,
 	ChangeTypeInternal,
-	type CompressedBuildInternal,
-	type CompressedChangeInternal,
-	type CompressedPlaceholderTree,
+	CompressedBuildInternal,
+	CompressedChangeInternal,
+	CompressedPlaceholderTree,
 	ConstraintEffect,
-	type ConstraintInternal,
-	type DetachInternal,
-	type Edit,
-	type PlaceholderTree,
-	type SetValueInternal,
+	ConstraintInternal,
+	DetachInternal,
+	Edit,
+	PlaceholderTree,
+	SetValueInternal,
 } from '../persisted-types/index.js';
-import { MutableStringInterner, type StringInterner } from '../StringInterner.js';
-import { InterningTreeCompressor, type TreeCompressor } from '../TreeCompressor.js';
 
 import { makeNodeIdContext, setUpTestTree } from './utilities/TestUtilities.js';
 

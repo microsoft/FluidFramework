@@ -52,21 +52,18 @@ export class TypedEventEmitter<TEvent>
 {
 	public constructor() {
 		super();
-		this.addListener = super.addListener.bind(this) as TypedEventTransform<
+		this.addListener = super.addListener.bind(this) as TypedEventTransform<this, TEvent>;
+		this.on = super.on.bind(this) as TypedEventTransform<this, TEvent>;
+		this.once = super.once.bind(this) as TypedEventTransform<this, TEvent>;
+		this.prependListener = super.prependListener.bind(this) as TypedEventTransform<
 			this,
 			TEvent
 		>;
-		this.on = super.on.bind(this) as TypedEventTransform<this, TEvent>;
-		this.once = super.once.bind(this) as TypedEventTransform<this, TEvent>;
-		this.prependListener = super.prependListener.bind(
+		this.prependOnceListener = super.prependOnceListener.bind(this) as TypedEventTransform<
 			this,
-		) as TypedEventTransform<this, TEvent>;
-		this.prependOnceListener = super.prependOnceListener.bind(
-			this,
-		) as TypedEventTransform<this, TEvent>;
-		this.removeListener = super.removeListener.bind(
-			this,
-		) as TypedEventTransform<this, TEvent>;
+			TEvent
+		>;
+		this.removeListener = super.removeListener.bind(this) as TypedEventTransform<this, TEvent>;
 		this.off = super.off.bind(this) as TypedEventTransform<this, TEvent>;
 	}
 	public readonly addListener: TypedEventTransform<this, TEvent>;

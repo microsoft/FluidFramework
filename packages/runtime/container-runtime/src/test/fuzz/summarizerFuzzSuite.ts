@@ -12,15 +12,15 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	type AsyncGenerator,
 	type AsyncReducer,
-	asyncGeneratorFromArray,
 	type BaseFuzzTestState,
+	type SaveInfo,
+	asyncGeneratorFromArray,
 	createFuzzDescribe,
 	defaultOptions,
 	getSaveDirectory,
 	getSaveInfo,
 	makeRandom,
 	performFuzzActionsAsync,
-	type SaveInfo,
 } from "@fluid-private/stochastic-test-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
@@ -38,10 +38,7 @@ export interface SummarizerFuzzTestState extends BaseFuzzTestState {
 
 export interface SummarizerFuzzModel {
 	workloadName: string;
-	generatorFactory: () => AsyncGenerator<
-		SummarizerOperation,
-		SummarizerFuzzTestState
-	>;
+	generatorFactory: () => AsyncGenerator<SummarizerOperation, SummarizerFuzzTestState>;
 	reducer: AsyncReducer<SummarizerOperation, SummarizerFuzzTestState>;
 }
 
@@ -57,10 +54,7 @@ export interface SummarizerFuzzHarnessEvents {
 	/**
 	 * Raised after creating the initialState but prior to performing the fuzzActions..
 	 */
-	(
-		event: "testStart",
-		listener: (initialState: SummarizerFuzzTestState) => void,
-	);
+	(event: "testStart", listener: (initialState: SummarizerFuzzTestState) => void);
 
 	/**
 	 * Raised after all fuzzActions have been completed.
@@ -144,8 +138,7 @@ export const defaultSummarizerFuzzSuiteOptions: SummarizerFuzzSuiteOptions = {
 	only: [],
 	skip: [],
 	saveFailures: false,
-	parseOperations: (serialized: string) =>
-		JSON.parse(serialized) as SummarizerOperation[],
+	parseOperations: (serialized: string) => JSON.parse(serialized) as SummarizerOperation[],
 };
 
 export function createSummarizerFuzzSuite(
@@ -162,15 +155,10 @@ export function createSummarizerFuzzSuite(
 	Object.assign(options, { only, skip });
 	assert(isInternalOptions(options));
 
-	const describeFuzz = createFuzzDescribe({
-		defaultTestCount: options.defaultTestCount,
-	});
+	const describeFuzz = createFuzzDescribe({ defaultTestCount: options.defaultTestCount });
 	describeFuzz(model.workloadName, ({ testCount }) => {
 		before(() => {
-			if (
-				options.saveFailures !== undefined &&
-				options.saveFailures !== false
-			) {
+			if (options.saveFailures !== undefined && options.saveFailures !== false) {
 				mkdirSync(getSaveDirectory(options.saveFailures.directory, model), {
 					recursive: true,
 				});
@@ -259,11 +247,7 @@ function runTest(
 	seed: number,
 	saveInfo: SaveInfo | undefined,
 ): void {
-	const itFn = options.only.has(seed)
-		? it.only
-		: options.skip.has(seed)
-			? it.skip
-			: it;
+	const itFn = options.only.has(seed) ? it.only : options.skip.has(seed) ? it.skip : it;
 	itFn(`seed ${seed}`, async () => {
 		const inCi = process.env.TF_BUILD !== undefined;
 		await runTestForSeed(model, options, seed, inCi ? undefined : saveInfo);
@@ -275,8 +259,6 @@ type InternalOptions = Omit<SummarizerFuzzSuiteOptions, "only" | "skip"> & {
 	skip: Set<number>;
 };
 
-function isInternalOptions(
-	options: SummarizerFuzzSuiteOptions,
-): options is InternalOptions {
+function isInternalOptions(options: SummarizerFuzzSuiteOptions): options is InternalOptions {
 	return options.only instanceof Set && options.skip instanceof Set;
 }

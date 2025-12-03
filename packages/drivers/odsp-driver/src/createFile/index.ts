@@ -27,14 +27,9 @@ export async function useCreateNewModule<T = void>(
 		if (attempt > 1) {
 			await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
 		}
-		module = await import(
-			/* webpackChunkName: "createNewModule" */ "./createNewModule.js"
-		)
+		module = await import(/* webpackChunkName: "createNewModule" */ "./createNewModule.js")
 			.then((m) => {
-				odspLogger.sendTelemetryEvent({
-					eventName: "createNewModuleLoaded",
-					attempt,
-				});
+				odspLogger.sendTelemetryEvent({ eventName: "createNewModuleLoaded", attempt });
 				return m;
 			})
 			.catch((error) => {

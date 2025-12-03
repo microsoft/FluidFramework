@@ -4,21 +4,21 @@
  */
 
 import {
-	type AuthenticationRecord,
 	InteractiveBrowserCredential,
 	useIdentityPlugin,
+	type AuthenticationRecord,
 } from "@azure/identity";
 import { cachePersistencePlugin } from "@azure/identity-cache-persistence";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
-	getAadTenant,
+	type IPublicClientConfig,
+	type IOdspAuthRequestInfo,
+	type IOdspDriveItem,
 	getChildrenByDriveItem,
 	getDriveItemByServerRelativePath,
 	getDriveItemFromDriveAndItem,
+	getAadTenant,
 	getOdspScope,
-	type IOdspAuthRequestInfo,
-	type IOdspDriveItem,
-	type IPublicClientConfig,
 } from "@fluidframework/odsp-doclib-utils/internal";
 
 import { loginHint } from "./fluidFetchArgs.js";
@@ -101,10 +101,7 @@ export async function resolveWrapper<T>(
 			},
 		});
 	} catch (e: any) {
-		if (
-			e.errorType === DriverErrorTypes.authorizationError &&
-			!forceTokenReauth
-		) {
+		if (e.errorType === DriverErrorTypes.authorizationError && !forceTokenReauth) {
 			// Re-auth
 			return resolveWrapper<T>(callback, server, clientConfig, true);
 		}
@@ -120,12 +117,7 @@ async function resolveDriveItemByServerRelativePath(
 	return resolveWrapper<IOdspDriveItem>(
 		// eslint-disable-next-line @typescript-eslint/promise-function-async
 		(authRequestInfo) =>
-			getDriveItemByServerRelativePath(
-				server,
-				serverRelativePath,
-				authRequestInfo,
-				false,
-			),
+			getDriveItemByServerRelativePath(server, serverRelativePath, authRequestInfo, false),
 		server,
 		clientConfig,
 	);
@@ -138,8 +130,7 @@ async function resolveChildrenByDriveItem(
 ) {
 	return resolveWrapper<IOdspDriveItem[]>(
 		// eslint-disable-next-line @typescript-eslint/promise-function-async
-		(authRequestInfo) =>
-			getChildrenByDriveItem(folderDriveItem, server, authRequestInfo),
+		(authRequestInfo) => getChildrenByDriveItem(folderDriveItem, server, authRequestInfo),
 		server,
 		clientConfig,
 	);
@@ -171,11 +162,7 @@ export async function getSharepointFiles(
 			break;
 		}
 		const { path, folder } = folderInfo;
-		const children = await resolveChildrenByDriveItem(
-			server,
-			folder,
-			fetchToolClientConfig,
-		);
+		const children = await resolveChildrenByDriveItem(server, folder, fetchToolClientConfig);
 		for (const child of children) {
 			const childPath = `${path}/${child.name}`;
 			if (child.isFolder) {
@@ -190,15 +177,10 @@ export async function getSharepointFiles(
 	return files;
 }
 
-export async function getSingleSharePointFile(
-	server: string,
-	drive: string,
-	item: string,
-) {
+export async function getSingleSharePointFile(server: string, drive: string, item: string) {
 	return resolveWrapper<IOdspDriveItem>(
 		// eslint-disable-next-line @typescript-eslint/promise-function-async
-		(authRequestInfo) =>
-			getDriveItemFromDriveAndItem(server, drive, item, authRequestInfo),
+		(authRequestInfo) => getDriveItemFromDriveAndItem(server, drive, item, authRequestInfo),
 		server,
 		fetchToolClientConfig,
 	);

@@ -13,8 +13,8 @@ import {
 } from "@fluid-example/migration-tools/alpha";
 import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import {
-	type ILoaderProps,
 	loadExistingContainer,
+	type ILoaderProps,
 } from "@fluidframework/container-loader/legacy";
 // eslint-disable-next-line import-x/no-internal-modules -- #26987: `local-driver` internal LocalSessionStorageDbFactory used in examples
 import { LocalSessionStorageDbFactory } from "@fluidframework/local-driver/internal";
@@ -30,10 +30,7 @@ import { v4 as uuid } from "uuid";
 
 import { inventoryListDataTransformationCallback } from "../src/dataTransform.js";
 import { DemoCodeLoader } from "../src/demoCodeLoader.js";
-import type {
-	IMigratableModel,
-	IVersionedModel,
-} from "../src/migratableModel.js";
+import type { IMigratableModel, IVersionedModel } from "../src/migratableModel.js";
 import type { IInventoryListAppModel } from "../src/modelInterfaces.js";
 import { DebugView, InventoryListAppView } from "../src/view/index.js";
 
@@ -61,9 +58,7 @@ const isIInventoryListAppModel = (
 const getUrlForContainerId = (containerId: string) => `/#${containerId}`;
 
 const urlResolver = new LocalResolver();
-const localServer = LocalDeltaConnectionServer.create(
-	new LocalSessionStorageDbFactory(),
-);
+const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
 
 const searchParams = new URLSearchParams(location.search);
 const testMode = searchParams.get("testMode") !== null;
@@ -73,27 +68,22 @@ const loaderProps: ILoaderProps = {
 	codeLoader: new DemoCodeLoader(testMode),
 };
 
-const createDetachedCallback = makeCreateDetachedContainerCallback(
-	loaderProps,
-	() => createLocalResolverCreateNewRequest(uuid()),
+const createDetachedCallback = makeCreateDetachedContainerCallback(loaderProps, () =>
+	createLocalResolverCreateNewRequest(uuid()),
 );
 
 const importDataCallback: ImportDataCallback = async (
 	destinationContainer: IContainer,
 	exportedData: unknown,
 ) => {
-	const destinationModel =
-		await getModelFromContainer<IMigratableModel>(destinationContainer);
+	const destinationModel = await getModelFromContainer<IMigratableModel>(destinationContainer);
 	// If the migrated model already supports the data format, go ahead with the migration.
 	// Otherwise, try using the dataTransformationCallback if provided to get the exported data into
 	// a format that we can import.
 	// TODO: Error paths in case the format isn't ingestible.
 	const transformedData = destinationModel.supportsDataFormat(exportedData)
 		? exportedData
-		: await inventoryListDataTransformationCallback(
-				exportedData,
-				destinationModel.version,
-			);
+		: await inventoryListDataTransformationCallback(exportedData, destinationModel.version);
 	await destinationModel.importData(transformedData);
 };
 const migrationCallback = makeSeparateContainerMigrationCallback(
@@ -105,9 +95,7 @@ const migrationCallback = makeSeparateContainerMigrationCallback(
  * Helper function for casting the container's entrypoint to the expected type.  Does a little extra
  * type checking for added safety.
  */
-const getModelFromContainer = async <ModelType>(
-	container: IContainer,
-): Promise<ModelType> => {
+const getModelFromContainer = async <ModelType>(container: IContainer): Promise<ModelType> => {
 	const entryPoint = (await container.getEntryPoint()) as {
 		model: ModelType;
 	};
@@ -115,9 +103,7 @@ const getModelFromContainer = async <ModelType>(
 	// If the user tries to use this with an incompatible container runtime, we want to give them
 	// a comprehensible error message.  So distrust the type by default and do some basic type checking.
 	if (typeof entryPoint.model !== "object") {
-		throw new TypeError(
-			"Incompatible container runtime: doesn't provide model",
-		);
+		throw new TypeError("Incompatible container runtime: doesn't provide model");
 	}
 
 	return entryPoint.model;
@@ -127,9 +113,7 @@ const getModelFromContainer = async <ModelType>(
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-export async function createContainerAndRenderInElement(
-	element: HTMLDivElement,
-) {
+export async function createContainerAndRenderInElement(element: HTMLDivElement) {
 	let id: string;
 	let container: IContainer | undefined;
 
@@ -194,8 +178,7 @@ export async function createContainerAndRenderInElement(
 		// In this example, our container code mixes in an IMigratorEntryPoint to the container entryPoint.  The getMigrator
 		// function lets us construct an IMigrator by providing the necessary external tools it needs to operate.  The IMigrator
 		// is an object we can use to watch migration status, propose a migration, and discover the migration result.
-		const { getMigrator } =
-			(await container.getEntryPoint()) as IMigratorEntryPoint;
+		const { getMigrator } = (await container.getEntryPoint()) as IMigratorEntryPoint;
 		const migrator: IMigrator = await getMigrator(
 			// Note that the LoadSourceContainerCallback must load a new instance of the container.  We cannot simply return the
 			// container reference we already got above since it may contain local un-ack'd changes.
@@ -211,8 +194,7 @@ export async function createContainerAndRenderInElement(
 		// eslint-disable-next-line @typescript-eslint/dot-notation
 		window["migrators"].push(migrator);
 		migrator.events.on("migrated", () => {
-			const newContainerId =
-				migrator.migrationResult as SeparateContainerMigrationResult;
+			const newContainerId = migrator.migrationResult as SeparateContainerMigrationResult;
 			container.dispose();
 			setupContainer(newContainerId).catch(console.error);
 		});

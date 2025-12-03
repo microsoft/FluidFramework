@@ -46,22 +46,15 @@ export class ChannelStorageService implements IChannelStorageService {
 
 	public async readBlob(path: string): Promise<ArrayBufferLike> {
 		const id = await this.getIdForPath(path);
-		assert(
-			id !== undefined,
-			0x9d7 /* id is undefined in ChannelStorageService.readBlob() */,
-		);
-		const blob =
-			this.extraBlobs === undefined ? undefined : this.extraBlobs.get(id);
+		assert(id !== undefined, 0x9d7 /* id is undefined in ChannelStorageService.readBlob() */);
+		const blob = this.extraBlobs === undefined ? undefined : this.extraBlobs.get(id);
 
 		if (blob !== undefined) {
 			return blob;
 		}
 		const blobP = this.storage.readBlob(id);
 		blobP.catch((error) =>
-			this.logger.sendErrorEvent(
-				{ eventName: "ChannelStorageBlobError" },
-				error,
-			),
+			this.logger.sendErrorEvent({ eventName: "ChannelStorageBlobError" }, error),
 		);
 
 		return blobP;

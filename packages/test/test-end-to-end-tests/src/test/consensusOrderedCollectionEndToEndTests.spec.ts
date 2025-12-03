@@ -3,19 +3,20 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import type { IConsensusOrderedCollection } from "@fluidframework/ordered-collection/internal";
 import {
-	type ChannelFactoryRegistry,
+	ChannelFactoryRegistry,
 	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
-	type ITestContainerConfig,
-	type ITestFluidObject,
-	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
 
 const mapId = "mapKey";
 
@@ -48,14 +49,12 @@ function generate(name: string, input: any[], output: any[]) {
 		beforeEach("createSharedMaps", async () => {
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
-			dataStore1 =
-				await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+			dataStore1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 			sharedMap1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			dataStore2 =
-				await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+			dataStore2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 			sharedMap2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 			closeContainer2 = () => {
 				container2.close();
@@ -64,8 +63,7 @@ function generate(name: string, input: any[], output: any[]) {
 
 			// Load the Container that was created by the first client.
 			const container3 = await provider.loadTestContainer(testContainerConfig);
-			const dataStore3 =
-				await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
+			const dataStore3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 			sharedMap3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 		});
 
@@ -147,21 +145,9 @@ function generate(name: string, input: any[], output: any[]) {
 			await provider.ensureSynchronized();
 
 			// Verify the value is in the correct order
-			assert.strictEqual(
-				await removeP1,
-				output[0],
-				"Unexpected value in document 1",
-			);
-			assert.strictEqual(
-				await removeP2,
-				output[1],
-				"Unexpected value in document 2",
-			);
-			assert.strictEqual(
-				await removeP3,
-				output[2],
-				"Unexpected value in document 3",
-			);
+			assert.strictEqual(await removeP1, output[0], "Unexpected value in document 1");
+			assert.strictEqual(await removeP2, output[1], "Unexpected value in document 2");
+			assert.strictEqual(await removeP3, output[2], "Unexpected value in document 3");
 			assert.strictEqual(
 				await removeEmptyP,
 				undefined,
@@ -315,10 +301,7 @@ function generate(name: string, input: any[], output: any[]) {
 
 			await collection1.add("testValue");
 
-			assert(
-				waitRejected,
-				"Closing the runtime while waiting should cause promise reject",
-			);
+			assert(waitRejected, "Closing the runtime while waiting should cause promise reject");
 			await acquireAndComplete(collection2);
 			await collection2.add("anotherValue");
 			assert.equal(
@@ -356,27 +339,15 @@ function generate(name: string, input: any[], output: any[]) {
 			let removeCount2 = 0;
 			let removeCount3 = 0;
 			collection1.on("add", (value) => {
-				assert.strictEqual(
-					value,
-					input[addCount1],
-					"Added value not match in document 1",
-				);
+				assert.strictEqual(value, input[addCount1], "Added value not match in document 1");
 				addCount1 += 1;
 			});
 			collection2.on("add", (value) => {
-				assert.strictEqual(
-					value,
-					input[addCount2],
-					"Added value not match in document 2",
-				);
+				assert.strictEqual(value, input[addCount2], "Added value not match in document 2");
 				addCount2 += 1;
 			});
 			collection3.on("add", (value) => {
-				assert.strictEqual(
-					value,
-					input[addCount3],
-					"Added value not match in document 3",
-				);
+				assert.strictEqual(value, input[addCount3], "Added value not match in document 3");
 				addCount3 += 1;
 			});
 
@@ -434,36 +405,12 @@ function generate(name: string, input: any[], output: any[]) {
 				undefined,
 				"Remove of empty collection should be undefined",
 			);
-			assert.strictEqual(
-				addCount1,
-				3,
-				"Incorrect number add events in document 1",
-			);
-			assert.strictEqual(
-				addCount2,
-				3,
-				"Incorrect number add events in document 2",
-			);
-			assert.strictEqual(
-				addCount3,
-				3,
-				"Incorrect number add events in document 3",
-			);
-			assert.strictEqual(
-				removeCount1,
-				3,
-				"Incorrect number remove events in document 1",
-			);
-			assert.strictEqual(
-				removeCount2,
-				3,
-				"Incorrect number remove events in document 2",
-			);
-			assert.strictEqual(
-				removeCount3,
-				3,
-				"Incorrect number remove events in document 3",
-			);
+			assert.strictEqual(addCount1, 3, "Incorrect number add events in document 1");
+			assert.strictEqual(addCount2, 3, "Incorrect number add events in document 2");
+			assert.strictEqual(addCount3, 3, "Incorrect number add events in document 3");
+			assert.strictEqual(removeCount1, 3, "Incorrect number remove events in document 1");
+			assert.strictEqual(removeCount2, 3, "Incorrect number remove events in document 2");
+			assert.strictEqual(removeCount3, 3, "Incorrect number remove events in document 3");
 		});
 	});
 }

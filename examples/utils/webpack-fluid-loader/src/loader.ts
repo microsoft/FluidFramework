@@ -3,43 +3,40 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type IFluidMountableView,
-	StaticCodeLoader,
-} from "@fluid-example/example-utils";
+import { IFluidMountableView, StaticCodeLoader } from "@fluid-example/example-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
-	type IContainer,
-	type IFluidCodeDetails,
-	type IFluidModule,
+	IContainer,
+	IFluidCodeDetails,
+	IFluidModule,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import {
 	createDetachedContainer,
-	type ILoaderProps,
-	loadExistingContainer,
 	rehydrateDetachedContainer,
+	loadExistingContainer,
+	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
-import type { FluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
-import type { IUser } from "@fluidframework/driver-definitions";
-import type {
+import { IUser } from "@fluidframework/driver-definitions";
+import {
 	IDocumentServiceFactory,
-	IPersistedCache,
 	IResolvedUrl,
+	type IPersistedCache,
 } from "@fluidframework/driver-definitions/internal";
-import type { InsecureUrlResolver } from "@fluidframework/driver-utils/internal";
+import { InsecureUrlResolver } from "@fluidframework/driver-utils/internal";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
 } from "@fluidframework/local-driver/internal";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver/internal";
-import type { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions/internal";
+import { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions/internal";
 import { RequestParser } from "@fluidframework/runtime-utils/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import sillyname from "sillyname";
 import { v4 as uuid } from "uuid";
-import type { Port } from "webpack-dev-server";
+import { Port } from "webpack-dev-server";
 
 import {
 	deltaConnectionServer,
@@ -47,7 +44,7 @@ import {
 } from "./getDocumentServiceFactory.js";
 import { getUrlResolver } from "./getUrlResolver.js";
 import { OdspPersistentCache } from "./odspPersistantCache.js";
-import type { OdspUrlResolver } from "./odspUrlResolver.js";
+import { OdspUrlResolver } from "./odspUrlResolver.js";
 
 export interface IDevServerUser extends IUser {
 	name: string;
@@ -134,12 +131,11 @@ async function createLoaderProps(
 		);
 		odspHostStoragePolicy.fetchBinarySnapshotFormat = true;
 	}
-	let documentServiceFactory: IDocumentServiceFactory =
-		getDocumentServiceFactory(
-			options,
-			odspPersistantCache,
-			odspHostStoragePolicy,
-		);
+	let documentServiceFactory: IDocumentServiceFactory = getDocumentServiceFactory(
+		options,
+		odspPersistantCache,
+		odspHostStoragePolicy,
+	);
 	// Create the inner document service which will be wrapped inside local driver. The inner document service
 	// will be used for ops(like delta connection/delta ops) while for storage, local storage would be used.
 	if (testOrderer) {
@@ -147,12 +143,11 @@ async function createLoaderProps(
 			await urlResolver.createCreateNewRequest(documentId),
 		);
 		assert(resolvedUrl !== undefined, 0x318 /* resolvedUrl is undefined */);
-		const innerDocumentService =
-			await documentServiceFactory.createDocumentService(
-				resolvedUrl,
-				undefined, // logger
-				false, // clientIsSummarizer
-			);
+		const innerDocumentService = await documentServiceFactory.createDocumentService(
+			resolvedUrl,
+			undefined, // logger
+			false, // clientIsSummarizer
+		);
 
 		documentServiceFactory = new LocalDocumentServiceFactory(
 			deltaConnectionServer,
@@ -216,10 +211,7 @@ export async function start(
 	let container1: IContainer;
 	if (autoAttach || manualAttach) {
 		// For new documents, create a detached container which will be attached later.
-		container1 = await createDetachedContainer({
-			...loaderProps1,
-			codeDetails,
-		});
+		container1 = await createDetachedContainer({ ...loaderProps1, codeDetails });
 	} else {
 		// For existing documents, we try to load the container with the given documentId.
 		const documentUrl = `${window.location.origin}/${documentId}`;
@@ -308,10 +300,7 @@ export async function start(
 			container1.resolvedUrl !== undefined,
 			0x31b /* container1.resolvedUrl is undefined */,
 		);
-		const requestUrl2 = await urlResolver.getAbsoluteUrl(
-			container1.resolvedUrl,
-			"",
-		);
+		const requestUrl2 = await urlResolver.getAbsoluteUrl(container1.resolvedUrl, "");
 		const container2 = await loadExistingContainer({
 			...loaderProps2,
 			request: { url: requestUrl2 },
@@ -339,14 +328,11 @@ async function getFluidObjectAndRender(
 	let fluidObject: FluidObject<IFluidMountableView>;
 	if (
 		entryPoint === undefined ||
-		(entryPoint as IFluidMountableViewEntryPoint).getMountableDefaultView ===
-			undefined
+		(entryPoint as IFluidMountableViewEntryPoint).getMountableDefaultView === undefined
 	) {
 		throw new Error("entryPoint was not defined or is not properly formatted");
 	} else {
-		fluidObject = await (
-			entryPoint as IFluidMountableViewEntryPoint
-		).getMountableDefaultView(
+		fluidObject = await (entryPoint as IFluidMountableViewEntryPoint).getMountableDefaultView(
 			// Remove starting "//"
 			url.slice(2),
 		);
@@ -447,17 +433,11 @@ async function attachContainer(
 					serializedState: snapshot,
 				});
 				const newLeftDiv =
-					rightDiv !== undefined
-						? makeSideBySideDiv(uuid())
-						: document.createElement("div");
+					rightDiv !== undefined ? makeSideBySideDiv(uuid()) : document.createElement("div");
 				currentLeftDiv.replaceWith(newLeftDiv);
 				currentLeftDiv = newLeftDiv;
 				// Load and render the component.
-				await getFluidObjectAndRender(
-					currentContainer,
-					fluidObjectUrl,
-					newLeftDiv,
-				);
+				await getFluidObjectAndRender(currentContainer, fluidObjectUrl, newLeftDiv);
 			};
 		};
 

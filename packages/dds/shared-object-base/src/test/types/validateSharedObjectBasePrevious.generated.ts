@@ -11,23 +11,12 @@
  * Current version: 2.74.0
  */
 
-import type {
-	FullType,
-	MinimalType,
-	requireAssignableTo,
-	TypeOnly,
-} from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/shared-object-base-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> =
-	| TypeOnly<T>
-	| MinimalType<T>
-	| FullType<T>
-	| typeof old
-	| typeof current
-	| requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -36,10 +25,7 @@ declare type MakeUnusedImportErrorsGoAway<T> =
  * typeValidation.broken:
  * "Class_SharedObject": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_SharedObject = requireAssignableTo<
-	TypeOnly<old.SharedObject>,
-	TypeOnly<current.SharedObject>
->;
+declare type old_as_current_for_Class_SharedObject = requireAssignableTo<TypeOnly<old.SharedObject>, TypeOnly<current.SharedObject>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -48,10 +34,7 @@ declare type old_as_current_for_Class_SharedObject = requireAssignableTo<
  * typeValidation.broken:
  * "Class_SharedObject": {"backCompat": false}
  */
-declare type current_as_old_for_Class_SharedObject = requireAssignableTo<
-	TypeOnly<current.SharedObject>,
-	TypeOnly<old.SharedObject>
->;
+declare type current_as_old_for_Class_SharedObject = requireAssignableTo<TypeOnly<current.SharedObject>, TypeOnly<old.SharedObject>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -60,10 +43,7 @@ declare type current_as_old_for_Class_SharedObject = requireAssignableTo<
  * typeValidation.broken:
  * "Class_SharedObjectCore": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_SharedObjectCore = requireAssignableTo<
-	TypeOnly<old.SharedObjectCore>,
-	TypeOnly<current.SharedObjectCore>
->;
+declare type old_as_current_for_Class_SharedObjectCore = requireAssignableTo<TypeOnly<old.SharedObjectCore>, TypeOnly<current.SharedObjectCore>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -72,10 +52,7 @@ declare type old_as_current_for_Class_SharedObjectCore = requireAssignableTo<
  * typeValidation.broken:
  * "Class_SharedObjectCore": {"backCompat": false}
  */
-declare type current_as_old_for_Class_SharedObjectCore = requireAssignableTo<
-	TypeOnly<current.SharedObjectCore>,
-	TypeOnly<old.SharedObjectCore>
->;
+declare type current_as_old_for_Class_SharedObjectCore = requireAssignableTo<TypeOnly<current.SharedObjectCore>, TypeOnly<old.SharedObjectCore>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -84,10 +61,7 @@ declare type current_as_old_for_Class_SharedObjectCore = requireAssignableTo<
  * typeValidation.broken:
  * "ClassStatics_SharedObject": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_SharedObject = requireAssignableTo<
-	TypeOnly<typeof current.SharedObject>,
-	TypeOnly<typeof old.SharedObject>
->;
+declare type current_as_old_for_ClassStatics_SharedObject = requireAssignableTo<TypeOnly<typeof current.SharedObject>, TypeOnly<typeof old.SharedObject>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -96,11 +70,7 @@ declare type current_as_old_for_ClassStatics_SharedObject = requireAssignableTo<
  * typeValidation.broken:
  * "ClassStatics_SharedObjectCore": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_SharedObjectCore =
-	requireAssignableTo<
-		TypeOnly<typeof current.SharedObjectCore>,
-		TypeOnly<typeof old.SharedObjectCore>
-	>;
+declare type current_as_old_for_ClassStatics_SharedObjectCore = requireAssignableTo<TypeOnly<typeof current.SharedObjectCore>, TypeOnly<typeof old.SharedObjectCore>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -109,11 +79,7 @@ declare type current_as_old_for_ClassStatics_SharedObjectCore =
  * typeValidation.broken:
  * "Function_makeHandlesSerializable": {"backCompat": false}
  */
-declare type current_as_old_for_Function_makeHandlesSerializable =
-	requireAssignableTo<
-		TypeOnly<typeof current.makeHandlesSerializable>,
-		TypeOnly<typeof old.makeHandlesSerializable>
-	>;
+declare type current_as_old_for_Function_makeHandlesSerializable = requireAssignableTo<TypeOnly<typeof current.makeHandlesSerializable>, TypeOnly<typeof old.makeHandlesSerializable>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -122,10 +88,7 @@ declare type current_as_old_for_Function_makeHandlesSerializable =
  * typeValidation.broken:
  * "Function_parseHandles": {"backCompat": false}
  */
-declare type current_as_old_for_Function_parseHandles = requireAssignableTo<
-	TypeOnly<typeof current.parseHandles>,
-	TypeOnly<typeof old.parseHandles>
->;
+declare type current_as_old_for_Function_parseHandles = requireAssignableTo<TypeOnly<typeof current.parseHandles>, TypeOnly<typeof old.parseHandles>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -134,11 +97,7 @@ declare type current_as_old_for_Function_parseHandles = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IFluidSerializer": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IFluidSerializer =
-	requireAssignableTo<
-		TypeOnly<old.IFluidSerializer>,
-		TypeOnly<current.IFluidSerializer>
-	>;
+declare type old_as_current_for_Interface_IFluidSerializer = requireAssignableTo<TypeOnly<old.IFluidSerializer>, TypeOnly<current.IFluidSerializer>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -147,11 +106,7 @@ declare type old_as_current_for_Interface_IFluidSerializer =
  * typeValidation.broken:
  * "Interface_IFluidSerializer": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IFluidSerializer =
-	requireAssignableTo<
-		TypeOnly<current.IFluidSerializer>,
-		TypeOnly<old.IFluidSerializer>
-	>;
+declare type current_as_old_for_Interface_IFluidSerializer = requireAssignableTo<TypeOnly<current.IFluidSerializer>, TypeOnly<old.IFluidSerializer>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -160,10 +115,7 @@ declare type current_as_old_for_Interface_IFluidSerializer =
  * typeValidation.broken:
  * "Interface_ISharedObject": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISharedObject = requireAssignableTo<
-	TypeOnly<old.ISharedObject>,
-	TypeOnly<current.ISharedObject>
->;
+declare type old_as_current_for_Interface_ISharedObject = requireAssignableTo<TypeOnly<old.ISharedObject>, TypeOnly<current.ISharedObject>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -172,10 +124,7 @@ declare type old_as_current_for_Interface_ISharedObject = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ISharedObject": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISharedObject = requireAssignableTo<
-	TypeOnly<current.ISharedObject>,
-	TypeOnly<old.ISharedObject>
->;
+declare type current_as_old_for_Interface_ISharedObject = requireAssignableTo<TypeOnly<current.ISharedObject>, TypeOnly<old.ISharedObject>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -184,11 +133,7 @@ declare type current_as_old_for_Interface_ISharedObject = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ISharedObjectEvents": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISharedObjectEvents =
-	requireAssignableTo<
-		TypeOnly<old.ISharedObjectEvents>,
-		TypeOnly<current.ISharedObjectEvents>
-	>;
+declare type old_as_current_for_Interface_ISharedObjectEvents = requireAssignableTo<TypeOnly<old.ISharedObjectEvents>, TypeOnly<current.ISharedObjectEvents>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -197,11 +142,7 @@ declare type old_as_current_for_Interface_ISharedObjectEvents =
  * typeValidation.broken:
  * "Interface_ISharedObjectEvents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISharedObjectEvents =
-	requireAssignableTo<
-		TypeOnly<current.ISharedObjectEvents>,
-		TypeOnly<old.ISharedObjectEvents>
-	>;
+declare type current_as_old_for_Interface_ISharedObjectEvents = requireAssignableTo<TypeOnly<current.ISharedObjectEvents>, TypeOnly<old.ISharedObjectEvents>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -210,11 +151,7 @@ declare type current_as_old_for_Interface_ISharedObjectEvents =
  * typeValidation.broken:
  * "Interface_ISharedObjectKind": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISharedObjectKind =
-	requireAssignableTo<
-		TypeOnly<old.ISharedObjectKind<never>>,
-		TypeOnly<current.ISharedObjectKind<never>>
-	>;
+declare type old_as_current_for_Interface_ISharedObjectKind = requireAssignableTo<TypeOnly<old.ISharedObjectKind<never>>, TypeOnly<current.ISharedObjectKind<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -223,11 +160,7 @@ declare type old_as_current_for_Interface_ISharedObjectKind =
  * typeValidation.broken:
  * "Interface_ISharedObjectKind": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISharedObjectKind =
-	requireAssignableTo<
-		TypeOnly<current.ISharedObjectKind<never>>,
-		TypeOnly<old.ISharedObjectKind<never>>
-	>;
+declare type current_as_old_for_Interface_ISharedObjectKind = requireAssignableTo<TypeOnly<current.ISharedObjectKind<never>>, TypeOnly<old.ISharedObjectKind<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -236,8 +169,4 @@ declare type current_as_old_for_Interface_ISharedObjectKind =
  * typeValidation.broken:
  * "Interface_SharedObjectKind": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_SharedObjectKind =
-	requireAssignableTo<
-		TypeOnly<current.SharedObjectKind>,
-		TypeOnly<old.SharedObjectKind>
-	>;
+declare type current_as_old_for_Interface_SharedObjectKind = requireAssignableTo<TypeOnly<current.SharedObjectKind>, TypeOnly<old.SharedObjectKind>>

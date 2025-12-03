@@ -18,15 +18,13 @@ import {
 } from "../../../core/index.js";
 import type { Context } from "../../../feature-libraries/flex-tree/context.js";
 import { LazyTreeNode } from "../../../feature-libraries/flex-tree/lazyNode.js";
-import type {
-	FlexTreeField,
-	FlexTreeNode,
-} from "../../../feature-libraries/index.js";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
+import type { FlexTreeField, FlexTreeNode } from "../../../feature-libraries/index.js";
+
+import { readonlyTreeWithContent } from "./utils.js";
 import { SchemaFactory } from "../../../simple-tree/index.js";
 import { stringSchema } from "../../../simple-tree/leafNodeSchema.js";
 import { brand } from "../../../util/index.js";
-import { readonlyTreeWithContent } from "./utils.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
 /**
  * Test {@link LazyTreeNode} implementation.
@@ -40,9 +38,7 @@ function createAnchors(
 	context: Context,
 	cursor: ITreeSubscriptionCursor,
 ): { anchor: Anchor; anchorNode: AnchorNode } {
-	const anchor = context.checkout.forest.anchors.track(
-		cursor.getPath() ?? fail(),
-	);
+	const anchor = context.checkout.forest.anchors.track(cursor.getPath() ?? fail());
 	const anchorNode = context.checkout.forest.anchors.locate(anchor) ?? fail();
 
 	return { anchor, anchorNode };

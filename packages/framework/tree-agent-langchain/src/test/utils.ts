@@ -9,24 +9,18 @@ import { appendFileSync, closeSync, mkdirSync, openSync } from "node:fs";
 import { oob, unreachableCase } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { type ImplicitFieldSchema, TreeViewConfiguration } from "@fluidframework/tree";
 import {
-	type ImplicitFieldSchema,
-	TreeViewConfiguration,
-} from "@fluidframework/tree";
-import {
-	type InsertableField,
-	independentView,
-	type ReadableField,
 	TreeAlpha,
+	independentView,
+	type InsertableField,
+	type ReadableField,
 	type TreeNode,
 	type UnsafeUnknownSchema,
 	type VerboseTree,
 	type VerboseTreeNode,
 } from "@fluidframework/tree/internal";
-import {
-	SharedTreeSemanticAgent,
-	type TreeView,
-} from "@fluidframework/tree-agent/alpha";
+import { SharedTreeSemanticAgent, type TreeView } from "@fluidframework/tree-agent/alpha";
 import { ChatAnthropic } from "@langchain/anthropic";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models"; // eslint-disable-line import-x/no-internal-modules
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
@@ -143,9 +137,7 @@ async function queryDomain<TSchema extends ImplicitFieldSchema>(
 /**
  * TODO
  */
-export interface LLMIntegrationTest<
-	TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema,
-> {
+export interface LLMIntegrationTest<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> {
 	readonly name: string;
 	readonly schema: TRoot;
 	readonly initialTree: () => InsertableField<TRoot>;
@@ -193,9 +185,7 @@ export function describeIntegrationTests(
 		let startTime: Date | undefined;
 		before(() => {
 			startTime = new Date();
-			mkdirSync(`${resultsFolderPath}/${formatDate(startTime)}`, {
-				recursive: true,
-			});
+			mkdirSync(`${resultsFolderPath}/${formatDate(startTime)}`, { recursive: true });
 		});
 
 		after(() => {
@@ -221,10 +211,7 @@ export function describeIntegrationTests(
 		});
 
 		// Group tests by domain, in case they were not already ordered that way in the test list.
-		const groups = new Map<
-			unknown,
-			LLMIntegrationTest<UnsafeUnknownSchema>[]
-		>();
+		const groups = new Map<unknown, LLMIntegrationTest<UnsafeUnknownSchema>[]>();
 		for (const test of tests) {
 			let t = groups.get(test.schema);
 			if (t === undefined) {
@@ -380,9 +367,7 @@ export function describeIntegrationTests(
 			if (view.root === undefined) {
 				result.score = expected === undefined ? 1 : 0;
 			} else {
-				const actualVerbose = TreeAlpha.exportVerbose(
-					view.root,
-				) as VerboseTree<never>;
+				const actualVerbose = TreeAlpha.exportVerbose(view.root) as VerboseTree<never>;
 				result.score = scoreTree(expected, actualVerbose, actualVerbose);
 			}
 		}
@@ -397,15 +382,10 @@ export const scoreSymbol = Symbol("Scope");
 /**
  * TODO
  */
-export type ScorableVerboseTreeNode = Partial<
-	Pick<VerboseTreeNode<never>, "type">
-> & {
+export type ScorableVerboseTreeNode = Partial<Pick<VerboseTreeNode<never>, "type">> & {
 	fields?: ScorableVerboseTree[] | Record<string, ScorableVerboseTree>;
 } & {
-	[scoreSymbol]?: (
-		actual: VerboseTreeNode<never>,
-		actualTree: VerboseTree<never>,
-	) => number;
+	[scoreSymbol]?: (actual: VerboseTreeNode<never>, actualTree: VerboseTree<never>) => number;
 };
 
 /**
@@ -416,10 +396,7 @@ export type ScorableVerboseTree = VerboseTree<never> | ScorableVerboseTreeNode;
 function hasScoreSymbol(
 	node: VerboseTreeNode<never> | ScorableVerboseTreeNode,
 ): node is ScorableVerboseTreeNode & {
-	[scoreSymbol]: (
-		actual: VerboseTreeNode<never>,
-		actualTree: VerboseTree<never>,
-	) => number;
+	[scoreSymbol]: (actual: VerboseTreeNode<never>, actualTree: VerboseTree<never>) => number;
 } {
 	return scoreSymbol in node;
 }
@@ -498,16 +475,12 @@ function scoreFields(
 		}
 		const expectedKeys = Reflect.ownKeys(expected)
 			.filter((k): k is string =>
-				typeof k === "string"
-					? true
-					: fail("Encountered unexpected symbol key"),
+				typeof k === "string" ? true : fail("Encountered unexpected symbol key"),
 			)
 			.sort();
 		const actualKeys = Reflect.ownKeys(actual)
 			.filter((k): k is string =>
-				typeof k === "string"
-					? true
-					: fail("Encountered unexpected symbol key"),
+				typeof k === "string" ? true : fail("Encountered unexpected symbol key"),
 			)
 			.sort();
 		if (expectedKeys.length !== actualKeys.length) {
@@ -529,14 +502,10 @@ function scoreFields(
 	return score;
 }
 
-async function handleAllSettledResults(
-	promises: Promise<unknown>[],
-): Promise<void> {
+async function handleAllSettledResults(promises: Promise<unknown>[]): Promise<void> {
 	const results = await Promise.allSettled(promises);
 	const errors = results
-		.filter(
-			(result): result is PromiseRejectedResult => result.status === "rejected",
-		)
+		.filter((result): result is PromiseRejectedResult => result.status === "rejected")
 		.map((result) => result.reason as unknown);
 
 	if (errors.length > 0) {

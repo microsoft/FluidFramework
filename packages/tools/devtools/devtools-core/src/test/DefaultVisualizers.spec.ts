@@ -7,7 +7,7 @@
 
 /* eslint-disable unicorn/no-null */
 
-import { type ISharedCell, SharedCell } from "@fluidframework/cell/internal";
+import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
@@ -21,6 +21,7 @@ import { SharedTree } from "@fluidframework/tree/internal";
 import { expect } from "chai";
 
 import { EditType, type FluidObjectId } from "../CommonInterfaces.js";
+import { getKeyForFluidObject } from "../FluidObjectKey.js";
 import {
 	type FluidObjectTreeNode,
 	type FluidObjectValueNode,
@@ -37,7 +38,6 @@ import {
 	visualizeSharedTree,
 	visualizeUnknownSharedObject,
 } from "../data-visualization/index.js";
-import { getKeyForFluidObject } from "../FluidObjectKey.js";
 
 /**
  * Mock {@link VisualizeChildData} for use in tests
@@ -53,13 +53,8 @@ async function visualizeChildData(data: unknown): Promise<VisualChildNode> {
 
 describe("DefaultVisualizers unit tests", () => {
 	it("SharedCell (Primitive data)", async () => {
-		const runtime = new MockFluidDataStoreRuntime({
-			registry: [SharedCell.getFactory()],
-		});
-		const sharedCell = SharedCell.create(
-			runtime,
-			"test-cell",
-		) as ISharedCell<string>;
+		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedCell.getFactory()] });
+		const sharedCell = SharedCell.create(runtime, "test-cell") as ISharedCell<string>;
 		const cellId = getKeyForFluidObject(sharedCell);
 
 		const result = await visualizeSharedCell(sharedCell, visualizeChildData);
@@ -78,13 +73,8 @@ describe("DefaultVisualizers unit tests", () => {
 	});
 
 	it("SharedCell (JSON data)", async () => {
-		const runtime = new MockFluidDataStoreRuntime({
-			registry: [SharedCell.getFactory()],
-		});
-		const sharedCell = SharedCell.create(
-			runtime,
-			"test-cell",
-		) as ISharedCell<object>;
+		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedCell.getFactory()] });
+		const sharedCell = SharedCell.create(runtime, "test-cell") as ISharedCell<object>;
 		const cellId = getKeyForFluidObject(sharedCell);
 
 		sharedCell.set({ test: undefined });
@@ -111,17 +101,12 @@ describe("DefaultVisualizers unit tests", () => {
 	});
 
 	it("SharedCounter", async () => {
-		const runtime = new MockFluidDataStoreRuntime({
-			registry: [SharedCounter.getFactory()],
-		});
+		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedCounter.getFactory()] });
 		const sharedCounter = SharedCounter.create(runtime, "test-counter");
 		const counterId = getKeyForFluidObject(sharedCounter);
 		sharedCounter.increment(37);
 
-		const result = await visualizeSharedCounter(
-			sharedCounter,
-			visualizeChildData,
-		);
+		const result = await visualizeSharedCounter(sharedCounter, visualizeChildData);
 
 		const expected: FluidObjectValueNode = {
 			fluidObjectId: counterId,
@@ -155,10 +140,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const subDirectoryBC = subDirectoryB.createSubDirectory("c");
 		subDirectoryBC.set("Meaning of life", 42);
 
-		const result = await visualizeSharedDirectory(
-			sharedDirectory,
-			visualizeChildData,
-		);
+		const result = await visualizeSharedDirectory(sharedDirectory, visualizeChildData);
 
 		const expected: FluidObjectTreeNode = {
 			fluidObjectId: directoryId,
@@ -175,7 +157,7 @@ describe("DefaultVisualizers unit tests", () => {
 					metadata: {
 						"absolute-path": "/a",
 						"sub-directories": 0,
-						values: 1,
+						"values": 1,
 					},
 					nodeKind: VisualNodeKind.TreeNode,
 				},
@@ -193,7 +175,7 @@ describe("DefaultVisualizers unit tests", () => {
 							metadata: {
 								"absolute-path": "/b/c",
 								"sub-directories": 0,
-								values: 1,
+								"values": 1,
 							},
 							nodeKind: VisualNodeKind.TreeNode,
 						},
@@ -202,7 +184,7 @@ describe("DefaultVisualizers unit tests", () => {
 					metadata: {
 						"absolute-path": "/b",
 						"sub-directories": 1,
-						values: 0,
+						"values": 0,
 					},
 					nodeKind: VisualNodeKind.TreeNode,
 				},
@@ -241,7 +223,7 @@ describe("DefaultVisualizers unit tests", () => {
 			metadata: {
 				"absolute-path": "/",
 				"sub-directories": 2,
-				values: 3,
+				"values": 3,
 			},
 			typeMetadata: "SharedDirectory",
 			nodeKind: VisualNodeKind.FluidTreeNode,
@@ -251,9 +233,7 @@ describe("DefaultVisualizers unit tests", () => {
 	});
 
 	it("SharedMap", async () => {
-		const runtime = new MockFluidDataStoreRuntime({
-			registry: [SharedMap.getFactory()],
-		});
+		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedMap.getFactory()] });
 		const sharedMap = SharedMap.create(runtime, "test-map");
 		const mapId = getKeyForFluidObject(sharedMap);
 		sharedMap.set("foo", 42);
@@ -312,9 +292,7 @@ describe("DefaultVisualizers unit tests", () => {
 	});
 
 	it("SharedMatrix", async () => {
-		const runtime = new MockFluidDataStoreRuntime({
-			registry: [SharedMatrix.getFactory()],
-		});
+		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedMatrix.getFactory()] });
 		const sharedMatrix = SharedMatrix.create(runtime, "test-matrix");
 		const matrixId = getKeyForFluidObject(sharedMatrix);
 		sharedMatrix.insertRows(0, 2);
@@ -397,17 +375,12 @@ describe("DefaultVisualizers unit tests", () => {
 	});
 
 	it("SharedString", async () => {
-		const runtime = new MockFluidDataStoreRuntime({
-			registry: [SharedString.getFactory()],
-		});
+		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedString.getFactory()] });
 		const sharedString = SharedString.create(runtime, "test-string");
 		const stringId = getKeyForFluidObject(sharedString);
 		sharedString.insertText(0, "Hello World!");
 
-		const result = await visualizeSharedString(
-			sharedString,
-			visualizeChildData,
-		);
+		const result = await visualizeSharedString(sharedString, visualizeChildData);
 
 		const expected: FluidObjectValueNode = {
 			fluidObjectId: stringId,
@@ -452,8 +425,7 @@ describe("DefaultVisualizers unit tests", () => {
 							value: "com.fluidframework.leaf.number",
 						},
 						allowedTypes: {
-							value:
-								"com.fluidframework.leaf.number | com.fluidframework.leaf.string",
+							value: "com.fluidframework.leaf.number | com.fluidframework.leaf.string",
 							nodeKind: "ValueNode",
 						},
 						isRequired: {
@@ -484,9 +456,7 @@ describe("DefaultVisualizers unit tests", () => {
 			foo: builder.optional(builder.array([builder.number, builder.string])),
 		}) {}
 
-		const view = sharedTree.viewWith(
-			new TreeViewConfiguration({ schema: RootNodeSchema }),
-		);
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
 		view.initialize(
 			new RootNodeSchema({
 				foo: [1, "hello world"],
@@ -514,8 +484,7 @@ describe("DefaultVisualizers unit tests", () => {
 											value: "com.fluidframework.leaf.number",
 										},
 										allowedTypes: {
-											value:
-												"com.fluidframework.leaf.number | com.fluidframework.leaf.string",
+											value: "com.fluidframework.leaf.number | com.fluidframework.leaf.string",
 											nodeKind: "ValueNode",
 										},
 									},
@@ -534,8 +503,7 @@ describe("DefaultVisualizers unit tests", () => {
 											value: "com.fluidframework.leaf.string",
 										},
 										allowedTypes: {
-											value:
-												"com.fluidframework.leaf.number | com.fluidframework.leaf.string",
+											value: "com.fluidframework.leaf.number | com.fluidframework.leaf.string",
 											nodeKind: "ValueNode",
 										},
 									},
@@ -607,9 +575,7 @@ describe("DefaultVisualizers unit tests", () => {
 			foo: builder.map([builder.number, builder.handle]),
 		}) {}
 
-		const view = sharedTree.viewWith(
-			new TreeViewConfiguration({ schema: RootNodeSchema }),
-		);
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
 		view.initialize(
 			new RootNodeSchema({
 				foo: new Map([
@@ -640,8 +606,7 @@ describe("DefaultVisualizers unit tests", () => {
 											value: "com.fluidframework.leaf.number",
 										},
 										allowedTypes: {
-											value:
-												"com.fluidframework.leaf.number | com.fluidframework.leaf.handle",
+											value: "com.fluidframework.leaf.number | com.fluidframework.leaf.handle",
 											nodeKind: "ValueNode",
 										},
 									},
@@ -660,8 +625,7 @@ describe("DefaultVisualizers unit tests", () => {
 											value: "com.fluidframework.leaf.number",
 										},
 										allowedTypes: {
-											value:
-												"com.fluidframework.leaf.number | com.fluidframework.leaf.handle",
+											value: "com.fluidframework.leaf.number | com.fluidframework.leaf.handle",
 											nodeKind: "ValueNode",
 										},
 									},
@@ -736,9 +700,7 @@ describe("DefaultVisualizers unit tests", () => {
 			}),
 		}) {}
 
-		const view = sharedTree.viewWith(
-			new TreeViewConfiguration({ schema: RootNodeSchema }),
-		);
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
 		view.initialize(
 			new RootNodeSchema({
 				foo: {
@@ -856,9 +818,7 @@ describe("DefaultVisualizers unit tests", () => {
 	it("SharedTree: Handle at the root", async () => {
 		const factory = SharedTree.getFactory();
 		const builder = new SchemaFactory("shared-tree-test");
-		const runtime = new MockFluidDataStoreRuntime({
-			registry: [SharedString.getFactory()],
-		});
+		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedString.getFactory()] });
 
 		const sharedTree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
@@ -869,9 +829,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const sharedString = SharedString.create(runtime, "test-string");
 		sharedString.insertText(0, "Hello World!");
 
-		const view = sharedTree.viewWith(
-			new TreeViewConfiguration({ schema: builder.handle }),
-		);
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: builder.handle }));
 		view.initialize(sharedString.handle);
 
 		const result = await visualizeSharedTree(
@@ -909,9 +867,7 @@ describe("DefaultVisualizers unit tests", () => {
 	it("SharedTree: Handle", async () => {
 		const factory = SharedTree.getFactory();
 		const builder = new SchemaFactory("shared-tree-test");
-		const runtime = new MockFluidDataStoreRuntime({
-			registry: [SharedString.getFactory()],
-		});
+		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedString.getFactory()] });
 
 		const sharedTree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
@@ -929,9 +885,7 @@ describe("DefaultVisualizers unit tests", () => {
 			}),
 		}) {}
 
-		const view = sharedTree.viewWith(
-			new TreeViewConfiguration({ schema: RootNodeSchema }),
-		);
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
 		view.initialize(
 			new RootNodeSchema({
 				foo: {
@@ -1379,8 +1333,7 @@ describe("DefaultVisualizers unit tests", () => {
 									children: {
 										name: {
 											nodeKind: "ValueNode",
-											value:
-												'shared-tree-test.Array<["shared-tree-test.work-item"]>',
+											value: 'shared-tree-test.Array<["shared-tree-test.work-item"]>',
 										},
 										allowedTypes: {
 											value:
@@ -1477,8 +1430,7 @@ describe("DefaultVisualizers unit tests", () => {
 					children: {
 						allowedTypes: {
 							nodeKind: VisualNodeKind.ValueNode,
-							value:
-								"com.fluidframework.leaf.number | com.fluidframework.leaf.string",
+							value: "com.fluidframework.leaf.number | com.fluidframework.leaf.string",
 						},
 						isRequired: {
 							nodeKind: VisualNodeKind.ValueNode,
@@ -1503,10 +1455,7 @@ describe("DefaultVisualizers unit tests", () => {
 		} as ISharedObject;
 		const unknownId = getKeyForFluidObject(unknownObject);
 
-		const result = await visualizeUnknownSharedObject(
-			unknownObject,
-			visualizeChildData,
-		);
+		const result = await visualizeUnknownSharedObject(unknownObject, visualizeChildData);
 
 		const expected: FluidUnknownObjectNode = {
 			fluidObjectId: unknownId,

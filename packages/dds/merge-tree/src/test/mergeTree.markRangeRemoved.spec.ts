@@ -181,13 +181,7 @@ describe("MergeTree.markRangeRemoved", () => {
 				/* refSeq: */ 0,
 				/* longClientId: */ "1",
 			);
-			expected.removeRangeRemote(
-				0,
-				1,
-				++seq,
-				/* refSeq: */ 0,
-				/* longClientId: */ "1",
-			);
+			expected.removeRangeRemote(0, 1, ++seq, /* refSeq: */ 0, /* longClientId: */ "1");
 			const refSeqAt2 = expected.getCurrentSeq();
 
 			// In parallel, Client 2 inserted "x" without knowledge of Client 1's insertion/removal.
@@ -202,14 +196,7 @@ describe("MergeTree.markRangeRemoved", () => {
 
 			// Client 1 inserts "c" having received acks for its own edits, but has not yet having
 			// observed the insertion of "X" from client 2.
-			expected.insertTextRemote(
-				0,
-				"c",
-				undefined,
-				++seq,
-				refSeqAt2,
-				/* longClientId: */ "1",
-			);
+			expected.insertTextRemote(0, "c", undefined, ++seq, refSeqAt2, /* longClientId: */ "1");
 		}
 
 		// Next, we run through the same sequence from the perspective of client 1:

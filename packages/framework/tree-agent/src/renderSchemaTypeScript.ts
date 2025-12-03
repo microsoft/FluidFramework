@@ -4,6 +4,7 @@
  */
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { FieldKind, NodeKind, ValueSchema } from "@fluidframework/tree/internal";
 import type {
 	SimpleArrayNodeSchema,
 	SimpleFieldSchema,
@@ -12,23 +13,13 @@ import type {
 	SimpleObjectNodeSchema,
 	SimpleRecordNodeSchema,
 } from "@fluidframework/tree/internal";
-import {
-	FieldKind,
-	NodeKind,
-	ValueSchema,
-} from "@fluidframework/tree/internal";
 import { z } from "zod";
 
 import type { BindableSchema, FunctionWrapper } from "./methodBinding.js";
 import { getExposedMethods } from "./methodBinding.js";
 import { getExposedProperties, type PropertyDef } from "./propertyBinding.js";
+import { getFriendlyName, isNamedSchema, llmDefault, unqualifySchema } from "./utils.js";
 import { instanceOfs, renderZodTypeScript } from "./renderZodTypeScript.js";
-import {
-	getFriendlyName,
-	isNamedSchema,
-	llmDefault,
-	unqualifySchema,
-} from "./utils.js";
 
 interface BoundMembers {
 	methods: Record<string, FunctionWrapper>;
@@ -51,7 +42,7 @@ interface TypeExpression {
 	text: string;
 }
 
-enum TypePrecedence {
+const enum TypePrecedence {
 	Union = 0,
 	Intersection = 1,
 	Object = 2,
@@ -86,8 +77,7 @@ export function renderSchemaTypeScript(
 		if (!isNamedSchema(identifier)) {
 			continue;
 		}
-		const friendlyName =
-			friendlyNames.get(identifier) ?? unqualifySchema(identifier);
+		const friendlyName = friendlyNames.get(identifier) ?? unqualifySchema(identifier);
 		const rendered = renderNamedSchema(identifier, friendlyName, schema);
 		if (rendered === undefined) {
 			continue;
@@ -175,11 +165,7 @@ export function renderSchemaTypeScript(
 		const binding = renderBindingIntersection(definition);
 		return {
 			declaration: `type ${name} = ${base}${binding.suffix};`,
-			description: describeBinding(
-				schema.metadata?.description,
-				"array",
-				binding,
-			),
+			description: describeBinding(schema.metadata?.description, "array", binding),
 		};
 	}
 
@@ -193,11 +179,7 @@ export function renderSchemaTypeScript(
 		const binding = renderBindingIntersection(definition);
 		return {
 			declaration: `type ${name} = ${base}${binding.suffix};`,
-			description: describeBinding(
-				schema.metadata?.description,
-				"map",
-				binding,
-			),
+			description: describeBinding(schema.metadata?.description, "map", binding),
 		};
 	}
 
@@ -211,11 +193,7 @@ export function renderSchemaTypeScript(
 		const binding = renderBindingIntersection(definition);
 		return {
 			declaration: `type ${name} = ${base}${binding.suffix};`,
-			description: describeBinding(
-				schema.metadata?.description,
-				"record",
-				binding,
-			),
+			description: describeBinding(schema.metadata?.description, "record", binding),
 		};
 	}
 
@@ -276,16 +254,11 @@ export function renderSchemaTypeScript(
 		return {
 			optional,
 			type,
-			comment:
-				description === undefined || description === ""
-					? undefined
-					: description,
+			comment: description === undefined || description === "" ? undefined : description,
 		};
 	}
 
-	function renderBindingIntersection(
-		definition: string,
-	): BindingIntersectionResult {
+	function renderBindingIntersection(definition: string): BindingIntersectionResult {
 		const { methods, properties } = getBoundMembers(definition);
 		const propertyLines = renderPropertyLines(properties);
 		const methodLines = renderMethodLines(methods);
@@ -294,9 +267,7 @@ export function renderSchemaTypeScript(
 			return { hasMethods: false, hasProperties: false, suffix: "" };
 		}
 
-		const lines = [...propertyLines, ...methodLines].map(
-			(line) => `    ${line}`,
-		);
+		const lines = [...propertyLines, ...methodLines].map((line) => `    ${line}`);
 		const suffix = ` & {\n${lines.join("\n")}\n}`;
 		return {
 			hasMethods: methodLines.length > 0,
@@ -305,9 +276,7 @@ export function renderSchemaTypeScript(
 		};
 	}
 
-	function renderMethodLines(
-		methods: Record<string, FunctionWrapper>,
-	): string[] {
+	function renderMethodLines(methods: Record<string, FunctionWrapper>): string[] {
 		const lines: string[] = [];
 		for (const [name, method] of Object.entries(methods)) {
 			if (method.description !== undefined && method.description !== "") {
@@ -343,9 +312,7 @@ export function renderSchemaTypeScript(
 			return { precedence: TypePrecedence.Object, text: "never" };
 		}
 		if (expressions.length === 1) {
-			return (
-				expressions[0] ?? { precedence: TypePrecedence.Object, text: "never" }
-			);
+			return expressions[0] ?? { precedence: TypePrecedence.Object, text: "never" };
 		}
 		return {
 			precedence: TypePrecedence.Union,
@@ -387,10 +354,7 @@ export function renderSchemaTypeScript(
 				return renderInlineRecord(schema);
 			}
 			case NodeKind.Leaf: {
-				return {
-					precedence: TypePrecedence.Object,
-					text: renderLeaf(schema.leafKind),
-				};
+				return { precedence: TypePrecedence.Object, text: renderLeaf(schema.leafKind) };
 			}
 			default: {
 				return { precedence: TypePrecedence.Object, text: "unknown" };
@@ -453,9 +417,7 @@ function describeBinding(
 	}
 
 	if (note === "") {
-		return description === undefined || description === ""
-			? undefined
-			: description;
+		return description === undefined || description === "" ? undefined : description;
 	}
 	if (description === undefined || description === "") {
 		return note;
@@ -463,9 +425,7 @@ function describeBinding(
 	return `${description} - ${note}`;
 }
 
-function renderPropertyLines(
-	properties: Record<string, PropertyDef>,
-): string[] {
+function renderPropertyLines(properties: Record<string, PropertyDef>): string[] {
 	const lines: string[] = [];
 	for (const [name, property] of Object.entries(properties)) {
 		if (property.description !== undefined && property.description !== "") {
@@ -516,18 +476,13 @@ function formatExpression(
 	expression: TypeExpression,
 	minPrecedence: TypePrecedence = TypePrecedence.Object,
 ): string {
-	return expression.precedence < minPrecedence
-		? `(${expression.text})`
-		: expression.text;
+	return expression.precedence < minPrecedence ? `(${expression.text})` : expression.text;
 }
 
 /**
  * Detects optional zod wrappers so argument lists can keep TypeScript optional markers in sync.
  */
-function unwrapOptional(type: z.ZodTypeAny): {
-	innerType: z.ZodTypeAny;
-	optional: boolean;
-} {
+function unwrapOptional(type: z.ZodTypeAny): { innerType: z.ZodTypeAny; optional: boolean } {
 	if (type instanceof z.ZodOptional) {
 		const inner = type.unwrap() as z.ZodTypeAny;
 		return { innerType: inner, optional: true };

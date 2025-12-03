@@ -32,12 +32,9 @@ export const maxSequenceId = (a: SequenceId, b: SequenceId): SequenceId =>
  * 2. sequenceId = \{ sequenceNumber: 2 \}. The upper bound is \{ sequenceNumber: 1, indexInBatch: Number.POSITIVE_INFINITY \}.
  * The indexInBatch value of the previous commit will depend on how many ops were in the previous batch of messages received.
  */
-export const getUpperBoundOfPreviousSequenceId = (
-	sequenceId: SequenceId,
-): SequenceId => {
+export const getUpperBoundOfPreviousSequenceId = (sequenceId: SequenceId): SequenceId => {
 	assert(
-		sequenceId.indexInBatch === undefined ||
-			Number.isFinite(sequenceId.indexInBatch),
+		sequenceId.indexInBatch === undefined || Number.isFinite(sequenceId.indexInBatch),
 		0xabc /* indexInBatch must not be infinity */,
 	);
 	return sequenceId.indexInBatch === undefined || sequenceId.indexInBatch === 0

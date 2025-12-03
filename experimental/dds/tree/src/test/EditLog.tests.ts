@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { strict as assert } from 'assert';
+
+import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
 import { assertNotUndefined } from '../Common.js';
 import { EditLog, separateEditAndId } from '../EditLog.js';
 import { newEdit } from '../EditUtilities.js';
-import type { EditId } from '../Identifiers.js';
-import type { Edit } from '../persisted-types/index.js';
+import { EditId } from '../Identifiers.js';
+import { Edit } from '../persisted-types/index.js';
 
 type DummyChange = never;
 

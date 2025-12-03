@@ -11,22 +11,19 @@ import { sharedTreeDiff } from "../../implicit-strategy/index.js";
 
 const schemaFactory = new SchemaFactory("TreeNodeTest");
 
-class TestOptionalObjectTreeNode extends schemaFactory.object(
-	"OptionalTreeNode",
-	{
-		optionalBoolean: schemaFactory.optional(schemaFactory.boolean),
-		optionalString: schemaFactory.optional(schemaFactory.string),
-		optionalNumber: schemaFactory.optional(schemaFactory.number),
-		optionalArray: schemaFactory.optional(
-			schemaFactory.array("SimpleArrayTreeNode", [schemaFactory.string]),
-		),
-		optionalObject: schemaFactory.optional(
-			schemaFactory.object("NestedObject", {
-				requiredString: schemaFactory.string,
-			}),
-		),
-	},
-) {}
+class TestOptionalObjectTreeNode extends schemaFactory.object("OptionalTreeNode", {
+	optionalBoolean: schemaFactory.optional(schemaFactory.boolean),
+	optionalString: schemaFactory.optional(schemaFactory.string),
+	optionalNumber: schemaFactory.optional(schemaFactory.number),
+	optionalArray: schemaFactory.optional(
+		schemaFactory.array("SimpleArrayTreeNode", [schemaFactory.string]),
+	),
+	optionalObject: schemaFactory.optional(
+		schemaFactory.object("NestedObject", {
+			requiredString: schemaFactory.string,
+		}),
+	),
+}) {}
 
 class TestObjectTreeNode extends schemaFactory.object("TreeNode", {
 	attribute1: schemaFactory.boolean,
@@ -114,15 +111,12 @@ describe("sharedTreeDiff() - Object - Change Diffs", () => {
 			},
 		});
 
-		const diffs = sharedTreeDiff(
-			treeNode as unknown as Record<string, unknown>,
-			{
-				...treeNode,
-				requiredObject: {
-					requiredString: "SomethingDifferent",
-				},
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, {
+			...treeNode,
+			requiredObject: {
+				requiredString: "SomethingDifferent",
 			},
-		);
+		});
 
 		assert.deepStrictEqual(diffs, [
 			{
@@ -211,19 +205,12 @@ describe("sharedTreeDiff() - Object - Change Diffs", () => {
 	});
 
 	it("change optional array to undefined", () => {
-		class ArrayNode extends schemaFactory.array("ArrayTreeNode", [
-			schemaFactory.string,
-		]) {}
-		class TestOptionalObjectTreeNode2 extends schemaFactory.object(
-			"OptionalTreeNode2",
-			{
-				optionalArray: schemaFactory.optional(ArrayNode),
-			},
-		) {}
+		class ArrayNode extends schemaFactory.array("ArrayTreeNode", [schemaFactory.string]) {}
+		class TestOptionalObjectTreeNode2 extends schemaFactory.object("OptionalTreeNode2", {
+			optionalArray: schemaFactory.optional(ArrayNode),
+		}) {}
 		const arrayNode = new ArrayNode([]);
-		const treeNode = new TestOptionalObjectTreeNode2({
-			optionalArray: arrayNode,
-		});
+		const treeNode = new TestOptionalObjectTreeNode2({ optionalArray: arrayNode });
 		assert.deepStrictEqual(
 			sharedTreeDiff(treeNode as unknown as Record<string, unknown>, {
 				optionalArray: undefined,
@@ -244,12 +231,9 @@ describe("sharedTreeDiff() - Object - Change Diffs", () => {
 describe("sharedTreeDiff() - Object - Create Diffs", () => {
 	it("new optional boolean primitive value", () => {
 		const treeNode = new TestOptionalObjectTreeNode({});
-		const diffs = sharedTreeDiff(
-			treeNode as unknown as Record<string, unknown>,
-			{
-				optionalBoolean: true,
-			},
-		);
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, {
+			optionalBoolean: true,
+		});
 		assert.deepStrictEqual(diffs, [
 			{
 				type: "CREATE",
@@ -261,12 +245,9 @@ describe("sharedTreeDiff() - Object - Create Diffs", () => {
 
 	it("new optional string primitive value", () => {
 		const treeNode = new TestOptionalObjectTreeNode({});
-		const diffs = sharedTreeDiff(
-			treeNode as unknown as Record<string, unknown>,
-			{
-				optionalString: "true",
-			},
-		);
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, {
+			optionalString: "true",
+		});
 		assert.deepStrictEqual(diffs, [
 			{
 				type: "CREATE",
@@ -278,12 +259,9 @@ describe("sharedTreeDiff() - Object - Create Diffs", () => {
 
 	it("new optional boolean primitive value", () => {
 		const treeNode = new TestOptionalObjectTreeNode({});
-		const diffs = sharedTreeDiff(
-			treeNode as unknown as Record<string, unknown>,
-			{
-				optionalNumber: 1,
-			},
-		);
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, {
+			optionalNumber: 1,
+		});
 		assert.deepStrictEqual(diffs, [
 			{
 				type: "CREATE",
@@ -295,12 +273,9 @@ describe("sharedTreeDiff() - Object - Create Diffs", () => {
 
 	it("new optional array value", () => {
 		const treeNode = new TestOptionalObjectTreeNode({});
-		const diffs = sharedTreeDiff(
-			treeNode as unknown as Record<string, unknown>,
-			{
-				optionalArray: [],
-			},
-		);
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, {
+			optionalArray: [],
+		});
 		assert.deepStrictEqual(diffs, [
 			{
 				type: "CREATE",
@@ -312,12 +287,9 @@ describe("sharedTreeDiff() - Object - Create Diffs", () => {
 
 	it("new optional object value", () => {
 		const treeNode = new TestOptionalObjectTreeNode({});
-		const diffs = sharedTreeDiff(
-			treeNode as unknown as Record<string, unknown>,
-			{
-				optionalObject: { requiredString: "test" },
-			},
-		);
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, {
+			optionalObject: { requiredString: "test" },
+		});
 		assert.deepStrictEqual(diffs, [
 			{
 				type: "CREATE",
@@ -331,10 +303,7 @@ describe("sharedTreeDiff() - Object - Create Diffs", () => {
 describe("sharedTreeDiff() - Object - Remove Diffs", () => {
 	it("remove optional boolean primitive value", () => {
 		const treeNode = new TestOptionalObjectTreeNode({ optionalBoolean: true });
-		const diffs = sharedTreeDiff(
-			treeNode as unknown as Record<string, unknown>,
-			{},
-		);
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, {});
 		assert.deepStrictEqual(diffs, [
 			{
 				type: "REMOVE",
@@ -347,10 +316,7 @@ describe("sharedTreeDiff() - Object - Remove Diffs", () => {
 
 	it("remove optional string primitive value", () => {
 		const treeNode = new TestOptionalObjectTreeNode({ optionalString: "true" });
-		const diffs = sharedTreeDiff(
-			treeNode as unknown as Record<string, unknown>,
-			{},
-		);
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, {});
 		assert.deepStrictEqual(diffs, [
 			{
 				type: "REMOVE",
@@ -363,10 +329,7 @@ describe("sharedTreeDiff() - Object - Remove Diffs", () => {
 
 	it("remove optional number primitive value", () => {
 		const treeNode = new TestOptionalObjectTreeNode({ optionalNumber: 1 });
-		const diffs = sharedTreeDiff(
-			treeNode as unknown as Record<string, unknown>,
-			{},
-		);
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, {});
 		assert.deepStrictEqual(diffs, [
 			{
 				type: "REMOVE",
@@ -378,23 +341,13 @@ describe("sharedTreeDiff() - Object - Remove Diffs", () => {
 	});
 
 	it("remove optional array value", () => {
-		class ArrayNode extends schemaFactory.array("ArrayTreeNode", [
-			schemaFactory.string,
-		]) {}
-		class TestOptionalObjectTreeNode2 extends schemaFactory.object(
-			"OptionalTreeNode2",
-			{
-				optionalArray: schemaFactory.optional(ArrayNode),
-			},
-		) {}
+		class ArrayNode extends schemaFactory.array("ArrayTreeNode", [schemaFactory.string]) {}
+		class TestOptionalObjectTreeNode2 extends schemaFactory.object("OptionalTreeNode2", {
+			optionalArray: schemaFactory.optional(ArrayNode),
+		}) {}
 		const arrayNode = new ArrayNode([]);
-		const treeNode = new TestOptionalObjectTreeNode2({
-			optionalArray: arrayNode,
-		});
-		const diffs = sharedTreeDiff(
-			treeNode as unknown as Record<string, unknown>,
-			{},
-		);
+		const treeNode = new TestOptionalObjectTreeNode2({ optionalArray: arrayNode });
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, {});
 		assert.deepStrictEqual(diffs, [
 			{
 				type: "REMOVE",
@@ -409,10 +362,7 @@ describe("sharedTreeDiff() - Object - Remove Diffs", () => {
 		const treeNode = new TestOptionalObjectTreeNode({
 			optionalObject: { requiredString: "test" },
 		});
-		const diffs = sharedTreeDiff(
-			treeNode as unknown as Record<string, unknown>,
-			{},
-		);
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, {});
 		assert.deepStrictEqual(diffs, [
 			{
 				type: "REMOVE",

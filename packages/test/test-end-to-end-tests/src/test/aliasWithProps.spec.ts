@@ -3,16 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { DataObjectFactory } from "@fluidframework/aqueduct/internal";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import type {
-	FluidObject,
-	IEvent,
-	IFluidHandle,
-} from "@fluidframework/core-interfaces";
-import type { ITestObjectProvider } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { FluidObject, IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
+import { type ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 interface TestDataObjectTypes {
 	/**
@@ -55,25 +52,19 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 
 		// The object starts with a LegacySharedTree
-		public async initializingFirstTime(
-			props: TestDataObjectProps,
-		): Promise<void> {
+		public async initializingFirstTime(props: TestDataObjectProps): Promise<void> {
 			this.root.set(propsKey, props.a);
 		}
 	}
 
-	type TestDataObjectFactory = DataObjectFactory<
-		TestDataObject,
-		TestDataObjectTypes
-	>;
+	type TestDataObjectFactory = DataObjectFactory<TestDataObject, TestDataObjectTypes>;
 
 	class RuntimeFactoryWithProps extends BaseContainerRuntimeFactory {
 		constructor(private readonly defaultFactory: TestDataObjectFactory) {
 			const props = {
 				registryEntries: [defaultFactory.registryEntry],
 				provideEntryPoint: async (runtime: IContainerRuntime) => {
-					const entrypoint =
-						await runtime.getAliasedDataStoreEntryPoint(defaultDataStoreId);
+					const entrypoint = await runtime.getAliasedDataStoreEntryPoint(defaultDataStoreId);
 					assert(entrypoint !== undefined, "default dataStore must exist");
 					return entrypoint.get();
 				},
@@ -83,8 +74,10 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 
 		protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
 			const props = { a: "b" };
-			const [, dataStore] =
-				await this.defaultFactory.createInstanceWithDataStore(runtime, props);
+			const [, dataStore] = await this.defaultFactory.createInstanceWithDataStore(
+				runtime,
+				props,
+			);
 			await dataStore.trySetAlias(defaultDataStoreId);
 		}
 	}
@@ -124,10 +117,7 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 		props: TestDataObjectProps,
 		alias: string,
 	) => {
-		const [object, datastore] = await factory.createInstanceWithDataStore(
-			runtime,
-			props,
-		);
+		const [object, datastore] = await factory.createInstanceWithDataStore(runtime, props);
 		const result = await datastore.trySetAlias(alias);
 		if (result !== "Success") {
 			const handle = await runtime.getAliasedDataStoreEntryPoint(alias);
@@ -146,12 +136,7 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 		const runtime2 = dataObject2._context.containerRuntime as IContainerRuntime;
 
 		const props1 = { a: "1 is different from 2" };
-		const newObjectPromise1 = createAliasedInstance(
-			dataObjectFactory,
-			runtime,
-			props1,
-			"new",
-		);
+		const newObjectPromise1 = createAliasedInstance(dataObjectFactory, runtime, props1, "new");
 		const props2 = { a: "Totally not same string" };
 		const newObjectPromise2 = createAliasedInstance(
 			dataObjectFactory,
@@ -163,10 +148,7 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 		await Promise.all([newObjectPromise1, newObjectPromise2]);
 		const newObject1 = await newObjectPromise1;
 		const newObject2 = await newObjectPromise2;
-		assert(
-			newObject1.getValue() === newObject2.getValue(),
-			"Aliasing should have worked",
-		);
+		assert(newObject1.getValue() === newObject2.getValue(), "Aliasing should have worked");
 	});
 
 	it("CreateRootInstance uses aliasing", async () => {
@@ -178,17 +160,9 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 		const runtime2 = dataObject2._context.containerRuntime as IContainerRuntime;
 
 		const props1 = { a: "1 is different from 2" };
-		const newObjectPromise1 = dataObjectFactory.createRootInstance(
-			"new",
-			runtime,
-			props1,
-		);
+		const newObjectPromise1 = dataObjectFactory.createRootInstance("new", runtime, props1);
 		const props2 = { a: "Totally not same string" };
-		const newObjectPromise2 = dataObjectFactory.createRootInstance(
-			"new",
-			runtime2,
-			props2,
-		);
+		const newObjectPromise2 = dataObjectFactory.createRootInstance("new", runtime2, props2);
 		await provider.ensureSynchronized();
 		await Promise.all([newObjectPromise1, newObjectPromise2]);
 		const newObject1 = await newObjectPromise1;
@@ -205,11 +179,11 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 		const runtime = dataObject._context.containerRuntime as IContainerRuntime;
 
 		const props = { a: "1 is different from 2" };
-		const [newObject] =
-			await childDataObjectFactory.createInstanceWithDataStore(runtime, props, [
-				"Test",
-				"Child",
-			]);
+		const [newObject] = await childDataObjectFactory.createInstanceWithDataStore(
+			runtime,
+			props,
+			["Test", "Child"],
+		);
 		dataObject._root.set("newObject", newObject.handle);
 		await provider.ensureSynchronized();
 		assert.deepEqual(
@@ -222,8 +196,7 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 
 		const dataObject2 = (await container2.getEntryPoint()) as TestDataObject;
-		const newObject2Handle =
-			dataObject2._root.get<IFluidHandle<TestDataObject>>("newObject");
+		const newObject2Handle = dataObject2._root.get<IFluidHandle<TestDataObject>>("newObject");
 		assert(newObject2Handle !== undefined, "Expected newObject to be defined");
 		const newObject2 = await newObject2Handle.get();
 		assert.deepEqual(

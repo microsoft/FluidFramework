@@ -56,9 +56,7 @@ export interface Mockable<T extends (...args: any[]) => unknown> {
  * sinon.restore();
  * ```
  */
-export function mockify<T extends (...args: any[]) => unknown>(
-	fn: T,
-): Mockable<T> {
+export function mockify<T extends (...args: any[]) => unknown>(fn: T): Mockable<T> {
 	const mockable = (...args: Parameters<T>): ReturnType<T> => {
 		return mockable[mockifyMockKey](...args) as ReturnType<T>;
 	};

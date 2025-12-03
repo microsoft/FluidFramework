@@ -3,18 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { isObject } from "@fluidframework/core-utils/internal";
-import {
-	isFluidHandle,
-	toFluidHandleInternal,
-} from "@fluidframework/runtime-utils/internal";
-import type { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils/internal";
 import { strict as assert } from "assert";
 
-import type { ISequenceIntervalCollection } from "../intervalCollection.js";
+import { isObject } from "@fluidframework/core-utils/internal";
+import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils/internal";
+
+import { ISequenceIntervalCollection } from "../intervalCollection.js";
 import { createOverlappingIntervalsIndex } from "../intervalIndex/index.js";
 import { SequenceIntervalClass } from "../intervals/index.js";
-import type { SharedString } from "../sequenceFactory.js";
+import { SharedString } from "../sequenceFactory.js";
 
 export interface Client {
 	sharedString: SharedString;
@@ -26,9 +24,7 @@ export interface Client {
  * and location of all intervals in any interval collections they have.
  * */
 export async function assertConsistent(clients: Client[]): Promise<void> {
-	const connectedClients = clients.filter(
-		(client) => client.containerRuntime.connected,
-	);
+	const connectedClients = clients.filter((client) => client.containerRuntime.connected);
 	if (connectedClients.length < 2) {
 		// No two strings are expected to be consistent.
 		return;
@@ -39,10 +35,7 @@ export async function assertConsistent(clients: Client[]): Promise<void> {
 	}
 }
 
-export async function assertEquivalentSharedStrings(
-	a: SharedString,
-	b: SharedString,
-) {
+export async function assertEquivalentSharedStrings(a: SharedString, b: SharedString) {
 	assert.equal(
 		a.getText(),
 		b.getText(),
@@ -74,11 +67,7 @@ export async function assertEquivalentSharedStrings(
 				otherInterval.startSide,
 				"interval start side not equal",
 			);
-			assert.equal(
-				interval.endSide,
-				otherInterval.endSide,
-				"interval end side not equal",
-			);
+			assert.equal(interval.endSide, otherInterval.endSide, "interval end side not equal");
 			assert.equal(
 				interval.stickiness,
 				otherInterval.stickiness,
@@ -95,9 +84,7 @@ export async function assertEquivalentSharedStrings(
 				"end sliding preference not equal",
 			);
 			const firstStart = a.localReferencePositionToPosition(interval.start);
-			const otherStart = b.localReferencePositionToPosition(
-				otherInterval.start,
-			);
+			const otherStart = b.localReferencePositionToPosition(otherInterval.start);
 			assert.equal(
 				firstStart,
 				otherStart,
@@ -122,10 +109,7 @@ export async function assertEquivalentSharedStrings(
 	}
 }
 
-async function assertPropertiesEqual(
-	a: SharedString,
-	b: SharedString,
-): Promise<void> {
+async function assertPropertiesEqual(a: SharedString, b: SharedString): Promise<void> {
 	for (let i = 0; i < a.getLength(); i++) {
 		const aProps = a.getPropertiesAtPosition(i) ?? {};
 		const bProps = b.getPropertiesAtPosition(i) ?? {};
@@ -167,23 +151,15 @@ export const assertSequenceIntervals = (
 ) => {
 	const actual = Array.from(intervalCollection);
 	if (validateOverlapping && sharedString.getLength() > 0) {
-		const overlappingIntervalsIndex =
-			createOverlappingIntervalsIndex(sharedString);
+		const overlappingIntervalsIndex = createOverlappingIntervalsIndex(sharedString);
 		intervalCollection.attachIndex(overlappingIntervalsIndex);
-		const overlapping = overlappingIntervalsIndex.findOverlappingIntervals(
-			"start",
-			"end",
-		);
+		const overlapping = overlappingIntervalsIndex.findOverlappingIntervals("start", "end");
 		assert.deepEqual(
 			actual
-				.filter(
-					(i): i is SequenceIntervalClass => i instanceof SequenceIntervalClass,
-				)
+				.filter((i): i is SequenceIntervalClass => i instanceof SequenceIntervalClass)
 				.map((i) => i.serialize()),
 			overlapping
-				.filter(
-					(i): i is SequenceIntervalClass => i instanceof SequenceIntervalClass,
-				)
+				.filter((i): i is SequenceIntervalClass => i instanceof SequenceIntervalClass)
 				.map((i) => i.serialize()),
 			"Interval search returned inconsistent results",
 		);

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { ISegment } from "@fluidframework/merge-tree/internal";
+import { ISegment } from "@fluidframework/merge-tree/internal";
 
-import type { SequenceInterval } from "../intervals/index.js";
+import { SequenceInterval } from "../intervals/index.js";
 
-import type { ISequenceOverlappingIntervalsIndex } from "./overlappingIntervalsIndex.js";
+import { type ISequenceOverlappingIntervalsIndex } from "./overlappingIntervalsIndex.js";
 
 /**
  * This namespace contains specialiazations of indexes which support spatial queries
@@ -29,10 +29,7 @@ export namespace SequenceIntervalIndexes {
 		 * @returns an array of all intervals that overlap with the specified SegOff range (includes both ends)
 		 */
 		findOverlappingIntervalsBySegoff(
-			startSegoff: {
-				segment: ISegment | undefined;
-				offset: number | undefined;
-			},
+			startSegoff: { segment: ISegment | undefined; offset: number | undefined },
 			endSegoff: { segment: ISegment | undefined; offset: number | undefined },
 		): Iterable<SequenceInterval>;
 	}

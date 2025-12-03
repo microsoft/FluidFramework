@@ -5,12 +5,12 @@
 		"outDir": "../../lib/test",
 		"types": ["mocha", "node"],
 		"declaration": true,
-		"declarationMap": true
+		"declarationMap": true,
 	},
 	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../.."
-		}
-	]
+			"path": "../..",
+		},
+	],
 }

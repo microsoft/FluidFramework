@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { strict as assert } from 'assert';
+
+import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
 import { fail } from '../Common.js';

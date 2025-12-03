@@ -4,54 +4,52 @@
  */
 
 import { strict as assert, fail } from "node:assert";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import {
-	MockNodeIdentifierManager,
-	TreeStatus,
-} from "../../feature-libraries/index.js";
-import {
-	ForestTypeExpensiveDebug,
-	ForestTypeReference,
-	Tree,
-	type TreeCheckout,
-} from "../../shared-tree/index.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import { MockNodeIdentifierManager, TreeStatus } from "../../feature-libraries/index.js";
 import {
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/schematizingTreeView.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
 import {
-	getKernel,
+	SchemaFactory,
+	SchemaFactoryAlpha,
+	TreeViewConfiguration,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTypedNode,
-	SchemaFactory,
-	SchemaFactoryAlpha,
-	SchemaFactoryBeta,
+	type UnsafeUnknownSchema,
 	type TransactionResult,
 	type TransactionResultExt,
-	TreeViewConfiguration,
+	getKernel,
 	toInitialSchema,
 	toUpgradeSchema,
-	type UnsafeUnknownSchema,
+	SchemaFactoryBeta,
 } from "../../simple-tree/index.js";
-import type { Mutable } from "../../util/index.js";
-import { brand } from "../../util/index.js";
-import { fieldJsonCursor } from "../json/index.js";
-import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
-import { testDocumentIndependentView } from "../testTrees.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
 	fieldCursorFromInsertable,
 	getView,
 	TestTreeProviderLite,
-	type TreeStoredContentStrict,
 	validateViewConsistency,
+	type TreeStoredContentStrict,
 } from "../utils.js";
+import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
+import {
+	ForestTypeExpensiveDebug,
+	ForestTypeReference,
+	Tree,
+	type TreeCheckout,
+} from "../../shared-tree/index.js";
+import type { Mutable } from "../../util/index.js";
+import { brand } from "../../util/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
+import { testDocumentIndependentView } from "../testTrees.js";
+import { fieldJsonCursor } from "../json/index.js";
 
 const schema = new SchemaFactoryAlpha("com.example");
 const config = new TreeViewConfiguration({ schema: schema.number });
@@ -115,9 +113,7 @@ describe("SchematizingSimpleTreeView", () => {
 			class SimpleTestObject extends schema.object("TestObject", {
 				content: schema.number,
 			}) {}
-			const configNode = new TreeViewConfiguration({
-				schema: SimpleTestObject,
-			});
+			const configNode = new TreeViewConfiguration({ schema: SimpleTestObject });
 			it("Initialize node", () => {
 				const checkout = checkoutWithContent(emptyContent);
 				const view = new SchematizingSimpleTreeView(
@@ -168,9 +164,7 @@ describe("SchematizingSimpleTreeView", () => {
 					});
 
 					const view = getView(config2, {
-						forest: additionalAsserts
-							? ForestTypeExpensiveDebug
-							: ForestTypeReference,
+						forest: additionalAsserts ? ForestTypeExpensiveDebug : ForestTypeReference,
 					});
 
 					const root = new Root({ content: 5 });
@@ -194,10 +188,7 @@ describe("SchematizingSimpleTreeView", () => {
 						validateUsageError(/Tree does not conform to schema./),
 					);
 
-					assert.throws(
-						() => view.root,
-						validateUsageError(/invalid state by another error/),
-					);
+					assert.throws(() => view.root, validateUsageError(/invalid state by another error/));
 				});
 
 				it(`Initialize invalid content: staged allowed type with enableSchemaValidation: ${enableSchemaValidation}, additionalAsserts: ${additionalAsserts}`, () => {
@@ -247,10 +238,7 @@ describe("SchematizingSimpleTreeView", () => {
 		);
 
 		// Put into broken state by trying incompatible upgrade
-		assert.throws(
-			() => view.upgradeSchema(),
-			validateUsageError(/compatibility/),
-		);
+		assert.throws(() => view.upgradeSchema(), validateUsageError(/compatibility/));
 
 		assert.throws(
 			() => view.initialize(5),
@@ -260,10 +248,7 @@ describe("SchematizingSimpleTreeView", () => {
 			() => view.upgradeSchema(),
 			validateUsageError(/invalid state by another error/),
 		);
-		assert.throws(
-			() => view.root,
-			validateUsageError(/invalid state by another error/),
-		);
+		assert.throws(() => view.root, validateUsageError(/invalid state by another error/));
 	});
 
 	const getChangeData = <T extends ImplicitFieldSchema>(
@@ -314,12 +299,8 @@ describe("SchematizingSimpleTreeView", () => {
 			config,
 			new MockNodeIdentifierManager(),
 		);
-		view.events.on("schemaChanged", () =>
-			log.push(["schemaChanged", getChangeData(view)]),
-		);
-		view.events.on("rootChanged", () =>
-			log.push(["rootChanged", getChangeData(view)]),
-		);
+		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
+		view.events.on("rootChanged", () => log.push(["rootChanged", getChangeData(view)]));
 		assert.equal(view.root, 5);
 		const log: [string, unknown][] = [];
 
@@ -338,12 +319,8 @@ describe("SchematizingSimpleTreeView", () => {
 			config2,
 			new MockNodeIdentifierManager(),
 		);
-		view.events.on("schemaChanged", () =>
-			log.push(["schemaChanged", getChangeData(view)]),
-		);
-		view.events.on("rootChanged", () =>
-			log.push(["rootChanged", getChangeData(view)]),
-		);
+		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
+		view.events.on("rootChanged", () => log.push(["rootChanged", getChangeData(view)]));
 		assert.equal(view.root, 5);
 		const log: [string, unknown][] = [];
 
@@ -361,18 +338,13 @@ describe("SchematizingSimpleTreeView", () => {
 		);
 		assert.equal(view.root, 5);
 		const log: [string, unknown][] = [];
-		view.events.on("schemaChanged", () =>
-			log.push(["schemaChanged", getChangeData(view)]),
-		);
+		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
 
 		// Modify schema to invalidate view
 		checkout.updateSchema(toUpgradeSchema([schema.number, schema.string]));
 
 		assert.deepEqual(log, [
-			[
-				"schemaChanged",
-				"SchemaCompatibilityStatus canView: false canUpgrade: false",
-			],
+			["schemaChanged", "SchemaCompatibilityStatus canView: false canUpgrade: false"],
 		]);
 		log.length = 0;
 		assert.equal(view.compatibility.isEquivalent, false);
@@ -583,10 +555,7 @@ describe("SchematizingSimpleTreeView", () => {
 			assert(!view.compatibility.canUpgrade);
 
 			// Case which doesn't update due to root being required
-			assert.throws(
-				() => view.upgradeSchema(),
-				validateUsageError(/cannot be upgraded/),
-			);
+			assert.throws(() => view.upgradeSchema(), validateUsageError(/cannot be upgraded/));
 
 			const reference = checkoutWithContent({
 				schema: emptySchema,
@@ -601,11 +570,7 @@ describe("SchematizingSimpleTreeView", () => {
 				schema: schemaGeneralized,
 				schemaData: toInitialSchema(builder.number),
 				treeFactory: () => [
-					{
-						type: brand(SchemaFactory.number.identifier),
-						value: 5,
-						fields: {},
-					},
+					{ type: brand(SchemaFactory.number.identifier), value: 5, fields: {} },
 				],
 			});
 
@@ -630,9 +595,7 @@ describe("SchematizingSimpleTreeView", () => {
 			new MockNodeIdentifierManager(),
 		);
 		const log: [string, unknown][] = [];
-		view.events.on("rootChanged", () =>
-			log.push(["rootChanged", getChangeData(view)]),
-		);
+		view.events.on("rootChanged", () => log.push(["rootChanged", getChangeData(view)]));
 
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, true);
@@ -756,9 +719,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const checkout = checkoutWithContent(content);
 			const view = new SchematizingSimpleTreeView(
 				checkout,
-				new TreeViewConfiguration({
-					schema: SchemaFactory.optional(SchemaFactory.number),
-				}),
+				new TreeViewConfiguration({ schema: SchemaFactory.optional(SchemaFactory.number) }),
 				new MockNodeIdentifierManager(),
 			);
 			const log: string[] = [];
@@ -790,11 +751,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const stringArrayStoredSchema = toInitialSchema(stringArraySchema);
 			const stringArrayContent = {
 				schema: stringArrayStoredSchema,
-				initialTree: fieldCursorFromInsertable(stringArraySchema, [
-					"a",
-					"b",
-					"c",
-				]),
+				initialTree: fieldCursorFromInsertable(stringArraySchema, ["a", "b", "c"]),
 			};
 			const checkout = checkoutWithContent(stringArrayContent);
 			const main = new SchematizingSimpleTreeView(
@@ -909,9 +866,7 @@ describe("SchematizingSimpleTreeView", () => {
 				const runTransactionResult = view.runTransaction(() => {
 					view.root.content = 43;
 					return {
-						preconditionsOnRevert: [
-							{ type: "nodeInDocument", node: view.root },
-						],
+						preconditionsOnRevert: [{ type: "nodeInDocument", node: view.root }],
 					};
 				});
 				assert.equal(view.root.content, 43, "The transaction did not commit");
@@ -931,9 +886,7 @@ describe("SchematizingSimpleTreeView", () => {
 					view.root.content = 43;
 					return {
 						rollback: true,
-						preconditionsOnRevert: [
-							{ type: "nodeInDocument", node: view.root },
-						],
+						preconditionsOnRevert: [{ type: "nodeInDocument", node: view.root }],
 					};
 				});
 				assert.equal(view.root.content, 42, "The transaction did not rollback");
@@ -996,9 +949,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 			it("undoes and redoes entire transaction", () => {
 				const view = getTestObjectView();
-				const { undoStack, redoStack } = createTestUndoRedoStacks(
-					view.checkout.events,
-				);
+				const { undoStack, redoStack } = createTestUndoRedoStacks(view.checkout.events);
 
 				const runTransactionResult = view.runTransaction(() => {
 					view.root.content = 43;
@@ -1112,9 +1063,7 @@ describe("SchematizingSimpleTreeView", () => {
 							// constraint on revert.
 							doSomething();
 							return {
-								preconditionsOnRevert: [
-									{ type: "nodeInDocument", node: child },
-								],
+								preconditionsOnRevert: [{ type: "nodeInDocument", node: child }],
 							};
 						}),
 					(e) => {
@@ -1163,11 +1112,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 				// This revert should do nothing since its constraint has been violated
 				changed42To43.revert();
-				assert.equal(
-					view.root.content,
-					43,
-					"The revert should have been ignored",
-				);
+				assert.equal(view.root.content, 43, "The revert should have been ignored");
 
 				stack.unsubscribe();
 			});

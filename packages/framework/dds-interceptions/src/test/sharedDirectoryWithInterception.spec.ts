@@ -25,10 +25,7 @@ describe("Shared Directory with Interception", () => {
 		let dataStoreContext: IFluidDataStoreContext;
 
 		// This function gets / creates the attribution directory for the given subdirectory path.
-		function getAttributionDirectory(
-			root: IDirectory,
-			path: string,
-		): IDirectory {
+		function getAttributionDirectory(root: IDirectory, path: string): IDirectory {
 			if (!root.hasSubDirectory(attributionDirectoryName)) {
 				root.createSubDirectory(attributionDirectoryName);
 			}
@@ -84,9 +81,7 @@ describe("Shared Directory with Interception", () => {
 			if (!subDirectory.hasSubDirectory(attributionDirectoryName)) {
 				subDirectory.createSubDirectory(attributionDirectoryName);
 			}
-			const attributionDirectory = subDirectory.getSubDirectory(
-				attributionDirectoryName,
-			);
+			const attributionDirectory = subDirectory.getSubDirectory(attributionDirectoryName);
 			assert(attributionDirectory);
 			attributionDirectory.set(key, userAttributes);
 		}
@@ -131,9 +126,7 @@ describe("Shared Directory with Interception", () => {
 				"The retrieved value should match the value that was set",
 			);
 
-			const attributionDir = directory.getSubDirectory(
-				attributionDirectoryName,
-			);
+			const attributionDir = directory.getSubDirectory(attributionDirectoryName);
 			assert(attributionDir);
 			if (props === undefined) {
 				assert.equal(
@@ -427,9 +420,7 @@ describe("Shared Directory with Interception", () => {
 				key: string,
 				value: unknown,
 			): void {
-				const directory = useWrapper
-					? sharedDirectoryWithInterception
-					: subDirectory;
+				const directory = useWrapper ? sharedDirectoryWithInterception : subDirectory;
 				directory.set(attributionKey(key), userAttributes);
 			}
 

@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	IErrorBase,
-	ITelemetryBaseProperties,
-} from "@fluidframework/core-interfaces";
+import type { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
 	FluidErrorTypes,
 	FluidErrorTypesAlpha,
@@ -17,9 +14,9 @@ import {
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import {
-	isExternalError,
 	LoggingError,
 	NORMALIZED_ERROR_TYPE,
+	isExternalError,
 	normalizeError,
 	wrapError,
 } from "./errorLogging.js";
@@ -50,10 +47,7 @@ export function validatePrecondition(
  *
  * @internal
  */
-export class GenericError
-	extends LoggingError
-	implements IGenericError, IFluidErrorBase
-{
+export class GenericError extends LoggingError implements IGenericError, IFluidErrorBase {
 	public readonly errorType = FluidErrorTypes.genericError;
 
 	/**
@@ -79,10 +73,7 @@ export class GenericError
  *
  * @internal
  */
-export class UsageError
-	extends LoggingError
-	implements IUsageError, IFluidErrorBase
-{
+export class UsageError extends LoggingError implements IUsageError, IFluidErrorBase {
 	public readonly errorType = FluidErrorTypes.usageError;
 
 	public constructor(message: string, props?: ITelemetryBaseProperties) {
@@ -96,10 +87,7 @@ export class UsageError
  *
  * @internal
  */
-export class DataCorruptionError
-	extends LoggingError
-	implements IErrorBase, IFluidErrorBase
-{
+export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
 	public readonly errorType = FluidErrorTypes.dataCorruptionError;
 	public readonly canRetry = false;
 
@@ -119,10 +107,7 @@ export class DataCorruptionError
  *
  * @internal
  */
-export class DataProcessingError
-	extends LoggingError
-	implements IErrorBase, IFluidErrorBase
-{
+export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
 	/**
 	 * {@inheritDoc IFluidErrorBase.errorType}
 	 */
@@ -222,9 +207,7 @@ export class DataProcessingError
 			);
 
 			// Copy over the props above and any others added to this error since first being normalized
-			dataProcessingError.addTelemetryProperties(
-				normalizedError.getTelemetryProperties(),
-			);
+			dataProcessingError.addTelemetryProperties(normalizedError.getTelemetryProperties());
 
 			return dataProcessingError;
 		}
@@ -272,12 +255,10 @@ export class LayerIncompatibilityError
 		this.layer = incompatibilityProps.layer;
 		this.layerVersion = incompatibilityProps.layerVersion;
 		this.incompatibleLayer = incompatibilityProps.incompatibleLayer;
-		this.incompatibleLayerVersion =
-			incompatibilityProps.incompatibleLayerVersion;
+		this.incompatibleLayerVersion = incompatibilityProps.incompatibleLayerVersion;
 		this.compatibilityRequirementsInMonths =
 			incompatibilityProps.compatibilityRequirementsInMonths;
-		this.actualDifferenceInMonths =
-			incompatibilityProps.actualDifferenceInMonths;
+		this.actualDifferenceInMonths = incompatibilityProps.actualDifferenceInMonths;
 		this.details = incompatibilityProps.details;
 	}
 }
@@ -309,8 +290,7 @@ export const extractSafePropertiesFromMessage = (
 	messageMinimumSequenceNumber: number | undefined;
 	messageTimestamp: number | undefined;
 } => ({
-	messageClientId:
-		messageLike.clientId === null ? "null" : messageLike.clientId,
+	messageClientId: messageLike.clientId === null ? "null" : messageLike.clientId,
 	messageSequenceNumber: messageLike.sequenceNumber,
 	messageClientSequenceNumber: messageLike.clientSequenceNumber,
 	messageReferenceSequenceNumber: messageLike.referenceSequenceNumber,

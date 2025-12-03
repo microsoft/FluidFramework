@@ -110,10 +110,7 @@ export type IEventThisPlaceHolder = { thisPlaceHolder: "thisPlaceHolder" };
  * @public
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type ReplaceIEventThisPlaceHolder<
-	L extends any[],
-	TThis,
-> = L extends any[]
+export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[]
 	? { [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K] }
 	: L;
 
@@ -373,30 +370,12 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 											TransformedEvent<TThis, E5, A5> &
 											TransformedEvent<TThis, E6, A6>
 									: TEvent extends {
-												(
-													event: infer E0,
-													listener: (...args: infer A0) => void,
-												);
-												(
-													event: infer E1,
-													listener: (...args: infer A1) => void,
-												);
-												(
-													event: infer E2,
-													listener: (...args: infer A2) => void,
-												);
-												(
-													event: infer E3,
-													listener: (...args: infer A3) => void,
-												);
-												(
-													event: infer E4,
-													listener: (...args: infer A4) => void,
-												);
-												(
-													event: infer E5,
-													listener: (...args: infer A5) => void,
-												);
+												(event: infer E0, listener: (...args: infer A0) => void);
+												(event: infer E1, listener: (...args: infer A1) => void);
+												(event: infer E2, listener: (...args: infer A2) => void);
+												(event: infer E3, listener: (...args: infer A3) => void);
+												(event: infer E4, listener: (...args: infer A4) => void);
+												(event: infer E5, listener: (...args: infer A5) => void);
 
 												(event: string, listener: (...args: any[]) => void);
 											}
@@ -407,26 +386,11 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 												TransformedEvent<TThis, E4, A4> &
 												TransformedEvent<TThis, E5, A5>
 										: TEvent extends {
-													(
-														event: infer E0,
-														listener: (...args: infer A0) => void,
-													);
-													(
-														event: infer E1,
-														listener: (...args: infer A1) => void,
-													);
-													(
-														event: infer E2,
-														listener: (...args: infer A2) => void,
-													);
-													(
-														event: infer E3,
-														listener: (...args: infer A3) => void,
-													);
-													(
-														event: infer E4,
-														listener: (...args: infer A4) => void,
-													);
+													(event: infer E0, listener: (...args: infer A0) => void);
+													(event: infer E1, listener: (...args: infer A1) => void);
+													(event: infer E2, listener: (...args: infer A2) => void);
+													(event: infer E3, listener: (...args: infer A3) => void);
+													(event: infer E4, listener: (...args: infer A4) => void);
 
 													(event: string, listener: (...args: any[]) => void);
 												}
@@ -436,22 +400,10 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 													TransformedEvent<TThis, E3, A3> &
 													TransformedEvent<TThis, E4, A4>
 											: TEvent extends {
-														(
-															event: infer E0,
-															listener: (...args: infer A0) => void,
-														);
-														(
-															event: infer E1,
-															listener: (...args: infer A1) => void,
-														);
-														(
-															event: infer E2,
-															listener: (...args: infer A2) => void,
-														);
-														(
-															event: infer E3,
-															listener: (...args: infer A3) => void,
-														);
+														(event: infer E0, listener: (...args: infer A0) => void);
+														(event: infer E1, listener: (...args: infer A1) => void);
+														(event: infer E2, listener: (...args: infer A2) => void);
+														(event: infer E3, listener: (...args: infer A3) => void);
 
 														(event: string, listener: (...args: any[]) => void);
 													}
@@ -460,54 +412,26 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 														TransformedEvent<TThis, E2, A2> &
 														TransformedEvent<TThis, E3, A3>
 												: TEvent extends {
-															(
-																event: infer E0,
-																listener: (...args: infer A0) => void,
-															);
-															(
-																event: infer E1,
-																listener: (...args: infer A1) => void,
-															);
-															(
-																event: infer E2,
-																listener: (...args: infer A2) => void,
-															);
+															(event: infer E0, listener: (...args: infer A0) => void);
+															(event: infer E1, listener: (...args: infer A1) => void);
+															(event: infer E2, listener: (...args: infer A2) => void);
 
-															(
-																event: string,
-																listener: (...args: any[]) => void,
-															);
+															(event: string, listener: (...args: any[]) => void);
 														}
 													? TransformedEvent<TThis, E0, A0> &
 															TransformedEvent<TThis, E1, A1> &
 															TransformedEvent<TThis, E2, A2>
 													: TEvent extends {
-																(
-																	event: infer E0,
-																	listener: (...args: infer A0) => void,
-																);
-																(
-																	event: infer E1,
-																	listener: (...args: infer A1) => void,
-																);
+																(event: infer E0, listener: (...args: infer A0) => void);
+																(event: infer E1, listener: (...args: infer A1) => void);
 
-																(
-																	event: string,
-																	listener: (...args: any[]) => void,
-																);
+																(event: string, listener: (...args: any[]) => void);
 															}
-														? TransformedEvent<TThis, E0, A0> &
-																TransformedEvent<TThis, E1, A1>
+														? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1>
 														: TEvent extends {
-																	(
-																		event: infer E0,
-																		listener: (...args: infer A0) => void,
-																	);
+																	(event: infer E0, listener: (...args: infer A0) => void);
 
-																	(
-																		event: string,
-																		listener: (...args: any[]) => void,
-																	);
+																	(event: string, listener: (...args: any[]) => void);
 																}
 															? TransformedEvent<TThis, E0, A0>
 															: // eslint-disable-next-line @typescript-eslint/no-explicit-any

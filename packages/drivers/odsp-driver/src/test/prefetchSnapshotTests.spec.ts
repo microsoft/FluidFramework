@@ -27,21 +27,17 @@ import {
 	persistedCacheValueVersion,
 } from "../contracts.js";
 import { createOdspUrl } from "../createOdspUrl.js";
-import {
-	type IPrefetchSnapshotContents,
-	LocalPersistentCache,
-} from "../odspCache.js";
+import { type IPrefetchSnapshotContents, LocalPersistentCache } from "../odspCache.js";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
 import type { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
-import { createCacheSnapshotKey, type INewFileInfo } from "../odspUtils.js";
+import { type INewFileInfo, createCacheSnapshotKey } from "../odspUtils.js";
 import { prefetchLatestSnapshot } from "../prefetchLatestSnapshot.js";
 
 import { createResponse, mockFetchSingle, notFound } from "./mockFetch.js";
 
-const createUtLocalCache = (): LocalPersistentCache =>
-	new LocalPersistentCache();
+const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
 describe("Tests for prefetching snapshot", () => {
 	const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
@@ -76,15 +72,8 @@ describe("Tests for prefetching snapshot", () => {
 		};
 	}
 	const resolver = new OdspDriverUrlResolver();
-	let snapshotPrefetchResultCache: PromiseCache<
-		string,
-		IPrefetchSnapshotContents
-	>;
-	const odspUrl = createOdspUrl({
-		...newFileParams,
-		itemId,
-		dataStorePath: "/",
-	});
+	let snapshotPrefetchResultCache: PromiseCache<string, IPrefetchSnapshotContents>;
+	const odspUrl = createOdspUrl({ ...newFileParams, itemId, dataStorePath: "/" });
 
 	const odspSnapshot: IOdspSnapshot = {
 		id: "id",
@@ -148,10 +137,7 @@ describe("Tests for prefetching snapshot", () => {
 	const blobContents = new Map<string, ArrayBuffer>([
 		[
 			"bARD4RKvW4LL1KmaUKp6hUMSp",
-			stringToBuffer(
-				JSON.stringify({ summaryFormatVersion: 1, gcFeature: 0 }),
-				"utf8",
-			),
+			stringToBuffer(JSON.stringify({ summaryFormatVersion: 1, gcFeature: 0 }), "utf8"),
 		],
 	]);
 
@@ -179,18 +165,13 @@ describe("Tests for prefetching snapshot", () => {
 				localCache,
 				GetHostStoragePolicyInternal(),
 			);
-			snapshotPrefetchCacheKey = getKeyForCacheEntry(
-				createCacheSnapshotKey(resolved, false),
+			snapshotPrefetchCacheKey = getKeyForCacheEntry(createCacheSnapshotKey(resolved, false));
+			const documentservice = await odspDocumentServiceFactory.createDocumentService(
+				resolved,
+				mockLogger,
 			);
-			const documentservice =
-				await odspDocumentServiceFactory.createDocumentService(
-					resolved,
-					mockLogger,
-				);
-			service =
-				(await documentservice.connectToStorage()) as OdspDocumentStorageService;
-			snapshotPrefetchResultCache =
-				odspDocumentServiceFactory.snapshotPrefetchResultCache;
+			service = (await documentservice.connectToStorage()) as OdspDocumentStorageService;
+			snapshotPrefetchResultCache = odspDocumentServiceFactory.snapshotPrefetchResultCache;
 		});
 
 		afterEach(async () => {
@@ -231,9 +212,8 @@ describe("Tests for prefetching snapshot", () => {
 
 			assert.deepStrictEqual(version, expectedVersion, "incorrect version");
 			assert(
-				mockLogger.events.filter((event) =>
-					event.eventName.includes("ObtainSnapshot_end"),
-				).length === 1,
+				mockLogger.events.filter((event) => event.eventName.includes("ObtainSnapshot_end"))
+					.length === 1,
 				"1 Obtain snapshot event should be there",
 			);
 			assert(
@@ -278,9 +258,8 @@ describe("Tests for prefetching snapshot", () => {
 			);
 			assert.deepStrictEqual(version, expectedVersion, "incorrect version");
 			assert(
-				mockLogger.events.filter((event) =>
-					event.eventName.includes("ObtainSnapshot_end"),
-				).length === 1,
+				mockLogger.events.filter((event) => event.eventName.includes("ObtainSnapshot_end"))
+					.length === 1,
 				"1 Obtain snapshot event should be there",
 			);
 			assert(
@@ -332,18 +311,14 @@ describe("Tests for prefetching snapshot", () => {
 
 			assert.deepStrictEqual(version, expectedVersion, "incorrect version");
 			assert(
-				mockLogger.events.filter((event) =>
-					event.eventName.includes("ObtainSnapshot_end"),
-				).length === 1,
+				mockLogger.events.filter((event) => event.eventName.includes("ObtainSnapshot_end"))
+					.length === 1,
 				"1 Obtain snapshot event should be there",
 			);
 			const method = mockLogger.events.find((event) =>
 				event.eventName.includes("ObtainSnapshot_end"),
 			)?.method;
-			assert(
-				method === "cache" || method === "network",
-				"Source should be cache or network",
-			);
+			assert(method === "cache" || method === "network", "Source should be cache or network");
 		});
 
 		it("prefetching snapshot should result in snapshot source as either cache or prefetch if both pass", async () => {
@@ -383,9 +358,8 @@ describe("Tests for prefetching snapshot", () => {
 			const version = await service.getVersions(null, 1);
 			assert.deepStrictEqual(version, expectedVersion, "incorrect version");
 			assert(
-				mockLogger.events.filter((event) =>
-					event.eventName.includes("ObtainSnapshot_end"),
-				).length === 1,
+				mockLogger.events.filter((event) => event.eventName.includes("ObtainSnapshot_end"))
+					.length === 1,
 				"1 Obtain snapshot event should be there",
 			);
 			const method = mockLogger.events.find((event) =>
@@ -534,18 +508,13 @@ describe("Tests for prefetching snapshot", () => {
 				localCache,
 				hostPolicy,
 			);
-			snapshotPrefetchCacheKey = getKeyForCacheEntry(
-				createCacheSnapshotKey(resolved, true),
+			snapshotPrefetchCacheKey = getKeyForCacheEntry(createCacheSnapshotKey(resolved, true));
+			const documentservice = await odspDocumentServiceFactory.createDocumentService(
+				resolved,
+				mockLogger,
 			);
-			const documentservice =
-				await odspDocumentServiceFactory.createDocumentService(
-					resolved,
-					mockLogger,
-				);
-			service =
-				(await documentservice.connectToStorage()) as OdspDocumentStorageService;
-			snapshotPrefetchResultCache =
-				odspDocumentServiceFactory.snapshotPrefetchResultCache;
+			service = (await documentservice.connectToStorage()) as OdspDocumentStorageService;
+			snapshotPrefetchResultCache = odspDocumentServiceFactory.snapshotPrefetchResultCache;
 		});
 
 		afterEach(async () => {
@@ -669,8 +638,7 @@ describe("Tests for prefetching snapshot", () => {
 			fluidEpoch: "epoch1",
 			version: persistedCacheValueVersion,
 		};
-		const odspCompactSnapshotWithGroupId =
-			convertToCompactSnapshot(snapshotWithGroupId);
+		const odspCompactSnapshotWithGroupId = convertToCompactSnapshot(snapshotWithGroupId);
 		const snapshotTreeWithGroupIdToCompare: ISnapshotTree = {
 			blobs: { ...snapshotTreeWithGroupId.trees[".app"].blobs },
 			trees: {
@@ -689,18 +657,13 @@ describe("Tests for prefetching snapshot", () => {
 				localCache,
 				GetHostStoragePolicyInternal(),
 			);
-			snapshotPrefetchCacheKey = getKeyForCacheEntry(
-				createCacheSnapshotKey(resolved, false),
+			snapshotPrefetchCacheKey = getKeyForCacheEntry(createCacheSnapshotKey(resolved, false));
+			const documentservice = await odspDocumentServiceFactory.createDocumentService(
+				resolved,
+				mockLogger,
 			);
-			const documentservice =
-				await odspDocumentServiceFactory.createDocumentService(
-					resolved,
-					mockLogger,
-				);
-			service =
-				(await documentservice.connectToStorage()) as OdspDocumentStorageService;
-			snapshotPrefetchResultCache =
-				odspDocumentServiceFactory.snapshotPrefetchResultCache;
+			service = (await documentservice.connectToStorage()) as OdspDocumentStorageService;
+			snapshotPrefetchResultCache = odspDocumentServiceFactory.snapshotPrefetchResultCache;
 		});
 
 		afterEach(async () => {
@@ -731,10 +694,7 @@ describe("Tests for prefetching snapshot", () => {
 					),
 				async () =>
 					createResponse(
-						{
-							"x-fluid-epoch": "epoch1",
-							"content-type": "application/ms-fluid",
-						},
+						{ "x-fluid-epoch": "epoch1", "content-type": "application/ms-fluid" },
 						odspCompactSnapshotWithGroupId,
 						200,
 					),
@@ -747,9 +707,8 @@ describe("Tests for prefetching snapshot", () => {
 				"incorrect snapshot",
 			);
 			assert(
-				mockLogger.events.filter((event) =>
-					event.eventName.includes("ObtainSnapshot_end"),
-				).length === 1,
+				mockLogger.events.filter((event) => event.eventName.includes("ObtainSnapshot_end"))
+					.length === 1,
 				"1 Obtain snapshot event should be there",
 			);
 			assert(
@@ -787,10 +746,7 @@ describe("Tests for prefetching snapshot", () => {
 				async () => service.getSnapshot(),
 				async () =>
 					createResponse(
-						{
-							"x-fluid-epoch": "epoch1",
-							"content-type": "application/ms-fluid",
-						},
+						{ "x-fluid-epoch": "epoch1", "content-type": "application/ms-fluid" },
 						odspCompactSnapshotWithGroupId,
 						200,
 					),
@@ -801,9 +757,8 @@ describe("Tests for prefetching snapshot", () => {
 				"incorrect snapshot",
 			);
 			assert(
-				mockLogger.events.filter((event) =>
-					event.eventName.includes("ObtainSnapshot_end"),
-				).length === 1,
+				mockLogger.events.filter((event) => event.eventName.includes("ObtainSnapshot_end"))
+					.length === 1,
 				"1 Obtain snapshot event should be there",
 			);
 			assert(
@@ -847,10 +802,7 @@ describe("Tests for prefetching snapshot", () => {
 				async () => service.getSnapshot(),
 				async () =>
 					createResponse(
-						{
-							"x-fluid-epoch": "epoch1",
-							"content-type": "application/ms-fluid",
-						},
+						{ "x-fluid-epoch": "epoch1", "content-type": "application/ms-fluid" },
 						odspCompactSnapshotWithGroupId,
 						200,
 					),
@@ -862,18 +814,14 @@ describe("Tests for prefetching snapshot", () => {
 				"incorrect snapshot",
 			);
 			assert(
-				mockLogger.events.filter((event) =>
-					event.eventName.includes("ObtainSnapshot_end"),
-				).length === 1,
+				mockLogger.events.filter((event) => event.eventName.includes("ObtainSnapshot_end"))
+					.length === 1,
 				"1 Obtain snapshot event should be there",
 			);
 			const method = mockLogger.events.find((event) =>
 				event.eventName.includes("ObtainSnapshot_end"),
 			)?.method;
-			assert(
-				method === "cache" || method === "network",
-				"Source should be cache or network",
-			);
+			assert(method === "cache" || method === "network", "Source should be cache or network");
 		});
 
 		it("prefetching snapshot should result in snapshot source as either cache or prefetch if both pass", async () => {
@@ -904,10 +852,7 @@ describe("Tests for prefetching snapshot", () => {
 					),
 				async () =>
 					createResponse(
-						{
-							"x-fluid-epoch": "epoch1",
-							"content-type": "application/ms-fluid",
-						},
+						{ "x-fluid-epoch": "epoch1", "content-type": "application/ms-fluid" },
 						odspCompactSnapshotWithGroupId,
 						200,
 					),
@@ -921,9 +866,8 @@ describe("Tests for prefetching snapshot", () => {
 			);
 
 			assert(
-				mockLogger.events.filter((event) =>
-					event.eventName.includes("ObtainSnapshot_end"),
-				).length === 1,
+				mockLogger.events.filter((event) => event.eventName.includes("ObtainSnapshot_end"))
+					.length === 1,
 				"1 Obtain snapshot event should be there",
 			);
 			const method = mockLogger.events.find((event) =>
@@ -946,8 +890,7 @@ describe("Tests for prefetching snapshot", () => {
 			sequenceNumber: 0,
 			snapshotFormatV: 1,
 		};
-		const odspCompactSnapshotWithGroupId =
-			convertToCompactSnapshot(snapshotWithGroupId);
+		const odspCompactSnapshotWithGroupId = convertToCompactSnapshot(snapshotWithGroupId);
 		const snapshotTreeWithGroupIdToCompare: ISnapshotTree = {
 			blobs: { ...snapshotTreeWithGroupId.trees[".app"].blobs },
 			trees: {
@@ -968,18 +911,13 @@ describe("Tests for prefetching snapshot", () => {
 				localCache,
 				hostPolicy,
 			);
-			snapshotPrefetchCacheKey = getKeyForCacheEntry(
-				createCacheSnapshotKey(resolved, false),
+			snapshotPrefetchCacheKey = getKeyForCacheEntry(createCacheSnapshotKey(resolved, false));
+			const documentservice = await odspDocumentServiceFactory.createDocumentService(
+				resolved,
+				mockLogger,
 			);
-			const documentservice =
-				await odspDocumentServiceFactory.createDocumentService(
-					resolved,
-					mockLogger,
-				);
-			service =
-				(await documentservice.connectToStorage()) as OdspDocumentStorageService;
-			snapshotPrefetchResultCache =
-				odspDocumentServiceFactory.snapshotPrefetchResultCache;
+			service = (await documentservice.connectToStorage()) as OdspDocumentStorageService;
+			snapshotPrefetchResultCache = odspDocumentServiceFactory.snapshotPrefetchResultCache;
 		});
 
 		afterEach(async () => {
@@ -1010,10 +948,7 @@ describe("Tests for prefetching snapshot", () => {
 					),
 				async () =>
 					createResponse(
-						{
-							"x-fluid-epoch": "epoch1",
-							"content-type": "application/ms-fluid",
-						},
+						{ "x-fluid-epoch": "epoch1", "content-type": "application/ms-fluid" },
 						odspCompactSnapshotWithGroupId,
 						200,
 					),

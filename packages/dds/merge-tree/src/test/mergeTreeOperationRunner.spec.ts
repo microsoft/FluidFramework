@@ -6,9 +6,9 @@
 import { strict as assert } from "node:assert";
 
 import {
+	type IConfigRange,
 	doOverRange,
 	doOverRanges,
-	type IConfigRange,
 	resolveRange,
 	resolveRanges,
 } from "./mergeTreeOperationRunner.js";
@@ -76,12 +76,7 @@ describe("MergeTreeOperationRunner combinatorial utils", () => {
 	];
 
 	describe("doOverRange", () => {
-		for (const {
-			name,
-			range,
-			defaultGrowthFunc,
-			expected,
-		} of oneRangeTestCases) {
+		for (const { name, range, defaultGrowthFunc, expected } of oneRangeTestCases) {
 			it(name, () => {
 				const actual: number[] = [];
 				doOverRange(range, defaultGrowthFunc, (i) => actual.push(i));
@@ -91,12 +86,7 @@ describe("MergeTreeOperationRunner combinatorial utils", () => {
 	});
 
 	describe("resolveRange", () => {
-		for (const {
-			name,
-			range,
-			defaultGrowthFunc,
-			expected,
-		} of oneRangeTestCases) {
+		for (const { name, range, defaultGrowthFunc, expected } of oneRangeTestCases) {
 			it(name, () => {
 				assert.deepEqual(resolveRange(range, defaultGrowthFunc), expected);
 			});
@@ -105,40 +95,39 @@ describe("MergeTreeOperationRunner combinatorial utils", () => {
 
 	describe("doOverRanges", () => {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const doOverRangesCases: { name: string; ranges: any; expected: any[] }[] =
-			[
-				{
-					name: "with no ranges",
-					ranges: { a: 1, growthFunc: constant },
-					expected: [{}],
+		const doOverRangesCases: { name: string; ranges: any; expected: any[] }[] = [
+			{
+				name: "with no ranges",
+				ranges: { a: 1, growthFunc: constant },
+				expected: [{}],
+			},
+			{
+				name: "with single property range",
+				ranges: { a: { min: 1, max: 2 }, growthFunc: plusOne },
+				expected: [{ a: 1 }, { a: 2 }],
+			},
+			{
+				name: "with single property range and a property without a range",
+				ranges: { a: { min: 1, max: 2 }, b: 3, growthFunc: plusOne },
+				expected: [{ a: 1 }, { a: 2 }],
+			},
+			{
+				name: "with multiple property ranges",
+				ranges: {
+					a: { min: 1, max: 5, growthFunc: timesTwo },
+					b: { min: 3, max: 4 },
+					growthFunc: plusOne,
 				},
-				{
-					name: "with single property range",
-					ranges: { a: { min: 1, max: 2 }, growthFunc: plusOne },
-					expected: [{ a: 1 }, { a: 2 }],
-				},
-				{
-					name: "with single property range and a property without a range",
-					ranges: { a: { min: 1, max: 2 }, b: 3, growthFunc: plusOne },
-					expected: [{ a: 1 }, { a: 2 }],
-				},
-				{
-					name: "with multiple property ranges",
-					ranges: {
-						a: { min: 1, max: 5, growthFunc: timesTwo },
-						b: { min: 3, max: 4 },
-						growthFunc: plusOne,
-					},
-					expected: [
-						{ a: 1, b: 3 },
-						{ a: 1, b: 4 },
-						{ a: 2, b: 3 },
-						{ a: 2, b: 4 },
-						{ a: 4, b: 3 },
-						{ a: 4, b: 4 },
-					],
-				},
-			];
+				expected: [
+					{ a: 1, b: 3 },
+					{ a: 1, b: 4 },
+					{ a: 2, b: 3 },
+					{ a: 2, b: 4 },
+					{ a: 4, b: 3 },
+					{ a: 4, b: 4 },
+				],
+			},
+		];
 
 		for (const { name, ranges, expected } of doOverRangesCases) {
 			it(name, () => {

@@ -8,8 +8,8 @@ import { SharedTree } from "@fluidframework/tree/internal";
 import type { DataObjectTypes, TreeDataObject } from "../data-objects/index.js";
 
 import {
-	type DataObjectFactoryProps,
 	PureDataObjectFactory,
+	type DataObjectFactoryProps,
 } from "./pureDataObjectFactory.js";
 
 /**
@@ -24,9 +24,7 @@ export class TreeDataObjectFactory<
 	TDataObject extends TreeDataObject<TDataObjectTypes>,
 	TDataObjectTypes extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObjectFactory<TDataObject, TDataObjectTypes> {
-	public constructor(
-		props: DataObjectFactoryProps<TDataObject, TDataObjectTypes>,
-	) {
+	public constructor(props: DataObjectFactoryProps<TDataObject, TDataObjectTypes>) {
 		const newProps = {
 			...props,
 			sharedObjects: props.sharedObjects ? [...props.sharedObjects] : [],

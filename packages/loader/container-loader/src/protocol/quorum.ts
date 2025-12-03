@@ -5,19 +5,15 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { IQuorumClients, ISequencedClient } from "@fluidframework/driver-definitions";
 import type {
-	IQuorumClients,
-	ISequencedClient,
-} from "@fluidframework/driver-definitions";
-import type {
+	ISequencedDocumentMessage,
 	ICommittedProposal,
 	IQuorum,
 	IQuorumProposals,
-	ISequencedDocumentMessage,
 	ISequencedProposal,
 } from "@fluidframework/driver-definitions/internal";
 import events_pkg from "events_pkg";
-
 const { EventEmitter } = events_pkg;
 
 /**
@@ -163,9 +159,7 @@ export class QuorumProposals
 	 * Cached snapshot state, to avoid unnecessary deep clones on repeated snapshot calls.
 	 * Cleared immediately (set to undefined) when the cache becomes invalid.
 	 */
-	private proposalsSnapshotCache:
-		| QuorumProposalsSnapshot["proposals"]
-		| undefined;
+	private proposalsSnapshotCache: QuorumProposalsSnapshot["proposals"] | undefined;
 	private valuesSnapshotCache: QuorumProposalsSnapshot["values"] | undefined;
 
 	constructor(
@@ -197,13 +191,11 @@ export class QuorumProposals
 	 * @returns arrays of proposals and values
 	 */
 	public snapshot(): QuorumProposalsSnapshot {
-		this.proposalsSnapshotCache ??= [...this.proposals].map(
-			([sequenceNumber, proposal]) => [
-				sequenceNumber,
-				{ sequenceNumber, key: proposal.key, value: proposal.value },
-				[], // rejections, which has been removed
-			],
-		);
+		this.proposalsSnapshotCache ??= [...this.proposals].map(([sequenceNumber, proposal]) => [
+			sequenceNumber,
+			{ sequenceNumber, key: proposal.key, value: proposal.value },
+			[], // rejections, which has been removed
+		]);
 		this.valuesSnapshotCache ??= [...this.values];
 
 		return {
@@ -252,15 +244,9 @@ export class QuorumProposals
 			): void => {
 				if (sequencedCSN === clientSequenceNumber) {
 					thisProposalSequenceNumber = sequenceNumber;
-					this.stateEvents.off(
-						"localProposalSequenced",
-						localProposalSequencedHandler,
-					);
+					this.stateEvents.off("localProposalSequenced", localProposalSequencedHandler);
 					this.stateEvents.off("disconnected", disconnectedHandler);
-					this.stateEvents.on(
-						"localProposalApproved",
-						localProposalApprovedHandler,
-					);
+					this.stateEvents.on("localProposalApproved", localProposalApprovedHandler);
 				}
 			};
 			const localProposalApprovedHandler = (sequenceNumber: number): void => {
@@ -283,11 +269,7 @@ export class QuorumProposals
 					this.stateEvents.once("connected", () => {
 						// If we don't see the ack by the time reconnection finishes, it failed to send.
 						if (thisProposalSequenceNumber === undefined) {
-							reject(
-								new Error(
-									"Client disconnected without successfully sending proposal",
-								),
-							);
+							reject(new Error("Client disconnected without successfully sending proposal"));
 							removeListeners();
 						}
 					});
@@ -301,21 +283,12 @@ export class QuorumProposals
 			};
 			// Convenience function to clean up our listeners.
 			const removeListeners = (): void => {
-				this.stateEvents.off(
-					"localProposalSequenced",
-					localProposalSequencedHandler,
-				);
-				this.stateEvents.off(
-					"localProposalApproved",
-					localProposalApprovedHandler,
-				);
+				this.stateEvents.off("localProposalSequenced", localProposalSequencedHandler);
+				this.stateEvents.off("localProposalApproved", localProposalApprovedHandler);
 				this.stateEvents.off("disconnected", disconnectedHandler);
 				this.stateEvents.off("disposed", disposedHandler);
 			};
-			this.stateEvents.on(
-				"localProposalSequenced",
-				localProposalSequencedHandler,
-			);
+			this.stateEvents.on("localProposalSequenced", localProposalSequencedHandler);
 			this.stateEvents.on("disconnected", disconnectedHandler);
 			this.stateEvents.on("disposed", disposedHandler);
 		});
@@ -331,10 +304,7 @@ export class QuorumProposals
 		local: boolean,
 		clientSequenceNumber: number,
 	): void {
-		assert(
-			!this.proposals.has(sequenceNumber),
-			0x9a4 /* sequenceNumber not found */,
-		);
+		assert(!this.proposals.has(sequenceNumber), 0x9a4 /* sequenceNumber not found */);
 
 		const proposal = new PendingProposal(sequenceNumber, key, value, local);
 		this.proposals.set(sequenceNumber, proposal);
@@ -344,11 +314,7 @@ export class QuorumProposals
 		this.emit("addProposal", proposal);
 
 		if (local) {
-			this.stateEvents.emit(
-				"localProposalSequenced",
-				clientSequenceNumber,
-				sequenceNumber,
-			);
+			this.stateEvents.emit("localProposalSequenced", clientSequenceNumber, sequenceNumber);
 		}
 
 		// clear the proposal cache
@@ -455,10 +421,7 @@ export class QuorumProposals
  * they have agreed upon and any pending proposals.
  * @internal
  */
-export class Quorum
-	extends TypedEventEmitter<IQuorum["on"]>
-	implements IQuorum
-{
+export class Quorum extends TypedEventEmitter<IQuorum["on"]> implements IQuorum {
 	private readonly quorumClients: QuorumClients;
 	private readonly quorumProposals: QuorumProposals;
 	private readonly isDisposed: boolean = false;
@@ -475,20 +438,14 @@ export class Quorum
 		super();
 
 		this.quorumClients = new QuorumClients(members);
-		this.quorumClients.on(
-			"addMember",
-			(clientId: string, details: ISequencedClient) => {
-				this.emit("addMember", clientId, details);
-			},
-		);
+		this.quorumClients.on("addMember", (clientId: string, details: ISequencedClient) => {
+			this.emit("addMember", clientId, details);
+		});
 		this.quorumClients.on("removeMember", (clientId: string) => {
 			this.emit("removeMember", clientId);
 		});
 
-		this.quorumProposals = new QuorumProposals(
-			{ proposals, values },
-			sendProposal,
-		);
+		this.quorumProposals = new QuorumProposals({ proposals, values }, sendProposal);
 		this.quorumProposals.on("addProposal", (proposal: ISequencedProposal) => {
 			this.emit("addProposal", proposal);
 		});
@@ -500,13 +457,7 @@ export class Quorum
 				value: unknown,
 				approvalSequenceNumber: number,
 			) => {
-				this.emit(
-					"approveProposal",
-					sequenceNumber,
-					key,
-					value,
-					approvalSequenceNumber,
-				);
+				this.emit("approveProposal", sequenceNumber, key, value, approvalSequenceNumber);
 			},
 		);
 	}

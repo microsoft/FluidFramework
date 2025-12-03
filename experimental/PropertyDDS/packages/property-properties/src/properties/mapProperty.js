@@ -6,21 +6,14 @@
 /**
  * @fileoverview Definition of the map property class
  */
-const {
-	PathHelper,
-	TypeIdHelper,
-} = require("@fluid-experimental/property-changeset");
+const { PathHelper, TypeIdHelper } = require("@fluid-experimental/property-changeset");
 const { MSG } = require("@fluid-experimental/property-common").constants;
 const { ConsoleUtils } = require("@fluid-experimental/property-common");
 const _ = require("lodash");
 
-const {
-	AbstractStaticCollectionProperty,
-} = require("./abstractStaticCollectionProperty");
+const { AbstractStaticCollectionProperty } = require("./abstractStaticCollectionProperty");
 const { BaseProperty } = require("./baseProperty");
-const {
-	IndexedCollectionBaseProperty,
-} = require("./indexedCollectionBaseProperty");
+const { IndexedCollectionBaseProperty } = require("./indexedCollectionBaseProperty");
 const { LazyLoadedProperties: Property } = require("./lazyLoadedProperties");
 
 const PATH_TOKENS = BaseProperty.PATH_TOKENS;
@@ -90,16 +83,18 @@ export class MapProperty extends IndexedCollectionBaseProperty {
 	 */
 	_setValuesInternal(in_values, in_typed) {
 		if (this._containsPrimitiveTypes) {
-			_.each(in_values, (value, key) => {
-				if (this.has(key)) {
-					this.remove(key);
+			var that = this;
+			_.each(in_values, function (value, key) {
+				if (that.has(key)) {
+					that.remove(key);
 				}
 
-				this.insert(key, value);
+				that.insert(key, value);
 			});
 		} else {
-			_.each(in_values, (value, key) => {
-				var property = this.get(String(key), {
+			var that = this;
+			_.each(in_values, function (value, key) {
+				var property = that.get(String(key), {
 					referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER,
 				});
 				// if key exists in set replace its value else insert a new key/value
@@ -116,26 +111,26 @@ export class MapProperty extends IndexedCollectionBaseProperty {
 					}
 				} else {
 					if (value instanceof BaseProperty) {
-						this.insert(key, value);
+						that.insert(key, value);
 					} else {
 						if (in_typed) {
-							this.insert(
+							that.insert(
 								key,
 								Property.PropertyFactory._createProperty(
-									value.typeid || this._typeid,
+									value.typeid || that._typeid,
 									null,
 									value.value,
-									this._getScope(),
+									that._getScope(),
 								),
 							);
 						} else {
-							this.insert(
+							that.insert(
 								key,
 								Property.PropertyFactory._createProperty(
-									this._typeid,
+									that._typeid,
 									null,
 									value,
-									this._getScope(),
+									that._getScope(),
 								),
 							);
 						}
@@ -300,10 +295,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
 	set(in_key, in_property) {
 		this._checkIsNotReadOnly(true);
 		if (this._dynamicChildren[in_key] !== in_property) {
-			if (
-				this._containsPrimitiveTypes === false &&
-				in_property.getParent() !== undefined
-			) {
+			if (this._containsPrimitiveTypes === false && in_property.getParent() !== undefined) {
 				throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
 			}
 			if (this._dynamicChildren[in_key] !== undefined) {
@@ -351,11 +343,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
 	get(in_ids, in_options) {
 		if (_.isArray(in_ids)) {
 			// Forward handling of arrays to the BaseProperty function
-			return AbstractStaticCollectionProperty.prototype.get.call(
-				this,
-				in_ids,
-				in_options,
-			);
+			return AbstractStaticCollectionProperty.prototype.get.call(this, in_ids, in_options);
 		} else {
 			in_options = in_options || {};
 			in_options.referenceResolutionMode =
@@ -383,10 +371,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
 			}
 
 			// Handle automatic reference resolution
-			if (
-				in_options.referenceResolutionMode ===
-				BaseProperty.REFERENCE_RESOLUTION.ALWAYS
-			) {
+			if (in_options.referenceResolutionMode === BaseProperty.REFERENCE_RESOLUTION.ALWAYS) {
 				if (prop instanceof Property.ReferenceProperty) {
 					prop = prop.ref;
 				}
@@ -446,8 +431,9 @@ export class MapProperty extends IndexedCollectionBaseProperty {
 	 * Deletes all values from the Map
 	 */
 	clear() {
-		this.getIds().forEach((id) => {
-			this.remove(id);
+		var that = this;
+		this.getIds().forEach(function (id) {
+			that.remove(id);
 		});
 	}
 }

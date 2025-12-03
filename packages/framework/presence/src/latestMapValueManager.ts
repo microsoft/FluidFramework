@@ -15,7 +15,11 @@ import type {
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { PostUpdateAction, ValidatableOptionalState, ValueManager } from "./internalTypes.js";
+import type {
+	PostUpdateAction,
+	ValidatableOptionalState,
+	ValueManager,
+} from "./internalTypes.js";
 import {
 	asDeeplyReadonly,
 	asDeeplyReadonlyDeserializedJson,
@@ -86,8 +90,11 @@ export interface LatestMapClientData<
  * @sealed
  * @beta
  */
-export interface LatestMapItemUpdatedClientData<T, K extends string | number, TValueAccessor extends ValueAccessor<T>>
-	extends LatestClientData<T, TValueAccessor> {
+export interface LatestMapItemUpdatedClientData<
+	T,
+	K extends string | number,
+	TValueAccessor extends ValueAccessor<T>,
+> extends LatestClientData<T, TValueAccessor> {
 	/**
 	 * Key of the updated item.
 	 */
@@ -142,7 +149,9 @@ export interface LatestMapEvents<
 	 *
 	 * @eventProperty
 	 */
-	remoteItemUpdated: (updatedItem: LatestMapItemUpdatedClientData<T, K, TRemoteValueAccessor>) => void;
+	remoteItemUpdated: (
+		updatedItem: LatestMapItemUpdatedClientData<T, K, TRemoteValueAccessor>,
+	) => void;
 
 	/**
 	 * Raised when specific item of remote client is removed.
@@ -158,7 +167,10 @@ export interface LatestMapEvents<
 	 *
 	 * @eventProperty
 	 */
-	localItemUpdated: (updatedItem: { value: DeepReadonly<JsonSerializable<T>>; key: K }) => void;
+	localItemUpdated: (updatedItem: {
+		value: DeepReadonly<JsonSerializable<T>>;
+		key: K;
+	}) => void;
 
 	/**
 	 * Raised when specific local item is removed.
@@ -166,7 +178,9 @@ export interface LatestMapEvents<
 	 *
 	 * @eventProperty
 	 */
-	localItemRemoved: (removedItem: { key: K }) => void;
+	localItemRemoved: (removedItem: {
+		key: K;
+	}) => void;
 }
 
 /**
@@ -175,7 +189,11 @@ export interface LatestMapEvents<
  * @sealed
  * @beta
  */
-export type LatestMapRawEvents<T, K extends string | number> = LatestMapEvents<T, K, RawValueAccessor<T>>;
+export type LatestMapRawEvents<T, K extends string | number> = LatestMapEvents<
+	T,
+	K,
+	RawValueAccessor<T>
+>;
 
 /**
  * Map of local client's values. Modifications are transmitted to all other connected clients.
@@ -207,7 +225,11 @@ export interface StateMap<K extends string | number, V> {
 	 * Executes a provided function once per each key/value pair in the StateMap, in arbitrary order.
 	 */
 	forEach(
-		callbackfn: (value: DeepReadonly<JsonDeserialized<V>>, key: K, map: StateMap<K, V>) => void,
+		callbackfn: (
+			value: DeepReadonly<JsonDeserialized<V>>,
+			key: K,
+			map: StateMap<K, V>,
+		) => void,
 		thisArg?: unknown,
 	): void;
 
@@ -312,7 +334,11 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 		return hasKey;
 	}
 	public forEach(
-		callbackfn: (value: DeepReadonly<JsonDeserialized<T>>, key: K, map: StateMap<K, T>) => void,
+		callbackfn: (
+			value: DeepReadonly<JsonDeserialized<T>>,
+			key: K,
+			map: StateMap<K, T>,
+		) => void,
 		thisArg?: unknown,
 	): void {
 		for (const [key, item] of objectEntries(this.value.items)) {
@@ -411,10 +437,20 @@ export interface LatestMap<
  * @sealed
  * @beta
  */
-export type LatestMapRaw<T, Keys extends string | number = string | number> = LatestMap<T, Keys, RawValueAccessor<T>>;
+export type LatestMapRaw<T, Keys extends string | number = string | number> = LatestMap<
+	T,
+	Keys,
+	RawValueAccessor<T>
+>;
 
-class LatestMapValueManagerImpl<T, RegistrationKey extends string, Keys extends string | number = string | number>
-	implements LatestMapRaw<T, Keys>, LatestMap<T, Keys>, Required<ValueManager<T, InternalTypes.MapValueState<T, Keys>>>
+class LatestMapValueManagerImpl<
+	T,
+	RegistrationKey extends string,
+	Keys extends string | number = string | number,
+> implements
+		LatestMapRaw<T, Keys>,
+		LatestMap<T, Keys>,
+		Required<ValueManager<T, InternalTypes.MapValueState<T, Keys>>>
 {
 	public readonly events = createEmitter<LatestMapEvents<T, Keys, ValueAccessor<T>>>();
 	public readonly controls: OptionalBroadcastControl;
@@ -432,11 +468,15 @@ class LatestMapValueManagerImpl<T, RegistrationKey extends string, Keys extends 
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
 
-		this.local = new ValueMapImpl<T, Keys>(value, this.events, (updates: InternalTypes.MapValueState<T, Keys>) => {
-			datastore.localUpdate(key, updates, {
-				allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
-			});
-		});
+		this.local = new ValueMapImpl<T, Keys>(
+			value,
+			this.events,
+			(updates: InternalTypes.MapValueState<T, Keys>) => {
+				datastore.localUpdate(key, updates, {
+					allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
+				});
+			},
+		);
 	}
 
 	public get presence(): Presence {
@@ -610,7 +650,11 @@ export interface LatestMapFactory {
 	 */
 	<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(
 		args: LatestMapArguments<T, Keys>,
-	): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
+	): InternalTypes.ManagerFactory<
+		RegistrationKey,
+		InternalTypes.MapValueState<T, Keys>,
+		LatestMap<T, Keys>
+	>;
 
 	/**
 	 * Factory for creating a {@link LatestMapRaw} State object.
@@ -621,7 +665,11 @@ export interface LatestMapFactory {
 	 */
 	<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(
 		args?: LatestMapArgumentsRaw<T, Keys>,
-	): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
+	): InternalTypes.ManagerFactory<
+		RegistrationKey,
+		InternalTypes.MapValueState<T, Keys>,
+		LatestMapRaw<T, Keys>
+	>;
 }
 
 // #endregion
@@ -662,14 +710,27 @@ export const latestMap: LatestMapFactory = <
 	}
 	const factory = (
 		key: RegistrationKey,
-		datastoreHandle: InternalTypes.StateDatastoreHandle<RegistrationKey, InternalTypes.MapValueState<T, Keys>>,
+		datastoreHandle: InternalTypes.StateDatastoreHandle<
+			RegistrationKey,
+			InternalTypes.MapValueState<T, Keys>
+		>,
 	): {
 		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
 		manager: InternalTypes.StateValue<LatestMapRaw<T, Keys> & LatestMap<T, Keys>>;
 	} => ({
 		initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
-		manager: brandIVM<LatestMapValueManagerImpl<T, RegistrationKey, Keys>, T, InternalTypes.MapValueState<T, Keys>>(
-			new LatestMapValueManagerImpl(key, datastoreFromHandle(datastoreHandle), value, settings, validator),
+		manager: brandIVM<
+			LatestMapValueManagerImpl<T, RegistrationKey, Keys>,
+			T,
+			InternalTypes.MapValueState<T, Keys>
+		>(
+			new LatestMapValueManagerImpl(
+				key,
+				datastoreFromHandle(datastoreHandle),
+				value,
+				settings,
+				validator,
+			),
 		),
 	});
 	return Object.assign(factory, { instanceBase: LatestMapValueManagerImpl });

@@ -11,23 +11,12 @@
  * Current version: 2.74.0
  */
 
-import type {
-	FullType,
-	MinimalType,
-	requireAssignableTo,
-	TypeOnly,
-} from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/datastore-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> =
-	| TypeOnly<T>
-	| MinimalType<T>
-	| FullType<T>
-	| typeof old
-	| typeof current
-	| requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -36,11 +25,7 @@ declare type MakeUnusedImportErrorsGoAway<T> =
  * typeValidation.broken:
  * "Class_FluidDataStoreRuntime": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_FluidDataStoreRuntime =
-	requireAssignableTo<
-		TypeOnly<old.FluidDataStoreRuntime>,
-		TypeOnly<current.FluidDataStoreRuntime>
-	>;
+declare type old_as_current_for_Class_FluidDataStoreRuntime = requireAssignableTo<TypeOnly<old.FluidDataStoreRuntime>, TypeOnly<current.FluidDataStoreRuntime>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -49,11 +34,7 @@ declare type old_as_current_for_Class_FluidDataStoreRuntime =
  * typeValidation.broken:
  * "Class_FluidDataStoreRuntime": {"backCompat": false}
  */
-declare type current_as_old_for_Class_FluidDataStoreRuntime =
-	requireAssignableTo<
-		TypeOnly<current.FluidDataStoreRuntime>,
-		TypeOnly<old.FluidDataStoreRuntime>
-	>;
+declare type current_as_old_for_Class_FluidDataStoreRuntime = requireAssignableTo<TypeOnly<current.FluidDataStoreRuntime>, TypeOnly<old.FluidDataStoreRuntime>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -62,10 +43,7 @@ declare type current_as_old_for_Class_FluidDataStoreRuntime =
  * typeValidation.broken:
  * "Class_FluidObjectHandle": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_FluidObjectHandle = requireAssignableTo<
-	TypeOnly<old.FluidObjectHandle>,
-	TypeOnly<current.FluidObjectHandle>
->;
+declare type old_as_current_for_Class_FluidObjectHandle = requireAssignableTo<TypeOnly<old.FluidObjectHandle>, TypeOnly<current.FluidObjectHandle>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -74,10 +52,7 @@ declare type old_as_current_for_Class_FluidObjectHandle = requireAssignableTo<
  * typeValidation.broken:
  * "Class_FluidObjectHandle": {"backCompat": false}
  */
-declare type current_as_old_for_Class_FluidObjectHandle = requireAssignableTo<
-	TypeOnly<current.FluidObjectHandle>,
-	TypeOnly<old.FluidObjectHandle>
->;
+declare type current_as_old_for_Class_FluidObjectHandle = requireAssignableTo<TypeOnly<current.FluidObjectHandle>, TypeOnly<old.FluidObjectHandle>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -86,11 +61,7 @@ declare type current_as_old_for_Class_FluidObjectHandle = requireAssignableTo<
  * typeValidation.broken:
  * "ClassStatics_FluidDataStoreRuntime": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_FluidDataStoreRuntime =
-	requireAssignableTo<
-		TypeOnly<typeof current.FluidDataStoreRuntime>,
-		TypeOnly<typeof old.FluidDataStoreRuntime>
-	>;
+declare type current_as_old_for_ClassStatics_FluidDataStoreRuntime = requireAssignableTo<TypeOnly<typeof current.FluidDataStoreRuntime>, TypeOnly<typeof old.FluidDataStoreRuntime>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -99,11 +70,7 @@ declare type current_as_old_for_ClassStatics_FluidDataStoreRuntime =
  * typeValidation.broken:
  * "ClassStatics_FluidObjectHandle": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_FluidObjectHandle =
-	requireAssignableTo<
-		TypeOnly<typeof current.FluidObjectHandle>,
-		TypeOnly<typeof old.FluidObjectHandle>
-	>;
+declare type current_as_old_for_ClassStatics_FluidObjectHandle = requireAssignableTo<TypeOnly<typeof current.FluidObjectHandle>, TypeOnly<typeof old.FluidObjectHandle>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -112,10 +79,7 @@ declare type current_as_old_for_ClassStatics_FluidObjectHandle =
  * typeValidation.broken:
  * "Enum_DataStoreMessageType": {"forwardCompat": false}
  */
-declare type old_as_current_for_Enum_DataStoreMessageType = requireAssignableTo<
-	TypeOnly<old.DataStoreMessageType>,
-	TypeOnly<current.DataStoreMessageType>
->;
+declare type old_as_current_for_Enum_DataStoreMessageType = requireAssignableTo<TypeOnly<old.DataStoreMessageType>, TypeOnly<current.DataStoreMessageType>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -124,10 +88,7 @@ declare type old_as_current_for_Enum_DataStoreMessageType = requireAssignableTo<
  * typeValidation.broken:
  * "Enum_DataStoreMessageType": {"backCompat": false}
  */
-declare type current_as_old_for_Enum_DataStoreMessageType = requireAssignableTo<
-	TypeOnly<current.DataStoreMessageType>,
-	TypeOnly<old.DataStoreMessageType>
->;
+declare type current_as_old_for_Enum_DataStoreMessageType = requireAssignableTo<TypeOnly<current.DataStoreMessageType>, TypeOnly<old.DataStoreMessageType>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -136,11 +97,7 @@ declare type current_as_old_for_Enum_DataStoreMessageType = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ISharedObjectRegistry": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISharedObjectRegistry =
-	requireAssignableTo<
-		TypeOnly<old.ISharedObjectRegistry>,
-		TypeOnly<current.ISharedObjectRegistry>
-	>;
+declare type old_as_current_for_Interface_ISharedObjectRegistry = requireAssignableTo<TypeOnly<old.ISharedObjectRegistry>, TypeOnly<current.ISharedObjectRegistry>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -149,11 +106,7 @@ declare type old_as_current_for_Interface_ISharedObjectRegistry =
  * typeValidation.broken:
  * "Interface_ISharedObjectRegistry": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISharedObjectRegistry =
-	requireAssignableTo<
-		TypeOnly<current.ISharedObjectRegistry>,
-		TypeOnly<old.ISharedObjectRegistry>
-	>;
+declare type current_as_old_for_Interface_ISharedObjectRegistry = requireAssignableTo<TypeOnly<current.ISharedObjectRegistry>, TypeOnly<old.ISharedObjectRegistry>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -162,11 +115,7 @@ declare type current_as_old_for_Interface_ISharedObjectRegistry =
  * typeValidation.broken:
  * "Variable_mixinRequestHandler": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_mixinRequestHandler =
-	requireAssignableTo<
-		TypeOnly<typeof current.mixinRequestHandler>,
-		TypeOnly<typeof old.mixinRequestHandler>
-	>;
+declare type current_as_old_for_Variable_mixinRequestHandler = requireAssignableTo<TypeOnly<typeof current.mixinRequestHandler>, TypeOnly<typeof old.mixinRequestHandler>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -175,8 +124,4 @@ declare type current_as_old_for_Variable_mixinRequestHandler =
  * typeValidation.broken:
  * "Variable_mixinSummaryHandler": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_mixinSummaryHandler =
-	requireAssignableTo<
-		TypeOnly<typeof current.mixinSummaryHandler>,
-		TypeOnly<typeof old.mixinSummaryHandler>
-	>;
+declare type current_as_old_for_Variable_mixinSummaryHandler = requireAssignableTo<TypeOnly<typeof current.mixinSummaryHandler>, TypeOnly<typeof old.mixinSummaryHandler>>

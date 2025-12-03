@@ -36,10 +36,7 @@ describe("changelogs", () => {
 			await updateChangelogs(pkg, "minor");
 
 			// Verify no CHANGELOG.md was created
-			await assert.rejects(
-				async () => access(path.join(testDir, "CHANGELOG.md")),
-				/ENOENT/,
-			);
+			await assert.rejects(async () => access(path.join(testDir, "CHANGELOG.md")), /ENOENT/);
 		});
 
 		it("should skip changelog updates for workspace root packages", async () => {
@@ -53,10 +50,7 @@ describe("changelogs", () => {
 			await updateChangelogs(pkg, "minor");
 
 			// Verify no CHANGELOG.md was created
-			await assert.rejects(
-				async () => access(path.join(testDir, "CHANGELOG.md")),
-				/ENOENT/,
-			);
+			await assert.rejects(async () => access(path.join(testDir, "CHANGELOG.md")), /ENOENT/);
 		});
 
 		it("should use version override when provided", async () => {
@@ -295,10 +289,7 @@ describe("changelogs", () => {
 				isWorkspaceRoot: false,
 			} as IPackage;
 
-			await assert.rejects(
-				async () => updateChangelogs(pkg, "minor"),
-				/Failed to replace/,
-			);
+			await assert.rejects(async () => updateChangelogs(pkg, "minor"), /Failed to replace/);
 		});
 
 		it("should replace all occurrences of version string (global replace)", async () => {

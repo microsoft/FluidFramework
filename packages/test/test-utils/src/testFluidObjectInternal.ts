@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import type {
+import {
 	IFluidHandle,
-	IFluidLoadable,
 	IRequest,
 	IResponse,
+	type IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { fail } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
-import type {
-	IChannel,
+import {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
+	type IChannel,
 } from "@fluidframework/datastore-definitions/internal";
-import type {
+import {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions/internal";
@@ -60,11 +60,7 @@ export class TestFluidObjectInternal implements IFluidLoadable {
 			IChannelFactory<ISharedObject>
 		>,
 	) {
-		this.handle = new FluidObjectHandle(
-			this,
-			"",
-			runtime.objectsRoutingContext,
-		);
+		this.handle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
 	}
 
 	/**
@@ -73,9 +69,7 @@ export class TestFluidObjectInternal implements IFluidLoadable {
 	 * @param id - The id of the shared object to retrieve.
 	 */
 	public async getInitialSharedObject(id: string): Promise<IChannel> {
-		return (
-			(await this.runtime.getChannel(id)) ?? fail("Shared object not found")
-		);
+		return (await this.runtime.getChannel(id)) ?? fail("Shared object not found");
 	}
 
 	/**
@@ -87,8 +81,7 @@ export class TestFluidObjectInternal implements IFluidLoadable {
 		kind: SharedObjectKind<T>,
 		id: string,
 	): Promise<IChannel & T> {
-		const result =
-			(await this.runtime.getChannel(id)) ?? fail("Shared object not found");
+		const result = (await this.runtime.getChannel(id)) ?? fail("Shared object not found");
 		if (kind.is(result)) {
 			return result;
 		}
@@ -96,9 +89,7 @@ export class TestFluidObjectInternal implements IFluidLoadable {
 	}
 
 	public async request(request: IRequest): Promise<IResponse> {
-		return request.url === "" ||
-			request.url === "/" ||
-			request.url.startsWith("/?")
+		return request.url === "" || request.url === "/" || request.url.startsWith("/?")
 			? { mimeType: "fluid/object", status: 200, value: this }
 			: create404Response(request);
 	}
@@ -106,12 +97,8 @@ export class TestFluidObjectInternal implements IFluidLoadable {
 	public async initialize(existing: boolean) {
 		const doInitialization = async () => {
 			if (!existing) {
-				for (const [key, sharedObjectFactory] of this
-					.initialSharedObjectsFactories) {
-					const channel = this.runtime.createChannel(
-						key,
-						sharedObjectFactory.type,
-					);
+				for (const [key, sharedObjectFactory] of this.initialSharedObjectsFactories) {
+					const channel = this.runtime.createChannel(key, sharedObjectFactory.type);
 					(channel as ISharedObject).bindToContext();
 				}
 			}

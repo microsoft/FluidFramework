@@ -24,4 +24,4 @@ export type {
 	TokenResponse,
 } from "./interfaces.js";
 export { OdspClient } from "./odspClient.js";
-export type { IOdspTokenProvider } from "./token.js";
+export { type IOdspTokenProvider } from "./token.js";

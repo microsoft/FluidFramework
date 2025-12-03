@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { Stats } from "../stats.js";
 import type { IAppState, IBubble } from "../types.js";

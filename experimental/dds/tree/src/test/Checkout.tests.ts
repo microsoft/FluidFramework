@@ -3,28 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
-import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { strict as assert } from 'assert';
+
+import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
+import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
 import {
-	areRevisionViewsSemanticallyEqual,
 	Change,
-	type Checkout,
+	Checkout,
 	CheckoutEvent,
 	EditStatus,
 	EditValidationResult,
-	type SharedTree,
+	SharedTree,
 	SharedTreeEvent,
 	Side,
 	StablePlace,
 	StableRange,
+	areRevisionViewsSemanticallyEqual,
 	setTrait,
 } from '../index.js';
 
-import type { TestTree } from './utilities/TestNode.js';
-import { type SharedTreeTestingOptions, setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities.js';
+import { TestTree } from './utilities/TestNode.js';
+import { SharedTreeTestingOptions, setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities.js';
 
 /**
  * Checkout test suite

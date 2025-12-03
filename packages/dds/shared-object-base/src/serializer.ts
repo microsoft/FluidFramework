@@ -8,21 +8,18 @@ import type {
 	IFluidHandleContext,
 	IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
-import {
-	assert,
-	shallowCloneObject,
-} from "@fluidframework/core-utils/internal";
+import { assert, shallowCloneObject } from "@fluidframework/core-utils/internal";
 import {
 	encodeHandleForSerialization,
 	generateHandleContextPath,
-	type ISerializedHandle,
-	isFluidHandle,
 	isSerializedHandle,
-	RemoteFluidObjectHandle,
+	isFluidHandle,
 	toFluidHandleInternal,
+	type ISerializedHandle,
+	RemoteFluidObjectHandle,
 } from "@fluidframework/runtime-utils/internal";
 
-import { type ISharedObjectHandle, isISharedObjectHandle } from "./handle.js";
+import { isISharedObjectHandle, type ISharedObjectHandle } from "./handle.js";
 
 /**
  * @legacy @beta
@@ -88,10 +85,7 @@ export class FluidSerializer implements IFluidSerializer {
 	 * Any unbound handles encountered are bound to the provided IFluidHandle.
 	 */
 	public encode(input: unknown, bind: IFluidHandleInternal): unknown {
-		assert(
-			isISharedObjectHandle(bind),
-			0xb8c /* bind must be an ISharedObjectHandle */,
-		);
+		assert(isISharedObjectHandle(bind), 0xb8c /* bind must be an ISharedObjectHandle */);
 		// If the given 'input' cannot contain handles, return it immediately.  Otherwise,
 		// return the result of 'recursivelyReplace()'.
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -124,10 +118,7 @@ export class FluidSerializer implements IFluidSerializer {
 	 * being bound to the given bind context in the process.
 	 */
 	public stringify(input: unknown, bind: IFluidHandle): string {
-		assert(
-			isISharedObjectHandle(bind),
-			0xb8d /* bind must be an ISharedObjectHandle */,
-		);
+		assert(isISharedObjectHandle(bind), 0xb8d /* bind must be an ISharedObjectHandle */);
 		return JSON.stringify(input, (key, value) => this.encodeValue(value, bind));
 	}
 
@@ -145,10 +136,7 @@ export class FluidSerializer implements IFluidSerializer {
 	protected encodeValue(value: unknown, bind?: ISharedObjectHandle): unknown {
 		// If 'value' is an IFluidHandle return its encoded form.
 		if (isFluidHandle(value)) {
-			assert(
-				bind !== undefined,
-				0xa93 /* Cannot encode a handle without a bind context */,
-			);
+			assert(bind !== undefined, 0xa93 /* Cannot encode a handle without a bind context */);
 			return this.bindAndEncodeHandle(toFluidHandleInternal(value), bind);
 		}
 		return value;

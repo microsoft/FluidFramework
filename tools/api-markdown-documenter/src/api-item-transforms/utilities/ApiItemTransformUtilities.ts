@@ -11,19 +11,19 @@ import type { Link } from "mdast";
 import type { SectionHeading } from "../../mdast/index.js";
 import {
 	getApiItemKind,
-	getEffectiveReleaseLevel,
-	getFileSafeNameForApiItem,
 	getFilteredParent,
+	getFileSafeNameForApiItem,
 	type ValidApiItemKind,
+	getEffectiveReleaseLevel,
 } from "../../utilities/index.js";
 import {
-	type ApiItemTransformationConfiguration,
-	type DocumentationHierarchyConfiguration,
-	type DocumentHierarchyConfiguration,
 	FolderDocumentPlacement,
-	type FolderHierarchyConfiguration,
-	type HierarchyConfiguration,
 	HierarchyKind,
+	type ApiItemTransformationConfiguration,
+	type DocumentHierarchyConfiguration,
+	type FolderHierarchyConfiguration,
+	type DocumentationHierarchyConfiguration,
+	type HierarchyConfiguration,
 } from "../configuration/index.js";
 
 /**
@@ -34,8 +34,7 @@ import {
  * API item paired with its hierarchy config.
  */
 export interface ApiItemWithHierarchy<
-	THierarchy extends
-		DocumentationHierarchyConfiguration = DocumentationHierarchyConfiguration,
+	THierarchy extends DocumentationHierarchyConfiguration = DocumentationHierarchyConfiguration,
 > {
 	readonly apiItem: ApiItem;
 	readonly hierarchy: THierarchy;
@@ -143,9 +142,7 @@ function findInHierarchy(
 function getFirstAncestorWithOwnDocument(
 	apiItem: ApiItem,
 	hierarchyConfig: HierarchyConfiguration,
-): ApiItemWithHierarchy<
-	DocumentHierarchyConfiguration | FolderHierarchyConfiguration
-> {
+): ApiItemWithHierarchy<DocumentHierarchyConfiguration | FolderHierarchyConfiguration> {
 	// Walk parentage until we reach an item kind that gets rendered to its own document.
 	// That is the document we will target with the generated link.
 	const documentItem = findInHierarchy(apiItem, (item) =>
@@ -185,10 +182,7 @@ export function getDocumentPathForApiItem(
 	apiItem: ApiItem,
 	hierarchyConfig: HierarchyConfiguration,
 ): string {
-	const targetDocument = getFirstAncestorWithOwnDocument(
-		apiItem,
-		hierarchyConfig,
-	);
+	const targetDocument = getFirstAncestorWithOwnDocument(apiItem, hierarchyConfig);
 	const targetDocumentName = hierarchyConfig.getDocumentName(
 		targetDocument.apiItem,
 		hierarchyConfig,
@@ -200,30 +194,21 @@ export function getDocumentPathForApiItem(
 	// to determine whether or not it should be placed inside or outside that folder.
 	if (
 		targetDocument.hierarchy.kind === HierarchyKind.Folder &&
-		targetDocument.hierarchy.documentPlacement ===
-			FolderDocumentPlacement.Inside
+		targetDocument.hierarchy.documentPlacement === FolderDocumentPlacement.Inside
 	) {
-		const folderName = hierarchyConfig.getFolderName(
-			targetDocument.apiItem,
-			hierarchyConfig,
-		);
+		const folderName = hierarchyConfig.getFolderName(targetDocument.apiItem, hierarchyConfig);
 		pathSegments.push(`${folderName}/${targetDocumentName}`);
 	} else {
 		pathSegments.push(targetDocumentName);
 	}
 
-	let currentItem: ApiItem | undefined = getFilteredParent(
-		targetDocument.apiItem,
-	);
+	let currentItem: ApiItem | undefined = getFilteredParent(targetDocument.apiItem);
 	while (currentItem !== undefined) {
 		const currentItemKind = getApiItemKind(currentItem);
 		const currentItemHierarchy = hierarchyConfig[currentItemKind];
 		// Push path segments for all folders in the hierarchy
 		if (currentItemHierarchy.kind === HierarchyKind.Folder) {
-			const folderName = hierarchyConfig.getFolderName(
-				currentItem,
-				hierarchyConfig,
-			);
+			const folderName = hierarchyConfig.getFolderName(currentItem, hierarchyConfig);
 			pathSegments.push(folderName);
 		}
 		currentItem = getFilteredParent(currentItem);
@@ -332,8 +317,7 @@ function getHeadingIdForApiItem(
 		const qualifiedName = getFileSafeNameForApiItem(hierarchyItem);
 
 		// Since we're walking up the tree, we'll build the string from the end for simplicity
-		baseName =
-			baseName === undefined ? qualifiedName : `${qualifiedName}-${baseName}`;
+		baseName = baseName === undefined ? qualifiedName : `${qualifiedName}-${baseName}`;
 
 		const parent = getFilteredParent(hierarchyItem);
 		if (parent === undefined) {

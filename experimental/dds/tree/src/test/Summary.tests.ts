@@ -3,30 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { type ISummaryBlob, SummaryType } from '@fluidframework/driver-definitions';
-import { assert, expect } from 'chai';
 import * as fs from 'fs';
 import { join } from 'path';
+
+import { ISummaryBlob, SummaryType } from '@fluidframework/driver-definitions';
+import { assert, expect } from 'chai';
 import { v5 } from 'uuid';
 
 import { Change, StablePlace, StableRange } from '../ChangeTypes.js';
-import { fail, type RecursiveMutable } from '../Common.js';
+import { RecursiveMutable, fail } from '../Common.js';
 import { areRevisionViewsSemanticallyEqual } from '../EditUtilities.js';
 import { convertEditIds } from '../IdConversion.js';
-import type { EditId, NodeId, SessionId, StableId, TraitLabel } from '../Identifiers.js';
+import { EditId, NodeId, SessionId, StableId, TraitLabel } from '../Identifiers.js';
 import { initialTree } from '../InitialTree.js';
-import { IdCompressor } from '../id-compressor/index.js';
 import { sequencedIdNormalizer } from '../NodeIdUtilities.js';
-import {
-	reservedIdCount,
-	type SharedTreeSummary,
-	type SharedTreeSummary_0_0_2,
-	WriteFormat,
-} from '../persisted-types/index.js';
 import { getChangeNodeFromView } from '../SerializationUtilities.js';
-import type { SharedTree } from '../SharedTree.js';
+import { SharedTree } from '../SharedTree.js';
 import { MutableStringInterner } from '../StringInterner.js';
-import { deserialize, getSummaryStatistics, type SummaryStatistics } from '../SummaryBackCompatibility.js';
+import { SummaryStatistics, deserialize, getSummaryStatistics } from '../SummaryBackCompatibility.js';
+import { IdCompressor } from '../id-compressor/index.js';
+import { SharedTreeSummary, SharedTreeSummary_0_0_2, WriteFormat, reservedIdCount } from '../persisted-types/index.js';
 
 import { expectDefined } from './utilities/TestCommon.js';
 import { TestFluidSerializer } from './utilities/TestSerializer.js';
@@ -335,7 +331,7 @@ export function runSummaryTests(title: string): void {
 						writeFormat: WriteFormat.v0_0_2,
 					});
 					applyTestEdits(resubmitTree);
-					const { tree } = await setUpLocalServerTestSharedTree({
+					const { tree: tree } = await setUpLocalServerTestSharedTree({
 						writeFormat: WriteFormat.v0_1_1,
 						testObjectProvider,
 					});

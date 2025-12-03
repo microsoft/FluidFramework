@@ -5,25 +5,8 @@
 
 import { strict as assert } from "node:assert";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
-import {
-	type FieldKey,
-	type FieldKindIdentifier,
-	LeafNodeStoredSchema,
-	MapNodeStoredSchema,
-	ObjectNodeStoredSchema,
-	type SchemaAndPolicy,
-	storedEmptyFieldSchema,
-	type TreeFieldStoredSchema,
-	type TreeNodeSchemaIdentifier,
-	type TreeNodeStoredSchema,
-	ValueSchema,
-} from "../../core/index.js";
-import {
-	defaultSchemaPolicy,
-	FieldKinds,
-	type FlexTreeHydratedContext,
-	MockNodeIdentifierManager,
-} from "../../feature-libraries/index.js";
+
+import { hydrate } from "./utils.js";
 import {
 	convertField,
 	normalizeFieldSchema,
@@ -33,12 +16,27 @@ import {
 	stringSchema,
 	TreeArrayNode,
 } from "../../simple-tree/index.js";
-import { brand } from "../../util/index.js";
 import {
-	checkoutWithContent,
-	fieldSchema as createFieldSchema,
-} from "../utils.js";
-import { hydrate } from "./utils.js";
+	LeafNodeStoredSchema,
+	MapNodeStoredSchema,
+	ObjectNodeStoredSchema,
+	storedEmptyFieldSchema,
+	ValueSchema,
+	type FieldKey,
+	type FieldKindIdentifier,
+	type SchemaAndPolicy,
+	type TreeFieldStoredSchema,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
+} from "../../core/index.js";
+import { brand } from "../../util/index.js";
+import { checkoutWithContent, fieldSchema as createFieldSchema } from "../utils.js";
+import {
+	defaultSchemaPolicy,
+	FieldKinds,
+	MockNodeIdentifierManager,
+	type FlexTreeHydratedContext,
+} from "../../feature-libraries/index.js";
 
 // proxies.spec.ts has a lot of coverage for this code, but is focused on other things, and more integration test oriented.
 // Here are a few key tests for prepareForInsertion covering cases which are known to be likely to have issues.
@@ -107,14 +105,8 @@ describe("prepareForInsertion", () => {
 		 * Creates a schema and policy and indicates stored schema validation should be performed.
 		 */
 		function createSchemaAndPolicy(
-			nodeSchema: Map<
-				TreeNodeSchemaIdentifier,
-				TreeNodeStoredSchema
-			> = new Map(),
-		): [
-			SchemaAndPolicy,
-			Pick<FlexTreeHydratedContext, "checkout" | "nodeKeyManager">,
-		] {
+			nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map(),
+		): [SchemaAndPolicy, Pick<FlexTreeHydratedContext, "checkout" | "nodeKeyManager">] {
 			const schemaAndPolicy = {
 				schema: {
 					nodeSchema,
@@ -143,9 +135,7 @@ describe("prepareForInsertion", () => {
 			] as const;
 		}
 
-		const outOfSchemaExpectedError = validateUsageError(
-			/Tree does not conform to schema/,
-		);
+		const outOfSchemaExpectedError = validateUsageError(/Tree does not conform to schema/);
 
 		const schemaFactory = new SchemaFactory("test");
 
@@ -186,9 +176,7 @@ describe("prepareForInsertion", () => {
 						content,
 						schemaFactory.string,
 						...schemaValidationPolicy,
-						createFieldSchema(FieldKinds.required, [
-							brand(stringSchema.identifier),
-						]),
+						createFieldSchema(FieldKinds.required, [brand(stringSchema.identifier)]),
 					);
 				});
 
@@ -201,9 +189,7 @@ describe("prepareForInsertion", () => {
 								content,
 								[schemaFactory.string],
 								...schemaValidationPolicy,
-								createFieldSchema(FieldKinds.required, [
-									brand(stringSchema.identifier),
-								]),
+								createFieldSchema(FieldKinds.required, [brand(stringSchema.identifier)]),
 							),
 						validateUsageError(/LeafNode_InvalidValue/),
 					);
@@ -232,9 +218,7 @@ describe("prepareForInsertion", () => {
 							[
 								brand(myObjectSchema.identifier),
 								new ObjectNodeStoredSchema(
-									new Map<FieldKey, TreeFieldStoredSchema>([
-										[brand("foo"), fieldSchema],
-									]),
+									new Map<FieldKey, TreeFieldStoredSchema>([[brand("foo"), fieldSchema]]),
 								),
 							],
 						]),
@@ -254,8 +238,7 @@ describe("prepareForInsertion", () => {
 				});
 
 				it("Failure", () => {
-					const schemaValidationPolicy =
-						createSchemaAndPolicyForObjectNode(true);
+					const schemaValidationPolicy = createSchemaAndPolicyForObjectNode(true);
 					assert.throws(
 						() =>
 							prepareForInsertionContextless(
@@ -278,11 +261,7 @@ describe("prepareForInsertion", () => {
 					// collaborate with other clients that have newer schema without erasing auxiliary data), they
 					// can use import-x/export tree APIs as noted in `ObjectSchemaOptions.allowUnknownOptionalFields`.
 					prepareForInsertionContextless(
-						{
-							foo: "Hello world",
-							notInSchemaKey: 5,
-							anotherNotInSchemaKey: false,
-						},
+						{ foo: "Hello world", notInSchemaKey: 5, anotherNotInSchemaKey: false },
 						[myObjectSchema, schemaFactory.string],
 						...schemaValidationPolicy,
 						convertField(
@@ -310,10 +289,7 @@ describe("prepareForInsertion", () => {
 									? new LeafNodeStoredSchema(ValueSchema.Number)
 									: new LeafNodeStoredSchema(ValueSchema.String),
 							],
-							[
-								brand(myMapSchema.identifier),
-								new MapNodeStoredSchema(fieldSchema),
-							],
+							[brand(myMapSchema.identifier), new MapNodeStoredSchema(fieldSchema)],
 						]),
 					);
 				}
@@ -353,9 +329,7 @@ describe("prepareForInsertion", () => {
 				const fieldSchema = getFieldSchema(FieldKinds.required, [
 					brand(schemaFactory.string.identifier),
 				]);
-				const myArrayNodeSchema = schemaFactory.array("myArrayNode", [
-					schemaFactory.string,
-				]);
+				const myArrayNodeSchema = schemaFactory.array("myArrayNode", [schemaFactory.string]);
 
 				function createSchemaAndPolicyForMapNode(invalid: boolean = false) {
 					return createSchemaAndPolicy(
@@ -367,10 +341,7 @@ describe("prepareForInsertion", () => {
 									? new LeafNodeStoredSchema(ValueSchema.Number)
 									: new LeafNodeStoredSchema(ValueSchema.String),
 							],
-							[
-								brand(myArrayNodeSchema.identifier),
-								new MapNodeStoredSchema(fieldSchema),
-							],
+							[brand(myArrayNodeSchema.identifier), new MapNodeStoredSchema(fieldSchema)],
 						]),
 					);
 				}
@@ -396,10 +367,7 @@ describe("prepareForInsertion", () => {
 								[myArrayNodeSchema, schemaFactory.string],
 								...schemaValidationPolicy,
 								convertField(
-									normalizeFieldSchema([
-										myArrayNodeSchema,
-										schemaFactory.string,
-									]),
+									normalizeFieldSchema([myArrayNodeSchema, schemaFactory.string]),
 									restrictiveStoredSchemaGenerationOptions,
 								),
 							),

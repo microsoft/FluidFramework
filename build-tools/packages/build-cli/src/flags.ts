@@ -21,16 +21,17 @@ function* supportedMonoRepoValues(): IterableIterator<MonoRepoKind> {
 	}
 }
 
-import type { ReleaseGroupName } from "@fluid-tools/build-infrastructure";
 import {
+	type VersionBumpType,
+	type VersionScheme,
 	isVersionBumpType,
 	isVersionBumpTypeExtended,
 	isVersionScheme,
-	type VersionBumpType,
-	type VersionScheme,
 } from "@fluid-tools/version-tools";
+
+import type { ReleaseGroupName } from "@fluid-tools/build-infrastructure";
 import type { DependencyUpdateType } from "./library/index.js";
-import { isReleaseGroup, type ReleaseGroup } from "./releaseGroups.js";
+import { type ReleaseGroup, isReleaseGroup } from "./releaseGroups.js";
 
 /**
  * A re-usable CLI flag to parse release groups.
@@ -152,15 +153,7 @@ export const bumpTypeFlag = Flags.custom<VersionBumpType>({
 export const dependencyUpdateTypeFlag = Flags.custom({
 	char: "t",
 	description: "Version bump type.",
-	options: [
-		"latest",
-		"newest",
-		"greatest",
-		"minor",
-		"patch",
-		"@next",
-		"@canary",
-	],
+	options: ["latest", "newest", "greatest", "minor", "patch", "@next", "@canary"],
 	parse: async (input) => {
 		return input as DependencyUpdateType;
 	},
@@ -185,8 +178,7 @@ export const versionSchemeFlag = Flags.custom<VersionScheme | undefined>({
  */
 export const testModeFlag = Flags.boolean({
 	default: false,
-	description:
-		"Enables test mode. This flag enables other flags used for testing.",
+	description: "Enables test mode. This flag enables other flags used for testing.",
 	hidden: true,
 	helpGroup: "TESTING",
 });
@@ -276,15 +268,13 @@ export const selectionFlags = {
 		helpGroup: "PACKAGE SELECTION",
 	}),
 	dir: Flags.directory({
-		description:
-			"Run on the package in this directory. Cannot be used with --all.",
+		description: "Run on the package in this directory. Cannot be used with --all.",
 		exclusive: ["all"],
 		helpGroup: "PACKAGE SELECTION",
 		multiple: true,
 	}),
 	packages: Flags.boolean({
-		description:
-			"Run on all independent packages in the repo. Cannot be used with --all.",
+		description: "Run on all independent packages in the repo. Cannot be used with --all.",
 		default: false,
 		exclusive: ["all"],
 		helpGroup: "PACKAGE SELECTION",
@@ -361,9 +351,7 @@ export const defaultSelectionKinds = ["dir", "all"] as const;
  * A type representing the possible ways a command can set its default selection criteria when no selection flags are
  * used.
  */
-export type PackageSelectionDefault =
-	| (typeof defaultSelectionKinds)[number]
-	| undefined;
+export type PackageSelectionDefault = (typeof defaultSelectionKinds)[number] | undefined;
 
 /**
  * A set of flags that can be used to filter selected packages in the repo.

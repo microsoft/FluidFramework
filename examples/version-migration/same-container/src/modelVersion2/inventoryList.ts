@@ -60,10 +60,7 @@ export class InventoryList extends DataObject implements IInventoryList {
 		const quantityMap: ISharedMap = SharedMap.create(this.runtime);
 		quantityMap.set(quantityKey, quantity);
 		const id = uuid();
-		this.root.set(id, {
-			name: nameString.handle,
-			quantity: quantityMap.handle,
-		});
+		this.root.set(id, { name: nameString.handle, quantity: quantityMap.handle });
 	};
 
 	public readonly deleteItem = (id: string) => {
@@ -88,11 +85,7 @@ export class InventoryList extends DataObject implements IInventoryList {
 		if (this.root.get(id) === undefined) {
 			return;
 		}
-		const newInventoryItem = new InventoryItem(
-			id,
-			nameSharedString,
-			quantitySharedMap,
-		);
+		const newInventoryItem = new InventoryItem(id, nameSharedString, quantitySharedMap);
 		this.inventoryItems.set(id, newInventoryItem);
 		this.emit("itemAdded", newInventoryItem);
 	};
@@ -129,10 +122,7 @@ export class InventoryList extends DataObject implements IInventoryList {
 				itemData.name.get(),
 				itemData.quantity.get(),
 			]);
-			this.inventoryItems.set(
-				id,
-				new InventoryItem(id, nameSharedString, quantitySharedMap),
-			);
+			this.inventoryItems.set(id, new InventoryItem(id, nameSharedString, quantitySharedMap));
 		}
 	}
 }

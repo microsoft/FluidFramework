@@ -6,14 +6,14 @@
 import {
 	Dropdown,
 	Link,
-	makeStyles,
 	Option,
 	Switch,
+	makeStyles,
 	teamsHighContrastTheme,
 	webDarkTheme,
 	webLightTheme,
 } from "@fluentui/react-components";
-import type React from "react";
+import React from "react";
 
 import { useTelemetryOptIn } from "../TelemetryUtils.js";
 import { ThemeOption, useThemeContext } from "../ThemeHelper.js";

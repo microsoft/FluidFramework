@@ -4,8 +4,8 @@
  */
 
 import type {
-	ISequencedDocumentMessage,
 	ISnapshot,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import type { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions/internal";
 
@@ -79,9 +79,7 @@ export interface IWriteSummaryResponse {
 	id: string;
 }
 
-export type OdspSummaryTreeEntry =
-	| IOdspSummaryTreeValueEntry
-	| IOdspSummaryTreeHandleEntry;
+export type OdspSummaryTreeEntry = IOdspSummaryTreeValueEntry | IOdspSummaryTreeHandleEntry;
 
 export interface IOdspSummaryTreeBaseEntry {
 	path: string;
@@ -180,24 +178,24 @@ export interface HostStoragePolicyInternal extends HostStoragePolicy {
 
 export interface ICreateFileResponse {
 	"@odata.context": string;
-	driveId: string;
-	id: string;
-	itemId: string;
-	itemUrl: string;
-	sequenceNumber: number;
+	"driveId": string;
+	"id": string;
+	"itemId": string;
+	"itemUrl": string;
+	"sequenceNumber": number;
 	// sharing object contains shareId, sharingLink data or error in the response
 	// TODO: use a stronger type
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	sharing?: any;
-	sharingLink?: string;
-	sharingLinkErrorReason?: string;
-	name: string;
+	"sharing"?: any;
+	"sharingLink"?: string;
+	"sharingLinkErrorReason"?: string;
+	"name": string;
 }
 
 export interface IRenameFileResponse {
 	"@odata.context": string;
-	id: string;
-	name: string;
+	"id": string;
+	"name": string;
 }
 
 export interface IVersionedValueWithEpoch {

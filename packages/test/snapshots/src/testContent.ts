@@ -4,8 +4,9 @@
  */
 
 import fs from "fs";
-import type * as Mocha from "mocha";
 import nodePath from "path";
+
+import * as Mocha from "mocha";
 
 import { _dirname } from "./dirname.cjs";
 

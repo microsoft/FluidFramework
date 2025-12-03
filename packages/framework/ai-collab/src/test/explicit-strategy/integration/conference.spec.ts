@@ -90,9 +90,7 @@ describe.skip("Agent Editing Integration", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = tree.viewWith(
-			new TreeViewConfiguration({ schema: Conference }),
-		);
+		const view = tree.viewWith(new TreeViewConfiguration({ schema: Conference }));
 
 		view.initialize({
 			name: "Roblox Creator x Investor Conference",
@@ -118,8 +116,7 @@ describe.skip("Agent Editing Integration", () => {
 						},
 						{
 							title: "What about fun?",
-							abstract:
-								"Can profit and the delightful smiles of the children coexist?",
+							abstract: "Can profit and the delightful smiles of the children coexist?",
 							sessionType: SessionType.keynote,
 							created: Date.now(),
 							lastChanged: Date.now(),

@@ -3,17 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
-import type {
-	IFluidHandle,
-	IFluidLoadable,
-} from "@fluidframework/core-interfaces";
-import type { ISummaryBlob } from "@fluidframework/driver-definitions";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { ISummaryBlob } from "@fluidframework/driver-definitions";
 import type { ISharedMap } from "@fluidframework/map/internal";
-import {
-	DetachedReferencePosition,
-	type PropertySet,
-} from "@fluidframework/merge-tree/internal";
+import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tree/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import type {
 	ISequenceIntervalCollection,
@@ -25,13 +21,12 @@ import type {
 // eslint-disable-next-line import-x/no-internal-modules
 import type { ISerializedIntervalCollectionV2 } from "@fluidframework/sequence/internal/test/intervalCollection";
 import {
-	type ChannelFactoryRegistry,
+	ChannelFactoryRegistry,
 	DataObjectFactoryType,
-	type ITestContainerConfig,
-	type ITestFluidObject,
-	type ITestObjectProvider,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
 
 const assertSequenceIntervals = (
 	sharedString: SharedString,
@@ -46,11 +41,7 @@ const assertSequenceIntervals = (
 			0,
 			sharedString.getLength() - 1,
 		);
-		assert.deepEqual(
-			actual,
-			overlapping,
-			"Interval search returned inconsistent results",
-		);
+		assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
 	}
 	assert.strictEqual(
 		actual.length,
@@ -67,20 +58,14 @@ const assertSequenceIntervals = (
 	assert.deepEqual(actualPos, expected, "intervals are not as expected");
 };
 
-function testIntervalOperations(
-	intervalCollection: ISequenceIntervalCollection,
-) {
+function testIntervalOperations(intervalCollection: ISequenceIntervalCollection) {
 	const intervalArray: SequenceInterval[] = [];
 	let interval: SequenceInterval | undefined;
 	let id;
 
 	intervalArray[0] = intervalCollection.add({ start: 0, end: 0 });
 	intervalArray[1] = intervalCollection.add({ start: 0, end: 0 });
-	assert.notStrictEqual(
-		intervalArray[0],
-		intervalArray[1],
-		"Unique intervals not added",
-	);
+	assert.notStrictEqual(intervalArray[0], intervalArray[1], "Unique intervals not added");
 
 	id = intervalArray[0].getIntervalId();
 	assert.notStrictEqual(id, undefined, "ID not created");
@@ -115,11 +100,7 @@ function testIntervalOperations(
 	tempArray[0] = intervalArray[3];
 	tempArray[1] = intervalArray[4];
 	tempArray[2] = intervalArray[5];
-	for (
-		i = 0, result = iterator.next();
-		!result.done;
-		i++, result = iterator.next()
-	) {
+	for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
 		interval = result.value;
 		assert.strictEqual(
 			interval,
@@ -138,11 +119,7 @@ function testIntervalOperations(
 	tempArray[0] = intervalArray[2];
 	tempArray[1] = intervalArray[5];
 	tempArray[2] = intervalArray[8];
-	for (
-		i = 0, result = iterator.next();
-		!result.done;
-		i++, result = iterator.next()
-	) {
+	for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
 		interval = result.value;
 		assert.strictEqual(
 			interval,
@@ -161,11 +138,7 @@ function testIntervalOperations(
 	tempArray[0] = intervalArray[2];
 	tempArray[1] = intervalArray[1];
 	tempArray[2] = intervalArray[0];
-	for (
-		i = 0, result = iterator.next();
-		!result.done;
-		i++, result = iterator.next()
-	) {
+	for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
 		interval = result.value;
 		assert.strictEqual(
 			interval,
@@ -184,11 +157,7 @@ function testIntervalOperations(
 	tempArray[0] = intervalArray[2];
 	tempArray[1] = intervalArray[5];
 	tempArray[2] = intervalArray[8];
-	for (
-		i = 0, result = iterator.next();
-		!result.done;
-		i++, result = iterator.next()
-	) {
+	for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
 		interval = result.value;
 		assert.strictEqual(
 			interval,
@@ -207,11 +176,7 @@ function testIntervalOperations(
 	tempArray[0] = intervalArray[7];
 	tempArray[1] = intervalArray[4];
 	tempArray[2] = intervalArray[1];
-	for (
-		i = 0, result = iterator.next();
-		!result.done;
-		i++, result = iterator.next()
-	) {
+	for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
 		interval = result.value;
 		assert.strictEqual(
 			interval,
@@ -226,38 +191,22 @@ function testIntervalOperations(
 	);
 
 	iterator = intervalCollection.CreateForwardIteratorWithStartPosition(-1);
-	for (
-		i = 0, result = iterator.next();
-		!result.done;
-		i++, result = iterator.next()
-	) {
+	for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
 		assert(false, "Iterator with OOB position should not produce a result");
 	}
 
 	iterator = intervalCollection.CreateForwardIteratorWithEndPosition(99999);
-	for (
-		i = 0, result = iterator.next();
-		!result.done;
-		i++, result = iterator.next()
-	) {
+	for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
 		assert(false, "Iterator with OOB position should not produce a result");
 	}
 
 	iterator = intervalCollection.CreateForwardIteratorWithStartPosition(-1);
-	for (
-		i = 0, result = iterator.next();
-		!result.done;
-		i++, result = iterator.next()
-	) {
+	for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
 		assert(false, "Iterator with OOB position should not produce a result");
 	}
 
 	iterator = intervalCollection.CreateForwardIteratorWithEndPosition(99999);
-	for (
-		i = 0, result = iterator.next();
-		!result.done;
-		i++, result = iterator.next()
-	) {
+	for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
 		assert(false, "Iterator with OOB position should not produce a result");
 	}
 
@@ -270,11 +219,7 @@ function testIntervalOperations(
 		);
 		i++;
 	}
-	assert.strictEqual(
-		i,
-		intervalArray.length,
-		"Interval omitted from for...of iteration",
-	);
+	assert.strictEqual(i, intervalArray.length, "Interval omitted from for...of iteration");
 
 	id = intervalArray[0].getIntervalId();
 	interval = intervalCollection.getIntervalById(id);
@@ -303,8 +248,7 @@ function testIntervalOperations(
 }
 describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap, SharedString } = apis.dds;
-	const { createOverlappingIntervalsIndex } =
-		apis.dataRuntime.packages.sequence;
+	const { createOverlappingIntervalsIndex } = apis.dataRuntime.packages.sequence;
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
@@ -317,21 +261,12 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 		let overlappingIntervalsIndex: ISequenceOverlappingIntervalsIndex;
 		let dataObject: ITestFluidObject & IFluidLoadable;
 
-		const assertIntervals = (
-			expected: readonly { start: number; end: number }[],
-		) => {
-			assertSequenceIntervals(
-				sharedString,
-				intervals,
-				overlappingIntervalsIndex,
-				expected,
-			);
+		const assertIntervals = (expected: readonly { start: number; end: number }[]) => {
+			assertSequenceIntervals(sharedString, intervals, overlappingIntervalsIndex, expected);
 		};
 
 		beforeEach("setup", async () => {
-			const registry: ChannelFactoryRegistry = [
-				[stringId, SharedString.getFactory()],
-			];
+			const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
 			const testContainerConfig: ITestContainerConfig = {
 				fluidDataObjectType: DataObjectFactoryType.Test,
 				registry,
@@ -370,9 +305,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 
 			sharedString.removeRange(0, len);
 			await provider.ensureSynchronized();
-			assertIntervals([
-				{ start: DetachedReferencePosition, end: DetachedReferencePosition },
-			]);
+			assertIntervals([{ start: DetachedReferencePosition, end: DetachedReferencePosition }]);
 		});
 
 		it("replace before is excluded", async () => {
@@ -458,9 +391,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 	describe("multiple clients", () => {
 		it("propagates", async () => {
 			const stringId = "stringKey";
-			const registry: ChannelFactoryRegistry = [
-				[stringId, SharedString.getFactory()],
-			];
+			const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
 			const testContainerConfig: ITestContainerConfig = {
 				fluidDataObjectType: DataObjectFactoryType.Test,
 				registry,
@@ -468,71 +399,50 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
-			const dataObject1 =
-				(await container1.getEntryPoint()) as ITestFluidObject;
-			const sharedString1 =
-				await dataObject1.getSharedObject<SharedString>(stringId);
+			const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+			const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
 			sharedString1.insertText(0, "0123456789");
 			const intervals1 = sharedString1.getIntervalCollection("intervals");
 			intervals1.add({ start: 1, end: 7 });
 
-			const overlappingIntervalsIndex1 =
-				createOverlappingIntervalsIndex(sharedString1);
+			const overlappingIntervalsIndex1 = createOverlappingIntervalsIndex(sharedString1);
 			intervals1.attachIndex(overlappingIntervalsIndex1);
 
-			assertSequenceIntervals(
-				sharedString1,
-				intervals1,
-				overlappingIntervalsIndex1,
-				[{ start: 1, end: 7 }],
-			);
+			assertSequenceIntervals(sharedString1, intervals1, overlappingIntervalsIndex1, [
+				{ start: 1, end: 7 },
+			]);
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject2 =
-				(await container2.getEntryPoint()) as ITestFluidObject;
+			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 
 			await provider.ensureSynchronized();
 
-			const sharedString2 =
-				await dataObject2.getSharedObject<SharedString>(stringId);
+			const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 			const intervals2 = sharedString2.getIntervalCollection("intervals");
 
-			const overlappingIntervalsIndex2 =
-				createOverlappingIntervalsIndex(sharedString2);
+			const overlappingIntervalsIndex2 = createOverlappingIntervalsIndex(sharedString2);
 			intervals2.attachIndex(overlappingIntervalsIndex2);
 
-			assertSequenceIntervals(
-				sharedString2,
-				intervals2,
-				overlappingIntervalsIndex2,
-				[{ start: 1, end: 7 }],
-			);
+			assertSequenceIntervals(sharedString2, intervals2, overlappingIntervalsIndex2, [
+				{ start: 1, end: 7 },
+			]);
 
 			sharedString2.removeRange(4, 5);
-			assertSequenceIntervals(
-				sharedString2,
-				intervals2,
-				overlappingIntervalsIndex2,
-				[{ start: 1, end: 6 }],
-			);
+			assertSequenceIntervals(sharedString2, intervals2, overlappingIntervalsIndex2, [
+				{ start: 1, end: 6 },
+			]);
 
 			sharedString2.insertText(4, "x");
-			assertSequenceIntervals(
-				sharedString2,
-				intervals2,
-				overlappingIntervalsIndex2,
-				[{ start: 1, end: 7 }],
-			);
+			assertSequenceIntervals(sharedString2, intervals2, overlappingIntervalsIndex2, [
+				{ start: 1, end: 7 },
+			]);
 
 			await provider.ensureSynchronized();
-			assertSequenceIntervals(
-				sharedString1,
-				intervals1,
-				overlappingIntervalsIndex1,
-				[{ start: 1, end: 7 }],
-			);
+			assertSequenceIntervals(sharedString1, intervals1, overlappingIntervalsIndex1, [
+				{ start: 1, end: 7 },
+			]);
 
 			intervals1.detachIndex(overlappingIntervalsIndex1);
 			intervals2.detachIndex(overlappingIntervalsIndex2);
@@ -540,9 +450,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 
 		it("multi-client interval ops", async () => {
 			const stringId = "stringKey";
-			const registry: ChannelFactoryRegistry = [
-				[stringId, SharedString.getFactory()],
-			];
+			const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
 			const testContainerConfig: ITestContainerConfig = {
 				fluidDataObjectType: DataObjectFactoryType.Test,
 				registry,
@@ -550,10 +458,8 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
-			const dataObject1 =
-				(await container1.getEntryPoint()) as ITestFluidObject;
-			const sharedString1 =
-				await dataObject1.getSharedObject<SharedString>(stringId);
+			const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+			const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
 			sharedString1.insertText(0, "012");
 			const intervals1 = sharedString1.getIntervalCollection("intervals");
@@ -572,20 +478,14 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject2 =
-				(await container2.getEntryPoint()) as ITestFluidObject;
+			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 
 			await provider.ensureSynchronized();
 
-			const sharedString2 =
-				await dataObject2.getSharedObject<SharedString>(stringId);
+			const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 			const intervals2 = sharedString2.getIntervalCollection("intervals");
 
-			const checkIdEquals = (
-				a: SequenceInterval,
-				b: SequenceInterval,
-				s: string,
-			) => {
+			const checkIdEquals = (a: SequenceInterval, b: SequenceInterval, s: string) => {
 				assert.strictEqual(a.getIntervalId(), b.getIntervalId(), s);
 			};
 			let i: number;
@@ -595,11 +495,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 			tempArray[0] = intervalArray[3];
 			tempArray[1] = intervalArray[4];
 			tempArray[2] = intervalArray[5];
-			for (
-				i = 0, result = iterator.next();
-				!result.done;
-				i++, result = iterator.next()
-			) {
+			for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
 				checkIdEquals(
 					result.value,
 					tempArray[i],
@@ -617,11 +513,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 			tempArray[0] = intervalArray[2];
 			tempArray[1] = intervalArray[1];
 			tempArray[2] = intervalArray[0];
-			for (
-				i = 0, result = iterator.next();
-				!result.done;
-				i++, result = iterator.next()
-			) {
+			for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
 				checkIdEquals(
 					result.value,
 					tempArray[i],
@@ -639,11 +531,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 			tempArray[0] = intervalArray[7];
 			tempArray[1] = intervalArray[4];
 			tempArray[2] = intervalArray[1];
-			for (
-				i = 0, result = iterator.next();
-				!result.done;
-				i++, result = iterator.next()
-			) {
+			for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
 				checkIdEquals(
 					result.value,
 					tempArray[i],
@@ -666,11 +554,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 				);
 				i++;
 			}
-			assert.strictEqual(
-				i,
-				intervalArray.length,
-				"Interval omitted from for...of iteration",
-			);
+			assert.strictEqual(i, intervalArray.length, "Interval omitted from for...of iteration");
 
 			for (interval of intervalArray) {
 				const id = interval.getIntervalId();
@@ -689,29 +573,21 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 		describe("Conflicting ops", () => {
 			async function setupConflictingOps() {
 				const stringId = "stringKey";
-				const registry: ChannelFactoryRegistry = [
-					[stringId, SharedString.getFactory()],
-				];
+				const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
 				const testContainerConfig: ITestContainerConfig = {
 					fluidDataObjectType: DataObjectFactoryType.Test,
 					registry,
 				};
 
-				const container1 =
-					await provider.makeTestContainer(testContainerConfig);
-				const dataObject1 =
-					(await container1.getEntryPoint()) as ITestFluidObject;
-				const sharedString1 =
-					await dataObject1.getSharedObject<SharedString>(stringId);
+				const container1 = await provider.makeTestContainer(testContainerConfig);
+				const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+				const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 				sharedString1.insertText(0, "01234");
 				const intervals1 = sharedString1.getIntervalCollection("intervals");
 
-				const container2 =
-					await provider.loadTestContainer(testContainerConfig);
-				const dataObject2 =
-					(await container2.getEntryPoint()) as ITestFluidObject;
-				const sharedString2 =
-					await dataObject2.getSharedObject<SharedString>(stringId);
+				const container2 = await provider.loadTestContainer(testContainerConfig);
+				const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+				const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 				const intervals2 = sharedString2.getIntervalCollection("intervals");
 
 				await provider.ensureSynchronized();
@@ -787,24 +663,12 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 					"Interval missing from collection 1",
 				);
 				for (const interval of intervals1) {
-					assert.strictEqual(
-						interval,
-						newInterval1,
-						"Oddball interval found in client 1",
-					);
+					assert.strictEqual(interval, newInterval1, "Oddball interval found in client 1");
 				}
 				const foundInterval2 = intervals2.getIntervalById(id1);
-				assert.notStrictEqual(
-					foundInterval2,
-					undefined,
-					"Interval missing from collection 2",
-				);
+				assert.notStrictEqual(foundInterval2, undefined, "Interval missing from collection 2");
 				for (const interval of intervals2) {
-					assert.strictEqual(
-						interval,
-						foundInterval2,
-						"Oddball interval found in client 2",
-					);
+					assert.strictEqual(interval, foundInterval2, "Oddball interval found in client 2");
 				}
 			});
 
@@ -879,12 +743,8 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 
 					const deltaEvents1: PropertySet[] = [];
 					const deltaEvents2: PropertySet[] = [];
-					intervals1.on("propertyChanged", (_, delta) =>
-						deltaEvents1.push(delta),
-					);
-					intervals2.on("propertyChanged", (_, delta) =>
-						deltaEvents2.push(delta),
-					);
+					intervals1.on("propertyChanged", (_, delta) => deltaEvents1.push(delta));
+					intervals2.on("propertyChanged", (_, delta) => deltaEvents2.push(delta));
 					intervals1.change(id, { props: { prop1: "prop1" } });
 					verifyAndClearDeltas(deltaEvents1, [{ prop1: null }]);
 					verifyAndClearDeltas(deltaEvents2, []);
@@ -909,12 +769,8 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 					await provider.ensureSynchronized();
 					const deltaEvents1: PropertySet[] = [];
 					const deltaEvents2: PropertySet[] = [];
-					intervals1.on("propertyChanged", (_, delta) =>
-						deltaEvents1.push(delta),
-					);
-					intervals2.on("propertyChanged", (_, delta) =>
-						deltaEvents2.push(delta),
-					);
+					intervals1.on("propertyChanged", (_, delta) => deltaEvents1.push(delta));
+					intervals2.on("propertyChanged", (_, delta) => deltaEvents2.push(delta));
 
 					await provider.opProcessingController.processOutgoing();
 					intervals2.change(id, { props: { prop1: "2" } });
@@ -992,23 +848,18 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject2 =
-				(await container2.getEntryPoint()) as ITestFluidObject;
+			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			sharedMap2 = await dataObject2.getSharedObject<ISharedMap>(mapId);
 
 			// Load the Container that was created by the first client.
 			const container3 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject3 =
-				(await container3.getEntryPoint()) as ITestFluidObject;
+			const dataObject3 = (await container3.getEntryPoint()) as ITestFluidObject;
 			sharedMap3 = await dataObject3.getSharedObject<ISharedMap>(mapId);
 		});
 
 		// This functionality is used in Word and FlowView's "add comment" functionality.
 		it("Can store shared objects in a shared string's interval collection via properties", async () => {
-			sharedMap1.set(
-				"outerString",
-				SharedString.create(dataObject1.runtime).handle,
-			);
+			sharedMap1.set("outerString", SharedString.create(dataObject1.runtime).handle);
 			await provider.ensureSynchronized();
 
 			const outerString1 = await sharedMap1
@@ -1020,29 +871,17 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 			const outerString3 = await sharedMap3
 				.get<IFluidHandle<SharedString>>("outerString")
 				?.get();
-			assert.ok(
-				outerString1,
-				"String did not correctly set as value in container 1's map",
-			);
-			assert.ok(
-				outerString2,
-				"String did not correctly set as value in container 2's map",
-			);
-			assert.ok(
-				outerString3,
-				"String did not correctly set as value in container 3's map",
-			);
+			assert.ok(outerString1, "String did not correctly set as value in container 1's map");
+			assert.ok(outerString2, "String did not correctly set as value in container 2's map");
+			assert.ok(outerString3, "String did not correctly set as value in container 3's map");
 
 			outerString1.insertText(0, "outer string");
 
-			const intervalCollection1 =
-				outerString1.getIntervalCollection("comments");
+			const intervalCollection1 = outerString1.getIntervalCollection("comments");
 			await provider.ensureSynchronized();
 
-			const intervalCollection2 =
-				outerString2.getIntervalCollection("comments");
-			const intervalCollection3 =
-				outerString3.getIntervalCollection("comments");
+			const intervalCollection2 = outerString2.getIntervalCollection("comments");
+			const intervalCollection3 = outerString3.getIntervalCollection("comments");
 			assert.ok(
 				intervalCollection1,
 				"Could not get the comments interval collection in container 1",
@@ -1076,31 +915,15 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 			});
 			const nestedMap = SharedMap.create(dataObject1.runtime, "nestedMap");
 			nestedMap.set("nestedKey", "nestedValue");
-			intervalCollection1.add({
-				start: 8,
-				end: 9,
-				props: { story: nestedMap.handle },
-			});
+			intervalCollection1.add({ start: 8, end: 9, props: { story: nestedMap.handle } });
 			await provider.ensureSynchronized();
 
 			const serialized1 = Array.from(intervalCollection1);
 			const serialized2 = Array.from(intervalCollection2);
 			const serialized3 = Array.from(intervalCollection3);
-			assert.equal(
-				serialized1.length,
-				3,
-				"Incorrect interval collection size in container 1",
-			);
-			assert.equal(
-				serialized2.length,
-				3,
-				"Incorrect interval collection size in container 2",
-			);
-			assert.equal(
-				serialized3.length,
-				3,
-				"Incorrect interval collection size in container 3",
-			);
+			assert.equal(serialized1.length, 3, "Incorrect interval collection size in container 1");
+			assert.equal(serialized2.length, 3, "Incorrect interval collection size in container 2");
+			assert.equal(serialized3.length, 3, "Incorrect interval collection size in container 3");
 
 			const interval1From3Properties = serialized3[0].properties;
 			assert(interval1From3Properties);
@@ -1123,8 +946,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 				"Incorrect value in interval collection's shared map",
 			);
 
-			const summaryBlob = (await outerString2.summarize()).summary.tree
-				.header as ISummaryBlob;
+			const summaryBlob = (await outerString2.summarize()).summary.tree.header as ISummaryBlob;
 			// Since it's based on a map kernel, its contents parse as
 			// an IMapDataObjectSerializable with the "comments" member we set
 			const parsedContent = JSON.parse(summaryBlob.content as string);
@@ -1135,10 +957,9 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 			).intervals[0][4];
 			// The "story" is the ILocalValue of the handle pointing to the SharedString
 			assert(serializedInterval1FromSnapshotProperties);
-			const handleLocalValueFromSnapshot =
-				serializedInterval1FromSnapshotProperties.story as {
-					type: string;
-				};
+			const handleLocalValueFromSnapshot = serializedInterval1FromSnapshotProperties.story as {
+				type: string;
+			};
 			assert.equal(
 				handleLocalValueFromSnapshot.type,
 				"__fluid_handle__",

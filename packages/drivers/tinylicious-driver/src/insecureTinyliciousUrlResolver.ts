@@ -31,10 +31,7 @@ export const defaultTinyliciousEndpoint = "http://localhost";
  */
 export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 	private readonly tinyliciousEndpoint: string;
-	public constructor(
-		port = defaultTinyliciousPort,
-		endpoint = defaultTinyliciousEndpoint,
-	) {
+	public constructor(port = defaultTinyliciousPort, endpoint = defaultTinyliciousEndpoint) {
 		this.tinyliciousEndpoint = `${endpoint}:${port}`;
 	}
 
@@ -59,9 +56,7 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 			documentUrl = `${this.tinyliciousEndpoint}/tinylicious/${finalDocumentId}`;
 		} else {
 			const encodedDocId = encodeURIComponent(finalDocumentId);
-			const documentRelativePath = relativeUrl.slice(
-				documentIdFromRequest.length,
-			);
+			const documentRelativePath = relativeUrl.slice(documentIdFromRequest.length);
 			documentUrl = `${this.tinyliciousEndpoint}/tinylicious/${encodedDocId}${documentRelativePath}`;
 			deltaStorageUrl = `${this.tinyliciousEndpoint}/deltas/tinylicious/${encodedDocId}`;
 		}
@@ -107,9 +102,7 @@ export function createInsecureTinyliciousTestUrlResolver(): IUrlResolver {
  * Creates a Tinylicious {@link @fluidframework/core-interfaces#IRequest}.
  * @internal
  */
-export const createTinyliciousCreateNewRequest = (
-	documentId?: string,
-): IRequest => ({
+export const createTinyliciousCreateNewRequest = (documentId?: string): IRequest => ({
 	url: documentId ?? "",
 	headers: {
 		[DriverHeader.createNew]: true,
@@ -119,5 +112,4 @@ export const createTinyliciousCreateNewRequest = (
 /**
  * Creates a Tinylicious {@link @fluidframework/core-interfaces#IRequest} for testing purposes.
  */
-export const createTinyliciousTestCreateNewRequest =
-	createTinyliciousCreateNewRequest;
+export const createTinyliciousTestCreateNewRequest = createTinyliciousCreateNewRequest;

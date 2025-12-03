@@ -23,21 +23,15 @@ function setupRollbackTest(): {
 	containerRuntime: MockContainerRuntime;
 	containerRuntimeFactory: MockContainerRuntimeFactory;
 } {
-	const containerRuntimeFactory = new MockContainerRuntimeFactory({
-		flushMode: 1,
-	}); // TurnBased
+	const containerRuntimeFactory = new MockContainerRuntimeFactory({ flushMode: 1 }); // TurnBased
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	const containerRuntime =
-		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
 
-	const taskManager = taskManagerFactory.create(
-		dataStoreRuntime,
-		"task-manager-1",
-	);
+	const taskManager = taskManagerFactory.create(dataStoreRuntime, "task-manager-1");
 	taskManager.connect(services);
 
 	return { taskManager, containerRuntime, containerRuntimeFactory };
@@ -51,12 +45,8 @@ function createAdditionalClient(
 	containerRuntime: MockContainerRuntime;
 } {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: id });
-	const containerRuntime =
-		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const taskManager = taskManagerFactory.create(
-		dataStoreRuntime,
-		"task-manager-1",
-	);
+	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const taskManager = taskManagerFactory.create(dataStoreRuntime, "task-manager-1");
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
@@ -72,8 +62,7 @@ const durationMs = 5;
 describe("TaskManager Rollback", () => {
 	describe("Rollback without remote ops", () => {
 		it("Can rollback volunteer", async () => {
-			const { taskManager, containerRuntime, containerRuntimeFactory } =
-				setupRollbackTest();
+			const { taskManager, containerRuntime, containerRuntimeFactory } = setupRollbackTest();
 
 			let assignedEvents = 0;
 			taskManager.on("assigned", () => {
@@ -97,8 +86,7 @@ describe("TaskManager Rollback", () => {
 		});
 
 		it("Can rollback abandon", async () => {
-			const { taskManager, containerRuntime, containerRuntimeFactory } =
-				setupRollbackTest();
+			const { taskManager, containerRuntime, containerRuntimeFactory } = setupRollbackTest();
 
 			let lostEvents = 0;
 			taskManager.on("lost", () => {
@@ -110,11 +98,7 @@ describe("TaskManager Rollback", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			const assigned = await volunteerP;
-			assert.equal(
-				assigned,
-				true,
-				"taskManager should still be assigned post-rollback",
-			);
+			assert.equal(assigned, true, "taskManager should still be assigned post-rollback");
 
 			taskManager.abandon(taskId);
 			assert.equal(
@@ -122,11 +106,7 @@ describe("TaskManager Rollback", () => {
 				true,
 				"task manager should still be assigned pre-rollback",
 			);
-			assert.equal(
-				lostEvents,
-				0,
-				"should not have emitted lost event pre-rollback",
-			);
+			assert.equal(lostEvents, 0, "should not have emitted lost event pre-rollback");
 
 			containerRuntime.rollback?.();
 			containerRuntimeFactory.processAllMessages();
@@ -136,16 +116,11 @@ describe("TaskManager Rollback", () => {
 				true,
 				"task manager should still be assigned post-rollback",
 			);
-			assert.equal(
-				lostEvents,
-				0,
-				"should not have emitted lost event post-rollback",
-			);
+			assert.equal(lostEvents, 0, "should not have emitted lost event post-rollback");
 		});
 
 		it("Can rollback subscribe", async () => {
-			const { taskManager, containerRuntime, containerRuntimeFactory } =
-				setupRollbackTest();
+			const { taskManager, containerRuntime, containerRuntimeFactory } = setupRollbackTest();
 
 			let assignedEvents = 0;
 			taskManager.on("assigned", () => {
@@ -167,8 +142,7 @@ describe("TaskManager Rollback", () => {
 		});
 
 		it("Can rollback complete", async () => {
-			const { taskManager, containerRuntime, containerRuntimeFactory } =
-				setupRollbackTest();
+			const { taskManager, containerRuntime, containerRuntimeFactory } = setupRollbackTest();
 
 			let completedEvents = 0;
 			taskManager.on("completed", () => {
@@ -187,11 +161,7 @@ describe("TaskManager Rollback", () => {
 				true,
 				"task manager should still be assigned pre-rollback",
 			);
-			assert.equal(
-				completedEvents,
-				0,
-				"should have not emitted completed event pre-rollback",
-			);
+			assert.equal(completedEvents, 0, "should have not emitted completed event pre-rollback");
 
 			containerRuntime.rollback?.();
 
@@ -356,11 +326,7 @@ describe("TaskManager Rollback", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			assert.deepEqual(
-				[
-					taskManager1.assigned(taskId),
-					taskManager2.assigned(taskId),
-					completedEvents1,
-				],
+				[taskManager1.assigned(taskId), taskManager2.assigned(taskId), completedEvents1],
 				[true, false, 0],
 				"TaskManager1 should remain assigned with no completed events after complete rollback",
 			);
@@ -403,11 +369,7 @@ describe("TaskManager Rollback", () => {
 				false,
 				"taskManager1 should not be assigned post-rollback",
 			);
-			assert.equal(
-				assigned2,
-				true,
-				"taskManager2 should be assigned post-rollback",
-			);
+			assert.equal(assigned2, true, "taskManager2 should be assigned post-rollback");
 
 			assert.deepEqual(
 				[

@@ -4,7 +4,7 @@
  */
 
 import type { EventEmitter } from "@fluid-example/example-utils";
-import type { TypedEmitter } from "tiny-typed-emitter";
+import { TypedEmitter } from "tiny-typed-emitter";
 
 /**
  * For demo purposes this is a super-simple interface, but in a real scenario this should have all relevant surface
@@ -40,10 +40,7 @@ export interface IInventoryList extends EventEmitter {
 	 * The listChanged event will fire whenever an item is added/removed, either locally or remotely.
 	 * TODO: Consider using tiny-typed-emitter if not using DataObject
 	 */
-	on(
-		event: "itemAdded" | "itemDeleted",
-		listener: (item: IInventoryItem) => void,
-	): this;
+	on(event: "itemAdded" | "itemDeleted", listener: (item: IInventoryItem) => void): this;
 }
 
 export interface IMigrateBackingData extends EventEmitter {

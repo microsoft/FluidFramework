@@ -14,8 +14,8 @@ import {
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type ITelemetryLoggerExt,
-	isFluidError,
 	MockLogger,
+	isFluidError,
 } from "@fluidframework/telemetry-utils/internal";
 import { stub } from "sinon";
 import type { Socket } from "socket.io-client";
@@ -107,14 +107,8 @@ describe("OdspDocumentDeltaConnection tests", () => {
 			_socket.listenerCount("flush_ops_response") === 0,
 			"no flush_ops_response listener should exiist",
 		);
-		assert(
-			_socket.listenerCount("error") === 0,
-			"no error listener should exiist",
-		);
-		assert(
-			_socket.listenerCount("disconnect") === 0,
-			"no disconnect listener should exiist",
-		);
+		assert(_socket.listenerCount("error") === 0, "no error listener should exiist");
+		assert(_socket.listenerCount("disconnect") === 0, "no disconnect listener should exiist");
 	};
 
 	afterEach(async () => {
@@ -122,10 +116,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 		await epochTracker.removeEntries().catch(() => {});
 	});
 
-	async function mockSocket<T>(
-		_response: Socket,
-		callback: () => Promise<T>,
-	): Promise<T> {
+	async function mockSocket<T>(_response: Socket, callback: () => Promise<T>): Promise<T> {
 		const getSocketCreationStub = stub(SocketIOClientStatic, mockify.key);
 		getSocketCreationStub.returns(_response);
 		try {
@@ -150,11 +141,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 				socketReferenceKeyPrefix,
 			),
 		);
-		assert.strictEqual(
-			connection.documentId,
-			documentId,
-			"document id should match",
-		);
+		assert.strictEqual(connection.documentId, documentId, "document id should match");
 		assert(!connection.disposed, "connection should not be disposed");
 		assert(connection.existing, "doucment should already exist");
 		assert.strictEqual(connection.mode, "write", "connection should be write");
@@ -194,10 +181,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 		} catch (error) {
 			errorhappened = true;
 			assert(isFluidError(error), "should be a Fluid error");
-			assert(
-				error.message.includes("TestSocketError"),
-				"error message should match",
-			);
+			assert(error.message.includes("TestSocketError"), "error message should match");
 			assert(
 				error.errorType === OdspErrorTypes.genericNetworkError,
 				"errortype should be correct",
@@ -230,10 +214,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 		} catch (error) {
 			errorhappened = true;
 			assert(isFluidError(error), "should be a Fluid error");
-			assert(
-				error.message.includes("TestSocketError"),
-				"error message should match",
-			);
+			assert(error.message.includes("TestSocketError"), "error message should match");
 			assert(
 				error.errorType === OdspErrorTypes.genericNetworkError,
 				"errortype should be correct",
@@ -264,10 +245,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 		} catch (error) {
 			errorhappened = true;
 			assert(isFluidError(error), "should be a Fluid error");
-			assert(
-				error.message.includes("connect_timeout"),
-				"error message should match",
-			);
+			assert(error.message.includes("connect_timeout"), "error message should match");
 			assert(
 				error.errorType === OdspErrorTypes.genericNetworkError,
 				"errortype should be correct",
@@ -339,10 +317,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 			"should container server disconnect event",
 		);
 		assert(errorReceived.errorType, OdspErrorTypes.genericNetworkError);
-		assert(
-			socket !== undefined && !socket.connected,
-			"socket should be disconnected",
-		);
+		assert(socket !== undefined && !socket.connected, "socket should be disconnected");
 		checkListenerCount(socket);
 	});
 
@@ -379,10 +354,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 		assert((errorReceived as any).socketErrorType === details.context.type);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 		assert((errorReceived as any).socketCode === details.context.code);
-		assert(
-			socket !== undefined && !socket.connected,
-			"socket should be closed",
-		);
+		assert(socket !== undefined && !socket.connected, "socket should be closed");
 		checkListenerCount(socket);
 	});
 
@@ -414,45 +386,38 @@ describe("OdspDocumentDeltaConnection tests", () => {
 			"should container disconnect event",
 		);
 		assert(errorReceived.errorType, OdspErrorTypes.genericNetworkError);
-		assert(
-			socket !== undefined && !socket.connected,
-			"socket should be closed",
-		);
+		assert(socket !== undefined && !socket.connected, "socket should be closed");
 		checkListenerCount(socket);
 	});
 
 	it("Multiple connection objects should handle server_disconnect event without clientId", async () => {
 		socket = new ClientSocketMock();
-		const connection1 = await mockSocket(
-			socket as unknown as Socket,
-			async () =>
-				OdspDocumentDeltaConnection.create(
-					tenantId,
-					documentId,
-					token,
-					client,
-					webSocketUrl,
-					logger,
-					60000,
-					epochTracker,
-					socketReferenceKeyPrefix,
-				),
+		const connection1 = await mockSocket(socket as unknown as Socket, async () =>
+			OdspDocumentDeltaConnection.create(
+				tenantId,
+				documentId,
+				token,
+				client,
+				webSocketUrl,
+				logger,
+				60000,
+				epochTracker,
+				socketReferenceKeyPrefix,
+			),
 		);
 
-		const connection2 = await mockSocket(
-			socket as unknown as Socket,
-			async () =>
-				OdspDocumentDeltaConnection.create(
-					tenantId,
-					documentId,
-					token,
-					client,
-					webSocketUrl,
-					logger,
-					60000,
-					epochTracker,
-					socketReferenceKeyPrefix,
-				),
+		const connection2 = await mockSocket(socket as unknown as Socket, async () =>
+			OdspDocumentDeltaConnection.create(
+				tenantId,
+				documentId,
+				token,
+				client,
+				webSocketUrl,
+				logger,
+				60000,
+				epochTracker,
+				socketReferenceKeyPrefix,
+			),
 		);
 		let disconnectedEvent1 = false;
 		let disconnectedEvent2 = false;
@@ -465,54 +430,41 @@ describe("OdspDocumentDeltaConnection tests", () => {
 		});
 		socket.sendServerDisconnectEvent(errorToThrow);
 
-		assert(
-			disconnectedEvent1,
-			"disconnect event should happen on first object",
-		);
-		assert(
-			disconnectedEvent2,
-			"disconnect event should happen on second object",
-		);
+		assert(disconnectedEvent1, "disconnect event should happen on first object");
+		assert(disconnectedEvent2, "disconnect event should happen on second object");
 
-		assert(
-			socket !== undefined && !socket.connected,
-			"socket should be disconnected",
-		);
+		assert(socket !== undefined && !socket.connected, "socket should be disconnected");
 		checkListenerCount(socket);
 	});
 
 	it("Multiple connection objects should handle server_disconnect event with particular clientId", async () => {
 		socket = new ClientSocketMock();
-		const connection1 = await mockSocket(
-			socket as unknown as Socket,
-			async () =>
-				OdspDocumentDeltaConnection.create(
-					tenantId,
-					documentId,
-					token,
-					client,
-					webSocketUrl,
-					logger,
-					60000,
-					epochTracker,
-					socketReferenceKeyPrefix,
-				),
+		const connection1 = await mockSocket(socket as unknown as Socket, async () =>
+			OdspDocumentDeltaConnection.create(
+				tenantId,
+				documentId,
+				token,
+				client,
+				webSocketUrl,
+				logger,
+				60000,
+				epochTracker,
+				socketReferenceKeyPrefix,
+			),
 		);
 
-		const connection2 = await mockSocket(
-			socket as unknown as Socket,
-			async () =>
-				OdspDocumentDeltaConnection.create(
-					tenantId,
-					documentId,
-					token,
-					client,
-					webSocketUrl,
-					logger,
-					60000,
-					epochTracker,
-					socketReferenceKeyPrefix,
-				),
+		const connection2 = await mockSocket(socket as unknown as Socket, async () =>
+			OdspDocumentDeltaConnection.create(
+				tenantId,
+				documentId,
+				token,
+				client,
+				webSocketUrl,
+				logger,
+				60000,
+				epochTracker,
+				socketReferenceKeyPrefix,
+			),
 		);
 		let disconnectedEvent1 = false;
 		let disconnectedEvent2 = false;
@@ -525,28 +477,16 @@ describe("OdspDocumentDeltaConnection tests", () => {
 		});
 		socket.sendServerDisconnectEvent(errorToThrow, connection1.clientId);
 
-		assert(
-			disconnectedEvent1,
-			"disconnect event should happen on first object",
-		);
-		assert(
-			!disconnectedEvent2,
-			"disconnect event should not happen on second object",
-		);
+		assert(disconnectedEvent1, "disconnect event should happen on first object");
+		assert(!disconnectedEvent2, "disconnect event should not happen on second object");
 
 		assert(socket.connected, "socket should be connected");
 		assert(
 			socket.listenerCount("server_disconnect") === 1,
 			"server_disconnect listener should still exiist",
 		);
-		assert(
-			socket.listenerCount("error") === 1,
-			"1 error listener should exiist",
-		);
-		assert(
-			socket.listenerCount("disconnect") === 1,
-			"1 disconnect listener should exiist",
-		);
+		assert(socket.listenerCount("error") === 1, "1 error listener should exiist");
+		assert(socket.listenerCount("disconnect") === 1, "1 disconnect listener should exiist");
 		assert(
 			socket.listenerCount("get_ops_response") === 1,
 			"1 get_ops_response listener should exiist",
@@ -555,20 +495,18 @@ describe("OdspDocumentDeltaConnection tests", () => {
 
 	it("Multiple connection objects should handle server_disconnect event when the second client is still waiting for connection to complete", async () => {
 		socket = new ClientSocketMock();
-		const connection1 = await mockSocket(
-			socket as unknown as Socket,
-			async () =>
-				OdspDocumentDeltaConnection.create(
-					tenantId,
-					documentId,
-					token,
-					client,
-					webSocketUrl,
-					logger,
-					60000,
-					epochTracker,
-					socketReferenceKeyPrefix,
-				),
+		const connection1 = await mockSocket(socket as unknown as Socket, async () =>
+			OdspDocumentDeltaConnection.create(
+				tenantId,
+				documentId,
+				token,
+				client,
+				webSocketUrl,
+				logger,
+				60000,
+				epochTracker,
+				socketReferenceKeyPrefix,
+			),
 		);
 
 		socket.setMockSocketConnectResponseForReuse({
@@ -601,21 +539,12 @@ describe("OdspDocumentDeltaConnection tests", () => {
 
 		socket.sendServerDisconnectEvent(errorToThrow);
 
-		assert(
-			disconnectedEvent1,
-			"disconnect event should happen on first object",
-		);
+		assert(disconnectedEvent1, "disconnect event should happen on first object");
 
-		assert(
-			socket !== undefined && !socket.connected,
-			"socket should be disconnected",
-		);
+		assert(socket !== undefined && !socket.connected, "socket should be disconnected");
 		checkListenerCount(socket);
 		await connection2;
 		assert(connection2Fails, "connection2 should fail");
-		assert(
-			errorReceived?.message.includes("server_disconnect"),
-			"message should be correct",
-		);
+		assert(errorReceived?.message.includes("server_disconnect"), "message should be correct");
 	});
 });

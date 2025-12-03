@@ -158,10 +158,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 	 */
 	// TODO: use `undefined` instead.
 	// eslint-disable-next-line @rushstack/no-new-null
-	getSnapshotTree(
-		version?: IVersion,
-		scenarioName?: string,
-	): Promise<ISnapshotTree | null>;
+	getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
 
 	/**
 	 * Returns the snapshot which can contain other artifacts too like blob contents, ops etc. It is different from
@@ -169,9 +166,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 	 * @param snapshotFetchOptions - Options specified by the caller to specify and want certain behavior from the
 	 * driver when fetching the snapshot.
 	 */
-	getSnapshot?(
-		snapshotFetchOptions?: ISnapshotFetchOptions,
-	): Promise<ISnapshot>;
+	getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
 
 	/**
 	 * Retrieves all versions of the document starting at the specified versionId - or null if from the head
@@ -209,10 +204,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 	 * referencing from the previously acked summary.
 	 * Returns the uploaded summary handle.
 	 */
-	uploadSummaryWithContext(
-		summary: ISummaryTree,
-		context: ISummaryContext,
-	): Promise<string>;
+	uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
 
 	/**
 	 * Retrieves the commit that matches the packfile handle. If the packfile has already been committed and the
@@ -230,10 +222,7 @@ export interface IDocumentServiceEvents extends IEvent {
 	 * This event is used to communicate any metadata related to the container. We might have received metadata from the service.
 	 * Read more info on this event from here `IContainer.containerMetadata`.
 	 */
-	(
-		event: "metadataUpdate",
-		listener: (metadata: Record<string, string>) => void,
-	);
+	(event: "metadataUpdate", listener: (metadata: Record<string, string>) => void);
 }
 
 /**
@@ -250,17 +239,8 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 	 * Update your listener implementations to handle cases where `reason` is undefined.
 	 */
 	(event: "disconnect", listener: (reason: IAnyDriverError) => void);
-	(
-		event: "op",
-		listener: (
-			documentId: string,
-			messages: ISequencedDocumentMessage[],
-		) => void,
-	);
-	(
-		event: "signal",
-		listener: (message: ISignalMessage | ISignalMessage[]) => void,
-	);
+	(event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage[]) => void);
+	(event: "signal", listener: (message: ISignalMessage | ISignalMessage[]) => void);
 	(event: "pong", listener: (latency: number) => void);
 	// TODO: Use something other than `any`.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -389,8 +369,7 @@ export interface IDocumentServicePolicies {
 /**
  * @legacy @beta
  */
-export interface IDocumentService
-	extends IEventProvider<IDocumentServiceEvents> {
+export interface IDocumentService extends IEventProvider<IDocumentServiceEvents> {
 	resolvedUrl: IResolvedUrl;
 
 	/**

@@ -4,12 +4,12 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 
 import {
 	DefaultCompressionStorageConfig,
 	DocumentServiceFactoryCompressionAdapter,
-	type ICompressionStorageConfig,
+	ICompressionStorageConfig,
 } from "./compression/index.js";
 
 /**
@@ -67,9 +67,7 @@ function applyStorageCompressionInternal(
  * This method checks whether given objects contains
  * a properties expected for the interface ICompressionStorageConfig.
  */
-export function isCompressionConfig(
-	config: any,
-): config is ICompressionStorageConfig {
+export function isCompressionConfig(config: any): config is ICompressionStorageConfig {
 	return (
 		config !== undefined &&
 		(config.algorithm !== undefined || config.minSizeToCompress !== undefined)

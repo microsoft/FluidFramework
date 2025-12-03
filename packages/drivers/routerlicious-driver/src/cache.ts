@@ -15,10 +15,7 @@ export class InMemoryCache<T> implements ICache<T> {
 	private readonly cache: Map<string, T>;
 
 	constructor(expirationMs?: number) {
-		this.cache =
-			expirationMs !== undefined
-				? new MapWithExpiration(expirationMs)
-				: new Map();
+		this.cache = expirationMs !== undefined ? new MapWithExpiration(expirationMs) : new Map();
 	}
 
 	public async get(key: string): Promise<T | undefined> {

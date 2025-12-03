@@ -9,9 +9,9 @@ import {
 	ContainerStateHistory,
 	GetContainerState,
 	type HasContainerKey,
-	handleIncomingMessage,
-	type InboundHandlers,
 	type ISourcedDevtoolsMessage,
+	type InboundHandlers,
+	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
@@ -30,9 +30,7 @@ export type ContainerHistoryProps = HasContainerKey;
  *
  * @param props - See {@link ContainerHistoryViewProps}.
  */
-export function ContainerHistoryView(
-	props: ContainerHistoryProps,
-): React.ReactElement {
+export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactElement {
 	const { containerKey } = props;
 	const messageRelay = useMessageRelay();
 

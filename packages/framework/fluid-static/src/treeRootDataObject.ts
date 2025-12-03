@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { IDataObjectProps } from "@fluidframework/aqueduct/internal";
 import {
 	BaseContainerRuntimeFactory,
 	TreeDataObject,
 	TreeDataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
+import type { IDataObjectProps } from "@fluidframework/aqueduct/internal";
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 import {
 	FluidDataStoreRegistry,
@@ -82,22 +82,16 @@ class TreeRootDataObject extends TreeDataObject implements IRootDataObject {
 	}
 
 	public async create<T>(objectClass: SharedObjectKind<T>): Promise<T> {
-		const internal = objectClass as unknown as LoadableObjectKind<
-			T & IFluidLoadable
-		>;
+		const internal = objectClass as unknown as LoadableObjectKind<T & IFluidLoadable>;
 		if (isDataObjectKind(internal)) {
 			return createDataObject(internal, this.context);
 		} else if (isSharedObjectKind(internal)) {
 			return createSharedObject(internal, this.runtime);
 		}
-		throw new Error(
-			"Could not create new Fluid object because an unknown object was passed",
-		);
+		throw new Error("Could not create new Fluid object because an unknown object was passed");
 	}
 
-	public async uploadBlob(
-		blob: ArrayBufferLike,
-	): Promise<IFluidHandle<ArrayBufferLike>> {
+	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
 		return this.runtime.uploadBlob(blob);
 	}
 }
@@ -113,14 +107,12 @@ const treeRootDataObjectType = "treeRootDO";
 async function provideEntryPoint(
 	containerRuntime: IContainerRuntime,
 ): Promise<IStaticEntryPoint> {
-	const entryPoint =
-		await containerRuntime.getAliasedDataStoreEntryPoint(treeRootDataStoreId);
+	const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint(treeRootDataStoreId);
 	if (entryPoint === undefined) {
 		throw new Error(`default dataStore [${treeRootDataStoreId}] must exist`);
 	}
-	const treeRootDataObject = (
-		(await entryPoint.get()) as FluidObject<TreeRootDataObject>
-	).TreeRootDataObject;
+	const treeRootDataObject = ((await entryPoint.get()) as FluidObject<TreeRootDataObject>)
+		.TreeRootDataObject;
 	assert(
 		treeRootDataObject !== undefined,
 		0xbe7 /* entryPoint must be of type TreeRootDataObject */,
@@ -164,14 +156,9 @@ class TreeContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		this.#treeRootDataObjectFactory = treeRootDataObjectFactory;
 	}
 
-	protected async containerInitializingFirstTime(
-		runtime: IContainerRuntime,
-	): Promise<void> {
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		// The first time we create the container we create the RootDataObject
-		await this.#treeRootDataObjectFactory.createRootInstance(
-			treeRootDataStoreId,
-			runtime,
-		);
+		await this.#treeRootDataObjectFactory.createRootInstance(treeRootDataStoreId, runtime);
 	}
 }
 
@@ -184,13 +171,13 @@ class TreeRootDataObjectFactory extends TreeDataObjectFactory<TreeRootDataObject
 		private readonly dataStoreRegistry: IFluidDataStoreRegistry,
 	) {
 		type Ctor = new (props: IDataObjectProps) => TreeRootDataObject;
-		const ctor: Ctor = ((_props) => {
+		const ctor: Ctor = function (_props) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			return new TreeRootDataObject({
 				..._props,
 				// Add any additional injected properties here
 			});
-		}) as unknown as Ctor;
+		} as unknown as Ctor;
 
 		// Note: we're not specifying registry entries to the base class, so it won't create a registry itself,
 		// and instead we override the necessary methods in this class to use the registry received in the constructor.
@@ -253,10 +240,8 @@ export function createTreeContainerRuntimeFactory(props: {
 		schema,
 	} = props;
 
-	const [registryEntries, sharedObjects] =
-		parseDataObjectsFromSharedObjects(schema);
-	const registry =
-		rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
+	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
+	const registry = rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
 
 	return new TreeContainerRuntimeFactory(
 		compatibilityMode,

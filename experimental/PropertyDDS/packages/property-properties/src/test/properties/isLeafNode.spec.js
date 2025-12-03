@@ -43,18 +43,18 @@ const AllProperties = {
 	],
 };
 
-var createPropertyInsertAndCommit = (workspace, typeid, context, propId) => {
+var createPropertyInsertAndCommit = function (workspace, typeid, context, propId) {
 	const prop = PropertyFactory.create(typeid, context);
 	workspace.insert(propId, prop);
 };
 
-describe("property-properties.Utils isLeafNode", () => {
+describe("property-properties.Utils isLeafNode", function () {
 	let root;
 
 	/**
 	 * Get all the objects we need in this test here.
 	 */
-	before(() => {
+	before(function () {
 		PropertyFactory = require("../..").PropertyFactory;
 		ChangeSet = require("@fluid-experimental/property-changeset").ChangeSet;
 		_ = require("lodash");
@@ -108,22 +108,16 @@ describe("property-properties.Utils isLeafNode", () => {
 		});
 
 		PsetUtils = require("@fluid-experimental/property-changeset").Utils;
-		DeferredPromise =
-			require("@fluid-experimental/property-common").DeferredPromise;
+		DeferredPromise = require("@fluid-experimental/property-common").DeferredPromise;
 	});
 
-	beforeEach(async () => {
+	beforeEach(async function () {
 		root = PropertyFactory.create("NodeProperty");
 	});
 
-	it.skip("should match leaf for primitives properties", async () => {
+	it.skip("should match leaf for primitives properties", async function () {
 		let leafNodesCount = 0;
-		createPropertyInsertAndCommit(
-			root,
-			"mysample:all-1.0.0",
-			"single",
-			"singleProp",
-		);
+		createPropertyInsertAndCommit(root, "mysample:all-1.0.0", "single", "singleProp");
 
 		const changeSet = root.getRoot().serialize();
 
@@ -145,14 +139,9 @@ describe("property-properties.Utils isLeafNode", () => {
 		expect(leafNodesCount).to.eql(19);
 	});
 
-	it("should see an empty array as a leaf", async () => {
+	it("should see an empty array as a leaf", async function () {
 		let leafNodesCount = 0;
-		createPropertyInsertAndCommit(
-			root,
-			"mysample:all-1.0.0",
-			"array",
-			"arrayProp",
-		);
+		createPropertyInsertAndCommit(root, "mysample:all-1.0.0", "array", "arrayProp");
 
 		const changeSet = root.getRoot().serialize();
 
@@ -174,7 +163,7 @@ describe("property-properties.Utils isLeafNode", () => {
 		expect(leafNodesCount).to.eql(1);
 	});
 
-	it("should see an empty map as a leaf", async () => {
+	it("should see an empty map as a leaf", async function () {
 		let leafNodesCount = 0;
 		createPropertyInsertAndCommit(root, "mysample:all-1.0.0", "map", "mapProp");
 
@@ -198,7 +187,7 @@ describe("property-properties.Utils isLeafNode", () => {
 		expect(leafNodesCount).to.eql(1);
 	});
 
-	it("should see an empty set as a leaf", async () => {
+	it("should see an empty set as a leaf", async function () {
 		let leafNodesCount = 0;
 		createPropertyInsertAndCommit(root, "mysample:all-1.0.0", "set", "setProp");
 
@@ -222,7 +211,7 @@ describe("property-properties.Utils isLeafNode", () => {
 		expect(leafNodesCount).to.eql(1);
 	});
 
-	it("should count primitives in an array as leafs", async () => {
+	it("should count primitives in an array as leafs", async function () {
 		let leafNodesCount = 0;
 		const array = PropertyFactory.create("autodesk.tests:array-1.0.0");
 		root.insert("arrayProp", array);
@@ -246,7 +235,7 @@ describe("property-properties.Utils isLeafNode", () => {
 		expect(leafNodesCount).to.eql(2);
 	});
 
-	it("should count primitives in an set as leafs", async () => {
+	it("should count primitives in an set as leafs", async function () {
 		let leafNodesCount = 0;
 		const set = PropertyFactory.create("autodesk.tests:set-1.0.0");
 		root.insert("setProp", set);
@@ -270,7 +259,7 @@ describe("property-properties.Utils isLeafNode", () => {
 		expect(leafNodesCount).to.eql(4);
 	});
 
-	it("should count primitives in an map as leafs", async () => {
+	it("should count primitives in an map as leafs", async function () {
 		let leafNodesCount = 0;
 		const map = PropertyFactory.create("autodesk.tests:map-1.0.0");
 		root.insert("mapProp", map);
@@ -294,7 +283,7 @@ describe("property-properties.Utils isLeafNode", () => {
 		expect(leafNodesCount).to.eql(2);
 	});
 
-	it("should count remove as leafs in reversible changeset", async () => {
+	it("should count remove as leafs in reversible changeset", async function () {
 		let leafNodesCount = 0;
 		const map = PropertyFactory.create("autodesk.tests:map-1.0.0");
 		root.insert("mapProp", map);
@@ -320,7 +309,7 @@ describe("property-properties.Utils isLeafNode", () => {
 		expect(leafNodesCount).to.eql(1);
 	});
 
-	it("should count remove as leafs", async () => {
+	it("should count remove as leafs", async function () {
 		let leafNodesCount = 0;
 		const map = PropertyFactory.create("autodesk.tests:map-1.0.0");
 		root.insert("mapProp", map);

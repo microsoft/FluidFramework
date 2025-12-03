@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type EventEmitterEventType,
-	TypedEventEmitter,
-} from "@fluid-internal/client-utils";
+import { type EventEmitterEventType, TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEvent } from "@fluidframework/core-interfaces";
 
 /**
@@ -26,10 +23,7 @@ export class EventEmitterWithErrorHandling<
 	public constructor(
 		// TODO: use `unknown` instead (breaking API change)
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		private readonly errorHandler: (
-			eventName: EventEmitterEventType,
-			error: any,
-		) => void,
+		private readonly errorHandler: (eventName: EventEmitterEventType, error: any) => void,
 	) {
 		super();
 	}

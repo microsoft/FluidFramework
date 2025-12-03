@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import * as fs from "fs";
 import * as path from "path";
+
+import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 
 import type { IFileLogger } from "./fileLogger.js";
 
@@ -35,10 +36,7 @@ export abstract class BaseFileLogger implements IFileLogger {
 		event = { ...event, ...this.defaultProps };
 		this.events.push(event);
 
-		if (
-			this.events.length >= this.eventsPerFlush ||
-			event.category === "error"
-		) {
+		if (this.events.length >= this.eventsPerFlush || event.category === "error") {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.flush();
 		}
@@ -46,9 +44,7 @@ export abstract class BaseFileLogger implements IFileLogger {
 
 	protected async flush(): Promise<void> {
 		if (this.events.length > 0) {
-			const contentToWrite = this.events
-				.map((it) => JSON.stringify(it))
-				.join(",");
+			const contentToWrite = this.events.map((it) => JSON.stringify(it)).join(",");
 			const dirName = path.dirname(this.filePath);
 			fs.mkdirSync(dirName, { recursive: true });
 			if (this.hasWrittenToFile) {

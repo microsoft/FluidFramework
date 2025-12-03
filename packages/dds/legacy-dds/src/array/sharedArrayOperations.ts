@@ -68,9 +68,7 @@ export interface IToggleMoveOperation {
 /**
  * @legacy @beta
  */
-export type ISharedArrayRevertibleOperation =
-	| IToggleOperation
-	| IToggleMoveOperation;
+export type ISharedArrayRevertibleOperation = IToggleOperation | IToggleMoveOperation;
 
 /**
  * @legacy @beta

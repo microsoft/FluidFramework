@@ -9,8 +9,8 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	type ChangeFamilyEditor,
 	findAncestor,
+	type ChangeFamilyEditor,
 	type GraphCommit,
 	type TaggedChange,
 } from "../core/index.js";
@@ -193,14 +193,11 @@ export class SquashingTransactionStack<
 	 * @remarks This editor can safely be held on to across transaction boundaries, as it will properly delegate to the correct branch.
 	 * In contrast, it is not safe to hold onto e.g. `activeBranch.editor` across transaction boundaries, since the active branch may change.
 	 */
-	public readonly activeBranchEditor = new Proxy<TEditor>(
-		{} as unknown as TEditor,
-		{
-			get: (_, p, receiver) => {
-				return Reflect.get(this.activeBranch.editor, p, receiver);
-			},
+	public readonly activeBranchEditor = new Proxy<TEditor>({} as unknown as TEditor, {
+		get: (_, p, receiver) => {
+			return Reflect.get(this.activeBranch.editor, p, receiver);
 		},
-	);
+	});
 
 	/**
 	 * Get the "active branch" for this transactor - either the transaction branch if a transaction is in progress, or the original branch otherwise.
@@ -214,9 +211,7 @@ export class SquashingTransactionStack<
 	 * @remarks When the active branch changes, the listeners for these events will automatically be transferred to the new active branch.
 	 * In contrast, binding an event to the {@link SquashingTransactionStack.activeBranch | active branch} directly will not automatically transfer the listener when the active branch changes.
 	 */
-	public get activeBranchEvents(): Listenable<
-		SharedTreeBranchEvents<TEditor, TChange>
-	> {
+	public get activeBranchEvents(): Listenable<SharedTreeBranchEvents<TEditor, TChange>> {
 		const off = (
 			eventName: keyof SharedTreeBranchEvents<TEditor, TChange>,
 			listener: SharedTreeBranchEvents<TEditor, TChange>[typeof eventName],
@@ -230,11 +225,7 @@ export class SquashingTransactionStack<
 
 		return {
 			on: (eventName, listener) => {
-				const listeners = getOrCreate(
-					this.#activeBranchEvents,
-					eventName,
-					() => new Set(),
-				);
+				const listeners = getOrCreate(this.#activeBranchEvents, eventName, () => new Set());
 				listeners.add(listener);
 				this.activeBranch.events.on(eventName, listener);
 				return () => off(eventName, listener);
@@ -245,10 +236,7 @@ export class SquashingTransactionStack<
 	readonly #activeBranchEvents = new Map<
 		keyof SharedTreeBranchEvents<TEditor, TChange>,
 		Set<
-			SharedTreeBranchEvents<TEditor, TChange>[keyof SharedTreeBranchEvents<
-				TEditor,
-				TChange
-			>]
+			SharedTreeBranchEvents<TEditor, TChange>[keyof SharedTreeBranchEvents<TEditor, TChange>]
 		>
 	>();
 
@@ -273,10 +261,7 @@ export class SquashingTransactionStack<
 			this.setTransactionBranch(transactionBranch);
 			transactionBranch.editor.enterTransaction();
 			return (result) => {
-				assert(
-					this.#transactionBranch !== undefined,
-					0xa98 /* Expected transaction branch */,
-				);
+				assert(this.#transactionBranch !== undefined, 0xa98 /* Expected transaction branch */);
 				this.#transactionBranch.editor.exitTransaction();
 				switch (result) {
 					case TransactionResult.Abort:

@@ -3,35 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { describeCompat } from "@fluid-private/test-version-utils";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import type {
-	ConfigTypes,
-	IConfigProviderBase,
-} from "@fluidframework/core-interfaces";
-import type {
-	ISharedCounter,
-	SharedCounter,
-} from "@fluidframework/counter/internal";
-import {
-	type ChannelFactoryRegistry,
-	DataObjectFactoryType,
-	getContainerEntryPointBackCompat,
-	type ITestContainerConfig,
-	type ITestFluidObject,
-	type ITestObjectProvider,
-} from "@fluidframework/test-utils/internal";
 import { strict as assert } from "assert";
+
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type { ISharedCounter, SharedCounter } from "@fluidframework/counter/internal";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	getContainerEntryPointBackCompat,
+} from "@fluidframework/test-utils/internal";
 
 const counterId = "counterKey";
 
 describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedCounter } = apis.dds;
 
-	const registry: ChannelFactoryRegistry = [
-		[counterId, SharedCounter.getFactory()],
-	];
+	const registry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()]];
 	const testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,
@@ -69,12 +62,9 @@ describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider, apis) => {
 
 	// Get all three data stores
 	beforeEach("Get data stores", async () => {
-		dataStore1 =
-			await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
-		dataStore2 =
-			await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
-		dataStore3 =
-			await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
+		dataStore1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		dataStore2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		dataStore3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 	});
 
 	// Get all three counters
@@ -89,11 +79,7 @@ describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 	});
 
-	function verifyCounterValue(
-		counter: ISharedCounter,
-		expectedValue,
-		index: number,
-	) {
+	function verifyCounterValue(counter: ISharedCounter, expectedValue, index: number) {
 		const userValue = counter.value;
 		assert.equal(
 			userValue,
@@ -144,11 +130,8 @@ describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider, apis) => {
 			verifyCounterValues(-13, -13, -13);
 		});
 
-		it("fires incremented events in 3 containers correctly", async () => {
-			const incrementSteps: {
-				incrementer: ISharedCounter;
-				incrementAmount: number;
-			}[] = [
+		it("fires incremented events in 3 containers correctly", async function () {
+			const incrementSteps: { incrementer: ISharedCounter; incrementAmount: number }[] = [
 				{ incrementer: sharedCounter3, incrementAmount: -1 },
 				{ incrementer: sharedCounter1, incrementAmount: 3 },
 				{ incrementer: sharedCounter2, incrementAmount: 10 },
@@ -163,30 +146,21 @@ describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider, apis) => {
 			let eventCount2 = 0;
 			let eventCount3 = 0;
 
-			sharedCounter1.on(
-				"incremented",
-				(incrementAmount: number, newValue: number) => {
-					assert.equal(incrementAmount, incrementSteps[0].incrementAmount);
-					assert.equal(newValue, expectedValue);
-					eventCount1++;
-				},
-			);
-			sharedCounter2.on(
-				"incremented",
-				(incrementAmount: number, newValue: number) => {
-					assert.equal(incrementAmount, incrementSteps[0].incrementAmount);
-					assert.equal(newValue, expectedValue);
-					eventCount2++;
-				},
-			);
-			sharedCounter3.on(
-				"incremented",
-				(incrementAmount: number, newValue: number) => {
-					assert.equal(incrementAmount, incrementSteps[0].incrementAmount);
-					assert.equal(newValue, expectedValue);
-					eventCount3++;
-				},
-			);
+			sharedCounter1.on("incremented", (incrementAmount: number, newValue: number) => {
+				assert.equal(incrementAmount, incrementSteps[0].incrementAmount);
+				assert.equal(newValue, expectedValue);
+				eventCount1++;
+			});
+			sharedCounter2.on("incremented", (incrementAmount: number, newValue: number) => {
+				assert.equal(incrementAmount, incrementSteps[0].incrementAmount);
+				assert.equal(newValue, expectedValue);
+				eventCount2++;
+			});
+			sharedCounter3.on("incremented", (incrementAmount: number, newValue: number) => {
+				assert.equal(incrementAmount, incrementSteps[0].incrementAmount);
+				assert.equal(newValue, expectedValue);
+				eventCount3++;
+			});
 
 			while (incrementSteps.length > 0) {
 				// set up for next increment, incrementSteps[0] holds the in-progress step
@@ -219,9 +193,7 @@ describeCompat(
 	(getTestObjectProvider, apis) => {
 		const { SharedCounter } = apis.dds;
 
-		const registry: ChannelFactoryRegistry = [
-			[counterId, SharedCounter.getFactory()],
-		];
+		const registry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()]];
 		const testContainerConfig: ITestContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,
 			registry,
@@ -239,9 +211,7 @@ describeCompat(
 		let containerRuntime: IContainerRuntime;
 		let incrementedEvents: { incrementAmount: number; newValue: number }[] = [];
 
-		const configProvider = (
-			settings: Record<string, ConfigTypes>,
-		): IConfigProviderBase => ({
+		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		});
 		const errorMessage = "callback failure";
@@ -256,20 +226,14 @@ describeCompat(
 				},
 			};
 			container = await provider.makeTestContainer(configWithFeatureGates);
-			dataObject =
-				await getContainerEntryPointBackCompat<ITestFluidObject>(container);
-			dataStore =
-				await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+			dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+			dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 			sharedCounter = await dataStore.getSharedObject<SharedCounter>(counterId);
-			containerRuntime = dataObject.context
-				.containerRuntime as IContainerRuntime;
+			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
 			incrementedEvents = [];
-			sharedCounter.on(
-				"incremented",
-				(incrementAmount: number, newValue: number) => {
-					incrementedEvents.push({ incrementAmount, newValue });
-				},
-			);
+			sharedCounter.on("incremented", (incrementAmount: number, newValue: number) => {
+				incrementedEvents.push({ incrementAmount, newValue });
+			});
 		});
 
 		it("can rollback increment op", async () => {
@@ -295,27 +259,15 @@ describeCompat(
 				1,
 				"incorrect incrementAmount pre-rollback",
 			);
-			assert.equal(
-				incrementedEvents[0].newValue,
-				1,
-				"incorrect newValue pre-rollback",
-			);
+			assert.equal(incrementedEvents[0].newValue, 1, "incorrect newValue pre-rollback");
 			// rollback
-			assert.equal(
-				sharedCounter.value,
-				0,
-				"Counter value incorrect after rollback",
-			);
+			assert.equal(sharedCounter.value, 0, "Counter value incorrect after rollback");
 			assert.equal(
 				incrementedEvents[1].incrementAmount,
 				-1,
 				"incorrect incrementAmount post-rollback",
 			);
-			assert.equal(
-				incrementedEvents[1].newValue,
-				0,
-				"incorrect newValue post-rollback",
-			);
+			assert.equal(incrementedEvents[1].newValue, 0, "incorrect newValue post-rollback");
 		});
 	},
 );

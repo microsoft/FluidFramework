@@ -119,7 +119,9 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		this.attendees.set(attendeeId, this.selfAttendee);
 	}
 
-	public ensureContent<TSchemaAdditional extends StatesWorkspaceSchema>(_content: TSchemaAdditional): never {
+	public ensureContent<TSchemaAdditional extends StatesWorkspaceSchema>(
+		_content: TSchemaAdditional,
+	): never {
 		throw new Error("Method not implemented.");
 	}
 
@@ -138,14 +140,18 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		 */
 		remoteDatastore: {
 			clientToSessionId: {
-				[ConnectionId: ClientConnectionId]: InternalTypes.ValueRequiredState<ConnectionValueState["value"]>;
+				[ConnectionId: ClientConnectionId]: InternalTypes.ValueRequiredState<
+					ConnectionValueState["value"]
+				>;
 			};
 		},
 		senderConnectionId: ClientConnectionId,
 	): PostUpdateAction[] {
 		const audienceMembers = this.audience.getMembers();
 		const postUpdateActions: PostUpdateAction[] = [];
-		for (const [clientConnectionId, value] of Object.entries(revealOpaqueJson(remoteDatastore.clientToSessionId))) {
+		for (const [clientConnectionId, value] of Object.entries(
+			revealOpaqueJson(remoteDatastore.clientToSessionId),
+		)) {
 			const attendeeId = value.value;
 			const { attendee, isJoining } = this.ensureAttendee(
 				attendeeId,
@@ -153,7 +159,8 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 				/* order */ value.rev,
 				// If the attendee is present in audience OR if the attendee update is from the sending remote client itself,
 				// then the attendee is considered connected.
-				/* isConnected */ senderConnectionId === clientConnectionId || audienceMembers.has(clientConnectionId),
+				/* isConnected */ senderConnectionId === clientConnectionId ||
+					audienceMembers.has(clientConnectionId),
 			);
 			// If the attendee is joining the session, add them to the list of joining attendees to be announced later.
 			if (isJoining) {

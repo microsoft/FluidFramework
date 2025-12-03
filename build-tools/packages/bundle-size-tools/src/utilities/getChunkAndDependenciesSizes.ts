@@ -46,14 +46,11 @@ export function getChunkAndDependencySizes(
 
 	// Find a chunk that has the desired name
 	const rootChunk = stats.chunks.find(
-		(c) =>
-			(c.names?.length ?? 0) > 0 && c.names!.find((name) => name === chunkName),
+		(c) => (c.names?.length ?? 0) > 0 && c.names!.find((name) => name === chunkName),
 	);
 
 	if (rootChunk === undefined) {
-		throw new Error(
-			`Could not find chunk with name: ${chunkName} in the stats file`,
-		);
+		throw new Error(`Could not find chunk with name: ${chunkName} in the stats file`);
 	}
 
 	const dependencySizeInfo: ChunkSizeInfo[] = [];
@@ -62,10 +59,7 @@ export function getChunkAndDependencySizes(
 	const processedDependencies = new Set<number | string>();
 
 	// Get the initial set of dependencies
-	const dependenciesToProcess = [
-		...(rootChunk.parents ?? []),
-		...(rootChunk.siblings ?? []),
-	];
+	const dependenciesToProcess = [...(rootChunk.parents ?? []), ...(rootChunk.siblings ?? [])];
 
 	while (dependenciesToProcess.length > 0) {
 		const chunkToProcess = dependenciesToProcess.pop()!;
@@ -82,9 +76,6 @@ export function getChunkAndDependencySizes(
 	return {
 		name: chunkName,
 		dependencies: dependencySizeInfo,
-		size: getChunkParsedSize(
-			stats,
-			rootChunk.id ?? fail("root chunk does not have id"),
-		),
+		size: getChunkParsedSize(stats, rootChunk.id ?? fail("root chunk does not have id")),
 	};
 }

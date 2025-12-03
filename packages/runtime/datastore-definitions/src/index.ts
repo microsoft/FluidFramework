@@ -19,16 +19,16 @@ export type {
 	IDeltaHandler,
 } from "./channel.js";
 export type {
-	IDeltaManagerErased,
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeAlpha,
 	IFluidDataStoreRuntimeEvents,
 	IFluidDataStoreRuntimeInternalConfig,
+	IDeltaManagerErased,
 } from "./dataStoreRuntime.js";
 export type {
-	Internal_InterfaceOfJsonableTypesWith,
 	Jsonable,
 	JsonableTypeWith,
+	Internal_InterfaceOfJsonableTypesWith,
 } from "./jsonable.js";
 export type { Serializable } from "./serializable.js";
 export type { IChannelAttributes } from "./storage.js";

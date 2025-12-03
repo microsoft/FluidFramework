@@ -3,26 +3,27 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from 'assert';
+
 import {
-	type BaseFuzzTestState,
+	BaseFuzzTestState,
+	Generator,
+	IRandom,
 	chain,
 	createWeightedGenerator,
-	type Generator,
 	generatorFromArray,
-	type IRandom,
 	makeRandom,
 	performFuzzActions,
 	take,
 } from '@fluid-private/stochastic-test-utils';
 import { BenchmarkType, benchmark } from '@fluid-tools/benchmark';
 import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
-import { strict as assert } from 'assert';
 import { expect } from 'chai';
 
 import { fail } from '../Common.js';
-import type { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from '../Identifiers.js';
-import { isFinalId, isLocalId } from '../id-compressor/index.js';
+import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from '../Identifiers.js';
 import { SessionIdNormalizer } from '../id-compressor/SessionIdNormalizer.js';
+import { isFinalId, isLocalId } from '../id-compressor/index.js';
 
 describe('SessionIdNormalizer', () => {
 	it('fails when adding finals with no corresponding locals', () => {

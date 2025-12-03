@@ -3,38 +3,36 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import {
-	enableOnNewFileKey,
 	getRuntimeAttributor,
-	type IRuntimeAttributor,
+	IRuntimeAttributor,
+	enableOnNewFileKey,
 } from "@fluid-experimental/attributor";
 import {
 	describeCompat,
 	itSkipsFailureOnSpecificDrivers,
 } from "@fluid-private/test-version-utils";
 import {
-	type IContainer,
-	type IFluidCodeDetails,
+	IContainer,
+	IFluidCodeDetails,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
-import type {
-	ConfigTypes,
-	IConfigProviderBase,
-} from "@fluidframework/core-interfaces";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
-import type { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
+import { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import {
-	type ChannelFactoryRegistry,
-	createSummarizer,
+	ChannelFactoryRegistry,
 	DataObjectFactoryType,
-	getContainerEntryPointBackCompat,
-	type ITestContainerConfig,
-	type ITestFluidObject,
-	type ITestObjectProvider,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	createSummarizer,
 	summarizeNow,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
 
 const stringId = "sharedStringKey";
 
@@ -99,9 +97,7 @@ function assertAttributionMatches(
 // unit tests.
 describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedString } = apis.dds;
-	const registry: ChannelFactoryRegistry = [
-		[stringId, SharedString.getFactory()],
-	];
+	const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
 	const testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,
@@ -112,15 +108,12 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 		provider = getTestObjectProvider();
 	});
 
-	const configProvider = (
-		settings: Record<string, ConfigTypes>,
-	): IConfigProviderBase => ({
+	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 		getRawConfig: (name: string): ConfigTypes => settings[name],
 	});
 
 	const sharedStringFromContainer = async (container: IContainer) => {
-		const dataObject =
-			await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+		const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 		return dataObject.getSharedObject<SharedString>(stringId);
 	};
 
@@ -162,9 +155,7 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 		return attributor;
 	};
 
-	const getAttributorFromContainerWithNoAssert = async (
-		container: IContainer,
-	) => {
+	const getAttributorFromContainerWithNoAssert = async (container: IContainer) => {
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const containerRuntime = dataStore.context.containerRuntime;
 		const attributor = await getRuntimeAttributor(containerRuntime);
@@ -181,10 +172,7 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 		async function () {
 			// Skip tests for r11s drivers due to timeout issues because of certain network calls
 			// taking longer time and this test has nothing to do with r11s driver.
-			if (
-				provider.driver.type === "r11s" ||
-				provider.driver.type === "routerlicious"
-			) {
+			if (provider.driver.type === "r11s" || provider.driver.type === "routerlicious") {
 				this.skip();
 			}
 			const container1 = await provider.makeTestContainer(getTestConfig(true));
@@ -226,10 +214,7 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 	it("attributes content created in a detached state", async function () {
 		// Skip tests for r11s drivers due to timeout issues because of certain network calls
 		// taking longer time and this test has nothing to do with r11s driver.
-		if (
-			provider.driver.type === "r11s" ||
-			provider.driver.type === "routerlicious"
-		) {
+		if (provider.driver.type === "r11s" || provider.driver.type === "routerlicious") {
 			this.skip();
 		}
 		const loader = provider.makeTestLoader(getTestConfig(true));
@@ -273,7 +258,7 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 		assertAttributionMatches(sharedString2, 13, attributor2, "detached");
 	});
 
-	it("repopulates attribution association data using the summary tree", async () => {
+	it("repopulates attribution association data using the summary tree", async function () {
 		const container1 = await provider.makeTestContainer(getTestConfig(true));
 		const sharedString1 = await sharedStringFromContainer(container1);
 		const attributor1 = await getAttributorFromContainer(container1);
@@ -318,33 +303,27 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("New documents should not have attributor if enableOnNewFileKey is false", async () => {
 		const container1 = await provider.makeTestContainer(getTestConfig(false));
-		const attributor1 =
-			await getAttributorFromContainerWithNoAssert(container1);
+		const attributor1 = await getAttributorFromContainerWithNoAssert(container1);
 		assert(attributor1 === undefined, "Attributor should be undefined");
 	});
 
 	it("New documents should not have attributor if enableOnNewFileKey is undefined", async () => {
-		const container1 = await provider.makeTestContainer(
-			getTestConfig(undefined),
-		);
-		const attributor1 =
-			await getAttributorFromContainerWithNoAssert(container1);
+		const container1 = await provider.makeTestContainer(getTestConfig(undefined));
+		const attributor1 = await getAttributorFromContainerWithNoAssert(container1);
 		assert(attributor1 === undefined, "Attributor should be undefined");
 	});
 
 	it("Existing documents should not have attributor if enableOnNewFileKey is true", async () => {
 		await provider.makeTestContainer(getTestConfig(false));
 		const container2 = await provider.loadTestContainer(getTestConfig(true));
-		const attributor2 =
-			await getAttributorFromContainerWithNoAssert(container2);
+		const attributor2 = await getAttributorFromContainerWithNoAssert(container2);
 		assert(attributor2 === undefined, "Attributor should be undefined");
 	});
 
 	it("Existing documents should not have attributor if enableOnNewFileKey is false", async () => {
 		await provider.makeTestContainer(getTestConfig(false));
 		const container2 = await provider.loadTestContainer(getTestConfig(false));
-		const attributor2 =
-			await getAttributorFromContainerWithNoAssert(container2);
+		const attributor2 = await getAttributorFromContainerWithNoAssert(container2);
 		assert(attributor2 === undefined, "Attributor should be undefined");
 	});
 });

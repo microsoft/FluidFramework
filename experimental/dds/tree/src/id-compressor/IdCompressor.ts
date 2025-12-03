@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
-import { createChildLogger, type ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
+import { ITelemetryLoggerExt, createChildLogger } from '@fluidframework/telemetry-utils/internal';
 import { BTree } from '@tylerbu/sorted-btree-es6';
 
 import {
+	Mutable,
 	assertNotUndefined,
 	assertWithMessage,
 	compareFiniteNumbers,
@@ -18,10 +19,9 @@ import {
 	fail,
 	getOrCreate,
 	hasLength,
-	type Mutable,
 	setPropertyIfDefined,
 } from '../Common.js';
-import type {
+import {
 	AttributionId,
 	CompressedId,
 	FinalCompressedId,
@@ -37,14 +37,15 @@ import { assertIsStableId, assertIsUuidString, isStableId } from '../UuidUtiliti
 import { AppendOnlySortedMap } from './AppendOnlySortedMap.js';
 import { getIds } from './IdRange.js';
 import {
+	NumericUuid,
 	ensureSessionUuid,
 	getPositiveDelta,
 	incrementUuid,
-	type NumericUuid,
 	numericUuidEquals,
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
 } from './NumericUuid.js';
+import { SessionIdNormalizer } from './SessionIdNormalizer.js';
 import type {
 	IdCreationRange,
 	SerializedCluster,
@@ -57,7 +58,6 @@ import type {
 	UnackedLocalId,
 	VersionedSerializedIdCompressor,
 } from './persisted-types/index.js';
-import { SessionIdNormalizer } from './SessionIdNormalizer.js';
 
 /**
  * A cluster of final (sequenced via consensus), sequentially allocated compressed IDs.

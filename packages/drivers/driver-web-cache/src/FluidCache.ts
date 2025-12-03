@@ -3,26 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
-	ICacheEntry,
-	IFileEntry,
 	IPersistedCache,
+	IFileEntry,
+	ICacheEntry,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	getKeyForCacheEntry,
 	maximumCacheDurationMs,
 } from "@fluidframework/driver-utils/internal";
 import {
-	createChildLogger,
-	type ITelemetryLoggerExt,
+	ITelemetryLoggerExt,
 	UsageError,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
-import type { IDBPDatabase } from "idb";
+import { IDBPDatabase } from "idb";
 
 import {
-	type FluidCacheDBSchema,
+	FluidCacheDBSchema,
 	FluidDriverObjectStoreName,
 	getFluidCacheIndexedDbInstance,
 } from "./FluidCacheIndexedDb.js";
@@ -128,9 +128,8 @@ export class FluidCache implements IPersistedCache {
 				// more detailed information on how the storage is being used
 				let indexedDBSize: number | undefined;
 				if ("usageDetails" in estimate) {
-					indexedDBSize = (
-						(estimate as any).usageDetails as StorageQuotaUsageDetails
-					).indexedDB;
+					indexedDBSize = ((estimate as any).usageDetails as StorageQuotaUsageDetails)
+						.indexedDB;
 				}
 
 				this.logger.sendTelemetryEvent({
@@ -151,19 +150,14 @@ export class FluidCache implements IPersistedCache {
 			try {
 				db = await getFluidCacheIndexedDbInstance(this.logger);
 
-				const transaction = db.transaction(
-					FluidDriverObjectStoreName,
-					"readwrite",
-				);
+				const transaction = db.transaction(FluidDriverObjectStoreName, "readwrite");
 				const index = transaction.store.index("createdTimeMs");
 				// Get items which were cached before the maxCacheItemAge.
 				const keysToDelete = await index.getAllKeys(
 					IDBKeyRange.upperBound(new Date().getTime() - this.maxCacheItemAge),
 				);
 
-				await Promise.all(
-					keysToDelete.map((key) => transaction.store.delete(key)),
-				);
+				await Promise.all(keysToDelete.map((key) => transaction.store.delete(key)));
 				await transaction.done;
 			} catch (error: any) {
 				this.logger.sendErrorEvent(
@@ -207,10 +201,7 @@ export class FluidCache implements IPersistedCache {
 				this.db = undefined;
 			});
 			// Schedule db close after this.closeDbAfterMs.
-			assert(
-				this.dbCloseTimer === undefined,
-				0x6c6 /* timer should not be set yet!! */,
-			);
+			assert(this.dbCloseTimer === undefined, 0x6c6 /* timer should not be set yet!! */);
 			this.dbCloseTimer = setTimeout(() => {
 				this.db?.close();
 				this.db = undefined;
@@ -233,17 +224,12 @@ export class FluidCache implements IPersistedCache {
 		try {
 			db = await this.openDb();
 
-			const transaction = db.transaction(
-				FluidDriverObjectStoreName,
-				"readwrite",
-			);
+			const transaction = db.transaction(FluidDriverObjectStoreName, "readwrite");
 			const index = transaction.store.index("fileId");
 
 			const keysToDelete = await index.getAllKeys(file.docId);
 
-			await Promise.all(
-				keysToDelete.map((key) => transaction.store.delete(key)),
-			);
+			await Promise.all(keysToDelete.map((key) => transaction.store.delete(key)));
 			await transaction.done;
 		} catch (error: any) {
 			this.logger.sendErrorEvent(

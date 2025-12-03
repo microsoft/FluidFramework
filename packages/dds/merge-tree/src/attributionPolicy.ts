@@ -45,19 +45,12 @@ function createAttributionPolicyFromCallbacks({
 	let unsubscribe: undefined | (() => void);
 	return {
 		attach: (client: Client): void => {
-			assert(
-				unsubscribe === undefined,
-				0x557 /* cannot attach to multiple clients at once */,
-			);
+			assert(unsubscribe === undefined, 0x557 /* cannot attach to multiple clients at once */);
 
-			const deltaSubscribed: AttributionCallbacks["delta"] = (
-				opArgs,
-				deltaArgs,
-			) => delta(opArgs, deltaArgs, client);
-			const maintenanceSubscribed: AttributionCallbacks["maintenance"] = (
-				args,
-				opArgs,
-			) => maintenance(args, opArgs, client);
+			const deltaSubscribed: AttributionCallbacks["delta"] = (opArgs, deltaArgs) =>
+				delta(opArgs, deltaArgs, client);
+			const maintenanceSubscribed: AttributionCallbacks["maintenance"] = (args, opArgs) =>
+				maintenance(args, opArgs, client);
 
 			client.on("delta", deltaSubscribed);
 			client.on("maintenance", maintenanceSubscribed);
@@ -97,9 +90,7 @@ const getAttributionKey = (
 		return { type: "op", seq: msg.sequenceNumber };
 	}
 	const collabWindow = client.getCollabWindow();
-	return collabWindow.collaborating
-		? { type: "local" }
-		: { type: "detached", id: 0 };
+	return collabWindow.collaborating ? { type: "local" } : { type: "detached", id: 0 };
 };
 
 const attributeInsertionOnSegments = (
@@ -141,10 +132,7 @@ const insertOnlyAttributionPolicyCallbacks: AttributionCallbacks = {
 function createPropertyTrackingMergeTreeCallbacks(
 	...propNames: string[]
 ): AttributionCallbacks {
-	const toTrack = propNames.map((entry) => ({
-		propName: entry,
-		channelName: entry,
-	}));
+	const toTrack = propNames.map((entry) => ({ propName: entry, channelName: entry }));
 	const attributeAnnotateOnSegments = (
 		isLocal: boolean,
 		deltaSegments: IMergeTreeSegmentDelta[],
@@ -160,10 +148,8 @@ function createPropertyTrackingMergeTreeCallbacks(
 				const shouldAttributeAnnotate =
 					op.type === MergeTreeDeltaType.ANNOTATE &&
 					// Only attribute annotations which change the tracked property
-					(op.props?.[propName] !== undefined ||
-						op.adjust?.[propName] !== undefined) &&
-					(isLocal ||
-						(propertyDeltas !== undefined && propName in propertyDeltas));
+					(op.props?.[propName] !== undefined || op.adjust?.[propName] !== undefined) &&
+					(isLocal || (propertyDeltas !== undefined && propName in propertyDeltas));
 
 				if (shouldAttributeInsert || shouldAttributeAnnotate) {
 					segment.attribution?.update(
@@ -177,10 +163,7 @@ function createPropertyTrackingMergeTreeCallbacks(
 	return {
 		delta: (opArgs, { deltaSegments }, client): void => {
 			const { op, sequencedMessage } = opArgs;
-			if (
-				op.type === MergeTreeDeltaType.ANNOTATE ||
-				op.type === MergeTreeDeltaType.INSERT
-			) {
+			if (op.type === MergeTreeDeltaType.ANNOTATE || op.type === MergeTreeDeltaType.INSERT) {
 				attributeAnnotateOnSegments(
 					sequencedMessage === undefined,
 					deltaSegments,
@@ -190,10 +173,7 @@ function createPropertyTrackingMergeTreeCallbacks(
 			}
 		},
 		maintenance: ({ deltaSegments, operation }, opArgs, client): void => {
-			if (
-				operation === MergeTreeMaintenanceType.ACKNOWLEDGED &&
-				opArgs !== undefined
-			) {
+			if (operation === MergeTreeMaintenanceType.ACKNOWLEDGED && opArgs !== undefined) {
 				attributeAnnotateOnSegments(
 					true,
 					deltaSegments,
@@ -205,9 +185,7 @@ function createPropertyTrackingMergeTreeCallbacks(
 	};
 }
 
-function combineMergeTreeCallbacks(
-	callbacks: AttributionCallbacks[],
-): AttributionCallbacks {
+function combineMergeTreeCallbacks(callbacks: AttributionCallbacks[]): AttributionCallbacks {
 	return {
 		delta: (...args): void => {
 			for (const { delta } of callbacks) delta(...args);

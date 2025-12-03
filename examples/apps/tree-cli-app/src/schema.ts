@@ -9,9 +9,7 @@ import { TreeViewConfigurationAlpha } from "@fluidframework/tree/alpha";
 /**
  * The SchemaFactory.
  */
-export const schemaBuilder = new SchemaFactory(
-	"com.fluidframework.example.cli",
-);
+export const schemaBuilder = new SchemaFactory("com.fluidframework.example.cli");
 
 class Point extends schemaBuilder.object("Point", {
 	x: schemaBuilder.number,
@@ -29,10 +27,7 @@ export class Item extends schemaBuilder.object("Item", {
 /**
  * List node.
  */
-export class List extends schemaBuilder.array("List", [
-	schemaBuilder.string,
-	Item,
-]) {}
+export class List extends schemaBuilder.array("List", [schemaBuilder.string, Item]) {}
 
 /**
  * Tree configuration.

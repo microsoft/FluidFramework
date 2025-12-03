@@ -108,10 +108,9 @@ function makeOperationGenerator(
 		};
 	}
 
-	const clientBaseOperationGenerator = createWeightedGenerator<
-		Operation,
-		OpSelectionState
-	>([[write, 1]]);
+	const clientBaseOperationGenerator = createWeightedGenerator<Operation, OpSelectionState>([
+		[write, 1],
+	]);
 
 	return async (state: FuzzTestState) =>
 		clientBaseOperationGenerator({
@@ -144,27 +143,15 @@ function assertEqualConsensusRegisterCollections(
 	for (const key of aKeys) {
 		const aValueLWW = a.read(key, ReadPolicy.LWW);
 		const bValueLWW = b.read(key, ReadPolicy.LWW);
-		assert.deepEqual(
-			aValueLWW,
-			bValueLWW,
-			`LWW Values do not match for key: ${key}`,
-		);
+		assert.deepEqual(aValueLWW, bValueLWW, `LWW Values do not match for key: ${key}`);
 
 		const aValueAtomic = a.read(key, ReadPolicy.Atomic);
 		const bValueAtomic = b.read(key, ReadPolicy.Atomic);
-		assert.deepEqual(
-			aValueAtomic,
-			bValueAtomic,
-			`Atomic Values do not match for key: ${key}`,
-		);
+		assert.deepEqual(aValueAtomic, bValueAtomic, `Atomic Values do not match for key: ${key}`);
 
 		const aVersions = a.readVersions(key) ?? [];
 		const bVersions = b.readVersions(key) ?? [];
-		assert.deepEqual(
-			aVersions,
-			bVersions,
-			`Versions do not match for key: ${key}`,
-		);
+		assert.deepEqual(aVersions, bVersions, `Versions do not match for key: ${key}`);
 	}
 }
 

@@ -4,8 +4,6 @@
  */
 
 import type { SessionId } from "@fluidframework/id-compressor";
-import { withSchemaValidation } from "../../../codec/index.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	type FieldChangeEncodingContext,
 	SequenceField as SF,
@@ -14,7 +12,6 @@ import {
 import type { Changeset } from "../../../feature-libraries/sequence-field/index.js";
 import { brand, type JsonCompatibleReadOnly } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
-import { TestNodeId } from "../../testNodeId.js";
 import {
 	type EncodingTestData,
 	makeEncodingTestSuite,
@@ -22,13 +19,12 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
+import { TestNodeId } from "../../testNodeId.js";
 import { generatePopulatedMarks } from "./populatedMarks.js";
-import {
-	ChangeMaker as Change,
-	cases,
-	MarkMaker as Mark,
-} from "./testEdits.js";
+import { ChangeMaker as Change, cases, MarkMaker as Mark } from "./testEdits.js";
 import { assertChangesetsEqual, inlineRevision } from "./utils.js";
+import { withSchemaValidation } from "../../../codec/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 
 type TestCase = [string, Changeset, FieldChangeEncodingContext];
 
@@ -47,33 +43,15 @@ const context: FieldChangeEncodingContext = {
 	decodeNode: (node) => TestNodeId.decode(node, baseContext),
 };
 
-const changes = TestNodeId.create(
-	{ localId: brand(2) },
-	TestChange.mint([], 1),
-);
+const changes = TestNodeId.create({ localId: brand(2) }, TestChange.mint([], 1));
 
-const encodingTestData: EncodingTestData<
-	Changeset,
-	unknown,
-	FieldChangeEncodingContext
-> = {
+const encodingTestData: EncodingTestData<Changeset, unknown, FieldChangeEncodingContext> = {
 	successes: [
-		[
-			"with child change",
-			inlineRevision(Change.modify(1, changes), tag1),
-			context,
-		],
-		[
-			"without child change",
-			inlineRevision(Change.remove(2, 2, tag1), tag1),
-			context,
-		],
+		["with child change", inlineRevision(Change.modify(1, changes), tag1), context],
+		["without child change", inlineRevision(Change.remove(2, 2, tag1), tag1), context],
 		[
 			"with a revive",
-			inlineRevision(
-				Change.revive(0, 1, { revision: tag2, localId: brand(10) }, tag1),
-				tag1,
-			),
+			inlineRevision(Change.revive(0, 1, { revision: tag2, localId: brand(10) }, tag1), tag1),
 			context,
 		],
 		...Object.entries(cases).map<TestCase>(([name, change]) => [
@@ -91,8 +69,7 @@ const encodingTestData: EncodingTestData<
 
 export function testCodecs() {
 	describe("Codecs", () => {
-		const sequenceFieldCodec =
-			SF.sequenceFieldChangeCodecFactory(testRevisionTagCodec);
+		const sequenceFieldCodec = SF.sequenceFieldChangeCodecFactory(testRevisionTagCodec);
 		makeEncodingTestSuite(sequenceFieldCodec, encodingTestData);
 		describe("Rename-like AttachAndDetach from documents prior to 2024-07-23 are decoded as Rename", () => {
 			const expected = [
@@ -134,36 +111,36 @@ const renameLikeAttachAndDetach: readonly {
 		version: 2,
 		changeset: [
 			{
-				count: 1,
-				effect: {
-					attachAndDetach: {
-						attach: {
-							moveIn: {
-								revision: encodedTag1,
-								id: 0,
+				"count": 1,
+				"effect": {
+					"attachAndDetach": {
+						"attach": {
+							"moveIn": {
+								"revision": encodedTag1,
+								"id": 0,
 							},
 						},
-						detach: {
-							moveOut: {
-								revision: encodedTag1,
-								idOverride: [2, encodedTag2],
-								id: 3,
+						"detach": {
+							"moveOut": {
+								"revision": encodedTag1,
+								"idOverride": [2, encodedTag2],
+								"id": 3,
 							},
 						},
 					},
 				},
-				cellId: [1, encodedTag1],
-				changes: {
-					fieldChanges: [
+				"cellId": [1, encodedTag1],
+				"changes": {
+					"fieldChanges": [
 						{
-							fieldKey: "",
-							fieldKind: "",
-							change: {
-								localId: 2,
-								testChange: {
-									inputContext: [],
-									intentions: [1],
-									outputContext: [1],
+							"fieldKey": "",
+							"fieldKind": "",
+							"change": {
+								"localId": 2,
+								"testChange": {
+									"inputContext": [],
+									"intentions": [1],
+									"outputContext": [1],
 								},
 							},
 						},

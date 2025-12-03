@@ -4,8 +4,7 @@
  */
 
 import { CollaborativeInput } from "@fluid-example/example-utils";
-import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import type { IInventoryItem, IInventoryList } from "../modelInterfaces.js";
 
@@ -57,10 +56,7 @@ export const InventoryItemView: React.FC<IInventoryItemViewProps> = (
 				></input>
 			</td>
 			<td>
-				<button
-					onClick={deleteItem}
-					style={{ border: "none", background: "none" }}
-				>
+				<button onClick={deleteItem} style={{ border: "none", background: "none" }}>
 					❌
 				</button>
 			</td>
@@ -85,8 +81,7 @@ const AddItemView: React.FC<IAddItemViewProps> = (props: IAddItemViewProps) => {
 		// Extract the values from the inputs and add the new item
 		const name = nameRef.current.value;
 		const quantityString = quantityRef.current.value;
-		const quantity =
-			quantityString === "" ? 0 : Number.parseInt(quantityString, 10);
+		const quantity = quantityString === "" ? 0 : Number.parseInt(quantityString, 10);
 		addItem(name, quantity);
 
 		// Clear the input form
@@ -98,20 +93,10 @@ const AddItemView: React.FC<IAddItemViewProps> = (props: IAddItemViewProps) => {
 		<>
 			<tr style={{ borderTop: "3px solid black" }}>
 				<td>
-					<input
-						ref={nameRef}
-						type="text"
-						placeholder="New item"
-						style={{ width: "200px" }}
-					/>
+					<input ref={nameRef} type="text" placeholder="New item" style={{ width: "200px" }} />
 				</td>
 				<td>
-					<input
-						ref={quantityRef}
-						type="number"
-						placeholder="0"
-						style={{ width: "60px" }}
-					/>
+					<input ref={quantityRef} type="number" placeholder="0" style={{ width: "60px" }} />
 				</td>
 			</tr>
 			<tr>
@@ -164,13 +149,7 @@ export const InventoryListView: React.FC<IInventoryListViewProps> = (
 	});
 
 	return (
-		<table
-			style={{
-				margin: "0 auto",
-				textAlign: "left",
-				borderCollapse: "collapse",
-			}}
-		>
+		<table style={{ margin: "0 auto", textAlign: "left", borderCollapse: "collapse" }}>
 			<thead>
 				<tr>
 					<th>Inventory item</th>

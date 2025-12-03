@@ -6,24 +6,23 @@
 import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	type ChangeEncodingContext,
 	type FieldKey,
-	makeAnonChange,
 	type RevisionMetadataSource,
 	type RevisionTag,
 	type TaggedChange,
+	makeAnonChange,
 	tagChange,
 } from "../core/index.js";
 import { brand } from "../util/index.js";
-import type {
-	ChildStateGenerator,
-	FieldStateTree,
-} from "./exhaustiveRebaserUtils.js";
+
+import type { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils.js";
 import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests.js";
 import { TestChange } from "./testChange.js";
 import { mintRevisionTag, testIdCompressor } from "./utils.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 describe("TestChange", () => {
 	it("can be composed", () => {
@@ -93,14 +92,8 @@ describe("TestChange", () => {
 			idCompressor: testIdCompressor,
 		};
 		const normal = TestChange.mint([0, 1], [2, 3]);
-		assert.deepEqual(
-			empty,
-			codec.decode(codec.encode(empty, context), context),
-		);
-		assert.deepEqual(
-			normal,
-			codec.decode(codec.encode(normal, context), context),
-		);
+		assert.deepEqual(empty, codec.decode(codec.encode(empty, context), context));
+		assert.deepEqual(normal, codec.decode(codec.encode(normal, context), context));
 	});
 
 	type TestChangeTestState = FieldStateTree<number[], TestChange>;
@@ -129,25 +122,24 @@ describe("TestChange", () => {
 	/**
 	 * See {@link ChildStateGenerator}
 	 */
-	const generateChildStates: ChildStateGenerator<number[], TestChange> =
-		function* (
-			state: TestChangeTestState,
-			tagFromIntention: (intention: number) => RevisionTag,
-			mintIntention: () => number,
-		): Iterable<TestChangeTestState> {
-			const context = state.content;
-			const intention = mintIntention();
-			const change = TestChange.mint(context, intention);
-			yield {
-				content: change.outputContext,
-				mostRecentEdit: {
-					changeset: tagChange(change, tagFromIntention(intention)),
-					description: JSON.stringify(intention),
-					intention,
-				},
-				parent: state,
-			};
+	const generateChildStates: ChildStateGenerator<number[], TestChange> = function* (
+		state: TestChangeTestState,
+		tagFromIntention: (intention: number) => RevisionTag,
+		mintIntention: () => number,
+	): Iterable<TestChangeTestState> {
+		const context = state.content;
+		const intention = mintIntention();
+		const change = TestChange.mint(context, intention);
+		yield {
+			content: change.outputContext,
+			mostRecentEdit: {
+				changeset: tagChange(change, tagFromIntention(intention)),
+				description: JSON.stringify(intention),
+				intention,
+			},
+			parent: state,
 		};
+	};
 
 	describe("Rebaser Axioms", () => {
 		describe("Exhaustive suite", () => {
@@ -156,10 +148,7 @@ describe("TestChange", () => {
 				generateChildStates,
 				{
 					rebase: (change, base) => {
-						return (
-							TestChange.rebase(change.change, base.change) ??
-							TestChange.emptyChange
-						);
+						return TestChange.rebase(change.change, base.change) ?? TestChange.emptyChange;
 					},
 					compose: (change1, change2) => {
 						return TestChange.compose(change1.change, change2.change);

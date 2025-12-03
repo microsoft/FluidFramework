@@ -3,23 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { RestrictiveStringRecord } from "../../util/index.js";
-import type {
-	ImplicitAllowedTypes,
-	NodeKind,
-	TreeNodeSchemaClass,
-	WithType,
-} from "../core/index.js";
-// These imports prevent a large number of type references in the API reports from showing up as *_2.
-/* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
-import type {
-	FieldKind,
-	FieldProps,
-	FieldPropsAlpha,
-	FieldSchemaAlpha,
-	ImplicitFieldSchema,
-} from "../fieldSchema.js";
-import type { LeafSchema } from "../leafNodeSchema.js";
 import {
 	type ArrayNodeCustomizableSchema,
 	arraySchema,
@@ -30,26 +13,42 @@ import {
 	type RecordNodeCustomizableSchema,
 	recordSchema,
 } from "../node-kinds/index.js";
-import type {
-	SimpleLeafNodeSchema,
-	SimpleObjectNodeSchema,
-} from "../simpleSchema.js";
 import {
 	defaultSchemaFactoryObjectOptions,
+	scoped,
 	type NodeSchemaOptionsAlpha,
 	type ObjectSchemaOptionsAlpha,
 	type ScopedSchemaName,
-	scoped,
 } from "./schemaFactory.js";
-import { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
 import { schemaStatics } from "./schemaStatics.js";
+import type { ImplicitFieldSchema } from "../fieldSchema.js";
+import type { RestrictiveStringRecord } from "../../util/index.js";
+import type {
+	NodeKind,
+	TreeNodeSchemaClass,
+	ImplicitAllowedTypes,
+	WithType,
+} from "../core/index.js";
 import type {
 	ArrayNodeCustomizableSchemaUnsafe,
-	FieldSchemaAlphaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
 	TreeRecordNodeUnsafe,
 } from "./typesUnsafe.js";
+import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
+import { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
+
+// These imports prevent a large number of type references in the API reports from showing up as *_2.
+/* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
+import type {
+	FieldProps,
+	FieldSchemaAlpha,
+	FieldPropsAlpha,
+	FieldKind,
+} from "../fieldSchema.js";
+import type { LeafSchema } from "../leafNodeSchema.js";
+import type { SimpleLeafNodeSchema } from "../simpleSchema.js";
+import type { FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
 /* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
 
 /**
@@ -80,12 +79,7 @@ export class SchemaFactoryAlpha<
 		name: Name,
 		fields: T,
 		options?: ObjectSchemaOptionsAlpha<TCustomMetadata>,
-	): ObjectNodeSchema<
-		ScopedSchemaName<TScope, Name>,
-		T,
-		true,
-		TCustomMetadata
-	> & {
+	): ObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> & {
 		/**
 		 * Typing checking workaround: not for for actual use.
 		 * @remarks
@@ -109,8 +103,7 @@ export class SchemaFactoryAlpha<
 	 */
 	public override objectRecursive<
 		const Name extends TName,
-		const T extends
-			RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>,
+		const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
@@ -179,14 +172,12 @@ export class SchemaFactoryAlpha<
 	/**
 	 * {@inheritDoc SchemaStatics.optionalRecursive}
 	 */
-	public static override readonly optionalRecursive =
-		schemaStatics.optionalRecursive;
+	public static override readonly optionalRecursive = schemaStatics.optionalRecursive;
 
 	/**
 	 * {@inheritDoc SchemaStatics.requiredRecursive}
 	 */
-	public static override readonly requiredRecursive =
-		schemaStatics.requiredRecursive;
+	public static override readonly requiredRecursive = schemaStatics.requiredRecursive;
 
 	/**
 	 * Like {@link SchemaFactory.identifier} but static and a factory function that can be provided {@link FieldProps}.
@@ -240,12 +231,7 @@ export class SchemaFactoryAlpha<
 		name: Name,
 		allowedTypes: T,
 		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
-	): MapNodeCustomizableSchema<
-		ScopedSchemaName<TScope, Name>,
-		T,
-		true,
-		TCustomMetadata
-	> {
+	): MapNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
 		return mapSchema(
 			scoped<TScope, TName, Name>(this, name),
 			allowedTypes,
@@ -263,11 +249,7 @@ export class SchemaFactoryAlpha<
 		Name extends TName,
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
-	>(
-		name: Name,
-		allowedTypes: T,
-		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
-	) {
+	>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>) {
 		return this.mapAlpha(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
@@ -299,12 +281,7 @@ export class SchemaFactoryAlpha<
 		name: Name,
 		allowedTypes: T,
 		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
-	): ArrayNodeCustomizableSchema<
-		ScopedSchemaName<TScope, Name>,
-		T,
-		true,
-		TCustomMetadata
-	> {
+	): ArrayNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
 		return arraySchema(
 			scoped<TScope, TName, Name>(this, name),
 			allowedTypes,
@@ -322,11 +299,7 @@ export class SchemaFactoryAlpha<
 		const Name extends TName,
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
-	>(
-		name: Name,
-		allowedTypes: T,
-		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
-	) {
+	>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>) {
 		return this.arrayAlpha(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
@@ -358,12 +331,7 @@ export class SchemaFactoryAlpha<
 		name: Name,
 		allowedTypes: T,
 		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
-	): RecordNodeCustomizableSchema<
-		ScopedSchemaName<TScope, Name>,
-		T,
-		true,
-		TCustomMetadata
-	> {
+	): RecordNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
 		return recordSchema({
 			identifier: scoped<TScope, TName, Name>(this, name),
 			info: allowedTypes,
@@ -385,11 +353,7 @@ export class SchemaFactoryAlpha<
 		Name extends TName,
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
-	>(
-		name: Name,
-		allowedTypes: T,
-		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
-	) {
+	>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>) {
 		const RecordSchema = recordSchema({
 			identifier: scoped<TScope, TName, Name>(this, name),
 			info: allowedTypes as T & ImplicitAllowedTypes,

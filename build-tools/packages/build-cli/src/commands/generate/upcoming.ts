@@ -10,11 +10,7 @@ import { Flags } from "@oclif/core";
 import { format as prettier } from "prettier";
 
 import { releaseGroupFlag } from "../../flags.js";
-import {
-	BaseCommand,
-	DEFAULT_CHANGESET_PATH,
-	loadChangesets,
-} from "../../library/index.js";
+import { BaseCommand, DEFAULT_CHANGESET_PATH, loadChangesets } from "../../library/index.js";
 
 const DEFAULT_FILE = "UPCOMING.md";
 
@@ -46,8 +42,7 @@ export default class GenerateUpcomingCommand extends BaseCommand<
 		}),
 		releaseType: Flags.custom<"major" | "minor">({
 			char: "t",
-			description:
-				"The type of release for which the upcoming file is being generated.",
+			description: "The type of release for which the upcoming file is being generated.",
 			options: ["major", "minor"],
 			required: true,
 			parse: async (input) => {
@@ -72,8 +67,7 @@ export default class GenerateUpcomingCommand extends BaseCommand<
 		},
 		{
 			description: `You can output a different file using the --out flag.`,
-			command:
-				"<%= config.bin %> <%= command.id %> -g client -t minor --out testOutput.md",
+			command: "<%= config.bin %> <%= command.id %> -g client -t minor --out testOutput.md",
 		},
 	];
 
@@ -87,10 +81,7 @@ export default class GenerateUpcomingCommand extends BaseCommand<
 			this.exit(2);
 		}
 
-		const changesetDir = path.join(
-			releaseGroup.directory,
-			DEFAULT_CHANGESET_PATH,
-		);
+		const changesetDir = path.join(releaseGroup.directory, DEFAULT_CHANGESET_PATH);
 		const changes = await loadChangesets(changesetDir, logger);
 
 		const { version } = releaseGroup;
@@ -102,10 +93,7 @@ export default class GenerateUpcomingCommand extends BaseCommand<
 
 		let body: string = "";
 		for (const change of changes) {
-			if (
-				change.changeTypes.includes("minor") ||
-				flags.releaseType === "major"
-			) {
+			if (change.changeTypes.includes("minor") || flags.releaseType === "major") {
 				body += `## ${change.summary}\n\n${change.body}\n\n`;
 			} else {
 				this.info(

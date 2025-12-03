@@ -14,15 +14,15 @@ import type { IClient } from "@fluidframework/driver-definitions";
 import {
 	type IDocumentDeltaStorageService,
 	type IDocumentMessage,
+	MessageType,
 	type ISequencedDocumentMessage,
 	type IStream,
 	type IStreamResult,
-	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	createChildLogger,
 	type ITelemetryLoggerExt,
 	MockLogger,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import { type SinonFakeTimers, useFakeTimers } from "sinon";
 
@@ -57,9 +57,8 @@ describe("Loader", () => {
 				const service = new MockDocumentService(deltaStorageFactory, () => {
 					// Always create new connection, as reusing old closed connection
 					// Forces DM into infinite reconnection loop.
-					deltaConnection = new MockDocumentDeltaConnection(
-						"test",
-						(messages) => emitter.emit(submitEvent, messages),
+					deltaConnection = new MockDocumentDeltaConnection("test", (messages) =>
+						emitter.emit(submitEvent, messages),
 					);
 					return deltaConnection;
 				});
@@ -83,10 +82,7 @@ describe("Loader", () => {
 						),
 				);
 
-				const noopHeuristic = new NoopHeuristic(
-					expectedTimeout,
-					noopCountFrequency,
-				);
+				const noopHeuristic = new NoopHeuristic(expectedTimeout, noopCountFrequency);
 
 				noopHeuristic.on("wantsNoop", () => {
 					deltaManager.submit(MessageType.NoOp);
@@ -123,10 +119,7 @@ describe("Loader", () => {
 				} as unknown as ISequencedDocumentMessage;
 			}
 
-			async function sendAndReceiveOps(
-				count: number,
-				type: MessageType,
-			): Promise<void> {
+			async function sendAndReceiveOps(count: number, type: MessageType): Promise<void> {
 				for (let num = 0; num < count; ++num) {
 					assert(!deltaConnection.disposed, "disposed");
 					deltaManager.submit(type);
@@ -201,9 +194,7 @@ describe("Loader", () => {
 					);
 
 					noopHeuristic.on("wantsNoop", () => {
-						assert.fail(
-							"Heuristic shouldn't request noops with Infinite thresholds",
-						);
+						assert.fail("Heuristic shouldn't request noops with Infinite thresholds");
 					});
 
 					for (let num = 0; num < 1000; ++num) {
@@ -215,10 +206,7 @@ describe("Loader", () => {
 
 				it("Infinite time frequency will not generate noops at time intervals", async () => {
 					let counter = 0;
-					const noopHeuristic = new NoopHeuristic(
-						Number.POSITIVE_INFINITY,
-						100,
-					);
+					const noopHeuristic = new NoopHeuristic(Number.POSITIVE_INFINITY, 100);
 					noopHeuristic.on("wantsNoop", () => {
 						counter++;
 						noopHeuristic.notifyMessageSent();
@@ -235,10 +223,7 @@ describe("Loader", () => {
 
 				it("Infinite op frequency will not generate noops at op intervals", async () => {
 					let counter = 0;
-					const noopHeuristic = new NoopHeuristic(
-						100,
-						Number.POSITIVE_INFINITY,
-					);
+					const noopHeuristic = new NoopHeuristic(100, Number.POSITIVE_INFINITY);
 					noopHeuristic.on("wantsNoop", () => {
 						counter++;
 						noopHeuristic.notifyMessageSent();
@@ -253,10 +238,7 @@ describe("Loader", () => {
 
 				it("1k op frequency will generate noop at op intervals", async () => {
 					let counter = 0;
-					const noopHeuristic = new NoopHeuristic(
-						Number.POSITIVE_INFINITY,
-						1000,
-					);
+					const noopHeuristic = new NoopHeuristic(Number.POSITIVE_INFINITY, 1000);
 					noopHeuristic.on("wantsNoop", () => {
 						counter++;
 						noopHeuristic.notifyMessageSent();
@@ -373,10 +355,7 @@ describe("Loader", () => {
 					]);
 
 					await yieldEventLoop();
-					assert.strictEqual(
-						expectedError?.message,
-						"gap in client sequence number: 1",
-					);
+					assert.strictEqual(expectedError?.message, "gap in client sequence number: 1");
 				});
 
 				it("Should pass with one noop sent, 0 received and one gap", async () => {
@@ -438,10 +417,7 @@ describe("Loader", () => {
 					]);
 
 					await yieldEventLoop();
-					assert.strictEqual(
-						expectedError?.message,
-						"gap in client sequence number: 1",
-					);
+					assert.strictEqual(expectedError?.message, "gap in client sequence number: 1");
 				});
 
 				it("Should pass with 2 noop sent, 1 received, gap = 1", async () => {
@@ -534,34 +510,28 @@ describe("Loader", () => {
 
 			it("Closed abort reason should be passed fetch abort signal", async () => {
 				const mockLogger = new MockLogger();
-				await startDeltaManager(
-					undefined,
-					mockLogger.toTelemetryLogger(),
-					() => ({
-						fetchMessages: (
-							_from: number,
-							_to: number | undefined,
-							abortSignal?: AbortSignal,
-							_cachedOnly?: boolean,
-						): IStream<ISequencedDocumentMessage[]> => {
-							return {
-								read: async (): Promise<
-									IStreamResult<ISequencedDocumentMessage[]>
-								> => {
-									await new Promise<void>((resolve) => {
-										// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-										abortSignal!.addEventListener("abort", () => {
-											resolve();
-										});
+				await startDeltaManager(undefined, mockLogger.toTelemetryLogger(), () => ({
+					fetchMessages: (
+						_from: number,
+						_to: number | undefined,
+						abortSignal?: AbortSignal,
+						_cachedOnly?: boolean,
+					): IStream<ISequencedDocumentMessage[]> => {
+						return {
+							read: async (): Promise<IStreamResult<ISequencedDocumentMessage[]>> => {
+								await new Promise<void>((resolve) => {
+									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+									abortSignal!.addEventListener("abort", () => {
+										resolve();
 									});
+								});
 
-									// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-									throw new Error(abortSignal?.reason);
-								},
-							};
-						},
-					}),
-				);
+								// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+								throw new Error(abortSignal?.reason);
+							},
+						};
+					},
+				}));
 
 				// Dispose will trigger abort
 				deltaManager.dispose();

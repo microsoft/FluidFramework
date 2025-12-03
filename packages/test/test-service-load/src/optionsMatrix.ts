@@ -3,23 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import type { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
+import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import {
+	OptionsMatrix,
 	booleanCases,
 	generatePairwiseOptions,
 	numberCases,
-	type OptionsMatrix,
 } from "@fluid-private/test-pairwise-generator";
-import type { ILoaderOptions } from "@fluidframework/container-definitions/internal";
+import { ILoaderOptions } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
-	type ContainerRuntimeOptionsInternal,
 	disabledCompressionConfig,
+	IGCRuntimeOptions,
+	ISummaryRuntimeOptions,
+	type ContainerRuntimeOptionsInternal,
 	type IContainerRuntimeOptionsInternal,
-	type IGCRuntimeOptions,
-	type ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
-import type { ConfigTypes } from "@fluidframework/core-interfaces";
+import { ConfigTypes } from "@fluidframework/core-interfaces";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 import type { OptionOverride, TestConfiguration } from "./testConfigFile.js";
@@ -87,9 +87,7 @@ const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
 
 export function generateRuntimeOptions(
 	seed: number,
-	overrides:
-		| Partial<OptionsMatrix<ContainerRuntimeOptionsInternal>>
-		| undefined,
+	overrides: Partial<OptionsMatrix<ContainerRuntimeOptionsInternal>> | undefined,
 ) {
 	const gcOptions = generatePairwiseOptions(
 		applyOverrides(gcOptionsMatrix, overrides?.gcOptions as any),
@@ -105,36 +103,31 @@ export function generateRuntimeOptions(
 	// with `exactOptionalPropertyTypes` disabled and thus not complaining. Note that `undefined`
 	// is a valid option for `enableRuntimeIdCompressor`. Probably should replace `undefined`
 	// with a sentinel symbol assuming `undefined` does mean something to overall processing.
-	const runtimeOptionsMatrix: OptionsMatrix<IContainerRuntimeOptionsInternal> =
-		{
-			gcOptions: [undefined, ...gcOptions],
-			summaryOptions: [undefined, ...summaryOptions],
-			loadSequenceNumberVerification: [undefined],
-			flushMode: [undefined],
-			compressionOptions: [
-				{
-					minimumBatchSizeInBytes: 500,
-					compressionAlgorithm: CompressionAlgorithms.lz4,
-				},
-			],
-			maxBatchSizeInBytes: [716800],
-			// Compressed payloads exceeding this size will be chunked into messages of exactly this size
-			chunkSizeInBytes: [204800],
-			enableRuntimeIdCompressor: ["on", undefined, "delayed"],
-			enableGroupedBatching: [true, false],
-			createBlobPayloadPending: [true, undefined],
-			explicitSchemaControl: [true, false],
-		};
+	const runtimeOptionsMatrix: OptionsMatrix<IContainerRuntimeOptionsInternal> = {
+		gcOptions: [undefined, ...gcOptions],
+		summaryOptions: [undefined, ...summaryOptions],
+		loadSequenceNumberVerification: [undefined],
+		flushMode: [undefined],
+		compressionOptions: [
+			{ minimumBatchSizeInBytes: 500, compressionAlgorithm: CompressionAlgorithms.lz4 },
+		],
+		maxBatchSizeInBytes: [716800],
+		// Compressed payloads exceeding this size will be chunked into messages of exactly this size
+		chunkSizeInBytes: [204800],
+		enableRuntimeIdCompressor: ["on", undefined, "delayed"],
+		enableGroupedBatching: [true, false],
+		createBlobPayloadPending: [true, undefined],
+		explicitSchemaControl: [true, false],
+	};
 
-	const pairwiseOptions =
-		generatePairwiseOptions<IContainerRuntimeOptionsInternal>(
-			applyOverrides(runtimeOptionsMatrix, {
-				...overrides,
-				gcOptions: undefined,
-				summaryOptions: undefined,
-			}),
-			seed,
-		);
+	const pairwiseOptions = generatePairwiseOptions<IContainerRuntimeOptionsInternal>(
+		applyOverrides(runtimeOptionsMatrix, {
+			...overrides,
+			gcOptions: undefined,
+			summaryOptions: undefined,
+		}),
+		seed,
+	);
 
 	// Override compressionOptions to disable it if Grouped Batching is disabled
 	pairwiseOptions.map((options) => {

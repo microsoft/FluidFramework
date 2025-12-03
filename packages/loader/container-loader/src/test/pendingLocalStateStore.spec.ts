@@ -58,9 +58,7 @@ describe("PendingLocalStateStore", () => {
 	/**
 	 * Creates a mock SerializedSnapshotInfo for testing
 	 */
-	function createMockSnapshotInfo(
-		snapshotSequenceNumber: number,
-	): SerializedSnapshotInfo {
+	function createMockSnapshotInfo(snapshotSequenceNumber: number): SerializedSnapshotInfo {
 		return {
 			snapshotSequenceNumber,
 			baseSnapshot: {
@@ -250,9 +248,7 @@ describe("PendingLocalStateStore", () => {
 			const op1Duplicate = { ...createMockOp(1), clientId: "different-client" };
 
 			const state1 = createMockContainerState("http://test.com", [op1, op2]);
-			const state2 = createMockContainerState("http://test.com", [
-				op1Duplicate,
-			]);
+			const state2 = createMockContainerState("http://test.com", [op1Duplicate]);
 
 			store.set("key1", JSON.stringify(state1));
 			store.set("key2", JSON.stringify(state2));
@@ -260,9 +256,7 @@ describe("PendingLocalStateStore", () => {
 			// Retrieve and verify that the original op1 is preserved
 			const retrievedState2String = store.get("key2");
 			assert(retrievedState2String !== undefined, "Expected state to be found");
-			const retrievedState2 = JSON.parse(
-				retrievedState2String,
-			) as IPendingContainerState;
+			const retrievedState2 = JSON.parse(retrievedState2String) as IPendingContainerState;
 			assert.strictEqual(retrievedState2.savedOps[0].clientId, "test-client");
 			assert.strictEqual(retrievedState2.savedOps[0].sequenceNumber, 1);
 		});
@@ -281,9 +275,7 @@ describe("PendingLocalStateStore", () => {
 
 			const retrievedState2String = store.get("key2");
 			assert(retrievedState2String !== undefined, "Expected state to be found");
-			const retrievedState2 = JSON.parse(
-				retrievedState2String,
-			) as IPendingContainerState;
+			const retrievedState2 = JSON.parse(retrievedState2String) as IPendingContainerState;
 			assert.strictEqual(retrievedState2.savedOps.length, 2);
 			assert.strictEqual(retrievedState2.savedOps[0].sequenceNumber, 2);
 			assert.strictEqual(retrievedState2.savedOps[1].sequenceNumber, 3);
@@ -305,9 +297,7 @@ describe("PendingLocalStateStore", () => {
 			// Verify that blob1 keeps the original content from state1
 			const retrievedState2String = store.get("key2");
 			assert(retrievedState2String !== undefined, "Expected state to be found");
-			const retrievedState2 = JSON.parse(
-				retrievedState2String,
-			) as IPendingContainerState;
+			const retrievedState2 = JSON.parse(retrievedState2String) as IPendingContainerState;
 			assert.strictEqual(retrievedState2.snapshotBlobs.blob1, "content1");
 			assert.strictEqual(retrievedState2.snapshotBlobs.blob3, "content3");
 		});
@@ -315,18 +305,14 @@ describe("PendingLocalStateStore", () => {
 		it("should handle empty blob objects", () => {
 			const store = new PendingLocalStateStore<string>();
 			const state1 = createMockContainerState("http://test.com", [], {});
-			const state2 = createMockContainerState("http://test.com", [], {
-				blob1: "content1",
-			});
+			const state2 = createMockContainerState("http://test.com", [], { blob1: "content1" });
 
 			store.set("key1", JSON.stringify(state1));
 			store.set("key2", JSON.stringify(state2));
 
 			const retrievedState2String = store.get("key2");
 			assert(retrievedState2String !== undefined, "Expected state to be found");
-			const retrievedState2 = JSON.parse(
-				retrievedState2String,
-			) as IPendingContainerState;
+			const retrievedState2 = JSON.parse(retrievedState2String) as IPendingContainerState;
 			assert.strictEqual(retrievedState2.snapshotBlobs.blob1, "content1");
 		});
 	});
@@ -334,12 +320,7 @@ describe("PendingLocalStateStore", () => {
 	describe("loading groups deduplication", () => {
 		it("should handle undefined loadedGroupIdSnapshots", () => {
 			const store = new PendingLocalStateStore<string>();
-			const state = createMockContainerState(
-				"http://test.com",
-				[],
-				{},
-				undefined,
-			);
+			const state = createMockContainerState("http://test.com", [], {}, undefined);
 
 			// Should not throw
 			store.set("key1", JSON.stringify(state));
@@ -376,9 +357,7 @@ describe("PendingLocalStateStore", () => {
 
 			const retrievedState2String = store.get("key2");
 			assert(retrievedState2String !== undefined, "Expected state to be found");
-			const retrievedState2 = JSON.parse(
-				retrievedState2String,
-			) as IPendingContainerState;
+			const retrievedState2 = JSON.parse(retrievedState2String) as IPendingContainerState;
 			assert(
 				retrievedState2.loadedGroupIdSnapshots !== undefined,
 				"Expected loading groups to be defined",
@@ -398,27 +377,15 @@ describe("PendingLocalStateStore", () => {
 			const lg1 = createMockSnapshotInfo(5);
 			const lg2 = createMockSnapshotInfo(10); // Higher sequence number
 
-			const state1 = createMockContainerState(
-				"http://test.com",
-				[],
-				{},
-				{ group1: lg1 },
-			);
-			const state2 = createMockContainerState(
-				"http://test.com",
-				[],
-				{},
-				{ group1: lg2 },
-			);
+			const state1 = createMockContainerState("http://test.com", [], {}, { group1: lg1 });
+			const state2 = createMockContainerState("http://test.com", [], {}, { group1: lg2 });
 
 			store.set("key1", JSON.stringify(state1));
 			store.set("key2", JSON.stringify(state2));
 
 			const retrievedState2String = store.get("key2");
 			assert(retrievedState2String !== undefined, "Expected state to be found");
-			const retrievedState2 = JSON.parse(
-				retrievedState2String,
-			) as IPendingContainerState;
+			const retrievedState2 = JSON.parse(retrievedState2String) as IPendingContainerState;
 			assert(
 				retrievedState2.loadedGroupIdSnapshots !== undefined,
 				"Expected loading groups to be defined",
@@ -464,20 +431,10 @@ describe("PendingLocalStateStore", () => {
 
 			const retrievedState1String = store.get("key1");
 			const retrievedState2String = store.get("key2");
-			assert(
-				retrievedState1String !== undefined,
-				"Expected state1 to be found",
-			);
-			assert(
-				retrievedState2String !== undefined,
-				"Expected state2 to be found",
-			);
-			const retrievedState1 = JSON.parse(
-				retrievedState1String,
-			) as IPendingContainerState;
-			const retrievedState2 = JSON.parse(
-				retrievedState2String,
-			) as IPendingContainerState;
+			assert(retrievedState1String !== undefined, "Expected state1 to be found");
+			assert(retrievedState2String !== undefined, "Expected state2 to be found");
+			const retrievedState1 = JSON.parse(retrievedState1String) as IPendingContainerState;
+			const retrievedState2 = JSON.parse(retrievedState2String) as IPendingContainerState;
 
 			assert(
 				retrievedState1.loadedGroupIdSnapshots !== undefined,
@@ -527,31 +484,19 @@ describe("PendingLocalStateStore", () => {
 			const lg1 = createMockSnapshotInfo(10);
 			const lg2 = createMockSnapshotInfo(5);
 
-			const state1 = createMockContainerState(
-				"http://test.com",
-				[op1, op2],
-				blobs1,
-				{
-					group1: lg1,
-				},
-			);
-			const state2 = createMockContainerState(
-				"http://test.com",
-				[op2, op3],
-				blobs2,
-				{
-					group1: lg2,
-				},
-			);
+			const state1 = createMockContainerState("http://test.com", [op1, op2], blobs1, {
+				group1: lg1,
+			});
+			const state2 = createMockContainerState("http://test.com", [op2, op3], blobs2, {
+				group1: lg2,
+			});
 
 			store.set("key1", JSON.stringify(state1));
 			store.set("key2", JSON.stringify(state2));
 
 			const retrievedState2String = store.get("key2");
 			assert(retrievedState2String !== undefined, "Expected state to be found");
-			const retrievedState2 = JSON.parse(
-				retrievedState2String,
-			) as IPendingContainerState;
+			const retrievedState2 = JSON.parse(retrievedState2String) as IPendingContainerState;
 
 			// Verify ops deduplication
 			assert.strictEqual(retrievedState2.savedOps.length, 2);
@@ -575,12 +520,8 @@ describe("PendingLocalStateStore", () => {
 
 		it("should handle overwriting existing keys", () => {
 			const store = new PendingLocalStateStore<string>();
-			const state1 = createMockContainerState("http://test.com", [
-				createMockOp(1),
-			]);
-			const state2 = createMockContainerState("http://test.com", [
-				createMockOp(2),
-			]);
+			const state1 = createMockContainerState("http://test.com", [createMockOp(1)]);
+			const state2 = createMockContainerState("http://test.com", [createMockOp(2)]);
 
 			store.set("key1", JSON.stringify(state1));
 			assert.strictEqual(store.size, 1);

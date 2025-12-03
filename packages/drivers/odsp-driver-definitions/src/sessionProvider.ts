@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Socket storage discovery api response
@@ -87,8 +87,7 @@ export interface IProvideSessionAwareDriverFactory {
  * function if it session aware.
  * @legacy @beta
  */
-export interface IRelaySessionAwareDriverFactory
-	extends IProvideSessionAwareDriverFactory {
+export interface IRelaySessionAwareDriverFactory extends IProvideSessionAwareDriverFactory {
 	getRelayServiceSessionInfo(
 		resolvedUrl: IResolvedUrl,
 	): Promise<ISocketStorageDiscovery | undefined>;

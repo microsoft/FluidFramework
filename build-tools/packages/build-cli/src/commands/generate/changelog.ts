@@ -5,9 +5,9 @@
 
 import { readFile, writeFile } from "node:fs/promises";
 import {
+	type VersionBumpType,
 	bumpVersionScheme,
 	isInternalVersionScheme,
-	type VersionBumpType,
 } from "@fluid-tools/version-tools";
 import { FluidRepo, type Package } from "@fluidframework/build-tools";
 import { ux } from "@oclif/core";
@@ -34,8 +34,7 @@ async function replaceInFile(
 export default class GenerateChangeLogCommand extends BaseCommand<
 	typeof GenerateChangeLogCommand
 > {
-	static readonly description =
-		"Generate a changelog for packages based on changesets.";
+	static readonly description = "Generate a changelog for packages based on changesets.";
 
 	static readonly flags = {
 		releaseGroup: releaseGroupFlag({
@@ -56,10 +55,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 		},
 	];
 
-	private async processPackage(
-		pkg: Package,
-		bumpType: VersionBumpType,
-	): Promise<void> {
+	private async processPackage(pkg: Package, bumpType: VersionBumpType): Promise<void> {
 		const { directory, version: pkgVersion } = pkg;
 
 		// This is the version that the changesets tooling calculates by default. It does a bump of the highest semver type
@@ -97,23 +93,16 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 		}
 
 		const monorepo =
-			releaseGroup === undefined
-				? undefined
-				: context.repo.releaseGroups.get(releaseGroup);
+			releaseGroup === undefined ? undefined : context.repo.releaseGroups.get(releaseGroup);
 		if (monorepo === undefined) {
-			this.error(`Release group ${releaseGroup} not found in repo config`, {
-				exit: 1,
-			});
+			this.error(`Release group ${releaseGroup} not found in repo config`, { exit: 1 });
 		}
 
 		const releaseGroupRoot = monorepo?.directory ?? gitRoot;
 
 		// Strips additional custom metadata from the source files before we call `changeset version`,
 		// because the changeset tools - like @changesets/cli - only work on canonical changesets.
-		const bumpType = await canonicalizeChangesets(
-			releaseGroupRoot,
-			this.logger,
-		);
+		const bumpType = await canonicalizeChangesets(releaseGroupRoot, this.logger);
 
 		// The `changeset version` command applies the changesets to the changelogs
 		ux.action.start("Running `changeset version`");

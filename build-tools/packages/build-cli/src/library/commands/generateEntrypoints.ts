@@ -4,21 +4,20 @@
  */
 
 import path from "node:path";
+import fs from "fs-extra";
+
 import type { PackageJson } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
-import fs from "fs-extra";
 import type { ExportSpecifierStructure, Node } from "ts-morph";
 import { ModuleKind, Project, ScriptKind } from "ts-morph";
 
 import type { CommandLogger } from "../../logging.js";
+import { BaseCommand } from "./base.js";
+
 import { ApiLevel, isLegacy } from "../apiLevel.js";
 import type { ExportData, Node10CompatExportData } from "../packageExports.js";
 import { queryTypesResolutionPathsFromPackageExports } from "../packageExports.js";
-import {
-	getApiExports,
-	getPackageDocumentationText,
-} from "../typescriptApi.js";
-import { BaseCommand } from "./base.js";
+import { getApiExports, getPackageDocumentationText } from "../typescriptApi.js";
 
 import { unscopedPackageNameString } from "./constants.js";
 
@@ -189,16 +188,11 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 			);
 		}
 
-		promises.push(
-			generateEntrypoints(mainEntrypoint, mapApiTagLevelToOutput, this.logger),
-		);
+		promises.push(generateEntrypoints(mainEntrypoint, mapApiTagLevelToOutput, this.logger));
 
 		if (node10TypeCompat) {
 			promises.push(
-				generateNode10TypeEntrypoints(
-					mapNode10CompatExportPathToData,
-					this.logger,
-				),
+				generateNode10TypeEntrypoints(mapNode10CompatExportPathToData, this.logger),
 			);
 		}
 
@@ -336,8 +330,7 @@ function getOutputConfiguration(
 		outFileToApiLevelEntries.push([outFileLegacyAlpha, ApiLevel.legacyAlpha]);
 	}
 
-	const mapQueryPathToApiTagLevel: Map<string | RegExp, ApiLevel | undefined> =
-		new Map();
+	const mapQueryPathToApiTagLevel: Map<string | RegExp, ApiLevel | undefined> = new Map();
 	for (const [outFile, apiLevel] of outFileToApiLevelEntries) {
 		const queryPath = `${pathPrefix}${outFile}${outFileSuffix}`;
 		if (mapQueryPathToApiTagLevel.has(queryPath)) {
@@ -356,15 +349,13 @@ function getOutputConfiguration(
 		mapQueryPathToApiTagLevel.set(internalPathRegex, undefined);
 	}
 
-	const {
-		mapKeyToOutput: mapApiTagLevelToOutput,
-		mapNode10CompatExportPathToData,
-	} = queryTypesResolutionPathsFromPackageExports(
-		packageJson,
-		mapQueryPathToApiTagLevel,
-		{ node10TypeCompat, onlyFirstMatches: true },
-		logger,
-	);
+	const { mapKeyToOutput: mapApiTagLevelToOutput, mapNode10CompatExportPathToData } =
+		queryTypesResolutionPathsFromPackageExports(
+			packageJson,
+			mapQueryPathToApiTagLevel,
+			{ node10TypeCompat, onlyFirstMatches: true },
+			logger,
+		);
 
 	return {
 		mapQueryPathToApiTagLevel,
@@ -474,8 +465,7 @@ async function generateEntrypoints(
 	const mainSourceFile = project.addSourceFileAtPath(mainEntrypoint);
 	const exports = getApiExports(mainSourceFile);
 
-	const packageDocumentationHeader =
-		getPackageDocumentationText(mainSourceFile);
+	const packageDocumentationHeader = getPackageDocumentationText(mainSourceFile);
 	const newFileHeader = `${generatedHeader}${packageDocumentationHeader}`;
 
 	const commonNamedExports: Omit<ExportSpecifierStructure, "kind">[] = [];
@@ -488,9 +478,7 @@ async function generateEntrypoints(
 				.map(
 					([name, { exportedDecl, exportDecl }]) =>
 						`${name} from ${sourceContext(exportedDecl)}${
-							exportDecl === undefined
-								? ""
-								: ` via ${sourceContext(exportDecl)}`
+							exportDecl === undefined ? "" : ` via ${sourceContext(exportDecl)}`
 						}`,
 				)
 				.join(`\n\t`)}`,
@@ -501,8 +489,7 @@ async function generateEntrypoints(
 			commonNamedExports.push({ name, leadingTrivia: "\n\t" });
 		}
 		commonNamedExports[0].leadingTrivia = `\n\t// #region Unrestricted APIs\n\t`;
-		commonNamedExports[commonNamedExports.length - 1].trailingTrivia =
-			"\n\t// #endregion\n\t";
+		commonNamedExports[commonNamedExports.length - 1].trailingTrivia = "\n\t// #endregion\n\t";
 	}
 
 	log.verbose(`Generating entrypoints...`);
@@ -522,9 +509,7 @@ async function generateEntrypoints(
 		const isLegacyRelease = isLegacy(apiLevel);
 
 		// Generate this level's additional (or only) exports sorted by ascending case-sensitive name
-		const levelExports = [...exports[apiLevel]].sort((a, b) =>
-			a.name > b.name ? 1 : -1,
-		);
+		const levelExports = [...exports[apiLevel]].sort((a, b) => (a.name > b.name ? 1 : -1));
 
 		const levelSectionExports: Omit<ExportSpecifierStructure, "kind">[] = [];
 		for (const levelExport of levelExports) {
@@ -601,10 +586,7 @@ export function createNode10EntrypointFileContent({
 	readonly sourceTypeRelPath: string;
 	readonly isTypeOnly: boolean;
 }): string {
-	let entrypointToTypeImportPath = path.posix.relative(
-		dirPath,
-		sourceTypeRelPath,
-	);
+	let entrypointToTypeImportPath = path.posix.relative(dirPath, sourceTypeRelPath);
 
 	// If the path is not explicitly relative, make it so.
 	if (!/^(\.\/|\.\.\/)/.test(entrypointToTypeImportPath)) {
@@ -615,10 +597,7 @@ export function createNode10EntrypointFileContent({
 		return `${generatedHeader}export type * from "${entrypointToTypeImportPath}";\n`;
 	}
 
-	const jsImport = entrypointToTypeImportPath.replace(
-		/\.d\.([cm]?)ts/,
-		".$1js",
-	);
+	const jsImport = entrypointToTypeImportPath.replace(/\.d\.([cm]?)ts/, ".$1js");
 	return `${generatedHeader}export * from "${jsImport}";\n`;
 }
 
@@ -658,17 +637,10 @@ async function generateNode10TypeEntrypoints(
 	 */
 	const fileSavePromises: Promise<void>[] = [];
 
-	for (const [
-		outFile,
-		{ relPath, isTypeOnly },
-	] of mapExportPathToData.entries()) {
+	for (const [outFile, { relPath, isTypeOnly }] of mapExportPathToData.entries()) {
 		log.info(`\tGenerating ${outFile}`);
 		fileSavePromises.push(
-			createEntrypointFile({
-				filePath: outFile,
-				sourceTypeRelPath: relPath,
-				isTypeOnly,
-			}),
+			createEntrypointFile({ filePath: outFile, sourceTypeRelPath: relPath, isTypeOnly }),
 		);
 	}
 

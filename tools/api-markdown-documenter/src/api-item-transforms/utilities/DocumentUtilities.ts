@@ -56,9 +56,7 @@ export function createDocument(
  * Checks for duplicate {@link ApiDocument.documentPath}s among the provided set of documents.
  * @throws If any duplicates are found.
  */
-export function checkForDuplicateDocumentPaths(
-	documents: readonly ApiDocument[],
-): void {
+export function checkForDuplicateDocumentPaths(documents: readonly ApiDocument[]): void {
 	const documentPathMap = new Map<string, ApiDocument[]>();
 	for (const document of documents) {
 		let entries = documentPathMap.get(document.documentPath);
@@ -77,9 +75,7 @@ export function checkForDuplicateDocumentPaths(
 		return;
 	}
 
-	const errorMessageLines = [
-		"Duplicate output paths found among the generated documents:",
-	];
+	const errorMessageLines = ["Duplicate output paths found among the generated documents:"];
 
 	for (const [documentPath, documentsUnderPath] of duplicates) {
 		errorMessageLines.push(`- ${documentPath}`);

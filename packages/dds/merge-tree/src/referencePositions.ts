@@ -26,8 +26,7 @@ export function refTypeIncludesFlag(
 	refPosOrType: ReferencePosition | ReferenceType,
 	flags: ReferenceType,
 ): boolean {
-	const refType =
-		typeof refPosOrType === "number" ? refPosOrType : refPosOrType.refType;
+	const refType = typeof refPosOrType === "number" ? refPosOrType : refPosOrType.refType;
 	// eslint-disable-next-line no-bitwise
 	return (refType & flags) !== 0;
 }
@@ -36,9 +35,7 @@ export function refTypeIncludesFlag(
  * Gets the tile labels stored in the given reference position.
  * @legacy @beta
  */
-export const refGetTileLabels = (
-	refPos: ReferencePosition,
-): string[] | undefined =>
+export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefined =>
 	refTypeIncludesFlag(refPos, ReferenceType.Tile) && refPos.properties
 		? (refPos.properties[reservedTileLabelsKey] as string[])
 		: undefined;
@@ -47,10 +44,7 @@ export const refGetTileLabels = (
  * Determines if a reference position has the given tile label.
  * @legacy @beta
  */
-export function refHasTileLabel(
-	refPos: ReferencePosition,
-	label: string,
-): boolean {
+export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean {
 	const tileLabels = refGetTileLabels(refPos);
 	return tileLabels?.includes(label) ?? false;
 }
@@ -113,10 +107,7 @@ export const DetachedReferencePosition = -1;
  * Finds the minimum reference position.
  * @internal
  */
-export function minReferencePosition<T extends ReferencePosition>(
-	a: T,
-	b: T,
-): T {
+export function minReferencePosition<T extends ReferencePosition>(a: T, b: T): T {
 	return compareReferencePositions(a, b) < 0 ? a : b;
 }
 
@@ -124,10 +115,7 @@ export function minReferencePosition<T extends ReferencePosition>(
  * Finds the maximum reference position.
  * @internal
  */
-export function maxReferencePosition<T extends ReferencePosition>(
-	a: T,
-	b: T,
-): T {
+export function maxReferencePosition<T extends ReferencePosition>(a: T, b: T): T {
 	return compareReferencePositions(a, b) > 0 ? a : b;
 }
 
@@ -135,17 +123,13 @@ export function maxReferencePosition<T extends ReferencePosition>(
  * Compares two reference positions.
  * @internal
  */
-export function compareReferencePositions(
-	a: ReferencePosition,
-	b: ReferencePosition,
-): number {
+export function compareReferencePositions(a: ReferencePosition, b: ReferencePosition): number {
 	const aSeg = a.getSegment();
 	const bSeg = b.getSegment();
 	if (aSeg === bSeg) {
 		return a.getOffset() - b.getOffset();
 	} else {
-		return !isMergeNodeInfo(aSeg) ||
-			(isMergeNodeInfo(bSeg) && aSeg.ordinal < bSeg.ordinal)
+		return !isMergeNodeInfo(aSeg) || (isMergeNodeInfo(bSeg) && aSeg.ordinal < bSeg.ordinal)
 			? -1
 			: 1;
 	}

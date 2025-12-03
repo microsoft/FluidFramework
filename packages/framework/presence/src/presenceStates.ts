@@ -63,7 +63,10 @@ export interface RuntimeLocalUpdateOptions {
 export interface PresenceRuntime {
 	readonly presence: Presence;
 	readonly attendeeId: AttendeeId;
-	localUpdate(states: { [key: string]: ClientUpdateEntry }, options: RuntimeLocalUpdateOptions): void;
+	localUpdate(
+		states: { [key: string]: ClientUpdateEntry },
+		options: RuntimeLocalUpdateOptions,
+	): void;
 }
 
 type PresenceSubSchemaFromWorkspaceSchema<
@@ -73,7 +76,10 @@ type PresenceSubSchemaFromWorkspaceSchema<
 	[Key in keyof TSchema]: MapSchemaElement<TSchema, Part, Key>;
 };
 
-type MapEntries<TSchema extends StatesWorkspaceSchema> = PresenceSubSchemaFromWorkspaceSchema<TSchema, "manager">;
+type MapEntries<TSchema extends StatesWorkspaceSchema> = PresenceSubSchemaFromWorkspaceSchema<
+	TSchema,
+	"manager"
+>;
 
 /**
  * ValueElementMap is a map of key to a map of clientId to ValueState.
@@ -142,8 +148,12 @@ export interface PresenceStatesInternal {
 
 function isValueDirectory<
 	T,
-	TValueState extends InternalTypes.ValueRequiredState<T> | InternalTypes.ValueOptionalState<T>,
->(value: InternalTypes.ValueDirectory<T> | TValueState): value is InternalTypes.ValueDirectory<T> {
+	TValueState extends
+		| InternalTypes.ValueRequiredState<T>
+		| InternalTypes.ValueOptionalState<T>,
+>(
+	value: InternalTypes.ValueDirectory<T> | TValueState,
+): value is InternalTypes.ValueDirectory<T> {
 	return "items" in value;
 }
 
@@ -151,7 +161,9 @@ function isValueDirectory<
 // Non-validatable types
 export function mergeValueDirectory<
 	T,
-	TValueState extends InternalTypes.ValueRequiredState<T> | InternalTypes.ValueOptionalState<T>,
+	TValueState extends
+		| InternalTypes.ValueRequiredState<T>
+		| InternalTypes.ValueOptionalState<T>,
 >(
 	base: TValueState | InternalTypes.ValueDirectory<T> | undefined,
 	update: TValueState | InternalTypes.ValueDirectory<T>,
@@ -161,14 +173,19 @@ export function mergeValueDirectory<
 export function mergeValueDirectory<
 	T,
 	TBaseState extends ValidatableRequiredState<T> | ValidatableOptionalState<T>,
-	TUpdateState extends InternalTypes.ValueRequiredState<T> | InternalTypes.ValueOptionalState<T>,
+	TUpdateState extends
+		| InternalTypes.ValueRequiredState<T>
+		| InternalTypes.ValueOptionalState<T>,
 >(
 	base: TBaseState | ValidatableValueDirectory<T> | undefined,
 	update: TUpdateState | InternalTypes.ValueDirectory<T>,
 	timeDelta: number,
 ): TBaseState | ValidatableValueDirectory<T>;
 // Fully validatable types
-export function mergeValueDirectory<T, TValueState extends ValidatableRequiredState<T> | ValidatableOptionalState<T>>(
+export function mergeValueDirectory<
+	T,
+	TValueState extends ValidatableRequiredState<T> | ValidatableOptionalState<T>,
+>(
 	base: TValueState | ValidatableValueDirectory<T> | undefined,
 	update: TValueState | ValidatableValueDirectory<T>,
 	timeDelta: number,
@@ -183,7 +200,9 @@ export function mergeValueDirectory<T, TValueState extends ValidatableRequiredSt
  */
 export function mergeValueDirectory<
 	T,
-	TValueState extends InternalTypes.ValueRequiredState<T> | InternalTypes.ValueOptionalState<T>,
+	TValueState extends
+		| InternalTypes.ValueRequiredState<T>
+		| InternalTypes.ValueOptionalState<T>,
 >(
 	base: TValueState | InternalTypes.ValueDirectory<T> | undefined,
 	update: TValueState | InternalTypes.ValueDirectory<T>,
@@ -237,10 +256,18 @@ export function mergeUntrackedDatastore(
 	datastore: ValueElementMap<StatesWorkspaceSchema>,
 	timeModifier: number,
 ): void {
-	const localAllKnownState = getOrCreateRecord(datastore, key, (): RecordEntryTypes<typeof datastore> => ({}));
+	const localAllKnownState = getOrCreateRecord(
+		datastore,
+		key,
+		(): RecordEntryTypes<typeof datastore> => ({}),
+	);
 	for (const [attendeeId, value] of objectEntries(remoteAllKnownState)) {
 		if (!("ignoreUnmonitored" in value)) {
-			localAllKnownState[attendeeId] = mergeValueDirectory(localAllKnownState[attendeeId], value, timeModifier);
+			localAllKnownState[attendeeId] = mergeValueDirectory(
+				localAllKnownState[attendeeId],
+				value,
+				timeModifier,
+			);
 		}
 	}
 }
@@ -253,10 +280,10 @@ const defaultAllowableUpdateLatencyMs = 60;
 /**
  * Produces the value type of a schema element or set of elements.
  */
-type SchemaElementValueType<TSchema extends StatesWorkspaceSchema, Keys extends keyof TSchema> = Exclude<
-	MapSchemaElement<TSchema, "initialData", Keys>,
-	undefined
->["value"];
+type SchemaElementValueType<
+	TSchema extends StatesWorkspaceSchema,
+	Keys extends keyof TSchema,
+> = Exclude<MapSchemaElement<TSchema, "initialData", Keys>, undefined>["value"];
 
 /**
  * No-runtime-effect helper to protect cast from unknown datastore to specific
@@ -264,17 +291,23 @@ type SchemaElementValueType<TSchema extends StatesWorkspaceSchema, Keys extends 
  * expectations.)
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function castUnknownRecordToSchemaRecord<TSchema extends StatesWorkspaceSchema, Key extends keyof TSchema & string>(
-	record: ClientRecord<ValidatableValueDirectoryOrState<unknown>>,
-) {
-	return record as ClientRecord<ValidatableValueStructure<SchemaElementValueType<TSchema, Key>>>;
+function castUnknownRecordToSchemaRecord<
+	TSchema extends StatesWorkspaceSchema,
+	Key extends keyof TSchema & string,
+>(record: ClientRecord<ValidatableValueDirectoryOrState<unknown>>) {
+	return record as ClientRecord<
+		ValidatableValueStructure<SchemaElementValueType<TSchema, Key>>
+	>;
 }
 
 class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 	implements
 		PresenceStatesInternal,
 		AnyWorkspace<TSchema>,
-		StateDatastore<keyof TSchema & string, SchemaElementValueType<TSchema, keyof TSchema & string>>
+		StateDatastore<
+			keyof TSchema & string,
+			SchemaElementValueType<TSchema, keyof TSchema & string>
+		>
 {
 	private readonly nodes: MapEntries<TSchema>;
 	public readonly states: StatesWorkspace<TSchema>["states"];
@@ -330,7 +363,8 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 
 			if (anyInitialValues) {
 				this.runtime.localUpdate(newValues, {
-					allowableUpdateLatencyMs: cumulativeAllowableUpdateLatencyMs ?? this.controls.allowableUpdateLatencyMs,
+					allowableUpdateLatencyMs:
+						cumulativeAllowableUpdateLatencyMs ?? this.controls.allowableUpdateLatencyMs,
 				});
 			}
 		}
@@ -363,7 +397,8 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 			{ [key]: value },
 			{
 				...options,
-				allowableUpdateLatencyMs: options.allowableUpdateLatencyMs ?? this.controls.allowableUpdateLatencyMs,
+				allowableUpdateLatencyMs:
+					options.allowableUpdateLatencyMs ?? this.controls.allowableUpdateLatencyMs,
 			},
 		);
 	}
@@ -383,7 +418,11 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 		);
 	}
 
-	public add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<unknown>, TValueManager>(
+	public add<
+		TKey extends string,
+		TValue extends InternalTypes.ValueDirectoryOrState<unknown>,
+		TValueManager,
+	>(
 		key: TKey,
 		nodeFactory: InternalTypes.ManagerFactory<TKey, TValue, TValueManager>,
 	): asserts this is StatesWorkspace<
@@ -405,7 +444,8 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 			this.runtime.localUpdate(
 				{ [key]: value },
 				{
-					allowableUpdateLatencyMs: allowableUpdateLatencyMs ?? this.controls.allowableUpdateLatencyMs,
+					allowableUpdateLatencyMs:
+						allowableUpdateLatencyMs ?? this.controls.allowableUpdateLatencyMs,
 				},
 			);
 		}
@@ -432,7 +472,11 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 		return this as AnyWorkspace<TSchema & TSchemaAdditional>;
 	}
 
-	public processUpdate(received: number, timeModifier: number, remoteDatastore: ValueUpdateRecord): PostUpdateAction[] {
+	public processUpdate(
+		received: number,
+		timeModifier: number,
+		remoteDatastore: ValueUpdateRecord,
+	): PostUpdateAction[] {
 		const postUpdateActions: PostUpdateAction[] = [];
 		for (const [key, remoteAllKnownState] of Object.entries(remoteDatastore)) {
 			const brandedIVM = this.nodes[key];

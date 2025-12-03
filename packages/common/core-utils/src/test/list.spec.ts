@@ -29,11 +29,7 @@ describe("DoublyLinkedList", () => {
 
 	describe(".first", () => {
 		it("Should return the first item in the list", () =>
-			assert.equal(
-				list.first?.data,
-				listCount - 1,
-				"first item not expected value",
-			));
+			assert.equal(list.first?.data, listCount - 1, "first item not expected value"));
 	});
 
 	describe(".last", () => {
@@ -85,56 +81,30 @@ describe("DoublyLinkedList", () => {
 	});
 
 	describe(".splice", () => {
-		for (const splicePos of [
-			-1,
-			0,
-			1,
-			Math.floor(listCount / 2),
-			listCount,
-			listCount - 1,
-		]) {
+		for (const splicePos of [-1, 0, 1, Math.floor(listCount / 2), listCount, listCount - 1]) {
 			it(`splice at position ${splicePos}`, () => {
 				const nodesArray = [...list];
 				// negative numbers for the start move back from the end
 				// see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/splice#syntax
-				const spliceIndex =
-					splicePos < 0 ? nodesArray.length + splicePos : splicePos;
+				const spliceIndex = splicePos < 0 ? nodesArray.length + splicePos : splicePos;
 				// capture the node for the list splice
 				const spliceNode = nodesArray[spliceIndex];
 				const arraySplice = nodesArray.splice(spliceIndex);
 
 				const listSplice =
-					spliceNode === undefined
-						? new DoublyLinkedList()
-						: list.splice(spliceNode);
+					spliceNode === undefined ? new DoublyLinkedList() : list.splice(spliceNode);
 
-				assert.equal(
-					list.length,
-					nodesArray.length,
-					"remaining lengths don't match",
-				);
-				assert.equal(
-					listSplice.length,
-					arraySplice.length,
-					"spliced lengths don't match",
-				);
+				assert.equal(list.length, nodesArray.length, "remaining lengths don't match");
+				assert.equal(listSplice.length, arraySplice.length, "spliced lengths don't match");
 
 				const listNodes = [...list];
 				for (let i = 0; i < listNodes.length; i++) {
-					assert.equal(
-						listNodes[i],
-						nodesArray[i],
-						`remaining node mismatch at pos ${i}`,
-					);
+					assert.equal(listNodes[i], nodesArray[i], `remaining node mismatch at pos ${i}`);
 				}
 
 				const listSpliceNodes = [...listSplice];
 				for (let i = 0; i < listSpliceNodes.length; i++) {
-					assert.equal(
-						listSpliceNodes[i],
-						arraySplice[i],
-						`splice node mismatch at pos ${i}`,
-					);
+					assert.equal(listSpliceNodes[i], arraySplice[i], `splice node mismatch at pos ${i}`);
 				}
 			});
 		}

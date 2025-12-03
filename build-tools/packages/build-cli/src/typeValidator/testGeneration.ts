@@ -20,8 +20,7 @@ export function buildTestCase(
 		return [];
 	}
 
-	const expectErrorString =
-		"// @ts-expect-error compatibility expected to be broken";
+	const expectErrorString = "// @ts-expect-error compatibility expected to be broken";
 	const testString: string[] = [];
 
 	if (!isCompatible) {

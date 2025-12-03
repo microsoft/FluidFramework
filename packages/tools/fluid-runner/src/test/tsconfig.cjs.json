@@ -3,11 +3,11 @@
 	"extends": "./tsconfig.json",
 	"exclude": ["./**/*.esm.*"],
 	"compilerOptions": {
-		"outDir": "../../dist/test"
+		"outDir": "../../dist/test",
 	},
 	"references": [
 		{
-			"path": "../../tsconfig.cjs.json"
-		}
-	]
+			"path": "../../tsconfig.cjs.json",
+		},
+	],
 }

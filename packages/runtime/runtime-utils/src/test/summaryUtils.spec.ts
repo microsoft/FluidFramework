@@ -5,11 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	IsoBuffer,
-	stringToBuffer,
-	Uint8ArrayToString,
-} from "@fluid-internal/client-utils";
+import { IsoBuffer, Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
 import type {
 	ISummaryBlob,
 	ISummaryHandle,
@@ -17,23 +13,17 @@ import type {
 	SummaryObject,
 } from "@fluidframework/driver-definitions";
 import { SummaryType } from "@fluidframework/driver-definitions";
-import type {
-	ISnapshotTree,
-	ITree,
-} from "@fluidframework/driver-definitions/internal";
-import {
-	BlobTreeEntry,
-	TreeTreeEntry,
-} from "@fluidframework/driver-utils/internal";
+import type { ISnapshotTree, ITree } from "@fluidframework/driver-definitions/internal";
+import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils/internal";
 
 import {
+	SummaryTreeBuilder,
+	TelemetryContext,
 	convertSnapshotTreeToSummaryTree,
 	convertSummaryTreeToITree,
 	convertToSummaryTree,
-	SummaryTreeBuilder,
-	type SummaryTreeBuilderParams,
-	TelemetryContext,
 	utf8ByteLength,
+	type SummaryTreeBuilderParams,
 } from "../summaryUtils.js";
 
 describe("Summary Utils", () => {
@@ -121,10 +111,7 @@ describe("Summary Utils", () => {
 			const subBlobUtf8 = assertSummaryBlob(subTree.tree.bu8);
 			assert.strictEqual(subBlobUtf8.content, "test-u8");
 			const subBlobBase64 = assertSummaryBlob(subTree.tree.b64);
-			assert.strictEqual(
-				Uint8ArrayToString(subBlobBase64.content as Uint8Array),
-				"test-b64",
-			);
+			assert.strictEqual(Uint8ArrayToString(subBlobBase64.content as Uint8Array), "test-b64");
 			const subTreeUnref = assertSummaryTree(subTree.tree.tu);
 			assert.strictEqual(
 				Object.keys(subTreeUnref.tree).length,
@@ -143,9 +130,7 @@ describe("Summary Utils", () => {
 
 			// trees with ids should not become handles
 			const usuallyIgnoredSubtree = assertSummaryTree(summaryTree.tree.h);
-			const usuallyIgnoredBlob = assertSummaryBlob(
-				usuallyIgnoredSubtree.tree.ignore,
-			);
+			const usuallyIgnoredBlob = assertSummaryBlob(usuallyIgnoredSubtree.tree.ignore);
 			assert.strictEqual(usuallyIgnoredBlob.content, "this-should-be-ignored");
 
 			// subtrees should recurse
@@ -153,10 +138,7 @@ describe("Summary Utils", () => {
 			const subBlobUtf8 = assertSummaryBlob(subTree.tree.bu8);
 			assert.strictEqual(subBlobUtf8.content, "test-u8");
 			const subBlobBase64 = assertSummaryBlob(subTree.tree.b64);
-			assert.strictEqual(
-				Uint8ArrayToString(subBlobBase64.content as Uint8Array),
-				"test-b64",
-			);
+			assert.strictEqual(Uint8ArrayToString(subBlobBase64.content as Uint8Array), "test-b64");
 			const subUnrefTree = assertSummaryTree(subTree.tree.tu);
 			assert.strictEqual(
 				Object.keys(subUnrefTree.tree).length,
@@ -237,15 +219,15 @@ describe("Summary Utils", () => {
 		beforeEach(() => {
 			snapshotTree = {
 				blobs: {
-					b: "blob-b",
+					"b": "blob-b",
 					"blob-b": IsoBuffer.from("test-blob").toString("base64"),
 				},
 				trees: {
 					t: {
 						blobs: {
-							bu8: "blob-bu8",
+							"bu8": "blob-bu8",
 							"blob-bu8": IsoBuffer.from("test-u8").toString("base64"),
-							b64: "blob-b64",
+							"b64": "blob-b64",
 							"blob-b64": IsoBuffer.from("test-b64").toString("base64"),
 						},
 						trees: {
@@ -285,10 +267,7 @@ describe("Summary Utils", () => {
 			const subBlobUtf8 = assertSummaryBlob(subTree.tree.bu8);
 			assert.strictEqual(subBlobUtf8.content, "test-u8");
 			const subBlobBase64 = assertSummaryBlob(subTree.tree.b64);
-			assert.strictEqual(
-				Uint8ArrayToString(subBlobBase64.content as Uint8Array),
-				"test-b64",
-			);
+			assert.strictEqual(Uint8ArrayToString(subBlobBase64.content as Uint8Array), "test-b64");
 			const subTreeUnref = assertSummaryTree(subTree.tree.tu);
 			assert.strictEqual(
 				Object.keys(subTreeUnref.tree).length,
@@ -351,11 +330,7 @@ describe("Summary Utils", () => {
 			);
 
 			const subTreeT = assertSummaryTree(summaryTree.tree.t);
-			assert.strictEqual(
-				subTreeT.groupId,
-				undefined,
-				"The t subtree not have groupId",
-			);
+			assert.strictEqual(subTreeT.groupId, undefined, "The t subtree not have groupId");
 			const subTreeTUnrefTree = assertSummaryTree(subTreeT.tree.tu);
 			assert.strictEqual(
 				subTreeTUnrefTree.groupId,
@@ -364,18 +339,10 @@ describe("Summary Utils", () => {
 			);
 
 			const subTreeUnref = assertSummaryTree(summaryTree.tree.unref);
-			assert.strictEqual(
-				subTreeUnref.groupId,
-				undefined,
-				"The groupId should not be set",
-			);
+			assert.strictEqual(subTreeUnref.groupId, undefined, "The groupId should not be set");
 
 			const subTreeGroupId = assertSummaryTree(summaryTree.tree.groupId);
-			assert.strictEqual(
-				subTreeGroupId.groupId,
-				"group-id",
-				"The groupId should be set",
-			);
+			assert.strictEqual(subTreeGroupId.groupId, "group-id", "The groupId should be set");
 		});
 	});
 
@@ -396,11 +363,7 @@ describe("Summary Utils", () => {
 				"������",
 			];
 			a.map((s) =>
-				assert.strictEqual(
-					utf8ByteLength(s),
-					stringToBuffer(s, "utf8").byteLength,
-					s,
-				),
+				assert.strictEqual(utf8ByteLength(s), stringToBuffer(s, "utf8").byteLength, s),
 			);
 		});
 	});
@@ -413,11 +376,7 @@ describe("Summary Utils", () => {
 			telemetryContext.set("pre2_", "prop1", "10");
 			telemetryContext.set("pre2_", "prop2", true);
 			telemetryContext.set("pre1_", "prop2", undefined);
-			telemetryContext.setMultiple("pre3_", "obj1", {
-				prop1: "1",
-				prop2: 2,
-				prop3: true,
-			});
+			telemetryContext.setMultiple("pre3_", "obj1", { prop1: "1", prop2: 2, prop3: true });
 
 			const serialized = telemetryContext.serialize();
 
@@ -474,8 +433,7 @@ describe("Summary Utils", () => {
 			const handle = "testHandle";
 			summaryTreeBuilder.addHandle("testHandleKey", SummaryType.Tree, handle);
 			const summaryTree = summaryTreeBuilder.summary;
-			const handleObject: SummaryObject | undefined =
-				summaryTree.tree.testHandleKey;
+			const handleObject: SummaryObject | undefined = summaryTree.tree.testHandleKey;
 			assert(handleObject !== undefined);
 			assert.strictEqual(handleObject.type, SummaryType.Handle);
 			assert.strictEqual(handleObject.handleType, SummaryType.Tree);

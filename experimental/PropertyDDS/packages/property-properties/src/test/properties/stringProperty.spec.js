@@ -15,11 +15,11 @@ const { PropertyFactory } = require("../..");
 const { BaseProperty } = require("../..");
 const deepCopy = _.cloneDeep;
 
-describe("StringProperty", () => {
+describe("StringProperty", function () {
 	var changeSetWithEntries, removalChangeSet;
 	var myStringProp;
 
-	before(() => {
+	before(function () {
 		// Register a template with a set property for the tests
 		var SimpleStringTestPropertyTemplate = {
 			typeid: "autodesk.tests:SimpleStringTestProperty-1.0.0",
@@ -31,34 +31,34 @@ describe("StringProperty", () => {
 	});
 
 	// Inserts a char into the string
-	var insertText = (stringProp) => {
+	var insertText = function (stringProp) {
 		stringProp.insertRange(0, "x");
 	};
 
 	// Removes the first char from the string
-	var removeText = (stringProp) => {
+	var removeText = function (stringProp) {
 		stringProp.removeRange(0, 1);
 	};
 
 	// Modifies the text
-	var modifyText = (stringProp) => {
+	var modifyText = function (stringProp) {
 		stringProp.setRange(0, "y");
 	};
 
 	// set the text to a given string
-	var setText = (stringProp) => {
+	var setText = function (stringProp) {
 		stringProp.value = "s";
 	};
 
-	describe("Testing creation, assignment and serialization", () => {
-		it("should be empty at the beginning", () => {
+	describe("Testing creation, assignment and serialization", function () {
+		it("should be empty at the beginning", function () {
 			expect(myStringProp.value).to.equal("");
 			expect(myStringProp.getValue()).to.equal("");
 			expect(myStringProp.serialize({ dirtyOnly: true })).to.be.empty;
 			expect(myStringProp.serialize({ dirtyOnly: false })).to.equal("");
 		});
 
-		it("should be possible to insert into the string", () => {
+		it("should be possible to insert into the string", function () {
 			// Text insertion
 			myStringProp.insertRange(0, "abef");
 			expect(myStringProp.value).to.equal("abef");
@@ -69,11 +69,10 @@ describe("StringProperty", () => {
 			changeSetWithEntries = myStringProp.serialize({ dirtyOnly: true });
 			expect(myStringProp.serialize({ dirtyOnly: false })).to.equal("abcdef");
 			var CS = myStringProp.serialize({ dirtyOnly: true });
-			expect(CS.insert && CS.insert[0] && CS.insert[0][1] === "abcdef").to.be
-				.ok;
+			expect(CS.insert && CS.insert[0] && CS.insert[0][1] === "abcdef").to.be.ok;
 		});
 
-		it("Should handle removals correctly", () => {
+		it("Should handle removals correctly", function () {
 			myStringProp.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
 			myStringProp.removeRange(3, 2);
 			expect(myStringProp.value).to.equal("abcf");
@@ -88,14 +87,12 @@ describe("StringProperty", () => {
 			expect(removalChangeSet.remove[0]).to.deep.equal([3, 2]);
 		});
 
-		it("Should support deserialization", () => {
+		it("Should support deserialization", function () {
 			var deserializedNode = PropertyFactory.create("String");
-			var deserializedChanges1 =
-				deserializedNode.deserialize(changeSetWithEntries);
+			var deserializedChanges1 = deserializedNode.deserialize(changeSetWithEntries);
 			expect(deserializedChanges1).to.deep.equal(changeSetWithEntries);
 
-			var deserializedChanges2 =
-				deserializedNode.deserialize(changeSetWithEntries);
+			var deserializedChanges2 = deserializedNode.deserialize(changeSetWithEntries);
 			expect(ChangeSet.isEmptyChangeSet(deserializedChanges2)).to.be.ok;
 
 			var deserializedChanges3 = deserializedNode.deserialize({});
@@ -106,13 +103,13 @@ describe("StringProperty", () => {
 			expect(deserializedChanges4).to.deep.equal("");
 		});
 
-		it("inserting at a bad position should throw an exception", () => {
-			expect(() => {
+		it("inserting at a bad position should throw an exception", function () {
+			expect(function () {
 				myStringProp.insertRange(2242, "x");
 			}).to.throw();
 		});
 
-		it("insert after set should work", () => {
+		it("insert after set should work", function () {
 			var testString = PropertyFactory.create("String");
 			testString.value = "A";
 			testString.insertRange(0, "B");
@@ -121,7 +118,7 @@ describe("StringProperty", () => {
 			expect(testString.serialize({ dirtyOnly: true })).to.equal("BA");
 		});
 
-		it("remove after set should work", () => {
+		it("remove after set should work", function () {
 			var testString = PropertyFactory.create("String");
 			testString.value = "ABCD";
 			testString.removeRange(1, 2);
@@ -130,7 +127,7 @@ describe("StringProperty", () => {
 			expect(testString.serialize({ dirtyOnly: true })).to.equal("AD");
 		});
 
-		it("modify after set should work", () => {
+		it("modify after set should work", function () {
 			var testString = PropertyFactory.create("String");
 			testString.value = "ABCD";
 			testString.setRange(1, "XY");
@@ -139,7 +136,7 @@ describe("StringProperty", () => {
 			expect(testString.serialize({ dirtyOnly: true })).to.equal("AXYD");
 		});
 
-		it("set must stay a set", () => {
+		it("set must stay a set", function () {
 			var testString = PropertyFactory.create("String");
 			testString.value = "ABCD";
 			expect(testString.serialize({ dirtyOnly: true })).to.equal("ABCD");
@@ -150,32 +147,32 @@ describe("StringProperty", () => {
 			expect(testString.serialize({ dirtyOnly: true })).to.equal("XYZ");
 		});
 
-		it(".get should return a single letter", () => {
+		it(".get should return a single letter", function () {
 			var testString = PropertyFactory.create("String");
 			testString.value = "ABCD";
 			expect(testString.get(2)).to.equal("C");
 		});
 
-		it(".getFullTypeid should return a string of the typeid", () => {
+		it(".getFullTypeid should return a string of the typeid", function () {
 			var testString = PropertyFactory.create("String");
 			expect(testString.getFullTypeid()).to.equal("String");
 		});
 
-		it(".insert should insert a string", () => {
+		it(".insert should insert a string", function () {
 			var testString = PropertyFactory.create("String");
 			testString.setValue("AAAAA");
 			testString.insert(1, "BB");
 			expect(testString.getValue()).to.equal("ABBAAAA");
 		});
 
-		it(".insertRange should insert a string", () => {
+		it(".insertRange should insert a string", function () {
 			var testString = PropertyFactory.create("String");
 			testString.setValue("AAAAA");
 			testString.insertRange(1, "BB");
 			expect(testString.getValue()).to.equal("ABBAAAA");
 		});
 
-		it("Should report dirtiness correctly when introducing a modification in certain order", () => {
+		it("Should report dirtiness correctly when introducing a modification in certain order", function () {
 			testString = PropertyFactory.create("String");
 			let newValue = "test";
 			const node = PropertyFactory.create("NodeProperty");
@@ -189,7 +186,7 @@ describe("StringProperty", () => {
 			);
 			node.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE);
 			node.cleanDirty();
-			const oldValue = newValue;
+			let oldValue = newValue;
 			newValue = "test1";
 			node.applyChangeSet(
 				JSON.parse(
@@ -200,21 +197,21 @@ describe("StringProperty", () => {
 			expect(Object.keys(node._serialize(true, false, 2))).to.have.length(1);
 		});
 
-		it(".insertRange should also accept an array with a single string", () => {
+		it(".insertRange should also accept an array with a single string", function () {
 			var testString = PropertyFactory.create("String");
 			testString.setValue("AAAAA");
 			testString.insertRange(1, ["BC"]);
 			expect(testString.getValue()).to.equal("ABCAAAA");
 		});
 
-		it(".insertRange should join an array with more than one string", () => {
+		it(".insertRange should join an array with more than one string", function () {
 			var testString = PropertyFactory.create("String");
 			testString.setValue("AAAAA");
 			testString.insertRange(1, ["B", "C", "D"]);
 			expect(testString.getValue()).to.equal("ABCDAAAA");
 		});
 
-		it(".push should add a string to the end of the original string and return the length of the string", () => {
+		it(".push should add a string to the end of the original string and return the length of the string", function () {
 			var testString = PropertyFactory.create("String");
 			testString.setValue("AAAAA");
 			testString.push("BB");
@@ -223,8 +220,8 @@ describe("StringProperty", () => {
 		});
 	});
 
-	describe("inherited API methods", () => {
-		it(".clear should remove all values from the string", () => {
+	describe("inherited API methods", function () {
+		it(".clear should remove all values from the string", function () {
 			var testString = PropertyFactory.create("String");
 			testString.setValue("AAAAA");
 			expect(testString.getValue()).to.equal("AAAAA");
@@ -232,33 +229,33 @@ describe("StringProperty", () => {
 			expect(testString.getValue()).to.equal("");
 		});
 
-		it(".getEntriesReadOnly should return a string", () => {
+		it(".getEntriesReadOnly should return a string", function () {
 			var testString = PropertyFactory.create("String");
 			testString.setValue("AAAAA");
 			expect(testString.getEntriesReadOnly()).to.equal("AAAAA");
 		});
 
-		it(".getIds should return an array of string ids", () => {
+		it(".getIds should return an array of string ids", function () {
 			var testString = PropertyFactory.create("String");
 			testString.setValue("AAAAA");
 			expect(testString.getIds()).to.deep.equal(["0", "1", "2", "3", "4"]);
 		});
 
-		it(".getLength should return the length of the string", () => {
+		it(".getLength should return the length of the string", function () {
 			var testString = PropertyFactory.create("String");
 			expect(testString.getLength()).to.equal(0);
 			testString.setValue("AAAAA");
 			expect(testString.getLength()).to.equal(5);
 		});
 
-		it(".pop should remove the last letter", () => {
+		it(".pop should remove the last letter", function () {
 			var testString = PropertyFactory.create("String");
 			testString.setValue("ABCDE");
 			testString.pop();
 			expect(testString.getValue()).to.equal("ABCD");
 		});
 
-		it(".remove should remove a single letter", () => {
+		it(".remove should remove a single letter", function () {
 			var testString = PropertyFactory.create("String");
 			testString.setValue("ABCDE");
 			testString.remove(2);
@@ -266,7 +263,7 @@ describe("StringProperty", () => {
 			expect(testString.remove(1)).to.equal("B");
 		});
 
-		it("removeRange should remove a range of letters", () => {
+		it("removeRange should remove a range of letters", function () {
 			var testString = PropertyFactory.create("String");
 			testString.setValue("ABCDEFG");
 			testString.removeRange(1, 2);
@@ -274,64 +271,64 @@ describe("StringProperty", () => {
 			expect(testString.removeRange(2, 3)).to.equal("EFG");
 		});
 
-		it('@regression removeRange should clear a value longer than the special value "setAsLiteral"', () => {
+		it('@regression removeRange should clear a value longer than the special value "setAsLiteral"', function () {
 			var testString = PropertyFactory.create("String");
 			testString.setValue("AAAAAAAAAAAAAAAAAA");
 			testString.removeRange(0, testString.getValue().length);
 			expect(testString.getValue()).to.equal("");
 		});
 
-		it("set should set a single character", () => {
+		it("set should set a single character", function () {
 			var testString = PropertyFactory.create("String");
 			testString.setValue("ABCDEFG");
 			testString.set(3, "x");
 			expect(testString.getValue()).to.equal("ABCxEFG");
 		});
 
-		it("set should not allow setting more than one character", () => {
+		it("set should not allow setting more than one character", function () {
 			var testString = PropertyFactory.create("String");
 			testString.setValue("ABCDEFG");
 
-			expect(() => {
+			expect(function () {
 				testString.set(0, "ab");
 			}).to.throw(MSG.STRING_SET_ONE_CHAR);
 		});
 
-		it("set should throw if in_offset is not an integer", () => {
+		it("set should throw if in_offset is not an integer", function () {
 			var testString = PropertyFactory.create("String");
 			testString.setValue("ABCDEFG");
 
-			expect(() => {
+			expect(function () {
 				testString.set("test", "a");
 			}).to.throw(MSG.STRING_SET_NEEDS_INDEX);
 		});
 
-		it("setRange should replace a range of letters", () => {
+		it("setRange should replace a range of letters", function () {
 			var testString = PropertyFactory.create("String");
 			testString.setValue("ABCDEFG");
 			testString.setRange(3, "xx");
 			expect(testString.getValue()).to.equal("ABCxxFG");
 		});
 
-		it("setRange should throw if trying to set out of range", () => {
+		it("setRange should throw if trying to set out of range", function () {
 			var testString = PropertyFactory.create("String");
 			testString.setValue("ABCDEFG");
-			var fn = () => {
+			var fn = function () {
 				testString.setRange(5, "xxxxxx");
 			};
 			expect(fn).to.throw();
 		});
 
-		it("setRange should throw if in_offset is not an integer", () => {
+		it("setRange should throw if in_offset is not an integer", function () {
 			var testString = PropertyFactory.create("String");
 			testString.setValue("ABCDEFG");
-			var fn = () => {
+			var fn = function () {
 				testString.setRange("test", "xx");
 			};
 			expect(fn).to.throw(MSG.NOT_NUMBER);
 		});
 
-		it("shift should remove a single letter at the beginning of the string", () => {
+		it("shift should remove a single letter at the beginning of the string", function () {
 			var testString = PropertyFactory.create("String");
 			testString.setValue("ABCDEFG");
 			testString.shift();
@@ -339,7 +336,7 @@ describe("StringProperty", () => {
 			expect(testString.shift()).to.equal("B");
 		});
 
-		it("unshift should add letters at the beginning of a string and return the length of the string", () => {
+		it("unshift should add letters at the beginning of a string and return the length of the string", function () {
 			var testString = PropertyFactory.create("String");
 			testString.setValue("ABC");
 			testString.unshift("DE");
@@ -348,8 +345,8 @@ describe("StringProperty", () => {
 		});
 	});
 
-	describe("change set specification should be met", () => {
-		it("Should handle inserts correctly", () => {
+	describe("change set specification should be met", function () {
+		it("Should handle inserts correctly", function () {
 			var t = PropertyFactory.create("String");
 			t.value = "test";
 			t.cleanDirty();
@@ -359,7 +356,7 @@ describe("StringProperty", () => {
 			});
 		});
 
-		it("Should handle push correctly", () => {
+		it("Should handle push correctly", function () {
 			var t = PropertyFactory.create("String");
 			t.value = "test";
 			t.cleanDirty();
@@ -369,7 +366,7 @@ describe("StringProperty", () => {
 			});
 		});
 
-		it("Should handle modifies correctly", () => {
+		it("Should handle modifies correctly", function () {
 			var t = PropertyFactory.create("String");
 			t.value = "test";
 			t.cleanDirty();
@@ -380,15 +377,15 @@ describe("StringProperty", () => {
 		});
 	});
 
-	describe("squashing", () => {
+	describe("squashing", function () {
 		// Helper function to test the squashing for different containers
-		var innerTestChangeSetSquashing = (
+		var innerTestChangeSetSquashing = function (
 			io_testProperty,
 			io_stringProperty,
 			io_initialChangeset,
 			in_options,
 			in_collection,
-		) => {
+		) {
 			var squashedChangeset = new ChangeSet();
 			io_testProperty.cleanDirty(
 				BaseProperty.MODIFIED_STATE_FLAGS.DIRTY |
@@ -412,9 +409,7 @@ describe("StringProperty", () => {
 				}
 				in_options.post(SC);
 			}
-			io_initialChangeset.applyChangeSet(
-				squashedChangeset.getSerializedChangeSet(),
-			);
+			io_initialChangeset.applyChangeSet(squashedChangeset.getSerializedChangeSet());
 		};
 
 		//
@@ -425,7 +420,7 @@ describe("StringProperty", () => {
 		// Optionally, a a callback which controls the initial state before the squashing can
 		// be given as first parameter
 		//
-		var testChangeSetSquashing = (in_options) => {
+		var testChangeSetSquashing = function (in_options) {
 			var testProperty = PropertyFactory.create(
 				"autodesk.tests:SimpleStringTestProperty-1.0.0",
 			);
@@ -487,14 +482,11 @@ describe("StringProperty", () => {
 
 			if (!initialChangesetNode.getSerializedChangeSet().insert) {
 				// empty changeset
-				expect(
-					nodeTestProperty.serialize().insert.String.stringProperty,
-				).to.equal("");
+				expect(nodeTestProperty.serialize().insert.String.stringProperty).to.equal("");
 			} else {
 				// according to the spec, the String changeset can either be a string or (insert|modify|remove) style
 				var nodeInitialChangesetString =
-					initialChangesetNode.getSerializedChangeSet().insert.String
-						.stringProperty;
+					initialChangesetNode.getSerializedChangeSet().insert.String.stringProperty;
 				if (!_.isString(nodeInitialChangesetString)) {
 					nodeInitialChangesetString = nodeInitialChangesetString.insert[0][1];
 				}
@@ -505,14 +497,11 @@ describe("StringProperty", () => {
 
 			if (!initialChangesetMap.getSerializedChangeSet().insert) {
 				// empty changeset
-				expect(
-					mapTestProperty.serialize().insert.String.stringProperty,
-				).to.equal("");
+				expect(mapTestProperty.serialize().insert.String.stringProperty).to.equal("");
 			} else {
 				// according to the spec, the String changeset can either be a string or (insert|modify|remove) style
 				var mapInitialChangesetString =
-					initialChangesetMap.getSerializedChangeSet().insert.String
-						.stringProperty;
+					initialChangesetMap.getSerializedChangeSet().insert.String.stringProperty;
 				if (!_.isString(mapInitialChangesetString)) {
 					mapInitialChangesetString = mapInitialChangesetString.insert[0][1];
 				}
@@ -522,128 +511,129 @@ describe("StringProperty", () => {
 			}
 		};
 
-		it("should work for multiple independent inserts", () => {
-			testChangeSetSquashing({
-				callbacks: [insertText, insertText, insertText],
-			});
+		it("should work for multiple independent inserts", function () {
+			testChangeSetSquashing({ callbacks: [insertText, insertText, insertText] });
 		});
 
-		it("should work for inserts followed by removes", () => {
+		it("should work for inserts followed by removes", function () {
 			testChangeSetSquashing({
 				callbacks: [insertText, insertText, removeText, removeText],
-				post: (changeset) => {
+				post: function (changeset) {
 					expect(changeset).to.be.empty;
 				},
 			});
 		});
 
-		it("should work for mixed modifies and inserts", () => {
+		it("should work for mixed modifies and inserts", function () {
 			testChangeSetSquashing({
 				callbacks: [insertText, modifyText, insertText, modifyText],
 			});
 		});
 
-		it("an insert, modify and a remove should give an empty changeset", () => {
+		it("an insert, modify and a remove should give an empty changeset", function () {
 			testChangeSetSquashing({
 				callbacks: [insertText, modifyText, removeText],
-				post: (changeset) => {
+				post: function (changeset) {
 					expect(changeset).to.be.empty;
 				},
 			});
 		});
-		it("work for modifies after an already existing insert", () => {
+		it("work for modifies after an already existing insert", function () {
 			testChangeSetSquashing({
 				pre: insertText,
 				callbacks: [modifyText, modifyText],
 			});
 		});
-		it("of modify and remove after an already existing insert should work", () => {
+		it("of modify and remove after an already existing insert should work", function () {
 			testChangeSetSquashing({
 				pre: insertText,
 				callbacks: [modifyText, removeText],
-				post: (changeset) => {
+				post: function (changeset) {
 					expect(changeset.String.stringProperty).to.have.all.keys("remove");
 				},
 			});
 		});
 
-		it("modify after set should work", () => {
+		it("modify after set should work", function () {
 			testChangeSetSquashing({
 				callbacks: [setText, modifyText],
-				post: (changeset) => {
+				post: function (changeset) {
 					expect(changeset.String.stringProperty).to.equal("y");
 				},
 			});
 		});
 
-		it("set after pre-insert and insert should work", () => {
+		it("set after pre-insert and insert should work", function () {
 			testChangeSetSquashing({
 				pre: insertText,
 				callbacks: [insertText, modifyText, setText],
-				post: (changeset) => {
+				post: function (changeset) {
 					expect(changeset.String.stringProperty).to.equal("s");
 				},
 			});
 		});
 
-		it("insert after set should work", () => {
+		it("insert after set should work", function () {
 			testChangeSetSquashing({
 				callbacks: [setText, insertText],
-				post: (changeset) => {
+				post: function (changeset) {
 					expect(changeset.String.stringProperty).to.equal("xs");
 				},
 			});
 		});
 
-		it("insert, set, insert/modify should work", () => {
+		it("insert, set, insert/modify should work", function () {
 			testChangeSetSquashing({
 				callbacks: [insertText, setText, insertText, modifyText],
-				post: (changeset) => {
+				post: function (changeset) {
 					expect(changeset.String.stringProperty).to.equal("ys");
 				},
 			});
 		});
 
-		it("insert, set, insert/modify, set should work", () => {
+		it("insert, set, insert/modify, set should work", function () {
 			testChangeSetSquashing({
 				callbacks: [insertText, setText, insertText, modifyText, setText],
-				post: (changeset) => {
+				post: function (changeset) {
 					expect(changeset.String.stringProperty).to.equal("s");
 				},
 			});
 		});
 	});
 
-	describe("Rebasing", () => {
-		var createPropertyForRebaseTestByTemplate = () =>
-			PropertyFactory.create("autodesk.tests:SimpleStringTestProperty-1.0.0");
+	describe("Rebasing", function () {
+		var createPropertyForRebaseTestByTemplate = function () {
+			return PropertyFactory.create("autodesk.tests:SimpleStringTestProperty-1.0.0");
+		};
 
-		var createNodePropertyForRebase = () => {
+		var createNodePropertyForRebase = function () {
 			var nodeTestProperty = PropertyFactory.create("NodeProperty");
 			var stringInNodeProperty = PropertyFactory.create("String");
 			nodeTestProperty.insert("stringProperty", stringInNodeProperty);
 			return nodeTestProperty;
 		};
 
-		var createMapPropertyForRebase = () => {
+		var createMapPropertyForRebase = function () {
 			var mapTestProperty = PropertyFactory.create("map<>");
 			var stringInNodeProperty = PropertyFactory.create("String");
 			mapTestProperty.insert("stringProperty", stringInNodeProperty);
 			return mapTestProperty;
 		};
 
-		var getStringPropertyFromNode = (in_testProperty) =>
-			in_testProperty._properties.stringProperty;
+		var getStringPropertyFromNode = function (in_testProperty) {
+			return in_testProperty._properties.stringProperty;
+		};
 
-		var getStringPropertyFromMap = (in_testProperty) =>
-			in_testProperty.get("stringProperty");
+		var getStringPropertyFromMap = function (in_testProperty) {
+			return in_testProperty.get("stringProperty");
+		};
 
-		var testRebasingInner = (
+		var testRebasingInner = function (
 			in_creator,
 			in_getInnerProperty,
 			in_options,
 			in_isCollection,
-		) => {
+		) {
 			// Prepare the initial state
 			var baseProperty1 = in_creator();
 			if (in_options.prepare) {
@@ -714,14 +704,11 @@ describe("StringProperty", () => {
 					expect(finalChangeSet.String.stringProperty).to.equal("");
 				} else {
 					// according to the spec, the String changeset can either be a string or (insert|modify|remove) style
-					var combinedChangeSetString =
-						combinedSerialized.String.stringProperty;
+					var combinedChangeSetString = combinedSerialized.String.stringProperty;
 					if (!_.isString(combinedChangeSetString)) {
 						combinedChangeSetString = combinedChangeSetString.insert[0][1];
 					}
-					expect(combinedChangeSetString).to.deep.equal(
-						finalChangeSet.String.stringProperty,
-					);
+					expect(combinedChangeSetString).to.deep.equal(finalChangeSet.String.stringProperty);
 				}
 			}
 
@@ -737,7 +724,7 @@ describe("StringProperty", () => {
 			}
 		};
 
-		var testRebasing = (in_options) => {
+		var testRebasing = function (in_options) {
 			testRebasingInner(
 				createPropertyForRebaseTestByTemplate,
 				getStringPropertyFromNode,
@@ -757,14 +744,14 @@ describe("StringProperty", () => {
 			);
 		};
 
-		it("with a NOP should be possible", () => {
+		it("with a NOP should be possible", function () {
 			testRebasing({
 				op2: insertText,
 				compareToSequential: true,
 			});
 		});
 
-		it("with independent inserts should be possible", () => {
+		it("with independent inserts should be possible", function () {
 			testRebasing({
 				op1: insertText,
 				op2: insertText,
@@ -772,23 +759,23 @@ describe("StringProperty", () => {
 			});
 		});
 
-		it("with independent removes should be possible", () => {
+		it("with independent removes should be possible", function () {
 			testRebasing({
-				prepare: (root) => {
+				prepare: function (root) {
 					insertText(root);
 					insertText(root);
 				},
-				op1: (root) => {
+				op1: function (root) {
 					root.removeRange(1, 1);
 				},
-				op2: (root) => {
+				op2: function (root) {
 					root.removeRange(0, 1);
 				},
 				compareToSequential: true,
 			});
 		});
 
-		it("with a modify and a remove should possible", () => {
+		it("with a modify and a remove should possible", function () {
 			testRebasing({
 				prepare: insertText,
 				op1: modifyText,
@@ -797,13 +784,13 @@ describe("StringProperty", () => {
 			});
 		});
 
-		it("with a remove and a modify should possible", () => {
+		it("with a remove and a modify should possible", function () {
 			testRebasing({
 				prepare: insertText,
 				op1: removeText,
 				op2: modifyText,
 				compareToSequential: false,
-				checkResult: (conflicts, changeSet) => {
+				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.have.length(1);
 					expect(conflicts[0].type).to.be.equal(
 						ChangeSet.ConflictType.ENTRY_MODIFIED_AFTER_REMOVE,
@@ -813,86 +800,79 @@ describe("StringProperty", () => {
 			});
 		});
 
-		it("with two compatible removes should be possible", () => {
+		it("with two compatible removes should be possible", function () {
 			testRebasing({
 				prepare: insertText,
 				op1: removeText,
 				op2: removeText,
 				compareToSequential: false,
-				checkResult: (conflicts, changeSet) => {
+				checkResult: function (conflicts, changeSet) {
 					expect(ChangeSet.isEmptyChangeSet(changeSet)).to.be.ok;
 				},
 			});
 		});
 
-		it("with two independent modifies should be possible", () => {
+		it("with two independent modifies should be possible", function () {
 			testRebasing({
-				prepare: (root) => {
+				prepare: function (root) {
 					root.insertRange(0, "ab");
 				},
 				op1: modifyText,
-				op2: (root) => {
+				op2: function (root) {
 					root.setRange(1, "z");
 				},
 				compareToSequential: true,
-				checkResult: (conflicts, changeSet) => {
+				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.be.empty;
 				},
 			});
 		});
 		// TODO: test with the same value
-		it("with two conflicting modifies should be possible and report a conflict", () => {
+		it("with two conflicting modifies should be possible and report a conflict", function () {
 			testRebasing({
 				prepare: insertText,
-				op1: (stringProp) => {
+				op1: function (stringProp) {
 					stringProp.setRange(0, "j");
 				},
 				op2: modifyText,
 				compareToSequential: true,
-				checkResult: (conflicts, changeSet) => {
+				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.have.length(1);
 					expect(changeSet.String.stringProperty.modify[0][1]).to.equal("y");
-					expect(conflicts[0].type).to.be.equal(
-						ChangeSet.ConflictType.COLLIDING_SET,
-					);
+					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.COLLIDING_SET);
 					expect(conflicts[0].path).to.be.equal("stringProperty");
 				},
 			});
 		});
 
-		it("with modify followed by remove+insert should work", () => {
+		it("with modify followed by remove+insert should work", function () {
 			testRebasing({
 				prepare: insertText,
 				op1: modifyText,
-				op2: (root) => {
+				op2: function (root) {
 					removeText(root);
 					insertText(root);
 				},
 				compareToSequential: true,
-				checkResult: (conflicts, changeSet) => {
+				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.have.length(1);
-					expect(conflicts[0].type).to.be.equal(
-						ChangeSet.ConflictType.REMOVE_AFTER_MODIFY,
-					);
+					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.REMOVE_AFTER_MODIFY);
 					expect(conflicts[0].path).to.be.equal("stringProperty");
-					expect(changeSet.String.stringProperty).to.have.all.keys(
-						"remove",
-						"insert",
-					);
+					expect(changeSet.String.stringProperty).to.have.all.keys("remove", "insert");
 				},
 			});
 		});
 
-		it("with remove + insert followed by modify should report conflict", () => {
+		it("with remove + insert followed by modify should report conflict", function () {
 			testRebasing({
 				prepare: insertText,
-				op1: (root) => {
+				op1: function (root) {
 					removeText(root);
 					insertText(root);
 				},
 				op2: modifyText,
 				compareToSequential: false,
-				checkResult: (conflicts, changeSet) => {
+				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.have.length(1);
 					expect(conflicts[0].type).to.be.equal(
 						ChangeSet.ConflictType.ENTRY_MODIFIED_AFTER_REMOVE,
@@ -902,13 +882,13 @@ describe("StringProperty", () => {
 			});
 		});
 
-		it("with conflicting inserts should report conflict", () => {
+		it("with conflicting inserts should report conflict", function () {
 			testRebasing({
 				prepare: insertText,
 				op1: insertText,
 				op2: insertText,
 				compareToSequential: false,
-				checkResult: (conflicts, changeSet) => {
+				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.have.length(1);
 					expect(conflicts[0].type).to.be.equal(
 						ChangeSet.ConflictType.INSERTED_ENTRY_WITH_SAME_KEY,
@@ -918,19 +898,19 @@ describe("StringProperty", () => {
 			});
 		});
 
-		it("with conflicting remove and insert should keep the insert and move it to the correct position", () => {
+		it("with conflicting remove and insert should keep the insert and move it to the correct position", function () {
 			testRebasing({
-				prepare: (p) => {
+				prepare: function (p) {
 					p.insertRange(0, "0123456");
 				},
-				op1: (p) => {
+				op1: function (p) {
 					p.removeRange(2, 5);
 				},
-				op2: (p) => {
+				op2: function (p) {
 					p.insertRange(5, "t");
 				},
 				compareToSequential: false,
-				checkResult: (conflicts, changeSet) => {
+				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.have.length(0);
 					expect(changeSet).to.deep.equal({
 						String: { stringProperty: { insert: [[2, "t"]] } },
@@ -939,20 +919,20 @@ describe("StringProperty", () => {
 			});
 		});
 
-		it("with touching remove and insert should not report conflict and keep them", () => {
+		it("with touching remove and insert should not report conflict and keep them", function () {
 			testRebasing({
-				prepare: (p) => {
+				prepare: function (p) {
 					p.insertRange(0, "0123456");
 				},
-				op1: (p) => {
+				op1: function (p) {
 					p.removeRange(2, 3);
 				},
-				op2: (p) => {
+				op2: function (p) {
 					p.insertRange(5, "b");
 					p.insertRange(2, "a");
 				},
 				compareToSequential: false,
-				checkResult: (conflicts, rebasedCS2, combinedChangeSet) => {
+				checkResult: function (conflicts, rebasedCS2, combinedChangeSet) {
 					expect(conflicts).to.have.length(0);
 					expect(rebasedCS2).to.deep.equal({
 						String: { stringProperty: { insert: [[2, "ab"]] } },
@@ -964,42 +944,38 @@ describe("StringProperty", () => {
 			});
 		});
 
-		it("with conflicting set and insert should report a conflict", () => {
+		it("with conflicting set and insert should report a conflict", function () {
 			testRebasing({
 				prepare: insertText,
 				op1: setText,
 				op2: insertText,
 				compareToSequential: false,
-				checkResult: (conflicts, changeSet) => {
+				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.have.length(1);
-					expect(conflicts[0].type).to.be.equal(
-						ChangeSet.ConflictType.COLLIDING_SET,
-					);
+					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.COLLIDING_SET);
 					expect(conflicts[0].path).to.be.equal("stringProperty");
 					expect(changeSet.String.stringProperty).to.be.equal("s");
 				},
 			});
 		});
 
-		it("with conflicting insert and set should report a conflict", () => {
+		it("with conflicting insert and set should report a conflict", function () {
 			testRebasing({
 				prepare: insertText,
 				op1: insertText,
 				op2: setText,
 				compareToSequential: false,
-				checkResult: (conflicts, changeSet) => {
+				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.have.length(1);
-					expect(conflicts[0].type).to.be.equal(
-						ChangeSet.ConflictType.COLLIDING_SET,
-					);
+					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.COLLIDING_SET);
 					expect(conflicts[0].path).to.be.equal("stringProperty");
 					expect(changeSet.String.stringProperty).to.be.equal("s");
 				},
 			});
 		});
 
-		it("should correctly handle boundary cases", () => {
-			var testChangeSet = (in_CS, in_CS2) => {
+		it("should correctly handle boundary cases", function () {
+			var testChangeSet = function (in_CS, in_CS2) {
 				var root = PropertyFactory.create("NodeProperty");
 				var initialString = PropertyFactory.create("String");
 				root.insert("str", initialString);
@@ -1011,9 +987,7 @@ describe("StringProperty", () => {
 				return initialString.value;
 			};
 
-			var CS1 = new ChangeSet({
-				modify: { String: { str: { remove: [[2, 2]] } } },
-			});
+			var CS1 = new ChangeSet({ modify: { String: { str: { remove: [[2, 2]] } } } });
 			var CS2 = new ChangeSet({
 				modify: {
 					String: {
@@ -1031,26 +1005,16 @@ describe("StringProperty", () => {
 			expect(testChangeSet(CS2.getSerializedChangeSet())).to.equal("AA-AA-AA");
 
 			var conflicts = [];
-			var rebasedCS1 = CS2._rebaseChangeSet(
-				deepCopy(CS1.getSerializedChangeSet()),
-				conflicts,
-			);
-			var rebasedCS2 = CS1._rebaseChangeSet(
-				deepCopy(CS2.getSerializedChangeSet()),
-				conflicts,
-			);
+			var rebasedCS1 = CS2._rebaseChangeSet(deepCopy(CS1.getSerializedChangeSet()), conflicts);
+			var rebasedCS2 = CS1._rebaseChangeSet(deepCopy(CS2.getSerializedChangeSet()), conflicts);
 
 			expect(rebasedCS1.modify.String.str.remove.length).to.equal(1);
-			expect(testChangeSet(CS2.getSerializedChangeSet(), rebasedCS1)).to.equal(
-				"AA--AA",
-			);
-			expect(testChangeSet(CS1.getSerializedChangeSet(), rebasedCS2)).to.equal(
-				"AA--AA",
-			);
+			expect(testChangeSet(CS2.getSerializedChangeSet(), rebasedCS1)).to.equal("AA--AA");
+			expect(testChangeSet(CS1.getSerializedChangeSet(), rebasedCS2)).to.equal("AA--AA");
 		});
 	});
 
-	it('field "length" in schema should be ignored', () => {
+	it('field "length" in schema should be ignored', function () {
 		var SchemaStringWithLength = {
 			typeid: "autodesk.tests:SchemaStringWithLength-1.0.0",
 			properties: [{ id: "stringProperty", typeid: "String", length: 4 }],
@@ -1061,7 +1025,7 @@ describe("StringProperty", () => {
 		expect(prop.get("stringProperty").getValue()).to.equal("");
 	});
 
-	it.skip('@bugfix field "length" not a number in schema should be ignored', () => {
+	it.skip('@bugfix field "length" not a number in schema should be ignored', function () {
 		var SchemaStringWithStringLength = {
 			typeid: "autodesk.tests:SchemaStringWithStringLength-1.0.0",
 			properties: [{ id: "stringProperty", typeid: "String", length: "4" }],

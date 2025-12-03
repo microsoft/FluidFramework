@@ -210,9 +210,7 @@ export namespace DefaultDocumentationSuiteConfiguration {
 				// For signature items, the display-name is not particularly useful information
 				// ("(constructor)", "(call)", etc.).
 				// Instead, we will use a cleaned up variation on the type signature.
-				const excerpt = getSingleLineExcerptText(
-					(apiItem as ApiDeclaredItem).excerpt,
-				);
+				const excerpt = getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
 				return trimTrailingSemicolon(excerpt);
 			}
 			default: {
@@ -242,9 +240,7 @@ export namespace DefaultDocumentationSuiteConfiguration {
 				// For signature items, the display-name is not particularly useful information
 				// ("(constructor)", "(call)", etc.).
 				// Instead, we will use a cleaned up variation on the type signature.
-				const excerpt = getSingleLineExcerptText(
-					(apiItem as ApiDeclaredItem).excerpt,
-				);
+				const excerpt = getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
 				return trimTrailingSemicolon(excerpt);
 			}
 			default: {
@@ -296,13 +292,13 @@ export namespace DefaultDocumentationSuiteConfiguration {
 export function getDocumentationSuiteConfigurationWithDefaults(
 	options?: DocumentationSuiteOptions,
 ): DocumentationSuiteConfiguration {
-	const hierarchy: HierarchyConfiguration =
-		getHierarchyConfigurationWithDefaults(options?.hierarchy);
+	const hierarchy: HierarchyConfiguration = getHierarchyConfigurationWithDefaults(
+		options?.hierarchy,
+	);
 
 	return {
 		hierarchy,
-		includeTopLevelDocumentHeading:
-			options?.includeTopLevelDocumentHeading ?? true,
+		includeTopLevelDocumentHeading: options?.includeTopLevelDocumentHeading ?? true,
 		includeBreadcrumb: options?.includeBreadcrumb ?? true,
 		getUriBaseOverrideForItem:
 			options?.getUriBaseOverrideForItem ??
@@ -316,8 +312,7 @@ export function getDocumentationSuiteConfigurationWithDefaults(
 		getAlertsForItem:
 			options?.getAlertsForItem ??
 			DefaultDocumentationSuiteConfiguration.defaultGetAlertsForItem,
-		exclude:
-			options?.exclude ?? DefaultDocumentationSuiteConfiguration.defaultExclude,
+		exclude: options?.exclude ?? DefaultDocumentationSuiteConfiguration.defaultExclude,
 		minimumReleaseLevel: options?.minimumReleaseLevel ?? ReleaseTag.Internal,
 	};
 }

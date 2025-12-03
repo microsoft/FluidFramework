@@ -13,11 +13,11 @@ import type {
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
 	type IDocumentMessage,
-	type ISequencedDocumentMessage,
 	type ISummaryAck,
 	type ISummaryContent,
 	type ISummaryNack,
 	MessageType,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	createChildLogger,
@@ -80,10 +80,7 @@ enum SummaryState {
 }
 
 class Summary implements ISummary {
-	public static createLocal(
-		clientId: string,
-		clientSequenceNumber: number,
-	): Summary {
+	public static createLocal(clientId: string, clientSequenceNumber: number): Summary {
 		return new Summary(clientId, clientSequenceNumber);
 	}
 	public static createFromOp(op: ISummaryOpMessage): Summary {
@@ -105,10 +102,7 @@ class Summary implements ISummary {
 	public get summaryOp(): ISummaryOpMessage | undefined {
 		return this._summaryOp;
 	}
-	public get summaryAckNack():
-		| ISummaryAckMessage
-		| ISummaryNackMessage
-		| undefined {
+	public get summaryAckNack(): ISummaryAckMessage | ISummaryNackMessage | undefined {
 		return this._summaryAckNack;
 	}
 
@@ -139,10 +133,7 @@ class Summary implements ISummary {
 		);
 		this._summaryAckNack = op;
 		this.defSummaryAck.resolve();
-		this.state =
-			op.type === MessageType.SummaryAck
-				? SummaryState.Acked
-				: SummaryState.Nacked;
+		this.state = op.type === MessageType.SummaryAck ? SummaryState.Acked : SummaryState.Nacked;
 		return true;
 	}
 
@@ -152,9 +143,7 @@ class Summary implements ISummary {
 		return this._summaryOp!;
 	}
 
-	public async waitAckNack(): Promise<
-		ISummaryAckMessage | ISummaryNackMessage
-	> {
+	public async waitAckNack(): Promise<ISummaryAckMessage | ISummaryNackMessage> {
 		await this.defSummaryAck.promise;
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return this._summaryAckNack!;
@@ -273,18 +262,14 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 		return this.lastAck;
 	}
 
-	public emit(
-		event: OpActionEventName,
-		...args: Parameters<OpActionEventListener>
-	): boolean {
+	public emit(event: OpActionEventName, ...args: Parameters<OpActionEventListener>): boolean {
 		return super.emit(event, ...args);
 	}
 
 	public get opsSinceLastAck(): number {
 		return (
 			this.deltaManager.lastSequenceNumber -
-			(this.lastAck?.summaryAck.sequenceNumber ??
-				this.deltaManager.initialSequenceNumber)
+			(this.lastAck?.summaryAck.sequenceNumber ?? this.deltaManager.initialSequenceNumber)
 		);
 	}
 
@@ -298,10 +283,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 
 	private readonly logger: ITelemetryLoggerExt;
 	public constructor(
-		private readonly deltaManager: IDeltaManager<
-			ISequencedDocumentMessage,
-			IDocumentMessage
-		>,
+		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		logger: ITelemetryBaseLogger,
 	) {
 		super();
@@ -358,9 +340,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 	 * @param referenceSequenceNumber - reference sequence number to wait for
 	 * @returns The latest acked summary
 	 */
-	public async waitSummaryAck(
-		referenceSequenceNumber: number,
-	): Promise<IAckedSummary> {
+	public async waitSummaryAck(referenceSequenceNumber: number): Promise<IAckedSummary> {
 		while (
 			!this.lastAck ||
 			this.lastAck.summaryOp.referenceSequenceNumber < referenceSequenceNumber
@@ -480,8 +460,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 		// Track latest ack
 		if (
 			!this.lastAck ||
-			seq >
-				this.lastAck.summaryAck.contents.summaryProposal.summarySequenceNumber
+			seq > this.lastAck.summaryAck.contents.summaryProposal.summarySequenceNumber
 		) {
 			this.lastAck = {
 				summaryOp: summary.summaryOp,

@@ -11,23 +11,12 @@
  * Current version: 2.74.0
  */
 
-import type {
-	FullType,
-	MinimalType,
-	requireAssignableTo,
-	TypeOnly,
-} from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/odsp-urlresolver-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> =
-	| TypeOnly<T>
-	| MinimalType<T>
-	| FullType<T>
-	| typeof old
-	| typeof current
-	| requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -36,11 +25,7 @@ declare type MakeUnusedImportErrorsGoAway<T> =
  * typeValidation.broken:
  * "Class_FluidAppOdspUrlResolver": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_FluidAppOdspUrlResolver =
-	requireAssignableTo<
-		TypeOnly<old.FluidAppOdspUrlResolver>,
-		TypeOnly<current.FluidAppOdspUrlResolver>
-	>;
+declare type old_as_current_for_Class_FluidAppOdspUrlResolver = requireAssignableTo<TypeOnly<old.FluidAppOdspUrlResolver>, TypeOnly<current.FluidAppOdspUrlResolver>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -49,11 +34,7 @@ declare type old_as_current_for_Class_FluidAppOdspUrlResolver =
  * typeValidation.broken:
  * "Class_FluidAppOdspUrlResolver": {"backCompat": false}
  */
-declare type current_as_old_for_Class_FluidAppOdspUrlResolver =
-	requireAssignableTo<
-		TypeOnly<current.FluidAppOdspUrlResolver>,
-		TypeOnly<old.FluidAppOdspUrlResolver>
-	>;
+declare type current_as_old_for_Class_FluidAppOdspUrlResolver = requireAssignableTo<TypeOnly<current.FluidAppOdspUrlResolver>, TypeOnly<old.FluidAppOdspUrlResolver>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -62,10 +43,7 @@ declare type current_as_old_for_Class_FluidAppOdspUrlResolver =
  * typeValidation.broken:
  * "Class_OdspUrlResolver": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_OdspUrlResolver = requireAssignableTo<
-	TypeOnly<old.OdspUrlResolver>,
-	TypeOnly<current.OdspUrlResolver>
->;
+declare type old_as_current_for_Class_OdspUrlResolver = requireAssignableTo<TypeOnly<old.OdspUrlResolver>, TypeOnly<current.OdspUrlResolver>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -74,10 +52,7 @@ declare type old_as_current_for_Class_OdspUrlResolver = requireAssignableTo<
  * typeValidation.broken:
  * "Class_OdspUrlResolver": {"backCompat": false}
  */
-declare type current_as_old_for_Class_OdspUrlResolver = requireAssignableTo<
-	TypeOnly<current.OdspUrlResolver>,
-	TypeOnly<old.OdspUrlResolver>
->;
+declare type current_as_old_for_Class_OdspUrlResolver = requireAssignableTo<TypeOnly<current.OdspUrlResolver>, TypeOnly<old.OdspUrlResolver>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -86,11 +61,7 @@ declare type current_as_old_for_Class_OdspUrlResolver = requireAssignableTo<
  * typeValidation.broken:
  * "ClassStatics_FluidAppOdspUrlResolver": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_FluidAppOdspUrlResolver =
-	requireAssignableTo<
-		TypeOnly<typeof current.FluidAppOdspUrlResolver>,
-		TypeOnly<typeof old.FluidAppOdspUrlResolver>
-	>;
+declare type current_as_old_for_ClassStatics_FluidAppOdspUrlResolver = requireAssignableTo<TypeOnly<typeof current.FluidAppOdspUrlResolver>, TypeOnly<typeof old.FluidAppOdspUrlResolver>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -99,8 +70,4 @@ declare type current_as_old_for_ClassStatics_FluidAppOdspUrlResolver =
  * typeValidation.broken:
  * "ClassStatics_OdspUrlResolver": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_OdspUrlResolver =
-	requireAssignableTo<
-		TypeOnly<typeof current.OdspUrlResolver>,
-		TypeOnly<typeof old.OdspUrlResolver>
-	>;
+declare type current_as_old_for_ClassStatics_OdspUrlResolver = requireAssignableTo<TypeOnly<typeof current.OdspUrlResolver>, TypeOnly<typeof old.OdspUrlResolver>>

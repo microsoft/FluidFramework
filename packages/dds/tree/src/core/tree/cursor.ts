@@ -312,7 +312,7 @@ export interface PathRootPrefix {
 	indexOffset?: number;
 }
 
-export enum CursorLocationType {
+export const enum CursorLocationType {
 	/**
 	 * Can iterate through nodes in a field.
 	 * At a "current node".
@@ -361,15 +361,8 @@ export function forEachField<TCursor extends ITreeCursor = ITreeCursor>(
 	cursor: TCursor,
 	f: (cursor: TCursor) => void,
 ): void {
-	assert(
-		cursor.mode === CursorLocationType.Nodes,
-		0x411 /* should be in nodes */,
-	);
-	for (
-		let inField = cursor.firstField();
-		inField;
-		inField = cursor.nextField()
-	) {
+	assert(cursor.mode === CursorLocationType.Nodes, 0x411 /* should be in nodes */);
+	for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
 		f(cursor);
 	}
 }
@@ -399,14 +392,11 @@ export function mapCursorField<T, TCursor extends ITreeCursor = ITreeCursor>(
  * @returns An iterable of `T` resulting from applying `f` to each item of the current field on `cursor`.
  * Yields nothing if an empty array if the field is empty or not present (which are considered the same).
  */
-export function* iterateCursorField<
-	T,
-	TCursor extends ITreeCursor = ITreeCursor,
->(cursor: TCursor, f: (cursor: TCursor) => T): IterableIterator<T> {
-	assert(
-		cursor.mode === CursorLocationType.Fields,
-		0x7a8 /* should be in fields */,
-	);
+export function* iterateCursorField<T, TCursor extends ITreeCursor = ITreeCursor>(
+	cursor: TCursor,
+	f: (cursor: TCursor) => T,
+): IterableIterator<T> {
+	assert(cursor.mode === CursorLocationType.Fields, 0x7a8 /* should be in fields */);
 	for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
 		yield f(cursor);
 	}
@@ -421,10 +411,7 @@ export function forEachNode<TCursor extends ITreeCursor = ITreeCursor>(
 	cursor: TCursor,
 	f: (cursor: TCursor) => void,
 ): void {
-	assert(
-		cursor.mode === CursorLocationType.Fields,
-		0x3bd /* should be in fields */,
-	);
+	assert(cursor.mode === CursorLocationType.Fields, 0x3bd /* should be in fields */);
 	for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
 		f(cursor);
 	}
@@ -458,9 +445,7 @@ export function forEachNodeInSubtree<TCursor extends ITreeCursor = ITreeCursor>(
  *
  * TODO: #1404: Handle this properly for partial data loading support.
  */
-export function castCursorToSynchronous(
-	cursor: ITreeCursor,
-): ITreeCursorSynchronous {
+export function castCursorToSynchronous(cursor: ITreeCursor): ITreeCursorSynchronous {
 	return cursor as ITreeCursorSynchronous;
 }
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type React from "react";
+import React from "react";
 
 import type { IInventoryListAppModel } from "../modelInterfaces.js";
 
@@ -20,7 +20,5 @@ export interface IInventoryListAppViewProps {
 export const InventoryListAppView: React.FC<IInventoryListAppViewProps> = ({
 	model,
 }: IInventoryListAppViewProps) => {
-	return (
-		<InventoryListView migratingInventoryList={model.migratingInventoryList} />
-	);
+	return <InventoryListView migratingInventoryList={model.migratingInventoryList} />;
 };

@@ -6,9 +6,9 @@
 import type { ReleaseVersion } from "@fluid-tools/version-tools";
 import {
 	FluidRepo,
-	getFluidBuildConfig,
 	type IFluidBuildConfig,
 	Package,
+	getFluidBuildConfig,
 } from "@fluidframework/build-tools";
 import { type FlubConfig, getFlubConfig } from "../config.js";
 import { Repository } from "./git.js";
@@ -83,9 +83,7 @@ export class Context {
 	 * @returns An array of packages that belong to the release group
 	 */
 	public packagesInReleaseGroup(releaseGroup: string): Package[] {
-		const packages = this.packages.filter(
-			(pkg) => pkg.monoRepo?.kind === releaseGroup,
-		);
+		const packages = this.packages.filter((pkg) => pkg.monoRepo?.kind === releaseGroup);
 		return packages;
 	}
 
@@ -149,10 +147,7 @@ export class Context {
 
 	public async getGitRepository(): Promise<Repository> {
 		if (this._gitRepository === undefined && !this.checkedIsGitRepo) {
-			const repo = new Repository(
-				{ baseDir: this.root },
-				"microsoft/FluidFramework",
-			);
+			const repo = new Repository({ baseDir: this.root }, "microsoft/FluidFramework");
 			const isRepo = await repo.gitClient.checkIsRepo();
 			this.checkedIsGitRepo = true;
 			this._gitRepository = isRepo ? repo : undefined;

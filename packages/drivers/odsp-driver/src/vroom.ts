@@ -5,9 +5,9 @@
 
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import type {
-	InstrumentedStorageTokenFetcher,
 	IOdspUrlParts,
 	ISocketStorageDiscovery,
+	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type ITelemetryLoggerExt,
@@ -136,8 +136,7 @@ export const fetchJoinSession = mockify(
 					// pushV2 websocket urls will contain pushf
 					pushv2: socketUrl.includes("pushf"),
 					webSocketHostName,
-					refreshSessionDurationSeconds:
-						response.content.refreshSessionDurationSeconds,
+					refreshSessionDurationSeconds: response.content.refreshSessionDurationSeconds,
 				});
 
 				if (response.content.runtimeTenantId && !response.content.tenantId) {

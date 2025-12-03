@@ -110,14 +110,9 @@ export class DiscriminatedUnionDispatcher<
 		(value: unknown, ...args: TArgs) => TResult
 	>;
 
-	public constructor(
-		library: DiscriminatedUnionLibrary<TUnion, TArgs, TResult>,
-	) {
+	public constructor(library: DiscriminatedUnionLibrary<TUnion, TArgs, TResult>) {
 		this.library = objectToMap(
-			library as Record<
-				keyof TUnion,
-				(value: unknown, ...args: TArgs) => TResult
-			>,
+			library as Record<keyof TUnion, (value: unknown, ...args: TArgs) => TResult>,
 		);
 	}
 
@@ -130,8 +125,7 @@ export class DiscriminatedUnionDispatcher<
 		const key: keyof TUnion = keys[0] as keyof TUnion;
 		const value = union[key];
 		const factory =
-			this.library.get(key) ??
-			fail(0xac2 /* missing function for union member */);
+			this.library.get(key) ?? fail(0xac2 /* missing function for union member */);
 		const result = factory(value, ...args);
 		return result;
 	}

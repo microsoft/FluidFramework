@@ -4,10 +4,7 @@
  */
 
 module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/recommended"),
-		"prettier",
-	],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/recommended"), "prettier"],
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
@@ -26,10 +23,7 @@ module.exports = {
 				"unicorn/consistent-function-scoping": "off",
 
 				// Test files are run in node only so additional node libraries can be used.
-				"import-x/no-nodejs-modules": [
-					"error",
-					{ allow: ["node:assert", "node:crypto"] },
-				],
+				"import-x/no-nodejs-modules": ["error", { allow: ["node:assert", "node:crypto"] }],
 			},
 		},
 	],

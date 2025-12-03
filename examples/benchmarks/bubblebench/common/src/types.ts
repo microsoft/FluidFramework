@@ -80,8 +80,6 @@ export function makeClient(
 	return {
 		clientId: "pending",
 		color: randomColor(),
-		bubbles: Array.from({ length: numBubbles }).map(() =>
-			makeBubble(stageWidth, stageHeight),
-		),
+		bubbles: Array.from({ length: numBubbles }).map(() => makeBubble(stageWidth, stageHeight)),
 	};
 }

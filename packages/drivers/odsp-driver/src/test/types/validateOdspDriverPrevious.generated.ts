@@ -11,23 +11,12 @@
  * Current version: 2.74.0
  */
 
-import type {
-	FullType,
-	MinimalType,
-	requireAssignableTo,
-	TypeOnly,
-} from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/odsp-driver-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> =
-	| TypeOnly<T>
-	| MinimalType<T>
-	| FullType<T>
-	| typeof old
-	| typeof current
-	| requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -36,10 +25,7 @@ declare type MakeUnusedImportErrorsGoAway<T> =
  * typeValidation.broken:
  * "Class_EpochTracker": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_EpochTracker = requireAssignableTo<
-	TypeOnly<old.EpochTracker>,
-	TypeOnly<current.EpochTracker>
->;
+declare type old_as_current_for_Class_EpochTracker = requireAssignableTo<TypeOnly<old.EpochTracker>, TypeOnly<current.EpochTracker>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -48,10 +34,7 @@ declare type old_as_current_for_Class_EpochTracker = requireAssignableTo<
  * typeValidation.broken:
  * "Class_EpochTracker": {"backCompat": false}
  */
-declare type current_as_old_for_Class_EpochTracker = requireAssignableTo<
-	TypeOnly<current.EpochTracker>,
-	TypeOnly<old.EpochTracker>
->;
+declare type current_as_old_for_Class_EpochTracker = requireAssignableTo<TypeOnly<current.EpochTracker>, TypeOnly<old.EpochTracker>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -60,11 +43,7 @@ declare type current_as_old_for_Class_EpochTracker = requireAssignableTo<
  * typeValidation.broken:
  * "Class_OdspDocumentServiceFactory": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_OdspDocumentServiceFactory =
-	requireAssignableTo<
-		TypeOnly<old.OdspDocumentServiceFactory>,
-		TypeOnly<current.OdspDocumentServiceFactory>
-	>;
+declare type old_as_current_for_Class_OdspDocumentServiceFactory = requireAssignableTo<TypeOnly<old.OdspDocumentServiceFactory>, TypeOnly<current.OdspDocumentServiceFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -73,11 +52,7 @@ declare type old_as_current_for_Class_OdspDocumentServiceFactory =
  * typeValidation.broken:
  * "Class_OdspDocumentServiceFactory": {"backCompat": false}
  */
-declare type current_as_old_for_Class_OdspDocumentServiceFactory =
-	requireAssignableTo<
-		TypeOnly<current.OdspDocumentServiceFactory>,
-		TypeOnly<old.OdspDocumentServiceFactory>
-	>;
+declare type current_as_old_for_Class_OdspDocumentServiceFactory = requireAssignableTo<TypeOnly<current.OdspDocumentServiceFactory>, TypeOnly<old.OdspDocumentServiceFactory>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -86,11 +61,7 @@ declare type current_as_old_for_Class_OdspDocumentServiceFactory =
  * typeValidation.broken:
  * "Class_OdspDocumentServiceFactoryCore": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_OdspDocumentServiceFactoryCore =
-	requireAssignableTo<
-		TypeOnly<old.OdspDocumentServiceFactoryCore>,
-		TypeOnly<current.OdspDocumentServiceFactoryCore>
-	>;
+declare type old_as_current_for_Class_OdspDocumentServiceFactoryCore = requireAssignableTo<TypeOnly<old.OdspDocumentServiceFactoryCore>, TypeOnly<current.OdspDocumentServiceFactoryCore>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -99,11 +70,7 @@ declare type old_as_current_for_Class_OdspDocumentServiceFactoryCore =
  * typeValidation.broken:
  * "Class_OdspDocumentServiceFactoryCore": {"backCompat": false}
  */
-declare type current_as_old_for_Class_OdspDocumentServiceFactoryCore =
-	requireAssignableTo<
-		TypeOnly<current.OdspDocumentServiceFactoryCore>,
-		TypeOnly<old.OdspDocumentServiceFactoryCore>
-	>;
+declare type current_as_old_for_Class_OdspDocumentServiceFactoryCore = requireAssignableTo<TypeOnly<current.OdspDocumentServiceFactoryCore>, TypeOnly<old.OdspDocumentServiceFactoryCore>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -112,11 +79,7 @@ declare type current_as_old_for_Class_OdspDocumentServiceFactoryCore =
  * typeValidation.broken:
  * "Class_OdspDriverUrlResolver": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_OdspDriverUrlResolver =
-	requireAssignableTo<
-		TypeOnly<old.OdspDriverUrlResolver>,
-		TypeOnly<current.OdspDriverUrlResolver>
-	>;
+declare type old_as_current_for_Class_OdspDriverUrlResolver = requireAssignableTo<TypeOnly<old.OdspDriverUrlResolver>, TypeOnly<current.OdspDriverUrlResolver>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -125,11 +88,7 @@ declare type old_as_current_for_Class_OdspDriverUrlResolver =
  * typeValidation.broken:
  * "Class_OdspDriverUrlResolver": {"backCompat": false}
  */
-declare type current_as_old_for_Class_OdspDriverUrlResolver =
-	requireAssignableTo<
-		TypeOnly<current.OdspDriverUrlResolver>,
-		TypeOnly<old.OdspDriverUrlResolver>
-	>;
+declare type current_as_old_for_Class_OdspDriverUrlResolver = requireAssignableTo<TypeOnly<current.OdspDriverUrlResolver>, TypeOnly<old.OdspDriverUrlResolver>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -138,11 +97,7 @@ declare type current_as_old_for_Class_OdspDriverUrlResolver =
  * typeValidation.broken:
  * "Class_OdspDriverUrlResolverForShareLink": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_OdspDriverUrlResolverForShareLink =
-	requireAssignableTo<
-		TypeOnly<old.OdspDriverUrlResolverForShareLink>,
-		TypeOnly<current.OdspDriverUrlResolverForShareLink>
-	>;
+declare type old_as_current_for_Class_OdspDriverUrlResolverForShareLink = requireAssignableTo<TypeOnly<old.OdspDriverUrlResolverForShareLink>, TypeOnly<current.OdspDriverUrlResolverForShareLink>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -151,11 +106,7 @@ declare type old_as_current_for_Class_OdspDriverUrlResolverForShareLink =
  * typeValidation.broken:
  * "Class_OdspDriverUrlResolverForShareLink": {"backCompat": false}
  */
-declare type current_as_old_for_Class_OdspDriverUrlResolverForShareLink =
-	requireAssignableTo<
-		TypeOnly<current.OdspDriverUrlResolverForShareLink>,
-		TypeOnly<old.OdspDriverUrlResolverForShareLink>
-	>;
+declare type current_as_old_for_Class_OdspDriverUrlResolverForShareLink = requireAssignableTo<TypeOnly<current.OdspDriverUrlResolverForShareLink>, TypeOnly<old.OdspDriverUrlResolverForShareLink>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -164,10 +115,7 @@ declare type current_as_old_for_Class_OdspDriverUrlResolverForShareLink =
  * typeValidation.broken:
  * "ClassStatics_EpochTracker": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_EpochTracker = requireAssignableTo<
-	TypeOnly<typeof current.EpochTracker>,
-	TypeOnly<typeof old.EpochTracker>
->;
+declare type current_as_old_for_ClassStatics_EpochTracker = requireAssignableTo<TypeOnly<typeof current.EpochTracker>, TypeOnly<typeof old.EpochTracker>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -176,11 +124,7 @@ declare type current_as_old_for_ClassStatics_EpochTracker = requireAssignableTo<
  * typeValidation.broken:
  * "ClassStatics_OdspDocumentServiceFactory": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_OdspDocumentServiceFactory =
-	requireAssignableTo<
-		TypeOnly<typeof current.OdspDocumentServiceFactory>,
-		TypeOnly<typeof old.OdspDocumentServiceFactory>
-	>;
+declare type current_as_old_for_ClassStatics_OdspDocumentServiceFactory = requireAssignableTo<TypeOnly<typeof current.OdspDocumentServiceFactory>, TypeOnly<typeof old.OdspDocumentServiceFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -189,11 +133,7 @@ declare type current_as_old_for_ClassStatics_OdspDocumentServiceFactory =
  * typeValidation.broken:
  * "ClassStatics_OdspDocumentServiceFactoryCore": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_OdspDocumentServiceFactoryCore =
-	requireAssignableTo<
-		TypeOnly<typeof current.OdspDocumentServiceFactoryCore>,
-		TypeOnly<typeof old.OdspDocumentServiceFactoryCore>
-	>;
+declare type current_as_old_for_ClassStatics_OdspDocumentServiceFactoryCore = requireAssignableTo<TypeOnly<typeof current.OdspDocumentServiceFactoryCore>, TypeOnly<typeof old.OdspDocumentServiceFactoryCore>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -202,11 +142,7 @@ declare type current_as_old_for_ClassStatics_OdspDocumentServiceFactoryCore =
  * typeValidation.broken:
  * "ClassStatics_OdspDriverUrlResolver": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_OdspDriverUrlResolver =
-	requireAssignableTo<
-		TypeOnly<typeof current.OdspDriverUrlResolver>,
-		TypeOnly<typeof old.OdspDriverUrlResolver>
-	>;
+declare type current_as_old_for_ClassStatics_OdspDriverUrlResolver = requireAssignableTo<TypeOnly<typeof current.OdspDriverUrlResolver>, TypeOnly<typeof old.OdspDriverUrlResolver>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -215,11 +151,7 @@ declare type current_as_old_for_ClassStatics_OdspDriverUrlResolver =
  * typeValidation.broken:
  * "ClassStatics_OdspDriverUrlResolverForShareLink": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_OdspDriverUrlResolverForShareLink =
-	requireAssignableTo<
-		TypeOnly<typeof current.OdspDriverUrlResolverForShareLink>,
-		TypeOnly<typeof old.OdspDriverUrlResolverForShareLink>
-	>;
+declare type current_as_old_for_ClassStatics_OdspDriverUrlResolverForShareLink = requireAssignableTo<TypeOnly<typeof current.OdspDriverUrlResolverForShareLink>, TypeOnly<typeof old.OdspDriverUrlResolverForShareLink>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -228,11 +160,7 @@ declare type current_as_old_for_ClassStatics_OdspDriverUrlResolverForShareLink =
  * typeValidation.broken:
  * "Enum_SnapshotFormatSupportType": {"forwardCompat": false}
  */
-declare type old_as_current_for_Enum_SnapshotFormatSupportType =
-	requireAssignableTo<
-		TypeOnly<old.SnapshotFormatSupportType>,
-		TypeOnly<current.SnapshotFormatSupportType>
-	>;
+declare type old_as_current_for_Enum_SnapshotFormatSupportType = requireAssignableTo<TypeOnly<old.SnapshotFormatSupportType>, TypeOnly<current.SnapshotFormatSupportType>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -241,11 +169,7 @@ declare type old_as_current_for_Enum_SnapshotFormatSupportType =
  * typeValidation.broken:
  * "Enum_SnapshotFormatSupportType": {"backCompat": false}
  */
-declare type current_as_old_for_Enum_SnapshotFormatSupportType =
-	requireAssignableTo<
-		TypeOnly<current.SnapshotFormatSupportType>,
-		TypeOnly<old.SnapshotFormatSupportType>
-	>;
+declare type current_as_old_for_Enum_SnapshotFormatSupportType = requireAssignableTo<TypeOnly<current.SnapshotFormatSupportType>, TypeOnly<old.SnapshotFormatSupportType>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -254,10 +178,7 @@ declare type current_as_old_for_Enum_SnapshotFormatSupportType =
  * typeValidation.broken:
  * "Function_checkUrl": {"backCompat": false}
  */
-declare type current_as_old_for_Function_checkUrl = requireAssignableTo<
-	TypeOnly<typeof current.checkUrl>,
-	TypeOnly<typeof old.checkUrl>
->;
+declare type current_as_old_for_Function_checkUrl = requireAssignableTo<TypeOnly<typeof current.checkUrl>, TypeOnly<typeof old.checkUrl>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -266,11 +187,7 @@ declare type current_as_old_for_Function_checkUrl = requireAssignableTo<
  * typeValidation.broken:
  * "Function_createLocalOdspDocumentServiceFactory": {"backCompat": false}
  */
-declare type current_as_old_for_Function_createLocalOdspDocumentServiceFactory =
-	requireAssignableTo<
-		TypeOnly<typeof current.createLocalOdspDocumentServiceFactory>,
-		TypeOnly<typeof old.createLocalOdspDocumentServiceFactory>
-	>;
+declare type current_as_old_for_Function_createLocalOdspDocumentServiceFactory = requireAssignableTo<TypeOnly<typeof current.createLocalOdspDocumentServiceFactory>, TypeOnly<typeof old.createLocalOdspDocumentServiceFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -279,11 +196,7 @@ declare type current_as_old_for_Function_createLocalOdspDocumentServiceFactory =
  * typeValidation.broken:
  * "Function_createOdspCreateContainerRequest": {"backCompat": false}
  */
-declare type current_as_old_for_Function_createOdspCreateContainerRequest =
-	requireAssignableTo<
-		TypeOnly<typeof current.createOdspCreateContainerRequest>,
-		TypeOnly<typeof old.createOdspCreateContainerRequest>
-	>;
+declare type current_as_old_for_Function_createOdspCreateContainerRequest = requireAssignableTo<TypeOnly<typeof current.createOdspCreateContainerRequest>, TypeOnly<typeof old.createOdspCreateContainerRequest>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -292,10 +205,7 @@ declare type current_as_old_for_Function_createOdspCreateContainerRequest =
  * typeValidation.broken:
  * "Function_createOdspUrl": {"backCompat": false}
  */
-declare type current_as_old_for_Function_createOdspUrl = requireAssignableTo<
-	TypeOnly<typeof current.createOdspUrl>,
-	TypeOnly<typeof old.createOdspUrl>
->;
+declare type current_as_old_for_Function_createOdspUrl = requireAssignableTo<TypeOnly<typeof current.createOdspUrl>, TypeOnly<typeof old.createOdspUrl>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -304,11 +214,7 @@ declare type current_as_old_for_Function_createOdspUrl = requireAssignableTo<
  * typeValidation.broken:
  * "Function_encodeOdspFluidDataStoreLocator": {"backCompat": false}
  */
-declare type current_as_old_for_Function_encodeOdspFluidDataStoreLocator =
-	requireAssignableTo<
-		TypeOnly<typeof current.encodeOdspFluidDataStoreLocator>,
-		TypeOnly<typeof old.encodeOdspFluidDataStoreLocator>
-	>;
+declare type current_as_old_for_Function_encodeOdspFluidDataStoreLocator = requireAssignableTo<TypeOnly<typeof current.encodeOdspFluidDataStoreLocator>, TypeOnly<typeof old.encodeOdspFluidDataStoreLocator>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -317,11 +223,7 @@ declare type current_as_old_for_Function_encodeOdspFluidDataStoreLocator =
  * typeValidation.broken:
  * "Function_getHashedDocumentId": {"backCompat": false}
  */
-declare type current_as_old_for_Function_getHashedDocumentId =
-	requireAssignableTo<
-		TypeOnly<typeof current.getHashedDocumentId>,
-		TypeOnly<typeof old.getHashedDocumentId>
-	>;
+declare type current_as_old_for_Function_getHashedDocumentId = requireAssignableTo<TypeOnly<typeof current.getHashedDocumentId>, TypeOnly<typeof old.getHashedDocumentId>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -330,11 +232,7 @@ declare type current_as_old_for_Function_getHashedDocumentId =
  * typeValidation.broken:
  * "Function_getLocatorFromOdspUrl": {"backCompat": false}
  */
-declare type current_as_old_for_Function_getLocatorFromOdspUrl =
-	requireAssignableTo<
-		TypeOnly<typeof current.getLocatorFromOdspUrl>,
-		TypeOnly<typeof old.getLocatorFromOdspUrl>
-	>;
+declare type current_as_old_for_Function_getLocatorFromOdspUrl = requireAssignableTo<TypeOnly<typeof current.getLocatorFromOdspUrl>, TypeOnly<typeof old.getLocatorFromOdspUrl>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -343,11 +241,7 @@ declare type current_as_old_for_Function_getLocatorFromOdspUrl =
  * typeValidation.broken:
  * "Function_isOdspResolvedUrl": {"backCompat": false}
  */
-declare type current_as_old_for_Function_isOdspResolvedUrl =
-	requireAssignableTo<
-		TypeOnly<typeof current.isOdspResolvedUrl>,
-		TypeOnly<typeof old.isOdspResolvedUrl>
-	>;
+declare type current_as_old_for_Function_isOdspResolvedUrl = requireAssignableTo<TypeOnly<typeof current.isOdspResolvedUrl>, TypeOnly<typeof old.isOdspResolvedUrl>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -356,11 +250,7 @@ declare type current_as_old_for_Function_isOdspResolvedUrl =
  * typeValidation.broken:
  * "Function_prefetchLatestSnapshot": {"backCompat": false}
  */
-declare type current_as_old_for_Function_prefetchLatestSnapshot =
-	requireAssignableTo<
-		TypeOnly<typeof current.prefetchLatestSnapshot>,
-		TypeOnly<typeof old.prefetchLatestSnapshot>
-	>;
+declare type current_as_old_for_Function_prefetchLatestSnapshot = requireAssignableTo<TypeOnly<typeof current.prefetchLatestSnapshot>, TypeOnly<typeof old.prefetchLatestSnapshot>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -369,11 +259,7 @@ declare type current_as_old_for_Function_prefetchLatestSnapshot =
  * typeValidation.broken:
  * "Function_storeLocatorInOdspUrl": {"backCompat": false}
  */
-declare type current_as_old_for_Function_storeLocatorInOdspUrl =
-	requireAssignableTo<
-		TypeOnly<typeof current.storeLocatorInOdspUrl>,
-		TypeOnly<typeof old.storeLocatorInOdspUrl>
-	>;
+declare type current_as_old_for_Function_storeLocatorInOdspUrl = requireAssignableTo<TypeOnly<typeof current.storeLocatorInOdspUrl>, TypeOnly<typeof old.storeLocatorInOdspUrl>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -382,11 +268,7 @@ declare type current_as_old_for_Function_storeLocatorInOdspUrl =
  * typeValidation.broken:
  * "Interface_ICacheAndTracker": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ICacheAndTracker =
-	requireAssignableTo<
-		TypeOnly<old.ICacheAndTracker>,
-		TypeOnly<current.ICacheAndTracker>
-	>;
+declare type old_as_current_for_Interface_ICacheAndTracker = requireAssignableTo<TypeOnly<old.ICacheAndTracker>, TypeOnly<current.ICacheAndTracker>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -395,11 +277,7 @@ declare type old_as_current_for_Interface_ICacheAndTracker =
  * typeValidation.broken:
  * "Interface_ICacheAndTracker": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ICacheAndTracker =
-	requireAssignableTo<
-		TypeOnly<current.ICacheAndTracker>,
-		TypeOnly<old.ICacheAndTracker>
-	>;
+declare type current_as_old_for_Interface_ICacheAndTracker = requireAssignableTo<TypeOnly<current.ICacheAndTracker>, TypeOnly<old.ICacheAndTracker>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -408,11 +286,7 @@ declare type current_as_old_for_Interface_ICacheAndTracker =
  * typeValidation.broken:
  * "Interface_INonPersistentCache": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_INonPersistentCache =
-	requireAssignableTo<
-		TypeOnly<old.INonPersistentCache>,
-		TypeOnly<current.INonPersistentCache>
-	>;
+declare type old_as_current_for_Interface_INonPersistentCache = requireAssignableTo<TypeOnly<old.INonPersistentCache>, TypeOnly<current.INonPersistentCache>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -421,11 +295,7 @@ declare type old_as_current_for_Interface_INonPersistentCache =
  * typeValidation.broken:
  * "Interface_INonPersistentCache": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_INonPersistentCache =
-	requireAssignableTo<
-		TypeOnly<current.INonPersistentCache>,
-		TypeOnly<old.INonPersistentCache>
-	>;
+declare type current_as_old_for_Interface_INonPersistentCache = requireAssignableTo<TypeOnly<current.INonPersistentCache>, TypeOnly<old.INonPersistentCache>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -434,10 +304,7 @@ declare type current_as_old_for_Interface_INonPersistentCache =
  * typeValidation.broken:
  * "Interface_IOdspCache": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IOdspCache = requireAssignableTo<
-	TypeOnly<old.IOdspCache>,
-	TypeOnly<current.IOdspCache>
->;
+declare type old_as_current_for_Interface_IOdspCache = requireAssignableTo<TypeOnly<old.IOdspCache>, TypeOnly<current.IOdspCache>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -446,10 +313,7 @@ declare type old_as_current_for_Interface_IOdspCache = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IOdspCache": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IOdspCache = requireAssignableTo<
-	TypeOnly<current.IOdspCache>,
-	TypeOnly<old.IOdspCache>
->;
+declare type current_as_old_for_Interface_IOdspCache = requireAssignableTo<TypeOnly<current.IOdspCache>, TypeOnly<old.IOdspCache>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -458,10 +322,7 @@ declare type current_as_old_for_Interface_IOdspCache = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IOdspResponse": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IOdspResponse = requireAssignableTo<
-	TypeOnly<old.IOdspResponse<never>>,
-	TypeOnly<current.IOdspResponse<never>>
->;
+declare type old_as_current_for_Interface_IOdspResponse = requireAssignableTo<TypeOnly<old.IOdspResponse<never>>, TypeOnly<current.IOdspResponse<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -470,10 +331,7 @@ declare type old_as_current_for_Interface_IOdspResponse = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IOdspResponse": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IOdspResponse = requireAssignableTo<
-	TypeOnly<current.IOdspResponse<never>>,
-	TypeOnly<old.IOdspResponse<never>>
->;
+declare type current_as_old_for_Interface_IOdspResponse = requireAssignableTo<TypeOnly<current.IOdspResponse<never>>, TypeOnly<old.IOdspResponse<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -482,11 +340,7 @@ declare type current_as_old_for_Interface_IOdspResponse = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IPersistedFileCache": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IPersistedFileCache =
-	requireAssignableTo<
-		TypeOnly<old.IPersistedFileCache>,
-		TypeOnly<current.IPersistedFileCache>
-	>;
+declare type old_as_current_for_Interface_IPersistedFileCache = requireAssignableTo<TypeOnly<old.IPersistedFileCache>, TypeOnly<current.IPersistedFileCache>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -495,11 +349,7 @@ declare type old_as_current_for_Interface_IPersistedFileCache =
  * typeValidation.broken:
  * "Interface_IPersistedFileCache": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IPersistedFileCache =
-	requireAssignableTo<
-		TypeOnly<current.IPersistedFileCache>,
-		TypeOnly<old.IPersistedFileCache>
-	>;
+declare type current_as_old_for_Interface_IPersistedFileCache = requireAssignableTo<TypeOnly<current.IPersistedFileCache>, TypeOnly<old.IPersistedFileCache>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -508,11 +358,7 @@ declare type current_as_old_for_Interface_IPersistedFileCache =
  * typeValidation.broken:
  * "Interface_IPrefetchSnapshotContents": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IPrefetchSnapshotContents =
-	requireAssignableTo<
-		TypeOnly<old.IPrefetchSnapshotContents>,
-		TypeOnly<current.IPrefetchSnapshotContents>
-	>;
+declare type old_as_current_for_Interface_IPrefetchSnapshotContents = requireAssignableTo<TypeOnly<old.IPrefetchSnapshotContents>, TypeOnly<current.IPrefetchSnapshotContents>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -521,11 +367,7 @@ declare type old_as_current_for_Interface_IPrefetchSnapshotContents =
  * typeValidation.broken:
  * "Interface_IPrefetchSnapshotContents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IPrefetchSnapshotContents =
-	requireAssignableTo<
-		TypeOnly<current.IPrefetchSnapshotContents>,
-		TypeOnly<old.IPrefetchSnapshotContents>
-	>;
+declare type current_as_old_for_Interface_IPrefetchSnapshotContents = requireAssignableTo<TypeOnly<current.IPrefetchSnapshotContents>, TypeOnly<old.IPrefetchSnapshotContents>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -534,11 +376,7 @@ declare type current_as_old_for_Interface_IPrefetchSnapshotContents =
  * typeValidation.broken:
  * "Interface_ISnapshotContents": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISnapshotContents =
-	requireAssignableTo<
-		TypeOnly<old.ISnapshotContents>,
-		TypeOnly<current.ISnapshotContents>
-	>;
+declare type old_as_current_for_Interface_ISnapshotContents = requireAssignableTo<TypeOnly<old.ISnapshotContents>, TypeOnly<current.ISnapshotContents>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -547,11 +385,7 @@ declare type old_as_current_for_Interface_ISnapshotContents =
  * typeValidation.broken:
  * "Interface_ISnapshotContents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISnapshotContents =
-	requireAssignableTo<
-		TypeOnly<current.ISnapshotContents>,
-		TypeOnly<old.ISnapshotContents>
-	>;
+declare type current_as_old_for_Interface_ISnapshotContents = requireAssignableTo<TypeOnly<current.ISnapshotContents>, TypeOnly<old.ISnapshotContents>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -560,11 +394,7 @@ declare type current_as_old_for_Interface_ISnapshotContents =
  * typeValidation.broken:
  * "Interface_OdspFluidDataStoreLocator": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_OdspFluidDataStoreLocator =
-	requireAssignableTo<
-		TypeOnly<old.OdspFluidDataStoreLocator>,
-		TypeOnly<current.OdspFluidDataStoreLocator>
-	>;
+declare type old_as_current_for_Interface_OdspFluidDataStoreLocator = requireAssignableTo<TypeOnly<old.OdspFluidDataStoreLocator>, TypeOnly<current.OdspFluidDataStoreLocator>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -573,11 +403,7 @@ declare type old_as_current_for_Interface_OdspFluidDataStoreLocator =
  * typeValidation.broken:
  * "Interface_OdspFluidDataStoreLocator": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_OdspFluidDataStoreLocator =
-	requireAssignableTo<
-		TypeOnly<current.OdspFluidDataStoreLocator>,
-		TypeOnly<old.OdspFluidDataStoreLocator>
-	>;
+declare type current_as_old_for_Interface_OdspFluidDataStoreLocator = requireAssignableTo<TypeOnly<current.OdspFluidDataStoreLocator>, TypeOnly<old.OdspFluidDataStoreLocator>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -586,11 +412,7 @@ declare type current_as_old_for_Interface_OdspFluidDataStoreLocator =
  * typeValidation.broken:
  * "Interface_ShareLinkFetcherProps": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ShareLinkFetcherProps =
-	requireAssignableTo<
-		TypeOnly<old.ShareLinkFetcherProps>,
-		TypeOnly<current.ShareLinkFetcherProps>
-	>;
+declare type old_as_current_for_Interface_ShareLinkFetcherProps = requireAssignableTo<TypeOnly<old.ShareLinkFetcherProps>, TypeOnly<current.ShareLinkFetcherProps>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -599,11 +421,7 @@ declare type old_as_current_for_Interface_ShareLinkFetcherProps =
  * typeValidation.broken:
  * "Interface_ShareLinkFetcherProps": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ShareLinkFetcherProps =
-	requireAssignableTo<
-		TypeOnly<current.ShareLinkFetcherProps>,
-		TypeOnly<old.ShareLinkFetcherProps>
-	>;
+declare type current_as_old_for_Interface_ShareLinkFetcherProps = requireAssignableTo<TypeOnly<current.ShareLinkFetcherProps>, TypeOnly<old.ShareLinkFetcherProps>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -612,10 +430,7 @@ declare type current_as_old_for_Interface_ShareLinkFetcherProps =
  * typeValidation.broken:
  * "TypeAlias_FetchType": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_FetchType = requireAssignableTo<
-	TypeOnly<old.FetchType>,
-	TypeOnly<current.FetchType>
->;
+declare type old_as_current_for_TypeAlias_FetchType = requireAssignableTo<TypeOnly<old.FetchType>, TypeOnly<current.FetchType>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -624,10 +439,7 @@ declare type old_as_current_for_TypeAlias_FetchType = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_FetchType": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_FetchType = requireAssignableTo<
-	TypeOnly<current.FetchType>,
-	TypeOnly<old.FetchType>
->;
+declare type current_as_old_for_TypeAlias_FetchType = requireAssignableTo<TypeOnly<current.FetchType>, TypeOnly<old.FetchType>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -636,11 +448,7 @@ declare type current_as_old_for_TypeAlias_FetchType = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_FetchTypeInternal": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_FetchTypeInternal =
-	requireAssignableTo<
-		TypeOnly<old.FetchTypeInternal>,
-		TypeOnly<current.FetchTypeInternal>
-	>;
+declare type old_as_current_for_TypeAlias_FetchTypeInternal = requireAssignableTo<TypeOnly<old.FetchTypeInternal>, TypeOnly<current.FetchTypeInternal>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -649,11 +457,7 @@ declare type old_as_current_for_TypeAlias_FetchTypeInternal =
  * typeValidation.broken:
  * "TypeAlias_FetchTypeInternal": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_FetchTypeInternal =
-	requireAssignableTo<
-		TypeOnly<current.FetchTypeInternal>,
-		TypeOnly<old.FetchTypeInternal>
-	>;
+declare type current_as_old_for_TypeAlias_FetchTypeInternal = requireAssignableTo<TypeOnly<current.FetchTypeInternal>, TypeOnly<old.FetchTypeInternal>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -662,11 +466,7 @@ declare type current_as_old_for_TypeAlias_FetchTypeInternal =
  * typeValidation.broken:
  * "Variable_locatorQueryParamName": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_locatorQueryParamName =
-	requireAssignableTo<
-		TypeOnly<typeof current.locatorQueryParamName>,
-		TypeOnly<typeof old.locatorQueryParamName>
-	>;
+declare type current_as_old_for_Variable_locatorQueryParamName = requireAssignableTo<TypeOnly<typeof current.locatorQueryParamName>, TypeOnly<typeof old.locatorQueryParamName>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -675,10 +475,7 @@ declare type current_as_old_for_Variable_locatorQueryParamName =
  * typeValidation.broken:
  * "Variable_OdcApiSiteOrigin": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_OdcApiSiteOrigin = requireAssignableTo<
-	TypeOnly<typeof current.OdcApiSiteOrigin>,
-	TypeOnly<typeof old.OdcApiSiteOrigin>
->;
+declare type current_as_old_for_Variable_OdcApiSiteOrigin = requireAssignableTo<TypeOnly<typeof current.OdcApiSiteOrigin>, TypeOnly<typeof old.OdcApiSiteOrigin>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -687,8 +484,4 @@ declare type current_as_old_for_Variable_OdcApiSiteOrigin = requireAssignableTo<
  * typeValidation.broken:
  * "Variable_OdcFileSiteOrigin": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_OdcFileSiteOrigin =
-	requireAssignableTo<
-		TypeOnly<typeof current.OdcFileSiteOrigin>,
-		TypeOnly<typeof old.OdcFileSiteOrigin>
-	>;
+declare type current_as_old_for_Variable_OdcFileSiteOrigin = requireAssignableTo<TypeOnly<typeof current.OdcFileSiteOrigin>, TypeOnly<typeof old.OdcFileSiteOrigin>>

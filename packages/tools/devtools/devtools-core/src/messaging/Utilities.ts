@@ -19,24 +19,17 @@ export function postMessagesToWindow<TMessage extends IDevtoolsMessage>(
 	loggingOptions?: MessageLoggingOptions,
 	...messages: TMessage[]
 ): void {
-	const messagesWithSource: ISourcedDevtoolsMessage[] = messages.map(
-		(message) => ({
-			...message,
-			source: devtoolsMessageSource,
-		}),
-	);
+	const messagesWithSource: ISourcedDevtoolsMessage[] = messages.map((message) => ({
+		...message,
+		source: devtoolsMessageSource,
+	}));
 
 	// TODO: remove loggingOptions once things settle.
 	// If we need special logic for globalThis.postMessage maybe keep this function, but otherwise maybe remove it too.
 	if (loggingOptions !== undefined) {
 		const loggingPreamble =
-			loggingOptions?.context === undefined
-				? ""
-				: `${loggingOptions.context}: `;
-		console.debug(
-			`${loggingPreamble}Posting messages to the window:`,
-			messagesWithSource,
-		);
+			loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
+		console.debug(`${loggingPreamble}Posting messages to the window:`, messagesWithSource);
 	}
 	for (const message of messagesWithSource) {
 		globalThis.postMessage?.(message, "*");
@@ -143,10 +136,7 @@ export function handleIncomingMessage(
 			}
 		},
 		(error) => {
-			console.error(
-				`${loggingPreamble} Message could not be handled due to an error:`,
-				error,
-			);
+			console.error(`${loggingPreamble} Message could not be handled due to an error:`, error);
 		},
 	);
 }

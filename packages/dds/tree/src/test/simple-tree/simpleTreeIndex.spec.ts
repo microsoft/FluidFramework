@@ -4,22 +4,22 @@
  */
 
 import { strict as assert } from "node:assert";
-import { type FieldKey, rootFieldKey, type UpPath } from "../../core/index.js";
+import { brand } from "../../util/index.js";
 import {
-	flexTreeSlot,
-	type TreeIndexKey,
-	type TreeIndexNodes,
-} from "../../feature-libraries/index.js";
-import {
-	createSimpleTreeIndex,
 	type InsertableTypedNode,
 	SchemaFactory,
 	type TreeNode,
 	type TreeNodeSchema,
 	TreeViewConfiguration,
+	createSimpleTreeIndex,
 } from "../../simple-tree/index.js";
-import { brand } from "../../util/index.js";
+import {
+	flexTreeSlot,
+	type TreeIndexKey,
+	type TreeIndexNodes,
+} from "../../feature-libraries/index.js";
 import { getView } from "../utils.js";
+import { rootFieldKey, type FieldKey, type UpPath } from "../../core/index.js";
 
 /** The field key under which the parentId node puts its identifier */
 const parentKey: FieldKey = brand("parentKey");
@@ -57,9 +57,7 @@ describe("simple tree indexes", () => {
 			schema.identifier === IndexableParent.identifier ||
 			schema.identifier === IndexableChild.identifier
 		) {
-			return schema.identifier === IndexableParent.identifier
-				? parentKey
-				: childKey;
+			return schema.identifier === IndexableParent.identifier ? parentKey : childKey;
 		}
 		return;
 	}
@@ -102,8 +100,7 @@ describe("simple tree indexes", () => {
 		};
 		const anchor = forest.anchors.track(path);
 		const anchorNode =
-			forest.anchors.locate(anchor) ??
-			assert.fail("should be able to find anchor to child");
+			forest.anchors.locate(anchor) ?? assert.fail("should be able to find anchor to child");
 		assert.equal(anchorNode.slots.has(flexTreeSlot), false);
 
 		const children = index.get(childId);
@@ -113,9 +110,7 @@ describe("simple tree indexes", () => {
 	});
 
 	it("filters out removed nodes", () => {
-		const { view, parent } = createView(
-			new IndexableChild({ childKey: childId }),
-		);
+		const { view, parent } = createView(new IndexableChild({ childKey: childId }));
 		const index = createSimpleTreeIndex<
 			typeof IndexableParent,
 			string,
@@ -148,10 +143,7 @@ describe("simple tree indexes", () => {
 		}) {}
 		const config = new TreeViewConfiguration({ schema: OtherIndexableParent });
 		const view = getView(config);
-		view.initialize({
-			other: parentId,
-			child: new OtherIndexableChild({ other: childId }),
-		});
+		view.initialize({ other: parentId, child: new OtherIndexableChild({ other: childId }) });
 		const parent = view.root;
 		const index = createSimpleTreeIndex(
 			view,

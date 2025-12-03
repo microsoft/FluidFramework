@@ -101,8 +101,7 @@ export interface NormalizedUpPathInterior<
  *
  * See {@link UpPath}.
  */
-export type NormalizedFieldUpPath<TParent = NormalizedUpPath> =
-	FieldUpPath<TParent>;
+export type NormalizedFieldUpPath<TParent = NormalizedUpPath> = FieldUpPath<TParent>;
 
 /**
  * Path from a field in the tree upward.
@@ -158,8 +157,7 @@ export interface RangeUpPath<TUpPath extends UpPath = UpPath>
 /**
  * A place in a field.
  */
-export interface PlaceUpPath<TUpPath extends UpPath = UpPath>
-	extends FieldUpPath<TUpPath> {
+export interface PlaceUpPath<TUpPath extends UpPath = UpPath> extends FieldUpPath<TUpPath> {
 	/**
 	 * The location in the field.
 	 */
@@ -237,10 +235,7 @@ export function topDownPath(path: UpPath | undefined): UpPath[] {
  * @remarks
  * Note that for mutable paths (as used in `AnchorSet`), this equality may change over time: this only checks if the two paths are currently the same.
  */
-export function compareUpPaths(
-	a: UpPath | undefined,
-	b: UpPath | undefined,
-): boolean {
+export function compareUpPaths(a: UpPath | undefined, b: UpPath | undefined): boolean {
 	if (a === b) {
 		// This handles the both `undefined` case, as well as provides an early out if a shared node is encountered.
 		return true;

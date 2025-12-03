@@ -11,14 +11,11 @@ import request from "supertest";
 
 import {
 	ExternalDataSource,
-	initializeExternalDataService,
 	type MockWebhook,
+	initializeExternalDataService,
 } from "../src/mock-external-data-service/index.js";
 import { externalDataServicePort } from "../src/mock-external-data-service-interface/index.js";
-import {
-	assertValidTaskData,
-	type ITaskData,
-} from "../src/model-interface/index.js";
+import { type ITaskData, assertValidTaskData } from "../src/model-interface/index.js";
 
 import { closeServer, delay } from "./utilities.js";
 
@@ -76,13 +73,9 @@ describe("mock-external-data-service", () => {
 	});
 
 	async function getCurrentExternalData(): Promise<ITaskData> {
-		const fetchResponse =
-			await externalDataSource!.fetchData(externalTaskListId);
+		const fetchResponse = await externalDataSource!.fetchData(externalTaskListId);
 		const responseText = await fetchResponse.text();
-		const responseBody = JSON.parse(responseText) as Record<
-			string | number | symbol,
-			unknown
-		>;
+		const responseBody = JSON.parse(responseText) as Record<string | number | symbol, unknown>;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 		return assertValidTaskData((responseBody as any).taskList);
 	}
@@ -206,10 +199,7 @@ describe("mock-external-data-service", () => {
 			.send({ url: "not a url", externalTaskListId })
 			.expect(400);
 		// missing url
-		await request(externalDataService!)
-			.post(`/unregister-webhook`)
-			.send({})
-			.expect(400);
+		await request(externalDataService!).post(`/unregister-webhook`).send({}).expect(400);
 		// invalid data type
 		await request(externalDataService!)
 			.post(`/unregister-webhook`)
@@ -226,10 +216,7 @@ describe("mock-external-data-service", () => {
 		// invalid externalTaskListId data type
 		await request(externalDataService!)
 			.post(`/unregister-webhook`)
-			.send({
-				url: "https://www.thefirstSubscriber.com",
-				externalTaskListId: 123,
-			})
+			.send({ url: "https://www.thefirstSubscriber.com", externalTaskListId: 123 })
 			.expect(400);
 	});
 
@@ -292,9 +279,7 @@ describe("mock-external-data-service: webhook", () => {
 			);
 
 			if (!webhookRegistrationResponse.ok) {
-				fail(
-					`Webhook registration failed. Code: ${webhookRegistrationResponse.status}.`,
-				);
+				fail(`Webhook registration failed. Code: ${webhookRegistrationResponse.status}.`);
 			}
 
 			// Update external data

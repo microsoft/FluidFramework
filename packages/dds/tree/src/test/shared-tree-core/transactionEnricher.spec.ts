@@ -4,10 +4,10 @@
  */
 
 import { strict as assert } from "node:assert";
-import type { RevisionTag } from "../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { TransactionEnricher } from "../../shared-tree-core/transactionEnricher.js";
 import { TestChange, TestChangeRebaser } from "../testChange.js";
+import type { RevisionTag } from "../../core/index.js";
 import { mintRevisionTag } from "../utils.js";
 import { TestChangeEnricher } from "./utils.js";
 
@@ -39,15 +39,21 @@ describe("TransactionEnricher", () => {
 		it("returns true during a transaction", () => {
 			const transactionEnricher = new TransactionEnricher(rebaser, enricher);
 			transactionEnricher.startTransaction();
-			assert.equal(transactionEnricher.isTransacting(), true);
-			transactionEnricher.startTransaction();
-			assert.equal(transactionEnricher.isTransacting(), true);
-			transactionEnricher.startTransaction();
-			assert.equal(transactionEnricher.isTransacting(), true);
-			transactionEnricher.abortTransaction();
-			assert.equal(transactionEnricher.isTransacting(), true);
-			transactionEnricher.commitTransaction();
-			assert.equal(transactionEnricher.isTransacting(), true);
+			{
+				assert.equal(transactionEnricher.isTransacting(), true);
+				transactionEnricher.startTransaction();
+				{
+					assert.equal(transactionEnricher.isTransacting(), true);
+					transactionEnricher.startTransaction();
+					{
+						assert.equal(transactionEnricher.isTransacting(), true);
+					}
+					transactionEnricher.abortTransaction();
+					assert.equal(transactionEnricher.isTransacting(), true);
+				}
+				transactionEnricher.commitTransaction();
+				assert.equal(transactionEnricher.isTransacting(), true);
+			}
 			transactionEnricher.commitTransaction();
 		});
 	});
@@ -63,10 +69,7 @@ describe("TransactionEnricher", () => {
 			assert.throws(() => transactionEnricher.commitTransaction());
 		});
 		it("returns undefined when committing an inner transaction", () => {
-			const transactionEnricher = new TransactionEnricher<TestChange>(
-				rebaser,
-				enricher,
-			);
+			const transactionEnricher = new TransactionEnricher<TestChange>(rebaser, enricher);
 			transactionEnricher.startTransaction();
 			transactionEnricher.startTransaction();
 			transactionEnricher.startTransaction();
@@ -75,55 +78,56 @@ describe("TransactionEnricher", () => {
 		});
 		describe("when committing an outer transaction", () => {
 			it("returns undefined for a transaction with no change steps", () => {
-				const transactionEnricher = new TransactionEnricher<TestChange>(
-					rebaser,
-					enricher,
-				);
+				const transactionEnricher = new TransactionEnricher<TestChange>(rebaser, enricher);
 				transactionEnricher.startTransaction();
 				const getter = transactionEnricher.commitTransaction();
 				assert.equal(getter, undefined);
 			});
 			it("returns undefined for a transaction with aborted change steps", () => {
-				const transactionEnricher = new TransactionEnricher<TestChange>(
-					rebaser,
-					enricher,
-				);
+				const transactionEnricher = new TransactionEnricher<TestChange>(rebaser, enricher);
 				transactionEnricher.startTransaction();
-				transactionEnricher.startTransaction();
-				transactionEnricher.addTransactionStep({
-					change: TestChange.mint([1], 2),
-					revision: tag2,
-				});
-				transactionEnricher.abortTransaction();
+				{
+					transactionEnricher.startTransaction();
+					{
+						transactionEnricher.addTransactionStep({
+							change: TestChange.mint([1], 2),
+							revision: tag2,
+						});
+					}
+					transactionEnricher.abortTransaction();
+				}
 				const getter = transactionEnricher.commitTransaction();
 				assert.equal(getter, undefined);
 			});
 			it("returns a getter that returns the composition of transaction steps for a transaction with change steps", () => {
-				const transactionEnricher = new TransactionEnricher<TestChange>(
-					rebaser,
-					enricher,
-				);
+				const transactionEnricher = new TransactionEnricher<TestChange>(rebaser, enricher);
 				transactionEnricher.startTransaction();
-				transactionEnricher.addTransactionStep({
-					change: TestChange.mint([], 1),
-					revision: tag1,
-				});
-				transactionEnricher.startTransaction();
-				transactionEnricher.addTransactionStep({
-					change: TestChange.mint([1], 2),
-					revision: tag2,
-				});
-				transactionEnricher.abortTransaction();
-				transactionEnricher.startTransaction();
-				transactionEnricher.addTransactionStep({
-					change: TestChange.mint([1], 3),
-					revision: tag3,
-				});
-				transactionEnricher.commitTransaction();
-				transactionEnricher.addTransactionStep({
-					change: TestChange.mint([1, 3], 4),
-					revision: tag4,
-				});
+				{
+					transactionEnricher.addTransactionStep({
+						change: TestChange.mint([], 1),
+						revision: tag1,
+					});
+					transactionEnricher.startTransaction();
+					{
+						transactionEnricher.addTransactionStep({
+							change: TestChange.mint([1], 2),
+							revision: tag2,
+						});
+					}
+					transactionEnricher.abortTransaction();
+					transactionEnricher.startTransaction();
+					{
+						transactionEnricher.addTransactionStep({
+							change: TestChange.mint([1], 3),
+							revision: tag3,
+						});
+					}
+					transactionEnricher.commitTransaction();
+					transactionEnricher.addTransactionStep({
+						change: TestChange.mint([1, 3], 4),
+						revision: tag4,
+					});
+				}
 				const getter = transactionEnricher.commitTransaction();
 				assert.notEqual(getter, undefined);
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion

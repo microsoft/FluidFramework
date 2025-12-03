@@ -5,10 +5,7 @@
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
 
-import {
-	type MoveEffectTable,
-	splitMarkForMoveEffects,
-} from "./moveEffectTable.js";
+import { type MoveEffectTable, splitMarkForMoveEffects } from "./moveEffectTable.js";
 import type { Mark } from "./types.js";
 import { splitMark } from "./utils.js";
 
@@ -34,8 +31,7 @@ export class MarkQueue {
 	}
 
 	public tryDequeue(): Mark | undefined {
-		const mark =
-			this.stack.length > 0 ? this.stack.pop() : this.list[this.index++];
+		const mark = this.stack.length > 0 ? this.stack.pop() : this.list[this.index++];
 		if (mark === undefined) {
 			return undefined;
 		}

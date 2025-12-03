@@ -17,9 +17,9 @@ baseConfig["node-option"].push("gc-global");
 
 module.exports = {
 	...baseConfig,
-	fgrep: ["@CustomBenchmark"],
-	recursive: true,
-	reporter: "@fluid-tools/benchmark/dist/MochaReporter.js",
-	reporterOptions: ["reportDir=.customBenchmarksOutput/"],
-	spec: ["lib/test/**/*.*js"],
+	"fgrep": ["@CustomBenchmark"],
+	"recursive": true,
+	"reporter": "@fluid-tools/benchmark/dist/MochaReporter.js",
+	"reporterOptions": ["reportDir=.customBenchmarksOutput/"],
+	"spec": ["lib/test/**/*.*js"],
 };

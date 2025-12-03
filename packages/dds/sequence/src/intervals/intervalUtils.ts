@@ -5,11 +5,7 @@
 
 /* eslint-disable no-bitwise */
 
-import {
-	type PropertySet,
-	Side,
-	SlidingPreference,
-} from "@fluidframework/merge-tree/internal";
+import { PropertySet, SlidingPreference, Side } from "@fluidframework/merge-tree/internal";
 
 /**
  * Basic interval abstraction
@@ -68,8 +64,7 @@ export const IntervalOpType = {
 /**
  * @legacy @beta
  */
-export type IntervalOpType =
-	(typeof IntervalOpType)[keyof typeof IntervalOpType];
+export type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
 
 /**
  * @legacy @beta
@@ -183,13 +178,7 @@ export type CompressedSerializedInterval =
 			PropertySet,
 			IntervalStickiness,
 	  ]
-	| [
-			number | "start" | "end",
-			number | "start" | "end",
-			number,
-			IntervalType,
-			PropertySet,
-	  ];
+	| [number | "start" | "end", number | "start" | "end", number, IntervalType, PropertySet];
 
 /**
  * Determines how an interval should expand when segments are inserted adjacent
@@ -232,8 +221,7 @@ export const IntervalStickiness = {
  * be explicitly enabled with the `intervalStickinessEnabled` flag
  * @legacy @beta
  */
-export type IntervalStickiness =
-	(typeof IntervalStickiness)[keyof typeof IntervalStickiness];
+export type IntervalStickiness = (typeof IntervalStickiness)[keyof typeof IntervalStickiness];
 
 export function startReferenceSlidingPreference(
 	startPos: number | "start" | "end" | undefined,
@@ -241,12 +229,7 @@ export function startReferenceSlidingPreference(
 	endPos: number | "start" | "end" | undefined,
 	endSide: Side,
 ): SlidingPreference {
-	const stickiness = computeStickinessFromSide(
-		startPos,
-		startSide,
-		endPos,
-		endSide,
-	);
+	const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
 	// if any start stickiness, prefer sliding backwards
 	return (stickiness & IntervalStickiness.START) === 0
 		? SlidingPreference.FORWARD
@@ -259,12 +242,7 @@ export function endReferenceSlidingPreference(
 	endPos: number | "start" | "end" | undefined,
 	endSide: Side,
 ): SlidingPreference {
-	const stickiness = computeStickinessFromSide(
-		startPos,
-		startSide,
-		endPos,
-		endSide,
-	);
+	const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
 
 	// if any end stickiness, prefer sliding forwards
 	return (stickiness & IntervalStickiness.END) === 0

@@ -4,8 +4,8 @@
  */
 
 import {
-	devtoolsMessageSource,
 	type ISourcedDevtoolsMessage,
+	devtoolsMessageSource,
 	isDevtoolsMessage,
 } from "@fluidframework/devtools-core/internal";
 
@@ -44,9 +44,7 @@ export function runContentScript(
 	 * see {@link https://developer.chrome.com/docs/extensions/mv3/devtools/#content-script-to-devtools | here}.
 	 */
 
-	console.log(
-		formatContentScriptMessageForLogging("Initializing Content Script."),
-	);
+	console.log(formatContentScriptMessageForLogging("Initializing Content Script."));
 
 	// `window` should always be defined in the Content script context.
 	if (window === undefined) {
@@ -56,9 +54,7 @@ export function runContentScript(
 	// Only establish messaging when activated by the Background Worker.
 	browser.runtime.onConnect.addListener((backgroundPort: Port) => {
 		console.log(
-			formatContentScriptMessageForLogging(
-				"Connection added from Background Worker.",
-			),
+			formatContentScriptMessageForLogging("Connection added from Background Worker."),
 		);
 		const allowedMessageSources = new Set([
 			extensionViewMessageSource,
@@ -74,10 +70,7 @@ export function runContentScript(
 
 			// Only relay message if it is one of ours, and if the source is the window's Devtools instance
 			// (and not a message originating from the extension).
-			if (
-				isDevtoolsMessage(message) &&
-				message.source === devtoolsMessageSource
-			) {
+			if (isDevtoolsMessage(message) && message.source === devtoolsMessageSource) {
 				relayMessageToPort(
 					message,
 					"webpage",
@@ -91,24 +84,19 @@ export function runContentScript(
 		window.addEventListener("message", relayMessageFromPageToBackground);
 
 		// Relay messages from the Background Worker to the inspected window.
-		backgroundPort.onMessage.addListener(
-			(message: Partial<ISourcedDevtoolsMessage>) => {
-				// Only relay message if it is one of ours, and if the source is the extension
-				// (and not the window).
-				if (
-					isDevtoolsMessage(message) &&
-					allowedMessageSources.has(message.source)
-				) {
-					console.debug(
-						formatContentScriptMessageForLogging(
-							`Relaying message from Background Script to the window:`,
-						),
-						message,
-					);
-					window.postMessage(message, "*");
-				}
-			},
-		);
+		backgroundPort.onMessage.addListener((message: Partial<ISourcedDevtoolsMessage>) => {
+			// Only relay message if it is one of ours, and if the source is the extension
+			// (and not the window).
+			if (isDevtoolsMessage(message) && allowedMessageSources.has(message.source)) {
+				console.debug(
+					formatContentScriptMessageForLogging(
+						`Relaying message from Background Script to the window:`,
+					),
+					message,
+				);
+				window.postMessage(message, "*");
+			}
+		});
 
 		// When the extension disconnects, clean up listeners.
 		backgroundPort.onDisconnect.addListener(() => {

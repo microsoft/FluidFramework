@@ -4,26 +4,22 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type {
+import {
 	IDocumentServiceFactory,
-	IPersistedCache,
+	type IPersistedCache,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	LocalDocumentServiceFactory,
 	LocalSessionStorageDbFactory,
 } from "@fluidframework/local-driver/internal";
 import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver/internal";
-import type { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions/internal";
+import { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import type {
-	IDevServerUser,
-	IRouterliciousRouteOptions,
-	RouteOptions,
-} from "./loader.js";
+import { IDevServerUser, IRouterliciousRouteOptions, RouteOptions } from "./loader.js";
 
 export const deltaConnectionServer = LocalDeltaConnectionServer.create(
 	new LocalSessionStorageDbFactory(),
@@ -63,17 +59,13 @@ export function getDocumentServiceFactory(
 		case "docker":
 		case "r11s":
 		case "tinylicious":
-			return new RouterliciousDocumentServiceFactory(
-				routerliciousTokenProvider,
-				{
-					enableWholeSummaryUpload:
-						options.mode === "r11s" || options.mode === "docker"
-							? options.enableWholeSummaryUpload
-							: undefined,
-					enableDiscovery:
-						options.mode === "r11s" && options.discoveryEndpoint !== undefined,
-				},
-			);
+			return new RouterliciousDocumentServiceFactory(routerliciousTokenProvider, {
+				enableWholeSummaryUpload:
+					options.mode === "r11s" || options.mode === "docker"
+						? options.enableWholeSummaryUpload
+						: undefined,
+				enableDiscovery: options.mode === "r11s" && options.discoveryEndpoint !== undefined,
+			});
 
 		case "spo":
 		case "spo-df":

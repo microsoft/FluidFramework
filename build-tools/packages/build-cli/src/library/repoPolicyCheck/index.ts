@@ -29,4 +29,4 @@ export const policyHandlers: Handler[] = [
 	yamlTabsHandler,
 ];
 
-export type { Handler } from "./common.js";
+export { type Handler } from "./common.js";

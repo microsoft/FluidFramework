@@ -15,12 +15,7 @@ import { CleanOptions, simpleGit } from "simple-git";
 
 import { loadBuildProject } from "../buildProject.js";
 import { NotInGitRepository } from "../errors.js";
-import {
-	findGitRootSync,
-	getChangedSinceRef,
-	getFiles,
-	getRemote,
-} from "../git.js";
+import { findGitRootSync, getChangedSinceRef, getFiles, getRemote } from "../git.js";
 import type { PackageJson } from "../types.js";
 
 import { packageRootPath, testRepoRoot } from "./init.js";
@@ -66,15 +61,10 @@ describe("getChangedSinceRef: local", () => {
 		await git.add(newFile);
 
 		// delete a file
-		await unlink(
-			path.join(testRepoRoot, "packages/group3/pkg-f/src/index.mjs"),
-		);
+		await unlink(path.join(testRepoRoot, "packages/group3/pkg-f/src/index.mjs"));
 
 		// edit a file
-		const pkgJson = path.join(
-			testRepoRoot,
-			"packages/group3/pkg-f/package.json",
-		);
+		const pkgJson = path.join(testRepoRoot, "packages/group3/pkg-f/package.json");
 		const json = (await readJson(pkgJson)) as PackageJson;
 		json.author = "edited field";
 		await writeJson(pkgJson, json);
@@ -131,10 +121,7 @@ describe("getChangedSinceRef: local", () => {
 	it("returns correct workspaces", async () => {
 		const { workspaces } = await getChangedSinceRef(repo, "HEAD");
 
-		expect(workspaces.map((p) => p.name)).to.be.containingAllOf([
-			"main",
-			"second",
-		]);
+		expect(workspaces.map((p) => p.name)).to.be.containingAllOf(["main", "second"]);
 		expect(workspaces).to.be.ofSize(2);
 	});
 });

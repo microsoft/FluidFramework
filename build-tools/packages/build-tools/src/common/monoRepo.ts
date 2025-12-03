@@ -6,14 +6,15 @@
 import { existsSync } from "node:fs";
 import * as path from "node:path";
 import { getPackagesSync } from "@manypkg/get-packages";
-import registerDebug from "debug";
 import { readFileSync, readJsonSync } from "fs-extra";
 import YAML from "yaml";
+
 import type { IFluidBuildDir } from "../fluidBuild/fluidBuildConfig";
-import { defaultLogger, type Logger } from "./logging";
+import { type Logger, defaultLogger } from "./logging";
 import { Package } from "./npmPackage";
 import { execWithErrorAsync, rimrafWithErrorAsync } from "./utils";
 
+import registerDebug from "debug";
 const traceInit = registerDebug("fluid-build:init");
 
 export type PackageManager = "npm" | "pnpm" | "yarn";
@@ -57,18 +58,8 @@ export class MonoRepo {
 		return this.repoPath;
 	}
 
-	public get releaseGroup():
-		| "build-tools"
-		| "client"
-		| "server"
-		| "gitrest"
-		| "historian" {
-		return this.kind as
-			| "build-tools"
-			| "client"
-			| "server"
-			| "gitrest"
-			| "historian";
+	public get releaseGroup(): "build-tools" | "client" | "server" | "gitrest" | "historian" {
+		return this.kind as "build-tools" | "client" | "server" | "gitrest" | "historian";
 	}
 
 	static load(group: string, repoPackage: IFluidBuildDir) {
@@ -81,9 +72,7 @@ export class MonoRepo {
 			if (path.resolve(rootDir) !== directory) {
 				// This is a sanity check. directory is the path passed in when creating the MonoRepo object, while rootDir is
 				// the dir that manypkg found. They should be the same.
-				throw new Error(
-					`rootDir ${rootDir} does not match repoPath ${directory}`,
-				);
+				throw new Error(`rootDir ${rootDir} does not match repoPath ${directory}`);
 			}
 			switch (tool.type) {
 				case "lerna":
@@ -102,20 +91,12 @@ export class MonoRepo {
 				// this is a independent package
 				return undefined;
 			}
-			packageDirs = packages
-				.filter((pkg) => pkg.relativeDir !== ".")
-				.map((pkg) => pkg.dir);
+			packageDirs = packages.filter((pkg) => pkg.relativeDir !== ".").map((pkg) => pkg.dir);
 		} catch {
 			return undefined;
 		}
 
-		return new MonoRepo(
-			group,
-			directory,
-			packageManager,
-			packageDirs,
-			ignoredDirs,
-		);
+		return new MonoRepo(group, directory, packageManager, packageDirs, ignoredDirs);
 	}
 
 	/**
@@ -154,9 +135,7 @@ export class MonoRepo {
 
 		for (const pkgDir of packageDirs) {
 			traceInit(`${kind}: Loading packages from ${pkgDir}`);
-			this.packages.push(
-				Package.load(path.join(pkgDir, "package.json"), kind, this),
-			);
+			this.packages.push(Package.load(path.join(pkgDir, "package.json"), kind, this));
 		}
 
 		if (packageManager === "pnpm") {
@@ -174,9 +153,7 @@ export class MonoRepo {
 			}
 
 			if (lerna.version !== undefined) {
-				traceInit(
-					`${kind}: Loading version (${lerna.version}) from ${lernaPath}`,
-				);
+				traceInit(`${kind}: Loading version (${lerna.version}) from ${lernaPath}`);
 				this.version = lerna.version;
 				versionFromLerna = true;
 			}
@@ -214,14 +191,8 @@ export class MonoRepo {
 	}
 
 	public async install() {
-		this.logger.log(
-			`Release group ${this.kind}: Installing - ${this.installCommand}`,
-		);
-		return execWithErrorAsync(
-			this.installCommand,
-			{ cwd: this.repoPath },
-			this.repoPath,
-		);
+		this.logger.log(`Release group ${this.kind}: Installing - ${this.installCommand}`);
+		return execWithErrorAsync(this.installCommand, { cwd: this.repoPath }, this.repoPath);
 	}
 	public async uninstall() {
 		return rimrafWithErrorAsync(this.getNodeModulePath(), this.repoPath);

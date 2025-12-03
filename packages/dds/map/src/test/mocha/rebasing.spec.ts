@@ -46,14 +46,11 @@ describe("Rebasing", () => {
 			let map2: ISharedMap;
 
 			beforeEach("createMaps", async () => {
-				containerRuntimeFactory = new MockContainerRuntimeFactory(
-					testConfig.options,
-				);
+				containerRuntimeFactory = new MockContainerRuntimeFactory(testConfig.options);
 				const factory = SharedMap.getFactory();
 
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-				containerRuntime1 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+				containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				const services1 = {
 					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 					objectStorage: new MockStorage(),
@@ -62,8 +59,7 @@ describe("Rebasing", () => {
 				map1.connect(services1);
 
 				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-				containerRuntime2 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+				containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 				const services2 = {
 					deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 					objectStorage: new MockStorage(),
@@ -112,14 +108,11 @@ describe("Rebasing", () => {
 			let dir2: ISharedDirectory;
 
 			beforeEach("createDirectories", async () => {
-				containerRuntimeFactory = new MockContainerRuntimeFactory(
-					testConfig.options,
-				);
+				containerRuntimeFactory = new MockContainerRuntimeFactory(testConfig.options);
 				const factory = SharedDirectory.getFactory();
 
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-				containerRuntime1 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+				containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				const services1 = {
 					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 					objectStorage: new MockStorage(),
@@ -129,8 +122,7 @@ describe("Rebasing", () => {
 
 				// Create the second SharedMap.
 				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-				containerRuntime2 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+				containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 				const services2 = {
 					deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 					objectStorage: new MockStorage(),
@@ -156,11 +148,7 @@ describe("Rebasing", () => {
 					"Number of keys should be the same",
 				);
 				for (const key of leftKeys) {
-					assert.strictEqual(
-						a.get(key),
-						b.get(key),
-						"Key values should be the same",
-					);
+					assert.strictEqual(a.get(key), b.get(key), "Key values should be the same");
 				}
 
 				const leftSubdirectories = [...a.subdirectories()];
@@ -207,25 +195,11 @@ describe("Rebasing", () => {
 				const directory1SubDir = dir1.getSubDirectory("testSubDir");
 				const directory2SubDir = dir2.getSubDirectory("testSubDir");
 
-				assert(
-					directory1SubDir !== undefined,
-					"SubDirectory on dir 1 should be present",
-				);
-				assert(
-					directory2SubDir !== undefined,
-					"SubDirectory on dir 2 should be present",
-				);
+				assert(directory1SubDir !== undefined, "SubDirectory on dir 1 should be present");
+				assert(directory2SubDir !== undefined, "SubDirectory on dir 2 should be present");
 
-				assert.strictEqual(
-					directory1SubDir.size,
-					0,
-					"Dir 1 no key should exist",
-				);
-				assert.strictEqual(
-					directory2SubDir.size,
-					0,
-					"Dir 2 no key should exist",
-				);
+				assert.strictEqual(directory1SubDir.size, 0, "Dir 1 no key should exist");
+				assert.strictEqual(directory2SubDir.size, 0, "Dir 2 no key should exist");
 				areDirectoriesEqual(dir1, dir2);
 			});
 		});

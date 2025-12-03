@@ -4,9 +4,9 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type {
-	ISequencedDocumentMessage,
+import {
 	IVersion,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 
 /**
@@ -241,9 +241,7 @@ export class DebuggerUI {
 		);
 
 		const opDownloadButton = doc.getElementById("downloadOps") as HTMLElement;
-		const anonymizeCheckbox = doc.getElementById(
-			"anonymize",
-		) as HTMLInputElement;
+		const anonymizeCheckbox = doc.getElementById("anonymize") as HTMLInputElement;
 		this.attachDownloadOpsListener(opDownloadButton, anonymizeCheckbox);
 
 		this.versionText = doc.getElementById("versionText") as HTMLDivElement;
@@ -252,10 +250,7 @@ export class DebuggerUI {
 		controller.connectToUi(this);
 	}
 
-	private attachDownloadOpsListener(
-		element: HTMLElement,
-		anonymize: HTMLInputElement,
-	) {
+	private attachDownloadOpsListener(element: HTMLElement, anonymize: HTMLInputElement) {
 		element.addEventListener("click", () => {
 			this.controller
 				.onDownloadOpsButtonClick(anonymize.checked)
@@ -320,9 +315,7 @@ export class DebuggerUI {
 		this.versionText.textContent = text;
 
 		const opDownloadButton = doc.getElementById("downloadOps") as HTMLElement;
-		const anonymizeCheckbox = doc.getElementById(
-			"anonymize",
-		) as HTMLInputElement;
+		const anonymizeCheckbox = doc.getElementById("anonymize") as HTMLInputElement;
 		this.attachDownloadOpsListener(opDownloadButton, anonymizeCheckbox);
 	}
 
@@ -350,9 +343,7 @@ export class DebuggerUI {
 	public updateVersionText(versionCount: number) {
 		if (!this.wasVersionSelected) {
 			const text =
-				versionCount === 0
-					? ""
-					: `Fetching information about ${versionCount} snapshots...`;
+				versionCount === 0 ? "" : `Fetching information about ${versionCount} snapshots...`;
 			this.versionText.textContent = text;
 		}
 	}
@@ -366,10 +357,7 @@ export class DebuggerUI {
 
 	private download(filename: string, data: string): void {
 		const element = document.createElement("a");
-		element.setAttribute(
-			"href",
-			`data:text/plain;charset=utf-8,${encodeURIComponent(data)}`,
-		);
+		element.setAttribute("href", `data:text/plain;charset=utf-8,${encodeURIComponent(data)}`);
 		element.setAttribute("download", filename);
 
 		element.style.display = "none";

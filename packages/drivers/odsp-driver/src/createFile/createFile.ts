@@ -5,17 +5,14 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
-import type {
-	IFileEntry,
-	ISnapshot,
-} from "@fluidframework/driver-definitions/internal";
+import type { IFileEntry, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import {
-	type InstrumentedStorageTokenFetcher,
 	type IOdspResolvedUrl,
-	type IOdspUrlParts,
+	type InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 	type ShareLinkInfoType,
+	type IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type ITelemetryLoggerExt,
@@ -23,10 +20,7 @@ import {
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 
-import type {
-	ICreateFileResponse,
-	IRenameFileResponse,
-} from "./../contracts.js";
+import type { ICreateFileResponse, IRenameFileResponse } from "./../contracts.js";
 import { ClpCompliantAppHeader } from "./../contractsPublic.js";
 import { createOdspUrl } from "./../createOdspUrl.js";
 import type { EpochTracker } from "./../epochTracker.js";
@@ -34,11 +28,11 @@ import { getHeadersWithAuth } from "./../getUrlAndHeadersWithAuth.js";
 import { OdspDriverUrlResolver } from "./../odspDriverUrlResolver.js";
 import { checkForKnownServerFarmType, getApiRoot } from "./../odspUrlHelper.js";
 import {
+	type INewFileInfo,
 	appendNavParam,
 	buildOdspShareLinkReqParams,
 	createCacheSnapshotKey,
 	getWithRetryForTokenRefresh,
-	type INewFileInfo,
 	snapshotWithLoadingGroupIdSupported,
 } from "./../odspUtils.js";
 import { pkgVersion as driverVersion } from "./../packageVersion.js";
@@ -106,10 +100,7 @@ export async function createNewFluidFile(
 		itemId = content.itemId;
 		summaryHandle = content.id;
 
-		shareLinkInfo = extractShareLinkData(
-			content,
-			enableSingleRequestForShareLinkWithCreate,
-		);
+		shareLinkInfo = extractShareLinkData(content, enableSingleRequestForShareLinkWithCreate);
 	}
 
 	const odspUrl = createOdspUrl({ ...newFileInfo, itemId, dataStorePath: "/" });
@@ -142,10 +133,7 @@ export async function createNewFluidFile(
 	odspResolvedUrl.pendingRename = pendingRename;
 
 	if (createNewSummary !== undefined && createNewCaching) {
-		assert(
-			summaryHandle !== undefined,
-			0x203 /* "Summary handle is undefined" */,
-		);
+		assert(summaryHandle !== undefined, 0x203 /* "Summary handle is undefined" */);
 		// converting summary and getting sequence number
 		const snapshot: ISnapshot = convertCreateNewSummaryTreeToTreeAndBlobs(
 			createNewSummary,
@@ -155,9 +143,7 @@ export async function createNewFluidFile(
 		await epochTracker.put(
 			createCacheSnapshotKey(
 				odspResolvedUrl,
-				snapshotWithLoadingGroupIdSupported(
-					loggerToMonitoringContext(logger).config,
-				),
+				snapshotWithLoadingGroupIdSupported(loggerToMonitoringContext(logger).config),
 			),
 			snapshot,
 		);
@@ -212,9 +198,7 @@ function extractShareLinkData(
  * @returns encoded path or "" if path is undefined
  */
 function encodeFilePath(path: string | undefined): string {
-	return path
-		? encodeURIComponent(path.startsWith("/") ? path : `/${path}`)
-		: "";
+	return path ? encodeURIComponent(path.startsWith("/") ? path : `/${path}`) : "";
 }
 
 export async function createNewEmptyFluidFile(
@@ -359,14 +343,11 @@ export async function createNewFluidFileFromSummary(
 		`${getApiRoot(new URL(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
 		`${filePath}/${encodedFilename}`;
 
-	const containerSnapshot =
-		convertSummaryIntoContainerSnapshot(createNewSummary);
+	const containerSnapshot = convertSummaryIntoContainerSnapshot(createNewSummary);
 
 	// Build share link parameter based on the createLinkType provided so that the
 	// snapshot api can create and return the share link along with creation of file in the response.
-	const createShareLinkParam = buildOdspShareLinkReqParams(
-		newFileInfo.createLinkType,
-	);
+	const createShareLinkParam = buildOdspShareLinkReqParams(newFileInfo.createLinkType);
 	const initialUrl = `${baseUrl}:/opStream/snapshots/snapshot${
 		createShareLinkParam ? `?${createShareLinkParam}` : ""
 	}`;

@@ -24,10 +24,7 @@ export class SharedMapOracle {
 		this.fuzzMap.on("clear", this.onClear);
 	}
 
-	private readonly onValueChanged = (
-		change: IValueChanged,
-		local: boolean,
-	): void => {
+	private readonly onValueChanged = (change: IValueChanged, local: boolean): void => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const { key, previousValue } = change;
 

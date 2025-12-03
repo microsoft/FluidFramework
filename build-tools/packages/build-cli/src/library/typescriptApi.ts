@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ExportDeclaration,
-	ExportedDeclarations,
-	JSDoc,
-	SourceFile,
-} from "ts-morph";
+import type { ExportDeclaration, ExportedDeclarations, JSDoc, SourceFile } from "ts-morph";
 import { Node, SyntaxKind } from "ts-morph";
 
 import type { ApiLevel } from "./apiLevel.js";
@@ -33,10 +28,7 @@ interface ExportRecords {
 	 * ExportedDeclarations provides context for the origin of
 	 * such cases.
 	 */
-	unknown: Map<
-		string,
-		{ exportedDecl: ExportedDeclarations; exportDecl?: ExportDeclaration }
-	>;
+	unknown: Map<string, { exportedDecl: ExportedDeclarations; exportDecl?: ExportDeclaration }>;
 }
 
 /**
@@ -72,9 +64,7 @@ interface ApiSupportLevelInfo {
 /**
  * Searches the given JSDocs for known release tags and returns the appropriate {@link ApiSupportLevelInfo | support details} (if any).
  */
-function getSupportInfoFromDocs(
-	jsdocs: JSDoc[],
-): ApiSupportLevelInfo | undefined {
+function getSupportInfoFromDocs(jsdocs: JSDoc[]): ApiSupportLevelInfo | undefined {
 	let releaseLevel: ReleaseLevel | undefined;
 	let isLegacy = false;
 	for (const jsdoc of jsdocs) {
@@ -93,9 +83,7 @@ function getSupportInfoFromDocs(
 			}
 		}
 	}
-	return releaseLevel === undefined
-		? undefined
-		: { releaseLevel: releaseLevel, isLegacy };
+	return releaseLevel === undefined ? undefined : { releaseLevel: releaseLevel, isLegacy };
 }
 
 /**
@@ -137,9 +125,7 @@ function getApiLevelFromTags(tags: ApiSupportLevelInfo): ApiLevel {
 		}
 		case "internal": {
 			if (isLegacy) {
-				throw new Error(
-					"@legacy + @internal is not supported. Use @internal only.",
-				);
+				throw new Error("@legacy + @internal is not supported. Use @internal only.");
 			}
 			return "internal";
 		}
@@ -245,10 +231,7 @@ export function getApiExports(sourceFile: SourceFile): ExportRecords {
 				if (namespaceLevel === undefined) {
 					unknownExported.exportDecl = exportDeclaration;
 				} else {
-					records[namespaceLevel].push({
-						name,
-						isTypeOnly: exportDeclaration.isTypeOnly(),
-					});
+					records[namespaceLevel].push({ name, isTypeOnly: exportDeclaration.isTypeOnly() });
 					records.unknown.delete(name);
 					if (records.unknown.size === 0) {
 						return records;
@@ -278,8 +261,7 @@ export function getApiExports(sourceFile: SourceFile): ExportRecords {
 				} else {
 					records[exportLevel].push({
 						name,
-						isTypeOnly:
-							exportDeclaration.isTypeOnly() || exportSpecifier.isTypeOnly(),
+						isTypeOnly: exportDeclaration.isTypeOnly() || exportSpecifier.isTypeOnly(),
 					});
 					records.unknown.delete(name);
 					if (records.unknown.size === 0) {

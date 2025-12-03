@@ -21,29 +21,25 @@ import type {
 	ITokenClaims,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	type TelemetryEventCategory,
 	createChildLogger,
 	loggerToMonitoringContext,
-	type TelemetryEventCategory,
 } from "@fluidframework/telemetry-utils/internal";
 import { type SinonFakeTimers, useFakeTimers } from "sinon";
 
 import { Audience } from "../audience.js";
 import { ConnectionState } from "../connectionState.js";
 import {
-	createConnectionStateHandlerCore,
 	type IConnectionStateHandler,
 	type IConnectionStateHandlerInputs,
+	createConnectionStateHandlerCore,
 } from "../connectionStateHandler.js";
 import type { IConnectionDetailsInternal } from "../contracts.js";
 import { ProtocolHandler } from "../protocol.js";
 
 class MockDeltaManagerForCatchingUp
 	extends TypedEventEmitter<IDeltaManagerEvents>
-	implements
-		Pick<
-			IDeltaManager<unknown, unknown>,
-			"lastSequenceNumber" | "lastKnownSeqNumber"
-		>
+	implements Pick<IDeltaManager<unknown, unknown>, "lastSequenceNumber" | "lastKnownSeqNumber">
 {
 	lastSequenceNumber: number = 5;
 	lastKnownSeqNumber: number = 10;
@@ -166,9 +162,7 @@ describe("ConnectionStateHandler Tests", () => {
 				category: TelemetryEventCategory,
 				details?: ITelemetryBaseProperties,
 			): void => {
-				throw new Error(
-					`logConnectionIssue: ${eventName} ${JSON.stringify(details)}`,
-				);
+				throw new Error(`logConnectionIssue: ${eventName} ${JSON.stringify(details)}`);
 			},
 			connectionStateChanged: (): void => {},
 			logger,
@@ -187,9 +181,7 @@ describe("ConnectionStateHandler Tests", () => {
 		); // readClientsWaitForJoinSignal
 
 		connectionStateHandler_receivedAddMemberEvent = (id: string): void => {
-			protocolHandler.quorum.addMember(id, {
-				client: {},
-			} as unknown as ISequencedClient);
+			protocolHandler.quorum.addMember(id, { client: {} } as unknown as ISequencedClient);
 		};
 		connectionStateHandler_receivedRemoveMemberEvent = (id: string): void => {
 			protocolHandler.quorum.removeMember(id);

@@ -3,15 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type IBuildProject,
-	loadBuildProject,
-} from "@fluid-tools/build-infrastructure";
 import { getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { Command, Flags, type Interfaces } from "@oclif/core";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { PrettyPrintableError } from "@oclif/core/errors";
 import chalk from "picocolors";
+
+import { type IBuildProject, loadBuildProject } from "@fluid-tools/build-infrastructure";
 import type { CommandLogger } from "../../logging.js";
 import { Context } from "../context.js";
 import { indentString } from "../text.js";
@@ -56,8 +54,7 @@ export abstract class BaseCommand<T extends typeof Command>
 			default: false,
 		}),
 		root: Flags.custom({
-			description:
-				"Root directory of the Fluid repo (default: env _FLUID_ROOT_).",
+			description: "Root directory of the Fluid repo (default: env _FLUID_ROOT_).",
 			env: "_FLUID_ROOT_",
 			hidden: true,
 		})(),
@@ -237,10 +234,7 @@ export abstract class BaseCommand<T extends typeof Command>
 	public error(
 		input: string | Error,
 		options?:
-			| ({
-					code?: string | undefined;
-					exit?: number | undefined;
-			  } & PrettyPrintableError)
+			| ({ code?: string | undefined; exit?: number | undefined } & PrettyPrintableError)
 			| undefined,
 	): never;
 
@@ -294,9 +288,7 @@ export abstract class BaseCommandWithBuildProject<
 	 * @deprecated This method should only be called in BaseCommand instances.
 	 */
 	public getContext(): never {
-		throw new Error(
-			"getContext method should only be called in BaseCommand instances",
-		);
+		throw new Error("getContext method should only be called in BaseCommand instances");
 	}
 
 	/**

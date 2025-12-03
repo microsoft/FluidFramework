@@ -8,22 +8,17 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { updatePackageJsonFile } from "@fluid-tools/build-infrastructure";
 import {
+	type InterdependencyRange,
+	type ReleaseVersion,
 	detectVersionScheme,
 	getVersionRange,
-	type InterdependencyRange,
 	isInterdependencyRange,
 	isInternalVersionRange,
 	isPrereleaseVersion,
 	isRangeOperator,
 	isWorkspaceRange,
-	type ReleaseVersion,
 } from "@fluid-tools/version-tools";
-import {
-	type Logger,
-	MonoRepo,
-	Package,
-	type PackageJson,
-} from "@fluidframework/build-tools";
+import { type Logger, MonoRepo, Package, type PackageJson } from "@fluidframework/build-tools";
 import { PackageName } from "@rushstack/node-core-library";
 import { compareDesc, differenceInBusinessDays } from "date-fns";
 import execa from "execa";
@@ -41,11 +36,7 @@ import {
 	type PackageWithKind,
 	selectAndFilterPackages,
 } from "../filter.js";
-import {
-	isReleaseGroup,
-	type ReleaseGroup,
-	type ReleasePackage,
-} from "../releaseGroups.js";
+import { type ReleaseGroup, type ReleasePackage, isReleaseGroup } from "../releaseGroups.js";
 import type { DependencyUpdateType } from "./bump.js";
 import { zip } from "./collections.js";
 import type { Context, VersionDetails } from "./context.js";
@@ -296,10 +287,7 @@ export async function getPreReleaseDependencies(
 	}
 
 	for (const pkg of packagesToCheck) {
-		for (const {
-			name: depName,
-			version: depVersion,
-		} of pkg.combinedDependencies) {
+		for (const { name: depName, version: depVersion } of pkg.combinedDependencies) {
 			// If it's not a dep we're looking to update, skip to the next dep
 			if (!updateDependenciesOnThesePackages.includes(depName)) {
 				continue;
@@ -308,9 +296,7 @@ export async function getPreReleaseDependencies(
 			// Convert the range into the minimum version
 			const minVer = semver.minVersion(depVersion);
 			if (minVer === null) {
-				throw new Error(
-					`semver.minVersion was null: ${depVersion} (${depName})`,
-				);
+				throw new Error(`semver.minVersion was null: ${depVersion} (${depName})`);
 			}
 
 			// If the min version has a pre-release section, then it needs to be released.
@@ -358,14 +344,9 @@ export async function isReleased(
 	await gitRepo.gitClient.fetch(["--tags"]);
 
 	const tagName = generateReleaseGitTagName(releaseGroupOrPackage, version);
-	if (
-		typeof releaseGroupOrPackage === "string" &&
-		isReleaseGroup(releaseGroupOrPackage)
-	) {
+	if (typeof releaseGroupOrPackage === "string" && isReleaseGroup(releaseGroupOrPackage)) {
 		// eslint-disable-next-line no-param-reassign, @typescript-eslint/no-non-null-assertion
-		releaseGroupOrPackage = context.repo.releaseGroups.get(
-			releaseGroupOrPackage,
-		)!;
+		releaseGroupOrPackage = context.repo.releaseGroups.get(releaseGroupOrPackage)!;
 	}
 
 	log?.verbose(`Checking for tag '${tagName}'`);
@@ -422,9 +403,7 @@ export function sortVersions(
 		sortedVersions.sort((a, b) => semver.rcompare(a.version, b.version));
 	} else {
 		sortedVersions.sort((a, b) =>
-			a.date === undefined || b.date === undefined
-				? -1
-				: compareDesc(a.date, b.date),
+			a.date === undefined || b.date === undefined ? -1 : compareDesc(a.date, b.date),
 		);
 	}
 
@@ -443,8 +422,7 @@ export function filterVersionsOlderThan(
 	numBusinessDays: number,
 ): VersionDetails[] {
 	return versions.filter((v) => {
-		const diff =
-			v.date === undefined ? 0 : differenceInBusinessDays(Date.now(), v.date);
+		const diff = v.date === undefined ? 0 : differenceInBusinessDays(Date.now(), v.date);
 		return diff <= numBusinessDays;
 	});
 }
@@ -469,9 +447,7 @@ export function getFluidDependencies(
 	if (isReleaseGroup(releaseGroupOrPackage)) {
 		packagesToCheck = context.packagesInReleaseGroup(releaseGroupOrPackage);
 	} else {
-		const independentPackage = context.fullPackageMap.get(
-			releaseGroupOrPackage,
-		);
+		const independentPackage = context.fullPackageMap.get(releaseGroupOrPackage);
 		assert(
 			independentPackage !== undefined,
 			`Package not found in context: ${releaseGroupOrPackage}`,
@@ -596,12 +572,9 @@ export async function setVersion(
 	}
 
 	// Update the release group root package.json
-	updatePackageJsonFile(
-		path.join(releaseGroupOrPackage.repoPath, "package.json"),
-		(json) => {
-			json.version = translatedVersion.version;
-		},
-	);
+	updatePackageJsonFile(path.join(releaseGroupOrPackage.repoPath, "package.json"), (json) => {
+		json.version = translatedVersion.version;
+	});
 
 	context.repo.reload();
 
@@ -639,10 +612,7 @@ export async function setVersion(
 	const packagesToCheckAndUpdate = releaseGroupOrPackage.packages;
 	const dependencyVersionMap = new Map<string, DependencyWithRange>();
 	for (const pkg of packagesToCheckAndUpdate) {
-		dependencyVersionMap.set(pkg.name, {
-			pkg,
-			range: newRange as InterdependencyRange,
-		});
+		dependencyVersionMap.set(pkg.name, { pkg, range: newRange as InterdependencyRange });
 	}
 
 	for (const pkg of packagesToCheckAndUpdate) {
@@ -674,9 +644,7 @@ export async function setVersion(
 function getDependenciesRecord(
 	packageJson: PackageJson,
 	depClass: "prod" | "dev" | "peer",
-):
-	| PackageJson["dependencies" | "devDependencies" | "peerDependencies"]
-	| undefined {
+): PackageJson["dependencies" | "devDependencies" | "peerDependencies"] | undefined {
 	switch (depClass) {
 		case "dev": {
 			return packageJson.devDependencies;
@@ -720,14 +688,8 @@ async function setPackageDependencies(
 	for (const { name, depClass } of pkg.combinedDependencies) {
 		const dep = dependencyVersionMap.get(name);
 		if (dep !== undefined) {
-			const isSameReleaseGroup = MonoRepo.isSame(
-				dep.pkg.monoRepo,
-				pkg.monoRepo,
-			);
-			if (
-				!isSameReleaseGroup ||
-				(updateWithinSameReleaseGroup && isSameReleaseGroup)
-			) {
+			const isSameReleaseGroup = MonoRepo.isSame(dep.pkg.monoRepo, pkg.monoRepo);
+			if (!isSameReleaseGroup || (updateWithinSameReleaseGroup && isSameReleaseGroup)) {
 				const dependencies = getDependenciesRecord(pkg.packageJson, depClass);
 				if (dependencies === undefined) {
 					continue;
@@ -837,11 +799,7 @@ export async function npmCheckUpdatesHomegrown(
 	/**
 	 * A map of packages that should be updated, and their latest version.
 	 */
-	const dependencyVersionMap = await findDepUpdates(
-		depsToUpdate,
-		prerelease,
-		log,
-	);
+	const dependencyVersionMap = await findDepUpdates(depsToUpdate, prerelease, log);
 	log?.verbose(
 		`Dependencies to update:\n${JSON.stringify(dependencyVersionMap, undefined, 2)}`,
 	);
@@ -859,8 +817,7 @@ export async function npmCheckUpdatesHomegrown(
 
 	// Remove the filtered release group from the list if needed
 	if (releaseGroupFilter !== undefined) {
-		const indexOfFilteredGroup =
-			selectionCriteria.releaseGroups.indexOf(releaseGroupFilter);
+		const indexOfFilteredGroup = selectionCriteria.releaseGroups.indexOf(releaseGroupFilter);
 		if (indexOfFilteredGroup !== -1) {
 			selectionCriteria.releaseGroups.splice(indexOfFilteredGroup, 1);
 			selectionCriteria.releaseGroupRoots.splice(indexOfFilteredGroup, 1);
@@ -896,9 +853,7 @@ export async function npmCheckUpdatesHomegrown(
 		throw new Error(`Couldn't parse version ${verString}`);
 	}
 
-	const range: InterdependencyRange = prerelease
-		? newVersion
-		: `^${[...versionSet][0]}`;
+	const range: InterdependencyRange = prerelease ? newVersion : `^${[...versionSet][0]}`;
 	log?.verbose(`Calculated new range: ${range}`);
 	for (const dep of Object.keys(dependencyVersionMap)) {
 		const pkg = context.fullPackageMap.get(dep);
@@ -913,9 +868,7 @@ export async function npmCheckUpdatesHomegrown(
 
 	const promises: Promise<boolean>[] = [];
 	for (const pkg of packagesToUpdate) {
-		promises.push(
-			setPackageDependencies(pkg, dependencyUpdateMap, false, writeChanges),
-		);
+		promises.push(setPackageDependencies(pkg, dependencyUpdateMap, false, writeChanges));
 	}
 	const results = await Promise.all(promises);
 	const packageStatus = zip(packagesToUpdate, results);
@@ -923,9 +876,7 @@ export async function npmCheckUpdatesHomegrown(
 		.filter(([, changed]) => changed === true)
 		.map(([pkg]) => pkg);
 
-	log?.info(
-		`Updated ${updatedPackages.length} of ${packagesToUpdate.length} packages.`,
-	);
+	log?.info(`Updated ${updatedPackages.length} of ${packagesToUpdate.length} packages.`);
 
 	return {
 		updatedDependencies: dependencyVersionMap,
@@ -946,9 +897,7 @@ export function ensureDevDependencyExists(
 ): string {
 	const dependencyVersion = packageObject?.devDependencies?.[dependencyName];
 	if (dependencyVersion === undefined) {
-		throw new Error(
-			`Did not find devDependency '${dependencyName}' in package.json`,
-		);
+		throw new Error(`Did not find devDependency '${dependencyName}' in package.json`);
 	}
 	return dependencyVersion;
 }
@@ -992,8 +941,6 @@ export async function readPackageJson(): Promise<PackageJson> {
 
 // Reads and parses the `tsconfig.json` file in the current directory.
 export async function readTsConfig(): Promise<TsConfigJson> {
-	const tsConfigContent = await readFile("./tsconfig.json", {
-		encoding: "utf8",
-	});
+	const tsConfigContent = await readFile("./tsconfig.json", { encoding: "utf8" });
 	return JSON5.parse(tsConfigContent);
 }

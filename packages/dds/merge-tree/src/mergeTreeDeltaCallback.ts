@@ -7,11 +7,7 @@ import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitio
 
 import type { ISegment } from "./mergeTreeNodes.js";
 // eslint-disable-next-line import-x/no-deprecated
-import type {
-	IMergeTreeGroupMsg,
-	IMergeTreeOp,
-	MergeTreeDeltaType,
-} from "./ops.js";
+import type { IMergeTreeGroupMsg, IMergeTreeOp, MergeTreeDeltaType } from "./ops.js";
 import type { PropertySet } from "./properties.js";
 
 /**
@@ -74,8 +70,7 @@ export type MergeTreeDeltaOperationTypes =
  * @legacy @beta
  */
 export interface IMergeTreeDeltaCallbackArgs<
-	TOperationType extends
-		MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType,
+	TOperationType extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType,
 > {
 	/**
 	 * The type of operation that affected segments in the merge-tree.

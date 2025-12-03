@@ -3,28 +3,26 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import {
-	describeCompat,
-	type ITestDataObject,
+	ITestDataObject,
 	TestDataObjectType,
+	describeCompat,
 } from "@fluid-private/test-version-utils";
-import type { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import {
-	type ISummaryTree,
-	SummaryType,
-} from "@fluidframework/driver-definitions";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
+	ITestContainerConfig,
+	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
-	type ITestContainerConfig,
-	type ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
 
 import { defaultGCConfig } from "./gcTestConfigs.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
@@ -62,8 +60,7 @@ async function validateNodeStateInGCSummaryTree(
 		// Blob node path format - "/_blobs/<blobId>"
 		// Data store node path format - "/<dataStoreId>/..."
 		const pathParts = nodePath.split("/");
-		const actualNodeId =
-			pathParts[1] === "_blobs" ? pathParts[2] : pathParts[1];
+		const actualNodeId = pathParts[1] === "_blobs" ? pathParts[2] : pathParts[1];
 		if (actualNodeId === nodeId) {
 			if (referenced) {
 				assert(
@@ -96,10 +93,7 @@ async function validateNodeStateInGCSummaryTree(
 /**
  * Validates that the summary trees of children have the given reference state.
  */
-function validateChildReferenceStates(
-	summary: ISummaryTree,
-	referenced: boolean,
-) {
+function validateChildReferenceStates(summary: ISummaryTree, referenced: boolean) {
 	const expectedUnreferenced = referenced ? undefined : true;
 	for (const [id, summaryObject] of Object.entries(summary.tree)) {
 		if (summaryObject.type !== SummaryType.Tree) {
@@ -189,10 +183,7 @@ async function validateDataStoreReferenceState(
 	} else {
 		// For referenced data store, the unreferenced flag in its summary tree is undefined.
 		const expectedUnreferenced = referenced ? undefined : true;
-		assert(
-			dataStoreTree !== undefined,
-			`Data store ${dataStoreId} is not in the summary!`,
-		);
+		assert(dataStoreTree !== undefined, `Data store ${dataStoreId} is not in the summary!`);
 		assert(
 			dataStoreTree.unreferenced === expectedUnreferenced,
 			`Data store ${dataStoreId} should be ${referenced ? "referenced" : "unreferenced"}`,
@@ -207,158 +198,141 @@ async function validateDataStoreReferenceState(
 /**
  * Validates that when running in GC test mode, unreferenced content is deleted from the summary.
  */
-describeCompat(
-	"GC delete objects in test mode",
-	"FullCompat",
-	(getTestObjectProvider) => {
-		// If deleteContent is true, GC is run in test mode where content that is not referenced is
-		// deleted after each GC run.
-		const tests = (deleteContent: boolean = false) => {
-			let provider: ITestObjectProvider;
-			let summarizerContainerRuntime: ContainerRuntime;
-			let mainDataStore: ITestDataObject;
+describeCompat("GC delete objects in test mode", "FullCompat", (getTestObjectProvider) => {
+	// If deleteContent is true, GC is run in test mode where content that is not referenced is
+	// deleted after each GC run.
+	const tests = (deleteContent: boolean = false) => {
+		let provider: ITestObjectProvider;
+		let summarizerContainerRuntime: ContainerRuntime;
+		let mainDataStore: ITestDataObject;
 
-			beforeEach("setup", async function () {
-				provider = getTestObjectProvider({ syncSummarizer: true });
-				if (provider.driver.type !== "local") {
-					this.skip();
-				}
-				const testContainerConfig: ITestContainerConfig = {
-					...defaultGCConfig,
-					runtimeOptions: {
-						...defaultGCConfig.runtimeOptions,
-						gcOptions: {
-							runGCInTestMode: deleteContent,
-						},
+		beforeEach("setup", async function () {
+			provider = getTestObjectProvider({ syncSummarizer: true });
+			if (provider.driver.type !== "local") {
+				this.skip();
+			}
+			const testContainerConfig: ITestContainerConfig = {
+				...defaultGCConfig,
+				runtimeOptions: {
+					...defaultGCConfig.runtimeOptions,
+					gcOptions: {
+						runGCInTestMode: deleteContent,
 					},
-				};
-				const container = await provider.makeTestContainer(testContainerConfig);
-				mainDataStore =
-					await getContainerEntryPointBackCompat<ITestDataObject>(container);
+				},
+			};
+			const container = await provider.makeTestContainer(testContainerConfig);
+			mainDataStore = await getContainerEntryPointBackCompat<ITestDataObject>(container);
 
-				// Send an op before GC runs. GC needs current timestamp to work with which is retrieved from ops. Without
-				// any op, GC will not run.
-				mainDataStore._root.set("key", "value");
-				await waitForContainerConnection(container);
+			// Send an op before GC runs. GC needs current timestamp to work with which is retrieved from ops. Without
+			// any op, GC will not run.
+			mainDataStore._root.set("key", "value");
+			await waitForContainerConnection(container);
 
-				const summarizerContainer =
-					await provider.loadTestContainer(testContainerConfig);
-				const summarizerMainDataStore =
-					await getContainerEntryPointBackCompat<ITestDataObject>(
-						summarizerContainer,
-					);
-				summarizerContainerRuntime = summarizerMainDataStore._context
-					.containerRuntime as ContainerRuntime;
-			});
-
-			it("marks default data store as referenced", async () => {
-				await validateDataStoreReferenceState(
-					provider,
-					summarizerContainerRuntime,
-					deleteContent,
-					mainDataStore._context.id,
-					true /* referenced */,
-				);
-			});
-
-			it("marks non-root data stores as referenced / unreferenced correctly", async () => {
-				const dataStore =
-					await mainDataStore._context.containerRuntime.createDataStore(
-						TestDataObjectType,
-					);
-				const dataObject =
-					await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore);
-				// Add data store's handle in root component and verify its marked as referenced.
-				mainDataStore._root.set("nonRootDS", dataObject.handle);
-				await validateDataStoreReferenceState(
-					provider,
-					summarizerContainerRuntime,
-					deleteContent,
-					dataObject._context.id,
-					true /* referenced */,
-				);
-
-				// Remove its handle and verify its marked as unreferenced.
-				mainDataStore._root.delete("nonRootDS");
-				await validateDataStoreReferenceState(
-					provider,
-					summarizerContainerRuntime,
-					deleteContent,
-					dataObject._context.id,
-					false /* referenced */,
-				);
-
-				// Add data store's handle back in root component. If deleteContent is true, the data store
-				// should get deleted and should remain unreferenced. Otherwise, it should be referenced back.
-				// Also, if deleteContent is true, it won't be in the GC state in the summary anymore.
-				mainDataStore._root.set("nonRootDS", dataObject.handle);
-				await validateDataStoreReferenceState(
-					provider,
-					summarizerContainerRuntime,
-					deleteContent,
-					dataObject._context.id,
-					deleteContent ? false : true /* referenced */,
-					deleteContent ? true : false /* deletedFromGCState */,
-				);
-			});
-
-			it("marks non-root data stores with handle in unreferenced data stores as unreferenced", async () => {
-				// Create a non-root data store - dataStore1.
-				const dataStore1 =
-					await mainDataStore._context.containerRuntime.createDataStore(
-						TestDataObjectType,
-					);
-				const dataObject1 =
-					await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore1);
-				// Add dataStore1's handle in root component and verify its marked as referenced.
-				mainDataStore._root.set("nonRootDS1", dataObject1.handle);
-				await validateDataStoreReferenceState(
-					provider,
-					summarizerContainerRuntime,
-					deleteContent,
-					dataObject1._context.id,
-					true /* referenced */,
-				);
-
-				// Create another non-root data store - dataStore2.
-				const dataStore2 =
-					await mainDataStore._context.containerRuntime.createDataStore(
-						TestDataObjectType,
-					);
-				const dataObject2 =
-					await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore2);
-				// Add dataStore2's handle in dataStore1 and verify its marked as referenced.
-				dataObject1._root.set("nonRootDS2", dataObject2.handle);
-				await validateDataStoreReferenceState(
-					provider,
-					summarizerContainerRuntime,
-					deleteContent,
-					dataObject2._context.id,
-					true /* referenced */,
-				);
-
-				// Remove dataStore1's handle. This should mark dataStore1 as unreferenced which in turn should mark
-				// dataStore2 as unreferenced.
-				mainDataStore._root.delete("nonRootDS1");
-				await validateDataStoreReferenceState(
-					provider,
-					summarizerContainerRuntime,
-					deleteContent,
-					dataObject2._context.id,
-					false /* referenced */,
-				);
-			});
-		};
-
-		describe("Verify node state when unreferenced content is marked", () => {
-			tests();
+			const summarizerContainer = await provider.loadTestContainer(testContainerConfig);
+			const summarizerMainDataStore =
+				await getContainerEntryPointBackCompat<ITestDataObject>(summarizerContainer);
+			summarizerContainerRuntime = summarizerMainDataStore._context
+				.containerRuntime as ContainerRuntime;
 		});
 
-		describe("Verify node state when unreferenced content is deleted", () => {
-			tests(true /* deleteContent */);
+		it("marks default data store as referenced", async () => {
+			await validateDataStoreReferenceState(
+				provider,
+				summarizerContainerRuntime,
+				deleteContent,
+				mainDataStore._context.id,
+				true /* referenced */,
+			);
 		});
-	},
-);
+
+		it("marks non-root data stores as referenced / unreferenced correctly", async () => {
+			const dataStore =
+				await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
+			const dataObject = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore);
+			// Add data store's handle in root component and verify its marked as referenced.
+			mainDataStore._root.set("nonRootDS", dataObject.handle);
+			await validateDataStoreReferenceState(
+				provider,
+				summarizerContainerRuntime,
+				deleteContent,
+				dataObject._context.id,
+				true /* referenced */,
+			);
+
+			// Remove its handle and verify its marked as unreferenced.
+			mainDataStore._root.delete("nonRootDS");
+			await validateDataStoreReferenceState(
+				provider,
+				summarizerContainerRuntime,
+				deleteContent,
+				dataObject._context.id,
+				false /* referenced */,
+			);
+
+			// Add data store's handle back in root component. If deleteContent is true, the data store
+			// should get deleted and should remain unreferenced. Otherwise, it should be referenced back.
+			// Also, if deleteContent is true, it won't be in the GC state in the summary anymore.
+			mainDataStore._root.set("nonRootDS", dataObject.handle);
+			await validateDataStoreReferenceState(
+				provider,
+				summarizerContainerRuntime,
+				deleteContent,
+				dataObject._context.id,
+				deleteContent ? false : true /* referenced */,
+				deleteContent ? true : false /* deletedFromGCState */,
+			);
+		});
+
+		it("marks non-root data stores with handle in unreferenced data stores as unreferenced", async () => {
+			// Create a non-root data store - dataStore1.
+			const dataStore1 =
+				await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
+			const dataObject1 = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore1);
+			// Add dataStore1's handle in root component and verify its marked as referenced.
+			mainDataStore._root.set("nonRootDS1", dataObject1.handle);
+			await validateDataStoreReferenceState(
+				provider,
+				summarizerContainerRuntime,
+				deleteContent,
+				dataObject1._context.id,
+				true /* referenced */,
+			);
+
+			// Create another non-root data store - dataStore2.
+			const dataStore2 =
+				await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
+			const dataObject2 = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore2);
+			// Add dataStore2's handle in dataStore1 and verify its marked as referenced.
+			dataObject1._root.set("nonRootDS2", dataObject2.handle);
+			await validateDataStoreReferenceState(
+				provider,
+				summarizerContainerRuntime,
+				deleteContent,
+				dataObject2._context.id,
+				true /* referenced */,
+			);
+
+			// Remove dataStore1's handle. This should mark dataStore1 as unreferenced which in turn should mark
+			// dataStore2 as unreferenced.
+			mainDataStore._root.delete("nonRootDS1");
+			await validateDataStoreReferenceState(
+				provider,
+				summarizerContainerRuntime,
+				deleteContent,
+				dataObject2._context.id,
+				false /* referenced */,
+			);
+		});
+	};
+
+	describe("Verify node state when unreferenced content is marked", () => {
+		tests();
+	});
+
+	describe("Verify node state when unreferenced content is deleted", () => {
+		tests(true /* deleteContent */);
+	});
+});
 
 /**
  * Validates the reference state of the attachment blob with the given handle in the GC summary tree and in
@@ -388,10 +362,7 @@ async function validateBlobsReferenceState(
 			attachment.type === SummaryType.Attachment || key === ".redirectTable",
 			"blob tree should only contain attachment blobs",
 		);
-		if (
-			attachment.type === SummaryType.Attachment &&
-			attachment.id === blobId
-		) {
+		if (attachment.type === SummaryType.Attachment && attachment.id === blobId) {
 			blobFound = true;
 		}
 	}
@@ -408,10 +379,7 @@ async function validateBlobsReferenceState(
 	if (referenced || !deleteContent) {
 		assert(blobFound, `Blob with id ${blobId} should be in blob summary tree`);
 	} else {
-		assert(
-			!blobFound,
-			`Blob with id ${blobId} should not be in blob summary tree`,
-		);
+		assert(!blobFound, `Blob with id ${blobId} should not be in blob summary tree`);
 	}
 }
 

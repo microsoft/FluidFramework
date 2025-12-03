@@ -12,22 +12,11 @@
  */
 
 import type * as old from "@fluidframework/app-insights-logger-previous/internal";
-import type {
-	FullType,
-	MinimalType,
-	requireAssignableTo,
-	TypeOnly,
-} from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> =
-	| TypeOnly<T>
-	| MinimalType<T>
-	| FullType<T>
-	| typeof old
-	| typeof current
-	| requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -36,10 +25,7 @@ declare type MakeUnusedImportErrorsGoAway<T> =
  * typeValidation.broken:
  * "Function_createLogger": {"backCompat": false}
  */
-declare type current_as_old_for_Function_createLogger = requireAssignableTo<
-	TypeOnly<typeof current.createLogger>,
-	TypeOnly<typeof old.createLogger>
->;
+declare type current_as_old_for_Function_createLogger = requireAssignableTo<TypeOnly<typeof current.createLogger>, TypeOnly<typeof old.createLogger>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -48,10 +34,7 @@ declare type current_as_old_for_Function_createLogger = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_CategoryFilter": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_CategoryFilter = requireAssignableTo<
-	TypeOnly<old.CategoryFilter>,
-	TypeOnly<current.CategoryFilter>
->;
+declare type old_as_current_for_Interface_CategoryFilter = requireAssignableTo<TypeOnly<old.CategoryFilter>, TypeOnly<current.CategoryFilter>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -60,10 +43,7 @@ declare type old_as_current_for_Interface_CategoryFilter = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_CategoryFilter": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_CategoryFilter = requireAssignableTo<
-	TypeOnly<current.CategoryFilter>,
-	TypeOnly<old.CategoryFilter>
->;
+declare type current_as_old_for_Interface_CategoryFilter = requireAssignableTo<TypeOnly<current.CategoryFilter>, TypeOnly<old.CategoryFilter>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -72,11 +52,7 @@ declare type current_as_old_for_Interface_CategoryFilter = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_FluidAppInsightsLoggerConfig": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_FluidAppInsightsLoggerConfig =
-	requireAssignableTo<
-		TypeOnly<old.FluidAppInsightsLoggerConfig>,
-		TypeOnly<current.FluidAppInsightsLoggerConfig>
-	>;
+declare type old_as_current_for_Interface_FluidAppInsightsLoggerConfig = requireAssignableTo<TypeOnly<old.FluidAppInsightsLoggerConfig>, TypeOnly<current.FluidAppInsightsLoggerConfig>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -85,11 +61,7 @@ declare type old_as_current_for_Interface_FluidAppInsightsLoggerConfig =
  * typeValidation.broken:
  * "Interface_FluidAppInsightsLoggerConfig": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_FluidAppInsightsLoggerConfig =
-	requireAssignableTo<
-		TypeOnly<current.FluidAppInsightsLoggerConfig>,
-		TypeOnly<old.FluidAppInsightsLoggerConfig>
-	>;
+declare type current_as_old_for_Interface_FluidAppInsightsLoggerConfig = requireAssignableTo<TypeOnly<current.FluidAppInsightsLoggerConfig>, TypeOnly<old.FluidAppInsightsLoggerConfig>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -98,10 +70,7 @@ declare type current_as_old_for_Interface_FluidAppInsightsLoggerConfig =
  * typeValidation.broken:
  * "Interface_NamespaceFilter": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_NamespaceFilter = requireAssignableTo<
-	TypeOnly<old.NamespaceFilter>,
-	TypeOnly<current.NamespaceFilter>
->;
+declare type old_as_current_for_Interface_NamespaceFilter = requireAssignableTo<TypeOnly<old.NamespaceFilter>, TypeOnly<current.NamespaceFilter>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -110,10 +79,7 @@ declare type old_as_current_for_Interface_NamespaceFilter = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_NamespaceFilter": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_NamespaceFilter = requireAssignableTo<
-	TypeOnly<current.NamespaceFilter>,
-	TypeOnly<old.NamespaceFilter>
->;
+declare type current_as_old_for_Interface_NamespaceFilter = requireAssignableTo<TypeOnly<current.NamespaceFilter>, TypeOnly<old.NamespaceFilter>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -122,11 +88,7 @@ declare type current_as_old_for_Interface_NamespaceFilter = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_TelemetryEventCategory": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_TelemetryEventCategory =
-	requireAssignableTo<
-		TypeOnly<old.TelemetryEventCategory>,
-		TypeOnly<current.TelemetryEventCategory>
-	>;
+declare type old_as_current_for_TypeAlias_TelemetryEventCategory = requireAssignableTo<TypeOnly<old.TelemetryEventCategory>, TypeOnly<current.TelemetryEventCategory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -135,11 +97,7 @@ declare type old_as_current_for_TypeAlias_TelemetryEventCategory =
  * typeValidation.broken:
  * "TypeAlias_TelemetryEventCategory": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_TelemetryEventCategory =
-	requireAssignableTo<
-		TypeOnly<current.TelemetryEventCategory>,
-		TypeOnly<old.TelemetryEventCategory>
-	>;
+declare type current_as_old_for_TypeAlias_TelemetryEventCategory = requireAssignableTo<TypeOnly<current.TelemetryEventCategory>, TypeOnly<old.TelemetryEventCategory>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -148,10 +106,7 @@ declare type current_as_old_for_TypeAlias_TelemetryEventCategory =
  * typeValidation.broken:
  * "TypeAlias_TelemetryFilter": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_TelemetryFilter = requireAssignableTo<
-	TypeOnly<old.TelemetryFilter>,
-	TypeOnly<current.TelemetryFilter>
->;
+declare type old_as_current_for_TypeAlias_TelemetryFilter = requireAssignableTo<TypeOnly<old.TelemetryFilter>, TypeOnly<current.TelemetryFilter>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -160,7 +115,4 @@ declare type old_as_current_for_TypeAlias_TelemetryFilter = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_TelemetryFilter": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_TelemetryFilter = requireAssignableTo<
-	TypeOnly<current.TelemetryFilter>,
-	TypeOnly<old.TelemetryFilter>
->;
+declare type current_as_old_for_TypeAlias_TelemetryFilter = requireAssignableTo<TypeOnly<current.TelemetryFilter>, TypeOnly<old.TelemetryFilter>>

@@ -4,16 +4,18 @@
  */
 
 import { strict as assert } from "node:assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
-import { TreeAlpha } from "../../shared-tree/index.js";
+
 import {
 	SchemaFactory,
+	TreeViewConfiguration,
 	type TreeView,
 	type TreeViewAlpha,
-	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
-import type { requireAssignableTo } from "../../util/index.js";
+
 import { getView } from "../utils.js";
+import { TreeAlpha } from "../../shared-tree/index.js";
+import type { requireAssignableTo } from "../../util/index.js";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 describe("TreeBranch", () => {
 	const schemaFactory = new SchemaFactory(undefined);
@@ -21,10 +23,7 @@ describe("TreeBranch", () => {
 
 	function init(content: string[]): TreeViewAlpha<typeof Array> {
 		const view = getView(
-			new TreeViewConfiguration({
-				schema: Array,
-				enableSchemaValidation: true,
-			}),
+			new TreeViewConfiguration({ schema: Array, enableSchemaValidation: true }),
 		);
 		view.initialize(content);
 		return view;

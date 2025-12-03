@@ -22,11 +22,7 @@ describe("assert", () => {
 				assert(false, Number.parseInt(shortCode, 16));
 			} catch (error: unknown) {
 				strict(error instanceof Error, "not an error");
-				strict.strictEqual(
-					error.message,
-					shortCode,
-					"incorrect short code format",
-				);
+				strict.strictEqual(error.message, shortCode, "incorrect short code format");
 			}
 		}
 	});
@@ -73,10 +69,7 @@ describe("assert", () => {
 		assert(true, "message", () => {
 			throw new Error("Should not run");
 		});
-		strict.throws(
-			() => assert(false, "message", () => "test"),
-			"message\ntest",
-		);
+		strict.throws(() => assert(false, "message", () => "test"), "message\ntest");
 
 		strict.equal(configureDebugAsserts(false), true);
 

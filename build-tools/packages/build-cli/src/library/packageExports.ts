@@ -47,10 +47,7 @@ export type Node10CompatExportData = Pick<ExportData, "relPath" | "isTypeOnly">;
 /**
  * Only the value types of exports that are records.
  */
-type ExportsRecordValue = Exclude<
-	Extract<PackageJson["exports"], object>,
-	unknown[]
->;
+type ExportsRecordValue = Exclude<Extract<PackageJson["exports"], object>, unknown[]>;
 
 /**
  * Returns value of first key to match test value, if any.
@@ -64,11 +61,7 @@ function valueOfFirstKeyMatching<TValue>(
 	mapQuery: ReadonlyMap<string | RegExp, TValue>,
 ): { value: TValue } | undefined {
 	for (const [key, value] of mapQuery.entries()) {
-		if (
-			typeof key === "string"
-				? path.resolve(test) === path.resolve(key)
-				: key.test(test)
-		) {
+		if (typeof key === "string" ? path.resolve(test) === path.resolve(key) : key.test(test)) {
 			// box value to distinguish nothing found from found value that is undefined.
 			return { value };
 		}
@@ -103,19 +96,15 @@ function findTypesPathsMatching<TOutKey>(
 	// All exports are type only if there was a previous condition where the only option
 	// was "types" constrained. Otherwise they may still become constrained or not.
 	const isTypeOnlySettled =
-		(previous.isTypeOnly ?? false) &&
-		previous.conditions.includes(typesExportCondition);
+		(previous.isTypeOnly ?? false) && previous.conditions.includes(typesExportCondition);
 	const entries = Object.entries(exports);
 	for (const [entry, value] of entries) {
 		// Current conditions
 		// "default" is not an explicit condition, but a catch all; so, never add it to conditions
 		const conditions =
-			entry === defaultExportCondition
-				? previous.conditions
-				: [...previous.conditions, entry];
+			entry === defaultExportCondition ? previous.conditions : [...previous.conditions, entry];
 		const isTypeOnly =
-			isTypeOnlySettled ||
-			(entries.length === 1 && entry === typesExportCondition);
+			isTypeOnlySettled || (entries.length === 1 && entry === typesExportCondition);
 		// First check if this entry is a leaf; where value is only
 		// expected to be a string (a relative file path).
 		if (typeof value === "string") {
@@ -124,17 +113,9 @@ function findTypesPathsMatching<TOutKey>(
 			// condition (entry) or is an inherited condition, both of which have been
 			// combined into local conditions.
 			if (conditions.includes(typesExportCondition)) {
-				const queryResult = valueOfFirstKeyMatching(
-					relPath,
-					mapQueryPathToOutKey,
-				);
+				const queryResult = valueOfFirstKeyMatching(relPath, mapQueryPathToOutKey);
 				if (queryResult !== undefined) {
-					results.push({
-						outKey: queryResult.value,
-						relPath,
-						conditions,
-						isTypeOnly,
-					});
+					results.push({ outKey: queryResult.value, relPath, conditions, isTypeOnly });
 				}
 			}
 		} else if (value !== null) {
@@ -143,15 +124,10 @@ function findTypesPathsMatching<TOutKey>(
 			if (Array.isArray(value)) {
 				continue;
 			}
-			const deepFind = findTypesPathsMatching(
-				mapQueryPathToOutKey,
-				value,
-				onlyFirstMatch,
-				{
-					conditions,
-					isTypeOnly,
-				},
-			);
+			const deepFind = findTypesPathsMatching(mapQueryPathToOutKey, value, onlyFirstMatch, {
+				conditions,
+				isTypeOnly,
+			});
 			if (deepFind !== undefined) {
 				results.push(...deepFind);
 			}
@@ -195,10 +171,7 @@ export function queryTypesResolutionPathsFromPackageExports<TOutKey>(
 	>;
 } {
 	const mapKeyToOutput = new Map<TOutKey, ExportData>();
-	const mapNode10CompatExportPathToData = new Map<
-		string,
-		Node10CompatExportData
-	>();
+	const mapNode10CompatExportPathToData = new Map<string, Node10CompatExportData>();
 	const mapTypesPathToExportPaths = new Map<
 		string,
 		Readonly<{ exportPath: string; conditions: readonly string[] }>[]
@@ -211,17 +184,13 @@ export function queryTypesResolutionPathsFromPackageExports<TOutKey>(
 
 	if (Array.isArray(exports)) {
 		// eslint-disable-next-line unicorn/prefer-type-error
-		throw new Error(
-			`required entrypoints cannot be generated for "exports" array`,
-		);
+		throw new Error(`required entrypoints cannot be generated for "exports" array`);
 	}
 
 	// Iterate through exports looking for properties with values matching keys in map.
 	for (const [exportPath, exportValue] of Object.entries(exports)) {
 		if (typeof exportValue !== "object") {
-			logger?.verbose(
-				`ignoring non-object export path "${exportPath}": "${exportValue}"`,
-			);
+			logger?.verbose(`ignoring non-object export path "${exportPath}": "${exportValue}"`);
 			continue;
 		}
 		if (exportValue === null) {
@@ -263,10 +232,7 @@ export function queryTypesResolutionPathsFromPackageExports<TOutKey>(
 			// Add mapping for Node10 type compatibility generation if requested.
 			// Exclude root "." path as "types" should handle that.
 			if (node10TypeCompat && exportPath !== ".") {
-				const node10TypeExportPath = exportPath.replace(
-					/(?:\.([cm]?)js)?$/,
-					".d.$1ts",
-				);
+				const node10TypeExportPath = exportPath.replace(/(?:\.([cm]?)js)?$/, ".d.$1ts");
 				// Nothing needed when export path already matches internal path.
 				if (path.resolve(node10TypeExportPath) !== path.resolve(relPath)) {
 					mapNode10CompatExportPathToData.set(node10TypeExportPath, {
@@ -278,11 +244,7 @@ export function queryTypesResolutionPathsFromPackageExports<TOutKey>(
 		}
 	}
 
-	return {
-		mapKeyToOutput,
-		mapNode10CompatExportPathToData,
-		mapTypesPathToExportPaths,
-	};
+	return { mapKeyToOutput, mapNode10CompatExportPathToData, mapTypesPathToExportPaths };
 }
 
 /**
@@ -332,15 +294,12 @@ export function getTypesPathFromPackage(
 	try {
 		// First try to resolve with the "import" condition, assuming the package is either ESM-only or dual-format.
 		// conditions: ["default", "types", "import", "node"]
-		const exports = resolve.exports(packageJson, entrypoint, {
-			conditions: ["types"],
-		});
+		const exports = resolve.exports(packageJson, entrypoint, { conditions: ["types"] });
 
 		// resolve.exports returns a `Exports.Output | void` type, though the documentation isn't clear under what
 		// conditions `void` would be the return type vs. just throwing an exception. Since the types say exports could be
 		// undefined or an empty array (Exports.Output is an array type), check for those conditions.
-		typesPath =
-			exports === undefined || exports.length === 0 ? undefined : exports[0];
+		typesPath = exports === undefined || exports.length === 0 ? undefined : exports[0];
 	} catch {
 		// Catch and ignore any exceptions here; we'll retry with the require condition.
 		log.verbose(
@@ -362,8 +321,7 @@ export function getTypesPathFromPackage(
 			conditions: ["types"],
 			require: true,
 		});
-		typesPath =
-			exports === undefined || exports.length === 0 ? undefined : exports[0];
+		typesPath = exports === undefined || exports.length === 0 ? undefined : exports[0];
 	} catch {
 		// Catch and ignore any exceptions here; we'll retry with the require condition.
 		log.verbose(

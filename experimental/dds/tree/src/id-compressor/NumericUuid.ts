@@ -6,7 +6,7 @@
 /* eslint-disable no-bitwise */
 
 import { assertWithMessage, fail } from '../Common.js';
-import type { SessionId, StableId } from '../Identifiers.js';
+import { SessionId, StableId } from '../Identifiers.js';
 import { generateStableId } from '../UuidUtilities.js';
 
 /**

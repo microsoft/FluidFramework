@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { SharedTree as LegacySharedTree } from "@fluid-experimental/tree";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import {
@@ -10,28 +12,27 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
 import {
+	LoaderHeader,
 	type IContainer,
 	type IRuntimeFactory,
-	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
-	type ITestObjectProvider,
 	TestObjectProvider,
+	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 import type { ITree } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
-import { strict as assert } from "assert";
 
 import {
 	DOWithST,
 	DOWithST2,
 	newRuntimeFactory,
-	type RootDO2,
 	treeConfig1,
 	treeConfig2,
+	type RootDO2,
 } from "./newCode.js";
 import { oldRuntimeFactory, RootDO, setLSTQuantity } from "./oldCode.js";
 import { runtimeOptions } from "./utils.js";
@@ -50,10 +51,7 @@ interface IDataObject {
 	_root: ISharedDirectory;
 }
 
-async function getObjectByHandle<T>(
-	dataObject: IDataObject,
-	key: string,
-): Promise<T> {
+async function getObjectByHandle<T>(dataObject: IDataObject, key: string): Promise<T> {
 	const handle = dataObject._root.get<IFluidHandle<T>>(key);
 	assert(handle !== undefined, `Expected handle to be defined for key: ${key}`);
 	return handle.get();
@@ -69,21 +67,9 @@ async function validateNewRoot(
 	const view = rootDataObject.doWithST.view;
 	const view2 = rootDataObject.doWithST2.view;
 
-	assert.equal(
-		view.root.quantity,
-		lstValue1,
-		"Expected view.quantity to match",
-	);
-	assert.equal(
-		view2.root.quantity,
-		lstValue2,
-		"Expected view2.quantity to match",
-	);
-	assert.equal(
-		view2.root.dir.value,
-		dirValue,
-		"Expected view2.dir.value to match",
-	);
+	assert.equal(view.root.quantity, lstValue1, "Expected view.quantity to match");
+	assert.equal(view2.root.quantity, lstValue2, "Expected view2.quantity to match");
+	assert.equal(view2.root.dir.value, dirValue, "Expected view2.dir.value to match");
 
 	// Validate handles
 	const dObject = await getObjectByHandle<DOWithST>(rootDataObject, "a");
@@ -96,30 +82,13 @@ async function validateNewRoot(
 	const treeView1 = tree1.viewWith(treeConfig1);
 	const treeView2 = tree2.viewWith(treeConfig2);
 
-	assert.equal(
-		treeView.root.quantity,
-		lstValue1,
-		"Expected treeView.quantity to match",
-	);
-	assert.equal(
-		treeView1.root.quantity,
-		lstValue1,
-		"Expected treeView1.quantity to match",
-	);
-	assert.equal(
-		treeView2.root.quantity,
-		lstValue2,
-		"Expected treeView2.quantity to match",
-	);
-	assert.equal(
-		treeView2.root.dir.value,
-		dirValue,
-		"Expected treeView2.dir.value to match",
-	);
+	assert.equal(treeView.root.quantity, lstValue1, "Expected treeView.quantity to match");
+	assert.equal(treeView1.root.quantity, lstValue1, "Expected treeView1.quantity to match");
+	assert.equal(treeView2.root.quantity, lstValue2, "Expected treeView2.quantity to match");
+	assert.equal(treeView2.root.dir.value, dirValue, "Expected treeView2.dir.value to match");
 
 	// Can send and receive ops
-	const container =
-		readContainer ?? (await provider.loadContainer(runtimeFactory));
+	const container = readContainer ?? (await provider.loadContainer(runtimeFactory));
 	const rootDataObjectB = (await container.getEntryPoint()) as RootDO2;
 	const viewB = rootDataObjectB.doWithST.view;
 	const view2B = rootDataObjectB.doWithST2.view;
@@ -135,31 +104,19 @@ async function validateNewRoot(
 		viewB.root.quantity,
 		"Expected treeView.quantity to match",
 	);
-	assert.equal(
-		treeView.root.quantity,
-		5,
-		"Expected treeView.quantity to update",
-	);
+	assert.equal(treeView.root.quantity, 5, "Expected treeView.quantity to update");
 	assert.equal(
 		treeView2.root.quantity,
 		view2B.root.quantity,
 		"Expected treeView1.quantity to match",
 	);
-	assert.equal(
-		treeView2.root.quantity,
-		6,
-		"Expected treeView2.quantity to update",
-	);
+	assert.equal(treeView2.root.quantity, 6, "Expected treeView2.quantity to update");
 	assert.equal(
 		treeView2.root.dir.value,
 		view2B.root.dir.value,
 		"Expected treeView2.dir.value to match",
 	);
-	assert.equal(
-		treeView2.root.dir.value,
-		"baz",
-		"Expected treeView2.dir.value to update",
-	);
+	assert.equal(treeView2.root.dir.value, "baz", "Expected treeView2.dir.value to update");
 }
 
 export interface IMigrationStrategy {
@@ -183,10 +140,7 @@ const rootDOFactory = new DataObjectFactory({
 	type: "rootdo",
 	ctor: RootDO,
 	sharedObjects: [LegacySharedTree.getFactory()],
-	registryEntries: [
-		DOWithSTFactory.registryEntry,
-		DOWithST2Factory.registryEntry,
-	],
+	registryEntries: [DOWithSTFactory.registryEntry, DOWithST2Factory.registryEntry],
 });
 const exampleRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 	defaultFactory: rootDOFactory,
@@ -197,21 +151,15 @@ const exampleRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 class ExampleStrategy implements IMigrationStrategy {
 	name: string = "Example strategy";
 	runtimeFactory = exampleRuntimeFactory;
-	public async migrateWithSummary(
-		provider: ITestObjectProvider,
-	): Promise<string> {
+	public async migrateWithSummary(provider: ITestObjectProvider): Promise<string> {
 		return "abc";
 	}
-	public async migrateWithoutSummary(
-		provider: ITestObjectProvider,
-	): Promise<RootDO2> {
+	public async migrateWithoutSummary(provider: ITestObjectProvider): Promise<RootDO2> {
 		const container = await provider.loadContainer(this.runtimeFactory);
 		const rootDataObject = (await container.getEntryPoint()) as RootDO2;
 		return rootDataObject;
 	}
-	public async migrateWithManyContainers(
-		...containers: IContainer[]
-	): Promise<RootDO2[]> {
+	public async migrateWithManyContainers(...containers: IContainer[]): Promise<RootDO2[]> {
 		throw new Error();
 	}
 }
@@ -249,25 +197,15 @@ describe.skip("basicMigration", () => {
 
 				const summaryVersion = await strategy.migrateWithSummary(provider);
 
-				const container2 = await provider.loadContainer(
-					newRuntimeFactory,
-					undefined,
-					{
-						[LoaderHeader.version]: summaryVersion,
-					},
-				);
+				const container2 = await provider.loadContainer(newRuntimeFactory, undefined, {
+					[LoaderHeader.version]: summaryVersion,
+				});
 				const rootDataObject2 = (await container2.getEntryPoint()) as RootDO2;
-				await validateNewRoot(
-					rootDataObject2,
-					provider,
-					strategy.runtimeFactory,
-				);
+				await validateNewRoot(rootDataObject2, provider, strategy.runtimeFactory);
 			});
 
 			it("can create new container", async () => {
-				const container = await provider.createContainer(
-					strategy.runtimeFactory,
-				);
+				const container = await provider.createContainer(strategy.runtimeFactory);
 				const rootDataObject = (await container.getEntryPoint()) as RootDO2;
 				rootDataObject.doWithST.view.root.quantity = lstValue1;
 				rootDataObject.doWithST2.view.root.quantity = lstValue2;

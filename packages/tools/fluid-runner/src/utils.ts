@@ -85,10 +85,7 @@ export async function timeoutPromise<T = void>(
 	timeout: number,
 ): Promise<T> {
 	return new Promise<T>((resolve, reject) => {
-		const timer = setTimeout(
-			() => reject(new Error(`Timed out (${timeout}ms)`)),
-			timeout,
-		);
+		const timer = setTimeout(() => reject(new Error(`Timed out (${timeout}ms)`)), timeout);
 
 		executor(
 			(value) => {

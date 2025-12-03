@@ -8,8 +8,7 @@
 // This file contains some helpers creating/executing benchmark suites using 'Benchmark.js'.
 
 import process = require("process");
-
-import type { Suite } from "benchmark";
+import { Suite } from "benchmark";
 
 let count = 0;
 let cached: any;
@@ -45,9 +44,7 @@ export function runSuite(suite: Suite) {
 		})
 		.on("complete", (event: any) => {
 			console.groupEnd();
-			console.log(
-				`Fastest is ${event.currentTarget.filter("fastest").map("name")}`,
-			);
+			console.log(`Fastest is ${event.currentTarget.filter("fastest").map("name")}`);
 		})
 		.run();
 }

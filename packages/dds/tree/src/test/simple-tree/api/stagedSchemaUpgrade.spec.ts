@@ -5,26 +5,27 @@
 
 import { strict as assert } from "node:assert";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { FluidClientVersion } from "../../../codec/index.js";
-import { storedEmptyFieldSchema } from "../../../core/index.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
+
+import {
+	extractPersistedSchema,
+	SchemaCompatibilityTester,
+	SchemaFactoryAlpha,
+	schemaStatics,
+	toUpgradeSchema,
+	TreeViewConfiguration,
+	TreeViewConfigurationAlpha,
+} from "../../../simple-tree/index.js";
+import { TestSchemaRepository, TestTreeProviderLite } from "../../utils.js";
 import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";
+import { storedEmptyFieldSchema } from "../../../core/index.js";
 import {
 	independentInitializedView,
 	independentView,
 	TreeAlpha,
 	type ViewContent,
 } from "../../../shared-tree/index.js";
-import {
-	extractPersistedSchema,
-	SchemaCompatibilityTester,
-	SchemaFactoryAlpha,
-	schemaStatics,
-	TreeViewConfiguration,
-	TreeViewConfigurationAlpha,
-	toUpgradeSchema,
-} from "../../../simple-tree/index.js";
-import { TestSchemaRepository, TestTreeProviderLite } from "../../utils.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
+import { FluidClientVersion } from "../../../codec/index.js";
 
 // Some documentation links to this file on GitHub: renaming it may break those links.
 
@@ -176,11 +177,7 @@ describe("staged schema upgrade", () => {
 			}),
 
 			// TODO: we need a way to get the stored schema from independent views. Allow constructing a ViewAbleTree instead of a view directly (maybe an independentTree API?)?
-			schema: extractPersistedSchema(
-				configA.schema,
-				FluidClientVersion.v2_0,
-				() => false,
-			),
+			schema: extractPersistedSchema(configA.schema, FluidClientVersion.v2_0, () => false),
 			idCompressor,
 		};
 
@@ -227,14 +224,8 @@ describe("staged schema upgrade", () => {
 
 		// open document, and check its compatibility with our application
 		const compat = view.checkCompatibility(stored);
-		assert.deepEqual(compat, {
-			canView: false,
-			canUpgrade: true,
-			isEquivalent: false,
-		});
-		assert(
-			stored.tryUpdateRootFieldSchema(toUpgradeSchema(schemaA).rootFieldSchema),
-		);
+		assert.deepEqual(compat, { canView: false, canUpgrade: true, isEquivalent: false });
+		assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(schemaA).rootFieldSchema));
 		assert(stored.tryUpdateTreeSchema(schemaStatics.number));
 
 		// view schema is A
@@ -245,9 +236,7 @@ describe("staged schema upgrade", () => {
 		});
 
 		// view schema is B (includes staged string)
-		view = new SchemaCompatibilityTester(
-			new TreeViewConfigurationAlpha({ schema: schemaB }),
-		);
+		view = new SchemaCompatibilityTester(new TreeViewConfigurationAlpha({ schema: schemaB }));
 		assert.deepEqual(view.checkCompatibility(stored), {
 			canView: true,
 			canUpgrade: true,
@@ -255,9 +244,7 @@ describe("staged schema upgrade", () => {
 		});
 
 		// upgrade stored to schema B (no-op)
-		assert(
-			stored.tryUpdateRootFieldSchema(toUpgradeSchema(schemaB).rootFieldSchema),
-		);
+		assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(schemaB).rootFieldSchema));
 
 		// nothing has changed, so compatibility is the same
 		assert.deepEqual(view.checkCompatibility(stored), {
@@ -267,9 +254,7 @@ describe("staged schema upgrade", () => {
 		});
 
 		// view schema now wants full support for string (not just staged)
-		view = new SchemaCompatibilityTester(
-			new TreeViewConfigurationAlpha({ schema: schemaC }),
-		);
+		view = new SchemaCompatibilityTester(new TreeViewConfigurationAlpha({ schema: schemaC }));
 		assert.deepEqual(view.checkCompatibility(stored), {
 			canView: false,
 			canUpgrade: true,
@@ -277,15 +262,11 @@ describe("staged schema upgrade", () => {
 		});
 
 		// to full schema C
-		assert(
-			stored.tryUpdateRootFieldSchema(toUpgradeSchema(schemaC).rootFieldSchema),
-		);
+		assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(schemaC).rootFieldSchema));
 		assert(stored.tryUpdateTreeSchema(schemaStatics.string));
 
 		// validate C is now fully supported
-		view = new SchemaCompatibilityTester(
-			new TreeViewConfigurationAlpha({ schema: schemaC }),
-		);
+		view = new SchemaCompatibilityTester(new TreeViewConfigurationAlpha({ schema: schemaC }));
 		assert.deepEqual(view.checkCompatibility(stored), {
 			canView: true,
 			canUpgrade: true,

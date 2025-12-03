@@ -8,9 +8,9 @@ import { type TUnsafe, Type } from "@sinclair/typebox";
 
 import { makeCodecFamily } from "../../../codec/index.js";
 import {
-	type FieldKindIdentifier,
-	Multiplicity,
 	makeDetachedNodeId,
+	Multiplicity,
+	type FieldKindIdentifier,
 } from "../../../core/index.js";
 import {
 	type FieldChangeDelta,
@@ -87,16 +87,9 @@ export const valueHandler = {
 	rebaser: replaceRebaser(),
 	codecsFactory: () =>
 		makeCodecFamily([
-			[
-				1,
-				makeValueCodec<TUnsafe<ValueChangeset>, FieldChangeEncodingContext>(
-					Type.Any(),
-				),
-			],
+			[1, makeValueCodec<TUnsafe<ValueChangeset>, FieldChangeEncodingContext>(Type.Any())],
 		]),
-	editor: {
-		buildChildChanges: () => assert.fail("Child changes not supported"),
-	},
+	editor: { buildChildChanges: () => assert.fail("Child changes not supported") },
 
 	intoDelta: (change): FieldChangeDelta => {
 		const delta: Mutable<FieldChangeDelta> = {};

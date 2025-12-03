@@ -42,16 +42,12 @@ export class PackageManager implements IPackageManager {
 		const args: string[] = ["install"];
 		switch (this.name) {
 			case "npm": {
-				args.push(
-					updateLockfile ? "--package-lock=true" : "--package-lock=false",
-				);
+				args.push(updateLockfile ? "--package-lock=true" : "--package-lock=false");
 				return args;
 			}
 
 			case "pnpm": {
-				args.push(
-					updateLockfile ? "--no-frozen-lockfile" : "--frozen-lockfile",
-				);
+				args.push(updateLockfile ? "--no-frozen-lockfile" : "--frozen-lockfile");
 				return args;
 			}
 
@@ -69,8 +65,6 @@ export class PackageManager implements IPackageManager {
 /**
  * Create a new package manager instance.
  */
-export function createPackageManager(
-	name: PackageManagerName,
-): IPackageManager {
+export function createPackageManager(name: PackageManagerName): IPackageManager {
 	return new PackageManager(name);
 }

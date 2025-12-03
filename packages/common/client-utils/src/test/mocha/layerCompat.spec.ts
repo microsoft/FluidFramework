@@ -30,11 +30,7 @@ describe("checkLayerCompatibility", () => {
 			isGenerationCompatible: false,
 			unsupportedFeatures: compatSupportRequirementsLayer1.requiredFeatures,
 		};
-		assert.deepStrictEqual(
-			result,
-			expectedResults,
-			"Layers should not be compatible",
-		);
+		assert.deepStrictEqual(result, expectedResults, "Layers should not be compatible");
 	});
 
 	it("should return compatible when other layer doesn't support ILayerCompatDetails (back compat)", () => {
@@ -51,11 +47,7 @@ describe("checkLayerCompatibility", () => {
 		const expectedResults: LayerCompatCheckResult = {
 			isCompatible: true,
 		};
-		assert.deepStrictEqual(
-			result,
-			expectedResults,
-			"Layers should be compatible",
-		);
+		assert.deepStrictEqual(result, expectedResults, "Layers should be compatible");
 	});
 
 	it("should return compatible when both generation and features are compatible", () => {
@@ -76,11 +68,7 @@ describe("checkLayerCompatibility", () => {
 		const expectedResults: LayerCompatCheckResult = {
 			isCompatible: true,
 		};
-		assert.deepStrictEqual(
-			result,
-			expectedResults,
-			"Layers should be compatible",
-		);
+		assert.deepStrictEqual(result, expectedResults, "Layers should be compatible");
 	});
 
 	it("should return not compatible when generation is incompatible", () => {

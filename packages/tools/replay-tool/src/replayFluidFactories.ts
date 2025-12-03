@@ -116,9 +116,7 @@ export class ReplayDataStoreFactory
 	 * Return ourselves when asked for child data store entry. The idea is that each data store that is created
 	 * has access to and can create from the list of known DDSes.
 	 */
-	public async get(
-		name: string,
-	): Promise<FluidDataStoreRegistryEntry | undefined> {
+	public async get(name: string): Promise<FluidDataStoreRegistryEntry | undefined> {
 		return this;
 	}
 

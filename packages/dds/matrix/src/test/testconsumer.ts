@@ -4,11 +4,7 @@
  */
 
 import { DenseVector, RowMajorMatrix } from "@tiny-calc/micro";
-import type {
-	IMatrixConsumer,
-	IMatrixProducer,
-	IMatrixReader,
-} from "@tiny-calc/nano";
+import type { IMatrixConsumer, IMatrixProducer, IMatrixReader } from "@tiny-calc/nano";
 
 import type { MatrixItem } from "../index.js";
 
@@ -93,11 +89,7 @@ export class TestConsumer<T = unknown>
 
 	// #region IMatrixConsumer
 
-	rowsChanged(
-		rowStart: number,
-		removedCount: number,
-		insertedCount: number,
-	): void {
+	rowsChanged(rowStart: number, removedCount: number, insertedCount: number): void {
 		this.rows.splice(rowStart, removedCount, insertedCount);
 		this.updateCells(
 			rowStart,
@@ -107,11 +99,7 @@ export class TestConsumer<T = unknown>
 		);
 	}
 
-	colsChanged(
-		colStart: number,
-		removedCount: number,
-		insertedCount: number,
-	): void {
+	colsChanged(colStart: number, removedCount: number, insertedCount: number): void {
 		this.cols.splice(colStart, removedCount, insertedCount);
 		this.updateCells(
 			/* rowStart: */ 0,
@@ -121,12 +109,7 @@ export class TestConsumer<T = unknown>
 		);
 	}
 
-	cellsChanged(
-		rowStart: number,
-		colStart: number,
-		rowCount: number,
-		colCount: number,
-	): void {
+	cellsChanged(rowStart: number, colStart: number, rowCount: number, colCount: number): void {
 		this.updateCells(rowStart, colStart, rowCount, colCount);
 	}
 

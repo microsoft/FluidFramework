@@ -5,10 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	createIdCompressor,
-	createSessionId,
-} from "@fluidframework/id-compressor/internal";
+import { createIdCompressor, createSessionId } from "@fluidframework/id-compressor/internal";
 
 import { type RevisionTag, RevisionTagCodec } from "../../core/index.js";
 import { testIdCompressor } from "../utils.js";
@@ -27,9 +24,7 @@ describe("RevisionTagCodec", () => {
 			idCompressor: testIdCompressor,
 		});
 		assert.deepEqual(decoded, rootRevisionTag);
-		const remoteEncoded = new RevisionTagCodec(remoteCompressor).encode(
-			rootRevisionTag,
-		);
+		const remoteEncoded = new RevisionTagCodec(remoteCompressor).encode(rootRevisionTag);
 		const decodedFromRemote = codec.decode(remoteEncoded, {
 			originatorId: remoteCompressor.localSessionId,
 			revision: undefined,

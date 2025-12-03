@@ -3,7 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export {
-	DiceRollerContainerRuntimeFactory,
-	IDiceRollerAppModel,
-} from "./containerCode.js";
+export { DiceRollerContainerRuntimeFactory, IDiceRollerAppModel } from "./containerCode.js";

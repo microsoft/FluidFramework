@@ -3,17 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Button,
-	Checkbox,
-	Input,
-	TableCell,
-	TableRow,
-} from "@fluentui/react-components";
+import { TableRow, TableCell, Input, Button, Checkbox } from "@fluentui/react-components";
 import { Delete24Regular } from "@fluentui/react-icons";
+import React, { type DragEvent } from "react";
 import { useTree } from "@fluidframework/react/alpha";
-import type React from "react";
-import type { DragEvent } from "react";
 
 import type { Table } from "../schema.js";
 
@@ -110,11 +103,7 @@ interface TableCellViewProps {
 	onUpdateCell: (newValue: string) => void;
 }
 
-const TableCellView: React.FC<TableCellViewProps> = ({
-	cell,
-	hint,
-	onUpdateCell,
-}) => {
+const TableCellView: React.FC<TableCellViewProps> = ({ cell, hint, onUpdateCell }) => {
 	// TODO: highlight cells in red when data is invalid
 	switch (hint) {
 		case "checkbox": {

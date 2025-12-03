@@ -11,37 +11,38 @@ import {
 	unreachableCase,
 } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { MakeNominal } from "../../util/index.js";
-import { getOrCreate } from "../../util/index.js";
+
 import {
-	type AllowedTypesFullEvaluated,
-	markSchemaMostDerived,
-	NodeKind,
-	type TreeNodeSchema,
-} from "../core/index.js";
-import {
-	FieldKind,
 	type FieldSchemaAlpha,
 	type ImplicitFieldSchema,
+	FieldKind,
 	normalizeFieldSchema,
 } from "../fieldSchema.js";
 import {
-	type ArrayNodeSchema,
-	isArrayNodeSchema,
-	isMapNodeSchema,
-	isObjectNodeSchema,
-	isRecordNodeSchema,
-	type MapNodeSchema,
-	type ObjectNodeSchema,
-	type RecordNodeSchema,
-} from "../node-kinds/index.js";
-import type { SimpleNodeSchema, SimpleTreeSchema } from "../simpleSchema.js";
+	type AllowedTypesFullEvaluated,
+	NodeKind,
+	type TreeNodeSchema,
+	markSchemaMostDerived,
+} from "../core/index.js";
 import {
 	permissiveStoredSchemaGenerationOptions,
 	restrictiveStoredSchemaGenerationOptions,
 	toStoredSchema,
 } from "../toStoredSchema.js";
+import {
+	isArrayNodeSchema,
+	isMapNodeSchema,
+	isObjectNodeSchema,
+	isRecordNodeSchema,
+	type ArrayNodeSchema,
+	type MapNodeSchema,
+	type ObjectNodeSchema,
+	type RecordNodeSchema,
+} from "../node-kinds/index.js";
+import { getOrCreate } from "../../util/index.js";
+import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
+import type { SimpleNodeSchema, SimpleTreeSchema } from "../simpleSchema.js";
 
 /**
  * Options when constructing a tree view.
@@ -239,10 +240,7 @@ export class TreeViewConfiguration<
 				markSchemaMostDerived(schema, true);
 
 				debugAssert(() => !definitions.has(schema.identifier));
-				definitions.set(
-					schema.identifier,
-					schema as SimpleNodeSchema & TreeNodeSchema,
-				);
+				definitions.set(schema.identifier, schema as SimpleNodeSchema & TreeNodeSchema);
 			},
 			allowedTypes({ types }: AllowedTypesFullEvaluated): void {
 				checkUnion(
@@ -258,9 +256,7 @@ export class TreeViewConfiguration<
 		if (ambiguityErrors.length !== 0) {
 			// Duplicate errors are common since when two types conflict, both orders error:
 			const deduplicated = new Set(ambiguityErrors);
-			throw new UsageError(
-				`Ambiguous schema found:\n${[...deduplicated].join("\n")}`,
-			);
+			throw new UsageError(`Ambiguous schema found:\n${[...deduplicated].join("\n")}`);
 		}
 	}
 }
@@ -285,14 +281,8 @@ export class TreeViewConfigurationAlpha<
 	/**
 	 * {@inheritDoc TreeSchema.definitions}
 	 */
-	public get definitions(): ReadonlyMap<
-		string,
-		SimpleNodeSchema & TreeNodeSchema
-	> {
-		return this.definitionsInternal as ReadonlyMap<
-			string,
-			SimpleNodeSchema & TreeNodeSchema
-		>;
+	public get definitions(): ReadonlyMap<string, SimpleNodeSchema & TreeNodeSchema> {
+		return this.definitionsInternal as ReadonlyMap<string, SimpleNodeSchema & TreeNodeSchema>;
 	}
 
 	public constructor(props: ITreeViewConfiguration<TSchema>) {
@@ -353,9 +343,7 @@ export function checkUnion(
 
 	for (const schema of union) {
 		if (checked.has(schema)) {
-			throw new UsageError(
-				`Duplicate schema in allowed types: ${schema.identifier}`,
-			);
+			throw new UsageError(`Duplicate schema in allowed types: ${schema.identifier}`);
 		}
 		checked.add(schema);
 
@@ -453,8 +441,7 @@ export function checkUnion(
 		// For each field of schema, remove schema from possiblyAmbiguous that do not have that field
 		for (const [key, field] of schema.fields) {
 			if (field.kind === FieldKind.Required) {
-				const withKey =
-					allObjectKeys.get(key) ?? fail(0xb35 /* missing schema */);
+				const withKey = allObjectKeys.get(key) ?? fail(0xb35 /* missing schema */);
 				for (const candidate of possiblyAmbiguous) {
 					if (!withKey.has(candidate)) {
 						possiblyAmbiguous.delete(candidate);

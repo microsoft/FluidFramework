@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { type SinonFakeTimers, useFakeTimers } from "sinon";
+import { SinonFakeTimers, useFakeTimers } from "sinon";
 
 import { MapWithExpiration } from "../mapWithExpiration.js";
 
@@ -69,11 +69,7 @@ describe("MapWithExpiration", () => {
 		message: string,
 	) {
 		for (const k of expected.keys()) {
-			assert.equal(
-				actual.get(k),
-				expected.get(k),
-				`'get' mismatch (${message})`,
-			);
+			assert.equal(actual.get(k), expected.get(k), `'get' mismatch (${message})`);
 		}
 	}
 
@@ -82,13 +78,12 @@ describe("MapWithExpiration", () => {
 	 * and returns a function that ensures actual and expected yield the same result when iterated over.
 	 * If fnName is undefined, iterate over actual and expected directly
 	 */
-	const assertIterable =
-		(fnName?: string | typeof Symbol.iterator) =>
-		(
+	const assertIterable = (fnName?: string | typeof Symbol.iterator) =>
+		function (
 			actual: MapWithExpiration<number, string>,
 			expected: Map<number, string>,
 			message: string,
-		) => {
+		) {
 			const actuals: any[] = [];
 			for (const a of fnName === undefined ? actual : actual[fnName]()) {
 				actuals.push(a);
@@ -97,11 +92,7 @@ describe("MapWithExpiration", () => {
 			for (const e of fnName === undefined ? expected : expected[fnName]()) {
 				expecteds.push(e);
 			}
-			assert.deepEqual(
-				actuals.sort(),
-				expecteds.sort(),
-				`Iterator mismatch (${message})`,
-			);
+			assert.deepEqual(actuals.sort(), expecteds.sort(), `Iterator mismatch (${message})`);
 		};
 
 	const assertEntries = assertIterable("entries");
@@ -158,11 +149,7 @@ describe("MapWithExpiration", () => {
 
 		clock.tick(5);
 		expected.delete(1);
-		assertMatches(
-			map,
-			expected,
-			"Should be expired after 10ms unless set in the interim",
-		);
+		assertMatches(map, expected, "Should be expired after 10ms unless set in the interim");
 	});
 
 	test("delete", (assertMatches: (
@@ -248,12 +235,7 @@ describe("MapWithExpiration", () => {
 					for (const map of maps) {
 						map.set(1, "one");
 						map.forEach(
-							function (
-								this: any,
-								value: string,
-								key: number,
-								m: Map<number, string>,
-							) {
+							function (this: any, value: string, key: number, m: Map<number, string>) {
 								assert.equal(this, "BOUND", "Incorrect value for 'this'");
 							}.bind("BOUND"),
 							thisArg,
@@ -269,11 +251,7 @@ describe("MapWithExpiration", () => {
 					!(this instanceof Foo),
 					"'this' should not be a Foo, it should have been overridden",
 				);
-				assert.equal(
-					this,
-					valueWhichIsExpectedThis,
-					"Incorrect value for 'this'",
-				);
+				assert.equal(this, valueWhichIsExpectedThis, "Incorrect value for 'this'");
 			}
 		}
 
@@ -303,30 +281,26 @@ describe("MapWithExpiration", () => {
 			},
 		);
 
-		testForEachCases(
-			"Arrow functions don't pick up thisArg",
-			(maps, thisArgs) => {
-				const testCaseRunner = new (class {
-					runTestCase(map: Map<any, any>, thisArg: any) {
-						map.set(1, "one");
+		testForEachCases("Arrow functions don't pick up thisArg", (maps, thisArgs) => {
+			const testCaseRunner = new (class {
+				runTestCase(map: Map<any, any>, thisArg: any) {
+					map.set(1, "one");
 
-						map.forEach(() => {
-							assert.equal(
-								this,
-								this,
-								"Expected 'this' to be unchanged for arrow fn",
-							);
-						}, thisArg);
-					}
-				})();
+					// eslint-disable-next-line @typescript-eslint/no-this-alias
+					const thisOutside = this;
 
-				for (const thisArg of thisArgs) {
-					for (const map of maps) {
-						testCaseRunner.runTestCase(map, thisArg);
-					}
+					map.forEach(() => {
+						assert.equal(this, thisOutside, "Expected 'this' to be unchanged for arrow fn");
+					}, thisArg);
 				}
-			},
-		);
+			})();
+
+			for (const thisArg of thisArgs) {
+				for (const map of maps) {
+					testCaseRunner.runTestCase(map, thisArg);
+				}
+			}
+		});
 	});
 
 	it("toString", () => {

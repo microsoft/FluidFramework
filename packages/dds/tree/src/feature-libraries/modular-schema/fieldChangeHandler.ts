@@ -188,8 +188,7 @@ export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
 	mute: (change: TChangeset) => TChangeset;
 }): FieldChangeRebaser<TChangeset> {
 	return isolatedFieldChangeRebaser({
-		compose: (change1, change2, _composeChild, _genId) =>
-			data.compose(change1, change2),
+		compose: (change1, change2, _composeChild, _genId) => data.compose(change1, change2),
 		invert: (change, _invertChild, _genId) => data.invert(change),
 		rebase: (change, over, _rebaseChild, _genId) => data.rebase(change, over),
 		mute: (change) => data.mute(change),
@@ -217,9 +216,7 @@ export interface FieldEditor<TChangeset> {
 	 * - The `NodeId` represents the nested changes for that child node.
 	 * Note: The indices in the iterable must be ordered from smallest to largest (with no duplicates).
 	 */
-	buildChildChanges(
-		changes: Iterable<[index: number, change: NodeId]>,
-	): TChangeset;
+	buildChildChanges(changes: Iterable<[index: number, change: NodeId]>): TChangeset;
 }
 
 /**
@@ -255,9 +252,7 @@ export type NodeChangePruner = (change: NodeId) => NodeId | undefined;
 /**
  * A function that returns the set of removed roots that should be in memory for a given node changeset to be applied.
  */
-export type RelevantRemovedRootsFromChild = (
-	child: NodeId,
-) => Iterable<DeltaDetachedNodeId>;
+export type RelevantRemovedRootsFromChild = (child: NodeId) => Iterable<DeltaDetachedNodeId>;
 
 export interface RebaseRevisionMetadata extends RevisionMetadataSource {
 	readonly getRevisionToRebase: () => RevisionTag | undefined;

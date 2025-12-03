@@ -22,24 +22,15 @@ class FakeTelemetryLogger implements ITelemetryLoggerExt {
 		assert.fail("Should not be called");
 	}
 
-	public sendTelemetryEvent(
-		_event: ITelemetryGenericEventExt,
-		_error?: unknown,
-	): void {
+	public sendTelemetryEvent(_event: ITelemetryGenericEventExt, _error?: unknown): void {
 		assert.fail("Should not be called");
 	}
 
-	public sendErrorEvent(
-		_event: ITelemetryErrorEventExt,
-		_error?: unknown,
-	): void {
+	public sendErrorEvent(_event: ITelemetryErrorEventExt, _error?: unknown): void {
 		assert.fail("Should not be called");
 	}
 
-	public sendPerformanceEvent(
-		event: ITelemetryPerformanceEventExt,
-		_error?: unknown,
-	): void {
+	public sendPerformanceEvent(event: ITelemetryPerformanceEventExt, _error?: unknown): void {
 		this.events.push(event);
 	}
 }
@@ -61,14 +52,8 @@ describe("ThresholdCounter", () => {
 		sender.send("event_4", 0);
 
 		assert.strictEqual(logger.events.length, 2);
-		assert.deepStrictEqual(logger.events[0], {
-			eventName: "event_1",
-			value: threshold,
-		});
-		assert.deepStrictEqual(logger.events[1], {
-			eventName: "event_2",
-			value: threshold + 1,
-		});
+		assert.deepStrictEqual(logger.events[0], { eventName: "event_1", value: threshold });
+		assert.deepStrictEqual(logger.events[1], { eventName: "event_2", value: threshold + 1 });
 	});
 
 	it("Send only if value is multiple", () => {
@@ -78,13 +63,7 @@ describe("ThresholdCounter", () => {
 		sender.sendIfMultiple("event_4", 0);
 
 		assert.strictEqual(logger.events.length, 2);
-		assert.deepStrictEqual(logger.events[0], {
-			eventName: "event_1",
-			value: threshold,
-		});
-		assert.deepStrictEqual(logger.events[1], {
-			eventName: "event_2",
-			value: threshold * 2,
-		});
+		assert.deepStrictEqual(logger.events[0], { eventName: "event_1", value: threshold });
+		assert.deepStrictEqual(logger.events[1], { eventName: "event_2", value: threshold * 2 });
 	});
 });

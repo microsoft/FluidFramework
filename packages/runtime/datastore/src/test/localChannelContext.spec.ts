@@ -13,14 +13,8 @@ import {
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import {
-	FluidDataStoreRuntime,
-	type ISharedObjectRegistry,
-} from "../dataStoreRuntime.js";
-import {
-	LocalChannelContext,
-	RehydratedLocalChannelContext,
-} from "../localChannelContext.js";
+import { FluidDataStoreRuntime, type ISharedObjectRegistry } from "../dataStoreRuntime.js";
+import { LocalChannelContext, RehydratedLocalChannelContext } from "../localChannelContext.js";
 
 describe("LocalChannelContext Tests", () => {
 	let dataStoreContext: MockFluidDataStoreContext;
@@ -29,14 +23,9 @@ describe("LocalChannelContext Tests", () => {
 		context: IFluidDataStoreContext,
 		registry: ISharedObjectRegistry,
 	): FluidDataStoreRuntime =>
-		new FluidDataStoreRuntime(
-			context,
-			registry,
-			/* existing */ false,
-			async () => ({
-				myProp: "myValue",
-			}),
-		);
+		new FluidDataStoreRuntime(context, registry, /* existing */ false, async () => ({
+			myProp: "myValue",
+		}));
 
 	beforeEach(() => {
 		dataStoreContext = new MockFluidDataStoreContext();
@@ -54,10 +43,7 @@ describe("LocalChannelContext Tests", () => {
 
 	it("LocalChannelContext rejects ids with forward slashes", () => {
 		const invalidId = "beforeSlash/afterSlash";
-		const dataStoreRuntime = loadRuntime(
-			dataStoreContext,
-			sharedObjectRegistry,
-		);
+		const dataStoreRuntime = loadRuntime(dataStoreContext, sharedObjectRegistry);
 		const codeBlock = (): LocalChannelContext =>
 			new LocalChannelContext(
 				{ id: invalidId } as unknown as IChannel,
@@ -77,10 +63,7 @@ describe("LocalChannelContext Tests", () => {
 
 	it("RehydratedLocalChannelContext rejects ids with forward slashes", () => {
 		const invalidId = "beforeSlash/afterSlash";
-		const dataStoreRuntime = loadRuntime(
-			dataStoreContext,
-			sharedObjectRegistry,
-		);
+		const dataStoreRuntime = loadRuntime(dataStoreContext, sharedObjectRegistry);
 		const codeBlock = (): RehydratedLocalChannelContext =>
 			new RehydratedLocalChannelContext(
 				invalidId,

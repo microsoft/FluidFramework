@@ -11,23 +11,12 @@
  * Current version: 2.74.0
  */
 
-import type {
-	FullType,
-	MinimalType,
-	requireAssignableTo,
-	TypeOnly,
-} from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/matrix-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> =
-	| TypeOnly<T>
-	| MinimalType<T>
-	| FullType<T>
-	| typeof old
-	| typeof current
-	| requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -36,10 +25,7 @@ declare type MakeUnusedImportErrorsGoAway<T> =
  * typeValidation.broken:
  * "Class_SharedMatrixFactory": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_SharedMatrixFactory = requireAssignableTo<
-	TypeOnly<old.SharedMatrixFactory>,
-	TypeOnly<current.SharedMatrixFactory>
->;
+declare type old_as_current_for_Class_SharedMatrixFactory = requireAssignableTo<TypeOnly<old.SharedMatrixFactory>, TypeOnly<current.SharedMatrixFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -48,10 +34,7 @@ declare type old_as_current_for_Class_SharedMatrixFactory = requireAssignableTo<
  * typeValidation.broken:
  * "Class_SharedMatrixFactory": {"backCompat": false}
  */
-declare type current_as_old_for_Class_SharedMatrixFactory = requireAssignableTo<
-	TypeOnly<current.SharedMatrixFactory>,
-	TypeOnly<old.SharedMatrixFactory>
->;
+declare type current_as_old_for_Class_SharedMatrixFactory = requireAssignableTo<TypeOnly<current.SharedMatrixFactory>, TypeOnly<old.SharedMatrixFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -60,11 +43,7 @@ declare type current_as_old_for_Class_SharedMatrixFactory = requireAssignableTo<
  * typeValidation.broken:
  * "ClassStatics_SharedMatrixFactory": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_SharedMatrixFactory =
-	requireAssignableTo<
-		TypeOnly<typeof current.SharedMatrixFactory>,
-		TypeOnly<typeof old.SharedMatrixFactory>
-	>;
+declare type current_as_old_for_ClassStatics_SharedMatrixFactory = requireAssignableTo<TypeOnly<typeof current.SharedMatrixFactory>, TypeOnly<typeof old.SharedMatrixFactory>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -73,10 +52,7 @@ declare type current_as_old_for_ClassStatics_SharedMatrixFactory =
  * typeValidation.broken:
  * "Interface_IRevertible": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IRevertible = requireAssignableTo<
-	TypeOnly<old.IRevertible>,
-	TypeOnly<current.IRevertible>
->;
+declare type old_as_current_for_Interface_IRevertible = requireAssignableTo<TypeOnly<old.IRevertible>, TypeOnly<current.IRevertible>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -85,10 +61,7 @@ declare type old_as_current_for_Interface_IRevertible = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IRevertible": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IRevertible = requireAssignableTo<
-	TypeOnly<current.IRevertible>,
-	TypeOnly<old.IRevertible>
->;
+declare type current_as_old_for_Interface_IRevertible = requireAssignableTo<TypeOnly<current.IRevertible>, TypeOnly<old.IRevertible>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -97,10 +70,7 @@ declare type current_as_old_for_Interface_IRevertible = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ISharedMatrix": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISharedMatrix = requireAssignableTo<
-	TypeOnly<old.ISharedMatrix>,
-	TypeOnly<current.ISharedMatrix>
->;
+declare type old_as_current_for_Interface_ISharedMatrix = requireAssignableTo<TypeOnly<old.ISharedMatrix>, TypeOnly<current.ISharedMatrix>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -109,10 +79,7 @@ declare type old_as_current_for_Interface_ISharedMatrix = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ISharedMatrix": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISharedMatrix = requireAssignableTo<
-	TypeOnly<current.ISharedMatrix>,
-	TypeOnly<old.ISharedMatrix>
->;
+declare type current_as_old_for_Interface_ISharedMatrix = requireAssignableTo<TypeOnly<current.ISharedMatrix>, TypeOnly<old.ISharedMatrix>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -121,11 +88,7 @@ declare type current_as_old_for_Interface_ISharedMatrix = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ISharedMatrixEvents": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISharedMatrixEvents =
-	requireAssignableTo<
-		TypeOnly<old.ISharedMatrixEvents<never>>,
-		TypeOnly<current.ISharedMatrixEvents<never>>
-	>;
+declare type old_as_current_for_Interface_ISharedMatrixEvents = requireAssignableTo<TypeOnly<old.ISharedMatrixEvents<never>>, TypeOnly<current.ISharedMatrixEvents<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -134,11 +97,7 @@ declare type old_as_current_for_Interface_ISharedMatrixEvents =
  * typeValidation.broken:
  * "Interface_ISharedMatrixEvents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISharedMatrixEvents =
-	requireAssignableTo<
-		TypeOnly<current.ISharedMatrixEvents<never>>,
-		TypeOnly<old.ISharedMatrixEvents<never>>
-	>;
+declare type current_as_old_for_Interface_ISharedMatrixEvents = requireAssignableTo<TypeOnly<current.ISharedMatrixEvents<never>>, TypeOnly<old.ISharedMatrixEvents<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -147,10 +106,7 @@ declare type current_as_old_for_Interface_ISharedMatrixEvents =
  * typeValidation.broken:
  * "Interface_IUndoConsumer": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IUndoConsumer = requireAssignableTo<
-	TypeOnly<old.IUndoConsumer>,
-	TypeOnly<current.IUndoConsumer>
->;
+declare type old_as_current_for_Interface_IUndoConsumer = requireAssignableTo<TypeOnly<old.IUndoConsumer>, TypeOnly<current.IUndoConsumer>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -159,10 +115,7 @@ declare type old_as_current_for_Interface_IUndoConsumer = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IUndoConsumer": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IUndoConsumer = requireAssignableTo<
-	TypeOnly<current.IUndoConsumer>,
-	TypeOnly<old.IUndoConsumer>
->;
+declare type current_as_old_for_Interface_IUndoConsumer = requireAssignableTo<TypeOnly<current.IUndoConsumer>, TypeOnly<old.IUndoConsumer>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -171,10 +124,7 @@ declare type current_as_old_for_Interface_IUndoConsumer = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_MatrixItem": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_MatrixItem = requireAssignableTo<
-	TypeOnly<old.MatrixItem<never>>,
-	TypeOnly<current.MatrixItem<never>>
->;
+declare type old_as_current_for_TypeAlias_MatrixItem = requireAssignableTo<TypeOnly<old.MatrixItem<never>>, TypeOnly<current.MatrixItem<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -183,10 +133,7 @@ declare type old_as_current_for_TypeAlias_MatrixItem = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_MatrixItem": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_MatrixItem = requireAssignableTo<
-	TypeOnly<current.MatrixItem<never>>,
-	TypeOnly<old.MatrixItem<never>>
->;
+declare type current_as_old_for_TypeAlias_MatrixItem = requireAssignableTo<TypeOnly<current.MatrixItem<never>>, TypeOnly<old.MatrixItem<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -195,10 +142,7 @@ declare type current_as_old_for_TypeAlias_MatrixItem = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_SharedMatrix": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_SharedMatrix = requireAssignableTo<
-	TypeOnly<old.SharedMatrix>,
-	TypeOnly<current.SharedMatrix>
->;
+declare type old_as_current_for_TypeAlias_SharedMatrix = requireAssignableTo<TypeOnly<old.SharedMatrix>, TypeOnly<current.SharedMatrix>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -207,10 +151,7 @@ declare type old_as_current_for_TypeAlias_SharedMatrix = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_SharedMatrix": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_SharedMatrix = requireAssignableTo<
-	TypeOnly<current.SharedMatrix>,
-	TypeOnly<old.SharedMatrix>
->;
+declare type current_as_old_for_TypeAlias_SharedMatrix = requireAssignableTo<TypeOnly<current.SharedMatrix>, TypeOnly<old.SharedMatrix>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -219,7 +160,4 @@ declare type current_as_old_for_TypeAlias_SharedMatrix = requireAssignableTo<
  * typeValidation.broken:
  * "Variable_SharedMatrix": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_SharedMatrix = requireAssignableTo<
-	TypeOnly<typeof current.SharedMatrix>,
-	TypeOnly<typeof old.SharedMatrix>
->;
+declare type current_as_old_for_Variable_SharedMatrix = requireAssignableTo<TypeOnly<typeof current.SharedMatrix>, TypeOnly<typeof old.SharedMatrix>>

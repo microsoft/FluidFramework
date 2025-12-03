@@ -208,13 +208,22 @@ describe("Presence", () => {
 				if (validatorCallExpected === "once") {
 					validatorCallExpected = false;
 				} else {
-					assert(validatorCallExpected, "point3DValidatorFunction should not be called at this time");
+					assert(
+						validatorCallExpected,
+						"point3DValidatorFunction should not be called at this time",
+					);
 				}
 				return typeof d === "object" ? (d as Point3D) : undefined;
 			});
 
 			// Create Presence joining session as attendeeId-2. Tests will act as attendee2
-			({ presence, processSignal } = prepareConnectedPresence(runtime, attendeeId2, connectionId2, clock, logger));
+			({ presence, processSignal } = prepareConnectedPresence(
+				runtime,
+				attendeeId2,
+				connectionId2,
+				clock,
+				logger,
+			));
 
 			// Pass a little time (to mimic reality)
 			clock.tick(10);
@@ -342,7 +351,11 @@ describe("Presence", () => {
 				it("when accessing .local", () => {
 					assert.equal(point3DValidatorFunction.callCount, 0, "initial call count is wrong");
 					assert.deepEqual(latest.local, { x: 0, y: 0, z: 0 });
-					assert.equal(point3DValidatorFunction.callCount, 0, "validator was called on local data");
+					assert.equal(
+						point3DValidatorFunction.callCount,
+						0,
+						"validator was called on local data",
+					);
 				});
 
 				it("when remote data is updated", () => {
@@ -413,8 +426,16 @@ describe("Presence", () => {
 
 					// Reading the remote value should cause the validator to be called a second time since the data has been changed.
 					const data2 = latest.getRemote(remoteAttendee);
-					assert.deepEqual(data2.value(), { x: 50, y: 60, z: 70 }, "updated remote value is wrong");
-					assert.equal(point3DValidatorFunction.callCount, 2, "validator should be called twice");
+					assert.deepEqual(
+						data2.value(),
+						{ x: 50, y: 60, z: 70 },
+						"updated remote value is wrong",
+					);
+					assert.equal(
+						point3DValidatorFunction.callCount,
+						2,
+						"validator should be called twice",
+					);
 				});
 
 				it("on .value() call when remote data changes from valid to invalid", () => {
@@ -438,7 +459,11 @@ describe("Presence", () => {
 					// Reading the remote value should cause the validator to be called a second time and return undefined
 					const data2 = latest.getRemote(remoteAttendee);
 					assert.equal(data2.value(), undefined, "invalid data should return undefined");
-					assert.equal(point3DValidatorFunction.callCount, 2, "validator should be called twice");
+					assert.equal(
+						point3DValidatorFunction.callCount,
+						2,
+						"validator should be called twice",
+					);
 				});
 
 				it("on .value() call when remote data changes from invalid to valid", () => {
@@ -473,8 +498,16 @@ describe("Presence", () => {
 
 					// Reading the remote value should cause the validator to be called a second time and return valid data
 					const data2 = latest.getRemote(remoteAttendee);
-					assert.deepEqual(data2.value(), { x: 100, y: 200, z: 300 }, "valid data should be returned");
-					assert.equal(point3DValidatorFunction.callCount, 2, "validator should be called twice");
+					assert.deepEqual(
+						data2.value(),
+						{ x: 100, y: 200, z: 300 },
+						"valid data should be returned",
+					);
+					assert.equal(
+						point3DValidatorFunction.callCount,
+						2,
+						"validator should be called twice",
+					);
 				});
 
 				it("on .value() call when remote data changes from invalid to invalid", () => {
@@ -510,7 +543,11 @@ describe("Presence", () => {
 					// Reading the remote value should cause the validator to be called a second time and still return undefined
 					const data2 = latest.getRemote(remoteAttendee);
 					assert.equal(data2.value(), undefined, "invalid data should return undefined");
-					assert.equal(point3DValidatorFunction.callCount, 2, "validator should be called twice");
+					assert.equal(
+						point3DValidatorFunction.callCount,
+						2,
+						"validator should be called twice",
+					);
 				});
 			});
 		});
@@ -675,7 +712,11 @@ describe("Presence", () => {
 						counter++;
 					});
 					// Make sure forEach iterated through all keys
-					assert.equal(counter, expectedValues.length, "counter should match expected values length");
+					assert.equal(
+						counter,
+						expectedValues.length,
+						"counter should match expected values length",
+					);
 				});
 			});
 
@@ -739,19 +780,31 @@ describe("Presence", () => {
 							// Verify
 							assert.equal(point3DValidatorFunction.callCount, 1, "validator was not called");
 							// double check value
-							assert.deepEqual(valueData, expectedValues[counter][1], `value at key "${key}" is wrong`);
+							assert.deepEqual(
+								valueData,
+								expectedValues[counter][1],
+								`value at key "${key}" is wrong`,
+							);
 
 							// Act - second call
 							// Access value a second time; should not affect validator call count
 							const valueDataRedux = value?.value();
 							// Verify
-							assert.equal(point3DValidatorFunction.callCount, 1, "validator was called a second time");
+							assert.equal(
+								point3DValidatorFunction.callCount,
+								1,
+								"validator was called a second time",
+							);
 							assert.strictEqual(valueDataRedux, valueData, `value at key "${key}" is wrong`);
 
 							counter++;
 						});
 						// Make sure forEach iterated through all keys
-						assert.equal(counter, expectedValues.length, "counter should match expected values length");
+						assert.equal(
+							counter,
+							expectedValues.length,
+							"counter should match expected values length",
+						);
 					});
 				}
 
@@ -822,7 +875,11 @@ describe("Presence", () => {
 						);
 
 						// Verify no call yet
-						assert.equal(point3DValidatorFunction.callCount, 0, "call count after update is wrong");
+						assert.equal(
+							point3DValidatorFunction.callCount,
+							0,
+							"call count after update is wrong",
+						);
 
 						// Reading the remote value should cause the validator to be
 						// called since the data has been changed.
@@ -834,8 +891,16 @@ describe("Presence", () => {
 						const updatedKey1Value = updatedMap.get("key1")?.value();
 
 						// Verify
-						assert.equal(point3DValidatorFunction.callCount, 1, "validator should be called twice");
-						assert.deepEqual(updatedKey1Value, expectedValue, "updated remote key value is wrong");
+						assert.equal(
+							point3DValidatorFunction.callCount,
+							1,
+							"validator should be called twice",
+						);
+						assert.deepEqual(
+							updatedKey1Value,
+							expectedValue,
+							"updated remote key value is wrong",
+						);
 					});
 				}
 			});
@@ -848,7 +913,11 @@ describe("Presence", () => {
 					validatorCallExpected = "once";
 					// Read key1 value - should call validator once
 					const key1Value = originalMap.get("key1")?.value();
-					assert.equal(point3DValidatorFunction.callCount, 1, "validator should be called once for key1");
+					assert.equal(
+						point3DValidatorFunction.callCount,
+						1,
+						"validator should be called once for key1",
+					);
 					assert.deepEqual(key1Value, { x: 1, y: 1, z: 1 });
 
 					// Update key2 (different key) with new data, keeping key1 unchanged
@@ -875,7 +944,11 @@ describe("Presence", () => {
 					// Verify
 					// Read key1 value (again) but from updated map - should NOT call validator again since key1 data hasn't changed
 					const key1ValueRedux = key1Redux.value();
-					assert.equal(point3DValidatorFunction.callCount, 1, "validator should still be called only once for key1");
+					assert.equal(
+						point3DValidatorFunction.callCount,
+						1,
+						"validator should still be called only once for key1",
+					);
 					assert.strictEqual(key1ValueRedux, key1Value, "key1 value should remain unchanged");
 
 					// Test verification
@@ -890,14 +963,22 @@ describe("Presence", () => {
 						1,
 						"validator should be called once for original key2 value read",
 					);
-					assert.deepEqual(key2Value, { "x": 2, "y": 2, "z": 2 }, "key2 value from original map should be unchanged");
+					assert.deepEqual(
+						key2Value,
+						{ "x": 2, "y": 2, "z": 2 },
+						"key2 value from original map should be unchanged",
+					);
 					key2Value = updatedMap.get("key2")?.value();
 					assert.equal(
 						point3DValidatorFunction.callCount,
 						2,
 						"validator should be called second time for updated key2 value read",
 					);
-					assert.deepEqual(key2Value, { "x": 4, "y": 4, "z": 4 }, "key2 should have updated value");
+					assert.deepEqual(
+						key2Value,
+						{ "x": 4, "y": 4, "z": 4 },
+						"key2 should have updated value",
+					);
 				});
 			});
 		});

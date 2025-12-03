@@ -5,13 +5,10 @@
 
 import { Picker } from "emoji-picker-element";
 
-import type { FocusTracker, IFocusState } from "./FocusTracker.js";
-import type { MouseTracker } from "./MouseTracker.js";
+import { FocusTracker, type IFocusState } from "./FocusTracker.js";
+import { MouseTracker } from "./MouseTracker.js";
 
-export function renderFocusPresence(
-	focusTracker: FocusTracker,
-	div: HTMLDivElement,
-) {
+export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
 	const wrapperDiv = document.createElement("div");
 	wrapperDiv.style.textAlign = "left";
 	wrapperDiv.style.margin = "10px";
@@ -56,10 +53,7 @@ export function renderMousePresence(
 	const onPositionChanged = () => {
 		div.innerHTML = "";
 
-		for (const [
-			sessionClient,
-			mousePosition,
-		] of mouseTracker.getMousePresences()) {
+		for (const [sessionClient, mousePosition] of mouseTracker.getMousePresences()) {
 			if (focusTracker.getFocusPresences().get(sessionClient) === true) {
 				const posDiv = document.createElement("div");
 				posDiv.textContent = `/${sessionClient.attendeeId}`;
@@ -76,10 +70,7 @@ export function renderMousePresence(
 	mouseTracker.on("mousePositionChanged", onPositionChanged);
 }
 
-export function renderControlPanel(
-	mouseTracker: MouseTracker,
-	controlPanel: HTMLDivElement,
-) {
+export function renderControlPanel(mouseTracker: MouseTracker, controlPanel: HTMLDivElement) {
 	controlPanel.style.paddingBottom = "10px";
 	const slider = document.createElement("input");
 	slider.type = "range";

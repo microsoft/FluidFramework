@@ -13,11 +13,8 @@ import type {
 
 import { mixinMonitoringContext } from "../config.js";
 import { TelemetryDataTag, tagCodeArtifacts, tagData } from "../logger.js";
-import type {
-	ITelemetryGenericEventExt,
-	ITelemetryLoggerExt,
-} from "../telemetryTypes.js";
-import { createSampledLogger, type IEventSampler } from "../utils.js";
+import type { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "../telemetryTypes.js";
+import { type IEventSampler, createSampledLogger } from "../utils.js";
 
 describe("tagData", () => {
 	it("tagData with data", () => {
@@ -31,9 +28,7 @@ describe("tagData", () => {
 		assert.deepStrictEqual(taggedData, expected);
 	});
 	it("tagData with undefined", () => {
-		const taggedData = tagData(TelemetryDataTag.CodeArtifact, {
-			none: undefined,
-		});
+		const taggedData = tagData(TelemetryDataTag.CodeArtifact, { none: undefined });
 		const expected: Partial<typeof taggedData> = {};
 		assert.deepStrictEqual(taggedData, expected);
 	});
@@ -80,24 +75,17 @@ describe("Sampling", () => {
 			},
 		};
 
-		const configProvider = (
-			settings: Record<string, ConfigTypes>,
-		): IConfigProviderBase => ({
+		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		});
 
-		return mixinMonitoringContext(
-			logger,
-			configProvider(configDictionary ?? {}),
-		).logger;
+		return mixinMonitoringContext(logger, configProvider(configDictionary ?? {})).logger;
 	}
 
 	/**
 	 * Creates an event sampler that uses a systematic approach to sampling (Sampling every nth event)
 	 */
-	function createSystematicEventSampler(options: {
-		samplingRate: number;
-	}): IEventSampler {
+	function createSystematicEventSampler(options: { samplingRate: number }): IEventSampler {
 		let eventCount = -1;
 		return {
 			sample: (): boolean => {
@@ -132,14 +120,8 @@ describe("Sampling", () => {
 
 		const totalEventCount = 15;
 		for (let i = 0; i < totalEventCount; i++) {
-			loggerWithoutSampling.send({
-				category: "generic",
-				eventName: "noSampling",
-			});
-			loggerWithEvery5Sampling.send({
-				category: "generic",
-				eventName: "oneEveryFive",
-			});
+			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
+			loggerWithEvery5Sampling.send({ category: "generic", eventName: "oneEveryFive" });
 		}
 		assert.equal(
 			events.filter((event) => event.eventName === "noSampling").length,
@@ -162,10 +144,7 @@ describe("Sampling", () => {
 
 		const totalEventCount = 15;
 		for (let i = 0; i < totalEventCount; i++) {
-			loggerWithoutSampling.send({
-				category: "generic",
-				eventName: "noSampling",
-			});
+			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
 		}
 		assert.equal(
 			events.filter((event) => event.eventName === "noSampling").length,
@@ -184,10 +163,7 @@ describe("Sampling", () => {
 
 		const totalEventCount = 15;
 		for (let i = 0; i < totalEventCount; i++) {
-			loggerWithoutSampling.send({
-				category: "generic",
-				eventName: "noSampling",
-			});
+			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
 		}
 		assert.equal(
 			events.filter((event) => event.eventName === "noSampling").length,
@@ -214,14 +190,8 @@ describe("Sampling", () => {
 
 		const totalEventCount = 15;
 		for (let i = 0; i < totalEventCount; i++) {
-			loggerWithoutSampling.send({
-				category: "generic",
-				eventName: "noSampling",
-			});
-			loggerWithEvery5Sampling.send({
-				category: "generic",
-				eventName: "oneEveryFive",
-			});
+			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
+			loggerWithEvery5Sampling.send({ category: "generic", eventName: "oneEveryFive" });
 		}
 		assert.equal(
 			events.filter((event) => event.eventName === "noSampling").length,
@@ -256,18 +226,9 @@ describe("Sampling", () => {
 
 		const totalEventCount = 15;
 		for (let i = 0; i < totalEventCount; i++) {
-			loggerWithoutSampling.send({
-				category: "generic",
-				eventName: "noSampling",
-			});
-			loggerWithEvery3Sampling.send({
-				category: "generic",
-				eventName: "oneEveryThree",
-			});
-			loggerWithEvery5Sampling.send({
-				category: "generic",
-				eventName: "oneEveryFive",
-			});
+			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
+			loggerWithEvery3Sampling.send({ category: "generic", eventName: "oneEveryThree" });
+			loggerWithEvery5Sampling.send({ category: "generic", eventName: "oneEveryFive" });
 		}
 
 		assert.equal(
@@ -310,10 +271,7 @@ describe("Sampling", () => {
 			appMode: string,
 		): boolean => {
 			const shouldSample =
-				appNumber1 < 1 &&
-				appNumber2 > 1 &&
-				appBoolean1 === true &&
-				appMode === "ready";
+				appNumber1 < 1 && appNumber2 > 1 && appBoolean1 === true && appMode === "ready";
 
 			return shouldSample;
 		};
@@ -358,9 +316,7 @@ describe("Sampling", () => {
 			});
 		}
 
-		const emittedEvents = events.filter(
-			(event) => event.eventName === eventName,
-		);
+		const emittedEvents = events.filter((event) => event.eventName === eventName);
 		assert.equal(emittedEvents.length === 10, true);
 		for (const event of emittedEvents) {
 			const typedEvent = event as ExampleEvent;
@@ -381,11 +337,7 @@ describe("tagCodeArtifacts", () => {
 	it("tagCodeArtifacts with undefined", () => {
 		const taggedData = tagCodeArtifacts({ node: undefined });
 		const expected: Partial<typeof taggedData> = {};
-		assert.deepStrictEqual(
-			taggedData,
-			expected,
-			"undefined not tagged as expected",
-		);
+		assert.deepStrictEqual(taggedData, expected, "undefined not tagged as expected");
 	});
 
 	it("tagCodeArtifacts with TelemetryBaseEventPropertyType properties", () => {

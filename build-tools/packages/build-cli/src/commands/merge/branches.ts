@@ -10,10 +10,10 @@ import chalk from "picocolors";
 
 import {
 	BaseCommand,
+	type Repository,
 	createPullRequest,
 	getCommitInfo,
 	pullRequestExists,
-	type Repository,
 } from "../../library/index.js";
 
 interface CleanupBranch {
@@ -28,8 +28,7 @@ interface CleanupBranch {
  * Later, it creates a pull request based on the batch size passed.
  */
 export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
-	static readonly description =
-		"Sync branches depending on the batch size passed";
+	static readonly description = "Sync branches depending on the batch size passed";
 
 	// This command is deprecated and should no longer be used.
 	static readonly state = "deprecated";
@@ -68,15 +67,13 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			multiple: true,
 		}),
 		createPr: Flags.boolean({
-			description:
-				"Use --no-createPr to skip creating a PR. Useful for testing.",
+			description: "Use --no-createPr to skip creating a PR. Useful for testing.",
 			hidden: true,
 			default: true,
 			allowNo: true,
 		}),
 		checkPr: Flags.boolean({
-			description:
-				"Use --no-checkPr to skip checking for a PR. Useful for testing.",
+			description: "Use --no-checkPr to skip checking for a PR. Useful for testing.",
 			hidden: true,
 			default: true,
 			allowNo: true,
@@ -122,9 +119,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		// eslint-disable-next-line unicorn/no-await-expression-member
 		this.initialBranch = (await gitRepo.gitClient.status()).current ?? "main";
 
-		this.remote =
-			flags.remote ??
-			(await gitRepo.getRemote(gitRepo.upstreamRemotePartialUrl));
+		this.remote = flags.remote ?? (await gitRepo.getRemote(gitRepo.upstreamRemotePartialUrl));
 		if (this.remote === undefined) {
 			this.error("Remote for upstream repo not found", { exit: 1 });
 		}
@@ -132,13 +127,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 
 		if (flags.checkPr) {
 			// Check if a branch integration PR exists already, based on its **name**.
-			const prData = await pullRequestExists(
-				flags.pat,
-				prTitle,
-				owner,
-				repo,
-				this.logger,
-			);
+			const prData = await pullRequestExists(flags.pat, prTitle, owner, repo, this.logger);
 
 			if (prData.found) {
 				this.log(`Found open PR #${prData.number} at ${prData.url}`);
@@ -164,10 +153,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			`${lastMergedCommit} is the last merged commit id between ${flags.source} and ${flags.target}`,
 		);
 
-		const unmergedCommitList: string[] = await gitRepo.revList(
-			lastMergedCommit,
-			flags.source,
-		);
+		const unmergedCommitList: string[] = await gitRepo.revList(lastMergedCommit, flags.source);
 
 		if (unmergedCommitList.length === 0) {
 			this.log(
@@ -181,9 +167,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		this.log(
 			`There are ${unmergedCommitList.length} unmerged commits between the ${flags.source} and ${flags.target} branches`,
 		);
-		this.verbose(
-			`Unmerged commit list: ${unmergedCommitList.map((c) => shortCommit(c))}`,
-		);
+		this.verbose(`Unmerged commit list: ${unmergedCommitList.map((c) => shortCommit(c))}`);
 
 		/**
 		 * tempBranchToCheckConflicts is used to check the conflicts of each commit with the target branch.
@@ -212,15 +196,9 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		);
 
 		// Check out a new temp branch at the same commit as the target branch.
-		await gitRepo.gitClient.checkoutBranch(
-			tempBranchToCheckConflicts,
-			remoteTargetBranch,
-		);
+		await gitRepo.gitClient.checkoutBranch(tempBranchToCheckConflicts, remoteTargetBranch);
 
-		const commitBatchSize = Math.min(
-			flags.batchSize,
-			unmergedCommitList.length,
-		);
+		const commitBatchSize = Math.min(flags.batchSize, unmergedCommitList.length);
 		const [commitListHasConflicts, conflictingCommitIndex] = await hasConflicts(
 			unmergedCommitList.slice(0, commitBatchSize),
 			gitRepo,
@@ -267,20 +245,12 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		);
 		await gitRepo.gitClient.checkoutBranch(mergeBranch, prHeadCommit);
 		// Clean up the local mergeBranch in case of a failure.
-		this.branchesToCleanup.push({
-			branch: mergeBranch,
-			local: true,
-			remote: false,
-		});
+		this.branchesToCleanup.push({ branch: mergeBranch, local: true, remote: false });
 
 		// Delete the temp branch we created earlier. It's safe to delete the branch now because we checked out a new branch
 		// in the previous step.
 		this.verbose(`Deleting temp branch: ${tempBranchToCheckConflicts}`);
-		await gitRepo.gitClient.branch([
-			"--delete",
-			tempBranchToCheckConflicts,
-			"--force",
-		]);
+		await gitRepo.gitClient.branch(["--delete", tempBranchToCheckConflicts, "--force"]);
 
 		// If we determined that the PR won't conflict, check out the target branch (with a temp branch) and merge that with
 		// mergeBranch, which is the source branch we want to merge. We will create the PR at the new merge commit; in other
@@ -340,9 +310,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 		const assignee: string = commitInfo?.data.author.login;
 
-		this.info(
-			`Creating PR for commit id ${prHeadCommit} assigned to ${assignee}`,
-		);
+		this.info(`Creating PR for commit id ${prHeadCommit} assigned to ${assignee}`);
 		const prObject = {
 			token: flags.pat,
 			owner,
@@ -369,11 +337,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			} catch (error: unknown) {
 				// There was an error when creating the pull request, so clean up the remote branch.
 				this.errorLog(`Error creating pull request: ${error}`);
-				this.branchesToCleanup.push({
-					branch: mergeBranch,
-					local: true,
-					remote: true,
-				});
+				this.branchesToCleanup.push({ branch: mergeBranch, local: true, remote: true });
 				throw error;
 			}
 			this.log(`Opened pull request ${prNumber} for commit id ${prHeadCommit}`);
@@ -397,11 +361,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			throw err;
 		}
 
-		if (
-			this.flags.cleanup === true &&
-			err.exitCode !== undefined &&
-			err.exitCode !== 0
-		) {
+		if (this.flags.cleanup === true && err.exitCode !== undefined && err.exitCode !== 0) {
 			await this.doCleanup();
 		}
 
@@ -437,9 +397,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			try {
 				await gitRepo?.gitClient.push(this.remote, branch, ["--delete"]);
 			} catch {
-				this.verbose(
-					`CLEANUP: FAILED to delete remote branch ${this.remote}/${branch}`,
-				);
+				this.verbose(`CLEANUP: FAILED to delete remote branch ${this.remote}/${branch}`);
 			}
 		};
 		for (const branch of this.branchesToCleanup.filter((b) => b.remote)) {

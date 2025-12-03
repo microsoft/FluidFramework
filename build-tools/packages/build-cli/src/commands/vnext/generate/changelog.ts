@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { setVersion } from "@fluid-tools/build-infrastructure";
 import { ux } from "@oclif/core";
 import { command as execCommand } from "execa";
 import { parse } from "semver";
+
+import { setVersion } from "@fluid-tools/build-infrastructure";
 import { releaseGroupNameFlag, semverFlag } from "../../../flags.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { updateChangelogs } from "../../../library/changelogs.js";
@@ -48,33 +49,24 @@ export default class GenerateChangeLogCommand extends BaseCommandWithBuildProjec
 	public async run(): Promise<void> {
 		const buildProject = this.getBuildProject();
 
-		const { releaseGroup: releaseGroupName, version: versionOverride } =
-			this.flags;
+		const { releaseGroup: releaseGroupName, version: versionOverride } = this.flags;
 
 		const releaseGroup = buildProject.releaseGroups.get(releaseGroupName);
 		if (releaseGroup === undefined) {
-			this.error(`Can't find release group named '${releaseGroupName}'`, {
-				exit: 1,
-			});
+			this.error(`Can't find release group named '${releaseGroupName}'`, { exit: 1 });
 		}
 
 		const releaseGroupRoot = releaseGroup.workspace.directory;
 		const releaseGroupVersion = parse(releaseGroup.version);
 		if (releaseGroupVersion === null) {
-			this.error(
-				`Version isn't a valid semver string: '${releaseGroup.version}'`,
-				{
-					exit: 1,
-				},
-			);
+			this.error(`Version isn't a valid semver string: '${releaseGroup.version}'`, {
+				exit: 1,
+			});
 		}
 
 		// Strips additional custom metadata from the source files before we call `changeset version`,
 		// because the changeset tools - like @changesets/cli - only work on canonical changesets.
-		const bumpType = await canonicalizeChangesets(
-			releaseGroupRoot,
-			this.logger,
-		);
+		const bumpType = await canonicalizeChangesets(releaseGroupRoot, this.logger);
 
 		// The `changeset version` command applies the changesets to the changelogs
 		ux.action.start("Running `changeset version`");

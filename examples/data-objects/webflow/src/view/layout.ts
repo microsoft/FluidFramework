@@ -3,40 +3,33 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import-x/no-nodejs-modules
+import { strict as assert } from "assert";
+
 import { EventEmitter } from "@fluid-example/example-utils";
+import { MergeTreeMaintenanceType, segmentIsRemoved } from "@fluidframework/merge-tree/legacy";
 import {
-	MergeTreeMaintenanceType,
-	segmentIsRemoved,
-} from "@fluidframework/merge-tree/legacy";
-import type {
 	ISegment,
 	LocalReferencePosition,
 	ReferencePosition,
 	SequenceEvent,
 } from "@fluidframework/sequence/legacy";
-// eslint-disable-next-line import-x/no-nodejs-modules
-import { strict as assert } from "assert";
 
-import type { FlowDocument } from "../document/index.js";
+import { FlowDocument } from "../document/index.js";
 import {
-	clamp,
 	Dom,
+	TagName,
+	clamp,
 	done,
 	emptyObject,
 	getSegmentRange,
 	hasTagName,
 	isTextNode,
-	type TagName,
 } from "../util/index.js";
 import { extractRef, updateRef } from "../util/localref.js";
 
 import { debug } from "./debug.js";
-import {
-	BootstrapFormatter,
-	type Formatter,
-	type IFormatterState,
-	type RootFormatter,
-} from "./formatter.js";
+import { BootstrapFormatter, Formatter, IFormatterState, RootFormatter } from "./formatter.js";
 
 interface ILayoutCursor {
 	parent: Node;
@@ -52,10 +45,7 @@ class LayoutCheckpoint {
 	public readonly formatStack: readonly Readonly<IFormatInfo>[];
 	public readonly cursor: Readonly<ILayoutCursor>;
 
-	constructor(
-		formatStack: readonly IFormatInfo[],
-		cursor: Readonly<ILayoutCursor>,
-	) {
+	constructor(formatStack: readonly IFormatInfo[], cursor: Readonly<ILayoutCursor>) {
 		this.formatStack = Object.freeze(formatStack.slice(0));
 		this.cursor = Object.freeze({ ...cursor });
 	}
@@ -112,10 +102,7 @@ export class Layout extends EventEmitter {
 	private emitted: Set<Node>;
 	private pending: Set<Node> = new Set();
 	private readonly initialCheckpoint: LayoutCheckpoint;
-	private readonly segmentToCheckpoint = new WeakMap<
-		ISegment,
-		LayoutCheckpoint
-	>();
+	private readonly segmentToCheckpoint = new WeakMap<ISegment, LayoutCheckpoint>();
 	private readonly nodeToSegmentMap = new WeakMap<Node, ISegment>();
 	private readonly segmentToEmitted = new WeakMap<ISegment, Set<Node>>();
 
@@ -158,10 +145,7 @@ export class Layout extends EventEmitter {
 			scheduled = true;
 		};
 
-		this.initialCheckpoint = new LayoutCheckpoint([], {
-			parent: this.slot,
-			previous: null,
-		});
+		this.initialCheckpoint = new LayoutCheckpoint([], { parent: this.slot, previous: null });
 		this.rootFormatInfo = Object.freeze({
 			formatter: new BootstrapFormatter(formatter),
 			state: emptyObject,
@@ -249,10 +233,7 @@ export class Layout extends EventEmitter {
 						// If the same 'FormatInfo' object is on the stack, it implies the stack wasn't popped.
 						// Sanity check that the FormatInfo frame contains the same contents as before.
 						assert.deepStrictEqual(this.formatStack[index].state, state);
-						assert.deepStrictEqual(
-							this.formatStack[index].formatter,
-							formatter,
-						);
+						assert.deepStrictEqual(this.formatStack[index].formatter, formatter);
 
 						this.formatStack[index] = Object.freeze({
 							formatter,
@@ -280,12 +261,7 @@ export class Layout extends EventEmitter {
 			//
 			//       To handle this case, we include 'end >= length' in the conditional below.
 			if (end >= length || this.segmentEnd >= length) {
-				debug(
-					"Begin EOT: %o@%d (length=%d)",
-					this.segment,
-					this.segmentEnd,
-					doc.length,
-				);
+				debug("Begin EOT: %o@%d (length=%d)", this.segment, this.segmentEnd, doc.length);
 				this.beginSegment(length, eotSegment, 0, 0);
 				this.popFormat(this.formatStack.length);
 				this.endSegment(end);
@@ -346,16 +322,12 @@ export class Layout extends EventEmitter {
 
 		// If we find the same kind of formatter at the expected depth, pass the previous output state.
 		const prevOut = (
-			candidate && candidate.formatter === formatter
-				? candidate.state
-				: undefined
+			candidate && candidate.formatter === formatter ? candidate.state : undefined
 		) as TState;
 
 		const state = formatter.begin(this, init, prevOut);
 
-		this.formatStack.push(
-			Object.freeze({ formatter, state: Object.freeze(state) }),
-		);
+		this.formatStack.push(Object.freeze({ formatter, state: Object.freeze(state) }));
 	}
 
 	public popFormat(count = 1) {
@@ -395,11 +367,7 @@ export class Layout extends EventEmitter {
 		// Note: Removing and inserting a new text node has the side-effect of reseting the caret blink.
 		//       Because text nodes are always leaves, this is harmless.
 		let existing = this.next;
-		if (
-			!!existing &&
-			isTextNode(existing) &&
-			this.nodeToSegment(existing) === this.segment
-		) {
+		if (!!existing && isTextNode(existing) && this.nodeToSegment(existing) === this.segment) {
 			this.removeNode(existing);
 		}
 		existing = document.createTextNode(text);
@@ -462,17 +430,12 @@ export class Layout extends EventEmitter {
 			return { node: null, nodeOffset: NaN };
 		}
 
-		const result = this.segmentAndOffsetToNodeAndOffsetHelper(
-			checkpoint.cursor,
-			offset,
-		);
+		const result = this.segmentAndOffsetToNodeAndOffsetHelper(checkpoint.cursor, offset);
 
 		if (result) {
 			debug(
 				"@%d %o:%d -> %o:%d",
-				segment === eotSegment
-					? this.doc.length
-					: this.doc.getPosition(segment) + offset,
+				segment === eotSegment ? this.doc.length : this.doc.getPosition(segment) + offset,
 				segment,
 				offset,
 				result.node,
@@ -483,19 +446,14 @@ export class Layout extends EventEmitter {
 
 		debug(
 			"@%d %o:%d -> null:NaN",
-			segment === eotSegment
-				? this.doc.length
-				: this.doc.getPosition(segment) + offset,
+			segment === eotSegment ? this.doc.length : this.doc.getPosition(segment) + offset,
 			segment,
 			offset,
 		);
 		return { node: null, nodeOffset: NaN };
 	}
 
-	private segmentAndOffsetToNodeAndOffsetHelper(
-		cursor: ILayoutCursor,
-		offset: number,
-	) {
+	private segmentAndOffsetToNodeAndOffsetHelper(cursor: ILayoutCursor, offset: number) {
 		let _offset = offset;
 		let { previous: node } = cursor;
 
@@ -647,10 +605,7 @@ export class Layout extends EventEmitter {
 	private readonly onChange = (e: SequenceEvent) => {
 		debug("onChange(%o)", e);
 
-		(this.rootFormatInfo.formatter as RootFormatter<IFormatterState>).onChange(
-			this,
-			e,
-		);
+		(this.rootFormatInfo.formatter as RootFormatter<IFormatterState>).onChange(this, e);
 
 		// If the segment was removed, promptly remove any DOM nodes it emitted.
 		for (const { segment } of e.ranges) {
@@ -664,10 +619,7 @@ export class Layout extends EventEmitter {
 			this.removeSegment(e.deltaArgs.deltaSegments[1].segment);
 		}
 
-		this.invalidate(
-			e.first.position,
-			e.last.position + e.last.segment.cachedLength,
-		);
+		this.invalidate(e.first.position, e.last.position + e.last.segment.cachedLength);
 	};
 
 	private unionRef(

@@ -8,10 +8,7 @@ import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import type { IPromiseTimerResult } from "@fluidframework/core-utils/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
-import type {
-	IRetriableFailureError,
-	ISummaryCancellationToken,
-} from "./summarizerTypes.js";
+import type { ISummaryCancellationToken, IRetriableFailureError } from "./summarizerTypes.js";
 
 export type raceTimerResult<T> =
 	| { result: "done"; value: T }
@@ -33,9 +30,7 @@ export async function raceTimer<T>(
 	];
 	if (cancellationToken !== undefined) {
 		promises.push(
-			cancellationToken.waitCancelled.then(
-				() => ({ result: "cancelled" }) as const,
-			),
+			cancellationToken.waitCancelled.then(() => ({ result: "cancelled" }) as const),
 		);
 	}
 	return Promise.race(promises);
@@ -47,9 +42,7 @@ export async function raceTimer<T>(
  * @param stopReason - SummarizerStopReason
  * @returns `true` if the stop reason can run a last summary, otherwise `false`.
  */
-export function stopReasonCanRunLastSummary(
-	stopReason: SummarizerStopReason,
-): boolean {
+export function stopReasonCanRunLastSummary(stopReason: SummarizerStopReason): boolean {
 	return stopReason === "parentNotConnected";
 }
 
@@ -98,8 +91,7 @@ const summarizeErrors = {
 	 * it to storage, or submitting the op. It could be a result of
 	 * the client becoming disconnected while generating or an actual error.
 	 */
-	submitSummaryFailure:
-		"Error while generating, uploading, or submitting summary",
+	submitSummaryFailure: "Error while generating, uploading, or submitting summary",
 	/**
 	 * The summaryAckWaitTimeout time has elapsed before receiving the summarize op
 	 * sent by this summarize attempt. It is expected to be broadcast quickly.
@@ -129,10 +121,7 @@ export const getFailMessage = (errorCode: SummarizeErrorCode): string =>
 /**
  * Errors type for errors hit during summary that may be retriable.
  */
-export class RetriableSummaryError
-	extends LoggingError
-	implements IRetriableFailureError
-{
+export class RetriableSummaryError extends LoggingError implements IRetriableFailureError {
 	constructor(
 		message: string,
 		public readonly retryAfterSeconds?: number,

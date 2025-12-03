@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { type IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
-import type { InsertableTypedNode } from "@fluidframework/tree";
+import { IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
+import { InsertableTypedNode } from "@fluidframework/tree";
 
-import type { Row } from "./tree/index.js";
+import { Row } from "./tree/index.js";
 
 export function generateRow(random: IRandom): InsertableTypedNode<typeof Row> {
 	const [itemType, unitPrice, unitCost] = random.pick([
@@ -223,8 +223,8 @@ export function generateRow(random: IRandom): InsertableTypedNode<typeof Row> {
 
 	return {
 		"Order ID": random.integer(100000000, 999999999),
-		Region: region,
-		Country: country,
+		"Region": region,
+		"Country": country,
 		"Item Type": itemType,
 		"Sales Channel": random.pick(["Online", "Offline"]),
 		"Order Priority": random.pick(["H", "M", "L", "C"]),

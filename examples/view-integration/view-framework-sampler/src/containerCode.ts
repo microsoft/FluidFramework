@@ -4,16 +4,13 @@
  */
 
 import {
-	getDataStoreEntryPoint,
 	ModelContainerRuntimeFactory,
+	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
-import type { IContainer } from "@fluidframework/container-definitions/legacy";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
+import { IContainer } from "@fluidframework/container-definitions/legacy";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 
-import {
-	DiceRollerInstantiationFactory,
-	type IDiceRoller,
-} from "./dataObject.js";
+import { DiceRollerInstantiationFactory, IDiceRoller } from "./dataObject.js";
 
 /**
  * The data model for our application.
@@ -45,19 +42,14 @@ export class DiceRollerContainerRuntimeFactory extends ModelContainerRuntimeFact
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-		const diceRoller = await runtime.createDataStore(
-			DiceRollerInstantiationFactory.type,
-		);
+		const diceRoller = await runtime.createDataStore(DiceRollerInstantiationFactory.type);
 		await diceRoller.trySetAlias(diceRollerId);
 	}
 
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
-	protected async createModel(
-		runtime: IContainerRuntime,
-		container: IContainer,
-	) {
+	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
 		return new DiceRollerAppModel(
 			await getDataStoreEntryPoint<IDiceRoller>(runtime, diceRollerId),
 		);

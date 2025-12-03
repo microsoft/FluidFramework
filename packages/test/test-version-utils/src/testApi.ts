@@ -27,9 +27,9 @@ import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 // Data Runtime API
 import * as counter from "@fluidframework/counter/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
+import { SharedArray, SharedSignal } from "@fluidframework/legacy-dds/internal";
 import * as datastore from "@fluidframework/datastore/internal";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
-import { SharedArray, SharedSignal } from "@fluidframework/legacy-dds/internal";
 import * as map from "@fluidframework/map/internal";
 import { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
 import * as matrix from "@fluidframework/matrix/internal";
@@ -40,11 +40,13 @@ import * as registerCollection from "@fluidframework/register-collection/interna
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import * as sequence from "@fluidframework/sequence/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
-// TypeScript generates incorrect imports in the d.ts file if this is not included.
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { TestFluidObjectFactory } from "@fluidframework/test-utils/internal";
+
 // ContainerRuntime and Data Runtime API
 import * as semver from "semver";
+
+// TypeScript generates incorrect imports in the d.ts file if this is not included.
+import { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 // Since this project has a TypeScript configuration which errors on unused imports and types, to avoid the above import causing a compile error, a dummy usage is included.
 // For this to avoid a compile error, it also has to be used somehow: exporting it is the simplest way to "use" it.
@@ -190,10 +192,7 @@ export const DataRuntimeApi = {
 
 // #endregion
 
-async function loadLoader(
-	baseVersion: string,
-	requested?: number | string,
-): Promise<void> {
+async function loadLoader(baseVersion: string, requested?: number | string): Promise<void> {
 	const requestedStr = getRequestedVersion(baseVersion, requested);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return;
@@ -203,9 +202,7 @@ async function loadLoader(
 	if (!loaderCache.has(version)) {
 		const loader = {
 			version,
-			Loader: (
-				await loadPackage(modulePath, "@fluidframework/container-loader")
-			).Loader,
+			Loader: (await loadPackage(modulePath, "@fluidframework/container-loader")).Loader,
 		};
 		loaderCache.set(version, loader);
 	}
@@ -229,10 +226,8 @@ async function loadContainerRuntime(
 
 		/* eslint-disable @typescript-eslint/no-shadow */
 		const { ContainerRuntime } = containerRuntimePkg;
-		const {
-			BaseContainerRuntimeFactory,
-			ContainerRuntimeFactoryWithDefaultDataStore,
-		} = aqueductPkg;
+		const { BaseContainerRuntimeFactory, ContainerRuntimeFactoryWithDefaultDataStore } =
+			aqueductPkg;
 		/* eslint-enable @typescript-eslint/no-shadow */
 
 		const containerRuntime = {
@@ -335,10 +330,7 @@ async function loadDataRuntime(
 	}
 }
 
-async function loadDriver(
-	baseVersion: string,
-	requested?: number | string,
-): Promise<void> {
+async function loadDriver(baseVersion: string, requested?: number | string): Promise<void> {
 	const requestedStr = getRequestedVersion(baseVersion, requested);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return;
@@ -347,11 +339,7 @@ async function loadDriver(
 	const { version, modulePath } = checkInstalled(requestedStr);
 	if (!driverCache.has(version)) {
 		const [
-			{
-				LocalDocumentServiceFactory,
-				LocalResolver,
-				createLocalResolverCreateNewRequest,
-			},
+			{ LocalDocumentServiceFactory, LocalResolver, createLocalResolverCreateNewRequest },
 			{ LocalDeltaConnectionServer },
 			{
 				OdspDocumentServiceFactory,
@@ -434,17 +422,12 @@ export function getLoaderApi(requestedStr: string): typeof LoaderApi {
  *
  * @internal
  */
-export function getContainerRuntimeApi(
-	requestedStr: string,
-): typeof ContainerRuntimeApi {
+export function getContainerRuntimeApi(requestedStr: string): typeof ContainerRuntimeApi {
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return ContainerRuntimeApi;
 	}
 	const { version } = checkInstalled(requestedStr);
-	return (
-		containerRuntimeCache.get(version) ??
-		throwNotFound("ContainerRuntime", version)
-	);
+	return containerRuntimeCache.get(version) ?? throwNotFound("ContainerRuntime", version);
 }
 
 /**

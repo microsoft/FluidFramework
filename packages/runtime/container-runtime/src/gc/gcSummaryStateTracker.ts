@@ -5,21 +5,18 @@
 
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
+	type ISummaryTreeWithStats,
+	type ISummarizeResult,
 	gcBlobPrefix,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
-	type ISummarizeResult,
-	type ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
-import {
-	mergeStats,
-	SummaryTreeBuilder,
-} from "@fluidframework/runtime-utils/internal";
+import { SummaryTreeBuilder, mergeStats } from "@fluidframework/runtime-utils/internal";
 
 import type { IRefreshSummaryResult } from "../summary/index.js";
 
-import type { IGarbageCollectorConfigs, IGCStats } from "./gcDefinitions.js";
+import type { IGCStats, IGarbageCollectorConfigs } from "./gcDefinitions.js";
 import { generateSortedGCState } from "./gcHelpers.js";
 import type {
 	IGarbageCollectionSnapshotData,
@@ -101,9 +98,7 @@ export class GCSummaryStateTracker {
 		// Serialize and write deleted nodes, if any. This is done irrespective of whether sweep is enabled or not so
 		// to identify deleted nodes' usage.
 		const serializedDeletedNodes =
-			deletedNodes.size > 0
-				? JSON.stringify([...deletedNodes].sort())
-				: undefined;
+			deletedNodes.size > 0 ? JSON.stringify([...deletedNodes].sort()) : undefined;
 		// Serialize and write tombstones, if any.
 		const serializedTombstones =
 			tombstones.length > 0 ? JSON.stringify(tombstones.sort()) : undefined;
@@ -175,15 +170,8 @@ export class GCSummaryStateTracker {
 		const builder = new SummaryTreeBuilder();
 
 		// If the GC state hasn't changed, write a summary handle, else write a summary blob for it.
-		if (
-			this.latestSummaryData?.serializedGCState === serializedGCState &&
-			trackState
-		) {
-			builder.addHandle(
-				gcStateBlobKey,
-				SummaryType.Blob,
-				`/${gcTreeKey}/${gcStateBlobKey}`,
-			);
+		if (this.latestSummaryData?.serializedGCState === serializedGCState && trackState) {
+			builder.addHandle(gcStateBlobKey, SummaryType.Blob, `/${gcTreeKey}/${gcStateBlobKey}`);
 		} else {
 			builder.addBlob(gcStateBlobKey, serializedGCState);
 		}
@@ -212,8 +200,7 @@ export class GCSummaryStateTracker {
 
 		// If the deleted nodes hasn't changed, write a summary handle, else write a summary blob for it.
 		if (
-			this.latestSummaryData?.serializedDeletedNodes ===
-				serializedDeletedNodes &&
+			this.latestSummaryData?.serializedDeletedNodes === serializedDeletedNodes &&
 			trackState
 		) {
 			builder.addHandle(
@@ -230,9 +217,7 @@ export class GCSummaryStateTracker {
 	/**
 	 * Called to refresh the latest summary state. This happens when a pending summary is acked.
 	 */
-	public async refreshLatestSummary(
-		result: IRefreshSummaryResult,
-	): Promise<void> {
+	public async refreshLatestSummary(result: IRefreshSummaryResult): Promise<void> {
 		if (!this.configs.gcAllowed || !result.isSummaryTracked) {
 			return;
 		}

@@ -20,11 +20,9 @@ export function getCommentForBundleDiff(
 	bundleComparison: BundleComparison[],
 	baselineCommit: string,
 ) {
-	const diffDetails = bundleComparison
-		.map(getBundleDetails)
-		.reduce((prev, current) => {
-			return prev + current;
-		});
+	const diffDetails = bundleComparison.map(getBundleDetails).reduce((prev, current) => {
+		return prev + current;
+	});
 
 	const baselineFooter = getCommentFooter(baselineCommit);
 
@@ -75,8 +73,7 @@ function getBundleDetails(bundleDiff: BundleComparison) {
 		`Could not compute the total size for a bundle, missing metric with name ${totalSizeMetricName}`,
 	);
 
-	const totalParsedSizeDiff =
-		totalMetric.compare.parsedSize - totalMetric.baseline.parsedSize;
+	const totalParsedSizeDiff = totalMetric.compare.parsedSize - totalMetric.baseline.parsedSize;
 
 	const formattedTotalDiff = formatDiff(totalParsedSizeDiff);
 	const glyph = getColorGlyph(totalParsedSizeDiff);
@@ -118,9 +115,7 @@ function formatBytes(bytes: number) {
 	const exponent = Math.floor(Math.log(Math.abs(bytes)) / Math.log(base));
 
 	return (
-		parseFloat((bytes / base ** exponent).toFixed(decimals)) +
-		" " +
-		sizes[exponent]
+		parseFloat((bytes / Math.pow(base, exponent)).toFixed(decimals)) + " " + sizes[exponent]
 	);
 }
 

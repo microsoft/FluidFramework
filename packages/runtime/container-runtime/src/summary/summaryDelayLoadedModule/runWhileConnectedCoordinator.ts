@@ -6,18 +6,14 @@
 import type { SummarizerStopReason } from "@fluidframework/container-runtime-definitions/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 
-import type {
-	IConnectableRuntime,
-	ISummaryCancellationToken,
-} from "../summarizerTypes.js";
+import type { IConnectableRuntime, ISummaryCancellationToken } from "../summarizerTypes.js";
 
 /**
  * Similar to AbortController, but using promise instead of events
  * @internal
  */
 
-export interface ICancellableSummarizerController
-	extends ISummaryCancellationToken {
+export interface ICancellableSummarizerController extends ISummaryCancellationToken {
 	stop(reason: SummarizerStopReason): void;
 }
 
@@ -37,9 +33,7 @@ export const neverCancelledSummaryToken: ISummaryCancellationToken = {
  * This provides promises that resolve as it starts or stops.  Stopping happens
  * when disconnected or if stop() is called.
  */
-export class RunWhileConnectedCoordinator
-	implements ICancellableSummarizerController
-{
+export class RunWhileConnectedCoordinator implements ICancellableSummarizerController {
 	private _cancelled = false;
 	private readonly stopDeferred = new Deferred<SummarizerStopReason>();
 
@@ -103,9 +97,7 @@ export class RunWhileConnectedCoordinator
 			return;
 		}
 
-		this.runtime.once("dispose", () =>
-			this.stop("summarizerClientDisconnected"),
-		);
+		this.runtime.once("dispose", () => this.stop("summarizerClientDisconnected"));
 
 		if (!this.runtime.connected) {
 			const waitConnected = new Promise<void>((resolve) =>
@@ -113,9 +105,7 @@ export class RunWhileConnectedCoordinator
 			);
 			await Promise.race([waitConnected, this.waitCancelled]);
 		}
-		this.runtime.once("disconnected", () =>
-			this.stop("summarizerClientDisconnected"),
-		);
+		this.runtime.once("disconnected", () => this.stop("summarizerClientDisconnected"));
 	}
 
 	/**

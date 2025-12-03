@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import type { TreeNode } from "./treeNode.js";
+import type { NodeKind, TreeNodeSchemaClass } from "./treeNodeSchema.js";
 // Used by doc links:
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
 import type { TreeAlpha } from "../../shared-tree/index.js";
-import type { TreeNode } from "./treeNode.js";
-import type { NodeKind, TreeNodeSchemaClass } from "./treeNodeSchema.js";
 
 /**
  * The type of a {@link TreeNode}.
@@ -112,12 +112,5 @@ export interface WithType<
 	/**
 	 * Type symbol, marking a type in a way to increase type safety via strong type checking.
 	 */
-	get [typeSchemaSymbol](): TreeNodeSchemaClass<
-		TName,
-		TKind,
-		TreeNode,
-		never,
-		boolean,
-		TInfo
-	>;
+	get [typeSchemaSymbol](): TreeNodeSchemaClass<TName, TKind, TreeNode, never, boolean, TInfo>;
 }

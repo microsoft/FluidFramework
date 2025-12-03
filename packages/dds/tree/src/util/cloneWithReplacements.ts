@@ -30,9 +30,7 @@ export function cloneWithReplacements(
 	}
 
 	if (Array.isArray(root)) {
-		return root.map((item, index) =>
-			cloneWithReplacements(item, index.toString(), replacer),
-		);
+		return root.map((item, index) => cloneWithReplacements(item, index.toString(), replacer));
 	}
 
 	const result: Record<string, unknown> = {};

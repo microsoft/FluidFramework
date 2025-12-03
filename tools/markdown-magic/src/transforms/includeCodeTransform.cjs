@@ -43,11 +43,8 @@ function includeCodeTransform(content, options, config) {
 	const { originalPath: documentFilePath } = config;
 
 	const startLine =
-		startLineString === undefined
-			? undefined
-			: Number.parseInt(startLineString);
-	const endLine =
-		endLineString === undefined ? undefined : Number.parseInt(endLineString);
+		startLineString === undefined ? undefined : Number.parseInt(startLineString);
+	const endLine = endLineString === undefined ? undefined : Number.parseInt(endLineString);
 
 	if (!relativeFilePath) {
 		throw new Error(
@@ -55,22 +52,14 @@ function includeCodeTransform(content, options, config) {
 		);
 	}
 
-	const resolvedFilePath = resolveRelativePath(
-		documentFilePath,
-		relativeFilePath,
-	);
+	const resolvedFilePath = resolveRelativePath(documentFilePath, relativeFilePath);
 
 	try {
 		const fileContents = readFile(resolvedFilePath, startLine, endLine);
 
-		const codeBlock = [`\`\`\`${language ?? ""}`, fileContents, "```"].join(
-			"\n",
-		);
+		const codeBlock = [`\`\`\`${language ?? ""}`, fileContents, "```"].join("\n");
 
-		const section = formattedSectionText(
-			codeBlock,
-			/* headingOptions: */ undefined,
-		);
+		const section = formattedSectionText(codeBlock, /* headingOptions: */ undefined);
 
 		return formattedEmbeddedContentBody(section);
 	} catch (error) {

@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
-import type { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils/internal';
+import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
+import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
 import { Change, ChangeType, StablePlace, StableRange } from '../ChangeTypes.js';
 import { SharedTreeMergeHealthTelemetryHeartbeat } from '../MergeHealth.js';
-import { ConstraintEffect, EditStatus } from '../persisted-types/index.js';
-import type { RevisionView } from '../RevisionView.js';
-import type { SequencedEditAppliedEventArguments, SharedTree } from '../SharedTree.js';
+import { RevisionView } from '../RevisionView.js';
+import { SequencedEditAppliedEventArguments, SharedTree } from '../SharedTree.js';
 import { TransactionInternal } from '../TransactionInternal.js';
+import { ConstraintEffect, EditStatus } from '../persisted-types/index.js';
 
-import { buildLeaf, type TestTree } from './utilities/TestNode.js';
+import { TestTree, buildLeaf } from './utilities/TestNode.js';
 import { setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities.js';
 
 async function setupHeartbeat() {
@@ -54,7 +54,11 @@ function flush(tree: SharedTree, containerRuntimeFactory: MockContainerRuntimeFa
 
 function itAggregates(
 	nameOfAggregatedData: string,
-	paramFunc: (params: { tree: SharedTree; testTree: TestTree; concurrentTree: SharedTree }) => {
+	paramFunc: (params: {
+		tree: SharedTree;
+		testTree: TestTree;
+		concurrentTree: SharedTree;
+	}) => {
 		edits: Change[][];
 		concurrentEdits?: Change[][];
 		action: (ITelemetryBaseEvent) => void;

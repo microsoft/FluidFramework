@@ -120,9 +120,7 @@ export interface Dictionary<TKey, TData> {
 /**
  * @internal
  */
-export class RedBlackTree<TKey, TData>
-	implements SortedDictionary<TKey, TData>
-{
+export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> {
 	private root: RBNode<TKey, TData> | undefined;
 
 	constructor(
@@ -130,12 +128,7 @@ export class RedBlackTree<TKey, TData>
 		private readonly aug?: IRBAugmentation<TKey, TData>,
 	) {}
 
-	private makeNode(
-		key: TKey,
-		data: TData,
-		color: RBColor,
-		size: number,
-	): RBNode<TKey, TData> {
+	private makeNode(key: TKey, data: TData, color: RBColor, size: number): RBNode<TKey, TData> {
 		return { key, data, color, size } as unknown as RBNode<TKey, TData>;
 	}
 
@@ -177,10 +170,7 @@ export class RedBlackTree<TKey, TData>
 		return this.get(key);
 	}
 
-	public gather(
-		key: TKey,
-		matcher: IRBMatcher<TKey, TData>,
-	): RBNode<TKey, TData>[] {
+	public gather(key: TKey, matcher: IRBMatcher<TKey, TData>): RBNode<TKey, TData>[] {
 		const results = [] as RBNode<TKey, TData>[];
 		if (key !== undefined) {
 			this.nodeGather(this.root, results, key, matcher);
@@ -305,11 +295,7 @@ export class RedBlackTree<TKey, TData>
 		}
 	}
 
-	public put(
-		key: TKey,
-		data: TData,
-		conflict?: ConflictAction<TKey, TData>,
-	): void {
+	public put(key: TKey, data: TData, conflict?: ConflictAction<TKey, TData>): void {
 		if (key !== undefined) {
 			if (data === undefined) {
 				this.remove(key);
@@ -378,9 +364,7 @@ export class RedBlackTree<TKey, TData>
 		}
 	}
 
-	private nodeRemoveMin(
-		node: RBNode<TKey, TData>,
-	): RBNode<TKey, TData> | undefined {
+	private nodeRemoveMin(node: RBNode<TKey, TData>): RBNode<TKey, TData> | undefined {
 		let _node = node;
 		if (_node.left) {
 			if (!this.isRed(_node.left) && !this.isRed(_node.left.left)) {
@@ -415,10 +399,7 @@ export class RedBlackTree<TKey, TData>
 		this.root = this.nodeRemove(this.root!, key);
 	}
 
-	private nodeRemove(
-		node: RBNode<TKey, TData>,
-		key: TKey,
-	): RBNode<TKey, TData> | undefined {
+	private nodeRemove(node: RBNode<TKey, TData>, key: TKey): RBNode<TKey, TData> | undefined {
 		let _node = node;
 		if (this.compareKeys(key, _node.key) < 0) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -621,10 +602,7 @@ export class RedBlackTree<TKey, TData>
 		this.nodeMap(this.root, action, accum, start, end);
 	}
 
-	public map<TAccum>(
-		action: PropertyAction<TKey, TData>,
-		accum?: TAccum,
-	): void {
+	public map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum): void {
 		// TODO: optimize to avoid comparisons
 		this.nodeMap(this.root, action, accum);
 	}
@@ -661,30 +639,19 @@ export class RedBlackTree<TKey, TData>
 	): boolean {
 		let go = true;
 		if (node) {
-			if (
-				actions.pre &&
-				(!!actions.showStructure || node.color === RBColor.BLACK)
-			) {
+			if (actions.pre && (!!actions.showStructure || node.color === RBColor.BLACK)) {
 				go = actions.pre(node);
 			}
 			if (node.left) {
 				go = this.nodeWalk(node.left, actions);
 			}
-			if (
-				go &&
-				actions.infix &&
-				(!!actions.showStructure || node.color === RBColor.BLACK)
-			) {
+			if (go && actions.infix && (!!actions.showStructure || node.color === RBColor.BLACK)) {
 				go = actions.infix(node);
 			}
 			if (go) {
 				go = this.nodeWalk(node.right, actions);
 			}
-			if (
-				go &&
-				actions.post &&
-				(!!actions.showStructure || node.color === RBColor.BLACK)
-			) {
+			if (go && actions.post && (!!actions.showStructure || node.color === RBColor.BLACK)) {
 				go = actions.post(node);
 			}
 		}
@@ -697,30 +664,19 @@ export class RedBlackTree<TKey, TData>
 	): boolean {
 		let go = true;
 		if (node) {
-			if (
-				actions.pre &&
-				(!!actions.showStructure || node.color === RBColor.BLACK)
-			) {
+			if (actions.pre && (!!actions.showStructure || node.color === RBColor.BLACK)) {
 				go = actions.pre(node);
 			}
 			if (node.right) {
 				go = this.nodeWalkBackward(node.right, actions);
 			}
-			if (
-				go &&
-				actions.infix &&
-				(!!actions.showStructure || node.color === RBColor.BLACK)
-			) {
+			if (go && actions.infix && (!!actions.showStructure || node.color === RBColor.BLACK)) {
 				go = actions.infix(node);
 			}
 			if (go) {
 				go = this.nodeWalkBackward(node.left, actions);
 			}
-			if (
-				go &&
-				actions.post &&
-				(!!actions.showStructure || node.color === RBColor.BLACK)
-			) {
+			if (go && actions.post && (!!actions.showStructure || node.color === RBColor.BLACK)) {
 				go = actions.post(node);
 			}
 		}

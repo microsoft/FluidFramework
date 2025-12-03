@@ -4,26 +4,26 @@
  */
 
 import {
-	type BenchmarkType,
-	type DocumentType,
-	type DocumentTypeInfo,
+	BenchmarkType,
+	DocumentType,
+	DocumentTypeInfo,
 	isMemoryTest,
 } from "@fluid-private/test-version-utils";
 import {
-	type BenchmarkArguments,
-	type BenchmarkTimer,
+	BenchmarkArguments,
+	BenchmarkTimer,
+	IMemoryTestObject,
+	Phase,
 	benchmark,
 	benchmarkMemory,
-	type IMemoryTestObject,
-	Phase,
 } from "@fluid-tools/benchmark";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
-import type { ISummarizer } from "@fluidframework/container-runtime/internal";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ISummarizer } from "@fluidframework/container-runtime/internal";
 import {
+	ITelemetryLoggerExt,
 	createChildLogger,
-	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
-import type { ITestObjectProvider } from "@fluidframework/test-utils/internal";
+import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 import { DocumentMap } from "./DocumentMap.js";
 import { DocumentMatrix } from "./DocumentMatrix.js";
@@ -66,9 +66,7 @@ export interface IDocumentLoaderAndSummarizer extends IDocumentLoader {
  * Creates a new {@link DocumentMap} using configuration parameters.
  * @param props - Properties for initializing the Document Creator.
  */
-export function createDocument(
-	props: IDocumentCreatorProps,
-): IDocumentLoaderAndSummarizer {
+export function createDocument(props: IDocumentCreatorProps): IDocumentLoaderAndSummarizer {
 	const logger = createChildLogger({
 		logger: getTestLogger?.(),
 		properties: {
@@ -115,10 +113,7 @@ export interface IBenchmarkParameters {
  * @param obj - The test object that will be persisted across runs (mainly used on Memory runs).
  * @param params - The {@link IBenchmarkParameters} parameters for the test.
  */
-export function benchmarkAll<T extends IBenchmarkParameters>(
-	title: string,
-	obj: T,
-) {
+export function benchmarkAll<T extends IBenchmarkParameters>(title: string, obj: T) {
 	if (isMemoryTest()) {
 		const t: IMemoryTestObject = {
 			title,

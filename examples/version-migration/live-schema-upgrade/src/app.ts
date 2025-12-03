@@ -14,7 +14,7 @@ import {
 
 import { DemoCodeLoader as DemoCodeLoader1 } from "./demoCodeLoader1.js";
 import { DemoCodeLoader as DemoCodeLoader2 } from "./demoCodeLoader2.js";
-import type { IDiceRollerAppModel } from "./interfaces.js";
+import { IDiceRollerAppModel } from "./interfaces.js";
 import { renderDiceRoller } from "./view.js";
 
 /**
@@ -43,8 +43,7 @@ async function start() {
 		documentServiceFactory: createRouterliciousDocumentServiceFactory(
 			createInsecureTinyliciousTestTokenProvider(),
 		),
-		codeLoader:
-			modelVersion === "1.0" ? new DemoCodeLoader1() : new DemoCodeLoader2(),
+		codeLoader: modelVersion === "1.0" ? new DemoCodeLoader1() : new DemoCodeLoader2(),
 		generateCreateNewRequest: createTinyliciousTestCreateNewRequest,
 	});
 

@@ -6,23 +6,23 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
 	Serializable,
+	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
+	ISummaryTreeWithStats,
 	AttributionKey,
 	IRuntimeMessageCollection,
-	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
-	ISummaryTreeWithStats,
+	IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	createSingleBlobSummary,
 	SharedObject,
+	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
 
 import type {
@@ -99,11 +99,7 @@ export class SharedCell<T = any>
 	 * @param id - Unique identifier for the `SharedCell`.
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
-	constructor(
-		id: string,
-		runtime: IFluidDataStoreRuntime,
-		attributes: IChannelAttributes,
-	) {
+	constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
 		super(id, runtime, attributes, "fluid_cell_");
 
 		this.options = runtime.options as ICellOptions;
@@ -249,9 +245,7 @@ export class SharedCell<T = any>
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */
-	protected processMessagesCore(
-		messagesCollection: IRuntimeMessageCollection,
-	): void {
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
 			this.processMessage(envelope, messageContent, local);
@@ -263,15 +257,13 @@ export class SharedCell<T = any>
 		messageContent: IRuntimeMessagesContent,
 		local: boolean,
 	): void {
-		const cellOpMetadata =
-			messageContent.localOpMetadata as ICellLocalOpMetadata;
+		const cellOpMetadata = messageContent.localOpMetadata as ICellLocalOpMetadata;
 		if (this.messageId !== this.messageIdObserved) {
 			// We are waiting for an ACK on our change to this cell - we will ignore all messages until we get it.
 			if (local) {
 				const messageIdReceived = cellOpMetadata.pendingMessageId;
 				assert(
-					messageIdReceived !== undefined &&
-						messageIdReceived <= this.messageId,
+					messageIdReceived !== undefined && messageIdReceived <= this.messageId,
 					0x00c /* "messageId is incorrect from from the local client's ACK" */,
 				);
 				assert(
@@ -377,10 +369,7 @@ export class SharedCell<T = any>
 	 * @param op - The cell message.
 	 * @param previousValue - The value of the cell before this op.
 	 */
-	private submitCellMessage(
-		op: ICellOperation,
-		previousValue?: Serializable<T>,
-	): void {
+	private submitCellMessage(op: ICellOperation, previousValue?: Serializable<T>): void {
 		const localMetadata = this.createLocalOpMetadata(op, previousValue);
 		this.submitLocalMessage(op, localMetadata);
 	}

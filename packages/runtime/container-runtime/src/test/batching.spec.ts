@@ -12,13 +12,13 @@ import {
 import type { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import {
-	type ISequencedDocumentMessage,
 	MessageType,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	type IFluidErrorBase,
 	MockLogger,
 	mixinMonitoringContext,
+	type IFluidErrorBase,
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockAudience,
@@ -26,7 +26,7 @@ import {
 	MockQuorumClients,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
-import { createSandbox, type SinonFakeTimers, useFakeTimers } from "sinon";
+import { type SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
 
 import type { ChannelCollection } from "../channelCollection.js";
 import { ContainerRuntime } from "../containerRuntime.js";
@@ -36,9 +36,7 @@ import { ContainerMessageType } from "../messageTypes.js";
 describe("Runtime batching", () => {
 	const mockClientId = "mockClientId";
 
-	const getMockContext = (
-		deltaManager: MockDeltaManager,
-	): Partial<IContainerContext> => {
+	const getMockContext = (deltaManager: MockDeltaManager): Partial<IContainerContext> => {
 		const mockContext = {
 			attachState: AttachState.Attached,
 			deltaManager,
@@ -69,15 +67,10 @@ describe("Runtime batching", () => {
 	 */
 	function patchContainerRuntime(cr: ContainerRuntime): sinon.SinonStub {
 		const fakeProcess: () => void = () => {};
-		const patched = cr as unknown as Omit<
-			ContainerRuntime,
-			"channelCollection"
-		> & {
+		const patched = cr as unknown as Omit<ContainerRuntime, "channelCollection"> & {
 			channelCollection: Partial<ChannelCollection>;
 		};
-		return sandbox
-			.stub(patched.channelCollection, "processMessages")
-			.callsFake(fakeProcess);
+		return sandbox.stub(patched.channelCollection, "processMessages").callsFake(fakeProcess);
 	}
 
 	before(() => {
@@ -147,10 +140,7 @@ describe("Runtime batching", () => {
 	 * Processes the given batch. The batch is processed by pushing each message to the inbound queue and then
 	 * processing the messages in the queue.
 	 */
-	function processBatch(
-		batch: ISequencedDocumentMessage[],
-		cr: ContainerRuntime,
-	) {
+	function processBatch(batch: ISequencedDocumentMessage[], cr: ContainerRuntime) {
 		// Push the messages in the inbound queue. This is done because InboundBatchAggregator listens to the "push" event
 		// emitted by the inbound queue to do batch validations.
 		for (const batchMessage of batch) {
@@ -258,9 +248,7 @@ describe("Runtime batching", () => {
 				() => processBatch(batch, containerRuntime),
 				(e: IFluidErrorBase) => {
 					assert(e.errorType === FluidErrorTypes.dataProcessingError);
-					assert(
-						e.message === "Received a system message during batch processing",
-					);
+					assert(e.message === "Received a system message during batch processing");
 					return true;
 				},
 				"Batch with non-runtime op along with runtime ops should fail",
@@ -321,16 +309,8 @@ describe("Runtime batching", () => {
 		}
 
 		function validateBatchBeginAndEnd() {
-			assert.strictEqual(
-				batchBeginCount,
-				1,
-				"Batch begin should have been emitted once",
-			);
-			assert.strictEqual(
-				batchEndCount,
-				1,
-				"Batch end should have been emitted once",
-			);
+			assert.strictEqual(batchBeginCount, 1, "Batch begin should have been emitted once");
+			assert.strictEqual(batchEndCount, 1, "Batch end should have been emitted once");
 		}
 
 		it("handles batch begin and end for successfully processing modern runtime messages", async () => {

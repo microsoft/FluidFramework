@@ -3,26 +3,24 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
-import type {
-	ConfigTypes,
-	IConfigProviderBase,
-} from "@fluidframework/core-interfaces";
-import type { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
-import type { IMergeTreeInsertMsg } from "@fluidframework/merge-tree/internal";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type { SharedDirectory, ISharedMap } from "@fluidframework/map/internal";
+import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import {
-	type ChannelFactoryRegistry,
+	ChannelFactoryRegistry,
 	DataObjectFactoryType,
-	getContainerEntryPointBackCompat,
-	type ITestContainerConfig,
-	type ITestFluidObject,
-	type ITestObjectProvider,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
 	toIDeltaManagerFull,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
 
 describeCompat(
 	"Concurrent op processing via DDS event handlers",
@@ -53,15 +51,12 @@ describeCompat(
 		let sharedDirectory1: SharedDirectory;
 		let sharedDirectory2: SharedDirectory;
 
-		const configProvider = (
-			settings: Record<string, ConfigTypes>,
-		): IConfigProviderBase => ({
+		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		});
 
 		const mapsAreEqual = (a: ISharedMap, b: ISharedMap) =>
-			a.size === b.size &&
-			[...a.entries()].every(([key, value]) => b.get(key) === value);
+			a.size === b.size && [...a.entries()].every(([key, value]) => b.get(key) === value);
 
 		beforeEach("getTestObjectProvider", async () => {
 			provider = getTestObjectProvider();
@@ -79,32 +74,23 @@ describeCompat(
 			container1 = await provider.makeTestContainer(configWithFeatureGates);
 			container2 = await provider.loadTestContainer(configWithFeatureGates);
 
-			dataObject1 =
-				await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
-			dataObject2 =
-				await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+			dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+			dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 
 			sharedMap1 = await dataObject1.getSharedObject<ISharedMap>(mapId);
 			sharedMap2 = await dataObject2.getSharedObject<ISharedMap>(mapId);
 
-			sharedString1 =
-				await dataObject1.getSharedObject<SharedString>(sharedStringId);
-			sharedString2 =
-				await dataObject2.getSharedObject<SharedString>(sharedStringId);
+			sharedString1 = await dataObject1.getSharedObject<SharedString>(sharedStringId);
+			sharedString2 = await dataObject2.getSharedObject<SharedString>(sharedStringId);
 
-			sharedDirectory1 =
-				await dataObject1.getSharedObject<SharedDirectory>(sharedDirectoryId);
-			sharedDirectory2 =
-				await dataObject2.getSharedObject<SharedDirectory>(sharedDirectoryId);
+			sharedDirectory1 = await dataObject1.getSharedObject<SharedDirectory>(sharedDirectoryId);
+			sharedDirectory2 = await dataObject2.getSharedObject<SharedDirectory>(sharedDirectoryId);
 
 			await provider.ensureSynchronized();
 		};
 
 		it("Test reentrant op sending", async function () {
-			if (
-				provider.driver.type === "t9s" ||
-				provider.driver.type === "tinylicious"
-			) {
+			if (provider.driver.type === "t9s" || provider.driver.type === "tinylicious") {
 				// This test is flaky on Tinylicious. ADO:5010
 				this.skip();
 			}
@@ -141,10 +127,7 @@ describeCompat(
 			it(`Eventual consistency with op reentry - ${
 				enableGroupedBatching ? "Grouped" : "Regular"
 			} batches`, async function () {
-				if (
-					provider.driver.type === "t9s" ||
-					provider.driver.type === "tinylicious"
-				) {
+				if (provider.driver.type === "t9s" || provider.driver.type === "tinylicious") {
 					// This test is flaky on Tinylicious. ADO:5010
 					this.skip();
 				}
@@ -161,9 +144,7 @@ describeCompat(
 				await provider.ensureSynchronized();
 
 				sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
-					if (
-						(sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "b"
-					) {
+					if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "b") {
 						sharedString2.insertText(3, "x");
 					}
 				});
@@ -212,10 +193,7 @@ describeCompat(
 			it(`Eventual consistency for shared directories with op reentry - ${
 				enableGroupedBatching ? "Grouped" : "Regular"
 			} batches`, async function () {
-				if (
-					provider.driver.type === "t9s" ||
-					provider.driver.type === "tinylicious"
-				) {
+				if (provider.driver.type === "t9s" || provider.driver.type === "tinylicious") {
 					// This test is flaky on Tinylicious. ADO:5010
 					this.skip();
 				}
@@ -252,24 +230,15 @@ describeCompat(
 
 				await provider.ensureSynchronized();
 				assert.strictEqual(
-					sharedDirectory1
-						.getSubDirectory(topLevel)
-						?.getSubDirectory(innerLevel)
-						?.get(key),
-					sharedDirectory2
-						.getSubDirectory(topLevel)
-						?.getSubDirectory(innerLevel)
-						?.get(key),
+					sharedDirectory1.getSubDirectory(topLevel)?.getSubDirectory(innerLevel)?.get(key),
+					sharedDirectory2.getSubDirectory(topLevel)?.getSubDirectory(innerLevel)?.get(key),
 				);
 			});
 		});
 
 		describe("Reentry safeguards", () => {
 			it("Flushing is supported if it happens in the next batch", async function () {
-				if (
-					provider.driver.type === "t9s" ||
-					provider.driver.type === "tinylicious"
-				) {
+				if (provider.driver.type === "t9s" || provider.driver.type === "tinylicious") {
 					// This test is flaky on Tinylicious. ADO:5010
 					this.skip();
 				}
@@ -282,9 +251,7 @@ describeCompat(
 				});
 
 				sharedString1.on("sequenceDelta", (sequenceDeltaEvent) => {
-					if (
-						(sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "ad"
-					) {
+					if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "ad") {
 						void Promise.resolve().then(() => {
 							sharedString1.insertText(0, "bc");
 						});
@@ -298,10 +265,7 @@ describeCompat(
 		});
 
 		it("Should not throw when submitting an op while handling an event - offline", async function () {
-			if (
-				provider.driver.type === "t9s" ||
-				provider.driver.type === "tinylicious"
-			) {
+			if (provider.driver.type === "t9s" || provider.driver.type === "tinylicious") {
 				// This test is flaky on Tinylicious. ADO:5010
 				this.skip();
 			}
@@ -311,9 +275,7 @@ describeCompat(
 				runtimeOptions: {},
 			});
 
-			const container1DeltaManager = toIDeltaManagerFull(
-				container1.deltaManager,
-			);
+			const container1DeltaManager = toIDeltaManagerFull(container1.deltaManager);
 			await container1DeltaManager.inbound.pause();
 			await container1DeltaManager.outbound.pause();
 
@@ -351,10 +313,7 @@ describeCompat(
 				},
 			].forEach((testConfig) => {
 				it(`Should not close the container when submitting an op while processing a batch [${testConfig.name}]`, async function () {
-					if (
-						provider.driver.type === "t9s" ||
-						provider.driver.type === "tinylicious"
-					) {
+					if (provider.driver.type === "t9s" || provider.driver.type === "tinylicious") {
 						// This test is flaky on Tinylicious. ADO:5010
 						this.skip();
 					}
@@ -392,10 +351,7 @@ describeCompat(
 				});
 
 				it(`Should not throw when submitting an op while processing a batch - offline [${testConfig.name}]`, async function () {
-					if (
-						provider.driver.type === "t9s" ||
-						provider.driver.type === "tinylicious"
-					) {
+					if (provider.driver.type === "t9s" || provider.driver.type === "tinylicious") {
 						// This test is flaky on Tinylicious. ADO:5010
 						this.skip();
 					}

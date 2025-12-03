@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import type { ISummaryTree } from "@fluidframework/driver-definitions";
-import type {
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
+import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IDocumentServicePolicies,
@@ -13,10 +13,10 @@ import type {
 	NackErrorType,
 } from "@fluidframework/driver-definitions/internal";
 import { DefaultTokenProvider } from "@fluidframework/routerlicious-driver/internal";
-import type { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
 import { createDocument } from "./localCreateDocument.js";
-import type { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection.js";
+import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection.js";
 import { createLocalDocumentService } from "./localDocumentService.js";
 import { localDriverCompatDetailsForLoader } from "./localLayerCompatState.js";
 
@@ -26,10 +26,8 @@ import { localDriverCompatDetailsForLoader } from "./localLayerCompatState.js";
  */
 export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 	// A map of clientId to LocalDocumentService.
-	private readonly documentDeltaConnectionsMap: Map<
-		string,
-		LocalDocumentDeltaConnection
-	> = new Map();
+	private readonly documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection> =
+		new Map();
 
 	/**
 	 * @param localDeltaConnectionServer - delta connection server for ops
@@ -47,8 +45,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 	 * The type of this should be ILayerCompatDetails. However, ILayerCompatDetails is internal and this class
 	 * is currently marked as legacy alpha. So, using unknown here.
 	 */
-	public readonly ILayerCompatDetails?: unknown =
-		localDriverCompatDetailsForLoader;
+	public readonly ILayerCompatDetails?: unknown = localDriverCompatDetailsForLoader;
 
 	public async createContainer(
 		createNewSummary: ISummaryTree | undefined,
@@ -60,11 +57,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 			throw new Error("Provide the localDeltaConnectionServer!!");
 		}
 		if (createNewSummary !== undefined) {
-			await createDocument(
-				this.localDeltaConnectionServer,
-				resolvedUrl,
-				createNewSummary,
-			);
+			await createDocument(this.localDeltaConnectionServer, resolvedUrl, createNewSummary);
 		}
 		return this.createDocumentService(resolvedUrl, logger, clientIsSummarizer);
 	}
@@ -80,9 +73,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
 		const parsedUrl = new URL(resolvedUrl.url);
-		const [, tenantId, documentId] = parsedUrl.pathname
-			? parsedUrl.pathname.split("/")
-			: [];
+		const [, tenantId, documentId] = parsedUrl.pathname ? parsedUrl.pathname.split("/") : [];
 		if (!documentId || !tenantId) {
 			throw new Error(
 				`Couldn't parse resolved url. [documentId:${documentId}][tenantId:${tenantId}]`,
@@ -116,8 +107,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 	 * @param disconnectReason - The reason of the disconnection.
 	 */
 	public disconnectClient(clientId: string, disconnectReason: string) {
-		const documentDeltaConnection =
-			this.documentDeltaConnectionsMap.get(clientId);
+		const documentDeltaConnection = this.documentDeltaConnectionsMap.get(clientId);
 		if (documentDeltaConnection === undefined) {
 			throw new Error(`No client with the id: ${clientId}`);
 		}
@@ -131,14 +121,8 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 	 * @param type - Type of the Nack.
 	 * @param message - A message about the nack for debugging/logging/telemetry purposes.
 	 */
-	public nackClient(
-		clientId: string,
-		code?: number,
-		type?: NackErrorType,
-		message?: any,
-	) {
-		const documentDeltaConnection =
-			this.documentDeltaConnectionsMap.get(clientId);
+	public nackClient(clientId: string, code?: number, type?: NackErrorType, message?: any) {
+		const documentDeltaConnection = this.documentDeltaConnectionsMap.get(clientId);
 		if (documentDeltaConnection === undefined) {
 			throw new Error(`No client with the id: ${clientId}`);
 		}

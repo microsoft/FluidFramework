@@ -17,9 +17,7 @@ interface AxeViolation {
  * Asserts that there are no accessibility violations in the container
  * @param container - The container being checked for accessibility violations
  */
-export async function assertNoAccessibilityViolations(
-	container: HTMLElement,
-): Promise<void> {
+export async function assertNoAccessibilityViolations(container: HTMLElement): Promise<void> {
 	const results = await axe.run(container);
 
 	if (results.violations.length > 0) {

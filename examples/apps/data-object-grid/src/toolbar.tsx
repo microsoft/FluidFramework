@@ -4,18 +4,11 @@
  */
 
 import { Button } from "@fluentui/react-components";
-import {
-	ChevronDownFilled,
-	ChevronUpFilled,
-	TargetEditFilled,
-} from "@fluentui/react-icons";
+import { ChevronDownFilled, ChevronUpFilled, TargetEditFilled } from "@fluentui/react-icons";
 import React from "react";
 
 import { Collapsible } from "./collapsible.cjs";
-import type {
-	IDataObjectGridItemEntry,
-	ISingleHandleItem,
-} from "./dataObjectRegistry.js";
+import type { IDataObjectGridItemEntry, ISingleHandleItem } from "./dataObjectRegistry.js";
 import { iconMap } from "./icons.js";
 import "./toolbar.css";
 
@@ -35,9 +28,7 @@ interface IDataObjectGridToolbarAddItemPickerProps {
 
 const DataObjectGridToolbarAddItemPicker: React.FC<
 	IDataObjectGridToolbarAddItemPickerProps
-> = (
-	props: React.PropsWithChildren<IDataObjectGridToolbarAddItemPickerProps>,
-) => {
+> = (props: React.PropsWithChildren<IDataObjectGridToolbarAddItemPickerProps>) => {
 	const { toolbarOptions } = props;
 	const [open, setOpen] = React.useState<boolean>(false);
 
@@ -91,16 +82,14 @@ export const DataObjectGridToolbar: React.FC<IDataObjectGridToolbarProps> = (
 ) => {
 	const { editable, setEditable, addItem, registry } = props;
 
-	const toolbarOptions: IToolbarOption[] = [...registry].map(
-		([type, dataGridItemEntry]) => {
-			return {
-				key: type,
-				create: () => addItem(type),
-				friendlyName: dataGridItemEntry.friendlyName,
-				fabricIconName: dataGridItemEntry.fabricIconName,
-			};
-		},
-	);
+	const toolbarOptions: IToolbarOption[] = [...registry].map(([type, dataGridItemEntry]) => {
+		return {
+			key: type,
+			create: () => addItem(type),
+			friendlyName: dataGridItemEntry.friendlyName,
+			fabricIconName: dataGridItemEntry.fabricIconName,
+		};
+	});
 
 	return (
 		<div className="data-grid-toolbar">
@@ -117,10 +106,7 @@ export const DataObjectGridToolbar: React.FC<IDataObjectGridToolbarProps> = (
 					{`Edit: ${editable}`}
 				</Button>
 			</div>
-			<DataObjectGridToolbarAddItemPicker
-				key="items"
-				toolbarOptions={toolbarOptions}
-			/>
+			<DataObjectGridToolbarAddItemPicker key="items" toolbarOptions={toolbarOptions} />
 		</div>
 	);
 };

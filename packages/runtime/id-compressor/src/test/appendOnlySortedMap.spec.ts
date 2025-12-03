@@ -12,9 +12,7 @@ import { compareFiniteNumbers } from "../utilities.js";
 
 import { assertNotUndefined } from "./testCommon.js";
 
-function runAppendOnlyMapTests(
-	mapBuilder: () => AppendOnlySortedMap<number, number>,
-): void {
+function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, number>): void {
 	it("detects out-of-order keys", () => {
 		const map = mapBuilder();
 		map.append(0, 0);
@@ -101,10 +99,7 @@ function runAppendOnlyMapTests(
 			assert.deepEqual(map.getPairOrNextHigher(minKey - 1), [minKey, minKey]);
 			for (let i = 0; i < map.size - 1; i++) {
 				assert.deepEqual(map.getPairOrNextHigher(i * 2), [i * 2, i * 2]);
-				assert.deepEqual(map.getPairOrNextHigher(i * 2 + 1), [
-					i * 2 + 2,
-					i * 2 + 2,
-				]);
+				assert.deepEqual(map.getPairOrNextHigher(i * 2 + 1), [i * 2 + 2, i * 2 + 2]);
 			}
 			assert.equal(map.getPairOrNextHigher(map.size * 2 + 1), undefined);
 		}

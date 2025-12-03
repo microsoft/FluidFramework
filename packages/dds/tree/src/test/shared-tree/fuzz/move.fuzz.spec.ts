@@ -3,19 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
-	createDDSFuzzSuite,
 	type DDSFuzzHarnessEvents,
 	type DDSFuzzModel,
 	type DDSFuzzSuiteOptions,
 	type DDSFuzzTestState,
+	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
-import {
-	SharedTreeTestFactory,
-	validateFuzzTreeConsistency,
-} from "../../utils.js";
+
+import { SharedTreeTestFactory, validateFuzzTreeConsistency } from "../../utils.js";
+
 import {
 	type EditGeneratorOpWeights,
 	type FuzzTestState,
@@ -30,6 +28,7 @@ import {
 	populatedInitialState,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 
 describe("Fuzz - move", () => {
 	const runsPerBatch = 50;
@@ -47,8 +46,7 @@ describe("Fuzz - move", () => {
 		commit: 1,
 		abort: 1,
 	};
-	const generatorFactory = () =>
-		takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
+	const generatorFactory = () => takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
 
 	const model: DDSFuzzModel<
 		SharedTreeTestFactory,

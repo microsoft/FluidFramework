@@ -7,20 +7,12 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 
 import fsePkg from "fs-extra";
-
 // eslint-disable-next-line import-x/no-named-as-default-member -- Imports are written this way for CJS/ESM compat
 const { readJsonSync } = fsePkg;
-
 import colors from "picocolors";
 
-import {
-	findReleaseGroupForPackage,
-	type WorkspaceDefinition,
-} from "./config.js";
-import {
-	readPackageJsonAndIndent,
-	writePackageJson,
-} from "./packageJsonUtils.js";
+import { type WorkspaceDefinition, findReleaseGroupForPackage } from "./config.js";
+import { readPackageJsonAndIndent, writePackageJson } from "./packageJsonUtils.js";
 import type {
 	AdditionalPackageProps,
 	IPackage,
@@ -73,9 +65,7 @@ export abstract class PackageBase<
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	private get color() {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return Package.colorFunction[
-			this.packageId % Package.colorFunction.length
-		]!;
+		return Package.colorFunction[this.packageId % Package.colorFunction.length]!;
 	}
 
 	/**
@@ -119,8 +109,7 @@ export abstract class PackageBase<
 		public isReleaseGroupRoot: boolean,
 		additionalProperties?: TAddProps,
 	) {
-		[this._packageJson, this._indent] =
-			readPackageJsonAndIndent(packageJsonFilePath);
+		[this._packageJson, this._indent] = readPackageJsonAndIndent(packageJsonFilePath);
 		if (additionalProperties !== undefined) {
 			Object.assign(this, additionalProperties);
 		}
@@ -197,9 +186,7 @@ export abstract class PackageBase<
 	 * {@inheritDoc IPackage.getScript}
 	 */
 	public getScript(name: string): string | undefined {
-		return this.packageJson.scripts === undefined
-			? undefined
-			: this.packageJson.scripts[name];
+		return this.packageJson.scripts === undefined ? undefined : this.packageJson.scripts[name];
 	}
 
 	/**
@@ -212,9 +199,7 @@ export abstract class PackageBase<
 		}
 
 		if (!existsSync(path.join(this.directory, "node_modules"))) {
-			return [
-				`${this.nameColored}: node_modules not installed in ${this.directory}`,
-			];
+			return [`${this.nameColored}: node_modules not installed in ${this.directory}`];
 		}
 
 		const errors: string[] = [];
@@ -289,16 +274,14 @@ class Package<
 			workspaceDefinition.releaseGroups[releaseGroupName as string];
 
 		if (releaseGroupDefinition === undefined) {
-			throw new Error(
-				`Cannot find release group definition for ${releaseGroupName}`,
-			);
+			throw new Error(`Cannot find release group definition for ${releaseGroupName}`);
 		}
 
 		const { rootPackageName } = releaseGroupDefinition;
 		const isReleaseGroupRoot =
 			rootPackageName === undefined ? false : packageName === rootPackageName;
 
-		const pkg = new Package(
+		const pkg = new this(
 			packageJsonFilePath,
 			packageManager,
 			workspace,
@@ -346,9 +329,7 @@ export function loadPackageFromWorkspaceDefinition(
 function* iterateDependencies<T extends PackageJson>(
 	packageJson: T,
 ): Generator<PackageDependency, void> {
-	for (const [pkgName, version] of Object.entries(
-		packageJson.dependencies ?? {},
-	)) {
+	for (const [pkgName, version] of Object.entries(packageJson.dependencies ?? {})) {
 		const name = pkgName as PackageName;
 		if (version === undefined) {
 			throw new Error(`Dependency found without a version specifier: ${name}`);
@@ -360,9 +341,7 @@ function* iterateDependencies<T extends PackageJson>(
 		} as const;
 	}
 
-	for (const [pkgName, version] of Object.entries(
-		packageJson.devDependencies ?? {},
-	)) {
+	for (const [pkgName, version] of Object.entries(packageJson.devDependencies ?? {})) {
 		const name = pkgName as PackageName;
 		if (version === undefined) {
 			throw new Error(`Dependency found without a version specifier: ${name}`);
@@ -374,9 +353,7 @@ function* iterateDependencies<T extends PackageJson>(
 		} as const;
 	}
 
-	for (const [pkgName, version] of Object.entries(
-		packageJson.devDependencies ?? {},
-	)) {
+	for (const [pkgName, version] of Object.entries(packageJson.devDependencies ?? {})) {
 		const name = pkgName as PackageName;
 		if (version === undefined) {
 			throw new Error(`Dependency found without a version specifier: ${name}`);

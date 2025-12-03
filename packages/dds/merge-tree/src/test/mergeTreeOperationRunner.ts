@@ -10,13 +10,10 @@ import * as fs from "node:fs";
 
 import type { IRandom } from "@fluid-private/stochastic-test-utils";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import type { ISegmentPrivate, SegmentGroup } from "../mergeTreeNodes.js";
+
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import {
-	type IMergeTreeOp,
-	MergeTreeDeltaType,
-	ReferenceType,
-} from "../ops.js";
+import type { ISegmentPrivate, SegmentGroup } from "../mergeTreeNodes.js";
+import { type IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { toRemovalInfo } from "../segmentInfos.js";
 import { Side } from "../sequencePlace.js";
 import { TextSegment } from "../textSegment.js";
@@ -146,10 +143,7 @@ export const insert: TestOperation = (
 	return client.insertTextLocal(start, text);
 };
 
-const generateInsert = (
-	client: TestClient,
-	random: IRandom,
-): IMergeTreeOp | undefined => {
+const generateInsert = (client: TestClient, random: IRandom): IMergeTreeOp | undefined => {
 	const len = client.getLength();
 	const text = client.longClientId!.repeat(random.integer(1, 3));
 	return client.insertTextLocal(random.integer(0, len), text);
@@ -214,16 +208,10 @@ export function resolveRanges<T extends object>(
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function isConfigRange(t: any): t is IConfigRange {
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-	return (
-		typeof t === "object" &&
-		typeof t.min === "number" &&
-		typeof t.max === "number"
-	);
+	return typeof t === "object" && typeof t.min === "number" && typeof t.max === "number";
 }
 
-type ReplaceRangeWith<T, TReplace> = T extends { min: number; max: number }
-	? TReplace
-	: never;
+type ReplaceRangeWith<T, TReplace> = T extends { min: number; max: number } ? TReplace : never;
 
 type RangePropertyNames<T> = {
 	[K in keyof T]-?: T[K] extends IConfigRange ? K : never;
@@ -258,9 +246,7 @@ export function doOverRanges<T extends ProvidesGrowthFunc>(
 			for (const [key, value] of selections) {
 				selectionsObj[key] = value;
 			}
-			const description = selections
-				.map(([key, value]) => `${key}:${value}`)
-				.join("_");
+			const description = selections.map(([key, value]) => `${key}:${value}`).join("_");
 			doAction(selectionsObj as PickFromRanges<T>, description);
 		} else {
 			const [key, value] = rangeEntries[selections.length];
@@ -283,14 +269,8 @@ export interface IMergeTreeOperationRunnerConfig {
 	readonly applyOpDuringGeneration?: boolean;
 	growthFunc(input: number): number;
 	resultsFilePostfix?: string;
-	insertText?: (
-		client: TestClient,
-		random: IRandom,
-	) => IMergeTreeOp | undefined;
-	updateEndpoints?: (
-		client: TestClient,
-		random: IRandom,
-	) => { start: number; end: number };
+	insertText?: (client: TestClient, random: IRandom) => IMergeTreeOp | undefined;
+	updateEndpoints?: (client: TestClient, random: IRandom) => { start: number; end: number };
 }
 
 export interface ReplayGroup {
@@ -338,13 +318,7 @@ export function runMergeTreeOperationRunner(
 				config.applyOpDuringGeneration,
 				config.insertText,
 			);
-			seq = apply(
-				messageData[0][0].sequenceNumber - 1,
-				messageData,
-				clients,
-				logger,
-				random,
-			);
+			seq = apply(messageData[0][0].sequenceNumber - 1, messageData, clients, logger, random);
 			const resultText = logger.validate();
 			results.push({
 				initialText,
@@ -373,37 +347,22 @@ export function generateOperationMessagesForClients(
 	minLength: number,
 	operations: readonly TestOperation[],
 	applyOpDuringGeneration?: boolean,
-	insertText?: (
-		client: TestClient,
-		random: IRandom,
-	) => IMergeTreeOp | undefined,
+	insertText?: (client: TestClient, random: IRandom) => IMergeTreeOp | undefined,
 ): [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][] {
 	const minimumSequenceNumber = startingSeq;
 	let runningSeq = startingSeq;
-	const messages: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][] =
-		[];
+	const messages: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][] = [];
 
 	for (let i = 0; i < opsPerRound; i++) {
 		// pick a client greater than 0, client 0 only applies remote ops
 		// and is our baseline
 		const client = clients[random.integer(1, clients.length - 1)];
 
-		if (
-			applyOpDuringGeneration === true &&
-			messages.length > 0 &&
-			random.bool()
-		) {
+		if (applyOpDuringGeneration === true && messages.length > 0 && random.bool()) {
 			const toApply = messages
-				.filter(
-					([msg]) => msg.sequenceNumber > client.getCollabWindow().currentSeq,
-				)
+				.filter(([msg]) => msg.sequenceNumber > client.getCollabWindow().currentSeq)
 				.slice(0, random.integer(1, 3));
-			applyMessages(
-				toApply[0][0].sequenceNumber - 1,
-				toApply,
-				[client],
-				logger,
-			);
+			applyMessages(toApply[0][0].sequenceNumber - 1, toApply, [client], logger);
 		}
 
 		const len = client.getLength();
@@ -411,9 +370,7 @@ export function generateOperationMessagesForClients(
 		let opOrOps: IMergeTreeOp[] | IMergeTreeOp | undefined;
 		if (len === 0 || len < minLength) {
 			opOrOps =
-				insertText === undefined
-					? generateInsert(client, random)
-					: insertText(client, random);
+				insertText === undefined ? generateInsert(client, random) : insertText(client, random);
 		} else {
 			let opIndex = random.integer(0, operations.length - 1);
 			const start = random.integer(0, len - 1);
@@ -439,15 +396,11 @@ export function generateOperationMessagesForClients(
 			const totalIndividualOps = ops
 				.map((o) => (o.type === MergeTreeDeltaType.GROUP ? o.ops.length : 1))
 				.reduce((a, b) => a + b, 0);
-			let allSegmentGroups =
-				client.peekPendingSegmentGroups(totalIndividualOps)!;
+			let allSegmentGroups = client.peekPendingSegmentGroups(totalIndividualOps)!;
 			if (!Array.isArray(allSegmentGroups)) {
 				allSegmentGroups = [allSegmentGroups];
 			}
-			assert(
-				Array.isArray(allSegmentGroups),
-				"Expected array of segment groups",
-			);
+			assert(Array.isArray(allSegmentGroups), "Expected array of segment groups");
 			for (const op of ops) {
 				const message = client.makeOpMessage(op, ++runningSeq);
 				message.minimumSequenceNumber = minimumSequenceNumber;
@@ -457,21 +410,15 @@ export function generateOperationMessagesForClients(
 				);
 				messages.push([
 					message,
-					op.type === MergeTreeDeltaType.GROUP
-						? segmentGroups
-						: segmentGroups[0],
+					op.type === MergeTreeDeltaType.GROUP ? segmentGroups : segmentGroups[0],
 				]);
 			}
 		}
 	}
 
-	const maxProcessedSeq = Math.max(
-		...clients.map((c) => c.getCollabWindow().currentSeq),
-	);
+	const maxProcessedSeq = Math.max(...clients.map((c) => c.getCollabWindow().currentSeq));
 	if (messages.length > 0) {
-		const index = messages.findIndex(
-			([msg]) => msg.sequenceNumber === maxProcessedSeq,
-		);
+		const index = messages.findIndex(([msg]) => msg.sequenceNumber === maxProcessedSeq);
 		if (index !== -1) {
 			const apply = messages.splice(0, index + 1);
 			applyMessages(apply[0][0].sequenceNumber - 1, apply, clients, logger);

@@ -5,14 +5,8 @@
 
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
-import {
-	type ISummaryTree,
-	SummaryType,
-} from "@fluidframework/driver-definitions";
-import type {
-	ITree,
-	ITreeEntry,
-} from "@fluidframework/driver-definitions/internal";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import { ITree, ITreeEntry } from "@fluidframework/driver-definitions/internal";
 
 import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "./blob.js";
 import { isCombinedAppAndProtocolSummary } from "./summaryForCreateNew.js";
@@ -22,9 +16,7 @@ import { isCombinedAppAndProtocolSummary } from "./summaryForCreateNew.js";
  * @param summaryTree - summary tree in ISummaryTree format
  * @internal
  */
-export function convertSummaryTreeToSnapshotITree(
-	summaryTree: ISummaryTree,
-): ITree {
+export function convertSummaryTreeToSnapshotITree(summaryTree: ISummaryTree): ITree {
 	const entries: ITreeEntry[] = [];
 	const adaptSummaryTree = isCombinedAppAndProtocolSummary(summaryTree);
 	const allSummaryEntries = adaptSummaryTree
@@ -51,9 +43,7 @@ export function convertSummaryTreeToSnapshotITree(
 			}
 
 			case SummaryType.Tree: {
-				entries.push(
-					new TreeTreeEntry(k, convertSummaryTreeToSnapshotITree(value)),
-				);
+				entries.push(new TreeTreeEntry(k, convertSummaryTreeToSnapshotITree(value)));
 				break;
 			}
 

@@ -8,26 +8,15 @@ import { strict as assert } from "node:assert";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
-	createDDSFuzzSuite,
 	type DDSFuzzHarnessEvents,
 	type DDSFuzzModel,
 	type DDSFuzzTestState,
+	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
-import type {
-	Anchor,
-	JsonableTree,
-	UpPath,
-	Value,
-} from "../../../core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { jsonableTreeFromForest } from "../../../feature-libraries/treeTextCursor.js";
-import type { NodeBuilderData } from "../../../internalTypes.js";
-import {
-	createTestUndoRedoStacks,
-	SharedTreeTestFactory,
-	validateTree,
-} from "../../utils.js";
+import type { Anchor, JsonableTree, UpPath, Value } from "../../../core/index.js";
+import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils.js";
+
 import {
 	type EditGeneratorOpWeights,
 	type FuzzTestState,
@@ -36,15 +25,18 @@ import {
 } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
 import {
-	createAnchors,
-	createOnCreate,
-	deterministicIdCompressorFactory,
-	type FuzzNode,
-	failureDirectory,
 	type RevertibleSharedTreeView,
+	createAnchors,
+	deterministicIdCompressorFactory,
+	failureDirectory,
 	validateAnchors,
+	type FuzzNode,
+	createOnCreate,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
+import type { NodeBuilderData } from "../../../internalTypes.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { jsonableTreeFromForest } from "../../../feature-libraries/treeTextCursor.js";
 
 interface AnchorFuzzTestState extends FuzzTestState {
 	// Parallel array to `clients`: set in testStart
@@ -105,10 +97,7 @@ describe("Fuzz - anchor stability", () => {
 
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AnchorFuzzTestState) => {
-			const tree = viewFromState(
-				initialState,
-				initialState.clients[0],
-			).checkout;
+			const tree = viewFromState(initialState, initialState.clients[0]).checkout;
 			tree.transaction.start();
 			const initialJsonableTree = jsonableTreeFromForest(tree.forest);
 			initialState.initialJsonableTree = initialJsonableTree;
@@ -117,8 +106,7 @@ describe("Fuzz - anchor stability", () => {
 		});
 
 		emitter.on("testEnd", (finalState: AnchorFuzzTestState) => {
-			const anchors =
-				finalState.anchors ?? assert.fail("Anchors should be defined");
+			const anchors = finalState.anchors ?? assert.fail("Anchors should be defined");
 
 			// aborts any transactions that may still be in progress
 			const tree = viewFromState(finalState, finalState.clients[0]).checkout;
@@ -179,21 +167,24 @@ describe("Fuzz - anchor stability", () => {
 
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AnchorFuzzTestState) => {
-			for (const client of initialState.clients) {
-				// This is a kludge to force the invocation of schematize for each client.
-				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-				viewFromState(initialState, client).checkout;
-				// synchronization here (instead of once after this loop) prevents the second client from having to rebase an initialize,
-				// which invalidates its view due to schema change.
-				initialState.containerRuntimeFactory.processAllMessages();
+			// Kludge: we force schematization and synchronization here to ensure that the clients all have the same
+			// starting tree as opposed to isomorphic copies.
+			// If we don't do this, then the anchors created below would be destroyed on all but one client (the client
+			// whose schematize wins the synchronization race).
+			{
+				for (const client of initialState.clients) {
+					// This is a kludge to force the invocation of schematize for each client.
+					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+					viewFromState(initialState, client).checkout;
+					// synchronization here (instead of once after this loop) prevents the second client from having to rebase an initialize,
+					// which invalidates its view due to schema change.
+					initialState.containerRuntimeFactory.processAllMessages();
+				}
 			}
 			initialState.anchors = [];
 			for (const client of initialState.clients) {
-				const view = viewFromState(initialState, client)
-					.checkout as RevertibleSharedTreeView;
-				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
-					view.events,
-				);
+				const view = viewFromState(initialState, client).checkout as RevertibleSharedTreeView;
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 				view.undoStack = undoStack;
 				view.redoStack = redoStack;
 				view.unsubscribe = unsubscribe;
@@ -202,14 +193,9 @@ describe("Fuzz - anchor stability", () => {
 		});
 
 		emitter.on("testEnd", (finalState: AnchorFuzzTestState) => {
-			const anchors =
-				finalState.anchors ?? assert.fail("Anchors should be defined");
+			const anchors = finalState.anchors ?? assert.fail("Anchors should be defined");
 			for (const [i, client] of finalState.clients.entries()) {
-				validateAnchors(
-					viewFromState(finalState, client).checkout,
-					anchors[i],
-					false,
-				);
+				validateAnchors(viewFromState(finalState, client).checkout, anchors[i], false);
 			}
 		});
 

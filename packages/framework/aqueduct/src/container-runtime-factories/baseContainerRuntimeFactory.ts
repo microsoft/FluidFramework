@@ -9,16 +9,16 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import {
 	FluidDataStoreRegistry,
-	type IContainerRuntimeOptions,
 	loadContainerRuntime,
+	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 import {
 	// eslint-disable-next-line import-x/no-deprecated
-	buildRuntimeRequestHandler,
-	// eslint-disable-next-line import-x/no-deprecated
 	type RuntimeRequestHandler,
+	// eslint-disable-next-line import-x/no-deprecated
+	buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler/internal";
 import type {
 	IFluidDataStoreRegistry,
@@ -94,9 +94,7 @@ export class BaseContainerRuntimeFactory
 	private readonly runtimeOptions?: IContainerRuntimeOptions;
 	// eslint-disable-next-line import-x/no-deprecated
 	private readonly requestHandlers: RuntimeRequestHandler[];
-	private readonly provideEntryPoint: (
-		runtime: IContainerRuntime,
-	) => Promise<FluidObject>;
+	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
 	private readonly minVersionForCollab: MinimumVersionForCollab | undefined;
 
 	public constructor(props: BaseContainerRuntimeFactoryProps) {
@@ -126,9 +124,7 @@ export class BaseContainerRuntimeFactory
 	 * i.e. every time it's initialized _except_ for when it is first created
 	 * @param runtime - The runtime for the container being initialized
 	 */
-	public async instantiateFromExisting(
-		runtime: IContainerRuntime,
-	): Promise<void> {
+	public async instantiateFromExisting(runtime: IContainerRuntime): Promise<void> {
 		await this.containerHasInitialized(runtime);
 	}
 
@@ -168,16 +164,12 @@ export class BaseContainerRuntimeFactory
 	 * is created. This likely includes creating any initial data stores that are expected to be there at the outset.
 	 * @param runtime - The container runtime for the container being initialized
 	 */
-	protected async containerInitializingFirstTime(
-		runtime: IContainerRuntime,
-	): Promise<void> {}
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {}
 
 	/**
 	 * Subclasses may override containerHasInitialized to perform any steps after the container has initialized.
 	 * This likely includes loading any data stores that are expected to be there at the outset.
 	 * @param runtime - The container runtime for the container being initialized
 	 */
-	protected async containerHasInitialized(
-		runtime: IContainerRuntime,
-	): Promise<void> {}
+	protected async containerHasInitialized(runtime: IContainerRuntime): Promise<void> {}
 }

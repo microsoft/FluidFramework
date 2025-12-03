@@ -6,10 +6,7 @@
 import type { Machine } from "jssm";
 import chalk from "picocolors";
 
-import {
-	type InstructionalPrompt,
-	mapADOLinks,
-} from "../instructionalPromptWriter.js";
+import { type InstructionalPrompt, mapADOLinks } from "../instructionalPromptWriter.js";
 import {
 	difference,
 	generateReleaseBranchName,
@@ -84,10 +81,7 @@ export const promptToCreateReleaseBranch: StateHandlerFunction = async (
 	const { command, promptWriter, releaseGroup, releaseVersion } = data;
 
 	if (isReleaseGroup(releaseGroup)) {
-		const releaseBranch = generateReleaseBranchName(
-			releaseGroup,
-			releaseVersion,
-		);
+		const releaseBranch = generateReleaseBranchName(releaseGroup, releaseVersion);
 
 		const prompt: InstructionalPrompt = {
 			title: "CREATE A RELEASE BRANCH",
@@ -192,12 +186,8 @@ export const promptToPRBump: StateHandlerFunction = async (
 	};
 
 	if (isReleaseGroup(releaseGroup)) {
-		const releaseBranch = generateReleaseBranchName(
-			releaseGroup,
-			releaseVersion,
-		);
-		const releaseBranchExists =
-			(await gitRepo.getShaForBranch(releaseBranch)) !== undefined;
+		const releaseBranch = generateReleaseBranchName(releaseGroup, releaseVersion);
+		const releaseBranchExists = (await gitRepo.getShaForBranch(releaseBranch)) !== undefined;
 
 		if (!releaseBranchExists) {
 			prompt.sections.push({
@@ -320,10 +310,7 @@ export const promptToReleaseDeps: StateHandlerFunction = async (
 
 	const { command, context, promptWriter, releaseGroup } = data;
 
-	const prereleaseDepNames = await getPreReleaseDependencies(
-		context,
-		releaseGroup,
-	);
+	const prereleaseDepNames = await getPreReleaseDependencies(context, releaseGroup);
 
 	const prompt: InstructionalPrompt = {
 		title: "NEED TO RELEASE DEPENDENCIES",
@@ -337,10 +324,7 @@ export const promptToReleaseDeps: StateHandlerFunction = async (
 		],
 	};
 
-	if (
-		prereleaseDepNames.releaseGroups.size > 0 ||
-		prereleaseDepNames.packages.size > 0
-	) {
+	if (prereleaseDepNames.releaseGroups.size > 0 || prereleaseDepNames.packages.size > 0) {
 		if (prereleaseDepNames.packages.size > 0) {
 			let packageSection = "";
 			for (const [pkg, depVersion] of prereleaseDepNames.packages.entries()) {
@@ -355,10 +339,7 @@ export const promptToReleaseDeps: StateHandlerFunction = async (
 
 		if (prereleaseDepNames.releaseGroups.size > 0) {
 			let packageSection = "";
-			for (const [
-				rg,
-				depVersion,
-			] of prereleaseDepNames.releaseGroups.entries()) {
+			for (const [rg, depVersion] of prereleaseDepNames.releaseGroups.entries()) {
 				packageSection = `${rg} = ${depVersion}`;
 				prompt.sections.push({
 					title: "RELEASE RELEASE GROUP",

@@ -19,10 +19,7 @@ describe("generateEntrypoints", () => {
 		expect(readArgValues("", optionDefaults)).to.deep.equal(optionDefaults);
 
 		expect(
-			readArgValues(
-				"--outFileLegacyBeta legacy --outDir ./dist",
-				optionDefaults,
-			),
+			readArgValues("--outFileLegacyBeta legacy --outDir ./dist", optionDefaults),
 		).to.deep.equal({
 			...optionDefaults,
 			outDir: "./dist",

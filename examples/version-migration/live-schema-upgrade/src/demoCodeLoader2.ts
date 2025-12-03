@@ -20,9 +20,7 @@ const v2ModuleWithDetails: IFluidModuleWithDetails = {
 
 // This code loader is used in version 2.0 of the app. In a production app, there will likely only be one code loader.
 export class DemoCodeLoader implements ICodeDetailsLoader {
-	public async load(
-		source: IFluidCodeDetails,
-	): Promise<IFluidModuleWithDetails> {
+	public async load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
 		const version = source.package;
 		if (typeof version !== "string") {
 			throw new TypeError("Unexpected code detail format");

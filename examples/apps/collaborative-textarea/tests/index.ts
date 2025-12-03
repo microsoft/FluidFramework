@@ -3,16 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import {
-	SessionStorageModelLoader,
-	StaticCodeLoader,
-} from "@fluid-example/example-utils";
+import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 import React from "react";
 import ReactDOM from "react-dom";
 
 import {
 	CollaborativeTextContainerRuntimeFactory,
-	type ICollaborativeTextAppModel,
+	ICollaborativeTextAppModel,
 } from "../src/container";
 import { CollaborativeTextView } from "../src/view";
 
@@ -21,10 +18,9 @@ import { CollaborativeTextView } from "../src/view";
  * requires making async calls.
  */
 async function createContainerAndRenderInElement(element: HTMLElement) {
-	const sessionStorageModelLoader =
-		new SessionStorageModelLoader<ICollaborativeTextAppModel>(
-			new StaticCodeLoader(new CollaborativeTextContainerRuntimeFactory()),
-		);
+	const sessionStorageModelLoader = new SessionStorageModelLoader<ICollaborativeTextAppModel>(
+		new StaticCodeLoader(new CollaborativeTextContainerRuntimeFactory()),
+	);
 
 	let id: string;
 	let model: ICollaborativeTextAppModel;
@@ -33,8 +29,7 @@ async function createContainerAndRenderInElement(element: HTMLElement) {
 		// Normally our code loader is expected to match up with the version passed here.
 		// But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
 		// the version doesn't actually matter.
-		const createResponse =
-			await sessionStorageModelLoader.createDetached("1.0");
+		const createResponse = await sessionStorageModelLoader.createDetached("1.0");
 		model = createResponse.model;
 		id = await createResponse.attach();
 	} else {
@@ -48,9 +43,7 @@ async function createContainerAndRenderInElement(element: HTMLElement) {
 
 	// Render it
 	ReactDOM.render(
-		React.createElement(CollaborativeTextView, {
-			text: model.collaborativeText.text,
-		}),
+		React.createElement(CollaborativeTextView, { text: model.collaborativeText.text }),
 		element,
 	);
 

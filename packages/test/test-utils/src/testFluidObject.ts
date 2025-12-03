@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import type {
+import {
 	IFluidHandle,
-	IFluidLoadable,
 	IRequest,
 	IResponse,
+	type IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	type FluidDataStoreRuntime,
+	FluidDataStoreRuntime,
 	FluidObjectHandle,
 	mixinRequestHandler,
 } from "@fluidframework/datastore/internal";
-import type {
+import {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import type {
+import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
@@ -28,7 +28,7 @@ import type {
 import { create404Response } from "@fluidframework/runtime-utils/internal";
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
-import type { ITestFluidObject } from "./interfaces.js";
+import { ITestFluidObject } from "./interfaces.js";
 
 /**
  * A test Fluid object that will create a shared object for each key-value pair in the initialSharedObjectsFactories passed to load.
@@ -70,11 +70,7 @@ export class TestFluidObject implements ITestFluidObject {
 			IChannelFactory<ISharedObject>
 		>,
 	) {
-		this.handle = new FluidObjectHandle(
-			this,
-			"",
-			runtime.objectsRoutingContext,
-		);
+		this.handle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
 	}
 
 	/**
@@ -100,9 +96,7 @@ export class TestFluidObject implements ITestFluidObject {
 	}
 
 	public async request(request: IRequest): Promise<IResponse> {
-		return request.url === "" ||
-			request.url === "/" ||
-			request.url.startsWith("/?")
+		return request.url === "" || request.url === "/" || request.url.startsWith("/?")
 			? { mimeType: "fluid/object", status: 200, value: this }
 			: create404Response(request);
 	}
@@ -114,10 +108,7 @@ export class TestFluidObject implements ITestFluidObject {
 
 				this.initialSharedObjectsFactories.forEach(
 					(sharedObjectFactory: IChannelFactory, key: string) => {
-						const sharedObject = this.runtime.createChannel(
-							key,
-							sharedObjectFactory.type,
-						);
+						const sharedObject = this.runtime.createChannel(key, sharedObjectFactory.type);
 						this.root.set(key, sharedObject.handle);
 					},
 				);
@@ -137,9 +128,7 @@ export class TestFluidObject implements ITestFluidObject {
  * Iterable\<[ChannelId, IChannelFactory]\>.
  * @internal
  */
-export type ChannelFactoryRegistry = Iterable<
-	[string | undefined, IChannelFactory]
->;
+export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFactory]>;
 
 /**
  * Kind of test data object which {@link TestFluidObjectFactory} can create.
@@ -149,10 +138,7 @@ export type TestDataObjectKind = new (
 	runtime: IFluidDataStoreRuntime,
 	channel: IFluidDataStoreChannel,
 	context: IFluidDataStoreContext,
-	initialSharedObjectsFactories: ReadonlyMap<
-		string,
-		IChannelFactory<ISharedObject>
-	>,
+	initialSharedObjectsFactories: ReadonlyMap<string, IChannelFactory<ISharedObject>>,
 ) => IFluidLoadable & {
 	request(request: IRequest): Promise<IResponse>;
 	initialize(existing: boolean): Promise<void>;
@@ -223,17 +209,11 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 
 		// Create a map from the factory entries with entries that don't have the id as undefined. This will be
 		// passed to the Fluid object.
-		const factoryEntriesMapForObject = new Map<
-			string,
-			IChannelFactory<ISharedObject>
-		>();
+		const factoryEntriesMapForObject = new Map<string, IChannelFactory<ISharedObject>>();
 		for (const [id, factory] of this.initialSharedObjectsFactories) {
 			if (id !== undefined) {
 				// Here we assume the factory produces an ISharedObject.
-				factoryEntriesMapForObject.set(
-					id,
-					factory as IChannelFactory<ISharedObject>,
-				);
+				factoryEntriesMapForObject.set(id, factory as IChannelFactory<ISharedObject>);
 			}
 		}
 

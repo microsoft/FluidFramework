@@ -23,10 +23,7 @@ import type { IFluidErrorBase } from "@fluidframework/telemetry-utils/internal";
 
 import type { IOdspSocketError } from "../contracts.js";
 import { errorObjectFromSocketError } from "../odspError.js";
-import {
-	fetchAndParseAsJSONHelper,
-	getWithRetryForTokenRefresh,
-} from "../odspUtils.js";
+import { fetchAndParseAsJSONHelper, getWithRetryForTokenRefresh } from "../odspUtils.js";
 import { pkgVersion } from "../packageVersion.js";
 
 import { mockFetchError } from "./mockFetch.js";
@@ -50,9 +47,7 @@ describe("Odsp Error", () => {
 	/**
 	 * Checks if the input is an {@link IGenericNetworkError}.
 	 */
-	function isIGenericNetworkError(
-		input: unknown,
-	): input is IGenericNetworkError {
+	function isIGenericNetworkError(input: unknown): input is IGenericNetworkError {
 		return (
 			(input as Partial<IGenericNetworkError>)?.errorType ===
 			OdspErrorTypes.genericNetworkError
@@ -64,8 +59,7 @@ describe("Odsp Error", () => {
 	 */
 	function isIThrottlingWarning(input: unknown): input is IThrottlingWarning {
 		return (
-			(input as Partial<IThrottlingWarning>)?.errorType ===
-			OdspErrorTypes.throttlingError
+			(input as Partial<IThrottlingWarning>)?.errorType === OdspErrorTypes.throttlingError
 		);
 	}
 
@@ -74,8 +68,7 @@ describe("Odsp Error", () => {
 	 */
 	function isIAuthorizationError(input: unknown): input is IAuthorizationError {
 		return (
-			(input as Partial<IAuthorizationError>)?.errorType ===
-			OdspErrorTypes.authorizationError
+			(input as Partial<IAuthorizationError>)?.errorType === OdspErrorTypes.authorizationError
 		);
 	}
 
@@ -86,12 +79,7 @@ describe("Odsp Error", () => {
 		responseText?: string,
 	): IFluidErrorBase & OdspError {
 		try {
-			throwOdspNetworkError(
-				errorMessage,
-				statusCode,
-				response ?? testResponse,
-				responseText,
-			);
+			throwOdspNetworkError(errorMessage, statusCode, response ?? testResponse, responseText);
 			assert.fail("Not reached - throwOdspNetworkError should have thrown");
 		} catch (error) {
 			return error as IFluidErrorBase & OdspError;
@@ -99,10 +87,7 @@ describe("Odsp Error", () => {
 	}
 
 	it("throwOdspNetworkError first-class properties", async () => {
-		const networkError = createOdspNetworkErrorWithResponse(
-			"some message",
-			400,
-		);
+		const networkError = createOdspNetworkErrorWithResponse("some message", 400);
 		if (networkError.errorType !== OdspErrorTypes.genericNetworkError) {
 			assert.fail("networkError should be a genericNetworkError");
 		}
@@ -121,21 +106,13 @@ describe("Odsp Error", () => {
 	it("throwOdspNetworkError sprequestguid exists", async () => {
 		const error1 = createOdspNetworkErrorWithResponse("some message", 400);
 		const errorBag = { ...error1.getTelemetryProperties() };
-		assert.equal(
-			"xxx-xxx",
-			errorBag.sprequestguid,
-			"sprequestguid should be 'xxx-xxx'",
-		);
+		assert.equal("xxx-xxx", errorBag.sprequestguid, "sprequestguid should be 'xxx-xxx'");
 	});
 
 	it("throwOdspNetworkError sprequestguid undefined", async () => {
 		const error1 = createOdspNetworkError("some message", 400);
 		const errorBag = { ...error1.getTelemetryProperties() };
-		assert.equal(
-			undefined,
-			errorBag.sprequestguid,
-			"sprequestguid should not be defined",
-		);
+		assert.equal(undefined, errorBag.sprequestguid, "sprequestguid should not be defined");
 	});
 
 	it("errorObjectFromSocketError no retryAfter", async () => {
@@ -217,11 +194,7 @@ describe("Odsp Error", () => {
 			"SurelyBlocked",
 			"Innermost error code should be correct",
 		);
-		assert.equal(
-			networkError.facetCodes?.length,
-			3,
-			"3 facet codes should be there",
-		);
+		assert.equal(networkError.facetCodes?.length, 3, "3 facet codes should be there");
 	});
 
 	it("errorObjectFromSocketError with retryAfter", async () => {
@@ -231,10 +204,7 @@ describe("Odsp Error", () => {
 			retryAfter: 10,
 		};
 		const networkError = errorObjectFromSocketError(socketError, "handler");
-		assert(
-			isIThrottlingWarning(networkError),
-			"networkError should be a throttlingError",
-		);
+		assert(isIThrottlingWarning(networkError), "networkError should be a throttlingError");
 		assert(
 			networkError.message.includes("handler"),
 			"error message should include handler name",
@@ -262,13 +232,9 @@ describe("Odsp Error", () => {
 			if (options.refresh) {
 				return 1;
 			} else {
-				throw new NonRetryableError(
-					"some message",
-					OdspErrorTypes.incorrectServerResponse,
-					{
-						driverVersion: pkgVersion,
-					},
-				);
+				throw new NonRetryableError("some message", OdspErrorTypes.incorrectServerResponse, {
+					driverVersion: pkgVersion,
+				});
 			}
 		});
 		assert.equal(res, 1, "did not successfully retried with new token");
@@ -302,29 +268,16 @@ describe("Odsp Error", () => {
 		},
 	} as Response;
 
-	function throwAuthorizationErrorWithInsufficientClaims(
-		errorMessage: string,
-	): void {
-		throwOdspNetworkError(
-			errorMessage,
-			401,
-			testResponseWithInsufficientClaims,
-		);
+	function throwAuthorizationErrorWithInsufficientClaims(errorMessage: string): void {
+		throwOdspNetworkError(errorMessage, 401, testResponseWithInsufficientClaims);
 	}
 
 	it("Authorization error with insufficient claims first-class properties", () => {
 		assert.throws(
 			() => throwAuthorizationErrorWithInsufficientClaims("TestMessage"),
 			(error) => {
-				assert(
-					isIAuthorizationError(error),
-					"error should be a IAuthorizationError",
-				);
-				assert.match(
-					error.message,
-					/TestMessage/,
-					"message should contain original message",
-				);
+				assert(isIAuthorizationError(error), "error should be a IAuthorizationError");
+				assert.match(error.message, /TestMessage/, "message should contain original message");
 				assert.equal(error.canRetry, false, "canRetry should be false");
 				assert.equal(
 					error.claims,
@@ -340,8 +293,7 @@ describe("Odsp Error", () => {
 		const res = await getWithRetryForTokenRefresh(async (options) => {
 			if (
 				options.refresh &&
-				options.claims ===
-					'{"access_token":{"nbf":{"essential":true, "value":"1597959090"}}}'
+				options.claims === '{"access_token":{"nbf":{"essential":true, "value":"1597959090"}}}'
 			) {
 				return 1;
 			} else {
@@ -376,15 +328,8 @@ describe("Odsp Error", () => {
 		assert.throws(
 			() => throwAuthorizationErrorWithRealm("TestMessage"),
 			(error) => {
-				assert(
-					isIAuthorizationError(error),
-					"error should be a IAuthorizationError",
-				);
-				assert.match(
-					error.message,
-					/TestMessage/,
-					"message should contain original message",
-				);
+				assert(isIAuthorizationError(error), "error should be a IAuthorizationError");
+				assert.match(error.message, /TestMessage/, "message should contain original message");
 				assert.equal(error.canRetry, false, "canRetry should be false");
 				assert.equal(
 					error.tenantId,
@@ -398,20 +343,13 @@ describe("Odsp Error", () => {
 
 	it("Authorization error with realm results in retry and realm passed as tenant id", async () => {
 		const res = await getWithRetryForTokenRefresh(async (options) => {
-			if (
-				options.refresh &&
-				options.tenantId === "6c482541-f706-4168-9e58-8e35a9992f58"
-			) {
+			if (options.refresh && options.tenantId === "6c482541-f706-4168-9e58-8e35a9992f58") {
 				return 1;
 			} else {
 				throwAuthorizationErrorWithRealm("some error");
 			}
 		});
-		assert.strictEqual(
-			res,
-			1,
-			"did not successfully retried with realm passed as tenantId",
-		);
+		assert.strictEqual(res, 1, "did not successfully retried with realm passed as tenantId");
 	});
 
 	it("Check Epoch Mismatch error props", async () => {
@@ -434,9 +372,9 @@ describe("Odsp Error", () => {
 		const responseText = {
 			error: {
 				"@error.redirectLocation": redirectLocation,
-				code: "itemNotFound",
-				message: "The site has been moved to a new location.",
-				innerError: {},
+				"code": "itemNotFound",
+				"message": "The site has been moved to a new location.",
+				"innerError": {},
 			},
 		};
 		const error = createOdspNetworkErrorWithResponse(
@@ -450,11 +388,7 @@ describe("Odsp Error", () => {
 			OdspErrorTypes.fileNotFoundOrAccessDeniedError,
 			"Error type should be fileNotFoundOrAccessDeniedError",
 		);
-		assert.strictEqual(
-			error.redirectLocation,
-			redirectLocation,
-			"Site location should match",
-		);
+		assert.strictEqual(error.redirectLocation, redirectLocation, "Site location should match");
 		assert.strictEqual(
 			(error as IGenericNetworkError).statusCode,
 			404,
@@ -466,10 +400,7 @@ describe("Odsp Error", () => {
 		try {
 			await mockFetchError(
 				async () =>
-					fetchAndParseAsJSONHelper(
-						"https://microsoft.sharepoint-df.com/siteUrl",
-						{},
-					),
+					fetchAndParseAsJSONHelper("https://microsoft.sharepoint-df.com/siteUrl", {}),
 				new Error(
 					"Request to https://6c482541-f706-4168-9e58-8e35a9992f58.sharepoint.com failed",
 				),
@@ -489,20 +420,14 @@ describe("Odsp Error", () => {
 		try {
 			await mockFetchError(
 				async () =>
-					fetchAndParseAsJSONHelper(
-						"https://microsoft.sharepoint-df.com/siteUrl",
-						{},
-					),
+					fetchAndParseAsJSONHelper("https://microsoft.sharepoint-df.com/siteUrl", {}),
 				new Error("Request to http://f706-4168-9e58-8e35a9992f58.COM failed"),
 			);
 			assert.fail("Fetch should throw an error");
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (error: any) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			assert(
-				(error.message as string).includes("REDACTED_URL"),
-				"url should get redacted",
-			);
+			assert((error.message as string).includes("REDACTED_URL"), "url should get redacted");
 		}
 	});
 });

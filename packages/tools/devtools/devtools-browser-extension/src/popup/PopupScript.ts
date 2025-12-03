@@ -58,26 +58,16 @@ browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
  *
  * @param target - The element into which the popup view will be rendered.
  */
-export async function initializePopupView(
-	target: HTMLElement,
-	tabId: number,
-): Promise<void> {
+export async function initializePopupView(target: HTMLElement, tabId: number): Promise<void> {
 	const backgroundServiceConnection = await BackgroundConnection.Initialize({
 		messageSource: extensionPopupMessageSource,
 		tabId,
 	});
 	// Setting the theme here instead of using Fluent UI's ThemeProvider was intentional given the popup's simplicity.
 	// Note: keep these in sync with the themes in the devtools view.
-	const prefersDarkScheme = window.matchMedia(
-		"(prefers-color-scheme: dark)",
-	).matches;
-	document.body.style.backgroundColor = prefersDarkScheme
-		? "#242424"
-		: "#ffffff";
+	const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)").matches;
+	document.body.style.backgroundColor = prefersDarkScheme ? "#242424" : "#ffffff";
 	document.body.style.color = prefersDarkScheme ? "#ffffff" : "#242424";
 
-	ReactDOM.render(
-		React.createElement(PopupView, { backgroundServiceConnection }),
-		target,
-	);
+	ReactDOM.render(React.createElement(PopupView, { backgroundServiceConnection }), target);
 }

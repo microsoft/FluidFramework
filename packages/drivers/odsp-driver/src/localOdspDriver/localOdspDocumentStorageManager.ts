@@ -44,10 +44,7 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
 		count: number,
 		_scenarioName?: string,
 	): Promise<IVersion[]> {
-		assert(
-			blobid === null,
-			0x342 /* Invalid usage. "blobid" should always be null */,
-		);
+		assert(blobid === null, 0x342 /* Invalid usage. "blobid" should always be null */);
 		assert(count === 1, 0x343 /* Invalid usage. "count" should always be 1 */);
 
 		// No reason to re-parse the data since it will never change
@@ -59,31 +56,22 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
 		let snapshotContents: ISnapshot;
 
 		if (typeof this.localSnapshot === "string") {
-			const content: IOdspSnapshot = JSON.parse(
-				this.localSnapshot,
-			) as IOdspSnapshot;
+			const content: IOdspSnapshot = JSON.parse(this.localSnapshot) as IOdspSnapshot;
 			snapshotContents = convertOdspSnapshotToSnapshotTreeAndBlobs(content);
 		} else {
-			snapshotContents = parseCompactSnapshotResponse(
-				this.localSnapshot,
-				this.logger,
-			);
+			snapshotContents = parseCompactSnapshotResponse(this.localSnapshot, this.logger);
 		}
 
 		this.snapshotTreeId = this.initializeFromSnapshot(snapshotContents);
 		return this.getSnapshotVersion();
 	}
 
-	public async getSnapshot(
-		snapshotFetchOptions?: ISnapshotFetchOptions,
-	): Promise<ISnapshot> {
+	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
 		this.throwUsageError("getSnapshot");
 	}
 
 	private getSnapshotVersion(): IVersion[] {
-		return this.snapshotTreeId
-			? [{ id: this.snapshotTreeId, treeId: undefined! }]
-			: [];
+		return this.snapshotTreeId ? [{ id: this.snapshotTreeId, treeId: undefined! }] : [];
 	}
 
 	protected fetchTreeFromSnapshot(_id: string, _scenarioName?: string): never {
@@ -94,10 +82,7 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
 		this.throwUsageError("fetchBlobFromStorage");
 	}
 
-	public uploadSummaryWithContext(
-		_summary: ISummaryTree,
-		_context: ISummaryContext,
-	): never {
+	public uploadSummaryWithContext(_summary: ISummaryTree, _context: ISummaryContext): never {
 		this.throwUsageError("uploadSummaryWithContext");
 	}
 

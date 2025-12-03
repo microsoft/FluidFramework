@@ -4,18 +4,18 @@
  */
 
 import {
+	OptionsMatrix,
 	booleanCases,
 	generatePairwiseOptions,
 	numberCases,
-	type OptionsMatrix,
 } from "@fluid-private/test-pairwise-generator";
 import {
-	createOdspCreateContainerRequest,
-	createOdspUrl,
 	OdspDocumentServiceFactory,
 	OdspDriverUrlResolver,
+	createOdspCreateContainerRequest,
+	createOdspUrl,
 } from "@fluidframework/odsp-driver/internal";
-import type {
+import {
 	HostStoragePolicy,
 	ICollabSessionOptions,
 	IOpsCachingPolicy,
@@ -68,15 +68,9 @@ export const generateOdspHostStoragePolicy = (seed: number) => {
 		concurrentSnapshotFetch: booleanCases,
 		opsBatchSize: numberCases,
 		concurrentOpsBatches: numberCases,
-		snapshotOptions: [
-			undefined,
-			...generatePairwiseOptions(odspSnapshotOptions, seed),
-		],
+		snapshotOptions: [undefined, ...generatePairwiseOptions(odspSnapshotOptions, seed)],
 		opsCaching: [undefined, ...generatePairwiseOptions(odspOpsCaching, seed)],
-		sessionOptions: [
-			undefined,
-			...generatePairwiseOptions(odspSessionOptions, seed),
-		],
+		sessionOptions: [undefined, ...generatePairwiseOptions(odspSessionOptions, seed)],
 		enableRedeemFallback: booleanCases,
 		cacheCreateNewSummary: booleanCases,
 		fetchBinarySnapshotFormat: [undefined],

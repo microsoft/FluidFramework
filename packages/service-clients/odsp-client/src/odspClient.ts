@@ -10,8 +10,8 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import {
 	createDetachedContainer,
-	type ILoaderProps,
 	loadExistingContainer,
+	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import type {
 	IConfigProviderBase,
@@ -20,32 +20,29 @@ import type {
 } from "@fluidframework/core-interfaces";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
-import type {
-	ContainerAttachProps,
-	ContainerSchema,
-} from "@fluidframework/fluid-static";
+import type { ContainerAttachProps, ContainerSchema } from "@fluidframework/fluid-static";
 import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 } from "@fluidframework/fluid-static/internal";
 import {
+	OdspDocumentServiceFactory,
+	OdspDriverUrlResolver,
 	createOdspCreateContainerRequest,
 	createOdspUrl,
 	isOdspResolvedUrl,
-	OdspDocumentServiceFactory,
-	OdspDriverUrlResolver,
 } from "@fluidframework/odsp-driver/internal";
 import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import type {
-	OdspContainerServices as IOdspContainerServices,
-	IOdspFluidContainer,
+	TokenResponse,
 	OdspClientProps,
 	OdspConnectionConfig,
 	OdspContainerAttachProps,
-	TokenResponse,
+	OdspContainerServices as IOdspContainerServices,
+	IOdspFluidContainer,
 } from "./interfaces.js";
 import { OdspContainerServices } from "./odspContainerServices.js";
 import type { IOdspTokenProvider } from "./token.js";
@@ -85,13 +82,8 @@ const odspClientFeatureGates = {
  * @param baseConfigProvider - The base config provider to wrap
  * @returns A new config provider with the appropriate defaults applied underneath the given provider
  */
-function wrapConfigProvider(
-	baseConfigProvider?: IConfigProviderBase,
-): IConfigProviderBase {
-	return wrapConfigProviderWithDefaults(
-		baseConfigProvider,
-		odspClientFeatureGates,
-	);
+function wrapConfigProvider(baseConfigProvider?: IConfigProviderBase): IConfigProviderBase {
+	return wrapConfigProviderWithDefaults(baseConfigProvider, odspClientFeatureGates);
 }
 
 /**
@@ -110,10 +102,8 @@ export class OdspClient {
 		this.connectionConfig = properties.connection;
 		this.logger = properties.logger;
 		this.documentServiceFactory = new OdspDocumentServiceFactory(
-			async (options) =>
-				getStorageToken(options, this.connectionConfig.tokenProvider),
-			async (options) =>
-				getWebsocketToken(options, this.connectionConfig.tokenProvider),
+			async (options) => getStorageToken(options, this.connectionConfig.tokenProvider),
+			async (options) => getWebsocketToken(options, this.connectionConfig.tokenProvider),
 		);
 
 		this.urlResolver = new OdspDriverUrlResolver();
@@ -160,10 +150,7 @@ export class OdspClient {
 			itemId: id,
 			dataStorePath: "",
 		});
-		const container = await loadExistingContainer({
-			...loaderProps,
-			request: { url },
-		});
+		const container = await loadExistingContainer({ ...loaderProps, request: { url } });
 
 		const fluidContainer = await createFluidContainer<T>({
 			container,
@@ -222,9 +209,7 @@ export class OdspClient {
 				odspProps?.fileName ?? uuid(),
 			);
 			if (container.attachState !== AttachState.Detached) {
-				throw new Error(
-					"Cannot attach container. Container is not in detached state",
-				);
+				throw new Error("Cannot attach container. Container is not in detached state");
 			}
 			await container.attach(createNewRequest);
 
@@ -246,9 +231,7 @@ export class OdspClient {
 		return fluidContainer;
 	}
 
-	private async getContainerServices(
-		container: IContainer,
-	): Promise<IOdspContainerServices> {
+	private async getContainerServices(container: IContainer): Promise<IOdspContainerServices> {
 		return new OdspContainerServices(container);
 	}
 }

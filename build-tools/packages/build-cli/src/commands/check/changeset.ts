@@ -9,9 +9,7 @@ import { sortPackageJson as sortJson } from "sort-package-json";
 
 import { BaseCommand } from "../../library/index.js";
 
-export default class CheckChangesetCommand extends BaseCommand<
-	typeof CheckChangesetCommand
-> {
+export default class CheckChangesetCommand extends BaseCommand<typeof CheckChangesetCommand> {
 	static readonly summary =
 		`Checks if a changeset was added when compared against a branch. This is used in CI to enforce that changesets are present for a PR.`;
 
@@ -28,13 +26,11 @@ export default class CheckChangesetCommand extends BaseCommand<
 
 	static readonly examples = [
 		{
-			description:
-				"Check if a changeset was added when compared to the 'main' branch.",
+			description: "Check if a changeset was added when compared to the 'main' branch.",
 			command: "<%= config.bin %> <%= command.id %> -b main",
 		},
 		{
-			description:
-				"Check if a changeset was added when compared to the 'next' branch.",
+			description: "Check if a changeset was added when compared to the 'next' branch.",
 			command: "<%= config.bin %> <%= command.id %> -b next",
 		},
 	];
@@ -57,14 +53,10 @@ export default class CheckChangesetCommand extends BaseCommand<
 		const { files } = await repo.getChangedSinceRef(branch, remote, context);
 		const changesetPathRegex = /.changeset\/[^/]+\.md$/;
 
-		const changedChangesetFiles = files.filter((file) =>
-			changesetPathRegex.test(file),
-		);
+		const changedChangesetFiles = files.filter((file) => changesetPathRegex.test(file));
 
 		if (changedChangesetFiles.length === 0) {
-			this.errorLog(
-				`No changeset files were added when compared to ${branch}.`,
-			);
+			this.errorLog(`No changeset files were added when compared to ${branch}.`);
 			this.verbose(`Changed files: ${JSON.stringify(files, undefined, 2)}`);
 
 			// When we output JSON, we don't want to exit with a failure error code. Instead we return the failure as part of
@@ -78,9 +70,7 @@ export default class CheckChangesetCommand extends BaseCommand<
 			this.exit(1);
 		}
 
-		this.log(
-			chalk.green(`Found a changeset file: ${changedChangesetFiles[0]}.`),
-		);
+		this.log(chalk.green(`Found a changeset file: ${changedChangesetFiles[0]}.`));
 
 		return sortJson({
 			changesetFound: true,

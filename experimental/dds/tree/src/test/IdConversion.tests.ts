@@ -7,7 +7,7 @@ import { expect } from 'chai';
 
 import { StablePlace, StableRange } from '../ChangeTypes.js';
 import { convertNodeDataIds, convertStablePlaceIds, convertStableRangeIds } from '../IdConversion.js';
-import type { NodeId, StableNodeId } from '../Identifiers.js';
+import { NodeId, StableNodeId } from '../Identifiers.js';
 
 import { areNodesEquivalent, refreshTestTree } from './utilities/TestUtilities.js';
 

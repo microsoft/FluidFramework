@@ -8,14 +8,8 @@ import {
 	type ITelemetryBaseLogger,
 	isTelemetryOptInEnabled,
 } from "@fluid-internal/devtools-view";
-import type {
-	Tagged,
-	TelemetryBaseEventPropertyType,
-} from "@fluidframework/core-interfaces";
-import {
-	AppInsightsCore,
-	type IExtendedConfiguration,
-} from "@microsoft/1ds-core-js";
+import type { Tagged, TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
+import { AppInsightsCore, type IExtendedConfiguration } from "@microsoft/1ds-core-js";
 import {
 	type IChannelConfiguration,
 	type IXHROverride,
@@ -30,9 +24,7 @@ const extensionVersion = chrome.runtime.getManifest().version;
 const fetchHttpXHROverride: IXHROverride = {
 	sendPOST: (payload, oncomplete, sync) => {
 		const telemetryRequestData =
-			typeof payload.data === "string"
-				? payload.data
-				: new TextDecoder().decode(payload.data);
+			typeof payload.data === "string" ? payload.data : new TextDecoder().decode(payload.data);
 
 		const requestInit: RequestInit = {
 			body: telemetryRequestData,
@@ -130,9 +122,7 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 		if ((coreConfig.instrumentationKey ?? "") !== "") {
 			this.enabled = true;
 			this.appInsightsCore.initialize(coreConfig, []);
-			console.log(
-				formatDevtoolsScriptMessageForLogging(`Injected telemetry token.`),
-			);
+			console.log(formatDevtoolsScriptMessageForLogging(`Injected telemetry token.`));
 		}
 	}
 
@@ -174,10 +164,7 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 			return;
 		}
 
-		if (
-			(this.sessionID === undefined || this.continuityID === undefined) &&
-			optIn
-		) {
+		if ((this.sessionID === undefined || this.continuityID === undefined) && optIn) {
 			this.generateIdentifiers();
 		}
 
@@ -203,9 +190,7 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 			if (value === undefined) {
 				continue;
 			}
-			if (
-				(value as Tagged<TelemetryBaseEventPropertyType>).value !== undefined
-			) {
+			if ((value as Tagged<TelemetryBaseEventPropertyType>).value !== undefined) {
 				// In Fluid Devtools we don't currently plan to log tagged properties because we don't intend to capture any
 				// user-identifiable or user-generated information. If we do later, we'll need to add support for this.
 				throw new Error(`Tagged properties not supported by telemetry logger`);

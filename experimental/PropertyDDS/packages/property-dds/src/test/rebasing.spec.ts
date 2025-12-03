@@ -5,42 +5,43 @@
 
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 
+import { strict as assert } from "assert";
+
 import { DeterministicRandomGenerator } from "@fluid-experimental/property-common";
 import {
-	type ArrayProperty,
-	type Float64Property,
-	type Int32Property,
-	type NamedProperty,
+	ArrayProperty,
+	Float64Property,
+	Int32Property,
+	NamedProperty,
 	PropertyFactory,
-	type StringArrayProperty,
+	StringArrayProperty,
 	StringProperty,
 } from "@fluid-experimental/property-properties";
-import type {
+import {
 	IContainer,
 	IFluidCodeDetails,
 	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
 import {
-	type ILoaderProps,
 	loadExistingContainer,
+	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
-import type { IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
 } from "@fluidframework/local-driver/internal";
 import {
-	type ILocalDeltaConnectionServer,
+	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
-	createAndAttachContainerUsingProps,
-	createLoaderProps,
-	type ITestFluidObject,
+	ITestFluidObject,
 	LoaderContainerTracker,
 	TestFluidObjectFactory,
+	createAndAttachContainerUsingProps,
+	createLoaderProps,
 } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
 import { expect } from "chai";
 import lodash from "lodash";
 import { v5 as uuidv5 } from "uuid";
@@ -59,9 +60,7 @@ function createLocalLoaderProps(
 	urlResolver: IUrlResolver,
 	options?: ILoaderOptions,
 ): ILoaderProps {
-	const documentServiceFactory = new LocalDocumentServiceFactory(
-		deltaConnectionServer,
-	);
+	const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
 
 	return createLoaderProps(
 		packageEntries,
@@ -162,8 +161,7 @@ describe("PropertyDDS", () => {
 				const operationCumSums = [] as number[];
 				for (const operation of operations) {
 					operationCumSums.push(
-						(operationCumSums[operationCumSums.length - 1] ?? 0) +
-							operation.probability,
+						(operationCumSums[operationCumSums.length - 1] ?? 0) + operation.probability,
 					);
 				}
 
@@ -172,13 +170,9 @@ describe("PropertyDDS", () => {
 					const maxCount = operationCumSums[operationCumSums.length - 1];
 					for (const _j of range(numOperations)) {
 						const operationId = 1 + random.irandom(maxCount);
-						const selectedOperation = sortedIndex(
-							operationCumSums,
-							operationId,
-						);
+						const selectedOperation = sortedIndex(operationCumSums, operationId);
 
-						const parameters =
-							operations[selectedOperation].getParameters(random);
+						const parameters = operations[selectedOperation].getParameters(random);
 
 						// Create the source code for the test
 						let operationSource = getFunctionSource(
@@ -216,15 +210,13 @@ describe("PropertyDDS", () => {
 		// Create a Container for the first client.
 		container1 = await createContainer();
 		dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
-		sharedPropertyTree1 =
-			await dataObject1.getSharedObject<SharedPropertyTree>(propertyDdsId);
+		sharedPropertyTree1 = await dataObject1.getSharedObject<SharedPropertyTree>(propertyDdsId);
 		(sharedPropertyTree1 as any).__id = 1; // Add an id to simplify debugging via conditional breakpoints
 
 		// Load the Container that was created by the first client.
 		container2 = await loadContainer();
 		dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		sharedPropertyTree2 =
-			await dataObject2.getSharedObject<SharedPropertyTree>(propertyDdsId);
+		sharedPropertyTree2 = await dataObject2.getSharedObject<SharedPropertyTree>(propertyDdsId);
 		(sharedPropertyTree2 as any).__id = 2; // Add an id to simplify debugging via conditional breakpoints
 
 		if (mode) {
@@ -259,14 +251,9 @@ describe("PropertyDDS", () => {
 				this.timeout(10000);
 
 				// Insert and prepare an array within the container
-				sharedPropertyTree1.root.insert(
-					"array",
-					PropertyFactory.create("String", "array"),
-				);
+				sharedPropertyTree1.root.insert("array", PropertyFactory.create("String", "array"));
 
-				const array = sharedPropertyTree1.root.get(
-					"array",
-				) as StringArrayProperty;
+				const array = sharedPropertyTree1.root.get("array") as StringArrayProperty;
 				array.push("B1");
 				array.push("B2");
 				array.push("B3");
@@ -286,12 +273,8 @@ describe("PropertyDDS", () => {
 					.concat(["B1", "B2", "B3"])
 					.concat(range(1, CCount + 1).map((i) => `C${i}`));
 
-				const array1 = sharedPropertyTree1.root.get(
-					"array",
-				) as StringArrayProperty;
-				const array2 = sharedPropertyTree2.root.get(
-					"array",
-				) as StringArrayProperty;
+				const array1 = sharedPropertyTree1.root.get("array") as StringArrayProperty;
+				const array2 = sharedPropertyTree2.root.get("array") as StringArrayProperty;
 				for (const array of [array1, array2]) {
 					for (const [i, value] of result.entries()) {
 						expect(array.get(i)).to.equal(value);
@@ -464,12 +447,12 @@ describe("PropertyDDS", () => {
 				expect(sharedPropertyTree1.root.serialize()).to.deep.equal(
 					sharedPropertyTree2.root.serialize(),
 				);
-				expect(
-					sharedPropertyTree1.root.get<StringProperty>("test"),
-				).to.be.instanceof(StringProperty);
-				expect(
-					sharedPropertyTree1.root.get<StringProperty>("test")?.getValue(),
-				).to.equal("Test");
+				expect(sharedPropertyTree1.root.get<StringProperty>("test")).to.be.instanceof(
+					StringProperty,
+				);
+				expect(sharedPropertyTree1.root.get<StringProperty>("test")?.getValue()).to.equal(
+					"Test",
+				);
 			});
 
 			it("works with overlapping sequences", async () => {
@@ -564,8 +547,7 @@ describe("PropertyDDS", () => {
 
 						await opProcessingController.ensureSynchronized();
 						if (logTest) {
-							testString +=
-								"await opProcessingController.ensureSynchronized();\n";
+							testString += "await opProcessingController.ensureSynchronized();\n";
 						}
 					});
 				}
@@ -631,9 +613,7 @@ describe("PropertyDDS", () => {
 				commit = true,
 			) {
 				for (let i = 0; i < count; i++) {
-					const property = PropertyFactory.create<NamedProperty>(
-						"test:namedEntry-1.0.0",
-					);
+					const property = PropertyFactory.create<NamedProperty>("test:namedEntry-1.0.0");
 					tree.root.get<ArrayProperty>("array")?.insert(index + i, property);
 					createdProperties.add(property.getGuid());
 				}
@@ -758,9 +738,7 @@ describe("PropertyDDS", () => {
 								};
 							},
 							op: async (parameters) => {
-								await opProcessingController.processOutgoing(
-									parameters.container(),
-								);
+								await opProcessingController.processOutgoing(parameters.container());
 							},
 							probability: 1,
 						},
@@ -773,9 +751,7 @@ describe("PropertyDDS", () => {
 								};
 							},
 							op: async (parameters) => {
-								await opProcessingController.processIncoming(
-									parameters.container(),
-								);
+								await opProcessingController.processIncoming(parameters.container());
 							},
 							probability: 1,
 						},
@@ -1132,9 +1108,7 @@ describe("PropertyDDS", () => {
 
 				// Make local changes for both collaborators
 				prop.setValue(val1);
-				sharedPropertyTree2.root
-					.get<Int32Property>("int32Prop")
-					?.setValue(val2);
+				sharedPropertyTree2.root.get<Int32Property>("int32Prop")?.setValue(val2);
 
 				sharedPropertyTree1.commit();
 				await opProcessingController.ensureSynchronized();
@@ -1142,11 +1116,8 @@ describe("PropertyDDS", () => {
 
 				// This collaborator should still have pending changes after rebase the incoming commits
 				expect(
-					Object.keys(
-						sharedPropertyTree2.root
-							.getPendingChanges()
-							.getSerializedChangeSet(),
-					).length,
+					Object.keys(sharedPropertyTree2.root.getPendingChanges().getSerializedChangeSet())
+						.length,
 				).to.not.equal(0);
 
 				// Committing the new pending change

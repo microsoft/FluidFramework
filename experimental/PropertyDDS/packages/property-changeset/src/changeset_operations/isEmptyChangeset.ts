@@ -11,7 +11,7 @@ import has from "lodash/has.js";
 import isEmpty from "lodash/isEmpty.js";
 import isObject from "lodash/isObject.js";
 
-import type { SerializedChangeSet } from "../changeset.js";
+import { SerializedChangeSet } from "../changeset.js";
 
 /**
  * Helper function which checks whether a given serialized changeSet is an empty changeSet.

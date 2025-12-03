@@ -17,8 +17,7 @@ export function findToken(tokenList: string, token: string) {
 				const end = start + token.length;
 				if (
 					end === tokenList.length ||
-					(end < tokenList.length &&
-						tokenList.charCodeAt(end) === CharCode.space)
+					(end < tokenList.length && tokenList.charCodeAt(end) === CharCode.space)
 				) {
 					return { start, end };
 				}
@@ -31,10 +30,7 @@ export function findToken(tokenList: string, token: string) {
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace TokenList {
-	export function set(
-		tokenList: string | undefined,
-		token: string | undefined,
-	) {
+	export function set(tokenList: string | undefined, token: string | undefined) {
 		return !tokenList // If the list is empty
 			? token // ...the token becomes the new list.
 			: !token || findToken(tokenList, token)

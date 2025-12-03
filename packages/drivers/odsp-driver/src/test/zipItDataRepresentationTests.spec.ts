@@ -11,16 +11,16 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { ReadBuffer } from "../ReadBufferUtils.js";
 import { TreeBuilderSerializer } from "../WriteBufferUtils.js";
 import {
-	assertBlobCoreInstance,
-	assertBoolInstance,
-	assertNodeCoreInstance,
-	assertNumberInstance,
 	BlobCore,
 	BlobShallowCopy,
 	type IStringElement,
 	NodeCore,
 	type NodeTypes,
 	TreeBuilder,
+	assertBlobCoreInstance,
+	assertBoolInstance,
+	assertNodeCoreInstance,
+	assertNumberInstance,
 } from "../zipItDataRepresentationUtils.js";
 
 function compareNodes(node1: NodeTypes, node2: NodeTypes): void {
@@ -33,8 +33,7 @@ function compareNodes(node1: NodeTypes, node2: NodeTypes): void {
 	} else if (node1 instanceof BlobCore) {
 		assert(node2 instanceof BlobCore, "Node2 should also be a blob");
 		assert(
-			Uint8ArrayToString(node1.buffer, "utf8") ===
-				Uint8ArrayToString(node2.buffer, "utf8"),
+			Uint8ArrayToString(node1.buffer, "utf8") === Uint8ArrayToString(node2.buffer, "utf8"),
 			"Blob contents not same",
 		);
 	} else if (typeof node1 === "number") {
@@ -226,11 +225,7 @@ describe("Tree Representation tests", () => {
 		assertNumberInstance(numNode, "should be a number");
 
 		let success = true;
-		const nonNumberNode: NodeTypes = new BlobShallowCopy(
-			new Uint8Array(),
-			0,
-			0,
-		);
+		const nonNumberNode: NodeTypes = new BlobShallowCopy(new Uint8Array(), 0, 0);
 		try {
 			assertNumberInstance(nonNumberNode, "should be a number");
 		} catch {

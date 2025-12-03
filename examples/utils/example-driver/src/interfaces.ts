@@ -46,7 +46,5 @@ export interface ExampleDriver {
  */
 export type ExampleDriverService = "odsp" | "t9s" | "local";
 
-export const isExampleDriverService = (
-	value: unknown,
-): value is ExampleDriverService =>
+export const isExampleDriverService = (value: unknown): value is ExampleDriverService =>
 	typeof value === "string" && ["odsp", "t9s", "local"].includes(value);

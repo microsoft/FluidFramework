@@ -5,21 +5,18 @@
 
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import { NonRetryableError, runWithRetry } from "@fluidframework/driver-utils/internal";
 import {
-	NonRetryableError,
-	runWithRetry,
-} from "@fluidframework/driver-utils/internal";
-import {
-	type IOdspResolvedUrl,
 	type IOdspUrlParts,
 	OdspErrorTypes,
 	type OdspResourceTokenFetchOptions,
 	type TokenFetcher,
+	type IOdspResolvedUrl,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type ITelemetryLoggerExt,
-	isFluidError,
 	PerformanceEvent,
+	isFluidError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
@@ -58,7 +55,7 @@ export const getFileLink = mockify(
 			return maybeFileLinkCacheEntry;
 		}
 
-		const fileLinkGenerator = async (): Promise<string> => {
+		const fileLinkGenerator = async function (): Promise<string> {
 			let fileLinkCore: string;
 			try {
 				let retryCount = 0;
@@ -66,11 +63,7 @@ export const getFileLink = mockify(
 					async () =>
 						runWithRetryForCoherencyAndServiceReadOnlyErrors(
 							async () =>
-								getFileLinkWithLocationRedirectionHandling(
-									getToken,
-									resolvedUrl,
-									logger,
-								),
+								getFileLinkWithLocationRedirectionHandling(getToken, resolvedUrl, logger),
 							"getFileLinkCore",
 							logger,
 						),
@@ -211,7 +204,7 @@ async function getFileLinkCore(
 					method,
 					headers: {
 						"Content-Type": "application/json;odata=verbose",
-						Accept: "application/json;odata=verbose",
+						"Accept": "application/json;odata=verbose",
 						...headers,
 					},
 				};
@@ -260,14 +253,11 @@ interface FileItemLite {
 	sharepointIds: IGraphSharepointIds;
 }
 
-const isFileItemLite = (
-	maybeFileItemLite: unknown,
-): maybeFileItemLite is FileItemLite =>
+const isFileItemLite = (maybeFileItemLite: unknown): maybeFileItemLite is FileItemLite =>
 	typeof (maybeFileItemLite as Partial<FileItemLite>).webUrl === "string" &&
 	typeof (maybeFileItemLite as Partial<FileItemLite>).webDavUrl === "string" &&
 	// TODO: stronger check
-	typeof (maybeFileItemLite as Partial<FileItemLite>).sharepointIds ===
-		"object";
+	typeof (maybeFileItemLite as Partial<FileItemLite>).sharepointIds === "object";
 
 async function getFileItemLite(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,

@@ -10,10 +10,7 @@
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 
 // Constructs a string containing all character in the given unicode range [charMin..charMax] (inclusive).
-export function createAlphabetFromUnicodeRange(
-	charMin: number,
-	charMax: number,
-) {
+export function createAlphabetFromUnicodeRange(charMin: number, charMax: number) {
 	let string = "";
 	for (let i = charMin; i <= charMax; i++) {
 		string += String.fromCodePoint(charMin + i);
@@ -29,19 +26,14 @@ export function getRandomEnglishString(
 	minLen: number,
 	maxLen: number,
 ) {
-	const stringLength =
-		minLen < maxLen ? random.integer(minLen, maxLen) : minLen;
+	const stringLength = minLen < maxLen ? random.integer(minLen, maxLen) : minLen;
 	return includeNumbers
 		? random.string(stringLength)
 		: random.string(stringLength, englishAlphabet);
 }
 
 const numbersString = "0123456789";
-export function getRandomNumberString(
-	random = makeRandom(),
-	minLen: number,
-	maxLen: number,
-) {
+export function getRandomNumberString(random = makeRandom(), minLen: number, maxLen: number) {
 	const stringLength = random.integer(minLen, maxLen);
 	return random.string(stringLength, numbersString);
 }

@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type ObjectOptions,
-	type Static,
-	type TSchema,
-	Type,
-} from "@sinclair/typebox";
+import { type ObjectOptions, type Static, type TSchema, Type } from "@sinclair/typebox";
 
 import { EncodedChangeAtomId } from "../modular-schema/index.js";
 
@@ -21,9 +16,7 @@ export type EncodedRegisterId = Static<typeof EncodedRegisterId>;
 
 // Type is intentionally derived.
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const EncodedOptionalChangeset = <Schema extends TSchema>(
-	tNodeChange: Schema,
-) =>
+export const EncodedOptionalChangeset = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Object(
 		{
 			// Moves between detached fields.

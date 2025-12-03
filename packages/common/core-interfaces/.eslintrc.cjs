@@ -4,10 +4,7 @@
  */
 
 module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/strict"),
-		"prettier",
-	],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
 	parserOptions: {
 		project: [
 			"./tsconfig.json",
@@ -27,7 +24,7 @@ module.exports = {
 				"import-x/no-internal-modules": [
 					"error",
 					{
-						allow: ["@fluidframework/*/internal{,/**}"],
+						"allow": ["@fluidframework/*/internal{,/**}"],
 					},
 				],
 			},

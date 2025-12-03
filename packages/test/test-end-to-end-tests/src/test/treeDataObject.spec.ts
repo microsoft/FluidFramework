@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
-	type PureDataObjectFactory,
+	PureDataObjectFactory,
 	TreeDataObject,
 	TreeDataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
@@ -18,10 +20,9 @@ import {
 import {
 	SchemaFactory,
 	SharedTree,
-	type TreeView,
 	TreeViewConfiguration,
+	type TreeView,
 } from "@fluidframework/tree/internal";
-import { strict as assert } from "assert";
 
 const schemaFactory = new SchemaFactory("test");
 class TestSchema extends schemaFactory.object("TestSchema", {
@@ -80,9 +81,7 @@ describeCompat("TreeDataObject", "NoCompat", (getTestObjectProvider) => {
 		ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory: TestTreeDataObject.getFactory(),
-			registryEntries: [
-				[TestTreeDataObject.type, TestTreeDataObject.getFactory()],
-			],
+			registryEntries: [[TestTreeDataObject.type, TestTreeDataObject.getFactory()]],
 			runtimeOptions,
 		},
 	);
@@ -91,8 +90,7 @@ describeCompat("TreeDataObject", "NoCompat", (getTestObjectProvider) => {
 		const provider = getTestObjectProvider();
 		const container = await provider.createContainer(runtimeFactory);
 
-		const dataObject =
-			await getContainerEntryPointBackCompat<TestTreeDataObject>(container);
+		const dataObject = await getContainerEntryPointBackCompat<TestTreeDataObject>(container);
 		assert.deepEqual(dataObject.treeView.root.foo, "Hello world");
 	});
 

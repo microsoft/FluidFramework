@@ -11,23 +11,12 @@
  * Current version: 2.74.0
  */
 
-import type {
-	FullType,
-	MinimalType,
-	requireAssignableTo,
-	TypeOnly,
-} from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/core-utils-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> =
-	| TypeOnly<T>
-	| MinimalType<T>
-	| FullType<T>
-	| typeof old
-	| typeof current
-	| requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -36,10 +25,7 @@ declare type MakeUnusedImportErrorsGoAway<T> =
  * typeValidation.broken:
  * "Class_Deferred": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_Deferred = requireAssignableTo<
-	TypeOnly<old.Deferred<never>>,
-	TypeOnly<current.Deferred<never>>
->;
+declare type old_as_current_for_Class_Deferred = requireAssignableTo<TypeOnly<old.Deferred<never>>, TypeOnly<current.Deferred<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -48,10 +34,7 @@ declare type old_as_current_for_Class_Deferred = requireAssignableTo<
  * typeValidation.broken:
  * "Class_Deferred": {"backCompat": false}
  */
-declare type current_as_old_for_Class_Deferred = requireAssignableTo<
-	TypeOnly<current.Deferred<never>>,
-	TypeOnly<old.Deferred<never>>
->;
+declare type current_as_old_for_Class_Deferred = requireAssignableTo<TypeOnly<current.Deferred<never>>, TypeOnly<old.Deferred<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -60,10 +43,7 @@ declare type current_as_old_for_Class_Deferred = requireAssignableTo<
  * typeValidation.broken:
  * "Class_LazyPromise": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_LazyPromise = requireAssignableTo<
-	TypeOnly<old.LazyPromise<never>>,
-	TypeOnly<current.LazyPromise<never>>
->;
+declare type old_as_current_for_Class_LazyPromise = requireAssignableTo<TypeOnly<old.LazyPromise<never>>, TypeOnly<current.LazyPromise<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -72,10 +52,7 @@ declare type old_as_current_for_Class_LazyPromise = requireAssignableTo<
  * typeValidation.broken:
  * "Class_LazyPromise": {"backCompat": false}
  */
-declare type current_as_old_for_Class_LazyPromise = requireAssignableTo<
-	TypeOnly<current.LazyPromise<never>>,
-	TypeOnly<old.LazyPromise<never>>
->;
+declare type current_as_old_for_Class_LazyPromise = requireAssignableTo<TypeOnly<current.LazyPromise<never>>, TypeOnly<old.LazyPromise<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -84,10 +61,7 @@ declare type current_as_old_for_Class_LazyPromise = requireAssignableTo<
  * typeValidation.broken:
  * "Class_PromiseCache": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_PromiseCache = requireAssignableTo<
-	TypeOnly<old.PromiseCache<never, never>>,
-	TypeOnly<current.PromiseCache<never, never>>
->;
+declare type old_as_current_for_Class_PromiseCache = requireAssignableTo<TypeOnly<old.PromiseCache<never,never>>, TypeOnly<current.PromiseCache<never,never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -96,10 +70,7 @@ declare type old_as_current_for_Class_PromiseCache = requireAssignableTo<
  * typeValidation.broken:
  * "Class_PromiseCache": {"backCompat": false}
  */
-declare type current_as_old_for_Class_PromiseCache = requireAssignableTo<
-	TypeOnly<current.PromiseCache<never, never>>,
-	TypeOnly<old.PromiseCache<never, never>>
->;
+declare type current_as_old_for_Class_PromiseCache = requireAssignableTo<TypeOnly<current.PromiseCache<never,never>>, TypeOnly<old.PromiseCache<never,never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -108,10 +79,7 @@ declare type current_as_old_for_Class_PromiseCache = requireAssignableTo<
  * typeValidation.broken:
  * "ClassStatics_Deferred": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_Deferred = requireAssignableTo<
-	TypeOnly<typeof current.Deferred>,
-	TypeOnly<typeof old.Deferred>
->;
+declare type current_as_old_for_ClassStatics_Deferred = requireAssignableTo<TypeOnly<typeof current.Deferred>, TypeOnly<typeof old.Deferred>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -120,10 +88,7 @@ declare type current_as_old_for_ClassStatics_Deferred = requireAssignableTo<
  * typeValidation.broken:
  * "ClassStatics_LazyPromise": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_LazyPromise = requireAssignableTo<
-	TypeOnly<typeof current.LazyPromise>,
-	TypeOnly<typeof old.LazyPromise>
->;
+declare type current_as_old_for_ClassStatics_LazyPromise = requireAssignableTo<TypeOnly<typeof current.LazyPromise>, TypeOnly<typeof old.LazyPromise>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -132,10 +97,7 @@ declare type current_as_old_for_ClassStatics_LazyPromise = requireAssignableTo<
  * typeValidation.broken:
  * "ClassStatics_PromiseCache": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_PromiseCache = requireAssignableTo<
-	TypeOnly<typeof current.PromiseCache>,
-	TypeOnly<typeof old.PromiseCache>
->;
+declare type current_as_old_for_ClassStatics_PromiseCache = requireAssignableTo<TypeOnly<typeof current.PromiseCache>, TypeOnly<typeof old.PromiseCache>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -144,10 +106,7 @@ declare type current_as_old_for_ClassStatics_PromiseCache = requireAssignableTo<
  * typeValidation.broken:
  * "Function_assert": {"backCompat": false}
  */
-declare type current_as_old_for_Function_assert = requireAssignableTo<
-	TypeOnly<typeof current.assert>,
-	TypeOnly<typeof old.assert>
->;
+declare type current_as_old_for_Function_assert = requireAssignableTo<TypeOnly<typeof current.assert>, TypeOnly<typeof old.assert>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -156,11 +115,7 @@ declare type current_as_old_for_Function_assert = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_PromiseCacheOptions": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_PromiseCacheOptions =
-	requireAssignableTo<
-		TypeOnly<old.PromiseCacheOptions>,
-		TypeOnly<current.PromiseCacheOptions>
-	>;
+declare type old_as_current_for_Interface_PromiseCacheOptions = requireAssignableTo<TypeOnly<old.PromiseCacheOptions>, TypeOnly<current.PromiseCacheOptions>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -169,11 +124,7 @@ declare type old_as_current_for_Interface_PromiseCacheOptions =
  * typeValidation.broken:
  * "Interface_PromiseCacheOptions": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_PromiseCacheOptions =
-	requireAssignableTo<
-		TypeOnly<current.PromiseCacheOptions>,
-		TypeOnly<old.PromiseCacheOptions>
-	>;
+declare type current_as_old_for_Interface_PromiseCacheOptions = requireAssignableTo<TypeOnly<current.PromiseCacheOptions>, TypeOnly<old.PromiseCacheOptions>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -182,11 +133,7 @@ declare type current_as_old_for_Interface_PromiseCacheOptions =
  * typeValidation.broken:
  * "TypeAlias_PromiseCacheExpiry": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_PromiseCacheExpiry =
-	requireAssignableTo<
-		TypeOnly<old.PromiseCacheExpiry>,
-		TypeOnly<current.PromiseCacheExpiry>
-	>;
+declare type old_as_current_for_TypeAlias_PromiseCacheExpiry = requireAssignableTo<TypeOnly<old.PromiseCacheExpiry>, TypeOnly<current.PromiseCacheExpiry>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -195,11 +142,7 @@ declare type old_as_current_for_TypeAlias_PromiseCacheExpiry =
  * typeValidation.broken:
  * "TypeAlias_PromiseCacheExpiry": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_PromiseCacheExpiry =
-	requireAssignableTo<
-		TypeOnly<current.PromiseCacheExpiry>,
-		TypeOnly<old.PromiseCacheExpiry>
-	>;
+declare type current_as_old_for_TypeAlias_PromiseCacheExpiry = requireAssignableTo<TypeOnly<current.PromiseCacheExpiry>, TypeOnly<old.PromiseCacheExpiry>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -208,7 +151,4 @@ declare type current_as_old_for_TypeAlias_PromiseCacheExpiry =
  * typeValidation.broken:
  * "Variable_compareArrays": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_compareArrays = requireAssignableTo<
-	TypeOnly<typeof current.compareArrays>,
-	TypeOnly<typeof old.compareArrays>
->;
+declare type current_as_old_for_Variable_compareArrays = requireAssignableTo<TypeOnly<typeof current.compareArrays>, TypeOnly<typeof old.compareArrays>>

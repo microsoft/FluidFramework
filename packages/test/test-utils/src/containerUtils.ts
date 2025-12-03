@@ -3,26 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import type {
+import {
 	IContainer,
 	IDeltaManager,
-	IDeltaManagerFull,
+	type IDeltaManagerFull,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import type { IResponse } from "@fluidframework/core-interfaces";
+import { IResponse } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IDeltaManagerErased } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import type { IDataStore } from "@fluidframework/runtime-definitions/internal";
+import { IDataStore } from "@fluidframework/runtime-definitions/internal";
 
-import {
-	type PromiseExecutor,
-	type TimeoutWithError,
-	timeoutPromise,
-} from "./timeoutUtils.js";
+import { PromiseExecutor, TimeoutWithError, timeoutPromise } from "./timeoutUtils.js";
 
 /**
  * Utility function to wait for the specified Container to be in Connected state.
@@ -71,9 +67,7 @@ export async function waitForContainerConnection(
  * This function can be removed once LTS version of Loader moves to 2.0.0-internal.7.0.0
  * @internal
  */
-export async function getContainerEntryPointBackCompat<T>(
-	container: IContainer,
-): Promise<T> {
+export async function getContainerEntryPointBackCompat<T>(container: IContainer): Promise<T> {
 	if (container.getEntryPoint !== undefined) {
 		const entryPoint = await container.getEntryPoint();
 		// Note: We need to also check if the result of `getEntryPoint()` is defined. This is because when running
@@ -85,10 +79,7 @@ export async function getContainerEntryPointBackCompat<T>(
 		}
 	}
 	const response: IResponse = await (container as any).request({ url: "/" });
-	assert(
-		response.status === 200,
-		"requesting '/' should return default data object",
-	);
+	assert(response.status === 200, "requesting '/' should return default data object");
 	return response.value as T;
 }
 
@@ -99,9 +90,7 @@ export async function getContainerEntryPointBackCompat<T>(
  *
  * @internal
  */
-export async function getDataStoreEntryPointBackCompat<T>(
-	dataStore: IDataStore,
-): Promise<T> {
+export async function getDataStoreEntryPointBackCompat<T>(dataStore: IDataStore): Promise<T> {
 	if (dataStore.entryPoint !== undefined) {
 		return dataStore.entryPoint.get() as Promise<T>;
 	}
@@ -124,8 +113,5 @@ export function toIDeltaManagerFull(
 	);
 	return deltaManager as unknown as
 		| IDeltaManagerErased
-		| IDeltaManager<
-				ISequencedDocumentMessage,
-				IDocumentMessage
-		  > as IDeltaManagerFull;
+		| IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> as IDeltaManagerFull;
 }

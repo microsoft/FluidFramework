@@ -6,24 +6,21 @@
 import { performanceNow } from "@fluid-internal/client-utils";
 import type { IDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
-import type {
-	IEventProvider,
-	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger, IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IDocumentMessage,
-	type ISequencedDocumentMessage,
 	MessageType,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
+	type IEventSampler,
+	type ITelemetryLoggerExt,
+	type ISampledTelemetryLogger,
 	createChildLogger,
 	createSampledLogger,
 	formatTick,
-	type IEventSampler,
-	type ISampledTelemetryLogger,
-	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 /**
@@ -162,8 +159,7 @@ class OpPerfTelemetry {
 			return {
 				sample: () => {
 					eventCount++;
-					const shouldSample =
-						eventCount % OpPerfTelemetry.DELTA_LATENCY_SAMPLE_RATE === 0;
+					const shouldSample = eventCount % OpPerfTelemetry.DELTA_LATENCY_SAMPLE_RATE === 0;
 					if (shouldSample) {
 						eventCount = 0;
 					}
@@ -172,10 +168,7 @@ class OpPerfTelemetry {
 			};
 		})();
 
-		this.deltaLatencyLogger = createSampledLogger(
-			logger,
-			deltaLatencyEventSampler,
-		);
+		this.deltaLatencyLogger = createSampledLogger(logger, deltaLatencyEventSampler);
 
 		// The SampledLogger here is used get access to the isSamplingDisabled property derived from
 		// telemetry config properties. The actual sampling logic for op messages happens outside this SampledLogger
@@ -187,8 +180,7 @@ class OpPerfTelemetry {
 			return {
 				sample: () => {
 					eventCount++;
-					const shouldSample =
-						eventCount % OpPerfTelemetry.PROCESSED_OPS_SAMPLE_RATE === 0;
+					const shouldSample = eventCount % OpPerfTelemetry.PROCESSED_OPS_SAMPLE_RATE === 0;
 					if (shouldSample) {
 						eventCount = 0;
 						this.noOpCountForTelemetry = 0;
@@ -232,17 +224,11 @@ class OpPerfTelemetry {
 				if (
 					msg.type === MessageType.Operation &&
 					(this.opLatencyLogger.isSamplingDisabled ||
-						this.clientSequenceNumberForLatencyStatistics ===
-							msg.clientSequenceNumber)
+						this.clientSequenceNumberForLatencyStatistics === msg.clientSequenceNumber)
 				) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const latencyStats = this.latencyStatistics.get(
-						msg.clientSequenceNumber,
-					)!;
-					assert(
-						latencyStats !== undefined,
-						0x7c2 /* Latency stats for op should exist */,
-					);
+					const latencyStats = this.latencyStatistics.get(msg.clientSequenceNumber)!;
+					assert(latencyStats !== undefined, 0x7c2 /* Latency stats for op should exist */);
 					assert(
 						latencyStats.opProcessingTimes.outboundPushEventTime === undefined,
 						0x2c8 /* "outboundPushEventTime should be undefined" */,
@@ -270,41 +256,29 @@ class OpPerfTelemetry {
 			}
 		});
 
-		this.deltaManager.inbound.on(
-			"push",
-			(message: ISequencedDocumentMessage) => {
-				if (
-					this.clientId === message.clientId &&
-					message.type === MessageType.Operation &&
-					(this.opLatencyLogger.isSamplingDisabled ||
-						this.clientSequenceNumberForLatencyStatistics ===
-							message.clientSequenceNumber)
-				) {
-					// We do an explicit check for undefined right after this
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const latencyStats = this.latencyStatistics.get(
-						message.clientSequenceNumber,
-					)!;
-					assert(
-						latencyStats !== undefined,
-						0x7c3 /* Latency stats for op should exist */,
-					);
-					if (
-						latencyStats.opProcessingTimes.outboundPushEventTime !== undefined
-					) {
-						latencyStats.opProcessingTimes.inboundPushEventTime = Date.now();
-						latencyStats.opPerfData.durationNetwork =
-							latencyStats.opProcessingTimes.inboundPushEventTime -
-							latencyStats.opProcessingTimes.outboundPushEventTime;
-						latencyStats.opPerfData.lengthInboundQueue =
-							this.deltaManager.inbound.length;
-					}
+		this.deltaManager.inbound.on("push", (message: ISequencedDocumentMessage) => {
+			if (
+				this.clientId === message.clientId &&
+				message.type === MessageType.Operation &&
+				(this.opLatencyLogger.isSamplingDisabled ||
+					this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber)
+			) {
+				// We do an explicit check for undefined right after this
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const latencyStats = this.latencyStatistics.get(message.clientSequenceNumber)!;
+				assert(latencyStats !== undefined, 0x7c3 /* Latency stats for op should exist */);
+				if (latencyStats.opProcessingTimes.outboundPushEventTime !== undefined) {
+					latencyStats.opProcessingTimes.inboundPushEventTime = Date.now();
+					latencyStats.opPerfData.durationNetwork =
+						latencyStats.opProcessingTimes.inboundPushEventTime -
+						latencyStats.opProcessingTimes.outboundPushEventTime;
+					latencyStats.opPerfData.lengthInboundQueue = this.deltaManager.inbound.length;
 				}
-				if (isRuntimeMessage(message) && typeof message.contents === "string") {
-					this.processedOpSizeForTelemetry += message.contents.length;
-				}
-			},
-		);
+			}
+			if (isRuntimeMessage(message) && typeof message.contents === "string") {
+				this.processedOpSizeForTelemetry += message.contents.length;
+			}
+		});
 
 		this.deltaManager.inbound.on("idle", (count: number, duration: number) => {
 			// Do not want to log zero for sure.
@@ -366,16 +340,13 @@ class OpPerfTelemetry {
 		if (
 			this.opLatencyLogger.isSamplingDisabled ||
 			(this.clientSequenceNumberForLatencyStatistics === undefined &&
-				message.clientSequenceNumber %
-					OpPerfTelemetry.OP_LATENCY_SAMPLE_RATE ===
-					1)
+				message.clientSequenceNumber % OpPerfTelemetry.OP_LATENCY_SAMPLE_RATE === 1)
 		) {
 			assert(
 				this.latencyStatistics.get(message.clientSequenceNumber) === undefined,
 				0x7c4 /* Existing op perf data for client sequence number */,
 			);
-			this.clientSequenceNumberForLatencyStatistics =
-				message.clientSequenceNumber;
+			this.clientSequenceNumberForLatencyStatistics = message.clientSequenceNumber;
 			this.latencyStatistics.set(message.clientSequenceNumber, {
 				opProcessingTimes: {
 					submitOpEventTime: Date.now(),
@@ -399,10 +370,7 @@ class OpPerfTelemetry {
 		}
 
 		// Record collab window max size after every 1000th op.
-		if (
-			this.sequenceNumberForMsnTracking === undefined &&
-			sequenceNumber % 1000 === 0
-		) {
+		if (this.sequenceNumberForMsnTracking === undefined && sequenceNumber % 1000 === 0) {
 			this.sequenceNumberForMsnTracking = sequenceNumber;
 			this.msnTrackingTimestamp = message.timestamp;
 		}
@@ -427,18 +395,12 @@ class OpPerfTelemetry {
 			this.clientId === message.clientId &&
 			message.type === MessageType.Operation &&
 			(this.opLatencyLogger.isSamplingDisabled ||
-				this.clientSequenceNumberForLatencyStatistics ===
-					message.clientSequenceNumber)
+				this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber)
 		) {
 			// We do an explicit check for undefined right after this
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const latencyData = this.latencyStatistics.get(
-				message.clientSequenceNumber,
-			)!;
-			assert(
-				latencyData !== undefined,
-				0x7c5 /* Undefined latency statistics for op */,
-			);
+			const latencyData = this.latencyStatistics.get(message.clientSequenceNumber)!;
+			assert(latencyData !== undefined, 0x7c5 /* Undefined latency statistics for op */);
 			assert(
 				latencyData.opProcessingTimes.submitOpEventTime !== undefined,
 				0x120 /* "Undefined latency statistics for op (op send time)" */,
@@ -448,8 +410,7 @@ class OpPerfTelemetry {
 				latencyData.opPerfData.durationInboundToProcessing =
 					currentTime - latencyData.opProcessingTimes.inboundPushEventTime;
 			}
-			const duration =
-				currentTime - latencyData.opProcessingTimes.submitOpEventTime;
+			const duration = currentTime - latencyData.opProcessingTimes.submitOpEventTime;
 
 			// One of the core expectations for Fluid service is to be fast.
 			// When it's not the case, we want to learn about it and be able to investigate, so
@@ -467,8 +428,7 @@ class OpPerfTelemetry {
 				category,
 				pingLatency: this.pingLatency,
 				msnDistance:
-					this.deltaManager.lastSequenceNumber -
-					this.deltaManager.minimumSequenceNumber,
+					this.deltaManager.lastSequenceNumber - this.deltaManager.minimumSequenceNumber,
 				...latencyData.opPerfData,
 			});
 

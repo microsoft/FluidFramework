@@ -185,46 +185,25 @@ describe("SharedTreeObject", () => {
 describe("ArrayNode Proxy", () => {
 	const schemaFactory = new SchemaFactory("test");
 
-	const StructurallyNamedNumberArray = schemaFactory.array(
-		schemaFactory.number,
-	);
+	const StructurallyNamedNumberArray = schemaFactory.array(schemaFactory.number);
 
-	class NumberArray extends schemaFactory.array(
-		"NumberArray",
-		schemaFactory.number,
-	) {}
+	class NumberArray extends schemaFactory.array("NumberArray", schemaFactory.number) {}
 
-	class CustomizedArray extends schemaFactory.array(
-		"CustomArray",
-		schemaFactory.number,
-	) {
+	class CustomizedArray extends schemaFactory.array("CustomArray", schemaFactory.number) {
 		public extra = "foo";
 	}
 
 	it("ownKeys", () => {
-		assert.deepEqual(
-			Reflect.ownKeys(hydrate(StructurallyNamedNumberArray, [])),
-			["length"],
-		);
+		assert.deepEqual(Reflect.ownKeys(hydrate(StructurallyNamedNumberArray, [])), ["length"]);
 		assert.deepEqual(Reflect.ownKeys(hydrate(NumberArray, [])), ["length"]);
-		assert.deepEqual(Reflect.ownKeys(hydrate(CustomizedArray, [])), [
-			"length",
-			"extra",
-		]);
+		assert.deepEqual(Reflect.ownKeys(hydrate(CustomizedArray, [])), ["length", "extra"]);
 
-		assert.deepEqual(
-			Reflect.ownKeys(hydrate(StructurallyNamedNumberArray, [5])),
-			["0", "length"],
-		);
-		assert.deepEqual(Reflect.ownKeys(hydrate(NumberArray, [5])), [
+		assert.deepEqual(Reflect.ownKeys(hydrate(StructurallyNamedNumberArray, [5])), [
 			"0",
 			"length",
 		]);
-		assert.deepEqual(Reflect.ownKeys(hydrate(CustomizedArray, [5])), [
-			"0",
-			"length",
-			"extra",
-		]);
+		assert.deepEqual(Reflect.ownKeys(hydrate(NumberArray, [5])), ["0", "length"]);
+		assert.deepEqual(Reflect.ownKeys(hydrate(CustomizedArray, [5])), ["0", "length", "extra"]);
 	});
 
 	it("in", () => {
@@ -248,10 +227,7 @@ describe("ArrayNode Proxy", () => {
 		assert.equal(hydrate(StructurallyNamedNumberArray, []).length, 0);
 		assert.equal(hydrate(StructurallyNamedNumberArray, [1, 2, 3]).length, 3);
 		assert.deepEqual(
-			Reflect.getOwnPropertyDescriptor(
-				hydrate(StructurallyNamedNumberArray, [5]),
-				"length",
-			),
+			Reflect.getOwnPropertyDescriptor(hydrate(StructurallyNamedNumberArray, [5]), "length"),
 			Reflect.getOwnPropertyDescriptor([5], "length"),
 		);
 
@@ -362,13 +338,7 @@ describe("ArrayNode Proxy", () => {
 			list.insertAtStart(0, TreeArrayNode.spread([1]), 2);
 			assert.deepEqual(list, [0, 1, 2]);
 			list.removeRange();
-			list.insertAtStart(
-				0,
-				1,
-				TreeArrayNode.spread([2, 3]),
-				4,
-				TreeArrayNode.spread([5, 6]),
-			);
+			list.insertAtStart(0, 1, TreeArrayNode.spread([2, 3]), 4, TreeArrayNode.spread([5, 6]));
 			assert.deepEqual(list, [0, 1, 2, 3, 4, 5, 6]);
 		});
 
@@ -380,13 +350,7 @@ describe("ArrayNode Proxy", () => {
 			list.insertAtEnd(0, TreeArrayNode.spread([1]), 2);
 			assert.deepEqual(list, [0, 1, 2]);
 			list.removeRange();
-			list.insertAtEnd(
-				0,
-				1,
-				TreeArrayNode.spread([2, 3]),
-				4,
-				TreeArrayNode.spread([5, 6]),
-			);
+			list.insertAtEnd(0, 1, TreeArrayNode.spread([2, 3]), 4, TreeArrayNode.spread([5, 6]));
 			assert.deepEqual(list, [0, 1, 2, 3, 4, 5, 6]);
 		});
 
@@ -398,14 +362,7 @@ describe("ArrayNode Proxy", () => {
 			list.insertAt(0, 0, TreeArrayNode.spread([1]), 2);
 			assert.deepEqual(list, [0, 1, 2]);
 			list.removeRange();
-			list.insertAt(
-				0,
-				0,
-				1,
-				TreeArrayNode.spread([2, 3]),
-				4,
-				TreeArrayNode.spread([5, 6]),
-			);
+			list.insertAt(0, 0, 1, TreeArrayNode.spread([2, 3]), 4, TreeArrayNode.spread([5, 6]));
 			assert.deepEqual(list, [0, 1, 2, 3, 4, 5, 6]);
 		});
 	});
@@ -438,17 +395,10 @@ describe("ArrayNode Proxy", () => {
 			const root = hydrate(schema, initialTree);
 			const a = root.booleans;
 			type T = InsertableTreeNodeFromImplicitAllowedTypes<
-				TreeNodeSchema<
-					"com.fluidframework.leaf.boolean",
-					NodeKind.Leaf,
-					boolean,
-					boolean
-				>
+				TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>
 			>;
 
-			type T2 = InsertableTreeNodeFromImplicitAllowedTypes<
-				typeof booleanSchema
-			>;
+			type T2 = InsertableTreeNodeFromImplicitAllowedTypes<typeof booleanSchema>;
 			root.booleans.insertAtStart(true);
 			root.booleans.insertAt(1, false);
 			root.booleans.insertAtEnd(true);

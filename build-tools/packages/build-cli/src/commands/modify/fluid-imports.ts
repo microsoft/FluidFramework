@@ -9,18 +9,8 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { Flags } from "@oclif/core";
 import * as JSON5 from "json5";
-import {
-	type ImportDeclaration,
-	ModuleKind,
-	Project,
-	type SourceFile,
-} from "ts-morph";
-import {
-	ApiLevel,
-	BaseCommand,
-	getApiExports,
-	isKnownApiLevel,
-} from "../../library/index.js";
+import { type ImportDeclaration, ModuleKind, Project, type SourceFile } from "ts-morph";
+import { ApiLevel, BaseCommand, getApiExports, isKnownApiLevel } from "../../library/index.js";
 import type { CommandLogger } from "../../logging.js";
 
 const maxConcurrency = 4;
@@ -78,10 +68,7 @@ const exportPathOrder = {
 /**
  * FF packages that exist outside of a scope that starts with `@fluid`.
  */
-const unscopedFFPackages: ReadonlySet<string> = new Set([
-	"fluid-framework",
-	"tinylicious",
-]);
+const unscopedFFPackages: ReadonlySet<string> = new Set(["fluid-framework", "tinylicious"]);
 
 /**
  * Rewrite imports for Fluid Framework APIs to use the correct subpath import (/beta, /legacy, etc.).
@@ -108,8 +95,7 @@ export default class UpdateFluidImportsCommand extends BaseCommand<
 			exists: true,
 		}),
 		onlyInternal: Flags.boolean({
-			description:
-				"Use /internal for all non-public APIs instead of /beta or /legacy.",
+			description: "Use /internal for all non-public APIs instead of /beta or /legacy.",
 		}),
 		...BaseCommand.flags,
 	};
@@ -129,15 +115,9 @@ export default class UpdateFluidImportsCommand extends BaseCommand<
 			this.error(`No config files found.`, { exit: 1 });
 		}
 
-		const apiLevelData =
-			data === undefined ? undefined : await loadData(data, onlyInternal);
+		const apiLevelData = data === undefined ? undefined : await loadData(data, onlyInternal);
 		const packagesRegex = new RegExp(packageRegex ?? "");
-		const apiMap = new ApiLevelReader(
-			this.logger,
-			packagesRegex,
-			onlyInternal,
-			apiLevelData,
-		);
+		const apiMap = new ApiLevelReader(this.logger, packagesRegex, onlyInternal, apiLevelData);
 
 		// Note that while there is a queue here it is only really a queue for file saves
 		// which are the only async aspect currently and aren't expected to take so long.
@@ -248,12 +228,7 @@ class FluidImportManager {
 				 * This ensures aliases and individual type-only imports are maintained when rewritten.
 				 */
 				const fullImportSpecifierText = importSpecifier.getFullText().trim();
-				const expectedPath = getPathForImportName(
-					name,
-					data,
-					ExportPath.Public,
-					this.log,
-				);
+				const expectedPath = getPathForImportName(name, data, ExportPath.Public, this.log);
 
 				const modificationRequired = path !== expectedPath;
 
@@ -290,9 +265,7 @@ class FluidImportManager {
 					this.log.verbose(`\t- ${namedImport}`);
 				}
 
-				fluidImport.importDeclaration.addNamedImports(
-					fluidImport.declaration.namedImports,
-				);
+				fluidImport.importDeclaration.addNamedImports(fluidImport.declaration.namedImports);
 			}
 			//  2. or if not see if there are new imports that would like to take over
 			//     which helps preserve comments and vertical spacing.
@@ -316,21 +289,14 @@ class FluidImportManager {
 					fluidImport.importDeclaration.setModuleSpecifier(
 						replacement.declaration.moduleSpecifier,
 					);
-					fluidImport.importDeclaration.addNamedImports(
-						replacement.declaration.namedImports,
-					);
-					fluidImport.importDeclaration.setIsTypeOnly(
-						replacement.declaration.isTypeOnly,
-					);
+					fluidImport.importDeclaration.addNamedImports(replacement.declaration.namedImports);
+					fluidImport.importDeclaration.setIsTypeOnly(replacement.declaration.isTypeOnly);
 					// Any other prospects should be inserted after this now.
 					for (const otherProspects of takeOverProspects.slice(1)) {
 						otherProspects.insertAfterIndex = true;
 					}
 					// Remove the missing as it is now in place.
-					this.missingImports.splice(
-						this.missingImports.indexOf(replacement),
-						1,
-					);
+					this.missingImports.splice(this.missingImports.indexOf(replacement), 1);
 					// We could remove the existing entry now, but that would
 					// alter the array being iterated. No further meaningful use is expected.
 					// The later removal check will skip as it now has imports.
@@ -373,8 +339,7 @@ class FluidImportManager {
 
 		// Check for import that has no imports, default or named, that has been
 		// modified. And only after insertions have been taken care of.
-		for (const { importDeclaration, originallyUnassigned } of this
-			.fluidImports) {
+		for (const { importDeclaration, originallyUnassigned } of this.fluidImports) {
 			if (!originallyUnassigned && isImportUnassigned(importDeclaration)) {
 				importDeclaration.remove();
 			}
@@ -443,9 +408,7 @@ class FluidImportManager {
 		packageName: PackageName,
 		order: number,
 	): { index: number; after: boolean } {
-		const references = this.fluidImports.filter(
-			(v) => v.packageName === packageName,
-		);
+		const references = this.fluidImports.filter((v) => v.packageName === packageName);
 		if (references.length === 1) {
 			const ref = references[0];
 			return {
@@ -592,8 +555,7 @@ function parseImport(
 		return undefined;
 	}
 
-	const order =
-		exportPathOrder[path] * 2 + (importDeclaration.isTypeOnly() ? 0 : 1);
+	const order = exportPathOrder[path] * 2 + (importDeclaration.isTypeOnly() ? 0 : 1);
 	return {
 		importDeclaration,
 		declaration: {
@@ -667,9 +629,7 @@ class ApiLevelReader {
 		},
 	});
 
-	private readonly tempSource = this.project.createSourceFile(
-		"flub-fluid-importer-temp.ts",
-	);
+	private readonly tempSource = this.project.createSourceFile("flub-fluid-importer-temp.ts");
 	private readonly map: Map<PackageName, NamedExportToPath | undefined>;
 
 	constructor(
@@ -697,9 +657,7 @@ class ApiLevelReader {
 		return loadResult;
 	}
 
-	private loadPackageData(
-		packageName: PackageName,
-	): NamedExportToPath | undefined {
+	private loadPackageData(packageName: PackageName): NamedExportToPath | undefined {
 		const internalImport = this.tempSource.addImportDeclaration({
 			moduleSpecifier: `${packageName}/internal`,
 		});
@@ -708,46 +666,26 @@ class ApiLevelReader {
 			this.log.warning(`no /internal export from ${packageName}`);
 			return undefined;
 		}
-		this.log.verbose(
-			`Loading ${packageName} API data from ${internalSource.getFilePath()}`,
-		);
+		this.log.verbose(`Loading ${packageName} API data from ${internalSource.getFilePath()}`);
 
 		const exports = getApiExports(internalSource);
 		for (const name of exports.unknown.keys()) {
 			// Suppress any warning for EventEmitter as this export is currently a special case.
 			// See AB#7377 for replacement status upon which this can be removed.
 			if (name !== "EventEmitter") {
-				this.log.warning(
-					`\t\t${packageName} ${name} API level was not recognized.`,
-				);
+				this.log.warning(`\t\t${packageName} ${name} API level was not recognized.`);
 			}
 		}
 
 		const memberData = new Map<string, ExportPath>();
 		addUniqueNamedExportsToMap(exports.public, memberData, ExportPath.Public);
 		if (this.onlyInternal) {
-			addUniqueNamedExportsToMap(
-				exports.alpha,
-				memberData,
-				ExportPath.Internal,
-			);
+			addUniqueNamedExportsToMap(exports.alpha, memberData, ExportPath.Internal);
 			addUniqueNamedExportsToMap(exports.beta, memberData, ExportPath.Internal);
 
-			addUniqueNamedExportsToMap(
-				exports.legacyAlpha,
-				memberData,
-				ExportPath.Internal,
-			);
-			addUniqueNamedExportsToMap(
-				exports.legacyBeta,
-				memberData,
-				ExportPath.Internal,
-			);
-			addUniqueNamedExportsToMap(
-				exports.legacyPublic,
-				memberData,
-				ExportPath.Internal,
-			);
+			addUniqueNamedExportsToMap(exports.legacyAlpha, memberData, ExportPath.Internal);
+			addUniqueNamedExportsToMap(exports.legacyBeta, memberData, ExportPath.Internal);
+			addUniqueNamedExportsToMap(exports.legacyPublic, memberData, ExportPath.Internal);
 		} else {
 			// #region Handle imports for API levels that have had different historical path mappings (with backwards compatibility)
 
@@ -778,11 +716,7 @@ class ApiLevelReader {
 				},
 			];
 
-			for (const {
-				apiLevel: level,
-				preferredPath,
-				fallbackPath,
-			} of exportSetsWithFallbacks) {
+			for (const { apiLevel: level, preferredPath, fallbackPath } of exportSetsWithFallbacks) {
 				const levelExports = exports[level];
 				if (levelExports.length > 0) {
 					const usePreferredExportPath =
@@ -809,17 +743,9 @@ class ApiLevelReader {
 			// #endregion
 
 			addUniqueNamedExportsToMap(exports.beta, memberData, ExportPath.Beta);
-			addUniqueNamedExportsToMap(
-				exports.legacyPublic,
-				memberData,
-				ExportPath.Legacy,
-			);
+			addUniqueNamedExportsToMap(exports.legacyPublic, memberData, ExportPath.Legacy);
 		}
-		addUniqueNamedExportsToMap(
-			exports.internal,
-			memberData,
-			ExportPath.Internal,
-		);
+		addUniqueNamedExportsToMap(exports.internal, memberData, ExportPath.Internal);
 		return memberData;
 	}
 }
@@ -838,10 +764,7 @@ function addUniqueNamedExportsToMap(
 	}
 }
 
-async function loadData(
-	dataFile: string,
-	onlyInternal: boolean,
-): Promise<MapData> {
+async function loadData(dataFile: string, onlyInternal: boolean): Promise<MapData> {
 	// Load the raw data file
 	// eslint-disable-next-line unicorn/no-await-expression-member
 	const rawData: string = (await readFile(dataFile)).toString();

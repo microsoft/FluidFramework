@@ -21,10 +21,7 @@ export interface IOdspTokenProvider {
 	 *
 	 * Default: `false`.
 	 */
-	fetchWebsocketToken(
-		siteUrl: string,
-		refresh: boolean,
-	): Promise<TokenResponse>;
+	fetchWebsocketToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
 
 	/**
 	 * Fetches the storage token from host.

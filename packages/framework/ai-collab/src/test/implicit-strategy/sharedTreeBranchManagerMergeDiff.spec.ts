@@ -11,22 +11,19 @@ import { SharedTreeBranchManager } from "../../implicit-strategy/index.js";
 
 const schemaFactory = new SchemaFactory("TreeNodeTest");
 
-class TestOptionalObjectTreeNode extends schemaFactory.object(
-	"OptionalTreeNode",
-	{
-		optionalBoolean: schemaFactory.optional(schemaFactory.boolean),
-		optionalString: schemaFactory.optional(schemaFactory.string),
-		optionalNumber: schemaFactory.optional(schemaFactory.number),
-		optionalArray: schemaFactory.optional(
-			schemaFactory.array("SimpleArrayTreeNode", [schemaFactory.string]),
-		),
-		optionalObject: schemaFactory.optional(
-			schemaFactory.object("NestedObject", {
-				requiredString: schemaFactory.string,
-			}),
-		),
-	},
-) {}
+class TestOptionalObjectTreeNode extends schemaFactory.object("OptionalTreeNode", {
+	optionalBoolean: schemaFactory.optional(schemaFactory.boolean),
+	optionalString: schemaFactory.optional(schemaFactory.string),
+	optionalNumber: schemaFactory.optional(schemaFactory.number),
+	optionalArray: schemaFactory.optional(
+		schemaFactory.array("SimpleArrayTreeNode", [schemaFactory.string]),
+	),
+	optionalObject: schemaFactory.optional(
+		schemaFactory.object("NestedObject", {
+			requiredString: schemaFactory.string,
+		}),
+	),
+}) {}
 
 class TestObjectTreeNode extends schemaFactory.object("TreeNode", {
 	attribute1: schemaFactory.boolean,
@@ -217,16 +214,11 @@ describe("SharedTreeBranchManager.mergeDiff() - Objects - Change Diffs", () => {
 	});
 
 	it("change optional array to undefined", () => {
-		class ArrayNode extends schemaFactory.array("ArrayTreeNode", [
-			schemaFactory.string,
-		]) {}
-		class TestOptionalObjectTreeNode2 extends schemaFactory.object(
-			"OptionalTreeNode2",
-			{
-				optionalString: schemaFactory.optional(schemaFactory.string),
-				optionalArray: schemaFactory.optional(ArrayNode),
-			},
-		) {}
+		class ArrayNode extends schemaFactory.array("ArrayTreeNode", [schemaFactory.string]) {}
+		class TestOptionalObjectTreeNode2 extends schemaFactory.object("OptionalTreeNode2", {
+			optionalString: schemaFactory.optional(schemaFactory.string),
+			optionalArray: schemaFactory.optional(ArrayNode),
+		}) {}
 		const arrayNode = new ArrayNode([]);
 		const treeNode = new TestOptionalObjectTreeNode2({
 			optionalString: "test",
@@ -263,10 +255,7 @@ describe("SharedTreeBranchManager.mergeDiff() - Objects - Create Diffs", () => {
 			],
 			treeNode as unknown as Record<string, unknown>,
 		);
-		const expectedMergedBranch = {
-			optionalString: "test",
-			optionalBoolean: true,
-		};
+		const expectedMergedBranch = { optionalString: "test", optionalBoolean: true };
 		assert.deepStrictEqual({ ...treeNode }, expectedMergedBranch);
 	});
 
@@ -282,10 +271,7 @@ describe("SharedTreeBranchManager.mergeDiff() - Objects - Create Diffs", () => {
 			],
 			treeNode as unknown as Record<string, unknown>,
 		);
-		const expectedMergedBranch = {
-			optionalBoolean: true,
-			optionalString: "true",
-		};
+		const expectedMergedBranch = { optionalBoolean: true, optionalString: "true" };
 		assert.deepStrictEqual({ ...treeNode }, expectedMergedBranch);
 	});
 
@@ -306,20 +292,13 @@ describe("SharedTreeBranchManager.mergeDiff() - Objects - Create Diffs", () => {
 	});
 
 	it("new optional array value", () => {
-		class ArrayNode extends schemaFactory.array("ArrayTreeNode", [
-			schemaFactory.string,
-		]) {}
-		class TestOptionalObjectTreeNode2 extends schemaFactory.object(
-			"OptionalTreeNode2",
-			{
-				optionalString: schemaFactory.optional(schemaFactory.string),
-				optionalArray: schemaFactory.optional(ArrayNode),
-			},
-		) {}
+		class ArrayNode extends schemaFactory.array("ArrayTreeNode", [schemaFactory.string]) {}
+		class TestOptionalObjectTreeNode2 extends schemaFactory.object("OptionalTreeNode2", {
+			optionalString: schemaFactory.optional(schemaFactory.string),
+			optionalArray: schemaFactory.optional(ArrayNode),
+		}) {}
 		const arrayNode = new ArrayNode([]);
-		const treeNode = new TestOptionalObjectTreeNode2({
-			optionalString: "test",
-		});
+		const treeNode = new TestOptionalObjectTreeNode2({ optionalString: "test" });
 		branchManager.mergeDiffs(
 			[
 				{
@@ -330,10 +309,7 @@ describe("SharedTreeBranchManager.mergeDiff() - Objects - Create Diffs", () => {
 			],
 			treeNode as unknown as Record<string, unknown>,
 		);
-		const expectedMergedBranch = {
-			optionalString: "test",
-			optionalArray: arrayNode,
-		};
+		const expectedMergedBranch = { optionalString: "test", optionalArray: arrayNode };
 		assert.deepStrictEqual({ ...treeNode }, expectedMergedBranch);
 	});
 
@@ -418,16 +394,11 @@ describe("SharedTreeBranchManager.mergeDiff() - Objects - Remove Diffs", () => {
 	});
 
 	it("remove optional array value", () => {
-		class ArrayNode extends schemaFactory.array("ArrayTreeNode", [
-			schemaFactory.string,
-		]) {}
-		class TestOptionalObjectTreeNode2 extends schemaFactory.object(
-			"OptionalTreeNode2",
-			{
-				optionalString: schemaFactory.optional(schemaFactory.string),
-				optionalArray: schemaFactory.optional(ArrayNode),
-			},
-		) {}
+		class ArrayNode extends schemaFactory.array("ArrayTreeNode", [schemaFactory.string]) {}
+		class TestOptionalObjectTreeNode2 extends schemaFactory.object("OptionalTreeNode2", {
+			optionalString: schemaFactory.optional(schemaFactory.string),
+			optionalArray: schemaFactory.optional(ArrayNode),
+		}) {}
 		const arrayNode = new ArrayNode([]);
 		const treeNode = new TestOptionalObjectTreeNode2({
 			optionalString: "test",

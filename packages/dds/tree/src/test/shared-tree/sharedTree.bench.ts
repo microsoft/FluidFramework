@@ -13,26 +13,20 @@ import {
 } from "@fluid-tools/benchmark";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import {
-	EmptyKey,
-	type NormalizedUpPath,
-	rootFieldKey,
-} from "../../core/index.js";
+import { EmptyKey, rootFieldKey, type NormalizedUpPath } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
-	type Context,
-	jsonableTreeFromFieldCursor,
 	TreeCompressionStrategy,
+	jsonableTreeFromFieldCursor,
+	type Context,
 } from "../../feature-libraries/index.js";
 import { Tree } from "../../shared-tree/index.js";
-import { TreeViewConfiguration } from "../../simple-tree/index.js";
-import { configuredSharedTree } from "../../treeFactory.js";
-import { makeArray } from "../../util/index.js";
 import {
-	deepPath,
 	type JSDeepTree,
 	type JSWideTree,
 	LinkedList,
+	WideRoot,
+	deepPath,
 	localFieldKey,
 	makeDeepContentSimple,
 	makeDeepStoredContent,
@@ -46,20 +40,22 @@ import {
 	readWideCursorTree,
 	readWideFlexTree,
 	readWideTreeAsJSObject,
-	WideRoot,
 } from "../scalableTestTrees.js";
-import { insert } from "../sequenceRootUtils.js";
 import {
-	checkoutWithContent,
-	chunkFromJsonTrees,
-	configureBenchmarkHooks,
-	fieldCursorFromInsertable,
-	flexTreeViewWithContent,
-	type SharedTreeWithContainerRuntime,
 	StringArray,
 	TestTreeProviderLite,
+	checkoutWithContent,
+	configureBenchmarkHooks,
+	chunkFromJsonTrees,
+	flexTreeViewWithContent,
 	toJsonableTree,
+	type SharedTreeWithContainerRuntime,
+	fieldCursorFromInsertable,
 } from "../utils.js";
+import { insert } from "../sequenceRootUtils.js";
+import { TreeViewConfiguration } from "../../simple-tree/index.js";
+import { configuredSharedTree } from "../../treeFactory.js";
+import { makeArray } from "../../util/index.js";
 
 // number of nodes in test for wide trees
 const nodesCountWide = [
@@ -227,9 +223,7 @@ describe("SharedTree benchmarks", () => {
 				title: `Wide Tree with Flex Tree: reads with ${numberOfNodes} nodes`,
 				before: () => {
 					expected = ((numberOfNodes - 1) * numberOfNodes) / 2; // Arithmetic sum of [0, numberOfNodes)
-					tree = flexTreeViewWithContent(
-						makeWideContentWithEndValueSimple(numberOfNodes),
-					);
+					tree = flexTreeViewWithContent(makeWideContentWithEndValueSimple(numberOfNodes));
 				},
 				benchmarkFn: () => {
 					const { nodesCount, sum } = readWideFlexTree(tree);
@@ -253,9 +247,7 @@ describe("SharedTree benchmarks", () => {
 						assert.equal(state.iterationsPerBatch, 1);
 
 						// Setup
-						const tree = checkoutWithContent(
-							makeDeepStoredContent(numberOfNodes),
-						);
+						const tree = checkoutWithContent(makeDeepStoredContent(numberOfNodes));
 						const path = deepPath(numberOfNodes);
 
 						// Measure
@@ -296,9 +288,7 @@ describe("SharedTree benchmarks", () => {
 						assert.equal(state.iterationsPerBatch, 1);
 
 						// Setup
-						const tree = checkoutWithContent(
-							makeWideStoredContentWithEndValue(numberOfNodes),
-						);
+						const tree = checkoutWithContent(makeWideStoredContentWithEndValue(numberOfNodes));
 
 						const rootPath: NormalizedUpPath = {
 							detachedNodeId: undefined,

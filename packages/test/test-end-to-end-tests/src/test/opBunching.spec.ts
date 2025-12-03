@@ -3,17 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type {
-	ISharedDirectory,
-	ISharedMap,
-} from "@fluidframework/map/internal";
+import type { ISharedDirectory, ISharedMap } from "@fluidframework/map/internal";
 import type { IRuntimeMessageCollection } from "@fluidframework/runtime-definitions/internal";
-import type { SharedObject } from "@fluidframework/shared-object-base/internal";
-import type { ITestObjectProvider } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
+import { SharedObject } from "@fluidframework/shared-object-base/internal";
+import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 import { createSandbox } from "sinon";
 
 describeCompat(
@@ -21,8 +19,7 @@ describeCompat(
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
 		const { DataObject, DataObjectFactory } = apis.dataRuntime;
-		const { ContainerRuntimeFactoryWithDefaultDataStore } =
-			apis.containerRuntime;
+		const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 		const { SharedMap } = apis.dds;
 
 		class TestDataObject extends DataObject {
@@ -78,32 +75,23 @@ describeCompat(
 
 			const container2 = await provider.loadContainer(runtimeFactory);
 			const rootObject2 = (await container2.getEntryPoint()) as TestDataObject;
-			const dds1Container2 =
-				rootObject2._root as unknown as SharedObjectWithProcess;
+			const dds1Container2 = rootObject2._root as unknown as SharedObjectWithProcess;
 
 			await provider.ensureSynchronized();
-			const dds2Handle =
-				rootObject2._root.get<IFluidHandle<SharedObjectWithProcess>>("map");
+			const dds2Handle = rootObject2._root.get<IFluidHandle<SharedObjectWithProcess>>("map");
 			assert(dds2Handle !== undefined, "shared map handle not found");
 			const dds2Container2 = await dds2Handle.get();
 
 			const ds2Container2Handle =
 				rootObject2._root.get<IFluidHandle<TestDataObject>>("dataStore2");
-			assert(
-				ds2Container2Handle !== undefined,
-				"data store 2 handle not found",
-			);
+			assert(ds2Container2Handle !== undefined, "data store 2 handle not found");
 			const ds2Container2 = await ds2Container2Handle.get();
-			const ds2dds1Container2 =
-				ds2Container2._root as unknown as SharedObjectWithProcess;
+			const ds2dds1Container2 = ds2Container2._root as unknown as SharedObjectWithProcess;
 			ds2dds1 = ds2Container2._root;
 
 			dds1Container2Stub = sandbox.stub(dds1Container2, "processMessages");
 			dds2Container2Stub = sandbox.stub(dds2Container2, "processMessages");
-			ds2dds1Container2Stub = sandbox.stub(
-				ds2dds1Container2,
-				"processMessages",
-			);
+			ds2dds1Container2Stub = sandbox.stub(ds2dds1Container2, "processMessages");
 		});
 
 		afterEach(() => {
@@ -125,12 +113,8 @@ describeCompat(
 			await provider.ensureSynchronized();
 
 			// Validate that processMessages is called once with all ops.
-			assert(
-				dds2Container2Stub.calledOnce,
-				"processMessages should be called once",
-			);
-			const messageCollection = dds2Container2Stub
-				.args[0][0] as IRuntimeMessageCollection;
+			assert(dds2Container2Stub.calledOnce, "processMessages should be called once");
+			const messageCollection = dds2Container2Stub.args[0][0] as IRuntimeMessageCollection;
 			assert.strictEqual(
 				messageCollection.messagesContent.length,
 				2 * bunchCount,
@@ -159,33 +143,24 @@ describeCompat(
 
 			await provider.ensureSynchronized();
 
-			assert(
-				dds1Container2Stub.calledOnce,
-				"processMessages should be called once on dds1",
-			);
-			assert(
-				dds2Container2Stub.calledTwice,
-				"processMessages should be called twice on dds2",
-			);
+			assert(dds1Container2Stub.calledOnce, "processMessages should be called once on dds1");
+			assert(dds2Container2Stub.calledTwice, "processMessages should be called twice on dds2");
 
-			const messageCollection1 = dds2Container2Stub
-				.args[0][0] as IRuntimeMessageCollection;
+			const messageCollection1 = dds2Container2Stub.args[0][0] as IRuntimeMessageCollection;
 			assert.strictEqual(
 				messageCollection1.messagesContent.length,
 				bunch1dds2Count,
 				"First bunch of ops for dds2 should be processed together",
 			);
 
-			const messageCollection2 = dds1Container2Stub
-				.args[0][0] as IRuntimeMessageCollection;
+			const messageCollection2 = dds1Container2Stub.args[0][0] as IRuntimeMessageCollection;
 			assert.strictEqual(
 				messageCollection2.messagesContent.length,
 				bunch2dds1Count,
 				"First bunch of ops for dds1 should be processed together",
 			);
 
-			const messageCollection3 = dds2Container2Stub
-				.args[1][0] as IRuntimeMessageCollection;
+			const messageCollection3 = dds2Container2Stub.args[1][0] as IRuntimeMessageCollection;
 			assert.strictEqual(
 				messageCollection3.messagesContent.length,
 				bunch3dds2Count,
@@ -214,37 +189,28 @@ describeCompat(
 
 			await provider.ensureSynchronized();
 
-			assert(
-				dds1Container2Stub.calledOnce,
-				"processMessages should be called once on dds1",
-			);
-			assert(
-				dds2Container2Stub.calledOnce,
-				"processMessages should be called once on dds2",
-			);
+			assert(dds1Container2Stub.calledOnce, "processMessages should be called once on dds1");
+			assert(dds2Container2Stub.calledOnce, "processMessages should be called once on dds2");
 			assert(
 				ds2dds1Container2Stub.calledOnce,
 				"processMessages should be called once on ds2's dds1",
 			);
 
-			const messageCollection1 = dds1Container2Stub
-				.args[0][0] as IRuntimeMessageCollection;
+			const messageCollection1 = dds1Container2Stub.args[0][0] as IRuntimeMessageCollection;
 			assert.strictEqual(
 				messageCollection1.messagesContent.length,
 				bunch1dds1Count,
 				"First bunch of ops for dds2 should be processed together",
 			);
 
-			const messageCollection2 = ds2dds1Container2Stub
-				.args[0][0] as IRuntimeMessageCollection;
+			const messageCollection2 = ds2dds1Container2Stub.args[0][0] as IRuntimeMessageCollection;
 			assert.strictEqual(
 				messageCollection2.messagesContent.length,
 				bunch2ds2dds1Count,
 				"First bunch of ops for dds1 should be processed together",
 			);
 
-			const messageCollection3 = dds2Container2Stub
-				.args[0][0] as IRuntimeMessageCollection;
+			const messageCollection3 = dds2Container2Stub.args[0][0] as IRuntimeMessageCollection;
 			assert.strictEqual(
 				messageCollection3.messagesContent.length,
 				bunch3dds2Count,
@@ -295,24 +261,21 @@ describeCompat(
 				"processMessages should be called thrice on dds1",
 			);
 
-			const messageCollection1 = dds1Container2Stub
-				.args[0][0] as IRuntimeMessageCollection;
+			const messageCollection1 = dds1Container2Stub.args[0][0] as IRuntimeMessageCollection;
 			assert.strictEqual(
 				messageCollection1.messagesContent.length,
 				bunch1dds1Count,
 				"First bunch of ops for dds1 should be processed together",
 			);
 
-			const messageCollection2 = dds1Container2Stub
-				.args[1][0] as IRuntimeMessageCollection;
+			const messageCollection2 = dds1Container2Stub.args[1][0] as IRuntimeMessageCollection;
 			assert.strictEqual(
 				messageCollection2.messagesContent.length,
 				bunch2dds1Count,
 				"Second bunch of ops for dds1 should be processed together",
 			);
 
-			const messageCollection3 = dds1Container2Stub
-				.args[2][0] as IRuntimeMessageCollection;
+			const messageCollection3 = dds1Container2Stub.args[2][0] as IRuntimeMessageCollection;
 			assert.strictEqual(
 				messageCollection3.messagesContent.length,
 				bunch3dds1Count,

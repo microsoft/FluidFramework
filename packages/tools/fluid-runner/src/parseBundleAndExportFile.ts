@@ -8,20 +8,11 @@ import * as path from "node:path";
 
 import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	isCodeLoaderBundle,
-	isFluidFileConverter,
-} from "./codeLoaderBundle.js";
-import {
-	createContainerAndExecute,
-	type IExportFileResponse,
-} from "./exportFile.js";
+import { isCodeLoaderBundle, isFluidFileConverter } from "./codeLoaderBundle.js";
+import { type IExportFileResponse, createContainerAndExecute } from "./exportFile.js";
 /* eslint-disable import-x/no-internal-modules */
 import type { ITelemetryOptions } from "./logger/fileLogger.js";
-import {
-	createLogger,
-	getTelemetryFileValidationError,
-} from "./logger/loggerUtils.js";
+import { createLogger, getTelemetryFileValidationError } from "./logger/loggerUtils.js";
 /* eslint-enable import-x/no-internal-modules */
 import { getArgsValidationError, getSnapshotFileContent } from "./utils.js";
 
@@ -62,8 +53,7 @@ export async function parseBundleAndExportFile(
 				const codeLoaderBundle = await import(codeLoaderSpec);
 				if (!isCodeLoaderBundle(codeLoaderBundle)) {
 					const eventName = clientArgsValidationError;
-					const errorMessage =
-						"Code loader bundle is not of type ICodeLoaderBundle";
+					const errorMessage = "Code loader bundle is not of type ICodeLoaderBundle";
 					logger.sendErrorEvent({ eventName, message: errorMessage });
 					return { success: false, eventName, errorMessage };
 				}
@@ -77,19 +67,11 @@ export async function parseBundleAndExportFile(
 					return { success: false, eventName, errorMessage };
 				}
 
-				const argsValidationError = getArgsValidationError(
-					inputFile,
-					outputFile,
-					timeout,
-				);
+				const argsValidationError = getArgsValidationError(inputFile, outputFile, timeout);
 				if (argsValidationError) {
 					const eventName = clientArgsValidationError;
 					logger.sendErrorEvent({ eventName, message: argsValidationError });
-					return {
-						success: false,
-						eventName,
-						errorMessage: argsValidationError,
-					};
+					return { success: false, eventName, errorMessage: argsValidationError };
 				}
 
 				fs.writeFileSync(
@@ -110,12 +92,7 @@ export async function parseBundleAndExportFile(
 	} catch (error) {
 		const eventName = "Client_UnexpectedError";
 		logger.sendErrorEvent({ eventName }, error);
-		return {
-			success: false,
-			eventName,
-			errorMessage: "Unexpected error",
-			error,
-		};
+		return { success: false, eventName, errorMessage: "Unexpected error", error };
 	} finally {
 		await fileLogger.close();
 	}

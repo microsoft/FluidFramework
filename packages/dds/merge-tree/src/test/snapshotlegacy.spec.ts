@@ -26,9 +26,7 @@ describe("snapshot", () => {
 		const client1 = new TestClient();
 		client1.startOrUpdateCollaboration("0");
 		for (let i = 0; i < SnapshotLegacy.sizeOfFirstChunk; i++) {
-			const op = client1.insertTextLocal(client1.getLength(), `${i % 10}`, {
-				segment: i,
-			});
+			const op = client1.insertTextLocal(client1.getLength(), `${i % 10}`, { segment: i });
 			const msg = client1.makeOpMessage(op, i + 1);
 			msg.minimumSequenceNumber = i + 1;
 			client1.applyMsg(msg);
@@ -56,13 +54,9 @@ describe("snapshot", () => {
 		const clients = [new TestClient(), new TestClient(), new TestClient()];
 		clients[0].startOrUpdateCollaboration("0");
 		for (let i = 0; i < SnapshotLegacy.sizeOfFirstChunk + 10; i++) {
-			const op = clients[0].insertTextLocal(
-				clients[0].getLength(),
-				`${i % 10}`,
-				{
-					segment: i,
-				},
-			)!;
+			const op = clients[0].insertTextLocal(clients[0].getLength(), `${i % 10}`, {
+				segment: i,
+			})!;
 			const msg = clients[0].makeOpMessage(op, i + 1);
 			msg.minimumSequenceNumber = i + 1;
 			clients[0].applyMsg(msg);
@@ -80,11 +74,7 @@ describe("snapshot", () => {
 				logger: client2.logger,
 				clientId: (i + 1).toString(),
 			};
-			await client2.load(
-				runtime as IFluidDataStoreRuntime,
-				services,
-				serializer,
-			);
+			await client2.load(runtime as IFluidDataStoreRuntime, services, serializer);
 
 			const client2Len = client2.getLength();
 			assert.equal(
@@ -112,9 +102,7 @@ describe("snapshot", () => {
 			expected.root,
 			"Keys don't match before round-tripping",
 		);
-		for (const [channel, channelExpectation] of Object.entries(
-			expected.channels ?? {},
-		)) {
+		for (const [channel, channelExpectation] of Object.entries(expected.channels ?? {})) {
 			assert.deepEqual(
 				client.getAllAttributionSeqs(channel),
 				channelExpectation,
@@ -139,19 +127,13 @@ describe("snapshot", () => {
 			logger: roundTripClient.logger,
 			clientId: "round-trips summary",
 		};
-		await roundTripClient.load(
-			runtime as IFluidDataStoreRuntime,
-			services,
-			serializer,
-		);
+		await roundTripClient.load(runtime as IFluidDataStoreRuntime, services, serializer);
 		assert.deepEqual(
 			roundTripClient.getAllAttributionSeqs(),
 			expected.root,
 			"Keys don't match after round-tripping",
 		);
-		for (const [channel, channelExpectation] of Object.entries(
-			expected.channels ?? {},
-		)) {
+		for (const [channel, channelExpectation] of Object.entries(expected.channels ?? {})) {
 			assert.deepEqual(
 				roundTripClient.getAllAttributionSeqs(channel),
 				channelExpectation,
@@ -167,8 +149,7 @@ describe("snapshot", () => {
 				options: {
 					attribution: {
 						track: true,
-						policyFactory:
-							createPropertyTrackingAndInsertionAttributionPolicyFactory("foo"),
+						policyFactory: createPropertyTrackingAndInsertionAttributionPolicyFactory("foo"),
 					},
 				},
 			},
@@ -178,15 +159,11 @@ describe("snapshot", () => {
 
 		const ops: ISequencedDocumentMessage[] = [];
 		const applyAllOps = (): void => {
-			for (const op of ops.splice(0))
-				clients.all.map((client) => client.applyMsg(op));
+			for (const op of ops.splice(0)) clients.all.map((client) => client.applyMsg(op));
 		};
 
 		ops.push(
-			clients.A.makeOpMessage(
-				clients.A.insertTextLocal(0, "hello world"),
-				/* seq */ 1,
-			),
+			clients.A.makeOpMessage(clients.A.insertTextLocal(0, "hello world"), /* seq */ 1),
 		);
 
 		applyAllOps();
@@ -228,15 +205,11 @@ describe("snapshot", () => {
 
 		const ops: ISequencedDocumentMessage[] = [];
 		const applyAllOps = (): void => {
-			for (const op of ops.splice(0))
-				clients.all.map((client) => client.applyMsg(op));
+			for (const op of ops.splice(0)) clients.all.map((client) => client.applyMsg(op));
 		};
 
 		ops.push(
-			clients.A.makeOpMessage(
-				clients.A.insertTextLocal(0, "hello world"),
-				/* seq */ 1,
-			),
+			clients.A.makeOpMessage(clients.A.insertTextLocal(0, "hello world"), /* seq */ 1),
 		);
 
 		applyAllOps();

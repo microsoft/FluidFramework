@@ -5,18 +5,18 @@
 
 import {
 	type AnchorNode,
-	anchorSlot,
 	type FieldKey,
 	type FieldKindIdentifier,
 	type ITreeCursorSynchronous,
 	type NormalizedFieldUpPath,
 	type TreeValue,
+	anchorSlot,
 } from "../../core/index.js";
 import type {
 	FieldKinds,
-	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	ValueFieldEditBuilder,
+	OptionalFieldEditBuilder,
 } from "../default-schema/index.js";
 import type {
 	MapTreeFieldViewGeneric,
@@ -154,9 +154,7 @@ export enum TreeStatus {
  *
  * All implementations should track read access in {@link currentObserver}'s observation methods as appropriate.
  */
-export interface FlexTreeNode
-	extends FlexTreeEntity,
-		MapTreeNodeViewGeneric<FlexTreeNode> {
+export interface FlexTreeNode extends FlexTreeEntity, MapTreeNodeViewGeneric<FlexTreeNode> {
 	readonly [flexTreeMarker]: FlexTreeEntityKind.Node;
 
 	/**
@@ -252,9 +250,7 @@ export interface HydratedFlexTreeNode extends FlexTreeNode {
  * All content in the tree is accessible without down-casting, but if the schema is known,
  * the schema aware API may be more ergonomic.
  */
-export interface FlexTreeField
-	extends FlexTreeEntity,
-		MapTreeFieldViewGeneric<FlexTreeNode> {
+export interface FlexTreeField extends FlexTreeEntity, MapTreeFieldViewGeneric<FlexTreeNode> {
 	readonly [flexTreeMarker]: FlexTreeEntityKind.Field;
 
 	/**
@@ -277,9 +273,7 @@ export interface FlexTreeField
 	/**
 	 * Type guard for narrowing / down-casting to a specific schema.
 	 */
-	is<TKind extends FlexFieldKind>(
-		kind: TKind,
-	): this is FlexTreeTypedField<TKind>;
+	is<TKind extends FlexFieldKind>(kind: TKind): this is FlexTreeTypedField<TKind>;
 
 	/**
 	 * Gets a node of this field by its index without unboxing.

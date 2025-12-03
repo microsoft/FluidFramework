@@ -74,29 +74,21 @@ export class SortedSegmentSet<
 		return this.getOffset(a) - this.getOffset(b);
 	}
 
-	protected onFindEquivalent(
-		item: T,
-		startIndex: number,
-	): { exists: boolean; index: number } {
+	protected onFindEquivalent(item: T, startIndex: number): { exists: boolean; index: number } {
 		// SortedSegmentSet may contain multiple items with the same key (e.g. a local ref at offset 0 and the segment it is on).
 		// Items should compare as reference-equal, so we do a linear walk to find the actual item in this case.
 		let index = startIndex;
 		if (item === this.sortedItems[index]) {
 			return { exists: true, index };
 		}
-		for (
-			let b = index - 1;
-			b >= 0 && this.compare(item, this.sortedItems[b]) === 0;
-			b--
-		) {
+		for (let b = index - 1; b >= 0 && this.compare(item, this.sortedItems[b]) === 0; b--) {
 			if (this.sortedItems[b] === item) {
 				return { exists: true, index: b };
 			}
 		}
 		for (
 			index + 1;
-			index < this.sortedItems.length &&
-			this.compare(item, this.sortedItems[index]) === 0;
+			index < this.sortedItems.length && this.compare(item, this.sortedItems[index]) === 0;
 			index++
 		) {
 			if (this.sortedItems[index] === item) {

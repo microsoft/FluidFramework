@@ -5,10 +5,7 @@
 
 import type { TAnySchema } from "@sinclair/typebox";
 
-import {
-	DiscriminatedUnionDispatcher,
-	type IJsonCodec,
-} from "../../codec/index.js";
+import { DiscriminatedUnionDispatcher, type IJsonCodec } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
 	EncodedRevisionTag,
@@ -50,10 +47,7 @@ export function makeV3Codec(
 		Encoded.MarkEffect,
 		ChangeEncodingContext
 	> = {
-		encode(
-			effect: MarkEffect,
-			context: ChangeEncodingContext,
-		): Encoded.MarkEffect {
+		encode(effect: MarkEffect, context: ChangeEncodingContext): Encoded.MarkEffect {
 			const type = effect.type;
 			switch (type) {
 				case "Rename":
@@ -66,10 +60,7 @@ export function makeV3Codec(
 					return markEffectV2Codec.encode(effect, context);
 			}
 		},
-		decode(
-			encoded: Encoded.MarkEffect,
-			context: ChangeEncodingContext,
-		): MarkEffect {
+		decode(encoded: Encoded.MarkEffect, context: ChangeEncodingContext): MarkEffect {
 			return decoderLibrary.dispatch(encoded, context);
 		},
 	};
@@ -105,16 +96,10 @@ export function makeV3Codec(
 					count: mark.count,
 				};
 				if (!isNoopMark(mark)) {
-					encodedMark.effect = markEffectCodec.encode(
-						mark,
-						context.baseContext,
-					);
+					encodedMark.effect = markEffectCodec.encode(mark, context.baseContext);
 				}
 				if (mark.cellId !== undefined) {
-					encodedMark.cellId = atomIdCodec.encode(
-						mark.cellId,
-						context.baseContext,
-					);
+					encodedMark.cellId = atomIdCodec.encode(mark.cellId, context.baseContext);
 				}
 				if (mark.changes !== undefined) {
 					encodedMark.changes = context.encodeNode(mark.changes);
@@ -134,16 +119,10 @@ export function makeV3Codec(
 				};
 
 				if (mark.effect !== undefined) {
-					Object.assign(
-						decodedMark,
-						markEffectCodec.decode(mark.effect, context.baseContext),
-					);
+					Object.assign(decodedMark, markEffectCodec.decode(mark.effect, context.baseContext));
 				}
 				if (mark.cellId !== undefined) {
-					decodedMark.cellId = atomIdCodec.decode(
-						mark.cellId,
-						context.baseContext,
-					);
+					decodedMark.cellId = atomIdCodec.decode(mark.cellId, context.baseContext);
 				}
 				if (mark.changes !== undefined) {
 					decodedMark.changes = context.decodeNode(mark.changes);

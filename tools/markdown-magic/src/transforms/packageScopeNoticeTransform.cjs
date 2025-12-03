@@ -75,8 +75,7 @@ function packageScopeNoticeTransform(content, options, config) {
 	const packageName = packageMetadata.name;
 
 	// Note: if the user specified an explicit scope, that takes precedence over the package namespace.
-	const scopeKindWithInheritance =
-		scopeKind ?? getScopeKindFromPackage(packageName);
+	const scopeKindWithInheritance = scopeKind ?? getScopeKindFromPackage(packageName);
 	return generatePackageScopeNotice(scopeKindWithInheritance);
 }
 

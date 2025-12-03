@@ -3,23 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type SharedTreeShim,
-	SharedTreeShimFactory,
-} from "@fluid-experimental/tree";
+import { strict as assert } from "assert";
+
+import { type SharedTreeShim, SharedTreeShimFactory } from "@fluid-experimental/tree";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
-import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { type IFluidHandle } from "@fluidframework/core-interfaces";
+import { type IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
-	createSummarizerFromFactory,
 	type ITestObjectProvider,
+	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
-import { strict as assert } from "assert";
 
 const treeKey = "treeKey";
 
@@ -118,10 +116,7 @@ describeCompat("SharedTreeShim", "NoCompat", (getTestObjectProvider, apis) => {
 		// Test that we can modify/send ops with the new Shared Tree
 		rootNode1.quantity = testValue;
 		await provider.ensureSynchronized();
-		assert(
-			rootNode2.quantity === rootNode1.quantity,
-			"Failed to update the new tree via op",
-		);
+		assert(rootNode2.quantity === rootNode1.quantity, "Failed to update the new tree via op");
 
 		// Summarize
 		const { summarizer } = await createSummarizerFromFactory(
@@ -147,22 +142,13 @@ describeCompat("SharedTreeShim", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// Verify that it matches the previous node
 		await provider.ensureSynchronized();
-		assert(
-			rootNode3.quantity === rootNode1.quantity,
-			`Failed to load from summary`,
-		);
-		assert(
-			rootNode3.quantity === testValue,
-			"Failed to update the tree at all",
-		);
+		assert(rootNode3.quantity === rootNode1.quantity, `Failed to load from summary`);
+		assert(rootNode3.quantity === testValue, "Failed to update the tree at all");
 
 		// Modify the root node and verify that it syncs
 		rootNode3.quantity = 4;
 		await provider.ensureSynchronized();
 		assert(rootNode1.quantity === 4, `Failed to modify new shared tree`);
-		assert(
-			rootNode1.quantity === rootNode3.quantity,
-			`Failed to sync new shared trees`,
-		);
+		assert(rootNode1.quantity === rootNode3.quantity, `Failed to sync new shared trees`);
 	});
 });

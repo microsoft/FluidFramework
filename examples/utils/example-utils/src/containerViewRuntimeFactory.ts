@@ -4,17 +4,11 @@
  */
 
 import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct/legacy";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
-import type {
-	FluidObject,
-	IFluidHandle,
-} from "@fluidframework/core-interfaces";
-import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/legacy";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
+import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/legacy";
 
-import {
-	type IFluidMountableView,
-	MountableView,
-} from "./mountableView/index.js";
+import { type IFluidMountableView, MountableView } from "./mountableView/index.js";
 
 const dataStoreId = "modelDataStore";
 
@@ -30,10 +24,9 @@ export async function getDataStoreEntryPoint<T>(
 	containerRuntime: IContainerRuntime,
 	alias: string,
 ): Promise<T> {
-	const entryPointHandle =
-		(await containerRuntime.getAliasedDataStoreEntryPoint(alias)) as
-			| IFluidHandle<T>
-			| undefined;
+	const entryPointHandle = (await containerRuntime.getAliasedDataStoreEntryPoint(alias)) as
+		| IFluidHandle<T>
+		| undefined;
 
 	if (entryPointHandle === undefined) {
 		throw new Error(`Default dataStore [${alias}] must exist`);
@@ -57,9 +50,7 @@ export interface IFluidMountableViewEntryPoint {
  * \@fluid-example/app-integration-container-views and \@fluid-example/multiview-container
  * @internal
  */
-export class ContainerViewRuntimeFactory<
-	T,
-> extends BaseContainerRuntimeFactory {
+export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory {
 	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 	constructor(
 		private readonly dataStoreFactory: IFluidDataStoreFactory,
@@ -68,17 +59,12 @@ export class ContainerViewRuntimeFactory<
 		// We'll use a MountableView so webpack-fluid-loader can display us,
 		// and add our default view request handler.
 		super({
-			registryEntries: new Map([
-				[dataStoreFactory.type, Promise.resolve(dataStoreFactory)],
-			]),
+			registryEntries: new Map([[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]]),
 			runtimeOptions: { enableRuntimeIdCompressor: "on" },
 			provideEntryPoint: async (
 				containerRuntime: IContainerRuntime,
 			): Promise<IFluidMountableViewEntryPoint> => {
-				const entryPoint = await getDataStoreEntryPoint<T>(
-					containerRuntime,
-					dataStoreId,
-				);
+				const entryPoint = await getDataStoreEntryPoint<T>(containerRuntime, dataStoreId);
 
 				const view = viewCallback(entryPoint);
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-return

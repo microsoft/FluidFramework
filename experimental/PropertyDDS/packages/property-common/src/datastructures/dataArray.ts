@@ -117,19 +117,12 @@ class BaseDataArray {
 	 * @param in_deleteCount - number of removed elements
 	 * @returns a copy of the input array without the selected range
 	 */
-	private _removeElementsFromArray(
-		in_arr,
-		in_offset: number,
-		in_deleteCount: number,
-	) {
+	private _removeElementsFromArray(in_arr, in_offset: number, in_deleteCount: number) {
 		// TODO: this function can be optimized
 		const newSize = this.size - in_deleteCount;
 		const splicedArray = new in_arr.constructor(newSize);
 		splicedArray.set(in_arr.subarray(0, in_offset));
-		splicedArray.set(
-			in_arr.subarray(in_offset + in_deleteCount, this.size),
-			in_offset,
-		);
+		splicedArray.set(in_arr.subarray(in_offset + in_deleteCount, this.size), in_offset);
 		return splicedArray;
 	}
 
@@ -140,16 +133,10 @@ class BaseDataArray {
 	 */
 	removeRange(in_offset: number, in_deleteCount: number) {
 		if (in_offset + in_deleteCount < (this._buffer.length as number) + 1) {
-			this._buffer = this._removeElementsFromArray(
-				this._buffer,
-				in_offset,
-				in_deleteCount,
-			);
+			this._buffer = this._removeElementsFromArray(this._buffer, in_offset, in_deleteCount);
 			this.size = this.size - in_deleteCount;
 		} else {
-			console.error(
-				"DataArray removeRange in_offset + in_deleteCount is out of bounds.",
-			);
+			console.error("DataArray removeRange in_offset + in_deleteCount is out of bounds.");
 		}
 	}
 
@@ -198,9 +185,7 @@ class BaseDataArray {
 		} else if (in_array instanceof BaseDataArray) {
 			this._buffer.set(in_array.getBuffer(), in_offset);
 		} else {
-			console.error(
-				"DataArray set() must be called with Array, TypedArray or DataArray",
-			);
+			console.error("DataArray set() must be called with Array, TypedArray or DataArray");
 		}
 	}
 
@@ -272,11 +257,7 @@ class BaseDataArray {
 	 * @returns The DataArray itself.
 	 */
 	protected _alloc(size: number): any {
-		this._buffer = this.resizeBuffer(
-			this.bufferConstructor,
-			this._buffer,
-			size,
-		);
+		this._buffer = this.resizeBuffer(this.bufferConstructor, this._buffer, size);
 		return this;
 	}
 
@@ -402,7 +383,7 @@ class UniversalDataArray extends BaseDataArray {
 	 */
 	private arraySet(array, values, offset = 0) {
 		let index = 0;
-		values.forEach((value) => {
+		values.forEach(function (value) {
 			array[index + offset] = value;
 			index++;
 		});
@@ -428,9 +409,7 @@ class UniversalDataArray extends BaseDataArray {
 			this._buffer.splice(in_offset, in_deleteCount);
 			this.size -= in_deleteCount;
 		} else {
-			throw Error(
-				"DataArray removeRange in_offset + in_deleteCount is out of bounds.",
-			);
+			throw Error("DataArray removeRange in_offset + in_deleteCount is out of bounds.");
 		}
 	}
 
@@ -450,9 +429,7 @@ class UniversalDataArray extends BaseDataArray {
 		} else if (in_array instanceof BaseDataArray) {
 			this.arraySet(this._buffer, in_array.getBuffer(), in_offset);
 		} else {
-			console.error(
-				"DataArray set() must be called with Array, TypedArray or DataArray",
-			);
+			console.error("DataArray set() must be called with Array, TypedArray or DataArray");
 		}
 	}
 
@@ -486,10 +463,7 @@ class UniversalDataArray extends BaseDataArray {
 		const oldSize = in_buffer.length;
 		const oldBuffer = in_buffer;
 		const isShrinking = oldSize > in_newSize;
-		this.arraySet(
-			newBuffer,
-			isShrinking ? oldBuffer.slice(0, in_newSize) : oldBuffer,
-		);
+		this.arraySet(newBuffer, isShrinking ? oldBuffer.slice(0, in_newSize) : oldBuffer);
 		return newBuffer;
 	}
 
@@ -539,9 +513,7 @@ class StringDataArray extends BaseDataArray {
 			)}`;
 			this.size -= in_deleteCount;
 		} else {
-			throw Error(
-				"DataArray removeRange in_offset + in_deleteCount is out of bounds.",
-			);
+			throw Error("DataArray removeRange in_offset + in_deleteCount is out of bounds.");
 		}
 	}
 
@@ -599,7 +571,7 @@ class BoolDataArray extends UniversalDataArray {
 	 */
 	private arraySetBool(array, values, offset = 0) {
 		let index = 0;
-		values.forEach((value) => {
+		values.forEach(function (value) {
 			array[index + offset] = !!(value as boolean);
 			index++;
 		});
@@ -631,9 +603,7 @@ class BoolDataArray extends UniversalDataArray {
 		} else if (in_array instanceof BaseDataArray) {
 			this.arraySetBool(this._buffer, in_array.getBuffer(), in_offset);
 		} else {
-			console.error(
-				"DataArray set() must be called with Array, TypedArray or DataArray",
-			);
+			console.error("DataArray set() must be called with Array, TypedArray or DataArray");
 		}
 	}
 }

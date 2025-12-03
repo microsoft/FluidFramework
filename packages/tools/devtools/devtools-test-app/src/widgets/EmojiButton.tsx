@@ -28,9 +28,7 @@ export function EmojiButton(props: EmojiButtonProps): React.ReactElement {
 	// undefined => No expression
 	// false => frowny
 	// true => smiley
-	const [isSmiley, setIsSmiley] = React.useState<boolean | undefined>(
-		emojiCell.get(),
-	);
+	const [isSmiley, setIsSmiley] = React.useState<boolean | undefined>(emojiCell.get());
 
 	React.useEffect(() => {
 		function updateState(): void {

@@ -24,9 +24,7 @@ interface TarballMetadata {
 /**
  * Publishes a tarball to the package registry unless the version is already published.
  */
-export default class PublishTarballCommand extends BaseCommand<
-	typeof PublishTarballCommand
-> {
+export default class PublishTarballCommand extends BaseCommand<typeof PublishTarballCommand> {
 	static readonly summary =
 		"Publishes tarballs to the package registry unless the version is already published.";
 
@@ -53,8 +51,7 @@ export default class PublishTarballCommand extends BaseCommand<
 			// In the future if orderFile becomes optional this should be uncommented.
 			// dependsOn: ["orderFile"],
 			deprecated: {
-				message:
-					"This option is deprecated and for backwards compatibility only.",
+				message: "This option is deprecated and for backwards compatibility only.",
 			},
 		}),
 		retry: Flags.integer({
@@ -147,8 +144,7 @@ export default class PublishTarballCommand extends BaseCommand<
 				}
 
 				case "SuccessfullyPublished": {
-					const countText =
-						tryCount === 0 ? "" : ` (attempt ${tryCount}/${retry})`;
+					const countText = tryCount === 0 ? "" : ` (attempt ${tryCount}/${retry})`;
 					this.info(`Published ${toPublish.fileName}${countText}`);
 					break;
 				}
@@ -189,16 +185,9 @@ async function extractPackageJsonFromTarball(
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const data = untar(unzipped!);
 	// eslint-disable-next-line unicorn/prefer-string-slice -- substring is clearer than slice in this case
-	const prefix = data[0].filename.substring(
-		0,
-		data[0].filename.indexOf("/") + 1,
-	);
-	const packageJsonText = data.find(
-		(f) => f.filename === `${prefix}package.json`,
-	)?.fileData;
-	const packageJson = JSON.parse(
-		new TextDecoder().decode(packageJsonText),
-	) as PackageJson;
+	const prefix = data[0].filename.substring(0, data[0].filename.indexOf("/") + 1);
+	const packageJsonText = data.find((f) => f.filename === `${prefix}package.json`)?.fileData;
+	const packageJson = JSON.parse(new TextDecoder().decode(packageJsonText)) as PackageJson;
 	return packageJson;
 }
 
@@ -226,9 +215,7 @@ async function publishTarball(
 		args.push(...publishArgs);
 	}
 	const tarballDirectory = path.dirname(tarball.filePath);
-	log.verbose(
-		`Executing publish command in ${tarballDirectory}: pnpm ${args.join(" ")}`,
-	);
+	log.verbose(`Executing publish command in ${tarballDirectory}: pnpm ${args.join(" ")}`);
 	try {
 		const publishOutput = await execa("npm", args, {
 			cwd: tarballDirectory,

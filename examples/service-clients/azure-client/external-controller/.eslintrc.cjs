@@ -4,10 +4,7 @@
  */
 
 module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid"),
-		"../../../.eslintrc.cjs",
-	],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "../../../.eslintrc.cjs"],
 	rules: {
 		// Demoted to warning as a workaround to layer-check challenges. Tracked by:
 		// https://github.com/microsoft/FluidFramework/issues/10226

@@ -35,88 +35,39 @@ describe("Attribution Policy", () => {
 		});
 
 		it("attributes segments inserted remotely", () => {
-			client.insertTextRemote(
-				0,
-				"123",
-				undefined,
-				++seq,
-				seq - 1,
-				remoteUserLongId,
-			);
+			client.insertTextRemote(0, "123", undefined, ++seq, seq - 1, remoteUserLongId);
 			assert.deepEqual(client.getAllAttributionSeqs(), [1, 1, 1]);
 		});
 
 		it("attributes insertion in a detached state", () => {
 			client = new TestClient(client.mergeTree.options);
 			client.insertTextLocal(0, "1", undefined);
-			assert.deepEqual(client.getAllAttributionSeqs(), [
-				{ type: "detached", id: 0 },
-			]);
+			assert.deepEqual(client.getAllAttributionSeqs(), [{ type: "detached", id: 0 }]);
 		});
 	}
 
 	function runAnnotateVerificationTests(): void {
 		it("attributes local property changes", () => {
-			client.applyMsg(
-				client.makeOpMessage(client.insertTextLocal(0, "123"), ++seq),
-			);
+			client.applyMsg(client.makeOpMessage(client.insertTextLocal(0, "123"), ++seq));
 			const annotateOp = client.annotateRangeLocal(1, 2, { foo: 1 });
-			assert.deepEqual(client.getAllAttributionSeqs("foo"), [
-				undefined,
-				local,
-				undefined,
-			]);
+			assert.deepEqual(client.getAllAttributionSeqs("foo"), [undefined, local, undefined]);
 			client.applyMsg(client.makeOpMessage(annotateOp, ++seq));
 			client.applyMsg(
-				client.makeOpMessage(
-					client.annotateRangeLocal(0, 3, { bar: 2 }),
-					++seq,
-				),
+				client.makeOpMessage(client.annotateRangeLocal(0, 3, { bar: 2 }), ++seq),
 			);
-			assert.deepEqual(client.getAllAttributionSeqs("foo"), [
-				undefined,
-				2,
-				undefined,
-			]);
+			assert.deepEqual(client.getAllAttributionSeqs("foo"), [undefined, 2, undefined]);
 		});
 
 		it("attributes remote property changes", () => {
-			client.insertTextRemote(
-				0,
-				"123",
-				undefined,
-				++seq,
-				seq - 1,
-				remoteUserLongId,
-			);
-			client.annotateRangeRemote(
-				1,
-				2,
-				{ foo: 1 },
-				++seq,
-				seq - 1,
-				remoteUserLongId,
-			);
-			assert.deepEqual(client.getAllAttributionSeqs("foo"), [
-				undefined,
-				2,
-				undefined,
-			]);
+			client.insertTextRemote(0, "123", undefined, ++seq, seq - 1, remoteUserLongId);
+			client.annotateRangeRemote(1, 2, { foo: 1 }, ++seq, seq - 1, remoteUserLongId);
+			assert.deepEqual(client.getAllAttributionSeqs("foo"), [undefined, 2, undefined]);
 		});
 
 		it("uses LWW semantics for conflicting attribution of props", () => {
-			client.applyMsg(
-				client.makeOpMessage(client.insertTextLocal(0, "123"), ++seq),
-			);
+			client.applyMsg(client.makeOpMessage(client.insertTextLocal(0, "123"), ++seq));
 			const localPropChange = client.annotateRangeLocal(1, 2, { foo: 1 });
-			client.annotateRangeRemote(
-				0,
-				2,
-				{ foo: 2 },
-				++seq,
-				seq - 1,
-				remoteUserLongId,
-			);
+			client.annotateRangeRemote(0, 2, { foo: 2 }, ++seq, seq - 1, remoteUserLongId);
 			const firstRemoteAnnotateSeq = seq;
 			assert.equal(client.getPropertiesAtPosition(0)?.foo, 2);
 			assert.equal(client.getPropertiesAtPosition(1)?.foo, 1);
@@ -126,22 +77,13 @@ describe("Attribution Policy", () => {
 				local,
 				undefined,
 			]);
-			client.applyMsg(
-				client.makeOpMessage(localPropChange, ++seq, seq - 1, localUserLongId),
-			);
+			client.applyMsg(client.makeOpMessage(localPropChange, ++seq, seq - 1, localUserLongId));
 			assert.deepEqual(
 				client.getAllAttributionSeqs("foo"),
 				[firstRemoteAnnotateSeq, seq, undefined],
 				"property change should have been attributed to the winning, local op",
 			);
-			client.annotateRangeRemote(
-				1,
-				2,
-				{ foo: 3 },
-				++seq,
-				seq - 1,
-				remoteUserLongId,
-			);
+			client.annotateRangeRemote(1, 2, { foo: 3 }, ++seq, seq - 1, remoteUserLongId);
 			assert.deepEqual(
 				client.getAllAttributionSeqs("foo"),
 				[firstRemoteAnnotateSeq, seq, undefined],
@@ -151,24 +93,13 @@ describe("Attribution Policy", () => {
 
 		describe("attributes properties set on a segment at insertion time", () => {
 			it("for remote insertions", () => {
-				client.insertTextRemote(
-					0,
-					"123",
-					{ foo: "bar" },
-					++seq,
-					seq - 1,
-					remoteUserLongId,
-				);
+				client.insertTextRemote(0, "123", { foo: "bar" }, ++seq, seq - 1, remoteUserLongId);
 				assert.deepEqual(client.getAllAttributionSeqs("foo"), [1, 1, 1]);
 			});
 
 			it("for local insertions", () => {
 				const mergeTreeOp = client.insertTextLocal(0, "123", { foo: "bar" });
-				assert.deepEqual(client.getAllAttributionSeqs("foo"), [
-					local,
-					local,
-					local,
-				]);
+				assert.deepEqual(client.getAllAttributionSeqs("foo"), [local, local, local]);
 				client.applyMsg(client.makeOpMessage(mergeTreeOp, ++seq));
 				assert.deepEqual(client.getAllAttributionSeqs("foo"), [1, 1, 1]);
 			});
@@ -178,17 +109,13 @@ describe("Attribution Policy", () => {
 			client = new TestClient(client.mergeTree.options);
 			client.insertTextLocal(0, "1", undefined);
 			client.annotateRangeLocal(0, 1, { foo: "bar" });
-			assert.deepEqual(client.getAllAttributionSeqs("foo"), [
-				{ type: "detached", id: 0 },
-			]);
+			assert.deepEqual(client.getAllAttributionSeqs("foo"), [{ type: "detached", id: 0 }]);
 		});
 
 		it("attributes annotation on insertion in a detached state", () => {
 			client = new TestClient(client.mergeTree.options);
 			client.insertTextLocal(0, "1", { foo: "bar" });
-			assert.deepEqual(client.getAllAttributionSeqs("foo"), [
-				{ type: "detached", id: 0 },
-			]);
+			assert.deepEqual(client.getAllAttributionSeqs("foo"), [{ type: "detached", id: 0 }]);
 		});
 	}
 
@@ -206,41 +133,19 @@ describe("Attribution Policy", () => {
 		runInsertVerificationTests();
 
 		it("ignores local property changes", () => {
+			client.applyMsg(client.makeOpMessage(client.insertTextLocal(0, "123"), ++seq));
 			client.applyMsg(
-				client.makeOpMessage(client.insertTextLocal(0, "123"), ++seq),
+				client.makeOpMessage(client.annotateRangeLocal(1, 2, { foo: 1 }), ++seq),
 			);
 			client.applyMsg(
-				client.makeOpMessage(
-					client.annotateRangeLocal(1, 2, { foo: 1 }),
-					++seq,
-				),
-			);
-			client.applyMsg(
-				client.makeOpMessage(
-					client.annotateRangeLocal(0, 3, { bar: 2 }),
-					++seq,
-				),
+				client.makeOpMessage(client.annotateRangeLocal(0, 3, { bar: 2 }), ++seq),
 			);
 			assert.deepEqual(client.getAllAttributionSeqs(), [1, 1, 1]);
 		});
 
 		it("ignores remote property changes", () => {
-			client.insertTextRemote(
-				0,
-				"123",
-				undefined,
-				++seq,
-				seq - 1,
-				remoteUserLongId,
-			);
-			client.annotateRangeRemote(
-				1,
-				2,
-				{ foo: 1 },
-				++seq,
-				seq - 1,
-				remoteUserLongId,
-			);
+			client.insertTextRemote(0, "123", undefined, ++seq, seq - 1, remoteUserLongId);
+			client.annotateRangeRemote(1, 2, { foo: 1 }, ++seq, seq - 1, remoteUserLongId);
 			assert.deepEqual(client.getAllAttributionSeqs(), [1, 1, 1]);
 		});
 	});
@@ -260,33 +165,14 @@ describe("Attribution Policy", () => {
 
 		it("ignores segments inserted locally", () => {
 			const mergeTreeOp = client.insertTextLocal(0, "123");
-			assert.deepEqual(client.getAllAttributionSeqs("foo"), [
-				undefined,
-				undefined,
-				undefined,
-			]);
+			assert.deepEqual(client.getAllAttributionSeqs("foo"), [undefined, undefined, undefined]);
 			client.applyMsg(client.makeOpMessage(mergeTreeOp, ++seq));
-			assert.deepEqual(client.getAllAttributionSeqs("foo"), [
-				undefined,
-				undefined,
-				undefined,
-			]);
+			assert.deepEqual(client.getAllAttributionSeqs("foo"), [undefined, undefined, undefined]);
 		});
 
 		it("ignores segments inserted remotely", () => {
-			client.insertTextRemote(
-				0,
-				"123",
-				undefined,
-				++seq,
-				seq - 1,
-				remoteUserLongId,
-			);
-			assert.deepEqual(client.getAllAttributionSeqs(), [
-				undefined,
-				undefined,
-				undefined,
-			]);
+			client.insertTextRemote(0, "123", undefined, ++seq, seq - 1, remoteUserLongId);
+			assert.deepEqual(client.getAllAttributionSeqs(), [undefined, undefined, undefined]);
 		});
 
 		it("can correctly combine segment attribution on append", () => {
@@ -298,24 +184,10 @@ describe("Attribution Policy", () => {
 				seq - 1,
 				remoteUserLongId,
 			);
-			client.insertTextRemote(
-				1,
-				"2",
-				{ bar: 1 },
-				++seq,
-				seq - 1,
-				remoteUserLongId,
-			);
+			client.insertTextRemote(1, "2", { bar: 1 }, ++seq, seq - 1, remoteUserLongId);
 			// Null is used to represent deleting a property, since undefined will not be sent over the wire.
 			// eslint-disable-next-line unicorn/no-null
-			client.annotateRangeRemote(
-				0,
-				1,
-				{ foo: null },
-				++seq,
-				seq - 1,
-				remoteUserLongId,
-			);
+			client.annotateRangeRemote(0, 1, { foo: null }, ++seq, seq - 1, remoteUserLongId);
 			client.updateMinSeq(seq);
 			let segmentCount = 0;
 			client.walkSegments(() => {
@@ -332,8 +204,7 @@ describe("Attribution Policy", () => {
 			client = new TestClient({
 				attribution: {
 					track: true,
-					policyFactory:
-						createPropertyTrackingAndInsertionAttributionPolicyFactory("foo"),
+					policyFactory: createPropertyTrackingAndInsertionAttributionPolicyFactory("foo"),
 				},
 			});
 			client.startOrUpdateCollaboration(localUserLongId);
@@ -349,36 +220,21 @@ describe("Attribution Policy", () => {
 			client = new TestClient({
 				attribution: {
 					track: true,
-					policyFactory: createPropertyTrackingAttributionPolicyFactory(
-						"foo",
-						"bar",
-					),
+					policyFactory: createPropertyTrackingAttributionPolicyFactory("foo", "bar"),
 				},
 			});
 			client.startOrUpdateCollaboration(localUserLongId);
 		});
 
 		it("attributes local property change on ack", () => {
+			client.applyMsg(client.makeOpMessage(client.insertTextLocal(0, "123"), ++seq));
 			client.applyMsg(
-				client.makeOpMessage(client.insertTextLocal(0, "123"), ++seq),
+				client.makeOpMessage(client.annotateRangeLocal(1, 2, { foo: 1 }), ++seq),
 			);
 			client.applyMsg(
-				client.makeOpMessage(
-					client.annotateRangeLocal(1, 2, { foo: 1 }),
-					++seq,
-				),
+				client.makeOpMessage(client.annotateRangeLocal(0, 3, { bar: 2 }), ++seq),
 			);
-			client.applyMsg(
-				client.makeOpMessage(
-					client.annotateRangeLocal(0, 3, { bar: 2 }),
-					++seq,
-				),
-			);
-			assert.deepEqual(client.getAllAttributionSeqs("foo"), [
-				undefined,
-				2,
-				undefined,
-			]);
+			assert.deepEqual(client.getAllAttributionSeqs("foo"), [undefined, 2, undefined]);
 			assert.deepEqual(client.getAllAttributionSeqs("bar"), [3, 3, 3]);
 		});
 	});

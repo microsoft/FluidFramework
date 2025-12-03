@@ -4,9 +4,9 @@
  */
 
 import {
-	type DriverError,
 	DriverErrorTypes,
-	type IDriverErrorBase,
+	IDriverErrorBase,
+	DriverError,
 } from "@fluidframework/driver-definitions/internal";
 
 /**
@@ -67,8 +67,7 @@ export const OdspErrorTypes = {
  * @legacy
  * @beta
  */
-export type OdspErrorTypes =
-	(typeof OdspErrorTypes)[keyof typeof OdspErrorTypes];
+export type OdspErrorTypes = (typeof OdspErrorTypes)[keyof typeof OdspErrorTypes];
 
 /**
  * @legacy

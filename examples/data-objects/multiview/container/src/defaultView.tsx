@@ -11,7 +11,7 @@ import type {
 import { PlotCoordinateView } from "@fluid-example/multiview-plot-coordinate-view";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 import { TriangleView } from "@fluid-example/multiview-triangle-view";
-import type * as React from "react";
+import * as React from "react";
 
 // eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";
@@ -32,37 +32,21 @@ interface IDefaultViewProps {
  * component views together.  We could have alternatively built a "base" component to do this composition if we had
  * preferred - either works fine.
  */
-export const DefaultView: React.FC<IDefaultViewProps> = (
-	props: IDefaultViewProps,
-) => {
+export const DefaultView: React.FC<IDefaultViewProps> = (props: IDefaultViewProps) => {
 	return (
 		<div>
 			<div>
 				<h2 className="scenario-header">
 					Scenario 1: Linking a single model to multiple views
 				</h2>
-				<SliderCoordinateView
-					model={props.simpleCoordinate}
-					label="Simple Coordinate"
-				/>
+				<SliderCoordinateView model={props.simpleCoordinate} label="Simple Coordinate" />
 				<PlotCoordinateView model={props.simpleCoordinate} />
 			</div>
 			<div>
-				<h2 className="scenario-header">
-					Scenario 2: Using multiple models in a single view
-				</h2>
-				<SliderCoordinateView
-					model={props.triangleCoordinate1}
-					label="Triangle pt1"
-				/>
-				<SliderCoordinateView
-					model={props.triangleCoordinate2}
-					label="Triangle pt2"
-				/>
-				<SliderCoordinateView
-					model={props.triangleCoordinate3}
-					label="Triangle pt3"
-				/>
+				<h2 className="scenario-header">Scenario 2: Using multiple models in a single view</h2>
+				<SliderCoordinateView model={props.triangleCoordinate1} label="Triangle pt1" />
+				<SliderCoordinateView model={props.triangleCoordinate2} label="Triangle pt2" />
+				<SliderCoordinateView model={props.triangleCoordinate3} label="Triangle pt3" />
 				<TriangleView
 					coordinate1={props.triangleCoordinate1}
 					coordinate2={props.triangleCoordinate2}

@@ -103,10 +103,7 @@ function getDeepSortedObject<T extends object>(obj: T): T {
  * Special handling for certain runtime blobs, such as the "gc" blob.
  * @returns the normalized blob content.
  */
-function getNormalizedBlobContent(
-	blobContent: string,
-	blobName: string,
-): string {
+function getNormalizedBlobContent(blobContent: string, blobName: string): string {
 	let content = blobContent;
 	if (blobName.startsWith(gcBlobPrefix)) {
 		// The following code parses JSON and makes some assumptions about the type of data within. There does not appear to
@@ -207,14 +204,9 @@ export function getNormalizedSnapshot(
 	const normalizedEntries: ITreeEntry[] = [];
 
 	// The metadata blob in the root of the summary tree needs to be normalized.
-	const blobsToNormalize = [
-		metadataBlobName,
-		...(config?.blobsToNormalize ?? []),
-	];
+	const blobsToNormalize = [metadataBlobName, ...(config?.blobsToNormalize ?? [])];
 	for (const entry of snapshot.entries) {
-		normalizedEntries.push(
-			normalizeEntry(entry, { ...config, blobsToNormalize }),
-		);
+		normalizedEntries.push(normalizeEntry(entry, { ...config, blobsToNormalize }));
 	}
 
 	// Sort the tree entries based on their path.
@@ -295,12 +287,8 @@ function normalizeEntry(
 						maybeAttributes.path === ".attributes"
 					) {
 						// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-						const parsed: { type?: string } = JSON.parse(
-							maybeAttributes.value.contents,
-						);
-						if (
-							parsed.type === "https://graph.microsoft.com/types/sharedmatrix"
-						) {
+						const parsed: { type?: string } = JSON.parse(maybeAttributes.value.contents);
+						if (parsed.type === "https://graph.microsoft.com/types/sharedmatrix") {
 							return new TreeTreeEntry(
 								entry.path,
 								normalizeMatrix(getNormalizedSnapshot(entry.value, config)),
@@ -311,18 +299,13 @@ function normalizeEntry(
 							config.excludedChannelContentTypes.includes(parsed.type)
 						) {
 							// remove everything to match the unknown channel
-							return new TreeTreeEntry(entry.path, {
-								entries: [maybeAttributes],
-							});
+							return new TreeTreeEntry(entry.path, { entries: [maybeAttributes] });
 						}
 					}
 				}
 			}
 
-			return new TreeTreeEntry(
-				entry.path,
-				getNormalizedSnapshot(entry.value, config),
-			);
+			return new TreeTreeEntry(entry.path, getNormalizedSnapshot(entry.value, config));
 		}
 		case TreeEntry.Attachment: {
 			return new AttachmentTreeEntry(entry.path, entry.value.id);

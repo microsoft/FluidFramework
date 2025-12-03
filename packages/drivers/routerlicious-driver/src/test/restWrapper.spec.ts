@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { RateLimiter } from "@fluidframework/driver-utils/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
-import { strict as assert } from "assert";
 import nock from "nock";
 
 import { DefaultTokenProvider } from "../defaultTokenProvider.js";
@@ -14,7 +15,7 @@ import {
 	RouterliciousOrdererRestWrapper,
 	toInstrumentedR11sOrdererTokenFetcher,
 } from "../restWrapper.js";
-import type { ITokenResponse } from "../tokens.js";
+import { ITokenResponse } from "../tokens.js";
 
 describe("RouterliciousDriverRestWrapper", () => {
 	const rateLimiter = new RateLimiter(1);
@@ -35,8 +36,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 		throttledAt = Date.now();
 	};
 	function replyWithThrottling() {
-		const retryAfterSeconds =
-			(throttleDurationInMs - Date.now() - throttledAt) / 1000;
+		const retryAfterSeconds = (throttleDurationInMs - Date.now() - throttledAt) / 1000;
 		const throttled = retryAfterSeconds > 0;
 		if (throttled) {
 			return [429, { retryAfter: retryAfterSeconds }];
@@ -222,9 +222,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 			nock(testHost, { reqheaders: { authorization: `Basic ${token1}` } })
 				.post(testPath)
 				.reply(200);
-			await assert.doesNotReject(
-				restWrapper.post(testUrl, { test: "payload" }),
-			);
+			await assert.doesNotReject(restWrapper.post(testUrl, { test: "payload" }));
 		});
 		it("retries a request with fresh auth headers on 401", async () => {
 			nock(testHost, { reqheaders: { authorization: `Basic ${token1}` } })
@@ -234,9 +232,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 				.post(testPath)
 				.query(true)
 				.reply(200);
-			await assert.doesNotReject(
-				restWrapper.post(testUrl, { test: "payload" }),
-			);
+			await assert.doesNotReject(restWrapper.post(testUrl, { test: "payload" }));
 		});
 		it("throws a non-retriable error on 2nd 401", async () => {
 			nock(testHost, { reqheaders: { authorization: `Basic ${token1}` } })
@@ -261,9 +257,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 		it("retries with delay on 429 with retryAfter", async () => {
 			throttle();
 			nock(testHost).post(testPath).reply(replyWithThrottling);
-			await assert.doesNotReject(
-				restWrapper.post(testUrl, { test: "payload" }),
-			);
+			await assert.doesNotReject(restWrapper.post(testUrl, { test: "payload" }));
 		});
 		it("throws a retriable error on 429 without retryAfter", async () => {
 			nock(testHost).post(testPath).reply(429, { retryAfter: undefined });
@@ -293,9 +287,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 			nock(testHost, { reqheaders: { authorization: `Basic ${token1}` } })
 				.patch(testPath)
 				.reply(200);
-			await assert.doesNotReject(
-				restWrapper.patch(testUrl, { test: "payload" }),
-			);
+			await assert.doesNotReject(restWrapper.patch(testUrl, { test: "payload" }));
 		});
 		it("retries a request with fresh auth headers on 401", async () => {
 			nock(testHost, { reqheaders: { authorization: `Basic ${token1}` } })
@@ -305,9 +297,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 				.patch(testPath)
 				.query(true)
 				.reply(200);
-			await assert.doesNotReject(
-				restWrapper.patch(testUrl, { test: "payload" }),
-			);
+			await assert.doesNotReject(restWrapper.patch(testUrl, { test: "payload" }));
 		});
 		it("throws a non-retriable error on 2nd 401", async () => {
 			nock(testHost, { reqheaders: { authorization: `Basic ${token1}` } })
@@ -332,9 +322,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 		it("retries with delay on 429 with retryAfter", async () => {
 			throttle();
 			nock(testHost).patch(testPath).reply(replyWithThrottling);
-			await assert.doesNotReject(
-				restWrapper.patch(testUrl, { test: "payload" }),
-			);
+			await assert.doesNotReject(restWrapper.patch(testUrl, { test: "payload" }));
 		});
 		it("throws a retriable error on 429 without retryAfter", async () => {
 			nock(testHost).patch(testPath).reply(429, { retryAfter: undefined });

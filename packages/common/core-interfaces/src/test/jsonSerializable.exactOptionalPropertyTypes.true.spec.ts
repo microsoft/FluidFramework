@@ -18,10 +18,7 @@ describe("JsonSerializable under exactOptionalPropertyTypes=true", () => {
 							objectWithOptionalUndefined,
 							{},
 						);
-						assertIdenticalTypes(
-							filteredIn,
-							createInstanceOf<{ optUndef?: never }>(),
-						);
+						assertIdenticalTypes(filteredIn, createInstanceOf<{ optUndef?: never }>());
 					});
 				});
 			});

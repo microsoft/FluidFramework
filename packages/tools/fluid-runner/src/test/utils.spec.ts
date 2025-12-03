@@ -7,21 +7,14 @@ import { strict as assert } from "assert";
 import * as fs from "fs";
 import path from "path";
 
-import {
-	isJsonSnapshot,
-	timeoutPromise,
-	validateCommandLineArgs,
-} from "../utils.js";
+import { isJsonSnapshot, timeoutPromise, validateCommandLineArgs } from "../utils.js";
 
 import { _dirname } from "./dirname.cjs";
 // eslint-disable-next-line import-x/no-internal-modules
 import { fluidExport } from "./sampleCodeLoaders/sampleCodeLoader.js";
 
 describe("utils", () => {
-	const snapshotFolder = path.join(
-		_dirname,
-		"../../src/test/localOdspSnapshots",
-	);
+	const snapshotFolder = path.join(_dirname, "../../src/test/localOdspSnapshots");
 
 	describe("isJsonSnapshot", () => {
 		const jsonSnapshots = new Set(["odspSnapshot1.json", "odspSnapshot2.json"]);
@@ -31,17 +24,9 @@ describe("utils", () => {
 				const filePath = path.join(snapshotFolder, snapshotFileName);
 				const fileContent = fs.readFileSync(filePath);
 				if (jsonSnapshots.has(snapshotFileName)) {
-					assert.strictEqual(
-						isJsonSnapshot(fileContent),
-						true,
-						"expect a JSON file",
-					);
+					assert.strictEqual(isJsonSnapshot(fileContent), true, "expect a JSON file");
 				} else {
-					assert.strictEqual(
-						isJsonSnapshot(fileContent),
-						false,
-						"expect a non-JSON file",
-					);
+					assert.strictEqual(isJsonSnapshot(fileContent), false, "expect a non-JSON file");
 				}
 			});
 		});
@@ -92,10 +77,7 @@ describe("utils", () => {
 				await timeoutPromise((resolve) => setTimeout(resolve, 100), 1);
 				assert.fail("expect timeout exception");
 			} catch (error) {
-				assert(
-					(error as Error).message.includes("Timed out"),
-					"unexpected exception",
-				);
+				assert((error as Error).message.includes("Timed out"), "unexpected exception");
 			}
 		});
 	});

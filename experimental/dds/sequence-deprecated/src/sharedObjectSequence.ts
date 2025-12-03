@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type {
+import {
+	Serializable,
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
-	Serializable,
 } from "@fluidframework/datastore-definitions/internal";
 
 import { SharedObjectSequenceFactory } from "./sequenceFactory.js";
@@ -32,12 +32,7 @@ export class SharedObjectSequenceClass<T> extends SharedSequence<T> {
 		public id: string,
 		attributes: IChannelAttributes,
 	) {
-		super(
-			document,
-			id,
-			attributes,
-			SharedObjectSequenceFactory.segmentFromSpec as any,
-		);
+		super(document, id, attributes, SharedObjectSequenceFactory.segmentFromSpec as any);
 	}
 
 	/**

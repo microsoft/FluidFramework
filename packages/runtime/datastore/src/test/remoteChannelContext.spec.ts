@@ -16,10 +16,7 @@ import {
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import {
-	FluidDataStoreRuntime,
-	type ISharedObjectRegistry,
-} from "../dataStoreRuntime.js";
+import { FluidDataStoreRuntime, type ISharedObjectRegistry } from "../dataStoreRuntime.js";
 import { RemoteChannelContext } from "../remoteChannelContext.js";
 
 describe("RemoteChannelContext Tests", () => {
@@ -29,14 +26,9 @@ describe("RemoteChannelContext Tests", () => {
 		context: IFluidDataStoreContext,
 		registry: ISharedObjectRegistry,
 	): FluidDataStoreRuntime =>
-		new FluidDataStoreRuntime(
-			context,
-			registry,
-			/* existing */ false,
-			async () => ({
-				myProp: "myValue",
-			}),
-		);
+		new FluidDataStoreRuntime(context, registry, /* existing */ false, async () => ({
+			myProp: "myValue",
+		}));
 
 	beforeEach(() => {
 		dataStoreContext = new MockFluidDataStoreContext();
@@ -52,10 +44,7 @@ describe("RemoteChannelContext Tests", () => {
 
 	it("rejects ids with forward slashes", () => {
 		const invalidId = "beforeSlash/afterSlash";
-		const dataStoreRuntime = loadRuntime(
-			dataStoreContext,
-			sharedObjectRegistry,
-		);
+		const dataStoreRuntime = loadRuntime(dataStoreContext, sharedObjectRegistry);
 		const codeBlock = (): RemoteChannelContext =>
 			new RemoteChannelContext(
 				dataStoreRuntime,

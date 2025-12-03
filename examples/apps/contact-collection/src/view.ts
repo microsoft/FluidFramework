@@ -45,8 +45,7 @@ export function renderContact(contact: IContact, div: HTMLDivElement): void {
 	const profilePic = document.createElement("div");
 	profilePic.style.fontSize = "50px";
 	// Really the profile picture should come from the contact, but this is just for fun :)
-	profilePic.textContent =
-		profilePictures[Math.floor(Math.random() * profilePictures.length)];
+	profilePic.textContent = profilePictures[Math.floor(Math.random() * profilePictures.length)];
 	div.append(contactDiv, profilePic);
 }
 

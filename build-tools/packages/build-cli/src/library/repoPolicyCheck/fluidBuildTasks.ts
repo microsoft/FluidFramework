@@ -12,13 +12,13 @@ import {
 } from "@fluid-tools/build-infrastructure";
 import {
 	FluidRepo,
+	type Package,
+	type PackageJson,
+	TscUtils,
 	getEsLintConfigFilePath,
 	getFluidBuildConfig,
 	getTaskDefinitions,
 	normalizeGlobalTaskDefinitions,
-	type Package,
-	type PackageJson,
-	TscUtils,
 } from "@fluidframework/build-tools";
 import JSON5 from "json5";
 import * as semver from "semver";
@@ -38,8 +38,7 @@ const getFluidBuildTasksTscIgnore = (root: string): Set<string> => {
 	const rootDir = path.resolve(root);
 	let ignore = fluidBuildTasksTscIgnoreTasksCache.get(rootDir);
 	if (ignore === undefined) {
-		const ignoreArray =
-			getFlubConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreTasks;
+		const ignoreArray = getFlubConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreTasks;
 		ignore = ignoreArray ? new Set(ignoreArray) : new Set();
 		fluidBuildTasksTscIgnoreTasksCache.set(rootDir, ignore);
 	}
@@ -49,10 +48,7 @@ const getFluidBuildTasksTscIgnore = (root: string): Set<string> => {
 /**
  * Cache the FluidRepo object, so we don't have to load it repeatedly
  */
-const repoCache = new Map<
-	string,
-	{ repo: FluidRepo; packageMap: Map<string, Package> }
->();
+const repoCache = new Map<string, { repo: FluidRepo; packageMap: Map<string, Package> }>();
 function getFluidPackageMap(root: string): Map<string, Package> {
 	const rootDir = path.resolve(root);
 	let record = repoCache.get(rootDir);
@@ -78,10 +74,7 @@ const fluidBuildDatabaseCache = new FluidBuildDatabase();
  * @param command - the command to find the script name for
  * @returns best script name found to match the command
  */
-function findScript(
-	json: Readonly<PackageJson>,
-	command: string,
-): string | undefined {
+function findScript(json: Readonly<PackageJson>, command: string): string | undefined {
 	if (json.scripts === undefined) {
 		return undefined;
 	}
@@ -135,9 +128,7 @@ function findFluidTscScript(
 		if (
 			scriptCommands.startsWith("fluid-tsc") &&
 			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-			(project
-				? scriptCommands.includes(project)
-				: !scriptCommands.includes("--project"))
+			(project ? scriptCommands.includes(project) : !scriptCommands.includes("--project"))
 		) {
 			return script;
 		}
@@ -151,10 +142,7 @@ function findFluidTscScript(
  * @param project - the tsc project to search for
  * @returns single script name found to use the project or undefined
  */
-function findTscScript(
-	json: Readonly<PackageJson>,
-	project: string,
-): string | undefined {
+function findTscScript(json: Readonly<PackageJson>, project: string): string | undefined {
 	const tscScripts: string[] = [];
 	function addIfDefined(script: string | undefined): void {
 		if (script !== undefined) {
@@ -210,18 +198,14 @@ async function eslintGetScriptDependencies(
 	const eslintConfig = getEsLintConfigFilePath(packageDir);
 	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 	if (!eslintConfig) {
-		throw new Error(
-			`Unable to find eslint config file for package in ${packageDir}`,
-		);
+		throw new Error(`Unable to find eslint config file for package in ${packageDir}`);
 	}
 
 	let config: EslintConfig;
 	try {
 		const { ext } = path.parse(eslintConfig);
 		if (ext === ".mjs") {
-			throw new Error(
-				`Eslint config '${eslintConfig}' is ESM; only CommonJS is supported.`,
-			);
+			throw new Error(`Eslint config '${eslintConfig}' is ESM; only CommonJS is supported.`);
 		}
 
 		if (ext !== ".js" && ext !== ".cjs") {
@@ -236,9 +220,7 @@ async function eslintGetScriptDependencies(
 			}
 		}
 	} catch (error) {
-		throw new Error(
-			`Unable to load eslint config file ${eslintConfig}. ${error}`,
-		);
+		throw new Error(`Unable to load eslint config file ${eslintConfig}. ${error}`);
 	}
 
 	let projects = config.parserOptions?.project;
@@ -297,13 +279,7 @@ async function eslintGetScriptDependencies(
 			const command = commandUntrimmed.trim();
 			if (shouldProcessScriptForTsc(script, command, emptyIgnoreSet)) {
 				collectiveDependencies.push(
-					...getTscCommandDependencies(
-						packageDir,
-						json,
-						script,
-						command,
-						packageMap,
-					),
+					...getTscCommandDependencies(packageDir, json, script, command, packageMap),
 				);
 			}
 		}
@@ -320,10 +296,7 @@ async function eslintGetScriptDependencies(
  * @param json - package.json content for the package
  * @returns true if FluidRepo includes the package, false otherwise
  */
-function isFluidBuildEnabled(
-	root: string,
-	json: Readonly<PackageJson>,
-): boolean {
+function isFluidBuildEnabled(root: string, json: Readonly<PackageJson>): boolean {
 	return getFluidPackageMap(root).get(json.name) !== undefined;
 }
 
@@ -351,9 +324,7 @@ function hasTaskDependency(
 	searchDeps: readonly string[],
 ): boolean {
 	const rootConfig = getFluidBuildConfig(root);
-	const globalTaskDefinitions = normalizeGlobalTaskDefinitions(
-		rootConfig?.tasks,
-	);
+	const globalTaskDefinitions = normalizeGlobalTaskDefinitions(rootConfig?.tasks);
 	const taskDefinitions = getTaskDefinitions(json, globalTaskDefinitions, {
 		isReleaseGroupRoot: false,
 	});
@@ -404,12 +375,10 @@ function hasTaskDependency(
 			// ^ means "depends on the task of the same name in all package dependencies".
 			// dep of exactly ^* means "_all_ tasks in all package dependencies".
 			const depPattern = dep.slice(1);
-			const regexSearchMatches = new RegExp(
-				depPattern === "*" ? "." : `#${depPattern}$`,
-			);
+			const regexSearchMatches = new RegExp(depPattern === "*" ? "." : `#${depPattern}$`);
 			// Check for task matches
-			const possibleSearchMatches = packageSpecificSearchDeps.filter(
-				(searchDep) => regexSearchMatches.test(searchDep),
+			const possibleSearchMatches = packageSpecificSearchDeps.filter((searchDep) =>
+				regexSearchMatches.test(searchDep),
 			);
 			// Check if there is matching dependency
 			if (
@@ -424,10 +393,7 @@ function hasTaskDependency(
 				// ^* would already consider all tasks in all dependencies.
 				continue;
 			}
-			for (const [
-				packageName,
-				secondaryData,
-			] of secondaryPackagesTasksToConsider) {
+			for (const [packageName, secondaryData] of secondaryPackagesTasksToConsider) {
 				// If there is a matching dependency package, add this task to
 				// transitive dependency in secondary package search list.
 				if (packageDependencies.has(packageName)) {
@@ -439,9 +405,7 @@ function hasTaskDependency(
 		const packageDepMatch = dep.match(/^([^#]*)#(.*)$/);
 		if (packageDepMatch) {
 			// Consider one level deep of package's tasks to handle multi-task dependencies.
-			const secondaryPackageSet = secondaryPackagesTasksToConsider.get(
-				packageDepMatch[1],
-			);
+			const secondaryPackageSet = secondaryPackagesTasksToConsider.get(packageDepMatch[1]);
 			if (secondaryPackageSet) {
 				secondaryPackageSet.tasks.add(packageDepMatch[2]);
 			}
@@ -456,21 +420,14 @@ function hasTaskDependency(
 
 	// Consider secondary package dependencies transitive dependencies
 	const packageMap = getFluidPackageMap(root);
-	for (const [
-		packageName,
-		secondaryData,
-	] of secondaryPackagesTasksToConsider.entries()) {
+	for (const [packageName, secondaryData] of secondaryPackagesTasksToConsider.entries()) {
 		const pkgJson = packageMap.get(packageName)?.packageJson;
 		if (pkgJson === undefined) {
 			throw new Error(`Dependent package ${packageName} not found in repo`);
 		}
-		const secondaryTaskDefinitions = getTaskDefinitions(
-			pkgJson,
-			globalTaskDefinitions,
-			{
-				isReleaseGroupRoot: false,
-			},
-		);
+		const secondaryTaskDefinitions = getTaskDefinitions(pkgJson, globalTaskDefinitions, {
+			isReleaseGroupRoot: false,
+		});
 		pending.push(...secondaryData.tasks);
 		let dep;
 		while ((dep = pending.pop()) !== undefined) {
@@ -504,12 +461,7 @@ function checkTaskDeps(
 	const missingTaskDependencies = taskDeps
 		.filter(
 			(taskDep) =>
-				!hasTaskDependency(
-					root,
-					json,
-					taskName,
-					Array.isArray(taskDep) ? taskDep : [taskDep],
-				),
+				!hasTaskDependency(root, json, taskName, Array.isArray(taskDep) ? taskDep : [taskDep]),
 		)
 		.map((dep) => (Array.isArray(dep) ? dep.join(" or ") : dep));
 
@@ -549,22 +501,14 @@ function patchTaskDeps(
 ): void {
 	const missingTaskDependencies = taskDeps.filter(
 		(taskDep) =>
-			!hasTaskDependency(
-				root,
-				json,
-				taskName,
-				Array.isArray(taskDep) ? taskDep : [taskDep],
-			),
+			!hasTaskDependency(root, json, taskName, Array.isArray(taskDep) ? taskDep : [taskDep]),
 	);
 
 	if (missingTaskDependencies.length > 0) {
 		const readonlyFileDep = json.fluidBuild?.tasks?.[taskName];
 		if (readonlyFileDep === undefined) {
 			let tasks: DeeplyMutable<
-				Exclude<
-					Exclude<PackageJson["fluidBuild"], undefined>["tasks"],
-					undefined
-				>
+				Exclude<Exclude<PackageJson["fluidBuild"], undefined>["tasks"], undefined>
 			>;
 			if (json.fluidBuild === undefined) {
 				tasks = {};
@@ -624,9 +568,7 @@ function getTscCommandDependencies(
 	// If the project has a referenced project, depend on that instead of the default
 	const parsedCommand = TscUtils.parseCommandLine(command);
 	if (!parsedCommand) {
-		throw new Error(
-			`Error parsing tsc command for script '${script}': ${command}`,
-		);
+		throw new Error(`Error parsing tsc command for script '${script}': ${command}`);
 	}
 	const configFile = TscUtils.findConfigFile(packageDir, parsedCommand);
 	const configJson = TscUtils.readConfigFile(configFile) as TsConfigJson;
@@ -640,8 +582,7 @@ function getTscCommandDependencies(
 	if (
 		json.scripts["build:test"] === undefined &&
 		json.scripts["typetests:gen"] !== undefined &&
-		(script === "tsc" ||
-			(json.scripts.tsc === undefined && script === "build:esnext"))
+		(script === "tsc" || (json.scripts.tsc === undefined && script === "build:esnext"))
 	) {
 		deps.push("typetests:gen");
 	}
@@ -666,9 +607,7 @@ function getTscCommandDependencies(
 
 			const referencedScript = findTscScript(json, refConfigPath);
 			if (referencedScript === undefined) {
-				throw new Error(
-					`Unable to find tsc script for referenced project ${refConfigPath}`,
-				);
+				throw new Error(`Unable to find tsc script for referenced project ${refConfigPath}`);
 			}
 			deps.push(referencedScript);
 		}
@@ -710,9 +649,7 @@ function getTscCommandDependencies(
 	// eslint-disable-next-line unicorn/prefer-spread
 	return deps.concat(
 		[...tscPredecessors].map((group) =>
-			group.map(
-				(predecessor) => `${predecessor.packageName}#${predecessor.script}`,
-			),
+			group.map((predecessor) => `${predecessor.packageName}#${predecessor.script}`),
 		),
 	);
 }
@@ -758,14 +695,7 @@ function buildDepsHandler(
 				continue;
 			}
 			try {
-				const error = check({
-					packageDir,
-					json,
-					script,
-					command,
-					packageMap,
-					root,
-				});
+				const error = check({ packageDir, json, script, command, packageMap, root });
 				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 				if (error) {
 					errors.push(error);
@@ -786,13 +716,7 @@ function checkTscDependencies({
 	packageMap,
 	root,
 }: BuildDepsCallbackContext): string | undefined {
-	const checkDeps = getTscCommandDependencies(
-		packageDir,
-		json,
-		script,
-		command,
-		packageMap,
-	);
+	const checkDeps = getTscCommandDependencies(packageDir, json, script, command, packageMap);
 	// Check the dependencies
 	return checkTaskDeps(root, json, script, checkDeps);
 }
@@ -802,10 +726,7 @@ export const handlers: Handler[] = [
 	{
 		name: "fluid-build-tasks-eslint",
 		match,
-		handler: async (
-			file: string,
-			root: string,
-		): Promise<string | undefined> => {
+		handler: async (file: string, root: string): Promise<string | undefined> => {
 			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file)) as PackageJson;
@@ -817,11 +738,7 @@ export const handlers: Handler[] = [
 				return;
 			}
 			try {
-				const scriptDeps = await eslintGetScriptDependencies(
-					path.dirname(file),
-					root,
-					json,
-				);
+				const scriptDeps = await eslintGetScriptDependencies(path.dirname(file), root, json);
 				return checkTaskDeps(root, json, "eslint", scriptDeps);
 			} catch (error: unknown) {
 				return (error as Error).message;
@@ -837,11 +754,7 @@ export const handlers: Handler[] = [
 					return;
 				}
 				try {
-					const scriptDeps = await eslintGetScriptDependencies(
-						path.dirname(file),
-						root,
-						json,
-					);
+					const scriptDeps = await eslintGetScriptDependencies(path.dirname(file), root, json);
 					patchTaskDeps(root, json, "eslint", scriptDeps);
 				} catch (error: unknown) {
 					result = { resolved: false, message: (error as Error).message };
@@ -858,10 +771,7 @@ export const handlers: Handler[] = [
 		 */
 		name: "tsc-project-single-use",
 		match,
-		handler: async (
-			file: string,
-			root: string,
-		): Promise<string | undefined> => {
+		handler: async (file: string, root: string): Promise<string | undefined> => {
 			const projectMap = new Map<string, string>();
 			return buildDepsHandler(
 				file,
@@ -870,9 +780,7 @@ export const handlers: Handler[] = [
 					// If the project has a referenced project, depend on that instead of the default
 					const parsedCommand = TscUtils.parseCommandLine(command);
 					if (!parsedCommand) {
-						throw new Error(
-							`Error parsing tsc command for script '${script}': ${command}`,
-						);
+						throw new Error(`Error parsing tsc command for script '${script}': ${command}`);
 					}
 					const configFile = TscUtils.findConfigFile(packageDir, parsedCommand);
 					const previousUse = projectMap.get(configFile);
@@ -889,10 +797,7 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string, root: string) =>
 			buildDepsHandler(file, root, checkTscDependencies),
-		resolver: (
-			file: string,
-			root: string,
-		): { resolved: boolean; message?: string } => {
+		resolver: (file: string, root: string): { resolved: boolean; message?: string } => {
 			let result: { resolved: boolean; message?: string } = { resolved: true };
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				if (!isFluidBuildEnabled(root, json)) {
@@ -946,9 +851,7 @@ function shouldProcessScriptForTsc(
 	return (
 		// This clause ensures we don't match commands that are prefixed with "tsc", like "tsc-multi". The exception
 		// is when the whole command is "tsc".
-		(command.startsWith("tsc ") ||
-			command === "tsc" ||
-			command.startsWith("fluid-tsc ")) &&
+		(command.startsWith("tsc ") || command === "tsc" || command.startsWith("fluid-tsc ")) &&
 		// tsc --watch tasks are long-running processes and don't need the standard task deps
 		!command.includes("--watch") &&
 		!tasksToIgnore.has(script)

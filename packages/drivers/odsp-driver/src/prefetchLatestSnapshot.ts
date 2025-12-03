@@ -12,24 +12,24 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import { getKeyForCacheEntry } from "@fluidframework/driver-utils/internal";
 import type {
-	InstrumentedStorageTokenFetcher,
 	IOdspResolvedUrl,
 	IOdspUrlParts,
 	ISnapshotOptions,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
+	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	createChildMonitoringContext,
 	PerformanceEvent,
+	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { IVersionedValueWithEpoch } from "./contracts.js";
 import {
-	downloadSnapshot,
-	fetchSnapshotWithRedeem,
 	type ISnapshotRequestAndResponseOptions,
 	type SnapshotFormatSupportType,
+	downloadSnapshot,
+	fetchSnapshotWithRedeem,
 } from "./fetchSnapshot.js";
 import type { IPrefetchSnapshotContents } from "./odspCache.js";
 import type { OdspDocumentServiceFactory } from "./odspDocumentServiceFactory.js";
@@ -38,8 +38,8 @@ import {
 	createOdspLogger,
 	getOdspResolvedUrl,
 	snapshotWithLoadingGroupIdSupported,
-	type TokenFetchOptionsEx,
 	toInstrumentedOdspStorageTokenFetcher,
+	type TokenFetchOptionsEx,
 } from "./odspUtils.js";
 
 /**
@@ -77,14 +77,9 @@ export async function prefetchLatestSnapshot(
 	snapshotFormatFetchType?: SnapshotFormatSupportType,
 	odspDocumentServiceFactory?: OdspDocumentServiceFactory,
 ): Promise<boolean> {
-	const mc = createChildMonitoringContext({
-		logger,
-		namespace: "PrefetchSnapshot",
-	});
+	const mc = createChildMonitoringContext({ logger, namespace: "PrefetchSnapshot" });
 	const odspLogger = createOdspLogger(mc.logger);
-	const useGroupIdsForSnapshotFetch = snapshotWithLoadingGroupIdSupported(
-		mc.config,
-	);
+	const useGroupIdsForSnapshotFetch = snapshotWithLoadingGroupIdSupported(mc.config);
 	// For prefetch, we just want to fetch the ungrouped data and want to use the new API if the
 	// feature gate is set, so provide an empty array.
 	const loadingGroupIds = useGroupIdsForSnapshotFetch ? [] : undefined;
@@ -119,15 +114,10 @@ export async function prefetchLatestSnapshot(
 			controller,
 		);
 	};
-	const snapshotKey = createCacheSnapshotKey(
-		odspResolvedUrl,
-		useGroupIdsForSnapshotFetch,
-	);
+	const snapshotKey = createCacheSnapshotKey(odspResolvedUrl, useGroupIdsForSnapshotFetch);
 	let cacheP: Promise<void> | undefined;
 	let snapshotEpoch: string | undefined;
-	const putInCache = async (
-		valueWithEpoch: IVersionedValueWithEpoch,
-	): Promise<void> => {
+	const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch): Promise<void> => {
 		snapshotEpoch = valueWithEpoch.fluidEpoch;
 		cacheP = persistedCache.put(snapshotKey, valueWithEpoch);
 		return cacheP;
@@ -141,8 +131,7 @@ export async function prefetchLatestSnapshot(
 		async () => {
 			const prefetchStartTime = performanceNow();
 			// Add the deferred promise to the cache, so that it can be leveraged while loading the container.
-			const snapshotContentsWithEpochP =
-				new Deferred<IPrefetchSnapshotContents>();
+			const snapshotContentsWithEpochP = new Deferred<IPrefetchSnapshotContents>();
 			const nonPersistentCacheKey = getKeyForCacheEntry(snapshotKey);
 			const snapshotNonPersistentCache =
 				odspDocumentServiceFactory?.snapshotPrefetchResultCache;
@@ -163,19 +152,13 @@ export async function prefetchLatestSnapshot(
 				enableRedeemFallback,
 			)
 				.then(async (value) => {
-					assert(
-						!!snapshotEpoch,
-						0x585 /* prefetched snapshot should have a valid epoch */,
-					);
+					assert(!!snapshotEpoch, 0x585 /* prefetched snapshot should have a valid epoch */);
 					snapshotContentsWithEpochP.resolve({
 						...value,
 						fluidEpoch: snapshotEpoch,
 						prefetchStartTime,
 					});
-					assert(
-						cacheP !== undefined,
-						0x1e7 /* "caching was not performed!" */,
-					);
+					assert(cacheP !== undefined, 0x1e7 /* "caching was not performed!" */);
 					await cacheP;
 					// Schedule it to remove from cache after 5s.
 					// 1. While it's in snapshotNonPersistentCache: Load flow will use this value and will not attempt
@@ -199,10 +182,7 @@ export async function prefetchLatestSnapshot(
 			return true;
 		},
 	).catch(async (error) => {
-		odspLogger.sendErrorEvent(
-			{ eventName: "PrefetchLatestSnapshotError" },
-			error,
-		);
+		odspLogger.sendErrorEvent({ eventName: "PrefetchLatestSnapshotError" }, error);
 		return false;
 	});
 }

@@ -4,12 +4,12 @@
  */
 
 import {
-	makeStyles,
 	Table,
 	TableBody,
 	TableCell,
 	TableHeader,
 	TableRow,
+	makeStyles,
 	tokens,
 } from "@fluentui/react-components";
 import {
@@ -19,7 +19,7 @@ import {
 	DoorArrowLeftRegular,
 	Person12Regular,
 } from "@fluentui/react-icons";
-import type React from "react";
+import React from "react";
 
 import { ThemeOption, useThemeContext } from "../ThemeHelper.js";
 
@@ -35,9 +35,9 @@ const audienceStyles = makeStyles({
 		backgroundColor: tokens.colorPaletteRedBackground2,
 	},
 	highContrast: {
-		color: "#FFF",
+		"color": "#FFF",
 		"&:hover": {
-			color: "#000",
+			"color": "#000",
 			"& *": {
 				color: "#000",
 			},
@@ -61,9 +61,7 @@ export interface AudienceHistoryTableProps {
  *
  * @remarks {@link ThemeContext} must be set in order to use this component.
  */
-export function AudienceHistoryTable(
-	props: AudienceHistoryTableProps,
-): React.ReactElement {
+export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.ReactElement {
 	const { audienceHistoryItems } = props;
 	const { themeInfo } = useThemeContext();
 
@@ -99,9 +97,7 @@ export function AudienceHistoryTable(
 								</LabelCellLayout>
 							)}
 							{column.columnKey === "time" && (
-								<LabelCellLayout icon={<Clock12Regular />}>
-									{column.label}
-								</LabelCellLayout>
+								<LabelCellLayout icon={<Clock12Regular />}>{column.label}</LabelCellLayout>
 							)}
 						</TableCell>
 					))}
@@ -124,11 +120,7 @@ export function AudienceHistoryTable(
 						<TableCell>
 							<LabelCellLayout
 								icon={
-									item.changeKind === "joined" ? (
-										<ArrowJoinRegular />
-									) : (
-										<ArrowExitRegular />
-									)
+									item.changeKind === "joined" ? <ArrowJoinRegular /> : <ArrowExitRegular />
 								}
 							>
 								{item.changeKind}

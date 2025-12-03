@@ -11,23 +11,12 @@
  * Current version: 2.74.0
  */
 
-import type {
-	FullType,
-	MinimalType,
-	requireAssignableTo,
-	TypeOnly,
-} from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/odsp-doclib-utils-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> =
-	| TypeOnly<T>
-	| MinimalType<T>
-	| FullType<T>
-	| typeof old
-	| typeof current
-	| requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -36,10 +25,7 @@ declare type MakeUnusedImportErrorsGoAway<T> =
  * typeValidation.broken:
  * "Function_getDriveId": {"backCompat": false}
  */
-declare type current_as_old_for_Function_getDriveId = requireAssignableTo<
-	TypeOnly<typeof current.getDriveId>,
-	TypeOnly<typeof old.getDriveId>
->;
+declare type current_as_old_for_Function_getDriveId = requireAssignableTo<TypeOnly<typeof current.getDriveId>, TypeOnly<typeof old.getDriveId>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -48,11 +34,7 @@ declare type current_as_old_for_Function_getDriveId = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IOdspAuthRequestInfo": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IOdspAuthRequestInfo =
-	requireAssignableTo<
-		TypeOnly<old.IOdspAuthRequestInfo>,
-		TypeOnly<current.IOdspAuthRequestInfo>
-	>;
+declare type old_as_current_for_Interface_IOdspAuthRequestInfo = requireAssignableTo<TypeOnly<old.IOdspAuthRequestInfo>, TypeOnly<current.IOdspAuthRequestInfo>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -61,11 +43,7 @@ declare type old_as_current_for_Interface_IOdspAuthRequestInfo =
  * typeValidation.broken:
  * "Interface_IOdspAuthRequestInfo": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IOdspAuthRequestInfo =
-	requireAssignableTo<
-		TypeOnly<current.IOdspAuthRequestInfo>,
-		TypeOnly<old.IOdspAuthRequestInfo>
-	>;
+declare type current_as_old_for_Interface_IOdspAuthRequestInfo = requireAssignableTo<TypeOnly<current.IOdspAuthRequestInfo>, TypeOnly<old.IOdspAuthRequestInfo>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -74,10 +52,7 @@ declare type current_as_old_for_Interface_IOdspAuthRequestInfo =
  * typeValidation.broken:
  * "Variable_getOdspScope": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_getOdspScope = requireAssignableTo<
-	TypeOnly<typeof current.getOdspScope>,
-	TypeOnly<typeof old.getOdspScope>
->;
+declare type current_as_old_for_Variable_getOdspScope = requireAssignableTo<TypeOnly<typeof current.getOdspScope>, TypeOnly<typeof old.getOdspScope>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -86,7 +61,4 @@ declare type current_as_old_for_Variable_getOdspScope = requireAssignableTo<
  * typeValidation.broken:
  * "Variable_pushScope": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_pushScope = requireAssignableTo<
-	TypeOnly<typeof current.pushScope>,
-	TypeOnly<typeof old.pushScope>
->;
+declare type current_as_old_for_Variable_pushScope = requireAssignableTo<TypeOnly<typeof current.pushScope>, TypeOnly<typeof old.pushScope>>

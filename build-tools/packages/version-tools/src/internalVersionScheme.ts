@@ -104,17 +104,13 @@ export function fromInternalScheme(
 			: prereleaseSections.slice(1).join(".");
 	const newSemVer = semver.parse(newSemVerString);
 	if (newSemVer === null) {
-		throw new Error(
-			`Couldn't convert ${internalVersion} to a standard semver.`,
-		);
+		throw new Error(`Couldn't convert ${internalVersion} to a standard semver.`);
 	}
 
 	const publicVersionString = parsedVersion.format().split("-")[0];
 	const publicVersion = semver.parse(publicVersionString);
 	if (publicVersion === null) {
-		throw new Error(
-			`Couldn't convert ${publicVersionString} to a standard semver.`,
-		);
+		throw new Error(`Couldn't convert ${publicVersionString} to a standard semver.`);
 	}
 
 	return [publicVersion, newSemVer, prereleaseIdentifier];
@@ -177,9 +173,7 @@ export function toInternalScheme(
 	}
 
 	if (!isInternalVersionScheme(newSemVer, allowPrereleases, true)) {
-		throw new Error(
-			`Converted version is not a valid Fluid internal version: ${newSemVer}`,
-		);
+		throw new Error(`Converted version is not a valid Fluid internal version: ${newSemVer}`);
 	}
 
 	return newSemVer;
@@ -244,8 +238,7 @@ export function validateVersionScheme(
 		parsedVersion.prerelease.length < EXPECTED_PRERELEASE_SECTIONS ||
 		// If the version has more than the minimum prerelease sections, then it's not considered an internal version unless
 		// allowPrereleases === true
-		(parsedVersion.prerelease.length > EXPECTED_PRERELEASE_SECTIONS &&
-			!allowPrereleases)
+		(parsedVersion.prerelease.length > EXPECTED_PRERELEASE_SECTIONS && !allowPrereleases)
 	) {
 		throw new Error(
 			`Prerelease value contains ${parsedVersion.prerelease.length} components; expected ${EXPECTED_PRERELEASE_SECTIONS}.`,
@@ -271,9 +264,7 @@ export function isInternalVersionScheme(
 	allowAnyPrereleaseId = false,
 ): boolean {
 	const parsedVersion = semver.parse(version);
-	const prereleaseIds = allowAnyPrereleaseId
-		? undefined
-		: ALLOWED_PRERELEASE_IDENTIFIERS;
+	const prereleaseIds = allowAnyPrereleaseId ? undefined : ALLOWED_PRERELEASE_IDENTIFIERS;
 
 	try {
 		validateVersionScheme(parsedVersion, allowPrereleases, prereleaseIds);
@@ -292,10 +283,7 @@ export function isInternalVersionScheme(
  * `ALLOWED_PRERELEASE_IDENTIFIERS`.
  * @returns True if the range string matches the Fluid internal version scheme.
  */
-export function isInternalVersionRange(
-	range: string,
-	allowAnyPrereleaseId = false,
-): boolean {
+export function isInternalVersionRange(range: string, allowAnyPrereleaseId = false): boolean {
 	if (semver.validRange(range) === null) {
 		return false;
 	}
@@ -340,8 +328,7 @@ export function isInternalVersionRange(
 	const prereleasePrefix = `${minVer.major}.${minVer.minor}.${minVer.patch}-${minVer.prerelease[0]}.`;
 	return singleRangeSet.some(
 		(comparator) =>
-			comparator.operator === "<" &&
-			comparator.semver.version.startsWith(prereleasePrefix),
+			comparator.operator === "<" && comparator.semver.version.startsWith(prereleasePrefix),
 	);
 }
 
@@ -358,11 +345,7 @@ export function bumpInternalVersion(
 	bumpType: VersionBumpTypeExtended,
 ): semver.SemVer {
 	validateVersionScheme(version, true, undefined);
-	const [pubVer, intVer, prereleaseId] = fromInternalScheme(
-		version,
-		true,
-		true,
-	);
+	const [pubVer, intVer, prereleaseId] = fromInternalScheme(version, true, true);
 
 	const newIntVer =
 		bumpType === "current"
@@ -448,9 +431,7 @@ export function changePreReleaseIdentifier(
 
 	if (typeof identifier === "number") {
 		// eslint-disable-next-line unicorn/prefer-type-error
-		throw new Error(
-			`Prerelease identifier is numeric; it should be a string: ${version}`,
-		);
+		throw new Error(`Prerelease identifier is numeric; it should be a string: ${version}`);
 	}
 
 	const newPrereleaseSection = [newIdentifier, ...pr.slice(1)].join(".");
@@ -514,11 +495,7 @@ export function detectInternalVersionConstraintType(
 	const minor = bumpInternalVersion(minVer, "minor");
 
 	const maxSatisfying = semver.maxSatisfying([patch, minor], range);
-	return maxSatisfying === patch
-		? "patch"
-		: maxSatisfying === minor
-			? "minor"
-			: "exact";
+	return maxSatisfying === patch ? "patch" : maxSatisfying === minor ? "minor" : "exact";
 }
 
 /**
@@ -539,9 +516,7 @@ export function detectInternalVersionConstraintType(
  *
  * @throws error - If the version string cannot be parsed as a valid semantic version.
  */
-export function isInternalTestVersion(
-	version: semver.SemVer | string,
-): boolean {
+export function isInternalTestVersion(version: semver.SemVer | string): boolean {
 	const parsedVersion = semver.parse(version);
 
 	if (parsedVersion === null) {

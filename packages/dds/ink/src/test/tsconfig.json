@@ -4,12 +4,12 @@
 		"rootDir": "./",
 		"outDir": "../../lib/test",
 		"types": ["mocha", "node"],
-		"noUncheckedIndexedAccess": false
+		"noUncheckedIndexedAccess": false,
 	},
 	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../.."
-		}
-	]
+			"path": "../..",
+		},
+	],
 }

@@ -7,10 +7,10 @@ import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 import type { ChangeAtomId, RevisionTag } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
-import { brand, type Mutable } from "../../../util/index.js";
 import { mintRevisionTag } from "../../utils.js";
-import { MarkMaker as Mark } from "./testEdits.js";
+import { type Mutable, brand } from "../../../util/index.js";
 import { assertChangesetsEqual } from "./utils.js";
+import { MarkMaker as Mark } from "./testEdits.js";
 
 const tag0: RevisionTag = mintRevisionTag();
 const tag1: RevisionTag = mintRevisionTag();
@@ -46,11 +46,7 @@ function runCases(outputRev: RevisionTag | undefined) {
 
 	function process(changeset: SF.Changeset): SF.Changeset {
 		deepFreeze(changeset);
-		return SF.sequenceFieldChangeRebaser.replaceRevisions(
-			changeset,
-			inputRevs,
-			outputRev,
-		);
+		return SF.sequenceFieldChangeRebaser.replaceRevisions(changeset, inputRevs, outputRev);
 	}
 
 	it("tombstones", () => {
@@ -140,14 +136,8 @@ function runCases(outputRev: RevisionTag | undefined) {
 		];
 		const expected: SF.Changeset = [
 			Mark.moveOut(1, atom0, { finalEndpoint: atom0, idOverride: atomOut1 }),
-			Mark.moveOut(1, atomOut1, {
-				finalEndpoint: atomOut1,
-				idOverride: atomOut2,
-			}),
-			Mark.moveOut(1, atomOut2, {
-				finalEndpoint: atomOut2,
-				idOverride: atomOut3,
-			}),
+			Mark.moveOut(1, atomOut1, { finalEndpoint: atomOut1, idOverride: atomOut2 }),
+			Mark.moveOut(1, atomOut2, { finalEndpoint: atomOut2, idOverride: atomOut3 }),
 			Mark.moveOut(1, atomOut3, { finalEndpoint: atomOut3, idOverride: atom0 }),
 			Mark.moveIn(1, atom0, { finalEndpoint: atom0 }),
 			Mark.moveIn(1, atomOut1, { finalEndpoint: atomOut1 }),

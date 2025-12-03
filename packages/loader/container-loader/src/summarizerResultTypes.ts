@@ -29,12 +29,7 @@ export const summarizerRequestUrl = "_summarizer";
  *
  * @legacy @alpha
  */
-export type SummaryStage =
-	| "base"
-	| "generate"
-	| "upload"
-	| "submit"
-	| "unknown";
+export type SummaryStage = "base" | "generate" | "upload" | "submit" | "unknown";
 
 type OnDemandSummaryStageResult<TSuccess> =
 	| {

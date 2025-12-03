@@ -10,7 +10,7 @@ import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
 import * as React from "react";
 
-import { type PropTreeNode, toPropTreeNode } from "../propNode.js";
+import { toPropTreeNode, type PropTreeNode } from "../propNode.js";
 import { objectIdNumber } from "../simpleIdentifier.js";
 import {
 	usePropTreeNode,
@@ -32,9 +32,7 @@ describe("useTree", () => {
 
 		it("withTreeObservations example", () => {
 			const builder = new SchemaFactory("example");
-			class Item extends builder.object("Item", {
-				text: SchemaFactory.string,
-			}) {}
+			class Item extends builder.object("Item", { text: SchemaFactory.string }) {}
 			const ItemComponentBug = ({ item }: { item: Item }): JSX.Element => (
 				<span>{item.text}</span> // Reading `text`, a mutable value from a React prop, causes an invalidation bug.
 			);
@@ -43,17 +41,13 @@ describe("useTree", () => {
 				({ item }: { item: Item }): JSX.Element => <span>{item.text}</span>,
 			);
 
-			const ItemParentComponent = ({
-				item,
-			}: {
-				item: PropTreeNode<Item>;
-			}): JSX.Element => <ItemComponent item={item} />;
+			const ItemParentComponent = ({ item }: { item: PropTreeNode<Item> }): JSX.Element => (
+				<ItemComponent item={item} />
+			);
 
 			const InvalidItemParentComponent = ({
 				item,
-			}: {
-				item: PropTreeNode<Item>;
-			}): JSX.Element => (
+			}: { item: PropTreeNode<Item> }): JSX.Element => (
 				// @ts-expect-error PropTreeNode turns this invalidation bug into a compile error
 				<span>{item.text}</span>
 			);
@@ -66,10 +60,7 @@ describe("useTree", () => {
 			 * When in StrictMode, React may double render, so that case is not checked for an exact match.
 			 */
 			// eslint-disable-next-line no-inner-declarations
-			function checkRenderLog(
-				log: string[],
-				expected: readonly string[],
-			): void {
+			function checkRenderLog(log: string[], expected: readonly string[]): void {
 				if (reactStrictMode) {
 					assert.deepEqual(new Set(log), new Set(expected));
 				} else {
@@ -89,9 +80,7 @@ describe("useTree", () => {
 
 					const log: string[] = [];
 
-					function PointComponent(props: {
-						node: PropTreeNode<Point>;
-					}): JSX.Element {
+					function PointComponent(props: { node: PropTreeNode<Point> }): JSX.Element {
 						log.push("render");
 						const { x, y } = usePropTreeNode(props.node, (node) => {
 							log.push(`usePropTreeNode`);
@@ -103,9 +92,7 @@ describe("useTree", () => {
 						return <span>{`x: ${x}, y: ${y}`}</span>;
 					}
 
-					function ParentComponent(props: {
-						node: PropTreeNode<Point>;
-					}): JSX.Element {
+					function ParentComponent(props: { node: PropTreeNode<Point> }): JSX.Element {
 						log.push("parent");
 						return <PointComponent node={props.node} />;
 					}
@@ -188,13 +175,7 @@ describe("useTree", () => {
 					const collection = new Collection([{ x: 1 }, { x: 2 }, { x: 3 }]);
 					const content = <ParentComponent node={collection} />;
 					const rendered = render(content, { reactStrictMode });
-					checkRenderLog(log, [
-						"Parent",
-						"Collection",
-						"Item: 1",
-						"Item: 2",
-						"Item: 3",
-					]);
+					checkRenderLog(log, ["Parent", "Collection", "Item: 1", "Item: 2", "Item: 3"]);
 					collection.insertAtEnd(new Item({ x: 4 }));
 					checkRenderLog(log, ["Collection invalidated"]);
 					rendered.rerender(content);
@@ -209,13 +190,7 @@ describe("useTree", () => {
 					const collection = new Collection([{ x: 1 }, { x: 2 }, { x: 3 }]);
 					const content = <ParentComponent node={collection} />;
 					const rendered = render(content, { reactStrictMode });
-					checkRenderLog(log, [
-						"Parent",
-						"Collection",
-						"Item: 1",
-						"Item: 2",
-						"Item: 3",
-					]);
+					checkRenderLog(log, ["Parent", "Collection", "Item: 1", "Item: 2", "Item: 3"]);
 					collection.moveToEnd(0);
 					checkRenderLog(log, ["Collection invalidated"]);
 					rendered.rerender(content);

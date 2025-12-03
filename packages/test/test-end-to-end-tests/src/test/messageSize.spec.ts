@@ -3,36 +3,33 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+// eslint-disable-next-line import-x/no-nodejs-modules
+import * as crypto from "crypto";
+
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
 	disabledCompressionConfig,
 } from "@fluidframework/container-runtime/internal";
-import type {
-	ConfigTypes,
-	IConfigProviderBase,
-	IErrorBase,
-} from "@fluidframework/core-interfaces";
-import type {
+import { ConfigTypes, IConfigProviderBase, IErrorBase } from "@fluidframework/core-interfaces";
+import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
-	type ChannelFactoryRegistry,
-	DataObjectFactoryType,
-	type ITestContainerConfig,
-	type ITestFluidObject,
-	type ITestObjectProvider,
 	toIDeltaManagerFull,
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
-// eslint-disable-next-line import-x/no-nodejs-modules
-import * as crypto from "crypto";
 
 describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
@@ -48,7 +45,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
-	afterEach(async () => {
+	afterEach(async function () {
 		provider.reset();
 	});
 
@@ -59,9 +56,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 	let localMap: ISharedMap;
 	let remoteMap: ISharedMap;
 
-	const configProvider = (
-		settings: Record<string, ConfigTypes>,
-	): IConfigProviderBase => {
+	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => {
 		return {
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		};
@@ -78,14 +73,12 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// Create a Container for the first client.
 		localContainer = await provider.makeTestContainer(configWithFeatureGates);
-		localDataObject =
-			(await localContainer.getEntryPoint()) as ITestFluidObject;
+		localDataObject = (await localContainer.getEntryPoint()) as ITestFluidObject;
 		localMap = await localDataObject.getSharedObject<ISharedMap>(mapId);
 
 		// Load the Container that was created by the first client.
 		remoteContainer = await provider.loadTestContainer(configWithFeatureGates);
-		remoteDataObject =
-			(await remoteContainer.getEntryPoint()) as ITestFluidObject;
+		remoteDataObject = (await remoteContainer.getEntryPoint()) as ITestFluidObject;
 		remoteMap = await remoteDataObject.getSharedObject<ISharedMap>(mapId);
 
 		await waitForContainerConnection(localContainer, true);
@@ -106,11 +99,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 	};
 
-	const assertMapValues = (
-		map: ISharedMap,
-		count: number,
-		expected: string,
-	): void => {
+	const assertMapValues = (map: ISharedMap, count: number, expected: string): void => {
 		for (let i = 0; i < count; i++) {
 			const value = map.get(`key${i}`);
 			assert.strictEqual(value, expected, `Wrong value for key${i}`);
@@ -133,12 +122,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 
 	itExpects(
 		"A large op will close the container when compression is disabled",
-		[
-			{
-				eventName: "fluid:telemetry:Container:ContainerClose",
-				error: "BatchTooLarge",
-			},
-		],
+		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
 		async () => {
 			const maxMessageSizeInBytes = 1024 * 1024; // 1Mb
 			await setupContainers(configWithCompressionDisabled);
@@ -255,7 +239,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		setMapKeys(localMap, messageCount, largeString);
 	});
 
-	it("Batched small ops pass when compression enabled and batch is larger than max op size", async () => {
+	it("Batched small ops pass when compression enabled and batch is larger than max op size", async function () {
 		await setupContainers({
 			...testContainerConfig,
 			runtimeOptions: {
@@ -276,13 +260,8 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 
 	itExpects(
 		"Large ops fail when compression is disabled and the content is over max op size",
-		[
-			{
-				eventName: "fluid:telemetry:Container:ContainerClose",
-				error: "BatchTooLarge",
-			},
-		],
-		async () => {
+		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
+		async function () {
 			const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
 			await setupContainers(configWithCompressionDisabled);
 
@@ -294,10 +273,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 			const errorP = captureContainerCloseError(localContainer);
 			await provider.ensureSynchronized();
 
-			assert(
-				localContainer.closed,
-				"Local Container should be closed during flush",
-			);
+			assert(localContainer.closed, "Local Container should be closed during flush");
 			const {
 				errorType,
 				dataProcessingCodepath,
@@ -330,10 +306,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 
 			// Confirm the remote map didn't receive any of the large ops
 			remoteMap.delete("test"); // So we can just check for empty on the next line
-			assert(
-				remoteMap.size === 0,
-				"Remote map should not have received any of the large ops",
-			);
+			assert(remoteMap.size === 0, "Remote map should not have received any of the large ops");
 		},
 	);
 
@@ -354,10 +327,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 			await setupContainers(containerConfigGroupedBatching);
 			// This is currently not supported by the local server. Nacks will occur because too many messages without summary (see localServerTestDriver.ts).
 			// This is not supported by tinylicious. For some reason, the socket is accepting more than 1 MB.
-			if (
-				provider.driver.type === "local" ||
-				provider.driver.type === "tinylicious"
-			) {
+			if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
 				this.skip();
 			}
 
@@ -437,7 +407,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 					error: "BatchTooLarge",
 				},
 			],
-			async () => {
+			async function () {
 				const maxMessageSizeInBytes = 50 * bytesPerKB; // 50 KB
 				await setupContainers({
 					...containerConfigGroupedBatching,
@@ -457,13 +427,8 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 
 		itExpects(
 			"Large ops fail when compression enabled and compressed content is over max op size",
-			[
-				{
-					eventName: "fluid:telemetry:Container:ContainerClose",
-					error: "BatchTooLarge",
-				},
-			],
-			async () => {
+			[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
+			async function () {
 				const maxMessageSizeInBytes = 50 * bytesPerKB; // 50 KB
 				await setupContainers({
 					...testContainerConfig,
@@ -516,13 +481,10 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 			});
 			totalPayloadSizeInBytes = 0;
 			totalOps = 0;
-			toIDeltaManagerFull(localContainer.deltaManager).outbound.on(
-				"push",
-				(messages) => {
-					totalPayloadSizeInBytes += JSON.stringify(messages).length;
-					totalOps += messages.length;
-				},
-			);
+			toIDeltaManagerFull(localContainer.deltaManager).outbound.on("push", (messages) => {
+				totalPayloadSizeInBytes += JSON.stringify(messages).length;
+				totalOps += messages.length;
+			});
 		};
 
 		const compressionRatio = 0.1;
@@ -556,8 +518,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				{
 					messagesInBatch: 10,
 					messageSize: compressionSizeThreshold + 1,
-					expectedSize:
-						badCompressionRatio * 10 * (compressionSizeThreshold + 1),
+					expectedSize: badCompressionRatio * 10 * (compressionSizeThreshold + 1),
 					// In order for chunking to kick in, we need to force compression to output
 					// a payload larger than the payload size limit, which is done by compressing
 					// random data.
@@ -646,7 +607,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				});
 			};
 
-			it("Reconnects while processing chunks", async () => {
+			it("Reconnects while processing chunks", async function () {
 				await setupContainers(config);
 				// Force the container to reconnect after processing 2 chunked ops
 				const secondConnection = reconnectAfterOpProcessing(
@@ -661,16 +622,14 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				await sendAndAssertSynchronization(secondConnection);
 			});
 
-			it("Reconnects while processing compressed batch", async () => {
+			it("Reconnects while processing compressed batch", async function () {
 				await setupContainers(config);
 				// Force the container to reconnect after processing all the chunks
 				const secondConnection = reconnectAfterOpProcessing(
 					remoteContainer,
 					(op) => {
 						const contents =
-							typeof op.contents === "string"
-								? JSON.parse(op.contents)
-								: undefined;
+							typeof op.contents === "string" ? JSON.parse(op.contents) : undefined;
 						return (
 							contents?.type === ContainerMessageType.ChunkedOp &&
 							contents?.contents?.chunkId === contents?.contents?.totalChunks
@@ -696,19 +655,13 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 							container.disconnect();
 							container.once("connected", () => {
 								resolve();
-								toIDeltaManagerFull(container.deltaManager).outbound.off(
-									"op",
-									handler,
-								);
+								toIDeltaManagerFull(container.deltaManager).outbound.off("op", handler);
 							});
 							container.connect();
 						}
 					};
 
-					toIDeltaManagerFull(container.deltaManager).outbound.on(
-						"op",
-						handler,
-					);
+					toIDeltaManagerFull(container.deltaManager).outbound.on("op", handler);
 				});
 			};
 
@@ -725,15 +678,14 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 					localContainer,
 					(batch) =>
 						batch.length === 1 &&
-						JSON.parse(batch[0].contents as string)?.type ===
-							ContainerMessageType.ChunkedOp,
+						JSON.parse(batch[0].contents as string)?.type === ContainerMessageType.ChunkedOp,
 					2,
 				);
 
 				await sendAndAssertSynchronization(secondConnection);
 			});
 
-			it("Reconnects while sending compressed batch", async () => {
+			it("Reconnects while sending compressed batch", async function () {
 				await setupContainers(config);
 				// Force the container to reconnect after sending the compressed batch (i.e. send all chunks)
 				const secondConnection = reconnectAfterBatchSending(
@@ -742,8 +694,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 						const parsedContent = JSON.parse(batch[0].contents as string);
 						return (
 							parsedContent?.type === ContainerMessageType.ChunkedOp &&
-							parsedContent.contents.chunkId ===
-								parsedContent.contents.totalChunks
+							parsedContent.contents.chunkId === parsedContent.contents.totalChunks
 						);
 					},
 					1,

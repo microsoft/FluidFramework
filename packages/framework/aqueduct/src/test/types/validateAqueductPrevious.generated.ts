@@ -12,22 +12,11 @@
  */
 
 import type * as old from "@fluidframework/aqueduct-previous/internal";
-import type {
-	FullType,
-	MinimalType,
-	requireAssignableTo,
-	TypeOnly,
-} from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> =
-	| TypeOnly<T>
-	| MinimalType<T>
-	| FullType<T>
-	| typeof old
-	| typeof current
-	| requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -36,11 +25,7 @@ declare type MakeUnusedImportErrorsGoAway<T> =
  * typeValidation.broken:
  * "Class_BaseContainerRuntimeFactory": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_BaseContainerRuntimeFactory =
-	requireAssignableTo<
-		TypeOnly<old.BaseContainerRuntimeFactory>,
-		TypeOnly<current.BaseContainerRuntimeFactory>
-	>;
+declare type old_as_current_for_Class_BaseContainerRuntimeFactory = requireAssignableTo<TypeOnly<old.BaseContainerRuntimeFactory>, TypeOnly<current.BaseContainerRuntimeFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -49,11 +34,7 @@ declare type old_as_current_for_Class_BaseContainerRuntimeFactory =
  * typeValidation.broken:
  * "Class_BaseContainerRuntimeFactory": {"backCompat": false}
  */
-declare type current_as_old_for_Class_BaseContainerRuntimeFactory =
-	requireAssignableTo<
-		TypeOnly<current.BaseContainerRuntimeFactory>,
-		TypeOnly<old.BaseContainerRuntimeFactory>
-	>;
+declare type current_as_old_for_Class_BaseContainerRuntimeFactory = requireAssignableTo<TypeOnly<current.BaseContainerRuntimeFactory>, TypeOnly<old.BaseContainerRuntimeFactory>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -62,11 +43,7 @@ declare type current_as_old_for_Class_BaseContainerRuntimeFactory =
  * typeValidation.broken:
  * "Class_ContainerRuntimeFactoryWithDefaultDataStore": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_ContainerRuntimeFactoryWithDefaultDataStore =
-	requireAssignableTo<
-		TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStore>,
-		TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStore>
-	>;
+declare type old_as_current_for_Class_ContainerRuntimeFactoryWithDefaultDataStore = requireAssignableTo<TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStore>, TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStore>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -75,11 +52,7 @@ declare type old_as_current_for_Class_ContainerRuntimeFactoryWithDefaultDataStor
  * typeValidation.broken:
  * "Class_ContainerRuntimeFactoryWithDefaultDataStore": {"backCompat": false}
  */
-declare type current_as_old_for_Class_ContainerRuntimeFactoryWithDefaultDataStore =
-	requireAssignableTo<
-		TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStore>,
-		TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStore>
-	>;
+declare type current_as_old_for_Class_ContainerRuntimeFactoryWithDefaultDataStore = requireAssignableTo<TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStore>, TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStore>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -88,10 +61,7 @@ declare type current_as_old_for_Class_ContainerRuntimeFactoryWithDefaultDataStor
  * typeValidation.broken:
  * "Class_DataObject": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_DataObject = requireAssignableTo<
-	TypeOnly<old.DataObject>,
-	TypeOnly<current.DataObject>
->;
+declare type old_as_current_for_Class_DataObject = requireAssignableTo<TypeOnly<old.DataObject>, TypeOnly<current.DataObject>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -100,10 +70,7 @@ declare type old_as_current_for_Class_DataObject = requireAssignableTo<
  * typeValidation.broken:
  * "Class_DataObject": {"backCompat": false}
  */
-declare type current_as_old_for_Class_DataObject = requireAssignableTo<
-	TypeOnly<current.DataObject>,
-	TypeOnly<old.DataObject>
->;
+declare type current_as_old_for_Class_DataObject = requireAssignableTo<TypeOnly<current.DataObject>, TypeOnly<old.DataObject>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -112,10 +79,7 @@ declare type current_as_old_for_Class_DataObject = requireAssignableTo<
  * typeValidation.broken:
  * "Class_DataObjectFactory": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_DataObjectFactory = requireAssignableTo<
-	TypeOnly<old.DataObjectFactory<never>>,
-	TypeOnly<current.DataObjectFactory<never>>
->;
+declare type old_as_current_for_Class_DataObjectFactory = requireAssignableTo<TypeOnly<old.DataObjectFactory<never>>, TypeOnly<current.DataObjectFactory<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -124,10 +88,7 @@ declare type old_as_current_for_Class_DataObjectFactory = requireAssignableTo<
  * typeValidation.broken:
  * "Class_DataObjectFactory": {"backCompat": false}
  */
-declare type current_as_old_for_Class_DataObjectFactory = requireAssignableTo<
-	TypeOnly<current.DataObjectFactory<never>>,
-	TypeOnly<old.DataObjectFactory<never>>
->;
+declare type current_as_old_for_Class_DataObjectFactory = requireAssignableTo<TypeOnly<current.DataObjectFactory<never>>, TypeOnly<old.DataObjectFactory<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -136,10 +97,7 @@ declare type current_as_old_for_Class_DataObjectFactory = requireAssignableTo<
  * typeValidation.broken:
  * "Class_PureDataObject": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_PureDataObject = requireAssignableTo<
-	TypeOnly<old.PureDataObject>,
-	TypeOnly<current.PureDataObject>
->;
+declare type old_as_current_for_Class_PureDataObject = requireAssignableTo<TypeOnly<old.PureDataObject>, TypeOnly<current.PureDataObject>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -148,10 +106,7 @@ declare type old_as_current_for_Class_PureDataObject = requireAssignableTo<
  * typeValidation.broken:
  * "Class_PureDataObject": {"backCompat": false}
  */
-declare type current_as_old_for_Class_PureDataObject = requireAssignableTo<
-	TypeOnly<current.PureDataObject>,
-	TypeOnly<old.PureDataObject>
->;
+declare type current_as_old_for_Class_PureDataObject = requireAssignableTo<TypeOnly<current.PureDataObject>, TypeOnly<old.PureDataObject>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -160,11 +115,7 @@ declare type current_as_old_for_Class_PureDataObject = requireAssignableTo<
  * typeValidation.broken:
  * "Class_PureDataObjectFactory": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_PureDataObjectFactory =
-	requireAssignableTo<
-		TypeOnly<old.PureDataObjectFactory<never>>,
-		TypeOnly<current.PureDataObjectFactory<never>>
-	>;
+declare type old_as_current_for_Class_PureDataObjectFactory = requireAssignableTo<TypeOnly<old.PureDataObjectFactory<never>>, TypeOnly<current.PureDataObjectFactory<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -173,11 +124,7 @@ declare type old_as_current_for_Class_PureDataObjectFactory =
  * typeValidation.broken:
  * "Class_PureDataObjectFactory": {"backCompat": false}
  */
-declare type current_as_old_for_Class_PureDataObjectFactory =
-	requireAssignableTo<
-		TypeOnly<current.PureDataObjectFactory<never>>,
-		TypeOnly<old.PureDataObjectFactory<never>>
-	>;
+declare type current_as_old_for_Class_PureDataObjectFactory = requireAssignableTo<TypeOnly<current.PureDataObjectFactory<never>>, TypeOnly<old.PureDataObjectFactory<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -186,10 +133,7 @@ declare type current_as_old_for_Class_PureDataObjectFactory =
  * typeValidation.broken:
  * "Class_TreeDataObject": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_TreeDataObject = requireAssignableTo<
-	TypeOnly<old.TreeDataObject>,
-	TypeOnly<current.TreeDataObject>
->;
+declare type old_as_current_for_Class_TreeDataObject = requireAssignableTo<TypeOnly<old.TreeDataObject>, TypeOnly<current.TreeDataObject>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -198,10 +142,7 @@ declare type old_as_current_for_Class_TreeDataObject = requireAssignableTo<
  * typeValidation.broken:
  * "Class_TreeDataObject": {"backCompat": false}
  */
-declare type current_as_old_for_Class_TreeDataObject = requireAssignableTo<
-	TypeOnly<current.TreeDataObject>,
-	TypeOnly<old.TreeDataObject>
->;
+declare type current_as_old_for_Class_TreeDataObject = requireAssignableTo<TypeOnly<current.TreeDataObject>, TypeOnly<old.TreeDataObject>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -210,11 +151,7 @@ declare type current_as_old_for_Class_TreeDataObject = requireAssignableTo<
  * typeValidation.broken:
  * "Class_TreeDataObjectFactory": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_TreeDataObjectFactory =
-	requireAssignableTo<
-		TypeOnly<old.TreeDataObjectFactory<never>>,
-		TypeOnly<current.TreeDataObjectFactory<never>>
-	>;
+declare type old_as_current_for_Class_TreeDataObjectFactory = requireAssignableTo<TypeOnly<old.TreeDataObjectFactory<never>>, TypeOnly<current.TreeDataObjectFactory<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -223,11 +160,7 @@ declare type old_as_current_for_Class_TreeDataObjectFactory =
  * typeValidation.broken:
  * "Class_TreeDataObjectFactory": {"backCompat": false}
  */
-declare type current_as_old_for_Class_TreeDataObjectFactory =
-	requireAssignableTo<
-		TypeOnly<current.TreeDataObjectFactory<never>>,
-		TypeOnly<old.TreeDataObjectFactory<never>>
-	>;
+declare type current_as_old_for_Class_TreeDataObjectFactory = requireAssignableTo<TypeOnly<current.TreeDataObjectFactory<never>>, TypeOnly<old.TreeDataObjectFactory<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -236,11 +169,7 @@ declare type current_as_old_for_Class_TreeDataObjectFactory =
  * typeValidation.broken:
  * "ClassStatics_BaseContainerRuntimeFactory": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_BaseContainerRuntimeFactory =
-	requireAssignableTo<
-		TypeOnly<typeof current.BaseContainerRuntimeFactory>,
-		TypeOnly<typeof old.BaseContainerRuntimeFactory>
-	>;
+declare type current_as_old_for_ClassStatics_BaseContainerRuntimeFactory = requireAssignableTo<TypeOnly<typeof current.BaseContainerRuntimeFactory>, TypeOnly<typeof old.BaseContainerRuntimeFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -249,11 +178,7 @@ declare type current_as_old_for_ClassStatics_BaseContainerRuntimeFactory =
  * typeValidation.broken:
  * "ClassStatics_ContainerRuntimeFactoryWithDefaultDataStore": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_ContainerRuntimeFactoryWithDefaultDataStore =
-	requireAssignableTo<
-		TypeOnly<typeof current.ContainerRuntimeFactoryWithDefaultDataStore>,
-		TypeOnly<typeof old.ContainerRuntimeFactoryWithDefaultDataStore>
-	>;
+declare type current_as_old_for_ClassStatics_ContainerRuntimeFactoryWithDefaultDataStore = requireAssignableTo<TypeOnly<typeof current.ContainerRuntimeFactoryWithDefaultDataStore>, TypeOnly<typeof old.ContainerRuntimeFactoryWithDefaultDataStore>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -262,10 +187,7 @@ declare type current_as_old_for_ClassStatics_ContainerRuntimeFactoryWithDefaultD
  * typeValidation.broken:
  * "ClassStatics_DataObject": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_DataObject = requireAssignableTo<
-	TypeOnly<typeof current.DataObject>,
-	TypeOnly<typeof old.DataObject>
->;
+declare type current_as_old_for_ClassStatics_DataObject = requireAssignableTo<TypeOnly<typeof current.DataObject>, TypeOnly<typeof old.DataObject>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -274,11 +196,7 @@ declare type current_as_old_for_ClassStatics_DataObject = requireAssignableTo<
  * typeValidation.broken:
  * "ClassStatics_DataObjectFactory": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_DataObjectFactory =
-	requireAssignableTo<
-		TypeOnly<typeof current.DataObjectFactory>,
-		TypeOnly<typeof old.DataObjectFactory>
-	>;
+declare type current_as_old_for_ClassStatics_DataObjectFactory = requireAssignableTo<TypeOnly<typeof current.DataObjectFactory>, TypeOnly<typeof old.DataObjectFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -287,11 +205,7 @@ declare type current_as_old_for_ClassStatics_DataObjectFactory =
  * typeValidation.broken:
  * "ClassStatics_PureDataObject": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_PureDataObject =
-	requireAssignableTo<
-		TypeOnly<typeof current.PureDataObject>,
-		TypeOnly<typeof old.PureDataObject>
-	>;
+declare type current_as_old_for_ClassStatics_PureDataObject = requireAssignableTo<TypeOnly<typeof current.PureDataObject>, TypeOnly<typeof old.PureDataObject>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -300,11 +214,7 @@ declare type current_as_old_for_ClassStatics_PureDataObject =
  * typeValidation.broken:
  * "ClassStatics_PureDataObjectFactory": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_PureDataObjectFactory =
-	requireAssignableTo<
-		TypeOnly<typeof current.PureDataObjectFactory>,
-		TypeOnly<typeof old.PureDataObjectFactory>
-	>;
+declare type current_as_old_for_ClassStatics_PureDataObjectFactory = requireAssignableTo<TypeOnly<typeof current.PureDataObjectFactory>, TypeOnly<typeof old.PureDataObjectFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -313,11 +223,7 @@ declare type current_as_old_for_ClassStatics_PureDataObjectFactory =
  * typeValidation.broken:
  * "ClassStatics_TreeDataObject": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_TreeDataObject =
-	requireAssignableTo<
-		TypeOnly<typeof current.TreeDataObject>,
-		TypeOnly<typeof old.TreeDataObject>
-	>;
+declare type current_as_old_for_ClassStatics_TreeDataObject = requireAssignableTo<TypeOnly<typeof current.TreeDataObject>, TypeOnly<typeof old.TreeDataObject>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -326,11 +232,7 @@ declare type current_as_old_for_ClassStatics_TreeDataObject =
  * typeValidation.broken:
  * "ClassStatics_TreeDataObjectFactory": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_TreeDataObjectFactory =
-	requireAssignableTo<
-		TypeOnly<typeof current.TreeDataObjectFactory>,
-		TypeOnly<typeof old.TreeDataObjectFactory>
-	>;
+declare type current_as_old_for_ClassStatics_TreeDataObjectFactory = requireAssignableTo<TypeOnly<typeof current.TreeDataObjectFactory>, TypeOnly<typeof old.TreeDataObjectFactory>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -339,11 +241,7 @@ declare type current_as_old_for_ClassStatics_TreeDataObjectFactory =
  * typeValidation.broken:
  * "Interface_BaseContainerRuntimeFactoryProps": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_BaseContainerRuntimeFactoryProps =
-	requireAssignableTo<
-		TypeOnly<old.BaseContainerRuntimeFactoryProps>,
-		TypeOnly<current.BaseContainerRuntimeFactoryProps>
-	>;
+declare type old_as_current_for_Interface_BaseContainerRuntimeFactoryProps = requireAssignableTo<TypeOnly<old.BaseContainerRuntimeFactoryProps>, TypeOnly<current.BaseContainerRuntimeFactoryProps>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -352,11 +250,7 @@ declare type old_as_current_for_Interface_BaseContainerRuntimeFactoryProps =
  * typeValidation.broken:
  * "Interface_ContainerRuntimeFactoryWithDefaultDataStoreProps": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ContainerRuntimeFactoryWithDefaultDataStoreProps =
-	requireAssignableTo<
-		TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStoreProps>,
-		TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStoreProps>
-	>;
+declare type old_as_current_for_Interface_ContainerRuntimeFactoryWithDefaultDataStoreProps = requireAssignableTo<TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStoreProps>, TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStoreProps>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -365,11 +259,7 @@ declare type old_as_current_for_Interface_ContainerRuntimeFactoryWithDefaultData
  * typeValidation.broken:
  * "Interface_ContainerRuntimeFactoryWithDefaultDataStoreProps": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ContainerRuntimeFactoryWithDefaultDataStoreProps =
-	requireAssignableTo<
-		TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStoreProps>,
-		TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStoreProps>
-	>;
+declare type current_as_old_for_Interface_ContainerRuntimeFactoryWithDefaultDataStoreProps = requireAssignableTo<TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStoreProps>, TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStoreProps>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -378,11 +268,7 @@ declare type current_as_old_for_Interface_ContainerRuntimeFactoryWithDefaultData
  * typeValidation.broken:
  * "Interface_DataObjectFactoryProps": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_DataObjectFactoryProps =
-	requireAssignableTo<
-		TypeOnly<old.DataObjectFactoryProps<never>>,
-		TypeOnly<current.DataObjectFactoryProps<never>>
-	>;
+declare type old_as_current_for_Interface_DataObjectFactoryProps = requireAssignableTo<TypeOnly<old.DataObjectFactoryProps<never>>, TypeOnly<current.DataObjectFactoryProps<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -391,11 +277,7 @@ declare type old_as_current_for_Interface_DataObjectFactoryProps =
  * typeValidation.broken:
  * "Interface_DataObjectFactoryProps": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_DataObjectFactoryProps =
-	requireAssignableTo<
-		TypeOnly<current.DataObjectFactoryProps<never>>,
-		TypeOnly<old.DataObjectFactoryProps<never>>
-	>;
+declare type current_as_old_for_Interface_DataObjectFactoryProps = requireAssignableTo<TypeOnly<current.DataObjectFactoryProps<never>>, TypeOnly<old.DataObjectFactoryProps<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -404,10 +286,7 @@ declare type current_as_old_for_Interface_DataObjectFactoryProps =
  * typeValidation.broken:
  * "Interface_DataObjectTypes": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_DataObjectTypes = requireAssignableTo<
-	TypeOnly<old.DataObjectTypes>,
-	TypeOnly<current.DataObjectTypes>
->;
+declare type old_as_current_for_Interface_DataObjectTypes = requireAssignableTo<TypeOnly<old.DataObjectTypes>, TypeOnly<current.DataObjectTypes>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -416,10 +295,7 @@ declare type old_as_current_for_Interface_DataObjectTypes = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_DataObjectTypes": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_DataObjectTypes = requireAssignableTo<
-	TypeOnly<current.DataObjectTypes>,
-	TypeOnly<old.DataObjectTypes>
->;
+declare type current_as_old_for_Interface_DataObjectTypes = requireAssignableTo<TypeOnly<current.DataObjectTypes>, TypeOnly<old.DataObjectTypes>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -428,11 +304,7 @@ declare type current_as_old_for_Interface_DataObjectTypes = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IDataObjectProps": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IDataObjectProps =
-	requireAssignableTo<
-		TypeOnly<old.IDataObjectProps>,
-		TypeOnly<current.IDataObjectProps>
-	>;
+declare type old_as_current_for_Interface_IDataObjectProps = requireAssignableTo<TypeOnly<old.IDataObjectProps>, TypeOnly<current.IDataObjectProps>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -441,8 +313,4 @@ declare type old_as_current_for_Interface_IDataObjectProps =
  * typeValidation.broken:
  * "Interface_IDataObjectProps": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IDataObjectProps =
-	requireAssignableTo<
-		TypeOnly<current.IDataObjectProps>,
-		TypeOnly<old.IDataObjectProps>
-	>;
+declare type current_as_old_for_Interface_IDataObjectProps = requireAssignableTo<TypeOnly<current.IDataObjectProps>, TypeOnly<old.IDataObjectProps>>

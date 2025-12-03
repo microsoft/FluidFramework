@@ -14,7 +14,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import type { ISharedMatrix, MatrixItem, SharedMatrix } from "../index.js";
+import type { MatrixItem, ISharedMatrix, SharedMatrix } from "../index.js";
 
 import { TestConsumer } from "./testconsumer.js";
 import { UndoRedoStackManager } from "./undoRedoStackManager.js";
@@ -28,9 +28,7 @@ for (const isSetCellPolicyFWW of [false, true]) {
 			// Test IMatrixConsumer that builds a copy of `matrix` via observed events.
 			let consumer1: TestConsumer<number | string>;
 			let undo1: UndoRedoStackManager;
-			let expect: <T>(
-				expected: readonly (readonly MatrixItem<T>[])[],
-			) => Promise<void>;
+			let expect: <T>(expected: readonly (readonly MatrixItem<T>[])[]) => Promise<void>;
 
 			function singleClientTests(): void {
 				it("undo/redo setCell", async () => {
@@ -68,12 +66,7 @@ for (const isSetCellPolicyFWW of [false, true]) {
 					undo1.closeCurrentOperation();
 
 					matrix1.insertRows(/* start: */ 0, /* count: */ 2);
-					matrix1.setCells(
-						/* rowStart: */ 0,
-						/* colStart: */ 0,
-						/* colCount: */ 1,
-						[0, 1],
-					);
+					matrix1.setCells(/* rowStart: */ 0, /* colStart: */ 0, /* colCount: */ 1, [0, 1]);
 					undo1.closeCurrentOperation();
 
 					await expect([[0], [1]]);
@@ -109,12 +102,7 @@ for (const isSetCellPolicyFWW of [false, true]) {
 				it("undo/redo removeRow 0 of 2x2", async () => {
 					matrix1.insertRows(/* start: */ 0, /* count: */ 2);
 					matrix1.insertCols(/* start: */ 0, /* count: */ 2);
-					matrix1.setCells(
-						/* row: */ 0,
-						/* col: */ 0,
-						/* colCount: */ 2,
-						[0, 1, 2, 3],
-					);
+					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [0, 1, 2, 3]);
 					undo1.closeCurrentOperation();
 					await expect([
 						[0, 1],
@@ -138,12 +126,7 @@ for (const isSetCellPolicyFWW of [false, true]) {
 				it("undo/redo removeRow 1 of 2x2", async () => {
 					matrix1.insertRows(/* start: */ 0, /* count: */ 2);
 					matrix1.insertCols(/* start: */ 0, /* count: */ 2);
-					matrix1.setCells(
-						/* row: */ 0,
-						/* col: */ 0,
-						/* colCount: */ 2,
-						[0, 1, 2, 3],
-					);
+					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [0, 1, 2, 3]);
 					undo1.closeCurrentOperation();
 					await expect([
 						[0, 1],
@@ -256,12 +239,7 @@ for (const isSetCellPolicyFWW of [false, true]) {
 					undo1.closeCurrentOperation();
 
 					matrix1.insertCols(/* start: */ 0, /* count: */ 2);
-					matrix1.setCells(
-						/* rowStart: */ 0,
-						/* colStart: */ 0,
-						/* colCount: */ 2,
-						[0, 1],
-					);
+					matrix1.setCells(/* rowStart: */ 0, /* colStart: */ 0, /* colCount: */ 2, [0, 1]);
 					undo1.closeCurrentOperation();
 
 					await expect([[0, 1]]);
@@ -309,12 +287,7 @@ for (const isSetCellPolicyFWW of [false, true]) {
 				it("undo/redo removeCol 0 of 2x2", async () => {
 					matrix1.insertRows(/* start: */ 0, /* count: */ 2);
 					matrix1.insertCols(/* start: */ 0, /* count: */ 2);
-					matrix1.setCells(
-						/* row: */ 0,
-						/* col: */ 0,
-						/* colCount: */ 2,
-						[0, 1, 2, 3],
-					);
+					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [0, 1, 2, 3]);
 					await expect([
 						[0, 1],
 						[2, 3],
@@ -338,12 +311,7 @@ for (const isSetCellPolicyFWW of [false, true]) {
 				it("undo/redo removeCol 1 of 2x2", async () => {
 					matrix1.insertRows(/* start: */ 0, /* count: */ 2);
 					matrix1.insertCols(/* start: */ 0, /* count: */ 2);
-					matrix1.setCells(
-						/* row: */ 0,
-						/* col: */ 0,
-						/* colCount: */ 2,
-						[0, 1, 2, 3],
-					);
+					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [0, 1, 2, 3]);
 					await expect([
 						[0, 1],
 						[2, 3],
@@ -604,23 +572,13 @@ for (const isSetCellPolicyFWW of [false, true]) {
 					await expect([]);
 
 					matrix2.insertRows(/* start: */ 0, /* count: */ 1);
-					matrix2.setCells(
-						/* row: */ 0,
-						/* col: */ 0,
-						/* colCount: */ 2,
-						[2, 3],
-					);
+					matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [2, 3]);
 					undo2.closeCurrentOperation();
 
 					await expect([[2, 3]]);
 
 					matrix1.insertRows(/* start: */ 0, /* count: */ 1);
-					matrix1.setCells(
-						/* row: */ 0,
-						/* col: */ 0,
-						/* colCount: */ 2,
-						[0, 1],
-					);
+					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [0, 1]);
 					undo1.closeCurrentOperation();
 
 					await expect([
@@ -671,12 +629,7 @@ for (const isSetCellPolicyFWW of [false, true]) {
 					await expect([[]]);
 
 					matrix1.insertCols(/* start: */ 0, /* count: */ 2);
-					matrix1.setCells(
-						/* row: */ 0,
-						/* col: */ 0,
-						/* colCount: */ 2,
-						[0, 2],
-					);
+					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [0, 2]);
 					undo1.closeCurrentOperation();
 					await expect([[0, 2]]);
 
@@ -699,12 +652,7 @@ for (const isSetCellPolicyFWW of [false, true]) {
 					await expect([[]]);
 
 					matrix1.insertCols(/* start: */ 0, /* count: */ 2);
-					matrix1.setCells(
-						/* row: */ 0,
-						/* col: */ 0,
-						/* colCount: */ 2,
-						[0, 2],
-					);
+					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [0, 2]);
 					undo1.closeCurrentOperation();
 					await expect([[0, 2]]);
 
@@ -736,16 +684,11 @@ for (const isSetCellPolicyFWW of [false, true]) {
 				it("undo of cell in remotely removed last column", async () => {
 					matrix1.insertRows(/* start: */ 0, /* count: */ 1);
 					matrix1.insertCols(/* start: */ 0, /* count: */ 2);
-					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [
-						"c0",
-						"c1",
-					]);
+					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, ["c0", "c1"]);
 					undo1.closeCurrentOperation();
 					await expect([["c0", "c1"]]);
 
-					matrix1.setCells(/* row: */ 0, /* col: */ 1, /* colCount: */ 1, [
-						"c1-update",
-					]);
+					matrix1.setCells(/* row: */ 0, /* col: */ 1, /* colCount: */ 1, ["c1-update"]);
 					undo1.closeCurrentOperation();
 					await expect([["c0", "c1-update"]]);
 
@@ -759,16 +702,11 @@ for (const isSetCellPolicyFWW of [false, true]) {
 				it("undo of cell in remotely removed first column", async () => {
 					matrix1.insertRows(/* start: */ 0, /* count: */ 1);
 					matrix1.insertCols(/* start: */ 0, /* count: */ 2);
-					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [
-						"c0",
-						"c1",
-					]);
+					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, ["c0", "c1"]);
 					undo1.closeCurrentOperation();
 					await expect([["c0", "c1"]]);
 
-					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [
-						"c0-update",
-					]);
+					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["c0-update"]);
 					undo1.closeCurrentOperation();
 					await expect([["c0-update", "c1"]]);
 
@@ -784,16 +722,11 @@ for (const isSetCellPolicyFWW of [false, true]) {
 				it("undo of cell in remotely removed last row", async () => {
 					matrix1.insertRows(/* start: */ 0, /* count: */ 2);
 					matrix1.insertCols(/* start: */ 0, /* count: */ 1);
-					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [
-						"r0",
-						"r1",
-					]);
+					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["r0", "r1"]);
 					undo1.closeCurrentOperation();
 					await expect([["r0"], ["r1"]]);
 
-					matrix1.setCells(/* row: */ 1, /* col: */ 0, /* colCount: */ 1, [
-						"r1-update",
-					]);
+					matrix1.setCells(/* row: */ 1, /* col: */ 0, /* colCount: */ 1, ["r1-update"]);
 					undo1.closeCurrentOperation();
 					await expect([["r0"], ["r1-update"]]);
 
@@ -807,16 +740,11 @@ for (const isSetCellPolicyFWW of [false, true]) {
 				it("undo of cell in remotely removed first row", async () => {
 					matrix1.insertRows(/* start: */ 0, /* count: */ 2);
 					matrix1.insertCols(/* start: */ 0, /* count: */ 1);
-					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [
-						"r0",
-						"r1",
-					]);
+					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["r0", "r1"]);
 					undo1.closeCurrentOperation();
 					await expect([["r0"], ["r1"]]);
 
-					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [
-						"r0-update",
-					]);
+					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["r0-update"]);
 					undo1.closeCurrentOperation();
 					await expect([["r0-update"], ["r1"]]);
 
@@ -832,9 +760,7 @@ for (const isSetCellPolicyFWW of [false, true]) {
 				it("undo of inserted and remotely removed column", async () => {
 					matrix1.insertRows(/* start: */ 0, /* count: */ 1);
 					matrix1.insertCols(/* start: */ 0, /* count: */ 1);
-					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [
-						"c0",
-					]);
+					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["c0"]);
 					undo1.closeCurrentOperation();
 					await expect([["c0"]]);
 
@@ -853,9 +779,7 @@ for (const isSetCellPolicyFWW of [false, true]) {
 				it("undo of inserted and remotely removed row", async () => {
 					matrix1.insertRows(/* start: */ 0, /* count: */ 1);
 					matrix1.insertCols(/* start: */ 0, /* count: */ 1);
-					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [
-						"r0",
-					]);
+					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["r0"]);
 					undo1.closeCurrentOperation();
 					await expect([["r0"]]);
 

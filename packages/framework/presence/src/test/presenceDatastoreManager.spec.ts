@@ -109,13 +109,22 @@ describe("Presence", () => {
 			let processSignal: ProcessSignalFunction;
 
 			beforeEach(() => {
-				({ processSignal } = prepareConnectedPresence(runtime, "attendeeId-2", "client2", clock, logger));
+				({ processSignal } = prepareConnectedPresence(
+					runtime,
+					"attendeeId-2",
+					"client2",
+					clock,
+					logger,
+				));
 
 				// Pass a little time (to mimic reality)
 				clock.tick(10);
 			});
 
-			function joinClients(updateProviders: ClientConnectionId[], delayToJoinClient5: number | undefined): void {
+			function joinClients(
+				updateProviders: ClientConnectionId[],
+				delayToJoinClient5: number | undefined,
+			): void {
 				// Join client4
 				processSignal(
 					[],
@@ -428,7 +437,13 @@ describe("Presence", () => {
 			} as const;
 
 			beforeEach(() => {
-				({ presence, processSignal } = prepareConnectedPresence(runtime, attendeeId2, connectionId2, clock, logger));
+				({ presence, processSignal } = prepareConnectedPresence(
+					runtime,
+					attendeeId2,
+					connectionId2,
+					clock,
+					logger,
+				));
 
 				// Pass a little time (to mimic reality)
 				clock.tick(10);
@@ -487,7 +502,10 @@ describe("Presence", () => {
 
 				// Verify
 				assert.strictEqual(listener.calledOnce, true);
-				assert.strictEqual(listener.calledWith("name:testNotificationWorkspace", "Notifications"), true);
+				assert.strictEqual(
+					listener.calledWith("name:testNotificationWorkspace", "Notifications"),
+					true,
+				);
 			});
 
 			it("with unregistered workspace of unknown type emits 'workspaceActivated'", () => {
@@ -572,7 +590,8 @@ describe("Presence", () => {
 							data: {
 								"system:presence": systemWorkspaceUpdate,
 								// Unrecognized internal address
-								["sn:name:testStateWorkspace" as InternalWorkspaceAddress]: statesWorkspaceUpdate,
+								["sn:name:testStateWorkspace" as InternalWorkspaceAddress]:
+									statesWorkspaceUpdate,
 							},
 						},
 						clientId: "client1",
@@ -713,7 +732,13 @@ describe("Presence", () => {
 			};
 
 			beforeEach(() => {
-				({ presence, processSignal } = prepareConnectedPresence(runtime, attendeeId2, connectionId2, clock, logger));
+				({ presence, processSignal } = prepareConnectedPresence(
+					runtime,
+					attendeeId2,
+					connectionId2,
+					clock,
+					logger,
+				));
 
 				// Pass a little time (to mimic reality)
 				clock.tick(10);
@@ -743,7 +768,11 @@ describe("Presence", () => {
 					} as const satisfies InboundExtensionMessage<SignalMessages>["content"],
 					clientId: "client1",
 				} as const;
-				processSignal(optional ? ["?"] : [], markUnverifiedIncomingMessage(unrecognizedMessage), false);
+				processSignal(
+					optional ? ["?"] : [],
+					markUnverifiedIncomingMessage(unrecognizedMessage),
+					false,
+				);
 			}
 
 			it("that is NOT optional, throws", () => {

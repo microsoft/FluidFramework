@@ -5,8 +5,6 @@
 
 import type { ISegment, Marker } from "./mergeTreeNodes.js";
 import {
-	type AdjustParams,
-	type IMergeTreeAnnotateAdjustMsg,
 	type IMergeTreeAnnotateMsg,
 	type IMergeTreeDeltaOp,
 	// eslint-disable-next-line import-x/no-deprecated
@@ -14,12 +12,14 @@ import {
 	type IMergeTreeInsertMsg,
 	// eslint-disable-next-line import-x/no-deprecated
 	type IMergeTreeObliterateMsg,
-	type IMergeTreeObliterateSidedMsg,
 	type IMergeTreeRemoveMsg,
 	MergeTreeDeltaType,
+	type AdjustParams,
+	type IMergeTreeAnnotateAdjustMsg,
+	type IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
-import type { MapLike, PropertySet } from "./properties.js";
-import { normalizePlace, type SequencePlace, Side } from "./sequencePlace.js";
+import type { PropertySet, MapLike } from "./properties.js";
+import { normalizePlace, Side, type SequencePlace } from "./sequencePlace.js";
 
 /**
  * Creates the op for annotating the markers with the provided properties
@@ -98,10 +98,7 @@ export function createAdjustRangeOp(
  *
  * @internal
  */
-export function createRemoveRangeOp(
-	start: number,
-	end: number,
-): IMergeTreeRemoveMsg {
+export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemoveMsg {
 	return {
 		pos1: start,
 		pos2: end,
@@ -118,10 +115,7 @@ export function createRemoveRangeOp(
  * @internal
  */
 // eslint-disable-next-line import-x/no-deprecated
-export function createObliterateRangeOp(
-	start: number,
-	end: number,
-): IMergeTreeObliterateMsg {
+export function createObliterateRangeOp(start: number, end: number): IMergeTreeObliterateMsg {
 	return {
 		pos1: start,
 		pos2: end,
@@ -167,10 +161,7 @@ export function createObliterateRangeOpSided(
  *
  * @internal
  */
-export function createInsertSegmentOp(
-	pos: number,
-	segment: ISegment,
-): IMergeTreeInsertMsg {
+export function createInsertSegmentOp(pos: number, segment: ISegment): IMergeTreeInsertMsg {
 	return createInsertOp(pos, segment.toJSONObject());
 }
 
@@ -180,10 +171,7 @@ export function createInsertSegmentOp(
  *
  * @internal
  */
-export function createInsertOp(
-	pos: number,
-	segSpec: unknown,
-): IMergeTreeInsertMsg {
+export function createInsertOp(pos: number, segSpec: unknown): IMergeTreeInsertMsg {
 	return {
 		pos1: pos,
 		seg: segSpec,

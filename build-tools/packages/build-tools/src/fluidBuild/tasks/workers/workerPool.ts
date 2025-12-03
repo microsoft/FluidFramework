@@ -27,10 +27,7 @@ export class WorkerPool {
 	private getThreadWorker() {
 		let worker: Worker | undefined = this.threadWorkerPool.pop();
 		if (!worker) {
-			worker = new Worker(`${__dirname}/worker.js`, {
-				stdout: true,
-				stderr: true,
-			});
+			worker = new Worker(`${__dirname}/worker.js`, { stdout: true, stderr: true });
 		}
 		return worker;
 	}
@@ -40,9 +37,7 @@ export class WorkerPool {
 		if (!worker) {
 			worker = fork(
 				`${__dirname}/worker.js`,
-				this.memoryUsageLimit !== Number.POSITIVE_INFINITY
-					? ["--memoryUsage"]
-					: undefined,
+				this.memoryUsageLimit !== Number.POSITIVE_INFINITY ? ["--memoryUsage"] : undefined,
 				{ silent: true },
 			);
 		}
@@ -97,23 +92,21 @@ export class WorkerPool {
 				return res;
 			} else {
 				const worker = this.getProcessWorker();
-				const res = await new Promise<WorkerExecResultWithOutput>(
-					(res, rej) => {
-						const setupErrorListener = (event: string) => {
-							installTemporaryListener(worker, event, () => {
-								rej(new Error(`Worker ${event}`));
-							});
-						};
+				const res = await new Promise<WorkerExecResultWithOutput>((res, rej) => {
+					const setupErrorListener = (event: string) => {
+						installTemporaryListener(worker, event, () => {
+							rej(new Error(`Worker ${event}`));
+						});
+					};
 
-						setupWorker(worker, res);
+					setupWorker(worker, res);
 
-						setupErrorListener("close");
-						setupErrorListener("disconnect");
-						setupErrorListener("error");
-						setupErrorListener("exit");
-						worker.send(workerMessage);
-					},
-				);
+					setupErrorListener("close");
+					setupErrorListener("disconnect");
+					setupErrorListener("error");
+					setupErrorListener("exit");
+					worker.send(workerMessage);
+				});
 
 				// Workers accumulate memory use over time.
 				// Since recreating workers fixes this, but takes time,
@@ -121,10 +114,7 @@ export class WorkerPool {
 
 				const freeMemory = freemem();
 				// As a heuristic to avoid memory pressure, lower threshold if running out of memory.
-				const currentMemoryLimit = Math.min(
-					this.memoryUsageLimit,
-					freeMemory / 2,
-				);
+				const currentMemoryLimit = Math.min(this.memoryUsageLimit, freeMemory / 2);
 				const bytesPerGiB = 1024 * 1024 * 1024;
 
 				if (

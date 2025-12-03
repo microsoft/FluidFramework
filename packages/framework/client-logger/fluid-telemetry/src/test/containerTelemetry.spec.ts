@@ -5,29 +5,23 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
-import type {
-	IFluidContainer,
-	IFluidContainerEvents,
-} from "@fluidframework/fluid-static";
-import {
-	ApplicationInsights,
-	type IEventTelemetry,
-} from "@microsoft/applicationinsights-web";
+import type { IFluidContainer, IFluidContainerEvents } from "@fluidframework/fluid-static";
+import { ApplicationInsights, type IEventTelemetry } from "@microsoft/applicationinsights-web";
 import { expect } from "chai";
-import type Sinon from "sinon";
 import { spy } from "sinon";
+import type Sinon from "sinon";
 
 import {
-	type IContainerTelemetry,
 	IFluidContainerSystemEventNames,
+	type IContainerTelemetry,
 } from "../container/index.js";
 import { startTelemetry, type TelemetryConfig } from "../factory/index.js";
 import {
 	AppInsightsTelemetryConsumer,
+	ContainerTelemetryEventNames,
 	type ContainerConnectedTelemetry,
 	type ContainerDisconnectedTelemetry,
 	type ContainerDisposedTelemetry,
-	ContainerTelemetryEventNames,
 } from "../index.js";
 
 /**
@@ -82,8 +76,7 @@ describe("container telemetry via", () => {
 		expect(trackEventSpy.callCount).to.equal(1);
 
 		// Obtain the events from the method that the spy was called with
-		const actualAppInsightsTelemetry = trackEventSpy.getCall(0)
-			.args[0] as IEventTelemetry;
+		const actualAppInsightsTelemetry = trackEventSpy.getCall(0).args[0] as IEventTelemetry;
 		const actualContainerTelemetry =
 			actualAppInsightsTelemetry.properties as IContainerTelemetry;
 
@@ -96,9 +89,7 @@ describe("container telemetry via", () => {
 			} satisfies ContainerConnectedTelemetry,
 		};
 
-		expect(expectedAppInsightsTelemetry).to.deep.equal(
-			actualAppInsightsTelemetry,
-		);
+		expect(expectedAppInsightsTelemetry).to.deep.equal(actualAppInsightsTelemetry);
 		// We won't know what the container containerInstanceId will be but we can still check that it is defined.
 		expect(actualContainerTelemetry.containerInstanceId)
 			.to.be.a("string")
@@ -113,8 +104,7 @@ describe("container telemetry via", () => {
 		expect(trackEventSpy.callCount).to.equal(1);
 
 		// Obtain the events from the method that the spy was called with
-		const actualAppInsightsTelemetry = trackEventSpy.getCall(0)
-			.args[0] as IEventTelemetry;
+		const actualAppInsightsTelemetry = trackEventSpy.getCall(0).args[0] as IEventTelemetry;
 		const actualContainerTelemetry =
 			actualAppInsightsTelemetry.properties as IContainerTelemetry;
 
@@ -127,9 +117,7 @@ describe("container telemetry via", () => {
 			} satisfies ContainerDisconnectedTelemetry,
 		};
 
-		expect(expectedAppInsightsTelemetry).to.deep.equal(
-			actualAppInsightsTelemetry,
-		);
+		expect(expectedAppInsightsTelemetry).to.deep.equal(actualAppInsightsTelemetry);
 		// We won't know what the container containerInstanceId will be but we can still check that it is defined.
 		expect(actualContainerTelemetry.containerInstanceId)
 			.to.be.a("string")
@@ -144,8 +132,7 @@ describe("container telemetry via", () => {
 		expect(trackEventSpy.callCount).to.equal(1);
 
 		// Obtain the events from the method that the spy was called with
-		const actualAppInsightsTelemetry = trackEventSpy.getCall(0)
-			.args[0] as IEventTelemetry;
+		const actualAppInsightsTelemetry = trackEventSpy.getCall(0).args[0] as IEventTelemetry;
 		const actualContainerTelemetry =
 			actualAppInsightsTelemetry.properties as IContainerTelemetry;
 
@@ -158,9 +145,7 @@ describe("container telemetry via", () => {
 			} satisfies ContainerDisposedTelemetry,
 		};
 
-		expect(expectedAppInsightsTelemetry).to.deep.equal(
-			actualAppInsightsTelemetry,
-		);
+		expect(expectedAppInsightsTelemetry).to.deep.equal(actualAppInsightsTelemetry);
 		// We won't know what the container containerInstanceId will be but we can still check that it is defined.
 		expect(actualContainerTelemetry.containerInstanceId)
 			.to.be.a("string")
@@ -179,8 +164,7 @@ describe("container telemetry via", () => {
 		mockFluidContainer.dispose(containerError);
 
 		// Obtain the events from the method that the spy was called with
-		const actualAppInsightsTelemetry = trackEventSpy.getCall(0)
-			.args[0] as IEventTelemetry;
+		const actualAppInsightsTelemetry = trackEventSpy.getCall(0).args[0] as IEventTelemetry;
 		const actualContainerTelemetry =
 			actualAppInsightsTelemetry.properties as IContainerTelemetry;
 
@@ -194,9 +178,7 @@ describe("container telemetry via", () => {
 			} satisfies ContainerDisposedTelemetry,
 		};
 
-		expect(expectedAppInsightsTelemetry).to.deep.equal(
-			actualAppInsightsTelemetry,
-		);
+		expect(expectedAppInsightsTelemetry).to.deep.equal(actualAppInsightsTelemetry);
 		// We won't know what the container containerInstanceId will be but we can still check that it is defined.
 		expect(actualContainerTelemetry.containerInstanceId)
 			.to.be.a("string")

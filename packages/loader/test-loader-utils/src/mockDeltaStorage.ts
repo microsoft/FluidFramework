@@ -5,8 +5,8 @@
 
 import type {
 	IDocumentDeltaStorageService,
-	ISequencedDocumentMessage,
 	IStream,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { streamFromMessages } from "@fluidframework/driver-utils/internal";
 
@@ -15,13 +15,9 @@ import { streamFromMessages } from "@fluidframework/driver-utils/internal";
  *
  * @internal
  */
-export class MockDocumentDeltaStorageService
-	implements IDocumentDeltaStorageService
-{
+export class MockDocumentDeltaStorageService implements IDocumentDeltaStorageService {
 	constructor(private readonly messages: ISequencedDocumentMessage[]) {
-		this.messages = messages.sort(
-			(a, b) => b.sequenceNumber - a.sequenceNumber,
-		);
+		this.messages = messages.sort((a, b) => b.sequenceNumber - a.sequenceNumber);
 	}
 
 	public fetchMessages(
@@ -33,18 +29,12 @@ export class MockDocumentDeltaStorageService
 		return streamFromMessages(this.getCore(from, to));
 	}
 
-	private async getCore(
-		from: number,
-		to?: number,
-	): Promise<ISequencedDocumentMessage[]> {
+	private async getCore(from: number, to?: number): Promise<ISequencedDocumentMessage[]> {
 		const messages: ISequencedDocumentMessage[] = [];
 		let index: number = 0;
 
 		// Find first
-		while (
-			index < this.messages.length &&
-			this.messages[index].sequenceNumber < from
-		) {
+		while (index < this.messages.length && this.messages[index].sequenceNumber < from) {
 			index++;
 		}
 

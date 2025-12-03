@@ -11,10 +11,7 @@ import {
 } from "@fluid-private/stochastic-test-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import type {
-	SummarizerFuzzModel,
-	SummarizerFuzzTestState,
-} from "./summarizerFuzzSuite.js";
+import type { SummarizerFuzzModel, SummarizerFuzzTestState } from "./summarizerFuzzSuite.js";
 
 interface Reconnect {
 	type: "reconnect";
@@ -32,11 +29,7 @@ interface SubmitOp {
 	type: "submitOp";
 }
 
-export type SummarizerOperation =
-	| Reconnect
-	| NewSummarizer
-	| SummaryNack
-	| SubmitOp;
+export type SummarizerOperation = Reconnect | NewSummarizer | SummaryNack | SubmitOp;
 
 export interface ISummarizerOperationGenerationConfig {
 	weights?: {
@@ -59,36 +52,25 @@ const defaultConfig: Required<ISummarizerOperationGenerationConfig> = {
 export function summarizerOperationGenerator(
 	options: ISummarizerOperationGenerationConfig,
 ): AsyncGenerator<SummarizerOperation, SummarizerFuzzTestState> {
-	const reconnect = async (
-		_state: SummarizerFuzzTestState,
-	): Promise<Reconnect> => ({
+	const reconnect = async (_state: SummarizerFuzzTestState): Promise<Reconnect> => ({
 		type: "reconnect",
 	});
 
-	const newSummarizer = async (
-		_state: SummarizerFuzzTestState,
-	): Promise<NewSummarizer> => ({
+	const newSummarizer = async (_state: SummarizerFuzzTestState): Promise<NewSummarizer> => ({
 		type: "newSummarizer",
 	});
 
-	const summaryNack = async (
-		_state: SummarizerFuzzTestState,
-	): Promise<SummaryNack> => ({
+	const summaryNack = async (_state: SummarizerFuzzTestState): Promise<SummaryNack> => ({
 		type: "summaryNack",
 	});
 
-	const submitOp = async (
-		_state: SummarizerFuzzTestState,
-	): Promise<SubmitOp> => ({
+	const submitOp = async (_state: SummarizerFuzzTestState): Promise<SubmitOp> => ({
 		type: "submitOp",
 	});
 
 	const usableWeights = options.weights ?? defaultConfig.weights;
 
-	return createWeightedAsyncGenerator<
-		SummarizerOperation,
-		SummarizerFuzzTestState
-	>([
+	return createWeightedAsyncGenerator<SummarizerOperation, SummarizerFuzzTestState>([
 		[reconnect, usableWeights.reconnect],
 		[newSummarizer, usableWeights.newSummarizer],
 		[summaryNack, usableWeights.summaryNack],
@@ -96,17 +78,11 @@ export function summarizerOperationGenerator(
 	]);
 }
 
-export const baseModel: Omit<
-	SummarizerFuzzModel,
-	"workloadName" | "generatorFactory"
-> = {
+export const baseModel: Omit<SummarizerFuzzModel, "workloadName" | "generatorFactory"> = {
 	reducer: makeReducer(),
 };
 
-function makeReducer(): AsyncReducer<
-	SummarizerOperation,
-	SummarizerFuzzTestState
-> {
+function makeReducer(): AsyncReducer<SummarizerOperation, SummarizerFuzzTestState> {
 	const wrapper =
 		<T>(
 			baseReducer: AsyncReducer<T, SummarizerFuzzTestState>,
@@ -119,26 +95,19 @@ function makeReducer(): AsyncReducer<
 	const createNewSummarizer = async (state: SummarizerFuzzTestState) => {
 		const oldRuntime = state.containerRuntime;
 		oldRuntime.disposeFn();
-		state.containerRuntime =
-			state.containerRuntimeFactory.createContainerRuntime(
-				new MockFluidDataStoreRuntime(),
-			);
+		state.containerRuntime = state.containerRuntimeFactory.createContainerRuntime(
+			new MockFluidDataStoreRuntime(),
+		);
 		await state.containerRuntime.initializeWithStashedOps(oldRuntime);
 	};
 
-	const reducer = combineReducersAsync<
-		SummarizerOperation,
-		SummarizerFuzzTestState
-	>({
+	const reducer = combineReducersAsync<SummarizerOperation, SummarizerFuzzTestState>({
 		reconnect: async (state: SummarizerFuzzTestState, _op: Reconnect) => {
 			state.containerRuntime.connected = false;
 			state.containerRuntime.connected = true;
 			await createNewSummarizer(state);
 		},
-		newSummarizer: async (
-			state: SummarizerFuzzTestState,
-			_op: NewSummarizer,
-		) => {
+		newSummarizer: async (state: SummarizerFuzzTestState, _op: NewSummarizer) => {
 			await createNewSummarizer(state);
 		},
 		summaryNack: async (state: SummarizerFuzzTestState, _op: SummaryNack) => {

@@ -31,8 +31,7 @@ async function loadSharedDirectory(
 ): Promise<ISharedDirectory> {
 	const containerRuntimeFactory = new MockContainerRuntimeFactory();
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	const containerRuntime =
-		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
@@ -40,12 +39,7 @@ async function loadSharedDirectory(
 	};
 
 	const factory = SharedDirectory.getFactory();
-	const directory = await factory.load(
-		dataStoreRuntime,
-		id,
-		services,
-		factory.attributes,
-	);
+	const directory = await factory.load(dataStoreRuntime, id, services, factory.attributes);
 	return directory;
 }
 

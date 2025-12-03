@@ -5,15 +5,11 @@
 
 import { type ObjectOptions, type Static, Type } from "@sinclair/typebox";
 
+import { type ChangesetLocalId, RevisionTagSchema, schemaFormatV1 } from "../../core/index.js";
 import {
-	type ChangesetLocalId,
-	RevisionTagSchema,
-	schemaFormatV1,
-} from "../../core/index.js";
-import {
-	brandedNumberType,
 	type JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlySchema,
+	brandedNumberType,
 } from "../../util/index.js";
 import { EncodedFieldBatch } from "../chunked-forest/index.js";
 

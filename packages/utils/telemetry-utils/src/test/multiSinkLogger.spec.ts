@@ -7,11 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { LogLevel } from "@fluidframework/core-interfaces";
 
-import {
-	createChildLogger,
-	createMultiSinkLogger,
-	type MultiSinkLogger,
-} from "../logger.js";
+import { type MultiSinkLogger, createChildLogger, createMultiSinkLogger } from "../logger.js";
 import { MockLogger } from "../mockLogger.js";
 
 describe("MultiSinkLogger", () => {
@@ -43,22 +39,15 @@ describe("MultiSinkLogger", () => {
 		const logger2 = new MockLogger();
 		const multiSink = createMultiSinkLogger({
 			loggers: [
-				createChildLogger({
-					logger: logger1,
-					properties: { all: { test: true } },
-				}),
+				createChildLogger({ logger: logger1, properties: { all: { test: true } } }),
 				logger2,
 			],
 			tryInheritProperties: true,
 		});
 		multiSink.sendTelemetryEvent({ eventName: "test" });
 
-		logger1.assertMatch([
-			{ category: "generic", eventName: "test", test: true },
-		]);
-		logger2.assertMatch([
-			{ category: "generic", eventName: "test", test: true },
-		]);
+		logger1.assertMatch([{ category: "generic", eventName: "test", test: true }]);
+		logger2.assertMatch([{ category: "generic", eventName: "test", test: true }]);
 	});
 
 	it("Does not Propagates Properties to sinks when tryInheritProperties not set", () => {
@@ -66,18 +55,13 @@ describe("MultiSinkLogger", () => {
 		const logger2 = new MockLogger();
 		const multiSink = createMultiSinkLogger({
 			loggers: [
-				createChildLogger({
-					logger: logger1,
-					properties: { all: { test: true } },
-				}),
+				createChildLogger({ logger: logger1, properties: { all: { test: true } } }),
 				logger2,
 			],
 		});
 		multiSink.sendTelemetryEvent({ eventName: "test" });
 
-		logger1.assertMatch([
-			{ category: "generic", eventName: "test", test: true },
-		]);
+		logger1.assertMatch([{ category: "generic", eventName: "test", test: true }]);
 		logger2.assertMatch([{ category: "generic", eventName: "test" }]);
 	});
 

@@ -6,13 +6,13 @@
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
-	type AcceptanceCondition,
-	type AsyncGenerator,
-	type AsyncWeights,
-	type BaseFuzzTestState,
+	AcceptanceCondition,
+	AsyncGenerator,
+	AsyncWeights,
+	BaseFuzzTestState,
+	Generator,
+	Weights,
 	done,
-	type Generator,
-	type Weights,
 } from "./types.js";
 
 /**
@@ -46,11 +46,8 @@ import {
 export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(
 	weights: Weights<T, TState>,
 ): Generator<T, TState> {
-	const cumulativeSums: [
-		T | Generator<T, TState>,
-		number,
-		AcceptanceCondition<TState>?,
-	][] = [];
+	const cumulativeSums: [T | Generator<T, TState>, number, AcceptanceCondition<TState>?][] =
+		[];
 	let totalWeight = 0;
 	for (const [tOrGenerator, weight, shouldAccept] of weights) {
 		const cumulativeWeight = totalWeight + weight;
@@ -132,9 +129,7 @@ export function generatorFromArray<T, TAdditionalState>(
  * Higher-order generator operator which exhausts each input generator sequentially before moving on to the next.
  * @internal
  */
-export function chain<T, TState>(
-	...generators: Generator<T, TState>[]
-): Generator<T, TState> {
+export function chain<T, TState>(...generators: Generator<T, TState>[]): Generator<T, TState> {
 	let currentIndex = 0;
 	return (state) => {
 		while (currentIndex < generators.length) {
@@ -303,10 +298,9 @@ export function repeat<T, TState = void>(t: T): Generator<T, TState> {
  * ```
  * @internal
  */
-export function createWeightedAsyncGenerator<
-	T,
-	TState extends BaseFuzzTestState,
->(weights: AsyncWeights<T, TState>): AsyncGenerator<T, TState> {
+export function createWeightedAsyncGenerator<T, TState extends BaseFuzzTestState>(
+	weights: AsyncWeights<T, TState>,
+): AsyncGenerator<T, TState> {
 	const cumulativeSums: [
 		T | AsyncGenerator<T, TState>,
 		number,
@@ -321,9 +315,7 @@ export function createWeightedAsyncGenerator<
 		totalWeight = cumulativeWeight;
 	}
 	if (totalWeight === 0) {
-		throw new Error(
-			"createWeightedAsyncGenerator must have some positive weight",
-		);
+		throw new Error("createWeightedAsyncGenerator must have some positive weight");
 	}
 
 	// Note: if this is a perf bottleneck in usage, the cumulative weights array could be

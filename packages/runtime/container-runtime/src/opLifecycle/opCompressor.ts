@@ -7,18 +7,15 @@ import { IsoBuffer } from "@fluid-internal/client-utils";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	createChildLogger,
 	DataProcessingError,
+	createChildLogger,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { compress } from "lz4js";
 
 import { CompressionAlgorithms } from "../compressionDefinitions.js";
 
-import type {
-	OutboundBatchMessage,
-	OutboundSingletonBatch,
-} from "./definitions.js";
+import type { OutboundBatchMessage, OutboundSingletonBatch } from "./definitions.js";
 import { estimateSocketSize } from "./outbox.js";
 
 /**
@@ -47,12 +44,9 @@ export class OpCompressor {
 		);
 
 		const compressionStart = Date.now();
-		const contentsAsBuffer = new TextEncoder().encode(
-			this.serializeBatchContents(batch),
-		);
+		const contentsAsBuffer = new TextEncoder().encode(this.serializeBatchContents(batch));
 		const compressedContents = compress(contentsAsBuffer);
-		const compressedContent =
-			IsoBuffer.from(compressedContents).toString("base64");
+		const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
 		const duration = Date.now() - compressionStart;
 
 		const messages: [OutboundBatchMessage] = [
@@ -89,10 +83,7 @@ export class OpCompressor {
 	 */
 	private serializeBatchContents(batch: OutboundSingletonBatch): string {
 		const [message, ...none] = batch.messages;
-		assert(
-			none.length === 0,
-			0xb78 /* Batch should only contain a single message */,
-		);
+		assert(none.length === 0, 0xb78 /* Batch should only contain a single message */);
 		try {
 			// This is expressed as a JSON array, for legacy reasons
 			return `[${message.contents}]`;
@@ -100,10 +91,7 @@ export class OpCompressor {
 			if ((error as Partial<Error>).message === "Invalid string length") {
 				// This is how string interpolation signals that
 				// the content size exceeds its capacity
-				const dpe = DataProcessingError.create(
-					"Payload too large",
-					"OpCompressor",
-				);
+				const dpe = DataProcessingError.create("Payload too large", "OpCompressor");
 				this.logger.sendErrorEvent(
 					{
 						eventName: "BatchTooLarge",

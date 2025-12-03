@@ -15,11 +15,7 @@ import { CatchUpMonitor } from "../catchUpMonitor.js";
 
 class MockDeltaManagerForCatchingUp
 	extends TypedEventEmitter<IDeltaManagerEvents>
-	implements
-		Pick<
-			IDeltaManager<unknown, unknown>,
-			"lastSequenceNumber" | "lastKnownSeqNumber"
-		>
+	implements Pick<IDeltaManager<unknown, unknown>, "lastSequenceNumber" | "lastKnownSeqNumber">
 {
 	constructor(
 		public lastSequenceNumber: number = 5,

@@ -26,10 +26,7 @@ import type {
  * @param onError - A callback invoked for each error thrown.
  * @returns a mitigated change family.
  */
-export function makeMitigatedChangeFamily<
-	TEditor extends ChangeFamilyEditor,
-	TChange,
->(
+export function makeMitigatedChangeFamily<TEditor extends ChangeFamilyEditor, TChange>(
 	unmitigatedChangeFamily: ChangeFamily<TEditor, TChange>,
 	fallbackChange: TChange,
 	onError: (error: unknown) => void,
@@ -39,16 +36,9 @@ export function makeMitigatedChangeFamily<
 			mintRevisionTag: () => RevisionTag,
 			changeReceiver: (change: TaggedChange<TChange>) => void,
 		): TEditor => {
-			return unmitigatedChangeFamily.buildEditor(
-				mintRevisionTag,
-				changeReceiver,
-			);
+			return unmitigatedChangeFamily.buildEditor(mintRevisionTag, changeReceiver);
 		},
-		rebaser: makeMitigatedRebaser(
-			unmitigatedChangeFamily.rebaser,
-			fallbackChange,
-			onError,
-		),
+		rebaser: makeMitigatedRebaser(unmitigatedChangeFamily.rebaser, fallbackChange, onError),
 		codecs: unmitigatedChangeFamily.codecs,
 	};
 }
@@ -76,26 +66,20 @@ export function makeMitigatedRebaser<TChange>(
 			isRollback: boolean,
 			revision: RevisionTag,
 		): TChange => {
-			return withFallback(() =>
-				unmitigatedRebaser.invert(changes, isRollback, revision),
-			);
+			return withFallback(() => unmitigatedRebaser.invert(changes, isRollback, revision));
 		},
 		rebase: (
 			change: TaggedChange<TChange>,
 			over: TaggedChange<TChange>,
 			revisionMetadata: RevisionMetadataSource,
 		): TChange => {
-			return withFallback(() =>
-				unmitigatedRebaser.rebase(change, over, revisionMetadata),
-			);
+			return withFallback(() => unmitigatedRebaser.rebase(change, over, revisionMetadata));
 		},
 		changeRevision: (
 			change: TChange,
 			newRevision: RevisionTag | undefined,
 			rollbackOf?: RevisionTag,
 		): TChange =>
-			withFallback(() =>
-				unmitigatedRebaser.changeRevision(change, newRevision, rollbackOf),
-			),
+			withFallback(() => unmitigatedRebaser.changeRevision(change, newRevision, rollbackOf)),
 	};
 }

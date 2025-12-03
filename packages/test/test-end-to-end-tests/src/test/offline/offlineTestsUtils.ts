@@ -3,23 +3,21 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import type { IContainer } from "@fluidframework/container-definitions/internal";
-import {
-	asLegacyAlpha,
-	type ContainerAlpha,
-} from "@fluidframework/container-loader/internal";
+import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import {
-	type ITestContainerConfig,
 	type ITestFluidObject,
+	type ITestContainerConfig,
 	type ITestObjectProvider,
-	toIDeltaManagerFull,
 	waitForContainerConnection,
+	toIDeltaManagerFull,
 } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
 
 import { wrapObjectAndOverride } from "../../mocking.js";
 

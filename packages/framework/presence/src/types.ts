@@ -63,7 +63,9 @@ export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
 	/**
 	 * Registered State objects.
 	 */
-	readonly [Key in keyof TSchema]: ReturnType<TSchema[Key]>["manager"] extends InternalTypes.StateValue<infer TManager>
+	readonly [Key in keyof TSchema]: ReturnType<
+		TSchema[Key]
+	>["manager"] extends InternalTypes.StateValue<infer TManager>
 		? TManager
 		: never;
 };
@@ -78,7 +80,10 @@ export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
  * @sealed
  * @beta
  */
-export interface StatesWorkspace<TSchema extends StatesWorkspaceSchema, TManagerConstraints = unknown> {
+export interface StatesWorkspace<
+	TSchema extends StatesWorkspaceSchema,
+	TManagerConstraints = unknown,
+> {
 	/**
 	 * Registers a new State object with the {@link StatesWorkspace}.
 	 * @param key - new unique key for the State object within the workspace
@@ -177,8 +182,10 @@ export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSc
 /**
  * `AnyWorkspace` is a superset of {@link StatesWorkspace} and {@link NotificationsWorkspace}.
  */
-export interface AnyWorkspace<TSchema extends StatesWorkspaceSchema, TManagerConstraints = unknown>
-	extends StatesWorkspace<TSchema, TManagerConstraints> {
+export interface AnyWorkspace<
+	TSchema extends StatesWorkspaceSchema,
+	TManagerConstraints = unknown,
+> extends StatesWorkspace<TSchema, TManagerConstraints> {
 	readonly notifications: StatesWorkspaceEntries<TSchema>;
 	// TO be removed if/when notifications are fully supported
 	readonly presence: PresenceWithNotifications;

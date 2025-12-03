@@ -5,11 +5,11 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
-	devtoolsMessageSource,
 	type IDevtoolsMessage,
 	type IMessageRelay,
 	type IMessageRelayEvents,
 	type ISourcedDevtoolsMessage,
+	devtoolsMessageSource,
 	isDevtoolsMessage,
 } from "@fluidframework/devtools-core/internal";
 
@@ -71,10 +71,7 @@ export class WindowMessageRelay
 		event: MessageEvent<Partial<ISourcedDevtoolsMessage>>,
 	): void => {
 		const message = event.data;
-		if (
-			isDevtoolsMessage(message) &&
-			message.source === devtoolsMessageSource
-		) {
+		if (isDevtoolsMessage(message) && message.source === devtoolsMessageSource) {
 			// Forward incoming message onto subscribers.
 			this.emit("message", message);
 		}

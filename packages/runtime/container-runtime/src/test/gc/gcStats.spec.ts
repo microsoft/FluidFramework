@@ -8,23 +8,23 @@ import { strict as assert } from "node:assert";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import type { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 import {
-	createChildLogger,
 	MockLogger,
 	type MonitoringContext,
+	createChildLogger,
 	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import { type SinonFakeTimers, useFakeTimers } from "sinon";
 
 import {
-	defaultSessionExpiryDurationMs,
-	defaultSweepGracePeriodMs,
-	GarbageCollector,
 	GCNodeType,
+	GarbageCollector,
+	type IGCMetadata,
+	type IGCStats,
 	type IGarbageCollectionRuntime,
 	type IGarbageCollector,
 	type IGarbageCollectorCreateParams,
-	type IGCMetadata,
-	type IGCStats,
+	defaultSessionExpiryDurationMs,
+	defaultSweepGracePeriodMs,
 	oneDayMs,
 	stableGCVersion,
 } from "../../gc/index.js";
@@ -33,14 +33,7 @@ import { pkgVersion } from "../../packageVersion.js";
 
 describe("Garbage Collection Stats", () => {
 	// Nodes in the reference graph.
-	const nodes: string[] = [
-		"/node1",
-		"/node2",
-		"/node3",
-		"/node4",
-		"/node5",
-		"/node6",
-	];
+	const nodes: string[] = ["/node1", "/node2", "/node3", "/node4", "/node5", "/node6"];
 	const testPkgPath = ["testPkg"];
 
 	let mockLogger: MockLogger;
@@ -186,11 +179,7 @@ describe("Garbage Collection Stats", () => {
 		if (lastGCMessage === undefined) {
 			return;
 		}
-		garbageCollector.processMessages(
-			[lastGCMessage.contents],
-			Date.now(),
-			true /* local */,
-		);
+		garbageCollector.processMessages([lastGCMessage.contents], Date.now(), true /* local */);
 	}
 
 	describe("Mark phase stats", () => {

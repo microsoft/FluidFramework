@@ -6,9 +6,9 @@
 import { strict as assert } from "node:assert";
 
 import {
+	stringToBuffer,
 	type ILayerCompatDetails,
 	type IProvideLayerCompatDetails,
-	stringToBuffer,
 } from "@fluid-internal/client-utils";
 import {
 	AttachState,
@@ -16,8 +16,8 @@ import {
 } from "@fluidframework/container-definitions";
 import {
 	ContainerErrorTypes,
-	type IBatchMessage,
 	type IContainerContext,
+	type IBatchMessage,
 	type IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
@@ -33,33 +33,30 @@ import type {
 	ITelemetryBaseLogger,
 	OpaqueJsonDeserialized,
 } from "@fluidframework/core-interfaces/internal";
-import type {
-	ISummaryTree,
-	SummaryObject,
-} from "@fluidframework/driver-definitions";
+import type { ISummaryTree, SummaryObject } from "@fluidframework/driver-definitions";
 import {
+	type ISnapshot,
+	type ISummaryContext,
+	type ISnapshotTree,
+	MessageType,
+	type ISequencedDocumentMessage,
+	type IVersion,
 	type FetchSource,
 	type IDocumentAttributes,
-	type ISequencedDocumentMessage,
-	type ISnapshot,
-	type ISnapshotTree,
-	type ISummaryContext,
-	type IVersion,
-	MessageType,
 	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
 import type {
 	FluidDataStoreMessage,
+	ISummaryTreeWithStats,
 	FluidDataStoreRegistryEntry,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
+	NamedFluidDataStoreRegistryEntries,
 	IRuntimeMessageCollection,
 	ISequencedMessageEnvelope,
-	ISummarizeInternalResult,
-	ISummaryTreeWithStats,
 	ITelemetryContext,
-	NamedFluidDataStoreRegistryEntries,
+	ISummarizeInternalResult,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	FlushMode,
@@ -67,11 +64,11 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
-	createChildLogger,
 	type IFluidErrorBase,
+	MockLogger,
+	createChildLogger,
 	isFluidError,
 	isILoggingError,
-	MockLogger,
 	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -83,18 +80,15 @@ import {
 import Sinon, { type SinonFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
-import {
-	CompressionAlgorithms,
-	enabledCompressionConfig,
-} from "../compressionDefinitions.js";
+import { CompressionAlgorithms, enabledCompressionConfig } from "../compressionDefinitions.js";
 import {
 	ContainerRuntime,
-	type ContainerRuntimeOptionsInternal,
+	type IContainerRuntimeOptions,
+	type IPendingRuntimeState,
 	defaultPendingOpsWaitTimeoutMs,
 	getSingleUseLegacyLogCallback,
-	type IContainerRuntimeOptions,
+	type ContainerRuntimeOptionsInternal,
 	type IContainerRuntimeOptionsInternal,
-	type IPendingRuntimeState,
 	type UnknownIncomingTypedMessage,
 } from "../containerRuntime.js";
 import { FluidDataStoreRegistry } from "../dataStoreRegistry.js";
@@ -116,20 +110,17 @@ import type {
 	PendingStateManager,
 } from "../pendingStateManager.js";
 import {
-	type IRefreshSummaryAckOptions,
 	type ISummaryCancellationToken,
 	neverCancelledSummaryToken,
 	recentBatchInfoBlobName,
+	type IRefreshSummaryAckOptions,
 } from "../summary/index.js";
 
 type Patch<T, U> = Omit<T, keyof U> & U;
 
 type ContainerRuntime_WithPrivates = Patch<
 	ContainerRuntime,
-	{
-		flush: (resubmitInfo?: BatchResubmitInfo) => void;
-		channelCollection: ChannelCollection;
-	}
+	{ flush: (resubmitInfo?: BatchResubmitInfo) => void; channelCollection: ChannelCollection }
 >;
 
 const testDataStoreMessage = {
@@ -182,9 +173,7 @@ interface ISignalEnvelopeWithClientIds {
 	targetClientId?: string;
 }
 
-function isSignalEnvelope(
-	obj: unknown,
-): obj is ISignalEnvelope<UnknownIncomingTypedMessage> {
+function isSignalEnvelope(obj: unknown): obj is ISignalEnvelope<UnknownIncomingTypedMessage> {
 	return (
 		typeof obj === "object" &&
 		obj !== null &&
@@ -194,9 +183,7 @@ function isSignalEnvelope(
 		"content" in obj.contents &&
 		"type" in obj.contents &&
 		typeof obj.contents.type === "string" &&
-		(!("address" in obj) ||
-			typeof obj.address === "string" ||
-			obj.address === undefined) &&
+		(!("address" in obj) || typeof obj.address === "string" || obj.address === undefined) &&
 		(!("clientBroadcastSignalSequenceNumber" in obj) ||
 			typeof obj.clientBroadcastSignalSequenceNumber === "number")
 	);
@@ -245,9 +232,7 @@ function assertSignalContentIsAString(
 }
 
 describe("Runtime", () => {
-	const configProvider = (
-		settings: Record<string, ConfigTypes>,
-	): IConfigProviderBase => ({
+	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 		getRawConfig: (name: string): ConfigTypes => settings[name],
 	});
 
@@ -280,10 +265,7 @@ describe("Runtime", () => {
 
 	// Mock the storage layer so "submitSummary" works.
 	const defaultMockStorage: Partial<IContainerStorageService> = {
-		uploadSummaryWithContext: async (
-			summary: ISummaryTree,
-			context: ISummaryContext,
-		) => {
+		uploadSummaryWithContext: async (summary: ISummaryTree, context: ISummaryContext) => {
 			return "fakeHandle";
 		},
 	};
@@ -314,8 +296,7 @@ describe("Runtime", () => {
 			deltaManager: new MockDeltaManager(),
 			audience: new MockAudience(),
 			quorum: new MockQuorumClients(),
-			taggedLogger: mixinMonitoringContext(logger, configProvider(settings))
-				.logger,
+			taggedLogger: mixinMonitoringContext(logger, configProvider(settings)).logger,
 			clientDetails: { capabilities: { interactive: true } },
 			closeFn: (_error?: ICriticalContainerError): void => {},
 			updateDirtyContainerState: (_dirty: boolean) => {},
@@ -435,18 +416,14 @@ describe("Runtime", () => {
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-				(containerRuntime as any).ensureNoDataModelChanges = (
-					callback: () => void,
-				) => {
+				(containerRuntime as any).ensureNoDataModelChanges = (callback: () => void) => {
 					callback();
 					callsToEnsure++;
 				};
 				changeConnectionState(containerRuntime, false, mockClientId);
 
 				// Not connected, so nothing is submitted on flush - just queued in PendingStateManager
-				submitDataStoreOp(containerRuntime, "1", testDataStoreMessage, {
-					emptyBatch: true,
-				});
+				submitDataStoreOp(containerRuntime, "1", testDataStoreMessage, { emptyBatch: true });
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 				(containerRuntime as any).flush();
 				changeConnectionState(containerRuntime, true, mockClientId);
@@ -477,8 +454,7 @@ describe("Runtime", () => {
 					const containerRuntime = (await ContainerRuntime.loadRuntime2({
 						context: getMockContext({
 							settings: {
-								"Fluid.ContainerRuntime.enableBatchIdTracking":
-									enableBatchIdTracking, // batchId only stamped if true
+								"Fluid.ContainerRuntime.enableBatchIdTracking": enableBatchIdTracking, // batchId only stamped if true
 							},
 						}) as IContainerContext,
 						registry: new FluidDataStoreRegistry([]),
@@ -510,8 +486,7 @@ describe("Runtime", () => {
 					function batchIdMatchesUnsentFormat(batchId?: string): boolean {
 						return (
 							batchId !== undefined &&
-							batchId.length ===
-								"00000000-0000-0000-0000-000000000000_[-1]".length &&
+							batchId.length === "00000000-0000-0000-0000-000000000000_[-1]".length &&
 							batchId.endsWith("_[-1]")
 						);
 					}
@@ -533,15 +508,9 @@ describe("Runtime", () => {
 						);
 					} else {
 						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-						assert(
-							submittedOps[0].metadata?.batchId === undefined,
-							"Expected no batchId (0)",
-						);
+						assert(submittedOps[0].metadata?.batchId === undefined, "Expected no batchId (0)");
 						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-						assert(
-							submittedOps[1].metadata?.batchId === undefined,
-							"Expected no batchId (1)",
-						);
+						assert(submittedOps[1].metadata?.batchId === undefined, "Expected no batchId (1)");
 					}
 				});
 
@@ -595,8 +564,7 @@ describe("Runtime", () => {
 						contents: "test content",
 					});
 
-					const expectedSubmitCount =
-						skipSafetyFlushDuringProcessStack === true ? 0 : 1;
+					const expectedSubmitCount = skipSafetyFlushDuringProcessStack === true ? 0 : 1;
 					assert.equal(
 						submittedOps.length,
 						expectedSubmitCount,
@@ -619,11 +587,7 @@ describe("Runtime", () => {
 					await Promise.resolve();
 
 					// Validate that the messages were submitted
-					assert.equal(
-						submittedOps.length,
-						2,
-						"Two messages should be submitted",
-					);
+					assert.equal(submittedOps.length, 2, "Two messages should be submitted");
 					assert.deepEqual(
 						submittedBatches,
 						[
@@ -668,11 +632,7 @@ describe("Runtime", () => {
 				// This would throw a DataProcessingError from codepath "outboxSequenceNumberCoherencyCheck"
 				// if we didn't schedule a flush after the idAllocation op submitted during the reconnect.
 				// (On account of the two ID Allocation ops having different refSeqs but being in the same batch)
-				submitDataStoreOp(
-					containerRuntime,
-					"someDS",
-					genTestDataStoreMessage({ id: id2 }),
-				);
+				submitDataStoreOp(containerRuntime, "someDS", genTestDataStoreMessage({ id: id2 }));
 
 				// Let the Outbox flush so we can check submittedOps length
 				await Promise.resolve();
@@ -683,8 +643,7 @@ describe("Runtime", () => {
 			});
 		});
 
-		const expectedOrderSequentiallyErrorMessage =
-			"orderSequentially callback exception";
+		const expectedOrderSequentiallyErrorMessage = "orderSequentially callback exception";
 		describe("orderSequentially (rollback not enabled)", () => {
 			for (const flushMode of [
 				FlushMode.TurnBased,
@@ -701,54 +660,48 @@ describe("Runtime", () => {
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					const submittedOpsMetadata: any[] = [];
 					const containerErrors: ICriticalContainerError[] = [];
-					const getMockContextForOrderSequentially =
-						(): Partial<IContainerContext> => {
-							return {
-								attachState: AttachState.Attached,
-								deltaManager: new MockDeltaManager(),
-								audience: new MockAudience(),
-								quorum: new MockQuorumClients(),
-								taggedLogger: new MockLogger(),
-								supportedFeatures: new Map([
-									["referenceSequenceNumbers", true],
-								]),
-								clientDetails: { capabilities: { interactive: true } },
-								closeFn: (error?: ICriticalContainerError): void => {
-									if (error !== undefined) {
-										containerErrors.push(error);
-									}
-								},
-								updateDirtyContainerState: (_dirty: boolean) => {},
-								submitFn: (
-									_type: MessageType,
-									// eslint-disable-next-line @typescript-eslint/no-explicit-any
-									contents: any,
-									_batch: boolean,
-									appData?: unknown,
-								) => {
+					const getMockContextForOrderSequentially = (): Partial<IContainerContext> => {
+						return {
+							attachState: AttachState.Attached,
+							deltaManager: new MockDeltaManager(),
+							audience: new MockAudience(),
+							quorum: new MockQuorumClients(),
+							taggedLogger: new MockLogger(),
+							supportedFeatures: new Map([["referenceSequenceNumbers", true]]),
+							clientDetails: { capabilities: { interactive: true } },
+							closeFn: (error?: ICriticalContainerError): void => {
+								if (error !== undefined) {
+									containerErrors.push(error);
+								}
+							},
+							updateDirtyContainerState: (_dirty: boolean) => {},
+							submitFn: (
+								_type: MessageType,
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any
+								contents: any,
+								_batch: boolean,
+								appData?: unknown,
+							) => {
+								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+								if (contents.type === "groupedBatch") {
 									// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-									if (contents.type === "groupedBatch") {
+									for (const subMessage of contents.contents) {
 										// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-										for (const subMessage of contents.contents) {
-											// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-											submittedOpsMetadata.push(subMessage.metadata);
-										}
-									} else {
-										submittedOpsMetadata.push(appData);
+										submittedOpsMetadata.push(subMessage.metadata);
 									}
-									return opFakeSequenceNumber++;
-								},
-								connected: true,
-								clientId: fakeClientId,
-								getLoadedFromVersion: () => undefined,
-							};
+								} else {
+									submittedOpsMetadata.push(appData);
+								}
+								return opFakeSequenceNumber++;
+							},
+							connected: true,
+							clientId: fakeClientId,
+							getLoadedFromVersion: () => undefined,
 						};
+					};
 
 					const getFirstContainerError = (): ICriticalContainerError => {
-						assert.ok(
-							containerErrors.length > 0,
-							"Container should have errors",
-						);
+						assert.ok(containerErrors.length > 0, "Container should have errors");
 						return containerErrors[0];
 					};
 
@@ -784,15 +737,9 @@ describe("Runtime", () => {
 
 						const error = getFirstContainerError();
 						assert(isFluidError(error));
-						assert.strictEqual(
-							error.errorType,
-							ContainerErrorTypes.genericError,
-						);
+						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
 						assert.strictEqual(error.message, "0x24c");
-						assert.strictEqual(
-							error.getTelemetryProperties().orderSequentiallyCalls,
-							1,
-						);
+						assert.strictEqual(error.getTelemetryProperties().orderSequentiallyCalls, 1);
 					});
 
 					it("Can't call flush() inside orderSequentially's callback when nested", () => {
@@ -807,15 +754,9 @@ describe("Runtime", () => {
 
 						const error = getFirstContainerError();
 						assert(isFluidError(error));
-						assert.strictEqual(
-							error.errorType,
-							ContainerErrorTypes.genericError,
-						);
+						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
 						assert.strictEqual(error.message, "0x24c");
-						assert.strictEqual(
-							error.getTelemetryProperties().orderSequentiallyCalls,
-							2,
-						);
+						assert.strictEqual(error.getTelemetryProperties().orderSequentiallyCalls, 2);
 					});
 
 					it("Can't call flush() inside orderSequentially's callback when nested ignoring exceptions", () => {
@@ -832,15 +773,9 @@ describe("Runtime", () => {
 
 						const error = getFirstContainerError();
 						assert(isFluidError(error));
-						assert.strictEqual(
-							error.errorType,
-							ContainerErrorTypes.genericError,
-						);
+						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
 						assert.strictEqual(error.message, "0x24c");
-						assert.strictEqual(
-							error.getTelemetryProperties().orderSequentiallyCalls,
-							2,
-						);
+						assert.strictEqual(error.getTelemetryProperties().orderSequentiallyCalls, 2);
 					});
 
 					it("Errors propagate to the container", () => {
@@ -852,18 +787,9 @@ describe("Runtime", () => {
 
 						const error = getFirstContainerError();
 						assert(isFluidError(error));
-						assert.strictEqual(
-							error.errorType,
-							ContainerErrorTypes.genericError,
-						);
-						assert.strictEqual(
-							error.message,
-							`${expectedOrderSequentiallyErrorMessage}: Any`,
-						);
-						assert.strictEqual(
-							error.getTelemetryProperties().orderSequentiallyCalls,
-							1,
-						);
+						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
+						assert.strictEqual(error.message, `${expectedOrderSequentiallyErrorMessage}: Any`);
+						assert.strictEqual(error.getTelemetryProperties().orderSequentiallyCalls, 1);
 					});
 
 					it("Errors propagate to the container when nested", () => {
@@ -877,18 +803,9 @@ describe("Runtime", () => {
 
 						const error = getFirstContainerError();
 						assert(isFluidError(error));
-						assert.strictEqual(
-							error.errorType,
-							ContainerErrorTypes.genericError,
-						);
-						assert.strictEqual(
-							error.message,
-							`${expectedOrderSequentiallyErrorMessage}: Any`,
-						);
-						assert.strictEqual(
-							error.getTelemetryProperties().orderSequentiallyCalls,
-							2,
-						);
+						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
+						assert.strictEqual(error.message, `${expectedOrderSequentiallyErrorMessage}: Any`);
+						assert.strictEqual(error.getTelemetryProperties().orderSequentiallyCalls, 2);
 					});
 
 					it("Batching property set properly", () => {
@@ -900,11 +817,7 @@ describe("Runtime", () => {
 						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 						(containerRuntime as any).flush();
 
-						assert.strictEqual(
-							submittedOpsMetadata.length,
-							3,
-							"3 messages should be sent",
-						);
+						assert.strictEqual(submittedOpsMetadata.length, 3, "3 messages should be sent");
 						assert.strictEqual(
 							// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 							submittedOpsMetadata[0].batch,
@@ -945,19 +858,11 @@ describe("Runtime", () => {
 						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 						(containerRuntime as any).flush();
 
-						assert.strictEqual(
-							submittedOpsMetadata.length,
-							0,
-							"no messages should be sent",
-						);
+						assert.strictEqual(submittedOpsMetadata.length, 0, "no messages should be sent");
 
 						changeConnectionState(containerRuntime, true, fakeClientId);
 
-						assert.strictEqual(
-							submittedOpsMetadata.length,
-							6,
-							"6 messages should be sent",
-						);
+						assert.strictEqual(submittedOpsMetadata.length, 6, "6 messages should be sent");
 
 						const expectedBatchMetadata = [
 							{ batch: true },
@@ -991,33 +896,32 @@ describe("Runtime", () => {
 					const containerErrors: ICriticalContainerError[] = [];
 					let submittedOpsCount: number = 0;
 
-					const getMockContextForOrderSequentially =
-						(): Partial<IContainerContext> => ({
-							attachState: AttachState.Attached,
-							connected: true,
-							clientId: "client-id",
-							supportedFeatures: new Map([["referenceSequenceNumbers", true]]),
-							deltaManager: new MockDeltaManager(),
-							audience: new MockAudience(),
-							quorum: new MockQuorumClients(),
-							taggedLogger: mixinMonitoringContext(
-								new MockLogger(),
-								configProvider({
-									"Fluid.ContainerRuntime.EnableRollback": true,
-								}),
-							) as unknown as MockLogger,
-							clientDetails: { capabilities: { interactive: true } },
-							closeFn: (error?: ICriticalContainerError): void => {
-								if (error !== undefined) {
-									containerErrors.push(error);
-								}
-							},
-							submitFn: (...args) => {
-								return ++submittedOpsCount; // clientSequenceNumber
-							},
-							updateDirtyContainerState: (dirty: boolean) => {},
-							getLoadedFromVersion: () => undefined,
-						});
+					const getMockContextForOrderSequentially = (): Partial<IContainerContext> => ({
+						attachState: AttachState.Attached,
+						connected: true,
+						clientId: "client-id",
+						supportedFeatures: new Map([["referenceSequenceNumbers", true]]),
+						deltaManager: new MockDeltaManager(),
+						audience: new MockAudience(),
+						quorum: new MockQuorumClients(),
+						taggedLogger: mixinMonitoringContext(
+							new MockLogger(),
+							configProvider({
+								"Fluid.ContainerRuntime.EnableRollback": true,
+							}),
+						) as unknown as MockLogger,
+						clientDetails: { capabilities: { interactive: true } },
+						closeFn: (error?: ICriticalContainerError): void => {
+							if (error !== undefined) {
+								containerErrors.push(error);
+							}
+						},
+						submitFn: (...args) => {
+							return ++submittedOpsCount; // clientSequenceNumber
+						},
+						updateDirtyContainerState: (dirty: boolean) => {},
+						getLoadedFromVersion: () => undefined,
+					});
 
 					beforeEach(async () => {
 						const runtimeOptions: IContainerRuntimeOptionsInternal = {
@@ -1027,8 +931,7 @@ describe("Runtime", () => {
 							flushMode,
 						};
 						containerRuntime = (await ContainerRuntime.loadRuntime2({
-							context:
-								getMockContextForOrderSequentially() as IContainerContext,
+							context: getMockContextForOrderSequentially() as IContainerContext,
 							registry: new FluidDataStoreRegistry([]),
 							existing: false,
 							runtimeOptions,
@@ -1044,27 +947,15 @@ describe("Runtime", () => {
 								throw new Error("Any");
 							}),
 						);
-						assert.equal(
-							containerRuntime.inStagingMode,
-							false,
-							"Still in Staging Mode",
-						);
-						assert.equal(
-							containerRuntime.isDirty,
-							false,
-							"Dirty after rollback",
-						);
+						assert.equal(containerRuntime.inStagingMode, false, "Still in Staging Mode");
+						assert.equal(containerRuntime.isDirty, false, "Dirty after rollback");
 
 						assert.strictEqual(containerErrors.length, 0);
 					});
 
 					it("No errors on successful callback with rollback set", () => {
 						containerRuntime.orderSequentially(() => {});
-						assert.equal(
-							containerRuntime.inStagingMode,
-							false,
-							"Still in Staging Mode",
-						);
+						assert.equal(containerRuntime.inStagingMode, false, "Still in Staging Mode");
 
 						assert.strictEqual(containerErrors.length, 0);
 					});
@@ -1101,11 +992,7 @@ describe("Runtime", () => {
 
 							assert.throws(() => {
 								containerRuntime.orderSequentially(() => {
-									submitDataStoreOp(
-										containerRuntime,
-										"1",
-										testDataStoreMessage,
-									);
+									submitDataStoreOp(containerRuntime, "1", testDataStoreMessage);
 									stageControls.commitChanges();
 								});
 							});
@@ -1118,11 +1005,7 @@ describe("Runtime", () => {
 
 							assert.doesNotThrow(() => {
 								containerRuntime.orderSequentially(() => {
-									submitDataStoreOp(
-										containerRuntime,
-										"1",
-										testDataStoreMessage,
-									);
+									submitDataStoreOp(containerRuntime, "1", testDataStoreMessage);
 									stageControls.discardChanges();
 								});
 							});
@@ -1140,16 +1023,8 @@ describe("Runtime", () => {
 								e.message === "Already in staging mode",
 							"Entering Staging Mode inside orderSequentially should throw",
 						);
-						assert.equal(
-							containerRuntime.inStagingMode,
-							false,
-							"Still in Staging Mode",
-						);
-						assert.equal(
-							containerRuntime.isDirty,
-							false,
-							"Dirty after rollback",
-						);
+						assert.equal(containerRuntime.inStagingMode, false, "Still in Staging Mode");
+						assert.equal(containerRuntime.isDirty, false, "Dirty after rollback");
 
 						assert.strictEqual(containerErrors.length, 0);
 					});
@@ -1189,10 +1064,7 @@ describe("Runtime", () => {
 
 			it("should NOT be set to dirty if context is attached with no pending ops", async () => {
 				const mockContext = createMockContext(AttachState.Attached, false);
-				const updateDirtyStateStub = sandbox.stub(
-					mockContext,
-					"updateDirtyContainerState",
-				);
+				const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
 				await ContainerRuntime.loadRuntime2({
 					context: mockContext as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
@@ -1207,10 +1079,7 @@ describe("Runtime", () => {
 
 			it("should be set to dirty if context is attached with pending ops", async () => {
 				const mockContext = createMockContext(AttachState.Attached, true);
-				const updateDirtyStateStub = sandbox.stub(
-					mockContext,
-					"updateDirtyContainerState",
-				);
+				const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
 				await ContainerRuntime.loadRuntime2({
 					context: mockContext as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
@@ -1225,10 +1094,7 @@ describe("Runtime", () => {
 
 			it("should be set to dirty if context is attaching", async () => {
 				const mockContext = createMockContext(AttachState.Attaching, false);
-				const updateDirtyStateStub = sandbox.stub(
-					mockContext,
-					"updateDirtyContainerState",
-				);
+				const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
 				await ContainerRuntime.loadRuntime2({
 					context: mockContext as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
@@ -1243,10 +1109,7 @@ describe("Runtime", () => {
 
 			it("should be set to dirty if context is detached", async () => {
 				const mockContext = createMockContext(AttachState.Detached, false);
-				const updateDirtyStateStub = sandbox.stub(
-					mockContext,
-					"updateDirtyContainerState",
-				);
+				const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
 				await ContainerRuntime.loadRuntime2({
 					context: mockContext as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
@@ -1267,39 +1130,33 @@ describe("Runtime", () => {
 			const mockLogger = new MockLogger();
 			const containerErrors: ICriticalContainerError[] = [];
 			const fakeClientId = "fakeClientId";
-			const getMockContextForPendingStateProgressTracking =
-				(): Partial<IContainerContext> => {
-					return {
-						connected: false,
-						attachState: AttachState.Attached,
-						deltaManager: new MockDeltaManager(),
-						audience: new MockAudience(),
-						quorum: new MockQuorumClients(),
-						taggedLogger: mockLogger,
-						clientDetails: { capabilities: { interactive: true } },
-						closeFn: (error?: ICriticalContainerError): void => {
-							if (error !== undefined) {
-								containerErrors.push(error);
-							}
-						},
-						updateDirtyContainerState: (_dirty: boolean) => {},
-						getLoadedFromVersion: () => undefined,
-					};
+			const getMockContextForPendingStateProgressTracking = (): Partial<IContainerContext> => {
+				return {
+					connected: false,
+					attachState: AttachState.Attached,
+					deltaManager: new MockDeltaManager(),
+					audience: new MockAudience(),
+					quorum: new MockQuorumClients(),
+					taggedLogger: mockLogger,
+					clientDetails: { capabilities: { interactive: true } },
+					closeFn: (error?: ICriticalContainerError): void => {
+						if (error !== undefined) {
+							containerErrors.push(error);
+						}
+					},
+					updateDirtyContainerState: (_dirty: boolean) => {},
+					getLoadedFromVersion: () => undefined,
 				};
+			};
 			const getMockPendingStateManager = (): PendingStateManager => {
 				let pendingMessages = 0;
 				return {
 					replayPendingStates: () => {},
 					hasPendingMessages: (): boolean => pendingMessages > 0,
 					hasPendingUserChanges: (): boolean => pendingMessages > 0,
-					processInboundMessages: (
-						inbound: InboundMessageResult,
-						_local: boolean,
-					) => {
+					processInboundMessages: (inbound: InboundMessageResult, _local: boolean) => {
 						const messages =
-							inbound.type === "fullBatch"
-								? inbound.messages
-								: [inbound.nextMessage];
+							inbound.type === "fullBatch" ? inbound.messages : [inbound.nextMessage];
 						return messages.map<{
 							message: InboundSequencedContainerRuntimeMessage;
 							localOpMetadata?: unknown;
@@ -1331,8 +1188,7 @@ describe("Runtime", () => {
 			beforeEach(async () => {
 				containerErrors.length = 0;
 				containerRuntime = await ContainerRuntime.loadRuntime2({
-					context:
-						getMockContextForPendingStateProgressTracking() as IContainerContext,
+					context: getMockContextForPendingStateProgressTracking() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					requestHandler: undefined,
@@ -1358,24 +1214,20 @@ describe("Runtime", () => {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				runtime.channelCollection = getMockChannelCollection();
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-				runtime.maxConsecutiveReconnects =
-					_maxReconnects ?? runtime.maxConsecutiveReconnects;
+				runtime.maxConsecutiveReconnects = _maxReconnects ?? runtime.maxConsecutiveReconnects;
 			}
 
 			/**
 			 * Connects with a new clientId and then immediately disconnects, returning that brief connection's clientId
 			 */
 			const toggleConnection = (runtime: ContainerRuntime, salt: number) => {
-				const clientId =
-					salt === undefined ? fakeClientId : `${fakeClientId}-${salt}`;
+				const clientId = salt === undefined ? fakeClientId : `${fakeClientId}-${salt}`;
 				changeConnectionState(runtime, true, clientId);
 				changeConnectionState(runtime, false, clientId);
 				return clientId;
 			};
 
-			const addPendingMessage = (
-				pendingStateManager: PendingStateManager,
-			): void =>
+			const addPendingMessage = (pendingStateManager: PendingStateManager): void =>
 				pendingStateManager.onFlushBatch(
 					[
 						{
@@ -1617,25 +1469,20 @@ describe("Runtime", () => {
 			 * Overwrites channelCollection property and exposes private submit function with modified typing
 			 */
 			function patchContainerRuntime(): Omit<ContainerRuntime, "submit"> & {
-				submit: (
-					containerRuntimeMessage: UnknownContainerRuntimeMessage,
-				) => void;
+				submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
 			} {
 				const patched = containerRuntime as unknown as Omit<
 					ContainerRuntime,
 					"submit" | "channelCollection"
 				> & {
-					submit: (
-						containerRuntimeMessage: UnknownContainerRuntimeMessage,
-					) => void;
+					submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
 					channelCollection: Partial<ChannelCollection>;
 				};
 
 				patched.channelCollection = {
 					setConnectionState: (_connected: boolean, _clientId?: string) => {},
 					// Pass data store op right back to ContainerRuntime
-					reSubmitContainerMessage:
-						containerRuntime.submitMessage.bind(containerRuntime),
+					reSubmitContainerMessage: containerRuntime.submitMessage.bind(containerRuntime),
 				} satisfies Partial<ChannelCollection>;
 
 				return patched;
@@ -1663,10 +1510,8 @@ describe("Runtime", () => {
 
 				// Connect, which will trigger resubmit
 				assert.throws(
-					() =>
-						changeConnectionState(patchedContainerRuntime, true, mockClientId),
-					(error: IErrorBase) =>
-						error.errorType === ContainerErrorTypes.dataProcessingError,
+					() => changeConnectionState(patchedContainerRuntime, true, mockClientId),
+					(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
 					"Ops with unrecognized type and 'Ignore' compat behavior should fail to resubmit",
 				);
 			});
@@ -1679,10 +1524,7 @@ describe("Runtime", () => {
 
 				const packedOp: Omit<
 					ISequencedDocumentMessage,
-					| "term"
-					| "clientSequenceNumber"
-					| "referenceSequenceNumber"
-					| "timestamp"
+					"term" | "clientSequenceNumber" | "referenceSequenceNumber" | "timestamp"
 				> = {
 					contents: JSON.stringify(futureRuntimeMessage),
 					type: MessageType.Operation,
@@ -1692,12 +1534,8 @@ describe("Runtime", () => {
 				};
 				assert.throws(
 					() =>
-						containerRuntime.process(
-							packedOp as ISequencedDocumentMessage,
-							false /* local */,
-						),
-					(error: IErrorBase) =>
-						error.errorType === ContainerErrorTypes.dataProcessingError,
+						containerRuntime.process(packedOp as ISequencedDocumentMessage, false /* local */),
+					(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
 					"Ops with unrecognized type should fail to process",
 				);
 			});
@@ -1713,9 +1551,7 @@ describe("Runtime", () => {
 						public static async loadRuntime2(params: {
 							context: IContainerContext;
 							containerRuntimeCtor?: typeof ContainerRuntime;
-							provideEntryPoint: (
-								containerRuntime: IContainerRuntime,
-							) => Promise<FluidObject>;
+							provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
 							existing: boolean;
 							runtimeOptions: IContainerRuntimeOptions;
 							registry: IFluidDataStoreRegistry;
@@ -1725,8 +1561,7 @@ describe("Runtime", () => {
 							// an issue in our tests.
 							params.containerRuntimeCtor =
 								params.containerRuntimeCtor ?? MixinContainerRuntime;
-							params.containerScope =
-								params.containerScope ?? params.context.scope;
+							params.containerScope = params.containerScope ?? params.context.scope;
 							return Base.loadRuntime2(params);
 						}
 
@@ -1754,43 +1589,34 @@ describe("Runtime", () => {
 					(runtime as unknown as { method1: () => unknown }).method1(),
 					"mixed in return",
 				);
-				assert.equal(
-					(runtime as unknown as { method2: () => unknown }).method2(),
-					42,
-				);
+				assert.equal((runtime as unknown as { method2: () => unknown }).method2(), 42);
 			});
 
 			// A legacy partner team overrides the summarizeInternal method to add custom data to the Summary.
 			// Let's make sure we don't break them inadvertently, while we work to move them to a better pattern.
 			it("Ensure private member is stable to support legacy usage", async () => {
-				const containerRuntime_withSummarizeInternal =
-					(await ContainerRuntime.loadRuntime2({
-						context: getMockContext() as IContainerContext,
-						registry: new FluidDataStoreRegistry([]),
-						existing: false,
-						provideEntryPoint: mockProvideEntryPoint,
-					})) as unknown as {
-						summarizeInternal(
-							fullTree: boolean,
-							trackState: boolean,
-							telemetryContext?: ITelemetryContext,
-						): Promise<ISummarizeInternalResult>;
-					};
+				const containerRuntime_withSummarizeInternal = (await ContainerRuntime.loadRuntime2({
+					context: getMockContext() as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					provideEntryPoint: mockProvideEntryPoint,
+				})) as unknown as {
+					summarizeInternal(
+						fullTree: boolean,
+						trackState: boolean,
+						telemetryContext?: ITelemetryContext,
+					): Promise<ISummarizeInternalResult>;
+				};
 
 				assert(
-					typeof containerRuntime_withSummarizeInternal.summarizeInternal ===
-						"function",
+					typeof containerRuntime_withSummarizeInternal.summarizeInternal === "function",
 					"Expected summarizeInternal to be present (it's a private method)",
 				);
-				const result =
-					await containerRuntime_withSummarizeInternal.summarizeInternal(
-						true,
-						true,
-					);
-				assert(
-					result.summary !== undefined,
-					"Expected a valid result from summarizeInternal",
+				const result = await containerRuntime_withSummarizeInternal.summarizeInternal(
+					true,
+					true,
 				);
+				assert(result.summary !== undefined, "Expected a valid result from summarizeInternal");
 			});
 		});
 
@@ -1808,10 +1634,7 @@ describe("Runtime", () => {
 
 				// The entryPoint should come from the provided initialization function.
 				const actualEntryPoint = await containerRuntime.getEntryPoint();
-				assert(
-					actualEntryPoint !== undefined,
-					"entryPoint was not initialized",
-				);
+				assert(actualEntryPoint !== undefined, "entryPoint was not initialized");
 				assert.deepEqual(
 					actualEntryPoint,
 					myEntryPoint,
@@ -1839,9 +1662,7 @@ describe("Runtime", () => {
 
 				// Calling request on the runtime should use the request handler we passed in the runtime's constructor.
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
-				const responseFromRequestMethod = await (
-					containerRuntime as any
-				).request({
+				const responseFromRequestMethod = await (containerRuntime as any).request({
 					url: "/",
 				});
 				assert.deepEqual(
@@ -1852,10 +1673,7 @@ describe("Runtime", () => {
 
 				// The entryPoint should come from the provided initialization function.
 				const actualEntryPoint = await containerRuntime.getEntryPoint();
-				assert(
-					actualEntryPoint !== undefined,
-					"entryPoint was not initialized",
-				);
+				assert(actualEntryPoint !== undefined, "entryPoint was not initialized");
 				assert.deepEqual(
 					actualEntryPoint,
 					myEntryPoint,
@@ -1894,11 +1712,7 @@ describe("Runtime", () => {
 				const state = pendingStateManager.getLocalState();
 
 				assert.notStrictEqual(state, undefined, "expect pending local state");
-				assert.strictEqual(
-					state?.pendingStates.length,
-					1,
-					"expect 1 pending message",
-				);
+				assert.strictEqual(state?.pendingStates.length, 1, "expect 1 pending message");
 				assert.deepStrictEqual(
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					JSON.parse(state?.pendingStates?.[0].content).contents.contents,
@@ -1964,10 +1778,7 @@ describe("Runtime", () => {
 				explicitSchemaControl: false,
 				createBlobPayloadPending: undefined,
 			} as const satisfies ContainerRuntimeOptionsInternal;
-			const mergedRuntimeOptions = {
-				...defaultRuntimeOptions,
-				...runtimeOptions,
-			} as const;
+			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions } as const;
 
 			it("Container load stats", async () => {
 				await ContainerRuntime.loadRuntime2({
@@ -2102,10 +1913,7 @@ describe("Runtime", () => {
 					supportedFeatures: new Set(),
 				};
 				const runtime = await ContainerRuntime.loadRuntime2({
-					context: localGetMockContext(
-						undefined,
-						compatDetails,
-					) as IContainerContext,
+					context: localGetMockContext(undefined, compatDetails) as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions,
@@ -2204,9 +2012,7 @@ describe("Runtime", () => {
 			it("summary fails after generate if there are pending ops", async () => {
 				// Patch the summarize function to submit messages during it. This way there will be pending
 				// messages after generating the summary.
-				const patch = (
-					fn: (...args: any[]) => Promise<ISummaryTreeWithStats>,
-				) => {
+				const patch = (fn: (...args: any[]) => Promise<ISummaryTreeWithStats>) => {
 					const boundFn = fn.bind(containerRuntime);
 					return async (...args: unknown[]) => {
 						// Submit an op and yield for it to be flushed from outbox to pending state manager.
@@ -2326,7 +2132,7 @@ describe("Runtime", () => {
 					trees: {
 						".protocol": {
 							blobs: {
-								attributes: "attributesBlob",
+								"attributes": "attributesBlob",
 							},
 							trees: {},
 						},
@@ -2463,8 +2269,7 @@ describe("Runtime", () => {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 				(containerRuntime as any).pendingStateManager = mockPendingStateManager;
 
-				const state =
-					containerRuntime.getPendingLocalState() as Partial<IPendingRuntimeState>;
+				const state = containerRuntime.getPendingLocalState() as Partial<IPendingRuntimeState>;
 				assert.ok(state.sessionExpiryTimerStarted !== undefined);
 			});
 			it("No Props. Some pending state", async () => {
@@ -2479,23 +2284,15 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-				const pendingStates: IPendingMessage[] = Array.from(
-					{ length: 5 },
-					(_, i) => ({
-						content: i.toString(),
-						type: "message",
-						referenceSequenceNumber: 0,
-						localOpMetadata: undefined,
-						opMetadata: undefined,
-						batchInfo: {
-							clientId: "CLIENT_ID",
-							batchStartCsn: 1,
-							length: 5,
-							staged: false,
-						},
-						runtimeOp: undefined,
-					}),
-				);
+				const pendingStates: IPendingMessage[] = Array.from({ length: 5 }, (_, i) => ({
+					content: i.toString(),
+					type: "message",
+					referenceSequenceNumber: 0,
+					localOpMetadata: undefined,
+					opMetadata: undefined,
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5, staged: false },
+					runtimeOp: undefined,
+				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>(
 					{} as unknown as PendingStateManager,
 					{
@@ -2520,8 +2317,7 @@ describe("Runtime", () => {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 				(containerRuntime as any).pendingStateManager = mockPendingStateManager;
 
-				const state =
-					containerRuntime.getPendingLocalState() as Partial<IPendingRuntimeState>;
+				const state = containerRuntime.getPendingLocalState() as Partial<IPendingRuntimeState>;
 				assert.strictEqual(typeof state, "object");
 				assert.strictEqual(state.pending?.pendingStates, pendingStates);
 			});
@@ -2559,23 +2355,15 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-				const pendingStates: IPendingMessage[] = Array.from(
-					{ length: 5 },
-					(_, i) => ({
-						content: i.toString(),
-						type: "message",
-						referenceSequenceNumber: 0,
-						localOpMetadata: undefined,
-						opMetadata: undefined,
-						batchInfo: {
-							clientId: "CLIENT_ID",
-							batchStartCsn: 1,
-							length: 5,
-							staged: false,
-						},
-						runtimeOp: undefined,
-					}),
-				);
+				const pendingStates: IPendingMessage[] = Array.from({ length: 5 }, (_, i) => ({
+					content: i.toString(),
+					type: "message",
+					referenceSequenceNumber: 0,
+					localOpMetadata: undefined,
+					opMetadata: undefined,
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5, staged: false },
+					runtimeOp: undefined,
+				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>(
 					{} as unknown as PendingStateManager,
 					{
@@ -2614,8 +2402,7 @@ describe("Runtime", () => {
 					const containerRuntime = await ContainerRuntime.loadRuntime2({
 						context: getMockContext({
 							settings: {
-								"Fluid.ContainerRuntime.enableBatchIdTracking":
-									enableBatchIdTracking,
+								"Fluid.ContainerRuntime.enableBatchIdTracking": enableBatchIdTracking,
 							},
 						}) as IContainerContext,
 						registry: new FluidDataStoreRegistry([]),
@@ -2631,32 +2418,23 @@ describe("Runtime", () => {
 						{
 							sequenceNumber: 123,
 							type: MessageType.Operation,
-							contents: {
-								type: ContainerMessageType.Rejoin,
-								contents: undefined,
-							},
+							contents: { type: ContainerMessageType.Rejoin, contents: undefined },
 							metadata: { batchId: "batchId1" },
 						} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
 						false,
 					);
 					// Process a duplicate batch "batchId1" with different seqNum 234
 					const assertThrowsOnlyIfExpected =
-						enableBatchIdTracking === true
-							? assert.throws
-							: assert.doesNotThrow;
+						enableBatchIdTracking === true ? assert.throws : assert.doesNotThrow;
 					const errorPredicate = (e: Error) =>
-						e.message ===
-						"Duplicate batch - The same batch was sequenced twice";
+						e.message === "Duplicate batch - The same batch was sequenced twice";
 					assertThrowsOnlyIfExpected(
 						() => {
 							containerRuntime.process(
 								{
 									sequenceNumber: 234,
 									type: MessageType.Operation,
-									contents: {
-										type: ContainerMessageType.Rejoin,
-										contents: undefined,
-									},
+									contents: { type: ContainerMessageType.Rejoin, contents: undefined },
 									metadata: { batchId: "batchId1" },
 								} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
 								false,
@@ -2691,40 +2469,27 @@ describe("Runtime", () => {
 					{
 						sequenceNumber: 123,
 						type: MessageType.Operation,
-						contents: {
-							type: ContainerMessageType.Rejoin,
-							contents: undefined,
-						},
+						contents: { type: ContainerMessageType.Rejoin, contents: undefined },
 						metadata: { batchId: "batchId1" },
 					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
 					false,
 				);
-				const { summary } = await containerRuntime.summarize({
-					fullTree: true,
-				});
-				const blob: SummaryObject | undefined =
-					summary.tree[recentBatchInfoBlobName];
+				const { summary } = await containerRuntime.summarize({ fullTree: true });
+				const blob: SummaryObject | undefined = summary.tree[recentBatchInfoBlobName];
 				assert(blob?.type === SummaryType.Blob, "Expected blob");
-				assert.equal(
-					blob.content,
-					'[[123,"batchId1"]]',
-					"Expected single batchId mapping",
-				);
+				assert.equal(blob.content, '[[123,"batchId1"]]', "Expected single batchId mapping");
 
 				// Load a new ContainerRuntime with the serialized DuplicateBatchDetector state.
 				const mockStorage = {
 					// Hardcode readblob fn to return the blob contents put in the summary
-					readBlob: async (_id) =>
-						stringToBuffer(blob.content as string, "utf8"),
+					readBlob: async (_id) => stringToBuffer(blob.content as string, "utf8"),
 				};
 				const containerRuntime2 = await ContainerRuntime.loadRuntime2({
 					context: getMockContext({
 						settings: settings_enableOfflineLoad,
 						baseSnapshot: {
 							trees: {},
-							blobs: {
-								[recentBatchInfoBlobName]: "nonempty_id_ignored_by_mockStorage",
-							},
+							blobs: { [recentBatchInfoBlobName]: "nonempty_id_ignored_by_mockStorage" },
 						},
 						mockStorage,
 					}) as IContainerContext,
@@ -2743,18 +2508,13 @@ describe("Runtime", () => {
 							{
 								sequenceNumber: 234,
 								type: MessageType.Operation,
-								contents: {
-									type: ContainerMessageType.Rejoin,
-									contents: undefined,
-								},
+								contents: { type: ContainerMessageType.Rejoin, contents: undefined },
 								metadata: { batchId: "batchId1" },
 							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
 							false,
 						);
 					},
-					(e: Error) =>
-						e.message ===
-						"Duplicate batch - The same batch was sequenced twice",
+					(e: Error) => e.message === "Duplicate batch - The same batch was sequenced twice",
 					"Expected duplicate batch detected after loading with recentBatchInfo",
 				);
 			});
@@ -2794,7 +2554,7 @@ describe("Runtime", () => {
 							unreferenced: true,
 						},
 						".blobs": { blobs: {}, trees: {} },
-						gc: {
+						"gc": {
 							id: "e8ed0760ac37fd8042020559779ce80b1d88f266",
 							blobs: {
 								__gc_root: "018d97818f8b519f99c418cb3c33ce5cc4e38e3f",
@@ -2807,10 +2567,7 @@ describe("Runtime", () => {
 				blobContents = new Map<string, ArrayBuffer>([
 					[
 						"bARD4RKvW4LL1KmaUKp6hUMSp",
-						stringToBuffer(
-							JSON.stringify({ summaryFormatVersion: 1, gcFeature: 3 }),
-							"utf8",
-						),
+						stringToBuffer(JSON.stringify({ summaryFormatVersion: 1, gcFeature: 3 }), "utf8"),
 					],
 					[
 						"bARC6dCXlcrPxQHw3PeROtmKc",
@@ -2875,8 +2632,7 @@ describe("Runtime", () => {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- Modifying private property
 				(containerContext as any).snapshotWithContents = snapshotWithContents;
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- Modifying private property
-				(containerContext as any).baseSnapshot =
-					snapshotWithContents.snapshotTree;
+				(containerContext as any).baseSnapshot = snapshotWithContents.snapshotTree;
 				containerContext.storage.readBlob = async (id: string) => {
 					return blobContents.get(id) as ArrayBuffer;
 				};
@@ -2891,10 +2647,7 @@ describe("Runtime", () => {
 				logger.clear();
 			});
 
-			function createSnapshot(
-				addMissingDatastore: boolean,
-				setGroupId: boolean = true,
-			): void {
+			function createSnapshot(addMissingDatastore: boolean, setGroupId: boolean = true): void {
 				if (addMissingDatastore) {
 					// TODO: Fix this violation and remove the disable
 					// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access
@@ -2955,10 +2708,7 @@ describe("Runtime", () => {
 				// snapshot for datastore "missingDataStore" is omitted and we will check that the container runtime loads fine
 				// but the "missingDataStore" is aliased, it fails if the snapshot for it does not have loadingGroupId to fetch
 				// the omitted snapshot contents.
-				createSnapshot(
-					true /* addMissingDatastore */,
-					false /* Don't set groupId property */,
-				);
+				createSnapshot(true /* addMissingDatastore */, false /* Don't set groupId property */);
 				containerRuntime = await ContainerRuntime.loadRuntime2({
 					context: containerContext,
 					registry: new FluidDataStoreRegistry([
@@ -2972,14 +2722,9 @@ describe("Runtime", () => {
 				});
 				const defaultDataStore =
 					await containerRuntime.getAliasedDataStoreEntryPoint("default");
-				assert(
-					defaultDataStore !== undefined,
-					"data store should load and is attached",
-				);
+				assert(defaultDataStore !== undefined, "data store should load and is attached");
 				await assert.rejects(async () => {
-					await containerRuntime.getAliasedDataStoreEntryPoint(
-						"missingDataStore",
-					);
+					await containerRuntime.getAliasedDataStoreEntryPoint("missingDataStore");
 				}, "Resolving missing datastore should reject");
 			});
 
@@ -3007,15 +2752,10 @@ describe("Runtime", () => {
 				});
 				const defaultDataStore =
 					await containerRuntime.getAliasedDataStoreEntryPoint("default");
-				assert(
-					defaultDataStore !== undefined,
-					"data store should load and is attached",
-				);
+				assert(defaultDataStore !== undefined, "data store should load and is attached");
 				await assert.rejects(
 					async () => {
-						await containerRuntime.getAliasedDataStoreEntryPoint(
-							"missingDataStore",
-						);
+						await containerRuntime.getAliasedDataStoreEntryPoint("missingDataStore");
 					},
 					(err: IFluidErrorBase) => {
 						assert(
@@ -3062,10 +2802,7 @@ describe("Runtime", () => {
 				});
 				const defaultDataStore =
 					await containerRuntime.getAliasedDataStoreEntryPoint("default");
-				assert(
-					defaultDataStore !== undefined,
-					"data store should load and is attached",
-				);
+				assert(defaultDataStore !== undefined, "data store should load and is attached");
 				const datastore1 = await containerRuntime.resolveHandle({
 					url: "/missingDataStore",
 				});
@@ -3084,10 +2821,7 @@ describe("Runtime", () => {
 					snapshot.snapshotTree,
 					"snapshot should be equal",
 				);
-				assert(
-					getSnapshotCalledTimes === 1,
-					"second time should be from cache",
-				);
+				assert(getSnapshotCalledTimes === 1, "second time should be from cache");
 
 				// Set api to undefined to see that it should not be called again.
 				// TODO: Fix this violation and remove the disable
@@ -3132,10 +2866,7 @@ describe("Runtime", () => {
 				});
 				const defaultDataStore =
 					await containerRuntime.getAliasedDataStoreEntryPoint("default");
-				assert(
-					defaultDataStore !== undefined,
-					"data store should load and is attached",
-				);
+				assert(defaultDataStore !== undefined, "data store should load and is attached");
 				// Set it to seq number of partial fetched snapshot so that it is returned successfully by container runtime.
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 				(containerContext.deltaManager as any).lastSequenceNumber = 5;
@@ -3144,11 +2875,7 @@ describe("Runtime", () => {
 				});
 				// Mock Datastore runtime will return null when requested for "/".
 				// eslint-disable-next-line unicorn/no-null
-				assert.strictEqual(
-					missingDataStore,
-					null,
-					"resolveHandle should work fine",
-				);
+				assert.strictEqual(missingDataStore, null, "resolveHandle should work fine");
 			});
 
 			it("Load snapshot with missing snapshot contents for datastores should only process ops in datastore context which are after the snapshot seq number", async () => {
@@ -3184,20 +2911,12 @@ describe("Runtime", () => {
 				});
 				const defaultDataStore =
 					await containerRuntime.getAliasedDataStoreEntryPoint("default");
-				assert(
-					defaultDataStore !== undefined,
-					"data store should load and is attached",
-				);
+				assert(defaultDataStore !== undefined, "data store should load and is attached");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const missingDataStoreContext =
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-					(containerRuntime as any).channelCollection.contexts.get(
-						"missingDataStore",
-					);
-				assert(
-					missingDataStoreContext !== undefined,
-					"context should be there",
-				);
+					(containerRuntime as any).channelCollection.contexts.get("missingDataStore");
+				assert(missingDataStoreContext !== undefined, "context should be there");
 				const envelopes: ISequencedMessageEnvelope[] = [
 					{ sequenceNumber: 1 },
 					{ sequenceNumber: 2 },
@@ -3209,11 +2928,7 @@ describe("Runtime", () => {
 					missingDataStoreContext.processMessages({
 						envelope,
 						messagesContent: [
-							{
-								contents: "message",
-								localOpMetadata: undefined,
-								clientSequenceNumber: 1,
-							},
+							{ contents: "message", localOpMetadata: undefined, clientSequenceNumber: 1 },
 						],
 						local: false,
 					});
@@ -3225,9 +2940,7 @@ describe("Runtime", () => {
 
 				let opsProcessed = 0;
 				let opsStart: number | undefined;
-				const processMessagesStub = (
-					messageCollection: IRuntimeMessageCollection,
-				) => {
+				const processMessagesStub = (messageCollection: IRuntimeMessageCollection) => {
 					if (opsProcessed === 0) {
 						opsStart = messageCollection.envelope.sequenceNumber;
 					}
@@ -3242,10 +2955,7 @@ describe("Runtime", () => {
 
 				stub.restore();
 
-				assert(
-					opsProcessed === 2,
-					"only 2 ops should be processed with seq number 3 and 4",
-				);
+				assert(opsProcessed === 2, "only 2 ops should be processed with seq number 3 and 4");
 				assert(opsStart === 3, "first op processed should have seq number 3");
 			});
 		});
@@ -3271,21 +2981,14 @@ describe("Runtime", () => {
 				"someType",
 			);
 			legacyLogger("codePath2");
-			assert.equal(
-				mockLogger.events.length,
-				0,
-				"Expected no more events logged",
-			);
+			assert.equal(mockLogger.events.length, 0, "Expected no more events logged");
 		});
 
 		describe("Signal Telemetry", () => {
 			let containerRuntime: ContainerRuntime_WithPrivates;
 			let logger: MockLogger;
 			let droppedSignals: ISignalEnvelopeWithClientIds[];
-			let runtimes: Map<
-				string,
-				ContainerRuntime | ContainerRuntime_WithPrivates
-			>;
+			let runtimes: Map<string, ContainerRuntime | ContainerRuntime_WithPrivates>;
 
 			beforeEach(async () => {
 				runtimes = new Map();
@@ -3303,10 +3006,7 @@ describe("Runtime", () => {
 					provideEntryPoint: mockProvideEntryPoint,
 				})) as unknown as ContainerRuntime_WithPrivates;
 				// Assert that clientId is not undefined
-				assert(
-					containerRuntime.clientId !== undefined,
-					"clientId should not be undefined",
-				);
+				assert(containerRuntime.clientId !== undefined, "clientId should not be undefined");
 
 				runtimes.set(containerRuntime.clientId, containerRuntime);
 				logger.clear();
@@ -3314,25 +3014,16 @@ describe("Runtime", () => {
 
 			function sendSignals(count: number): void {
 				for (let i = 0; i < count; i++) {
-					containerRuntime.submitSignal(
-						"TestSignalType",
-						`TestSignalContent ${i + 1}`,
-					);
+					containerRuntime.submitSignal("TestSignalType", `TestSignalContent ${i + 1}`);
 					const { type, content } =
 						submittedSignals[submittedSignals.length - 1].envelope.contents;
 					assert(type === "TestSignalType", "Signal type should match");
 					assertSignalContentIsAString(content);
-					assert(
-						content === `TestSignalContent ${i + 1}`,
-						"Signal content should match",
-					);
+					assert(content === `TestSignalContent ${i + 1}`, "Signal content should match");
 				}
 			}
 
-			function processSignals(
-				signals: ISignalEnvelopeWithClientIds[],
-				count: number,
-			): void {
+			function processSignals(signals: ISignalEnvelopeWithClientIds[], count: number): void {
 				const signalsToProcess = signals.splice(0, count);
 				for (const signal of signalsToProcess) {
 					if (signal.targetClientId === undefined) {
@@ -4088,8 +3779,7 @@ describe("Runtime", () => {
 						(error: IErrorBase) => {
 							return (
 								error.errorType === ContainerErrorTypes.usageError &&
-								error.message ===
-									"If compression is enabled, op grouping must be enabled too"
+								error.message === "If compression is enabled, op grouping must be enabled too"
 							);
 						},
 						"Container should throw when op compression is on and op grouping is off",
@@ -4476,10 +4166,7 @@ describe("Runtime", () => {
 
 			for (const runtimeOption of [
 				{ enableGroupedBatching: true },
-				{
-					enableGroupedBatching: true,
-					compressionOptions: enabledCompressionConfig,
-				},
+				{ enableGroupedBatching: true, compressionOptions: enabledCompressionConfig },
 				{ explicitSchemaControl: true },
 				{ gcOptions: { enableGCSweep: true } },
 				// Adding in an arbitrary entry into the IGCRuntimeOptions object
@@ -4516,10 +4203,7 @@ describe("Runtime", () => {
 						existing: false,
 						// We would normally throw (since `createBlobPayloadPending` requires 2.40), but since we did
 						// not explicity set minVersionForCollab, we allow it.
-						runtimeOptions: {
-							createBlobPayloadPending: true,
-							explicitSchemaControl: true,
-						},
+						runtimeOptions: { createBlobPayloadPending: true, explicitSchemaControl: true },
 						provideEntryPoint: mockProvideEntryPoint,
 					});
 				});
@@ -4542,8 +4226,7 @@ describe("Runtime", () => {
 
 			afterEach("dispose", () => {
 				containerRuntime.dispose();
-				containerRuntime =
-					undefined as unknown as ContainerRuntime_WithPrivates;
+				containerRuntime = undefined as unknown as ContainerRuntime_WithPrivates;
 			});
 
 			it("entering and exiting updates inStagingMode flag", () => {
@@ -4636,11 +4319,7 @@ describe("Runtime", () => {
 				const channelCollectionStub = stubChannelCollection(containerRuntime);
 
 				// Won't be resubmitted when exiting staging mode
-				submitDataStoreOp(
-					containerRuntime,
-					"1",
-					genTestDataStoreMessage("pre-staging"),
-				);
+				submitDataStoreOp(containerRuntime, "1", genTestDataStoreMessage("pre-staging"));
 
 				const controls = containerRuntime.enterStagingMode();
 				assert(
@@ -4650,25 +4329,12 @@ describe("Runtime", () => {
 
 				// Entering staging mode triggers a flush, so we should see the pre-staging op sent,
 				// but not the staged op (even with flush)
-				assert.equal(
-					submittedOps.length,
-					1,
-					"Pre-staging op expected to be submitted",
-				);
+				assert.equal(submittedOps.length, 1, "Pre-staging op expected to be submitted");
 
 				const stagedOpContents = genTestDataStoreMessage("staged-op");
-				submitDataStoreOp(
-					containerRuntime,
-					"2",
-					stagedOpContents,
-					"LOCAL_OP_METADATA",
-				);
+				submitDataStoreOp(containerRuntime, "2", stagedOpContents, "LOCAL_OP_METADATA");
 				containerRuntime.flush();
-				assert.equal(
-					submittedOps.length,
-					1,
-					"Only expected the 1 pre-staging op",
-				);
+				assert.equal(submittedOps.length, 1, "Only expected the 1 pre-staging op");
 
 				// default options: { squash: false }
 				controls.commitChanges();
@@ -4689,9 +4355,7 @@ describe("Runtime", () => {
 					"Unexpected args for reSubmit",
 				);
 				assert(
-					channelCollectionStub.notifyStagingMode
-						.getCall(1)
-						?.calledWithExactly(false),
+					channelCollectionStub.notifyStagingMode.getCall(1)?.calledWithExactly(false),
 					"Expected notifyStagingMode to be called with false on the second call",
 				);
 
@@ -4701,11 +4365,7 @@ describe("Runtime", () => {
 					"Staged op should be resubmitted after commitChanges",
 				);
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				assert.equal(
-					submittedOps[1].contents.address,
-					"2",
-					"Unexpected staged op address",
-				);
+				assert.equal(submittedOps[1].contents.address, "2", "Unexpected staged op address");
 			});
 
 			it("discardChanges drops staged ops", () => {
@@ -4723,38 +4383,18 @@ describe("Runtime", () => {
 
 				// Entering staging mode triggers a flush, so we should see the pre-staging op sent,
 				// but not the staged op (even with flush)
-				assert.equal(
-					submittedOps.length,
-					1,
-					"Pre-staging op expected to be submitted",
-				);
+				assert.equal(submittedOps.length, 1, "Pre-staging op expected to be submitted");
 
 				const stagedOpContents = genTestDataStoreMessage("staged-op");
-				submitDataStoreOp(
-					containerRuntime,
-					"2",
-					stagedOpContents,
-					"LOCAL_OP_METADATA",
-				);
-				submitDataStoreOp(
-					containerRuntime,
-					"3",
-					stagedOpContents,
-					"LOCAL_OP_METADATA",
-				);
+				submitDataStoreOp(containerRuntime, "2", stagedOpContents, "LOCAL_OP_METADATA");
+				submitDataStoreOp(containerRuntime, "3", stagedOpContents, "LOCAL_OP_METADATA");
 				containerRuntime.flush();
-				assert.equal(
-					submittedOps.length,
-					1,
-					"No more ops expected while staged",
-				);
+				assert.equal(submittedOps.length, 1, "No more ops expected while staged");
 
 				controls.discardChanges();
 
 				assert.deepEqual(
-					channelCollectionStub.rollbackDataStoreOp
-						.getCalls()
-						.map((call) => call.args),
+					channelCollectionStub.rollbackDataStoreOp.getCalls().map((call) => call.args),
 					[
 						// LIFO order for rolling back
 						[{ address: "3", contents: stagedOpContents }, "LOCAL_OP_METADATA"],
@@ -4764,9 +4404,7 @@ describe("Runtime", () => {
 					"Unexpected args for rollback",
 				);
 				assert(
-					channelCollectionStub.notifyStagingMode
-						.getCall(1)
-						?.calledWithExactly(false),
+					channelCollectionStub.notifyStagingMode.getCall(1)?.calledWithExactly(false),
 					"Expected notifyStagingMode to be called with false on the second call",
 				);
 
@@ -4794,25 +4432,13 @@ describe("Runtime", () => {
 					genTestDataStoreMessage("staged-op"),
 					"LOCAL_OP_METADATA",
 				);
-				assert.equal(
-					containerRuntime.isDirty,
-					true,
-					"Runtime should be dirty (from Outbox)",
-				);
+				assert.equal(containerRuntime.isDirty, true, "Runtime should be dirty (from Outbox)");
 				containerRuntime.flush();
-				assert.equal(
-					containerRuntime.isDirty,
-					true,
-					"Runtime should be dirty (from PSM)",
-				);
+				assert.equal(containerRuntime.isDirty, true, "Runtime should be dirty (from PSM)");
 
 				controls.discardChanges();
 
-				assert.equal(
-					containerRuntime.isDirty,
-					false,
-					"Runtime should not be dirty anymore",
-				);
+				assert.equal(containerRuntime.isDirty, false, "Runtime should not be dirty anymore");
 			});
 		});
 	});

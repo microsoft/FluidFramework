@@ -4,16 +4,13 @@
  */
 
 import type { TreeValue } from "../../core/index.js";
-import {
-	type FlexTreeUnknownUnboxed,
-	isFlexTreeNode,
-} from "../../feature-libraries/index.js";
+import { isFlexTreeNode, type FlexTreeUnknownUnboxed } from "../../feature-libraries/index.js";
 
 import type { TreeNode } from "./treeNode.js";
 import {
-	createTreeNodeFromInner,
 	type InnerNode,
 	simpleTreeNodeSlot,
+	createTreeNodeFromInner,
 	splitInnerNodeType,
 } from "./treeNodeKernel.js";
 import type { TreeLeafValue } from "./treeNodeSchema.js";
@@ -25,9 +22,7 @@ import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
  * @remarks
  * This supports both hydrated and unhydrated nodes.
  */
-export function getOrCreateNodeFromInnerNode(
-	flexNode: InnerNode,
-): TreeNode | TreeValue {
+export function getOrCreateNodeFromInnerNode(flexNode: InnerNode): TreeNode | TreeValue {
 	splitInnerNodeType(flexNode);
 
 	const cached =
@@ -51,7 +46,5 @@ export function getOrCreateNodeFromInnerNode(
 export function getOrCreateNodeFromInnerUnboxedNode(
 	flexTree: FlexTreeUnknownUnboxed,
 ): TreeNode | TreeLeafValue {
-	return isFlexTreeNode(flexTree)
-		? getOrCreateNodeFromInnerNode(flexTree)
-		: flexTree;
+	return isFlexTreeNode(flexTree) ? getOrCreateNodeFromInnerNode(flexTree) : flexTree;
 }

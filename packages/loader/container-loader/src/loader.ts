@@ -26,11 +26,11 @@ import type {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	createChildMonitoringContext,
 	type ITelemetryLoggerExt,
 	type MonitoringContext,
-	mixinMonitoringContext,
 	PerformanceEvent,
+	createChildMonitoringContext,
+	mixinMonitoringContext,
 	sessionStorageConfigProvider,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
@@ -116,8 +116,7 @@ export interface IFluidModuleWithDetails {
  * a package name and package version range.
  * @legacy @beta
  */
-export interface ICodeDetailsLoader
-	extends Partial<IProvideFluidCodeDetailsComparer> {
+export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
 	/**
 	 * Load the code module (package) that is capable to interact with the document.
 	 *
@@ -267,9 +266,7 @@ export class Loader implements IHostLoader {
 			codeLoader,
 			options: options ?? {},
 			scope:
-				options?.provideScopeLoader === false
-					? { ...scope }
-					: { ...scope, ILoader: this },
+				options?.provideScopeLoader === false ? { ...scope } : { ...scope, ILoader: this },
 			protocolHandlerBuilder,
 			subLogger: subMc.logger,
 		};
@@ -311,22 +308,14 @@ export class Loader implements IHostLoader {
 		);
 	}
 
-	public async resolve(
-		request: IRequest,
-		pendingLocalState?: string,
-	): Promise<IContainer> {
-		const eventName =
-			pendingLocalState === undefined ? "Resolve" : "ResolveWithPendingState";
-		return PerformanceEvent.timedExecAsync(
-			this.mc.logger,
-			{ eventName },
-			async () => {
-				return this.resolveCore(
-					request,
-					getAttachedContainerStateFromSerializedContainer(pendingLocalState),
-				);
-			},
-		);
+	public async resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer> {
+		const eventName = pendingLocalState === undefined ? "Resolve" : "ResolveWithPendingState";
+		return PerformanceEvent.timedExecAsync(this.mc.logger, { eventName }, async () => {
+			return this.resolveCore(
+				request,
+				getAttachedContainerStateFromSerializedContainer(pendingLocalState),
+			);
+		});
 	}
 
 	private async resolveCore(
@@ -343,13 +332,10 @@ export class Loader implements IHostLoader {
 		}
 
 		if (pendingLocalState !== undefined) {
-			const parsedPendingUrl = tryParseCompatibleResolvedUrl(
-				pendingLocalState.url,
-			);
+			const parsedPendingUrl = tryParseCompatibleResolvedUrl(pendingLocalState.url);
 			if (
 				parsedPendingUrl?.id !== parsed.id ||
-				parsedPendingUrl?.path.replace(/\/$/, "") !==
-					parsed.path.replace(/\/$/, "")
+				parsedPendingUrl?.path.replace(/\/$/, "") !== parsed.path.replace(/\/$/, "")
 			) {
 				const message = `URL ${resolvedAsFluid.url} does not match pending state URL ${pendingLocalState.url}`;
 				throw new Error(message);

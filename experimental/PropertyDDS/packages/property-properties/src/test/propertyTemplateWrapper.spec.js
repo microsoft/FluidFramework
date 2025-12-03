@@ -12,9 +12,9 @@
 
 const { PropertyFactory } = require("..");
 
-describe("Property Template Wrapper", () => {
-	describe("Compiled Template Creation", () => {
-		it("should work for template that has no inheritence", () => {
+describe("Property Template Wrapper", function () {
+	describe("Compiled Template Creation", function () {
+		it("should work for template that has no inheritence", function () {
 			var noParents = {
 				typeid: "SimpleTest:NoParents-1.0.0",
 				properties: [{ id: "area", typeid: "Float32" }],
@@ -28,7 +28,7 @@ describe("Property Template Wrapper", () => {
 			expect(compiledTemplate).to.deep.equal(wrapper.getPropertyTemplate());
 		});
 
-		it("should contain properties from parent templates", () => {
+		it("should contain properties from parent templates", function () {
 			var withParents = {
 				typeid: "SimpleTest:WithParents-1.0.0",
 				inherits: ["SimpleTest:Parent1-1.0.0", "SimpleTest:Parent2-1.0.0"],
@@ -59,7 +59,7 @@ describe("Property Template Wrapper", () => {
 			]);
 		});
 
-		it("should contain constants from parent templates", () => {
+		it("should contain constants from parent templates", function () {
 			var withParents = {
 				typeid: "SimpleTest:WithParents-1.0.0",
 				inherits: ["SimpleTest:Parent1-1.0.0", "SimpleTest:Parent2-1.0.0"],
@@ -90,7 +90,7 @@ describe("Property Template Wrapper", () => {
 			]);
 		});
 
-		it("should merge property if found in both child and parent", () => {
+		it("should merge property if found in both child and parent", function () {
 			var withParents = {
 				typeid: "SimpleTest:WithParents-1.0.0",
 				inherits: ["SimpleTest:Parent1-1.0.0"],
@@ -113,7 +113,7 @@ describe("Property Template Wrapper", () => {
 			]);
 		});
 
-		it("should merge constant if found in both child and parent", () => {
+		it("should merge constant if found in both child and parent", function () {
 			var withParents = {
 				typeid: "SimpleTest:WithParents-1.0.0",
 				inherits: ["SimpleTest:Parent1-1.0.0"],
@@ -136,7 +136,7 @@ describe("Property Template Wrapper", () => {
 			]);
 		});
 
-		it("should throw error if schema inherits from more than one creation type", () => {
+		it("should throw error if schema inherits from more than one creation type", function () {
 			var badTemplate = {
 				typeid: "SimpleTest:BadTemplate-1.0.0",
 				inherits: ["NodeProperty", "Binary"],
@@ -158,7 +158,7 @@ describe("Property Template Wrapper", () => {
 			}).to.throw();
 		});
 
-		it("should throw error if schema indirectly inherits from more than one creation type", () => {
+		it("should throw error if schema indirectly inherits from more than one creation type", function () {
 			var badParent1 = {
 				typeid: "SimpleTest:BadParent1-1.0.0",
 				inherits: ["NodeProperty"],
@@ -171,10 +171,7 @@ describe("Property Template Wrapper", () => {
 
 			var badTemplate = {
 				typeid: "SimpleTest:IndirectBadTemplate-1.0.0",
-				inherits: [
-					"SimpleTest:BadParent1-1.0.0",
-					"SimpleTest:BadParent2-1.0.0",
-				],
+				inherits: ["SimpleTest:BadParent1-1.0.0", "SimpleTest:BadParent2-1.0.0"],
 				properties: [
 					{
 						id: "props",

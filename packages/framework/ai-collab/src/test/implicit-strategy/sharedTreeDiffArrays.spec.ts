@@ -7,10 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { SchemaFactory } from "@fluidframework/tree";
 
-import {
-	createMergableIdDiffSeries,
-	sharedTreeDiff,
-} from "../../implicit-strategy/index.js";
+import { createMergableIdDiffSeries, sharedTreeDiff } from "../../implicit-strategy/index.js";
 
 const schemaFactory = new SchemaFactory("TreeNodeTest");
 
@@ -34,16 +31,13 @@ describe("sharedTreeDiff() - arrays", () => {
 	});
 
 	it("nested array", () => {
-		class NestedStringArrayNode extends schemaFactory.array(
-			"NestedStringTreeArrayNode",
-			[schemaFactory.string, StringArrayNode],
-		) {}
+		class NestedStringArrayNode extends schemaFactory.array("NestedStringTreeArrayNode", [
+			schemaFactory.string,
+			StringArrayNode,
+		]) {}
 		const treeNode = new NestedStringArrayNode(["test", ["test"]]);
 		assert.deepStrictEqual(
-			sharedTreeDiff(treeNode as unknown as unknown[], [
-				"test",
-				["test", "test2"],
-			]),
+			sharedTreeDiff(treeNode as unknown as unknown[], ["test", ["test", "test2"]]),
 			[
 				{
 					type: "CREATE",
@@ -67,12 +61,9 @@ describe("sharedTreeDiff() - arrays", () => {
 		const treeNode = new ObjectTreeNode({
 			state: ["test", new SimpleObjectTreeNode({ test: true })],
 		});
-		const diffs = sharedTreeDiff(
-			treeNode as unknown as Record<string, unknown>,
-			{
-				state: ["test", { test: false }],
-			},
-		);
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, {
+			state: ["test", { test: false }],
+		});
 
 		assert.deepStrictEqual(diffs, [
 			{
@@ -86,18 +77,15 @@ describe("sharedTreeDiff() - arrays", () => {
 	});
 
 	it("array to object", () => {
-		assert.deepStrictEqual(
-			sharedTreeDiff({ data: [] }, { data: { val: "test" } }),
-			[
-				{
-					type: "CHANGE",
-					path: ["data"],
-					objectId: undefined,
-					value: { val: "test" },
-					oldValue: [],
-				},
-			],
-		);
+		assert.deepStrictEqual(sharedTreeDiff({ data: [] }, { data: { val: "test" } }), [
+			{
+				type: "CHANGE",
+				path: ["data"],
+				objectId: undefined,
+				value: { val: "test" },
+				oldValue: [],
+			},
+		]);
 	});
 });
 
@@ -114,9 +102,7 @@ describe("sharedTreeDiff() - arrays with object ID strategy", () => {
 	}) {}
 
 	it("object with id is moved from a new deleted array index", () => {
-		const treeNode = new ObjectTreeNode({
-			state: ["test", { id: "1", test: true }],
-		});
+		const treeNode = new ObjectTreeNode({ state: ["test", { id: "1", test: true }] });
 		const diffs = sharedTreeDiff(
 			treeNode as unknown as Record<string, unknown>,
 			{ state: [{ id: "1", test: true }] },
@@ -359,16 +345,12 @@ describe("createMergableIdDiffSeries()", () => {
 			],
 		};
 
-		const diffs = sharedTreeDiff(
-			treeNode as unknown as Record<string, unknown>,
-			llmResponse,
-			{
-				cyclesFix: true,
-				useObjectIds: {
-					idAttributeName: "id",
-				},
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, llmResponse, {
+			cyclesFix: true,
+			useObjectIds: {
+				idAttributeName: "id",
 			},
-		);
+		});
 
 		assert.deepStrictEqual(diffs, [
 			{
@@ -431,16 +413,12 @@ describe("createMergableIdDiffSeries()", () => {
 			},
 		];
 
-		const diffs = sharedTreeDiff(
-			treeNode as unknown as Record<string, unknown>,
-			llmResponse,
-			{
-				cyclesFix: true,
-				useObjectIds: {
-					idAttributeName: "id",
-				},
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, llmResponse, {
+			cyclesFix: true,
+			useObjectIds: {
+				idAttributeName: "id",
 			},
-		);
+		});
 
 		assert.deepStrictEqual(diffs, expectedDiffs);
 
@@ -477,16 +455,12 @@ describe("createMergableIdDiffSeries()", () => {
 			],
 		};
 
-		const diffs = sharedTreeDiff(
-			treeNode as unknown as Record<string, unknown>,
-			llmResponse,
-			{
-				cyclesFix: true,
-				useObjectIds: {
-					idAttributeName: "id",
-				},
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, llmResponse, {
+			cyclesFix: true,
+			useObjectIds: {
+				idAttributeName: "id",
 			},
-		);
+		});
 
 		assert.deepStrictEqual(diffs, [
 			{
@@ -575,16 +549,12 @@ describe("createMergableIdDiffSeries()", () => {
 			],
 		};
 
-		const diffs = sharedTreeDiff(
-			treeNode as unknown as Record<string, unknown>,
-			llmResponse,
-			{
-				cyclesFix: true,
-				useObjectIds: {
-					idAttributeName: "id",
-				},
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, llmResponse, {
+			cyclesFix: true,
+			useObjectIds: {
+				idAttributeName: "id",
 			},
-		);
+		});
 
 		assert.deepStrictEqual(diffs, [
 			{
@@ -674,16 +644,12 @@ describe("createMergableIdDiffSeries()", () => {
 			],
 		};
 
-		const diffs = sharedTreeDiff(
-			treeNode as unknown as Record<string, unknown>,
-			llmResponse,
-			{
-				cyclesFix: true,
-				useObjectIds: {
-					idAttributeName: "id",
-				},
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, llmResponse, {
+			cyclesFix: true,
+			useObjectIds: {
+				idAttributeName: "id",
 			},
-		);
+		});
 
 		assert.deepStrictEqual(diffs, [
 			{
@@ -796,16 +762,12 @@ describe("createMergableIdDiffSeries()", () => {
 			],
 		};
 
-		const diffs = sharedTreeDiff(
-			treeNode as unknown as Record<string, unknown>,
-			llmResponse,
-			{
-				cyclesFix: true,
-				useObjectIds: {
-					idAttributeName: "id",
-				},
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, llmResponse, {
+			cyclesFix: true,
+			useObjectIds: {
+				idAttributeName: "id",
 			},
-		);
+		});
 
 		assert.deepStrictEqual(diffs, [
 			{
@@ -867,22 +829,17 @@ describe("createMergableIdDiffSeries()", () => {
 			"SimpleObjectTreeNodeWithObjectArray",
 			{
 				id: schemaFactory.identifier,
-				innerArray: schemaFactory.array("NestedStringTreeArrayNode1", [
-					SimpleObjectTreeNode,
-				]),
+				innerArray: schemaFactory.array("NestedStringTreeArrayNode1", [SimpleObjectTreeNode]),
 			},
 		) {}
-		class ComplexObjectTreeNode extends schemaFactory.object(
-			"ComplexObjectTreeNode",
-			{
-				state: schemaFactory.array("NestedStringTreeArrayNode2", [
-					SimpleObjectTreeNodeWithObjectArray,
-				]),
-				stateArrayTwo: schemaFactory.array("NestedStringTreeArrayNode3", [
-					SimpleObjectTreeNodeWithObjectArray,
-				]),
-			},
-		) {}
+		class ComplexObjectTreeNode extends schemaFactory.object("ComplexObjectTreeNode", {
+			state: schemaFactory.array("NestedStringTreeArrayNode2", [
+				SimpleObjectTreeNodeWithObjectArray,
+			]),
+			stateArrayTwo: schemaFactory.array("NestedStringTreeArrayNode3", [
+				SimpleObjectTreeNodeWithObjectArray,
+			]),
+		}) {}
 
 		const treeNode = new ComplexObjectTreeNode({
 			state: [
@@ -951,16 +908,12 @@ describe("createMergableIdDiffSeries()", () => {
 			],
 		};
 
-		const diffs = sharedTreeDiff(
-			treeNode as unknown as Record<string, unknown>,
-			llmResponse,
-			{
-				cyclesFix: true,
-				useObjectIds: {
-					idAttributeName: "id",
-				},
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, llmResponse, {
+			cyclesFix: true,
+			useObjectIds: {
+				idAttributeName: "id",
 			},
-		);
+		});
 
 		const minimalDiffs = createMergableIdDiffSeries(treeNode, diffs, "id");
 
@@ -1010,22 +963,17 @@ describe("createMergableIdDiffSeries()", () => {
 			"SimpleObjectTreeNodeWithObjectArray",
 			{
 				id: schemaFactory.identifier,
-				innerArray: schemaFactory.array("NestedStringTreeArrayNode1", [
-					SimpleObjectTreeNode,
-				]),
+				innerArray: schemaFactory.array("NestedStringTreeArrayNode1", [SimpleObjectTreeNode]),
 			},
 		) {}
-		class ComplexObjectTreeNode extends schemaFactory.object(
-			"ComplexObjectTreeNode",
-			{
-				state: schemaFactory.array("NestedStringTreeArrayNode2", [
-					SimpleObjectTreeNodeWithObjectArray,
-				]),
-				stateArrayTwo: schemaFactory.array("NestedStringTreeArrayNode3", [
-					SimpleObjectTreeNodeWithObjectArray,
-				]),
-			},
-		) {}
+		class ComplexObjectTreeNode extends schemaFactory.object("ComplexObjectTreeNode", {
+			state: schemaFactory.array("NestedStringTreeArrayNode2", [
+				SimpleObjectTreeNodeWithObjectArray,
+			]),
+			stateArrayTwo: schemaFactory.array("NestedStringTreeArrayNode3", [
+				SimpleObjectTreeNodeWithObjectArray,
+			]),
+		}) {}
 
 		const treeNode = new ComplexObjectTreeNode({
 			state: [
@@ -1071,16 +1019,12 @@ describe("createMergableIdDiffSeries()", () => {
 			],
 		};
 
-		const diffs = sharedTreeDiff(
-			treeNode as unknown as Record<string, unknown>,
-			llmResponse,
-			{
-				cyclesFix: true,
-				useObjectIds: {
-					idAttributeName: "id",
-				},
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, llmResponse, {
+			cyclesFix: true,
+			useObjectIds: {
+				idAttributeName: "id",
 			},
-		);
+		});
 
 		const minimalDiffs = createMergableIdDiffSeries(treeNode, diffs, "id");
 

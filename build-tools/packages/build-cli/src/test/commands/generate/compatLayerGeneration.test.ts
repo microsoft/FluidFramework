@@ -4,10 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import type {
-	IFluidCompatibilityMetadata,
-	Logger,
-} from "@fluidframework/build-tools";
+import type { IFluidCompatibilityMetadata, Logger } from "@fluidframework/build-tools";
 import { formatISO } from "date-fns";
 import { describe, it } from "mocha";
 
@@ -19,8 +16,8 @@ import UpdateGenerationCommand, {
 } from "../../../commands/generate/compatLayerGeneration.js";
 
 describe("generate:compatLayerGeneration", () => {
-	const minimumCompatWindowMonths = UpdateGenerationCommand.flags
-		.minimumCompatWindowMonths.default as number;
+	const minimumCompatWindowMonths = UpdateGenerationCommand.flags.minimumCompatWindowMonths
+		.default as number;
 
 	// Mock logger that captures log calls for verification
 	const createMockLogger = (): Logger => {
@@ -105,9 +102,7 @@ describe("generate:compatLayerGeneration", () => {
 
 		// Create a date monthsSincePreviousRelease months ago
 		const oldDate = new Date();
-		oldDate.setDate(
-			oldDate.getDate() - monthsSincePreviousRelease * daysInMonthApproximation,
-		);
+		oldDate.setDate(oldDate.getDate() - monthsSincePreviousRelease * daysInMonthApproximation);
 		const oldDateString = formatISO(oldDate, { representation: "date" });
 		const mockMetadata: IFluidCompatibilityMetadata = {
 			generation: previousGeneration,
@@ -131,9 +126,7 @@ describe("generate:compatLayerGeneration", () => {
 
 		// Create a date monthsSincePreviousRelease months ago
 		const oldDate = new Date();
-		oldDate.setDate(
-			oldDate.getDate() - monthsSincePreviousRelease * daysInMonthApproximation,
-		);
+		oldDate.setDate(oldDate.getDate() - monthsSincePreviousRelease * daysInMonthApproximation);
 		const oldDateString = formatISO(oldDate, { representation: "date" });
 		const mockMetadata: IFluidCompatibilityMetadata = {
 			generation: previousGeneration,
@@ -194,10 +187,7 @@ describe("generate:compatLayerGeneration", () => {
 			mockLogger,
 		);
 
-		assert.strictEqual(
-			result,
-			previousGeneration + minimumCompatWindowMonths - 1,
-		);
+		assert.strictEqual(result, previousGeneration + minimumCompatWindowMonths - 1);
 	});
 
 	it("should throw error for invalid date format", () => {
@@ -210,12 +200,7 @@ describe("generate:compatLayerGeneration", () => {
 		};
 
 		assert.throws(() => {
-			maybeGetNewGeneration(
-				"2.0.0",
-				invalidMetadata,
-				minimumCompatWindowMonths,
-				mockLogger,
-			);
+			maybeGetNewGeneration("2.0.0", invalidMetadata, minimumCompatWindowMonths, mockLogger);
 		}, /not a valid date/);
 	});
 
@@ -229,12 +214,7 @@ describe("generate:compatLayerGeneration", () => {
 		};
 
 		assert.throws(() => {
-			maybeGetNewGeneration(
-				"2.0.0",
-				invalidMetadata,
-				minimumCompatWindowMonths,
-				mockLogger,
-			);
+			maybeGetNewGeneration("2.0.0", invalidMetadata, minimumCompatWindowMonths, mockLogger);
 		}, /Invalid Version/);
 	});
 

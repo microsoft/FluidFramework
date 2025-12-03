@@ -9,8 +9,8 @@ import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	createChildLogger,
 	type ITelemetryLoggerExt,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
 type BatchTrackerMessage = Pick<ISequencedDocumentMessage, "sequenceNumber">;
@@ -36,42 +36,38 @@ export class BatchTracker {
 			this.trackedBatchCount++;
 		});
 
-		this.batchEventEmitter.on(
-			"batchEnd",
-			(error: unknown, message: BatchTrackerMessage) => {
-				assert(
-					this.startBatchSequenceNumber !== undefined &&
-						this.batchProcessingStartTimeStamp !== undefined,
-					0x2ba /* "batchBegin must fire before batchEnd" */,
-				);
+		this.batchEventEmitter.on("batchEnd", (error: unknown, message: BatchTrackerMessage) => {
+			assert(
+				this.startBatchSequenceNumber !== undefined &&
+					this.batchProcessingStartTimeStamp !== undefined,
+				0x2ba /* "batchBegin must fire before batchEnd" */,
+			);
 
-				const length =
-					message.sequenceNumber - this.startBatchSequenceNumber + 1;
-				if (length >= batchLengthThreshold) {
-					this.logger.sendPerformanceEvent({
-						eventName: "LengthTooBig",
-						length,
-						threshold: batchLengthThreshold,
-						batchEndSequenceNumber: message.sequenceNumber,
-						duration: dateTimeProvider() - this.batchProcessingStartTimeStamp,
-						batchError: error !== undefined,
-					});
-				}
+			const length = message.sequenceNumber - this.startBatchSequenceNumber + 1;
+			if (length >= batchLengthThreshold) {
+				this.logger.sendPerformanceEvent({
+					eventName: "LengthTooBig",
+					length,
+					threshold: batchLengthThreshold,
+					batchEndSequenceNumber: message.sequenceNumber,
+					duration: dateTimeProvider() - this.batchProcessingStartTimeStamp,
+					batchError: error !== undefined,
+				});
+			}
 
-				if (this.trackedBatchCount % batchCountSamplingRate === 0) {
-					this.logger.sendPerformanceEvent({
-						eventName: "Length",
-						length,
-						samplingRate: batchCountSamplingRate,
-						batchEndSequenceNumber: message.sequenceNumber,
-						duration: dateTimeProvider() - this.batchProcessingStartTimeStamp,
-					});
-				}
+			if (this.trackedBatchCount % batchCountSamplingRate === 0) {
+				this.logger.sendPerformanceEvent({
+					eventName: "Length",
+					length,
+					samplingRate: batchCountSamplingRate,
+					batchEndSequenceNumber: message.sequenceNumber,
+					duration: dateTimeProvider() - this.batchProcessingStartTimeStamp,
+				});
+			}
 
-				this.startBatchSequenceNumber = undefined;
-				this.batchProcessingStartTimeStamp = undefined;
-			},
-		);
+			this.startBatchSequenceNumber = undefined;
+			this.batchProcessingStartTimeStamp = undefined;
+		});
 	}
 }
 
@@ -89,9 +85,4 @@ export const BindBatchTracker = (
 	batchLengthThreshold: number = 1000,
 	batchCountSamplingRate: number = 1000,
 ): BatchTracker =>
-	new BatchTracker(
-		batchEventEmitter,
-		logger,
-		batchLengthThreshold,
-		batchCountSamplingRate,
-	);
+	new BatchTracker(batchEventEmitter, logger, batchLengthThreshold, batchCountSamplingRate);

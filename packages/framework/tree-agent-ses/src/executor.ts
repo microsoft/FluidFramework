@@ -8,8 +8,8 @@ import "ses";
 
 import type { ImplicitFieldSchema } from "@fluidframework/tree";
 import {
-	type AsynchronousEditor,
 	createContext,
+	type AsynchronousEditor,
 	type ViewOrTree,
 } from "@fluidframework/tree-agent/alpha";
 
@@ -26,13 +26,8 @@ const lockdownSymbol = Symbol.for("tree-agent.ses.locked");
  * @remarks This function will call the SES `lockdown` API the first time it is invoked. For best performance, create the executor once during application initialization.
  * @alpha
  */
-export function createSesEditExecutor<
-	TSchema extends ImplicitFieldSchema,
->(options?: {
-	compartmentOptions?: {
-		globals?: Map<string, unknown>;
-		[key: string]: unknown;
-	};
+export function createSesEditExecutor<TSchema extends ImplicitFieldSchema>(options?: {
+	compartmentOptions?: { globals?: Map<string, unknown>; [key: string]: unknown };
 	lockdownOptions?: Record<string, unknown>;
 }): AsynchronousEditor<TSchema> {
 	const optionsGlobals: Map<string, unknown> =
@@ -76,10 +71,7 @@ export function createSesEditExecutor<
 			},
 		};
 
-		const compartment = new Compartment({
-			...compartmentOptions,
-			__options__: true,
-		});
+		const compartment = new Compartment({ ...compartmentOptions, __options__: true });
 		await compartment.evaluate(code);
 	};
 }

@@ -10,8 +10,8 @@ export {
 	getApiItemTransformationConfigurationWithDefaults,
 } from "./Configuration.js";
 export {
-	type DefaultDocumentationSuiteConfiguration,
 	type DocumentationSuiteConfiguration,
+	type DefaultDocumentationSuiteConfiguration,
 	type DocumentationSuiteOptions,
 	getDocumentationSuiteConfigurationWithDefaults as getDocumentationSuiteOptionsWithDefaults,
 } from "./DocumentationSuite.js";
@@ -22,8 +22,8 @@ export {
 	FolderDocumentPlacement,
 	type FolderHierarchyConfiguration,
 	type HierarchyConfiguration,
-	HierarchyKind,
 	type HierarchyOptions,
+	HierarchyKind,
 	type SectionHierarchyConfiguration,
 } from "./Hierarchy.js";
 export {

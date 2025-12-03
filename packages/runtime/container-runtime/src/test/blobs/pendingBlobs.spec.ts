@@ -5,10 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import type {
-	IPendingBlobs,
-	SerializableLocalBlobRecord,
-} from "../../blobManager/index.js";
+import type { IPendingBlobs, SerializableLocalBlobRecord } from "../../blobManager/index.js";
 
 import {
 	attachHandle,
@@ -27,9 +24,7 @@ for (const createBlobPayloadPending of [false, true]) {
 	describe(`Pending blobs (pending payloads: ${createBlobPayloadPending})`, () => {
 		describe("getPendingBlobs", () => {
 			it("With no pending blobs", async () => {
-				const { blobManager } = createTestMaterial({
-					createBlobPayloadPending,
-				});
+				const { blobManager } = createTestMaterial({ createBlobPayloadPending });
 				const pendingState = blobManager.getPendingBlobs();
 				assert.strictEqual(pendingState, undefined);
 			});
@@ -65,8 +60,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				}
 
 				// Since everything is still pending, shouldn't have anything in the summary
-				const { ids, redirectTable } =
-					getSummaryContentsWithFormatValidation(blobManager);
+				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids, undefined);
 				assert.strictEqual(redirectTable, undefined);
 			});
@@ -90,18 +84,13 @@ for (const createBlobPayloadPending of [false, true]) {
 				if (createBlobPayloadPending) {
 					const { localId } = unpackHandle(await handleP);
 					assert(
-						pendingBlobs !== undefined &&
-							Object.entries(pendingBlobs).length === 1,
+						pendingBlobs !== undefined && Object.entries(pendingBlobs).length === 1,
 						"Expect one pending blob",
 					);
-					const pendingBlob: SerializableLocalBlobRecord | undefined =
-						pendingBlobs[localId];
+					const pendingBlob: SerializableLocalBlobRecord | undefined = pendingBlobs[localId];
 					assert(pendingBlob !== undefined, "Expect pending blob with localId");
 					assert.strictEqual(pendingBlob.state, "uploaded");
-					assert.strictEqual(
-						pendingBlob.blob,
-						getSerializedBlobForString("hello"),
-					);
+					assert.strictEqual(pendingBlob.blob, getSerializedBlobForString("hello"));
 					assert.strictEqual(
 						pendingBlob.storageId,
 						await getDedupedStorageIdForString("hello"),
@@ -115,32 +104,27 @@ for (const createBlobPayloadPending of [false, true]) {
 				}
 
 				// Since everything is still pending, shouldn't have anything in the summary
-				const { ids, redirectTable } =
-					getSummaryContentsWithFormatValidation(blobManager);
+				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids, undefined);
 				assert.strictEqual(redirectTable, undefined);
 			});
 
 			it("getPendingBlobs after attach completes", async () => {
-				const { blobManager } = createTestMaterial({
-					createBlobPayloadPending,
-				});
+				const { blobManager } = createTestMaterial({ createBlobPayloadPending });
 				const handle = await blobManager.createBlob(textToBlob("hello"));
 				await ensureBlobsShared([handle]);
 				const pendingState = blobManager.getPendingBlobs();
 				assert.strictEqual(pendingState, undefined);
 
-				const { ids, redirectTable } =
-					getSummaryContentsWithFormatValidation(blobManager);
+				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids?.length, 1);
 				assert.strictEqual(redirectTable?.length, 1);
 			});
 
 			it("Multiple blobs in multiple states", async () => {
-				const { mockBlobStorage, mockOrderingService, blobManager } =
-					createTestMaterial({
-						createBlobPayloadPending,
-					});
+				const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+					createBlobPayloadPending,
+				});
 
 				// First blob fully uploaded/attached
 				const handle1 = await blobManager.createBlob(textToBlob("hello"));
@@ -174,21 +158,13 @@ for (const createBlobPayloadPending of [false, true]) {
 					const { localId: localId2 } = unpackHandle(await handleP2);
 					const { localId: localId3 } = unpackHandle(await handleP3);
 					assert(
-						pendingBlobs !== undefined &&
-							Object.entries(pendingBlobs).length === 2,
+						pendingBlobs !== undefined && Object.entries(pendingBlobs).length === 2,
 						"Expect two pending blobs",
 					);
-					const pendingBlob2: SerializableLocalBlobRecord | undefined =
-						pendingBlobs[localId2];
-					assert(
-						pendingBlob2 !== undefined,
-						"Expect pending blob with localId2",
-					);
+					const pendingBlob2: SerializableLocalBlobRecord | undefined = pendingBlobs[localId2];
+					assert(pendingBlob2 !== undefined, "Expect pending blob with localId2");
 					assert.strictEqual(pendingBlob2.state, "uploaded");
-					assert.strictEqual(
-						pendingBlob2.blob,
-						getSerializedBlobForString("world"),
-					);
+					assert.strictEqual(pendingBlob2.blob, getSerializedBlobForString("world"));
 					assert.strictEqual(
 						pendingBlob2.storageId,
 						await getDedupedStorageIdForString("world"),
@@ -196,25 +172,17 @@ for (const createBlobPayloadPending of [false, true]) {
 					assert.strictEqual(typeof pendingBlob2.uploadTime, "number");
 					assert.strictEqual(pendingBlob2.minTTLInSeconds, MIN_TTL);
 
-					const pendingBlob3: SerializableLocalBlobRecord | undefined =
-						pendingBlobs[localId3];
-					assert(
-						pendingBlob3 !== undefined,
-						"Expect pending blob with localId3",
-					);
+					const pendingBlob3: SerializableLocalBlobRecord | undefined = pendingBlobs[localId3];
+					assert(pendingBlob3 !== undefined, "Expect pending blob with localId3");
 					assert.strictEqual(pendingBlob3.state, "localOnly");
-					assert.strictEqual(
-						pendingBlob3.blob,
-						getSerializedBlobForString("fizz"),
-					);
+					assert.strictEqual(pendingBlob3.blob, getSerializedBlobForString("fizz"));
 				} else {
 					const pendingBlobs = blobManager.getPendingBlobs();
 					assert.strictEqual(pendingBlobs, undefined);
 				}
 
 				// Only the first blob should be in the summary
-				const { ids, redirectTable } =
-					getSummaryContentsWithFormatValidation(blobManager);
+				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids?.length, 1);
 				assert.strictEqual(redirectTable?.length, 1);
 			});
@@ -253,8 +221,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert.deepStrictEqual(roundTrippedPendingBlobs, pendingBlobs);
 
 				// Nothing should have made it into the summary
-				const { ids, redirectTable } =
-					getSummaryContentsWithFormatValidation(blobManager);
+				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids, undefined);
 				assert.strictEqual(redirectTable, undefined);
 			});
@@ -281,11 +248,10 @@ for (const createBlobPayloadPending of [false, true]) {
 					},
 				} as const satisfies IPendingBlobs;
 
-				const { mockBlobStorage, mockOrderingService, blobManager } =
-					createTestMaterial({
-						pendingBlobs,
-						createBlobPayloadPending,
-					});
+				const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+					pendingBlobs,
+					createBlobPayloadPending,
+				});
 
 				mockBlobStorage.pause();
 				mockOrderingService.pause();
@@ -308,10 +274,7 @@ for (const createBlobPayloadPending of [false, true]) {
 					await new Promise<void>((resolve) => {
 						const onMessageReceived = () => {
 							if (mockOrderingService.messagesReceived === 1) {
-								mockOrderingService.events.off(
-									"messageReceived",
-									onMessageReceived,
-								);
+								mockOrderingService.events.off("messageReceived", onMessageReceived);
 								resolve();
 							}
 						};
@@ -332,10 +295,7 @@ for (const createBlobPayloadPending of [false, true]) {
 					},
 				};
 
-				assert.deepStrictEqual(
-					roundTrippedPendingBlobs1,
-					expectedPendingBlobs1,
-				);
+				assert.deepStrictEqual(roundTrippedPendingBlobs1, expectedPendingBlobs1);
 
 				// Nothing should have made it into the summary
 				const { ids: ids1, redirectTable: redirectTable1 } =
@@ -358,25 +318,16 @@ for (const createBlobPayloadPending of [false, true]) {
 				} = roundTrippedPendingBlobs2;
 				// blob1 was allowed to upload
 				assert.strictEqual(roundTrippedPendingBlob1.state, "uploaded");
-				assert.strictEqual(
-					roundTrippedPendingBlob1.blob,
-					getSerializedBlobForString("hello"),
-				);
+				assert.strictEqual(roundTrippedPendingBlob1.blob, getSerializedBlobForString("hello"));
 				assert.strictEqual(
 					roundTrippedPendingBlob1.storageId,
 					await getDedupedStorageIdForString("hello"),
 				);
-				assert.strictEqual(
-					typeof roundTrippedPendingBlob1.uploadTime,
-					"number",
-				);
+				assert.strictEqual(typeof roundTrippedPendingBlob1.uploadTime, "number");
 				assert.strictEqual(roundTrippedPendingBlob1.minTTLInSeconds, MIN_TTL);
 				// blob2 is still waiting on upload
 				assert.strictEqual(roundTrippedPendingBlob2.state, "localOnly");
-				assert.strictEqual(
-					roundTrippedPendingBlob2.blob,
-					getSerializedBlobForString("world"),
-				);
+				assert.strictEqual(roundTrippedPendingBlob2.blob, getSerializedBlobForString("world"));
 				// blob3 should be shared and no longer in the pending blobs.
 				assert.strictEqual(roundTrippedPendingBlob3, undefined);
 
@@ -422,22 +373,15 @@ for (const createBlobPayloadPending of [false, true]) {
 				});
 
 				assert(blobManager.hasBlob("blob1"));
-				const blob1 = await blobManager.getBlob(
-					"blob1",
-					createBlobPayloadPending,
-				);
+				const blob1 = await blobManager.getBlob("blob1", createBlobPayloadPending);
 				assert.strictEqual(blobToText(blob1), "hello");
 
 				assert(blobManager.hasBlob("blob2"));
-				const blob2 = await blobManager.getBlob(
-					"blob2",
-					createBlobPayloadPending,
-				);
+				const blob2 = await blobManager.getBlob("blob2", createBlobPayloadPending);
 				assert.strictEqual(blobToText(blob2), "world");
 
 				// Nothing should have made it into the summary
-				const { ids, redirectTable } =
-					getSummaryContentsWithFormatValidation(blobManager);
+				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids, undefined);
 				assert.strictEqual(redirectTable, undefined);
 			});
@@ -450,19 +394,15 @@ for (const createBlobPayloadPending of [false, true]) {
 					},
 				};
 
-				const { mockBlobStorage, mockOrderingService, blobManager } =
-					createTestMaterial({
-						pendingBlobs,
-						createBlobPayloadPending,
-					});
+				const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+					pendingBlobs,
+					createBlobPayloadPending,
+				});
 
 				await blobManager.sharePendingBlobs();
 
 				assert(blobManager.hasBlob("blob1"));
-				const blob1 = await blobManager.getBlob(
-					"blob1",
-					createBlobPayloadPending,
-				);
+				const blob1 = await blobManager.getBlob("blob1", createBlobPayloadPending);
 				assert.strictEqual(blobToText(blob1), "hello");
 
 				// Verify only a single blob uploaded and a single message sequenced
@@ -470,8 +410,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert.strictEqual(mockOrderingService.messagesSequenced, 1);
 
 				// Shared blob should be in the summary
-				const { ids, redirectTable } =
-					getSummaryContentsWithFormatValidation(blobManager);
+				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids?.length, 1);
 				assert.strictEqual(redirectTable?.length, 1);
 
@@ -490,19 +429,15 @@ for (const createBlobPayloadPending of [false, true]) {
 					},
 				};
 
-				const { mockBlobStorage, mockOrderingService, blobManager } =
-					createTestMaterial({
-						pendingBlobs,
-						createBlobPayloadPending,
-					});
+				const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+					pendingBlobs,
+					createBlobPayloadPending,
+				});
 
 				await blobManager.sharePendingBlobs();
 
 				assert(blobManager.hasBlob("blob1"));
-				const blob1 = await blobManager.getBlob(
-					"blob1",
-					createBlobPayloadPending,
-				);
+				const blob1 = await blobManager.getBlob("blob1", createBlobPayloadPending);
 				assert.strictEqual(blobToText(blob1), "hello");
 
 				// Verify no blobs uploaded and a single message sequenced
@@ -510,8 +445,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert.strictEqual(mockOrderingService.messagesSequenced, 1);
 
 				// Shared blob should be in the summary
-				const { ids, redirectTable } =
-					getSummaryContentsWithFormatValidation(blobManager);
+				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids?.length, 1);
 				assert.strictEqual(redirectTable?.length, 1);
 
@@ -530,19 +464,15 @@ for (const createBlobPayloadPending of [false, true]) {
 					},
 				};
 
-				const { mockBlobStorage, mockOrderingService, blobManager } =
-					createTestMaterial({
-						pendingBlobs,
-						createBlobPayloadPending,
-					});
+				const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+					pendingBlobs,
+					createBlobPayloadPending,
+				});
 
 				await blobManager.sharePendingBlobs();
 
 				assert(blobManager.hasBlob("blob1"));
-				const blob1 = await blobManager.getBlob(
-					"blob1",
-					createBlobPayloadPending,
-				);
+				const blob1 = await blobManager.getBlob("blob1", createBlobPayloadPending);
 				assert.strictEqual(blobToText(blob1), "hello");
 
 				// Verify a single blob uploaded (the reupload) and a single message sequenced
@@ -550,8 +480,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert.strictEqual(mockOrderingService.messagesSequenced, 1);
 
 				// Shared blob should be in the summary
-				const { ids, redirectTable } =
-					getSummaryContentsWithFormatValidation(blobManager);
+				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids?.length, 1);
 				assert.strictEqual(redirectTable?.length, 1);
 
@@ -581,31 +510,21 @@ for (const createBlobPayloadPending of [false, true]) {
 					},
 				};
 
-				const { mockBlobStorage, mockOrderingService, blobManager } =
-					createTestMaterial({
-						pendingBlobs,
-						createBlobPayloadPending,
-					});
+				const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+					pendingBlobs,
+					createBlobPayloadPending,
+				});
 
 				await blobManager.sharePendingBlobs();
 
 				assert(blobManager.hasBlob("blob1"));
-				const blob1 = await blobManager.getBlob(
-					"blob1",
-					createBlobPayloadPending,
-				);
+				const blob1 = await blobManager.getBlob("blob1", createBlobPayloadPending);
 				assert.strictEqual(blobToText(blob1), "hello");
 				assert(blobManager.hasBlob("blob2"));
-				const blob2 = await blobManager.getBlob(
-					"blob2",
-					createBlobPayloadPending,
-				);
+				const blob2 = await blobManager.getBlob("blob2", createBlobPayloadPending);
 				assert.strictEqual(blobToText(blob2), "world");
 				assert(blobManager.hasBlob("blob3"));
-				const blob3 = await blobManager.getBlob(
-					"blob3",
-					createBlobPayloadPending,
-				);
+				const blob3 = await blobManager.getBlob("blob3", createBlobPayloadPending);
 				assert.strictEqual(blobToText(blob3), "fizz");
 
 				// Two blobs uploaded (blob1 and blob3) and three messages sequenced
@@ -613,8 +532,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert.strictEqual(mockOrderingService.messagesSequenced, 3);
 
 				// Shared blobs should be in the summary
-				const { ids, redirectTable } =
-					getSummaryContentsWithFormatValidation(blobManager);
+				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids?.length, 3);
 				assert.strictEqual(redirectTable?.length, 3);
 
@@ -645,27 +563,14 @@ for (const createBlobPayloadPending of [false, true]) {
 						},
 					};
 
-					const { mockBlobStorage, mockOrderingService, blobManager } =
-						createTestMaterial({
-							pendingBlobs,
-							createBlobPayloadPending,
-						});
+					const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+						pendingBlobs,
+						createBlobPayloadPending,
+					});
 
-					mockOrderingService.sendBlobAttachMessage(
-						"priorClientId",
-						"blob1",
-						"remoteBlob1",
-					);
-					mockOrderingService.sendBlobAttachMessage(
-						"priorClientId",
-						"blob2",
-						"remoteBlob2",
-					);
-					mockOrderingService.sendBlobAttachMessage(
-						"priorClientId",
-						"blob3",
-						"remoteBlob3",
-					);
+					mockOrderingService.sendBlobAttachMessage("priorClientId", "blob1", "remoteBlob1");
+					mockOrderingService.sendBlobAttachMessage("priorClientId", "blob2", "remoteBlob2");
+					mockOrderingService.sendBlobAttachMessage("priorClientId", "blob3", "remoteBlob3");
 
 					// Should already have received and sequenced all three messages sent above
 					assert.strictEqual(mockBlobStorage.blobsReceived, 0);
@@ -675,8 +580,7 @@ for (const createBlobPayloadPending of [false, true]) {
 					// be in the pending state
 					assert.strictEqual(blobManager.getPendingBlobs(), undefined);
 					// Shared blobs should be in the summary
-					const { ids, redirectTable } =
-						getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids?.length, 3);
 					assert.strictEqual(redirectTable?.length, 3);
 
@@ -707,11 +611,10 @@ for (const createBlobPayloadPending of [false, true]) {
 						},
 					};
 
-					const { mockBlobStorage, mockOrderingService, blobManager } =
-						createTestMaterial({
-							pendingBlobs,
-							createBlobPayloadPending,
-						});
+					const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+						pendingBlobs,
+						createBlobPayloadPending,
+					});
 
 					mockBlobStorage.pause();
 
@@ -730,16 +633,8 @@ for (const createBlobPayloadPending of [false, true]) {
 						});
 					}
 
-					mockOrderingService.sendBlobAttachMessage(
-						"priorClientId",
-						"blob1",
-						"remoteBlob1",
-					);
-					mockOrderingService.sendBlobAttachMessage(
-						"priorClientId",
-						"blob2",
-						"remoteBlob2",
-					);
+					mockOrderingService.sendBlobAttachMessage("priorClientId", "blob1", "remoteBlob1");
+					mockOrderingService.sendBlobAttachMessage("priorClientId", "blob2", "remoteBlob2");
 
 					// Should already have received and sequenced both messages sent above
 					assert.strictEqual(mockBlobStorage.blobsReceived, 2);
@@ -751,8 +646,7 @@ for (const createBlobPayloadPending of [false, true]) {
 					// be in the pending state
 					assert.strictEqual(blobManager.getPendingBlobs(), undefined);
 					// Shared blobs should be in the summary
-					const { ids, redirectTable } =
-						getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids?.length, 2);
 					assert.strictEqual(redirectTable?.length, 2);
 
@@ -791,31 +685,18 @@ for (const createBlobPayloadPending of [false, true]) {
 						},
 					};
 
-					const { mockBlobStorage, mockOrderingService, blobManager } =
-						createTestMaterial({
-							pendingBlobs,
-							createBlobPayloadPending,
-						});
+					const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+						pendingBlobs,
+						createBlobPayloadPending,
+					});
 
 					mockOrderingService.pause();
 
 					// Enqueue the attach messages from the prior client, so they will be sequenced before the
 					// new messages resulting from the sharePendingBlobs() call.
-					mockOrderingService.sendBlobAttachMessage(
-						"priorClientId",
-						"blob1",
-						"remoteBlob1",
-					);
-					mockOrderingService.sendBlobAttachMessage(
-						"priorClientId",
-						"blob2",
-						"remoteBlob2",
-					);
-					mockOrderingService.sendBlobAttachMessage(
-						"priorClientId",
-						"blob3",
-						"remoteBlob3",
-					);
+					mockOrderingService.sendBlobAttachMessage("priorClientId", "blob1", "remoteBlob1");
+					mockOrderingService.sendBlobAttachMessage("priorClientId", "blob2", "remoteBlob2");
+					mockOrderingService.sendBlobAttachMessage("priorClientId", "blob3", "remoteBlob3");
 
 					const sharePendingBlobsP = blobManager.sharePendingBlobs();
 
@@ -825,17 +706,11 @@ for (const createBlobPayloadPending of [false, true]) {
 						await new Promise<void>((resolve) => {
 							const onMessageReceived = () => {
 								if (mockOrderingService.messagesReceived === 6) {
-									mockOrderingService.events.off(
-										"messageReceived",
-										onMessageReceived,
-									);
+									mockOrderingService.events.off("messageReceived", onMessageReceived);
 									resolve();
 								}
 							};
-							mockOrderingService.events.on(
-								"messageReceived",
-								onMessageReceived,
-							);
+							mockOrderingService.events.on("messageReceived", onMessageReceived);
 						});
 					}
 
@@ -853,8 +728,7 @@ for (const createBlobPayloadPending of [false, true]) {
 					// be in the pending state
 					assert.strictEqual(blobManager.getPendingBlobs(), undefined);
 					// Shared blobs should be in the summary
-					const { ids, redirectTable } =
-						getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids?.length, 3);
 					assert.strictEqual(redirectTable?.length, 3);
 
@@ -894,11 +768,10 @@ for (const createBlobPayloadPending of [false, true]) {
 						},
 					};
 
-					const { mockBlobStorage, mockOrderingService, blobManager } =
-						createTestMaterial({
-							pendingBlobs,
-							createBlobPayloadPending,
-						});
+					const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+						pendingBlobs,
+						createBlobPayloadPending,
+					});
 
 					mockOrderingService.pause();
 
@@ -910,38 +783,20 @@ for (const createBlobPayloadPending of [false, true]) {
 						await new Promise<void>((resolve) => {
 							const onMessageReceived = () => {
 								if (mockOrderingService.messagesReceived === 3) {
-									mockOrderingService.events.off(
-										"messageReceived",
-										onMessageReceived,
-									);
+									mockOrderingService.events.off("messageReceived", onMessageReceived);
 									resolve();
 								}
 							};
-							mockOrderingService.events.on(
-								"messageReceived",
-								onMessageReceived,
-							);
+							mockOrderingService.events.on("messageReceived", onMessageReceived);
 						});
 					}
 
 					// Enqueue the attach messages from the prior client after the ones from the sharePendingBlobs
 					// call, so they will be sequenced after. This scenario is probably rare in normal/intended use,
 					// since it would imply the prior client is still connected.
-					mockOrderingService.sendBlobAttachMessage(
-						"priorClientId",
-						"blob1",
-						"remoteBlob1",
-					);
-					mockOrderingService.sendBlobAttachMessage(
-						"priorClientId",
-						"blob2",
-						"remoteBlob2",
-					);
-					mockOrderingService.sendBlobAttachMessage(
-						"priorClientId",
-						"blob3",
-						"remoteBlob3",
-					);
+					mockOrderingService.sendBlobAttachMessage("priorClientId", "blob1", "remoteBlob1");
+					mockOrderingService.sendBlobAttachMessage("priorClientId", "blob2", "remoteBlob2");
+					mockOrderingService.sendBlobAttachMessage("priorClientId", "blob3", "remoteBlob3");
 
 					assert.strictEqual(mockBlobStorage.blobsReceived, 2);
 					assert.strictEqual(mockOrderingService.messagesReceived, 6);
@@ -957,8 +812,7 @@ for (const createBlobPayloadPending of [false, true]) {
 					// be in the pending state
 					assert.strictEqual(blobManager.getPendingBlobs(), undefined);
 					// Shared blobs should be in the summary
-					const { ids, redirectTable } =
-						getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids?.length, 3);
 					assert.strictEqual(redirectTable?.length, 3);
 

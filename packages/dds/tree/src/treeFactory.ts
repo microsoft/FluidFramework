@@ -6,34 +6,32 @@
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import {
-	type FactoryOut,
 	type ISharedObject,
 	type ISharedObjectKind,
-	type KernelArgs,
 	makeSharedObjectKind,
+	type KernelArgs,
 	type SharedKernelFactory,
 	type SharedObjectOptions,
+	type FactoryOut,
 } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { FluidClientVersion } from "./codec/index.js";
+
 import {
-	type ITreePrivate,
 	SharedTreeKernel,
-	type SharedTreeKernelView,
+	type ITreePrivate,
 	type SharedTreeOptions,
 	type SharedTreeOptionsBeta,
 	type SharedTreeOptionsInternal,
+	type SharedTreeKernelView,
 } from "./shared-tree/index.js";
+import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
+import type { ITree } from "./simple-tree/index.js";
+import { Breakable, copyProperty } from "./util/index.js";
+import { FluidClientVersion } from "./codec/index.js";
 import {
 	editManagerFormatVersionSelectorForSharedBranches,
 	messageFormatVersionSelectorForSharedBranches,
 } from "./shared-tree-core/index.js";
-import {
-	SharedTreeAttributes,
-	SharedTreeFactoryType,
-} from "./sharedTreeAttributes.js";
-import type { ITree } from "./simple-tree/index.js";
-import { Breakable, copyProperty } from "./util/index.js";
 
 /**
  * {@link ITreePrivate} extended with ISharedObject.
@@ -69,9 +67,7 @@ function treeKernelFactory(
 			// B. Otherwise, we use args.minVersionForCollab, which is propagated from the ContainerRuntime.
 			// C. If neither specifies it, we fall back to a default value default of 2.0 since that is the oldest version that supports SharedTree.
 			minVersionForCollab:
-				minVersionForCollab ??
-				args.minVersionForCollab ??
-				FluidClientVersion.v2_0,
+				minVersionForCollab ?? args.minVersionForCollab ?? FluidClientVersion.v2_0,
 		};
 
 		return new SharedTreeKernel(
@@ -205,9 +201,7 @@ export function configuredSharedTreeInternal(
 	return makeSharedObjectKind<ITree>(sharedObjectOptions);
 }
 
-export function resolveOptions(
-	options: SharedTreeOptions,
-): SharedTreeOptionsInternal {
+export function resolveOptions(options: SharedTreeOptions): SharedTreeOptionsInternal {
 	const internal: SharedTreeOptionsInternal = {
 		...resolveSharedBranchesOptions(options.enableSharedBranches),
 	};

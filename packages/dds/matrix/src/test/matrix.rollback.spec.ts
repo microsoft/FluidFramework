@@ -20,8 +20,7 @@ describe("SharedMatrix rollback", () => {
 			flushMode: FlushMode.TurnBased,
 		});
 		const dataRuntime = new MockFluidDataStoreRuntime();
-		const containerRuntime =
-			containerRuntimeFactory.createContainerRuntime(dataRuntime);
+		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataRuntime);
 		const matrix = matrixFactory.create(dataRuntime, "A");
 		matrix.connect({
 			deltaConnection: dataRuntime.createDeltaConnection(),
@@ -33,11 +32,7 @@ describe("SharedMatrix rollback", () => {
 		// Do not process messages yet, keep ops local
 
 		// Initial state after insert
-		assert.deepEqual(
-			extract(matrix),
-			[[undefined]],
-			"initial state after insert",
-		);
+		assert.deepEqual(extract(matrix), [[undefined]], "initial state after insert");
 
 		matrix.setCell(0, 0, 42);
 		assert.deepEqual(extract(matrix), [[42]], "after setCell(0, 0, 42)");
@@ -50,11 +45,7 @@ describe("SharedMatrix rollback", () => {
 		// Now process messages to ensure no-op
 		containerRuntime.flush();
 		containerRuntimeFactory.processAllMessages();
-		assert.deepEqual(
-			extract(matrix),
-			[],
-			"after processAllMessages post-rollback",
-		);
+		assert.deepEqual(extract(matrix), [], "after processAllMessages post-rollback");
 	});
 
 	it("should rollback an insertCols operation", () => {
@@ -62,8 +53,7 @@ describe("SharedMatrix rollback", () => {
 			flushMode: FlushMode.TurnBased,
 		});
 		const dataRuntime = new MockFluidDataStoreRuntime();
-		const containerRuntime =
-			containerRuntimeFactory.createContainerRuntime(dataRuntime);
+		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataRuntime);
 		const matrix = matrixFactory.create(dataRuntime, "A");
 		matrix.connect({
 			deltaConnection: dataRuntime.createDeltaConnection(),
@@ -75,11 +65,7 @@ describe("SharedMatrix rollback", () => {
 		assert.deepEqual(extract(matrix), [[]], "initial state after row insert");
 
 		matrix.insertCols(0, 2);
-		assert.deepEqual(
-			extract(matrix),
-			[[undefined, undefined]],
-			"after insertCols(0, 2)",
-		);
+		assert.deepEqual(extract(matrix), [[undefined, undefined]], "after insertCols(0, 2)");
 
 		// Rollback all unacked changes using containerRuntime.rollback
 		containerRuntime.rollback?.();
@@ -89,11 +75,7 @@ describe("SharedMatrix rollback", () => {
 		// Now process messages to ensure no-op
 		containerRuntime.flush();
 		containerRuntimeFactory.processAllMessages();
-		assert.deepEqual(
-			extract(matrix),
-			[],
-			"after processAllMessages post-rollback",
-		);
+		assert.deepEqual(extract(matrix), [], "after processAllMessages post-rollback");
 	});
 
 	it("should rollback a removeCols operation", () => {
@@ -101,8 +83,7 @@ describe("SharedMatrix rollback", () => {
 			flushMode: FlushMode.TurnBased,
 		});
 		const dataRuntime = new MockFluidDataStoreRuntime();
-		const containerRuntime =
-			containerRuntimeFactory.createContainerRuntime(dataRuntime);
+		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataRuntime);
 		const matrix = matrixFactory.create(dataRuntime, "A");
 		matrix.connect({
 			deltaConnection: dataRuntime.createDeltaConnection(),
@@ -115,11 +96,7 @@ describe("SharedMatrix rollback", () => {
 		matrix.setCell(0, 1, 2);
 		containerRuntime.flush();
 		// State after sets
-		assert.deepEqual(
-			extract(matrix),
-			[[1, 2]],
-			"after setCell(0, 0, 1) and setCell(0, 1, 2)",
-		);
+		assert.deepEqual(extract(matrix), [[1, 2]], "after setCell(0, 0, 1) and setCell(0, 1, 2)");
 
 		matrix.removeCols(0, 1);
 		assert.deepEqual(extract(matrix), [[2]], "after removeCols(0, 1)");
@@ -132,11 +109,7 @@ describe("SharedMatrix rollback", () => {
 		// Now process messages to ensure no-op
 		containerRuntime.flush();
 		containerRuntimeFactory.processAllMessages();
-		assert.deepEqual(
-			extract(matrix),
-			[[1, 2]],
-			"after processAllMessages post-rollback",
-		);
+		assert.deepEqual(extract(matrix), [[1, 2]], "after processAllMessages post-rollback");
 	});
 
 	it("should rollback an insertRows operation", () => {
@@ -144,8 +117,7 @@ describe("SharedMatrix rollback", () => {
 			flushMode: FlushMode.TurnBased,
 		});
 		const dataRuntime = new MockFluidDataStoreRuntime();
-		const containerRuntime =
-			containerRuntimeFactory.createContainerRuntime(dataRuntime);
+		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataRuntime);
 		const matrix = matrixFactory.create(dataRuntime, "A");
 		matrix.connect({
 			deltaConnection: dataRuntime.createDeltaConnection(),
@@ -167,8 +139,7 @@ describe("SharedMatrix rollback", () => {
 			flushMode: FlushMode.TurnBased,
 		});
 		const dataRuntime = new MockFluidDataStoreRuntime();
-		const containerRuntime =
-			containerRuntimeFactory.createContainerRuntime(dataRuntime);
+		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataRuntime);
 		const matrix = matrixFactory.create(dataRuntime, "A");
 		matrix.connect({
 			deltaConnection: dataRuntime.createDeltaConnection(),
@@ -186,11 +157,7 @@ describe("SharedMatrix rollback", () => {
 		assert.deepEqual(extract(matrix), [[20]], "after removeRows(0, 1)");
 
 		containerRuntime.rollback?.();
-		assert.deepEqual(
-			extract(matrix),
-			[[10], [20]],
-			"after rollback of removeRows",
-		);
+		assert.deepEqual(extract(matrix), [[10], [20]], "after rollback of removeRows");
 	});
 
 	it("should rollback multiple operations in sequence", () => {
@@ -198,8 +165,7 @@ describe("SharedMatrix rollback", () => {
 			flushMode: FlushMode.TurnBased,
 		});
 		const dataRuntime = new MockFluidDataStoreRuntime();
-		const containerRuntime =
-			containerRuntimeFactory.createContainerRuntime(dataRuntime);
+		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataRuntime);
 		const matrix = matrixFactory.create(dataRuntime, "A");
 		matrix.connect({
 			deltaConnection: dataRuntime.createDeltaConnection(),
@@ -214,11 +180,7 @@ describe("SharedMatrix rollback", () => {
 
 		matrix.insertCols(1, 1);
 		matrix.setCell(0, 1, 15);
-		assert.deepEqual(
-			extract(matrix),
-			[[5, 15]],
-			"after insertCols and setCell",
-		);
+		assert.deepEqual(extract(matrix), [[5, 15]], "after insertCols and setCell");
 
 		containerRuntime.rollback?.();
 		assert.deepEqual(extract(matrix), [[5]], "after rollback of multiple ops");
@@ -229,8 +191,7 @@ describe("SharedMatrix rollback", () => {
 			flushMode: FlushMode.TurnBased,
 		});
 		const dataRuntime = new MockFluidDataStoreRuntime();
-		const containerRuntime =
-			containerRuntimeFactory.createContainerRuntime(dataRuntime);
+		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataRuntime);
 		const matrix = matrixFactory.create(dataRuntime, "A");
 		matrix.connect({
 			deltaConnection: dataRuntime.createDeltaConnection(),
@@ -243,11 +204,7 @@ describe("SharedMatrix rollback", () => {
 		assert.deepEqual(extract(matrix), [[undefined]], "after flush");
 
 		containerRuntime.rollback?.();
-		assert.deepEqual(
-			extract(matrix),
-			[[undefined]],
-			"rollback with no pending changes",
-		);
+		assert.deepEqual(extract(matrix), [[undefined]], "rollback with no pending changes");
 	});
 
 	it("should not rollback already flushed (acked) operations", () => {
@@ -255,8 +212,7 @@ describe("SharedMatrix rollback", () => {
 			flushMode: FlushMode.TurnBased,
 		});
 		const dataRuntime = new MockFluidDataStoreRuntime();
-		const containerRuntime =
-			containerRuntimeFactory.createContainerRuntime(dataRuntime);
+		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataRuntime);
 		const matrix = matrixFactory.create(dataRuntime, "A");
 		matrix.connect({
 			deltaConnection: dataRuntime.createDeltaConnection(),
@@ -270,11 +226,7 @@ describe("SharedMatrix rollback", () => {
 		assert.deepEqual(extract(matrix), [[undefined]], "after flush and process");
 
 		containerRuntime.rollback?.();
-		assert.deepEqual(
-			extract(matrix),
-			[[undefined]],
-			"rollback after flush (no effect)",
-		);
+		assert.deepEqual(extract(matrix), [[undefined]], "rollback after flush (no effect)");
 	});
 
 	it("should rollback with interleaved operations", () => {
@@ -282,8 +234,7 @@ describe("SharedMatrix rollback", () => {
 			flushMode: FlushMode.TurnBased,
 		});
 		const dataRuntime = new MockFluidDataStoreRuntime();
-		const containerRuntime =
-			containerRuntimeFactory.createContainerRuntime(dataRuntime);
+		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataRuntime);
 		const matrix = matrixFactory.create(dataRuntime, "A");
 		matrix.connect({
 			deltaConnection: dataRuntime.createDeltaConnection(),
@@ -319,11 +270,7 @@ describe("SharedMatrix rollback", () => {
 
 		// Remove a column
 		matrix.removeCols(0, 1);
-		assert.deepEqual(
-			extract(matrix),
-			[[undefined], [2]],
-			"after removeCols(0, 1)",
-		);
+		assert.deepEqual(extract(matrix), [[undefined], [2]], "after removeCols(0, 1)");
 
 		// Insert a row
 		matrix.insertRows(1, 1);
@@ -335,19 +282,11 @@ describe("SharedMatrix rollback", () => {
 
 		// Set a cell in the new row
 		matrix.setCell(1, 0, 99);
-		assert.deepEqual(
-			extract(matrix),
-			[[undefined], [99], [2]],
-			"after setCell(1, 0, 99)",
-		);
+		assert.deepEqual(extract(matrix), [[undefined], [99], [2]], "after setCell(1, 0, 99)");
 
 		// Rollback all unacked changes
 		containerRuntime.rollback?.();
 		// Should revert to initial state (empty matrix)
-		assert.deepEqual(
-			extract(matrix),
-			[],
-			"after rollback of interleaved operations",
-		);
+		assert.deepEqual(extract(matrix), [], "after rollback of interleaved operations");
 	});
 });

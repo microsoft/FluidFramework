@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block/internal";
 
@@ -55,9 +52,7 @@ export class LastEditedTrackerDataObject
 	protected async hasInitialized(): Promise<void> {
 		const sharedSummaryBlock =
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			await this.root
-				.get<IFluidHandle<SharedSummaryBlock>>(this.sharedSummaryBlockId)!
-				.get();
+			await this.root.get<IFluidHandle<SharedSummaryBlock>>(this.sharedSummaryBlockId)!.get();
 		this._lastEditedTracker = new LastEditedTracker(sharedSummaryBlock);
 	}
 }

@@ -14,7 +14,7 @@ import {
 } from "@fluid-experimental/tree";
 import type { Serializable } from "@fluidframework/datastore-definitions/legacy";
 
-import { fromJson, NodeKind } from "./treeutils.js";
+import { NodeKind, fromJson } from "./treeutils.js";
 
 function getChild(
 	tree: SharedTree,
@@ -45,18 +45,12 @@ export const TreeObjectProxy = <T extends Object>(
 	new Proxy<T>({} as unknown as T, {
 		get(_target, key) {
 			const view = tree.currentView;
-			const childrenIds = view.getTrait({
-				parent: nodeId,
-				label: key as TraitLabel,
-			});
+			const childrenIds = view.getTrait({ parent: nodeId, label: key as TraitLabel });
 			return getChild(tree, childrenIds[0], update);
 		},
 		set(_target, key, value) {
 			const view = tree.currentView;
-			const childrenIds = view.getTrait({
-				parent: nodeId,
-				label: key as TraitLabel,
-			});
+			const childrenIds = view.getTrait({ parent: nodeId, label: key as TraitLabel });
 			if (childrenIds.length === 0) {
 				update(
 					...Change.insertTree(
@@ -124,9 +118,7 @@ export class TreeArrayProxy<T> {
 								[fromJson(tree, value)],
 								StablePlace.after(view.getViewNode(childrenIds[index])),
 							),
-							Change.delete(
-								StableRange.only(view.getViewNode(childrenIds[index])),
-							),
+							Change.delete(StableRange.only(view.getViewNode(childrenIds[index]))),
 						);
 						return true;
 					}
@@ -177,20 +169,14 @@ export class TreeArrayProxy<T> {
 
 		const removedId = itemIds[itemIds.length - 1];
 		const removed = getChild(this.tree, removedId, this.update);
-		this.update(
-			Change.delete(
-				StableRange.only(this.tree.currentView.getViewNode(removedId)),
-			),
-		);
+		this.update(Change.delete(StableRange.only(this.tree.currentView.getViewNode(removedId))));
 		return removed as Serializable<T>;
 	}
 
 	push(...item: Serializable<T>[]): number {
 		this.update(
 			...Change.insertTree(
-				item.map(
-					(child: Serializable<T>): ChangeNode => fromJson(this.tree, child),
-				),
+				item.map((child: Serializable<T>): ChangeNode => fromJson(this.tree, child)),
 				StablePlace.atEndOf({
 					parent: this.nodeId,
 					label: "items" as TraitLabel,
@@ -214,11 +200,7 @@ export class TreeArrayProxy<T> {
 	}
 
 	map<U>(
-		callbackfn: (
-			value: Serializable<T>,
-			index: number,
-			array: Serializable<T>[],
-		) => U,
+		callbackfn: (value: Serializable<T>, index: number, array: Serializable<T>[]) => U,
 		thisArg?: unknown,
 	): U[] {
 		return this.items.map<U>(

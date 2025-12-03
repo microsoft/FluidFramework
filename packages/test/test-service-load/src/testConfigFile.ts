@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { OptionsMatrix } from "@fluid-private/test-pairwise-generator";
-import type { ILoaderOptions } from "@fluidframework/container-definitions/internal";
+import { OptionsMatrix } from "@fluid-private/test-pairwise-generator";
+import { ILoaderOptions } from "@fluidframework/container-definitions/internal";
 import type { ContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import type { ConfigTypes } from "@fluidframework/core-interfaces";
+import { ConfigTypes } from "@fluidframework/core-interfaces";
 
 /** Type modeling the structure of the testConfig.json file */
 export interface TestConfigurationFileContents {

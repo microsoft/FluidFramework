@@ -70,10 +70,7 @@ export class BuildProject<P extends IPackage> implements IBuildProject<P> {
 				console.warn(
 					`The repoPackages setting is deprecated and will no longer be read in a future version. Use buildProject instead.`,
 				);
-				this._workspaces = loadWorkspacesFromLegacyConfig(
-					config.repoPackages,
-					this,
-				);
+				this._workspaces = loadWorkspacesFromLegacyConfig(config.repoPackages, this);
 			}
 		} else {
 			this._workspaces = new Map<WorkspaceName, IWorkspace>(
@@ -211,11 +208,7 @@ export function loadBuildProject<P extends IPackage>(
 export function getAllDependencies(
 	repo: IBuildProject,
 	packages: IPackage[],
-): {
-	packages: IPackage[];
-	releaseGroups: IReleaseGroup[];
-	workspaces: IWorkspace[];
-} {
+): { packages: IPackage[]; releaseGroups: IReleaseGroup[]; workspaces: IWorkspace[] } {
 	const dependencyPackages: Set<IPackage> = new Set();
 	const releaseGroups: Set<IReleaseGroup> = new Set();
 	const workspaces: Set<IWorkspace> = new Set();
@@ -281,15 +274,9 @@ export async function setDependencyRange<P extends IPackage>(
 				// Update the version in packageJson
 				if (depKind === "prod" && pkg.packageJson.dependencies !== undefined) {
 					pkg.packageJson.dependencies[depName] = depRange;
-				} else if (
-					depKind === "dev" &&
-					pkg.packageJson.devDependencies !== undefined
-				) {
+				} else if (depKind === "dev" && pkg.packageJson.devDependencies !== undefined) {
 					pkg.packageJson.devDependencies[depName] = depRange;
-				} else if (
-					depKind === "peer" &&
-					pkg.packageJson.peerDependencies !== undefined
-				) {
+				} else if (depKind === "peer" && pkg.packageJson.peerDependencies !== undefined) {
 					pkg.packageJson.peerDependencies[depName] = depRange;
 				}
 			}

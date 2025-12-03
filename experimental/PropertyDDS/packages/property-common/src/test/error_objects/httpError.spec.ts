@@ -11,45 +11,45 @@ import { expect } from "chai";
 
 import { HTTPError } from "../..";
 
-describe("property-common.HTTPError", () => {
+describe("property-common.HTTPError", function () {
 	const errorMsg = "a test error message";
 
-	describe("object", () => {
-		it("is instanceof Error", (done) => {
+	describe("object", function () {
+		it("is instanceof Error", function (done) {
 			expect(new HTTPError() instanceof Error).to.equal(true);
 			done();
 		});
 
-		it("is instanceof HTTPError", (done) => {
+		it("is instanceof HTTPError", function (done) {
 			expect(new HTTPError() instanceof HTTPError).to.equal(true);
 			done();
 		});
 	});
 
-	describe("toString", () => {
-		it("basic error message", (done) => {
+	describe("toString", function () {
+		it("basic error message", function (done) {
 			const actual = new HTTPError(errorMsg);
 			expect(actual.toString()).to.have.string(errorMsg);
 			done();
 		});
 	});
 
-	describe("JSON.stringify", () => {
-		it("stringifies", (done) => {
+	describe("JSON.stringify", function () {
+		it("stringifies", function (done) {
 			const actual = JSON.stringify(new HTTPError(errorMsg));
 			expect(actual).to.have.string(errorMsg);
 			done();
 		});
 	});
 
-	describe("flags", () => {
-		it("default at 0", (done) => {
+	describe("flags", function () {
+		it("default at 0", function (done) {
 			const actual = new HTTPError(errorMsg);
 			expect(actual.flags).to.equal(0);
 			done();
 		});
 
-		it("can be quiet", (done) => {
+		it("can be quiet", function (done) {
 			const actual = new HTTPError(
 				errorMsg,
 				undefined,
@@ -63,7 +63,7 @@ describe("property-common.HTTPError", () => {
 			done();
 		});
 
-		it("can be extended", (done) => {
+		it("can be extended", function (done) {
 			const actual = new HTTPError(
 				errorMsg,
 				undefined,

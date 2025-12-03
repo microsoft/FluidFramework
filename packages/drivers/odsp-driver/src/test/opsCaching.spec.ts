@@ -7,19 +7,14 @@ import { strict as assert } from "node:assert";
 
 import { delay } from "@fluidframework/core-utils/internal";
 import type {
-	ISequencedDocumentMessage,
 	IStream,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { OdspDeltaStorageWithCache } from "../odspDeltaStorageService.js";
 import type { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
-import {
-	type CacheEntry,
-	type ICache,
-	type IMessage,
-	OpsCache,
-} from "../opsCaching.js";
+import { type CacheEntry, type ICache, type IMessage, OpsCache } from "../opsCaching.js";
 
 export type MyDataInput = IMessage & { data: string };
 
@@ -418,10 +413,7 @@ describe("OdspDeltaStorageWithCache", () => {
 		return ops;
 	}
 
-	function createOps(
-		fromArg: number,
-		length: number,
-	): ISequencedDocumentMessage[] {
+	function createOps(fromArg: number, length: number): ISequencedDocumentMessage[] {
 		const ops: ISequencedDocumentMessage[] = [];
 		let from = fromArg;
 		const to = from + length;
@@ -438,16 +430,10 @@ describe("OdspDeltaStorageWithCache", () => {
 		from: number,
 		to: number,
 	): ISequencedDocumentMessage[] {
-		return ops.filter(
-			(op) => op.sequenceNumber >= from && op.sequenceNumber < to,
-		);
+		return ops.filter((op) => op.sequenceNumber >= from && op.sequenceNumber < to);
 	}
 
-	function validateOps(
-		ops: ISequencedDocumentMessage[],
-		from: number,
-		to: number,
-	): void {
+	function validateOps(ops: ISequencedDocumentMessage[], from: number, to: number): void {
 		if (to < from) {
 			assert(ops.length === 0);
 		} else {
@@ -469,13 +455,9 @@ describe("OdspDeltaStorageWithCache", () => {
 	): Promise<void> {
 		const snapshotOps = createOps(fromTotal, opsFromSnapshot);
 		const cachedOps = createOps(fromTotal + opsFromSnapshot, opsFromCache);
-		const storageOps = createOps(
-			fromTotal + opsFromSnapshot + opsFromCache,
-			opsFromStorage,
-		);
+		const storageOps = createOps(fromTotal + opsFromSnapshot + opsFromCache, opsFromStorage);
 
-		let totalOps =
-			opsFromSnapshot + opsFromCache + (cacheOnly ? 0 : opsFromStorage);
+		let totalOps = opsFromSnapshot + opsFromCache + (cacheOnly ? 0 : opsFromStorage);
 		const actualTo = toTotal ?? fromTotal + totalOps;
 		assert(actualTo <= fromTotal + totalOps); // code will deadlock if that's not the case
 		const askingOps = actualTo - fromTotal;
@@ -490,10 +472,7 @@ describe("OdspDeltaStorageWithCache", () => {
 			concurrency,
 			// getFromStorage
 			async (from: number, to: number) => {
-				return {
-					messages: filterOps(storageOps, from, to),
-					partialResult: false,
-				};
+				return { messages: filterOps(storageOps, from, to), partialResult: false };
 			},
 			// getCached
 			async (from: number, to: number) => filterOps(cachedOps, from, to),
@@ -501,10 +480,7 @@ describe("OdspDeltaStorageWithCache", () => {
 			(from: number, to: number) => {},
 			// opsReceived
 			(ops: ISequencedDocumentMessage[]) => opsToCache.push(...ops),
-			() =>
-				({
-					isFirstSnapshotFromNetwork: false,
-				}) as unknown as OdspDocumentStorageService,
+			() => ({ isFirstSnapshotFromNetwork: false }) as unknown as OdspDocumentStorageService,
 		);
 
 		const stream = storage.fetchMessages(
@@ -520,9 +496,7 @@ describe("OdspDeltaStorageWithCache", () => {
 		if (cacheOnly) {
 			assert(opsToCache.length === 0);
 		} else {
-			opsToCache = opsToCache.sort(
-				(a, b) => a.sequenceNumber - b.sequenceNumber,
-			);
+			opsToCache = opsToCache.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
 			validateOps(
 				opsToCache,
 				fromTotal + opsFromSnapshot + opsFromCache,

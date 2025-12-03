@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import fs from "fs";
+
 import { assert } from "@fluidframework/core-utils/internal";
-import type {
+import {
 	IDocumentDeltaStorageService,
-	ISequencedDocumentMessage,
 	IStream,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { emptyMessageStream } from "@fluidframework/driver-utils/internal";
-import fs from "fs";
 
 /**
  * Provides access to the underlying delta storage on the local file storage for file driver.
@@ -57,10 +58,7 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
 	 * @param from - First op to be fetched.
 	 * @param to - Last op to be fetched. This is exclusive.
 	 */
-	public getFromWebSocket(
-		from: number,
-		to: number,
-	): ISequencedDocumentMessage[] {
+	public getFromWebSocket(from: number, to: number): ISequencedDocumentMessage[] {
 		const readFrom = Math.max(from, 0); // Inclusive
 		const readTo = Math.min(to, this.messages.length); // Exclusive
 
@@ -69,10 +67,7 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
 		}
 
 		// Optimizations for multiple readers (replay tool)
-		if (
-			this.lastOps.length > 0 &&
-			this.lastOps[0].sequenceNumber === readFrom + 1
-		) {
+		if (this.lastOps.length > 0 && this.lastOps[0].sequenceNumber === readFrom + 1) {
 			return this.lastOps;
 		}
 		this.lastOps = this.messages.slice(readFrom, readTo);

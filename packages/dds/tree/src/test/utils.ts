@@ -4,48 +4,33 @@
  */
 
 import { strict as assert } from "node:assert";
-import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import type { Client } from "@fluid-private/test-dds-utils";
-import { LocalServerTestDriver } from "@fluid-private/test-drivers";
-import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
-import type { ISummarizer } from "@fluidframework/container-runtime/internal";
-import type {
-	ConfigTypes,
-	IConfigProviderBase,
-} from "@fluidframework/core-interfaces";
+import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
 import type {
 	HasListeners,
 	IEmitter,
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
-import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
-import type {
-	IChannelAttributes,
-	IChannelFactory,
-	IChannelServices,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions/internal";
-import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
-import {
-	assertIsStableId,
-	createIdCompressor,
-} from "@fluidframework/id-compressor/internal";
-import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions/internal";
-import {
-	isFluidHandle,
-	toFluidHandleInternal,
-} from "@fluidframework/runtime-utils/internal";
-import type {
-	ISharedObjectKind,
-	SharedObjectKind,
-} from "@fluidframework/shared-object-base/internal";
 import {
 	createMockLoggerExt,
 	type IMockLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
+
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import { LocalServerTestDriver } from "@fluid-private/test-drivers";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
+import type { ISummarizer } from "@fluidframework/container-runtime/internal";
+import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type {
+	IChannelAttributes,
+	IFluidDataStoreRuntime,
+	IChannelServices,
+	IChannelFactory,
+} from "@fluidframework/datastore-definitions/internal";
+import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
+import { assertIsStableId, createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
@@ -53,15 +38,16 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type ChannelFactoryRegistry,
-	createSummarizer,
 	type ITestObjectProvider,
 	type SummaryInfo,
-	summarizeNow,
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
 	TestFluidObjectInternal,
 	TestObjectProvider,
+	createSummarizer,
+	summarizeNow,
 } from "@fluidframework/test-utils/internal";
+
 import {
 	currentVersion,
 	type FormatVersion,
@@ -70,152 +56,155 @@ import {
 	withSchemaValidation,
 } from "../codec/index.js";
 import {
-	type Anchor,
-	type AnchorNode,
-	type AnchorSetRootEvents,
-	applyDelta,
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	CommitKind,
 	type CommitMetadata,
-	CursorLocationType,
-	clonePath,
-	compareUpPaths,
 	type DeltaDetachedNodeBuild,
-	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeDestruction,
-	type DeltaDetachedNodeRename,
 	type DeltaFieldChanges,
 	type DeltaFieldMap,
 	type DeltaMark,
 	type DeltaRoot,
 	type DeltaVisitor,
 	type DetachedFieldIndex,
-	type ExclusiveMapTree,
-	type FieldKindIdentifier,
 	type FieldUpPath,
 	type IEditableForest,
 	type IForestSubscription,
-	type ITreeCursorSynchronous,
 	type JsonableTree,
-	type MapTree,
-	makeDetachedFieldIndex,
-	mapCursorField,
-	moveToDetachedField,
-	type NormalizedFieldUpPath,
-	type RevertibleAlpha,
-	type RevertibleAlphaFactory,
 	type RevisionInfo,
 	type RevisionMetadataSource,
 	type RevisionTag,
 	RevisionTagCodec,
-	revisionMetadataSourceFromInfo,
-	SchemaFormatVersion,
 	type TaggedChange,
-	type TreeFieldStoredSchema,
-	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
-	type TreeStoredSchemaSubscription,
 	type UpPath,
+	applyDelta,
+	clonePath,
+	compareUpPaths,
+	makeDetachedFieldIndex,
+	mapCursorField,
+	moveToDetachedField,
+	revisionMetadataSourceFromInfo,
+	type Anchor,
+	type AnchorNode,
+	type AnchorSetRootEvents,
+	type TreeStoredSchemaSubscription,
+	type ITreeCursorSynchronous,
+	CursorLocationType,
+	type RevertibleAlpha,
+	type RevertibleAlphaFactory,
+	type DeltaDetachedNodeChanges,
+	type DeltaDetachedNodeRename,
+	type NormalizedFieldUpPath,
+	type ExclusiveMapTree,
+	type MapTree,
+	type FieldKindIdentifier,
+	type TreeNodeSchemaIdentifier,
+	type TreeFieldStoredSchema,
+	SchemaFormatVersion,
 } from "../core/index.js";
 import { FormatValidatorBasic } from "../external-utilities/index.js";
 import {
 	Context,
-	chunkFieldSingle,
-	cursorForJsonableTreeField,
-	cursorForMapTreeField,
-	cursorForMapTreeNode,
-	defaultChunkPolicy,
-	defaultIncrementalEncodingPolicy,
+	type NodeIdentifierManager,
 	defaultSchemaPolicy,
-	type FullSchemaPolicy,
-	type IDefaultEditBuilder,
-	type IncrementalEncodingPolicy,
-	jsonableTreeFromCursor,
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,
-	type MinimalMapTreeNodeView,
-	MockNodeIdentifierManager,
-	makeSchemaCodec,
 	mapRootChanges,
-	mapTreeFieldFromCursor,
 	mapTreeFromCursor,
-	mapTreeWithField,
-	type NodeIdentifierManager,
+	MockNodeIdentifierManager,
+	cursorForMapTreeField,
+	type IDefaultEditBuilder,
 	type TreeChunk,
+	mapTreeFieldFromCursor,
+	defaultChunkPolicy,
+	cursorForJsonableTreeField,
+	chunkFieldSingle,
+	makeSchemaCodec,
+	mapTreeWithField,
+	type MinimalMapTreeNodeView,
+	jsonableTreeFromCursor,
+	cursorForMapTreeNode,
+	type FullSchemaPolicy,
+	type IncrementalEncodingPolicy,
+	defaultIncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { FieldChangeDelta } from "../feature-libraries/modular-schema/index.js";
 import {
-	allowsFieldSuperset,
-	allowsTreeSuperset,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../feature-libraries/modular-schema/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { ObjectForest } from "../feature-libraries/object-forest/objectForest.js";
-import { JsonAsTree } from "../jsonDomainSchema.js";
-import {
-	buildConfiguredForest,
 	type CheckoutEvents,
-	createTreeCheckout,
-	type ForestOptions,
-	type ForestType,
-	ForestTypeReference,
-	type ISharedTreeEditor,
-	type ITreeCheckout,
-	type ITreeCheckoutFork,
 	type ITreePrivate,
+	type ITreeCheckout,
+	type SharedTreeContentSnapshot,
+	type TreeCheckout,
+	createTreeCheckout,
+	type ISharedTreeEditor,
+	type ITreeCheckoutFork,
 	independentView,
 	SchematizingSimpleTreeView,
-	type SharedTreeContentSnapshot,
+	type ForestOptions,
+	buildConfiguredForest,
+	type ForestType,
+	ForestTypeReference,
 	type SharedTreeOptionsInternal,
-	type TreeCheckout,
 } from "../shared-tree/index.js";
-import type { Transactor } from "../shared-tree-core/index.js";
 import {
-	getStoredSchema,
 	type ImplicitFieldSchema,
-	type InsertableField,
-	type ITree,
-	restrictiveStoredSchemaGenerationOptions,
-	SchemaFactory,
-	type SimpleNodeSchema,
-	type TreeBranchEvents,
-	type TreeNodeSchema,
-	type TreeView,
 	type TreeViewConfiguration,
-	toInitialSchema,
+	SchemaFactory,
+	type TreeView,
+	type TreeBranchEvents,
+	type ITree,
 	type UnsafeUnknownSchema,
+	type InsertableField,
 	unhydratedFlexTreeFromInsertable,
+	type SimpleNodeSchema,
+	type TreeNodeSchema,
+	getStoredSchema,
+	restrictiveStoredSchemaGenerationOptions,
+	toInitialSchema,
 } from "../simple-tree/index.js";
+import {
+	Breakable,
+	type JsonCompatible,
+	type Mutable,
+	nestedMapFromFlatList,
+	forEachInNestedMap,
+	tryGetFromNestedMap,
+	isReadonlyArray,
+	brand,
+} from "../util/index.js";
+import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import type { Client } from "@fluid-private/test-dds-utils";
+import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
+import type { Transactor } from "../shared-tree-core/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { FieldChangeDelta } from "../feature-libraries/modular-schema/index.js";
 import {
 	configuredSharedTree,
 	configuredSharedTreeInternal,
 	type ISharedTree,
 } from "../treeFactory.js";
-import {
-	Breakable,
-	brand,
-	forEachInNestedMap,
-	isReadonlyArray,
-	type JsonCompatible,
-	type Mutable,
-	nestedMapFromFlatList,
-	tryGetFromNestedMap,
-} from "../util/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
-import { initializeForest } from "./feature-libraries/index.js";
-import {
-	cursorToJsonObject,
-	fieldJsonCursor,
-	singleJsonCursor,
-} from "./json/index.js";
+import { JsonAsTree } from "../jsonDomainSchema.js";
 import {
 	MockContainerRuntimeFactoryWithOpBunching,
 	type MockContainerRuntimeWithOpBunching,
 } from "./mocksForOpBunching.js";
+import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+import type {
+	ISharedObjectKind,
+	SharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
+// eslint-disable-next-line import-x/no-internal-modules
+import { ObjectForest } from "../feature-libraries/object-forest/objectForest.js";
+import {
+	allowsFieldSuperset,
+	allowsTreeSuperset,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../feature-libraries/modular-schema/index.js";
+import { initializeForest } from "./feature-libraries/index.js";
 
 // Testing utilities
 
@@ -305,9 +294,7 @@ export class TestTreeProvider {
 			"trees must be >= 1 to allow summarization on demand",
 		);
 
-		const registry: ChannelFactoryRegistry = [
-			[TestTreeProvider.treeId, factory],
-		];
+		const registry: ChannelFactoryRegistry = [[TestTreeProvider.treeId, factory]];
 		const driver = new LocalServerTestDriver();
 		const containerRuntimeFactory = () =>
 			new TestContainerRuntimeFactory(
@@ -320,23 +307,17 @@ export class TestTreeProvider {
 				{
 					summaryOptions: {
 						summaryConfigOverrides:
-							summarizeType === SummarizeType.disabled
-								? { state: "disabled" }
-								: undefined,
+							summarizeType === SummarizeType.disabled ? { state: "disabled" } : undefined,
 					},
 					enableRuntimeIdCompressor: "on",
 				},
 			);
 
-		const objProvider = new TestObjectProvider(
-			Loader,
-			driver,
-			containerRuntimeFactory,
-		);
+		const objProvider = new TestObjectProvider(Loader, driver, containerRuntimeFactory);
 
 		if (summarizeType === SummarizeType.onDemand) {
 			const container = await objProvider.makeTestContainer();
-			const firstTree = await TestTreeProvider.getTree(container);
+			const firstTree = await this.getTree(container);
 			const { summarizer } = await createSummarizer(objProvider, container);
 			const provider = new TestTreeProvider(objProvider, [
 				container,
@@ -372,9 +353,7 @@ export class TestTreeProvider {
 	 * _i_ is the index of the tree in order of creation.
 	 */
 	public async createTree(): Promise<ISharedTree> {
-		const configProvider = (
-			settings: Record<string, ConfigTypes>,
-		): IConfigProviderBase => ({
+		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		});
 		const container =
@@ -450,10 +429,8 @@ export class TestTreeProviderLite {
 	private readonly runtimeFactory: MockContainerRuntimeFactoryWithOpBunching;
 	public readonly trees: readonly SharedTreeWithContainerRuntime[];
 	public readonly logger: IMockLoggerExt = createMockLoggerExt();
-	private readonly containerRuntimeMap: Map<
-		string,
-		MockContainerRuntimeWithOpBunching
-	> = new Map();
+	private readonly containerRuntimeMap: Map<string, MockContainerRuntimeWithOpBunching> =
+		new Map();
 
 	/**
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
@@ -482,9 +459,7 @@ export class TestTreeProviderLite {
 		});
 		assert(trees >= 1, "Must initialize provider with at least one tree");
 		const t: SharedTreeWithContainerRuntime[] = [];
-		const random = useDeterministicSessionIds
-			? makeRandom(0xdeadbeef)
-			: makeRandom();
+		const random = useDeterministicSessionIds ? makeRandom(0xdeadbeef) : makeRandom();
 		for (let i = 0; i < trees; i++) {
 			const sessionId = random.uuid4() as SessionId;
 			const runtime = new MockFluidDataStoreRuntime({
@@ -494,15 +469,13 @@ export class TestTreeProviderLite {
 				logger: this.logger,
 			});
 			const tree = this.factory.create(runtime, `tree-${i}`);
-			const containerRuntime =
-				this.runtimeFactory.createContainerRuntime(runtime);
+			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
 			this.containerRuntimeMap.set(tree.id, containerRuntime);
 			tree.connect({
 				deltaConnection: runtime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
-			(tree as Mutable<SharedTreeWithContainerRuntime>).containerRuntime =
-				containerRuntime;
+			(tree as Mutable<SharedTreeWithContainerRuntime>).containerRuntime = containerRuntime;
 			t.push(tree as SharedTreeWithContainerRuntime);
 		}
 		this.trees = t;
@@ -525,10 +498,7 @@ export class TestTreeProviderLite {
 	 * - Flushing does not preserve the order in which the messages were sent. To do so, tests should flush the messages
 	 * from the trees in the order they were sent.
 	 */
-	public synchronizeMessages(options?: {
-		count?: number;
-		flush?: boolean;
-	}): void {
+	public synchronizeMessages(options?: { count?: number; flush?: boolean }): void {
 		const flush = options?.flush ?? true;
 		if (flush) {
 			this.containerRuntimeMap.forEach((containerRuntime) => {
@@ -585,9 +555,7 @@ export function spyOnMethod(
 /**
  * Determines whether or not the given delta has a visible impact on the document tree.
  */
-export function isDeltaVisible(
-	fieldChanges: DeltaFieldChanges | undefined,
-): boolean {
+export function isDeltaVisible(fieldChanges: DeltaFieldChanges | undefined): boolean {
 	for (const mark of fieldChanges ?? []) {
 		if (mark.attach !== undefined || mark.detach !== undefined) {
 			return true;
@@ -606,30 +574,21 @@ export function isDeltaVisible(
 /**
  * Assert two MarkList are equal, handling cursors.
  */
-export function assertFieldChangesEqual(
-	a: FieldChangeDelta,
-	b: FieldChangeDelta,
-): void {
+export function assertFieldChangesEqual(a: FieldChangeDelta, b: FieldChangeDelta): void {
 	assert.deepStrictEqual(a, b);
 }
 
 /**
  * Assert two MarkList are equal, handling cursors.
  */
-export function assertMarkListEqual(
-	a: readonly DeltaMark[],
-	b: readonly DeltaMark[],
-): void {
+export function assertMarkListEqual(a: readonly DeltaMark[], b: readonly DeltaMark[]): void {
 	assert.deepStrictEqual(a, b);
 }
 
 /**
  * Assert two Delta are equal, handling cursors.
  */
-export function assertDeltaFieldMapEqual(
-	a: DeltaFieldMap,
-	b: DeltaFieldMap,
-): void {
+export function assertDeltaFieldMapEqual(a: DeltaFieldMap, b: DeltaFieldMap): void {
 	assert.deepStrictEqual(a, b);
 }
 
@@ -679,12 +638,7 @@ export class SharedTreeTestFactory implements IChannelFactory<ISharedTree> {
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
 	): Promise<ISharedTree> {
-		const tree = await this.inner.load(
-			runtime,
-			id,
-			services,
-			channelAttributes,
-		);
+		const tree = await this.inner.load(runtime, id, services, channelAttributes);
 		this.onLoad?.(tree);
 		return tree;
 	}
@@ -696,10 +650,7 @@ export class SharedTreeTestFactory implements IChannelFactory<ISharedTree> {
 	}
 }
 
-export function validateTree(
-	tree: ITreeCheckout,
-	expected: JsonableTree[],
-): void {
+export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): void {
 	const actual = toJsonableTree(tree);
 	assert.deepEqual(actual, expected);
 }
@@ -716,9 +667,7 @@ const schemaCodec = makeSchemaCodec(
 	brand(SchemaFormatVersion.v2),
 );
 
-export function checkRemovedRootsAreSynchronized(
-	trees: readonly ITreeCheckout[],
-): void {
+export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]): void {
 	if (trees.length > 1) {
 		const baseline = nestedMapFromFlatList(trees[0].getRemovedRoots());
 		for (const tree of trees.slice(1)) {
@@ -732,10 +681,7 @@ export function checkRemovedRootsAreSynchronized(
  * This does NOT check that the trees have the same edits, same edit manager state or anything like that.
  * This ONLY checks if the content of the forest of the main branch of the trees match.
  */
-export function validateTreeConsistency(
-	treeA: ITreePrivate,
-	treeB: ITreePrivate,
-): void {
+export function validateTreeConsistency(treeA: ITreePrivate, treeB: ITreePrivate): void {
 	// TODO: validate other aspects of these trees are consistent, for example their collaboration window information.
 	validateSnapshotConsistency(
 		treeA.contentSnapshot(),
@@ -755,15 +701,9 @@ export function validateFuzzTreeConsistency(
 	);
 }
 
-export function validateTreeContent(
-	tree: ITreeCheckout,
-	content: TreeSimpleContent,
-): void {
+export function validateTreeContent(tree: ITreeCheckout, content: TreeSimpleContent): void {
 	const contentReference = jsonableTreeFromFieldCursor(
-		fieldCursorFromInsertable<UnsafeUnknownSchema>(
-			content.schema,
-			content.initialTree,
-		),
+		fieldCursorFromInsertable<UnsafeUnknownSchema>(content.schema, content.initialTree),
 	);
 	assert.deepEqual(toJsonableTree(tree), contentReference);
 	expectSchemaEqual(tree.storedSchema, toInitialSchema(content.schema));
@@ -862,8 +802,7 @@ export function prepareTreeForCompare(tree: JsonableTree[]): object[] {
 
 		// Normalize optional values to be omitted for cleaner diffs:
 		if (output.value === undefined) delete output.value;
-		if (Reflect.ownKeys(output.fields as object).length === 0)
-			delete output.fields;
+		if (Reflect.ownKeys(output.fields as object).length === 0) delete output.fields;
 
 		return output as object;
 	});
@@ -990,10 +929,7 @@ export const IdentifierSchema = sf.object("identifier-object", {
  * @param json - The JSON-compatible object to initialize the tree with.
  * @param optionalRoot - If `true`, the root field is optional; otherwise, it is required. Defaults to `false`.
  */
-export function makeTreeFromJson(
-	json: JsonCompatible,
-	optionalRoot = false,
-): ITreeCheckout {
+export function makeTreeFromJson(json: JsonCompatible, optionalRoot = false): ITreeCheckout {
 	return checkoutWithContent({
 		schema: toInitialSchema(
 			optionalRoot ? SchemaFactory.optional(JsonAsTree.Tree) : JsonAsTree.Tree,
@@ -1013,9 +949,7 @@ export function jsonTreeFromCheckout(tree: ITreeCheckout): JsonCompatible[] {
 	return jsonTreeFromForest(tree.forest);
 }
 
-export function jsonTreeFromForest(
-	forest: IForestSubscription,
-): JsonCompatible[] {
+export function jsonTreeFromForest(forest: IForestSubscription): JsonCompatible[] {
 	const readCursor = forest.allocateCursor();
 	moveToDetachedField(forest, readCursor);
 	const copy = mapCursorField(readCursor, cursorToJsonObject);
@@ -1042,10 +976,7 @@ export function expectEqualMapTreeViews(
 	actual: MinimalMapTreeNodeView,
 	expected: MinimalMapTreeNodeView,
 ): void {
-	expectEqualCursors(
-		cursorForMapTreeNode(actual),
-		cursorForMapTreeNode(expected),
-	);
+	expectEqualCursors(cursorForMapTreeNode(actual), cursorForMapTreeNode(expected));
 }
 
 export function expectEqualCursors(
@@ -1074,10 +1005,7 @@ export function expectEqualPaths(
 	}
 }
 
-export function expectEqualFieldPaths(
-	path: FieldUpPath,
-	expectedPath: FieldUpPath,
-): void {
+export function expectEqualFieldPaths(path: FieldUpPath, expectedPath: FieldUpPath): void {
 	expectEqualPaths(path.parent, expectedPath.parent);
 	assert.equal(path.field, expectedPath.field);
 }
@@ -1101,8 +1029,7 @@ export interface EncodingTestData<TDecoded, TEncoded, TContext = void> {
 	};
 }
 
-const assertDeepEqual = (a: unknown, b: unknown): void =>
-	assert.deepEqual(a, b);
+const assertDeepEqual = (a: unknown, b: unknown): void => assert.deepEqual(a, b);
 
 /**
  * Constructs a basic suite of round-trip tests for all versions of a codec family.
@@ -1129,8 +1056,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 	supportedVersions?: FormatVersion[],
 	discontinuedVersions?: FormatVersion[],
 ): void {
-	const supportedVersionsToTest =
-		supportedVersions ?? family.getSupportedFormats();
+	const supportedVersionsToTest = supportedVersions ?? family.getSupportedFormats();
 	for (const version of supportedVersionsToTest) {
 		describe(`version ${version}`, () => {
 			const codec = family.resolve(version);
@@ -1141,11 +1067,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 			// pattern.
 			const jsonCodec =
 				codec.json.encodedSchema !== undefined
-					? withSchemaValidation(
-							codec.json.encodedSchema,
-							codec.json,
-							FormatValidatorBasic,
-						)
+					? withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic)
 					: codec.json;
 			describe("can json roundtrip", () => {
 				for (const includeStringification of [false, true]) {
@@ -1182,8 +1104,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 				}
 			});
 
-			const failureCases =
-				encodingTestData.failures?.[version ?? "undefined"] ?? [];
+			const failureCases = encodingTestData.failures?.[version ?? "undefined"] ?? [];
 			if (failureCases.length > 0) {
 				describe("rejects malformed data", () => {
 					for (const [name, encodedData, context] of failureCases) {
@@ -1204,11 +1125,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 				const codec = family.resolve(version);
 				const jsonCodec =
 					codec.json.encodedSchema !== undefined
-						? withSchemaValidation(
-								codec.json.encodedSchema,
-								codec.json,
-								FormatValidatorBasic,
-							)
+						? withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic)
 						: codec.json;
 				it("throws when encoding", () => {
 					assert(encodingTestData.successes.length > 0);
@@ -1243,9 +1160,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 export function testChangeReceiver<TChange>(
 	_changeFamily?: ChangeFamily<ChangeFamilyEditor, TChange>,
 ): [
-	changeReceiver: Parameters<
-		ChangeFamily<ChangeFamilyEditor, TChange>["buildEditor"]
-	>[1],
+	changeReceiver: Parameters<ChangeFamily<ChangeFamilyEditor, TChange>["buildEditor"]>[1],
 	getChanges: () => readonly TChange[],
 ] {
 	const changes: TChange[] = [];
@@ -1306,15 +1221,8 @@ export function applyTestDelta(
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
 	params?: DeltaParams,
 ): void {
-	const { detachedFieldIndex, revision, global, rename, build, destroy } =
-		params ?? {};
-	const rootDelta = rootFromDeltaFieldMap(
-		delta,
-		global,
-		rename,
-		build,
-		destroy,
-	);
+	const { detachedFieldIndex, revision, global, rename, build, destroy } = params ?? {};
+	const rootDelta = rootFromDeltaFieldMap(delta, global, rename, build, destroy);
 	applyDelta(
 		rootDelta,
 		revision,
@@ -1369,10 +1277,7 @@ export function createTestUndoRedoStacks(
 		}
 	}
 
-	function onNewCommit(
-		commit: CommitMetadata,
-		getRevertible?: RevertibleAlphaFactory,
-	): void {
+	function onNewCommit(commit: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void {
 		if (getRevertible !== undefined) {
 			const revertible = getRevertible(onDispose);
 			if (commit.kind === CommitKind.Undo) {
@@ -1440,9 +1345,7 @@ export function getView<const TSchema extends ImplicitFieldSchema>(
  * Test trees which manually create their data store runtime must set up their trees'
  * session ids explicitly.
  */
-export const snapshotSessionId = assertIsSessionId(
-	"beefbeef-beef-4000-8000-000000000001",
-);
+export const snapshotSessionId = assertIsSessionId("beefbeef-beef-4000-8000-000000000001");
 
 export function createSnapshotCompressor(seed?: number) {
 	return createAlwaysFinalizedIdCompressor(snapshotSessionId, undefined, seed);
@@ -1494,17 +1397,13 @@ export class MockTreeCheckout implements ITreeCheckout {
 		return this.options.editor;
 	}
 	public get transaction(): Transactor {
-		throw new Error(
-			"'transaction' property not implemented in MockTreeCheckout.",
-		);
+		throw new Error("'transaction' property not implemented in MockTreeCheckout.");
 	}
 	public get events(): Listenable<CheckoutEvents> {
 		throw new Error("'events' property not implemented in MockTreeCheckout.");
 	}
 	public get rootEvents(): Listenable<AnchorSetRootEvents> {
-		throw new Error(
-			"'rootEvents' property not implemented in MockTreeCheckout.",
-		);
+		throw new Error("'rootEvents' property not implemented in MockTreeCheckout.");
 	}
 
 	public branch(): ITreeCheckoutFork {
@@ -1517,18 +1416,10 @@ export class MockTreeCheckout implements ITreeCheckout {
 		throw new Error("Method 'rebase' not implemented in MockTreeCheckout.");
 	}
 	public updateSchema(newSchema: TreeStoredSchema): void {
-		throw new Error(
-			"Method 'updateSchema' not implemented in MockTreeCheckout.",
-		);
+		throw new Error("Method 'updateSchema' not implemented in MockTreeCheckout.");
 	}
-	public getRemovedRoots(): [
-		string | number | undefined,
-		number,
-		JsonableTree,
-	][] {
-		throw new Error(
-			"Method 'getRemovedRoots' not implemented in MockTreeCheckout.",
-		);
+	public getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {
+		throw new Error("Method 'getRemovedRoots' not implemented in MockTreeCheckout.");
 	}
 	public locate(anchor: Anchor): AnchorNode | undefined {
 		throw new Error("Method 'locate' not implemented in MockTreeCheckout.");
@@ -1536,10 +1427,7 @@ export class MockTreeCheckout implements ITreeCheckout {
 }
 
 function normalizeNewFieldContent(
-	content:
-		| readonly ITreeCursorSynchronous[]
-		| ITreeCursorSynchronous
-		| undefined,
+	content: readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined,
 ): ITreeCursorSynchronous {
 	if (content === undefined) {
 		return cursorForMapTreeField([]);
@@ -1604,9 +1492,7 @@ export function chunkToMapTreeField(chunk: TreeChunk): ExclusiveMapTree[] {
 	return mapTreeFieldFromCursor(chunk.cursor());
 }
 
-export function nodeCursorsFromChunk(
-	trees: TreeChunk,
-): ITreeCursorSynchronous[] {
+export function nodeCursorsFromChunk(trees: TreeChunk): ITreeCursorSynchronous[] {
 	return mapCursorField(trees.cursor(), (c) => c.fork());
 }
 
@@ -1672,13 +1558,8 @@ export class TestSchemaRepository extends TreeStoredSchemaRepository {
 	 * Updates the specified schema iff all possible in schema data would remain in schema after the change.
 	 * @returns true iff update was performed.
 	 */
-	public tryUpdateTreeSchema(
-		schema: SimpleNodeSchema & TreeNodeSchema,
-	): boolean {
-		const storedSchema = getStoredSchema(
-			schema,
-			restrictiveStoredSchemaGenerationOptions,
-		);
+	public tryUpdateTreeSchema(schema: SimpleNodeSchema & TreeNodeSchema): boolean {
+		const storedSchema = getStoredSchema(schema, restrictiveStoredSchemaGenerationOptions);
 		const name: TreeNodeSchemaIdentifier = brand(schema.identifier);
 		const original = this.nodeSchema.get(name);
 		if (allowsTreeSuperset(this.policy, this, original, storedSchema)) {
@@ -1706,10 +1587,7 @@ interface TreeStoredContent {
 	 *
 	 * This cannot encode the dummy "above root" node and thus can not specify additional detached fields.
 	 */
-	readonly initialTree:
-		| readonly ITreeCursorSynchronous[]
-		| ITreeCursorSynchronous
-		| undefined;
+	readonly initialTree: readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined;
 }
 
 /**
@@ -1727,9 +1605,7 @@ export interface TreeStoredContentStrict {
 	readonly initialTree: ITreeCursorSynchronous;
 }
 
-export function treeChunkFromCursor(
-	fieldCursor: ITreeCursorSynchronous,
-): TreeChunk {
+export function treeChunkFromCursor(fieldCursor: ITreeCursorSynchronous): TreeChunk {
 	return chunkFieldSingle(fieldCursor, {
 		policy: defaultChunkPolicy,
 		idCompressor: testIdCompressor,

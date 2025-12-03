@@ -8,23 +8,23 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type {
-	AttributionKey,
 	ISummaryTreeWithStats,
+	AttributionKey,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	createChildLogger,
 	type ITelemetryLoggerExt,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { IAttributionCollection } from "./attributionCollection.js";
 import { NonCollabClient } from "./constants.js";
 import type { MergeTree } from "./mergeTree.js";
-import type { ISegmentPrivate } from "./mergeTreeNodes.js";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
+import type { ISegmentPrivate } from "./mergeTreeNodes.js";
 import type { IJSONSegment } from "./ops.js";
-import { matchProperties, type PropertySet } from "./properties.js";
+import { type PropertySet, matchProperties } from "./properties.js";
 import { assertInserted, isRemoved } from "./segmentInfos.js";
 import {
 	type IJSONSegmentWithMergeInfo,
@@ -63,8 +63,7 @@ export class SnapshotV1 {
 		public onCompletion?: () => void,
 	) {
 		this.logger = createChildLogger({ logger, namespace: "Snapshot" });
-		this.chunkSize =
-			mergeTree?.options?.mergeTreeSnapshotChunkSize ?? SnapshotV1.chunkSize;
+		this.chunkSize = mergeTree?.options?.mergeTreeSnapshotChunkSize ?? SnapshotV1.chunkSize;
 
 		const { currentSeq, minSeq } = mergeTree.collabWindow;
 		this.header = {
@@ -95,10 +94,7 @@ export class SnapshotV1 {
 		let length = 0;
 		let segmentCount = 0;
 		let hasAttribution = false;
-		while (
-			length < approxSequenceLength &&
-			startIndex + segmentCount < allSegments.length
-		) {
+		while (length < approxSequenceLength && startIndex + segmentCount < allSegments.length) {
 			const pseg = allSegments[startIndex + segmentCount];
 			segments.push(pseg);
 			length += allLengths[startIndex + segmentCount];
@@ -135,10 +131,7 @@ export class SnapshotV1 {
 	 * Emits the snapshot to an ISummarizeResult. If provided the optional IFluidSerializer will be used when
 	 * serializing the summary data rather than JSON.stringify.
 	 */
-	emit(
-		serializer: IFluidSerializer,
-		bind: IFluidHandle,
-	): ISummaryTreeWithStats {
+	emit(serializer: IFluidSerializer, bind: IFluidHandle): ISummaryTreeWithStats {
 		const chunks: MergeTreeChunkV1[] = [];
 		this.header.totalSegmentCount = 0;
 		this.header.totalLength = 0;
@@ -159,9 +152,7 @@ export class SnapshotV1 {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const headerChunk = chunks.shift()!;
 		headerChunk.headerMetadata = this.header;
-		headerChunk.headerMetadata.orderedChunkMetadata = [
-			{ id: SnapshotLegacy.header },
-		];
+		headerChunk.headerMetadata.orderedChunkMetadata = [{ id: SnapshotLegacy.header }];
 		const blobs: [key: string, content: string][] = [];
 		for (const [index, chunk] of chunks.entries()) {
 			const id = `${SnapshotLegacy.body}_${index}`;
@@ -201,10 +192,7 @@ export class SnapshotV1 {
 	extractSync(): JsonSegmentSpecs[] {
 		const mergeTree = this.mergeTree;
 		const minSeq = this.header.minSequenceNumber;
-		const minSeqStamp: OperationStamp = {
-			seq: minSeq,
-			clientId: NonCollabClient,
-		};
+		const minSeqStamp: OperationStamp = { seq: minSeq, clientId: NonCollabClient };
 
 		let originalSegments = 0;
 		let segmentsAfterCombine = 0;
@@ -226,10 +214,7 @@ export class SnapshotV1 {
 		// Helper to serialize the given `segment` and add it to the snapshot (if a segment is provided).
 		const pushSeg = (segment?: ISegmentPrivate): void => {
 			if (segment) {
-				if (
-					segment.properties !== undefined &&
-					Object.keys(segment.properties).length === 0
-				) {
+				if (segment.properties !== undefined && Object.keys(segment.properties).length === 0) {
 					segment.properties = undefined;
 				}
 				pushSegRaw(
@@ -251,8 +236,7 @@ export class SnapshotV1 {
 			//      segment, and therefore we can discard it.
 			if (
 				opstampUtils.isLocal(segment.insert) ||
-				(isRemoved(segment) &&
-					opstampUtils.lte(segment.removes[0], minSeqStamp))
+				(isRemoved(segment) && opstampUtils.lte(segment.removes[0], minSeqStamp))
 			) {
 				if (opstampUtils.isAcked(segment.insert)) {
 					originalSegments += 1;
@@ -294,10 +278,7 @@ export class SnapshotV1 {
 				pushSeg(prev);
 				prev = undefined;
 
-				if (
-					segment.properties !== undefined &&
-					Object.keys(segment.properties).length === 0
-				) {
+				if (segment.properties !== undefined && Object.keys(segment.properties).length === 0) {
 					segment.properties = undefined;
 				}
 				const raw: IJSONSegmentWithMergeInfo & { removedClient?: string } = {
@@ -311,10 +292,7 @@ export class SnapshotV1 {
 
 				// We have already dispensed with removed segments below the MSN and removed segments with unassigned
 				// sequence numbers.  Any remaining removal info should be preserved.
-				if (
-					isRemoved(segment) &&
-					segment.removes.some((r) => r.type === "setRemove")
-				) {
+				if (isRemoved(segment) && segment.removes.some((r) => r.type === "setRemove")) {
 					const removes = segment.removes.filter((r) => r.type === "setRemove");
 					const firstRemove = removes[0];
 					assert(
@@ -332,15 +310,10 @@ export class SnapshotV1 {
 					// load a document produced by a version beyond the removal. It is vestigial in the meantime.
 					raw.removedClient = this.getLongClientId(firstRemove.clientId);
 
-					raw.removedClientIds = removes.map(({ clientId }) =>
-						this.getLongClientId(clientId),
-					);
+					raw.removedClientIds = removes.map(({ clientId }) => this.getLongClientId(clientId));
 				}
 
-				if (
-					isRemoved(segment) &&
-					segment.removes.some((r) => r.type === "sliceRemove")
-				) {
+				if (isRemoved(segment) && segment.removes.some((r) => r.type === "sliceRemove")) {
 					// In this format, we used the term "move" to refer to a sliceRemove/obliterate.
 					const moves = segment.removes.filter((r) => r.type === "sliceRemove");
 					const firstMove = moves[0];
@@ -351,16 +324,13 @@ export class SnapshotV1 {
 					);
 					raw.movedSeq = firstMove.seq;
 					raw.movedSeqs = moves.map(({ seq }) => seq);
-					raw.movedClientIds = moves.map(({ clientId }) =>
-						this.getLongClientId(clientId),
-					);
+					raw.movedClientIds = moves.map(({ clientId }) => this.getLongClientId(clientId));
 				}
 
 				// Sanity check that we are preserving either the seq > minSeq or a (re)moved segment's info.
 				assert(
 					(raw.seq !== undefined && raw.client !== undefined) ||
-						(raw.removedSeq !== undefined &&
-							raw.removedClientIds !== undefined) ||
+						(raw.removedSeq !== undefined && raw.removedClientIds !== undefined) ||
 						(raw.movedSeq !== undefined &&
 							raw.movedClientIds !== undefined &&
 							raw.movedClientIds.length > 0 &&
@@ -382,10 +352,7 @@ export class SnapshotV1 {
 
 		// To reduce potential spam from this telemetry, we sample only a small
 		// percentage of summaries
-		if (
-			Math.abs(originalSegments - segmentsAfterCombine) > 500 &&
-			Math.random() < 0.005
-		) {
+		if (Math.abs(originalSegments - segmentsAfterCombine) > 500 && Math.random() < 0.005) {
 			this.logger.sendTelemetryEvent({
 				eventName: "MergeTreeV1SummarizeSegmentCount",
 				originalSegments,
@@ -406,13 +373,7 @@ export class SnapshotV1 {
 	): Promise<MergeTreeChunkV1> {
 		const blob = await storage.readBlob(path);
 		const chunkAsString = bufferToString(blob, "utf8");
-		return SnapshotV1.processChunk(
-			path,
-			chunkAsString,
-			logger,
-			options,
-			serializer,
-		);
+		return SnapshotV1.processChunk(path, chunkAsString, logger, options, serializer);
 	}
 
 	public static processChunk(

@@ -4,16 +4,13 @@
  */
 
 import {
-	getDataStoreEntryPoint,
 	ModelContainerRuntimeFactory,
+	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
 import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 
-import type {
-	IInventoryList,
-	IInventoryListAppModel,
-} from "../modelInterfaces.js";
+import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.js";
 
 import { InventoryListAppModel } from "./appModel.js";
 import { LegacyTreeInventoryListFactory } from "./legacyTreeInventoryList.js";
@@ -53,22 +50,15 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
-	protected async createModel(
-		runtime: IContainerRuntime,
-		container: IContainer,
-	) {
-		const legacyTreeInventoryList =
-			await getDataStoreEntryPoint<IInventoryList>(
-				runtime,
-				legacyTreeInventoryListId,
-			);
+	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+		const legacyTreeInventoryList = await getDataStoreEntryPoint<IInventoryList>(
+			runtime,
+			legacyTreeInventoryListId,
+		);
 		const newTreeInventoryList = await getDataStoreEntryPoint<IInventoryList>(
 			runtime,
 			newTreeInventoryListId,
 		);
-		return new InventoryListAppModel(
-			legacyTreeInventoryList,
-			newTreeInventoryList,
-		);
+		return new InventoryListAppModel(legacyTreeInventoryList, newTreeInventoryList);
 	}
 }

@@ -4,9 +4,9 @@
  */
 
 export {
-	DefaultCompressionStorageConfig,
-	ICompressionStorageConfig,
 	SummaryCompressionAlgorithm,
+	ICompressionStorageConfig,
+	DefaultCompressionStorageConfig,
 } from "./compressionTypes.js";
 export { DocumentServiceFactoryCompressionAdapter } from "./documentServiceFactoryCompressionAdapter.js";
 export { blobHeadersBlobName } from "./summaryblob/index.js";

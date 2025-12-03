@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	IRequest,
-	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+import type { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { PromiseCache } from "@fluidframework/core-utils/internal";
 import type {
 	IContainerPackageInfo,
@@ -14,17 +11,14 @@ import type {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import type {
-	IdentityType,
 	IOdspResolvedUrl,
+	IdentityType,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	type OdspFluidDataStoreLocator,
-	SharingLinkHeader,
-} from "./contractsPublic.js";
+import { type OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic.js";
 import { createOdspUrl } from "./createOdspUrl.js";
 import { getFileLink } from "./getFileLink.js";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
@@ -36,8 +30,8 @@ import {
 import {
 	appendNavParam,
 	createOdspLogger,
-	getContainerPackageName,
 	getOdspResolvedUrl,
+	getContainerPackageName,
 } from "./odspUtils.js";
 
 /**
@@ -104,10 +98,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 	 * Takes an already generated data store url (from requestUrl) and appends a path to the
 	 * existing data store information.
 	 */
-	public appendDataStorePath(
-		requestUrl: URL,
-		pathToAppend: string,
-	): string | undefined {
+	public appendDataStorePath(requestUrl: URL, pathToAppend: string): string | undefined {
 		const fluidInfo = getLocatorFromOdspUrl(requestUrl);
 
 		if (!fluidInfo) {
@@ -127,9 +118,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 			fluidInfo.dataStorePath = `${parsingUrl.pathname}${parsingUrl.search}`;
 		} else {
 			fluidInfo.dataStorePath = `${parsingUrl.pathname}${
-				parsingUrl.pathname.endsWith("/") || pathToAppend.startsWith("/")
-					? ""
-					: "/"
+				parsingUrl.pathname.endsWith("/") || pathToAppend.startsWith("/") ? "" : "/"
 			}${pathToAppend}/${parsingUrl.search}`;
 		}
 		storeLocatorInOdspUrl(requestUrl, fluidInfo);
@@ -161,9 +150,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 			// If the locator throws some error, then try to resolve the request as it is.
 		}
 
-		const odspResolvedUrl = await new OdspDriverUrlResolver().resolve(
-			requestToBeResolved,
-		);
+		const odspResolvedUrl = await new OdspDriverUrlResolver().resolve(requestToBeResolved);
 
 		odspResolvedUrl.context = await this.getContext?.(
 			odspResolvedUrl,
@@ -174,23 +161,16 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 
 		odspResolvedUrl.codeHint = odspResolvedUrl.codeHint?.containerPackageName
 			? odspResolvedUrl.codeHint
-			: {
-					containerPackageName: getContainerPackageName(
-						this.containerPackageInfo,
-					),
-				};
+			: { containerPackageName: getContainerPackageName(this.containerPackageInfo) };
 
 		if (isSharingLinkToRedeem) {
 			// We need to remove the nav param if set by host when setting the sharelink as otherwise the shareLinkId
 			// when redeeming the share link during the redeem fallback for trees latest call becomes greater than
 			// the eligible length.
-			odspResolvedUrl.shareLinkInfo = Object.assign(
-				odspResolvedUrl.shareLinkInfo ?? {},
-				{
-					sharingLinkToRedeem: this.removeNavParam(request.url),
-					isRedemptionNonDurable: isRedemptionNonDurable ?? false,
-				},
-			);
+			odspResolvedUrl.shareLinkInfo = Object.assign(odspResolvedUrl.shareLinkInfo ?? {}, {
+				sharingLinkToRedeem: this.removeNavParam(request.url),
+				isRedemptionNonDurable: isRedemptionNonDurable ?? false,
+			});
 		}
 		if (odspResolvedUrl.itemId) {
 			// Kick start the sharing link request if we don't have it already as a performance optimization.
@@ -208,13 +188,9 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 		return url.href;
 	}
 
-	private async getShareLinkPromise(
-		resolvedUrl: IOdspResolvedUrl,
-	): Promise<string> {
+	private async getShareLinkPromise(resolvedUrl: IOdspResolvedUrl): Promise<string> {
 		if (this.shareLinkFetcherProps === undefined) {
-			throw new Error(
-				"Failed to get share link because share link fetcher props are missing",
-			);
+			throw new Error("Failed to get share link because share link fetcher props are missing");
 		}
 
 		if (!(resolvedUrl.siteUrl && resolvedUrl.driveId && resolvedUrl.itemId)) {
@@ -261,12 +237,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 
 		const shareLink = await this.getShareLinkPromise(odspResolvedUrl);
 
-		return this.appendLocatorParams(
-			shareLink,
-			resolvedUrl,
-			dataStorePath,
-			packageInfoSource,
-		);
+		return this.appendLocatorParams(shareLink, resolvedUrl, dataStorePath, packageInfoSource);
 	}
 
 	/**
@@ -289,13 +260,9 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 		const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 
 		// If the user has passed an empty dataStorePath, then extract it from the resolved url.
-		const actualDataStorePath =
-			dataStorePath || (odspResolvedUrl.dataStorePath ?? "");
+		const actualDataStorePath = dataStorePath || (odspResolvedUrl.dataStorePath ?? "");
 
-		odspResolvedUrl.context = await this.getContext?.(
-			odspResolvedUrl,
-			actualDataStorePath,
-		);
+		odspResolvedUrl.context = await this.getContext?.(odspResolvedUrl, actualDataStorePath);
 
 		/**
 		 * containerPackageName can be provided by various ways, in the order of priority:
@@ -310,12 +277,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 
 		odspResolvedUrl.appName = this.appName;
 
-		return appendNavParam(
-			baseUrl,
-			odspResolvedUrl,
-			actualDataStorePath,
-			containerPackageName,
-		);
+		return appendNavParam(baseUrl, odspResolvedUrl, actualDataStorePath, containerPackageName);
 	}
 
 	/**

@@ -10,15 +10,15 @@ import {
 	type ApiEntryPoint,
 	ApiInterface,
 	type ApiItem,
-	ApiPropertyItem,
 	ApiReturnTypeMixin,
 	ApiTypeParameterListMixin,
-	ApiVariable,
 	type Excerpt,
 	ExcerptTokenKind,
 	type HeritageType,
 	type IResolveDeclarationReferenceResult,
 	type TypeParameter,
+	ApiPropertyItem,
+	ApiVariable,
 } from "@microsoft/api-extractor-model";
 import {
 	type DocNode,
@@ -40,33 +40,26 @@ import type {
 } from "mdast";
 
 import type { Logger } from "../../Logging.js";
-import type {
-	Section,
-	SectionContent,
-	SectionHeading,
-} from "../../mdast/index.js";
+import type { Section, SectionContent, SectionHeading } from "../../mdast/index.js";
 import {
 	type ApiFunctionLike,
-	getApiItemKind,
-	getDeprecatedBlock,
-	getExampleBlocks,
+	injectSeparator,
 	getFileSafeNameForApiItem,
-	getFilteredParent,
-	getReturnsBlock,
 	getSeeBlocks,
 	getThrowsBlocks,
-	injectSeparator,
+	getDeprecatedBlock,
+	getExampleBlocks,
+	getReturnsBlock,
+	getApiItemKind,
 	type ValidApiItemKind,
+	getFilteredParent,
 } from "../../utilities/index.js";
-import {
-	type ApiItemTransformationConfiguration,
-	HierarchyKind,
-} from "../configuration/index.js";
 import { transformTsdoc } from "../TsdocNodeTransforms.js";
 import {
-	doesItemKindRequireOwnDocument,
-	getLinkForApiItem,
-} from "../utilities/index.js";
+	HierarchyKind,
+	type ApiItemTransformationConfiguration,
+} from "../configuration/index.js";
+import { doesItemKindRequireOwnDocument, getLinkForApiItem } from "../utilities/index.js";
 
 import {
 	createParametersSummaryTable,
@@ -205,10 +198,7 @@ function createHeritageTypesContent(
 	}
 
 	// Render type parameters if there are any.
-	if (
-		ApiTypeParameterListMixin.isBaseClassOf(apiItem) &&
-		apiItem.typeParameters.length > 0
-	) {
+	if (ApiTypeParameterListMixin.isBaseClassOf(apiItem) && apiItem.typeParameters.length > 0) {
 		const renderedTypeParameters = createTypeParametersSection(
 			apiItem.typeParameters,
 			apiItem,
@@ -283,10 +273,7 @@ function createHeritageTypeListSpan(
 	// Build up array of excerpt entries
 	const renderedHeritageTypes: PhrasingContent[][] = [];
 	for (const heritageType of heritageTypes) {
-		const renderedExcerpt = createExcerptSpanWithHyperlinks(
-			heritageType.excerpt,
-			config,
-		);
+		const renderedExcerpt = createExcerptSpanWithHyperlinks(heritageType.excerpt, config);
 		renderedHeritageTypes.push(renderedExcerpt);
 	}
 
@@ -431,18 +418,11 @@ export function createExcerptSpanWithHyperlinks(
 		// If it's hyperlink-able, then append a DocLinkTag
 		if (token.kind === ExcerptTokenKind.Reference && token.canonicalReference) {
 			const apiItemResult: IResolveDeclarationReferenceResult =
-				config.apiModel.resolveDeclarationReference(
-					token.canonicalReference,
-					undefined,
-				);
+				config.apiModel.resolveDeclarationReference(token.canonicalReference, undefined);
 
 			if (apiItemResult.resolvedApiItem) {
 				content.push(
-					getLinkForApiItem(
-						apiItemResult.resolvedApiItem,
-						config,
-						unwrappedTokenText,
-					),
+					getLinkForApiItem(apiItemResult.resolvedApiItem, config, unwrappedTokenText),
 				);
 				wroteHyperlink = true;
 			}
@@ -552,10 +532,7 @@ export function createSummarySection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): Section | undefined {
-	if (
-		apiItem instanceof ApiDocumentedItem &&
-		apiItem.tsdocComment !== undefined
-	) {
+	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
 		const sectionContents = transformTsdoc(
 			apiItem.tsdocComment.summarySection,
 			apiItem,
@@ -597,11 +574,7 @@ export function createRemarksSection(
 
 	return {
 		type: "section",
-		children: transformTsdoc(
-			apiItem.tsdocComment.remarksBlock.content,
-			apiItem,
-			config,
-		),
+		children: transformTsdoc(apiItem.tsdocComment.remarksBlock.content, apiItem, config),
 		heading: {
 			type: "sectionHeading",
 			title: "Remarks",
@@ -733,10 +706,7 @@ export function createExamplesSection(
 	for (const [i, exampleBlock] of exampleBlocks.entries()) {
 		const exampleNumber = i + 1; // i is 0-based, but we want our example numbers to be 1-based.
 		exampleSections.push(
-			createExampleSection(
-				{ apiItem, content: exampleBlock, exampleNumber },
-				config,
-			),
+			createExampleSection({ apiItem, content: exampleBlock, exampleNumber }, config),
 		);
 	}
 
@@ -833,11 +803,7 @@ function createExampleSection(
 ): Section {
 	const { logger } = config;
 
-	let transformedExampleContent = transformTsdoc(
-		example.content,
-		example.apiItem,
-		config,
-	);
+	let transformedExampleContent = transformTsdoc(example.content, example.apiItem, config);
 
 	// Per TSDoc spec, if the `@example` comment has content on the same line as the tag,
 	// that line is expected to be treated as the title.
@@ -902,9 +868,7 @@ function createExampleSection(
  *
  * Reference: {@link https://tsdoc.org/pages/tags/example/}
  */
-function extractTitleFromExampleSection(
-	sectionNode: DocSection,
-): string | undefined {
+function extractTitleFromExampleSection(sectionNode: DocSection): string | undefined {
 	// Drill down to find first leaf node. If it is plain text (and not a line break),
 	// use it as title.
 	let currentNode: DocNode = sectionNode;
@@ -963,19 +927,13 @@ function stripTitleFromExampleComment<TNode extends Nodes>(
 	if ((firstChild as Partial<Parent>).children !== undefined) {
 		const newFirst = {
 			...firstChild,
-			children: stripTitleFromExampleComment(
-				(firstChild as Parent).children,
-				title,
-				logger,
-			),
+			children: stripTitleFromExampleComment((firstChild as Parent).children, title, logger),
 		};
 
 		const remaining = nodes.slice(1);
 
 		// If there are no remaining children under the first item after stripping out the title, omit that item altogether.
-		return newFirst.children.length === 0
-			? remaining
-			: [newFirst, ...remaining];
+		return newFirst.children.length === 0 ? remaining : [newFirst, ...remaining];
 	}
 
 	if (firstChild.type === "text") {
@@ -1061,10 +1019,7 @@ export function createReturnsSection(
 	const children: BlockContent[] = [];
 
 	// Generate span from `@returns` comment
-	if (
-		apiItem instanceof ApiDocumentedItem &&
-		apiItem.tsdocComment !== undefined
-	) {
+	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
 		const returnsBlock = getReturnsBlock(apiItem);
 		if (returnsBlock !== undefined) {
 			children.push(...transformTsdoc(returnsBlock, apiItem, config));

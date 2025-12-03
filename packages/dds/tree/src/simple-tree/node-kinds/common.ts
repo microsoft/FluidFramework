@@ -11,14 +11,14 @@ import { brand } from "../../util/index.js";
 
 import {
 	createField,
-	type FlexContent,
-	normalizeAllowedTypes,
 	type UnhydratedFlexTreeField,
+	normalizeAllowedTypes,
+	type FlexContent,
 } from "../core/index.js";
 import { getUnhydratedContext } from "../createContext.js";
 import {
-	type InsertableContent,
 	unhydratedFlexTreeFromInsertableNode,
+	type InsertableContent,
 } from "../unhydratedFlexTreeFromInsertable.js";
 import type { MapNodeSchema } from "./map/index.js";
 import type { RecordNodeSchema } from "./record/index.js";
@@ -40,10 +40,7 @@ export function recordLikeDataToFlexContent(
 	const transformedFields = new Map<FieldKey, UnhydratedFlexTreeField>();
 	for (const item of fieldsIterator) {
 		const [key, value] = item;
-		assert(
-			!transformedFields.has(brand(key)),
-			0x84c /* Keys should not be duplicated */,
-		);
+		assert(!transformedFields.has(brand(key)), 0x84c /* Keys should not be duplicated */);
 
 		// Omit undefined values - an entry with an undefined value is equivalent to one that has been removed or omitted
 		if (value !== undefined) {
@@ -51,12 +48,7 @@ export function recordLikeDataToFlexContent(
 				value,
 				allowedChildTypes.evaluateSet(),
 			);
-			const field = createField(
-				context,
-				FieldKinds.optional.identifier,
-				brand(key),
-				[child],
-			);
+			const field = createField(context, FieldKinds.optional.identifier, brand(key), [child]);
 			transformedFields.set(brand(key), field);
 		}
 	}

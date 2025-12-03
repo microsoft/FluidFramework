@@ -6,7 +6,7 @@
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { compare, gt, gte, lte, parse, valid } from "semver-ts";
+import { compare, gt, gte, lte, valid, parse } from "semver-ts";
 
 import { pkgVersion } from "./packageVersion.js";
 
@@ -44,8 +44,7 @@ export const defaultMinVersionForCollab =
  *
  * @internal
  */
-export const lowestMinVersionForCollab =
-	"1.0.0" as const satisfies MinimumVersionForCollab;
+export const lowestMinVersionForCollab = "1.0.0" as const satisfies MinimumVersionForCollab;
 
 /**
  * String in a valid semver format specifying bottom of a minor version
@@ -55,9 +54,7 @@ export const lowestMinVersionForCollab =
  *
  * @internal
  */
-export type MinimumMinorSemanticVersion =
-	| `${bigint}.${bigint}.0`
-	| `${bigint}.0.0-defaults`;
+export type MinimumMinorSemanticVersion = `${bigint}.${bigint}.0` | `${bigint}.0.0-defaults`;
 
 /**
  * String in a valid semver format of a specific version at least specifying minor.
@@ -120,9 +117,7 @@ export type ConfigValidationMap<T extends Record<string, unknown>> = {
  * It should have no impact on the user of this function.
  * @internal
  */
-export function getConfigsForMinVersionForCollab<
-	T extends Record<SemanticVersion, unknown>,
->(
+export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersion, unknown>>(
 	minVersionForCollab: MinimumVersionForCollab,
 	configMap: ConfigMap<T> & Record<keyof T, unknown>,
 ): T {
@@ -150,12 +145,10 @@ export function getConfigForMinVersionForCollab<T>(
 ): T {
 	const entries: [string, unknown][] = Object.entries(config); // Assigning this to a typed variable to convert the "any" into unknown.
 	// Validate and strongly type the versions from the configMap.
-	const versions: [MinimumVersionForCollab, unknown][] = entries.map(
-		([version, value]) => {
-			validateMinimumVersionForCollab(version);
-			return [version, value];
-		},
-	);
+	const versions: [MinimumVersionForCollab, unknown][] = entries.map(([version, value]) => {
+		validateMinimumVersionForCollab(version);
+		return [version, value];
+	});
 	// Sort the versions in descending order to find the largest compatible entry.
 	// TODO: Enforcing a sorted order might be a good idea. For now tolerates any order.
 	versions.sort((a, b) => compare(b[0], a[0]));
@@ -176,9 +169,7 @@ export function getConfigForMinVersionForCollab<T>(
  *
  * @internal
  */
-export function checkValidMinVersionForCollabVerbose(
-	minVersionForCollab: SemanticVersion,
-): {
+export function checkValidMinVersionForCollabVerbose(minVersionForCollab: SemanticVersion): {
 	isValidSemver: boolean;
 	isGteLowestMinVersion: boolean;
 	isLtePkgVersion: boolean;
@@ -190,8 +181,7 @@ export function checkValidMinVersionForCollabVerbose(
 		// We have to check if the value is a valid semver before calling gte/lte, otherwise they will throw when parsing the version.
 		isGteLowestMinVersion:
 			isValidSemver && gte(minVersionForCollab, lowestMinVersionForCollab),
-		isLtePkgVersion:
-			isValidSemver && lte(minVersionForCollab, cleanedPackageVersion),
+		isLtePkgVersion: isValidSemver && lte(minVersionForCollab, cleanedPackageVersion),
 	};
 }
 
@@ -209,8 +199,7 @@ export function isValidMinVersionForCollab(
 	return isValidSemver && isGteLowestMinVersion && isLtePkgVersion;
 }
 
-const parsedPackageVersion =
-	parse(pkgVersion) ?? fail("Invalid package version");
+const parsedPackageVersion = parse(pkgVersion) ?? fail("Invalid package version");
 
 /**
  * `pkgVersion` version without pre-release.
@@ -294,21 +283,17 @@ export function validateConfigMapOverrides<T extends Record<string, unknown>>(
 	}
 	// Iterate through each runtime option passed in by the user
 	// Type assertion is safe as entries come from runtimeOptions object
-	for (const [passedRuntimeOption, passedRuntimeOptionValue] of Object.entries(
-		overrides,
-	) as [keyof T & string, T[keyof T & string]][]) {
+	for (const [passedRuntimeOption, passedRuntimeOptionValue] of Object.entries(overrides) as [
+		keyof T & string,
+		T[keyof T & string],
+	][]) {
 		// Skip if passedRuntimeOption is not in validation map
 		if (!(passedRuntimeOption in validationMap)) {
 			continue;
 		}
 
-		const requiredVersion = validationMap[passedRuntimeOption](
-			passedRuntimeOptionValue,
-		);
-		if (
-			requiredVersion !== undefined &&
-			gt(requiredVersion, minVersionForCollab)
-		) {
+		const requiredVersion = validationMap[passedRuntimeOption](passedRuntimeOptionValue);
+		if (requiredVersion !== undefined && gt(requiredVersion, minVersionForCollab)) {
 			throw new UsageError(
 				`Runtime option ${passedRuntimeOption}:${JSON.stringify(passedRuntimeOptionValue)} requires ` +
 					`runtime version ${requiredVersion}. Please update minVersionForCollab ` +
@@ -351,11 +336,7 @@ export function configValueToMinVersionForCollab<
 			// Check if `possibleConfigValue` and the input `configValue` share at least one
 			// common key-value pair. If they do, the `versionRequired` for this `possibleConfigValue`
 			// is added to `matchingVersions`.
-			if (
-				Object.entries(possibleConfigValue).some(
-					([k, v]) => configValue[k] === v,
-				)
-			) {
+			if (Object.entries(possibleConfigValue).some(([k, v]) => configValue[k] === v)) {
 				matchingVersions.push(versionRequired);
 			}
 		}

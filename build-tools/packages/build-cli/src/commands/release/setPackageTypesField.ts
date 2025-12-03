@@ -92,9 +92,7 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 			const types: string | undefined = json.types ?? json.typings;
 
 			if (types === undefined) {
-				throw new Error(
-					"Neither 'types' nor 'typings' field is defined in the package.json.",
-				);
+				throw new Error("Neither 'types' nor 'typings' field is defined in the package.json.");
 			}
 
 			/**
@@ -127,9 +125,7 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 		await super.run();
 
 		if (this.packageList.packagesUpdated.length === 0) {
-			this.errorLog(
-				`No updates in package.json for ${this.flags.types} release tag`,
-			);
+			this.errorLog(`No updates in package.json for ${this.flags.types} release tag`);
 			this.exit(1);
 		}
 
@@ -182,9 +178,7 @@ function updatePackageJsonTypes(
 			}
 		}
 	} catch {
-		log.verbose(
-			`Unable to update types: ${JSON.stringify(extractorConfig.projectFolder)}`,
-		);
+		log.verbose(`Unable to update types: ${JSON.stringify(extractorConfig.projectFolder)}`);
 	}
 	return false;
 }

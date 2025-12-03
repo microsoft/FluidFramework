@@ -13,14 +13,14 @@ import { createPropertyTrackingAndInsertionAttributionPolicyFactory } from "../a
 import type { ISegmentPrivate } from "../mergeTreeNodes.js";
 
 import {
-	generateClientNames,
 	type IConfigRange,
 	type IMergeTreeOperationRunnerConfig,
+	type TestOperation,
+	generateClientNames,
 	insert,
 	removeRange,
 	resolveRanges,
 	runMergeTreeOperationRunner,
-	type TestOperation,
 } from "./mergeTreeOperationRunner.js";
 import { TestClient } from "./testClient.js";
 import { TestClientLogger } from "./testClientLogger.js";
@@ -29,10 +29,7 @@ export const annotateRange: TestOperation = (
 	client: TestClient,
 	opStart: number,
 	opEnd: number,
-) =>
-	client.annotateRangeLocal(opStart, opEnd, {
-		trackedProp: client.longClientId,
-	});
+) => client.annotateRangeLocal(opStart, opEnd, { trackedProp: client.longClientId });
 
 const defaultOptions: Record<"initLen" | "modLen", IConfigRange> &
 	IMergeTreeOperationRunnerConfig = {
@@ -63,14 +60,11 @@ describeFuzz("MergeTree.Attribution", ({ testCount }) => {
 								attribution: {
 									track: true,
 									policyFactory:
-										createPropertyTrackingAndInsertionAttributionPolicyFactory(
-											"trackedProp",
-										),
+										createPropertyTrackingAndInsertionAttributionPolicyFactory("trackedProp"),
 								},
 							}),
 					);
-				for (const [i, c] of clients.entries())
-					c.startOrUpdateCollaboration(clientNames[i]);
+				for (const [i, c] of clients.entries()) c.startOrUpdateCollaboration(clientNames[i]);
 
 				const getAttributionAtPosition = (
 					client: TestClient,
@@ -80,15 +74,12 @@ describeFuzz("MergeTree.Attribution", ({ testCount }) => {
 							[name: string]: AttributionKey | undefined;
 					  }
 					| undefined => {
-					const { segment, offset } =
-						client.getContainingSegment<ISegmentPrivate>(pos) ?? {};
+					const { segment, offset } = client.getContainingSegment<ISegmentPrivate>(pos) ?? {};
 					if (segment?.attribution === undefined || offset === undefined) {
 						return undefined;
 					}
 					const { attribution } = segment;
-					let channels:
-						| { [name: string]: AttributionKey | undefined }
-						| undefined;
+					let channels: { [name: string]: AttributionKey | undefined } | undefined;
 					const result: {
 						root: AttributionKey | undefined;
 						channels?: { [name: string]: AttributionKey | undefined };
@@ -102,15 +93,12 @@ describeFuzz("MergeTree.Attribution", ({ testCount }) => {
 					return channels;
 				};
 
-				const validateAnnotation = (
-					reason: string,
-					workload: () => void,
-				): void => {
+				const validateAnnotation = (reason: string, workload: () => void): void => {
 					const preWorkload = TestClientLogger.toString(clients);
 					workload();
-					const attributions = Array.from({
-						length: clients[0].getLength(),
-					}).map((_, i) => getAttributionAtPosition(clients[0], i));
+					const attributions = Array.from({ length: clients[0].getLength() }).map((_, i) =>
+						getAttributionAtPosition(clients[0], i),
+					);
 					for (let c = 1; c < clients.length; c++) {
 						for (let i = 0; i < clients[c].getLength(); i++) {
 							const attribution0 = attributions[i];
@@ -132,13 +120,7 @@ describeFuzz("MergeTree.Attribution", ({ testCount }) => {
 				let seq = 0;
 
 				validateAnnotation("Initialize", () => {
-					seq = runMergeTreeOperationRunner(
-						random,
-						seq,
-						clients,
-						initLen,
-						defaultOptions,
-					);
+					seq = runMergeTreeOperationRunner(random, seq, clients, initLen, defaultOptions);
 				});
 
 				validateAnnotation("After Init Zamboni", () => {
@@ -149,13 +131,7 @@ describeFuzz("MergeTree.Attribution", ({ testCount }) => {
 				});
 
 				validateAnnotation("After More Ops", () => {
-					seq = runMergeTreeOperationRunner(
-						random,
-						seq,
-						clients,
-						modLen,
-						defaultOptions,
-					);
+					seq = runMergeTreeOperationRunner(random, seq, clients, modLen, defaultOptions);
 				});
 
 				validateAnnotation("After Final Zamboni", () => {

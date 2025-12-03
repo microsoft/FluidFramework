@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { TreeNodeSchema, TreeNodeSchemaClass } from "@fluidframework/tree";
-import type { infer as ZodInfer, ZodType, ZodTypeAny, ZodTypeDef } from "zod";
+import type { ZodType, ZodTypeAny, ZodTypeDef, infer as ZodInfer } from "zod";
 
 import type { BindableSchema, Ctor } from "./methodBinding.js";
 import { instanceOf } from "./renderZodTypeScript.js";
@@ -32,9 +32,9 @@ export type ExposableKeys<T> = {
  * - If X and Y are different, it evaluates to B.
  * @alpha
  */
-export type IfEquals<X, Y, A = true, B = false> = (<T>() => T extends X
-	? 1
-	: 2) extends <T>() => T extends Y ? 1 : 2
+export type IfEquals<X, Y, A = true, B = false> = (<T>() => T extends X ? 1 : 2) extends <
+	T,
+>() => T extends Y ? 1 : 2
 	? A
 	: B;
 
@@ -44,12 +44,7 @@ export type IfEquals<X, Y, A = true, B = false> = (<T>() => T extends X
  */
 export type ReadonlyKeys<T> = {
 	// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
-	[P in keyof T]-?: IfEquals<
-		{ [Q in P]: T[P] },
-		{ -readonly [Q in P]: T[P] },
-		never,
-		P
-	>;
+	[P in keyof T]-?: IfEquals<{ [Q in P]: T[P] }, { -readonly [Q in P]: T[P] }, never, P>;
 }[keyof T];
 
 /**
@@ -57,9 +52,7 @@ export type ReadonlyKeys<T> = {
  * @alpha
  */
 export type ReadOnlyRequirement<TObj, K extends keyof TObj> = {
-	[P in K]-?: P extends ReadonlyKeys<TObj>
-		? { readOnly: true }
-		: { readOnly?: false };
+	[P in K]-?: P extends ReadonlyKeys<TObj> ? { readOnly: true } : { readOnly?: false };
 }[K];
 
 /**
@@ -99,10 +92,7 @@ export interface ExposedProperties {
 	>(
 		schema: S,
 		name: K,
-		def: { schema: TZ; description?: string } & ReadOnlyRequirement<
-			InstanceType<S>,
-			K
-		> &
+		def: { schema: TZ; description?: string } & ReadOnlyRequirement<InstanceType<S>, K> &
 			TypeMatchOrError<InstanceType<S>[K], ZodInfer<TZ>>,
 	): void;
 
@@ -142,10 +132,7 @@ class ExposedPropertiesI implements ExposedProperties {
 	>(
 		schema: S,
 		name: K,
-		def: { schema: TZ; description?: string } & ReadOnlyRequirement<
-			InstanceType<S>,
-			K
-		> &
+		def: { schema: TZ; description?: string } & ReadOnlyRequirement<InstanceType<S>, K> &
 			TypeMatchOrError<InstanceType<S>[K], ZodInfer<TZ>>,
 	): void {
 		if (schema !== this.schemaClass) {

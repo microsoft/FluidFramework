@@ -4,14 +4,14 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { PropertySet } from "@fluidframework/sequence/legacy";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { PropertySet } from "@fluidframework/sequence/legacy";
 
-import type { CellRange } from "./cellrange.js";
+import { CellRange } from "./cellrange.js";
 import { TableSliceType } from "./componentTypes.js";
 import { ConfigKey } from "./configKey.js";
-import type { TableDocument } from "./document.js";
-import type { ITable, TableDocumentItem } from "./table.js";
+import { TableDocument } from "./document.js";
+import { ITable, TableDocumentItem } from "./table.js";
 
 export interface ITableSliceConfig {
 	docId: string;
@@ -76,11 +76,7 @@ export class TableSlice
 		this.doc.setCellValue(row, col, value, properties);
 	}
 
-	public annotateRows(
-		startRow: number,
-		endRow: number,
-		properties: PropertySet,
-	) {
+	public annotateRows(startRow: number, endRow: number, properties: PropertySet) {
 		this.validateInSlice(startRow, undefined);
 		this.validateInSlice(endRow - 1, undefined);
 		this.doc.annotateRows(startRow, endRow, properties);
@@ -91,11 +87,7 @@ export class TableSlice
 		return this.doc.getRowProperties(row);
 	}
 
-	public annotateCols(
-		startCol: number,
-		endCol: number,
-		properties: PropertySet,
-	) {
+	public annotateCols(startCol: number, endCol: number, properties: PropertySet) {
 		this.validateInSlice(undefined, startCol);
 		this.validateInSlice(undefined, endCol - 1);
 		this.doc.annotateCols(startCol, endCol, properties);
@@ -161,9 +153,7 @@ export class TableSlice
 	}
 
 	protected async hasInitialized() {
-		this.maybeValues = await this.doc.getRange(
-			this.root.get(ConfigKey.valuesKey),
-		);
+		this.maybeValues = await this.doc.getRange(this.root.get(ConfigKey.valuesKey));
 
 		this.root.on("op", this.emitOp);
 		this.doc.on("sequenceDelta", this.emitSequenceDelta);
@@ -178,12 +168,7 @@ export class TableSlice
 		}
 	}
 
-	private createValuesRange(
-		minCol: number,
-		minRow: number,
-		maxCol: number,
-		maxRow: number,
-	) {
+	private createValuesRange(minCol: number, minRow: number, maxCol: number, maxRow: number) {
 		const valuesRangeId = `values-${Math.random().toString(36).substr(2)}`;
 		this.root.set(ConfigKey.valuesKey, valuesRangeId);
 		this.doc.createInterval(valuesRangeId, minRow, minCol, maxRow, maxCol);
@@ -193,17 +178,11 @@ export class TableSlice
 	private validateInSlice(row?: number, col?: number) {
 		const range = this.values.getRange();
 
-		if (
-			(row !== undefined && row < range.row) ||
-			row >= range.row + range.numRows
-		) {
+		if ((row !== undefined && row < range.row) || row >= range.row + range.numRows) {
 			throw new Error("Unable to access specified row from this slice.");
 		}
 
-		if (
-			(col !== undefined && col < range.col) ||
-			col >= range.col + range.numCols
-		) {
+		if ((col !== undefined && col < range.col) || col >= range.col + range.numCols) {
 			throw new Error("Unable to access specified column from this slice.");
 		}
 	}

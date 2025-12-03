@@ -12,13 +12,13 @@ const MSG = require("@fluid-experimental/property-common").constants.MSG;
 
 const PropertyFactory = require("../..").PropertyFactory;
 
-describe("ContainerProperty", () => {
+describe("ContainerProperty", function () {
 	beforeEach(() => {
 		PropertyFactory._clear();
 	});
 
-	describe("Changeset", () => {
-		it("should not add created properties to the changeset on creation", () => {
+	describe("Changeset", function () {
+		it("should not add created properties to the changeset on creation", function () {
 			const DefaultPrimitive = {
 				typeid: "SimpleTest:OptionalPrimitive-1.0.0",
 				properties: [
@@ -35,15 +35,13 @@ describe("ContainerProperty", () => {
 			};
 
 			PropertyFactory._reregister(DefaultPrimitive);
-			const instance = PropertyFactory.create(
-				"SimpleTest:OptionalPrimitive-1.0.0",
-			);
+			const instance = PropertyFactory.create("SimpleTest:OptionalPrimitive-1.0.0");
 
 			expect(instance._serialize(false, false)).to.deep.equal(changeset);
 			expect(instance._serialize(true, false)).to.be.empty;
 		});
 
-		it("should add optional properties that have default values to the changeset on creation", () => {
+		it("should add optional properties that have default values to the changeset on creation", function () {
 			const DefaultPrimitive = {
 				typeid: "SimpleTest:OptionalPrimitive-1.0.0",
 				properties: [
@@ -62,14 +60,12 @@ describe("ContainerProperty", () => {
 			};
 
 			PropertyFactory._reregister(DefaultPrimitive);
-			const instance = PropertyFactory.create(
-				"SimpleTest:OptionalPrimitive-1.0.0",
-			);
+			const instance = PropertyFactory.create("SimpleTest:OptionalPrimitive-1.0.0");
 
 			expect(instance._serialize(true, false)).to.deep.equal(changeset);
 		});
 
-		it("should not add optional properties that do not have default values to the changeset on creation", () => {
+		it("should not add optional properties that do not have default values to the changeset on creation", function () {
 			const DefaultPrimitive = {
 				typeid: "SimpleTest:OptionalPrimitive-1.0.0",
 				properties: [
@@ -80,16 +76,14 @@ describe("ContainerProperty", () => {
 			};
 
 			PropertyFactory._reregister(DefaultPrimitive);
-			const instance = PropertyFactory.create(
-				"SimpleTest:OptionalPrimitive-1.0.0",
-			);
+			const instance = PropertyFactory.create("SimpleTest:OptionalPrimitive-1.0.0");
 
 			expect(instance._serialize(true, false)).to.be.empty;
 		});
 	});
 
-	describe("Optional Properties", () => {
-		it("should not exist on creation if no value is specified", () => {
+	describe("Optional Properties", function () {
+		it("should not exist on creation if no value is specified", function () {
 			const DefaultPrimitive = {
 				typeid: "SimpleTest:OptionalPrimitive-1.0.0",
 				properties: [
@@ -101,15 +95,13 @@ describe("ContainerProperty", () => {
 
 			PropertyFactory._reregister(DefaultPrimitive);
 
-			const instance = PropertyFactory.create(
-				"SimpleTest:OptionalPrimitive-1.0.0",
-			);
+			const instance = PropertyFactory.create("SimpleTest:OptionalPrimitive-1.0.0");
 			expect(instance.get("num")).to.be.undefined;
 			expect(instance.get("bool")).to.be.undefined;
 			expect(instance.get("string")).to.be.undefined;
 		});
 
-		it("should exist on creation if value is specified", () => {
+		it("should exist on creation if value is specified", function () {
 			const DefaultPrimitive = {
 				typeid: "SimpleTest:OptionalPrimitive-1.0.0",
 				properties: [
@@ -121,15 +113,13 @@ describe("ContainerProperty", () => {
 
 			PropertyFactory._reregister(DefaultPrimitive);
 
-			const instance = PropertyFactory.create(
-				"SimpleTest:OptionalPrimitive-1.0.0",
-			);
+			const instance = PropertyFactory.create("SimpleTest:OptionalPrimitive-1.0.0");
 			expect(instance.get("num").getValue()).to.equal(111);
 			expect(instance.get("bool").getValue()).to.equal(true);
 			expect(instance.get("string").getValue()).to.equal("basic");
 		});
 
-		it("can be inserted", () => {
+		it("can be inserted", function () {
 			const DefaultPrimitive = {
 				typeid: "SimpleTest:OptionalPrimitive-1.0.0",
 				properties: [
@@ -141,9 +131,7 @@ describe("ContainerProperty", () => {
 
 			PropertyFactory._reregister(DefaultPrimitive);
 
-			const instance = PropertyFactory.create(
-				"SimpleTest:OptionalPrimitive-1.0.0",
-			);
+			const instance = PropertyFactory.create("SimpleTest:OptionalPrimitive-1.0.0");
 
 			const num = PropertyFactory.create("Uint32");
 			num.setValue(111);
@@ -163,7 +151,7 @@ describe("ContainerProperty", () => {
 			expect(instance.get("string").getValue()).to.equal("basic");
 		});
 
-		it("can be removed", () => {
+		it("can be removed", function () {
 			const DefaultPrimitive = {
 				typeid: "SimpleTest:OptionalPrimitive-1.0.0",
 				properties: [
@@ -175,9 +163,7 @@ describe("ContainerProperty", () => {
 
 			PropertyFactory._reregister(DefaultPrimitive);
 
-			const instance = PropertyFactory.create(
-				"SimpleTest:OptionalPrimitive-1.0.0",
-			);
+			const instance = PropertyFactory.create("SimpleTest:OptionalPrimitive-1.0.0");
 
 			instance.remove("num");
 			instance.remove("bool");
@@ -188,7 +174,7 @@ describe("ContainerProperty", () => {
 			expect(instance.get("string")).to.be.undefined;
 		});
 
-		it("throws error if inserted property has unknown id", () => {
+		it("throws error if inserted property has unknown id", function () {
 			const DefaultPrimitive = {
 				typeid: "SimpleTest:OptionalPrimitive-1.0.0",
 				properties: [
@@ -200,9 +186,7 @@ describe("ContainerProperty", () => {
 
 			PropertyFactory._reregister(DefaultPrimitive);
 
-			const instance = PropertyFactory.create(
-				"SimpleTest:OptionalPrimitive-1.0.0",
-			);
+			const instance = PropertyFactory.create("SimpleTest:OptionalPrimitive-1.0.0");
 			const prop = PropertyFactory.create("String");
 
 			expect(() => {
@@ -210,7 +194,7 @@ describe("ContainerProperty", () => {
 			}).to.throw(MSG.CANNOT_INSERT_UNKNOWN_PROPERTY + "badId");
 		});
 
-		it("throws error if inserted property typeid does not match corresponding typeid", () => {
+		it("throws error if inserted property typeid does not match corresponding typeid", function () {
 			const DefaultPrimitive = {
 				typeid: "SimpleTest:OptionalPrimitive-1.0.0",
 				properties: [
@@ -222,9 +206,7 @@ describe("ContainerProperty", () => {
 
 			PropertyFactory._reregister(DefaultPrimitive);
 
-			const instance = PropertyFactory.create(
-				"SimpleTest:OptionalPrimitive-1.0.0",
-			);
+			const instance = PropertyFactory.create("SimpleTest:OptionalPrimitive-1.0.0");
 			const prop = PropertyFactory.create("String");
 
 			expect(() => {
@@ -232,7 +214,7 @@ describe("ContainerProperty", () => {
 			}).to.throw(MSG.MISMATCHING_PROPERTY_TYPEID);
 		});
 
-		it("throws error if attempting to remove a not optional property", () => {
+		it("throws error if attempting to remove a not optional property", function () {
 			const DefaultPrimitive = {
 				typeid: "SimpleTest:OptionalPrimitive-1.0.0",
 				properties: [
@@ -244,9 +226,7 @@ describe("ContainerProperty", () => {
 
 			PropertyFactory._reregister(DefaultPrimitive);
 
-			const instance = PropertyFactory.create(
-				"SimpleTest:OptionalPrimitive-1.0.0",
-			);
+			const instance = PropertyFactory.create("SimpleTest:OptionalPrimitive-1.0.0");
 
 			expect(() => {
 				instance.remove("num");

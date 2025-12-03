@@ -34,9 +34,7 @@ describe("PerformanceEvent", () => {
 	const callback = (): void => {
 		callbackCalls++;
 	};
-	const asyncCallback = async (
-		event: PerformanceEvent,
-	): Promise<string | void> => {
+	const asyncCallback = async (event: PerformanceEvent): Promise<string | void> => {
 		const outerPromise = new Promise<string>((resolve, reject) => {
 			Promise.resolve("A")
 				.finally(() => {
@@ -59,16 +57,11 @@ describe("PerformanceEvent", () => {
 	});
 
 	it("Cancel then End", async () => {
-		await PerformanceEvent.timedExecAsync(
-			logger,
-			{ eventName: "Testing" },
-			asyncCallback,
-			{
-				start: true,
-				end: true,
-				cancel: "generic",
-			},
-		);
+		await PerformanceEvent.timedExecAsync(logger, { eventName: "Testing" }, asyncCallback, {
+			start: true,
+			end: true,
+			cancel: "generic",
+		});
 		assert.equal(logger.errorsLogged, 0, "Shouldn't have logged any errors");
 	});
 
@@ -137,16 +130,11 @@ describe("PerformanceEvent", () => {
 			);
 
 			Array.from({ length: 100 }).map((_) =>
-				PerformanceEvent.timedExec(
-					logger,
-					{ eventName: "TestingSync" },
-					callback,
-					{
-						start: true,
-						end: true,
-						cancel: "generic",
-					},
-				),
+				PerformanceEvent.timedExec(logger, { eventName: "TestingSync" }, callback, {
+					start: true,
+					end: true,
+					cancel: "generic",
+				}),
 			);
 
 			assert.equal(callbackCalls, 200);

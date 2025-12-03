@@ -20,12 +20,8 @@ describe("arrayUtilities unit tests", () => {
 		assert.doesNotThrow(() => validateSafeInteger(-0, "test"));
 		assert.doesNotThrow(() => validateSafeInteger(1, "test"));
 		assert.doesNotThrow(() => validateSafeInteger(-1, "test"));
-		assert.doesNotThrow(() =>
-			validateSafeInteger(Number.MAX_SAFE_INTEGER, "test"),
-		);
-		assert.doesNotThrow(() =>
-			validateSafeInteger(Number.MIN_SAFE_INTEGER, "test"),
-		);
+		assert.doesNotThrow(() => validateSafeInteger(Number.MAX_SAFE_INTEGER, "test"));
+		assert.doesNotThrow(() => validateSafeInteger(Number.MIN_SAFE_INTEGER, "test"));
 
 		assert.throws(
 			() => validateSafeInteger(1.5, "test"),
@@ -33,15 +29,11 @@ describe("arrayUtilities unit tests", () => {
 		);
 		assert.throws(
 			() => validateSafeInteger(Number.MAX_SAFE_INTEGER + 1, "test"),
-			validateUsageError(
-				/Expected a safe integer passed to test, got 9007199254740992/,
-			),
+			validateUsageError(/Expected a safe integer passed to test, got 9007199254740992/),
 		);
 		assert.throws(
 			() => validateSafeInteger(Number.MIN_SAFE_INTEGER - 1, "test"),
-			validateUsageError(
-				/Expected a safe integer passed to test, got -9007199254740992/,
-			),
+			validateUsageError(/Expected a safe integer passed to test, got -9007199254740992/),
 		);
 		assert.throws(
 			() => validateSafeInteger(Number.NaN, "test"),
@@ -49,15 +41,11 @@ describe("arrayUtilities unit tests", () => {
 		);
 		assert.throws(
 			() => validateSafeInteger(Number.POSITIVE_INFINITY, "test"),
-			validateUsageError(
-				/Expected a safe integer passed to test, got Infinity/,
-			),
+			validateUsageError(/Expected a safe integer passed to test, got Infinity/),
 		);
 		assert.throws(
 			() => validateSafeInteger(Number.NEGATIVE_INFINITY, "test"),
-			validateUsageError(
-				/Expected a safe integer passed to test, got -Infinity/,
-			),
+			validateUsageError(/Expected a safe integer passed to test, got -Infinity/),
 		);
 	});
 
@@ -65,9 +53,7 @@ describe("arrayUtilities unit tests", () => {
 		assert.doesNotThrow(() => validatePositiveIndex(0, "test"));
 		assert.doesNotThrow(() => validatePositiveIndex(-0, "test"));
 		assert.doesNotThrow(() => validatePositiveIndex(1, "test"));
-		assert.doesNotThrow(() =>
-			validatePositiveIndex(Number.MAX_SAFE_INTEGER, "test"),
-		);
+		assert.doesNotThrow(() => validatePositiveIndex(Number.MAX_SAFE_INTEGER, "test"));
 
 		assert.throws(
 			() => validatePositiveIndex(-1, "test"),
@@ -84,15 +70,11 @@ describe("arrayUtilities unit tests", () => {
 		);
 		assert.throws(
 			() => validatePositiveIndex(Number.MAX_SAFE_INTEGER + 1, "test"),
-			validateUsageError(
-				/Expected a safe integer passed to test, got 9007199254740992/,
-			),
+			validateUsageError(/Expected a safe integer passed to test, got 9007199254740992/),
 		);
 		assert.throws(
 			() => validatePositiveIndex(Number.MIN_SAFE_INTEGER - 1, "test"),
-			validateUsageError(
-				/Expected a safe integer passed to test, got -9007199254740992/,
-			),
+			validateUsageError(/Expected a safe integer passed to test, got -9007199254740992/),
 		);
 		assert.throws(
 			() => validatePositiveIndex(Number.NaN, "test"),
@@ -100,15 +82,11 @@ describe("arrayUtilities unit tests", () => {
 		);
 		assert.throws(
 			() => validatePositiveIndex(Number.POSITIVE_INFINITY, "test"),
-			validateUsageError(
-				/Expected a safe integer passed to test, got Infinity/,
-			),
+			validateUsageError(/Expected a safe integer passed to test, got Infinity/),
 		);
 		assert.throws(
 			() => validatePositiveIndex(Number.NEGATIVE_INFINITY, "test"),
-			validateUsageError(
-				/Expected a safe integer passed to test, got -Infinity/,
-			),
+			validateUsageError(/Expected a safe integer passed to test, got -Infinity/),
 		);
 	});
 
@@ -127,9 +105,7 @@ describe("arrayUtilities unit tests", () => {
 			);
 			assert.throws(
 				() => validateIndex(-1, array, "test", false),
-				validateUsageError(
-					/Expected non-negative index passed to test, got -1/,
-				),
+				validateUsageError(/Expected non-negative index passed to test, got -1/),
 			);
 			assert.throws(
 				() => validateIndex(Number.NaN, array, "test", false),
@@ -152,9 +128,7 @@ describe("arrayUtilities unit tests", () => {
 			);
 			assert.throws(
 				() => validateIndex(-1, array, "test", true),
-				validateUsageError(
-					/Expected non-negative index passed to test, got -1/,
-				),
+				validateUsageError(/Expected non-negative index passed to test, got -1/),
 			);
 			assert.throws(
 				() => validateIndex(Number.NaN, array, "test", true),

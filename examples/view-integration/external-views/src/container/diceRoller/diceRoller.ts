@@ -11,11 +11,7 @@ import type {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/legacy";
-import {
-	type ISharedMap,
-	type IValueChanged,
-	MapFactory,
-} from "@fluidframework/map/legacy";
+import { MapFactory, type ISharedMap, type IValueChanged } from "@fluidframework/map/legacy";
 import { getPresenceFromDataStoreContext } from "@fluidframework/presence/legacy/alpha";
 import type {
 	IFluidDataStoreChannel,
@@ -23,11 +19,7 @@ import type {
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/legacy";
 
-import type {
-	EntryPoint,
-	IDiceRoller,
-	IDiceRollerEvents,
-} from "./interface.js";
+import type { EntryPoint, IDiceRoller, IDiceRollerEvents } from "./interface.js";
 
 // This key is where we store the value in the ISharedMap.
 const diceValueKey = "dice-value";

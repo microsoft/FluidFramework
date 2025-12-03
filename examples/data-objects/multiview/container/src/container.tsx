@@ -4,9 +4,9 @@
  */
 
 import {
-	getDataStoreEntryPoint,
 	type IFluidMountableViewEntryPoint,
 	MountableView,
+	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
 import { Constellation } from "@fluid-example/multiview-constellation-model";
 import type { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
@@ -101,9 +101,7 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 	 * Since we're letting the container define the default view it will respond with, it must do whatever setup
 	 * it requires to produce that default view.  We'll create a few Coordinates and give them starting values.
 	 */
-	protected async containerInitializingFirstTime(
-		runtime: IContainerRuntime,
-	): Promise<void> {
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const simpleCoordinate = await createAndAttachCoordinate(
 			runtime,
 			simpleCoordinateComponentId,
@@ -135,9 +133,7 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 		triangleCoordinate3.y = 60;
 
 		// Create the constellation component
-		const dataStore = await runtime.createDataStore(
-			Constellation.getFactory().type,
-		);
+		const dataStore = await runtime.createDataStore(Constellation.getFactory().type);
 		await dataStore.trySetAlias(constellationComponentName);
 		const constellationComponent = await getDataStoreEntryPoint<Constellation>(
 			runtime,

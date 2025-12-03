@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import type { ITestDriver } from "@fluid-internal/test-driver-definitions";
-import type { IRequest } from "@fluidframework/core-interfaces";
-import type {
+import { ITestDriver } from "@fluid-internal/test-driver-definitions";
+import { IRequest } from "@fluidframework/core-interfaces";
+import {
 	IDocumentServiceFactory,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	createTinyliciousCreateNewRequest,
-	defaultTinyliciousPort,
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,
+	createTinyliciousCreateNewRequest,
+	defaultTinyliciousPort,
 } from "@fluidframework/tinylicious-driver/internal";
 
 import {
 	RouterliciousDriverApi,
-	type RouterliciousDriverApiType,
+	RouterliciousDriverApiType,
 } from "./routerliciousDriverApi.js";
 
 /**
@@ -31,9 +31,7 @@ export class TinyliciousTestDriver implements ITestDriver {
 		return this.api.version;
 	}
 
-	constructor(
-		private readonly api: RouterliciousDriverApiType = RouterliciousDriverApi,
-	) {}
+	constructor(private readonly api: RouterliciousDriverApiType = RouterliciousDriverApi) {}
 	createDocumentServiceFactory(): IDocumentServiceFactory {
 		return new this.api.RouterliciousDocumentServiceFactory(
 			new InsecureTinyliciousTokenProvider(),
@@ -45,12 +43,8 @@ export class TinyliciousTestDriver implements ITestDriver {
 	createCreateNewRequest(testId: string): IRequest {
 		return createTinyliciousCreateNewRequest(testId);
 	}
-	async createContainerUrl(
-		testId: string,
-		containerUrl?: IResolvedUrl,
-	): Promise<string> {
-		const containerId =
-			containerUrl && "id" in containerUrl ? containerUrl.id : testId;
+	async createContainerUrl(testId: string, containerUrl?: IResolvedUrl): Promise<string> {
+		const containerId = containerUrl && "id" in containerUrl ? containerUrl.id : testId;
 		return `http://localhost:${defaultTinyliciousPort}/${containerId}`;
 	}
 }

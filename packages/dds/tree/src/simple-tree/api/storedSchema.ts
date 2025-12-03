@@ -6,10 +6,7 @@
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { FluidClientVersion, type ICodecOptions } from "../../codec/index.js";
 import { SchemaFormatVersion } from "../../core/index.js";
-import {
-	encodeTreeSchema,
-	makeSchemaCodec,
-} from "../../feature-libraries/index.js";
+import { encodeTreeSchema, makeSchemaCodec } from "../../feature-libraries/index.js";
 import {
 	clientVersionToSchemaVersion,
 	type FormatV1,
@@ -17,10 +14,7 @@ import {
 } from "../../feature-libraries/schema-index/index.js";
 import { brand, type JsonCompatible } from "../../util/index.js";
 import type { SchemaUpgrade } from "../core/index.js";
-import {
-	type ImplicitFieldSchema,
-	normalizeFieldSchema,
-} from "../fieldSchema.js";
+import { normalizeFieldSchema, type ImplicitFieldSchema } from "../fieldSchema.js";
 import { toStoredSchema } from "../toStoredSchema.js";
 import { TreeViewConfigurationAlpha } from "./configuration.js";
 

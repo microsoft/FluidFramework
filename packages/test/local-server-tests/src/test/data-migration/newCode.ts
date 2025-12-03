@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -12,12 +14,11 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import { SchemaFactory } from "@fluidframework/tree";
 import {
-	type ITree,
+	ITree,
 	SharedTree,
-	type TreeView,
 	TreeViewConfiguration,
+	type TreeView,
 } from "@fluidframework/tree/internal";
-import { strict as assert } from "assert";
 
 import { runtimeOptions } from "./utils.js";
 
@@ -129,34 +130,23 @@ export class RootDO2 extends DataObject {
 
 	private _doWithST?: DOWithST;
 	public get doWithST(): DOWithST {
-		assert(
-			this._doWithST !== undefined,
-			"doWithST not yet initialized in RootDO2!",
-		);
+		assert(this._doWithST !== undefined, "doWithST not yet initialized in RootDO2!");
 		return this._doWithST;
 	}
 	private _doWithST2?: DOWithST2;
 	public get doWithST2(): DOWithST2 {
-		assert(
-			this._doWithST2 !== undefined,
-			"doWithST2 not yet initialized in RootDO2!",
-		);
+		assert(this._doWithST2 !== undefined, "doWithST2 not yet initialized in RootDO2!");
 		return this._doWithST2;
 	}
 	private _tree?: ITree;
 	public get tree(): ITree {
-		assert(
-			this._tree !== undefined,
-			"sharedTree not yet initialized in RootDO2!",
-		);
+		assert(this._tree !== undefined, "sharedTree not yet initialized in RootDO2!");
 		return this._tree;
 	}
 
 	protected async initializingFirstTime(): Promise<void> {
 		const doWithLST = await DOWithSTFactory.createChildInstance(this.context);
-		const doWithLSTAndDir = await DOWithST2Factory.createChildInstance(
-			this.context,
-		);
+		const doWithLSTAndDir = await DOWithST2Factory.createChildInstance(this.context);
 		this.root.set("a", doWithLST.handle);
 		this.root.set("b", doWithLSTAndDir.handle);
 		this.root.set("tree", doWithLST.tree.handle);
@@ -172,10 +162,7 @@ export class RootDO2 extends DataObject {
 		this._doWithST2 = await handle2.get();
 
 		const treeHandle = this.root.get<IFluidHandle<ITree>>("tree");
-		assert(
-			treeHandle !== undefined,
-			"SharedTree handle not stored in RootDO2!",
-		);
+		assert(treeHandle !== undefined, "SharedTree handle not stored in RootDO2!");
 		this._tree = await treeHandle.get();
 	}
 }
@@ -193,15 +180,11 @@ export const DOWithST2Factory = new DataObjectFactory({
 export const RootDO2Factory = new DataObjectFactory({
 	type: "rootdo",
 	ctor: RootDO2,
-	registryEntries: [
-		DOWithSTFactory.registryEntry,
-		DOWithST2Factory.registryEntry,
-	],
+	registryEntries: [DOWithSTFactory.registryEntry, DOWithST2Factory.registryEntry],
 });
 
-export const newRuntimeFactory =
-	new ContainerRuntimeFactoryWithDefaultDataStore({
-		defaultFactory: RootDO2Factory,
-		registryEntries: [RootDO2Factory.registryEntry],
-		runtimeOptions,
-	});
+export const newRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+	defaultFactory: RootDO2Factory,
+	registryEntries: [RootDO2Factory.registryEntry],
+	runtimeOptions,
+});

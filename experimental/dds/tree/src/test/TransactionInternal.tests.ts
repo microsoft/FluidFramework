@@ -6,21 +6,21 @@
 import { assert, expect } from 'chai';
 
 import { StablePlace, StableRange } from '../ChangeTypes.js';
-import { deepCompareNodes, PlaceValidationResult, RangeValidationResultKind } from '../EditUtilities.js';
-import type { DetachedSequenceId, NodeId, TraitLabel } from '../Identifiers.js';
+import { PlaceValidationResult, RangeValidationResultKind, deepCompareNodes } from '../EditUtilities.js';
+import { DetachedSequenceId, NodeId, TraitLabel } from '../Identifiers.js';
+import { getChangeNodeFromViewNode } from '../SerializationUtilities.js';
+import { GenericTransaction, TransactionInternal } from '../TransactionInternal.js';
 import {
 	ChangeInternal,
-	type ChangeNode,
+	ChangeNode,
 	ChangeTypeInternal,
 	ConstraintEffect,
 	EditStatus,
-	type SetValueInternal,
+	SetValueInternal,
 	Side,
 	StablePlaceInternal,
 	StableRangeInternal,
 } from '../persisted-types/index.js';
-import { getChangeNodeFromViewNode } from '../SerializationUtilities.js';
-import { type GenericTransaction, TransactionInternal } from '../TransactionInternal.js';
 
 import { SimpleTestTree } from './utilities/TestNode.js';
 import { refreshTestTree, testTrait, testTraitLabel } from './utilities/TestUtilities.js';
@@ -226,8 +226,9 @@ describe('Transaction', () => {
 		it('can clear an unset payload', () => {
 			transaction.applyChange(ChangeInternal.clearPayload(testTree.identifier));
 			expect(transaction.status).equals(EditStatus.Applied);
-			expect(Object.hasOwn(transaction.view.getViewNode(testTree.identifier), 'payload')).to.be.false;
-			expect(Object.hasOwn(getChangeNodeFromViewNode(transaction.view, testTree.identifier), 'payload')).to.be.false;
+			expect({}.hasOwnProperty.call(transaction.view.getViewNode(testTree.identifier), 'payload')).to.be.false;
+			expect({}.hasOwnProperty.call(getChangeNodeFromViewNode(transaction.view, testTree.identifier), 'payload')).to.be
+				.false;
 		});
 
 		it('can clear a set payload', () => {
@@ -241,8 +242,9 @@ describe('Transaction', () => {
 			expect(transaction.view.getViewNode(testTree.identifier).payload).not.undefined;
 			transaction.applyChange(ChangeInternal.clearPayload(testTree.identifier));
 			expect(transaction.status).equals(EditStatus.Applied);
-			expect(Object.hasOwn(transaction.view.getViewNode(testTree.identifier), 'payload')).to.be.false;
-			expect(Object.hasOwn(getChangeNodeFromViewNode(transaction.view, testTree.identifier), 'payload')).to.be.false;
+			expect({}.hasOwnProperty.call(transaction.view.getViewNode(testTree.identifier), 'payload')).to.be.false;
+			expect({}.hasOwnProperty.call(getChangeNodeFromViewNode(transaction.view, testTree.identifier), 'payload')).to.be
+				.false;
 		});
 	});
 

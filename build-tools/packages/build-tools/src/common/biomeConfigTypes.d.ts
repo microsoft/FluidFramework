@@ -34,21 +34,15 @@ export type TrailingCommas = "all" | "es5" | "none";
  */
 export type JsxRuntime = "transparent" | "reactClassic";
 export type TrailingCommas2 = "none" | "all";
-export type RuleFixConfiguration =
-	| RulePlainConfiguration
-	| RuleWithFixNoOptions;
+export type RuleFixConfiguration = RulePlainConfiguration | RuleWithFixNoOptions;
 export type RulePlainConfiguration = "warn" | "error" | "info" | "off";
 /**
  * Used to identify the kind of code action emitted by a rule
  */
 export type FixKind = "none" | "safe" | "unsafe";
 export type RuleConfiguration = RulePlainConfiguration | RuleWithNoOptions;
-export type ValidAriaRoleConfiguration =
-	| RulePlainConfiguration
-	| RuleWithValidAriaRoleOptions;
-export type ComplexityConfiguration =
-	| RulePlainConfiguration
-	| RuleWithComplexityOptions;
+export type ValidAriaRoleConfiguration = RulePlainConfiguration | RuleWithValidAriaRoleOptions;
+export type ComplexityConfiguration = RulePlainConfiguration | RuleWithComplexityOptions;
 export type HooksConfiguration = RulePlainConfiguration | RuleWithHooksOptions;
 export type StableHookResult = boolean | [number, ...number[]];
 export type DeprecatedHooksConfiguration =
@@ -79,12 +73,7 @@ export type FilenamingConventionConfiguration =
 /**
  * Supported cases for file names.
  */
-export type FilenameCase =
-	| "camelCase"
-	| "export"
-	| "kebab-case"
-	| "PascalCase"
-	| "snake_case";
+export type FilenameCase = "camelCase" | "export" | "kebab-case" | "PascalCase" | "snake_case";
 export type FilenameCases = FilenameCase[];
 export type NamingConventionConfiguration =
 	| RulePlainConfiguration
@@ -92,11 +81,7 @@ export type NamingConventionConfiguration =
 /**
  * Supported cases.
  */
-export type Format =
-	| "camelCase"
-	| "CONSTANT_CASE"
-	| "PascalCase"
-	| "snake_case";
+export type Format = "camelCase" | "CONSTANT_CASE" | "PascalCase" | "snake_case";
 export type Formats = Format[];
 export type Regex = string;
 export type Kind =
@@ -140,12 +125,7 @@ export type Kind =
 	| "typeProperty"
 	| "typeSetter"
 	| "typeMethod";
-export type RestrictedModifier =
-	| "abstract"
-	| "private"
-	| "protected"
-	| "readonly"
-	| "static";
+export type RestrictedModifier = "abstract" | "private" | "protected" | "readonly" | "static";
 export type Modifiers = RestrictedModifier[];
 export type Scope = "any" | "global";
 export type Overrides = OverridePattern[];
@@ -437,7 +417,7 @@ export interface JavascriptLinter {
 	 */
 	enabled?: boolean | null;
 }
-export type JavascriptOrganizeImports = {};
+export interface JavascriptOrganizeImports {}
 /**
  * Options that changes how the JavaScript parser behaves
  */
@@ -1104,7 +1084,7 @@ export interface RuleWithDeprecatedHooksOptions {
 /**
  * Options for the `useHookAtTopLevel` rule have been deprecated, since we now use the React hook naming convention to determine whether a function is a hook.
  */
-export type DeprecatedHooksOptions = {};
+export interface DeprecatedHooksOptions {}
 /**
  * A list of rules that belong to this group
  */

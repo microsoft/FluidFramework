@@ -6,8 +6,8 @@
 import { expect } from "chai";
 
 import {
-	type IPropertyTreeMessage,
-	type IRemotePropertyTreeMessage,
+	IPropertyTreeMessage,
+	IRemotePropertyTreeMessage,
 	OpKind,
 	SharedPropertyTree,
 } from "../propertyTree.js";
@@ -41,8 +41,7 @@ describe("PropertyTree", () => {
 					localBranchStart: undefined,
 				},
 			];
-			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> =
-				{};
+			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> = {};
 			unrebasedRemoteChanges.C = {
 				op: OpKind.ChangeSet,
 				metadata: {},
@@ -61,9 +60,7 @@ describe("PropertyTree", () => {
 			);
 
 			expect(remoteChanges).to.deep.equal(prundedData.remoteChanges);
-			expect(unrebasedRemoteChanges).to.deep.equal(
-				prundedData.unrebasedRemoteChanges,
-			);
+			expect(unrebasedRemoteChanges).to.deep.equal(prundedData.unrebasedRemoteChanges);
 		});
 		it("Prune does nothing if sequence number is equivalent to the sole unrebased commit", () => {
 			/**
@@ -92,8 +89,7 @@ describe("PropertyTree", () => {
 					localBranchStart: undefined,
 				},
 			];
-			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> =
-				{};
+			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> = {};
 			unrebasedRemoteChanges.C = {
 				op: OpKind.ChangeSet,
 				metadata: {},
@@ -112,9 +108,7 @@ describe("PropertyTree", () => {
 			);
 			expect(prundedData.prunedCount).to.equal(0);
 			expect(remoteChanges).to.deep.equal(prundedData.remoteChanges);
-			expect(unrebasedRemoteChanges).to.deep.equal(
-				prundedData.unrebasedRemoteChanges,
-			);
+			expect(unrebasedRemoteChanges).to.deep.equal(prundedData.unrebasedRemoteChanges);
 		});
 
 		it("Prune does nothing if all unrebased changes with leq sqn than msn are ref'ing all remote changes", () => {
@@ -145,8 +139,7 @@ describe("PropertyTree", () => {
 					localBranchStart: undefined,
 				},
 			];
-			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> =
-				{};
+			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> = {};
 			unrebasedRemoteChanges.C = {
 				op: OpKind.ChangeSet,
 				metadata: {},
@@ -176,9 +169,7 @@ describe("PropertyTree", () => {
 			);
 			expect(prundedData.prunedCount).to.equal(0);
 			expect(remoteChanges).to.deep.equal(prundedData.remoteChanges);
-			expect(unrebasedRemoteChanges).to.deep.equal(
-				prundedData.unrebasedRemoteChanges,
-			);
+			expect(unrebasedRemoteChanges).to.deep.equal(prundedData.unrebasedRemoteChanges);
 		});
 
 		it("Prune deletes the initial commit since its not referenced by unrebased change", () => {
@@ -207,8 +198,7 @@ describe("PropertyTree", () => {
 					localBranchStart: undefined,
 				},
 			];
-			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> =
-				{};
+			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> = {};
 			unrebasedRemoteChanges.C = {
 				op: OpKind.ChangeSet,
 				metadata: {},
@@ -229,9 +219,7 @@ describe("PropertyTree", () => {
 			expect(prundedData.prunedCount).to.equal(1);
 			expect(prundedData.remoteChanges.length).to.be.equal(1);
 			expect(remoteChanges[1]).to.equal(prundedData.remoteChanges[0]);
-			expect(unrebasedRemoteChanges).to.deep.equal(
-				prundedData.unrebasedRemoteChanges,
-			);
+			expect(unrebasedRemoteChanges).to.deep.equal(prundedData.unrebasedRemoteChanges);
 		});
 
 		it("Prune deletes the initial commit since its not indirectly referenced by unrebased change", () => {
@@ -261,8 +249,7 @@ describe("PropertyTree", () => {
 					localBranchStart: undefined,
 				},
 			];
-			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> =
-				{};
+			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> = {};
 			unrebasedRemoteChanges.C = {
 				op: OpKind.ChangeSet,
 				metadata: {},
@@ -293,9 +280,7 @@ describe("PropertyTree", () => {
 			expect(prundedData.prunedCount).to.equal(1);
 			expect(prundedData.remoteChanges.length).to.be.equal(1);
 			expect(remoteChanges[1]).to.equal(prundedData.remoteChanges[0]);
-			expect(unrebasedRemoteChanges).to.deep.equal(
-				prundedData.unrebasedRemoteChanges,
-			);
+			expect(unrebasedRemoteChanges).to.deep.equal(prundedData.unrebasedRemoteChanges);
 		});
 
 		it("Prune deletes multiple changes since msn is higher than one of the unrebased changes chain sqn", () => {
@@ -325,8 +310,7 @@ describe("PropertyTree", () => {
 					localBranchStart: undefined,
 				},
 			];
-			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> =
-				{};
+			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> = {};
 			unrebasedRemoteChanges.C = {
 				op: OpKind.ChangeSet,
 				metadata: {},
@@ -366,13 +350,9 @@ describe("PropertyTree", () => {
 
 			expect(prundedData.prunedCount).to.equal(3);
 			expect(prundedData.remoteChanges.length).to.be.equal(1);
-			expect(Object.keys(prundedData.unrebasedRemoteChanges).length).to.equal(
-				1,
-			);
+			expect(Object.keys(prundedData.unrebasedRemoteChanges).length).to.equal(1);
 			expect(remoteChanges[1]).to.equal(prundedData.remoteChanges[0]);
-			expect(unrebasedRemoteChanges.E).to.deep.equal(
-				prundedData.unrebasedRemoteChanges.E,
-			);
+			expect(unrebasedRemoteChanges.E).to.deep.equal(prundedData.unrebasedRemoteChanges.E);
 		});
 
 		it("Prune should not prune partially rebased commit chains", () => {
@@ -410,8 +390,7 @@ describe("PropertyTree", () => {
 					localBranchStart: undefined,
 				},
 			];
-			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> =
-				{};
+			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> = {};
 			unrebasedRemoteChanges.B = {
 				op: OpKind.ChangeSet,
 				metadata: {},
@@ -442,9 +421,7 @@ describe("PropertyTree", () => {
 
 			expect(prundedData.prunedCount).to.equal(0);
 			expect(prundedData.remoteChanges.length).to.be.equal(3);
-			expect(Object.keys(prundedData.unrebasedRemoteChanges).length).to.equal(
-				2,
-			);
+			expect(Object.keys(prundedData.unrebasedRemoteChanges).length).to.equal(2);
 		});
 		it("Prune should not prune commits with an empty remote head", () => {
 			/**
@@ -463,8 +440,7 @@ describe("PropertyTree", () => {
 					metadata: undefined,
 				},
 			];
-			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> =
-				{};
+			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> = {};
 			unrebasedRemoteChanges.A = {
 				op: OpKind.ChangeSet,
 				changeSet: {},
@@ -485,9 +461,7 @@ describe("PropertyTree", () => {
 
 			expect(prundedData.prunedCount).to.equal(0);
 			expect(prundedData.remoteChanges.length).to.be.equal(1);
-			expect(Object.keys(prundedData.unrebasedRemoteChanges).length).to.equal(
-				1,
-			);
+			expect(Object.keys(prundedData.unrebasedRemoteChanges).length).to.equal(1);
 		});
 		it("Prune does nothing if unrebased changes point to remote head that is not in the remote changes", () => {
 			/**
@@ -516,8 +490,7 @@ describe("PropertyTree", () => {
 					localBranchStart: undefined,
 				},
 			];
-			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> =
-				{};
+			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> = {};
 			unrebasedRemoteChanges.A = {
 				op: OpKind.ChangeSet,
 				metadata: {},
@@ -546,9 +519,7 @@ describe("PropertyTree", () => {
 			);
 
 			expect(remoteChanges).to.deep.equal(prundedData.remoteChanges);
-			expect(unrebasedRemoteChanges).to.deep.equal(
-				prundedData.unrebasedRemoteChanges,
-			);
+			expect(unrebasedRemoteChanges).to.deep.equal(prundedData.unrebasedRemoteChanges);
 		});
 	});
 });

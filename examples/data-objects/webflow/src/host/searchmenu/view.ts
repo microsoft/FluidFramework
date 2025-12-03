@@ -34,7 +34,7 @@ export abstract class View<TInit extends TProps, TProps = {} | undefined>
 	}
 
 	public detach() {
-		const { root, listeners } = this;
+		const { root: root, listeners } = this;
 
 		const parent = root.parentNode;
 		root.remove();
@@ -66,11 +66,7 @@ export abstract class View<TInit extends TProps, TProps = {} | undefined>
 		listener: (ev: HTMLElementEventMap[K]) => any,
 	) {
 		const eventListener = listener as EventListener;
-		const registration: IListenerRegistration = {
-			target,
-			type,
-			listener: eventListener,
-		};
+		const registration: IListenerRegistration = { target, type, listener: eventListener };
 		const listeners = this.listeners;
 
 		if (listeners === undefined) {

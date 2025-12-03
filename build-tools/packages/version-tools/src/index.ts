@@ -4,13 +4,13 @@
  */
 
 export {
-	DEFAULT_INTERDEPENDENCY_RANGE,
-	type InterdependencyRange,
 	isInterdependencyRange,
 	isRangeOperator,
 	isVersionBumpType,
 	isVersionBumpTypeExtended,
 	isWorkspaceRange,
+	DEFAULT_INTERDEPENDENCY_RANGE,
+	type InterdependencyRange,
 	type RangeOperator,
 	RangeOperators,
 	type RangeOperatorWithVersion,
@@ -23,10 +23,10 @@ export {
 	WorkspaceRanges,
 } from "./bumpTypes";
 export {
-	changePreReleaseIdentifier,
 	DEFAULT_PRERELEASE_IDENTIFIER,
-	fromInternalScheme,
+	changePreReleaseIdentifier,
 	getVersionRange,
+	fromInternalScheme,
 	isInternalTestVersion,
 	isInternalVersionRange,
 	isInternalVersionScheme,
@@ -40,18 +40,6 @@ export {
 	sortVersions,
 	type VersionScheme,
 } from "./schemes";
-export {
-	bumpRange,
-	detectBumpType,
-	getPreviousVersions,
-	isPrereleaseVersion,
-} from "./semver";
-export {
-	getIsLatest,
-	getSimpleVersion,
-	getVersionsFromStrings,
-} from "./versions";
-export {
-	fromVirtualPatchScheme,
-	toVirtualPatchScheme,
-} from "./virtualPatchScheme";
+export { bumpRange, detectBumpType, isPrereleaseVersion, getPreviousVersions } from "./semver";
+export { getIsLatest, getSimpleVersion, getVersionsFromStrings } from "./versions";
+export { fromVirtualPatchScheme, toVirtualPatchScheme } from "./virtualPatchScheme";

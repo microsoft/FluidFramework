@@ -13,12 +13,7 @@ import type { EncodedRevisionTag, RevisionTag } from "./types.js";
 
 export class RevisionTagCodec
 	implements
-		IJsonCodec<
-			RevisionTag,
-			EncodedRevisionTag,
-			EncodedRevisionTag,
-			ChangeEncodingContext
-		>
+		IJsonCodec<RevisionTag, EncodedRevisionTag, EncodedRevisionTag, ChangeEncodingContext>
 {
 	public localSessionId: SessionId;
 
@@ -31,10 +26,7 @@ export class RevisionTagCodec
 			? tag
 			: (this.idCompressor.normalizeToOpSpace(tag) as EncodedRevisionTag);
 	}
-	public decode(
-		tag: EncodedRevisionTag,
-		context: ChangeEncodingContext,
-	): RevisionTag {
+	public decode(tag: EncodedRevisionTag, context: ChangeEncodingContext): RevisionTag {
 		if (tag === "root") {
 			return tag;
 		}

@@ -3,26 +3,26 @@
  * Licensed under the MIT License.
  */
 
+export {
+	SharedArrayFactory,
+	SharedArray,
+	SharedArrayBuilder,
+} from "./sharedArrayFactory.js";
+export { SharedArrayRevertible } from "./sharedArrayRevertible.js";
 export type {
-	IRevertible,
+	SerializableTypeForSharedArray,
 	ISharedArray,
 	ISharedArrayEvents,
 	ISharedArrayRevertible,
-	SerializableTypeForSharedArray,
+	IRevertible,
 } from "./interfaces.js";
-export {
-	SharedArray,
-	SharedArrayBuilder,
-	SharedArrayFactory,
-} from "./sharedArrayFactory.js";
 export type {
-	IDeleteOperation,
-	IInsertOperation,
-	IMoveOperation,
 	ISharedArrayOperation,
+	IInsertOperation,
+	IDeleteOperation,
+	IMoveOperation,
 	ISharedArrayRevertibleOperation,
 	IToggleMoveOperation,
 	IToggleOperation,
 } from "./sharedArrayOperations.js";
 export { OperationType } from "./sharedArrayOperations.js";
-export { SharedArrayRevertible } from "./sharedArrayRevertible.js";

@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+
 import type {
 	DeltaDetachedNodeId,
 	DeltaFieldChanges,
@@ -14,6 +14,7 @@ import type {
 } from "../../core/index.js";
 import { mapRootChanges } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import { chunkFromJsonTrees, chunkToMapTreeField } from "../utils.js";
 
 const nodeX = chunkFromJsonTrees(["X"]);

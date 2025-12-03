@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { StablePlace, StableRange } from './ChangeTypes.js';
+import { StablePlace, StableRange } from './ChangeTypes.js';
 import { assertWithMessage, fail } from './Common.js';
-import type { TraitLocation, TreeView, TreeViewPlace, TreeViewRange } from './TreeView.js';
+import { TraitLocation, TreeView, TreeViewPlace, TreeViewRange } from './TreeView.js';
 
 /**
  * Express the given {@link (StableRange:interface)} as a {@link TreeViewRange}

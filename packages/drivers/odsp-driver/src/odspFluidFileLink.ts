@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	fromBase64ToUtf8,
-	fromUtf8ToBase64,
-} from "@fluid-internal/client-utils";
+import { fromBase64ToUtf8, fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 
 import { OdcApiSiteOrigin, OdcFileSiteOrigin } from "./constants.js";
 import type { OdspFluidDataStoreLocator } from "./contractsPublic.js";
@@ -29,9 +26,7 @@ const additionalContextParamName = "x";
  * @legacy
  * @beta
  */
-export function encodeOdspFluidDataStoreLocator(
-	locator: OdspFluidDataStoreLocator,
-): string {
+export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocator): string {
 	const siteUrl = new URL(locator.siteUrl);
 	const sitePath = encodeURIComponent(siteUrl.pathname);
 	const driveId = encodeURIComponent(locator.driveId);
@@ -72,9 +67,7 @@ function decodeOdspFluidDataStoreLocator(
 	siteOriginUrl: string,
 	requireFluidSignature: boolean = true,
 ): OdspFluidDataStoreLocator | undefined {
-	const locatorInfo = new URLSearchParams(
-		fromBase64ToUtf8(encodedLocatorValue),
-	);
+	const locatorInfo = new URLSearchParams(fromBase64ToUtf8(encodedLocatorValue));
 
 	const signatureValue = locatorInfo.get(fluidSignatureParamName);
 	if (requireFluidSignature && signatureValue !== "1") {
@@ -86,8 +79,7 @@ function decodeOdspFluidDataStoreLocator(
 	const itemId = locatorInfo.get(itemIdParamName);
 	const dataStorePath = locatorInfo.get(dataStorePathParamName);
 	const appName = locatorInfo.get(appNameParamName) ?? undefined;
-	const containerPackageName =
-		locatorInfo.get(containerPackageNameParamName) ?? undefined;
+	const containerPackageName = locatorInfo.get(containerPackageNameParamName) ?? undefined;
 	const fileVersion = locatorInfo.get(fileVersionParamName) ?? undefined;
 	const context = locatorInfo.get(additionalContextParamName) ?? undefined;
 	// "" is a valid value for dataStorePath so simply check for absence of the param;
@@ -134,10 +126,7 @@ export const locatorQueryParamName = "nav";
  * @legacy
  * @beta
  */
-export function storeLocatorInOdspUrl(
-	url: URL,
-	locator: OdspFluidDataStoreLocator,
-): void {
+export function storeLocatorInOdspUrl(url: URL, locator: OdspFluidDataStoreLocator): void {
 	const encodedLocatorValue = encodeOdspFluidDataStoreLocator(locator);
 	// IMPORTANT: Do not apply encodeURIComponent to encodedLocatorValue, param value is automatically encoded
 	// when set via URLSearchParams class
@@ -166,9 +155,7 @@ export function getLocatorFromOdspUrl(
 	// IMPORTANT: ODC deviates from ODSP in that its file link origin is different from vroom api origin.
 	// The following code passes vroom api origin as site origin instead of file origin.
 	const siteOriginUrl =
-		url.origin.toLowerCase() === OdcFileSiteOrigin
-			? OdcApiSiteOrigin
-			: url.origin;
+		url.origin.toLowerCase() === OdcFileSiteOrigin ? OdcApiSiteOrigin : url.origin;
 
 	return decodeOdspFluidDataStoreLocator(
 		encodedLocatorValue,

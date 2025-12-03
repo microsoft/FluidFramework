@@ -4,8 +4,7 @@
  */
 
 import type { IMigrator } from "@fluid-example/migration-tools/alpha";
-import type React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import type { IInventoryListAppModel } from "../modelInterfaces.js";
 
@@ -47,10 +46,5 @@ export const InventoryListAppView: React.FC<IInventoryListAppViewProps> = (
 		};
 	}, [migrator]);
 
-	return (
-		<InventoryListView
-			inventoryList={model.inventoryList}
-			disabled={disableInput}
-		/>
-	);
+	return <InventoryListView inventoryList={model.inventoryList} disabled={disableInput} />;
 };

@@ -5,8 +5,8 @@
 
 import { assertNotUndefined } from './Common.js';
 import { SharedTreeEvent } from './EventTypes.js';
-import type { EditId } from './Identifiers.js';
-import type { EditCommittedEventArguments, SharedTree } from './SharedTree.js';
+import { EditId } from './Identifiers.js';
+import { EditCommittedEventArguments, SharedTree } from './SharedTree.js';
 
 // TODO: We temporarily duplicate these contracts from 'framework/undo-redo' to unblock development
 // while we decide on the correct layering for undo.

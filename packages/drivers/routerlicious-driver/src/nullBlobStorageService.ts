@@ -3,16 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ISummaryHandle,
-	ISummaryTree,
-} from "@fluidframework/driver-definitions";
-import type {
-	ICreateBlobResponse,
+import { ISummaryTree, ISummaryHandle } from "@fluidframework/driver-definitions";
+import {
 	IDocumentStorageService,
-	ISnapshotTree,
 	ISummaryContext,
 	IVersion,
+	ISnapshotTree,
+	ICreateBlobResponse,
 } from "@fluidframework/driver-definitions/internal";
 
 /**
@@ -20,16 +17,11 @@ import type {
  * Does not read/write anything.
  */
 export class NullBlobStorageService implements IDocumentStorageService {
-	public async getSnapshotTree(
-		version?: IVersion,
-	): Promise<ISnapshotTree | null> {
+	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
 		return version ? Promise.reject(new Error("Invalid operation")) : null;
 	}
 
-	public async getVersions(
-		versionId: string | null,
-		count: number,
-	): Promise<IVersion[]> {
+	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
 		return [];
 	}
 

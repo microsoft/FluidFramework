@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { copyPropertyIfDefined, fail, type Mutable, type ReplaceRecursive } from './Common.js';
+import { Mutable, ReplaceRecursive, copyPropertyIfDefined, fail } from './Common.js';
 import { convertTreeNodes } from './EditUtilities.js';
-import { type DetachedSequenceId, isDetachedSequenceId, type NodeId } from './Identifiers.js';
+import { DetachedSequenceId, NodeId, isDetachedSequenceId } from './Identifiers.js';
 import {
-	type BuildNodeInternal,
-	type ChangeInternal,
+	BuildNodeInternal,
+	ChangeInternal,
 	ChangeTypeInternal,
-	type ConstraintInternal,
-	type DetachInternal,
-	type Edit,
-	type NodeData,
-	type StablePlaceInternal,
-	type StableRangeInternal,
-	type TreeNode,
+	ConstraintInternal,
+	DetachInternal,
+	Edit,
+	NodeData,
+	StablePlaceInternal,
+	StableRangeInternal,
+	TreeNode,
 } from './persisted-types/index.js';
 
 export function convertEditIds<IdFrom, IdTo>(

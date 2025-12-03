@@ -4,33 +4,26 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import {
-	assert,
-	fail,
-	unreachableCase,
-} from "@fluidframework/core-utils/internal";
+import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	EmptyKey,
-	type FieldKey,
 	forEachField,
-	type ITreeCursor,
 	inCursorField,
 	LeafNodeStoredSchema,
 	mapCursorField,
 	ObjectNodeStoredSchema,
+	type FieldKey,
+	type ITreeCursor,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeTypeSet,
 } from "../../core/index.js";
-import {
-	FieldKinds,
-	valueSchemaAllows,
-} from "../../feature-libraries/index.js";
+import { FieldKinds, valueSchemaAllows } from "../../feature-libraries/index.js";
 import { cloneWithReplacements } from "../../util/index.js";
-import type { TreeLeafValue, TreeNodeSchema } from "../core/index.js";
+import type { TreeNodeSchema, TreeLeafValue } from "../core/index.js";
 import {
 	booleanSchema,
 	handleSchema,
@@ -156,49 +149,28 @@ export function customFromCursor<TChild>(
 		case booleanSchema.identifier:
 		case nullSchema.identifier:
 		case stringSchema.identifier:
-			assert(
-				reader.value !== undefined,
-				0xa50 /* out of schema: missing value */,
-			);
-			assert(
-				!isFluidHandle(reader.value),
-				0xa51 /* out of schema: unexpected FluidHandle */,
-			);
+			assert(reader.value !== undefined, 0xa50 /* out of schema: missing value */);
+			assert(!isFluidHandle(reader.value), 0xa51 /* out of schema: unexpected FluidHandle */);
 			return reader.value;
 		case handleSchema.identifier:
-			assert(
-				reader.value !== undefined,
-				0xa52 /* out of schema: missing value */,
-			);
-			assert(
-				isFluidHandle(reader.value),
-				0xa53 /* out of schema: expected FluidHandle */,
-			);
+			assert(reader.value !== undefined, 0xa52 /* out of schema: missing value */);
+			assert(isFluidHandle(reader.value), 0xa53 /* out of schema: expected FluidHandle */);
 			return reader.value;
 		default: {
-			assert(
-				reader.value === undefined,
-				0xa54 /* out of schema: unexpected value */,
-			);
+			assert(reader.value === undefined, 0xa54 /* out of schema: unexpected value */);
 			const nodeSchema =
-				storedSchema.get(type) ??
-				fail(0xb2e /* missing schema for type in cursor */);
+				storedSchema.get(type) ?? fail(0xb2e /* missing schema for type in cursor */);
 			const arrayTypes = tryStoredSchemaAsArray(nodeSchema);
 
 			if (arrayTypes !== undefined) {
 				const fields = inCursorField(reader, EmptyKey, () =>
-					mapCursorField(reader, () =>
-						childHandler(reader, options, storedSchema, schema),
-					),
+					mapCursorField(reader, () => childHandler(reader, options, storedSchema, schema)),
 				);
 				return fields;
 			} else {
 				const fields: Record<string, TChild> = {};
 				forEachField(reader, () => {
-					assert(
-						reader.getFieldLength() === 1,
-						0xa19 /* invalid children number */,
-					);
+					assert(reader.getFieldLength() === 1, 0xa19 /* invalid children number */);
 					const storedKey = reader.getFieldKey();
 					const key = getKeyFromOptions(options.keys, type, storedKey, schema);
 					if (key === undefined) {
@@ -258,9 +230,7 @@ function getKeyFromOptions(
 					// Skip unknown optional fields when using property keys or only known stored keys.
 					return undefined;
 				} else {
-					return options === KeyEncodingOptions.usePropertyKeys
-						? propertyKey
-						: storedKey;
+					return options === KeyEncodingOptions.usePropertyKeys ? propertyKey : storedKey;
 				}
 			} else {
 				return storedKey;
@@ -285,21 +255,14 @@ export function customFromCursorStored<TChild>(
 	) => TChild,
 ): CustomTree<TChild> {
 	const type = reader.type;
-	const nodeSchema =
-		schema.get(type) ?? fail(0xb30 /* missing schema for type in cursor */);
+	const nodeSchema = schema.get(type) ?? fail(0xb30 /* missing schema for type in cursor */);
 
 	if (nodeSchema instanceof LeafNodeStoredSchema) {
-		assert(
-			valueSchemaAllows(nodeSchema.leafValue, reader.value),
-			0xa9c /* invalid value */,
-		);
+		assert(valueSchemaAllows(nodeSchema.leafValue, reader.value), 0xa9c /* invalid value */);
 		return reader.value;
 	}
 
-	assert(
-		reader.value === undefined,
-		0xa9d /* out of schema: unexpected value */,
-	);
+	assert(reader.value === undefined, 0xa9d /* out of schema: unexpected value */);
 
 	const arrayTypes = tryStoredSchemaAsArray(nodeSchema);
 	if (arrayTypes !== undefined) {
@@ -331,9 +294,7 @@ export function customFromCursorStored<TChild>(
  * @remarks
  * If the schema was defined by the public API, this will be accurate since there is no way to define an object node with a sequence field.
  */
-export function tryStoredSchemaAsArray(
-	schema: TreeNodeStoredSchema,
-): TreeTypeSet | undefined {
+export function tryStoredSchemaAsArray(schema: TreeNodeStoredSchema): TreeTypeSet | undefined {
 	if (schema instanceof ObjectNodeStoredSchema) {
 		const empty = schema.getFieldSchema(EmptyKey);
 		if (empty.kind === FieldKinds.sequence.identifier) {
@@ -369,10 +330,7 @@ export type HandleConverter<TCustom> = (data: IFluidHandle) => TCustom;
  * Code attempting to reverse this replacement may want to use {@link cloneWithReplacements}.
  * @alpha
  */
-export function replaceHandles<T>(
-	tree: unknown,
-	replacer: HandleConverter<T>,
-): unknown {
+export function replaceHandles<T>(tree: unknown, replacer: HandleConverter<T>): unknown {
 	return cloneWithReplacements(tree, "", (key, value) => {
 		// eslint-disable-next-line unicorn/prefer-ternary
 		if (isFluidHandle(value)) {

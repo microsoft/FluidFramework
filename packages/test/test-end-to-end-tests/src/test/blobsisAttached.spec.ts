@@ -3,33 +3,34 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import type {
+import {
 	IContainer,
 	IHostLoader,
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { IPendingRuntimeState } from "@fluidframework/container-runtime/internal/test/containerRuntime";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { type IPendingRuntimeState } from "@fluidframework/container-runtime/internal/test/containerRuntime";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type {
-	ISharedDirectory,
 	ISharedMap,
+	ISharedDirectory,
 	SharedDirectory,
 } from "@fluidframework/map/internal";
 import { isFluidHandlePayloadPending } from "@fluidframework/runtime-utils/internal";
 import {
-	type ChannelFactoryRegistry,
-	createAndAttachContainer,
+	ChannelFactoryRegistry,
 	DataObjectFactoryType,
-	type ITestContainerConfig,
-	type ITestFluidObject,
-	type ITestObjectProvider,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	createAndAttachContainer,
 } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
 
 import { driverSupportsBlobs } from "./mockDetachedBlobStorage.js";
 
@@ -61,9 +62,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 				let loader: IHostLoader;
 				let container: IContainer;
 
-				const runtimeOf = (
-					dataObject: ITestFluidObject,
-				): IContainerRuntime & IRuntime =>
+				const runtimeOf = (dataObject: ITestFluidObject): IContainerRuntime & IRuntime =>
 					dataObject.context.containerRuntime as IContainerRuntime & IRuntime;
 
 				beforeEach("createContainer", async () => {
@@ -83,8 +82,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 						this.skip();
 					}
 					const testString = "this is a test string";
-					const dataStore1 =
-						(await container.getEntryPoint()) as ITestFluidObject;
+					const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 					const ac = new AbortController();
 					ac.abort("abort test");
 					let surprisingSuccess = false;
@@ -103,9 +101,9 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 						assert.fail("Should not succeed");
 					}
 
-					const pendingState = (await runtimeOf(
-						dataStore1,
-					).getPendingLocalState()) as IPendingRuntimeState | undefined;
+					const pendingState = (await runtimeOf(dataStore1).getPendingLocalState()) as
+						| IPendingRuntimeState
+						| undefined;
 					assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
 				});
 
@@ -115,8 +113,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 						this.skip();
 					}
 					const testString = "this is a test string";
-					const dataStore1 =
-						(await container.getEntryPoint()) as ITestFluidObject;
+					const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 					const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
 					const ac = new AbortController();
 					let blob: IFluidHandle<ArrayBufferLike>;
@@ -130,19 +127,16 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 					} catch (error: any) {
 						assert.fail("Should succeed");
 					}
-					const pendingState = (await runtimeOf(
-						dataStore1,
-					).getPendingLocalState({
+					const pendingState = (await runtimeOf(dataStore1).getPendingLocalState({
 						notifyImminentClosure: false,
 					})) as IPendingRuntimeState | undefined;
 					assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
 				});
 
-				it("blob is attached after usage in map", async () => {
+				it("blob is attached after usage in map", async function () {
 					const testString = "this is a test string";
 					const testKey = "a blob";
-					const dataStore1 =
-						(await container.getEntryPoint()) as ITestFluidObject;
+					const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 					const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
 
 					const blobHandle = await dataStore1.runtime.uploadBlob(
@@ -153,13 +147,11 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 					assert.strictEqual(blobHandle.isAttached, true);
 				});
 
-				it("blob is attached after usage in directory", async () => {
+				it("blob is attached after usage in directory", async function () {
 					const testString = "this is a test string";
 					const testKey = "a blob";
-					const dataStore1 =
-						(await container.getEntryPoint()) as ITestFluidObject;
-					const directory =
-						await dataStore1.getSharedObject<SharedDirectory>(directoryId);
+					const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
+					const directory = await dataStore1.getSharedObject<SharedDirectory>(directoryId);
 
 					const blobHandle = await dataStore1.runtime.uploadBlob(
 						stringToBuffer(testString, "utf-8"),
@@ -169,29 +161,25 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 					assert.strictEqual(blobHandle.isAttached, true);
 				});
 
-				it("removes pending blob when waiting for blob to be attached", async () => {
+				it("removes pending blob when waiting for blob to be attached", async function () {
 					const testString = "this is a test string";
-					const dataStore1 =
-						(await container.getEntryPoint()) as ITestFluidObject;
+					const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 					const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
 					const blobHandle = await dataStore1.runtime.uploadBlob(
 						stringToBuffer(testString, "utf-8"),
 					);
-					const pendingStateP: any = runtimeOf(dataStore1).getPendingLocalState(
-						{
-							notifyImminentClosure: false,
-						},
-					);
+					const pendingStateP: any = runtimeOf(dataStore1).getPendingLocalState({
+						notifyImminentClosure: false,
+					});
 					map.set("key", blobHandle);
 					const pendingState = await pendingStateP;
 					assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
 				});
 
-				it("removes pending blob after attached and acked", async () => {
+				it("removes pending blob after attached and acked", async function () {
 					const testString = "this is a test string";
 					const testKey = "a blob";
-					const dataStore1 =
-						(await container.getEntryPoint()) as ITestFluidObject;
+					const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 
 					const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
 					const blobHandle = await dataStore1.runtime.uploadBlob(
@@ -208,15 +196,14 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 							blobHandle.events.on("payloadShared", resolve);
 						});
 					}
-					const pendingState = (await runtimeOf(
-						dataStore1,
-					).getPendingLocalState()) as IPendingRuntimeState | undefined;
+					const pendingState = (await runtimeOf(dataStore1).getPendingLocalState()) as
+						| IPendingRuntimeState
+						| undefined;
 					assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
 				});
 
-				it("removes multiple pending blobs after attached and acked", async () => {
-					const dataStore1 =
-						(await container.getEntryPoint()) as ITestFluidObject;
+				it("removes multiple pending blobs after attached and acked", async function () {
+					const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 					const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
 					const lots = 10;
 					for (let i = 0; i < lots; i++) {
@@ -235,9 +222,9 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 							});
 						}
 					}
-					const pendingState = (await runtimeOf(
-						dataStore1,
-					).getPendingLocalState()) as IPendingRuntimeState | undefined;
+					const pendingState = (await runtimeOf(dataStore1).getPendingLocalState()) as
+						| IPendingRuntimeState
+						| undefined;
 					assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
 				});
 			});
@@ -260,12 +247,9 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 					loader = provider.makeTestLoader({
 						...testContainerConfig,
 					});
-					container = await loader.createDetachedContainer(
-						provider.defaultCodeDetails,
-					);
+					container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 					provider.updateDocumentId(container.resolvedUrl);
-					detachedDataStore =
-						(await container.getEntryPoint()) as ITestFluidObject;
+					detachedDataStore = (await container.getEntryPoint()) as ITestFluidObject;
 					map = SharedMap.create(detachedDataStore.runtime);
 					directory = SharedDirectory.create(detachedDataStore.runtime);
 					text = "this is some example text";
@@ -274,9 +258,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 					);
 				});
 
-				const checkForDetachedHandles = (
-					dds: ISharedMap | ISharedDirectory,
-				) => {
+				const checkForDetachedHandles = (dds: ISharedMap | ISharedDirectory) => {
 					assert.strictEqual(
 						container.attachState,
 						AttachState.Detached,
@@ -287,21 +269,11 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 						false,
 						"data store handle should be detached",
 					);
-					assert.strictEqual(
-						dds.handle.isAttached,
-						false,
-						"dds handle should be detached",
-					);
-					assert.strictEqual(
-						blobHandle.isAttached,
-						false,
-						"blob handle should be detached",
-					);
+					assert.strictEqual(dds.handle.isAttached, false, "dds handle should be detached");
+					assert.strictEqual(blobHandle.isAttached, false, "blob handle should be detached");
 				};
 
-				const checkForAttachedHandles = (
-					dds: ISharedMap | ISharedDirectory,
-				) => {
+				const checkForAttachedHandles = (dds: ISharedMap | ISharedDirectory) => {
 					assert.strictEqual(
 						container.attachState,
 						AttachState.Attached,
@@ -312,68 +284,54 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 						true,
 						"data store handle should be attached",
 					);
-					assert.strictEqual(
-						dds.handle.isAttached,
-						true,
-						"dds handle should be attached",
-					);
-					assert.strictEqual(
-						blobHandle.isAttached,
-						true,
-						"blob handle should be attached",
-					);
+					assert.strictEqual(dds.handle.isAttached, true, "dds handle should be attached");
+					assert.strictEqual(blobHandle.isAttached, true, "blob handle should be attached");
 				};
 
-				it("all detached", async () => {
+				it("all detached", async function () {
 					checkForDetachedHandles(map);
 					checkForDetachedHandles(directory);
 				});
 
-				it("after map is set in root directory", async () => {
+				it("after map is set in root directory", async function () {
 					detachedDataStore.root.set(mapId, map.handle);
 					checkForDetachedHandles(map);
 				});
 
-				it("after directory is set in root directory", async () => {
+				it("after directory is set in root directory", async function () {
 					detachedDataStore.root.set(directoryId, directory.handle);
 					checkForDetachedHandles(directory);
 				});
 
-				it("after blob handle is set in map", async () => {
+				it("after blob handle is set in map", async function () {
 					detachedDataStore.root.set("map", map.handle);
 					map.set("my blob", blobHandle);
 					checkForDetachedHandles(map);
 				});
 
-				it("after blob handle is set in directory", async () => {
+				it("after blob handle is set in directory", async function () {
 					detachedDataStore.root.set(directoryId, directory.handle);
 					directory.set("my blob", blobHandle);
 					checkForDetachedHandles(directory);
 				});
 
-				it("after container is attached with map", async () => {
+				it("after container is attached with map", async function () {
 					detachedDataStore.root.set("map", map.handle);
 					map.set("my blob", blobHandle);
-					await container.attach(
-						provider.driver.createCreateNewRequest(provider.documentId),
-					);
+					await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
 					checkForAttachedHandles(map);
 				});
 
-				it("after container is attached with directory", async () => {
+				it("after container is attached with directory", async function () {
 					detachedDataStore.root.set(directoryId, directory.handle);
 					directory.set("my blob", blobHandle);
-					await container.attach(
-						provider.driver.createCreateNewRequest(provider.documentId),
-					);
+					await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
 					checkForAttachedHandles(directory);
 				});
 
-				it("after container is attached and dds is detached in map", async () => {
+				it("after container is attached and dds is detached in map", async function () {
 					map.set("my blob", blobHandle);
-					await container.attach(
-						provider.driver.createCreateNewRequest(provider.documentId),
-					);
+					await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
 					assert.strictEqual(
 						map.handle.isAttached,
 						false,
@@ -397,11 +355,9 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 					);
 				});
 
-				it("after container is attached and dds is detached in directory", async () => {
+				it("after container is attached and dds is detached in directory", async function () {
 					directory.set("my blob", blobHandle);
-					await container.attach(
-						provider.driver.createCreateNewRequest(provider.documentId),
-					);
+					await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
 					assert.strictEqual(
 						directory.handle.isAttached,
 						false,

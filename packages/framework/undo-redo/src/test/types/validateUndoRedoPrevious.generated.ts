@@ -11,23 +11,12 @@
  * Current version: 2.74.0
  */
 
-import type {
-	FullType,
-	MinimalType,
-	requireAssignableTo,
-	TypeOnly,
-} from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/undo-redo-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> =
-	| TypeOnly<T>
-	| MinimalType<T>
-	| FullType<T>
-	| typeof old
-	| typeof current
-	| requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -36,10 +25,7 @@ declare type MakeUnusedImportErrorsGoAway<T> =
  * typeValidation.broken:
  * "Class_SharedMapRevertible": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_SharedMapRevertible = requireAssignableTo<
-	TypeOnly<old.SharedMapRevertible>,
-	TypeOnly<current.SharedMapRevertible>
->;
+declare type old_as_current_for_Class_SharedMapRevertible = requireAssignableTo<TypeOnly<old.SharedMapRevertible>, TypeOnly<current.SharedMapRevertible>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -48,10 +34,7 @@ declare type old_as_current_for_Class_SharedMapRevertible = requireAssignableTo<
  * typeValidation.broken:
  * "Class_SharedMapRevertible": {"backCompat": false}
  */
-declare type current_as_old_for_Class_SharedMapRevertible = requireAssignableTo<
-	TypeOnly<current.SharedMapRevertible>,
-	TypeOnly<old.SharedMapRevertible>
->;
+declare type current_as_old_for_Class_SharedMapRevertible = requireAssignableTo<TypeOnly<current.SharedMapRevertible>, TypeOnly<old.SharedMapRevertible>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -60,11 +43,7 @@ declare type current_as_old_for_Class_SharedMapRevertible = requireAssignableTo<
  * typeValidation.broken:
  * "Class_SharedMapUndoRedoHandler": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_SharedMapUndoRedoHandler =
-	requireAssignableTo<
-		TypeOnly<old.SharedMapUndoRedoHandler>,
-		TypeOnly<current.SharedMapUndoRedoHandler>
-	>;
+declare type old_as_current_for_Class_SharedMapUndoRedoHandler = requireAssignableTo<TypeOnly<old.SharedMapUndoRedoHandler>, TypeOnly<current.SharedMapUndoRedoHandler>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -73,11 +52,7 @@ declare type old_as_current_for_Class_SharedMapUndoRedoHandler =
  * typeValidation.broken:
  * "Class_SharedMapUndoRedoHandler": {"backCompat": false}
  */
-declare type current_as_old_for_Class_SharedMapUndoRedoHandler =
-	requireAssignableTo<
-		TypeOnly<current.SharedMapUndoRedoHandler>,
-		TypeOnly<old.SharedMapUndoRedoHandler>
-	>;
+declare type current_as_old_for_Class_SharedMapUndoRedoHandler = requireAssignableTo<TypeOnly<current.SharedMapUndoRedoHandler>, TypeOnly<old.SharedMapUndoRedoHandler>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -86,11 +61,7 @@ declare type current_as_old_for_Class_SharedMapUndoRedoHandler =
  * typeValidation.broken:
  * "Class_SharedSegmentSequenceRevertible": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_SharedSegmentSequenceRevertible =
-	requireAssignableTo<
-		TypeOnly<old.SharedSegmentSequenceRevertible>,
-		TypeOnly<current.SharedSegmentSequenceRevertible>
-	>;
+declare type old_as_current_for_Class_SharedSegmentSequenceRevertible = requireAssignableTo<TypeOnly<old.SharedSegmentSequenceRevertible>, TypeOnly<current.SharedSegmentSequenceRevertible>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -99,11 +70,7 @@ declare type old_as_current_for_Class_SharedSegmentSequenceRevertible =
  * typeValidation.broken:
  * "Class_SharedSegmentSequenceRevertible": {"backCompat": false}
  */
-declare type current_as_old_for_Class_SharedSegmentSequenceRevertible =
-	requireAssignableTo<
-		TypeOnly<current.SharedSegmentSequenceRevertible>,
-		TypeOnly<old.SharedSegmentSequenceRevertible>
-	>;
+declare type current_as_old_for_Class_SharedSegmentSequenceRevertible = requireAssignableTo<TypeOnly<current.SharedSegmentSequenceRevertible>, TypeOnly<old.SharedSegmentSequenceRevertible>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -112,11 +79,7 @@ declare type current_as_old_for_Class_SharedSegmentSequenceRevertible =
  * typeValidation.broken:
  * "Class_SharedSegmentSequenceUndoRedoHandler": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_SharedSegmentSequenceUndoRedoHandler =
-	requireAssignableTo<
-		TypeOnly<old.SharedSegmentSequenceUndoRedoHandler>,
-		TypeOnly<current.SharedSegmentSequenceUndoRedoHandler>
-	>;
+declare type old_as_current_for_Class_SharedSegmentSequenceUndoRedoHandler = requireAssignableTo<TypeOnly<old.SharedSegmentSequenceUndoRedoHandler>, TypeOnly<current.SharedSegmentSequenceUndoRedoHandler>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -125,11 +88,7 @@ declare type old_as_current_for_Class_SharedSegmentSequenceUndoRedoHandler =
  * typeValidation.broken:
  * "Class_SharedSegmentSequenceUndoRedoHandler": {"backCompat": false}
  */
-declare type current_as_old_for_Class_SharedSegmentSequenceUndoRedoHandler =
-	requireAssignableTo<
-		TypeOnly<current.SharedSegmentSequenceUndoRedoHandler>,
-		TypeOnly<old.SharedSegmentSequenceUndoRedoHandler>
-	>;
+declare type current_as_old_for_Class_SharedSegmentSequenceUndoRedoHandler = requireAssignableTo<TypeOnly<current.SharedSegmentSequenceUndoRedoHandler>, TypeOnly<old.SharedSegmentSequenceUndoRedoHandler>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -138,11 +97,7 @@ declare type current_as_old_for_Class_SharedSegmentSequenceUndoRedoHandler =
  * typeValidation.broken:
  * "Class_UndoRedoStackManager": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_UndoRedoStackManager =
-	requireAssignableTo<
-		TypeOnly<old.UndoRedoStackManager>,
-		TypeOnly<current.UndoRedoStackManager>
-	>;
+declare type old_as_current_for_Class_UndoRedoStackManager = requireAssignableTo<TypeOnly<old.UndoRedoStackManager>, TypeOnly<current.UndoRedoStackManager>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -151,11 +106,7 @@ declare type old_as_current_for_Class_UndoRedoStackManager =
  * typeValidation.broken:
  * "Class_UndoRedoStackManager": {"backCompat": false}
  */
-declare type current_as_old_for_Class_UndoRedoStackManager =
-	requireAssignableTo<
-		TypeOnly<current.UndoRedoStackManager>,
-		TypeOnly<old.UndoRedoStackManager>
-	>;
+declare type current_as_old_for_Class_UndoRedoStackManager = requireAssignableTo<TypeOnly<current.UndoRedoStackManager>, TypeOnly<old.UndoRedoStackManager>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -164,11 +115,7 @@ declare type current_as_old_for_Class_UndoRedoStackManager =
  * typeValidation.broken:
  * "ClassStatics_SharedMapRevertible": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_SharedMapRevertible =
-	requireAssignableTo<
-		TypeOnly<typeof current.SharedMapRevertible>,
-		TypeOnly<typeof old.SharedMapRevertible>
-	>;
+declare type current_as_old_for_ClassStatics_SharedMapRevertible = requireAssignableTo<TypeOnly<typeof current.SharedMapRevertible>, TypeOnly<typeof old.SharedMapRevertible>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -177,11 +124,7 @@ declare type current_as_old_for_ClassStatics_SharedMapRevertible =
  * typeValidation.broken:
  * "ClassStatics_SharedMapUndoRedoHandler": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_SharedMapUndoRedoHandler =
-	requireAssignableTo<
-		TypeOnly<typeof current.SharedMapUndoRedoHandler>,
-		TypeOnly<typeof old.SharedMapUndoRedoHandler>
-	>;
+declare type current_as_old_for_ClassStatics_SharedMapUndoRedoHandler = requireAssignableTo<TypeOnly<typeof current.SharedMapUndoRedoHandler>, TypeOnly<typeof old.SharedMapUndoRedoHandler>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -190,11 +133,7 @@ declare type current_as_old_for_ClassStatics_SharedMapUndoRedoHandler =
  * typeValidation.broken:
  * "ClassStatics_SharedSegmentSequenceRevertible": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_SharedSegmentSequenceRevertible =
-	requireAssignableTo<
-		TypeOnly<typeof current.SharedSegmentSequenceRevertible>,
-		TypeOnly<typeof old.SharedSegmentSequenceRevertible>
-	>;
+declare type current_as_old_for_ClassStatics_SharedSegmentSequenceRevertible = requireAssignableTo<TypeOnly<typeof current.SharedSegmentSequenceRevertible>, TypeOnly<typeof old.SharedSegmentSequenceRevertible>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -203,11 +142,7 @@ declare type current_as_old_for_ClassStatics_SharedSegmentSequenceRevertible =
  * typeValidation.broken:
  * "ClassStatics_SharedSegmentSequenceUndoRedoHandler": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_SharedSegmentSequenceUndoRedoHandler =
-	requireAssignableTo<
-		TypeOnly<typeof current.SharedSegmentSequenceUndoRedoHandler>,
-		TypeOnly<typeof old.SharedSegmentSequenceUndoRedoHandler>
-	>;
+declare type current_as_old_for_ClassStatics_SharedSegmentSequenceUndoRedoHandler = requireAssignableTo<TypeOnly<typeof current.SharedSegmentSequenceUndoRedoHandler>, TypeOnly<typeof old.SharedSegmentSequenceUndoRedoHandler>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -216,11 +151,7 @@ declare type current_as_old_for_ClassStatics_SharedSegmentSequenceUndoRedoHandle
  * typeValidation.broken:
  * "ClassStatics_UndoRedoStackManager": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_UndoRedoStackManager =
-	requireAssignableTo<
-		TypeOnly<typeof current.UndoRedoStackManager>,
-		TypeOnly<typeof old.UndoRedoStackManager>
-	>;
+declare type current_as_old_for_ClassStatics_UndoRedoStackManager = requireAssignableTo<TypeOnly<typeof current.UndoRedoStackManager>, TypeOnly<typeof old.UndoRedoStackManager>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -229,10 +160,7 @@ declare type current_as_old_for_ClassStatics_UndoRedoStackManager =
  * typeValidation.broken:
  * "Interface_IRevertible": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IRevertible = requireAssignableTo<
-	TypeOnly<old.IRevertible>,
-	TypeOnly<current.IRevertible>
->;
+declare type old_as_current_for_Interface_IRevertible = requireAssignableTo<TypeOnly<old.IRevertible>, TypeOnly<current.IRevertible>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -241,7 +169,4 @@ declare type old_as_current_for_Interface_IRevertible = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IRevertible": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IRevertible = requireAssignableTo<
-	TypeOnly<current.IRevertible>,
-	TypeOnly<old.IRevertible>
->;
+declare type current_as_old_for_Interface_IRevertible = requireAssignableTo<TypeOnly<current.IRevertible>, TypeOnly<old.IRevertible>>

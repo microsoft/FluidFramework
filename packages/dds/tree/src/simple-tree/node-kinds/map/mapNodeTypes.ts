@@ -3,16 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import type { MapNodeInsertableData, TreeMapNode } from "./mapNode.js";
+import { NodeKind } from "../../core/index.js";
 import type {
-	ImplicitAllowedTypes,
-	TreeNodeSchema,
 	TreeNodeSchemaClass,
+	TreeNodeSchema,
 	TreeNodeSchemaNonClass,
 	WithType,
+	ImplicitAllowedTypes,
 } from "../../core/index.js";
-import { NodeKind } from "../../core/index.js";
+
 import type { SimpleMapNodeSchema } from "../../simpleSchema.js";
-import type { MapNodeInsertableData, TreeMapNode } from "./mapNode.js";
 
 /**
  * A schema for customizable {@link (TreeMapNode:interface)}s.
@@ -64,9 +65,7 @@ export interface MapNodePojoEmulationSchema<
  * perhaps if moving to an order independent way to pass generic arguments, adding support for them here would make sense.
  * @alpha
  */
-export type MapNodeSchema =
-	| MapNodeCustomizableSchema
-	| MapNodePojoEmulationSchema;
+export type MapNodeSchema = MapNodeCustomizableSchema | MapNodePojoEmulationSchema;
 
 /**
  * @alpha
@@ -86,8 +85,6 @@ export const MapNodeSchema = {
  * If at some point we want to have internal only APIs for MapNodeSchema (like done for objects),
  * this can include those since its not the public facing API.
  */
-export function isMapNodeSchema(
-	schema: TreeNodeSchema,
-): schema is MapNodeSchema {
+export function isMapNodeSchema(schema: TreeNodeSchema): schema is MapNodeSchema {
 	return schema.kind === NodeKind.Map;
 }

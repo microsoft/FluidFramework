@@ -134,9 +134,7 @@ const selectPackagesFromRepo = async <P extends IPackage>(
 		const git = await buildProject.getGitRepository();
 		const remote = await getRemote(git, buildProject.upstreamRemotePartialUrl);
 		if (remote === undefined) {
-			throw new Error(
-				`Can't find a remote with ${buildProject.upstreamRemotePartialUrl}`,
-			);
+			throw new Error(`Can't find a remote with ${buildProject.upstreamRemotePartialUrl}`);
 		}
 		const { packages } = await getChangedSinceRef(
 			buildProject,
@@ -157,9 +155,7 @@ const selectPackagesFromRepo = async <P extends IPackage>(
 			(p) => p.directory === selectedAbsolutePath,
 		);
 		if (dirPackage === undefined) {
-			throw new Error(
-				`Cannot find package with directory: ${selectedAbsolutePath}`,
-			);
+			throw new Error(`Cannot find package with directory: ${selectedAbsolutePath}`);
 		}
 		selected.add(dirPackage);
 		return selected;
@@ -167,10 +163,7 @@ const selectPackagesFromRepo = async <P extends IPackage>(
 
 	// Select workspace and workspace root packages
 	for (const workspace of buildProject.workspaces.values()) {
-		if (
-			selection.workspaces.length > 0 &&
-			mm.isMatch(workspace.name, selection.workspaces)
-		) {
+		if (selection.workspaces.length > 0 && mm.isMatch(workspace.name, selection.workspaces)) {
 			addAllToSet(
 				selected,
 				workspace.packages.filter((p) => !p.isWorkspaceRoot),
@@ -229,13 +222,10 @@ export async function selectAndFilterPackages<P extends IPackage>(
 	filter?: PackageFilterOptions,
 ): Promise<{ selected: P[]; filtered: P[] }> {
 	// Select the packages from the repo
-	const selected = [
-		...(await selectPackagesFromRepo<P>(buildProject, selection)),
-	];
+	const selected = [...(await selectPackagesFromRepo<P>(buildProject, selection))];
 
 	// Filter resulting list if needed
-	const filtered =
-		filter === undefined ? selected : await filterPackages(selected, filter);
+	const filtered = filter === undefined ? selected : await filterPackages(selected, filter);
 
 	return { selected, filtered };
 }

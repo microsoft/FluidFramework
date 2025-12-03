@@ -5,18 +5,14 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	type FieldUpPath,
-	type JsonableTree,
-	rootFieldKey,
-} from "../../../core/index.js";
+import { type FieldUpPath, type JsonableTree, rootFieldKey } from "../../../core/index.js";
 import {
 	jsonableTreeFromFieldCursor,
 	type TreeChunk,
 } from "../../../feature-libraries/index.js";
+import { checkFieldTraversal } from "../../cursorTestSuite.js";
 import { numberSchema } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
-import { checkFieldTraversal } from "../../cursorTestSuite.js";
 
 export function numberSequenceField(length: number): JsonableTree[] {
 	const field: JsonableTree[] = [];
@@ -26,10 +22,7 @@ export function numberSequenceField(length: number): JsonableTree[] {
 	return field;
 }
 
-export function assertChunkCursorEquals(
-	chunk: TreeChunk,
-	expected: JsonableTree[],
-): void {
+export function assertChunkCursorEquals(chunk: TreeChunk, expected: JsonableTree[]): void {
 	const result = jsonableTreeFromFieldCursor(chunk.cursor());
 	assert.deepEqual(result, expected);
 	assert.equal(chunk.topLevelLength, expected.length);

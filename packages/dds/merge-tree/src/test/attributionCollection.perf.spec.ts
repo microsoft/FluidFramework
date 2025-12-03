@@ -15,10 +15,7 @@ import type { ISegment } from "../mergeTreeNodes.js";
 import { TextSegmentGranularity } from "../textSegment.js";
 
 interface IAttributionCollectionCtor {
-	new (
-		length: number,
-		key?: AttributionKey,
-	): IAttributionCollection<AttributionKey>;
+	new (length: number, key?: AttributionKey): IAttributionCollection<AttributionKey>;
 
 	serializeAttributionCollections(
 		segments: Iterable<{
@@ -51,17 +48,9 @@ function getCollectionSizes(
 		maxSizeCollection.append(new ctor(1, { type: "op", seq: i }));
 	}
 	return [
-		{
-			name: "one key",
-			collection: singleKeyCollection,
-			type: BenchmarkType.Diagnostic,
-		},
+		{ name: "one key", collection: singleKeyCollection, type: BenchmarkType.Diagnostic },
 		{ name: "ten keys", collection: tenKeyCollection, type: baseSuiteType },
-		{
-			name: "maximum keys",
-			collection: maxSizeCollection,
-			type: BenchmarkType.Diagnostic,
-		},
+		{ name: "maximum keys", collection: maxSizeCollection, type: BenchmarkType.Diagnostic },
 	];
 }
 
@@ -105,8 +94,7 @@ function runAttributionCollectionSuite(
 
 			benchmark({
 				title: "getKeysInOffsetRange from mid to end",
-				benchmarkFn: () =>
-					collection.getKeysInOffsetRange(length / 2, length - 1),
+				benchmarkFn: () => collection.getKeysInOffsetRange(length / 2, length - 1),
 				type,
 			});
 
@@ -146,8 +134,7 @@ function runAttributionCollectionSuite(
 
 	benchmark({
 		title: "serializing",
-		benchmarkFn: () =>
-			ctor.serializeAttributionCollections(segmentsToSerialize),
+		benchmarkFn: () => ctor.serializeAttributionCollections(segmentsToSerialize),
 		type: suiteBaseType,
 	});
 
@@ -171,9 +158,6 @@ describe("IAttributionCollection perf", () => {
 	// There was a RedBlack tree based implementation for the collection entries, but the linear array based one won due to constant
 	// factors/memory characteristics, so just kept the array based one.
 	describe("list-based implementation", () => {
-		runAttributionCollectionSuite(
-			NewAttributionCollection,
-			BenchmarkType.Measurement,
-		);
+		runAttributionCollectionSuite(NewAttributionCollection, BenchmarkType.Measurement);
 	});
 });

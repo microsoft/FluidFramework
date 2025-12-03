@@ -12,9 +12,7 @@
  * This tends to convert unions and intersections into objects.
  * @system @public
  */
-export type FlattenKeys<T> = [
-	{ [Property in keyof T]: T[Property] },
-][_InlineTrick];
+export type FlattenKeys<T> = [{ [Property in keyof T]: T[Property] }][_InlineTrick];
 
 /**
  * Use for trick to "inline" generic types.
@@ -159,11 +157,9 @@ export type IsUnion<T, T2 = T> = T extends unknown
  * Then the constraint on the type parameter in this new context is inferred, giving the intersection.
  * @system @public
  */
-export type UnionToIntersection<T> = (
-	T extends T
-		? (k: T) => unknown
-		: never
-) extends (k: infer U) => unknown
+export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (
+	k: infer U,
+) => unknown
 	? U
 	: never;
 

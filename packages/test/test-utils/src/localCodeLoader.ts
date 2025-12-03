@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type {
+import { strict as assert } from "assert";
+
+import {
 	ICodeDetailsLoader,
 	IFluidCodeDetails,
 	IFluidModule,
@@ -11,14 +13,13 @@ import type {
 	IProvideFluidCodeDetailsComparer,
 	IProvideRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
-import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import type {
-	IFluidDataStoreFactory,
-	IFluidDataStoreRegistry,
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import {
 	IProvideFluidDataStoreFactory,
 	IProvideFluidDataStoreRegistry,
+	type IFluidDataStoreFactory,
+	type IFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions/internal";
-import { strict as assert } from "assert";
 
 // eslint-disable-next-line import-x/no-deprecated
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "./containerRuntimeFactories.js";
@@ -42,8 +43,7 @@ export type fluidEntryPoint = SupportedExportInterfaces | IFluidModule;
 /**
  * @internal
  */
-export type Factory = IFluidDataStoreFactory &
-	Partial<IProvideFluidDataStoreRegistry>;
+export type Factory = IFluidDataStoreFactory & Partial<IProvideFluidDataStoreRegistry>;
 
 /**
  * @internal
@@ -62,8 +62,7 @@ export function createDataStoreFactory(
 		},
 		instantiateDataStore: async (context, existing) =>
 			(await factory).instantiateDataStore(context, existing),
-		get: async (name: string) =>
-			(await factory).IFluidDataStoreRegistry?.get(name),
+		get: async (name: string) => (await factory).IFluidDataStoreRegistry?.get(name),
 	};
 }
 
@@ -73,10 +72,7 @@ export function createDataStoreFactory(
  * @internal
  */
 export class LocalCodeLoader implements ICodeDetailsLoader {
-	private readonly fluidPackageCache = new Map<
-		string,
-		IFluidModuleWithDetails
-	>();
+	private readonly fluidPackageCache = new Map<string, IFluidModuleWithDetails>();
 
 	constructor(
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
@@ -109,9 +105,7 @@ export class LocalCodeLoader implements ICodeDetailsLoader {
 							// eslint-disable-next-line import-x/no-deprecated
 							IRuntimeFactory: new ContainerRuntimeFactoryWithDefaultDataStore({
 								defaultFactory,
-								registryEntries: [
-									[defaultFactory.type, Promise.resolve(defaultFactory)],
-								],
+								registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 								runtimeOptions,
 							}),
 						},
@@ -133,9 +127,7 @@ export class LocalCodeLoader implements ICodeDetailsLoader {
 	 * as a Fluid module.
 	 * @param source - Details of where to find chaincode
 	 */
-	public async load(
-		source: IFluidCodeDetails,
-	): Promise<IFluidModuleWithDetails> {
+	public async load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
 		// Get the entry point for from the fluidPackageCache for the given code details.
 		// For code details containing a package name, use the package name as the id.
 		// For code details containing a Fluid package, create a unique id from the package name and version.

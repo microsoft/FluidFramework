@@ -24,19 +24,11 @@ describe("Garbage Collector", () => {
 		}
 
 		// Referenced nodes are all nodes in the gcNodes that are not in deletedNodes.
-		const referencedNodes = gcNodes.filter(
-			(node) => !deletedNodes.includes(node),
-		);
-		const referencedNodeIds = Array.from(
-			referencedNodes,
-			(node: IGCNode) => node.id,
-		);
+		const referencedNodes = gcNodes.filter((node) => !deletedNodes.includes(node));
+		const referencedNodeIds = Array.from(referencedNodes, (node: IGCNode) => node.id);
 		const deletedNodeIds = Array.from(deletedNodes, (node: IGCNode) => node.id);
 
-		const gcResult: IGCResult = runGarbageCollection(
-			referenceGraph,
-			startingIds,
-		);
+		const gcResult: IGCResult = runGarbageCollection(referenceGraph, startingIds);
 		assert.deepStrictEqual(
 			gcResult.referencedNodeIds.sort(),
 			referencedNodeIds.sort(),
@@ -79,14 +71,8 @@ describe("Garbage Collector", () => {
 		const gcNode1: IGCNode = { id: "/", outboundRoutes: ["/ds1"] };
 		const gcNode2: IGCNode = { id: "/ds1", outboundRoutes: ["/ds1/dds1"] };
 		const gcNode3: IGCNode = { id: "/ds2", outboundRoutes: ["/ds2/dds1"] };
-		const gcNode4: IGCNode = {
-			id: "/ds1/dds1",
-			outboundRoutes: ["/ds2", "/ds1"],
-		};
-		const gcNode5: IGCNode = {
-			id: "/ds2/dds1",
-			outboundRoutes: ["/ds1", "/ds2"],
-		};
+		const gcNode4: IGCNode = { id: "/ds1/dds1", outboundRoutes: ["/ds2", "/ds1"] };
+		const gcNode5: IGCNode = { id: "/ds2/dds1", outboundRoutes: ["/ds1", "/ds2"] };
 		// The following node is not referenced by any of the nodes above.
 		const gcNode6: IGCNode = { id: "/ds3", outboundRoutes: [] };
 

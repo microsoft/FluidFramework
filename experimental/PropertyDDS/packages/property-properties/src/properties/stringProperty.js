@@ -157,10 +157,7 @@ export class StringProperty extends ValueArrayProperty {
 	 * @throws If in_value is not a string
 	 */
 	insert(in_position, in_value) {
-		ConsoleUtils.assert(
-			_.isString(in_value),
-			MSG.IN_VALUE_MUST_BE_STRING + in_value,
-		);
+		ConsoleUtils.assert(_.isString(in_value), MSG.IN_VALUE_MUST_BE_STRING + in_value);
 		this._insertRange(in_position, in_value);
 	}
 
@@ -171,10 +168,7 @@ export class StringProperty extends ValueArrayProperty {
 	 * @returns {number} The new length of the string.
 	 */
 	push(in_value) {
-		ConsoleUtils.assert(
-			_.isString(in_value),
-			MSG.IN_VALUE_MUST_BE_STRING + in_value,
-		);
+		ConsoleUtils.assert(_.isString(in_value), MSG.IN_VALUE_MUST_BE_STRING + in_value);
 		this._insertRange(this._dataArrayRef.length, in_value);
 		return this.getLength();
 	}
@@ -221,18 +215,14 @@ export class StringProperty extends ValueArrayProperty {
 	removeRange(in_offset, in_deleteCount) {
 		ConsoleUtils.assert(
 			_.isNumber(in_offset),
-			MSG.NOT_NUMBER +
-				"in_offset, method: StringProperty.remove or .removeRange",
+			MSG.NOT_NUMBER + "in_offset, method: StringProperty.remove or .removeRange",
 		);
 		ConsoleUtils.assert(
 			_.isNumber(in_deleteCount),
-			MSG.NOT_NUMBER +
-				"in_deleteCount, method: StringProperty.remove or .removeRange",
+			MSG.NOT_NUMBER + "in_deleteCount, method: StringProperty.remove or .removeRange",
 		);
 		ConsoleUtils.assert(
-			in_offset + in_deleteCount < this.length + 1 &&
-				in_offset >= 0 &&
-				in_deleteCount > 0,
+			in_offset + in_deleteCount < this.length + 1 && in_offset >= 0 && in_deleteCount > 0,
 			MSG.REMOVE_OUT_OF_BOUNDS +
 				"Cannot remove " +
 				in_deleteCount +
@@ -252,12 +242,7 @@ export class StringProperty extends ValueArrayProperty {
 	/**
 	 * @inheritdoc
 	 */
-	_deserialize(
-		in_serializedObj,
-		in_reportToView,
-		in_filteringOptions,
-		in_createChangeSet,
-	) {
+	_deserialize(in_serializedObj, in_reportToView, in_filteringOptions, in_createChangeSet) {
 		if (
 			(in_serializedObj.remove && in_serializedObj.remove.length > 0) ||
 			(in_serializedObj.modify && in_serializedObj.modify.length > 0) ||
@@ -273,9 +258,7 @@ export class StringProperty extends ValueArrayProperty {
 		var oldStringLength = this._dataArrayRef.length;
 		var newStringData;
 		if (_.isString(in_serializedObj)) {
-			return this._setValue(in_serializedObj, in_reportToView)
-				? in_serializedObj
-				: {};
+			return this._setValue(in_serializedObj, in_reportToView) ? in_serializedObj : {};
 		} else {
 			if (!in_serializedObj.insert || !in_serializedObj.insert[0]) {
 				// we've got an empty object, so we have to wipe everything we've got
@@ -440,8 +423,7 @@ export class StringProperty extends ValueArrayProperty {
 		) {
 			let newFlags = this._dirty.flags;
 			if (in_pending === undefined) {
-				newFlags &=
-					0xffffffff ^ BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE;
+				newFlags &= 0xffffffff ^ BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE;
 			}
 			if (in_dirty === undefined) {
 				newFlags &= 0xffffffff ^ BaseProperty.MODIFIED_STATE_FLAGS.DIRTY;
@@ -502,11 +484,7 @@ export class StringProperty extends ValueArrayProperty {
 			this._setValue(in_changeSet.value, in_reportToView);
 		} else {
 			// Let's consider it's an ArrayProperty-like changeset
-			ArrayProperty.prototype._applyChangeset.call(
-				this,
-				in_changeSet,
-				in_reportToView,
-			);
+			ArrayProperty.prototype._applyChangeset.call(this, in_changeSet, in_reportToView);
 		}
 	}
 
@@ -519,14 +497,7 @@ export class StringProperty extends ValueArrayProperty {
 	 */
 	_prettyPrint(indent, externalId, printFct) {
 		printFct(
-			indent +
-				externalId +
-				this.getId() +
-				" (" +
-				this.getTypeid() +
-				'): "' +
-				this.value +
-				'"',
+			indent + externalId + this.getId() + " (" + this.getTypeid() + '): "' + this.value + '"',
 		);
 	}
 
@@ -553,10 +524,7 @@ export class StringProperty extends ValueArrayProperty {
 	 * @throws If length of in_character is longer than one character
 	 */
 	set(in_index, in_character) {
-		ConsoleUtils.assert(
-			_.isNumber(in_index),
-			MSG.STRING_SET_NEEDS_INDEX + in_index,
-		);
+		ConsoleUtils.assert(_.isNumber(in_index), MSG.STRING_SET_NEEDS_INDEX + in_index);
 
 		if (in_character.length !== 1) {
 			throw new Error(MSG.STRING_SET_ONE_CHAR);
@@ -672,9 +640,7 @@ export class StringProperty extends ValueArrayProperty {
 				this._dataArrayRef.substr(0, in_position) +
 				this._dataArrayRef.substr(in_position + in_length);
 		} else {
-			throw Error(
-				"DataArray removeRange in_offset + in_deleteCount is out of bounds.",
-			);
+			throw Error("DataArray removeRange in_offset + in_deleteCount is out of bounds.");
 		}
 	}
 

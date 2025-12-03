@@ -3,20 +3,21 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { asLegacyAlpha } from "@fluidframework/container-loader/internal";
-import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
-	createSummarizerFromFactory,
-	createTestConfigProvider,
 	type ITestObjectProvider,
+	createTestConfigProvider,
+	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
 
 import { TestPersistedCache } from "../../testPersistedCache.js";
 
@@ -65,10 +66,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		},
 	};
 	const configProvider = createTestConfigProvider();
-	configProvider.set(
-		"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2",
-		true,
-	);
+	configProvider.set("Fluid.Container.UseLoadingGroupIdForSnapshotFetch2", true);
 
 	const testDataObjectType = "TestDataObject";
 	const dataObjectFactory = new DataObjectFactory({
@@ -98,20 +96,13 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 			documentServiceFactory,
 			documentServiceFactory.createDocumentService,
 			(documentService) => {
-				interceptResult(
-					documentService,
-					documentService.connectToStorage,
-					(storage) => {
-						assert(
-							storage.getSnapshot !== undefined,
-							"Test can't run without getSnapshot",
-						);
-						interceptResult(storage, storage.getSnapshot, (snapshot) => {
-							latestSnapshot = snapshot;
-							callCount++;
-						});
-					},
-				);
+				interceptResult(documentService, documentService.connectToStorage, (storage) => {
+					assert(storage.getSnapshot !== undefined, "Test can't run without getSnapshot");
+					interceptResult(storage, storage.getSnapshot, (snapshot) => {
+						latestSnapshot = snapshot;
+						callCount++;
+					});
+				});
 			},
 		);
 	});
@@ -166,16 +157,11 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		// Testing the get snapshot call
 		const mainObject3 = (await container3.getEntryPoint()) as TestDataObject;
 		const runtime3 = mainObject3.containerRuntime;
-		assert(
-			runtime3.storage.getSnapshot !== undefined,
-			"getSnapshot should be defined",
-		);
+		assert(runtime3.storage.getSnapshot !== undefined, "getSnapshot should be defined");
 
 		// Try to load the data stores with groupIds
-		const handleA3 =
-			mainObject3._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
-		const handleB3 =
-			mainObject3._root.get<IFluidHandle<TestDataObject>>("dataObjectB");
+		const handleA3 = mainObject3._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
+		const handleB3 = mainObject3._root.get<IFluidHandle<TestDataObject>>("dataObjectB");
 		assert(handleA3 !== undefined, "handleA3 should not be undefined");
 		assert(handleB3 !== undefined, "handleB3 should not be undefined");
 
@@ -237,10 +223,8 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 		await provider.ensureSynchronized();
 		const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
-		const handleA2 =
-			mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
-		const handleB2 =
-			mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectB");
+		const handleA2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
+		const handleB2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectB");
 		assert(handleA2 !== undefined, "handleA2 should not be undefined");
 		assert(handleB2 !== undefined, "handleB2 should not be undefined");
 
@@ -266,16 +250,11 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		// Testing the get snapshot call
 		const mainObject3 = (await container3.getEntryPoint()) as TestDataObject;
 		const runtime3 = mainObject3.containerRuntime;
-		assert(
-			runtime3.storage.getSnapshot !== undefined,
-			"getSnapshot should be defined",
-		);
+		assert(runtime3.storage.getSnapshot !== undefined, "getSnapshot should be defined");
 
 		// Try to load the data stores with groupIds
-		const handleA3 =
-			mainObject3._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
-		const handleB3 =
-			mainObject3._root.get<IFluidHandle<TestDataObject>>("dataObjectB");
+		const handleA3 = mainObject3._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
+		const handleB3 = mainObject3._root.get<IFluidHandle<TestDataObject>>("dataObjectB");
 		assert(handleA3 !== undefined, "handleA3 should not be undefined");
 		assert(handleB3 !== undefined, "handleB3 should not be undefined");
 
@@ -283,11 +262,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		callCount = 0;
 		const dataObjectA3 = await handleA3.get();
 		const dataObjectB3 = await handleB3.get();
-		assert.equal(
-			callCount,
-			0,
-			"No network call should be made after older snapshot",
-		);
+		assert.equal(callCount, 0, "No network call should be made after older snapshot");
 		assert.equal(dataObjectA3._root.get("A"), "A", "A should be set");
 		assert.equal(dataObjectA3._root.get("A2"), "A2", "A2 should be set");
 		assert.equal(dataObjectB3._root.get("B"), "B", "B should be set");
@@ -333,10 +308,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 			configProvider,
 		);
 		const initialSummaryVersion = latestSnapshot?.snapshotTree.id;
-		assert(
-			initialSummaryVersion !== undefined,
-			"Initial summary version should be defined",
-		);
+		assert(initialSummaryVersion !== undefined, "Initial summary version should be defined");
 		const { summaryVersion } = await summarizeNow(summarizer);
 		await provider.ensureSynchronized();
 
@@ -351,10 +323,8 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 		await provider.ensureSynchronized();
 		const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
-		const handleA2 =
-			mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
-		const handleB2 =
-			mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectB");
+		const handleA2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
+		const handleB2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectB");
 		callCount = 0;
 		const dataObjectA2 = await handleA2?.get();
 		const dataObjectB2 = await handleB2?.get();
@@ -376,9 +346,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 			container2 as unknown as {
 				// See SerializedStateManager class in container-loader package
 				serializedStateManager: {
-					refreshLatestSnapshot: (
-						supportGetSnapshotApi: boolean,
-					) => Promise<void>;
+					refreshLatestSnapshot: (supportGetSnapshotApi: boolean) => Promise<void>;
 				};
 			}
 		).serializedStateManager;
@@ -419,16 +387,11 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		// Testing the get snapshot call
 		const mainObject3 = (await container3.getEntryPoint()) as TestDataObject;
 		const runtime3 = mainObject3.containerRuntime;
-		assert(
-			runtime3.storage.getSnapshot !== undefined,
-			"getSnapshot should be defined",
-		);
+		assert(runtime3.storage.getSnapshot !== undefined, "getSnapshot should be defined");
 
 		// Try to load the data stores with groupIds
-		const handleA3 =
-			mainObject3._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
-		const handleB3 =
-			mainObject3._root.get<IFluidHandle<TestDataObject>>("dataObjectB");
+		const handleA3 = mainObject3._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
+		const handleB3 = mainObject3._root.get<IFluidHandle<TestDataObject>>("dataObjectB");
 		assert(handleA3 !== undefined, "handleA3 should not be undefined");
 		assert(handleB3 !== undefined, "handleB3 should not be undefined");
 

@@ -9,12 +9,7 @@ import { strict as assert } from "node:assert";
 
 import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 
-import {
-	findSchemas,
-	getFriendlyName,
-	isNamedSchema,
-	unqualifySchema,
-} from "../utils.js";
+import { getFriendlyName, unqualifySchema, findSchemas, isNamedSchema } from "../utils.js";
 
 const sf = new SchemaFactoryAlpha("test.scope");
 class TestObject extends sf.object("TestObject", { value: sf.string }) {}
@@ -92,37 +87,25 @@ describe("getFriendlyName", () => {
 	it("handles maps of map schemas", () => {
 		const InnerMap = sf.map(sf.string);
 		const MapOfMaps = sf.map(InnerMap);
-		assert.equal(
-			getFriendlyName(MapOfMaps),
-			"Map<string, Map<string, string>>",
-		);
+		assert.equal(getFriendlyName(MapOfMaps), "Map<string, Map<string, string>>");
 	});
 
 	it("handles maps of record schemas", () => {
 		const InnerRecord = sf.record(sf.string);
 		const MapOfRecords = sf.map(InnerRecord);
-		assert.equal(
-			getFriendlyName(MapOfRecords),
-			"Map<string, Record<string, string>>",
-		);
+		assert.equal(getFriendlyName(MapOfRecords), "Map<string, Record<string, string>>");
 	});
 
 	it("handles records of map schemas", () => {
 		const InnerMap = sf.map(sf.string);
 		const RecordOfMaps = sf.record(InnerMap);
-		assert.equal(
-			getFriendlyName(RecordOfMaps),
-			"Record<string, Map<string, string>>",
-		);
+		assert.equal(getFriendlyName(RecordOfMaps), "Record<string, Map<string, string>>");
 	});
 
 	it("handles records of record schemas", () => {
 		const InnerRecord = sf.record(sf.string);
 		const RecordOfRecords = sf.record(InnerRecord);
-		assert.equal(
-			getFriendlyName(RecordOfRecords),
-			"Record<string, Record<string, string>>",
-		);
+		assert.equal(getFriendlyName(RecordOfRecords), "Record<string, Record<string, string>>");
 	});
 
 	it("handles maps of object schemas", () => {
@@ -132,23 +115,14 @@ describe("getFriendlyName", () => {
 
 	it("handles records of object schemas", () => {
 		const RecordOfObjects = sf.record(TestObject);
-		assert.equal(
-			getFriendlyName(RecordOfObjects),
-			"Record<string, TestObject>",
-		);
+		assert.equal(getFriendlyName(RecordOfObjects), "Record<string, TestObject>");
 	});
 
 	it("handles type unions", () => {
 		const ArrayOfUnion = sf.array([sf.string, sf.number, TestObject]);
-		assert.equal(
-			getFriendlyName(ArrayOfUnion),
-			"(string | number | TestObject)[]",
-		);
+		assert.equal(getFriendlyName(ArrayOfUnion), "(string | number | TestObject)[]");
 		const MapOfUnion = sf.map([sf.string, sf.number, TestObject]);
-		assert.equal(
-			getFriendlyName(MapOfUnion),
-			"Map<string, (string | number | TestObject)>",
-		);
+		assert.equal(getFriendlyName(MapOfUnion), "Map<string, (string | number | TestObject)>");
 		const RecordOfUnion = sf.record([sf.string, sf.number, TestObject]);
 		assert.equal(
 			getFriendlyName(RecordOfUnion),
@@ -237,23 +211,12 @@ describe("findNamedSchemas", () => {
 		}) {}
 
 		const identifiers: string[] = [];
-		for (const s of findSchemas(Root, (schema) =>
-			isNamedSchema(schema.identifier),
-		)) {
+		for (const s of findSchemas(Root, (schema) => isNamedSchema(schema.identifier))) {
 			identifiers.push((s as { identifier: string }).identifier);
 		}
 		assert.equal(identifiers.length, new Set(identifiers).size);
-		for (const s of [
-			Root,
-			TestObject,
-			NamedStringArray,
-			NamedStringMap,
-			NamedStringRecord,
-		]) {
-			assert.ok(
-				identifiers.includes(s.identifier),
-				`Expected named schema ${s.identifier}`,
-			);
+		for (const s of [Root, TestObject, NamedStringArray, NamedStringMap, NamedStringRecord]) {
+			assert.ok(identifiers.includes(s.identifier), `Expected named schema ${s.identifier}`);
 		}
 		for (const s of [InlineArray, InlineMap, InlineRecord]) {
 			assert.ok(

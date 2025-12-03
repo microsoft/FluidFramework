@@ -6,8 +6,8 @@
 import type { IRequest } from "@fluidframework/core-interfaces";
 import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import type {
-	IOdspAuthRequestInfo,
 	IPublicClientConfig,
+	IOdspAuthRequestInfo,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import * as odsp from "@fluidframework/odsp-driver/internal";
 import type {
@@ -22,10 +22,7 @@ import * as r11s from "@fluidframework/routerlicious-driver/internal";
 import { RouterliciousUrlResolver } from "@fluidframework/routerlicious-urlresolver/internal";
 
 import { localDataOnly, paramJWT } from "./fluidFetchArgs.js";
-import {
-	fetchToolClientConfig,
-	resolveWrapper,
-} from "./fluidFetchSharePoint.js";
+import { resolveWrapper, fetchToolClientConfig } from "./fluidFetchSharePoint.js";
 
 export let latestVersionsId: string = "";
 export let connectionInfo: any;
@@ -55,9 +52,7 @@ async function initializeODSPCore(
   item:   ${itemId}
   docId:  ${docId}`);
 
-	const getStorageTokenStub = async (
-		options: OdspResourceTokenFetchOptions,
-	) => {
+	const getStorageTokenStub = async (options: OdspResourceTokenFetchOptions) => {
 		return resolveWrapper(
 			async (authRequestInfo: IOdspAuthRequestInfo) => {
 				if (
@@ -118,8 +113,9 @@ async function initializeR11s(
 
 	console.log(`Connecting to r11s: tenantId=${tenantId} id:${documentId}`);
 	const tokenProvider = new r11s.DefaultTokenProvider(paramJWT);
-	const r11sDocumentServiceFactory =
-		new r11s.RouterliciousDocumentServiceFactory(tokenProvider);
+	const r11sDocumentServiceFactory = new r11s.RouterliciousDocumentServiceFactory(
+		tokenProvider,
+	);
 	return r11sDocumentServiceFactory.createDocumentService(r11sResolvedUrl);
 }
 

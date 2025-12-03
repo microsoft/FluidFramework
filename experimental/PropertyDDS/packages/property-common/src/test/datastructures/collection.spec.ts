@@ -12,7 +12,7 @@ import _ from "lodash";
 
 import { Collection } from "../../index";
 
-describe("collection", () => {
+describe("collection", function () {
 	const createObject = () => ({
 		item4: Number.NaN,
 		item5: undefined,
@@ -26,7 +26,7 @@ describe("collection", () => {
 		item13: 1,
 	});
 
-	it("should add a value under a key", (done) => {
+	it("should add a value under a key", function (done) {
 		const collection = new Collection<string>();
 
 		expect(collection.add("item1", "test")).to.equal("test");
@@ -40,7 +40,7 @@ describe("collection", () => {
 		done();
 	});
 
-	it("should bulk add a key-value object to the list of items", (done) => {
+	it("should bulk add a key-value object to the list of items", function (done) {
 		const collection = new Collection<any>();
 
 		const objectToAdd = createObject();
@@ -54,7 +54,7 @@ describe("collection", () => {
 		done();
 	});
 
-	it("should remove a value associated with a key", (done) => {
+	it("should remove a value associated with a key", function (done) {
 		const collection = new Collection<string>();
 
 		collection.add("item1", "test");
@@ -68,7 +68,7 @@ describe("collection", () => {
 		done();
 	});
 
-	it("should bulk remove a key-value object from the list of items", (done) => {
+	it("should bulk remove a key-value object from the list of items", function (done) {
 		const collection = new Collection();
 
 		const objectToAdd = createObject();
@@ -83,7 +83,7 @@ describe("collection", () => {
 		done();
 	});
 
-	it("should check for emptyness", (done) => {
+	it("should check for emptyness", function (done) {
 		const collection = new Collection<string>();
 
 		expect(collection.isEmpty()).to.equal(true);
@@ -94,7 +94,7 @@ describe("collection", () => {
 		done();
 	});
 
-	it("should get the first value in the collection", (done) => {
+	it("should get the first value in the collection", function (done) {
 		const collection = new Collection<string>();
 
 		collection.add("item1", "test1");
@@ -104,7 +104,7 @@ describe("collection", () => {
 		done();
 	});
 
-	it("should get the last value in the collection", (done) => {
+	it("should get the last value in the collection", function (done) {
 		const collection = new Collection<string>();
 
 		collection.add("item1", "test1");
@@ -114,7 +114,7 @@ describe("collection", () => {
 		done();
 	});
 
-	it("should get the type of the collection", (done) => {
+	it("should get the type of the collection", function (done) {
 		const collection = new Collection("collection1", Array);
 
 		expect(collection.getType()).to.equal(Array);
@@ -122,7 +122,7 @@ describe("collection", () => {
 		done();
 	});
 
-	it("should filter out values based on a predicate function", (done) => {
+	it("should filter out values based on a predicate function", function (done) {
 		const collection = new Collection<number>();
 
 		const objectToAdd = {
@@ -142,7 +142,7 @@ describe("collection", () => {
 		done();
 	});
 
-	it("should filter out values based on a key predicate", (done) => {
+	it("should filter out values based on a key predicate", function (done) {
 		const collection = new Collection();
 
 		const objectToAdd = {
@@ -168,7 +168,7 @@ describe("collection", () => {
 		done();
 	});
 
-	it("should filter out values based on a value predicate", (done) => {
+	it("should filter out values based on a value predicate", function (done) {
 		const collection = new Collection();
 
 		const objectToAdd = {
@@ -188,7 +188,7 @@ describe("collection", () => {
 		done();
 	});
 
-	it("should return the number of elements in the collection", (done) => {
+	it("should return the number of elements in the collection", function (done) {
 		const collection = new Collection();
 
 		const objectToAdd = {
@@ -203,7 +203,7 @@ describe("collection", () => {
 		done();
 	});
 
-	it("should return the list of items in an array", (done) => {
+	it("should return the list of items in an array", function (done) {
 		const collection = new Collection();
 
 		const objectToAdd = {
@@ -225,7 +225,7 @@ describe("collection", () => {
 		done();
 	});
 
-	it("should check if an item exists", (done) => {
+	it("should check if an item exists", function (done) {
 		const collection = new Collection();
 
 		const objectToAdd = {
@@ -242,7 +242,7 @@ describe("collection", () => {
 		done();
 	});
 
-	it("should get an item from the collection", (done) => {
+	it("should get an item from the collection", function (done) {
 		const collection = new Collection();
 
 		const objectToAdd = {
@@ -258,7 +258,7 @@ describe("collection", () => {
 		done();
 	});
 
-	it("should set the value of a key", (done) => {
+	it("should set the value of a key", function (done) {
 		const collection = new Collection();
 
 		const objectToAdd = {
@@ -276,7 +276,7 @@ describe("collection", () => {
 		done();
 	});
 
-	it("should iterate over the set of items", (done) => {
+	it("should iterate over the set of items", function (done) {
 		const collection = new Collection();
 
 		const objectToAdd = {
@@ -288,7 +288,7 @@ describe("collection", () => {
 		collection.bulkAdd(objectToAdd);
 
 		const result = {};
-		collection.iterate((key, item) => {
+		collection.iterate(function (key, item) {
 			result[key] = item;
 		});
 
@@ -297,7 +297,7 @@ describe("collection", () => {
 		done();
 	});
 
-	it("should iterate over the set of items starting from the tail", (done) => {
+	it("should iterate over the set of items starting from the tail", function (done) {
 		const collection = new Collection();
 
 		const objectToAdd = {
@@ -311,7 +311,7 @@ describe("collection", () => {
 		const result = {};
 		const keys = collection.getKeys();
 		let i = keys.length - 1;
-		collection.iterateFromTail((key, item) => {
+		collection.iterateFromTail(function (key, item) {
 			result[key] = item;
 			expect(key).to.equal(keys[i]);
 			i--;
@@ -322,7 +322,7 @@ describe("collection", () => {
 		done();
 	});
 
-	it("should return all items in an JSON format", (done) => {
+	it("should return all items in an JSON format", function (done) {
 		const collection = new Collection();
 
 		const objectToAdd = {
@@ -338,7 +338,7 @@ describe("collection", () => {
 		done();
 	});
 
-	it("should return all keys in an array", (done) => {
+	it("should return all keys in an array", function (done) {
 		const collection = new Collection();
 
 		const objectToAdd = {
@@ -354,7 +354,7 @@ describe("collection", () => {
 		done();
 	});
 
-	it("should return the first item in the collection along with the key", (done) => {
+	it("should return the first item in the collection along with the key", function (done) {
 		const collection = new Collection();
 
 		collection.add("item1", "test1");
@@ -365,8 +365,8 @@ describe("collection", () => {
 		done();
 	});
 
-	describe("clear", () => {
-		it("should empty the collection", (done) => {
+	describe("clear", function () {
+		it("should empty the collection", function (done) {
 			const collection = new Collection();
 
 			const objectToAdd = {
@@ -385,7 +385,7 @@ describe("collection", () => {
 			done();
 		});
 
-		it("should return the collection itself", (done) => {
+		it("should return the collection itself", function (done) {
 			const collection = new Collection();
 			const ret = collection.clear();
 			expect(ret).to.equal(collection);
@@ -393,7 +393,7 @@ describe("collection", () => {
 		});
 	});
 
-	it("should clone the collection", (done) => {
+	it("should clone the collection", function (done) {
 		const collection = new Collection();
 
 		const objectToAdd = {
@@ -409,7 +409,7 @@ describe("collection", () => {
 		done();
 	});
 
-	it("should copy the collection", (done) => {
+	it("should copy the collection", function (done) {
 		const collection = new Collection();
 
 		const objectToAdd = {
@@ -431,12 +431,12 @@ describe("collection", () => {
 		done();
 	});
 
-	it("should invoke the onAdd callback", (done) => {
+	it("should invoke the onAdd callback", function (done) {
 		const collection = new Collection();
 
 		let triggered = false;
 
-		collection.onAdd = (key, item) => {
+		collection.onAdd = function (key, item) {
 			triggered = true;
 			expect(key).to.equal("item");
 			expect(item).to.equal("value");
@@ -450,9 +450,9 @@ describe("collection", () => {
 
 		// now override the onAdd function and check wiether we call it
 		// when we bulkAdd
-		collection.onAdd = (key, item) => {
+		collection.onAdd = function (key, item) {
 			callbackCounter++;
-			expect(Object.hasOwn(objectToAdd, key)).to.equal(true);
+			expect(Object.prototype.hasOwnProperty.call(objectToAdd, key)).to.equal(true);
 		};
 
 		collection.bulkAdd(objectToAdd);
@@ -461,12 +461,12 @@ describe("collection", () => {
 		done();
 	});
 
-	it("should invoke the onRemove callback", (done) => {
+	it("should invoke the onRemove callback", function (done) {
 		const collection = new Collection();
 
 		let triggered = false;
 
-		collection.onRemove = (key, item) => {
+		collection.onRemove = function (key, item) {
 			triggered = true;
 			expect(key).to.equal("item");
 			expect(item).to.equal("value");
@@ -487,9 +487,9 @@ describe("collection", () => {
 
 		// now override the onRemove function and check wiether we call it
 		// when we bulkRemove
-		collection.onRemove = (key, item) => {
+		collection.onRemove = function (key, item) {
 			callbackCounter++;
-			expect(Object.hasOwn(objectToAdd, key)).to.equal(true);
+			expect(Object.prototype.hasOwnProperty.call(objectToAdd, key)).to.equal(true);
 		};
 
 		collection.bulkAdd(objectToAdd);
@@ -500,7 +500,7 @@ describe("collection", () => {
 		done();
 	});
 
-	it("should stop early when iterating", () => {
+	it("should stop early when iterating", function () {
 		const collection = new Collection();
 
 		const objectToAdd = {
@@ -513,7 +513,7 @@ describe("collection", () => {
 
 		let iterator = 1;
 
-		collection.iterate(() => {
+		collection.iterate(function () {
 			if (iterator === 2) {
 				return false;
 			}
@@ -527,7 +527,7 @@ describe("collection", () => {
 
 		iterator = 1;
 
-		collection.iterateFromTail(() => {
+		collection.iterateFromTail(function () {
 			if (iterator === 2) {
 				return false;
 			}
@@ -540,12 +540,12 @@ describe("collection", () => {
 		expect(iterator).to.equal(2);
 	});
 
-	it("should invoke the onClear callback", (done) => {
+	it("should invoke the onClear callback", function (done) {
 		const collection = new Collection();
 
 		const objectToAdd = createObject();
 		let triggered = false;
-		collection.onClear = (items) => {
+		collection.onClear = function (items) {
 			triggered = true;
 			expect(items).to.deep.equal(objectToAdd);
 		};

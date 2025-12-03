@@ -9,7 +9,7 @@
  * @remarks Note: `TagName` are uppercase for comparison '===' with the 'tagName' property of Element.
  * Unfortunately, this is the opposite of the casing used for document.createElement().
  */
-export enum TagName {
+export const enum TagName {
 	a = "A",
 	abbr = "ABBR",
 	address = "ADDRESS",

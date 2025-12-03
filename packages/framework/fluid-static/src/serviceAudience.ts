@@ -8,12 +8,7 @@ import type { IAudience } from "@fluidframework/container-definitions";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 
-import type {
-	IMember,
-	IServiceAudience,
-	IServiceAudienceEvents,
-	Myself,
-} from "./types.js";
+import type { IMember, IServiceAudience, IServiceAudienceEvents, Myself } from "./types.js";
 
 /**
  * Creates a service audience for the provided container.
@@ -25,9 +20,7 @@ import type {
  *
  * @internal
  */
-export function createServiceAudience<
-	TMember extends IMember = IMember,
->(props: {
+export function createServiceAudience<TMember extends IMember = IMember>(props: {
 	container: IContainer;
 	createServiceMember: (audienceMember: IClient) => TMember;
 }): IServiceAudience<TMember> {

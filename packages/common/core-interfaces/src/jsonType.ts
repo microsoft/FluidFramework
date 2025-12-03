@@ -60,11 +60,7 @@ export type ReadonlyJsonTypeWith<TReadonlyAlternates> =
 	| number
 	| string
 	| TReadonlyAlternates
-	| {
-			readonly [
-				key: string | number
-			]: ReadonlyJsonTypeWith<TReadonlyAlternates>;
-	  }
+	| { readonly [key: string | number]: ReadonlyJsonTypeWith<TReadonlyAlternates> }
 	| readonly ReadonlyJsonTypeWith<TReadonlyAlternates>[];
 
 /**
@@ -73,9 +69,5 @@ export type ReadonlyJsonTypeWith<TReadonlyAlternates> =
  * @internal
  */
 export type ReadonlyNonNullJsonObjectWith<TReadonlyAlternates> =
-	| {
-			readonly [
-				key: string | number
-			]: ReadonlyJsonTypeWith<TReadonlyAlternates>;
-	  }
+	| { readonly [key: string | number]: ReadonlyJsonTypeWith<TReadonlyAlternates> }
 	| readonly ReadonlyJsonTypeWith<TReadonlyAlternates>[];

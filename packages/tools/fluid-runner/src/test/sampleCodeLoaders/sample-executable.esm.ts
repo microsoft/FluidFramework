@@ -4,7 +4,8 @@
  * Licensed under the MIT License.
  */
 
-import { fluidRunner } from "@fluidframework/fluid-runner/internal";
 import { fluidExport } from "./sampleCodeLoader.js";
+
+import { fluidRunner } from "@fluidframework/fluid-runner/internal";
 
 await fluidRunner(fluidExport);

@@ -10,18 +10,18 @@ import type {
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
-	ICacheEntry,
-	IContainerPackageInfo,
 	IResolvedUrl,
 	ISnapshot,
+	IContainerPackageInfo,
+	ICacheEntry,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	type AuthorizationError,
-	isOnline,
 	NetworkErrorBasic,
 	NonRetryableError,
 	OnlineStatus,
 	RetryableError,
+	isOnline,
 } from "@fluidframework/driver-utils/internal";
 import {
 	fetchIncorrectResponse,
@@ -29,28 +29,28 @@ import {
 	throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import {
-	authHeaderFromTokenResponse,
-	type InstrumentedStorageTokenFetcher,
-	type InstrumentedTokenFetcher,
 	type IOdspResolvedUrl,
 	type IOdspUrlParts,
 	type ISharingLinkKind,
-	isTokenFromCache,
+	type InstrumentedStorageTokenFetcher,
+	type InstrumentedTokenFetcher,
 	OdspErrorTypes,
+	authHeaderFromTokenResponse,
 	type OdspResourceTokenFetchOptions,
-	snapshotKey,
-	snapshotWithLoadingGroupIdKey,
-	type TokenFetcher,
 	type TokenFetchOptions,
+	type TokenFetcher,
+	isTokenFromCache,
+	snapshotKey,
 	tokenFromResponse,
+	snapshotWithLoadingGroupIdKey,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	createChildLogger,
 	type IConfigProvider,
 	type IFluidErrorBase,
 	type ITelemetryLoggerExt,
 	PerformanceEvent,
 	TelemetryDataTag,
+	createChildLogger,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -59,8 +59,7 @@ import { storeLocatorInOdspUrl } from "./odspFluidFileLink.js";
 import type { ISnapshotContents } from "./odspPublicUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 
-export const getWithRetryForTokenRefreshRepeat =
-	"getWithRetryForTokenRefreshRepeat";
+export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
 
 /**
  * @legacy
@@ -105,19 +104,12 @@ export async function getWithRetryForTokenRefresh<T>(
 	get: (options: TokenFetchOptionsEx) => Promise<T>,
 ): Promise<T> {
 	return get({ refresh: false }).catch(async (error) => {
-		const options: TokenFetchOptionsEx = {
-			refresh: true,
-			previousError: error,
-		};
+		const options: TokenFetchOptionsEx = { refresh: true, previousError: error };
 		switch ((error as Partial<IFluidErrorBase>).errorType) {
 			// If the error is 401 or 403 refresh the token and try once more.
 			case OdspErrorTypes.authorizationError: {
 				const authError = error as AuthorizationError;
-				return get({
-					...options,
-					claims: authError.claims,
-					tenantId: authError.tenantId,
-				});
+				return get({ ...options, claims: authError.claims, tenantId: authError.tenantId });
 			}
 
 			case OdspErrorTypes.incorrectServerResponse: // some error on the wire, retry once
@@ -184,31 +176,20 @@ export async function fetchHelper(
 			};
 			// After redacting URLs we believe the error message is safe to log
 			const urlRegex = /((http|https):\/\/(\S*))/i;
-			const redactedErrorText = taggedErrorMessage.value.replace(
-				urlRegex,
-				"REDACTED_URL",
-			);
+			const redactedErrorText = taggedErrorMessage.value.replace(urlRegex, "REDACTED_URL");
 
 			// This error is thrown by fetch() when AbortSignal is provided and it gets cancelled
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			if (error.name === "AbortError") {
-				throw new RetryableError(
-					"Fetch Timeout (AbortError)",
-					OdspErrorTypes.fetchTimeout,
-					{
-						driverVersion,
-					},
-				);
+				throw new RetryableError("Fetch Timeout (AbortError)", OdspErrorTypes.fetchTimeout, {
+					driverVersion,
+				});
 			}
 			// TCP/IP timeout
 			if (redactedErrorText.includes("ETIMEDOUT")) {
-				throw new RetryableError(
-					"Fetch Timeout (ETIMEDOUT)",
-					OdspErrorTypes.fetchTimeout,
-					{
-						driverVersion,
-					},
-				);
+				throw new RetryableError("Fetch Timeout (ETIMEDOUT)", OdspErrorTypes.fetchTimeout, {
+					driverVersion,
+				});
 			}
 
 			// eslint-disable-next-line unicorn/prefer-ternary
@@ -348,9 +329,7 @@ export function isNewFileInfo(
 	return fileInfo.type === undefined || fileInfo.type === "New";
 }
 
-export function getOdspResolvedUrl(
-	resolvedUrl: IResolvedUrl,
-): IOdspResolvedUrl {
+export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl {
 	assert(
 		(resolvedUrl as IOdspResolvedUrl).odspResolvedUrl === true,
 		0x1de /* "Not an ODSP resolved url" */,
@@ -364,17 +343,11 @@ export function getOdspResolvedUrl(
  * @legacy
  * @beta
  */
-export function isOdspResolvedUrl(
-	resolvedUrl: IResolvedUrl,
-): resolvedUrl is IOdspResolvedUrl {
-	return (
-		"odspResolvedUrl" in resolvedUrl && resolvedUrl.odspResolvedUrl === true
-	);
+export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOdspResolvedUrl {
+	return "odspResolvedUrl" in resolvedUrl && resolvedUrl.odspResolvedUrl === true;
 }
 
-export const createOdspLogger = (
-	logger?: ITelemetryBaseLogger,
-): ITelemetryLoggerExt =>
+export const createOdspLogger = (logger?: ITelemetryBaseLogger): ITelemetryLoggerExt =>
 	createChildLogger({
 		logger,
 		namespace: "OdspDriver",
@@ -476,9 +449,7 @@ export function toInstrumentedOdspTokenFetcher(
 								new NetworkErrorBasic(
 									`The Host-provided token fetcher threw an error`,
 									OdspErrorTypes.fetchTokenError,
-									typeof rawCanRetry === "boolean"
-										? rawCanRetry
-										: false /* canRetry */,
+									typeof rawCanRetry === "boolean" ? rawCanRetry : false /* canRetry */,
 									{ method: name, errorMessage, driverVersion },
 								),
 						);
@@ -495,9 +466,7 @@ export function createCacheSnapshotKey(
 	snapshotWithLoadingGroupId: boolean | undefined,
 ): ICacheEntry {
 	const cacheEntry: ICacheEntry = {
-		type: snapshotWithLoadingGroupId
-			? snapshotWithLoadingGroupIdKey
-			: snapshotKey,
+		type: snapshotWithLoadingGroupId ? snapshotWithLoadingGroupIdKey : snapshotKey,
 		key: "",
 		file: {
 			resolvedUrl: odspResolvedUrl,
@@ -511,9 +480,7 @@ export function createCacheSnapshotKey(
 export function snapshotWithLoadingGroupIdSupported(
 	config: IConfigProvider,
 ): boolean | undefined {
-	return config.getBoolean(
-		"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2",
-	);
+	return config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch2");
 }
 
 // 80KB is the max body size that we can put in ump post body for server to be able to accept it.
@@ -548,18 +515,14 @@ export function measure<T>(callback: () => T): [T, number] {
 	return [result, time];
 }
 
-export async function measureP<T>(
-	callback: () => Promise<T>,
-): Promise<[T, number]> {
+export async function measureP<T>(callback: () => Promise<T>): Promise<[T, number]> {
 	const start = performanceNow();
 	const result = await callback();
 	const time = performanceNow() - start;
 	return [result, time];
 }
 
-export function getJoinSessionCacheKey(
-	odspResolvedUrl: IOdspResolvedUrl,
-): string {
+export function getJoinSessionCacheKey(odspResolvedUrl: IOdspResolvedUrl): string {
 	return `${odspResolvedUrl.hashedDocumentId}/joinsession`;
 }
 
@@ -572,9 +535,7 @@ export function isInstanceOfISnapshot(
 	// eslint-disable-next-line import-x/no-deprecated
 	obj: ISnapshotContents | ISnapshot | undefined,
 ): obj is ISnapshot {
-	return (
-		obj !== undefined && "snapshotFormatV" in obj && obj.snapshotFormatV === 1
-	);
+	return obj !== undefined && "snapshotFormatV" in obj && obj.snapshotFormatV === 1;
 }
 
 /**
@@ -599,9 +560,7 @@ export function useLegacyFlowWithoutGroupsForSnapshotFetch(
 
 // back-compat: GitHub #9653
 const isFluidPackage = (pkg: Record<string, unknown>): boolean =>
-	typeof pkg === "object" &&
-	typeof pkg?.name === "string" &&
-	typeof pkg?.fluid === "object";
+	typeof pkg === "object" && typeof pkg?.name === "string" && typeof pkg?.fluid === "object";
 
 /**
  * Appends the store locator properties to the provided base URL. This function is useful for scenarios where an application
@@ -624,8 +583,7 @@ export function appendNavParam(
 	const url = new URL(baseUrl);
 
 	// If the user has passed an empty dataStorePath, then extract it from the resolved url.
-	const actualDataStorePath =
-		dataStorePath || (odspResolvedUrl.dataStorePath ?? "");
+	const actualDataStorePath = dataStorePath || (odspResolvedUrl.dataStorePath ?? "");
 
 	storeLocatorInOdspUrl(url, {
 		siteUrl: odspResolvedUrl.siteUrl,

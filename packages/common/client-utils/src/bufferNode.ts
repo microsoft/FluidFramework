@@ -23,11 +23,7 @@ export declare class Buffer extends Uint8Array {
 	 *
 	 * @privateRemarks TODO: Use actual types
 	 */
-	public static from(
-		value: unknown,
-		encodingOrOffset?: unknown,
-		length?: unknown,
-	): IsoBuffer;
+	public static from(value: unknown, encodingOrOffset?: unknown, length?: unknown): IsoBuffer;
 	public static isBuffer(obj: unknown): obj is Buffer;
 }
 

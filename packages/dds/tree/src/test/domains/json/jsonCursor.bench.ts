@@ -5,19 +5,15 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	BenchmarkType,
-	benchmark,
-	isInPerformanceTestingMode,
-} from "@fluid-tools/benchmark";
-import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
+import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+
 import {
 	EmptyKey,
 	type FieldKey,
 	type ITreeCursor,
 	type JsonableTree,
-	moveToDetachedField,
 	TreeStoredSchemaRepository,
+	moveToDetachedField,
 } from "../../../core/index.js";
 import {
 	basicChunkTree,
@@ -35,22 +31,20 @@ import {
 	jsonableTreeFromCursor,
 	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { toInitialSchema } from "../../../simple-tree/toStoredSchema.js";
 import { brand, type JsonCompatible } from "../../../util/index.js";
-import { initializeForest } from "../../feature-libraries/index.js";
-import { cursorToJsonObject, singleJsonCursor } from "../../json/index.js";
-import {
-	buildTestForest,
-	testIdCompressor,
-	testRevisionTagCodec,
-} from "../../utils.js";
+
+import { buildTestForest, testIdCompressor, testRevisionTagCodec } from "../../utils.js";
 import { averageValues, sum, sumMap } from "./benchmarks.js";
 import { Canada, generateCanada } from "./canada.js";
 import { CitmCatalog, generateCitmJson } from "./citm.js";
 import { clone } from "./jsObjectUtil.js";
 import { generateTwitterJsonByByteSize } from "./twitter.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { toInitialSchema } from "../../../simple-tree/toStoredSchema.js";
+import { cursorToJsonObject, singleJsonCursor } from "../../json/index.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
+import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
+import { initializeForest } from "../../feature-libraries/index.js";
 
 // Shared tree keys that map to the type used by the Twitter type/dataset
 export const TwitterKey = {
@@ -98,16 +92,8 @@ function bench(
 						title: "Clone JS Object",
 						before: () => {
 							const cloned = clone(json);
-							assert.deepEqual(
-								cloned,
-								json,
-								"clone() must return an equivalent tree.",
-							);
-							assert.notEqual(
-								cloned,
-								json,
-								"clone() must not return the same tree instance.",
-							);
+							assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");
+							assert.notEqual(cloned, json, "clone() must not return the same tree instance.");
 						},
 						benchmarkFn: () => {
 							clone(json);
@@ -158,9 +144,7 @@ function bench(
 							() => {
 								const forest = buildChunkedForest(
 									makeTreeChunker(
-										new TreeStoredSchemaRepository(
-											toInitialSchema(JsonAsTree.Tree),
-										),
+										new TreeStoredSchemaRepository(toInitialSchema(JsonAsTree.Tree)),
 										defaultSchemaPolicy,
 										defaultIncrementalEncodingPolicy,
 									),
@@ -183,10 +167,7 @@ function bench(
 						string,
 						(
 							cursor: ITreeCursor,
-							dataConsumer: (
-								cursor: ITreeCursor,
-								calculate: (a: number) => void,
-							) => unknown,
+							dataConsumer: (cursor: ITreeCursor, calculate: (a: number) => void) => unknown,
 						) => void,
 					][] = [
 						["cursorToJsonObject", cursorToJsonObject],
@@ -249,11 +230,7 @@ function extractCoordinatesFromCanada(
 	for (let result = cursor.firstNode(); result; result = cursor.nextNode()) {
 		cursor.enterField(EmptyKey);
 
-		for (
-			let resultInner = cursor.firstNode();
-			resultInner;
-			resultInner = cursor.nextNode()
-		) {
+		for (let resultInner = cursor.firstNode(); resultInner; resultInner = cursor.nextNode()) {
 			// Read x and y values
 			cursor.enterField(EmptyKey);
 			assert.equal(cursor.firstNode(), true, "No X field");
@@ -359,8 +336,7 @@ describe("ITreeCursor", () => {
 		{
 			name: "canada",
 			getJson: () => canada as unknown as JsonCompatible,
-			dataConsumer: (cursor) =>
-				averageValues(cursor, extractCoordinatesFromCanada),
+			dataConsumer: (cursor) => averageValues(cursor, extractCoordinatesFromCanada),
 		},
 	]);
 	bench([

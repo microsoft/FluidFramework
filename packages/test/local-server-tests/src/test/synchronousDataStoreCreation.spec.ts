@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import {
 	AttachState,
 	type IRuntimeFactory,
@@ -17,17 +14,14 @@ import {
 	waitContainerToCatchUp,
 } from "@fluidframework/container-loader/internal";
 import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
-import type {
-	FluidObject,
-	IFluidHandle,
-} from "@fluidframework/core-interfaces/internal";
+import { IFluidHandle, type FluidObject } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
-import type {
+import {
 	IChannelFactory,
-	IFluidDataStoreRuntime,
+	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
@@ -39,9 +33,7 @@ import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server"
 import { createLoader } from "../utils.js";
 
 const mapFactory = SharedMap.getFactory();
-const sharedObjectRegistry = new Map<string, IChannelFactory>([
-	[mapFactory.type, mapFactory],
-]);
+const sharedObjectRegistry = new Map<string, IChannelFactory>([[mapFactory.type, mapFactory]]);
 
 /**
  * This is the child datastore that will be created synchronously
@@ -102,9 +94,7 @@ class ChildDataStoreFactory implements IFluidDataStoreFactory {
 			existing,
 			async () => dataStore,
 		);
-		const dataStore = existing
-			? ChildDataStore.load(runtime)
-			: ChildDataStore.create(runtime);
+		const dataStore = existing ? ChildDataStore.load(runtime) : ChildDataStore.create(runtime);
 
 		return runtime;
 	}
@@ -143,9 +133,7 @@ class ParentDataObject extends DataObject {
 			this.context.createChildDataStore !== undefined,
 			"this.context.createChildDataStore",
 		);
-		const { entrypoint } = this.context.createChildDataStore(
-			ChildDataStoreFactory.instance,
-		);
+		const { entrypoint } = this.context.createChildDataStore(ChildDataStoreFactory.instance);
 		const dir = this.root.createSubDirectory("children");
 		dir.set(name, entrypoint.handle);
 		entrypoint.setProperty("childValue", name);
@@ -166,9 +154,7 @@ class ParentDataObject extends DataObject {
 const parentDataObjectFactory = new DataObjectFactory({
 	type: "ParentDataObject",
 	ctor: ParentDataObject,
-	registryEntries: [
-		[ChildDataStoreFactory.instance.type, ChildDataStoreFactory.instance],
-	],
+	registryEntries: [[ChildDataStoreFactory.instance.type, ChildDataStoreFactory.instance]],
 });
 
 // a simple container runtime factory with a single datastore aliased as default.
@@ -212,14 +198,10 @@ describe("Scenario Test", () => {
 			runtimeFactory,
 		});
 
-		const container = await createDetachedContainer({
-			...loaderProps,
-			codeDetails,
-		});
+		const container = await createDetachedContainer({ ...loaderProps, codeDetails });
 
 		{
-			const entrypoint: FluidObject<ParentDataObject> =
-				await container.getEntryPoint();
+			const entrypoint: FluidObject<ParentDataObject> = await container.getEntryPoint();
 
 			assert(
 				entrypoint.ParentDataObject !== undefined,
@@ -229,14 +211,10 @@ describe("Scenario Test", () => {
 			// create a child while detached
 			entrypoint.ParentDataObject.createChild("detachedChildInstance");
 
-			const attachP = container.attach(
-				urlResolver.createCreateNewRequest("test"),
-			);
+			const attachP = container.attach(urlResolver.createCreateNewRequest("test"));
 
 			if (container.attachState === AttachState.Attached) {
-				await new Promise<void>((resolve) =>
-					container.once("attaching", () => resolve()),
-				);
+				await new Promise<void>((resolve) => container.once("attaching", () => resolve()));
 			}
 
 			// create a child while attaching
@@ -248,9 +226,7 @@ describe("Scenario Test", () => {
 			entrypoint.ParentDataObject.createChild("attachedChildInstance");
 
 			if (container.isDirty) {
-				await new Promise<void>((resolve) =>
-					container.once("saved", () => resolve()),
-				);
+				await new Promise<void>((resolve) => container.once("saved", () => resolve()));
 			}
 		}
 
@@ -259,13 +235,9 @@ describe("Scenario Test", () => {
 		container.dispose();
 
 		{
-			const container2 = await loadExistingContainer({
-				...loaderProps,
-				request: { url },
-			});
+			const container2 = await loadExistingContainer({ ...loaderProps, request: { url } });
 			await waitContainerToCatchUp(container2);
-			const entrypoint: FluidObject<ParentDataObject> =
-				await container2.getEntryPoint();
+			const entrypoint: FluidObject<ParentDataObject> = await container2.getEntryPoint();
 
 			assert(
 				entrypoint.ParentDataObject !== undefined,
@@ -282,10 +254,7 @@ describe("Scenario Test", () => {
 				assert(childHandle !== undefined, `${childKey} must be defined`);
 				assert(isFluidHandle(childHandle), `${childKey} should be a handle`);
 				const child = (await childHandle.get()) as FluidObject<ChildDataStore>;
-				assert(
-					child.ChildDataStore !== undefined,
-					`${childKey} must be ChildDataStore`,
-				);
+				assert(child.ChildDataStore !== undefined, `${childKey} must be ChildDataStore`);
 				assert(
 					child.ChildDataStore.getProperty("childValue") === childKey,
 					"unexpected childValue",

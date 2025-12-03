@@ -7,17 +7,15 @@ import type { IDisposable } from "@fluidframework/core-interfaces";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentStorageService,
-	IDocumentStorageServicePolicies,
 	ISummaryContext,
+	IDocumentStorageServicePolicies,
 } from "@fluidframework/driver-definitions/internal";
 
 /**
  * A storage service wrapper whose sole job is to intercept calls to uploadSummaryWithContext and ensure they include
  * the protocol summary, using the provided callback to add it if necessary.
  */
-export class ProtocolTreeStorageService
-	implements IDocumentStorageService, IDisposable
-{
+export class ProtocolTreeStorageService implements IDocumentStorageService, IDisposable {
 	/**
 	 *
 	 * @param internalStorageService - Document storage service responsible to make api calls to the storage.
@@ -25,31 +23,16 @@ export class ProtocolTreeStorageService
 	 * @param shouldSummarizeProtocolTree - Callback function to learn about the service preference on whether single-commit summaries are enabled.
 	 */
 	constructor(
-		private readonly internalStorageService: IDocumentStorageService &
-			IDisposable,
-		private readonly addProtocolSummaryIfMissing: (
-			summaryTree: ISummaryTree,
-		) => ISummaryTree,
+		private readonly internalStorageService: IDocumentStorageService & IDisposable,
+		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
 		private readonly shouldSummarizeProtocolTree: () => boolean,
 	) {
-		this.getSnapshotTree = internalStorageService.getSnapshotTree.bind(
-			internalStorageService,
-		);
-		this.getSnapshot = internalStorageService.getSnapshot?.bind(
-			internalStorageService,
-		);
-		this.getVersions = internalStorageService.getVersions.bind(
-			internalStorageService,
-		);
-		this.createBlob = internalStorageService.createBlob.bind(
-			internalStorageService,
-		);
-		this.readBlob = internalStorageService.readBlob.bind(
-			internalStorageService,
-		);
-		this.downloadSummary = internalStorageService.downloadSummary.bind(
-			internalStorageService,
-		);
+		this.getSnapshotTree = internalStorageService.getSnapshotTree.bind(internalStorageService);
+		this.getSnapshot = internalStorageService.getSnapshot?.bind(internalStorageService);
+		this.getVersions = internalStorageService.getVersions.bind(internalStorageService);
+		this.createBlob = internalStorageService.createBlob.bind(internalStorageService);
+		this.readBlob = internalStorageService.readBlob.bind(internalStorageService);
+		this.downloadSummary = internalStorageService.downloadSummary.bind(internalStorageService);
 		this.dispose = internalStorageService.dispose.bind(internalStorageService);
 	}
 	public get policies(): IDocumentStorageServicePolicies | undefined {

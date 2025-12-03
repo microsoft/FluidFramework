@@ -8,19 +8,14 @@ import { strict as assert } from "node:assert";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type { ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
-import {
-	type SinonFakeTimers,
-	type SinonStub,
-	stub,
-	useFakeTimers,
-} from "sinon";
+import { type SinonFakeTimers, type SinonStub, stub, useFakeTimers } from "sinon";
 
 import type { OdspFluidDataStoreLocator } from "../contractsPublic.js";
 import { createOdspUrl } from "../createOdspUrl.js";
 import { mockify } from "../mockify.js";
 import { LocalPersistentCache } from "../odspCache.js";
-import type { OdspDocumentDeltaConnection } from "../odspDocumentDeltaConnection.js";
 import * as odspDocumentDeltaConnection from "../odspDocumentDeltaConnection.js";
+import type { OdspDocumentDeltaConnection } from "../odspDocumentDeltaConnection.js";
 import type { OdspDocumentService } from "../odspDocumentService.js";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";

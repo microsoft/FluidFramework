@@ -6,8 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import { MergeTree } from "../mergeTree.js";
-import { MaxNodesInBlock, type MergeBlock } from "../mergeTreeNodes.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
+import { type MergeBlock, MaxNodesInBlock } from "../mergeTreeNodes.js";
 import { TextSegment } from "../textSegment.js";
 
 describe("MergeTree walks", () => {
@@ -55,10 +55,7 @@ describe("MergeTree walks", () => {
 					while (current !== block && current !== undefined) {
 						current = current.parent;
 					}
-					assert(
-						current === block,
-						"Expected all visited segments to be descendants",
-					);
+					assert(current === block, "Expected all visited segments to be descendants");
 					return true;
 				});
 				assert(walkedAnySegments, "Walk should have hit segments");

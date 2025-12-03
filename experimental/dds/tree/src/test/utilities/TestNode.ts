@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import type { BuildTreeNode } from '../../ChangeTypes.js';
+import { BuildTreeNode } from '../../ChangeTypes.js';
 import { fail, identity, memoizeGetter, setPropertyIfDefined } from '../../Common.js';
 import { convertTreeNodes } from '../../EditUtilities.js';
 import { convertNodeDataIds } from '../../IdConversion.js';
-import type { Definition, NodeId, OpSpaceNodeId, SessionId, StableNodeId, TraitLabel } from '../../Identifiers.js';
+import { Definition, NodeId, OpSpaceNodeId, SessionId, StableNodeId, TraitLabel } from '../../Identifiers.js';
 import { initialTree } from '../../InitialTree.js';
-import type { NodeIdContext, NodeIdConverter, NodeIdNormalizer } from '../../NodeIdUtilities.js';
-import type {
+import { NodeIdContext, NodeIdConverter, NodeIdNormalizer } from '../../NodeIdUtilities.js';
+import { RevisionView } from '../../RevisionView.js';
+import { TraitLocation } from '../../TreeView.js';
+import {
 	BuildNodeInternal,
 	ChangeNode,
 	Payload,
@@ -19,8 +21,6 @@ import type {
 	TraitMap,
 	TreeNode,
 } from '../../persisted-types/index.js';
-import { RevisionView } from '../../RevisionView.js';
-import type { TraitLocation } from '../../TreeView.js';
 
 /** A legacy format of a `TestNode` */
 export type TestNode_0_0_2 = TreeNode<TestNode_0_0_2, StableNodeId>;

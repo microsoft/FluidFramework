@@ -14,9 +14,9 @@ import type {
 	MarkEffect,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/types.js";
-import { brand, type Populated } from "../../../util/index.js";
-import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
+import { type Populated, brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
 
 export type PopulatedMark = Populated<CellMark<Populated<MarkEffect>>>;
 
@@ -26,15 +26,10 @@ export type PopulatedMark = Populated<CellMark<Populated<MarkEffect>>>;
  * @remarks New objects are generated every time this function is called. This is to ensure that stable IDs are
  * generated when appropriate.
  */
-export function generatePopulatedMarks(
-	idCompressor: IIdCompressor,
-): PopulatedMark[] {
+export function generatePopulatedMarks(idCompressor: IIdCompressor): PopulatedMark[] {
 	const tag = idCompressor.generateCompressedId();
 	const atomId: Populated<ChangeAtomId> = { localId: brand(0), revision: tag };
-	const changes = TestNodeId.create(
-		{ localId: brand(2) },
-		TestChange.mint([], 1),
-	);
+	const changes = TestNodeId.create({ localId: brand(2) }, TestChange.mint([], 1));
 	const attach: Populated<Attach> = {
 		type: "MoveIn",
 		id: brand(0),
@@ -49,14 +44,7 @@ export function generatePopulatedMarks(
 	};
 	const populatedMarks: PopulatedMark[] = [
 		{ count: 1, cellId: atomId, changes },
-		{
-			type: "Insert",
-			count: 1,
-			cellId: atomId,
-			changes,
-			id: brand(0),
-			revision: tag,
-		},
+		{ type: "Insert", count: 1, cellId: atomId, changes, id: brand(0), revision: tag },
 		{
 			type: "MoveIn",
 			count: 1,

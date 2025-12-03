@@ -3,29 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	IContainer,
+import {
 	IDeltaQueue,
-	IHostLoader,
+	IContainer,
+	type IHostLoader,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import type {
+import {
 	IContainerCreateProps,
 	IContainerLoadProps,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/container-loader/internal/test/container";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	type IDocumentMessage,
-	type ISequencedDocumentMessage,
+	IDocumentMessage,
 	MessageType,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { canBeCoalescedByService } from "@fluidframework/driver-utils/internal";
 
-import {
-	toIDeltaManagerFull,
-	waitForContainerConnection,
-} from "./containerUtils.js";
+import { toIDeltaManagerFull, waitForContainerConnection } from "./containerUtils.js";
 import { debug } from "./debug.js";
 import { isNonEmptyArray, type NonEmptyArray } from "./nonEmptyArrayType.js";
 import type { IOpProcessingController } from "./testObjectProvider.js";
@@ -177,8 +174,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 				// update the record and skip ahead as well
 				const oldStartTrailingNoOps = record.startTrailingNoOps;
 				record.startTrailingNoOps = message.clientSequenceNumber + 1;
-				record.trailingNoOps -=
-					record.startTrailingNoOps - oldStartTrailingNoOps;
+				record.trailingNoOps -= record.startTrailingNoOps - oldStartTrailingNoOps;
 			}
 		});
 
@@ -253,8 +249,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 				// Wait for all the leave messages
 				const pendingClients = this.getPendingClients(containersToApply);
 				if (pendingClients.length === 0) {
-					const needSync =
-						this.needSequenceNumberSynchronize(containersToApply);
+					const needSync = this.needSequenceNumberSynchronize(containersToApply);
 					if (needSync === undefined) {
 						// done, we are in sync
 						break;
@@ -313,12 +308,8 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	private getPendingClients(containersToApply: IContainer[]) {
 		// All the clientId we track should be a superset of the quorum, otherwise, we are missing
 		// leave messages
-		const openedDocuments = Array.from(this.containers.keys()).filter(
-			(c) => !c.closed,
-		);
-		const openedClientId = openedDocuments.map(
-			(container) => container.clientId,
-		);
+		const openedDocuments = Array.from(this.containers.keys()).filter((c) => !c.closed);
+		const openedClientId = openedDocuments.map((container) => container.clientId);
 
 		const pendingClients: [IContainer, Set<string>][] = [];
 		containersToApply.forEach((container) => {
@@ -326,10 +317,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 			const quorum = container.getQuorum();
 			quorum.getMembers().forEach((client, clientId) => {
 				// ignore summarizer
-				if (
-					!client.client.details.capabilities.interactive &&
-					!this.syncSummarizerClients
-				) {
+				if (!client.client.details.capabilities.interactive && !this.syncSummarizerClients) {
 					return;
 				}
 				if (!openedClientId.includes(clientId)) {
@@ -350,9 +338,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 *
 	 * @param containersToApply - the set of containers to check
 	 */
-	private needSequenceNumberSynchronize(
-		containersToApply: NonEmptyArray<IContainer>,
-	) {
+	private needSequenceNumberSynchronize(containersToApply: NonEmptyArray<IContainer>) {
 		// If there is a pending proposal, wait for it to be accepted
 		const minSeqNum = containersToApply[0].deltaManager.minimumSequenceNumber;
 		if (minSeqNum < this.lastProposalSeqNum) {
@@ -383,10 +369,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 				deltaManager = deltaManager.connectionManager;
 			}
 			assert("clientSequenceNumber" in deltaManager, "no clientSequenceNumber");
-			assert(
-				"clientSequenceNumberObserved" in deltaManager,
-				"no clientSequenceNumber",
-			);
+			assert("clientSequenceNumberObserved" in deltaManager, "no clientSequenceNumber");
 			// If last submittedClientId isn't the current clientId, then we haven't send any ops
 			return (
 				deltaManager.lastSubmittedClientId === container.clientId &&
@@ -437,9 +420,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 *
 	 * @param containersToApply - the set of containers to wait for any inbound ops for
 	 */
-	private async waitForPendingClients(
-		pendingClients: [IContainer, Set<string>][],
-	) {
+	private async waitForPendingClients(pendingClients: [IContainer, Set<string>][]) {
 		const unconnectedClients = Array.from(this.containers.keys()).filter(
 			(c) => !c.closed && c.connectionState !== ConnectionState.Connected,
 		);
@@ -551,14 +532,8 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	private async pauseContainer(container: IContainer, record: ContainerRecord) {
 		debugWait(`${record.index}: pausing container`);
 		const deltaManagerFull = toIDeltaManagerFull(container.deltaManager);
-		assert(
-			!deltaManagerFull.outbound.paused,
-			"Container should not be paused yet",
-		);
-		assert(
-			!deltaManagerFull.inbound.paused,
-			"Container should not be paused yet",
-		);
+		assert(!deltaManagerFull.outbound.paused, "Container should not be paused yet");
+		assert(!deltaManagerFull.inbound.paused, "Container should not be paused yet");
 
 		// Pause outbound
 		debugWait(`${record.index}: pausing container outbound queues`);
@@ -588,9 +563,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 			// Wait for nack
 			debugWait(`${record.index}: Wait for container disconnect`);
 			deltaManagerFull.outbound.resume();
-			await new Promise<void>((resolve) =>
-				container.once("disconnected", resolve),
-			);
+			await new Promise<void>((resolve) => container.once("disconnected", resolve));
 			const accepted = proposalP ? await proposalP : false;
 			assert(!accepted, "A proposal in read mode should be rejected");
 			await deltaManagerFull.outbound.pause();
@@ -699,10 +672,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 * @param container - the container to setup
 	 * @param inflightTracker - a map to track the clientSequenceNumber per container it expect to get ops back
 	 */
-	private setupInOutTracker(
-		container: IContainer,
-		inflightTracker: Map<IContainer, number>,
-	) {
+	private setupInOutTracker(container: IContainer, inflightTracker: Map<IContainer, number>) {
 		const outHandler = (messages: IDocumentMessage[]) => {
 			for (const message of messages) {
 				if (!canBeCoalescedByService(message)) {
@@ -748,9 +718,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 					// contents comes in the wire as JSON string ("push" event)
 					// But already parsed when apply ("op" event)
 					let contents =
-						typeof msgContents === "string"
-							? JSON.parse(msgContents)
-							: msgContents;
+						typeof msgContents === "string" ? JSON.parse(msgContents) : msgContents;
 					while (contents !== undefined && contents !== null) {
 						if (contents.contents?.address !== undefined) {
 							address += `/${contents.contents.address}`;

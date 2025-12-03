@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import type { IRandom } from "@fluid-private/stochastic-test-utils";
+import { strict as assert } from "assert";
+
+import { IRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	DetachedReferencePosition,
 	type SequencePlace,
 	Side,
 } from "@fluidframework/merge-tree/internal";
 import type { TestClient } from "@fluidframework/merge-tree/internal/test";
-import { strict as assert } from "assert";
 
 import {
 	createSequenceInterval,
@@ -37,11 +38,7 @@ export function assertOrderedSequenceIntervals(
 	results: SequenceInterval[],
 	expectedEndpoints: { start: number; end: number }[] | SequenceInterval[],
 ): void {
-	assert.equal(
-		results.length,
-		expectedEndpoints.length,
-		"Mismatched result count",
-	);
+	assert.equal(results.length, expectedEndpoints.length, "Mismatched result count");
 	for (let i = 0; i < results.length; ++i) {
 		assert(results[i]);
 		const { start, end } = expectedEndpoints[i];
@@ -69,11 +66,7 @@ let currentId = 0;
  * @param end - The end value of the interval.
  * @returns The created Interval object.
  */
-export function createTestSequenceInterval(
-	client: TestClient,
-	p1: number,
-	p2: number,
-) {
+export function createTestSequenceInterval(client: TestClient, p1: number, p2: number) {
 	const id = `${currentId++}`;
 	const interval = createSequenceInterval(
 		"test",
@@ -91,18 +84,12 @@ export function createTestSequenceInterval(
  * @param options - The options for generating random intervals.
  * @returns An array of generated Interval objects.
  */
-export function generateRandomIntervals(
-	client: TestClient,
-	options: RandomIntervalOptions,
-) {
+export function generateRandomIntervals(client: TestClient, options: RandomIntervalOptions) {
 	const intervals: SequenceInterval[] = [];
 	const { random, count, min, max } = options;
 
 	for (let i = 0; i < count; ++i) {
-		const start = random.integer(
-			Math.max(min, 0),
-			Math.min(max, client.getLength() - 1),
-		);
+		const start = random.integer(Math.max(min, 0), Math.min(max, client.getLength() - 1));
 		const end = random.integer(start, Math.min(max, client.getLength() - 1));
 		const interval = createTestSequenceInterval(client, start, end);
 		intervals.push(interval);
@@ -201,9 +188,7 @@ export function assertInterval(
 	intervalId: string,
 	expected: [SequencePlace, SequencePlace],
 ): void {
-	const actual = sharedString
-		.getIntervalCollection("test")
-		.getIntervalById(intervalId);
+	const actual = sharedString.getIntervalCollection("test").getIntervalById(intervalId);
 	assert(actual);
 	let expectedStickiness: IntervalStickiness;
 	if (
@@ -225,16 +210,12 @@ export function assertInterval(
 		typeof expectedStart === "object" ? expectedStart.side : Side.Before,
 		"unexpected start side",
 	);
-	const actualStart = sharedString.localReferencePositionToPosition(
-		actual.start,
-	);
+	const actualStart = sharedString.localReferencePositionToPosition(actual.start);
 	assert.equal(
 		actualStart,
 		expectedPositionFromSequencePlace(
 			expectedStart,
-			actual.start.canSlideToEndpoint
-				? sharedString.getLength()
-				: DetachedReferencePosition,
+			actual.start.canSlideToEndpoint ? sharedString.getLength() : DetachedReferencePosition,
 		),
 		`unexpected start position(${sharedString.getLength()})`,
 	);

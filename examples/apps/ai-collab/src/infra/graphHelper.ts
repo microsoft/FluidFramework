@@ -12,9 +12,9 @@
 "use client";
 
 import {
-	type AccountInfo,
-	InteractionType,
 	type PublicClientApplication,
+	InteractionType,
+	type AccountInfo,
 } from "@azure/msal-browser";
 import { Client } from "@microsoft/microsoft-graph-client";
 import {
@@ -38,10 +38,7 @@ export class GraphHelper {
 	private readonly intializedPublicClientApplication: PublicClientApplication;
 	private readonly accountInfo: AccountInfo;
 	private readonly graphClient: Client;
-	constructor(
-		publicClientApplication: PublicClientApplication,
-		accountInfo: AccountInfo,
-	) {
+	constructor(publicClientApplication: PublicClientApplication, accountInfo: AccountInfo) {
 		this.intializedPublicClientApplication = publicClientApplication;
 		this.accountInfo = accountInfo;
 
@@ -131,9 +128,7 @@ export class GraphHelper {
 	}
 
 	// Function to get the shared item using the sharing link
-	public async getSharedItem(
-		shareId: string,
-	): Promise<{ itemId: string; driveId: string }> {
+	public async getSharedItem(shareId: string): Promise<{ itemId: string; driveId: string }> {
 		const response = (await this.graphClient
 			.api(`/shares/${shareId}/driveItem`)
 			.header("Prefer", "redeemSharingLink")

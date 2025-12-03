@@ -6,7 +6,7 @@
 /* eslint-disable no-bitwise */
 
 import * as distribution from "./distributions/index.js";
-import type { IRandom } from "./types.js";
+import { IRandom } from "./types.js";
 import { XSadd } from "./xsadd.js";
 
 // The base58 alphabet contains upper and lower case Latin letters and Arabic numerals,
@@ -17,12 +17,7 @@ const base58 = "123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
 // Constructs a compliant UUID version 4 from four 32b integers.  UUID version 4 contains
 // 6 predetermined bits (bits 48..51 for the version and bits 64..65 for the variant).
 // Consequently, only 122 of the provided 128 bits are used.
-export function makeUuid4(
-	u32_0: number,
-	u32_1: number,
-	u32_2: number,
-	u32_3: number,
-) {
+export function makeUuid4(u32_0: number, u32_1: number, u32_2: number, u32_3: number) {
 	const hex = (value: number, digits: number) =>
 		(value >>> 0).toString(16).padStart(digits, "0");
 
@@ -95,12 +90,6 @@ export function makeRandom(
 
 			return result;
 		},
-		uuid4: () =>
-			makeUuid4(
-				engine.uint32(),
-				engine.uint32(),
-				engine.uint32(),
-				engine.uint32(),
-			),
+		uuid4: () => makeUuid4(engine.uint32(), engine.uint32(), engine.uint32(), engine.uint32()),
 	};
 }

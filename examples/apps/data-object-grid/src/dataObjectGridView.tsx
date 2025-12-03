@@ -4,12 +4,12 @@
  */
 
 import React from "react";
-import RGL, { type Layout, WidthProvider } from "react-grid-layout";
+import RGL, { WidthProvider, type Layout } from "react-grid-layout";
 
 import type { IDataObjectGrid, IDataObjectGridItem } from "./dataObjectGrid.js";
 import {
-	dataObjectRegistry,
 	type IDataObjectGridItemEntry,
+	dataObjectRegistry,
 	type ISingleHandleItem,
 } from "./dataObjectRegistry.js";
 import { DataObjectGridToolbar } from "./toolbar.js";
@@ -55,9 +55,7 @@ const ItemView: React.FC<IItemViewProps> = (
 	props: React.PropsWithChildren<IItemViewProps>,
 ) => {
 	const { url, getItemView, removeItem } = props;
-	const [itemView, setItemView] = React.useState<JSX.Element | undefined>(
-		undefined,
-	);
+	const [itemView, setItemView] = React.useState<JSX.Element | undefined>(undefined);
 
 	React.useEffect(() => {
 		getItemView()
@@ -86,14 +84,12 @@ const DataObjectGridView: React.FC<IDataObjectGridViewProps> = (
 ) => {
 	const { getUrlForItem, model, registry, editable } = props;
 	// Again stronger typing would be good
-	const [itemList, setItemList] = React.useState<
-		IDataObjectGridItem<ISingleHandleItem>[]
-	>(model.getItems());
+	const [itemList, setItemList] = React.useState<IDataObjectGridItem<ISingleHandleItem>[]>(
+		model.getItems(),
+	);
 
 	React.useEffect(() => {
-		const onItemListChanged = (
-			newList: IDataObjectGridItem<ISingleHandleItem>[],
-		): void => {
+		const onItemListChanged = (newList: IDataObjectGridItem<ISingleHandleItem>[]): void => {
 			setItemList(newList);
 		};
 		model.on("itemListChanged", onItemListChanged);
@@ -194,9 +190,7 @@ export const DataObjectGridAppView: React.FC<IDataObjectGridAppViewProps> = (
 	props: IDataObjectGridAppViewProps,
 ) => {
 	const { model, getDirectUrl } = props;
-	const [editable, setEditable] = React.useState<boolean>(
-		model.getItems().length === 0,
-	);
+	const [editable, setEditable] = React.useState<boolean>(model.getItems().length === 0);
 	return (
 		<div className="data-grid-view">
 			<DataObjectGridToolbar

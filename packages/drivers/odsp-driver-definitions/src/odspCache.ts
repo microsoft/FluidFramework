@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Describes what kind of content is stored in cache entry.
@@ -20,10 +20,7 @@ export const snapshotWithLoadingGroupIdKey = "snapshotWithLoadingGroupId";
 /**
  * @legacy @beta
  */
-export type CacheContentType =
-	| "snapshot"
-	| "ops"
-	| "snapshotWithLoadingGroupId";
+export type CacheContentType = "snapshot" | "ops" | "snapshotWithLoadingGroupId";
 
 /*
  * File / container identifier.

@@ -6,13 +6,14 @@
 import { type Static, Type } from "@sinclair/typebox";
 
 import { unionOptions } from "../../../codec/index.js";
-import { type Brand, brand } from "../../../util/index.js";
+
 import {
 	Count,
 	EncodedFieldBatchGeneric,
 	IdentifierOrIndex,
 	ShapeIndex,
 } from "./formatGeneric.js";
+import { brand, type Brand } from "../../../util/index.js";
 
 /**
  * The format version for the field batch.
@@ -28,9 +29,7 @@ export type FieldBatchFormatVersion = Brand<
 
 // Compatible versions used for format/version validation.
 // TODO: A proper version update policy will need to be documented.
-export const validVersions = new Set([
-	...Object.values(FieldBatchFormatVersion),
-]);
+export const validVersions = new Set([...Object.values(FieldBatchFormatVersion)]);
 
 /**
  * Top level length is implied from length of data array.
@@ -217,9 +216,7 @@ export type EncodedNestedArrayShape = Static<typeof EncodedNestedArrayShape>;
 export type EncodedInlineArrayShape = Static<typeof EncodedInlineArrayShape>;
 export type EncodedNodeShape = Static<typeof EncodedNodeShape>;
 export type EncodedAnyShape = Static<typeof EncodedAnyShape>;
-export type EncodedIncrementalChunkShape = Static<
-	typeof EncodedIncrementalChunkShape
->;
+export type EncodedIncrementalChunkShape = Static<typeof EncodedIncrementalChunkShape>;
 
 export const EncodedFieldBatchV1 = EncodedFieldBatchGeneric(
 	brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v1),
@@ -233,8 +230,5 @@ export const EncodedFieldBatchV2 = EncodedFieldBatchGeneric(
 );
 export type EncodedFieldBatchV2 = Static<typeof EncodedFieldBatchV2>;
 
-export const EncodedFieldBatch = Type.Union([
-	EncodedFieldBatchV1,
-	EncodedFieldBatchV2,
-]);
+export const EncodedFieldBatch = Type.Union([EncodedFieldBatchV1, EncodedFieldBatchV2]);
 export type EncodedFieldBatch = Static<typeof EncodedFieldBatch>;

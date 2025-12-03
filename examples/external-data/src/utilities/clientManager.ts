@@ -36,10 +36,7 @@ function clientRecordToString(record: ClientSessionRecord): string {
 
 function clientStringToRecord(client: string): ClientSessionRecord {
 	const [tenantId, documentId] = client.split("_");
-	const record: ClientSessionRecord = {
-		TenantId: tenantId,
-		DocumentId: documentId,
-	};
+	const record: ClientSessionRecord = { TenantId: tenantId, DocumentId: documentId };
 	return record;
 }
 /**
@@ -54,35 +51,21 @@ export class ClientManager<TData = unknown> {
 	 * Map of active external resource id to client sessions.
 	 * Values are the set of Fluid Container URLs that will be notified of changes.
 	 */
-	private readonly _taskListMapping: Map<
-		ExternalTaskListId,
-		Set<ClientSessionString>
-	>;
+	private readonly _taskListMapping: Map<ExternalTaskListId, Set<ClientSessionString>>;
 	/**
 	 * Map of active clients to external resource id.
 	 * Values are the set of external resource id's that the client has active and is registered to listen for.
 	 */
-	private readonly _clientMapping: Map<
-		ClientSessionString,
-		Set<ExternalTaskListId>
-	>;
+	private readonly _clientMapping: Map<ClientSessionString, Set<ExternalTaskListId>>;
 
 	public constructor() {
-		this._clientMapping = new Map<
-			ClientSessionString,
-			Set<ExternalTaskListId>
-		>();
-		this._taskListMapping = new Map<
-			ExternalTaskListId,
-			Set<ClientSessionString>
-		>();
+		this._clientMapping = new Map<ClientSessionString, Set<ExternalTaskListId>>();
+		this._taskListMapping = new Map<ExternalTaskListId, Set<ClientSessionString>>();
 	}
 	/**
 	 * Gets the current list of client session URLs for the specified task list id.
 	 */
-	public getClientSessions(
-		externalTaskListId: ExternalTaskListId,
-	): Set<ClientSessionRecord> {
+	public getClientSessions(externalTaskListId: ExternalTaskListId): Set<ClientSessionRecord> {
 		const activeClients = this._taskListMapping.get(externalTaskListId);
 		const activeClientSessionRecords = new Set<ClientSessionRecord>();
 		if (activeClients) {
@@ -112,19 +95,13 @@ export class ClientManager<TData = unknown> {
 	): void {
 		const client = clientRecordToString(clientRecord);
 		if (this._clientMapping.get(client) === undefined) {
-			this._clientMapping.set(
-				client,
-				new Set<ExternalTaskListId>([externalTaskListId]),
-			);
+			this._clientMapping.set(client, new Set<ExternalTaskListId>([externalTaskListId]));
 		} else {
 			this._clientMapping.get(client)?.add(externalTaskListId);
 		}
 
 		if (this._taskListMapping.get(externalTaskListId) === undefined) {
-			this._taskListMapping.set(
-				externalTaskListId,
-				new Set<ClientSessionString>([client]),
-			);
+			this._taskListMapping.set(externalTaskListId, new Set<ClientSessionString>([client]));
 		} else {
 			this._taskListMapping.get(externalTaskListId)?.add(client);
 		}
@@ -143,10 +120,7 @@ export class ClientManager<TData = unknown> {
 		const client = clientRecordToString(clientRecord);
 		const clientTaskListIds = this._clientMapping.get(client);
 		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- Use of optional chaining disrupts needed type narrowing
-		if (
-			clientTaskListIds !== undefined &&
-			clientTaskListIds.has(externalTaskListId)
-		) {
+		if (clientTaskListIds !== undefined && clientTaskListIds.has(externalTaskListId)) {
 			clientTaskListIds.delete(externalTaskListId);
 		}
 		const taskListClients = this._taskListMapping.get(externalTaskListId);
@@ -160,9 +134,7 @@ export class ClientManager<TData = unknown> {
 	 * De-registers the provided subscriber URL from future notifications for all existing tasks it is subscribed to.
 	 * @returns A list of task list ID's that no longer have any client sessions mapped to them.
 	 */
-	public removeAllClientTaskListRegistrations(
-		clientRecord: ClientSessionRecord,
-	): string[] {
+	public removeAllClientTaskListRegistrations(clientRecord: ClientSessionRecord): string[] {
 		const client = clientRecordToString(clientRecord);
 		const clientTaskListIds = this._clientMapping.get(client);
 		const emptyTaskListRegistrationIds: string[] = [];

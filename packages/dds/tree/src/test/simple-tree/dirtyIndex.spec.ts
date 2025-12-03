@@ -5,13 +5,13 @@
 
 import { strict as assert } from "node:assert";
 import {
+	SchemaFactory,
+	TreeViewConfiguration,
+	trackDirtyNodes,
 	type DirtyTreeStatus,
 	type ImplicitFieldSchema,
 	type InsertableField,
-	SchemaFactory,
 	type TreeNode,
-	TreeViewConfiguration,
-	trackDirtyNodes,
 } from "../../simple-tree/index.js";
 import { getView } from "../utils.js";
 
@@ -121,10 +121,7 @@ describe("dirty indexes", () => {
 		{
 			const { root, index } = init(
 				Roots,
-				new Roots({
-					a: [new Parent({ child: new Child({ value: 3 }) })],
-					b: [],
-				}),
+				new Roots({ a: [new Parent({ child: new Child({ value: 3 }) })], b: [] }),
 			);
 			root.a[0].child = new Child({ value: 4 });
 			root.b.moveToEnd(0, root.a);
@@ -133,10 +130,7 @@ describe("dirty indexes", () => {
 		{
 			const { root, index } = init(
 				Roots,
-				new Roots({
-					a: [new Parent({ child: new Child({ value: 3 }) })],
-					b: [],
-				}),
+				new Roots({ a: [new Parent({ child: new Child({ value: 3 }) })], b: [] }),
 			);
 			root.b.moveToEnd(0, root.a);
 			root.b[0].child = new Child({ value: 4 });

@@ -13,10 +13,7 @@ import { baseTaskManagerModel, defaultOptions } from "./fuzzUtils.js";
 
 describe("TaskManager fuzz testing", () => {
 	createDDSFuzzSuite(baseTaskManagerModel, {
-		validationStrategy: {
-			type: "fixedInterval",
-			interval: defaultOptions.validateInterval,
-		},
+		validationStrategy: { type: "fixedInterval", interval: defaultOptions.validateInterval },
 		clientJoinOptions: {
 			maxNumberOfClients: 6,
 			clientAddProbability: 0.05,
@@ -32,10 +29,7 @@ describe("TaskManager fuzz testing", () => {
 
 describe("TaskManager fuzz testing with rebasing", () => {
 	createDDSFuzzSuite(baseTaskManagerModel, {
-		validationStrategy: {
-			type: "fixedInterval",
-			interval: defaultOptions.validateInterval,
-		},
+		validationStrategy: { type: "fixedInterval", interval: defaultOptions.validateInterval },
 		skip: [],
 		rebaseProbability: 0.15,
 		containerRuntimeOptions: {

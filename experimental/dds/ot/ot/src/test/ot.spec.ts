@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import { strict as assert } from "assert";
 
 import { DeltaFactory, SharedDelta } from "./delta.js";
 
@@ -17,10 +18,7 @@ const createLocalOT = (id: string) => {
 	return factory.create(new MockFluidDataStoreRuntime(), id);
 };
 
-function createConnectedOT(
-	id: string,
-	runtimeFactory: MockContainerRuntimeFactory,
-) {
+function createConnectedOT(id: string, runtimeFactory: MockContainerRuntimeFactory) {
 	// Create and connect a second SharedCell.
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);

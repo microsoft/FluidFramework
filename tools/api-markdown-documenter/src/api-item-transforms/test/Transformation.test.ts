@@ -20,6 +20,8 @@ import { expect } from "chai";
 
 import type { ApiDocument } from "../../ApiDocument.js";
 import type { NormalizedTree } from "../../mdast/index.js";
+import { apiItemToDocument } from "../TransformApiItem.js";
+import { transformApiModel } from "../TransformApiModel.js";
 import {
 	type ApiItemTransformationConfiguration,
 	type ApiItemTransformationOptions,
@@ -27,8 +29,6 @@ import {
 	HierarchyKind,
 } from "../configuration/index.js";
 import { betaWarningSpan } from "../helpers/index.js";
-import { apiItemToDocument } from "../TransformApiItem.js";
-import { transformApiModel } from "../TransformApiModel.js";
 
 // Relative to lib/api-item-transforms/test
 const dirname = Path.dirname(fileURLToPath(import.meta.url));
@@ -122,10 +122,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 			model,
 		);
 
-		const result: NormalizedTree = apiItemToDocument(
-			apiVariable,
-			config,
-		).contents;
+		const result: NormalizedTree = apiItemToDocument(apiVariable, config).contents;
 
 		const expected: NormalizedTree = {
 			type: "root",
@@ -206,10 +203,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 			model,
 		);
 
-		const result: NormalizedTree = apiItemToDocument(
-			apiFunction,
-			config,
-		).contents;
+		const result: NormalizedTree = apiItemToDocument(apiFunction, config).contents;
 
 		const expected: NormalizedTree = {
 			type: "root",
@@ -245,10 +239,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 							type: "link",
 							url: "/test-package/testfunction-function",
 							children: [
-								{
-									type: "text",
-									value: "testFunction(testParameter, testOptionalParameter)",
-								},
+								{ type: "text", value: "testFunction(testParameter, testOptionalParameter)" },
 							],
 						},
 					],
@@ -319,18 +310,9 @@ describe("ApiItem to Documentation transformation tests", () => {
 						{
 							type: "tableRow",
 							children: [
-								{
-									type: "tableCell",
-									children: [{ type: "text", value: "Parameter" }],
-								},
-								{
-									type: "tableCell",
-									children: [{ type: "text", value: "Modifiers" }],
-								},
-								{
-									type: "tableCell",
-									children: [{ type: "text", value: "Type" }],
-								},
+								{ type: "tableCell", children: [{ type: "text", value: "Parameter" }] },
+								{ type: "tableCell", children: [{ type: "text", value: "Modifiers" }] },
+								{ type: "tableCell", children: [{ type: "text", value: "Type" }] },
 								{
 									type: "tableCell",
 									children: [{ type: "text", value: "Description" }],
@@ -362,10 +344,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 									type: "tableCell",
 									children: [{ type: "text", value: "testOptionalParameter" }],
 								},
-								{
-									type: "tableCell",
-									children: [{ type: "text", value: "optional" }],
-								},
+								{ type: "tableCell", children: [{ type: "text", value: "optional" }] },
 								{
 									type: "tableCell",
 									children: [{ type: "text", value: "TTypeParameter" }],
@@ -391,10 +370,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 				{
 					type: "paragraph",
 					children: [
-						{
-							type: "strong",
-							children: [{ type: "text", value: "Return type" }],
-						},
+						{ type: "strong", children: [{ type: "text", value: "Return type" }] },
 						{ type: "text", value: ": " },
 						{ type: "text", value: "TTypeParameter" },
 					],
@@ -407,9 +383,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 				},
 				{
 					type: "paragraph",
-					children: [
-						{ type: "text", value: "An Error when something bad happens." },
-					],
+					children: [{ type: "text", value: "An Error when something bad happens." }],
 				},
 				// #endregion
 			],
@@ -429,10 +403,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const config = createConfig({}, model);
 
-		const result: NormalizedTree = apiItemToDocument(
-			apiInterface,
-			config,
-		).contents;
+		const result: NormalizedTree = apiItemToDocument(apiInterface, config).contents;
 
 		const expected: NormalizedTree = {
 			type: "root",
@@ -494,12 +465,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 				},
 				{
 					type: "paragraph",
-					children: [
-						{
-							type: "text",
-							value: "Here are some remarks about the interface",
-						},
-					],
+					children: [{ type: "text", value: "Here are some remarks about the interface" }],
 				},
 				// #endregion
 				// #region Properties section
@@ -514,26 +480,14 @@ describe("ApiItem to Documentation transformation tests", () => {
 						{
 							type: "tableRow",
 							children: [
-								{
-									type: "tableCell",
-									children: [{ type: "text", value: "Property" }],
-								},
-								{
-									type: "tableCell",
-									children: [{ type: "text", value: "Modifiers" }],
-								},
+								{ type: "tableCell", children: [{ type: "text", value: "Property" }] },
+								{ type: "tableCell", children: [{ type: "text", value: "Modifiers" }] },
 								{
 									type: "tableCell",
 									children: [{ type: "text", value: "Default Value" }],
 								},
-								{
-									type: "tableCell",
-									children: [{ type: "text", value: "Type" }],
-								},
-								{
-									type: "tableCell",
-									children: [{ type: "text", value: "Description" }],
-								},
+								{ type: "tableCell", children: [{ type: "text", value: "Type" }] },
+								{ type: "tableCell", children: [{ type: "text", value: "Description" }] },
 							],
 						},
 						{
@@ -545,12 +499,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 										{
 											type: "link",
 											url: "/test-package/testinterface-interface#testoptionalinterfaceproperty-propertysignature",
-											children: [
-												{
-													type: "text",
-													value: "testOptionalInterfaceProperty",
-												},
-											],
+											children: [{ type: "text", value: "testOptionalInterfaceProperty" }],
 										},
 									],
 								},
@@ -637,10 +586,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 			model,
 		);
 
-		const result: NormalizedTree = apiItemToDocument(
-			apiNamespace,
-			config,
-		).contents;
+		const result: NormalizedTree = apiItemToDocument(apiNamespace, config).contents;
 
 		// Note: the namespace being processed includes 3 const variables:
 		// - foo (@public)
@@ -715,26 +661,11 @@ describe("ApiItem to Documentation transformation tests", () => {
 						{
 							type: "tableRow",
 							children: [
-								{
-									type: "tableCell",
-									children: [{ type: "text", value: "Variable" }],
-								},
-								{
-									type: "tableCell",
-									children: [{ type: "text", value: "Alerts" }],
-								},
-								{
-									type: "tableCell",
-									children: [{ type: "text", value: "Modifiers" }],
-								},
-								{
-									type: "tableCell",
-									children: [{ type: "text", value: "Type" }],
-								},
-								{
-									type: "tableCell",
-									children: [{ type: "text", value: "Description" }],
-								},
+								{ type: "tableCell", children: [{ type: "text", value: "Variable" }] },
+								{ type: "tableCell", children: [{ type: "text", value: "Alerts" }] },
+								{ type: "tableCell", children: [{ type: "text", value: "Modifiers" }] },
+								{ type: "tableCell", children: [{ type: "text", value: "Type" }] },
+								{ type: "tableCell", children: [{ type: "text", value: "Description" }] },
 							],
 						},
 						// Table row for `bar`
@@ -951,11 +882,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 			contents: {
 				type: "root",
 				children: [
-					{
-						type: "heading",
-						depth: 1,
-						children: [{ type: "text", value: "entry-point-a" }],
-					},
+					{ type: "heading", depth: 1, children: [{ type: "text", value: "entry-point-a" }] },
 					// Breadcrumb
 					{
 						type: "paragraph",
@@ -987,11 +914,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 					},
 
 					// Variables table
-					{
-						type: "heading",
-						depth: 2,
-						children: [{ type: "text", value: "Variables" }],
-					},
+					{ type: "heading", depth: 2, children: [{ type: "text", value: "Variables" }] },
 					{
 						type: "table",
 
@@ -1007,10 +930,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 										type: "tableCell",
 										children: [{ type: "text", value: "Modifiers" }],
 									},
-									{
-										type: "tableCell",
-										children: [{ type: "text", value: "Type" }],
-									},
+									{ type: "tableCell", children: [{ type: "text", value: "Type" }] },
 									{
 										type: "tableCell",
 										children: [{ type: "text", value: "Description" }],
@@ -1088,11 +1008,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 			contents: {
 				type: "root",
 				children: [
-					{
-						type: "heading",
-						depth: 1,
-						children: [{ type: "text", value: "entry-point-b" }],
-					},
+					{ type: "heading", depth: 1, children: [{ type: "text", value: "entry-point-b" }] },
 					// Breadcrumb
 					{
 						type: "paragraph",
@@ -1124,11 +1040,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 					},
 
 					// #region Variables table
-					{
-						type: "heading",
-						depth: 2,
-						children: [{ type: "text", value: "Variables" }],
-					},
+					{ type: "heading", depth: 2, children: [{ type: "text", value: "Variables" }] },
 					{
 						type: "table",
 						children: [
@@ -1139,10 +1051,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 										type: "tableCell",
 										children: [{ type: "text", value: "Variable" }],
 									},
-									{
-										type: "tableCell",
-										children: [{ type: "text", value: "Type" }],
-									},
+									{ type: "tableCell", children: [{ type: "text", value: "Type" }] },
 									{
 										type: "tableCell",
 										children: [{ type: "text", value: "Description" }],

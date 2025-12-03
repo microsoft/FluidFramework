@@ -16,12 +16,13 @@ import {
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import React from "react";
+
+import { MessageRelayContext } from "../MessageRelayContext.js";
 import {
 	FluidTreeView,
 	UnknownDataView,
 	UnknownFluidObjectView,
 } from "../components/index.js";
-import { MessageRelayContext } from "../MessageRelayContext.js";
 
 import { MockMessageRelay } from "./utils/index.js";
 
@@ -53,30 +54,28 @@ describe("VisualTreeView component tests", () => {
 	});
 
 	it("FluidObjectTreeView", async (): Promise<void> => {
-		const messageRelay = new MockMessageRelay(
-			(untypedMessage: IDevtoolsMessage) => {
-				switch (untypedMessage.type) {
-					case GetDataVisualization.MessageType: {
-						const message = untypedMessage as GetDataVisualization.Message;
-						const visualization: FluidObjectValueNode = {
-							fluidObjectId: message.data.fluidObjectId,
-							value: `test-value: ${message.data.fluidObjectId}`,
-							nodeKind: VisualNodeKind.FluidValueNode,
-						};
-						return {
-							type: DataVisualization.MessageType,
-							data: {
-								containerKey: testContainerKey,
-								visualization,
-							},
-						};
-					}
-					default: {
-						throw new Error("Received unexpected message.");
-					}
+		const messageRelay = new MockMessageRelay((untypedMessage: IDevtoolsMessage) => {
+			switch (untypedMessage.type) {
+				case GetDataVisualization.MessageType: {
+					const message = untypedMessage as GetDataVisualization.Message;
+					const visualization: FluidObjectValueNode = {
+						fluidObjectId: message.data.fluidObjectId,
+						value: `test-value: ${message.data.fluidObjectId}`,
+						nodeKind: VisualNodeKind.FluidValueNode,
+					};
+					return {
+						type: DataVisualization.MessageType,
+						data: {
+							containerKey: testContainerKey,
+							visualization,
+						},
+					};
 				}
-			},
-		);
+				default: {
+					throw new Error("Received unexpected message.");
+				}
+			}
+		});
 
 		const treeData: FluidObjectTreeNode = {
 			fluidObjectId: testFluidObjectId,
@@ -92,12 +91,7 @@ describe("VisualTreeView component tests", () => {
 
 		render(
 			<MessageRelayContext.Provider value={messageRelay}>
-				<FluidTreeView
-					containerKey={testContainerKey}
-					label={testLabel}
-					node={treeData}
-				/>
-				,
+				<FluidTreeView containerKey={testContainerKey} label={testLabel} node={treeData} />,
 			</MessageRelayContext.Provider>,
 		);
 

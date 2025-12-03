@@ -42,7 +42,5 @@ createDDSFuzzSuite(model, {
 	detachedStartOptions: { numOpsBeforeAttach: 0 },
 	replay: 2,
 	// Note: this should point the replay to the source-controlled 2.json file in this directory.
-	saveFailures: {
-		directory: path.join(_dirname, "../../../src/test/ddsSuiteCases"),
-	},
+	saveFailures: { directory: path.join(_dirname, "../../../src/test/ddsSuiteCases") },
 });

@@ -48,9 +48,7 @@ export class BlobCollectionContainerRuntimeFactory implements IRuntimeFactory {
 		});
 
 		if (!existing) {
-			const blobCollection = await runtime.createDataStore(
-				blobCollectionRegistryKey,
-			);
+			const blobCollection = await runtime.createDataStore(blobCollectionRegistryKey);
 			await blobCollection.trySetAlias(blobCollectionId);
 		}
 

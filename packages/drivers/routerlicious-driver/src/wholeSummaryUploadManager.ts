@@ -4,13 +4,13 @@
  */
 
 import {
+	ISummaryTree,
+	IWholeSummaryPayload,
+	IWholeSummaryPayloadType,
 	convertSummaryTreeToWholeSummaryTree,
-	type ISummaryTree,
-	type IWholeSummaryPayload,
-	type IWholeSummaryPayloadType,
 } from "@fluidframework/server-services-client";
 
-import type { IGitManager, ISummaryUploadManager } from "./storageContracts.js";
+import { IGitManager, ISummaryUploadManager } from "./storageContracts.js";
 
 /**
  * Converts summary to snapshot tree and uploads with single snaphot tree payload.

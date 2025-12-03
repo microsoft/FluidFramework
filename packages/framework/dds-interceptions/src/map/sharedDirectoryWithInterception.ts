@@ -66,9 +66,7 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
 		return directory;
 	};
 
-	subDirectoryWithInterception.createSubDirectory = (
-		subdirName: string,
-	): IDirectory => {
+	subDirectoryWithInterception.createSubDirectory = (subdirName: string): IDirectory => {
 		const subSubDirectory = subDirectory.createSubDirectory(subdirName);
 		return createSubDirectoryWithInterception(
 			baseDirectory,
@@ -92,9 +90,7 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
 				);
 	};
 
-	subDirectoryWithInterception.subdirectories = (): IterableIterator<
-		[string, IDirectory]
-	> => {
+	subDirectoryWithInterception.subdirectories = (): IterableIterator<[string, IDirectory]> => {
 		const localDirectoriesIterator = subDirectory.subdirectories();
 		const iterator = {
 			next(): IteratorResult<[string, IDirectory]> {

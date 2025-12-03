@@ -11,23 +11,12 @@
  * Current version: 2.74.0
  */
 
-import type {
-	FullType,
-	MinimalType,
-	requireAssignableTo,
-	TypeOnly,
-} from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/map-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> =
-	| TypeOnly<T>
-	| MinimalType<T>
-	| FullType<T>
-	| typeof old
-	| typeof current
-	| requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -36,10 +25,7 @@ declare type MakeUnusedImportErrorsGoAway<T> =
  * typeValidation.broken:
  * "Class_DirectoryFactory": {"backCompat": false}
  */
-declare type current_as_old_for_Class_DirectoryFactory = requireAssignableTo<
-	TypeOnly<current.DirectoryFactory>,
-	TypeOnly<old.DirectoryFactory>
->;
+declare type current_as_old_for_Class_DirectoryFactory = requireAssignableTo<TypeOnly<current.DirectoryFactory>, TypeOnly<old.DirectoryFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -48,10 +34,7 @@ declare type current_as_old_for_Class_DirectoryFactory = requireAssignableTo<
  * typeValidation.broken:
  * "Class_MapFactory": {"backCompat": false}
  */
-declare type current_as_old_for_Class_MapFactory = requireAssignableTo<
-	TypeOnly<current.MapFactory>,
-	TypeOnly<old.MapFactory>
->;
+declare type current_as_old_for_Class_MapFactory = requireAssignableTo<TypeOnly<current.MapFactory>, TypeOnly<old.MapFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -60,11 +43,7 @@ declare type current_as_old_for_Class_MapFactory = requireAssignableTo<
  * typeValidation.broken:
  * "ClassStatics_DirectoryFactory": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_DirectoryFactory =
-	requireAssignableTo<
-		TypeOnly<typeof current.DirectoryFactory>,
-		TypeOnly<typeof old.DirectoryFactory>
-	>;
+declare type current_as_old_for_ClassStatics_DirectoryFactory = requireAssignableTo<TypeOnly<typeof current.DirectoryFactory>, TypeOnly<typeof old.DirectoryFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -73,10 +52,7 @@ declare type current_as_old_for_ClassStatics_DirectoryFactory =
  * typeValidation.broken:
  * "ClassStatics_MapFactory": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_MapFactory = requireAssignableTo<
-	TypeOnly<typeof current.MapFactory>,
-	TypeOnly<typeof old.MapFactory>
->;
+declare type current_as_old_for_ClassStatics_MapFactory = requireAssignableTo<TypeOnly<typeof current.MapFactory>, TypeOnly<typeof old.MapFactory>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -85,10 +61,7 @@ declare type current_as_old_for_ClassStatics_MapFactory = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ICreateInfo": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ICreateInfo = requireAssignableTo<
-	TypeOnly<old.ICreateInfo>,
-	TypeOnly<current.ICreateInfo>
->;
+declare type old_as_current_for_Interface_ICreateInfo = requireAssignableTo<TypeOnly<old.ICreateInfo>, TypeOnly<current.ICreateInfo>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -97,10 +70,7 @@ declare type old_as_current_for_Interface_ICreateInfo = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ICreateInfo": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ICreateInfo = requireAssignableTo<
-	TypeOnly<current.ICreateInfo>,
-	TypeOnly<old.ICreateInfo>
->;
+declare type current_as_old_for_Interface_ICreateInfo = requireAssignableTo<TypeOnly<current.ICreateInfo>, TypeOnly<old.ICreateInfo>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -109,10 +79,7 @@ declare type current_as_old_for_Interface_ICreateInfo = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IDirectory": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IDirectory = requireAssignableTo<
-	TypeOnly<current.IDirectory>,
-	TypeOnly<old.IDirectory>
->;
+declare type current_as_old_for_Interface_IDirectory = requireAssignableTo<TypeOnly<current.IDirectory>, TypeOnly<old.IDirectory>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -121,11 +88,7 @@ declare type current_as_old_for_Interface_IDirectory = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IDirectoryDataObject": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IDirectoryDataObject =
-	requireAssignableTo<
-		TypeOnly<old.IDirectoryDataObject>,
-		TypeOnly<current.IDirectoryDataObject>
-	>;
+declare type old_as_current_for_Interface_IDirectoryDataObject = requireAssignableTo<TypeOnly<old.IDirectoryDataObject>, TypeOnly<current.IDirectoryDataObject>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -134,11 +97,7 @@ declare type old_as_current_for_Interface_IDirectoryDataObject =
  * typeValidation.broken:
  * "Interface_IDirectoryDataObject": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IDirectoryDataObject =
-	requireAssignableTo<
-		TypeOnly<current.IDirectoryDataObject>,
-		TypeOnly<old.IDirectoryDataObject>
-	>;
+declare type current_as_old_for_Interface_IDirectoryDataObject = requireAssignableTo<TypeOnly<current.IDirectoryDataObject>, TypeOnly<old.IDirectoryDataObject>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -147,11 +106,7 @@ declare type current_as_old_for_Interface_IDirectoryDataObject =
  * typeValidation.broken:
  * "Interface_IDirectoryEvents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IDirectoryEvents =
-	requireAssignableTo<
-		TypeOnly<current.IDirectoryEvents>,
-		TypeOnly<old.IDirectoryEvents>
-	>;
+declare type current_as_old_for_Interface_IDirectoryEvents = requireAssignableTo<TypeOnly<current.IDirectoryEvents>, TypeOnly<old.IDirectoryEvents>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -160,11 +115,7 @@ declare type current_as_old_for_Interface_IDirectoryEvents =
  * typeValidation.broken:
  * "Interface_IDirectoryNewStorageFormat": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IDirectoryNewStorageFormat =
-	requireAssignableTo<
-		TypeOnly<old.IDirectoryNewStorageFormat>,
-		TypeOnly<current.IDirectoryNewStorageFormat>
-	>;
+declare type old_as_current_for_Interface_IDirectoryNewStorageFormat = requireAssignableTo<TypeOnly<old.IDirectoryNewStorageFormat>, TypeOnly<current.IDirectoryNewStorageFormat>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -173,11 +124,7 @@ declare type old_as_current_for_Interface_IDirectoryNewStorageFormat =
  * typeValidation.broken:
  * "Interface_IDirectoryNewStorageFormat": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IDirectoryNewStorageFormat =
-	requireAssignableTo<
-		TypeOnly<current.IDirectoryNewStorageFormat>,
-		TypeOnly<old.IDirectoryNewStorageFormat>
-	>;
+declare type current_as_old_for_Interface_IDirectoryNewStorageFormat = requireAssignableTo<TypeOnly<current.IDirectoryNewStorageFormat>, TypeOnly<old.IDirectoryNewStorageFormat>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -186,11 +133,7 @@ declare type current_as_old_for_Interface_IDirectoryNewStorageFormat =
  * typeValidation.broken:
  * "Interface_IDirectoryValueChanged": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IDirectoryValueChanged =
-	requireAssignableTo<
-		TypeOnly<current.IDirectoryValueChanged>,
-		TypeOnly<old.IDirectoryValueChanged>
-	>;
+declare type current_as_old_for_Interface_IDirectoryValueChanged = requireAssignableTo<TypeOnly<current.IDirectoryValueChanged>, TypeOnly<old.IDirectoryValueChanged>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -199,11 +142,7 @@ declare type current_as_old_for_Interface_IDirectoryValueChanged =
  * typeValidation.broken:
  * "Interface_ISerializableValue": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISerializableValue =
-	requireAssignableTo<
-		TypeOnly<old.ISerializableValue>,
-		TypeOnly<current.ISerializableValue>
-	>;
+declare type old_as_current_for_Interface_ISerializableValue = requireAssignableTo<TypeOnly<old.ISerializableValue>, TypeOnly<current.ISerializableValue>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -212,11 +151,7 @@ declare type old_as_current_for_Interface_ISerializableValue =
  * typeValidation.broken:
  * "Interface_ISerializableValue": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISerializableValue =
-	requireAssignableTo<
-		TypeOnly<current.ISerializableValue>,
-		TypeOnly<old.ISerializableValue>
-	>;
+declare type current_as_old_for_Interface_ISerializableValue = requireAssignableTo<TypeOnly<current.ISerializableValue>, TypeOnly<old.ISerializableValue>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -225,11 +160,7 @@ declare type current_as_old_for_Interface_ISerializableValue =
  * typeValidation.broken:
  * "Interface_ISharedDirectory": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISharedDirectory =
-	requireAssignableTo<
-		TypeOnly<current.ISharedDirectory>,
-		TypeOnly<old.ISharedDirectory>
-	>;
+declare type current_as_old_for_Interface_ISharedDirectory = requireAssignableTo<TypeOnly<current.ISharedDirectory>, TypeOnly<old.ISharedDirectory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -238,11 +169,7 @@ declare type current_as_old_for_Interface_ISharedDirectory =
  * typeValidation.broken:
  * "Interface_ISharedDirectoryEvents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISharedDirectoryEvents =
-	requireAssignableTo<
-		TypeOnly<current.ISharedDirectoryEvents>,
-		TypeOnly<old.ISharedDirectoryEvents>
-	>;
+declare type current_as_old_for_Interface_ISharedDirectoryEvents = requireAssignableTo<TypeOnly<current.ISharedDirectoryEvents>, TypeOnly<old.ISharedDirectoryEvents>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -251,10 +178,7 @@ declare type current_as_old_for_Interface_ISharedDirectoryEvents =
  * typeValidation.broken:
  * "Interface_ISharedMap": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISharedMap = requireAssignableTo<
-	TypeOnly<current.ISharedMap>,
-	TypeOnly<old.ISharedMap>
->;
+declare type current_as_old_for_Interface_ISharedMap = requireAssignableTo<TypeOnly<current.ISharedMap>, TypeOnly<old.ISharedMap>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -263,11 +187,7 @@ declare type current_as_old_for_Interface_ISharedMap = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ISharedMapEvents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISharedMapEvents =
-	requireAssignableTo<
-		TypeOnly<current.ISharedMapEvents>,
-		TypeOnly<old.ISharedMapEvents>
-	>;
+declare type current_as_old_for_Interface_ISharedMapEvents = requireAssignableTo<TypeOnly<current.ISharedMapEvents>, TypeOnly<old.ISharedMapEvents>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -276,10 +196,7 @@ declare type current_as_old_for_Interface_ISharedMapEvents =
  * typeValidation.broken:
  * "Interface_IValueChanged": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IValueChanged = requireAssignableTo<
-	TypeOnly<current.IValueChanged>,
-	TypeOnly<old.IValueChanged>
->;
+declare type current_as_old_for_Interface_IValueChanged = requireAssignableTo<TypeOnly<current.IValueChanged>, TypeOnly<old.IValueChanged>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -288,10 +205,7 @@ declare type current_as_old_for_Interface_IValueChanged = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_SharedDirectory": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_SharedDirectory = requireAssignableTo<
-	TypeOnly<old.SharedDirectory>,
-	TypeOnly<current.SharedDirectory>
->;
+declare type old_as_current_for_TypeAlias_SharedDirectory = requireAssignableTo<TypeOnly<old.SharedDirectory>, TypeOnly<current.SharedDirectory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -300,10 +214,7 @@ declare type old_as_current_for_TypeAlias_SharedDirectory = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_SharedDirectory": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_SharedDirectory = requireAssignableTo<
-	TypeOnly<current.SharedDirectory>,
-	TypeOnly<old.SharedDirectory>
->;
+declare type current_as_old_for_TypeAlias_SharedDirectory = requireAssignableTo<TypeOnly<current.SharedDirectory>, TypeOnly<old.SharedDirectory>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -312,10 +223,7 @@ declare type current_as_old_for_TypeAlias_SharedDirectory = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_SharedMap": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_SharedMap = requireAssignableTo<
-	TypeOnly<old.SharedMap>,
-	TypeOnly<current.SharedMap>
->;
+declare type old_as_current_for_TypeAlias_SharedMap = requireAssignableTo<TypeOnly<old.SharedMap>, TypeOnly<current.SharedMap>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -324,10 +232,7 @@ declare type old_as_current_for_TypeAlias_SharedMap = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_SharedMap": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_SharedMap = requireAssignableTo<
-	TypeOnly<current.SharedMap>,
-	TypeOnly<old.SharedMap>
->;
+declare type current_as_old_for_TypeAlias_SharedMap = requireAssignableTo<TypeOnly<current.SharedMap>, TypeOnly<old.SharedMap>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -336,10 +241,7 @@ declare type current_as_old_for_TypeAlias_SharedMap = requireAssignableTo<
  * typeValidation.broken:
  * "Variable_SharedDirectory": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_SharedDirectory = requireAssignableTo<
-	TypeOnly<typeof current.SharedDirectory>,
-	TypeOnly<typeof old.SharedDirectory>
->;
+declare type current_as_old_for_Variable_SharedDirectory = requireAssignableTo<TypeOnly<typeof current.SharedDirectory>, TypeOnly<typeof old.SharedDirectory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -348,7 +250,4 @@ declare type current_as_old_for_Variable_SharedDirectory = requireAssignableTo<
  * typeValidation.broken:
  * "Variable_SharedMap": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_SharedMap = requireAssignableTo<
-	TypeOnly<typeof current.SharedMap>,
-	TypeOnly<typeof old.SharedMap>
->;
+declare type current_as_old_for_Variable_SharedMap = requireAssignableTo<TypeOnly<typeof current.SharedMap>, TypeOnly<typeof old.SharedMap>>

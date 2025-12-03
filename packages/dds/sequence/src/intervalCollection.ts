@@ -6,63 +6,60 @@
 /* eslint-disable no-bitwise */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { IEvent } from "@fluidframework/core-interfaces";
+import { IEvent } from "@fluidframework/core-interfaces";
 import {
 	assert,
 	DoublyLinkedList,
-	type ListNode,
 	unreachableCase,
+	type ListNode,
 } from "@fluidframework/core-utils/internal";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	type Client,
-	createLocalReconnectingPerspective,
-	endpointPosAndSide,
-	getSlideToSegoff,
-	type ISegment,
-	type ISegmentInternal,
-	type LocalReferencePosition,
-	type PropertySet,
+	Client,
+	ISegment,
+	LocalReferencePosition,
+	PropertySet,
 	ReferenceType,
+	getSlideToSegoff,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
-	type SequencePlace,
 	Side,
+	SequencePlace,
+	endpointPosAndSide,
+	type ISegmentInternal,
+	createLocalReconnectingPerspective,
 	SlidingPreference,
 } from "@fluidframework/merge-tree/internal";
-import {
-	LoggingError,
-	UsageError,
-} from "@fluidframework/telemetry-utils/internal";
+import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import type {
-	IIntervalCollectionTypeOperationValue,
-	IntervalAddLocalMetadata,
-	IntervalChangeLocalMetadata,
+import {
 	IntervalMessageLocalMetadata,
 	SequenceOptions,
+	type IIntervalCollectionTypeOperationValue,
+	type IntervalAddLocalMetadata,
+	type IntervalChangeLocalMetadata,
 } from "./intervalCollectionMapInterfaces.js";
 import {
 	createIdIntervalIndex,
 	EndpointIndex,
+	OverlappingIntervalsIndex,
 	type IEndpointIndex,
 	type IIdIntervalIndex,
 	type ISequenceOverlappingIntervalsIndex,
-	OverlappingIntervalsIndex,
 	type SequenceIntervalIndex,
 } from "./intervalIndex/index.js";
 import {
-	type CompressedSerializedInterval,
+	CompressedSerializedInterval,
+	ISerializedInterval,
+	IntervalStickiness,
+	IntervalType,
+	SequenceInterval,
+	SequenceIntervalClass,
+	SerializedIntervalDelta,
 	createPositionReferenceFromSegoff,
 	createSequenceInterval,
 	getSerializedProperties,
-	IntervalStickiness,
-	IntervalType,
-	type ISerializedInterval,
-	type SequenceInterval,
-	type SequenceIntervalClass,
-	type SerializedIntervalDelta,
 } from "./intervals/index.js";
 
 export type ISerializedIntervalCollectionV1 = ISerializedInterval[];
@@ -74,10 +71,8 @@ export interface ISerializedIntervalCollectionV2 {
 }
 
 function sidesFromStickiness(stickiness: IntervalStickiness) {
-	const startSide =
-		(stickiness & IntervalStickiness.START) !== 0 ? Side.After : Side.Before;
-	const endSide =
-		(stickiness & IntervalStickiness.END) !== 0 ? Side.Before : Side.After;
+	const startSide = (stickiness & IntervalStickiness.START) !== 0 ? Side.After : Side.Before;
+	const endSide = (stickiness & IntervalStickiness.END) !== 0 ? Side.Before : Side.After;
 
 	return { startSide, endSide };
 }
@@ -108,9 +103,7 @@ function decompressInterval(
  * Compress an interval prior to serialization as JSON. The exact format of this
  * compression is unspecified and subject to change
  */
-function compressInterval(
-	interval: ISerializedInterval,
-): CompressedSerializedInterval {
+function compressInterval(interval: ISerializedInterval): CompressedSerializedInterval {
 	const { start, end, sequenceNumber, intervalType, properties } = interval;
 
 	let base: CompressedSerializedInterval = [
@@ -123,10 +116,7 @@ function compressInterval(
 		{ ...properties, [reservedRangeLabelsKey]: undefined },
 	];
 
-	if (
-		interval.stickiness !== undefined &&
-		interval.stickiness !== IntervalStickiness.END
-	) {
+	if (interval.stickiness !== undefined && interval.stickiness !== IntervalStickiness.END) {
 		// reassignment to make it easier for typescript to reason about types
 		base = [...base, interval.stickiness];
 	}
@@ -280,9 +270,7 @@ export class LocalIntervalCollection {
 		version: "1" | "2",
 	): ISerializedIntervalCollectionV1 | ISerializedIntervalCollectionV2 {
 		if (version === "1") {
-			return Array.from(this.idIntervalIndex, (interval) =>
-				interval.serialize(),
-			);
+			return Array.from(this.idIntervalIndex, (interval) => interval.serialize());
 		}
 		return {
 			label: this.label,
@@ -363,12 +351,7 @@ class IntervalCollectionIterator implements Iterator<SequenceIntervalClass> {
 		this.results = [];
 		this.index = 0;
 
-		collection.gatherIterationResults(
-			this.results,
-			iteratesForward,
-			start,
-			end,
-		);
+		collection.gatherIterationResults(this.results, iteratesForward, start, end);
 	}
 
 	public next(): IteratorResult<SequenceIntervalClass> {
@@ -595,11 +578,7 @@ export interface ISequenceIntervalCollection
 	 */
 	change(
 		id: string,
-		{
-			start,
-			end,
-			props,
-		}: { start?: SequencePlace; end?: SequencePlace; props?: PropertySet },
+		{ start, end, props }: { start?: SequencePlace; end?: SequencePlace; props?: PropertySet },
 	): SequenceInterval | undefined;
 
 	/**
@@ -614,30 +593,22 @@ export interface ISequenceIntervalCollection
 	/**
 	 * @returns a forward iterator over all intervals in this collection with start point equal to `startPosition`.
 	 */
-	CreateForwardIteratorWithStartPosition(
-		startPosition: number,
-	): Iterator<SequenceInterval>;
+	CreateForwardIteratorWithStartPosition(startPosition: number): Iterator<SequenceInterval>;
 
 	/**
 	 * @returns a backward iterator over all intervals in this collection with start point equal to `startPosition`.
 	 */
-	CreateBackwardIteratorWithStartPosition(
-		startPosition: number,
-	): Iterator<SequenceInterval>;
+	CreateBackwardIteratorWithStartPosition(startPosition: number): Iterator<SequenceInterval>;
 
 	/**
 	 * @returns a forward iterator over all intervals in this collection with end point equal to `endPosition`.
 	 */
-	CreateForwardIteratorWithEndPosition(
-		endPosition: number,
-	): Iterator<SequenceInterval>;
+	CreateForwardIteratorWithEndPosition(endPosition: number): Iterator<SequenceInterval>;
 
 	/**
 	 * @returns a backward iterator over all intervals in this collection with end point equal to `endPosition`.
 	 */
-	CreateBackwardIteratorWithEndPosition(
-		endPosition: number,
-	): Iterator<SequenceInterval>;
+	CreateBackwardIteratorWithEndPosition(endPosition: number): Iterator<SequenceInterval>;
 
 	/**
 	 * Gathers iteration results that optionally match a start/end criteria into the provided array.
@@ -666,10 +637,7 @@ export interface ISequenceIntervalCollection
 	 * @returns an array of all intervals in this collection that overlap with the interval
 	 * `[startPosition, endPosition]`.
 	 */
-	findOverlappingIntervals(
-		startPosition: number,
-		endPosition: number,
-	): SequenceInterval[];
+	findOverlappingIntervals(startPosition: number, endPosition: number): SequenceInterval[];
 
 	/**
 	 * Applies a function to each interval in this collection.
@@ -729,9 +697,8 @@ type PendingChanges = Partial<
 function removeMetadataFromPendingChanges(
 	localOpMetadataNode: ListNode<IntervalMessageLocalMetadata> | unknown,
 ): IntervalMessageLocalMetadata {
-	const acked = (
-		localOpMetadataNode as ListNode<IntervalMessageLocalMetadata>
-	)?.remove()?.data;
+	const acked = (localOpMetadataNode as ListNode<IntervalMessageLocalMetadata>)?.remove()
+		?.data;
 	assert(acked !== undefined, 0xbbe /* local change must exist */);
 	acked.endpointChangesNode?.remove();
 	return acked;
@@ -781,13 +748,8 @@ export class IntervalCollection
 	) => void;
 
 	constructor(
-		submitDelta: (
-			op: IIntervalCollectionTypeOperationValue,
-			md: unknown,
-		) => void,
-		serializedIntervals:
-			| ISerializedIntervalCollectionV1
-			| ISerializedIntervalCollectionV2,
+		submitDelta: (op: IIntervalCollectionTypeOperationValue, md: unknown) => void,
+		serializedIntervals: ISerializedIntervalCollectionV1 | ISerializedIntervalCollectionV2,
 		private readonly options: Partial<SequenceOptions> = {},
 	) {
 		super();
@@ -798,12 +760,8 @@ export class IntervalCollection
 				local: new DoublyLinkedList(),
 				consensus,
 			});
-			if (
-				md.type === "add" ||
-				(md.type === "change" && hasEndpointChanges(op.value))
-			) {
-				const endpointChanges = (pending.endpointChanges ??=
-					new DoublyLinkedList());
+			if (md.type === "add" || (md.type === "change" && hasEndpointChanges(op.value))) {
+				const endpointChanges = (pending.endpointChanges ??= new DoublyLinkedList());
 				md.endpointChangesNode = endpointChanges.push(md).last;
 			}
 			submitDelta(op, pending.local.push(md).last);
@@ -850,10 +808,7 @@ export class IntervalCollection
 		return true;
 	}
 
-	public rollback(
-		op: IIntervalCollectionTypeOperationValue,
-		maybeMetadata: unknown,
-	) {
+	public rollback(op: IIntervalCollectionTypeOperationValue, maybeMetadata: unknown) {
 		const localOpMetadata = removeMetadataFromPendingChanges(maybeMetadata);
 		const { value } = op;
 		const { id, properties } = getSerializedProperties(value);
@@ -914,8 +869,7 @@ export class IntervalCollection
 		const { opName, value } = op;
 		const { id } = getSerializedProperties(value);
 		assert(
-			(local === false && localOpMetadata === undefined) ||
-				opName === localOpMetadata?.type,
+			(local === false && localOpMetadata === undefined) || opName === localOpMetadata?.type,
 			0xbc1 /* must be same type */,
 		);
 		let newConsensus = localOpMetadata?.interval;
@@ -1058,28 +1012,18 @@ export class IntervalCollection
 	private computeRebasedPositions(
 		localOpMetadata: IntervalAddLocalMetadata | IntervalChangeLocalMetadata,
 		squash: boolean,
-	):
-		| Record<"start" | "end", { segment: ISegmentInternal; offset: number }>
-		| "detached" {
+	): Record<"start" | "end", { segment: ISegmentInternal; offset: number }> | "detached" {
 		assert(
 			this.client !== undefined,
 			0x550 /* Client should be defined when computing rebased position */,
 		);
 
 		const { localSeq, interval } = localOpMetadata;
-		const start = this.rebaseReferenceWithSegmentSlide(
-			interval.start,
-			localSeq,
-			squash,
-		);
+		const start = this.rebaseReferenceWithSegmentSlide(interval.start, localSeq, squash);
 		if (start === undefined) {
 			return "detached";
 		}
-		const end = this.rebaseReferenceWithSegmentSlide(
-			interval.end,
-			localSeq,
-			squash,
-		);
+		const end = this.rebaseReferenceWithSegmentSlide(interval.end, localSeq, squash);
 		if (end === undefined) {
 			return "detached";
 		}
@@ -1102,11 +1046,7 @@ export class IntervalCollection
 				for (const pending of Object.values(this.pending)) {
 					if (pending?.endpointChanges !== undefined) {
 						for (const local of pending.endpointChanges) {
-							this.rebaseLocalInterval(
-								local.data.interval.serialize(),
-								local.data,
-								squash,
-							);
+							this.rebaseLocalInterval(local.data.interval.serialize(), local.data, squash);
 						}
 					}
 				}
@@ -1117,8 +1057,7 @@ export class IntervalCollection
 			client,
 			label,
 			this.options,
-			(interval, previousInterval) =>
-				this.emitChange(interval, previousInterval, true, true),
+			(interval, previousInterval) => this.emitChange(interval, previousInterval, true, true),
 		);
 		if (this.savedSerializedIntervals) {
 			for (const serializedInterval of this.savedSerializedIntervals) {
@@ -1183,14 +1122,7 @@ export class IntervalCollection
 		previousInterval.start.refType = ReferenceType.Transient;
 		previousInterval.end.refType = ReferenceType.Transient;
 		this.emit("changeInterval", interval, previousInterval, local, op, slide);
-		this.emit(
-			"changed",
-			interval,
-			undefined,
-			previousInterval ?? undefined,
-			local,
-			slide,
-		);
+		this.emit("changed", interval, undefined, previousInterval ?? undefined, local, slide);
 		previousInterval.start.refType = startRefType;
 		previousInterval.end.refType = endRefType;
 	}
@@ -1200,9 +1132,7 @@ export class IntervalCollection
 	 */
 	public getIntervalById(id: string): SequenceIntervalClass | undefined {
 		if (!this.localCollection) {
-			throw new LoggingError(
-				"attach must be called before accessing intervals",
-			);
+			throw new LoggingError("attach must be called before accessing intervals");
 		}
 		return this.localCollection.idIntervalIndex.getIntervalById(id);
 	}
@@ -1236,10 +1166,7 @@ export class IntervalCollection
 			throw new LoggingError("attach must be called prior to adding intervals");
 		}
 
-		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(
-			start,
-			end,
-		);
+		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(start, end);
 
 		assert(
 			startPos !== undefined &&
@@ -1300,9 +1227,7 @@ export class IntervalCollection
 		rollback?: boolean;
 	}) {
 		if (!this.localCollection) {
-			throw new LoggingError(
-				"Attach must be called before accessing intervals",
-			);
+			throw new LoggingError("Attach must be called before accessing intervals");
 		}
 		// The given interval is known to exist in the collection.
 		this.localCollection.removeExistingInterval(interval);
@@ -1337,9 +1262,7 @@ export class IntervalCollection
 	 */
 	public removeIntervalById(id: string): SequenceIntervalClass | undefined {
 		if (!this.localCollection) {
-			throw new LoggingError(
-				"Attach must be called before accessing intervals",
-			);
+			throw new LoggingError("Attach must be called before accessing intervals");
 		}
 		const interval = this.getIntervalById(id);
 		if (interval) {
@@ -1357,17 +1280,10 @@ export class IntervalCollection
 			end,
 			props,
 			rollback,
-		}: {
-			start?: SequencePlace;
-			end?: SequencePlace;
-			props?: PropertySet;
-			rollback?: boolean;
-		},
+		}: { start?: SequencePlace; end?: SequencePlace; props?: PropertySet; rollback?: boolean },
 	): SequenceIntervalClass | undefined {
 		if (!this.localCollection) {
-			throw new LoggingError(
-				"Attach must be called before accessing intervals",
-			);
+			throw new LoggingError("Attach must be called before accessing intervals");
 		}
 
 		// Force id to be a string.
@@ -1467,9 +1383,7 @@ export class IntervalCollection
 		localOpMetadata: IntervalChangeLocalMetadata | undefined,
 	) {
 		if (!this.localCollection) {
-			throw new LoggingError(
-				"Attach must be called before accessing intervals",
-			);
+			throw new LoggingError("Attach must be called before accessing intervals");
 		}
 
 		// Note that the ID is in the property bag only to allow us to find the interval.
@@ -1479,10 +1393,7 @@ export class IntervalCollection
 		assert(id !== undefined, 0x3fe /* id must exist on the interval */);
 
 		if (local) {
-			assert(
-				localOpMetadata !== undefined,
-				0xbd4 /* local must have metadata */,
-			);
+			assert(localOpMetadata !== undefined, 0xbd4 /* local must have metadata */);
 			const { interval } = localOpMetadata;
 			interval.ackPropertiesChange(properties, op);
 
@@ -1522,14 +1433,7 @@ export class IntervalCollection
 
 			if (deltaProps !== undefined && Object.keys(deltaProps).length > 0) {
 				this.emit("propertyChanged", latestInterval, deltaProps, local, op);
-				this.emit(
-					"changed",
-					latestInterval,
-					deltaProps,
-					undefined,
-					local,
-					false,
-				);
+				this.emit("changed", latestInterval, deltaProps, undefined, local, false);
 			}
 			return newInterval;
 		}
@@ -1575,10 +1479,7 @@ export class IntervalCollection
 		const { localSeq, interval } = localOpMetadata;
 		const { id } = getSerializedProperties(original);
 
-		const rebasedEndpoint = this.computeRebasedPositions(
-			localOpMetadata,
-			squash,
-		);
+		const rebasedEndpoint = this.computeRebasedPositions(localOpMetadata, squash);
 		const localInterval = this.getIntervalById(id);
 
 		// if the interval slid off the string, rebase the op to be a noop and delete the interval.
@@ -1615,12 +1516,10 @@ export class IntervalCollection
 			...original,
 			start:
 				start.segment.endpointType ??
-				this.client.findReconnectionPosition(start.segment, localSeq) +
-					start.offset,
+				this.client.findReconnectionPosition(start.segment, localSeq) + start.offset,
 			end:
 				end.segment.endpointType ??
-				this.client.findReconnectionPosition(end.segment, localSeq) +
-					end.offset,
+				this.client.findReconnectionPosition(end.segment, localSeq) + end.offset,
 			sequenceNumber: this.client?.getCurrentSeq() ?? 0,
 		};
 	}
@@ -1650,10 +1549,7 @@ export class IntervalCollection
 		);
 	}
 
-	private ackInterval(
-		interval: SequenceIntervalClass,
-		op: ISequencedDocumentMessage,
-	): void {
+	private ackInterval(interval: SequenceIntervalClass, op: ISequencedDocumentMessage): void {
 		if (
 			!refTypeIncludesFlag(interval.start, ReferenceType.StayOnRemove) &&
 			!refTypeIncludesFlag(interval.end, ReferenceType.StayOnRemove)
@@ -1674,14 +1570,11 @@ export class IntervalCollection
 
 		const needsStartUpdate =
 			newStart?.segment !== interval.start.getSegment() && !hasPendingChange;
-		const needsEndUpdate =
-			newEnd?.segment !== interval.end.getSegment() && !hasPendingChange;
+		const needsEndUpdate = newEnd?.segment !== interval.end.getSegment() && !hasPendingChange;
 
 		if (needsStartUpdate || needsEndUpdate) {
 			if (!this.localCollection) {
-				throw new LoggingError(
-					"Attach must be called before accessing intervals",
-				);
+				throw new LoggingError("Attach must be called before accessing intervals");
 			}
 
 			// `interval`'s endpoints will get modified in-place, so clone it prior to doing so for event emission.
@@ -1712,15 +1605,11 @@ export class IntervalCollection
 				if (props) {
 					interval.start.addProperties(props);
 				}
-				const oldSeg: ISegmentInternal | undefined =
-					oldInterval.start.getSegment();
+				const oldSeg: ISegmentInternal | undefined = oldInterval.start.getSegment();
 				// remove and rebuild start interval as transient for event
 				this.client.removeLocalReferencePosition(oldInterval.start);
 				oldInterval.start.refType = ReferenceType.Transient;
-				oldSeg?.localRefs?.addLocalRef(
-					oldInterval.start,
-					oldInterval.start.getOffset(),
-				);
+				oldSeg?.localRefs?.addLocalRef(oldInterval.start, oldInterval.start.getOffset());
 			}
 			if (needsEndUpdate) {
 				const props = interval.end.properties;
@@ -1736,14 +1625,10 @@ export class IntervalCollection
 					interval.end.addProperties(props);
 				}
 				// remove and rebuild end interval as transient for event
-				const oldSeg: ISegmentInternal | undefined =
-					oldInterval.end.getSegment();
+				const oldSeg: ISegmentInternal | undefined = oldInterval.end.getSegment();
 				this.client.removeLocalReferencePosition(oldInterval.end);
 				oldInterval.end.refType = ReferenceType.Transient;
-				oldSeg?.localRefs?.addLocalRef(
-					oldInterval.end,
-					oldInterval.end.getOffset(),
-				);
+				oldSeg?.localRefs?.addLocalRef(oldInterval.end, oldInterval.end.getOffset());
 			}
 			if (isLatestInterval) {
 				this.localCollection.add(interval);
@@ -1775,14 +1660,8 @@ export class IntervalCollection
 
 		const interval: SequenceIntervalClass = this.localCollection.addInterval(
 			id,
-			toSequencePlace(
-				serializedInterval.start,
-				serializedInterval.startSide ?? Side.Before,
-			),
-			toSequencePlace(
-				serializedInterval.end,
-				serializedInterval.endSide ?? Side.Before,
-			),
+			toSequencePlace(serializedInterval.start, serializedInterval.startSide ?? Side.Before),
+			toSequencePlace(serializedInterval.end, serializedInterval.endSide ?? Side.Before),
 			properties,
 			op,
 		);
@@ -1811,9 +1690,7 @@ export class IntervalCollection
 		}
 
 		if (!this.localCollection) {
-			throw new LoggingError(
-				"attach must be called prior to deleting intervals",
-			);
+			throw new LoggingError("attach must be called prior to deleting intervals");
 		}
 
 		const { id } = getSerializedProperties(serializedInterval);
@@ -1867,12 +1744,7 @@ export class IntervalCollection
 	public CreateForwardIteratorWithEndPosition(
 		endPosition: number,
 	): IntervalCollectionIterator {
-		const iterator = new IntervalCollectionIterator(
-			this,
-			true,
-			undefined,
-			endPosition,
-		);
+		const iterator = new IntervalCollectionIterator(this, true, undefined, endPosition);
 		return iterator;
 	}
 
@@ -1882,12 +1754,7 @@ export class IntervalCollection
 	public CreateBackwardIteratorWithEndPosition(
 		endPosition: number,
 	): IntervalCollectionIterator {
-		const iterator = new IntervalCollectionIterator(
-			this,
-			false,
-			undefined,
-			endPosition,
-		);
+		const iterator = new IntervalCollectionIterator(this, false, undefined, endPosition);
 		return iterator;
 	}
 

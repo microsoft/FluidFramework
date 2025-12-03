@@ -5,7 +5,7 @@
 
 import { type Static, type TSchema, Type } from "@sinclair/typebox";
 
-import { type Brand, brandedNumberType } from "../../util/index.js";
+import { brandedNumberType, type Brand } from "../../util/index.js";
 
 import type { ForestRootId } from "./detachedFieldIndexTypes.js";
 
@@ -57,18 +57,14 @@ export type RootRanges = Static<typeof RootRanges>;
  */
 // Return type is intentionally derived.
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const EncodedRootsForRevision = <Schema extends TSchema>(
-	tRevisionTag: Schema,
-) =>
+export const EncodedRootsForRevision = <Schema extends TSchema>(tRevisionTag: Schema) =>
 	Type.Union([
 		// Used to represent a revision in which more than one node were detached
 		Type.Tuple([tRevisionTag, RootRanges]),
 		// Used to represent a revision in which a single node was detached
 		Type.Tuple([tRevisionTag, DetachId, ForestRootIdSchema]),
 	]);
-export type EncodedRootsForRevision = Static<
-	ReturnType<typeof EncodedRootsForRevision>
->;
+export type EncodedRootsForRevision = Static<ReturnType<typeof EncodedRootsForRevision>>;
 
 export const Format = <
 	TVersion extends DetachedFieldIndexFormatVersion,

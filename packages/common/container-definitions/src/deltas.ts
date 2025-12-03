@@ -15,9 +15,9 @@ import type {
 	IAnyDriverError,
 	IClientConfiguration,
 	IDocumentMessage,
+	ITokenClaims,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-	ITokenClaims,
 } from "@fluidframework/driver-definitions/internal";
 
 /**
@@ -94,10 +94,7 @@ export interface IDeltaManagerEvents extends IEvent {
 	 */
 	(
 		event: "op",
-		listener: (
-			message: ISequencedDocumentMessage,
-			processingTime: number,
-		) => void,
+		listener: (message: ISequencedDocumentMessage, processingTime: number) => void,
 	);
 
 	/**
@@ -119,10 +116,7 @@ export interface IDeltaManagerEvents extends IEvent {
 	 * - `opsBehind`: An estimate of far behind the client is relative to the service in terms of ops.
 	 * Will not be specified if an estimate cannot be determined.
 	 */
-	(
-		event: "connect",
-		listener: (details: IConnectionDetails, opsBehind?: number) => void,
-	);
+	(event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void);
 
 	/**
 	 * Emitted when the {@link IDeltaManager} becomes disconnected from the Fluid service.
@@ -132,10 +126,7 @@ export interface IDeltaManagerEvents extends IEvent {
 	 * - `reason`: Describes the reason for which the delta manager was disconnected.
 	 * - `error` : error if any for the disconnect.
 	 */
-	(
-		event: "disconnect",
-		listener: (reason: string, error?: IAnyDriverError) => void,
-	);
+	(event: "disconnect", listener: (reason: string, error?: IAnyDriverError) => void);
 
 	/**
 	 * Emitted when read/write permissions change.
@@ -236,10 +227,8 @@ export interface IDeltaManager<T, U>
  * DeltaManager which is used internally by the Fluid layers and not exposed to the end users.
  * @internal
  */
-export interface IDeltaManagerFull<
-	T = ISequencedDocumentMessage,
-	U = IDocumentMessage,
-> extends IDeltaManager<T, U> {
+export interface IDeltaManagerFull<T = ISequencedDocumentMessage, U = IDocumentMessage>
+	extends IDeltaManager<T, U> {
 	/**
 	 * The queue of inbound delta messages
 	 */
@@ -310,9 +299,7 @@ export interface IDeltaQueueEvents<T> extends IErrorEvent {
  * @sealed
  * @legacy @beta
  */
-export interface IDeltaQueue<T>
-	extends IEventProvider<IDeltaQueueEvents<T>>,
-		IDisposable {
+export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, IDisposable {
 	/**
 	 * Flag indicating whether or not the queue was paused
 	 */

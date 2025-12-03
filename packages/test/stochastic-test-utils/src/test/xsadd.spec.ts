@@ -23,8 +23,8 @@ describe("XSadd (PRNG)", () => {
 		// Check that the first 10 results match the original 'C' implementation.
 		const actual = [...new Array(10)].map(src.uint32);
 		const expected = [
-			0x25adaa92, 0x49104f14, 0xa148f1f9, 0x5eb27472, 0xa2df62bb, 0xa30fe176,
-			0x8eb7f176, 0xd18f1191, 0xd3fdea23, 0x3c834b7d,
+			0x25adaa92, 0x49104f14, 0xa148f1f9, 0x5eb27472, 0xa2df62bb, 0xa30fe176, 0x8eb7f176,
+			0xd18f1191, 0xd3fdea23, 0x3c834b7d,
 		];
 
 		assert.deepEqual(actual, expected);

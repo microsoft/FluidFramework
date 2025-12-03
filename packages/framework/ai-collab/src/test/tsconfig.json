@@ -5,12 +5,12 @@
 		"outDir": "../../lib/test",
 		"types": ["mocha", "node"],
 		// TODO: make this build without this setting
-		"exactOptionalPropertyTypes": false
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../.."
-		}
-	]
+			"path": "../..",
+		},
+	],
 }

@@ -48,9 +48,7 @@ const NullConfigProvider: IConfigProviderBase = {
  * @returns A base configuration provider with
  * the supplied `Storage` instance as the underlying config store
  */
-export const inMemoryConfigProvider = (
-	storage: Storage | undefined,
-): IConfigProviderBase => {
+export const inMemoryConfigProvider = (storage: Storage | undefined): IConfigProviderBase => {
 	if (storage !== undefined && storage !== null) {
 		return new CachedConfigProvider(undefined, {
 			getRawConfig: (name: string): ConfigTypes | undefined => {
@@ -101,9 +99,7 @@ interface StronglyTypedValue extends Partial<ConfigTypeStringToType> {
  * if it is not possible to parsed and coerce a string to a strong config type the original string
  * will be return with a string type for the consumer to handle further if necessary.
  */
-function stronglyTypedParse(
-	input: ConfigTypes,
-): StronglyTypedValue | undefined {
+function stronglyTypedParse(input: ConfigTypes): StronglyTypedValue | undefined {
 	let output: ConfigTypes = input;
 	let defaultReturn: Pick<StronglyTypedValue, "raw" | "string"> | undefined;
 	// we do special handling for strings to try and coerce
@@ -187,8 +183,7 @@ export const wrapConfigProviderWithDefaults = (
 	original: IConfigProviderBase | undefined,
 	defaults: Record<string, ConfigTypes>,
 ): IConfigProviderBase => ({
-	getRawConfig: (name: string): ConfigTypes =>
-		original?.getRawConfig(name) ?? defaults[name],
+	getRawConfig: (name: string): ConfigTypes => original?.getRawConfig(name) ?? defaults[name],
 });
 
 /**
@@ -274,9 +269,7 @@ export class CachedConfigProvider implements IConfigProvider {
  *
  * @internal
  */
-export interface MonitoringContext<
-	L extends ITelemetryBaseLogger = ITelemetryLoggerExt,
-> {
+export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt> {
 	config: IConfigProvider;
 	logger: L;
 }
@@ -291,10 +284,7 @@ export function loggerIsMonitoringContext<
 	L extends ITelemetryBaseLogger = ITelemetryLoggerExt,
 >(obj: L): obj is L & MonitoringContext<L> {
 	const maybeConfig = obj as Partial<MonitoringContext<L>> | undefined;
-	return (
-		isConfigProviderBase(maybeConfig?.config) &&
-		maybeConfig?.logger !== undefined
-	);
+	return isConfigProviderBase(maybeConfig?.config) && maybeConfig?.logger !== undefined;
 }
 
 /**
@@ -322,9 +312,7 @@ export function loggerToMonitoringContext<
  *
  * @internal
  */
-export function mixinMonitoringContext<
-	L extends ITelemetryBaseLogger = ITelemetryLoggerExt,
->(
+export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(
 	logger: L,
 	...configs: (IConfigProviderBase | undefined)[]
 ): MonitoringContext<L> {
@@ -367,10 +355,7 @@ export function createChildMonitoringContext(
  * */
 export type OptionConfigReaders<T extends object> = {
 	[K in keyof T]?: K extends string
-		? (
-				config: IConfigProvider,
-				name: `Fluid.${string}.${K}`,
-			) => T[K] | undefined
+		? (config: IConfigProvider, name: `Fluid.${string}.${K}`) => T[K] | undefined
 		: undefined;
 };
 

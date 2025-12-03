@@ -48,10 +48,7 @@ export class SessionSpaceNormalizer {
 		compareFiniteNumbers,
 	);
 
-	public get idRanges(): Pick<
-		AppendOnlySortedMap<number, number>,
-		"size" | "entries"
-	> {
+	public get idRanges(): Pick<AppendOnlySortedMap<number, number>, "size" | "entries"> {
 		return this.localIdRanges;
 	}
 
@@ -64,20 +61,14 @@ export class SessionSpaceNormalizer {
 		// since this method must find ranges between firstGenCount and lastGenCount
 		let firstRange = this.localIdRanges.getPairOrNextLower(firstGenCount);
 		// if the first range does not contain the first ID, next higher range is between but non-containing
-		if (
-			firstRange === undefined ||
-			!this.rangeContains(firstRange, firstGenCount)
-		) {
+		if (firstRange === undefined || !this.rangeContains(firstRange, firstGenCount)) {
 			firstRange = this.localIdRanges.getPairOrNextHigher(firstGenCount);
 			if (firstRange === undefined) {
 				return ranges;
 			}
 		}
 
-		for (const [genCount, count] of this.localIdRanges.getRange(
-			firstRange[0],
-			lastGenCount,
-		)) {
+		for (const [genCount, count] of this.localIdRanges.getRange(firstRange[0], lastGenCount)) {
 			ranges.push([genCount, count]);
 		}
 
@@ -113,10 +104,7 @@ export class SessionSpaceNormalizer {
 		);
 		const [limitGenCount, limitCount] = lastRange;
 		if (this.rangeContains(lastRange, lastGenCount)) {
-			ranges[lastRangeIndex] = [
-				limitGenCount,
-				lastGenCount - limitGenCount + 1,
-			];
+			ranges[lastRangeIndex] = [limitGenCount, lastGenCount - limitGenCount + 1];
 			assert(
 				this.rangeContains(lastRange, lastGenCount),
 				0x954 /* Expected the touched up range to contain the queried ID */,
@@ -130,10 +118,7 @@ export class SessionSpaceNormalizer {
 		return ranges;
 	}
 
-	private rangeContains(
-		range: readonly [number, number],
-		genCount: number,
-	): boolean {
+	private rangeContains(range: readonly [number, number], genCount: number): boolean {
 		const [baseGenCount, count] = range;
 		return genCount >= baseGenCount && genCount < baseGenCount + count;
 	}

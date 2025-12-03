@@ -11,9 +11,7 @@ describe("ToDo", () => {
 		retryWithEventualValue(
 			() =>
 				page.evaluate((i: number) => {
-					const openInNewTabButtons = document.querySelectorAll(
-						"button[name=OpenInNewTab]",
-					);
+					const openInNewTabButtons = document.querySelectorAll("button[name=OpenInNewTab]");
 					const button = openInNewTabButtons[i] as HTMLDivElement;
 					if (button) {
 						// TODO: Would be better to actually click the button and verify it opens in a
@@ -46,8 +44,8 @@ describe("ToDo", () => {
 		await expect(page).toClick("button[name=createItem]");
 
 		const result = await page.evaluate(() => {
-			const itemLists = document.body.querySelectorAll(".todo-item-list");
-			const items = itemLists[0].childNodes;
+			let itemLists = document.body.querySelectorAll(".todo-item-list");
+			let items = itemLists[0].childNodes;
 			return items.length === 2;
 		});
 
@@ -88,8 +86,8 @@ describe("ToDo", () => {
 		await page.goto(itemUrl, { waitUntil: "load" });
 		await page.waitForFunction(() => window["fluidStarted"]);
 		const result = await page.evaluate(() => {
-			const itemLists = document.body.querySelectorAll(".todo-item");
-			const items = itemLists[0].childNodes;
+			let itemLists = document.body.querySelectorAll(".todo-item");
+			let items = itemLists[0].childNodes;
 			return items.length === 1;
 		});
 

@@ -100,12 +100,8 @@ export function testMarkListFactory() {
 			const factory = new SF.MarkListFactory();
 			const moveOut1 = Mark.moveOut(1, brand(0));
 			const moveOut2 = Mark.moveOut(1, brand(1));
-			const moveIn1 = Mark.moveIn(1, brand(0), {
-				cellId: { localId: brand(2) },
-			});
-			const moveIn2 = Mark.moveIn(1, brand(1), {
-				cellId: { localId: brand(3) },
-			});
+			const moveIn1 = Mark.moveIn(1, brand(0), { cellId: { localId: brand(2) } });
+			const moveIn2 = Mark.moveIn(1, brand(1), { cellId: { localId: brand(3) } });
 			factory.pushContent(moveOut1);
 			factory.pushContent(moveOut2);
 			factory.pushOffset(3);
@@ -124,15 +120,9 @@ export function testMarkListFactory() {
 			const moveOut1 = Mark.moveOut(1, brand(0));
 			const moveOut2 = Mark.moveOut(1, brand(1));
 			const moveOut3 = Mark.moveOut(1, brand(2));
-			const moveIn1 = Mark.moveIn(1, brand(0), {
-				cellId: { localId: brand(3) },
-			});
-			const moveIn2 = Mark.moveIn(1, brand(1), {
-				cellId: { localId: brand(4) },
-			});
-			const moveIn3 = Mark.moveIn(1, brand(2), {
-				cellId: { localId: brand(5) },
-			});
+			const moveIn1 = Mark.moveIn(1, brand(0), { cellId: { localId: brand(3) } });
+			const moveIn2 = Mark.moveIn(1, brand(1), { cellId: { localId: brand(4) } });
+			const moveIn3 = Mark.moveIn(1, brand(2), { cellId: { localId: brand(5) } });
 			factory.pushContent(moveOut1);
 			factory.pushContent(moveOut2);
 			factory.pushContent(moveOut3);

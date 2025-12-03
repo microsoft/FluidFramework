@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	AsyncFluidObjectProvider,
-	FluidObjectSymbolProvider,
-} from "./types.js";
+import type { AsyncFluidObjectProvider, FluidObjectSymbolProvider } from "./types.js";
 
 /**
  * @legacy @beta
@@ -27,8 +24,7 @@ export interface IProvideFluidDependencySynthesizer {
  * and required types.
  * @legacy @beta
  */
-export interface IFluidDependencySynthesizer
-	extends IProvideFluidDependencySynthesizer {
+export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynthesizer {
 	/**
 	 * synthesize takes optional and required types and returns an object that will fulfill the
 	 * defined types based off objects that has been previously registered.

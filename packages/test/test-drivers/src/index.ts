@@ -4,8 +4,8 @@
  */
 
 export {
-	CreateFromEnvConfigParam,
 	createFluidTestDriver,
+	CreateFromEnvConfigParam,
 	DriverApi,
 	DriverApiType,
 	FluidTestDriverConfig,
@@ -17,11 +17,7 @@ export {
 	OdspDriverApi,
 	OdspDriverApiType,
 } from "./odspDriverApi.js";
-export {
-	assertOdspEndpoint,
-	getOdspCredentials,
-	OdspTestDriver,
-} from "./odspTestDriver.js";
+export { assertOdspEndpoint, getOdspCredentials, OdspTestDriver } from "./odspTestDriver.js";
 export {
 	RouterliciousDriverApi,
 	RouterliciousDriverApiType,

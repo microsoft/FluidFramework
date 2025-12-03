@@ -36,9 +36,7 @@ const {
 } = await createExampleDriver(service);
 
 const codeLoader: ICodeDetailsLoader = {
-	load: async (
-		details: IFluidCodeDetails,
-	): Promise<IFluidModuleWithDetails> => {
+	load: async (details: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
 		return {
 			module: { fluidExport: new BlobCollectionContainerRuntimeFactory() },
 			details,

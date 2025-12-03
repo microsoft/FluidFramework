@@ -3,12 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type BaseOperation,
-	ReducerPreconditionError,
-} from "./combineReducers.js";
+import { ReducerPreconditionError, type BaseOperation } from "./combineReducers.js";
 import { makeRandom } from "./random.js";
-import { type AsyncGenerator, done, type SaveInfo } from "./types.js";
+import { type SaveInfo, type AsyncGenerator, done } from "./types.js";
 
 /**
  * A function which takes in an operation and modifies it by reference to be more
@@ -37,9 +34,7 @@ import { type AsyncGenerator, done, type SaveInfo } from "./types.js";
  *
  * @internal
  */
-export type MinimizationTransform<TOperation extends BaseOperation> = (
-	op: TOperation,
-) => void;
+export type MinimizationTransform<TOperation extends BaseOperation> = (op: TOperation) => void;
 /**
  * @internal
  */
@@ -52,9 +47,7 @@ export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 		minimizationTransforms: MinimizationTransform<TOperation>[] | undefined,
 		readonly operations: TOperation[],
 		readonly saveInfo: SaveInfo,
-		readonly replayTest: (
-			generator: AsyncGenerator<TOperation, unknown>,
-		) => Promise<void>,
+		readonly replayTest: (generator: AsyncGenerator<TOperation, unknown>) => Promise<void>,
 		readonly numIterations: number = 1000,
 	) {
 		this.transforms = minimizationTransforms ?? [];
@@ -134,9 +127,7 @@ export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 			.map(() => this.random.pick(this.transforms));
 
 		// select `n` random operations without duplicates
-		let operationIdxs = [
-			...Array.from({ length: this.operations.length }).keys(),
-		];
+		let operationIdxs = [...Array.from({ length: this.operations.length }).keys()];
 		this.random.shuffle(operationIdxs);
 		operationIdxs = operationIdxs.slice(0, n);
 
@@ -167,9 +158,7 @@ export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 	/**
 	 * Apply a given transform on each op until it can no longer make progress
 	 */
-	private async applyTransform(
-		transform: MinimizationTransform<TOperation>,
-	): Promise<void> {
+	private async applyTransform(transform: MinimizationTransform<TOperation>): Promise<void> {
 		for (let opIdx = this.operations.length - 1; opIdx >= 0; opIdx--) {
 			// apply this transform at most 10 times on the current op
 			for (let i = 0; i < 10; i++) {
@@ -229,8 +218,7 @@ export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 			}
 
 			return (
-				message === this.initialError.message &&
-				this.initialError.op.type === lastOp.type
+				message === this.initialError.message && this.initialError.op.type === lastOp.type
 			);
 		}
 	}

@@ -4,21 +4,23 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
-import type { SemanticVersion } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { type TSchema, Type } from "@sinclair/typebox";
-import { pkgVersion } from "../../packageVersion.js";
+import type { SemanticVersion } from "@fluidframework/runtime-utils/internal";
+import { Type, type TSchema } from "@sinclair/typebox";
+
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import {
-	type CodecWriteOptions,
-	type FormatVersion,
 	type ICodecFamily,
 	type ICodecOptions,
 	type IJsonCodec,
 	withSchemaValidation,
+	type FormatVersion,
+	type CodecWriteOptions,
 } from "../codec.js";
+
 import { Versioned } from "./format.js";
+import { pkgVersion } from "../../packageVersion.js";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 export function makeVersionedCodec<
 	TDecoded,
@@ -110,12 +112,7 @@ export function makeDiscontinuedCodecVersion<
 			);
 		},
 	};
-	return makeVersionedValidatedCodec(
-		options,
-		new Set([discontinuedVersion]),
-		schema,
-		codec,
-	);
+	return makeVersionedValidatedCodec(options, new Set([discontinuedVersion]), schema, codec);
 }
 
 /**
@@ -129,12 +126,7 @@ export function makeDiscontinuedCodecVersion<
 export function makeVersionDispatchingCodec<TDecoded, TContext>(
 	family: ICodecFamily<TDecoded, TContext>,
 	options: ICodecOptions & { writeVersion: number | string },
-): IJsonCodec<
-	TDecoded,
-	JsonCompatibleReadOnly,
-	JsonCompatibleReadOnly,
-	TContext
-> {
+): IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
 	const writeCodec = family.resolve(options.writeVersion).json;
 	const supportedVersions = new Set(family.getSupportedFormats());
 	return makeVersionedCodec(supportedVersions, options, {
@@ -165,23 +157,13 @@ export class ClientVersionDispatchingCodecBuilder<TDecoded, TContext> {
 		 * This can (and typically does) pick the newest version of the codec which is known to be compatible with the client version so that
 		 * any improvements in newer versions of the codec can be used when allowed.
 		 */
-		private readonly versionMapping: (
-			minVersionForCollab: MinimumVersionForCollab,
-		) => number,
+		private readonly versionMapping: (minVersionForCollab: MinimumVersionForCollab) => number,
 	) {}
 
 	public build(
 		options: CodecWriteOptions,
-	): IJsonCodec<
-		TDecoded,
-		JsonCompatibleReadOnly,
-		JsonCompatibleReadOnly,
-		TContext
-	> {
+	): IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
 		const writeVersion = this.versionMapping(options.minVersionForCollab);
-		return makeVersionDispatchingCodec(this.family, {
-			...options,
-			writeVersion,
-		});
+		return makeVersionDispatchingCodec(this.family, { ...options, writeVersion });
 	}
 }

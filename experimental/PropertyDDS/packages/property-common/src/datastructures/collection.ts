@@ -155,7 +155,7 @@ export class Collection<T> {
 	filter(in_filterFunction: (key: string, item: T) => boolean): Collection<T> {
 		const rtn = new Collection<T>();
 
-		const filterCb = (in_key, in_item) => {
+		const filterCb = function (in_key, in_item) {
 			const keeper = in_filterFunction(in_key, in_item);
 			if (keeper) {
 				rtn.add(in_key, in_item);
@@ -178,12 +178,12 @@ export class Collection<T> {
 		const rtn = new Collection<T>();
 
 		const filterCb = _.isArray(in_filterKey)
-			? (in_key, in_item) => {
+			? function (in_key, in_item) {
 					if (in_filterKey.includes(in_key)) {
 						rtn.add(in_key, in_item);
 					}
 				}
-			: (in_key, in_item) => {
+			: function (in_key, in_item) {
 					if (in_key === in_filterKey) {
 						rtn.add(in_key, in_item);
 					}
@@ -202,7 +202,7 @@ export class Collection<T> {
 	filterByValue(in_filterValue: T): Collection<T> {
 		const rtn = new Collection<T>();
 
-		const filterCb = (in_key, in_item) => {
+		const filterCb = function (in_key, in_item) {
 			if (in_item === in_filterValue) {
 				rtn.add(in_key, in_item);
 			}
@@ -268,7 +268,7 @@ export class Collection<T> {
 	 * @returns true if the item exists
 	 */
 	has(in_key: string | number): boolean {
-		return Object.hasOwn(this._items, in_key);
+		return Object.prototype.hasOwnProperty.call(this._items, in_key);
 	}
 
 	/**
@@ -361,7 +361,7 @@ export class Collection<T> {
 	getItems(): { [key: string]: T } {
 		const result = {};
 
-		_.each(this._items, (item, key) => {
+		_.each(this._items, function (item, key) {
 			result[key] = item;
 		});
 

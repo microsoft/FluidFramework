@@ -10,11 +10,10 @@ export type {
 	LocalAttributionKey,
 	OpAttributionKey,
 } from "./attribution.js";
-export type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
 export type {
-	ContainerExtensionExpectations,
 	ContainerExtensionId,
 	ContainerExtensionProvider,
+	ContainerExtensionExpectations,
 	ExtensionCompatibilityDetails,
 	UnknownExtensionInstantiation,
 } from "./containerExtensionProvider.js";
@@ -26,18 +25,14 @@ export type {
 	IContainerRuntimeBaseEvents,
 	IDataStore,
 	IFluidDataStoreChannel,
-	IFluidDataStoreContext,
-	IFluidDataStoreContextDetached,
 	IFluidDataStorePolicies,
+	IFluidDataStoreContext,
 	IFluidParentContext,
+	IFluidDataStoreContextDetached,
 	IPendingMessagesState,
 	PackagePath,
 } from "./dataStoreContext.js";
-export {
-	FlushMode,
-	FlushModeExperimental,
-	VisibilityState,
-} from "./dataStoreContext.js";
+export { FlushMode, FlushModeExperimental, VisibilityState } from "./dataStoreContext.js";
 export type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
 export { IFluidDataStoreFactory } from "./dataStoreFactory.js";
 export type {
@@ -67,21 +62,13 @@ export type {
 	InboundAttachMessage,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
-	IRuntimeStorageService,
 	ISequencedMessageEnvelope,
+	IRuntimeStorageService,
 } from "./protocol.js";
 export {
 	encodeHandlesInContainerRuntime,
 	notifiesReadOnlyState,
 } from "./runtimeLayerCompatFeatureNames.js";
-export {
-	asLegacyAlpha,
-	type CommitStagedChangesOptionsInternal,
-	type ContainerRuntimeBaseAlpha,
-	type IContainerRuntimeBaseInternal,
-	type StageControlsAlpha,
-	type StageControlsInternal,
-} from "./stagingMode.js";
 export type {
 	CreateChildSummarizerNodeParam,
 	IExperimentalIncrementalSummaryContext,
@@ -99,7 +86,17 @@ export type {
 } from "./summary.js";
 export {
 	blobCountPropertyName,
-	CreateSummarizerNodeSource,
 	channelsTreeName,
+	CreateSummarizerNodeSource,
 	totalBlobSizePropertyName,
 } from "./summary.js";
+export type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
+
+export {
+	type ContainerRuntimeBaseAlpha,
+	type StageControlsAlpha,
+	type CommitStagedChangesOptionsInternal,
+	type IContainerRuntimeBaseInternal,
+	type StageControlsInternal,
+	asLegacyAlpha,
+} from "./stagingMode.js";

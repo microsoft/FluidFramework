@@ -6,7 +6,7 @@
 import { expect } from 'chai';
 
 import { deepCompareNodes } from '../EditUtilities.js';
-import type { ChangeNode } from '../persisted-types/index.js';
+import { ChangeNode } from '../persisted-types/index.js';
 
 import { refreshTestTree } from './utilities/TestUtilities.js';
 

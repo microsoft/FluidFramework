@@ -67,9 +67,8 @@ export interface ISharedObjectEvents extends IErrorEvent {
  * If not then more clarity is needed on what this interface specifically is, what the other "shared object" concept means and how they relate.
  * @legacy @beta
  */
-export interface ISharedObject<
-	TEvent extends ISharedObjectEvents = ISharedObjectEvents,
-> extends IChannel,
+export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
+	extends IChannel,
 		IEventProvider<TEvent> {
 	/**
 	 * Binds the given shared object to its containing data store runtime, causing it to attach once

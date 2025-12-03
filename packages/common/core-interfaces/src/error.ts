@@ -39,8 +39,7 @@ export const FluidErrorTypes = {
 /**
  * @legacy @beta
  */
-export type FluidErrorTypes =
-	(typeof FluidErrorTypes)[keyof typeof FluidErrorTypes];
+export type FluidErrorTypes = (typeof FluidErrorTypes)[keyof typeof FluidErrorTypes];
 
 /**
  * New error types that are still in alpha stage. Once stabilized, they will be moved to FluidErrorTypes.

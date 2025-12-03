@@ -7,23 +7,16 @@ import { strict as assert } from "node:assert";
 
 import {
 	getSimpleSchema,
-	type ImplicitFieldSchema,
-	type InsertableField,
 	independentView,
 	SchemaFactory,
 	TreeViewConfiguration,
+	type ImplicitFieldSchema,
+	type InsertableField,
 } from "@fluidframework/tree/internal";
 import { z } from "zod";
 
-import {
-	buildFunc,
-	type ExposedMethods,
-	exposeMethodsSymbol,
-} from "../methodBinding.js";
-import {
-	type ExposedProperties,
-	exposePropertiesSymbol,
-} from "../propertyBinding.js";
+import { buildFunc, exposeMethodsSymbol, type ExposedMethods } from "../methodBinding.js";
+import { exposePropertiesSymbol, type ExposedProperties } from "../propertyBinding.js";
 import { generateEditTypesForPrompt } from "../typeGeneration.js";
 
 const sf = new SchemaFactory("test");
@@ -37,11 +30,7 @@ class Todo extends sf.object("Todo", {
 	}
 
 	public static [exposeMethodsSymbol](methods: ExposedMethods): void {
-		methods.expose(
-			Todo,
-			"method",
-			buildFunc({ returns: z.boolean() }, ["n", z.string()]),
-		);
+		methods.expose(Todo, "method", buildFunc({ returns: z.boolean() }, ["n", z.string()]));
 	}
 }
 
@@ -54,10 +43,7 @@ class TestTodoAppSchema extends sf.object("TestTodoAppSchema", {
 		methods.expose(
 			TestTodoAppSchema,
 			"addTodo",
-			buildFunc({ returns: methods.instanceOf(Todo) }, [
-				"todo",
-				methods.instanceOf(Todo),
-			]),
+			buildFunc({ returns: methods.instanceOf(Todo) }, ["todo", methods.instanceOf(Todo)]),
 		);
 	}
 
@@ -124,9 +110,7 @@ describe("Type generation", () => {
 				}
 			}
 
-			const arrayDomainSchemaString = getDomainSchemaString(ArrayWithMethod, [
-				"test",
-			]);
+			const arrayDomainSchemaString = getDomainSchemaString(ArrayWithMethod, ["test"]);
 			assert.deepEqual(
 				arrayDomainSchemaString,
 				`// Note: this array has custom user-defined methods directly on it.
@@ -152,10 +136,7 @@ type ArrayWithMethod = string[] & {
 				}
 			}
 
-			const mapDomainSchemaString = getDomainSchemaString(
-				MapWithMethod,
-				new Map(),
-			);
+			const mapDomainSchemaString = getDomainSchemaString(MapWithMethod, new Map());
 			assert.deepEqual(
 				mapDomainSchemaString,
 				`// Note: this map has custom user-defined methods directly on it.
@@ -183,10 +164,7 @@ type MapWithMethod = Map<string, string> & {
 				}
 			}
 
-			const mapDomainSchemaString = getDomainSchemaString(
-				MapWithMethod,
-				new Map(),
-			);
+			const mapDomainSchemaString = getDomainSchemaString(MapWithMethod, new Map());
 			assert.deepEqual(
 				mapDomainSchemaString,
 				`// Note: this map has custom user-defined methods directly on it.
@@ -205,12 +183,8 @@ type MapWithMethod = Map<string, string> & {
 				public get property(): string {
 					return this.testProperty;
 				}
-				public static [exposePropertiesSymbol](
-					properties: ExposedProperties,
-				): void {
-					properties.exposeProperty(ObjWithProperty, "testProperty", {
-						schema: z.string(),
-					});
+				public static [exposePropertiesSymbol](properties: ExposedProperties): void {
+					properties.exposeProperty(ObjWithProperty, "testProperty", { schema: z.string() });
 					properties.exposeProperty(ObjWithProperty, "property", {
 						schema: z.string(),
 						readOnly: true,
@@ -218,10 +192,7 @@ type MapWithMethod = Map<string, string> & {
 				}
 			}
 
-			const arrayDomainSchemaString = getDomainSchemaString(
-				ObjWithProperty,
-				{},
-			);
+			const arrayDomainSchemaString = getDomainSchemaString(ObjWithProperty, {});
 			assert.deepEqual(
 				arrayDomainSchemaString,
 				`interface ObjWithProperty {
@@ -238,12 +209,8 @@ type MapWithMethod = Map<string, string> & {
 				public get property(): string {
 					return this.testProperty;
 				}
-				public static [exposePropertiesSymbol](
-					properties: ExposedProperties,
-				): void {
-					properties.exposeProperty(ArrayWithProperty, "testProperty", {
-						schema: z.string(),
-					});
+				public static [exposePropertiesSymbol](properties: ExposedProperties): void {
+					properties.exposeProperty(ArrayWithProperty, "testProperty", { schema: z.string() });
 					properties.exposeProperty(ArrayWithProperty, "property", {
 						schema: z.string(),
 						readOnly: true,
@@ -251,9 +218,7 @@ type MapWithMethod = Map<string, string> & {
 				}
 			}
 
-			const arrayDomainSchemaString = getDomainSchemaString(ArrayWithProperty, [
-				"test",
-			]);
+			const arrayDomainSchemaString = getDomainSchemaString(ArrayWithProperty, ["test"]);
 			assert.deepEqual(
 				arrayDomainSchemaString,
 				`// Note: this array has custom user-defined properties directly on it.
@@ -271,12 +236,8 @@ type ArrayWithProperty = string[] & {
 				public get property(): string {
 					return this.testProperty;
 				}
-				public static [exposePropertiesSymbol](
-					properties: ExposedProperties,
-				): void {
-					properties.exposeProperty(MapWithProperty, "testProperty", {
-						schema: z.string(),
-					});
+				public static [exposePropertiesSymbol](properties: ExposedProperties): void {
+					properties.exposeProperty(MapWithProperty, "testProperty", { schema: z.string() });
 					properties.exposeProperty(MapWithProperty, "property", {
 						schema: z.string(),
 						readOnly: true,
@@ -284,10 +245,7 @@ type ArrayWithProperty = string[] & {
 				}
 			}
 
-			const mapDomainSchemaString = getDomainSchemaString(
-				MapWithProperty,
-				new Map(),
-			);
+			const mapDomainSchemaString = getDomainSchemaString(MapWithProperty, new Map());
 			assert.deepEqual(
 				mapDomainSchemaString,
 				`// Note: this map has custom user-defined properties directly on it.
@@ -301,9 +259,7 @@ type MapWithProperty = Map<string, string> & {
 	});
 
 	it("includes TypeScript types for node schema", () => {
-		const view = independentView(
-			new TreeViewConfiguration({ schema: TestTodoAppSchema }),
-		);
+		const view = independentView(new TreeViewConfiguration({ schema: TestTodoAppSchema }));
 		view.initialize(initialAppState);
 
 		const schema = getSimpleSchema(view.schema);
@@ -332,9 +288,7 @@ function getDomainSchemaString<TSchema extends ImplicitFieldSchema>(
 	schemaClass: TSchema,
 	initialValue: InsertableField<TSchema>,
 ): string {
-	const view = independentView(
-		new TreeViewConfiguration({ schema: schemaClass }),
-	);
+	const view = independentView(new TreeViewConfiguration({ schema: schemaClass }));
 	view.initialize(initialValue);
 	const schema = getSimpleSchema(view.schema);
 	const { schemaText } = generateEditTypesForPrompt(view.schema, schema);

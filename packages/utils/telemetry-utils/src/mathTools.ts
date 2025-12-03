@@ -10,10 +10,7 @@
  * @param decimalPlaces - The number of decimal places to round to.
  * @returns The rounded number.
  */
-export function roundToDecimalPlaces(
-	number: number,
-	decimalPlaces: number,
-): number {
-	const factor = 10 ** decimalPlaces;
+export function roundToDecimalPlaces(number: number, decimalPlaces: number): number {
+	const factor = Math.pow(10, decimalPlaces);
 	return Math.round(number * factor) / factor;
 }

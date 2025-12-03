@@ -17,9 +17,9 @@ import type {
 import { assert } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
-	createChildLogger,
 	type ITelemetryLoggerExt,
 	PerformanceEvent,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { IThrottler } from "../throttler.js";
@@ -173,8 +173,7 @@ export class SummaryManager
 	private static readonly isStartingOrRunning = (
 		state: SummaryManagerState,
 	): state is SummaryManagerState.Starting | SummaryManagerState.Running =>
-		state === SummaryManagerState.Starting ||
-		state === SummaryManagerState.Running;
+		state === SummaryManagerState.Starting || state === SummaryManagerState.Running;
 
 	private getShouldSummarizeState(): ShouldSummarizeState {
 		if (this.disposed) {
@@ -243,10 +242,7 @@ export class SummaryManager
 		assert(this.state === SummaryManagerState.Off, 0x261 /* "Expected: off" */);
 		this.state = SummaryManagerState.Starting;
 
-		assert(
-			this.summarizer === undefined,
-			0x262 /* "Old summarizer is still working!" */,
-		);
+		assert(this.summarizer === undefined, 0x262 /* "Old summarizer is still working!" */);
 
 		this.delayBeforeCreatingSummarizer()
 			.then(async (startWithInitialDelay: boolean) => {
@@ -273,10 +269,7 @@ export class SummaryManager
 				// when the electedClient will be replaced with the new summarizer client.
 				// The alternative would be to let connectedState.clientId !== clientElection.electedClientId when
 				// state === Starting || state === Running.
-				assert(
-					this.state === SummaryManagerState.Starting,
-					0x263 /* "Expected: starting" */,
-				);
+				assert(this.state === SummaryManagerState.Starting, 0x263 /* "Expected: starting" */);
 				this.state = SummaryManagerState.Running;
 
 				const summarizer = await this.createSummarizerFn();
@@ -309,10 +302,7 @@ export class SummaryManager
 
 				return PerformanceEvent.timedExecAsync(
 					this.logger,
-					{
-						eventName: "RunningSummarizer",
-						attempt: this.startThrottler.numAttempts,
-					},
+					{ eventName: "RunningSummarizer", attempt: this.startThrottler.numAttempts },
 					async () => summarizer.run(clientId),
 				);
 			})
@@ -339,18 +329,13 @@ export class SummaryManager
 				// means it also lost connection), and error happened on load (we do not have summarizer).
 				// We could annotate the error raised in Container.load where the container closed during load with no error
 				// and check for that case here, but that does not seem to be necessary.
-				if (
-					this.getShouldSummarizeState().shouldSummarize ||
-					this.summarizer !== undefined
-				) {
+				if (this.getShouldSummarizeState().shouldSummarize || this.summarizer !== undefined) {
 					// Report any failure as an error unless it was due to cancellation (like "disconnected" error)
 					// If failure happened on container load, we may not yet realized that socket disconnected, so check
 					// offlineError.
 					const category =
 						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-						error?.errorType === DriverErrorTypes.offlineError
-							? "generic"
-							: "error";
+						error?.errorType === DriverErrorTypes.offlineError ? "generic" : "error";
 					this.logger.sendTelemetryEvent(
 						{
 							eventName: "SummarizerException",
@@ -361,10 +346,7 @@ export class SummaryManager
 				}
 			})
 			.finally(() => {
-				assert(
-					this.state !== SummaryManagerState.Off,
-					0x264 /* "Expected: Not Off" */,
-				);
+				assert(this.state !== SummaryManagerState.Off, 0x264 /* "Expected: Not Off" */);
 				this.state = SummaryManagerState.Off;
 
 				this.cleanupForwardedEvents();
@@ -430,9 +412,7 @@ export class SummaryManager
 			let resolveOpPromiseFn: (value: void | PromiseLike<void>) => void;
 			// Create a listener that will break the delay if we've exceeded the initial delay ops count.
 			const opsListenerFn = (): void => {
-				if (
-					this.summaryCollection.opsSinceLastAck >= this.opsToBypassInitialDelay
-				) {
+				if (this.summaryCollection.opsSinceLastAck >= this.opsToBypassInitialDelay) {
 					clearTimeout(timer);
 					resolveOpPromiseFn();
 				}
@@ -452,9 +432,7 @@ export class SummaryManager
 		return startWithInitialDelay;
 	}
 
-	public summarizeOnDemand(
-		options: IOnDemandSummarizeOptions,
-	): ISummarizeResults {
+	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
 		if (this.summarizer === undefined) {
 			throw new Error("No running summarizer client");
 			// TODO: could spawn a summarizer client temporarily.
@@ -462,9 +440,7 @@ export class SummaryManager
 		return this.summarizer.summarizeOnDemand(options);
 	}
 
-	public enqueueSummarize(
-		options: IEnqueueSummarizeOptions,
-	): EnqueueSummarizeResult {
+	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
 		if (this.summarizer === undefined) {
 			throw new Error("No running summarizer client");
 			// TODO: could spawn a summarizer client temporarily.

@@ -18,7 +18,7 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";
-import { Dice, TwoDiceApp } from "./schema.js";
+import { TwoDiceApp, Dice } from "./schema.js";
 
 export interface ICustomUserDetails {
 	gender: string;
@@ -44,20 +44,19 @@ const azureUser = {
 	additionalDetails: userDetails,
 };
 
-export const connectionConfig:
-	| AzureRemoteConnectionConfig
-	| AzureLocalConnectionConfig = useAzure
-	? {
-			type: "remote",
-			tenantId: "",
-			tokenProvider: new AzureFunctionTokenProvider("", azureUser),
-			endpoint: "",
-		}
-	: {
-			type: "local",
-			tokenProvider: new InsecureTokenProvider("fooBar", user),
-			endpoint: "http://localhost:7070",
-		};
+export const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig =
+	useAzure
+		? {
+				type: "remote",
+				tenantId: "",
+				tokenProvider: new AzureFunctionTokenProvider("", azureUser),
+				endpoint: "",
+			}
+		: {
+				type: "local",
+				tokenProvider: new InsecureTokenProvider("fooBar", user),
+				endpoint: "http://localhost:7070",
+			};
 
 /**
  * Schema for the Dice Roller Container.
@@ -94,9 +93,7 @@ export function initializeAppForNewContainer(
 	const tree = container.initialObjects.tree;
 	const treeView = tree.viewWith(treeViewConfig);
 	if (!treeView.compatibility.canInitialize) {
-		throw new Error(
-			"Expected container data to be compatible with Dice schema",
-		);
+		throw new Error("Expected container data to be compatible with Dice schema");
 	}
 	treeView.initialize(
 		new TwoDiceApp({

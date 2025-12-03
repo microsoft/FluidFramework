@@ -45,14 +45,8 @@ export type ClientStashData = Omit<ClientLoadData, "summaries"> & {
  * @internal
  */
 export type FuzzSerializedIdCompressor =
-	| {
-			withSession: false;
-			serializedCompressor: SerializedIdCompressorWithNoSession;
-	  }
-	| {
-			withSession: true;
-			serializedCompressor: SerializedIdCompressorWithOngoingSession;
-	  };
+	| { withSession: false; serializedCompressor: SerializedIdCompressorWithNoSession }
+	| { withSession: true; serializedCompressor: SerializedIdCompressorWithOngoingSession };
 
 /**
  * @internal
@@ -78,22 +72,15 @@ export function createLoadData(
 ): ClientLoadData {
 	const compressor = client.dataStoreRuntime.idCompressor;
 	return {
-		minimumSequenceNumber:
-			client.dataStoreRuntime.deltaManagerInternal.lastSequenceNumber,
+		minimumSequenceNumber: client.dataStoreRuntime.deltaManagerInternal.lastSequenceNumber,
 		summaries: {
 			summary: client.channel.getAttachSummary().summary,
 			idCompressorSummary:
 				compressor === undefined
 					? undefined
 					: withSession
-						? {
-								withSession: true,
-								serializedCompressor: compressor.serialize(true),
-							}
-						: {
-								withSession: false,
-								serializedCompressor: compressor.serialize(false),
-							},
+						? { withSession: true, serializedCompressor: compressor.serialize(true) }
+						: { withSession: false, serializedCompressor: compressor.serialize(false) },
 		},
 	};
 }
@@ -116,10 +103,7 @@ export function createLoadDataFromStashData(
 			idCompressorSummary:
 				compressor === undefined
 					? undefined
-					: {
-							withSession: true,
-							serializedCompressor: compressor.serialize(true),
-						},
+					: { withSession: true, serializedCompressor: compressor.serialize(true) },
 		},
 	};
 }

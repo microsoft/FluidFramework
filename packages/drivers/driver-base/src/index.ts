@@ -4,8 +4,4 @@
  */
 
 export { DocumentDeltaConnection } from "./documentDeltaConnection.js";
-export {
-	getW3CData,
-	promiseRaceWithWinner,
-	validateMessages,
-} from "./driverUtils.js";
+export { getW3CData, promiseRaceWithWinner, validateMessages } from "./driverUtils.js";

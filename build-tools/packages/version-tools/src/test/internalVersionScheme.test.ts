@@ -140,11 +140,7 @@ describe("internalScheme", () => {
 				">=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0 || >=2.0.0-rc.1.0.0 <2.0.0-rc.1.1.0",
 				undefined,
 			],
-			[
-				false,
-				">=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0 || >=1.0.0 <2.0.0",
-				undefined,
-			],
+			[false, ">=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0 || >=1.0.0 <2.0.0", undefined],
 			[true, ">=2.0.0-internal.2.2.1 <2.0.0-internal.3.0.0", undefined],
 			[false, ">=2.0.0-alpha.2.2.1 <2.0.0-alpha.3.0.0", undefined],
 			[true, ">=2.0.0-alpha.2.2.1 <2.0.0-alpha.3.0.0", true],
@@ -316,10 +312,7 @@ describe("internalScheme", () => {
 				),
 			);
 			assert.isFalse(
-				semver.satisfies(
-					`2.0.0-dev.1.5.0`,
-					`>=2.0.0-internal.1.4.0 <2.0.0-internal.2.0.0`,
-				),
+				semver.satisfies(`2.0.0-dev.1.5.0`, `>=2.0.0-internal.1.4.0 <2.0.0-internal.2.0.0`),
 			);
 		});
 	});

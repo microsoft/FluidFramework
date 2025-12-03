@@ -5,18 +5,12 @@
 
 import { isInternalVersionScheme } from "@fluid-tools/version-tools";
 import * as semver from "semver";
-import {
-	findPackageOrReleaseGroup,
-	packageOrReleaseGroupArg,
-	semverArg,
-} from "../../args.js";
+import { findPackageOrReleaseGroup, packageOrReleaseGroupArg, semverArg } from "../../args.js";
 import { BaseCommand, sortVersions } from "../../library/index.js";
 
 type MajorVersion = number;
 
-export default class LatestVersionsCommand extends BaseCommand<
-	typeof LatestVersionsCommand
-> {
+export default class LatestVersionsCommand extends BaseCommand<typeof LatestVersionsCommand> {
 	static readonly summary =
 		"Determines if an input version matches a latest minor release version. Intended to be used in the Fluid Framework CI pipeline only.";
 
@@ -40,10 +34,7 @@ export default class LatestVersionsCommand extends BaseCommand<
 		const context = await this.getContext();
 		const versionInput = this.args.version;
 
-		const rgOrPackage = findPackageOrReleaseGroup(
-			args.package_or_release_group,
-			context,
-		);
+		const rgOrPackage = findPackageOrReleaseGroup(args.package_or_release_group, context);
 		if (rgOrPackage === undefined) {
 			this.error(`Package not found: ${args.package_or_release_group}`);
 		}
@@ -75,9 +66,7 @@ export default class LatestVersionsCommand extends BaseCommand<
 					this.log(
 						`Version ${versionInput.version} is the latest version for major version ${majorVersion}`,
 					);
-					this.log(
-						`##vso[task.setvariable variable=shouldDeploy;isoutput=true]true`,
-					);
+					this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]true`);
 					this.log(
 						`##vso[task.setvariable variable=majorVersion;isoutput=true]${majorVersion}`,
 					);
@@ -88,12 +77,8 @@ export default class LatestVersionsCommand extends BaseCommand<
 				this.log(
 					`##[warning]skipping deployment stage. input version ${versionInput.version} does not match the latest version ${v.version}`,
 				);
-				this.log(
-					`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`,
-				);
-				this.log(
-					`##vso[task.setvariable variable=majorVersion;isoutput=true]${majorVersion}`,
-				);
+				this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`);
+				this.log(`##vso[task.setvariable variable=majorVersion;isoutput=true]${majorVersion}`);
 				return;
 			}
 		}
@@ -102,9 +87,7 @@ export default class LatestVersionsCommand extends BaseCommand<
 		this.log(
 			`##[warning]No major version found corresponding to input version ${versionInput.version}`,
 		);
-		this.log(
-			`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`,
-		);
+		this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`);
 		this.log(
 			`##vso[task.setvariable variable=majorVersion;isoutput=true]${inputMajorVersion}`,
 		);

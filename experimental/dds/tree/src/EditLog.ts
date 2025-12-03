@@ -6,14 +6,14 @@
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import type { IEvent } from '@fluidframework/core-interfaces';
 import { assert, compareArrays } from '@fluidframework/core-utils/internal';
-import type { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { BTree } from '@tylerbu/sorted-btree-es6';
 
 import type { ChangeCompressor } from './ChangeCompression.js';
 import { fail } from './Common.js';
 import type { EditId } from './Identifiers.js';
-import type { Edit, EditLogSummary, EditWithoutId, FluidEditHandle } from './persisted-types/index.js';
 import type { StringInterner } from './StringInterner.js';
+import { Edit, EditLogSummary, EditWithoutId, FluidEditHandle } from './persisted-types/index.js';
 
 /**
  * An ordered set of Edits associated with a SharedTree.

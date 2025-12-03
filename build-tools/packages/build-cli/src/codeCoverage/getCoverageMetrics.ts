@@ -24,7 +24,7 @@ interface XmlCoverageReportSchema {
 interface XmlCoverageReportSchemaForPackage {
 	package: [
 		{
-			$: {
+			"$": {
 				name: string;
 				"line-rate": string;
 				"branch-rate": string;
@@ -42,15 +42,9 @@ const extractCoverageMetrics = (
 
 	for (const coverageForPackage of coverageForPackagesResult) {
 		const packagePath = coverageForPackage.$.name;
-		const lineCoverage =
-			Number.parseFloat(coverageForPackage.$["line-rate"]) * 100;
-		const branchCoverage =
-			Number.parseFloat(coverageForPackage.$["branch-rate"]) * 100;
-		if (
-			packagePath &&
-			!Number.isNaN(lineCoverage) &&
-			!Number.isNaN(branchCoverage)
-		) {
+		const lineCoverage = Number.parseFloat(coverageForPackage.$["line-rate"]) * 100;
+		const branchCoverage = Number.parseFloat(coverageForPackage.$["branch-rate"]) * 100;
+		if (packagePath && !Number.isNaN(lineCoverage) && !Number.isNaN(branchCoverage)) {
 			report.set(packagePath, {
 				lineCoverage,
 				branchCoverage,
@@ -98,9 +92,7 @@ export const getCoverageMetricsFromArtifact = async (
 					coverageReportXML,
 					(err: Error | null, result: unknown): void => {
 						if (err) {
-							console.warn(
-								`Error processing file ${coverageReportFile}: ${err}`,
-							);
+							console.warn(`Error processing file ${coverageReportFile}: ${err}`);
 							return;
 						}
 						coverageMetricsForBaseline = extractCoverageMetrics(
@@ -117,8 +109,6 @@ export const getCoverageMetricsFromArtifact = async (
 		logger?.warning(`Error encountered with reading files: ${error}`);
 	}
 
-	logger?.info(
-		`${coverageMetricsForBaseline.size} packages with coverage data found.`,
-	);
+	logger?.info(`${coverageMetricsForBaseline.size} packages with coverage data found.`);
 	return coverageMetricsForBaseline;
 };

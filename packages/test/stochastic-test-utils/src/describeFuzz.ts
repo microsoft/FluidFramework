@@ -16,17 +16,13 @@ function createSuite<TArgs extends StressSuiteArguments>(
 		// Don't override the timeout if it's already set to a higher value, though.
 		switch (args.stressMode) {
 			case StressMode.Long: {
-				this.timeout(
-					this.timeout() === 0 ? 0 : Math.max(20_000, this.timeout()),
-				);
+				this.timeout(this.timeout() === 0 ? 0 : Math.max(20_000, this.timeout()));
 
 				break;
 			}
 			case StressMode.Normal:
 			case StressMode.Short: {
-				this.timeout(
-					this.timeout() === 0 ? 0 : Math.max(10_000, this.timeout()),
-				);
+				this.timeout(this.timeout() === 0 ? 0 : Math.max(10_000, this.timeout()));
 
 				break;
 			}
@@ -120,9 +116,7 @@ export const defaultOptions: Required<FuzzDescribeOptions> = {
 /**
  * @internal
  */
-export function createFuzzDescribe(
-	optionsArg?: FuzzDescribeOptions,
-): DescribeFuzz {
+export function createFuzzDescribe(optionsArg?: FuzzDescribeOptions): DescribeFuzz {
 	const options = { ...defaultOptions, ...optionsArg };
 	const testCountFromEnv =
 		process.env?.FUZZ_TEST_COUNT !== undefined
@@ -177,10 +171,7 @@ export const describeStress: DescribeStress = createFuzzDescribe();
 /**
  * @internal
  */
-export function generateTestSeeds(
-	testCount: number,
-	stressMode: StressMode,
-): number[] {
+export function generateTestSeeds(testCount: number, stressMode: StressMode): number[] {
 	switch (stressMode) {
 		case StressMode.Short:
 		case StressMode.Normal: {
@@ -196,10 +187,7 @@ export function generateTestSeeds(
 				0,
 				Number.MAX_SAFE_INTEGER - longModeFactor * testCount,
 			);
-			return Array.from(
-				{ length: testCount * longModeFactor },
-				(_, i) => initialSeed + i,
-			);
+			return Array.from({ length: testCount * longModeFactor }, (_, i) => initialSeed + i);
 		}
 
 		default: {

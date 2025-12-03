@@ -3,31 +3,26 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { Loader } from "@fluidframework/container-loader/internal";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type {
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import {
 	IDocumentServiceFactory,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	NonRetryableError,
-	readAndParse,
-} from "@fluidframework/driver-utils/internal";
-import {
-	ReferenceType,
-	TextSegment,
-} from "@fluidframework/merge-tree/internal";
+import { NonRetryableError, readAndParse } from "@fluidframework/driver-utils/internal";
+import { ReferenceType, TextSegment } from "@fluidframework/merge-tree/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import {
-	type ChannelFactoryRegistry,
-	createDocumentId,
-	type ITestFluidObject,
+	ChannelFactoryRegistry,
+	ITestFluidObject,
 	LocalCodeLoader,
-	type SupportedExportInterfaces,
+	SupportedExportInterfaces,
 	TestFluidObjectFactory,
+	createDocumentId,
 } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
 
 import { wrapObjectAndOverride } from "../mocking.js";
 import { pkgVersion } from "../packageVersion.js";
@@ -48,17 +43,12 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 					"fluid:telemetry:FluidDataStoreRuntime:SharedSegmentSequence.MergeTreeClient:SnapshotLoader:CatchupOpsLoadFailure",
 			},
 			{ eventName: "fluid:telemetry:FluidDataStoreRuntime:SequenceLoadFailed" },
-			{
-				eventName:
-					"fluid:telemetry:FluidDataStoreRuntime:GetChannelFailedInRequest",
-			},
+			{ eventName: "fluid:telemetry:FluidDataStoreRuntime:GetChannelFailedInRequest" },
 			{ eventName: "TestException" },
 		],
 		async () => {
 			const stringId = "sharedStringKey";
-			const registry: ChannelFactoryRegistry = [
-				[stringId, SharedString.getFactory()],
-			];
+			const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
 			const fluidExport: SupportedExportInterfaces = {
 				IFluidDataStoreFactory: new TestFluidObjectFactory(registry),
 			};
@@ -81,17 +71,14 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 				});
 
 				const container = await loader.createDetachedContainer(codeDetails);
-				const dataObject =
-					(await container.getEntryPoint()) as ITestFluidObject;
+				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 				const sharedString = await dataObject.root
 					.get<IFluidHandle<SharedString>>(stringId)
 					?.get();
 				assert(sharedString);
 				sharedString.insertText(0, text);
 
-				await container.attach(
-					provider.driver.createCreateNewRequest(documentId),
-				);
+				await container.attach(provider.driver.createCreateNewRequest(documentId));
 				containerUrl = container.resolvedUrl;
 			}
 			{
@@ -107,13 +94,9 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 				});
 
 				const container = await loader.resolve({
-					url: await provider.driver.createContainerUrl(
-						documentId,
-						containerUrl,
-					),
+					url: await provider.driver.createContainerUrl(documentId, containerUrl),
 				});
-				const dataObject =
-					(await container.getEntryPoint()) as ITestFluidObject;
+				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 				const sharedString = await dataObject.root
 					.get<IFluidHandle<SharedString>>(stringId)
 					?.get();
@@ -122,31 +105,24 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 			}
 			{
 				const documentServiceFactory: IDocumentServiceFactory =
-					wrapObjectAndOverride<IDocumentServiceFactory>(
-						provider.documentServiceFactory,
-						{
-							createDocumentService: {
-								connectToStorage: {
-									readBlob: (realStorage) => async (id) => {
-										const blob = await realStorage.readBlob(id);
-										const blobObj = await readAndParse<any>(realStorage, id);
-										// throw when trying to load the header blob
-										if (blobObj.headerMetadata !== undefined) {
-											throw new NonRetryableError(
-												"Not Found",
-												"someErrorType",
-												{
-													statusCode: 404,
-													driverVersion: pkgVersion,
-												},
-											);
-										}
-										return blob;
-									},
+					wrapObjectAndOverride<IDocumentServiceFactory>(provider.documentServiceFactory, {
+						createDocumentService: {
+							connectToStorage: {
+								readBlob: (realStorage) => async (id) => {
+									const blob = await realStorage.readBlob(id);
+									const blobObj = await readAndParse<any>(realStorage, id);
+									// throw when trying to load the header blob
+									if (blobObj.headerMetadata !== undefined) {
+										throw new NonRetryableError("Not Found", "someErrorType", {
+											statusCode: 404,
+											driverVersion: pkgVersion,
+										});
+									}
+									return blob;
 								},
 							},
 						},
-					);
+					});
 
 				const codeDetails = { package: "no-dynamic-pkg" };
 				const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]], {
@@ -167,13 +143,9 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 				});
 
 				const container = await loader.resolve({
-					url: await provider.driver.createContainerUrl(
-						documentId,
-						containerUrl,
-					),
+					url: await provider.driver.createContainerUrl(documentId, containerUrl),
 				});
-				const dataObject =
-					(await container.getEntryPoint()) as ITestFluidObject;
+				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 
 				await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
 			}
@@ -182,9 +154,7 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("Text operations successfully round trip on detached create", async () => {
 		const stringId = "sharedStringKey";
-		const registry: ChannelFactoryRegistry = [
-			[stringId, SharedString.getFactory()],
-		];
+		const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
 		const fluidExport: SupportedExportInterfaces = {
 			IFluidDataStoreFactory: new TestFluidObjectFactory(registry),
 		};
@@ -236,9 +206,7 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 			}
 			initialText = sharedString.getText();
 
-			await container.attach(
-				provider.driver.createCreateNewRequest(documentId),
-			);
+			await container.attach(provider.driver.createCreateNewRequest(documentId));
 			containerUrl = container.resolvedUrl;
 		}
 		{

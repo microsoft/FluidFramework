@@ -4,30 +4,16 @@
  */
 
 import { strict as assert } from "node:assert";
-import {
-	type ChangeAtomId,
-	makeAnonChange,
-	type RevisionTag,
-} from "../../../core/index.js";
-import type {
-	NodeId,
-	SequenceField as SF,
-} from "../../../feature-libraries/index.js";
+import { mintRevisionTag } from "../../utils.js";
+import type { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
+import { type ChangeAtomId, type RevisionTag, makeAnonChange } from "../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import { brand } from "../../../util/index.js";
-import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
-import { mintRevisionTag } from "../../utils.js";
 import {
-	ChangeMaker as Change,
-	cases,
-	MarkMaker as Mark,
-} from "./testEdits.js";
-import {
+	type RebaseConfig,
 	assertChangesetsEqual,
 	checkDeltaEquality,
-	type RebaseConfig,
 	rebase as rebaseI,
 	rebaseOverChanges,
 	rebaseOverComposition,
@@ -36,6 +22,9 @@ import {
 	tagChangeInline,
 	withoutTombstones,
 } from "./utils.js";
+import { ChangeMaker as Change, MarkMaker as Mark, cases } from "./testEdits.js";
+import { brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
@@ -48,11 +37,7 @@ function rebase(
 	baseRev?: RevisionTag,
 	config?: RebaseConfig,
 ): SF.Changeset {
-	return rebaseI(
-		makeAnonChange(change),
-		tagChangeInline(base, baseRev ?? tag1),
-		config,
-	);
+	return rebaseI(makeAnonChange(change), tagChangeInline(base, baseRev ?? tag1), config);
 }
 
 export function testRebase() {
@@ -85,18 +70,9 @@ export function testRebase() {
 		});
 
 		it("modify ↷ modify", () => {
-			const child1 = TestNodeId.create(
-				{ localId: brand(0) },
-				TestChange.mint([0], 1),
-			);
-			const child2 = TestNodeId.create(
-				{ localId: brand(1) },
-				TestChange.mint([0], 2),
-			);
-			const child3 = TestNodeId.create(
-				{ localId: brand(1) },
-				TestChange.mint([0, 1], 2),
-			);
+			const child1 = TestNodeId.create({ localId: brand(0) }, TestChange.mint([0], 1));
+			const child2 = TestNodeId.create({ localId: brand(1) }, TestChange.mint([0], 2));
+			const child3 = TestNodeId.create({ localId: brand(1) }, TestChange.mint([0, 1], 2));
 
 			const change1 = Change.modify(0, child1);
 			const change2 = Change.modify(0, child2);
@@ -121,18 +97,9 @@ export function testRebase() {
 		});
 
 		it("revive ↷ modify", () => {
-			const child1 = TestNodeId.create(
-				{ localId: brand(0) },
-				TestChange.mint([0], 1),
-			);
-			const child2 = TestNodeId.create(
-				{ localId: brand(1) },
-				TestChange.mint([0], 2),
-			);
-			const child3 = TestNodeId.create(
-				{ localId: brand(2) },
-				TestChange.mint([0], 3),
-			);
+			const child1 = TestNodeId.create({ localId: brand(0) }, TestChange.mint([0], 1));
+			const child2 = TestNodeId.create({ localId: brand(1) }, TestChange.mint([0], 2));
+			const child3 = TestNodeId.create({ localId: brand(2) }, TestChange.mint([0], 3));
 
 			const revive = [
 				Mark.revive(2, { revision: tag1, localId: brand(0) }),
@@ -153,18 +120,9 @@ export function testRebase() {
 		});
 
 		it("modify ↷ remove", () => {
-			const child1 = TestNodeId.create(
-				{ localId: brand(0) },
-				TestChange.mint([0], 1),
-			);
-			const child2 = TestNodeId.create(
-				{ localId: brand(1) },
-				TestChange.mint([0], 2),
-			);
-			const child3 = TestNodeId.create(
-				{ localId: brand(2) },
-				TestChange.mint([0], 3),
-			);
+			const child1 = TestNodeId.create({ localId: brand(0) }, TestChange.mint([0], 1));
+			const child2 = TestNodeId.create({ localId: brand(1) }, TestChange.mint([0], 2));
+			const child3 = TestNodeId.create({ localId: brand(2) }, TestChange.mint([0], 3));
 
 			const mods = [
 				Mark.modify(child1),
@@ -260,20 +218,11 @@ export function testRebase() {
 			const expected = [
 				{ count: 2 },
 				Mark.tomb(tag1, brand(0), 1),
-				Mark.onEmptyCell(
-					{ revision: tag1, localId: brand(1) },
-					Mark.remove(1, brand(0)),
-				),
+				Mark.onEmptyCell({ revision: tag1, localId: brand(1) }, Mark.remove(1, brand(0))),
 				Mark.remove(1, brand(1)),
-				Mark.onEmptyCell(
-					{ revision: tag1, localId: brand(2) },
-					Mark.remove(1, brand(2)),
-				),
+				Mark.onEmptyCell({ revision: tag1, localId: brand(2) }, Mark.remove(1, brand(2))),
 				Mark.remove(1, brand(3)),
-				Mark.onEmptyCell(
-					{ revision: tag1, localId: brand(3) },
-					Mark.remove(1, brand(4)),
-				),
+				Mark.onEmptyCell({ revision: tag1, localId: brand(3) }, Mark.remove(1, brand(4))),
 				Mark.tomb(tag1, brand(4), 1),
 			];
 			assertChangesetsEqual(actual, expected);
@@ -329,11 +278,7 @@ export function testRebase() {
 
 		it("move ↷ overlapping remove", () => {
 			// Moves ---DEFGH--
-			const move = [
-				Mark.moveIn(5, brand(0)),
-				{ count: 3 },
-				Mark.moveOut(5, brand(0)),
-			];
+			const move = [Mark.moveIn(5, brand(0)), { count: 3 }, Mark.moveOut(5, brand(0))];
 			// Removes --CD-F-HI
 			const deletion = [
 				{ count: 2 },
@@ -350,40 +295,22 @@ export function testRebase() {
 				Mark.moveIn(5, brand(0)),
 				{ count: 2 },
 				Mark.tomb(tag1, brand(0)),
-				Mark.onEmptyCell(
-					{ revision: tag1, localId: brand(1) },
-					Mark.moveOut(1, brand(0)),
-				),
+				Mark.onEmptyCell({ revision: tag1, localId: brand(1) }, Mark.moveOut(1, brand(0))),
 				Mark.moveOut(1, brand(1)),
-				Mark.onEmptyCell(
-					{ revision: tag1, localId: brand(2) },
-					Mark.moveOut(1, brand(2)),
-				),
+				Mark.onEmptyCell({ revision: tag1, localId: brand(2) }, Mark.moveOut(1, brand(2))),
 				Mark.moveOut(1, brand(3)),
-				Mark.onEmptyCell(
-					{ revision: tag1, localId: brand(3) },
-					Mark.moveOut(1, brand(4)),
-				),
+				Mark.onEmptyCell({ revision: tag1, localId: brand(3) }, Mark.moveOut(1, brand(4))),
 				Mark.tomb(tag1, brand(4)),
 			];
 			assertChangesetsEqual(actual, expected);
 		});
 
 		it("modify ↷ insert", () => {
-			const child1 = TestNodeId.create(
-				{ localId: brand(0) },
-				TestChange.mint([0], 1),
-			);
-			const child2 = TestNodeId.create(
-				{ localId: brand(1) },
-				TestChange.mint([0], 2),
-			);
+			const child1 = TestNodeId.create({ localId: brand(0) }, TestChange.mint([0], 1));
+			const child2 = TestNodeId.create({ localId: brand(1) }, TestChange.mint([0], 2));
 
 			const mods = [Mark.modify(child1), Mark.skip(2), Mark.modify(child2)];
-			const insert = Change.insert(2, 1, tag1, {
-				localId: brand(2),
-				revision: tag1,
-			});
+			const insert = Change.insert(2, 1, tag1, { localId: brand(2), revision: tag1 });
 			const expected = [Mark.modify(child1), Mark.skip(3), Mark.modify(child2)];
 			const actual = rebase(mods, insert);
 			assertChangesetsEqual(actual, expected);
@@ -399,10 +326,7 @@ export function testRebase() {
 				Mark.remove(1, brand(3)),
 			];
 			// Inserts between C and D
-			const insert = Change.insert(3, 1, tag1, {
-				localId: brand(2),
-				revision: tag1,
-			});
+			const insert = Change.insert(3, 1, tag1, { localId: brand(2), revision: tag1 });
 			const expected = [
 				Mark.remove(1, brand(0)),
 				Mark.skip(1),
@@ -417,21 +341,10 @@ export function testRebase() {
 		});
 
 		it("insert ↷ insert", () => {
-			const insertA = [
-				Mark.insert(1, brand(1)),
-				Mark.skip(2),
-				Mark.insert(1, brand(2)),
-			];
-			const insertB = Change.insert(1, 1, tag1, {
-				localId: brand(3),
-				revision: tag1,
-			});
+			const insertA = [Mark.insert(1, brand(1)), Mark.skip(2), Mark.insert(1, brand(2))];
+			const insertB = Change.insert(1, 1, tag1, { localId: brand(3), revision: tag1 });
 			const actual = rebase(insertA, insertB);
-			const expected = [
-				Mark.insert(1, brand(1)),
-				Mark.skip(3),
-				Mark.insert(1, brand(2)),
-			];
+			const expected = [Mark.insert(1, brand(1)), Mark.skip(3), Mark.insert(1, brand(2))];
 			assertChangesetsEqual(actual, expected);
 		});
 
@@ -453,12 +366,7 @@ export function testRebase() {
 		});
 
 		it("redundant revive ↷ insert", () => {
-			const revive = Change.pin(
-				0,
-				3,
-				{ revision: tag2, localId: brand(0) },
-				tag2,
-			);
+			const revive = Change.pin(0, 3, { revision: tag2, localId: brand(0) }, tag2);
 			const insert = Change.insert(1, 1, tag1);
 			const actual = rebase(revive, insert);
 			const expected = [
@@ -470,21 +378,10 @@ export function testRebase() {
 		});
 
 		it("modify ↷ revive", () => {
-			const child1 = TestNodeId.create(
-				{ localId: brand(0) },
-				TestChange.mint([0], 1),
-			);
-			const child2 = TestNodeId.create(
-				{ localId: brand(1) },
-				TestChange.mint([0], 2),
-			);
+			const child1 = TestNodeId.create({ localId: brand(0) }, TestChange.mint([0], 1));
+			const child2 = TestNodeId.create({ localId: brand(1) }, TestChange.mint([0], 2));
 			const mods = [Mark.modify(child1), Mark.skip(2), Mark.modify(child2)];
-			const revive = Change.revive(
-				2,
-				1,
-				{ revision: tag1, localId: brand(0) },
-				tag1,
-			);
+			const revive = Change.revive(2, 1, { revision: tag1, localId: brand(0) }, tag1);
 			const expected = [
 				// Modify at earlier index is unaffected
 				Mark.modify(child1),
@@ -506,12 +403,7 @@ export function testRebase() {
 				Mark.remove(1, brand(3)),
 			];
 			// Revives content between C and D
-			const revive = Change.revive(
-				3,
-				1,
-				{ revision: tag1, localId: brand(0) },
-				tag1,
-			);
+			const revive = Change.revive(3, 1, { revision: tag1, localId: brand(0) }, tag1);
 			const expected = [
 				Mark.remove(1, brand(0)),
 				Mark.skip(1),
@@ -526,23 +418,10 @@ export function testRebase() {
 		});
 
 		it("insert ↷ revive", () => {
-			const insert = [
-				Mark.insert(1, brand(1)),
-				Mark.skip(2),
-				Mark.insert(1, brand(2)),
-			];
-			const revive = Change.revive(
-				1,
-				1,
-				{ revision: tag1, localId: brand(0) },
-				tag1,
-			);
+			const insert = [Mark.insert(1, brand(1)), Mark.skip(2), Mark.insert(1, brand(2))];
+			const revive = Change.revive(1, 1, { revision: tag1, localId: brand(0) }, tag1);
 			const actual = rebase(insert, revive);
-			const expected = [
-				Mark.insert(1, brand(1)),
-				Mark.skip(3),
-				Mark.insert(1, brand(2)),
-			];
+			const expected = [Mark.insert(1, brand(1)), Mark.skip(3), Mark.insert(1, brand(2))];
 			assertChangesetsEqual(actual, expected);
 		});
 
@@ -552,10 +431,7 @@ export function testRebase() {
 				Mark.revive(2, { revision: tag1, localId: brand(0) }),
 			];
 			const reviveB = [Mark.revive(1, { revision: tag2, localId: brand(0) })];
-			const expected = [
-				Mark.skip(1),
-				Mark.revive(2, { revision: tag1, localId: brand(0) }),
-			];
+			const expected = [Mark.skip(1), Mark.revive(2, { revision: tag1, localId: brand(0) })];
 			const actual = rebase(reviveAA, reviveB);
 			assertChangesetsEqual(actual, expected);
 		});
@@ -583,12 +459,7 @@ export function testRebase() {
 		});
 
 		it("reviveBB ↷ reviveA => ABB", () => {
-			const reviveBB = Change.revive(
-				5,
-				2,
-				{ revision: tag2, localId: brand(0) },
-				tag2,
-			);
+			const reviveBB = Change.revive(5, 2, { revision: tag2, localId: brand(0) }, tag2);
 			const reviveA = [
 				Mark.skip(5),
 				Mark.revive(1, { revision: tag1, localId: brand(0) }),
@@ -596,11 +467,7 @@ export function testRebase() {
 			];
 			const expected = [
 				Mark.skip(6),
-				Mark.revive(
-					2,
-					{ revision: tag2, localId: brand(0) },
-					{ revision: tag2 },
-				),
+				Mark.revive(2, { revision: tag2, localId: brand(0) }, { revision: tag2 }),
 			];
 			const actual = rebase(reviveBB, reviveA);
 			assertChangesetsEqual(actual, expected);
@@ -613,14 +480,8 @@ export function testRebase() {
 				Mark.revive(1, { revision: tag1, localId: brand(6) }),
 				Mark.tomb(tag2, brand(6)),
 			];
-			const reviveBB = [
-				Mark.skip(5),
-				Mark.revive(2, { revision: tag2, localId: brand(5) }),
-			];
-			const expected = [
-				Mark.skip(6),
-				Mark.revive(1, { revision: tag1, localId: brand(6) }),
-			];
+			const reviveBB = [Mark.skip(5), Mark.revive(2, { revision: tag2, localId: brand(5) })];
+			const expected = [Mark.skip(6), Mark.revive(1, { revision: tag1, localId: brand(6) })];
 			const actual = rebase(reviveA, reviveBB);
 			assertChangesetsEqual(actual, expected);
 		});
@@ -635,10 +496,7 @@ export function testRebase() {
 				Mark.revive(1, { revision: tag2, localId: brand(0) }),
 				Mark.revive(1, { revision: tag3, localId: brand(0) }),
 			];
-			const expected = [
-				Mark.skip(2),
-				Mark.revive(2, { revision: tag1, localId: brand(0) }),
-			];
+			const expected = [Mark.skip(2), Mark.revive(2, { revision: tag1, localId: brand(0) })];
 			const actual = rebase(reviveAA, reviveB);
 			assertChangesetsEqual(actual, expected);
 		});
@@ -717,10 +575,7 @@ export function testRebase() {
 		});
 
 		it("modify ↷ move right", () => {
-			const inner = TestNodeId.create(
-				{ localId: brand(0) },
-				TestChange.mint([0], 1),
-			);
+			const inner = TestNodeId.create({ localId: brand(0) }, TestChange.mint([0], 1));
 			const modify = [Mark.modify(inner)];
 			const [moveOut, moveIn] = Mark.move(1, brand(0));
 			const move = [moveOut, Mark.skip(3), moveIn];
@@ -730,10 +585,7 @@ export function testRebase() {
 		});
 
 		it("modify ↷ move left", () => {
-			const inner = TestNodeId.create(
-				{ localId: brand(0) },
-				TestChange.mint([0], 1),
-			);
+			const inner = TestNodeId.create({ localId: brand(0) }, TestChange.mint([0], 1));
 			const modify = [Mark.skip(3), Mark.modify(inner)];
 			const [moveOut, moveIn] = Mark.move(1, brand(0));
 			const move = [moveIn, Mark.skip(3), moveOut];
@@ -746,14 +598,8 @@ export function testRebase() {
 			const nodeId: NodeId = { localId: brand(0) };
 			const baseNodeId: NodeId = { revision: tag1, localId: brand(1) };
 
-			const inputChildChange = TestNodeId.create(
-				nodeId,
-				TestChange.mint([], 2),
-			);
-			const baseChildChange = TestNodeId.create(
-				baseNodeId,
-				TestChange.mint([], 1),
-			);
+			const inputChildChange = TestNodeId.create(nodeId, TestChange.mint([], 2));
+			const baseChildChange = TestNodeId.create(baseNodeId, TestChange.mint([], 1));
 			const modify = [Mark.skip(3), Mark.modify(inputChildChange)];
 			const [moveOut, moveIn] = Mark.move(1, brand(0), {
 				changes: baseChildChange,
@@ -785,14 +631,8 @@ export function testRebase() {
 			const startCellId: SF.CellId = { revision: tag2, localId: brand(1) };
 			const endCellId: SF.CellId = { revision: tag3, localId: brand(0) };
 
-			const inputChildChange = TestNodeId.create(
-				nodeId,
-				TestChange.mint([], 2),
-			);
-			const baseChildChange = TestNodeId.create(
-				baseNodeId,
-				TestChange.mint([], 1),
-			);
+			const inputChildChange = TestNodeId.create(nodeId, TestChange.mint([], 2));
+			const baseChildChange = TestNodeId.create(baseNodeId, TestChange.mint([], 1));
 			const rename = [
 				Mark.moveOut(
 					1,
@@ -805,27 +645,16 @@ export function testRebase() {
 				}),
 			];
 			const move = [
-				Mark.moveOut(
-					1,
-					{ revision: tag4, localId: brand(4) },
-					{ changes: baseChildChange },
-				),
+				Mark.moveOut(1, { revision: tag4, localId: brand(4) }, { changes: baseChildChange }),
 				Mark.returnTo(1, { revision: tag4, localId: brand(4) }, startCellId),
 			];
-			const expectedChildChange = TestNodeId.create(
-				nodeId,
-				TestChange.mint([1], 2),
-			);
+			const expectedChildChange = TestNodeId.create(nodeId, TestChange.mint([1], 2));
 			const expected = [
 				Mark.tomb(tag4, brand(4)),
 				Mark.moveOut(
 					1,
 					{ revision: tag2, localId: brand(0) },
-					{
-						changes: expectedChildChange,
-						idOverride: endCellId,
-						finalEndpoint: endCellId,
-					},
+					{ changes: expectedChildChange, idOverride: endCellId, finalEndpoint: endCellId },
 				),
 				Mark.moveIn(1, endCellId, {
 					finalEndpoint: { revision: tag2, localId: brand(0) },
@@ -852,23 +681,13 @@ export function testRebase() {
 			const startCellId: SF.CellId = { revision: tag2, localId: brand(1) };
 			const endCellId: SF.CellId = { revision: tag3, localId: brand(0) };
 
-			const inputChildChange = TestNodeId.create(
-				nodeId,
-				TestChange.mint([], 2),
-			);
-			const baseChildChange = TestNodeId.create(
-				baseNodeId,
-				TestChange.mint([], 1),
-			);
+			const inputChildChange = TestNodeId.create(nodeId, TestChange.mint([], 2));
+			const baseChildChange = TestNodeId.create(baseNodeId, TestChange.mint([], 1));
 			const rebasee = [
 				Mark.moveOut(
 					1,
 					{ revision: tag2, localId: brand(0) },
-					{
-						changes: inputChildChange,
-						idOverride: endCellId,
-						finalEndpoint: endCellId,
-					},
+					{ changes: inputChildChange, idOverride: endCellId, finalEndpoint: endCellId },
 				),
 				Mark.skip(1),
 				Mark.moveIn(1, endCellId, {
@@ -876,17 +695,10 @@ export function testRebase() {
 				}),
 			];
 			const move = [
-				Mark.moveOut(
-					1,
-					{ revision: tag4, localId: brand(4) },
-					{ changes: baseChildChange },
-				),
+				Mark.moveOut(1, { revision: tag4, localId: brand(4) }, { changes: baseChildChange }),
 				Mark.moveIn(1, { revision: tag4, localId: brand(4) }),
 			];
-			const expectedChildChange = TestNodeId.create(
-				nodeId,
-				TestChange.mint([1], 2),
-			);
+			const expectedChildChange = TestNodeId.create(nodeId, TestChange.mint([1], 2));
 			const expected = [
 				Mark.rename(1, { revision: tag4, localId: brand(4) }, endCellId),
 				Mark.moveOut(
@@ -952,11 +764,7 @@ export function testRebase() {
 				{ count: 2 },
 				Mark.moveOut(1, brand(0)),
 			];
-			const expected = [
-				Mark.pin(1, brand(0)),
-				{ count: 2 },
-				Mark.tomb(tag1, brand(0)),
-			];
+			const expected = [Mark.pin(1, brand(0)), { count: 2 }, Mark.tomb(tag1, brand(0))];
 			const rebased = rebase(move, move);
 			assertChangesetsEqual(rebased, expected);
 		});
@@ -971,11 +779,7 @@ export function testRebase() {
 				{ count: 2 },
 				Mark.returnTo(1, brand(0), cellId),
 			];
-			const expected = [
-				Mark.tomb(tag1, brand(0)),
-				{ count: 2 },
-				Mark.pin(1, brand(0)),
-			];
+			const expected = [Mark.tomb(tag1, brand(0)), { count: 2 }, Mark.pin(1, brand(0))];
 			const rebased = rebase(move, move);
 			assertChangesetsEqual(rebased, expected);
 		});
@@ -1013,11 +817,7 @@ export function testRebase() {
 		});
 
 		it("pin ↷ move", () => {
-			const move = [
-				Mark.moveIn(2, brand(0)),
-				{ count: 2 },
-				Mark.moveOut(2, brand(0)),
-			];
+			const move = [Mark.moveIn(2, brand(0)), { count: 2 }, Mark.moveOut(2, brand(0))];
 			const pin = [{ count: 2 }, Mark.pin(2, brand(0))];
 			const expected = [
 				Mark.moveOut(2, brand(0)),
@@ -1032,14 +832,8 @@ export function testRebase() {
 			const [mo1, mi1] = Mark.move(1, brand(1));
 			const [mo2, mi2] = Mark.move(1, brand(10));
 			const [mo3, mi3] = Mark.move(1, brand(20));
-			const src: SF.CellMark<SF.MoveOut> = {
-				...mo1,
-				finalEndpoint: { localId: brand(20) },
-			};
-			const dst: SF.CellMark<SF.MoveIn> = {
-				...mi3,
-				finalEndpoint: { localId: brand(1) },
-			};
+			const src: SF.CellMark<SF.MoveOut> = { ...mo1, finalEndpoint: { localId: brand(20) } };
+			const dst: SF.CellMark<SF.MoveIn> = { ...mi3, finalEndpoint: { localId: brand(1) } };
 			const move = [
 				src,
 				Mark.skip(1),
@@ -1064,19 +858,14 @@ export function testRebase() {
 		});
 
 		it("rebasing over transient revive changes cell ID", () => {
-			const change = TestNodeId.create(
-				{ localId: brand(0) },
-				TestChange.mint([0], 1),
-			);
+			const change = TestNodeId.create({ localId: brand(0) }, TestChange.mint([0], 1));
 			const modify = Change.modifyDetached(0, change, {
 				revision: tag1,
 				localId: brand(0),
 			});
 
 			const revive = [
-				Mark.remove(1, brand(2), {
-					cellId: { revision: tag1, localId: brand(0) },
-				}),
+				Mark.remove(1, brand(2), { cellId: { revision: tag1, localId: brand(0) } }),
 			];
 
 			const rebased = rebase(modify, revive, tag2);
@@ -1090,9 +879,7 @@ export function testRebase() {
 		it("rebasing over transient adds tombstones", () => {
 			const insert = Change.insert(0, 1, tag2);
 			const transient = [
-				Mark.remove(2, brand(2), {
-					cellId: { localId: brand(0), revision: tag1 },
-				}),
+				Mark.remove(2, brand(2), { cellId: { localId: brand(0), revision: tag1 } }),
 			];
 			const rebased = rebase(insert, transient, tag1, {
 				metadata: rebaseRevisionMetadataFromInfo(
@@ -1102,11 +889,7 @@ export function testRebase() {
 				),
 			});
 			const expected = [
-				Mark.insert(
-					1,
-					{ localId: brand(0), revision: tag2 },
-					{ revision: tag2 },
-				),
+				Mark.insert(1, { localId: brand(0), revision: tag2 }, { revision: tag2 }),
 				Mark.tomb(tag1, brand(2), 2),
 			];
 
@@ -1117,10 +900,7 @@ export function testRebase() {
 			const moveAndRemove = [
 				Mark.moveOut(1, brand(0)),
 				{ count: 1 },
-				Mark.attachAndDetach(
-					Mark.moveIn(1, brand(0)),
-					Mark.remove(1, brand(1)),
-				),
+				Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.remove(1, brand(1))),
 			];
 
 			const del = Change.remove(0, 1, tag2);
@@ -1139,10 +919,7 @@ export function testRebase() {
 
 		it("remove ↷ [move, remove] (reverse move direction)", () => {
 			const moveAndRemove = [
-				Mark.attachAndDetach(
-					Mark.moveIn(1, brand(0)),
-					Mark.remove(1, brand(1)),
-				),
+				Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.remove(1, brand(1))),
 				{ count: 1 },
 				Mark.moveOut(1, brand(0)),
 			];
@@ -1162,24 +939,15 @@ export function testRebase() {
 		});
 
 		it("move ↷ move and remove", () => {
-			const [moveOut1, moveIn1] = Mark.move(1, {
-				localId: brand(0),
-				revision: tag1,
-			});
+			const [moveOut1, moveIn1] = Mark.move(1, { localId: brand(0), revision: tag1 });
 			const moveAndRemove = [
 				{ count: 1 },
-				Mark.attachAndDetach(
-					moveIn1,
-					Mark.remove(1, { revision: tag1, localId: brand(2) }),
-				),
+				Mark.attachAndDetach(moveIn1, Mark.remove(1, { revision: tag1, localId: brand(2) })),
 				{ count: 1 },
 				moveOut1,
 			];
 
-			const [moveOut2, moveIn2] = Mark.move(1, {
-				localId: brand(0),
-				revision: tag2,
-			});
+			const [moveOut2, moveIn2] = Mark.move(1, { localId: brand(0), revision: tag2 });
 			const move2 = [moveIn2, { count: 2 }, moveOut2];
 			const rebased = rebase(move2, moveAndRemove);
 			const expected = [
@@ -1242,20 +1010,14 @@ export function testRebase() {
 			const reviveMoveRemove = [
 				Mark.moveOut(1, brand(1), { cellId }),
 				{ count: 1 },
-				Mark.attachAndDetach(
-					Mark.moveIn(1, brand(1)),
-					Mark.remove(1, brand(2)),
-				),
+				Mark.attachAndDetach(Mark.moveIn(1, brand(1)), Mark.remove(1, brand(2))),
 			];
 			const revive = [Mark.revive(1, cellId)];
 			const rebased = rebase(revive, reviveMoveRemove, tag2);
 			const expected = [
 				Mark.returnTo(1, brand(0), { revision: tag2, localId: brand(1) }),
 				{ count: 1 },
-				Mark.onEmptyCell(
-					{ revision: tag2, localId: brand(2) },
-					Mark.moveOut(1, brand(0)),
-				),
+				Mark.onEmptyCell({ revision: tag2, localId: brand(2) }, Mark.moveOut(1, brand(0))),
 			];
 			assertChangesetsEqual(rebased, expected);
 		});
@@ -1419,21 +1181,16 @@ export function testRebase() {
 				const rebased = rebaseOverComposition(
 					insert,
 					removes,
-					rebaseRevisionMetadataFromInfo(
-						[{ revision: tag1 }, { revision: tag2 }],
-						undefined,
-						[tag1, tag2],
-					),
+					rebaseRevisionMetadataFromInfo([{ revision: tag1 }, { revision: tag2 }], undefined, [
+						tag1,
+						tag2,
+					]),
 				);
 
 				const expected = [
 					Mark.tomb(tag2),
 					Mark.tomb(tag1, brand(0), 2),
-					Mark.insert(
-						1,
-						{ localId: brand(0), revision: tag3 },
-						{ revision: tag3 },
-					),
+					Mark.insert(1, { localId: brand(0), revision: tag3 }, { revision: tag3 }),
 					Mark.tomb(tag2, brand(1)),
 				];
 				assertChangesetsEqual(rebased, expected);
@@ -1445,19 +1202,15 @@ export function testRebase() {
 					tagChangeInline(Change.remove(0, 2, tag2), tag2),
 				]);
 
-				const nodeChange = TestNodeId.create(
-					{ localId: brand(0) },
-					TestChange.mint([], 0),
-				);
+				const nodeChange = TestNodeId.create({ localId: brand(0) }, TestChange.mint([], 0));
 				const modify = Change.modify(3, nodeChange);
 				const rebased = rebaseOverComposition(
 					modify,
 					removes,
-					rebaseRevisionMetadataFromInfo(
-						[{ revision: tag1 }, { revision: tag2 }],
-						undefined,
-						[tag1, tag2],
-					),
+					rebaseRevisionMetadataFromInfo([{ revision: tag1 }, { revision: tag2 }], undefined, [
+						tag1,
+						tag2,
+					]),
 				);
 
 				const expected = [

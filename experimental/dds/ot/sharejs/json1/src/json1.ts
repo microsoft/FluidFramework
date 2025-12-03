@@ -4,18 +4,18 @@
  */
 
 import { SharedOT } from "@fluid-experimental/ot";
-import type {
+import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	Serializable,
 } from "@fluidframework/datastore-definitions/internal";
 import {
-	type Doc,
-	insertOp,
-	type JSONOp,
+	Doc,
+	JSONOp,
 	type as Json1OTType,
+	Path,
+	insertOp,
 	moveOp,
-	type Path,
 	removeOp,
 	replaceOp,
 } from "ot-json1";
@@ -26,10 +26,7 @@ import { Json1Factory } from "./factory.js";
  * @internal
  */
 export class SharedJson1 extends SharedOT<Doc, JSONOp> {
-	public static create(
-		runtime: IFluidDataStoreRuntime,
-		id?: string,
-	): SharedJson1 {
+	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedJson1 {
 		return runtime.createChannel(id, Json1Factory.Type) as SharedJson1;
 	}
 
@@ -37,11 +34,7 @@ export class SharedJson1 extends SharedOT<Doc, JSONOp> {
 		return new Json1Factory();
 	}
 
-	constructor(
-		id: string,
-		runtime: IFluidDataStoreRuntime,
-		attributes: IChannelAttributes,
-	) {
+	constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
 		// RATIONALE: 'undefined' is not preserved by JSON.stringify().
 		super(id, runtime, attributes, /* initialValue: */ null);
 	}
@@ -74,11 +67,7 @@ export class SharedJson1 extends SharedOT<Doc, JSONOp> {
 		this.apply(removeOp(path, value));
 	}
 
-	public replace<T, U>(
-		path: Path,
-		oldValue: Serializable<T>,
-		newValue: Serializable<U>,
-	) {
+	public replace<T, U>(path: Path, oldValue: Serializable<T>, newValue: Serializable<U>) {
 		this.apply(replaceOp(path, oldValue as Doc, newValue as Doc));
 	}
 }

@@ -41,20 +41,14 @@ interface TestTelemetryPropertiesWithDuration extends TestTelemetryProperties {
 class TestLogger implements ITelemetryLoggerExt {
 	public events: ITelemetryPerformanceEventExt[] = [];
 
-	public sendPerformanceEvent(
-		event: ITelemetryPerformanceEventExt,
-		error?: unknown,
-	): void {
+	public sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown): void {
 		this.events.push(event);
 	}
 
 	public send(event: ITelemetryBaseEvent): void {
 		throw new Error("Method not implemented.");
 	}
-	public sendTelemetryEvent(
-		event: ITelemetryGenericEventExt,
-		error?: unknown,
-	): void {
+	public sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown): void {
 		throw new Error("Method not implemented.");
 	}
 	public sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void {
@@ -72,9 +66,11 @@ describe("TelemetryEventBatcher", () => {
 
 	it("only writes event after threshold for number of calls is reached", () => {
 		const threshold = 10;
-		const eventBatcher = new TelemetryEventBatcher<
-			keyof TestTelemetryProperties
-		>({ eventName: "testEvent" }, logger, threshold);
+		const eventBatcher = new TelemetryEventBatcher<keyof TestTelemetryProperties>(
+			{ eventName: "testEvent" },
+			logger,
+			threshold,
+		);
 
 		for (let i = 0; i < threshold - 1; i++) {
 			const { output: outputOne } = measure(() => ({
@@ -123,9 +119,11 @@ describe("TelemetryEventBatcher", () => {
 
 	it("contains correct telemetryProperties", () => {
 		const threshold = 10;
-		const eventBatcher = new TelemetryEventBatcher<
-			keyof TestTelemetryProperties
-		>({ eventName: "testEvent" }, logger, threshold);
+		const eventBatcher = new TelemetryEventBatcher<keyof TestTelemetryProperties>(
+			{ eventName: "testEvent" },
+			logger,
+			threshold,
+		);
 
 		for (let i = 0; i < threshold; i++) {
 			const { output } = measure(() => ({
@@ -150,9 +148,11 @@ describe("TelemetryEventBatcher", () => {
 
 	it("correctly calculates average and max values for multiple events", () => {
 		const threshold = 10;
-		const eventBatcher = new TelemetryEventBatcher<
-			keyof TestTelemetryProperties
-		>({ eventName: "testEvent" }, logger, threshold);
+		const eventBatcher = new TelemetryEventBatcher<keyof TestTelemetryProperties>(
+			{ eventName: "testEvent" },
+			logger,
+			threshold,
+		);
 
 		for (let i = 1; i <= threshold; i++) {
 			const { output } = measure(() => ({
@@ -270,9 +270,11 @@ describe("TelemetryEventBatcher", () => {
 
 	it("correctly calculates duration", () => {
 		const threshold = 10;
-		const eventBatcher = new TelemetryEventBatcher<
-			keyof TestTelemetryPropertiesWithDuration
-		>({ eventName: "testEvent" }, logger, threshold);
+		const eventBatcher = new TelemetryEventBatcher<keyof TestTelemetryPropertiesWithDuration>(
+			{ eventName: "testEvent" },
+			logger,
+			threshold,
+		);
 
 		const clock = sinon.useFakeTimers();
 		const startingPoint = 50; // Arbitrary starting point.
@@ -291,10 +293,7 @@ describe("TelemetryEventBatcher", () => {
 					},
 				};
 			});
-			eventBatcher.accumulateAndLog({
-				duration,
-				...output.telemetryProperties,
-			});
+			eventBatcher.accumulateAndLog({ duration, ...output.telemetryProperties });
 		}
 
 		assert.strictEqual(logger.events.length, 1);

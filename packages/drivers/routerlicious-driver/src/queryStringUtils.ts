@@ -10,10 +10,7 @@ export type QueryStringType = Record<string, string | number | boolean>;
  * @param url - URL to which query params should be appended. Can include base/default query params.
  * @param queryParams - Query parameters to append. Will override any query params in url.
  */
-export function addOrUpdateQueryParams(
-	url: URL | string,
-	queryParams: QueryStringType,
-): URL {
+export function addOrUpdateQueryParams(url: URL | string, queryParams: QueryStringType): URL {
 	// Initialize urlSearchParams with query params from the base URL itself
 	const outputUrl = new URL(url);
 	const updatedSearchParams = outputUrl.searchParams;

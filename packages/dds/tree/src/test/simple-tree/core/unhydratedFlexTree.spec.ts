@@ -4,6 +4,8 @@
  */
 
 import { strict as assert } from "node:assert";
+
+import { cursorForMapTreeNode, FieldKinds } from "../../../feature-libraries/index.js";
 import {
 	EmptyKey,
 	type ExclusiveMapTree,
@@ -11,21 +13,17 @@ import {
 	type MapTree,
 	type Value,
 } from "../../../core/index.js";
-import {
-	cursorForMapTreeNode,
-	FieldKinds,
-} from "../../../feature-libraries/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { unhydratedFlexTreeFromCursor } from "../../../simple-tree/api/create.js";
+import { brand } from "../../../util/index.js";
 import {
 	UnhydratedFlexTreeNode,
 	type UnhydratedOptionalField,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/unhydratedFlexTree.js";
+import { SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
-import { SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
-import { brand } from "../../../util/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { unhydratedFlexTreeFromCursor } from "../../../simple-tree/api/create.js";
 import { expectEqualCursors } from "../../utils.js";
 
 describe("unhydratedFlexTree", () => {
@@ -35,10 +33,7 @@ describe("unhydratedFlexTree", () => {
 
 	const schemaFactory = new SchemaFactory("Test");
 	const mapSchemaSimple = schemaFactory.map("Map", schemaFactory.string);
-	const arrayNodeSchemaSimple = schemaFactory.array(
-		"ArrayNode",
-		schemaFactory.string,
-	);
+	const arrayNodeSchemaSimple = schemaFactory.array("ArrayNode", schemaFactory.string);
 	const objectSchemaSimple = schemaFactory.object("Object", {
 		[objectMapKey]: mapSchemaSimple,
 		[objectFieldNodeKey]: arrayNodeSchemaSimple,
@@ -83,13 +78,9 @@ describe("unhydratedFlexTree", () => {
 		objectSchemaSimple,
 	]);
 
-	const object = unhydratedFlexTreeFromCursor(
-		context,
-		cursorForMapTreeNode(objectMapTree),
-	);
+	const object = unhydratedFlexTreeFromCursor(context, cursorForMapTreeNode(objectMapTree));
 	const map = object.getBoxed(objectMapKey).boxedAt(0) ?? assert.fail();
-	const arrayNode =
-		object.getBoxed(objectFieldNodeKey).boxedAt(0) ?? assert.fail();
+	const arrayNode = object.getBoxed(objectFieldNodeKey).boxedAt(0) ?? assert.fail();
 
 	assert(map instanceof UnhydratedFlexTreeNode);
 	assert(arrayNode instanceof UnhydratedFlexTreeNode);
@@ -105,20 +96,14 @@ describe("unhydratedFlexTree", () => {
 		assert.equal(arrayNode.value, undefined);
 		assert.equal(object.value, undefined);
 		assert.equal(map.tryGetField(mapKey)?.boxedAt(0)?.value, childValue);
-		assert.equal(
-			arrayNode.tryGetField(EmptyKey)?.boxedAt(0)?.value,
-			childValue,
-		);
+		assert.equal(arrayNode.tryGetField(EmptyKey)?.boxedAt(0)?.value, childValue);
 	});
 
 	it("can get their schema", () => {
 		assert.equal(map.type, mapSchemaSimple.identifier);
 		assert.equal(arrayNode.type, arrayNodeSchemaSimple.identifier);
 		assert.equal(object.type, objectSchemaSimple.identifier);
-		assert.equal(
-			map.tryGetField(mapKey)?.boxedAt(0)?.type,
-			schemaFactory.string.identifier,
-		);
+		assert.equal(map.tryGetField(mapKey)?.boxedAt(0)?.type, schemaFactory.string.identifier);
 		assert.equal(
 			arrayNode.tryGetField(EmptyKey)?.boxedAt(0)?.type,
 			schemaFactory.string.identifier,
@@ -235,18 +220,13 @@ describe("unhydratedFlexTree", () => {
 				cursorForMapTreeNode(objectMapTree),
 			);
 			// Find a field to edit. In this case the one with the map in it.
-			const field = mutableObject.getBoxed(
-				objectMapKey,
-			) as UnhydratedOptionalField;
+			const field = mutableObject.getBoxed(objectMapKey) as UnhydratedOptionalField;
 			const oldMap = field.boxedAt(0);
 			assert(oldMap instanceof UnhydratedFlexTreeNode);
 			assert.equal(oldMap.parentField.parent.parent, mutableObject);
 
 			// Allocate a new node
-			const newMap = unhydratedFlexTreeFromCursor(
-				context,
-				cursorForMapTreeNode(mapMapTree),
-			);
+			const newMap = unhydratedFlexTreeFromCursor(context, cursorForMapTreeNode(mapMapTree));
 			assert.notEqual(newMap, oldMap);
 			assert.equal(newMap.parentField.parent.parent, undefined);
 
@@ -272,9 +252,7 @@ describe("unhydratedFlexTree", () => {
 			const oldValue = field.boxedAt(0);
 			const newValue = `new ${childValue}`;
 			const newTree: MapTree = { ...mapChildMapTree, value: newValue };
-			field.editor.set(
-				unhydratedFlexTreeFromCursor(context, cursorForMapTreeNode(newTree)),
-			);
+			field.editor.set(unhydratedFlexTreeFromCursor(context, cursorForMapTreeNode(newTree)));
 			assert.equal(field.boxedAt(0)?.value, newValue);
 			assert.notEqual(newValue, oldValue);
 			field.editor.set(undefined);
@@ -322,9 +300,7 @@ describe("unhydratedFlexTree", () => {
 				const newContent: UnhydratedFlexTreeNode[] = [];
 				for (let i = 0; i < 10000; i++) {
 					const tree: MapTree = { ...mapChildMapTree, value: String(i) };
-					newContent.push(
-						unhydratedFlexTreeFromCursor(context, cursorForMapTreeNode(tree)),
-					);
+					newContent.push(unhydratedFlexTreeFromCursor(context, cursorForMapTreeNode(tree)));
 				}
 				field.editor.insert(0, newContent);
 				assert.equal(field.length, newContent.length);

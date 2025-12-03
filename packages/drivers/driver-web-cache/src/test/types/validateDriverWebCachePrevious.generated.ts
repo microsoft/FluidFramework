@@ -11,23 +11,12 @@
  * Current version: 2.74.0
  */
 
-import type {
-	FullType,
-	MinimalType,
-	requireAssignableTo,
-	TypeOnly,
-} from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/driver-web-cache-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> =
-	| TypeOnly<T>
-	| MinimalType<T>
-	| FullType<T>
-	| typeof old
-	| typeof current
-	| requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -36,10 +25,7 @@ declare type MakeUnusedImportErrorsGoAway<T> =
  * typeValidation.broken:
  * "Class_FluidCache": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_FluidCache = requireAssignableTo<
-	TypeOnly<old.FluidCache>,
-	TypeOnly<current.FluidCache>
->;
+declare type old_as_current_for_Class_FluidCache = requireAssignableTo<TypeOnly<old.FluidCache>, TypeOnly<current.FluidCache>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -48,10 +34,7 @@ declare type old_as_current_for_Class_FluidCache = requireAssignableTo<
  * typeValidation.broken:
  * "Class_FluidCache": {"backCompat": false}
  */
-declare type current_as_old_for_Class_FluidCache = requireAssignableTo<
-	TypeOnly<current.FluidCache>,
-	TypeOnly<old.FluidCache>
->;
+declare type current_as_old_for_Class_FluidCache = requireAssignableTo<TypeOnly<current.FluidCache>, TypeOnly<old.FluidCache>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -60,10 +43,7 @@ declare type current_as_old_for_Class_FluidCache = requireAssignableTo<
  * typeValidation.broken:
  * "ClassStatics_FluidCache": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_FluidCache = requireAssignableTo<
-	TypeOnly<typeof current.FluidCache>,
-	TypeOnly<typeof old.FluidCache>
->;
+declare type current_as_old_for_ClassStatics_FluidCache = requireAssignableTo<TypeOnly<typeof current.FluidCache>, TypeOnly<typeof old.FluidCache>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -72,11 +52,7 @@ declare type current_as_old_for_ClassStatics_FluidCache = requireAssignableTo<
  * typeValidation.broken:
  * "Function_deleteFluidCacheIndexDbInstance": {"backCompat": false}
  */
-declare type current_as_old_for_Function_deleteFluidCacheIndexDbInstance =
-	requireAssignableTo<
-		TypeOnly<typeof current.deleteFluidCacheIndexDbInstance>,
-		TypeOnly<typeof old.deleteFluidCacheIndexDbInstance>
-	>;
+declare type current_as_old_for_Function_deleteFluidCacheIndexDbInstance = requireAssignableTo<TypeOnly<typeof current.deleteFluidCacheIndexDbInstance>, TypeOnly<typeof old.deleteFluidCacheIndexDbInstance>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -85,11 +61,7 @@ declare type current_as_old_for_Function_deleteFluidCacheIndexDbInstance =
  * typeValidation.broken:
  * "Interface_FluidCacheConfig": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_FluidCacheConfig =
-	requireAssignableTo<
-		TypeOnly<old.FluidCacheConfig>,
-		TypeOnly<current.FluidCacheConfig>
-	>;
+declare type old_as_current_for_Interface_FluidCacheConfig = requireAssignableTo<TypeOnly<old.FluidCacheConfig>, TypeOnly<current.FluidCacheConfig>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -98,8 +70,4 @@ declare type old_as_current_for_Interface_FluidCacheConfig =
  * typeValidation.broken:
  * "Interface_FluidCacheConfig": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_FluidCacheConfig =
-	requireAssignableTo<
-		TypeOnly<current.FluidCacheConfig>,
-		TypeOnly<old.FluidCacheConfig>
-	>;
+declare type current_as_old_for_Interface_FluidCacheConfig = requireAssignableTo<TypeOnly<current.FluidCacheConfig>, TypeOnly<old.FluidCacheConfig>>

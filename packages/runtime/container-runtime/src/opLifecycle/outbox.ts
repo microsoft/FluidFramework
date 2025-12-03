@@ -10,11 +10,11 @@ import type {
 } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
-	createChildLogger,
 	DataProcessingError,
+	UsageError,
+	createChildLogger,
 	type IFluidErrorBase,
 	type ITelemetryLoggerExt,
-	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
@@ -24,18 +24,18 @@ import type {
 } from "../pendingStateManager.js";
 
 import {
-	type BatchId,
 	BatchManager,
 	type BatchSequenceNumbers,
 	sequenceNumbersMatch,
+	type BatchId,
 } from "./batchManager.js";
 import type {
-	IBatchCheckpoint,
-	LocalBatch,
 	LocalBatchMessage,
-	OutboundBatch,
+	IBatchCheckpoint,
 	OutboundBatchMessage,
 	OutboundSingletonBatch,
+	LocalBatch,
+	OutboundBatch,
 } from "./definitions.js";
 import type { OpCompressor } from "./opCompressor.js";
 import type { OpGroupingManager } from "./opGroupingManager.js";
@@ -69,10 +69,7 @@ export interface IOutboxParameters {
 	readonly logger: ITelemetryBaseLogger;
 	readonly groupingManager: OpGroupingManager;
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
-	readonly reSubmit: (
-		message: PendingMessageResubmitData,
-		squash: boolean,
-	) => void;
+	readonly reSubmit: (message: PendingMessageResubmitData, squash: boolean) => void;
 	readonly opReentrancy: () => boolean;
 }
 
@@ -113,10 +110,7 @@ export function getLongStack<T>(action: () => T, length: number = 50): T {
 		// ?? is not logically equivalent when the first clause returns false.
 		(
 			Object.getOwnPropertyDescriptor(errorObj, "stackTraceLimit") ||
-			Object.getOwnPropertyDescriptor(
-				Object.getPrototypeOf(errorObj),
-				"stackTraceLimit",
-			)
+			Object.getOwnPropertyDescriptor(Object.getPrototypeOf(errorObj), "stackTraceLimit")
 		)?.writable !== true
 		/* eslint-enable @typescript-eslint/prefer-nullish-coalescing */
 	) {
@@ -215,10 +209,7 @@ export class Outbox {
 	private mismatchedOpsReported = 0;
 
 	constructor(private readonly params: IOutboxParameters) {
-		this.logger = createChildLogger({
-			logger: params.logger,
-			namespace: "Outbox",
-		});
+		this.logger = createChildLogger({ logger: params.logger, namespace: "Outbox" });
 
 		this.mainBatch = new BatchManager({ canRebase: true });
 		this.blobAttachBatch = new BatchManager({ canRebase: true });
@@ -229,11 +220,7 @@ export class Outbox {
 	}
 
 	public get messageCount(): number {
-		return (
-			this.mainBatch.length +
-			this.blobAttachBatch.length +
-			this.idAllocationBatch.length
-		);
+		return this.mainBatch.length + this.blobAttachBatch.length + this.idAllocationBatch.length;
 	}
 
 	public get mainBatchMessageCount(): number {
@@ -254,8 +241,7 @@ export class Outbox {
 
 	public containsUserChanges(): boolean {
 		return (
-			this.mainBatch.containsUserChanges() ||
-			this.blobAttachBatch.containsUserChanges()
+			this.mainBatch.containsUserChanges() || this.blobAttachBatch.containsUserChanges()
 			// ID Allocation ops are not user changes
 		);
 	}
@@ -316,17 +302,12 @@ export class Outbox {
 					eventName: "ReferenceSequenceNumberMismatch",
 					details: {
 						expectedDueToReentrancy,
-						mainReferenceSequenceNumber:
-							mainBatchSeqNums.referenceSequenceNumber,
+						mainReferenceSequenceNumber: mainBatchSeqNums.referenceSequenceNumber,
 						mainClientSequenceNumber: mainBatchSeqNums.clientSequenceNumber,
-						blobAttachReferenceSequenceNumber:
-							blobAttachSeqNums.referenceSequenceNumber,
-						blobAttachClientSequenceNumber:
-							blobAttachSeqNums.clientSequenceNumber,
-						currentReferenceSequenceNumber:
-							currentSequenceNumbers.referenceSequenceNumber,
-						currentClientSequenceNumber:
-							currentSequenceNumbers.clientSequenceNumber,
+						blobAttachReferenceSequenceNumber: blobAttachSeqNums.referenceSequenceNumber,
+						blobAttachClientSequenceNumber: blobAttachSeqNums.clientSequenceNumber,
+						currentReferenceSequenceNumber: currentSequenceNumbers.referenceSequenceNumber,
+						currentClientSequenceNumber: currentSequenceNumbers.clientSequenceNumber,
 					},
 				},
 				errorWrapper.value,
@@ -403,9 +384,7 @@ export class Outbox {
 
 	private flushAll(resubmitInfo?: BatchResubmitInfo): void {
 		const allBatchesEmpty =
-			this.idAllocationBatch.empty &&
-			this.blobAttachBatch.empty &&
-			this.mainBatch.empty;
+			this.idAllocationBatch.empty && this.blobAttachBatch.empty && this.mainBatch.empty;
 		if (allBatchesEmpty) {
 			// If we're resubmitting with a batchId and all batches are empty, we need to flush an empty batch.
 			// Note that we currently resubmit one batch at a time, so on resubmit, 1 of the 2 batches will *always* be empty.
@@ -470,11 +449,7 @@ export class Outbox {
 		disableGroupedBatching?: boolean;
 		resubmitInfo?: BatchResubmitInfo; // undefined if not resubmitting
 	}): void {
-		const {
-			batchManager,
-			disableGroupedBatching = false,
-			resubmitInfo,
-		} = params;
+		const { batchManager, disableGroupedBatching = false, resubmitInfo } = params;
 		if (batchManager.empty) {
 			return;
 		}
@@ -489,17 +464,13 @@ export class Outbox {
 		);
 
 		const groupingEnabled =
-			!disableGroupedBatching &&
-			this.params.groupingManager.groupedBatchingEnabled();
+			!disableGroupedBatching && this.params.groupingManager.groupedBatchingEnabled();
 		if (
 			batchManager.options.canRebase &&
 			rawBatch.hasReentrantOps === true &&
 			groupingEnabled
 		) {
-			assert(
-				!this.rebasing,
-				0x6fa /* A rebased batch should never have reentrant ops */,
-			);
+			assert(!this.rebasing, 0x6fa /* A rebased batch should never have reentrant ops */);
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
 			// it needs to be rebased so that we can ensure consistent reference sequence numbers
 			// and eventual consistency at the DDS level.
@@ -540,10 +511,7 @@ export class Outbox {
 	 */
 	private rebase(rawBatch: LocalBatch, batchManager: BatchManager): void {
 		assert(!this.rebasing, 0x6fb /* Reentrancy */);
-		assert(
-			batchManager.options.canRebase,
-			0x9a7 /* BatchManager does not support rebase */,
-		);
+		assert(batchManager.options.canRebase, 0x9a7 /* BatchManager does not support rebase */);
 
 		this.rebasing = true;
 		const squash = false;
@@ -591,10 +559,7 @@ export class Outbox {
 	 * - (C) A compressed singleton batch
 	 * - (D) A singleton batch containing the last chunk.
 	 */
-	private virtualizeBatch(
-		localBatch: LocalBatch,
-		groupingEnabled: boolean,
-	): OutboundBatch {
+	private virtualizeBatch(localBatch: LocalBatch, groupingEnabled: boolean): OutboundBatch {
 		// Shallow copy the local batch, updating the messages to be outbound messages
 		const originalBatch = localBatchToOutboundBatch(localBatch);
 
@@ -620,28 +585,19 @@ export class Outbox {
 			return singletonBatch;
 		}
 
-		const compressedBatch =
-			this.params.compressor.compressBatch(singletonBatch);
+		const compressedBatch = this.params.compressor.compressBatch(singletonBatch);
 
 		if (this.params.splitter.isBatchChunkingEnabled) {
-			return compressedBatch.contentSizeInBytes <=
-				this.params.splitter.chunkSizeInBytes
+			return compressedBatch.contentSizeInBytes <= this.params.splitter.chunkSizeInBytes
 				? compressedBatch
 				: this.params.splitter.splitSingletonBatchMessage(compressedBatch);
 		}
 
 		// We want to distinguish this "BatchTooLarge" case from the generic "BatchTooLarge" case in sendBatch
-		if (
-			compressedBatch.contentSizeInBytes >=
-			this.params.config.maxBatchSizeInBytes
-		) {
-			throw this.makeBatchTooLargeError(
-				compressedBatch,
-				"CompressionInsufficient",
-				{
-					uncompressedSizeInBytes: singletonBatch.contentSizeInBytes,
-				},
-			);
+		if (compressedBatch.contentSizeInBytes >= this.params.config.maxBatchSizeInBytes) {
+			throw this.makeBatchTooLargeError(compressedBatch, "CompressionInsufficient", {
+				uncompressedSizeInBytes: singletonBatch.contentSizeInBytes,
+			});
 		}
 
 		return compressedBatch;
@@ -675,10 +631,7 @@ export class Outbox {
 
 			clientSequenceNumber = this.params.legacySendBatchFn(batch);
 		} else {
-			assert(
-				batch.referenceSequenceNumber !== undefined,
-				0x58e /* Batch must not be empty */,
-			);
+			assert(batch.referenceSequenceNumber !== undefined, 0x58e /* Batch must not be empty */);
 			clientSequenceNumber = this.params.submitBatchFn(
 				batch.messages.map<IBatchMessage>((message) => ({
 					contents: message.contents,
@@ -692,10 +645,7 @@ export class Outbox {
 
 		// Convert from clientSequenceNumber of last message in the batch to clientSequenceNumber of first message.
 		clientSequenceNumber -= length - 1;
-		assert(
-			clientSequenceNumber >= 0,
-			0x3d0 /* clientSequenceNumber can't be negative */,
-		);
+		assert(clientSequenceNumber >= 0, 0x3d0 /* clientSequenceNumber can't be negative */);
 		return clientSequenceNumber;
 	}
 
@@ -714,11 +664,8 @@ export class Outbox {
 					contentSizeInBytes: batch.contentSizeInBytes,
 					socketSize: estimateSocketSize(batch),
 					maxBatchSizeInBytes: this.params.config.maxBatchSizeInBytes,
-					groupedBatchingEnabled:
-						this.params.groupingManager.groupedBatchingEnabled(),
-					compressionOptions: JSON.stringify(
-						this.params.config.compressionOptions,
-					),
+					groupedBatchingEnabled: this.params.groupingManager.groupedBatchingEnabled(),
+					compressionOptions: JSON.stringify(this.params.config.compressionOptions),
 					chunkingEnabled: this.params.splitter.isBatchChunkingEnabled,
 					chunkSizeInBytes: this.params.splitter.chunkSizeInBytes,
 					...moreDetails,

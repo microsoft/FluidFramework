@@ -3,25 +3,26 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import {
 	describeInstallVersions,
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
 } from "@fluid-private/test-version-utils";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 // TODO:AB#6558: This should be provided based on the compatibility configuration.
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
-	type ChannelFactoryRegistry,
+	ChannelFactoryRegistry,
 	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
-	type ITestContainerConfig,
-	type ITestFluidObject,
-	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
 
 const versionWithChunking = "0.56.0";
 
@@ -57,12 +58,8 @@ describeInstallVersions(
 		);
 
 		const ContainerRuntimeFactoryWithDefaultDataStore_Old =
-			getContainerRuntimeApi(
-				versionWithChunking,
-			).ContainerRuntimeFactoryWithDefaultDataStore;
-		const oldRuntimeFactory = new (
-			ContainerRuntimeFactoryWithDefaultDataStore_Old as any
-		)(
+			getContainerRuntimeApi(versionWithChunking).ContainerRuntimeFactoryWithDefaultDataStore;
+		const oldRuntimeFactory = new (ContainerRuntimeFactoryWithDefaultDataStore_Old as any)(
 			oldDataObjectFactory,
 			[[oldDataObjectFactory.type, Promise.resolve(oldDataObjectFactory)]],
 			undefined,
@@ -84,10 +81,8 @@ describeInstallVersions(
 			await getContainerEntryPointBackCompat<ITestFluidObject>(oldContainer);
 		oldMap = await oldDataObject.getSharedObject<ISharedMap>(mapId);
 
-		const containerOnLatest =
-			await provider.loadTestContainer(testContainerConfig);
-		const newDataObject =
-			(await containerOnLatest.getEntryPoint()) as ITestFluidObject;
+		const containerOnLatest = await provider.loadTestContainer(testContainerConfig);
+		const newDataObject = (await containerOnLatest.getEntryPoint()) as ITestFluidObject;
 		newMap = await newDataObject.getSharedObject<ISharedMap>(mapId);
 
 		await provider.ensureSynchronized();
@@ -111,30 +106,10 @@ describeInstallVersions(
 		oldMap.set("key4", regularValue);
 
 		await provider.ensureSynchronized();
-		assert.strictEqual(
-			newMap.get("key0"),
-			regularValue,
-			"Wrong value found in the new map",
-		);
-		assert.strictEqual(
-			newMap.get("key1"),
-			chunkableValue,
-			"Wrong value found in the new map",
-		);
-		assert.strictEqual(
-			newMap.get("key2"),
-			chunkableValue,
-			"Wrong value found in the new map",
-		);
-		assert.strictEqual(
-			newMap.get("key3"),
-			regularValue,
-			"Wrong value found in the new map",
-		);
-		assert.strictEqual(
-			newMap.get("key4"),
-			regularValue,
-			"Wrong value found in the new map",
-		);
+		assert.strictEqual(newMap.get("key0"), regularValue, "Wrong value found in the new map");
+		assert.strictEqual(newMap.get("key1"), chunkableValue, "Wrong value found in the new map");
+		assert.strictEqual(newMap.get("key2"), chunkableValue, "Wrong value found in the new map");
+		assert.strictEqual(newMap.get("key3"), regularValue, "Wrong value found in the new map");
+		assert.strictEqual(newMap.get("key4"), regularValue, "Wrong value found in the new map");
 	});
 });

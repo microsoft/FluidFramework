@@ -183,9 +183,7 @@ export interface FluidObjectTreeNode extends TreeNodeBase, FluidObjectNodeBase {
  *
  * @internal
  */
-export interface FluidObjectValueNode
-	extends ValueNodeBase,
-		FluidObjectNodeBase {
+export interface FluidObjectValueNode extends ValueNodeBase, FluidObjectNodeBase {
 	/**
 	 * {@inheritDoc VisualNodeBase.nodeKind}
 	 */

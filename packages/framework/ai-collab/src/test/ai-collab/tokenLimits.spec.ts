@@ -10,8 +10,8 @@ import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 // eslint-disable-next-line import-x/no-internal-modules
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import {
-	SchemaFactory,
 	SharedTree,
+	SchemaFactory,
 	TreeViewConfiguration,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/tree/internal";
@@ -40,9 +40,7 @@ describe.skip("Token limits work as expected", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = tree.viewWith(
-			new TreeViewConfiguration({ schema: TestAppSchema }),
-		);
+		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestAppSchema }));
 		view.initialize({
 			title: "This is a group of tasks",
 			tasks: [
@@ -80,10 +78,7 @@ describe.skip("Token limits work as expected", () => {
 		});
 		assert.strictEqual(response.status, "partial-failure");
 		assert.strictEqual(response.errorMessage, "tokenLimitExceeded");
-		assert.strictEqual(
-			response.tokensUsed.inputTokens >= inputTokenLimit,
-			true,
-		);
+		assert.strictEqual(response.tokensUsed.inputTokens >= inputTokenLimit, true);
 	}).timeout(20000);
 
 	it("Should not allow more than allowed output token limit", async () => {
@@ -91,9 +86,7 @@ describe.skip("Token limits work as expected", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = tree.viewWith(
-			new TreeViewConfiguration({ schema: TestAppSchema }),
-		);
+		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestAppSchema }));
 		view.initialize({
 			title: "This is a group of tasks",
 			tasks: [
@@ -132,9 +125,6 @@ describe.skip("Token limits work as expected", () => {
 		});
 		assert.strictEqual(response.status, "partial-failure");
 		assert.strictEqual(response.errorMessage, "tokenLimitExceeded");
-		assert.strictEqual(
-			response.tokensUsed.outputTokens >= outputTokenLimit,
-			true,
-		);
+		assert.strictEqual(response.tokensUsed.outputTokens >= outputTokenLimit, true);
 	}).timeout(20000);
 });

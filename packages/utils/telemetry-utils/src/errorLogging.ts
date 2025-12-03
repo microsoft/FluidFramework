@@ -3,18 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ITelemetryBaseProperties,
-	Tagged,
-} from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseProperties, Tagged } from "@fluidframework/core-interfaces";
 import type { ILoggingError } from "@fluidframework/core-interfaces/internal";
 import { v4 as uuid } from "uuid";
 
-import {
-	hasErrorInstanceId,
-	type IFluidErrorBase,
-	isFluidError,
-} from "./fluidErrorBase.js";
+import { type IFluidErrorBase, hasErrorInstanceId, isFluidError } from "./fluidErrorBase.js";
 import { convertToBasePropertyType } from "./logger.js";
 import type {
 	ITelemetryLoggerExt,
@@ -42,10 +35,7 @@ export function extractLogSafeErrorProperties(
 	errorType?: string | undefined;
 	stack?: string | undefined;
 } {
-	const removeMessageFromStack = (
-		stack: string,
-		errorName?: string,
-	): string => {
+	const removeMessageFromStack = (stack: string, errorName?: string): string => {
 		if (!sanitizeStack) {
 			return stack;
 		}
@@ -135,10 +125,7 @@ export function normalizeError(
 	}
 
 	// We have to construct a new Fluid Error, copying safe properties over
-	const { message, stack } = extractLogSafeErrorProperties(
-		error,
-		false /* sanitizeStack */,
-	);
+	const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
 	const fluidError: IFluidErrorBase = new NormalizedLoggingError({
 		message,
 		stack,
@@ -148,12 +135,8 @@ export function normalizeError(
 	// Anywhere they are set should be on a valid Fluid Error that would have been returned above,
 	// but we can't prove it with the types, so adding this defensive measure.
 	if (typeof error === "object" && error !== null) {
-		const maybeHasRetry: Partial<
-			Record<"canRetry" | "retryAfterSeconds", unknown>
-		> = error;
-		let retryProps:
-			| Partial<Record<"canRetry" | "retryAfterSeconds", unknown>>
-			| undefined;
+		const maybeHasRetry: Partial<Record<"canRetry" | "retryAfterSeconds", unknown>> = error;
+		let retryProps: Partial<Record<"canRetry" | "retryAfterSeconds", unknown>> | undefined;
 		if ("canRetry" in error) {
 			retryProps ??= {};
 			retryProps.canRetry = maybeHasRetry.canRetry;
@@ -280,9 +263,7 @@ export function wrapError<T extends LoggingError>(
 		newError.overwriteErrorInstanceId(innerError.errorInstanceId);
 
 		// For "back-compat" in the logs
-		newError.addTelemetryProperties({
-			innerErrorInstanceId: innerError.errorInstanceId,
-		});
+		newError.addTelemetryProperties({ innerErrorInstanceId: innerError.errorInstanceId });
 	}
 
 	// Lastly, copy over all other telemetry properties. Note these will not overwrite existing properties
@@ -334,10 +315,7 @@ export function wrapErrorAndLog<T extends LoggingError>(
  *
  * @internal
  */
-export function overwriteStack(
-	error: IFluidErrorBase | LoggingError,
-	stack: string,
-): void {
+export function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string): void {
 	try {
 		Object.assign(error, { stack });
 	} catch {
@@ -361,9 +339,7 @@ export function isExternalError(error: unknown): boolean {
 			const props = error.getTelemetryProperties();
 			// NOTE: errorRunningExternalCode is not currently used - once this "read" code reaches LTS,
 			// we can switch to writing this more explicit property
-			return (
-				props.untrustedOrigin === 1 || Boolean(props.errorRunningExternalCode)
-			);
+			return props.untrustedOrigin === 1 || Boolean(props.errorRunningExternalCode);
 		}
 		return false;
 	}
@@ -393,10 +369,7 @@ export function isTaggedTelemetryPropertyValue(
  *
  * @internal
  */
-export const getCircularReplacer = (): ((
-	key: string,
-	value: unknown,
-) => any) => {
+export const getCircularReplacer = (): ((key: string, value: unknown) => any) => {
 	const seen = new WeakSet();
 	return (key: string, value: unknown): any => {
 		if (typeof value === "object" && value !== null) {

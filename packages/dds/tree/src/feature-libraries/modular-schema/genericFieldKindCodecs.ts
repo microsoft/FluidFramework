@@ -3,18 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type ICodecFamily,
-	type IJsonCodec,
-	makeCodecFamily,
-} from "../../codec/index.js";
+import { type ICodecFamily, type IJsonCodec, makeCodecFamily } from "../../codec/index.js";
 
 import type { FieldChangeEncodingContext } from "./fieldChangeHandler.js";
 import { EncodedGenericChangeset } from "./genericFieldKindFormat.js";
-import {
-	type GenericChangeset,
-	newGenericChangeset,
-} from "./genericFieldKindTypes.js";
+import { newGenericChangeset, type GenericChangeset } from "./genericFieldKindTypes.js";
 import { EncodedNodeChangeset } from "./modularChangeFormat.js";
 
 export function makeGenericChangeCodec(): ICodecFamily<
@@ -45,10 +38,7 @@ function makeV1Codec(): IJsonCodec<
 			context: FieldChangeEncodingContext,
 		): GenericChangeset => {
 			return newGenericChangeset(
-				encoded.map(([index, nodeChange]) => [
-					index,
-					context.decodeNode(nodeChange),
-				]),
+				encoded.map(([index, nodeChange]) => [index, context.decodeNode(nodeChange)]),
 			);
 		},
 		encodedSchema: EncodedGenericChangeset(EncodedNodeChangeset),

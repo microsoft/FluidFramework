@@ -5,31 +5,29 @@
 
 import { fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { TreeNode, Tree, NodeKind } from "@fluidframework/tree";
 import type {
 	ImplicitFieldSchema,
-	TreeArrayNode,
 	TreeFieldFromImplicitField,
 	TreeMapNode,
+	TreeArrayNode,
 } from "@fluidframework/tree";
-import { NodeKind, Tree, TreeNode } from "@fluidframework/tree";
+import { TreeAlpha } from "@fluidframework/tree/alpha";
 import type {
 	ReadableField,
-	TreeBranchAlpha,
 	TreeRecordNode,
+	TreeBranchAlpha,
 } from "@fluidframework/tree/alpha";
-import { TreeAlpha } from "@fluidframework/tree/alpha";
-import type { TreeView, ViewOrTree } from "./api.js";
+
 import { getNodeOnBranch } from "./getNodeOnBranch.js";
+import type { TreeView, ViewOrTree } from "./api.js";
 
 /**
  * Wraps either a {@link TreeView} or a {@link TreeNode} and provides a common interface over them.
  */
 export class Subtree<TRoot extends ImplicitFieldSchema> {
 	public constructor(public readonly viewOrTree: ViewOrTree<TRoot>) {
-		if (
-			viewOrTree instanceof TreeNode &&
-			TreeAlpha.branch(viewOrTree) === undefined
-		) {
+		if (viewOrTree instanceof TreeNode && TreeAlpha.branch(viewOrTree) === undefined) {
 			throw new UsageError("The provided node must belong to a branch.");
 		}
 	}
@@ -41,9 +39,7 @@ export class Subtree<TRoot extends ImplicitFieldSchema> {
 	}
 
 	public get field(): ReadableField<TRoot> {
-		return this.viewOrTree instanceof TreeNode
-			? this.viewOrTree
-			: this.viewOrTree.root;
+		return this.viewOrTree instanceof TreeNode ? this.viewOrTree : this.viewOrTree.root;
 	}
 
 	public set field(value: TreeFieldFromImplicitField<TRoot>) {
@@ -112,8 +108,7 @@ export class Subtree<TRoot extends ImplicitFieldSchema> {
 
 	public fork(): Subtree<TRoot> {
 		if (this.viewOrTree instanceof TreeNode) {
-			const branch =
-				TreeAlpha.branch(this.viewOrTree) ?? fail("Node cannot be raw.");
+			const branch = TreeAlpha.branch(this.viewOrTree) ?? fail("Node cannot be raw.");
 			const node =
 				getNodeOnBranch(this.viewOrTree, branch.fork()) ??
 				fail("Expected node to be on new fork.");

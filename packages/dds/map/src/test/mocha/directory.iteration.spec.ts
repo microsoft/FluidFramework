@@ -7,10 +7,10 @@ import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import {
-	type MockContainerRuntime,
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
+	type MockContainerRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { DirectoryFactory } from "../../directoryFactory.js";
@@ -26,16 +26,10 @@ interface TestParts {
 const directoryFactory = new DirectoryFactory();
 
 function setupTest(): TestParts {
-	const containerRuntimeFactory = new MockContainerRuntimeFactory({
-		flushMode: 1,
-	}); // TurnBased
+	const containerRuntimeFactory = new MockContainerRuntimeFactory({ flushMode: 1 }); // TurnBased
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: "1" });
-	const containerRuntime =
-		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const sharedDirectory = directoryFactory.create(
-		dataStoreRuntime,
-		"shared-directory-1",
-	);
+	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const sharedDirectory = directoryFactory.create(dataStoreRuntime, "shared-directory-1");
 	dataStoreRuntime.setAttachState(AttachState.Attached);
 	sharedDirectory.connect({
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
@@ -59,12 +53,8 @@ function createAdditionalClient(
 	containerRuntime: MockContainerRuntime;
 } {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: id });
-	const containerRuntime =
-		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const sharedDirectory = directoryFactory.create(
-		dataStoreRuntime,
-		`shared-directory-${id}`,
-	);
+	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const sharedDirectory = directoryFactory.create(dataStoreRuntime, `shared-directory-${id}`);
 	dataStoreRuntime.setAttachState(AttachState.Attached);
 	sharedDirectory.connect({
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
@@ -75,13 +65,10 @@ function createAdditionalClient(
 
 describe("SharedDirectory iteration", () => {
 	it("should have eventually consistent iteration order between clients when simultaneous set", () => {
-		const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
-			setupTest();
+		const { sharedDirectory, containerRuntimeFactory, containerRuntime } = setupTest();
 		// Create a second client
-		const {
-			sharedDirectory: sharedDirectory2,
-			containerRuntime: containerRuntime2,
-		} = createAdditionalClient(containerRuntimeFactory);
+		const { sharedDirectory: sharedDirectory2, containerRuntime: containerRuntime2 } =
+			createAdditionalClient(containerRuntimeFactory);
 
 		sharedDirectory.set("key1", "value1");
 		sharedDirectory.set("key2", "value2");
@@ -106,13 +93,10 @@ describe("SharedDirectory iteration", () => {
 	});
 
 	it("should have eventually consistent iteration order between clients when suppressed delete", () => {
-		const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
-			setupTest();
+		const { sharedDirectory, containerRuntimeFactory, containerRuntime } = setupTest();
 		// Create a second client
-		const {
-			sharedDirectory: sharedDirectory2,
-			containerRuntime: containerRuntime2,
-		} = createAdditionalClient(containerRuntimeFactory);
+		const { sharedDirectory: sharedDirectory2, containerRuntime: containerRuntime2 } =
+			createAdditionalClient(containerRuntimeFactory);
 
 		sharedDirectory.set("key1", "value1");
 		sharedDirectory.set("key2", "value2");
@@ -131,22 +115,15 @@ describe("SharedDirectory iteration", () => {
 		const keys1 = [...sharedDirectory.keys()];
 		const keys2 = [...sharedDirectory2.keys()];
 
-		assert.deepStrictEqual(
-			keys1,
-			["key2", "key1"],
-			"Keys should match expected",
-		);
+		assert.deepStrictEqual(keys1, ["key2", "key1"], "Keys should match expected");
 		assert.deepStrictEqual(keys1, keys2, "Keys should match between clients");
 	});
 
 	it("should have eventually consistent iteration order between clients when clear", () => {
-		const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
-			setupTest();
+		const { sharedDirectory, containerRuntimeFactory, containerRuntime } = setupTest();
 		// Create a second client
-		const {
-			sharedDirectory: sharedDirectory2,
-			containerRuntime: containerRuntime2,
-		} = createAdditionalClient(containerRuntimeFactory);
+		const { sharedDirectory: sharedDirectory2, containerRuntime: containerRuntime2 } =
+			createAdditionalClient(containerRuntimeFactory);
 
 		sharedDirectory.set("key1", "value1");
 		sharedDirectory.set("key2", "value2");
@@ -167,21 +144,14 @@ describe("SharedDirectory iteration", () => {
 		const keys1 = [...sharedDirectory.keys()];
 		const keys2 = [...sharedDirectory2.keys()];
 
-		assert.deepStrictEqual(
-			keys1,
-			["key3", "key1", "key4"],
-			"Keys should match expected",
-		);
+		assert.deepStrictEqual(keys1, ["key3", "key1", "key4"], "Keys should match expected");
 		assert.deepStrictEqual(keys1, keys2, "Keys should match between clients");
 	});
 
 	it("should have eventually consistent iteration order with nested subdirectory operations", () => {
-		const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
-			setupTest();
-		const {
-			sharedDirectory: sharedDirectory2,
-			containerRuntime: containerRuntime2,
-		} = createAdditionalClient(containerRuntimeFactory);
+		const { sharedDirectory, containerRuntimeFactory, containerRuntime } = setupTest();
+		const { sharedDirectory: sharedDirectory2, containerRuntime: containerRuntime2 } =
+			createAdditionalClient(containerRuntimeFactory);
 
 		sharedDirectory.set("rootKey1", "rootValue1");
 		const subDir1 = sharedDirectory.createSubDirectory("subdir");
@@ -213,11 +183,7 @@ describe("SharedDirectory iteration", () => {
 			["rootKey2", "rootKey3", "rootKey4", "rootKey1"],
 			"Root keys should match expected order",
 		);
-		assert.deepStrictEqual(
-			rootKeys1,
-			rootKeys2,
-			"Root keys should match between clients",
-		);
+		assert.deepStrictEqual(rootKeys1, rootKeys2, "Root keys should match between clients");
 
 		const subKeys1 = [...subDir1.keys()];
 		const subKeys2 = [...subDir2.keys()];
@@ -235,12 +201,9 @@ describe("SharedDirectory iteration", () => {
 	});
 
 	it("should have eventually consistent subdirectory iteration order with multiple create/delete", () => {
-		const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
-			setupTest();
-		const {
-			sharedDirectory: sharedDirectory2,
-			containerRuntime: containerRuntime2,
-		} = createAdditionalClient(containerRuntimeFactory);
+		const { sharedDirectory, containerRuntimeFactory, containerRuntime } = setupTest();
+		const { sharedDirectory: sharedDirectory2, containerRuntime: containerRuntime2 } =
+			createAdditionalClient(containerRuntimeFactory);
 
 		sharedDirectory.createSubDirectory("dir1");
 		sharedDirectory.createSubDirectory("dir2");
@@ -248,12 +211,8 @@ describe("SharedDirectory iteration", () => {
 		containerRuntime.flush();
 		containerRuntimeFactory.processAllMessages();
 
-		const initialSubdirs1 = [...sharedDirectory.subdirectories()].map(
-			([name]) => name,
-		);
-		const initialSubdirs2 = [...sharedDirectory2.subdirectories()].map(
-			([name]) => name,
-		);
+		const initialSubdirs1 = [...sharedDirectory.subdirectories()].map(([name]) => name);
+		const initialSubdirs2 = [...sharedDirectory2.subdirectories()].map(([name]) => name);
 		assert.deepStrictEqual(
 			initialSubdirs1,
 			["dir1", "dir2", "dir3"],
@@ -278,12 +237,8 @@ describe("SharedDirectory iteration", () => {
 		containerRuntime2.flush();
 		containerRuntimeFactory.processAllMessages();
 
-		const finalSubdirs1 = [...sharedDirectory.subdirectories()].map(
-			([name]) => name,
-		);
-		const finalSubdirs2 = [...sharedDirectory2.subdirectories()].map(
-			([name]) => name,
-		);
+		const finalSubdirs1 = [...sharedDirectory.subdirectories()].map(([name]) => name);
+		const finalSubdirs2 = [...sharedDirectory2.subdirectories()].map(([name]) => name);
 
 		assert.deepStrictEqual(
 			finalSubdirs1,

@@ -195,23 +195,21 @@ export async function timeoutPromise<T = void>(
 		return executorPromise;
 	}
 
-	return Promise.race([executorPromise, currentTestTimeout.getPromise()]).catch(
-		(e) => {
-			if (e === currentTestTimeout) {
-				if (timeoutOptions.reject !== false) {
-					// If the rejection is because of the timeout then
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const errorObject = err!;
-					errorObject.message = `${
-						timeoutOptions.errorMsg ?? "Forcing timeout before test does"
-					} (${currentTestTimeout.getTimeout()}ms)`;
-					throw errorObject;
-				}
-				return timeoutOptions.value;
+	return Promise.race([executorPromise, currentTestTimeout.getPromise()]).catch((e) => {
+		if (e === currentTestTimeout) {
+			if (timeoutOptions.reject !== false) {
+				// If the rejection is because of the timeout then
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const errorObject = err!;
+				errorObject.message = `${
+					timeoutOptions.errorMsg ?? "Forcing timeout before test does"
+				} (${currentTestTimeout.getTimeout()}ms)`;
+				throw errorObject;
 			}
-			throw e;
-		},
-	) as Promise<T>;
+			return timeoutOptions.value;
+		}
+		throw e;
+	}) as Promise<T>;
 }
 
 // Create a promise based on the timeout options
@@ -237,9 +235,7 @@ async function getTimeoutPromise<T = void>(
 		};
 		const timer = setTimeout(
 			() =>
-				timeoutOptions.reject === false
-					? resolve(timeoutOptions.value)
-					: timeoutRejections(),
+				timeoutOptions.reject === false ? resolve(timeoutOptions.value) : timeoutRejections(),
 			timeout,
 		);
 

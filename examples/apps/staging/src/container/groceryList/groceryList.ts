@@ -12,11 +12,7 @@ import type {
 import { assert } from "@fluidframework/core-utils/legacy";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/legacy";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/legacy";
-import {
-	type ISharedMap,
-	type IValueChanged,
-	MapFactory,
-} from "@fluidframework/map/legacy";
+import { type ISharedMap, type IValueChanged, MapFactory } from "@fluidframework/map/legacy";
 import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,

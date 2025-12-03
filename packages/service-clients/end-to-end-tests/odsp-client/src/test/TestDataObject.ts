@@ -4,10 +4,10 @@
  */
 
 import {
-	createDataObjectKind,
 	DataObject,
 	DataObjectFactory,
 	type IDataObjectProps,
+	createDataObjectKind,
 } from "@fluidframework/aqueduct/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
@@ -40,8 +40,7 @@ export class CounterTestDataObjectClass extends DataObject {
 	}
 
 	protected async hasInitialized(): Promise<void> {
-		const counterHandle =
-			this.root.get<IFluidHandle<SharedCounter>>("counter-key");
+		const counterHandle = this.root.get<IFluidHandle<SharedCounter>>("counter-key");
 		this._counter = await counterHandle?.get();
 	}
 
@@ -69,7 +68,5 @@ export class CounterTestDataObjectClass extends DataObject {
 	}
 }
 
-export const CounterTestDataObject = createDataObjectKind(
-	CounterTestDataObjectClass,
-);
+export const CounterTestDataObject = createDataObjectKind(CounterTestDataObjectClass);
 export type CounterTestDataObject = CounterTestDataObjectClass;

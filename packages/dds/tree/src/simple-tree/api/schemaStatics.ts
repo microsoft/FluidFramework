@@ -5,27 +5,23 @@
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ImplicitAllowedTypes } from "../core/index.js";
+import { FieldKind, getDefaultProvider, createFieldSchema } from "../fieldSchema.js";
 import type {
-	DefaultProvider,
 	FieldProps,
-	FieldPropsAlpha,
 	FieldSchema,
+	DefaultProvider,
+	FieldPropsAlpha,
 	FieldSchemaAlpha,
-} from "../fieldSchema.js";
-import {
-	createFieldSchema,
-	FieldKind,
-	getDefaultProvider,
 } from "../fieldSchema.js";
 import type { LeafSchema } from "../leafNodeSchema.js";
 import {
-	booleanSchema,
-	handleSchema,
-	nullSchema,
-	numberSchema,
 	stringSchema,
+	numberSchema,
+	booleanSchema,
+	nullSchema,
+	handleSchema,
 } from "../leafNodeSchema.js";
-import type { FieldSchemaAlphaUnsafe, System_Unsafe } from "./typesUnsafe.js";
+import type { System_Unsafe, FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
 
 /**
  * Stateless APIs exposed via {@link SchemaFactory} as both instance properties and as statics.
@@ -109,10 +105,7 @@ export interface SchemaStatics {
 	 * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
 	 * See {@link FieldSchemaMetadata.custom}.
 	 */
-	readonly optional: <
-		const T extends ImplicitAllowedTypes,
-		const TCustomMetadata = unknown,
-	>(
+	readonly optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		t: T,
 		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
 	) => FieldSchema<FieldKind.Optional, T, TCustomMetadata>;
@@ -130,10 +123,7 @@ export interface SchemaStatics {
 	 * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
 	 * See {@link FieldSchemaMetadata.custom}.
 	 */
-	readonly required: <
-		const T extends ImplicitAllowedTypes,
-		const TCustomMetadata = unknown,
-	>(
+	readonly required: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		t: T,
 		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
 	) => FieldSchema<FieldKind.Required, T, TCustomMetadata>;
@@ -185,10 +175,7 @@ export const schemaStaticsStable = {
 	handle: handleSchema,
 	leaves: [stringSchema, numberSchema, booleanSchema, nullSchema, handleSchema],
 
-	optional: <
-		const T extends ImplicitAllowedTypes,
-		const TCustomMetadata = unknown,
-	>(
+	optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		t: T,
 		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
 	): FieldSchemaAlpha<FieldKind.Optional, T, TCustomMetadata> => {
@@ -198,10 +185,7 @@ export const schemaStaticsStable = {
 		});
 	},
 
-	required: <
-		const T extends ImplicitAllowedTypes,
-		const TCustomMetadata = unknown,
-	>(
+	required: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		t: T,
 		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
 	): FieldSchemaAlpha<FieldKind.Required, T, TCustomMetadata> => {
@@ -239,11 +223,7 @@ export const schemaStatics = {
 	...schemaStaticsStable,
 	identifier: <const TCustomMetadata = unknown>(
 		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
-	): FieldSchemaAlpha<
-		FieldKind.Identifier,
-		typeof stringSchema,
-		TCustomMetadata
-	> => {
+	): FieldSchemaAlpha<FieldKind.Identifier, typeof stringSchema, TCustomMetadata> => {
 		return createFieldSchema(FieldKind.Identifier, stringSchema, props);
 	},
 } as const;

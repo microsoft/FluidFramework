@@ -7,9 +7,9 @@ import Path from "node:path";
 
 import {
 	ApiItemKind,
+	ReleaseTag,
 	type ApiModel,
 	type ApiPackage,
-	ReleaseTag,
 } from "@microsoft/api-extractor-model";
 
 import { loadModel, MarkdownRenderer } from "../index.js";
@@ -25,28 +25,19 @@ import {
 /**
  * Temp directory under which all tests that generate files will output their contents.
  */
-const testTemporaryDirectoryPath = Path.resolve(
-	testTemporaryDirectoryPathBase,
-	"markdown",
-);
+const testTemporaryDirectoryPath = Path.resolve(testTemporaryDirectoryPathBase, "markdown");
 
 /**
  * Snapshot directory to which generated test data will be copied.
  * Relative to lib/test
  */
-const snapshotsDirectoryPath = Path.resolve(
-	snapshotsDirectoryPathBase,
-	"markdown",
-);
+const snapshotsDirectoryPath = Path.resolve(snapshotsDirectoryPathBase, "markdown");
 
 const apiModels: string[] = ["simple-suite-test"];
 
 const testConfigs = new Map<
 	string,
-	Omit<
-		MarkdownRenderer.RenderApiModelOptions,
-		"apiModel" | "outputDirectoryPath"
-	>
+	Omit<MarkdownRenderer.RenderApiModelOptions, "apiModel" | "outputDirectoryPath">
 >([
 	[
 		"default-config",
@@ -112,11 +103,7 @@ describe("Markdown end-to-end tests", () => {
 					modelName,
 					configName,
 				);
-				const snapshotPath = Path.join(
-					snapshotsDirectoryPath,
-					modelName,
-					configName,
-				);
+				const snapshotPath = Path.join(snapshotsDirectoryPath, modelName, configName);
 
 				it(configName, async () => {
 					const options: MarkdownRenderer.RenderApiModelOptions = {
@@ -127,10 +114,7 @@ describe("Markdown end-to-end tests", () => {
 
 					await MarkdownRenderer.renderApiModel(options);
 
-					await compareDocumentationSuiteSnapshot(
-						snapshotPath,
-						temporaryOutputPath,
-					);
+					await compareDocumentationSuiteSnapshot(snapshotPath, temporaryOutputPath);
 				});
 			}
 		});

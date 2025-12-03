@@ -5,18 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import type {
-	ICacheEntry,
-	IResolvedUrl,
-} from "@fluidframework/driver-definitions/internal";
+import type { ICacheEntry, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 import { getKeyForCacheEntry } from "../cacheUtils.js";
 
-function createMockCacheEntry(
-	type: string,
-	key: string,
-	fileVersion?: string,
-): ICacheEntry {
+function createMockCacheEntry(type: string, key: string, fileVersion?: string): ICacheEntry {
 	const resolvedUrl = {
 		endpoints: {},
 		id: "test-doc-id",

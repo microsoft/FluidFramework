@@ -6,10 +6,7 @@
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import {
-	asLegacyAlpha,
-	isFluidHandle,
-} from "@fluidframework/runtime-utils/internal";
+import { isFluidHandle, asLegacyAlpha } from "@fluidframework/runtime-utils/internal";
 
 import type { ISharedObject } from "./types.js";
 
@@ -19,8 +16,7 @@ import type { ISharedObject } from "./types.js";
  *
  * @internal
  */
-export interface ISharedObjectHandle
-	extends IFluidHandleInternal<ISharedObject> {
+export interface ISharedObjectHandle extends IFluidHandleInternal<ISharedObject> {
 	/**
 	 * Binds the given handle to this DDS or attach the given handle if this DDS is attached.
 	 * A bound handle will also be attached once this DDS is attached.
@@ -34,13 +30,8 @@ export interface ISharedObjectHandle
  * Type guard for {@link ISharedObjectHandle}.
  * @internal
  */
-export function isISharedObjectHandle(
-	handle: unknown,
-): handle is ISharedObjectHandle {
-	return (
-		isFluidHandle(handle) &&
-		typeof (handle as ISharedObjectHandle).bind === "function"
-	);
+export function isISharedObjectHandle(handle: unknown): handle is ISharedObjectHandle {
+	return isFluidHandle(handle) && typeof (handle as ISharedObjectHandle).bind === "function";
 }
 
 /**

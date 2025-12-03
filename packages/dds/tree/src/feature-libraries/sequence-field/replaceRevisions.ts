@@ -40,23 +40,13 @@ function updateMark(
 	revisionsToReplace: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
 ): Mark {
-	const updatedMark = {
-		...updateEffect(mark, revisionsToReplace, newRevision),
-	};
+	const updatedMark = { ...updateEffect(mark, revisionsToReplace, newRevision) };
 	if (mark.cellId !== undefined) {
-		updatedMark.cellId = replaceAtomRevisions(
-			mark.cellId,
-			revisionsToReplace,
-			newRevision,
-		);
+		updatedMark.cellId = replaceAtomRevisions(mark.cellId, revisionsToReplace, newRevision);
 	}
 
 	if (mark.changes !== undefined) {
-		updatedMark.changes = replaceAtomRevisions(
-			mark.changes,
-			revisionsToReplace,
-			newRevision,
-		);
+		updatedMark.changes = replaceAtomRevisions(mark.changes, revisionsToReplace, newRevision);
 	}
 
 	return updatedMark;
@@ -92,11 +82,7 @@ function updateEffect<TMark extends MarkEffect>(
 			);
 		case "Insert":
 		case "Remove":
-			return updateRevision<TMark & HasRevisionTag>(
-				mark,
-				revisionsToReplace,
-				newRevision,
-			);
+			return updateRevision<TMark & HasRevisionTag>(mark, revisionsToReplace, newRevision);
 		default:
 			unreachableCase(type);
 	}
@@ -128,11 +114,7 @@ function updateMoveEffect<TEffect extends HasMoveFields>(
 		? updateRevision(
 				{
 					...effect,
-					finalEndpoint: updateRevision(
-						effect.finalEndpoint,
-						revisionsToReplace,
-						newRevision,
-					),
+					finalEndpoint: updateRevision(effect.finalEndpoint, revisionsToReplace, newRevision),
 				},
 				revisionsToReplace,
 				newRevision,
@@ -145,9 +127,7 @@ function updateRevision<T extends HasRevisionTag>(
 	revisionsToReplace: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
 ): T {
-	return revisionsToReplace.has(input.revision)
-		? withRevision(input, newRevision)
-		: input;
+	return revisionsToReplace.has(input.revision) ? withRevision(input, newRevision) : input;
 }
 
 function withRevision<T extends HasRevisionTag>(

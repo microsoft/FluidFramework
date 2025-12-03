@@ -4,12 +4,12 @@
  */
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
 	getConfigForMinVersionForCollab,
 	lowestMinVersionForCollab,
 } from "@fluidframework/runtime-utils/internal";
+
 import {
 	type CodecTree,
 	type CodecWriteOptions,
@@ -30,13 +30,12 @@ import type {
 	SchemaAndPolicy,
 } from "../core/index.js";
 import { brand, type JsonCompatibleReadOnly } from "../util/index.js";
+
+import type { DecodedMessage } from "./messageTypes.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { makeV1ToV4CodecWithVersion } from "./messageCodecV1ToV4.js";
 import { makeSharedBranchesCodecWithVersion } from "./messageCodecVSharedBranches.js";
-import {
-	MessageFormatVersion,
-	messageFormatVersions,
-} from "./messageFormat.js";
-import type { DecodedMessage } from "./messageTypes.js";
+import { MessageFormatVersion, messageFormatVersions } from "./messageFormat.js";
 
 export interface MessageEncodingContext {
 	idCompressor: IIdCompressor;
@@ -70,8 +69,7 @@ export interface MessageCodecOptions {
 function messageFormatVersionFromOptions(
 	options: MessageCodecOptions & CodecWriteOptions,
 ): MessageFormatVersion {
-	const selector =
-		options.messageFormatSelector ?? clientVersionToMessageFormatVersion;
+	const selector = options.messageFormatSelector ?? clientVersionToMessageFormatVersion;
 	return selector(options.minVersionForCollab);
 }
 
@@ -151,31 +149,18 @@ export function makeMessageCodecs<TChangeset>(
 				).json;
 				return [
 					version,
-					makeV1ToV4CodecWithVersion(
-						changeCodec,
-						revisionTagCodec,
-						options,
-						version,
-					),
+					makeV1ToV4CodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
 			}
 			case MessageFormatVersion.v5:
-				return [
-					version,
-					makeDiscontinuedCodecVersion(options, version, "2.74.0"),
-				];
+				return [version, makeDiscontinuedCodecVersion(options, version, "2.74.0")];
 			case MessageFormatVersion.vSharedBranches: {
 				const changeCodec = changeCodecs.resolve(
 					dependentChangeFormatVersion.lookup(version),
 				).json;
 				return [
 					version,
-					makeSharedBranchesCodecWithVersion(
-						changeCodec,
-						revisionTagCodec,
-						options,
-						version,
-					),
+					makeSharedBranchesCodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
 			}
 			default:

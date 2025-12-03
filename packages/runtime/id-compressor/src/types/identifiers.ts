@@ -30,9 +30,7 @@ export type OpSpaceCompressedId = number & {
  * where x is a lowercase hex digit.
  * @public
  */
-export type StableId = string & {
-	readonly StableId: "53172b0d-a3d5-41ea-bd75-b43839c97f5a";
-};
+export type StableId = string & { readonly StableId: "53172b0d-a3d5-41ea-bd75-b43839c97f5a" };
 
 /**
  * A StableId which is suitable for use as a session identifier

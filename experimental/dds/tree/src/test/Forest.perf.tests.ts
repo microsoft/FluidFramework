@@ -3,17 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { BenchmarkType, benchmark, isInPerformanceTestingMode } from '@fluid-tools/benchmark';
 import { strict as assert } from 'assert';
+
+import { BenchmarkType, benchmark, isInPerformanceTestingMode } from '@fluid-tools/benchmark';
 import { v4 } from 'uuid';
 
-import { Forest, type ForestNode } from '../Forest.js';
-import type { Definition, NodeId, TraitLabel } from '../Identifiers.js';
-import { type ChangeNode, Side } from '../persisted-types/index.js';
+import { Forest, ForestNode } from '../Forest.js';
+import { Definition, NodeId, TraitLabel } from '../Identifiers.js';
 import { RevisionView } from '../RevisionView.js';
-import type { TreeViewNode } from '../TreeView.js';
+import { TreeViewNode } from '../TreeView.js';
+import { ChangeNode, Side } from '../persisted-types/index.js';
 
-import type { TestTree } from './utilities/TestNode.js';
+import { TestTree } from './utilities/TestNode.js';
 import { refreshTestTree } from './utilities/TestUtilities.js';
 
 describe('Forest Perf', () => {

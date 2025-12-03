@@ -42,9 +42,7 @@ export class TextSegment extends BaseSegment {
 		return new TextSegment(text, props);
 	}
 
-	public static fromJSONObject(
-		spec: string | IJSONSegment,
-	): TextSegment | undefined {
+	public static fromJSONObject(spec: string | IJSONSegment): TextSegment | undefined {
 		if (typeof spec === "string") {
 			return new TextSegment(spec);
 		} else if (spec && typeof spec === "object" && "text" in spec) {
@@ -65,9 +63,7 @@ export class TextSegment extends BaseSegment {
 	public toJSONObject(): IJSONTextSegment | string {
 		// To reduce snapshot/ops size, we serialize a TextSegment as a plain 'string' if it is
 		// not annotated.
-		return this.properties
-			? { text: this.text, props: { ...this.properties } }
-			: this.text;
+		return this.properties ? { text: this.text, props: { ...this.properties } } : this.text;
 	}
 
 	public clone(start = 0, end?: number): TextSegment {

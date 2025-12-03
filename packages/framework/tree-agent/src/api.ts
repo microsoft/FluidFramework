@@ -195,12 +195,7 @@ export interface EditResult {
 	 * - `tooManyEditsError`: The {@link SharedTreeChatQuery.edit} function has been called more than the number of times specified by {@link SemanticAgentOptions.maximumSequentialEdits} for the same message.
 	 * - `expiredError`: The {@link SharedTreeChatQuery.edit} function was called after the issuing query has already completed.
 	 */
-	type:
-		| "success"
-		| "disabledError"
-		| "editingError"
-		| "tooManyEditsError"
-		| "expiredError";
+	type: "success" | "disabledError" | "editingError" | "tooManyEditsError" | "expiredError";
 
 	/**
 	 * A human-readable message describing the result of the edit attempt.

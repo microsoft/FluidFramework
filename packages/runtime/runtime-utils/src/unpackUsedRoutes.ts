@@ -15,15 +15,10 @@ export function unpackChildNodesUsedRoutes(
 	usedRoutes: readonly string[],
 ): Map<string, string[]> {
 	// Remove the node's self used route, if any, and generate the children used routes.
-	const filteredUsedRoutes = usedRoutes.filter(
-		(route) => route !== "" && route !== "/",
-	);
+	const filteredUsedRoutes = usedRoutes.filter((route) => route !== "" && route !== "/");
 	const childUsedRoutesMap = new Map<string, string[]>();
 	for (const route of filteredUsedRoutes) {
-		assert(
-			route.startsWith("/"),
-			0x5e0 /* Used route should always be an absolute route */,
-		);
+		assert(route.startsWith("/"), 0x5e0 /* Used route should always be an absolute route */);
 		const childId = route.split("/")[1];
 		assert(
 			childId !== undefined,

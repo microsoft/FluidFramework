@@ -74,8 +74,7 @@ describe("rebaser", () => {
 					};
 					this[revision] = cur;
 				}
-				this.main =
-					cur ?? assert.fail("Expected main to have at least one commit");
+				this.main = cur ?? assert.fail("Expected main to have at least one commit");
 				const [baseInMain] = branch;
 				cur = this[baseInMain] ?? assert.fail("branch base must be in main");
 				for (const revision of branch.slice(1)) {
@@ -86,17 +85,12 @@ describe("rebaser", () => {
 					};
 				}
 
-				this.branch =
-					cur ?? assert.fail("Expected branch to have at least one commit");
+				this.branch = cur ?? assert.fail("Expected branch to have at least one commit");
 			}
 
 			public assertParentage(head: DummyCommit, ...revisions: number[]): void {
 				const branch: RevisionTag[] = [];
-				for (
-					let cur: DummyCommit | undefined = head;
-					cur !== undefined;
-					cur = cur.parent
-				) {
+				for (let cur: DummyCommit | undefined = head; cur !== undefined; cur = cur.parent) {
 					branch.unshift(cur.revision);
 				}
 
@@ -134,8 +128,7 @@ describe("rebaser", () => {
 				const tester = new BranchTester(main, branch);
 				const base =
 					baseInMain !== undefined
-						? (tester[baseInMain] ??
-							assert.fail("Expected baseInMain to be in main"))
+						? (tester[baseInMain] ?? assert.fail("Expected baseInMain to be in main"))
 						: tester.main;
 
 				const { newSourceHead } = rebaseBranch(
@@ -148,16 +141,9 @@ describe("rebaser", () => {
 				// The `expected` parameter starts at the base of the branch. Prepend the rest of the main
 				// branch to it so that it can be fully compared against the `BranchTester`'s `main`.
 				const expectedBaseIndex = main.indexOf(expected[0]);
-				assert.notEqual(
-					expectedBaseIndex,
-					-1,
-					"Expected expected base to be in main",
-				);
+				assert.notEqual(expectedBaseIndex, -1, "Expected expected base to be in main");
 				const mainBeforeExpected = main.slice(0, expectedBaseIndex);
-				tester.assertParentage(
-					newSourceHead,
-					...[...mainBeforeExpected, ...expected],
-				);
+				tester.assertParentage(newSourceHead, ...[...mainBeforeExpected, ...expected]);
 			});
 		}
 

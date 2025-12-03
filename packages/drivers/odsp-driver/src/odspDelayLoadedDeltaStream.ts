@@ -8,10 +8,10 @@ import type { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type {
-	IAnyDriverError,
 	IDocumentDeltaConnection,
 	IDocumentServicePolicies,
 	IResolvedUrl,
+	IAnyDriverError,
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
@@ -22,11 +22,11 @@ import {
 import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	type HostStoragePolicy,
-	type InstrumentedStorageTokenFetcher,
 	type IOdspError,
 	type IOdspResolvedUrl,
-	type ISensitivityLabelsInfo,
 	type ISocketStorageDiscovery,
+	type ISensitivityLabelsInfo,
+	type InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 	type TokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
@@ -43,9 +43,9 @@ import type { EpochTracker } from "./epochTracker.js";
 import type { IOdspCache } from "./odspCache.js";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection.js";
 import {
+	type TokenFetchOptionsEx,
 	getJoinSessionCacheKey,
 	getWithRetryForTokenRefresh,
-	type TokenFetchOptionsEx,
 } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { fetchJoinSession } from "./vroom.js";
@@ -99,9 +99,7 @@ export class OdspDelayLoadedDeltaStream {
 		private readonly hostPolicy: HostStoragePolicy,
 		private readonly epochTracker: EpochTracker,
 		private readonly opsReceived: (ops: ISequencedDocumentMessage[]) => void,
-		private readonly metadataUpdateHandler: (
-			metadata: Record<string, string>,
-		) => void,
+		private readonly metadataUpdateHandler: (metadata: Record<string, string>) => void,
 		private readonly socketReferenceKeyPrefix?: string,
 	) {
 		this.joinSessionKey = getJoinSessionCacheKey(this.odspResolvedUrl);
@@ -140,169 +138,138 @@ export class OdspDelayLoadedDeltaStream {
 	 *
 	 * @returns returns the document delta stream service for onedrive/sharepoint driver.
 	 */
-	public async connectToDeltaStream(
-		client: IClient,
-	): Promise<IDocumentDeltaConnection> {
+	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
 		assert(
 			this.currentConnection === undefined,
 			0x4ad /* Should not be called when connection is already present! */,
 		);
 		// Attempt to connect twice, in case we used expired token.
-		return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(
-			async (options) => {
-				// Presence of getWebsocketToken callback dictates whether callback is used for fetching
-				// websocket token or whether it is returned with joinSession response payload
-				const requestWebsocketTokenFromJoinSession =
-					this.getWebsocketToken === undefined;
-				const websocketTokenPromise = requestWebsocketTokenFromJoinSession
-					? // eslint-disable-next-line unicorn/no-null
-						Promise.resolve(null)
-					: this.getWebsocketToken(options);
+		return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (options) => {
+			// Presence of getWebsocketToken callback dictates whether callback is used for fetching
+			// websocket token or whether it is returned with joinSession response payload
+			const requestWebsocketTokenFromJoinSession = this.getWebsocketToken === undefined;
+			const websocketTokenPromise = requestWebsocketTokenFromJoinSession
+				? // eslint-disable-next-line unicorn/no-null
+					Promise.resolve(null)
+				: this.getWebsocketToken(options);
 
-				const annotateAndRethrowConnectionError =
-					(step: string) => (error: unknown) => {
-						throw this.annotateConnectionError(
-							error,
-							step,
-							!requestWebsocketTokenFromJoinSession,
-						);
-					};
+			const annotateAndRethrowConnectionError = (step: string) => (error: unknown) => {
+				throw this.annotateConnectionError(error, step, !requestWebsocketTokenFromJoinSession);
+			};
 
-				// Log telemetry for join session attempt
-				if (this.firstConnectionAttempt) {
-					this.mc.logger.sendTelemetryEvent({
-						eventName: "FirstJoinSessionAttemptDetails",
-						details: {
-							requestWebsocketToken: requestWebsocketTokenFromJoinSession,
-						},
-					});
-				}
+			// Log telemetry for join session attempt
+			if (this.firstConnectionAttempt) {
+				this.mc.logger.sendTelemetryEvent({
+					eventName: "FirstJoinSessionAttemptDetails",
+					details: {
+						requestWebsocketToken: requestWebsocketTokenFromJoinSession,
+					},
+				});
+			}
 
-				const joinSessionPromise = this.joinSession(
-					requestWebsocketTokenFromJoinSession,
-					options,
-					false /* isRefreshingJoinSession */,
-					undefined /* clientId */,
-					this.hostPolicy.sessionOptions?.displayName,
+			const joinSessionPromise = this.joinSession(
+				requestWebsocketTokenFromJoinSession,
+				options,
+				false /* isRefreshingJoinSession */,
+				undefined /* clientId */,
+				this.hostPolicy.sessionOptions?.displayName,
+			);
+			const [websocketEndpoint, websocketToken] = await Promise.all([
+				joinSessionPromise.catch(annotateAndRethrowConnectionError("joinSession")),
+				websocketTokenPromise.catch(annotateAndRethrowConnectionError("getWebsocketToken")),
+			]);
+
+			// eslint-disable-next-line unicorn/no-null
+			const finalWebsocketToken = websocketToken ?? websocketEndpoint.socketToken ?? null;
+			if (finalWebsocketToken === null) {
+				throw this.annotateConnectionError(
+					new NonRetryableError("Websocket token is null", OdspErrorTypes.fetchTokenError, {
+						driverVersion,
+					}),
+					"getWebsocketToken",
+					!requestWebsocketTokenFromJoinSession,
 				);
-				const [websocketEndpoint, websocketToken] = await Promise.all([
-					joinSessionPromise.catch(
-						annotateAndRethrowConnectionError("joinSession"),
-					),
-					websocketTokenPromise.catch(
-						annotateAndRethrowConnectionError("getWebsocketToken"),
-					),
-				]);
+			}
+			if (websocketEndpoint.sensitivityLabelsInfo !== undefined) {
+				this.emitSensitivityLabelUpdateEvent(websocketEndpoint.sensitivityLabelsInfo);
+			}
 
-				// eslint-disable-next-line unicorn/no-null
-				const finalWebsocketToken =
-					websocketToken ?? websocketEndpoint.socketToken ?? null;
-				if (finalWebsocketToken === null) {
-					throw this.annotateConnectionError(
-						new NonRetryableError(
-							"Websocket token is null",
-							OdspErrorTypes.fetchTokenError,
-							{
-								driverVersion,
-							},
-						),
-						"getWebsocketToken",
-						!requestWebsocketTokenFromJoinSession,
-					);
-				}
-				if (websocketEndpoint.sensitivityLabelsInfo !== undefined) {
-					this.emitSensitivityLabelUpdateEvent(
-						websocketEndpoint.sensitivityLabelsInfo,
-					);
-				}
-
-				const connectionId = uuid();
-				if (this.firstConnectionAttempt) {
-					this.firstConnectionAttempt = false;
-					this.mc.logger.sendTelemetryEvent({
-						eventName: "FirstConnectionAttemptDetails",
-						details: {
-							connectionId,
-							tenantId: websocketEndpoint.tenantId,
-							documentId: websocketEndpoint.id,
-						},
-					});
-				}
-				try {
-					const connection = await this.createDeltaConnection(
-						websocketEndpoint.tenantId,
-						websocketEndpoint.id,
-						finalWebsocketToken,
-						client,
-						websocketEndpoint.deltaStreamSocketUrl,
+			const connectionId = uuid();
+			if (this.firstConnectionAttempt) {
+				this.firstConnectionAttempt = false;
+				this.mc.logger.sendTelemetryEvent({
+					eventName: "FirstConnectionAttemptDetails",
+					details: {
 						connectionId,
-					);
-					connection.on(
-						"op",
-						(documentId, ops: ISequencedDocumentMessage[]) => {
-							this.opsReceived(ops);
-						},
-					);
-					connection.on("signal", this.signalHandler);
-					// Also process the initial signals
-					this.signalHandler(connection.initialSignals);
-					// On disconnect with 401/403 error code, we can just clear the joinSession cache as we will again
-					// get the auth error on reconnecting and face latency.
-					connection.once("disconnect", (error: unknown) => {
-						// Clear the join session refresh timer so that it can be restarted on reconnection.
-						this.clearJoinSessionTimer();
-						if (
-							typeof error === "object" &&
-							error !== null &&
-							(error as Partial<IOdspError>).errorType ===
-								OdspErrorTypes.authorizationError
-						) {
-							this.cache.sessionJoinCache.remove(this.joinSessionKey);
-						}
-						// If we hit this assert, it means that "disconnect" event is emitted before the connection went through
-						// dispose flow which is not correct and could lead to a bunch of errors.
-						assert(
-							connection.disposed,
-							0x4ae /* Connection should be disposed by now */,
-						);
-						this.currentConnection = undefined;
-					});
-					this.currentConnection = connection;
-					return connection;
-				} catch (error) {
-					// Remove join session information from cache only if it is an error is from socket event connect_document_error.
-					// Otherwise keep it in cache so that this session can be re-used after disconnection.
-					// Also keeping an undefined check here to account for any unknown code path that is unable to stamp the value as in that case also
-					// it is safer to clear join session cache and start over.
+						tenantId: websocketEndpoint.tenantId,
+						documentId: websocketEndpoint.id,
+					},
+				});
+			}
+			try {
+				const connection = await this.createDeltaConnection(
+					websocketEndpoint.tenantId,
+					websocketEndpoint.id,
+					finalWebsocketToken,
+					client,
+					websocketEndpoint.deltaStreamSocketUrl,
+					connectionId,
+				);
+				connection.on("op", (documentId, ops: ISequencedDocumentMessage[]) => {
+					this.opsReceived(ops);
+				});
+				connection.on("signal", this.signalHandler);
+				// Also process the initial signals
+				this.signalHandler(connection.initialSignals);
+				// On disconnect with 401/403 error code, we can just clear the joinSession cache as we will again
+				// get the auth error on reconnecting and face latency.
+				connection.once("disconnect", (error: unknown) => {
+					// Clear the join session refresh timer so that it can be restarted on reconnection.
+					this.clearJoinSessionTimer();
 					if (
-						error &&
 						typeof error === "object" &&
-						((error as IAnyDriverError).scenarioName ===
-							"connect_document_error" ||
-							(error as IAnyDriverError).scenarioName === undefined)
+						error !== null &&
+						(error as Partial<IOdspError>).errorType === OdspErrorTypes.authorizationError
 					) {
-						this.clearJoinSessionTimer();
 						this.cache.sessionJoinCache.remove(this.joinSessionKey);
 					}
-					const normalizedError = this.annotateConnectionError(
-						error,
-						"createDeltaConnection",
-						!requestWebsocketTokenFromJoinSession,
-					);
-					if (typeof error === "object" && error !== null) {
-						normalizedError.addTelemetryProperties({
-							socketDocumentId: websocketEndpoint.id,
-						});
-					}
-					throw normalizedError;
+					// If we hit this assert, it means that "disconnect" event is emitted before the connection went through
+					// dispose flow which is not correct and could lead to a bunch of errors.
+					assert(connection.disposed, 0x4ae /* Connection should be disposed by now */);
+					this.currentConnection = undefined;
+				});
+				this.currentConnection = connection;
+				return connection;
+			} catch (error) {
+				// Remove join session information from cache only if it is an error is from socket event connect_document_error.
+				// Otherwise keep it in cache so that this session can be re-used after disconnection.
+				// Also keeping an undefined check here to account for any unknown code path that is unable to stamp the value as in that case also
+				// it is safer to clear join session cache and start over.
+				if (
+					error &&
+					typeof error === "object" &&
+					((error as IAnyDriverError).scenarioName === "connect_document_error" ||
+						(error as IAnyDriverError).scenarioName === undefined)
+				) {
+					this.clearJoinSessionTimer();
+					this.cache.sessionJoinCache.remove(this.joinSessionKey);
 				}
-			},
-		);
+				const normalizedError = this.annotateConnectionError(
+					error,
+					"createDeltaConnection",
+					!requestWebsocketTokenFromJoinSession,
+				);
+				if (typeof error === "object" && error !== null) {
+					normalizedError.addTelemetryProperties({
+						socketDocumentId: websocketEndpoint.id,
+					});
+				}
+				throw normalizedError;
+			}
+		});
 	}
 
-	private readonly signalHandler = (
-		signalsArg: ISignalMessage | ISignalMessage[],
-	): void => {
+	private readonly signalHandler = (signalsArg: ISignalMessage | ISignalMessage[]): void => {
 		const signals = Array.isArray(signalsArg) ? signalsArg : [signalsArg];
 		for (const signal of signals) {
 			// Make sure it is not for a specific client as `PolicyLabelsUpdate` is meant for all clients.
@@ -389,8 +356,7 @@ export class OdspDelayLoadedDeltaStream {
 		if (
 			isRefreshingJoinSession &&
 			(this.currentConnection === undefined ||
-				(clientId !== undefined &&
-					this.currentConnection.clientId !== clientId))
+				(clientId !== undefined && this.currentConnection.clientId !== clientId))
 		) {
 			this.clearJoinSessionTimer();
 			throw new NonRetryableError(
@@ -474,9 +440,7 @@ export class OdspDelayLoadedDeltaStream {
 			);
 			// Emit event only in case it is fetched from the network.
 			if (joinSessionResponse.sensitivityLabelsInfo !== undefined) {
-				this.emitSensitivityLabelUpdateEvent(
-					joinSessionResponse.sensitivityLabelsInfo,
-				);
+				this.emitSensitivityLabelUpdateEvent(joinSessionResponse.sensitivityLabelsInfo);
 			}
 			return {
 				entryTime: Date.now(),
@@ -564,11 +528,7 @@ export class OdspDelayLoadedDeltaStream {
 		refreshSessionDurationSeconds: number,
 	): number {
 		// 30 seconds is buffer time to refresh the session.
-		return (
-			responseFetchTime +
-			(refreshSessionDurationSeconds * 1000 - 30000) -
-			Date.now()
-		);
+		return responseFetchTime + (refreshSessionDurationSeconds * 1000 - 30000) - Date.now();
 	}
 
 	/**

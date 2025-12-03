@@ -108,9 +108,7 @@ export interface AttachProcessProps {
 	 */
 	readonly createOrGetStorageService: (
 		data: ISummaryTree | undefined,
-	) => Promise<
-		Pick<IDocumentStorageService, "createBlob" | "uploadSummaryWithContext">
-	>;
+	) => Promise<Pick<IDocumentStorageService, "createBlob" | "uploadSummaryWithContext">>;
 
 	/**
 	 * The detached blob storage if it exists.
@@ -180,9 +178,7 @@ export const runRetriableAttachProcess = async ({
 		// build a table mapping IDs assigned locally to IDs assigned by storage and pass it to runtime to
 		// support blob handles that only know about the local IDs
 		while (redirectTable.size < detachedBlobStorage.size) {
-			const newIds = detachedBlobStorage
-				.getBlobIds()
-				.filter((id) => !redirectTable.has(id));
+			const newIds = detachedBlobStorage.getBlobIds().filter((id) => !redirectTable.has(id));
 			for (const id of newIds) {
 				const blob = await detachedBlobStorage.readBlob(id);
 				const response = await storage.createBlob(blob);

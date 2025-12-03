@@ -4,7 +4,7 @@
  */
 
 export {
-	AdaptedViewSchema,
 	type Adapters,
 	type TreeAdapter,
+	AdaptedViewSchema,
 } from "./view.js";

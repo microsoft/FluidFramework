@@ -62,11 +62,7 @@ export function* generateStrings(): Generator<{
 
 		let sharedString = createNewSharedString();
 		// Small enough so snapshot won't have body
-		for (
-			let i = 0;
-			i < Snapshot.sizeOfFirstChunk / insertText.length / 2;
-			++i
-		) {
+		for (let i = 0; i < Snapshot.sizeOfFirstChunk / insertText.length / 2; ++i) {
 			sharedString.insertText(0, `${insertText}${i}`);
 		}
 
@@ -78,11 +74,7 @@ export function* generateStrings(): Generator<{
 
 		sharedString = createNewSharedString();
 		// Big enough that snapshot will have body
-		for (
-			let i = 0;
-			i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2;
-			++i
-		) {
+		for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
 			sharedString.insertText(0, `${insertText}${i}`);
 		}
 
@@ -106,11 +98,7 @@ export function* generateStrings(): Generator<{
 
 		sharedString = createNewSharedString();
 		// SharedString with markers
-		for (
-			let i = 0;
-			i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2;
-			++i
-		) {
+		for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
 			sharedString.insertText(0, `${insertText}${i}`);
 		}
 		for (let i = 0; i < sharedString.getLength(); i += 70) {
@@ -130,11 +118,7 @@ export function* generateStrings(): Generator<{
 
 		sharedString = createNewSharedString();
 		// SharedString with annotations
-		for (
-			let i = 0;
-			i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2;
-			++i
-		) {
+		for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
 			sharedString.insertText(0, `${insertText}${i}`);
 		}
 		for (let i = 0; i < sharedString.getLength(); i += 70) {
@@ -149,11 +133,7 @@ export function* generateStrings(): Generator<{
 
 		sharedString = createNewSharedString();
 		// SharedString with intervals
-		for (
-			let i = 0;
-			i < Snapshot.sizeOfFirstChunk / insertText.length / 2;
-			i++
-		) {
+		for (let i = 0; i < Snapshot.sizeOfFirstChunk / insertText.length / 2; i++) {
 			sharedString.insertText(0, `${insertText}${i}`);
 		}
 
@@ -168,11 +148,7 @@ export function* generateStrings(): Generator<{
 		if (version === "v1Intervals") {
 			sharedString = createNewSharedString();
 			// SharedString with V1 intervals
-			for (
-				let i = 0;
-				i < Snapshot.sizeOfFirstChunk / insertText.length / 2;
-				i++
-			) {
+			for (let i = 0; i < Snapshot.sizeOfFirstChunk / insertText.length / 2; i++) {
 				sharedString.insertText(0, `${insertText}${i}`);
 			}
 			createIntervals(sharedString);

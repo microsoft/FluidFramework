@@ -56,16 +56,10 @@ export class LazyPromise<T> implements Promise<T> {
 	// eslint-disable-next-line unicorn/no-thenable
 	public async then<TResult1 = T, TResult2 = never>(
 		// eslint-disable-next-line @rushstack/no-new-null
-		onfulfilled?:
-			| ((value: T) => TResult1 | PromiseLike<TResult1>)
-			| null
-			| undefined,
+		onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined,
 		// TODO: Use `unknown` instead (API breaking)
 		// eslint-disable-next-line @rushstack/no-new-null, @typescript-eslint/no-explicit-any
-		onrejected?:
-			| ((reason: any) => TResult2 | PromiseLike<TResult2>)
-			| null
-			| undefined,
+		onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined,
 	): Promise<TResult1 | TResult2> {
 		// eslint-disable-next-line prefer-rest-params
 		return this.getPromise().then<TResult1, TResult2>(...arguments);
@@ -74,19 +68,14 @@ export class LazyPromise<T> implements Promise<T> {
 	public async catch<TResult = never>(
 		// TODO: Use `unknown` instead (API breaking)
 		// eslint-disable-next-line @rushstack/no-new-null, @typescript-eslint/no-explicit-any
-		onrejected?:
-			| ((reason: any) => TResult | PromiseLike<TResult>)
-			| null
-			| undefined,
+		onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined,
 	): Promise<T | TResult> {
 		// eslint-disable-next-line prefer-rest-params
 		return this.getPromise().catch<TResult>(...arguments);
 	}
 
 	// eslint-disable-next-line @rushstack/no-new-null
-	public async finally(
-		onfinally?: (() => void) | null | undefined,
-	): Promise<T> {
+	public async finally(onfinally?: (() => void) | null | undefined): Promise<T> {
 		// eslint-disable-next-line prefer-rest-params
 		return this.getPromise().finally(...arguments);
 	}

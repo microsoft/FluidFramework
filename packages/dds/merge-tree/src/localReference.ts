@@ -12,16 +12,10 @@ import {
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { ISegmentInternal } from "./mergeTreeNodes.js";
-import {
-	type TrackingGroup,
-	TrackingGroupCollection,
-} from "./mergeTreeTracking.js";
+import { type TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking.js";
 import { ReferenceType } from "./ops.js";
-import { addProperties, type PropertySet } from "./properties.js";
-import {
-	type ReferencePosition,
-	refTypeIncludesFlag,
-} from "./referencePositions.js";
+import { type PropertySet, addProperties } from "./properties.js";
+import { type ReferencePosition, refTypeIncludesFlag } from "./referencePositions.js";
 
 /**
  * Dictates the preferential direction for a {@link ReferencePosition} to slide
@@ -44,8 +38,7 @@ export const SlidingPreference = {
  * in a merge-tree
  * @legacy @beta
  */
-export type SlidingPreference =
-	(typeof SlidingPreference)[keyof typeof SlidingPreference];
+export type SlidingPreference = (typeof SlidingPreference)[keyof typeof SlidingPreference];
 
 function _validateReferenceType(refType: ReferenceType): void {
 	let exclusiveCount = 0;
@@ -99,12 +92,7 @@ class LocalReference implements LocalReferencePosition {
 	private listNode: ListNode<LocalReference> | undefined;
 
 	public callbacks?:
-		| Partial<
-				Record<
-					"beforeSlide" | "afterSlide",
-					(ref: LocalReferencePosition) => void
-				>
-		  >
+		| Partial<Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>>
 		| undefined;
 	private _trackingCollection?: TrackingGroupCollection;
 	public get trackingCollection(): TrackingGroupCollection {
@@ -188,10 +176,7 @@ interface IRefsAtOffset {
 }
 
 function assertLocalReferences(lref: unknown): asserts lref is LocalReference {
-	assert(
-		lref instanceof LocalReference,
-		0x2e0 /* "lref not a Local Reference" */,
-	);
+	assert(lref instanceof LocalReference, 0x2e0 /* "lref not a Local Reference" */);
 }
 
 /**
@@ -228,9 +213,7 @@ export function* filterLocalReferencePositions(
  * Injectable hook for validating that the refCount property matches the
  * expected value
  */
-let validateRefCount:
-	| ((collection?: LocalReferenceCollection) => void)
-	| undefined;
+let validateRefCount: ((collection?: LocalReferenceCollection) => void) | undefined;
 
 export function setValidateRefCount(
 	cb?: (collection?: LocalReferenceCollection) => void,
@@ -296,8 +279,7 @@ export class LocalReferenceCollection {
 		next(): IteratorResult<LocalReferencePosition>;
 		[Symbol.iterator](): IterableIterator<LocalReferencePosition>;
 	} {
-		const subiterators: IterableIterator<ListNode<LocalReferencePosition>>[] =
-			[];
+		const subiterators: IterableIterator<ListNode<LocalReferencePosition>>[] = [];
 		for (const refs of this.refsByOffset) {
 			if (refs) {
 				if (refs.before) {
@@ -355,12 +337,7 @@ export class LocalReferenceCollection {
 		slidingPreference?: SlidingPreference,
 		canSlideToEndpoint?: boolean,
 	): LocalReferencePosition {
-		const ref = new LocalReference(
-			refType,
-			properties,
-			slidingPreference,
-			canSlideToEndpoint,
-		);
+		const ref = new LocalReference(refType, properties, slidingPreference, canSlideToEndpoint);
 		ref.link(this.segment, offset, undefined);
 		if (!refTypeIncludesFlag(ref, ReferenceType.Transient)) {
 			this.addLocalRef(ref, offset);
@@ -382,13 +359,10 @@ export class LocalReferenceCollection {
 		if (refTypeIncludesFlag(lref, ReferenceType.Transient)) {
 			lref.link(this.segment, offset, undefined);
 		} else {
-			const refsAtOffset = (this.refsByOffset[offset] = this.refsByOffset[
-				offset
-			] ?? {
+			const refsAtOffset = (this.refsByOffset[offset] = this.refsByOffset[offset] ?? {
 				at: new DoublyLinkedList(),
 			});
-			const atRefs = (refsAtOffset.at =
-				refsAtOffset.at ?? new DoublyLinkedList());
+			const atRefs = (refsAtOffset.at = refsAtOffset.at ?? new DoublyLinkedList());
 
 			lref.link(this.segment, offset, atRefs.push(lref).last);
 
@@ -401,9 +375,7 @@ export class LocalReferenceCollection {
 	 * Removes a local reference from the collection.
 	 * @remarks This method should only be called by mergeTree.
 	 */
-	public removeLocalRef(
-		lref: LocalReferencePosition,
-	): LocalReferencePosition | undefined {
+	public removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined {
 		if (this.has(lref)) {
 			assertLocalReferences(lref);
 
@@ -437,11 +409,7 @@ export class LocalReferenceCollection {
 		other.refCount = 0;
 		for (const lref of other) {
 			assertLocalReferences(lref);
-			lref.link(
-				this.segment,
-				lref.getOffset() + this.refsByOffset.length,
-				lref.getListNode(),
-			);
+			lref.link(this.segment, lref.getOffset() + this.refsByOffset.length, lref.getListNode());
 		}
 
 		this.refsByOffset.push(...other.refsByOffset);
@@ -517,9 +485,7 @@ export class LocalReferenceCollection {
 	 * Insert a reference before tombstoned references.
 	 * @remarks This method should only be called by mergeTree.
 	 */
-	public addBeforeTombstones(
-		...refs: Iterable<LocalReferencePosition>[]
-	): void {
+	public addBeforeTombstones(...refs: Iterable<LocalReferencePosition>[]): void {
 		const beforeRefs = this.refsByOffset[0]?.before ?? new DoublyLinkedList();
 
 		if (this.refsByOffset[0]?.before === undefined) {
@@ -532,6 +498,7 @@ export class LocalReferenceCollection {
 			for (const lref of iterable) {
 				assertLocalReferences(lref);
 				if (refTypeIncludesFlag(lref, ReferenceType.StayOnRemove)) {
+					continue;
 				} else if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
 					lref.callbacks?.beforeSlide?.(lref);
 					precedingRef =
@@ -554,13 +521,10 @@ export class LocalReferenceCollection {
 	 */
 	public addAfterTombstones(...refs: Iterable<LocalReferencePosition>[]): void {
 		const lastOffset = this.segment.cachedLength - 1;
-		const afterRefs =
-			this.refsByOffset[lastOffset]?.after ?? new DoublyLinkedList();
+		const afterRefs = this.refsByOffset[lastOffset]?.after ?? new DoublyLinkedList();
 
 		if (this.refsByOffset[lastOffset]?.after === undefined) {
-			const refsAtOffset = (this.refsByOffset[lastOffset] ??= {
-				after: afterRefs,
-			});
+			const refsAtOffset = (this.refsByOffset[lastOffset] ??= { after: afterRefs });
 			refsAtOffset.after ??= afterRefs;
 		}
 
@@ -568,6 +532,7 @@ export class LocalReferenceCollection {
 			for (const lref of iterable) {
 				assertLocalReferences(lref);
 				if (refTypeIncludesFlag(lref, ReferenceType.StayOnRemove)) {
+					continue;
 				} else if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
 					lref.callbacks?.beforeSlide?.(lref);
 					afterRefs.push(lref);
@@ -610,12 +575,10 @@ export class LocalReferenceCollection {
 			}
 			assertLocalReferences(start);
 		}
-		let offset =
-			start?.getOffset() ?? (forward ? 0 : this.segment.cachedLength - 1);
+		let offset = start?.getOffset() ?? (forward ? 0 : this.segment.cachedLength - 1);
 
-		const offsetPositions: DoublyLinkedList<
-			IRefsAtOffset[keyof IRefsAtOffset]
-		> = new DoublyLinkedList();
+		const offsetPositions: DoublyLinkedList<IRefsAtOffset[keyof IRefsAtOffset]> =
+			new DoublyLinkedList();
 		offsetPositions.push(
 			this.refsByOffset[offset]?.before,
 			this.refsByOffset[offset]?.at,
@@ -648,13 +611,8 @@ export class LocalReferenceCollection {
 		const increment = forward ? 1 : -1;
 		while (offset >= 0 && offset < this.refsByOffset.length) {
 			while (offsetPositions.length > 0) {
-				const offsetPos = forward
-					? offsetPositions.shift()
-					: offsetPositions.pop();
-				if (
-					offsetPos?.data !== undefined &&
-					listWalker(offsetPos.data) === false
-				) {
+				const offsetPos = forward ? offsetPositions.shift() : offsetPositions.pop();
+				if (offsetPos?.data !== undefined && listWalker(offsetPos.data) === false) {
 					return false;
 				}
 			}

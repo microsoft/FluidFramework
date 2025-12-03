@@ -36,9 +36,7 @@ export type BindableSchema =
 /**
  * A type guard to check if a schema is {@link BindableSchema | bindable}.
  */
-export function isBindableSchema(
-	schema: TreeNodeSchema,
-): schema is BindableSchema {
+export function isBindableSchema(schema: TreeNodeSchema): schema is BindableSchema {
 	return (
 		schema.kind === NodeKind.Object ||
 		schema.kind === NodeKind.Record ||
@@ -63,10 +61,7 @@ export function getExposedMethods(schemaClass: BindableSchema): {
  * A type that represents a function argument.
  * @alpha
  */
-export type Arg<T extends z.ZodTypeAny = z.ZodTypeAny> = readonly [
-	name: string,
-	type: T,
-];
+export type Arg<T extends z.ZodTypeAny = z.ZodTypeAny> = readonly [name: string, type: T];
 
 /**
  * A function definition interface that describes the structure of a function.
@@ -103,14 +98,9 @@ export class FunctionWrapper
  * A utility type that extracts the argument types from a function definition.
  * @alpha
  */
-export type ArgsTuple<T extends readonly Arg[]> = T extends readonly [
-	infer Single extends Arg,
-]
+export type ArgsTuple<T extends readonly Arg[]> = T extends readonly [infer Single extends Arg]
 	? [Single[1]]
-	: T extends readonly [
-				infer Head extends Arg,
-				...infer Tail extends readonly Arg[],
-			]
+	: T extends readonly [infer Head extends Arg, ...infer Tail extends readonly Arg[]]
 		? [Head[1], ...ArgsTuple<Tail>]
 		: never;
 
@@ -138,10 +128,9 @@ export function buildFunc<
  * A utility type that infers the return type of a function definition.
  * @alpha
  */
-export type Infer<T> =
-	T extends FunctionDef<infer Args, infer Return, infer Rest>
-		? z.infer<z.ZodFunction<z.ZodTuple<ArgsTuple<Args>, Rest>, Return>>
-		: never;
+export type Infer<T> = T extends FunctionDef<infer Args, infer Return, infer Rest>
+	? z.infer<z.ZodFunction<z.ZodTuple<ArgsTuple<Args>, Rest>, Return>>
+	: never;
 
 /**
  * An interface for exposing methods of schema classes to an agent.

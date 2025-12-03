@@ -3,8 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export type { ITelemetryConsumer } from "./consumers/index.js";
-export type {
-	FluidTelemetryEventName,
-	IFluidTelemetry,
-} from "./telemetry/index.js";
+export { type ITelemetryConsumer } from "./consumers/index.js";
+export { type IFluidTelemetry, type FluidTelemetryEventName } from "./telemetry/index.js";

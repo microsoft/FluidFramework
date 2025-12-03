@@ -17,17 +17,14 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { LogLevel } from "@fluidframework/core-interfaces";
 import type { ScopeType } from "@fluidframework/driver-definitions/legacy";
-import type {
-	ContainerSchema,
-	IFluidContainer,
-} from "@fluidframework/fluid-static";
+import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import {
-	type Attendee,
 	getPresence,
-	type LatestMapRaw,
-	type LatestRaw,
+	type Attendee,
 	type Presence,
 	StateFactory,
+	type LatestRaw,
+	type LatestMapRaw,
 	type StatesWorkspace,
 } from "@fluidframework/presence/beta";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
@@ -37,10 +34,10 @@ import { createAzureTokenProvider } from "../AzureTokenFactory.js";
 import { TestDataObject } from "../TestDataObject.js";
 
 import type {
-	EventEntry,
-	MessageToChild as MessageFromParent,
 	MessageFromChild as MessageToParent,
+	MessageToChild as MessageFromParent,
 	UserIdAndName,
+	EventEntry,
 } from "./messageTypes.js";
 
 const testLabel = process.argv[2];
@@ -65,30 +62,19 @@ const containerSchema = {
 } as const satisfies ContainerSchema;
 
 function log(...data: unknown[]): void {
-	console.log(
-		`[${testLabel}] [${new Date().toISOString()}] [${process_id}]`,
-		...data,
-	);
+	console.log(`[${testLabel}] [${new Date().toISOString()}] [${process_id}]`, ...data);
 }
 
-function telemetryEventInterestLevel(
-	eventName: string,
-): "none" | "basic" | "details" {
+function telemetryEventInterestLevel(eventName: string): "none" | "basic" | "details" {
 	if (eventName.includes(":Signal") || eventName.includes(":Join")) {
 		return "details";
-	} else if (
-		eventName.includes(":Container:") ||
-		eventName.includes(":Presence:")
-	) {
+	} else if (eventName.includes(":Container:") || eventName.includes(":Presence:")) {
 		return "basic";
 	}
 	return "none";
 }
 
-function selectiveVerboseLog(
-	event: ITelemetryBaseEvent,
-	logLevel?: LogLevel,
-): void {
+function selectiveVerboseLog(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
 	const interest = telemetryEventInterestLevel(event.eventName);
 	if (interest === "none") {
 		return;
@@ -123,17 +109,8 @@ const getOrCreateContainer = async (params: {
 }> => {
 	let container: IFluidContainer<typeof containerSchema>;
 	let { containerId } = params;
-	const {
-		logger,
-		onDisconnected,
-		user,
-		scopes,
-		createScopes,
-		connectTimeoutMs,
-	} = params;
-	const connectionProps:
-		| AzureRemoteConnectionConfig
-		| AzureLocalConnectionConfig = useAzure
+	const { logger, onDisconnected, user, scopes, createScopes, connectTimeoutMs } = params;
+	const connectionProps: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
 		? {
 				tenantId,
 				tokenProvider: createAzureTokenProvider(
@@ -146,12 +123,7 @@ const getOrCreateContainer = async (params: {
 				type: "remote",
 			}
 		: {
-				tokenProvider: new InsecureTokenProvider(
-					"fooBar",
-					user,
-					scopes,
-					createScopes,
-				),
+				tokenProvider: new InsecureTokenProvider("fooBar", user, scopes, createScopes),
 				endpoint: "http://localhost:7071",
 				type: "local",
 			};
@@ -161,30 +133,20 @@ const getOrCreateContainer = async (params: {
 	});
 	let services: AzureContainerServices;
 	if (containerId === undefined) {
-		({ container, services } = await client.createContainer(
-			containerSchema,
-			"2",
-		));
+		({ container, services } = await client.createContainer(containerSchema, "2"));
 		containerId = await container.attach();
 	} else {
-		({ container, services } = await client.getContainer(
-			containerId,
-			containerSchema,
-			"2",
-		));
+		({ container, services } = await client.getContainer(containerId, containerSchema, "2"));
 	}
 	container.on("disconnected", onDisconnected);
 
 	const connected =
 		container.connectionState === ConnectionState.Connected
 			? Promise.resolve()
-			: timeoutPromise(
-					(resolve) => container.once("connected", () => resolve()),
-					{
-						durationMs: connectTimeoutMs,
-						errorMsg: "container connect() timeout",
-					},
-				);
+			: timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+					durationMs: connectTimeoutMs,
+					errorMsg: "container connect() timeout",
+				});
 
 	assert.strictEqual(
 		container.attachState,
@@ -217,9 +179,7 @@ function createSendFunction(): (msg: MessageToParent) => void {
 
 const send = createSendFunction();
 
-function isStringOrNumberRecord(
-	value: unknown,
-): value is Record<string, string | number> {
+function isStringOrNumberRecord(value: unknown): value is Record<string, string | number> {
 	if (value === null || typeof value !== "object" || Array.isArray(value)) {
 		return false;
 	}
@@ -252,25 +212,17 @@ function isStringOrNumberRecord(
 type WorkspaceSchema = {
 	latest?: ReturnType<typeof StateFactory.latest<{ value: string }>>;
 	latestMap?: ReturnType<
-		typeof StateFactory.latestMap<
-			{ value: Record<string, string | number> },
-			string
-		>
+		typeof StateFactory.latestMap<{ value: Record<string, string | number> }, string>
 	>;
 };
 const WorkspaceSchema: WorkspaceSchema = {};
 
 class MessageHandler {
 	private readonly log: EventEntry[] = [];
-	private msgQueue:
-		| undefined
-		| Exclude<MessageFromParent, { command: "ping" | "connect" }>[];
+	private msgQueue: undefined | Exclude<MessageFromParent, { command: "ping" | "connect" }>[];
 	private container: IFluidContainer | undefined;
 	private presence: Presence | undefined;
-	private readonly workspaces = new Map<
-		string,
-		StatesWorkspace<WorkspaceSchema>
-	>();
+	private readonly workspaces = new Map<string, StatesWorkspace<WorkspaceSchema>>();
 
 	private send(msg: MessageToParent): void {
 		this.log.push({
@@ -303,10 +255,7 @@ class MessageHandler {
 		send: (event: ITelemetryBaseEvent, logLevel?: LogLevel) => {
 			// Filter out non-interactive client telemetry
 			const clientType = event.clientType;
-			if (
-				typeof clientType === "string" &&
-				clientType.startsWith("noninteractive")
-			) {
+			if (typeof clientType === "string" && clientType.startsWith("noninteractive")) {
 				return;
 			}
 
@@ -329,9 +278,7 @@ class MessageHandler {
 				eventCategory: "telemetry",
 				eventName: event.eventName,
 				details:
-					typeof event.details === "string"
-						? event.details
-						: JSON.stringify(event.details),
+					typeof event.details === "string" ? event.details : JSON.stringify(event.details),
 			});
 			if (verbosity.includes("telem")) {
 				selectiveVerboseLog(event, logLevel);
@@ -341,10 +288,7 @@ class MessageHandler {
 
 	private readonly onDisconnected = (): void => {
 		// Test state is a bit fragile and does not account for reconnections.
-		this.send({
-			event: "error",
-			error: `${process_id}: Container disconnected`,
-		});
+		this.send({ event: "error", error: `${process_id}: Container disconnected` });
 	};
 
 	private registerWorkspace(
@@ -352,15 +296,14 @@ class MessageHandler {
 		options: { latest?: boolean; latestMap?: boolean },
 	): void {
 		if (!this.presence) {
-			this.send({
-				event: "error",
-				error: `${process_id} is not connected to presence`,
-			});
+			this.send({ event: "error", error: `${process_id} is not connected to presence` });
 			return;
 		}
 		const { latest, latestMap } = options;
-		const workspace: StatesWorkspace<WorkspaceSchema> =
-			this.presence.states.getWorkspace(`test:${workspaceId}`, WorkspaceSchema);
+		const workspace: StatesWorkspace<WorkspaceSchema> = this.presence.states.getWorkspace(
+			`test:${workspaceId}`,
+			WorkspaceSchema,
+		);
 
 		if (latest && !workspace.states.latest) {
 			workspace.add(
@@ -369,9 +312,7 @@ class MessageHandler {
 			);
 			// Cast required due to optional keys in WorkspaceSchema
 			// TODO: AB#47518
-			const latestState = workspace.states.latest as LatestRaw<{
-				value: string;
-			}>;
+			const latestState = workspace.states.latest as LatestRaw<{ value: string }>;
 			latestState.events.on("remoteUpdated", (update) => {
 				this.send({
 					event: "latestValueUpdated",
@@ -393,10 +334,7 @@ class MessageHandler {
 		if (latestMap && !workspace.states.latestMap) {
 			workspace.add(
 				"latestMap",
-				StateFactory.latestMap<
-					{ value: Record<string, string | number> },
-					string
-				>({
+				StateFactory.latestMap<{ value: Record<string, string | number> }, string>({
 					local: {},
 				}),
 			);
@@ -522,17 +460,11 @@ class MessageHandler {
 		msg: Extract<MessageFromParent, { command: "connect" }>,
 	): Promise<void> {
 		if (!msg.user) {
-			this.send({
-				event: "error",
-				error: `${process_id}: No azure user information given`,
-			});
+			this.send({ event: "error", error: `${process_id}: No azure user information given` });
 			return;
 		}
 		if (this.container) {
-			this.send({
-				event: "error",
-				error: `${process_id}: Container already loaded`,
-			});
+			this.send({ event: "error", error: `${process_id}: Container already loaded` });
 			return;
 		}
 
@@ -565,23 +497,14 @@ class MessageHandler {
 			// Send existing attendees excluding self to parent/orchestrator
 			const self = presence.attendees.getMyself();
 			for (const attendee of presence.attendees.getAttendees()) {
-				if (
-					attendee !== self &&
-					attendee.getConnectionStatus() === "Connected"
-				) {
+				if (attendee !== self && attendee.getConnectionStatus() === "Connected") {
 					this.sendAttendeeConnected(attendee);
 				}
 			}
 
 			// Listen for presence events to notify parent/orchestrator when a new attendee joins or leaves the session.
-			presence.attendees.events.on(
-				"attendeeConnected",
-				this.sendAttendeeConnected,
-			);
-			presence.attendees.events.on(
-				"attendeeDisconnected",
-				this.sendAttendeeDisconnected,
-			);
+			presence.attendees.events.on("attendeeConnected", this.sendAttendeeConnected);
+			presence.attendees.events.on("attendeeDisconnected", this.sendAttendeeDisconnected);
 		} finally {
 			// Process any queued messages received while connecting
 			for (const queuedMsg of this.msgQueue) {
@@ -605,17 +528,11 @@ class MessageHandler {
 				}
 				log(`Report: ${attendees.size} attendees, ${connectedCount} connected`);
 			} else {
-				this.send({
-					event: "error",
-					error: `${process_id} is not connected to presence`,
-				});
+				this.send({ event: "error", error: `${process_id} is not connected to presence` });
 			}
 		}
 
-		const debugReport: Extract<
-			MessageToParent,
-			{ event: "debugReportComplete" }
-		> = {
+		const debugReport: Extract<MessageToParent, { event: "debugReportComplete" }> = {
 			event: "debugReportComplete",
 		};
 		if (msg.sendEventLog) {
@@ -626,18 +543,12 @@ class MessageHandler {
 
 	private handleDisconnectSelf(): void {
 		if (!this.container) {
-			this.send({
-				event: "error",
-				error: `${process_id} is not connected to container`,
-			});
+			this.send({ event: "error", error: `${process_id} is not connected to container` });
 			return;
 		}
 		// There are no current scenarios where disconnect without presence is expected.
 		if (!this.presence) {
-			this.send({
-				event: "error",
-				error: `${process_id} is not connected to presence`,
-			});
+			this.send({ event: "error", error: `${process_id} is not connected to presence` });
 			return;
 		}
 		// Disconnect event is treated as an error in normal handling.
@@ -654,10 +565,7 @@ class MessageHandler {
 		msg: Extract<MessageFromParent, { command: "setLatestValue" }>,
 	): void {
 		if (!this.presence) {
-			this.send({
-				event: "error",
-				error: `${process_id} is not connected to presence`,
-			});
+			this.send({ event: "error", error: `${process_id} is not connected to presence` });
 			return;
 		}
 		const workspace = this.workspaces.get(msg.workspaceId);
@@ -670,9 +578,7 @@ class MessageHandler {
 		}
 		// Cast required due to optional keys in WorkspaceSchema
 		// TODO: AB#47518
-		const latestState = workspace.states.latest as
-			| LatestRaw<{ value: string }>
-			| undefined;
+		const latestState = workspace.states.latest as LatestRaw<{ value: string }> | undefined;
 		if (!latestState) {
 			this.send({
 				event: "error",
@@ -690,10 +596,7 @@ class MessageHandler {
 		msg: Extract<MessageFromParent, { command: "setLatestMapValue" }>,
 	): void {
 		if (!this.presence) {
-			this.send({
-				event: "error",
-				error: `${process_id} is not connected to presence`,
-			});
+			this.send({ event: "error", error: `${process_id} is not connected to presence` });
 			return;
 		}
 		if (typeof msg.key !== "string") {
@@ -730,10 +633,7 @@ class MessageHandler {
 		msg: Extract<MessageFromParent, { command: "getLatestValue" }>,
 	): void {
 		if (!this.presence) {
-			this.send({
-				event: "error",
-				error: `${process_id} is not connected to presence`,
-			});
+			this.send({ event: "error", error: `${process_id} is not connected to presence` });
 			return;
 		}
 		const workspace = this.workspaces.get(msg.workspaceId);
@@ -746,9 +646,7 @@ class MessageHandler {
 		}
 		// Cast required due to optional keys in WorkspaceSchema
 		// TODO: AB#47518
-		const latestState = workspace.states.latest as
-			| LatestRaw<{ value: string }>
-			| undefined;
+		const latestState = workspace.states.latest as LatestRaw<{ value: string }> | undefined;
 		if (!latestState) {
 			this.send({
 				event: "error",
@@ -776,10 +674,7 @@ class MessageHandler {
 		msg: Extract<MessageFromParent, { command: "getLatestMapValue" }>,
 	): void {
 		if (!this.presence) {
-			this.send({
-				event: "error",
-				error: `${process_id} is not connected to presence`,
-			});
+			this.send({ event: "error", error: `${process_id} is not connected to presence` });
 			return;
 		}
 		if (typeof msg.key !== "string") {

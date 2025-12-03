@@ -4,19 +4,14 @@
  */
 
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
-import {
-	type ISummaryTree,
-	SummaryType,
-} from "@fluidframework/driver-definitions";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 
 /**
  * Utility api to convert ISummaryTree to a summary tree where blob contents are only utf8 strings.
  * @param summary - Summary supplied by the runtime to upload.
  * @returns Modified summary tree where the blob contents could be utf8 string only.
  */
-export function convertSummaryToCreateNewSummary(
-	summary: ISummaryTree,
-): ISummaryTree {
+export function convertSummaryToCreateNewSummary(summary: ISummaryTree): ISummaryTree {
 	for (const [key, summaryObject] of Object.entries(summary.tree)) {
 		switch (summaryObject.type) {
 			case SummaryType.Tree: {

@@ -11,28 +11,28 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type {
-	CreateChildSummarizerNodeFn,
 	IExperimentalIncrementalSummaryContext,
-	IFluidDataStoreContext,
+	ITelemetryContext,
 	IGarbageCollectionData,
-	IPendingMessagesState,
-	IRuntimeMessageCollection,
-	IRuntimeStorageService,
+	CreateChildSummarizerNodeFn,
+	IFluidDataStoreContext,
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNodeWithGC,
-	ITelemetryContext,
+	IPendingMessagesState,
+	IRuntimeMessageCollection,
+	IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	createChildLogger,
 	type ITelemetryLoggerExt,
 	ThresholdCounter,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	type ChannelServiceEndpoints,
-	createChannelServiceEndpoints,
 	type IChannelContext,
+	createChannelServiceEndpoints,
 	loadChannel,
 	loadChannelFactoryAndAttributes,
 	summarizeChannelAsync,
@@ -69,10 +69,7 @@ export class RemoteChannelContext implements IChannelContext {
 		createSummarizerNode: CreateChildSummarizerNodeFn,
 		attachMessageType?: string,
 	) {
-		assert(
-			!this.id.includes("/"),
-			0x310 /* Channel context ID cannot contain slashes */,
-		);
+		assert(!this.id.includes("/"), 0x310 /* Channel context ID cannot contain slashes */);
 
 		this.subLogger = createChildLogger({
 			logger: runtime.logger,
@@ -112,8 +109,7 @@ export class RemoteChannelContext implements IChannelContext {
 				this.pendingMessagesState !== undefined,
 				0xa6c /* pending messages state is undefined */,
 			);
-			for (const messageCollection of this.pendingMessagesState
-				.messageCollections) {
+			for (const messageCollection of this.pendingMessagesState.messageCollections) {
 				this.services.deltaConnection.processMessages(messageCollection);
 			}
 			this.thresholdOpsCounter.send(
@@ -128,9 +124,7 @@ export class RemoteChannelContext implements IChannelContext {
 
 			// Because have some await between we created the service and here, the connection state might have changed
 			// and we don't propagate the connection state when we are not loaded.  So we have to set it again here.
-			this.services.deltaConnection.setConnectionState(
-				dataStoreContext.connected,
-			);
+			this.services.deltaConnection.setConnectionState(dataStoreContext.connected);
 			return this.channel;
 		});
 
@@ -171,10 +165,7 @@ export class RemoteChannelContext implements IChannelContext {
 	}
 
 	public applyStashedOp(content: unknown): unknown {
-		assert(
-			this.isLoaded,
-			0x194 /* "Remote channel must be loaded when rebasing op" */,
-		);
+		assert(this.isLoaded, 0x194 /* "Remote channel must be loaded when rebasing op" */);
 		return this.services.deltaConnection.applyStashedOp(content);
 	}
 
@@ -189,10 +180,7 @@ export class RemoteChannelContext implements IChannelContext {
 		if (this.isLoaded) {
 			this.services.deltaConnection.processMessages(messageCollection);
 		} else {
-			assert(
-				!local,
-				0x195 /* "Remote channel must not be local when processing op" */,
-			);
+			assert(!local, 0x195 /* "Remote channel must not be local when processing op" */);
 			assert(
 				this.pendingMessagesState !== undefined,
 				0xa6d /* pending messages queue is undefined */,
@@ -209,24 +197,14 @@ export class RemoteChannelContext implements IChannelContext {
 		}
 	}
 
-	public reSubmit(
-		content: unknown,
-		localOpMetadata: unknown,
-		squash: boolean,
-	): void {
-		assert(
-			this.isLoaded,
-			0x196 /* "Remote channel must be loaded when resubmitting op" */,
-		);
+	public reSubmit(content: unknown, localOpMetadata: unknown, squash: boolean): void {
+		assert(this.isLoaded, 0x196 /* "Remote channel must be loaded when resubmitting op" */);
 
 		this.services.deltaConnection.reSubmit(content, localOpMetadata, squash);
 	}
 
 	public rollback(content: unknown, localOpMetadata: unknown): void {
-		assert(
-			this.isLoaded,
-			0x2f0 /* "Remote channel must be loaded when rolling back op" */,
-		);
+		assert(this.isLoaded, 0x2f0 /* "Remote channel must be loaded when rolling back op" */);
 
 		this.services.deltaConnection.rollback(content, localOpMetadata);
 	}
@@ -242,11 +220,7 @@ export class RemoteChannelContext implements IChannelContext {
 		trackState: boolean = true,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult> {
-		return this.summarizerNode.summarize(
-			fullTree,
-			trackState,
-			telemetryContext,
-		);
+		return this.summarizerNode.summarize(fullTree, trackState, telemetryContext);
 	}
 
 	private async summarizeInternal(
@@ -273,9 +247,7 @@ export class RemoteChannelContext implements IChannelContext {
 	 * If there is new data, the GC data is generated again (by calling getGCDataInternal).
 	 * @param fullGC - true to bypass optimizations and force full generation of GC data.
 	 */
-	public async getGCData(
-		fullGC: boolean = false,
-	): Promise<IGarbageCollectionData> {
+	public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
 		return this.summarizerNode.getGCData(fullGC);
 	}
 
@@ -284,9 +256,7 @@ export class RemoteChannelContext implements IChannelContext {
 	 * loads the context and calls into the channel to get its GC data.
 	 * @param fullGC - true to bypass optimizations and force full generation of GC data.
 	 */
-	private async getGCDataInternal(
-		fullGC: boolean = false,
-	): Promise<IGarbageCollectionData> {
+	private async getGCDataInternal(fullGC: boolean = false): Promise<IGarbageCollectionData> {
 		const channel = await this.getChannel();
 		return channel.getGCData(fullGC);
 	}

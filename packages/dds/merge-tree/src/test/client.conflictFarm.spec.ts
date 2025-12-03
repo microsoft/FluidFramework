@@ -3,23 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import {
-	describeFuzz,
-	makeRandom,
-	StressMode,
-} from "@fluid-private/stochastic-test-utils";
+import { describeFuzz, makeRandom, StressMode } from "@fluid-private/stochastic-test-utils";
 
 import {
+	type IConfigRange,
+	type IMergeTreeOperationRunnerConfig,
+	type TestOperation,
 	annotateRange,
 	doOverRange,
 	generateClientNames,
-	type IConfigRange,
-	type IMergeTreeOperationRunnerConfig,
 	insertAtRefPos,
 	obliterateRange,
 	removeRange,
 	runMergeTreeOperationRunner,
-	type TestOperation,
 } from "./mergeTreeOperationRunner.js";
 import { TestClient } from "./testClient.js";
 
@@ -28,11 +24,7 @@ interface IConflictFarmConfig extends IMergeTreeOperationRunnerConfig {
 	clients: IConfigRange;
 }
 
-const allOperations: TestOperation[] = [
-	removeRange,
-	annotateRange,
-	insertAtRefPos,
-];
+const allOperations: TestOperation[] = [removeRange, annotateRange, insertAtRefPos];
 
 export const debugOptions: IConflictFarmConfig = {
 	minLength: { min: 1, max: 512 },
@@ -75,10 +67,7 @@ export const stressOptions: IConflictFarmConfig = {
 // Generate a list of single character client names, support up to 69 clients
 const clientNames = generateClientNames();
 
-function runConflictFarmTests(
-	opts: IConflictFarmConfig,
-	extraSeed?: number,
-): void {
+function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): void {
 	doOverRange(opts.minLength, opts.growthFunc, (minLength) => {
 		for (const { name, config } of [
 			{
@@ -102,12 +91,7 @@ function runConflictFarmTests(
 			// },
 		])
 			it(`${name}: ConflictFarm_${minLength}`, async () => {
-				const random = makeRandom(
-					0xdeadbeef,
-					0xfeedbed,
-					minLength,
-					extraSeed ?? 0,
-				);
+				const random = makeRandom(0xdeadbeef, 0xfeedbed, minLength, extraSeed ?? 0);
 
 				const clients: TestClient[] = [
 					new TestClient({
@@ -116,8 +100,7 @@ function runConflictFarmTests(
 						mergeTreeEnableAnnotateAdjust: true,
 					}),
 				];
-				for (const [i, c] of clients.entries())
-					c.startOrUpdateCollaboration(clientNames[i]);
+				for (const [i, c] of clients.entries()) c.startOrUpdateCollaboration(clientNames[i]);
 
 				let seq = 0;
 				while (clients.length < config.clients.max) {
@@ -136,13 +119,7 @@ function runConflictFarmTests(
 						clients.push(newClient);
 					}
 
-					seq = runMergeTreeOperationRunner(
-						random,
-						seq,
-						clients,
-						minLength,
-						config,
-					);
+					seq = runMergeTreeOperationRunner(random, seq, clients, minLength, config);
 				}
 			}).timeout(30 * 10000);
 	});

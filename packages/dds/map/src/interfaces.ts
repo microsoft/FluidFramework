@@ -159,10 +159,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 	 *
 	 * - `target` - The {@link ISharedDirectory} itself.
 	 */
-	(
-		event: "clear",
-		listener: (local: boolean, target: IEventThisPlaceHolder) => void,
-	);
+	(event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void);
 
 	/**
 	 * Emitted when a subdirectory is created.
@@ -178,11 +175,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 	 */
 	(
 		event: "subDirectoryCreated",
-		listener: (
-			path: string,
-			local: boolean,
-			target: IEventThisPlaceHolder,
-		) => void,
+		listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void,
 	);
 
 	/**
@@ -199,11 +192,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 	 */
 	(
 		event: "subDirectoryDeleted",
-		listener: (
-			path: string,
-			local: boolean,
-			target: IEventThisPlaceHolder,
-		) => void,
+		listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void,
 	);
 }
 
@@ -229,11 +218,7 @@ export interface IDirectoryEvents extends IEvent {
 	 */
 	(
 		event: "containedValueChanged",
-		listener: (
-			changed: IValueChanged,
-			local: boolean,
-			target: IEventThisPlaceHolder,
-		) => void,
+		listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void,
 	);
 
 	/**
@@ -251,11 +236,7 @@ export interface IDirectoryEvents extends IEvent {
 	 */
 	(
 		event: "subDirectoryCreated",
-		listener: (
-			path: string,
-			local: boolean,
-			target: IEventThisPlaceHolder,
-		) => void,
+		listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void,
 	);
 
 	/**
@@ -272,11 +253,7 @@ export interface IDirectoryEvents extends IEvent {
 	 */
 	(
 		event: "subDirectoryDeleted",
-		listener: (
-			path: string,
-			local: boolean,
-			target: IEventThisPlaceHolder,
-		) => void,
+		listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void,
 	);
 
 	/**
@@ -318,11 +295,7 @@ export interface ISharedDirectoryEventsInternal extends ISharedDirectoryEvents {
 	 */
 	(
 		event: "clearInternal",
-		listener: (
-			path: string,
-			local: boolean,
-			target: IEventThisPlaceHolder,
-		) => void,
+		listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void,
 	);
 }
 
@@ -379,11 +352,7 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
 	 */
 	(
 		event: "valueChanged",
-		listener: (
-			changed: IValueChanged,
-			local: boolean,
-			target: IEventThisPlaceHolder,
-		) => void,
+		listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void,
 	);
 
 	/**
@@ -395,10 +364,7 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
 	 *
 	 * - `target` - The {@link ISharedMap} itself.
 	 */
-	(
-		event: "clear",
-		listener: (local: boolean, target: IEventThisPlaceHolder) => void,
-	);
+	(event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void);
 }
 
 /**
@@ -418,9 +384,7 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
  */
 // TODO: Use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface ISharedMap
-	extends ISharedObject<ISharedMapEvents>,
-		Map<string, any> {
+export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
 	/**
 	 * Retrieves the given key from the map if it exists.
 	 * @param key - Key to retrieve from

@@ -12,8 +12,6 @@ import type { NodeId } from "./modularChangeTypes.js";
  */
 export type GenericChangeset = BTree<number, NodeId>;
 
-export function newGenericChangeset(
-	nodes: [number, NodeId][] = [],
-): GenericChangeset {
+export function newGenericChangeset(nodes: [number, NodeId][] = []): GenericChangeset {
 	return new BTree(nodes);
 }

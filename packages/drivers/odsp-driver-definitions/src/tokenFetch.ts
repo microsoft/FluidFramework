@@ -57,10 +57,7 @@ export interface TokenFetchOptions {
 	 * - method: method type
 	 * Request info may be encoded into the returned token that the receiver can use to validate that caller is allowed to make specific call.
 	 */
-	readonly request?: {
-		url: string;
-		method: "GET" | "POST" | "PATCH" | "DELETE" | "PUT";
-	};
+	readonly request?: { url: string; method: "GET" | "POST" | "PATCH" | "DELETE" | "PUT" };
 }
 
 /**
@@ -88,9 +85,7 @@ export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
  * @legacy
  * @beta
  */
-export type TokenFetcher<T> = (
-	options: T,
-) => Promise<string | TokenResponse | null>;
+export type TokenFetcher<T> = (options: T) => Promise<string | TokenResponse | null>;
 
 /**
  * Helper method which transforms return value for TokenFetcher method to token string
@@ -116,10 +111,7 @@ export const tokenFromResponse = (
 export const authHeaderFromTokenResponse = (
 	tokenResponse: string | TokenResponse | null | undefined,
 ): string | null => {
-	if (
-		typeof tokenResponse === "object" &&
-		tokenResponse?.authorizationHeader !== undefined
-	) {
+	if (typeof tokenResponse === "object" && tokenResponse?.authorizationHeader !== undefined) {
 		return tokenResponse.authorizationHeader;
 	}
 	const token = tokenFromResponse(tokenResponse);

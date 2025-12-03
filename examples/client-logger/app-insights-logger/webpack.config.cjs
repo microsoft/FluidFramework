@@ -42,11 +42,7 @@ module.exports = (env) => {
 				devtoolNamespace: "fluid-tools/client-debugger-view",
 				libraryTarget: "umd",
 			},
-			plugins: [
-				new HtmlWebpackPlugin({
-					template: path.join(testAppSrcPath, "index.html"),
-				}),
-			],
+			plugins: [new HtmlWebpackPlugin({ template: path.join(testAppSrcPath, "index.html") })],
 			// This impacts which files are watched by the dev server (and likely by webpack if watch is true).
 			// This should be configurable under devServer.static.watch
 			// (see https://github.com/webpack/webpack-dev-server/blob/master/migration-v4.md) but that does not seem to work.

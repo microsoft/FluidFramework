@@ -4,8 +4,8 @@
  */
 
 import { EventEmitter } from "@fluid-internal/client-utils";
-import type { ICollection, IDb } from "@fluidframework/server-services-core";
-import type { ITestDbFactory } from "@fluidframework/server-test-utils";
+import { ICollection, IDb } from "@fluidframework/server-services-core";
+import { ITestDbFactory } from "@fluidframework/server-test-utils";
 import { v4 as uuid } from "uuid";
 
 /**
@@ -28,10 +28,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 	public async distinct(key: any, query: any): Promise<any> {
 		throw new Error("Method Not Implemented");
 	}
-	public async findAndUpdate(
-		query: any,
-		value: T,
-	): Promise<{ value: T; existing: boolean }> {
+	public async findAndUpdate(query: any, value: T): Promise<{ value: T; existing: boolean }> {
 		throw new Error("Method not implemented.");
 	}
 
@@ -247,10 +244,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 				if (!value._id) {
 					value._id = uuid();
 				}
-				sessionStorage.setItem(
-					`${this.collectionName}-${value._id}`,
-					JSON.stringify(value),
-				);
+				sessionStorage.setItem(`${this.collectionName}-${value._id}`, JSON.stringify(value));
 			}
 		}
 	}
@@ -264,9 +258,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 	 */
 	private findOneInternal(query: any): any {
 		if (query._id) {
-			const json = sessionStorage.getItem(
-				`${this.collectionName}-${query._id}`,
-			);
+			const json = sessionStorage.getItem(`${this.collectionName}-${query._id}`);
 			if (json) {
 				return JSON.parse(json);
 			}
@@ -301,10 +293,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
  * A database for testing that stores data in the browsers session storage
  */
 class LocalSessionStorageDb extends EventEmitter implements IDb {
-	private readonly collections = new Map<
-		string,
-		LocalSessionStorageCollection<any>
-	>();
+	private readonly collections = new Map<string, LocalSessionStorageCollection<any>>();
 	public async close(): Promise<void> {}
 	public collection<T>(name: string): ICollection<T> {
 		if (!this.collections.has(name)) {

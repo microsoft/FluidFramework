@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { FluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import type { IFluidMountableView } from "./interface.js";
+import { IFluidMountableView } from "./interface.js";
 
 /**
  * Abstracts mounting of views for usage outside of their bundle.  Supports React elements.

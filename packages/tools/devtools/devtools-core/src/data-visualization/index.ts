@@ -4,16 +4,16 @@
  */
 
 export type {
-	DataVisualizerEvents,
 	SharedObjectType,
-	SharedObjectVisualizers,
-	VisualizeChildData,
 	VisualizeSharedObject,
+	VisualizeChildData,
+	SharedObjectVisualizers,
+	DataVisualizerEvents,
 } from "./DataVisualization.js";
 export {
 	DataVisualizerGraph,
-	VisualizerNode,
 	visualizeChildData,
+	VisualizerNode,
 } from "./DataVisualization.js";
 export {
 	defaultVisualizers,
@@ -36,12 +36,12 @@ export type {
 	Primitive,
 	RootHandleNode,
 	TreeNodeBase,
-	UnknownObjectNode,
-	ValueNodeBase,
 	VisualChildNode,
-	VisualNode,
+	ValueNodeBase,
 	VisualNodeBase,
+	VisualNode,
 	VisualTreeNode,
 	VisualValueNode,
+	UnknownObjectNode,
 } from "./VisualTree.js";
 export { createHandleNode, VisualNodeKind } from "./VisualTree.js";

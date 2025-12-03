@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type { AsyncReducer, BaseFuzzTestState, Reducer } from "./types.js";
+import { AsyncReducer, BaseFuzzTestState, Reducer } from "./types.js";
 
 /**
  * @internal
@@ -30,10 +30,7 @@ export function combineReducers<
 	TState extends BaseFuzzTestState,
 >(
 	reducerMap: {
-		[K in TOperation["type"]]: Reducer<
-			Extract<TOperation, { type: K }>,
-			TState
-		>;
+		[K in TOperation["type"]]: Reducer<Extract<TOperation, { type: K }>, TState>;
 	},
 ): Reducer<TOperation, TState> {
 	return (state, op) => {
@@ -55,10 +52,7 @@ export function combineReducersAsync<
 	TState extends BaseFuzzTestState,
 >(
 	reducerMap: {
-		[K in TOperation["type"]]: AsyncReducer<
-			Extract<TOperation, { type: K }>,
-			TState
-		>;
+		[K in TOperation["type"]]: AsyncReducer<Extract<TOperation, { type: K }>, TState>;
 	},
 ): AsyncReducer<TOperation, TState> {
 	return async (state, op) => {

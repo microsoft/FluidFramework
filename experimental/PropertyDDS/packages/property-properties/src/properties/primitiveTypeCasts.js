@@ -30,7 +30,7 @@ var castArrays = {
  * @return {number|string|boolean} The casted value
  * @private
  */
-var _simpleCastFunctor = (in_array, in_value) => {
+var _simpleCastFunctor = function (in_array, in_value) {
 	in_array[0] = in_value;
 	return in_array[0];
 };
@@ -49,7 +49,7 @@ const _castFunctors = {
 	 * @return {number} The casted value
 	 * @protected
 	 */
-	Uint64: (in_value, in_radix) => {
+	Uint64: function (in_value, in_radix) {
 		if (in_value instanceof Uint64) {
 			return in_value;
 		}
@@ -90,7 +90,7 @@ const _castFunctors = {
 	 * @return {number} The casted value
 	 * @protected
 	 */
-	Int64: (in_value, in_radix) => {
+	Int64: function (in_value, in_radix) {
 		if (in_value instanceof Int64) {
 			return in_value;
 		}
@@ -143,14 +143,18 @@ const _castFunctors = {
 	 * @return {number} The casted value
 	 * @protected
 	 */
-	String: (in_value) => String(in_value),
+	String: function (in_value) {
+		return String(in_value);
+	},
 	/**
 	 * Casts the input value to a Boolean value
 	 * @param {boolean} in_value - The value to use in the cast
 	 * @return {boolean} The casted value
 	 * @protected
 	 */
-	Boolean: (in_value) => !!in_value,
+	Boolean: function (in_value) {
+		return !!in_value;
+	},
 };
 
 export { _castFunctors };

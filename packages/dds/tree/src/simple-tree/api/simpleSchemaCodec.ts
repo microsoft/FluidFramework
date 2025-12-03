@@ -3,21 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	transformMapValues,
-	unreachableCase,
-} from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import {
-	DiscriminatedUnionDispatcher,
-	extractJsonValidator,
-	type FormatValidator,
-	FormatValidatorNoOp,
-} from "../../codec/index.js";
-import type { ValueSchema } from "../../core/index.js";
-import { type JsonCompatibleReadOnly, objectToMap } from "../../util/index.js";
-import { createSchemaUpgrade, NodeKind, SchemaUpgrade } from "../core/index.js";
-import type { FieldKind } from "../fieldSchema.js";
+import { objectToMap, type JsonCompatibleReadOnly } from "../../util/index.js";
+import { unreachableCase, transformMapValues } from "@fluidframework/core-utils/internal";
 import type {
 	SimpleAllowedTypeAttributes,
 	SimpleArrayNodeSchema,
@@ -30,7 +17,17 @@ import type {
 	SimpleRecordNodeSchema,
 	SimpleTreeSchema,
 } from "../simpleSchema.js";
+import { createSchemaUpgrade, NodeKind, SchemaUpgrade } from "../core/index.js";
+import type { FieldKind } from "../fieldSchema.js";
+import type { ValueSchema } from "../../core/index.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import * as Format from "../simpleSchemaFormatV1.js";
+import {
+	DiscriminatedUnionDispatcher,
+	extractJsonValidator,
+	FormatValidatorNoOp,
+	type FormatValidator,
+} from "../../codec/index.js";
 
 /**
  * Encodes a simple schema (view or stored) into a serializable format.
@@ -41,9 +38,7 @@ import * as Format from "../simpleSchemaFormatV1.js";
  *
  * @alpha
  */
-export function encodeSimpleSchema(
-	simpleSchema: SimpleTreeSchema,
-): JsonCompatibleReadOnly {
+export function encodeSimpleSchema(simpleSchema: SimpleTreeSchema): JsonCompatibleReadOnly {
 	// Convert types to serializable forms
 	const encodedDefinitions: Format.SimpleSchemaDefinitionsFormat = {};
 
@@ -87,12 +82,9 @@ export function decodeSimpleSchema(
 	return {
 		root: decodeSimpleFieldSchema(encodedSchema.root),
 		definitions: new Map(
-			transformMapValues(
-				objectToMap(encodedSchema.definitions),
-				(value, key) => {
-					return decodeNodeSchema(value);
-				},
-			),
+			transformMapValues(objectToMap(encodedSchema.definitions), (value, key) => {
+				return decodeNodeSchema(value);
+			}),
 		),
 	};
 }
@@ -102,9 +94,7 @@ export function decodeSimpleSchema(
  * @param schema - The node schema to convert.
  * @returns A serializable representation of the node schema.
  */
-function encodeNodeSchema(
-	schema: SimpleNodeSchema,
-): Format.SimpleNodeSchemaUnionFormat {
+function encodeNodeSchema(schema: SimpleNodeSchema): Format.SimpleNodeSchemaUnionFormat {
 	const kind = schema.kind;
 	switch (kind) {
 		case NodeKind.Leaf:
@@ -128,9 +118,7 @@ function encodeNodeSchema(
  * @param schema - The leaf node schema to convert.
  * @returns A serializable representation of the leaf node schema.
  */
-function encodeLeafNode(
-	schema: SimpleLeafNodeSchema,
-): Format.SimpleLeafNodeSchemaFormat {
+function encodeLeafNode(schema: SimpleLeafNodeSchema): Format.SimpleLeafNodeSchemaFormat {
 	return {
 		kind: schema.kind,
 		leafKind: schema.leafKind,
@@ -165,8 +153,7 @@ function encodeSimpleAllowedTypes(
 ): Format.SimpleAllowedTypesFormat {
 	const encodedAllowedTypes: Format.SimpleAllowedTypesFormat = {};
 	for (const [identifier, attributes] of simpleAllowedTypes) {
-		const isStaged =
-			attributes.isStaged instanceof SchemaUpgrade ? true : attributes.isStaged;
+		const isStaged = attributes.isStaged instanceof SchemaUpgrade ? true : attributes.isStaged;
 		encodedAllowedTypes[identifier] = { isStaged };
 	}
 	return encodedAllowedTypes;
@@ -209,14 +196,10 @@ function encodeObjectField(
  * @param fieldSchema - The field schema to convert.
  * @returns A serializable representation of the field schema.
  */
-function encodeField(
-	fieldSchema: SimpleFieldSchema,
-): Format.SimpleFieldSchemaFormat {
+function encodeField(fieldSchema: SimpleFieldSchema): Format.SimpleFieldSchemaFormat {
 	return {
 		kind: fieldSchema.kind,
-		simpleAllowedTypes: encodeSimpleAllowedTypes(
-			fieldSchema.simpleAllowedTypes,
-		),
+		simpleAllowedTypes: encodeSimpleAllowedTypes(fieldSchema.simpleAllowedTypes),
 	};
 }
 
@@ -264,13 +247,8 @@ function decodeContainerNode(
 		| Format.SimpleRecordNodeSchemaFormat,
 ): SimpleArrayNodeSchema | SimpleMapNodeSchema | SimpleRecordNodeSchema {
 	return {
-		kind: encodedContainerSchema.kind as
-			| NodeKind.Array
-			| NodeKind.Map
-			| NodeKind.Record,
-		simpleAllowedTypes: decodeSimpleAllowedTypes(
-			encodedContainerSchema.simpleAllowedTypes,
-		),
+		kind: encodedContainerSchema.kind as NodeKind.Array | NodeKind.Map | NodeKind.Record,
+		simpleAllowedTypes: decodeSimpleAllowedTypes(encodedContainerSchema.simpleAllowedTypes),
 		// We cannot encode persistedMetadata or metadata, so we explicitly set them to empty values.
 		persistedMetadata: undefined,
 		metadata: {},
@@ -354,9 +332,7 @@ function decodeSimpleFieldSchema(
 ): SimpleFieldSchema {
 	return {
 		kind: encodedField.kind as FieldKind,
-		simpleAllowedTypes: decodeSimpleAllowedTypes(
-			encodedField.simpleAllowedTypes,
-		),
+		simpleAllowedTypes: decodeSimpleAllowedTypes(encodedField.simpleAllowedTypes),
 		// We cannot encode persistedMetadata or metadata, so we explicitly set them to empty values when decoding.
 		persistedMetadata: undefined,
 		metadata: {},
@@ -376,8 +352,7 @@ function decodeSimpleAllowedTypes(
 	const simpleAllowedTypes = transformMapValues(
 		untypedMap,
 		(value): SimpleAllowedTypeAttributes => {
-			const isStaged =
-				value.isStaged === true ? createSchemaUpgrade() : value.isStaged;
+			const isStaged = value.isStaged === true ? createSchemaUpgrade() : value.isStaged;
 			return { isStaged };
 		},
 	);

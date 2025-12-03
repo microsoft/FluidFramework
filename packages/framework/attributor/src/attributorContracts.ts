@@ -19,8 +19,7 @@ export const enableOnNewFileKey = "Fluid.Attribution.EnableOnNewFile";
 /**
  * @internal
  */
-export const IRuntimeAttributor: keyof IProvideRuntimeAttributor =
-	"IRuntimeAttributor";
+export const IRuntimeAttributor: keyof IProvideRuntimeAttributor = "IRuntimeAttributor";
 
 /**
  * @internal
@@ -32,8 +31,7 @@ export interface IProvideRuntimeAttributor {
 /**
  * @internal
  */
-export const attributorDataStoreAlias =
-	"attributor-cf9b6fe4-4c50-4a5d-9045-eb73b886f740";
+export const attributorDataStoreAlias = "attributor-cf9b6fe4-4c50-4a5d-9045-eb73b886f740";
 
 /**
  * Provides access to attribution information stored on the container runtime.

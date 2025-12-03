@@ -3,25 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import {
-	gitHashFile,
-	IsoBuffer,
-	Uint8ArrayToString,
-} from "@fluid-internal/client-utils";
+import { IsoBuffer, Uint8ArrayToString, gitHashFile } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
-	type ISummaryTree,
-	type SummaryObject,
-	SummaryType,
-} from "@fluidframework/driver-definitions";
-import type {
-	IGitCreateTreeEntry,
-	ISnapshotTreeEx,
-} from "@fluidframework/driver-definitions/internal";
+import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
+import type { IGitCreateTreeEntry } from "@fluidframework/driver-definitions/internal";
+import { ISnapshotTreeEx } from "@fluidframework/driver-definitions/internal";
 import { getGitMode, getGitType } from "@fluidframework/driver-utils/internal";
-import type { IWholeSummaryPayloadType } from "@fluidframework/server-services-client";
+import { IWholeSummaryPayloadType } from "@fluidframework/server-services-client";
 
-import type { IGitManager, ISummaryUploadManager } from "./storageContracts.js";
+import { IGitManager, ISummaryUploadManager } from "./storageContracts.js";
 
 /**
  * Recursively writes summary tree as individual summary blobs.
@@ -42,12 +32,8 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 		sequenceNumber?: number,
 		initial?: boolean,
 	): Promise<string> {
-		const previousFullSnapshot =
-			await this.getPreviousFullSnapshot(parentHandle);
-		return this.writeSummaryTreeCore(
-			summaryTree,
-			previousFullSnapshot ?? undefined,
-		);
+		const previousFullSnapshot = await this.getPreviousFullSnapshot(parentHandle);
+		return this.writeSummaryTreeCore(summaryTree, previousFullSnapshot ?? undefined);
 	}
 
 	private async writeSummaryTreeCore(
@@ -56,10 +42,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 	): Promise<string> {
 		const entries = await Promise.all(
 			Object.entries(summaryTree.tree).map(async ([key, entry]) => {
-				const pathHandle = await this.writeSummaryTreeObject(
-					entry,
-					previousFullSnapshot,
-				);
+				const pathHandle = await this.writeSummaryTreeObject(entry, previousFullSnapshot);
 				const treeEntry: IGitCreateTreeEntry = {
 					mode: getGitMode(entry),
 					path: encodeURIComponent(key),
@@ -70,8 +53,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 			}),
 		);
 
-		const treeHandle = (await this.manager.createGitTree({ tree: entries }))
-			.content;
+		const treeHandle = (await this.manager.createGitTree({ tree: entries })).content;
 		return treeHandle.sha;
 	}
 
@@ -87,11 +69,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 				if (previousFullSnapshot === undefined) {
 					throw Error("Parent summary does not exist to reference by handle.");
 				}
-				return this.getIdFromPath(
-					object.handleType,
-					object.handle,
-					previousFullSnapshot,
-				);
+				return this.getIdFromPath(object.handleType, object.handle, previousFullSnapshot);
 			}
 			case SummaryType.Tree: {
 				return this.writeSummaryTreeCore(object, previousFullSnapshot);
@@ -105,23 +83,17 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 		}
 	}
 
-	private async writeSummaryBlob(
-		content: string | Uint8Array,
-	): Promise<string> {
+	private async writeSummaryBlob(content: string | Uint8Array): Promise<string> {
 		const { parsedContent, encoding } =
 			typeof content === "string"
 				? { parsedContent: content, encoding: "utf-8" }
-				: {
-						parsedContent: Uint8ArrayToString(content, "base64"),
-						encoding: "base64",
-					};
+				: { parsedContent: Uint8ArrayToString(content, "base64"), encoding: "base64" };
 
 		// The gitHashFile would return the same hash as returned by the server as blob.sha
 		const hash = await gitHashFile(IsoBuffer.from(parsedContent, encoding));
 		if (!this.blobsShaCache.has(hash)) {
 			this.blobsShaCache.set(hash, "");
-			const blob = (await this.manager.createBlob(parsedContent, encoding))
-				.content;
+			const blob = (await this.manager.createBlob(parsedContent, encoding)).content;
 			assert(hash === blob.sha, 0x0b6 /* "Blob.sha and hash do not match!!" */);
 		}
 		return hash;
@@ -171,15 +143,9 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 					return tryId;
 				}
 				default:
-					throw Error(
-						`Unexpected handle summary object type: "${handleType}".`,
-					);
+					throw Error(`Unexpected handle summary object type: "${handleType}".`);
 			}
 		}
-		return this.getIdFromPathCore(
-			handleType,
-			path.slice(1),
-			previousSnapshot.trees[key],
-		);
+		return this.getIdFromPathCore(handleType, path.slice(1), previousSnapshot.trees[key]);
 	}
 }

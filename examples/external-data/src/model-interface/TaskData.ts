@@ -34,7 +34,7 @@ export function assertValidTaskData(input: unknown): ITaskData {
 			throw new TypeError(`Input task data contained malformed key: "${key}".`);
 		}
 		const jsonValue = value as Record<string | number | symbol, unknown>;
-		if (!Object.hasOwn(jsonValue, "name")) {
+		if (!Object.prototype.hasOwnProperty.call(jsonValue, "name")) {
 			throw new Error(
 				`Input task entry under ID "${key}" does not contain required "name" property. Received: "${JSON.stringify(
 					jsonValue,
@@ -42,11 +42,9 @@ export function assertValidTaskData(input: unknown): ITaskData {
 			);
 		}
 		if (typeof jsonValue.name !== "string") {
-			throw new TypeError(
-				`Invalid ITaskData "name" value received: "${jsonValue.name}".`,
-			);
+			throw new TypeError(`Invalid ITaskData "name" value received: "${jsonValue.name}".`);
 		}
-		if (!Object.hasOwn(jsonValue, "priority")) {
+		if (!Object.prototype.hasOwnProperty.call(jsonValue, "priority")) {
 			throw new Error(
 				`Input task entry under ID "${key}" does not contain required "priority" property. Received: "${JSON.stringify(
 					jsonValue,

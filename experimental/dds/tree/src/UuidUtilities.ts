@@ -6,7 +6,7 @@
 import { NIL, v4 } from 'uuid';
 
 import { assertWithMessage } from './Common.js';
-import type { StableId, UuidString } from './Identifiers.js';
+import { StableId, UuidString } from './Identifiers.js';
 
 const hexadecimalCharCodes = Array.from('09afAF').map((c) => c.charCodeAt(0)) as [
 	zero: number,

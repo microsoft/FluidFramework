@@ -28,25 +28,19 @@ export class DemoCodeLoader implements ICodeDetailsLoader {
 	 * @param testMode - True to enable instant summarizer spawning.
 	 */
 	public constructor(private readonly testMode = false) {}
-	public async load(
-		source: IFluidCodeDetails,
-	): Promise<IFluidModuleWithDetails> {
+	public async load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
 		const version = source.package;
 		if (typeof version !== "string") {
 			throw new TypeError("Unexpected code detail format");
 		}
 
 		const v1ModuleWithDetails: IFluidModuleWithDetails = {
-			module: {
-				fluidExport: new InventoryListContainerRuntimeFactory1(this.testMode),
-			},
+			module: { fluidExport: new InventoryListContainerRuntimeFactory1(this.testMode) },
 			details: { package: "one" },
 		};
 
 		const v2ModuleWithDetails: IFluidModuleWithDetails = {
-			module: {
-				fluidExport: new InventoryListContainerRuntimeFactory2(this.testMode),
-			},
+			module: { fluidExport: new InventoryListContainerRuntimeFactory2(this.testMode) },
 			details: { package: "two" },
 		};
 

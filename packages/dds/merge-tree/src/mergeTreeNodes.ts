@@ -13,42 +13,27 @@ import {
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
 } from "./constants.js";
-import {
-	LocalReferenceCollection,
-	type LocalReferencePosition,
-} from "./localReference.js";
-import {
-	type ITrackingGroup,
-	TrackingGroupCollection,
-} from "./mergeTreeTracking.js";
+import { LocalReferenceCollection, type LocalReferencePosition } from "./localReference.js";
+import { TrackingGroupCollection, type ITrackingGroup } from "./mergeTreeTracking.js";
 import type { IJSONSegment, IMarkerDef, ReferenceType } from "./ops.js";
 import { computeHierarchicalOrdinal } from "./ordinal.js";
 import type { PartialSequenceLengths } from "./partialLengths.js";
-import {
-	LocalDefaultPerspective,
-	type Perspective,
-	PriorPerspective,
-} from "./perspective.js";
-import {
-	clone,
-	createMap,
-	type MapLike,
-	type PropertySet,
-} from "./properties.js";
+import { LocalDefaultPerspective, PriorPerspective, type Perspective } from "./perspective.js";
+import { type PropertySet, clone, createMap, type MapLike } from "./properties.js";
 import type { ReferencePosition } from "./referencePositions.js";
 import type { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import {
 	hasProp,
-	type IHasInsertionInfo,
-	type IHasRemovalInfo,
-	type IMergeNodeInfo,
-	type ISegmentInsideObliterateInfo,
 	isInserted,
-	isInsideObliterate,
 	isMergeNodeInfo as isMergeNode,
 	isRemoved,
 	overwriteInfo,
+	type IHasInsertionInfo,
+	type IMergeNodeInfo,
+	type IHasRemovalInfo,
 	type SegmentWithInfo,
+	type ISegmentInsideObliterateInfo,
+	isInsideObliterate,
 } from "./segmentInfos.js";
 import type { PropertiesManager } from "./segmentPropertiesManager.js";
 import type { Side } from "./sequencePlace.js";
@@ -112,9 +97,7 @@ export type ISegmentLeaf = SegmentWithInfo<IMergeNodeInfo & IHasInsertionInfo>;
  * @param nodeLike - The segment-like object to check.
  * @returns True if the segment is a segment leaf, otherwise false.
  */
-export const isSegmentLeaf = (
-	segmentLike: unknown,
-): segmentLike is ISegmentLeaf =>
+export const isSegmentLeaf = (segmentLike: unknown): segmentLike is ISegmentLeaf =>
 	isInserted(segmentLike) && isMergeNode(segmentLike);
 
 /**
@@ -123,9 +106,7 @@ export const isSegmentLeaf = (
  * @param segmentLike - The segment-like object to convert.
  * @returns The segment leaf if the conversion is possible, otherwise undefined.
  */
-export const toSegmentLeaf = (
-	segmentLike: unknown,
-): ISegmentLeaf | undefined =>
+export const toSegmentLeaf = (segmentLike: unknown): ISegmentLeaf | undefined =>
 	isSegmentLeaf(segmentLike) ? segmentLike : undefined;
 /**
  * Asserts that the segment is a segment leaf. Usage of this function should not produce a user facing error.
@@ -133,10 +114,8 @@ export const toSegmentLeaf = (
  * @param segmentLike - The segment-like object to check.
  * @throws Will throw an error if the segment is not a segment leaf.
  */
-export const assertSegmentLeaf: (
-	segmentLike: unknown,
-) => asserts segmentLike is ISegmentLeaf = (segmentLike) =>
-	assert(isSegmentLeaf(segmentLike), 0xaab /* must be segment leaf */);
+export const assertSegmentLeaf: (segmentLike: unknown) => asserts segmentLike is ISegmentLeaf =
+	(segmentLike) => assert(isSegmentLeaf(segmentLike), 0xaab /* must be segment leaf */);
 /**
  * This type is used for building MergeBlocks from segments and other MergeBlocks. We need this
  * type as segments may not yet be bound to the tree, so lack merge node info which is required for
@@ -226,11 +205,7 @@ export interface ISegmentChanges {
 
 export interface InsertContext {
 	candidateSegment?: SegmentWithInfo<IHasInsertionInfo>;
-	leaf: (
-		segment: ISegmentLeaf | undefined,
-		pos: number,
-		ic: InsertContext,
-	) => ISegmentChanges;
+	leaf: (segment: ISegmentLeaf | undefined, pos: number, ic: InsertContext) => ISegmentChanges;
 	continuePredicate?: (continueFromBlock: MergeBlock) => boolean;
 }
 
@@ -357,8 +332,9 @@ export function seqLTE(seq: number, minOrRefSeq: number): boolean {
 export abstract class BaseSegment implements ISegment {
 	public cachedLength: number = 0;
 
-	public readonly trackingCollection: TrackingGroupCollection =
-		new TrackingGroupCollection(this);
+	public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(
+		this,
+	);
 	/***/
 	public attribution?: IAttributionCollection<AttributionKey>;
 
@@ -415,8 +391,7 @@ export abstract class BaseSegment implements ISegment {
 			return undefined;
 		}
 
-		const leafSegment: ISegmentPrivate | undefined =
-			this.createSplitSegmentAt(pos);
+		const leafSegment: ISegmentPrivate | undefined = this.createSplitSegmentAt(pos);
 
 		if (!leafSegment) {
 			return undefined;
@@ -544,10 +519,7 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 
 	static fromJSONObject(spec: IJSONSegment): Marker | undefined {
 		if (spec && typeof spec === "object" && "marker" in spec) {
-			return Marker.make(
-				(spec.marker as Marker).refType,
-				spec.props as PropertySet,
-			);
+			return Marker.make((spec.marker as Marker).refType, spec.props as PropertySet);
 		}
 		return undefined;
 	}
@@ -600,9 +572,7 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
  * things closer to `Perspective`s when calling methods on `Client` rather than refSeq/localSeq/clientId etc),
  * it may be more reasonable to expose this more directly on `CollaborationWindow`.
  */
-export function getMinSeqStamp(
-	collabWindow: CollaborationWindow,
-): OperationStamp {
+export function getMinSeqStamp(collabWindow: CollaborationWindow): OperationStamp {
 	return { seq: collabWindow.minSeq, clientId: NonCollabClient };
 }
 
@@ -615,9 +585,7 @@ export function getMinSeqStamp(
  * things closer to `Perspective`s when calling methods on `Client` rather than refSeq/localSeq/clientId etc),
  * it may be more reasonable to expose this more directly on `CollaborationWindow`.
  */
-export function getMinSeqPerspective(
-	collabWindow: CollaborationWindow,
-): Perspective {
+export function getMinSeqPerspective(collabWindow: CollaborationWindow): Perspective {
 	return new PriorPerspective(collabWindow.minSeq, NonCollabClient);
 }
 
@@ -705,9 +673,7 @@ export class CollaborationWindow {
 	 */
 	localSeq = 0;
 
-	public localPerspective: Perspective = new LocalDefaultPerspective(
-		this.clientId,
-	);
+	public localPerspective: Perspective = new LocalDefaultPerspective(this.clientId);
 
 	public loadFrom(a: CollaborationWindow): void {
 		this.clientId = a.clientId;
@@ -722,9 +688,7 @@ export class CollaborationWindow {
 		}
 
 		return {
-			seq: this.collaborating
-				? UnassignedSequenceNumber
-				: UniversalSequenceNumber,
+			seq: this.collaborating ? UnassignedSequenceNumber : UniversalSequenceNumber,
 			clientId: this.clientId,
 			localSeq: this.localSeq,
 		};
@@ -739,5 +703,4 @@ export const compareNumbers = (a: number, b: number): number => a - b;
 /**
  * Compares two strings.
  */
-export const compareStrings = (a: string, b: string): number =>
-	a.localeCompare(b);
+export const compareStrings = (a: string, b: string): number => a.localeCompare(b);

@@ -4,26 +4,23 @@
  */
 
 import { strict as assert } from "node:assert";
-import { Tree } from "../../shared-tree/index.js";
 import {
-	type NodeFromSchema,
 	SchemaFactory,
+	type NodeFromSchema,
 	type Unhydrated,
 	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
 import { hydrate } from "./utils.js";
+import { Tree } from "../../shared-tree/index.js";
 
 const schemaFactory = new SchemaFactory("test");
 
 /**
  * A recursive tree node with a single leaf value
  */
-export class DeepTreeNode extends schemaFactory.objectRecursive(
-	"deep-tree-node",
-	{
-		node: [() => DeepTreeNode, schemaFactory.number],
-	},
-) {}
+export class DeepTreeNode extends schemaFactory.objectRecursive("deep-tree-node", {
+	node: [() => DeepTreeNode, schemaFactory.number],
+}) {}
 {
 	type _check = ValidateRecursiveSchema<typeof DeepTreeNode>;
 }
@@ -37,10 +34,7 @@ export type WideTreeNode = NodeFromSchema<typeof WideTreeNode>;
 /**
  * Make an unhydrated deep tree with a single leaf value
  */
-function makeDeepTree(
-	depth: number,
-	leafValue: number,
-): Unhydrated<DeepTreeNode> {
+function makeDeepTree(depth: number, leafValue: number): Unhydrated<DeepTreeNode> {
 	return new DeepTreeNode({
 		node: depth === 1 ? leafValue : makeDeepTree(depth - 1, leafValue),
 	});
@@ -49,10 +43,7 @@ function makeDeepTree(
 /**
  * generate a deep tree with a single leaf value
  */
-export function generateDeepSimpleTree(
-	depth: number,
-	leafValue: number,
-): DeepTreeNode {
+export function generateDeepSimpleTree(depth: number, leafValue: number): DeepTreeNode {
 	assert(Number.isSafeInteger(depth));
 	assert(depth > 0);
 
@@ -93,10 +84,7 @@ export function writeDeepTree(tree: DeepTreeNode, newValue: number): void {
 /**
  * generate a wide tree with a single layer
  */
-export function generateWideSimpleTree(
-	length: number,
-	leafValue: number,
-): WideTreeNode {
+export function generateWideSimpleTree(length: number, leafValue: number): WideTreeNode {
 	return hydrate(
 		WideTreeNode,
 		Array.from({ length }, () => leafValue),

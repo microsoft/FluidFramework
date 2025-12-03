@@ -6,10 +6,7 @@
 import { createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import {
-	baseConsensusOrderedCollectionModel,
-	defaultOptions,
-} from "./fuzzUtils.js";
+import { baseConsensusOrderedCollectionModel, defaultOptions } from "./fuzzUtils.js";
 
 describe("ConsensusOrderedCollection fuzz testing", () => {
 	createDDSFuzzSuite(baseConsensusOrderedCollectionModel, {

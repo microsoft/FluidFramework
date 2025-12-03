@@ -34,9 +34,7 @@ class FluidTestRunLogger implements ITelemetryBufferedLogger {
 	send(event: ITelemetryBaseEvent) {
 		// TODO: Remove when issue #7061 is resolved.
 		// Don't log this event as we generate too much.
-		if (
-			event.eventName === "fluid:telemetry:RouterliciousDriver:readBlob_end"
-		) {
+		if (event.eventName === "fluid:telemetry:RouterliciousDriver:readBlob_end") {
 			return;
 		}
 
@@ -108,9 +106,7 @@ export const mochaHooks = {
 		if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER === undefined) {
 			originalLogger = nullLogger;
 		} else {
-			const { createTestLogger } = await import(
-				process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER
-			);
+			const { createTestLogger } = await import(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
 			if (typeof createTestLogger !== "function") {
 				throw new TypeError(
 					`Expected package '${process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER}' to export a function, but got an object of type '${typeof createTestLogger}' instead`,

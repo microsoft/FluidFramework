@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import { strict as assert } from "assert";
 
 import { runWithRetry } from "../runWithRetry.js";
 
@@ -15,9 +16,7 @@ const fastSetTimeout: any = (
 	ms: number,
 	...args: any[]
 ) => _setTimeout(callback, ms / 1000.0, ...args);
-async function runWithFastSetTimeout<T>(
-	callback: () => Promise<T>,
-): Promise<T> {
+async function runWithFastSetTimeout<T>(callback: () => Promise<T>): Promise<T> {
 	global.setTimeout = fastSetTimeout;
 	return callback().finally(() => {
 		global.setTimeout = _setTimeout;
@@ -45,11 +44,7 @@ describe("runWithRetry Tests", () => {
 		);
 		assert.strictEqual(retryTimes, 0, "Should succeed at first time");
 		assert.strictEqual(success, true, "Retry should succeed ultimately");
-		assert.strictEqual(
-			emitDelayInfoTimes,
-			0,
-			"Should not emit delay at first time",
-		);
+		assert.strictEqual(emitDelayInfoTimes, 0, "Should not emit delay at first time");
 	});
 
 	it("Check that it retries infinitely", async () => {
@@ -77,11 +72,7 @@ describe("runWithRetry Tests", () => {
 		);
 		assert.strictEqual(retryTimes, 0, "Should keep retrying until success");
 		assert.strictEqual(success, true, "Retry should succeed ultimately");
-		assert.strictEqual(
-			emitDelayInfoTimes,
-			maxTries,
-			"Should emit delay at each try",
-		);
+		assert.strictEqual(emitDelayInfoTimes, maxTries, "Should emit delay at each try");
 	});
 
 	it("Check that it retries after retry seconds", async () => {
@@ -98,9 +89,7 @@ describe("runWithRetry Tests", () => {
 			}
 			return true;
 		};
-		success = await runWithFastSetTimeout(async () =>
-			runWithRetry(api, "test", logger, {}),
-		);
+		success = await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}));
 		assert.strictEqual(retryTimes, 0, "Should retry once");
 		assert.strictEqual(success, true, "Retry should succeed ultimately");
 	});
@@ -118,16 +107,10 @@ describe("runWithRetry Tests", () => {
 			return true;
 		};
 		try {
-			success = await runWithFastSetTimeout(async () =>
-				runWithRetry(api, "test", logger, {}),
-			);
+			success = await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}));
 		} catch (error) {}
 		assert.strictEqual(retryTimes, 0, "Should retry");
-		assert.strictEqual(
-			success,
-			true,
-			"Should succeed as retry should be successful",
-		);
+		assert.strictEqual(success, true, "Should succeed as retry should be successful");
 	});
 
 	it("Should not retry if canRetry is set as false", async () => {
@@ -143,17 +126,11 @@ describe("runWithRetry Tests", () => {
 			return true;
 		};
 		try {
-			success = await runWithFastSetTimeout(async () =>
-				runWithRetry(api, "test", logger, {}),
-			);
+			success = await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}));
 			assert.fail("Should not succeed");
 		} catch (error) {}
 		assert.strictEqual(retryTimes, 0, "Should not retry");
-		assert.strictEqual(
-			success,
-			false,
-			"Should not succeed as canRetry was not set",
-		);
+		assert.strictEqual(success, false, "Should not succeed as canRetry was not set");
 	});
 
 	it("Should not retry if canRetry is not set", async () => {
@@ -168,17 +145,11 @@ describe("runWithRetry Tests", () => {
 			return true;
 		};
 		try {
-			success = await runWithFastSetTimeout(async () =>
-				runWithRetry(api, "test", logger, {}),
-			);
+			success = await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}));
 			assert.fail("Should not succeed");
 		} catch (error) {}
 		assert.strictEqual(retryTimes, 0, "Should not retry");
-		assert.strictEqual(
-			success,
-			false,
-			"Should not succeed as canRetry was not set",
-		);
+		assert.strictEqual(success, false, "Should not succeed as canRetry was not set");
 	});
 
 	it("Should not retry if it is disabled", async () => {
@@ -204,11 +175,7 @@ describe("runWithRetry Tests", () => {
 			assert.fail("Should not succeed");
 		} catch (error) {}
 		assert.strictEqual(retryTimes, 0, "Should not retry");
-		assert.strictEqual(
-			success,
-			false,
-			"Should not succeed as retrying was disabled",
-		);
+		assert.strictEqual(success, false, "Should not succeed as retrying was disabled");
 	});
 
 	it("Abort reason is included in thrown exception", async () => {

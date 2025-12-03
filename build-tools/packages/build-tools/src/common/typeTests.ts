@@ -20,11 +20,7 @@ export function getTypeTestPreviousPackageDetails(pkg: Package): {
 	packageJsonPath: string;
 } {
 	const previousPackageName = `${pkg.name}-previous`;
-	const previousBasePath = path.join(
-		pkg.directory,
-		"node_modules",
-		previousPackageName,
-	);
+	const previousBasePath = path.join(pkg.directory, "node_modules", previousPackageName);
 	const previousPackageJsonPath = path.join(previousBasePath, "package.json");
 	return {
 		name: previousPackageName,

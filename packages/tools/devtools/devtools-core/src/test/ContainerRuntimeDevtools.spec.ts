@@ -69,9 +69,7 @@ describe("ContainerRuntimeDevtools unit tests", () => {
 	beforeEach(() => {
 		containerKey = "test-container-key";
 		container = new MockDecomposedContainer();
-		devtools = new ContainerRuntimeDevtools(
-			createTestProps(containerKey, container),
-		);
+		devtools = new ContainerRuntimeDevtools(createTestProps(containerKey, container));
 	});
 
 	afterEach(() => {
@@ -89,21 +87,15 @@ describe("ContainerRuntimeDevtools unit tests", () => {
 		// Simulate container state changes
 		container.emit("attached");
 		expect(devtools.getContainerConnectionLog().length).to.equal(1);
-		expect(devtools.getContainerConnectionLog()[0]?.newState).to.equal(
-			"attached",
-		);
+		expect(devtools.getContainerConnectionLog()[0]?.newState).to.equal("attached");
 
 		container.emit("connected", "test-client");
 		expect(devtools.getContainerConnectionLog().length).to.equal(2);
-		expect(devtools.getContainerConnectionLog()[1]?.newState).to.equal(
-			"connected",
-		);
+		expect(devtools.getContainerConnectionLog()[1]?.newState).to.equal("connected");
 
 		container.emit("disconnected");
 		expect(devtools.getContainerConnectionLog().length).to.equal(3);
-		expect(devtools.getContainerConnectionLog()[2]?.newState).to.equal(
-			"disconnected",
-		);
+		expect(devtools.getContainerConnectionLog()[2]?.newState).to.equal("disconnected");
 	});
 
 	it("Should track audience changes", () => {
@@ -178,9 +170,7 @@ describe("ContainerRuntimeDevtools unit tests", () => {
 		container.emit("connected", "test-client");
 
 		expect(devtools.getContainerConnectionLog().length).to.equal(1);
-		expect(devtools.getContainerConnectionLog()[0]?.newState).to.equal(
-			"connected",
-		);
+		expect(devtools.getContainerConnectionLog()[0]?.newState).to.equal("connected");
 	});
 
 	it("Should handle empty audience", () => {

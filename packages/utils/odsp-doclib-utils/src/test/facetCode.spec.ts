@@ -17,8 +17,7 @@ describe("parseFacetCodes", () => {
 	});
 
 	it("can parse nested error", () => {
-		const text =
-			'{"error":{"message":"foo", "code":"a", "innerError":{"code":"b"}}}';
+		const text = '{"error":{"message":"foo", "code":"a", "innerError":{"code":"b"}}}';
 		const result = tryParseErrorResponse(text);
 		assert(result.success);
 		const stack = parseFacetCodes(result.errorResponse);

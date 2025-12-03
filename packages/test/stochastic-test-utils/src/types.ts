@@ -25,9 +25,7 @@ export type Generator<TOut, TState> = (state: TState) => TOut | typeof done;
  * Given some input state, asynchronously generates outputs.
  * @internal
  */
-export type AsyncGenerator<TOut, TState> = (
-	state: TState,
-) => Promise<TOut | typeof done>;
+export type AsyncGenerator<TOut, TState> = (state: TState) => Promise<TOut | typeof done>;
 
 /**
  * Given a starting state and an operation to apply to that state, returns a new state.
@@ -39,10 +37,7 @@ export type AsyncGenerator<TOut, TState> = (
  *
  * @internal
  */
-export type Reducer<TOp, TState> = (
-	state: TState,
-	operation: TOp,
-) => TState | void;
+export type Reducer<TOp, TState> = (state: TState, operation: TOp) => TState | void;
 
 /**
  * Given a starting state and an operation to apply to that state, asynchronously returns a new state.

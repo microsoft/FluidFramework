@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
 
-import { type CodecWriteOptions, currentVersion } from "../../codec/index.js";
+import { currentVersion, type CodecWriteOptions } from "../../codec/index.js";
 import { TreeStoredSchemaRepository } from "../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { decode } from "../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
@@ -21,20 +21,20 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
-	defaultSchemaPolicy,
 	type FieldBatch,
 	type FieldBatchEncodingContext,
 	type ModularChangeset,
-	makeModularChangeCodecFamily,
 	type SequenceField,
+	defaultSchemaPolicy,
+	makeModularChangeCodecFamily,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { newCrossFieldKeyTable } from "../../feature-libraries/modular-schema/modularChangeTypes.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import { makeSharedTreeChangeCodecFamily } from "../../shared-tree/sharedTreeChangeCodecs.js";
-import { brand, newTupleBTree } from "../../util/index.js";
 import { ajvValidator } from "../codec/index.js";
 import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
+import { brand, newTupleBTree } from "../../util/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { newCrossFieldKeyTable } from "../../feature-libraries/modular-schema/modularChangeTypes.js";
 
 const codecOptions: CodecWriteOptions = {
 	jsonValidator: ajvValidator,
@@ -44,18 +44,12 @@ const codecOptions: CodecWriteOptions = {
 describe("sharedTreeChangeCodec", () => {
 	it("passes down the context's schema to the fieldBatchCodec", () => {
 		const dummyFieldBatchCodec = {
-			encode: (
-				data: FieldBatch,
-				context: FieldBatchEncodingContext,
-			): EncodedFieldBatch => {
+			encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
 				// Checks that the context's schema matches the schema passed into the sharedTreeChangeCodec.
 				assert.equal(context.schema?.schema, dummyTestSchema);
 				return uncompressedEncodeV1(data);
 			},
-			decode: (
-				data: EncodedFieldBatch,
-				context: FieldBatchEncodingContext,
-			): FieldBatch => {
+			decode: (data: EncodedFieldBatch, context: FieldBatchEncodingContext): FieldBatch => {
 				return decode(data, {
 					idCompressor: context.idCompressor,
 					originatorId: context.originatorId,
@@ -84,10 +78,7 @@ describe("sharedTreeChangeCodec", () => {
 		const dummyModularChangeSet: ModularChangeset = {
 			nodeChanges: newTupleBTree(),
 			fieldChanges: new Map([
-				[
-					brand("fA"),
-					{ fieldKind: sequence.identifier, change: brand(changeA) },
-				],
+				[brand("fA"), { fieldKind: sequence.identifier, change: brand(changeA) }],
 			]),
 			nodeToParent: newTupleBTree(),
 			nodeAliases: newTupleBTree(),

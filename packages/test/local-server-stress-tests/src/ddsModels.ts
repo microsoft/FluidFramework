@@ -4,27 +4,21 @@
  */
 
 /* eslint-disable import-x/no-internal-modules */
-import {
-	type AsyncGenerator,
-	done,
-} from "@fluid-private/stochastic-test-utils";
-import type {
-	DDSFuzzModel,
-	DDSFuzzTestState,
-} from "@fluid-private/test-dds-utils";
+import { done, type AsyncGenerator } from "@fluid-private/stochastic-test-utils";
+import { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import { baseCounterModel } from "@fluidframework/counter/internal/test";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import { baseSharedArrayModel } from "@fluidframework/legacy-dds/internal/test";
-import { baseDirModel, baseMapModel } from "@fluidframework/map/internal/test";
+import { baseMapModel, baseDirModel } from "@fluidframework/map/internal/test";
 import { baseSharedMatrixModel } from "@fluidframework/matrix/internal/test";
 import { baseConsensusOrderedCollectionModel } from "@fluidframework/ordered-collection/internal/test";
-import { baseRegisterCollectionModel } from "@fluidframework/register-collection/internal/test";
 import {
-	baseIntervalModel,
 	baseSharedStringModel,
+	baseIntervalModel,
 } from "@fluidframework/sequence/internal/test";
 import { baseTaskManagerModel } from "@fluidframework/task-manager/internal/test";
 import { baseTreeModel } from "@fluidframework/tree/internal/test";
+import { baseRegisterCollectionModel } from "@fluidframework/register-collection/internal/test";
 
 function repeatFactoryAsync<T, TState = void>(
 	factory: () => AsyncGenerator<T, TState>,
@@ -49,24 +43,13 @@ const generateSubModelMap = (
 			factory: IChannelFactory;
 			generator: AsyncGenerator<any, DDSFuzzTestState<IChannelFactory>>;
 			reducer: DDSFuzzModel<IChannelFactory, any>["reducer"];
-			validateConsistency: DDSFuzzModel<
-				IChannelFactory,
-				any
-			>["validateConsistency"];
-			minimizationTransforms?: DDSFuzzModel<
-				IChannelFactory,
-				any
-			>["minimizationTransforms"];
+			validateConsistency: DDSFuzzModel<IChannelFactory, any>["validateConsistency"];
+			minimizationTransforms?: DDSFuzzModel<IChannelFactory, any>["minimizationTransforms"];
 		}
 	>();
 	for (const model of models) {
-		const {
-			reducer,
-			generatorFactory,
-			factory,
-			validateConsistency,
-			minimizationTransforms,
-		} = model;
+		const { reducer, generatorFactory, factory, validateConsistency, minimizationTransforms } =
+			model;
 		const generator = repeatFactoryAsync(generatorFactory);
 		modelMap.set(factory.attributes.type, {
 			generator,

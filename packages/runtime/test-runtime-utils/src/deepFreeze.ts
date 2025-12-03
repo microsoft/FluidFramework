@@ -40,10 +40,7 @@ function freezeObjectMethods<T>(object: T, methods: (keyof T)[]): void {
  *
  * @internal
  */
-export function deepFreeze<T>(
-	object: T,
-	filter?: (object: object) => boolean,
-): void {
+export function deepFreeze<T>(object: T, filter?: (object: object) => boolean): void {
 	if (object === undefined || object === null) {
 		return;
 	}
@@ -65,9 +62,7 @@ export function deepFreeze<T>(
 		freezeObjectMethods(object, ["add", "delete", "clear"]);
 	} else {
 		// Retrieve the property names defined on object
-		const propNames: (keyof T)[] = Object.getOwnPropertyNames(
-			object,
-		) as (keyof T)[];
+		const propNames: (keyof T)[] = Object.getOwnPropertyNames(object) as (keyof T)[];
 		// Freeze properties before freezing self
 		for (const name of propNames) {
 			const value = object[name];

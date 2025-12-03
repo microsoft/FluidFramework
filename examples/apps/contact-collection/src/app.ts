@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	StaticCodeLoader,
-	TinyliciousModelLoader,
-} from "@fluid-example/example-utils";
+import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
 
 import {
 	ContactCollectionContainerRuntimeFactory,
@@ -39,10 +36,9 @@ const getContactUrl = (contactId: string): string => {
 // ID to load from, so the URL for a document load will look something like http://localhost:8080/#1596520748752.
 // These policy choices are arbitrary for demo purposes, and can be changed however you'd like.
 async function start(): Promise<void> {
-	const tinyliciousModelLoader =
-		new TinyliciousModelLoader<IContactCollectionAppModel>(
-			new StaticCodeLoader(new ContactCollectionContainerRuntimeFactory()),
-		);
+	const tinyliciousModelLoader = new TinyliciousModelLoader<IContactCollectionAppModel>(
+		new StaticCodeLoader(new ContactCollectionContainerRuntimeFactory()),
+	);
 
 	let id: string;
 	let model: IContactCollectionAppModel;

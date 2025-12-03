@@ -3,11 +3,11 @@
 	"extends": "./tsconfig.jest.json",
 	"compilerOptions": {
 		"outDir": "../../lib/test",
-		"noUncheckedIndexedAccess": false
+		"noUncheckedIndexedAccess": false,
 	},
 	"references": [
 		{
-			"path": "../../tsconfig.esm.json"
-		}
-	]
+			"path": "../../tsconfig.esm.json",
+		},
+	],
 }

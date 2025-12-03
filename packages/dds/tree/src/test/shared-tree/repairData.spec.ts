@@ -7,14 +7,10 @@ import { strict as assert } from "node:assert";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { rootFieldKey } from "../../core/index.js";
+import { StringArray, TestTreeProviderLite, createTestUndoRedoStacks } from "../utils.js";
 import { TreeStatus } from "../../feature-libraries/index.js";
-import { TreeViewConfiguration } from "../../simple-tree/index.js";
 import { TestAnchor } from "../testAnchor.js";
-import {
-	createTestUndoRedoStacks,
-	StringArray,
-	TestTreeProviderLite,
-} from "../utils.js";
+import { TreeViewConfiguration } from "../../simple-tree/index.js";
 
 const enableSchemaValidation = true;
 
@@ -130,9 +126,7 @@ describe("Repair Data", () => {
 			view1.initialize(["A", "B", "C", "D"]);
 
 			// make sure that revertibles are created
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(
-				view1.checkout.events,
-			);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view1.checkout.events);
 
 			// get anchors to the nodes we're removing
 			const anchorAOnTree1 = TestAnchor.fromValue(view1.checkout.forest, "A");
@@ -180,9 +174,7 @@ describe("Repair Data", () => {
 			view1.initialize(["A", "B"]);
 
 			// make sure that revertibles are created
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(
-				view1.checkout.events,
-			);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view1.checkout.events);
 
 			// get anchors to the nodes we're removing
 			const anchorAOnTree1 = TestAnchor.fromValue(view1.checkout.forest, "A");
@@ -358,10 +350,7 @@ describe("Repair Data", () => {
 	});
 });
 
-function advanceCollabWindow(
-	provider: TestTreeProviderLite,
-	removeSequenceNumber: number,
-) {
+function advanceCollabWindow(provider: TestTreeProviderLite, removeSequenceNumber: number) {
 	provider.synchronizeMessages();
 	while (provider.minimumSequenceNumber <= removeSequenceNumber) {
 		for (const tree of provider.trees) {

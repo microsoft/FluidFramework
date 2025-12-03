@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { InsecureUrlResolver } from "@fluidframework/driver-utils/internal";
 import { LocalResolver } from "@fluidframework/local-driver/internal";
 
-import type { ITinyliciousRouteOptions, RouteOptions } from "./loader.js";
+import { ITinyliciousRouteOptions, RouteOptions } from "./loader.js";
 import { OdspUrlResolver } from "./odspUrlResolver.js";
 
 const dockerUrls = {
@@ -35,10 +35,7 @@ export function getUrlResolver(
 ): InsecureUrlResolver | OdspUrlResolver | LocalResolver {
 	switch (options.mode) {
 		case "docker":
-			assert(
-				options.tenantId !== undefined,
-				0x31e /* options.tenantId is undefined */,
-			);
+			assert(options.tenantId !== undefined, 0x31e /* options.tenantId is undefined */);
 			return new InsecureUrlResolver(
 				dockerUrls.hostUrl,
 				dockerUrls.ordererUrl,
@@ -48,14 +45,10 @@ export function getUrlResolver(
 				options.bearerSecret ?? "",
 			);
 
-		case "r11s": {
+		case "r11s":
+			assert(options.tenantId !== undefined, 0x320 /* options.tenantId is undefined */);
 			assert(
-				options.tenantId !== undefined,
-				0x320 /* options.tenantId is undefined */,
-			);
-			assert(
-				options.fluidHost !== undefined ||
-					options.discoveryEndpoint !== undefined,
+				options.fluidHost !== undefined || options.discoveryEndpoint !== undefined,
 				0x322 /* options.fluidHost and options.discoveryEndpoint are undefined */,
 			);
 			if (options.discoveryEndpoint !== undefined) {
@@ -78,7 +71,6 @@ export function getUrlResolver(
 				options.tenantId,
 				options.bearerSecret ?? "",
 			);
-		}
 		case "tinylicious": {
 			const urls = tinyliciousUrls(options);
 			return new InsecureUrlResolver(
@@ -92,17 +84,12 @@ export function getUrlResolver(
 		}
 		case "spo":
 		case "spo-df":
-			assert(
-				options.server !== undefined,
-				0x324 /* options.server is undefined */,
-			);
+			assert(options.server !== undefined, 0x324 /* options.server is undefined */);
 			assert(
 				options.odspAccessToken !== undefined,
 				0x325 /* options.odspAccessToken is undefined */,
 			);
-			return new OdspUrlResolver(options.server, {
-				accessToken: options.odspAccessToken,
-			});
+			return new OdspUrlResolver(options.server, { accessToken: options.odspAccessToken });
 
 		default: // Local
 			return new LocalResolver();

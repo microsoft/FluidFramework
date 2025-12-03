@@ -38,7 +38,7 @@ module.exports = {
 		"@typescript-eslint/restrict-plus-operands": "off",
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"@typescript-eslint/unbound-method": "off",
-		eqeqeq: "off",
+		"eqeqeq": "off",
 		"import-x/no-internal-modules": "off",
 		"no-case-declarations": "off",
 		"no-inner-declarations": "off",

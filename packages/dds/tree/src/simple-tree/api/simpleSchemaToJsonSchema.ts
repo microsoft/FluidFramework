@@ -7,37 +7,37 @@ import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { ValueSchema } from "../../core/index.js";
 import { copyProperty, hasSingle, type Mutable } from "../../util/index.js";
-import { NodeKind, type TreeNodeSchema } from "../core/index.js";
+import type {
+	JsonArrayNodeSchema,
+	JsonFieldSchema,
+	JsonSchemaRef,
+	JsonRefPath,
+	JsonLeafNodeSchema,
+	JsonMapNodeSchema,
+	JsonNodeSchema,
+	JsonObjectNodeSchema,
+	JsonTreeSchema,
+	JsonLeafSchemaType,
+	JsonRecordNodeSchema,
+} from "./jsonSchema.js";
 import { FieldKind } from "../fieldSchema.js";
-import { LeafNodeSchema } from "../leafNodeSchema.js";
-import {
-	ArrayNodeSchema,
-	isMapNodeSchema,
-	isRecordNodeSchema,
-	ObjectNodeSchema,
-} from "../node-kinds/index.js";
 import type {
 	SimpleArrayNodeSchema,
 	SimpleLeafNodeSchema,
 	SimpleMapNodeSchema,
 	SimpleRecordNodeSchema,
 } from "../simpleSchema.js";
+import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import type { TreeSchema } from "./configuration.js";
-import { KeyEncodingOptions } from "./customTree.js";
 import type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
-import type {
-	JsonArrayNodeSchema,
-	JsonFieldSchema,
-	JsonLeafNodeSchema,
-	JsonLeafSchemaType,
-	JsonMapNodeSchema,
-	JsonNodeSchema,
-	JsonObjectNodeSchema,
-	JsonRecordNodeSchema,
-	JsonRefPath,
-	JsonSchemaRef,
-	JsonTreeSchema,
-} from "./jsonSchema.js";
+import {
+	ArrayNodeSchema,
+	isMapNodeSchema,
+	isRecordNodeSchema,
+	ObjectNodeSchema,
+} from "../node-kinds/index.js";
+import { LeafNodeSchema } from "../leafNodeSchema.js";
+import { KeyEncodingOptions } from "./customTree.js";
 
 /**
  * Generates a JSON Schema representation from a simple tree schema.
@@ -105,9 +105,7 @@ function convertNodeSchema(
 	throw new TypeError(`Unknown node schema kind: ${schema.kind}`);
 }
 
-function convertArrayNodeSchema(
-	schema: SimpleArrayNodeSchema,
-): JsonArrayNodeSchema {
+function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSchema {
 	const allowedTypes: JsonSchemaRef[] = [];
 	const allowedTypesIdentifiers: ReadonlySet<string> = new Set(
 		schema.simpleAllowedTypes.keys(),
@@ -131,9 +129,7 @@ function convertArrayNodeSchema(
 	return output;
 }
 
-function convertLeafNodeSchema(
-	schema: SimpleLeafNodeSchema,
-): JsonLeafNodeSchema {
+function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): JsonLeafNodeSchema {
 	let type: JsonLeafSchemaType;
 	switch (schema.leafKind) {
 		case ValueSchema.String:
@@ -239,7 +235,7 @@ function convertRecordLikeNodeSchema(
 
 function createSchemaRef(schemaId: string): JsonSchemaRef {
 	return {
-		$ref: createRefPath(schemaId),
+		"$ref": createRefPath(schemaId),
 	};
 }
 

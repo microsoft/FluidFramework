@@ -4,8 +4,8 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/legacy";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/legacy";
 
 import { FlowDocument } from "../document/index.js";
 import { hostType } from "../package.js";
@@ -22,9 +22,7 @@ export class WebFlow extends DataObject {
 	}
 
 	protected async initializingFirstTime() {
-		const doc = await FlowDocument.getFactory().createChildInstance(
-			this.context,
-		);
+		const doc = await FlowDocument.getFactory().createChildInstance(this.context);
 		this.root.set("doc", doc.handle);
 	}
 

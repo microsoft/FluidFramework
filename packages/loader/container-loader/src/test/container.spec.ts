@@ -6,10 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type {
-	AttachState,
-	IAudience,
-} from "@fluidframework/container-definitions/";
+import type { AttachState, IAudience } from "@fluidframework/container-definitions/";
 import type {
 	IContainer,
 	IContainerEvents,
@@ -19,8 +16,8 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type {
-	IDocumentMessage,
 	IResolvedUrl,
+	IDocumentMessage,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 
@@ -33,10 +30,7 @@ class MockDeltaManager
 	extends TypedEventEmitter<IDeltaManagerEvents>
 	implements
 		Partial<
-			Omit<
-				IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-				"on" | "off" | "once"
-			>
+			Omit<IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, "on" | "off" | "once">
 		>
 {
 	hasCheckpointSequenceNumber = true;
@@ -79,8 +73,7 @@ describe("Container", () => {
 			mockContainer.closed = true;
 
 			await assert.rejects(
-				async () =>
-					waitContainerToCatchUp(mockContainer as unknown as IContainer),
+				async () => waitContainerToCatchUp(mockContainer as unknown as IContainer),
 				"Passing a closed container should throw",
 			);
 		});
@@ -89,9 +82,7 @@ describe("Container", () => {
 			const mockContainer = new MockContainer();
 			mockContainer.connectionState = ConnectionState.Connected;
 
-			const waitP = waitContainerToCatchUp(
-				mockContainer as unknown as IContainer,
-			);
+			const waitP = waitContainerToCatchUp(mockContainer as unknown as IContainer);
 			mockContainer.mockDeltaManager.emit("op", { sequenceNumber: 2 });
 
 			// Should resolve immediately, otherwise test will time out
@@ -103,9 +94,7 @@ describe("Container", () => {
 			mockContainer.mockDeltaManager.lastSequenceNumber = 2; // to match lastKnownSeqNumber
 			mockContainer.connectionState = ConnectionState.Connected;
 
-			const waitP = waitContainerToCatchUp(
-				mockContainer as unknown as IContainer,
-			);
+			const waitP = waitContainerToCatchUp(mockContainer as unknown as IContainer);
 
 			// Should resolve immediately, otherwise test will time out
 			await waitP;
@@ -115,9 +104,7 @@ describe("Container", () => {
 			const mockContainer = new MockContainer();
 			mockContainer.connectionState = ConnectionState.Disconnected;
 
-			const waitP = waitContainerToCatchUp(
-				mockContainer as unknown as IContainer,
-			);
+			const waitP = waitContainerToCatchUp(mockContainer as unknown as IContainer);
 			mockContainer.mockDeltaManager.emit("op", { sequenceNumber: 2 });
 
 			// Should resolve immediately, otherwise test will time out

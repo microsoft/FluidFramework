@@ -31,9 +31,7 @@ async function getDataStoreEntryPoint(
 	return entryPointHandle.get();
 }
 
-const createPiece = async (
-	runtime: IContainerRuntime,
-): Promise<FluidObject> => {
+const createPiece = async (runtime: IContainerRuntime): Promise<FluidObject> => {
 	const inventoryList = (await getDataStoreEntryPoint(
 		runtime,
 		inventoryListAlias,

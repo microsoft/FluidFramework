@@ -6,19 +6,10 @@
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	type FlexTreeNode,
-	isFlexTreeNode,
-} from "../../feature-libraries/index.js";
-import type { AllowedTypesFull } from "./allowedTypes.js";
-import type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
+import { type FlexTreeNode, isFlexTreeNode } from "../../feature-libraries/index.js";
+
 import { inPrototypeChain, privateToken, TreeNode } from "./treeNode.js";
-import {
-	getSimpleNodeSchemaFromInnerNode,
-	type InnerNode,
-	isTreeNode,
-	TreeNodeKernel,
-} from "./treeNodeKernel.js";
+import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
 import {
 	NodeKind,
 	type TreeNodeSchema,
@@ -26,9 +17,16 @@ import {
 	type TreeNodeSchemaInitializedData,
 	type TreeNodeSchemaPrivateData,
 } from "./treeNodeSchema.js";
+import {
+	getSimpleNodeSchemaFromInnerNode,
+	isTreeNode,
+	TreeNodeKernel,
+	type InnerNode,
+} from "./treeNodeKernel.js";
 import type { InternalTreeNode } from "./types.js";
-import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
 import { typeSchemaSymbol } from "./withType.js";
+import type { AllowedTypesFull } from "./allowedTypes.js";
+import type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
 
 /**
  * Class which all {@link TreeNode}s must extend.
@@ -96,21 +94,15 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	 * Ways to enforce this immutability prevent it from being overridden,
 	 * so code modifying constructorCached should be extra careful to avoid accidentally modifying the base/inherited value.
 	 */
-	protected static constructorCached: MostDerivedData | "default" | undefined =
-		"default";
+	protected static constructorCached: MostDerivedData | "default" | undefined = "default";
 
 	/**
 	 * Indicate that `this` is the most derived version of a schema, and thus the only one allowed to be used (other than by being subclassed a single time).
 	 */
-	public static markMostDerived(
-		this: typeof TreeNodeValid & TreeNodeSchema,
-	): MostDerivedData {
-		assert(
-			TreeNodeValid.constructorCached !== "default",
-			0x95f /* invalid schema class */,
-		);
+	public static markMostDerived(this: typeof TreeNodeValid & TreeNodeSchema): MostDerivedData {
+		assert(this.constructorCached !== "default", 0x95f /* invalid schema class */);
 
-		if (TreeNodeValid.constructorCached === undefined) {
+		if (this.constructorCached === undefined) {
 			// Set the constructorCached on the layer of the prototype chain that declared it.
 			// This is necessary to ensure there is only one subclass of that type used:
 			// if constructorCached was simply set on `schema`,
@@ -119,35 +111,29 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 
 			// This is not just an alias of `this`, but a reference to the item in the prototype chain being walked, which happens to start at `this`.
 			// eslint-disable-next-line @typescript-eslint/no-this-alias, unicorn/no-this-assignment
-			let schemaBase: typeof TreeNodeValid = TreeNodeValid;
-			while (!Object.hasOwn(schemaBase, "constructorCached")) {
+			let schemaBase: typeof TreeNodeValid = this;
+			while (!Object.prototype.hasOwnProperty.call(schemaBase, "constructorCached")) {
 				schemaBase = Reflect.getPrototypeOf(schemaBase) as typeof TreeNodeValid;
 			}
+			assert(schemaBase.constructorCached === undefined, 0x962 /* overwriting wrong cache */);
+			schemaBase.constructorCached = { constructor: this, oneTimeInitialized: undefined };
 			assert(
-				schemaBase.constructorCached === undefined,
-				0x962 /* overwriting wrong cache */,
-			);
-			schemaBase.constructorCached = {
-				constructor: TreeNodeValid,
-				oneTimeInitialized: undefined,
-			};
-			assert(
-				TreeNodeValid.constructorCached === schemaBase.constructorCached,
+				this.constructorCached === schemaBase.constructorCached,
 				0x9b5 /* Inheritance should work */,
 			);
-			return TreeNodeValid.constructorCached;
-		} else if (TreeNodeValid.constructorCached.constructor === TreeNodeValid) {
-			return TreeNodeValid.constructorCached;
+			return this.constructorCached;
+		} else if (this.constructorCached.constructor === this) {
+			return this.constructorCached;
 		}
 
 		// If users trying to diagnose the cause of this error becomes a common issue, more information could be captured.
 		// The call stack to when a schema is first marked most derived could be captured in debug builds and stored in the `MostDerivedData` object:
 		// This could then be included in the error to aid in debugging this error.
 		throw new UsageError(
-			`Two schema classes were used (${TreeNodeValid.name} and ${
-				TreeNodeValid.constructorCached.constructor.name
+			`Two schema classes were used (${this.name} and ${
+				this.constructorCached.constructor.name
 			}) which derived from the same SchemaFactory generated class (${JSON.stringify(
-				TreeNodeValid.identifier,
+				this.identifier,
 			)}). This is invalid.`,
 		);
 	}
@@ -163,20 +149,17 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		this: TThis,
 		input: TInput,
 	): TOut {
-		return new TreeNodeValid(input);
+		return new this(input);
 	}
 
 	/**
 	 * See {@link TreeNodeSchemaCore.createFromInsertable}.
 	 */
-	public static createFromInsertable<
-		TInput,
-		TOut,
-		TThis extends new (
-			args: TInput,
-		) => TOut,
-	>(this: TThis, input: TInput): TOut {
-		return new TreeNodeValid(input);
+	public static createFromInsertable<TInput, TOut, TThis extends new (args: TInput) => TOut>(
+		this: TThis,
+		input: TInput,
+	): TOut {
+		return new this(input);
 	}
 
 	/**
@@ -185,12 +168,10 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	public static oneTimeInitialize(
 		this: typeof TreeNodeValid & TreeNodeSchema,
 	): Required<MostDerivedData> {
-		const cache = TreeNodeValid.markMostDerived();
-		cache.oneTimeInitialized ??= TreeNodeValid.oneTimeSetup();
+		const cache = this.markMostDerived();
+		cache.oneTimeInitialized ??= this.oneTimeSetup();
 		// TypeScript fails to narrow the type of `oneTimeInitialized` to `Context` here, so use a cast:
-		return cache as MostDerivedData & {
-			oneTimeInitialized: TreeNodeSchemaInitializedData;
-		};
+		return cache as MostDerivedData & { oneTimeInitialized: TreeNodeSchemaInitializedData };
 	}
 
 	public constructor(input: TInput | InternalTreeNode) {
@@ -205,9 +186,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 			);
 		}
 
-		const node: InnerNode = isFlexTreeNode(input)
-			? input
-			: schema.buildRawNode(this, input);
+		const node: InnerNode = isFlexTreeNode(input) ? input : schema.buildRawNode(this, input);
 		assert(
 			getSimpleNodeSchemaFromInnerNode(node) === schema,
 			0x83b /* building node with wrong schema */,
@@ -288,8 +267,7 @@ export function createTreeNodeSchemaPrivateData(
 	schemaValid.markMostDerived();
 
 	return {
-		idempotentInitialize: () =>
-			schemaValid.oneTimeInitialize().oneTimeInitialized,
+		idempotentInitialize: () => schemaValid.oneTimeInitialize().oneTimeInitialized,
 		childAllowedTypes,
 	};
 }

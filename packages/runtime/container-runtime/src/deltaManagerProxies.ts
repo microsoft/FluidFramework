@@ -169,10 +169,7 @@ export class BaseDeltaManagerProxy
 			onSubmitOp: (message: IDocumentMessage): void => {
 				this.emit("submitOp", message);
 			},
-			onOp: (
-				message: ISequencedDocumentMessage,
-				processingTime: number,
-			): void => {
+			onOp: (message: ISequencedDocumentMessage, processingTime: number): void => {
 				this.emit("op", message, processingTime);
 			},
 			onPong: (latency: number): void => {
@@ -232,9 +229,7 @@ export class BaseDeltaManagerProxy
  * - Summarizer client should not be active to layers below the container runtime to restrict local changes.
  */
 export class DeltaManagerSummarizerProxy extends BaseDeltaManagerProxy {
-	public static wrapIfSummarizer(
-		deltaManager: IDeltaManagerFull,
-	): IDeltaManagerFull {
+	public static wrapIfSummarizer(deltaManager: IDeltaManagerFull): IDeltaManagerFull {
 		if (deltaManager.clientDetails.type === summarizerClientType) {
 			return new DeltaManagerSummarizerProxy(deltaManager);
 		}
@@ -267,8 +262,7 @@ export class DeltaManagerSummarizerProxy extends BaseDeltaManagerProxy {
 
 export class DeltaManagerPendingOpsProxy extends BaseDeltaManagerProxy {
 	public get minimumSequenceNumber(): number {
-		const minPendingSeqNum =
-			this.pendingStateManager.minimumPendingMessageSequenceNumber;
+		const minPendingSeqNum = this.pendingStateManager.minimumPendingMessageSequenceNumber;
 		/**
 		 * The reason why the minimum pending sequence number can be less than the delta manager's minimum sequence
 		 * number (DM's msn) is that when we are processing messages in the container runtime/delta manager, the delta
@@ -307,10 +301,7 @@ export class DeltaManagerPendingOpsProxy extends BaseDeltaManagerProxy {
 		>,
 	) {
 		super(deltaManager, {
-			onOp: (
-				message: ISequencedDocumentMessage,
-				processingTime: number,
-			): void => {
+			onOp: (message: ISequencedDocumentMessage, processingTime: number): void => {
 				const messageIntercept = {
 					...message,
 					minimumSequenceNumber: this.minimumSequenceNumber,

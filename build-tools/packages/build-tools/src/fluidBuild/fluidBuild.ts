@@ -9,7 +9,7 @@ import { Spinner } from "picospinner";
 import { GitRepo } from "../common/gitRepo";
 import { defaultLogger } from "../common/logging";
 import { Timer } from "../common/timer";
-import type { BuildGraph } from "./buildGraph";
+import { type BuildGraph } from "./buildGraph";
 import { BuildResult } from "./buildResult";
 import { commonOptions } from "./commonOptions";
 import { DEFAULT_FLUIDBUILD_CONFIG } from "./fluidBuildConfig";
@@ -56,7 +56,7 @@ async function main() {
 		timer.time("Uninstall completed", true);
 
 		if (!options.install) {
-			let errorStep: string | undefined;
+			let errorStep: string | undefined = undefined;
 			if (options.clean) {
 				errorStep = "clean";
 			} else if (options.build) {

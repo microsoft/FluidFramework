@@ -10,8 +10,8 @@ import {
 	benchmarkCustom,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -19,19 +19,16 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import type { Value } from "../../core/index.js";
-import { type ITreePrivate, Tree } from "../../shared-tree/index.js";
+import { Tree, type ITreePrivate } from "../../shared-tree/index.js";
+import { type JsonCompatibleReadOnly, getOrAddEmptyToMap } from "../../util/index.js";
+import { DefaultTestSharedTreeKind } from "../utils.js";
 import {
+	SchemaFactory,
+	TreeViewConfiguration,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type ITree,
-	SchemaFactory,
 	type TreeView,
-	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
-import {
-	getOrAddEmptyToMap,
-	type JsonCompatibleReadOnly,
-} from "../../util/index.js";
-import { DefaultTestSharedTreeKind } from "../utils.js";
 
 // Notes:
 // 1. Within this file "percentile" is commonly used, and seems to refer to a portion (0 to 1) or some maximum size.
@@ -59,10 +56,7 @@ function createConnectedTree(): ITreePrivate {
 		idCompressor: createIdCompressor(),
 	});
 	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const tree = DefaultTestSharedTreeKind.getFactory().create(
-		dataStoreRuntime,
-		"tree",
-	);
+	const tree = DefaultTestSharedTreeKind.getFactory().create(dataStoreRuntime, "tree");
 	tree.connect({
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
@@ -103,10 +97,7 @@ function createTreeWithSize(
 	};
 }
 
-function assertChildNodeCount(
-	tree: TreeView<typeof Parent>,
-	nodeCount: number,
-): void {
+function assertChildNodeCount(tree: TreeView<typeof Parent>, nodeCount: number): void {
 	assert.equal(tree.root.length, nodeCount);
 }
 
@@ -131,8 +122,9 @@ function createInitialTree(
 	childNodeByteSize: number,
 ): InsertableTreeNodeFromImplicitAllowedTypes<typeof Parent> {
 	const childNode = createTreeWithSize(childNodeByteSize);
-	const children: InsertableTreeNodeFromImplicitAllowedTypes<typeof Child>[] =
-		new Array(childNodes).fill(childNode);
+	const children: InsertableTreeNodeFromImplicitAllowedTypes<typeof Child>[] = new Array(
+		childNodes,
+	).fill(childNode);
 	return children;
 }
 
@@ -162,10 +154,7 @@ function removeNodes(
 	removalsPerOp: number,
 ): void {
 	for (let i = 0; i < numRemovals; i++) {
-		tree.root.removeRange(
-			tree.root.length - 1,
-			tree.root.length - 1 + removalsPerOp,
-		);
+		tree.root.removeRange(tree.root.length - 1, tree.root.length - 1 + removalsPerOp);
 	}
 }
 
@@ -259,9 +248,7 @@ const getSuccessfulOpByteSize = (
 	percentile: number,
 ) => {
 	return Math.floor(
-		MAX_SUCCESSFUL_OP_BYTE_SIZES[operation][transactionStyle].nodeCounts[
-			"100"
-		] * percentile,
+		MAX_SUCCESSFUL_OP_BYTE_SIZES[operation][transactionStyle].nodeCounts["100"] * percentile,
 	);
 };
 
@@ -299,8 +286,7 @@ function withTransactionsOrNot(
 }
 
 describe("Op Size", () => {
-	const opsByBenchmarkName: Map<string, ISequencedDocumentMessage[]> =
-		new Map();
+	const opsByBenchmarkName: Map<string, ISequencedDocumentMessage[]> = new Map();
 	let currentBenchmarkName = "";
 	const currentTestOps: ISequencedDocumentMessage[] = [];
 
@@ -371,10 +357,7 @@ describe("Op Size", () => {
 	});
 
 	describe("Insert Nodes", () => {
-		function benchmarkOps(
-			transactionStyle: TransactionStyle,
-			percentile: number,
-		): void {
+		function benchmarkOps(transactionStyle: TransactionStyle, percentile: number): void {
 			const tree = createConnectedTree();
 			initializeOpDataCollection(tree);
 			const view = initializeTestTree(tree);
@@ -387,11 +370,7 @@ describe("Op Size", () => {
 			apply(
 				view,
 				createTreeWithSize(
-					getSuccessfulOpByteSize(
-						Operation.Insert,
-						transactionStyle,
-						percentile,
-					),
+					getSuccessfulOpByteSize(Operation.Insert, transactionStyle, percentile),
 				),
 				BENCHMARK_NODE_COUNT,
 			);
@@ -419,10 +398,7 @@ describe("Op Size", () => {
 	});
 
 	describe("Remove Nodes", () => {
-		function benchmarkOps(
-			transactionStyle: TransactionStyle,
-			percentile: number,
-		): void {
+		function benchmarkOps(transactionStyle: TransactionStyle, percentile: number): void {
 			const tree = createConnectedTree();
 			initializeOpDataCollection(tree);
 			const childByteSize = getSuccessfulOpByteSize(
@@ -430,10 +406,7 @@ describe("Op Size", () => {
 				transactionStyle,
 				percentile,
 			);
-			const view = initializeTestTree(
-				tree,
-				createInitialTree(100, childByteSize),
-			);
+			const view = initializeTestTree(tree, createInitialTree(100, childByteSize));
 			deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
 			if (transactionStyle === TransactionStyle.Individual) {
 				removeNodes(view, 100, 1);
@@ -469,17 +442,11 @@ describe("Op Size", () => {
 	});
 
 	describe("Edit Nodes", () => {
-		function benchmarkOps(
-			transactionStyle: TransactionStyle,
-			percentile: number,
-		): void {
+		function benchmarkOps(transactionStyle: TransactionStyle, percentile: number): void {
 			const tree = createConnectedTree();
 			initializeOpDataCollection(tree);
 			// Note that the child node byte size for the initial tree here should be arbitrary.
-			const view = initializeTestTree(
-				tree,
-				createInitialTree(BENCHMARK_NODE_COUNT, 1000),
-			);
+			const view = initializeTestTree(tree, createInitialTree(BENCHMARK_NODE_COUNT, 1000));
 			deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
 			const childData = createStringFromLength(
 				getSuccessfulOpByteSize(Operation.Edit, transactionStyle, percentile),
@@ -499,9 +466,7 @@ describe("Op Size", () => {
 			describe(description, () => {
 				for (const { percentile, word } of sizes) {
 					const title = `${BENCHMARK_NODE_COUNT} ${word} changes in ${extraDescription} containing ${
-						style === TransactionStyle.Individual
-							? "1 edit"
-							: `${BENCHMARK_NODE_COUNT} edits`
+						style === TransactionStyle.Individual ? "1 edit" : `${BENCHMARK_NODE_COUNT} edits`
 					}`;
 					benchmarkCustom({
 						only: false,
@@ -579,11 +544,7 @@ describe("Op Size", () => {
 				deleteCurrentOps(); // We don't want to record the ops from initializing the tree.
 
 				const childData = createStringFromLength(
-					getSuccessfulOpByteSize(
-						Operation.Edit,
-						TransactionStyle.Individual,
-						percentile,
-					),
+					getSuccessfulOpByteSize(Operation.Edit, TransactionStyle.Individual, percentile),
 				);
 
 				run(view, () => {
@@ -592,11 +553,7 @@ describe("Op Size", () => {
 
 					// insert
 					const insertChildNode = createTreeWithSize(
-						getSuccessfulOpByteSize(
-							Operation.Insert,
-							TransactionStyle.Individual,
-							percentile,
-						),
+						getSuccessfulOpByteSize(Operation.Insert, TransactionStyle.Individual, percentile),
 					);
 					insertNodes(view, insertChildNode, insertNodeCount);
 					assertChildNodeCount(view, insertNodeCount);
@@ -619,10 +576,7 @@ describe("Op Size", () => {
 				describe(suiteDescription, () => {
 					for (const { percentile } of sizes) {
 						it(`Percentile: ${percentile}`, () => {
-							benchmarkInsertRemoveEditNodesWithIndividualTxs(
-								percentile,
-								distribution,
-							);
+							benchmarkInsertRemoveEditNodesWithIndividualTxs(percentile, distribution);
 						});
 					}
 				});

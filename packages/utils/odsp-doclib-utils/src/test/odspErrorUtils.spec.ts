@@ -6,14 +6,11 @@
 import { strict as assert } from "node:assert";
 
 import {
-	DriverErrorTypes,
 	type IGenericNetworkError,
 	type IThrottlingWarning,
+	DriverErrorTypes,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	createWriteError,
-	GenericNetworkError,
-} from "@fluidframework/driver-utils/internal";
+import { GenericNetworkError, createWriteError } from "@fluidframework/driver-utils/internal";
 import {
 	type IOdspError,
 	type OdspError,
@@ -28,15 +25,8 @@ describe("OdspErrorUtils", () => {
 	function assertCustomPropertySupport(err: unknown): void {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 		(err as any).asdf = "asdf";
-		assert(
-			isILoggingError(err),
-			"Error should support getTelemetryProperties()",
-		);
-		assert.equal(
-			err.getTelemetryProperties().asdf,
-			"asdf",
-			"Error should have property asdf",
-		);
+		assert(isILoggingError(err), "Error should support getTelemetryProperties()");
+		assert.equal(err.getTelemetryProperties().asdf, "asdf", "Error should have property asdf");
 	}
 
 	describe("createOdspNetworkError", () => {
@@ -70,10 +60,7 @@ describe("OdspErrorUtils", () => {
 		});
 
 		it("GenericNetworkError Test", () => {
-			const networkError = createOdspNetworkError(
-				"Test Message",
-				500 /* statusCode */,
-			);
+			const networkError = createOdspNetworkError("Test Message", 500 /* statusCode */);
 			assertCustomPropertySupport(networkError);
 			assert(
 				networkError.errorType === DriverErrorTypes.genericNetworkError,
@@ -83,10 +70,7 @@ describe("OdspErrorUtils", () => {
 		});
 
 		it("AuthorizationError Test 401", () => {
-			const networkError = createOdspNetworkError(
-				"Test Message",
-				401 /* statusCode */,
-			);
+			const networkError = createOdspNetworkError("Test Message", 401 /* statusCode */);
 			assert(
 				networkError.errorType === DriverErrorTypes.authorizationError,
 				"Error should be an authorizationError",
@@ -95,26 +79,16 @@ describe("OdspErrorUtils", () => {
 		});
 
 		it("AuthorizationError Test 403", () => {
-			const networkError = createOdspNetworkError(
-				"Test Message",
-				403 /* statusCode */,
-			);
+			const networkError = createOdspNetworkError("Test Message", 403 /* statusCode */);
 			assert(
 				networkError.errorType === DriverErrorTypes.authorizationError,
 				"Error should be an authorizationError",
 			);
-			assert.equal(
-				networkError.canRetry,
-				false,
-				"canRetry should be preserved",
-			);
+			assert.equal(networkError.canRetry, false, "canRetry should be preserved");
 		});
 
 		it("OutOfStorageError Test 507", () => {
-			const networkError = createOdspNetworkError(
-				"Test Message",
-				507 /* statusCode */,
-			);
+			const networkError = createOdspNetworkError("Test Message", 507 /* statusCode */);
 			assert(
 				networkError.errorType === OdspErrorTypes.outOfStorageError,
 				"Error should be an OutOfStorageError",
@@ -123,28 +97,17 @@ describe("OdspErrorUtils", () => {
 		});
 
 		it("FileNotFoundOrAccessDeniedError Test", () => {
-			const networkError = createOdspNetworkError(
-				"Test Message",
-				404 /* statusCode */,
-			);
+			const networkError = createOdspNetworkError("Test Message", 404 /* statusCode */);
 			assertCustomPropertySupport(networkError);
 			assert(
-				networkError.errorType ===
-					DriverErrorTypes.fileNotFoundOrAccessDeniedError,
+				networkError.errorType === DriverErrorTypes.fileNotFoundOrAccessDeniedError,
 				"Error should be a fileNotFoundOrAccessDeniedError",
 			);
-			assert.equal(
-				networkError.canRetry,
-				false,
-				"canRetry should be preserved",
-			);
+			assert.equal(networkError.canRetry, false, "canRetry should be preserved");
 		});
 
 		it("InvalidFileNameError Test 414", () => {
-			const networkError = createOdspNetworkError(
-				"Test Message",
-				414 /* statusCode */,
-			);
+			const networkError = createOdspNetworkError("Test Message", 414 /* statusCode */);
 			assert(
 				networkError.errorType === OdspErrorTypes.invalidFileNameError,
 				"Error should be an InvalidFileNameError",
@@ -249,10 +212,7 @@ describe("OdspErrorUtils", () => {
 				"Test Message",
 				400,
 				undefined,
-				{
-					type: "fooType",
-					headers: mockHeaders,
-				} as unknown as Response /* response */,
+				{ type: "fooType", headers: mockHeaders } as unknown as Response /* response */,
 				"non-standard response text",
 			);
 
@@ -263,43 +223,26 @@ describe("OdspErrorUtils", () => {
 				"If response text is not standard don't log it",
 			);
 			assert.equal(error.getTelemetryProperties().responseType, "fooType");
-			assert.equal(
-				error.getTelemetryProperties().sprequestguid,
-				"mock header sprequestguid",
-			);
-			assert.equal(
-				error.getTelemetryProperties().requestId,
-				"mock header request-id",
-			);
+			assert.equal(error.getTelemetryProperties().sprequestguid, "mock header sprequestguid");
+			assert.equal(error.getTelemetryProperties().requestId, "mock header request-id");
 			assert.equal(
 				error.getTelemetryProperties().clientRequestId,
 				"mock header client-request-id",
 			);
-			assert.equal(
-				error.getTelemetryProperties().xMsedgeRef,
-				"mock header x-msedge-ref",
-			);
+			assert.equal(error.getTelemetryProperties().xMsedgeRef, "mock header x-msedge-ref");
 			assert.equal(
 				error.getTelemetryProperties().serverRetries,
 				"mock header X-Fluid-Retries",
 			);
 			assert.equal(error.getTelemetryProperties().sprequestduration, 5);
 			assert.equal(error.getTelemetryProperties().contentsize, 5);
-			assert.equal(
-				error.getTelemetryProperties().serverEpoch,
-				"mock header x-fluid-epoch",
-			);
-			assert.equal(
-				(error as IOdspError).serverEpoch,
-				"mock header x-fluid-epoch",
-			);
+			assert.equal(error.getTelemetryProperties().serverEpoch, "mock header x-fluid-epoch");
+			assert.equal((error as IOdspError).serverEpoch, "mock header x-fluid-epoch");
 		});
 	});
 
 	it("WriteError Test", () => {
-		const writeError = createWriteError("Test Error", {
-			driverVersion: pkgVersion,
-		});
+		const writeError = createWriteError("Test Error", { driverVersion: pkgVersion });
 		assertCustomPropertySupport(writeError);
 		assert(
 			writeError.errorType === DriverErrorTypes.writeError,

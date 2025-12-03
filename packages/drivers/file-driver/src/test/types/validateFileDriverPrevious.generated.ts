@@ -11,23 +11,12 @@
  * Current version: 2.74.0
  */
 
-import type {
-	FullType,
-	MinimalType,
-	requireAssignableTo,
-	TypeOnly,
-} from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/file-driver-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> =
-	| TypeOnly<T>
-	| MinimalType<T>
-	| FullType<T>
-	| typeof old
-	| typeof current
-	| requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -36,11 +25,7 @@ declare type MakeUnusedImportErrorsGoAway<T> =
  * typeValidation.broken:
  * "Class_FileDeltaStorageService": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_FileDeltaStorageService =
-	requireAssignableTo<
-		TypeOnly<old.FileDeltaStorageService>,
-		TypeOnly<current.FileDeltaStorageService>
-	>;
+declare type old_as_current_for_Class_FileDeltaStorageService = requireAssignableTo<TypeOnly<old.FileDeltaStorageService>, TypeOnly<current.FileDeltaStorageService>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -49,11 +34,7 @@ declare type old_as_current_for_Class_FileDeltaStorageService =
  * typeValidation.broken:
  * "Class_FileDeltaStorageService": {"backCompat": false}
  */
-declare type current_as_old_for_Class_FileDeltaStorageService =
-	requireAssignableTo<
-		TypeOnly<current.FileDeltaStorageService>,
-		TypeOnly<old.FileDeltaStorageService>
-	>;
+declare type current_as_old_for_Class_FileDeltaStorageService = requireAssignableTo<TypeOnly<current.FileDeltaStorageService>, TypeOnly<old.FileDeltaStorageService>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -62,11 +43,7 @@ declare type current_as_old_for_Class_FileDeltaStorageService =
  * typeValidation.broken:
  * "Class_FileDocumentServiceFactory": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_FileDocumentServiceFactory =
-	requireAssignableTo<
-		TypeOnly<old.FileDocumentServiceFactory>,
-		TypeOnly<current.FileDocumentServiceFactory>
-	>;
+declare type old_as_current_for_Class_FileDocumentServiceFactory = requireAssignableTo<TypeOnly<old.FileDocumentServiceFactory>, TypeOnly<current.FileDocumentServiceFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -75,11 +52,7 @@ declare type old_as_current_for_Class_FileDocumentServiceFactory =
  * typeValidation.broken:
  * "Class_FileDocumentServiceFactory": {"backCompat": false}
  */
-declare type current_as_old_for_Class_FileDocumentServiceFactory =
-	requireAssignableTo<
-		TypeOnly<current.FileDocumentServiceFactory>,
-		TypeOnly<old.FileDocumentServiceFactory>
-	>;
+declare type current_as_old_for_Class_FileDocumentServiceFactory = requireAssignableTo<TypeOnly<current.FileDocumentServiceFactory>, TypeOnly<old.FileDocumentServiceFactory>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -88,10 +61,7 @@ declare type current_as_old_for_Class_FileDocumentServiceFactory =
  * typeValidation.broken:
  * "Class_FluidFetchReader": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_FluidFetchReader = requireAssignableTo<
-	TypeOnly<old.FluidFetchReader>,
-	TypeOnly<current.FluidFetchReader>
->;
+declare type old_as_current_for_Class_FluidFetchReader = requireAssignableTo<TypeOnly<old.FluidFetchReader>, TypeOnly<current.FluidFetchReader>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -100,10 +70,7 @@ declare type old_as_current_for_Class_FluidFetchReader = requireAssignableTo<
  * typeValidation.broken:
  * "Class_FluidFetchReader": {"backCompat": false}
  */
-declare type current_as_old_for_Class_FluidFetchReader = requireAssignableTo<
-	TypeOnly<current.FluidFetchReader>,
-	TypeOnly<old.FluidFetchReader>
->;
+declare type current_as_old_for_Class_FluidFetchReader = requireAssignableTo<TypeOnly<current.FluidFetchReader>, TypeOnly<old.FluidFetchReader>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -112,10 +79,7 @@ declare type current_as_old_for_Class_FluidFetchReader = requireAssignableTo<
  * typeValidation.broken:
  * "Class_Replayer": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_Replayer = requireAssignableTo<
-	TypeOnly<old.Replayer>,
-	TypeOnly<current.Replayer>
->;
+declare type old_as_current_for_Class_Replayer = requireAssignableTo<TypeOnly<old.Replayer>, TypeOnly<current.Replayer>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -124,10 +88,7 @@ declare type old_as_current_for_Class_Replayer = requireAssignableTo<
  * typeValidation.broken:
  * "Class_Replayer": {"backCompat": false}
  */
-declare type current_as_old_for_Class_Replayer = requireAssignableTo<
-	TypeOnly<current.Replayer>,
-	TypeOnly<old.Replayer>
->;
+declare type current_as_old_for_Class_Replayer = requireAssignableTo<TypeOnly<current.Replayer>, TypeOnly<old.Replayer>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -136,11 +97,7 @@ declare type current_as_old_for_Class_Replayer = requireAssignableTo<
  * typeValidation.broken:
  * "Class_ReplayFileDeltaConnection": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_ReplayFileDeltaConnection =
-	requireAssignableTo<
-		TypeOnly<old.ReplayFileDeltaConnection>,
-		TypeOnly<current.ReplayFileDeltaConnection>
-	>;
+declare type old_as_current_for_Class_ReplayFileDeltaConnection = requireAssignableTo<TypeOnly<old.ReplayFileDeltaConnection>, TypeOnly<current.ReplayFileDeltaConnection>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -149,11 +106,7 @@ declare type old_as_current_for_Class_ReplayFileDeltaConnection =
  * typeValidation.broken:
  * "Class_ReplayFileDeltaConnection": {"backCompat": false}
  */
-declare type current_as_old_for_Class_ReplayFileDeltaConnection =
-	requireAssignableTo<
-		TypeOnly<current.ReplayFileDeltaConnection>,
-		TypeOnly<old.ReplayFileDeltaConnection>
-	>;
+declare type current_as_old_for_Class_ReplayFileDeltaConnection = requireAssignableTo<TypeOnly<current.ReplayFileDeltaConnection>, TypeOnly<old.ReplayFileDeltaConnection>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -162,11 +115,7 @@ declare type current_as_old_for_Class_ReplayFileDeltaConnection =
  * typeValidation.broken:
  * "ClassStatics_FileDeltaStorageService": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_FileDeltaStorageService =
-	requireAssignableTo<
-		TypeOnly<typeof current.FileDeltaStorageService>,
-		TypeOnly<typeof old.FileDeltaStorageService>
-	>;
+declare type current_as_old_for_ClassStatics_FileDeltaStorageService = requireAssignableTo<TypeOnly<typeof current.FileDeltaStorageService>, TypeOnly<typeof old.FileDeltaStorageService>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -175,11 +124,7 @@ declare type current_as_old_for_ClassStatics_FileDeltaStorageService =
  * typeValidation.broken:
  * "ClassStatics_FileDocumentServiceFactory": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_FileDocumentServiceFactory =
-	requireAssignableTo<
-		TypeOnly<typeof current.FileDocumentServiceFactory>,
-		TypeOnly<typeof old.FileDocumentServiceFactory>
-	>;
+declare type current_as_old_for_ClassStatics_FileDocumentServiceFactory = requireAssignableTo<TypeOnly<typeof current.FileDocumentServiceFactory>, TypeOnly<typeof old.FileDocumentServiceFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -188,11 +133,7 @@ declare type current_as_old_for_ClassStatics_FileDocumentServiceFactory =
  * typeValidation.broken:
  * "ClassStatics_FluidFetchReader": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_FluidFetchReader =
-	requireAssignableTo<
-		TypeOnly<typeof current.FluidFetchReader>,
-		TypeOnly<typeof old.FluidFetchReader>
-	>;
+declare type current_as_old_for_ClassStatics_FluidFetchReader = requireAssignableTo<TypeOnly<typeof current.FluidFetchReader>, TypeOnly<typeof old.FluidFetchReader>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -201,10 +142,7 @@ declare type current_as_old_for_ClassStatics_FluidFetchReader =
  * typeValidation.broken:
  * "ClassStatics_Replayer": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_Replayer = requireAssignableTo<
-	TypeOnly<typeof current.Replayer>,
-	TypeOnly<typeof old.Replayer>
->;
+declare type current_as_old_for_ClassStatics_Replayer = requireAssignableTo<TypeOnly<typeof current.Replayer>, TypeOnly<typeof old.Replayer>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -213,11 +151,7 @@ declare type current_as_old_for_ClassStatics_Replayer = requireAssignableTo<
  * typeValidation.broken:
  * "ClassStatics_ReplayFileDeltaConnection": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_ReplayFileDeltaConnection =
-	requireAssignableTo<
-		TypeOnly<typeof current.ReplayFileDeltaConnection>,
-		TypeOnly<typeof old.ReplayFileDeltaConnection>
-	>;
+declare type current_as_old_for_ClassStatics_ReplayFileDeltaConnection = requireAssignableTo<TypeOnly<typeof current.ReplayFileDeltaConnection>, TypeOnly<typeof old.ReplayFileDeltaConnection>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -226,11 +160,7 @@ declare type current_as_old_for_ClassStatics_ReplayFileDeltaConnection =
  * typeValidation.broken:
  * "Interface_ISnapshotWriterStorage": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISnapshotWriterStorage =
-	requireAssignableTo<
-		TypeOnly<old.ISnapshotWriterStorage>,
-		TypeOnly<current.ISnapshotWriterStorage>
-	>;
+declare type old_as_current_for_Interface_ISnapshotWriterStorage = requireAssignableTo<TypeOnly<old.ISnapshotWriterStorage>, TypeOnly<current.ISnapshotWriterStorage>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -239,11 +169,7 @@ declare type old_as_current_for_Interface_ISnapshotWriterStorage =
  * typeValidation.broken:
  * "Interface_ISnapshotWriterStorage": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISnapshotWriterStorage =
-	requireAssignableTo<
-		TypeOnly<current.ISnapshotWriterStorage>,
-		TypeOnly<old.ISnapshotWriterStorage>
-	>;
+declare type current_as_old_for_Interface_ISnapshotWriterStorage = requireAssignableTo<TypeOnly<current.ISnapshotWriterStorage>, TypeOnly<old.ISnapshotWriterStorage>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -252,11 +178,7 @@ declare type current_as_old_for_Interface_ISnapshotWriterStorage =
  * typeValidation.broken:
  * "TypeAlias_ReaderConstructor": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_ReaderConstructor =
-	requireAssignableTo<
-		TypeOnly<old.ReaderConstructor>,
-		TypeOnly<current.ReaderConstructor>
-	>;
+declare type old_as_current_for_TypeAlias_ReaderConstructor = requireAssignableTo<TypeOnly<old.ReaderConstructor>, TypeOnly<current.ReaderConstructor>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -265,11 +187,7 @@ declare type old_as_current_for_TypeAlias_ReaderConstructor =
  * typeValidation.broken:
  * "TypeAlias_ReaderConstructor": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_ReaderConstructor =
-	requireAssignableTo<
-		TypeOnly<current.ReaderConstructor>,
-		TypeOnly<old.ReaderConstructor>
-	>;
+declare type current_as_old_for_TypeAlias_ReaderConstructor = requireAssignableTo<TypeOnly<current.ReaderConstructor>, TypeOnly<old.ReaderConstructor>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -278,11 +196,7 @@ declare type current_as_old_for_TypeAlias_ReaderConstructor =
  * typeValidation.broken:
  * "Variable_FileSnapshotWriterClassFactory": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_FileSnapshotWriterClassFactory =
-	requireAssignableTo<
-		TypeOnly<typeof current.FileSnapshotWriterClassFactory>,
-		TypeOnly<typeof old.FileSnapshotWriterClassFactory>
-	>;
+declare type current_as_old_for_Variable_FileSnapshotWriterClassFactory = requireAssignableTo<TypeOnly<typeof current.FileSnapshotWriterClassFactory>, TypeOnly<typeof old.FileSnapshotWriterClassFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -291,11 +205,7 @@ declare type current_as_old_for_Variable_FileSnapshotWriterClassFactory =
  * typeValidation.broken:
  * "Variable_FileStorageDocumentName": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_FileStorageDocumentName =
-	requireAssignableTo<
-		TypeOnly<typeof current.FileStorageDocumentName>,
-		TypeOnly<typeof old.FileStorageDocumentName>
-	>;
+declare type current_as_old_for_Variable_FileStorageDocumentName = requireAssignableTo<TypeOnly<typeof current.FileStorageDocumentName>, TypeOnly<typeof old.FileStorageDocumentName>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -304,8 +214,4 @@ declare type current_as_old_for_Variable_FileStorageDocumentName =
  * typeValidation.broken:
  * "Variable_FluidFetchReaderFileSnapshotWriter": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_FluidFetchReaderFileSnapshotWriter =
-	requireAssignableTo<
-		TypeOnly<typeof current.FluidFetchReaderFileSnapshotWriter>,
-		TypeOnly<typeof old.FluidFetchReaderFileSnapshotWriter>
-	>;
+declare type current_as_old_for_Variable_FluidFetchReaderFileSnapshotWriter = requireAssignableTo<TypeOnly<typeof current.FluidFetchReaderFileSnapshotWriter>, TypeOnly<typeof old.FluidFetchReaderFileSnapshotWriter>>

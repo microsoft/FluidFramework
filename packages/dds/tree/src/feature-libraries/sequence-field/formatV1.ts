@@ -3,19 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type ObjectOptions,
-	type Static,
-	type TSchema,
-	Type,
-} from "@sinclair/typebox";
+import { type ObjectOptions, type Static, type TSchema, Type } from "@sinclair/typebox";
 
 import { unionOptions } from "../../codec/index.js";
 import { RevisionTagSchema } from "../../core/index.js";
-import {
-	ChangesetLocalIdSchema,
-	EncodedChangeAtomId,
-} from "../modular-schema/index.js";
+import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "../modular-schema/index.js";
 
 export enum DetachIdOverrideType {
 	/**
@@ -54,9 +46,7 @@ const LineageEvent = Type.Tuple([
 	Type.Number({ multipleOf: 1, minimum: 0 }),
 ]);
 
-const HasLineage = Type.Object({
-	lineage: Type.Optional(Type.Array(LineageEvent)),
-});
+const HasLineage = Type.Object({ lineage: Type.Optional(Type.Array(LineageEvent)) });
 
 const IdRange = Type.Tuple([ChangesetLocalIdSchema, CellCount]);
 
@@ -71,9 +61,7 @@ const CellId = Type.Composite(
 	noAdditionalProps,
 );
 
-const HasRevisionTag = Type.Object({
-	revision: Type.Optional(RevisionTagSchema),
-});
+const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagSchema) });
 
 const Insert = Type.Composite([HasMoveId, HasRevisionTag], noAdditionalProps);
 
@@ -108,10 +96,7 @@ const Remove = Type.Composite(
 	noAdditionalProps,
 );
 
-const MoveOut = Type.Composite(
-	[HasMoveFields, DetachFields],
-	noAdditionalProps,
-);
+const MoveOut = Type.Composite([HasMoveFields, DetachFields], noAdditionalProps);
 
 const Attach = Type.Object(
 	{
@@ -196,14 +181,9 @@ export namespace Encoded {
 	export type AttachAndDetach = Static<typeof AttachAndDetach>;
 	export type MarkEffect = Static<typeof MarkEffect>;
 
-	export type CellMark<
-		Schema extends TSchema,
-		TNodeChange extends TSchema,
-	> = Static<ReturnType<typeof CellMark<Schema, TNodeChange>>>;
-	export type Mark<Schema extends TSchema> = Static<
-		ReturnType<typeof Mark<Schema>>
+	export type CellMark<Schema extends TSchema, TNodeChange extends TSchema> = Static<
+		ReturnType<typeof CellMark<Schema, TNodeChange>>
 	>;
-	export type Changeset<Schema extends TSchema> = Static<
-		ReturnType<typeof Changeset<Schema>>
-	>;
+	export type Mark<Schema extends TSchema> = Static<ReturnType<typeof Mark<Schema>>>;
+	export type Changeset<Schema extends TSchema> = Static<ReturnType<typeof Changeset<Schema>>>;
 }

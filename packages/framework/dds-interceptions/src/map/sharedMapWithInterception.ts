@@ -25,11 +25,7 @@ import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions
 export function createSharedMapWithInterception(
 	sharedMap: ISharedMap,
 	context: IFluidDataStoreContext,
-	setInterceptionCallback: (
-		sharedMap: ISharedMap,
-		key: string,
-		value: unknown,
-	) => void,
+	setInterceptionCallback: (sharedMap: ISharedMap, key: string, value: unknown) => void,
 ): ISharedMap {
 	const sharedMapWithInterception = Object.create(sharedMap) as ISharedMap;
 

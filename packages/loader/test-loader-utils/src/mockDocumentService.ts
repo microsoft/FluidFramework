@@ -37,9 +37,7 @@ export class MockDocumentService
 
 	constructor(
 		private readonly deltaStorageFactory?: () => IDocumentDeltaStorageService,
-		private readonly deltaConnectionFactory?: (
-			client?: IClient,
-		) => IDocumentDeltaConnection,
+		private readonly deltaConnectionFactory?: (client?: IClient) => IDocumentDeltaConnection,
 	) {
 		super();
 	}
@@ -59,9 +57,7 @@ export class MockDocumentService
 			? new MockDocumentDeltaStorageService(this.deltaStorageMessages)
 			: this.deltaStorageFactory();
 	}
-	public async connectToDeltaStream(
-		client: IClient,
-	): Promise<IDocumentDeltaConnection> {
+	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
 		return this.deltaConnectionFactory === undefined
 			? new MockDocumentDeltaConnection(`mock_client_${this.nextClientId++}`)
 			: this.deltaConnectionFactory(client);

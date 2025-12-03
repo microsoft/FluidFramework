@@ -62,9 +62,7 @@ export const toRedirectTable = (
 		count: blobManagerLoadInfo.ids?.length ?? 0,
 		redirectTable: blobManagerLoadInfo.redirectTable?.length,
 	});
-	const redirectTable = new Map<string, string>(
-		blobManagerLoadInfo.redirectTable,
-	);
+	const redirectTable = new Map<string, string>(blobManagerLoadInfo.redirectTable);
 	if (blobManagerLoadInfo.ids !== undefined) {
 		for (const storageId of blobManagerLoadInfo.ids) {
 			// Older versions of the runtime used the storage ID directly in the handle,
@@ -82,9 +80,7 @@ export const summarizeBlobManagerState = (
 	redirectTable: Map<string, string>,
 ): ISummaryTreeWithStats => summarizeV1(redirectTable);
 
-const summarizeV1 = (
-	redirectTable: Map<string, string>,
-): ISummaryTreeWithStats => {
+const summarizeV1 = (redirectTable: Map<string, string>): ISummaryTreeWithStats => {
 	const builder = new SummaryTreeBuilder();
 	const storageIds = getStorageIds(redirectTable);
 	for (const storageId of storageIds) {
@@ -102,17 +98,12 @@ const summarizeV1 = (
 		([localId, storageId]) => localId !== storageId,
 	);
 	if (nonIdentityRedirectTableEntries.length > 0) {
-		builder.addBlob(
-			redirectTableBlobName,
-			JSON.stringify(nonIdentityRedirectTableEntries),
-		);
+		builder.addBlob(redirectTableBlobName, JSON.stringify(nonIdentityRedirectTableEntries));
 	}
 
 	return builder.getSummaryTree();
 };
 
-export const getStorageIds = (
-	redirectTable: Map<string, string>,
-): Set<string> => {
+export const getStorageIds = (redirectTable: Map<string, string>): Set<string> => {
 	return new Set<string>(redirectTable.values());
 };

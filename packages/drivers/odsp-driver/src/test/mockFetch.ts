@@ -54,9 +54,7 @@ export async function mockFetchMultiple<T>(
 		}
 		const cb = responses.shift();
 		assert(cb !== undefined, "the end");
-		return cb(
-			Object.fromEntries(new Headers(init?.headers)),
-		) as Promise<Response>;
+		return cb(Object.fromEntries(new Headers(init?.headers))) as Promise<Response>;
 	});
 	try {
 		return await callback();
@@ -102,9 +100,7 @@ export async function mockFetchOKIf<T>(
 		if (check(reqHeaders)) {
 			return okResponse(headers, response);
 		}
-		throw new Error(
-			`Unexpected fetch. requestCheck should throw if not passing.`,
-		);
+		throw new Error(`Unexpected fetch. requestCheck should throw if not passing.`);
 	});
 }
 

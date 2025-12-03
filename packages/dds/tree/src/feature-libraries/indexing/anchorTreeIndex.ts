@@ -8,21 +8,21 @@ import { assert, fail } from "@fluidframework/core-utils/internal";
 import {
 	type Anchor,
 	type AnchorNode,
-	type AnnouncedVisitor,
-	CursorLocationType,
-	compareUpPaths,
-	createAnnouncedVisitor,
 	type FieldKey,
+	type TreeNodeSchemaIdentifier,
 	forEachField,
 	forEachNode,
-	type IForestSubscription,
-	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
-	keyAsDetachedField,
+	createAnnouncedVisitor,
+	type IForestSubscription,
+	type AnnouncedVisitor,
+	CursorLocationType,
 	rootField,
-	TreeNavigationResult,
-	type TreeNodeSchemaIdentifier,
 	type UpPath,
+	keyAsDetachedField,
+	compareUpPaths,
+	TreeNavigationResult,
+	type ITreeCursorSynchronous,
 } from "../../core/index.js";
 import { disposeSymbol, getOrCreate } from "../../util/index.js";
 import { TreeStatus } from "../flex-tree/index.js";
@@ -40,9 +40,7 @@ import type { TreeIndex, TreeIndexKey, TreeIndexNodes } from "./types.js";
  * but returns the cursor to the state it was in before being passed to the function. It should also not be disposed by this function
  * and must be disposed elsewhere.
  */
-export type KeyFinder<TKey extends TreeIndexKey> = (
-	tree: ITreeSubscriptionCursor,
-) => TKey;
+export type KeyFinder<TKey extends TreeIndexKey> = (tree: ITreeSubscriptionCursor) => TKey;
 
 /**
  * An index from some arbitrary keys to anchor nodes. Keys can be anything that is a {@link TreeValue}.
@@ -61,10 +59,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	 * need to be considered at all for this index. This allows us to skip subtrees that aren't relevant
 	 * as a performance optimization.
 	 */
-	private readonly keyFinders = new Map<
-		TreeNodeSchemaIdentifier,
-		KeyFinder<TKey> | null
-	>();
+	private readonly keyFinders = new Map<TreeNodeSchemaIdentifier, KeyFinder<TKey> | null>();
 	/**
 	 * The actual index from keys to anchor nodes.
 	 */
@@ -97,12 +92,8 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 		private readonly indexer: (
 			schemaId: TreeNodeSchemaIdentifier,
 		) => KeyFinder<TKey> | undefined,
-		private readonly getValue: (
-			anchorNodes: TreeIndexNodes<AnchorNode>,
-		) => TValue | undefined,
-		private readonly checkTreeStatus: (
-			node: AnchorNode,
-		) => TreeStatus | undefined,
+		private readonly getValue: (anchorNodes: TreeIndexNodes<AnchorNode>) => TValue | undefined,
+		private readonly checkTreeStatus: (node: AnchorNode) => TreeStatus | undefined,
 		private readonly isShallowIndex = false,
 	) {
 		this.forest.registerAnnouncedVisitor(this.keyFinder);
@@ -134,10 +125,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 
 		return createAnnouncedVisitor({
 			// nodes (and their entire subtrees) are added to the index as soon as they are created
-			afterCreate: (
-				content: readonly ITreeCursorSynchronous[],
-				destination: FieldKey,
-			) => {
+			afterCreate: (content: readonly ITreeCursorSynchronous[], destination: FieldKey) => {
 				const detachedCursor = this.forest.allocateCursor();
 				assert(
 					this.forest.tryMoveCursorToField(
@@ -165,10 +153,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 			// the methods below are used to keep track of the path that has been traversed by the visitor
 			// this is required so that cursors can be moved to the correct location when index updates are required
 			enterNode(index: number): void {
-				assert(
-					parentField !== undefined,
-					0xa8d /* must be in a field to enter node */,
-				);
+				assert(parentField !== undefined, 0xa8d /* must be in a field to enter node */);
 
 				parent = {
 					parent,
@@ -269,11 +254,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	 * Applies the provided callback to each entry in the index.
 	 */
 	public forEach(
-		callbackfn: (
-			value: TValue,
-			key: TKey,
-			map: AnchorTreeIndex<TKey, TValue>,
-		) => void,
+		callbackfn: (value: TValue, key: TKey, map: AnchorTreeIndex<TKey, TValue>) => void,
 		thisArg?: unknown,
 	): void {
 		this.checkNotDisposed();
@@ -292,9 +273,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	public *allEntries(): IterableIterator<[TKey, TValue]> {
 		this.checkNotDisposed();
 		for (const [key, nodes] of this.keyToNodes.entries()) {
-			const value = this.getValue(
-				nodes as unknown as TreeIndexNodes<AnchorNode>,
-			);
+			const value = this.getValue(nodes as unknown as TreeIndexNodes<AnchorNode>);
 			if (value !== undefined) {
 				yield [key, value];
 			}
@@ -372,8 +351,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 			}
 			const anchor = nodeCursor.buildAnchor();
 			const anchorNode =
-				this.forest.anchors.locate(anchor) ??
-				fail(0xb16 /* expected anchor node */);
+				this.forest.anchors.locate(anchor) ?? fail(0xb16 /* expected anchor node */);
 
 			// check if this anchor node already exists in the index
 			const existingKey = this.nodeToKey.get(anchorNode);
@@ -445,10 +423,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 			0xa90 /* destroyed anchor node should be tracked by index */,
 		);
 		const index = indexedNodes.indexOf(anchorNode);
-		assert(
-			index !== -1,
-			0xa91 /* destroyed anchor node should be tracked by index */,
-		);
+		assert(index !== -1, 0xa91 /* destroyed anchor node should be tracked by index */);
 		const newNodes = filterNodes(indexedNodes, (n) => n !== anchorNode);
 		if (newNodes !== undefined && newNodes.length > 0) {
 			this.keyToNodes.set(key, newNodes);
@@ -465,9 +440,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	/**
 	 * Filters out any anchor nodes that are detached and returns the value for the remaining nodes.
 	 */
-	private getFilteredValue(
-		anchorNodes: AnchorNode[] | undefined,
-	): TValue | undefined {
+	private getFilteredValue(anchorNodes: AnchorNode[] | undefined): TValue | undefined {
 		const attachedNodes = filterNodes(anchorNodes, (anchorNode) => {
 			const nodeStatus = this.checkTreeStatus(anchorNode);
 			return nodeStatus === TreeStatus.InDocument;

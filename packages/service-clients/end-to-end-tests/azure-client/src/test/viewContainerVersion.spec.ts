@@ -7,10 +7,7 @@ import { strict as assert } from "node:assert";
 
 import type { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
-import type {
-	ContainerSchema,
-	IFluidContainer,
-} from "@fluidframework/fluid-static";
+import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/legacy";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import type { AxiosResponse } from "axios";
@@ -61,12 +58,11 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined =
-					await createContainerFromPayload(
-						ephemeralSummaryTrees.getVersionsOfCurrentDocument,
-						"test-user-id-1",
-						"test-user-name-1",
-					);
+				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+					ephemeralSummaryTrees.getVersionsOfCurrentDocument,
+					"test-user-id-1",
+					"test-user-name-1",
+				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container } = await client.getContainer(containerId, schema, "2"));
 			} else {
@@ -75,13 +71,10 @@ for (const testOpts of testMatrix) {
 			}
 
 			if (container.connectionState !== ConnectionState.Connected) {
-				await timeoutPromise(
-					(resolve) => container.once("connected", () => resolve()),
-					{
-						durationMs: connectTimeoutMs,
-						errorMsg: "container connect() timeout",
-					},
-				);
+				await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+					durationMs: connectTimeoutMs,
+					errorMsg: "container connect() timeout",
+				});
 			}
 			const resources = client.getContainerVersions(containerId);
 			await assert.doesNotReject(
@@ -91,11 +84,7 @@ for (const testOpts of testMatrix) {
 			);
 
 			const versions = await resources;
-			assert.strictEqual(
-				versions.length,
-				1,
-				"Container should have exactly one version.",
-			);
+			assert.strictEqual(versions.length, 1, "Container should have exactly one version.");
 		});
 
 		/**
@@ -106,11 +95,7 @@ for (const testOpts of testMatrix) {
 		it("can handle bad document id when requesting versions", async () => {
 			const resources = client.getContainerVersions("badid");
 			const errorFn = (error: Error): boolean => {
-				assert.notStrictEqual(
-					error.message,
-					undefined,
-					"Azure Client error is undefined",
-				);
+				assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
 				assert.strictEqual(
 					error.message,
 					"R11s fetch error: Document is deleted and cannot be accessed.",
@@ -135,34 +120,26 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined =
-					await createContainerFromPayload(
-						ephemeralSummaryTrees.copyDocumentSuccessfully,
-						"test-user-id-1",
-						"test-user-name-1",
-					);
+				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+					ephemeralSummaryTrees.copyDocumentSuccessfully,
+					"test-user-id-1",
+					"test-user-name-1",
+				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 			} else {
 				({ container } = await client.createContainer(schema, "2"));
 				containerId = await container.attach();
 
 				if (container.connectionState !== ConnectionState.Connected) {
-					await timeoutPromise(
-						(resolve) => container.once("connected", () => resolve()),
-						{
-							durationMs: connectTimeoutMs,
-							errorMsg: "container connect() timeout",
-						},
-					);
+					await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+						durationMs: connectTimeoutMs,
+						errorMsg: "container connect() timeout",
+					});
 				}
 			}
 
 			const versions = await client.getContainerVersions(containerId);
-			assert.notStrictEqual(
-				versions.length,
-				0,
-				"There should be at least one version",
-			);
+			assert.notStrictEqual(versions.length, 0, "There should be at least one version");
 			const viewContainerVersionAttempt = client.viewContainerVersion(
 				containerId,
 				schema,
@@ -187,12 +164,11 @@ for (const testOpts of testMatrix) {
 			const testKey = "new-key";
 			const expectedValue = "expected-value";
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined =
-					await createContainerFromPayload(
-						ephemeralSummaryTrees.copyDDSValuesWhenCopyingContainer,
-						"test-user-id-1",
-						"test-user-name-1",
-					);
+				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+					ephemeralSummaryTrees.copyDDSValuesWhenCopyingContainer,
+					"test-user-id-1",
+					"test-user-name-1",
+				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container } = await client.getContainer(containerId, schema, "2"));
 				map1 = container.initialObjects.map1 as SharedMap;
@@ -207,23 +183,16 @@ for (const testOpts of testMatrix) {
 			}
 
 			if (container.connectionState !== ConnectionState.Connected) {
-				await timeoutPromise(
-					(resolve) => container.once("connected", () => resolve()),
-					{
-						durationMs: connectTimeoutMs,
-						errorMsg: "container connect() timeout",
-					},
-				);
+				await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+					durationMs: connectTimeoutMs,
+					errorMsg: "container connect() timeout",
+				});
 			}
 			// Set a new value to the map - we do not expect to see this when loading the older version
 			map1.set(testKey, "some-newer-value");
 
 			const versions = await client.getContainerVersions(containerId);
-			assert.notStrictEqual(
-				versions.length,
-				0,
-				"There should be at least one version",
-			);
+			assert.notStrictEqual(versions.length, 0, "There should be at least one version");
 			// Get the oldest version, which we expect is the version from attach and should still have the old value.
 			const viewContainerVersionAttempt = client.viewContainerVersion(
 				containerId,
@@ -233,10 +202,7 @@ for (const testOpts of testMatrix) {
 			);
 			await assert.doesNotReject(viewContainerVersionAttempt);
 			const { container: containerView } = await viewContainerVersionAttempt;
-			assert.strictEqual(
-				containerView.initialObjects.map1.get(testKey),
-				valueAtCreate,
-			);
+			assert.strictEqual(containerView.initialObjects.map1.get(testKey), valueAtCreate);
 		});
 
 		/**
@@ -254,11 +220,7 @@ for (const testOpts of testMatrix) {
 				"2",
 			);
 			const errorFn = (error: Error): boolean => {
-				assert.notStrictEqual(
-					error.message,
-					undefined,
-					"Azure Client error is undefined",
-				);
+				assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
 				assert.strictEqual(
 					error.message,
 					"R11s fetch error: Document is deleted and cannot be accessed.",
@@ -267,11 +229,7 @@ for (const testOpts of testMatrix) {
 				return true;
 			};
 
-			await assert.rejects(
-				resources,
-				errorFn,
-				"We should not be able to view the container.",
-			);
+			await assert.rejects(resources, errorFn, "We should not be able to view the container.");
 		});
 	});
 }

@@ -6,23 +6,19 @@
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
+	SharedMap,
 	DirectoryFactory,
 	MapFactory,
 	SharedDirectory,
-	SharedMap,
 } from "@fluidframework/map/internal";
 import type { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
 import type { FluidObjectSymbolProvider } from "@fluidframework/synthesize/internal";
 
-import type {
-	DataObject,
-	DataObjectTypes,
-	IDataObjectProps,
-} from "../data-objects/index.js";
+import type { DataObject, DataObjectTypes, IDataObjectProps } from "../data-objects/index.js";
 
 import {
-	type DataObjectFactoryProps,
 	PureDataObjectFactory,
+	type DataObjectFactoryProps,
 } from "./pureDataObjectFactory.js";
 
 /**
@@ -75,13 +71,9 @@ export class DataObjectFactory<
 					}
 				: { ...propsOrType };
 
-		const sharedObjects = (newProps.sharedObjects = [
-			...(newProps.sharedObjects ?? []),
-		]);
+		const sharedObjects = (newProps.sharedObjects = [...(newProps.sharedObjects ?? [])]);
 
-		if (
-			!sharedObjects.some((factory) => factory.type === DirectoryFactory.Type)
-		) {
+		if (!sharedObjects.some((factory) => factory.type === DirectoryFactory.Type)) {
 			// User did not register for directory
 			sharedObjects.push(SharedDirectory.getFactory());
 		}

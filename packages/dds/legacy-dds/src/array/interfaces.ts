@@ -3,14 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	IEventThisPlaceHolder,
-	IFluidHandle,
-} from "@fluidframework/core-interfaces";
+import type { IEventThisPlaceHolder, IFluidHandle } from "@fluidframework/core-interfaces";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import type {
-	ISharedObject,
 	ISharedObjectEvents,
+	ISharedObject,
 } from "@fluidframework/shared-object-base/internal";
 
 import type { ISharedArrayOperation } from "./sharedArrayOperations.js";
@@ -21,12 +18,7 @@ import type { ISharedArrayOperation } from "./sharedArrayOperations.js";
  *
  * @legacy @beta
  */
-export type SerializableTypeForSharedArray =
-	| boolean
-	| number
-	| string
-	| object
-	| IFluidHandle;
+export type SerializableTypeForSharedArray = boolean | number | string | object | IFluidHandle;
 
 /**
  * Interface defining the events that can be emitted by the SharedArray DDS
@@ -78,18 +70,14 @@ export interface ISharedArray<T extends SerializableTypeForSharedArray>
 	move(oldIndex: number, newIndex: number): void;
 	toggle(entryId: string): void;
 	toggleMove(oldEntryId: string, newEntryId: string): void;
-	insertBulkAfter<TWrite>(
-		ref: T | undefined,
-		values: (Serializable<TWrite> & T)[],
-	): void;
+	insertBulkAfter<TWrite>(ref: T | undefined, values: (Serializable<TWrite> & T)[]): void;
 }
 
 /**
  *
  * @internal
  */
-export interface ISharedArrayRevertible
-	extends ISharedObject<ISharedArrayEvents> {
+export interface ISharedArrayRevertible extends ISharedObject<ISharedArrayEvents> {
 	toggle(entryId: string): void;
 	toggleMove(oldEntryId: string, newEntryId: string): void;
 }
@@ -129,9 +117,7 @@ export interface SharedArrayEntry<T extends SerializableTypeForSharedArray>
  *
  * @internal
  */
-export interface SharedArrayEntryCore<
-	T extends SerializableTypeForSharedArray,
-> {
+export interface SharedArrayEntryCore<T extends SerializableTypeForSharedArray> {
 	/**
 	 * a unique ID for this particular entry
 	 */

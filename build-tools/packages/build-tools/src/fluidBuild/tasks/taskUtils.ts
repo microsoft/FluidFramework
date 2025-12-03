@@ -4,22 +4,17 @@
  */
 
 import { existsSync } from "node:fs";
-import { readdir, readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
-import * as glob from "glob";
 import * as path from "path";
+import * as glob from "glob";
 
 import type { PackageJson } from "../../common/npmPackage";
 import { lookUpDirSync } from "../../common/utils";
 
 export function getEsLintConfigFilePath(dir: string) {
 	// TODO: we currently don't support .yaml and .yml, or config in package.json
-	const possibleConfig = [
-		".eslintrc.js",
-		".eslintrc.cjs",
-		".eslintrc.json",
-		".eslintrc",
-	];
+	const possibleConfig = [".eslintrc.js", ".eslintrc.cjs", ".eslintrc.json", ".eslintrc"];
 	for (const configFile of possibleConfig) {
 		const configFileFullPath = path.join(dir, configFile);
 		if (existsSync(configFileFullPath)) {
@@ -29,10 +24,7 @@ export function getEsLintConfigFilePath(dir: string) {
 	return undefined;
 }
 
-export async function getInstalledPackageVersion(
-	packageName: string,
-	cwd: string,
-) {
+export async function getInstalledPackageVersion(packageName: string, cwd: string) {
 	const resolvedPath = require.resolve(packageName, { paths: [cwd] });
 	const packageJsonPath = lookUpDirSync(resolvedPath, (currentDir) => {
 		return existsSync(path.join(currentDir, "package.json"));
@@ -73,8 +65,7 @@ export async function getRecursiveFiles(pathName: string) {
  */
 export function getApiExtractorConfigFilePath(commandLine: string): string {
 	const commandArgs = commandLine.split(/\s+/);
-	const configFileArg =
-		commandArgs.findIndex((arg) => arg === "--config" || arg === "-c") + 1;
+	const configFileArg = commandArgs.findIndex((arg) => arg === "--config" || arg === "-c") + 1;
 	if (configFileArg > 0 && commandArgs.length > configFileArg) {
 		return commandArgs[configFileArg];
 	}
@@ -87,10 +78,7 @@ export function toPosixPath(s: string) {
 	return path.sep === "\\" ? s.replace(/\\/g, "/") : s;
 }
 
-export async function globFn(
-	pattern: string,
-	options: glob.IOptions = {},
-): Promise<string[]> {
+export async function globFn(pattern: string, options: glob.IOptions = {}): Promise<string[]> {
 	return new Promise((resolve, reject) => {
 		glob.default(pattern, options, (err, matches) => {
 			if (err) {

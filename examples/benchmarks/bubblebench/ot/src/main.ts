@@ -28,9 +28,7 @@ export class Bubblebench extends DataObject {
 
 	protected async initializingFromExisting(): Promise<void> {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this.maybeTree = await this.root
-			.get<IFluidHandle<SharedJson1>>("tree")!
-			.get();
+		this.maybeTree = await this.root.get<IFluidHandle<SharedJson1>>("tree")!.get();
 	}
 
 	protected async hasInitialized(): Promise<void> {
@@ -47,10 +45,7 @@ export class Bubblebench extends DataObject {
 			// update the tree if it has.
 			setInterval(() => {
 				const clientId = this.runtime.clientId;
-				if (
-					clientId !== undefined &&
-					clientId !== this.appState.localClient.clientId
-				) {
+				if (clientId !== undefined && clientId !== this.appState.localClient.clientId) {
 					this.appState.localClient.clientId = clientId;
 				}
 			}, 1000);

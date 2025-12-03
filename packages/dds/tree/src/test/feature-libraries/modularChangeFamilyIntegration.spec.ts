@@ -11,41 +11,35 @@ import {
 	type DeltaRoot,
 	type FieldKey,
 	type FieldKindIdentifier,
-	makeAnonChange,
 	type NormalizedUpPath,
 	type RevisionTag,
-	revisionMetadataSourceFromInfo,
 	type TaggedChange,
+	type UpPath,
+	makeAnonChange,
+	revisionMetadataSourceFromInfo,
 	tagChange,
 	tagRollbackInverse,
-	type UpPath,
 } from "../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
-	type EditDescription,
 	type FlexFieldKind,
-	genericFieldKind,
 	type ModularChangeset,
 	type SequenceField as SF,
+	type EditDescription,
+	genericFieldKind,
 } from "../../feature-libraries/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
 import {
-	intoDelta,
 	ModularChangeFamily,
+	intoDelta,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
-import type {
-	NodeId,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
-	brand,
 	type IdAllocator,
-	idAllocatorFromMaxId,
 	type Mutable,
+	brand,
+	idAllocatorFromMaxId,
 } from "../../util/index.js";
 import {
 	assertDeltaEqual,
@@ -56,14 +50,17 @@ import {
 	moveWithin,
 	testChangeReceiver,
 } from "../utils.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import {
-	assertEqual,
-	Change,
-	removeAliases,
-} from "./modular-schema/modularChangesetUtil.js";
+
+import type {
+	NodeId,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../feature-libraries/modular-schema/modularChangeTypes.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { assertEqual, Change, removeAliases } from "./modular-schema/modularChangesetUtil.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> = new Map([
 	[sequence.identifier, sequence],
@@ -85,17 +82,9 @@ describe("ModularChangeFamily integration", () => {
 	describe("rebase", () => {
 		it("remove over cross-field move", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
-			const editor = new DefaultEditBuilder(
-				family,
-				mintRevisionTag,
-				changeReceiver,
-			);
+			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
 
-			const rootPath = {
-				parent: undefined,
-				parentField: rootField,
-				parentIndex: 0,
-			};
+			const rootPath = { parent: undefined, parentField: rootField, parentIndex: 0 };
 			editor.move(
 				{
 					parent: rootPath,
@@ -103,10 +92,7 @@ describe("ModularChangeFamily integration", () => {
 				},
 				1,
 				2,
-				{
-					parent: { parent: rootPath, parentField: fieldB, parentIndex: 0 },
-					field: fieldC,
-				},
+				{ parent: { parent: rootPath, parentField: fieldB, parentIndex: 0 }, field: fieldC },
 				2,
 			);
 
@@ -148,25 +134,14 @@ describe("ModularChangeFamily integration", () => {
 			// Tag changes before comparing them because default edit builder will assign tags to changes and
 			// the expected tag needs to be the same.
 			const tag = mintRevisionTag();
-			assertEqual(
-				tagChangeInline(rebased, tag),
-				tagChangeInline(expected, tag),
-			);
+			assertEqual(tagChangeInline(rebased, tag), tagChangeInline(expected, tag));
 		});
 
 		it("remove over cross-field move to edited field", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
-			const editor = new DefaultEditBuilder(
-				family,
-				mintRevisionTag,
-				changeReceiver,
-			);
+			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
 
-			const rootPath = {
-				parent: undefined,
-				parentField: rootField,
-				parentIndex: 0,
-			};
+			const rootPath = { parent: undefined, parentField: rootField, parentIndex: 0 };
 			editor.move(
 				{
 					parent: rootPath,
@@ -174,10 +149,7 @@ describe("ModularChangeFamily integration", () => {
 				},
 				1,
 				2,
-				{
-					parent: { parent: rootPath, parentField: fieldA, parentIndex: 0 },
-					field: fieldC,
-				},
+				{ parent: { parent: rootPath, parentField: fieldA, parentIndex: 0 }, field: fieldC },
 				2,
 			);
 
@@ -218,19 +190,12 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			const tag = mintRevisionTag();
-			assertEqual(
-				tagChangeInline(rebased, tag),
-				tagChangeInline(expected, tag),
-			);
+			assertEqual(tagChangeInline(rebased, tag), tagChangeInline(expected, tag));
 		});
 
 		it("nested change over cross-field move", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
-			const editor = new DefaultEditBuilder(
-				family,
-				mintRevisionTag,
-				changeReceiver,
-			);
+			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
 
 			editor.move(
 				{ parent: undefined, field: fieldA },
@@ -263,27 +228,18 @@ describe("ModularChangeFamily integration", () => {
 					Change.nodeWithId(
 						0,
 						{ localId: brand(3) },
-						Change.field(fieldC, sequence.identifier, [
-							MarkMaker.remove(1, brand(2)),
-						]),
+						Change.field(fieldC, sequence.identifier, [MarkMaker.remove(1, brand(2))]),
 					),
 				),
 			);
 
 			const tag = mintRevisionTag();
-			assertEqual(
-				tagChangeInline(rebased, tag),
-				tagChangeInline(expected, tag),
-			);
+			assertEqual(tagChangeInline(rebased, tag), tagChangeInline(expected, tag));
 		});
 
 		it("cross-field move over remove", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
-			const editor = new DefaultEditBuilder(
-				family,
-				mintRevisionTag,
-				changeReceiver,
-			);
+			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
 			editor.sequenceField({ parent: undefined, field: fieldA }).remove(1, 1);
 			editor.move(
 				{ parent: undefined, field: fieldA },
@@ -299,10 +255,7 @@ describe("ModularChangeFamily integration", () => {
 				false,
 				mintRevisionTag(),
 			);
-			const expected = family.compose([
-				makeAnonChange(restore),
-				makeAnonChange(move),
-			]);
+			const expected = family.compose([makeAnonChange(restore), makeAnonChange(move)]);
 			const rebased = family.rebase(
 				makeAnonChange(move),
 				tagChangeInline(remove, baseTag),
@@ -319,11 +272,7 @@ describe("ModularChangeFamily integration", () => {
 
 		it("move over cross-field move", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
-			const editor = new DefaultEditBuilder(
-				family,
-				mintRevisionTag,
-				changeReceiver,
-			);
+			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
 			editor.move(
 				{ parent: undefined, field: fieldA },
 				0,
@@ -347,25 +296,16 @@ describe("ModularChangeFamily integration", () => {
 					MarkMaker.moveOut(1, brand(3)),
 					MarkMaker.moveIn(2, brand(2)),
 				]),
-				Change.field(fieldB, sequence.identifier, [
-					MarkMaker.moveOut(1, brand(2)),
-				]),
+				Change.field(fieldB, sequence.identifier, [MarkMaker.moveOut(1, brand(2))]),
 			);
 
 			const tag = mintRevisionTag();
-			assertEqual(
-				tagChangeInline(rebased, tag),
-				tagChangeInline(expected, tag),
-			);
+			assertEqual(tagChangeInline(rebased, tag), tagChangeInline(expected, tag));
 		});
 
 		it("Nested moves both requiring a second pass", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
-			const editor = new DefaultEditBuilder(
-				family,
-				mintRevisionTag,
-				changeReceiver,
-			);
+			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
 
 			const fieldAPath = { parent: undefined, field: fieldA };
 
@@ -401,10 +341,7 @@ describe("ModularChangeFamily integration", () => {
 
 			editor.exitTransaction();
 			const [move1, move2, modify] = getChanges();
-			const moves = family.compose([
-				makeAnonChange(move1),
-				makeAnonChange(move2),
-			]);
+			const moves = family.compose([makeAnonChange(move1), makeAnonChange(move2)]);
 
 			const taggedMoves = tagChangeInline(moves, tag1);
 			const rebased = family.rebase(
@@ -458,24 +395,13 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			const tag = mintRevisionTag();
-			assertEqual(
-				tagChangeInline(rebased, tag),
-				tagChangeInline(expected, tag),
-			);
+			assertEqual(tagChangeInline(rebased, tag), tagChangeInline(expected, tag));
 		});
 
 		it("over change which moves node upward", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
-			const editor = new DefaultEditBuilder(
-				family,
-				mintRevisionTag,
-				changeReceiver,
-			);
-			const nodeAPath: UpPath = {
-				parent: undefined,
-				parentField: fieldA,
-				parentIndex: 0,
-			};
+			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
+			const nodeAPath: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 0 };
 			const nodeBPath: UpPath = {
 				parent: nodeAPath,
 				parentField: fieldB,
@@ -497,9 +423,7 @@ describe("ModularChangeFamily integration", () => {
 			};
 
 			editor.sequenceField({ parent: nodeBPath, field: fieldC }).remove(0, 1);
-			editor
-				.sequenceField({ parent: nodeBPathAfterMove, field: fieldC })
-				.remove(0, 1);
+			editor.sequenceField({ parent: nodeBPathAfterMove, field: fieldC }).remove(0, 1);
 
 			const [move, remove, expected] = getChanges();
 			const baseTag = mintRevisionTag();
@@ -523,16 +447,8 @@ describe("ModularChangeFamily integration", () => {
 		// This test demonstrates that a field may need three rebasing passes.
 		it("over change which moves into moved subtree", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
-			const editor = new DefaultEditBuilder(
-				family,
-				mintRevisionTag,
-				changeReceiver,
-			);
-			const nodePath1: UpPath = {
-				parent: undefined,
-				parentField: fieldA,
-				parentIndex: 1,
-			};
+			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
+			const nodePath1: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 1 };
 
 			// The base changeset consists of the following two move edits.
 			// This edit moves node2 from field B into field C which is under node1 in field A.
@@ -576,45 +492,24 @@ describe("ModularChangeFamily integration", () => {
 				Change.field(
 					fieldA,
 					sequence.identifier,
-					[
-						MarkMaker.skip(2),
-						MarkMaker.tomb(tag1, brand(3)),
-						MarkMaker.remove(1, brand(5)),
-					],
+					[MarkMaker.skip(2), MarkMaker.tomb(tag1, brand(3)), MarkMaker.remove(1, brand(5))],
 					Change.nodeWithId(
 						0,
 						{ revision: tag1, localId: brand(2) },
-						Change.field(fieldC, sequence.identifier, [
-							MarkMaker.remove(1, brand(6)),
-						]),
+						Change.field(fieldC, sequence.identifier, [MarkMaker.remove(1, brand(6))]),
 					),
 				),
 			);
 
 			const tag = mintRevisionTag();
-			assertEqual(
-				tagChangeInline(rebased, tag),
-				tagChangeInline(expected, tag),
-			);
+			assertEqual(tagChangeInline(rebased, tag), tagChangeInline(expected, tag));
 		});
 
 		it("prunes its output", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
-			const editor = new DefaultEditBuilder(
-				family,
-				mintRevisionTag,
-				changeReceiver,
-			);
-			const nodeAPath: UpPath = {
-				parent: undefined,
-				parentField: fieldA,
-				parentIndex: 0,
-			};
-			const nodeBPath: UpPath = {
-				parent: undefined,
-				parentField: fieldB,
-				parentIndex: 0,
-			};
+			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
+			const nodeAPath: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 0 };
+			const nodeBPath: UpPath = { parent: undefined, parentField: fieldB, parentIndex: 0 };
 
 			editor.sequenceField({ parent: nodeAPath, field: fieldA }).remove(0, 1);
 			editor.sequenceField({ parent: nodeBPath, field: fieldB }).remove(0, 1);
@@ -644,16 +539,8 @@ describe("ModularChangeFamily integration", () => {
 			 */
 
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
-			const editor = new DefaultEditBuilder(
-				family,
-				mintRevisionTag,
-				changeReceiver,
-			);
-			const nodeAPath: UpPath = {
-				parent: undefined,
-				parentField: fieldA,
-				parentIndex: 0,
-			};
+			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
+			const nodeAPath: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 0 };
 
 			// Moves A to an adjacent cell to its right
 			const fieldAPath = { parent: undefined, field: fieldA };
@@ -662,20 +549,12 @@ describe("ModularChangeFamily integration", () => {
 			// Moves B into A
 			editor.move(fieldAPath, 1, 1, { parent: nodeAPath, field: fieldB }, 0);
 
-			const nodeBPath: UpPath = {
-				parent: nodeAPath,
-				parentField: fieldB,
-				parentIndex: 0,
-			};
+			const nodeBPath: UpPath = { parent: nodeAPath, parentField: fieldB, parentIndex: 0 };
 
 			// Moves C into B
 			editor.move(fieldAPath, 1, 1, { parent: nodeBPath, field: fieldC }, 0);
 
-			const nodeCPath: UpPath = {
-				parent: nodeBPath,
-				parentField: fieldC,
-				parentIndex: 0,
-			};
+			const nodeCPath: UpPath = { parent: nodeBPath, parentField: fieldC, parentIndex: 0 };
 
 			// Modifies C by removing a node from it
 			editor.sequenceField({ parent: nodeCPath, field: fieldC }).remove(0, 1);
@@ -685,11 +564,7 @@ describe("ModularChangeFamily integration", () => {
 			const tagForCompare = mintRevisionTag();
 
 			const moves = tagChangeInline(
-				family.compose([
-					makeAnonChange(moveA),
-					makeAnonChange(moveB),
-					makeAnonChange(moveC),
-				]),
+				family.compose([makeAnonChange(moveA), makeAnonChange(moveB), makeAnonChange(moveC)]),
 				tagForCompare,
 			);
 
@@ -697,9 +572,7 @@ describe("ModularChangeFamily integration", () => {
 
 			const composed = family.compose([moves, remove]);
 			family.validateChangeset(composed);
-			const composedDelta = normalizeDelta(
-				intoDelta(makeAnonChange(composed), fieldKinds),
-			);
+			const composedDelta = normalizeDelta(intoDelta(makeAnonChange(composed), fieldKinds));
 
 			const nodeAChanges: DeltaFieldMap = new Map([
 				[fieldB, [{ count: 1, attach: { minor: 1, major: tagForCompare } }]],
@@ -714,22 +587,10 @@ describe("ModularChangeFamily integration", () => {
 			]);
 
 			const fieldAChanges: DeltaFieldChanges = [
-				{
-					count: 1,
-					detach: { minor: 0, major: tagForCompare },
-					fields: nodeAChanges,
-				},
+				{ count: 1, detach: { minor: 0, major: tagForCompare }, fields: nodeAChanges },
 				{ count: 1, attach: { minor: 0, major: tagForCompare } },
-				{
-					count: 1,
-					detach: { minor: 1, major: tagForCompare },
-					fields: nodeBChanges,
-				},
-				{
-					count: 1,
-					detach: { minor: 2, major: tagForCompare },
-					fields: nodeCChanges,
-				},
+				{ count: 1, detach: { minor: 1, major: tagForCompare }, fields: nodeBChanges },
+				{ count: 1, detach: { minor: 2, major: tagForCompare }, fields: nodeCChanges },
 			];
 
 			const expectedDelta: DeltaRoot = normalizeDelta({
@@ -741,11 +602,7 @@ describe("ModularChangeFamily integration", () => {
 
 		it("cross-field move and nested changes", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
-			const editor = new DefaultEditBuilder(
-				family,
-				mintRevisionTag,
-				changeReceiver,
-			);
+			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
 			editor.move(
 				{ parent: undefined, field: fieldA },
 				0,
@@ -763,10 +620,7 @@ describe("ModularChangeFamily integration", () => {
 				.insert(0, newNode);
 
 			const [move, insert] = getChanges();
-			const composed = family.compose([
-				makeAnonChange(move),
-				makeAnonChange(insert),
-			]);
+			const composed = family.compose([makeAnonChange(move), makeAnonChange(insert)]);
 			const tagForCompare = mintRevisionTag();
 			const taggedComposed = tagChangeInline(composed, tagForCompare);
 			const expected: DeltaRoot = {
@@ -779,10 +633,7 @@ describe("ModularChangeFamily integration", () => {
 								count: 1,
 								detach: { minor: 0, major: tagForCompare },
 								fields: new Map([
-									[
-										fieldC,
-										[{ count: 1, attach: { minor: 2, major: tagForCompare } }],
-									],
+									[fieldC, [{ count: 1, attach: { minor: 2, major: tagForCompare } }]],
 								]),
 							},
 						],
@@ -798,11 +649,7 @@ describe("ModularChangeFamily integration", () => {
 
 		it("cross-field move and inverse with nested changes", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
-			const editor = new DefaultEditBuilder(
-				family,
-				mintRevisionTag,
-				changeReceiver,
-			);
+			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
 			editor.move(
 				{ parent: undefined, field: fieldA },
 				0,
@@ -827,14 +674,8 @@ describe("ModularChangeFamily integration", () => {
 				moveTagged.revision,
 			);
 
-			const moveAndInsert = family.compose([
-				tagChangeInline(insert, tag2),
-				moveTagged,
-			]);
-			const composed = family.compose([
-				returnTagged,
-				makeAnonChange(moveAndInsert),
-			]);
+			const moveAndInsert = family.compose([tagChangeInline(insert, tag2), moveTagged]);
+			const composed = family.compose([returnTagged, makeAnonChange(moveAndInsert)]);
 			family.validateChangeset(composed);
 
 			const actual = intoDelta(makeAnonChange(composed), family.fieldKinds);
@@ -852,9 +693,7 @@ describe("ModularChangeFamily integration", () => {
 							{ count: 1 },
 							{
 								count: 1,
-								fields: new Map([
-									[fieldC, [{ count: 1, attach: { major: tag2, minor: 2 } }]],
-								]),
+								fields: new Map([[fieldC, [{ count: 1, attach: { major: tag2, minor: 2 } }]]]),
 							},
 						],
 					],
@@ -866,11 +705,7 @@ describe("ModularChangeFamily integration", () => {
 
 		it("two cross-field moves of same node", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
-			const editor = new DefaultEditBuilder(
-				family,
-				mintRevisionTag,
-				changeReceiver,
-			);
+			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
 			editor.move(
 				{ parent: undefined, field: fieldA },
 				0,
@@ -894,10 +729,7 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			const [move1, move2, expected] = getChanges();
-			const composed = family.compose([
-				makeAnonChange(move1),
-				makeAnonChange(move2),
-			]);
+			const composed = family.compose([makeAnonChange(move1), makeAnonChange(move2)]);
 			const tagForCompare = mintRevisionTag();
 			family.validateChangeset(composed);
 			const actualDelta = normalizeDelta(
@@ -913,11 +745,7 @@ describe("ModularChangeFamily integration", () => {
 	describe("invert", () => {
 		it("Cross-field move of edited node", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
-			const editor = new DefaultEditBuilder(
-				family,
-				mintRevisionTag,
-				changeReceiver,
-			);
+			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
 
 			editor.enterTransaction();
 
@@ -940,26 +768,17 @@ describe("ModularChangeFamily integration", () => {
 			editor.exitTransaction();
 
 			const [remove, move] = getChanges();
-			const edit = family.compose([
-				makeAnonChange(remove),
-				makeAnonChange(move),
-			]);
+			const edit = family.compose([makeAnonChange(remove), makeAnonChange(move)]);
 
-			const inverse = removeAliases(
-				family.invert(tagChangeInline(edit, tag1), false, tag2),
-			);
+			const inverse = removeAliases(family.invert(tagChangeInline(edit, tag1), false, tag2));
 
 			const fieldAExpected = [
 				MarkMaker.returnTo(1, brand(2), { revision: tag1, localId: brand(2) }),
 			];
 			const fieldBExpected = [
-				MarkMaker.moveOut(1, brand(2), {
-					changes: { revision: tag1, localId: brand(1) },
-				}),
+				MarkMaker.moveOut(1, brand(2), { changes: { revision: tag1, localId: brand(1) } }),
 			];
-			const fieldCExpected = [
-				MarkMaker.revive(1, { revision: tag1, localId: brand(0) }),
-			];
+			const fieldCExpected = [MarkMaker.revive(1, { revision: tag1, localId: brand(0) })];
 
 			const expected = tagChangeInline(
 				Change.build(
@@ -984,11 +803,7 @@ describe("ModularChangeFamily integration", () => {
 
 		it("Nested moves both requiring a second pass", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
-			const editor = new DefaultEditBuilder(
-				family,
-				mintRevisionTag,
-				changeReceiver,
-			);
+			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
 
 			const fieldAPath = { parent: undefined, field: fieldA };
 			editor.enterTransaction();
@@ -1037,9 +852,7 @@ describe("ModularChangeFamily integration", () => {
 				makeAnonChange(modify),
 			]);
 
-			const inverse = removeAliases(
-				family.invert(tagChangeInline(moves, tag1), false, tag2),
-			);
+			const inverse = removeAliases(family.invert(tagChangeInline(moves, tag1), false, tag2));
 
 			const fieldAExpected: SF.Changeset = [
 				MarkMaker.moveOut(1, brand(0)),
@@ -1053,9 +866,7 @@ describe("ModularChangeFamily integration", () => {
 				MarkMaker.returnTo(1, brand(2), { revision: tag1, localId: brand(2) }),
 			];
 
-			const fieldCExpected = [
-				MarkMaker.revive(1, { revision: tag1, localId: brand(5) }),
-			];
+			const fieldCExpected = [MarkMaker.revive(1, { revision: tag1, localId: brand(5) })];
 
 			const nodeId1: NodeId = { revision: tag1, localId: brand(4) };
 			const nodeId2: NodeId = { revision: tag1, localId: brand(6) };
@@ -1191,10 +1002,7 @@ function normalizeDeltaFieldMap(
 ): DeltaFieldMap {
 	const normalized = new Map();
 	for (const [field, fieldChanges] of delta) {
-		normalized.set(
-			field,
-			normalizeDeltaFieldChanges(fieldChanges, genId, idMap),
-		);
+		normalized.set(field, normalizeDeltaFieldChanges(fieldChanges, genId, idMap));
 	}
 	return normalized;
 }
@@ -1218,18 +1026,10 @@ function normalizeDeltaMark(
 ): DeltaMark {
 	const normalized: Mutable<DeltaMark> = { ...delta };
 	if (normalized.attach !== undefined) {
-		normalized.attach = normalizeDeltaDetachedNodeId(
-			normalized.attach,
-			genId,
-			idMap,
-		);
+		normalized.attach = normalizeDeltaDetachedNodeId(normalized.attach, genId, idMap);
 	}
 	if (normalized.detach !== undefined) {
-		normalized.detach = normalizeDeltaDetachedNodeId(
-			normalized.detach,
-			genId,
-			idMap,
-		);
+		normalized.detach = normalizeDeltaDetachedNodeId(normalized.detach, genId, idMap);
 	}
 	if (normalized.fields !== undefined) {
 		normalized.fields = normalizeDeltaFieldMap(normalized.fields, genId, idMap);

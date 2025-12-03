@@ -3,37 +3,32 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
-import type {
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import {
 	IContainerRuntimeOptions,
 	ISummarizer,
 } from "@fluidframework/container-runtime/internal";
-import type {
-	IGarbageCollector,
+import {
 	IGCMetadata,
+	IGarbageCollector,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/gc";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import {
-	type ISummaryTree,
-	SummaryType,
-} from "@fluidframework/driver-definitions";
-import {
-	channelsTreeName,
-	gcTreeKey,
-} from "@fluidframework/runtime-definitions/internal";
-import {
+	ITestFluidObject,
+	ITestObjectProvider,
+	TestFluidObjectFactory,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizerFromFactory,
-	type ITestFluidObject,
-	type ITestObjectProvider,
 	summarizeNow,
-	TestFluidObjectFactory,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
-import { createSandbox, type SinonSandbox } from "sinon";
+import { createSandbox, SinonSandbox } from "sinon";
 
 // IContainerRuntime type that exposes garbage collector which is a private property.
 type IContainerRuntimeWithPrivates = IContainerRuntime & {
@@ -44,252 +39,227 @@ type IContainerRuntimeWithPrivates = IContainerRuntime & {
  * Validates that when the runtime GC version changes, we reset the GC state and disable GC if needed.
  * Basically, when we update the GC version due to bugs, newer versions re-run GC and older versions stop running GC.
  */
-describeCompat(
-	"GC version update",
-	"NoCompat",
-	(getTestObjectProvider, apis) => {
-		const {
-			containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
-		} = apis;
-		let provider: ITestObjectProvider;
-		// TODO:#4670: Make this compat-version-specific.
-		const defaultFactory = new TestFluidObjectFactory([]);
-		const runtimeOptions: IContainerRuntimeOptions = {
-			summaryOptions: {
-				summaryConfigOverrides: {
-					state: "disabled",
-				},
+describeCompat("GC version update", "NoCompat", (getTestObjectProvider, apis) => {
+	const {
+		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
+	} = apis;
+	let provider: ITestObjectProvider;
+	// TODO:#4670: Make this compat-version-specific.
+	const defaultFactory = new TestFluidObjectFactory([]);
+	const runtimeOptions: IContainerRuntimeOptions = {
+		summaryOptions: {
+			summaryConfigOverrides: {
+				state: "disabled",
 			},
-		};
+		},
+	};
 
-		const defaultRuntimeFactory =
-			createContainerRuntimeFactoryWithDefaultDataStore(
-				ContainerRuntimeFactoryWithDefaultDataStore,
-				{
-					defaultFactory,
-					registryEntries: [
-						[defaultFactory.type, Promise.resolve(defaultFactory)],
-					],
-					runtimeOptions,
-				},
-			);
+	const defaultRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+		ContainerRuntimeFactoryWithDefaultDataStore,
+		{
+			defaultFactory,
+			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+			runtimeOptions,
+		},
+	);
 
-		let mainContainer: IContainer;
-		let dataStore1Id: string;
-		let dataStore2Id: string;
-		let dataStore3Id: string;
+	let mainContainer: IContainer;
+	let dataStore1Id: string;
+	let dataStore2Id: string;
+	let dataStore3Id: string;
 
-		/**
-		 * Generates a summary and validates that the data store's summary is of correct type - tree or handle.
-		 * The data stores ids in dataStoresAsHandles should have their summary as handles. All other data stores
-		 * should have their summary as tree.
-		 */
-		async function summarizeAndValidateDataStoreState(
-			summarizer: ISummarizer,
-			dataStoresAsHandles: string[],
-			gcAllowed: boolean,
-		) {
-			await provider.ensureSynchronized();
-			const summaryResult = await summarizeNow(summarizer);
+	/**
+	 * Generates a summary and validates that the data store's summary is of correct type - tree or handle.
+	 * The data stores ids in dataStoresAsHandles should have their summary as handles. All other data stores
+	 * should have their summary as tree.
+	 */
+	async function summarizeAndValidateDataStoreState(
+		summarizer: ISummarizer,
+		dataStoresAsHandles: string[],
+		gcAllowed: boolean,
+	) {
+		await provider.ensureSynchronized();
+		const summaryResult = await summarizeNow(summarizer);
 
-			const gcTreeExists =
-				summaryResult.summaryTree.tree[gcTreeKey] !== undefined;
-			assert.strictEqual(
-				gcTreeExists,
-				gcAllowed,
-				"GC tree in summary is not as expected.",
-			);
+		const gcTreeExists = summaryResult.summaryTree.tree[gcTreeKey] !== undefined;
+		assert.strictEqual(gcTreeExists, gcAllowed, "GC tree in summary is not as expected.");
 
-			const dataStoreTrees = (
-				summaryResult.summaryTree.tree[channelsTreeName] as ISummaryTree
-			).tree;
-			for (const [key, value] of Object.entries(dataStoreTrees)) {
-				if (dataStoresAsHandles.includes(key)) {
-					assert(
-						value.type === SummaryType.Handle,
-						`The summary for data store ${key} should be a handle`,
-					);
-				} else {
-					assert(
-						value.type === SummaryType.Tree,
-						`The summary for data store ${key} should be a tree`,
-					);
-				}
-			}
-			return summaryResult.summaryVersion;
-		}
-
-		/**
-		 * Validates that the GC state is reset (empty) in the base GC details. This will ensure that the GC data is
-		 * regenerated by all the nodes.
-		 * A summary is done to ensure that the base GC details are initialized.
-		 */
-		async function summarizeAndValidateGCStateReset(summarizer: ISummarizer) {
-			const containerRuntime = (summarizer as any)
-				.runtime as IContainerRuntimeWithPrivates;
-			const spy = sandbox.spy(
-				containerRuntime.garbageCollector,
-				"getBaseGCDetails",
-			);
-
-			await provider.ensureSynchronized();
-			await summarizeNow(summarizer);
-
-			const baseGCDetails = await spy.returnValues[0];
-			assert.deepStrictEqual(
-				baseGCDetails,
-				{},
-				"Base GC state should have been reset",
-			);
-		}
-
-		/**
-		 * Function that sets up a container such that the GC version is the metadata blob in summary is updated as per
-		 * gcVersionDiff param. It either increments or decrements the version to provide the ability to test clients
-		 * running different GC versions.
-		 */
-		async function setupGCVersionUpdateInMetadata(
-			summarizer: ISummarizer,
-			gcVersionDiff: number,
-		) {
-			// Override the getMetadata function in GarbageCollector to update the gcFeature property.
-			const containerRuntime = (summarizer as any)
-				.runtime as IContainerRuntimeWithPrivates;
-			let getMetadataFunc = containerRuntime.garbageCollector.getMetadata;
-			const getMetadataOverride = () => {
-				getMetadataFunc = getMetadataFunc.bind(
-					containerRuntime.garbageCollector,
+		const dataStoreTrees = (summaryResult.summaryTree.tree[channelsTreeName] as ISummaryTree)
+			.tree;
+		for (const [key, value] of Object.entries(dataStoreTrees)) {
+			if (dataStoresAsHandles.includes(key)) {
+				assert(
+					value.type === SummaryType.Handle,
+					`The summary for data store ${key} should be a handle`,
 				);
-				const metadata = getMetadataFunc();
-				const gcFeature = metadata.gcFeature;
-				assert(gcFeature !== undefined, "gcFeature not found in GC metadata");
-				const updatedMetadata: IGCMetadata = {
-					...metadata,
-					gcFeature: gcFeature + gcVersionDiff,
-				};
-				return updatedMetadata;
-			};
-			containerRuntime.garbageCollector.getMetadata = getMetadataOverride;
+			} else {
+				assert(
+					value.type === SummaryType.Tree,
+					`The summary for data store ${key} should be a tree`,
+				);
+			}
 		}
+		return summaryResult.summaryVersion;
+	}
 
-		let sandbox: SinonSandbox;
-		before(() => {
-			sandbox = createSandbox();
-		});
+	/**
+	 * Validates that the GC state is reset (empty) in the base GC details. This will ensure that the GC data is
+	 * regenerated by all the nodes.
+	 * A summary is done to ensure that the base GC details are initialized.
+	 */
+	async function summarizeAndValidateGCStateReset(summarizer: ISummarizer) {
+		const containerRuntime = (summarizer as any).runtime as IContainerRuntimeWithPrivates;
+		const spy = sandbox.spy(containerRuntime.garbageCollector, "getBaseGCDetails");
 
-		beforeEach("setup", async () => {
-			provider = getTestObjectProvider({ syncSummarizer: true });
-			mainContainer = await provider.createContainer(defaultRuntimeFactory);
-			const dataStore1 =
-				(await mainContainer.getEntryPoint()) as ITestFluidObject;
-			dataStore1Id = dataStore1.context.id;
+		await provider.ensureSynchronized();
+		await summarizeNow(summarizer);
 
-			// Create couple more data stores and mark them as referenced.
-			const containerRuntime = dataStore1.context.containerRuntime;
-			const dataStore2 = (await (
-				await containerRuntime.createDataStore(defaultFactory.type)
-			).entryPoint.get()) as ITestFluidObject;
-			dataStore1.root.set("dataStore2", dataStore2.handle);
-			const dataStore3 = (await (
-				await containerRuntime.createDataStore(defaultFactory.type)
-			).entryPoint.get()) as ITestFluidObject;
-			dataStore1.root.set("dataStore3", dataStore3.handle);
-			dataStore2Id = dataStore2.context.id;
-			dataStore3Id = dataStore3.context.id;
+		const baseGCDetails = await spy.returnValues[0];
+		assert.deepStrictEqual(baseGCDetails, {}, "Base GC state should have been reset");
+	}
 
-			await waitForContainerConnection(mainContainer);
-		});
+	/**
+	 * Function that sets up a container such that the GC version is the metadata blob in summary is updated as per
+	 * gcVersionDiff param. It either increments or decrements the version to provide the ability to test clients
+	 * running different GC versions.
+	 */
+	async function setupGCVersionUpdateInMetadata(
+		summarizer: ISummarizer,
+		gcVersionDiff: number,
+	) {
+		// Override the getMetadata function in GarbageCollector to update the gcFeature property.
+		const containerRuntime = (summarizer as any).runtime as IContainerRuntimeWithPrivates;
+		let getMetadataFunc = containerRuntime.garbageCollector.getMetadata;
+		const getMetadataOverride = () => {
+			getMetadataFunc = getMetadataFunc.bind(containerRuntime.garbageCollector);
+			const metadata = getMetadataFunc();
+			const gcFeature = metadata.gcFeature;
+			assert(gcFeature !== undefined, "gcFeature not found in GC metadata");
+			const updatedMetadata: IGCMetadata = {
+				...metadata,
+				gcFeature: gcFeature + gcVersionDiff,
+			};
+			return updatedMetadata;
+		};
+		containerRuntime.garbageCollector.getMetadata = getMetadataOverride;
+	}
 
-		afterEach(() => {
-			sandbox.restore();
-		});
+	let sandbox: SinonSandbox;
+	before(() => {
+		sandbox = createSandbox();
+	});
 
-		it("should reset GC state when GC version is newer that the one in base snapshot", async () => {
-			// Stores the ids of data stores whose summary tree should be handles.
-			const dataStoresAsHandles: string[] = [];
+	beforeEach("setup", async () => {
+		provider = getTestObjectProvider({ syncSummarizer: true });
+		mainContainer = await provider.createContainer(defaultRuntimeFactory);
+		const dataStore1 = (await mainContainer.getEntryPoint()) as ITestFluidObject;
+		dataStore1Id = dataStore1.context.id;
 
-			// Create a summarizer client.
-			const { summarizer: summarizer1 } = await createSummarizerFromFactory(
-				provider,
-				mainContainer,
-				defaultFactory,
-			);
-			// Setup the summarizer container's GC version in summary to be decremented by 1 so that containers that load
-			// from this summary will have newer GC version.
-			await setupGCVersionUpdateInMetadata(summarizer1, -1 /* gcVersionDiff */);
+		// Create couple more data stores and mark them as referenced.
+		const containerRuntime = dataStore1.context.containerRuntime;
+		const dataStore2 = (await (
+			await containerRuntime.createDataStore(defaultFactory.type)
+		).entryPoint.get()) as ITestFluidObject;
+		dataStore1.root.set("dataStore2", dataStore2.handle);
+		const dataStore3 = (await (
+			await containerRuntime.createDataStore(defaultFactory.type)
+		).entryPoint.get()) as ITestFluidObject;
+		dataStore1.root.set("dataStore3", dataStore3.handle);
+		dataStore2Id = dataStore2.context.id;
+		dataStore3Id = dataStore3.context.id;
 
-			// Generate a summary and validate that all data store summaries are trees.
-			await summarizeAndValidateDataStoreState(
-				summarizer1,
-				dataStoresAsHandles,
-				true /* gcAllowed */,
-			);
+		await waitForContainerConnection(mainContainer);
+	});
 
-			// Generate another summary in which the summaries for all data stores are handles. This validates that the
-			// GC data is not regenerated in absence of changes.
-			dataStoresAsHandles.push(dataStore1Id, dataStore2Id, dataStore3Id);
-			const summaryVersion = await summarizeAndValidateDataStoreState(
-				summarizer1,
-				dataStoresAsHandles,
-				true /* gcAllowed */,
-			);
+	afterEach(() => {
+		sandbox.restore();
+	});
 
-			// Create a new summarizer. It will have newer GC version that the above container.
-			summarizer1.close();
-			const { summarizer: summarizer2 } = await createSummarizerFromFactory(
-				provider,
-				mainContainer,
-				defaultFactory,
-				summaryVersion,
-			);
+	it("should reset GC state when GC version is newer that the one in base snapshot", async () => {
+		// Stores the ids of data stores whose summary tree should be handles.
+		const dataStoresAsHandles: string[] = [];
 
-			// Validate that the GC state is reset (empty) in the base GC details. When the GC state is empty, all the nodes
-			// will start with empty GC data and will regenerate the GC data in the first GC / summary run.
-			await summarizeAndValidateGCStateReset(summarizer2);
-		});
+		// Create a summarizer client.
+		const { summarizer: summarizer1 } = await createSummarizerFromFactory(
+			provider,
+			mainContainer,
+			defaultFactory,
+		);
+		// Setup the summarizer container's GC version in summary to be decremented by 1 so that containers that load
+		// from this summary will have newer GC version.
+		await setupGCVersionUpdateInMetadata(summarizer1, -1 /* gcVersionDiff */);
 
-		it("should reset GC state when GC version is older than the one in base snapshot", async () => {
-			// Stores the ids of data stores whose summary tree should be handles.
-			const dataStoresAsHandles: string[] = [];
+		// Generate a summary and validate that all data store summaries are trees.
+		await summarizeAndValidateDataStoreState(
+			summarizer1,
+			dataStoresAsHandles,
+			true /* gcAllowed */,
+		);
 
-			// Create a summarizer client.
-			const { summarizer: summarizer1 } = await createSummarizerFromFactory(
-				provider,
-				mainContainer,
-				defaultFactory,
-			);
-			// Setup the summarizer container's GC version in summary to be incremented by 1. Containers that load from
-			// this summary will have older GC version.
-			await setupGCVersionUpdateInMetadata(summarizer1, 1 /* gcVersionDiff */);
+		// Generate another summary in which the summaries for all data stores are handles. This validates that the
+		// GC data is not regenerated in absence of changes.
+		dataStoresAsHandles.push(dataStore1Id, dataStore2Id, dataStore3Id);
+		const summaryVersion = await summarizeAndValidateDataStoreState(
+			summarizer1,
+			dataStoresAsHandles,
+			true /* gcAllowed */,
+		);
 
-			// Generate a summary and validate that all data store summaries are trees.
-			await summarizeAndValidateDataStoreState(
-				summarizer1,
-				dataStoresAsHandles,
-				true /* gcAllowed */,
-			);
+		// Create a new summarizer. It will have newer GC version that the above container.
+		summarizer1.close();
+		const { summarizer: summarizer2 } = await createSummarizerFromFactory(
+			provider,
+			mainContainer,
+			defaultFactory,
+			summaryVersion,
+		);
 
-			// Generate another summary in which the summaries for all data stores are handles. This validates that the
-			// GC data is not regenerated in absence of changes.
-			dataStoresAsHandles.push(dataStore1Id, dataStore2Id, dataStore3Id);
-			const summaryVersion = await summarizeAndValidateDataStoreState(
-				summarizer1,
-				dataStoresAsHandles,
-				true /* gcAllowed */,
-			);
+		// Validate that the GC state is reset (empty) in the base GC details. When the GC state is empty, all the nodes
+		// will start with empty GC data and will regenerate the GC data in the first GC / summary run.
+		await summarizeAndValidateGCStateReset(summarizer2);
+	});
 
-			// Create a new summarizer. It will have older GC version that the above container.
-			summarizer1.close();
-			const { summarizer: summarizer2 } = await createSummarizerFromFactory(
-				provider,
-				mainContainer,
-				defaultFactory,
-				summaryVersion,
-			);
+	it("should reset GC state when GC version is older than the one in base snapshot", async () => {
+		// Stores the ids of data stores whose summary tree should be handles.
+		const dataStoresAsHandles: string[] = [];
 
-			// Validate that the GC state is reset (empty) in the base GC details. When the GC state is empty, all the nodes
-			// will start with empty GC data and will regenerate the GC data in the first GC / summary run.
-			await summarizeAndValidateGCStateReset(summarizer2);
-		});
-	},
-);
+		// Create a summarizer client.
+		const { summarizer: summarizer1 } = await createSummarizerFromFactory(
+			provider,
+			mainContainer,
+			defaultFactory,
+		);
+		// Setup the summarizer container's GC version in summary to be incremented by 1. Containers that load from
+		// this summary will have older GC version.
+		await setupGCVersionUpdateInMetadata(summarizer1, 1 /* gcVersionDiff */);
+
+		// Generate a summary and validate that all data store summaries are trees.
+		await summarizeAndValidateDataStoreState(
+			summarizer1,
+			dataStoresAsHandles,
+			true /* gcAllowed */,
+		);
+
+		// Generate another summary in which the summaries for all data stores are handles. This validates that the
+		// GC data is not regenerated in absence of changes.
+		dataStoresAsHandles.push(dataStore1Id, dataStore2Id, dataStore3Id);
+		const summaryVersion = await summarizeAndValidateDataStoreState(
+			summarizer1,
+			dataStoresAsHandles,
+			true /* gcAllowed */,
+		);
+
+		// Create a new summarizer. It will have older GC version that the above container.
+		summarizer1.close();
+		const { summarizer: summarizer2 } = await createSummarizerFromFactory(
+			provider,
+			mainContainer,
+			defaultFactory,
+			summaryVersion,
+		);
+
+		// Validate that the GC state is reset (empty) in the base GC details. When the GC state is empty, all the nodes
+		// will start with empty GC data and will regenerate the GC data in the first GC / summary run.
+		await summarizeAndValidateGCStateReset(summarizer2);
+	});
+});

@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { AttachState } from "@fluidframework/container-definitions";
 import {
-	type MockContainerRuntime,
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
+	type MockContainerRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
-import { strict as assert } from "assert";
 
 import { IntervalCollection } from "../intervalCollection.js";
 import { SharedStringFactory } from "../sequenceFactory.js";
@@ -25,12 +26,9 @@ interface RollbackTestSetup {
 }
 
 function setupRollbackTest(): RollbackTestSetup {
-	const containerRuntimeFactory = new MockContainerRuntimeFactory({
-		flushMode: 1,
-	}); // TurnBased
+	const containerRuntimeFactory = new MockContainerRuntimeFactory({ flushMode: 1 }); // TurnBased
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: "1" });
-	const containerRuntime =
-		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	const sharedString = new SharedStringClass(
 		dataStoreRuntime,
 		"shared-string-1",
@@ -64,8 +62,7 @@ function createAdditionalClient(
 	collection: IntervalCollection;
 } {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: id });
-	const containerRuntime =
-		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	const sharedString = new SharedStringClass(
 		dataStoreRuntime,
 		`shared-string-${id}`,
@@ -78,21 +75,14 @@ function createAdditionalClient(
 		objectStorage: new MockStorage(),
 	});
 	const collection = sharedString.getIntervalCollection("test");
-	assert(
-		collection instanceof IntervalCollection,
-		"IntervalCollection instance expected",
-	);
+	assert(collection instanceof IntervalCollection, "IntervalCollection instance expected");
 	return { sharedString, dataStoreRuntime, containerRuntime, collection };
 }
 
 describe("SharedString IntervalCollection rollback", () => {
 	it("should rollback addInterval operation", () => {
-		const {
-			sharedString,
-			containerRuntimeFactory,
-			containerRuntime,
-			collection,
-		} = setupRollbackTest();
+		const { sharedString, containerRuntimeFactory, containerRuntime, collection } =
+			setupRollbackTest();
 		sharedString.insertText(0, "abcde");
 		containerRuntimeFactory.processAllMessages();
 		const interval = collection.add({ start: 1, end: 3 });
@@ -111,12 +101,8 @@ describe("SharedString IntervalCollection rollback", () => {
 	});
 
 	it("should rollback changeInterval operation", () => {
-		const {
-			sharedString,
-			containerRuntimeFactory,
-			containerRuntime,
-			collection,
-		} = setupRollbackTest();
+		const { sharedString, containerRuntimeFactory, containerRuntime, collection } =
+			setupRollbackTest();
 		sharedString.insertText(0, "abcde");
 		containerRuntimeFactory.processAllMessages();
 		const interval = collection.add({ start: 1, end: 3 });
@@ -145,12 +131,8 @@ describe("SharedString IntervalCollection rollback", () => {
 	});
 
 	it("should rollback removeInterval operation", () => {
-		const {
-			sharedString,
-			containerRuntimeFactory,
-			containerRuntime,
-			collection,
-		} = setupRollbackTest();
+		const { sharedString, containerRuntimeFactory, containerRuntime, collection } =
+			setupRollbackTest();
 		sharedString.insertText(0, "abcde");
 		containerRuntimeFactory.processAllMessages();
 		const interval = collection.add({ start: 1, end: 3 });
@@ -158,11 +140,7 @@ describe("SharedString IntervalCollection rollback", () => {
 		containerRuntime.flush();
 		containerRuntimeFactory.processAllMessages();
 		collection.removeIntervalById(intervalId);
-		assert.equal(
-			collection.getIntervalById(intervalId),
-			undefined,
-			"interval removed",
-		);
+		assert.equal(collection.getIntervalById(intervalId), undefined, "interval removed");
 		containerRuntime.rollback?.();
 		assert.notEqual(
 			collection.getIntervalById(intervalId),
@@ -173,12 +151,8 @@ describe("SharedString IntervalCollection rollback", () => {
 	});
 
 	it("should rollback multiple interval operations in sequence", () => {
-		const {
-			sharedString,
-			containerRuntimeFactory,
-			containerRuntime,
-			collection,
-		} = setupRollbackTest();
+		const { sharedString, containerRuntimeFactory, containerRuntime, collection } =
+			setupRollbackTest();
 		sharedString.insertText(0, "abcde");
 		const i1 = collection.add({ start: 0, end: 2 });
 		const i2 = collection.add({ start: 2, end: 4 });
@@ -192,11 +166,7 @@ describe("SharedString IntervalCollection rollback", () => {
 			true,
 			"i1 present",
 		);
-		assert.equal(
-			collection.getIntervalById(i2.getIntervalId()),
-			undefined,
-			"i2 removed",
-		);
+		assert.equal(collection.getIntervalById(i2.getIntervalId()), undefined, "i2 removed");
 		containerRuntime.rollback?.();
 		assert.equal(
 			collection.getIntervalById(i1.getIntervalId()) !== undefined,
@@ -211,12 +181,8 @@ describe("SharedString IntervalCollection rollback", () => {
 	});
 
 	it("should not rollback already flushed (acked) interval operations", () => {
-		const {
-			sharedString,
-			containerRuntimeFactory,
-			containerRuntime,
-			collection,
-		} = setupRollbackTest();
+		const { sharedString, containerRuntimeFactory, containerRuntime, collection } =
+			setupRollbackTest();
 		sharedString.insertText(0, "abcde");
 		containerRuntimeFactory.processAllMessages();
 		const interval = collection.add({ start: 1, end: 3 });
@@ -238,12 +204,8 @@ describe("SharedString IntervalCollection rollback", () => {
 	});
 
 	it("should be a no-op if rollback is called with no pending interval changes", () => {
-		const {
-			sharedString,
-			containerRuntimeFactory,
-			containerRuntime,
-			collection,
-		} = setupRollbackTest();
+		const { sharedString, containerRuntimeFactory, containerRuntime, collection } =
+			setupRollbackTest();
 		sharedString.insertText(0, "abcde");
 		containerRuntimeFactory.processAllMessages();
 		const interval = collection.add({ start: 1, end: 3 });
@@ -262,12 +224,8 @@ describe("SharedString IntervalCollection rollback", () => {
 	});
 
 	it("should rollback local changes in presence of remote changes from another client", () => {
-		const {
-			sharedString,
-			containerRuntimeFactory,
-			containerRuntime,
-			collection,
-		} = setupRollbackTest();
+		const { sharedString, containerRuntimeFactory, containerRuntime, collection } =
+			setupRollbackTest();
 		// Create a second client
 		const {
 			sharedString: sharedString2,
@@ -330,12 +288,8 @@ describe("SharedString IntervalCollection rollback", () => {
 	});
 
 	it("should rollback remove in presence of remote changes from another client", () => {
-		const {
-			sharedString,
-			containerRuntimeFactory,
-			containerRuntime,
-			collection,
-		} = setupRollbackTest();
+		const { sharedString, containerRuntimeFactory, containerRuntime, collection } =
+			setupRollbackTest();
 		// Create a second client
 		const {
 			sharedString: sharedString2,
@@ -349,7 +303,11 @@ describe("SharedString IntervalCollection rollback", () => {
 		const intervalId = interval1.getIntervalId();
 		containerRuntime.flush();
 		containerRuntimeFactory.processAllMessages();
-		collection.removeIntervalById(intervalId);
+
+		// Client 1 makes a local change (not flushed)
+		{
+			collection.removeIntervalById(intervalId);
+		}
 		// Client 2 makes a local change and flushes
 		{
 			const change2 = collection2.change(intervalId, {
@@ -384,12 +342,8 @@ describe("SharedString IntervalCollection rollback", () => {
 	});
 
 	it("should not restore interval if both clients delete and one rolls back after remote delete", () => {
-		const {
-			sharedString,
-			containerRuntimeFactory,
-			containerRuntime,
-			collection,
-		} = setupRollbackTest();
+		const { sharedString, containerRuntimeFactory, containerRuntime, collection } =
+			setupRollbackTest();
 		// Create a second client
 		const { containerRuntime: containerRuntime2, collection: collection2 } =
 			createAdditionalClient(containerRuntimeFactory);
@@ -424,12 +378,8 @@ describe("SharedString IntervalCollection rollback", () => {
 	});
 
 	it("should not restore interval if remote clients deletes and local rolls back change", () => {
-		const {
-			sharedString,
-			containerRuntimeFactory,
-			containerRuntime,
-			collection,
-		} = setupRollbackTest();
+		const { sharedString, containerRuntimeFactory, containerRuntime, collection } =
+			setupRollbackTest();
 		// Create a second client
 		const { containerRuntime: containerRuntime2, collection: collection2 } =
 			createAdditionalClient(containerRuntimeFactory);

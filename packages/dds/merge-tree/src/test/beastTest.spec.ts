@@ -17,6 +17,8 @@ import { type IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import JsDiff from "diff";
+
+import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import {
 	type KeyComparer,
 	type Property,
@@ -29,33 +31,25 @@ import {
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
 } from "../constants.js";
-import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { MergeTree } from "../mergeTree.js";
 import type { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import {
+	type IJSONMarkerSegment,
 	compareNumbers,
 	compareStrings,
-	type IJSONMarkerSegment,
-	type ISegmentPrivate,
 	reservedMarkerIdKey,
+	type ISegmentPrivate,
 } from "../mergeTreeNodes.js";
 import { createRemoveRangeOp } from "../opBuilder.js";
-import {
-	type IMergeTreeOp,
-	MergeTreeDeltaType,
-	ReferenceType,
-} from "../ops.js";
+import { type IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { LocalDefaultPerspective } from "../perspective.js";
-import {
-	reservedRangeLabelsKey,
-	reservedTileLabelsKey,
-} from "../referencePositions.js";
+import { reservedRangeLabelsKey, reservedTileLabelsKey } from "../referencePositions.js";
 import type { JsonSegmentSpecs } from "../snapshotChunks.js";
 import { SnapshotLegacy } from "../snapshotlegacy.js";
 import { type IJSONTextSegment, TextSegment } from "../textSegment.js";
 
 import { _dirname } from "./dirname.cjs";
-import { getStats, specToSegment, TestClient } from "./testClient.js";
+import { TestClient, getStats, specToSegment } from "./testClient.js";
 import { TestServer } from "./testServer.js";
 import { loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils.js";
 
@@ -63,10 +57,8 @@ function LinearDictionary<TKey, TData>(
 	compareKeys: KeyComparer<TKey>,
 ): SortedDictionary<TKey, TData> {
 	const props: Property<TKey, TData>[] = [];
-	const compareProps = (
-		a: Property<TKey, TData>,
-		b: Property<TKey, TData>,
-	): number => compareKeys(a.key, b.key);
+	const compareProps = (a: Property<TKey, TData>, b: Property<TKey, TData>): number =>
+		compareKeys(a.key, b.key);
 	function mapRange<TAccum>(
 		action: PropertyAction<TKey, TData>,
 		accum?: TAccum,
@@ -99,10 +91,7 @@ function LinearDictionary<TKey, TData>(
 		}
 	}
 
-	function map<TAccum>(
-		action: PropertyAction<TKey, TData>,
-		accum?: TAccum,
-	): void {
+	function map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum): void {
 		mapRange(action, accum);
 	}
 
@@ -176,16 +165,7 @@ function printStringNumProperty(p: Property<string, number>): boolean {
 }
 
 export function simpleTest(): void {
-	const a = [
-		"Aardvark",
-		"cute",
-		"Baboon",
-		"big",
-		"Chameleon",
-		"colorful",
-		"Dingo",
-		"wild",
-	];
+	const a = ["Aardvark", "cute", "Baboon", "big", "Chameleon", "colorful", "Dingo", "wild"];
 
 	const beast = new RedBlackTree<string, string>(compareStrings);
 	for (let i = 0; i < a.length; i += 2) {
@@ -315,9 +295,7 @@ function makeCollabTextSegment(text: string): TextSegment {
 }
 
 function editFlat(source: string, s: number, dl: number, nt = ""): string {
-	return (
-		source.slice(0, Math.max(0, s)) + nt + source.slice(s + dl, source.length)
-	);
+	return source.slice(0, Math.max(0, s)) + nt + source.slice(s + dl, source.length);
 }
 
 let accumTime = 0;
@@ -328,9 +306,7 @@ function checkInsertMergeTree(
 	textSegment: TextSegment,
 	verbose = false,
 ): boolean {
-	let checkText = new MergeTreeTextHelper(mergeTree).getText(
-		mergeTree.localPerspective,
-	);
+	let checkText = new MergeTreeTextHelper(mergeTree).getText(mergeTree.localPerspective);
 	checkText = editFlat(checkText, pos, 0, textSegment.text);
 	const clockStart = clock();
 	mergeTree.insertSegments(
@@ -341,9 +317,7 @@ function checkInsertMergeTree(
 		undefined,
 	);
 	accumTime += elapsedMicroseconds(clockStart);
-	const updatedText = new MergeTreeTextHelper(mergeTree).getText(
-		mergeTree.localPerspective,
-	);
+	const updatedText = new MergeTreeTextHelper(mergeTree).getText(mergeTree.localPerspective);
 	const result = checkText === updatedText;
 	if (!result && verbose) {
 		log(`mismatch(o): ${checkText}`);
@@ -389,9 +363,7 @@ export function mergeTreeTest1(): void {
 		mergeTree.collabWindow.mintNextLocalOperationStamp(),
 		undefined,
 	);
-	const localPerspective = new LocalDefaultPerspective(
-		mergeTree.collabWindow.clientId,
-	);
+	const localPerspective = new LocalDefaultPerspective(mergeTree.collabWindow.clientId);
 	mergeTree.mapRange(printTextSegment, localPerspective, undefined);
 	let fuzzySeg = makeCollabTextSegment("fuzzy, fuzzy ");
 	checkInsertMergeTree(mergeTree, 4, fuzzySeg);
@@ -694,8 +666,7 @@ export function TestPack(verbose = true): {
 	const minSegCount = 1;
 	const maxSegCount = 1000;
 	const randSmallSegmentCount = (): number => random.integer(1, 4);
-	const randSegmentCount = (): number =>
-		random.integer(minSegCount, maxSegCount);
+	const randSegmentCount = (): number => random.integer(minSegCount, maxSegCount);
 	const randTextLength = (): number => random.integer(1, 5);
 	const zedCode = 48;
 	function randomString(len: number, c: string): string {
@@ -721,9 +692,7 @@ export function TestPack(verbose = true): {
 		const packTime = stats.packTime;
 		const aveWindowTime = ((windowTime || 0) / client.accumOps).toFixed(1);
 		const avePackTime = ((packTime ?? 0) / client.accumOps).toFixed(1);
-		const aveExtraWindowTime = (
-			client.accumWindowTime / client.accumOps
-		).toFixed(1);
+		const aveExtraWindowTime = (client.accumWindowTime / client.accumOps).toFixed(1);
 		const aveWindow = (client.accumWindow / client.accumOps).toFixed(1);
 		const adjTime = (
 			(client.accumTime - (windowTime - client.accumWindowTime)) /
@@ -839,16 +808,12 @@ export function TestPack(verbose = true): {
 			const textLen = randTextLength();
 			const text = randomString(
 				textLen,
-				String.fromCodePoint(
-					zedCode + ((client.getCurrentSeq() + charIndex) % 50),
-				),
+				String.fromCodePoint(zedCode + ((client.getCurrentSeq() + charIndex) % 50)),
 			);
 			const preLen = client.getLength();
 			const pos = random.integer(0, preLen);
 			const insertTextOp = client.insertTextLocal(pos, text);
-			server.enqueueMsg(
-				client.makeOpMessage(insertTextOp!, UnassignedSequenceNumber),
-			);
+			server.enqueueMsg(client.makeOpMessage(insertTextOp!, UnassignedSequenceNumber));
 
 			if (TestClient.useCheckQ) {
 				client.enqueueTestString();
@@ -872,9 +837,7 @@ export function TestPack(verbose = true): {
 				const removeStart = word1.pos;
 				const removeEnd = removeStart + word1.text.length;
 				const removeOp = client.removeRangeLocal(removeStart, removeEnd);
-				server.enqueueMsg(
-					client.makeOpMessage(removeOp!, UnassignedSequenceNumber),
-				);
+				server.enqueueMsg(client.makeOpMessage(removeOp!, UnassignedSequenceNumber));
 				if (TestClient.useCheckQ) {
 					client.enqueueTestString();
 				}
@@ -884,9 +847,7 @@ export function TestPack(verbose = true): {
 				}
 				const pos = word2.pos + word2.text.length;
 				const insertOp = client.insertTextLocal(pos, word1.text);
-				server.enqueueMsg(
-					client.makeOpMessage(insertOp!, UnassignedSequenceNumber),
-				);
+				server.enqueueMsg(client.makeOpMessage(insertOp!, UnassignedSequenceNumber));
 
 				if (TestClient.useCheckQ) {
 					client.enqueueTestString();
@@ -1020,15 +981,11 @@ export function TestPack(verbose = true): {
 		function checkTextMatch(checkSeq: number): boolean {
 			let error = false;
 			if (cliA.getCurrentSeq() !== checkSeq) {
-				log(
-					`client A has seq number ${cliA.getCurrentSeq()} mismatch with ${checkSeq}`,
-				);
+				log(`client A has seq number ${cliA.getCurrentSeq()} mismatch with ${checkSeq}`);
 				error = true;
 			}
 			if (cliB.getCurrentSeq() !== checkSeq) {
-				log(
-					`client B has seq number ${cliB.getCurrentSeq()} mismatch with ${checkSeq}`,
-				);
+				log(`client B has seq number ${cliB.getCurrentSeq()} mismatch with ${checkSeq}`);
 				error = true;
 			}
 			const aText = cliA.getText();
@@ -1067,10 +1024,7 @@ export function TestPack(verbose = true): {
 					const preLen = cliA.getLength();
 					const pos = random.integer(0, preLen);
 
-					const msg = cliA.makeOpMessage(
-						cliA.insertTextLocal(pos, text)!,
-						sequenceNumber++,
-					);
+					const msg = cliA.makeOpMessage(cliA.insertTextLocal(pos, text)!, sequenceNumber++);
 					msg.minimumSequenceNumber = min;
 					cliAMsgs.push(msg);
 					cliB.applyMsg(msg);
@@ -1096,10 +1050,7 @@ export function TestPack(verbose = true): {
 					);
 					const preLen = cliB.getLength();
 					const pos = random.integer(0, preLen);
-					const msg = cliB.makeOpMessage(
-						cliB.insertTextLocal(pos, text)!,
-						sequenceNumber++,
-					);
+					const msg = cliB.makeOpMessage(cliB.insertTextLocal(pos, text)!, sequenceNumber++);
 					msg.minimumSequenceNumber = min;
 					cliBMsgs.push(msg);
 					cliA.applyMsg(msg);
@@ -1176,23 +1127,17 @@ export function TestPack(verbose = true): {
 			log(cliB.mergeTree.toString());
 			errorCount++;
 		} else {
-			log(
-				`sequence number: ${cliA.getCurrentSeq()} min: ${cliA.getCollabWindow().minSeq}`,
-			);
+			log(`sequence number: ${cliA.getCurrentSeq()} min: ${cliA.getCollabWindow().minSeq}`);
 			//            log(cliA.mergeTree.toString());
 
-			log(
-				`testing remove at ${cliA.getCurrentSeq()} and ${cliB.getCurrentSeq()}`,
-			);
+			log(`testing remove at ${cliA.getCurrentSeq()} and ${cliB.getCurrentSeq()}`);
 			if (removeTest()) {
 				log(cliA.mergeTree.toString());
 				log(cliB.mergeTree.toString());
 				errorCount++;
 			}
 		}
-		log(
-			`sequence number: ${cliA.getCurrentSeq()} min: ${cliA.getCollabWindow().minSeq}`,
-		);
+		log(`sequence number: ${cliA.getCurrentSeq()} min: ${cliA.getCollabWindow().minSeq}`);
 		//                log(cliA.mergeTree.toString());
 		// log(cliB.mergeTree.toString());
 		// log(cliA.getText());
@@ -1265,10 +1210,7 @@ export function TestPack(verbose = true): {
 			}
 		}
 		const segs = <SharedStringJSONSegment[]>(
-			new SnapshotLegacy(
-				cli.mergeTree,
-				createChildLogger({ namespace: "fluid:snapshot" }),
-			)
+			new SnapshotLegacy(cli.mergeTree, createChildLogger({ namespace: "fluid:snapshot" }))
 				.extractSync()
 				.map((seg) => seg.toJSONObject() as JsonSegmentSpecs)
 		);
@@ -1425,8 +1367,7 @@ export class RandomPack {
 		];
 		let buf = "";
 		for (let i = 0; i < wordCount; i++) {
-			const exampleWord =
-				exampleWords[this.randInteger(0, exampleWords.length - 1)];
+			const exampleWord = exampleWords[this.randInteger(0, exampleWords.length - 1)];
 			if (i > 0) {
 				buf += " ";
 			}
@@ -1500,10 +1441,7 @@ export class DocumentTree {
 	}
 
 	static generateDocument(): DocumentTree {
-		const tree = new DocumentTree(
-			"Document",
-			DocumentTree.generateContent(0.6),
-		);
+		const tree = new DocumentTree("Document", DocumentTree.generateContent(0.6));
 		return tree;
 	}
 
@@ -1548,10 +1486,7 @@ export class DocumentTree {
 	}
 
 	static generateBox(rowProbability: number): DocumentTree {
-		return new DocumentTree(
-			"box",
-			DocumentTree.generateContent(rowProbability),
-		);
+		return new DocumentTree("box", DocumentTree.generateContent(rowProbability));
 	}
 }
 
@@ -1596,9 +1531,7 @@ function findReplacePerf(filename: string): void {
 	}
 
 	const elapsed = elapsedMicroseconds(clockStart);
-	log(
-		`${cFetches} fetches and ${cReplaces} replaces took ${elapsed} microseconds`,
-	);
+	log(`${cFetches} fetches and ${cReplaces} replaces took ${elapsed} microseconds`);
 }
 
 const baseDir = "../../src/test/literature";

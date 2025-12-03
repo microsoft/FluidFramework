@@ -8,11 +8,19 @@
  * DataObject creation for temporary {@link ExperimentalPresenceManager}.
  */
 
-import type { FluidObject, IFluidLoadable, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import type {
+	FluidObject,
+	IFluidLoadable,
+	IRequest,
+	IResponse,
+} from "@fluidframework/core-interfaces";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
-import type { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
+import type {
+	IFluidDataStoreContext,
+	IFluidDataStoreFactory,
+} from "@fluidframework/runtime-definitions/internal";
 import { create404Response } from "@fluidframework/runtime-utils/internal";
 
 /**
@@ -34,7 +42,10 @@ class BasicFluidDataStoreRuntime extends FluidDataStoreRuntime {
 			// The provideEntryPoint callback below always returns an instance of
 			// LoadableFluidObject. Make sure that is the case.
 			const dataObject = await this.entryPoint.get();
-			assert(dataObject instanceof LoadableFluidObject, 0xa36 /* Data store runtime entryPoint is not expected type */);
+			assert(
+				dataObject instanceof LoadableFluidObject,
+				0xa36 /* Data store runtime entryPoint is not expected type */,
+			);
 			return { mimeType: "fluid/object", status: 200, value: dataObject };
 		}
 		return create404Response(request);

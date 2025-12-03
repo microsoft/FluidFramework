@@ -8,17 +8,17 @@ import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
-	compareFieldUpPaths,
 	EmptyKey,
 	type FieldKey,
 	type FieldUpPath,
 	type ITreeCursor,
 	type JsonableTree,
 	type PathRootPrefix,
-	rootFieldKey,
-	setGenericTreeField,
 	type TreeNodeSchemaIdentifier,
 	type UpPath,
+	compareFieldUpPaths,
+	rootFieldKey,
+	setGenericTreeField,
 } from "../core/index.js";
 import {
 	cursorForJsonableTreeNode,
@@ -26,19 +26,15 @@ import {
 	prefixFieldPath,
 	prefixPath,
 } from "../feature-libraries/index.js";
-import { JsonAsTree } from "../jsonDomainSchema.js";
+import { brand } from "../util/index.js";
+import { expectEqualFieldPaths, expectEqualPaths, IdentifierSchema } from "./utils.js";
 import {
 	booleanSchema,
 	numberSchema,
 	SchemaFactory,
 	stringSchema,
 } from "../simple-tree/index.js";
-import { brand } from "../util/index.js";
-import {
-	expectEqualFieldPaths,
-	expectEqualPaths,
-	IdentifierSchema,
-} from "./utils.js";
+import { JsonAsTree } from "../jsonDomainSchema.js";
 
 const sf = new SchemaFactory("Cursor Test Suite");
 
@@ -46,15 +42,9 @@ export class EmptyObject extends sf.object("Empty object", {}) {}
 class EmptyObject2 extends sf.object("Empty object 2", {}) {}
 class EmptyObject3 extends sf.object("Empty object 3", {}) {}
 
-const emptyObjectIdentifier: TreeNodeSchemaIdentifier = brand(
-	EmptyObject.identifier,
-);
-const emptyObjectIdentifier2: TreeNodeSchemaIdentifier = brand(
-	EmptyObject2.identifier,
-);
-const emptyObjectIdentifier3: TreeNodeSchemaIdentifier = brand(
-	EmptyObject3.identifier,
-);
+const emptyObjectIdentifier: TreeNodeSchemaIdentifier = brand(EmptyObject.identifier);
+const emptyObjectIdentifier2: TreeNodeSchemaIdentifier = brand(EmptyObject2.identifier);
+const emptyObjectIdentifier3: TreeNodeSchemaIdentifier = brand(EmptyObject3.identifier);
 
 export const testTreeSchema = [
 	EmptyObject,
@@ -68,22 +58,13 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	["minimal", { type: emptyObjectIdentifier }],
 	["true boolean", { type: brand(booleanSchema.identifier), value: true }],
 	["false boolean", { type: brand(booleanSchema.identifier), value: false }],
-	[
-		"integer",
-		{
-			type: brand(numberSchema.identifier),
-			value: Number.MIN_SAFE_INTEGER - 1,
-		},
-	],
+	["integer", { type: brand(numberSchema.identifier), value: Number.MIN_SAFE_INTEGER - 1 }],
 	["string", { type: brand(stringSchema.identifier), value: "test" }],
 	[
 		"string with escaped characters",
 		{ type: brand(stringSchema.identifier), value: '\\"\b\f\n\r\t' },
 	],
-	[
-		"string with emoticon",
-		{ type: brand(stringSchema.identifier), value: "😀" },
-	],
+	["string with emoticon", { type: brand(stringSchema.identifier), value: "😀" }],
 	[
 		"field",
 		{
@@ -226,10 +207,7 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
  * @typeParam TData - Format which the cursor reads. Must be JSON compatible.
  * @typeParam TCursor - Type of the cursor being tested.
  */
-export function testGeneralPurposeTreeCursor<
-	TData,
-	TCursor extends ITreeCursor,
->(
+export function testGeneralPurposeTreeCursor<TData, TCursor extends ITreeCursor>(
 	cursorName: string,
 	cursorFactory: (data: TData) => TCursor,
 	dataFromCursor: (cursor: ITreeCursor) => TData,
@@ -295,10 +273,7 @@ export interface TestField<TData> {
  * @typeParam TData - Format which the cursor reads. Must be JSON compatible.
  * @typeParam TCursor - Type of the cursor being tested.
  */
-export function testSpecializedCursor<
-	TData,
-	TCursor extends ITreeCursor,
->(config: {
+export function testSpecializedCursor<TData, TCursor extends ITreeCursor>(config: {
 	cursorName: string;
 	builders: SpecialCaseBuilder<TData>;
 	cursorFactory: (data: TData) => TCursor;
@@ -324,10 +299,7 @@ export function testSpecializedCursor<
  * @typeParam TData - Format which the cursor reads. Must be JSON compatible.
  * @typeParam TCursor - Type of the cursor being tested.
  */
-export function testSpecializedFieldCursor<
-	TData,
-	TCursor extends ITreeCursor,
->(config: {
+export function testSpecializedFieldCursor<TData, TCursor extends ITreeCursor>(config: {
 	cursorName: string;
 	builders: SpecialCaseBuilder<TData>;
 	cursorFactory: (data: TData) => TCursor;
@@ -343,11 +315,7 @@ export function testSpecializedFieldCursor<
 					name: reference.length > 1 ? `${name} part ${index + 1}` : name,
 					dataFactory: () => [index, dataFactory()],
 					reference: reference[index],
-					path: {
-						parent: path.parent,
-						parentIndex: index,
-						parentField: path.field,
-					},
+					path: { parent: path.parent, parentIndex: index, parentField: path.field },
 				});
 			}
 			return out;
@@ -443,8 +411,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 		builders: builder,
 	} = config;
 
-	const dataFromJsonableTree =
-		typeof builder === "object" ? undefined : builder;
+	const dataFromJsonableTree = typeof builder === "object" ? undefined : builder;
 	const withKeys: undefined | ((keys: FieldKey[]) => TData) =
 		typeof builder === "object"
 			? builder.withKeys === undefined
@@ -577,9 +544,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 						it("first node in a root field", () => {
 							const cursor = factory({
 								type: brand(JsonAsTree.JsonObject.identifier),
-								fields: {
-									key: [{ type: brand(numberSchema.identifier), value: 0 }],
-								},
+								fields: { key: [{ type: brand(numberSchema.identifier), value: 0 }] },
 							});
 							cursor.enterField(brand("key"));
 							cursor.firstNode();
@@ -710,10 +675,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 
 							for (const prefix of prefixes) {
 								// prefixPath has its own tests, so we can use it to test cursors here:
-								expectEqualPaths(
-									cursor.getPath(prefix),
-									prefixPath(prefix, parent),
-								);
+								expectEqualPaths(cursor.getPath(prefix), prefixPath(prefix, parent));
 							}
 
 							cursor.enterField(brand("testField"));
@@ -728,10 +690,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 								assert(
 									compareFieldUpPaths(
 										cursor.getFieldPath(prefix),
-										prefixFieldPath(prefix, {
-											field: brand("testField"),
-											parent,
-										}),
+										prefixFieldPath(prefix, { field: brand("testField"), parent }),
 									),
 								);
 							}
@@ -760,19 +719,12 @@ function checkTraversal(cursor: ITreeCursor, expectedPath: UpPath | undefined) {
 
 	const fieldLengths: Map<FieldKey, number> = new Map();
 
-	for (
-		let inField: boolean = cursor.firstField();
-		inField;
-		inField = cursor.nextField()
-	) {
+	for (let inField: boolean = cursor.firstField(); inField; inField = cursor.nextField()) {
 		const expectedFieldLength = cursor.getFieldLength();
 		const key = cursor.getFieldKey();
 		assert(!fieldLengths.has(key), "no duplicate keys");
 		fieldLengths.set(cursor.getFieldKey(), expectedFieldLength);
-		assert(
-			expectedFieldLength > 0,
-			"only non empty fields should show up in field iteration",
-		);
+		assert(expectedFieldLength > 0, "only non empty fields should show up in field iteration");
 		checkFieldTraversal(cursor, { parent: path, field: key });
 	}
 
@@ -813,10 +765,7 @@ function checkTraversal(cursor: ITreeCursor, expectedPath: UpPath | undefined) {
  * This does NOT test that the data the cursor exposes is correct,
  * it simply checks that the traversal APIs function, and that a few aspects of them conform with the spec.
  */
-export function checkFieldTraversal(
-	cursor: ITreeCursor,
-	expectedPath: FieldUpPath,
-): void {
+export function checkFieldTraversal(cursor: ITreeCursor, expectedPath: FieldUpPath): void {
 	assert.equal(cursor.mode, CursorLocationType.Fields);
 	assert.equal(cursor.pending, false);
 	const expectedFieldLength = cursor.getFieldLength();

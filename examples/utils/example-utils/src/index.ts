@@ -15,9 +15,9 @@ export {
 
 export {
 	ContainerViewRuntimeFactory,
+	ViewCallback,
 	getDataStoreEntryPoint,
 	IFluidMountableViewEntryPoint,
-	ViewCallback,
 } from "./containerViewRuntimeFactory.js";
 export type {
 	DataTransformationCallback,

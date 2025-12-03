@@ -14,8 +14,8 @@ import {
 	type DeduplicationTable,
 	jsonMinimizingFilter,
 } from "./chunkCodecUtilities.js";
-import type { FieldBatchFormatVersion } from "./format.js";
 import type { EncodedFieldBatchGeneric } from "./formatGeneric.js";
+import type { FieldBatchFormatVersion } from "./format.js";
 
 /**
  * An identifier which can be compressed using {@link Counter}.
@@ -112,11 +112,9 @@ export function updateShapesAndIdentifiersEncoding<TEncodedShape>(
 		for (let index = 0; index < array.length; index++) {
 			const item = array[index];
 			if (item instanceof IdentifierToken) {
-				array[index] =
-					identifierTable.valueToIndex.get(item.identifier) ?? item.identifier;
+				array[index] = identifierTable.valueToIndex.get(item.identifier) ?? item.identifier;
 			} else if (item instanceof Shape) {
-				array[index] =
-					shapeTable.valueToIndex.get(item) ?? fail(0xb4c /* missing shape */);
+				array[index] = shapeTable.valueToIndex.get(item) ?? fail(0xb4c /* missing shape */);
 			}
 		}
 	}

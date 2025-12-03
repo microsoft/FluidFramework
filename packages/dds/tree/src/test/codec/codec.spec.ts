@@ -4,10 +4,12 @@
  */
 
 import { strict as assert } from "node:assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import { Type } from "@sinclair/typebox";
+
 import { type IJsonCodec, withSchemaValidation } from "../../codec/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 describe("Codec APIs", () => {
 	describe("withSchemaValidation", () => {
@@ -15,11 +17,7 @@ describe("Codec APIs", () => {
 			encode: (x) => x,
 			decode: (x) => x,
 		};
-		const codec = withSchemaValidation(
-			Type.Number(),
-			idCodec,
-			FormatValidatorBasic,
-		);
+		const codec = withSchemaValidation(Type.Number(), idCodec, FormatValidatorBasic);
 		describe("rejects invalid data", () => {
 			it("on encode", () => {
 				assert.throws(

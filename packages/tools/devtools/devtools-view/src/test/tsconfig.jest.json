@@ -3,6 +3,6 @@
 	"include": ["./**/*"],
 	"compilerOptions": {
 		"rootDir": "./",
-		"types": ["jest"]
-	}
+		"types": ["jest"],
+	},
 }

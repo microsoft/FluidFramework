@@ -21,13 +21,7 @@ const drawAPrettyPictureIntoBlob = async (): Promise<Blob> => {
 	for (let stroke = 0; stroke < 5; stroke++) {
 		ctx.strokeStyle = `rgb(${randInt(255)}, ${randInt(255)}, ${randInt(255)})`;
 		ctx.beginPath();
-		ctx.arc(
-			randInt(180) + 10,
-			randInt(180) + 10,
-			randInt(90) + 10,
-			0,
-			2 * Math.PI,
-		);
+		ctx.arc(randInt(180) + 10, randInt(180) + 10, randInt(90) + 10, 0, 2 * Math.PI);
 		ctx.stroke();
 	}
 	// Annoyingly, canvas.toBlob is a callback-based API rather than returning a Promise.
@@ -51,10 +45,7 @@ interface IBlobUrlRecord {
 const idSort = (a: { id: string }, b: { id: string }): number =>
 	a.id.localeCompare(b.id, "en", { sensitivity: "base" });
 
-const blobRecordToBlobUrlRecord = ({
-	id,
-	blob,
-}: IBlobRecord): IBlobUrlRecord => {
+const blobRecordToBlobUrlRecord = ({ id, blob }: IBlobRecord): IBlobUrlRecord => {
 	return {
 		id,
 		url: URL.createObjectURL(blob),
@@ -90,17 +81,11 @@ export const BlobCollectionView: FC<IBlobCollectionViewProps> = ({
 	}, [blobCollection]);
 
 	const blobViews = blobUrlRecords.map(({ id, url }) => (
-		<img
-			key={id}
-			src={url}
-			style={{ border: "1px solid black", margin: "10px" }}
-		></img>
+		<img key={id} src={url} style={{ border: "1px solid black", margin: "10px" }}></img>
 	));
 
 	const addBlob = (): void => {
-		drawAPrettyPictureIntoBlob()
-			.then(blobCollection.addBlob)
-			.catch(console.error);
+		drawAPrettyPictureIntoBlob().then(blobCollection.addBlob).catch(console.error);
 	};
 
 	return (

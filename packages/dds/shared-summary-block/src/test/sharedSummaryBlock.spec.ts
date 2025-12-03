@@ -29,9 +29,7 @@ describe("SharedSummaryBlock", () => {
 
 	beforeEach(async () => {
 		// We only want to test local state of the DDS.
-		dataStoreRuntime = new MockFluidDataStoreRuntime({
-			attachState: AttachState.Detached,
-		});
+		dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
 		sharedSummaryBlock = factory.create(dataStoreRuntime, "root");
 	});
 
@@ -106,10 +104,7 @@ describe("SharedSummaryBlock", () => {
 				summaryObjectKeys.length === 1,
 				"summarize should return a tree with single blob",
 			);
-			assert(
-				summaryObjectKeys[0] === "header",
-				"summary should have a header blob",
-			);
+			assert(summaryObjectKeys[0] === "header", "summary should have a header blob");
 			assert(
 				(summaryTree.tree.header as ISummaryBlob).content === contents,
 				"The summary content is incorrect",

@@ -15,22 +15,17 @@ interface TestUsersFileContents {
 	credentials: TestUsersRecord;
 }
 
-const isTestUsersRecord = (
-	recordObject: unknown,
-): recordObject is TestUsersRecord => {
+const isTestUsersRecord = (recordObject: unknown): recordObject is TestUsersRecord => {
 	return (
 		typeof recordObject === "object" &&
 		recordObject !== null &&
 		Object.entries(recordObject).every(
-			([username, password]) =>
-				typeof username === "string" && typeof password === "string",
+			([username, password]) => typeof username === "string" && typeof password === "string",
 		)
 	);
 };
 
-const isTestUserFileContents = (
-	contents: unknown,
-): contents is TestUsersFileContents => {
+const isTestUserFileContents = (contents: unknown): contents is TestUsersFileContents => {
 	return (
 		typeof contents === "object" &&
 		contents !== null &&
@@ -52,12 +47,10 @@ export function getTestUsers(credFilePath: string): TestUsers {
 	if (!isTestUserFileContents(contents)) {
 		throw new Error("credFile provided, but incorrect format");
 	}
-	const testUsers = Object.entries(contents.credentials).map(
-		([username, password]) => ({
-			username,
-			password,
-		}),
-	);
+	const testUsers = Object.entries(contents.credentials).map(([username, password]) => ({
+		username,
+		password,
+	}));
 	if (testUsers.length === 0) {
 		throw new Error("credFile contained no credentials");
 	}

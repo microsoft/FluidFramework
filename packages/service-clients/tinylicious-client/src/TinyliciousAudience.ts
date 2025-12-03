@@ -15,9 +15,7 @@ import type { TinyliciousMember, TinyliciousUser } from "./interfaces.js";
  * Assumes that the provided client's {@link @fluidframework/protocol-definitions#IClient.user} is of type {@link TinyliciousUser}.
  * This function will fail if that is not the case.
  */
-export function createTinyliciousAudienceMember(
-	audienceMember: IClient,
-): TinyliciousMember {
+export function createTinyliciousAudienceMember(audienceMember: IClient): TinyliciousMember {
 	const tinyliciousUser = audienceMember.user as Partial<TinyliciousUser>;
 	assert(
 		tinyliciousUser !== undefined &&

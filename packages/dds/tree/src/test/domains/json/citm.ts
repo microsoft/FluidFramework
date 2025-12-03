@@ -11,10 +11,7 @@ import { type IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
 import type { FieldKey } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 
-import {
-	getRandomEnglishString,
-	getSizeInBytes,
-} from "./jsonGeneratorUtils.js";
+import { getRandomEnglishString, getSizeInBytes } from "./jsonGeneratorUtils.js";
 
 /**
  * This file contains logic to generate a JSON file that is statistically similar to the well-known
@@ -144,10 +141,7 @@ export function generateCitmJson(
 			random,
 		);
 	} else if (keyspaceMultiplier < 1) {
-		areaNameValues = decreaseKeyspace(
-			ORIGINAL_AREA_NAME_VALUES,
-			keyspaceMultiplier,
-		);
+		areaNameValues = decreaseKeyspace(ORIGINAL_AREA_NAME_VALUES, keyspaceMultiplier);
 	}
 	// construct keys for each vaue and insert into object.
 	for (const value of areaNameValues) {
@@ -195,10 +189,7 @@ export function generateCitmJson(
 			random,
 		);
 	} else if (keyspaceMultiplier < 1) {
-		subTopicNameValues = decreaseKeyspace(
-			ORIGINAL_SUB_TOPIC_NAME_VALUES,
-			keyspaceMultiplier,
-		);
+		subTopicNameValues = decreaseKeyspace(ORIGINAL_SUB_TOPIC_NAME_VALUES, keyspaceMultiplier);
 	}
 
 	for (const value of subTopicNameValues) {
@@ -218,10 +209,7 @@ export function generateCitmJson(
 			random,
 		);
 	} else if (keyspaceMultiplier < 1) {
-		topicNameValues = decreaseKeyspace(
-			ORIGINAL_TOPIC_NAME_VALUES,
-			keyspaceMultiplier,
-		);
+		topicNameValues = decreaseKeyspace(ORIGINAL_TOPIC_NAME_VALUES, keyspaceMultiplier);
 	}
 
 	for (const value of topicNameValues) {
@@ -246,9 +234,7 @@ export function generateCitmJson(
 		topicSubTopics[`${currTopicId}`] = [];
 		for (let i = 0; i < numSubTopicsToAdd; i++) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			topicSubTopics[`${currTopicId}`].push(
-				Number.parseInt(subTopicIds.pop()!, 10),
-			);
+			topicSubTopics[`${currTopicId}`].push(Number.parseInt(subTopicIds.pop()!, 10));
 		}
 	}
 
@@ -308,13 +294,10 @@ export function generateCitmJson(
 			areaNames,
 		);
 		performances.push(nextEventAndPerformance.performance);
-		events[`${nextEventAndPerformance.event.id}`] =
-			nextEventAndPerformance.event;
+		events[`${nextEventAndPerformance.event.id}`] = nextEventAndPerformance.event;
 		idNumberCounter = nextEventAndPerformance.idNumberCounter;
 
-		objectCurrentSizeBytes += getSizeInBytes(
-			nextEventAndPerformance.performance,
-		);
+		objectCurrentSizeBytes += getSizeInBytes(nextEventAndPerformance.performance);
 		// This will be very slighlty more than the actual size addition because of two brackets for the object.
 		objectCurrentSizeBytes += getSizeInBytes({
 			[nextEventAndPerformance.event.id]: nextEventAndPerformance.event,
@@ -403,9 +386,7 @@ function generateEventAndPerformance(
 		description: null,
 		id: idNumberCounter,
 		logo,
-		name: ORIGINAL_EVENT_NAMES[
-			random.integer(0, ORIGINAL_EVENT_NAMES.length - 1)
-		],
+		name: ORIGINAL_EVENT_NAMES[random.integer(0, ORIGINAL_EVENT_NAMES.length - 1)],
 		subjectCode: null,
 		subtitle: null,
 		topicIds: Array.from(eventTopicIdSet),
@@ -421,25 +402,18 @@ function generateEventAndPerformance(
 	const usedSeatCategoryIds = new Set<string>();
 	const availableSeatCategoryIds = Object.keys(seatCategoryNames);
 	for (let i = 0; i < numPricesToAdd; i++) {
-		let seatCategoryIdIndex = random.integer(
-			0,
-			availableSeatCategoryIds.length - 1,
-		);
+		let seatCategoryIdIndex = random.integer(0, availableSeatCategoryIds.length - 1);
 		let seatCategoryId = availableSeatCategoryIds[seatCategoryIdIndex];
 		while (usedSeatCategoryIds.has(seatCategoryId)) {
 			seatCategoryIdIndex += 1;
 			if (seatCategoryIdIndex > availableSeatCategoryIds.length - 1) {
-				seatCategoryIdIndex =
-					seatCategoryIdIndex % availableSeatCategoryIds.length;
+				seatCategoryIdIndex = seatCategoryIdIndex % availableSeatCategoryIds.length;
 			}
 			seatCategoryId = availableSeatCategoryIds[seatCategoryIdIndex];
 		}
 		prices.push({
 			amount: random.integer(10000, 180500),
-			audienceSubCategoryId: Number.parseInt(
-				Object.keys(audienceSubCategoryNames)[0],
-				10,
-			),
+			audienceSubCategoryId: Number.parseInt(Object.keys(audienceSubCategoryNames)[0], 10),
 			seatCategoryId: Number.parseInt(seatCategoryId, 10),
 		});
 	}
@@ -450,10 +424,7 @@ function generateEventAndPerformance(
 	}[] = [];
 	const availableAreaIds = Object.keys(areaNames);
 	prices.forEach((priceObject) => {
-		const numAreaIdsToAdd = random.integer(
-			1,
-			Math.min(availableAreaIds.length, 16),
-		);
+		const numAreaIdsToAdd = random.integer(1, Math.min(availableAreaIds.length, 16));
 		const areas = [];
 		for (let i = 0; i < numAreaIdsToAdd; i++) {
 			areas.push({

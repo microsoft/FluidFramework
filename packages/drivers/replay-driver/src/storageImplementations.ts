@@ -5,8 +5,8 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IClient, ISummaryTree } from "@fluidframework/driver-definitions";
-import type {
+import { IClient, ISummaryTree } from "@fluidframework/driver-definitions";
+import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
 	IDocumentService,
@@ -19,7 +19,7 @@ import type {
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService.js";
 import { ReadDocumentStorageServiceBase } from "./replayController.js";
@@ -57,15 +57,8 @@ export class FileSnapshotReader
 		this.docTree = buildSnapshotTree(json.tree.entries, this.blobs);
 	}
 
-	public async getVersions(
-		versionId: string | null,
-		count: number,
-	): Promise<IVersion[]> {
-		if (
-			this.docId === undefined ||
-			this.docId === versionId ||
-			versionId === null
-		) {
+	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
+		if (this.docId === undefined || this.docId === versionId || versionId === null) {
 			if (versionId !== null) {
 				this.docId = versionId;
 			}
@@ -73,22 +66,16 @@ export class FileSnapshotReader
 		}
 
 		if (this.commits[versionId] !== undefined) {
-			return [
-				{ id: versionId, treeId: FileSnapshotReader.FileStorageVersionTreeId },
-			];
+			return [{ id: versionId, treeId: FileSnapshotReader.FileStorageVersionTreeId }];
 		}
 		throw new Error(`Unknown version ID: ${versionId}`);
 	}
 
-	public async getSnapshotTree(
-		versionRequested?: IVersion,
-	): Promise<ISnapshotTree | null> {
+	public async getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | null> {
 		if (!versionRequested || versionRequested.id === "latest") {
 			return this.docTree;
 		}
-		if (
-			versionRequested.treeId !== FileSnapshotReader.FileStorageVersionTreeId
-		) {
+		if (versionRequested.treeId !== FileSnapshotReader.FileStorageVersionTreeId) {
 			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			throw new Error(`Unknown version id: ${versionRequested}`);
 		}
@@ -131,15 +118,8 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
 		assert(!!this.docTree, 0x0b0 /* "Missing document snapshot tree!" */);
 	}
 
-	public async getVersions(
-		versionId: string | null,
-		count: number,
-	): Promise<IVersion[]> {
-		if (
-			this.docId === undefined ||
-			this.docId === versionId ||
-			versionId === null
-		) {
+	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
+		if (this.docId === undefined || this.docId === versionId || versionId === null) {
 			if (versionId !== null) {
 				this.docId = versionId;
 			}
@@ -148,9 +128,7 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
 		return this.storage.getVersions(versionId, count);
 	}
 
-	public async getSnapshotTree(
-		versionRequested?: IVersion,
-	): Promise<ISnapshotTree | null> {
+	public async getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | null> {
 		if (versionRequested && versionRequested.id !== "latest") {
 			return this.storage.getSnapshotTree(versionRequested);
 		}
@@ -184,9 +162,7 @@ export class StaticStorageDocumentService
 		return new EmptyDeltaStorageService();
 	}
 
-	public async connectToDeltaStream(
-		client: IClient,
-	): Promise<IDocumentDeltaConnection> {
+	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
 		// We have no delta stream, so make it not return forever...
 		return new Promise(() => {});
 	}
@@ -195,9 +171,7 @@ export class StaticStorageDocumentService
 /**
  * @internal
  */
-export class StaticStorageDocumentServiceFactory
-	implements IDocumentServiceFactory
-{
+export class StaticStorageDocumentServiceFactory implements IDocumentServiceFactory {
 	public constructor(protected readonly storage: IDocumentStorageService) {}
 
 	public async createDocumentService(

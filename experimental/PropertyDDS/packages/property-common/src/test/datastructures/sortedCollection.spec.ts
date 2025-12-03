@@ -12,11 +12,11 @@ import semver from "semver";
 
 import { SortedCollection } from "../../index";
 
-describe("SortedCollection", () => {
+describe("SortedCollection", function () {
 	let collection;
-	beforeEach(() => {
+	beforeEach(function () {
 		collection = new SortedCollection();
-		collection.setComparisonFunction((a, b) => {
+		collection.setComparisonFunction(function (a, b) {
 			if (semver.gt(a, b)) {
 				return 1;
 			} else if (semver.lt(a, b)) {
@@ -38,7 +38,7 @@ describe("SortedCollection", () => {
 		});
 	});
 
-	it("should always sort the order of the keys after altering the collection", () => {
+	it("should always sort the order of the keys after altering the collection", function () {
 		expect(collection._sortedKeys).to.eql([
 			"1.1.0",
 			"1.2.1",
@@ -98,7 +98,7 @@ describe("SortedCollection", () => {
 		]);
 	});
 
-	it("should test against adding values for keys that are of type number or string", () => {
+	it("should test against adding values for keys that are of type number or string", function () {
 		const collection2 = new SortedCollection<string>();
 		collection2.add("6.0.0", "6.0.0");
 		collection2.add(6.0, "6.0");
@@ -110,7 +110,7 @@ describe("SortedCollection", () => {
 		expect(collection2.item("6.2")).to.equal("6.2");
 	});
 
-	it("should get the nearest next item in the collection", () => {
+	it("should get the nearest next item in the collection", function () {
 		let nearestNextItem = collection.getNearestNextItem("0.0.1");
 		expect(nearestNextItem).to.equal("1.1.0");
 
@@ -130,7 +130,7 @@ describe("SortedCollection", () => {
 		expect(nearestNextItem).to.equal("3.0.0");
 	});
 
-	it("should get the nearest previous item in the collection", () => {
+	it("should get the nearest previous item in the collection", function () {
 		let nearestNextItem = collection.getNearestPreviousItem("0.0.1");
 		expect(nearestNextItem).to.equal(undefined);
 
@@ -150,7 +150,7 @@ describe("SortedCollection", () => {
 		expect(nearestNextItem).to.equal("3.0.0");
 	});
 
-	it("should clone the sorted collection", () => {
+	it("should clone the sorted collection", function () {
 		const clone = collection.clone();
 		expect(clone instanceof SortedCollection).to.equal(true);
 		expect(clone._sortedKeys).to.eql([

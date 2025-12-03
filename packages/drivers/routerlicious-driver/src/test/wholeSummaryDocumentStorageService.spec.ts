@@ -3,19 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type ISummaryTree,
-	SummaryType,
-} from "@fluidframework/driver-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { strict as assert } from "assert";
 
-import type {
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+
+import {
 	IWholeFlatSnapshot,
 	IWholeFlatSnapshotBlob,
 	IWholeFlatSnapshotTreeEntry,
 } from "../contracts.js";
-import type { IR11sResponse } from "../restWrapper.js";
+import { IR11sResponse } from "../restWrapper.js";
 import { WholeSummaryDocumentStorageService } from "../wholeSummaryDocumentStorageService.js";
 
 /* Blobs contained within source snapshot tree returned by git manager */
@@ -141,9 +139,7 @@ const expectedSummary: ISummaryTree = {
 };
 
 class MockGitManager {
-	public async getSnapshot(
-		sha: string,
-	): Promise<IR11sResponse<IWholeFlatSnapshot>> {
+	public async getSnapshot(sha: string): Promise<IR11sResponse<IWholeFlatSnapshot>> {
 		return {
 			content: flatSnapshot,
 			headers: new Map(),
@@ -167,10 +163,6 @@ describe("WholeSummaryDocumentStorageService", () => {
 			handleType: SummaryType.Tree,
 			handle: "testHandle",
 		});
-		assert.deepStrictEqual(
-			res,
-			expectedSummary,
-			"Unexpected summary returned.",
-		);
+		assert.deepStrictEqual(res, expectedSummary, "Unexpected summary returned.");
 	});
 });

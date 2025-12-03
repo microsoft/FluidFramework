@@ -8,6 +8,6 @@
 		"noImplicitAny": true,
 		// TODO: AB#34170 Enable noUncheckedIndexedAccess for packages/dds/matrix
 		"noUncheckedIndexedAccess": false,
-		"exactOptionalPropertyTypes": false
-	}
+		"exactOptionalPropertyTypes": false,
+	},
 }

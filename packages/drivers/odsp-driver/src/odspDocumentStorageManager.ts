@@ -10,12 +10,12 @@ import { promiseRaceWithWinner } from "@fluidframework/driver-base/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
-	type ICreateBlobResponse,
 	type ISnapshot,
 	type ISnapshotFetchOptions,
-	type ISnapshotTree,
 	type ISummaryContext,
+	type ICreateBlobResponse,
 	type IVersion,
+	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	getKeyForCacheEntry,
@@ -23,19 +23,19 @@ import {
 	RateLimiter,
 } from "@fluidframework/driver-utils/internal";
 import {
-	type InstrumentedStorageTokenFetcher,
 	type IOdspResolvedUrl,
 	type ISnapshotOptions,
+	type InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	generateStack,
-	type IConfigProvider,
 	type ITelemetryLoggerExt,
+	PerformanceEvent,
+	generateStack,
 	loggerToMonitoringContext,
 	normalizeError,
 	overwriteStack,
-	PerformanceEvent,
+	type IConfigProvider,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type {
@@ -49,12 +49,12 @@ import type {
 import { useCreateNewModule } from "./createFile/index.js";
 import type { EpochTracker } from "./epochTracker.js";
 import {
-	downloadSnapshot,
-	fetchSnapshot,
-	fetchSnapshotWithRedeem,
-	getTreeStats,
 	type ISnapshotRequestAndResponseOptions,
 	type SnapshotFormatSupportType,
+	downloadSnapshot,
+	getTreeStats,
+	fetchSnapshot,
+	fetchSnapshotWithRedeem,
 } from "./fetchSnapshot.js";
 import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import type { IOdspCache, IPrefetchSnapshotContents } from "./odspCache.js";
@@ -62,14 +62,14 @@ import type { FlushResult } from "./odspDocumentDeltaConnection.js";
 import { OdspDocumentStorageServiceBase } from "./odspDocumentStorageServiceBase.js";
 import type { OdspSummaryUploadManager } from "./odspSummaryUploadManager.js";
 import {
+	type IOdspResponse,
 	createCacheSnapshotKey,
 	getWithRetryForTokenRefresh,
-	type IOdspResponse,
 	isInstanceOfISnapshot,
 	isSnapshotFetchForLoadingGroup,
 	snapshotWithLoadingGroupIdSupported,
-	type TokenFetchOptionsEx,
 	useLegacyFlowWithoutGroupsForSnapshotFetch,
+	type TokenFetchOptionsEx,
 } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 
@@ -120,10 +120,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
 		this.documentId = this.odspResolvedUrl.hashedDocumentId;
 		this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
-		this.attachmentPOSTUrl =
-			this.odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
-		this.attachmentGETUrl =
-			this.odspResolvedUrl.endpoints.attachmentGETStorageUrl;
+		this.attachmentPOSTUrl = this.odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
+		this.attachmentGETUrl = this.odspResolvedUrl.endpoints.attachmentGETStorageUrl;
 		this.config = loggerToMonitoringContext(logger).config;
 	}
 
@@ -203,11 +201,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
 				},
 				async (event) => {
-					const res = await this.epochTracker.fetchArray(
-						url,
-						{ headers },
-						"blob",
-					);
+					const res = await this.epochTracker.fetchArray(url, { headers }, "blob");
 					event.end({
 						waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
 						...res.propsToLog,
@@ -216,10 +210,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					const cacheControl = res.headers.get("cache-control");
 					if (
 						cacheControl === undefined ||
-						!(
-							cacheControl.includes("private") ||
-							cacheControl.includes("public")
-						)
+						!(cacheControl.includes("private") || cacheControl.includes("public"))
 					) {
 						this.logger.sendErrorEvent({
 							eventName: "NonCacheableBlob",
@@ -253,15 +244,11 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	 * ungrouped data will be provided.
 	 * @param snapshotFetchOptions - fetch options for snapshot.
 	 */
-	public async getSnapshot(
-		snapshotFetchOptions?: ISnapshotFetchOptions,
-	): Promise<ISnapshot> {
+	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
 		// Don't consult cache if request is not for a particular loading group.
 		const { snapshot } = await this.fetchSnapshot({
 			...snapshotFetchOptions,
-			fetchSource: isSnapshotFetchForLoadingGroup(
-				snapshotFetchOptions?.loadingGroupIds,
-			)
+			fetchSource: isSnapshotFetchForLoadingGroup(snapshotFetchOptions?.loadingGroupIds)
 				? FetchSource.noCache
 				: snapshotFetchOptions?.fetchSource,
 			loadingGroupIds: snapshotFetchOptions?.loadingGroupIds ?? [],
@@ -269,9 +256,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
 		return {
 			...snapshot,
-			snapshotTree: this.combineProtocolAndAppSnapshotTree(
-				snapshot.snapshotTree,
-			),
+			snapshotTree: this.combineProtocolAndAppSnapshotTree(snapshot.snapshotTree),
 		};
 	}
 
@@ -279,198 +264,185 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		snapshotFetchOptions: ISnapshotFetchOptions,
 	): Promise<{ snapshot: ISnapshot; id: string | undefined }> {
 		const hostSnapshotOptions = this.hostPolicy.snapshotOptions;
-		const odspSnapshotCacheValue: ISnapshot =
-			await PerformanceEvent.timedExecAsync(
-				this.logger,
-				{
-					eventName: isSnapshotFetchForLoadingGroup(
-						snapshotFetchOptions.loadingGroupIds,
-					)
-						? "ObtainSnapshotForGroup"
-						: "ObtainSnapshot",
-					fetchSource: snapshotFetchOptions?.fetchSource,
-				},
-				async (event: PerformanceEvent) => {
-					const props: GetVersionsTelemetryProps = {};
-					let cacheLookupTimeInSerialFetch = 0;
-					let retrievedSnapshot:
-						| ISnapshot
-						| IPrefetchSnapshotContents
-						| undefined;
+		const odspSnapshotCacheValue: ISnapshot = await PerformanceEvent.timedExecAsync(
+			this.logger,
+			{
+				eventName: isSnapshotFetchForLoadingGroup(snapshotFetchOptions.loadingGroupIds)
+					? "ObtainSnapshotForGroup"
+					: "ObtainSnapshot",
+				fetchSource: snapshotFetchOptions?.fetchSource,
+			},
+			async (event: PerformanceEvent) => {
+				const props: GetVersionsTelemetryProps = {};
+				let cacheLookupTimeInSerialFetch = 0;
+				let retrievedSnapshot: ISnapshot | IPrefetchSnapshotContents | undefined;
 
-					let method: string;
-					let prefetchWaitStartTime: number = performanceNow();
-					if (snapshotFetchOptions.fetchSource === FetchSource.noCache) {
-						retrievedSnapshot = await this.fetchSnapshotFromNetwork(
+				let method: string;
+				let prefetchWaitStartTime: number = performanceNow();
+				if (snapshotFetchOptions.fetchSource === FetchSource.noCache) {
+					retrievedSnapshot = await this.fetchSnapshotFromNetwork(
+						hostSnapshotOptions,
+						snapshotFetchOptions.loadingGroupIds,
+						snapshotFetchOptions.scenarioName,
+					);
+					method = "networkOnly";
+				} else {
+					// Here's the logic to grab the persistent cache snapshot implemented by the host
+					// Epoch tracker is responsible for communicating with the persistent cache, handling epochs and cache versions
+					const cachedSnapshotP: Promise<ISnapshot | undefined> = this.epochTracker
+						.get(
+							createCacheSnapshotKey(
+								this.odspResolvedUrl,
+								snapshotWithLoadingGroupIdSupported(this.config),
+							),
+						)
+						.then(
+							async (
+								// eslint-disable-next-line import-x/no-deprecated
+								snapshotCachedEntry: ISnapshotCachedEntry | ISnapshotCachedEntry2,
+							) => {
+								if (snapshotCachedEntry !== undefined) {
+									// If the cached entry does not contain the entry time, then assign it a default of 30 days old.
+									const age =
+										Date.now() -
+										(snapshotCachedEntry.cacheEntryTime ??
+											Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+									// In order to decrease the number of times we have to execute a snapshot refresh,
+									// if this is the summarizer and we have a cache entry but it is past the defaultSummarizerCacheExpiryTimeout,
+									// force the network retrieval instead as there might be a more recent snapshot available.
+									// See: https://github.com/microsoft/FluidFramework/issues/8995 for additional information.
+									if (this.hostPolicy.summarizerClient) {
+										if (age > defaultSummarizerCacheExpiryTimeout) {
+											props.cacheSummarizerExpired = true;
+											return undefined;
+										} else {
+											props.cacheSummarizerExpired = false;
+										}
+									}
+
+									// Record the cache age
+									props.cacheEntryAge = age;
+									// Snapshot from cache could be in older format, so transform that before returning.
+									if (isInstanceOfISnapshot(snapshotCachedEntry)) {
+										return snapshotCachedEntry;
+									} else {
+										const snapshot: ISnapshot = {
+											snapshotTree: snapshotCachedEntry.snapshotTree,
+											blobContents: snapshotCachedEntry.blobs,
+											ops: snapshotCachedEntry.ops,
+											latestSequenceNumber: snapshotCachedEntry.latestSequenceNumber,
+											sequenceNumber: snapshotCachedEntry.sequenceNumber,
+											snapshotFormatV: 1,
+										};
+										return snapshot;
+									}
+								}
+							},
+						);
+					// Based on the concurrentSnapshotFetch policy:
+					// Either retrieve both the network and cache snapshots concurrently and pick the first to return,
+					// or grab the cache value and then the network value if the cache value returns undefined.
+					// For summarizer which could call this during refreshing of summary parent, always use the cache
+					// first. Also for other clients, if it is not critical path which is determined by firstSnapshotFetchCall,
+					// then also check the cache first.
+					if (
+						this.firstSnapshotFetchCall &&
+						this.hostPolicy.concurrentSnapshotFetch &&
+						!this.hostPolicy.summarizerClient
+					) {
+						const networkSnapshotP = this.fetchSnapshotFromNetwork(
 							hostSnapshotOptions,
 							snapshotFetchOptions.loadingGroupIds,
 							snapshotFetchOptions.scenarioName,
 						);
-						method = "networkOnly";
+
+						// Ensure that failures on both paths are ignored initially.
+						// I.e. if cache fails for some reason, we will proceed with network result.
+						// And vice versa - if (for example) client is offline and network request fails first, we
+						// do want to attempt to succeed with cached data!
+						const promiseRaceWinner = await promiseRaceWithWinner([
+							cachedSnapshotP.catch(() => undefined),
+							networkSnapshotP.catch(() => undefined),
+						]);
+						retrievedSnapshot = promiseRaceWinner.value;
+						method = promiseRaceWinner.index === 0 ? "cache" : "network";
+
+						if (retrievedSnapshot === undefined) {
+							// if network failed -> wait for cache ( then return network failure)
+							// If cache returned empty or failed -> wait for network (success of failure)
+							try {
+								if (promiseRaceWinner.index === 1) {
+									retrievedSnapshot = await cachedSnapshotP;
+									method = "cache";
+								}
+								if (retrievedSnapshot === undefined) {
+									retrievedSnapshot = await networkSnapshotP;
+									method = "network";
+								}
+							} catch (error: unknown) {
+								// The call stacks of any errors thrown by cached snapshot or network snapshot aren't very useful:
+								// they get truncated at this stack frame due to the promise race and how v8 tracks async stack traces--
+								// see https://v8.dev/docs/stack-trace-api#async-stack-traces and the "zero-cost async stack traces" document
+								// linked there. https://v8.dev/blog/fast-async#await-under-the-hood may also be helpful for context on internals.
+								// Regenerating the stack at this level provides more information for logged errors.
+								// Once FF uses an ES2021 target, we could convert the above promise race to use `Promise.any` + AggregateError and
+								// get similar quality stacks with less hand-crafted code.
+								const innerStack = (error as Error).stack;
+								const normalizedError = normalizeError(error);
+								normalizedError.addTelemetryProperties({ innerStack });
+
+								const newStack = `<<STACK TRUNCATED: see innerStack property>> \n${generateStack()}`;
+								overwriteStack(normalizedError, newStack);
+
+								throw normalizedError;
+							}
+						}
 					} else {
-						// Here's the logic to grab the persistent cache snapshot implemented by the host
-						// Epoch tracker is responsible for communicating with the persistent cache, handling epochs and cache versions
-						const cachedSnapshotP: Promise<ISnapshot | undefined> =
-							this.epochTracker
-								.get(
-									createCacheSnapshotKey(
-										this.odspResolvedUrl,
-										snapshotWithLoadingGroupIdSupported(this.config),
-									),
-								)
-								.then(
-									async (
-										// eslint-disable-next-line import-x/no-deprecated
-										snapshotCachedEntry:
-											| ISnapshotCachedEntry
-											| ISnapshotCachedEntry2,
-									) => {
-										if (snapshotCachedEntry !== undefined) {
-											// If the cached entry does not contain the entry time, then assign it a default of 30 days old.
-											const age =
-												Date.now() -
-												(snapshotCachedEntry.cacheEntryTime ??
-													Date.now() - 30 * 24 * 60 * 60 * 1000);
+						// Note: There's a race condition here - another caller may come past the undefined check
+						// while the first caller is awaiting later async code in this block.
+						const startTime = performanceNow();
+						retrievedSnapshot = await cachedSnapshotP;
+						cacheLookupTimeInSerialFetch = performanceNow() - startTime;
+						method = retrievedSnapshot === undefined ? "network" : "cache";
 
-											// In order to decrease the number of times we have to execute a snapshot refresh,
-											// if this is the summarizer and we have a cache entry but it is past the defaultSummarizerCacheExpiryTimeout,
-											// force the network retrieval instead as there might be a more recent snapshot available.
-											// See: https://github.com/microsoft/FluidFramework/issues/8995 for additional information.
-											if (this.hostPolicy.summarizerClient) {
-												if (age > defaultSummarizerCacheExpiryTimeout) {
-													props.cacheSummarizerExpired = true;
-													return undefined;
-												} else {
-													props.cacheSummarizerExpired = false;
-												}
-											}
-
-											// Record the cache age
-											props.cacheEntryAge = age;
-											// Snapshot from cache could be in older format, so transform that before returning.
-											if (isInstanceOfISnapshot(snapshotCachedEntry)) {
-												return snapshotCachedEntry;
-											} else {
-												const snapshot: ISnapshot = {
-													snapshotTree: snapshotCachedEntry.snapshotTree,
-													blobContents: snapshotCachedEntry.blobs,
-													ops: snapshotCachedEntry.ops,
-													latestSequenceNumber:
-														snapshotCachedEntry.latestSequenceNumber,
-													sequenceNumber: snapshotCachedEntry.sequenceNumber,
-													snapshotFormatV: 1,
-												};
-												return snapshot;
-											}
-										}
-									},
-								);
-						// Based on the concurrentSnapshotFetch policy:
-						// Either retrieve both the network and cache snapshots concurrently and pick the first to return,
-						// or grab the cache value and then the network value if the cache value returns undefined.
-						// For summarizer which could call this during refreshing of summary parent, always use the cache
-						// first. Also for other clients, if it is not critical path which is determined by firstSnapshotFetchCall,
-						// then also check the cache first.
-						if (
-							this.firstSnapshotFetchCall &&
-							this.hostPolicy.concurrentSnapshotFetch &&
-							!this.hostPolicy.summarizerClient
-						) {
-							const networkSnapshotP = this.fetchSnapshotFromNetwork(
+						if (retrievedSnapshot === undefined) {
+							prefetchWaitStartTime = performanceNow();
+							retrievedSnapshot = await this.fetchSnapshotFromNetwork(
 								hostSnapshotOptions,
 								snapshotFetchOptions.loadingGroupIds,
 								snapshotFetchOptions.scenarioName,
 							);
-
-							// Ensure that failures on both paths are ignored initially.
-							// I.e. if cache fails for some reason, we will proceed with network result.
-							// And vice versa - if (for example) client is offline and network request fails first, we
-							// do want to attempt to succeed with cached data!
-							const promiseRaceWinner = await promiseRaceWithWinner([
-								cachedSnapshotP.catch(() => undefined),
-								networkSnapshotP.catch(() => undefined),
-							]);
-							retrievedSnapshot = promiseRaceWinner.value;
-							method = promiseRaceWinner.index === 0 ? "cache" : "network";
-
-							if (retrievedSnapshot === undefined) {
-								// if network failed -> wait for cache ( then return network failure)
-								// If cache returned empty or failed -> wait for network (success of failure)
-								try {
-									if (promiseRaceWinner.index === 1) {
-										retrievedSnapshot = await cachedSnapshotP;
-										method = "cache";
-									}
-									if (retrievedSnapshot === undefined) {
-										retrievedSnapshot = await networkSnapshotP;
-										method = "network";
-									}
-								} catch (error: unknown) {
-									// The call stacks of any errors thrown by cached snapshot or network snapshot aren't very useful:
-									// they get truncated at this stack frame due to the promise race and how v8 tracks async stack traces--
-									// see https://v8.dev/docs/stack-trace-api#async-stack-traces and the "zero-cost async stack traces" document
-									// linked there. https://v8.dev/blog/fast-async#await-under-the-hood may also be helpful for context on internals.
-									// Regenerating the stack at this level provides more information for logged errors.
-									// Once FF uses an ES2021 target, we could convert the above promise race to use `Promise.any` + AggregateError and
-									// get similar quality stacks with less hand-crafted code.
-									const innerStack = (error as Error).stack;
-									const normalizedError = normalizeError(error);
-									normalizedError.addTelemetryProperties({ innerStack });
-
-									const newStack = `<<STACK TRUNCATED: see innerStack property>> \n${generateStack()}`;
-									overwriteStack(normalizedError, newStack);
-
-									throw normalizedError;
-								}
-							}
-						} else {
-							// Note: There's a race condition here - another caller may come past the undefined check
-							// while the first caller is awaiting later async code in this block.
-							const startTime = performanceNow();
-							retrievedSnapshot = await cachedSnapshotP;
-							cacheLookupTimeInSerialFetch = performanceNow() - startTime;
-							method = retrievedSnapshot === undefined ? "network" : "cache";
-
-							if (retrievedSnapshot === undefined) {
-								prefetchWaitStartTime = performanceNow();
-								retrievedSnapshot = await this.fetchSnapshotFromNetwork(
-									hostSnapshotOptions,
-									snapshotFetchOptions.loadingGroupIds,
-									snapshotFetchOptions.scenarioName,
-								);
-							}
 						}
 					}
-					if (method === "network") {
-						props.cacheEntryAge = undefined;
-					}
-					if (this.firstSnapshotFetchCall) {
-						this._isFirstSnapshotFromNetwork =
-							method === "cache" ? false : true;
-					}
-					const prefetchStartTime: number | undefined = (
-						retrievedSnapshot as IPrefetchSnapshotContents
-					).prefetchStartTime;
-					event.end({
-						...props,
-						method,
-						fetchSnapshotForInitialLoad: this.firstSnapshotFetchCall,
-						useLegacyFlowWithoutGroups:
-							useLegacyFlowWithoutGroupsForSnapshotFetch(
-								snapshotFetchOptions.loadingGroupIds,
-							),
-						avoidPrefetchSnapshotCache:
-							this.hostPolicy.avoidPrefetchSnapshotCache,
-						...getTreeStats(retrievedSnapshot),
-						cacheLookupTimeInSerialFetch,
-						prefetchSavedDuration:
-							prefetchStartTime !== undefined && method !== "cache"
-								? prefetchWaitStartTime - prefetchStartTime
-								: undefined,
-					});
-					return retrievedSnapshot;
-				},
-			);
+				}
+				if (method === "network") {
+					props.cacheEntryAge = undefined;
+				}
+				if (this.firstSnapshotFetchCall) {
+					this._isFirstSnapshotFromNetwork = method === "cache" ? false : true;
+				}
+				const prefetchStartTime: number | undefined = (
+					retrievedSnapshot as IPrefetchSnapshotContents
+				).prefetchStartTime;
+				event.end({
+					...props,
+					method,
+					fetchSnapshotForInitialLoad: this.firstSnapshotFetchCall,
+					useLegacyFlowWithoutGroups: useLegacyFlowWithoutGroupsForSnapshotFetch(
+						snapshotFetchOptions.loadingGroupIds,
+					),
+					avoidPrefetchSnapshotCache: this.hostPolicy.avoidPrefetchSnapshotCache,
+					...getTreeStats(retrievedSnapshot),
+					cacheLookupTimeInSerialFetch,
+					prefetchSavedDuration:
+						prefetchStartTime !== undefined && method !== "cache"
+							? prefetchWaitStartTime - prefetchStartTime
+							: undefined,
+				});
+				return retrievedSnapshot;
+			},
+		);
 
 		const stTime = performanceNow();
 		// Don't override ops which were fetched during initial load, since we could still need them.
@@ -607,10 +579,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	): Promise<ISnapshot | IPrefetchSnapshotContents> {
 		// Don't look into cache, if the host specifically tells us so. Also, if request is
 		// for initial snapshot, don't consult the prefetch cache.
-		if (
-			!this.hostPolicy.avoidPrefetchSnapshotCache &&
-			this.firstSnapshotFetchCall
-		) {
+		if (!this.hostPolicy.avoidPrefetchSnapshotCache && this.firstSnapshotFetchCall) {
 			const prefetchCacheKey = getKeyForCacheEntry(
 				createCacheSnapshotKey(
 					this.odspResolvedUrl,
@@ -623,10 +592,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					// Remove it from cache once used.
 					this.cache.snapshotPrefetchResultCache.remove(prefetchCacheKey);
 					// Validate the epoch from the prefetched snapshot result.
-					await this.epochTracker.validateEpoch(
-						response.fluidEpoch,
-						"treesLatest",
-					);
+					await this.epochTracker.validateEpoch(response.fluidEpoch, "treesLatest");
 					return response;
 				})
 				.catch(async (error) => {
@@ -679,9 +645,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				scenarioName,
 			);
 		};
-		const putInCache = async (
-			valueWithEpoch: IVersionedValueWithEpoch,
-		): Promise<void> => {
+		const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch): Promise<void> => {
 			return this.cache.persistedCache.put(
 				createCacheSnapshotKey(
 					this.odspResolvedUrl,
@@ -691,15 +655,13 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				valueWithEpoch.value,
 			);
 		};
-		const removeEntries = async (): Promise<void> =>
-			this.cache.persistedCache.removeEntries();
+		const removeEntries = async (): Promise<void> => this.cache.persistedCache.removeEntries();
 		try {
 			const odspSnapshot = await fetchSnapshotWithRedeem(
 				this.odspResolvedUrl,
 				this.getAuthHeader,
 				snapshotOptions,
-				!!this.hostPolicy.sessionOptions
-					?.forceAccessTokenViaAuthorizationHeader,
+				!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 				this.logger,
 				snapshotDownloader,
 				putInCache,
@@ -741,8 +703,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					this.odspResolvedUrl,
 					this.getAuthHeader,
 					snapshotOptionsWithoutBlobs,
-					!!this.hostPolicy.sessionOptions
-						?.forceAccessTokenViaAuthorizationHeader,
+					!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 					this.logger,
 					snapshotDownloader,
 					putInCache,
@@ -815,10 +776,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			this.odspSummaryUploadManager !== undefined,
 			0x56e /* summary upload manager should have been initialized */,
 		);
-		const id = await this.odspSummaryUploadManager.writeSummaryTree(
-			summary,
-			context,
-		);
+		const id = await this.odspSummaryUploadManager.writeSummaryTree(summary, context);
 		const { pendingRename } = this.odspResolvedUrl;
 		if (
 			pendingRename !== undefined &&
@@ -850,10 +808,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	}
 
 	private async getDelayLoadedSummaryManager(): Promise<OdspSummaryUploadManager> {
-		assert(
-			this.odspSummaryModuleLoaded === false,
-			0x56f /* Should be loaded only once */,
-		);
+		assert(this.odspSummaryModuleLoaded === false, 0x56f /* Should be loaded only once */);
 		const module = await import(
 			/* webpackChunkName: "summaryModule" */ "./odspSummaryUploadManager.js"
 		)
@@ -862,10 +817,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				return m;
 			})
 			.catch((error) => {
-				this.logger.sendErrorEvent(
-					{ eventName: "SummaryModuleLoadFailed" },
-					error,
-				);
+				this.logger.sendErrorEvent({ eventName: "SummaryModuleLoadFailed" }, error);
 				throw error;
 			});
 		this.odspSummaryUploadManager = new module.OdspSummaryUploadManager(
@@ -913,9 +865,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		scenarioName?: string,
 	): Promise<ISnapshotTree | undefined> {
 		return getWithRetryForTokenRefresh(async (options) => {
-			const snapshotDownloader = async (
-				url: string,
-			): Promise<IOdspResponse<unknown>> => {
+			const snapshotDownloader = async (url: string): Promise<IOdspResponse<unknown>> => {
 				const authHeader = await this.getAuthHeader(
 					{ ...options, request: { url, method: "GET" } },
 					"ReadCommit",
@@ -933,8 +883,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				this.snapshotUrl!,
 				id,
 				this.fetchFullSnapshot,
-				!!this.hostPolicy.sessionOptions
-					?.forceAccessTokenViaAuthorizationHeader,
+				!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 				this.logger,
 				snapshotDownloader,
 			);

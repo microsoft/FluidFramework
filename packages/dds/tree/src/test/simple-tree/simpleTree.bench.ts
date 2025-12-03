@@ -5,24 +5,20 @@
 
 import { strict as assert, fail } from "node:assert";
 
-import {
-	BenchmarkType,
-	benchmark,
-	isInPerformanceTestingMode,
-} from "@fluid-tools/benchmark";
-import { SchemaFactory, SchemaFactoryAlpha } from "../../simple-tree/index.js";
-import { configureBenchmarkHooks } from "../utils.js";
+import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import {
 	type DeepTreeNode,
 	generateDeepSimpleTree,
 	generateWideSimpleTree,
 	readDeepSimpleTree,
 	readWideSimpleTree,
-	type WideTreeNode,
 	writeDeepTree,
 	writeWideSimpleTreeNewValue,
+	type WideTreeNode,
 } from "./benchmarkUtilities.js";
+import { SchemaFactory, SchemaFactoryAlpha } from "../../simple-tree/index.js";
 import { hydrate, hydrateUnsafe } from "./utils.js";
+import { configureBenchmarkHooks } from "../utils.js";
 
 // number of nodes in test for wide trees
 const nodesCountWide = [
@@ -131,9 +127,7 @@ describe("SimpleTree benchmarks", () => {
 						flexTree = flexNodeInitFunction();
 					},
 					benchmarkFn: () => {
-						readNumber = treeReadingFunction(
-							flexTree ?? fail("Expected flexTree to be set"),
-						);
+						readNumber = treeReadingFunction(flexTree ?? fail("Expected flexTree to be set"));
 					},
 					after: () => {
 						assert.equal(readNumber, expectedValue);
@@ -193,20 +187,9 @@ describe("SimpleTree benchmarks", () => {
 					},
 				];
 
-				for (const {
-					title,
-					initUnhydrated,
-					readFunction,
-					expected,
-				} of testCases) {
+				for (const { title, initUnhydrated, readFunction, expected } of testCases) {
 					const initFlexNode = () => hydrate(MySchema, initUnhydrated());
-					generateBenchmarkPair(
-						title,
-						initUnhydrated,
-						initFlexNode,
-						readFunction,
-						expected,
-					);
+					generateBenchmarkPair(title, initUnhydrated, initFlexNode, readFunction, expected);
 				}
 			});
 
@@ -238,27 +221,17 @@ describe("SimpleTree benchmarks", () => {
 					},
 				];
 
-				const initUnhydrated = () =>
-					new MySchema({ value: 1, leafUnion: 1, complexUnion: 1 });
+				const initUnhydrated = () => new MySchema({ value: 1, leafUnion: 1, complexUnion: 1 });
 				const initFlex = () => hydrate(MySchema, initUnhydrated());
 				for (const { title, readFunction } of testCases) {
-					generateBenchmarkPair(
-						title,
-						initUnhydrated,
-						initFlex,
-						readFunction,
-						1,
-					);
+					generateBenchmarkPair(title, initUnhydrated, initFlex, readFunction, 1);
 				}
 			});
 
 			describe("Map keys", () => {
 				const factory = new SchemaFactory("test");
 				class NumberMap extends factory.map("root", [factory.number]) {}
-				class NumberStringMap extends factory.map("root", [
-					factory.number,
-					factory.string,
-				]) {}
+				class NumberStringMap extends factory.map("root", [factory.number, factory.string]) {}
 				class NumberObjectMap extends factory.map("root", [
 					factory.number,
 					factory.object("inner", { value: factory.number }),
@@ -285,13 +258,7 @@ describe("SimpleTree benchmarks", () => {
 					const initUnhydrated = () => new mapType([["a", 1]]);
 					const initFlex = () => hydrateUnsafe(mapType, initUnhydrated());
 					const readFunction = (tree: CombinedTypes) => tree.get("a") as number;
-					generateBenchmarkPair(
-						title,
-						initUnhydrated,
-						initFlex,
-						readFunction,
-						1,
-					);
+					generateBenchmarkPair(title, initUnhydrated, initFlex, readFunction, 1);
 				}
 
 				const undefinedTestCases = [
@@ -319,13 +286,7 @@ describe("SimpleTree benchmarks", () => {
 					const initUnhydrated = () => new mapType([["a", 1]]);
 					const initFlex = () => hydrateUnsafe(mapType, initUnhydrated());
 					const readFunction = (tree: CombinedTypes) => tree.get("b") as number;
-					generateBenchmarkPair(
-						title,
-						initUnhydrated,
-						initFlex,
-						readFunction,
-						undefined,
-					);
+					generateBenchmarkPair(title, initUnhydrated, initFlex, readFunction, undefined);
 				}
 			});
 
@@ -341,10 +302,7 @@ describe("SimpleTree benchmarks", () => {
 					factory.object("inner", { value: factory.number }),
 				]) {}
 				// Just to simplify typing a bit below in a way that keeps TypeScript happy
-				type CombinedTypes =
-					| NumberRecord
-					| NumberStringRecord
-					| NumberObjectRecord;
+				type CombinedTypes = NumberRecord | NumberStringRecord | NumberObjectRecord;
 
 				const valueTestCases = [
 					{
@@ -365,13 +323,7 @@ describe("SimpleTree benchmarks", () => {
 					const initUnhydrated = () => new recordType({ a: 1 });
 					const initFlex = () => hydrateUnsafe(recordType, initUnhydrated());
 					const readFunction = (tree: CombinedTypes) => tree.a as number;
-					generateBenchmarkPair(
-						title,
-						initUnhydrated,
-						initFlex,
-						readFunction,
-						1,
-					);
+					generateBenchmarkPair(title, initUnhydrated, initFlex, readFunction, 1);
 				}
 
 				const undefinedTestCases = [
@@ -399,23 +351,14 @@ describe("SimpleTree benchmarks", () => {
 					const initUnhydrated = () => new recordType({ a: 1 });
 					const initFlex = () => hydrateUnsafe(recordType, initUnhydrated());
 					const readFunction = (tree: CombinedTypes) => tree.b as number;
-					generateBenchmarkPair(
-						title,
-						initUnhydrated,
-						initFlex,
-						readFunction,
-						undefined,
-					);
+					generateBenchmarkPair(title, initUnhydrated, initFlex, readFunction, undefined);
 				}
 			});
 
 			describe("Array entries", () => {
 				const factory = new SchemaFactory("test");
 				class NumArray extends factory.array("root", [factory.number]) {}
-				class NumStringArray extends factory.array("root", [
-					factory.number,
-					factory.string,
-				]) {}
+				class NumStringArray extends factory.array("root", [factory.number, factory.string]) {}
 				class NumObjectArray extends factory.array("root", [
 					factory.number,
 					factory.object("inner", { value: factory.number }),
@@ -439,8 +382,7 @@ describe("SimpleTree benchmarks", () => {
 				for (const { title, arrayType } of testCases) {
 					const initUnhydrated = () => new arrayType([1]);
 					const initFlex = () => hydrateUnsafe(arrayType, initUnhydrated());
-					const read = (tree: NumArray | NumStringArray | NumObjectArray) =>
-						tree[0] as number;
+					const read = (tree: NumArray | NumStringArray | NumObjectArray) => tree[0] as number;
 					generateBenchmarkPair(title, initUnhydrated, initFlex, read, 1);
 				}
 			});
@@ -463,10 +405,7 @@ describe("SimpleTree benchmarks", () => {
 					writeDeepTree(tree, changedLeafValue);
 				},
 				after: () => {
-					const expected = generateDeepSimpleTree(
-						numberOfNodes,
-						changedLeafValue,
-					);
+					const expected = generateDeepSimpleTree(numberOfNodes, changedLeafValue);
 					assert.deepEqual(tree, expected);
 				},
 			});
@@ -526,8 +465,7 @@ describe("SimpleTree benchmarks", () => {
 				after: () => {
 					// Even number of iterations cancel out, so this validation only works after odd numbers of iterations.
 					// Correctness mode always does a single iteration, so just validate that case.
-					if (!isInPerformanceTestingMode)
-						assert.equal(tree[0], changedLeafValue);
+					if (!isInPerformanceTestingMode) assert.equal(tree[0], changedLeafValue);
 				},
 			});
 		}

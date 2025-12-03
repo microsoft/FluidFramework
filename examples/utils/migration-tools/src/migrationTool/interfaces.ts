@@ -14,11 +14,7 @@ import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
  * * migrated - migration has completed and the migration result is available.
  * @alpha
  */
-export type MigrationState =
-	| "collaborating"
-	| "stopping"
-	| "migrating"
-	| "migrated";
+export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
 
 /**
  * The details of the accepted migration.  Signifies that the collaboration has agreed to migrate whatever

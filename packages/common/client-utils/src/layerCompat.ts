@@ -31,8 +31,7 @@ export type LayerCompatCheckResult =
 /**
  * @internal
  */
-export const ILayerCompatDetails: keyof IProvideLayerCompatDetails =
-	"ILayerCompatDetails";
+export const ILayerCompatDetails: keyof IProvideLayerCompatDetails = "ILayerCompatDetails";
 
 /**
  * @internal
@@ -45,8 +44,7 @@ export interface IProvideLayerCompatDetails {
  * This interface is used to communicate the compatibility details of a layer to another layer.
  * @internal
  */
-export interface ILayerCompatDetails
-	extends Partial<IProvideLayerCompatDetails> {
+export interface ILayerCompatDetails extends Partial<IProvideLayerCompatDetails> {
 	/**
 	 * A list of features supported by the layer at a particular layer boundary. This is used to check if these
 	 * set of features satisfy the requirements of another layer.
@@ -110,8 +108,7 @@ export function checkLayerCompatibility(
 	compatSupportRequirementsLayer1: ILayerCompatSupportRequirements,
 	compatDetailsLayer2: ILayerCompatDetails | undefined,
 ): LayerCompatCheckResult {
-	const compatDetailsLayer2ToUse =
-		compatDetailsLayer2 ?? defaultLayerCompatDetails;
+	const compatDetailsLayer2ToUse = compatDetailsLayer2 ?? defaultLayerCompatDetails;
 	let isGenerationCompatible = true;
 	const unsupportedFeatures: string[] = [];
 
@@ -136,7 +133,6 @@ export function checkLayerCompatibility(
 		: {
 				isCompatible: false,
 				isGenerationCompatible,
-				unsupportedFeatures:
-					unsupportedFeatures.length > 0 ? unsupportedFeatures : undefined,
+				unsupportedFeatures: unsupportedFeatures.length > 0 ? unsupportedFeatures : undefined,
 			};
 }

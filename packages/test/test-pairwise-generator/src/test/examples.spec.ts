@@ -5,15 +5,11 @@
 
 import { strict as assert } from "assert";
 
-import { generatePairwiseOptions, type OptionsMatrix } from "../index.js";
+import { OptionsMatrix, generatePairwiseOptions } from "../index.js";
 
 describe("generatePairwiseOptions.examples", () => {
 	it("Testing a function", () => {
-		const myFunction = (
-			param1: boolean,
-			param2: "string1" | "string2",
-			param3?: number,
-		) => {};
+		const myFunction = (param1: boolean, param2: "string1" | "string2", param3?: number) => {};
 
 		const options = generatePairwiseOptions<{
 			p1: boolean;
@@ -59,8 +55,7 @@ describe("generatePairwiseOptions.examples", () => {
 			length: [2],
 		};
 
-		const myArrayLikes =
-			generatePairwiseOptions<ArrayLike<number>>(arrayMatrix);
+		const myArrayLikes = generatePairwiseOptions<ArrayLike<number>>(arrayMatrix);
 
 		// use the array to drive a scenario
 		const runScenario = (numbers: number[]) => {
@@ -89,17 +84,12 @@ describe("generatePairwiseOptions.examples", () => {
 		const complexObjectMatrix: OptionsMatrix<MyComplexObject> = {
 			numbers: [
 				undefined,
-				...generatePairwiseOptions<ArrayLike<number>>(arrayMatrix).map((a) =>
-					Array.from(a),
-				),
+				...generatePairwiseOptions<ArrayLike<number>>(arrayMatrix).map((a) => Array.from(a)),
 			],
-			subObject: generatePairwiseOptions<{ str: string }>({
-				str: ["a", "b", "c"],
-			}),
+			subObject: generatePairwiseOptions<{ str: string }>({ str: ["a", "b", "c"] }),
 		};
 
-		const complexObjects =
-			generatePairwiseOptions<MyComplexObject>(complexObjectMatrix);
+		const complexObjects = generatePairwiseOptions<MyComplexObject>(complexObjectMatrix);
 
 		// use the array to drive a scenario
 		const runScenario = (complexObject: MyComplexObject) => {};

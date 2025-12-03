@@ -15,7 +15,13 @@
 /**
  * All fluid scopes EXCEPT for @fluid-example
  */
-const fluidScopes = ["@fluidframework", "@fluid-experimental", "@fluid-internal", "@fluid-private", "@fluid-tools"];
+const fluidScopes = [
+	"@fluidframework",
+	"@fluid-experimental",
+	"@fluid-internal",
+	"@fluid-private",
+	"@fluid-tools",
+];
 
 /**
  * The settings in this file configure the repo layout used by build-tools, such as fluid-build and flub.
@@ -47,7 +53,8 @@ module.exports = {
 						include: [...fluidScopes, "@fluid-example"],
 						rootPackageName: "build-tools-release-group-root",
 						defaultInterdependencyRange: "workspace:~",
-						adoPipelineUrl: "https://dev.azure.com/fluidframework/internal/_build?definitionId=14",
+						adoPipelineUrl:
+							"https://dev.azure.com/fluidframework/internal/_build?definitionId=14",
 					},
 				},
 			},
@@ -58,7 +65,8 @@ module.exports = {
 						include: [...fluidScopes, "@fluid-example", "tinylicious"],
 						rootPackageName: "server-release-group-root",
 						defaultInterdependencyRange: "workspace:~",
-						adoPipelineUrl: "https://dev.azure.com/fluidframework/internal/_build?definitionId=30",
+						adoPipelineUrl:
+							"https://dev.azure.com/fluidframework/internal/_build?definitionId=30",
 					},
 				},
 			},
@@ -69,7 +77,8 @@ module.exports = {
 						include: [...fluidScopes, "@fluid-example"],
 						rootPackageName: "gitrest-release-group-root",
 						defaultInterdependencyRange: "workspace:~",
-						adoPipelineUrl: "https://dev.azure.com/fluidframework/internal/_build?definitionId=26",
+						adoPipelineUrl:
+							"https://dev.azure.com/fluidframework/internal/_build?definitionId=26",
 					},
 				},
 			},
@@ -80,7 +89,8 @@ module.exports = {
 						include: [...fluidScopes, "@fluid-example"],
 						rootPackageName: "historian-release-group-root",
 						defaultInterdependencyRange: "workspace:~",
-						adoPipelineUrl: "https://dev.azure.com/fluidframework/internal/_build?definitionId=25",
+						adoPipelineUrl:
+							"https://dev.azure.com/fluidframework/internal/_build?definitionId=25",
 					},
 				},
 			},
@@ -93,7 +103,8 @@ module.exports = {
 						include: ["@fluid-tools/api-markdown-documenter"],
 						rootPackageName: "@fluid-tools/api-markdown-documenter",
 						defaultInterdependencyRange: "workspace:~",
-						adoPipelineUrl: "https://dev.azure.com/fluidframework/internal/_build?definitionId=97",
+						adoPipelineUrl:
+							"https://dev.azure.com/fluidframework/internal/_build?definitionId=97",
 					},
 				},
 			},
@@ -104,7 +115,8 @@ module.exports = {
 						include: ["@fluid-tools/benchmark"],
 						rootPackageName: "@fluid-tools/benchmark",
 						defaultInterdependencyRange: "workspace:~",
-						adoPipelineUrl: "https://dev.azure.com/fluidframework/internal/_build?definitionId=62",
+						adoPipelineUrl:
+							"https://dev.azure.com/fluidframework/internal/_build?definitionId=62",
 					},
 				},
 			},
@@ -115,7 +127,8 @@ module.exports = {
 						include: ["@fluidframework/build-common"],
 						rootPackageName: "@fluidframework/build-common",
 						defaultInterdependencyRange: "workspace:~",
-						adoPipelineUrl: "https://dev.azure.com/fluidframework/internal/_build?definitionId=3",
+						adoPipelineUrl:
+							"https://dev.azure.com/fluidframework/internal/_build?definitionId=3",
 					},
 				},
 			},
@@ -126,7 +139,8 @@ module.exports = {
 						include: ["@fluidframework/common-utils"],
 						rootPackageName: "@fluidframework/common-utils",
 						defaultInterdependencyRange: "workspace:~",
-						adoPipelineUrl: "https://dev.azure.com/fluidframework/internal/_build?definitionId=10",
+						adoPipelineUrl:
+							"https://dev.azure.com/fluidframework/internal/_build?definitionId=10",
 					},
 				},
 			},
@@ -137,7 +151,8 @@ module.exports = {
 						include: ["@fluidframework/eslint-config-fluid"],
 						rootPackageName: "@fluidframework/eslint-config-fluid",
 						defaultInterdependencyRange: "workspace:~",
-						adoPipelineUrl: "https://dev.azure.com/fluidframework/internal/_build?definitionId=7",
+						adoPipelineUrl:
+							"https://dev.azure.com/fluidframework/internal/_build?definitionId=7",
 					},
 				},
 			},
@@ -148,7 +163,8 @@ module.exports = {
 						include: ["@fluid-internal/eslint-plugin-fluid"],
 						rootPackageName: "@fluid-internal/eslint-plugin-fluid",
 						defaultInterdependencyRange: "workspace:~",
-						adoPipelineUrl: "https://dev.azure.com/fluidframework/internal/_build?definitionId=135",
+						adoPipelineUrl:
+							"https://dev.azure.com/fluidframework/internal/_build?definitionId=135",
 					},
 				},
 			},
@@ -169,7 +185,8 @@ module.exports = {
 						include: ["@fluidframework/protocol-definitions"],
 						rootPackageName: "@fluidframework/protocol-definitions",
 						defaultInterdependencyRange: "workspace:~",
-						adoPipelineUrl: "https://dev.azure.com/fluidframework/internal/_build?definitionId=67",
+						adoPipelineUrl:
+							"https://dev.azure.com/fluidframework/internal/_build?definitionId=67",
 					},
 				},
 			},
@@ -180,7 +197,8 @@ module.exports = {
 						include: ["@fluidframework/test-tools"],
 						rootPackageName: "@fluidframework/test-tools",
 						defaultInterdependencyRange: "workspace:~",
-						adoPipelineUrl: "https://dev.azure.com/fluidframework/internal/_build?definitionId=13",
+						adoPipelineUrl:
+							"https://dev.azure.com/fluidframework/internal/_build?definitionId=13",
 					},
 				},
 			},

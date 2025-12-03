@@ -8,26 +8,26 @@
 import { assert } from "@fluidframework/core-utils/legacy";
 // eslint-disable-next-line import-x/no-internal-modules -- #26905: `merge-tree` internals used in examples
 import { createInsertSegmentOp } from "@fluidframework/merge-tree/internal";
-import type { IMergeTreeDeltaOp } from "@fluidframework/merge-tree/legacy";
+import { IMergeTreeDeltaOp } from "@fluidframework/merge-tree/legacy";
 // eslint-disable-next-line import-x/no-internal-modules -- #26904: `sequence` internals used in examples
 import { reservedRangeLabelsKey } from "@fluidframework/sequence/internal";
 import {
-	type ISegment,
-	type ISequenceDeltaRange,
+	ISegment,
+	ISequenceDeltaRange,
 	Marker,
 	MergeTreeDeltaType,
 	ReferenceType,
-	type SequenceDeltaEvent,
-	type SharedString,
+	SequenceDeltaEvent,
+	SharedString,
 	TextSegment,
 } from "@fluidframework/sequence/legacy";
 import {
 	Fragment,
-	type Schema,
+	Schema,
 	Slice,
 	// Slice,
 } from "prosemirror-model";
-import type { EditorState, Transaction } from "prosemirror-state";
+import { EditorState, Transaction } from "prosemirror-state";
 import { ReplaceAroundStep } from "prosemirror-transform";
 
 export interface IProseMirrorNode {
@@ -89,7 +89,7 @@ interface IThingGroup {
 export class ProseMirrorTransactionBuilder {
 	private readonly transaction: Transaction;
 
-	private readonly things = [] as IThing[];
+	private readonly things = new Array<IThing>();
 
 	constructor(
 		state: EditorState,
@@ -146,10 +146,7 @@ export class ProseMirrorTransactionBuilder {
 				//
 				// For positions we *will* need to include any newly inserted nodes. We can count these as "new" ether
 
-				assert(
-					i < this.things.length,
-					"Trying to insert removal node out-of-bounds!",
-				);
+				assert(i < this.things.length, "Trying to insert removal node out-of-bounds!");
 
 				i = this.splitAt(position, i);
 				let length = range.segment.cachedLength;
@@ -257,7 +254,7 @@ export class ProseMirrorTransactionBuilder {
 		);
 
 		let currentGroup: IThingGroup | undefined;
-		const groups: IThingGroup[] = [];
+		const groups = new Array<IThingGroup>();
 		const annotations: {
 			from: number;
 			to: number;
@@ -313,11 +310,7 @@ export class ProseMirrorTransactionBuilder {
 				this.getOpenEnd(fragment),
 			);
 
-			this.transaction.replaceRange(
-				group.position,
-				group.position + removalSize,
-				slice,
-			);
+			this.transaction.replaceRange(group.position, group.position + removalSize, slice);
 		} else if (groups.length > 1) {
 			const removalSizes: number[] = [];
 			const insertSizes: number[] = [];
@@ -375,11 +368,7 @@ export class ProseMirrorTransactionBuilder {
 						this.schema.marks[prop].create(value),
 					);
 				} else {
-					this.transaction.removeMark(
-						annotation.from,
-						annotation.to,
-						this.schema.marks[prop],
-					);
+					this.transaction.removeMark(annotation.from, annotation.to, this.schema.marks[prop]);
 				}
 			}
 		}
@@ -393,9 +382,7 @@ export class ProseMirrorTransactionBuilder {
 		}
 
 		const start = node[0];
-		return !start._open || !start.content
-			? 0
-			: 1 + this.getOpenStart(start.content);
+		return !start._open || !start.content ? 0 : 1 + this.getOpenStart(start.content);
 	}
 
 	private getOpenEnd(node: IProseMirrorNode[]): number {
@@ -415,7 +402,7 @@ export function sliceToGroupOps(
 	insert?: number,
 	gapDistance?: number,
 ): IMergeTreeDeltaOp[] {
-	const ops: IMergeTreeDeltaOp[] = [];
+	const ops = new Array<IMergeTreeDeltaOp>();
 
 	const sliceOpenStart = slice.openStart ?? 0;
 	const sliceOpenEnd = slice.openEnd ?? 0;
@@ -473,13 +460,7 @@ function sliceToGroupOpsInternal(
 			const segment = TextSegment.make(value.text, props);
 			ops.push(createInsertSegmentOp(from + offset, segment));
 
-			offset = adjustOffset(
-				from,
-				offset,
-				value.text.length,
-				insert,
-				gapDistance,
-			);
+			offset = adjustOffset(from, offset, value.text.length, insert, gapDistance);
 		} else {
 			const nodeProps = {
 				...props,
@@ -548,7 +529,7 @@ function sliceToGroupOpsInternal(
 }
 
 function generateFragment(segments: ISegment[]) {
-	const nodeStack: IProseMirrorNode[] = [];
+	const nodeStack = new Array<IProseMirrorNode>();
 	nodeStack.push({ type: "doc", content: [] });
 
 	let openTop: IProseMirrorNode | undefined;

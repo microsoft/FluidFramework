@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
+import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";

@@ -3,18 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
+import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
-	describeCompat,
-	type ITestDataObject,
-} from "@fluid-private/test-version-utils";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import {
+	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
-	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
 
 /**
  * These tests retrieve a data store after its creation but at different stages of visibility.
@@ -66,26 +64,20 @@ describeCompat(
 			private readonly innerDataStoreKey = "innerDataStore";
 
 			protected async initializingFirstTime(): Promise<void> {
-				const innerDataStore =
-					await this._context.containerRuntime.createDataStore(
-						innerDataObjectFactory.type,
-					);
+				const innerDataStore = await this._context.containerRuntime.createDataStore(
+					innerDataObjectFactory.type,
+				);
 				const innerDataObject =
-					await getDataStoreEntryPointBackCompat<ITestDataObject>(
-						innerDataStore,
-					);
+					await getDataStoreEntryPointBackCompat<ITestDataObject>(innerDataStore);
 
 				this.root.set(this.innerDataStoreKey, innerDataObject.handle);
 			}
 
 			protected async hasInitialized(): Promise<void> {
-				const innerDataStoreHandle = this.root.get<
-					IFluidHandle<InnerDataObject>
-				>(this.innerDataStoreKey);
-				assert(
-					innerDataStoreHandle !== undefined,
-					"inner data store handle is missing",
+				const innerDataStoreHandle = this.root.get<IFluidHandle<InnerDataObject>>(
+					this.innerDataStoreKey,
 				);
+				assert(innerDataStoreHandle !== undefined, "inner data store handle is missing");
 				// Here is where we retrieve the inner object during outer object's initialization
 				await innerDataStoreHandle.get();
 			}
@@ -99,77 +91,52 @@ describeCompat(
 
 		let provider: ITestObjectProvider;
 
-		beforeEach("getTestObjectProvider", () => {
+		beforeEach("getTestObjectProvider", function () {
 			provider = getTestObjectProvider();
 		});
 
-		it("Requesting data store before outer data store completes initialization", async () => {
-			const containerRuntimeFactory =
-				createContainerRuntimeFactoryWithDefaultDataStore(
-					ContainerRuntimeFactoryWithDefaultDataStore,
-					{
-						defaultFactory: outerDataObjectFactory,
-						registryEntries: [
-							[
-								outerDataObjectFactory.type,
-								Promise.resolve(outerDataObjectFactory),
-							],
-							[
-								innerDataObjectFactory.type,
-								Promise.resolve(innerDataObjectFactory),
-							],
-						],
-					},
-				);
-			const request = provider.driver.createCreateNewRequest(
-				provider.documentId,
+		it("Requesting data store before outer data store completes initialization", async function () {
+			const containerRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+				ContainerRuntimeFactoryWithDefaultDataStore,
+				{
+					defaultFactory: outerDataObjectFactory,
+					registryEntries: [
+						[outerDataObjectFactory.type, Promise.resolve(outerDataObjectFactory)],
+						[innerDataObjectFactory.type, Promise.resolve(innerDataObjectFactory)],
+					],
+				},
 			);
+			const request = provider.driver.createCreateNewRequest(provider.documentId);
 			const loader = provider.createLoader([
 				[provider.defaultCodeDetails, containerRuntimeFactory],
 			]);
 
-			const container = await loader.createDetachedContainer(
-				provider.defaultCodeDetails,
-			);
+			const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 			// Get the outer dataStore from the detached container. This will create and load the inner data store
 			// during initialization.
 			const outerDataStore =
 				await getContainerEntryPointBackCompat<ITestDataObject>(container);
 			assert(outerDataStore !== undefined, "Could not load outer data store");
-			await assert.doesNotReject(
-				container.attach(request),
-				"Container did not attach",
-			);
+			await assert.doesNotReject(container.attach(request), "Container did not attach");
 		});
 
-		it("Requesting data store before outer data store (non-root) completes initialization", async () => {
-			const containerRuntimeFactory =
-				createContainerRuntimeFactoryWithDefaultDataStore(
-					ContainerRuntimeFactoryWithDefaultDataStore,
-					{
-						defaultFactory: innerDataObjectFactory,
-						registryEntries: [
-							[
-								outerDataObjectFactory.type,
-								Promise.resolve(outerDataObjectFactory),
-							],
-							[
-								innerDataObjectFactory.type,
-								Promise.resolve(innerDataObjectFactory),
-							],
-						],
-					},
-				);
-			const request = provider.driver.createCreateNewRequest(
-				provider.documentId,
+		it("Requesting data store before outer data store (non-root) completes initialization", async function () {
+			const containerRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+				ContainerRuntimeFactoryWithDefaultDataStore,
+				{
+					defaultFactory: innerDataObjectFactory,
+					registryEntries: [
+						[outerDataObjectFactory.type, Promise.resolve(outerDataObjectFactory)],
+						[innerDataObjectFactory.type, Promise.resolve(innerDataObjectFactory)],
+					],
+				},
 			);
+			const request = provider.driver.createCreateNewRequest(provider.documentId);
 			const loader = provider.createLoader([
 				[provider.defaultCodeDetails, containerRuntimeFactory],
 			]);
 
-			const container = await loader.createDetachedContainer(
-				provider.defaultCodeDetails,
-			);
+			const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 			// Get the default dataStore from the detached container.
 			const defaultDataStore =
@@ -185,10 +152,7 @@ describeCompat(
 				dataStore2.handle.get(),
 				"Could not retrieve outer data store",
 			);
-			await assert.doesNotReject(
-				container.attach(request),
-				"Container did not attach",
-			);
+			await assert.doesNotReject(container.attach(request), "Container did not attach");
 		});
 	},
 );

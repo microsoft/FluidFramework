@@ -7,10 +7,10 @@ import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import {
-	type MockContainerRuntime,
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
+	type MockContainerRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import type { ISharedMap, IValueChanged } from "../../interfaces.js";
@@ -26,12 +26,9 @@ interface RollbackTestSetup {
 const mapFactory = new MapFactory();
 
 function setupRollbackTest(): RollbackTestSetup {
-	const containerRuntimeFactory = new MockContainerRuntimeFactory({
-		flushMode: 1,
-	}); // TurnBased
+	const containerRuntimeFactory = new MockContainerRuntimeFactory({ flushMode: 1 }); // TurnBased
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: "1" });
-	const containerRuntime =
-		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	const sharedMap = mapFactory.create(dataStoreRuntime, "shared-map-1");
 	dataStoreRuntime.setAttachState(AttachState.Attached);
 	sharedMap.connect({
@@ -56,8 +53,7 @@ function createAdditionalClient(
 	containerRuntime: MockContainerRuntime;
 } {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: id });
-	const containerRuntime =
-		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	const sharedMap = mapFactory.create(dataStoreRuntime, `shared-map-${id}`);
 	dataStoreRuntime.setAttachState(AttachState.Attached);
 	sharedMap.connect({
@@ -75,32 +71,12 @@ describe("SharedMap rollback", () => {
 			valueChanges.push(event);
 		});
 		sharedMap.set("key1", "value1");
-		assert.strictEqual(
-			sharedMap.get("key1"),
-			"value1",
-			"Failed getting pending value",
-		);
-		assert.strictEqual(
-			valueChanges.length,
-			1,
-			"Should have one value change event",
-		);
+		assert.strictEqual(sharedMap.get("key1"), "value1", "Failed getting pending value");
+		assert.strictEqual(valueChanges.length, 1, "Should have one value change event");
 		containerRuntime.rollback?.();
-		assert.strictEqual(
-			sharedMap.get("key1"),
-			undefined,
-			"Value should be rolled back",
-		);
-		assert.strictEqual(
-			valueChanges.length,
-			2,
-			"Should have two value change events",
-		);
-		assert.strictEqual(
-			valueChanges[1].key,
-			"key1",
-			"Second event should be for key1",
-		);
+		assert.strictEqual(sharedMap.get("key1"), undefined, "Value should be rolled back");
+		assert.strictEqual(valueChanges.length, 2, "Should have two value change events");
+		assert.strictEqual(valueChanges[1].key, "key1", "Second event should be for key1");
 		assert.strictEqual(
 			valueChanges[1].previousValue,
 			"value1",
@@ -109,8 +85,7 @@ describe("SharedMap rollback", () => {
 	});
 
 	it("should rollback delete operation", () => {
-		const { sharedMap, containerRuntimeFactory, containerRuntime } =
-			setupRollbackTest();
+		const { sharedMap, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
 		sharedMap.set("key1", "value1");
 		containerRuntime.flush();
 		containerRuntimeFactory.processAllMessages();
@@ -124,27 +99,15 @@ describe("SharedMap rollback", () => {
 			undefined,
 			"Pending value should reflect the delete",
 		);
-		assert.strictEqual(
-			valueChanges.length,
-			1,
-			"Should have one value change event",
-		);
+		assert.strictEqual(valueChanges.length, 1, "Should have one value change event");
 		containerRuntime.rollback?.();
 		assert.strictEqual(
 			sharedMap.get("key1"),
 			"value1",
 			"Value should be restored by rollback",
 		);
-		assert.strictEqual(
-			valueChanges.length,
-			2,
-			"Should have two value change events",
-		);
-		assert.strictEqual(
-			valueChanges[1].key,
-			"key1",
-			"Second event should be for key1",
-		);
+		assert.strictEqual(valueChanges.length, 2, "Should have two value change events");
+		assert.strictEqual(valueChanges[1].key, "key1", "Second event should be for key1");
 		assert.strictEqual(
 			valueChanges[1].previousValue,
 			undefined,
@@ -153,8 +116,7 @@ describe("SharedMap rollback", () => {
 	});
 
 	it("should rollback clear operation", () => {
-		const { sharedMap, containerRuntimeFactory, containerRuntime } =
-			setupRollbackTest();
+		const { sharedMap, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
 		sharedMap.set("key1", "value1");
 		sharedMap.set("key2", "value2");
 		containerRuntime.flush();
@@ -180,11 +142,7 @@ describe("SharedMap rollback", () => {
 			undefined,
 			"Pending value for key2 should reflect the clear",
 		);
-		assert.strictEqual(
-			valueChanges.length,
-			0,
-			"Should have no value change events",
-		);
+		assert.strictEqual(valueChanges.length, 0, "Should have no value change events");
 		assert.strictEqual(clears, 1, "Should have one clear event");
 		containerRuntime.rollback?.();
 		assert.strictEqual(
@@ -197,26 +155,14 @@ describe("SharedMap rollback", () => {
 			"value2",
 			"Value should be restored by rollback",
 		);
-		assert.strictEqual(
-			valueChanges.length,
-			2,
-			"Should have two value change events",
-		);
-		assert.strictEqual(
-			valueChanges[0].key,
-			"key1",
-			"First event should be for key1",
-		);
+		assert.strictEqual(valueChanges.length, 2, "Should have two value change events");
+		assert.strictEqual(valueChanges[0].key, "key1", "First event should be for key1");
 		assert.strictEqual(
 			valueChanges[0].previousValue,
 			undefined,
 			"First event previousValue should be pre-rollback value",
 		);
-		assert.strictEqual(
-			valueChanges[1].key,
-			"key2",
-			"Second event should be for key2",
-		);
+		assert.strictEqual(valueChanges[1].key, "key2", "Second event should be for key2");
 		assert.strictEqual(
 			valueChanges[1].previousValue,
 			undefined,
@@ -225,8 +171,7 @@ describe("SharedMap rollback", () => {
 	});
 
 	it("should rollback multiple operations in sequence", () => {
-		const { sharedMap, containerRuntimeFactory, containerRuntime } =
-			setupRollbackTest();
+		const { sharedMap, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
 		sharedMap.set("key1", "value1");
 		sharedMap.set("key2", "value2");
 		containerRuntime.flush();
@@ -302,8 +247,7 @@ describe("SharedMap rollback", () => {
 	});
 
 	it("should rollback local changes in presence of remote changes from another client", () => {
-		const { sharedMap, containerRuntimeFactory, containerRuntime } =
-			setupRollbackTest();
+		const { sharedMap, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
 		// Create a second client
 		const { sharedMap: sharedMap2, containerRuntime: containerRuntime2 } =
 			createAdditionalClient(containerRuntimeFactory);

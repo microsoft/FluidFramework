@@ -3,51 +3,44 @@
  * Licensed under the MIT License.
  */
 
-import {
-	assertDocumentTypeInfo,
-	isDocumentMapInfo,
-} from "@fluid-private/test-version-utils";
+import { strict as assert } from "assert";
+// eslint-disable-next-line import-x/no-nodejs-modules
+import * as crypto from "crypto";
+
+import { assertDocumentTypeInfo, isDocumentMapInfo } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
-import {
-	type IContainer,
-	LoaderHeader,
-} from "@fluidframework/container-definitions/internal";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
-	type ContainerRuntime,
-	type IContainerRuntimeOptions,
-	type ISummarizer,
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+	ISummarizer,
 } from "@fluidframework/container-runtime/internal";
-import type {
+import {
 	ConfigTypes,
 	IConfigProviderBase,
 	IFluidHandle,
 	IRequest,
 } from "@fluidframework/core-interfaces";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
-	type ChannelFactoryRegistry,
+	ChannelFactoryRegistry,
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
-// eslint-disable-next-line import-x/no-nodejs-modules
-import * as crypto from "crypto";
 
-import type {
+import {
 	IDocumentLoaderAndSummarizer,
 	IDocumentProps,
 	ISummarizeResult,
 } from "./DocumentCreator.js";
 
-const configProvider = (
-	settings: Record<string, ConfigTypes>,
-): IConfigProviderBase => ({
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 
@@ -68,11 +61,7 @@ function setMapKeys(map: ISharedMap, count: number, item: string): void {
 	}
 }
 
-function validateMapKeys(
-	map: ISharedMap,
-	count: number,
-	expectedSize: number,
-): void {
+function validateMapKeys(map: ISharedMap, count: number, expectedSize: number): void {
 	for (let i = 0; i < count; i++) {
 		const value = map.get(`key${i}`);
 		assert(value !== undefined);
@@ -144,10 +133,7 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 	 * @param props - Properties for initializing the Document Creator.
 	 */
 	public constructor(private readonly props: IDocumentProps) {
-		assertDocumentTypeInfo(
-			this.props.documentTypeInfo,
-			this.props.documentType,
-		);
+		assertDocumentTypeInfo(this.props.documentTypeInfo, this.props.documentType);
 		// Now TypeScript knows that info.documentTypeInfo is either DocumentMapInfo or DocumentMultipleDataStoresInfo
 		// and info.documentType is either "DocumentMap" or "DocumentMultipleDataStores"
 		assert(isDocumentMapInfo(this.props.documentTypeInfo));
@@ -187,20 +173,12 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 		const mapHandle = this.mainDataStore._root.get(mapId);
 		assert(mapHandle !== undefined, "map not found");
 		const map = await mapHandle.get();
-		const largeString = generateRandomStringOfSize(
-			maxMessageSizeInBytes * this.sizeOfItemMb,
-		);
+		const largeString = generateRandomStringOfSize(maxMessageSizeInBytes * this.sizeOfItemMb);
 		setMapKeys(map, this.keysInMap, largeString);
-		validateMapKeys(
-			map,
-			this.keysInMap,
-			maxMessageSizeInBytes * this.sizeOfItemMb,
-		);
+		validateMapKeys(map, this.keysInMap, maxMessageSizeInBytes * this.sizeOfItemMb);
 	}
 
-	private async ensureContainerConnectedWriteMode(
-		container: IContainer,
-	): Promise<void> {
+	private async ensureContainerConnectedWriteMode(container: IContainer): Promise<void> {
 		const resolveIfActive = (res: () => void) => {
 			if (container.deltaManager.active) {
 				res();
@@ -226,27 +204,20 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 	public async initializeDocument() {
 		const loader = this.props.provider.createLoader(
 			[[this.props.provider.defaultCodeDetails, this.runtimeFactory]],
-			{
-				logger: this.props.logger,
-				configProvider: configProvider(featureGates),
-			},
+			{ logger: this.props.logger, configProvider: configProvider(featureGates) },
 		);
 		this._mainContainer = await loader.createDetachedContainer(
 			this.props.provider.defaultCodeDetails,
 		);
 		this.props.provider.updateDocumentId(this._mainContainer.resolvedUrl);
-		this.mainDataStore =
-			(await this._mainContainer.getEntryPoint()) as TestDataObject;
+		this.mainDataStore = (await this._mainContainer.getEntryPoint()) as TestDataObject;
 		this.mainDataStore._root.set("mode", "write");
 		await this.populateMap();
 		await this._mainContainer.attach(
-			this.props.provider.driver.createCreateNewRequest(
-				this.props.provider.documentId,
-			),
+			this.props.provider.driver.createCreateNewRequest(this.props.provider.documentId),
 		);
 		await this.waitForContainerSave(this._mainContainer);
-		this.containerRuntime = this.mainDataStore._context
-			.containerRuntime as ContainerRuntime;
+		this.containerRuntime = this.mainDataStore._context.containerRuntime as ContainerRuntime;
 
 		if (this._mainContainer.deltaManager.active) {
 			await this.ensureContainerConnectedWriteMode(this._mainContainer);
@@ -266,10 +237,7 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 		};
 		const loader = this.props.provider.createLoader(
 			[[this.props.provider.defaultCodeDetails, this.runtimeFactory]],
-			{
-				logger: this.props.logger,
-				configProvider: configProvider(featureGates),
-			},
+			{ logger: this.props.logger, configProvider: configProvider(featureGates) },
 		);
 		const container2 = await loader.resolve(request);
 
@@ -279,11 +247,7 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 		const mapHandle = dataStore._root.get(mapId);
 		assert(mapHandle !== undefined, "map not found");
 		const map = await mapHandle.get();
-		validateMapKeys(
-			map,
-			this.keysInMap,
-			maxMessageSizeInBytes * this.sizeOfItemMb,
-		);
+		validateMapKeys(map, this.keysInMap, maxMessageSizeInBytes * this.sizeOfItemMb);
 		return container2;
 	}
 
@@ -300,10 +264,7 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 		closeContainer: boolean = true,
 	): Promise<ISummarizeResult> {
 		try {
-			assert(
-				_container !== undefined,
-				"Container should be initialized before summarize",
-			);
+			assert(_container !== undefined, "Container should be initialized before summarize");
 			const { container: containerClient, summarizer: summarizerClient } =
 				await createSummarizerFromFactory(
 					this.props.provider,
@@ -317,10 +278,7 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 				);
 
 			const newSummaryVersion = await this.waitForSummary(summarizerClient);
-			assert(
-				newSummaryVersion !== undefined,
-				"summaryVersion needs to be valid.",
-			);
+			assert(newSummaryVersion !== undefined, "summaryVersion needs to be valid.");
 			if (closeContainer) {
 				summarizerClient.close();
 			}

@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	createWeightedAsyncGenerator,
-	done,
 	takeAsync,
+	done,
 } from "@fluid-private/stochastic-test-utils";
 import {
 	createSquashFuzzSuite,
@@ -15,21 +17,20 @@ import {
 	type SquashFuzzTestState,
 } from "@fluid-private/test-dds-utils";
 import {
-	type LocalReferencePosition,
 	ReferenceType,
-	segmentIsRemoved,
+	type LocalReferencePosition,
 } from "@fluidframework/merge-tree/internal";
-import { strict as assert } from "assert";
+import { segmentIsRemoved } from "@fluidframework/merge-tree/internal";
 
 import type { SharedStringFactory } from "../../sequenceFactory.js";
 import type { ISharedString } from "../../sharedString.js";
 
 import {
-	type AddPoisonedText,
 	baseSharedStringModel,
 	defaultFuzzOptions,
 	defaultIntervalOperationGenerationConfig,
 	makeSharedStringOperationGenerator,
+	type AddPoisonedText,
 	type Operation,
 	type SharedStringOperationGenerationConfig,
 } from "./fuzzUtils.js";
@@ -38,9 +39,7 @@ export type PoisonedSharedString = ISharedString & {
 	poisonedHandleLocations: LocalReferencePosition[];
 };
 
-export function isPoisonedSharedString(
-	s: ISharedString,
-): s is PoisonedSharedString {
+export function isPoisonedSharedString(s: ISharedString): s is PoisonedSharedString {
 	return (
 		(s as PoisonedSharedString).poisonedHandleLocations !== undefined &&
 		Array.isArray((s as PoisonedSharedString).poisonedHandleLocations)
@@ -51,21 +50,19 @@ type FuzzTestState = SquashFuzzTestState<SharedStringFactory>;
 
 type SquashOperation = AddPoisonedText | Operation;
 
-interface SquashOperationGenerationConfig
-	extends SharedStringOperationGenerationConfig {
+interface SquashOperationGenerationConfig extends SharedStringOperationGenerationConfig {
 	weights: SharedStringOperationGenerationConfig["weights"] & {
 		addPoisonedHandleText: number;
 	};
 }
 
-const defaultSquashOperationGenerationConfig: SquashOperationGenerationConfig =
-	{
-		...defaultIntervalOperationGenerationConfig,
-		weights: {
-			...defaultIntervalOperationGenerationConfig.weights,
-			addPoisonedHandleText: 1,
-		},
-	};
+const defaultSquashOperationGenerationConfig: SquashOperationGenerationConfig = {
+	...defaultIntervalOperationGenerationConfig,
+	weights: {
+		...defaultIntervalOperationGenerationConfig.weights,
+		addPoisonedHandleText: 1,
+	},
+};
 
 function makeExitingStagingModeGenerator() {
 	return (state: FuzzTestState): Operation | typeof done => {
@@ -94,14 +91,10 @@ function makeExitingStagingModeGenerator() {
 	};
 }
 
-function makeSquashOperationGenerator(
-	optionsParam?: SquashOperationGenerationConfig,
-) {
+function makeSquashOperationGenerator(optionsParam?: SquashOperationGenerationConfig) {
 	const baseGenerator = makeSharedStringOperationGenerator(optionsParam);
 
-	async function addPoisonedHandleText(
-		state: FuzzTestState,
-	): Promise<AddPoisonedText> {
+	async function addPoisonedHandleText(state: FuzzTestState): Promise<AddPoisonedText> {
 		const { random, client } = state;
 		return {
 			type: "addPoisonedText",
@@ -124,11 +117,7 @@ function makeSquashOperationGenerator(
 				usableWeights.obliterateRange +
 				usableWeights.annotateRange,
 		],
-		[
-			addPoisonedHandleText,
-			usableWeights.addPoisonedHandleText,
-			isInStagingMode,
-		],
+		[addPoisonedHandleText, usableWeights.addPoisonedHandleText, isInStagingMode],
 	]);
 }
 
@@ -174,10 +163,9 @@ function makeSquashReducer() {
 			}
 
 			if (removedPoisonedHandles.size > 0) {
-				sharedString.poisonedHandleLocations =
-					sharedString.poisonedHandleLocations.filter(
-						(ref) => !removedPoisonedHandles.has(ref),
-					);
+				sharedString.poisonedHandleLocations = sharedString.poisonedHandleLocations.filter(
+					(ref) => !removedPoisonedHandles.has(ref),
+				);
 			}
 		}
 	};

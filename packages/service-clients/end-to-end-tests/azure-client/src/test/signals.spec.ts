@@ -5,16 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import type {
-	AzureClient,
-	AzureContainerServices,
-} from "@fluidframework/azure-client";
+import type { AzureClient, AzureContainerServices } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
-import type {
-	ContainerSchema,
-	IFluidContainer,
-} from "@fluidframework/fluid-static";
+import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import type { AxiosResponse } from "axios";
 
@@ -24,8 +18,8 @@ import {
 	getContainerIdFromPayloadResponse,
 	ScopeType,
 } from "./AzureClientFactory.js";
-import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
 import { SignalerTestDataObject } from "./TestDataObject.js";
+import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
 import { configProvider, getTestMatrix } from "./utils.js";
 
 interface UserIdAndName {
@@ -98,13 +92,7 @@ for (const testOpts of testMatrix) {
 			client: AzureClient;
 			containerId: string;
 		}> => {
-			const client = createAzureClient(
-				user.id,
-				user.name,
-				undefined,
-				config,
-				scopes,
-			);
+			const client = createAzureClient(user.id, user.name, undefined, config, scopes);
 			const schema: ContainerSchema = {
 				initialObjects: {
 					signaler: SignalerTestDataObject,
@@ -122,48 +110,32 @@ for (const testOpts of testMatrix) {
 							"test-user-name-1",
 						);
 					containerId = getContainerIdFromPayloadResponse(containerResponse);
-					({ container, services } = await client.getContainer(
-						containerId,
-						schema,
-						"2",
-					));
+					({ container, services } = await client.getContainer(containerId, schema, "2"));
 				} else {
 					({ container, services } = await client.createContainer(schema, "2"));
 					containerId = await container.attach();
 				}
 			} else {
 				containerId = id;
-				({ container, services } = await client.getContainer(
-					containerId,
-					schema,
-					"2",
-				));
+				({ container, services } = await client.getContainer(containerId, schema, "2"));
 			}
 
 			if (container.connectionState !== ConnectionState.Connected) {
-				await timeoutPromise(
-					(resolve) => container.once("connected", () => resolve()),
-					{
-						durationMs: connectTimeoutMs,
-						errorMsg: "container connect() timeout",
-					},
-				);
+				await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+					durationMs: connectTimeoutMs,
+					errorMsg: "container connect() timeout",
+				});
 			}
 			connectedContainers.push(container);
 
-			assert.strictEqual(
-				typeof containerId,
-				"string",
-				"Attach did not return a string ID",
-			);
+			assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
 			assert.strictEqual(
 				container.attachState,
 				AttachState.Attached,
 				"Container is not attached after attach is called",
 			);
 
-			const signaler = container.initialObjects
-				.signaler as SignalerTestDataObject;
+			const signaler = container.initialObjects.signaler as SignalerTestDataObject;
 			return {
 				client,
 				container,
@@ -180,10 +152,7 @@ for (const testOpts of testMatrix) {
 		 * a signal sent by 1 client should be recieved by both clients.
 		 */
 		it("can send and receive signals", async () => {
-			const { signaler, containerId } = await getOrCreateSignalerContainer(
-				undefined,
-				user1,
-			);
+			const { signaler, containerId } = await getOrCreateSignalerContainer(undefined, user1);
 			const { signaler: signaler2 } = await getOrCreateSignalerContainer(
 				containerId,
 				user2,
@@ -224,9 +193,11 @@ for (const testOpts of testMatrix) {
 		 * Expected behavior: While 2 clients are connected (1 writer, 2 readers) to a container,
 		 * a signal sent by any 1 client should be recieved by all 3 clients, regardless of read/write permissions.
 		 */
-		it("can send and receive read-only client signals", async () => {
-			const { signaler: writeSignaler, containerId } =
-				await getOrCreateSignalerContainer(undefined, user1);
+		it("can send and receive read-only client signals", async function () {
+			const { signaler: writeSignaler, containerId } = await getOrCreateSignalerContainer(
+				undefined,
+				user1,
+			);
 			const { signaler: readSignaler } = await getOrCreateSignalerContainer(
 				containerId,
 				user2,

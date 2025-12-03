@@ -77,11 +77,7 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 		}
 		if (this.externalDataSnapshot.name !== undefined) {
 			const oldString = this._draftName.getText();
-			this._draftName.replaceText(
-				0,
-				oldString.length,
-				this.externalDataSnapshot.name,
-			);
+			this._draftName.replaceText(0, oldString.length, this.externalDataSnapshot.name);
 		}
 		this.emit("changesAvailable", false);
 	};
@@ -99,9 +95,7 @@ interface PersistedTask {
 /**
  * The TaskList is our data object that implements the ITaskList interface.
  */
-export class TaskList extends DataObject<{
-	InitialState: IBaseDocumentInitialState;
-}> {
+export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialState }> {
 	/**
 	 * The tasks collection holds local facades on the data.  These facades encapsulate the data for a single task
 	 * so we don't have to hand out references to the whole SharedDirectory.  Additionally, we only create them
@@ -129,9 +123,7 @@ export class TaskList extends DataObject<{
 
 	private get externalDataSnapshot(): ISharedMap {
 		if (this._externalDataSnapshot === undefined) {
-			throw new Error(
-				"The externalDataSnapshot SharedMap has not yet been initialized.",
-			);
+			throw new Error("The externalDataSnapshot SharedMap has not yet been initialized.");
 		}
 		return this._externalDataSnapshot;
 	}
@@ -148,9 +140,7 @@ export class TaskList extends DataObject<{
 	private get externalTaskListId(): string {
 		this._externalTaskListId = this.root.get(this.taskListIdKey);
 		if (this._externalTaskListId === undefined) {
-			throw new Error(
-				"The externalTaskListId property has not yet been initialized.",
-			);
+			throw new Error("The externalTaskListId property has not yet been initialized.");
 		}
 		return this._externalTaskListId;
 	}
@@ -162,11 +152,7 @@ export class TaskList extends DataObject<{
 	 */
 	private _demoErrorFlagCount: number = 0;
 
-	public readonly addDraftTask = (
-		id: string,
-		name: string,
-		priority: number,
-	): void => {
+	public readonly addDraftTask = (id: string, name: string, priority: number): void => {
 		if (this.tasks.get(id) !== undefined) {
 			throw new Error("Task already exists");
 		}
@@ -176,9 +162,7 @@ export class TaskList extends DataObject<{
 		// externalDataSnapshot map will get updated when the data syncs back
 		draftNameString.insertText(0, name);
 
-		const draftPriorityCell = SharedCell.create(
-			this.runtime,
-		) as ISharedCell<number>;
+		const draftPriorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
 
 		draftPriorityCell.set(priority);
 
@@ -284,10 +268,7 @@ export class TaskList extends DataObject<{
 			}
 			const data = responseBody.taskList as ITaskData;
 			incomingExternalData = Object.entries(data);
-			console.log(
-				"TASK-LIST: Data imported from service.",
-				incomingExternalData,
-			);
+			console.log("TASK-LIST: Data imported from service.", incomingExternalData);
 		} catch (error) {
 			console.error(`Task list fetch failed due to an error:\n${error}`);
 
@@ -302,8 +283,7 @@ export class TaskList extends DataObject<{
 			{ name: incomingName, priority: incomingPriority },
 		] of incomingExternalData) {
 			// Write external data into externalDataSnapshot map.
-			const currentTask =
-				this.externalDataSnapshot.get<ExternalSnapshotTask>(id);
+			const currentTask = this.externalDataSnapshot.get<ExternalSnapshotTask>(id);
 			// Create a new task because it doesn't exist already
 			if (currentTask === undefined) {
 				const externalDataSnapshotTask: ExternalSnapshotTask = {
@@ -358,9 +338,7 @@ export class TaskList extends DataObject<{
 		this._demoErrorFlagCount++;
 		// Force update failures every 3 calls to showcase retry logic.
 		if (this._demoErrorFlagCount % 3 === 0) {
-			throw new Error(
-				"Simulated error to demonstrate failure writing to external service.",
-			);
+			throw new Error("Simulated error to demonstrate failure writing to external service.");
 		}
 		const tasks = this.getDraftTasks();
 		const formattedTasks = {};
@@ -390,9 +368,7 @@ export class TaskList extends DataObject<{
 		}
 	};
 
-	protected async initializingFirstTime(
-		props: IBaseDocumentInitialState,
-	): Promise<void> {
+	protected async initializingFirstTime(props: IBaseDocumentInitialState): Promise<void> {
 		const externalTaskListId = props.externalTaskListId;
 		if (externalTaskListId === undefined) {
 			throw new Error(
@@ -429,9 +405,7 @@ export class TaskList extends DataObject<{
 	 * @remarks This will allow the Customer Service to pass on the container information
 	 * to the Fluid Service to send the signal that some new information has come through.
 	 */
-	private async registerWithCustomerService(
-		containerUrlData: IResolvedUrl,
-	): Promise<void> {
+	private async registerWithCustomerService(containerUrlData: IResolvedUrl): Promise<void> {
 		if (this.externalTaskListId === undefined) {
 			throw new Error("externalTaskListId is undefined");
 		}
@@ -446,21 +420,18 @@ export class TaskList extends DataObject<{
 			console.log(
 				`TASK-LIST: Registering client ${containerUrlData.url} with customer service...`,
 			);
-			await fetch(
-				`http://localhost:${customerServicePort}/register-session-url`,
-				{
-					method: "POST",
-					headers: {
-						"Access-Control-Allow-Origin": "*",
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({
-						tenantId,
-						documentId,
-						externalTaskListId: this.externalTaskListId,
-					}),
+			await fetch(`http://localhost:${customerServicePort}/register-session-url`, {
+				method: "POST",
+				headers: {
+					"Access-Control-Allow-Origin": "*",
+					"Content-Type": "application/json",
 				},
-			);
+				body: JSON.stringify({
+					tenantId,
+					documentId,
+					externalTaskListId: this.externalTaskListId,
+				}),
+			});
 		} catch (error) {
 			const message = `Customer service registration failed:\n${error}`;
 			throw new Error(message);
@@ -476,9 +447,8 @@ export class TaskList extends DataObject<{
 			throw new Error("externalTaskListId was not initialized");
 		}
 
-		const externalDataSnapshot = this.root.get<IFluidHandle<ISharedMap>>(
-			"externalDataSnapshot",
-		);
+		const externalDataSnapshot =
+			this.root.get<IFluidHandle<ISharedMap>>("externalDataSnapshot");
 		if (externalDataSnapshot === undefined) {
 			throw new Error("externalDataSnapshot was not initialized");
 		}
@@ -566,9 +536,7 @@ export class BaseDocument extends DataObject implements IBaseDocument {
 	 * {@inheritDoc IBaseDocument.addTaskList}
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
-	public readonly addTaskList = async (
-		props: IBaseDocumentInitialState,
-	): Promise<void> => {
+	public readonly addTaskList = async (props: IBaseDocumentInitialState): Promise<void> => {
 		if (this.taskListCollection.has(props.externalTaskListId)) {
 			throw new Error(
 				`task list ${props.externalTaskListId} already exists on this collection`,
@@ -621,11 +589,10 @@ export class BaseDocument extends DataObject implements IBaseDocument {
 	}
 }
 
-export const BaseDocumentInstantiationFactory =
-	new DataObjectFactory<BaseDocument>(
-		"base-document",
-		BaseDocument,
-		[],
-		{},
-		new Map([TaskListInstantiationFactory.registryEntry]),
-	);
+export const BaseDocumentInstantiationFactory = new DataObjectFactory<BaseDocument>(
+	"base-document",
+	BaseDocument,
+	[],
+	{},
+	new Map([TaskListInstantiationFactory.registryEntry]),
+);

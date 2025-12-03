@@ -11,23 +11,12 @@
  * Current version: 2.74.0
  */
 
-import type {
-	FullType,
-	MinimalType,
-	requireAssignableTo,
-	TypeOnly,
-} from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/test-utils-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> =
-	| TypeOnly<T>
-	| MinimalType<T>
-	| FullType<T>
-	| typeof old
-	| typeof current
-	| requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -36,11 +25,7 @@ declare type MakeUnusedImportErrorsGoAway<T> =
  * typeValidation.broken:
  * "Class_LoaderContainerTracker": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_LoaderContainerTracker =
-	requireAssignableTo<
-		TypeOnly<old.LoaderContainerTracker>,
-		TypeOnly<current.LoaderContainerTracker>
-	>;
+declare type old_as_current_for_Class_LoaderContainerTracker = requireAssignableTo<TypeOnly<old.LoaderContainerTracker>, TypeOnly<current.LoaderContainerTracker>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -49,11 +34,7 @@ declare type old_as_current_for_Class_LoaderContainerTracker =
  * typeValidation.broken:
  * "Class_LoaderContainerTracker": {"backCompat": false}
  */
-declare type current_as_old_for_Class_LoaderContainerTracker =
-	requireAssignableTo<
-		TypeOnly<current.LoaderContainerTracker>,
-		TypeOnly<old.LoaderContainerTracker>
-	>;
+declare type current_as_old_for_Class_LoaderContainerTracker = requireAssignableTo<TypeOnly<current.LoaderContainerTracker>, TypeOnly<old.LoaderContainerTracker>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -62,11 +43,7 @@ declare type current_as_old_for_Class_LoaderContainerTracker =
  * typeValidation.broken:
  * "ClassStatics_LoaderContainerTracker": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_LoaderContainerTracker =
-	requireAssignableTo<
-		TypeOnly<typeof current.LoaderContainerTracker>,
-		TypeOnly<typeof old.LoaderContainerTracker>
-	>;
+declare type current_as_old_for_ClassStatics_LoaderContainerTracker = requireAssignableTo<TypeOnly<typeof current.LoaderContainerTracker>, TypeOnly<typeof old.LoaderContainerTracker>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -75,11 +52,7 @@ declare type current_as_old_for_ClassStatics_LoaderContainerTracker =
  * typeValidation.broken:
  * "Function_createAndAttachContainer": {"backCompat": false}
  */
-declare type current_as_old_for_Function_createAndAttachContainer =
-	requireAssignableTo<
-		TypeOnly<typeof current.createAndAttachContainer>,
-		TypeOnly<typeof old.createAndAttachContainer>
-	>;
+declare type current_as_old_for_Function_createAndAttachContainer = requireAssignableTo<TypeOnly<typeof current.createAndAttachContainer>, TypeOnly<typeof old.createAndAttachContainer>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -88,11 +61,7 @@ declare type current_as_old_for_Function_createAndAttachContainer =
  * typeValidation.broken:
  * "Interface_IOpProcessingController": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IOpProcessingController =
-	requireAssignableTo<
-		TypeOnly<old.IOpProcessingController>,
-		TypeOnly<current.IOpProcessingController>
-	>;
+declare type old_as_current_for_Interface_IOpProcessingController = requireAssignableTo<TypeOnly<old.IOpProcessingController>, TypeOnly<current.IOpProcessingController>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -101,11 +70,7 @@ declare type old_as_current_for_Interface_IOpProcessingController =
  * typeValidation.broken:
  * "Interface_IOpProcessingController": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IOpProcessingController =
-	requireAssignableTo<
-		TypeOnly<current.IOpProcessingController>,
-		TypeOnly<old.IOpProcessingController>
-	>;
+declare type current_as_old_for_Interface_IOpProcessingController = requireAssignableTo<TypeOnly<current.IOpProcessingController>, TypeOnly<old.IOpProcessingController>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -114,11 +79,7 @@ declare type current_as_old_for_Interface_IOpProcessingController =
  * typeValidation.broken:
  * "Interface_IProvideTestFluidObject": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IProvideTestFluidObject =
-	requireAssignableTo<
-		TypeOnly<old.IProvideTestFluidObject>,
-		TypeOnly<current.IProvideTestFluidObject>
-	>;
+declare type old_as_current_for_Interface_IProvideTestFluidObject = requireAssignableTo<TypeOnly<old.IProvideTestFluidObject>, TypeOnly<current.IProvideTestFluidObject>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -127,11 +88,7 @@ declare type old_as_current_for_Interface_IProvideTestFluidObject =
  * typeValidation.broken:
  * "Interface_IProvideTestFluidObject": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IProvideTestFluidObject =
-	requireAssignableTo<
-		TypeOnly<current.IProvideTestFluidObject>,
-		TypeOnly<old.IProvideTestFluidObject>
-	>;
+declare type current_as_old_for_Interface_IProvideTestFluidObject = requireAssignableTo<TypeOnly<current.IProvideTestFluidObject>, TypeOnly<old.IProvideTestFluidObject>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -140,11 +97,7 @@ declare type current_as_old_for_Interface_IProvideTestFluidObject =
  * typeValidation.broken:
  * "Interface_ITestFluidObject": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ITestFluidObject =
-	requireAssignableTo<
-		TypeOnly<old.ITestFluidObject>,
-		TypeOnly<current.ITestFluidObject>
-	>;
+declare type old_as_current_for_Interface_ITestFluidObject = requireAssignableTo<TypeOnly<old.ITestFluidObject>, TypeOnly<current.ITestFluidObject>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -153,8 +106,4 @@ declare type old_as_current_for_Interface_ITestFluidObject =
  * typeValidation.broken:
  * "Interface_ITestFluidObject": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ITestFluidObject =
-	requireAssignableTo<
-		TypeOnly<current.ITestFluidObject>,
-		TypeOnly<old.ITestFluidObject>
-	>;
+declare type current_as_old_for_Interface_ITestFluidObject = requireAssignableTo<TypeOnly<current.ITestFluidObject>, TypeOnly<old.ITestFluidObject>>

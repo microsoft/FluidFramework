@@ -178,10 +178,7 @@
 	"compounds": [
 		{
 			"name": "Debug Current e2e test (tinylicious)",
-			"configurations": [
-				"tinylicious",
-				"Client: Debug Current e2e test (tinylicious)",
-			],
+			"configurations": ["tinylicious", "Client: Debug Current e2e test (tinylicious)"],
 			"presentation": {
 				"group": "e2e-tests",
 				"order": 2,
@@ -215,10 +212,7 @@
 			"description": "Show console output?",
 			"default": "",
 			"type": "pickString",
-			"options": [
-				{ "label": "No", "value": "" },
-				{ "label": "Yes", "value": "1" },
-			],
+			"options": [{ "label": "No", "value": "" }, { "label": "Yes", "value": "1" }],
 		},
 		{
 			"id": "debugOldFluidModules",

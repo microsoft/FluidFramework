@@ -12,8 +12,8 @@ import type {
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeMaintenanceCallbackArgs,
 } from "../mergeTreeDeltaCallback.js";
-import type { MergeBlock } from "../mergeTreeNodes.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
+import type { MergeBlock } from "../mergeTreeNodes.js";
 import {
 	PartialSequenceLengths,
 	verifyExpectedPartialLengths,
@@ -21,8 +21,8 @@ import {
 } from "../partialLengths.js";
 import {
 	LocalReconnectingPerspective,
-	type Perspective,
 	PriorPerspective,
+	type Perspective,
 } from "../perspective.js";
 import type { OperationStamp } from "../stamps.js";
 
@@ -75,11 +75,7 @@ export interface MockRemoteClient {
  * );
  * ```
  */
-export function makeRemoteClient({
-	clientId,
-}: {
-	clientId: number;
-}): MockRemoteClient {
+export function makeRemoteClient({ clientId }: { clientId: number }): MockRemoteClient {
 	return {
 		perspectiveAt({ refSeq }: { refSeq: number }): Perspective {
 			return new PriorPerspective(refSeq, clientId);
@@ -149,11 +145,7 @@ function getPartialLengths(
 	partialLen: number | undefined;
 	actualLen: number;
 } {
-	const partialLen = mergeBlock.partialLengths?.getPartialLength(
-		seq,
-		clientId,
-		localSeq,
-	);
+	const partialLen = mergeBlock.partialLengths?.getPartialLength(seq, clientId, localSeq);
 
 	const perspective =
 		localSeq === undefined
@@ -181,11 +173,7 @@ export function validatePartialLengths(
 	minRefSeqForLocalSeq = new Map<number, number>(),
 	mergeBlock: MergeBlock = mergeTree.root,
 ): void {
-	function validatePartialLengthAt(
-		seq: number,
-		localSeq?: number,
-		len?: number,
-	): void {
+	function validatePartialLengthAt(seq: number, localSeq?: number, len?: number): void {
 		const { partialLen, actualLen } = getPartialLengths(
 			clientId,
 			seq,
@@ -203,11 +191,7 @@ export function validatePartialLengths(
 			"Partial length did not match value obtained from walking all segments in the block.",
 		);
 		if (len !== undefined) {
-			assert.equal(
-				partialLen,
-				len,
-				"Partial length did not match expected value.",
-			);
+			assert.equal(partialLen, len, "Partial length did not match expected value.");
 		}
 	}
 
@@ -224,11 +208,7 @@ export function validatePartialLengths(
 		// to ensure whenever the removal of a segment applies, so does existence of that segment), at which point we could validate for a wider range
 		// of local perspectives.
 		for (const [localSeq, minRefSeq] of minRefSeqForLocalSeq.entries()) {
-			for (
-				let refSeq = minRefSeq;
-				refSeq <= mergeTree.collabWindow.currentSeq;
-				refSeq++
-			) {
+			for (let refSeq = minRefSeq; refSeq <= mergeTree.collabWindow.currentSeq; refSeq++) {
 				validatePartialLengthAt(refSeq, localSeq);
 			}
 		}
@@ -269,8 +249,7 @@ export function validateRefCount(collection?: LocalReferenceCollection): void {
 export function useStrictPartialLengthChecks(): void {
 	beforeEach("Enable strict partial lengths", () => {
 		PartialSequenceLengths.options.verifier = verifyPartialLengths;
-		PartialSequenceLengths.options.verifyExpected =
-			verifyExpectedPartialLengths;
+		PartialSequenceLengths.options.verifyExpected = verifyExpectedPartialLengths;
 	});
 
 	afterEach("Disable strict partial lengths", () => {
@@ -279,10 +258,7 @@ export function useStrictPartialLengthChecks(): void {
 	});
 }
 
-function createObliterateTestBody({
-	action,
-	expectedText,
-}: ObliterateTestArgs): () => void {
+function createObliterateTestBody({ action, expectedText }: ObliterateTestArgs): () => void {
 	return () => {
 		const events: number[] = [];
 

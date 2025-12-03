@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import type { Jsonable } from "@fluidframework/datastore-definitions/internal";
+import { strict as assert } from "assert";
+
+import { Jsonable } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import { strict as assert } from "assert";
 
 import { Json1Factory, SharedJson1 } from "../index.js";
 
@@ -18,10 +19,7 @@ const createLocalOT = (id: string) => {
 	return factory.create(new MockFluidDataStoreRuntime(), id) as SharedJson1;
 };
 
-function createConnectedOT(
-	id: string,
-	runtimeFactory: MockContainerRuntimeFactory,
-) {
+function createConnectedOT(id: string, runtimeFactory: MockContainerRuntimeFactory) {
 	// Create and connect a second SharedCell.
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
@@ -30,11 +28,7 @@ function createConnectedOT(
 		objectStorage: new MockStorage(),
 	};
 
-	const ot = new SharedJson1(
-		id,
-		dataStoreRuntime,
-		(Json1Factory as any).Attributes,
-	);
+	const ot = new SharedJson1(id, dataStoreRuntime, (Json1Factory as any).Attributes);
 	ot.connect(services);
 	return ot;
 }

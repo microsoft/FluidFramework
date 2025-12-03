@@ -26,18 +26,16 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 
 import {
+	todoListContainerSchema,
 	initializeAppForNewContainer,
 	loadAppFromExistingContainer,
 	type TodoListContainerSchema,
-	todoListContainerSchema,
 } from "../src/fluid.js";
 import type { TodoList } from "../src/schema.js";
 import { TodoListAppView } from "../src/view.js";
 
 // The local server needs to be shared across the Loader instances for collaboration to happen
-const localServer = LocalDeltaConnectionServer.create(
-	new LocalSessionStorageDbFactory(),
-);
+const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
 
 const urlResolver = new LocalResolver();
 
@@ -51,10 +49,7 @@ export async function getSessionStorageContainer(
 	containerId: string,
 	containerRuntimeFactory: IRuntimeFactory,
 	createNew: boolean,
-): Promise<{
-	container: IContainer;
-	attach: (() => Promise<void>) | undefined;
-}> {
+): Promise<{ container: IContainer; attach: (() => Promise<void>) | undefined }> {
 	const documentServiceFactory = new LocalDocumentServiceFactory(localServer);
 	const url = `${window.location.origin}/${containerId}`;
 
@@ -82,10 +77,7 @@ export async function getSessionStorageContainer(
 		// We're not actually using the code proposal (our code loader always loads the same module regardless of the
 		// proposal), but the IContainer will only give us a NullRuntime if there's no proposal.  So we'll use a fake
 		// proposal.
-		container = await loader.createDetachedContainer({
-			package: "",
-			config: {},
-		});
+		container = await loader.createDetachedContainer({ package: "", config: {} });
 		attach = async (): Promise<void> => container.attach({ url });
 	} else {
 		container = await loader.resolve({ url });
@@ -120,9 +112,7 @@ async function createContainerAndRenderInElement(
 	);
 
 	// Get the Default Object from the Container
-	const fluidContainer = await createFluidContainer<TodoListContainerSchema>({
-		container,
-	});
+	const fluidContainer = await createFluidContainer<TodoListContainerSchema>({ container });
 
 	let appModel: TodoList;
 	if (createNewFlag) {
@@ -134,9 +124,7 @@ async function createContainerAndRenderInElement(
 
 	const contentDiv = document.querySelector("#content") as HTMLDivElement;
 	const root = createRoot(contentDiv);
-	root.render(
-		<TodoListAppView todoList={appModel} container={fluidContainer} />,
-	);
+	root.render(<TodoListAppView todoList={appModel} container={fluidContainer} />);
 }
 
 /**

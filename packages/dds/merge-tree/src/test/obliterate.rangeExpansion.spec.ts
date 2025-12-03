@@ -15,19 +15,11 @@ describe("obliterate", () => {
 		action: (helper) => {
 			helper.insertText("A", 0, "|ABC>");
 			helper.processAllOps();
-			helper.obliterateRange(
-				"A",
-				{ pos: 0, side: Side.After },
-				{ pos: 4, side: Side.Before },
-			);
+			helper.obliterateRange("A", { pos: 0, side: Side.After }, { pos: 4, side: Side.Before });
 			// not concurrent to A's obliterate - ops on the same client are never concurrent to one another
 			// because they are all sequenced locally
 			helper.insertText("A", 1, "AAA");
-			helper.obliterateRange(
-				"B",
-				{ pos: 0, side: Side.After },
-				{ pos: 4, side: Side.Before },
-			);
+			helper.obliterateRange("B", { pos: 0, side: Side.After }, { pos: 4, side: Side.Before });
 			helper.insertText("B", 1, "BBB");
 		},
 		expectedText: "|BBB>",
@@ -37,26 +29,14 @@ describe("obliterate", () => {
 		action: (helper) => {
 			helper.insertText("A", 0, "0xx12345678");
 			helper.processAllOps();
-			helper.obliterateRange(
-				"A",
-				{ pos: 0, side: Side.After },
-				{ pos: 2, side: Side.After },
-			);
-			helper.obliterateRange(
-				"B",
-				{ pos: 0, side: Side.After },
-				{ pos: 2, side: Side.After },
-			);
+			helper.obliterateRange("A", { pos: 0, side: Side.After }, { pos: 2, side: Side.After });
+			helper.obliterateRange("B", { pos: 0, side: Side.After }, { pos: 2, side: Side.After });
 			// B won the obliterate, so this segment should be obliterated on insertion
 			helper.insertText("A", 1, "AAAAAAAAAA");
 			// Nonetheless, all clients should recognize that subsequent ops from A won't have realized this (until A's refSeq advances beyond
 			// acking B's obliterate). At one point this caused 0xa3f because other clients didn't realize that the positions here still assume
 			// existence of the 'AAAAAAAAAA' segment.
-			helper.obliterateRange(
-				"A",
-				{ pos: 6, side: Side.After },
-				{ pos: 15, side: Side.After },
-			);
+			helper.obliterateRange("A", { pos: 6, side: Side.After }, { pos: 15, side: Side.After });
 			helper.processAllOps();
 		},
 		expectedText: "0678",
@@ -66,11 +46,7 @@ describe("obliterate", () => {
 		action: (helper) => {
 			helper.insertText("A", 0, "hello world");
 			helper.processAllOps();
-			helper.obliterateRange(
-				"A",
-				{ pos: 2, side: Side.Before },
-				{ pos: 4, side: Side.After },
-			);
+			helper.obliterateRange("A", { pos: 2, side: Side.Before }, { pos: 4, side: Side.After });
 			// do not obliterate the XYZ - outside the obliterated range without expansion
 			helper.insertText("B", 0, "XYZ");
 		},
@@ -271,16 +247,8 @@ describe("overlapping edits", () => {
 		action: (helper) => {
 			helper.insertText("A", 0, "hello world");
 			helper.processAllOps();
-			helper.obliterateRange(
-				"A",
-				{ pos: 2, side: Side.Before },
-				{ pos: 3, side: Side.After },
-			);
-			helper.obliterateRange(
-				"B",
-				{ pos: 4, side: Side.Before },
-				{ pos: 5, side: Side.After },
-			);
+			helper.obliterateRange("A", { pos: 2, side: Side.Before }, { pos: 3, side: Side.After });
+			helper.obliterateRange("B", { pos: 4, side: Side.Before }, { pos: 5, side: Side.After });
 		},
 		expectedText: "heworld",
 	});
@@ -289,11 +257,7 @@ describe("overlapping edits", () => {
 		action: (helper) => {
 			helper.insertText("A", 0, "hello world");
 			helper.processAllOps();
-			helper.obliterateRange(
-				"A",
-				{ pos: 2, side: Side.Before },
-				{ pos: 5, side: Side.After },
-			);
+			helper.obliterateRange("A", { pos: 2, side: Side.Before }, { pos: 5, side: Side.After });
 			helper.removeRange("B", 3, 4);
 		},
 		expectedText: "heworld",
@@ -303,11 +267,7 @@ describe("overlapping edits", () => {
 		action: (helper) => {
 			helper.insertText("A", 0, "hello world");
 			helper.processAllOps();
-			helper.obliterateRange(
-				"A",
-				{ pos: 1, side: Side.After },
-				{ pos: 5, side: Side.After },
-			);
+			helper.obliterateRange("A", { pos: 1, side: Side.After }, { pos: 5, side: Side.After });
 			helper.removeRange("B", 1, 2);
 		},
 		expectedText: "hworld",
@@ -317,11 +277,7 @@ describe("overlapping edits", () => {
 		action: (helper) => {
 			helper.insertText("A", 0, "hello world");
 			helper.processAllOps();
-			helper.obliterateRange(
-				"A",
-				{ pos: 2, side: Side.Before },
-				{ pos: 4, side: Side.After },
-			);
+			helper.obliterateRange("A", { pos: 2, side: Side.Before }, { pos: 4, side: Side.After });
 			helper.removeRange("B", 4, 6);
 		},
 		expectedText: "heworld",
@@ -332,11 +288,7 @@ describe("overlapping edits", () => {
 			helper.insertText("A", 0, "hello world");
 			helper.processAllOps();
 			helper.removeRange("A", 4, 6);
-			helper.obliterateRange(
-				"B",
-				{ pos: 2, side: Side.Before },
-				{ pos: 4, side: Side.After },
-			);
+			helper.obliterateRange("B", { pos: 2, side: Side.Before }, { pos: 4, side: Side.After });
 		},
 		expectedText: "heworld",
 	});
@@ -346,11 +298,7 @@ describe("overlapping edits", () => {
 			helper.insertText("A", 0, "hello world");
 			helper.processAllOps();
 			helper.removeRange("A", 2, 4);
-			helper.obliterateRange(
-				"B",
-				{ pos: 3, side: Side.After },
-				{ pos: 6, side: Side.After },
-			);
+			helper.obliterateRange("B", { pos: 3, side: Side.After }, { pos: 6, side: Side.After });
 		},
 		expectedText: "heorld",
 	});
@@ -363,16 +311,8 @@ describe("overlapping edits", () => {
 		action: (helper) => {
 			helper.insertText("A", 0, "0123456789");
 			helper.processAllOps();
-			helper.obliterateRange(
-				"A",
-				{ pos: 7, side: Side.After },
-				{ pos: 8, side: Side.After },
-			);
-			helper.obliterateRange(
-				"C",
-				{ pos: 1, side: Side.Before },
-				{ pos: 8, side: Side.After },
-			);
+			helper.obliterateRange("A", { pos: 7, side: Side.After }, { pos: 8, side: Side.After });
+			helper.obliterateRange("C", { pos: 1, side: Side.Before }, { pos: 8, side: Side.After });
 			helper.insertText("B", 5, "V");
 			helper.processAllOps();
 		},
@@ -399,17 +339,9 @@ describe("sided obliterates", () => {
 			// in order to get the right behavior, the range needs to start after the previous position
 			// if so, for a range ( 2, 4 ) itCorrectlyObliterates would need to be after 1 and before 5
 			// h e( l l o )_ w o r l d
-			helper.obliterateRange(
-				"A",
-				{ pos: 1, side: Side.After },
-				{ pos: 5, side: Side.Before },
-			);
+			helper.obliterateRange("A", { pos: 1, side: Side.After }, { pos: 5, side: Side.Before });
 			// [2, 4]: before 2, after 4 => h e [l l o] _ w o r l d
-			helper.obliterateRange(
-				"B",
-				{ pos: 2, side: Side.Before },
-				{ pos: 4, side: Side.After },
-			);
+			helper.obliterateRange("B", { pos: 2, side: Side.Before }, { pos: 4, side: Side.After });
 			helper.insertText("C", 2, "123");
 			helper.insertText("C", 8, "456");
 		},
@@ -425,11 +357,7 @@ describe("sided obliterates", () => {
 			helper.processAllOps();
 			helper.insertText("A", 2, "D");
 			// ( 1]: after 0, after 1 => A( B] D C
-			helper.obliterateRange(
-				"A",
-				{ pos: 0, side: Side.After },
-				{ pos: 1, side: Side.After },
-			);
+			helper.obliterateRange("A", { pos: 0, side: Side.After }, { pos: 1, side: Side.After });
 			// included in the range -- should get obliterated
 			helper.insertText("B", 1, "E");
 			// [1 ): before 1, before 2 => A E [B )C
@@ -448,17 +376,9 @@ describe("sided obliterates", () => {
 			helper.processAllOps();
 
 			// ( 2, 4 ): after 1, before 5 => h e( l l o )_ w o r l d
-			helper.obliterateRange(
-				"A",
-				{ pos: 1, side: Side.After },
-				{ pos: 5, side: Side.Before },
-			);
+			helper.obliterateRange("A", { pos: 1, side: Side.After }, { pos: 5, side: Side.Before });
 			// ( 2, 4]: after 1, after 4 => h e( l l o] _ w o r l d
-			helper.obliterateRange(
-				"B",
-				{ pos: 2, side: Side.After },
-				{ pos: 4, side: Side.Before },
-			);
+			helper.obliterateRange("B", { pos: 2, side: Side.After }, { pos: 4, side: Side.Before });
 			helper.insertText("C", 2, "123");
 			// for this to be interesting, might want to insert at 5
 			helper.insertText("C", 4, "456");
@@ -472,11 +392,7 @@ describe("sided obliterates", () => {
 			helper.processAllOps();
 
 			// ( 2, 4 ): after 1, before 5 => h e( l l o )_ w o r l d
-			helper.obliterateRange(
-				"A",
-				{ pos: 1, side: Side.After },
-				{ pos: 5, side: Side.Before },
-			);
+			helper.obliterateRange("A", { pos: 1, side: Side.After }, { pos: 5, side: Side.Before });
 			// [2, 4 ): before 2, before 5 => h e [l l o )_ w o r l d
 			helper.obliterateRange(
 				"B",
@@ -496,17 +412,9 @@ describe("sided obliterates", () => {
 			helper.processAllOps();
 
 			// [2, 4]: before 2, after 4 => h e [l l o] _ w o r l d
-			helper.obliterateRange(
-				"A",
-				{ pos: 2, side: Side.Before },
-				{ pos: 4, side: Side.After },
-			);
+			helper.obliterateRange("A", { pos: 2, side: Side.Before }, { pos: 4, side: Side.After });
 			// ( 2, 4]: after 1, after 4 => h e( l l o] _ w o r l d
-			helper.obliterateRange(
-				"B",
-				{ pos: 1, side: Side.After },
-				{ pos: 4, side: Side.After },
-			);
+			helper.obliterateRange("B", { pos: 1, side: Side.After }, { pos: 4, side: Side.After });
 
 			helper.insertText("C", 2, "123"); // h e( 123 l l o] _ w o r l d
 			helper.insertText("C", 8, "456"); // h e( 123 l l o) 456 _ w o r l d
@@ -527,11 +435,7 @@ describe("sided obliterates", () => {
 			helper.processAllOps();
 
 			// [2, 4]: before 2, after 4 => h e [l l o] _ w o r l d
-			helper.obliterateRange(
-				"A",
-				{ pos: 2, side: Side.Before },
-				{ pos: 4, side: Side.After },
-			);
+			helper.obliterateRange("A", { pos: 2, side: Side.Before }, { pos: 4, side: Side.After });
 			// [2, 4 ): before 2, before 5 => h e [l l o )_ w o r l d
 			helper.obliterateRange(
 				"B",

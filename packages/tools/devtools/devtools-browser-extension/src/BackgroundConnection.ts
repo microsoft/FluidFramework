@@ -5,22 +5,22 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
-	devtoolsMessageSource,
 	type IDevtoolsMessage,
 	type IMessageRelay,
 	type IMessageRelayEvents,
 	type ISourcedDevtoolsMessage,
+	devtoolsMessageSource,
 	isDevtoolsMessage,
 } from "@fluidframework/devtools-core/internal";
 
 import { browser } from "./Globals.js";
 import {
 	type DevToolsInitMessage,
+	type TypedPortConnection,
 	devToolsInitAcknowledgementType,
 	devToolsInitMessageType,
 	extensionPopupMessageSource,
 	extensionViewMessageSource,
-	type TypedPortConnection,
 } from "./messaging/index.js";
 
 /**
@@ -124,10 +124,7 @@ export class BackgroundConnection
 			source: this.messageSource,
 		};
 
-		this.logDebugMessage(
-			`Posting message to background service:`,
-			sourcedMessage,
-		);
+		this.logDebugMessage(`Posting message to background service:`, sourcedMessage);
 		this.backgroundServiceConnection.postMessage(sourcedMessage);
 	}
 
@@ -176,9 +173,7 @@ export class BackgroundConnection
 	 * Log the disconnection and re-establish the connection.
 	 */
 	private readonly onBackgroundServiceDisconnect = (): void => {
-		this.logDebugMessage(
-			"Disconnected from Background script. Attempting to reconnect...",
-		);
+		this.logDebugMessage("Disconnected from Background script. Attempting to reconnect...");
 
 		//  No need to clean up the disconnected event listener here since if the event emitter is not accessible,
 		// even if it has listeners attached to it, it will be garbage collected.
@@ -207,9 +202,7 @@ export class BackgroundConnection
 		this.postMessage(initMessage);
 
 		// Bind listeners
-		this.backgroundServiceConnection.onMessage.addListener(
-			this.onBackgroundServiceMessage,
-		);
+		this.backgroundServiceConnection.onMessage.addListener(this.onBackgroundServiceMessage);
 		this.backgroundServiceConnection.onDisconnect.addListener(
 			this.onBackgroundServiceDisconnect,
 		);

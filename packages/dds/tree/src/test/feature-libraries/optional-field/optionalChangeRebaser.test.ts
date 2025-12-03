@@ -5,32 +5,28 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	describeStress,
-	StressMode,
-} from "@fluid-private/stochastic-test-utils";
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
+import type { CrossFieldManager } from "../../../feature-libraries/index.js";
 import {
 	type ChangeAtomId,
 	type ChangeAtomIdMap,
 	type ChangesetLocalId,
-	makeAnonChange,
 	type RevisionMetadataSource,
 	type RevisionTag,
 	type TaggedChange,
 	type TreeNodeSchemaIdentifier,
+	makeAnonChange,
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
-import type { CrossFieldManager } from "../../../feature-libraries/index.js";
 import {
 	type FieldChangeDelta,
 	type NodeChangeComposer,
 	type NodeChangeRebaser,
 	type NodeId,
 	type RebaseRevisionMetadata,
-	rebaseRevisionMetadataFromInfo,
 	type ToDelta,
+	rebaseRevisionMetadataFromInfo,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
@@ -46,7 +42,6 @@ import {
 	idAllocatorFromMaxId,
 	setInNestedMap,
 } from "../../../util/index.js";
-import { ChangesetWrapper } from "../../changesetWrapper.js";
 import {
 	type ChildStateGenerator,
 	type FieldStateTree,
@@ -60,17 +55,15 @@ import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js"
 // since OptionalChangeset is not generic over the child changeset type.
 // Search this file for "as any" and "as NodeChangeset"
 import { TestChange } from "../../testChange.js";
-import { TestNodeId } from "../../testNodeId.js";
 import {
 	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
 	isDeltaVisible,
 } from "../../utils.js";
-import {
-	assertTaggedEqual,
-	Change,
-	verifyContextChain,
-} from "./optionalFieldUtils.js";
+import { TestNodeId } from "../../testNodeId.js";
+import { Change, assertTaggedEqual, verifyContextChain } from "./optionalFieldUtils.js";
+import { ChangesetWrapper } from "../../changesetWrapper.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 type RevisionTagMinter = () => RevisionTag;
 
@@ -125,9 +118,7 @@ function toDeltaWrapped(change: TaggedChange<WrappedChangeset>) {
 	);
 }
 
-function getMaxId(
-	...changes: OptionalChangeset[]
-): ChangesetLocalId | undefined {
+function getMaxId(...changes: OptionalChangeset[]): ChangesetLocalId | undefined {
 	let max: ChangesetLocalId | undefined;
 	const ingest = (candidate: ChangesetLocalId | undefined) => {
 		if (max === undefined || (candidate !== undefined && candidate > max)) {
@@ -151,10 +142,7 @@ function getMaxId(
 
 		if (change.valueReplace !== undefined) {
 			ingest(change.valueReplace.dst.localId);
-			if (
-				change.valueReplace.src !== undefined &&
-				change.valueReplace.src !== "self"
-			) {
+			if (change.valueReplace.src !== undefined && change.valueReplace.src !== "self") {
 				ingest(change.valueReplace.src.localId);
 			}
 		}
@@ -199,11 +187,9 @@ function rebase(
 
 	const metadata =
 		metadataArg ??
-		rebaseRevisionMetadataFromInfo(
-			defaultRevInfosFromChanges([base]),
-			undefined,
-			[base.revision],
-		);
+		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base]), undefined, [
+			base.revision,
+		]);
 	const moveEffects = failCrossFieldManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
 	const rebased = optionalChangeRebaser.rebase(
@@ -258,9 +244,7 @@ function compose(
 ): OptionalChangeset {
 	verifyContextChain(change1, change2);
 	const moveEffects = failCrossFieldManager;
-	const idAllocator = idAllocatorFromMaxId(
-		getMaxId(change1.change, change2.change),
-	);
+	const idAllocator = idAllocatorFromMaxId(getMaxId(change1.change, change2.change));
 	return optionalChangeRebaser.compose(
 		change1.change,
 		change2.change,
@@ -293,14 +277,9 @@ function assertWrappedChangesetsEquivalent(
 	assert.deepEqual(toDeltaWrapped(change1), toDeltaWrapped(change2));
 }
 
-type OptionalFieldTestState = FieldStateTree<
-	string | undefined,
-	WrappedChangeset
->;
+type OptionalFieldTestState = FieldStateTree<string | undefined, WrappedChangeset>;
 
-function computeChildChangeInputContext(
-	inputState: OptionalFieldTestState,
-): number[] {
+function computeChildChangeInputContext(inputState: OptionalFieldTestState): number[] {
 	// This is effectively a filter of the intentions from all edits such that it only includes
 	// intentions for edits which modify the same child as the final one in the changeset.
 	// Note: this takes a dependency on the fact that `generateChildStates` doesn't set matching string
@@ -333,175 +312,153 @@ type WrappedChangeset = ChangesetWrapper<OptionalChangeset>;
 /**
  * See {@link ChildStateGenerator}
  */
-const generateChildStates: ChildStateGenerator<
-	string | undefined,
-	WrappedChangeset
-> = function* (
-	state: OptionalFieldTestState,
-	tagFromIntention: (intention: number) => RevisionTag,
-	mintIntention: () => number,
-): Iterable<OptionalFieldTestState> {
-	const mintId: () => ChangeAtomId = () => {
-		return {
-			localId: mintIntention() as ChangesetLocalId,
+const generateChildStates: ChildStateGenerator<string | undefined, WrappedChangeset> =
+	function* (
+		state: OptionalFieldTestState,
+		tagFromIntention: (intention: number) => RevisionTag,
+		mintIntention: () => number,
+	): Iterable<OptionalFieldTestState> {
+		const mintId: () => ChangeAtomId = () => {
+			return {
+				localId: mintIntention() as ChangesetLocalId,
+			};
 		};
-	};
-	const edits = getSequentialEdits(state);
-	if (state.content !== undefined) {
-		const changeChildIntention = mintIntention();
-		const nodeId: NodeId = { localId: brand(0) };
-		yield {
-			content: state.content,
-			mostRecentEdit: {
-				changeset: tagWrappedChangeInline(
-					ChangesetWrapper.create(OptionalChange.buildChildChange(nodeId), [
-						nodeId,
-						TestChange.mint(
-							computeChildChangeInputContext(state),
-							changeChildIntention,
-						),
-					]),
-					tagFromIntention(changeChildIntention),
-				),
-				intention: changeChildIntention,
-				description: `ChildChange${changeChildIntention}`,
-			},
-			parent: state,
-		};
-
-		const setUndefinedIntention = mintIntention();
-		yield {
-			content: undefined,
-			mostRecentEdit: {
-				changeset: tagWrappedChangeInline(
-					ChangesetWrapper.create(OptionalChange.clear(false, mintId())),
-					tagFromIntention(setUndefinedIntention),
-				),
-				intention: setUndefinedIntention,
-				description: "Remove",
-			},
-			parent: state,
-		};
-	} else {
-		// Even if there is no content, optional field supports an explicit clear operation with LWW semantics,
-		// as a concurrent set operation may populate the field.
-		const setUndefinedIntention = mintIntention();
-		yield {
-			content: undefined,
-			mostRecentEdit: {
-				changeset: tagWrappedChangeInline(
-					ChangesetWrapper.create(OptionalChange.clear(true, mintId())),
-					tagFromIntention(setUndefinedIntention),
-				),
-				intention: setUndefinedIntention,
-				description: "Remove",
-			},
-			parent: state,
-		};
-	}
-
-	for (const value of ["A", "B"]) {
-		const setIntention = mintIntention();
-		const [fill, detach] = [mintId(), mintId()];
-		// Using length of the input context guarantees set operations generated at different times also have different
-		// values, which should tend to be easier to debug.
-		// This also makes the logic to determine intentions simpler.
-		const newContents = `${value},${edits.length}`;
-		yield {
-			content: newContents,
-			mostRecentEdit: {
-				changeset: tagWrappedChangeInline(
-					ChangesetWrapper.create(
-						OptionalChange.set(newContents, state.content === undefined, {
-							fill,
-							detach,
-						}),
+		const edits = getSequentialEdits(state);
+		if (state.content !== undefined) {
+			const changeChildIntention = mintIntention();
+			const nodeId: NodeId = { localId: brand(0) };
+			yield {
+				content: state.content,
+				mostRecentEdit: {
+					changeset: tagWrappedChangeInline(
+						ChangesetWrapper.create(OptionalChange.buildChildChange(nodeId), [
+							nodeId,
+							TestChange.mint(computeChildChangeInputContext(state), changeChildIntention),
+						]),
+						tagFromIntention(changeChildIntention),
 					),
-					tagFromIntention(setIntention),
-				),
-				intention: setIntention,
-				description: `Set${newContents}`,
-			},
-			parent: state,
-		};
-	}
+					intention: changeChildIntention,
+					description: `ChildChange${changeChildIntention}`,
+				},
+				parent: state,
+			};
 
-	if (state.mostRecentEdit !== undefined) {
-		const undoIntention = mintIntention();
-		// We don't use the `invert` helper here, as `TestChange.invert` has logic to negate the intention
-		// of the most recent edit. Instead, we want to mint a new intention. Having correct composition for
-		// the 'negate' operation is already tested via sandwich rebasing.
-		const invertTestChangeViaNewIntention = (
-			change: TestChange,
-		): TestChange => {
-			if ("inputContext" in change) {
-				return {
-					inputContext: change.outputContext,
-					outputContext: [...change.outputContext, undoIntention],
-					intentions: [undoIntention],
-				};
-			}
-			return TestChange.emptyChange;
-		};
+			const setUndefinedIntention = mintIntention();
+			yield {
+				content: undefined,
+				mostRecentEdit: {
+					changeset: tagWrappedChangeInline(
+						ChangesetWrapper.create(OptionalChange.clear(false, mintId())),
+						tagFromIntention(setUndefinedIntention),
+					),
+					intention: setUndefinedIntention,
+					description: "Remove",
+				},
+				parent: state,
+			};
+		} else {
+			// Even if there is no content, optional field supports an explicit clear operation with LWW semantics,
+			// as a concurrent set operation may populate the field.
+			const setUndefinedIntention = mintIntention();
+			yield {
+				content: undefined,
+				mostRecentEdit: {
+					changeset: tagWrappedChangeInline(
+						ChangesetWrapper.create(OptionalChange.clear(true, mintId())),
+						tagFromIntention(setUndefinedIntention),
+					),
+					intention: setUndefinedIntention,
+					description: "Remove",
+				},
+				parent: state,
+			};
+		}
 
-		const invertedNodeChanges: ChangeAtomIdMap<TestChange> = new Map();
-		forEachInNestedMap(
-			state.mostRecentEdit.changeset.change.nodes,
-			(node, revision, id) => {
+		for (const value of ["A", "B"]) {
+			const setIntention = mintIntention();
+			const [fill, detach] = [mintId(), mintId()];
+			// Using length of the input context guarantees set operations generated at different times also have different
+			// values, which should tend to be easier to debug.
+			// This also makes the logic to determine intentions simpler.
+			const newContents = `${value},${edits.length}`;
+			yield {
+				content: newContents,
+				mostRecentEdit: {
+					changeset: tagWrappedChangeInline(
+						ChangesetWrapper.create(
+							OptionalChange.set(newContents, state.content === undefined, {
+								fill,
+								detach,
+							}),
+						),
+						tagFromIntention(setIntention),
+					),
+					intention: setIntention,
+					description: `Set${newContents}`,
+				},
+				parent: state,
+			};
+		}
+
+		if (state.mostRecentEdit !== undefined) {
+			const undoIntention = mintIntention();
+			// We don't use the `invert` helper here, as `TestChange.invert` has logic to negate the intention
+			// of the most recent edit. Instead, we want to mint a new intention. Having correct composition for
+			// the 'negate' operation is already tested via sandwich rebasing.
+			const invertTestChangeViaNewIntention = (change: TestChange): TestChange => {
+				if ("inputContext" in change) {
+					return {
+						inputContext: change.outputContext,
+						outputContext: [...change.outputContext, undoIntention],
+						intentions: [undoIntention],
+					};
+				}
+				return TestChange.emptyChange;
+			};
+
+			const invertedNodeChanges: ChangeAtomIdMap<TestChange> = new Map();
+			forEachInNestedMap(state.mostRecentEdit.changeset.change.nodes, (node, revision, id) => {
 				const invertedNode = invertTestChangeViaNewIntention(node);
 				setInNestedMap(invertedNodeChanges, revision, id, invertedNode);
-			},
-		);
+			});
 
-		const inverseChangeset: WrappedChangeset = {
-			fieldChange: invert(
-				tagChange(
-					state.mostRecentEdit.changeset.change.fieldChange,
-					state.mostRecentEdit.changeset.revision,
-				),
-				tagFromIntention(undoIntention),
-				false,
-			),
-			nodes: invertedNodeChanges,
-		};
-
-		yield {
-			content: state.parent?.content,
-			mostRecentEdit: {
-				changeset: tagWrappedChangeInline(
-					inverseChangeset,
+			const inverseChangeset: WrappedChangeset = {
+				fieldChange: invert(
+					tagChange(
+						state.mostRecentEdit.changeset.change.fieldChange,
+						state.mostRecentEdit.changeset.revision,
+					),
 					tagFromIntention(undoIntention),
+					false,
 				),
-				intention: undoIntention,
-				description: `Undo:${state.mostRecentEdit.description}`,
-			},
-			parent: state,
-		};
-	}
-};
+				nodes: invertedNodeChanges,
+			};
+
+			yield {
+				content: state.parent?.content,
+				mostRecentEdit: {
+					changeset: tagWrappedChangeInline(inverseChangeset, tagFromIntention(undoIntention)),
+					intention: undoIntention,
+					description: `Undo:${state.mostRecentEdit.description}`,
+				},
+				parent: state,
+			};
+		}
+	};
 
 /**
  * Runs a suite of axiomatic tests which use combinations of single edits that are valid to apply from an initial state.
  */
 function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 	const singleTestChanges = (prefix: string) =>
-		generatePossibleSequenceOfEdits(
-			initialState,
-			generateChildStates,
-			1,
-			prefix,
-		);
+		generatePossibleSequenceOfEdits(initialState, generateChildStates, 1, prefix);
 
 	/**
 	 * This test simulates rebasing over an do-inverse pair.
 	 */
 	describe("A ↷ [B, B⁻¹] === A", () => {
-		for (const [
-			{ description: name1, changeset: change1 },
-		] of singleTestChanges("A")) {
-			for (const [
-				{ description: name2, changeset: change2 },
-			] of singleTestChanges("B")) {
+		for (const [{ description: name1, changeset: change1 }] of singleTestChanges("A")) {
+			for (const [{ description: name2, changeset: change2 }] of singleTestChanges("B")) {
 				const title = `(${name1} ↷ ${name2}) ↷ ${name2}⁻¹ => ${name1}`;
 				it(title, () => {
 					const inv = tagRollbackInverse(
@@ -524,18 +481,11 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 	 * - The inverse produced by undo(B) is not a rollback
 	 */
 	describe("A ↷ [B, undo(B)] => A", () => {
-		for (const [
-			{ description: name1, changeset: change1 },
-		] of singleTestChanges("A")) {
-			for (const [
-				{ description: name2, changeset: change2 },
-			] of singleTestChanges("B")) {
+		for (const [{ description: name1, changeset: change1 }] of singleTestChanges("A")) {
+			for (const [{ description: name2, changeset: change2 }] of singleTestChanges("B")) {
 				const title = `${name1} ↷ [${name2}, undo(${name2})] => ${name1}`;
 				it(title, () => {
-					const inv = tagWrappedChangeInline(
-						invertWrapped(change2, tag1, false),
-						tag1,
-					);
+					const inv = tagWrappedChangeInline(invertWrapped(change2, tag1, false), tag1);
 					const r1 = rebaseWrappedTagged(change1, change2);
 					const r2 = rebaseWrappedTagged(r1, inv);
 					assert.deepEqual(r2.change, change1.change);
@@ -553,12 +503,8 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 	 * apply the inverse of some change.
 	 */
 	describe("(A ↷ B) ↷ [B⁻¹, B] === A ↷ B", () => {
-		for (const [
-			{ description: name1, changeset: change1 },
-		] of singleTestChanges("A")) {
-			for (const [
-				{ description: name2, changeset: change2 },
-			] of singleTestChanges("B")) {
+		for (const [{ description: name1, changeset: change1 }] of singleTestChanges("A")) {
+			for (const [{ description: name2, changeset: change2 }] of singleTestChanges("B")) {
 				const title = `${name1} ↷ [${name2}, ${name2}⁻¹, ${name2}] => ${name1} ↷ ${name2}`;
 				it(title, () => {
 					const inverse2 = tagRollbackInverse(
@@ -576,15 +522,10 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 	});
 
 	describe("A ○ A⁻¹ === ε", () => {
-		for (const [{ description: name, changeset: change }] of singleTestChanges(
-			"A",
-		)) {
+		for (const [{ description: name, changeset: change }] of singleTestChanges("A")) {
 			it(`${name} ○ ${name}⁻¹ === ε`, () => {
 				const inv = invertWrapped(change, tag1, true);
-				const actual = composeWrapped(
-					change,
-					tagRollbackInverse(inv, tag1, change.revision),
-				);
+				const actual = composeWrapped(change, tagRollbackInverse(inv, tag1, change.revision));
 				const delta = toDeltaWrapped(makeAnonChange(actual));
 				assert.equal(isDeltaVisible(delta.local), false);
 			});
@@ -592,9 +533,7 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 	});
 
 	describe("A⁻¹ ○ A === ε", () => {
-		for (const [{ description: name, changeset: change }] of singleTestChanges(
-			"A",
-		)) {
+		for (const [{ description: name, changeset: change }] of singleTestChanges("A")) {
 			it(`${name}⁻¹ ○ ${name} === ε`, () => {
 				const inv = tagRollbackInverse(
 					invertWrapped(change, tag1, true),
@@ -637,8 +576,7 @@ export function testRebaserAxioms() {
 				{
 					numberOfEditsToRebase: 3,
 					numberOfEditsToRebaseOver: stressMode !== StressMode.Short ? 5 : 3,
-					numberOfEditsToVerifyAssociativity:
-						stressMode !== StressMode.Short ? 6 : 3,
+					numberOfEditsToVerifyAssociativity: stressMode !== StressMode.Short ? 6 : 3,
 				},
 			);
 		});
@@ -666,15 +604,8 @@ function inlineRevisionWrapped(
 	return ChangesetWrapper.inlineRevision(change, revision, inlineRevision);
 }
 
-function inlineRevision(
-	change: OptionalChangeset,
-	revision: RevisionTag,
-): OptionalChangeset {
-	return optionalChangeRebaser.replaceRevisions(
-		change,
-		new Set([undefined]),
-		revision,
-	);
+function inlineRevision(change: OptionalChangeset, revision: RevisionTag): OptionalChangeset {
+	return optionalChangeRebaser.replaceRevisions(change, new Set([undefined]), revision);
 }
 
 function tagWrappedChangeInline(

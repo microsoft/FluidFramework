@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	matchesReleaseGroupDefinition,
-	type ReleaseGroupDefinition,
-} from "./config.js";
+import { type ReleaseGroupDefinition, matchesReleaseGroupDefinition } from "./config.js";
 import type {
 	IPackage,
 	IReleaseGroup,
@@ -46,9 +43,7 @@ export class ReleaseGroup implements IReleaseGroup {
 		this.name = name as ReleaseGroupName;
 		this.adoPipelineUrl = releaseGroupDefinition.adoPipelineUrl;
 		this.packages = workspace.packages
-			.filter((pkg) =>
-				matchesReleaseGroupDefinition(pkg, releaseGroupDefinition),
-			)
+			.filter((pkg) => matchesReleaseGroupDefinition(pkg, releaseGroupDefinition))
 			.map((pkg) => {
 				// update the release group in the package object so we have an easy way to get from packages to release groups
 				pkg.releaseGroup = this.name;
@@ -100,9 +95,7 @@ export class ReleaseGroup implements IReleaseGroup {
 					continue;
 				}
 
-				const releaseGroup = buildProject.releaseGroups.get(
-					depPackage.releaseGroup,
-				);
+				const releaseGroup = buildProject.releaseGroups.get(depPackage.releaseGroup);
 				if (releaseGroup === undefined) {
 					throw new Error(
 						`Cannot find release group "${depPackage.releaseGroup}" in workspace "${this.workspace}"`,

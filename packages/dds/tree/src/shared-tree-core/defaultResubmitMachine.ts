@@ -19,14 +19,11 @@ interface PendingChange<TChange> {
 /**
  * Default implementation of {@link ResubmitMachine}.
  */
-export class DefaultResubmitMachine<TChange>
-	implements ResubmitMachine<TChange>
-{
+export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange> {
 	/**
 	 * Maps from revision of submitted commit to the pending change for that commit.
 	 */
-	private readonly pendingChanges: Map<RevisionTag, PendingChange<TChange>> =
-		new Map();
+	private readonly pendingChanges: Map<RevisionTag, PendingChange<TChange>> = new Map();
 
 	/**
 	 * The current enrichment version for in-flight commits.
@@ -108,8 +105,7 @@ export class DefaultResubmitMachine<TChange>
 				const nextCommit = localCommits[iCommit + 1];
 				if (
 					nextCommit !== undefined &&
-					this.getPendingChange(nextCommit.revision).lastEnrichment <
-						this.currentEnrichment
+					this.getPendingChange(nextCommit.revision).lastEnrichment < this.currentEnrichment
 				) {
 					checkout.applyTipChange(enrichedChange, commit.revision);
 				}
@@ -137,10 +133,7 @@ export class DefaultResubmitMachine<TChange>
 		);
 	}
 
-	public onSequencedCommitApplied(
-		revision: RevisionTag,
-		isLocal: boolean,
-	): void {
+	public onSequencedCommitApplied(revision: RevisionTag, isLocal: boolean): void {
 		// We no longer need to track enrichment for the commit with this revision.
 		// Note that we may have a commit for this revision even if this is not a local change,
 		// as this client and another peer may have merged the same commit from a shared branch.

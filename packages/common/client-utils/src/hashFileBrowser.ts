@@ -16,10 +16,7 @@ async function digestBuffer(
 	return new Uint8Array(hash);
 }
 
-function encodeDigest(
-	hashArray: Uint8Array,
-	encoding: "hex" | "base64",
-): string {
+function encodeDigest(hashArray: Uint8Array, encoding: "hex" | "base64"): string {
 	// eslint-disable-next-line default-case
 	switch (encoding) {
 		case "hex": {

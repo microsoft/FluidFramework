@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	SessionStorageModelLoader,
-	StaticCodeLoader,
-} from "@fluid-example/example-utils";
+import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 import React from "react";
 import ReactDOM from "react-dom";
 
@@ -32,8 +29,7 @@ export async function createContainerAndRenderInElement(
 		// Normally our code loader is expected to match up with the version passed here.
 		// But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
 		// the version doesn't actually matter.
-		const createResponse =
-			await sessionStorageModelLoader.createDetached("1.0");
+		const createResponse = await sessionStorageModelLoader.createDetached("1.0");
 		model = createResponse.model;
 
 		id = await createResponse.attach();

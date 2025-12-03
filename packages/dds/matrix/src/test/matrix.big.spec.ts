@@ -14,14 +14,9 @@ import {
 
 import type { SharedMatrix } from "../index.js";
 
-import {
-	checkCorners,
-	expectSize,
-	matrixFactory,
-	setCorners,
-} from "./utils.js";
+import { checkCorners, expectSize, setCorners, matrixFactory } from "./utils.js";
 
-enum Const {
+const enum Const {
 	// https://support.office.com/en-us/article/excel-specifications-and-limits-1672b34d-7043-467e-8e27-269d656771c3
 	excelMaxRows = 1048576,
 	excelMaxCols = 16384,
@@ -31,9 +26,7 @@ enum Const {
 // equivalent, and then returns the 2nd matrix.
 async function summarize<T>(matrix: SharedMatrix<T>): Promise<SharedMatrix<T>> {
 	// Create a summary
-	const objectStorage = MockStorage.createFromSummary(
-		matrix.getAttachSummary().summary,
-	);
+	const objectStorage = MockStorage.createFromSummary(matrix.getAttachSummary().summary);
 
 	// Create a local DataStoreRuntime since we only want to load the summary for a local client.
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
@@ -130,15 +123,9 @@ for (const isSetCellPolicyFWW of [false, true]) {
 
 				expectSize(matrix2, Const.excelMaxRows, Const.excelMaxCols);
 
-				matrix1.removeRows(
-					/* rowStart: */ matrix1.rowCount - 1,
-					/* rowCount: */ 1,
-				);
+				matrix1.removeRows(/* rowStart: */ matrix1.rowCount - 1, /* rowCount: */ 1);
 				matrix1.removeRows(/* rowStart: */ 0, /* rowCount: */ 1);
-				matrix1.removeCols(
-					/* rowStart: */ matrix1.colCount - 1,
-					/* colCount: */ 1,
-				);
+				matrix1.removeCols(/* rowStart: */ matrix1.colCount - 1, /* colCount: */ 1);
 				matrix1.removeCols(/* rowStart: */ 0, /* colCount: */ 1);
 
 				expectSize(matrix1, Const.excelMaxRows - 2, Const.excelMaxCols - 2);
@@ -178,15 +165,9 @@ for (const isSetCellPolicyFWW of [false, true]) {
 
 				checkCorners(matrix2);
 
-				matrix1.removeRows(
-					/* rowStart: */ matrix1.rowCount - 1,
-					/* rowCount: */ 1,
-				);
+				matrix1.removeRows(/* rowStart: */ matrix1.rowCount - 1, /* rowCount: */ 1);
 				matrix1.removeRows(/* rowStart: */ 0, /* rowCount: */ 1);
-				matrix1.removeCols(
-					/* rowStart: */ matrix1.colCount - 1,
-					/* colCount: */ 1,
-				);
+				matrix1.removeCols(/* rowStart: */ matrix1.colCount - 1, /* colCount: */ 1);
 				matrix1.removeCols(/* rowStart: */ 0, /* colCount: */ 1);
 
 				expectSize(matrix1, Const.excelMaxRows - 2, Const.excelMaxCols - 2);

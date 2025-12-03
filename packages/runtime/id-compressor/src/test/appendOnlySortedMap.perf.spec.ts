@@ -52,7 +52,5 @@ function runAppendOnlyMapPerfTests(
 }
 
 describe("AppendOnlySortedMap Perf", () => {
-	runAppendOnlyMapPerfTests(
-		() => new AppendOnlySortedMap(compareFiniteNumbers),
-	);
+	runAppendOnlyMapPerfTests(() => new AppendOnlySortedMap(compareFiniteNumbers));
 });

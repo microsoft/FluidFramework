@@ -3,24 +3,22 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
+import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
-	describeCompat,
-	type ITestDataObject,
-	itExpects,
-} from "@fluid-private/test-version-utils";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
-import {
-	type ContainerRuntime,
+	ContainerRuntime,
 	DefaultSummaryConfiguration,
-	type IContainerRuntimeOptions,
-	type ISummaryConfiguration,
+	IContainerRuntimeOptions,
+	ISummaryConfiguration,
 } from "@fluidframework/container-runtime/internal";
 import {
 	defaultMaxAttemptsForSubmitFailures,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/summary";
 import type { ISummarizeEventProps } from "@fluidframework/container-runtime-definitions/internal";
-import type {
+import {
 	IFluidHandle,
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
@@ -28,21 +26,20 @@ import type {
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import {
-	type ISequencedDocumentMessage,
 	MessageType,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
+	ITestObjectProvider,
 	createSummarizer,
 	createSummarizerFromFactory,
 	createTestConfigProvider,
-	type ITestObjectProvider,
 	summarizeNow,
 	timeoutAwait,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
 
 const configProvider = createTestConfigProvider();
 
@@ -77,8 +74,7 @@ describeCompat(
 	function (getTestObjectProvider, apis) {
 		const { DataObject, DataObjectFactory } = apis.dataRuntime;
 		const { mixinSummaryHandler } = apis.dataRuntime.packages.datastore;
-		const { ContainerRuntimeFactoryWithDefaultDataStore } =
-			apis.containerRuntime;
+		const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 
 		/**
 		 * Data object that creates another data object during initialization. This is used to create a scenario
@@ -113,9 +109,9 @@ describeCompat(
 				// If the second data store already exists, don't create another one. This ensures that we don't create data
 				// stores endlessly during summarization.
 				let dataObject2: RootTestDataObject | undefined;
-				const dataObject2Handle = this.root.get<
-					IFluidHandle<RootTestDataObject>
-				>(this.datastoreKey);
+				const dataObject2Handle = this.root.get<IFluidHandle<RootTestDataObject>>(
+					this.datastoreKey,
+				);
 				if (dataObject2Handle !== undefined) {
 					dataObject2 = await dataObject2Handle.get();
 				}
@@ -165,9 +161,7 @@ describeCompat(
 
 		// Search does something similar to this, where it loads the data object.
 		const getDataObjectAndSendOps = async (runtime: FluidDataStoreRuntime) => {
-			const dataObject = (await DataObject.getDataObject(
-				runtime,
-			)) as TestDataObject2;
+			const dataObject = (await DataObject.getDataObject(runtime)) as TestDataObject2;
 			dataObject._root.set("op", "value");
 			return undefined;
 		};
@@ -197,10 +191,7 @@ describeCompat(
 			}),
 		});
 
-		const registryStoreEntries = new Map<
-			string,
-			Promise<IFluidDataStoreFactory>
-		>([
+		const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 			[rootDataObjectFactory.type, Promise.resolve(rootDataObjectFactory)],
 			[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
 			[dataStoreFactory2.type, Promise.resolve(dataStoreFactory2)],
@@ -254,10 +245,7 @@ describeCompat(
 				this.skip();
 			}
 
-			configProvider.set(
-				"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs",
-				0,
-			);
+			configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 0);
 			configProvider.set("Fluid.Summarizer.PendingOpsRetryDelayMs", 5);
 		});
 
@@ -282,8 +270,7 @@ describeCompat(
 			async () => {
 				const container = await createContainer(provider);
 				await waitForContainerConnection(container);
-				const rootDataObject =
-					(await container.getEntryPoint()) as RootTestDataObject;
+				const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
 				const dataObject = await dataStoreFactory1.createInstance(
 					rootDataObject.containerRuntime,
 				);
@@ -330,25 +317,21 @@ describeCompat(
 			async () => {
 				// Wait for 100 ms for pending ops to be saved.
 				const pendingOpsTimeoutMs = 100;
-				configProvider.set(
-					"Fluid.Summarizer.waitForPendingOpsTimeoutMs",
-					pendingOpsTimeoutMs,
-				);
+				configProvider.set("Fluid.Summarizer.waitForPendingOpsTimeoutMs", pendingOpsTimeoutMs);
 				const mockLogger = new MockLogger();
 				const container1 = await provider.makeTestContainer();
-				const { summarizer, container: summarizerContainer } =
-					await createSummarizer(
-						provider,
-						container1,
-						{ loaderProps: { configProvider } },
-						undefined /* summaryVersion */,
-						mockLogger,
-					);
+				const { summarizer, container: summarizerContainer } = await createSummarizer(
+					provider,
+					container1,
+					{ loaderProps: { configProvider } },
+					undefined /* summaryVersion */,
+					mockLogger,
+				);
 
 				const runtime = (summarizer as any).runtime as ContainerRuntime;
-				const entryPoint = (await runtime.getAliasedDataStoreEntryPoint(
-					"default",
-				)) as IFluidHandle<ITestDataObject> | undefined;
+				const entryPoint = (await runtime.getAliasedDataStoreEntryPoint("default")) as
+					| IFluidHandle<ITestDataObject>
+					| undefined;
 				if (entryPoint === undefined) {
 					throw new Error("default dataStore must exist");
 				}
@@ -356,9 +339,7 @@ describeCompat(
 
 				// Pause op processing and send ops so there are pending ops in the summarizer.
 				const pendingOpCount = 10;
-				await provider.opProcessingController.pauseProcessing(
-					summarizerContainer,
-				);
+				await provider.opProcessingController.pauseProcessing(summarizerContainer);
 				for (let i = 0; i < pendingOpCount; i++) {
 					defaultDataStore1._root.set(`key${i}`, `value${i}`);
 				}
@@ -377,8 +358,7 @@ describeCompat(
 				// We should have received a PendingOpsWhileSummarizing event with all the pending ops not saved.
 				mockLogger.assertMatch([
 					{
-						eventName:
-							"fluid:telemetry:Summarizer:Running:PendingOpsWhileSummarizing",
+						eventName: "fluid:telemetry:Summarizer:Running:PendingOpsWhileSummarizing",
 						saved: false,
 						countBefore: pendingOpCount,
 						countAfter: pendingOpCount,
@@ -408,8 +388,7 @@ describeCompat(
 				const container = await createContainer(provider);
 				await waitForContainerConnection(container);
 
-				const rootDataObject =
-					(await container.getEntryPoint()) as RootTestDataObject;
+				const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
 
 				// This data object will send ops during summarization because the factory uses mixinSummaryHandler
 				// to do so on every summarize.
@@ -461,8 +440,7 @@ describeCompat(
 					false /* disableSummary */,
 					logger,
 				);
-				const rootDataObject =
-					(await mainContainer.getEntryPoint()) as RootTestDataObject;
+				const rootDataObject = (await mainContainer.getEntryPoint()) as RootTestDataObject;
 				const waitForSummaryOpPromise = waitForSummaryOp(mainContainer);
 				const dataObject = await dataStoreFactory1.createInstance(
 					rootDataObject.containerRuntime,
@@ -473,10 +451,7 @@ describeCompat(
 				const summarySucceeded = await timeoutAwait(waitForSummaryOpPromise, {
 					errorMsg: "Timeout on waiting for summary op",
 				});
-				assert(
-					summarySucceeded === true,
-					"Summary should have been successful",
-				);
+				assert(summarySucceeded === true, "Summary should have been successful");
 
 				// The sequence of events that should happen:
 				// 1. First summarize attempt starts, i.e., summaryAttempts = 1.
@@ -485,18 +460,14 @@ describeCompat(
 				// 4. Second summarize attempts starts, i.e., summaryAttempts = 2.
 				// 5. Summary is successfully generated.
 				const clientType = "noninteractive/summarizer";
-				const expectedEventsInSequence: Omit<
-					ITelemetryBaseEvent,
-					"category"
-				>[] = [
+				const expectedEventsInSequence: Omit<ITelemetryBaseEvent, "category">[] = [
 					{
 						eventName: "fluid:telemetry:Summarizer:Running:Summarize_start",
 						clientType,
 						summaryAttempts: 1,
 					},
 					{
-						eventName:
-							"fluid:telemetry:FluidDataStoreContext:DataStoreCreatedWhileReadonly",
+						eventName: "fluid:telemetry:FluidDataStoreContext:DataStoreCreatedWhileReadonly",
 						clientType,
 					},
 					{
@@ -517,10 +488,7 @@ describeCompat(
 					},
 				];
 
-				logger.assertMatch(
-					expectedEventsInSequence,
-					"Unexpected sequence of events",
-				);
+				logger.assertMatch(expectedEventsInSequence, "Unexpected sequence of events");
 			},
 			// The test is expected to take longer than the default timeout of 2s.
 		).timeout(standardTimeout * 2);
@@ -570,37 +538,30 @@ describeCompat(
 				},
 			],
 			async () => {
-				const container = await createContainer(
-					provider,
-					false /* disableSummary */,
-				);
+				const container = await createContainer(provider, false /* disableSummary */);
 				await waitForContainerConnection(container);
 
-				const rootDataObject =
-					(await container.getEntryPoint()) as RootTestDataObject;
-				const containerRuntime =
-					rootDataObject.containerRuntime as ContainerRuntime;
+				const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
+				const containerRuntime = rootDataObject.containerRuntime as ContainerRuntime;
 
-				const summarizePromiseP = new Promise<ISummarizeEventProps>(
-					(resolve) => {
-						const handler = (eventProps: ISummarizeEventProps) => {
-							if (eventProps.result !== "failure") {
+				const summarizePromiseP = new Promise<ISummarizeEventProps>((resolve) => {
+					const handler = (eventProps: ISummarizeEventProps) => {
+						if (eventProps.result !== "failure") {
+							containerRuntime.off("summarize", handler);
+							resolve(eventProps);
+						} else {
+							assert(
+								eventProps.error?.message === "PendingOpsWhileSummarizing",
+								"Unexpected summarization failure",
+							);
+							if (eventProps.currentAttempt === eventProps.maxAttempts) {
 								containerRuntime.off("summarize", handler);
 								resolve(eventProps);
-							} else {
-								assert(
-									eventProps.error?.message === "PendingOpsWhileSummarizing",
-									"Unexpected summarization failure",
-								);
-								if (eventProps.currentAttempt === eventProps.maxAttempts) {
-									containerRuntime.off("summarize", handler);
-									resolve(eventProps);
-								}
 							}
-						};
-						containerRuntime.on("summarize", handler);
-					},
-				);
+						}
+					};
+					containerRuntime.on("summarize", handler);
+				});
 
 				const dataObject2 = await dataStoreFactory2.createInstance(
 					rootDataObject.containerRuntime,
@@ -610,11 +571,7 @@ describeCompat(
 				await provider.ensureSynchronized();
 
 				const props = await summarizePromiseP;
-				assert.strictEqual(
-					props.result,
-					"failure",
-					"Summarization did not fail as expected",
-				);
+				assert.strictEqual(props.result, "failure", "Summarization did not fail as expected");
 				assert.strictEqual(
 					props.maxAttempts,
 					defaultMaxAttemptsForSubmitFailures,
@@ -655,50 +612,39 @@ describeCompat(
 					error: "PendingOpsWhileSummarizing",
 				},
 				{
-					eventName:
-						"fluid:telemetry:Summarizer:Running:SkipFailingIncorrectSummary",
+					eventName: "fluid:telemetry:Summarizer:Running:SkipFailingIncorrectSummary",
 					summaryAttempts: 5,
 					finalAttempt: true,
 					error: "Pending ops during summarization",
 				},
 			],
 			async () => {
-				configProvider.set(
-					"Fluid.Summarizer.SkipFailingIncorrectSummary",
-					true,
-				);
+				configProvider.set("Fluid.Summarizer.SkipFailingIncorrectSummary", true);
 				configProvider.set("Fluid.Summarizer.PendingOpsRetryDelayMs", 5);
-				const container = await createContainer(
-					provider,
-					false /* disableSummary */,
-				);
+				const container = await createContainer(provider, false /* disableSummary */);
 				await waitForContainerConnection(container);
 
-				const rootDataObject =
-					(await container.getEntryPoint()) as RootTestDataObject;
-				const containerRuntime =
-					rootDataObject.containerRuntime as ContainerRuntime;
+				const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
+				const containerRuntime = rootDataObject.containerRuntime as ContainerRuntime;
 
-				const summarizePromiseP = new Promise<ISummarizeEventProps>(
-					(resolve) => {
-						const handler = (eventProps: ISummarizeEventProps) => {
-							if (eventProps.result !== "failure") {
+				const summarizePromiseP = new Promise<ISummarizeEventProps>((resolve) => {
+					const handler = (eventProps: ISummarizeEventProps) => {
+						if (eventProps.result !== "failure") {
+							containerRuntime.off("summarize", handler);
+							resolve(eventProps);
+						} else {
+							assert(
+								eventProps.error?.message === "PendingOpsWhileSummarizing",
+								"Unexpected summarization failure",
+							);
+							if (eventProps.currentAttempt === eventProps.maxAttempts) {
 								containerRuntime.off("summarize", handler);
 								resolve(eventProps);
-							} else {
-								assert(
-									eventProps.error?.message === "PendingOpsWhileSummarizing",
-									"Unexpected summarization failure",
-								);
-								if (eventProps.currentAttempt === eventProps.maxAttempts) {
-									containerRuntime.off("summarize", handler);
-									resolve(eventProps);
-								}
 							}
-						};
-						containerRuntime.on("summarize", handler);
-					},
-				);
+						}
+					};
+					containerRuntime.on("summarize", handler);
+				});
 
 				const dataObject2 = await dataStoreFactory2.createInstance(
 					rootDataObject.containerRuntime,
@@ -737,23 +683,16 @@ describeCompat(
 				},
 			],
 			async () => {
-				const container = await createContainer(
-					provider,
-					false /* disableSummary */,
-				);
+				const container = await createContainer(provider, false /* disableSummary */);
 				await waitForContainerConnection(container);
 
-				const rootDataObject =
-					(await container.getEntryPoint()) as RootTestDataObject;
-				const containerRuntime =
-					rootDataObject.containerRuntime as ContainerRuntime;
+				const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
+				const containerRuntime = rootDataObject.containerRuntime as ContainerRuntime;
 
 				try {
-					const firstSummaryResultP = new Promise<ISummarizeEventProps>(
-						(resolve) => {
-							containerRuntime.on("summarize", resolve);
-						},
-					);
+					const firstSummaryResultP = new Promise<ISummarizeEventProps>((resolve) => {
+						containerRuntime.on("summarize", resolve);
+					});
 
 					// Create and reference the dataObject 3 and wait for Summary
 					// Summary should fail due to mixed-in summary handler throwing

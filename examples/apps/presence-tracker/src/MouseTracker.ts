@@ -6,9 +6,9 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEvent } from "@fluidframework/core-interfaces";
 import type {
+	Presence,
 	Attendee,
 	LatestRaw,
-	Presence,
 	StatesWorkspace,
 } from "@fluidframework/presence/beta";
 import { AttendeeStatus, StateFactory } from "@fluidframework/presence/beta";

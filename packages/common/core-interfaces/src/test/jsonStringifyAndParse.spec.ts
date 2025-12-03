@@ -11,10 +11,7 @@ import type {
 	JsonString,
 	JsonStringifyOptions,
 } from "@fluidframework/core-interfaces/internal";
-import {
-	JsonParse,
-	JsonStringify,
-} from "@fluidframework/core-interfaces/internal";
+import { JsonParse, JsonStringify } from "@fluidframework/core-interfaces/internal";
 import type {
 	JsonDeserialized,
 	JsonSerializable,
@@ -26,192 +23,126 @@ import type {
 import { assertIdenticalTypes, createInstanceOf } from "./testUtils.js";
 import type {
 	BrandedString,
-	DeserializedOpaqueSerializableAndDeserializedInRecursiveStructure,
 	DeserializedOpaqueSerializableInRecursiveStructure,
+	DeserializedOpaqueSerializableAndDeserializedInRecursiveStructure,
 	ObjectWithOptionalRecursion,
 	ObjectWithSymbolOrRecursion,
 } from "./testValues.js";
 // Note: some values are commented out as not interesting to add coverage for (but acknowledge they exist to test).
 // This import list should be kept mostly in-sync with jsonDeserialized.spec.ts.
 import {
-	aFunction,
-	arrayOfBigintOrObjects,
-	arrayOfBigintOrSymbols,
-	arrayOfBigints,
-	arrayOfFunctions,
-	arrayOfFunctionsWithProperties,
+	boolean,
+	number,
+	string,
+	numericEnumValue,
+	NumericEnum,
+	stringEnumValue,
+	StringEnum,
+	constHeterogenousEnumValue,
+	ConstHeterogenousEnum,
+	computedEnumValue,
+	ComputedEnum,
+	objectWithLiterals,
 	arrayOfLiterals,
-	arrayOfNumberBigintOrSymbols,
-	arrayOfNumbers,
-	arrayOfNumbersOrUndefined,
-	arrayOfNumbersSparse,
-	arrayOfObjectAndFunctions,
-	arrayOfSymbolOrObjects,
-	arrayOfSymbols,
-	arrayOfUnknown,
+	tupleWithLiterals,
+	symbol,
+	uniqueSymbol,
 	bigint,
+	aFunction,
+	// unknownValueOfSimpleRecord,
+	// unknownValueWithBigint,
+	voidValue,
+	stringOrSymbol,
 	bigintOrString,
 	bigintOrSymbol,
-	boolean,
-	brandedNumber,
-	brandedObject,
-	brandedObjectWithString,
-	brandedString,
-	brandedStringAliasIndexOfBooleans,
-	brandedStringAliasIndexOfNumbers,
-	brandedStringAliasIndexOfTrueOrUndefined,
-	brandedStringAliasRecordOfBooleans,
-	brandedStringAliasRecordOfNumbers,
-	brandedStringIndexOfBooleans,
-	brandedStringIndexOfNumbers,
-	brandedStringRecordOfBooleans,
-	brandedStringRecordOfNumbers,
-	// These `ClassWith*` values are used to verify `instanceof` results of
-	// parse and not expected to be test cases themselves.
-	ClassWithPrivateData,
-	ClassWithPrivateGetter,
-	ClassWithPrivateMethod,
-	ClassWithPrivateSetter,
-	ClassWithPublicData,
-	ClassWithPublicMethod,
-	ComputedEnum,
-	ConstHeterogenousEnum,
-	classInstanceWithPrivateData,
-	classInstanceWithPrivateDataAndIsFunction,
-	classInstanceWithPrivateGetter,
-	classInstanceWithPrivateMethod,
-	classInstanceWithPrivateSetter,
-	classInstanceWithPublicData,
-	classInstanceWithPublicDataAndIsFunction,
-	classInstanceWithPublicMethod,
-	computedEnumValue,
-	constHeterogenousEnumValue,
-	datastore,
-	emptyObject,
-	fluidHandleToNumber,
-	functionObjectWithPrivateData,
-	functionObjectWithPublicData,
-	functionWithProperties,
-	immutableJsonObject,
-	jsonObject,
-	jsonStringOfBigInt,
-	jsonStringOfObjectWithArrayOfNumbers,
-	jsonStringOfString,
-	jsonStringOfStringRecordOfNumberOrUndefined,
-	jsonStringOfStringRecordOfNumbers,
-	jsonStringOfUnknown,
-	mapOfStringsToNumbers,
-	NumericEnum,
-	number,
 	numberOrBigintOrSymbol,
-	numericEnumValue,
-	object,
+	functionWithProperties,
 	objectAndFunction,
-	objectInheritingOptionalRecursionAndWithNestedSymbol,
-	objectWithAlternatingRecursion,
-	objectWithArrayOfBigintOrObjects,
-	objectWithArrayOfBigints,
-	objectWithArrayOfFunctions,
-	objectWithArrayOfFunctionsWithProperties,
-	objectWithArrayOfNumbers,
-	objectWithArrayOfNumbersOrUndefined,
-	objectWithArrayOfNumbersSparse,
-	objectWithArrayOfObjectAndFunctions,
-	objectWithArrayOfSymbolOrObjects,
-	objectWithArrayOfSymbols,
-	objectWithArrayOfUnknown,
+	arrayOfNumbers,
+	arrayOfNumbersSparse,
+	arrayOfNumbersOrUndefined,
+	arrayOfBigints,
+	arrayOfSymbols,
+	arrayOfUnknown,
+	arrayOfFunctions,
+	arrayOfFunctionsWithProperties,
+	arrayOfObjectAndFunctions,
+	arrayOfBigintOrObjects,
+	arrayOfSymbolOrObjects,
+	arrayOfBigintOrSymbols,
+	arrayOfNumberBigintOrSymbols,
+	readonlyArrayOfNumbers,
+	readonlyArrayOfObjects,
+	object,
+	emptyObject,
+	objectWithBoolean,
+	objectWithNumber,
+	objectWithString,
+	objectWithSymbol,
 	objectWithBigint,
+	objectWithFunction,
+	objectWithFunctionWithProperties,
+	objectWithObjectAndFunction,
 	objectWithBigintOrString,
 	objectWithBigintOrSymbol,
-	objectWithBoolean,
-	objectWithBrandedNumber,
-	objectWithBrandedString,
-	objectWithClassWithPrivateDataInOptionalRecursion,
-	objectWithEmbeddedRecursion,
-	objectWithFluidHandle,
-	objectWithFunction,
-	objectWithFunctionOrSymbol,
-	objectWithFunctionWithProperties,
-	objectWithGetter,
-	objectWithGetterViaValue,
-	objectWithLiterals,
-	objectWithMatchedGetterAndSetterProperty,
-	objectWithMatchedGetterAndSetterPropertyViaValue,
-	objectWithMismatchedGetterAndSetterProperty,
-	objectWithMismatchedGetterAndSetterPropertyViaValue,
-	objectWithNever,
-	objectWithNumber,
-	objectWithNumberKey,
 	objectWithNumberOrBigintOrSymbol,
-	objectWithNumberOrUndefinedNumbered,
-	objectWithNumberOrUndefinedUndefined,
-	objectWithObjectAndFunction,
-	objectWithOpaqueDeserializedUnknown,
-	objectWithOpaqueSerializableUnknown,
-	objectWithOptionalBigint,
-	objectWithOptionalNumberDefined,
-	objectWithOptionalNumberNotPresent,
-	objectWithOptionalNumberUndefined,
-	objectWithOptionalRecursion,
+	objectWithFunctionOrSymbol,
+	objectWithStringOrSymbol,
+	objectWithUndefined,
+	objectWithUnknown,
+	objectWithOptionalUnknown,
 	// Skipped as type checking varies with exactOptionalPropertyTypes setting. See
 	// jsonDeserialized.spec.ts, jsonSerializable.exactOptionalPropertyTypes.true.spec.ts,
 	// and jsonSerializable.exactOptionalPropertyTypes.false.spec.ts.
 	// objectWithOptionalUndefined,
 	objectWithOptionalSymbol,
-	objectWithOptionalUndefinedEnclosingRequiredUndefined,
-	objectWithOptionalUnknown,
-	objectWithPossibleRecursion,
-	objectWithReadonly,
+	objectWithOptionalBigint,
+	objectWithNumberKey,
+	objectWithSymbolKey,
+	objectWithUniqueSymbolKey,
+	objectWithArrayOfNumbers,
+	objectWithArrayOfNumbersSparse,
+	objectWithArrayOfNumbersOrUndefined,
+	objectWithArrayOfBigints,
+	objectWithArrayOfSymbols,
+	objectWithArrayOfUnknown,
+	objectWithArrayOfFunctions,
+	objectWithArrayOfFunctionsWithProperties,
+	objectWithArrayOfObjectAndFunctions,
+	objectWithArrayOfBigintOrObjects,
+	objectWithArrayOfSymbolOrObjects,
 	objectWithReadonlyArrayOfNumbers,
+	objectWithOptionalNumberNotPresent,
+	objectWithOptionalNumberUndefined,
+	objectWithOptionalNumberDefined,
+	objectWithNumberOrUndefinedUndefined,
+	objectWithNumberOrUndefinedNumbered,
+	objectWithOptionalUndefinedEnclosingRequiredUndefined,
+	objectWithReadonly,
 	objectWithReadonlyViaGetter,
-	objectWithSelfReference,
+	objectWithGetter,
+	objectWithGetterViaValue,
 	objectWithSetter,
 	objectWithSetterViaValue,
-	objectWithString,
-	objectWithStringOrSymbol,
-	objectWithSymbol,
-	objectWithSymbolKey,
-	objectWithSymbolOrRecursion,
-	objectWithUndefined,
-	objectWithUniqueSymbolKey,
-	objectWithUnknown,
-	objectWithUnknownAdjacentToOptionalRecursion,
-	// objectWithOptionalUnknownAdjacentToOptionalRecursion,
-	objectWithUnknownInOptionalRecursion,
-	opaqueDeserializedInRecursiveStructure,
-	opaqueDeserializedObject,
-	opaqueDeserializedObjectExpectingBigintSupport,
-	opaqueDeserializedObjectRequiringBigintSupport,
-	opaqueDeserializedUnknown,
-	opaqueSerializableAndDeserializedInRecursiveStructure,
-	opaqueSerializableAndDeserializedObject,
-	opaqueSerializableAndDeserializedObjectExpectingBigintSupport,
-	opaqueSerializableAndDeserializedObjectRequiringBigintSupport,
-	opaqueSerializableAndDeserializedUnknown,
-	opaqueSerializableInRecursiveStructure,
-	// objectWithFluidHandleOrRecursion,
-	opaqueSerializableObject,
-	opaqueSerializableObjectExpectingBigintSupport,
-	opaqueSerializableObjectRequiringBigintSupport,
-	opaqueSerializableUnknown,
+	objectWithMatchedGetterAndSetterProperty,
+	objectWithMatchedGetterAndSetterPropertyViaValue,
+	objectWithMismatchedGetterAndSetterProperty,
+	objectWithMismatchedGetterAndSetterPropertyViaValue,
+	objectWithNever,
+	stringRecordOfNumbers,
+	stringRecordOfUndefined,
+	stringRecordOfNumberOrUndefined,
+	stringRecordOfSymbolOrBoolean,
+	stringRecordOfUnknown,
+	stringOrNumberRecordOfStrings,
+	stringOrNumberRecordOfObjects,
 	partialStringRecordOfNumbers,
 	partialStringRecordOfUnknown,
+	templatedRecordOfNumbers,
 	partialTemplatedRecordOfNumbers,
-	readonlyArrayOfNumbers,
-	readonlyArrayOfObjects,
-	readonlyMapOfStringsToNumbers,
-	readonlySetOfNumbers,
-	StringEnum,
-	// objectWithOptionalUnknownInOptionalRecursion,
-	selfRecursiveFunctionWithProperties,
-	selfRecursiveObjectAndFunction,
-	setOfNumbers,
-	simpleImmutableJson,
-	simpleJson,
-	string,
-	stringEnumValue,
-	stringOrNumberRecordOfObjects,
-	stringOrNumberRecordOfStrings,
+	// templatedRecordOfUnknown,
+	// mixedRecordOfUnknown,
+	stringRecordOfNumbersOrStringsWithKnownProperties,
 	// stringRecordOfUnknownWithKnownProperties,
 	// partialStringRecordOfUnknownWithKnownProperties,
 	// stringRecordOfUnknownWithOptionalKnownProperties,
@@ -219,22 +150,88 @@ import {
 	// stringRecordOfUnknownWithOptionalKnownUnknown,
 	stringOrNumberRecordOfStringWithKnownNumber,
 	stringOrNumberRecordOfUndefinedWithKnownNumber,
-	stringOrSymbol,
-	stringRecordOfNumberOrUndefined,
-	stringRecordOfNumbers,
-	// templatedRecordOfUnknown,
-	// mixedRecordOfUnknown,
-	stringRecordOfNumbersOrStringsWithKnownProperties,
-	stringRecordOfSymbolOrBoolean,
-	stringRecordOfUndefined,
-	stringRecordOfUnknown,
-	symbol,
-	templatedRecordOfNumbers,
-	tupleWithLiterals,
-	uniqueSymbol,
-	// unknownValueOfSimpleRecord,
-	// unknownValueWithBigint,
-	voidValue,
+	objectWithPossibleRecursion,
+	objectWithOptionalRecursion,
+	objectWithEmbeddedRecursion,
+	objectWithAlternatingRecursion,
+	objectWithSelfReference,
+	objectWithSymbolOrRecursion,
+	objectWithUnknownAdjacentToOptionalRecursion,
+	// objectWithOptionalUnknownAdjacentToOptionalRecursion,
+	objectWithUnknownInOptionalRecursion,
+	// objectWithOptionalUnknownInOptionalRecursion,
+	selfRecursiveFunctionWithProperties,
+	selfRecursiveObjectAndFunction,
+	objectInheritingOptionalRecursionAndWithNestedSymbol,
+	simpleJson,
+	simpleImmutableJson,
+	jsonObject,
+	immutableJsonObject,
+	classInstanceWithPrivateData,
+	classInstanceWithPrivateMethod,
+	classInstanceWithPrivateGetter,
+	classInstanceWithPrivateSetter,
+	classInstanceWithPublicData,
+	classInstanceWithPublicMethod,
+	objectWithClassWithPrivateDataInOptionalRecursion,
+	functionObjectWithPrivateData,
+	functionObjectWithPublicData,
+	classInstanceWithPrivateDataAndIsFunction,
+	classInstanceWithPublicDataAndIsFunction,
+	// These `ClassWith*` values are used to verify `instanceof` results of
+	// parse and not expected to be test cases themselves.
+	ClassWithPrivateData,
+	ClassWithPrivateMethod,
+	ClassWithPrivateGetter,
+	ClassWithPrivateSetter,
+	ClassWithPublicData,
+	ClassWithPublicMethod,
+	mapOfStringsToNumbers,
+	readonlyMapOfStringsToNumbers,
+	setOfNumbers,
+	readonlySetOfNumbers,
+	brandedNumber,
+	brandedString,
+	brandedObject,
+	brandedObjectWithString,
+	objectWithBrandedNumber,
+	objectWithBrandedString,
+	brandedStringIndexOfBooleans,
+	brandedStringAliasIndexOfBooleans,
+	brandedStringRecordOfBooleans,
+	brandedStringAliasRecordOfBooleans,
+	brandedStringIndexOfNumbers,
+	brandedStringAliasIndexOfNumbers,
+	brandedStringRecordOfNumbers,
+	brandedStringAliasRecordOfNumbers,
+	brandedStringAliasIndexOfTrueOrUndefined,
+	datastore,
+	fluidHandleToNumber,
+	objectWithFluidHandle,
+	// objectWithFluidHandleOrRecursion,
+	opaqueSerializableObject,
+	opaqueDeserializedObject,
+	opaqueSerializableAndDeserializedObject,
+	opaqueSerializableUnknown,
+	opaqueDeserializedUnknown,
+	opaqueSerializableAndDeserializedUnknown,
+	objectWithOpaqueSerializableUnknown,
+	objectWithOpaqueDeserializedUnknown,
+	opaqueSerializableInRecursiveStructure,
+	opaqueDeserializedInRecursiveStructure,
+	opaqueSerializableAndDeserializedInRecursiveStructure,
+	opaqueSerializableObjectRequiringBigintSupport,
+	opaqueDeserializedObjectRequiringBigintSupport,
+	opaqueSerializableAndDeserializedObjectRequiringBigintSupport,
+	opaqueSerializableObjectExpectingBigintSupport,
+	opaqueDeserializedObjectExpectingBigintSupport,
+	opaqueSerializableAndDeserializedObjectExpectingBigintSupport,
+	jsonStringOfString,
+	jsonStringOfObjectWithArrayOfNumbers,
+	jsonStringOfStringRecordOfNumbers,
+	jsonStringOfStringRecordOfNumberOrUndefined,
+	jsonStringOfBigInt,
+	jsonStringOfUnknown,
 } from "./testValues.js";
 
 /**
@@ -254,16 +251,11 @@ export function stringifyThenParse<
 	TExpected,
 	Options extends JsonStringifyOptions = Record<never, never>,
 >(
-	v: JsonSerializable<
-		T,
-		Pick<Options, Extract<keyof JsonStringifyOptions, keyof Options>>
-	>,
+	v: JsonSerializable<T, Pick<Options, Extract<keyof JsonStringifyOptions, keyof Options>>>,
 	expectedDeserialization?: JsonDeserialized<TExpected>,
 ): {
 	stringified: ReturnType<typeof JsonStringify<T, Options>>;
-	out: ReturnType<
-		typeof JsonParse<ReturnType<typeof JsonStringify<T, Options>>>
-	>;
+	out: ReturnType<typeof JsonParse<ReturnType<typeof JsonStringify<T, Options>>>>;
 	// Replace above with below if `JsonParse` argument is `JsonString<T>`
 	// out: ReturnType<typeof JsonParse<T>>;
 } {
@@ -289,10 +281,7 @@ export function stringifyThenParse<
  * Similar to {@link stringifyThenParse} but ignores hidden (private/protected) members.
  */
 function stringifyIgnoringInaccessibleMembersThenParse<const T, TExpected>(
-	v: JsonSerializable<
-		T,
-		{ IgnoreInaccessibleMembers: "ignore-inaccessible-members" }
-	>,
+	v: JsonSerializable<T, { IgnoreInaccessibleMembers: "ignore-inaccessible-members" }>,
 	expected?: JsonDeserialized<TExpected>,
 ): ReturnType<
 	typeof stringifyThenParse<
@@ -313,26 +302,17 @@ describe("JsonStringify and JsonParse", () => {
 		describe("supports primitive types", () => {
 			it("`boolean`", () => {
 				const { stringified, out } = stringifyThenParse(boolean);
-				assertIdenticalTypes(
-					stringified,
-					createInstanceOf<JsonString<boolean>>(),
-				);
+				assertIdenticalTypes(stringified, createInstanceOf<JsonString<boolean>>());
 				assertIdenticalTypes(out, boolean);
 			});
 			it("`number`", () => {
 				const { stringified, out } = stringifyThenParse(number);
-				assertIdenticalTypes(
-					stringified,
-					createInstanceOf<JsonString<number>>(),
-				);
+				assertIdenticalTypes(stringified, createInstanceOf<JsonString<number>>());
 				assertIdenticalTypes(out, number);
 			});
 			it("`string`", () => {
 				const { stringified, out } = stringifyThenParse(string);
-				assertIdenticalTypes(
-					stringified,
-					createInstanceOf<JsonString<string>>(),
-				);
+				assertIdenticalTypes(stringified, createInstanceOf<JsonString<string>>());
 				assertIdenticalTypes(out, string);
 			});
 			it("numeric enum", () => {
@@ -352,9 +332,7 @@ describe("JsonStringify and JsonParse", () => {
 				assertIdenticalTypes(out, stringEnumValue);
 			});
 			it("const heterogenous enum", () => {
-				const { stringified, out } = stringifyThenParse(
-					constHeterogenousEnumValue,
-				);
+				const { stringified, out } = stringifyThenParse(constHeterogenousEnumValue);
 				assertIdenticalTypes(
 					stringified,
 					createInstanceOf<JsonString<typeof constHeterogenousEnumValue>>(),
@@ -394,26 +372,18 @@ describe("JsonStringify and JsonParse", () => {
 				assertIdenticalTypes(out, jsonStringOfString);
 			});
 			it("`JsonString<{ arrayOfNumbers: number[] }>`", () => {
-				const { stringified, out } = stringifyThenParse(
-					jsonStringOfObjectWithArrayOfNumbers,
-				);
+				const { stringified, out } = stringifyThenParse(jsonStringOfObjectWithArrayOfNumbers);
 				assertIdenticalTypes(
 					stringified,
-					createInstanceOf<
-						JsonString<typeof jsonStringOfObjectWithArrayOfNumbers>
-					>(),
+					createInstanceOf<JsonString<typeof jsonStringOfObjectWithArrayOfNumbers>>(),
 				);
 				assertIdenticalTypes(out, jsonStringOfObjectWithArrayOfNumbers);
 			});
 			it("`JsonString<Record<string, number>>`", () => {
-				const { stringified, out } = stringifyThenParse(
-					jsonStringOfStringRecordOfNumbers,
-				);
+				const { stringified, out } = stringifyThenParse(jsonStringOfStringRecordOfNumbers);
 				assertIdenticalTypes(
 					stringified,
-					createInstanceOf<
-						JsonString<typeof jsonStringOfStringRecordOfNumbers>
-					>(),
+					createInstanceOf<JsonString<typeof jsonStringOfStringRecordOfNumbers>>(),
 				);
 				assertIdenticalTypes(out, jsonStringOfStringRecordOfNumbers);
 			});
@@ -423,9 +393,7 @@ describe("JsonStringify and JsonParse", () => {
 				);
 				assertIdenticalTypes(
 					stringified,
-					createInstanceOf<
-						JsonString<typeof jsonStringOfStringRecordOfNumberOrUndefined>
-					>(),
+					createInstanceOf<JsonString<typeof jsonStringOfStringRecordOfNumberOrUndefined>>(),
 				);
 				assertIdenticalTypes(out, jsonStringOfStringRecordOfNumberOrUndefined);
 			});
@@ -455,10 +423,7 @@ describe("JsonStringify and JsonParse", () => {
 			});
 			it("`false`", () => {
 				const { stringified, out } = stringifyThenParse(false);
-				assertIdenticalTypes(
-					stringified,
-					createInstanceOf<JsonString<false>>(),
-				);
+				assertIdenticalTypes(stringified, createInstanceOf<JsonString<false>>());
 				assertIdenticalTypes(out, false);
 			});
 			it("`0`", () => {
@@ -468,10 +433,7 @@ describe("JsonStringify and JsonParse", () => {
 			});
 			it('"string"', () => {
 				const { stringified, out } = stringifyThenParse("string");
-				assertIdenticalTypes(
-					stringified,
-					createInstanceOf<JsonString<"string">>(),
-				);
+				assertIdenticalTypes(stringified, createInstanceOf<JsonString<"string">>());
 				assertIdenticalTypes(out, "string");
 			});
 			it("`null`", () => {
@@ -505,24 +467,16 @@ describe("JsonStringify and JsonParse", () => {
 			});
 			it("specific numeric enum value", () => {
 				const { stringified, out } = stringifyThenParse(NumericEnum.two);
-				assertIdenticalTypes(
-					stringified,
-					createInstanceOf<JsonString<NumericEnum.two>>(),
-				);
+				assertIdenticalTypes(stringified, createInstanceOf<JsonString<NumericEnum.two>>());
 				assertIdenticalTypes(out, NumericEnum.two);
 			});
 			it("specific string enum value", () => {
 				const { stringified, out } = stringifyThenParse(StringEnum.b);
-				assertIdenticalTypes(
-					stringified,
-					createInstanceOf<JsonString<StringEnum.b>>(),
-				);
+				assertIdenticalTypes(stringified, createInstanceOf<JsonString<StringEnum.b>>());
 				assertIdenticalTypes(out, StringEnum.b);
 			});
 			it("specific const heterogenous enum value", () => {
-				const { stringified, out } = stringifyThenParse(
-					ConstHeterogenousEnum.zero,
-				);
+				const { stringified, out } = stringifyThenParse(ConstHeterogenousEnum.zero);
 				assertIdenticalTypes(
 					stringified,
 					createInstanceOf<JsonString<ConstHeterogenousEnum.zero>>(),
@@ -569,10 +523,7 @@ describe("JsonStringify and JsonParse", () => {
 		describe("supports object types", () => {
 			it("empty object", () => {
 				const { stringified, out } = stringifyThenParse(emptyObject);
-				assertIdenticalTypes(
-					stringified,
-					createInstanceOf<JsonString<typeof emptyObject>>(),
-				);
+				assertIdenticalTypes(stringified, createInstanceOf<JsonString<typeof emptyObject>>());
 				assertIdenticalTypes(out, emptyObject);
 			});
 
@@ -622,9 +573,7 @@ describe("JsonStringify and JsonParse", () => {
 			});
 
 			it("object with array of `number`s", () => {
-				const { stringified, out } = stringifyThenParse(
-					objectWithArrayOfNumbers,
-				);
+				const { stringified, out } = stringifyThenParse(objectWithArrayOfNumbers);
 				assertIdenticalTypes(
 					stringified,
 					createInstanceOf<JsonString<typeof objectWithArrayOfNumbers>>(),
@@ -632,22 +581,16 @@ describe("JsonStringify and JsonParse", () => {
 				assertIdenticalTypes(out, objectWithArrayOfNumbers);
 			});
 			it("readonly array of `number`s", () => {
-				const { stringified, out } = stringifyThenParse(
-					objectWithReadonlyArrayOfNumbers,
-				);
+				const { stringified, out } = stringifyThenParse(objectWithReadonlyArrayOfNumbers);
 				assertIdenticalTypes(
 					stringified,
-					createInstanceOf<
-						JsonString<typeof objectWithReadonlyArrayOfNumbers>
-					>(),
+					createInstanceOf<JsonString<typeof objectWithReadonlyArrayOfNumbers>>(),
 				);
 				assertIdenticalTypes(out, objectWithReadonlyArrayOfNumbers);
 			});
 
 			it("object with branded `number`", () => {
-				const { stringified, out } = stringifyThenParse(
-					objectWithBrandedNumber,
-				);
+				const { stringified, out } = stringifyThenParse(objectWithBrandedNumber);
 				assertIdenticalTypes(
 					stringified,
 					createInstanceOf<JsonString<typeof objectWithBrandedNumber>>(),
@@ -655,9 +598,7 @@ describe("JsonStringify and JsonParse", () => {
 				assertIdenticalTypes(out, objectWithBrandedNumber);
 			});
 			it("object with branded `string`", () => {
-				const { stringified, out } = stringifyThenParse(
-					objectWithBrandedString,
-				);
+				const { stringified, out } = stringifyThenParse(objectWithBrandedString);
 				assertIdenticalTypes(
 					stringified,
 					createInstanceOf<JsonString<typeof objectWithBrandedString>>(),
@@ -674,9 +615,7 @@ describe("JsonStringify and JsonParse", () => {
 				assertIdenticalTypes(out, stringRecordOfNumbers);
 			});
 			it("`string`|`number` indexed record of `string`s", () => {
-				const { stringified, out } = stringifyThenParse(
-					stringOrNumberRecordOfStrings,
-				);
+				const { stringified, out } = stringifyThenParse(stringOrNumberRecordOfStrings);
 				assertIdenticalTypes(
 					stringified,
 					createInstanceOf<JsonString<typeof stringOrNumberRecordOfStrings>>(),
@@ -684,9 +623,7 @@ describe("JsonStringify and JsonParse", () => {
 				assertIdenticalTypes(out, stringOrNumberRecordOfStrings);
 			});
 			it("`string`|`number` indexed record of objects", () => {
-				const { stringified, out } = stringifyThenParse(
-					stringOrNumberRecordOfObjects,
-				);
+				const { stringified, out } = stringifyThenParse(stringOrNumberRecordOfObjects);
 				assertIdenticalTypes(
 					stringified,
 					createInstanceOf<JsonString<typeof stringOrNumberRecordOfObjects>>(),
@@ -694,9 +631,7 @@ describe("JsonStringify and JsonParse", () => {
 				assertIdenticalTypes(out, stringOrNumberRecordOfObjects);
 			});
 			it("templated record of `numbers`", () => {
-				const { stringified, out } = stringifyThenParse(
-					templatedRecordOfNumbers,
-				);
+				const { stringified, out } = stringifyThenParse(templatedRecordOfNumbers);
 				assertIdenticalTypes(
 					stringified,
 					createInstanceOf<JsonString<typeof templatedRecordOfNumbers>>(),
@@ -713,10 +648,7 @@ describe("JsonStringify and JsonParse", () => {
 						JsonString<typeof stringRecordOfNumbersOrStringsWithKnownProperties>
 					>(),
 				);
-				assertIdenticalTypes(
-					out,
-					stringRecordOfNumbersOrStringsWithKnownProperties,
-				);
+				assertIdenticalTypes(out, stringRecordOfNumbersOrStringsWithKnownProperties);
 			});
 			it("`string`|`number` indexed record of `strings` with known `number` property (unassignable)", () => {
 				const { stringified, out } = stringifyThenParse(
@@ -724,17 +656,13 @@ describe("JsonStringify and JsonParse", () => {
 				);
 				assertIdenticalTypes(
 					stringified,
-					createInstanceOf<
-						JsonString<typeof stringOrNumberRecordOfStringWithKnownNumber>
-					>(),
+					createInstanceOf<JsonString<typeof stringOrNumberRecordOfStringWithKnownNumber>>(),
 				);
 				assertIdenticalTypes(out, stringOrNumberRecordOfStringWithKnownNumber);
 			});
 
 			it("branded-`string` indexed of `boolean`s", () => {
-				const { stringified, out } = stringifyThenParse(
-					brandedStringIndexOfBooleans,
-				);
+				const { stringified, out } = stringifyThenParse(brandedStringIndexOfBooleans);
 				assertIdenticalTypes(
 					stringified,
 					createInstanceOf<JsonString<typeof brandedStringIndexOfBooleans>>(),
@@ -742,21 +670,15 @@ describe("JsonStringify and JsonParse", () => {
 				assertIdenticalTypes(out, brandedStringIndexOfBooleans);
 			});
 			it("branded-`string` alias indexed of `boolean`s", () => {
-				const { stringified, out } = stringifyThenParse(
-					brandedStringAliasIndexOfBooleans,
-				);
+				const { stringified, out } = stringifyThenParse(brandedStringAliasIndexOfBooleans);
 				assertIdenticalTypes(
 					stringified,
-					createInstanceOf<
-						JsonString<typeof brandedStringAliasIndexOfBooleans>
-					>(),
+					createInstanceOf<JsonString<typeof brandedStringAliasIndexOfBooleans>>(),
 				);
 				assertIdenticalTypes(out, brandedStringAliasIndexOfBooleans);
 			});
 			it("branded-`string` record of `boolean`s", () => {
-				const { stringified, out } = stringifyThenParse(
-					brandedStringRecordOfBooleans,
-				);
+				const { stringified, out } = stringifyThenParse(brandedStringRecordOfBooleans);
 				assertIdenticalTypes(
 					stringified,
 					createInstanceOf<JsonString<typeof brandedStringRecordOfBooleans>>(),
@@ -764,21 +686,15 @@ describe("JsonStringify and JsonParse", () => {
 				assertIdenticalTypes(out, brandedStringRecordOfBooleans);
 			});
 			it("branded-`string` alias record of `boolean`s", () => {
-				const { stringified, out } = stringifyThenParse(
-					brandedStringAliasRecordOfBooleans,
-				);
+				const { stringified, out } = stringifyThenParse(brandedStringAliasRecordOfBooleans);
 				assertIdenticalTypes(
 					stringified,
-					createInstanceOf<
-						JsonString<typeof brandedStringAliasRecordOfBooleans>
-					>(),
+					createInstanceOf<JsonString<typeof brandedStringAliasRecordOfBooleans>>(),
 				);
 				assertIdenticalTypes(out, brandedStringAliasRecordOfBooleans);
 			});
 			it("branded-`string` indexed of `number`s", () => {
-				const { stringified, out } = stringifyThenParse(
-					brandedStringIndexOfNumbers,
-				);
+				const { stringified, out } = stringifyThenParse(brandedStringIndexOfNumbers);
 				assertIdenticalTypes(
 					stringified,
 					createInstanceOf<JsonString<typeof brandedStringIndexOfNumbers>>(),
@@ -786,21 +702,15 @@ describe("JsonStringify and JsonParse", () => {
 				assertIdenticalTypes(out, brandedStringIndexOfNumbers);
 			});
 			it("branded-`string` alias indexed of `number`s", () => {
-				const { stringified, out } = stringifyThenParse(
-					brandedStringAliasIndexOfNumbers,
-				);
+				const { stringified, out } = stringifyThenParse(brandedStringAliasIndexOfNumbers);
 				assertIdenticalTypes(
 					stringified,
-					createInstanceOf<
-						JsonString<typeof brandedStringAliasIndexOfNumbers>
-					>(),
+					createInstanceOf<JsonString<typeof brandedStringAliasIndexOfNumbers>>(),
 				);
 				assertIdenticalTypes(out, brandedStringAliasIndexOfNumbers);
 			});
 			it("branded-`string` record of `number`s", () => {
-				const { stringified, out } = stringifyThenParse(
-					brandedStringRecordOfNumbers,
-				);
+				const { stringified, out } = stringifyThenParse(brandedStringRecordOfNumbers);
 				assertIdenticalTypes(
 					stringified,
 					createInstanceOf<JsonString<typeof brandedStringRecordOfNumbers>>(),
@@ -808,22 +718,16 @@ describe("JsonStringify and JsonParse", () => {
 				assertIdenticalTypes(out, brandedStringRecordOfNumbers);
 			});
 			it("branded-`string` alias record of `number`s", () => {
-				const { stringified, out } = stringifyThenParse(
-					brandedStringAliasRecordOfNumbers,
-				);
+				const { stringified, out } = stringifyThenParse(brandedStringAliasRecordOfNumbers);
 				assertIdenticalTypes(
 					stringified,
-					createInstanceOf<
-						JsonString<typeof brandedStringAliasRecordOfNumbers>
-					>(),
+					createInstanceOf<JsonString<typeof brandedStringAliasRecordOfNumbers>>(),
 				);
 				assertIdenticalTypes(out, brandedStringAliasRecordOfNumbers);
 			});
 
 			it("object with possible type recursion through union", () => {
-				const { stringified, out } = stringifyThenParse(
-					objectWithPossibleRecursion,
-				);
+				const { stringified, out } = stringifyThenParse(objectWithPossibleRecursion);
 				assertIdenticalTypes(
 					stringified,
 					createInstanceOf<JsonString<typeof objectWithPossibleRecursion>>(),
@@ -831,9 +735,7 @@ describe("JsonStringify and JsonParse", () => {
 				assertIdenticalTypes(out, objectWithPossibleRecursion);
 			});
 			it("object with optional type recursion", () => {
-				const { stringified, out } = stringifyThenParse(
-					objectWithOptionalRecursion,
-				);
+				const { stringified, out } = stringifyThenParse(objectWithOptionalRecursion);
 				assertIdenticalTypes(
 					stringified,
 					createInstanceOf<JsonString<typeof objectWithOptionalRecursion>>(),
@@ -841,9 +743,7 @@ describe("JsonStringify and JsonParse", () => {
 				assertIdenticalTypes(out, objectWithOptionalRecursion);
 			});
 			it("object with deep type recursion", () => {
-				const { stringified, out } = stringifyThenParse(
-					objectWithEmbeddedRecursion,
-				);
+				const { stringified, out } = stringifyThenParse(objectWithEmbeddedRecursion);
 				assertIdenticalTypes(
 					stringified,
 					createInstanceOf<JsonString<typeof objectWithEmbeddedRecursion>>(),
@@ -851,9 +751,7 @@ describe("JsonStringify and JsonParse", () => {
 				assertIdenticalTypes(out, objectWithEmbeddedRecursion);
 			});
 			it("object with alternating type recursion", () => {
-				const { stringified, out } = stringifyThenParse(
-					objectWithAlternatingRecursion,
-				);
+				const { stringified, out } = stringifyThenParse(objectWithAlternatingRecursion);
 				assertIdenticalTypes(
 					stringified,
 					createInstanceOf<JsonString<typeof objectWithAlternatingRecursion>>(),
@@ -863,10 +761,7 @@ describe("JsonStringify and JsonParse", () => {
 
 			it("simple non-null object json (NonNullJsonObjectWith<never>)", () => {
 				const { stringified, out } = stringifyThenParse(jsonObject);
-				assertIdenticalTypes(
-					stringified,
-					createInstanceOf<JsonString<typeof jsonObject>>(),
-				);
+				assertIdenticalTypes(stringified, createInstanceOf<JsonString<typeof jsonObject>>());
 				assertIdenticalTypes(out, jsonObject);
 			});
 			it("simple read-only non-null object json (ReadonlyNonNullJsonObjectWith<never>)", () => {
@@ -889,12 +784,8 @@ describe("JsonStringify and JsonParse", () => {
 					createInstanceOf<JsonString<typeof NumericEnum>>(),
 				);
 				assertIdenticalTypes(outNumeric, NumericEnum);
-				const { stringified: resultString, out: outString } =
-					stringifyThenParse(StringEnum);
-				assertIdenticalTypes(
-					resultString,
-					createInstanceOf<JsonString<typeof StringEnum>>(),
-				);
+				const { stringified: resultString, out: outString } = stringifyThenParse(StringEnum);
+				assertIdenticalTypes(resultString, createInstanceOf<JsonString<typeof StringEnum>>());
 				assertIdenticalTypes(outString, StringEnum);
 				const { stringified: resultComputed, out: outComputed } =
 					stringifyThenParse(ComputedEnum);
@@ -915,9 +806,7 @@ describe("JsonStringify and JsonParse", () => {
 			});
 
 			it("object with getter implemented via value", () => {
-				const { stringified, out } = stringifyThenParse(
-					objectWithGetterViaValue,
-				);
+				const { stringified, out } = stringifyThenParse(objectWithGetterViaValue);
 				assertIdenticalTypes(
 					stringified,
 					createInstanceOf<JsonString<typeof objectWithGetterViaValue>>(),
@@ -925,9 +814,7 @@ describe("JsonStringify and JsonParse", () => {
 				assertIdenticalTypes(out, objectWithGetterViaValue);
 			});
 			it("object with setter implemented via value", () => {
-				const { stringified, out } = stringifyThenParse(
-					objectWithSetterViaValue,
-				);
+				const { stringified, out } = stringifyThenParse(objectWithSetterViaValue);
 				assertIdenticalTypes(
 					stringified,
 					createInstanceOf<JsonString<typeof objectWithSetterViaValue>>(),
@@ -944,10 +831,7 @@ describe("JsonStringify and JsonParse", () => {
 						JsonString<typeof objectWithMatchedGetterAndSetterPropertyViaValue>
 					>(),
 				);
-				assertIdenticalTypes(
-					out,
-					objectWithMatchedGetterAndSetterPropertyViaValue,
-				);
+				assertIdenticalTypes(out, objectWithMatchedGetterAndSetterPropertyViaValue);
 			});
 			it("object with mismatched getter and setter implemented via value", () => {
 				const { stringified, out } = stringifyThenParse(
@@ -956,25 +840,17 @@ describe("JsonStringify and JsonParse", () => {
 				assertIdenticalTypes(
 					stringified,
 					createInstanceOf<
-						JsonString<
-							typeof objectWithMismatchedGetterAndSetterPropertyViaValue
-						>
+						JsonString<typeof objectWithMismatchedGetterAndSetterPropertyViaValue>
 					>(),
 				);
-				assertIdenticalTypes(
-					out,
-					objectWithMismatchedGetterAndSetterPropertyViaValue,
-				);
+				assertIdenticalTypes(out, objectWithMismatchedGetterAndSetterPropertyViaValue);
 			});
 
 			describe("class instance (losing 'instanceof' nature)", () => {
 				it("with public data (just cares about data)", () => {
-					const { stringified, out } = stringifyThenParse(
-						classInstanceWithPublicData,
-						{
-							public: "public",
-						},
-					);
+					const { stringified, out } = stringifyThenParse(classInstanceWithPublicData, {
+						public: "public",
+					});
 					assertIdenticalTypes(
 						stringified,
 						createInstanceOf<JsonString<typeof classInstanceWithPublicData>>(),
@@ -991,18 +867,15 @@ describe("JsonStringify and JsonParse", () => {
 				});
 				describe("with `ignore-inaccessible-members`", () => {
 					it("with private method ignores method", () => {
-						const { stringified, out } =
-							stringifyIgnoringInaccessibleMembersThenParse(
-								classInstanceWithPrivateMethod,
-								{
-									public: "public",
-								},
-							);
+						const { stringified, out } = stringifyIgnoringInaccessibleMembersThenParse(
+							classInstanceWithPrivateMethod,
+							{
+								public: "public",
+							},
+						);
 						assertIdenticalTypes(
 							stringified,
-							createInstanceOf<
-								JsonString<typeof classInstanceWithPrivateMethod>
-							>(),
+							createInstanceOf<JsonString<typeof classInstanceWithPrivateMethod>>(),
 						);
 						assertIdenticalTypes(
 							out,
@@ -1024,18 +897,15 @@ describe("JsonStringify and JsonParse", () => {
 						);
 					});
 					it("with private getter ignores getter", () => {
-						const { stringified, out } =
-							stringifyIgnoringInaccessibleMembersThenParse(
-								classInstanceWithPrivateGetter,
-								{
-									public: "public",
-								},
-							);
+						const { stringified, out } = stringifyIgnoringInaccessibleMembersThenParse(
+							classInstanceWithPrivateGetter,
+							{
+								public: "public",
+							},
+						);
 						assertIdenticalTypes(
 							stringified,
-							createInstanceOf<
-								JsonString<typeof classInstanceWithPrivateGetter>
-							>(),
+							createInstanceOf<JsonString<typeof classInstanceWithPrivateGetter>>(),
 						);
 						assertIdenticalTypes(
 							out,
@@ -1057,18 +927,15 @@ describe("JsonStringify and JsonParse", () => {
 						);
 					});
 					it("with private setter ignores setter", () => {
-						const { stringified, out } =
-							stringifyIgnoringInaccessibleMembersThenParse(
-								classInstanceWithPrivateSetter,
-								{
-									public: "public",
-								},
-							);
+						const { stringified, out } = stringifyIgnoringInaccessibleMembersThenParse(
+							classInstanceWithPrivateSetter,
+							{
+								public: "public",
+							},
+						);
 						assertIdenticalTypes(
 							stringified,
-							createInstanceOf<
-								JsonString<typeof classInstanceWithPrivateSetter>
-							>(),
+							createInstanceOf<JsonString<typeof classInstanceWithPrivateSetter>>(),
 						);
 						assertIdenticalTypes(
 							out,
@@ -1094,14 +961,10 @@ describe("JsonStringify and JsonParse", () => {
 
 			describe("object with optional property", () => {
 				it("without property", () => {
-					const { stringified, out } = stringifyThenParse(
-						objectWithOptionalNumberNotPresent,
-					);
+					const { stringified, out } = stringifyThenParse(objectWithOptionalNumberNotPresent);
 					assertIdenticalTypes(
 						stringified,
-						createInstanceOf<
-							JsonString<typeof objectWithOptionalNumberNotPresent>
-						>(),
+						createInstanceOf<JsonString<typeof objectWithOptionalNumberNotPresent>>(),
 					);
 					assertIdenticalTypes(out, objectWithOptionalNumberNotPresent);
 				});
@@ -1112,21 +975,15 @@ describe("JsonStringify and JsonParse", () => {
 					);
 					assertIdenticalTypes(
 						stringified,
-						createInstanceOf<
-							JsonString<typeof objectWithOptionalNumberUndefined>
-						>(),
+						createInstanceOf<JsonString<typeof objectWithOptionalNumberUndefined>>(),
 					);
 					assertIdenticalTypes(out, objectWithOptionalNumberUndefined);
 				});
 				it("with defined value", () => {
-					const { stringified, out } = stringifyThenParse(
-						objectWithOptionalNumberDefined,
-					);
+					const { stringified, out } = stringifyThenParse(objectWithOptionalNumberDefined);
 					assertIdenticalTypes(
 						stringified,
-						createInstanceOf<
-							JsonString<typeof objectWithOptionalNumberDefined>
-						>(),
+						createInstanceOf<JsonString<typeof objectWithOptionalNumberDefined>>(),
 					);
 					assertIdenticalTypes(out, objectWithOptionalNumberDefined);
 				});
@@ -1134,9 +991,7 @@ describe("JsonStringify and JsonParse", () => {
 
 			describe("opaque Json types", () => {
 				it("opaque serializable object", () => {
-					const { stringified, out } = stringifyThenParse(
-						opaqueSerializableObject,
-					);
+					const { stringified, out } = stringifyThenParse(opaqueSerializableObject);
 					assertIdenticalTypes(
 						stringified,
 						createInstanceOf<JsonString<typeof opaqueSerializableObject>>(),
@@ -1149,9 +1004,7 @@ describe("JsonStringify and JsonParse", () => {
 					);
 				});
 				it("opaque deserialized object", () => {
-					const { stringified, out } = stringifyThenParse(
-						opaqueDeserializedObject,
-					);
+					const { stringified, out } = stringifyThenParse(opaqueDeserializedObject);
 					assertIdenticalTypes(
 						stringified,
 						createInstanceOf<JsonString<typeof opaqueDeserializedObject>>(),
@@ -1164,9 +1017,7 @@ describe("JsonStringify and JsonParse", () => {
 					);
 					assertIdenticalTypes(
 						stringified,
-						createInstanceOf<
-							JsonString<typeof opaqueSerializableAndDeserializedObject>
-						>(),
+						createInstanceOf<JsonString<typeof opaqueSerializableAndDeserializedObject>>(),
 					);
 					// @ts-expect-error In this case, `out` has a unique `OpaqueJsonDeserialized` result.
 					assertIdenticalTypes(out, opaqueSerializableAndDeserializedObject);
@@ -1176,24 +1027,17 @@ describe("JsonStringify and JsonParse", () => {
 					);
 				});
 				it("opaque serializable unknown", () => {
-					const { stringified, out } = stringifyThenParse(
-						opaqueSerializableUnknown,
-					);
+					const { stringified, out } = stringifyThenParse(opaqueSerializableUnknown);
 					assertIdenticalTypes(
 						stringified,
 						createInstanceOf<JsonString<typeof opaqueSerializableUnknown>>(),
 					);
 					// @ts-expect-error In this case, `out` has a unique `OpaqueJsonDeserialized` result.
 					assertIdenticalTypes(out, opaqueSerializableUnknown);
-					assertIdenticalTypes(
-						out,
-						createInstanceOf<OpaqueJsonDeserialized<unknown>>(),
-					);
+					assertIdenticalTypes(out, createInstanceOf<OpaqueJsonDeserialized<unknown>>());
 				});
 				it("opaque deserialized unknown", () => {
-					const { stringified, out } = stringifyThenParse(
-						opaqueDeserializedUnknown,
-					);
+					const { stringified, out } = stringifyThenParse(opaqueDeserializedUnknown);
 					assertIdenticalTypes(
 						stringified,
 						createInstanceOf<JsonString<typeof opaqueDeserializedUnknown>>(),
@@ -1206,26 +1050,17 @@ describe("JsonStringify and JsonParse", () => {
 					);
 					assertIdenticalTypes(
 						stringified,
-						createInstanceOf<
-							JsonString<typeof opaqueSerializableAndDeserializedUnknown>
-						>(),
+						createInstanceOf<JsonString<typeof opaqueSerializableAndDeserializedUnknown>>(),
 					);
 					// @ts-expect-error In this case, `out` has a unique `OpaqueJsonDeserialized` result.
 					assertIdenticalTypes(out, opaqueSerializableAndDeserializedUnknown);
-					assertIdenticalTypes(
-						out,
-						createInstanceOf<OpaqueJsonDeserialized<unknown>>(),
-					);
+					assertIdenticalTypes(out, createInstanceOf<OpaqueJsonDeserialized<unknown>>());
 				});
 				it("object with opaque serializable unknown", () => {
-					const { stringified, out } = stringifyThenParse(
-						objectWithOpaqueSerializableUnknown,
-					);
+					const { stringified, out } = stringifyThenParse(objectWithOpaqueSerializableUnknown);
 					assertIdenticalTypes(
 						stringified,
-						createInstanceOf<
-							JsonString<typeof objectWithOpaqueSerializableUnknown>
-						>(),
+						createInstanceOf<JsonString<typeof objectWithOpaqueSerializableUnknown>>(),
 					);
 					// @ts-expect-error In this case, `out` has a unique `OpaqueJsonDeserialized` result.
 					assertIdenticalTypes(out, objectWithOpaqueSerializableUnknown);
@@ -1235,14 +1070,10 @@ describe("JsonStringify and JsonParse", () => {
 					);
 				});
 				it("object with opaque deserialized unknown", () => {
-					const { stringified, out } = stringifyThenParse(
-						objectWithOpaqueDeserializedUnknown,
-					);
+					const { stringified, out } = stringifyThenParse(objectWithOpaqueDeserializedUnknown);
 					assertIdenticalTypes(
 						stringified,
-						createInstanceOf<
-							JsonString<typeof objectWithOpaqueDeserializedUnknown>
-						>(),
+						createInstanceOf<JsonString<typeof objectWithOpaqueDeserializedUnknown>>(),
 					);
 					assertIdenticalTypes(out, objectWithOpaqueDeserializedUnknown);
 				});
@@ -1252,9 +1083,7 @@ describe("JsonStringify and JsonParse", () => {
 					);
 					assertIdenticalTypes(
 						stringified,
-						createInstanceOf<
-							JsonString<typeof opaqueSerializableInRecursiveStructure>
-						>(),
+						createInstanceOf<JsonString<typeof opaqueSerializableInRecursiveStructure>>(),
 					);
 					// @ts-expect-error In this case, `out` has a unique `OpaqueJsonDeserialized` result.
 					assertIdenticalTypes(out, opaqueSerializableInRecursiveStructure);
@@ -1269,9 +1098,7 @@ describe("JsonStringify and JsonParse", () => {
 					);
 					assertIdenticalTypes(
 						stringified,
-						createInstanceOf<
-							JsonString<typeof opaqueDeserializedInRecursiveStructure>
-						>(),
+						createInstanceOf<JsonString<typeof opaqueDeserializedInRecursiveStructure>>(),
 					);
 					assertIdenticalTypes(out, opaqueDeserializedInRecursiveStructure);
 				});
@@ -1282,16 +1109,11 @@ describe("JsonStringify and JsonParse", () => {
 					assertIdenticalTypes(
 						stringified,
 						createInstanceOf<
-							JsonString<
-								typeof opaqueSerializableAndDeserializedInRecursiveStructure
-							>
+							JsonString<typeof opaqueSerializableAndDeserializedInRecursiveStructure>
 						>(),
 					);
 					// @ts-expect-error In this case, `out` has a unique `OpaqueJsonDeserialized` result.
-					assertIdenticalTypes(
-						out,
-						opaqueSerializableAndDeserializedInRecursiveStructure,
-					);
+					assertIdenticalTypes(out, opaqueSerializableAndDeserializedInRecursiveStructure);
 					assertIdenticalTypes(
 						out,
 						createInstanceOf<DeserializedOpaqueSerializableAndDeserializedInRecursiveStructure>(),
@@ -1299,10 +1121,7 @@ describe("JsonStringify and JsonParse", () => {
 				});
 				it("recursive branded indexed object with OpaqueJsonDeserialized<unknown>", () => {
 					const { stringified, out } = stringifyThenParse(datastore);
-					assertIdenticalTypes(
-						stringified,
-						createInstanceOf<JsonString<typeof datastore>>(),
-					);
+					assertIdenticalTypes(stringified, createInstanceOf<JsonString<typeof datastore>>());
 					assertIdenticalTypes(out, datastore);
 				});
 			});
@@ -1311,10 +1130,7 @@ describe("JsonStringify and JsonParse", () => {
 		describe("supports union types", () => {
 			it("simple json (JsonTypeWith<never>)", () => {
 				const { stringified, out } = stringifyThenParse(simpleJson);
-				assertIdenticalTypes(
-					stringified,
-					createInstanceOf<JsonString<typeof simpleJson>>(),
-				);
+				assertIdenticalTypes(stringified, createInstanceOf<JsonString<typeof simpleJson>>());
 				assertIdenticalTypes(out, simpleJson);
 			});
 			it("simple read-only json (ReadonlyJsonTypeWith<never>)", () => {
@@ -1344,24 +1160,16 @@ describe("JsonStringify and JsonParse", () => {
 			describe("known defect expectations", () => {
 				describe("getters and setters allowed but do not propagate", () => {
 					it("object with `readonly` implemented via getter", () => {
-						const { stringified, out } = stringifyThenParse(
-							objectWithReadonlyViaGetter,
-							{},
-						);
+						const { stringified, out } = stringifyThenParse(objectWithReadonlyViaGetter, {});
 						assertIdenticalTypes(
 							stringified,
-							createInstanceOf<
-								JsonString<typeof objectWithReadonlyViaGetter>
-							>(),
+							createInstanceOf<JsonString<typeof objectWithReadonlyViaGetter>>(),
 						);
 						assertIdenticalTypes(out, objectWithReadonlyViaGetter);
 					});
 
 					it("object with getter", () => {
-						const { stringified, out } = stringifyThenParse(
-							objectWithGetter,
-							{},
-						);
+						const { stringified, out } = stringifyThenParse(objectWithGetter, {});
 						assertIdenticalTypes(
 							stringified,
 							createInstanceOf<JsonString<typeof objectWithGetter>>(),
@@ -1370,10 +1178,7 @@ describe("JsonStringify and JsonParse", () => {
 					});
 
 					it("object with setter", () => {
-						const { stringified, out } = stringifyThenParse(
-							objectWithSetter,
-							{},
-						);
+						const { stringified, out } = stringifyThenParse(objectWithSetter, {});
 						assertIdenticalTypes(
 							stringified,
 							createInstanceOf<JsonString<typeof objectWithSetter>>(),
@@ -1388,9 +1193,7 @@ describe("JsonStringify and JsonParse", () => {
 						);
 						assertIdenticalTypes(
 							stringified,
-							createInstanceOf<
-								JsonString<typeof objectWithMatchedGetterAndSetterProperty>
-							>(),
+							createInstanceOf<JsonString<typeof objectWithMatchedGetterAndSetterProperty>>(),
 						);
 						assertIdenticalTypes(out, objectWithMatchedGetterAndSetterProperty);
 					});
@@ -1406,29 +1209,23 @@ describe("JsonStringify and JsonParse", () => {
 								JsonString<typeof objectWithMismatchedGetterAndSetterProperty>
 							>(),
 						);
-						assertIdenticalTypes(
-							out,
-							objectWithMismatchedGetterAndSetterProperty,
-						);
+						assertIdenticalTypes(out, objectWithMismatchedGetterAndSetterProperty);
 					});
 				});
 
 				describe("class instance", () => {
 					describe("with `ignore-inaccessible-members`", () => {
 						it("with private data ignores private data (that propagates)", () => {
-							const { stringified, out } =
-								stringifyIgnoringInaccessibleMembersThenParse(
-									classInstanceWithPrivateData,
-									{
-										public: "public",
-										secret: 0,
-									},
-								);
+							const { stringified, out } = stringifyIgnoringInaccessibleMembersThenParse(
+								classInstanceWithPrivateData,
+								{
+									public: "public",
+									secret: 0,
+								},
+							);
 							assertIdenticalTypes(
 								stringified,
-								createInstanceOf<
-									JsonString<typeof classInstanceWithPrivateData>
-								>(),
+								createInstanceOf<JsonString<typeof classInstanceWithPrivateData>>(),
 							);
 							// @ts-expect-error secret is missing, but required
 							out satisfies typeof classInstanceWithPrivateData;
@@ -1448,10 +1245,12 @@ describe("JsonStringify and JsonParse", () => {
 				});
 
 				it("sparse array of supported types", () => {
-					const { stringified, out } = stringifyThenParse(
-						arrayOfNumbersSparse,
-						[0, null, null, 3],
-					);
+					const { stringified, out } = stringifyThenParse(arrayOfNumbersSparse, [
+						0,
+						null,
+						null,
+						3,
+					]);
 					assertIdenticalTypes(
 						stringified,
 						createInstanceOf<JsonString<typeof arrayOfNumbersSparse>>(),
@@ -1460,17 +1259,12 @@ describe("JsonStringify and JsonParse", () => {
 				});
 
 				it("object with sparse array of supported types", () => {
-					const { stringified, out } = stringifyThenParse(
-						objectWithArrayOfNumbersSparse,
-						{
-							arrayOfNumbersSparse: [0, null, null, 3],
-						},
-					);
+					const { stringified, out } = stringifyThenParse(objectWithArrayOfNumbersSparse, {
+						arrayOfNumbersSparse: [0, null, null, 3],
+					});
 					assertIdenticalTypes(
 						stringified,
-						createInstanceOf<
-							JsonString<typeof objectWithArrayOfNumbersSparse>
-						>(),
+						createInstanceOf<JsonString<typeof objectWithArrayOfNumbersSparse>>(),
 					);
 					assertIdenticalTypes(out, objectWithArrayOfNumbersSparse);
 				});
@@ -1483,7 +1277,7 @@ describe("JsonStringify and JsonParse", () => {
 			it("const enums are never readable", () => {
 				// ... and thus don't need accounted for by JsonDeserialized.
 
-				enum LocalConstHeterogenousEnum {
+				const enum LocalConstHeterogenousEnum {
 					zero,
 					a = "a",
 				}
@@ -1529,10 +1323,7 @@ describe("JsonStringify and JsonParse", () => {
 					// @ts-expect-error `unknown` is not supported (expects `JsonTypeWith<never> | OpaqueJsonSerializable<unknown>`)
 					{} as unknown,
 				); // {} value is actually supported; so, no runtime error.
-				assertIdenticalTypes(
-					stringified,
-					createInstanceOf<JsonString<unknown>>(),
-				);
+				assertIdenticalTypes(stringified, createInstanceOf<JsonString<unknown>>());
 				assertIdenticalTypes(out, createInstanceOf<JsonTypeWith<never>>());
 			});
 			it("`symbol`", () => {
@@ -1547,11 +1338,7 @@ describe("JsonStringify and JsonParse", () => {
 					// @ts-expect-error [unique] `symbol` is not supported
 					uniqueSymbol,
 				);
-				assert.equal(
-					stringified,
-					undefined,
-					"uniqueSymbol is not serializable",
-				);
+				assert.equal(stringified, undefined, "uniqueSymbol is not serializable");
 			});
 			it("`bigint`", () => {
 				assert.throws(
@@ -1571,27 +1358,17 @@ describe("JsonStringify and JsonParse", () => {
 				assert.equal(stringified, undefined, "aFunction is not serializable");
 				// Keep this assert at end of scope to avoid assertion altering type
 				const varTypeof = typeof aFunction;
-				assert(
-					varTypeof === "function",
-					"plain function is a function at runtime",
-				);
+				assert(varTypeof === "function", "plain function is a function at runtime");
 			});
 			it("function with supported properties", () => {
 				const stringified = JsonStringify(
 					// @ts-expect-error `Function & {...}` is not supported
 					functionWithProperties,
 				);
-				assert.equal(
-					stringified,
-					undefined,
-					"functionWithProperties is not serializable",
-				);
+				assert.equal(stringified, undefined, "functionWithProperties is not serializable");
 				// Keep this assert at end of scope to avoid assertion altering type
 				const varTypeof = typeof functionWithProperties;
-				assert(
-					varTypeof === "function",
-					"function with properties is a function at runtime",
-				);
+				assert(varTypeof === "function", "function with properties is a function at runtime");
 			});
 			it("object and function", () => {
 				const { stringified, out } = stringifyThenParse(
@@ -1606,10 +1383,7 @@ describe("JsonStringify and JsonParse", () => {
 				assertIdenticalTypes(out, createInstanceOf<{ property: number }>());
 				// Keep this assert at end of scope to avoid assertion altering type
 				const varTypeof = typeof objectAndFunction;
-				assert(
-					varTypeof === "object",
-					"object assigned a function is an object at runtime",
-				);
+				assert(varTypeof === "object", "object assigned a function is an object at runtime");
 			});
 			it("object with function with supported properties", () => {
 				const { stringified, out } = stringifyThenParse(
@@ -1619,9 +1393,7 @@ describe("JsonStringify and JsonParse", () => {
 				);
 				assertIdenticalTypes(
 					stringified,
-					createInstanceOf<
-						JsonString<typeof objectWithFunctionWithProperties>
-					>(),
+					createInstanceOf<JsonString<typeof objectWithFunctionWithProperties>>(),
 				);
 				assertIdenticalTypes(
 					out,
@@ -1691,9 +1463,7 @@ describe("JsonStringify and JsonParse", () => {
 				);
 				assertIdenticalTypes(
 					stringified,
-					createInstanceOf<
-						JsonString<typeof classInstanceWithPrivateDataAndIsFunction>
-					>(),
+					createInstanceOf<JsonString<typeof classInstanceWithPrivateDataAndIsFunction>>(),
 				);
 				assertIdenticalTypes(out, createInstanceOf<{ public: string }>());
 				// Keep this assert at end of scope to avoid assertion altering type
@@ -1711,9 +1481,7 @@ describe("JsonStringify and JsonParse", () => {
 				);
 				assertIdenticalTypes(
 					stringified,
-					createInstanceOf<
-						JsonString<typeof classInstanceWithPublicDataAndIsFunction>
-					>(),
+					createInstanceOf<JsonString<typeof classInstanceWithPublicDataAndIsFunction>>(),
 				);
 				assertIdenticalTypes(out, createInstanceOf<{ public: string }>());
 			});
@@ -1723,14 +1491,8 @@ describe("JsonStringify and JsonParse", () => {
 					object,
 					// object's value is actually supported; so, no runtime error.
 				);
-				assertIdenticalTypes(
-					stringified,
-					createInstanceOf<JsonString<typeof object>>(),
-				);
-				assertIdenticalTypes(
-					out,
-					createInstanceOf<NonNullJsonObjectWith<never>>(),
-				);
+				assertIdenticalTypes(stringified, createInstanceOf<JsonString<typeof object>>());
+				assertIdenticalTypes(out, createInstanceOf<NonNullJsonObjectWith<never>>());
 			});
 			it("`void`", () => {
 				const { stringified, out } = stringifyThenParse(
@@ -1772,11 +1534,7 @@ describe("JsonStringify and JsonParse", () => {
 						// @ts-expect-error `string | symbol` is not assignable to `string`
 						stringOrSymbol,
 					);
-					assert.equal(
-						stringified,
-						undefined,
-						"stringOrSymbol is not serializable",
-					);
+					assert.equal(stringified, undefined, "stringOrSymbol is not serializable");
 				});
 				it("`bigint | string`", () => {
 					const { stringified, out } = stringifyThenParse(
@@ -1794,11 +1552,7 @@ describe("JsonStringify and JsonParse", () => {
 						// @ts-expect-error `bigint | symbol` is not assignable to `never`
 						bigintOrSymbol,
 					);
-					assert.equal(
-						stringified,
-						undefined,
-						"bigintOrSymbol is not serializable",
-					);
+					assert.equal(stringified, undefined, "bigintOrSymbol is not serializable");
 				});
 				it("`number | bigint | symbol`", () => {
 					const { stringified, out } = stringifyThenParse(
@@ -1868,14 +1622,9 @@ describe("JsonStringify and JsonParse", () => {
 					);
 					assertIdenticalTypes(
 						stringified,
-						createInstanceOf<
-							JsonString<typeof arrayOfFunctionsWithProperties>
-						>(),
+						createInstanceOf<JsonString<typeof arrayOfFunctionsWithProperties>>(),
 					);
-					assertIdenticalTypes(
-						out,
-						createInstanceOf<({ property: number } | null)[]>(),
-					);
+					assertIdenticalTypes(out, createInstanceOf<({ property: number } | null)[]>());
 				});
 				it("array of objects and functions", () => {
 					const { stringified, out } = stringifyThenParse(
@@ -1887,10 +1636,7 @@ describe("JsonStringify and JsonParse", () => {
 						stringified,
 						createInstanceOf<JsonString<typeof arrayOfObjectAndFunctions>>(),
 					);
-					assertIdenticalTypes(
-						out,
-						createInstanceOf<({ property: number } | null)[]>(),
-					);
+					assertIdenticalTypes(out, createInstanceOf<({ property: number } | null)[]>());
 				});
 				it("array of `number | undefined`s", () => {
 					const { stringified, out } = stringifyThenParse(
@@ -1924,10 +1670,7 @@ describe("JsonStringify and JsonParse", () => {
 						stringified,
 						createInstanceOf<JsonString<typeof arrayOfSymbolOrObjects>>(),
 					);
-					assertIdenticalTypes(
-						out,
-						createInstanceOf<({ property: string } | null)[]>(),
-					);
+					assertIdenticalTypes(out, createInstanceOf<({ property: string } | null)[]>());
 				});
 				it("array of `bigint | symbol`s", () => {
 					const { stringified, out } = stringifyThenParse(
@@ -2078,9 +1821,7 @@ describe("JsonStringify and JsonParse", () => {
 					);
 					assertIdenticalTypes(
 						stringified,
-						createInstanceOf<
-							JsonString<typeof objectWithNumberOrBigintOrSymbol>
-						>(),
+						createInstanceOf<JsonString<typeof objectWithNumberOrBigintOrSymbol>>(),
 					);
 					assertIdenticalTypes(
 						out,
@@ -2114,14 +1855,9 @@ describe("JsonStringify and JsonParse", () => {
 					);
 					assertIdenticalTypes(
 						stringified,
-						createInstanceOf<
-							JsonString<typeof stringRecordOfSymbolOrBoolean>
-						>(),
+						createInstanceOf<JsonString<typeof stringRecordOfSymbolOrBoolean>>(),
 					);
-					assertIdenticalTypes(
-						out,
-						createInstanceOf<Record<string, boolean>>(),
-					);
+					assertIdenticalTypes(out, createInstanceOf<Record<string, boolean>>());
 				});
 
 				it("object with array of `bigint`s", () => {
@@ -2144,10 +1880,7 @@ describe("JsonStringify and JsonParse", () => {
 						stringified,
 						createInstanceOf<JsonString<typeof objectWithArrayOfSymbols>>(),
 					);
-					assertIdenticalTypes(
-						out,
-						createInstanceOf<{ arrayOfSymbols: null[] }>(),
-					);
+					assertIdenticalTypes(out, createInstanceOf<{ arrayOfSymbols: null[] }>());
 				});
 				it("object with array of `unknown`", () => {
 					const { stringified, out } = stringifyThenParse(
@@ -2173,10 +1906,7 @@ describe("JsonStringify and JsonParse", () => {
 						stringified,
 						createInstanceOf<JsonString<typeof objectWithArrayOfFunctions>>(),
 					);
-					assertIdenticalTypes(
-						out,
-						createInstanceOf<{ arrayOfFunctions: null[] }>(),
-					);
+					assertIdenticalTypes(out, createInstanceOf<{ arrayOfFunctions: null[] }>());
 				});
 				it("object with array of functions with properties", () => {
 					const { stringified, out } = stringifyThenParse(
@@ -2186,9 +1916,7 @@ describe("JsonStringify and JsonParse", () => {
 					);
 					assertIdenticalTypes(
 						stringified,
-						createInstanceOf<
-							JsonString<typeof objectWithArrayOfFunctionsWithProperties>
-						>(),
+						createInstanceOf<JsonString<typeof objectWithArrayOfFunctionsWithProperties>>(),
 					);
 					assertIdenticalTypes(
 						out,
@@ -2207,9 +1935,7 @@ describe("JsonStringify and JsonParse", () => {
 					);
 					assertIdenticalTypes(
 						stringified,
-						createInstanceOf<
-							JsonString<typeof objectWithArrayOfObjectAndFunctions>
-						>(),
+						createInstanceOf<JsonString<typeof objectWithArrayOfObjectAndFunctions>>(),
 					);
 					assertIdenticalTypes(
 						out,
@@ -2228,15 +1954,11 @@ describe("JsonStringify and JsonParse", () => {
 					);
 					assertIdenticalTypes(
 						stringified,
-						createInstanceOf<
-							JsonString<typeof objectWithArrayOfNumbersOrUndefined>
-						>(),
+						createInstanceOf<JsonString<typeof objectWithArrayOfNumbersOrUndefined>>(),
 					);
 					assertIdenticalTypes(
 						out,
-						createInstanceOf<{
-							arrayOfNumbersOrUndefined: (number | null)[];
-						}>(),
+						createInstanceOf<{ arrayOfNumbersOrUndefined: (number | null)[] }>(),
 					);
 				});
 				it("object with array of `bigint` or basic object", () => {
@@ -2257,9 +1979,7 @@ describe("JsonStringify and JsonParse", () => {
 					);
 					assertIdenticalTypes(
 						stringified,
-						createInstanceOf<
-							JsonString<typeof objectWithArrayOfSymbolOrObjects>
-						>(),
+						createInstanceOf<JsonString<typeof objectWithArrayOfSymbolOrObjects>>(),
 					);
 					assertIdenticalTypes(
 						out,
@@ -2281,14 +2001,9 @@ describe("JsonStringify and JsonParse", () => {
 					);
 					assertIdenticalTypes(
 						stringified,
-						createInstanceOf<
-							JsonString<typeof objectWithArrayOfBigintOrSymbols>
-						>(),
+						createInstanceOf<JsonString<typeof objectWithArrayOfBigintOrSymbols>>(),
 					);
-					assertIdenticalTypes(
-						out,
-						createInstanceOf<{ arrayOfBigintOrSymbols: null[] }>(),
-					);
+					assertIdenticalTypes(out, createInstanceOf<{ arrayOfBigintOrSymbols: null[] }>());
 				});
 
 				it("object with `symbol` key", () => {
@@ -2325,10 +2040,7 @@ describe("JsonStringify and JsonParse", () => {
 						stringified,
 						createInstanceOf<JsonString<typeof stringRecordOfUnknown>>(),
 					);
-					assertIdenticalTypes(
-						out,
-						createInstanceOf<Record<string, JsonTypeWith<never>>>(),
-					);
+					assertIdenticalTypes(out, createInstanceOf<Record<string, JsonTypeWith<never>>>());
 				});
 				it("`Partial<>` `string` indexed record of `unknown`", () => {
 					const { stringified, out } = stringifyThenParse(
@@ -2339,10 +2051,7 @@ describe("JsonStringify and JsonParse", () => {
 						stringified,
 						createInstanceOf<JsonString<typeof partialStringRecordOfUnknown>>(),
 					);
-					assertIdenticalTypes(
-						out,
-						createInstanceOf<Record<string, JsonTypeWith<never>>>(),
-					);
+					assertIdenticalTypes(out, createInstanceOf<Record<string, JsonTypeWith<never>>>());
 				});
 
 				it("`Partial<>` `string` indexed record of `numbers`", () => {
@@ -2377,14 +2086,9 @@ describe("JsonStringify and JsonParse", () => {
 					);
 					assertIdenticalTypes(
 						stringified,
-						createInstanceOf<
-							JsonString<typeof partialTemplatedRecordOfNumbers>
-						>(),
+						createInstanceOf<JsonString<typeof partialTemplatedRecordOfNumbers>>(),
 					);
-					assertIdenticalTypes(
-						out,
-						createInstanceOf<Record<`key${number}`, number>>(),
-					);
+					assertIdenticalTypes(out, createInstanceOf<Record<`key${number}`, number>>());
 				});
 
 				it("object with recursion and `symbol`", () => {
@@ -2430,16 +2134,12 @@ describe("JsonStringify and JsonParse", () => {
 					);
 					assertIdenticalTypes(
 						stringified,
-						createInstanceOf<
-							JsonString<typeof selfRecursiveObjectAndFunction>
-						>(),
+						createInstanceOf<JsonString<typeof selfRecursiveObjectAndFunction>>(),
 					);
 					assertIdenticalTypes(
 						out,
 						createInstanceOf<{
-							recurse?: OpaqueJsonDeserialized<
-								typeof selfRecursiveObjectAndFunction
-							>;
+							recurse?: OpaqueJsonDeserialized<typeof selfRecursiveObjectAndFunction>;
 						}>(),
 					);
 					// Keep this assert at end of scope to avoid assertion altering
@@ -2462,18 +2162,14 @@ describe("JsonStringify and JsonParse", () => {
 					assertIdenticalTypes(
 						stringified,
 						createInstanceOf<
-							JsonString<
-								typeof objectWithNestedFunctionWithPropertiesAndRecursion
-							>
+							JsonString<typeof objectWithNestedFunctionWithPropertiesAndRecursion>
 						>(),
 					);
 					assertIdenticalTypes(
 						out,
 						createInstanceOf<{
 							outerFnOjb?: {
-								recurse?: OpaqueJsonDeserialized<
-									typeof selfRecursiveFunctionWithProperties
-								>;
+								recurse?: OpaqueJsonDeserialized<typeof selfRecursiveFunctionWithProperties>;
 							};
 						}>(),
 					);
@@ -2497,9 +2193,7 @@ describe("JsonStringify and JsonParse", () => {
 						out,
 						createInstanceOf<{
 							outerFnOjb?: {
-								recurse?: OpaqueJsonDeserialized<
-									typeof selfRecursiveObjectAndFunction
-								>;
+								recurse?: OpaqueJsonDeserialized<typeof selfRecursiveObjectAndFunction>;
 							};
 						}>(),
 					);
@@ -2509,17 +2203,12 @@ describe("JsonStringify and JsonParse", () => {
 					const { stringified, out } = stringifyThenParse(
 						// @ts-expect-error 'ObjectInheritingOptionalRecursionAndWithNestedSymbol' is not assignable to parameter of type '...' (symbol at complex.symbol becomes `never`)
 						objectInheritingOptionalRecursionAndWithNestedSymbol,
-						{
-							recursive: { recursive: { recursive: {} } },
-							complex: { number: 0 },
-						},
+						{ recursive: { recursive: { recursive: {} } }, complex: { number: 0 } },
 					);
 					assertIdenticalTypes(
 						stringified,
 						createInstanceOf<
-							JsonString<
-								typeof objectInheritingOptionalRecursionAndWithNestedSymbol
-							>
+							JsonString<typeof objectInheritingOptionalRecursionAndWithNestedSymbol>
 						>(),
 					);
 					assertIdenticalTypes(
@@ -2549,27 +2238,20 @@ describe("JsonStringify and JsonParse", () => {
 						assertIdenticalTypes(out, emptyObject);
 					});
 					it("in union property", () => {
-						const { stringified: resultUndefined, out: outUndefined } =
-							stringifyThenParse(
-								// @ts-expect-error not assignable to type '{ "error required property may not allow `undefined` value": never; }'
-								objectWithNumberOrUndefinedUndefined,
-								{},
-							);
+						const { stringified: resultUndefined, out: outUndefined } = stringifyThenParse(
+							// @ts-expect-error not assignable to type '{ "error required property may not allow `undefined` value": never; }'
+							objectWithNumberOrUndefinedUndefined,
+							{},
+						);
 						assertIdenticalTypes(
 							resultUndefined,
-							createInstanceOf<
-								JsonString<typeof objectWithNumberOrUndefinedUndefined>
-							>(),
+							createInstanceOf<JsonString<typeof objectWithNumberOrUndefinedUndefined>>(),
 						);
-						assertIdenticalTypes(
-							outUndefined,
-							createInstanceOf<{ numOrUndef?: number }>(),
+						assertIdenticalTypes(outUndefined, createInstanceOf<{ numOrUndef?: number }>());
+						const { stringified: resultNumbered, out: outNumbered } = stringifyThenParse(
+							// @ts-expect-error not assignable to `{ "error required property may not allow `undefined` value": never; }`
+							objectWithNumberOrUndefinedNumbered,
 						);
-						const { stringified: resultNumbered, out: outNumbered } =
-							stringifyThenParse(
-								// @ts-expect-error not assignable to `{ "error required property may not allow `undefined` value": never; }`
-								objectWithNumberOrUndefinedNumbered,
-							);
 						assertIdenticalTypes(resultNumbered, resultUndefined);
 						assertIdenticalTypes(outNumbered, outUndefined);
 					});
@@ -2594,15 +2276,10 @@ describe("JsonStringify and JsonParse", () => {
 						assertIdenticalTypes(
 							stringified,
 							createInstanceOf<
-								JsonString<
-									typeof stringOrNumberRecordOfUndefinedWithKnownNumber
-								>
+								JsonString<typeof stringOrNumberRecordOfUndefinedWithKnownNumber>
 							>(),
 						);
-						assertIdenticalTypes(
-							out,
-							createInstanceOf<{ knownNumber: number }>(),
-						);
+						assertIdenticalTypes(out, createInstanceOf<{ knownNumber: number }>());
 					});
 
 					it("`| number` in string indexed record", () => {
@@ -2613,14 +2290,9 @@ describe("JsonStringify and JsonParse", () => {
 						);
 						assertIdenticalTypes(
 							stringified,
-							createInstanceOf<
-								JsonString<typeof stringRecordOfNumberOrUndefined>
-							>(),
+							createInstanceOf<JsonString<typeof stringRecordOfNumberOrUndefined>>(),
 						);
-						assertIdenticalTypes(
-							out,
-							createInstanceOf<Record<string, number>>(),
-						);
+						assertIdenticalTypes(out, createInstanceOf<Record<string, number>>());
 					});
 
 					it("`| true` in branded-`string` alias index", () => {
@@ -2631,9 +2303,7 @@ describe("JsonStringify and JsonParse", () => {
 						);
 						assertIdenticalTypes(
 							stringified,
-							createInstanceOf<
-								JsonString<typeof brandedStringAliasIndexOfTrueOrUndefined>
-							>(),
+							createInstanceOf<JsonString<typeof brandedStringAliasIndexOfTrueOrUndefined>>(),
 						);
 						assertIdenticalTypes(
 							out,
@@ -2656,9 +2326,7 @@ describe("JsonStringify and JsonParse", () => {
 						assertIdenticalTypes(
 							stringified,
 							createInstanceOf<
-								JsonString<
-									typeof objectWithOptionalUndefinedEnclosingRequiredUndefined
-								>
+								JsonString<typeof objectWithOptionalUndefinedEnclosingRequiredUndefined>
 							>(),
 						);
 						assertIdenticalTypes(
@@ -2683,10 +2351,7 @@ describe("JsonStringify and JsonParse", () => {
 							stringified,
 							createInstanceOf<JsonString<typeof objectWithUnknown>>(),
 						);
-						assertIdenticalTypes(
-							out,
-							createInstanceOf<{ unknown?: JsonTypeWith<never> }>(),
-						);
+						assertIdenticalTypes(out, createInstanceOf<{ unknown?: JsonTypeWith<never> }>());
 					});
 					it("as exact property type adjacent to recursion", () => {
 						const { stringified, out } = stringifyThenParse(
@@ -2716,17 +2381,13 @@ describe("JsonStringify and JsonParse", () => {
 						);
 						assertIdenticalTypes(
 							stringified,
-							createInstanceOf<
-								JsonString<typeof objectWithUnknownInOptionalRecursion>
-							>(),
+							createInstanceOf<JsonString<typeof objectWithUnknownInOptionalRecursion>>(),
 						);
 						assertIdenticalTypes(
 							out,
 							createInstanceOf<{
 								unknown?: JsonTypeWith<never>;
-								recurse?: OpaqueJsonDeserialized<
-									typeof objectWithUnknownInOptionalRecursion
-								>;
+								recurse?: OpaqueJsonDeserialized<typeof objectWithUnknownInOptionalRecursion>;
 							}>(),
 						);
 					});
@@ -2745,9 +2406,7 @@ describe("JsonStringify and JsonParse", () => {
 						);
 						assertIdenticalTypes(
 							stringified,
-							createInstanceOf<
-								JsonString<typeof classInstanceWithPrivateData>
-							>(),
+							createInstanceOf<JsonString<typeof classInstanceWithPrivateData>>(),
 						);
 						assertIdenticalTypes(out, createInstanceOf<{ public: string }>());
 					});
@@ -2761,9 +2420,7 @@ describe("JsonStringify and JsonParse", () => {
 						);
 						assertIdenticalTypes(
 							stringified,
-							createInstanceOf<
-								JsonString<typeof classInstanceWithPrivateMethod>
-							>(),
+							createInstanceOf<JsonString<typeof classInstanceWithPrivateMethod>>(),
 						);
 						assertIdenticalTypes(out, createInstanceOf<{ public: string }>());
 					});
@@ -2777,9 +2434,7 @@ describe("JsonStringify and JsonParse", () => {
 						);
 						assertIdenticalTypes(
 							stringified,
-							createInstanceOf<
-								JsonString<typeof classInstanceWithPrivateGetter>
-							>(),
+							createInstanceOf<JsonString<typeof classInstanceWithPrivateGetter>>(),
 						);
 						assertIdenticalTypes(out, createInstanceOf<{ public: string }>());
 					});
@@ -2793,9 +2448,7 @@ describe("JsonStringify and JsonParse", () => {
 						);
 						assertIdenticalTypes(
 							stringified,
-							createInstanceOf<
-								JsonString<typeof classInstanceWithPrivateSetter>
-							>(),
+							createInstanceOf<JsonString<typeof classInstanceWithPrivateSetter>>(),
 						);
 						assertIdenticalTypes(out, createInstanceOf<{ public: string }>());
 					});
@@ -2807,9 +2460,7 @@ describe("JsonStringify and JsonParse", () => {
 						);
 						assertIdenticalTypes(
 							stringified,
-							createInstanceOf<
-								JsonString<typeof classInstanceWithPublicMethod>
-							>(),
+							createInstanceOf<JsonString<typeof classInstanceWithPublicMethod>>(),
 						);
 						assertIdenticalTypes(out, createInstanceOf<{ public: string }>());
 						// @ts-expect-error getSecret is missing, but required
@@ -2845,9 +2496,7 @@ describe("JsonStringify and JsonParse", () => {
 						assertIdenticalTypes(
 							stringified,
 							createInstanceOf<
-								JsonString<
-									typeof objectWithClassWithPrivateDataInOptionalRecursion
-								>
+								JsonString<typeof objectWithClassWithPrivateDataInOptionalRecursion>
 							>(),
 						);
 						assertIdenticalTypes(
@@ -2945,17 +2594,13 @@ describe("JsonStringify and JsonParse", () => {
 					assertIdenticalTypes(
 						stringified,
 						createInstanceOf<
-							JsonString<
-								typeof opaqueSerializableAndDeserializedObjectExpectingBigintSupport
-							>
+							JsonString<typeof opaqueSerializableAndDeserializedObjectExpectingBigintSupport>
 						>(),
 					);
 					assertIdenticalTypes(
 						out,
 						createInstanceOf<
-							OpaqueJsonDeserialized<{
-								readonlyArrayOfNumbers: readonly number[];
-							}>
+							OpaqueJsonDeserialized<{ readonlyArrayOfNumbers: readonly number[] }>
 						>(),
 					);
 				});
@@ -2972,10 +2617,7 @@ describe("JsonStringify and JsonParse", () => {
 						stringified,
 						createInstanceOf<JsonString<typeof mapOfStringsToNumbers>>(),
 					);
-					assertIdenticalTypes(
-						out,
-						createInstanceOf<{ readonly size: number }>(),
-					);
+					assertIdenticalTypes(out, createInstanceOf<{ readonly size: number }>());
 					// @ts-expect-error methods are missing, but required
 					out satisfies typeof readonlyMapOfStringsToNumbers;
 					// @ts-expect-error methods are missing, but required
@@ -2994,14 +2636,9 @@ describe("JsonStringify and JsonParse", () => {
 					);
 					assertIdenticalTypes(
 						stringified,
-						createInstanceOf<
-							JsonString<typeof readonlyMapOfStringsToNumbers>
-						>(),
+						createInstanceOf<JsonString<typeof readonlyMapOfStringsToNumbers>>(),
 					);
-					assertIdenticalTypes(
-						out,
-						createInstanceOf<{ readonly size: number }>(),
-					);
+					assertIdenticalTypes(out, createInstanceOf<{ readonly size: number }>());
 					// @ts-expect-error methods are missing, but required
 					out satisfies typeof readonlyMapOfStringsToNumbers;
 					// @ts-expect-error methods are missing, but required
@@ -3022,10 +2659,7 @@ describe("JsonStringify and JsonParse", () => {
 						stringified,
 						createInstanceOf<JsonString<typeof setOfNumbers>>(),
 					);
-					assertIdenticalTypes(
-						out,
-						createInstanceOf<{ readonly size: number }>(),
-					);
+					assertIdenticalTypes(out, createInstanceOf<{ readonly size: number }>());
 					// @ts-expect-error methods are missing, but required
 					out satisfies typeof setOfNumbers;
 					// @ts-expect-error methods are missing, but required
@@ -3046,10 +2680,7 @@ describe("JsonStringify and JsonParse", () => {
 						stringified,
 						createInstanceOf<JsonString<typeof readonlySetOfNumbers>>(),
 					);
-					assertIdenticalTypes(
-						out,
-						createInstanceOf<{ readonly size: number }>(),
-					);
+					assertIdenticalTypes(out, createInstanceOf<{ readonly size: number }>());
 					// @ts-expect-error methods are missing, but required
 					out satisfies typeof setOfNumbers;
 					// @ts-expect-error methods are missing, but required
@@ -3073,10 +2704,7 @@ describe("JsonStringify and JsonParse", () => {
 						stringified,
 						createInstanceOf<JsonString<typeof fluidHandleToNumber>>(),
 					);
-					assertIdenticalTypes(
-						out,
-						createInstanceOf<{ readonly isAttached: boolean }>(),
-					);
+					assertIdenticalTypes(out, createInstanceOf<{ readonly isAttached: boolean }>());
 				});
 				it("object with `IFluidHandle`", () => {
 					const { stringified, out } = stringifyThenParse(
@@ -3110,74 +2738,43 @@ describe("JsonStringify and JsonParse", () => {
 		describe("`number` edge cases", () => {
 			describe("supported", () => {
 				it("MIN_SAFE_INTEGER", () => {
-					const { stringified, out } = stringifyThenParse(
-						Number.MIN_SAFE_INTEGER,
-					);
-					assertIdenticalTypes(
-						stringified,
-						createInstanceOf<JsonString<number>>(),
-					);
+					const { stringified, out } = stringifyThenParse(Number.MIN_SAFE_INTEGER);
+					assertIdenticalTypes(stringified, createInstanceOf<JsonString<number>>());
 					assertIdenticalTypes(out, createInstanceOf<number>());
 				});
 				it("MAX_SAFE_INTEGER", () => {
-					const { stringified, out } = stringifyThenParse(
-						Number.MAX_SAFE_INTEGER,
-					);
-					assertIdenticalTypes(
-						stringified,
-						createInstanceOf<JsonString<number>>(),
-					);
+					const { stringified, out } = stringifyThenParse(Number.MAX_SAFE_INTEGER);
+					assertIdenticalTypes(stringified, createInstanceOf<JsonString<number>>());
 					assertIdenticalTypes(out, createInstanceOf<number>());
 				});
 				it("MIN_VALUE", () => {
 					const { stringified, out } = stringifyThenParse(Number.MIN_VALUE);
-					assertIdenticalTypes(
-						stringified,
-						createInstanceOf<JsonString<number>>(),
-					);
+					assertIdenticalTypes(stringified, createInstanceOf<JsonString<number>>());
 					assertIdenticalTypes(out, createInstanceOf<number>());
 				});
 				it("MAX_VALUE", () => {
 					const { stringified, out } = stringifyThenParse(Number.MAX_VALUE);
-					assertIdenticalTypes(
-						stringified,
-						createInstanceOf<JsonString<number>>(),
-					);
+					assertIdenticalTypes(stringified, createInstanceOf<JsonString<number>>());
 					assertIdenticalTypes(out, createInstanceOf<number>());
 				});
 			});
 			describe("resulting in `null`", () => {
 				it("NaN", () => {
 					const { stringified, out } = stringifyThenParse(Number.NaN, null);
-					assertIdenticalTypes(
-						stringified,
-						createInstanceOf<JsonString<number>>(),
-					);
+					assertIdenticalTypes(stringified, createInstanceOf<JsonString<number>>());
 					// However, real result is `null`
 					assertIdenticalTypes(out, createInstanceOf<number>());
 				});
 
 				it("+Infinity", () => {
-					const { stringified, out } = stringifyThenParse(
-						Number.POSITIVE_INFINITY,
-						null,
-					);
-					assertIdenticalTypes(
-						stringified,
-						createInstanceOf<JsonString<number>>(),
-					);
+					const { stringified, out } = stringifyThenParse(Number.POSITIVE_INFINITY, null);
+					assertIdenticalTypes(stringified, createInstanceOf<JsonString<number>>());
 					// However, real result is `null`
 					assertIdenticalTypes(out, createInstanceOf<number>());
 				});
 				it("-Infinity", () => {
-					const { stringified, out } = stringifyThenParse(
-						Number.NEGATIVE_INFINITY,
-						null,
-					);
-					assertIdenticalTypes(
-						stringified,
-						createInstanceOf<JsonString<number>>(),
-					);
+					const { stringified, out } = stringifyThenParse(Number.NEGATIVE_INFINITY, null);
+					assertIdenticalTypes(stringified, createInstanceOf<JsonString<number>>());
 					// However, real result is `null`
 					assertIdenticalTypes(out, createInstanceOf<number>());
 				});
@@ -3189,7 +2786,7 @@ describe("JsonStringify and JsonParse", () => {
 describe("JsonParse", () => {
 	it("parses `JsonString<A> | JsonString<B>` to `JsonDeserialized<A | B>`", () => {
 		// Setup
-		const jsonString = JsonStringify({ a: 6 }) as
+		const jsonString = JsonStringify({ "a": 6 }) as
 			| JsonString<{ a: number }>
 			| JsonString<{ b: string } | { c: boolean }>;
 

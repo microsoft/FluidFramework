@@ -12,10 +12,7 @@ import type {
 	IProvideRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
-import type {
-	IResolvedUrl,
-	IUrlResolver,
-} from "@fluidframework/driver-definitions/internal";
+import type { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 
 /**
  * URL Resolver for the replay tool.
@@ -40,9 +37,7 @@ export class ReplayUrlResolver implements IUrlResolver {
 }
 
 /** Simple code loader that loads the runtime factory provided during creation. */
-export class ReplayCodeLoader
-	implements ICodeDetailsLoader, IFluidCodeDetailsComparer
-{
+export class ReplayCodeLoader implements ICodeDetailsLoader, IFluidCodeDetailsComparer {
 	private readonly fluidModule: IFluidModule;
 
 	constructor(runtimeFactory: IProvideRuntimeFactory) {
@@ -53,9 +48,7 @@ export class ReplayCodeLoader
 		return this;
 	}
 
-	public async load(
-		source: IFluidCodeDetails,
-	): Promise<IFluidModuleWithDetails> {
+	public async load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
 		return {
 			module: this.fluidModule,
 			details: source,

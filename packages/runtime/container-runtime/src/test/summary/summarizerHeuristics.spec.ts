@@ -238,11 +238,7 @@ describe("Runtime", () => {
 				initialize({ minOpsForLastSummaryAttempt, runtimeOpWeight: 1 });
 
 				data.numRuntimeOps = minOpsForLastSummaryAttempt;
-				assert.strictEqual(
-					runner.shouldRunLastSummary(),
-					true,
-					"should run on close",
-				);
+				assert.strictEqual(runner.shouldRunLastSummary(), true, "should run on close");
 			});
 
 			it("Should not summarize on close if insufficient outstanding ops", () => {
@@ -250,11 +246,7 @@ describe("Runtime", () => {
 				initialize({ minOpsForLastSummaryAttempt, runtimeOpWeight: 1 });
 
 				data.numRuntimeOps = minOpsForLastSummaryAttempt - 1;
-				assert.strictEqual(
-					runner.shouldRunLastSummary(),
-					false,
-					"should not run on close",
-				);
+				assert.strictEqual(runner.shouldRunLastSummary(), false, "should not run on close");
 			});
 
 			it("Should summarize on close weights ops properly", () => {
@@ -266,18 +258,10 @@ describe("Runtime", () => {
 				});
 
 				data.numRuntimeOps += 8;
-				assert.strictEqual(
-					runner.shouldRunLastSummary(),
-					false,
-					"should not run yet",
-				);
+				assert.strictEqual(runner.shouldRunLastSummary(), false, "should not run yet");
 
 				data.numNonRuntimeOps += 1;
-				assert.strictEqual(
-					runner.shouldRunLastSummary(),
-					false,
-					"should not run yet",
-				);
+				assert.strictEqual(runner.shouldRunLastSummary(), false, "should not run yet");
 
 				data.numRuntimeOps += 1;
 				assert.strictEqual(runner.shouldRunLastSummary(), true, "should run");
@@ -323,11 +307,7 @@ describe("Runtime", () => {
 				});
 
 				data.lastOpSequenceNumber = maxOps;
-				assert.strictEqual(
-					runner.idleTime,
-					maxIdleTime,
-					"should start at the maxIdleTime",
-				);
+				assert.strictEqual(runner.idleTime, maxIdleTime, "should start at the maxIdleTime");
 
 				data.numRuntimeOps += 50;
 				assert.strictEqual(runner.idleTime, maxIdleTime - 0.05);
@@ -369,11 +349,7 @@ describe("Runtime", () => {
 				});
 
 				data.lastOpSequenceNumber = maxOps;
-				assert.strictEqual(
-					runner.idleTime,
-					maxIdleTime,
-					"should start at the maxIdleTime",
-				);
+				assert.strictEqual(runner.idleTime, maxIdleTime, "should start at the maxIdleTime");
 
 				data.numRuntimeOps += 50;
 				assert.strictEqual(runner.idleTime, maxIdleTime - 5);

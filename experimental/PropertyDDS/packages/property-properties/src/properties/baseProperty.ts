@@ -8,10 +8,10 @@
 import {
 	ChangeSet,
 	PathHelper,
-	type SerializedChangeSet,
+	SerializedChangeSet,
 	TypeIdHelper,
 } from "@fluid-experimental/property-changeset";
-import { ConsoleUtils, constants } from "@fluid-experimental/property-common";
+import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
 
 import _ from "lodash";
 
@@ -134,7 +134,7 @@ export abstract class BaseProperty {
             MSG.CONTEXT_NOT_AS_EXPECTED + this._context + ' != ' + in_params.context); */
 
 		// Sets typeid if default value is not fine
-		const typeId = in_params.typeid || "BaseProperty";
+		let typeId = in_params.typeid || "BaseProperty";
 		if (typeId !== this._typeid) {
 			this._typeid = typeId;
 		}
@@ -287,8 +287,7 @@ export abstract class BaseProperty {
 			MODIFIED_STATE_FLAGS.PENDING_CHANGE,
 	) {
 		if (in_flags === undefined) {
-			in_flags =
-				MODIFIED_STATE_FLAGS.DIRTY | MODIFIED_STATE_FLAGS.PENDING_CHANGE;
+			in_flags = MODIFIED_STATE_FLAGS.DIRTY | MODIFIED_STATE_FLAGS.PENDING_CHANGE;
 		}
 		var reportToView = in_reportToView;
 		if (reportToView === undefined) {
@@ -422,20 +421,17 @@ export abstract class BaseProperty {
 		this._checkIsNotReadOnly(false);
 		// Here we must walk both changesets in parallel. Sometimes there will be only an entry in one
 		// changeset, sometimes only one in the other changeset, sometimes one in both.
-		const typeids = _.keys(in_pendingChangeSet).concat(
-			_.keys(in_dirtyChangeSet),
-		);
+		const typeids = _.keys(in_pendingChangeSet).concat(_.keys(in_dirtyChangeSet));
 		for (const typeid of typeids) {
 			if (ChangeSet.isReservedKeyword(typeid)) {
 				continue; // Ignore the special keys
 			}
-			const pendingChangeSet =
-				in_pendingChangeSet && in_pendingChangeSet[typeid];
+			const pendingChangeSet = in_pendingChangeSet && in_pendingChangeSet[typeid];
 			const dirtyChangeSet = in_dirtyChangeSet && in_dirtyChangeSet[typeid];
 
 			const paths = _.keys(pendingChangeSet).concat(_.keys(dirtyChangeSet));
 			for (const path of paths) {
-				const property = this.resolvePath(path);
+				let property = this.resolvePath(path);
 				if (property) {
 					property._reapplyDirtyFlags(
 						pendingChangeSet && pendingChangeSet[path],
@@ -460,9 +456,7 @@ export abstract class BaseProperty {
 	 */
 	_cleanDirty(in_flags) {
 		this._setDirtyFlags(
-			in_flags === undefined
-				? MODIFIED_STATE_FLAGS.CLEAN
-				: this._getDirtyFlags() & ~in_flags,
+			in_flags === undefined ? MODIFIED_STATE_FLAGS.CLEAN : this._getDirtyFlags() & ~in_flags,
 		);
 	}
 
@@ -492,9 +486,7 @@ export abstract class BaseProperty {
 	 * @param in_dirtinessType - The type of dirtiness to check for. By default this is DIRTY
 	 * @returns Is the property dirty?
 	 */
-	_isDirty(
-		in_dirtinessType: MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS.DIRTY,
-	): boolean {
+	_isDirty(in_dirtinessType: MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS.DIRTY): boolean {
 		return !!(this._getDirtyFlags() & in_dirtinessType);
 	}
 
@@ -553,10 +545,8 @@ export abstract class BaseProperty {
 	 * @return {property-properties.CheckoutView} - the checkout view
 	 */
 	_getCheckoutView() {
-		const checkedOutRepositoryInfo = this._getCheckedOutRepositoryInfo();
-		return checkedOutRepositoryInfo
-			? checkedOutRepositoryInfo.getCheckoutView()
-			: undefined;
+		let checkedOutRepositoryInfo = this._getCheckedOutRepositoryInfo();
+		return checkedOutRepositoryInfo ? checkedOutRepositoryInfo.getCheckoutView() : undefined;
 	}
 
 	/**
@@ -568,9 +558,7 @@ export abstract class BaseProperty {
 		if (!this._parent) {
 			return this._checkedOutRepositoryInfo;
 		} else {
-			return this.getRoot()
-				? this.getRoot()._getCheckedOutRepositoryInfo()
-				: undefined;
+			return this.getRoot() ? this.getRoot()._getCheckedOutRepositoryInfo() : undefined;
 		}
 	}
 
@@ -591,10 +579,7 @@ export abstract class BaseProperty {
 	 * @returns The path segment to resolve the child property under this property
 	 */
 	protected _getPathSegmentForChildNode(in_childNode: BaseProperty): string {
-		return (
-			PROPERTY_PATH_DELIMITER +
-			PathHelper.quotePathSegmentIfNeeded(in_childNode.getId())
-		);
+		return PROPERTY_PATH_DELIMITER + PathHelper.quotePathSegmentIfNeeded(in_childNode.getId());
 	}
 
 	/**
@@ -605,10 +590,7 @@ export abstract class BaseProperty {
 	 *
 	 * @return {property-properties.BaseProperty|undefined} The child property that has been resolved
 	 */
-	protected _resolvePathSegment(
-		in_segment: string,
-		in_segmentType: PathHelper.TOKEN_TYPES,
-	) {
+	protected _resolvePathSegment(in_segment: string, in_segmentType: PathHelper.TOKEN_TYPES) {
 		// Base Properties only support paths separated via dots
 		if (in_segmentType !== PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN) {
 			throw new Error(MSG.INVALID_PATH_TOKEN + in_segment);
@@ -633,9 +615,7 @@ export abstract class BaseProperty {
 		}
 
 		if (this._parent !== undefined) {
-			throw new Error(
-				MSG.ID_CHANGE_FOR_PROPERTY_WITH_PARENT + this._id + " to id: " + in_id,
-			);
+			throw new Error(MSG.ID_CHANGE_FOR_PROPERTY_WITH_PARENT + this._id + " to id: " + in_id);
 		}
 
 		this._id = String(in_id);
@@ -760,15 +740,7 @@ export abstract class BaseProperty {
 			default:
 				break;
 		}
-		printFct(
-			indent +
-				externalId +
-				this.getId() +
-				" (" +
-				context +
-				this.getTypeid() +
-				"):",
-		);
+		printFct(indent + externalId + this.getId() + " (" + context + this.getTypeid() + "):");
 		this._prettyPrintChildren(indent, printFct);
 	}
 
@@ -799,16 +771,18 @@ export abstract class BaseProperty {
 	 */
 	_getPathsThroughRepoRef(in_fromProperty) {
 		var paths = [];
+		var that = this;
 		var referenceProps = [];
 		// get all reference properties in the referenceProps array
-		this._getCheckoutView()._forEachCheckedOutRepository((repoInfo) => {
+		this._getCheckoutView()._forEachCheckedOutRepository(function (repoInfo) {
 			var keys = _.keys(repoInfo._referencedByPropertyInstanceGUIDs);
 			for (const key of keys) {
 				if (key) {
 					var repoRef =
-						repoInfo._referencedByPropertyInstanceGUIDs[key]
-							._repositoryReferenceProperties[key].property;
-					if (this.getRoot() === repoRef.getReferencedRepositoryRoot()) {
+						repoInfo._referencedByPropertyInstanceGUIDs[key]._repositoryReferenceProperties[
+							key
+						].property;
+					if (that.getRoot() === repoRef.getReferencedRepositoryRoot()) {
 						referenceProps.push(repoRef);
 					}
 				}
@@ -853,14 +827,15 @@ export abstract class BaseProperty {
 	 */
 	_getIndirectPath(in_fromProperty) {
 		var path = [];
-		var foundPath;
+		var that = this;
+		var foundPath = undefined;
 
-		foundPath = in_fromProperty.traverseUp((in_node) => {
+		foundPath = in_fromProperty.traverseUp(function (in_node) {
 			path.push("../");
-			if (in_node === this) {
+			if (in_node === that) {
 				return BREAK_TRAVERSAL;
 			}
-			var directPath = this._getDirectPath(in_node);
+			var directPath = that._getDirectPath(in_node);
 			if (directPath) {
 				path.push(directPath);
 				return BREAK_TRAVERSAL;
@@ -880,13 +855,13 @@ export abstract class BaseProperty {
 	 */
 	_getDirectPath(in_fromProperty) {
 		var path = [];
-		var foundAncestor;
+		var foundAncestor = undefined;
 		if (in_fromProperty === this) {
 			foundAncestor = BREAK_TRAVERSAL;
 		} else if (this.getParent()) {
 			path.push(this.getParent()._getPathSegmentForChildNode(this));
 
-			foundAncestor = this.traverseUp((in_node) => {
+			foundAncestor = this.traverseUp(function (in_node) {
 				// break where we meet the relative reference
 				if (in_node === in_fromProperty) {
 					return BREAK_TRAVERSAL;
@@ -983,15 +958,16 @@ export abstract class BaseProperty {
 	 * @return {string} The path from the root
 	 */
 	getAbsolutePath() {
+		var that = this;
 		var referenceProps = [];
 		// get all reference properties pointing to the root the repository containing 'this'
 		if (this._getCheckoutView()) {
-			this._getCheckoutView()._forEachCheckedOutRepository((repoInfo) => {
+			this._getCheckoutView()._forEachCheckedOutRepository(function (repoInfo) {
 				var keys = _.keys(repoInfo._referencedByPropertyInstanceGUIDs);
 				for (const key of keys) {
 					if (key) {
-						const repoRef = repoInfo._referencedByPropertyInstanceGUIDs[key];
-						let refProperty;
+						let repoRef = repoInfo._referencedByPropertyInstanceGUIDs[key];
+						let refProperty = undefined;
 
 						if (repoRef) {
 							refProperty = repoRef._repositoryReferenceProperties[key]
@@ -1001,14 +977,12 @@ export abstract class BaseProperty {
 
 						let refRoot;
 						try {
-							refRoot = refProperty
-								? refProperty.getReferencedRepositoryRoot()
-								: undefined;
+							refRoot = refProperty ? refProperty.getReferencedRepositoryRoot() : undefined;
 						} catch (e) {
 							console.warn(e.message);
 						}
 
-						if (this.getRoot() === refRoot) {
+						if (that.getRoot() === refRoot) {
 							referenceProps.push(refProperty);
 							break;
 						}
@@ -1017,19 +991,13 @@ export abstract class BaseProperty {
 			});
 		}
 
-		var path = this.isRoot()
-			? []
-			: [this.getParent()._getPathSegmentForChildNode(this)];
-		this.traverseUp((in_node) => {
+		var path = this.isRoot() ? [] : [this.getParent()._getPathSegmentForChildNode(this)];
+		this.traverseUp(function (in_node) {
 			if (in_node.getParent()) {
 				path.push(in_node.getParent()._getPathSegmentForChildNode(in_node));
 			} else if (referenceProps.length > 0) {
 				// recursively call getAbsolutePath, removing the '/' at the beginning of the path
-				path.push(
-					referenceProps[0]
-						.getAbsolutePath(referenceProps[0].getRoot())
-						.slice(1),
-				);
+				path.push(referenceProps[0].getAbsolutePath(referenceProps[0].getRoot()).slice(1));
 			}
 		});
 		var absolutePath = path.reverse().join("");
@@ -1097,10 +1065,7 @@ export abstract class BaseProperty {
 	 * @private
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-	_traverse(
-		in_callback: Function,
-		in_pathFromTraversalStart: string,
-	): string | undefined {
+	_traverse(in_callback: Function, in_pathFromTraversalStart: string): string | undefined {
 		return undefined;
 	}
 
@@ -1239,7 +1204,7 @@ export abstract class BaseProperty {
 
 		if (this instanceof Property.AbstractStaticCollectionProperty) {
 			// Set all children properties as constants
-			this.traverseDown((prop) => {
+			this.traverseDown(function (prop) {
 				prop._isConstant = true;
 			});
 		}
@@ -1259,7 +1224,7 @@ export abstract class BaseProperty {
 
 		if (this instanceof Property.AbstractStaticCollectionProperty) {
 			// Unset all children properties as constants
-			this.traverseDown((prop) => {
+			this.traverseDown(function (prop) {
 				// Deleting this property will make the object
 				// fall back to the entry in the prototype (false)
 				delete prop._isConstant;
@@ -1275,7 +1240,7 @@ export abstract class BaseProperty {
 	 * @private
 	 */
 	_setDirtyTree(in_reportToView = true) {
-		this._traverse((node) => {
+		this._traverse(function (node) {
 			// Set all nodes to dirty, but prevent recursive updates up to the repository for the individual changes
 			node._setDirty(false);
 		}, "");
@@ -1334,21 +1299,16 @@ export abstract class BaseProperty {
 
 		if (coverage.coverageExtent === PathHelper.CoverageExtent.FULLY_COVERED) {
 			return true;
-		} else if (
-			coverage.coverageExtent === PathHelper.CoverageExtent.PARTLY_COVERED
-		) {
+		} else if (coverage.coverageExtent === PathHelper.CoverageExtent.PARTLY_COVERED) {
 			// We know that part of the property is covered, if we don't find any actual children not covered
 			// by the paths it's because we're fully covered.
 			if (this.isPrimitiveType()) {
 				const childrenIds = this.getContext() === "single" ? [] : this.getIds();
 				for (const childId of childrenIds) {
-					const childPath = PathHelper.getChildAbsolutePathCanonical(
-						in_basePath,
-						childId,
-					);
+					const childPath = PathHelper.getChildAbsolutePathCanonical(in_basePath, childId);
 					if (
-						PathHelper.getPathCoverage(childPath, coverage.pathList)
-							.coverageExtent === PathHelper.CoverageExtent.UNCOVERED
+						PathHelper.getPathCoverage(childPath, coverage.pathList).coverageExtent ===
+						PathHelper.CoverageExtent.UNCOVERED
 					) {
 						// this children is outside the list of paths
 						return false;
@@ -1358,10 +1318,7 @@ export abstract class BaseProperty {
 				const childrenIds = this.getIds();
 				for (const childId of childrenIds) {
 					const child = this.get(childId);
-					const childPath = PathHelper.getChildAbsolutePathCanonical(
-						in_basePath,
-						childId,
-					);
+					const childPath = PathHelper.getChildAbsolutePathCanonical(in_basePath, childId);
 					if (!child._coveredByPaths(childPath, coverage.pathList)) {
 						return false;
 					}

@@ -28,8 +28,6 @@ export const compareArrays = <T>(
 	return (
 		left === right || // Trivial acceptance: 'left' and 'right' are the same instance
 		(left.length === right.length && // Trivial rejection: 'left' and 'right' are different lengths
-			left.every((leftItem, index) =>
-				comparator(leftItem, right[index], index),
-			))
+			left.every((leftItem, index) => comparator(leftItem, right[index], index)))
 	);
 };

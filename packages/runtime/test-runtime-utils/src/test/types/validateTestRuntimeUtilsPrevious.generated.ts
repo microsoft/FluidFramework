@@ -11,23 +11,12 @@
  * Current version: 2.74.0
  */
 
-import type {
-	FullType,
-	MinimalType,
-	requireAssignableTo,
-	TypeOnly,
-} from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/test-runtime-utils-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> =
-	| TypeOnly<T>
-	| MinimalType<T>
-	| FullType<T>
-	| typeof old
-	| typeof current
-	| requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -36,10 +25,7 @@ declare type MakeUnusedImportErrorsGoAway<T> =
  * typeValidation.broken:
  * "Class_MockAudience": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_MockAudience = requireAssignableTo<
-	TypeOnly<old.MockAudience>,
-	TypeOnly<current.MockAudience>
->;
+declare type old_as_current_for_Class_MockAudience = requireAssignableTo<TypeOnly<old.MockAudience>, TypeOnly<current.MockAudience>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -48,10 +34,7 @@ declare type old_as_current_for_Class_MockAudience = requireAssignableTo<
  * typeValidation.broken:
  * "Class_MockAudience": {"backCompat": false}
  */
-declare type current_as_old_for_Class_MockAudience = requireAssignableTo<
-	TypeOnly<current.MockAudience>,
-	TypeOnly<old.MockAudience>
->;
+declare type current_as_old_for_Class_MockAudience = requireAssignableTo<TypeOnly<current.MockAudience>, TypeOnly<old.MockAudience>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -60,11 +43,7 @@ declare type current_as_old_for_Class_MockAudience = requireAssignableTo<
  * typeValidation.broken:
  * "Class_MockContainerRuntime": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_MockContainerRuntime =
-	requireAssignableTo<
-		TypeOnly<old.MockContainerRuntime>,
-		TypeOnly<current.MockContainerRuntime>
-	>;
+declare type old_as_current_for_Class_MockContainerRuntime = requireAssignableTo<TypeOnly<old.MockContainerRuntime>, TypeOnly<current.MockContainerRuntime>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -73,11 +52,7 @@ declare type old_as_current_for_Class_MockContainerRuntime =
  * typeValidation.broken:
  * "Class_MockContainerRuntime": {"backCompat": false}
  */
-declare type current_as_old_for_Class_MockContainerRuntime =
-	requireAssignableTo<
-		TypeOnly<current.MockContainerRuntime>,
-		TypeOnly<old.MockContainerRuntime>
-	>;
+declare type current_as_old_for_Class_MockContainerRuntime = requireAssignableTo<TypeOnly<current.MockContainerRuntime>, TypeOnly<old.MockContainerRuntime>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -86,11 +61,7 @@ declare type current_as_old_for_Class_MockContainerRuntime =
  * typeValidation.broken:
  * "Class_MockContainerRuntimeFactory": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_MockContainerRuntimeFactory =
-	requireAssignableTo<
-		TypeOnly<old.MockContainerRuntimeFactory>,
-		TypeOnly<current.MockContainerRuntimeFactory>
-	>;
+declare type old_as_current_for_Class_MockContainerRuntimeFactory = requireAssignableTo<TypeOnly<old.MockContainerRuntimeFactory>, TypeOnly<current.MockContainerRuntimeFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -99,11 +70,7 @@ declare type old_as_current_for_Class_MockContainerRuntimeFactory =
  * typeValidation.broken:
  * "Class_MockContainerRuntimeFactory": {"backCompat": false}
  */
-declare type current_as_old_for_Class_MockContainerRuntimeFactory =
-	requireAssignableTo<
-		TypeOnly<current.MockContainerRuntimeFactory>,
-		TypeOnly<old.MockContainerRuntimeFactory>
-	>;
+declare type current_as_old_for_Class_MockContainerRuntimeFactory = requireAssignableTo<TypeOnly<current.MockContainerRuntimeFactory>, TypeOnly<old.MockContainerRuntimeFactory>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -112,11 +79,7 @@ declare type current_as_old_for_Class_MockContainerRuntimeFactory =
  * typeValidation.broken:
  * "Class_MockContainerRuntimeFactoryForReconnection": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_MockContainerRuntimeFactoryForReconnection =
-	requireAssignableTo<
-		TypeOnly<old.MockContainerRuntimeFactoryForReconnection>,
-		TypeOnly<current.MockContainerRuntimeFactoryForReconnection>
-	>;
+declare type old_as_current_for_Class_MockContainerRuntimeFactoryForReconnection = requireAssignableTo<TypeOnly<old.MockContainerRuntimeFactoryForReconnection>, TypeOnly<current.MockContainerRuntimeFactoryForReconnection>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -125,11 +88,7 @@ declare type old_as_current_for_Class_MockContainerRuntimeFactoryForReconnection
  * typeValidation.broken:
  * "Class_MockContainerRuntimeFactoryForReconnection": {"backCompat": false}
  */
-declare type current_as_old_for_Class_MockContainerRuntimeFactoryForReconnection =
-	requireAssignableTo<
-		TypeOnly<current.MockContainerRuntimeFactoryForReconnection>,
-		TypeOnly<old.MockContainerRuntimeFactoryForReconnection>
-	>;
+declare type current_as_old_for_Class_MockContainerRuntimeFactoryForReconnection = requireAssignableTo<TypeOnly<current.MockContainerRuntimeFactoryForReconnection>, TypeOnly<old.MockContainerRuntimeFactoryForReconnection>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -138,11 +97,7 @@ declare type current_as_old_for_Class_MockContainerRuntimeFactoryForReconnection
  * typeValidation.broken:
  * "Class_MockContainerRuntimeForReconnection": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_MockContainerRuntimeForReconnection =
-	requireAssignableTo<
-		TypeOnly<old.MockContainerRuntimeForReconnection>,
-		TypeOnly<current.MockContainerRuntimeForReconnection>
-	>;
+declare type old_as_current_for_Class_MockContainerRuntimeForReconnection = requireAssignableTo<TypeOnly<old.MockContainerRuntimeForReconnection>, TypeOnly<current.MockContainerRuntimeForReconnection>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -151,11 +106,7 @@ declare type old_as_current_for_Class_MockContainerRuntimeForReconnection =
  * typeValidation.broken:
  * "Class_MockContainerRuntimeForReconnection": {"backCompat": false}
  */
-declare type current_as_old_for_Class_MockContainerRuntimeForReconnection =
-	requireAssignableTo<
-		TypeOnly<current.MockContainerRuntimeForReconnection>,
-		TypeOnly<old.MockContainerRuntimeForReconnection>
-	>;
+declare type current_as_old_for_Class_MockContainerRuntimeForReconnection = requireAssignableTo<TypeOnly<current.MockContainerRuntimeForReconnection>, TypeOnly<old.MockContainerRuntimeForReconnection>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -164,10 +115,7 @@ declare type current_as_old_for_Class_MockContainerRuntimeForReconnection =
  * typeValidation.broken:
  * "Class_MockDeltaConnection": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_MockDeltaConnection = requireAssignableTo<
-	TypeOnly<old.MockDeltaConnection>,
-	TypeOnly<current.MockDeltaConnection>
->;
+declare type old_as_current_for_Class_MockDeltaConnection = requireAssignableTo<TypeOnly<old.MockDeltaConnection>, TypeOnly<current.MockDeltaConnection>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -176,10 +124,7 @@ declare type old_as_current_for_Class_MockDeltaConnection = requireAssignableTo<
  * typeValidation.broken:
  * "Class_MockDeltaConnection": {"backCompat": false}
  */
-declare type current_as_old_for_Class_MockDeltaConnection = requireAssignableTo<
-	TypeOnly<current.MockDeltaConnection>,
-	TypeOnly<old.MockDeltaConnection>
->;
+declare type current_as_old_for_Class_MockDeltaConnection = requireAssignableTo<TypeOnly<current.MockDeltaConnection>, TypeOnly<old.MockDeltaConnection>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -188,10 +133,7 @@ declare type current_as_old_for_Class_MockDeltaConnection = requireAssignableTo<
  * typeValidation.broken:
  * "Class_MockDeltaManager": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_MockDeltaManager = requireAssignableTo<
-	TypeOnly<old.MockDeltaManager>,
-	TypeOnly<current.MockDeltaManager>
->;
+declare type old_as_current_for_Class_MockDeltaManager = requireAssignableTo<TypeOnly<old.MockDeltaManager>, TypeOnly<current.MockDeltaManager>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -200,10 +142,7 @@ declare type old_as_current_for_Class_MockDeltaManager = requireAssignableTo<
  * typeValidation.broken:
  * "Class_MockDeltaManager": {"backCompat": false}
  */
-declare type current_as_old_for_Class_MockDeltaManager = requireAssignableTo<
-	TypeOnly<current.MockDeltaManager>,
-	TypeOnly<old.MockDeltaManager>
->;
+declare type current_as_old_for_Class_MockDeltaManager = requireAssignableTo<TypeOnly<current.MockDeltaManager>, TypeOnly<old.MockDeltaManager>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -212,10 +151,7 @@ declare type current_as_old_for_Class_MockDeltaManager = requireAssignableTo<
  * typeValidation.broken:
  * "Class_MockDeltaQueue": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_MockDeltaQueue = requireAssignableTo<
-	TypeOnly<old.MockDeltaQueue<never>>,
-	TypeOnly<current.MockDeltaQueue<never>>
->;
+declare type old_as_current_for_Class_MockDeltaQueue = requireAssignableTo<TypeOnly<old.MockDeltaQueue<never>>, TypeOnly<current.MockDeltaQueue<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -224,10 +160,7 @@ declare type old_as_current_for_Class_MockDeltaQueue = requireAssignableTo<
  * typeValidation.broken:
  * "Class_MockDeltaQueue": {"backCompat": false}
  */
-declare type current_as_old_for_Class_MockDeltaQueue = requireAssignableTo<
-	TypeOnly<current.MockDeltaQueue<never>>,
-	TypeOnly<old.MockDeltaQueue<never>>
->;
+declare type current_as_old_for_Class_MockDeltaQueue = requireAssignableTo<TypeOnly<current.MockDeltaQueue<never>>, TypeOnly<old.MockDeltaQueue<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -236,11 +169,7 @@ declare type current_as_old_for_Class_MockDeltaQueue = requireAssignableTo<
  * typeValidation.broken:
  * "Class_MockFluidDataStoreContext": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_MockFluidDataStoreContext =
-	requireAssignableTo<
-		TypeOnly<old.MockFluidDataStoreContext>,
-		TypeOnly<current.MockFluidDataStoreContext>
-	>;
+declare type old_as_current_for_Class_MockFluidDataStoreContext = requireAssignableTo<TypeOnly<old.MockFluidDataStoreContext>, TypeOnly<current.MockFluidDataStoreContext>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -249,11 +178,7 @@ declare type old_as_current_for_Class_MockFluidDataStoreContext =
  * typeValidation.broken:
  * "Class_MockFluidDataStoreContext": {"backCompat": false}
  */
-declare type current_as_old_for_Class_MockFluidDataStoreContext =
-	requireAssignableTo<
-		TypeOnly<current.MockFluidDataStoreContext>,
-		TypeOnly<old.MockFluidDataStoreContext>
-	>;
+declare type current_as_old_for_Class_MockFluidDataStoreContext = requireAssignableTo<TypeOnly<current.MockFluidDataStoreContext>, TypeOnly<old.MockFluidDataStoreContext>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -262,11 +187,7 @@ declare type current_as_old_for_Class_MockFluidDataStoreContext =
  * typeValidation.broken:
  * "Class_MockFluidDataStoreRuntime": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_MockFluidDataStoreRuntime =
-	requireAssignableTo<
-		TypeOnly<old.MockFluidDataStoreRuntime>,
-		TypeOnly<current.MockFluidDataStoreRuntime>
-	>;
+declare type old_as_current_for_Class_MockFluidDataStoreRuntime = requireAssignableTo<TypeOnly<old.MockFluidDataStoreRuntime>, TypeOnly<current.MockFluidDataStoreRuntime>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -275,11 +196,7 @@ declare type old_as_current_for_Class_MockFluidDataStoreRuntime =
  * typeValidation.broken:
  * "Class_MockFluidDataStoreRuntime": {"backCompat": false}
  */
-declare type current_as_old_for_Class_MockFluidDataStoreRuntime =
-	requireAssignableTo<
-		TypeOnly<current.MockFluidDataStoreRuntime>,
-		TypeOnly<old.MockFluidDataStoreRuntime>
-	>;
+declare type current_as_old_for_Class_MockFluidDataStoreRuntime = requireAssignableTo<TypeOnly<current.MockFluidDataStoreRuntime>, TypeOnly<old.MockFluidDataStoreRuntime>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -288,10 +205,7 @@ declare type current_as_old_for_Class_MockFluidDataStoreRuntime =
  * typeValidation.broken:
  * "Class_MockHandle": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_MockHandle = requireAssignableTo<
-	TypeOnly<old.MockHandle<never>>,
-	TypeOnly<current.MockHandle<never>>
->;
+declare type old_as_current_for_Class_MockHandle = requireAssignableTo<TypeOnly<old.MockHandle<never>>, TypeOnly<current.MockHandle<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -300,10 +214,7 @@ declare type old_as_current_for_Class_MockHandle = requireAssignableTo<
  * typeValidation.broken:
  * "Class_MockHandle": {"backCompat": false}
  */
-declare type current_as_old_for_Class_MockHandle = requireAssignableTo<
-	TypeOnly<current.MockHandle<never>>,
-	TypeOnly<old.MockHandle<never>>
->;
+declare type current_as_old_for_Class_MockHandle = requireAssignableTo<TypeOnly<current.MockHandle<never>>, TypeOnly<old.MockHandle<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -312,11 +223,7 @@ declare type current_as_old_for_Class_MockHandle = requireAssignableTo<
  * typeValidation.broken:
  * "Class_MockObjectStorageService": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_MockObjectStorageService =
-	requireAssignableTo<
-		TypeOnly<old.MockObjectStorageService>,
-		TypeOnly<current.MockObjectStorageService>
-	>;
+declare type old_as_current_for_Class_MockObjectStorageService = requireAssignableTo<TypeOnly<old.MockObjectStorageService>, TypeOnly<current.MockObjectStorageService>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -325,11 +232,7 @@ declare type old_as_current_for_Class_MockObjectStorageService =
  * typeValidation.broken:
  * "Class_MockObjectStorageService": {"backCompat": false}
  */
-declare type current_as_old_for_Class_MockObjectStorageService =
-	requireAssignableTo<
-		TypeOnly<current.MockObjectStorageService>,
-		TypeOnly<old.MockObjectStorageService>
-	>;
+declare type current_as_old_for_Class_MockObjectStorageService = requireAssignableTo<TypeOnly<current.MockObjectStorageService>, TypeOnly<old.MockObjectStorageService>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -338,10 +241,7 @@ declare type current_as_old_for_Class_MockObjectStorageService =
  * typeValidation.broken:
  * "Class_MockQuorumClients": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_MockQuorumClients = requireAssignableTo<
-	TypeOnly<old.MockQuorumClients>,
-	TypeOnly<current.MockQuorumClients>
->;
+declare type old_as_current_for_Class_MockQuorumClients = requireAssignableTo<TypeOnly<old.MockQuorumClients>, TypeOnly<current.MockQuorumClients>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -350,10 +250,7 @@ declare type old_as_current_for_Class_MockQuorumClients = requireAssignableTo<
  * typeValidation.broken:
  * "Class_MockQuorumClients": {"backCompat": false}
  */
-declare type current_as_old_for_Class_MockQuorumClients = requireAssignableTo<
-	TypeOnly<current.MockQuorumClients>,
-	TypeOnly<old.MockQuorumClients>
->;
+declare type current_as_old_for_Class_MockQuorumClients = requireAssignableTo<TypeOnly<current.MockQuorumClients>, TypeOnly<old.MockQuorumClients>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -362,11 +259,7 @@ declare type current_as_old_for_Class_MockQuorumClients = requireAssignableTo<
  * typeValidation.broken:
  * "Class_MockSharedObjectServices": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_MockSharedObjectServices =
-	requireAssignableTo<
-		TypeOnly<old.MockSharedObjectServices>,
-		TypeOnly<current.MockSharedObjectServices>
-	>;
+declare type old_as_current_for_Class_MockSharedObjectServices = requireAssignableTo<TypeOnly<old.MockSharedObjectServices>, TypeOnly<current.MockSharedObjectServices>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -375,11 +268,7 @@ declare type old_as_current_for_Class_MockSharedObjectServices =
  * typeValidation.broken:
  * "Class_MockSharedObjectServices": {"backCompat": false}
  */
-declare type current_as_old_for_Class_MockSharedObjectServices =
-	requireAssignableTo<
-		TypeOnly<current.MockSharedObjectServices>,
-		TypeOnly<old.MockSharedObjectServices>
-	>;
+declare type current_as_old_for_Class_MockSharedObjectServices = requireAssignableTo<TypeOnly<current.MockSharedObjectServices>, TypeOnly<old.MockSharedObjectServices>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -388,10 +277,7 @@ declare type current_as_old_for_Class_MockSharedObjectServices =
  * typeValidation.broken:
  * "Class_MockStorage": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_MockStorage = requireAssignableTo<
-	TypeOnly<old.MockStorage>,
-	TypeOnly<current.MockStorage>
->;
+declare type old_as_current_for_Class_MockStorage = requireAssignableTo<TypeOnly<old.MockStorage>, TypeOnly<current.MockStorage>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -400,10 +286,7 @@ declare type old_as_current_for_Class_MockStorage = requireAssignableTo<
  * typeValidation.broken:
  * "Class_MockStorage": {"backCompat": false}
  */
-declare type current_as_old_for_Class_MockStorage = requireAssignableTo<
-	TypeOnly<current.MockStorage>,
-	TypeOnly<old.MockStorage>
->;
+declare type current_as_old_for_Class_MockStorage = requireAssignableTo<TypeOnly<current.MockStorage>, TypeOnly<old.MockStorage>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -412,10 +295,7 @@ declare type current_as_old_for_Class_MockStorage = requireAssignableTo<
  * typeValidation.broken:
  * "ClassStatics_MockAudience": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_MockAudience = requireAssignableTo<
-	TypeOnly<typeof current.MockAudience>,
-	TypeOnly<typeof old.MockAudience>
->;
+declare type current_as_old_for_ClassStatics_MockAudience = requireAssignableTo<TypeOnly<typeof current.MockAudience>, TypeOnly<typeof old.MockAudience>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -424,11 +304,7 @@ declare type current_as_old_for_ClassStatics_MockAudience = requireAssignableTo<
  * typeValidation.broken:
  * "ClassStatics_MockContainerRuntime": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_MockContainerRuntime =
-	requireAssignableTo<
-		TypeOnly<typeof current.MockContainerRuntime>,
-		TypeOnly<typeof old.MockContainerRuntime>
-	>;
+declare type current_as_old_for_ClassStatics_MockContainerRuntime = requireAssignableTo<TypeOnly<typeof current.MockContainerRuntime>, TypeOnly<typeof old.MockContainerRuntime>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -437,11 +313,7 @@ declare type current_as_old_for_ClassStatics_MockContainerRuntime =
  * typeValidation.broken:
  * "ClassStatics_MockContainerRuntimeFactory": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_MockContainerRuntimeFactory =
-	requireAssignableTo<
-		TypeOnly<typeof current.MockContainerRuntimeFactory>,
-		TypeOnly<typeof old.MockContainerRuntimeFactory>
-	>;
+declare type current_as_old_for_ClassStatics_MockContainerRuntimeFactory = requireAssignableTo<TypeOnly<typeof current.MockContainerRuntimeFactory>, TypeOnly<typeof old.MockContainerRuntimeFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -450,11 +322,7 @@ declare type current_as_old_for_ClassStatics_MockContainerRuntimeFactory =
  * typeValidation.broken:
  * "ClassStatics_MockContainerRuntimeFactoryForReconnection": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_MockContainerRuntimeFactoryForReconnection =
-	requireAssignableTo<
-		TypeOnly<typeof current.MockContainerRuntimeFactoryForReconnection>,
-		TypeOnly<typeof old.MockContainerRuntimeFactoryForReconnection>
-	>;
+declare type current_as_old_for_ClassStatics_MockContainerRuntimeFactoryForReconnection = requireAssignableTo<TypeOnly<typeof current.MockContainerRuntimeFactoryForReconnection>, TypeOnly<typeof old.MockContainerRuntimeFactoryForReconnection>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -463,11 +331,7 @@ declare type current_as_old_for_ClassStatics_MockContainerRuntimeFactoryForRecon
  * typeValidation.broken:
  * "ClassStatics_MockContainerRuntimeForReconnection": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_MockContainerRuntimeForReconnection =
-	requireAssignableTo<
-		TypeOnly<typeof current.MockContainerRuntimeForReconnection>,
-		TypeOnly<typeof old.MockContainerRuntimeForReconnection>
-	>;
+declare type current_as_old_for_ClassStatics_MockContainerRuntimeForReconnection = requireAssignableTo<TypeOnly<typeof current.MockContainerRuntimeForReconnection>, TypeOnly<typeof old.MockContainerRuntimeForReconnection>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -476,11 +340,7 @@ declare type current_as_old_for_ClassStatics_MockContainerRuntimeForReconnection
  * typeValidation.broken:
  * "ClassStatics_MockDeltaConnection": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_MockDeltaConnection =
-	requireAssignableTo<
-		TypeOnly<typeof current.MockDeltaConnection>,
-		TypeOnly<typeof old.MockDeltaConnection>
-	>;
+declare type current_as_old_for_ClassStatics_MockDeltaConnection = requireAssignableTo<TypeOnly<typeof current.MockDeltaConnection>, TypeOnly<typeof old.MockDeltaConnection>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -489,11 +349,7 @@ declare type current_as_old_for_ClassStatics_MockDeltaConnection =
  * typeValidation.broken:
  * "ClassStatics_MockDeltaManager": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_MockDeltaManager =
-	requireAssignableTo<
-		TypeOnly<typeof current.MockDeltaManager>,
-		TypeOnly<typeof old.MockDeltaManager>
-	>;
+declare type current_as_old_for_ClassStatics_MockDeltaManager = requireAssignableTo<TypeOnly<typeof current.MockDeltaManager>, TypeOnly<typeof old.MockDeltaManager>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -502,11 +358,7 @@ declare type current_as_old_for_ClassStatics_MockDeltaManager =
  * typeValidation.broken:
  * "ClassStatics_MockDeltaQueue": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_MockDeltaQueue =
-	requireAssignableTo<
-		TypeOnly<typeof current.MockDeltaQueue>,
-		TypeOnly<typeof old.MockDeltaQueue>
-	>;
+declare type current_as_old_for_ClassStatics_MockDeltaQueue = requireAssignableTo<TypeOnly<typeof current.MockDeltaQueue>, TypeOnly<typeof old.MockDeltaQueue>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -515,11 +367,7 @@ declare type current_as_old_for_ClassStatics_MockDeltaQueue =
  * typeValidation.broken:
  * "ClassStatics_MockFluidDataStoreContext": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_MockFluidDataStoreContext =
-	requireAssignableTo<
-		TypeOnly<typeof current.MockFluidDataStoreContext>,
-		TypeOnly<typeof old.MockFluidDataStoreContext>
-	>;
+declare type current_as_old_for_ClassStatics_MockFluidDataStoreContext = requireAssignableTo<TypeOnly<typeof current.MockFluidDataStoreContext>, TypeOnly<typeof old.MockFluidDataStoreContext>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -528,11 +376,7 @@ declare type current_as_old_for_ClassStatics_MockFluidDataStoreContext =
  * typeValidation.broken:
  * "ClassStatics_MockFluidDataStoreRuntime": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_MockFluidDataStoreRuntime =
-	requireAssignableTo<
-		TypeOnly<typeof current.MockFluidDataStoreRuntime>,
-		TypeOnly<typeof old.MockFluidDataStoreRuntime>
-	>;
+declare type current_as_old_for_ClassStatics_MockFluidDataStoreRuntime = requireAssignableTo<TypeOnly<typeof current.MockFluidDataStoreRuntime>, TypeOnly<typeof old.MockFluidDataStoreRuntime>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -541,10 +385,7 @@ declare type current_as_old_for_ClassStatics_MockFluidDataStoreRuntime =
  * typeValidation.broken:
  * "ClassStatics_MockHandle": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_MockHandle = requireAssignableTo<
-	TypeOnly<typeof current.MockHandle>,
-	TypeOnly<typeof old.MockHandle>
->;
+declare type current_as_old_for_ClassStatics_MockHandle = requireAssignableTo<TypeOnly<typeof current.MockHandle>, TypeOnly<typeof old.MockHandle>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -553,11 +394,7 @@ declare type current_as_old_for_ClassStatics_MockHandle = requireAssignableTo<
  * typeValidation.broken:
  * "ClassStatics_MockObjectStorageService": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_MockObjectStorageService =
-	requireAssignableTo<
-		TypeOnly<typeof current.MockObjectStorageService>,
-		TypeOnly<typeof old.MockObjectStorageService>
-	>;
+declare type current_as_old_for_ClassStatics_MockObjectStorageService = requireAssignableTo<TypeOnly<typeof current.MockObjectStorageService>, TypeOnly<typeof old.MockObjectStorageService>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -566,11 +403,7 @@ declare type current_as_old_for_ClassStatics_MockObjectStorageService =
  * typeValidation.broken:
  * "ClassStatics_MockQuorumClients": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_MockQuorumClients =
-	requireAssignableTo<
-		TypeOnly<typeof current.MockQuorumClients>,
-		TypeOnly<typeof old.MockQuorumClients>
-	>;
+declare type current_as_old_for_ClassStatics_MockQuorumClients = requireAssignableTo<TypeOnly<typeof current.MockQuorumClients>, TypeOnly<typeof old.MockQuorumClients>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -579,11 +412,7 @@ declare type current_as_old_for_ClassStatics_MockQuorumClients =
  * typeValidation.broken:
  * "ClassStatics_MockSharedObjectServices": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_MockSharedObjectServices =
-	requireAssignableTo<
-		TypeOnly<typeof current.MockSharedObjectServices>,
-		TypeOnly<typeof old.MockSharedObjectServices>
-	>;
+declare type current_as_old_for_ClassStatics_MockSharedObjectServices = requireAssignableTo<TypeOnly<typeof current.MockSharedObjectServices>, TypeOnly<typeof old.MockSharedObjectServices>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -592,10 +421,7 @@ declare type current_as_old_for_ClassStatics_MockSharedObjectServices =
  * typeValidation.broken:
  * "ClassStatics_MockStorage": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_MockStorage = requireAssignableTo<
-	TypeOnly<typeof current.MockStorage>,
-	TypeOnly<typeof old.MockStorage>
->;
+declare type current_as_old_for_ClassStatics_MockStorage = requireAssignableTo<TypeOnly<typeof current.MockStorage>, TypeOnly<typeof old.MockStorage>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -604,11 +430,7 @@ declare type current_as_old_for_ClassStatics_MockStorage = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IInternalMockRuntimeMessage": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IInternalMockRuntimeMessage =
-	requireAssignableTo<
-		TypeOnly<old.IInternalMockRuntimeMessage>,
-		TypeOnly<current.IInternalMockRuntimeMessage>
-	>;
+declare type old_as_current_for_Interface_IInternalMockRuntimeMessage = requireAssignableTo<TypeOnly<old.IInternalMockRuntimeMessage>, TypeOnly<current.IInternalMockRuntimeMessage>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -617,11 +439,7 @@ declare type old_as_current_for_Interface_IInternalMockRuntimeMessage =
  * typeValidation.broken:
  * "Interface_IInternalMockRuntimeMessage": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IInternalMockRuntimeMessage =
-	requireAssignableTo<
-		TypeOnly<current.IInternalMockRuntimeMessage>,
-		TypeOnly<old.IInternalMockRuntimeMessage>
-	>;
+declare type current_as_old_for_Interface_IInternalMockRuntimeMessage = requireAssignableTo<TypeOnly<current.IInternalMockRuntimeMessage>, TypeOnly<old.IInternalMockRuntimeMessage>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -630,11 +448,7 @@ declare type current_as_old_for_Interface_IInternalMockRuntimeMessage =
  * typeValidation.broken:
  * "Interface_IMockContainerRuntimeOptions": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IMockContainerRuntimeOptions =
-	requireAssignableTo<
-		TypeOnly<old.IMockContainerRuntimeOptions>,
-		TypeOnly<current.IMockContainerRuntimeOptions>
-	>;
+declare type old_as_current_for_Interface_IMockContainerRuntimeOptions = requireAssignableTo<TypeOnly<old.IMockContainerRuntimeOptions>, TypeOnly<current.IMockContainerRuntimeOptions>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -643,11 +457,7 @@ declare type old_as_current_for_Interface_IMockContainerRuntimeOptions =
  * typeValidation.broken:
  * "Interface_IMockContainerRuntimeOptions": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IMockContainerRuntimeOptions =
-	requireAssignableTo<
-		TypeOnly<current.IMockContainerRuntimeOptions>,
-		TypeOnly<old.IMockContainerRuntimeOptions>
-	>;
+declare type current_as_old_for_Interface_IMockContainerRuntimeOptions = requireAssignableTo<TypeOnly<current.IMockContainerRuntimeOptions>, TypeOnly<old.IMockContainerRuntimeOptions>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -656,11 +466,7 @@ declare type current_as_old_for_Interface_IMockContainerRuntimeOptions =
  * typeValidation.broken:
  * "Interface_IMockContainerRuntimePendingMessage": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IMockContainerRuntimePendingMessage =
-	requireAssignableTo<
-		TypeOnly<old.IMockContainerRuntimePendingMessage>,
-		TypeOnly<current.IMockContainerRuntimePendingMessage>
-	>;
+declare type old_as_current_for_Interface_IMockContainerRuntimePendingMessage = requireAssignableTo<TypeOnly<old.IMockContainerRuntimePendingMessage>, TypeOnly<current.IMockContainerRuntimePendingMessage>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -669,8 +475,4 @@ declare type old_as_current_for_Interface_IMockContainerRuntimePendingMessage =
  * typeValidation.broken:
  * "Interface_IMockContainerRuntimePendingMessage": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IMockContainerRuntimePendingMessage =
-	requireAssignableTo<
-		TypeOnly<current.IMockContainerRuntimePendingMessage>,
-		TypeOnly<old.IMockContainerRuntimePendingMessage>
-	>;
+declare type current_as_old_for_Interface_IMockContainerRuntimePendingMessage = requireAssignableTo<TypeOnly<current.IMockContainerRuntimePendingMessage>, TypeOnly<old.IMockContainerRuntimePendingMessage>>

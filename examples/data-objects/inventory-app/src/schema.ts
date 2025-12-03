@@ -37,6 +37,4 @@ export class Inventory extends builder.object("Inventory", {
 	parts: PartList,
 }) {}
 
-export const treeConfiguration = new TreeViewConfiguration({
-	schema: Inventory,
-});
+export const treeConfiguration = new TreeViewConfiguration({ schema: Inventory });

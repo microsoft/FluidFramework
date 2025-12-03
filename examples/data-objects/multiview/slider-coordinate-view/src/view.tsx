@@ -43,10 +43,7 @@ export const SliderCoordinateView: React.FC<ISliderCoordinateViewProps> = (
 				<input
 					type="range"
 					onChange={(e): void => {
-						props.model.x = Number.parseInt(
-							(e.target as HTMLInputElement).value,
-							10,
-						);
+						props.model.x = Number.parseInt((e.target as HTMLInputElement).value, 10);
 					}}
 					value={x}
 				/>
@@ -57,10 +54,7 @@ export const SliderCoordinateView: React.FC<ISliderCoordinateViewProps> = (
 				<input
 					type="range"
 					onChange={(e): void => {
-						props.model.y = Number.parseInt(
-							(e.target as HTMLInputElement).value,
-							10,
-						);
+						props.model.y = Number.parseInt((e.target as HTMLInputElement).value, 10);
 					}}
 					value={y}
 				/>

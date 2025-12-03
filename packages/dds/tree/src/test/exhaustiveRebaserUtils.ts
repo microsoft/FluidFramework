@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	RevisionMetadataSource,
-	RevisionTag,
-	TaggedChange,
-} from "../core/index.js";
+import type { RevisionMetadataSource, RevisionTag, TaggedChange } from "../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { RebaseRevisionMetadata } from "../feature-libraries/modular-schema/index.js";
 

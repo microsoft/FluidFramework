@@ -60,7 +60,11 @@ export interface BroadcastControlSettings {
 }
 
 class ForcedRefreshControl
-	implements Pick<BroadcastControls & { forcedRefreshIntervalMs: number | undefined }, "forcedRefreshIntervalMs">
+	implements
+		Pick<
+			BroadcastControls & { forcedRefreshIntervalMs: number | undefined },
+			"forcedRefreshIntervalMs"
+		>
 {
 	private _forcedRefreshInterval: number | undefined;
 
@@ -88,7 +92,10 @@ class ForcedRefreshControl
  * Implements {@link BroadcastControls} for States Managers
  * where returning `undefined` settings are allowed.
  */
-export class OptionalBroadcastControl extends ForcedRefreshControl implements BroadcastControls {
+export class OptionalBroadcastControl
+	extends ForcedRefreshControl
+	implements BroadcastControls
+{
 	public allowableUpdateLatencyMs: number | undefined;
 
 	public constructor(settings?: BroadcastControlSettings) {
@@ -104,7 +111,10 @@ export class OptionalBroadcastControl extends ForcedRefreshControl implements Br
  * If {@link BroadcastControls.allowableUpdateLatencyMs | allowableUpdateLatencyMs}
  * is set to `undefined`, the default will be restored.
  */
-export class RequiredBroadcastControl extends ForcedRefreshControl implements BroadcastControls {
+export class RequiredBroadcastControl
+	extends ForcedRefreshControl
+	implements BroadcastControls
+{
 	private _allowableUpdateLatencyMs: number;
 
 	public constructor(private readonly defaultAllowableUpdateLatencyMs: number) {

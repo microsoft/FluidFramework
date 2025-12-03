@@ -5,10 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	type IGCTestProvider,
-	runGCTests,
-} from "@fluid-private/test-dds-utils";
+import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
@@ -21,13 +18,10 @@ import {
 
 import type { ConsensusOrderedCollection } from "../consensusOrderedCollection.js";
 import {
-	type ConsensusQueue,
 	ConsensusQueueFactory,
+	type ConsensusQueue,
 } from "../consensusOrderedCollectionFactory.js";
-import {
-	ConsensusResult,
-	type IConsensusOrderedCollection,
-} from "../interfaces.js";
+import { ConsensusResult, type IConsensusOrderedCollection } from "../interfaces.js";
 import {
 	acquireAndComplete,
 	acquireAndRelease,
@@ -64,8 +58,7 @@ function createCollectionForReconnection(
 	containerRuntime: MockContainerRuntimeForReconnection;
 } {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	const containerRuntime =
-		runtimeFactory.createContainerRuntime(dataStoreRuntime);
+	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services: IChannelServices = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
@@ -133,10 +126,7 @@ describe("ConsensusOrderedCollection", () => {
 
 				assert.strictEqual(acquiredValue.absolutePath, handle.absolutePath);
 				const dataStore = (await handle.get()) as ConsensusQueue;
-				assert.strictEqual(
-					dataStore.handle.absolutePath,
-					testCollection.handle.absolutePath,
-				);
+				assert.strictEqual(dataStore.handle.absolutePath, testCollection.handle.absolutePath);
 
 				assert.strictEqual(await removeItem(), undefined);
 			});
@@ -192,21 +182,13 @@ describe("ConsensusOrderedCollection", () => {
 				let addCount = 0;
 				let removeCount = 0;
 				const addListener = (value): void => {
-					assert.strictEqual(
-						value,
-						input[addCount],
-						"Added event value not matched",
-					);
+					assert.strictEqual(value, input[addCount], "Added event value not matched");
 					addCount += 1;
 				};
 				testCollection.on("add", addListener);
 
 				const acquireListener = (value): void => {
-					assert.strictEqual(
-						value,
-						output[removeCount],
-						"Remove event value not matched",
-					);
+					assert.strictEqual(value, output[removeCount], "Remove event value not matched");
 					removeCount += 1;
 				};
 				testCollection.on("acquire", acquireListener);
@@ -228,16 +210,8 @@ describe("ConsensusOrderedCollection", () => {
 					"Remove from empty collection should undefined",
 				);
 
-				assert.strictEqual(
-					addCount,
-					input.length,
-					"Incorrect number add event",
-				);
-				assert.strictEqual(
-					removeCount,
-					output.length,
-					"Incorrect number remove event",
-				);
+				assert.strictEqual(addCount, input.length, "Incorrect number add event");
+				assert.strictEqual(removeCount, output.length, "Incorrect number remove event");
 
 				testCollection.off("add", addListener);
 				testCollection.off("acquire", acquireListener);
@@ -288,8 +262,7 @@ describe("ConsensusOrderedCollection", () => {
 		let testCollection2: IConsensusOrderedCollection;
 
 		beforeEach(async () => {
-			containerRuntimeFactory =
-				new MockContainerRuntimeFactoryForReconnection();
+			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
 			// Create first ConsensusOrderedCollection
 			const response1 = createCollectionForReconnection(
@@ -335,16 +308,8 @@ describe("ConsensusOrderedCollection", () => {
 			await waitP;
 
 			// Verify that the remote collection received the added value.
-			assert.equal(
-				addedValue,
-				testValue,
-				"The remote client did not receive the added value",
-			);
-			assert.equal(
-				newlyAdded,
-				true,
-				"The remote client's value was not newly added",
-			);
+			assert.equal(addedValue, testValue, "The remote client did not receive the added value");
+			assert.equal(newlyAdded, true, "The remote client's value was not newly added");
 
 			/**
 			 * Now, we will acquire the added value in the first collection and verify the op is resent.
@@ -377,11 +342,7 @@ describe("ConsensusOrderedCollection", () => {
 			await resultP;
 
 			// Verify that the value acquired is the one that was added earlier.
-			assert.equal(
-				res,
-				testValue,
-				"The acquired value does not match the added value",
-			);
+			assert.equal(res, testValue, "The acquired value does not match the added value");
 
 			// Verify that the remote collection received the acquired op.
 			assert.equal(
@@ -423,16 +384,8 @@ describe("ConsensusOrderedCollection", () => {
 			await waitP;
 
 			// Verify that the remote collection received the added value.
-			assert.equal(
-				addedValue,
-				testValue,
-				"The remote client did not receive the added value",
-			);
-			assert.equal(
-				newlyAdded,
-				true,
-				"The remote client's value was not newly added",
-			);
+			assert.equal(addedValue, testValue, "The remote client did not receive the added value");
+			assert.equal(newlyAdded, true, "The remote client's value was not newly added");
 		});
 	});
 
@@ -482,10 +435,7 @@ describe("ConsensusOrderedCollection", () => {
 
 			public async deleteOutboundRoutes(): Promise<void> {
 				const deletedHandle = (await this.removeItem()) as IFluidHandleInternal;
-				assert(
-					deletedHandle !== undefined,
-					"Route must be added before deleting",
-				);
+				assert(deletedHandle !== undefined, "Route must be added before deleting");
 				// Remove deleted handle's route from expected routes.
 				this._expectedRoutes = this._expectedRoutes.filter(
 					(route) => route !== deletedHandle.absolutePath,
@@ -577,11 +527,7 @@ describe("ConsensusOrderedCollection", () => {
 			const acquiredP = acquireAndComplete(testCollection1);
 			processAcquireMessages();
 			const acquiredVal = (await acquiredP) as unknown;
-			assert.equal(
-				acquiredVal,
-				undefined,
-				"Should not have added value post rollback",
-			);
+			assert.equal(acquiredVal, undefined, "Should not have added value post rollback");
 		});
 
 		it("can rollback acquire/complete ops", async () => {
@@ -604,32 +550,16 @@ describe("ConsensusOrderedCollection", () => {
 
 			processAcquireMessages();
 			const acquiredVal1 = (await acquiredP1) as unknown;
-			assert.equal(
-				acquiredVal1,
-				undefined,
-				"Should not have acquired value post rollback",
-			);
+			assert.equal(acquiredVal1, undefined, "Should not have acquired value post rollback");
 			assert.equal(acquireFired, false, "Acquire event should not fire");
 			assert.equal(completeFired, false, "Complete event should not fire");
 
 			const acquiredP2 = acquireAndComplete(testCollection1);
 			processAcquireMessages();
 			const acquiredVal2 = (await acquiredP2) as unknown;
-			assert.equal(
-				acquiredVal2,
-				"value",
-				"Should be able to acquire value post rollback",
-			);
-			assert.equal(
-				acquireFired,
-				true,
-				"acquire event should fire post rollback",
-			);
-			assert.equal(
-				completeFired,
-				true,
-				"complete event should fire post rollback",
-			);
+			assert.equal(acquiredVal2, "value", "Should be able to acquire value post rollback");
+			assert.equal(acquireFired, true, "acquire event should fire post rollback");
+			assert.equal(completeFired, true, "complete event should fire post rollback");
 		});
 
 		it("can rollback acquire/release ops", async () => {
@@ -652,32 +582,16 @@ describe("ConsensusOrderedCollection", () => {
 
 			processAcquireMessages();
 			const acquiredVal1 = (await acquiredP1) as unknown;
-			assert.equal(
-				acquiredVal1,
-				undefined,
-				"Should not have acquired value post rollback",
-			);
+			assert.equal(acquiredVal1, undefined, "Should not have acquired value post rollback");
 			assert.equal(acquireFired, false, "acquire event should not fire");
 			assert.equal(releaseFired, false, "release event should not fire");
 
 			const acquiredP2 = acquireAndRelease(testCollection1);
 			processAcquireMessages();
 			const acquiredVal2 = (await acquiredP2) as unknown;
-			assert.equal(
-				acquiredVal2,
-				"value",
-				"Should be able to acquire value post rollback",
-			);
-			assert.equal(
-				acquireFired,
-				true,
-				"acquire event should fire post rollback",
-			);
-			assert.equal(
-				releaseFired,
-				true,
-				"release event should fire post rollback",
-			);
+			assert.equal(acquiredVal2, "value", "Should be able to acquire value post rollback");
+			assert.equal(acquireFired, true, "acquire event should fire post rollback");
+			assert.equal(releaseFired, true, "release event should fire post rollback");
 		});
 
 		it("can rollback only the complete op", async () => {
@@ -770,11 +684,7 @@ describe("ConsensusOrderedCollection", () => {
 				const acquiredP1 = acquireAndComplete(testCollection1);
 				processAcquireMessages();
 				const acquiredVal1 = (await acquiredP1) as unknown;
-				assert.equal(
-					acquiredVal1,
-					"value2",
-					"value2 should be the first value acquired",
-				);
+				assert.equal(acquiredVal1, "value2", "value2 should be the first value acquired");
 
 				const acquiredP2 = acquireAndComplete(testCollection1);
 				processAcquireMessages();
@@ -815,22 +725,17 @@ describe("ConsensusOrderedCollection", () => {
 
 				processAcquireMessages();
 
-				const [acquiredVal1, acquiredVal2] = (await Promise.all([
-					acquiredP1,
-					acquiredP2,
-				])) as [unknown, unknown];
+				const [acquiredVal1, acquiredVal2] = (await Promise.all([acquiredP1, acquiredP2])) as [
+					unknown,
+					unknown,
+				];
 				assert.deepEqual(
 					[acquiredVal1, acquiredVal2],
 					[undefined, "value"],
 					"Client 1 should not have acquired value post rollback, value 2 should have",
 				);
 				assert.deepEqual(
-					[
-						acquireFiredCount1,
-						completeFiredCount1,
-						acquireFiredCount2,
-						completeFiredCount2,
-					],
+					[acquireFiredCount1, completeFiredCount1, acquireFiredCount2, completeFiredCount2],
 					[1, 1, 1, 1],
 					"Both clients should have fired each event once",
 				);
@@ -838,11 +743,7 @@ describe("ConsensusOrderedCollection", () => {
 				const acquiredP3 = acquireAndComplete(testCollection1);
 				processAcquireMessages();
 				const acquiredVal3 = (await acquiredP3) as unknown;
-				assert.equal(
-					acquiredVal3,
-					undefined,
-					"There should be no more values to acquire",
-				);
+				assert.equal(acquiredVal3, undefined, "There should be no more values to acquire");
 			});
 
 			it("can rollback acquire/release across remote ops", async () => {
@@ -874,22 +775,17 @@ describe("ConsensusOrderedCollection", () => {
 
 				processAcquireMessages();
 
-				const [acquiredVal1, acquiredVal2] = (await Promise.all([
-					acquiredP1,
-					acquiredP2,
-				])) as [unknown, unknown];
+				const [acquiredVal1, acquiredVal2] = (await Promise.all([acquiredP1, acquiredP2])) as [
+					unknown,
+					unknown,
+				];
 				assert.deepEqual(
 					[acquiredVal1, acquiredVal2],
 					[undefined, "value"],
 					"Client 1 should not have acquired value post rollback, value 2 should have",
 				);
 				assert.deepEqual(
-					[
-						acquireFiredCount1,
-						releaseFiredCount1,
-						acquireFiredCount2,
-						releaseFiredCount2,
-					],
+					[acquireFiredCount1, releaseFiredCount1, acquireFiredCount2, releaseFiredCount2],
 					[1, 0, 1, 1],
 					"Only client 2 should have local release event fired",
 				);
@@ -897,11 +793,7 @@ describe("ConsensusOrderedCollection", () => {
 				const acquiredP3 = acquireAndRelease(testCollection1);
 				processAcquireMessages();
 				const acquiredVal3 = (await acquiredP3) as unknown;
-				assert.equal(
-					acquiredVal3,
-					undefined,
-					"There should be no more values to acquire",
-				);
+				assert.equal(acquiredVal3, undefined, "There should be no more values to acquire");
 			});
 		});
 	});

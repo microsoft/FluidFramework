@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Button, Table, TableBody } from "@fluentui/react-components";
+import { Table, TableBody, Button } from "@fluentui/react-components";
 import { Add24Regular } from "@fluentui/react-icons";
+import React, { useState, type DragEvent } from "react";
 import { useTree } from "@fluidframework/react/alpha";
-import React, { type DragEvent, useState } from "react";
 
 import type { TableDataObject } from "../dataObject.js";
 import { Row } from "../schema.js";
@@ -35,15 +35,9 @@ import "./tableView.css";
  * - Column properties such as `label` and `hint` (e.g., `"checkbox"`, `"text"`, `"date"`) from the columns
  * are used to determine how each cell is rendered.
  */
-export const TableView: React.FC<{ tableModel: TableDataObject }> = ({
-	tableModel,
-}) => {
-	const [draggedRowIndex, setDraggedRowIndex] = useState<number | undefined>(
-		undefined,
-	);
-	const [draggedColumnIndex, setDraggedColumnIndex] = useState<
-		number | undefined
-	>(undefined);
+export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableModel }) => {
+	const [draggedRowIndex, setDraggedRowIndex] = useState<number | undefined>(undefined);
+	const [draggedColumnIndex, setDraggedColumnIndex] = useState<number | undefined>(undefined);
 
 	const table = tableModel.treeView.root;
 	useTree(table);
@@ -64,8 +58,7 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({
 
 	const handleRowDrop = (targetIndex: number): void => {
 		if (draggedRowIndex !== undefined && draggedRowIndex !== targetIndex) {
-			const destinationGap =
-				draggedRowIndex < targetIndex ? targetIndex + 1 : targetIndex;
+			const destinationGap = draggedRowIndex < targetIndex ? targetIndex + 1 : targetIndex;
 			table.rows.moveToIndex(destinationGap, draggedRowIndex);
 		}
 		setDraggedRowIndex(undefined);
@@ -75,19 +68,13 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({
 		setDraggedColumnIndex(index);
 	};
 
-	const handleColumnDragOver = (
-		event: DragEvent<HTMLTableHeaderCellElement>,
-	): void => {
+	const handleColumnDragOver = (event: DragEvent<HTMLTableHeaderCellElement>): void => {
 		event.preventDefault();
 	};
 
 	const handleColumnDrop = (targetIndex: number): void => {
-		if (
-			draggedColumnIndex !== undefined &&
-			draggedColumnIndex !== targetIndex
-		) {
-			const destinationGap =
-				draggedColumnIndex < targetIndex ? targetIndex + 1 : targetIndex;
+		if (draggedColumnIndex !== undefined && draggedColumnIndex !== targetIndex) {
+			const destinationGap = draggedColumnIndex < targetIndex ? targetIndex + 1 : targetIndex;
 			table.columns.moveToIndex(destinationGap, draggedColumnIndex);
 		}
 		setDraggedColumnIndex(undefined);

@@ -4,22 +4,19 @@
  */
 
 import {
-	getDataStoreEntryPoint,
-	type IFluidMountableViewEntryPoint,
+	IFluidMountableViewEntryPoint,
 	MountableView,
+	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
-import type {
-	IContainerContext,
-	IRuntime,
-} from "@fluidframework/container-definitions/legacy";
+import { IContainerContext, IRuntime } from "@fluidframework/container-definitions/legacy";
 import { loadContainerRuntime } from "@fluidframework/container-runtime/legacy";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
-import type { FluidObject } from "@fluidframework/core-interfaces";
-import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/legacy";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
+import { FluidObject } from "@fluidframework/core-interfaces";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/legacy";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils/legacy";
 import React from "react";
 
-import { type CodeMirrorComponent, SmdeFactory } from "./codeMirror.js";
+import { CodeMirrorComponent, SmdeFactory } from "./codeMirror.js";
 import { CodeMirrorReactView } from "./codeMirrorView.js";
 
 export { CodeMirrorComponent, SmdeFactory } from "./codeMirror.js";

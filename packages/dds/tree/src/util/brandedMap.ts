@@ -16,14 +16,15 @@ import { getOrCreate } from "./utils.js";
  * Due to the `TContent` type parameter being invariant (which it has to be since keys are used to both read and write data),
  * generic collections end up needing to constrain their key's `TContent` to `any`.
  */
-export type BrandedKey<TKey, TContent> = Brand<
-	TKey,
-	["BrandedKey", Invariant<TContent>]
->;
+export type BrandedKey<TKey, TContent> = Brand<TKey, ["BrandedKey", Invariant<TContent>]>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> =
-	TKey extends BrandedKey<unknown, infer TContent> ? TContent : never;
+export type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> = TKey extends BrandedKey<
+	unknown,
+	infer TContent
+>
+	? TContent
+	: never;
 
 /**
  * A Map where the keys carry the types of values which they correspond to.

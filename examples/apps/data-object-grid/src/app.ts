@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	StaticCodeLoader,
-	TinyliciousModelLoader,
-} from "@fluid-example/example-utils";
+import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
 import React from "react";
 import ReactDOM from "react-dom";
 
@@ -22,10 +19,9 @@ import { DataObjectGridAppView } from "./dataObjectGridView.js";
  * @remarks We wrap this in an async function so we can await Fluid's async calls.
  */
 async function start(): Promise<void> {
-	const tinyliciousModelLoader =
-		new TinyliciousModelLoader<IDataObjectGridAppModel>(
-			new StaticCodeLoader(new DataObjectGridContainerRuntimeFactory()),
-		);
+	const tinyliciousModelLoader = new TinyliciousModelLoader<IDataObjectGridAppModel>(
+		new StaticCodeLoader(new DataObjectGridContainerRuntimeFactory()),
+	);
 
 	let id: string;
 	let model: IDataObjectGridAppModel;

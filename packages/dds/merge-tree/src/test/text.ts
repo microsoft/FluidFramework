@@ -9,8 +9,8 @@ import { Marker } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
 import { reservedTileLabelsKey } from "../referencePositions.js";
 import {
-	type IHasInsertionInfo,
 	overwriteInfo,
+	type IHasInsertionInfo,
 	type SegmentWithInfo,
 } from "../segmentInfos.js";
 import { TextSegment } from "../textSegment.js";
@@ -46,27 +46,17 @@ export function loadSegments(
 	for (const paragraph of paragraphs) {
 		let pgMarker: Marker | undefined;
 		if (markers) {
-			pgMarker = Marker.make(ReferenceType.Tile, {
-				[reservedTileLabelsKey]: ["pg"],
-			});
+			pgMarker = Marker.make(ReferenceType.Tile, { [reservedTileLabelsKey]: ["pg"] });
 		}
 		if (withProps) {
-			if (
-				paragraph.includes("Chapter") ||
-				paragraph.includes("PRIDE AND PREJ")
-			) {
+			if (paragraph.includes("Chapter") || paragraph.includes("PRIDE AND PREJ")) {
 				if (pgMarker) {
 					pgMarker.properties = { header: 2 };
-					segments.push(
-						overwriteInfo(new TextSegment(paragraph), defaultInsertionInfo),
-					);
+					segments.push(overwriteInfo(new TextSegment(paragraph), defaultInsertionInfo));
 				} else {
 					segments.push(
 						overwriteInfo(
-							TextSegment.make(paragraph, {
-								fontSize: "140%",
-								lineHeight: "150%",
-							}),
+							TextSegment.make(paragraph, { fontSize: "140%", lineHeight: "150%" }),
 							defaultInsertionInfo,
 						),
 					);
@@ -87,19 +77,14 @@ export function loadSegments(
 					} else {
 						if (emphStrings[i].length > 0) {
 							segments.push(
-								overwriteInfo(
-									new TextSegment(emphStrings[i]),
-									defaultInsertionInfo,
-								),
+								overwriteInfo(new TextSegment(emphStrings[i]), defaultInsertionInfo),
 							);
 						}
 					}
 				}
 			}
 		} else {
-			segments.push(
-				overwriteInfo(new TextSegment(paragraph), defaultInsertionInfo),
-			);
+			segments.push(overwriteInfo(new TextSegment(paragraph), defaultInsertionInfo));
 		}
 		if (pgMarker) {
 			segments.push(overwriteInfo(pgMarker, defaultInsertionInfo));

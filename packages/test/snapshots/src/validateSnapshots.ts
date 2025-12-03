@@ -3,24 +3,25 @@
  * Licensed under the MIT License.
  */
 
+import fs from "fs";
+
 import {
 	compareWithReferenceSnapshot,
 	getNormalizedFileSnapshot,
 	loadContainer,
 	uploadSummary,
 } from "@fluid-internal/replay-tool";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	type ISequencedDocumentMessage,
 	TreeEntry,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { FileStorageDocumentName } from "@fluidframework/file-driver/internal";
 import {
-	type IFileSnapshot,
+	IFileSnapshot,
 	StaticStorageDocumentServiceFactory,
 } from "@fluidframework/replay-driver/internal";
-import fs from "fs";
 
 import { SnapshotStorageService } from "./snapshotStorageService.js";
 

@@ -4,9 +4,9 @@
  */
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 
-import type {
+import {
 	INormalizedWholeSnapshot,
 	IWholeFlatSnapshot,
 	IWholeFlatSnapshotTree,
@@ -30,10 +30,7 @@ function buildHierarchy(
 
 	for (const entry of flatTree.entries) {
 		// Strip the `treePrefixToRemove` path from tree entries such that they are stored under root.
-		const entryPath = entry.path.replace(
-			new RegExp(`^${treePrefixToRemove}/`),
-			"",
-		);
+		const entryPath = entry.path.replace(new RegExp(`^${treePrefixToRemove}/`), "");
 		const lastIndex = entryPath.lastIndexOf("/");
 		const entryPathDir = entryPath.slice(0, Math.max(0, lastIndex));
 		const entryPathBase = entryPath.slice(lastIndex + 1);
@@ -75,10 +72,7 @@ export function convertWholeFlatSnapshotToSnapshotTreeAndBlobs(
 	const blobs = new Map<string, ArrayBuffer>();
 	if (flatSnapshot.blobs) {
 		flatSnapshot.blobs.forEach((blob) => {
-			blobs.set(
-				blob.id,
-				stringToBuffer(blob.content, blob.encoding ?? "utf-8"),
-			);
+			blobs.set(blob.id, stringToBuffer(blob.content, blob.encoding ?? "utf-8"));
 		});
 	}
 	const flatSnapshotTree = flatSnapshot.trees?.[0];

@@ -9,8 +9,8 @@
 
 const { PropertyFactory } = require("../..");
 
-describe("RelationshipProperty", () => {
-	it("should be able to add a relationship property whithin a schema", () => {
+describe("RelationshipProperty", function () {
+	it("should be able to add a relationship property whithin a schema", function () {
 		const assetSchema = {
 			typeid: "foo:bar-1.0.0",
 			inherits: ["NodeProperty"],
@@ -22,11 +22,11 @@ describe("RelationshipProperty", () => {
 			],
 		};
 		PropertyFactory.register(assetSchema);
-		const str = PropertyFactory.create("String");
+		let str = PropertyFactory.create("String");
 		str.setValue("BAR");
-		const foo = PropertyFactory.create(assetSchema.typeid);
+		let foo = PropertyFactory.create(assetSchema.typeid);
 		foo.insert("str", str);
-		const relation = foo.get("relationship");
+		let relation = foo.get("relationship");
 		expect(relation.get("guid").getValue()).to.be.a("string");
 		expect(relation.resolvePath("to")).to.not.exist;
 		relation.resolvePath("to*").setValue("/str");

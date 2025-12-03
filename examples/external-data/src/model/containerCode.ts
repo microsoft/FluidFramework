@@ -4,8 +4,8 @@
  */
 
 import {
-	getDataStoreEntryPoint,
 	ModelContainerRuntimeFactory,
+	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
 import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
@@ -39,9 +39,7 @@ export class BaseDocumentContainerRuntimeFactory extends ModelContainerRuntimeFa
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
-	protected async containerInitializingFirstTime(
-		runtime: IContainerRuntime,
-	): Promise<void> {
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const taskListCollection = await runtime.createDataStore(
 			BaseDocumentInstantiationFactory.type,
 		);
@@ -51,9 +49,7 @@ export class BaseDocumentContainerRuntimeFactory extends ModelContainerRuntimeFa
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerHasInitialized}
 	 */
-	protected async containerHasInitialized(
-		runtime: IContainerRuntime,
-	): Promise<void> {
+	protected async containerHasInitialized(runtime: IContainerRuntime): Promise<void> {
 		runtime.on("signal", (message) => {
 			// TODO: Check the message type? clientId?  And route to the TaskList for interpretation?
 			// Interpretation of the message contents should probably live on the TaskList to encapsulate

@@ -10,22 +10,15 @@ import {
 	TreeDataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
 import { SharedCell } from "@fluidframework/cell/internal";
-import type {
-	IFluidHandle,
-	IFluidLoadable,
-} from "@fluidframework/core-interfaces";
+import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
-import {
-	type ITree,
-	SchemaFactory,
-	TreeViewConfiguration,
-} from "@fluidframework/tree";
+import { type ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree, type TreeView } from "@fluidframework/tree/internal";
 import { v4 as uuid } from "uuid";
 
-import { TodoItem, TodoList } from "./Schema.js";
+import { TodoList, TodoItem } from "./Schema.js";
 
 /**
  * Props used when creating a new todo item.
@@ -140,7 +133,7 @@ export class AppDataTwo extends DataObject {
 	});
 
 	public static getFactory(): DataObjectFactory<AppDataTwo> {
-		return AppDataTwo.factory;
+		return this.factory;
 	}
 
 	protected async initializingFirstTime(): Promise<void> {
@@ -156,9 +149,7 @@ export class AppDataTwo extends DataObject {
 	}
 
 	protected async hasInitialized(): Promise<void> {
-		this._text = await this.root
-			.get<IFluidHandle<SharedString>>(this.sharedTextKey)
-			?.get();
+		this._text = await this.root.get<IFluidHandle<SharedString>>(this.sharedTextKey)?.get();
 	}
 }
 
@@ -267,7 +258,7 @@ export class AppData extends DataObject {
 	});
 
 	public static getFactory(): DataObjectFactory<AppData> {
-		return AppData.factory;
+		return this.factory;
 	}
 
 	protected async initializingFirstTime(): Promise<void> {
@@ -288,12 +279,8 @@ export class AppData extends DataObject {
 		}
 		this.populateSharedTree(sharedTree);
 
-		const appDataTwo = await AppDataTwo.getFactory().createChildInstance(
-			this.context,
-		);
-		const appDataTree = await AppDataTree.getFactory().createChildInstance(
-			this.context,
-		);
+		const appDataTwo = await AppDataTwo.getFactory().createChildInstance(this.context);
+		const appDataTree = await AppDataTree.getFactory().createChildInstance(this.context);
 
 		this.root.set(this.sharedTextKey, text.handle);
 		this.root.set(this.sharedCounterKey, counter.handle);
@@ -319,9 +306,7 @@ export class AppData extends DataObject {
 
 	protected async hasInitialized(): Promise<void> {
 		// Store the objects if we are loading the first time or loading from existing
-		this._text = await this.root
-			.get<IFluidHandle<SharedString>>(this.sharedTextKey)
-			?.get();
+		this._text = await this.root.get<IFluidHandle<SharedString>>(this.sharedTextKey)?.get();
 		this._counter = await this.root
 			.get<IFluidHandle<SharedCounter>>(this.sharedCounterKey)
 			?.get();
@@ -331,9 +316,7 @@ export class AppData extends DataObject {
 		this._treeDataObject = await this.root
 			.get<IFluidHandle<AppDataTree>>(this.treeDataObjectKey)
 			?.get();
-		const sharedTree = await this.root
-			.get<IFluidHandle<ITree>>(this.sharedTreeKey)
-			?.get();
+		const sharedTree = await this.root.get<IFluidHandle<ITree>>(this.sharedTreeKey)?.get();
 		if (sharedTree === undefined) {
 			throw new Error("SharedTree was not initialized");
 		} else {

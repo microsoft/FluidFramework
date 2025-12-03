@@ -4,16 +4,16 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type {
+import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	Serializable,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	BaseSegment,
-	type IJSONSegment,
-	type ISegment,
-	type PropertySet,
+	IJSONSegment,
+	ISegment,
+	PropertySet,
 } from "@fluidframework/merge-tree/internal";
 
 import { SharedSegmentSequence } from "./sequence.js";
@@ -79,10 +79,7 @@ export class SubSequence<T> extends BaseSegment {
 	}
 
 	public append(segment: ISegment) {
-		assert(
-			SubSequence.is(segment),
-			0x448 /* can only append to another run segment */,
-		);
+		assert(SubSequence.is(segment), 0x448 /* can only append to another run segment */);
 		super.append(segment);
 		// assert above checks that segment is a SubSequence but not that generic T matches.
 		// Since SubSequence is already deprecated, assume that usage is generic T consistent

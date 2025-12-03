@@ -21,10 +21,7 @@
  * @packageDocumentation
  */
 
-import type {
-	IDisposable,
-	IFluidLoadable,
-} from "@fluidframework/core-interfaces";
+import type { IDisposable, IFluidLoadable } from "@fluidframework/core-interfaces";
 import {
 	type ContainerDevtoolsProps as ContainerDevtoolsPropsBase,
 	type HasContainerKey,
@@ -160,9 +157,7 @@ class Devtools implements IDevtools {
 export function initializeDevtools(props: DevtoolsProps): IDevtools {
 	const { initialContainers, logger } = props;
 
-	const mappedInitialContainers = initialContainers?.map((p) =>
-		mapContainerProps(p),
-	);
+	const mappedInitialContainers = initialContainers?.map((p) => mapContainerProps(p));
 
 	const baseDevtools = initializeDevtoolsBase({
 		logger,
@@ -198,7 +193,7 @@ function mapContainerProps(
 // ContainerDevtoolsProps extends HasContainerKey, so it needs ContainerKey.
 export {
 	type ContainerKey,
-	createDevtoolsLogger,
 	type HasContainerKey,
+	createDevtoolsLogger,
 	type IDevtoolsLogger,
 } from "@fluidframework/devtools-core/internal";

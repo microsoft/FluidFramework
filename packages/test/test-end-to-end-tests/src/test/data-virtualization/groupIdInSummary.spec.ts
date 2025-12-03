@@ -3,28 +3,26 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
-import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	ConfigTypes,
 	IConfigProviderBase,
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import { SummaryType } from "@fluidframework/driver-definitions";
-import type {
-	ISnapshot,
-	ISnapshotTree,
-} from "@fluidframework/driver-definitions/internal";
+import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import {
-	createSummarizerFromFactory,
 	type ITestObjectProvider,
+	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
 
 import { TestPersistedCache } from "../../testPersistedCache.js";
 
@@ -50,9 +48,7 @@ const interceptResult = <T>(
 	return fn;
 };
 
-const configProvider = (
-	settings: Record<string, ConfigTypes>,
-): IConfigProviderBase => ({
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 
@@ -61,8 +57,7 @@ describeCompat(
 	"LoaderCompat",
 	(getTestObjectProvider, apis) => {
 		const { DataObjectFactory, DataObject } = apis.dataRuntime;
-		const { ContainerRuntimeFactoryWithDefaultDataStore } =
-			apis.containerRuntime;
+		const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 
 		// A Test Data Object that exposes some basic functionality.
 		class TestDataObject extends DataObject {
@@ -134,10 +129,7 @@ describeCompat(
 			}
 			const snapshotTree = getSnapshotTree(snapshot);
 			assert(snapshotTree.groupId === groupId, message);
-			assert(
-				assertOmittedBlobContentsCore(snapshotTree, groupId, blobContents),
-				message,
-			);
+			assert(assertOmittedBlobContentsCore(snapshotTree, groupId, blobContents), message);
 		};
 
 		const assertOmittedBlobContentsCore = (
@@ -153,11 +145,7 @@ describeCompat(
 			}
 			for (const tree of Object.values(snapshotTree.trees)) {
 				if (tree.groupId === undefined) {
-					const omitted = assertOmittedBlobContentsCore(
-						tree,
-						groupId,
-						blobContents,
-					);
+					const omitted = assertOmittedBlobContentsCore(tree, groupId, blobContents);
 					if (omitted) {
 						return true;
 					}
@@ -236,13 +224,12 @@ describeCompat(
 				undefined,
 				loadingGroupId2,
 			);
-			const [objD, dataStoreD] =
-				await dataObjectFactory.createInstanceWithDataStore(
-					containerRuntime,
-					undefined,
-					undefined,
-					loadingGroupId2,
-				);
+			const [objD, dataStoreD] = await dataObjectFactory.createInstanceWithDataStore(
+				containerRuntime,
+				undefined,
+				undefined,
+				loadingGroupId2,
+			);
 			dataObjectD = objD;
 
 			mainObject._root.set("dataObjectA", dataObjectA.handle);
@@ -275,26 +262,17 @@ describeCompat(
 			await provider.ensureSynchronized();
 			const { summaryVersion, summaryTree } = await summarizeNow(summarizer);
 			const channelsTree = summaryTree.tree[".channels"];
-			assert(
-				channelsTree.type === SummaryType.Tree,
-				"channels should be a tree",
-			);
+			assert(channelsTree.type === SummaryType.Tree, "channels should be a tree");
 			const dataObjectTreeA = channelsTree.tree[dataObjectA.id];
 			const dataObjectTreeB = channelsTree.tree[dataObjectB.id];
 			assert(dataObjectTreeA !== undefined, "dataObjectTree should exist");
-			assert(
-				dataObjectTreeA.type === SummaryType.Tree,
-				"dataObjectTree should be a tree",
-			);
+			assert(dataObjectTreeA.type === SummaryType.Tree, "dataObjectTree should be a tree");
 			assert(
 				dataObjectTreeA.groupId === loadingGroupId,
 				"GroupId missing from A summary tree",
 			);
 			assert(dataObjectTreeB !== undefined, "dataObjectTree should exist");
-			assert(
-				dataObjectTreeB.type === SummaryType.Tree,
-				"dataObjectTree should be a tree",
-			);
+			assert(dataObjectTreeB.type === SummaryType.Tree, "dataObjectTree should be a tree");
 			assert(
 				dataObjectTreeB.groupId === loadingGroupId,
 				"GroupId missing from B summary tree",
@@ -319,9 +297,7 @@ describeCompat(
 			const handleB2 = mainObject2._root.get("dataObjectB");
 			const handleC2 = mainObject2._root.get("dataObjectC");
 			const handleD2 =
-				await mainObject2.containerRuntime.getAliasedDataStoreEntryPoint(
-					"dataObjectD",
-				);
+				await mainObject2.containerRuntime.getAliasedDataStoreEntryPoint("dataObjectD");
 			assert(handleA2 !== undefined, "handleA2 should not be undefined");
 			assert(handleB2 !== undefined, "handleB2 should not be undefined");
 			assert(handleC2 !== undefined, "handleC2 should not be undefined");
@@ -335,26 +311,10 @@ describeCompat(
 			// This allows us to test against services without groupId enabled.
 			// Round tripping of groupId only works for local driver, regardless the rest should just work as intended
 			if (supportsDataVirtualization(provider)) {
-				assert.equal(
-					dataObjectA2.loadingGroupId,
-					loadingGroupId,
-					"A groupId not set",
-				);
-				assert.equal(
-					dataObjectB2.loadingGroupId,
-					loadingGroupId,
-					"B groupId not set",
-				);
-				assert.equal(
-					dataObjectC2.loadingGroupId,
-					loadingGroupId2,
-					"C groupId not set",
-				);
-				assert.equal(
-					dataObjectD2.loadingGroupId,
-					loadingGroupId2,
-					"D groupId not set",
-				);
+				assert.equal(dataObjectA2.loadingGroupId, loadingGroupId, "A groupId not set");
+				assert.equal(dataObjectB2.loadingGroupId, loadingGroupId, "B groupId not set");
+				assert.equal(dataObjectC2.loadingGroupId, loadingGroupId2, "C groupId not set");
+				assert.equal(dataObjectD2.loadingGroupId, loadingGroupId2, "D groupId not set");
 			}
 		});
 
@@ -384,26 +344,17 @@ describeCompat(
 			await provider.ensureSynchronized();
 			const { summaryVersion, summaryTree } = await summarizeNow(summarizer);
 			const channelsTree = summaryTree.tree[".channels"];
-			assert(
-				channelsTree.type === SummaryType.Tree,
-				"channels should be a tree",
-			);
+			assert(channelsTree.type === SummaryType.Tree, "channels should be a tree");
 			const dataObjectTreeA = channelsTree.tree[dataObjectA.id];
 			const dataObjectTreeB = channelsTree.tree[dataObjectB.id];
 			assert(dataObjectTreeA !== undefined, "dataObjectTree should exist");
-			assert(
-				dataObjectTreeA.type === SummaryType.Tree,
-				"dataObjectTree should be a tree",
-			);
+			assert(dataObjectTreeA.type === SummaryType.Tree, "dataObjectTree should be a tree");
 			assert(
 				dataObjectTreeA.groupId === loadingGroupId,
 				"GroupId missing from A summary tree",
 			);
 			assert(dataObjectTreeB !== undefined, "dataObjectTree should exist");
-			assert(
-				dataObjectTreeB.type === SummaryType.Tree,
-				"dataObjectTree should be a tree",
-			);
+			assert(dataObjectTreeB.type === SummaryType.Tree, "dataObjectTree should be a tree");
 			assert(
 				dataObjectTreeB.groupId === loadingGroupId,
 				"GroupId missing from B summary tree",
@@ -424,17 +375,12 @@ describeCompat(
 			);
 
 			const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
-			const handleA2 =
-				mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
-			const handleB2 =
-				mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectB");
-			const handleC2 =
-				mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectC");
+			const handleA2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
+			const handleB2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectB");
+			const handleC2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectC");
 
 			await assert.doesNotReject(
-				mainObject2.containerRuntime.getAliasedDataStoreEntryPoint(
-					"dataObjectD",
-				),
+				mainObject2.containerRuntime.getAliasedDataStoreEntryPoint("dataObjectD"),
 				"D should not be loaded",
 			);
 			assert(handleA2 !== undefined, "handleA2 should not be undefined");
@@ -442,18 +388,9 @@ describeCompat(
 			assert(handleC2 !== undefined, "handleC2 should not be undefined");
 
 			// When fixed, all these should not fail.
-			await assert.doesNotReject(
-				handleA2.get(),
-				"should be able to retrieve A",
-			);
-			await assert.doesNotReject(
-				handleB2.get(),
-				"should be able to retrieve B",
-			);
-			await assert.doesNotReject(
-				handleC2.get(),
-				"should be able to retrieve C",
-			);
+			await assert.doesNotReject(handleA2.get(), "should be able to retrieve A");
+			await assert.doesNotReject(handleB2.get(), "should be able to retrieve B");
+			await assert.doesNotReject(handleC2.get(), "should be able to retrieve C");
 		});
 
 		it("Can create loadingGroupId via detached flow", async () => {
@@ -472,8 +409,7 @@ describeCompat(
 				});
 				await provider.ensureSynchronized();
 
-				const mainObject2 =
-					(await container2.getEntryPoint()) as TestDataObject;
+				const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
 				const handleA2 = mainObject2._root.get("dataObjectA");
 				const handleB2 = mainObject2._root.get("dataObjectB");
 				assert(handleA2 !== undefined, "handleA2 should not be undefined");
@@ -535,20 +471,13 @@ describeCompat(
 				documentServiceFactory,
 				documentServiceFactory.createDocumentService,
 				(documentService) => {
-					interceptResult(
-						documentService,
-						documentService.connectToStorage,
-						(storage) => {
-							assert(
-								storage.getSnapshot !== undefined,
-								"Test can't run without getSnapshot",
-							);
-							interceptResult(storage, storage.getSnapshot, (snapshot) => {
-								snapshotCaptured = snapshot;
-								callCount++;
-							});
-						},
-					);
+					interceptResult(documentService, documentService.connectToStorage, (storage) => {
+						assert(storage.getSnapshot !== undefined, "Test can't run without getSnapshot");
+						interceptResult(storage, storage.getSnapshot, (snapshot) => {
+							snapshotCaptured = snapshot;
+							callCount++;
+						});
+					});
 				},
 			);
 
@@ -573,14 +502,8 @@ describeCompat(
 			const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
 			const runtime2 = mainObject2.containerRuntime;
 			if (loaderSupport) {
-				assert(
-					loadingSnapshot !== undefined,
-					"should have captured loading snapshot!",
-				);
-				assert(
-					runtime2.storage.getSnapshot !== undefined,
-					"getSnapshot should be defined",
-				);
+				assert(loadingSnapshot !== undefined, "should have captured loading snapshot!");
+				assert(runtime2.storage.getSnapshot !== undefined, "getSnapshot should be defined");
 				assert.equal(callCount, 1, "Should have only called getSnapshot once");
 				assert(
 					loadingSnapshot?.sequenceNumber === summaryRefSeq,
@@ -596,12 +519,7 @@ describeCompat(
 				const dataObjectCTree = channelsTree.trees[dataObjectC.id];
 				const dataObjectDTree = channelsTree.trees[dataObjectD.id];
 
-				assertPopulatedTree(
-					mainObjectTree,
-					noId,
-					blobContents,
-					"mainObject tree not right",
-				);
+				assertPopulatedTree(mainObjectTree, noId, blobContents, "mainObject tree not right");
 				assertOmittedBlobContents(
 					dataObjectATree,
 					loadingGroupId,
@@ -633,14 +551,9 @@ describeCompat(
 			// Try to load the data stores with groupIds
 			const doubleHandleA2 =
 				mainObject2._root.get<IFluidHandle<TestDataObject>>("doubleHandleA");
-			const handleA2 =
-				mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
-			const handleB2 =
-				mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectB");
-			assert(
-				doubleHandleA2 !== undefined,
-				"doubleHandleA2 should not be undefined",
-			);
+			const handleA2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
+			const handleB2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectB");
+			assert(doubleHandleA2 !== undefined, "doubleHandleA2 should not be undefined");
 			assert(handleA2 !== undefined, "handleA2 should not be undefined");
 			assert(handleB2 !== undefined, "handleB2 should not be undefined");
 
@@ -663,29 +576,14 @@ describeCompat(
 				dataObjectD.id,
 				{},
 			)) as IFluidDataStoreContext;
-			assert(
-				contextA.baseSnapshot !== undefined,
-				"contextA should have a baseSnapshot",
-			);
-			assert(
-				contextB.baseSnapshot !== undefined,
-				"contextB should have a baseSnapshot",
-			);
-			assert(
-				contextC.baseSnapshot !== undefined,
-				"contextC should have a baseSnapshot",
-			);
-			assert(
-				contextD.baseSnapshot !== undefined,
-				"contextD should have a baseSnapshot",
-			);
+			assert(contextA.baseSnapshot !== undefined, "contextA should have a baseSnapshot");
+			assert(contextB.baseSnapshot !== undefined, "contextB should have a baseSnapshot");
+			assert(contextC.baseSnapshot !== undefined, "contextC should have a baseSnapshot");
+			assert(contextD.baseSnapshot !== undefined, "contextD should have a baseSnapshot");
 
 			assert.equal(callCount, 0, "Should not have made any network calls");
 			if (loaderSupport) {
-				assert(
-					loadingSnapshot !== undefined,
-					"should have captured loading snapshot!",
-				);
+				assert(loadingSnapshot !== undefined, "should have captured loading snapshot!");
 				const blobContents = loadingSnapshot.blobContents;
 				assertOmittedBlobContents(
 					contextA.baseSnapshot,
@@ -715,21 +613,14 @@ describeCompat(
 
 			// loading group call
 			assert.equal(callCount, 0, "Should not have made any network calls");
-			const [dataObjectA2, dataObjectB2] = await Promise.all([
-				handleA2.get(),
-				handleB2.get(),
-			]);
+			const [dataObjectA2, dataObjectB2] = await Promise.all([handleA2.get(), handleB2.get()]);
 			if (loaderSupport) {
 				assert.equal(callCount, 1, "Should have only called getSnapshot once!");
 			}
 			callCount = 0;
 			assert.equal(dataObjectA2._root.get("A"), "A", "A should be set");
 			assert.equal(dataObjectB2._root.get("B"), "B", "B should be set");
-			assert.equal(
-				callCount,
-				0,
-				"retrieving data should not have made any network calls",
-			);
+			assert.equal(callCount, 0, "retrieving data should not have made any network calls");
 
 			callCount = 0;
 			const aDataObjectA2 = await doubleHandleA2.get();
@@ -739,10 +630,7 @@ describeCompat(
 			// Testing the get snapshot call with loadingGroupId
 			if (loaderSupport) {
 				const groupSnapshot = snapshotCaptured;
-				assert(
-					groupSnapshot !== undefined,
-					"should have captured group snapshot!",
-				);
+				assert(groupSnapshot !== undefined, "should have captured group snapshot!");
 				const blobContents = groupSnapshot.blobContents;
 				assert.deepEqual(
 					groupSnapshot.sequenceNumber,
@@ -758,12 +646,7 @@ describeCompat(
 				const dataObjectCTree2 = channelsTree2.trees[dataObjectC.id];
 				const dataObjectDTree2 = channelsTree2.trees[dataObjectD.id];
 
-				assertOmittedTree(
-					mainObjectTree2,
-					noId,
-					blobContents,
-					"mainObject tree incorrect",
-				);
+				assertOmittedTree(mainObjectTree2, noId, blobContents, "mainObject tree incorrect");
 				assertPopulatedTree(
 					dataObjectATree2,
 					loadingGroupId,
@@ -790,11 +673,9 @@ describeCompat(
 				);
 			}
 
-			const handleC2 =
-				mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectC");
+			const handleC2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectC");
 			// This call realizes the data object
-			const handleD2 =
-				await runtime2.getAliasedDataStoreEntryPoint("dataObjectD");
+			const handleD2 = await runtime2.getAliasedDataStoreEntryPoint("dataObjectD");
 			assert(handleC2 !== undefined, "handleC2 should not be undefined");
 			assert(handleD2 !== undefined, "handleD2 should not be undefined");
 
@@ -804,16 +685,9 @@ describeCompat(
 			// Snapshot validation (a snapshot call for loadingGroupIds = [loadingGroupId])
 			if (loaderSupport) {
 				const group2Snapshot = snapshotCaptured;
-				assert(
-					group2Snapshot !== undefined,
-					"should have captured group2 snapshot!",
-				);
+				assert(group2Snapshot !== undefined, "should have captured group2 snapshot!");
 				const blobContents = group2Snapshot.blobContents;
-				assert.deepEqual(
-					group2Snapshot.sequenceNumber,
-					summaryRefSeq,
-					"Unexpected snapshot",
-				);
+				assert.deepEqual(group2Snapshot.sequenceNumber, summaryRefSeq, "Unexpected snapshot");
 				const channels2Tree2 = group2Snapshot.snapshotTree.trees[".channels"];
 				const mainObject2Tree2 = channels2Tree2.trees[mainObject.id];
 				const dataObjectA2Tree2 = channels2Tree2.trees[dataObjectA.id];

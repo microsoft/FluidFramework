@@ -4,33 +4,35 @@
  */
 
 import { strict as assert } from "node:assert";
-import { isStableId } from "@fluidframework/id-compressor/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
-import { rootFieldKey } from "../../core/index.js";
-import { TreeStatus } from "../../feature-libraries/index.js";
+
+import { isStableId } from "@fluidframework/id-compressor/internal";
+
 import { Tree } from "../../shared-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { unhydratedFlexTreeFromCursor } from "../../simple-tree/api/create.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { getUnhydratedContext } from "../../simple-tree/createContext.js";
+import { rootFieldKey } from "../../core/index.js";
+import {
+	getInnerNode,
+	SchemaFactory,
+	SchemaFactoryAlpha,
+	TreeBeta,
+	type FieldProps,
+	type TreeNode,
+} from "../../simple-tree/index.js";
 import type {
 	ConstantFieldProvider,
 	ContextualFieldProvider,
 	FieldProvider,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/fieldSchema.js";
-import {
-	type FieldProps,
-	getInnerNode,
-	SchemaFactory,
-	SchemaFactoryAlpha,
-	TreeBeta,
-	type TreeNode,
-} from "../../simple-tree/index.js";
-import { singleJsonCursor } from "../json/index.js";
 import { hydrate } from "./utils.js";
+import { TreeStatus } from "../../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
+import { singleJsonCursor } from "../json/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { unhydratedFlexTreeFromCursor } from "../../simple-tree/api/create.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { getUnhydratedContext } from "../../simple-tree/createContext.js";
 
 describe("Unhydrated nodes", () => {
 	const schemaFactory = new SchemaFactoryAlpha("undefined");
@@ -268,10 +270,7 @@ describe("Unhydrated nodes", () => {
 		leafObject.value = "new value";
 		// Assert that the event fired
 		// TODO: Eventually the order of events should be documented, and an approach like this can test that they are ordered as documented.
-		assert.deepEqual(log, [
-			{ changedProperties: new Set(["value"]) },
-			"treeChanged",
-		]);
+		assert.deepEqual(log, [{ changedProperties: new Set(["value"]) }, "treeChanged"]);
 	});
 
 	it("preserve events after hydration", () => {
@@ -318,16 +317,8 @@ describe("Unhydrated nodes", () => {
 		} {
 			let deepEvent = false;
 			let shallowEvent = false;
-			const offNodeChanged = Tree.on(
-				node,
-				"nodeChanged",
-				() => (shallowEvent = true),
-			);
-			const offTreeChanged = Tree.on(
-				node,
-				"treeChanged",
-				() => (deepEvent = true),
-			);
+			const offNodeChanged = Tree.on(node, "nodeChanged", () => (shallowEvent = true));
+			const offTreeChanged = Tree.on(node, "treeChanged", () => (deepEvent = true));
 			return {
 				deregister: () => {
 					offNodeChanged();
@@ -348,12 +339,9 @@ describe("Unhydrated nodes", () => {
 		// Register events on each node
 		const { deregister: deregisterLeafObject, assert: assertLeafObject } =
 			registerEvents(leafObject);
-		const { deregister: deregisterMap, assert: assertMap } =
-			registerEvents(map);
-		const { deregister: deregisterArray, assert: assertArray } =
-			registerEvents(array);
-		const { deregister: deregisterRecord, assert: assertRecord } =
-			registerEvents(record);
+		const { deregister: deregisterMap, assert: assertMap } = registerEvents(map);
+		const { deregister: deregisterArray, assert: assertArray } = registerEvents(array);
+		const { deregister: deregisterRecord, assert: assertRecord } = registerEvents(record);
 		// Hydrate the nodes
 		hydrate(TestArray, array);
 		hydrate(TestMap, map);
@@ -386,15 +374,14 @@ describe("Unhydrated nodes", () => {
 
 	it("read constant defaulted properties", () => {
 		const defaultValue = 3;
-		const constantProvider: ConstantFieldProvider =
-			(): UnhydratedFlexTreeNode[] => {
-				return [
-					unhydratedFlexTreeFromCursor(
-						getUnhydratedContext(SchemaFactory.number),
-						singleJsonCursor(defaultValue),
-					),
-				];
-			};
+		const constantProvider: ConstantFieldProvider = (): UnhydratedFlexTreeNode[] => {
+			return [
+				unhydratedFlexTreeFromCursor(
+					getUnhydratedContext(SchemaFactory.number),
+					singleJsonCursor(defaultValue),
+				),
+			];
+		};
 		class HasDefault extends schemaFactory.object("DefaultingLeaf", {
 			value: schemaFactory.optional(
 				schemaFactory.number,
@@ -464,9 +451,7 @@ describe("Unhydrated nodes", () => {
 		const leaf = new TestLeaf({ value: "3" });
 		assert.throws(
 			() => new TestArray([leaf, leaf]),
-			validateUsageError(
-				"A node may not be in more than one place in the tree",
-			),
+			validateUsageError("A node may not be in more than one place in the tree"),
 		);
 	});
 
@@ -550,9 +535,7 @@ describe("Unhydrated nodes", () => {
 		TreeBeta.on(leaf, "nodeChanged", ({ changedProperties }) =>
 			log.push(...changedProperties),
 		);
-		TreeBeta.on(map, "nodeChanged", ({ changedProperties }) =>
-			log.push(...changedProperties),
-		);
+		TreeBeta.on(map, "nodeChanged", ({ changedProperties }) => log.push(...changedProperties));
 		TreeBeta.on(array, "nodeChanged", ({ changedProperties }) => {
 			assert.equal(changedProperties, undefined);
 			// Arrays do not supply a changedProperties, but we still want to validate that the event is emitted.
@@ -573,15 +556,7 @@ describe("Unhydrated nodes", () => {
 		object.array = new TestArray([]);
 		object.record = new TestRecord({});
 
-		assert.deepEqual(log, [
-			"value",
-			"key",
-			"<arrayChanged>",
-			"foo",
-			"map",
-			"array",
-			"record",
-		]);
+		assert.deepEqual(log, ["value", "key", "<arrayChanged>", "foo", "map", "array", "record"]);
 	});
 });
 

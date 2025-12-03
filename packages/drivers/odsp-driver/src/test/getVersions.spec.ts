@@ -6,10 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { delay } from "@fluidframework/core-utils/internal";
-import type {
-	ICacheEntry,
-	ISnapshot,
-} from "@fluidframework/driver-definitions/internal";
+import type { ICacheEntry, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { maximumCacheDurationMs } from "@fluidframework/driver-utils/internal";
 import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
@@ -24,8 +21,8 @@ import { createOdspUrl } from "../createOdspUrl.js";
 import { EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache, NonPersistentCache } from "../odspCache.js";
 import {
-	defaultSummarizerCacheExpiryTimeout,
 	OdspDocumentStorageService,
+	defaultSummarizerCacheExpiryTimeout,
 } from "../odspDocumentStorageManager.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
@@ -33,8 +30,7 @@ import type { INewFileInfo } from "../odspUtils.js";
 
 import { createResponse, mockFetchSingle, notFound } from "./mockFetch.js";
 
-const createUtLocalCache = (): LocalPersistentCache =>
-	new LocalPersistentCache();
+const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
 describe("Tests for snapshot fetch", () => {
 	const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
@@ -75,11 +71,7 @@ describe("Tests for snapshot fetch", () => {
 	const resolver = new OdspDriverUrlResolver();
 	const nonPersistentCache = new NonPersistentCache();
 	const logger = createChildLogger();
-	const odspUrl = createOdspUrl({
-		...newFileParams,
-		itemId,
-		dataStorePath: "/",
-	});
+	const odspUrl = createOdspUrl({ ...newFileParams, itemId, dataStorePath: "/" });
 
 	const odspSnapshot: IOdspSnapshot = {
 		id: "id",
@@ -113,14 +105,9 @@ describe("Tests for snapshot fetch", () => {
 	};
 
 	// Set the cacheEntryTime to anything greater than the current maxCacheAge
-	function valueWithExpiredCache(
-		cacheExpiryTimeoutMs: number,
-	): IVersionedValueWithEpoch {
+	function valueWithExpiredCache(cacheExpiryTimeoutMs: number): IVersionedValueWithEpoch {
 		const versionedValue: IVersionedValueWithEpoch = {
-			value: {
-				...content,
-				cacheEntryTime: Date.now() - cacheExpiryTimeoutMs - 1000,
-			},
+			value: { ...content, cacheEntryTime: Date.now() - cacheExpiryTimeoutMs - 1000 },
 			fluidEpoch: "epoch1",
 			version: persistedCacheValueVersion,
 		};
@@ -294,8 +281,7 @@ describe("Tests for snapshot fetch", () => {
 
 			const version = await mockFetchSingle(
 				async () => service.getVersions(null, 1),
-				async () =>
-					createResponse({ "x-fluid-epoch": "epoch1" }, odspSnapshot, 200),
+				async () => createResponse({ "x-fluid-epoch": "epoch1" }, odspSnapshot, 200),
 			);
 			assert.deepStrictEqual(version, expectedVersion, "incorrect version");
 		});
@@ -355,10 +341,7 @@ describe("Tests for snapshot fetch", () => {
 				type: "snapshot",
 				file: { docId: hashedDocumentId, resolvedUrl, fileVersion: undefined },
 			};
-			await localCache.put(
-				cacheEntry,
-				valueWithExpiredCache(maximumCacheDurationMs),
-			);
+			await localCache.put(cacheEntry, valueWithExpiredCache(maximumCacheDurationMs));
 
 			const version = await mockFetchSingle(
 				async () => service.getVersions(null, 1),
@@ -378,10 +361,7 @@ describe("Tests for snapshot fetch", () => {
 				type: "snapshot",
 				file: { docId: hashedDocumentId, resolvedUrl, fileVersion: undefined },
 			};
-			await localCache.put(
-				cacheEntry,
-				valueWithExpiredCache(maximumCacheDurationMs),
-			);
+			await localCache.put(cacheEntry, valueWithExpiredCache(maximumCacheDurationMs));
 
 			await assert.rejects(
 				async () => {

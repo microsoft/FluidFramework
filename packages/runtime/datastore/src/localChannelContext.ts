@@ -11,23 +11,23 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type {
+	ITelemetryContext,
 	IFluidDataStoreContext,
 	IGarbageCollectionData,
+	ISummarizeResult,
 	IPendingMessagesState,
 	IRuntimeMessageCollection,
 	IRuntimeStorageService,
-	ISummarizeResult,
-	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	DataProcessingError,
 	type ITelemetryLoggerExt,
+	DataProcessingError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	type ChannelServiceEndpoints,
-	createChannelServiceEndpoints,
 	type IChannelContext,
+	createChannelServiceEndpoints,
 	loadChannel,
 	loadChannelFactoryAndAttributes,
 	summarizeChannel,
@@ -54,10 +54,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		private readonly channelP: Promise<IChannel>,
 		private _channel?: IChannel,
 	) {
-		assert(
-			!this.id.includes("/"),
-			0x30f /* Channel context ID cannot contain slashes */,
-		);
+		assert(!this.id.includes("/"), 0x30f /* Channel context ID cannot contain slashes */);
 	}
 
 	protected get isGloballyVisible(): boolean {
@@ -110,30 +107,16 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		}
 	}
 
-	public reSubmit(
-		content: unknown,
-		localOpMetadata: unknown,
-		squash: boolean,
-	): void {
-		assert(
-			this.isLoaded,
-			0x18a /* "Channel should be loaded to resubmit ops" */,
-		);
+	public reSubmit(content: unknown, localOpMetadata: unknown, squash: boolean): void {
+		assert(this.isLoaded, 0x18a /* "Channel should be loaded to resubmit ops" */);
 		assert(
 			this.globallyVisible,
 			0x2d4 /* "Local channel must be globally visible when resubmitting op" */,
 		);
-		this.services.value.deltaConnection.reSubmit(
-			content,
-			localOpMetadata,
-			squash,
-		);
+		this.services.value.deltaConnection.reSubmit(content, localOpMetadata, squash);
 	}
 	public rollback(content: unknown, localOpMetadata: unknown): void {
-		assert(
-			this.isLoaded,
-			0x2ee /* "Channel should be loaded to rollback ops" */,
-		);
+		assert(this.isLoaded, 0x2ee /* "Channel should be loaded to rollback ops" */);
 		assert(
 			this.globallyVisible,
 			0x2ef /* "Local channel must be globally visible when rolling back op" */,
@@ -155,12 +138,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult> {
 		const channel = await this.getChannel();
-		return summarizeChannelAsync(
-			channel,
-			fullTree,
-			trackState,
-			telemetryContext,
-		);
+		return summarizeChannelAsync(channel, fullTree, trackState, telemetryContext);
 	}
 
 	/**
@@ -168,9 +146,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 	 *
 	 * Synchronously generates the channel's attach summary to be joined with the same from the DataStore's other channels
 	 */
-	public getAttachSummary(
-		telemetryContext?: ITelemetryContext,
-	): ISummarizeResult {
+	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummarizeResult {
 		assert(
 			this._channel !== undefined,
 			0x18d /* "Channel should be loaded to take snapshot" */,
@@ -189,9 +165,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 	 * Synchronously generates the channel's attach GC data (set of outbound routes in the initial state)
 	 * to be joined with the same from the DataStore's other channels
 	 */
-	public getAttachGCData(
-		telemetryContext?: ITelemetryContext,
-	): IGarbageCollectionData {
+	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
 		assert(
 			this._channel !== undefined,
 			0x8fd /* Local Channel should be loaded before being attached */,
@@ -207,10 +181,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		}
 
 		if (this.isLoaded) {
-			assert(
-				!!this._channel,
-				0x192 /* "Channel should be there if loaded!!" */,
-			);
+			assert(!!this._channel, 0x192 /* "Channel should be there if loaded!!" */);
 			this._channel.connect(this.services.value);
 		}
 		this.globallyVisible = true;
@@ -222,9 +193,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 	 * the context has loaded.
 	 * @param fullGC - true to bypass optimizations and force full generation of GC data.
 	 */
-	public async getGCData(
-		fullGC: boolean = false,
-	): Promise<IGarbageCollectionData> {
+	public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
 		const channel = await this.getChannel();
 		return channel.getGCData(fullGC);
 	}
@@ -256,17 +225,14 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 			id,
 			runtime,
 			new Lazy(() => {
-				const blobMap: Map<string, ArrayBufferLike> = new Map<
-					string,
-					ArrayBufferLike
-				>(extraBlob);
+				const blobMap: Map<string, ArrayBufferLike> = new Map<string, ArrayBufferLike>(
+					extraBlob,
+				);
 				const clonedSnapshotTree = cloneSnapshotTree(this.snapshotTree);
 				// 0.47 back-compat Need to sanitize if snapshotTree.blobs still contains blob contents too.
 				// This is for older snapshot which is generated by loader <=0.47 version which still contains
 				// the contents within blobs. After a couple of revisions we can remove it.
-				if (
-					this.isSnapshotInOldFormatAndCollectBlobs(clonedSnapshotTree, blobMap)
-				) {
+				if (this.isSnapshotInOldFormatAndCollectBlobs(clonedSnapshotTree, blobMap)) {
 					this.sanitizeSnapshot(clonedSnapshotTree);
 				}
 				return createChannelServiceEndpoints(
@@ -297,11 +263,8 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 						this.id,
 					);
 					// Send all pending messages to the channel
-					for (const messageCollection of this.pendingMessagesState
-						.messageCollections) {
-						this.services.value.deltaConnection.processMessages(
-							messageCollection,
-						);
+					for (const messageCollection of this.pendingMessagesState.messageCollections) {
+						this.services.value.deltaConnection.processMessages(messageCollection);
 					}
 					return channel;
 				} catch (error) {
@@ -338,8 +301,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 			}
 		}
 		for (const value of Object.values(snapshotTree.trees)) {
-			sanitize =
-				sanitize || this.isSnapshotInOldFormatAndCollectBlobs(value, blobMap);
+			sanitize = sanitize || this.isSnapshotInOldFormatAndCollectBlobs(value, blobMap);
 		}
 		return sanitize;
 	}

@@ -9,7 +9,11 @@ import type { ValueManager } from "./internalTypes.js";
 /**
  * Given a value manager, return opaque InternalTypes.StateValue.
  */
-export function brandIVM<TManagerInterface, TValue, TValueState extends InternalTypes.ValueDirectoryOrState<TValue>>(
+export function brandIVM<
+	TManagerInterface,
+	TValue,
+	TValueState extends InternalTypes.ValueDirectoryOrState<TValue>,
+>(
 	manager: TManagerInterface & ValueManager<TValue, TValueState>,
 ): InternalTypes.StateValue<TManagerInterface> {
 	return manager as TManagerInterface as InternalTypes.StateValue<TManagerInterface>;
@@ -18,8 +22,10 @@ export function brandIVM<TManagerInterface, TValue, TValueState extends Internal
 /**
  * Extract the value manager from an opaque InternalTypes.StateValue.
  */
-export function unbrandIVM<TManagerInterface, TValue, TValueState extends InternalTypes.ValueDirectoryOrState<TValue>>(
-	branded: InternalTypes.StateValue<TManagerInterface>,
-): ValueManager<TValue, TValueState> {
+export function unbrandIVM<
+	TManagerInterface,
+	TValue,
+	TValueState extends InternalTypes.ValueDirectoryOrState<TValue>,
+>(branded: InternalTypes.StateValue<TManagerInterface>): ValueManager<TValue, TValueState> {
 	return branded as unknown as ValueManager<TValue, TValueState>;
 }

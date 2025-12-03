@@ -4,11 +4,7 @@
  */
 
 import { Grocery } from "../domains/index.js";
-import {
-	type LLMIntegrationTest,
-	type ScorableVerboseTree,
-	scoreSymbol,
-} from "../utils.js";
+import { scoreSymbol, type LLMIntegrationTest, type ScorableVerboseTree } from "../utils.js";
 
 import {
 	alphabeticalGroceries,
@@ -37,7 +33,6 @@ export const unlinkLinkedGroceriesTest = {
 	prompt: `Please remove "${removedItemName}".`,
 	expected,
 	options: {
-		domainHints:
-			"You manage a grocery list to help a user with his or her shopping.",
+		domainHints: "You manage a grocery list to help a user with his or her shopping.",
 	},
 } as const satisfies LLMIntegrationTest<typeof Grocery>;

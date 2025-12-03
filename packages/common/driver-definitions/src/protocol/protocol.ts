@@ -321,16 +321,14 @@ export type ISequencedDocumentMessageExperimental = Omit<
 /**
  * @internal
  */
-export interface ISequencedDocumentSystemMessage
-	extends ISequencedDocumentMessage {
+export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessage {
 	data: string;
 }
 
 /**
  * @internal
  */
-export interface ISequencedDocumentAugmentedMessage
-	extends ISequencedDocumentMessage {
+export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMessage {
 	additionalContent: string;
 }
 
@@ -338,9 +336,7 @@ export interface ISequencedDocumentAugmentedMessage
  * Common interface between incoming and outgoing signals.
  * @legacy @beta
  */
-export interface ISignalMessageBase<
-	TMessage extends TypedMessage = TypedMessage,
-> {
+export interface ISignalMessageBase<TMessage extends TypedMessage = TypedMessage> {
 	/**
 	 * Signal content
 	 */

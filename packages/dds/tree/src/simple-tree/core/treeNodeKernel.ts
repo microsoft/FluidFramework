@@ -4,35 +4,31 @@
  */
 
 import { createEmitter } from "@fluid-internal/client-utils";
-import type {
-	HasListeners,
-	Listenable,
-	Off,
-} from "@fluidframework/core-interfaces/internal";
+import type { HasListeners, Listenable, Off } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
-	debugAssert,
 	fail,
+	debugAssert,
 	unreachableCase,
 } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
+	anchorSlot,
 	type AnchorEvents,
 	type AnchorNode,
-	anchorSlot,
 	type FieldKey,
 	type TreeValue,
 } from "../../core/index.js";
+import { getOrCreateHydratedFlexTreeNode } from "../../feature-libraries/index.js";
 import {
 	ContextSlot,
-	type FlexTreeNode,
 	flexTreeSlot,
-	getOrCreateHydratedFlexTreeNode,
-	type HydratedFlexTreeNode,
 	LazyEntity,
 	TreeStatus,
 	treeStatusFromAnchorCache,
+	type FlexTreeNode,
+	type HydratedFlexTreeNode,
 } from "../../feature-libraries/index.js";
 
 import type { Context, HydratedContext } from "./context.js";
@@ -63,9 +59,7 @@ export function getKernel(node: TreeNode): TreeNodeKernel {
  * @param candidate - Value which may be a TreeNode
  * @returns true if the given 'candidate' is a hydrated TreeNode.
  */
-export function isTreeNode(
-	candidate: unknown,
-): candidate is TreeNode | Unhydrated<TreeNode> {
+export function isTreeNode(candidate: unknown): candidate is TreeNode | Unhydrated<TreeNode> {
 	return treeNodeToKernel.has(candidate as TreeNode);
 }
 
@@ -76,9 +70,7 @@ export function isTreeNode(
  * @remarks
  * Does not give schema for a {@link TreeLeafValue}.
  */
-export function tryGetTreeNodeSchema(
-	value: unknown,
-): undefined | TreeNodeSchema {
+export function tryGetTreeNodeSchema(value: unknown): undefined | TreeNodeSchema {
 	const kernel = treeNodeToKernel.get(value as TreeNode);
 	return kernel?.schema;
 }
@@ -152,10 +144,7 @@ export class TreeNodeKernel {
 	) {
 		splitInnerNodeType(innerNode);
 
-		assert(
-			!treeNodeToKernel.has(node),
-			0xa1a /* only one kernel per node can be made */,
-		);
+		assert(!treeNodeToKernel.has(node), 0xa1a /* only one kernel per node can be made */);
 		treeNodeToKernel.set(node, this);
 
 		if (innerNode instanceof UnhydratedFlexTreeNode) {
@@ -180,9 +169,8 @@ export class TreeNodeKernel {
 		if (isHydrated(this.#hydrationState)) {
 			// This can't be cached on this.#hydrated during hydration since initial tree is hydrated before the context is cached on the anchorSet.
 			return (
-				this.#hydrationState.innerNode.anchorNode.anchorSet.slots.get(
-					SimpleContextSlot,
-				) ?? fail(0xb40 /* missing simple-tree context */)
+				this.#hydrationState.innerNode.anchorNode.anchorSet.slots.get(SimpleContextSlot) ??
+				fail(0xb40 /* missing simple-tree context */)
 			);
 		}
 		return this.initialContext;
@@ -197,10 +185,7 @@ export class TreeNodeKernel {
 	 */
 	public hydrate(inner: HydratedFlexTreeNode): void {
 		assert(!this.disposed, 0xa2a /* cannot hydrate a disposed node */);
-		assert(
-			!isHydrated(this.#hydrationState),
-			0xa2b /* hydration should only happen once */,
-		);
+		assert(!isHydrated(this.#hydrationState), 0xa2b /* hydration should only happen once */);
 
 		this.#hydrationState = this.createHydratedState(inner);
 
@@ -235,13 +220,9 @@ export class TreeNodeKernel {
 		}
 
 		// TODO: Replace this check with the proper check against the cursor state when the cursor becomes part of the kernel
-		const flex =
-			this.#hydrationState.innerNode.anchorNode.slots.get(flexTreeSlot);
+		const flex = this.#hydrationState.innerNode.anchorNode.slots.get(flexTreeSlot);
 		if (flex !== undefined) {
-			assert(
-				flex instanceof LazyEntity,
-				0x9b4 /* Unexpected flex node implementation */,
-			);
+			assert(flex instanceof LazyEntity, 0x9b4 /* Unexpected flex node implementation */);
 			if (flex.isFreed()) {
 				return TreeStatus.Deleted;
 			}
@@ -266,10 +247,7 @@ export class TreeNodeKernel {
 		// TODO: go to the context and remove myself from withAnchors
 	}
 
-	public isHydrated(): this is {
-		anchorNode: AnchorNode;
-		context: HydratedContext;
-	} {
+	public isHydrated(): this is { anchorNode: AnchorNode; context: HydratedContext } {
 		return isHydrated(this.#hydrationState);
 	}
 
@@ -317,10 +295,7 @@ export class TreeNodeKernel {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const kernelEvents = [
-	"childrenChangedAfterBatch",
-	"subtreeChangedAfterBatch",
-] as const;
+const kernelEvents = ["childrenChangedAfterBatch", "subtreeChangedAfterBatch"] as const;
 
 type KernelEvents = Pick<AnchorEvents, (typeof kernelEvents)[number]>;
 
@@ -424,10 +399,8 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		this.#eventSource = newSource;
 
 		if (this.#events.hasListeners("childrenChangedAfterBatch")) {
-			const off = this.#eventSource.on(
-				"childrenChangedAfterBatch",
-				({ changedFields }) =>
-					this.#emit("childrenChangedAfterBatch", { changedFields }),
+			const off = this.#eventSource.on("childrenChangedAfterBatch", ({ changedFields }) =>
+				this.#emit("childrenChangedAfterBatch", { changedFields }),
 			);
 			this.#disposeSourceListeners.set("childrenChangedAfterBatch", off);
 		}
@@ -439,10 +412,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		}
 	}
 
-	public on(
-		eventName: keyof KernelEvents,
-		listener: KernelEvents[typeof eventName],
-	): Off {
+	public on(eventName: keyof KernelEvents, listener: KernelEvents[typeof eventName]): Off {
 		// Lazily bind event listeners to the source.
 		// If we do not have any existing listeners for this event, then we need to bind to the source.
 		if (!this.#events.hasListeners(eventName)) {
@@ -451,9 +421,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 				0xc4f /* Should not have a dispose function without listeners */,
 			);
 
-			const off = this.#eventSource.on(eventName, (args) =>
-				this.#emit(eventName, args),
-			);
+			const off = this.#eventSource.on(eventName, (args) => this.#emit(eventName, args));
 			this.#disposeSourceListeners.set(eventName, off);
 		}
 
@@ -461,10 +429,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		return () => this.off(eventName, listener);
 	}
 
-	public off(
-		eventName: keyof KernelEvents,
-		listener: KernelEvents[typeof eventName],
-	): void {
+	public off(eventName: keyof KernelEvents, listener: KernelEvents[typeof eventName]): void {
 		this.#events.off(eventName, listener);
 
 		// If there are no remaining listeners for the event, unbind from the source
@@ -484,10 +449,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		this.#assertNotDisposed();
 		switch (eventName) {
 			case "childrenChangedAfterBatch":
-				assert(
-					arg !== undefined,
-					0xc50 /* childrenChangedAfterBatch should have arg */,
-				);
+				assert(arg !== undefined, 0xc50 /* childrenChangedAfterBatch should have arg */);
 				return this.#handleChildrenChangedAfterBatch(arg.changedFields);
 			case "subtreeChangedAfterBatch":
 				return this.#handleSubtreeChangedAfterBatch();
@@ -601,14 +563,9 @@ export function tryDisposeTreeNode(anchorNode: AnchorNode): void {
 /**
  * Gets the {@link TreeNodeSchema} for the {@link InnerNode}.
  */
-export function getSimpleNodeSchemaFromInnerNode(
-	innerNode: InnerNode,
-): TreeNodeSchema {
+export function getSimpleNodeSchemaFromInnerNode(innerNode: InnerNode): TreeNodeSchema {
 	const context: Context = getSimpleContextFromInnerNode(innerNode);
-	return (
-		context.schema.get(innerNode.type) ??
-		fail(0xb3f /* missing schema from context */)
-	);
+	return context.schema.get(innerNode.type) ?? fail(0xb3f /* missing schema from context */);
 }
 
 /**
@@ -649,8 +606,7 @@ function flexNodeFromAnchor(anchorNode: AnchorNode): HydratedFlexTreeNode {
 		return flexNode; // If it does have a flex node, return it...
 	} // ...otherwise, the flex node must be created
 	const context =
-		anchorNode.anchorSet.slots.get(ContextSlot) ??
-		fail(0xb45 /* missing context */);
+		anchorNode.anchorSet.slots.get(ContextSlot) ?? fail(0xb45 /* missing context */);
 	const cursor = context.checkout.forest.allocateCursor("getFlexNode");
 	context.checkout.forest.moveCursorToPath(anchorNode, cursor);
 	const newFlexNode = getOrCreateHydratedFlexTreeNode(context, cursor);
@@ -661,9 +617,7 @@ function flexNodeFromAnchor(anchorNode: AnchorNode): HydratedFlexTreeNode {
 /**
  * Gets a tree node from an anchor node
  */
-export function treeNodeFromAnchor(
-	anchorNode: AnchorNode,
-): TreeNode | TreeValue {
+export function treeNodeFromAnchor(anchorNode: AnchorNode): TreeNode | TreeValue {
 	const cached = anchorNode.slots.get(simpleTreeNodeSlot);
 	if (cached !== undefined) {
 		return cached;
@@ -678,16 +632,14 @@ export function treeNodeFromAnchor(
  * @remarks
  * This does not do caching or validation: caller must ensure duplicate nodes for a given inner node are not created, and that the inner node is valid.
  */
-export function createTreeNodeFromInner(
-	innerNode: InnerNode,
-): TreeNode | TreeValue {
+export function createTreeNodeFromInner(innerNode: InnerNode): TreeNode | TreeValue {
 	const classSchema = getSimpleNodeSchemaFromInnerNode(innerNode);
 	const internal = innerNode as unknown as InternalTreeNode;
 	return typeof classSchema === "function"
 		? new classSchema(internal)
-		: (
-				classSchema as { create(data: InternalTreeNode): TreeNode | TreeValue }
-			).create(internal);
+		: (classSchema as { create(data: InternalTreeNode): TreeNode | TreeValue }).create(
+				internal,
+			);
 }
 
 /**

@@ -7,26 +7,19 @@ import { strict as assert } from "node:assert";
 
 import {
 	type AsyncGenerator,
+	type Generator,
+	type Reducer,
 	combineReducers,
 	createWeightedAsyncGenerator,
 	createWeightedGenerator,
-	type Generator,
 	isOperationType,
-	type Reducer,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
-import type {
-	Client,
-	DDSFuzzModel,
-	DDSFuzzTestState,
-} from "@fluid-private/test-dds-utils";
+import type { Client, DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { isObject } from "@fluidframework/core-utils/internal";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
-import {
-	isFluidHandle,
-	toFluidHandleInternal,
-} from "@fluidframework/runtime-utils/internal";
+import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 import {
 	DirectoryFactory,
@@ -67,15 +60,8 @@ type MapOperation = MapSetKey | MapDeleteKey | MapClear;
 // This type gets used a lot as the state object of the suite; shorthand it here.
 type MapState = DDSFuzzTestState<MapFactory>;
 
-async function assertMapsAreEquivalent(
-	a: ISharedMap,
-	b: ISharedMap,
-): Promise<void> {
-	assert.equal(
-		a.size,
-		b.size,
-		`${a.id} and ${b.id} have different number of keys.`,
-	);
+async function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap): Promise<void> {
+	assert.equal(a.size, b.size, `${a.id} and ${b.id} have different number of keys.`);
 	for (const key of a.keys()) {
 		const aVal: unknown = a.get(key);
 		const bVal: unknown = b.get(key);
@@ -84,12 +70,8 @@ async function assertMapsAreEquivalent(
 				isObject(bVal),
 				`${a.id} and ${b.id} differ at ${key}: a is an object, b is not}`,
 			);
-			const aHandle = isFluidHandle(aVal)
-				? toFluidHandleInternal(aVal).absolutePath
-				: aVal;
-			const bHandle = isFluidHandle(bVal)
-				? toFluidHandleInternal(bVal).absolutePath
-				: bVal;
+			const aHandle = isFluidHandle(aVal) ? toFluidHandleInternal(aVal).absolutePath : aVal;
+			const bHandle = isFluidHandle(bVal) ? toFluidHandleInternal(bVal).absolutePath : bVal;
 			assert.equal(
 				aHandle,
 				bHandle,
@@ -98,11 +80,7 @@ async function assertMapsAreEquivalent(
 				)}`,
 			);
 		} else {
-			assert.equal(
-				aVal,
-				bVal,
-				`${a.id} and ${b.id} differ at ${key}: ${aVal} vs ${bVal}`,
-			);
+			assert.equal(aVal, bVal, `${a.id} and ${b.id} differ at ${key}: ${aVal} vs ${bVal}`);
 		}
 	}
 }
@@ -285,10 +263,7 @@ export const dirDefaultOptions: Required<DirOperationGenerationConfig> = {
  * @param shouldHaveKey - Whether the directory should have a key.
  * @returns The absolute path.
  */
-function pickAbsolutePathForKeyOps(
-	state: DirFuzzTestState,
-	shouldHaveKey: boolean,
-): string {
+function pickAbsolutePathForKeyOps(state: DirFuzzTestState, shouldHaveKey: boolean): string {
 	const { random, client } = state;
 	let parentDir: IDirectory = client.channel;
 	for (;;) {
@@ -318,9 +293,7 @@ export function makeDirOperationGenerator(
 	const options = { ...dirDefaultOptions, ...optionsParam };
 
 	// All subsequent helper functions are generators; note that they don't actually apply any operations.
-	function pickAbsolutePathForCreateDirectoryOp(
-		state: DirFuzzTestState,
-	): string {
+	function pickAbsolutePathForCreateDirectoryOp(state: DirFuzzTestState): string {
 		const { random, client } = state;
 		let dir: IDirectory = client.channel;
 		for (;;) {
@@ -337,10 +310,7 @@ export function makeDirOperationGenerator(
 				dir = random.pick<IDirectory>(subDirectories);
 				continue;
 			}
-			const subDir = random.pick<IDirectory | undefined>([
-				undefined,
-				...subDirectories,
-			]);
+			const subDir = random.pick<IDirectory | undefined>([undefined, ...subDirectories]);
 			if (subDir === undefined) {
 				break;
 			} else {
@@ -350,9 +320,7 @@ export function makeDirOperationGenerator(
 		return dir.absolutePath;
 	}
 
-	function pickAbsolutePathForDeleteDirectoryOp(
-		state: DirFuzzTestState,
-	): string {
+	function pickAbsolutePathForDeleteDirectoryOp(state: DirFuzzTestState): string {
 		const { random, client } = state;
 		let parentDir: IDirectory = client.channel;
 		const subDirectories: IDirectory[] = [];
@@ -366,10 +334,7 @@ export function makeDirOperationGenerator(
 			for (const [_, b] of dirToDelete.subdirectories()) {
 				subDirs.push(b);
 			}
-			const subDir = random.pick<IDirectory | undefined>([
-				undefined,
-				...subDirs,
-			]);
+			const subDir = random.pick<IDirectory | undefined>([undefined, ...subDirs]);
 			if (subDir === undefined) {
 				break;
 			} else {
@@ -380,9 +345,7 @@ export function makeDirOperationGenerator(
 		return parentDir.absolutePath;
 	}
 
-	async function createSubDirectory(
-		state: DirFuzzTestState,
-	): Promise<CreateSubDirectory> {
+	async function createSubDirectory(state: DirFuzzTestState): Promise<CreateSubDirectory> {
 		return {
 			type: "createSubDirectory",
 			name: state.random.pick(options.subDirectoryNamePool),
@@ -390,9 +353,7 @@ export function makeDirOperationGenerator(
 		};
 	}
 
-	async function deleteSubDirectory(
-		state: DirFuzzTestState,
-	): Promise<DeleteSubDirectory> {
+	async function deleteSubDirectory(state: DirFuzzTestState): Promise<DeleteSubDirectory> {
 		const { random, client } = state;
 		const path = pickAbsolutePathForDeleteDirectoryOp(state);
 		const parentDir = client.channel.getWorkingDirectory(path);
@@ -476,10 +437,7 @@ interface LoggingInfo {
 	printConsoleLogs?: boolean;
 }
 
-function logCurrentState(
-	clients: Client<DirectoryFactory>[],
-	loggingInfo: LoggingInfo,
-): void {
+function logCurrentState(clients: Client<DirectoryFactory>[], loggingInfo: LoggingInfo): void {
 	if (loggingInfo.printConsoleLogs === true) {
 		for (const id of loggingInfo.clientIds) {
 			const { channel: sharedDirectory } =
@@ -487,11 +445,7 @@ function logCurrentState(
 			if (sharedDirectory !== undefined) {
 				console.log(`Client ${id}:`);
 				console.log(
-					JSON.stringify(
-						sharedDirectory.getAttachSummary(true).summary,
-						undefined,
-						4,
-					),
+					JSON.stringify(sharedDirectory.getAttachSummary(true).summary, undefined, 4),
 				);
 				console.log("\n");
 			}
@@ -508,9 +462,7 @@ export function makeDirReducer(
 	loggingInfo?: LoggingInfo,
 ): Reducer<DirOperation, DirFuzzTestState> {
 	const withLogging =
-		<T>(
-			baseReducer: Reducer<T, DirFuzzTestState>,
-		): Reducer<T, DirFuzzTestState> =>
+		<T>(baseReducer: Reducer<T, DirFuzzTestState>): Reducer<T, DirFuzzTestState> =>
 		(state, operation) => {
 			if (loggingInfo?.printConsoleLogs === true) {
 				logCurrentState(state.clients, loggingInfo);
@@ -564,14 +516,9 @@ export function makeDirReducer(
  */
 export const baseDirModel: DDSFuzzModel<DirectoryFactory, DirOperation> = {
 	workloadName: "default directory 1",
-	generatorFactory: () =>
-		takeAsync(100, makeDirOperationGenerator(dirDefaultOptions)),
-	reducer: makeDirReducer({
-		clientIds: ["A", "B", "C"],
-		printConsoleLogs: false,
-	}),
-	validateConsistency: async (a, b) =>
-		assertEquivalentDirectories(a.channel, b.channel),
+	generatorFactory: () => takeAsync(100, makeDirOperationGenerator(dirDefaultOptions)),
+	reducer: makeDirReducer({ clientIds: ["A", "B", "C"], printConsoleLogs: false }),
+	validateConsistency: async (a, b) => assertEquivalentDirectories(a.channel, b.channel),
 	factory: new DirectoryFactory(),
 	minimizationTransforms: [
 		(op: DirOperation): void => {

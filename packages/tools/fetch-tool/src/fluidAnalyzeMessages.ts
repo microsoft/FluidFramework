@@ -11,27 +11,19 @@ import {
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { DataStoreMessageType } from "@fluidframework/datastore/internal";
 import {
-	type ISequencedDocumentMessage,
 	type ISummaryAck,
 	type ISummaryNack,
 	type ISummaryProposal,
 	MessageType,
 	TreeEntry,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import type {
-	IAttachMessage,
-	IEnvelope,
-} from "@fluidframework/runtime-definitions/internal";
+import type { IAttachMessage, IEnvelope } from "@fluidframework/runtime-definitions/internal";
 
 const noClientName = "No Client";
 const objectTypePrefix = "https://graph.microsoft.com/types/";
 
-function incr(
-	map: Map<string, [number, number]>,
-	key: string,
-	size: number,
-	count = 1,
-) {
+function incr(map: Map<string, [number, number]>, key: string, size: number, count = 1) {
 	const value = map.get(key);
 	if (value === undefined) {
 		map.set(key, [count, size]);
@@ -50,11 +42,7 @@ interface ISessionInfo {
 }
 
 interface IMessageAnalyzer {
-	processOp(
-		op: ISequencedDocumentMessage,
-		msgSize: number,
-		filteredOutOp: boolean,
-	): void;
+	processOp(op: ISequencedDocumentMessage, msgSize: number, filteredOutOp: boolean): void;
 	reportAnalyzes(lastOp: ISequencedDocumentMessage): void;
 }
 
@@ -109,11 +97,7 @@ function dumpStats(
 	let headers = props.headers;
 
 	let recordsToShow = props.lines ?? 10;
-	if (
-		map.size !== recordsToShow &&
-		props.removeTotals === undefined &&
-		recordsToShow > 1
-	) {
+	if (map.size !== recordsToShow && props.removeTotals === undefined && recordsToShow > 1) {
 		recordsToShow--;
 	}
 
@@ -121,14 +105,10 @@ function dumpStats(
 	const sortIndex = props.orderByFirstColumn === true ? 0 : 1;
 	let add: string;
 	if (props.reverseSort !== undefined) {
-		sorted = [...map.entries()].sort(
-			(a, b) => a[1][sortIndex] - b[1][sortIndex],
-		);
+		sorted = [...map.entries()].sort((a, b) => a[1][sortIndex] - b[1][sortIndex]);
 		add = "↑";
 	} else {
-		sorted = [...map.entries()].sort(
-			(a, b) => b[1][sortIndex] - a[1][sortIndex],
-		);
+		sorted = [...map.entries()].sort((a, b) => b[1][sortIndex] - a[1][sortIndex]);
 		add = "↓";
 	}
 	headers[sortIndex] = `${headers[sortIndex]} ${add}`;
@@ -185,9 +165,7 @@ function dumpStats(
 				).padStart(fieldSizes[1])}`,
 			);
 		}
-		console.log(
-			`${"─".repeat(nameLength + 1)}┼${"─".repeat(fieldsLength + 1)}`,
-		);
+		console.log(`${"─".repeat(nameLength + 1)}┼${"─".repeat(fieldsLength + 1)}`);
 		console.log(
 			`${"Total".padEnd(nameLength)} │ ${formatNumber(totalCount).padStart(
 				fieldSizes[0],
@@ -196,8 +174,7 @@ function dumpStats(
 	}
 }
 
-const getObjectId = (dataStoreId: string, id: string) =>
-	`[${dataStoreId}]/${id}`;
+const getObjectId = (dataStoreId: string, id: string) => `[${dataStoreId}]/${id}`;
 
 /**
  * Analyzer for sessions
@@ -234,12 +211,7 @@ class SessionAnalyzer implements IMessageAnalyzer {
 
 	public reportAnalyzes(lastOp: ISequencedDocumentMessage): void {
 		// Close any open sessions
-		reportOpenSessions(
-			lastOp.timestamp,
-			this.sessionsInProgress,
-			this.sessions,
-			this.users,
-		);
+		reportOpenSessions(lastOp.timestamp, this.sessionsInProgress, this.sessions, this.users);
 		dumpStats(this.users, {
 			title: "Users",
 			headers: ["Sessions", "Op count"],
@@ -271,10 +243,7 @@ class DataStructureAnalyzer implements IMessageAnalyzer {
 	private readonly dataType = new Map<string, string>();
 	private readonly dataTypeStats = new Map<string, [number, number]>();
 	private readonly objectStats = new Map<string, [number, number]>();
-	private readonly chunkMap = new Map<
-		string,
-		{ chunks: string[]; totalSize: number }
-	>();
+	private readonly chunkMap = new Map<string, { chunks: string[]; totalSize: number }>();
 
 	public processOp(
 		message: ISequencedDocumentMessage,
@@ -370,10 +339,9 @@ class MessageDensityAnalyzer implements IMessageAnalyzer {
 		if (message.sequenceNumber >= this.opLimit) {
 			if (message.sequenceNumber !== 1) {
 				const timeDiff = durationFromTime(message.timestamp - this.timeStart);
-				const opsString =
-					`ops = [${this.opLimit - this.opChunk}, ${this.opLimit - 1}]`.padEnd(
-						26,
-					);
+				const opsString = `ops = [${this.opLimit - this.opChunk}, ${this.opLimit - 1}]`.padEnd(
+					26,
+				);
 				const timeString = `time = [${durationFromTime(
 					this.timeStart - this.doctimerStart,
 				)}, ${durationFromTime(message.timestamp - this.doctimerStart)}]`;
@@ -422,9 +390,7 @@ class CollabWindowSizeAnalyzer implements IMessageAnalyzer {
 	}
 
 	public reportAnalyzes(lastOp: ISequencedDocumentMessage): void {
-		console.log(
-			`\nMaximum collab window size: ${this.maxCollabWindow}, seq# ${this.opSeq}`,
-		);
+		console.log(`\nMaximum collab window size: ${this.maxCollabWindow}, seq# ${this.opSeq}`);
 	}
 }
 
@@ -458,13 +424,9 @@ class SummaryAnalyzer implements IMessageAnalyzer {
 
 			this.lastSummaryOp = message.sequenceNumber;
 		}
-		if (
-			message.type === MessageType.SummaryAck ||
-			message.type === MessageType.SummaryNack
-		) {
-			const contents: ISummaryProposal = (
-				message.contents as ISummaryAck | ISummaryNack
-			).summaryProposal;
+		if (message.type === MessageType.SummaryAck || message.type === MessageType.SummaryNack) {
+			const contents: ISummaryProposal = (message.contents as ISummaryAck | ISummaryNack)
+				.summaryProposal;
 			const distance = message.sequenceNumber - contents.summarySequenceNumber;
 			if (distance > this.maxResponse) {
 				this.maxResponse = distance;
@@ -540,8 +502,7 @@ export async function printMessageStats(
 			const msgSize = JSON.stringify(message).length;
 			lastMessage = message;
 
-			const skipMessage =
-				messageTypeFilter.size !== 0 && !messageTypeFilter.has(message.type);
+			const skipMessage = messageTypeFilter.size !== 0 && !messageTypeFilter.has(message.type);
 
 			for (const analyzer of analyzers) {
 				analyzer.processOp(message, msgSize, skipMessage);
@@ -720,9 +681,7 @@ function processDataStoreAttachOp(
 	// That's data store, and it brings a bunch of data structures.
 	// Let's try to crack it.
 	const parsedAttachMessage =
-		typeof attachMessage === "string"
-			? JSON.parse(attachMessage)
-			: attachMessage;
+		typeof attachMessage === "string" ? JSON.parse(attachMessage) : attachMessage;
 	for (const entry of parsedAttachMessage.snapshot.entries) {
 		if (entry.type === TreeEntry.Tree) {
 			for (const entry2 of entry.value.entries) {
@@ -732,10 +691,7 @@ function processDataStoreAttachOp(
 					if (objectType.startsWith(objectTypePrefix)) {
 						objectType = objectType.substring(objectTypePrefix.length);
 					}
-					dataType.set(
-						getObjectId(parsedAttachMessage.id, entry.path),
-						objectType,
-					);
+					dataType.set(getObjectId(parsedAttachMessage.id, entry.path), objectType);
 				}
 			}
 		}
@@ -816,10 +772,7 @@ function processQuorumMessages(
 		const clientId = JSON.parse(dataString);
 		session = sessionsInProgress.get(clientId);
 		sessionsInProgress.delete(clientId);
-		assert(
-			!!session,
-			0x1b7 /* "Bad session state for processing quorum messages" */,
-		);
+		assert(!!session, 0x1b7 /* "Bad session state for processing quorum messages" */);
 		if (session !== undefined) {
 			if (!skipMessage) {
 				session.reportOp(message.timestamp);
@@ -839,10 +792,7 @@ function processQuorumMessages(
 		session = sessionsInProgress.get(message.clientId as string);
 		if (session === undefined) {
 			session = sessionsInProgress.get(noClientName);
-			assert(
-				!!session,
-				0x1b8 /* "Bad session state for processing quorum messages" */,
-			);
+			assert(!!session, 0x1b8 /* "Bad session state for processing quorum messages" */);
 		}
 	}
 	return session;

@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString, IsoBuffer } from "@fluid-internal/client-utils";
 import type { ErasedType } from "@fluidframework/core-interfaces/internal";
+import { IsoBuffer, bufferToString } from "@fluid-internal/client-utils";
 import { assert, fail } from "@fluidframework/core-utils/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
+
 import type { ChangeEncodingContext } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 /**
  * Translates decoded data to encoded data.
@@ -70,9 +71,7 @@ export interface FormatValidator extends ErasedType<"FormatValidator"> {}
  * validators, simplifying code performing validation.
  */
 const noopValidator: JsonValidator = {
-	compile: <Schema extends TSchema>() => ({
-		check: (data): data is Static<Schema> => true,
-	}),
+	compile: <Schema extends TSchema>() => ({ check: (data): data is Static<Schema> => true }),
 };
 
 /**
@@ -91,9 +90,7 @@ export function toFormatValidator(factory: JsonValidator): FormatValidator {
 /**
  * Un-type-erase the {@link FormatValidator}.
  */
-export function extractJsonValidator(
-	input: FormatValidator | JsonValidator,
-): JsonValidator {
+export function extractJsonValidator(input: FormatValidator | JsonValidator): JsonValidator {
 	return input as unknown as JsonValidator;
 }
 
@@ -111,9 +108,7 @@ export interface JsonValidator {
 	 *
 	 * Implementations of `JsonValidator` must therefore tolerate these values, despite the input not being valid JSON.
 	 */
-	compile<Schema extends TSchema>(
-		schema: Schema,
-	): SchemaValidationFunction<Schema>;
+	compile<Schema extends TSchema>(schema: Schema): SchemaValidationFunction<Schema>;
 }
 
 /**
@@ -246,12 +241,7 @@ export interface ICodecFamily<TDecoded, TContext = void> {
 	 */
 	resolve(
 		formatVersion: FormatVersion,
-	): IMultiFormatCodec<
-		TDecoded,
-		JsonCompatibleReadOnly,
-		JsonCompatibleReadOnly,
-		TContext
-	>;
+	): IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>;
 
 	/**
 	 * @returns an iterable of all format versions supported by this family.
@@ -297,9 +287,7 @@ export class MappedDependentFormatVersion<
 	TChildVersion extends FormatVersion = FormatVersion,
 > implements DependentFormatVersion<TParentVersion, TChildVersion>
 {
-	public constructor(
-		private readonly map: ReadonlyMap<TParentVersion, TChildVersion>,
-	) {}
+	public constructor(private readonly map: ReadonlyMap<TParentVersion, TChildVersion>) {}
 	public lookup(parent: TParentVersion): TChildVersion {
 		return this.map.get(parent) ?? fail(0xc73 /* Unknown parent version */);
 	}
@@ -308,16 +296,10 @@ export class MappedDependentFormatVersion<
 export const DependentFormatVersion = {
 	fromUnique: <TChildVersion extends FormatVersion>(child: TChildVersion) =>
 		new UniqueDependentFormatVersion(child),
-	fromMap: <
-		TParentVersion extends FormatVersion,
-		TChildVersion extends FormatVersion,
-	>(
+	fromMap: <TParentVersion extends FormatVersion, TChildVersion extends FormatVersion>(
 		map: ReadonlyMap<TParentVersion, TChildVersion>,
 	) => new MappedDependentFormatVersion(map),
-	fromPairs: <
-		TParentVersion extends FormatVersion,
-		TChildVersion extends FormatVersion,
-	>(
+	fromPairs: <TParentVersion extends FormatVersion, TChildVersion extends FormatVersion>(
 		pairs: Iterable<[TParentVersion, TChildVersion]>,
 	) => new MappedDependentFormatVersion(new Map(pairs)),
 };
@@ -331,29 +313,14 @@ export function makeCodecFamily<TDecoded, TContext>(
 		[
 			formatVersion: FormatVersion,
 			codec:
-				| IMultiFormatCodec<
-						TDecoded,
-						JsonCompatibleReadOnly,
-						JsonCompatibleReadOnly,
-						TContext
-				  >
-				| IJsonCodec<
-						TDecoded,
-						JsonCompatibleReadOnly,
-						JsonCompatibleReadOnly,
-						TContext
-				  >,
+				| IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>
+				| IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
 		]
 	>,
 ): ICodecFamily<TDecoded, TContext> {
 	const codecs: Map<
 		FormatVersion,
-		IMultiFormatCodec<
-			TDecoded,
-			JsonCompatibleReadOnly,
-			JsonCompatibleReadOnly,
-			TContext
-		>
+		IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>
 	> = new Map();
 	for (const [formatVersion, codec] of registry) {
 		if (codecs.has(formatVersion)) {
@@ -365,17 +332,9 @@ export function makeCodecFamily<TDecoded, TContext>(
 	return {
 		resolve(
 			formatVersion: number,
-		): IMultiFormatCodec<
-			TDecoded,
-			JsonCompatibleReadOnly,
-			JsonCompatibleReadOnly,
-			TContext
-		> {
+		): IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
 			const codec = codecs.get(formatVersion);
-			assert(
-				codec !== undefined,
-				0x5e6 /* Requested coded for unsupported format. */,
-			);
+			assert(codec !== undefined, 0x5e6 /* Requested coded for unsupported format. */);
 			return codec;
 		},
 		getSupportedFormats(): Iterable<FormatVersion> {
@@ -384,16 +343,9 @@ export function makeCodecFamily<TDecoded, TContext>(
 	};
 }
 
-class DefaultBinaryCodec<TDecoded, TContext>
-	implements IBinaryCodec<TDecoded, TContext>
-{
+class DefaultBinaryCodec<TDecoded, TContext> implements IBinaryCodec<TDecoded, TContext> {
 	public constructor(
-		private readonly jsonCodec: IJsonCodec<
-			TDecoded,
-			unknown,
-			unknown,
-			TContext
-		>,
+		private readonly jsonCodec: IJsonCodec<TDecoded, unknown, unknown, TContext>,
 	) {}
 
 	public encode(change: TDecoded, context: TContext): IsoBuffer {
@@ -411,27 +363,10 @@ class DefaultBinaryCodec<TDecoded, TContext>
 
 function isJsonCodec<TDecoded, TContext>(
 	codec:
-		| IMultiFormatCodec<
-				TDecoded,
-				JsonCompatibleReadOnly,
-				JsonCompatibleReadOnly,
-				TContext
-		  >
-		| IJsonCodec<
-				TDecoded,
-				JsonCompatibleReadOnly,
-				JsonCompatibleReadOnly,
-				TContext
-		  >,
-): codec is IJsonCodec<
-	TDecoded,
-	JsonCompatibleReadOnly,
-	JsonCompatibleReadOnly,
-	TContext
-> {
-	return (
-		typeof codec.encode === "function" && typeof codec.decode === "function"
-	);
+		| IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>
+		| IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
+): codec is IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
+	return typeof codec.encode === "function" && typeof codec.decode === "function";
 }
 
 /**
@@ -439,18 +374,8 @@ function isJsonCodec<TDecoded, TContext>(
  * the json representation of the object to a buffer.
  */
 export function withDefaultBinaryEncoding<TDecoded, TContext>(
-	jsonCodec: IJsonCodec<
-		TDecoded,
-		JsonCompatibleReadOnly,
-		JsonCompatibleReadOnly,
-		TContext
-	>,
-): IMultiFormatCodec<
-	TDecoded,
-	JsonCompatibleReadOnly,
-	JsonCompatibleReadOnly,
-	TContext
-> {
+	jsonCodec: IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
+): IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
 	return {
 		json: jsonCodec,
 		binary: new DefaultBinaryCodec(jsonCodec),
@@ -463,24 +388,9 @@ export function withDefaultBinaryEncoding<TDecoded, TContext>(
  */
 export function ensureBinaryEncoding<TDecoded, TContext>(
 	codec:
-		| IMultiFormatCodec<
-				TDecoded,
-				JsonCompatibleReadOnly,
-				JsonCompatibleReadOnly,
-				TContext
-		  >
-		| IJsonCodec<
-				TDecoded,
-				JsonCompatibleReadOnly,
-				JsonCompatibleReadOnly,
-				TContext
-		  >,
-): IMultiFormatCodec<
-	TDecoded,
-	JsonCompatibleReadOnly,
-	JsonCompatibleReadOnly,
-	TContext
-> {
+		| IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>
+		| IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
+): IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
 	return isJsonCodec(codec) ? withDefaultBinaryEncoding(codec) : codec;
 }
 

@@ -4,32 +4,29 @@
  */
 
 import {
-	bufferToString,
 	IsoBuffer,
-	stringToBuffer,
 	Uint8ArrayToString,
+	bufferToString,
+	stringToBuffer,
 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import type {
-	ISummaryHandle,
-	ISummaryTree,
-} from "@fluidframework/driver-definitions";
-import type {
-	ICreateBlobResponse,
+import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
+import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	IResolvedUrl,
-	ISnapshot,
-	ISnapshotFetchOptions,
-	ISnapshotTreeEx,
+	type ISnapshot,
+	type ISnapshotFetchOptions,
 	ISummaryContext,
+	ICreateBlobResponse,
+	ISnapshotTreeEx,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
-import type { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
-	type GitManager,
-	type ISummaryUploadManager,
+	GitManager,
+	ISummaryUploadManager,
 	SummaryTreeUploadManager,
 } from "@fluidframework/server-services-client";
 
@@ -59,10 +56,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		);
 	}
 
-	public async getVersions(
-		versionId: string | null,
-		count: number,
-	): Promise<IVersion[]> {
+	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
 		const id = versionId ? versionId : this.id;
 		const commits = await this.manager.getCommits(id, count);
 		return commits.map((commit) => ({
@@ -72,9 +66,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		}));
 	}
 
-	public async getSnapshotTree(
-		version?: IVersion,
-	): Promise<ISnapshotTreeEx | null> {
+	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTreeEx | null> {
 		let requestVersion = version;
 		if (!requestVersion) {
 			const versions = await this.getVersions(this.id, 1);
@@ -93,9 +85,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		return tree;
 	}
 
-	public async getSnapshot(
-		snapshotFetchOptions?: ISnapshotFetchOptions,
-	): Promise<ISnapshot> {
+	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
 		let versionId = snapshotFetchOptions?.versionId;
 		if (!versionId) {
 			const versions = await this.getVersions(this.id, 1);
@@ -108,14 +98,8 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 			versionId = versions[0]!.treeId;
 		}
 		const rawTree = await this.manager.getTree(versionId);
-		const snapshotTree = buildGitTreeHierarchy(
-			rawTree,
-			this.blobsShaCache,
-			true,
-		);
-		const groupIds = new Set<string>(
-			snapshotFetchOptions?.loadingGroupIds ?? [],
-		);
+		const snapshotTree = buildGitTreeHierarchy(rawTree, this.blobsShaCache, true);
+		const groupIds = new Set<string>(snapshotFetchOptions?.loadingGroupIds ?? []);
 		// TODO Why are we non null asserting here
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const attributesBlobId = snapshotTree.trees[".protocol"]!.blobs.attributes!;
@@ -126,11 +110,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 			// If the root is in the groupIds, we don't need to filter the tree.
 			// We can just strip the  of all groupIds as in collect the blobIds so that we can
 			// return blob contents only for those ids.
-			await this.collectBlobContentsForUngroupedSnapshot(
-				snapshotTree,
-				groupIds,
-				blobContents,
-			);
+			await this.collectBlobContentsForUngroupedSnapshot(snapshotTree, groupIds, blobContents);
 		} else {
 			const hasFoundTree = await this.filterTreeByLoadingGroupIds(
 				snapshotTree,
@@ -141,8 +121,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 			assert(hasFoundTree, 0x8dd /* No tree found for the given groupIds */);
 		}
 
-		const attributesString =
-			IsoBuffer.from(attributesBlobData).toString("utf-8");
+		const attributesString = IsoBuffer.from(attributesBlobData).toString("utf-8");
 		const attributes = JSON.parse(attributesString);
 		const sequenceNumber: number = attributes.sequenceNumber ?? 0;
 		return {
@@ -203,24 +182,19 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		ancestorGroupIdInLoadingGroup: boolean,
 		blobContents: Map<string, ArrayBuffer>,
 	): Promise<boolean> {
-		assert(
-			loadingGroupIds.size > 0,
-			0x8de /* loadingGroupIds should not be empty */,
-		);
+		assert(loadingGroupIds.size > 0, 0x8de /* loadingGroupIds should not be empty */);
 		const groupId = await this.readGroupId(tree);
 
 		// Strip the tree if it has a groupId and it is not in the loadingGroupIds
 		// This is an optimization here as we have other reasons to keep the tree.
-		const noGroupIdInLoadingGroupIds =
-			groupId !== undefined && !loadingGroupIds.has(groupId);
+		const noGroupIdInLoadingGroupIds = groupId !== undefined && !loadingGroupIds.has(groupId);
 		if (noGroupIdInLoadingGroupIds) {
 			this.stripTree(tree, groupId);
 			return false;
 		}
 
 		// Keep tree if it has a groupId and it is in the loadingGroupIds
-		const groupIdInLoadingGroupIds =
-			groupId !== undefined && loadingGroupIds.has(groupId);
+		const groupIdInLoadingGroupIds = groupId !== undefined && loadingGroupIds.has(groupId);
 
 		// Keep tree if it has an ancestor that has a groupId that is in loadingGroupIds and it doesn't have groupId
 		const isChildOfAncestorWithGroupId =
@@ -296,9 +270,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		tree.trees = {};
 	}
 
-	private async readGroupId(
-		tree: ISnapshotTreeEx,
-	): Promise<string | undefined> {
+	private async readGroupId(tree: ISnapshotTreeEx): Promise<string | undefined> {
 		const groupIdBlobId = tree.blobs[".groupId"];
 		if (groupIdBlobId !== undefined) {
 			const groupIdBuffer = await this.readBlob(groupIdBlobId);
@@ -323,19 +295,12 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		context: ISummaryContext,
 	): Promise<string> {
 		if (context.referenceSequenceNumber === 0) {
-			if (
-				this.localDeltaConnectionServer === undefined ||
-				this.resolvedUrl === undefined
-			) {
+			if (this.localDeltaConnectionServer === undefined || this.resolvedUrl === undefined) {
 				throw new Error(
 					"Insufficient constructor parameters. An ILocalDeltaConnectionServer and IResolvedUrl required",
 				);
 			}
-			await createDocument(
-				this.localDeltaConnectionServer,
-				this.resolvedUrl,
-				summary,
-			);
+			await createDocument(this.localDeltaConnectionServer, this.resolvedUrl, summary);
 			const version = await this.getVersions(this.id, 1);
 			// TODO Why are we non null asserting here
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion

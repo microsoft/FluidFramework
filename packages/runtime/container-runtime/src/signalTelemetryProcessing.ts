@@ -123,21 +123,18 @@ export class SignalTelemetryManager {
 		}
 
 		if (
-			clientBroadcastSignalSequenceNumber >=
-			this.signalTracking.trackingSignalSequenceNumber
+			clientBroadcastSignalSequenceNumber >= this.signalTracking.trackingSignalSequenceNumber
 		) {
 			// Calculate the number of signals lost and log the event.
 			const signalsLost =
-				clientBroadcastSignalSequenceNumber -
-				this.signalTracking.trackingSignalSequenceNumber;
+				clientBroadcastSignalSequenceNumber - this.signalTracking.trackingSignalSequenceNumber;
 			if (signalsLost > 0) {
 				this.signalTracking.signalsLost += signalsLost;
 				logger.sendErrorEvent({
 					eventName: "SignalLost",
 					details: {
 						signalsLost, // Number of lost signals detected.
-						expectedSequenceNumber:
-							this.signalTracking.trackingSignalSequenceNumber, // The next expected signal sequence number.
+						expectedSequenceNumber: this.signalTracking.trackingSignalSequenceNumber, // The next expected signal sequence number.
 						clientBroadcastSignalSequenceNumber, // Actual signal sequence number received.
 					},
 				});
@@ -152,8 +149,7 @@ export class SignalTelemetryManager {
 		) {
 			this.signalTracking.signalsOutOfOrder++;
 			const details: TelemetryEventPropertyTypeExt = {
-				expectedSequenceNumber:
-					this.signalTracking.trackingSignalSequenceNumber, // The next expected signal sequence number.
+				expectedSequenceNumber: this.signalTracking.trackingSignalSequenceNumber, // The next expected signal sequence number.
 				clientBroadcastSignalSequenceNumber, // Sequence number of the out of order signal.
 			};
 			// Only log `contents.type` when address is for container to avoid chance that contents type is customer data.
@@ -168,8 +164,7 @@ export class SignalTelemetryManager {
 
 		if (
 			this.signalTracking.roundTripSignalSequenceNumber !== undefined &&
-			clientBroadcastSignalSequenceNumber >=
-				this.signalTracking.roundTripSignalSequenceNumber
+			clientBroadcastSignalSequenceNumber >= this.signalTracking.roundTripSignalSequenceNumber
 		) {
 			if (
 				clientBroadcastSignalSequenceNumber ===
@@ -205,14 +200,11 @@ export class SignalTelemetryManager {
 	 * @remarks Do not call this for non-broadcast signals.
 	 * @param envelope - The signal envelope to process.
 	 */
-	public applyTrackingToBroadcastSignalEnvelope(
-		envelope: ISignalEnvelope,
-	): void {
+	public applyTrackingToBroadcastSignalEnvelope(envelope: ISignalEnvelope): void {
 		const broadcastSignalSequenceNumber = ++this.broadcastSignalSequenceNumber;
 
 		// Stamp with the broadcast signal sequence number.
-		envelope.clientBroadcastSignalSequenceNumber =
-			broadcastSignalSequenceNumber;
+		envelope.clientBroadcastSignalSequenceNumber = broadcastSignalSequenceNumber;
 
 		this.signalTracking.signalsSentSinceLastLatencyMeasurement++;
 
@@ -222,10 +214,8 @@ export class SignalTelemetryManager {
 			this.signalTracking.minimumTrackingSignalSequenceNumber === undefined ||
 			this.signalTracking.trackingSignalSequenceNumber === undefined
 		) {
-			this.signalTracking.minimumTrackingSignalSequenceNumber =
-				broadcastSignalSequenceNumber;
-			this.signalTracking.trackingSignalSequenceNumber =
-				broadcastSignalSequenceNumber;
+			this.signalTracking.minimumTrackingSignalSequenceNumber = broadcastSignalSequenceNumber;
+			this.signalTracking.trackingSignalSequenceNumber = broadcastSignalSequenceNumber;
 		}
 
 		// Start tracking roundtrip for a new signal only if we are not tracking one already (and sampling logic is met)
@@ -234,8 +224,7 @@ export class SignalTelemetryManager {
 			broadcastSignalSequenceNumber % defaultTelemetrySignalSampleCount === 1
 		) {
 			this.signalTracking.signalTimestamp = Date.now();
-			this.signalTracking.roundTripSignalSequenceNumber =
-				broadcastSignalSequenceNumber;
+			this.signalTracking.roundTripSignalSequenceNumber = broadcastSignalSequenceNumber;
 			this.signalTracking.totalSignalsSentInLatencyWindow +=
 				this.signalTracking.signalsSentSinceLastLatencyMeasurement;
 			this.signalTracking.signalsSentSinceLastLatencyMeasurement = 0;

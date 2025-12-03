@@ -6,10 +6,7 @@
 import type { IDisposable } from "@fluidframework/core-interfaces";
 
 import type { HasContainerKey } from "./CommonInterfaces.js";
-import type {
-	AudienceChangeLogEntry,
-	ConnectionStateChangeLogEntry,
-} from "./Logs.js";
+import type { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs.js";
 
 // TODOs:
 // - Data recording configuration (what things the user wishes to subscribe to)

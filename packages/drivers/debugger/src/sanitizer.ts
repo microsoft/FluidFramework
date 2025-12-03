@@ -19,7 +19,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import * as Validator from "jsonschema";
 
 import {
@@ -64,12 +64,12 @@ class ChunkedOpProcessor {
 	 * be top-level chunkedOp messages, or top-level op messages with a chunkedOp
 	 * within the contents
 	 */
-	private messages = [] as any[];
+	private messages = new Array<any>();
 	/**
 	 * The messages' parsed contents for processing.  Should parallel the
 	 * messages member
 	 */
-	private parsedMessageContents = [] as any[];
+	private parsedMessageContents = new Array<any>();
 	private writtenBack = false;
 	/**
 	 * keep track of the total starting length to make sure we don't somehow end
@@ -109,8 +109,7 @@ class ChunkedOpProcessor {
 	}
 
 	hasAllMessages(): boolean {
-		const lastMsgContents =
-			this.parsedMessageContents[this.parsedMessageContents.length - 1];
+		const lastMsgContents = this.parsedMessageContents[this.parsedMessageContents.length - 1];
 		return (
 			lastMsgContents.chunkId !== undefined &&
 			lastMsgContents.chunkId === lastMsgContents.totalChunks
@@ -161,10 +160,7 @@ class ChunkedOpProcessor {
 		}
 
 		for (let i = 0; i < this.messages.length; i++) {
-			const substring = stringified.substring(
-				i * chunkSize,
-				(i + 1) * chunkSize,
-			);
+			const substring = stringified.substring(i * chunkSize, (i + 1) * chunkSize);
 
 			const parsedContents = this.parsedMessageContents[i];
 			parsedContents.contents = substring;
@@ -198,8 +194,8 @@ class ChunkedOpProcessor {
 			this.writtenBack,
 			0x08a /* "resetting ChunkedOpProcessor that never wrote back its contents" */,
 		);
-		this.messages = [] as any[];
-		this.parsedMessageContents = [] as any[];
+		this.messages = new Array<any>();
+		this.parsedMessageContents = new Array<any>();
 		this.writtenBack = false;
 		this.concatenatedLength = 0;
 	}
@@ -229,8 +225,7 @@ export class Sanitizer {
 	 * information is being sufficiently sanitized.
 	 */
 	objectMatchesSchema = (object: any, schema: any): boolean => {
-		const result =
-			schema === false ? falseResult : this.validator.validate(object, schema);
+		const result = schema === false ? falseResult : this.validator.validate(object, schema);
 		if (!result.valid) {
 			const errorMsg = `Bad msg fmt:\n${result.toString()}\n${JSON.stringify(
 				object,
@@ -261,10 +256,7 @@ export class Sanitizer {
 		this.defaultExcludedKeys.add("snapshotFormatVersion");
 		this.defaultExcludedKeys.add("packageVersion");
 		this.mergeTreeExcludedKeys.add("nodeType");
-		this.chunkProcessor = new ChunkedOpProcessor(
-			this.objectMatchesSchema,
-			debug,
-		);
+		this.chunkProcessor = new ChunkedOpProcessor(this.objectMatchesSchema, debug);
 	}
 
 	debugMsg(msg: any) {
@@ -301,10 +293,7 @@ export class Sanitizer {
 	 * Replace text with garbage.  FluidObject types are not replaced when not under
 	 * full scrub mode.  All other text is replaced consistently.
 	 */
-	replaceText(
-		input?: string,
-		type: TextType = TextType.Generic,
-	): string | undefined {
+	replaceText(input?: string, type: TextType = TextType.Generic): string | undefined {
 		if (input === undefined) {
 			return undefined;
 		}
@@ -314,9 +303,7 @@ export class Sanitizer {
 				return this.replacementMap.get(input)!;
 			}
 
-			const replacement = this.fullScrub
-				? this.getRandomText(input.length)
-				: input;
+			const replacement = this.fullScrub ? this.getRandomText(input.length) : input;
 
 			this.replacementMap.set(input, replacement);
 			return replacement;
@@ -363,9 +350,7 @@ export class Sanitizer {
 				if (typeof value === "string") {
 					input[key] = this.replaceText(
 						value,
-						this.isFluidObjectKey(key)
-							? TextType.FluidObject
-							: TextType.Generic,
+						this.isFluidObjectKey(key) ? TextType.FluidObject : TextType.Generic,
 					);
 				} else if (Array.isArray(value)) {
 					input[key] = this.replaceArray(value);
@@ -383,10 +368,7 @@ export class Sanitizer {
 	 * @param input - The object to sanitize
 	 * @param excludedKeys - object keys for which to skip replacement when not in fullScrub
 	 */
-	replaceAny(
-		input: any,
-		excludedKeys: Set<string> = this.defaultExcludedKeys,
-	): any {
+	replaceAny(input: any, excludedKeys: Set<string> = this.defaultExcludedKeys): any {
 		if (input === null || input === undefined) {
 			return input;
 		}
@@ -439,9 +421,7 @@ export class Sanitizer {
 							pkg.name = this.replaceText(pkg.name, TextType.FluidObject);
 						}
 						if (Array.isArray(pkg?.fluid?.browser?.umd?.files)) {
-							pkg.fluid.browser.umd.files = this.replaceArray(
-								pkg.fluid.browser.umd.files,
-							);
+							pkg.fluid.browser.umd.files = this.replaceArray(pkg.fluid.browser.umd.files);
 						}
 					}
 				} catch (e) {
@@ -545,10 +525,7 @@ export class Sanitizer {
 			this.replaceAny(contents);
 		} else {
 			if (this.fullScrub) {
-				contents.address = this.replaceText(
-					contents.address,
-					TextType.FluidObject,
-				);
+				contents.address = this.replaceText(contents.address, TextType.FluidObject);
 			}
 
 			const innerContent = contents.contents.content;
@@ -570,15 +547,10 @@ export class Sanitizer {
 				} else {
 					this.fixAttachContents(contents.contents.content);
 				}
-			} else if (
-				this.validator.validate(innerContent, opContentsMapSchema).valid
-			) {
+			} else if (this.validator.validate(innerContent, opContentsMapSchema).valid) {
 				// map op
 				if (this.fullScrub) {
-					innerContent.address = this.replaceText(
-						innerContent.address,
-						TextType.FluidObject,
-					);
+					innerContent.address = this.replaceText(innerContent.address, TextType.FluidObject);
 					innerContent.contents.key = this.replaceText(
 						innerContent.contents.key,
 						TextType.MapKey,
@@ -590,43 +562,29 @@ export class Sanitizer {
 					);
 				}
 			} else if (
-				this.validator.validate(innerContent, opContentsMergeTreeGroupOpSchema)
-					.valid
+				this.validator.validate(innerContent, opContentsMergeTreeGroupOpSchema).valid
 			) {
 				// merge tree group op
 				if (this.fullScrub) {
-					innerContent.address = this.replaceText(
-						innerContent.address,
-						TextType.FluidObject,
-					);
+					innerContent.address = this.replaceText(innerContent.address, TextType.FluidObject);
 				}
 				innerContent.contents.ops.forEach((deltaOp) => {
 					this.fixDeltaOp(deltaOp);
 				});
 			} else if (
-				this.validator.validate(innerContent, opContentsMergeTreeDeltaOpSchema)
-					.valid
+				this.validator.validate(innerContent, opContentsMergeTreeDeltaOpSchema).valid
 			) {
 				// merge tree delta op
 				if (this.fullScrub) {
-					innerContent.address = this.replaceText(
-						innerContent.address,
-						TextType.FluidObject,
-					);
+					innerContent.address = this.replaceText(innerContent.address, TextType.FluidObject);
 				}
 				this.fixDeltaOp(innerContent.contents);
 			} else if (
-				this.validator.validate(
-					innerContent,
-					opContentsRegisterCollectionSchema,
-				).valid
+				this.validator.validate(innerContent, opContentsRegisterCollectionSchema).valid
 			) {
 				// register collection op
 				if (this.fullScrub) {
-					innerContent.address = this.replaceText(
-						innerContent.address,
-						TextType.FluidObject,
-					);
+					innerContent.address = this.replaceText(innerContent.address, TextType.FluidObject);
 					innerContent.contents.key = this.replaceText(
 						innerContent.contents.key,
 						TextType.MapKey,

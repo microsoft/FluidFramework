@@ -5,10 +5,10 @@
 
 import { AttachState } from "@fluidframework/container-definitions";
 import {
-	type MockContainerRuntime,
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
+	type MockContainerRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
 
 // eslint-disable-next-line import-x/no-internal-modules
@@ -23,12 +23,9 @@ interface RollbackTestSetup {
 const signalFactory = new SharedSignalFactory();
 
 function setupRollbackTest(): RollbackTestSetup {
-	const containerRuntimeFactory = new MockContainerRuntimeFactory({
-		flushMode: 1,
-	}); // TurnBased
+	const containerRuntimeFactory = new MockContainerRuntimeFactory({ flushMode: 1 }); // TurnBased
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: "1" });
-	const containerRuntime =
-		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: improve typing
 	const sharedSignal: ISharedSignal<number> = signalFactory.create(
 		dataStoreRuntime,

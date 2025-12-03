@@ -26,21 +26,15 @@ import {
 	type OdspResourceTokenFetchOptions,
 	SharingLinkRole,
 	SharingLinkScope,
-	type TokenFetcher,
 	type TokenFetchOptions,
+	type TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import {
-	createChildLogger,
-	PerformanceEvent,
-} from "@fluidframework/telemetry-utils/internal";
+import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { v4 as uuid } from "uuid";
 
 import { useCreateNewModule } from "./createFile/index.js";
-import {
-	createOdspCacheAndTracker,
-	type ICacheAndTracker,
-} from "./epochTracker.js";
+import { type ICacheAndTracker, createOdspCacheAndTracker } from "./epochTracker.js";
 import {
 	type INonPersistentCache,
 	type IPrefetchSnapshotContents,
@@ -50,11 +44,11 @@ import {
 import { OdspDocumentService } from "./odspDocumentService.js";
 import { odspDriverCompatDetailsForLoader } from "./odspLayerCompatState.js";
 import {
+	type IExistingFileInfo,
+	type INewFileInfo,
 	createOdspLogger,
 	getJoinSessionCacheKey,
 	getOdspResolvedUrl,
-	type IExistingFileInfo,
-	type INewFileInfo,
 	isNewFileInfo,
 	toInstrumentedOdspStorageTokenFetcher,
 	toInstrumentedOdspTokenFetcher,
@@ -72,14 +66,10 @@ import {
 export class OdspDocumentServiceFactoryCore
 	implements IDocumentServiceFactory, IRelaySessionAwareDriverFactory
 {
-	private readonly nonPersistentCache: INonPersistentCache =
-		new NonPersistentCache();
+	private readonly nonPersistentCache: INonPersistentCache = new NonPersistentCache();
 	private readonly socketReferenceKeyPrefix?: string;
 
-	public get snapshotPrefetchResultCache(): PromiseCache<
-		string,
-		IPrefetchSnapshotContents
-	> {
+	public get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents> {
 		return this.nonPersistentCache.snapshotPrefetchResultCache;
 	}
 
@@ -98,10 +88,9 @@ export class OdspDocumentServiceFactoryCore
 		resolvedUrl: IResolvedUrl,
 	): Promise<ISocketStorageDiscovery | undefined> {
 		const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
-		const joinSessionResponse =
-			await this.nonPersistentCache.sessionJoinCache.get(
-				getJoinSessionCacheKey(odspResolvedUrl),
-			);
+		const joinSessionResponse = await this.nonPersistentCache.sessionJoinCache.get(
+			getJoinSessionCacheKey(odspResolvedUrl),
+		);
 		return joinSessionResponse?.joinSessionResponse;
 	}
 
@@ -134,10 +123,7 @@ export class OdspDocumentServiceFactoryCore
 			if (filePath === undefined || filePath === null) {
 				throw new Error("File path should be provided!!");
 			}
-			createShareLinkParam = getSharingLinkParams(
-				this.hostPolicy,
-				searchParams,
-			);
+			createShareLinkParam = getSharingLinkParams(this.hostPolicy, searchParams);
 			fileInfo = {
 				type: "New",
 				driveId: odspResolvedUrl.driveId,
@@ -147,9 +133,7 @@ export class OdspDocumentServiceFactoryCore
 				createLinkType: createShareLinkParam,
 			};
 		} else {
-			throw new Error(
-				"A new or existing file must be specified to create container!",
-			);
+			throw new Error("A new or existing file must be specified to create container!");
 		}
 
 		if (isCombinedAppAndProtocolSummary(createNewSummary)) {
@@ -193,39 +177,34 @@ export class OdspDocumentServiceFactoryCore
 					resolvedUrlData,
 					this.getStorageToken,
 				);
-				const _odspResolvedUrl = await useCreateNewModule(
-					odspLogger,
-					async (module) => {
-						return isNewFileInfo(fileInfo)
-							? module.createNewFluidFile(
-									getAuthHeader,
-									fileInfo,
-									odspLogger,
-									createNewSummary,
-									cacheAndTracker.epochTracker,
-									fileEntry,
-									this.hostPolicy.cacheCreateNewSummary ?? true,
-									!!this.hostPolicy.sessionOptions
-										?.forceAccessTokenViaAuthorizationHeader,
-									odspResolvedUrl.isClpCompliantApp,
-									this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
-									odspResolvedUrl,
-								)
-							: module.createNewContainerOnExistingFile(
-									getAuthHeader,
-									fileInfo,
-									odspLogger,
-									createNewSummary,
-									cacheAndTracker.epochTracker,
-									fileEntry,
-									this.hostPolicy.cacheCreateNewSummary ?? true,
-									!!this.hostPolicy.sessionOptions
-										?.forceAccessTokenViaAuthorizationHeader,
-									odspResolvedUrl.isClpCompliantApp,
-									odspResolvedUrl.fileMetadata?.eTag,
-								);
-					},
-				);
+				const _odspResolvedUrl = await useCreateNewModule(odspLogger, async (module) => {
+					return isNewFileInfo(fileInfo)
+						? module.createNewFluidFile(
+								getAuthHeader,
+								fileInfo,
+								odspLogger,
+								createNewSummary,
+								cacheAndTracker.epochTracker,
+								fileEntry,
+								this.hostPolicy.cacheCreateNewSummary ?? true,
+								!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+								odspResolvedUrl.isClpCompliantApp,
+								this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
+								odspResolvedUrl,
+							)
+						: module.createNewContainerOnExistingFile(
+								getAuthHeader,
+								fileInfo,
+								odspLogger,
+								createNewSummary,
+								cacheAndTracker.epochTracker,
+								fileEntry,
+								this.hostPolicy.cacheCreateNewSummary ?? true,
+								!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+								odspResolvedUrl.isClpCompliantApp,
+								odspResolvedUrl.fileMetadata?.eTag,
+							);
+				});
 				const docService = this.createDocumentServiceCore(
 					_odspResolvedUrl,
 					odspLogger,
@@ -262,8 +241,7 @@ export class OdspDocumentServiceFactoryCore
 			this.socketReferenceKeyPrefix = uuid();
 		}
 		// Set enableRedeemFallback by default as true.
-		this.hostPolicy.enableRedeemFallback =
-			this.hostPolicy.enableRedeemFallback ?? true;
+		this.hostPolicy.enableRedeemFallback = this.hostPolicy.enableRedeemFallback ?? true;
 		this.hostPolicy.sessionOptions = {
 			forceAccessTokenViaAuthorizationHeader: true,
 			...this.hostPolicy.sessionOptions,
@@ -277,8 +255,7 @@ export class OdspDocumentServiceFactoryCore
 	 * The type of this should be ILayerCompatDetails. However, ILayerCompatDetails is internal and this class
 	 * is currently marked as legacy alpha. So, using unknown here.
 	 */
-	public readonly ILayerCompatDetails?: unknown =
-		odspDriverCompatDetailsForLoader;
+	public readonly ILayerCompatDetails?: unknown = odspDriverCompatDetailsForLoader;
 
 	public async createDocumentService(
 		resolvedUrl: IResolvedUrl,

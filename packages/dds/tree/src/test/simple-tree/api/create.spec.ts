@@ -60,10 +60,7 @@ describe("simple-tree create", () => {
 					createFromCursor(
 						Obj,
 						cursor,
-						convertField(
-							normalizeFieldSchema(Obj),
-							restrictiveStoredSchemaGenerationOptions,
-						),
+						convertField(normalizeFieldSchema(Obj), restrictiveStoredSchemaGenerationOptions),
 					),
 				validateUsageError(/does not conform to schema/),
 			);

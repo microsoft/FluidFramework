@@ -11,23 +11,12 @@
  * Current version: 2.74.0
  */
 
-import type {
-	FullType,
-	MinimalType,
-	requireAssignableTo,
-	TypeOnly,
-} from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/runtime-definitions-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> =
-	| TypeOnly<T>
-	| MinimalType<T>
-	| FullType<T>
-	| typeof old
-	| typeof current
-	| requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -36,11 +25,7 @@ declare type MakeUnusedImportErrorsGoAway<T> =
  * typeValidation.broken:
  * "Enum_CreateSummarizerNodeSource": {"forwardCompat": false}
  */
-declare type old_as_current_for_Enum_CreateSummarizerNodeSource =
-	requireAssignableTo<
-		TypeOnly<old.CreateSummarizerNodeSource>,
-		TypeOnly<current.CreateSummarizerNodeSource>
-	>;
+declare type old_as_current_for_Enum_CreateSummarizerNodeSource = requireAssignableTo<TypeOnly<old.CreateSummarizerNodeSource>, TypeOnly<current.CreateSummarizerNodeSource>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -49,11 +34,7 @@ declare type old_as_current_for_Enum_CreateSummarizerNodeSource =
  * typeValidation.broken:
  * "Enum_CreateSummarizerNodeSource": {"backCompat": false}
  */
-declare type current_as_old_for_Enum_CreateSummarizerNodeSource =
-	requireAssignableTo<
-		TypeOnly<current.CreateSummarizerNodeSource>,
-		TypeOnly<old.CreateSummarizerNodeSource>
-	>;
+declare type current_as_old_for_Enum_CreateSummarizerNodeSource = requireAssignableTo<TypeOnly<current.CreateSummarizerNodeSource>, TypeOnly<old.CreateSummarizerNodeSource>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -62,10 +43,7 @@ declare type current_as_old_for_Enum_CreateSummarizerNodeSource =
  * typeValidation.broken:
  * "Enum_FlushMode": {"forwardCompat": false}
  */
-declare type old_as_current_for_Enum_FlushMode = requireAssignableTo<
-	TypeOnly<old.FlushMode>,
-	TypeOnly<current.FlushMode>
->;
+declare type old_as_current_for_Enum_FlushMode = requireAssignableTo<TypeOnly<old.FlushMode>, TypeOnly<current.FlushMode>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -74,10 +52,7 @@ declare type old_as_current_for_Enum_FlushMode = requireAssignableTo<
  * typeValidation.broken:
  * "Enum_FlushMode": {"backCompat": false}
  */
-declare type current_as_old_for_Enum_FlushMode = requireAssignableTo<
-	TypeOnly<current.FlushMode>,
-	TypeOnly<old.FlushMode>
->;
+declare type current_as_old_for_Enum_FlushMode = requireAssignableTo<TypeOnly<current.FlushMode>, TypeOnly<old.FlushMode>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -86,10 +61,7 @@ declare type current_as_old_for_Enum_FlushMode = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_AttributionInfo": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_AttributionInfo = requireAssignableTo<
-	TypeOnly<old.AttributionInfo>,
-	TypeOnly<current.AttributionInfo>
->;
+declare type old_as_current_for_Interface_AttributionInfo = requireAssignableTo<TypeOnly<old.AttributionInfo>, TypeOnly<current.AttributionInfo>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -98,10 +70,7 @@ declare type old_as_current_for_Interface_AttributionInfo = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_AttributionInfo": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_AttributionInfo = requireAssignableTo<
-	TypeOnly<current.AttributionInfo>,
-	TypeOnly<old.AttributionInfo>
->;
+declare type current_as_old_for_Interface_AttributionInfo = requireAssignableTo<TypeOnly<current.AttributionInfo>, TypeOnly<old.AttributionInfo>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -110,11 +79,7 @@ declare type current_as_old_for_Interface_AttributionInfo = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_DetachedAttributionKey": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_DetachedAttributionKey =
-	requireAssignableTo<
-		TypeOnly<old.DetachedAttributionKey>,
-		TypeOnly<current.DetachedAttributionKey>
-	>;
+declare type old_as_current_for_Interface_DetachedAttributionKey = requireAssignableTo<TypeOnly<old.DetachedAttributionKey>, TypeOnly<current.DetachedAttributionKey>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -123,11 +88,7 @@ declare type old_as_current_for_Interface_DetachedAttributionKey =
  * typeValidation.broken:
  * "Interface_DetachedAttributionKey": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_DetachedAttributionKey =
-	requireAssignableTo<
-		TypeOnly<current.DetachedAttributionKey>,
-		TypeOnly<old.DetachedAttributionKey>
-	>;
+declare type current_as_old_for_Interface_DetachedAttributionKey = requireAssignableTo<TypeOnly<current.DetachedAttributionKey>, TypeOnly<old.DetachedAttributionKey>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -136,10 +97,7 @@ declare type current_as_old_for_Interface_DetachedAttributionKey =
  * typeValidation.broken:
  * "Interface_IAttachMessage": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IAttachMessage = requireAssignableTo<
-	TypeOnly<old.IAttachMessage>,
-	TypeOnly<current.IAttachMessage>
->;
+declare type old_as_current_for_Interface_IAttachMessage = requireAssignableTo<TypeOnly<old.IAttachMessage>, TypeOnly<current.IAttachMessage>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -148,10 +106,7 @@ declare type old_as_current_for_Interface_IAttachMessage = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IAttachMessage": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IAttachMessage = requireAssignableTo<
-	TypeOnly<current.IAttachMessage>,
-	TypeOnly<old.IAttachMessage>
->;
+declare type current_as_old_for_Interface_IAttachMessage = requireAssignableTo<TypeOnly<current.IAttachMessage>, TypeOnly<old.IAttachMessage>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -160,11 +115,7 @@ declare type current_as_old_for_Interface_IAttachMessage = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IContainerRuntimeBase": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IContainerRuntimeBase =
-	requireAssignableTo<
-		TypeOnly<current.IContainerRuntimeBase>,
-		TypeOnly<old.IContainerRuntimeBase>
-	>;
+declare type current_as_old_for_Interface_IContainerRuntimeBase = requireAssignableTo<TypeOnly<current.IContainerRuntimeBase>, TypeOnly<old.IContainerRuntimeBase>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -173,11 +124,7 @@ declare type current_as_old_for_Interface_IContainerRuntimeBase =
  * typeValidation.broken:
  * "Interface_IContainerRuntimeBaseEvents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IContainerRuntimeBaseEvents =
-	requireAssignableTo<
-		TypeOnly<current.IContainerRuntimeBaseEvents>,
-		TypeOnly<old.IContainerRuntimeBaseEvents>
-	>;
+declare type current_as_old_for_Interface_IContainerRuntimeBaseEvents = requireAssignableTo<TypeOnly<current.IContainerRuntimeBaseEvents>, TypeOnly<old.IContainerRuntimeBaseEvents>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -186,10 +133,7 @@ declare type current_as_old_for_Interface_IContainerRuntimeBaseEvents =
  * typeValidation.broken:
  * "Interface_IDataStore": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IDataStore = requireAssignableTo<
-	TypeOnly<old.IDataStore>,
-	TypeOnly<current.IDataStore>
->;
+declare type old_as_current_for_Interface_IDataStore = requireAssignableTo<TypeOnly<old.IDataStore>, TypeOnly<current.IDataStore>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -198,10 +142,7 @@ declare type old_as_current_for_Interface_IDataStore = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IDataStore": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IDataStore = requireAssignableTo<
-	TypeOnly<current.IDataStore>,
-	TypeOnly<old.IDataStore>
->;
+declare type current_as_old_for_Interface_IDataStore = requireAssignableTo<TypeOnly<current.IDataStore>, TypeOnly<old.IDataStore>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -210,10 +151,7 @@ declare type current_as_old_for_Interface_IDataStore = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IEnvelope": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IEnvelope = requireAssignableTo<
-	TypeOnly<old.IEnvelope>,
-	TypeOnly<current.IEnvelope>
->;
+declare type old_as_current_for_Interface_IEnvelope = requireAssignableTo<TypeOnly<old.IEnvelope>, TypeOnly<current.IEnvelope>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -222,10 +160,7 @@ declare type old_as_current_for_Interface_IEnvelope = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IEnvelope": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IEnvelope = requireAssignableTo<
-	TypeOnly<current.IEnvelope>,
-	TypeOnly<old.IEnvelope>
->;
+declare type current_as_old_for_Interface_IEnvelope = requireAssignableTo<TypeOnly<current.IEnvelope>, TypeOnly<old.IEnvelope>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -234,11 +169,7 @@ declare type current_as_old_for_Interface_IEnvelope = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IExperimentalIncrementalSummaryContext": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IExperimentalIncrementalSummaryContext =
-	requireAssignableTo<
-		TypeOnly<old.IExperimentalIncrementalSummaryContext>,
-		TypeOnly<current.IExperimentalIncrementalSummaryContext>
-	>;
+declare type old_as_current_for_Interface_IExperimentalIncrementalSummaryContext = requireAssignableTo<TypeOnly<old.IExperimentalIncrementalSummaryContext>, TypeOnly<current.IExperimentalIncrementalSummaryContext>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -247,11 +178,7 @@ declare type old_as_current_for_Interface_IExperimentalIncrementalSummaryContext
  * typeValidation.broken:
  * "Interface_IExperimentalIncrementalSummaryContext": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IExperimentalIncrementalSummaryContext =
-	requireAssignableTo<
-		TypeOnly<current.IExperimentalIncrementalSummaryContext>,
-		TypeOnly<old.IExperimentalIncrementalSummaryContext>
-	>;
+declare type current_as_old_for_Interface_IExperimentalIncrementalSummaryContext = requireAssignableTo<TypeOnly<current.IExperimentalIncrementalSummaryContext>, TypeOnly<old.IExperimentalIncrementalSummaryContext>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -260,11 +187,7 @@ declare type current_as_old_for_Interface_IExperimentalIncrementalSummaryContext
  * typeValidation.broken:
  * "Interface_IFluidDataStoreChannel": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IFluidDataStoreChannel =
-	requireAssignableTo<
-		TypeOnly<old.IFluidDataStoreChannel>,
-		TypeOnly<current.IFluidDataStoreChannel>
-	>;
+declare type old_as_current_for_Interface_IFluidDataStoreChannel = requireAssignableTo<TypeOnly<old.IFluidDataStoreChannel>, TypeOnly<current.IFluidDataStoreChannel>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -273,11 +196,7 @@ declare type old_as_current_for_Interface_IFluidDataStoreChannel =
  * typeValidation.broken:
  * "Interface_IFluidDataStoreChannel": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IFluidDataStoreChannel =
-	requireAssignableTo<
-		TypeOnly<current.IFluidDataStoreChannel>,
-		TypeOnly<old.IFluidDataStoreChannel>
-	>;
+declare type current_as_old_for_Interface_IFluidDataStoreChannel = requireAssignableTo<TypeOnly<current.IFluidDataStoreChannel>, TypeOnly<old.IFluidDataStoreChannel>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -286,11 +205,7 @@ declare type current_as_old_for_Interface_IFluidDataStoreChannel =
  * typeValidation.broken:
  * "Interface_IFluidDataStoreContext": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IFluidDataStoreContext =
-	requireAssignableTo<
-		TypeOnly<old.IFluidDataStoreContext>,
-		TypeOnly<current.IFluidDataStoreContext>
-	>;
+declare type old_as_current_for_Interface_IFluidDataStoreContext = requireAssignableTo<TypeOnly<old.IFluidDataStoreContext>, TypeOnly<current.IFluidDataStoreContext>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -299,11 +214,7 @@ declare type old_as_current_for_Interface_IFluidDataStoreContext =
  * typeValidation.broken:
  * "Interface_IFluidDataStoreContext": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IFluidDataStoreContext =
-	requireAssignableTo<
-		TypeOnly<current.IFluidDataStoreContext>,
-		TypeOnly<old.IFluidDataStoreContext>
-	>;
+declare type current_as_old_for_Interface_IFluidDataStoreContext = requireAssignableTo<TypeOnly<current.IFluidDataStoreContext>, TypeOnly<old.IFluidDataStoreContext>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -312,11 +223,7 @@ declare type current_as_old_for_Interface_IFluidDataStoreContext =
  * typeValidation.broken:
  * "Interface_IFluidDataStoreContextDetached": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IFluidDataStoreContextDetached =
-	requireAssignableTo<
-		TypeOnly<old.IFluidDataStoreContextDetached>,
-		TypeOnly<current.IFluidDataStoreContextDetached>
-	>;
+declare type old_as_current_for_Interface_IFluidDataStoreContextDetached = requireAssignableTo<TypeOnly<old.IFluidDataStoreContextDetached>, TypeOnly<current.IFluidDataStoreContextDetached>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -325,11 +232,7 @@ declare type old_as_current_for_Interface_IFluidDataStoreContextDetached =
  * typeValidation.broken:
  * "Interface_IFluidDataStoreContextDetached": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IFluidDataStoreContextDetached =
-	requireAssignableTo<
-		TypeOnly<current.IFluidDataStoreContextDetached>,
-		TypeOnly<old.IFluidDataStoreContextDetached>
-	>;
+declare type current_as_old_for_Interface_IFluidDataStoreContextDetached = requireAssignableTo<TypeOnly<current.IFluidDataStoreContextDetached>, TypeOnly<old.IFluidDataStoreContextDetached>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -338,11 +241,7 @@ declare type current_as_old_for_Interface_IFluidDataStoreContextDetached =
  * typeValidation.broken:
  * "Interface_IFluidDataStoreFactory": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IFluidDataStoreFactory =
-	requireAssignableTo<
-		TypeOnly<old.IFluidDataStoreFactory>,
-		TypeOnly<current.IFluidDataStoreFactory>
-	>;
+declare type old_as_current_for_Interface_IFluidDataStoreFactory = requireAssignableTo<TypeOnly<old.IFluidDataStoreFactory>, TypeOnly<current.IFluidDataStoreFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -351,11 +250,7 @@ declare type old_as_current_for_Interface_IFluidDataStoreFactory =
  * typeValidation.broken:
  * "Interface_IFluidDataStoreFactory": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IFluidDataStoreFactory =
-	requireAssignableTo<
-		TypeOnly<current.IFluidDataStoreFactory>,
-		TypeOnly<old.IFluidDataStoreFactory>
-	>;
+declare type current_as_old_for_Interface_IFluidDataStoreFactory = requireAssignableTo<TypeOnly<current.IFluidDataStoreFactory>, TypeOnly<old.IFluidDataStoreFactory>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -364,11 +259,7 @@ declare type current_as_old_for_Interface_IFluidDataStoreFactory =
  * typeValidation.broken:
  * "Interface_IFluidDataStorePolicies": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IFluidDataStorePolicies =
-	requireAssignableTo<
-		TypeOnly<old.IFluidDataStorePolicies>,
-		TypeOnly<current.IFluidDataStorePolicies>
-	>;
+declare type old_as_current_for_Interface_IFluidDataStorePolicies = requireAssignableTo<TypeOnly<old.IFluidDataStorePolicies>, TypeOnly<current.IFluidDataStorePolicies>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -377,11 +268,7 @@ declare type old_as_current_for_Interface_IFluidDataStorePolicies =
  * typeValidation.broken:
  * "Interface_IFluidDataStorePolicies": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IFluidDataStorePolicies =
-	requireAssignableTo<
-		TypeOnly<current.IFluidDataStorePolicies>,
-		TypeOnly<old.IFluidDataStorePolicies>
-	>;
+declare type current_as_old_for_Interface_IFluidDataStorePolicies = requireAssignableTo<TypeOnly<current.IFluidDataStorePolicies>, TypeOnly<old.IFluidDataStorePolicies>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -390,11 +277,7 @@ declare type current_as_old_for_Interface_IFluidDataStorePolicies =
  * typeValidation.broken:
  * "Interface_IFluidDataStoreRegistry": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IFluidDataStoreRegistry =
-	requireAssignableTo<
-		TypeOnly<old.IFluidDataStoreRegistry>,
-		TypeOnly<current.IFluidDataStoreRegistry>
-	>;
+declare type old_as_current_for_Interface_IFluidDataStoreRegistry = requireAssignableTo<TypeOnly<old.IFluidDataStoreRegistry>, TypeOnly<current.IFluidDataStoreRegistry>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -403,11 +286,7 @@ declare type old_as_current_for_Interface_IFluidDataStoreRegistry =
  * typeValidation.broken:
  * "Interface_IFluidDataStoreRegistry": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IFluidDataStoreRegistry =
-	requireAssignableTo<
-		TypeOnly<current.IFluidDataStoreRegistry>,
-		TypeOnly<old.IFluidDataStoreRegistry>
-	>;
+declare type current_as_old_for_Interface_IFluidDataStoreRegistry = requireAssignableTo<TypeOnly<current.IFluidDataStoreRegistry>, TypeOnly<old.IFluidDataStoreRegistry>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -416,11 +295,7 @@ declare type current_as_old_for_Interface_IFluidDataStoreRegistry =
  * typeValidation.broken:
  * "Interface_IFluidParentContext": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IFluidParentContext =
-	requireAssignableTo<
-		TypeOnly<old.IFluidParentContext>,
-		TypeOnly<current.IFluidParentContext>
-	>;
+declare type old_as_current_for_Interface_IFluidParentContext = requireAssignableTo<TypeOnly<old.IFluidParentContext>, TypeOnly<current.IFluidParentContext>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -429,11 +304,7 @@ declare type old_as_current_for_Interface_IFluidParentContext =
  * typeValidation.broken:
  * "Interface_IFluidParentContext": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IFluidParentContext =
-	requireAssignableTo<
-		TypeOnly<current.IFluidParentContext>,
-		TypeOnly<old.IFluidParentContext>
-	>;
+declare type current_as_old_for_Interface_IFluidParentContext = requireAssignableTo<TypeOnly<current.IFluidParentContext>, TypeOnly<old.IFluidParentContext>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -442,11 +313,7 @@ declare type current_as_old_for_Interface_IFluidParentContext =
  * typeValidation.broken:
  * "Interface_IGarbageCollectionData": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IGarbageCollectionData =
-	requireAssignableTo<
-		TypeOnly<old.IGarbageCollectionData>,
-		TypeOnly<current.IGarbageCollectionData>
-	>;
+declare type old_as_current_for_Interface_IGarbageCollectionData = requireAssignableTo<TypeOnly<old.IGarbageCollectionData>, TypeOnly<current.IGarbageCollectionData>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -455,11 +322,7 @@ declare type old_as_current_for_Interface_IGarbageCollectionData =
  * typeValidation.broken:
  * "Interface_IGarbageCollectionData": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IGarbageCollectionData =
-	requireAssignableTo<
-		TypeOnly<current.IGarbageCollectionData>,
-		TypeOnly<old.IGarbageCollectionData>
-	>;
+declare type current_as_old_for_Interface_IGarbageCollectionData = requireAssignableTo<TypeOnly<current.IGarbageCollectionData>, TypeOnly<old.IGarbageCollectionData>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -468,11 +331,7 @@ declare type current_as_old_for_Interface_IGarbageCollectionData =
  * typeValidation.broken:
  * "Interface_IGarbageCollectionDetailsBase": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IGarbageCollectionDetailsBase =
-	requireAssignableTo<
-		TypeOnly<old.IGarbageCollectionDetailsBase>,
-		TypeOnly<current.IGarbageCollectionDetailsBase>
-	>;
+declare type old_as_current_for_Interface_IGarbageCollectionDetailsBase = requireAssignableTo<TypeOnly<old.IGarbageCollectionDetailsBase>, TypeOnly<current.IGarbageCollectionDetailsBase>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -481,11 +340,7 @@ declare type old_as_current_for_Interface_IGarbageCollectionDetailsBase =
  * typeValidation.broken:
  * "Interface_IGarbageCollectionDetailsBase": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IGarbageCollectionDetailsBase =
-	requireAssignableTo<
-		TypeOnly<current.IGarbageCollectionDetailsBase>,
-		TypeOnly<old.IGarbageCollectionDetailsBase>
-	>;
+declare type current_as_old_for_Interface_IGarbageCollectionDetailsBase = requireAssignableTo<TypeOnly<current.IGarbageCollectionDetailsBase>, TypeOnly<old.IGarbageCollectionDetailsBase>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -494,11 +349,7 @@ declare type current_as_old_for_Interface_IGarbageCollectionDetailsBase =
  * typeValidation.broken:
  * "Interface_IInboundSignalMessage": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IInboundSignalMessage =
-	requireAssignableTo<
-		TypeOnly<old.IInboundSignalMessage>,
-		TypeOnly<current.IInboundSignalMessage>
-	>;
+declare type old_as_current_for_Interface_IInboundSignalMessage = requireAssignableTo<TypeOnly<old.IInboundSignalMessage>, TypeOnly<current.IInboundSignalMessage>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -507,11 +358,7 @@ declare type old_as_current_for_Interface_IInboundSignalMessage =
  * typeValidation.broken:
  * "Interface_IInboundSignalMessage": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IInboundSignalMessage =
-	requireAssignableTo<
-		TypeOnly<current.IInboundSignalMessage>,
-		TypeOnly<old.IInboundSignalMessage>
-	>;
+declare type current_as_old_for_Interface_IInboundSignalMessage = requireAssignableTo<TypeOnly<current.IInboundSignalMessage>, TypeOnly<old.IInboundSignalMessage>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -520,11 +367,7 @@ declare type current_as_old_for_Interface_IInboundSignalMessage =
  * typeValidation.broken:
  * "Interface_IProvideFluidDataStoreFactory": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IProvideFluidDataStoreFactory =
-	requireAssignableTo<
-		TypeOnly<old.IProvideFluidDataStoreFactory>,
-		TypeOnly<current.IProvideFluidDataStoreFactory>
-	>;
+declare type old_as_current_for_Interface_IProvideFluidDataStoreFactory = requireAssignableTo<TypeOnly<old.IProvideFluidDataStoreFactory>, TypeOnly<current.IProvideFluidDataStoreFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -533,11 +376,7 @@ declare type old_as_current_for_Interface_IProvideFluidDataStoreFactory =
  * typeValidation.broken:
  * "Interface_IProvideFluidDataStoreFactory": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IProvideFluidDataStoreFactory =
-	requireAssignableTo<
-		TypeOnly<current.IProvideFluidDataStoreFactory>,
-		TypeOnly<old.IProvideFluidDataStoreFactory>
-	>;
+declare type current_as_old_for_Interface_IProvideFluidDataStoreFactory = requireAssignableTo<TypeOnly<current.IProvideFluidDataStoreFactory>, TypeOnly<old.IProvideFluidDataStoreFactory>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -546,11 +385,7 @@ declare type current_as_old_for_Interface_IProvideFluidDataStoreFactory =
  * typeValidation.broken:
  * "Interface_IProvideFluidDataStoreRegistry": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IProvideFluidDataStoreRegistry =
-	requireAssignableTo<
-		TypeOnly<old.IProvideFluidDataStoreRegistry>,
-		TypeOnly<current.IProvideFluidDataStoreRegistry>
-	>;
+declare type old_as_current_for_Interface_IProvideFluidDataStoreRegistry = requireAssignableTo<TypeOnly<old.IProvideFluidDataStoreRegistry>, TypeOnly<current.IProvideFluidDataStoreRegistry>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -559,11 +394,7 @@ declare type old_as_current_for_Interface_IProvideFluidDataStoreRegistry =
  * typeValidation.broken:
  * "Interface_IProvideFluidDataStoreRegistry": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IProvideFluidDataStoreRegistry =
-	requireAssignableTo<
-		TypeOnly<current.IProvideFluidDataStoreRegistry>,
-		TypeOnly<old.IProvideFluidDataStoreRegistry>
-	>;
+declare type current_as_old_for_Interface_IProvideFluidDataStoreRegistry = requireAssignableTo<TypeOnly<current.IProvideFluidDataStoreRegistry>, TypeOnly<old.IProvideFluidDataStoreRegistry>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -572,11 +403,7 @@ declare type current_as_old_for_Interface_IProvideFluidDataStoreRegistry =
  * typeValidation.broken:
  * "Interface_IRuntimeMessageCollection": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IRuntimeMessageCollection =
-	requireAssignableTo<
-		TypeOnly<current.IRuntimeMessageCollection>,
-		TypeOnly<old.IRuntimeMessageCollection>
-	>;
+declare type current_as_old_for_Interface_IRuntimeMessageCollection = requireAssignableTo<TypeOnly<current.IRuntimeMessageCollection>, TypeOnly<old.IRuntimeMessageCollection>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -585,11 +412,7 @@ declare type current_as_old_for_Interface_IRuntimeMessageCollection =
  * typeValidation.broken:
  * "Interface_IRuntimeMessagesContent": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IRuntimeMessagesContent =
-	requireAssignableTo<
-		TypeOnly<current.IRuntimeMessagesContent>,
-		TypeOnly<old.IRuntimeMessagesContent>
-	>;
+declare type current_as_old_for_Interface_IRuntimeMessagesContent = requireAssignableTo<TypeOnly<current.IRuntimeMessagesContent>, TypeOnly<old.IRuntimeMessagesContent>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -598,11 +421,7 @@ declare type current_as_old_for_Interface_IRuntimeMessagesContent =
  * typeValidation.broken:
  * "Interface_IRuntimeStorageService": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IRuntimeStorageService =
-	requireAssignableTo<
-		TypeOnly<old.IRuntimeStorageService>,
-		TypeOnly<current.IRuntimeStorageService>
-	>;
+declare type old_as_current_for_Interface_IRuntimeStorageService = requireAssignableTo<TypeOnly<old.IRuntimeStorageService>, TypeOnly<current.IRuntimeStorageService>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -611,11 +430,7 @@ declare type old_as_current_for_Interface_IRuntimeStorageService =
  * typeValidation.broken:
  * "Interface_IRuntimeStorageService": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IRuntimeStorageService =
-	requireAssignableTo<
-		TypeOnly<current.IRuntimeStorageService>,
-		TypeOnly<old.IRuntimeStorageService>
-	>;
+declare type current_as_old_for_Interface_IRuntimeStorageService = requireAssignableTo<TypeOnly<current.IRuntimeStorageService>, TypeOnly<old.IRuntimeStorageService>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -624,11 +439,7 @@ declare type current_as_old_for_Interface_IRuntimeStorageService =
  * typeValidation.broken:
  * "Interface_ISummarizeInternalResult": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISummarizeInternalResult =
-	requireAssignableTo<
-		TypeOnly<old.ISummarizeInternalResult>,
-		TypeOnly<current.ISummarizeInternalResult>
-	>;
+declare type old_as_current_for_Interface_ISummarizeInternalResult = requireAssignableTo<TypeOnly<old.ISummarizeInternalResult>, TypeOnly<current.ISummarizeInternalResult>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -637,11 +448,7 @@ declare type old_as_current_for_Interface_ISummarizeInternalResult =
  * typeValidation.broken:
  * "Interface_ISummarizeInternalResult": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISummarizeInternalResult =
-	requireAssignableTo<
-		TypeOnly<current.ISummarizeInternalResult>,
-		TypeOnly<old.ISummarizeInternalResult>
-	>;
+declare type current_as_old_for_Interface_ISummarizeInternalResult = requireAssignableTo<TypeOnly<current.ISummarizeInternalResult>, TypeOnly<old.ISummarizeInternalResult>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -650,11 +457,7 @@ declare type current_as_old_for_Interface_ISummarizeInternalResult =
  * typeValidation.broken:
  * "Interface_ISummarizeResult": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISummarizeResult =
-	requireAssignableTo<
-		TypeOnly<old.ISummarizeResult>,
-		TypeOnly<current.ISummarizeResult>
-	>;
+declare type old_as_current_for_Interface_ISummarizeResult = requireAssignableTo<TypeOnly<old.ISummarizeResult>, TypeOnly<current.ISummarizeResult>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -663,11 +466,7 @@ declare type old_as_current_for_Interface_ISummarizeResult =
  * typeValidation.broken:
  * "Interface_ISummarizeResult": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISummarizeResult =
-	requireAssignableTo<
-		TypeOnly<current.ISummarizeResult>,
-		TypeOnly<old.ISummarizeResult>
-	>;
+declare type current_as_old_for_Interface_ISummarizeResult = requireAssignableTo<TypeOnly<current.ISummarizeResult>, TypeOnly<old.ISummarizeResult>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -676,10 +475,7 @@ declare type current_as_old_for_Interface_ISummarizeResult =
  * typeValidation.broken:
  * "Interface_ISummarizerNode": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISummarizerNode = requireAssignableTo<
-	TypeOnly<old.ISummarizerNode>,
-	TypeOnly<current.ISummarizerNode>
->;
+declare type old_as_current_for_Interface_ISummarizerNode = requireAssignableTo<TypeOnly<old.ISummarizerNode>, TypeOnly<current.ISummarizerNode>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -688,10 +484,7 @@ declare type old_as_current_for_Interface_ISummarizerNode = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ISummarizerNode": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISummarizerNode = requireAssignableTo<
-	TypeOnly<current.ISummarizerNode>,
-	TypeOnly<old.ISummarizerNode>
->;
+declare type current_as_old_for_Interface_ISummarizerNode = requireAssignableTo<TypeOnly<current.ISummarizerNode>, TypeOnly<old.ISummarizerNode>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -700,11 +493,7 @@ declare type current_as_old_for_Interface_ISummarizerNode = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ISummarizerNodeConfig": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISummarizerNodeConfig =
-	requireAssignableTo<
-		TypeOnly<old.ISummarizerNodeConfig>,
-		TypeOnly<current.ISummarizerNodeConfig>
-	>;
+declare type old_as_current_for_Interface_ISummarizerNodeConfig = requireAssignableTo<TypeOnly<old.ISummarizerNodeConfig>, TypeOnly<current.ISummarizerNodeConfig>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -713,11 +502,7 @@ declare type old_as_current_for_Interface_ISummarizerNodeConfig =
  * typeValidation.broken:
  * "Interface_ISummarizerNodeConfig": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISummarizerNodeConfig =
-	requireAssignableTo<
-		TypeOnly<current.ISummarizerNodeConfig>,
-		TypeOnly<old.ISummarizerNodeConfig>
-	>;
+declare type current_as_old_for_Interface_ISummarizerNodeConfig = requireAssignableTo<TypeOnly<current.ISummarizerNodeConfig>, TypeOnly<old.ISummarizerNodeConfig>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -726,11 +511,7 @@ declare type current_as_old_for_Interface_ISummarizerNodeConfig =
  * typeValidation.broken:
  * "Interface_ISummarizerNodeConfigWithGC": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISummarizerNodeConfigWithGC =
-	requireAssignableTo<
-		TypeOnly<old.ISummarizerNodeConfigWithGC>,
-		TypeOnly<current.ISummarizerNodeConfigWithGC>
-	>;
+declare type old_as_current_for_Interface_ISummarizerNodeConfigWithGC = requireAssignableTo<TypeOnly<old.ISummarizerNodeConfigWithGC>, TypeOnly<current.ISummarizerNodeConfigWithGC>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -739,11 +520,7 @@ declare type old_as_current_for_Interface_ISummarizerNodeConfigWithGC =
  * typeValidation.broken:
  * "Interface_ISummarizerNodeConfigWithGC": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISummarizerNodeConfigWithGC =
-	requireAssignableTo<
-		TypeOnly<current.ISummarizerNodeConfigWithGC>,
-		TypeOnly<old.ISummarizerNodeConfigWithGC>
-	>;
+declare type current_as_old_for_Interface_ISummarizerNodeConfigWithGC = requireAssignableTo<TypeOnly<current.ISummarizerNodeConfigWithGC>, TypeOnly<old.ISummarizerNodeConfigWithGC>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -752,11 +529,7 @@ declare type current_as_old_for_Interface_ISummarizerNodeConfigWithGC =
  * typeValidation.broken:
  * "Interface_ISummarizerNodeWithGC": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISummarizerNodeWithGC =
-	requireAssignableTo<
-		TypeOnly<old.ISummarizerNodeWithGC>,
-		TypeOnly<current.ISummarizerNodeWithGC>
-	>;
+declare type old_as_current_for_Interface_ISummarizerNodeWithGC = requireAssignableTo<TypeOnly<old.ISummarizerNodeWithGC>, TypeOnly<current.ISummarizerNodeWithGC>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -765,11 +538,7 @@ declare type old_as_current_for_Interface_ISummarizerNodeWithGC =
  * typeValidation.broken:
  * "Interface_ISummarizerNodeWithGC": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISummarizerNodeWithGC =
-	requireAssignableTo<
-		TypeOnly<current.ISummarizerNodeWithGC>,
-		TypeOnly<old.ISummarizerNodeWithGC>
-	>;
+declare type current_as_old_for_Interface_ISummarizerNodeWithGC = requireAssignableTo<TypeOnly<current.ISummarizerNodeWithGC>, TypeOnly<old.ISummarizerNodeWithGC>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -778,10 +547,7 @@ declare type current_as_old_for_Interface_ISummarizerNodeWithGC =
  * typeValidation.broken:
  * "Interface_ISummaryStats": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISummaryStats = requireAssignableTo<
-	TypeOnly<old.ISummaryStats>,
-	TypeOnly<current.ISummaryStats>
->;
+declare type old_as_current_for_Interface_ISummaryStats = requireAssignableTo<TypeOnly<old.ISummaryStats>, TypeOnly<current.ISummaryStats>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -790,10 +556,7 @@ declare type old_as_current_for_Interface_ISummaryStats = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ISummaryStats": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISummaryStats = requireAssignableTo<
-	TypeOnly<current.ISummaryStats>,
-	TypeOnly<old.ISummaryStats>
->;
+declare type current_as_old_for_Interface_ISummaryStats = requireAssignableTo<TypeOnly<current.ISummaryStats>, TypeOnly<old.ISummaryStats>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -802,11 +565,7 @@ declare type current_as_old_for_Interface_ISummaryStats = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ISummaryTreeWithStats": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISummaryTreeWithStats =
-	requireAssignableTo<
-		TypeOnly<old.ISummaryTreeWithStats>,
-		TypeOnly<current.ISummaryTreeWithStats>
-	>;
+declare type old_as_current_for_Interface_ISummaryTreeWithStats = requireAssignableTo<TypeOnly<old.ISummaryTreeWithStats>, TypeOnly<current.ISummaryTreeWithStats>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -815,11 +574,7 @@ declare type old_as_current_for_Interface_ISummaryTreeWithStats =
  * typeValidation.broken:
  * "Interface_ISummaryTreeWithStats": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISummaryTreeWithStats =
-	requireAssignableTo<
-		TypeOnly<current.ISummaryTreeWithStats>,
-		TypeOnly<old.ISummaryTreeWithStats>
-	>;
+declare type current_as_old_for_Interface_ISummaryTreeWithStats = requireAssignableTo<TypeOnly<current.ISummaryTreeWithStats>, TypeOnly<old.ISummaryTreeWithStats>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -828,11 +583,7 @@ declare type current_as_old_for_Interface_ISummaryTreeWithStats =
  * typeValidation.broken:
  * "Interface_ITelemetryContext": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ITelemetryContext =
-	requireAssignableTo<
-		TypeOnly<old.ITelemetryContext>,
-		TypeOnly<current.ITelemetryContext>
-	>;
+declare type old_as_current_for_Interface_ITelemetryContext = requireAssignableTo<TypeOnly<old.ITelemetryContext>, TypeOnly<current.ITelemetryContext>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -841,11 +592,7 @@ declare type old_as_current_for_Interface_ITelemetryContext =
  * typeValidation.broken:
  * "Interface_ITelemetryContext": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ITelemetryContext =
-	requireAssignableTo<
-		TypeOnly<current.ITelemetryContext>,
-		TypeOnly<old.ITelemetryContext>
-	>;
+declare type current_as_old_for_Interface_ITelemetryContext = requireAssignableTo<TypeOnly<current.ITelemetryContext>, TypeOnly<old.ITelemetryContext>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -854,11 +601,7 @@ declare type current_as_old_for_Interface_ITelemetryContext =
  * typeValidation.broken:
  * "Interface_LocalAttributionKey": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_LocalAttributionKey =
-	requireAssignableTo<
-		TypeOnly<old.LocalAttributionKey>,
-		TypeOnly<current.LocalAttributionKey>
-	>;
+declare type old_as_current_for_Interface_LocalAttributionKey = requireAssignableTo<TypeOnly<old.LocalAttributionKey>, TypeOnly<current.LocalAttributionKey>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -867,11 +610,7 @@ declare type old_as_current_for_Interface_LocalAttributionKey =
  * typeValidation.broken:
  * "Interface_LocalAttributionKey": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_LocalAttributionKey =
-	requireAssignableTo<
-		TypeOnly<current.LocalAttributionKey>,
-		TypeOnly<old.LocalAttributionKey>
-	>;
+declare type current_as_old_for_Interface_LocalAttributionKey = requireAssignableTo<TypeOnly<current.LocalAttributionKey>, TypeOnly<old.LocalAttributionKey>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -880,11 +619,7 @@ declare type current_as_old_for_Interface_LocalAttributionKey =
  * typeValidation.broken:
  * "Interface_OpAttributionKey": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_OpAttributionKey =
-	requireAssignableTo<
-		TypeOnly<old.OpAttributionKey>,
-		TypeOnly<current.OpAttributionKey>
-	>;
+declare type old_as_current_for_Interface_OpAttributionKey = requireAssignableTo<TypeOnly<old.OpAttributionKey>, TypeOnly<current.OpAttributionKey>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -893,11 +628,7 @@ declare type old_as_current_for_Interface_OpAttributionKey =
  * typeValidation.broken:
  * "Interface_OpAttributionKey": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_OpAttributionKey =
-	requireAssignableTo<
-		TypeOnly<current.OpAttributionKey>,
-		TypeOnly<old.OpAttributionKey>
-	>;
+declare type current_as_old_for_Interface_OpAttributionKey = requireAssignableTo<TypeOnly<current.OpAttributionKey>, TypeOnly<old.OpAttributionKey>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -906,10 +637,7 @@ declare type current_as_old_for_Interface_OpAttributionKey =
  * typeValidation.broken:
  * "TypeAlias_AliasResult": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_AliasResult = requireAssignableTo<
-	TypeOnly<old.AliasResult>,
-	TypeOnly<current.AliasResult>
->;
+declare type old_as_current_for_TypeAlias_AliasResult = requireAssignableTo<TypeOnly<old.AliasResult>, TypeOnly<current.AliasResult>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -918,10 +646,7 @@ declare type old_as_current_for_TypeAlias_AliasResult = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_AliasResult": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_AliasResult = requireAssignableTo<
-	TypeOnly<current.AliasResult>,
-	TypeOnly<old.AliasResult>
->;
+declare type current_as_old_for_TypeAlias_AliasResult = requireAssignableTo<TypeOnly<current.AliasResult>, TypeOnly<old.AliasResult>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -930,10 +655,7 @@ declare type current_as_old_for_TypeAlias_AliasResult = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_AttributionKey": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_AttributionKey = requireAssignableTo<
-	TypeOnly<old.AttributionKey>,
-	TypeOnly<current.AttributionKey>
->;
+declare type old_as_current_for_TypeAlias_AttributionKey = requireAssignableTo<TypeOnly<old.AttributionKey>, TypeOnly<current.AttributionKey>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -942,10 +664,7 @@ declare type old_as_current_for_TypeAlias_AttributionKey = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_AttributionKey": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_AttributionKey = requireAssignableTo<
-	TypeOnly<current.AttributionKey>,
-	TypeOnly<old.AttributionKey>
->;
+declare type current_as_old_for_TypeAlias_AttributionKey = requireAssignableTo<TypeOnly<current.AttributionKey>, TypeOnly<old.AttributionKey>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -954,11 +673,7 @@ declare type current_as_old_for_TypeAlias_AttributionKey = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_CreateChildSummarizerNodeFn": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_CreateChildSummarizerNodeFn =
-	requireAssignableTo<
-		TypeOnly<old.CreateChildSummarizerNodeFn>,
-		TypeOnly<current.CreateChildSummarizerNodeFn>
-	>;
+declare type old_as_current_for_TypeAlias_CreateChildSummarizerNodeFn = requireAssignableTo<TypeOnly<old.CreateChildSummarizerNodeFn>, TypeOnly<current.CreateChildSummarizerNodeFn>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -967,11 +682,7 @@ declare type old_as_current_for_TypeAlias_CreateChildSummarizerNodeFn =
  * typeValidation.broken:
  * "TypeAlias_CreateChildSummarizerNodeFn": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_CreateChildSummarizerNodeFn =
-	requireAssignableTo<
-		TypeOnly<current.CreateChildSummarizerNodeFn>,
-		TypeOnly<old.CreateChildSummarizerNodeFn>
-	>;
+declare type current_as_old_for_TypeAlias_CreateChildSummarizerNodeFn = requireAssignableTo<TypeOnly<current.CreateChildSummarizerNodeFn>, TypeOnly<old.CreateChildSummarizerNodeFn>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -980,11 +691,7 @@ declare type current_as_old_for_TypeAlias_CreateChildSummarizerNodeFn =
  * typeValidation.broken:
  * "TypeAlias_CreateChildSummarizerNodeParam": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_CreateChildSummarizerNodeParam =
-	requireAssignableTo<
-		TypeOnly<old.CreateChildSummarizerNodeParam>,
-		TypeOnly<current.CreateChildSummarizerNodeParam>
-	>;
+declare type old_as_current_for_TypeAlias_CreateChildSummarizerNodeParam = requireAssignableTo<TypeOnly<old.CreateChildSummarizerNodeParam>, TypeOnly<current.CreateChildSummarizerNodeParam>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -993,11 +700,7 @@ declare type old_as_current_for_TypeAlias_CreateChildSummarizerNodeParam =
  * typeValidation.broken:
  * "TypeAlias_CreateChildSummarizerNodeParam": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_CreateChildSummarizerNodeParam =
-	requireAssignableTo<
-		TypeOnly<current.CreateChildSummarizerNodeParam>,
-		TypeOnly<old.CreateChildSummarizerNodeParam>
-	>;
+declare type current_as_old_for_TypeAlias_CreateChildSummarizerNodeParam = requireAssignableTo<TypeOnly<current.CreateChildSummarizerNodeParam>, TypeOnly<old.CreateChildSummarizerNodeParam>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1006,11 +709,7 @@ declare type current_as_old_for_TypeAlias_CreateChildSummarizerNodeParam =
  * typeValidation.broken:
  * "TypeAlias_FluidDataStoreRegistryEntry": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_FluidDataStoreRegistryEntry =
-	requireAssignableTo<
-		TypeOnly<old.FluidDataStoreRegistryEntry>,
-		TypeOnly<current.FluidDataStoreRegistryEntry>
-	>;
+declare type old_as_current_for_TypeAlias_FluidDataStoreRegistryEntry = requireAssignableTo<TypeOnly<old.FluidDataStoreRegistryEntry>, TypeOnly<current.FluidDataStoreRegistryEntry>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1019,11 +718,7 @@ declare type old_as_current_for_TypeAlias_FluidDataStoreRegistryEntry =
  * typeValidation.broken:
  * "TypeAlias_FluidDataStoreRegistryEntry": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_FluidDataStoreRegistryEntry =
-	requireAssignableTo<
-		TypeOnly<current.FluidDataStoreRegistryEntry>,
-		TypeOnly<old.FluidDataStoreRegistryEntry>
-	>;
+declare type current_as_old_for_TypeAlias_FluidDataStoreRegistryEntry = requireAssignableTo<TypeOnly<current.FluidDataStoreRegistryEntry>, TypeOnly<old.FluidDataStoreRegistryEntry>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1032,11 +727,7 @@ declare type current_as_old_for_TypeAlias_FluidDataStoreRegistryEntry =
  * typeValidation.broken:
  * "TypeAlias_InboundAttachMessage": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_InboundAttachMessage =
-	requireAssignableTo<
-		TypeOnly<old.InboundAttachMessage>,
-		TypeOnly<current.InboundAttachMessage>
-	>;
+declare type old_as_current_for_TypeAlias_InboundAttachMessage = requireAssignableTo<TypeOnly<old.InboundAttachMessage>, TypeOnly<current.InboundAttachMessage>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1045,11 +736,7 @@ declare type old_as_current_for_TypeAlias_InboundAttachMessage =
  * typeValidation.broken:
  * "TypeAlias_InboundAttachMessage": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_InboundAttachMessage =
-	requireAssignableTo<
-		TypeOnly<current.InboundAttachMessage>,
-		TypeOnly<old.InboundAttachMessage>
-	>;
+declare type current_as_old_for_TypeAlias_InboundAttachMessage = requireAssignableTo<TypeOnly<current.InboundAttachMessage>, TypeOnly<old.InboundAttachMessage>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1058,11 +745,7 @@ declare type current_as_old_for_TypeAlias_InboundAttachMessage =
  * typeValidation.broken:
  * "TypeAlias_ISequencedMessageEnvelope": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_ISequencedMessageEnvelope =
-	requireAssignableTo<
-		TypeOnly<old.ISequencedMessageEnvelope>,
-		TypeOnly<current.ISequencedMessageEnvelope>
-	>;
+declare type old_as_current_for_TypeAlias_ISequencedMessageEnvelope = requireAssignableTo<TypeOnly<old.ISequencedMessageEnvelope>, TypeOnly<current.ISequencedMessageEnvelope>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1071,11 +754,7 @@ declare type old_as_current_for_TypeAlias_ISequencedMessageEnvelope =
  * typeValidation.broken:
  * "TypeAlias_ISequencedMessageEnvelope": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_ISequencedMessageEnvelope =
-	requireAssignableTo<
-		TypeOnly<current.ISequencedMessageEnvelope>,
-		TypeOnly<old.ISequencedMessageEnvelope>
-	>;
+declare type current_as_old_for_TypeAlias_ISequencedMessageEnvelope = requireAssignableTo<TypeOnly<current.ISequencedMessageEnvelope>, TypeOnly<old.ISequencedMessageEnvelope>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1084,11 +763,7 @@ declare type current_as_old_for_TypeAlias_ISequencedMessageEnvelope =
  * typeValidation.broken:
  * "TypeAlias_MinimumVersionForCollab": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_MinimumVersionForCollab =
-	requireAssignableTo<
-		TypeOnly<old.MinimumVersionForCollab>,
-		TypeOnly<current.MinimumVersionForCollab>
-	>;
+declare type old_as_current_for_TypeAlias_MinimumVersionForCollab = requireAssignableTo<TypeOnly<old.MinimumVersionForCollab>, TypeOnly<current.MinimumVersionForCollab>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1097,11 +772,7 @@ declare type old_as_current_for_TypeAlias_MinimumVersionForCollab =
  * typeValidation.broken:
  * "TypeAlias_NamedFluidDataStoreRegistryEntries": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_NamedFluidDataStoreRegistryEntries =
-	requireAssignableTo<
-		TypeOnly<old.NamedFluidDataStoreRegistryEntries>,
-		TypeOnly<current.NamedFluidDataStoreRegistryEntries>
-	>;
+declare type old_as_current_for_TypeAlias_NamedFluidDataStoreRegistryEntries = requireAssignableTo<TypeOnly<old.NamedFluidDataStoreRegistryEntries>, TypeOnly<current.NamedFluidDataStoreRegistryEntries>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1110,11 +781,7 @@ declare type old_as_current_for_TypeAlias_NamedFluidDataStoreRegistryEntries =
  * typeValidation.broken:
  * "TypeAlias_NamedFluidDataStoreRegistryEntries": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_NamedFluidDataStoreRegistryEntries =
-	requireAssignableTo<
-		TypeOnly<current.NamedFluidDataStoreRegistryEntries>,
-		TypeOnly<old.NamedFluidDataStoreRegistryEntries>
-	>;
+declare type current_as_old_for_TypeAlias_NamedFluidDataStoreRegistryEntries = requireAssignableTo<TypeOnly<current.NamedFluidDataStoreRegistryEntries>, TypeOnly<old.NamedFluidDataStoreRegistryEntries>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1123,11 +790,7 @@ declare type current_as_old_for_TypeAlias_NamedFluidDataStoreRegistryEntries =
  * typeValidation.broken:
  * "TypeAlias_NamedFluidDataStoreRegistryEntry": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_NamedFluidDataStoreRegistryEntry =
-	requireAssignableTo<
-		TypeOnly<old.NamedFluidDataStoreRegistryEntry>,
-		TypeOnly<current.NamedFluidDataStoreRegistryEntry>
-	>;
+declare type old_as_current_for_TypeAlias_NamedFluidDataStoreRegistryEntry = requireAssignableTo<TypeOnly<old.NamedFluidDataStoreRegistryEntry>, TypeOnly<current.NamedFluidDataStoreRegistryEntry>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1136,11 +799,7 @@ declare type old_as_current_for_TypeAlias_NamedFluidDataStoreRegistryEntry =
  * typeValidation.broken:
  * "TypeAlias_NamedFluidDataStoreRegistryEntry": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_NamedFluidDataStoreRegistryEntry =
-	requireAssignableTo<
-		TypeOnly<current.NamedFluidDataStoreRegistryEntry>,
-		TypeOnly<old.NamedFluidDataStoreRegistryEntry>
-	>;
+declare type current_as_old_for_TypeAlias_NamedFluidDataStoreRegistryEntry = requireAssignableTo<TypeOnly<current.NamedFluidDataStoreRegistryEntry>, TypeOnly<old.NamedFluidDataStoreRegistryEntry>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1149,11 +808,7 @@ declare type current_as_old_for_TypeAlias_NamedFluidDataStoreRegistryEntry =
  * typeValidation.broken:
  * "TypeAlias_NamedFluidDataStoreRegistryEntry2": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_NamedFluidDataStoreRegistryEntry2 =
-	requireAssignableTo<
-		TypeOnly<old.NamedFluidDataStoreRegistryEntry2>,
-		TypeOnly<current.NamedFluidDataStoreRegistryEntry2>
-	>;
+declare type old_as_current_for_TypeAlias_NamedFluidDataStoreRegistryEntry2 = requireAssignableTo<TypeOnly<old.NamedFluidDataStoreRegistryEntry2>, TypeOnly<current.NamedFluidDataStoreRegistryEntry2>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1162,11 +817,7 @@ declare type old_as_current_for_TypeAlias_NamedFluidDataStoreRegistryEntry2 =
  * typeValidation.broken:
  * "TypeAlias_NamedFluidDataStoreRegistryEntry2": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_NamedFluidDataStoreRegistryEntry2 =
-	requireAssignableTo<
-		TypeOnly<current.NamedFluidDataStoreRegistryEntry2>,
-		TypeOnly<old.NamedFluidDataStoreRegistryEntry2>
-	>;
+declare type current_as_old_for_TypeAlias_NamedFluidDataStoreRegistryEntry2 = requireAssignableTo<TypeOnly<current.NamedFluidDataStoreRegistryEntry2>, TypeOnly<old.NamedFluidDataStoreRegistryEntry2>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1175,10 +826,7 @@ declare type current_as_old_for_TypeAlias_NamedFluidDataStoreRegistryEntry2 =
  * typeValidation.broken:
  * "TypeAlias_PackagePath": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_PackagePath = requireAssignableTo<
-	TypeOnly<old.PackagePath>,
-	TypeOnly<current.PackagePath>
->;
+declare type old_as_current_for_TypeAlias_PackagePath = requireAssignableTo<TypeOnly<old.PackagePath>, TypeOnly<current.PackagePath>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1187,10 +835,7 @@ declare type old_as_current_for_TypeAlias_PackagePath = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_PackagePath": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_PackagePath = requireAssignableTo<
-	TypeOnly<current.PackagePath>,
-	TypeOnly<old.PackagePath>
->;
+declare type current_as_old_for_TypeAlias_PackagePath = requireAssignableTo<TypeOnly<current.PackagePath>, TypeOnly<old.PackagePath>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1199,11 +844,7 @@ declare type current_as_old_for_TypeAlias_PackagePath = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_SummarizeInternalFn": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_SummarizeInternalFn =
-	requireAssignableTo<
-		TypeOnly<old.SummarizeInternalFn>,
-		TypeOnly<current.SummarizeInternalFn>
-	>;
+declare type old_as_current_for_TypeAlias_SummarizeInternalFn = requireAssignableTo<TypeOnly<old.SummarizeInternalFn>, TypeOnly<current.SummarizeInternalFn>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1212,11 +853,7 @@ declare type old_as_current_for_TypeAlias_SummarizeInternalFn =
  * typeValidation.broken:
  * "TypeAlias_SummarizeInternalFn": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_SummarizeInternalFn =
-	requireAssignableTo<
-		TypeOnly<current.SummarizeInternalFn>,
-		TypeOnly<old.SummarizeInternalFn>
-	>;
+declare type current_as_old_for_TypeAlias_SummarizeInternalFn = requireAssignableTo<TypeOnly<current.SummarizeInternalFn>, TypeOnly<old.SummarizeInternalFn>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1225,10 +862,7 @@ declare type current_as_old_for_TypeAlias_SummarizeInternalFn =
  * typeValidation.broken:
  * "TypeAlias_VisibilityState": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_VisibilityState = requireAssignableTo<
-	TypeOnly<old.VisibilityState>,
-	TypeOnly<current.VisibilityState>
->;
+declare type old_as_current_for_TypeAlias_VisibilityState = requireAssignableTo<TypeOnly<old.VisibilityState>, TypeOnly<current.VisibilityState>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1237,10 +871,7 @@ declare type old_as_current_for_TypeAlias_VisibilityState = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_VisibilityState": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_VisibilityState = requireAssignableTo<
-	TypeOnly<current.VisibilityState>,
-	TypeOnly<old.VisibilityState>
->;
+declare type current_as_old_for_TypeAlias_VisibilityState = requireAssignableTo<TypeOnly<current.VisibilityState>, TypeOnly<old.VisibilityState>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1249,11 +880,7 @@ declare type current_as_old_for_TypeAlias_VisibilityState = requireAssignableTo<
  * typeValidation.broken:
  * "Variable_IFluidDataStoreFactory": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_IFluidDataStoreFactory =
-	requireAssignableTo<
-		TypeOnly<typeof current.IFluidDataStoreFactory>,
-		TypeOnly<typeof old.IFluidDataStoreFactory>
-	>;
+declare type current_as_old_for_Variable_IFluidDataStoreFactory = requireAssignableTo<TypeOnly<typeof current.IFluidDataStoreFactory>, TypeOnly<typeof old.IFluidDataStoreFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1262,11 +889,7 @@ declare type current_as_old_for_Variable_IFluidDataStoreFactory =
  * typeValidation.broken:
  * "Variable_IFluidDataStoreRegistry": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_IFluidDataStoreRegistry =
-	requireAssignableTo<
-		TypeOnly<typeof current.IFluidDataStoreRegistry>,
-		TypeOnly<typeof old.IFluidDataStoreRegistry>
-	>;
+declare type current_as_old_for_Variable_IFluidDataStoreRegistry = requireAssignableTo<TypeOnly<typeof current.IFluidDataStoreRegistry>, TypeOnly<typeof old.IFluidDataStoreRegistry>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1275,7 +898,4 @@ declare type current_as_old_for_Variable_IFluidDataStoreRegistry =
  * typeValidation.broken:
  * "Variable_VisibilityState": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_VisibilityState = requireAssignableTo<
-	TypeOnly<typeof current.VisibilityState>,
-	TypeOnly<typeof old.VisibilityState>
->;
+declare type current_as_old_for_Variable_VisibilityState = requireAssignableTo<TypeOnly<typeof current.VisibilityState>, TypeOnly<typeof old.VisibilityState>>

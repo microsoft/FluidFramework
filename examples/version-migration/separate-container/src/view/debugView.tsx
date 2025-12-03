@@ -3,12 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	IMigrator,
-	MigrationState,
-} from "@fluid-example/migration-tools/alpha";
-import type React from "react";
-import { useEffect, useState } from "react";
+import type { IMigrator, MigrationState } from "@fluid-example/migration-tools/alpha";
+import React, { useEffect, useState } from "react";
 
 import type { IMigratableModel } from "../migratableModel.js";
 import type { IInventoryListAppModel } from "../modelInterfaces.js";
@@ -19,9 +15,7 @@ export interface IDebugViewProps {
 	getUrlForContainerId?: (containerId: string) => string;
 }
 
-export const DebugView: React.FC<IDebugViewProps> = (
-	props: IDebugViewProps,
-) => {
+export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
 	const { model, migrator, getUrlForContainerId } = props;
 
 	const [disableControls, setDisableControls] = useState<boolean>(
@@ -119,10 +113,7 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 			getUrlForContainerId === undefined ? (
 				migrationResult
 			) : (
-				<a
-					href={getUrlForContainerId(migrationResult)}
-					onClick={navToNewContainer}
-				>
+				<a href={getUrlForContainerId(migrationResult)} onClick={navToNewContainer}>
 					{migrationResult}
 				</a>
 			);
@@ -153,9 +144,7 @@ interface IControlsViewProps {
 	readonly disabled: boolean;
 }
 
-const ControlsView: React.FC<IControlsViewProps> = (
-	props: IControlsViewProps,
-) => {
+const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) => {
 	const { proposeVersion, addItem, disabled } = props;
 
 	const addSampleItems = (): void => {

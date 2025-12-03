@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type * as React from "react";
+import * as React from "react";
 
 export interface ICounterProps {
 	title: string;

@@ -58,10 +58,7 @@ export class SummarizeResultBuilder {
 		// submit summary and op broadcast has already been resolved as passed, only ack nack result will get modified.
 		this.summarySubmitted.resolve({ ...result, data: submitFailureResult });
 		this.summaryOpBroadcasted.resolve(result);
-		this.receivedSummaryAckOrNack.resolve({
-			...result,
-			data: nackSummaryResult,
-		});
+		this.receivedSummaryAckOrNack.resolve({ ...result, data: nackSummaryResult });
 	}
 	public build(): ISummarizeResults {
 		return {

@@ -3,18 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import type { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
-import { unreachableCase } from "@fluidframework/core-utils/internal";
-import { HttpAgent } from "agentkeepalive";
 import http from "http";
 
-import { LocalDriverApi, type LocalDriverApiType } from "./localDriverApi.js";
+import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { HttpAgent } from "agentkeepalive";
+
+import { LocalDriverApi, LocalDriverApiType } from "./localDriverApi.js";
 import { LocalServerTestDriver } from "./localServerTestDriver.js";
-import { OdspDriverApi, type OdspDriverApiType } from "./odspDriverApi.js";
+import { OdspDriverApi, OdspDriverApiType } from "./odspDriverApi.js";
 import { OdspTestDriver } from "./odspTestDriver.js";
 import {
 	RouterliciousDriverApi,
-	type RouterliciousDriverApiType,
+	RouterliciousDriverApiType,
 } from "./routerliciousDriverApi.js";
 import { RouterliciousTestDriver } from "./routerliciousTestDriver.js";
 import { TinyliciousTestDriver } from "./tinyliciousTestDriver.js";
@@ -48,9 +49,8 @@ http.globalAgent = new HttpAgent();
 /**
  * @internal
  */
-export type CreateFromEnvConfigParam<
-	T extends (config: any, ...args: any) => any,
-> = T extends (config: infer P, ...args: any) => any ? P : never;
+export type CreateFromEnvConfigParam<T extends (config: any, ...args: any) => any> =
+	T extends (config: infer P, ...args: any) => any ? P : never;
 
 /**
  * @internal
@@ -68,10 +68,7 @@ export async function createFluidTestDriver(
 	config?: FluidTestDriverConfig,
 	api: DriverApiType = DriverApi,
 ): Promise<
-	| LocalServerTestDriver
-	| TinyliciousTestDriver
-	| RouterliciousTestDriver
-	| OdspTestDriver
+	LocalServerTestDriver | TinyliciousTestDriver | RouterliciousTestDriver | OdspTestDriver
 > {
 	switch (fluidTestDriverType) {
 		case "local":
@@ -83,10 +80,7 @@ export async function createFluidTestDriver(
 
 		case "r11s":
 		case "routerlicious":
-			return RouterliciousTestDriver.createFromEnv(
-				config?.r11s,
-				api.RouterliciousDriverApi,
-			);
+			return RouterliciousTestDriver.createFromEnv(config?.r11s, api.RouterliciousDriverApi);
 
 		case "odsp":
 			return OdspTestDriver.createFromEnv(config?.odsp, api.OdspDriverApi);

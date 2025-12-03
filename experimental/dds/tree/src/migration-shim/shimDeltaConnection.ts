@@ -4,13 +4,13 @@
  */
 
 import { assert } from '@fluidframework/core-utils/internal';
-import type {
-	IChannelAttributes,
-	IDeltaConnection,
-	IDeltaHandler,
+import {
+	type IChannelAttributes,
+	type IDeltaConnection,
+	type IDeltaHandler,
 } from '@fluidframework/datastore-definitions/internal';
 
-import type { IShimDeltaHandler, IUnstampedContents } from './types.js';
+import { type IShimDeltaHandler, type IUnstampedContents } from './types.js';
 
 /**
  * Represents a connection to a Shim data store that can receive and submit deltas.

@@ -11,23 +11,12 @@
  * Current version: 2.74.0
  */
 
-import type {
-	FullType,
-	MinimalType,
-	requireAssignableTo,
-	TypeOnly,
-} from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/ordered-collection-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> =
-	| TypeOnly<T>
-	| MinimalType<T>
-	| FullType<T>
-	| typeof old
-	| typeof current
-	| requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -36,11 +25,7 @@ declare type MakeUnusedImportErrorsGoAway<T> =
  * typeValidation.broken:
  * "Class_ConsensusOrderedCollection": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_ConsensusOrderedCollection =
-	requireAssignableTo<
-		TypeOnly<old.ConsensusOrderedCollection>,
-		TypeOnly<current.ConsensusOrderedCollection>
-	>;
+declare type old_as_current_for_Class_ConsensusOrderedCollection = requireAssignableTo<TypeOnly<old.ConsensusOrderedCollection>, TypeOnly<current.ConsensusOrderedCollection>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -49,11 +34,7 @@ declare type old_as_current_for_Class_ConsensusOrderedCollection =
  * typeValidation.broken:
  * "Class_ConsensusOrderedCollection": {"backCompat": false}
  */
-declare type current_as_old_for_Class_ConsensusOrderedCollection =
-	requireAssignableTo<
-		TypeOnly<current.ConsensusOrderedCollection>,
-		TypeOnly<old.ConsensusOrderedCollection>
-	>;
+declare type current_as_old_for_Class_ConsensusOrderedCollection = requireAssignableTo<TypeOnly<current.ConsensusOrderedCollection>, TypeOnly<old.ConsensusOrderedCollection>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -62,10 +43,7 @@ declare type current_as_old_for_Class_ConsensusOrderedCollection =
  * typeValidation.broken:
  * "Class_ConsensusQueueClass": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_ConsensusQueueClass = requireAssignableTo<
-	TypeOnly<old.ConsensusQueueClass>,
-	TypeOnly<current.ConsensusQueueClass>
->;
+declare type old_as_current_for_Class_ConsensusQueueClass = requireAssignableTo<TypeOnly<old.ConsensusQueueClass>, TypeOnly<current.ConsensusQueueClass>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -74,10 +52,7 @@ declare type old_as_current_for_Class_ConsensusQueueClass = requireAssignableTo<
  * typeValidation.broken:
  * "Class_ConsensusQueueClass": {"backCompat": false}
  */
-declare type current_as_old_for_Class_ConsensusQueueClass = requireAssignableTo<
-	TypeOnly<current.ConsensusQueueClass>,
-	TypeOnly<old.ConsensusQueueClass>
->;
+declare type current_as_old_for_Class_ConsensusQueueClass = requireAssignableTo<TypeOnly<current.ConsensusQueueClass>, TypeOnly<old.ConsensusQueueClass>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -86,11 +61,7 @@ declare type current_as_old_for_Class_ConsensusQueueClass = requireAssignableTo<
  * typeValidation.broken:
  * "ClassStatics_ConsensusOrderedCollection": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_ConsensusOrderedCollection =
-	requireAssignableTo<
-		TypeOnly<typeof current.ConsensusOrderedCollection>,
-		TypeOnly<typeof old.ConsensusOrderedCollection>
-	>;
+declare type current_as_old_for_ClassStatics_ConsensusOrderedCollection = requireAssignableTo<TypeOnly<typeof current.ConsensusOrderedCollection>, TypeOnly<typeof old.ConsensusOrderedCollection>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -99,11 +70,7 @@ declare type current_as_old_for_ClassStatics_ConsensusOrderedCollection =
  * typeValidation.broken:
  * "ClassStatics_ConsensusQueueClass": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_ConsensusQueueClass =
-	requireAssignableTo<
-		TypeOnly<typeof current.ConsensusQueueClass>,
-		TypeOnly<typeof old.ConsensusQueueClass>
-	>;
+declare type current_as_old_for_ClassStatics_ConsensusQueueClass = requireAssignableTo<TypeOnly<typeof current.ConsensusQueueClass>, TypeOnly<typeof old.ConsensusQueueClass>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -112,10 +79,7 @@ declare type current_as_old_for_ClassStatics_ConsensusQueueClass =
  * typeValidation.broken:
  * "Enum_ConsensusResult": {"forwardCompat": false}
  */
-declare type old_as_current_for_Enum_ConsensusResult = requireAssignableTo<
-	TypeOnly<old.ConsensusResult>,
-	TypeOnly<current.ConsensusResult>
->;
+declare type old_as_current_for_Enum_ConsensusResult = requireAssignableTo<TypeOnly<old.ConsensusResult>, TypeOnly<current.ConsensusResult>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -124,10 +88,7 @@ declare type old_as_current_for_Enum_ConsensusResult = requireAssignableTo<
  * typeValidation.broken:
  * "Enum_ConsensusResult": {"backCompat": false}
  */
-declare type current_as_old_for_Enum_ConsensusResult = requireAssignableTo<
-	TypeOnly<current.ConsensusResult>,
-	TypeOnly<old.ConsensusResult>
->;
+declare type current_as_old_for_Enum_ConsensusResult = requireAssignableTo<TypeOnly<current.ConsensusResult>, TypeOnly<old.ConsensusResult>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -136,11 +97,7 @@ declare type current_as_old_for_Enum_ConsensusResult = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IConsensusOrderedCollection": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IConsensusOrderedCollection =
-	requireAssignableTo<
-		TypeOnly<old.IConsensusOrderedCollection>,
-		TypeOnly<current.IConsensusOrderedCollection>
-	>;
+declare type old_as_current_for_Interface_IConsensusOrderedCollection = requireAssignableTo<TypeOnly<old.IConsensusOrderedCollection>, TypeOnly<current.IConsensusOrderedCollection>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -149,11 +106,7 @@ declare type old_as_current_for_Interface_IConsensusOrderedCollection =
  * typeValidation.broken:
  * "Interface_IConsensusOrderedCollection": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IConsensusOrderedCollection =
-	requireAssignableTo<
-		TypeOnly<current.IConsensusOrderedCollection>,
-		TypeOnly<old.IConsensusOrderedCollection>
-	>;
+declare type current_as_old_for_Interface_IConsensusOrderedCollection = requireAssignableTo<TypeOnly<current.IConsensusOrderedCollection>, TypeOnly<old.IConsensusOrderedCollection>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -162,11 +115,7 @@ declare type current_as_old_for_Interface_IConsensusOrderedCollection =
  * typeValidation.broken:
  * "Interface_IConsensusOrderedCollectionEvents": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IConsensusOrderedCollectionEvents =
-	requireAssignableTo<
-		TypeOnly<old.IConsensusOrderedCollectionEvents<never>>,
-		TypeOnly<current.IConsensusOrderedCollectionEvents<never>>
-	>;
+declare type old_as_current_for_Interface_IConsensusOrderedCollectionEvents = requireAssignableTo<TypeOnly<old.IConsensusOrderedCollectionEvents<never>>, TypeOnly<current.IConsensusOrderedCollectionEvents<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -175,11 +124,7 @@ declare type old_as_current_for_Interface_IConsensusOrderedCollectionEvents =
  * typeValidation.broken:
  * "Interface_IConsensusOrderedCollectionEvents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IConsensusOrderedCollectionEvents =
-	requireAssignableTo<
-		TypeOnly<current.IConsensusOrderedCollectionEvents<never>>,
-		TypeOnly<old.IConsensusOrderedCollectionEvents<never>>
-	>;
+declare type current_as_old_for_Interface_IConsensusOrderedCollectionEvents = requireAssignableTo<TypeOnly<current.IConsensusOrderedCollectionEvents<never>>, TypeOnly<old.IConsensusOrderedCollectionEvents<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -188,11 +133,7 @@ declare type current_as_old_for_Interface_IConsensusOrderedCollectionEvents =
  * typeValidation.broken:
  * "Interface_IOrderedCollection": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IOrderedCollection =
-	requireAssignableTo<
-		TypeOnly<old.IOrderedCollection>,
-		TypeOnly<current.IOrderedCollection>
-	>;
+declare type old_as_current_for_Interface_IOrderedCollection = requireAssignableTo<TypeOnly<old.IOrderedCollection>, TypeOnly<current.IOrderedCollection>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -201,11 +142,7 @@ declare type old_as_current_for_Interface_IOrderedCollection =
  * typeValidation.broken:
  * "Interface_IOrderedCollection": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IOrderedCollection =
-	requireAssignableTo<
-		TypeOnly<current.IOrderedCollection>,
-		TypeOnly<old.IOrderedCollection>
-	>;
+declare type current_as_old_for_Interface_IOrderedCollection = requireAssignableTo<TypeOnly<current.IOrderedCollection>, TypeOnly<old.IOrderedCollection>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -214,10 +151,7 @@ declare type current_as_old_for_Interface_IOrderedCollection =
  * typeValidation.broken:
  * "Interface_ISnapshotable": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISnapshotable = requireAssignableTo<
-	TypeOnly<old.ISnapshotable<never>>,
-	TypeOnly<current.ISnapshotable<never>>
->;
+declare type old_as_current_for_Interface_ISnapshotable = requireAssignableTo<TypeOnly<old.ISnapshotable<never>>, TypeOnly<current.ISnapshotable<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -226,10 +160,7 @@ declare type old_as_current_for_Interface_ISnapshotable = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ISnapshotable": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISnapshotable = requireAssignableTo<
-	TypeOnly<current.ISnapshotable<never>>,
-	TypeOnly<old.ISnapshotable<never>>
->;
+declare type current_as_old_for_Interface_ISnapshotable = requireAssignableTo<TypeOnly<current.ISnapshotable<never>>, TypeOnly<old.ISnapshotable<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -238,11 +169,7 @@ declare type current_as_old_for_Interface_ISnapshotable = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_ConsensusCallback": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_ConsensusCallback =
-	requireAssignableTo<
-		TypeOnly<old.ConsensusCallback<never>>,
-		TypeOnly<current.ConsensusCallback<never>>
-	>;
+declare type old_as_current_for_TypeAlias_ConsensusCallback = requireAssignableTo<TypeOnly<old.ConsensusCallback<never>>, TypeOnly<current.ConsensusCallback<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -251,11 +178,7 @@ declare type old_as_current_for_TypeAlias_ConsensusCallback =
  * typeValidation.broken:
  * "TypeAlias_ConsensusCallback": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_ConsensusCallback =
-	requireAssignableTo<
-		TypeOnly<current.ConsensusCallback<never>>,
-		TypeOnly<old.ConsensusCallback<never>>
-	>;
+declare type current_as_old_for_TypeAlias_ConsensusCallback = requireAssignableTo<TypeOnly<current.ConsensusCallback<never>>, TypeOnly<old.ConsensusCallback<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -264,10 +187,7 @@ declare type current_as_old_for_TypeAlias_ConsensusCallback =
  * typeValidation.broken:
  * "TypeAlias_ConsensusQueue": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_ConsensusQueue = requireAssignableTo<
-	TypeOnly<old.ConsensusQueue>,
-	TypeOnly<current.ConsensusQueue>
->;
+declare type old_as_current_for_TypeAlias_ConsensusQueue = requireAssignableTo<TypeOnly<old.ConsensusQueue>, TypeOnly<current.ConsensusQueue>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -276,10 +196,7 @@ declare type old_as_current_for_TypeAlias_ConsensusQueue = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_ConsensusQueue": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_ConsensusQueue = requireAssignableTo<
-	TypeOnly<current.ConsensusQueue>,
-	TypeOnly<old.ConsensusQueue>
->;
+declare type current_as_old_for_TypeAlias_ConsensusQueue = requireAssignableTo<TypeOnly<current.ConsensusQueue>, TypeOnly<old.ConsensusQueue>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -288,7 +205,4 @@ declare type current_as_old_for_TypeAlias_ConsensusQueue = requireAssignableTo<
  * typeValidation.broken:
  * "Variable_ConsensusQueue": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_ConsensusQueue = requireAssignableTo<
-	TypeOnly<typeof current.ConsensusQueue>,
-	TypeOnly<typeof old.ConsensusQueue>
->;
+declare type current_as_old_for_Variable_ConsensusQueue = requireAssignableTo<TypeOnly<typeof current.ConsensusQueue>, TypeOnly<typeof old.ConsensusQueue>>

@@ -38,9 +38,7 @@ const clientCreds: OdspTestCredentials = {
  *
  * @returns OdspClient - An instance of the odsp-client.
  */
-function createOdspClient(
-	props: { configProvider?: IConfigProviderBase } = {},
-): OdspClient {
+function createOdspClient(props: { configProvider?: IConfigProviderBase } = {}): OdspClient {
 	// Configuration for connecting to the ODSP service.
 	const connectionProperties: OdspConnectionConfig = {
 		tokenProvider: new OdspTestTokenProvider(clientCreds), // Token provider using the provided test credentials.
@@ -79,11 +77,7 @@ describe("OdspClient", () => {
 	it("can create new ODSP container successfully", async () => {
 		const resourcesP = client.createContainer(schema);
 
-		await assert.doesNotReject(
-			resourcesP,
-			() => true,
-			"container cannot be created in ODSP",
-		);
+		await assert.doesNotReject(resourcesP, () => true, "container cannot be created in ODSP");
 	});
 
 	/**
@@ -103,13 +97,11 @@ describe("OdspClient", () => {
 	});
 
 	it("GC is disabled by default", async () => {
-		const { container: container_defaultConfig } =
-			await client.createContainer(schema);
+		const { container: container_defaultConfig } = await client.createContainer(schema);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const { sweepEnabled, throwOnTombstoneLoad } =
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-			(container_defaultConfig as any).container._runtime.garbageCollector
-				.configs;
+			(container_defaultConfig as any).container._runtime.garbageCollector.configs;
 
 		const expectedConfigs = {
 			sweepEnabled: false,

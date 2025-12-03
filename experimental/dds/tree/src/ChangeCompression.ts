@@ -3,25 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { copyPropertyIfDefined, fail, type Mutable, type ReplaceRecursive } from './Common.js';
+import { Mutable, ReplaceRecursive, copyPropertyIfDefined, fail } from './Common.js';
 import { convertStablePlaceIds, convertStableRangeIds } from './IdConversion.js';
-import type { DetachedSequenceId, NodeId, OpSpaceNodeId } from './Identifiers.js';
-import type { ContextualizedNodeIdNormalizer } from './NodeIdUtilities.js';
+import { DetachedSequenceId, NodeId, OpSpaceNodeId } from './Identifiers.js';
+import { ContextualizedNodeIdNormalizer } from './NodeIdUtilities.js';
+import { StringInterner } from './StringInterner.js';
+import { TreeCompressor } from './TreeCompressor.js';
 import {
-	type BuildInternal,
-	type BuildNodeInternal,
-	type ChangeInternal,
+	BuildInternal,
+	BuildNodeInternal,
+	ChangeInternal,
 	ChangeTypeInternal,
-	type CompressedBuildInternal,
-	type CompressedChangeInternal,
-	type CompressedPlaceholderTree,
-	type ConstraintInternal,
-	type DetachInternal,
-	type InsertInternal,
-	type SetValueInternal,
+	CompressedBuildInternal,
+	CompressedChangeInternal,
+	CompressedPlaceholderTree,
+	ConstraintInternal,
+	DetachInternal,
+	InsertInternal,
+	SetValueInternal,
 } from './persisted-types/index.js';
-import type { StringInterner } from './StringInterner.js';
-import type { TreeCompressor } from './TreeCompressor.js';
 
 /**
  * Encapsulates knowledge of how to compress/decompress a change into a compressed change

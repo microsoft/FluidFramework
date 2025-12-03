@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IDebugger } from "debug";
+import { IDebugger } from "debug";
 
 import { debug as parent } from "../debug.js";
 

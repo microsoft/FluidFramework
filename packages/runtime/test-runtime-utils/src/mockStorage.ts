@@ -5,13 +5,9 @@
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-import type { ISummaryTree } from "@fluidframework/driver-definitions";
-import type {
-	IBlob,
-	ISnapshotTree,
-	ITree,
-} from "@fluidframework/driver-definitions/internal";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
+import { IBlob, ITree, type ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
 import {
 	convertSummaryTreeToITree,
@@ -28,10 +24,7 @@ export class MockStorage implements IChannelStorageService {
 		return new MockStorage(tree);
 	}
 
-	private static readBlobCore(
-		tree: ITree | undefined,
-		paths: string[],
-	): IBlob | undefined {
+	private static readBlobCore(tree: ITree | undefined, paths: string[]): IBlob | undefined {
 		if (tree) {
 			for (const entry of tree.entries) {
 				if (entry.path === paths[0]) {

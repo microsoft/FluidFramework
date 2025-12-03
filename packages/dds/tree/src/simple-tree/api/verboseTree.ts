@@ -4,30 +4,29 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert, fail } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	aboveRootPlaceholder,
 	EmptyKey,
+	keyAsDetachedField,
+	LeafNodeStoredSchema,
 	type FieldKey,
 	type ITreeCursor,
 	type ITreeCursorSynchronous,
-	keyAsDetachedField,
-	LeafNodeStoredSchema,
 	type TreeNodeStoredSchema,
 } from "../../core/index.js";
+import { brand } from "../../util/index.js";
+import type { ImplicitFieldSchema } from "../fieldSchema.js";
+import type { Context, TreeLeafValue, TreeNodeSchema } from "../core/index.js";
 import {
-	type CursorAdapter,
 	isTreeValue,
 	stackTreeFieldCursor,
 	stackTreeNodeCursor,
+	type CursorAdapter,
 } from "../../feature-libraries/index.js";
-import { brand } from "../../util/index.js";
-import type { Context, TreeLeafValue, TreeNodeSchema } from "../core/index.js";
-import { getUnhydratedContext } from "../createContext.js";
-import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import {
 	booleanSchema,
 	handleSchema,
@@ -37,15 +36,16 @@ import {
 } from "../leafNodeSchema.js";
 import { isObjectNodeSchema } from "../node-kinds/index.js";
 import {
-	type CustomTreeNode,
 	customFromCursor,
-	type HandleConverter,
 	KeyEncodingOptions,
 	replaceHandles,
+	unknownTypeError,
+	type CustomTreeNode,
+	type HandleConverter,
 	type SchemalessParseOptions,
 	type TreeEncodingOptions,
-	unknownTypeError,
 } from "./customTree.js";
+import { getUnhydratedContext } from "../createContext.js";
 
 /**
  * Verbose encoding of a {@link TreeNode} or {@link TreeLeafValue}.
@@ -133,11 +133,9 @@ export function applySchemaToParserOptions(
 						encode: (type, key: FieldKey): string => {
 							// translate stored key into property key.
 							const simpleNodeSchema =
-								context.schema.get(brand(type)) ??
-								fail(0xb39 /* missing schema */);
+								context.schema.get(brand(type)) ?? fail(0xb39 /* missing schema */);
 							if (isObjectNodeSchema(simpleNodeSchema)) {
-								const propertyKey =
-									simpleNodeSchema.storedKeyToPropertyKey.get(key);
+								const propertyKey = simpleNodeSchema.storedKeyToPropertyKey.get(key);
 								if (propertyKey !== undefined) {
 									return propertyKey;
 								}
@@ -146,12 +144,9 @@ export function applySchemaToParserOptions(
 								// It's possible that the key, if we returned it unmodified, could point to some data
 								// (for example if looking up a key which is a stored key already when using property keys).
 								// Thus return an arbitrary key that was selected randomly, so should not exist on non-adversarial data:
-								const arbitrary =
-									"arbitrary unused key: fe71614a-bf3e-43b3-b7b0-4cef39538e90";
+								const arbitrary = "arbitrary unused key: fe71614a-bf3e-43b3-b7b0-4cef39538e90";
 								assert(
-									!simpleNodeSchema.storedKeyToPropertyKey.has(
-										brand(arbitrary),
-									),
+									!simpleNodeSchema.storedKeyToPropertyKey.has(brand(arbitrary)),
 									0xa13 /* arbitrarily selected unused key was actually used */,
 								);
 								return arbitrary;
@@ -204,9 +199,7 @@ export function fieldCursorFromVerbose(
 	);
 }
 
-function verboseTreeAdapter(
-	options: SchemalessParseOptions,
-): CursorAdapter<VerboseTree> {
+function verboseTreeAdapter(options: SchemalessParseOptions): CursorAdapter<VerboseTree> {
 	return {
 		value: (node: VerboseTree) => {
 			return isTreeValue(node) ? node : undefined;
@@ -253,10 +246,7 @@ function verboseTreeAdapter(
 					return [];
 			}
 		},
-		getFieldFromNode: (
-			node: VerboseTree,
-			key: FieldKey,
-		): readonly VerboseTree[] => {
+		getFieldFromNode: (node: VerboseTree, key: FieldKey): readonly VerboseTree[] => {
 			// Object.prototype.hasOwnProperty can return true for strings (ex: with key "0"), so we have to filter them out.
 			// Rather than just special casing strings, we can handle them with an early return for all primitives.
 			if (typeof node !== "object") {
@@ -276,11 +266,9 @@ function verboseTreeAdapter(
 			}
 
 			const convertedKey =
-				options.keyConverter === undefined
-					? key
-					: options.keyConverter.encode(node.type, key);
+				options.keyConverter === undefined ? key : options.keyConverter.encode(node.type, key);
 
-			if (Object.hasOwn(node.fields, convertedKey)) {
+			if (Object.prototype.hasOwnProperty.call(node.fields, convertedKey)) {
 				const field = node.fields[convertedKey];
 				return field === undefined ? [] : [field];
 			}
@@ -323,8 +311,7 @@ function verboseFromCursorInner(
 		verboseFromCursorInner,
 	);
 	const nodeSchema =
-		storedSchema.get(reader.type) ??
-		fail(0xb3c /* missing schema for type in cursor */);
+		storedSchema.get(reader.type) ?? fail(0xb3c /* missing schema for type in cursor */);
 	if (nodeSchema instanceof LeafNodeStoredSchema) {
 		return fields as TreeLeafValue;
 	}

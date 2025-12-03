@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export type IRect = Readonly<
-	Pick<ClientRect | DOMRect, "left" | "top" | "right" | "bottom">
->;
+export type IRect = Readonly<Pick<ClientRect | DOMRect, "left" | "top" | "right" | "bottom">>;
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Rect {

@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
 import { type AsyncPriorityQueue, priorityQueue } from "async";
+
+import * as assert from "assert";
 import registerDebug from "debug";
 import type { BuildContext } from "../buildContext";
-import type { BuildPackage } from "../buildGraph";
+import { type BuildPackage } from "../buildGraph";
 import { BuildResult } from "../buildResult";
 import { options } from "../options";
 import type { LeafTask } from "./leaf/leafTask";
@@ -74,11 +75,7 @@ export abstract class Task {
 		// This function should only be called by task with task names
 		assert.notStrictEqual(this.taskName, undefined);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this.dependentTasks = this.node.getDependsOnTasks(
-			this,
-			this.taskName!,
-			pendingInitDep,
-		);
+		this.dependentTasks = this.node.getDependsOnTasks(this, this.taskName!, pendingInitDep);
 	}
 
 	// Add dependent task. For group tasks, propagate to unnamed subtask only if it's a default dependency
@@ -160,20 +157,14 @@ export abstract class Task {
 
 	public abstract initializeDependentLeafTasks(): void;
 	public abstract collectLeafTasks(leafTasks: Set<LeafTask>);
-	public abstract addDependentLeafTasks(
-		dependentTasks: Iterable<LeafTask>,
-	): void;
+	public abstract addDependentLeafTasks(dependentTasks: Iterable<LeafTask>): void;
 	public abstract initializeWeight(): void;
 
 	protected abstract checkIsUpToDate(): Promise<boolean>;
-	protected abstract runTask(
-		q: AsyncPriorityQueue<TaskExec>,
-	): Promise<BuildResult>;
+	protected abstract runTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult>;
 
 	public get forced() {
-		return (
-			options.force && (options.matchedOnly !== true || this.package.matched)
-		);
+		return options.force && (options.matchedOnly !== true || this.package.matched);
 	}
 
 	protected traceExec(msg: string) {

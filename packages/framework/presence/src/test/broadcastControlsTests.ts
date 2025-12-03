@@ -19,7 +19,10 @@ const testDefaultAllowableUpdateLatencyMs = 100;
  * @param createControls - Function to create the `controls` provider object
  */
 export function addControlsTests(
-	createControls: (presence: Presence, controlSettings?: BroadcastControlSettings) => { controls: BroadcastControls },
+	createControls: (
+		presence: Presence,
+		controlSettings?: BroadcastControlSettings,
+	) => { controls: BroadcastControls },
 ): void {
 	describe("controls allowableUpdateLatencyMs", () => {
 		it("can be specified during create", () => {
@@ -32,7 +35,10 @@ export function addControlsTests(
 			});
 
 			// Verify
-			assert.equal(controlsProvider.controls.allowableUpdateLatencyMs, testDefaultAllowableUpdateLatencyMs);
+			assert.equal(
+				controlsProvider.controls.allowableUpdateLatencyMs,
+				testDefaultAllowableUpdateLatencyMs,
+			);
 		});
 
 		it("can be changed", () => {

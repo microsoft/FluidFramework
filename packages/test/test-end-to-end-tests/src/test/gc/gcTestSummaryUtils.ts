@@ -3,32 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainer } from "@fluidframework/container-definitions/internal";
+import { strict as assert } from "assert";
+
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
+	IGarbageCollectionState,
 	concatGarbageCollectionStates,
-	type IGarbageCollectionState,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/gc";
-import type {
-	IFluidHandleContext,
-	IFluidHandleInternal,
-} from "@fluidframework/core-interfaces/internal";
 import {
-	type ISummaryTree,
-	SummaryType,
-} from "@fluidframework/driver-definitions";
+	IFluidHandleContext,
+	type IFluidHandleInternal,
+} from "@fluidframework/core-interfaces/internal";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import {
 	gcBlobPrefix,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
 } from "@fluidframework/runtime-definitions/internal";
-import {
-	FluidSerializer,
-	parseHandles,
-} from "@fluidframework/shared-object-base/internal";
+import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base/internal";
 import { waitForContainerConnection } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
 
 /**
  * Returns the garbage collection state from the GC tree in the summary.
@@ -57,18 +52,13 @@ export function getGCStateFromSummary(
 		}
 
 		const gcBlob = rootGCTree.tree[key];
-		assert(
-			gcBlob !== undefined,
-			"getGCStateFromSummary: GC state not available",
-		);
+		assert(gcBlob !== undefined, "getGCStateFromSummary: GC state not available");
 		assert.equal(
 			gcBlob.type,
 			SummaryType.Blob,
 			"getGCStateFromSummary: GC state is not a blob",
 		);
-		const gcState = JSON.parse(
-			gcBlob.content as string,
-		) as IGarbageCollectionState;
+		const gcState = JSON.parse(gcBlob.content as string) as IGarbageCollectionState;
 		// Merge the GC state of this blob into the root GC state.
 		rootGCState = concatGarbageCollectionStates(rootGCState, gcState);
 	}
@@ -82,15 +72,8 @@ export function getGCStateFromSummary(
  */
 export function getGCFeatureFromSummary(summaryTree: ISummaryTree): number {
 	const metadata = summaryTree.tree[".metadata"];
-	assert.equal(
-		metadata.type,
-		SummaryType.Blob,
-		"Expected to find metadata blob in summary",
-	);
-	assert(
-		typeof metadata.content === "string",
-		"Expected metadata to be a string",
-	);
+	assert.equal(metadata.type, SummaryType.Blob, "Expected to find metadata blob in summary");
+	assert(typeof metadata.content === "string", "Expected metadata to be a string");
 	const content = JSON.parse(metadata.content) as { gcFeature: number };
 	return content.gcFeature;
 }
@@ -133,9 +116,7 @@ export function getGCTombstoneStateFromSummary(
  * @param summaryTree - The summary tree that contains the GC summary.
  * @returns The sweep data if it exists, undefined otherwise.
  */
-export function getGCDeletedStateFromSummary(
-	summaryTree: ISummaryTree,
-): string[] | undefined {
+export function getGCDeletedStateFromSummary(summaryTree: ISummaryTree): string[] | undefined {
 	const rootGCTree = summaryTree.tree[gcTreeKey];
 	if (rootGCTree === undefined) {
 		return undefined;
@@ -159,9 +140,7 @@ export function getGCDeletedStateFromSummary(
 	return JSON.parse(sweepBlob.content as string) as string[];
 }
 
-export const waitForContainerWriteModeConnectionWrite = async (
-	container: IContainer,
-) => {
+export const waitForContainerWriteModeConnectionWrite = async (container: IContainer) => {
 	const resolveIfActive = (res: () => void) => {
 		if (container.deltaManager.active) {
 			res();

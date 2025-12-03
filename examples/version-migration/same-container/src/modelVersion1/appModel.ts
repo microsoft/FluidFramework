@@ -8,7 +8,7 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import { ConnectionState } from "@fluidframework/container-loader";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 
 import { parseStringDataVersionOne, readVersion } from "../dataTransform.js";
 import type {
@@ -48,9 +48,7 @@ export class InventoryListAppModel
 	public readonly supportsDataFormat = (
 		initialData: unknown,
 	): initialData is InventoryListAppModelExportFormat1 => {
-		return (
-			typeof initialData === "string" && readVersion(initialData) === "one"
-		);
+		return typeof initialData === "string" && readVersion(initialData) === "one";
 	};
 
 	// Ideally, prevent this from being called after the container has been modified at all -- i.e. only support
@@ -70,15 +68,14 @@ export class InventoryListAppModel
 		}
 	};
 
-	public readonly exportData =
-		async (): Promise<InventoryListAppModelExportFormat1> => {
-			// Exports in version:one format (using ':' delimiter between name/quantity)
-			const inventoryItems = this.inventoryList.getItems();
-			const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
-				return `${inventoryItem.name.getText()}:${inventoryItem.quantity.toString()}`;
-			});
-			return `version:one\n${inventoryItemStrings.join("\n")}`;
-		};
+	public readonly exportData = async (): Promise<InventoryListAppModelExportFormat1> => {
+		// Exports in version:one format (using ':' delimiter between name/quantity)
+		const inventoryItems = this.inventoryList.getItems();
+		const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
+			return `${inventoryItem.name.getText()}:${inventoryItem.quantity.toString()}`;
+		});
+		return `version:one\n${inventoryItemStrings.join("\n")}`;
+	};
 
 	public connected() {
 		return this.container.connectionState === ConnectionState.Connected;

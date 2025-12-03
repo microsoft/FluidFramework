@@ -8,6 +8,6 @@
 		"types": ["node"],
 		// TODO: AB#34169 Enable noUncheckedIndexedAccess for packages/tools/fetch-tool
 		"noUncheckedIndexedAccess": false,
-		"exactOptionalPropertyTypes": false
-	}
+		"exactOptionalPropertyTypes": false,
+	},
 }

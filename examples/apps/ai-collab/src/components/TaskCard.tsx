@@ -6,19 +6,15 @@
 "use client";
 
 import {
+	aiCollab,
 	type AiCollabErrorResponse,
 	type AiCollabSuccessResponse,
 	type ApplyEditSuccess,
-	aiCollab,
-	type Diff,
 	type ModifyDiff,
 	type MoveDiff,
+	type Diff,
 } from "@fluidframework/ai-collab/alpha";
-import {
-	TreeAlpha,
-	type TreeBranch,
-	type TreeViewAlpha,
-} from "@fluidframework/tree/alpha";
+import { TreeAlpha, type TreeBranch, type TreeViewAlpha } from "@fluidframework/tree/alpha";
 import { Icon } from "@iconify/react";
 import { LoadingButton } from "@mui/lab";
 import {
@@ -39,17 +35,17 @@ import {
 } from "@mui/material";
 import { Tree, type TreeView } from "fluid-framework";
 import { useSnackbar } from "notistack";
-import React, { type ReactNode, type SetStateAction, useState } from "react";
+import React, { useState, type ReactNode, type SetStateAction } from "react";
 
 import { getOpenAiClient } from "@/infra/openAiClient";
 import {
-	aiCollabLlmTreeNodeValidator,
-	SharedTreeAppState,
 	type SharedTreeTask,
 	type SharedTreeTaskGroup,
+	SharedTreeAppState,
 	TaskPriorities,
 	type TaskPriority,
 	TaskStatuses,
+	aiCollabLlmTreeNodeValidator,
 } from "@/types/sharedTreeAppSchema";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 
@@ -70,17 +66,12 @@ export function TaskCard(props: {
 	const [diffOldValue, setDiffOldValue] = useState<React.ReactNode>();
 	const [isAiTaskRunning, setIsAiTaskRunning] = useState<boolean>(false);
 
-	useSharedTreeRerender({
-		sharedTreeNode: props.sharedTreeTask,
-		logId: "TaskCard",
-	});
+	useSharedTreeRerender({ sharedTreeNode: props.sharedTreeTask, logId: "TaskCard" });
 
 	const [diffs, setdiffs] = useState(props.diffs);
 
 	const deleteTask = (): void => {
-		const taskIndex = props.sharedTreeTaskGroup.tasks.indexOf(
-			props.sharedTreeTask,
-		);
+		const taskIndex = props.sharedTreeTaskGroup.tasks.indexOf(props.sharedTreeTask);
 		props.sharedTreeTaskGroup.tasks.removeAt(taskIndex);
 	};
 
@@ -103,15 +94,11 @@ export function TaskCard(props: {
 
 		if (diff.type === "modify") {
 			if (typeof diff.nodePath[0]?.parentField !== "string") {
-				throw new TypeError(
-					"Invalid 'modify' diff. Expected 'parentField' to be a string.",
-				);
+				throw new TypeError("Invalid 'modify' diff. Expected 'parentField' to be a string.");
 			}
 			const targetField = diff.nodePath[0]?.parentField;
 			if (targetField === undefined) {
-				console.error(
-					"Received modify ui diff but could not identify target field",
-				);
+				console.error("Received modify ui diff but could not identify target field");
 				continue;
 			}
 
@@ -120,9 +107,7 @@ export function TaskCard(props: {
 
 		if (diff.type === "move" && diff.moveType === "move-single") {
 			if (typeof diff.sourceNodePath[0]?.parentField !== "number") {
-				throw new TypeError(
-					"Invalid 'move' diff. Expected 'parentField' to be a number.",
-				);
+				throw new TypeError("Invalid 'move' diff. Expected 'parentField' to be a number.");
 			}
 			fieldDifferences.moved = {
 				diff,
@@ -190,61 +175,56 @@ export function TaskCard(props: {
 
 		try {
 			// 1. Get the current branch, the new branch and associated task to be used for ai collaboration
-			const { currentBranch, newBranchTree, newBranchTask } =
-				getNewSharedTreeBranchAndTask(
-					props.sharedTreeBranch.root,
-					props.sharedTreeTask,
-				);
+			const { currentBranch, newBranchTree, newBranchTask } = getNewSharedTreeBranchAndTask(
+				props.sharedTreeBranch.root,
+				props.sharedTreeTask,
+			);
 			console.log("ai-collab Branch Task BEFORE:", { ...newBranchTask });
 
 			// 2. execute the ai collaboration
-			const response: AiCollabSuccessResponse | AiCollabErrorResponse =
-				await aiCollab({
-					openAI: {
-						client: getOpenAiClient(),
-						modelName: "gpt-4o",
-					},
-					treeNode: newBranchTask,
-					prompt: {
-						systemRoleContext:
-							"You are a manager that is helping out with a project management tool. You have been asked to edit a specific task.",
-						userAsk: userRequest,
-					},
-					planningStep: true,
-					finalReviewStep: true,
-					validator: aiCollabLlmTreeNodeValidator,
-					debugEventLogHandler: (event) => {
-						console.log(`Received event: ${event.eventName}`);
-						if (
-							event.eventName === "APPLIED_EDIT_SUCCESS" ||
-							event.eventName === "APPLIED_EDIT_FAILURE"
-						) {
-							console.log(
-								`${
-									event.eventName === "APPLIED_EDIT_SUCCESS"
-										? "Succesfully applied"
-										: "Failed to appply"
-								} tree edit: ${JSON.stringify(
-									(event as unknown as ApplyEditSuccess).edit,
-									undefined,
-									2,
-								)}`,
-							);
-						}
-					},
-				});
+			const response: AiCollabSuccessResponse | AiCollabErrorResponse = await aiCollab({
+				openAI: {
+					client: getOpenAiClient(),
+					modelName: "gpt-4o",
+				},
+				treeNode: newBranchTask,
+				prompt: {
+					systemRoleContext:
+						"You are a manager that is helping out with a project management tool. You have been asked to edit a specific task.",
+					userAsk: userRequest,
+				},
+				planningStep: true,
+				finalReviewStep: true,
+				validator: aiCollabLlmTreeNodeValidator,
+				debugEventLogHandler: (event) => {
+					console.log(`Received event: ${event.eventName}`);
+					if (
+						event.eventName === "APPLIED_EDIT_SUCCESS" ||
+						event.eventName === "APPLIED_EDIT_FAILURE"
+					) {
+						console.log(
+							`${
+								event.eventName === "APPLIED_EDIT_SUCCESS"
+									? "Succesfully applied"
+									: "Failed to appply"
+							} tree edit: ${JSON.stringify(
+								(event as unknown as ApplyEditSuccess).edit,
+								undefined,
+								2,
+							)}`,
+						);
+					}
+				},
+			});
 
 			if (response.status !== "success") {
 				throw new Error(response.errorMessage);
 			}
 
-			enqueueSnackbar(
-				`Copilot: I've completed your request - "${userRequest}"`,
-				{
-					variant: "success",
-					autoHideDuration: 5000,
-				},
-			);
+			enqueueSnackbar(`Copilot: I've completed your request - "${userRequest}"`, {
+				variant: "success",
+				autoHideDuration: 5000,
+			});
 			console.log("ai-collab Branch Task AFTER:", { ...newBranchTask });
 			console.log("ai-collab Branch Task differences:", response.diffs);
 
@@ -277,17 +257,9 @@ export function TaskCard(props: {
 			key={`${props.sharedTreeTask.title}`}
 		>
 			{fieldDifferences.isNewCreation && (
-				<Box
-					component="span"
-					sx={{ position: "absolute", top: -15, left: -7.5 }}
-				>
+				<Box component="span" sx={{ position: "absolute", top: -15, left: -7.5 }}>
 					<IconButton>
-						<Icon
-							icon="clarity:new-solid"
-							width={45}
-							height={45}
-							color="blue"
-						/>
+						<Icon icon="clarity:new-solid" width={45} height={45} color="blue" />
 					</IconButton>
 				</Box>
 			)}
@@ -297,12 +269,7 @@ export function TaskCard(props: {
 					<Tooltip
 						title={`This was moved from index: ${fieldDifferences.moved.originalIndex}`}
 					>
-						<Icon
-							icon="material-symbols:move-down"
-							width={30}
-							height={30}
-							color="blue"
-						/>
+						<Icon icon="material-symbols:move-down" width={30} height={30} color="blue" />
 					</Tooltip>
 				</Box>
 			)}
@@ -314,11 +281,7 @@ export function TaskCard(props: {
 			</Box>
 
 			<Box mb={2}>
-				<Stack
-					direction="row"
-					justifyContent="space-between"
-					alignItems="center"
-				>
+				<Stack direction="row" justifyContent="space-between" alignItems="center">
 					<Box>
 						<Typography variant="h1" fontSize={24}>
 							{props.sharedTreeTask.title}
@@ -342,12 +305,7 @@ export function TaskCard(props: {
 							>
 								<Box
 									component="form"
-									sx={{
-										display: "flex",
-										width: "500px",
-										alignItems: "center",
-										p: 2,
-									}}
+									sx={{ display: "flex", width: "500px", alignItems: "center", p: 2 }}
 									// eslint-disable-next-line @typescript-eslint/no-misused-promises
 									onSubmit={async (e) => {
 										e.preventDefault();
@@ -437,9 +395,7 @@ export function TaskCard(props: {
 							sx: {
 								alignItems: "flex-start",
 								backgroundColor:
-									fieldDifferences.changes.description === undefined
-										? "white"
-										: "#a4dbfc",
+									fieldDifferences.changes.description === undefined ? "white" : "#a4dbfc",
 							},
 						},
 						inputLabel: {
@@ -451,8 +407,7 @@ export function TaskCard(props: {
 					<IconButton
 						onClick={(event) => {
 							setDiffOldValue(
-								fieldDifferences.changes.description
-									?.oldValue as SetStateAction<ReactNode>,
+								fieldDifferences.changes.description?.oldValue as SetStateAction<ReactNode>,
 							);
 							setDiffOldValuePopoverAnchor(event.currentTarget);
 						}}
@@ -475,15 +430,12 @@ export function TaskCard(props: {
 								value={props.sharedTreeTask.priority}
 								label="Priority"
 								onChange={(e) => {
-									props.sharedTreeTask.priority = e.target
-										.value as TaskPriority;
+									props.sharedTreeTask.priority = e.target.value as TaskPriority;
 								}}
 								inputProps={{
 									sx: {
 										backgroundColor:
-											fieldDifferences.changes.priority === undefined
-												? "white"
-												: "#a4dbfc",
+											fieldDifferences.changes.priority === undefined ? "white" : "#a4dbfc",
 									},
 								}}
 								size="small"
@@ -498,11 +450,7 @@ export function TaskCard(props: {
 								>
 									<Typography color="orange"> Medium </Typography>
 								</MenuItem>
-								<MenuItem
-									value={TaskPriorities.HIGH}
-									color="red"
-									key={TaskPriorities.HIGH}
-								>
+								<MenuItem value={TaskPriorities.HIGH} color="red" key={TaskPriorities.HIGH}>
 									<Typography color="red"> High </Typography>
 								</MenuItem>
 							</Select>
@@ -512,17 +460,12 @@ export function TaskCard(props: {
 							<IconButton
 								onClick={(event) => {
 									setDiffOldValue(
-										fieldDifferences.changes.priority
-											?.oldValue as SetStateAction<ReactNode>,
+										fieldDifferences.changes.priority?.oldValue as SetStateAction<ReactNode>,
 									);
 									setDiffOldValuePopoverAnchor(event.currentTarget);
 								}}
 							>
-								<Icon
-									icon="clarity:info-standard-line"
-									width={20}
-									height={20}
-								/>
+								<Icon icon="clarity:info-standard-line" width={20} height={20} />
 							</IconButton>
 						)}
 					</Stack>
@@ -542,9 +485,7 @@ export function TaskCard(props: {
 								inputProps={{
 									sx: {
 										backgroundColor:
-											fieldDifferences.changes.status === undefined
-												? "white"
-												: "#a4dbfc",
+											fieldDifferences.changes.status === undefined ? "white" : "#a4dbfc",
 									},
 								}}
 							>
@@ -558,11 +499,7 @@ export function TaskCard(props: {
 								>
 									<Typography color="blue"> In Progress </Typography>
 								</MenuItem>
-								<MenuItem
-									value={TaskStatuses.DONE}
-									color="red"
-									key={TaskStatuses.DONE}
-								>
+								<MenuItem value={TaskStatuses.DONE} color="red" key={TaskStatuses.DONE}>
 									<Typography color="green"> Done </Typography>
 								</MenuItem>
 							</Select>
@@ -581,16 +518,12 @@ export function TaskCard(props: {
 								id="select-assignee-id"
 								value={props.sharedTreeTask.assignee}
 								label="Assignee"
-								onChange={(e) =>
-									(props.sharedTreeTask.assignee = e.target.value)
-								}
+								onChange={(e) => (props.sharedTreeTask.assignee = e.target.value)}
 								size="small"
 								inputProps={{
 									sx: {
 										backgroundColor:
-											fieldDifferences.changes.assignee === undefined
-												? "white"
-												: "#a4dbfc",
+											fieldDifferences.changes.assignee === undefined ? "white" : "#a4dbfc",
 									},
 								}}
 							>
@@ -608,17 +541,12 @@ export function TaskCard(props: {
 							<IconButton
 								onClick={(event) => {
 									setDiffOldValue(
-										fieldDifferences.changes.assignee
-											?.oldValue as SetStateAction<ReactNode>,
+										fieldDifferences.changes.assignee?.oldValue as SetStateAction<ReactNode>,
 									);
 									setDiffOldValuePopoverAnchor(event.currentTarget);
 								}}
 							>
-								<Icon
-									icon="clarity:info-standard-line"
-									width={20}
-									height={20}
-								/>
+								<Icon icon="clarity:info-standard-line" width={20} height={20} />
 							</IconButton>
 						)}
 					</Stack>

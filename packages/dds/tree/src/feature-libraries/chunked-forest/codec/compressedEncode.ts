@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	assert,
-	fail,
-	unreachableCase,
-} from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
@@ -15,12 +11,12 @@ import {
 	type FieldKey,
 	type FieldKindData,
 	type FieldKindIdentifier,
-	forEachNode,
 	type ITreeCursorSynchronous,
 	type TreeChunk,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type Value,
+	forEachNode,
 } from "../../../core/index.js";
 import { getOrCreate } from "../../../util/index.js";
 
@@ -30,7 +26,6 @@ import {
 	Shape as ShapeGeneric,
 	updateShapesAndIdentifiersEncoding,
 } from "./chunkEncodingGeneric.js";
-import type { IncrementalEncoder } from "./codecs.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import {
 	type EncodedAnyShape,
@@ -41,6 +36,7 @@ import {
 	FieldBatchFormatVersion,
 	SpecialField,
 } from "./format.js";
+import type { IncrementalEncoder } from "./codecs.js";
 
 /**
  * Encode data from `FieldBatch` into an `EncodedFieldBatch`.
@@ -141,9 +137,7 @@ export function asFieldEncoder(encoder: NodeEncoder): FieldEncoder {
 			context: EncoderContext,
 			outputBuffer: BufferFormat,
 		): void {
-			forEachNode(cursor, () =>
-				encoder.encodeNode(cursor, context, outputBuffer),
-			);
+			forEachNode(cursor, () => encoder.encodeNode(cursor, context, outputBuffer));
 		},
 		shape: encoder.shape,
 	};
@@ -338,9 +332,7 @@ export class InlineArrayEncoder
 		return {
 			b: {
 				length: this.length,
-				shape:
-					shapes.valueToIndex.get(this.inner.shape) ??
-					fail(0xb4e /* missing shape */),
+				shape: shapes.valueToIndex.get(this.inner.shape) ?? fail(0xb4e /* missing shape */),
 			},
 		};
 	}
@@ -397,9 +389,7 @@ export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> {
 export class NestedArrayEncoder implements FieldEncoder {
 	public constructor(
 		public readonly innerEncoder: NodeEncoder,
-		public readonly shape: NestedArrayShape = new NestedArrayShape(
-			innerEncoder.shape,
-		),
+		public readonly shape: NestedArrayShape = new NestedArrayShape(innerEncoder.shape),
 	) {}
 
 	public encodeField(
@@ -501,27 +491,15 @@ export function encodeValue(
 		}
 	} else {
 		if (shape === true) {
-			assert(
-				value !== undefined,
-				0x78d /* required value must not be missing */,
-			);
+			assert(value !== undefined, 0x78d /* required value must not be missing */);
 			outputBuffer.push(value);
 		} else if (shape === false) {
-			assert(
-				value === undefined,
-				0x73f /* incompatible value shape: expected no value */,
-			);
+			assert(value === undefined, 0x73f /* incompatible value shape: expected no value */);
 		} else if (Array.isArray(shape)) {
-			assert(
-				shape.length === 1,
-				0x740 /* expected a single constant for value */,
-			);
+			assert(shape.length === 1, 0x740 /* expected a single constant for value */);
 		} else if (shape === SpecialField.Identifier) {
 			// This case is a special case handling the encoding of identifier fields.
-			assert(
-				value !== undefined,
-				0x998 /* required value must not be missing */,
-			);
+			assert(value !== undefined, 0x998 /* required value must not be missing */);
 			outputBuffer.push(value);
 		} else {
 			// EncodedCounter case:
@@ -539,19 +517,13 @@ export function encodeValue(
  * - Cached in this object for future reuse such that all equivalent Shapes are deduplicated.
  */
 export class EncoderContext implements NodeEncodeBuilder, FieldEncodeBuilder {
-	private readonly nodeEncodersFromSchema: Map<
-		TreeNodeSchemaIdentifier,
-		NodeEncoder
-	> = new Map();
-	private readonly nestedArrayEncoders: Map<NodeEncoder, NestedArrayEncoder> =
+	private readonly nodeEncodersFromSchema: Map<TreeNodeSchemaIdentifier, NodeEncoder> =
 		new Map();
+	private readonly nestedArrayEncoders: Map<NodeEncoder, NestedArrayEncoder> = new Map();
 	public constructor(
 		private readonly nodeEncoderFromPolicy: NodeEncoderPolicy,
 		private readonly fieldEncoderFromPolicy: FieldEncoderPolicy,
-		public readonly fieldShapes: ReadonlyMap<
-			FieldKindIdentifier,
-			FieldKindData
-		>,
+		public readonly fieldShapes: ReadonlyMap<FieldKindIdentifier, FieldKindData>,
 		public readonly idCompressor: IIdCompressor,
 		/**
 		 * To be used to encode incremental chunks, if any.
@@ -562,26 +534,18 @@ export class EncoderContext implements NodeEncodeBuilder, FieldEncodeBuilder {
 		public readonly version: FieldBatchFormatVersion,
 	) {}
 
-	public nodeEncoderFromSchema(
-		schemaName: TreeNodeSchemaIdentifier,
-	): NodeEncoder {
+	public nodeEncoderFromSchema(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
 		return getOrCreate(this.nodeEncodersFromSchema, schemaName, () =>
 			this.nodeEncoderFromPolicy(this, schemaName),
 		);
 	}
 
-	public fieldEncoderFromSchema(
-		fieldSchema: TreeFieldStoredSchema,
-	): FieldEncoder {
+	public fieldEncoderFromSchema(fieldSchema: TreeFieldStoredSchema): FieldEncoder {
 		return new LazyFieldEncoder(this, fieldSchema, this.fieldEncoderFromPolicy);
 	}
 
 	public nestedArrayEncoder(inner: NodeEncoder): NestedArrayEncoder {
-		return getOrCreate(
-			this.nestedArrayEncoders,
-			inner,
-			() => new NestedArrayEncoder(inner),
-		);
+		return getOrCreate(this.nestedArrayEncoders, inner, () => new NestedArrayEncoder(inner));
 	}
 }
 
@@ -627,10 +591,7 @@ class LazyFieldEncoder implements FieldEncoder {
 
 	private get encoder(): FieldEncoder {
 		if (this.encoderLazy === undefined) {
-			this.encoderLazy = this.fieldEncoderFromPolicy(
-				this.nodeBuilder,
-				this.fieldSchema,
-			);
+			this.encoderLazy = this.fieldEncoderFromPolicy(this.nodeBuilder, this.fieldSchema);
 		}
 		return this.encoderLazy;
 	}

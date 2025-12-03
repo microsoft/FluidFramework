@@ -50,11 +50,7 @@ export type RangeOperatorWithVersion = `${Exclude<RangeOperator, "">}${string}`;
  * We intentionally only include the ranges we use, not everything considered valid by workspace-protocol-aware tools
  * like yarn and pnpm.
  */
-export const WorkspaceRanges = [
-	"workspace:*",
-	"workspace:^",
-	"workspace:~",
-] as const;
+export const WorkspaceRanges = ["workspace:*", "workspace:^", "workspace:~"] as const;
 
 /**
  * A type representing the workspace range strings we use.
@@ -91,10 +87,7 @@ export type InterdependencyRange =
  * which is good because I don't know how to fix it.
  */
 export function isInterdependencyRange(r: unknown): r is InterdependencyRange {
-	if (
-		(typeof r === "string" || r instanceof semver.SemVer) &&
-		semver.valid(r) !== null
-	) {
+	if ((typeof r === "string" || r instanceof semver.SemVer) && semver.valid(r) !== null) {
 		return true;
 	}
 
@@ -102,10 +95,7 @@ export function isInterdependencyRange(r: unknown): r is InterdependencyRange {
 		return true;
 	}
 
-	if (
-		(typeof r === "string" || r instanceof semver.Range) &&
-		semver.validRange(r) === null
-	) {
+	if ((typeof r === "string" || r instanceof semver.Range) && semver.validRange(r) === null) {
 		return false;
 	}
 
@@ -149,9 +139,7 @@ export type VersionChangeTypeExtended = VersionBumpTypeExtended | semver.SemVer;
 export function isVersionBumpType(
 	type: VersionChangeType | string | undefined,
 ): type is VersionBumpType {
-	return type === undefined
-		? false
-		: type === "major" || type === "minor" || type === "patch";
+	return type === undefined ? false : type === "major" || type === "minor" || type === "patch";
 }
 
 /**
@@ -160,10 +148,5 @@ export function isVersionBumpType(
 export function isVersionBumpTypeExtended(
 	type: VersionChangeType | string,
 ): type is VersionBumpTypeExtended {
-	return (
-		type === "major" ||
-		type === "minor" ||
-		type === "patch" ||
-		type === "current"
-	);
+	return type === "major" || type === "minor" || type === "patch" || type === "current";
 }

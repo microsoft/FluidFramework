@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	bumpVersionScheme,
-	type VersionBumpType,
-} from "@fluid-tools/version-tools";
+import { type VersionBumpType, bumpVersionScheme } from "@fluid-tools/version-tools";
 import { rawlist } from "@inquirer/prompts";
 import type { Machine } from "jssm";
 
@@ -50,18 +47,9 @@ export const askForReleaseType: StateHandlerFunction = async (
 	if (inputBumpType === undefined) {
 		const selectedBumpType: VersionBumpType = await rawlist({
 			choices: [
-				{
-					value: "major",
-					name: `major (${currentVersion} => ${bumpedMajor.version})`,
-				},
-				{
-					value: "minor",
-					name: `minor (${currentVersion} => ${bumpedMinor.version})`,
-				},
-				{
-					value: "patch",
-					name: `patch  (${currentVersion} => ${bumpedPatch.version})`,
-				},
+				{ value: "major", name: `major (${currentVersion} => ${bumpedMajor.version})` },
+				{ value: "minor", name: `minor (${currentVersion} => ${bumpedMinor.version})` },
+				{ value: "patch", name: `patch  (${currentVersion} => ${bumpedPatch.version})` },
 			],
 			message: `The current branch is '${currentBranch}'. The default bump type for that branch is '${bumpType}', but you can change it now if needed.`,
 		});
@@ -77,9 +65,7 @@ export const askForReleaseType: StateHandlerFunction = async (
 	// This state is unique; it uses major/minor/patch as the actions
 	const result = machine.action(bumpType);
 	if (result !== true) {
-		throw new Error(
-			`Failed when calling the ${bumpType} action from the ${state} state.`,
-		);
+		throw new Error(`Failed when calling the ${bumpType} action from the ${state} state.`);
 	}
 
 	return true;

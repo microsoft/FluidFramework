@@ -13,9 +13,7 @@ const odspTenants = new Map<string, string>([
  * @internal
  */
 export function isOdspHostname(server: string): boolean {
-	return (
-		server.endsWith("sharepoint.com") || server.endsWith("sharepoint-df.com")
-	);
+	return server.endsWith("sharepoint.com") || server.endsWith("sharepoint-df.com");
 }
 
 // eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
@@ -58,9 +56,7 @@ export function getAadTenant(server: string): string {
 		hostname = hostname.slice(8);
 	}
 
-	let tenantName = hostname
-		.slice(0, Math.max(0, hostname.indexOf(".")))
-		.toLowerCase();
+	let tenantName = hostname.slice(0, Math.max(0, hostname.indexOf("."))).toLowerCase();
 	let restOfTenantHostname = hostname.slice(tenantName.length).toLowerCase();
 
 	if (tenantName.endsWith("-my")) {

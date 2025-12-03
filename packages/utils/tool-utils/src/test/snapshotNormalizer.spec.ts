@@ -6,10 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import type { IBlob, ITree } from "@fluidframework/driver-definitions/internal";
-import {
-	BlobTreeEntry,
-	TreeTreeEntry,
-} from "@fluidframework/driver-utils/internal";
+import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils/internal";
 
 import type { ISnapshotNormalizerConfig } from "../snapshotNormalizer.js";
 import {
@@ -92,8 +89,8 @@ describe("Snapshot Normalizer", () => {
 			"GC blob not normalized",
 		);
 
-		const innerGCBlob = (normalizedSnapshot.entries[1].value as ITree)
-			.entries[0].value as IBlob;
+		const innerGCBlob = (normalizedSnapshot.entries[1].value as ITree).entries[0]
+			.value as IBlob;
 		assert.deepStrictEqual(
 			JSON.parse(innerGCBlob.contents),
 			normalizedGCDetails,
@@ -124,9 +121,7 @@ describe("Snapshot Normalizer", () => {
 		};
 
 		// Config to normalize the above blobs.
-		const config: ISnapshotNormalizerConfig = {
-			blobsToNormalize: ["custom", "normalized"],
-		};
+		const config: ISnapshotNormalizerConfig = { blobsToNormalize: ["custom", "normalized"] };
 		const normalizedSnapshot = getNormalizedSnapshot(snapshot, config);
 
 		assert.strictEqual(
@@ -171,9 +166,7 @@ describe("Snapshot Normalizer", () => {
 		};
 
 		// Config to normalize the above blobs.
-		const config: ISnapshotNormalizerConfig = {
-			blobsToNormalize: ["custom", "normalized"],
-		};
+		const config: ISnapshotNormalizerConfig = { blobsToNormalize: ["custom", "normalized"] };
 		const normalizedSnapshot = getNormalizedSnapshot(snapshot, config);
 
 		assert.strictEqual(
@@ -209,16 +202,10 @@ describe("Snapshot Normalizer", () => {
 		};
 
 		// Config to normalize the above blobs.
-		const config: ISnapshotNormalizerConfig = {
-			blobsToNormalize: ["custom1", "custom2"],
-		};
+		const config: ISnapshotNormalizerConfig = { blobsToNormalize: ["custom1", "custom2"] };
 		const normalizedSnapshot = getNormalizedSnapshot(snapshot, config);
 		const customBlob1 = normalizedSnapshot.entries[0].value as IBlob;
-		assert.strictEqual(
-			customBlob1.contents,
-			"contents",
-			"Blob with string not as expected",
-		);
+		assert.strictEqual(customBlob1.contents, "contents", "Blob with string not as expected");
 
 		const customBlob2 = normalizedSnapshot.entries[1].value as IBlob;
 		assert.strictEqual(
@@ -230,37 +217,31 @@ describe("Snapshot Normalizer", () => {
 
 	it("can normalize legacy catchupOps blobs with metadata property in ops", () => {
 		const catchupOp = {
-			clientId: "0c200397-abdc-47ca-905d-ab3ef7329c8f",
-			clientSequenceNumber: 82,
-			contents: {
-				pos1: 2,
-				seg: {},
-				type: 0,
+			"clientId": "0c200397-abdc-47ca-905d-ab3ef7329c8f",
+			"clientSequenceNumber": 82,
+			"contents": {
+				"pos1": 2,
+				"seg": {},
+				"type": 0,
 			},
-			metadata: {
-				batch: true,
+			"metadata": {
+				"batch": true,
 			},
-			minimumSequenceNumber: 189,
-			referenceSequenceNumber: 227,
-			sequenceNumber: 228,
-			timestamp: 1646688471368,
-			type: "op",
+			"minimumSequenceNumber": 189,
+			"referenceSequenceNumber": 227,
+			"sequenceNumber": 228,
+			"timestamp": 1646688471368,
+			"type": "op",
 		};
 
 		// Snapshot with a catchupOps blob.
 		const snapshot: ITree = {
 			id: "root",
-			entries: [
-				new BlobTreeEntry(
-					`${legacyCatchUpBlobName}`,
-					JSON.stringify([catchupOp]),
-				),
-			],
+			entries: [new BlobTreeEntry(`${legacyCatchUpBlobName}`, JSON.stringify([catchupOp]))],
 		};
 
 		const normalizedSnapshot = getNormalizedSnapshot(snapshot);
-		const normalizedCatchupOpBlob = normalizedSnapshot.entries[0]
-			.value as IBlob;
+		const normalizedCatchupOpBlob = normalizedSnapshot.entries[0].value as IBlob;
 
 		const catchupOpWithoutMetadata = { ...catchupOp, metadata: undefined };
 		assert.deepStrictEqual(

@@ -3,19 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import type { IRequest } from "@fluidframework/core-interfaces";
-import type {
-	IResolvedUrl,
-	IUrlResolver,
-} from "@fluidframework/driver-definitions/internal";
+import { IRequest } from "@fluidframework/core-interfaces";
+import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import {
+	IOdspAuthRequestInfo,
 	getDriveItemByRootFileName,
-	type IOdspAuthRequestInfo,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import {
+	OdspDriverUrlResolver,
 	createOdspCreateContainerRequest,
 	createOdspUrl,
-	OdspDriverUrlResolver,
 } from "@fluidframework/odsp-driver/internal";
 
 export class OdspUrlResolver implements IUrlResolver {
@@ -54,10 +51,7 @@ export class OdspUrlResolver implements IUrlResolver {
 			dataStorePath,
 		});
 
-		return this.driverUrlResolver.resolve({
-			url: odspUrl,
-			headers: request.headers,
-		});
+		return this.driverUrlResolver.resolve({ url: odspUrl, headers: request.headers });
 	}
 
 	private formFilePath(documentId: string): string {

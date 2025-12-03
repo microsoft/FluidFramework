@@ -29,13 +29,9 @@ import type { SharedString } from "@fluidframework/sequence/internal";
 export function createSharedStringWithInterception(
 	sharedString: SharedString,
 	context: IFluidDataStoreContext,
-	propertyInterceptionCallback: (
-		props?: MergeTree.PropertySet,
-	) => MergeTree.PropertySet,
+	propertyInterceptionCallback: (props?: MergeTree.PropertySet) => MergeTree.PropertySet,
 ): SharedString {
-	const sharedStringWithInterception = Object.create(
-		sharedString,
-	) as SharedString;
+	const sharedStringWithInterception = Object.create(sharedString) as SharedString;
 
 	// executingCallback keeps track of whether a method on this wrapper object is called recursively
 	// from the propertyInterceptionCallback.
@@ -196,12 +192,7 @@ export function createSharedStringWithInterception(
 		context.containerRuntime.orderSequentially(() => {
 			executingCallback = true;
 			try {
-				sharedString.replaceText(
-					start,
-					end,
-					text,
-					propertyInterceptionCallback(props),
-				);
+				sharedString.replaceText(start, end, text, propertyInterceptionCallback(props));
 			} finally {
 				executingCallback = false;
 			}
@@ -228,10 +219,7 @@ export function createSharedStringWithInterception(
 		context.containerRuntime.orderSequentially(() => {
 			executingCallback = true;
 			try {
-				sharedString.annotateMarker(
-					marker,
-					propertyInterceptionCallback(props),
-				);
+				sharedString.annotateMarker(marker, propertyInterceptionCallback(props));
 			} finally {
 				executingCallback = false;
 			}
@@ -261,11 +249,7 @@ export function createSharedStringWithInterception(
 		context.containerRuntime.orderSequentially(() => {
 			executingCallback = true;
 			try {
-				sharedString.annotateRange(
-					start,
-					end,
-					propertyInterceptionCallback(props),
-				);
+				sharedString.annotateRange(start, end, propertyInterceptionCallback(props));
 			} finally {
 				executingCallback = false;
 			}

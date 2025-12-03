@@ -4,9 +4,7 @@
  */
 
 const path = require("path");
-const {
-	BundleComparisonPlugin,
-} = require("@mixer/webpack-bundle-compare/dist/plugin");
+const { BundleComparisonPlugin } = require("@mixer/webpack-bundle-compare/dist/plugin");
 const { BundleAnalyzerPlugin } = require("webpack-bundle-analyzer");
 const DuplicatePackageCheckerPlugin = require("@cerner/duplicate-package-checker-webpack-plugin");
 const { BannedModulesPlugin } = require("@fluidframework/bundle-size-tools");
@@ -31,17 +29,10 @@ const verString = process.env.SETVERSION_VERSION ?? pkg.version;
 // If the version is a Fluid internal version, then we want to replace the version string in the bundled code. Otherwise
 // we leave the versions as-is.
 if (isInternalVersionScheme(verString, true, true)) {
-	const [publicVer, { major, minor, patch }] = fromInternalScheme(
-		verString,
-		true,
-		true,
-	);
+	const [publicVer, { major, minor, patch }] = fromInternalScheme(verString, true, true);
 	const versionToReplace = new RegExp(verString, "g");
 	const internalVersionNoPrerelease = [major, minor, patch].join(".");
-	const newVersion = toInternalScheme(
-		publicVer,
-		internalVersionNoPrerelease,
-	).version;
+	const newVersion = toInternalScheme(publicVer, internalVersionNoPrerelease).version;
 
 	// This rule replaces the version string in the bundled code.
 	webpackModuleRules.push({

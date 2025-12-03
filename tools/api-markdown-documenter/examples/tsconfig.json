@@ -4,8 +4,8 @@
 	"compilerOptions": {
 		"rootDir": ".",
 		"paths": {
-			"@fluid-tools/api-markdown-documenter": [".."]
+			"@fluid-tools/api-markdown-documenter": [".."],
 		},
-		"noEmit": true
-	}
+		"noEmit": true,
+	},
 }

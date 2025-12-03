@@ -8,31 +8,23 @@ import { isStableId } from "@fluidframework/id-compressor/internal";
 
 import {
 	type FieldKey,
-	forEachField,
 	type ITreeCursorSynchronous,
 	type TreeNodeSchemaIdentifier,
+	forEachField,
 	type Value,
 } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 
 import type { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
-import {
-	type BufferFormat,
-	IdentifierToken,
-	Shape,
-} from "./chunkEncodingGeneric.js";
+import { type BufferFormat, IdentifierToken, Shape } from "./chunkEncodingGeneric.js";
 import {
 	type EncoderContext,
-	encodeValue,
 	type FieldEncoder,
 	type KeyedFieldEncoder,
 	type NodeEncoder,
+	encodeValue,
 } from "./compressedEncode.js";
-import type {
-	EncodedChunkShape,
-	EncodedFieldShape,
-	EncodedValueShape,
-} from "./format.js";
+import type { EncodedChunkShape, EncodedFieldShape, EncodedValueShape } from "./format.js";
 
 /**
  * Encodes a node with the {@link EncodedNodeShape} shape.
@@ -40,10 +32,7 @@ import type {
  * The fact this is also a Shape is an implementation detail of the encoder: that allows the shape it uses to be itself,
  * which is an easy way to keep all the related code together without extra objects.
  */
-export class NodeShapeBasedEncoder
-	extends Shape<EncodedChunkShape>
-	implements NodeEncoder
-{
+export class NodeShapeBasedEncoder extends Shape<EncodedChunkShape> implements NodeEncoder {
 	/**
 	 * Set of keys for fields that are encoded using {@link NodeShapeBasedEncoder.specializedFieldEncoders}.
 	 * TODO: Ensure uniform chunks, encoding and identifier generation sort fields the same.
@@ -72,28 +61,16 @@ export class NodeShapeBasedEncoder
 		public readonly otherFieldsEncoder: undefined | FieldEncoder,
 	) {
 		super();
-		this.specializedFieldKeys = new Set(
-			this.specializedFieldEncoders.map((f) => f.key),
-		);
+		this.specializedFieldKeys = new Set(this.specializedFieldEncoders.map((f) => f.key));
 	}
 
-	private getValueToEncode(
-		cursor: ITreeCursorSynchronous,
-		context: EncoderContext,
-	): Value {
+	private getValueToEncode(cursor: ITreeCursorSynchronous, context: EncoderContext): Value {
 		if (this.value === 0) {
-			assert(
-				typeof cursor.value === "string",
-				0x9aa /* identifier must be type string */,
-			);
+			assert(typeof cursor.value === "string", 0x9aa /* identifier must be type string */);
 			if (isStableId(cursor.value)) {
-				const sessionSpaceCompressedId = context.idCompressor.tryRecompress(
-					cursor.value,
-				);
+				const sessionSpaceCompressedId = context.idCompressor.tryRecompress(cursor.value);
 				if (sessionSpaceCompressedId !== undefined) {
-					return context.idCompressor.normalizeToOpSpace(
-						sessionSpaceCompressedId,
-					);
+					return context.idCompressor.normalizeToOpSpace(sessionSpaceCompressedId);
 				}
 			}
 		}
@@ -110,11 +87,7 @@ export class NodeShapeBasedEncoder
 		} else {
 			assert(cursor.type === this.type, 0x741 /* type must match shape */);
 		}
-		encodeValue(
-			this.getValueToEncode(cursor, context),
-			this.value,
-			outputBuffer,
-		);
+		encodeValue(this.getValueToEncode(cursor, context), this.value, outputBuffer);
 		for (const fieldEncoder of this.specializedFieldEncoders) {
 			cursor.enterField(brand(fieldEncoder.key));
 			fieldEncoder.encoder.encodeField(cursor, context, outputBuffer);
@@ -148,11 +121,7 @@ export class NodeShapeBasedEncoder
 			c: {
 				type: encodeOptionalIdentifier(this.type, identifiers),
 				value: this.value,
-				fields: encodeFieldShapes(
-					this.specializedFieldEncoders,
-					identifiers,
-					shapes,
-				),
+				fields: encodeFieldShapes(this.specializedFieldEncoders, identifiers, shapes),
 				extraFields: encodeOptionalFieldShape(this.otherFieldsEncoder, shapes),
 			},
 		};
@@ -193,8 +162,7 @@ export function encodeFieldShapes(
 		// key
 		encodeIdentifier(fieldEncoder.key, identifiers),
 		// shape
-		shapes.valueToIndex.get(fieldEncoder.encoder.shape) ??
-			fail(0xb50 /* missing shape */),
+		shapes.valueToIndex.get(fieldEncoder.encoder.shape) ?? fail(0xb50 /* missing shape */),
 	]);
 }
 
@@ -209,9 +177,7 @@ function encodeOptionalIdentifier(
 	identifier: string | undefined,
 	identifiers: DeduplicationTable<string>,
 ): string | number | undefined {
-	return identifier === undefined
-		? undefined
-		: encodeIdentifier(identifier, identifiers);
+	return identifier === undefined ? undefined : encodeIdentifier(identifier, identifiers);
 }
 
 function encodeOptionalFieldShape(

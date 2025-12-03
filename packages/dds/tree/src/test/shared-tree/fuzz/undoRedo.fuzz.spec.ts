@@ -6,15 +6,12 @@
 import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { type AsyncGenerator, takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
-	type AsyncGenerator,
-	takeAsync,
-} from "@fluid-private/stochastic-test-utils";
-import {
-	createDDSFuzzSuite,
 	type DDSFuzzHarnessEvents,
 	type DDSFuzzModel,
 	type DDSFuzzTestState,
+	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
 import {
@@ -71,10 +68,8 @@ describe("Fuzz - revert", () => {
 	};
 
 	describe("revert sequenced commits last-to-first", () => {
-		const generatorFactory = (): AsyncGenerator<
-			Operation,
-			UndoRedoFuzzTestState
-		> => takeAsync(opsPerRun, makeOpGenerator(undoRedoWeights));
+		const generatorFactory = (): AsyncGenerator<Operation, UndoRedoFuzzTestState> =>
+			takeAsync(opsPerRun, makeOpGenerator(undoRedoWeights));
 
 		const model: DDSFuzzModel<
 			SharedTreeTestFactory,
@@ -102,10 +97,8 @@ describe("Fuzz - revert", () => {
 			checkTreesAreSynchronized(state.clients.map((client) => client));
 
 			const anchors = state.anchors ?? assert.fail("Anchors should be defined");
-			const undoStack =
-				state.undoStack ?? assert.fail("undoStack should be defined");
-			const redoStack =
-				state.redoStack ?? assert.fail("redoStack should be defined");
+			const undoStack = state.undoStack ?? assert.fail("undoStack should be defined");
+			const redoStack = state.redoStack ?? assert.fail("redoStack should be defined");
 			assert(redoStack.length === 0, "redoStack should be empty");
 
 			// Save final tree state to validate redo later
@@ -118,10 +111,7 @@ describe("Fuzz - revert", () => {
 				state.containerRuntimeFactory.processAllMessages();
 			}
 			checkTreesAreSynchronized(state.clients.map((client) => client));
-			assert(
-				redoStack.length === undoStack.length,
-				"redoStack should now be full",
-			);
+			assert(redoStack.length === undoStack.length, "redoStack should now be full");
 
 			// Validate that undoing all the edits restored the initial state
 			const stateAfterUndos = toJsonableTree(tree);
@@ -170,10 +160,8 @@ describe("Fuzz - revert", () => {
 	});
 
 	describe("revert unsequenced commits first-to-last", () => {
-		const generatorFactory = (): AsyncGenerator<
-			Operation,
-			UndoRedoFuzzTestState
-		> => takeAsync(opsPerRun, makeOpGenerator(undoRedoWeights));
+		const generatorFactory = (): AsyncGenerator<Operation, UndoRedoFuzzTestState> =>
+			takeAsync(opsPerRun, makeOpGenerator(undoRedoWeights));
 
 		const model: DDSFuzzModel<
 			SharedTreeTestFactory,
@@ -189,10 +177,8 @@ describe("Fuzz - revert", () => {
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", init);
 		emitter.on("testEnd", (state: UndoRedoFuzzTestState) => {
-			const undoStack =
-				state.undoStack ?? assert.fail("undoStack should be defined");
-			const redoStack =
-				state.redoStack ?? assert.fail("redoStack should be defined");
+			const undoStack = state.undoStack ?? assert.fail("undoStack should be defined");
+			const redoStack = state.redoStack ?? assert.fail("redoStack should be defined");
 			assert(redoStack.length === 0, "redoStack should be empty");
 
 			// Undo all the edits oldest to newest
@@ -200,10 +186,7 @@ describe("Fuzz - revert", () => {
 				revertible.revert();
 			}
 
-			assert(
-				redoStack.length === undoStack.length,
-				"redoStack should now be full",
-			);
+			assert(redoStack.length === undoStack.length, "redoStack should now be full");
 
 			// Redo all of the undone edits oldest to newest
 			for (const revertible of redoStack) {
@@ -244,18 +227,15 @@ function init(state: UndoRedoFuzzTestState) {
 	state.unsubscribe = [];
 	for (const client of state.clients) {
 		const checkout = viewFromState(state, client).checkout;
-		const unsubscribe = checkout.events.on(
-			"changed",
-			(commit, getRevertible) => {
-				if (getRevertible !== undefined) {
-					if (commit.kind === CommitKind.Undo) {
-						redoStack.push(getRevertible());
-					} else {
-						undoStack.push(getRevertible());
-					}
+		const unsubscribe = checkout.events.on("changed", (commit, getRevertible) => {
+			if (getRevertible !== undefined) {
+				if (commit.kind === CommitKind.Undo) {
+					redoStack.push(getRevertible());
+				} else {
+					undoStack.push(getRevertible());
 				}
-			},
-		);
+			}
+		});
 		state.unsubscribe.push(unsubscribe);
 	}
 }

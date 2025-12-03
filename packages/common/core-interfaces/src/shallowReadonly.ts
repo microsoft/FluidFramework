@@ -18,9 +18,7 @@ import type { IFluidHandle } from "./handles.js";
  *
  * @system
  */
-export type ShallowReadonlySupportedGenericsDefault =
-	| Promise<unknown>
-	| IFluidHandle;
+export type ShallowReadonlySupportedGenericsDefault = Promise<unknown> | IFluidHandle;
 
 /**
  * Options for {@link ShallowReadonly}.

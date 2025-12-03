@@ -5,10 +5,7 @@
 
 import fs from "fs";
 
-import type {
-	TestConfiguration,
-	TestConfigurationFileContents,
-} from "./testConfigFile.js";
+import type { TestConfiguration, TestConfigurationFileContents } from "./testConfigFile.js";
 
 export function getProfile(profileName: string): TestConfiguration {
 	const config: TestConfigurationFileContents = JSON.parse(
@@ -18,9 +15,7 @@ export function getProfile(profileName: string): TestConfiguration {
 
 	const profile: TestConfiguration | undefined = config.profiles[profileName];
 	if (profile === undefined) {
-		throw new Error(
-			"Invalid --profile argument not found in testConfig.json profiles",
-		);
+		throw new Error("Invalid --profile argument not found in testConfig.json profiles");
 	}
 	return profile;
 }

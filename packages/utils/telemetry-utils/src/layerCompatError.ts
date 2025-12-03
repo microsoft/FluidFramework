@@ -39,20 +39,17 @@ export function validateLayerCompatibility(
 			layer: layer1,
 			incompatibleLayer: layer2,
 			layerVersion: compatDetailsLayer1.pkgVersion,
-			incompatibleLayerVersion:
-				maybeCompatDetailsLayer2?.pkgVersion ?? "unknown",
+			incompatibleLayerVersion: maybeCompatDetailsLayer2?.pkgVersion ?? "unknown",
 			compatibilityRequirementsInMonths:
 				compatDetailsLayer1.generation -
 				compatSupportRequirementsLayer1.minSupportedGeneration,
 			actualDifferenceInMonths:
-				compatDetailsLayer1.generation -
-				(maybeCompatDetailsLayer2?.generation ?? 0),
+				compatDetailsLayer1.generation - (maybeCompatDetailsLayer2?.generation ?? 0),
 		};
 		const detailedProperties = {
 			layerGeneration: compatDetailsLayer1.generation,
 			incompatibleLayerGeneration: maybeCompatDetailsLayer2?.generation,
-			minSupportedGeneration:
-				compatSupportRequirementsLayer1.minSupportedGeneration,
+			minSupportedGeneration: compatSupportRequirementsLayer1.minSupportedGeneration,
 			isGenerationCompatible: layerCheckResult.isGenerationCompatible,
 			unsupportedFeatures: layerCheckResult.unsupportedFeatures,
 		};

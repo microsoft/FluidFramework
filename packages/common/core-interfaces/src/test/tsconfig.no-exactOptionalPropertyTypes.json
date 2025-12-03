@@ -6,12 +6,12 @@
 		// Note: placing it at the root confuses the build system incrementality for eslint.
 		"outDir": "../../lib/test/no-exactOptionalPropertyTypes",
 		"exactOptionalPropertyTypes": false,
-		"noEmit": true
+		"noEmit": true,
 	},
 	"exclude": ["./jsonSerializable.exactOptionalPropertyTypes.true.spec.ts"],
 	"references": [
 		{
-			"path": "../.."
-		}
-	]
+			"path": "../..",
+		},
+	],
 }

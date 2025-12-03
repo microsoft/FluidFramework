@@ -10,11 +10,7 @@
  * If any particular node is an {@link ISummaryTree}, it can contain additional `SummaryObject`s as its children.
  * @public
  */
-export type SummaryObject =
-	| ISummaryTree
-	| ISummaryBlob
-	| ISummaryHandle
-	| ISummaryAttachment;
+export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISummaryAttachment;
 
 /**
  * The root of the summary tree.
@@ -92,10 +88,7 @@ export type SummaryType =
  * the need to re-send the entire subtree if summary object has not changed.
  * @public
  */
-export type SummaryTypeNoHandle =
-	| SummaryType.Tree
-	| SummaryType.Blob
-	| SummaryType.Attachment;
+export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment;
 
 /**
  * Path to a summary tree object from the last successful summary indicating the summary object hasn't

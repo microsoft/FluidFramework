@@ -4,20 +4,20 @@
  */
 
 import type {
-	IChannelAttributes,
-	IChannelStorageService,
-	IFluidDataStoreRuntime,
 	Jsonable,
+	IChannelAttributes,
+	IFluidDataStoreRuntime,
+	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
-	IRuntimeMessageCollection,
 	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	createSingleBlobSummary,
 	type IFluidSerializer,
 	SharedObject,
+	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
 
 import type { ISharedSummaryBlock } from "./interfaces.js";
@@ -37,10 +37,7 @@ interface ISharedSummaryBlockDataSerializable {
  * Data should be set in this object in response to a remote op.
  * @legacy @beta
  */
-export class SharedSummaryBlockClass
-	extends SharedObject
-	implements ISharedSummaryBlock
-{
+export class SharedSummaryBlockClass extends SharedObject implements ISharedSummaryBlock {
 	/**
 	 * The data held by this object.
 	 */
@@ -54,11 +51,7 @@ export class SharedSummaryBlockClass
 	 * @param runtime - data store runtime thee object belongs to.
 	 * @param attributes - The attributes for the object.
 	 */
-	constructor(
-		id: string,
-		runtime: IFluidDataStoreRuntime,
-		attributes: IChannelAttributes,
-	) {
+	constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
 		super(id, runtime, attributes, "fluid_sharedSummaryBlock_");
 	}
 
@@ -86,10 +79,7 @@ export class SharedSummaryBlockClass
 		for (const [key, value] of this.data.entries()) {
 			contentsBlob[key] = value;
 		}
-		return createSingleBlobSummary(
-			snapshotFileName,
-			JSON.stringify(contentsBlob),
-		);
+		return createSingleBlobSummary(snapshotFileName, JSON.stringify(contentsBlob));
 	}
 
 	/**
@@ -113,9 +103,7 @@ export class SharedSummaryBlockClass
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */
-	protected processMessagesCore(
-		messagesCollection: IRuntimeMessageCollection,
-	): void {
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		throw new Error("shared summary block should not generate any ops.");
 	}
 

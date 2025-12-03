@@ -42,11 +42,7 @@ const test_tags = [
  * @param testValue - the value to test against
  * @returns An assertion that will fail if the line doesn't match the value and pass if it does.
  */
-function stdoutLineEquals(
-	stdout: string,
-	lineIndex: number,
-	testValue: string,
-): void {
+function stdoutLineEquals(stdout: string, lineIndex: number, testValue: string): void {
 	const lines = stdout.split(EOL);
 	if (lineIndex > lines.length) {
 		console.error(lines);
@@ -545,13 +541,7 @@ describe("generate:buildVersion", () => {
 		);
 
 		const { stdout } = await runCommand(
-			[
-				"generate:buildVersion",
-				"--fileVersion",
-				"2.0.0-rc.7.0.0",
-				"--tags",
-				...test_tags,
-			],
+			["generate:buildVersion", "--fileVersion", "2.0.0-rc.7.0.0", "--tags", ...test_tags],
 			{
 				root: import.meta.url,
 			},
@@ -573,13 +563,7 @@ describe("generate:buildVersion", () => {
 		);
 
 		const { stdout } = await runCommand(
-			[
-				"generate:buildVersion",
-				"--fileVersion",
-				"3.0.0",
-				"--tags",
-				...test_tags,
-			],
+			["generate:buildVersion", "--fileVersion", "3.0.0", "--tags", ...test_tags],
 			{
 				root: import.meta.url,
 			},
@@ -601,13 +585,7 @@ describe("generate:buildVersion", () => {
 		);
 
 		const { stdout } = await runCommand(
-			[
-				"generate:buildVersion",
-				"--fileVersion",
-				"3.0.0",
-				"--tags",
-				...test_tags,
-			],
+			["generate:buildVersion", "--fileVersion", "3.0.0", "--tags", ...test_tags],
 			{
 				root: import.meta.url,
 			},
@@ -629,13 +607,7 @@ describe("generate:buildVersion", () => {
 		);
 
 		const { stdout } = await runCommand(
-			[
-				"generate:buildVersion",
-				"--fileVersion",
-				"3.0.0",
-				"--tags",
-				...test_tags,
-			],
+			["generate:buildVersion", "--fileVersion", "3.0.0", "--tags", ...test_tags],
 			{
 				root: import.meta.url,
 			},
@@ -657,13 +629,7 @@ describe("generate:buildVersion", () => {
 		);
 
 		const { stdout } = await runCommand(
-			[
-				"generate:buildVersion",
-				"--fileVersion",
-				"2.1.2",
-				"--tags",
-				...test_tags,
-			],
+			["generate:buildVersion", "--fileVersion", "2.1.2", "--tags", ...test_tags],
 			{
 				root: import.meta.url,
 			},
@@ -685,13 +651,7 @@ describe("generate:buildVersion", () => {
 		);
 
 		const { stdout } = await runCommand(
-			[
-				"generate:buildVersion",
-				"--fileVersion",
-				"2.0.2",
-				"--tags",
-				...test_tags,
-			],
+			["generate:buildVersion", "--fileVersion", "2.0.2", "--tags", ...test_tags],
 			{
 				root: import.meta.url,
 			},
@@ -713,13 +673,7 @@ describe("generate:buildVersion", () => {
 		);
 
 		const { stdout } = await runCommand(
-			[
-				"generate:buildVersion",
-				"--fileVersion",
-				"2.2.0",
-				"--tags",
-				...test_tags,
-			],
+			["generate:buildVersion", "--fileVersion", "2.2.0", "--tags", ...test_tags],
 			{
 				root: import.meta.url,
 			},
@@ -752,12 +706,9 @@ describe("generate:buildVersion for alpha/beta", () => {
 			{ clear: true },
 		);
 
-		const { stdout } = await runCommand(
-			["generate:buildVersion", "--fileVersion", "0.4.0"],
-			{
-				root: import.meta.url,
-			},
-		);
+		const { stdout } = await runCommand(["generate:buildVersion", "--fileVersion", "0.4.0"], {
+			root: import.meta.url,
+		});
 		stdoutLineEquals(stdout, 0, "version=0.4.0-88879-alpha-types");
 		stdoutLineEquals(stdout, 2, "isLatest=false");
 	});
@@ -771,12 +722,9 @@ describe("generate:buildVersion for alpha/beta", () => {
 			{ clear: true },
 		);
 
-		const { stdout } = await runCommand(
-			["generate:buildVersion", "--fileVersion", "0.4.0"],
-			{
-				root: import.meta.url,
-			},
-		);
+		const { stdout } = await runCommand(["generate:buildVersion", "--fileVersion", "0.4.0"], {
+			root: import.meta.url,
+		});
 		stdoutLineEquals(stdout, 0, "version=0.4.0-88879-beta-types");
 		stdoutLineEquals(stdout, 2, "isLatest=false");
 	});
@@ -790,12 +738,9 @@ describe("generate:buildVersion for alpha/beta", () => {
 			{ clear: true },
 		);
 
-		const { stdout } = await runCommand(
-			["generate:buildVersion", "--fileVersion", "0.4.0"],
-			{
-				root: import.meta.url,
-			},
-		);
+		const { stdout } = await runCommand(["generate:buildVersion", "--fileVersion", "0.4.0"], {
+			root: import.meta.url,
+		});
 		stdoutLineEquals(stdout, 0, "version=0.4.0-88879");
 		stdoutLineEquals(stdout, 2, "isLatest=false");
 	});
@@ -809,12 +754,9 @@ describe("generate:buildVersion for alpha/beta", () => {
 			{ clear: true },
 		);
 
-		const { stdout } = await runCommand(
-			["generate:buildVersion", "--fileVersion", "0.4.0"],
-			{
-				root: import.meta.url,
-			},
-		);
+		const { stdout } = await runCommand(["generate:buildVersion", "--fileVersion", "0.4.0"], {
+			root: import.meta.url,
+		});
 		stdoutLineEquals(stdout, 0, "version=0.4.0-88879");
 		stdoutLineEquals(stdout, 2, "isLatest=false");
 	});
@@ -828,12 +770,9 @@ describe("generate:buildVersion for alpha/beta", () => {
 			{ clear: true },
 		);
 
-		const { stdout } = await runCommand(
-			["generate:buildVersion", "--fileVersion", "0.4.0"],
-			{
-				root: import.meta.url,
-			},
-		);
+		const { stdout } = await runCommand(["generate:buildVersion", "--fileVersion", "0.4.0"], {
+			root: import.meta.url,
+		});
 		stdoutLineEquals(stdout, 0, "version=0.4.0-88879");
 		stdoutLineEquals(stdout, 2, "isLatest=false");
 	});
@@ -848,12 +787,9 @@ describe("generate:buildVersion for alpha/beta", () => {
 			{ clear: true },
 		);
 
-		const { stdout } = await runCommand(
-			["generate:buildVersion", "--fileVersion", "0.4.0"],
-			{
-				root: import.meta.url,
-			},
-		);
+		const { stdout } = await runCommand(["generate:buildVersion", "--fileVersion", "0.4.0"], {
+			root: import.meta.url,
+		});
 		stdoutLineEquals(stdout, 0, "version=0.4.0");
 	});
 
@@ -867,12 +803,9 @@ describe("generate:buildVersion for alpha/beta", () => {
 			{ clear: true },
 		);
 
-		const { stdout } = await runCommand(
-			["generate:buildVersion", "--fileVersion", "0.4.0"],
-			{
-				root: import.meta.url,
-			},
-		);
+		const { stdout } = await runCommand(["generate:buildVersion", "--fileVersion", "0.4.0"], {
+			root: import.meta.url,
+		});
 		stdoutLineEquals(stdout, 0, "version=0.4.0");
 	});
 
@@ -886,12 +819,9 @@ describe("generate:buildVersion for alpha/beta", () => {
 			{ clear: true },
 		);
 
-		const { stdout } = await runCommand(
-			["generate:buildVersion", "--fileVersion", "0.4.0"],
-			{
-				root: import.meta.url,
-			},
-		);
+		const { stdout } = await runCommand(["generate:buildVersion", "--fileVersion", "0.4.0"], {
+			root: import.meta.url,
+		});
 		stdoutLineEquals(stdout, 2, "version=0.0.0-88879-test-alpha-types");
 		stdoutLineEquals(stdout, 4, "isLatest=false");
 	});
@@ -906,12 +836,9 @@ describe("generate:buildVersion for alpha/beta", () => {
 			{ clear: true },
 		);
 
-		const { stdout } = await runCommand(
-			["generate:buildVersion", "--fileVersion", "0.4.0"],
-			{
-				root: import.meta.url,
-			},
-		);
+		const { stdout } = await runCommand(["generate:buildVersion", "--fileVersion", "0.4.0"], {
+			root: import.meta.url,
+		});
 		stdoutLineEquals(stdout, 2, "version=0.0.0-88879-test-beta-types");
 		stdoutLineEquals(stdout, 4, "isLatest=false");
 	});
@@ -926,12 +853,9 @@ describe("generate:buildVersion for alpha/beta", () => {
 			{ clear: true },
 		);
 
-		const { stdout } = await runCommand(
-			["generate:buildVersion", "--fileVersion", "0.4.0"],
-			{
-				root: import.meta.url,
-			},
-		);
+		const { stdout } = await runCommand(["generate:buildVersion", "--fileVersion", "0.4.0"], {
+			root: import.meta.url,
+		});
 		stdoutLineEquals(stdout, 2, "version=0.0.0-88879-test");
 		stdoutLineEquals(stdout, 4, "isLatest=false");
 	});
@@ -946,12 +870,9 @@ describe("generate:buildVersion for alpha/beta", () => {
 			{ clear: true },
 		);
 
-		const { stdout } = await runCommand(
-			["generate:buildVersion", "--fileVersion", "0.4.0"],
-			{
-				root: import.meta.url,
-			},
-		);
+		const { stdout } = await runCommand(["generate:buildVersion", "--fileVersion", "0.4.0"], {
+			root: import.meta.url,
+		});
 		stdoutLineEquals(stdout, 2, "version=0.0.0-88879-test");
 		stdoutLineEquals(stdout, 4, "isLatest=false");
 	});

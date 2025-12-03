@@ -3,11 +3,11 @@
 	"extends": "./tsconfig.jest.json",
 	"compilerOptions": {
 		"outDir": "../../dist/test",
-		"noUncheckedIndexedAccess": false
+		"noUncheckedIndexedAccess": false,
 	},
 	"references": [
 		{
-			"path": "../../tsconfig.cjs.json"
-		}
-	]
+			"path": "../../tsconfig.cjs.json",
+		},
+	],
 }

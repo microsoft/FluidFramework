@@ -3,56 +3,51 @@
  * Licensed under the MIT License.
  */
 
-import { createEmitter } from "@fluid-internal/client-utils";
-import type { Listenable } from "@fluidframework/core-interfaces";
 import { assert, fail } from "@fluidframework/core-utils/internal";
+import { createEmitter } from "@fluid-internal/client-utils";
 import type { SessionId } from "@fluidframework/id-compressor";
-import {
-	type ITelemetryLoggerExt,
-	TelemetryEventBatcher,
-} from "@fluidframework/telemetry-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
+
 import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
+	type GraphCommit,
+	type RevisionTag,
 	findAncestor,
 	findCommonAncestor,
-	type GraphCommit,
 	mintCommit,
 	type RebaseStatsWithDuration,
-	type RevisionTag,
 	tagChange,
 } from "../core/index.js";
+import { type Mutable, brand, getOrCreate, mapIterable } from "../util/index.js";
+
 import {
-	brand,
-	getOrCreate,
-	type Mutable,
-	mapIterable,
-} from "../util/index.js";
-import {
-	type BranchId,
+	SharedTreeBranch,
 	type BranchTrimmingEvents,
 	onForkTransitive,
-	SharedTreeBranch,
+	type BranchId,
 } from "./branch.js";
 import type {
 	Commit,
 	SeqNumber,
-	SequencedCommit,
 	SequenceId,
+	SequencedCommit,
 	SummarySessionBranch,
 } from "./editManagerFormatCommons.js";
 import {
-	equalSequenceIds,
 	getUpperBoundOfPreviousSequenceId,
+	equalSequenceIds,
 	maxSequenceId,
 	minSequenceId,
 	sequenceIdComparator,
 } from "./sequenceIdUtils.js";
+import {
+	TelemetryEventBatcher,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
+import type { Listenable } from "@fluidframework/core-interfaces";
 
-export const minimumPossibleSequenceNumber: SeqNumber = brand(
-	Number.MIN_SAFE_INTEGER,
-);
+export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_INTEGER);
 const minimumPossibleSequenceId: SequenceId = {
 	sequenceNumber: minimumPossibleSequenceNumber,
 };
@@ -82,10 +77,7 @@ export class EditManager<
 > {
 	private readonly _events = createEmitter<BranchTrimmingEvents>();
 
-	private readonly sharedBranches = new Map<
-		BranchId,
-		SharedBranch<TEditor, TChangeset>
-	>();
+	private readonly sharedBranches = new Map<BranchId, SharedBranch<TEditor, TChangeset>>();
 
 	/**
 	 * Tracks where on the trunk of the main branch all registered branches are based.
@@ -160,19 +152,12 @@ export class EditManager<
 		this.createAndAddSharedBranch("main", undefined, undefined, mainTrunk);
 	}
 
-	public getLocalBranch(
-		branchId: BranchId,
-	): SharedTreeBranch<TEditor, TChangeset> {
+	public getLocalBranch(branchId: BranchId): SharedTreeBranch<TEditor, TChangeset> {
 		return this.getSharedBranch(branchId).localBranch;
 	}
 
-	private getSharedBranch(
-		branchId: BranchId,
-	): SharedBranch<TEditor, TChangeset> {
-		return (
-			this.sharedBranches.get(branchId) ??
-			fail(0xc56 /* Branch does not exist */)
-		);
+	private getSharedBranch(branchId: BranchId): SharedBranch<TEditor, TChangeset> {
+		return this.sharedBranches.get(branchId) ?? fail(0xc56 /* Branch does not exist */);
 	}
 
 	/**
@@ -214,11 +199,7 @@ export class EditManager<
 			findCommonAncestor(main.trunk.getHead(), b.getHead()) ??
 			fail(0xad2 /* Expected branch to be related to main */);
 		const sequenceId = main.getCommitSequenceId(trunkCommit.revision);
-		const branches = getOrCreate(
-			this.trunkBranches,
-			sequenceId,
-			() => new Set(),
-		);
+		const branches = getOrCreate(this.trunkBranches, sequenceId, () => new Set());
 
 		assert(!branches.has(b), 0x670 /* Branch was registered more than once */);
 		branches.add(b);
@@ -231,8 +212,7 @@ export class EditManager<
 			fail(0xad3 /* Expected branch to be related to main */);
 		const sequenceId = main.getCommitSequenceId(trunkCommit.revision);
 		const branches =
-			this.trunkBranches.get(sequenceId) ??
-			fail(0xad4 /* Expected branch to be tracked */);
+			this.trunkBranches.get(sequenceId) ?? fail(0xad4 /* Expected branch to be tracked */);
 
 		assert(branches.delete(b), 0x671 /* Expected branch to be tracked */);
 		if (branches.size === 0) {
@@ -298,8 +278,9 @@ export class EditManager<
 		if (minimumBranchBaseSequenceId !== undefined) {
 			// If that branch is behind the minimum sequence id, we only want to evict commits older than it,
 			// even if those commits are behind the minimum sequence id
-			const sequenceIdBeforeMinimumBranchBase =
-				getUpperBoundOfPreviousSequenceId(minimumBranchBaseSequenceId);
+			const sequenceIdBeforeMinimumBranchBase = getUpperBoundOfPreviousSequenceId(
+				minimumBranchBaseSequenceId,
+			);
 			trunkTailSequenceId = minSequenceId(
 				trunkTailSequenceId,
 				sequenceIdBeforeMinimumBranchBase,
@@ -342,10 +323,7 @@ export class EditManager<
 		for (const commit of trimmedCommits.slice(0, -1)) {
 			Reflect.defineProperty(commit, "change", {
 				get: () =>
-					assert(
-						false,
-						0xa5e /* Should not access 'change' property of an evicted commit */,
-					),
+					assert(false, 0xa5e /* Should not access 'change' property of an evicted commit */),
 			});
 			Reflect.defineProperty(commit, "revision", {
 				get: () =>
@@ -356,10 +334,7 @@ export class EditManager<
 			});
 			Reflect.defineProperty(commit, "parent", {
 				get: () =>
-					assert(
-						false,
-						0xa60 /* Should not access 'parent' property of an evicted commit */,
-					),
+					assert(false, 0xa60 /* Should not access 'parent' property of an evicted commit */),
 			});
 		}
 
@@ -397,20 +372,12 @@ export class EditManager<
 					this.trunkBase.revision,
 				);
 				branches.set(branchId, branchSummary);
-				assert(
-					branchSummary.base !== undefined,
-					0xc57 /* Branch summary must have a base */,
-				);
-				const baseSequenceId = mainBranch.getCommitSequenceId(
-					branchSummary.base,
-				);
+				assert(branchSummary.base !== undefined, 0xc57 /* Branch summary must have a base */);
+				const baseSequenceId = mainBranch.getCommitSequenceId(branchSummary.base);
 				minBaseSeqId = minSequenceId(minBaseSeqId, baseSequenceId);
 			}
 		}
-		const mainSummary = mainBranch.getSummaryData(
-			minBaseSeqId,
-			this.trunkBase.revision,
-		);
+		const mainSummary = mainBranch.getSummaryData(minBaseSeqId, this.trunkBase.revision);
 		return { main: mainSummary, branches, originator: this.localSessionId };
 	}
 
@@ -424,8 +391,7 @@ export class EditManager<
 		const trunkRevisionCache = new Map<RevisionTag, GraphCommit<TChangeset>>();
 		trunkRevisionCache.set(this.trunkBase.revision, this.trunkBase);
 		const mainBranch =
-			this.sharedBranches.get("main") ??
-			fail(0xc58 /* Main branch must exist */);
+			this.sharedBranches.get("main") ?? fail(0xc58 /* Main branch must exist */);
 		mainBranch.loadSummaryData(data.main, trunkRevisionCache);
 		if (data.branches !== undefined) {
 			for (const [branchId, branchData] of data.branches) {
@@ -453,9 +419,7 @@ export class EditManager<
 		return getPathFromBase(this.getTrunkHead(branchId), this.trunkBase);
 	}
 
-	public getLocalCommits(
-		branchId: BranchId,
-	): readonly GraphCommit<TChangeset>[] {
+	public getLocalCommits(branchId: BranchId): readonly GraphCommit<TChangeset>[] {
 		const branch = this.getSharedBranch(branchId);
 		return branch.getLocalCommits();
 	}
@@ -482,23 +446,17 @@ export class EditManager<
 		branchId: BranchId,
 	): void {
 		if (sessionId === this.localSessionId) {
-			assert(
-				this.sharedBranches.has(branchId),
-				0xc59 /* Expected branch to already exist */,
-			);
+			assert(this.sharedBranches.has(branchId), 0xc59 /* Expected branch to already exist */);
 			return;
 		}
 
 		const mainBranch = this.getSharedBranch("main");
-		const branchTrunk = mainBranch
-			.rebasePeer(sessionId, referenceSequenceNumber)
-			.fork();
+		const branchTrunk = mainBranch.rebasePeer(sessionId, referenceSequenceNumber).fork();
 		this.createAndAddSharedBranch(branchId, sessionId, mainBranch, branchTrunk);
 	}
 
 	public addNewBranch(branchId: BranchId): void {
-		const main =
-			this.getSharedBranch("main") ?? fail(0xc5a /* Main branch must exist */);
+		const main = this.getSharedBranch("main") ?? fail(0xc5a /* Main branch must exist */);
 		this.createAndAddSharedBranch(
 			branchId,
 			this.localSessionId,
@@ -523,12 +481,7 @@ export class EditManager<
 		parent: SharedBranch<TEditor, TChangeset> | undefined,
 		branch: SharedTreeBranch<TEditor, TChangeset>,
 	): SharedBranch<TEditor, TChangeset> {
-		const sharedBranch = this.createSharedBranch(
-			branchId,
-			sessionId,
-			parent,
-			branch,
-		);
+		const sharedBranch = this.createSharedBranch(branchId, sessionId, parent, branch);
 		this.addSharedBranch(branchId, sharedBranch);
 		return sharedBranch;
 	}
@@ -593,10 +546,7 @@ export class EditManager<
 		referenceSequenceNumber: SeqNumber,
 		branchId: BranchId,
 	): void {
-		assert(
-			newCommits.length > 0,
-			0xad8 /* Expected at least one sequenced change */,
-		);
+		assert(newCommits.length > 0, 0xad8 /* Expected at least one sequenced change */);
 		assert(
 			sequenceNumber > this.minimumSequenceNumber,
 			0x713 /* Expected change sequence number to exceed the last known minimum sequence number */,
@@ -619,18 +569,11 @@ export class EditManager<
 			// This update is not necessarily required for all local branches, since some may have fallen behind the local branch and are based on older trunk commits (such branches do not need updating).
 			const currentBranches = this.trunkBranches.get(previousSequenceId);
 			if (currentBranches !== undefined) {
-				const newBranches = getOrCreate(
-					this.trunkBranches,
-					sequenceId,
-					() => new Set(),
-				);
+				const newBranches = getOrCreate(this.trunkBranches, sequenceId, () => new Set());
 				for (const forkedBranch of currentBranches) {
 					// Check every branch associated with the old sequence ID and advance it if it is based on the local branch (specifically, on the local branch as it was before we pushed its first commit to the trunk).
 					// We validate this by checking if the branch's head is a descendant of the local commit that we just pushed.
-					if (
-						findAncestor(forkedBranch.getHead(), (c) => c === commit) !==
-						undefined
-					) {
+					if (findAncestor(forkedBranch.getHead(), (c) => c === commit) !== undefined) {
 						newBranches.add(forkedBranch);
 						currentBranches.delete(forkedBranch);
 					}
@@ -659,19 +602,13 @@ export class EditManager<
 	public findLocalCommit(
 		branchId: BranchId,
 		revision: RevisionTag,
-	): [
-		commit: GraphCommit<TChangeset>,
-		commitsAfter: GraphCommit<TChangeset>[],
-	] {
+	): [commit: GraphCommit<TChangeset>, commitsAfter: GraphCommit<TChangeset>[]] {
 		const commits: GraphCommit<TChangeset>[] = [];
 		const commit = findAncestor(
 			[this.getSharedBranch(branchId).localBranch.getHead(), commits],
 			(c) => c.revision === revision,
 		);
-		assert(
-			commit !== undefined,
-			0x599 /* Expected local branch to contain revision */,
-		);
+		assert(commit !== undefined, 0x599 /* Expected local branch to contain revision */);
 		return [commit, commits];
 	}
 }
@@ -682,10 +619,7 @@ export class EditManager<
 export interface SummaryData<TChangeset> {
 	readonly originator?: SessionId;
 	readonly main: SharedBranchSummaryData<TChangeset>;
-	readonly branches?: ReadonlyMap<
-		BranchId,
-		SharedBranchSummaryData<TChangeset>
-	>;
+	readonly branches?: ReadonlyMap<BranchId, SharedBranchSummaryData<TChangeset>>;
 }
 
 export interface SharedBranchSummaryData<TChangeset> {
@@ -695,10 +629,7 @@ export interface SharedBranchSummaryData<TChangeset> {
 	readonly author?: string;
 	readonly base?: RevisionTag;
 	readonly trunk: readonly SequencedCommit<TChangeset>[];
-	readonly peerLocalBranches: ReadonlyMap<
-		SessionId,
-		SummarySessionBranch<TChangeset>
-	>;
+	readonly peerLocalBranches: ReadonlyMap<SessionId, SummarySessionBranch<TChangeset>>;
 }
 
 /**
@@ -727,19 +658,17 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 	 * at the time of submitting the latest known edit on the branch.
 	 * This means the head commit of each branch is always in its original (non-rebased) form.
 	 */
-	private readonly peerLocalBranches: Map<
-		SessionId,
-		SharedTreeBranch<TEditor, TChangeset>
-	> = new Map();
+	private readonly peerLocalBranches: Map<SessionId, SharedTreeBranch<TEditor, TChangeset>> =
+		new Map();
 
 	/**
 	 * A map from a sequence id to the commit which has that sequence id.
 	 * This also includes an entry for the {@link trunkBase} which always has the lowest key in the map.
 	 */
-	public readonly sequenceIdToCommit = new BTree<
-		SequenceId,
-		GraphCommit<TChangeset>
-	>(undefined, sequenceIdComparator);
+	public readonly sequenceIdToCommit = new BTree<SequenceId, GraphCommit<TChangeset>>(
+		undefined,
+		sequenceIdComparator,
+	);
 
 	/**
 	 * The list of commits (from oldest to most recent) that are on the local branch but not on the trunk.
@@ -765,9 +694,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 		private readonly changeFamily: ChangeFamily<TEditor, TChangeset>,
 		private readonly mintRevisionTag: () => RevisionTag,
 		branchTrimmer: Listenable<BranchTrimmingEvents>,
-		telemetryEventBatcher:
-			| TelemetryEventBatcher<keyof RebaseStatsWithDuration>
-			| undefined,
+		telemetryEventBatcher: TelemetryEventBatcher<keyof RebaseStatsWithDuration> | undefined,
 	) {
 		this.localBranch = new SharedTreeBranch(
 			this.trunk.getHead(),
@@ -804,8 +731,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 	): void {
 		assert(
 			sequenceNumber >= // This is ">=", not ">" because changes in the same batch will have the same sequence number
-				(this.sequenceIdToCommit.maxKey()?.sequenceNumber ??
-					minimumPossibleSequenceNumber),
+				(this.sequenceIdToCommit.maxKey()?.sequenceNumber ?? minimumPossibleSequenceNumber),
 			0xa64 /* Attempted to sequence change with an outdated sequence number */,
 		);
 
@@ -825,12 +751,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 		// the trunk.
 		if (areLocalCommits) {
 			for (const { revision } of newCommits) {
-				this.sequenceLocalCommit(
-					revision,
-					nextSequenceId,
-					sessionId,
-					onSequenceLocalCommit,
-				);
+				this.sequenceLocalCommit(revision, nextSequenceId, sessionId, onSequenceLocalCommit);
 				nextSequenceId = getNextSequenceId(nextSequenceId);
 			}
 			return;
@@ -888,26 +809,17 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 		sessionId: SessionId,
 		referenceSequenceNumber: SeqNumber,
 	): SharedTreeBranch<TEditor, TChangeset> {
-		const [, baseRevisionInTrunk] = this.getClosestTrunkCommit(
-			referenceSequenceNumber,
-		);
+		const [, baseRevisionInTrunk] = this.getClosestTrunkCommit(referenceSequenceNumber);
 		const peerLocalBranch = getOrCreate(
 			this.peerLocalBranches,
 			sessionId,
-			() =>
-				new SharedTreeBranch(
-					baseRevisionInTrunk,
-					this.changeFamily,
-					this.mintRevisionTag,
-				),
+			() => new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily, this.mintRevisionTag),
 		);
 		peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
 		return peerLocalBranch;
 	}
 
-	public getPeerBranchOrTrunk(
-		sessionId: SessionId,
-	): SharedTreeBranch<TEditor, TChangeset> {
+	public getPeerBranchOrTrunk(sessionId: SessionId): SharedTreeBranch<TEditor, TChangeset> {
 		return this.peerLocalBranches.get(sessionId) ?? this.trunk;
 	}
 
@@ -932,10 +844,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 		return Math.max(max, localPath.length);
 	}
 
-	public trimHistory(
-		newBase: GraphCommit<TChangeset>,
-		sequenceId: SequenceId,
-	): void {
+	public trimHistory(newBase: GraphCommit<TChangeset>, sequenceId: SequenceId): void {
 		this.rebasePeers(newBase);
 
 		this.sequenceIdToCommit.editRange(
@@ -1010,9 +919,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 			0x6b5 /* Received a sequenced change from the local session despite having no local changes */,
 		);
 
-		const prevSequenceId = this.getCommitSequenceId(
-			this.trunk.getHead().revision,
-		);
+		const prevSequenceId = this.getCommitSequenceId(this.trunk.getHead().revision);
 		this.pushGraphCommitToTrunk(sequenceId, firstLocalCommit, sessionId);
 		onSequenceLocalCommit(firstLocalCommit, sequenceId, prevSequenceId);
 	}
@@ -1023,12 +930,8 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 	 * @remarks Fails if there is no eligible commit.
 	 * @returns the closest commit and its sequence id
 	 */
-	public getClosestTrunkCommit(
-		searchBy: SeqNumber,
-	): [SequenceId, GraphCommit<TChangeset>];
-	public getClosestTrunkCommit(
-		searchBy: SequenceId,
-	): [SequenceId, GraphCommit<TChangeset>];
+	public getClosestTrunkCommit(searchBy: SeqNumber): [SequenceId, GraphCommit<TChangeset>];
+	public getClosestTrunkCommit(searchBy: SequenceId): [SequenceId, GraphCommit<TChangeset>];
 	public getClosestTrunkCommit(
 		searchBy: SeqNumber | SequenceId,
 	): [SequenceId, GraphCommit<TChangeset>] {
@@ -1057,10 +960,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 		this.registerSequencedCommit(sequenceId, sessionId, graphCommit);
 	}
 
-	private pushCommitToTrunk(
-		sequenceId: SequenceId,
-		commit: Commit<TChangeset>,
-	): void {
+	private pushCommitToTrunk(sequenceId: SequenceId, commit: Commit<TChangeset>): void {
 		const mintedCommit = mintCommit(this.trunk.getHead(), commit);
 		this.pushGraphCommitToTrunk(sequenceId, mintedCommit, commit.sessionId);
 	}
@@ -1092,11 +992,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 			sequenceNumber: brand((sequenceNumber as number) + 1),
 		};
 
-		return this.sequenceIdToCommit.getRange(
-			startSequenceId,
-			endSequenceId,
-			false,
-		).length;
+		return this.sequenceIdToCommit.getRange(startSequenceId, endSequenceId, false).length;
 	}
 
 	public getSummaryData(
@@ -1118,12 +1014,10 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 
 		let parentHead: GraphCommit<TChangeset>;
 		if (this.parentBranch === undefined) {
-			const oldestCommitInCollabWindow = this.getClosestTrunkCommit(
-				minSeqNumberToSummarize,
-			)[1];
+			const oldestCommitInCollabWindow =
+				this.getClosestTrunkCommit(minSeqNumberToSummarize)[1];
 			// Path construction is exclusive, so we need to use the parent of the oldest commit in the window if it exists
-			parentHead =
-				oldestCommitInCollabWindow.parent ?? oldestCommitInCollabWindow;
+			parentHead = oldestCommitInCollabWindow.parent ?? oldestCommitInCollabWindow;
 		} else {
 			parentHead = this.parentBranch.trunk.getHead();
 		}
@@ -1154,22 +1048,15 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 			return commit;
 		});
 
-		const peerLocalBranches = new Map<
-			SessionId,
-			SummarySessionBranch<TChangeset>
-		>(
+		const peerLocalBranches = new Map<SessionId, SummarySessionBranch<TChangeset>>(
 			mapIterable(this.peerLocalBranches.entries(), ([sessionId, branch]) => {
 				const branchPath: GraphCommit<TChangeset>[] = [];
 				const ancestor =
-					findCommonAncestor(
-						[branch.getHead(), branchPath],
-						this.trunk.getHead(),
-					) ?? fail(0xad6 /* Expected branch to be based on trunk */);
+					findCommonAncestor([branch.getHead(), branchPath], this.trunk.getHead()) ??
+					fail(0xad6 /* Expected branch to be based on trunk */);
 
 				const base =
-					ancestor.revision === trunkBaseRevision
-						? rootRevision
-						: ancestor.revision;
+					ancestor.revision === trunkBaseRevision ? rootRevision : ancestor.revision;
 				return [
 					sessionId,
 					{
@@ -1188,16 +1075,8 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 		);
 
 		const trunkBase =
-			this.parentBranch === undefined
-				? undefined
-				: forkPointFromMainTrunk.revision;
-		return {
-			trunk,
-			peerLocalBranches,
-			base: trunkBase,
-			id: this.id,
-			session: this.sessionId,
-		};
+			this.parentBranch === undefined ? undefined : forkPointFromMainTrunk.revision;
+		return { trunk, peerLocalBranches, base: trunkBase, id: this.id, session: this.sessionId };
 	}
 
 	public loadSummaryData(
@@ -1238,9 +1117,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 		for (const [sessionId, branch] of data.peerLocalBranches) {
 			const commit =
 				trunkRevisionCache.get(branch.base) ??
-				fail(
-					0xad7 /* Expected summary branch to be based off of a revision in the trunk */,
-				);
+				fail(0xad7 /* Expected summary branch to be based off of a revision in the trunk */);
 
 			this.peerLocalBranches.set(
 				sessionId,

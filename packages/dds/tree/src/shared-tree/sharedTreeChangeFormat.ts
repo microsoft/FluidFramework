@@ -12,9 +12,7 @@ export const EncodedSharedTreeInnerChange = Type.Object({
 	data: Type.Optional(JsonCompatibleReadOnlySchema),
 });
 
-export type EncodedSharedTreeInnerChange = Static<
-	typeof EncodedSharedTreeInnerChange
->;
+export type EncodedSharedTreeInnerChange = Static<typeof EncodedSharedTreeInnerChange>;
 
 export const EncodedSharedTreeChange = Type.Array(EncodedSharedTreeInnerChange);
 

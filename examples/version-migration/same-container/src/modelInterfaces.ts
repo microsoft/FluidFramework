@@ -3,17 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "@fluid-example/example-utils";
 import type {
-	EventEmitter,
 	ISameContainerMigratableModel,
 	ISameContainerMigratableModelEvents,
 } from "@fluid-example/example-utils";
 import type { IEventProvider } from "@fluidframework/core-interfaces";
-import type { SharedString } from "@fluidframework/sequence/legacy";
+import { SharedString } from "@fluidframework/sequence/legacy";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
-export interface IInventoryListAppModelEvents
-	extends ISameContainerMigratableModelEvents {}
+export interface IInventoryListAppModelEvents extends ISameContainerMigratableModelEvents {}
 
 /**
  * For demo purposes this is a super-simple interface, but in a real scenario this should have all relevant surface
@@ -50,8 +49,5 @@ export interface IInventoryList extends EventEmitter {
 	/**
 	 * The listChanged event will fire whenever an item is added/removed, either locally or remotely.
 	 */
-	on(
-		event: "itemAdded" | "itemDeleted",
-		listener: (item: IInventoryItem) => void,
-	): this;
+	on(event: "itemAdded" | "itemDeleted", listener: (item: IInventoryItem) => void): this;
 }

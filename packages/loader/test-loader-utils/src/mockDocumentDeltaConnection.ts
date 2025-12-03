@@ -7,16 +7,16 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IDisposable } from "@fluidframework/core-interfaces";
 import type { ConnectionMode } from "@fluidframework/driver-definitions";
 import type {
-	IAnyDriverError,
-	IClientConfiguration,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
+	IAnyDriverError,
+	IClientConfiguration,
 	IDocumentMessage,
 	INack,
-	ISequencedDocumentMessage,
 	ISignalClient,
-	ISignalMessage,
 	ITokenClaims,
+	ISequencedDocumentMessage,
+	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 
 // This is coppied from alfred.  Probably should clean this up.
@@ -84,10 +84,7 @@ export class MockDocumentDeltaConnection
 	}
 
 	// Mock methods for raising events
-	public emitOp(
-		documentId: string,
-		messages: Partial<ISequencedDocumentMessage>[],
-	): void {
+	public emitOp(documentId: string, messages: Partial<ISequencedDocumentMessage>[]): void {
 		this.emit("op", documentId, messages);
 	}
 	public emitSignal(signal: Partial<ISignalMessage>): void {

@@ -13,23 +13,23 @@ import {
 	createRemoveRangeOp,
 	// eslint-disable-next-line import-x/no-internal-modules -- #26905: `merge-tree` internals used in examples
 } from "@fluidframework/merge-tree/internal";
-import type { IMergeTreeDeltaOp } from "@fluidframework/merge-tree/legacy";
+import { IMergeTreeDeltaOp } from "@fluidframework/merge-tree/legacy";
 import {
 	Marker,
 	ReferenceType,
-	type SharedString,
+	SharedString,
 	TextSegment,
 } from "@fluidframework/sequence/legacy";
 import { exampleSetup } from "prosemirror-example-setup";
 import { DOMSerializer, Schema, Slice } from "prosemirror-model";
 import { addListNodes } from "prosemirror-schema-list";
-import { EditorState, Plugin, type Transaction } from "prosemirror-state";
+import { EditorState, Plugin, Transaction } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 
 import {
-	type IProseMirrorNode,
-	nodeTypeKey,
+	IProseMirrorNode,
 	ProseMirrorTransactionBuilder,
+	nodeTypeKey,
 	sliceToGroupOps,
 	stackTypeBegin,
 	stackTypeEnd,
@@ -56,10 +56,7 @@ export interface IRichTextEditor extends IProvideRichTextEditor {
 	initializeValue(value: string): void;
 }
 
-export class FluidCollabManager
-	extends EventEmitter
-	implements IRichTextEditor
-{
+export class FluidCollabManager extends EventEmitter implements IRichTextEditor {
 	public get IRichTextEditor() {
 		return this;
 	}
@@ -89,7 +86,7 @@ export class FluidCollabManager
 		this.schema = fluidSchema;
 
 		// Initialize the base ProseMirror JSON data structure
-		const nodeStack: IProseMirrorNode[] = [];
+		const nodeStack = new Array<IProseMirrorNode>();
 		nodeStack.push({ type: "doc", content: [] });
 
 		this.text.walkSegments((segment) => {
@@ -126,10 +123,7 @@ export class FluidCollabManager
 							nodeStack.push(newNode);
 						} else if (stackType === stackTypeEnd) {
 							const popped = nodeStack.pop();
-							assert(
-								popped!.type === nodeType,
-								"NestEnd top-node type has wrong type",
-							);
+							assert(popped!.type === nodeType, "NestEnd top-node type has wrong type");
 						} else {
 							// TODO consolidate the text segment and simple references
 							const nodeJson: IProseMirrorNode = {
@@ -183,11 +177,7 @@ export class FluidCollabManager
 			}
 
 			const startState = this.getCurrentState();
-			sliceBuilder = new ProseMirrorTransactionBuilder(
-				startState,
-				this.schema,
-				this.text,
-			);
+			sliceBuilder = new ProseMirrorTransactionBuilder(startState, this.schema, this.text);
 		});
 
 		this.text.on("sequenceDelta", (ev) => {
@@ -279,7 +269,7 @@ export class FluidCollabManager
 					const from = stepAsJson.from;
 					const to = stepAsJson.to;
 
-					let operations: IMergeTreeDeltaOp[] = [];
+					let operations = new Array<IMergeTreeDeltaOp>();
 
 					if (from !== to) {
 						const removeOp = createRemoveRangeOp(from, to);
@@ -287,11 +277,7 @@ export class FluidCollabManager
 					}
 
 					if (stepAsJson.slice) {
-						const sliceOperations = sliceToGroupOps(
-							from,
-							stepAsJson.slice,
-							this.schema,
-						);
+						const sliceOperations = sliceToGroupOps(from, stepAsJson.slice, this.schema);
 						operations = operations.concat(sliceOperations);
 					}
 
@@ -303,7 +289,7 @@ export class FluidCollabManager
 				}
 
 				case "replaceAround": {
-					let operations: IMergeTreeDeltaOp[] = [];
+					let operations = new Array<IMergeTreeDeltaOp>();
 
 					const from = stepAsJson.from;
 					const to = stepAsJson.to;

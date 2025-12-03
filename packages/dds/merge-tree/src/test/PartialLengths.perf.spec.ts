@@ -12,8 +12,7 @@ import type { OperationStamp } from "../stamps.js";
 import { TextSegment } from "../textSegment.js";
 
 describe("MergeTree partial lengths", () => {
-	const originalIncrementalUpdate: boolean =
-		MergeTree.options.incrementalUpdate;
+	const originalIncrementalUpdate: boolean = MergeTree.options.incrementalUpdate;
 
 	for (const incremental of [true, false]) {
 		benchmark({

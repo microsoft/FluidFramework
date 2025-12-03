@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
+import {
 	IDocumentService,
 	IDocumentServiceFactory,
 } from "@fluidframework/driver-definitions/internal";

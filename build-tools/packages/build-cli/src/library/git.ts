@@ -5,23 +5,20 @@
 
 import { execFileSync } from "node:child_process";
 import path from "node:path";
-import type { IReleaseGroup } from "@fluid-tools/build-infrastructure";
-import { getVersionsFromStrings } from "@fluid-tools/version-tools";
 import type { Package } from "@fluidframework/build-tools";
 import { PackageName } from "@rushstack/node-core-library";
-import { parseISO } from "date-fns";
 import readPkgUp from "read-pkg-up";
 import * as semver from "semver";
 import { type SimpleGit, type SimpleGitOptions, simpleGit } from "simple-git";
 import type { SetRequired } from "type-fest";
+
+import type { IReleaseGroup } from "@fluid-tools/build-infrastructure";
+import { getVersionsFromStrings } from "@fluid-tools/version-tools";
+import { parseISO } from "date-fns";
 import type { CommandLogger } from "../logging.js";
 import type { ReleaseGroup } from "../releaseGroups.js";
 // eslint-disable-next-line import-x/no-deprecated
-import {
-	type Context,
-	isMonoRepoKind,
-	type VersionDetails,
-} from "./context.js";
+import { type Context, type VersionDetails, isMonoRepoKind } from "./context.js";
 
 const newlineCrossPlatform = /\r?\n/;
 /**
@@ -55,10 +52,7 @@ function getVersionFromTag(tag: string): string | undefined {
  * @param prefix - Prefix to search for.
  * @returns List of version tags.
  */
-async function getVersionTags(
-	git: SimpleGit,
-	prefix: string,
-): Promise<string[]> {
+async function getVersionTags(git: SimpleGit, prefix: string): Promise<string[]> {
 	const raw_tags = git.tags(["--list", `${prefix}_v*`]);
 	const tags = await raw_tags;
 	return tags.all;
@@ -168,14 +162,9 @@ export class Repository implements GitContext {
 	/**
 	 * Returns the SHA hash for a branch. If a remote is provided, the SHA for the remote ref is returned.
 	 */
-	public async getShaForBranch(
-		branch: string,
-		remote?: string,
-	): Promise<string> {
+	public async getShaForBranch(branch: string, remote?: string): Promise<string> {
 		const refspec =
-			remote === undefined
-				? `refs/heads/${branch}`
-				: `refs/remotes/${remote}/${branch}`;
+			remote === undefined ? `refs/heads/${branch}` : `refs/remotes/${remote}/${branch}`;
 		// result is a string of the form '64adcdba56deb16e0641c91ca825401a9f7a01f9'
 		const result = await this.git.raw("show-ref", "--hash", refspec);
 		return result;
@@ -229,10 +218,7 @@ export class Repository implements GitContext {
 		return base;
 	}
 
-	private async getChangedFilesSinceRef(
-		ref: string,
-		remote: string,
-	): Promise<string[]> {
+	private async getChangedFilesSinceRef(ref: string, remote: string): Promise<string[]> {
 		const divergedAt = await this.getMergeBaseRemote(ref, remote);
 		// Now we can find which files we added
 		const added = await this.gitClient
@@ -245,10 +231,7 @@ export class Repository implements GitContext {
 		return files;
 	}
 
-	private async getChangedDirectoriesSinceRef(
-		ref: string,
-		remote: string,
-	): Promise<string[]> {
+	private async getChangedDirectoriesSinceRef(ref: string, remote: string): Promise<string[]> {
 		const files = await this.getChangedFilesSinceRef(ref, remote);
 		const dirs = new Set(files.map((f) => path.dirname(f)));
 		return [...dirs];
@@ -308,15 +291,8 @@ export class Repository implements GitContext {
 	 * @param headCommit - The head commit. Defaults to HEAD.
 	 * @returns An array of all commits between the base and head commits.
 	 */
-	public async revList(
-		baseCommit: string,
-		headCommit: string = "HEAD",
-	): Promise<string[]> {
-		const result = await this.git.raw(
-			"rev-list",
-			`${baseCommit}..${headCommit}`,
-			"--reverse",
-		);
+	public async revList(baseCommit: string, headCommit: string = "HEAD"): Promise<string[]> {
+		const result = await this.git.raw("rev-list", `${baseCommit}..${headCommit}`, "--reverse");
 		return result
 			.split(newlineCrossPlatform)
 			.filter((value) => value !== null && value !== undefined && value !== "");
@@ -390,9 +366,7 @@ export class Repository implements GitContext {
 	 * @param releaseGroupOrPackage - The release group or independent package to get tags for.
 	 * @returns An array of all all the tags for the release group or package.
 	 */
-	public async getTagsForReleaseGroup(
-		releaseGroupOrPackage: string,
-	): Promise<string[]> {
+	public async getTagsForReleaseGroup(releaseGroupOrPackage: string): Promise<string[]> {
 		// eslint-disable-next-line import-x/no-deprecated
 		const prefix = isMonoRepoKind(releaseGroupOrPackage)
 			? releaseGroupOrPackage.toLowerCase()
@@ -462,9 +436,7 @@ export class Repository implements GitContext {
 	 */
 	public async createBranch(branchName: string): Promise<void> {
 		if (await this.getShaForBranch(branchName)) {
-			throw new Error(
-				`Branch '${branchName}' already exists. Failed to create.`,
-			);
+			throw new Error(`Branch '${branchName}' already exists. Failed to create.`);
 		}
 		await this.gitClient.checkoutLocalBranch(branchName);
 	}
@@ -482,10 +454,7 @@ export class Repository implements GitContext {
 		return result;
 	}
 
-	public async isBranchUpToDate(
-		branch: string,
-		remote: string,
-	): Promise<boolean> {
+	public async isBranchUpToDate(branch: string, remote: string): Promise<boolean> {
 		await this.fetchBranch(remote, branch);
 		const currentSha = await this.getShaForBranch(branch);
 		const remoteSha = await this.getShaForBranch(branch, remote);
@@ -513,14 +482,10 @@ export class Repository implements GitContext {
  */
 export function getCurrentBranchNameSync(cwd: string = process.cwd()): string {
 	try {
-		const revParseOut = execFileSync(
-			"git",
-			["rev-parse", "--abbrev-ref", "HEAD"],
-			{
-				cwd,
-				encoding: "utf8",
-			},
-		).trim();
+		const revParseOut = execFileSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
+			cwd,
+			encoding: "utf8",
+		}).trim();
 		return revParseOut.split(/\r?\n/)[0];
 	} catch (error) {
 		throw new Error(

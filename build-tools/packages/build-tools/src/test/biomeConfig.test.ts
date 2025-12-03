@@ -48,14 +48,8 @@ describe("Biome config loading", () => {
 					testDataPath,
 					"biome/pkg-b/include-formatter-added-1/subdirectory/markdownFile2.md",
 				),
-				path.resolve(
-					testDataPath,
-					"biome/pkg-b/include-formatter-added-1/sourceFile.ts",
-				),
-				path.resolve(
-					testDataPath,
-					"biome/pkg-b/include-formatter-added-1/markdownFile1.md",
-				),
+				path.resolve(testDataPath, "biome/pkg-b/include-formatter-added-1/sourceFile.ts"),
+				path.resolve(testDataPath, "biome/pkg-b/include-formatter-added-1/markdownFile1.md"),
 			];
 			const { formattedFiles } = config;
 			assert(
@@ -77,10 +71,7 @@ describe("Biome config loading", () => {
 					testDataPath,
 					"biome/pkg-b/include-formatter-added-1/subdirectory/markdownFile2.md",
 				),
-				path.resolve(
-					testDataPath,
-					"biome/pkg-b/include-formatter-added-1/markdownFile1.md",
-				),
+				path.resolve(testDataPath, "biome/pkg-b/include-formatter-added-1/markdownFile1.md"),
 			];
 			const { formattedFiles } = config;
 			assert(
@@ -120,9 +111,7 @@ describe("Biome config loading", () => {
 			assert(actual.files!.ignoreUnknown === false);
 			assert(actual.files!.include!.includes("pkg-a-include/**"));
 			assert(actual.files!.ignore!.includes("pkg-a-ignore/**"));
-			assert(
-				actual.formatter!.include!.includes("include-formatter-added-1/**"),
-			);
+			assert(actual.formatter!.include!.includes("include-formatter-added-1/**"));
 			assert(actual.formatter!.ignore!.includes("ignore-formatter-added-1/**"));
 			assert(actual.linter!.include!.includes("include-linter-added-1/**"));
 			assert(actual.linter!.ignore!.includes("ignore-linter-added-1/**"));
@@ -222,18 +211,11 @@ describe("Biome config loading", () => {
 				);
 				assert(ignores.has("pkg-a-ignore/**"));
 				assert(ignores.has("ignore-formatter/**"));
-				assert(
-					ignores.size === 2,
-					`expected 2 items in the set, got ${ignores.size}`,
-				);
+				assert(ignores.size === 2, `expected 2 items in the set, got ${ignores.size}`);
 			});
 
 			it("linter ignore settings are merged with root", async () => {
-				const ignores = await getSettingValuesFromBiomeConfig(
-					testConfig,
-					"linter",
-					"ignore",
-				);
+				const ignores = await getSettingValuesFromBiomeConfig(testConfig, "linter", "ignore");
 				assert(ignores.has("pkg-a-ignore/**"));
 				assert(ignores.has("ignore-linter/**"));
 				assert(ignores.size === 2);
@@ -281,19 +263,10 @@ describe("Biome config loading", () => {
 						testDataPath,
 						"biome/pkg-a/pkg-a-include/include-formatter/formatter.ts",
 					),
-					path.resolve(
-						testDataPath,
-						"biome/pkg-a/pkg-a-include/include-linter/linter.ts",
-					),
-					path.resolve(
-						testDataPath,
-						"biome/pkg-a/include-formatter/formatter.ts",
-					),
+					path.resolve(testDataPath, "biome/pkg-a/pkg-a-include/include-linter/linter.ts"),
+					path.resolve(testDataPath, "biome/pkg-a/include-formatter/formatter.ts"),
 				];
-				const formattedFiles = await getBiomeFormattedFilesFromDirectory(
-					testPath,
-					gitRepo,
-				);
+				const formattedFiles = await getBiomeFormattedFilesFromDirectory(testPath, gitRepo);
 				for (const actual of formattedFiles) {
 					assert(expected.includes(actual));
 				}
@@ -317,27 +290,15 @@ describe("Biome config loading", () => {
 			it("returns correct file set", async () => {
 				const expected = [
 					path.resolve(testDataPath, "biome/pkg-a/pkg-a-include/sourceFile.ts"),
-					path.resolve(
-						testDataPath,
-						"biome/pkg-a/pkg-a-include/include-linter/linter.ts",
-					),
+					path.resolve(testDataPath, "biome/pkg-a/pkg-a-include/include-linter/linter.ts"),
 					path.resolve(
 						testDataPath,
 						"biome/pkg-a/pkg-a-include/include-formatter/formatter.ts",
 					),
-					path.resolve(
-						testDataPath,
-						"biome/pkg-a/pkg-a-include/pkg-a-ignore/ignoredFile.ts",
-					),
-					path.resolve(
-						testDataPath,
-						"biome/pkg-a/include-formatter/formatter.ts",
-					),
+					path.resolve(testDataPath, "biome/pkg-a/pkg-a-include/pkg-a-ignore/ignoredFile.ts"),
+					path.resolve(testDataPath, "biome/pkg-a/include-formatter/formatter.ts"),
 				];
-				const formattedFiles = await getBiomeFormattedFilesFromDirectory(
-					testPath,
-					gitRepo,
-				);
+				const formattedFiles = await getBiomeFormattedFilesFromDirectory(testPath, gitRepo);
 				for (const actual of formattedFiles) {
 					assert(expected.includes(actual));
 				}

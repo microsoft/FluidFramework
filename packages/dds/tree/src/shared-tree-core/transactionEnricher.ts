@@ -46,10 +46,7 @@ export class TransactionEnricher<TChange> {
 	 */
 	public commitTransaction(): ((revision: RevisionTag) => TChange) | undefined {
 		const commitsCommitted = this.#transactionScopesStart.pop();
-		assert(
-			commitsCommitted !== undefined,
-			0x985 /* No transaction to commit */,
-		);
+		assert(commitsCommitted !== undefined, 0x985 /* No transaction to commit */);
 		if (this.#transactionScopesStart.length === 0) {
 			if (this.#transactionCommits.length === 0) {
 				return undefined;
@@ -57,10 +54,7 @@ export class TransactionEnricher<TChange> {
 			const transactionCommits = this.#transactionCommits;
 			this.#transactionCommits = [];
 			return (revision: RevisionTag) =>
-				this.#rebaser.changeRevision(
-					this.#rebaser.compose(transactionCommits),
-					revision,
-				);
+				this.#rebaser.changeRevision(this.#rebaser.compose(transactionCommits), revision);
 		}
 	}
 
@@ -75,10 +69,7 @@ export class TransactionEnricher<TChange> {
 			this.#transactionScopesStart.length !== 0,
 			0x987 /* No transaction to add a step to */,
 		);
-		const change = this.#enricher.updateChangeEnrichments(
-			commit.change,
-			commit.revision,
-		);
+		const change = this.#enricher.updateChangeEnrichments(commit.change, commit.revision);
 		this.#transactionCommits.push({ ...commit, change });
 	}
 }

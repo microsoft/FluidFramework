@@ -4,22 +4,23 @@
  */
 
 import { strict as assert } from "node:assert";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
-import { Tree } from "../shared-tree/index.js";
+
 import {
 	allowUnused,
 	evaluateLazySchema,
-	type NodeKind,
-	type ObjectFromSchemaRecord,
 	SchemaFactory,
 	TreeBeta,
+	TreeViewConfiguration,
+	type NodeKind,
+	type ObjectFromSchemaRecord,
 	type TreeNode,
 	type TreeNodeSchema,
-	TreeViewConfiguration,
 	type Unhydrated,
 } from "../simple-tree/index.js";
+import { Tree } from "../shared-tree/index.js";
 import { getOrAddInMap, type requireAssignableTo } from "../util/index.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Examples and tests for open polymorphism design patterns for schema.
@@ -69,9 +70,7 @@ interface ItemExtensions {
  * Open polymorphic collection which libraries can provide additional implementations of, similar to TypeScript interfaces.
  * Implementations should declare schema whose nodes extends this interface, and have the schema statically implement ItemSchema.
  */
-type Item = TreeNode &
-	ItemExtensions &
-	ObjectFromSchemaRecord<typeof itemFields>;
+type Item = TreeNode & ItemExtensions & ObjectFromSchemaRecord<typeof itemFields>;
 
 /**
  * Details about the type all item schema must provide.
@@ -144,9 +143,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 			// If we don't do anything special, the insertable type is never, so a cast is required to insert content.
 			// See example using customizeSchemaTyping for how to avoid this.
 			// TODO: See `SchemaUnionToIntersection` test for why `as never` is currently not required here.
-			container.insertAtStart(
-				new TextItem({ text: "", location: { x: 0, y: 0 } }),
-			);
+			container.insertAtStart(new TextItem({ text: "", location: { x: 0, y: 0 } }));
 
 			type Input = Parameters<typeof container.insertAtStart>[0];
 			allowUnused<requireAssignableTo<Input, never>>();
@@ -222,9 +219,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 
 		type LazyItems = readonly (() => ItemSchema)[];
 
-		function composeComponents(
-			allComponents: readonly MyAppComponent[],
-		): MyAppConfig {
+		function composeComponents(allComponents: readonly MyAppComponent[]): MyAppConfig {
 			const lazyConfig = () => config;
 			const ItemTypes = allComponents.flatMap(
 				(component): LazyItems => component.itemTypes(lazyConfig),
@@ -343,15 +338,10 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 		 *
 		 * Information from the components can be aggregated into the configuration.
 		 */
-		function composeComponents(
-			allComponents: readonly MyAppComponent[],
-		): MyAppConfig {
+		function composeComponents(allComponents: readonly MyAppComponent[]): MyAppConfig {
 			const lazyConfig: () => MyAppConfigPartial = () => config;
 			// Compose all components
-			const ItemTypes = ComponentMinimal.composeComponentSchema(
-				allComponents,
-				lazyConfig,
-			);
+			const ItemTypes = ComponentMinimal.composeComponentSchema(allComponents, lazyConfig);
 			const config: MyAppConfigPartial = { allowedItemTypes: ItemTypes };
 			// At this point it is now legal to evaluate lazy schema:
 			const items = new Set(ItemTypes.map(evaluateLazySchema));
@@ -388,10 +378,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 			backgrounds?: Component.LazyArray<BackgroundSchema>;
 		}
 
-		type MyAppComponent = Component.Factory<
-			MyAppConfigPartial,
-			MyAppComponentContent
-		>;
+		type MyAppComponent = Component.Factory<MyAppConfigPartial, MyAppComponentContent>;
 
 		interface BackgroundExtensions {
 			html(): string;
@@ -401,20 +388,13 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 			readonly description: string;
 			default(): Unhydrated<Background>;
 		}
-		type BackgroundSchema = TreeNodeSchema<
-			string,
-			NodeKind.Object,
-			Background
-		> &
+		type BackgroundSchema = TreeNodeSchema<string, NodeKind.Object, Background> &
 			BackgroundStatic;
 
 		// An example component which recursively depends on all components.
 		const containerComponent: MyAppComponent = (lazyConfig) => {
 			function createContainer(config: MyAppConfigPartial): ItemSchema {
-				class Container extends sf.array(
-					"Container",
-					config.allowedItemTypes,
-				) {}
+				class Container extends sf.array("Container", config.allowedItemTypes) {}
 				class ContainerItem extends sf.object("ContainerItem", {
 					...itemFields,
 					container: Container,
@@ -462,10 +442,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 				// This could use config if needed.
 				const config = lazyConfig();
 
-				class Blank
-					extends sf.object("Blank", { ...itemFields })
-					implements Background, Item
-				{
+				class Blank extends sf.object("Blank", { ...itemFields }) implements Background, Item {
 					public html(): string {
 						return "transparent";
 					}
@@ -522,9 +499,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 		 *
 		 * Information from the components can be aggregated into the configuration.
 		 */
-		function composeComponents(
-			allComponents: readonly MyAppComponent[],
-		): MyAppConfig {
+		function composeComponents(allComponents: readonly MyAppComponent[]): MyAppConfig {
 			const composed = Component.composeComponents(allComponents, (c) => {
 				const config: MyAppConfigPartial = {
 					allowedItemTypes: c.getComposed("items"),
@@ -534,9 +509,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 			});
 
 			// At this point it is now legal to evaluate lazy schema:
-			const items = new Set(
-				composed.config.allowedItemTypes.map(evaluateLazySchema),
-			);
+			const items = new Set(composed.config.allowedItemTypes.map(evaluateLazySchema));
 			const backgrounds = new Set(
 				composed.config.allowedBackgroundTypes.map(evaluateLazySchema),
 			);
@@ -612,27 +585,18 @@ export namespace Component {
 	 * The execution of this function may not evaluate `lazyConfiguration` (doing so will error):
 	 * instead the returned `TComponent` can capture the `lazyConfiguration` and evaluate it at a later time (after all components have been composed).
 	 */
-	export type Factory<TConfig, TComponent> = (
-		lazyConfiguration: () => TConfig,
-	) => TComponent;
+	export type Factory<TConfig, TComponent> = (lazyConfiguration: () => TConfig) => TComponent;
 
 	/**
 	 * A function which returns an array of lazy values (like {@link AllowedTypes} where all of the values are lazy) which evaluate to `T`.
 	 */
 	export type LazyArray<T> = () => readonly (() => T)[];
 
-	class Config<TConfig, TComponent>
-		implements ComposedComponents<TConfig, TComponent>
-	{
-		public readonly componentsMap: ReadonlyMap<
-			Factory<TConfig, TComponent>,
-			TComponent
-		>;
+	class Config<TConfig, TComponent> implements ComposedComponents<TConfig, TComponent> {
+		public readonly componentsMap: ReadonlyMap<Factory<TConfig, TComponent>, TComponent>;
 
-		public readonly evaluatedMap: Map<
-			Configurable<TConfig, unknown, TComponent>,
-			unknown
-		> = new Map();
+		public readonly evaluatedMap: Map<Configurable<TConfig, unknown, TComponent>, unknown> =
+			new Map();
 
 		public readonly components: readonly TComponent[];
 
@@ -643,21 +607,17 @@ export namespace Component {
 
 		public constructor(
 			allComponents: readonly Factory<TConfig, TComponent>[],
-			lazyConfiguration: (
-				composed: ComposedComponents<TConfig, TComponent>,
-			) => TConfig,
+			lazyConfiguration: (composed: ComposedComponents<TConfig, TComponent>) => TConfig,
 		) {
 			// eslint-disable-next-line no-undef-init
-			let config: TConfig | undefined;
+			let config: TConfig | undefined = undefined;
 			const lazyConfigInner = () => {
 				if (config === undefined) {
 					throw new Error("Configuration not yet available");
 				}
 				return config;
 			};
-			this.componentsMap = new Map(
-				allComponents.map((c) => [c, c(lazyConfigInner)]),
-			);
+			this.componentsMap = new Map(allComponents.map((c) => [c, c(lazyConfigInner)]));
 			this.components = Array.from(this.componentsMap.values());
 			config = lazyConfiguration(this);
 			this.config = config;
@@ -668,25 +628,21 @@ export namespace Component {
 		): ReturnType<TFactory> {
 			const found = this.componentsMap.get(factory);
 			if (found === undefined) {
-				throw new UsageError(
-					"Requested component not included in this configuration",
-				);
+				throw new UsageError("Requested component not included in this configuration");
 			}
 			return found as ReturnType<TFactory>;
 		}
 
-		public getConfigured<
-			TEvaluatable extends Configurable<TConfig, unknown, TComponent>,
-		>(factory: TEvaluatable): ReturnType<TEvaluatable["configure"]> {
+		public getConfigured<TEvaluatable extends Configurable<TConfig, unknown, TComponent>>(
+			factory: TEvaluatable,
+		): ReturnType<TEvaluatable["configure"]> {
 			const found: unknown = getOrAddInMap(
 				this.evaluatedMap,
 				factory,
 				factory.configure(this.config, this),
 			);
 			if (found === undefined) {
-				throw new UsageError(
-					"Requested component not included in this configuration",
-				);
+				throw new UsageError("Requested component not included in this configuration");
 			}
 			return found as ReturnType<TEvaluatable["configure"]>;
 		}
@@ -699,9 +655,7 @@ export namespace Component {
 			},
 		>(
 			property: TKey,
-		): readonly (TComponent[TKey] extends LazyArray<infer U>
-			? () => U
-			: never)[] {
+		): readonly (TComponent[TKey] extends LazyArray<infer U> ? () => U : never)[] {
 			const result = this.components.flatMap((c) => {
 				const prop = c[property] as LazyArray<unknown>;
 				if (prop === undefined) {
@@ -709,9 +663,7 @@ export namespace Component {
 				}
 				return prop();
 			});
-			return result as (TComponent[TKey] extends LazyArray<infer U>
-				? () => U
-				: never)[];
+			return result as (TComponent[TKey] extends LazyArray<infer U> ? () => U : never)[];
 		}
 	}
 
@@ -727,14 +679,9 @@ export namespace Component {
 	 */
 	export function composeComponents<TConfig, TComponentInner>(
 		allComponents: readonly Factory<TConfig, TComponentInner>[],
-		lazyConfiguration: (
-			composed: ComposedComponents<TConfig, TComponentInner>,
-		) => TConfig,
+		lazyConfiguration: (composed: ComposedComponents<TConfig, TComponentInner>) => TConfig,
 	): ComposedComponents<TConfig, TComponentInner> {
-		const config = new Config<TConfig, TComponentInner>(
-			allComponents,
-			lazyConfiguration,
-		);
+		const config = new Config<TConfig, TComponentInner>(allComponents, lazyConfiguration);
 		return config;
 	}
 
@@ -770,9 +717,9 @@ export namespace Component {
 		 * @remarks
 		 * The result is cached when first evaluated.
 		 */
-		getConfigured<
-			TConfigurable extends Configurable<TConfig, unknown, TComponent>,
-		>(configurable: TConfigurable): ReturnType<TConfigurable["configure"]>;
+		getConfigured<TConfigurable extends Configurable<TConfig, unknown, TComponent>>(
+			configurable: TConfigurable,
+		): ReturnType<TConfigurable["configure"]>;
 
 		/**
 		 * Compose the contents of a lazy array property from all components.
@@ -788,8 +735,6 @@ export namespace Component {
 			},
 		>(
 			property: TKey,
-		): readonly (TComponent[TKey] extends LazyArray<infer U>
-			? () => U
-			: never)[];
+		): readonly (TComponent[TKey] extends LazyArray<infer U> ? () => U : never)[];
 	}
 }

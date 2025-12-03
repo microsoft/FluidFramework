@@ -15,20 +15,13 @@ import type {
 import type { Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import {
-	type EncodedChangeAtomId,
 	EncodedNodeChangeset,
+	type EncodedChangeAtomId,
 	type FieldChangeEncodingContext,
 } from "../modular-schema/index.js";
 
-import {
-	EncodedOptionalChangeset,
-	EncodedRegisterId,
-} from "./optionalFieldChangeFormatV2.js";
-import type {
-	OptionalChangeset,
-	RegisterId,
-	Replace,
-} from "./optionalFieldChangeTypes.js";
+import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormatV2.js";
+import type { OptionalChangeset, RegisterId, Replace } from "./optionalFieldChangeTypes.js";
 
 function makeRegisterIdCodec(
 	changeAtomIdCodec: IJsonCodec<
@@ -37,12 +30,7 @@ function makeRegisterIdCodec(
 		EncodedChangeAtomId,
 		ChangeEncodingContext
 	>,
-): IJsonCodec<
-	RegisterId,
-	EncodedRegisterId,
-	EncodedRegisterId,
-	ChangeEncodingContext
-> {
+): IJsonCodec<RegisterId, EncodedRegisterId, EncodedRegisterId, ChangeEncodingContext> {
 	return {
 		encode: (registerId: RegisterId, context: ChangeEncodingContext) => {
 			if (registerId === "self") {
@@ -77,10 +65,7 @@ export function makeOptionalFieldCodec(
 	const registerIdCodec = makeRegisterIdCodec(changeAtomIdCodec);
 
 	return {
-		encode: (
-			change: OptionalChangeset,
-			context: FieldChangeEncodingContext,
-		) => {
+		encode: (change: OptionalChangeset, context: FieldChangeEncodingContext) => {
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
 
 			if (change.moves.length > 0) {
@@ -93,16 +78,10 @@ export function makeOptionalFieldCodec(
 			if (change.valueReplace !== undefined) {
 				encoded.r = {
 					e: change.valueReplace.isEmpty,
-					d: changeAtomIdCodec.encode(
-						change.valueReplace.dst,
-						context.baseContext,
-					),
+					d: changeAtomIdCodec.encode(change.valueReplace.dst, context.baseContext),
 				};
 				if (change.valueReplace.src !== undefined) {
-					encoded.r.s = registerIdCodec.encode(
-						change.valueReplace.src,
-						context.baseContext,
-					);
+					encoded.r.s = registerIdCodec.encode(change.valueReplace.src, context.baseContext);
 				}
 			}
 
@@ -142,10 +121,7 @@ export function makeOptionalFieldCodec(
 					dst: changeAtomIdCodec.decode(encoded.r.d, context.baseContext),
 				};
 				if (encoded.r.s !== undefined) {
-					replace.src = registerIdCodec.decode(
-						encoded.r.s,
-						context.baseContext,
-					);
+					replace.src = registerIdCodec.decode(encoded.r.s, context.baseContext);
 				}
 				decoded.valueReplace = replace;
 			}

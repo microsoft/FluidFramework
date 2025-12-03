@@ -5,9 +5,9 @@
 
 import type {
 	IChannelAttributes,
+	IFluidDataStoreRuntime,
 	IChannelFactory,
 	IChannelServices,
-	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
@@ -20,8 +20,7 @@ import { SharedSignalClass } from "./sharedSignal.js";
  * @internal
  */
 export class SharedSignalFactory implements IChannelFactory<ISharedSignal> {
-	public static readonly Type: string =
-		"https://graph.microsoft.com/types/signal";
+	public static readonly Type: string = "https://graph.microsoft.com/types/signal";
 
 	public static readonly Attributes: IChannelAttributes = {
 		type: SharedSignalFactory.Type,
@@ -59,5 +58,4 @@ export class SharedSignalFactory implements IChannelFactory<ISharedSignal> {
  * Entrypoint for {@link ISharedSignal} creation.
  * @legacy @beta
  */
-export const SharedSignal =
-	createSharedObjectKind<ISharedSignal>(SharedSignalFactory);
+export const SharedSignal = createSharedObjectKind<ISharedSignal>(SharedSignalFactory);

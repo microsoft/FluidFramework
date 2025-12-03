@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+// eslint-disable-next-line import-x/no-nodejs-modules
+import * as crypto from "crypto";
+
 import {
 	describeCompat,
 	describeInstallVersions,
@@ -15,18 +19,15 @@ import {
 } from "@fluidframework/container-runtime/internal";
 // TODO:AB#6558: This should be provided based on the compatibility configuration.
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
-import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
 	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
-	type ITestContainerConfig,
-	type ITestFluidObject,
-	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
-// eslint-disable-next-line import-x/no-nodejs-modules
-import * as crypto from "crypto";
 
 import { pkgVersion } from "../packageVersion.js";
 
@@ -51,8 +52,7 @@ const compressionSuite = (getProvider, apis?) => {
 			// If the runtime version for the local or remote container runtime is 1.4.0, then we need to skip the tests as a lot of the options being tested fail in this version.
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
 				compatLocalVersionIsOld = apis.containerRuntime.version === "1.4.0";
-				compatOldRemoteVersionIsOld =
-					apis.containerRuntimeForLoading.version === "1.4.0";
+				compatOldRemoteVersionIsOld = apis.containerRuntimeForLoading.version === "1.4.0";
 			}
 		});
 
@@ -68,16 +68,12 @@ const compressionSuite = (getProvider, apis?) => {
 			};
 			const localContainer = await provider.makeTestContainer(containerConfig);
 			localDataObject =
-				await getContainerEntryPointBackCompat<ITestFluidObject>(
-					localContainer,
-				);
+				await getContainerEntryPointBackCompat<ITestFluidObject>(localContainer);
 			localMap = await localDataObject.getSharedObject<ISharedMap>("mapKey");
 
 			const remoteContainer = await provider.loadTestContainer(containerConfig);
 			const remoteDataObject =
-				await getContainerEntryPointBackCompat<ITestFluidObject>(
-					remoteContainer,
-				);
+				await getContainerEntryPointBackCompat<ITestFluidObject>(remoteContainer);
 			remoteMap = await remoteDataObject.getSharedObject<ISharedMap>("mapKey");
 		}
 
@@ -142,9 +138,7 @@ const compressionSuite = (getProvider, apis?) => {
 				await setupContainers(
 					{
 						compressionOptions: {
-							minimumBatchSizeInBytes: option.compression
-								? 10
-								: Number.POSITIVE_INFINITY,
+							minimumBatchSizeInBytes: option.compression ? 10 : Number.POSITIVE_INFINITY,
 							compressionAlgorithm: CompressionAlgorithms.lz4,
 						},
 						chunkSizeInBytes: option.chunking ? 100 : Number.POSITIVE_INFINITY,

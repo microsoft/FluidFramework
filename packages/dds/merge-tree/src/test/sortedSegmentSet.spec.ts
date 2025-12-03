@@ -12,13 +12,9 @@ import type { ISegment, ISegmentPrivate } from "../mergeTreeNodes.js";
 import { TrackingGroup } from "../mergeTreeTracking.js";
 import { ReferenceType } from "../ops.js";
 import { toMergeNodeInfo } from "../segmentInfos.js";
-import {
-	SortedSegmentSet,
-	type SortedSegmentSetItem,
-} from "../sortedSegmentSet.js";
+import { SortedSegmentSet, type SortedSegmentSetItem } from "../sortedSegmentSet.js";
 
 import { TestClient } from "./testClient.js";
-
 const segmentCount = 15;
 
 function validateSorted<T extends SortedSegmentSetItem>(
@@ -72,8 +68,7 @@ describe("SortedSegmentSet", () => {
 		const set = new SortedSegmentSet<{ segment: ISegment }>();
 		for (let i = 0; i < client.getLength(); i++) {
 			for (const pos of [i, client.getLength() - 1 - i]) {
-				const segment =
-					client.getContainingSegment<ISegmentPrivate>(pos)?.segment;
+				const segment = client.getContainingSegment<ISegmentPrivate>(pos)?.segment;
 				assert(segment);
 				const item = { segment };
 				assert.equal(set.has(item), false);
@@ -89,8 +84,7 @@ describe("SortedSegmentSet", () => {
 		const set = new SortedSegmentSet();
 		for (let i = 0; i < client.getLength(); i++) {
 			for (const pos of [i, client.getLength() - 1 - i]) {
-				const segment =
-					client.getContainingSegment<ISegmentPrivate>(pos)?.segment;
+				const segment = client.getContainingSegment<ISegmentPrivate>(pos)?.segment;
 				assert(segment);
 				set.addOrUpdate(segment);
 				assert.equal(set.has(segment), true);
@@ -105,8 +99,7 @@ describe("SortedSegmentSet", () => {
 			const random = makeRandom(0);
 			const refsAtAllPositions: LocalReferencePosition[] = [];
 			for (let i = 0; i < client.getLength(); i++) {
-				const { segment, offset } =
-					client.getContainingSegment<ISegmentPrivate>(i) ?? {};
+				const { segment, offset } = client.getContainingSegment<ISegmentPrivate>(i) ?? {};
 				assert(segment !== undefined);
 				assert(offset !== undefined);
 				refsAtAllPositions.push(

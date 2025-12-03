@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import {
 	assertDocumentTypeInfo,
 	isDocumentMatrixInfo,
@@ -12,16 +14,13 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
-	type IContainer,
-	LoaderHeader,
-} from "@fluidframework/container-definitions/internal";
-import type {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 	ISummarizer,
 } from "@fluidframework/container-runtime/internal";
-import type {
+import {
 	ConfigTypes,
 	IConfigProviderBase,
 	IFluidHandle,
@@ -29,22 +28,19 @@ import type {
 } from "@fluidframework/core-interfaces";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-import { strict as assert } from "assert";
 
-import type {
+import {
 	IDocumentLoaderAndSummarizer,
 	IDocumentProps,
 	ISummarizeResult,
 } from "./DocumentCreator.js";
 
-const configProvider = (
-	settings: Record<string, ConfigTypes>,
-): IConfigProviderBase => ({
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 
@@ -82,15 +78,11 @@ class TestDataObject extends DataObject {
 	}
 
 	protected async hasInitialized() {
-		const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(
-			this.matrixKey,
-		);
+		const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
 		assert(matrixHandle !== undefined, "SharedMatrix not found");
 		this.matrix = await matrixHandle.get();
 
-		const sharedStringHandle = this.root.get<IFluidHandle<SharedString>>(
-			this.sharedStringKey,
-		);
+		const sharedStringHandle = this.root.get<IFluidHandle<SharedString>>(this.sharedStringKey);
 		assert(sharedStringHandle !== undefined, "SharedMatrix not found");
 		this.sharedString = await sharedStringHandle.get();
 	}
@@ -125,9 +117,7 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 		return this.props.logger;
 	}
 
-	private async ensureContainerConnectedWriteMode(
-		container: IContainer,
-	): Promise<void> {
+	private async ensureContainerConnectedWriteMode(container: IContainer): Promise<void> {
 		const resolveIfActive = (res: () => void) => {
 			if (container.deltaManager.active) {
 				res();
@@ -145,8 +135,7 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 
 	private generateRandomString(length: number): string {
 		let result = "";
-		const characters =
-			"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+		const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 		const charactersLength = characters.length;
 		for (let i = 0; i < length; i++) {
 			result += characters.charAt(Math.floor(Math.random() * charactersLength));
@@ -174,10 +163,7 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 		for (let i = 0; i < this.rowSize; i++) {
 			for (let j = 0; j < this.columnSize; j++) {
 				const id = `${i.toString()}_${j.toString()}`;
-				const sharedString = SharedString.create(
-					this.mainDataStore._runtime,
-					id,
-				);
+				const sharedString = SharedString.create(this.mainDataStore._runtime, id);
 				sharedString.insertText(0, randomString);
 				matrix.setCell(i, j, sharedString.getText());
 			}
@@ -209,10 +195,7 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 			runtimeOptions,
 		});
 
-		assertDocumentTypeInfo(
-			this.props.documentTypeInfo,
-			this.props.documentType,
-		);
+		assertDocumentTypeInfo(this.props.documentTypeInfo, this.props.documentType);
 		// Now TypeScript knows that info.documentTypeInfo is either DocumentMapInfo or DocumentMultipleDataStoresInfo
 		// and info.documentType is either "DocumentMap" or "DocumentMultipleDataStores"
 		assert(isDocumentMatrixInfo(this.props.documentTypeInfo));
@@ -231,30 +214,23 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 	public async initializeDocument(): Promise<void> {
 		const loader = this.props.provider.createLoader(
 			[[this.props.provider.defaultCodeDetails, this.runtimeFactory]],
-			{
-				logger: this.props.logger,
-				configProvider: configProvider(featureGates),
-			},
+			{ logger: this.props.logger, configProvider: configProvider(featureGates) },
 		);
 		this._mainContainer = await loader.createDetachedContainer(
 			this.props.provider.defaultCodeDetails,
 		);
 		this.props.provider.updateDocumentId(this._mainContainer.resolvedUrl);
-		this.mainDataStore =
-			(await this._mainContainer.getEntryPoint()) as TestDataObject;
+		this.mainDataStore = (await this._mainContainer.getEntryPoint()) as TestDataObject;
 		this.mainDataStore._root.set("mode", "write");
 
 		await this.createDataStores();
 
 		await this._mainContainer.attach(
-			this.props.provider.driver.createCreateNewRequest(
-				this.props.provider.documentId,
-			),
+			this.props.provider.driver.createCreateNewRequest(this.props.provider.documentId),
 		);
 
 		await this.waitForContainerSave(this._mainContainer);
-		this.containerRuntime = this.mainDataStore._context
-			.containerRuntime as ContainerRuntime;
+		this.containerRuntime = this.mainDataStore._context.containerRuntime as ContainerRuntime;
 
 		if (this._mainContainer.deltaManager.active) {
 			await this.ensureContainerConnectedWriteMode(this._mainContainer);
@@ -280,10 +256,7 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 
 		const loader = this.props.provider.createLoader(
 			[[this.props.provider.defaultCodeDetails, this.runtimeFactory]],
-			{
-				logger: this.props.logger,
-				configProvider: configProvider(featureGates),
-			},
+			{ logger: this.props.logger, configProvider: configProvider(featureGates) },
 		);
 		const container2 = await loader.resolve(request);
 		return container2;
@@ -301,10 +274,7 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 		summaryVersion?: string,
 		closeContainer: boolean = true,
 	): Promise<ISummarizeResult> {
-		assert(
-			_container !== undefined,
-			"Container should be initialized before summarize",
-		);
+		assert(_container !== undefined, "Container should be initialized before summarize");
 		const { container: containerClient, summarizer: summarizerClient } =
 			await createSummarizerFromFactory(
 				this.props.provider,
@@ -318,10 +288,7 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 			);
 
 		const newSummaryVersion = await this.waitForSummary(summarizerClient);
-		assert(
-			newSummaryVersion !== undefined,
-			"summaryVersion needs to be valid.",
-		);
+		assert(newSummaryVersion !== undefined, "summaryVersion needs to be valid.");
 		if (closeContainer) {
 			summarizerClient.close();
 		}

@@ -3,17 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import type { IDiceRollerAppModel } from "./interfaces.js";
+import { IDiceRollerAppModel } from "./interfaces.js";
 
 /**
  * Render an IDiceRoller into a given div as a text character, with a button to roll it.
  * @param diceRoller - The Data Object to be rendered
  * @param div - The div to render into
  */
-export function renderDiceRoller(
-	model: IDiceRollerAppModel,
-	div: HTMLDivElement,
-) {
+export function renderDiceRoller(model: IDiceRollerAppModel, div: HTMLDivElement) {
 	const diceRoller = model.diceRoller;
 	const diceCounter = model.diceCounter;
 

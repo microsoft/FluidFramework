@@ -5,7 +5,6 @@
 
 import { strict as assert } from "node:assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
-import { FluidClientVersion } from "../../../../codec/index.js";
 import {
 	makeFieldBatchCodec,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -15,13 +14,14 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/index.js";
 import {
+	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
 	jsonableTreeFromFieldCursor,
-	TreeCompressionStrategy,
 } from "../../../../feature-libraries/index.js";
+import { FluidClientVersion } from "../../../../codec/index.js";
 import { ajvValidator } from "../../../codec/index.js";
-import { testTrees } from "../../../cursorTestSuite.js";
 import { testIdCompressor } from "../../../utils.js";
+import { testTrees } from "../../../cursorTestSuite.js";
 
 describe("makeFieldBatchCodec", () => {
 	// Use the first simple test tree from the test suite

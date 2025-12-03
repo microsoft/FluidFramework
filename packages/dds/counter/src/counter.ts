@@ -6,21 +6,21 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
+	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
+	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
-	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	createSingleBlobSummary,
 	SharedObject,
+	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
 
 import type { ISharedCounter, ISharedCounterEvents } from "./interfaces.js";
@@ -138,10 +138,7 @@ export class SharedCounter
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
-		const content = await readAndParse<ICounterSnapshotFormat>(
-			storage,
-			snapshotFileName,
-		);
+		const content = await readAndParse<ICounterSnapshotFormat>(storage, snapshotFileName);
 
 		this._value = content.value;
 	}
@@ -154,9 +151,7 @@ export class SharedCounter
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */
-	protected processMessagesCore(
-		messagesCollection: IRuntimeMessageCollection,
-	): void {
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
 			this.processMessage(envelope, messageContent, local);
@@ -178,10 +173,7 @@ export class SharedCounter
 			if (local) {
 				const pendingOp = this.pendingOps.shift();
 				const messageId = messageContent.localOpMetadata;
-				assert(
-					typeof messageId === "number",
-					0xc8e /* localOpMetadata should be a number */,
-				);
+				assert(typeof messageId === "number", 0xc8e /* localOpMetadata should be a number */);
 				assert(
 					pendingOp !== undefined &&
 						pendingOp.messageId === messageId &&
@@ -212,10 +204,7 @@ export class SharedCounter
 
 		// TODO: Clean up error code linter violations repo-wide.
 
-		assert(
-			counterOp.type === "increment",
-			0x3ec /* Op type is not increment */,
-		);
+		assert(counterOp.type === "increment", 0x3ec /* Op type is not increment */);
 
 		this.increment(counterOp.incrementAmount);
 	}

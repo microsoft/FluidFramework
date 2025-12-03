@@ -5,24 +5,16 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, StableId } from "@fluidframework/id-compressor";
-import { isStableId } from "@fluidframework/id-compressor/internal";
+
 import type { ICodecOptions, IJsonCodec } from "../../codec/index.js";
-import { brand } from "../../util/index.js";
-import type {
-	EncodedRevisionTag,
-	RevisionTag,
-	RevisionTagCodec,
-} from "../rebase/index.js";
+import type { EncodedRevisionTag, RevisionTagCodec, RevisionTag } from "../rebase/index.js";
+
+import { type FormatV2, StableOrFinalRevisionTag } from "./detachedFieldIndexFormatV2.js";
+import type { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes.js";
 import { makeDetachedFieldIndexCodecFromMajorCodec } from "./detachedFieldIndexCodecCommon.js";
+import { isStableId } from "@fluidframework/id-compressor/internal";
 import { DetachedFieldIndexFormatVersion } from "./detachedFieldIndexFormatCommon.js";
-import {
-	type FormatV2,
-	StableOrFinalRevisionTag,
-} from "./detachedFieldIndexFormatV2.js";
-import type {
-	DetachedFieldSummaryData,
-	Major,
-} from "./detachedFieldIndexTypes.js";
+import { brand } from "../../util/index.js";
 
 class MajorCodec implements IJsonCodec<Major> {
 	public constructor(
@@ -49,9 +41,7 @@ class MajorCodec implements IJsonCodec<Major> {
 
 	public decode(major: EncodedRevisionTag | StableId): RevisionTag {
 		assert(
-			major === "root" ||
-				(typeof major === "string" && isStableId(major)) ||
-				major >= 0,
+			major === "root" || (typeof major === "string" && isStableId(major)) || major >= 0,
 			0xbfd /* Expected root, stable, or final compressed id */,
 		);
 		if (typeof major === "string" && isStableId(major)) {

@@ -3,20 +3,21 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
+	AsyncGenerator as Generator,
 	createWeightedAsyncGenerator as createWeightedGenerator,
-	type AsyncGenerator as Generator,
 	takeAsync as take,
 } from "@fluid-private/stochastic-test-utils";
 import {
+	DDSFuzzHarnessEvents,
+	DDSFuzzModel,
+	DDSFuzzSuiteOptions,
 	createDDSFuzzSuite,
-	type DDSFuzzHarnessEvents,
-	type DDSFuzzModel,
-	type DDSFuzzSuiteOptions,
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
-import { strict as assert } from "assert";
 
 import {
 	appendAddIntervalToRevertibles,
@@ -27,16 +28,16 @@ import {
 } from "../../revertibles.js";
 
 import {
+	FuzzTestState,
+	IntervalOperationGenerationConfig,
+	RevertOperation,
+	RevertSharedStringRevertibles,
+	RevertibleSharedString,
+	SharedStringFuzzFactory,
 	baseModel,
 	defaultFuzzOptions,
-	type FuzzTestState,
-	type IntervalOperationGenerationConfig,
 	isRevertibleSharedString,
 	makeIntervalOperationGenerator,
-	type RevertibleSharedString,
-	type RevertOperation,
-	type RevertSharedStringRevertibles,
-	type SharedStringFuzzFactory,
 } from "./fuzzUtils.js";
 
 const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
@@ -57,26 +58,19 @@ emitter.on("clientCreate", (client) => {
 		});
 		collection.on("deleteInterval", (interval, local, op) => {
 			if (local && !channel.isCurrentRevert) {
-				appendDeleteIntervalToRevertibles(
+				appendDeleteIntervalToRevertibles(channel, interval, channel.revertibles);
+			}
+		});
+		collection.on("changeInterval", (interval, previousInterval, local, op, slide) => {
+			if (local && !channel.isCurrentRevert && !slide) {
+				appendChangeIntervalToRevertibles(
 					channel,
 					interval,
+					previousInterval,
 					channel.revertibles,
 				);
 			}
 		});
-		collection.on(
-			"changeInterval",
-			(interval, previousInterval, local, op, slide) => {
-				if (local && !channel.isCurrentRevert && !slide) {
-					appendChangeIntervalToRevertibles(
-						channel,
-						interval,
-						previousInterval,
-						channel.revertibles,
-					);
-				}
-			},
-		);
 		collection.on("propertyChanged", (interval, propertyDeltas, local, op) => {
 			if (local && !channel.isCurrentRevert) {
 				appendIntervalPropertyChangedToRevertibles(
@@ -119,10 +113,7 @@ function operationGenerator(
 		return {
 			type: "revertSharedStringRevertibles",
 			// grab a random number of edits to revert
-			editsToRevert: state.random.integer(
-				1,
-				state.client.channel.revertibles.length,
-			),
+			editsToRevert: state.random.integer(1, state.client.channel.revertibles.length),
 		};
 	}
 
@@ -134,21 +125,13 @@ function operationGenerator(
 	assert(optionsParam.weights !== undefined);
 	const baseGenerator = makeIntervalOperationGenerator(optionsParam, true);
 	return createWeightedGenerator<RevertOperation, ClientOpState>([
-		[
-			revertSharedStringRevertibles,
-			optionsParam.weights.revertWeight,
-			hasRevertibles,
-		],
+		[revertSharedStringRevertibles, optionsParam.weights.revertWeight, hasRevertibles],
 		[baseGenerator, 1],
 	]);
 }
 
 describe("IntervalCollection fuzz testing", () => {
-	const model: DDSFuzzModel<
-		SharedStringFuzzFactory,
-		RevertOperation,
-		FuzzTestState
-	> = {
+	const model: DDSFuzzModel<SharedStringFuzzFactory, RevertOperation, FuzzTestState> = {
 		...baseModel,
 		workloadName: "interval collection with revertibles",
 		generatorFactory: () =>
@@ -179,11 +162,7 @@ describe("IntervalCollection fuzz testing", () => {
 });
 
 describe("IntervalCollection fuzz testing with rebasing", () => {
-	const model: DDSFuzzModel<
-		SharedStringFuzzFactory,
-		RevertOperation,
-		FuzzTestState
-	> = {
+	const model: DDSFuzzModel<SharedStringFuzzFactory, RevertOperation, FuzzTestState> = {
 		...baseModel,
 		workloadName: "interval collection with revertibles and rebasing",
 		generatorFactory: () =>

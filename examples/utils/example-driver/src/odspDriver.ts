@@ -59,12 +59,7 @@ export const createOdspDriver = async (): Promise<ExampleDriver> => {
 			async () => pushToken,
 		),
 		createCreateNewRequest: (id: string) =>
-			createOdspCreateContainerRequest(
-				siteUrl,
-				driveId,
-				directory,
-				`${id}.tstFluid`,
-			),
+			createOdspCreateContainerRequest(siteUrl, driveId, directory, `${id}.tstFluid`),
 		createLoadExistingRequest: async (id: string) => {
 			const driveItem = await getDriveItemByRootFileName(
 				siteUrl,

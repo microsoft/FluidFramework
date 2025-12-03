@@ -57,26 +57,10 @@ describe("Ink", () => {
 
 			const strokes = ink.getStrokes();
 			assert.equal(strokes.length, 2, "There should be two strokes");
-			assert.deepEqual(
-				strokes[0].id,
-				strokeId1,
-				"The first stroke's id is incorrect",
-			);
-			assert.deepEqual(
-				strokes[0].pen,
-				pen,
-				"The first stroke's pen is incorrect",
-			);
-			assert.deepEqual(
-				strokes[1].id,
-				strokeId2,
-				"The second stroke's id is incorrect",
-			);
-			assert.deepEqual(
-				strokes[1].pen,
-				pen,
-				"The second stroke's pen is incorrect",
-			);
+			assert.deepEqual(strokes[0].id, strokeId1, "The first stroke's id is incorrect");
+			assert.deepEqual(strokes[0].pen, pen, "The first stroke's pen is incorrect");
+			assert.deepEqual(strokes[1].id, strokeId2, "The second stroke's id is incorrect");
+			assert.deepEqual(strokes[1].pen, pen, "The second stroke's pen is incorrect");
 		});
 
 		it("Can append a point to a stroke", () => {
@@ -92,32 +76,17 @@ describe("Ink", () => {
 
 			// Get the stroked and verify it has the correct point.
 			const stroke = ink.getStroke(strokeId);
-			assert.equal(
-				stroke.points.length,
-				1,
-				"There should be only one point in the stroke",
-			);
-			assert.deepEqual(
-				stroke.points[0],
-				inkPoint,
-				"The ink point is incorrect",
-			);
+			assert.equal(stroke.points.length, 1, "There should be only one point in the stroke");
+			assert.deepEqual(stroke.points[0], inkPoint, "The ink point is incorrect");
 		});
 
 		it("Can clear a stroke", () => {
 			const strokeId = ink.createStroke(pen).id;
-			assert(
-				ink.getStroke(strokeId) !== undefined,
-				"Could not retrieve the stroke",
-			);
+			assert(ink.getStroke(strokeId) !== undefined, "Could not retrieve the stroke");
 
 			// Clear the stroke.
 			ink.clear();
-			assert.equal(
-				ink.getStroke(strokeId),
-				undefined,
-				"The stroke should have been cleared",
-			);
+			assert.equal(ink.getStroke(strokeId), undefined, "The stroke should have been cleared");
 		});
 
 		it("can load an Ink from snapshot", async () => {
@@ -140,16 +109,8 @@ describe("Ink", () => {
 
 			// Verify that the new Ink has the stroke and the point.
 			const stroke = ink2.getStroke(strokeId);
-			assert.equal(
-				stroke.points.length,
-				1,
-				"There should be only one point in the stroke",
-			);
-			assert.deepEqual(
-				stroke.points[0],
-				inkPoint,
-				"The ink point is incorrect",
-			);
+			assert.equal(stroke.points.length, 1, "There should be only one point in the stroke");
+			assert.deepEqual(stroke.points[0], inkPoint, "The ink point is incorrect");
 		});
 	});
 
@@ -183,10 +144,7 @@ describe("Ink", () => {
 			ink.connect(services1);
 
 			// Verify that both the inks have the stroke.
-			assert(
-				ink.getStroke(strokeId) !== undefined,
-				"The first ink does not have the stroke",
-			);
+			assert(ink.getStroke(strokeId) !== undefined, "The first ink does not have the stroke");
 			assert(
 				ink2.getStroke(strokeId) !== undefined,
 				"The second ink does not have the stroke",
@@ -206,11 +164,7 @@ describe("Ink", () => {
 
 			// Verify that both the inks have the added point.
 			const points1 = ink.getStroke(strokeId).points;
-			assert.equal(
-				points1.length,
-				1,
-				"There should be only one point in the stroke",
-			);
+			assert.equal(points1.length, 1, "There should be only one point in the stroke");
 			assert.deepEqual(points1[0], inkPoint, "The ink point is incorrect");
 
 			const points2 = ink2.getStroke(strokeId).points;
@@ -219,11 +173,7 @@ describe("Ink", () => {
 				1,
 				"There should be only one point in the stroke in remote client",
 			);
-			assert.deepEqual(
-				points2[0],
-				inkPoint,
-				"The ink point is incorrect in remote client",
-			);
+			assert.deepEqual(points2[0], inkPoint, "The ink point is incorrect in remote client");
 		});
 	});
 
@@ -270,20 +220,9 @@ describe("Ink", () => {
 
 			// Verify that the remote ink has the correct stroke.
 			const stroke2 = ink2.getStroke(strokeId);
-			assert(
-				stroke2 !== undefined,
-				"Could not retrieve the stroke in remote client",
-			);
-			assert.equal(
-				stroke2.id,
-				strokeId,
-				"The stroke's id is incorrect in remote client",
-			);
-			assert.deepEqual(
-				stroke2.pen,
-				pen,
-				"The stroke's pen is incorrect in remote client",
-			);
+			assert(stroke2 !== undefined, "Could not retrieve the stroke in remote client");
+			assert.equal(stroke2.id, strokeId, "The stroke's id is incorrect in remote client");
+			assert.deepEqual(stroke2.pen, pen, "The stroke's pen is incorrect in remote client");
 		});
 
 		it("Can create / get multiple strokes", () => {
@@ -297,34 +236,14 @@ describe("Ink", () => {
 			// Verify that the first ink has the correct strokes.
 			const strokes1 = ink.getStrokes();
 			assert.equal(strokes1.length, 2, "There should be two strokes");
-			assert.deepEqual(
-				strokes1[0].id,
-				stroke1Id,
-				"The first stroke's id is incorrect",
-			);
-			assert.deepEqual(
-				strokes1[0].pen,
-				pen,
-				"The first stroke's pen is incorrect",
-			);
-			assert.deepEqual(
-				strokes1[1].id,
-				stroke2Id,
-				"The second stroke's id is incorrect",
-			);
-			assert.deepEqual(
-				strokes1[1].pen,
-				pen,
-				"The second stroke's pen is incorrect",
-			);
+			assert.deepEqual(strokes1[0].id, stroke1Id, "The first stroke's id is incorrect");
+			assert.deepEqual(strokes1[0].pen, pen, "The first stroke's pen is incorrect");
+			assert.deepEqual(strokes1[1].id, stroke2Id, "The second stroke's id is incorrect");
+			assert.deepEqual(strokes1[1].pen, pen, "The second stroke's pen is incorrect");
 
 			// Verify that the remote ink has the correct strokes.
 			const strokes2 = ink2.getStrokes();
-			assert.equal(
-				strokes2.length,
-				2,
-				"There should be two strokes in remote client",
-			);
+			assert.equal(strokes2.length, 2, "There should be two strokes in remote client");
 			assert.deepEqual(
 				strokes2[0].id,
 				stroke1Id,
@@ -370,21 +289,9 @@ describe("Ink", () => {
 
 			// Verify that the first ink has the correct stroke with both the points.
 			const stroke1 = ink.getStroke(strokeId);
-			assert.equal(
-				stroke1.points.length,
-				2,
-				"There should be two points in the stroke",
-			);
-			assert.deepEqual(
-				stroke1.points[0],
-				inkPoint1,
-				"The first ink point is incorrect",
-			);
-			assert.deepEqual(
-				stroke1.points[1],
-				inkPoint2,
-				"The second ink point is incorrect",
-			);
+			assert.equal(stroke1.points.length, 2, "There should be two points in the stroke");
+			assert.deepEqual(stroke1.points[0], inkPoint1, "The first ink point is incorrect");
+			assert.deepEqual(stroke1.points[1], inkPoint2, "The second ink point is incorrect");
 
 			// Verify that the remote ink has the correct stroke with both the points.
 			const stroke2 = ink2.getStroke(strokeId);
@@ -413,10 +320,7 @@ describe("Ink", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify that both the inks have the stroke.
-			assert(
-				ink.getStroke(strokeId) !== undefined,
-				"Could not retrieve the stroke",
-			);
+			assert(ink.getStroke(strokeId) !== undefined, "Could not retrieve the stroke");
 			assert(
 				ink2.getStroke(strokeId) !== undefined,
 				"Could not retrieve the stroke in remote client",
@@ -429,11 +333,7 @@ describe("Ink", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify that the stroke is cleared from both the inks.
-			assert.equal(
-				ink.getStroke(strokeId),
-				undefined,
-				"The stroke should have been cleared",
-			);
+			assert.equal(ink.getStroke(strokeId), undefined, "The stroke should have been cleared");
 			assert.equal(
 				ink2.getStroke(strokeId),
 				undefined,
@@ -449,13 +349,11 @@ describe("Ink", () => {
 		let ink2: Ink;
 
 		beforeEach("createConnectedInks", () => {
-			containerRuntimeFactory =
-				new MockContainerRuntimeFactoryForReconnection();
+			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
 			// Connect the first Ink.
 			dataStoreRuntime.setAttachState(AttachState.Attached);
-			containerRuntime1 =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services1 = {
 				deltaConnection: dataStoreRuntime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -464,8 +362,7 @@ describe("Ink", () => {
 
 			// Create and connect a second Ink.
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-			containerRuntime2 =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -519,11 +416,7 @@ describe("Ink", () => {
 				1,
 				"There should be only one point in the stroke in first client",
 			);
-			assert.deepEqual(
-				points1[0],
-				inkPoint,
-				"The ink point is incorrect in first client",
-			);
+			assert.deepEqual(points1[0], inkPoint, "The ink point is incorrect in first client");
 
 			const points2 = ink2.getStroke(strokeId).points;
 			assert.equal(
@@ -531,11 +424,7 @@ describe("Ink", () => {
 				1,
 				"There should be only one point in the stroke in second client",
 			);
-			assert.deepEqual(
-				points2[0],
-				inkPoint,
-				"The ink point is incorrect in second client",
-			);
+			assert.deepEqual(points2[0], inkPoint, "The ink point is incorrect in second client");
 		});
 
 		it("can store ops in disconnected state and resend them on reconnection", async () => {
@@ -586,11 +475,7 @@ describe("Ink", () => {
 				1,
 				"There should be only one point in the stroke in first client",
 			);
-			assert.deepEqual(
-				points1[0],
-				inkPoint,
-				"The ink point is incorrect in first client",
-			);
+			assert.deepEqual(points1[0], inkPoint, "The ink point is incorrect in first client");
 
 			const points2 = ink2.getStroke(strokeId).points;
 			assert.equal(
@@ -598,11 +483,7 @@ describe("Ink", () => {
 				1,
 				"There should be only one point in the stroke in second client",
 			);
-			assert.deepEqual(
-				points2[0],
-				inkPoint,
-				"The ink point is incorrect in second client",
-			);
+			assert.deepEqual(points2[0], inkPoint, "The ink point is incorrect in second client");
 		});
 	});
 });

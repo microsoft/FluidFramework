@@ -4,17 +4,13 @@
  */
 
 import { strict as assert } from "node:assert";
-import { FluidClientVersion } from "../../codec/index.js";
+
 import {
+	independentInitializedView,
 	createIndependentTreeAlpha,
 	createIndependentTreeBeta,
-	independentInitializedView,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/independentView.js";
-import {
-	ForestTypeExpensiveDebug,
-	TreeAlpha,
-} from "../../shared-tree/index.js";
 import {
 	extractPersistedSchema,
 	FieldKind,
@@ -23,16 +19,16 @@ import {
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 } from "../../simple-tree/index.js";
+import { ForestTypeExpensiveDebug, TreeAlpha } from "../../shared-tree/index.js";
 import { ajvValidator } from "../codec/index.js";
+import { FluidClientVersion } from "../../codec/index.js";
 import { testIdCompressor } from "../utils.js";
 
 describe("independentView", () => {
 	describe("independentInitializedView", () => {
 		// Regression test for debug forest erroring during initialization due to being out of schema.
 		it("debug forest", () => {
-			const config = new TreeViewConfigurationAlpha({
-				schema: SchemaFactory.number,
-			});
+			const config = new TreeViewConfigurationAlpha({ schema: SchemaFactory.number });
 			const view = independentInitializedView(
 				config,
 				{
@@ -40,11 +36,7 @@ describe("independentView", () => {
 					jsonValidator: ajvValidator,
 				},
 				{
-					schema: extractPersistedSchema(
-						config.schema,
-						FluidClientVersion.v2_0,
-						() => true,
-					),
+					schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_0, () => true),
 					tree: TreeAlpha.exportCompressed(1, {
 						minVersionForCollab: FluidClientVersion.v2_0,
 					}),
@@ -67,9 +59,7 @@ describe("independentView", () => {
 			assert.deepEqual(emptySchema.root.simpleAllowedTypes, new Map());
 			assert.equal(tree.exportVerbose(), undefined);
 
-			const config = new TreeViewConfigurationAlpha({
-				schema: SchemaFactory.number,
-			});
+			const config = new TreeViewConfigurationAlpha({ schema: SchemaFactory.number });
 
 			const view = tree.viewWith(config);
 			assert(view.compatibility.canInitialize);
@@ -93,9 +83,7 @@ describe("independentView", () => {
 				idCompressor: testIdCompressor,
 			});
 
-			const beforeConfig = new TreeViewConfigurationAlpha({
-				schema: SchemaFactory.number,
-			});
+			const beforeConfig = new TreeViewConfigurationAlpha({ schema: SchemaFactory.number });
 			const stagedConfig = new TreeViewConfigurationAlpha({
 				schema: SchemaFactoryAlpha.types([
 					SchemaFactory.number,
@@ -178,18 +166,12 @@ describe("independentView", () => {
 
 		it("initialized", () => {
 			const minVersionForCollab = FluidClientVersion.v2_0;
-			const config = new TreeViewConfigurationAlpha({
-				schema: SchemaFactory.number,
-			});
+			const config = new TreeViewConfigurationAlpha({ schema: SchemaFactory.number });
 			const tree = createIndependentTreeAlpha({
 				forest: ForestTypeExpensiveDebug,
 				jsonValidator: ajvValidator,
 				content: {
-					schema: extractPersistedSchema(
-						config.schema,
-						minVersionForCollab,
-						() => true,
-					),
+					schema: extractPersistedSchema(config.schema, minVersionForCollab, () => true),
 					tree: TreeAlpha.exportCompressed(1, {
 						minVersionForCollab,
 					}),
@@ -202,9 +184,7 @@ describe("independentView", () => {
 		});
 
 		it("oddly allowed jsonValidator", () => {
-			const config = new TreeViewConfigurationAlpha({
-				schema: SchemaFactory.number,
-			});
+			const config = new TreeViewConfigurationAlpha({ schema: SchemaFactory.number });
 			const tree = createIndependentTreeAlpha({
 				forest: ForestTypeExpensiveDebug,
 				// This does nothing, and is not part of the allowed input type.

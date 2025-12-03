@@ -6,10 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import type {
-	IContainer,
-	IRuntime,
-} from "@fluidframework/container-definitions/internal";
+import type { IContainer, IRuntime } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type { ContainerRuntimeOptionsInternal } from "@fluidframework/container-runtime/internal";
 import { CompressionAlgorithms } from "@fluidframework/container-runtime/internal";
@@ -20,11 +17,7 @@ import type { IFluidContainer } from "@fluidframework/fluid-static";
 import { isInternalFluidContainer } from "@fluidframework/fluid-static/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-import {
-	SchemaFactory,
-	SharedTree,
-	TreeViewConfiguration,
-} from "fluid-framework";
+import { SchemaFactory, SharedTree, TreeViewConfiguration } from "fluid-framework";
 // eslint-disable-next-line import-x/no-internal-modules
 import { SharedMap } from "fluid-framework/legacy";
 import { v4 as uuid } from "uuid";
@@ -33,7 +26,10 @@ import { AzureClient } from "../AzureClient.js";
 import type { AzureLocalConnectionConfig } from "../interfaces.js";
 
 function createAzureClient(
-	props: { scopes?: ScopeType[]; configProvider?: IConfigProviderBase } = {},
+	props: {
+		scopes?: ScopeType[];
+		configProvider?: IConfigProviderBase;
+	} = {},
 ): AzureClient {
 	const connectionProperties: AzureLocalConnectionConfig = {
 		tokenProvider: new InsecureTokenProvider(
@@ -58,9 +54,7 @@ function createAzureClient(
 // this is better than `any`.
 
 function getRuntimeOptions(
-	runtime:
-		| IRuntime
-		| { runtimeOptions: Readonly<ContainerRuntimeOptionsInternal> },
+	runtime: IRuntime | { runtimeOptions: Readonly<ContainerRuntimeOptionsInternal> },
 ): Readonly<ContainerRuntimeOptionsInternal> {
 	assert("runtimeOptions" in runtime);
 	return runtime.runtimeOptions;
@@ -86,7 +80,7 @@ const connectionModeOf = (container: IFluidContainer): ConnectionMode => {
 };
 
 for (const compatibilityMode of ["1", "2"] as const) {
-	describe(`AzureClient (compatibilityMode: ${compatibilityMode})`, () => {
+	describe(`AzureClient (compatibilityMode: ${compatibilityMode})`, function () {
 		const connectTimeoutMs = 1000;
 		let client: AzureClient;
 		let schema: {
@@ -95,7 +89,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			};
 		};
 
-		beforeEach("createAzureClient", () => {
+		beforeEach("createAzureClient", function () {
 			client = createAzureClient();
 			schema = {
 				initialObjects: {
@@ -111,7 +105,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		 * Expected behavior: an error should not be thrown nor should a rejected promise
 		 * be returned.
 		 */
-		it("can create new Azure Fluid Relay container successfully", async () => {
+		it("can create new Azure Fluid Relay container successfully", async function () {
 			const resourcesP = client.createContainer(schema, compatibilityMode);
 
 			await assert.doesNotReject(
@@ -128,11 +122,8 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		 * Expected behavior: an error should not be thrown nor should a rejected promise
 		 * be returned.
 		 */
-		it("created container is detached", async () => {
-			const { container } = await client.createContainer(
-				schema,
-				compatibilityMode,
-			);
+		it("created container is detached", async function () {
+			const { container } = await client.createContainer(schema, compatibilityMode);
 			assert.strictEqual(
 				container.attachState,
 				AttachState.Detached,
@@ -146,28 +137,18 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		 * Expected behavior: an error should not be thrown nor should a rejected promise
 		 * be returned.
 		 */
-		it("can attach a container", async () => {
-			const { container } = await client.createContainer(
-				schema,
-				compatibilityMode,
-			);
+		it("can attach a container", async function () {
+			const { container } = await client.createContainer(schema, compatibilityMode);
 			const containerId = await container.attach();
 
 			if (container.connectionState !== ConnectionState.Connected) {
-				await timeoutPromise(
-					(resolve) => container.once("connected", () => resolve()),
-					{
-						durationMs: connectTimeoutMs,
-						errorMsg: "container connect() timeout",
-					},
-				);
+				await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+					durationMs: connectTimeoutMs,
+					errorMsg: "container connect() timeout",
+				});
 			}
 
-			assert.strictEqual(
-				typeof containerId,
-				"string",
-				"Attach did not return a string ID",
-			);
+			assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
 			assert.strictEqual(
 				container.attachState,
 				AttachState.Attached,
@@ -181,28 +162,18 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		 * Expected behavior: an error should not be thrown nor should a rejected promise
 		 * be returned.
 		 */
-		it("cannot attach a container twice", async () => {
-			const { container } = await client.createContainer(
-				schema,
-				compatibilityMode,
-			);
+		it("cannot attach a container twice", async function () {
+			const { container } = await client.createContainer(schema, compatibilityMode);
 			const containerId = await container.attach();
 
 			if (container.connectionState !== ConnectionState.Connected) {
-				await timeoutPromise(
-					(resolve) => container.once("connected", () => resolve()),
-					{
-						durationMs: connectTimeoutMs,
-						errorMsg: "container connect() timeout",
-					},
-				);
+				await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+					durationMs: connectTimeoutMs,
+					errorMsg: "container connect() timeout",
+				});
 			}
 
-			assert.strictEqual(
-				typeof containerId,
-				"string",
-				"Attach did not return a string ID",
-			);
+			assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
 			assert.strictEqual(
 				container.attachState,
 				AttachState.Attached,
@@ -221,7 +192,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		 * Expected behavior: an error should not be thrown nor should a rejected promise
 		 * be returned.
 		 */
-		it("can retrieve existing Azure Fluid Relay container successfully", async () => {
+		it("can retrieve existing Azure Fluid Relay container successfully", async function () {
 			const { container: newContainer } = await client.createContainer(
 				schema,
 				compatibilityMode,
@@ -229,20 +200,13 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			const containerId = await newContainer.attach();
 
 			if (newContainer.connectionState !== ConnectionState.Connected) {
-				await timeoutPromise(
-					(resolve) => newContainer.once("connected", () => resolve()),
-					{
-						durationMs: connectTimeoutMs,
-						errorMsg: "container connect() timeout",
-					},
-				);
+				await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
+					durationMs: connectTimeoutMs,
+					errorMsg: "container connect() timeout",
+				});
 			}
 
-			const resources = client.getContainer(
-				containerId,
-				schema,
-				compatibilityMode,
-			);
+			const resources = client.getContainer(containerId, schema, compatibilityMode);
 			await assert.doesNotReject(
 				resources,
 				() => true,
@@ -255,7 +219,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		 *
 		 * Expected behavior: an error should be thrown when trying to get a non-existent container.
 		 */
-		it("cannot load improperly created container (cannot load a non-existent container)", async () => {
+		it("cannot load improperly created container (cannot load a non-existent container)", async function () {
 			const consoleErrorFunction = console.error;
 			console.error = (): void => {};
 			const containerAndServicesP = client.getContainer(
@@ -265,11 +229,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			);
 
 			const errorFunction = (error: Error): boolean => {
-				assert.notStrictEqual(
-					error.message,
-					undefined,
-					"Azure Client error is undefined",
-				);
+				assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
 				return true;
 			};
 
@@ -289,10 +249,8 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		 *
 		 * Expected behavior: AzureClient should start the container with the connectionMode in `read`.
 		 */
-		it("can create a container with only read permission in read mode", async () => {
-			const readOnlyAzureClient = createAzureClient({
-				scopes: [ScopeType.DocRead],
-			});
+		it("can create a container with only read permission in read mode", async function () {
+			const readOnlyAzureClient = createAzureClient({ scopes: [ScopeType.DocRead] });
 
 			const { container } = await readOnlyAzureClient.createContainer(
 				schema,
@@ -303,12 +261,11 @@ for (const compatibilityMode of ["1", "2"] as const) {
 				durationMs: 1000,
 				errorMsg: "container connect() timeout",
 			});
-			const { container: containerGet } =
-				await readOnlyAzureClient.getContainer(
-					containerId,
-					schema,
-					compatibilityMode,
-				);
+			const { container: containerGet } = await readOnlyAzureClient.getContainer(
+				containerId,
+				schema,
+				compatibilityMode,
+			);
 
 			assert.strictEqual(
 				connectionModeOf(container),
@@ -330,7 +287,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		 *
 		 * Expected behavior: AzureClient should start the container with the connectionMode in `write`.
 		 */
-		it("can create a container with read and write permissions in write mode", async () => {
+		it("can create a container with read and write permissions in write mode", async function () {
 			const readWriteAzureClient = createAzureClient({
 				scopes: [ScopeType.DocRead, ScopeType.DocWrite],
 			});
@@ -344,12 +301,11 @@ for (const compatibilityMode of ["1", "2"] as const) {
 				durationMs: 1000,
 				errorMsg: "container connect() timeout",
 			});
-			const { container: containerGet } =
-				await readWriteAzureClient.getContainer(
-					containerId,
-					schema,
-					compatibilityMode,
-				);
+			const { container: containerGet } = await readWriteAzureClient.getContainer(
+				containerId,
+				schema,
+				compatibilityMode,
+			);
 
 			assert.strictEqual(
 				connectionModeOf(container),
@@ -364,14 +320,15 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			);
 		});
 
-		it("GC is disabled for both compat modes", async () => {
-			const { container: container_defaultConfig } =
-				await client.createContainer(schema, compatibilityMode);
+		it("GC is disabled for both compat modes", async function () {
+			const { container: container_defaultConfig } = await client.createContainer(
+				schema,
+				compatibilityMode,
+			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const { sweepEnabled, throwOnTombstoneLoad } =
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-				(container_defaultConfig as any).container._runtime.garbageCollector
-					.configs;
+				(container_defaultConfig as any).container._runtime.garbageCollector.configs;
 
 			const expectedConfigs = {
 				sweepEnabled: false,
@@ -389,8 +346,8 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		 * Scenario: Ensure that the types of 'initialObjects' are preserved when the container
 		 * schema type is statically known.
 		 */
-		describe("'initialObjects'", () => {
-			it("preserves 'SharedMap' type", async () => {
+		describe("'initialObjects'", function () {
+			it("preserves 'SharedMap' type", async function () {
 				const { container } = await client.createContainer(
 					{
 						initialObjects: {
@@ -401,10 +358,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 				);
 
 				// Ensure that the 'map' API is accessible without casting or suppressing lint rules:
-				assert.equal(
-					container.initialObjects.map.get("nonexistent"),
-					undefined,
-				);
+				assert.equal(container.initialObjects.map.get("nonexistent"), undefined);
 			});
 
 			it("preserves 'SharedTree' type", async function () {
@@ -431,9 +385,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 					itWorks: _.string,
 				}) {}
 
-				const view = tree.viewWith(
-					new TreeViewConfiguration({ schema: RootNode }),
-				);
+				const view = tree.viewWith(new TreeViewConfiguration({ schema: RootNode }));
 				view.initialize(new RootNode({ itWorks: "yes" }));
 
 				// Ensure root node is correctly typed.
@@ -443,8 +395,10 @@ for (const compatibilityMode of ["1", "2"] as const) {
 
 		describe("compatibilityModeRuntimeOptions", () => {
 			it("should set correct runtime options for compatibilityMode", async () => {
-				const { container: container_defaultConfig } =
-					await client.createContainer(schema, compatibilityMode);
+				const { container: container_defaultConfig } = await client.createContainer(
+					schema,
+					compatibilityMode,
+				);
 
 				const expectedRuntimeOptions1 = {
 					summaryOptions: {},
@@ -480,9 +434,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 				} as const satisfies ContainerRuntimeOptionsInternal;
 
 				const expectedRuntimeOptions =
-					compatibilityMode === "1"
-						? expectedRuntimeOptions1
-						: expectedRuntimeOptions2;
+					compatibilityMode === "1" ? expectedRuntimeOptions1 : expectedRuntimeOptions2;
 				assert(isInternalFluidContainer(container_defaultConfig));
 				const actualRuntimeOptions = getRuntimeOptions(
 					getContainerRuntime(container_defaultConfig.container),

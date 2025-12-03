@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { ChangeInternal } from './persisted-types/index.js';
-import type { TransactionView } from './RevisionView.js';
-import type { TreeView } from './TreeView.js';
+import { TransactionView } from './RevisionView.js';
+import { TreeView } from './TreeView.js';
+import { ChangeInternal } from './persisted-types/index.js';
 
 /**
  * The path of edits from the revision view where a change was meant to have been applied to the view where the edit that contains the

@@ -17,10 +17,7 @@ const {
 } = require("@fluid-experimental/property-common");
 const _ = require("lodash");
 
-const {
-	Int64Property,
-	Uint64Property,
-} = require("../properties/intProperties");
+const { Int64Property, Uint64Property } = require("../properties/intProperties");
 
 const { ArrayProperty } = require("./arrayProperty");
 const { BaseProperty } = require("./baseProperty");
@@ -399,14 +396,7 @@ export class Integer64ArrayProperty extends ValueArrayProperty {
 	 * @inheritdoc
 	 */
 	_prettyPrint(indent, externalId, printFct) {
-		printFct(
-			indent +
-				externalId +
-				this.getId() +
-				" (Array of " +
-				this.getTypeid() +
-				"): [",
-		);
+		printFct(indent + externalId + this.getId() + " (Array of " + this.getTypeid() + "): [");
 		var childIndent = indent + "  ";
 		var int64Prop;
 		for (var i = 0; i < this._dataArrayGetLength(); i++) {
@@ -450,9 +440,7 @@ export class Int64ArrayProperty extends Integer64ArrayProperty {
 	 */
 	setRange(in_offset, in_array) {
 		if (!_.isArray(in_array)) {
-			throw new TypeError(
-				MSG.IN_ARRAY_NOT_ARRAY + "Int64ArrayProperty.setRange",
-			);
+			throw new TypeError(MSG.IN_ARRAY_NOT_ARRAY + "Int64ArrayProperty.setRange");
 		}
 		var out_array = in_array.map((element) => {
 			return _castFunctors.Int64(element);
@@ -541,9 +529,7 @@ export class Uint64ArrayProperty extends Integer64ArrayProperty {
 	 */
 	setRange(in_offset, in_array) {
 		if (!_.isArray(in_array)) {
-			throw new TypeError(
-				MSG.IN_ARRAY_NOT_ARRAY + "Uint64ArrayProperty.setRange",
-			);
+			throw new TypeError(MSG.IN_ARRAY_NOT_ARRAY + "Uint64ArrayProperty.setRange");
 		}
 		var out_array = in_array.map((element) => {
 			return _castFunctors.Uint64(element);

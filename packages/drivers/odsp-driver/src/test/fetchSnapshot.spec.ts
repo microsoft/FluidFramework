@@ -8,19 +8,16 @@
 import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import type {
-	ISnapshot,
-	ISnapshotTree,
-} from "@fluidframework/driver-definitions/internal";
+import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	type IOdspResolvedUrl,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	createChildLogger,
 	type IFluidErrorBase,
 	type ITelemetryLoggerExt,
 	MockLogger,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import { stub } from "sinon";
 
@@ -38,21 +35,20 @@ import { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 import {
-	createCacheSnapshotKey,
 	type INewFileInfo,
 	type IOdspResponse,
+	createCacheSnapshotKey,
 } from "../odspUtils.js";
 
 import {
 	createResponse,
-	type MockResponse,
 	mockFetchMultiple,
 	notFound,
 	okResponse,
+	type MockResponse,
 } from "./mockFetch.js";
 
-const createUtLocalCache = (): LocalPersistentCache =>
-	new LocalPersistentCache();
+const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
 describe("Tests1 for snapshot fetch", () => {
 	const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
@@ -90,11 +86,7 @@ describe("Tests1 for snapshot fetch", () => {
 	const nonPersistentCache = new NonPersistentCache();
 	let logger: ITelemetryLoggerExt;
 	let mockLogger: MockLogger;
-	const odspUrl = createOdspUrl({
-		...newFileParams,
-		itemId,
-		dataStorePath: "/",
-	});
+	const odspUrl = createOdspUrl({ ...newFileParams, itemId, dataStorePath: "/" });
 
 	const content: ISnapshot = {
 		snapshotTree: {
@@ -206,11 +198,7 @@ describe("Tests1 for snapshot fetch", () => {
 			}
 		}
 		const odspResponse: IOdspResponse<Response> = {
-			content: (await createResponse(
-				{},
-				new Uint8Array().buffer,
-				200,
-			)) as unknown as Response,
+			content: (await createResponse({}, new Uint8Array().buffer, 200)) as unknown as Response,
 			duration: 10,
 			headers: new Map([
 				["x-fluid-epoch", "epoch1"],
@@ -343,18 +331,9 @@ describe("Tests1 for snapshot fetch", () => {
 		const cachedValueWithLoadingGroupId = (await epochTracker.get(
 			createCacheSnapshotKey(resolved, true),
 		)) as ISnapshot;
-		assert(
-			cachedValueWithLoadingGroupId === undefined,
-			"snapshot should not exist",
-		);
-		assert(
-			cachedValue.snapshotTree.id === "SnapshotId",
-			"snapshot should have been cached",
-		);
-		assert(
-			service["blobCache"].value.size > 0,
-			"blobs should be cached locally",
-		);
+		assert(cachedValueWithLoadingGroupId === undefined, "snapshot should not exist");
+		assert(cachedValue.snapshotTree.id === "SnapshotId", "snapshot should have been cached");
+		assert(service["blobCache"].value.size > 0, "blobs should be cached locally");
 		assert(service["commitCache"].size > 0, "no trees should be cached");
 	});
 
@@ -371,10 +350,7 @@ describe("Tests1 for snapshot fetch", () => {
 				return await callback();
 			} finally {
 				getDownloadSnapshotStub.restore();
-				assert(
-					getDownloadSnapshotStub.args[0][3]?.[0] === "g1",
-					"should ask for g1 groupId",
-				);
+				assert(getDownloadSnapshotStub.args[0][3]?.[0] === "g1", "should ask for g1 groupId");
 				success = true;
 			}
 		}
@@ -413,10 +389,7 @@ describe("Tests1 for snapshot fetch", () => {
 			assert.fail("the getSnapshot request should succeed");
 		}
 		assert(success, "should have asked for g1 group id");
-		assert(
-			service["blobCache"].value.size > 0,
-			"blobs should still be cached locally",
-		);
+		assert(service["blobCache"].value.size > 0, "blobs should still be cached locally");
 		assert(service["commitCache"].size === 0, "no trees should be cached");
 		assert(
 			mockLogger.matchEvents([
@@ -480,14 +453,8 @@ describe("Tests1 for snapshot fetch", () => {
 		const cachedValue = (await epochTracker.get(
 			createCacheSnapshotKey(resolved, false),
 		)) as ISnapshot;
-		assert(
-			cachedValue.snapshotTree.id === "SnapshotId",
-			"snapshot should have been cached",
-		);
-		assert(
-			service["blobCache"].value.size > 0,
-			"blobs should still be cached locally",
-		);
+		assert(cachedValue.snapshotTree.id === "SnapshotId", "snapshot should have been cached");
+		assert(service["blobCache"].value.size > 0, "blobs should still be cached locally");
 		assert(service["commitCache"].size === 0, "no trees should be cached");
 	});
 
@@ -607,10 +574,7 @@ describe("Tests1 for snapshot fetch", () => {
 					details:
 						'{"shareLinkUrlLength":45,"queryParamsLength":0,"useHeaders":true,"isRedemptionNonDurable":false}',
 				},
-				{
-					eventName: "RedeemFallback",
-					errorType: "fileNotFoundOrAccessDeniedError",
-				},
+				{ eventName: "RedeemFallback", errorType: "fileNotFoundOrAccessDeniedError" },
 				{ eventName: "TreesLatest_end" },
 			]),
 		);
@@ -659,10 +623,7 @@ describe("Tests1 for snapshot fetch", () => {
 					details:
 						'{"shareLinkUrlLength":45,"queryParamsLength":0,"useHeaders":true,"isRedemptionNonDurable":true}',
 				},
-				{
-					eventName: "RedeemFallback",
-					errorType: "fileNotFoundOrAccessDeniedError",
-				},
+				{ eventName: "RedeemFallback", errorType: "fileNotFoundOrAccessDeniedError" },
 				{ eventName: "TreesLatest_end" },
 			]),
 		);
@@ -708,9 +669,6 @@ const snapshotTreeWithGroupId: ISnapshotTree = {
 const blobContents = new Map<string, ArrayBuffer>([
 	[
 		"bARD4RKvW4LL1KmaUKp6hUMSp",
-		stringToBuffer(
-			JSON.stringify({ summaryFormatVersion: 1, gcFeature: 0 }),
-			"utf8",
-		),
+		stringToBuffer(JSON.stringify({ summaryFormatVersion: 1, gcFeature: 0 }), "utf8"),
 	],
 ]);
