@@ -64,13 +64,16 @@ export {
 export {
 	configValueToMinVersionForCollab,
 	defaultMinVersionForCollab,
-	getValidationForRuntimeOptions,
+	validateConfigMapOverrides,
+	getConfigForMinVersionForCollab,
 	getConfigsForMinVersionForCollab,
 	isValidMinVersionForCollab,
-	semanticVersionToMinimumVersionForCollab,
+	validateMinimumVersionForCollab,
+	lowestMinVersionForCollab,
 } from "./compatibilityBase.js";
 export type {
 	ConfigMap,
+	ConfigMapEntry,
 	ConfigValidationMap,
 	MinimumMinorSemanticVersion,
 	SemanticVersion,

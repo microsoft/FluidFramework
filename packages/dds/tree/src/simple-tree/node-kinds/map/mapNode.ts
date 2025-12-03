@@ -7,7 +7,6 @@ import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	FieldKinds,
 	isTreeValue,
 	type FlexibleNodeContent,
 	type FlexTreeNode,
@@ -42,7 +41,6 @@ import {
 	createTreeNodeSchemaPrivateData,
 	type FlexContent,
 	type TreeNodeSchemaPrivateData,
-	convertAllowedTypes,
 	AnnotatedAllowedTypesInternal,
 } from "../../core/index.js";
 import {
@@ -343,19 +341,7 @@ export function mapSchema<
 		}
 
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-			return (privateData ??= createTreeNodeSchemaPrivateData(
-				this,
-				[normalizedTypes],
-				(storedOptions) =>
-					new MapNodeStoredSchema(
-						{
-							kind: FieldKinds.optional.identifier,
-							types: convertAllowedTypes(info, storedOptions),
-							persistedMetadata,
-						},
-						persistedMetadata,
-					),
-			));
+			return (privateData ??= createTreeNodeSchemaPrivateData(this, [normalizedTypes]));
 		}
 	}
 	const schemaErased: MapNodeCustomizableSchema<

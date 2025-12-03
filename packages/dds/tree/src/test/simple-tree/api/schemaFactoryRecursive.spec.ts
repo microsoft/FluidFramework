@@ -8,7 +8,10 @@
 import { strict as assert } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockFluidDataStoreRuntime,
+	validateTypeError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type FieldSchema,
@@ -48,7 +51,6 @@ import type {
 } from "../../../util/index.js";
 
 import { hydrate } from "../utils.js";
-import { validateTypeError } from "../../utils.js";
 
 // Tests for SchemaFactoryRecursive.ts and the recursive API subset of SchemaFactory and SchemaFactoryAlpha.
 // It is a bit odd/non-conventional to put the tests for the recursive methods of SchemaFactory here:
@@ -1045,7 +1047,7 @@ describe("SchemaFactory Recursive methods", () => {
 				// Check constructor
 				type TBuild = NodeBuilderData<typeof RecordRecursive>;
 				type _check2 = requireAssignableTo<RecordRecursive, TBuild>;
-				// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
+				// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 				type _check3 = requireAssignableTo<{}, TBuild>;
 				type _check4 = requireAssignableTo<{ a: RecordRecursive }, TBuild>;
 				type _check5 = requireAssignableTo<Record<string, TInsert>, TBuild>;

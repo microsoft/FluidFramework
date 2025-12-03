@@ -44,7 +44,7 @@ export {
 	type UnannotateAllowedTypesList,
 	type AllowedTypeMetadata,
 	type AnnotatedAllowedTypes,
-	type SchemaUpgrade,
+	SchemaUpgrade,
 	type LazyItem,
 	type FlexList,
 	type FlexListToUnion,
@@ -59,6 +59,8 @@ export {
 	type AllowedTypesFullFromMixed,
 	AnnotatedAllowedTypesInternal,
 	type NumberKeys,
+	ExpectStored,
+	createSchemaUpgrade,
 } from "./core/index.js";
 export { walkFieldSchema } from "./walkFieldSchema.js";
 export type { UnsafeUnknownSchema, Insertable } from "./unsafeUnknownSchema.js";
@@ -184,7 +186,7 @@ export {
 	KeyEncodingOptions,
 	type TreeParsingOptions,
 	incrementalSummaryHint,
-	getShouldIncrementallySummarizeAllowedTypes,
+	incrementalEncodingPolicyForAllowedTypes,
 	type SchemaFactory_base,
 } from "./api/index.js";
 export type {
@@ -283,4 +285,7 @@ export type { LeafSchema } from "./leafNodeSchema.js";
 export {
 	encodeSimpleSchema,
 	decodeSimpleSchema,
+	exportCompatibilitySchemaSnapshot,
+	importCompatibilitySchemaSnapshot,
+	checkCompatibility,
 } from "./api/index.js";

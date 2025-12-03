@@ -5,7 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	validateAssertionError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { currentVersion, type CodecWriteOptions } from "../../../codec/index.js";
 import { rootFieldKey } from "../../../core/index.js";
@@ -34,7 +37,7 @@ import {
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { EmptyObject } from "../../cursorTestSuite.js";
-import { testIdCompressor, validateUsageError } from "../../utils.js";
+import { testIdCompressor } from "../../utils.js";
 
 const codecOptions: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,
@@ -156,7 +159,7 @@ describe("ForestSummarizerCodec", () => {
 						} as unknown as Format,
 						context,
 					),
-				(e: Error) => validateAssertionError(e, "Encoded schema should validate"),
+				validateAssertionError("Encoded schema should validate"),
 			);
 		});
 
@@ -172,7 +175,7 @@ describe("ForestSummarizerCodec", () => {
 						} as unknown as Format,
 						context,
 					),
-				(e: Error) => validateAssertionError(e, "Encoded schema should validate"),
+				validateAssertionError("Encoded schema should validate"),
 			);
 		});
 	});

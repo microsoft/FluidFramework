@@ -231,7 +231,7 @@ async function getTimeoutPromise<T = void>(
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const errorObject = err!;
 			errorObject.message = `${errorObject.message} (${timeout}ms)`;
-			reject(err);
+			reject(errorObject);
 		};
 		const timer = setTimeout(
 			() =>
@@ -244,7 +244,7 @@ async function getTimeoutPromise<T = void>(
 				clearTimeout(timer);
 				resolve(value);
 			},
-			(reason) => {
+			(reason: Error) => {
 				clearTimeout(timer);
 				reject(reason);
 			},

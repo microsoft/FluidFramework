@@ -12,6 +12,7 @@ import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
+	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type TestFluidObjectInternal,
@@ -85,7 +86,6 @@ import {
 	expectSchemaEqual,
 	validateTreeConsistency,
 	validateTreeContent,
-	validateUsageError,
 	StringArray,
 	NumberArray,
 	validateViewConsistency,
@@ -2323,8 +2323,8 @@ describe("SharedTree", () => {
 		});
 	});
 
-	describe("Shared Tree format v5 enablement via `configuredSharedTree`", () => {
-		it("can create a SharedTree with format v5 enabled", async () => {
+	describe("Schema v2 format enablement via `configuredSharedTree`", () => {
+		it("can create a SharedTree with schema format v2 enabled", async () => {
 			// Create and initialize the runtime factory
 			const runtime = new MockSharedTreeRuntime();
 

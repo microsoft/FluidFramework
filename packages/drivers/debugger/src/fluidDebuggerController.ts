@@ -95,6 +95,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
 		this.startSeqDeferred.resolve(DebugReplayController.WindowClosedSeq);
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	public async onVersionSelection(version: IVersion) {
 		if (!this.documentStorageService) {
 			throw new Error("onVersionSelection: no storage");
