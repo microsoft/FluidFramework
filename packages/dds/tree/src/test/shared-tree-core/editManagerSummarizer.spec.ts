@@ -4,7 +4,12 @@
  */
 
 import { strict as assert } from "node:assert";
-import { SummaryType, type SummaryObject } from "@fluidframework/driver-definitions/internal";
+import {
+	SummaryType,
+	type ISummaryBlob,
+	type ISummaryTree,
+	type SummaryObject,
+} from "@fluidframework/driver-definitions/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
@@ -16,19 +21,27 @@ import {
 } from "../../shared-tree-core/index.js";
 import {
 	EditManagerSummaryFormatVersion,
+	stringKey,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree-core/editManagerSummarizer.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { EncodedEditManager } from "../../shared-tree-core/editManagerFormatV1toV4.js";
 import {
+	EditManagerFormatVersion,
 	editManagerFormatVersions,
+	type SequencedCommit,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree-core/editManagerFormatCommons.js";
 import { DependentFormatVersion, FluidClientVersion } from "../../codec/index.js";
-import { testIdCompressor } from "../utils.js";
+import { failCodecFamily, mintRevisionTag, testIdCompressor } from "../utils.js";
 import { RevisionTagCodec } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { editManagerFactory } from "./edit-manager/editManagerTestUtils.js";
 import { testChangeFamilyFactory } from "../testChange.js";
+import { DefaultChangeFamily, type DefaultChangeset } from "../../feature-libraries/index.js";
+import type { SessionId } from "@fluidframework/id-compressor";
+import { brand } from "../../util/index.js";
 
 function createEditManagerSummarizer(options?: {
 	minVersionForCollab?: MinimumVersionForCollab;
@@ -127,6 +140,40 @@ describe("EditManagerSummarizer", () => {
 			const { summarizer: summarizer2 } = createEditManagerSummarizer();
 
 			await assert.doesNotReject(async () => summarizer2.load(mockStorage, JSON.parse));
+		});
+
+		it("loads version 3 with no metadata blob", async () => {
+			const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
+			const trunk: SequencedCommit<DefaultChangeset>[] = [
+				{
+					revision: mintRevisionTag(),
+					change: defaultChangeFamily.rebaser.compose([]),
+					sessionId: "1" as SessionId,
+					sequenceNumber: brand(1),
+				},
+			];
+			// Create a v3 format summary (empty edit manager with no metadata)
+			const editManagerDataV3: EncodedEditManager<unknown> = {
+				version: EditManagerFormatVersion.v3,
+				trunk,
+				branches: [],
+			};
+			const editManagerBlob: ISummaryBlob = {
+				type: SummaryType.Blob,
+				content: JSON.stringify(editManagerDataV3),
+			};
+			const summaryTree: ISummaryTree = {
+				type: SummaryType.Tree,
+				tree: {
+					[stringKey]: editManagerBlob,
+				},
+			};
+
+			// Should load successfully
+			const mockStorage = MockStorage.createFromSummary(summaryTree);
+			const { summarizer } = createEditManagerSummarizer();
+
+			await assert.doesNotReject(async () => summarizer.load(mockStorage, JSON.parse));
 		});
 
 		it("fail to load with metadata blob with version > latest", async () => {

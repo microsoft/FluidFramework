@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 import {
 	SummaryType,
+	type ISummaryBlob,
 	type ISummaryTree,
 	type SummaryObject,
 } from "@fluidframework/driver-definitions";
@@ -18,6 +19,8 @@ import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-ut
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 import {
+	FieldBatchFormatVersion,
+	ForestFormatVersion,
 	ForestSummarizer,
 	TreeCompressionStrategy,
 	defaultSchemaPolicy,
@@ -25,6 +28,9 @@ import {
 	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
 } from "../../../feature-libraries/index.js";
+import { brand } from "../../../util/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { FormatV1 } from "../../../feature-libraries/forest-summary/format.js";
 import {
 	checkoutWithContent,
 	fieldCursorFromInsertable,
@@ -59,6 +65,7 @@ import {
 	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
 } from "../../../shared-tree-core/index.js";
+import { rootFieldKey } from "../../../core/index.js";
 
 function createForestSummarizer(args: {
 	// The encoding strategy to use when summarizing the forest.
@@ -762,6 +769,39 @@ describe("ForestSummarizer", () => {
 			});
 
 			await assert.doesNotReject(async () => forestSummarizer2.load(mockStorage, JSON.parse));
+		});
+
+		it("loads version 1 with no metadata blob", async () => {
+			// Create a v1 format summary (empty forest with no metadata)
+			const forestDataV1: FormatV1 = {
+				version: brand(ForestFormatVersion.v1),
+				keys: [rootFieldKey],
+				fields: {
+					version: brand(FieldBatchFormatVersion.v2),
+					identifiers: [],
+					shapes: [{ a: 0 }],
+					data: [[0, []]],
+				},
+			};
+			const forestContentBlob: ISummaryBlob = {
+				type: SummaryType.Blob,
+				content: JSON.stringify(forestDataV1),
+			};
+			const summaryTree: ISummaryTree = {
+				type: SummaryType.Tree,
+				tree: {
+					[forestSummaryContentKey]: forestContentBlob,
+				},
+			};
+
+			// Should load successfully
+			const mockStorage = MockStorage.createFromSummary(summaryTree);
+			const { forestSummarizer } = createForestSummarizer({
+				encodeType: TreeCompressionStrategy.Compressed,
+				forestType: ForestTypeOptimized,
+			});
+
+			await assert.doesNotReject(async () => forestSummarizer.load(mockStorage, JSON.parse));
 		});
 
 		it("fail to load with metadata blob with version > latest", async () => {

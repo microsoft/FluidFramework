@@ -13,10 +13,15 @@ import {
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { DetachedFieldIndex, type ForestRootId } from "../../core/index.js";
+import {
+	DetachedFieldIndex,
+	DetachedFieldIndexFormatVersion,
+	type ForestRootId,
+} from "../../core/index.js";
 import {
 	DetachedFieldIndexSummarizer,
 	DetachedFieldIndexSummaryFormatVersion,
+	detachedFieldIndexBlobKey,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/detachedFieldIndexSummarizer.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -47,15 +52,6 @@ function createDetachedFieldIndexSummarizer(options?: {
 	);
 	return { summarizer, index };
 }
-
-// Create detached field data version 1 for testing loading old summaries
-const mintedTag = testIdCompressor.generateCompressedId();
-const finalizedTag = testIdCompressor.normalizeToOpSpace(mintedTag);
-const detachedFieldDataV1: FormatV1 = {
-	version: brand(DetachedFieldIndexSummaryFormatVersion.v1),
-	data: [[brand(finalizedTag), 0, brand(1)]],
-	maxId: brand(-1),
-};
 
 describe("DetachedFieldIndexSummarizer", () => {
 	describe("Summary metadata validation", () => {
@@ -111,6 +107,14 @@ describe("DetachedFieldIndexSummarizer", () => {
 		});
 
 		it("loads version 1 with no metadata blob", async () => {
+			// Create detached field data version 1 for testing loading old summaries
+			const mintedTag = testIdCompressor.generateCompressedId();
+			const finalizedTag = testIdCompressor.normalizeToOpSpace(mintedTag);
+			const detachedFieldDataV1: FormatV1 = {
+				version: brand(DetachedFieldIndexFormatVersion.v1),
+				data: [[brand(finalizedTag), 0, brand(1)]],
+				maxId: brand(-1),
+			};
 			const summaryBlob: ISummaryBlob = {
 				type: SummaryType.Blob,
 				content: JSON.stringify(detachedFieldDataV1),
@@ -118,7 +122,7 @@ describe("DetachedFieldIndexSummarizer", () => {
 			const summaryTree: ISummaryTree = {
 				type: SummaryType.Tree,
 				tree: {
-					[DetachedFieldIndexSummarizer.key]: summaryBlob,
+					[detachedFieldIndexBlobKey]: summaryBlob,
 				},
 			};
 

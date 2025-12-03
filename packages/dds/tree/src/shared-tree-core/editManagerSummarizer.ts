@@ -27,7 +27,7 @@ import type {
 } from "./summaryTypes.js";
 import { VersionedSummarizer } from "./versionedSummarizer.js";
 
-const stringKey = "String";
+export const stringKey = "String";
 
 /**
  * The versions for the edit manager summary format.

@@ -4,17 +4,29 @@
  */
 
 import { strict as assert } from "node:assert";
-import { SummaryType, type SummaryObject } from "@fluidframework/driver-definitions/internal";
+import {
+	SummaryType,
+	type ISummaryBlob,
+	type ISummaryTree,
+	type SummaryObject,
+} from "@fluidframework/driver-definitions/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { storedEmptyFieldSchema, TreeStoredSchemaRepository } from "../../../core/index.js";
+import {
+	SchemaFormatVersion,
+	storedEmptyFieldSchema,
+	TreeStoredSchemaRepository,
+} from "../../../core/index.js";
 import {
 	encodeTreeSchema,
 	SchemaSummarizer,
 	SchemaSummaryFormatVersion,
+	schemaStringKey,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/schema-index/schemaSummarizer.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { Format as SchemaFormatV1 } from "../../../feature-libraries/schema-index/formatV1.js";
 import { toInitialSchema } from "../../../simple-tree/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
@@ -134,6 +146,31 @@ describe("schemaSummarizer", () => {
 			const summarizer2 = createSchemaSummarizer();
 
 			await assert.doesNotReject(async () => summarizer2.load(mockStorage, JSON.parse));
+		});
+
+		it("loads version 1 with no metadata blob", async () => {
+			// Create a v1 format summary (empty schema with no metadata)
+			const schemaDataV1: SchemaFormatV1 = {
+				version: SchemaFormatVersion.v1,
+				nodes: {},
+				root: { kind: storedEmptyFieldSchema.kind, types: [] },
+			};
+			const schemaBlob: ISummaryBlob = {
+				type: SummaryType.Blob,
+				content: JSON.stringify(schemaDataV1),
+			};
+			const summaryTree: ISummaryTree = {
+				type: SummaryType.Tree,
+				tree: {
+					[schemaStringKey]: schemaBlob,
+				},
+			};
+
+			// Should load successfully
+			const mockStorage = MockStorage.createFromSummary(summaryTree);
+			const summarizer = createSchemaSummarizer();
+
+			await assert.doesNotReject(async () => summarizer.load(mockStorage, JSON.parse));
 		});
 
 		it("fail to load with metadata blob with version > latest", async () => {

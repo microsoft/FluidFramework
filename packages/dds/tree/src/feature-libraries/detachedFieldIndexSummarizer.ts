@@ -24,7 +24,7 @@ import type { JsonCompatibleReadOnly } from "../util/index.js";
 /**
  * The storage key for the blob in the summary containing schema data
  */
-const detachedFieldIndexBlobKey = "DetachedFieldIndexBlob";
+export const detachedFieldIndexBlobKey = "DetachedFieldIndexBlob";
 
 /**
  * The versions for the detached field index summary format.
@@ -63,13 +63,12 @@ function minVersionToDetachedFieldIndexSummaryFormatVersion(
  * Provides methods for summarizing and loading a tree index.
  */
 export class DetachedFieldIndexSummarizer extends VersionedSummarizer implements Summarizable {
-	public static readonly key: string = "DetachedFieldIndex";
 	public constructor(
 		private readonly detachedFieldIndex: DetachedFieldIndex,
 		minVersionForCollab: MinimumVersionForCollab,
 	) {
 		super(
-			DetachedFieldIndexSummarizer.key,
+			"DetachedFieldIndex",
 			minVersionToDetachedFieldIndexSummaryFormatVersion(minVersionForCollab),
 			supportedVersions,
 			DetachedFieldIndexSummaryFormatVersion.v1,

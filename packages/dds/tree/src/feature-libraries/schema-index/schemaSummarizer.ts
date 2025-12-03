@@ -32,7 +32,7 @@ import type { CollabWindow } from "../incrementalSummarizationUtils.js";
 
 import { encodeRepo } from "./codec.js";
 
-const schemaStringKey = "SchemaString";
+export const schemaStringKey = "SchemaString";
 
 /**
  * The versions for the schema summary format.
