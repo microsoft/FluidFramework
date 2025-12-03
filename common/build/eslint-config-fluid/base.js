@@ -135,6 +135,20 @@ module.exports = {
 			},
 		],
 
+		// eslint-plugin-depend
+		"depend/ban-dependencies": [
+			"error",
+			{
+				allowed: [
+					// axios replacement with fetch is ongoing: https://github.com/microsoft/FluidFramework/pull/25592
+					"axios",
+
+					// fs-extra is well-maintained and provides a useful readJson/writeJson API which is what we mainly use.
+					"fs-extra",
+				],
+			},
+		],
+
 		// #region eslint-plugin-import-x
 
 		"import-x/no-default-export": "error",

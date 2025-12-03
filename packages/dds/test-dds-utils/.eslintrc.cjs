@@ -24,5 +24,16 @@ module.exports = {
 		],
 		"@typescript-eslint/no-import-type-side-effects": "error",
 		// #endregion
+
+		"depend/ban-dependencies": [
+			"error",
+			{
+				allowed: [
+					// TODO: This package should use tinyexec or child_process directly instead of execa
+					"execa",
+				],
+			},
+		],
+
 	},
 };

@@ -1053,7 +1053,13 @@
             "error"
         ],
         "depend/ban-dependencies": [
-            "error"
+            "error",
+            {
+                "allowed": [
+                    "axios",
+                    "fs-extra"
+                ]
+            }
         ],
         "dot-location": [
             "off"
