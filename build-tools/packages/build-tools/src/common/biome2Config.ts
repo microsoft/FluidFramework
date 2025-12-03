@@ -4,15 +4,15 @@
  */
 
 import { strict as assert } from "node:assert/strict";
-import { readFile, stat } from "node:fs/promises";
+import { stat } from "node:fs/promises";
 import path from "node:path";
 import ignore from "ignore";
-import * as JSON5 from "json5";
 import multimatch from "multimatch";
 import { merge } from "ts-deepmerge";
 import type { Opaque } from "type-fest";
 
 import type { Configuration2 as Biome2ConfigRaw } from "./biome2ConfigTypes";
+import { loadRawBiomeConfigFile, resolveExtendsChainGeneric } from "./biomeConfigUtils";
 import type { GitRepo } from "./gitRepo";
 
 // switch to regular import once building ESM
@@ -29,9 +29,7 @@ export type Biome2ConfigResolved = Opaque<Biome2ConfigRaw, "Biome2ConfigResolved
  * {@link loadBiome2Configs} instead of this function.
  */
 async function loadRawBiome2Config(configPath: string): Promise<Biome2ConfigRaw> {
-	const contents = await readFile(configPath, "utf8");
-	const config: Biome2ConfigRaw = JSON5.parse(contents);
-	return config;
+	return loadRawBiomeConfigFile<Biome2ConfigRaw>(configPath);
 }
 
 /**
@@ -50,12 +48,9 @@ export async function getAllBiome2ConfigPaths(configPath: string): Promise<strin
 
 	// First, handle explicit extends declarations
 	if (config.extends) {
-		const pathsNested = await Promise.all(
-			config.extends.map((configToExtend) =>
-				getAllBiome2ConfigPaths(path.join(path.dirname(configPath), configToExtend)),
-			),
-		);
-		extendedConfigPaths = pathsNested.flat();
+		extendedConfigPaths = await resolveExtendsChainGeneric(configPath, loadRawBiome2Config);
+		// Remove the last element (configPath itself) since we'll add it at the end
+		extendedConfigPaths.pop();
 	}
 
 	// If this config doesn't have root: true and doesn't have explicit extends,
@@ -73,10 +68,12 @@ export async function getAllBiome2ConfigPaths(configPath: string): Promise<strin
 /**
  * Walks up the directory tree from the given directory to find parent Biome config files.
  * Stops when a config with `root: true` is found or when the filesystem root is reached.
+ * For each parent config found, recursively resolves any `extends` declarations.
  *
  * @param startDir - The directory containing the child config file. Parent discovery starts
  *                   from this directory's parent (i.e., startDir itself is not searched).
- * @returns Array of config paths in order from root to nearest parent (not including the starting directory)
+ * @returns Array of config paths in order from root to nearest parent (not including the starting directory),
+ *          with all extends chains resolved
  */
 async function findParentBiome2Configs(startDir: string): Promise<string[]> {
 	const configs: string[] = [];
@@ -88,8 +85,15 @@ async function findParentBiome2Configs(startDir: string): Promise<string[]> {
 		const configPath = await findBiome2ConfigInDirectory(currentDir);
 		if (configPath) {
 			const config = await loadRawBiome2Config(configPath);
+
+			// Recursively resolve any extends for this parent config using shared utility
+			const parentConfigPaths = await resolveExtendsChainGeneric(
+				configPath,
+				loadRawBiome2Config,
+			);
+
 			// Insert at the beginning since we want root configs first
-			configs.unshift(configPath);
+			configs.unshift(...parentConfigPaths);
 
 			// If this config has root: true, stop walking up
 			if (config.root === true) {

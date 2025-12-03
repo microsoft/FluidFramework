@@ -4,10 +4,9 @@
  */
 
 import { strict as assert } from "node:assert/strict";
-import { readFile, stat } from "node:fs/promises";
+import { stat } from "node:fs/promises";
 import path from "node:path";
 import ignore from "ignore";
-import * as JSON5 from "json5";
 import multimatch from "multimatch";
 import { merge } from "ts-deepmerge";
 // Opaque is deprecated in newer type-fest versions (replaced by Tagged); we pin type-fest 2.x for current CommonJS
@@ -15,6 +14,7 @@ import type { Opaque } from "type-fest";
 
 import { Biome2ConfigReader } from "./biome2Config";
 import type { Configuration as BiomeConfigRaw } from "./biomeConfigTypes";
+import { loadRawBiomeConfigFile, resolveExtendsChainGeneric } from "./biomeConfigUtils";
 import type { GitRepo } from "./gitRepo";
 import { type BiomeMajorVersion, detectBiomeVersion } from "./biomeVersion";
 
@@ -32,9 +32,7 @@ export type BiomeConfigResolved = Opaque<BiomeConfigRaw, "BiomeConfigResolved">;
  * {@link loadBiomeConfigs} instead of this function.
  */
 async function loadRawBiomeConfig(configPath: string): Promise<BiomeConfigRaw> {
-	const contents = await readFile(configPath, "utf8");
-	const config: BiomeConfigRaw = JSON5.parse(contents);
-	return config;
+	return loadRawBiomeConfigFile<BiomeConfigRaw>(configPath);
 }
 
 /**
@@ -42,21 +40,7 @@ async function loadRawBiomeConfig(configPath: string): Promise<BiomeConfigRaw> {
  * Biome. That is, the last item in the array will be the absolute path to `configPath`.
  */
 export async function getAllBiomeConfigPaths(configPath: string): Promise<string[]> {
-	const config = await loadRawBiomeConfig(configPath);
-	let extendedConfigPaths: string[] = [];
-
-	if (config.extends) {
-		const pathsNested = await Promise.all(
-			config.extends.map((configToExtend) =>
-				getAllBiomeConfigPaths(path.join(path.dirname(configPath), configToExtend)),
-			),
-		);
-		extendedConfigPaths = pathsNested.flat();
-	}
-
-	// Add the current config as the last one to be applied when they're merged
-	extendedConfigPaths.push(configPath);
-	return extendedConfigPaths;
+	return resolveExtendsChainGeneric(configPath, loadRawBiomeConfig);
 }
 
 /**

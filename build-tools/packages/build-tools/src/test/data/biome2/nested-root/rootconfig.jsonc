@@ -1,13 +1,11 @@
 {
 	"$schema": "../../../../../../node_modules/@biomejs/biome/configuration_schema.json",
+	"extends": ["../baseconfig.jsonc"],
 	"root": true,
 	"files": {
-		"ignoreUnknown": true,
 		"includes": ["**", "!**/dist/**"]
 	},
 	"formatter": {
-		"enabled": true,
-		"indentStyle": "tab",
 		"lineWidth": 100
 	}
 }

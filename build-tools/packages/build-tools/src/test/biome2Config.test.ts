@@ -242,8 +242,11 @@ describe("Biome 2.x config loading", () => {
 		it("parent config settings are correctly loaded", async () => {
 			const config = await loadBiome2Config(parentConfig);
 			// Check parent config has expected settings
+			// ignoreUnknown comes from baseconfig.jsonc via extends
 			assert.equal(config.files!.ignoreUnknown, true);
+			// indentStyle comes from baseconfig.jsonc via extends
 			assert.equal(config.formatter!.indentStyle, "tab");
+			// lineWidth is overridden in rootconfig.jsonc
 			assert.equal(config.formatter!.lineWidth, 100);
 		});
 
@@ -263,6 +266,63 @@ describe("Biome 2.x config loading", () => {
 				formattedFiles.includes(srcFile),
 				`expected ${srcFile} to be in formatted files, got: ${formattedFiles.join(", ")}`,
 			);
+		});
+	});
+
+	describe("combined extends and find-up (root config extends, child uses find-up)", () => {
+		// This test verifies the case where:
+		// - baseconfig.jsonc is the base config with defaults
+		// - rootconfig.jsonc has root: true AND extends baseconfig.jsonc
+		// - childconfig.jsonc has root: false and no extends (uses find-up to find rootconfig)
+		// The child should inherit settings from both root (via find-up) AND base (via extends from root)
+		const childConfig = path.resolve(
+			testDataPath,
+			"biome2/nested-root/child/childconfig.jsonc",
+		);
+
+		it("child inherits settings from base config through root's extends chain", async () => {
+			const config = await loadBiome2Config(childConfig);
+
+			// These settings come from baseconfig.jsonc, inherited through root's extends
+			assert.equal(
+				config.files!.ignoreUnknown,
+				true,
+				"should inherit ignoreUnknown from base",
+			);
+			assert.equal(
+				config.formatter!.indentStyle,
+				"tab",
+				"should inherit indentStyle from base",
+			);
+			assert.equal(
+				config.formatter!.formatWithErrors,
+				true,
+				"should inherit formatWithErrors from base",
+			);
+		});
+
+		it("child overrides settings from root config", async () => {
+			const config = await loadBiome2Config(childConfig);
+
+			// lineWidth is set to 100 in root, but child overrides to 80
+			assert.equal(config.formatter!.lineWidth, 80, "child should override root's lineWidth");
+		});
+
+		it("complete inheritance chain works correctly", async () => {
+			const config = await loadBiome2Config(childConfig);
+
+			// From base: ignoreUnknown=true, indentStyle=tab, lineWidth=95 (overridden by root)
+			// From root (overrides base): lineWidth=100 (overridden by child)
+			// From child (overrides root): lineWidth=80
+
+			// Final expected values:
+			assert.equal(config.files!.ignoreUnknown, true, "from base via root");
+			assert.equal(config.formatter!.indentStyle, "tab", "from base via root");
+			assert.equal(config.formatter!.lineWidth, 80, "from child, overriding root and base");
+
+			// VCS settings from base should be inherited
+			assert.equal(config.vcs!.enabled, true, "vcs.enabled from base");
+			assert.equal(config.vcs!.clientKind, "git", "vcs.clientKind from base");
 		});
 	});
 });
