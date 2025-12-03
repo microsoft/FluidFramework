@@ -4,7 +4,7 @@
  */
 
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
-import { toStoredSchema } from "../toStoredSchema.js";
+import { toInitialSchema } from "../toStoredSchema.js";
 import { TreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
 import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
 import { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
@@ -65,9 +65,7 @@ export function checkCompatibility(
 	view: TreeViewConfiguration,
 ): Omit<SchemaCompatibilityStatus, "canInitialize"> {
 	const viewAsAlpha = new TreeViewConfigurationAlpha({ schema: view.schema });
-	const stored = toStoredSchema(viewWhichCreatedStoredSchema.schema, {
-		includeStaged: () => true,
-	});
+	const stored = toInitialSchema(viewWhichCreatedStoredSchema.schema);
 	const tester = new SchemaCompatibilityTester(viewAsAlpha);
 	return tester.checkCompatibility(stored);
 }
