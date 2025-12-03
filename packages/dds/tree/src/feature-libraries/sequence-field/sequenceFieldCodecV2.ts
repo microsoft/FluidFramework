@@ -342,7 +342,6 @@ function decodeDetach(
 	const detachId: ChangeAtomId = { revision, localId };
 	if (cellId !== undefined) {
 		context.decodeRootRename(cellId, detachId, count);
-		// XXX: detachCellId
 		return {
 			type: "Rename",
 			idOverride: cellRename ?? detachId,
@@ -469,9 +468,9 @@ function encodeRename(
 
 	const inputDetachId = context.getInputRootId(mark.idOverride, mark.count).value;
 	const isMoveInAndDetach =
-		(context.isDetachId(mark.idOverride, mark.count).value &&
-			!context.isAttachId(mark.idOverride, mark.count).value) ||
-		(inputDetachId !== undefined && !areEqualChangeAtomIds(inputDetachId, mark.cellId));
+		!context.isAttachId(mark.idOverride, mark.count).value &&
+		(context.isDetachId(mark.idOverride, mark.count).value ||
+			(inputDetachId !== undefined && !areEqualChangeAtomIds(inputDetachId, mark.cellId)));
 
 	if (isMoveInAndDetach) {
 		// These cells are the final detach location of moved nodes.

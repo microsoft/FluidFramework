@@ -2296,6 +2296,14 @@ describe("ModularChangeFamily integration", () => {
 			editor.move(fieldAPath, 0, 1, fieldAPath, 2);
 		}, tag1).change;
 
+		const compositeMoveWithCellDetachId = family.rebase(
+			tagChange(compositeMove, tag1),
+			buildTransaction((editor) => {
+				editor.move(fieldAPath, 1, 1, fieldAPath, 0);
+			}, tag0),
+			revisionMetadataSourceFromInfo([{ revision: tag0 }, { revision: tag1 }]),
+		);
+
 		const moveAndRemove = buildTransaction((editor) => {
 			editor.move(fieldAPath, 1, 1, fieldAPath, 0);
 			editor.sequenceField(fieldAPath).remove(0, 1);
@@ -2400,6 +2408,29 @@ describe("ModularChangeFamily integration", () => {
 			Change.field(fieldA, optional.identifier, {}),
 		);
 
+		const fieldBId = { nodeId: undefined, field: fieldB };
+		const moveDetached = Change.build(
+			{
+				family,
+				renames: [{ oldId, newId: removeId, count: 1, detachLocation: fieldAId }],
+				detachedMoves: [{ detachId: removeId, count: 1, newLocation: fieldBId }],
+				revisions,
+				maxId: 3,
+			},
+			Change.field(fieldA, sequence.identifier, [MarkMaker.rename(1, oldId, moveOutId)]),
+			Change.field(fieldB, sequence.identifier, [
+				MarkMaker.rename(1, { revision: tag1, localId: brand(2) }, removeId),
+			]),
+		);
+
+		const moveDetachedWithCellDetachId = family.rebase(
+			tagChange(compositeMoveWithCellDetachId, tag1),
+			buildTransaction((editor) => {
+				editor.sequenceField(fieldAPath).remove(0, 1);
+			}, tag0),
+			revisionMetadataSourceFromInfo([{ revision: tag0 }, { revision: tag1 }]),
+		);
+
 		const encodingTestData: EncodingTestData<
 			ModularChangeset,
 			EncodedModularChangeset,
@@ -2409,6 +2440,9 @@ describe("ModularChangeFamily integration", () => {
 				["revive", revive, context],
 				["move", move, context],
 				["composite move", compositeMove, context],
+				["composite move with cell detach ID", compositeMoveWithCellDetachId, context],
+				["move detached", moveDetached, context],
+				["move detached with cell detach ID", moveDetachedWithCellDetachId, context],
 				["move and remove", moveAndRemove, context],
 				["revive and move (separate IDs)", reviveAndMoveWithSeparateIds, context],
 				["revive and move (same ID)", reviveAndMoveWithSameId, context],
