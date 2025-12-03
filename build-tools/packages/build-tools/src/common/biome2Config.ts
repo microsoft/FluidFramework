@@ -233,15 +233,22 @@ export function parseIncludes(includes: string[] | undefined | null): {
  *
  * @remarks
  *
- * In Biome 2.x, negation patterns (prefixed with `!`) are processed in order within the `includes` array.
- * However, when we separate them here, we apply all include patterns first, then all ignore patterns.
- * This is safe because:
- * 1. Our use case is to determine the final set of files, not to support re-inclusion patterns
- * 2. In Biome 1.x, `include` and `ignore` were already separate arrays
- * 3. The ignore library we use applies patterns in the order they're added
+ * KNOWN LIMITATION - Negation Pattern Ordering:
  *
- * For complex patterns with re-inclusions (e.g., `["!test/**", "test/special/**"]`), the behavior may
- * differ slightly from Biome's native behavior. This is an acceptable trade-off for our use case.
+ * In Biome 2.x, patterns in `includes` are processed in declaration order, allowing for complex
+ * re-inclusion patterns like `["!test/**", "test/special/**"]` (exclude test/, but re-include test/special/).
+ *
+ * Our implementation separates include and ignore patterns, applying all includes first, then all ignores.
+ * This means re-inclusion patterns will NOT work correctly - the ignore will always win.
+ *
+ * This limitation may cause OVERMATCHING (including more files than Biome would) in edge cases where
+ * re-inclusion patterns are used. However, it will NOT cause undermatching (missing files that should
+ * be cached), which is acceptable for our caching use case.
+ *
+ * To fully support ordered negation patterns, we would need to:
+ * 1. Process patterns in declaration order
+ * 2. Use a library that supports incremental include/exclude (the `ignore` library can do this)
+ * 3. Refactor `filterFilesWithPatterns` to accept an ordered pattern list instead of separate sets
  *
  * See: {@link https://biomejs.dev/reference/configuration/#filesinclude}
  *
@@ -323,10 +330,19 @@ export async function getBiome2FormattedFiles(
 		"formatter",
 	);
 
-	// In Biome 2.x, globs are resolved from the configuration file location.
-	// However, since we're matching against repo-root-relative paths from git,
-	// we need to prepend **/ to the patterns to match anywhere in the path.
-	// This is similar to how Biome 1.x handled patterns implicitly.
+	// KNOWN LIMITATION: In Biome 2.x, globs are resolved relative to the configuration file location.
+	// However, since we're matching against repo-root-relative paths from git, we prepend **/ to
+	// patterns to match anywhere in the path (similar to Biome 1.x behavior).
+	//
+	// This approach may OVERMATCH files (i.e., include more files than Biome would), which could cause
+	// unnecessary cache invalidation. However, it will NOT UNDERMATCH (miss files that should be cached),
+	// so this is a safe trade-off for our caching use case.
+	//
+	// To fully replicate Biome 2.x behavior, we would need to:
+	// 1. Track which config file each pattern originates from
+	// 2. Compute the relative path from config file location to repo root
+	// 3. Apply patterns relative to their source config's directory
+	//
 	// We avoid double-prefixing patterns that already start with **/.
 	const prefixGlob = (glob: string): string => (glob.startsWith("**/") ? glob : `**/${glob}`);
 
