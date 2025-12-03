@@ -407,3 +407,85 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 		});
 	});
 });
+
+describe("Runtime order randomization (test mode)", () => {
+	const originalEnv = process.env.FLUID_BUILD_TEST_RANDOM_ORDER;
+
+	afterEach(() => {
+		// Restore original env var
+		if (originalEnv === undefined) {
+			delete process.env.FLUID_BUILD_TEST_RANDOM_ORDER;
+		} else {
+			process.env.FLUID_BUILD_TEST_RANDOM_ORDER = originalEnv;
+		}
+	});
+
+	it("globFn randomizes results when FLUID_BUILD_TEST_RANDOM_ORDER=true", async () => {
+		process.env.FLUID_BUILD_TEST_RANDOM_ORDER = "true";
+
+		// Run multiple times to verify randomization
+		const results: string[][] = [];
+		for (let i = 0; i < 10; i++) {
+			const matches = await globFn("*.ts", { cwd: globTestDataPath, nodir: true });
+			results.push(matches);
+		}
+
+		// At least some runs should have different orderings
+		// (Very unlikely all 10 random shuffles produce the same order)
+		const uniqueOrderings = new Set(results.map((r) => JSON.stringify(r)));
+		assert(
+			uniqueOrderings.size > 1,
+			"Expected different orderings across runs, but all were identical",
+		);
+
+		// All runs should have the same files (just different order)
+		const sorted = results.map((r) => [...r].sort());
+		const firstSorted = JSON.stringify(sorted[0]);
+		for (const s of sorted) {
+			assert.equal(JSON.stringify(s), firstSorted, "All runs should return same files");
+		}
+	});
+
+	it("globWithGitignore randomizes results when FLUID_BUILD_TEST_RANDOM_ORDER=true", async () => {
+		process.env.FLUID_BUILD_TEST_RANDOM_ORDER = "true";
+
+		// Run multiple times to verify randomization
+		const results: string[][] = [];
+		for (let i = 0; i < 10; i++) {
+			const matches = await globWithGitignore(["*.ts"], {
+				cwd: globTestDataPath,
+				gitignore: false,
+			});
+			results.push(matches);
+		}
+
+		// At least some runs should have different orderings
+		const uniqueOrderings = new Set(results.map((r) => JSON.stringify(r)));
+		assert(
+			uniqueOrderings.size > 1,
+			"Expected different orderings across runs, but all were identical",
+		);
+
+		// All runs should have the same files (just different order)
+		const sorted = results.map((r) => [...r].sort());
+		const firstSorted = JSON.stringify(sorted[0]);
+		for (const s of sorted) {
+			assert.equal(JSON.stringify(s), firstSorted, "All runs should return same files");
+		}
+	});
+
+	it("globFn does NOT randomize when FLUID_BUILD_TEST_RANDOM_ORDER is not set", async () => {
+		delete process.env.FLUID_BUILD_TEST_RANDOM_ORDER;
+
+		// Run multiple times
+		const results: string[][] = [];
+		for (let i = 0; i < 5; i++) {
+			const matches = await globFn("*.ts", { cwd: globTestDataPath, nodir: true });
+			results.push(matches);
+		}
+
+		// All runs should have identical ordering
+		const uniqueOrderings = new Set(results.map((r) => JSON.stringify(r)));
+		assert.equal(uniqueOrderings.size, 1, "Expected consistent ordering without test mode");
+	});
+});

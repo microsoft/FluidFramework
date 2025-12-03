@@ -79,12 +79,32 @@ export function toPosixPath(s: string) {
 	return s.replace(/\\/g, "/");
 }
 
+/**
+ * Promisified wrapper around the glob library.
+ *
+ * @param pattern - Glob pattern to match files
+ * @param options - Options to pass to glob
+ * @returns Promise resolving to array of matched file paths
+ *
+ * @remarks
+ * When the environment variable `FLUID_BUILD_TEST_RANDOM_ORDER` is set to "true", results will be
+ * randomly shuffled to expose code that incorrectly depends on glob result ordering. This should only
+ * be used in test/CI environments.
+ */
 export async function globFn(pattern: string, options: glob.IOptions = {}): Promise<string[]> {
 	return new Promise((resolve, reject) => {
 		glob.default(pattern, options, (err, matches) => {
 			if (err) {
 				reject(err);
+				return;
 			}
+
+			// Test mode: randomize order to expose ordering dependencies
+			if (isRandomOrderTestMode()) {
+				resolve(shuffleArray([...matches]));
+				return;
+			}
+
 			resolve(matches);
 		});
 	});
@@ -97,6 +117,29 @@ export async function loadModule(modulePath: string, moduleType?: string) {
 		return await import(pathToFileURL(modulePath).toString());
 	}
 	return require(modulePath);
+}
+
+/**
+ * Shuffles an array in place using Fisher-Yates algorithm.
+ * Used for testing order-independence when FLUID_BUILD_TEST_RANDOM_ORDER is set.
+ *
+ * @param array - The array to shuffle
+ * @returns The shuffled array (same reference, modified in place)
+ */
+function shuffleArray<T>(array: T[]): T[] {
+	for (let i = array.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[array[i], array[j]] = [array[j], array[i]];
+	}
+	return array;
+}
+
+/**
+ * Returns true if runtime order randomization is enabled for testing.
+ * When enabled, glob functions will randomize their results to expose order dependencies.
+ */
+function isRandomOrderTestMode(): boolean {
+	return process.env.FLUID_BUILD_TEST_RANDOM_ORDER === "true";
 }
 
 /**
@@ -123,15 +166,27 @@ export interface GlobWithGitignoreOptions {
  * Absolute patterns are not recommended as they may behave unexpectedly with the cwd option.
  * @param options - Options for the glob operation.
  * @returns An array of absolute paths to all files that match the globs.
+ *
+ * @remarks
+ * When the environment variable `FLUID_BUILD_TEST_RANDOM_ORDER` is set to "true", results will be
+ * randomly shuffled to expose code that incorrectly depends on glob result ordering. This should only
+ * be used in test/CI environments.
  */
 export async function globWithGitignore(
 	patterns: readonly string[],
 	options: GlobWithGitignoreOptions,
 ): Promise<string[]> {
 	const { cwd, gitignore = true } = options;
-	return globby([...patterns], {
+	const results = await globby([...patterns], {
 		cwd,
 		absolute: true,
 		gitignore,
 	});
+
+	// Test mode: randomize order to expose ordering dependencies
+	if (isRandomOrderTestMode()) {
+		return shuffleArray([...results]);
+	}
+
+	return results;
 }
