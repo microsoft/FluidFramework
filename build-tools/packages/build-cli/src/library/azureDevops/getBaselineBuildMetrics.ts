@@ -4,11 +4,13 @@
  */
 
 import { strict as assert } from "node:assert";
-import { getZipObjectFromArtifact } from "@fluidframework/bundle-size-tools";
+import {
+	type UnzippedContents,
+	getZipObjectFromArtifact,
+} from "@fluidframework/bundle-size-tools";
 import type { WebApi } from "azure-devops-node-api";
 import { BuildResult } from "azure-devops-node-api/interfaces/BuildInterfaces.js";
 import type { Build } from "azure-devops-node-api/interfaces/BuildInterfaces.js";
-import type JSZip from "jszip";
 import type { CommandLogger } from "../../logging.js";
 import type { IAzureDevopsBuildCoverageConstants } from "./constants.js";
 import { getBuild, getBuilds } from "./utils.js";
@@ -16,9 +18,9 @@ import { getBuild, getBuilds } from "./utils.js";
 export interface IBuildMetrics {
 	build: Build & { id: number };
 	/**
-	 * The artifact that was published by the PR build in zip format
+	 * The artifact that was published by the PR build as unzipped contents
 	 */
-	artifactZip: JSZip;
+	artifactZip: UnzippedContents;
 }
 
 /**
@@ -43,7 +45,7 @@ export async function getBaselineBuildMetrics(
 	});
 
 	let baselineBuild: Build | undefined;
-	let baselineArtifactZip: JSZip | undefined;
+	let baselineArtifactZip: UnzippedContents | undefined;
 	for (const build of recentBuilds) {
 		if (build.result !== BuildResult.Succeeded) {
 			continue;
@@ -159,7 +161,7 @@ export async function getBuildArtifactForSpecificBuild(
 		`codeCoverageAnalysisArtifactName: ${azureDevopsBuildCoverageConstants.artifactName}`,
 	);
 
-	const artifactZip: JSZip | undefined = await getZipObjectFromArtifact(
+	const artifactZip: UnzippedContents | undefined = await getZipObjectFromArtifact(
 		adoConnection,
 		azureDevopsBuildCoverageConstants.projectName,
 		build.id,

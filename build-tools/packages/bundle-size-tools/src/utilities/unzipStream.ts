@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as JSZip from "jszip";
+import { unzipSync } from "fflate";
+
+/**
+ * Type alias for unzipped archive contents - a Map of file paths to their contents.
+ */
+export type UnzippedContents = Map<string, Buffer>;
 
 function readStreamAsBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
 	return new Promise((resolve, reject) => {
@@ -21,6 +26,30 @@ function readStreamAsBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
 	});
 }
 
-export async function unzipStream(stream: NodeJS.ReadableStream) {
-	return JSZip.loadAsync(await readStreamAsBuffer(stream));
+/**
+ * Unzips a stream and returns a Map of file paths to their contents.
+ * @param stream - The stream containing zip data
+ * @param baseFolder - Optional folder prefix to filter by and strip from paths
+ * @returns A Map where keys are relative file paths and values are file contents as Buffers
+ */
+export async function unzipStream(
+	stream: NodeJS.ReadableStream,
+	baseFolder?: string,
+): Promise<UnzippedContents> {
+	const buffer = await readStreamAsBuffer(stream);
+	const unzipped = unzipSync(new Uint8Array(buffer));
+
+	const files = new Map<string, Buffer>();
+	const prefix = baseFolder ? `${baseFolder}/` : "";
+
+	for (const [path, data] of Object.entries(unzipped)) {
+		if (prefix && !path.startsWith(prefix)) continue;
+		// Strip the base folder prefix for cleaner relative paths
+		const relativePath = prefix ? path.slice(prefix.length) : path;
+		if (relativePath) {
+			files.set(relativePath, Buffer.from(data));
+		}
+	}
+
+	return files;
 }
