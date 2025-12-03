@@ -134,7 +134,7 @@ export function allowsFieldSuperset(
 ): boolean {
 	return (
 		policy.fieldKinds.get(original.kind) ?? fail(0xb1b /* missing kind */)
-	).allowsFieldSuperset(policy, originalData, original.types, superset);
+	).allowedMonotonicUpgrade(policy, originalData, original.types, superset);
 }
 
 /**
