@@ -10,6 +10,7 @@ import type {
 	IWriteSummaryResponse,
 	WholeSummaryTreeEntry,
 } from "@fluidframework/server-services-client";
+import { StageTrace } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 import { GitRestLumberEventName } from "../gitrestTelemetryDefinitions";
@@ -19,7 +20,12 @@ import {
 	type IWriteSummaryTreeOptions,
 	writeSummaryTree as writeSummaryTreeCore,
 } from "./coreWriteUtils";
-import type { IFullGitTree, ISummaryVersion, IWholeSummaryOptions } from "./definitions";
+import {
+	IFullGitTree,
+	ISummaryVersion,
+	IWholeSummaryOptions,
+	WriteSummaryTraceStage,
+} from "./definitions";
 import { computeLowIoSummaryTreeEntries } from "./lowIoWriteUtils";
 
 /**
@@ -127,6 +133,7 @@ async function writeSummaryTree(
 	payload: IWholeSummaryPayload,
 	documentRef: IRef | undefined,
 	options: IWholeSummaryOptions & { precomputeFullTree: boolean; useLowIoWrite: boolean },
+	stageTrace?: StageTrace<WriteSummaryTraceStage>,
 ): Promise<IFullGitTree> {
 	const writeSummaryTreeOptions: IWriteSummaryTreeOptions = {
 		repoManager: options.repoManager,
@@ -145,6 +152,7 @@ async function writeSummaryTree(
 		writeSummaryTreeOptions,
 		options,
 	);
+	stageTrace?.stampStage(WriteSummaryTraceStage.ComputedTreeEntries);
 
 	const writeSummaryTreeMetric = Lumberjack.newLumberMetric(
 		GitRestLumberEventName.WriteSummaryTree,
@@ -168,15 +176,23 @@ export async function writeChannelSummary(
 	payload: IWholeSummaryPayload,
 	options: IWholeSummaryOptions,
 	featureFlags: ISummaryWriteFeatureFlags,
+	stageTrace?: StageTrace<WriteSummaryTraceStage>,
 ): Promise<IWriteSummaryInfo> {
 	const useLowIoWrite = featureFlags.enableLowIoWrite === true;
 	// We need the document Ref to write channel with LowIo so that we can access pointers.
 	const documentRef: IRef | undefined = useLowIoWrite ? await getDocRef(options) : undefined;
-	const fullGitTree = await writeSummaryTree(payload, documentRef, {
-		...options,
-		precomputeFullTree: false,
-		useLowIoWrite,
-	});
+	stageTrace?.stampStage(WriteSummaryTraceStage.DocRefRetrieved);
+	const fullGitTree = await writeSummaryTree(
+		payload,
+		documentRef,
+		{
+			...options,
+			precomputeFullTree: false,
+			useLowIoWrite,
+		},
+		stageTrace,
+	);
+	stageTrace?.stampStage(WriteSummaryTraceStage.WroteSummaryTree);
 	return {
 		isNew: false,
 		writeSummaryResponse: {
@@ -291,23 +307,31 @@ export async function writeContainerSummary(
 	isInitial: boolean,
 	options: IWholeSummaryOptions,
 	featureFlags: ISummaryWriteFeatureFlags,
+	stageTrace?: StageTrace<WriteSummaryTraceStage>,
 ): Promise<IWriteSummaryInfo> {
 	// Ref will not exist for an initial summary, so do not bother checking.
 	const documentRef: IRef | undefined =
 		featureFlags.optimizeForInitialSummary && isInitial === true
 			? undefined
 			: await getDocRef(options);
+	stageTrace?.stampStage(WriteSummaryTraceStage.DocRefRetrieved);
 	const isNewDocument = !documentRef && payload.sequenceNumber === 0;
 	const useLowIoWrite =
 		featureFlags.enableLowIoWrite === true ||
 		(isNewDocument && featureFlags.enableLowIoWrite === "initial");
 
 	// Write the container summary tree into storage.
-	const fullGitTree = await writeSummaryTree(payload, documentRef, {
-		...options,
-		precomputeFullTree: true,
-		useLowIoWrite,
-	});
+	const fullGitTree = await writeSummaryTree(
+		payload,
+		documentRef,
+		{
+			...options,
+			precomputeFullTree: true,
+			useLowIoWrite,
+		},
+		stageTrace,
+	);
+	stageTrace?.stampStage(WriteSummaryTraceStage.WroteSummaryTree);
 
 	// Create a new commit referencing the container summary tree.
 	const { id: versionId, treeId } = await createNewSummaryVersion(
@@ -317,11 +341,14 @@ export async function writeContainerSummary(
 		payload.sequenceNumber,
 		options,
 	);
+	stageTrace?.stampStage(WriteSummaryTraceStage.CreatedNewSummaryVersion);
 
 	// Create or update the document ref to reference the new commit.
 	await createOrUpdateRef(documentRef, versionId, options);
+	stageTrace?.stampStage(WriteSummaryTraceStage.CreatedOrUpdatedDocRef);
 
 	const fullSummaryTree = convertFullGitTreeToFullSummaryTree(fullGitTree);
+	stageTrace?.stampStage(WriteSummaryTraceStage.ConvertedToWholeFlatSummary);
 	const wholeFlatSummary: IWholeFlatSummary = {
 		id: versionId,
 		trees: [
