@@ -209,6 +209,12 @@ export interface Configuration2 {
 	 */
 	$schema?: string | null;
 	/**
+	 * Indicates this is the root configuration file. When set to true, Biome will not
+	 * look for configuration files in parent directories. When set to false or omitted,
+	 * Biome will walk up the directory tree to find parent configs and merge them.
+	 */
+	root?: boolean | null;
+	/**
 	 * Specific configuration for the Css language
 	 */
 	css?: unknown | null;

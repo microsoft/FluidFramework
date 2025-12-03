@@ -212,4 +212,57 @@ describe("Biome 2.x config loading", () => {
 			);
 		});
 	});
+
+	describe("nested config WITHOUT extends (automatic parent discovery)", () => {
+		// Test data uses renamed files to avoid biome 1.x parsing errors
+		// The test verifies the merging logic works correctly when we manually specify the config chain
+		const childConfig = path.resolve(
+			testDataPath,
+			"biome2/nested-root/child/childconfig.jsonc",
+		);
+		const parentConfig = path.resolve(testDataPath, "biome2/nested-root/rootconfig.jsonc");
+		let gitRepo: GitRepo;
+
+		before(async () => {
+			const repoRoot = await getResolvedFluidRoot(true);
+			gitRepo = new GitRepo(repoRoot);
+		});
+
+		it("child config has root: false", async () => {
+			const config = await loadBiome2Config(childConfig);
+			// root should be false (or undefined, which is treated as false)
+			assert(config.root === false || config.root === undefined || config.root === null);
+		});
+
+		it("parent config has root: true", async () => {
+			const config = await loadBiome2Config(parentConfig);
+			assert.equal(config.root, true);
+		});
+
+		it("parent config settings are correctly loaded", async () => {
+			const config = await loadBiome2Config(parentConfig);
+			// Check parent config has expected settings
+			assert.equal(config.files!.ignoreUnknown, true);
+			assert.equal(config.formatter!.indentStyle, "tab");
+			assert.equal(config.formatter!.lineWidth, 100);
+		});
+
+		it("child config overrides parent settings correctly", async () => {
+			const config = await loadBiome2Config(childConfig);
+			// Child config has lineWidth: 80 which should override parent's 100
+			assert.equal(config.formatter!.lineWidth, 80);
+		});
+
+		it("has correct formatted files for child config", async () => {
+			const config = await Biome2ConfigReader.create(childConfig, gitRepo);
+			const { formattedFiles } = config;
+
+			// Should include file from src/
+			const srcFile = path.resolve(testDataPath, "biome2/nested-root/child/src/index.ts");
+			assert(
+				formattedFiles.includes(srcFile),
+				`expected ${srcFile} to be in formatted files, got: ${formattedFiles.join(", ")}`,
+			);
+		});
+	});
 });

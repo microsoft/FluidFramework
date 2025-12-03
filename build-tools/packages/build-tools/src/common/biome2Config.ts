@@ -37,11 +37,18 @@ async function loadRawBiome2Config(configPath: string): Promise<Biome2ConfigRaw>
 /**
  * Returns an array of absolute paths to Biome 2.x config files. The paths are in the order in which they are merged by
  * Biome. That is, the last item in the array will be the absolute path to `configPath`.
+ *
+ * In Biome 2.x, configs are resolved by:
+ * 1. Following explicit `extends` declarations
+ * 2. Walking up the directory tree to find parent configs until a config with `root: true` is found
+ *
+ * Both mechanisms are supported and combined.
  */
 export async function getAllBiome2ConfigPaths(configPath: string): Promise<string[]> {
 	const config = await loadRawBiome2Config(configPath);
 	let extendedConfigPaths: string[] = [];
 
+	// First, handle explicit extends declarations
 	if (config.extends) {
 		const pathsNested = await Promise.all(
 			config.extends.map((configToExtend) =>
@@ -51,14 +58,69 @@ export async function getAllBiome2ConfigPaths(configPath: string): Promise<strin
 		extendedConfigPaths = pathsNested.flat();
 	}
 
+	// If this config doesn't have root: true and doesn't have explicit extends,
+	// walk up the directory tree to find parent configs
+	if (config.root !== true && !config.extends) {
+		const parentConfigs = await findParentBiome2Configs(path.dirname(configPath));
+		extendedConfigPaths = [...parentConfigs, ...extendedConfigPaths];
+	}
+
 	// Add the current config as the last one to be applied when they're merged
 	extendedConfigPaths.push(configPath);
 	return extendedConfigPaths;
 }
 
 /**
- * Loads a Biome 2.x configuration file. If the config extends others, then those are loaded recursively and the results are
- * merged. Array-type values are not merged, in accordance with how Biome applies configs.
+ * Walks up the directory tree from the given directory to find parent Biome config files.
+ * Stops when a config with `root: true` is found or when the filesystem root is reached.
+ *
+ * @returns Array of config paths in order from root to nearest parent (not including the starting directory)
+ */
+async function findParentBiome2Configs(startDir: string): Promise<string[]> {
+	const configs: string[] = [];
+	let currentDir = path.dirname(startDir); // Start from parent of the starting directory
+	const fsRoot = path.parse(startDir).root;
+
+	while (currentDir !== fsRoot) {
+		const configPath = await findBiome2ConfigInDirectory(currentDir);
+		if (configPath) {
+			const config = await loadRawBiome2Config(configPath);
+			// Insert at the beginning since we want root configs first
+			configs.unshift(configPath);
+
+			// If this config has root: true, stop walking up
+			if (config.root === true) {
+				break;
+			}
+		}
+		currentDir = path.dirname(currentDir);
+	}
+
+	return configs;
+}
+
+/**
+ * Looks for a Biome config file in the given directory.
+ * @returns The path to the config file if found, undefined otherwise.
+ */
+async function findBiome2ConfigInDirectory(dir: string): Promise<string | undefined> {
+	const possibleNames = ["biome.json", "biome.jsonc"];
+	for (const name of possibleNames) {
+		const configPath = path.join(dir, name);
+		try {
+			await stat(configPath);
+			return configPath;
+		} catch {
+			// File doesn't exist, try next
+		}
+	}
+	return undefined;
+}
+
+/**
+ * Loads a Biome 2.x configuration file. If the config extends others or has parent configs in the directory tree,
+ * those are loaded recursively and the results are merged. Array-type values are not merged, in accordance with
+ * how Biome applies configs.
  *
  * @remarks
  *
@@ -66,7 +128,7 @@ export async function getAllBiome2ConfigPaths(configPath: string): Promise<strin
  * Biome documentation, so there may be subtle differences unaccounted for. Where this implementation diverges from
  * Biome's behavior, this function should be considered incorrect.
  *
- * Relevant Biome documentation: {@link https://biomejs.dev/guides/configure-biome/#share-a-configuration-file}
+ * Relevant Biome documentation: {@link https://biomejs.dev/guides/big-projects/}
  */
 export async function loadBiome2Config(configPath: string): Promise<Biome2ConfigResolved> {
 	const allConfigPaths = await getAllBiome2ConfigPaths(configPath);

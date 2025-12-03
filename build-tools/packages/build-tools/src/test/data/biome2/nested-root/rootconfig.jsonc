@@ -1,0 +1,13 @@
+{
+	"$schema": "../../../../../../node_modules/@biomejs/biome/configuration_schema.json",
+	"root": true,
+	"files": {
+		"ignoreUnknown": true,
+		"includes": ["**", "!**/dist/**"]
+	},
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab",
+		"lineWidth": 100
+	}
+}
