@@ -146,7 +146,7 @@ describe("ForestSummarizerCodec", () => {
 						{
 							version: brand(ForestFormatVersion.v1),
 							fields: {
-								version: brand(FieldBatchFormatVersion.v1),
+								version: 3 as FieldBatchFormatVersion,
 								identifiers: [],
 								shapes: [],
 								data: [],
@@ -155,7 +155,7 @@ describe("ForestSummarizerCodec", () => {
 						},
 						context,
 					),
-				validateUsageError(/Unsupported version 3 encountered while decoding data/),
+				validateAssertionError("Encoded schema should validate"),
 			);
 		});
 

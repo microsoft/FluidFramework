@@ -67,7 +67,6 @@ import {
 	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
 } from "../../../shared-tree-core/index.js";
-import { rootFieldKey } from "../../../core/index.js";
 
 function createForestSummarizer(args: {
 	// The encoding strategy to use when summarizing the forest.
@@ -216,8 +215,10 @@ function validateSummaryIsIncremental(summary: ISummaryTree, incrementalNodeCoun
 }
 
 function validateSummaryIsNotIncremental(summary: ISummaryTree) {
+	// Forest summary contains one blob for top-level forest content and one blob for metadata.
+	// For incremental summaries, it should not contain any other node.
 	assert(
-		Object.keys(summary.tree).length === 1,
+		Object.keys(summary.tree).length === 2,
 		"There should be no nodes for incremental fields",
 	);
 }
@@ -867,12 +868,12 @@ describe("ForestSummarizer", () => {
 			// Create data in v1 summary format.
 			const forestDataV1: FormatV1 = {
 				version: brand(ForestFormatVersion.v1),
-				keys: [rootFieldKey],
+				keys: [],
 				fields: {
 					version: brand(FieldBatchFormatVersion.v2),
 					identifiers: [],
-					shapes: [{ a: 0 }],
-					data: [[0, []]],
+					shapes: [],
+					data: [],
 				},
 			};
 			const forestContentBlob: ISummaryBlob = {
