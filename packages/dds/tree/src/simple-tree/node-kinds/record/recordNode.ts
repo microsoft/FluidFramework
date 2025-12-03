@@ -11,7 +11,7 @@ import { type JsonCompatibleReadOnlyObject, brand } from "../../../util/index.js
 import {
 	type TreeNodeSchema,
 	NodeKind,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	typeNameSymbol,
 	typeSchemaSymbol,
 	type UnhydratedFlexTreeNode,
@@ -31,7 +31,6 @@ import {
 	type FlexContent,
 	CompatibilityLevel,
 	type TreeNodeSchemaPrivateData,
-	convertAllowedTypes,
 	AnnotatedAllowedTypesInternal,
 } from "../../core/index.js";
 import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
@@ -50,7 +49,6 @@ import type {
 	TreeRecordNode,
 } from "./recordNodeTypes.js";
 import {
-	FieldKinds,
 	isTreeValue,
 	type FlexTreeNode,
 	type FlexTreeOptionalField,
@@ -80,7 +78,7 @@ function createRecordNodeProxy(
 					case typeSchemaSymbol: {
 						return schema;
 					}
-					// eslint-disable-next-line import/no-deprecated
+					// eslint-disable-next-line import-x/no-deprecated
 					case typeNameSymbol: {
 						return schema.identifier;
 					}
@@ -370,7 +368,7 @@ export function recordSchema<
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
 			persistedMetadata;
 
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		public get [typeNameSymbol](): TName {
 			return identifier;
 		}
@@ -388,19 +386,7 @@ export function recordSchema<
 		}
 
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-			return (privateData ??= createTreeNodeSchemaPrivateData(
-				this,
-				[normalizedTypes],
-				(storedOptions) =>
-					new MapNodeStoredSchema(
-						{
-							kind: FieldKinds.optional.identifier,
-							types: convertAllowedTypes(info, storedOptions),
-							persistedMetadata,
-						},
-						persistedMetadata,
-					),
-			));
+			return (privateData ??= createTreeNodeSchemaPrivateData(this, [normalizedTypes]));
 		}
 	}
 

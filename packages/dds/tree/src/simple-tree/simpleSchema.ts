@@ -5,7 +5,7 @@
 
 import type { ValueSchema } from "../core/index.js";
 import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
-import type { NodeKind, SimpleNodeSchemaBase } from "./core/index.js";
+import type { NodeKind, SchemaUpgrade, SimpleNodeSchemaBase } from "./core/index.js";
 import type { FieldKind, FieldSchemaMetadata } from "./fieldSchema.js";
 
 /*
@@ -40,6 +40,15 @@ export interface SimpleNodeSchemaBaseAlpha<
 }
 
 /**
+ * {@link AllowedTypes} for a location in the tree, expressed for use in the Simple Schema layer of abstraction.
+ *
+ * @remarks
+ * Refers to the types by identifier.
+ * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
+ */
+export type SimpleAllowedTypes = ReadonlyMap<string, SimpleAllowedTypeAttributes>;
+
+/**
  * A {@link SimpleNodeSchema} for an object node.
  *
  * @alpha
@@ -58,6 +67,15 @@ export interface SimpleObjectNodeSchema<out TCustomMetadata = unknown>
 	 * especially if/when TreeNodeSchema for objects provide more maps.
 	 */
 	readonly fields: ReadonlyMap<string, SimpleObjectFieldSchema>;
+
+	/**
+	 * Whether the object node allows unknown optional fields.
+	 *
+	 * @see {@link ObjectSchemaOptions.allowUnknownOptionalFields} for the API where this field is set as part of authoring a schema.
+	 *
+	 * @remarks Only populated for view schemas, undefined otherwise. Relevant for compatibility checking scenarios.
+	 */
+	readonly allowUnknownOptionalFields: boolean | undefined;
 }
 
 /**
@@ -163,20 +181,24 @@ export type SimpleNodeSchema =
 	| SimpleRecordNodeSchema;
 
 /**
- * Information about allowed types.
+ * Information about allowed types under a field.
  *
  * @alpha
  * @sealed
  */
 export interface SimpleAllowedTypeAttributes {
 	/**
-	 * True if this schema is included as a {@link SchemaStaticsAlpha.staged | staged} schema upgrade,
+	 * {@link SchemaUpgrade} if this schema is included as a {@link SchemaStaticsBeta.staged | staged} schema upgrade,
 	 * allowing the view schema be compatible with stored schema with (post upgrade) or without it (pre-upgrade).
 	 * New documents and schema upgrades will omit any staged schema.
 	 *
 	 * Undefined if derived from a stored schema.
+	 *
+	 * @privateRemarks
+	 * The false and undefined cases here are a bit odd.
+	 * This API should be reevaluated before stabilizing.
 	 */
-	readonly isStaged: boolean | undefined;
+	readonly isStaged: false | SchemaUpgrade | undefined;
 }
 
 /**
@@ -238,7 +260,7 @@ export interface SimpleTreeSchema {
 	 * @remarks
 	 * The keys are the schemas' {@link TreeNodeSchemaCore.identifier | identifiers}.
 	 *
-	 * Information about if a schema is {@link SchemaStaticsAlpha.staged | staged} or not is not available as the "Simple Schema" layer of abstraction: they are included unconditionally.
+	 * Information about if a schema is {@link SchemaStaticsBeta.staged | staged} or not is not available as the "Simple Schema" layer of abstraction: they are included unconditionally.
 	 * Options for filtering out staged schemas from view schema are available in {@link extractPersistedSchema}.
 	 */
 	readonly definitions: ReadonlyMap<string, SimpleNodeSchema>;

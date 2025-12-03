@@ -4,13 +4,14 @@
  */
 
 import { strict as assert, fail } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { MockNodeIdentifierManager, TreeStatus } from "../../feature-libraries/index.js";
 import {
 	SchematizingSimpleTreeView,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/schematizingTreeView.js";
 import {
 	SchemaFactory,
@@ -33,7 +34,6 @@ import {
 	fieldCursorFromInsertable,
 	getView,
 	TestTreeProviderLite,
-	validateUsageError,
 	validateViewConsistency,
 	type TreeStoredContentStrict,
 } from "../utils.js";
@@ -46,7 +46,7 @@ import {
 } from "../../shared-tree/index.js";
 import type { Mutable } from "../../util/index.js";
 import { brand } from "../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
 import { testDocumentIndependentView } from "../testTrees.js";
 import { fieldJsonCursor } from "../json/index.js";

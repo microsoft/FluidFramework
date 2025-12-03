@@ -36,8 +36,8 @@ export {
 	type NodeSchemaOptionsAlpha,
 	type SchemaFactory_base,
 } from "./schemaFactory.js";
-export { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
-export { SchemaFactoryAlpha, type SchemaStaticsAlpha } from "./schemaFactoryAlpha.js";
+export { SchemaFactoryBeta, type SchemaStaticsBeta } from "./schemaFactoryBeta.js";
+export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
 export type {
 	ValidateRecursiveSchema,
 	FixRecursiveArraySchema,
@@ -164,6 +164,15 @@ export { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
 export { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 export type { TreeChangeEvents } from "./treeChangeEvents.js";
 export {
-	getShouldIncrementallySummarizeAllowedTypes,
+	incrementalEncodingPolicyForAllowedTypes,
 	incrementalSummaryHint,
 } from "./incrementalAllowedTypes.js";
+export {
+	encodeSimpleSchema,
+	decodeSimpleSchema,
+} from "./simpleSchemaCodec.js";
+export {
+	exportCompatibilitySchemaSnapshot,
+	importCompatibilitySchemaSnapshot,
+	checkCompatibility,
+} from "./snapshotCompatibilityChecker.js";

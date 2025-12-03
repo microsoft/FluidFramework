@@ -33,7 +33,7 @@ import type {
 	SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
 import { idAllocatorFromMaxId, type JsonCompatible } from "../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
 import {
 	defaultIncrementalEncodingPolicy,
@@ -48,7 +48,7 @@ import {
 	ForestIncrementalSummaryBuilder,
 	forestSummaryContentKey,
 } from "./incrementalSummaryBuilder.js";
-import { TreeCompressionStrategyExtended } from "../treeCompressionUtils.js";
+import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 /**
@@ -85,7 +85,7 @@ export class ForestSummarizer implements Summarizable {
 		this.codec = makeForestSummarizerCodec(options, fieldBatchCodec);
 		this.incrementalSummaryBuilder = new ForestIncrementalSummaryBuilder(
 			encoderContext.encodeType ===
-				TreeCompressionStrategyExtended.CompressedIncremental /* enableIncrementalSummary */,
+				TreeCompressionStrategy.CompressedIncremental /* enableIncrementalSummary */,
 			(cursor: ITreeCursorSynchronous) => this.forest.chunkField(cursor),
 			shouldEncodeIncrementally,
 			initialSequenceNumber,

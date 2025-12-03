@@ -252,9 +252,11 @@ export interface ICodecFamily<TDecoded, TContext = void> {
 /**
  * A version stamp for encoded data.
  *
+ * Strings are used for formats that are not yet officially supported.
+ * When such formats become officially supported/stable, they will be switched to using a number.
  * Undefined is tolerated to enable the scenario where data was not initially versioned.
  */
-export type FormatVersion = number | undefined;
+export type FormatVersion = number | string | undefined;
 
 /**
  * A format version which is dependent on some parent format version.
@@ -499,10 +501,32 @@ export const FluidClientVersion = {
 	// then update it to "2.001" once we actually have the opt in working.
 	// v2_1 = v2_0,
 
-	/** Fluid Framework Client 2.52 and newer. */
-	// New formats introduced in 2.52:
-	// - DetachedFieldIndex FormatV2
+	/**
+	 * Fluid Framework Client 2.43 and newer.
+	 * @remarks
+	 * New formats introduced in 2.43:
+	 * - SchemaFormatVersion.v2
+	 * - MessageFormatVersion.v4
+	 * - EditManagerFormatVersion.v4
+	 * - Sequence format version 3
+	 */
+	v2_43: "2.43.0",
+
+	/**
+	 * Fluid Framework Client 2.52 and newer.
+	 * @remarks
+	 * New formats introduced in 2.52:
+	 * - DetachedFieldIndexFormatVersion.v2
+	 */
 	v2_52: "2.52.0",
+
+	/**
+	 * Fluid Framework Client 2.73 and newer.
+	 * @remarks
+	 * New formats introduced in 2.73:
+	 * - FieldBatchFormatVersion v2
+	 */
+	v2_73: "2.73.0",
 } as const satisfies Record<string, MinimumVersionForCollab>;
 
 /**

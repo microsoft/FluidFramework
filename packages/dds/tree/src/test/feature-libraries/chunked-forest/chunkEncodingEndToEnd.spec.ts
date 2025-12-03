@@ -26,14 +26,14 @@ import {
 	tryShapeFromNodeSchema,
 	uniformChunkFromCursor,
 	type ShapeInfo,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 import {
 	TreeShape,
 	UniformChunk,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
 	DefaultChangeFamily,
@@ -72,17 +72,17 @@ import {
 	TreeViewConfiguration,
 	toInitialSchema,
 } from "../../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { Format } from "../../../feature-libraries/forest-summary/format.js";
 import type {
 	EncodedFieldBatch,
 	FieldBatchEncodingContext,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/index.js";
 import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import { brand } from "../../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { configuredSharedTree } from "../../../treeFactory.js";
@@ -94,7 +94,7 @@ const options: CodecWriteOptions = {
 	minVersionForCollab: FluidClientVersion.v2_0,
 };
 
-const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: FormatValidatorBasic }, 1);
+const fieldBatchCodec = makeFieldBatchCodec(options);
 const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 const idCompressor = createIdCompressor(sessionId);
 const revisionTagCodec = new RevisionTagCodec(idCompressor);

@@ -5,7 +5,12 @@
 
 import { unreachableCase, fail } from "@fluidframework/core-utils/internal";
 
-import { NodeKind, type TreeNodeSchema, type AllowedTypes } from "../core/index.js";
+import {
+	NodeKind,
+	type TreeNodeSchema,
+	type AllowedTypesFull,
+	SchemaUpgrade,
+} from "../core/index.js";
 import {
 	type FieldSchema,
 	type FieldSchemaAlpha,
@@ -88,11 +93,14 @@ function generateFieldSchema(
 function generateAllowedTypes(
 	allowed: ReadonlyMap<string, SimpleAllowedTypeAttributes>,
 	context: Context,
-): AllowedTypes {
-	return Array.from(
-		allowed.keys(),
-		(id) => context.get(id) ?? fail(0xb5a /* Missing schema */),
-	);
+): AllowedTypesFull {
+	const types = Array.from(allowed.entries(), ([id, attributes]) => {
+		const schema = context.get(id) ?? fail(0xb5a /* Missing schema */);
+		return attributes.isStaged instanceof SchemaUpgrade ? factory.staged(schema) : schema;
+	});
+	// TODO: AB#53315: `AllowedTypesFullFromMixed` does not correctly handle the `(AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]` case.
+	// We have to cast here in order to produce an allowed types list that can be used in tree node factory methods (e.g., `SchemaFactoryAlpha.objectAlpha`).
+	return SchemaFactoryAlpha.types(types) as AllowedTypesFull;
 }
 
 function generateNode(
@@ -106,9 +114,12 @@ function generateNode(
 			for (const [key, field] of schema.fields) {
 				fields[key] = generateFieldSchema(field, context, field.storedKey);
 			}
-			// Here allowUnknownOptionalFields is implicitly defaulting. This is a subjective policy choice:
-			// users of this code are expected to handle what ever choice this code makes for cases like this.
-			return factory.objectAlpha(id, fields, { metadata: schema.metadata });
+			// Here allowUnknownOptionalFields is implicitly defaulting in the case where the input schema does not explicitly specify the value.
+			// This is a subjective policy choice: users of this code are expected to handle what ever choice this code makes for cases like this.
+			return factory.objectAlpha(id, fields, {
+				metadata: schema.metadata,
+				allowUnknownOptionalFields: schema.allowUnknownOptionalFields ?? false,
+			});
 		}
 		case NodeKind.Array:
 			return factory.arrayAlpha(id, generateAllowedTypes(schema.simpleAllowedTypes, context), {

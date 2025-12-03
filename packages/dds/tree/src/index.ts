@@ -52,6 +52,7 @@ export {
 	type TreeIndex,
 	type TreeIndexKey,
 	type TreeIndexNodes,
+	type IncrementalEncodingPolicy,
 } from "./feature-libraries/index.js";
 
 export {
@@ -60,7 +61,6 @@ export {
 	type SharedTreeOptionsBeta,
 	type ForestType,
 	type SharedTreeFormatOptions,
-	SharedTreeFormatVersion,
 	Tree,
 	type RunTransaction,
 	type ForestOptions,
@@ -95,6 +95,7 @@ export {
 	type TreeViewEvents,
 	SchemaFactory,
 	SchemaFactoryBeta,
+	type SchemaStaticsBeta,
 	SchemaFactoryAlpha,
 	type ObjectSchemaOptionsAlpha,
 	type ObjectSchemaOptions,
@@ -181,7 +182,6 @@ export {
 	type AllowedTypeMetadata,
 	type AllowedTypesMetadata,
 	type UnannotateAllowedTypesList,
-	type SchemaStaticsAlpha,
 	type AnnotateAllowedTypesList,
 	type AllowedTypesFull,
 	type AllowedTypesFullFromMixed,
@@ -283,10 +283,18 @@ export {
 	type SchemaFactory_base,
 	type NumberKeys,
 	type SimpleAllowedTypeAttributes,
+	encodeSimpleSchema,
+	decodeSimpleSchema,
+	exportCompatibilitySchemaSnapshot,
+	importCompatibilitySchemaSnapshot,
+	checkCompatibility,
+	incrementalSummaryHint,
+	incrementalEncodingPolicyForAllowedTypes,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
 	configuredSharedTree,
+	configuredSharedTreeAlpha,
 	configuredSharedTreeBeta,
 	configuredSharedTreeBetaLegacy,
 } from "./treeFactory.js";

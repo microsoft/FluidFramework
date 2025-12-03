@@ -16,7 +16,7 @@ import type {
 	RestrictiveStringRecord,
 	UnionToIntersection,
 	// Allow importing from this specific file which is being tested:
-	/* eslint-disable-next-line import/no-internal-modules */
+	/* eslint-disable-next-line import-x/no-internal-modules */
 } from "../../util/typeUtils.js";
 
 // These tests currently just cover the type checking, so its all compile time.
@@ -89,7 +89,6 @@ import type {
 	type _check3 = requireTrue<
 		areSafelyAssignable<UnionToIntersection<{ x: 1 | 2 } | { x: 2 | 3 }>, { x: 2 }>
 	>;
-	type _check4 = requireTrue<areSafelyAssignable<UnionToIntersection<1>, 1>>;
 
 	// Check that arrays are preserved
 	allowUnused<

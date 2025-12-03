@@ -70,7 +70,7 @@ export class Collection<T> implements ICollection<T> {
 		if (!value) {
 			throw new Error("Not found");
 		} else {
-			// eslint-disable-next-line import/namespace
+			// eslint-disable-next-line import-x/namespace
 			_.extend(value, set);
 			return this.insertOne(value);
 		}
@@ -85,7 +85,7 @@ export class Collection<T> implements ICollection<T> {
 		if (!value) {
 			return this.insertOne(set);
 		} else {
-			// eslint-disable-next-line import/namespace
+			// eslint-disable-next-line import-x/namespace
 			_.extend(value, set);
 			return this.insertOne(value);
 		}

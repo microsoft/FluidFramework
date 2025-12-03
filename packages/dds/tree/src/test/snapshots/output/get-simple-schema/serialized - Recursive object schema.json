@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "root": {
+    "kind": 1,
+    "simpleAllowedTypes": {
+      "test.recursive-object": {
+        "isStaged": false
+      }
+    }
+  },
+  "definitions": {
+    "com.fluidframework.leaf.string": {
+      "leaf": {
+        "kind": 3,
+        "leafKind": 1
+      }
+    },
+    "test.recursive-object": {
+      "object": {
+        "kind": 2,
+        "fields": {
+          "foo": {
+            "kind": 0,
+            "simpleAllowedTypes": {
+              "com.fluidframework.leaf.string": {
+                "isStaged": false
+              },
+              "test.recursive-object": {
+                "isStaged": false
+              }
+            },
+            "storedKey": "foo"
+          }
+        },
+        "allowUnknownOptionalFields": false
+      }
+    }
+  }
+}
