@@ -15,6 +15,11 @@ import type { Opaque } from "type-fest";
 
 import type { Configuration as BiomeConfigRaw } from "./biomeConfigTypes";
 import type { GitRepo } from "./gitRepo";
+import {
+	type BiomeMajorVersion,
+	type BiomeVersionInfo,
+	detectBiomeVersion,
+} from "./biomeVersion";
 
 // switch to regular import once building ESM
 const findUp = import("find-up");
@@ -266,4 +271,81 @@ export class BiomeConfigReader {
 		const files = await getBiomeFormattedFiles(mergedConfig, directory, gitRepo);
 		return new BiomeConfigReader(configFile, allConfigs, mergedConfig, files);
 	}
+}
+
+// Re-export version detection utilities
+export { detectBiomeVersion, type BiomeMajorVersion, type BiomeVersionInfo };
+
+// Re-export Biome 2.x types and reader
+export {
+	Biome2ConfigReader,
+	type Biome2ConfigResolved,
+	getAllBiome2ConfigPaths,
+	getBiome2FormattedFiles,
+	getBiome2FormattedFilesFromDirectory,
+	getSettingValuesFromBiome2Config,
+	loadBiome2Config,
+	parseIncludes,
+	type Biome2ConfigSection,
+} from "./biome2Config";
+
+/**
+ * A common interface for both Biome 1.x and 2.x config readers.
+ * This interface defines the properties that are available on both readers.
+ */
+export interface IBiomeConfigReader {
+	/**
+	 * The absolute path to the closest (most specific) config file.
+	 */
+	readonly closestConfig: string;
+	/**
+	 * The directory containing the config file.
+	 */
+	readonly directory: string;
+	/**
+	 * All config file paths, in order of application (base configs first).
+	 */
+	readonly allConfigs: string[];
+	/**
+	 * Absolute paths to files that would be formatted by Biome.
+	 */
+	readonly formattedFiles: string[];
+}
+
+/**
+ * Creates the appropriate BiomeConfigReader based on the detected Biome version.
+ *
+ * This factory function auto-detects whether Biome 1.x or 2.x is installed and returns
+ * the appropriate config reader. Use this function when you want automatic version detection.
+ *
+ * @param directoryOrConfigFile - A path to a directory or a Biome config file.
+ * @param gitRepo - A GitRepo instance that is used to enumerate files.
+ * @param forceVersion - If provided, forces the use of a specific Biome version reader
+ *                       instead of auto-detecting.
+ * @returns A BiomeConfigReader (for 1.x) or Biome2ConfigReader (for 2.x) based on the detected version.
+ */
+export async function createBiomeConfigReader(
+	directoryOrConfigFile: string,
+	gitRepo: GitRepo,
+	forceVersion?: BiomeMajorVersion,
+): Promise<IBiomeConfigReader> {
+	// Import dynamically to avoid circular dependencies
+	const { Biome2ConfigReader: Reader2 } = await import("./biome2Config.js");
+
+	let majorVersion: BiomeMajorVersion;
+
+	if (forceVersion !== undefined) {
+		majorVersion = forceVersion;
+	} else {
+		// Auto-detect the Biome version
+		const versionInfo = await detectBiomeVersion(directoryOrConfigFile);
+		majorVersion = versionInfo?.majorVersion ?? 1; // Default to 1.x if detection fails
+	}
+
+	if (majorVersion === 2) {
+		return Reader2.create(directoryOrConfigFile, gitRepo);
+	}
+
+	// Default to Biome 1.x reader
+	return BiomeConfigReader.create(directoryOrConfigFile, gitRepo);
 }
