@@ -10,7 +10,6 @@ import {
 	SchemaFactory,
 	exportCompatibilitySchemaSnapshot,
 	TreeViewConfiguration,
-	type SchemaCompatibilityStatus,
 	SchemaFactoryBeta,
 	stringSchema,
 	numberSchema,
@@ -35,31 +34,7 @@ describe("snapshotCompatibilityChecker", () => {
 		);
 	});
 
-	it("checkCompatibility detects upgradeable schemas", () => {
-		const factory = new SchemaFactory("test");
-		class Point2D extends factory.object("Point", {
-			x: factory.number,
-			y: factory.number,
-		}) {}
-		class Point3D extends factory.object("Point", {
-			x: factory.number,
-			y: factory.number,
-			z: factory.optional(factory.number),
-		}) {}
-
-		const storedAsView = new TreeViewConfiguration({ schema: Point2D });
-		const view = new TreeViewConfiguration({ schema: Point3D });
-		const compatibility = checkCompatibility(storedAsView, view);
-
-		const expected: Omit<SchemaCompatibilityStatus, "canInitialize"> = {
-			canView: false,
-			canUpgrade: true,
-			isEquivalent: false,
-		};
-		assert.deepEqual(compatibility, expected);
-	});
-
-	it("checkCompatibility detects upgradeable schemas - snapshot test", () => {
+	function checkCompatibilityDetectsUpgradeableSchemas(roundtripSnapshot: boolean): void {
 		const factory = new SchemaFactory("test");
 
 		// The past view schema, for the purposes of illustration. This wouldn't normally appear as a concrete schema in the test
@@ -68,12 +43,20 @@ describe("snapshotCompatibilityChecker", () => {
 			x: factory.number,
 			y: factory.number,
 		}) {}
-		const viewSchema = new TreeViewConfiguration({ schema: Point2D });
-		const encodedSchema = JSON.stringify(exportCompatibilitySchemaSnapshot(viewSchema));
 
-		// Load the past view schema from the snapshot (in-memory for the purposes of this test)
-		// This snapshot is assumed to be the same as Point3D, except missing `z`.
-		const oldViewSchema = importCompatibilitySchemaSnapshot(JSON.parse(encodedSchema));
+		let oldViewSchema: TreeViewConfiguration;
+
+		// If roundtripSnapshot is true, we store the old schema as a JSON string and then load it
+		if (roundtripSnapshot) {
+			const viewSchema = new TreeViewConfiguration({ schema: Point2D });
+			const encodedSchema = JSON.stringify(exportCompatibilitySchemaSnapshot(viewSchema));
+
+			// Load the past view schema from the snapshot (in-memory for the purposes of this test)
+			// This snapshot is assumed to be the same as Point3D, except missing `z`.
+			oldViewSchema = importCompatibilitySchemaSnapshot(JSON.parse(encodedSchema));
+		} else {
+			oldViewSchema = new TreeViewConfiguration({ schema: Point2D });
+		}
 
 		// Build the current view schema
 		class Point3D extends factory.object("Point", {
@@ -101,6 +84,14 @@ describe("snapshotCompatibilityChecker", () => {
 		// we assert that there is forwards compatibility break:
 		// this means these two versions of the application cannot collaborate on content using these schema.
 		assert.equal(forwardsCompatibilityStatus.canView, false);
+	}
+
+	it("checkCompatibility detects upgradeable schemas", () => {
+		checkCompatibilityDetectsUpgradeableSchemas(false);
+	});
+
+	it("checkCompatibility detects upgradeable schemas - snapshot test", () => {
+		checkCompatibilityDetectsUpgradeableSchemas(true);
 	});
 
 	it("checkCompatibility: allowUnknownOptionalFields", () => {
