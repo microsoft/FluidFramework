@@ -14,6 +14,27 @@ import { testDataPath } from "./init";
 const globTestDataPath = path.resolve(testDataPath, "glob");
 
 /**
+ * Helper to extract relative paths from absolute results for easier testing.
+ * Converts absolute paths to paths relative to globTestDataPath for assertions.
+ */
+function toRelativePaths(results: string[]): string[] {
+	return results.map((f) => path.relative(globTestDataPath, f)).sort();
+}
+
+/**
+ * Helper to verify paths are absolute and optionally check their basenames.
+ */
+function assertAbsolutePaths(results: string[], expectedBasenames?: string[]): void {
+	for (const result of results) {
+		assert(path.isAbsolute(result), `Expected absolute path: ${result}`);
+	}
+	if (expectedBasenames !== undefined) {
+		const basenames = results.map((f) => path.basename(f)).sort();
+		assert.deepEqual(basenames, expectedBasenames);
+	}
+}
+
+/**
  * Tests for globFn wrapper function in taskUtils.ts.
  *
  * The globFn wrapper is used by:
@@ -26,34 +47,34 @@ describe("globFn (glob wrapper for task utilities)", () => {
 		it("matches .ts files with wildcard", async () => {
 			const pattern = path.join(globTestDataPath, "*.ts");
 			const results = await globFn(pattern);
-			const filenames = results.map((f) => path.basename(f)).sort();
-			assert.deepEqual(filenames, ["file1.ts", "file2.ts", "tracked.ts"]);
+			const relativePaths = toRelativePaths(results);
+			assert.deepEqual(relativePaths, ["file1.ts", "file2.ts", "tracked.ts"]);
 		});
 
 		it("matches all files with *", async () => {
 			const pattern = path.join(globTestDataPath, "*");
 			const results = await globFn(pattern, { nodir: true });
-			const filenames = results.map((f) => path.basename(f)).sort();
-			assert.deepEqual(filenames, ["file1.ts", "file2.ts", "file3.mjs", "tracked.ts"]);
+			const relativePaths = toRelativePaths(results);
+			assert.deepEqual(relativePaths, ["file1.ts", "file2.ts", "file3.mjs", "tracked.ts"]);
 		});
 
 		it("matches files in nested directories with **", async () => {
 			const pattern = path.join(globTestDataPath, "**/*.ts");
 			const results = await globFn(pattern, { nodir: true });
-			const filenames = results.map((f) => path.basename(f)).sort();
-			assert.deepEqual(filenames, [
-				"exclude.ts",
-				"file1.ts",
-				"file1.ts",
-				"file1.ts",
-				"file2.ts",
-				"file2.ts",
-				"file2.ts",
-				"file3.ts",
-				"include.ts",
+			const relativePaths = toRelativePaths(results);
+			assert.deepEqual(relativePaths, [
+				"dotfiles/visible.ts",
+				"ignore-test/exclude.ts",
+				"ignore-test/include.ts",
+				"nested/dir1/file1.ts",
+				"nested/dir1/file2.ts",
+				"nested/dir2/file1.ts",
+				"nested/dir2/file2.ts",
+				"nested/file3.ts",
 				"tracked.ts",
-				"visible.ts",
-			]);
+				"file1.ts",
+				"file2.ts",
+			].sort());
 		});
 
 		it("returns empty array for no matches", async () => {
@@ -67,15 +88,15 @@ describe("globFn (glob wrapper for task utilities)", () => {
 		it("excludes directories when nodir is true", async () => {
 			const pattern = path.join(globTestDataPath, "*");
 			const results = await globFn(pattern, { nodir: true });
-			const filenames = results.map((f) => path.basename(f)).sort();
-			assert.deepEqual(filenames, ["file1.ts", "file2.ts", "file3.mjs", "tracked.ts"]);
+			const relativePaths = toRelativePaths(results);
+			assert.deepEqual(relativePaths, ["file1.ts", "file2.ts", "file3.mjs", "tracked.ts"]);
 		});
 
 		it("includes directories when nodir is false", async () => {
 			const pattern = path.join(globTestDataPath, "*");
 			const results = await globFn(pattern, { nodir: false });
-			const filenames = results.map((f) => path.basename(f)).sort();
-			assert.deepEqual(filenames, [
+			const relativePaths = toRelativePaths(results);
+			assert.deepEqual(relativePaths, [
 				"dotfiles",
 				"file1.ts",
 				"file2.ts",
@@ -91,15 +112,15 @@ describe("globFn (glob wrapper for task utilities)", () => {
 		it("excludes dot files by default", async () => {
 			const pattern = path.join(globTestDataPath, "dotfiles/*");
 			const results = await globFn(pattern, { nodir: true });
-			const filenames = results.map((f) => path.basename(f)).sort();
-			assert.deepEqual(filenames, ["visible.ts"]);
+			const relativePaths = toRelativePaths(results);
+			assert.deepEqual(relativePaths, ["dotfiles/visible.ts"]);
 		});
 
 		it("includes dot files when dot is true", async () => {
 			const pattern = path.join(globTestDataPath, "dotfiles/*");
 			const results = await globFn(pattern, { nodir: true, dot: true });
-			const filenames = results.map((f) => path.basename(f)).sort();
-			assert.deepEqual(filenames, [".config", ".hidden", "visible.ts"]);
+			const relativePaths = toRelativePaths(results);
+			assert.deepEqual(relativePaths, ["dotfiles/.config", "dotfiles/.hidden", "dotfiles/visible.ts"]);
 		});
 	});
 
@@ -108,8 +129,8 @@ describe("globFn (glob wrapper for task utilities)", () => {
 			const pattern = path.join(globTestDataPath, "ignore-test/*");
 			const ignorePattern = path.join(globTestDataPath, "ignore-test/exclude.ts");
 			const results = await globFn(pattern, { nodir: true, ignore: ignorePattern });
-			const filenames = results.map((f) => path.basename(f)).sort();
-			assert.deepEqual(filenames, ["include.ts", "other.mjs"]);
+			const relativePaths = toRelativePaths(results);
+			assert.deepEqual(relativePaths, ["ignore-test/include.ts", "ignore-test/other.mjs"]);
 		});
 
 		it("ignores files matching ignore pattern (array)", async () => {
@@ -119,16 +140,16 @@ describe("globFn (glob wrapper for task utilities)", () => {
 				path.join(globTestDataPath, "ignore-test/other.mjs"),
 			];
 			const results = await globFn(pattern, { nodir: true, ignore: ignorePatterns });
-			const filenames = results.map((f) => path.basename(f)).sort();
-			assert.deepEqual(filenames, ["include.ts"]);
+			const relativePaths = toRelativePaths(results);
+			assert.deepEqual(relativePaths, ["ignore-test/include.ts"]);
 		});
 	});
 
 	describe("cwd option", () => {
 		it("uses cwd as base for relative patterns", async () => {
 			const results = await globFn("*.ts", { cwd: globTestDataPath, nodir: true });
-			const filenames = results.map((f) => path.basename(f)).sort();
-			assert.deepEqual(filenames, ["file1.ts", "file2.ts", "tracked.ts"]);
+			const relativePaths = toRelativePaths(results);
+			assert.deepEqual(relativePaths, ["file1.ts", "file2.ts", "tracked.ts"]);
 		});
 	});
 
@@ -139,9 +160,7 @@ describe("globFn (glob wrapper for task utilities)", () => {
 				nodir: true,
 				absolute: true,
 			});
-			for (const result of results) {
-				assert(path.isAbsolute(result), `Expected absolute path: ${result}`);
-			}
+			assertAbsolutePaths(results, ["file1.ts", "file2.ts", "tracked.ts"]);
 		});
 
 		it("returns relative paths when absolute is not set", async () => {
@@ -149,6 +168,8 @@ describe("globFn (glob wrapper for task utilities)", () => {
 			for (const result of results) {
 				assert(!path.isAbsolute(result), `Expected relative path: ${result}`);
 			}
+			const relativePaths = results.map((f) => f).sort();
+			assert.deepEqual(relativePaths, ["file1.ts", "file2.ts", "tracked.ts"]);
 		});
 	});
 });
@@ -203,21 +224,21 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 			cwd: globTestDataPath,
 			gitignore: false,
 		});
-		const filenames = results.map((f) => path.basename(f)).sort();
-		assert.deepEqual(filenames, [
-			"exclude.ts",
-			"file1.ts",
-			"file1.ts",
+		const relativePaths = toRelativePaths(results);
+		assert.deepEqual(relativePaths, [
+			"dotfiles/visible.ts",
 			"file1.ts",
 			"file2.ts",
-			"file2.ts",
-			"file2.ts",
-			"file3.ts",
-			"include.ts",
-			"shouldBeIgnored.ts",
+			"gitignored/shouldBeIgnored.ts",
+			"ignore-test/exclude.ts",
+			"ignore-test/include.ts",
+			"nested/dir1/file1.ts",
+			"nested/dir1/file2.ts",
+			"nested/dir2/file1.ts",
+			"nested/dir2/file2.ts",
+			"nested/file3.ts",
 			"tracked.ts",
-			"visible.ts",
-		]);
+		].sort());
 	});
 
 	it("excludes gitignored files when gitignore option is true", async () => {
@@ -228,40 +249,40 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 			cwd: globTestDataPath,
 			gitignore: true,
 		});
-		const filenames = results.map((f) => path.basename(f)).sort();
-		assert.deepEqual(filenames, [
-			"exclude.ts",
-			"file1.ts",
-			"file1.ts",
+		const relativePaths = toRelativePaths(results);
+		assert.deepEqual(relativePaths, [
+			"dotfiles/visible.ts",
 			"file1.ts",
 			"file2.ts",
-			"file2.ts",
-			"file2.ts",
-			"file3.ts",
-			"include.ts",
+			"ignore-test/exclude.ts",
+			"ignore-test/include.ts",
+			"nested/dir1/file1.ts",
+			"nested/dir1/file2.ts",
+			"nested/dir2/file1.ts",
+			"nested/dir2/file2.ts",
+			"nested/file3.ts",
 			"tracked.ts",
-			"visible.ts",
-		]);
+		].sort());
 	});
 
 	it("excludes gitignored files by default", async () => {
 		const results = await globWithGitignore(["**/*.ts"], {
 			cwd: globTestDataPath,
 		});
-		const filenames = results.map((f) => path.basename(f)).sort();
-		assert.deepEqual(filenames, [
-			"exclude.ts",
-			"file1.ts",
-			"file1.ts",
+		const relativePaths = toRelativePaths(results);
+		assert.deepEqual(relativePaths, [
+			"dotfiles/visible.ts",
 			"file1.ts",
 			"file2.ts",
-			"file2.ts",
-			"file2.ts",
-			"file3.ts",
-			"include.ts",
+			"ignore-test/exclude.ts",
+			"ignore-test/include.ts",
+			"nested/dir1/file1.ts",
+			"nested/dir1/file2.ts",
+			"nested/dir2/file1.ts",
+			"nested/dir2/file2.ts",
+			"nested/file3.ts",
 			"tracked.ts",
-			"visible.ts",
-		]);
+		].sort());
 	});
 
 	it("excludes files matching gitignore patterns", async () => {
@@ -272,9 +293,9 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 			cwd: globTestDataPath,
 			gitignore: true,
 		});
-		const filenames = results.map((f) => path.basename(f)).sort();
+		const relativePaths = toRelativePaths(results);
 		// test.ignored should be excluded by *.ignored pattern in .gitignore
-		assert.deepEqual(filenames, ["file1.ts", "file2.ts", "file3.mjs", "tracked.ts"]);
+		assert.deepEqual(relativePaths, ["file1.ts", "file2.ts", "file3.mjs", "tracked.ts"]);
 	});
 
 	it("includes files matching gitignore patterns when gitignore is false", async () => {
@@ -285,9 +306,9 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 			cwd: globTestDataPath,
 			gitignore: false,
 		});
-		const filenames = results.map((f) => path.basename(f)).sort();
+		const relativePaths = toRelativePaths(results);
 		// test.ignored should be included when gitignore is disabled
-		assert.deepEqual(filenames, [
+		assert.deepEqual(relativePaths, [
 			"file1.ts",
 			"file2.ts",
 			"file3.mjs",
@@ -301,21 +322,23 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 			cwd: globTestDataPath,
 			gitignore: true,
 		});
-		const filenames = results.map((f) => path.basename(f)).sort();
+		const relativePaths = toRelativePaths(results);
 		// shouldBeIgnored.ts is in gitignored/ directory which is in .gitignore
-		assert.deepEqual(filenames, [
-			"exclude.ts",
-			"file1.ts",
-			"file1.ts",
+		assert(!relativePaths.includes("gitignored/shouldBeIgnored.ts"), 
+			"gitignored/shouldBeIgnored.ts should be excluded");
+		assert.deepEqual(relativePaths, [
+			"dotfiles/visible.ts",
 			"file1.ts",
 			"file2.ts",
-			"file2.ts",
-			"file2.ts",
-			"file3.ts",
-			"include.ts",
+			"ignore-test/exclude.ts",
+			"ignore-test/include.ts",
+			"nested/dir1/file1.ts",
+			"nested/dir1/file2.ts",
+			"nested/dir2/file1.ts",
+			"nested/dir2/file2.ts",
+			"nested/file3.ts",
 			"tracked.ts",
-			"visible.ts",
-		]);
+		].sort());
 	});
 
 	it("returns absolute paths", async () => {
@@ -323,11 +346,7 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 			cwd: globTestDataPath,
 			gitignore: false,
 		});
-		const filenames = results.map((f) => path.basename(f)).sort();
-		assert.deepEqual(filenames, ["file1.ts", "file2.ts", "tracked.ts"]);
-		for (const result of results) {
-			assert(path.isAbsolute(result), `Expected absolute path: ${result}`);
-		}
+		assertAbsolutePaths(results, ["file1.ts", "file2.ts", "tracked.ts"]);
 	});
 
 	it("handles multiple glob patterns", async () => {
@@ -335,7 +354,7 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 			cwd: globTestDataPath,
 			gitignore: false,
 		});
-		const filenames = results.map((f) => path.basename(f)).sort();
-		assert.deepEqual(filenames, ["file1.ts", "file2.ts", "file3.mjs", "tracked.ts"]);
+		const relativePaths = toRelativePaths(results);
+		assert.deepEqual(relativePaths, ["file1.ts", "file2.ts", "file3.mjs", "tracked.ts"]);
 	});
 });
