@@ -9,7 +9,10 @@
 			// format them conservatively without trailing commas.
 			//
 			// See also: https://github.com/microsoft/vscode/issues/102061
-			"includes": ["**/test/test-data/**", "**/src/fence.json"],
+			"includes": [
+				// These files contain comments, but are not JSONC files
+				"**/test/test-data/**"
+			],
 			"json": {
 				"parser": {
 					"allowComments": true,
