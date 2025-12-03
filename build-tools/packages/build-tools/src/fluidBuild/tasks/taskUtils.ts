@@ -7,6 +7,7 @@ import { existsSync } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import * as path from "path";
+import createIgnore from "ignore";
 import { glob as tinyglobbyGlob } from "tinyglobby";
 
 import type { PackageJson } from "../../common/npmPackage";
@@ -131,7 +132,8 @@ export async function globFn(pattern: string, options: GlobFnOptions = {}): Prom
 		followSymbolicLinks: follow,
 	});
 
-	// tinyglobby returns directories with trailing slashes, remove them for consistency
+	// When nodir is false (i.e., onlyFiles is false), tinyglobby returns directories
+	// with trailing slashes. Remove them for backwards compatibility with the glob package.
 	return results.map((p) => (p.endsWith("/") ? p.slice(0, -1) : p));
 }
 
@@ -197,9 +199,7 @@ export async function globWithGitignore(
  * Reads .gitignore files from the filesystem and applies them to filter files.
  */
 async function filterByGitignore(files: string[], cwd: string): Promise<string[]> {
-	// Dynamically import the ignore package
-	const ignore = await import("ignore");
-	const ig = ignore.default();
+	const ig = createIgnore();
 
 	// Find and read .gitignore files in the cwd and parent directories
 	const gitignorePatterns = await readGitignorePatterns(cwd);
