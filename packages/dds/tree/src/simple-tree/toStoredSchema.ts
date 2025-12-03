@@ -59,6 +59,11 @@ import type {
 } from "./simpleSchema.js";
 import { createTreeSchema } from "./treeSchema.js";
 
+// TODO: this file, src/simple-tree/api/storedSchema.ts and src/simple-tree/core/toStored.ts should be refactored to group the logic more logically.
+// The content of src/simple-tree/api/storedSchema.ts should probably removed from the API surface, replaced by simple schema snapshotting APIs.
+// The logic from this file for converting stored-simple-schema to the persisted format can be moved to its own file.
+// The simple-schema related logic from this file and src/simple-tree/core/toStored.ts can be unified and `toStoredSchema` and its other ImplicitFieldSchema consuming variants should probably be removed in favor of acting on TreeSchema and SimpleTreeSchema directly.
+
 const viewToStoredCache = new WeakMap<
 	StoredFromViewSchemaGenerationOptions,
 	WeakMap<ImplicitFieldSchema, TreeStoredSchema>
