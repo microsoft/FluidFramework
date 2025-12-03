@@ -123,26 +123,8 @@ describe("EditManagerSummarizer", () => {
 			await assert.doesNotReject(async () => summarizer2.load(mockStorage, JSON.parse));
 		});
 
-		it("loads with no metadata blob", async () => {
-			const { summarizer } = createEditManagerSummarizer({
-				minVersionForCollab: FluidClientVersion.v2_74,
-			});
-
-			const summary = summarizer.summarize({
-				stringify: JSON.stringify,
-			});
-
-			// Delete metadata blob from the summary
-			Reflect.deleteProperty(summary.summary.tree, summarizablesMetadataKey);
-
-			// Should load successfully
-			const mockStorage = MockStorage.createFromSummary(summary.summary);
-			const { summarizer: summarizer2 } = createEditManagerSummarizer();
-
-			await assert.doesNotReject(async () => summarizer2.load(mockStorage, JSON.parse));
-		});
-
-		it("loads version 3 with no metadata blob", async () => {
+		it("loads version 1 with no metadata blob", async () => {
+			// Create data in v1 summary format.
 			const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
 			const trunk: SequencedCommit<DefaultChangeset>[] = [
 				{
@@ -152,15 +134,14 @@ describe("EditManagerSummarizer", () => {
 					sequenceNumber: brand(1),
 				},
 			];
-			// Create a v3 format summary (empty edit manager with no metadata)
-			const editManagerDataV3: EncodedEditManager<unknown> = {
+			const editManagerDataV1: EncodedEditManager<DefaultChangeset> = {
 				version: EditManagerFormatVersion.v3,
 				trunk,
 				branches: [],
 			};
 			const editManagerBlob: ISummaryBlob = {
 				type: SummaryType.Blob,
-				content: JSON.stringify(editManagerDataV3),
+				content: JSON.stringify(editManagerDataV1),
 			};
 			const summaryTree: ISummaryTree = {
 				type: SummaryType.Tree,

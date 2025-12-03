@@ -107,7 +107,7 @@ describe("DetachedFieldIndexSummarizer", () => {
 		});
 
 		it("loads version 1 with no metadata blob", async () => {
-			// Create detached field data version 1 for testing loading old summaries
+			// Create data in v1 summary format.
 			const mintedTag = testIdCompressor.generateCompressedId();
 			const finalizedTag = testIdCompressor.normalizeToOpSpace(mintedTag);
 			const detachedFieldDataV1: FormatV1 = {

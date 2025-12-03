@@ -750,29 +750,8 @@ describe("ForestSummarizer", () => {
 			await assert.doesNotReject(async () => forestSummarizer2.load(mockStorage, JSON.parse));
 		});
 
-		it("loads with no metadata blob", async () => {
-			const { forestSummarizer } = createForestSummarizer({
-				encodeType: TreeCompressionStrategy.Compressed,
-				forestType: ForestTypeOptimized,
-			});
-
-			const summary = forestSummarizer.summarize({ stringify: JSON.stringify });
-
-			// Delete metadata blob from the summary
-			Reflect.deleteProperty(summary.summary.tree, summarizablesMetadataKey);
-
-			// Should load successfully
-			const mockStorage = MockStorage.createFromSummary(summary.summary);
-			const { forestSummarizer: forestSummarizer2 } = createForestSummarizer({
-				encodeType: TreeCompressionStrategy.Compressed,
-				forestType: ForestTypeOptimized,
-			});
-
-			await assert.doesNotReject(async () => forestSummarizer2.load(mockStorage, JSON.parse));
-		});
-
 		it("loads version 1 with no metadata blob", async () => {
-			// Create a v1 format summary (empty forest with no metadata)
+			// Create data in v1 summary format.
 			const forestDataV1: FormatV1 = {
 				version: brand(ForestFormatVersion.v1),
 				keys: [rootFieldKey],

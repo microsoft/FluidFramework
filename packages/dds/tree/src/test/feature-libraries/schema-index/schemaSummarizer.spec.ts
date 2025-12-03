@@ -131,25 +131,8 @@ describe("schemaSummarizer", () => {
 			await assert.doesNotReject(async () => summarizer2.load(mockStorage, JSON.parse));
 		});
 
-		it("loads with no metadata blob", async () => {
-			const summarizer = createSchemaSummarizer();
-
-			const summary = summarizer.summarize({
-				stringify: JSON.stringify,
-			});
-
-			// Delete metadata blob from the summary
-			Reflect.deleteProperty(summary.summary.tree, summarizablesMetadataKey);
-
-			// Should load successfully
-			const mockStorage = MockStorage.createFromSummary(summary.summary);
-			const summarizer2 = createSchemaSummarizer();
-
-			await assert.doesNotReject(async () => summarizer2.load(mockStorage, JSON.parse));
-		});
-
 		it("loads version 1 with no metadata blob", async () => {
-			// Create a v1 format summary (empty schema with no metadata)
+			// Create data in v1 summary format.
 			const schemaDataV1: SchemaFormatV1 = {
 				version: SchemaFormatVersion.v1,
 				nodes: {},
