@@ -67,11 +67,23 @@ const viewToStoredCache = new WeakMap<
 	WeakMap<ImplicitFieldSchema, TreeStoredSchema>
 >();
 
+/**
+ * Maximally restrictive transformation of a view to stored schema.
+ */
 export const restrictiveStoredSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions =
 	{
 		includeStaged: () => false,
 	};
 
+/**
+ * Maximally permissive transformation of a view to stored schema.
+ * @remarks
+ * This is unable to include unknown optional fields in the output, which makes it not truly maximally permissive.
+ *
+ * TODO: {@link StoredFromViewSchemaGenerationOptions} could be updated to allow a way to inject extra optional fields.
+ * If done, then this could take in an existing stored schema, and attempt to generate a valid superset.
+ * This could be useful to use as the schema for unhydrated content cloned from hydrated content.
+ */
 export const permissiveStoredSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions = {
 	includeStaged: () => true,
 };

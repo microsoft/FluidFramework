@@ -44,9 +44,7 @@ export interface SimpleNodeSchemaBaseAlpha<
 	 */
 	readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined;
 
-	/**
-	 * {@inheritDoc SimpleNodeSchemaBase.metadata}
-	 */
+	// This overrides the type from SimpleNodeSchemaBase to make it more specific. When stabilized, this should be moved to the base interface.
 	readonly metadata: SimpleNodeSchemaBase<TNodeKind, TCustomMetadata>["metadata"] &
 		(Type extends SchemaType.View
 			? unknown
@@ -225,7 +223,7 @@ export type SimpleNodeSchema<Type extends SchemaType = SchemaType> =
  * That is bad as it allows schema of unknown type to be used as stored or view without errors.
  * To mitigate this, `out` is added to make this interface properly covariant in `Type`.
  * This may not be robust if TypeScript checks this type structurally,
- * but what ever bug causes the bi-variant likely does not occur in that case anyway.
+ * but whatever bug causes the bi-variant likely does not occur in that case anyway.
  *
  * @alpha
  * @sealed
