@@ -524,12 +524,15 @@ export namespace System_TableSchema {
 				) as InstanceType<TThis>;
 			}
 
-			public get columns(): TreeArrayNode<TColumnSchema> {
-				return this.table.columns;
+			public get columns(): TreeNode &
+				readonly TreeNodeFromImplicitAllowedTypes<TColumnSchema>[] {
+				return this.table.columns as TreeNode &
+					readonly TreeNodeFromImplicitAllowedTypes<TColumnSchema>[];
 			}
 
-			public get rows(): TreeArrayNode<TRowSchema> {
-				return this.table.rows;
+			public get rows(): TreeNode & readonly TreeNodeFromImplicitAllowedTypes<TRowSchema>[] {
+				return this.table.rows as TreeNode &
+					readonly TreeNodeFromImplicitAllowedTypes<TRowSchema>[];
 			}
 
 			public getColumn(indexOrId: number | string): ColumnValueType | undefined {
@@ -1401,12 +1404,12 @@ export namespace TableSchema {
 		/**
 		 * The table's columns.
 		 */
-		readonly columns: TreeArrayNode<TColumn>;
+		readonly columns: TreeNode & readonly TreeNodeFromImplicitAllowedTypes<TColumn>[];
 
 		/**
 		 * The table's rows.
 		 */
-		readonly rows: TreeArrayNode<TRow>;
+		readonly rows: TreeNode & readonly TreeNodeFromImplicitAllowedTypes<TRow>[];
 
 		/**
 		 * Gets a table column by its {@link TableSchema.Column.id}.
