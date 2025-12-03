@@ -366,16 +366,14 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 	});
 
 	it("excludes directories matching gitignore patterns", async () => {
+		// Verify test files exist before testing
+		assert(existsSync(gitIgnoredFile), "shouldBeIgnored.ts should exist");
+
 		const results = await globWithGitignore(["**/*.ts"], {
 			cwd: globTestDataPath,
 			gitignore: true,
 		});
 		const relativePaths = toRelativePaths(results);
-		// shouldBeIgnored.ts is in gitignored/ directory which is in .gitignore
-		assert(
-			!relativePaths.includes("gitignored/shouldBeIgnored.ts"),
-			"gitignored/shouldBeIgnored.ts should be excluded",
-		);
 		assert.deepEqual(
 			relativePaths,
 			[
