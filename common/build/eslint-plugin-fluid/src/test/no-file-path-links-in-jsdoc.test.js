@@ -5,7 +5,7 @@
 
 const assert = require("assert");
 const path = require("path");
-const { createESLintConfig, eslintVersion, ESLint } = require("../eslintConfigHelper.cjs");
+const { createESLintConfig, eslintVersion, ESLint } = require("./eslintConfigHelper.cjs");
 
 describe(`Do not allow file path links in JSDoc/TSDoc comments (eslint ${eslintVersion})`, function () {
 	async function lintFile(file) {
@@ -16,7 +16,7 @@ describe(`Do not allow file path links in JSDoc/TSDoc comments (eslint ${eslintV
 		});
 
 		const eslint = new ESLint(eslintOptions);
-		const fileToLint = path.join(__dirname, "../example/no-file-path-links-in-jsdoc", file);
+		const fileToLint = path.join(__dirname, "./test-cases/no-file-path-links-in-jsdoc", file);
 		const results = await eslint.lintFiles([fileToLint]);
 		assert.equal(results.length, 1, "Expected a single result for linting a single file.");
 		return results[0];

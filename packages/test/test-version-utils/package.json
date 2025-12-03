@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-version-utils",
-	"version": "2.73.0",
+	"version": "2.74.0",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -99,6 +99,7 @@
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
+		"@fluidframework/tree": "workspace:~",
 		"nconf": "^0.12.0",
 		"proper-lockfile": "^4.1.2",
 		"semver": "^7.7.1"

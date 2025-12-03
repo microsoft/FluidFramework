@@ -10,14 +10,14 @@ import { describe, it } from "mocha";
 
 import UpdateGenerationCommand, {
 	generateLayerFileContent,
-} from "../../../commands/generate/layerCompatGeneration.js";
+} from "../../../commands/generate/compatLayerGeneration.js";
 import {
 	DAYS_IN_MONTH_APPROXIMATION,
 	isCurrentPackageVersionPatch,
 	maybeGetNewGeneration,
 } from "../../../library/layerCompatibility.js";
 
-describe("generate:layerCompatGeneration", () => {
+describe("generate:compatLayerGeneration", () => {
 	const minimumCompatWindowMonths = UpdateGenerationCommand.flags.minimumCompatWindowMonths
 		.default as number;
 

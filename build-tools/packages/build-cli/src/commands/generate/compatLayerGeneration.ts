@@ -20,8 +20,11 @@ import {
 	maybeGetNewGeneration,
 } from "../../library/layerCompatibility.js";
 
-export default class UpdateGenerationCommand extends PackageCommand<
-	typeof UpdateGenerationCommand
+/**
+ * Command to update the generation value of Fluid's compatibility layers.
+ */
+export default class UpdateGenerationLayerCommand extends PackageCommand<
+	typeof UpdateGenerationLayerCommand
 > {
 	static readonly description =
 		"Updates the generation and release date for layer compatibility.";

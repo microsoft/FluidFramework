@@ -1,5 +1,11 @@
 # @fluid-tools/api-markdown-documenter
 
+## 0.23.2
+
+### 🐞 Bug Fixes
+
+- Fixed an issue where `MarkdownRenderer` would emit trailing `\` characters when processing certain summary comments.
+
 ## 0.23.1
 
 ### 🐞 Bug Fixes

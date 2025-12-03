@@ -60,12 +60,12 @@ export class FlexFieldKind<
 	}
 
 	/**
-	 * Returns true if and only if `superset` permits a (non-strict) superset of the subtrees
-	 * allowed by field made from `this` and `originalTypes`.
+	 * True if a client should be able to {@link TreeView.upgradeSchema} from a field schema using this field kind and `originalTypes` to `superset`.
 	 *
-	 * TODO: clarify the relationship between this and FieldKindData, and issues with cyclic schema upgrades.
+	 * @privateRemarks
+	 * See also {@link FieldKindOptions.allowedMonotonicUpgrade} for constraints on the implementation.
 	 */
-	public allowsFieldSuperset(
+	public allowedMonotonicUpgrade(
 		policy: SchemaPolicy,
 		originalData: TreeStoredSchema,
 		originalTypes: TreeTypeSet,
@@ -84,7 +84,7 @@ export class FlexFieldKind<
 		if (isNeverField(policy, originalData, superset)) {
 			return false;
 		}
-		return this.options.allowsTreeSupersetOf(originalTypes, superset);
+		return this.options.allowedMonotonicUpgrade(originalTypes, superset);
 	}
 }
 
@@ -101,12 +101,31 @@ export interface FieldKindOptions<TFieldChangeHandler> {
 	readonly changeHandler: TFieldChangeHandler;
 
 	/**
-	 * Returns true if and only if `superset` permits a (non-strict) superset of the subtrees
-	 * allowed by field made from `this` and `originalTypes`.
+	 * True if a client should be able to {@link TreeView.upgradeSchema} from a field schema using this field kind and `originalTypes` to `superset`.
 	 * @remarks
-	 * Used by {@link FlexFieldKind.allowsFieldSuperset}, which handles the `never` cases before calling this.
+	 * Must return false if such an upgrade could violate any invariants of `superset` for any document which is compatible with `this` + `originalTypes`.
+	 *
+	 * Unlike the rest of the FieldKind API, this function may change over time without changing the FieldKind identifier without causing decoherence between clients.
+	 * It has a different set of constraints:
+	 *
+	 * - This must never allow an upgrade that could violate any invariants of any field kind required by any version of client for any document content (that was not already invalid).
+	 * This prevents a schema upgrade from causing a document to become out of schema.
+	 * - The set of implementations of this function across all fields kinds and all client versions must never permit a cycle.
+	 * This prevents applications which simply do an upgrade when possible from being able to have two clients both upgrade where one is actually a down grade and they cause an infinite loop of schema upgrade edits.
+	 *
+	 * To help maintain these invariants, any cases where the set of allowed contents does not increase (but is the same so the upgrade is still in schema) must be considered carefully.
+	 * For example, a migration from `Sequence([])` to `Optional([])`  can be problematic despite being permissible
+	 * as it does not change what content is allowed (the field must be empty either way as no types are allowed in it).
+	 * Such cases, if allowed, could lead to cycles if their inverse is also allowed.
+	 * These cases, if supported, can be removed, but if doing so must be documented and still considered when avoiding cycles.
+	 *
+	 * Used by {@link FlexFieldKind.allowedMonotonicUpgrade}, which handles the `never` cases (empty type sets) before calling this: the implementer does not need to handle those.
+	 *
+	 * TODO: this design is rather limiting, and there is some planned work in this area:
+	 * - Provide schema upgrade schema not reliant on this to ensure monotonicity of schema upgrades like AB#7482.
+	 * - This monotonic upgrade scheme can remain useful for features like AB#53604 so it should be kept and refined.
 	 */
-	readonly allowsTreeSupersetOf: (
+	readonly allowedMonotonicUpgrade: (
 		originalTypes: TreeTypeSet,
 		superset: TreeFieldStoredSchema,
 	) => boolean;
