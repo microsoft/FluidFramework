@@ -10,19 +10,5 @@
 			"trailingCommas": "es5",
 			"quoteStyle": "single"
 		}
-	},
-	"overrides": [
-		{
-			"includes": ["**/.vscode/**/*.json", "**/tsconfig*.json", "**/api-extractor*.json", "**/tsdoc*.json"],
-			"json": {
-				"parser": {
-					"allowComments": true,
-					"allowTrailingCommas": true
-				},
-				"formatter": {
-					"trailingCommas": "all"
-				}
-			}
-		}
-	]
+	}
 }

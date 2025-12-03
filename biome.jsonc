@@ -32,6 +32,7 @@
 			"!**/.changeset/templates/",
 			"!**/*.hbs",
 			"!**/build-tools/packages/build-tools/src/test/data/biome/empty.jsonc",
+			"!**/build-tools/packages/build-tools/src/test/data/spaces/**",
 			"!**/experimental/dds/tree/src/test/documents/**",
 			"!**/packages/dds/map/src/test/mocha/snapshots/**/*.json",
 			"!**/packages/dds/matrix/src/test/results/**/*.json",
