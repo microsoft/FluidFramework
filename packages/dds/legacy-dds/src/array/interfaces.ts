@@ -110,6 +110,8 @@ export interface SharedArrayEntry<T extends SerializableTypeForSharedArray>
 	 * being if there is a remote delete, we will have to respect that
 	 */
 	isLocalPendingMove: number;
+
+	isRollback?: boolean;
 }
 
 /**

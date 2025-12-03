@@ -131,9 +131,7 @@ eventEmitterForFuzzHarness.on("clientCreate", (client) => {
 			}
 			case OperationType.deleteEntry: {
 				const entryId = op.entryId;
-				if (op.isRollback !== true) {
-					channel.deleteIds.set(entryId, channel.insertIds.get(entryId));
-				}
+				channel.deleteIds.set(entryId, channel.insertIds.get(entryId));
 				channel.insertIds.delete(entryId);
 				channel.moveIds.delete(entryId);
 				break;
@@ -142,9 +140,7 @@ eventEmitterForFuzzHarness.on("clientCreate", (client) => {
 				if (channel.insertIds.has(op.entryId)) {
 					channel.insertIds.set(op.changedToEntryId, channel.insertIds.get(op.entryId));
 					channel.insertIds.delete(op.entryId);
-					if (op.isRollback !== true) {
-						channel.moveIds.set(op.entryId, op.changedToEntryId);
-					}
+					channel.moveIds.set(op.entryId, op.changedToEntryId);
 				}
 				break;
 			}

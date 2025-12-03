@@ -336,6 +336,9 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 */
 	public toggle(entryId: string): void {
 		const liveEntry = this.getLiveEntry(entryId);
+		if (liveEntry?.isRollback) {
+			return;
+		}
 		const isDeleted = !liveEntry.isDeleted;
 
 		// Adding local pending counter
@@ -369,6 +372,10 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 * @param newEntryId - EntryId of the to be live entry
 	 */
 	public toggleMove(oldEntryId: string, newEntryId: string): void {
+		const liveEntry = this.getLiveEntry(newEntryId);
+		if (liveEntry?.isRollback) {
+			return;
+		}
 		if (this.getEntryForId(newEntryId).isDeleted) {
 			return;
 		}
@@ -400,10 +407,10 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			case OperationType.insertEntry: {
 				const liveEntry = this.getLiveEntry(arrayOp.entryId);
 				liveEntry.isDeleted = true;
+				liveEntry.isRollback = true;
 				const deleteOp: IDeleteOperation = {
 					type: OperationType.deleteEntry,
 					entryId: arrayOp.entryId,
-					isRollback: true,
 				};
 				this.emitValueChangedEvent(deleteOp, true /* isLocal */);
 				break;
@@ -416,6 +423,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				} else {
 					const liveEntry = this.getLiveEntry(arrayOp.entryId);
 					liveEntry.isDeleted = false;
+					liveEntry.isRollback = true;
 					const insertOp = {
 						type: OperationType.insertEntry,
 						entryId: arrayOp.entryId,
@@ -434,6 +442,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				if (this.getEntryForId(newEntryId).isDeleted) {
 					return;
 				}
+				this.getEntryForId(oldEntryId).isRollback = true;
 				this.updateLiveEntry(newEntryId, oldEntryId);
 				const inputEntry = this.getEntryForId(oldEntryId);
 				inputEntry.prevEntryId = undefined;
@@ -443,7 +452,6 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 					type: OperationType.moveEntry,
 					entryId: newEntryId,
 					changedToEntryId: oldEntryId,
-					isRollback: true,
 				};
 				this.emitValueChangedEvent(moveOp, true /* isLocal */);
 				break;
@@ -456,6 +464,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				// Toggling the isDeleted flag to undo the last operation for the skip list payload/value
 				liveEntry.isDeleted = !isDeleted;
 				liveEntry.isLocalPendingDelete -= 1;
+				liveEntry.isRollback = true;
 
 				const toggleOp: IToggleOperation = {
 					type: OperationType.toggle,
@@ -468,6 +477,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			case OperationType.toggleMove: {
 				const { entryId: oldEntryId, changedToEntryId: newEntryId } = arrayOp;
 				this.getEntryForId(oldEntryId).isLocalPendingMove -= 1;
+				this.getEntryForId(newEntryId).isRollback = true;
 				this.updateLiveEntry(oldEntryId, newEntryId);
 
 				const toggleMoveOp: IToggleMoveOperation = {
