@@ -59,7 +59,7 @@ describe("schemaSummarizer", () => {
 			const collabWindow: CollabWindow = {
 				getCurrentSeq: () => 0,
 			};
-			const minVersionForCollab = options?.minVersionForCollab ?? FluidClientVersion.v2_73;
+			const minVersionForCollab = options?.minVersionForCollab ?? FluidClientVersion.v2_74;
 			const codecOptions: CodecWriteOptions = {
 				jsonValidator: FormatValidatorBasic,
 				minVersionForCollab,

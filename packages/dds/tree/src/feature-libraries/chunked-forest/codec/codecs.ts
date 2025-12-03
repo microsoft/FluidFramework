@@ -136,7 +136,7 @@ function clientVersionToFieldBatchVersion(
 	return brand(
 		getConfigForMinVersionForCollab(clientVersion, {
 			[lowestMinVersionForCollab]: FieldBatchFormatVersion.v1,
-			[FluidClientVersion.v2_73]: FieldBatchFormatVersion.v2,
+			[FluidClientVersion.v2_74]: FieldBatchFormatVersion.v2,
 		}),
 	);
 }

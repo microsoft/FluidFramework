@@ -47,12 +47,12 @@ describe("VersionedSummarizer", () => {
 	describe("summarize", () => {
 		it("calls summarizeInternal", () => {
 			const version = 1;
-			const summarizer = new TestVersionedSummarizer({
-				key: "testKey",
-				writeVersion: version,
-				supportedVersions: new Set([version]),
-				defaultVersion: version,
-			});
+			const summarizer = new TestVersionedSummarizer(
+				"testKey",
+				version,
+				new Set([version]),
+				version,
+			);
 
 			summarizer.summarize({ stringify });
 			assert(
@@ -63,12 +63,12 @@ describe("VersionedSummarizer", () => {
 
 		it("writes metadata blob", () => {
 			const version = 1;
-			const summarizer = new TestVersionedSummarizer({
-				key: "testKey",
-				writeVersion: version,
-				supportedVersions: new Set([version]),
-				defaultVersion: version,
-			});
+			const summarizer = new TestVersionedSummarizer(
+				"testKey",
+				version,
+				new Set([version]),
+				version,
+			);
 
 			const summary = summarizer.summarize({ stringify });
 
@@ -84,15 +84,17 @@ describe("VersionedSummarizer", () => {
 
 		it("includes content from summarizeInternal in summary", () => {
 			const version = 1;
-			const summarizer = new TestVersionedSummarizer({
-				key: "testKey",
-				writeVersion: version,
-				supportedVersions: new Set([version]),
-				defaultVersion: version,
-			});
+			const summarizer = new TestVersionedSummarizer(
+				"testKey",
+				version,
+				new Set([version]),
+				version,
+			);
 
 			const summaryWithStats = summarizer.summarize({ stringify });
-			const testContentBlob = summaryWithStats.summary.tree[summarizer.key];
+			const testContentBlob: ISummaryBlob | undefined = summaryWithStats.summary.tree[
+				summarizer.key
+			] as ISummaryBlob | undefined;
 			assert(testContentBlob !== undefined, "Test content should exist in summary");
 			assert.equal(testContentBlob.type, SummaryType.Blob, "Test content should be a blob");
 		});
@@ -101,12 +103,12 @@ describe("VersionedSummarizer", () => {
 	describe("load", () => {
 		it("calls loadInternal", async () => {
 			const version = 1;
-			const summarizer = new TestVersionedSummarizer({
-				key: "testKey",
-				writeVersion: version,
-				supportedVersions: new Set([version]),
-				defaultVersion: version,
-			});
+			const summarizer = new TestVersionedSummarizer(
+				"testKey",
+				version,
+				new Set([version]),
+				version,
+			);
 
 			const storage = new MockStorage();
 			await summarizer.load(storage, parse);
@@ -115,12 +117,12 @@ describe("VersionedSummarizer", () => {
 
 		it("load successful: no metadata is supported", async () => {
 			const version = 1;
-			const summarizer = new TestVersionedSummarizer({
-				key: "testKey",
-				writeVersion: version,
-				supportedVersions: new Set([version]),
-				defaultVersion: version,
-			});
+			const summarizer = new TestVersionedSummarizer(
+				"testKey",
+				version,
+				new Set([version]),
+				version,
+			);
 
 			// Create a summary and delete the metadata blob to simulate older clients without metadata.
 			const summary = summarizer.summarize({ stringify });
@@ -133,12 +135,12 @@ describe("VersionedSummarizer", () => {
 
 		it("load fails: no metadata is not supported", async () => {
 			const oldVersion = 1;
-			const summarizer = new TestVersionedSummarizer({
-				key: "testKey",
-				writeVersion: oldVersion,
-				supportedVersions: new Set([oldVersion]),
-				defaultVersion: oldVersion,
-			});
+			const summarizer = new TestVersionedSummarizer(
+				"testKey",
+				oldVersion,
+				new Set([oldVersion]),
+				oldVersion,
+			);
 
 			// Create a summary and delete the metadata blob.
 			const summary = summarizer.summarize({ stringify });
@@ -147,12 +149,12 @@ describe("VersionedSummarizer", () => {
 			const newStorage = MockStorage.createFromSummary(summary.summary);
 			// Create another summarizer which doesn't support the default version anymore.
 			const newVersion = oldVersion + 1;
-			const newSummarizer = new TestVersionedSummarizer({
-				key: "testKey",
-				writeVersion: newVersion,
-				supportedVersions: new Set([newVersion]),
-				defaultVersion: oldVersion,
-			});
+			const newSummarizer = new TestVersionedSummarizer(
+				"testKey",
+				newVersion,
+				new Set([newVersion]),
+				oldVersion,
+			);
 			await assert.rejects(
 				newSummarizer.load(newStorage, parse),
 				validateUsageError(/Cannot read version/),
@@ -162,12 +164,12 @@ describe("VersionedSummarizer", () => {
 		it("load successful: metadata version is supported", async () => {
 			const version = 1;
 			// The version written in metadata is in supportedVersions.
-			const summarizer = new TestVersionedSummarizer({
-				key: "testKey",
-				writeVersion: version,
-				supportedVersions: new Set([version]),
-				defaultVersion: version,
-			});
+			const summarizer = new TestVersionedSummarizer(
+				"testKey",
+				version,
+				new Set([version]),
+				version,
+			);
 			const summary = summarizer.summarize({ stringify });
 
 			// Load from the summary
@@ -177,22 +179,22 @@ describe("VersionedSummarizer", () => {
 
 		it("load fails: metadata version is not supported", async () => {
 			const newVersion = 1;
-			const newSummarizer = new TestVersionedSummarizer({
-				key: "testKey",
-				writeVersion: newVersion,
-				supportedVersions: new Set([newVersion]),
-				defaultVersion: newVersion,
-			});
+			const newSummarizer = new TestVersionedSummarizer(
+				"testKey",
+				newVersion,
+				new Set([newVersion]),
+				newVersion,
+			);
 			const newSummary = newSummarizer.summarize({ stringify });
 
 			// Create summarizer that supports older version.
 			const oldVersion = newVersion - 1;
-			const oldSummarizer = new TestVersionedSummarizer({
-				key: "testKey",
-				writeVersion: oldVersion,
-				supportedVersions: new Set([oldVersion]),
-				defaultVersion: oldVersion,
-			});
+			const oldSummarizer = new TestVersionedSummarizer(
+				"testKey",
+				oldVersion,
+				new Set([oldVersion]),
+				oldVersion,
+			);
 
 			const oldStorage = MockStorage.createFromSummary(newSummary.summary);
 			await assert.rejects(
@@ -203,22 +205,22 @@ describe("VersionedSummarizer", () => {
 
 		it("backward compatibility: newer reader can load older version", async () => {
 			const oldVersion = 1;
-			const oldSummarizer = new TestVersionedSummarizer({
-				key: "testKey",
-				writeVersion: oldVersion,
-				supportedVersions: new Set([oldVersion]),
-				defaultVersion: oldVersion,
-			});
+			const oldSummarizer = new TestVersionedSummarizer(
+				"testKey",
+				oldVersion,
+				new Set([oldVersion]),
+				oldVersion,
+			);
 			const oldSummary = oldSummarizer.summarize({ stringify });
 
 			// Create summarizer that supports old and new version.
 			const newVersion = 2;
-			const newSummarizer = new TestVersionedSummarizer({
-				key: "testKey",
-				writeVersion: newVersion,
-				supportedVersions: new Set([oldVersion, newVersion]),
-				defaultVersion: newVersion,
-			});
+			const newSummarizer = new TestVersionedSummarizer(
+				"testKey",
+				newVersion,
+				new Set([oldVersion, newVersion]),
+				newVersion,
+			);
 			const newStorage = MockStorage.createFromSummary(oldSummary.summary);
 			await assert.doesNotReject(newSummarizer.load(newStorage, parse));
 		});

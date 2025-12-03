@@ -67,12 +67,12 @@ export class DetachedFieldIndexSummarizer extends VersionedSummarizer implements
 		private readonly detachedFieldIndex: DetachedFieldIndex,
 		minVersionForCollab: MinimumVersionForCollab,
 	) {
-		super({
-			key: "DetachedFieldIndex",
-			writeVersion: minVersionToDetachedFieldIndexSummaryFormatVersion(minVersionForCollab),
+		super(
+			"DetachedFieldIndex",
+			minVersionToDetachedFieldIndexSummaryFormatVersion(minVersionForCollab),
 			supportedVersions,
-			defaultVersion: DetachedFieldIndexSummaryFormatVersion.v1,
-		});
+			DetachedFieldIndexSummaryFormatVersion.v1,
+		);
 	}
 
 	protected summarizeInternal(props: {

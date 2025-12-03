@@ -41,7 +41,7 @@ function createEditManagerSummarizer(options?: {
 	const changeFormatVersion = DependentFormatVersion.fromPairs(
 		Array.from(editManagerFormatVersions, (e) => [e, 1]),
 	);
-	const minVersionForCollab = options?.minVersionForCollab ?? FluidClientVersion.v2_73;
+	const minVersionForCollab = options?.minVersionForCollab ?? FluidClientVersion.v2_74;
 	const codec = makeEditManagerCodec(family.codecs, changeFormatVersion, revisionTagCodec, {
 		jsonValidator: FormatValidatorBasic,
 		minVersionForCollab,
@@ -81,7 +81,7 @@ describe("EditManagerSummarizer", () => {
 
 		it("loads with metadata blob with version 2", async () => {
 			const { summarizer } = createEditManagerSummarizer({
-				minVersionForCollab: FluidClientVersion.v2_73,
+				minVersionForCollab: FluidClientVersion.v2_74,
 			});
 
 			const summary = summarizer.summarize({
@@ -112,7 +112,7 @@ describe("EditManagerSummarizer", () => {
 
 		it("loads with no metadata blob", async () => {
 			const { summarizer } = createEditManagerSummarizer({
-				minVersionForCollab: FluidClientVersion.v2_73,
+				minVersionForCollab: FluidClientVersion.v2_74,
 			});
 
 			const summary = summarizer.summarize({
@@ -131,7 +131,7 @@ describe("EditManagerSummarizer", () => {
 
 		it("fail to load with metadata blob with version > latest", async () => {
 			const { summarizer } = createEditManagerSummarizer({
-				minVersionForCollab: FluidClientVersion.v2_73,
+				minVersionForCollab: FluidClientVersion.v2_74,
 			});
 
 			const summary = summarizer.summarize({

@@ -36,7 +36,7 @@ function createDetachedFieldIndexSummarizer(options?: {
 	);
 	const summarizer = new DetachedFieldIndexSummarizer(
 		index,
-		options?.minVersionForCollab ?? FluidClientVersion.v2_73,
+		options?.minVersionForCollab ?? FluidClientVersion.v2_74,
 	);
 	return { summarizer, index };
 }

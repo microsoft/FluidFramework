@@ -85,12 +85,12 @@ export class EditManagerSummarizer<TChangeset>
 		minVersionForCollab: MinimumVersionForCollab,
 		private readonly schemaAndPolicy?: SchemaAndPolicy,
 	) {
-		super({
-			key: "EditManager",
-			writeVersion: minVersionToEditManagerSummaryFormatVersion(minVersionForCollab),
+		super(
+			"EditManager",
+			minVersionToEditManagerSummaryFormatVersion(minVersionForCollab),
 			supportedVersions,
-			defaultVersion: EditManagerSummaryFormatVersion.v1,
-		});
+			EditManagerSummaryFormatVersion.v1,
+		);
 	}
 
 	protected summarizeInternal(props: {

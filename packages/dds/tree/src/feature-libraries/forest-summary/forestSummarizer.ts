@@ -77,12 +77,12 @@ export class ForestSummarizer extends VersionedSummarizer implements Summarizabl
 		initialSequenceNumber: number,
 		shouldEncodeIncrementally: IncrementalEncodingPolicy = defaultIncrementalEncodingPolicy,
 	) {
-		super({
-			key: forestSummaryKey,
-			writeVersion: minVersionToForestSummaryFormatVersion(options.minVersionForCollab),
-			supportedVersions: supportedForestSummaryFormatVersions,
-			defaultVersion: ForestSummaryFormatVersion.v1,
-		});
+		super(
+			forestSummaryKey,
+			minVersionToForestSummaryFormatVersion(options.minVersionForCollab),
+			supportedForestSummaryFormatVersions,
+			ForestSummaryFormatVersion.v1,
+		);
 
 		// TODO: this should take in CodecWriteOptions, and use it to pick the write version.
 		this.codec = makeForestSummarizerCodec(options, fieldBatchCodec);

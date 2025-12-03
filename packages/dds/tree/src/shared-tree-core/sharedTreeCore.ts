@@ -147,12 +147,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		enricher?: ChangeEnricherReadonlyCheckout<TChange>,
 		public readonly getEditor: () => TEditor = () => this.getLocalBranch().editor,
 	) {
-		super({
-			key: summarizablesTreeKey,
-			writeVersion: minVersionToSharedTreeSummaryFormatVersion(options.minVersionForCollab),
-			supportedVersions: supportedSharedTreeSummaryFormatVersions,
-			defaultVersion: SharedTreeSummaryFormatVersion.v1,
-		});
+		super(
+			summarizablesTreeKey,
+			minVersionToSharedTreeSummaryFormatVersion(options.minVersionForCollab),
+			supportedSharedTreeSummaryFormatVersions,
+			SharedTreeSummaryFormatVersion.v1,
+		);
 
 		this.schemaAndPolicy = {
 			schema,

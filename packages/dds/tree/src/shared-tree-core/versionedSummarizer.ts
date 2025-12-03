@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IExperimentalIncrementalSummaryContext,
@@ -26,28 +27,26 @@ import { readAndParseSnapshotBlob } from "../util/index.js";
  * and checking version compatibility when loading.
  */
 export abstract class VersionedSummarizer implements Summarizable {
-	public readonly key: string;
-	private readonly writeVersion: number;
-	private readonly supportedVersions: Set<number>;
-	private readonly defaultVersion: number;
-
-	public constructor(props: {
+	public constructor(
 		/** {@link Summarizable.key} */
-		key: string;
+		public readonly key: string,
 		/** The format version of the summary to write in the summary metadata. */
-		writeVersion: number;
+		private readonly writeVersion: number,
 		/** The set of supported versions that a summary can have for this summarizer to load it. */
-		supportedVersions: Set<number>;
+		private readonly supportedVersions: ReadonlySet<number>,
 		/**
-		 * The default format version to use if the summary doesn't have metadata blob.
+		 * The default format version to use if the summary during load doesn't have metadata blob.
 		 * This is used for summaries that were written before versioning was added for summaries.
+		 * @remarks
+		 * This version may not be supported if the support for the version before metadata blob was dropped.
+		 * In that case, this will not be present in `supportedVersions` and an error will be thrown during load.
 		 */
-		defaultVersion: number;
-	}) {
-		this.key = props.key;
-		this.writeVersion = props.writeVersion;
-		this.supportedVersions = props.supportedVersions;
-		this.defaultVersion = props.defaultVersion;
+		private readonly defaultReadVersion: number,
+	) {
+		assert(
+			this.supportedVersions.has(this.writeVersion),
+			`Write version ${this.writeVersion} must be supported.`,
+		);
 	}
 
 	/**
@@ -92,7 +91,7 @@ export abstract class VersionedSummarizer implements Summarizable {
 		parse: SummaryElementParser,
 	): Promise<void> {
 		// This is the version before metadata blob with version is written into the summary.
-		let version = this.defaultVersion;
+		let version = this.defaultReadVersion;
 		if (await services.contains(summarizablesMetadataKey)) {
 			const metadata = await readAndParseSnapshotBlob<SharedTreeSummarizableMetadata>(
 				summarizablesMetadataKey,

@@ -79,12 +79,12 @@ export class SchemaSummarizer extends VersionedSummarizer implements Summarizabl
 		private readonly codec: IJsonCodec<TreeStoredSchema>,
 		minVersionForCollab: MinimumVersionForCollab,
 	) {
-		super({
-			key: "Schema",
-			writeVersion: minVersionToSchemaSummaryFormatVersion(minVersionForCollab),
+		super(
+			"Schema",
+			minVersionToSchemaSummaryFormatVersion(minVersionForCollab),
 			supportedVersions,
-			defaultVersion: SchemaSummaryFormatVersion.v1,
-		});
+			SchemaSummaryFormatVersion.v1,
+		);
 		this.schema.events.on("afterSchemaChange", () => {
 			// Invalidate the cache, as we need to regenerate the blob if the schema changes
 			// We are assuming that schema changes from remote ops are valid, as we are in a summarization context.

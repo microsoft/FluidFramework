@@ -78,7 +78,7 @@ function createForestSummarizer(args: {
 		encodeType,
 		forestType,
 		shouldEncodeIncrementally,
-		minVersionForCollab = FluidClientVersion.v2_73,
+		minVersionForCollab = FluidClientVersion.v2_74,
 	} = args;
 	const options: CodecWriteOptions = {
 		jsonValidator: FormatValidatorBasic,
