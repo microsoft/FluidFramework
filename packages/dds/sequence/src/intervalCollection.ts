@@ -1431,7 +1431,7 @@ export class IntervalCollection
 				}
 			}
 
-			if (deltaProps !== undefined && Object.keys(deltaProps).length > 0) {
+			if (isLatestInterval && deltaProps !== undefined && Object.keys(deltaProps).length > 0) {
 				this.emit("propertyChanged", latestInterval, deltaProps, local, op);
 				this.emit("changed", latestInterval, deltaProps, undefined, local, false);
 			}
@@ -1482,17 +1482,18 @@ export class IntervalCollection
 		const rebasedEndpoint = this.computeRebasedPositions(localOpMetadata, squash);
 		const localInterval = this.getIntervalById(id);
 
-		// if the interval slid off the string, rebase the op to be a noop and delete the interval.
+		// if the interval slides off the string, rebase the op to be a noop and delete the interval.
 		if (rebasedEndpoint === "detached") {
 			if (
 				localInterval !== undefined &&
 				(localInterval === interval || localOpMetadata.type === "add")
 			) {
-				this.localCollection?.removeExistingInterval(localInterval);
+				// Use deleteExistingInterval (not removeExistingInterval) to ensure the deleteInterval
+				// event is emitted when intervals slide off during rebasing.
+				this.deleteExistingInterval({ interval: localInterval, local: true });
 			}
 			return undefined;
 		}
-
 		const { start, end } = rebasedEndpoint;
 		if (
 			interval.start.getSegment() !== start.segment ||

@@ -75,7 +75,14 @@ import {
 	toInitialSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../simple-tree/toStoredSchema.js";
-import { numberSchema, SchemaFactory, stringSchema } from "../../../../simple-tree/index.js";
+import {
+	incrementalEncodingPolicyForAllowedTypes,
+	incrementalSummaryHint,
+	numberSchema,
+	SchemaFactoryAlpha,
+	stringSchema,
+	TreeViewConfigurationAlpha,
+} from "../../../../simple-tree/index.js";
 import { currentVersion } from "../../../../codec/index.js";
 
 const anyNodeShape = new NodeShapeBasedEncoder(undefined, undefined, [], anyFieldEncoder);
@@ -344,21 +351,20 @@ describe("schemaBasedEncoding", () => {
 		});
 
 		it("incrementalEncoder", () => {
-			const factory = new SchemaFactory("test");
-			class HasOptionalFields extends factory.object("hasOptionalField", {
-				field: factory.optional(factory.number),
-				incrementalField: factory.optional(factory.number),
+			const sf = new SchemaFactoryAlpha("test");
+			class HasOptionalFields extends sf.object("hasOptionalField", {
+				field: sf.optional(sf.number),
+				incrementalField: sf.optional(
+					sf.types([{ type: sf.number, metadata: {} }], {
+						custom: { [incrementalSummaryHint]: true },
+					}),
+				),
 			}) {}
 			const testReferenceId: ChunkReferenceId = brand(123);
 			const mockIncrementalEncoder: IncrementalEncoder = {
-				shouldEncodeIncrementally: (
-					nodeIdentifier: string | undefined,
-					fieldKey: string,
-				): boolean => {
-					return (
-						nodeIdentifier === HasOptionalFields.identifier && fieldKey === "incrementalField"
-					);
-				},
+				shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(
+					new TreeViewConfigurationAlpha({ schema: HasOptionalFields }),
+				),
 				encodeIncrementalField: (
 					cursor: ITreeCursorSynchronous,
 					chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatch,
