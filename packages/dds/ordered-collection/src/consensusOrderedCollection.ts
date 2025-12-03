@@ -7,15 +7,15 @@ import { bufferToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import type {
-	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
+	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import {
@@ -84,14 +84,19 @@ type IConsensusOrderedCollectionOperation<T> =
 /**
  * The type of the resolve function to call after the local operation is acknowledged.
  */
-type PendingResolve<T> = (value: IConsensusOrderedCollectionValue<T> | undefined) => void;
+type PendingResolve<T> = (
+	value: IConsensusOrderedCollectionValue<T> | undefined,
+) => void;
 
 /**
  * For job tracking, we need to keep track of which client "owns" a given value.
  * Key is the acquireId from when it was acquired
  * Value is the acquired value, and the id of the client who acquired it, or undefined for unattached client
  */
-type JobTrackingInfo<T> = Map<string, { value: T; clientId: string | undefined }>;
+type JobTrackingInfo<T> = Map<
+	string,
+	{ value: T; clientId: string | undefined }
+>;
 const idForLocalUnattachedClient = undefined;
 
 /**
@@ -211,7 +216,10 @@ export class ConsensusOrderedCollection<T = any>
 		const builder = new SummaryTreeBuilder();
 		let blobContent = this.serializeValue(this.data.asArray(), serializer);
 		builder.addBlob(snapshotFileNameData, blobContent);
-		blobContent = this.serializeValue([...this.jobTracking.entries()], serializer);
+		blobContent = this.serializeValue(
+			[...this.jobTracking.entries()],
+			serializer,
+		);
 		builder.addBlob(snapshotFileNameTracking, blobContent);
 		return builder.getSummaryTree();
 	}
@@ -256,7 +264,10 @@ export class ConsensusOrderedCollection<T = any>
 				opName: "release",
 				acquireId,
 			}).catch((error) => {
-				this.logger.sendErrorEvent({ eventName: "ConsensusQueue_release" }, error);
+				this.logger.sendErrorEvent(
+					{ eventName: "ConsensusQueue_release" },
+					error,
+				);
 			});
 		}
 	}
@@ -292,7 +303,10 @@ export class ConsensusOrderedCollection<T = any>
 		);
 		const blob2 = await storage.readBlob(snapshotFileNameData);
 		const rawContentData = bufferToString(blob2, "utf8");
-		const content2 = this.deserializeValue(rawContentData, this.serializer) as T[];
+		const content2 = this.deserializeValue(
+			rawContentData,
+			this.serializer,
+		) as T[];
 		this.data.loadFrom(content2);
 	}
 
@@ -307,7 +321,9 @@ export class ConsensusOrderedCollection<T = any>
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected processMessagesCore(
+		messagesCollection: IRuntimeMessageCollection,
+	): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
 			this.processMessage(envelope, messageContent, local);
@@ -320,7 +336,8 @@ export class ConsensusOrderedCollection<T = any>
 		local: boolean,
 	): void {
 		if (messageEnvelope.type === MessageType.Operation) {
-			const op = messageContent.contents as IConsensusOrderedCollectionOperation<T>;
+			const op =
+				messageContent.contents as IConsensusOrderedCollectionOperation<T>;
 			let value: IConsensusOrderedCollectionValue<T> | undefined;
 			switch (op.opName) {
 				case "add": {
@@ -333,7 +350,10 @@ export class ConsensusOrderedCollection<T = any>
 				}
 
 				case "acquire": {
-					value = this.acquireCore(op.acquireId, messageEnvelope.clientId ?? undefined);
+					value = this.acquireCore(
+						op.acquireId,
+						messageEnvelope.clientId ?? undefined,
+					);
 					break;
 				}
 
@@ -359,19 +379,24 @@ export class ConsensusOrderedCollection<T = any>
 		}
 	}
 
-	private async submit<TMessage extends IConsensusOrderedCollectionOperation<T>>(
+	private async submit<
+		TMessage extends IConsensusOrderedCollectionOperation<T>,
+	>(
 		message: TMessage,
 	): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
-		assert(this.isAttached(), 0x06a /* "Trying to submit message while detached!" */);
+		assert(
+			this.isAttached(),
+			0x06a /* "Trying to submit message while detached!" */,
+		);
 
-		return this.newAckBasedPromise<IConsensusOrderedCollectionValue<T> | undefined>(
-			(resolve) => {
-				// Send the resolve function as the localOpMetadata. This will be provided back to us when the
-				// op is ack'd.
-				this.submitLocalMessage(message, resolve);
-				// If we fail due to runtime being disposed, it's better to return undefined then unhandled exception.
-			},
-		).catch((error) => undefined);
+		return this.newAckBasedPromise<
+			IConsensusOrderedCollectionValue<T> | undefined
+		>((resolve) => {
+			// Send the resolve function as the localOpMetadata. This will be provided back to us when the
+			// op is ack'd.
+			this.submitLocalMessage(message, resolve);
+			// If we fail due to runtime being disposed, it's better to return undefined then unhandled exception.
+		}).catch((error) => undefined);
 	}
 
 	private addCore(value: T): void {
@@ -398,7 +423,9 @@ export class ConsensusOrderedCollection<T = any>
 		return value2;
 	}
 
-	private async acquireInternal(): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
+	private async acquireInternal(): Promise<
+		IConsensusOrderedCollectionValue<T> | undefined
+	> {
 		if (!this.isAttached()) {
 			// can be undefined if queue is empty
 			return this.acquireCore(uuid(), idForLocalUnattachedClient);
@@ -429,7 +456,10 @@ export class ConsensusOrderedCollection<T = any>
 		return serializer.stringify(value, this.handle);
 	}
 
-	private deserializeValue(content: string, serializer: IFluidSerializer): unknown {
+	private deserializeValue(
+		content: string,
+		serializer: IFluidSerializer,
+	): unknown {
 		return serializer.parse(content);
 	}
 

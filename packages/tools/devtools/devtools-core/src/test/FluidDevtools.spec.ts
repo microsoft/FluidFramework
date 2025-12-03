@@ -7,8 +7,8 @@ import { expect } from "chai";
 
 import type { ContainerDevtoolsProps } from "../ContainerDevtools.js";
 import {
-	FluidDevtools,
 	accessBeforeInitializeErrorText,
+	FluidDevtools,
 	getContainerAlreadyRegisteredErrorText,
 	initializeDevtools,
 	useAfterDisposeErrorText,
@@ -112,7 +112,9 @@ describe("FluidDevtools unit tests", () => {
 	});
 
 	it("getOrThrow", () => {
-		expect(() => FluidDevtools.getOrThrow()).to.throw(accessBeforeInitializeErrorText);
+		expect(() => FluidDevtools.getOrThrow()).to.throw(
+			accessBeforeInitializeErrorText,
+		);
 
 		const devtools = initializeDevtools({});
 
@@ -120,6 +122,8 @@ describe("FluidDevtools unit tests", () => {
 
 		devtools.dispose();
 
-		expect(() => FluidDevtools.getOrThrow()).to.throw(accessBeforeInitializeErrorText);
+		expect(() => FluidDevtools.getOrThrow()).to.throw(
+			accessBeforeInitializeErrorText,
+		);
 	});
 });

@@ -19,7 +19,8 @@ const isTestAccounts = (value: unknown): value is TestAccounts =>
 			account !== null &&
 			"UserPrincipalName" in account &&
 			"Password" in account &&
-			typeof (account as { UserPrincipalName: unknown }).UserPrincipalName === "string" &&
+			typeof (account as { UserPrincipalName: unknown }).UserPrincipalName ===
+				"string" &&
 			typeof (account as { Password: unknown }).Password === "string",
 	);
 

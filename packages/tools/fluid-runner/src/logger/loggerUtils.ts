@@ -3,15 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import {
+	createChildLogger,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 import * as fs from "fs";
 
-import {
-	type ITelemetryLoggerExt,
-	createChildLogger,
-} from "@fluidframework/telemetry-utils/internal";
-
 import { CSVFileLogger } from "./csvFileLogger.js";
-import { type IFileLogger, type ITelemetryOptions, OutputFormat } from "./fileLogger.js";
+import {
+	type IFileLogger,
+	type ITelemetryOptions,
+	OutputFormat,
+} from "./fileLogger.js";
 import { JSONFileLogger } from "./jsonFileLogger.js";
 
 /**
@@ -34,8 +37,16 @@ export function createLogger(
 ): { logger: ITelemetryLoggerExt; fileLogger: IFileLogger } {
 	const fileLogger =
 		options?.outputFormat === OutputFormat.CSV
-			? new CSVFileLogger(filePath, options?.eventsPerFlush, options?.defaultProps)
-			: new JSONFileLogger(filePath, options?.eventsPerFlush, options?.defaultProps);
+			? new CSVFileLogger(
+					filePath,
+					options?.eventsPerFlush,
+					options?.defaultProps,
+				)
+			: new JSONFileLogger(
+					filePath,
+					options?.eventsPerFlush,
+					options?.defaultProps,
+				);
 
 	const logger = createChildLogger({
 		logger: fileLogger,
@@ -53,7 +64,9 @@ export function createLogger(
  * @param telemetryFile - path where telemetry will be written
  * @internal
  */
-export function getTelemetryFileValidationError(telemetryFile: string): string | undefined {
+export function getTelemetryFileValidationError(
+	telemetryFile: string,
+): string | undefined {
 	if (!telemetryFile) {
 		return "Telemetry file argument is missing.";
 	} else if (fs.existsSync(telemetryFile)) {
@@ -73,7 +86,9 @@ export function validateAndParseTelemetryOptions(
 	format?: string,
 	props?: (string | number)[],
 	eventsPerFlush?: number,
-): { success: false; error: string } | { success: true; telemetryOptions: ITelemetryOptions } {
+):
+	| { success: false; error: string }
+	| { success: true; telemetryOptions: ITelemetryOptions } {
 	let outputFormat: OutputFormat | undefined;
 	const defaultProps: Record<string, string | number> = {};
 
@@ -109,5 +124,8 @@ export function validateAndParseTelemetryOptions(
 		};
 	}
 
-	return { success: true, telemetryOptions: { outputFormat, defaultProps, eventsPerFlush } };
+	return {
+		success: true,
+		telemetryOptions: { outputFormat, defaultProps, eventsPerFlush },
+	};
 }

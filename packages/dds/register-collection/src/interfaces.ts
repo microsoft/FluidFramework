@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
-import {
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import type {
 	ISharedObject,
 	ISharedObjectEvents,
 } from "@fluidframework/shared-object-base/internal";
@@ -24,7 +24,8 @@ export type IConsensusRegisterCollectionFactory =
  * Events emitted by {@link IConsensusRegisterCollection}.
  * @legacy @beta
  */
-export interface IConsensusRegisterCollectionEvents extends ISharedObjectEvents {
+export interface IConsensusRegisterCollectionEvents
+	extends ISharedObjectEvents {
 	(
 		event: "atomicChanged" | "versionChanged",
 		listener: (key: string, value: any, local: boolean) => void,

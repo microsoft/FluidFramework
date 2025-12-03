@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { validateMessages } from "../driverUtils.js";
@@ -16,7 +16,9 @@ describe("driver utils tests", () => {
 			const ops: ISequencedDocumentMessage[] = [];
 			let i = 0;
 			while (i < count) {
-				ops.push({ sequenceNumber: start + i } as any as ISequencedDocumentMessage);
+				ops.push({
+					sequenceNumber: start + i,
+				} as any as ISequencedDocumentMessage);
 				i++;
 			}
 			return ops;

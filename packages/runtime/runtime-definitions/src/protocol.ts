@@ -5,9 +5,9 @@
 
 import type { TypedMessage } from "@fluidframework/core-interfaces/internal";
 import type {
-	ITree,
-	ISignalMessage,
 	ISequencedDocumentMessage,
+	ISignalMessage,
+	ITree,
 } from "@fluidframework/driver-definitions/internal";
 
 /**
@@ -31,8 +31,9 @@ export interface IEnvelope<TContents = any> {
  * Represents ISignalMessage with its type.
  * @legacy @beta
  */
-export interface IInboundSignalMessage<TMessage extends TypedMessage = TypedMessage>
-	extends ISignalMessage<TMessage> {
+export interface IInboundSignalMessage<
+	TMessage extends TypedMessage = TypedMessage,
+> extends ISignalMessage<TMessage> {
 	readonly type: TMessage["type"];
 }
 

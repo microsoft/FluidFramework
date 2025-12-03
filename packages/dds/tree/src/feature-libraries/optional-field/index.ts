@@ -3,14 +3,18 @@
  * Licensed under the MIT License.
  */
 
-export { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
-export type { Move, OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes.js";
 export {
 	type IRegisterMap,
-	RegisterMap,
-	optionalChangeHandler,
-	optionalFieldEditor,
-	optionalChangeRebaser,
-	optionalFieldIntoDelta,
 	type OptionalFieldEditor,
+	optionalChangeHandler,
+	optionalChangeRebaser,
+	optionalFieldEditor,
+	optionalFieldIntoDelta,
+	RegisterMap,
 } from "./optionalField.js";
+export type {
+	Move,
+	OptionalChangeset,
+	RegisterId,
+} from "./optionalFieldChangeTypes.js";
+export { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";

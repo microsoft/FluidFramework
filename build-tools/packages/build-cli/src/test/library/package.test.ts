@@ -101,8 +101,8 @@ const mockPackageObject: PackageJson = {
 	version: "1.0.0",
 	scripts: {},
 	devDependencies: {
-		"dependency1": "1.0.0",
-		"dependency2": "2.0.0",
+		dependency1: "1.0.0",
+		dependency2: "2.0.0",
 		"mockPackage-previous": "1.2.3",
 	},
 };

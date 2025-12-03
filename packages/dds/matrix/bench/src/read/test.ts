@@ -4,7 +4,7 @@
  */
 
 import { benchmark, getTestArgs } from "hotloop";
-import { IMatrix, fill } from "../imports";
+import { fill, type IMatrix } from "../imports";
 
 const { row, col, rowCount, colCount, fill: shouldFill } = getTestArgs();
 

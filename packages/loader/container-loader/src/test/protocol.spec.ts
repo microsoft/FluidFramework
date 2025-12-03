@@ -7,10 +7,10 @@ import { strict as assert } from "node:assert";
 
 import type { IClientDetails, IUser } from "@fluidframework/driver-definitions";
 import {
-	MessageType,
+	type IClientJoin,
 	type ISequencedDocumentMessage,
 	type ISequencedDocumentSystemMessage,
-	type IClientJoin,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 
 import { ProtocolOpHandler } from "../protocol/index.js";
@@ -59,7 +59,9 @@ describe("Protocol", () => {
 				},
 			];
 			for (const message of messages) {
-				assert.doesNotThrow(() => protocolOpHandler.processMessage(message, false));
+				assert.doesNotThrow(() =>
+					protocolOpHandler.processMessage(message, false),
+				);
 			}
 			assert.strictEqual(protocolOpHandler.attributes.sequenceNumber, 2);
 		});
@@ -87,7 +89,9 @@ describe("Protocol", () => {
 					timestamp: 1,
 				},
 			];
-			assert.doesNotThrow(() => protocolOpHandler.processMessage(messages[0], false));
+			assert.doesNotThrow(() =>
+				protocolOpHandler.processMessage(messages[0], false),
+			);
 			assert.throws(() => protocolOpHandler.processMessage(messages[1], false));
 		});
 
@@ -151,7 +155,9 @@ describe("Protocol", () => {
 				},
 			];
 			for (const message of messages) {
-				assert.doesNotThrow(() => protocolOpHandler.processMessage(message, false));
+				assert.doesNotThrow(() =>
+					protocolOpHandler.processMessage(message, false),
+				);
 			}
 			assert.strictEqual(protocolOpHandler.attributes.sequenceNumber, 2);
 
@@ -233,7 +239,9 @@ describe("Protocol", () => {
 				},
 			];
 			for (const message of messages) {
-				assert.doesNotThrow(() => protocolOpHandler.processMessage(message, false));
+				assert.doesNotThrow(() =>
+					protocolOpHandler.processMessage(message, false),
+				);
 			}
 			assert.strictEqual(protocolOpHandler.attributes.sequenceNumber, 2);
 
@@ -258,11 +266,15 @@ describe("Protocol", () => {
 				assert(member.client.user.id, "user id should be present");
 				// TODO: use a real type
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-				assert((member.client.user as unknown as any).name, "user name should be present");
+				assert(
+					(member.client.user as unknown as any).name,
+					"user name should be present",
+				);
 				assert(
 					// TODO: use a real type
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-					(member.client.user as unknown as any).additionalDetails?.favoriteColor,
+					(member.client.user as unknown as any).additionalDetails
+						?.favoriteColor,
 					"user additional details should be present",
 				);
 			}

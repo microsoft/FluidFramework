@@ -19,7 +19,9 @@ initializeExternalDataService({
 	webhookCollection: new Map<string, MockWebhook<ITaskData>>(),
 	// eslint-disable-next-line unicorn/prefer-top-level-await
 }).catch((error) => {
-	console.error(`There was an error initializing the mock external data service:\n${error}`);
+	console.error(
+		`There was an error initializing the mock external data service:\n${error}`,
+	);
 
 	// eslint-disable-next-line unicorn/no-process-exit
 	process.exit(1);

@@ -3,13 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Suite } from "benchmark";
 import { FluidSerializer } from "../..";
 import { MockHandleContext, makeJson } from "../../src/test/utils";
 import { consume, runSuites } from "./util";
 
-const serializer = new FluidSerializer(new MockHandleContext(), (handle: IFluidHandle) => {});
+const serializer = new FluidSerializer(
+	new MockHandleContext(),
+	(handle: IFluidHandle) => {},
+);
 
 // Mock Fluid handle
 const handle: IFluidHandle = {
@@ -25,7 +28,11 @@ const handle: IFluidHandle = {
 };
 
 const shallowNoHandles = makeJson(/* breadth: */ 2, /* depth: */ 2, () => ({}));
-const deepWithHandles = makeJson(/* breadth: */ 8, /* depth: */ 8, () => handle);
+const deepWithHandles = makeJson(
+	/* breadth: */ 8,
+	/* depth: */ 8,
+	() => handle,
+);
 
 const shallowNoHandlesString = serializer.stringify(shallowNoHandles, handle);
 const deepWithHandlesString = serializer.stringify(deepWithHandles, handle);

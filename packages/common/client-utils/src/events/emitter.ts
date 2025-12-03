@@ -21,7 +21,11 @@ import type {
  * @returns either the existing value for the given key, or the newly-created value (the result of `defaultValue`)
  * @internal
  */
-function getOrCreate<K, V>(map: MapGetSet<K, V>, key: K, defaultValue: (key: K) => V): V {
+function getOrCreate<K, V>(
+	map: MapGetSet<K, V>,
+	key: K,
+	defaultValue: (key: K) => V,
+): V {
 	let value = map.get(key);
 	if (value === undefined) {
 		value = defaultValue(key);
@@ -93,7 +97,9 @@ export class CustomEventEmitter<TListeners extends Listeners<TListeners>>
 
 	// Because this is protected and not public, calling this externally (not from a subclass) makes sending events to the constructed instance impossible.
 	// Instead, use the static `create` function to get an instance which allows emitting events.
-	protected constructor(private readonly noListeners?: NoListenersCallback<TListeners>) {}
+	protected constructor(
+		private readonly noListeners?: NoListenersCallback<TListeners>,
+	) {}
 
 	protected emit<K extends keyof TListeners>(
 		eventName: K,
@@ -136,7 +142,9 @@ export class CustomEventEmitter<TListeners extends Listeners<TListeners>>
 		const listeners = getOrCreate(this.listeners, eventName, () => new Set());
 		if (listeners.has(listener)) {
 			const eventDescription =
-				typeof eventName === "symbol" ? eventName.description : String(eventName.toString());
+				typeof eventName === "symbol"
+					? eventName.description
+					: String(eventName.toString());
 
 			throw new Error(
 				`Attempted to register the same listener object twice for event ${eventDescription}`,

@@ -4,20 +4,23 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
+	ISummaryHandle,
+	ISummaryTree,
+} from "@fluidframework/driver-definitions";
 import {
 	type FetchSource,
 	type FiveDaysMs,
+	type ICreateBlobResponse,
 	type IDocumentStorageService,
 	type IDocumentStorageServicePolicies,
+	type ISequencedDocumentMessage,
 	type ISnapshot,
 	type ISnapshotFetchOptions,
-	type ISummaryContext,
-	LoaderCachingPolicy,
 	type ISnapshotTree,
-	type ICreateBlobResponse,
+	type ISummaryContext,
 	type IVersion,
-	type ISequencedDocumentMessage,
+	LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions/internal";
 import { maximumCacheDurationMs } from "@fluidframework/driver-utils/internal";
 import type { IConfigProvider } from "@fluidframework/telemetry-utils/internal";
@@ -86,7 +89,10 @@ class BlobCache {
 					this._blobCache.clear();
 				}
 			};
-			this.blobCacheTimeout = setTimeout(clearCacheOrDefer, this.blobCacheTimeoutDuration);
+			this.blobCacheTimeout = setTimeout(
+				clearCacheOrDefer,
+				this.blobCacheTimeoutDuration,
+			);
 			// any future storage reads that get into the cache should be cleared from cache rather quickly -
 			// there is not much value in keeping them longer
 			this.blobCacheTimeoutDuration = 10 * 1000;
@@ -104,7 +110,10 @@ class BlobCache {
 		return { blobContent, evicted };
 	}
 
-	public setBlob(blobId: string, blob: ArrayBuffer): Map<string, ArrayBuffer> | undefined {
+	public setBlob(
+		blobId: string,
+		blob: ArrayBuffer,
+	): Map<string, ArrayBuffer> | undefined {
 		// This API is called as result of cache miss and reading blob from storage.
 		// Runtime never reads same blob twice.
 		// The only reason we may get read request for same blob is blob de-duping in summaries.
@@ -123,7 +132,9 @@ class BlobCache {
 	}
 }
 
-export abstract class OdspDocumentStorageServiceBase implements IDocumentStorageService {
+export abstract class OdspDocumentStorageServiceBase
+	implements IDocumentStorageService
+{
 	readonly policies: IDocumentStorageServicePolicies;
 
 	constructor(config: IConfigProvider) {
@@ -167,7 +178,9 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		return this._snapshotSequenceNumber;
 	}
 
-	public abstract createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
+	public abstract createBlob(
+		file: ArrayBufferLike,
+	): Promise<ICreateBlobResponse>;
 
 	private async readBlobCore(blobId: string): Promise<ArrayBuffer> {
 		const { blobContent, evicted } = this.blobCache.getBlob(blobId);
@@ -239,7 +252,10 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		this.blobCache.addBlobs(blobs);
 	}
 
-	private async readTree(id: string, scenarioName?: string): Promise<ISnapshotTree | null> {
+	private async readTree(
+		id: string,
+		scenarioName?: string,
+	): Promise<ISnapshotTree | null> {
 		let tree = this.commitCache.get(id);
 		if (!tree) {
 			tree = await this.fetchTreeFromSnapshot(id, scenarioName);
@@ -254,7 +270,9 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		scenarioName?: string,
 	): Promise<ISnapshotTree | undefined>;
 
-	protected combineProtocolAndAppSnapshotTree(snapshotTree: ISnapshotTree): ISnapshotTree {
+	protected combineProtocolAndAppSnapshotTree(
+		snapshotTree: ISnapshotTree,
+	): ISnapshotTree {
 		// When we upload the container snapshot, we upload appTree in ".app" and protocol tree in ".protocol"
 		// So when we request the snapshot we get ".app" as tree and not as commit node as in the case just above.
 		const hierarchicalAppTree = snapshotTree.trees[".app"];

@@ -4,9 +4,9 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
-import { IValueChanged } from "@fluidframework/map/legacy";
+import type { IValueChanged } from "@fluidframework/map/legacy";
 
-import { IDiceRoller } from "./interface.js";
+import type { IDiceRoller } from "./interface.js";
 
 const diceValueKey = "diceValue";
 

@@ -15,9 +15,15 @@ import {
 	type ISummarizerNodeConfig,
 } from "@fluidframework/runtime-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils/internal";
-import { TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	createChildLogger,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils/internal";
 
-import { type IRootSummarizerNode, createRootSummarizerNode } from "../summary/index.js";
+import {
+	createRootSummarizerNode,
+	type IRootSummarizerNode,
+} from "../summary/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { ValidateSummaryResult } from "../summary/summarizerNode/index.js";
 
@@ -32,7 +38,9 @@ describe("Runtime", () => {
 
 			const logger = createChildLogger();
 			let summarizeCalls = [0, 0, 0];
-			function assertSummarizeCalls(...expected: [root: number, mid: number, leaf: number]) {
+			function assertSummarizeCalls(
+				...expected: [root: number, mid: number, leaf: number]
+			) {
 				for (let i = 0; i < expected.length; i++) {
 					assert(
 						expected[i] === summarizeCalls[i],
@@ -41,15 +49,16 @@ describe("Runtime", () => {
 				}
 			}
 
-			const getSummarizeInternalFn = (depth: 0 | 1 | 2) => async (fullTree: boolean) => {
-				summarizeCalls[depth]++;
-				return {
-					id: ids[depth],
-					pathPartsForChildren: undefined, // extra path parts between nodes
-					stats: mergeStats(),
-					summary: { type: SummaryType.Tree, tree: {} } as const,
+			const getSummarizeInternalFn =
+				(depth: 0 | 1 | 2) => async (fullTree: boolean) => {
+					summarizeCalls[depth]++;
+					return {
+						id: ids[depth],
+						pathPartsForChildren: undefined, // extra path parts between nodes
+						stats: mergeStats(),
+						summary: { type: SummaryType.Tree, tree: {} } as const,
+					};
 				};
-			};
 
 			function createRoot({
 				changeSeq = 1,
@@ -74,7 +83,12 @@ describe("Runtime", () => {
 				createParam: CreateChildSummarizerNodeParam,
 				config?: ISummarizerNodeConfig,
 			) {
-				midNode = rootNode.createChild(getSummarizeInternalFn(1), ids[1], createParam, config);
+				midNode = rootNode.createChild(
+					getSummarizeInternalFn(1),
+					ids[1],
+					createParam,
+					config,
+				);
 			}
 
 			function createLeaf(
@@ -99,7 +113,10 @@ describe("Runtime", () => {
 					fn();
 					throw new Error(`${failMsg}: Expected to fail`);
 				} catch (error: unknown) {
-					assert(expectedErrors.includes((error as ILoggingError).message), errMsg);
+					assert(
+						expectedErrors.includes((error as ILoggingError).message),
+						errMsg,
+					);
 				}
 			}
 
@@ -113,7 +130,10 @@ describe("Runtime", () => {
 					await fn();
 					throw new Error(`${failMsg}: Expected to reject`);
 				} catch (error: unknown) {
-					assert(expectedErrors.includes((error as ILoggingError).message), errMsg);
+					assert(
+						expectedErrors.includes((error as ILoggingError).message),
+						errMsg,
+					);
 				}
 			}
 
@@ -175,7 +195,11 @@ describe("Runtime", () => {
 					// Refreshing should be necessary for startSummary to occur
 					await rootNode.refreshLatestSummary("test-handle", 11);
 					const result = rootNode.startSummary(12, logger, 11);
-					assert.strictEqual(result.invalidNodes, 0, "startSummary have succeeded");
+					assert.strictEqual(
+						result.invalidNodes,
+						0,
+						"startSummary have succeeded",
+					);
 				});
 
 				it("Should fail startSummary when missing refresh", async () => {
@@ -193,7 +217,11 @@ describe("Runtime", () => {
 
 					// Failing to refresh the root node should generate failing summaries
 					const result = rootNode.startSummary(21, logger, 12);
-					assert.strictEqual(result.invalidNodes, 1, "startSummary fails due to no refresh");
+					assert.strictEqual(
+						result.invalidNodes,
+						1,
+						"startSummary fails due to no refresh",
+					);
 					assert.deepEqual(
 						result.mismatchNumbers,
 						new Set(["12-11"]),
@@ -208,7 +236,11 @@ describe("Runtime", () => {
 					rootNode.completeSummary("test-handle");
 					await rootNode.refreshLatestSummary("test-handle", 11);
 					const result = rootNode.startSummary(12, logger, 0); // 0 is wrong here (so we can get invalid results)
-					assert.strictEqual(result.invalidNodes, 1, "expected failure wrong ref seq");
+					assert.strictEqual(
+						result.invalidNodes,
+						1,
+						"expected failure wrong ref seq",
+					);
 					assert.deepEqual(
 						result.mismatchNumbers,
 						new Set(["0-11"]),
@@ -343,7 +375,10 @@ describe("Runtime", () => {
 					rootNode.startSummary(99, logger, 11);
 					const result = await rootNode.summarize(false);
 					assertSummarizeCalls(0, 0, 0);
-					assert(result.summary.type === SummaryType.Handle, "should be handle");
+					assert(
+						result.summary.type === SummaryType.Handle,
+						"should be handle",
+					);
 				});
 
 				it("Should call summarize internal always when fullTree true", async () => {
@@ -359,7 +394,10 @@ describe("Runtime", () => {
 			describe("Refresh Latest Summary", () => {
 				it("Should not refresh latest if already passed ref seq number", async () => {
 					createRoot({ refSeq: summaryRefSeq });
-					const result = await rootNode.refreshLatestSummary("test-handle", summaryRefSeq);
+					const result = await rootNode.refreshLatestSummary(
+						"test-handle",
+						summaryRefSeq,
+					);
 					assert(!result.isSummaryTracked, "we already got this summary");
 				});
 
@@ -371,7 +409,10 @@ describe("Runtime", () => {
 					await rootNode.summarize(false);
 					rootNode.completeSummary(proposalHandle);
 
-					const result = await rootNode.refreshLatestSummary(proposalHandle, summaryRefSeq);
+					const result = await rootNode.refreshLatestSummary(
+						proposalHandle,
+						summaryRefSeq,
+					);
 					assert(result.isSummaryTracked, "should be tracked");
 					assert(result.isSummaryNewer === true, "should be newer");
 				});
@@ -384,9 +425,15 @@ describe("Runtime", () => {
 					rootNode.startSummary(referenceSeqNum, logger, 0);
 					await rootNode.summarize(false);
 					await assert.rejects(
-						async () => rootNode.refreshLatestSummary(proposalHandle, summaryRefSeq),
-						(error: ILoggingError & { inProgressSummaryRefSeq: number | undefined }) => {
-							const correctErrorMessage = error.message === "UnexpectedRefreshDuringSummarize";
+						async () =>
+							rootNode.refreshLatestSummary(proposalHandle, summaryRefSeq),
+						(
+							error: ILoggingError & {
+								inProgressSummaryRefSeq: number | undefined;
+							},
+						) => {
+							const correctErrorMessage =
+								error.message === "UnexpectedRefreshDuringSummarize";
 							const correctInProgressRefSeq =
 								error.inProgressSummaryRefSeq === referenceSeqNum;
 							return correctErrorMessage && correctInProgressRefSeq;

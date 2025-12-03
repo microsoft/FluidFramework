@@ -11,8 +11,8 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { getFileLink } from "../getFileLink.js";
 
 import {
-	type MockResponse,
 	createResponse,
+	type MockResponse,
 	mockFetchMultiple,
 	mockFetchSingle,
 	notFound,
@@ -55,7 +55,8 @@ describe("getFileLink", () => {
 				),
 			[
 				async (): Promise<MockResponse> => okResponse({}, fileItemResponse),
-				async (): Promise<MockResponse> => okResponse({}, { d: { directUrl: "sharelink" } }),
+				async (): Promise<MockResponse> =>
+					okResponse({}, { d: { directUrl: "sharelink" } }),
 			],
 		);
 		assert.strictEqual(
@@ -109,7 +110,8 @@ describe("getFileLink", () => {
 				async (): Promise<MockResponse> =>
 					createResponse({ "retry-after": "0.001" }, undefined, 900),
 				async (): Promise<MockResponse> => okResponse({}, fileItemResponse),
-				async (): Promise<MockResponse> => okResponse({}, { d: { directUrl: "sharelink" } }),
+				async (): Promise<MockResponse> =>
+					okResponse({}, { d: { directUrl: "sharelink" } }),
 			],
 		);
 		assert.strictEqual(
@@ -170,10 +172,14 @@ describe("getFileLink", () => {
 						{},
 						{
 							...fileItemResponse,
-							sharepointIds: { ...fileItemResponse.sharepointIds, siteUrl: newSiteUrl },
+							sharepointIds: {
+								...fileItemResponse.sharepointIds,
+								siteUrl: newSiteUrl,
+							},
 						},
 					),
-				async (): Promise<MockResponse> => okResponse({}, { d: { directUrl: "sharelink" } }),
+				async (): Promise<MockResponse> =>
+					okResponse({}, { d: { directUrl: "sharelink" } }),
 			],
 		);
 		assert.strictEqual(
@@ -208,7 +214,10 @@ describe("getFileLink", () => {
 						{},
 						{
 							...fileItemResponse,
-							sharepointIds: { ...fileItemResponse.sharepointIds, siteUrl: newSiteUrl },
+							sharepointIds: {
+								...fileItemResponse.sharepointIds,
+								siteUrl: newSiteUrl,
+							},
 						},
 					),
 				notFound,
@@ -220,7 +229,8 @@ describe("getFileLink", () => {
 							sharepointIds: { ...fileItemResponse.sharepointIds, siteUrl },
 						},
 					),
-				async (): Promise<MockResponse> => okResponse({}, { d: { directUrl: "sharelink" } }),
+				async (): Promise<MockResponse> =>
+					okResponse({}, { d: { directUrl: "sharelink" } }),
 			],
 		);
 		assert.strictEqual(
@@ -255,7 +265,10 @@ describe("getFileLink", () => {
 						{},
 						{
 							...fileItemResponse,
-							sharepointIds: { ...fileItemResponse.sharepointIds, siteUrl: newSiteUrl },
+							sharepointIds: {
+								...fileItemResponse.sharepointIds,
+								siteUrl: newSiteUrl,
+							},
 						},
 					),
 				notFound,
@@ -273,7 +286,10 @@ describe("getFileLink", () => {
 						{},
 						{
 							...fileItemResponse,
-							sharepointIds: { ...fileItemResponse.sharepointIds, siteUrl: newSiteUrl },
+							sharepointIds: {
+								...fileItemResponse.sharepointIds,
+								siteUrl: newSiteUrl,
+							},
 						},
 					),
 				notFound,
@@ -291,7 +307,10 @@ describe("getFileLink", () => {
 						{},
 						{
 							...fileItemResponse,
-							sharepointIds: { ...fileItemResponse.sharepointIds, siteUrl: newSiteUrl },
+							sharepointIds: {
+								...fileItemResponse.sharepointIds,
+								siteUrl: newSiteUrl,
+							},
 						},
 					),
 				notFound,

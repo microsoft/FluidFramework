@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { type ObjectOptions, type TSchema, Type } from "@sinclair/typebox";
 import type { SessionId } from "@fluidframework/id-compressor";
-
-import { EncodedSharedBranch, EditManagerFormatVersion } from "./editManagerFormatCommons.js";
+import { type ObjectOptions, type TSchema, Type } from "@sinclair/typebox";
 import { SessionIdSchema } from "../core/index.js";
+import {
+	EditManagerFormatVersion,
+	EncodedSharedBranch,
+} from "./editManagerFormatCommons.js";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
@@ -21,7 +23,9 @@ export interface EncodedEditManager<TChangeset> {
 	readonly branches?: readonly EncodedSharedBranch<TChangeset>[];
 }
 
-export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
+export const EncodedEditManager = <ChangeSchema extends TSchema>(
+	tChange: ChangeSchema,
+) =>
 	Type.Object(
 		{
 			version: Type.Literal(EditManagerFormatVersion.vSharedBranches),

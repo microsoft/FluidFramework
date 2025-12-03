@@ -4,7 +4,8 @@
  */
 
 import { type IColor, InkCanvas } from "@fluid-experimental/ink";
-import React, { useEffect, useRef, useState } from "react";
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { Canvas } from "./canvas.js";
 // eslint-disable-next-line import-x/no-unassigned-import
@@ -64,7 +65,9 @@ const ColorOption: React.FC<IColorOptionProps> = (props: IColorOptionProps) => {
 		<button
 			className="ink-color-option"
 			onClick={choose}
-			style={{ backgroundColor: `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})` }}
+			style={{
+				backgroundColor: `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})`,
+			}}
 		></button>
 	);
 };
@@ -92,7 +95,9 @@ interface ICanvasViewProps {
 	canvas: Canvas;
 }
 
-export const CanvasView: React.FC<ICanvasViewProps> = (props: ICanvasViewProps) => {
+export const CanvasView: React.FC<ICanvasViewProps> = (
+	props: ICanvasViewProps,
+) => {
 	const { canvas } = props;
 	const [inkCanvas, setInkCanvas] = useState<InkCanvas | undefined>();
 	const [showColorPicker, setShowColorPicker] = useState<boolean>(false);

@@ -258,7 +258,10 @@ describe("CustomEventEmitter", () => {
 		let count = 0;
 		const listener = (): number => (count += 1);
 		emitter.on("open", listener);
-		assert.throws(() => emitter.on("open", listener), validateError(/register.*twice.*open/));
+		assert.throws(
+			() => emitter.on("open", listener),
+			validateError(/register.*twice.*open/),
+		);
 		// If error is caught, the listener should still fire once for the first registration
 		emitter.emit("open");
 		assert.strictEqual(count, 1);
@@ -327,11 +330,17 @@ export class MyCompositionClass implements Listenable<MyEvents> {
 		this.load();
 	}
 
-	public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): () => void {
+	public on<K extends keyof MyEvents>(
+		eventName: K,
+		listener: MyEvents[K],
+	): () => void {
 		return this.events.on(eventName, listener);
 	}
 
-	public off<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): void {
+	public off<K extends keyof MyEvents>(
+		eventName: K,
+		listener: MyEvents[K],
+	): void {
 		return this.events.off(eventName, listener);
 	}
 }
@@ -364,7 +373,9 @@ export class MyExposingClass {
  * This does not work for asserts that get "tagging" see {@link @fluidframework/test-runtime-utils#validateAssertionError} for that.
  * This function exists here to avoid a dependency on `@fluidframework/test-runtime-utils` since this package cannot use it.
  */
-function validateError(expectedErrorMsg: string | RegExp): (error: Error) => true {
+function validateError(
+	expectedErrorMsg: string | RegExp,
+): (error: Error) => true {
 	return (error: Error) => {
 		const actualMsg = error.message;
 		if (

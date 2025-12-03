@@ -4,9 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import path from "path";
-
 import fs from "fs-extra";
+import path from "path";
 
 import { _dirname } from "./dirname.cjs";
 

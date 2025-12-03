@@ -7,15 +7,15 @@ import { strict as assert } from "node:assert";
 
 import type { IClient } from "@fluidframework/driver-definitions";
 import type {
-	IResolvedUrl,
 	IAnyDriverError,
+	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
 import type {
 	IOdspResolvedUrl,
 	ISocketStorageDiscovery,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
-import { stub, type SinonStub } from "sinon";
+import { type SinonStub, stub } from "sinon";
 import type { Socket } from "socket.io-client";
 
 import { createOdspUrl } from "../createOdspUrl.js";
@@ -63,7 +63,10 @@ describe("expose joinSessionInfo Tests", () => {
 		return joinSessionStub;
 	}
 
-	async function mockSocket<T>(_response: Socket, callback: () => Promise<T>): Promise<T> {
+	async function mockSocket<T>(
+		_response: Socket,
+		callback: () => Promise<T>,
+	): Promise<T> {
 		const getSocketCreationStub = stub(SocketIOClientStatic, mockify.key);
 		getSocketCreationStub.returns(_response);
 		try {
@@ -78,7 +81,8 @@ describe("expose joinSessionInfo Tests", () => {
 	});
 
 	it("Response missing in join session cache", async () => {
-		const info = await odspDocumentServiceFactory.getRelayServiceSessionInfo(resolvedUrl);
+		const info =
+			await odspDocumentServiceFactory.getRelayServiceSessionInfo(resolvedUrl);
 		assert(info === undefined, "no cached response");
 	});
 
@@ -90,8 +94,13 @@ describe("expose joinSessionInfo Tests", () => {
 				return { entryTime: Date.now(), joinSessionResponse };
 			},
 		);
-		const info = await odspDocumentServiceFactory.getRelayServiceSessionInfo(resolvedUrl);
-		assert.deepStrictEqual(info, joinSessionResponse, "cached response should be present");
+		const info =
+			await odspDocumentServiceFactory.getRelayServiceSessionInfo(resolvedUrl);
+		assert.deepStrictEqual(
+			info,
+			joinSessionResponse,
+			"cached response should be present",
+		);
 	});
 
 	it("should throw error is resolved url is not odspResolvedUrl", async () => {
@@ -160,7 +169,9 @@ describe("expose joinSessionInfo Tests", () => {
 			);
 
 			const info =
-				await odspDocumentServiceFactory.getRelayServiceSessionInfo(odspResolvedUrl);
+				await odspDocumentServiceFactory.getRelayServiceSessionInfo(
+					odspResolvedUrl,
+				);
 			assert(
 				info === undefined,
 				`joinSession cache should get cleared when '${errorEventName}' occurs`,
@@ -168,7 +179,9 @@ describe("expose joinSessionInfo Tests", () => {
 		} finally {
 			// reset nonPersistenCache changes from the test
 			// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-			odspDocumentServiceFactory["nonPersistentCache"].sessionJoinCache.remove(cacheKey);
+			odspDocumentServiceFactory["nonPersistentCache"].sessionJoinCache.remove(
+				cacheKey,
+			);
 			joinSessionStub.restore();
 		}
 	});
@@ -226,7 +239,9 @@ describe("expose joinSessionInfo Tests", () => {
 			);
 
 			const info =
-				await odspDocumentServiceFactory.getRelayServiceSessionInfo(odspResolvedUrl);
+				await odspDocumentServiceFactory.getRelayServiceSessionInfo(
+					odspResolvedUrl,
+				);
 			assert(
 				info === joinSessionResponse,
 				`joinSession cache should not get cleared when '${errorEventName}' occurs`,
@@ -234,7 +249,9 @@ describe("expose joinSessionInfo Tests", () => {
 		} finally {
 			// reset nonPersistenCache changes from the test
 			// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-			odspDocumentServiceFactory["nonPersistentCache"].sessionJoinCache.remove(cacheKey);
+			odspDocumentServiceFactory["nonPersistentCache"].sessionJoinCache.remove(
+				cacheKey,
+			);
 			joinSessionStub.restore();
 		}
 	});

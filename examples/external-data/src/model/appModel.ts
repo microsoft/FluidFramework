@@ -8,13 +8,20 @@ import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 import type { IResolvedUrl } from "@fluidframework/driver-definitions/legacy";
 
-import type { IAppModel, IAppModelEvents, IBaseDocument } from "../model-interface/index.js";
+import type {
+	IAppModel,
+	IAppModelEvents,
+	IBaseDocument,
+} from "../model-interface/index.js";
 
 /**
  * In this demo, the AppModel just needs to hold the taskList.  In a real scenario, this may have further
  * responsibilities and functionality.
  */
-export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IAppModel {
+export class AppModel
+	extends TypedEventEmitter<IAppModelEvents>
+	implements IAppModel
+{
 	public constructor(
 		public readonly baseDocument: IBaseDocument,
 		private readonly container: IContainer,

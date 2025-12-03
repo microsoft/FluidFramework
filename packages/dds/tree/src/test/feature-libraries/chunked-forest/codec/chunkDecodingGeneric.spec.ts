@@ -7,14 +7,17 @@ import { strict as assert, fail } from "node:assert";
 
 import { type Static, Type } from "@sinclair/typebox";
 
-import { DiscriminatedUnionDispatcher, unionOptions } from "../../../../codec/index.js";
+import {
+	DiscriminatedUnionDispatcher,
+	unionOptions,
+} from "../../../../codec/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { ChunkedCursor } from "../../../../core/index.js";
 import {
 	type ChunkDecoder,
-	type StreamCursor,
 	getChecked,
 	readStreamNumber,
+	type StreamCursor,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
 import {
@@ -45,13 +48,18 @@ const EncodedChunkShape = Type.Object(
 	unionOptions,
 );
 
-const fieldBatchVersion = brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v1);
+const fieldBatchVersion = brand<FieldBatchFormatVersion>(
+	FieldBatchFormatVersion.v1,
+);
 
 type Constant = Static<typeof Constant>;
 type StringShape = Static<typeof StringShape>;
 type EncodedChunkShape = Static<typeof EncodedChunkShape>;
 
-const EncodedFieldBatch = EncodedFieldBatchGeneric(fieldBatchVersion, EncodedChunkShape);
+const EncodedFieldBatch = EncodedFieldBatchGeneric(
+	fieldBatchVersion,
+	EncodedChunkShape,
+);
 type EncodedFieldBatch = Static<typeof EncodedFieldBatch>;
 
 class TestChunk1 extends ReferenceCountedBase implements TreeChunk {

@@ -3,26 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { Context } from "../feature-libraries/index.js";
 import {
+	getInnerNode,
 	type ImplicitFieldSchema,
+	rollback,
+	type TransactionConstraint,
 	type TreeNode,
 	type TreeNodeApi,
 	type TreeView,
-	getInnerNode,
 	treeNodeApi,
-	rollback,
-	type TransactionConstraint,
 } from "../simple-tree/index.js";
-
 import {
 	addConstraintsToTransaction,
 	SchematizingSimpleTreeView,
 } from "./schematizingTreeView.js";
 import type { ITreeCheckout } from "./treeCheckout.js";
-import { Context } from "../feature-libraries/index.js";
 
 /**
  * Provides various functions for interacting with {@link TreeNode}s.
@@ -210,7 +208,10 @@ export interface RunTransaction {
 	 * If the transaction function throws an error then the transaction will be automatically rolled back (discarding any changes made to the tree so far) before the error is propagated up from this function.
 	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
 	 */
-	<TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void): void;
+	<TNode extends TreeNode>(
+		node: TNode,
+		transaction: (node: TNode) => void,
+	): void;
 	/**
 	 * Apply one or more edits to the tree as a single atomic unit.
 	 * @param tree - The tree which will be edited by the transaction
@@ -231,7 +232,10 @@ export interface RunTransaction {
 	 */
 	// See comment on previous overload about use of any here.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	<TView extends TreeView<any>>(tree: TView, transaction: (root: TView["root"]) => void): void;
+	<TView extends TreeView<any>>(
+		tree: TView,
+		transaction: (root: TView["root"]) => void,
+	): void;
 	/**
 	 * Apply one or more edits to the tree as a single atomic unit.
 	 * @param node - The node that will be passed to `transaction`.
@@ -453,8 +457,15 @@ export function runTransaction<
 				"Transactions cannot be run on Unhydrated nodes. Transactions apply to a TreeView and Unhydrated nodes are not part of a TreeView.",
 			);
 		}
-		assert(context instanceof Context, 0xbe3 /* Expected context to be a Context instance. */);
-		return runTransactionInCheckout(context.checkout, () => t(node), preconditions);
+		assert(
+			context instanceof Context,
+			0xbe3 /* Expected context to be a Context instance. */,
+		);
+		return runTransactionInCheckout(
+			context.checkout,
+			() => t(node),
+			preconditions,
+		);
 	}
 }
 

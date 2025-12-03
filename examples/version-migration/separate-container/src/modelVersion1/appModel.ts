@@ -5,7 +5,10 @@
 
 import { parseStringDataVersionOne, readVersion } from "../dataTransform.js";
 import type { IMigratableModel } from "../migratableModel.js";
-import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.js";
+import type {
+	IInventoryList,
+	IInventoryListAppModel,
+} from "../modelInterfaces.js";
 
 // This type represents a stronger expectation than just any string - it needs to be in the right format.
 export type InventoryListAppModelExportFormat1 = string;
@@ -16,7 +19,9 @@ export type InventoryListAppModelExportFormat1 = string;
  * the Container (e.g. no direct access to the Loader).  It does not have a goal of being general-purpose like
  * Container does -- instead it is specially designed for the specific container code.
  */
-export class InventoryListAppModel implements IInventoryListAppModel, IMigratableModel {
+export class InventoryListAppModel
+	implements IInventoryListAppModel, IMigratableModel
+{
 	// To be used by the consumer of the model to pair with an appropriate view.
 	public readonly version = "one";
 
@@ -25,7 +30,9 @@ export class InventoryListAppModel implements IInventoryListAppModel, IMigratabl
 	public readonly supportsDataFormat = (
 		initialData: unknown,
 	): initialData is InventoryListAppModelExportFormat1 => {
-		return typeof initialData === "string" && readVersion(initialData) === "one";
+		return (
+			typeof initialData === "string" && readVersion(initialData) === "one"
+		);
 	};
 
 	public readonly importData = async (initialData: unknown): Promise<void> => {
@@ -40,12 +47,13 @@ export class InventoryListAppModel implements IInventoryListAppModel, IMigratabl
 		}
 	};
 
-	public readonly exportData = async (): Promise<InventoryListAppModelExportFormat1> => {
-		// Exports in version:one format (using ':' delimiter between name/quantity)
-		const inventoryItems = this.inventoryList.getItems();
-		const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
-			return `${inventoryItem.name.getText()}:${inventoryItem.quantity.toString()}`;
-		});
-		return `version:one\n${inventoryItemStrings.join("\n")}`;
-	};
+	public readonly exportData =
+		async (): Promise<InventoryListAppModelExportFormat1> => {
+			// Exports in version:one format (using ':' delimiter between name/quantity)
+			const inventoryItems = this.inventoryList.getItems();
+			const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
+				return `${inventoryItem.name.getText()}:${inventoryItem.quantity.toString()}`;
+			});
+			return `version:one\n${inventoryItemStrings.join("\n")}`;
+		};
 }

@@ -5,17 +5,16 @@
 
 import { strict as assert } from "node:assert";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
-
+import type {
+	ValidateRecursiveSchema,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/api/schemaFactoryRecursive.js";
 import {
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 } from "../../../simple-tree/index.js";
-import type {
-	ValidateRecursiveSchema,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/api/schemaFactoryRecursive.js";
 import { getView } from "../../utils.js";
 
 const sf = new SchemaFactory("integration");
@@ -25,9 +24,7 @@ describe("simple-tree API integration tests", () => {
 		class O extends sf.objectRecursive("O", {
 			recursive: sf.optionalRecursive([() => O]),
 		}) {}
-		{
-			type _check = ValidateRecursiveSchema<typeof O>;
-		}
+		type _check = ValidateRecursiveSchema<typeof O>;
 		it("making a recursive unhydrated and un-parented object node errors", () => {
 			const obj = new O({ recursive: undefined });
 			assert.throws(

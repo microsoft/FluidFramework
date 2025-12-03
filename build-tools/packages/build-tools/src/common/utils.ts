@@ -5,8 +5,8 @@
 
 import * as child_process from "child_process";
 import * as fs from "fs";
-import * as path from "path";
 import isEqual from "lodash.isequal";
+import * as path from "path";
 
 /**
  *	An array of commands that are known to have subcommands and should be parsed as such. These will be combined with
@@ -14,7 +14,10 @@ import isEqual from "lodash.isequal";
  */
 const defaultMultiCommandExecutables = ["flub", "biome"] as const;
 
-export function getExecutableFromCommand(command: string, multiCommandExecutables: string[]) {
+export function getExecutableFromCommand(
+	command: string,
+	multiCommandExecutables: string[],
+) {
 	let toReturn: string;
 	const commands = command.split(" ");
 	const multiExecutables: Set<string> = new Set([
@@ -27,8 +30,13 @@ export function getExecutableFromCommand(command: string, multiCommandExecutable
 		//
 		// This assumes that subcommand names always precede flags and that non-command arguments
 		// match one of the patterns we look for below.
-		const nonCommandIndex = commands.findIndex((c) => c.startsWith("-") || c === ".");
-		toReturn = nonCommandIndex !== -1 ? commands.slice(0, nonCommandIndex).join(" ") : command;
+		const nonCommandIndex = commands.findIndex(
+			(c) => c.startsWith("-") || c === ".",
+		);
+		toReturn =
+			nonCommandIndex !== -1
+				? commands.slice(0, nonCommandIndex).join(" ")
+				: command;
 	} else {
 		toReturn = commands[0];
 	}
@@ -90,7 +98,10 @@ async function rimrafAsync(deletePath: string) {
 	});
 }
 
-export async function rimrafWithErrorAsync(deletePath: string, errorPrefix: string) {
+export async function rimrafWithErrorAsync(
+	deletePath: string,
+	errorPrefix: string,
+) {
 	const ret = await rimrafAsync(deletePath);
 	printExecError(ret, `rimraf ${deletePath}`, errorPrefix, true);
 	return ret;
@@ -138,7 +149,10 @@ export async function lookUpDirAsync(
 	return undefined;
 }
 
-export function lookUpDirSync(dir: string, callback: (currentDir: string) => boolean) {
+export function lookUpDirSync(
+	dir: string,
+	callback: (currentDir: string) => boolean,
+) {
 	let curr = path.resolve(dir);
 	// eslint-disable-next-line no-constant-condition
 	while (true) {

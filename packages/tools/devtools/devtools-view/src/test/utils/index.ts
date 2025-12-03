@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { MockMessageRelay } from "./MockMessageRelay.js";
 export { assertNoAccessibilityViolations } from "./axeUtils.js";
+export { MockMessageRelay } from "./MockMessageRelay.js";

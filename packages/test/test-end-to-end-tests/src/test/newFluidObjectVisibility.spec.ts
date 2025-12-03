@@ -3,27 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import {
-	ITestDataObject,
-	TestDataObjectType,
 	describeCompat,
+	type ITestDataObject,
+	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions/internal";
-import {
+import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type {
 	IContainerRuntime,
 	IContainerRuntimeWithResolveHandle_Deprecated,
 } from "@fluidframework/container-runtime-definitions/internal";
-import { type FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
+import type {
+	FluidObject,
+	IFluidHandle,
+} from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { responseToException } from "@fluidframework/runtime-utils/internal";
 import {
-	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
+	type ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import { strict as assert } from "assert";
 
 async function resolveHandleWithoutWait(
 	containerRuntime: IContainerRuntimeWithResolveHandle_Deprecated,
@@ -52,7 +54,8 @@ async function createNonRootDataObject(
 	containerRuntime: IContainerRuntimeWithResolveHandle_Deprecated,
 ): Promise<ITestDataObject> {
 	const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
-	const dataObject = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore);
+	const dataObject =
+		await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore);
 	// Non-root data stores are not visible (unreachable) from the root unless their handles are stored in a
 	// visible DDS.
 	await assert.rejects(
@@ -83,8 +86,12 @@ async function getAndValidateDataObject(
 	fromDataObject: ITestDataObject,
 	key: string,
 ): Promise<ITestDataObject> {
-	const dataObjectHandle = fromDataObject._root.get<IFluidHandle<ITestDataObject>>(key);
-	assert(dataObjectHandle !== undefined, `Data object handle for key ${key} not found`);
+	const dataObjectHandle =
+		fromDataObject._root.get<IFluidHandle<ITestDataObject>>(key);
+	assert(
+		dataObjectHandle !== undefined,
+		`Data object handle for key ${key} not found`,
+	);
 	const dataObject = await dataObjectHandle.get();
 	const runtime = dataObject._context
 		.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
@@ -147,13 +154,16 @@ describeCompat(
 
 				if (detachedMode) {
 					const loader1 = provider.makeTestLoader();
-					container1 = await loader1.createDetachedContainer(provider.defaultCodeDetails);
+					container1 = await loader1.createDetachedContainer(
+						provider.defaultCodeDetails,
+					);
 				} else {
 					container1 = await provider.makeTestContainer();
 					await waitForContainerConnection(container1);
 				}
 
-				dataObject1 = await getContainerEntryPointBackCompat<ITestDataObject>(container1);
+				dataObject1 =
+					await getContainerEntryPointBackCompat<ITestDataObject>(container1);
 				containerRuntime1 = dataObject1._context
 					.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
 			});
@@ -162,7 +172,7 @@ describeCompat(
 			 * Validates that non-root data stores are not visible until their handles are added to a visible DDS.
 			 * Also, they are visible in remote clients and can send ops.
 			 */
-			it("validates that non-root data stores become visible correctly", async function () {
+			it("validates that non-root data stores become visible correctly", async () => {
 				const dataObject2 = await createNonRootDataObject(containerRuntime1);
 				dataObject1._root.set("dataObject2", dataObject2.handle);
 
@@ -174,7 +184,9 @@ describeCompat(
 				);
 
 				if (detachedMode) {
-					await container1.attach(provider.driver.createCreateNewRequest(provider.documentId));
+					await container1.attach(
+						provider.driver.createCreateNewRequest(provider.documentId),
+					);
 					await waitForContainerConnection(container1);
 				}
 
@@ -183,7 +195,10 @@ describeCompat(
 				await provider.ensureSynchronized();
 				const dataObject1C2 =
 					await getContainerEntryPointBackCompat<ITestDataObject>(container2);
-				const dataObject2C2 = await getAndValidateDataObject(dataObject1C2, "dataObject2");
+				const dataObject2C2 = await getAndValidateDataObject(
+					dataObject1C2,
+					"dataObject2",
+				);
 
 				// Send ops for the data store in both local and remote container and validate that the ops are successfully
 				// processed.
@@ -199,7 +214,10 @@ describeCompat(
 			 * until the parent root data store is visible. Also, they are visible in remote clients and can send ops.
 			 */
 			it("validates that root data stores and their dependencies become visible correctly", async () => {
-				const dataObject2 = await createRootDataObject(containerRuntime1, "rootDataStore");
+				const dataObject2 = await createRootDataObject(
+					containerRuntime1,
+					"rootDataStore",
+				);
 				const dataObject3 = await createNonRootDataObject(containerRuntime1);
 
 				// Add the handle of the non-root data store (dataObject3) in the root data store (dataObject2)'s DDS.
@@ -211,21 +229,28 @@ describeCompat(
 				);
 
 				if (detachedMode) {
-					await container1.attach(provider.driver.createCreateNewRequest(provider.documentId));
+					await container1.attach(
+						provider.driver.createCreateNewRequest(provider.documentId),
+					);
 					await waitForContainerConnection(container1);
 				}
 
 				// Load a second container and validate that the non-root data store is visible in it.
 				const container2 = await provider.loadTestContainer();
 				await provider.ensureSynchronized();
-				const entryPoint = await getContainerEntryPointBackCompat<ITestDataObject>(container2);
-				const containerRuntime2 = entryPoint._context.containerRuntime as IContainerRuntime;
+				const entryPoint =
+					await getContainerEntryPointBackCompat<ITestDataObject>(container2);
+				const containerRuntime2 = entryPoint._context
+					.containerRuntime as IContainerRuntime;
 				const dsEntryPoint = await getAliasedDataStoreBackCompat(
 					containerRuntime2,
 					"rootDataStore",
 				);
 				const dataObject2C2 = (await dsEntryPoint?.get()) as ITestDataObject;
-				const dataObject3C2 = await getAndValidateDataObject(dataObject2C2, "dataObject3");
+				const dataObject3C2 = await getAndValidateDataObject(
+					dataObject2C2,
+					"dataObject3",
+				);
 
 				// Send ops for both data stores in both local and remote container and validate that the ops are
 				// successfully processed.
@@ -258,7 +283,9 @@ describeCompat(
 				dataObject2._root.set("map2", map2.handle);
 
 				if (detachedMode) {
-					await container1.attach(provider.driver.createCreateNewRequest(provider.documentId));
+					await container1.attach(
+						provider.driver.createCreateNewRequest(provider.documentId),
+					);
 					await waitForContainerConnection(container1);
 				}
 
@@ -271,14 +298,23 @@ describeCompat(
 				await provider.ensureSynchronized();
 				const dataObject1C2 =
 					await getContainerEntryPointBackCompat<ITestDataObject>(container2);
-				const dataObject2C2 = await getAndValidateDataObject(dataObject1C2, "dataObject2");
+				const dataObject2C2 = await getAndValidateDataObject(
+					dataObject1C2,
+					"dataObject2",
+				);
 
 				// Validate that the DDSes are present in the second container.
-				const map1C2 = await dataObject2C2._root.get<IFluidHandle<ISharedMap>>("map1")?.get();
+				const map1C2 = await dataObject2C2._root
+					.get<IFluidHandle<ISharedMap>>("map1")
+					?.get();
 				assert(map1C2 !== undefined, "map1 not found in second container");
-				const map2C2 = await dataObject2C2._root.get<IFluidHandle<ISharedMap>>("map2")?.get();
+				const map2C2 = await dataObject2C2._root
+					.get<IFluidHandle<ISharedMap>>("map2")
+					?.get();
 				assert(map2C2 !== undefined, "map2 not found in second container");
-				const map3C2 = await dataObject2C2._root.get<IFluidHandle<ISharedMap>>("map3")?.get();
+				const map3C2 = await dataObject2C2._root
+					.get<IFluidHandle<ISharedMap>>("map3")
+					?.get();
 				assert(map3C2 !== undefined, "map3 not found in second container");
 
 				// Send ops for all the DDSes created above in both local and remote container and validate that the ops are
@@ -303,7 +339,10 @@ describeCompat(
 			 * becomes globally visible to all clients.
 			 */
 			it("validates that DDSes in root data stores become visible correctly", async () => {
-				const dataObject2 = await createRootDataObject(containerRuntime1, "rootDataStore");
+				const dataObject2 = await createRootDataObject(
+					containerRuntime1,
+					"rootDataStore",
+				);
 
 				// Create a DDS after data store is locally visible and store its handle.
 				const map1 = SharedMap.create(dataObject2._runtime);
@@ -317,7 +356,9 @@ describeCompat(
 				);
 
 				if (detachedMode) {
-					await container1.attach(provider.driver.createCreateNewRequest(provider.documentId));
+					await container1.attach(
+						provider.driver.createCreateNewRequest(provider.documentId),
+					);
 					await waitForContainerConnection(container1);
 				}
 
@@ -330,7 +371,8 @@ describeCompat(
 				await provider.ensureSynchronized();
 				const entryPoint2 =
 					await getContainerEntryPointBackCompat<ITestDataObject>(container2);
-				const containerRuntime2 = entryPoint2._context.containerRuntime as IContainerRuntime;
+				const containerRuntime2 = entryPoint2._context
+					.containerRuntime as IContainerRuntime;
 				const dsEntryPoint = await getAliasedDataStoreBackCompat(
 					containerRuntime2,
 					"rootDataStore",
@@ -341,9 +383,13 @@ describeCompat(
 				const dataObject2C2 = (await dsEntryPoint.get()) as ITestDataObject;
 
 				// Validate that the DDSes are present in the second container.
-				const map1C2 = await dataObject2C2._root.get<IFluidHandle<ISharedMap>>("map1")?.get();
+				const map1C2 = await dataObject2C2._root
+					.get<IFluidHandle<ISharedMap>>("map1")
+					?.get();
 				assert(map1C2 !== undefined, "map1 not found in second container");
-				const map2C2 = await dataObject2C2._root.get<IFluidHandle<ISharedMap>>("map2")?.get();
+				const map2C2 = await dataObject2C2._root
+					.get<IFluidHandle<ISharedMap>>("map2")
+					?.get();
 				assert(map2C2 !== undefined, "map2 not found in second container");
 
 				// Send ops for all the DDSes created above in both local and remote container and validate that the ops are
@@ -410,8 +456,14 @@ describeCompat(
 			await provider2.ensureSynchronized();
 			const dataObject1C2 =
 				await getContainerEntryPointBackCompat<ITestDataObject>(container2);
-			const dataObject2C2 = await getAndValidateDataObject(dataObject1C2, "dataObject2");
-			const dataObject3C2 = await getAndValidateDataObject(dataObject2C2, "dataObject3");
+			const dataObject2C2 = await getAndValidateDataObject(
+				dataObject1C2,
+				"dataObject2",
+			);
+			const dataObject3C2 = await getAndValidateDataObject(
+				dataObject2C2,
+				"dataObject3",
+			);
 
 			// Send ops for the data stores in both local and remote container and validate that the ops are
 			// successfully processed.

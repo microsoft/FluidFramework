@@ -4,4 +4,7 @@
  */
 
 export { InventoryListContainerRuntimeFactory } from "./containerCode.js";
-export { InventoryList, InventoryListInstantiationFactory } from "./inventoryList.js";
+export {
+	InventoryList,
+	InventoryListInstantiationFactory,
+} from "./inventoryList.js";

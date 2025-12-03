@@ -5,28 +5,28 @@
 
 import { strict as assert } from "node:assert";
 import {
-	type IMemoryTestObject,
 	benchmarkMemory,
+	type IMemoryTestObject,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
-import { testIdCompressor } from "../utils.js";
+import { TreeCompressionStrategy } from "../../feature-libraries/index.js";
 
 import type { NodeBuilderData } from "../../internalTypes.js";
-import {
-	SchemaFactory,
-	TreeViewConfiguration,
-	type ImplicitFieldSchema,
-	type InsertableTreeFieldFromImplicitField,
-	type TreeView,
-} from "../../simple-tree/index.js";
 import {
 	ForestTypeOptimized,
 	ForestTypeReference,
 	type SharedTreeOptions,
 } from "../../shared-tree/index.js";
+import {
+	type ImplicitFieldSchema,
+	type InsertableTreeFieldFromImplicitField,
+	SchemaFactory,
+	type TreeView,
+	TreeViewConfiguration,
+} from "../../simple-tree/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
-import { TreeCompressionStrategy } from "../../feature-libraries/index.js";
+import { testIdCompressor } from "../utils.js";
 
 const builder = new SchemaFactory("shared-tree-test");
 
@@ -63,7 +63,10 @@ class PolymorphicArray extends builder.array("root-item-with-basic-chunks", [
 /**
  * Monomorphic array schema to make uniform chunking more efficient.
  */
-class MonomorphicArray extends builder.array("root-item-with-basic-chunks", builder.number) {}
+class MonomorphicArray extends builder.array(
+	"root-item-with-basic-chunks",
+	builder.number,
+) {}
 
 /**
  * Deep monomorphic node schema to highlight efficiency of chunked forest.
@@ -185,7 +188,9 @@ describe("SharedTree memory usage", () => {
 					assert(this.sharedTree?.root.child !== undefined);
 
 					for (let i = 0; i < numberOfEntries; i++) {
-						this.sharedTree.root.child.propertyTwo.itemOne = i.toString().padStart(6, "0");
+						this.sharedTree.root.child.propertyTwo.itemOne = i
+							.toString()
+							.padStart(6, "0");
 					}
 				}
 
@@ -228,10 +233,14 @@ describe("SharedTree memory usage", () => {
 	/**
 	 * Define a suite of benchmarks for testing the memory use of variety of sizes of trees of the given schema in various forest implementations.
 	 */
-	function describeMemoryBenchmarksForSubtrees<TSchema extends ImplicitFieldSchema>(
+	function describeMemoryBenchmarksForSubtrees<
+		TSchema extends ImplicitFieldSchema,
+	>(
 		title: string,
 		schema: TSchema,
-		generateContent: (numberOfNodes: number) => InsertableTreeFieldFromImplicitField<TSchema>,
+		generateContent: (
+			numberOfNodes: number,
+		) => InsertableTreeFieldFromImplicitField<TSchema>,
 		testNodeCounts: number[],
 	) {
 		describe(title, () => {
@@ -269,14 +278,18 @@ describe("SharedTree memory usage", () => {
 		});
 	}
 
-	const numberOfNodesForTests = isInPerformanceTestingMode ? [1, 10, 100, 1000] : [10];
+	const numberOfNodesForTests = isInPerformanceTestingMode
+		? [1, 10, 100, 1000]
+		: [10];
 	// TODO: AB#24885 needs .only to describe block when running in performance mode if you need to see the results. Check to see why it does not run without .only.
 	describe("Forest memory usage", () => {
 		describeMemoryBenchmarksForSubtrees(
 			"Array of monomorphic leaves",
 			MonomorphicArray,
 			(numberOfNodes: number) =>
-				new MonomorphicArray(Array.from({ length: numberOfNodes }, (_, index) => index + 1)),
+				new MonomorphicArray(
+					Array.from({ length: numberOfNodes }, (_, index) => index + 1),
+				),
 			numberOfNodesForTests,
 		);
 
@@ -284,7 +297,9 @@ describe("SharedTree memory usage", () => {
 			"Array of polymorphic leaves",
 			PolymorphicArray,
 			(numberOfNodes: number) =>
-				new PolymorphicArray(Array.from({ length: numberOfNodes }, (_, index) => index + 1)),
+				new PolymorphicArray(
+					Array.from({ length: numberOfNodes }, (_, index) => index + 1),
+				),
 			numberOfNodesForTests,
 		);
 
@@ -297,7 +312,9 @@ describe("SharedTree memory usage", () => {
 						{ length: numberOfNodes },
 						(_, index) =>
 							new DeepMonomorphicNode({
-								layer1: { layer2: { layer3: { layer4: { x: index, y: index + 1 } } } },
+								layer1: {
+									layer2: { layer3: { layer4: { x: index, y: index + 1 } } },
+								},
 							}),
 					),
 				),

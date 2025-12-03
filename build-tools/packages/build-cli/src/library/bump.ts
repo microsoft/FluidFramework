@@ -4,12 +4,12 @@
  */
 
 import {
+	bumpVersionScheme,
 	DEFAULT_INTERDEPENDENCY_RANGE,
 	type InterdependencyRange,
+	isVersionBumpType,
 	type VersionChangeType,
 	type VersionScheme,
-	bumpVersionScheme,
-	isVersionBumpType,
 } from "@fluid-tools/version-tools";
 import type { Logger, MonoRepo, Package } from "@fluidframework/build-tools";
 import type { Context } from "./context.js";
@@ -33,7 +33,9 @@ export type DependencyUpdateType =
  *
  * @internal
  */
-export function isDependencyUpdateType(str: string | undefined): str is DependencyUpdateType {
+export function isDependencyUpdateType(
+	str: string | undefined,
+): str is DependencyUpdateType {
 	if (str === undefined) {
 		return false;
 	}

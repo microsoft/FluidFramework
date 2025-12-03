@@ -92,10 +92,15 @@ export class Throttler implements IThrottler {
 		}
 
 		// Remove all attempts that have already fallen out of the window.
-		this.startTimes = this.startTimes.filter((t) => now - t < this.delayWindowMs);
+		this.startTimes = this.startTimes.filter(
+			(t) => now - t < this.delayWindowMs,
+		);
 
 		// Compute delay, but do not exceed the specified max delay.
-		const delayMs = Math.min(this.delayFn(this.startTimes.length), this.maxDelayMs);
+		const delayMs = Math.min(
+			this.delayFn(this.startTimes.length),
+			this.maxDelayMs,
+		);
 
 		// Record this attempt start time.
 		this.startTimes.push(now);
@@ -136,7 +141,7 @@ export const formExponentialFn =
 			0,
 			numAttempts <= 0 && initialDelay !== undefined
 				? initialDelay
-				: coefficient * Math.pow(multiplier, numAttempts) + offset,
+				: coefficient * multiplier ** numAttempts + offset,
 		);
 
 /**
@@ -153,7 +158,7 @@ export const formExponentialFnWithAttemptOffset = (
 ): IThrottler["delayFn"] =>
 	formExponentialFn({
 		multiplier,
-		coefficient: coefficient * Math.pow(multiplier, attemptOffset),
+		coefficient: coefficient * multiplier ** attemptOffset,
 		offset,
 		initialDelay,
 	});

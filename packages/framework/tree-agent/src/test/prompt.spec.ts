@@ -8,19 +8,25 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import {
+	type ImplicitFieldSchema,
+	type InsertableField,
 	independentView,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
-	type ImplicitFieldSchema,
-	type InsertableField,
 } from "@fluidframework/tree/internal";
 import { z } from "zod";
-
-import { buildFunc, exposeMethodsSymbol, type ExposedMethods } from "../methodBinding.js";
-import { getPrompt } from "../prompt.js";
-import { exposePropertiesSymbol, type ExposedProperties } from "../propertyBinding.js";
-import { Subtree } from "../subtree.js";
 import type { TreeView } from "../api.js";
+import {
+	buildFunc,
+	type ExposedMethods,
+	exposeMethodsSymbol,
+} from "../methodBinding.js";
+import { getPrompt } from "../prompt.js";
+import {
+	type ExposedProperties,
+	exposePropertiesSymbol,
+} from "../propertyBinding.js";
+import { Subtree } from "../subtree.js";
 
 const sf = new SchemaFactoryAlpha("test");
 
@@ -79,7 +85,9 @@ describe("Prompt generation", () => {
 				subtree: new Subtree(view),
 				editToolName: "EditTreeTool",
 			});
-			assert.ok(!prompt.includes("ALWAYS prefer to use any application helper methods"));
+			assert.ok(
+				!prompt.includes("ALWAYS prefer to use any application helper methods"),
+			);
 		}
 
 		// If there are methods, then the prompt should mention them
@@ -103,7 +111,9 @@ describe("Prompt generation", () => {
 				subtree: new Subtree(view),
 				editToolName: "EditTreeTool",
 			});
-			assert.ok(prompt.includes("ALWAYS prefer to use any application helper methods"));
+			assert.ok(
+				prompt.includes("ALWAYS prefer to use any application helper methods"),
+			);
 		}
 	});
 
@@ -127,7 +137,9 @@ describe("Prompt generation", () => {
 					return this.testProperty;
 				}
 
-				public static [exposePropertiesSymbol](properties: ExposedProperties): void {
+				public static [exposePropertiesSymbol](
+					properties: ExposedProperties,
+				): void {
 					properties.exposeProperty(ObjWithProperty, "name", {
 						schema: z.string(),
 						readOnly: true,
@@ -225,7 +237,9 @@ describe("Prompt snapshot", () => {
 				);
 			}
 
-			public static [exposePropertiesSymbol](properties: ExposedProperties): void {
+			public static [exposePropertiesSymbol](
+				properties: ExposedProperties,
+			): void {
 				properties.exposeProperty(TestMap, "testProperty", {
 					schema: z.string(),
 					readOnly: true,
@@ -255,7 +269,9 @@ describe("Prompt snapshot", () => {
 					buildFunc({ returns: z.string() }, ["radix", z.number()]),
 				);
 			}
-			public static [exposePropertiesSymbol](properties: ExposedProperties): void {
+			public static [exposePropertiesSymbol](
+				properties: ExposedProperties,
+			): void {
 				properties.exposeProperty(NumberValue, "testProperty", {
 					schema: z.string(),
 					readOnly: true,

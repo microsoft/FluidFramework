@@ -7,13 +7,16 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISerializedHandle } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	ValueType,
 	parseHandles,
 	serializeHandles,
+	ValueType,
 } from "@fluidframework/shared-object-base/internal";
 
 // eslint-disable-next-line import-x/no-deprecated
-import type { ISerializableValue, ISerializedValue } from "./internalInterfaces.js";
+import type {
+	ISerializableValue,
+	ISerializedValue,
+} from "./internalInterfaces.js";
 
 /**
  * A local value to be stored in a container type Distributed Data Store (DDS).
@@ -65,6 +68,9 @@ export const migrateIfSharedSerializable = (
 		// NOTE: here we require the use of `parseHandles` because the roundtrip
 		// through a string is necessary to resolve the absolute path of
 		// legacy handles (`ValueType.Shared`)
-		serializable.value = serializer.encode(parseHandles(handle, serializer), bind);
+		serializable.value = serializer.encode(
+			parseHandles(handle, serializer),
+			bind,
+		);
 	}
 };

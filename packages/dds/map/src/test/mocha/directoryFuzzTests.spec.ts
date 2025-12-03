@@ -6,7 +6,10 @@
 import * as dirPath from "node:path";
 
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
-import { type DDSFuzzModel, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
+import {
+	createDDSFuzzSuite,
+	type DDSFuzzModel,
+} from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { DirectoryFactory } from "../../index.js";
@@ -15,11 +18,11 @@ import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 import { _dirname } from "./dirname.cjs";
 import {
 	baseDirModel,
+	type DirOperation,
+	type DirOperationGenerationConfig,
 	dirDefaultOptions,
 	makeDirOperationGenerator,
 	makeDirReducer,
-	type DirOperation,
-	type DirOperationGenerationConfig,
 } from "./fuzzUtils.js";
 
 describe("SharedDirectory fuzz Create/Delete concentrated", () => {
@@ -36,8 +39,12 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 	const model: DDSFuzzModel<DirectoryFactory, DirOperation> = {
 		workloadName: "default directory 1",
 		generatorFactory: () => takeAsync(100, makeDirOperationGenerator(options)),
-		reducer: makeDirReducer({ clientIds: ["A", "B", "C"], printConsoleLogs: false }),
-		validateConsistency: async (a, b) => assertEquivalentDirectories(a.channel, b.channel),
+		reducer: makeDirReducer({
+			clientIds: ["A", "B", "C"],
+			printConsoleLogs: false,
+		}),
+		validateConsistency: async (a, b) =>
+			assertEquivalentDirectories(a.channel, b.channel),
 		factory: new DirectoryFactory(),
 	};
 
@@ -58,7 +65,9 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 		defaultTestCount: 25,
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 21,
-		saveFailures: { directory: dirPath.join(_dirname, "../../../src/test/mocha/results/1") },
+		saveFailures: {
+			directory: dirPath.join(_dirname, "../../../src/test/mocha/results/1"),
+		},
 	});
 
 	createDDSFuzzSuite(
@@ -110,7 +119,9 @@ describe("SharedDirectory fuzz", () => {
 		defaultTestCount: 25,
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
-		saveFailures: { directory: dirPath.join(_dirname, "../../../src/test/mocha/results/2") },
+		saveFailures: {
+			directory: dirPath.join(_dirname, "../../../src/test/mocha/results/2"),
+		},
 		skip: [],
 	});
 

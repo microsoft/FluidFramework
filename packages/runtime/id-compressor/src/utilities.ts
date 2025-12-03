@@ -21,8 +21,10 @@ const hexadecimalCharCodes = [..."09afAF"].map((c) => c.codePointAt(0)) as [
 
 function isHexadecimalCharacter(charCode: number): boolean {
 	return (
-		(charCode >= hexadecimalCharCodes[0] && charCode <= hexadecimalCharCodes[1]) ||
-		(charCode >= hexadecimalCharCodes[2] && charCode <= hexadecimalCharCodes[3]) ||
+		(charCode >= hexadecimalCharCodes[0] &&
+			charCode <= hexadecimalCharCodes[1]) ||
+		(charCode >= hexadecimalCharCodes[2] &&
+			charCode <= hexadecimalCharCodes[3]) ||
 		(charCode >= hexadecimalCharCodes[4] && charCode <= hexadecimalCharCodes[5])
 	);
 }
@@ -99,7 +101,10 @@ export function isStableId(str: string): str is StableId {
 
 			default: {
 				const codePoint = str.codePointAt(i);
-				assert(codePoint !== undefined, 0xaaf /* Unexpected undefined code point */);
+				assert(
+					codePoint !== undefined,
+					0xaaf /* Unexpected undefined code point */,
+				);
 				if (!isHexadecimalCharacter(codePoint)) {
 					return false;
 				}
@@ -174,7 +179,8 @@ export function stableIdFromNumericUuid(numericUuid: NumericUuid): StableId {
 	const upperMasked = (numericUuid & strippedUpperMask) << 6n;
 	const middieBittiesMasked = (numericUuid & strippedMiddieBittiesMask) << 2n;
 	const lowerMasked = numericUuid & lowerMask;
-	const uuidU128 = upperMasked | versionMask | middieBittiesMasked | variantMask | lowerMasked;
+	const uuidU128 =
+		upperMasked | versionMask | middieBittiesMasked | variantMask | lowerMasked;
 	// Pad to 32 characters, inserting leading zeroes if needed
 	const uuidString = uuidU128.toString(16).padStart(32, "0");
 	return `${uuidString.slice(0, 8)}-${uuidString.slice(8, 12)}-${uuidString.slice(
@@ -183,11 +189,17 @@ export function stableIdFromNumericUuid(numericUuid: NumericUuid): StableId {
 	)}-${uuidString.slice(16, 20)}-${uuidString.slice(20, 32)}` as StableId;
 }
 
-export function offsetNumericUuid(numericUuid: NumericUuid, offset: number): NumericUuid {
+export function offsetNumericUuid(
+	numericUuid: NumericUuid,
+	offset: number,
+): NumericUuid {
 	return (numericUuid + BigInt(offset)) as NumericUuid;
 }
 
-export function subtractNumericUuids(a: NumericUuid, b: NumericUuid): NumericUuid {
+export function subtractNumericUuids(
+	a: NumericUuid,
+	b: NumericUuid,
+): NumericUuid {
 	return (a - b) as NumericUuid;
 }
 

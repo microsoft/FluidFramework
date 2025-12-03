@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { FlowDocument } from "../document/index.js";
+import type { FlowDocument } from "../document/index.js";
 import { TagName } from "../util/index.js";
 
 import { debug } from "./debug.js";
 
-const enum ClipboardFormat {
+enum ClipboardFormat {
 	html = "text/html",
 	text = "text/text",
 }
@@ -38,7 +38,11 @@ const ignoredTags = [TagName.meta];
 function pasteChildren(doc: FlowDocument, root: Node, position: number) {
 	let _position = position;
 
-	for (let child: Node | null = root.firstChild; child !== null; child = child.nextSibling) {
+	for (
+		let child: Node | null = root.firstChild;
+		child !== null;
+		child = child.nextSibling
+	) {
 		switch (child.nodeType) {
 			case document.TEXT_NODE: {
 				const text = child as Text;

@@ -12,7 +12,7 @@ import {
 import type { IMergeTreeOptionsInternal } from "../mergeTree.js";
 import { SnapshotV1 } from "../snapshotV1.js";
 
-import { TestString, loadSnapshot } from "./snapshot.utils.js";
+import { loadSnapshot, TestString } from "./snapshot.utils.js";
 
 function makeSnapshotSuite(options?: IMergeTreeOptionsInternal): void {
 	describe("from an empty initial state", () => {
@@ -166,7 +166,10 @@ function makeSnapshotSuite(options?: IMergeTreeOptionsInternal): void {
 describe("snapshot", () => {
 	describe("with attribution", () => {
 		makeSnapshotSuite({
-			attribution: { track: true, policyFactory: createInsertOnlyAttributionPolicy },
+			attribution: {
+				track: true,
+				policyFactory: createInsertOnlyAttributionPolicy,
+			},
 			mergeTreeEnableObliterate: true,
 		});
 	});
@@ -190,11 +193,17 @@ describe("snapshot", () => {
 
 	it("presence of attribution overrides merge-tree initialization value", async () => {
 		const str = new TestString("id", {
-			attribution: { track: true, policyFactory: createInsertOnlyAttributionPolicy },
+			attribution: {
+				track: true,
+				policyFactory: createInsertOnlyAttributionPolicy,
+			},
 		});
 		str.append("hello world", /* increaseMsn: */ true);
 		await str.checkSnapshot({
-			attribution: { track: false, policyFactory: createInsertOnlyAttributionPolicy },
+			attribution: {
+				track: false,
+				policyFactory: createInsertOnlyAttributionPolicy,
+			},
 		});
 		str.insert(0, "should have attribution", false);
 		str.applyPendingOps();
@@ -208,7 +217,10 @@ describe("snapshot", () => {
 		const str = new TestString("id", { attribution: { track: false } });
 		str.append("hello world", /* increaseMsn: */ true);
 		await str.checkSnapshot({
-			attribution: { track: true, policyFactory: createInsertOnlyAttributionPolicy },
+			attribution: {
+				track: true,
+				policyFactory: createInsertOnlyAttributionPolicy,
+			},
 		});
 		str.insert(0, "should not have attribution", false);
 		str.applyPendingOps();

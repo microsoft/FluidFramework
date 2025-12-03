@@ -5,9 +5,9 @@
 
 import { strict as assert } from "node:assert";
 import {
-	type VersionBumpType,
 	bumpVersionScheme,
 	detectVersionScheme,
+	type VersionBumpType,
 } from "@fluid-tools/version-tools";
 import { rawlist } from "@inquirer/prompts";
 import type { Config } from "@oclif/core";
@@ -28,7 +28,7 @@ import {
 } from "../handlers/index.js";
 import { PromptWriter } from "../instructionalPromptWriter.js";
 // eslint-disable-next-line import-x/no-deprecated
-import { MonoRepoKind, getDefaultBumpTypeForBranch } from "../library/index.js";
+import { getDefaultBumpTypeForBranch, MonoRepoKind } from "../library/index.js";
 import { FluidReleaseMachine } from "../machines/index.js";
 import { getRunPolicyCheckDefault } from "../repoConfig.js";
 import { StateMachineCommand } from "../stateMachineCommand.js";
@@ -39,7 +39,9 @@ import { StateMachineCommand } from "../stateMachineCommand.js";
  * {@link FluidReleaseStateHandler} itself.
  */
 
-export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCommand> {
+export default class ReleaseCommand extends StateMachineCommand<
+	typeof ReleaseCommand
+> {
 	static readonly summary = "Releases a package or release group.";
 	static readonly description =
 		`The release command ensures that a release branch is in good condition, then walks the user through releasing a package or release group.
@@ -77,7 +79,10 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 	async init(): Promise<void> {
 		await super.init();
 
-		const [context] = await Promise.all([this.getContext(), this.initMachineHooks()]);
+		const [context] = await Promise.all([
+			this.getContext(),
+			this.initMachineHooks(),
+		]);
 		const { argv, flags, logger, machine } = this;
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -87,17 +92,27 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 			"Either release group and package flags must be provided.",
 		);
 
-		const packageOrReleaseGroup = findPackageOrReleaseGroup(rgOrPackageName, context);
+		const packageOrReleaseGroup = findPackageOrReleaseGroup(
+			rgOrPackageName,
+			context,
+		);
 		if (packageOrReleaseGroup === undefined) {
-			this.error(`Could not find release group or package: ${rgOrPackageName}`, {
-				exit: 1,
-			});
+			this.error(
+				`Could not find release group or package: ${rgOrPackageName}`,
+				{
+					exit: 1,
+				},
+			);
 		}
 		const releaseGroup = packageOrReleaseGroup.name;
 		const releaseVersion = packageOrReleaseGroup.version;
 		const gitRepo = await context.getGitRepository();
 		const currentBranch = await gitRepo.getCurrentBranchName();
-		const bumpType = await getBumpType(flags.bumpType, currentBranch, releaseVersion);
+		const bumpType = await getBumpType(
+			flags.bumpType,
+			currentBranch,
+			releaseVersion,
+		);
 
 		// eslint-disable-next-line no-warning-comments
 		// TODO: can be removed once server team owns server releases
@@ -130,7 +145,8 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 			versionScheme: detectVersionScheme(releaseVersion),
 			shouldSkipChecks: flags.skipChecks,
 			shouldCheckPolicy:
-				userPolicyCheckChoice ?? (branchPolicyCheckDefault && !flags.skipChecks),
+				userPolicyCheckChoice ??
+				(branchPolicyCheckDefault && !flags.skipChecks),
 			shouldCheckBranch: flags.branchCheck && !flags.skipChecks,
 			shouldCheckMainNextIntegrated: !flags.skipChecks,
 			shouldCommit: flags.commit && !flags.skipChecks,

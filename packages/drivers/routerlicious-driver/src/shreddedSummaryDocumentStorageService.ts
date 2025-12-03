@@ -3,30 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
+	stringToBuffer,
+	Uint8ArrayToString,
+} from "@fluid-internal/client-utils";
+import type {
+	ISummaryHandle,
+	ISummaryTree,
+} from "@fluidframework/driver-definitions";
+import type {
+	ICreateBlobResponse,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
-	ISummaryContext,
-	ICreateBlobResponse,
 	ISnapshotTreeEx,
+	ISummaryContext,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { buildGitTreeHierarchy } from "@fluidframework/driver-utils/internal";
 import {
-	ITelemetryLoggerExt,
-	MonitoringContext,
-	PerformanceEvent,
 	createChildMonitoringContext,
+	type ITelemetryLoggerExt,
+	type MonitoringContext,
+	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ICache, InMemoryCache } from "./cache.js";
-import { ISnapshotTreeVersion } from "./definitions.js";
-import { GitManager } from "./gitManager.js";
-import { IRouterliciousDriverPolicies } from "./policies.js";
+import { type ICache, InMemoryCache } from "./cache.js";
+import type { ISnapshotTreeVersion } from "./definitions.js";
+import type { GitManager } from "./gitManager.js";
+import type { IRouterliciousDriverPolicies } from "./policies.js";
 import { RetriableGitManager } from "./retriableGitManager.js";
-import { ISummaryUploadManager } from "./storageContracts.js";
+import type { ISummaryUploadManager } from "./storageContracts.js";
 import { SummaryTreeUploadManager } from "./summaryTreeUploadManager.js";
 
 const isNode = typeof window === "undefined";
@@ -36,7 +42,9 @@ const isNode = typeof window === "undefined";
  * Uploads summaries piece-by-piece traversing the tree recursively.
  * Downloads summaries piece-by-piece on-demand, or up-front when prefetch is enabled.
  */
-export class ShreddedSummaryDocumentStorageService implements IDocumentStorageService {
+export class ShreddedSummaryDocumentStorageService
+	implements IDocumentStorageService
+{
 	private readonly mc: MonitoringContext;
 	// The values of this cache is useless. We only need the keys. So we are always putting
 	// empty strings as values.
@@ -75,7 +83,10 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 		});
 	}
 
-	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
+	public async getVersions(
+		versionId: string | null,
+		count: number,
+	): Promise<IVersion[]> {
 		const id = versionId ? versionId : this.id;
 		const commits = await PerformanceEvent.timedExecAsync(
 			this.logger,
@@ -96,7 +107,9 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 		}));
 	}
 
-	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTreeEx | null> {
+	public async getSnapshotTree(
+		version?: IVersion,
+	): Promise<ISnapshotTreeEx | null> {
 		let requestVersion = version;
 		if (!requestVersion) {
 			const versions = await this.getVersions(this.id, 1);

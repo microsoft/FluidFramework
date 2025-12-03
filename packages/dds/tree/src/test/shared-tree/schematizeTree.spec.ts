@@ -4,29 +4,28 @@
  */
 
 import { strict as assert } from "node:assert";
-
+import type { Listenable } from "@fluidframework/core-interfaces";
 import {
 	type Anchor,
 	type AnchorNode,
+	type AnchorSetRootEvents,
 	type IForestSubscription,
 	type JsonableTree,
+	type TaggedChange,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
-	type AnchorSetRootEvents,
-	type TaggedChange,
 } from "../../core/index.js";
-import { fieldJsonCursor } from "../json/index.js";
 import {
-	FieldKinds,
 	allowsRepoSuperset,
 	defaultSchemaPolicy,
+	FieldKinds,
 	type ModularChangeset,
 } from "../../feature-libraries/index.js";
 import type {
-	ITreeCheckout,
-	ITreeCheckoutFork,
 	CheckoutEvents,
 	ISharedTreeEditor,
+	ITreeCheckout,
+	ITreeCheckoutFork,
 } from "../../shared-tree/index.js";
 import {
 	canInitialize,
@@ -34,16 +33,16 @@ import {
 	initializerFromChunk,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/schematizeTree.js";
-import type { Listenable } from "@fluidframework/core-interfaces";
+import type { Transactor } from "../../shared-tree-core/index.js";
 import {
-	SchemaFactory,
 	type ImplicitFieldSchema,
+	SchemaFactory,
 	type TreeView,
 	type TreeViewConfiguration,
+	toInitialSchema,
 } from "../../simple-tree/index.js";
-import { toInitialSchema } from "../../simple-tree/index.js";
-import type { Transactor } from "../../shared-tree-core/index.js";
 import { Breakable } from "../../util/index.js";
+import { fieldJsonCursor } from "../json/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { makeTestDefaultChangeFamily } from "../shared-tree-core/utils.js";
 import {
@@ -61,7 +60,10 @@ const schemaValueRoot = [root, builder.string];
 // Schema for tree that must always be empty.
 const emptySchema = builder.optional([]);
 
-function expectSchema(actual: TreeStoredSchema, expected: TreeStoredSchema): void {
+function expectSchema(
+	actual: TreeStoredSchema,
+	expected: TreeStoredSchema,
+): void {
 	// Check schema match
 	assert(allowsRepoSuperset(defaultSchemaPolicy, actual, expected));
 	assert(allowsRepoSuperset(defaultSchemaPolicy, expected, actual));
@@ -71,7 +73,10 @@ function makeCheckout(
 	repository: TreeStoredSchemaRepository,
 	onChange: (change: TaggedChange<ModularChangeset>) => void = () => {},
 ) {
-	const editor = makeTestDefaultChangeFamily().buildEditor(mintRevisionTag, onChange);
+	const editor = makeTestDefaultChangeFamily().buildEditor(
+		mintRevisionTag,
+		onChange,
+	);
 
 	return {
 		storedSchema: repository,
@@ -85,7 +90,10 @@ function makeCheckout(
 
 describe("schematizeTree", () => {
 	describe("initialize", () => {
-		function testInitialize(name: string, content: TreeStoredContentStrict): void {
+		function testInitialize(
+			name: string,
+			content: TreeStoredContentStrict,
+		): void {
 			describe(`Initialize ${name}`, () => {
 				it("correct output", () => {
 					const storedSchema = new TreeStoredSchemaRepository();
@@ -94,7 +102,9 @@ describe("schematizeTree", () => {
 					initialize(
 						checkout,
 						content.schema,
-						initializerFromChunk(checkout, () => treeChunkFromCursor(content.initialTree)),
+						initializerFromChunk(checkout, () =>
+							treeChunkFromCursor(content.initialTree),
+						),
 					);
 					assert.equal(count, 1);
 					expectSchema(storedSchema, content.schema);
@@ -106,7 +116,9 @@ describe("schematizeTree", () => {
 					// this test should be updated to use it to greatly increase its validation.
 
 					const storedSchema = new TreeStoredSchemaRepository();
-					let previousSchema: TreeStoredSchema = new TreeStoredSchemaRepository(storedSchema);
+					let previousSchema: TreeStoredSchema = new TreeStoredSchemaRepository(
+						storedSchema,
+					);
 					expectSchema(storedSchema, previousSchema);
 
 					storedSchema.events.on("afterSchemaChange", () => {
@@ -122,7 +134,9 @@ describe("schematizeTree", () => {
 					initialize(
 						checkout,
 						content.schema,
-						initializerFromChunk(checkout, () => treeChunkFromCursor(content.initialTree)),
+						initializerFromChunk(checkout, () =>
+							treeChunkFromCursor(content.initialTree),
+						),
 					);
 
 					// Ensure final schema change was actually tested.
@@ -137,16 +151,21 @@ describe("schematizeTree", () => {
 					storedSchema.events.on("afterSchemaChange", () => {
 						log.push("schema");
 					});
-					const checkout = makeCheckout(storedSchema, () => log.push("content"));
+					const checkout = makeCheckout(storedSchema, () =>
+						log.push("content"),
+					);
 					initialize(
 						checkout,
 						content.schema,
-						initializerFromChunk(checkout, () => treeChunkFromCursor(content.initialTree)),
+						initializerFromChunk(checkout, () =>
+							treeChunkFromCursor(content.initialTree),
+						),
 					);
 
 					assert.deepEqual(
 						log,
-						content.schema.rootFieldSchema.kind === FieldKinds.required.identifier
+						content.schema.rootFieldSchema.kind ===
+							FieldKinds.required.identifier
 							? ["schema", "content", "schema"]
 							: ["schema", "content"],
 					);
@@ -170,8 +189,13 @@ describe("schematizeTree", () => {
 		// TODO: Test schema validation of initial tree (once we have a utility for it)
 	});
 
-	function mockCheckout(InputSchema: ImplicitFieldSchema, isEmpty: boolean): ITreeCheckout {
-		const storedSchema = new TreeStoredSchemaRepository(toInitialSchema(InputSchema));
+	function mockCheckout(
+		InputSchema: ImplicitFieldSchema,
+		isEmpty: boolean,
+	): ITreeCheckout {
+		const storedSchema = new TreeStoredSchemaRepository(
+			toInitialSchema(InputSchema),
+		);
 		const checkout: ITreeCheckout = {
 			breaker: new Breakable("mockCheckout"),
 			storedSchema,

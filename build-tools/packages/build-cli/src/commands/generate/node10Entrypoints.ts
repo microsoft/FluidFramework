@@ -12,8 +12,8 @@ import { ApiLevel, BaseCommand, knownApiLevels } from "../../library/index.js";
 import { readPackageJson, readTsConfig } from "../../library/package.js";
 
 import {
-	type Node10CompatExportData,
 	getTypesPathFromPackage,
+	type Node10CompatExportData,
 	// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../library/packageExports.js";
@@ -47,7 +47,10 @@ export default class GenerateNode10EntrypointsCommand extends BaseCommand<
 			);
 		}
 
-		await generateNode10TypeEntrypoints(mapNode10CompatExportPathToData, this.logger);
+		await generateNode10TypeEntrypoints(
+			mapNode10CompatExportPathToData,
+			this.logger,
+		);
 	}
 }
 
@@ -106,7 +109,10 @@ async function generateNode10TypeEntrypoints(
 	 */
 	const fileSavePromises: Promise<void>[] = [];
 
-	for (const [outFile, { relPath, isTypeOnly }] of mapExportPathToData.entries()) {
+	for (const [
+		outFile,
+		{ relPath, isTypeOnly },
+	] of mapExportPathToData.entries()) {
 		log.info(`\tGenerating ${outFile}`);
 		const jsImport = relPath.replace(/\.d\.([cm]?)ts/, ".$1js");
 		fileSavePromises.push(

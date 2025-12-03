@@ -4,15 +4,15 @@
  */
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { ILoaderProps } from "@fluidframework/container-loader/internal";
-import { type SharedString } from "@fluidframework/sequence/internal";
+import type { ILoaderProps } from "@fluidframework/container-loader/internal";
+import type { SharedString } from "@fluidframework/sequence/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	DataObjectFactoryType,
-	ITestContainerConfig,
-	ITestFluidObject,
-	ITestObjectProvider,
 	createTestConfigProvider,
+	DataObjectFactoryType,
+	type ITestContainerConfig,
+	type ITestFluidObject,
+	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
 /**
@@ -54,89 +54,145 @@ describeCompat(
 
 		it("Create with read connection and load with read connection", async () => {
 			// Create container with read-connection
-			const container1 = await provider.makeTestContainer(configWithReadConnection);
-			const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
-			const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
+			const container1 = await provider.makeTestContainer(
+				configWithReadConnection,
+			);
+			const dataObject1 =
+				(await container1.getEntryPoint()) as ITestFluidObject;
+			const sharedString1 =
+				await dataObject1.getSharedObject<SharedString>(stringId);
 			sharedString1.insertText(0, "a");
 			await provider.ensureSynchronized();
 			mockLogger.assertMatch([
-				{ eventName: "fluid:telemetry:OpRoundtripTime", clientType: "interactive" },
+				{
+					eventName: "fluid:telemetry:OpRoundtripTime",
+					clientType: "interactive",
+				},
 			]);
 
 			// Load the container with read-connection
-			const container2 = await provider.loadTestContainer(configWithReadConnection);
-			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
-			const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
+			const container2 = await provider.loadTestContainer(
+				configWithReadConnection,
+			);
+			const dataObject2 =
+				(await container2.getEntryPoint()) as ITestFluidObject;
+			const sharedString2 =
+				await dataObject2.getSharedObject<SharedString>(stringId);
 			sharedString2.insertText(0, "b");
 			await provider.ensureSynchronized();
 			mockLogger.assertMatch([
-				{ eventName: "fluid:telemetry:OpRoundtripTime", clientType: "interactive" },
+				{
+					eventName: "fluid:telemetry:OpRoundtripTime",
+					clientType: "interactive",
+				},
 			]);
 		});
 
 		it("Create with read connection and load with write connection", async () => {
 			// Create container with read-connection
-			const container1 = await provider.makeTestContainer(configWithReadConnection);
-			const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
-			const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
+			const container1 = await provider.makeTestContainer(
+				configWithReadConnection,
+			);
+			const dataObject1 =
+				(await container1.getEntryPoint()) as ITestFluidObject;
+			const sharedString1 =
+				await dataObject1.getSharedObject<SharedString>(stringId);
 			sharedString1.insertText(0, "a");
 			await provider.ensureSynchronized();
 			mockLogger.assertMatch([
-				{ eventName: "fluid:telemetry:OpRoundtripTime", clientType: "interactive" },
+				{
+					eventName: "fluid:telemetry:OpRoundtripTime",
+					clientType: "interactive",
+				},
 			]);
 
 			// Load the container with write-connection
-			const container2 = await provider.loadTestContainer(configWithWriteConnection);
-			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
-			const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
+			const container2 = await provider.loadTestContainer(
+				configWithWriteConnection,
+			);
+			const dataObject2 =
+				(await container2.getEntryPoint()) as ITestFluidObject;
+			const sharedString2 =
+				await dataObject2.getSharedObject<SharedString>(stringId);
 			sharedString2.insertText(0, "b");
 			await provider.ensureSynchronized();
 			mockLogger.assertMatch([
-				{ eventName: "fluid:telemetry:OpRoundtripTime", clientType: "interactive" },
+				{
+					eventName: "fluid:telemetry:OpRoundtripTime",
+					clientType: "interactive",
+				},
 			]);
 		});
 
 		it("Create with write connection and load with read connection", async () => {
 			// Create container with write-connection
-			const container1 = await provider.makeTestContainer(configWithWriteConnection);
-			const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
-			const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
+			const container1 = await provider.makeTestContainer(
+				configWithWriteConnection,
+			);
+			const dataObject1 =
+				(await container1.getEntryPoint()) as ITestFluidObject;
+			const sharedString1 =
+				await dataObject1.getSharedObject<SharedString>(stringId);
 			sharedString1.insertText(0, "a");
 			await provider.ensureSynchronized();
 			mockLogger.assertMatch([
-				{ eventName: "fluid:telemetry:OpRoundtripTime", clientType: "interactive" },
+				{
+					eventName: "fluid:telemetry:OpRoundtripTime",
+					clientType: "interactive",
+				},
 			]);
 
 			// Load the container with read-connection
-			const container2 = await provider.loadTestContainer(configWithReadConnection);
-			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
-			const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
+			const container2 = await provider.loadTestContainer(
+				configWithReadConnection,
+			);
+			const dataObject2 =
+				(await container2.getEntryPoint()) as ITestFluidObject;
+			const sharedString2 =
+				await dataObject2.getSharedObject<SharedString>(stringId);
 			sharedString2.insertText(0, "b");
 			await provider.ensureSynchronized();
 			mockLogger.assertMatch([
-				{ eventName: "fluid:telemetry:OpRoundtripTime", clientType: "interactive" },
+				{
+					eventName: "fluid:telemetry:OpRoundtripTime",
+					clientType: "interactive",
+				},
 			]);
 		});
 
 		it("Create with write connection and load with write connection", async () => {
 			// Create container with write-connection
-			const container1 = await provider.makeTestContainer(configWithWriteConnection);
-			const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
-			const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
+			const container1 = await provider.makeTestContainer(
+				configWithWriteConnection,
+			);
+			const dataObject1 =
+				(await container1.getEntryPoint()) as ITestFluidObject;
+			const sharedString1 =
+				await dataObject1.getSharedObject<SharedString>(stringId);
 			sharedString1.insertText(0, "a");
 			await provider.ensureSynchronized();
 			mockLogger.assertMatch([
-				{ eventName: "fluid:telemetry:OpRoundtripTime", clientType: "interactive" },
+				{
+					eventName: "fluid:telemetry:OpRoundtripTime",
+					clientType: "interactive",
+				},
 			]);
 
 			// Load the container with write-connection
-			const container2 = await provider.loadTestContainer(configWithWriteConnection);
-			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
-			const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
+			const container2 = await provider.loadTestContainer(
+				configWithWriteConnection,
+			);
+			const dataObject2 =
+				(await container2.getEntryPoint()) as ITestFluidObject;
+			const sharedString2 =
+				await dataObject2.getSharedObject<SharedString>(stringId);
 			sharedString2.insertText(0, "b");
 			await provider.ensureSynchronized();
 			mockLogger.assertMatch([
-				{ eventName: "fluid:telemetry:OpRoundtripTime", clientType: "interactive" },
+				{
+					eventName: "fluid:telemetry:OpRoundtripTime",
+					clientType: "interactive",
+				},
 			]);
 		});
 	},

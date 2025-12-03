@@ -5,8 +5,8 @@
 
 import type { Package } from "@fluidframework/build-tools";
 import { runCommand } from "@oclif/test";
-import { assert, expect } from "chai";
 import * as chai from "chai";
+import { assert, expect } from "chai";
 import assertArrays from "chai-arrays";
 import { describe, it } from "mocha";
 
@@ -19,9 +19,12 @@ interface jsonOutput {
 
 describe("flub test-only-filter", () => {
 	it(`--all selector`, async () => {
-		const { stdout } = await runCommand(["test-only-filter", "--quiet", "--json", "--all"], {
-			root: import.meta.url,
-		});
+		const { stdout } = await runCommand(
+			["test-only-filter", "--quiet", "--json", "--all"],
+			{
+				root: import.meta.url,
+			},
+		);
 		const output: jsonOutput = JSON.parse(stdout) as jsonOutput;
 		const { selected, filtered } = output;
 		expect(selected).to.be.ofSize(filtered.length);
@@ -46,7 +49,13 @@ describe("flub test-only-filter", () => {
 
 	it(`--releaseGroup selector`, async () => {
 		const { stdout } = await runCommand(
-			["test-only-filter", "--quiet", "--json", "--releaseGroup", "build-tools"],
+			[
+				"test-only-filter",
+				"--quiet",
+				"--json",
+				"--releaseGroup",
+				"build-tools",
+			],
 			{ root: import.meta.url },
 		);
 		const output: jsonOutput = JSON.parse(stdout) as jsonOutput;
@@ -64,7 +73,9 @@ describe("flub test-only-filter", () => {
 		const { filtered } = output;
 
 		const names = filtered.map((p) => p.name);
-		expect(names).to.be.containing("@fluid-private/changelog-generator-wrapper");
+		expect(names).to.be.containing(
+			"@fluid-private/changelog-generator-wrapper",
+		);
 		expect(names).to.be.containing("@fluid-example/example-utils");
 	});
 
@@ -77,12 +88,21 @@ describe("flub test-only-filter", () => {
 		const { filtered } = output;
 
 		const names = filtered.map((p) => p.name);
-		expect(names).not.to.be.containing("@fluid-private/changelog-generator-wrapper");
+		expect(names).not.to.be.containing(
+			"@fluid-private/changelog-generator-wrapper",
+		);
 	});
 
 	it(`--scope filter`, async () => {
 		const { stdout } = await runCommand(
-			["test-only-filter", "--quiet", "--json", "--all", "--skipScope", "@fluidframework"],
+			[
+				"test-only-filter",
+				"--quiet",
+				"--json",
+				"--all",
+				"--skipScope",
+				"@fluidframework",
+			],
 			{ root: import.meta.url },
 		);
 		const output: jsonOutput = JSON.parse(stdout) as jsonOutput;

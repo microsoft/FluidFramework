@@ -10,13 +10,12 @@ import "jsdom-global/register.js";
 window.performance.mark ??= () => undefined as unknown as PerformanceMark;
 window.performance.measure ??= () => undefined as unknown as PerformanceMeasure;
 
-import { strict as assert } from "assert";
-
 import { describeCompat } from "@fluid-private/test-version-utils";
 import {
-	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
+	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
+import { strict as assert } from "assert";
 
 import { FlowDocument } from "../document/index.js";
 import { htmlFormatter } from "../index.js";

@@ -15,5 +15,7 @@ export function transformMapValues<Key, InputValue, OutputValue>(
 	map: ReadonlyMap<Key, InputValue>,
 	transformValue: (value: InputValue, key: Key) => OutputValue,
 ): Map<Key, OutputValue> {
-	return new Map([...map.entries()].map(([key, value]) => [key, transformValue(value, key)]));
+	return new Map(
+		[...map.entries()].map(([key, value]) => [key, transformValue(value, key)]),
+	);
 }

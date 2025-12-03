@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Dom, ICommand, KeyCode, randomId } from "../../util/index.js";
+import { Dom, type ICommand, KeyCode, randomId } from "../../util/index.js";
 import { debug } from "../debug.js";
 
 import { View } from "./view.js";
@@ -42,7 +42,10 @@ export class SearchMenuView extends View<ISearchMenuProps, ISearchMenuProps> {
 		this.inputElement.classList.add("input");
 		this.inputElement.autocomplete = "off";
 		// Assign the datalist a random 'id' and <input> element to the datalist.
-		this.inputElement.setAttribute("list", (this.datalistElement.id = randomId()));
+		this.inputElement.setAttribute(
+			"list",
+			(this.datalistElement.id = randomId()),
+		);
 		this.onDom(this.inputElement, "keydown", this.onKeyDown);
 
 		root.append(this.inputElement, this.datalistElement);
@@ -95,7 +98,9 @@ export class SearchMenuView extends View<ISearchMenuProps, ISearchMenuProps> {
 	}
 
 	private complete(e: KeyboardEvent, commit: boolean) {
-		const command = commit ? this.findCommand(this.inputElement.value) : undefined;
+		const command = commit
+			? this.findCommand(this.inputElement.value)
+			: undefined;
 
 		this.dismiss(e);
 		this.state.onComplete(command);

@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { Tree, TreeNode, type ImplicitFieldSchema } from "@fluidframework/tree";
-import { TreeAlpha, type TreeBranch, type TreeViewAlpha } from "@fluidframework/tree/alpha";
+import { type ImplicitFieldSchema, Tree, TreeNode } from "@fluidframework/tree";
+import {
+	TreeAlpha,
+	type TreeBranch,
+	type TreeViewAlpha,
+} from "@fluidframework/tree/alpha";
 
 /**
  * Given a {@link TreeNode} _n_ and a target {@link TreeView} _B_, return the node corresponding to _n_ in _B_.

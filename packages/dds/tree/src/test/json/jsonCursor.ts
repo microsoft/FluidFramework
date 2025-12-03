@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import {
 	EmptyKey,
 	type FieldKey,
@@ -20,10 +20,8 @@ import {
 	stackTreeFieldCursor,
 	stackTreeNodeCursor,
 } from "../../feature-libraries/index.js";
-import { brand, isReadonlyArray, type JsonCompatible } from "../../util/index.js";
 
 import { JsonAsTree } from "../../jsonDomainSchema.js";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import {
 	booleanSchema,
 	nullSchema,
@@ -31,6 +29,11 @@ import {
 	stringSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/leafNodeSchema.js";
+import {
+	brand,
+	isReadonlyArray,
+	type JsonCompatible,
+} from "../../util/index.js";
 
 const adapter: CursorAdapter<JsonCompatible> = {
 	value: (node: JsonCompatible) =>
@@ -71,7 +74,10 @@ const adapter: CursorAdapter<JsonCompatible> = {
 				return [];
 		}
 	},
-	getFieldFromNode: (node: JsonCompatible, key: FieldKey): readonly JsonCompatible[] => {
+	getFieldFromNode: (
+		node: JsonCompatible,
+		key: FieldKey,
+	): readonly JsonCompatible[] => {
 		// Object.prototype.hasOwnProperty can return true for strings (ex: with key "0"), so we have to filter them out.
 		// Rather than just special casing strings, we can handle them with an early return for all primitives.
 		if (typeof node !== "object") {
@@ -86,7 +92,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
 			return key === EmptyKey ? node : [];
 		}
 
-		if (Object.prototype.hasOwnProperty.call(node, key)) {
+		if (Object.hasOwn(node, key)) {
 			const field = node[key];
 			assert(
 				field !== undefined,
@@ -115,7 +121,9 @@ export function singleJsonCursor(root: JsonCompatible): ITreeCursorSynchronous {
  *
  * @returns an {@link ITreeCursorSynchronous} for a single {@link JsonCompatible}.
  */
-export function fieldJsonCursor(root: JsonCompatible[]): ITreeCursorSynchronous {
+export function fieldJsonCursor(
+	root: JsonCompatible[],
+): ITreeCursorSynchronous {
 	return stackTreeFieldCursor(adapter, root, keyAsDetachedField(EmptyKey));
 }
 
@@ -130,8 +138,14 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
 		case numberSchema.identifier:
 		case booleanSchema.identifier:
 		case stringSchema.identifier:
-			assert(reader.value !== undefined, 0x84f /* out of schema: missing value */);
-			assert(!isFluidHandle(reader.value), 0x850 /* out of schema: unexpected FluidHandle */);
+			assert(
+				reader.value !== undefined,
+				0x84f /* out of schema: missing value */,
+			);
+			assert(
+				!isFluidHandle(reader.value),
+				0x850 /* out of schema: unexpected FluidHandle */,
+			);
 			return reader.value;
 		case JsonAsTree.Array.identifier: {
 			reader.enterField(EmptyKey);

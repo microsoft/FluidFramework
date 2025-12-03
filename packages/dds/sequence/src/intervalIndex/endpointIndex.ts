@@ -3,12 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { Client, RedBlackTree } from "@fluidframework/merge-tree/internal";
+import { type Client, RedBlackTree } from "@fluidframework/merge-tree/internal";
 
-import { createTransientInterval, SequenceInterval } from "../intervals/index.js";
-import { ISharedString } from "../sharedString.js";
+import {
+	createTransientInterval,
+	type SequenceInterval,
+} from "../intervals/index.js";
+import type { ISharedString } from "../sharedString.js";
 
-import { type SequenceIntervalIndex } from "./intervalIndex.js";
+import type { SequenceIntervalIndex } from "./intervalIndex.js";
 
 /**
  * @internal
@@ -28,11 +31,14 @@ export interface IEndpointIndex extends SequenceIntervalIndex {
 }
 
 export class EndpointIndex implements IEndpointIndex {
-	private readonly endIntervalTree: RedBlackTree<SequenceInterval, SequenceInterval>;
+	private readonly endIntervalTree: RedBlackTree<
+		SequenceInterval,
+		SequenceInterval
+	>;
 
 	constructor(private readonly client: Client) {
-		this.endIntervalTree = new RedBlackTree<SequenceInterval, SequenceInterval>((a, b) =>
-			a.compareEnd(b),
+		this.endIntervalTree = new RedBlackTree<SequenceInterval, SequenceInterval>(
+			(a, b) => a.compareEnd(b),
 		);
 	}
 
@@ -64,7 +70,9 @@ export class EndpointIndex implements IEndpointIndex {
 /**
  * @internal
  */
-export function createEndpointIndex(sharedString: ISharedString): IEndpointIndex {
+export function createEndpointIndex(
+	sharedString: ISharedString,
+): IEndpointIndex {
 	const client = (sharedString as unknown as { client: Client }).client;
 	return new EndpointIndex(client);
 }

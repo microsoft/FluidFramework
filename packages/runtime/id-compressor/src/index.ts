@@ -8,21 +8,21 @@
  */
 
 export { createIdCompressor, deserializeIdCompressor } from "./idCompressor.js";
+export type {
+	IdCreationRange,
+	IIdCompressor,
+	IIdCompressorCore,
+	OpSpaceCompressedId,
+	SerializedIdCompressor,
+	SerializedIdCompressorWithNoSession,
+	SerializedIdCompressorWithOngoingSession,
+	SessionId,
+	SessionSpaceCompressedId,
+	StableId,
+} from "./types/index.js";
 export {
-	createSessionId,
 	assertIsStableId,
+	createSessionId,
 	generateStableId,
 	isStableId,
 } from "./utilities.js";
-export type {
-	IIdCompressorCore,
-	IIdCompressor,
-	SerializedIdCompressor,
-	SerializedIdCompressorWithOngoingSession,
-	SerializedIdCompressorWithNoSession,
-	SessionSpaceCompressedId,
-	OpSpaceCompressedId,
-	SessionId,
-	StableId,
-	IdCreationRange,
-} from "./types/index.js";

@@ -4,9 +4,14 @@
  */
 
 import { CollaborativeInput } from "@fluid-example/example-utils";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import type React from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import type { ExternalSnapshotTask, ITask, ITaskList } from "../model-interface/index.js";
+import type {
+	ExternalSnapshotTask,
+	ITask,
+	ITaskList,
+} from "../model-interface/index.js";
 
 /**
  * {@link TaskRow} input props.
@@ -30,9 +35,8 @@ interface ITaskRowProps {
 const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 	const { task, deleteDraftTask, clientID, leader } = props;
 	const priorityRef = useRef<HTMLInputElement>(null);
-	const [externalDataSnapshot, setExternalDataSnapshot] = useState<ExternalSnapshotTask>(
-		task.externalDataSnapshot,
-	);
+	const [externalDataSnapshot, setExternalDataSnapshot] =
+		useState<ExternalSnapshotTask>(task.externalDataSnapshot);
 	const [showConflictUI, setShowConflictUI] = useState<boolean>(false);
 	useEffect(() => {
 		const updatePriorityFromFluid = (): void => {
@@ -102,12 +106,17 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 				></input>
 			</td>
 			<td>
-				<button onClick={deleteDraftTask} style={{ background: "none", border: "none" }}>
+				<button
+					onClick={deleteDraftTask}
+					style={{ background: "none", border: "none" }}
+				>
 					❌
 				</button>
 			</td>
 			{showNameDiff ? (
-				<td style={{ backgroundColor: diffColor }}>{externalDataSnapshot.name}</td>
+				<td style={{ backgroundColor: diffColor }}>
+					{externalDataSnapshot.name}
+				</td>
 			) : (
 				<td />
 			)}
@@ -121,7 +130,9 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 			<td>
 				<div style={{ visibility: showAcceptButton }}>
 					{clientID !== undefined && clientID === leader ? (
-						<button onClick={task.overwriteWithExternalData}>Accept change</button>
+						<button onClick={task.overwriteWithExternalData}>
+							Accept change
+						</button>
 					) : (
 						<h4 style={{ margin: 0 }}>Changes in progress</h4>
 					)}
@@ -153,7 +164,9 @@ export interface ITaskListViewProps {
 /**
  * A tabular, editable view of the task list.  Includes a save button to sync the changes back to the data source.
  */
-export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewProps) => {
+export const TaskListView: React.FC<ITaskListViewProps> = (
+	props: ITaskListViewProps,
+) => {
 	const { taskList, claimLeadership, clientID, leaderID } = props;
 
 	const [tasks, setTasks] = useState<ITask[]>(taskList.getDraftTasks());
@@ -242,7 +255,9 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 			</table>
 			<button onClick={handleSaveChanges}>Write to External Source</button>
 			<div style={{ margin: "10px 0" }}>
-				<button onClick={(): void => claimLeadership()}>Claim Leadership</button>
+				<button onClick={(): void => claimLeadership()}>
+					Claim Leadership
+				</button>
 			</div>
 		</div>
 	);

@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	stringToBuffer,
+	Uint8ArrayToString,
+} from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	type ISummaryBlob,
@@ -11,7 +14,10 @@ import {
 	type SummaryObject,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
-import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type {
+	ISnapshot,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	getDocAttributesFromProtocolSummary,
 	getGitType,
@@ -34,7 +40,10 @@ import type {
 import type { EpochTracker, FetchType } from "./../epochTracker.js";
 import { getHeadersWithAuth } from "./../getUrlAndHeadersWithAuth.js";
 import { checkForKnownServerFarmType } from "./../odspUrlHelper.js";
-import { getWithRetryForTokenRefresh, maxUmpPostBodySize } from "./../odspUtils.js";
+import {
+	getWithRetryForTokenRefresh,
+	maxUmpPostBodySize,
+} from "./../odspUtils.js";
 import { runWithRetry } from "./../retryUtils.js";
 
 /**
@@ -45,10 +54,14 @@ export function convertCreateNewSummaryTreeToTreeAndBlobs(
 	treeId: string,
 ): ISnapshot {
 	const protocolSummary = summary.tree[".protocol"] as ISummaryTree;
-	const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
+	const documentAttributes =
+		getDocAttributesFromProtocolSummary(protocolSummary);
 	const sequenceNumber = documentAttributes.sequenceNumber;
 	const blobContents = new Map<string, ArrayBuffer>();
-	const snapshotTree = convertCreateNewSummaryTreeToTreeAndBlobsCore(summary, blobContents);
+	const snapshotTree = convertCreateNewSummaryTreeToTreeAndBlobsCore(
+		summary,
+		blobContents,
+	);
 	snapshotTree.id = treeId;
 	const snapshotTreeValue: ISnapshot = {
 		snapshotTree,
@@ -96,7 +109,9 @@ function convertCreateNewSummaryTreeToTreeAndBlobsCore(
 			}
 			case SummaryType.Handle:
 			case SummaryType.Attachment: {
-				throw new Error(`No ${summaryObject.type} should be present for detached summary!`);
+				throw new Error(
+					`No ${summaryObject.type} should be present for detached summary!`,
+				);
 			}
 			default: {
 				unreachableCase(
@@ -117,7 +132,8 @@ export function convertSummaryIntoContainerSnapshot(
 	}
 	const appSummary = createNewSummary.tree[".app"];
 	const protocolSummary = createNewSummary.tree[".protocol"];
-	const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
+	const documentAttributes =
+		getDocAttributesFromProtocolSummary(protocolSummary);
 	const attributesSummaryBlob: ISummaryBlob = {
 		type: SummaryType.Blob,
 		content: JSON.stringify(documentAttributes),
@@ -130,7 +146,9 @@ export function convertSummaryIntoContainerSnapshot(
 			".app": appSummary,
 		},
 	};
-	const snapshotTree = convertSummaryToSnapshotTreeForCreateNew(convertedCreateNewSummary);
+	const snapshotTree = convertSummaryToSnapshotTreeForCreateNew(
+		convertedCreateNewSummary,
+	);
 	const snapshot: IOdspSummaryPayload = {
 		entries: snapshotTree.entries ?? [],
 		message: "app",
@@ -143,7 +161,9 @@ export function convertSummaryIntoContainerSnapshot(
 /**
  * Converts a summary tree to ODSP tree
  */
-function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspSummaryTree {
+function convertSummaryToSnapshotTreeForCreateNew(
+	summary: ISummaryTree,
+): IOdspSummaryTree {
 	const snapshotTree: IOdspSummaryTree = {
 		type: "tree",
 		entries: [],
@@ -173,7 +193,8 @@ function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspS
 					typeof summaryObject.content === "string"
 						? summaryObject.content
 						: Uint8ArrayToString(summaryObject.content, "base64");
-				const encoding = typeof summaryObject.content === "string" ? "utf-8" : "base64";
+				const encoding =
+					typeof summaryObject.content === "string" ? "utf-8" : "base64";
 
 				value = {
 					type: "blob",
@@ -268,7 +289,8 @@ export async function createNewFluidContainerCore<T>(args: {
 				// We use the byte length of the post body to determine if we should use the multipart/form-data or not. This helps
 				// in cases where the body contains data with different language where 1 char could be multiple code points.
 				if (
-					new TextEncoder().encode(postBodyWithAuth).length <= maxUmpPostBodySize &&
+					new TextEncoder().encode(postBodyWithAuth).length <=
+						maxUmpPostBodySize &&
 					authHeader?.startsWith("Bearer")
 				) {
 					url = authInBodyUrl;

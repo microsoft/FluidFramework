@@ -4,11 +4,11 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IEvent } from "@fluidframework/core-interfaces";
+import type { IEvent } from "@fluidframework/core-interfaces";
 import {
-	IAnyDriverError,
-	IConnect,
-	IConnected,
+	type IAnyDriverError,
+	type IConnect,
+	type IConnected,
 	ScopeType,
 } from "@fluidframework/driver-definitions/internal";
 import { createGenericNetworkError } from "@fluidframework/driver-utils/internal";
@@ -17,7 +17,10 @@ import { v4 as uuid } from "uuid";
 import { pkgVersion as driverVersion } from "../../packageVersion.js";
 
 export interface SocketMockEvents extends IEvent {
-	(event: "disconnect", listener: (reason?: IAnyDriverError, details?: unknown) => void): void;
+	(
+		event: "disconnect",
+		listener: (reason?: IAnyDriverError, details?: unknown) => void,
+	): void;
 	(event: "error", listener: (error?: IAnyDriverError) => void): void;
 }
 
@@ -82,14 +85,24 @@ export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 		details?: { context: { type?: string; code?: number } },
 	): void {
 		const error =
-			reason ?? createGenericNetworkError("TestError", { canRetry: false }, { driverVersion });
+			reason ??
+			createGenericNetworkError(
+				"TestError",
+				{ canRetry: false },
+				{ driverVersion },
+			);
 		this.emit("disconnect", error, details);
 	}
 
 	public sendErrorEvent(error?: IAnyDriverError): void {
 		this.emit(
 			"error",
-			error ?? createGenericNetworkError("TestError", { canRetry: false }, { driverVersion }),
+			error ??
+				createGenericNetworkError(
+					"TestError",
+					{ canRetry: false },
+					{ driverVersion },
+				),
 		);
 	}
 
@@ -102,7 +115,11 @@ export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 					case "connect_error": {
 						const errorToThrow =
 							this.mockSocketConnectResponse.connect_document.errorToThrow ??
-							createGenericNetworkError("TestError", { canRetry: false }, { driverVersion });
+							createGenericNetworkError(
+								"TestError",
+								{ canRetry: false },
+								{ driverVersion },
+							);
 						this.emit(
 							this.mockSocketConnectResponse.connect_document.eventToEmit,
 							errorToThrow,
@@ -110,8 +127,8 @@ export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 						break;
 					}
 					case "connect_document_success": {
-						const iConnected: IConnected = this.mockSocketConnectResponse.connect_document
-							.connectMessage ?? {
+						const iConnected: IConnected = this.mockSocketConnectResponse
+							.connect_document.connectMessage ?? {
 							clientId: uuid(),
 							existing: true,
 							initialClients: [],
@@ -123,7 +140,11 @@ export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 							serviceConfiguration: { maxMessageSize: 1000, blockSize: 1000 },
 							claims: {
 								documentId: connectMessage.id,
-								scopes: [ScopeType.DocWrite, ScopeType.DocRead, ScopeType.SummaryWrite],
+								scopes: [
+									ScopeType.DocWrite,
+									ScopeType.DocRead,
+									ScopeType.SummaryWrite,
+								],
 								tenantId: connectMessage.tenantId,
 								ver: "1.0.0",
 								iat: 10,

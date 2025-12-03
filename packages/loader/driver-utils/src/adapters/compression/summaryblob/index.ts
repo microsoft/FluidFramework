@@ -4,6 +4,6 @@
  */
 
 export {
-	DocumentStorageServiceCompressionAdapter,
 	blobHeadersBlobName,
+	DocumentStorageServiceCompressionAdapter,
 } from "./documentStorageServiceSummaryBlobCompressionAdapter.js";

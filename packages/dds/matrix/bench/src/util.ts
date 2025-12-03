@@ -6,7 +6,7 @@
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import process from "process";
 import { insertFragmented } from "../../test/utils";
-import { SharedMatrix, SharedMatrixFactory } from "./imports";
+import { type SharedMatrix, SharedMatrixFactory } from "./imports";
 
 let count = 1;
 let cached: any;

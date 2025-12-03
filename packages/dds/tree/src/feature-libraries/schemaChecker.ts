@@ -3,20 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase, fail } from "@fluidframework/core-utils/internal";
+import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	type TreeFieldStoredSchema,
 	LeafNodeStoredSchema,
-	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
 	Multiplicity,
+	ObjectNodeStoredSchema,
 	type SchemaAndPolicy,
+	type TreeFieldStoredSchema,
 } from "../core/index.js";
-import { allowsValue } from "./valueUtilities.js";
-import type { MapTreeFieldViewGeneric, MinimalMapTreeNodeView } from "./mapTreeCursor.js";
 import { iterableHasSome, mapIterable } from "../util/index.js";
+import type {
+	MapTreeFieldViewGeneric,
+	MinimalMapTreeNodeView,
+} from "./mapTreeCursor.js";
+import { allowsValue } from "./valueUtilities.js";
 
 export enum SchemaValidationError {
 	Field_KindNotInSchemaPolicy,
@@ -75,7 +78,9 @@ export function isNodeInSchema<T extends NotUndefined>(
 		}
 
 		if (schema instanceof ObjectNodeStoredSchema) {
-			const uncheckedFieldsFromNode = new Set(mapIterable(node.fields, ([key, field]) => key));
+			const uncheckedFieldsFromNode = new Set(
+				mapIterable(node.fields, ([key, field]) => key),
+			);
 			for (const [fieldKey, fieldSchema] of schema.objectNodeFields) {
 				const nodeField = node.fields.get(fieldKey) ?? [];
 				const fieldInSchemaResult = isFieldInSchema(
@@ -137,7 +142,10 @@ export function isFieldInSchema<T extends NotUndefined>(
 
 	// Validate that the field doesn't contain more nodes than its type supports
 	{
-		const multiplicityCheck = compliesWithMultiplicity(childNodes.length, kind.multiplicity);
+		const multiplicityCheck = compliesWithMultiplicity(
+			childNodes.length,
+			kind.multiplicity,
+		);
 		if (multiplicityCheck !== undefined) {
 			return onError(multiplicityCheck);
 		}

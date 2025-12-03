@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ISharedArrayRevertible, IRevertible } from "./interfaces.js";
+import type { IRevertible, ISharedArrayRevertible } from "./interfaces.js";
 import type { ISharedArrayOperation } from "./sharedArrayOperations.js";
 import { OperationType } from "./sharedArrayOperations.js";
 
@@ -13,7 +13,10 @@ import { OperationType } from "./sharedArrayOperations.js";
 export class SharedArrayRevertible implements IRevertible {
 	private readonly sharedArray: ISharedArrayRevertible;
 	private readonly op: ISharedArrayOperation;
-	public constructor(sharedArray: ISharedArrayRevertible, op: ISharedArrayOperation) {
+	public constructor(
+		sharedArray: ISharedArrayRevertible,
+		op: ISharedArrayOperation,
+	) {
 		this.sharedArray = sharedArray;
 		this.op = op;
 	}

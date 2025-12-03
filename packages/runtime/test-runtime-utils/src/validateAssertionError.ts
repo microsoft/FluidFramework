@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { assert } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { shortCodeMap } from "./assertionShortCodesMap.js";
 
 /**
@@ -49,7 +49,9 @@ export function validateAssertionError(
  * {@link validateError} for `UsageError`.
  * @internal
  */
-export function validateUsageError(expectedErrorMsg: string | RegExp): (error: Error) => true {
+export function validateUsageError(
+	expectedErrorMsg: string | RegExp,
+): (error: Error) => true {
 	return validateError(expectedErrorMsg, UsageError);
 }
 
@@ -57,7 +59,9 @@ export function validateUsageError(expectedErrorMsg: string | RegExp): (error: E
  * {@link validateError} for `TypeError`.
  * @internal
  */
-export function validateTypeError(expectedErrorMsg: string | RegExp): (error: Error) => true {
+export function validateTypeError(
+	expectedErrorMsg: string | RegExp,
+): (error: Error) => true {
 	return validateError(expectedErrorMsg, TypeError);
 }
 
@@ -87,7 +91,10 @@ export function validateError(
 	};
 }
 
-function testErrorMessage(actualMessage: string, expectedErrorMsg: string | RegExp): boolean {
+function testErrorMessage(
+	actualMessage: string,
+	expectedErrorMsg: string | RegExp,
+): boolean {
 	return typeof expectedErrorMsg === "string"
 		? actualMessage !== expectedErrorMsg
 		: !expectedErrorMsg.test(actualMessage);

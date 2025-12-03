@@ -7,8 +7,8 @@ import type { IFluidContainer } from "@fluidframework/fluid-static";
 
 import type { ITelemetryConsumer } from "../common/index.js";
 import {
-	ContainerTelemetryManager,
 	ContainerEventTelemetryProducer,
+	ContainerTelemetryManager,
 } from "../container/index.js";
 
 /**
@@ -41,6 +41,12 @@ export interface TelemetryConfig {
  * @beta
  */
 export const startTelemetry = (config: TelemetryConfig): void => {
-	const telemetryProducer = new ContainerEventTelemetryProducer(config.containerId);
-	new ContainerTelemetryManager(config.container, telemetryProducer, config.consumers);
+	const telemetryProducer = new ContainerEventTelemetryProducer(
+		config.containerId,
+	);
+	new ContainerTelemetryManager(
+		config.container,
+		telemetryProducer,
+		config.consumers,
+	);
 };

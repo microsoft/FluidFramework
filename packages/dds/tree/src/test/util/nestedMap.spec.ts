@@ -6,17 +6,17 @@
 import { strict as assert } from "node:assert";
 
 import {
-	type NestedMap,
-	SizedNestedMap,
 	deleteFromNestedMap,
 	getOrAddInNestedMap,
+	getOrCreateInNestedMap,
 	getOrDefaultInNestedMap,
+	mapNestedMap,
+	type NestedMap,
 	populateNestedMap,
+	SizedNestedMap,
 	setInNestedMap,
 	tryAddToNestedMap,
 	tryGetFromNestedMap,
-	mapNestedMap,
-	getOrCreateInNestedMap,
 } from "../../util/index.js";
 
 describe("NestedMap unit tests", () => {
@@ -81,9 +81,17 @@ describe("NestedMap unit tests", () => {
 
 		it("Existing value", () => {
 			const nestedMap: NestedMap<string, string, number> = new Map();
-			const got1 = getOrCreateInNestedMap(nestedMap, "Foo", "Bar", (...args: unknown[]) => 1);
-			const got2 = getOrCreateInNestedMap(nestedMap, "Foo", "Bar", (...args: unknown[]) =>
-				assert.fail("Should not be called"),
+			const got1 = getOrCreateInNestedMap(
+				nestedMap,
+				"Foo",
+				"Bar",
+				(...args: unknown[]) => 1,
+			);
+			const got2 = getOrCreateInNestedMap(
+				nestedMap,
+				"Foo",
+				"Bar",
+				(...args: unknown[]) => assert.fail("Should not be called"),
 			);
 			assert.equal(got1, 1);
 			assert.equal(got2, 1);
@@ -326,7 +334,10 @@ describe("NestedMap unit tests", () => {
 
 	describe("mapNestedMap", () => {
 		it("creates a new map with mapped values", () => {
-			const input: NestedMap<string, string, number> = new Map<string, Map<string, number>>();
+			const input: NestedMap<string, string, number> = new Map<
+				string,
+				Map<string, number>
+			>();
 			setInNestedMap(input, "Foo", "Bar", 1);
 			setInNestedMap(input, "Foo", "Baz", 2);
 
@@ -347,7 +358,10 @@ describe("NestedMap unit tests", () => {
 		});
 
 		it("tolerates empty outer maps", () => {
-			const input: NestedMap<string, string, number> = new Map<string, Map<string, number>>();
+			const input: NestedMap<string, string, number> = new Map<
+				string,
+				Map<string, number>
+			>();
 
 			const output = mapNestedMap(input, (n: number) => String(n));
 
@@ -355,9 +369,10 @@ describe("NestedMap unit tests", () => {
 		});
 
 		it("tolerates (and preserves) empty inner maps", () => {
-			const input: NestedMap<string, string, number> = new Map<string, Map<string, number>>([
-				["Foo", new Map()],
-			]);
+			const input: NestedMap<string, string, number> = new Map<
+				string,
+				Map<string, number>
+			>([["Foo", new Map()]]);
 
 			const output = mapNestedMap(input, (n: number) => String(n));
 

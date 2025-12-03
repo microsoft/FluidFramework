@@ -6,24 +6,25 @@
 import { strict as assert } from "node:assert";
 
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
-
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type ChangeAtomId,
 	type ChangeAtomIdMap,
 	type ChangeAtomIdRangeMap,
 	type ChangesetLocalId,
-	type RevisionInfo,
-	type RevisionMetadataSource,
-	type RevisionTag,
-	type TaggedChange,
 	makeAnonChange,
 	mapTaggedChange,
 	newChangeAtomIdRangeMap,
+	type RevisionInfo,
+	type RevisionMetadataSource,
+	type RevisionTag,
 	revisionMetadataSourceFromInfo,
+	type TaggedChange,
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import {
 	addCrossFieldQuery,
 	type CrossFieldManager,
@@ -32,25 +33,29 @@ import {
 	type FieldChangeDelta,
 	type NodeId,
 	type RebaseRevisionMetadata,
+	rebaseRevisionMetadataFromInfo,
 	setInCrossFieldMap,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { DetachedCellMark } from "../../../feature-libraries/sequence-field/helperTypes.js";
 import {
 	type CellId,
 	type Changeset,
-	type HasMarkFields,
-	MarkListFactory,
-	type MoveId,
 	cloneMark,
 	extractMarkEffect,
 	getInputLength,
+	type HasMarkFields,
 	isDetach,
+	MarkListFactory,
+	type MoveId,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/index.js";
+import {
+	type MarkEffect,
+	NoopMarkType,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/sequence-field/types.js";
 import {
 	areInputCellsEmpty,
 	isActiveReattach,
@@ -62,30 +67,23 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/utils.js";
 import {
-	type IdAllocator,
-	type Mutable,
 	brand,
 	fakeIdAllocator,
 	getOrAddEmptyToMap,
+	type IdAllocator,
 	idAllocatorFromMaxId,
+	type Mutable,
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../../util/index.js";
+import { ChangesetWrapper } from "../../changesetWrapper.js";
+import { TestNodeId } from "../../testNodeId.js";
 import {
 	assertFieldChangesEqual,
 	assertIsSessionId,
 	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
 } from "../../utils.js";
-
-import { ChangesetWrapper } from "../../changesetWrapper.js";
-import { TestNodeId } from "../../testNodeId.js";
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
-import {
-	type MarkEffect,
-	NoopMarkType,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/sequence-field/types.js";
 
 export function assertWrappedChangesetsEqual(
 	actual: WrappedChange,
@@ -127,12 +125,23 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 	const normalSrcAtoms: ChangeAtomIdMap<ChangeAtomId> = new Map();
 	const normalDstAtoms: ChangeAtomIdMap<ChangeAtomId> = new Map();
 
-	function normalizeAtom(atom: ChangeAtomId, target: CrossFieldTarget): ChangeAtomId {
-		const normalAtoms = target === CrossFieldTarget.Source ? normalSrcAtoms : normalDstAtoms;
-		const normal = tryGetFromNestedMap(normalAtoms, atom.revision, atom.localId);
+	function normalizeAtom(
+		atom: ChangeAtomId,
+		target: CrossFieldTarget,
+	): ChangeAtomId {
+		const normalAtoms =
+			target === CrossFieldTarget.Source ? normalSrcAtoms : normalDstAtoms;
+		const normal = tryGetFromNestedMap(
+			normalAtoms,
+			atom.revision,
+			atom.localId,
+		);
 		if (normal === undefined) {
 			const newId: ChangesetLocalId = brand(idAllocator.allocate());
-			const newAtom: ChangeAtomId = { revision: normalRevision, localId: newId };
+			const newAtom: ChangeAtomId = {
+				revision: normalRevision,
+				localId: newId,
+			};
 			setInNestedMap(normalAtoms, atom.revision, atom.localId, newAtom);
 			return newAtom;
 		}
@@ -148,7 +157,9 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 		};
 	}
 
-	function normalizeEffect<TEffect extends MarkEffect>(effect: TEffect): TEffect {
+	function normalizeEffect<TEffect extends MarkEffect>(
+		effect: TEffect,
+	): TEffect {
 		switch (effect.type) {
 			case "Rename":
 			case NoopMarkType:
@@ -177,7 +188,10 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 				const normalized: Mutable<SF.MoveIn> = { ...effect };
 				normalized.finalEndpoint =
 					normalized.finalEndpoint !== undefined
-						? normalizeAtom(normalized.finalEndpoint, CrossFieldTarget.Destination)
+						? normalizeAtom(
+								normalized.finalEndpoint,
+								CrossFieldTarget.Destination,
+							)
 						: normalizeAtom(effectId, CrossFieldTarget.Destination);
 				normalized.id = atom.localId;
 				normalized.revision = atom.revision;
@@ -235,14 +249,21 @@ export function composeDeep(
 	changes: TaggedChange<WrappedChange>[],
 	revisionMetadata?: RevisionMetadataSource,
 ): WrappedChange {
-	const metadata = revisionMetadata ?? defaultRevisionMetadataFromChanges(changes);
+	const metadata =
+		revisionMetadata ?? defaultRevisionMetadataFromChanges(changes);
 
 	return changes.length === 0
 		? ChangesetWrapper.create([])
 		: changes.reduce((change1, change2) =>
 				makeAnonChange(
 					ChangesetWrapper.compose(change1, change2, (c1, c2, composeChild) =>
-						composePair(c1.change, c2.change, composeChild, metadata, idAllocatorFromMaxId()),
+						composePair(
+							c1.change,
+							c2.change,
+							composeChild,
+							metadata,
+							idAllocatorFromMaxId(),
+						),
 					),
 				),
 			).change;
@@ -252,26 +273,38 @@ export function composeNoVerify(
 	changes: TaggedChange<SF.Changeset>[],
 	revInfos?: RevisionInfo[],
 ): SF.Changeset {
-	return composeI(changes, (id1, id2) => TestNodeId.composeChild(id1, id2, false), revInfos);
-}
-
-export function composeShallow(changes: TaggedChange<SF.Changeset>[]): SF.Changeset {
 	return composeI(
 		changes,
-		(id1, id2) => id1 ?? id2 ?? assert.fail("Should not compose two undefined IDs"),
+		(id1, id2) => TestNodeId.composeChild(id1, id2, false),
+		revInfos,
+	);
+}
+
+export function composeShallow(
+	changes: TaggedChange<SF.Changeset>[],
+): SF.Changeset {
+	return composeI(
+		changes,
+		(id1, id2) =>
+			id1 ?? id2 ?? assert.fail("Should not compose two undefined IDs"),
 	);
 }
 
 export function compose(
 	changes: TaggedChange<SF.Changeset>[],
 	revInfos?: RevisionInfo[] | RevisionMetadataSource,
-	childComposer?: (change1: NodeId | undefined, change2: NodeId | undefined) => NodeId,
+	childComposer?: (
+		change1: NodeId | undefined,
+		change2: NodeId | undefined,
+	) => NodeId,
 ): SF.Changeset {
 	return composeI(changes, childComposer ?? TestNodeId.composeChild, revInfos);
 }
 
 export function pruneDeep(change: WrappedChange): WrappedChange {
-	return ChangesetWrapper.prune(change, (c, childPruner) => prune(c, childPruner));
+	return ChangesetWrapper.prune(change, (c, childPruner) =>
+		prune(c, childPruner),
+	);
 }
 
 export function prune(
@@ -295,7 +328,9 @@ export function shallowCompose(
 				child1 === undefined || child2 === undefined,
 				"Should only have one child to compose",
 			);
-			return child1 ?? child2 ?? assert.fail("One of the children should be defined");
+			return (
+				child1 ?? child2 ?? assert.fail("One of the children should be defined")
+			);
 		},
 		revInfos,
 	);
@@ -303,7 +338,10 @@ export function shallowCompose(
 
 function composeI(
 	taggedChanges: TaggedChange<SF.Changeset>[],
-	composer: (change1: NodeId | undefined, change2: NodeId | undefined) => NodeId,
+	composer: (
+		change1: NodeId | undefined,
+		change2: NodeId | undefined,
+	) => NodeId,
 	revInfos?: RevisionInfo[] | RevisionMetadataSource,
 ): SF.Changeset {
 	const changes = taggedChanges.map(({ change }) => change);
@@ -326,16 +364,33 @@ function composeI(
 function composePair(
 	change1: SF.Changeset,
 	change2: SF.Changeset,
-	composer: (change1: NodeId | undefined, change2: NodeId | undefined) => NodeId,
+	composer: (
+		change1: NodeId | undefined,
+		change2: NodeId | undefined,
+	) => NodeId,
 	metadata: RevisionMetadataSource,
 	idAllocator: IdAllocator,
 ): SF.Changeset {
 	const moveEffects = newCrossFieldTable();
-	let composed = SF.compose(change1, change2, composer, idAllocator, moveEffects, metadata);
+	let composed = SF.compose(
+		change1,
+		change2,
+		composer,
+		idAllocator,
+		moveEffects,
+		metadata,
+	);
 
 	if (moveEffects.isInvalidated) {
 		resetCrossFieldTable(moveEffects);
-		composed = SF.compose(change1, change2, composer, idAllocator, moveEffects, metadata);
+		composed = SF.compose(
+			change1,
+			change2,
+			composer,
+			idAllocator,
+			moveEffects,
+			metadata,
+		);
 	}
 	return composed;
 }
@@ -367,7 +422,9 @@ export function rebase(
 	const childRebaser = config.childRebaser ?? TestNodeId.rebaseChild;
 
 	const moveEffects = newCrossFieldTable();
-	const idAllocator = idAllocatorFromMaxId(getMaxId(change.change, base.change));
+	const idAllocator = idAllocatorFromMaxId(
+		getMaxId(change.change, base.change),
+	);
 	let rebasedChange = SF.rebase(
 		change.change,
 		base.change,
@@ -403,13 +460,16 @@ export function rebaseOverChanges(
 	revInfos?: RevisionInfo[],
 ): TaggedChange<SF.Changeset> {
 	let currChange = change;
-	const revisionInfo = revInfos ?? defaultRevInfosFromChanges([...baseChanges, change]);
+	const revisionInfo =
+		revInfos ?? defaultRevInfosFromChanges([...baseChanges, change]);
 	for (const base of baseChanges) {
 		currChange = tagChange(
 			rebase(currChange, base, {
-				metadata: rebaseRevisionMetadataFromInfo(revisionInfo, change.revision, [
-					base.revision,
-				]),
+				metadata: rebaseRevisionMetadataFromInfo(
+					revisionInfo,
+					change.revision,
+					[base.revision],
+				),
 			}),
 			currChange.revision,
 		);
@@ -487,7 +547,10 @@ export function invert(
 	return inverted;
 }
 
-export function checkDeltaEquality(actual: SF.Changeset, expected: SF.Changeset) {
+export function checkDeltaEquality(
+	actual: SF.Changeset,
+	expected: SF.Changeset,
+) {
 	assertFieldChangesEqual(toDelta(actual), toDelta(expected));
 }
 
@@ -502,7 +565,9 @@ export function toDeltaWrapped(change: WrappedChange) {
 	);
 }
 
-export function getMaxId(...changes: SF.Changeset[]): ChangesetLocalId | undefined {
+export function getMaxId(
+	...changes: SF.Changeset[]
+): ChangesetLocalId | undefined {
 	let max: ChangesetLocalId | undefined;
 	for (const change of changes) {
 		for (const mark of change) {
@@ -526,7 +591,10 @@ export function continuingAllocator(changes: SF.Changeset[]): IdAllocator {
 }
 
 export function withoutTombstonesDeep(changeset: WrappedChange): WrappedChange {
-	return { ...changeset, fieldChange: withoutTombstones(changeset.fieldChange) };
+	return {
+		...changeset,
+		fieldChange: withoutTombstones(changeset.fieldChange),
+	};
 }
 
 export function withoutTombstones(changeset: SF.Changeset): SF.Changeset {
@@ -607,7 +675,8 @@ export class DetachedNodeTracker {
 						newNodes.set(k, v);
 					}
 				}
-				const detachEvent = mark.cellId ?? assert.fail("Unable to track detached nodes");
+				const detachEvent =
+					mark.cellId ?? assert.fail("Unable to track detached nodes");
 				for (let i = 0; i < mark.count; ++i) {
 					newNodes.set(index + i, {
 						revision: detachEvent.revision,
@@ -631,10 +700,13 @@ export class DetachedNodeTracker {
 	public isApplicable(change: Changeset): boolean {
 		for (const mark of change) {
 			if (isActiveReattach(mark)) {
-				const detachEvent = mark.cellId ?? assert.fail("Unable to track detached nodes");
+				const detachEvent =
+					mark.cellId ?? assert.fail("Unable to track detached nodes");
 				const revision = detachEvent.revision;
 				for (let i = 0; i < mark.count; ++i) {
-					const localId = brand<ChangesetLocalId>((detachEvent.localId as number) + i);
+					const localId = brand<ChangesetLocalId>(
+						(detachEvent.localId as number) + i,
+					);
 					const original: CellId = { revision, localId };
 					const updated = this.getUpdatedDetach(original);
 					for (const detached of this.nodes.values()) {
@@ -689,9 +761,15 @@ export class DetachedNodeTracker {
 
 	private updateMark(mark: HasMarkFields & DetachedCellMark): void {
 		const detachEvent = mark.cellId;
-		const original = { revision: detachEvent.revision, localId: detachEvent.localId };
+		const original = {
+			revision: detachEvent.revision,
+			localId: detachEvent.localId,
+		};
 		const updated = this.getUpdatedDetach(original);
-		if (updated.revision !== original.revision || updated.localId !== original.localId) {
+		if (
+			updated.revision !== original.revision ||
+			updated.localId !== original.localId
+		) {
 			mark.cellId = { ...updated };
 		}
 	}
@@ -699,7 +777,10 @@ export class DetachedNodeTracker {
 	private getUpdatedDetach(detach: CellId): CellId {
 		let curr = detach;
 		for (const eq of this.equivalences) {
-			if (curr.revision === eq.old.revision && curr.localId === eq.old.localId) {
+			if (
+				curr.revision === eq.old.revision &&
+				curr.localId === eq.old.localId
+			) {
 				curr = eq.new;
 			}
 		}
@@ -727,7 +808,8 @@ export function areRebasable(branch: Changeset, target: Changeset): boolean {
 		if (isActiveReattach(mark)) {
 			const list = getOrAddEmptyToMap(indexToReattach, index);
 			for (let i = 0; i < mark.count; ++i) {
-				const detachEvent = mark.cellId ?? assert.fail("Unable to track detached nodes");
+				const detachEvent =
+					mark.cellId ?? assert.fail("Unable to track detached nodes");
 				const entry: CellId = {
 					...detachEvent,
 					localId: brand((detachEvent.localId as number) + i),
@@ -749,7 +831,8 @@ export function areRebasable(branch: Changeset, target: Changeset): boolean {
 		if (isActiveReattach(mark)) {
 			const list = getOrAddEmptyToMap(indexToReattach, index);
 			for (let i = 0; i < mark.count; ++i) {
-				const detachEvent = mark.cellId ?? assert.fail("Unable to track detached nodes");
+				const detachEvent =
+					mark.cellId ?? assert.fail("Unable to track detached nodes");
 				const entry: CellId = {
 					...detachEvent,
 					localId: brand((detachEvent.localId as number) + i),
@@ -813,7 +896,10 @@ export function tagChangeInline(
 		: tagChange(inlined, revision);
 }
 
-export function inlineRevision(change: Changeset, revision: RevisionTag): Changeset {
+export function inlineRevision(
+	change: Changeset,
+	revision: RevisionTag,
+): Changeset {
 	return SF.sequenceFieldChangeRebaser.replaceRevisions(
 		change,
 		new Set([undefined]),

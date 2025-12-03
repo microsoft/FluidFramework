@@ -9,8 +9,8 @@ import { expect } from "chai";
 
 import { defaultConsoleLogger } from "../../Logging.js";
 import {
-	transformTsdocSection,
 	type TsdocNodeTransformOptions,
+	transformTsdocSection,
 } from "../TsdocNodeTransforms.js";
 
 const mockApiItem = {} as unknown as ApiItem;
@@ -142,7 +142,10 @@ describe("Tsdoc node transformation tests", () => {
 					const context = parser.parseString(comment);
 					const summarySection = context.docComment.summarySection;
 
-					const result = transformTsdocSection(summarySection, transformOptions);
+					const result = transformTsdocSection(
+						summarySection,
+						transformOptions,
+					);
 
 					expect(result).to.deep.equal([
 						{
@@ -208,7 +211,10 @@ describe("Tsdoc node transformation tests", () => {
 					const context = parser.parseString(comment);
 					const summarySection = context.docComment.summarySection;
 
-					const result = transformTsdocSection(summarySection, transformOptions);
+					const result = transformTsdocSection(
+						summarySection,
+						transformOptions,
+					);
 
 					expect(result).to.deep.equal([
 						{
@@ -294,7 +300,10 @@ describe("Tsdoc node transformation tests", () => {
 					const context = parser.parseString(comment);
 					const summarySection = context.docComment.summarySection;
 
-					const result = transformTsdocSection(summarySection, transformOptions);
+					const result = transformTsdocSection(
+						summarySection,
+						transformOptions,
+					);
 
 					expect(result).to.deep.equal([
 						{
@@ -388,7 +397,10 @@ describe("Tsdoc node transformation tests", () => {
 					const context = parser.parseString(comment);
 					const summarySection = context.docComment.summarySection;
 
-					const result = transformTsdocSection(summarySection, transformOptions);
+					const result = transformTsdocSection(
+						summarySection,
+						transformOptions,
+					);
 
 					expect(result).to.deep.equal([
 						{
@@ -399,31 +411,46 @@ describe("Tsdoc node transformation tests", () => {
 								{
 									type: "listItem",
 									children: [
-										{ type: "paragraph", children: [{ type: "text", value: "Item 1" }] },
+										{
+											type: "paragraph",
+											children: [{ type: "text", value: "Item 1" }],
+										},
 									],
 								},
 								{
 									type: "listItem",
 									children: [
-										{ type: "paragraph", children: [{ type: "text", value: "Item 1.a" }] },
+										{
+											type: "paragraph",
+											children: [{ type: "text", value: "Item 1.a" }],
+										},
 									],
 								},
 								{
 									type: "listItem",
 									children: [
-										{ type: "paragraph", children: [{ type: "text", value: "Item 1.b" }] },
+										{
+											type: "paragraph",
+											children: [{ type: "text", value: "Item 1.b" }],
+										},
 									],
 								},
 								{
 									type: "listItem",
 									children: [
-										{ type: "paragraph", children: [{ type: "text", value: "Item 2" }] },
+										{
+											type: "paragraph",
+											children: [{ type: "text", value: "Item 2" }],
+										},
 									],
 								},
 								{
 									type: "listItem",
 									children: [
-										{ type: "paragraph", children: [{ type: "text", value: "Item 2.a" }] },
+										{
+											type: "paragraph",
+											children: [{ type: "text", value: "Item 2.a" }],
+										},
 									],
 								},
 							],
@@ -442,7 +469,10 @@ describe("Tsdoc node transformation tests", () => {
 					const context = parser.parseString(comment);
 					const summarySection = context.docComment.summarySection;
 
-					const result = transformTsdocSection(summarySection, transformOptions);
+					const result = transformTsdocSection(
+						summarySection,
+						transformOptions,
+					);
 
 					expect(result).to.deep.equal([
 						{
@@ -506,7 +536,10 @@ describe("Tsdoc node transformation tests", () => {
 					const context = parser.parseString(comment);
 					const summarySection = context.docComment.summarySection;
 
-					const result = transformTsdocSection(summarySection, transformOptions);
+					const result = transformTsdocSection(
+						summarySection,
+						transformOptions,
+					);
 
 					expect(result).to.deep.equal([
 						{
@@ -592,7 +625,10 @@ describe("Tsdoc node transformation tests", () => {
 					const context = parser.parseString(comment);
 					const summarySection = context.docComment.summarySection;
 
-					const result = transformTsdocSection(summarySection, transformOptions);
+					const result = transformTsdocSection(
+						summarySection,
+						transformOptions,
+					);
 
 					expect(result).to.deep.equal([
 						{
@@ -603,32 +639,19 @@ describe("Tsdoc node transformation tests", () => {
 								{
 									type: "listItem",
 									children: [
-										{ type: "paragraph", children: [{ type: "text", value: "Item 1" }] },
+										{
+											type: "paragraph",
+											children: [{ type: "text", value: "Item 1" }],
+										},
 									],
 								},
 								{
 									type: "listItem",
 									children: [
-										{ type: "paragraph", children: [{ type: "text", value: "Item 2" }] },
-									],
-								},
-							],
-						},
-						{
-							type: "list",
-							ordered: false,
-							spread: false,
-							children: [
-								{
-									type: "listItem",
-									children: [
-										{ type: "paragraph", children: [{ type: "text", value: "Item 3" }] },
-									],
-								},
-								{
-									type: "listItem",
-									children: [
-										{ type: "paragraph", children: [{ type: "text", value: "Item 4" }] },
+										{
+											type: "paragraph",
+											children: [{ type: "text", value: "Item 2" }],
+										},
 									],
 								},
 							],
@@ -641,13 +664,44 @@ describe("Tsdoc node transformation tests", () => {
 								{
 									type: "listItem",
 									children: [
-										{ type: "paragraph", children: [{ type: "text", value: "Item 5" }] },
+										{
+											type: "paragraph",
+											children: [{ type: "text", value: "Item 3" }],
+										},
 									],
 								},
 								{
 									type: "listItem",
 									children: [
-										{ type: "paragraph", children: [{ type: "text", value: "Item 6" }] },
+										{
+											type: "paragraph",
+											children: [{ type: "text", value: "Item 4" }],
+										},
+									],
+								},
+							],
+						},
+						{
+							type: "list",
+							ordered: false,
+							spread: false,
+							children: [
+								{
+									type: "listItem",
+									children: [
+										{
+											type: "paragraph",
+											children: [{ type: "text", value: "Item 5" }],
+										},
+									],
+								},
+								{
+									type: "listItem",
+									children: [
+										{
+											type: "paragraph",
+											children: [{ type: "text", value: "Item 6" }],
+										},
 									],
 								},
 							],
@@ -668,7 +722,10 @@ describe("Tsdoc node transformation tests", () => {
 					const context = parser.parseString(comment);
 					const summarySection = context.docComment.summarySection;
 
-					const result = transformTsdocSection(summarySection, transformOptions);
+					const result = transformTsdocSection(
+						summarySection,
+						transformOptions,
+					);
 
 					expect(result).to.deep.equal([
 						{
@@ -679,31 +736,46 @@ describe("Tsdoc node transformation tests", () => {
 								{
 									type: "listItem",
 									children: [
-										{ type: "paragraph", children: [{ type: "text", value: "Item 1" }] },
+										{
+											type: "paragraph",
+											children: [{ type: "text", value: "Item 1" }],
+										},
 									],
 								},
 								{
 									type: "listItem",
 									children: [
-										{ type: "paragraph", children: [{ type: "text", value: "Item 1.a" }] },
+										{
+											type: "paragraph",
+											children: [{ type: "text", value: "Item 1.a" }],
+										},
 									],
 								},
 								{
 									type: "listItem",
 									children: [
-										{ type: "paragraph", children: [{ type: "text", value: "Item 1.b" }] },
+										{
+											type: "paragraph",
+											children: [{ type: "text", value: "Item 1.b" }],
+										},
 									],
 								},
 								{
 									type: "listItem",
 									children: [
-										{ type: "paragraph", children: [{ type: "text", value: "Item 2" }] },
+										{
+											type: "paragraph",
+											children: [{ type: "text", value: "Item 2" }],
+										},
 									],
 								},
 								{
 									type: "listItem",
 									children: [
-										{ type: "paragraph", children: [{ type: "text", value: "Item 2.a" }] },
+										{
+											type: "paragraph",
+											children: [{ type: "text", value: "Item 2.a" }],
+										},
 									],
 								},
 							],
@@ -740,38 +812,28 @@ describe("Tsdoc node transformation tests", () => {
 							{
 								type: "listItem",
 								children: [
-									{ type: "paragraph", children: [{ type: "text", value: "Item 1" }] },
+									{
+										type: "paragraph",
+										children: [{ type: "text", value: "Item 1" }],
+									},
 								],
 							},
 							{
 								type: "listItem",
 								children: [
-									{ type: "paragraph", children: [{ type: "text", value: "Item 2" }] },
+									{
+										type: "paragraph",
+										children: [{ type: "text", value: "Item 2" }],
+									},
 								],
 							},
 							{
 								type: "listItem",
 								children: [
-									{ type: "paragraph", children: [{ type: "text", value: "Item 3" }] },
-								],
-							},
-						],
-					},
-					{
-						type: "list",
-						ordered: false,
-						spread: false,
-						children: [
-							{
-								type: "listItem",
-								children: [
-									{ type: "paragraph", children: [{ type: "text", value: "Item 4" }] },
-								],
-							},
-							{
-								type: "listItem",
-								children: [
-									{ type: "paragraph", children: [{ type: "text", value: "Item 5" }] },
+									{
+										type: "paragraph",
+										children: [{ type: "text", value: "Item 3" }],
+									},
 								],
 							},
 						],
@@ -784,7 +846,35 @@ describe("Tsdoc node transformation tests", () => {
 							{
 								type: "listItem",
 								children: [
-									{ type: "paragraph", children: [{ type: "text", value: "Item 6" }] },
+									{
+										type: "paragraph",
+										children: [{ type: "text", value: "Item 4" }],
+									},
+								],
+							},
+							{
+								type: "listItem",
+								children: [
+									{
+										type: "paragraph",
+										children: [{ type: "text", value: "Item 5" }],
+									},
+								],
+							},
+						],
+					},
+					{
+						type: "list",
+						ordered: false,
+						spread: false,
+						children: [
+							{
+								type: "listItem",
+								children: [
+									{
+										type: "paragraph",
+										children: [{ type: "text", value: "Item 6" }],
+									},
 								],
 							},
 						],
@@ -797,7 +887,10 @@ describe("Tsdoc node transformation tests", () => {
 							{
 								type: "listItem",
 								children: [
-									{ type: "paragraph", children: [{ type: "text", value: "Item 7" }] },
+									{
+										type: "paragraph",
+										children: [{ type: "text", value: "Item 7" }],
+									},
 								],
 							},
 						],
@@ -810,7 +903,10 @@ describe("Tsdoc node transformation tests", () => {
 							{
 								type: "listItem",
 								children: [
-									{ type: "paragraph", children: [{ type: "text", value: "Item 8" }] },
+									{
+										type: "paragraph",
+										children: [{ type: "text", value: "Item 8" }],
+									},
 								],
 							},
 						],

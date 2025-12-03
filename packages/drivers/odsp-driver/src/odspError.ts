@@ -10,8 +10,8 @@ import {
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	type IFluidErrorBase,
 	getCircularReplacer,
+	type IFluidErrorBase,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { IOdspSocketError } from "./contracts.js";

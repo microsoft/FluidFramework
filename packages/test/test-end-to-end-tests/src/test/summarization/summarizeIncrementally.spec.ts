@@ -3,28 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import {
-	ITestDataObject,
-	TestDataObjectType,
 	describeCompat,
+	type ITestDataObject,
+	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ISummarizer } from "@fluidframework/container-runtime/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { ISummarizer } from "@fluidframework/container-runtime/internal";
 import {
-	IContainerRuntimeBase,
+	type ISummaryTree,
+	SummaryType,
+} from "@fluidframework/driver-definitions";
+import {
 	channelsTreeName,
+	type IContainerRuntimeBase,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	ITestObjectProvider,
 	createSummarizer,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
+	type ITestObjectProvider,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import { strict as assert } from "assert";
 
 /**
  * Validates that the data store summary is as expected.
@@ -36,7 +38,8 @@ function validateDataStoreStateInSummary(
 	dataStoreId: string,
 	expectHandle: boolean,
 ) {
-	const channelsTree = (summaryTree.tree[channelsTreeName] as ISummaryTree).tree;
+	const channelsTree = (summaryTree.tree[channelsTreeName] as ISummaryTree)
+		.tree;
 	const dataStoreSummaryObject = channelsTree[dataStoreId];
 
 	if (!expectHandle) {
@@ -74,7 +77,9 @@ function validateDDSStateInSummary(
 	ddsId: string,
 	expectHandle: boolean,
 ) {
-	const dataStoreChannelsTree = (summaryTree.tree[channelsTreeName] as ISummaryTree).tree;
+	const dataStoreChannelsTree = (
+		summaryTree.tree[channelsTreeName] as ISummaryTree
+	).tree;
 	const dataStoreSummaryTree = dataStoreChannelsTree[dataStoreId];
 	assert.strictEqual(
 		dataStoreSummaryTree.type,
@@ -82,7 +87,9 @@ function validateDDSStateInSummary(
 		"Data store summary should be a tree",
 	);
 
-	const ddsChannelsTree = (dataStoreSummaryTree.tree[channelsTreeName] as ISummaryTree).tree;
+	const ddsChannelsTree = (
+		dataStoreSummaryTree.tree[channelsTreeName] as ISummaryTree
+	).tree;
 	const ddsSummaryObject = ddsChannelsTree[ddsId];
 
 	if (!expectHandle) {
@@ -102,7 +109,11 @@ function validateDDSStateInSummary(
 		SummaryType.Handle,
 		"DDS summary should be a handle",
 	);
-	assert.strictEqual(ddsSummaryObject.handle, expectedHandleId, "DDS handle is incorrect");
+	assert.strictEqual(
+		ddsSummaryObject.handle,
+		expectedHandleId,
+		"DDS handle is incorrect",
+	);
 }
 
 /**
@@ -133,9 +144,11 @@ describeCompat(
 			summarizer = (await createSummarizer(provider, container)).summarizer;
 		});
 
-		it("can do incremental data store summary", async function () {
-			const dataStore2 = await containerRuntime.createDataStore(TestDataObjectType);
-			const dataObject2 = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore2);
+		it("can do incremental data store summary", async () => {
+			const dataStore2 =
+				await containerRuntime.createDataStore(TestDataObjectType);
+			const dataObject2 =
+				await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore2);
 			dataObject1._root.set("dataObject2", dataObject2.handle);
 
 			await provider.ensureSynchronized();

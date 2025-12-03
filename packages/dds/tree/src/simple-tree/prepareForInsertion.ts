@@ -3,34 +3,31 @@
  * Licensed under the MIT License.
  */
 
+import { debugAssert, fail, oob } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type {
-	SchemaAndPolicy,
-	IForestSubscription,
-	UpPath,
-	FieldKey,
 	DetachedField,
+	FieldKey,
+	IForestSubscription,
+	SchemaAndPolicy,
 	TreeFieldStoredSchema,
 	TreeTypeSet,
+	UpPath,
 } from "../core/index.js";
 import {
-	type FlexTreeContext,
-	getSchemaAndPolicy,
-	type FlexTreeHydratedContextMinimal,
+	assertFlexTreeEntityNotFreed,
+	ContextSlot,
 	FieldKinds,
 	type FlexibleFieldContent,
 	type FlexibleNodeContent,
-	throwOutOfSchema,
+	type FlexTreeContext,
+	type FlexTreeHydratedContextMinimal,
 	flexTreeSlot,
-	ContextSlot,
 	getOrCreateHydratedFlexTreeNode,
-	assertFlexTreeEntityNotFreed,
+	getSchemaAndPolicy,
+	isFieldInSchema,
+	throwOutOfSchema,
 } from "../feature-libraries/index.js";
-import type { ImplicitFieldSchema } from "./fieldSchema.js";
-import {
-	type InsertableContent,
-	unhydratedFlexTreeFromInsertable,
-} from "./unhydratedFlexTreeFromInsertable.js";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { brand, type Mutable } from "../util/index.js";
 import {
 	getKernel,
@@ -38,8 +35,11 @@ import {
 	type TreeNode,
 	type UnhydratedFlexTreeNode,
 } from "./core/index.js";
-import { debugAssert, fail, oob } from "@fluidframework/core-utils/internal";
-import { isFieldInSchema } from "../feature-libraries/index.js";
+import type { ImplicitFieldSchema } from "./fieldSchema.js";
+import {
+	type InsertableContent,
+	unhydratedFlexTreeFromInsertable,
+} from "./unhydratedFlexTreeFromInsertable.js";
 
 /**
  * For now, schema validation for inserted content is always enabled.
@@ -118,7 +118,9 @@ export function prepareArrayContentForInsertion(
  * @remarks
  * Adding this entry point is a workaround for initialize not currently having a context.
  */
-export function prepareForInsertionContextless<TIn extends InsertableContent | undefined>(
+export function prepareForInsertionContextless<
+	TIn extends InsertableContent | undefined,
+>(
 	data: TIn,
 	schema: ImplicitFieldSchema,
 	schemaAndPolicy: SchemaAndPolicy,
@@ -254,7 +256,11 @@ function walkMapTree(
 
 	type Next = [path: UpPath, tree: UnhydratedFlexTreeNode];
 	const nexts: Next[] = [];
-	for (let next: Next | undefined = [path, root]; next !== undefined; next = nexts.pop()) {
+	for (
+		let next: Next | undefined = [path, root];
+		next !== undefined;
+		next = nexts.pop()
+	) {
 		const [p, node] = next;
 		if (node !== undefined) {
 			const treeNode = node.treeNode;
@@ -315,7 +321,11 @@ function scheduleHydration(
 		const off = forest.events.on("afterRootFieldCreated", (fieldKey) => {
 			// Indexing is safe here because of the length check above. This assumes the array has not been modified which should be the case.
 			const batch = locatedNodes[index] ?? oob();
-			doHydration(batch, { parent: undefined, parentField: fieldKey, parentIndex: 0 });
+			doHydration(batch, {
+				parent: undefined,
+				parentField: fieldKey,
+				parentIndex: 0,
+			});
 			if (++index === locatedNodes.length) {
 				off();
 			}
@@ -331,7 +341,9 @@ function hydrator(
 	forest: IForestSubscription,
 ): (batch: LocatedNodesBatch, attachedPath: UpPath) => void {
 	return (batch: LocatedNodesBatch, attachedPath: UpPath) => {
-		const context = forest.anchors.slots.get(ContextSlot) ?? fail(0xb41 /* missing context */);
+		const context =
+			forest.anchors.slots.get(ContextSlot) ??
+			fail(0xb41 /* missing context */);
 
 		// Modify paths in batch to point to correct location:
 		debugAssert(() => batch.rootPath.parentField === placeholderKey);
@@ -343,7 +355,8 @@ function hydrator(
 		// Find or create one as necessary.
 		for (const { path, node } of batch.paths) {
 			const anchor = forest.anchors.track(path);
-			const anchorNode = forest.anchors.locate(anchor) ?? fail(0xc7b /* missing anchor */);
+			const anchorNode =
+				forest.anchors.locate(anchor) ?? fail(0xc7b /* missing anchor */);
 
 			let flexNode = anchorNode.slots.get(flexTreeSlot);
 			if (flexNode === undefined) {

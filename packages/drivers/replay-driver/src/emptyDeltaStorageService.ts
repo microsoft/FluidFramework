@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IDocumentDeltaStorageService,
-	IStream,
 	ISequencedDocumentMessage,
+	IStream,
 } from "@fluidframework/driver-definitions/internal";
 import { emptyMessageStream } from "@fluidframework/driver-utils/internal";
 

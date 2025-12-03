@@ -7,9 +7,9 @@ import type { IDeltaManager } from "@fluidframework/container-definitions/intern
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IQuorumClients } from "@fluidframework/driver-definitions";
 import {
-	MessageType,
 	type IDocumentMessage,
 	type ISequencedDocumentMessage,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import type { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -60,7 +60,9 @@ export class Attributor implements IAttributor {
 	public getAttributionInfo(key: number): AttributionInfo {
 		const result = this.tryGetAttributionInfo(key);
 		if (!result) {
-			throw new UsageError(`Requested attribution information for unstored key: ${key}.`);
+			throw new UsageError(
+				`Requested attribution information for unstored key: ${key}.`,
+			);
 		}
 		return result;
 	}

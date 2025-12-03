@@ -3,17 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IChannelAttributes,
 	IChannelFactory,
-	IFluidDataStoreRuntime,
 	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import { IJSONSegment } from "@fluidframework/merge-tree/internal";
-import { IJSONRunSegment, SubSequence } from "@fluidframework/sequence/internal";
+import type { IJSONSegment } from "@fluidframework/merge-tree/internal";
 import {
-	ISharedObject,
+	type IJSONRunSegment,
+	SubSequence,
+} from "@fluidframework/sequence/internal";
+import {
 	createSharedObjectKind,
+	type ISharedObject,
 } from "@fluidframework/shared-object-base/internal";
 
 import { pkgVersion } from "./packageVersion.js";
@@ -30,7 +33,8 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
 	 * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
 	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
 	 */
-	public static Type = "https://graph.microsoft.com/types/mergeTree/object-sequence";
+	public static Type =
+		"https://graph.microsoft.com/types/mergeTree/object-sequence";
 
 	/**
 	 * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
@@ -83,7 +87,11 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<ISharedObject> {
-		const sharedSeq = new SharedObjectSequenceClass<object>(runtime, id, attributes);
+		const sharedSeq = new SharedObjectSequenceClass<object>(
+			runtime,
+			id,
+			attributes,
+		);
 		await sharedSeq.load(services);
 		return sharedSeq;
 	}
@@ -93,7 +101,11 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
 	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
 	 */
 	public create(document: IFluidDataStoreRuntime, id: string): ISharedObject {
-		const sharedString = new SharedObjectSequenceClass(document, id, this.attributes);
+		const sharedString = new SharedObjectSequenceClass(
+			document,
+			id,
+			this.attributes,
+		);
 		sharedString.initializeLocal();
 		return sharedString;
 	}
@@ -109,7 +121,8 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
 	 * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
 	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
 	 */
-	public static Type = "https://graph.microsoft.com/types/mergeTree/number-sequence";
+	public static Type =
+		"https://graph.microsoft.com/types/mergeTree/number-sequence";
 
 	/**
 	 * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
@@ -172,7 +185,11 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
 	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
 	 */
 	public create(document: IFluidDataStoreRuntime, id: string): ISharedObject {
-		const sharedString = new SharedNumberSequenceClass(document, id, this.attributes);
+		const sharedString = new SharedNumberSequenceClass(
+			document,
+			id,
+			this.attributes,
+		);
 		sharedString.initializeLocal();
 		return sharedString;
 	}
@@ -182,7 +199,9 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
  * {@inheritDoc SharedNumberSequenceClass}
  * @internal
  */
-export const SharedNumberSequence = createSharedObjectKind(SharedNumberSequenceFactory);
+export const SharedNumberSequence = createSharedObjectKind(
+	SharedNumberSequenceFactory,
+);
 /**
  * {@inheritDoc SharedNumberSequenceClass}
  * @internal
@@ -193,7 +212,9 @@ export type SharedNumberSequence = SharedNumberSequenceClass;
  * {@inheritDoc SharedObjectSequenceClass}
  * @internal
  */
-export const SharedObjectSequence = createSharedObjectKind(SharedObjectSequenceFactory);
+export const SharedObjectSequence = createSharedObjectKind(
+	SharedObjectSequenceFactory,
+);
 /**
  * {@inheritDoc SharedObjectSequenceClass}
  * @internal

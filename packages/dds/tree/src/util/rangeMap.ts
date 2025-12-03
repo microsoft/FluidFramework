@@ -36,7 +36,10 @@ export class RangeMap<K, V> {
 	public constructor(
 		private readonly offsetKey: (key: K, offset: number) => K,
 		private readonly subtractKeys: (a: K, b: K) => number,
-		public readonly offsetValue: (value: V, offset: number) => V = defaultValueOffsetFn,
+		public readonly offsetValue: (
+			value: V,
+			offset: number,
+		) => V = defaultValueOffsetFn,
 	) {
 		this.tree = new BTree(undefined, subtractKeys);
 	}
@@ -86,7 +89,10 @@ export class RangeMap<K, V> {
 		const lastQueryKey = this.offsetKey(start, length - 1);
 		const lengthAfter = this.subtractKeys(lastEntryKey, lastQueryKey);
 		if (lengthAfter > 0) {
-			entries[entries.length - 1] = { ...lastEntry, length: lastEntry.length - lengthAfter };
+			entries[entries.length - 1] = {
+				...lastEntry,
+				length: lastEntry.length - lengthAfter,
+			};
 		}
 
 		return entries;
@@ -110,7 +116,10 @@ export class RangeMap<K, V> {
 
 				const entryLastKey = this.offsetKey(entryKey, entryLength - 1);
 				const lengthBeforeQuery = this.subtractKeys(start, entryKey);
-				const overlappingLength = Math.min(this.subtractKeys(entryLastKey, start) + 1, length);
+				const overlappingLength = Math.min(
+					this.subtractKeys(entryLastKey, start) + 1,
+					length,
+				);
 				if (overlappingLength > 0) {
 					return {
 						value: this.offsetValue(value, lengthBeforeQuery),
@@ -130,7 +139,11 @@ export class RangeMap<K, V> {
 
 				const lastQueryKey = this.offsetKey(start, length - 1);
 				if (this.le(entryKey, lastQueryKey)) {
-					return { value: undefined, start, length: this.subtractKeys(entryKey, start) };
+					return {
+						value: undefined,
+						start,
+						length: this.subtractKeys(entryKey, start),
+					};
 				}
 			}
 
@@ -174,10 +187,11 @@ export class RangeMap<K, V> {
 	 */
 	public delete(start: K, length: number): void {
 		const lastDeleteKey = this.offsetKey(start, length - 1);
-		for (const { start: key, length: entryLength, value } of this.getIntersectingEntries(
-			start,
-			length,
-		)) {
+		for (const {
+			start: key,
+			length: entryLength,
+			value,
+		} of this.getIntersectingEntries(start, length)) {
 			this.tree.delete(key);
 			const lengthBefore = this.subtractKeys(start, key);
 			if (lengthBefore > 0) {
@@ -200,7 +214,11 @@ export class RangeMap<K, V> {
 	}
 
 	public clone(): RangeMap<K, V> {
-		const cloned = new RangeMap<K, V>(this.offsetKey, this.subtractKeys, this.offsetValue);
+		const cloned = new RangeMap<K, V>(
+			this.offsetKey,
+			this.subtractKeys,
+			this.offsetValue,
+		);
 		cloned.tree = this.tree.clone();
 		return cloned;
 	}
@@ -208,7 +226,10 @@ export class RangeMap<K, V> {
 	/**
 	 * Returns a new map which contains the entries from both input maps.
 	 */
-	public static union<K, V>(a: RangeMap<K, V>, b: RangeMap<K, V>): RangeMap<K, V> {
+	public static union<K, V>(
+		a: RangeMap<K, V>,
+		b: RangeMap<K, V>,
+	): RangeMap<K, V> {
 		assert(
 			a.offsetKey === b.offsetKey &&
 				a.subtractKeys === b.subtractKeys &&
@@ -216,7 +237,11 @@ export class RangeMap<K, V> {
 			0xaae /* Maps should have the same behavior */,
 		);
 
-		const merged = new RangeMap<K, V>(a.offsetKey, a.subtractKeys, a.offsetValue);
+		const merged = new RangeMap<K, V>(
+			a.offsetKey,
+			a.subtractKeys,
+			a.offsetValue,
+		);
 
 		// TODO: Is there a good pattern that lets us make `tree` readonly?
 		merged.tree = a.tree.clone();
@@ -228,7 +253,10 @@ export class RangeMap<K, V> {
 		return merged;
 	}
 
-	private getIntersectingEntries(start: K, length: number): RangeQueryEntry<K, V>[] {
+	private getIntersectingEntries(
+		start: K,
+		length: number,
+	): RangeQueryEntry<K, V>[] {
 		const entries: RangeQueryEntry<K, V>[] = [];
 		const lastQueryKey = this.offsetKey(start, length - 1);
 		{

@@ -7,10 +7,10 @@ import type { ICriticalContainerError } from "@fluidframework/container-definiti
 import type { IRequest } from "@fluidframework/core-interfaces";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type {
-	ITelemetryContext,
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import type { ReadAndParseBlob } from "@fluidframework/runtime-utils/internal";
 import type {
@@ -69,7 +69,8 @@ export const disableThrowOnTombstoneLoadKey =
 /**
  * Config key to enable GC version upgrade.
  */
-export const gcVersionUpgradeToV4Key = "Fluid.GarbageCollection.GCVersionUpgradeToV4";
+export const gcVersionUpgradeToV4Key =
+	"Fluid.GarbageCollection.GCVersionUpgradeToV4";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
@@ -502,7 +503,9 @@ export interface IGarbageCollectorCreateParams {
 	readonly createContainerMetadata: ICreateContainerMetadata;
 	readonly baseSnapshot: ISnapshotTree | undefined;
 	readonly isSummarizerClient: boolean;
-	readonly getNodePackagePath: (nodePath: string) => Promise<readonly string[] | undefined>;
+	readonly getNodePackagePath: (
+		nodePath: string,
+	) => Promise<readonly string[] | undefined>;
 	readonly getLastSummaryTimestampMs: () => number | undefined;
 	readonly readAndParseBlob: ReadAndParseBlob;
 	readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
@@ -634,7 +637,8 @@ export const UnreferencedState = {
 	 */
 	SweepReady: "SweepReady",
 } as const;
-export type UnreferencedState = (typeof UnreferencedState)[keyof typeof UnreferencedState];
+export type UnreferencedState =
+	(typeof UnreferencedState)[keyof typeof UnreferencedState];
 
 /**
  * Represents the result of a GC run.

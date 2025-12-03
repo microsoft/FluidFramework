@@ -4,8 +4,8 @@
  */
 
 import {
-	ModelContainerRuntimeFactory,
 	getDataStoreEntryPoint,
+	ModelContainerRuntimeFactory,
 } from "@fluid-example/example-utils";
 import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
@@ -35,7 +35,9 @@ export class ContactCollectionContainerRuntimeFactory extends ModelContainerRunt
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
-	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
+	protected async containerInitializingFirstTime(
+		runtime: IContainerRuntime,
+	): Promise<void> {
 		const dataStore = await runtime.createDataStore(
 			ContactCollectionInstantiationFactory.type,
 		);
@@ -50,7 +52,10 @@ export class ContactCollectionContainerRuntimeFactory extends ModelContainerRunt
 		container: IContainer,
 	): Promise<IContactCollectionAppModel> {
 		return new ContactCollectionAppModel(
-			await getDataStoreEntryPoint<IContactCollection>(runtime, contactCollectionId),
+			await getDataStoreEntryPoint<IContactCollection>(
+				runtime,
+				contactCollectionId,
+			),
 		);
 	}
 }

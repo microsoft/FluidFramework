@@ -5,8 +5,14 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",
-		"lib": ["ES2017", "ES2018.Promise", "ES2018.AsyncIterable", "DOM", "DOM.Iterable"],
+		"lib": [
+			"ES2017",
+			"ES2018.Promise",
+			"ES2018.AsyncIterable",
+			"DOM",
+			"DOM.Iterable"
+		],
 		"types": ["node"],
-		"exactOptionalPropertyTypes": false,
-	},
+		"exactOptionalPropertyTypes": false
+	}
 }

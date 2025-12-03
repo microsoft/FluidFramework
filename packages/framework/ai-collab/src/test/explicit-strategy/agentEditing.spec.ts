@@ -10,11 +10,11 @@ import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 // eslint-disable-next-line import-x/no-internal-modules
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import {
-	SchemaFactory,
 	getJsonSchema,
+	KeyEncodingOptions,
+	SchemaFactory,
 	SharedTree,
 	TreeViewConfiguration,
-	KeyEncodingOptions,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/tree/internal";
 
@@ -73,8 +73,14 @@ describe("toDecoratedJson", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: RootObject }));
-		view.initialize({ str: "hello", vectors: [{ x: 1, y: 2, z: 3 }], bools: [true] });
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: RootObject }),
+		);
+		view.initialize({
+			str: "hello",
+			vectors: [{ x: 1, y: 2, z: 3 }],
+			bools: [true],
+		});
 
 		assert.equal(
 			toDecoratedJson(idGenerator, view.root),

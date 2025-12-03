@@ -5,9 +5,9 @@
 
 import { strict as assert } from "assert";
 
-import { SinonFakeTimers, useFakeTimers } from "sinon";
+import { type SinonFakeTimers, useFakeTimers } from "sinon";
 
-import { ICache, InMemoryCache } from "../cache.js";
+import { type ICache, InMemoryCache } from "../cache.js";
 
 describe("InMemoryCache", () => {
 	let clock: SinonFakeTimers;
@@ -42,16 +42,36 @@ describe("InMemoryCache", () => {
 		await cache.put("two", 2);
 
 		clock.tick(5);
-		assert.equal(await cache.get("one"), 1, "'one' shouldn't be expired after 5ms");
-		assert.equal(await cache.get("two"), 2, "'two' shouldn't be expired after 5ms");
+		assert.equal(
+			await cache.get("one"),
+			1,
+			"'one' shouldn't be expired after 5ms",
+		);
+		assert.equal(
+			await cache.get("two"),
+			2,
+			"'two' shouldn't be expired after 5ms",
+		);
 
 		assert.equal(await cache.get("one"), 1); // Should NOT reset the expiry, only put does
 		await cache.put("two", 2.1);
 		await cache.put("three", 3);
 
 		clock.tick(5);
-		assert.equal(await cache.get("one"), undefined, "'one' should be expired after 10ms");
-		assert.equal(await cache.get("two"), 2.1, "'two' shouldn't be expired after 5ms");
-		assert.equal(await cache.get("three"), 3, "'three' shouldn't be expired after 5ms");
+		assert.equal(
+			await cache.get("one"),
+			undefined,
+			"'one' should be expired after 10ms",
+		);
+		assert.equal(
+			await cache.get("two"),
+			2.1,
+			"'two' shouldn't be expired after 5ms",
+		);
+		assert.equal(
+			await cache.get("three"),
+			3,
+			"'three' shouldn't be expired after 5ms",
+		);
 	});
 });

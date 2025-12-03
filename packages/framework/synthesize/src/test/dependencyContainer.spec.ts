@@ -12,8 +12,8 @@ import {
 } from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleContext,
-	IProvideFluidHandle,
 	IFluidHandleInternal,
+	IProvideFluidHandle,
 } from "@fluidframework/core-interfaces/internal";
 import { LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
@@ -126,7 +126,10 @@ describe("someObjectlicious", () => {
 				const loadable_promise = s.IFluidLoadable;
 				// This stacking of promises is done in order to make sure that the loadable_promise would have been executed by the time the assertion is done
 				await Promise.resolve().then(async () => {
-					assert(!lazyPromiseFlag, "Optional IFluidLoadable was correctly lazy loaded");
+					assert(
+						!lazyPromiseFlag,
+						"Optional IFluidLoadable was correctly lazy loaded",
+					);
 					const loadable = await loadable_promise;
 					assert(loadable, "Optional IFluidLoadable was registered");
 					assert(loadable === mock, "IFluidLoadable is expected");
@@ -203,7 +206,10 @@ describe("someObjectlicious", () => {
 				const loadable_promise = s.IFluidLoadable;
 				// This stacking of promises is done in order to make sure that the loadable_promise would have been executed by the time the assertion is done
 				await Promise.resolve().then(async () => {
-					assert(!lazyPromiseFlag, "Required IFluidLoadable was correctly lazy loaded");
+					assert(
+						!lazyPromiseFlag,
+						"Required IFluidLoadable was correctly lazy loaded",
+					);
 					const loadable = await loadable_promise;
 					assert(loadable, "Required IFluidLoadable was registered");
 					assert(loadable === mock, "IFluidLoadable is expected");
@@ -211,7 +217,9 @@ describe("someObjectlicious", () => {
 			});
 
 			it(`Two Optional Modules all registered`, async () => {
-				const dc = new DependencyContainer<FluidObject<IFluidLoadable & ISomeObject>>();
+				const dc = new DependencyContainer<
+					FluidObject<IFluidLoadable & ISomeObject>
+				>();
 				const loadableMock = new MockLoadable();
 				dc.register(IFluidLoadable, loadableMock);
 				const someObjectMock = new MockSomeObject();
@@ -231,7 +239,9 @@ describe("someObjectlicious", () => {
 			});
 
 			it(`Two Optional Modules one registered`, async () => {
-				const dc = new DependencyContainer<FluidObject<IFluidLoadable & ISomeObject>>();
+				const dc = new DependencyContainer<
+					FluidObject<IFluidLoadable & ISomeObject>
+				>();
 				const loadableMock = new MockLoadable();
 				dc.register(IFluidLoadable, loadableMock);
 
@@ -248,7 +258,9 @@ describe("someObjectlicious", () => {
 			});
 
 			it(`Two Optional Modules none registered`, async () => {
-				const dc = new DependencyContainer<FluidObject<IFluidLoadable & ISomeObject>>();
+				const dc = new DependencyContainer<
+					FluidObject<IFluidLoadable & ISomeObject>
+				>();
 
 				const s = dc.synthesize<IFluidLoadable & ISomeObject>(
 					{ IFluidLoadable, ISomeObject },
@@ -261,16 +273,18 @@ describe("someObjectlicious", () => {
 			});
 
 			it(`Two Required Modules all registered`, async () => {
-				const dc = new DependencyContainer<FluidObject<IFluidLoadable & ISomeObject>>();
+				const dc = new DependencyContainer<
+					FluidObject<IFluidLoadable & ISomeObject>
+				>();
 				const loadableMock = new MockLoadable();
 				dc.register(IFluidLoadable, loadableMock);
 				const someObjectMock = new MockSomeObject();
 				dc.register(ISomeObject, someObjectMock);
 
-				const s = dc.synthesize<undefined, IProvideFluidLoadable & IProvideSomeObject>(
+				const s = dc.synthesize<
 					undefined,
-					{ IFluidLoadable, ISomeObject },
-				);
+					IProvideFluidLoadable & IProvideSomeObject
+				>(undefined, { IFluidLoadable, ISomeObject });
 				const loadable = await s.IFluidLoadable;
 				assert(loadable, "Required IFluidLoadable was registered");
 				assert(loadable === loadableMock, "IFluidLoadable is expected");
@@ -328,7 +342,9 @@ describe("someObjectlicious", () => {
 			it(`Optional Provider found in Parent and Child resolves Child`, async () => {
 				const parentDc = new DependencyContainer<FluidObject<IFluidLoadable>>();
 				parentDc.register(IFluidLoadable, new MockLoadable());
-				const dc = new DependencyContainer<FluidObject<IFluidLoadable>>(parentDc);
+				const dc = new DependencyContainer<FluidObject<IFluidLoadable>>(
+					parentDc,
+				);
 				const loadableMock = new MockLoadable();
 				dc.register(IFluidLoadable, loadableMock);
 
@@ -360,10 +376,10 @@ describe("someObjectlicious", () => {
 				const someObjectMock = new MockSomeObject();
 				dc.register(ISomeObject, someObjectMock);
 
-				const s = dc.synthesize<undefined, IProvideFluidLoadable & IProvideSomeObject>(
+				const s = dc.synthesize<
 					undefined,
-					{ IFluidLoadable, ISomeObject },
-				);
+					IProvideFluidLoadable & IProvideSomeObject
+				>(undefined, { IFluidLoadable, ISomeObject });
 				const loadable = await s.IFluidLoadable;
 				assert(loadable, "Required IFluidLoadable was registered");
 				assert(loadable === loadableMock, "IFluidLoadable is expected");
@@ -376,7 +392,9 @@ describe("someObjectlicious", () => {
 			it(`Required Provider found in Parent and Child resolves Child`, async () => {
 				const parentDc = new DependencyContainer<FluidObject<IFluidLoadable>>();
 				parentDc.register(IFluidLoadable, new MockLoadable());
-				const dc = new DependencyContainer<FluidObject<IFluidLoadable>>(parentDc);
+				const dc = new DependencyContainer<FluidObject<IFluidLoadable>>(
+					parentDc,
+				);
 				const loadableMock = new MockLoadable();
 				dc.register(IFluidLoadable, loadableMock);
 
@@ -391,20 +409,29 @@ describe("someObjectlicious", () => {
 			it(`Registering`, async () => {
 				const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
 				dc.register(IFluidLoadable, new MockLoadable());
-				assert(dc.has(IFluidLoadable), "DependencyContainer has IFluidLoadable");
+				assert(
+					dc.has(IFluidLoadable),
+					"DependencyContainer has IFluidLoadable",
+				);
 			});
 
 			it(`Registering the same type twice throws`, async () => {
 				const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
 				dc.register(IFluidLoadable, new MockLoadable());
-				assert.throws(() => dc.register(IFluidLoadable, new MockLoadable()), Error);
+				assert.throws(
+					() => dc.register(IFluidLoadable, new MockLoadable()),
+					Error,
+				);
 			});
 
 			it(`Registering then Unregistering`, async () => {
 				const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
 				dc.register(IFluidLoadable, new MockLoadable());
 				dc.unregister(IFluidLoadable);
-				assert(!dc.has(IFluidLoadable), "DependencyContainer doesn't have IFluidLoadable");
+				assert(
+					!dc.has(IFluidLoadable),
+					"DependencyContainer doesn't have IFluidLoadable",
+				);
 			});
 
 			it(`Registering then Unregistering then Registering`, async () => {
@@ -412,11 +439,16 @@ describe("someObjectlicious", () => {
 				dc.register(IFluidLoadable, new MockLoadable());
 				dc.unregister(IFluidLoadable);
 				dc.register(IFluidLoadable, new MockLoadable());
-				assert(dc.has(IFluidLoadable), "DependencyContainer has IFluidLoadable");
+				assert(
+					dc.has(IFluidLoadable),
+					"DependencyContainer has IFluidLoadable",
+				);
 			});
 
 			it(`has() resolves correctly in all variations`, async () => {
-				const dc = new DependencyContainer<FluidObject<IFluidLoadable & ISomeObject>>();
+				const dc = new DependencyContainer<
+					FluidObject<IFluidLoadable & ISomeObject>
+				>();
 				dc.register(IFluidLoadable, new MockLoadable());
 				dc.register(ISomeObject, new MockSomeObject());
 				assert(dc.has(IFluidLoadable), "Manager has IFluidLoadable");
@@ -445,19 +477,26 @@ describe("someObjectlicious", () => {
 			});
 
 			it(`Parent Resolved from Child`, async () => {
-				const parentDc = new DependencyContainer<FluidObject<IFluidHandleInternal>>();
-				const loadableToHandle: FluidObjectProvider<IProvideFluidHandle> = async (
-					fds: IFluidDependencySynthesizer,
-				) => {
-					const loadable = fds.synthesize<undefined, IProvideFluidLoadable>(undefined, {
-						IFluidLoadable,
-					});
+				const parentDc = new DependencyContainer<
+					FluidObject<IFluidHandleInternal>
+				>();
+				const loadableToHandle: FluidObjectProvider<
+					IProvideFluidHandle
+				> = async (fds: IFluidDependencySynthesizer) => {
+					const loadable = fds.synthesize<undefined, IProvideFluidLoadable>(
+						undefined,
+						{
+							IFluidLoadable,
+						},
+					);
 					const loadedLoadable = await loadable.IFluidLoadable;
 					return toFluidHandleInternal(loadedLoadable.handle);
 				};
 				parentDc.register("IFluidHandle", loadableToHandle);
 
-				const dc = new DependencyContainer<FluidObject<IFluidLoadable>>(parentDc);
+				const dc = new DependencyContainer<FluidObject<IFluidLoadable>>(
+					parentDc,
+				);
 				const loadableMock = new MockLoadable();
 				dc.register(IFluidLoadable, loadableMock);
 
@@ -493,9 +532,14 @@ describe("someObjectlicious", () => {
 				};
 				testGetProvider(dc, "direct");
 				testGetProvider(new DependencyContainer(dc), "parent");
-				testGetProvider(new PassThru<FluidObject<IFluidLoadable>>(dc), "pass thru");
 				testGetProvider(
-					new DependencyContainer(new PassThru<FluidObject<IFluidLoadable>>(dc)),
+					new PassThru<FluidObject<IFluidLoadable>>(dc),
+					"pass thru",
+				);
+				testGetProvider(
+					new DependencyContainer(
+						new PassThru<FluidObject<IFluidLoadable>>(dc),
+					),
 					"pass thru as child",
 				);
 			});
@@ -516,7 +560,9 @@ class PassThru<TMap> implements IFluidDependencySynthesizer {
 	}
 	readonly IFluidDependencySynthesizer = this;
 
-	getProvider<K extends keyof TMap>(key: K): FluidObjectProvider<TMap[K]> | undefined {
+	getProvider<K extends keyof TMap>(
+		key: K,
+	): FluidObjectProvider<TMap[K]> | undefined {
 		const maybe = this.parent as unknown as Partial<this>;
 		if (maybe.getProvider) {
 			return maybe.getProvider(key);

@@ -16,7 +16,9 @@ import type { areSafelyAssignable, requireTrue } from "../../../util/index.js";
 
 type MapInlined = System_Unsafe.ReadonlyMapInlined<string, typeof numberSchema>;
 
-type _check = requireTrue<areSafelyAssignable<MapInlined, ReadonlyMap<string, number>>>;
+type _check = requireTrue<
+	areSafelyAssignable<MapInlined, ReadonlyMap<string, number>>
+>;
 
 // UnannotateAllowedTypeUnsafe
 {

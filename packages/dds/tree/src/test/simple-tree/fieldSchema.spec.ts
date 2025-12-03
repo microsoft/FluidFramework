@@ -4,37 +4,35 @@
  */
 
 import { strict as assert } from "node:assert";
+import { TreeAlpha } from "../../shared-tree/index.js";
 
 import {
-	SchemaFactory,
-	SchemaFactoryAlpha,
-	type AllowedTypes,
-	type booleanSchema,
-	type ImplicitAllowedTypes,
-	type numberSchema,
-	type stringSchema,
-	type TreeLeafValue,
-	type TreeNode,
-	type TreeNodeSchema,
-} from "../../simple-tree/index.js";
-
-import {
+	areImplicitFieldSchemaEqual,
 	type FieldKind,
 	type FieldSchema,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
 	type TreeFieldFromImplicitField,
-	areImplicitFieldSchemaEqual,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/fieldSchema.js";
-
+import {
+	type AllowedTypes,
+	type booleanSchema,
+	type ImplicitAllowedTypes,
+	type numberSchema,
+	SchemaFactory,
+	SchemaFactoryAlpha,
+	type stringSchema,
+	type TreeLeafValue,
+	type TreeNode,
+	type TreeNodeSchema,
+} from "../../simple-tree/index.js";
 import type {
 	areSafelyAssignable,
 	requireAssignableTo,
 	requireTrue,
 } from "../../util/index.js";
-import { TreeAlpha } from "../../shared-tree/index.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -42,18 +40,15 @@ describe("fieldSchema", () => {
 	{
 		class A extends schema.object("A", { x: [schema.number, schema.string] }) {}
 		class B extends schema.object("B", { x: [schema.number, schema.null] }) {}
-		// Unconstrained
-		{
-			// Input
-			type I1 = InsertableTreeFieldFromImplicitField<ImplicitFieldSchema>;
-			type _check1 = requireTrue<areSafelyAssignable<I1, never>>;
+		// Input
+		type I1 = InsertableTreeFieldFromImplicitField<ImplicitFieldSchema>;
+		type _check1 = requireTrue<areSafelyAssignable<I1, never>>;
 
-			// Output
-			type N3 = TreeFieldFromImplicitField;
-			type _check6 = requireTrue<
-				areSafelyAssignable<N3, TreeNode | TreeLeafValue | undefined>
-			>;
-		}
+		// Output
+		type N3 = TreeFieldFromImplicitField;
+		type _check6 = requireTrue<
+			areSafelyAssignable<N3, TreeNode | TreeLeafValue | undefined>
+		>;
 
 		// InsertableTreeFieldFromImplicitField
 		{
@@ -69,7 +64,9 @@ describe("fieldSchema", () => {
 			type I6 = InsertableTreeFieldFromImplicitField<
 				typeof numberSchema & typeof stringSchema
 			>;
-			type I7 = InsertableTreeFieldFromImplicitField<AllowedTypes & TreeNodeSchema>;
+			type I7 = InsertableTreeFieldFromImplicitField<
+				AllowedTypes & TreeNodeSchema
+			>;
 
 			type I9 = InsertableTreeFieldFromImplicitField<typeof A | typeof B>;
 			type I10 = InsertableTreeFieldFromImplicitField<FieldSchema>;
@@ -95,10 +92,8 @@ describe("fieldSchema", () => {
 
 		// InsertableField
 		{
-			{
-				type unconstrained = InsertableField<ImplicitFieldSchema>;
-				type _check = requireTrue<areSafelyAssignable<unconstrained, never>>;
-			}
+			type unconstrained = InsertableField<ImplicitFieldSchema>;
+			type _check = requireTrue<areSafelyAssignable<unconstrained, never>>;
 			type I8 = InsertableField<TreeNodeSchema>;
 
 			type I6 = InsertableField<typeof numberSchema & typeof stringSchema>;
@@ -135,7 +130,11 @@ describe("fieldSchema", () => {
 
 	it("areImplicitFieldSchemaEqual", () => {
 		const sf = new SchemaFactoryAlpha("test");
-		function check(a: ImplicitFieldSchema, b: ImplicitFieldSchema, expected: boolean) {
+		function check(
+			a: ImplicitFieldSchema,
+			b: ImplicitFieldSchema,
+			expected: boolean,
+		) {
 			assert.equal(areImplicitFieldSchemaEqual(a, b), expected);
 		}
 
@@ -150,9 +149,21 @@ describe("fieldSchema", () => {
 		check(sf.required([sf.number, sf.string]), [sf.string, sf.number], true); // Multiple explicit vs. implicit
 		check(sf.required(sf.number), sf.optional(sf.number), false); // Different kinds
 		check(sf.required(sf.number), sf.required(sf.number, {}), true); // One with empty props
-		check(sf.required(sf.number, { key: "a" }), sf.required(sf.number, { key: "a" }), true); // Props with same key
-		check(sf.required(sf.number, { key: "a" }), sf.required(sf.number, { key: "b" }), false); // Props with different key
-		check(sf.required(sf.number, {}), sf.required(sf.number, { metadata: {} }), true); // One with empty metadata
+		check(
+			sf.required(sf.number, { key: "a" }),
+			sf.required(sf.number, { key: "a" }),
+			true,
+		); // Props with same key
+		check(
+			sf.required(sf.number, { key: "a" }),
+			sf.required(sf.number, { key: "b" }),
+			false,
+		); // Props with different key
+		check(
+			sf.required(sf.number, {}),
+			sf.required(sf.number, { metadata: {} }),
+			true,
+		); // One with empty metadata
 		check(
 			sf.required(sf.number, { metadata: { description: "a" } }),
 			sf.required(sf.number, { metadata: { description: "a" } }),
@@ -263,7 +274,9 @@ describe("fieldSchema", () => {
 				// Like with the above case, TypeScript fails to simplify the input types, and these do not build.
 
 				// @ts-expect-error Compiler limitation, see comment above.
-				const _createdEmpty = TreeAlpha.create(GenericContainer, { content: undefined });
+				const _createdEmpty = TreeAlpha.create(GenericContainer, {
+					content: undefined,
+				});
 				// @ts-expect-error Compiler limitation, see comment above.
 				const _created = TreeAlpha.create(GenericContainer, { content });
 				// @ts-expect-error Compiler limitation, see comment above.
@@ -285,7 +298,9 @@ describe("fieldSchema", () => {
 				}) {}
 
 				// @ts-expect-error Compiler limitation, see comment above.
-				const _createdEmpty = TreeAlpha.create(GenericContainer, { content: undefined });
+				const _createdEmpty = TreeAlpha.create(GenericContainer, {
+					content: undefined,
+				});
 				// @ts-expect-error Compiler limitation, see comment above.
 				const _created = TreeAlpha.create(GenericContainer, { content });
 				// @ts-expect-error Compiler limitation, see comment above.
@@ -295,7 +310,9 @@ describe("fieldSchema", () => {
 			}
 		});
 
-		it("Generic InsertableTreeFieldFromImplicitField", <T extends ImplicitAllowedTypes>() => {
+		it("Generic InsertableTreeFieldFromImplicitField", <
+			T extends ImplicitAllowedTypes,
+		>() => {
 			type Required = FieldSchema<FieldKind.Required, T>;
 
 			type ArgFieldImplicit2 = InsertableTreeFieldFromImplicitField<T>;
@@ -310,7 +327,9 @@ describe("fieldSchema", () => {
 			type _check6 = requireAssignableTo<ArgFieldImplicit2, ArgFieldRequired2>;
 		});
 
-		it("Generic TreeFieldFromImplicitField", <T extends ImplicitAllowedTypes>() => {
+		it("Generic TreeFieldFromImplicitField", <
+			T extends ImplicitAllowedTypes,
+		>() => {
 			type Required = FieldSchema<FieldKind.Required, T>;
 
 			type ArgFieldImplicit2 = TreeFieldFromImplicitField<T>;
@@ -335,9 +354,15 @@ describe("fieldSchema", () => {
 			// An optional field should be the same as a required field unioned with undefined. Typescript fails to see this when its generic:
 
 			// @ts-expect-error Compiler limitation, see comment above.
-			type _check5 = requireAssignableTo<ArgFieldOptional, ArgFieldImplicit | undefined>;
+			type _check5 = requireAssignableTo<
+				ArgFieldOptional,
+				ArgFieldImplicit | undefined
+			>;
 			// @ts-expect-error Compiler limitation, see comment above.
-			type _check6 = requireAssignableTo<ArgFieldImplicit | undefined, ArgFieldOptional>;
+			type _check6 = requireAssignableTo<
+				ArgFieldImplicit | undefined,
+				ArgFieldOptional
+			>;
 
 			// At least this case allows undefined, like recursive object fields, but unlike non recursive object fields.
 			type _check7 = requireAssignableTo<undefined, ArgFieldOptional>;

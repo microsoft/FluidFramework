@@ -8,9 +8,12 @@ import {
 	encodeTreeSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/schema-index/schemaSummarizer.js";
-import { toInitialSchema } from "../../../simple-tree/index.js";
-import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
+import { toInitialSchema } from "../../../simple-tree/index.js";
+import {
+	takeJsonSnapshot,
+	useSnapshotDirectory,
+} from "../../snapshots/index.js";
 import { supportedSchemaFormats } from "./codecUtil.js";
 
 describe("schemaSummarizer", () => {
@@ -29,7 +32,10 @@ describe("schemaSummarizer", () => {
 			});
 
 			it(`simple encoded schema - schema v${schemaFormat}`, () => {
-				const encoded = encodeTreeSchema(toInitialSchema(JsonAsTree.Tree), schemaFormat);
+				const encoded = encodeTreeSchema(
+					toInitialSchema(JsonAsTree.Tree),
+					schemaFormat,
+				);
 				takeJsonSnapshot(encoded);
 			});
 		}

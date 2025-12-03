@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { type ITreeCursor, forEachField, forEachNode } from "../../../core/index.js";
+import {
+	forEachField,
+	forEachNode,
+	type ITreeCursor,
+} from "../../../core/index.js";
 import type {
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlyObject,
@@ -16,7 +20,11 @@ export function sum(cursor: ITreeCursor): number {
 		total += value;
 	}
 
-	for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
+	for (
+		let inField = cursor.firstField();
+		inField;
+		inField = cursor.nextField()
+	) {
 		for (let inNode = cursor.firstNode(); inNode; inNode = cursor.nextNode()) {
 			total += sum(cursor);
 		}

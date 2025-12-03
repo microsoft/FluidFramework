@@ -62,7 +62,10 @@ async function evaluateBrowserHash(
 			// eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
 			const hashFn = new Function(`"use strict"; return ( ${fn} );`);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-			const pageHashArray = await (hashFn()(fileUint8, alg) as Promise<Uint8Array>);
+			const pageHashArray = await (hashFn()(
+				fileUint8,
+				alg,
+			) as Promise<Uint8Array>);
 
 			// Similarly, return the hash array as a string instead of a Uint8Array
 			return Array.prototype.map
@@ -78,9 +81,12 @@ async function evaluateBrowserHash(
 	);
 
 	// reconstruct the Uint8Array from the string
-	const charCodes = Array.prototype.map.call([...hashCharCodeString], (char: string) => {
-		return char.charCodeAt(0);
-	}) as number[];
+	const charCodes = Array.prototype.map.call(
+		[...hashCharCodeString],
+		(char: string) => {
+			return char.charCodeAt(0);
+		},
+	) as number[];
 	const hashArray = Uint8Array.from(charCodes);
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 	return HashBrowser.__get__("encodeDigest")(hashArray, hashEncoding) as string;
@@ -95,7 +101,10 @@ async function evaluateBrowserGitHash(file: Buffer): Promise<string> {
 	const size = file.byteLength;
 	const filePrefix = `blob ${size.toString()}${String.fromCharCode(0)}`;
 	const prefixBuffer = Buffer.from(filePrefix, "utf8");
-	const hashBuffer = Buffer.concat([prefixBuffer, file], prefixBuffer.length + file.length);
+	const hashBuffer = Buffer.concat(
+		[prefixBuffer, file],
+		prefixBuffer.length + file.length,
+	);
 	return evaluateBrowserHash(hashBuffer);
 }
 
@@ -130,12 +139,23 @@ describe("Client-Utils", () => {
 		const port: number = (server.address() as AddressInfo).port;
 
 		// Navigate to the local test server so crypto is available
-		await page.goto(`http://localhost:${port}`, { waitUntil: "load", timeout: 0 });
+		await page.goto(`http://localhost:${port}`, {
+			waitUntil: "load",
+			timeout: 0,
+		});
 
-		xmlFile = await getFileContents(path.join(__dirname, `${dataDir}/assets/book.xml`));
-		svgFile = await getFileContents(path.join(__dirname, `${dataDir}/assets/bindy.svg`));
-		pdfFile = await getFileContents(path.join(__dirname, `${dataDir}/assets/aka.pdf`));
-		gifFile = await getFileContents(path.join(__dirname, `${dataDir}/assets/grid.gif`));
+		xmlFile = await getFileContents(
+			path.join(__dirname, `${dataDir}/assets/book.xml`),
+		);
+		svgFile = await getFileContents(
+			path.join(__dirname, `${dataDir}/assets/bindy.svg`),
+		);
+		pdfFile = await getFileContents(
+			path.join(__dirname, `${dataDir}/assets/aka.pdf`),
+		);
+		gifFile = await getFileContents(
+			path.join(__dirname, `${dataDir}/assets/grid.gif`),
+		);
 	});
 
 	afterAll(async () => {
@@ -196,7 +216,8 @@ describe("Client-Utils", () => {
 
 	describe("hashFile", () => {
 		test("SHA256 hashes match", async () => {
-			const expectedHash = "9b8abd0b90324ffce0b6a9630e5c4301972c364ed9aeb7e7329e424a4ae8a630";
+			const expectedHash =
+				"9b8abd0b90324ffce0b6a9630e5c4301972c364ed9aeb7e7329e424a4ae8a630";
 			const hashNode = await HashNode.hashFile(svgFile, "SHA-256");
 			const hashBrowser = await evaluateBrowserHash(svgFile, "SHA-256");
 			expect(hashNode).toEqual(expectedHash);
@@ -206,13 +227,21 @@ describe("Client-Utils", () => {
 		test("base64 encoded hashes match", async () => {
 			const expectedHash1 = "4/nXhjtBQhhvXTNNSNq/cJgb4sQ=";
 			const hashNode1 = await HashNode.hashFile(xmlFile, "SHA-1", "base64");
-			const hashBrowser1 = await evaluateBrowserHash(xmlFile, "SHA-1", "base64");
+			const hashBrowser1 = await evaluateBrowserHash(
+				xmlFile,
+				"SHA-1",
+				"base64",
+			);
 			expect(hashNode1).toEqual(expectedHash1);
 			expect(hashBrowser1).toEqual(expectedHash1);
 
 			const expectedHash256 = "QPQh34aj1TNmyo34aPDA0vMIU7r5QC/6KNgIzlLYiFY=";
 			const hashNode256 = await HashNode.hashFile(pdfFile, "SHA-256", "base64");
-			const hashBrowser256 = await evaluateBrowserHash(pdfFile, "SHA-256", "base64");
+			const hashBrowser256 = await evaluateBrowserHash(
+				pdfFile,
+				"SHA-256",
+				"base64",
+			);
 			expect(hashNode256).toEqual(expectedHash256);
 			expect(hashBrowser256).toEqual(expectedHash256);
 		});

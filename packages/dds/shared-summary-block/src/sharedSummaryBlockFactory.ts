@@ -6,8 +6,8 @@
 import type {
 	IChannelAttributes,
 	IChannelFactory,
-	IFluidDataStoreRuntime,
 	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
@@ -18,11 +18,14 @@ import { SharedSummaryBlockClass } from "./sharedSummaryBlock.js";
 /**
  * The factory that defines the shared summary block.
  */
-export class SharedSummaryBlockFactory implements IChannelFactory<ISharedSummaryBlock> {
+export class SharedSummaryBlockFactory
+	implements IChannelFactory<ISharedSummaryBlock>
+{
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
 	 */
-	public static readonly Type = "https://graph.microsoft.com/types/shared-summary-block";
+	public static readonly Type =
+		"https://graph.microsoft.com/types/shared-summary-block";
 
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
@@ -56,7 +59,11 @@ export class SharedSummaryBlockFactory implements IChannelFactory<ISharedSummary
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<ISharedSummaryBlock> {
-		const sharedSummaryBlock = new SharedSummaryBlockClass(id, runtime, attributes);
+		const sharedSummaryBlock = new SharedSummaryBlockClass(
+			id,
+			runtime,
+			attributes,
+		);
 		await sharedSummaryBlock.load(services);
 
 		return sharedSummaryBlock;
@@ -65,7 +72,10 @@ export class SharedSummaryBlockFactory implements IChannelFactory<ISharedSummary
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
 	 */
-	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedSummaryBlock {
+	public create(
+		runtime: IFluidDataStoreRuntime,
+		id: string,
+	): ISharedSummaryBlock {
 		const sharedSummaryBlock = new SharedSummaryBlockClass(
 			id,
 			runtime,
@@ -81,7 +91,9 @@ export class SharedSummaryBlockFactory implements IChannelFactory<ISharedSummary
  * {@inheritDoc ISharedSummaryBlock}
  * @legacy @beta
  */
-export const SharedSummaryBlock = createSharedObjectKind(SharedSummaryBlockFactory);
+export const SharedSummaryBlock = createSharedObjectKind(
+	SharedSummaryBlockFactory,
+);
 
 /**
  * {@inheritDoc ISharedSummaryBlock}

@@ -3,35 +3,41 @@
  * Licensed under the MIT License.
  */
 
-import { AttachState, IAudience } from "@fluidframework/container-definitions";
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import { FluidObject } from "@fluidframework/core-interfaces";
-import {
+import type {
+	AttachState,
+	IAudience,
+} from "@fluidframework/container-definitions";
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces";
+import type {
 	IFluidHandleContext,
-	type IFluidHandleInternal,
+	IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
-import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
-import {
+import type {
+	IClientDetails,
+	IQuorumClients,
+} from "@fluidframework/driver-definitions";
+import type {
 	IDocumentMessage,
-	ISnapshotTree,
 	ISequencedDocumentMessage,
+	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
-import {
+import type {
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
-	type IRuntimeStorageService,
-	type MinimumVersionForCollab,
+	IRuntimeStorageService,
+	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
-	ITelemetryLoggerExt,
 	createChildLogger,
+	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -50,8 +56,10 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public connected: boolean = true;
 	public readonly: boolean = false;
 	public baseSnapshot: ISnapshotTree | undefined;
-	public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> =
-		new MockDeltaManager(() => this.clientId);
+	public deltaManager: IDeltaManager<
+		ISequencedDocumentMessage,
+		IDocumentMessage
+	> = new MockDeltaManager(() => this.clientId);
 
 	public containerRuntime: IContainerRuntimeBase = undefined as any;
 	public storage: IRuntimeStorageService = undefined as any;
@@ -80,7 +88,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	/**
 	 * {@inheritdoc @fluidframework/runtime-definitions#IFluidDataStoreContext.minVersionForCollab}
 	 */
-	public minVersionForCollab: MinimumVersionForCollab = defaultMinVersionForCollab;
+	public minVersionForCollab: MinimumVersionForCollab =
+		defaultMinVersionForCollab;
 
 	constructor(
 		public readonly id: string = uuid(),
@@ -135,7 +144,9 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		throw new Error("Method not implemented.");
 	}
 
-	public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
+	public async getAbsoluteUrl(
+		relativeUrl: string,
+	): Promise<string | undefined> {
 		throw new Error("Method not implemented.");
 	}
 
@@ -160,7 +171,11 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		throw new Error("Method not implemented.");
 	}
 
-	public addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number) {
+	public addedGCOutboundRoute(
+		fromPath: string,
+		toPath: string,
+		messageTimestampMs?: number,
+	) {
 		throw new Error("Method not implemented.");
 	}
 }

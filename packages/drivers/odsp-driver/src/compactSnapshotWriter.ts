@@ -6,20 +6,19 @@
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
-	ISnapshot,
 	IBlob,
-	ISnapshotTree,
 	ISequencedDocumentMessage,
+	ISnapshot,
+	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
-
-import { TreeBuilderSerializer } from "./WriteBufferUtils.js";
 import { snapshotMinReadVersion } from "./compactSnapshotParser.js";
+import { TreeBuilderSerializer } from "./WriteBufferUtils.js";
 import {
-	type NodeCore,
 	addBoolProperty,
 	addDictionaryStringProperty,
 	addNumberProperty,
 	addStringProperty,
+	type NodeCore,
 } from "./zipItDataRepresentationUtils.js";
 
 /**
@@ -27,7 +26,10 @@ import {
  * @param node - snapshot node to serialize to
  * @param latestSequenceNumber - latest seq number of the container.
  */
-function writeSnapshotProps(node: NodeCore, latestSequenceNumber: number): void {
+function writeSnapshotProps(
+	node: NodeCore,
+	latestSequenceNumber: number,
+): void {
 	addStringProperty(node, "mrv", snapshotMinReadVersion);
 	addStringProperty(node, "cv", snapshotMinReadVersion);
 	addNumberProperty(node, "lsn", latestSequenceNumber);
@@ -51,7 +53,9 @@ function writeBlobsSection(
 		if (blob instanceof ArrayBuffer) {
 			blobNode.addBlob(new Uint8Array(blob));
 		} else {
-			blobNode.addBlob(new Uint8Array(stringToBuffer(blob.contents, blob.encoding ?? "utf8")));
+			blobNode.addBlob(
+				new Uint8Array(stringToBuffer(blob.contents, blob.encoding ?? "utf8")),
+			);
 		}
 	}
 }
@@ -61,13 +65,19 @@ function writeBlobsSection(
  * @param snapshotNode - tree node to serialize to
  * @param snapshotTree - snapshot tree that is being serialized
  */
-function writeTreeSection(snapshotNode: NodeCore, snapshotTree: ISnapshotTree): void {
+function writeTreeSection(
+	snapshotNode: NodeCore,
+	snapshotTree: ISnapshotTree,
+): void {
 	snapshotNode.addDictionaryString("treeNodes");
 	const treesNode = snapshotNode.addNode("list");
 	writeTreeSectionCore(treesNode, snapshotTree);
 }
 
-function writeTreeSectionCore(treesNode: NodeCore, snapshotTree: ISnapshotTree): void {
+function writeTreeSectionCore(
+	treesNode: NodeCore,
+	snapshotTree: ISnapshotTree,
+): void {
 	for (const [path, value] of Object.entries(snapshotTree.trees)) {
 		const treeNode = treesNode.addNode();
 		// Many leaf nodes in the tree have same names like "content", "body", "header"
@@ -78,7 +88,10 @@ function writeTreeSectionCore(treesNode: NodeCore, snapshotTree: ISnapshotTree):
 			addBoolProperty(treeNode, "unreferenced", snapshotTree.unreferenced);
 		}
 		// Only write children prop if either blobs or trees are present.
-		if (Object.keys(value.blobs).length > 0 || Object.keys(value.trees).length > 0) {
+		if (
+			Object.keys(value.blobs).length > 0 ||
+			Object.keys(value.trees).length > 0
+		) {
 			treeNode.addDictionaryString("children");
 			const childNode = treeNode.addNode("list");
 			writeTreeSectionCore(childNode, value);
@@ -113,9 +126,16 @@ function writeSnapshotSection(
 	const snapshotNode = rootNode.addNode();
 
 	const snapshotId = snapshotTree.id;
-	assert(snapshotId !== undefined, 0x21b /* "Snapshot id should be provided" */);
+	assert(
+		snapshotId !== undefined,
+		0x21b /* "Snapshot id should be provided" */,
+	);
 	addStringProperty(snapshotNode, "id", snapshotId);
-	addStringProperty(snapshotNode, "message", `Snapshot@${snapshotSequenceNumber}`);
+	addStringProperty(
+		snapshotNode,
+		"message",
+		`Snapshot@${snapshotSequenceNumber}`,
+	);
 	addNumberProperty(snapshotNode, "sequenceNumber", snapshotSequenceNumber);
 
 	// Add Trees
@@ -127,7 +147,10 @@ function writeSnapshotSection(
  * @param rootNode - node to serialize to.
  * @param ops - ops that is being serialized
  */
-function writeOpsSection(rootNode: NodeCore, ops: ISequencedDocumentMessage[]): void {
+function writeOpsSection(
+	rootNode: NodeCore,
+	ops: ISequencedDocumentMessage[],
+): void {
 	let firstSequenceNumber: number | undefined;
 	if (ops.length > 0) {
 		firstSequenceNumber = ops[0].sequenceNumber;
@@ -149,7 +172,9 @@ function writeOpsSection(rootNode: NodeCore, ops: ISequencedDocumentMessage[]): 
  * @param snapshotContents - snapshot tree contents to serialize
  * @returns ReadBuffer - binary representation of the data.
  */
-export function convertToCompactSnapshot(snapshotContents: ISnapshot): Uint8Array {
+export function convertToCompactSnapshot(
+	snapshotContents: ISnapshot,
+): Uint8Array {
 	const builder = new TreeBuilderSerializer();
 	// Create the root node.
 	const rootNode = builder.addNode();

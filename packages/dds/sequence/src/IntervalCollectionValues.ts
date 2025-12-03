@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
+	type IFluidSerializer,
 	serializeHandles,
-	IFluidSerializer,
 } from "@fluidframework/shared-object-base/internal";
 
-import { type IntervalCollection } from "./intervalCollection.js";
-import { ISerializableIntervalCollection } from "./intervalCollectionMapInterfaces.js";
+import type { IntervalCollection } from "./intervalCollection.js";
+import type { ISerializableIntervalCollection } from "./intervalCollectionMapInterfaces.js";
 
 export function makeSerializable(
 	localValue: IntervalCollection,

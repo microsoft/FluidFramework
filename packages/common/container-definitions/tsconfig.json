@@ -4,6 +4,6 @@
 	"exclude": ["src/test/**/*"],
 	"compilerOptions": {
 		"rootDir": "./src",
-		"outDir": "./lib",
-	},
+		"outDir": "./lib"
+	}
 }

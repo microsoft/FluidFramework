@@ -8,20 +8,20 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { walkTree } from '../EditUtilities.js';
 import {
-	Definition,
-	DetachedSequenceId,
-	InternedStringId,
-	NodeId,
-	OpSpaceNodeId,
-	TraitLabel,
+	type Definition,
+	type DetachedSequenceId,
+	type InternedStringId,
 	isDetachedSequenceId,
+	type NodeId,
+	type OpSpaceNodeId,
+	type TraitLabel,
 } from '../Identifiers.js';
-import { ContextualizedNodeIdNormalizer, scopeIdNormalizer } from '../NodeIdUtilities.js';
+import { createSessionId, IdCompressor, isFinalId, isLocalId } from '../id-compressor/index.js';
+import { type ContextualizedNodeIdNormalizer, scopeIdNormalizer } from '../NodeIdUtilities.js';
+import type { CompressedPlaceholderTree, PlaceholderTree, TraitMap, TreeNode } from '../persisted-types/index.js';
 import { RevisionView } from '../RevisionView.js';
 import { MutableStringInterner } from '../StringInterner.js';
 import { InterningTreeCompressor } from '../TreeCompressor.js';
-import { IdCompressor, createSessionId, isFinalId, isLocalId } from '../id-compressor/index.js';
-import { CompressedPlaceholderTree, PlaceholderTree, TraitMap, TreeNode } from '../persisted-types/index.js';
 
 import { makeNodeIdContext, setUpTestTree } from './utilities/TestUtilities.js';
 

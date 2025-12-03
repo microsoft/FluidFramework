@@ -18,7 +18,9 @@ import {
 	exposeFromOpaqueJson,
 } from "./testUtils.js";
 
-function saveJsonSerializable<const T>(value: JsonSerializable<T>): OpaqueJsonSerializable<T> {
+function saveJsonSerializable<const T>(
+	value: JsonSerializable<T>,
+): OpaqueJsonSerializable<T> {
 	return value as unknown as OpaqueJsonSerializable<T>;
 }
 
@@ -28,14 +30,17 @@ function forwardJsonSerializable<const T>(
 	return value as unknown as JsonSerializable<T>;
 }
 
-function saveJsonDeserialized<const T>(value: JsonDeserialized<T>): OpaqueJsonDeserialized<T> {
+function saveJsonDeserialized<const T>(
+	value: JsonDeserialized<T>,
+): OpaqueJsonDeserialized<T> {
 	return value as unknown as OpaqueJsonDeserialized<T>;
 }
 
 function saveJsonRoundTrippable<const T>(
 	value: JsonSerializable<T> & JsonDeserialized<T>,
 ): OpaqueJsonSerializable<T> & OpaqueJsonDeserialized<T> {
-	return value as unknown as OpaqueJsonSerializable<T> & OpaqueJsonDeserialized<T>;
+	return value as unknown as OpaqueJsonSerializable<T> &
+		OpaqueJsonDeserialized<T>;
 }
 
 function returnJsonDeserialized<const T>(
@@ -71,7 +76,10 @@ describe("OpaqueJsonSerializable and OpaqueJsonDeserialized", () => {
 			let serializableGeneralValue = saveJsonSerializable({ ...generalValue });
 			use(serializableGeneralValue);
 			const serializableSpecificValue = saveJsonSerializable({ a: 1 });
-			const serializableValueWithMore = saveJsonSerializable({ a: 2 as number, b: "test" });
+			const serializableValueWithMore = saveJsonSerializable({
+				a: 2 as number,
+				b: "test",
+			});
 
 			// Act & Verify
 			serializableGeneralValue = serializableSpecificValue; // should be assignable
@@ -97,7 +105,9 @@ describe("OpaqueJsonSerializable and OpaqueJsonDeserialized", () => {
 
 		it("OpaqueJsonSerializable & OpaqueJsonDeserialized is covariant (more specific is assignable to general)", () => {
 			// Setup
-			let roundTrippableGeneralValue = saveJsonRoundTrippable({ ...generalValue });
+			let roundTrippableGeneralValue = saveJsonRoundTrippable({
+				...generalValue,
+			});
 			use(roundTrippableGeneralValue);
 			const roundTrippableSpecificValue = saveJsonRoundTrippable({ a: 1 });
 			const roundTrippableValueWithMore = saveJsonRoundTrippable({
@@ -209,22 +219,38 @@ describe("OpaqueJsonSerializable and OpaqueJsonDeserialized", () => {
 
 			it("OpaqueJsonSerializable may be forwarded as JsonSerializable", () => {
 				// Setup
-				let serializableGenericValue = { ...generalValue } as unknown as JsonSerializable<T>;
-				const opaqueSerializableGenericValue = saveJsonSerializable(serializableGenericValue);
+				let serializableGenericValue = {
+					...generalValue,
+				} as unknown as JsonSerializable<T>;
+				const opaqueSerializableGenericValue = saveJsonSerializable(
+					serializableGenericValue,
+				);
 
 				// Act & Verify
-				serializableGenericValue = forwardJsonSerializable(opaqueSerializableGenericValue);
-				serializableGenericValue = exposeFromOpaqueJson(opaqueSerializableGenericValue);
+				serializableGenericValue = forwardJsonSerializable(
+					opaqueSerializableGenericValue,
+				);
+				serializableGenericValue = exposeFromOpaqueJson(
+					opaqueSerializableGenericValue,
+				);
 			});
 
 			it("OpaqueJsonDeserialized may be returned to JsonDeserialized", () => {
 				// Setup
-				let deserializedGenericValue = { ...generalValue } as unknown as JsonDeserialized<T>;
-				const opaqueDeserializedGenericValue = saveJsonDeserialized(deserializedGenericValue);
+				let deserializedGenericValue = {
+					...generalValue,
+				} as unknown as JsonDeserialized<T>;
+				const opaqueDeserializedGenericValue = saveJsonDeserialized(
+					deserializedGenericValue,
+				);
 
 				// Act & Verify
-				deserializedGenericValue = returnJsonDeserialized(opaqueDeserializedGenericValue);
-				deserializedGenericValue = exposeFromOpaqueJson(opaqueDeserializedGenericValue);
+				deserializedGenericValue = returnJsonDeserialized(
+					opaqueDeserializedGenericValue,
+				);
+				deserializedGenericValue = exposeFromOpaqueJson(
+					opaqueDeserializedGenericValue,
+				);
 			});
 
 			it("OpaqueJsonSerializable & OpaqueJsonDeserialized may be returned to JsonSerializable & JsonDeserialized", () => {
@@ -240,7 +266,9 @@ describe("OpaqueJsonSerializable and OpaqueJsonDeserialized", () => {
 				roundTrippableGenericValue = returnJsonSerializableAndDeserialized(
 					opaqueRoundTrippableGenericValue,
 				);
-				roundTrippableGenericValue = exposeFromOpaqueJson(opaqueRoundTrippableGenericValue);
+				roundTrippableGenericValue = exposeFromOpaqueJson(
+					opaqueRoundTrippableGenericValue,
+				);
 			});
 
 			it("OpaqueJsonSerializable & OpaqueJsonDeserialized may be forwarded as JsonSerializable", () => {
@@ -289,7 +317,10 @@ describe("OpaqueJsonSerializable and OpaqueJsonDeserialized", () => {
 			const serializableGeneralValue = saveJsonSerializable(generalValue);
 			let serializableSpecificValue = saveJsonSerializable({ a: 1 });
 			use(serializableSpecificValue);
-			let serializableValueWithMore = saveJsonSerializable({ a: 2 as number, b: "test" });
+			let serializableValueWithMore = saveJsonSerializable({
+				a: 2 as number,
+				b: "test",
+			});
 			use(serializableValueWithMore);
 
 			// Act & Verify
@@ -324,7 +355,10 @@ describe("OpaqueJsonSerializable and OpaqueJsonDeserialized", () => {
 			const roundTrippableGeneralValue = saveJsonRoundTrippable(generalValue);
 			let roundTrippableSpecificValue = saveJsonRoundTrippable({ a: 1 });
 			use(roundTrippableSpecificValue);
-			let roundTrippableValueWithMore = saveJsonRoundTrippable({ a: 2 as number, b: "test" });
+			let roundTrippableValueWithMore = saveJsonRoundTrippable({
+				a: 2 as number,
+				b: "test",
+			});
 			use(roundTrippableValueWithMore);
 
 			// Act & Verify

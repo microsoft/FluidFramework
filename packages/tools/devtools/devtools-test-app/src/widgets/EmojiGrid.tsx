@@ -32,9 +32,14 @@ export function EmojiGrid(props: EmojiGridProps): React.ReactElement {
 	for (let row = 0; row < rowCount; row++) {
 		const renderedCells: React.ReactElement[] = [];
 		for (let col = 0; col < colCount; col++) {
-			const cellHandle = emojiMatrix.getCell(row, col) as IFluidHandle<ISharedCell<boolean>>;
+			const cellHandle = emojiMatrix.getCell(row, col) as IFluidHandle<
+				ISharedCell<boolean>
+			>;
 			renderedCells.push(
-				<CellView key={`emoji-grid-cell-${row}-${col}`} cellHandle={cellHandle} />,
+				<CellView
+					key={`emoji-grid-cell-${row}-${col}`}
+					cellHandle={cellHandle}
+				/>,
 			);
 		}
 		renderedRows.push(<div key={`emoji-grid-row${row}`}>{renderedCells}</div>);
@@ -50,7 +55,9 @@ interface CellViewProps {
 function CellView(props: CellViewProps): React.ReactElement {
 	const { cellHandle } = props;
 
-	const [emojiCell, setEmojiCell] = React.useState<ISharedCell<boolean> | undefined>();
+	const [emojiCell, setEmojiCell] = React.useState<
+		ISharedCell<boolean> | undefined
+	>();
 
 	React.useEffect(() => {
 		cellHandle.get().then(setEmojiCell, (error) => {
@@ -59,5 +66,9 @@ function CellView(props: CellViewProps): React.ReactElement {
 		});
 	}, [cellHandle, setEmojiCell]);
 
-	return emojiCell === undefined ? <Spinner /> : <EmojiButton emojiCell={emojiCell} />;
+	return emojiCell === undefined ? (
+		<Spinner />
+	) : (
+		<EmojiButton emojiCell={emojiCell} />
+	);
 }

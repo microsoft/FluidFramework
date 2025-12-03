@@ -7,17 +7,29 @@
 // (See 'Isomorphic Code' section in the package README.md.)
 
 export {
+	fromBase64ToUtf8,
+	fromUtf8ToBase64,
+	toUtf8,
+} from "./base64EncodingBrowser.js";
+export {
 	bufferToString,
-	isArrayBuffer,
 	IsoBuffer,
+	isArrayBuffer,
 	stringToBuffer,
 	Uint8ArrayToString,
 } from "./bufferBrowser.js";
-export { gitHashFile, hashFile } from "./hashFileBrowser.js";
-
-export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64EncodingBrowser.js";
 export { Uint8ArrayToArrayBuffer } from "./bufferShared.js";
 export { EventEmitter } from "./eventEmitter.cjs";
+export { createEmitter } from "./events/index.js";
+export { gitHashFile, hashFile } from "./hashFileBrowser.js";
+export {
+	checkLayerCompatibility,
+	type FluidLayer,
+	type ILayerCompatDetails,
+	type ILayerCompatSupportRequirements,
+	type IProvideLayerCompatDetails,
+	type LayerCompatCheckResult,
+} from "./layerCompat.js";
 export { performanceNow } from "./performanceIsomorphic.js";
 export { type ITraceEvent, Trace } from "./trace.js";
 export {
@@ -25,14 +37,3 @@ export {
 	TypedEventEmitter,
 	type TypedEventTransform,
 } from "./typedEventEmitter.js";
-
-export { createEmitter } from "./events/index.js";
-
-export {
-	type FluidLayer,
-	checkLayerCompatibility,
-	type LayerCompatCheckResult,
-	type ILayerCompatDetails,
-	type IProvideLayerCompatDetails,
-	type ILayerCompatSupportRequirements,
-} from "./layerCompat.js";

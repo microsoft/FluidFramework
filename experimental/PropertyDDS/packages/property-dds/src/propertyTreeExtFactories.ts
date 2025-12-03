@@ -6,16 +6,16 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import {
+import type {
 	IChannelAttributes,
 	IChannelFactory,
-	IFluidDataStoreRuntime,
 	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { compress, decompress } from "lz4js";
 import { deflate, inflate } from "pako";
 
-import {
+import type {
 	IPropertyTreeConfig,
 	IPropertyTreeMessage,
 	ISharedPropertyTreeEncDec,
@@ -33,7 +33,10 @@ export abstract class CompressedPropertyTreeFactory implements IChannelFactory {
 	public abstract get type();
 	public abstract getEncodeFce();
 	public abstract getDecodeFce();
-	private createCompressionMethods(encodeFn, decodeFn): ISharedPropertyTreeEncDec {
+	private createCompressionMethods(
+		encodeFn,
+		decodeFn,
+	): ISharedPropertyTreeEncDec {
 		return {
 			messageEncoder: {
 				encode: (change: IPropertyTreeMessage) => {
@@ -51,7 +54,9 @@ export abstract class CompressedPropertyTreeFactory implements IChannelFactory {
 				decode: (transferChange: IPropertyTreeMessage) => {
 					// eslint-disable-next-line @typescript-eslint/dot-notation
 					if (transferChange["isZipped"]) {
-						const zipped = new Uint8Array(stringToBuffer(transferChange.changeSet, "base64"));
+						const zipped = new Uint8Array(
+							stringToBuffer(transferChange.changeSet, "base64"),
+						);
 						const unzipped = decodeFn(zipped);
 						const changeSetStr = new TextDecoder().decode(unzipped);
 						transferChange.changeSet = JSON.parse(changeSetStr);
@@ -76,7 +81,10 @@ export abstract class CompressedPropertyTreeFactory implements IChannelFactory {
 		};
 	}
 	public getEncDec(): ISharedPropertyTreeEncDec {
-		return this.createCompressionMethods(this.getEncodeFce(), this.getDecodeFce());
+		return this.createCompressionMethods(
+			this.getEncodeFce(),
+			this.getDecodeFce(),
+		);
 	}
 	public abstract newPropertyTree(
 		id: string,
@@ -142,7 +150,13 @@ export class DeflatedPropertyTreeFactory extends CompressedPropertyTreeFactory {
 		attributes: IChannelAttributes,
 		url?: string,
 	): Promise<DeflatedPropertyTree> {
-		return (await super.load(runtime, id, services, attributes, url)) as DeflatedPropertyTree;
+		return (await super.load(
+			runtime,
+			id,
+			services,
+			attributes,
+			url,
+		)) as DeflatedPropertyTree;
 	}
 
 	public create(
@@ -174,7 +188,13 @@ export class DeflatedPropertyTreeFactory extends CompressedPropertyTreeFactory {
 		options: SharedPropertyTreeOptions,
 		propertyTreeConfig: IPropertyTreeConfig,
 	): SharedPropertyTree {
-		return new DeflatedPropertyTree(id, runtime, attributes, options, propertyTreeConfig);
+		return new DeflatedPropertyTree(
+			id,
+			runtime,
+			attributes,
+			options,
+			propertyTreeConfig,
+		);
 	}
 }
 
@@ -197,7 +217,13 @@ export class LZ4PropertyTreeFactory extends CompressedPropertyTreeFactory {
 		attributes: IChannelAttributes,
 		url?: string,
 	): Promise<LZ4PropertyTree> {
-		return (await super.load(runtime, id, services, attributes, url)) as LZ4PropertyTree;
+		return (await super.load(
+			runtime,
+			id,
+			services,
+			attributes,
+			url,
+		)) as LZ4PropertyTree;
 	}
 
 	public create(
@@ -229,6 +255,12 @@ export class LZ4PropertyTreeFactory extends CompressedPropertyTreeFactory {
 		options: SharedPropertyTreeOptions,
 		propertyTreeConfig: IPropertyTreeConfig,
 	): SharedPropertyTree {
-		return new LZ4PropertyTree(id, runtime, attributes, options, propertyTreeConfig);
+		return new LZ4PropertyTree(
+			id,
+			runtime,
+			attributes,
+			options,
+			propertyTreeConfig,
+		);
 	}
 }

@@ -30,7 +30,9 @@ interface FilterCommandResult {
  * While the --json flag is technically optional, it should always be passed when using this command for testing.
  * Otherwise there is no output to be checked for correctness.
  */
-export default class FilterCommand extends PackageCommand<typeof FilterCommand> {
+export default class FilterCommand extends PackageCommand<
+	typeof FilterCommand
+> {
 	static readonly summary =
 		`FOR INTERNAL TESTING ONLY. This command is used only to test the common package filtering and selection logic that is used across the CLI. FOR INTERNAL TESTING ONLY.`;
 
@@ -47,7 +49,9 @@ export default class FilterCommand extends PackageCommand<typeof FilterCommand> 
 		// do nothing
 	}
 
-	protected async processPackages(_packages: PackageWithKind[]): Promise<string[]> {
+	protected async processPackages(
+		_packages: PackageWithKind[],
+	): Promise<string[]> {
 		// do nothing
 		return [];
 	}
@@ -55,10 +59,19 @@ export default class FilterCommand extends PackageCommand<typeof FilterCommand> 
 	public async run(): Promise<FilterCommandResult> {
 		await super.run();
 
-		assert(this.selectionOptions !== undefined, "selectionOptions is undefined");
+		assert(
+			this.selectionOptions !== undefined,
+			"selectionOptions is undefined",
+		);
 		assert(this.filterOptions !== undefined, "filterOptions is undefined");
-		assert(this.selectedPackages !== undefined, "selectedPackages is undefined");
-		assert(this.filteredPackages !== undefined, "filteredPackages is undefined");
+		assert(
+			this.selectedPackages !== undefined,
+			"selectedPackages is undefined",
+		);
+		assert(
+			this.filteredPackages !== undefined,
+			"filteredPackages is undefined",
+		);
 
 		const context = await this.getContext();
 		const pkgs = {

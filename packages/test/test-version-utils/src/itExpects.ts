@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
+import type { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import {
-	type ITelemetryGenericEventExt,
 	createChildLogger,
+	type ITelemetryGenericEventExt,
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	getUnexpectedLogErrorException,
-	TestObjectProvider,
+	type TestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 // eslint-disable-next-line import-x/no-extraneous-dependencies
-import { Context } from "mocha";
+import type { Context } from "mocha";
 
 /**
  * @internal
@@ -44,7 +44,9 @@ export function createExpectsTest(
 		} catch (error) {
 			// only use TestException if the event is provided.
 			// it must be last, as the events are ordered, so all other events must come first
-			if (orderedEvents[orderedEvents.length - 1]?.eventName === "TestException") {
+			if (
+				orderedEvents[orderedEvents.length - 1]?.eventName === "TestException"
+			) {
 				createChildLogger({ logger: provider.logger }).sendErrorEvent(
 					{ eventName: "TestException" },
 					error,

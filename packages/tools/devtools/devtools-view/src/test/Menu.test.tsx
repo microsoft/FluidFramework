@@ -11,11 +11,13 @@ import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import React from "react";
-
-import { MessageRelayContext } from "../MessageRelayContext.js";
 import { Menu, type MenuSelection } from "../components/index.js";
+import { MessageRelayContext } from "../MessageRelayContext.js";
 
-import { assertNoAccessibilityViolations, MockMessageRelay } from "./utils/index.js";
+import {
+	assertNoAccessibilityViolations,
+	MockMessageRelay,
+} from "./utils/index.js";
 
 describe("Menu Accessibility Check", () => {
 	const supportedFeatures: DevtoolsFeatureFlags = {
@@ -71,7 +73,9 @@ describe("Menu Accessibility Check", () => {
 		expect(homeHeader).toHaveFocus();
 
 		await user.tab();
-		const refreshButton = screen.getByRole("button", { name: /refresh containers list/i });
+		const refreshButton = screen.getByRole("button", {
+			name: /refresh containers list/i,
+		});
 		expect(refreshButton).toHaveFocus();
 
 		await user.tab();
@@ -81,7 +85,9 @@ describe("Menu Accessibility Check", () => {
 		expect(container1).toHaveFocus();
 
 		await user.tab();
-		const removeButtons = screen.getAllByRole("button", { name: /remove container/i });
+		const removeButtons = screen.getAllByRole("button", {
+			name: /remove container/i,
+		});
 		expect(removeButtons[0]).toHaveFocus();
 
 		await user.tab();

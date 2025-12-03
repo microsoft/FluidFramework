@@ -5,7 +5,10 @@
 
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { TreeNodeSchema, TreeNodeSchemaClass } from "@fluidframework/tree/alpha";
+import type {
+	TreeNodeSchema,
+	TreeNodeSchemaClass,
+} from "@fluidframework/tree/alpha";
 import { ObjectNodeSchema } from "@fluidframework/tree/alpha";
 import { z } from "zod";
 
@@ -24,7 +27,10 @@ export function renderZodTypeScript(
 	appendType(zodType);
 	return result;
 
-	function appendType(type: z.ZodTypeAny, minPrecedence = TypePrecedence.Object): void {
+	function appendType(
+		type: z.ZodTypeAny,
+		minPrecedence = TypePrecedence.Object,
+	): void {
 		const shouldParenthesize = getTypePrecendece(type) < minPrecedence;
 		if (shouldParenthesize) {
 			append("(");
@@ -95,7 +101,11 @@ export function renderZodTypeScript(
 			}
 			case z.ZodFirstPartyTypeKind.ZodDiscriminatedUnion: {
 				appendUnionOrIntersectionTypes(
-					[...(type._def as z.ZodDiscriminatedUnionDef<string>).options.values()],
+					[
+						...(
+							type._def as z.ZodDiscriminatedUnionDef<string>
+						).options.values(),
+					],
 					TypePrecedence.Union,
 				);
 				return;
@@ -128,7 +138,9 @@ export function renderZodTypeScript(
 			}
 			case z.ZodFirstPartyTypeKind.ZodEnum: {
 				append(
-					(type._def as z.ZodEnumDef).values.map((value) => JSON.stringify(value)).join(" | "),
+					(type._def as z.ZodEnumDef).values
+						.map((value) => JSON.stringify(value))
+						.join(" | "),
 				);
 				return;
 			}
@@ -178,7 +190,9 @@ export function renderZodTypeScript(
 		append("{");
 		appendNewLine();
 		indent++;
-		for (const [name, entry] of Object.entries((objectType._def as z.ZodObjectDef).shape())) {
+		for (const [name, entry] of Object.entries(
+			(objectType._def as z.ZodObjectDef).shape(),
+		)) {
 			let propertyType = entry;
 			append(name);
 			if (getTypeKind(propertyType) === z.ZodFirstPartyTypeKind.ZodOptional) {
@@ -211,20 +225,26 @@ export function renderZodTypeScript(
 	function appendTupleType(tupleType: z.ZodTypeAny): void {
 		append("[");
 		let first = true;
-		for (const innerType of (tupleType._def as z.ZodTupleDef<z.ZodTupleItems, z.ZodType>)
-			.items) {
+		for (const innerType of (
+			tupleType._def as z.ZodTupleDef<z.ZodTupleItems, z.ZodType>
+		).items) {
 			if (!first) {
 				append(", ");
 			}
 			if (getTypeKind(innerType) === z.ZodFirstPartyTypeKind.ZodOptional) {
-				appendType((innerType._def as z.ZodOptionalDef).innerType, TypePrecedence.Object);
+				appendType(
+					(innerType._def as z.ZodOptionalDef).innerType,
+					TypePrecedence.Object,
+				);
 				append("?");
 			} else {
 				appendType(innerType);
 			}
 			first = false;
 		}
-		const rest = (tupleType._def as z.ZodTupleDef<z.ZodTupleItems, z.ZodType | null>).rest;
+		const rest = (
+			tupleType._def as z.ZodTupleDef<z.ZodTupleItems, z.ZodType | null>
+		).rest;
 		if (rest !== null) {
 			if (!first) {
 				append(", ");
@@ -254,7 +274,9 @@ export function renderZodTypeScript(
 
 	function appendLiteral(value: unknown): void {
 		append(
-			typeof value === "string" || typeof value === "number" || typeof value === "boolean"
+			typeof value === "string" ||
+				typeof value === "number" ||
+				typeof value === "boolean"
 				? JSON.stringify(value)
 				: "any",
 		);
@@ -268,10 +290,11 @@ export function renderZodTypeScript(
 }
 
 function getTypeKind(type: z.ZodType): z.ZodFirstPartyTypeKind {
-	return (type._def as z.ZodTypeDef & { typeName: z.ZodFirstPartyTypeKind }).typeName;
+	return (type._def as z.ZodTypeDef & { typeName: z.ZodFirstPartyTypeKind })
+		.typeName;
 }
 
-const enum TypePrecedence {
+enum TypePrecedence {
 	Union = 0,
 	Intersection = 1,
 	Object = 2,
@@ -301,7 +324,9 @@ export function instanceOf<T extends TreeNodeSchemaClass>(
 	schema: T,
 ): z.ZodType<InstanceType<T>, z.ZodTypeDef, InstanceType<T>> {
 	if (!(schema instanceof ObjectNodeSchema)) {
-		throw new UsageError(`${schema.identifier} must be an instance of ObjectNodeSchema.`);
+		throw new UsageError(
+			`${schema.identifier} must be an instance of ObjectNodeSchema.`,
+		);
 	}
 	const effect = z.instanceof(schema);
 	instanceOfs.set(effect, schema);

@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { type ObjectOptions, type Static, type TSchema, Type } from "@sinclair/typebox";
+import {
+	type ObjectOptions,
+	type Static,
+	type TSchema,
+	Type,
+} from "@sinclair/typebox";
 
 import { unionOptions } from "../../codec/index.js";
 
@@ -61,6 +66,10 @@ export namespace Encoded {
 
 	export type Rename = Static<typeof Rename>;
 	export type MarkEffect = Static<typeof MarkEffect>;
-	export type Mark<Schema extends TSchema> = Static<ReturnType<typeof Mark<Schema>>>;
-	export type Changeset<Schema extends TSchema> = Static<ReturnType<typeof Changeset<Schema>>>;
+	export type Mark<Schema extends TSchema> = Static<
+		ReturnType<typeof Mark<Schema>>
+	>;
+	export type Changeset<Schema extends TSchema> = Static<
+		ReturnType<typeof Changeset<Schema>>
+	>;
 }

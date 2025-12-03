@@ -4,8 +4,16 @@
  */
 
 import type { SessionId } from "@fluidframework/id-compressor";
-
+import type { FieldChangeEncodingContext } from "../../../feature-libraries/index.js";
+import {
+	makeOptionalFieldCodecFamily,
+	type OptionalChangeset,
+	optionalFieldEditor,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/optional-field/index.js";
 import { brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
+import { TestNodeId } from "../../testNodeId.js";
 import {
 	type EncodingTestData,
 	makeEncodingTestSuite,
@@ -13,15 +21,6 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
-import {
-	type OptionalChangeset,
-	makeOptionalFieldCodecFamily,
-	optionalFieldEditor,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/optional-field/index.js";
-import type { FieldChangeEncodingContext } from "../../../feature-libraries/index.js";
-import { TestNodeId } from "../../testNodeId.js";
-import { TestChange } from "../../testChange.js";
 import { Change, inlineRevision } from "./optionalFieldUtils.js";
 
 const nodeChange1: TestNodeId = TestNodeId.create(
@@ -31,7 +30,10 @@ const nodeChange1: TestNodeId = TestNodeId.create(
 const tag1 = mintRevisionTag();
 
 const change1 = inlineRevision(
-	Change.atOnce(Change.reserve("self", brand(1)), Change.move(brand(41), "self")),
+	Change.atOnce(
+		Change.reserve("self", brand(1)),
+		Change.move(brand(41), "self"),
+	),
 	tag1,
 );
 

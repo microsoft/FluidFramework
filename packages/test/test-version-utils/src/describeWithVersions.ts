@@ -5,15 +5,20 @@
 
 import {
 	getUnexpectedLogErrorException,
-	ITestObjectProvider,
-	TestObjectProvider,
+	type ITestObjectProvider,
+	type TestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
-import { driver, odspEndpointName, r11sEndpointName, tenantIndex } from "./compatOptions.js";
+import {
+	driver,
+	odspEndpointName,
+	r11sEndpointName,
+	tenantIndex,
+} from "./compatOptions.js";
 import { getVersionedTestObjectProvider } from "./compatUtils.js";
-import { ITestObjectProviderOptions } from "./describeCompat.js";
+import type { ITestObjectProviderOptions } from "./describeCompat.js";
 import { pkgVersion } from "./packageVersion.js";
-import { ensurePackageInstalled, InstalledPackage } from "./testApi.js";
+import { ensurePackageInstalled, type InstalledPackage } from "./testApi.js";
 
 /**
  * Interface to hold the requested versions which should be installed
@@ -46,7 +51,11 @@ const installRequiredVersions = async (config: IRequestedFluidVersions) => {
 
 	if (config.requestRelativeVersions !== undefined) {
 		installPromises.push(
-			ensurePackageInstalled(pkgVersion, config.requestRelativeVersions, /* force */ false),
+			ensurePackageInstalled(
+				pkgVersion,
+				config.requestRelativeVersions,
+				/* force */ false,
+			),
 		);
 	}
 
@@ -61,12 +70,16 @@ const installRequiredVersions = async (config: IRequestedFluidVersions) => {
 	}
 
 	if (hadErrors) {
-		throw new Error("Exceptions while installing package versions. Check STDERR");
+		throw new Error(
+			"Exceptions while installing package versions. Check STDERR",
+		);
 	}
 };
 
 const defaultTimeoutMs = 180000; // 3 minutes
-const defaultRequestedVersions: IRequestedFluidVersions = { requestRelativeVersions: -2 };
+const defaultRequestedVersions: IRequestedFluidVersions = {
+	requestRelativeVersions: -2,
+};
 
 function createTestSuiteWithInstalledVersion(
 	tests: (this: Mocha.Suite, provider: () => ITestObjectProvider) => void,
@@ -147,7 +160,9 @@ function createTestSuiteWithInstalledVersion(
 			provider = undefined;
 			Object.defineProperty(this, "__fluidTestProvider", {
 				get: () => {
-					throw new Error("Attempted to use __fluidTestProvider after test suite disposed.");
+					throw new Error(
+						"Attempted to use __fluidTestProvider after test suite disposed.",
+					);
 				},
 			});
 		});
@@ -192,7 +207,10 @@ export function describeInstallVersions(
 	timeoutMs?: number,
 ): DescribeWithVersions {
 	const d: DescribeWithVersions = (name, tests) =>
-		describe(name, createTestSuiteWithInstalledVersion(tests, requestedVersions, timeoutMs));
+		describe(
+			name,
+			createTestSuiteWithInstalledVersion(tests, requestedVersions, timeoutMs),
+		);
 	d.skip = (name, tests) =>
 		describe.skip(
 			name,

@@ -14,15 +14,18 @@ import {
 	updatePackageJsonFile,
 	updatePackageJsonFileAsync,
 } from "@fluid-tools/build-infrastructure";
-import { type PackageJson, getApiExtractorConfigFilePath } from "@fluidframework/build-tools";
+import {
+	getApiExtractorConfigFilePath,
+	type PackageJson,
+} from "@fluidframework/build-tools";
 import { writeJson } from "fs-extra/esm";
 import JSON5 from "json5";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
 import {
+	getFlubConfig,
 	type PackageNamePolicyConfig,
 	type ScriptRequirement,
-	getFlubConfig,
 } from "../../config.js";
 import { Repository } from "../git.js";
 import { queryTypesResolutionPathsFromPackageExports } from "../packageExports.js";
@@ -183,7 +186,8 @@ export function packageMustNotBePrivate(name: string, root: string): boolean {
 	}
 
 	return (
-		packageMustPublishToNPM(name, config) || packageMustPublishToInternalFeedOnly(name, config)
+		packageMustPublishToNPM(name, config) ||
+		packageMustPublishToInternalFeedOnly(name, config)
 	);
 }
 
@@ -198,13 +202,18 @@ function packageIsFluidPackage(name: string, root: string): boolean {
 		return true;
 	}
 
-	return packageScopeIsAllowed(name, config) || packageIsKnownUnscoped(name, config);
+	return (
+		packageScopeIsAllowed(name, config) || packageIsKnownUnscoped(name, config)
+	);
 }
 
 /**
  * Returns true if the package scope matches the .
  */
-function packageScopeIsAllowed(name: string, config: PackageNamePolicyConfig): boolean {
+function packageScopeIsAllowed(
+	name: string,
+	config: PackageNamePolicyConfig,
+): boolean {
 	const allowedScopes = config?.allowedScopes;
 
 	if (allowedScopes === undefined) {
@@ -224,7 +233,10 @@ function packageScopeIsAllowed(name: string, config: PackageNamePolicyConfig): b
 /**
  * Returns true if the name matches one of the configured known unscoped package names.
  */
-function packageIsKnownUnscoped(name: string, config: PackageNamePolicyConfig): boolean {
+function packageIsKnownUnscoped(
+	name: string,
+	config: PackageNamePolicyConfig,
+): boolean {
 	const unscopedPackages = config?.unscopedPackages;
 
 	if (unscopedPackages === undefined) {
@@ -293,7 +305,8 @@ export function packagePublishesToFeed(
 	feed: Feed,
 ): boolean {
 	const publishPublic =
-		packageMustPublishToNPM(name, config) || packageMayChooseToPublishToNPM(name, config);
+		packageMustPublishToNPM(name, config) ||
+		packageMayChooseToPublishToNPM(name, config);
 	const publishInternalBuild =
 		publishPublic || packageMustPublishToInternalFeedOnly(name, config);
 
@@ -310,7 +323,8 @@ export function packagePublishesToFeed(
 
 		case "internal-dev": {
 			return (
-				!publishInternalBuild && packageMayChooseToPublishToInternalFeedOnly(name, config)
+				!publishInternalBuild &&
+				packageMayChooseToPublishToInternalFeedOnly(name, config)
 			);
 		}
 
@@ -366,7 +380,9 @@ async function ensurePrivatePackagesComputed(): Promise<Set<string>> {
 	const packageJsons = await repo.getFiles("**/package.json");
 
 	for (const filePath of packageJsons) {
-		const packageJson = JSON.parse(readFile(path.resolve(baseDir, filePath))) as PackageJson;
+		const packageJson = JSON.parse(
+			readFile(path.resolve(baseDir, filePath)),
+		) as PackageJson;
 		if (packageJson.private ?? false) {
 			computedPrivatePackages.add(packageJson.name);
 		}
@@ -401,9 +417,13 @@ function parseArgs(
 	const regexQuotedSegment = onlyDoubleQuotes
 		? /(?:^|(?<=(?:[^\\]|^)(?:\\\\)*))(")(.*?)(?:(?<=[^\\](?:\\\\)*)\1|$)/g
 		: /(?:^|(?<=(?:[^\\]|^)(?:\\\\)*))(["'])(.*?)(?:(?<=[^\\](?:\\\\)*)\1|$)/g;
-	const regexEscapedCharacters = onlyDoubleQuotes ? /\\(["\\])/g : /\\(["'\\])/g;
+	const regexEscapedCharacters = onlyDoubleQuotes
+		? /\\(["\\])/g
+		: /\\(["'\\])/g;
 	return [...commandLine.matchAll(regexArg)].map((matches) => ({
-		arg: matches[0].replace(regexQuotedSegment, "$2").replace(regexEscapedCharacters, "$1"),
+		arg: matches[0]
+			.replace(regexQuotedSegment, "$2")
+			.replace(regexEscapedCharacters, "$1"),
 		original: matches[0],
 	}));
 }
@@ -441,7 +461,10 @@ function quoteAndEscapeArgsForUniversalCommandLine(
  * @param parsedArg - one result from parseArgs
  * @returns preferred string to use within a command script string
  */
-function quoteAndEscapeArgsForUniversalScriptLine({ arg, original }: ParsedArg): string {
+function quoteAndEscapeArgsForUniversalScriptLine({
+	arg,
+	original,
+}: ParsedArg): string {
 	// Check for exactly `&&` or `|`.
 	if (arg === "&&" || arg === "|") {
 		// Use quoting if original had any quoting.
@@ -519,11 +542,11 @@ async function readConfigMainEntryPointFilePath(
 			// mainEntryPointFilePath is relative to the config file
 			// directory unless it is prefixed with <projectFolder>
 			// which is replaced with the project root directory.
-			const mainEntryPointFilePathWithoutProjectFolder = mainEntryPointFilePath.replace(
-				/^<projectFolder>\//,
-				"./",
-			);
-			if (mainEntryPointFilePathWithoutProjectFolder !== mainEntryPointFilePath) {
+			const mainEntryPointFilePathWithoutProjectFolder =
+				mainEntryPointFilePath.replace(/^<projectFolder>\//, "./");
+			if (
+				mainEntryPointFilePathWithoutProjectFolder !== mainEntryPointFilePath
+			) {
 				return mainEntryPointFilePathWithoutProjectFolder;
 			}
 			const mainEntryPointFileAbsPath = path.join(
@@ -604,18 +627,24 @@ async function getApiLintElementsMissing(
 	const configFiles = new Map<string, string>();
 	const devDependencies: string[] = [];
 	const targetsImpacted = new Set<string>();
-	const missing = { scriptEntries, configFiles, devDependencies, targetsImpacted };
+	const missing = {
+		scriptEntries,
+		configFiles,
+		devDependencies,
+		targetsImpacted,
+	};
 
 	const exportsField = packageJson.exports;
 	if (exportsField === undefined) {
 		return missing;
 	}
 
-	const { mapTypesPathToExportPaths } = queryTypesResolutionPathsFromPackageExports(
-		packageJson,
-		new Map([[/\.d\.ts$/, undefined]]),
-		{ node10TypeCompat: false, onlyFirstMatches: false },
-	);
+	const { mapTypesPathToExportPaths } =
+		queryTypesResolutionPathsFromPackageExports(
+			packageJson,
+			new Map([[/\.d\.ts$/, undefined]]),
+			{ node10TypeCompat: false, onlyFirstMatches: false },
+		);
 
 	const needsLinted = new Map<string, string>();
 	let internalLintTarget: string | undefined;
@@ -692,7 +721,8 @@ async function getApiLintElementsMissing(
 	{
 		const bundleLintTarget = internalLintTarget ?? rootLintTarget;
 		if (bundleLintTarget !== undefined) {
-			const lintBundleTags = packageJson.scripts?.["check:exports:bundle-release-tags"];
+			const lintBundleTags =
+				packageJson.scripts?.["check:exports:bundle-release-tags"];
 			const apiExtractorFile = "api-extractor/api-extractor-lint-bundle.json";
 			const commandLine = `api-extractor run --config ${apiExtractorFile}`;
 			if (lintBundleTags !== commandLine) {
@@ -707,7 +737,10 @@ async function getApiLintElementsMissing(
 			// or any target appropriate for cross group consistency checks. "*|" is used
 			// as a sentinel to allow any target, but also encodes a default file when
 			// fixing is invoked.
-			configFiles.set(configFileAbsPath, internalLintTarget ?? `*|${rootLintTarget}`);
+			configFiles.set(
+				configFileAbsPath,
+				internalLintTarget ?? `*|${rootLintTarget}`,
+			);
 		}
 	}
 
@@ -715,7 +748,8 @@ async function getApiLintElementsMissing(
 	await removeLintedExportsPathsAsync(packageJson, dir, needsLinted);
 
 	// Form script entries and unique config file names for files without recognized coverage.
-	const regexPath = /^(?:\.\/)?(?:lib\/|dist\/)?(?<path>[^/]+(?:\/[^/]+)*)\.d\.ts$/;
+	const regexPath =
+		/^(?:\.\/)?(?:lib\/|dist\/)?(?<path>[^/]+(?:\/[^/]+)*)\.d\.ts$/;
 	for (const [relPath, skew] of needsLinted) {
 		const pathMatch = regexPath.exec(relPath);
 		const scriptEntry = pathMatch?.groups?.path.replace(/\//g, ":") ?? "";
@@ -772,7 +806,10 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-metadata-and-sorting",
 		match,
-		handler: async (file: string, gitRoot: string): Promise<string | undefined> => {
+		handler: async (
+			file: string,
+			gitRoot: string,
+		): Promise<string | undefined> => {
 			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file)) as PackageJson;
@@ -801,17 +838,24 @@ export const handlers: Handler[] = [
 				ret.push(`repository should be an object, not a string`);
 			} else {
 				if (json.repository?.url !== repository) {
-					ret.push(`repository.url: "${json.repository.url}" !== "${repository}"`);
+					ret.push(
+						`repository.url: "${json.repository.url}" !== "${repository}"`,
+					);
 				}
 
-				const relativePkgDir = path.dirname(path.relative(gitRoot, file)).replace(/\\/g, "/");
+				const relativePkgDir = path
+					.dirname(path.relative(gitRoot, file))
+					.replace(/\\/g, "/");
 
 				// The directory field should be omitted from the root package, so consider this a policy failure.
 				if (relativePkgDir === "." && json.repository.directory !== undefined) {
 					ret.push(
 						`repository.directory: "${json.repository.directory}" field is present but should be omitted from root package`,
 					);
-				} else if (relativePkgDir !== "." && json.repository?.directory !== relativePkgDir) {
+				} else if (
+					relativePkgDir !== "." &&
+					json.repository?.directory !== relativePkgDir
+				) {
 					ret.push(
 						`repository.directory: "${json.repository.directory}" !== "${relativePkgDir}"`,
 					);
@@ -842,7 +886,9 @@ export const handlers: Handler[] = [
 				json.license = licenseId;
 
 				// file is absolute path, so make relative to the repo root
-				const relativePkgDir = path.dirname(path.relative(gitRoot, file)).replace(/\\/g, "/");
+				const relativePkgDir = path
+					.dirname(path.relative(gitRoot, file))
+					.replace(/\\/g, "/");
 				json.repository =
 					// The directory field should be omitted from the root package.
 					relativePkgDir === "."
@@ -867,7 +913,10 @@ export const handlers: Handler[] = [
 		// If you'd like to introduce a new package scope or a new unscoped package, please discuss it first.
 		name: "npm-strange-package-name",
 		match,
-		handler: async (file: string, root: string): Promise<string | undefined> => {
+		handler: async (
+			file: string,
+			root: string,
+		): Promise<string | undefined> => {
 			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file)) as PackageJson;
@@ -890,7 +939,10 @@ export const handlers: Handler[] = [
 		// Also verify that non-private packages don't take dependencies on private packages.
 		name: "npm-private-packages",
 		match,
-		handler: async (file: string, root: string): Promise<string | undefined> => {
+		handler: async (
+			file: string,
+			root: string,
+		): Promise<string | undefined> => {
 			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file)) as PackageJson;
@@ -912,7 +964,10 @@ export const handlers: Handler[] = [
 			}
 
 			const deps = Object.keys(json.dependencies ?? {});
-			if (json.private !== true && deps.some((name) => privatePackages.has(name))) {
+			if (
+				json.private !== true &&
+				deps.some((name) => privatePackages.has(name))
+			) {
 				errors.push(
 					`Non-private package must not depend on the private package(s): ${deps
 						.filter((name) => privatePackages.has(name))
@@ -951,7 +1006,10 @@ export const handlers: Handler[] = [
 				}
 			}
 
-			if (fs.existsSync(path.join(packageDir, "Dockerfile")) && !readmeInfo.trademark) {
+			if (
+				fs.existsSync(path.join(packageDir, "Dockerfile")) &&
+				!readmeInfo.trademark
+			) {
 				return `Readme in package directory ${packageDir} with Dockerfile should contain with trademark verbiage`;
 			}
 		},
@@ -967,10 +1025,15 @@ export const handlers: Handler[] = [
 			const packageDir = path.dirname(file);
 			const readmeInfo: IReadmeInfo = getReadmeInfo(packageDir);
 			const expectedTitle = `# ${json.name}`;
-			const expectTrademark = fs.existsSync(path.join(packageDir, "Dockerfile"));
+			const expectTrademark = fs.existsSync(
+				path.join(packageDir, "Dockerfile"),
+			);
 			if (!readmeInfo.exists) {
 				if (expectTrademark) {
-					writeFile(readmeInfo.filePath, `${expectedTitle}${newline}${newline}${trademark}`);
+					writeFile(
+						readmeInfo.filePath,
+						`${expectedTitle}${newline}${newline}${trademark}`,
+					);
 				} else {
 					writeFile(readmeInfo.filePath, `${expectedTitle}${newline}`);
 				}
@@ -1028,7 +1091,10 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-license",
 		match,
-		handler: async (file: string, root: string): Promise<string | undefined> => {
+		handler: async (
+			file: string,
+			root: string,
+		): Promise<string | undefined> => {
 			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file)) as PackageJson;
@@ -1056,7 +1122,10 @@ export const handlers: Handler[] = [
 				return `LICENSE file in ${packageDir} doesn't match ${rootLicensePath}`;
 			}
 		},
-		resolver: (file: string, root: string): { resolved: boolean; message?: string } => {
+		resolver: (
+			file: string,
+			root: string,
+		): { resolved: boolean; message?: string } => {
 			const packageDir = path.dirname(file);
 			const licensePath = path.join(packageDir, "LICENSE");
 			const rootLicensePath = path.join(root, "LICENSE");
@@ -1083,23 +1152,23 @@ export const handlers: Handler[] = [
 				return `Error parsing JSON file: ${file}`;
 			}
 
-			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
+			const hasScriptsField = Object.hasOwn(json, "scripts");
 			const missingScripts: string[] = [];
 
 			if (hasScriptsField) {
-				const hasPrettierScript = Object.prototype.hasOwnProperty.call(
-					json.scripts,
-					"prettier",
-				);
-				const hasPrettierFixScript = Object.prototype.hasOwnProperty.call(
+				const hasPrettierScript = Object.hasOwn(json.scripts, "prettier");
+				const hasPrettierFixScript = Object.hasOwn(
 					json.scripts,
 					"prettier:fix",
 				);
-				const hasFormatScript = Object.prototype.hasOwnProperty.call(json.scripts, "format");
+				const hasFormatScript = Object.hasOwn(json.scripts, "format");
 				const isLernaFormat = json.scripts.format?.includes("lerna");
 
 				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-				if (!isLernaFormat && (hasPrettierScript || hasPrettierFixScript || hasFormatScript)) {
+				if (
+					!isLernaFormat &&
+					(hasPrettierScript || hasPrettierFixScript || hasFormatScript)
+				) {
 					if (!hasPrettierScript) {
 						missingScripts.push(`prettier`);
 					}
@@ -1120,20 +1189,17 @@ export const handlers: Handler[] = [
 		},
 		resolver: (file: string): { resolved: boolean; message?: string } => {
 			updatePackageJsonFile(path.dirname(file), (json) => {
-				const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
+				const hasScriptsField = Object.hasOwn(json, "scripts");
 
 				if (hasScriptsField) {
-					const hasFormatScriptResolver = Object.prototype.hasOwnProperty.call(
-						json.scripts,
-						"format",
-					);
+					const hasFormatScriptResolver = Object.hasOwn(json.scripts, "format");
 
-					const hasPrettierScriptResolver = Object.prototype.hasOwnProperty.call(
+					const hasPrettierScriptResolver = Object.hasOwn(
 						json.scripts,
 						"prettier",
 					);
 
-					const hasPrettierFixScriptResolver = Object.prototype.hasOwnProperty.call(
+					const hasPrettierFixScriptResolver = Object.hasOwn(
 						json.scripts,
 						"prettier:fix",
 					);
@@ -1144,7 +1210,8 @@ export const handlers: Handler[] = [
 						hasPrettierFixScriptResolver
 					) {
 						const formatScript = json.scripts?.format?.includes("lerna");
-						const prettierScript = json.scripts?.prettier?.includes("--ignore-path");
+						const prettierScript =
+							json.scripts?.prettier?.includes("--ignore-path");
 						const prettierFixScript =
 							json.scripts?.["prettier:fix"]?.includes("--ignore-path");
 						// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -1178,12 +1245,12 @@ export const handlers: Handler[] = [
 				return `Error parsing JSON file: ${file}`;
 			}
 
-			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
+			const hasScriptsField = Object.hasOwn(json, "scripts");
 			const missingScripts: string[] = [];
 
 			if (hasScriptsField) {
-				const hasBuildScript = Object.prototype.hasOwnProperty.call(json.scripts, "build");
-				const hasCleanScript = Object.prototype.hasOwnProperty.call(json.scripts, "clean");
+				const hasBuildScript = Object.hasOwn(json.scripts, "build");
+				const hasCleanScript = Object.hasOwn(json.scripts, "clean");
 
 				if (hasBuildScript && !hasCleanScript) {
 					missingScripts.push(`clean`);
@@ -1198,7 +1265,10 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-script-dep",
 		match,
-		handler: async (file: string, root: string): Promise<string | undefined> => {
+		handler: async (
+			file: string,
+			root: string,
+		): Promise<string | undefined> => {
 			const manifest = getFlubConfig(root);
 			const commandPackages = manifest.policy?.dependencies?.commandPackages;
 			if (commandPackages === undefined) {
@@ -1213,7 +1283,7 @@ export const handlers: Handler[] = [
 				return `Error parsing JSON file: ${file}`;
 			}
 
-			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
+			const hasScriptsField = Object.hasOwn(json, "scripts");
 			const missingDeps: string[] = [];
 
 			if (hasScriptsField) {
@@ -1245,7 +1315,9 @@ export const handlers: Handler[] = [
 						dep &&
 						!deps.has(dep)
 					) {
-						missingDeps.push(`Package '${dep}' missing needed by command '${command}'`);
+						missingDeps.push(
+							`Package '${dep}' missing needed by command '${command}'`,
+						);
 					}
 				}
 			}
@@ -1269,7 +1341,7 @@ export const handlers: Handler[] = [
 				return `Error parsing JSON file: ${file}`;
 			}
 
-			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
+			const hasScriptsField = Object.hasOwn(json, "scripts");
 			if (!hasScriptsField) {
 				return undefined;
 			}
@@ -1289,9 +1361,13 @@ export const handlers: Handler[] = [
 				: undefined;
 		},
 		resolver: (file: string): { resolved: boolean; message?: string } => {
-			const result: { resolved: boolean; message?: string } = { resolved: true };
+			const result: { resolved: boolean; message?: string } = {
+				resolved: true,
+			};
 			updatePackageJsonFile(path.dirname(file), (json) => {
-				for (const [scriptName, scriptContent] of Object.entries(json.scripts)) {
+				for (const [scriptName, scriptContent] of Object.entries(
+					json.scripts,
+				)) {
 					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 					if (scriptContent) {
 						json.scripts[scriptName] = getPreferredScriptLine(scriptContent);
@@ -1332,7 +1408,9 @@ export const handlers: Handler[] = [
 				const info = fs.readdirSync(testDir, { withFileTypes: true });
 				if (
 					info.some(
-						(e) => path.extname(e.name) === ".ts" || (e.isDirectory() && e.name !== "types"),
+						(e) =>
+							path.extname(e.name) === ".ts" ||
+							(e.isDirectory() && e.name !== "types"),
 					)
 				) {
 					return "Test files exists but no test scripts";
@@ -1415,7 +1493,8 @@ export const handlers: Handler[] = [
 			if (scripts === undefined) {
 				return undefined;
 			}
-			const mochaScriptName = scripts["test:mocha"] === undefined ? "test" : "test:mocha";
+			const mochaScriptName =
+				scripts["test:mocha"] === undefined ? "test" : "test:mocha";
 			const mochaScript = scripts[mochaScriptName];
 
 			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- Existing logic is easier to read
@@ -1425,7 +1504,12 @@ export const handlers: Handler[] = [
 			}
 
 			const packageDir = path.dirname(file);
-			const mochaRcNames = [".mocharc", ".mocharc.js", ".mocharc.json", ".mocharc.cjs"];
+			const mochaRcNames = [
+				".mocharc",
+				".mocharc.js",
+				".mocharc.json",
+				".mocharc.cjs",
+			];
 			const mochaRcName = mochaRcNames.find((name) =>
 				fs.existsSync(path.join(packageDir, name)),
 			);
@@ -1453,7 +1537,8 @@ export const handlers: Handler[] = [
 			if (scripts === undefined) {
 				return undefined;
 			}
-			const jestScriptName = scripts["test:jest"] === undefined ? "test" : "test:jest";
+			const jestScriptName =
+				scripts["test:jest"] === undefined ? "test" : "test:jest";
 			const jestScript = scripts[jestScriptName];
 
 			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- Existing logic is easier to read
@@ -1472,7 +1557,9 @@ export const handlers: Handler[] = [
 
 			const jestConfigFile = path.join(packageDir, jestFileName);
 			// This assumes that the jest config will be in CommonJS, because if it's ESM the require call will fail.
-			const config = require(path.resolve(jestConfigFile)) as { reporters?: unknown };
+			const config = require(path.resolve(jestConfigFile)) as {
+				reporters?: unknown;
+			};
 			if (config.reporters === undefined) {
 				return `Missing reporters in '${jestConfigFile}'`;
 			}
@@ -1488,7 +1575,9 @@ export const handlers: Handler[] = [
 				],
 			];
 
-			if (JSON.stringify(config.reporters) !== JSON.stringify(expectedReporter)) {
+			if (
+				JSON.stringify(config.reporters) !== JSON.stringify(expectedReporter)
+			) {
 				return `Unexpected reporters in '${jestConfigFile}'`;
 			}
 
@@ -1523,7 +1612,9 @@ export const handlers: Handler[] = [
 			// that it has a ESM build.
 			// Newer packages may be ESM only and just use tsc to build ESM, which isn't detected.
 			const esnextScriptsNames = ["build:esnext", "tsc:esnext"];
-			const hasBuildEsNext = esnextScriptsNames.some((name) => scripts[name] !== undefined);
+			const hasBuildEsNext = esnextScriptsNames.some(
+				(name) => scripts[name] !== undefined,
+			);
 			const hasModuleOutput = json.module !== undefined;
 
 			if (hasBuildEsNext) {
@@ -1559,7 +1650,10 @@ export const handlers: Handler[] = [
 			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (cleanScript) {
 				// Ignore clean scripts that are root of the release group
-				if (cleanScript.startsWith("pnpm") || cleanScript.startsWith("fluid-build")) {
+				if (
+					cleanScript.startsWith("pnpm") ||
+					cleanScript.startsWith("fluid-build")
+				) {
 					return undefined;
 				}
 
@@ -1583,7 +1677,9 @@ export const handlers: Handler[] = [
 			}
 		},
 		resolver: (file: string): { resolved: boolean; message?: string } => {
-			const result: { resolved: boolean; message?: string } = { resolved: true };
+			const result: { resolved: boolean; message?: string } = {
+				resolved: true,
+			};
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				const missing = missingCleanDirectories(json.scripts);
 				let clean: string = json.scripts.clean ?? "rimraf --glob";
@@ -1720,7 +1816,9 @@ export const handlers: Handler[] = [
 			}
 		},
 		resolver: (file: string): { resolved: boolean; message?: string } => {
-			const result: { resolved: boolean; message?: string } = { resolved: true };
+			const result: { resolved: boolean; message?: string } = {
+				resolved: true,
+			};
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				if (shouldCheckExportsField(json)) {
 					try {
@@ -1769,17 +1867,25 @@ export const handlers: Handler[] = [
 			file: string,
 			root: string,
 		): Promise<{ resolved: boolean; message?: string }> => {
-			const result: { resolved: boolean; message?: string } = { resolved: true };
+			const result: { resolved: boolean; message?: string } = {
+				resolved: true,
+			};
 			const dir = path.dirname(file);
 			const pathToRoot = path.relative(dir, root);
 			// <projectFolder> is used in path to allow config file to be located anywhere
 			// within project (projectFolder = package.json directory).
 			const commonApiLintConfig = `<projectFolder>/${path
-				.join(pathToRoot, "common/build/build-common/api-extractor-lint.entrypoint.json")
+				.join(
+					pathToRoot,
+					"common/build/build-common/api-extractor-lint.entrypoint.json",
+				)
 				.replaceAll("\\", "/")}`;
 			await updatePackageJsonFileAsync(dir, async (packageJson) => {
 				try {
-					const missingElements = await getApiLintElementsMissing(packageJson, dir);
+					const missingElements = await getApiLintElementsMissing(
+						packageJson,
+						dir,
+					);
 					// 1. Fix config files.
 					//    Config files are written first before any scripts are updated that
 					//    would reference them. In case of failure, the package.json is not
@@ -1867,7 +1973,8 @@ export const handlers: Handler[] = [
 				return;
 			}
 
-			const requirements = getFlubConfig(rootDirectoryPath).policy?.publicPackageRequirements;
+			const requirements =
+				getFlubConfig(rootDirectoryPath).policy?.publicPackageRequirements;
 			if (requirements === undefined) {
 				// If no requirements have been specified, we have nothing to validate.
 				return;
@@ -1907,75 +2014,85 @@ export const handlers: Handler[] = [
 			}
 
 			if (errors.length > 0) {
-				return [`Policy violations for public package "${packageJson.name}":`, ...errors].join(
-					`${newline}* `,
-				);
+				return [
+					`Policy violations for public package "${packageJson.name}":`,
+					...errors,
+				].join(`${newline}* `);
 			}
 		},
 		resolver: (
 			packageJsonFilePath: string,
 			rootDirectoryPath: string,
 		): { resolved: boolean; message?: string } => {
-			const result: { resolved: boolean; message?: string } = { resolved: true };
-			updatePackageJsonFile(path.dirname(packageJsonFilePath), (packageJson) => {
-				// If the package is private, there is nothing to fix.
-				if (packageJson.private === true) {
-					return result;
-				}
-
-				const requirements =
-					getFlubConfig(rootDirectoryPath).policy?.publicPackageRequirements;
-				if (requirements === undefined) {
-					// If no requirements have been specified, we have nothing to validate.
-					return;
-				}
-
-				/**
-				 * Updates the package.json contents to ensure the requirements of the specified script are met.
-				 */
-				function applyScriptCorrection(script: ScriptRequirement): void {
-					// If the script is missing, or if it exists but its body doesn't satisfy the requirement,
-					// apply the correct script configuration.
-					if (
-						packageJson.scripts[script.name] === undefined ||
-						script.bodyMustMatch === true
-					) {
-						packageJson.scripts[script.name] = script.body;
-					}
-				}
-
-				if (requirements.requiredScripts !== undefined) {
-					// Ensure scripts body exists
-					if (packageJson.scripts === undefined) {
-						packageJson.scripts = {};
+			const result: { resolved: boolean; message?: string } = {
+				resolved: true,
+			};
+			updatePackageJsonFile(
+				path.dirname(packageJsonFilePath),
+				(packageJson) => {
+					// If the package is private, there is nothing to fix.
+					if (packageJson.private === true) {
+						return result;
 					}
 
-					// Applies script corrections as needed for all script requirements
-					// eslint-disable-next-line unicorn/no-array-for-each, unicorn/no-array-callback-reference
-					requirements.requiredScripts.forEach(applyScriptCorrection);
-				}
+					const requirements =
+						getFlubConfig(rootDirectoryPath).policy?.publicPackageRequirements;
+					if (requirements === undefined) {
+						// If no requirements have been specified, we have nothing to validate.
+						return;
+					}
 
-				// If there are any missing required dev dependencies, report that the issues were not resolved (and
-				// the dependencies need to be added manually).
-				// TODO: In the future, we could consider having this code actually run the pnpm commands to install
-				// the missing deps.
-				if (requirements.requiredDevDependencies !== undefined) {
-					const devDependencies = Object.keys(packageJson.devDependencies ?? {});
-					for (const requiredDevDependency of requirements.requiredDevDependencies) {
-						if (!devDependencies.includes(requiredDevDependency)) {
-							result.resolved = false;
-							break;
+					/**
+					 * Updates the package.json contents to ensure the requirements of the specified script are met.
+					 */
+					function applyScriptCorrection(script: ScriptRequirement): void {
+						// If the script is missing, or if it exists but its body doesn't satisfy the requirement,
+						// apply the correct script configuration.
+						if (
+							packageJson.scripts[script.name] === undefined ||
+							script.bodyMustMatch === true
+						) {
+							packageJson.scripts[script.name] = script.body;
 						}
 					}
-				}
-			});
+
+					if (requirements.requiredScripts !== undefined) {
+						// Ensure scripts body exists
+						if (packageJson.scripts === undefined) {
+							packageJson.scripts = {};
+						}
+
+						// Applies script corrections as needed for all script requirements
+						// eslint-disable-next-line unicorn/no-array-for-each, unicorn/no-array-callback-reference
+						requirements.requiredScripts.forEach(applyScriptCorrection);
+					}
+
+					// If there are any missing required dev dependencies, report that the issues were not resolved (and
+					// the dependencies need to be added manually).
+					// TODO: In the future, we could consider having this code actually run the pnpm commands to install
+					// the missing deps.
+					if (requirements.requiredDevDependencies !== undefined) {
+						const devDependencies = Object.keys(
+							packageJson.devDependencies ?? {},
+						);
+						for (const requiredDevDependency of requirements.requiredDevDependencies) {
+							if (!devDependencies.includes(requiredDevDependency)) {
+								result.resolved = false;
+								break;
+							}
+						}
+					}
+				},
+			);
 
 			return result;
 		},
 	},
 ];
 
-function missingCleanDirectories(scripts: { [key: string]: string | undefined }): string[] {
+function missingCleanDirectories(scripts: {
+	[key: string]: string | undefined;
+}): string[] {
 	const expectedClean: string[] = [];
 
 	if (scripts.tsc !== undefined) {
@@ -1985,7 +2102,9 @@ function missingCleanDirectories(scripts: { [key: string]: string | undefined })
 	// Using the heuristic that our package use "build:esnext" or "tsc:esnext" to indicate
 	// that it has a ESM build.
 	const esnextScriptsNames = ["build:esnext", "tsc:esnext"];
-	const hasBuildEsNext = esnextScriptsNames.some((name) => scripts[name] !== undefined);
+	const hasBuildEsNext = esnextScriptsNames.some(
+		(name) => scripts[name] !== undefined,
+	);
 	if (hasBuildEsNext) {
 		expectedClean.push("lib");
 	}

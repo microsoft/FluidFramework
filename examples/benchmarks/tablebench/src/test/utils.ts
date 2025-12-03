@@ -5,8 +5,11 @@
 
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { IChannel, IChannelFactory } from "@fluidframework/datastore-definitions/legacy";
-import { SessionId } from "@fluidframework/id-compressor";
+import type {
+	IChannel,
+	IChannelFactory,
+} from "@fluidframework/datastore-definitions/legacy";
+import type { SessionId } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/legacy";
 import {
 	MockContainerRuntimeFactory,
@@ -40,7 +43,10 @@ export function create<T>(factory: IChannelFactory<T>): {
 		objectStorage: new MockStorage(),
 	});
 
-	return { channel, processAllMessages: () => runtimeFactory.processAllMessages() };
+	return {
+		channel,
+		processAllMessages: () => runtimeFactory.processAllMessages(),
+	};
 }
 
 export function measureAttachmentSummary(channel: IChannel) {

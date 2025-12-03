@@ -5,42 +5,53 @@
 
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-
-import { type JsonCompatibleReadOnlyObject, brand } from "../../../util/index.js";
-
+import { MapNodeStoredSchema } from "../../../core/index.js";
 import {
-	type TreeNodeSchema,
+	type FlexTreeNode,
+	type FlexTreeOptionalField,
+	isTreeValue,
+} from "../../../feature-libraries/index.js";
+import {
+	brand,
+	type JsonCompatibleReadOnlyObject,
+} from "../../../util/index.js";
+import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
+import {
+	AnnotatedAllowedTypesInternal,
+	CompatibilityLevel,
+	createTreeNodeSchemaPrivateData,
+	type FlexContent,
+	getInnerNode,
+	getKernel,
+	type ImplicitAllowedTypes,
+	type InternalTreeNode,
+	type MostDerivedData,
 	NodeKind,
+	type NodeSchemaMetadata,
+	normalizeAllowedTypes,
+	privateDataSymbol,
+	type TreeNodeFromImplicitAllowedTypes,
+	type TreeNodeSchema,
+	type TreeNodeSchemaCorePrivate,
+	type TreeNodeSchemaInitializedData,
+	type TreeNodeSchemaPrivateData,
+	TreeNodeValid,
 	// eslint-disable-next-line import-x/no-deprecated
 	typeNameSymbol,
 	typeSchemaSymbol,
 	type UnhydratedFlexTreeNode,
-	getInnerNode,
-	getKernel,
-	type InternalTreeNode,
-	type NodeSchemaMetadata,
-	type ImplicitAllowedTypes,
-	normalizeAllowedTypes,
-	type TreeNodeFromImplicitAllowedTypes,
-	TreeNodeValid,
-	type MostDerivedData,
-	type TreeNodeSchemaInitializedData,
-	type TreeNodeSchemaCorePrivate,
-	privateDataSymbol,
-	createTreeNodeSchemaPrivateData,
-	type FlexContent,
-	CompatibilityLevel,
-	type TreeNodeSchemaPrivateData,
-	AnnotatedAllowedTypesInternal,
 } from "../../core/index.js";
 import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
-import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
 import { createFieldSchema, FieldKind } from "../../fieldSchema.js";
+import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
+import { prepareForInsertion } from "../../prepareForInsertion.js";
+import type { SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 import {
-	unhydratedFlexTreeFromInsertable,
 	type FactoryContent,
 	type InsertableContent,
+	unhydratedFlexTreeFromInsertable,
 } from "../../unhydratedFlexTreeFromInsertable.js";
+import { recordLikeDataToFlexContent } from "../common.js";
 import type {
 	RecordNodeCustomizableSchema,
 	RecordNodeInsertableData,
@@ -48,16 +59,6 @@ import type {
 	RecordNodeSchema,
 	TreeRecordNode,
 } from "./recordNodeTypes.js";
-import {
-	isTreeValue,
-	type FlexTreeNode,
-	type FlexTreeOptionalField,
-} from "../../../feature-libraries/index.js";
-import { prepareForInsertion } from "../../prepareForInsertion.js";
-import { recordLikeDataToFlexContent } from "../common.js";
-import { MapNodeStoredSchema } from "../../../core/index.js";
-import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
-import type { SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 
 /**
  * Create a proxy which implements the {@link TreeRecordNode} API.
@@ -70,125 +71,142 @@ function createRecordNodeProxy(
 	customizable: boolean,
 	schema: RecordNodeSchema,
 ): TreeRecordNode {
-	const proxy: TreeRecordNode = new Proxy<TreeRecordNode>(proxyTarget as TreeRecordNode, {
-		get: (target, key, receiver): unknown => {
-			if (typeof key === "symbol") {
-				switch (key) {
-					// POJO mode records don't have TreeNode's build in members on their targets, so special case them:
-					case typeSchemaSymbol: {
-						return schema;
-					}
-					// eslint-disable-next-line import-x/no-deprecated
-					case typeNameSymbol: {
-						return schema.identifier;
-					}
-					case Symbol.iterator: {
-						return () => recordIterator(proxy);
-					}
-					case Symbol.toPrimitive: {
-						// Handle string interpolation and coercion to string
-						return () => Object.prototype.toString.call(proxy);
-					}
-					case Symbol.toStringTag: {
-						// In order to satisfy deep equality checks in POJO (non-customizable) mode,
-						// we cannot override the behavior of this.
-						if (customizable) {
-							// Generates nicer toString behavior for customizable records.
-							// E.g. `[object My.Record]` instead of `[object Object]`.
+	const proxy: TreeRecordNode = new Proxy<TreeRecordNode>(
+		proxyTarget as TreeRecordNode,
+		{
+			get: (target, key, receiver): unknown => {
+				if (typeof key === "symbol") {
+					switch (key) {
+						// POJO mode records don't have TreeNode's build in members on their targets, so special case them:
+						case typeSchemaSymbol: {
+							return schema;
+						}
+						// eslint-disable-next-line import-x/no-deprecated
+						case typeNameSymbol: {
 							return schema.identifier;
 						}
-						break;
-					}
-					default: {
-						// No-op
+						case Symbol.iterator: {
+							return () => recordIterator(proxy);
+						}
+						case Symbol.toPrimitive: {
+							// Handle string interpolation and coercion to string
+							return () => Object.prototype.toString.call(proxy);
+						}
+						case Symbol.toStringTag: {
+							// In order to satisfy deep equality checks in POJO (non-customizable) mode,
+							// we cannot override the behavior of this.
+							if (customizable) {
+								// Generates nicer toString behavior for customizable records.
+								// E.g. `[object My.Record]` instead of `[object Object]`.
+								return schema.identifier;
+							}
+							break;
+						}
+						default: {
+							// No-op
+						}
 					}
 				}
-			}
 
-			if (typeof key === "string") {
+				if (typeof key === "string") {
+					const innerNode = getInnerNode(receiver);
+					const field = innerNode.tryGetField(brand(key));
+					if (field !== undefined) {
+						return tryGetTreeNodeForField(field);
+					}
+				}
+
+				return undefined;
+			},
+			set: (
+				target,
+				key,
+				value: InsertableContent | undefined,
+				receiver,
+			): boolean => {
+				if (typeof key === "symbol") {
+					return false;
+				}
+
 				const innerNode = getInnerNode(receiver);
-				const field = innerNode.tryGetField(brand(key));
-				if (field !== undefined) {
-					return tryGetTreeNodeForField(field);
+				const field = innerNode.getBoxed(brand(key)) as FlexTreeOptionalField;
+				const kernel = getKernel(receiver);
+				const innerSchema = innerNode.context.schema.nodeSchema.get(
+					brand(schema.identifier),
+				);
+				assert(
+					innerSchema instanceof MapNodeStoredSchema,
+					0xc1a /* Expected MapNodeStoredSchema */,
+				);
+
+				const mapTree = prepareForInsertion(
+					value,
+					createFieldSchema(
+						FieldKind.Optional,
+						kernel.schema.info as ImplicitAllowedTypes,
+					),
+					innerNode.context,
+					innerSchema.mapFields,
+				);
+
+				field.editor.set(mapTree, field.length === 0);
+				return true;
+			},
+			has: (target, key): boolean => {
+				if (typeof key === "symbol") {
+					return false;
 				}
-			}
 
-			return undefined;
+				const innerNode = getInnerNode(proxy);
+				const childField = innerNode.tryGetField(brand(key));
+
+				return childField !== undefined;
+			},
+			ownKeys: (target) => {
+				const innerNode = getInnerNode(proxy);
+				return [...innerNode.keys()];
+			},
+			getOwnPropertyDescriptor: (target, key) => {
+				if (typeof key === "symbol") {
+					return undefined;
+				}
+
+				const innerNode = getInnerNode(proxy);
+				const field = innerNode.tryGetField(brand(key));
+
+				if (field === undefined) {
+					return undefined;
+				}
+
+				return {
+					value: tryGetTreeNodeForField(field),
+					writable: true,
+					enumerable: true,
+					configurable: true, // Must be 'configurable' if property is absent from proxy target.
+				};
+			},
+			defineProperty(target, key, attributes) {
+				throw new UsageError(
+					"Shadowing properties of record nodes is not permitted.",
+				);
+			},
+			deleteProperty(target, key) {
+				if (typeof key === "symbol") {
+					return false;
+				}
+
+				const innerNode = getInnerNode(proxy);
+				const field = innerNode.tryGetField(brand(key)) as
+					| FlexTreeOptionalField
+					| undefined;
+				if (field !== undefined) {
+					field.editor.set(undefined, field.length === 0);
+				}
+
+				return true;
+			},
 		},
-		set: (target, key, value: InsertableContent | undefined, receiver): boolean => {
-			if (typeof key === "symbol") {
-				return false;
-			}
-
-			const innerNode = getInnerNode(receiver);
-			const field = innerNode.getBoxed(brand(key)) as FlexTreeOptionalField;
-			const kernel = getKernel(receiver);
-			const innerSchema = innerNode.context.schema.nodeSchema.get(brand(schema.identifier));
-			assert(
-				innerSchema instanceof MapNodeStoredSchema,
-				0xc1a /* Expected MapNodeStoredSchema */,
-			);
-
-			const mapTree = prepareForInsertion(
-				value,
-				createFieldSchema(FieldKind.Optional, kernel.schema.info as ImplicitAllowedTypes),
-				innerNode.context,
-				innerSchema.mapFields,
-			);
-
-			field.editor.set(mapTree, field.length === 0);
-			return true;
-		},
-		has: (target, key): boolean => {
-			if (typeof key === "symbol") {
-				return false;
-			}
-
-			const innerNode = getInnerNode(proxy);
-			const childField = innerNode.tryGetField(brand(key));
-
-			return childField !== undefined;
-		},
-		ownKeys: (target) => {
-			const innerNode = getInnerNode(proxy);
-			return [...innerNode.keys()];
-		},
-		getOwnPropertyDescriptor: (target, key) => {
-			if (typeof key === "symbol") {
-				return undefined;
-			}
-
-			const innerNode = getInnerNode(proxy);
-			const field = innerNode.tryGetField(brand(key));
-
-			if (field === undefined) {
-				return undefined;
-			}
-
-			return {
-				value: tryGetTreeNodeForField(field),
-				writable: true,
-				enumerable: true,
-				configurable: true, // Must be 'configurable' if property is absent from proxy target.
-			};
-		},
-		defineProperty(target, key, attributes) {
-			throw new UsageError("Shadowing properties of record nodes is not permitted.");
-		},
-		deleteProperty(target, key) {
-			if (typeof key === "symbol") {
-				return false;
-			}
-
-			const innerNode = getInnerNode(proxy);
-			const field = innerNode.tryGetField(brand(key)) as FlexTreeOptionalField | undefined;
-			if (field !== undefined) {
-				field.editor.set(undefined, field.length === 0);
-			}
-
-			return true;
-		},
-	});
+	);
 	return proxy;
 }
 
@@ -198,7 +216,10 @@ abstract class CustomRecordNodeBase<
 	public static readonly kind = NodeKind.Record;
 
 	public constructor(
-		input?: InternalTreeNode | RecordNodeInsertableData<TAllowedTypes> | undefined,
+		input?:
+			| InternalTreeNode
+			| RecordNodeInsertableData<TAllowedTypes>
+			| undefined,
 	) {
 		super(input ?? {});
 	}
@@ -251,7 +272,13 @@ export function recordSchema<
 		TCustomMetadata
 	>,
 ) {
-	const { identifier, info, customizable, implicitlyConstructable, nodeOptions } = options;
+	const {
+		identifier,
+		info,
+		customizable,
+		implicitlyConstructable,
+		nodeOptions,
+	} = options;
 	const persistedMetadata = nodeOptions?.persistedMetadata;
 
 	const normalizedTypes = normalizeAllowedTypes(info);
@@ -259,7 +286,9 @@ export function recordSchema<
 		() => new Set(normalizedTypes.evaluate().map((type) => type.identifier)),
 	);
 	const lazySimpleAllowedTypes = new Lazy(() => {
-		return AnnotatedAllowedTypesInternal.evaluateSimpleAllowedTypes(normalizedTypes);
+		return AnnotatedAllowedTypesInternal.evaluateSimpleAllowedTypes(
+			normalizedTypes,
+		);
 	});
 
 	let privateData: TreeNodeSchemaPrivateData | undefined;
@@ -300,7 +329,7 @@ export function recordSchema<
 			return createRecordNodeProxy(
 				proxyTarget,
 				customizable,
-				this as unknown as RecordNodeSchema,
+				Schema as unknown as RecordNodeSchema,
 			) as unknown as Schema;
 		}
 
@@ -309,7 +338,10 @@ export function recordSchema<
 			instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return unhydratedFlexTreeFromInsertable(input as object, this as typeof Schema);
+			return unhydratedFlexTreeFromInsertable(
+				input as object,
+				Schema as typeof Schema,
+			);
 		}
 
 		protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
@@ -317,7 +349,7 @@ export function recordSchema<
 			// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.
 			// Scan for shadowing inherited members which won't work, but stop scan early to allow shadowing built in (which seems to work ok).
 			{
-				let prototype: object = this.prototype;
+				let prototype: object = Schema.prototype;
 				// There isn't a clear cleaner way to author this loop.
 				while (prototype !== Schema.prototype) {
 					for (const key of Object.getOwnPropertyNames(prototype)) {
@@ -338,8 +370,8 @@ export function recordSchema<
 				}
 			}
 
-			const schema = this as RecordNodeSchema;
-			return getTreeNodeSchemaInitializedData(this, {
+			const schema = Schema as RecordNodeSchema;
+			return getTreeNodeSchemaInitializedData(Schema, {
 				shallowCompatibilityTest,
 				toFlexContent: (data: FactoryContent): FlexContent =>
 					recordToFlexContent(data, schema),
@@ -350,11 +382,15 @@ export function recordSchema<
 			return lazyAllowedTypesIdentifiers.value;
 		}
 
-		public static get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
+		public static get simpleAllowedTypes(): ReadonlyMap<
+			string,
+			SimpleAllowedTypeAttributes
+		> {
 			return lazySimpleAllowedTypes.value;
 		}
 
-		protected static override constructorCached: MostDerivedData | undefined = undefined;
+		protected static override constructorCached: MostDerivedData | undefined =
+			undefined;
 
 		public static readonly identifier = identifier;
 		public static readonly info = info;
@@ -365,8 +401,9 @@ export function recordSchema<
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> =
 			nodeOptions?.metadata ?? {};
-		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
-			persistedMetadata;
+		public static readonly persistedMetadata:
+			| JsonCompatibleReadOnlyObject
+			| undefined = persistedMetadata;
 
 		// eslint-disable-next-line import-x/no-deprecated
 		public get [typeNameSymbol](): TName {
@@ -386,7 +423,9 @@ export function recordSchema<
 		}
 
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-			return (privateData ??= createTreeNodeSchemaPrivateData(this, [normalizedTypes]));
+			return (privateData ??= createTreeNodeSchemaPrivateData(Schema, [
+				normalizedTypes,
+			]));
 		}
 	}
 
@@ -438,11 +477,17 @@ function shallowCompatibilityTest(data: FactoryContent): CompatibilityLevel {
  * @param data - The tree data to be transformed. Must be a Record-like object.
  * @param schema - The schema to comply with.
  */
-function recordToFlexContent(data: FactoryContent, schema: RecordNodeSchema): FlexContent {
+function recordToFlexContent(
+	data: FactoryContent,
+	schema: RecordNodeSchema,
+): FlexContent {
 	if (!(typeof data === "object" && data !== null)) {
-		throw new UsageError(`Input data is incompatible with Record schema: ${data}`);
+		throw new UsageError(
+			`Input data is incompatible with Record schema: ${data}`,
+		);
 	}
 
-	const fieldsIterator: Iterable<readonly [string, InsertableContent]> = Object.entries(data);
+	const fieldsIterator: Iterable<readonly [string, InsertableContent]> =
+		Object.entries(data);
 	return recordLikeDataToFlexContent(fieldsIterator, schema);
 }

@@ -11,20 +11,27 @@ import {
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { deepCopyMapTree, EmptyKey, type FieldKey, type MapTree } from "../../core/index.js";
 import {
-	booleanSchema,
-	tryGetTreeNodeForField,
-	handleSchema,
-	nullSchema,
-	numberSchema,
-	SchemaFactory,
-	SchemaFactoryAlpha,
-	stringSchema,
-	type TreeNodeSchema,
-	type ValidateRecursiveSchema,
-	getKernel,
-} from "../../simple-tree/index.js";
+	deepCopyMapTree,
+	EmptyKey,
+	type FieldKey,
+	type MapTree,
+} from "../../core/index.js";
+import {
+	type FlexTreeHydratedContextMinimal,
+	MockNodeIdentifierManager,
+} from "../../feature-libraries/index.js";
+import {
+	CompatibilityLevel,
+	contentSchemaSymbol,
+	privateDataSymbol,
+	type TreeNodeSchemaInitializedData,
+	type TreeNodeSchemaPrivateData,
+	UnhydratedFlexTreeNode,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../simple-tree/core/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { getUnhydratedContext } from "../../simple-tree/createContext.js";
 import {
 	createFieldSchema,
 	FieldKind,
@@ -32,29 +39,27 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/fieldSchema.js";
 import {
+	booleanSchema,
+	getKernel,
+	handleSchema,
+	nullSchema,
+	numberSchema,
+	SchemaFactory,
+	SchemaFactoryAlpha,
+	stringSchema,
+	type TreeNodeSchema,
+	tryGetTreeNodeForField,
+	type ValidateRecursiveSchema,
+} from "../../simple-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { prepareContentForHydration } from "../../simple-tree/prepareForInsertion.js";
+import {
 	getPossibleTypes,
-	unhydratedFlexTreeFromInsertable,
 	type InsertableContent,
+	unhydratedFlexTreeFromInsertable,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/unhydratedFlexTreeFromInsertable.js";
 import { brand } from "../../util/index.js";
-import {
-	MockNodeIdentifierManager,
-	type FlexTreeHydratedContextMinimal,
-} from "../../feature-libraries/index.js";
-import {
-	CompatibilityLevel,
-	contentSchemaSymbol,
-	privateDataSymbol,
-	UnhydratedFlexTreeNode,
-	type TreeNodeSchemaInitializedData,
-	type TreeNodeSchemaPrivateData,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../simple-tree/core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { getUnhydratedContext } from "../../simple-tree/createContext.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { prepareContentForHydration } from "../../simple-tree/prepareForInsertion.js";
 import { hydrate } from "./utils.js";
 
 describe("unhydratedFlexTreeFromInsertable", () => {
@@ -62,7 +67,9 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 		const schemaFactory = new SchemaFactory("test");
 		const tree = "Hello world";
 
-		const actual = unhydratedFlexTreeFromInsertable(tree, [schemaFactory.string]);
+		const actual = unhydratedFlexTreeFromInsertable(tree, [
+			schemaFactory.string,
+		]);
 
 		const expected: MapTree = {
 			type: brand(stringSchema.identifier),
@@ -180,7 +187,8 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 		const schemaFactory = new SchemaFactory("test");
 
 		assert.throws(
-			() => unhydratedFlexTreeFromInsertable("Hello world", [schemaFactory.number]),
+			() =>
+				unhydratedFlexTreeFromInsertable("Hello world", [schemaFactory.number]),
 			validateAssertionError(
 				/The provided data is incompatible with all of the types allowed by the schema/,
 			),
@@ -411,7 +419,10 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 
 		it("Simple map", () => {
 			const schemaFactory = new SchemaFactory("test");
-			const schema = schemaFactory.map("map", [schemaFactory.number, schemaFactory.string]);
+			const schema = schemaFactory.map("map", [
+				schemaFactory.number,
+				schemaFactory.string,
+			]);
 
 			const entries: [string, InsertableContent][] = [
 				["a", 42],
@@ -427,7 +438,13 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 				fields: new Map<FieldKey, MapTree[]>([
 					[
 						brand("a"),
-						[{ type: brand(numberSchema.identifier), value: 42, fields: new Map() }],
+						[
+							{
+								type: brand(numberSchema.identifier),
+								value: 42,
+								fields: new Map(),
+							},
+						],
 					],
 					[
 						brand("b"),
@@ -441,7 +458,13 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 					],
 					[
 						brand("c"),
-						[{ type: brand(numberSchema.identifier), value: 37, fields: new Map() }],
+						[
+							{
+								type: brand(numberSchema.identifier),
+								value: 37,
+								fields: new Map(),
+							},
+						],
 					],
 				]),
 			};
@@ -477,7 +500,13 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 				fields: new Map<FieldKey, MapTree[]>([
 					[
 						brand("a"),
-						[{ type: brand(numberSchema.identifier), value: 42, fields: new Map() }],
+						[
+							{
+								type: brand(numberSchema.identifier),
+								value: 42,
+								fields: new Map(),
+							},
+						],
 					],
 					[
 						brand("b"),
@@ -491,7 +520,13 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 					],
 					[
 						brand("c"),
-						[{ type: brand(nullSchema.identifier), value: null, fields: new Map() }],
+						[
+							{
+								type: brand(nullSchema.identifier),
+								value: null,
+								fields: new Map(),
+							},
+						],
 					],
 					[
 						brand("d"),
@@ -547,11 +582,23 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 				fields: new Map<FieldKey, MapTree[]>([
 					[
 						brand("a"),
-						[{ type: brand(numberSchema.identifier), value: 42, fields: new Map() }],
+						[
+							{
+								type: brand(numberSchema.identifier),
+								value: 42,
+								fields: new Map(),
+							},
+						],
 					],
 					[
 						brand("c"),
-						[{ type: brand(numberSchema.identifier), value: 37, fields: new Map() }],
+						[
+							{
+								type: brand(numberSchema.identifier),
+								value: 37,
+								fields: new Map(),
+							},
+						],
 					],
 				]),
 			};
@@ -630,7 +677,13 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 				fields: new Map<FieldKey, MapTree[]>([
 					[
 						brand("a"),
-						[{ type: brand(numberSchema.identifier), value: 42, fields: new Map() }],
+						[
+							{
+								type: brand(numberSchema.identifier),
+								value: 42,
+								fields: new Map(),
+							},
+						],
 					],
 					[
 						brand("b"),
@@ -644,7 +697,13 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 					],
 					[
 						brand("c"),
-						[{ type: brand(numberSchema.identifier), value: 37, fields: new Map() }],
+						[
+							{
+								type: brand(numberSchema.identifier),
+								value: 37,
+								fields: new Map(),
+							},
+						],
 					],
 				]),
 			};
@@ -680,7 +739,13 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 				fields: new Map<FieldKey, MapTree[]>([
 					[
 						brand("a"),
-						[{ type: brand(numberSchema.identifier), value: 42, fields: new Map() }],
+						[
+							{
+								type: brand(numberSchema.identifier),
+								value: 42,
+								fields: new Map(),
+							},
+						],
 					],
 					[
 						brand("b"),
@@ -694,7 +759,13 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 					],
 					[
 						brand("c"),
-						[{ type: brand(nullSchema.identifier), value: null, fields: new Map() }],
+						[
+							{
+								type: brand(nullSchema.identifier),
+								value: null,
+								fields: new Map(),
+							},
+						],
 					],
 					[
 						brand("d"),
@@ -750,11 +821,23 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 				fields: new Map<FieldKey, MapTree[]>([
 					[
 						brand("a"),
-						[{ type: brand(numberSchema.identifier), value: 42, fields: new Map() }],
+						[
+							{
+								type: brand(numberSchema.identifier),
+								value: 42,
+								fields: new Map(),
+							},
+						],
 					],
 					[
 						brand("c"),
-						[{ type: brand(numberSchema.identifier), value: 37, fields: new Map() }],
+						[
+							{
+								type: brand(numberSchema.identifier),
+								value: 37,
+								fields: new Map(),
+							},
+						],
 					],
 				]),
 			};
@@ -781,8 +864,14 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 
 		it("Throws for structurally valid data, but created with a different schema.", () => {
 			const schemaFactory = new SchemaFactoryAlpha("test");
-			class TestSchema extends schemaFactory.record("test-a", schemaFactory.string) {}
-			class TestSchema2 extends schemaFactory.record("test-b", schemaFactory.string) {}
+			class TestSchema extends schemaFactory.record(
+				"test-a",
+				schemaFactory.string,
+			) {}
+			class TestSchema2 extends schemaFactory.record(
+				"test-b",
+				schemaFactory.string,
+			) {}
 
 			const testData = new TestSchema2({ field: "test" });
 
@@ -843,11 +932,23 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 					],
 					[
 						brand("b"),
-						[{ type: brand(numberSchema.identifier), value: 42, fields: new Map() }],
+						[
+							{
+								type: brand(numberSchema.identifier),
+								value: 42,
+								fields: new Map(),
+							},
+						],
 					],
 					[
 						brand("c"),
-						[{ type: brand(booleanSchema.identifier), value: false, fields: new Map() }],
+						[
+							{
+								type: brand(booleanSchema.identifier),
+								value: false,
+								fields: new Map(),
+							},
+						],
 					],
 				]),
 			};
@@ -897,7 +998,13 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 								fields: new Map<FieldKey, MapTree[]>([
 									[
 										brand("foo"),
-										[{ type: brand(numberSchema.identifier), value: 42, fields: new Map() }],
+										[
+											{
+												type: brand(numberSchema.identifier),
+												value: 42,
+												fields: new Map(),
+											},
+										],
 									],
 								]),
 							},
@@ -955,7 +1062,13 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 				fields: new Map<FieldKey, MapTree[]>([
 					[
 						brand("a"),
-						[{ type: brand(numberSchema.identifier), value: 42, fields: new Map() }],
+						[
+							{
+								type: brand(numberSchema.identifier),
+								value: 42,
+								fields: new Map(),
+							},
+						],
 					],
 				]),
 			};
@@ -996,15 +1109,33 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 					],
 					[
 						brand("bar"),
-						[{ type: brand(numberSchema.identifier), value: 42, fields: new Map() }],
+						[
+							{
+								type: brand(numberSchema.identifier),
+								value: 42,
+								fields: new Map(),
+							},
+						],
 					],
 					[
 						brand("c"),
-						[{ type: brand(booleanSchema.identifier), value: false, fields: new Map() }],
+						[
+							{
+								type: brand(booleanSchema.identifier),
+								value: false,
+								fields: new Map(),
+							},
+						],
 					],
 					[
 						brand("d"),
-						[{ type: brand(numberSchema.identifier), value: 37, fields: new Map() }],
+						[
+							{
+								type: brand(numberSchema.identifier),
+								value: 37,
+								fields: new Map(),
+							},
+						],
 					],
 				]),
 			};
@@ -1094,7 +1225,12 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 		const handle = new MockHandle<boolean>(true);
 
 		const a = "Hello world";
-		const b = [{ name: "Jack", age: 37 }, null, { name: "Jill", age: 42 }, handle];
+		const b = [
+			{ name: "Jack", age: 37 },
+			null,
+			{ name: "Jill", age: 42 },
+			handle,
+		];
 		const cEntries: [string, InsertableContent][] = [
 			["foo", { name: "Foo", age: 2 }],
 			["bar", "1"],
@@ -1115,7 +1251,13 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 			fields: new Map<FieldKey, MapTree[]>([
 				[
 					brand("a"),
-					[{ type: brand(stringSchema.identifier), value: "Hello world", fields: new Map() }],
+					[
+						{
+							type: brand(stringSchema.identifier),
+							value: "Hello world",
+							fields: new Map(),
+						},
+					],
 				],
 				[
 					brand("b"),
@@ -1240,7 +1382,13 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 								],
 								[
 									brand("baz"),
-									[{ type: brand(numberSchema.identifier), value: 2, fields: new Map() }],
+									[
+										{
+											type: brand(numberSchema.identifier),
+											value: 2,
+											fields: new Map(),
+										},
+									],
 								],
 							]),
 						},
@@ -1270,22 +1418,37 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 
 	it("unambiguous unions", () => {
 		const schemaFactory = new SchemaFactory("test");
-		const a = schemaFactory.object("a", { a: schemaFactory.string, c: schemaFactory.string });
-		const b = schemaFactory.object("b", { b: schemaFactory.string, c: schemaFactory.string });
+		const a = schemaFactory.object("a", {
+			a: schemaFactory.string,
+			c: schemaFactory.string,
+		});
+		const b = schemaFactory.object("b", {
+			b: schemaFactory.string,
+			c: schemaFactory.string,
+		});
 		const allowedTypes = [a, b];
 
 		assert.doesNotThrow(() =>
-			unhydratedFlexTreeFromInsertable({ a: "hello", c: "world" }, allowedTypes),
+			unhydratedFlexTreeFromInsertable(
+				{ a: "hello", c: "world" },
+				allowedTypes,
+			),
 		);
 		assert.doesNotThrow(() =>
-			unhydratedFlexTreeFromInsertable({ b: "hello", c: "world" }, allowedTypes),
+			unhydratedFlexTreeFromInsertable(
+				{ b: "hello", c: "world" },
+				allowedTypes,
+			),
 		);
 	});
 
 	// Our data serialization format does not support certain numeric values.
 	// These tests are intended to verify the mapping behaviors for those values.
 	describe("Incompatible numeric value handling", () => {
-		function assertFallback(value: number, expectedFallbackValue: unknown): void {
+		function assertFallback(
+			value: number,
+			expectedFallbackValue: unknown,
+		): void {
 			const schemaFactory = new SchemaFactory("test");
 
 			// The current fallbacks we generate are `number` and `null`.
@@ -1339,11 +1502,17 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 
 		it("Array containing `undefined` (maps values to null when allowed by the schema)", () => {
 			const schemaFactory = new SchemaFactory("test");
-			const schema = schemaFactory.array([schemaFactory.number, schemaFactory.null]);
+			const schema = schemaFactory.array([
+				schemaFactory.number,
+				schemaFactory.null,
+			]);
 
 			const input: (number | undefined)[] = [42, undefined, 37, undefined];
 
-			const actual = unhydratedFlexTreeFromInsertable(input as InsertableContent, [schema]);
+			const actual = unhydratedFlexTreeFromInsertable(
+				input as InsertableContent,
+				[schema],
+			);
 
 			const expected: MapTree = {
 				type: brand(schema.identifier),
@@ -1398,16 +1567,20 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 			const arraySchema = f.array([f.null]);
 			const mapSchema = f.map([f.null]);
 			// Array makes array
-			assert.deepEqual(getPossibleTypes(new Set([mapSchema, arraySchema]), []), [arraySchema]);
+			assert.deepEqual(
+				getPossibleTypes(new Set([mapSchema, arraySchema]), []),
+				[arraySchema],
+			);
 			// Map makes map
-			assert.deepEqual(getPossibleTypes(new Set([mapSchema, arraySchema]), new Map()), [
-				mapSchema,
-			]);
+			assert.deepEqual(
+				getPossibleTypes(new Set([mapSchema, arraySchema]), new Map()),
+				[mapSchema],
+			);
 			// Iterator can make map or array.
-			assert.deepEqual(getPossibleTypes(new Set([mapSchema, arraySchema]), new Map().keys()), [
-				mapSchema,
-				arraySchema,
-			]);
+			assert.deepEqual(
+				getPossibleTypes(new Set([mapSchema, arraySchema]), new Map().keys()),
+				[mapSchema, arraySchema],
+			);
 		});
 
 		it("array vs map low priority matching", () => {
@@ -1417,7 +1590,9 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 			// Array makes map
 			assert.deepEqual(getPossibleTypes(new Set([mapSchema]), []), [mapSchema]);
 			// Map makes array
-			assert.deepEqual(getPossibleTypes(new Set([arraySchema]), new Map()), [arraySchema]);
+			assert.deepEqual(getPossibleTypes(new Set([arraySchema]), new Map()), [
+				arraySchema,
+			]);
 		});
 
 		it("inherited properties types", () => {
@@ -1432,15 +1607,22 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 				other: f.number,
 			}) {}
 			// Ignore inherited constructor field
-			assert.deepEqual(getPossibleTypes(new Set([Optional, Required, Other]), {}), [Optional]);
+			assert.deepEqual(
+				getPossibleTypes(new Set([Optional, Required, Other]), {}),
+				[Optional],
+			);
 			// Allow overridden field
 			assert.deepEqual(
-				getPossibleTypes(new Set([Optional, Required, Other]), { constructor: 5 }),
+				getPossibleTypes(new Set([Optional, Required, Other]), {
+					constructor: 5,
+				}),
 				[Optional, Required],
 			);
 			// Allow overridden undefined
 			assert.deepEqual(
-				getPossibleTypes(new Set([Optional, Required, Other]), { constructor: undefined }),
+				getPossibleTypes(new Set([Optional, Required, Other]), {
+					constructor: undefined,
+				}),
 				[Optional],
 			);
 			// Multiple Fields
@@ -1460,7 +1642,10 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 			);
 			// No properties
 			assert.deepEqual(
-				getPossibleTypes(new Set([Optional, Required, Other]), Object.create(null)),
+				getPossibleTypes(
+					new Set([Optional, Required, Other]),
+					Object.create(null),
+				),
 				[Optional],
 			);
 		});
@@ -1482,14 +1667,22 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 
 			it("Type symbol specified when there are multiple valid options", () => {
 				// Type symbol specified when there are multiple valid options
-				const ambiguousContent = { [contentSchemaSymbol]: "test.B", value: "hello" };
+				const ambiguousContent = {
+					[contentSchemaSymbol]: "test.B",
+					value: "hello",
+				};
 				// Only B, even though A is also valid based on properties
-				assert.deepEqual(getPossibleTypes(new Set([A, B]), ambiguousContent), [B]);
+				assert.deepEqual(getPossibleTypes(new Set([A, B]), ambiguousContent), [
+					B,
+				]);
 			});
 
 			it("Type symbol specified that does not match any options", () => {
 				// Type symbol specified that does not match any options
-				const invalidContent = { [contentSchemaSymbol]: "test.B", value: "hello" };
+				const invalidContent = {
+					[contentSchemaSymbol]: "test.B",
+					value: "hello",
+				};
 				// Should report no valid types
 				assert.deepEqual(getPossibleTypes(new Set([]), invalidContent), []);
 				assert.deepEqual(getPossibleTypes(new Set([A]), invalidContent), []);
@@ -1529,7 +1722,10 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 				};
 
 				assert.deepEqual(
-					getPossibleTypes(new Set([dummySchema as unknown as typeof A]), tagged),
+					getPossibleTypes(
+						new Set([dummySchema as unknown as typeof A]),
+						tagged,
+					),
 					[],
 				);
 				assert.deepEqual(log, ["called"]);
@@ -1537,7 +1733,10 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 
 				level = CompatibilityLevel.Low;
 				assert.deepEqual(
-					getPossibleTypes(new Set([dummySchema as unknown as typeof A]), tagged),
+					getPossibleTypes(
+						new Set([dummySchema as unknown as typeof A]),
+						tagged,
+					),
 					[dummySchema],
 				);
 				assert.deepEqual(log, ["called"]);

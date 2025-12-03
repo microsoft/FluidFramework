@@ -39,14 +39,18 @@ async function loadRawBiomeConfig(configPath: string): Promise<BiomeConfigRaw> {
  * Returns an array of absolute paths to Biome config files. The paths are in the order in which they are merged by
  * Biome. That is, the last item in the array will be the absolute path to `configPath`.
  */
-export async function getAllBiomeConfigPaths(configPath: string): Promise<string[]> {
+export async function getAllBiomeConfigPaths(
+	configPath: string,
+): Promise<string[]> {
 	const config = await loadRawBiomeConfig(configPath);
 	let extendedConfigPaths: string[] = [];
 
 	if (config.extends) {
 		const pathsNested = await Promise.all(
 			config.extends.map((configToExtend) =>
-				getAllBiomeConfigPaths(path.join(path.dirname(configPath), configToExtend)),
+				getAllBiomeConfigPaths(
+					path.join(path.dirname(configPath), configToExtend),
+				),
 			),
 		);
 		extendedConfigPaths = pathsNested.flat();
@@ -69,7 +73,9 @@ export async function getAllBiomeConfigPaths(configPath: string): Promise<string
  *
  * Relevant Biome documentation: {@link https://biomejs.dev/guides/configure-biome/#share-a-configuration-file}
  */
-export async function loadBiomeConfig(configPath: string): Promise<BiomeConfigResolved> {
+export async function loadBiomeConfig(
+	configPath: string,
+): Promise<BiomeConfigResolved> {
 	const allConfigPaths = await getAllBiomeConfigPaths(configPath);
 	return loadBiomeConfigs(allConfigPaths);
 }
@@ -79,7 +85,9 @@ export async function loadBiomeConfig(configPath: string): Promise<BiomeConfigRe
  * recursively and the results are merged. Array-type values are not merged, in accordance with how Biome applies
  * configs.
  */
-async function loadBiomeConfigs(allConfigPaths: string[]): Promise<BiomeConfigResolved> {
+async function loadBiomeConfigs(
+	allConfigPaths: string[],
+): Promise<BiomeConfigResolved> {
 	const allConfigs = await Promise.all(
 		allConfigPaths.map((pathToConfig) => loadRawBiomeConfig(pathToConfig)),
 	);
@@ -153,7 +161,10 @@ export async function getBiomeFormattedFilesFromDirectory(
 	let configFile: string;
 	if ((await stat(directoryOrConfigFile)).isFile()) {
 		configFile = directoryOrConfigFile;
-		directory = path.relative(gitRepo.resolvedRoot, path.dirname(directoryOrConfigFile));
+		directory = path.relative(
+			gitRepo.resolvedRoot,
+			path.dirname(directoryOrConfigFile),
+		);
 	} else {
 		configFile = await getClosestBiomeConfigPath(directoryOrConfigFile);
 		directory = path.relative(gitRepo.resolvedRoot, directoryOrConfigFile);
@@ -255,7 +266,10 @@ export class BiomeConfigReader {
 		let configFile: string;
 		if ((await stat(directoryOrConfigFile)).isFile()) {
 			configFile = directoryOrConfigFile;
-			directory = path.relative(gitRepo.resolvedRoot, path.dirname(directoryOrConfigFile));
+			directory = path.relative(
+				gitRepo.resolvedRoot,
+				path.dirname(directoryOrConfigFile),
+			);
 		} else {
 			configFile = await getClosestBiomeConfigPath(directoryOrConfigFile);
 			directory = path.relative(gitRepo.resolvedRoot, directoryOrConfigFile);
@@ -263,7 +277,11 @@ export class BiomeConfigReader {
 
 		const allConfigs = await getAllBiomeConfigPaths(configFile);
 		const mergedConfig = await loadBiomeConfigs(allConfigs);
-		const files = await getBiomeFormattedFiles(mergedConfig, directory, gitRepo);
+		const files = await getBiomeFormattedFiles(
+			mergedConfig,
+			directory,
+			gitRepo,
+		);
 		return new BiomeConfigReader(configFile, allConfigs, mergedConfig, files);
 	}
 }

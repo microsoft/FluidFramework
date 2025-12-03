@@ -6,21 +6,21 @@
 /* eslint-disable no-bitwise */
 
 import {
-	BaseFuzzTestState,
-	Generator,
-	SaveInfo,
+	type BaseFuzzTestState,
 	createWeightedGenerator,
+	type Generator,
 	interleave,
 	makeRandom,
 	performFuzzActions as performFuzzActionsBase,
 	repeat,
+	type SaveInfo,
 	take,
 } from '@fluid-private/stochastic-test-utils';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { assert, expect } from 'chai';
 
-import { ClosedMap, assertNotUndefined, fail, getOrCreate } from '../../Common.js';
-import {
+import { assertNotUndefined, type ClosedMap, fail, getOrCreate } from '../../Common.js';
+import type {
 	AttributionId,
 	FinalCompressedId,
 	OpSpaceCompressedId,
@@ -28,21 +28,21 @@ import {
 	SessionSpaceCompressedId,
 	StableId,
 } from '../../Identifiers.js';
-import { assertIsStableId, assertIsUuidString } from '../../UuidUtilities.js';
 import { IdCompressor, isLocalId } from '../../id-compressor/IdCompressor.js';
 import { getIds } from '../../id-compressor/IdRange.js';
-import {
-	NumericUuid,
-	createSessionId,
-	ensureSessionUuid,
-	numericUuidFromStableId,
-	stableIdFromNumericUuid,
-} from '../../id-compressor/NumericUuid.js';
 import type {
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
 } from '../../id-compressor/index.js';
+import {
+	createSessionId,
+	ensureSessionUuid,
+	type NumericUuid,
+	numericUuidFromStableId,
+	stableIdFromNumericUuid,
+} from '../../id-compressor/NumericUuid.js';
+import { assertIsStableId, assertIsUuidString } from '../../UuidUtilities.js';
 
 import { expectDefined } from './TestCommon.js';
 

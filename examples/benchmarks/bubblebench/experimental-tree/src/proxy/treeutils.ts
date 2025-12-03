@@ -3,10 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import type { ChangeNode, Definition, NodeIdContext } from "@fluid-experimental/tree";
+import type {
+	ChangeNode,
+	Definition,
+	NodeIdContext,
+} from "@fluid-experimental/tree";
 import type { Serializable } from "@fluidframework/datastore-definitions/legacy";
 
-export const enum NodeKind {
+export enum NodeKind {
 	scalar = "s",
 	object = "o",
 	array = "a",
@@ -23,14 +27,19 @@ export const makeScalar = (
 	payload: value,
 });
 
-export function fromJson<T>(idContext: NodeIdContext, value: Serializable<T>): ChangeNode {
+export function fromJson<T>(
+	idContext: NodeIdContext,
+	value: Serializable<T>,
+): ChangeNode {
 	if (typeof value === "object") {
 		if (Array.isArray(value)) {
 			return {
 				identifier: idContext.generateNodeId(),
 				definition: NodeKind.array as Definition,
 				traits: {
-					items: value.map((property): ChangeNode => fromJson(idContext, property)),
+					items: value.map(
+						(property): ChangeNode => fromJson(idContext, property),
+					),
 				},
 			};
 		} else if (value === null) {
@@ -39,7 +48,10 @@ export function fromJson<T>(idContext: NodeIdContext, value: Serializable<T>): C
 			const traits: PropertyDescriptorMap = {};
 
 			for (const [label, json] of Object.entries(value)) {
-				traits[label] = { value: [fromJson(idContext, json)], enumerable: true };
+				traits[label] = {
+					value: [fromJson(idContext, json)],
+					enumerable: true,
+				};
 			}
 
 			const node: ChangeNode = {

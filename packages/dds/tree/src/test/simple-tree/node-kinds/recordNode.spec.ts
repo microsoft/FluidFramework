@@ -5,23 +5,25 @@
 
 import { strict as assert } from "node:assert";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
-
-import { describeHydration } from "../utils.js";
+import { Tree } from "../../../shared-tree/index.js";
 import {
-	SchemaFactoryAlpha,
-	TreeBeta,
 	type ConciseTree,
 	type NodeFromSchema,
 	type NodeKind,
+	SchemaFactoryAlpha,
+	TreeBeta,
 	type TreeLeafValue,
 	type TreeNode,
 	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
-import { Tree } from "../../../shared-tree/index.js";
+import { describeHydration } from "../utils.js";
 
 const schemaFactory = new SchemaFactoryAlpha("RecordNodeTest");
 const PojoEmulationNumberRecord = schemaFactory.record(schemaFactory.number);
-class CustomizableNumberRecord extends schemaFactory.record("Record", schemaFactory.number) {}
+class CustomizableNumberRecord extends schemaFactory.record(
+	"Record",
+	schemaFactory.number,
+) {}
 
 /**
  * Compares a tree with an expected "concise" tree representation.
@@ -35,7 +37,9 @@ function assertEqualTrees(actual: TreeNode, expected: ConciseTree): void {
 describe("RecordNode", () => {
 	{
 		// Assignable to TypeScript record
-		const _record1: Record<string, number> = PojoEmulationNumberRecord.create({});
+		const _record1: Record<string, number> = PojoEmulationNumberRecord.create(
+			{},
+		);
 		const _record2: Record<string, number> = new CustomizableNumberRecord({});
 	}
 
@@ -158,7 +162,10 @@ describe("RecordNode", () => {
 			assert.notDeepEqual(cNode, aInsertable);
 
 			// Structurally equivalent node with different schema
-			class OtherSchema extends schemaFactory.record("other", schemaFactory.number) {}
+			class OtherSchema extends schemaFactory.record(
+				"other",
+				schemaFactory.number,
+			) {}
 			const dNode = new OtherSchema(aInsertable);
 			assert.notDeepEqual(dNode, aNode);
 		});
@@ -175,7 +182,9 @@ describe("RecordNode", () => {
 			>(schema: TSchema, data: TInsertable): void {
 				assert.throws(
 					() => init(schema, data),
-					validateUsageError(/[Ss]hadowing properties of record nodes is not permitted/),
+					validateUsageError(
+						/[Ss]hadowing properties of record nodes is not permitted/,
+					),
 				);
 			}
 
@@ -214,7 +223,9 @@ describe("RecordNode", () => {
 	// Tests which should behave the same for both "structurally named" "POJO emulation mode" records and "customizable" records can be added in this function to avoid duplication.
 	function testRecordFromSchemaType(
 		title: string,
-		schemaType: typeof PojoEmulationNumberRecord | typeof CustomizableNumberRecord,
+		schemaType:
+			| typeof PojoEmulationNumberRecord
+			| typeof CustomizableNumberRecord,
 	): void {
 		describeHydration(title, (init) => {
 			it("can get and set values", () => {
@@ -277,14 +288,20 @@ describe("RecordNode", () => {
 				/* eslint-disable @typescript-eslint/no-base-to-string -- Explicitly testing this scenario */
 				assert.equal(`${node}`, "[object RecordNodeTest.Record]");
 				assert.equal(String(node), "[object RecordNodeTest.Record]");
-				assert.equal(Object.prototype.toString.call(node), "[object RecordNodeTest.Record]");
+				assert.equal(
+					Object.prototype.toString.call(node),
+					"[object RecordNodeTest.Record]",
+				);
 				/* eslint-enable @typescript-eslint/no-base-to-string */
 			});
 
 			it("JSON.stringify", () => {
 				const tsRecord = { foo: 1, bar: 2, toJson: 3 };
 				const recordNode = init(schemaType, tsRecord);
-				assert.equal(JSON.stringify(recordNode), '{"foo":1,"bar":2,"toJson":3}');
+				assert.equal(
+					JSON.stringify(recordNode),
+					'{"foo":1,"bar":2,"toJson":3}',
+				);
 			});
 
 			it("Object.keys", () => {
@@ -365,14 +382,20 @@ describe("RecordNode", () => {
 		});
 	}
 
-	testRecordFromSchemaType("created in pojo-emulation mode", PojoEmulationNumberRecord);
-	testRecordFromSchemaType("created in customizable mode", CustomizableNumberRecord);
+	testRecordFromSchemaType(
+		"created in pojo-emulation mode",
+		PojoEmulationNumberRecord,
+	);
+	testRecordFromSchemaType(
+		"created in customizable mode",
+		CustomizableNumberRecord,
+	);
 
 	describe("recursive", () => {
-		class RecursiveRecordSchema extends schemaFactory.recordRecursive("RecursiveRecord", [
-			schemaFactory.number,
-			() => RecursiveRecordSchema,
-		]) {}
+		class RecursiveRecordSchema extends schemaFactory.recordRecursive(
+			"RecursiveRecord",
+			[schemaFactory.number, () => RecursiveRecordSchema],
+		) {}
 
 		it("construction", () => {
 			const _empty: RecursiveRecordSchema = new RecursiveRecordSchema({});

@@ -6,6 +6,6 @@
 		"rootDir": "./src",
 		"outDir": "./lib",
 		"types": ["mocha", "node"],
-		"noUncheckedIndexedAccess": false,
-	},
+		"noUncheckedIndexedAccess": false
+	}
 }

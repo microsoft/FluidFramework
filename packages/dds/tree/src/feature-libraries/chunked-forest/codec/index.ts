@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-export { EncodedFieldBatch, FieldBatchFormatVersion } from "./format.js";
-export type { FieldBatch } from "./fieldBatch.js";
 export {
-	type FieldBatchCodec,
-	makeFieldBatchCodec,
-	type FieldBatchEncodingContext,
-	type IncrementalEncoderDecoder,
-	type IncrementalEncoder,
-	type IncrementalDecoder,
 	type ChunkReferenceId,
+	type FieldBatchCodec,
+	type FieldBatchEncodingContext,
 	getCodecTreeForFieldBatchFormat,
+	type IncrementalDecoder,
+	type IncrementalEncoder,
+	type IncrementalEncoderDecoder,
+	makeFieldBatchCodec,
 } from "./codecs.js";
+export type { FieldBatch } from "./fieldBatch.js";
+export { EncodedFieldBatch, FieldBatchFormatVersion } from "./format.js";
 export {
-	type IncrementalEncodingPolicy,
 	defaultIncrementalEncodingPolicy,
+	type IncrementalEncodingPolicy,
 } from "./incrementalEncodingPolicy.js";

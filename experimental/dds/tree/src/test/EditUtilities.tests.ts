@@ -3,29 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, fluidHandleSymbol } from '@fluidframework/core-interfaces';
+import { fluidHandleSymbol, type IFluidHandle } from '@fluidframework/core-interfaces';
 import type { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { assert } from '@fluidframework/core-utils/internal';
 import { FluidSerializer, isISharedObjectHandle } from '@fluidframework/shared-object-base/internal';
 import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
-import { BuildNode, BuildTreeNode } from '../ChangeTypes.js';
+import type { BuildNode, BuildTreeNode } from '../ChangeTypes.js';
 import { noop } from '../Common.js';
 import {
-	PlaceValidationResult,
-	RangeValidationResultKind,
 	convertTreeNodes,
 	deepCompareNodes,
 	internalizeBuildNode,
+	PlaceValidationResult,
+	RangeValidationResultKind,
 	validateStablePlace,
 	validateStableRange,
 	walkTree,
 } from '../EditUtilities.js';
-import { Definition, NodeId } from '../Identifiers.js';
+import type { Definition, NodeId } from '../Identifiers.js';
 import { comparePayloads } from '../PayloadUtilities.js';
+import {
+	type BuildNodeInternal,
+	type ChangeNode,
+	type Payload,
+	Side,
+	type TreeNode,
+} from '../persisted-types/index.js';
 import { getChangeNodeFromView } from '../SerializationUtilities.js';
-import { BuildNodeInternal, ChangeNode, Payload, Side, TreeNode } from '../persisted-types/index.js';
 
 import { refreshTestTree } from './utilities/TestUtilities.js';
 
@@ -467,9 +473,9 @@ describe('EditUtilities', () => {
 
 		it('does not copy extraneous properties from converter', () => {
 			const node = testTree.buildLeaf(testTree.generateNodeId());
-			expect(Object.prototype.hasOwnProperty.call(node, 'payload')).to.be.false;
+			expect(Object.hasOwn(node, 'payload')).to.be.false;
 			const converted = convertTreeNodes(node, (node) => internalizeBuildNode(node, testTree), isNumber);
-			expect(Object.prototype.hasOwnProperty.call(converted, 'payload')).to.be.false;
+			expect(Object.hasOwn(converted, 'payload')).to.be.false;
 		});
 	});
 

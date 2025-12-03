@@ -26,7 +26,10 @@ export class TestSerializer implements IFluidSerializer {
 	}
 
 	public stringify(value: unknown, bind: IFluidHandle): string {
-		assert(bind === undefined, "Test serializer should not be called with bind handles");
+		assert(
+			bind === undefined,
+			"Test serializer should not be called with bind handles",
+		);
 		return JSON.stringify(value);
 	}
 

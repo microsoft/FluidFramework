@@ -8,17 +8,17 @@ import {
 	Body1Strong,
 	Button,
 	Link,
-	Subtitle1,
 	makeStyles,
+	Subtitle1,
 } from "@fluentui/react-components";
 import {
 	DevtoolsFeatures,
 	GetDevtoolsFeatures,
-	type ISourcedDevtoolsMessage,
+	handleIncomingMessage,
 	type InboundHandlers,
+	type ISourcedDevtoolsMessage,
 	SetUnsampledTelemetry,
 	TelemetryEvent,
-	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
@@ -75,16 +75,17 @@ export function OpLatencyView(): React.ReactElement {
 			},
 			data: [],
 		});
-	const [durationNetworkData, setDurationNetworkData] = React.useState<GraphDataSet>({
-		graphType: "line",
-		schema: {
-			displayName: "Duration Network",
-			uuid: "durationNetwork",
-			xAxisDataKey: "timestamp",
-			yAxisDataKey: "duration",
-		},
-		data: [],
-	});
+	const [durationNetworkData, setDurationNetworkData] =
+		React.useState<GraphDataSet>({
+			graphType: "line",
+			schema: {
+				displayName: "Duration Network",
+				uuid: "durationNetwork",
+				xAxisDataKey: "timestamp",
+				yAxisDataKey: "duration",
+			},
+			data: [],
+		});
 	const [durationInboundToProcessingData, setDurationInboundToProcessingData] =
 		React.useState<GraphDataSet>({
 			graphType: "line",
@@ -96,7 +97,8 @@ export function OpLatencyView(): React.ReactElement {
 			},
 			data: [],
 		});
-	const [unsampledTelemetry, setUnsampledTelemetry] = React.useState<boolean>(false);
+	const [unsampledTelemetry, setUnsampledTelemetry] =
+		React.useState<boolean>(false);
 
 	React.useEffect(() => {
 		// Handler for incoming messages
@@ -254,22 +256,24 @@ export function OpLatencyView(): React.ReactElement {
 								</li>
 								<li>
 									<Body1>
-										Op is sent to service. Note: we do not know for sure when the op is
-										actually sent on the network, we only track when it is added to a local
-										outbound queue.
+										Op is sent to service. Note: we do not know for sure when
+										the op is actually sent on the network, we only track when
+										it is added to a local outbound queue.
 									</Body1>
 								</li>
 								<li>
 									<Body1>(Sequenced) Op is received from service.</Body1>
 								</li>
 								<li>
-									<Body1>(Sequenced) Op is processed and passed to the application.</Body1>
+									<Body1>
+										(Sequenced) Op is processed and passed to the application.
+									</Body1>
 								</li>
 							</ol>
 						</div>
 						<Body1Strong>
-							With the above four phases in mind, these are the definitions for the metrics in
-							the graph above:
+							With the above four phases in mind, these are the definitions for
+							the metrics in the graph above:
 						</Body1Strong>
 						<ol>
 							<li>
@@ -295,7 +299,9 @@ export function OpLatencyView(): React.ReactElement {
 				</>
 			)}
 			<Button size="small" onClick={toggleUnsampledTelemetry}>
-				{unsampledTelemetry ? "Disable Unsampled Telemetry" : "Enable Unsampled Telemetry"}
+				{unsampledTelemetry
+					? "Disable Unsampled Telemetry"
+					: "Enable Unsampled Telemetry"}
 			</Button>
 			<Body1>The page will refresh upon clicking the button</Body1>
 		</div>

@@ -5,13 +5,16 @@
 
 import { strict as assert } from "node:assert";
 
-import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
-
+import {
+	BenchmarkType,
+	benchmark,
+	isInPerformanceTestingMode,
+} from "@fluid-tools/benchmark";
+import type { JsonCompatibleReadOnlyObject } from "../../../util/index.js";
 import { averageValues, sumDirect } from "./benchmarks.js";
 import { type Canada, generateCanada } from "./canada.js";
 import { clone } from "./jsObjectUtil.js";
-import { type Twitter, generateTwitterJsonByByteSize } from "./twitter.js";
-import type { JsonCompatibleReadOnlyObject } from "../../../util/index.js";
+import { generateTwitterJsonByByteSize, type Twitter } from "./twitter.js";
 
 /**
  * Performance test suite that measures a variety of access patterns using the direct JS objects to compare its performance when using ITreeCursor.
@@ -31,8 +34,16 @@ export function jsObjectBench<T extends JsonCompatibleReadOnlyObject>(
 			title: `clone JS Object: '${name}'`,
 			before: () => {
 				const cloned = clone(json);
-				assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");
-				assert.notEqual(cloned, json, "clone() must not return the same tree instance.");
+				assert.deepEqual(
+					cloned,
+					json,
+					"clone() must return an equivalent tree.",
+				);
+				assert.notEqual(
+					cloned,
+					json,
+					"clone() must not return the same tree instance.",
+				);
 			},
 			benchmarkFn: () => {
 				clone(json);
@@ -102,6 +113,10 @@ describe("Direct Object", () => {
 		},
 	]);
 	jsObjectBench([
-		{ name: "twitter", getJson: () => twitter, dataConsumer: extractAvgValsFromTwitterDirect },
+		{
+			name: "twitter",
+			getJson: () => twitter,
+			dataConsumer: extractAvgValsFromTwitterDirect,
+		},
 	]);
 });

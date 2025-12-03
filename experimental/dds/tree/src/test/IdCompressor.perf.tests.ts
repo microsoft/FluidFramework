@@ -8,19 +8,25 @@
 import { take } from '@fluid-private/stochastic-test-utils';
 import { BenchmarkType, benchmark } from '@fluid-tools/benchmark';
 
-import { Mutable, fail } from '../Common.js';
-import { CompressedId, FinalCompressedId, LocalCompressedId, OpSpaceCompressedId, SessionId } from '../Identifiers.js';
-import { IdCompressor, defaultClusterCapacity, isFinalId, isLocalId } from '../id-compressor/IdCompressor.js';
+import { fail, type Mutable } from '../Common.js';
+import type {
+	CompressedId,
+	FinalCompressedId,
+	LocalCompressedId,
+	OpSpaceCompressedId,
+	SessionId,
+} from '../Identifiers.js';
+import { defaultClusterCapacity, IdCompressor, isFinalId, isLocalId } from '../id-compressor/IdCompressor.js';
+import type { IdCreationRange, SerializedIdCompressorWithNoSession, UnackedLocalId } from '../id-compressor/index.js';
 import { createSessionId, numericUuidFromStableId, stableIdFromNumericUuid } from '../id-compressor/NumericUuid.js';
-import { IdCreationRange, SerializedIdCompressorWithNoSession, UnackedLocalId } from '../id-compressor/index.js';
 
 import {
 	Client,
 	IdCompressorTestNetwork,
-	TestIdData,
 	makeOpGenerator,
 	performFuzzActions,
 	sessionIds,
+	type TestIdData,
 } from './utilities/IdCompressorTestUtilities.js';
 
 describe('IdCompressor Perf', () => {

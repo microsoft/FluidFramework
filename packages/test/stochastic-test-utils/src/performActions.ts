@@ -7,19 +7,19 @@ import { promises as fs, mkdirSync, writeFileSync } from "fs";
 import path from "path";
 
 import {
+	type BaseOperation,
 	combineReducers,
 	combineReducersAsync,
-	type BaseOperation,
 } from "./combineReducers.js";
 import { makeRandom } from "./random.js";
 import {
-	AsyncGenerator,
-	AsyncReducer,
-	BaseFuzzTestState,
-	Generator,
-	Reducer,
-	SaveInfo,
+	type AsyncGenerator,
+	type AsyncReducer,
+	type BaseFuzzTestState,
 	done,
+	type Generator,
+	type Reducer,
+	type SaveInfo,
 } from "./types.js";
 
 type RealOperation<T extends BaseOperation> = T & {
@@ -100,7 +100,10 @@ export async function performFuzzActionsAsync<
 >(
 	generator: AsyncGenerator<TOperation, TState>,
 	reducerMap: {
-		[K in TOperation["type"]]: AsyncReducer<Extract<TOperation, { type: K }>, TState>;
+		[K in TOperation["type"]]: AsyncReducer<
+			Extract<TOperation, { type: K }>,
+			TState
+		>;
 	},
 	initialState: TState,
 	saveInfo?: SaveInfo,
@@ -116,9 +119,18 @@ export async function performFuzzActionsAsync<
 	generator: AsyncGenerator<TOperation, TState>,
 	reducerOrMap:
 		| AsyncReducer<TOperation, TState>
-		| { [K in TOperation["type"]]: AsyncReducer<Extract<TOperation, { type: K }>, TState> },
+		| {
+				[K in TOperation["type"]]: AsyncReducer<
+					Extract<TOperation, { type: K }>,
+					TState
+				>;
+		  },
 	initialState: TState,
-	saveInfo: SaveInfo = { saveOnFailure: false, saveOnSuccess: false, saveFluidOps: false },
+	saveInfo: SaveInfo = {
+		saveOnFailure: false,
+		saveOnSuccess: false,
+		saveFluidOps: false,
+	},
 	forceGlobalSeed?: boolean,
 ): Promise<TState> {
 	const operations: TOperation[] = [];
@@ -131,7 +143,9 @@ export async function performFuzzActionsAsync<
 	const applyOperation = async (op: RealOperation<TOperation>) =>
 		(await reducer(state, op)) ?? state;
 
-	const runGenerator = async (): Promise<RealOperation<TOperation> | typeof done> => {
+	const runGenerator = async (): Promise<
+		RealOperation<TOperation> | typeof done
+	> => {
 		const seed =
 			forceGlobalSeed === true
 				? undefined
@@ -261,7 +275,12 @@ export function performFuzzActions<
 	TState extends BaseFuzzTestState,
 >(
 	generator: Generator<TOperation, TState>,
-	reducerMap: { [K in TOperation["type"]]: Reducer<Extract<TOperation, { type: K }>, TState> },
+	reducerMap: {
+		[K in TOperation["type"]]: Reducer<
+			Extract<TOperation, { type: K }>,
+			TState
+		>;
+	},
 	initialState: TState,
 	saveInfo?: SaveInfo,
 ): TState;
@@ -275,9 +294,18 @@ export function performFuzzActions<
 	generator: Generator<TOperation, TState>,
 	reducerOrMap:
 		| Reducer<TOperation, TState>
-		| { [K in TOperation["type"]]: Reducer<Extract<TOperation, { type: K }>, TState> },
+		| {
+				[K in TOperation["type"]]: Reducer<
+					Extract<TOperation, { type: K }>,
+					TState
+				>;
+		  },
 	initialState: TState,
-	saveInfo: SaveInfo = { saveOnFailure: false, saveOnSuccess: false, saveFluidOps: false },
+	saveInfo: SaveInfo = {
+		saveOnFailure: false,
+		saveOnSuccess: false,
+		saveFluidOps: false,
+	},
 ): TState {
 	const operations: TOperation[] = [];
 	let state: TState = initialState;
@@ -289,7 +317,11 @@ export function performFuzzActions<
 		reducer(state, op) ?? state;
 
 	try {
-		for (let operation = generator(state); operation !== done; operation = generator(state)) {
+		for (
+			let operation = generator(state);
+			operation !== done;
+			operation = generator(state)
+		) {
 			operations.push(operation);
 			state = applyOperation(operation);
 		}
@@ -315,7 +347,10 @@ export function performFuzzActions<
  *
  * @internal
  */
-function saveOpsToFileSync(filepath: string, operations: { type: string | number }[]) {
+function saveOpsToFileSync(
+	filepath: string,
+	operations: { type: string | number }[],
+) {
 	mkdirSync(path.dirname(filepath), { recursive: true });
 	writeFileSync(filepath, JSON.stringify(operations, undefined, 4));
 }

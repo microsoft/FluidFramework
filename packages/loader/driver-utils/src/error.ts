@@ -5,15 +5,21 @@
 
 import {
 	DriverErrorTypes,
-	IDriverErrorBase,
+	type IDriverErrorBase,
 } from "@fluidframework/driver-definitions/internal";
-import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils/internal";
+import {
+	type IFluidErrorBase,
+	LoggingError,
+} from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Error indicating an API is being used improperly resulting in an invalid operation.
  * @internal
  */
-export class UsageError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
+export class UsageError
+	extends LoggingError
+	implements IDriverErrorBase, IFluidErrorBase
+{
 	readonly errorType = DriverErrorTypes.usageError;
 	readonly canRetry = false;
 

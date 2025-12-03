@@ -5,7 +5,9 @@
 
 type ConcurrentlyCommand = `concurrently ${string}`;
 
-export function isConcurrentlyCommand(command: string): command is ConcurrentlyCommand {
+export function isConcurrentlyCommand(
+	command: string,
+): command is ConcurrentlyCommand {
 	return command.startsWith("concurrently ");
 }
 
@@ -39,7 +41,9 @@ export function parseConcurrentlyCommand(
 				// Note: result of no matches is allowed, so long as another concurrently step has a match.
 				// This avoids general tool being overly prescriptive about script patterns. If always
 				// having a match is desired, then such a policy should be enforced.
-				for (const scriptName of scriptNames.filter((s) => s.startsWith(scriptSpec))) {
+				for (const scriptName of scriptNames.filter((s) =>
+					s.startsWith(scriptSpec),
+				)) {
 					onNpmCommand(scriptName);
 				}
 			} else {

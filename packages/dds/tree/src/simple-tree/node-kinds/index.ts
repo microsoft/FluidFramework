@@ -9,10 +9,10 @@ export {
 	ArrayNodeSchema,
 	arraySchema,
 	asIndex,
-	isArrayNodeSchema,
 	IterableTreeArrayContent,
-	TreeArrayNode,
+	isArrayNodeSchema,
 	type ReadonlyArrayNode,
+	TreeArrayNode,
 } from "./array/index.js";
 
 export {
@@ -33,9 +33,9 @@ export {
 	ObjectNodeSchema,
 	type ObjectNodeSchemaPrivate,
 	objectSchema,
+	type SimpleKeyMap,
 	setField,
 	type TreeObjectNode,
-	type SimpleKeyMap,
 } from "./object/index.js";
 
 export {

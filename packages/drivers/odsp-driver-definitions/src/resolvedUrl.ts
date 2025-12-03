@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 /**
  * @legacy

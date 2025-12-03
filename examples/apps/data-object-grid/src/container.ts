@@ -4,8 +4,8 @@
  */
 
 import {
-	ModelContainerRuntimeFactory,
 	getDataStoreEntryPoint,
+	ModelContainerRuntimeFactory,
 } from "@fluid-example/example-utils";
 import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
@@ -24,7 +24,9 @@ export interface IDataObjectGridAppModel {
 }
 
 class DataObjectGridAppModel implements IDataObjectGridAppModel {
-	public constructor(public readonly dataObjectGrid: IDataObjectGrid<ISingleHandleItem>) {}
+	public constructor(
+		public readonly dataObjectGrid: IDataObjectGrid<ISingleHandleItem>,
+	) {}
 }
 
 const dataObjectGridId = "data-object-grid";
@@ -42,8 +44,12 @@ export class DataObjectGridContainerRuntimeFactory extends ModelContainerRuntime
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
-	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
-		const dataObjectGrid = await runtime.createDataStore(DataObjectGrid.getFactory().type);
+	protected async containerInitializingFirstTime(
+		runtime: IContainerRuntime,
+	): Promise<void> {
+		const dataObjectGrid = await runtime.createDataStore(
+			DataObjectGrid.getFactory().type,
+		);
 		await dataObjectGrid.trySetAlias(dataObjectGridId);
 	}
 

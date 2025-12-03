@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
-import * as path from "path";
-
 import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { Parser } from "@json2csv/plainjs";
+import * as fs from "fs";
+import * as path from "path";
 
 import { BaseFileLogger } from "./baseFileLogger.js";
 

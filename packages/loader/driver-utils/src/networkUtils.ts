@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryErrorEventExt } from "@fluidframework/telemetry-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type {
+	ITelemetryErrorEventExt,
+	ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
-import { OnlineStatus, canRetryOnError, isOnline } from "./network.js";
+import { canRetryOnError, isOnline, OnlineStatus } from "./network.js";
 
 /**
  * @internal
@@ -20,11 +22,14 @@ export function logNetworkFailure(
 
 	const errorOnlineProp = error?.online;
 	newEvent.online =
-		typeof errorOnlineProp === "string" ? errorOnlineProp : OnlineStatus[isOnline()];
+		typeof errorOnlineProp === "string"
+			? errorOnlineProp
+			: OnlineStatus[isOnline()];
 
 	if (typeof navigator === "object" && navigator !== null) {
 		const nav = navigator as any;
-		const connection = nav.connection ?? nav.mozConnection ?? nav.webkitConnection;
+		const connection =
+			nav.connection ?? nav.mozConnection ?? nav.webkitConnection;
 		if (connection !== null && typeof connection === "object") {
 			newEvent.connectionType = connection.type;
 		}

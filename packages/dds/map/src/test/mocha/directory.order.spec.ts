@@ -21,7 +21,11 @@ import {
 	type IDirectoryOperation,
 	SharedDirectory as SharedDirectoryInternal,
 } from "../../directory.js";
-import { DirectoryFactory, type ISharedDirectory, SharedDirectory } from "../../index.js";
+import {
+	DirectoryFactory,
+	type ISharedDirectory,
+	SharedDirectory,
+} from "../../index.js";
 
 function createConnectedDirectory(
 	id: string,
@@ -30,7 +34,8 @@ function createConnectedDirectory(
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		registry: [SharedDirectory.getFactory()],
 	});
-	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
+	const containerRuntime =
+		runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
@@ -50,7 +55,10 @@ class TestSharedDirectory extends SharedDirectoryInternal {
 		return this.lastMetadata;
 	}
 
-	public submitLocalMessage(op: IDirectoryOperation, localOpMetadata: unknown): void {
+	public submitLocalMessage(
+		op: IDirectoryOperation,
+		localOpMetadata: unknown,
+	): void {
 		this.lastMetadata = localOpMetadata as DirectoryLocalOpMetadata;
 		super.submitLocalMessage(op, localOpMetadata);
 	}
@@ -117,22 +125,20 @@ describe("Directory Iteration Order", () => {
 
 			assertDirectoryIterationOrder(directory, ["c", "a", "b"]);
 			assert.notEqual(directory.getWorkingDirectory("/a"), undefined);
-			assertDirectoryIterationOrder(directory.getWorkingDirectory("/a") as ISharedDirectory, [
-				"a-b",
-				"a-a",
-				"a-c",
-			]);
+			assertDirectoryIterationOrder(
+				directory.getWorkingDirectory("/a") as ISharedDirectory,
+				["a-b", "a-a", "a-c"],
+			);
 			assert.notEqual(directory.getWorkingDirectory("/b"), undefined);
 			assertDirectoryIterationOrder(
 				directory.getWorkingDirectory("/b") as ISharedDirectory,
 				[],
 			);
 			assert.notEqual(directory.getWorkingDirectory("/c"), undefined);
-			assertDirectoryIterationOrder(directory.getWorkingDirectory("/c") as ISharedDirectory, [
-				"c-a",
-				"c-c",
-				"c-b",
-			]);
+			assertDirectoryIterationOrder(
+				directory.getWorkingDirectory("/c") as ISharedDirectory,
+				["c-a", "c-c", "c-b"],
+			);
 		});
 
 		it("delete subdirectories", () => {
@@ -153,11 +159,10 @@ describe("Directory Iteration Order", () => {
 			directory.getWorkingDirectory("/c")?.createSubDirectory("c-d");
 			directory.getWorkingDirectory("/c")?.deleteSubDirectory("c-c");
 
-			assertDirectoryIterationOrder(directory.getWorkingDirectory("/c") as ISharedDirectory, [
-				"c-a",
-				"c-b",
-				"c-d",
-			]);
+			assertDirectoryIterationOrder(
+				directory.getWorkingDirectory("/c") as ISharedDirectory,
+				["c-a", "c-b", "c-d"],
+			);
 		});
 	});
 
@@ -169,9 +174,15 @@ describe("Directory Iteration Order", () => {
 		beforeEach("createDirectories", async () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 			// Create the first directory.
-			directory1 = createConnectedDirectory("directory1", containerRuntimeFactory);
+			directory1 = createConnectedDirectory(
+				"directory1",
+				containerRuntimeFactory,
+			);
 			// Create the second directory.
-			directory2 = createConnectedDirectory("directory2", containerRuntimeFactory);
+			directory2 = createConnectedDirectory(
+				"directory2",
+				containerRuntimeFactory,
+			);
 		});
 
 		it("Remote messages have no conflict with the local pending ops", () => {
@@ -196,14 +207,14 @@ describe("Directory Iteration Order", () => {
 
 			assert(directory1.getWorkingDirectory("b"));
 			assert(directory2.getWorkingDirectory("b"));
-			assertDirectoryIterationOrder(directory1.getWorkingDirectory("b") as ISharedDirectory, [
-				"b-b",
-				"b-a",
-			]);
-			assertDirectoryIterationOrder(directory2.getWorkingDirectory("b") as ISharedDirectory, [
-				"b-b",
-				"b-a",
-			]);
+			assertDirectoryIterationOrder(
+				directory1.getWorkingDirectory("b") as ISharedDirectory,
+				["b-b", "b-a"],
+			);
+			assertDirectoryIterationOrder(
+				directory2.getWorkingDirectory("b") as ISharedDirectory,
+				["b-b", "b-a"],
+			);
 		});
 
 		it("Remote messages have conflicts with the local pending ops", () => {
@@ -223,27 +234,26 @@ describe("Directory Iteration Order", () => {
 			assertDirectoryIterationOrder(directory2, ["b", "a", "d"]);
 
 			assert.notEqual(directory1.getWorkingDirectory("/d"), undefined);
-			assertDirectoryIterationOrder(directory1.getWorkingDirectory("/d") as ISharedDirectory, [
-				"d-b",
-				"d-a",
-			]);
+			assertDirectoryIterationOrder(
+				directory1.getWorkingDirectory("/d") as ISharedDirectory,
+				["d-b", "d-a"],
+			);
 
 			assert.notEqual(directory2.getWorkingDirectory("/d"), undefined);
-			assertDirectoryIterationOrder(directory2.getWorkingDirectory("/d") as ISharedDirectory, [
-				"d-b",
-				"d-a",
-			]);
+			assertDirectoryIterationOrder(
+				directory2.getWorkingDirectory("/d") as ISharedDirectory,
+				["d-b", "d-a"],
+			);
 
 			directory1.deleteSubDirectory("d");
 			directory2.getWorkingDirectory("/d")?.createSubDirectory("d-c");
 
 			assertDirectoryIterationOrder(directory1, ["b", "a"]);
 			assertDirectoryIterationOrder(directory2, ["b", "a", "d"]);
-			assertDirectoryIterationOrder(directory2.getWorkingDirectory("/d") as ISharedDirectory, [
-				"d-b",
-				"d-a",
-				"d-c",
-			]);
+			assertDirectoryIterationOrder(
+				directory2.getWorkingDirectory("/d") as ISharedDirectory,
+				["d-b", "d-a", "d-c"],
+			);
 
 			containerRuntimeFactory.processAllMessages();
 			assertDirectoryIterationOrder(directory1, ["b", "a"]);
@@ -375,10 +385,10 @@ describe("Directory Iteration Order", () => {
 
 			assertDirectoryIterationOrder(directory1, ["c", "b", "a"]);
 			assert(directory1.getWorkingDirectory("/c"));
-			assertDirectoryIterationOrder(directory1.getWorkingDirectory("/c") as ISharedDirectory, [
-				"c_b",
-				"c_a",
-			]);
+			assertDirectoryIterationOrder(
+				directory1.getWorkingDirectory("/c") as ISharedDirectory,
+				["c_b", "c_a"],
+			);
 		});
 
 		it("serialize the contents, load it into another directory and maintain the order", async () => {
@@ -449,11 +459,13 @@ describe("Directory Iteration Order", () => {
 		let factory: DirectoryFactory;
 
 		beforeEach("createDirectories", async () => {
-			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+			containerRuntimeFactory =
+				new MockContainerRuntimeFactoryForReconnection();
 			factory = SharedDirectory.getFactory();
 			// Create the first SharedDirectory
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			containerRuntime1 =
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -463,7 +475,8 @@ describe("Directory Iteration Order", () => {
 
 			// Create the second SharedDirectory
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-			containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			containerRuntime2 =
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),

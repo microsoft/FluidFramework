@@ -4,23 +4,23 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IDisposable } from "@fluidframework/core-interfaces";
+import type { IDisposable } from "@fluidframework/core-interfaces";
 import { delay } from "@fluidframework/core-utils/internal";
-import { ConnectionMode } from "@fluidframework/driver-definitions";
+import type { ConnectionMode } from "@fluidframework/driver-definitions";
 import {
-	IDocumentDeltaConnection,
-	IDocumentDeltaConnectionEvents,
-	IDocumentDeltaStorageService,
-	IDocumentService,
-	IClientConfiguration,
-	IConnected,
-	IDocumentMessage,
-	ISignalClient,
-	ITokenClaims,
-	IVersion,
+	type IClientConfiguration,
+	type IConnected,
+	type IDocumentDeltaConnection,
+	type IDocumentDeltaConnectionEvents,
+	type IDocumentDeltaStorageService,
+	type IDocumentMessage,
+	type IDocumentService,
+	type ISequencedDocumentMessage,
+	type ISignalClient,
+	type ISignalMessage,
+	type ITokenClaims,
+	type IVersion,
 	ScopeType,
-	ISequencedDocumentMessage,
-	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 
 import { ReplayController } from "./replayController.js";
@@ -58,7 +58,10 @@ export class ReplayControllerStatic extends ReplayController {
 		return true;
 	}
 
-	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
+	public async getVersions(
+		versionId: string | null,
+		count: number,
+	): Promise<IVersion[]> {
 		return [];
 	}
 
@@ -162,7 +165,8 @@ export class ReplayControllerStatic extends ReplayController {
 						if (
 							this.firstTimeStamp !== undefined &&
 							this.replayTo >= 0 &&
-							currentTimeStamp + nextInterval - this.firstTimeStamp > this.replayTo
+							currentTimeStamp + nextInterval - this.firstTimeStamp >
+								this.replayTo
 						) {
 							nextInterval = -1;
 						}
@@ -271,7 +275,8 @@ export class ReplayDocumentDeltaConnection
 		return this.details.serviceConfiguration;
 	}
 
-	public readonly maxMessageSize = ReplayDocumentDeltaConnection.ReplayMaxMessageSize;
+	public readonly maxMessageSize =
+		ReplayDocumentDeltaConnection.ReplayMaxMessageSize;
 
 	constructor(public details: IConnected) {
 		super();
@@ -328,12 +333,18 @@ export class ReplayDocumentDeltaConnection
 					break;
 				}
 				replayPromiseChain = replayPromiseChain.then(async () =>
-					controller.replay((ops) => this.emit("op", ReplayDocumentId, ops), messages),
+					controller.replay(
+						(ops) => this.emit("op", ReplayDocumentId, ops),
+						messages,
+					),
 				);
 
 				const messages = result.value;
 				currentOp += messages.length;
-				done = controller.isDoneFetch(currentOp, messages[messages.length - 1].timestamp);
+				done = controller.isDoneFetch(
+					currentOp,
+					messages[messages.length - 1].timestamp,
+				);
 			} while (!done);
 
 			abortController.abort();

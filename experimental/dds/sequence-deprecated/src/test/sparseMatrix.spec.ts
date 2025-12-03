@@ -3,22 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
-import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
+import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
+	type MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
+import { strict as assert } from "assert";
 
 import {
 	SparseMatrix,
 	SparseMatrixClass,
 	SparseMatrixFactory,
-	SparseMatrixItem,
+	type SparseMatrixItem,
 } from "../sparsematrix.js";
 
 describe("SparseMatrix", () => {
@@ -280,7 +279,8 @@ describe("SparseMatrix", () => {
 			let containerRuntime2: MockContainerRuntimeForReconnection;
 
 			beforeEach(async () => {
-				containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+				containerRuntimeFactory =
+					new MockContainerRuntimeFactoryForReconnection();
 
 				// Create and connect the first SharedMatrix.
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();

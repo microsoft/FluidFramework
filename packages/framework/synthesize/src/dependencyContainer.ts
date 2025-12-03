@@ -29,7 +29,9 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 	}
 
 	public constructor(...parents: (IFluidDependencySynthesizer | undefined)[]) {
-		this.parents = parents.filter((v): v is IFluidDependencySynthesizer => v !== undefined);
+		this.parents = parents.filter(
+			(v): v is IFluidDependencySynthesizer => v !== undefined,
+		);
 	}
 
 	/**
@@ -69,10 +71,15 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 		requiredTypes: Required<FluidObjectSymbolProvider<R>>,
 	): AsyncFluidObjectProvider<O, R> {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-		const base: AsyncFluidObjectProvider<O, R> = {} as AsyncFluidObjectProvider<O, R>;
+		const base: AsyncFluidObjectProvider<O, R> = {} as AsyncFluidObjectProvider<
+			O,
+			R
+		>;
 		this.generateRequired<R>(base, requiredTypes);
 		this.generateOptional<O>(base, optionalTypes);
-		Object.defineProperty(base, IFluidDependencySynthesizer, { get: () => this });
+		Object.defineProperty(base, IFluidDependencySynthesizer, {
+			get: () => this,
+		});
 		return base;
 	}
 
@@ -94,7 +101,9 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 	 * @param provider - The name of the provider to get
 	 * @deprecated Needed for backwards compatability.
 	 */
-	private getProvider(provider: string & keyof TMap): PropertyDescriptor | undefined {
+	private getProvider(
+		provider: string & keyof TMap,
+	): PropertyDescriptor | undefined {
 		// this was removed, but some partners have trouble with back compat where they
 		// use invalid patterns with FluidObject and IFluidDependencySynthesizer
 		// this is just for back compat until those are removed
@@ -108,7 +117,9 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 				} else {
 					// older implementations of the IFluidDependencySynthesizer exposed getProvider
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-					const maybeGetProvider = parent as { getProvider?(provider: string & keyof TMap) };
+					const maybeGetProvider = parent as {
+						getProvider?(provider: string & keyof TMap);
+					};
 					if (maybeGetProvider?.getProvider !== undefined) {
 						return maybeGetProvider.getProvider(provider);
 					}
@@ -146,12 +157,16 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 			// back-compat: in 0.56 we allow undefined in the types, but we didn't before
 			// this will keep runtime back compat, eventually we should support undefined properties
 			// rather than properties that return promises that resolve to undefined
-			const provider = this.resolveProvider(key) ?? { get: async () => undefined };
+			const provider = this.resolveProvider(key) ?? {
+				get: async () => undefined,
+			};
 			Object.defineProperty(base, key, provider);
 		}
 	}
 
-	private resolveProvider<T extends keyof TMap>(t: T): PropertyDescriptor | undefined {
+	private resolveProvider<T extends keyof TMap>(
+		t: T,
+	): PropertyDescriptor | undefined {
 		// If we have the provider return it
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const provider = this.providers.get(t);
@@ -159,7 +174,10 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 			for (const parent of this.parents) {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				const sp = { [t]: t } as FluidObjectSymbolProvider<Pick<TMap, T>>;
-				const syn = parent.synthesize<Pick<TMap, T>, Record<string, unknown>>(sp, {});
+				const syn = parent.synthesize<Pick<TMap, T>, Record<string, unknown>>(
+					sp,
+					{},
+				);
 				const descriptor = Object.getOwnPropertyDescriptor(syn, t);
 				if (descriptor !== undefined) {
 					return descriptor;

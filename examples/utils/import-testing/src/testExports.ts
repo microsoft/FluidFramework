@@ -40,17 +40,20 @@ however that is less representative of actual use, and thus fails to detect some
 /* eslint-disable jsdoc/require-jsdoc */
 
 import {
+	type NodeFromSchema,
 	SchemaFactory,
 	TreeViewConfiguration,
-	type NodeFromSchema,
 	type ValidateRecursiveSchema,
 	// To diagnose `error TS2742: The inferred type of ...` errors,
 	// enable this import then look for use of it in the generated d.ts file fo find what needs to be moved out of InternalTypes
 	// // eslint-disable-next-line unused-imports/no-unused-imports
 	// InternalTypes,
 } from "@fluidframework/tree";
+import type {
+	FixRecursiveArraySchema,
+	ObjectNodeSchema,
+} from "@fluidframework/tree/alpha";
 import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
-import type { FixRecursiveArraySchema, ObjectNodeSchema } from "@fluidframework/tree/alpha";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { requireAssignableTo } from "@fluidframework/tree/internal";
 
@@ -76,12 +79,16 @@ export class Note extends schema.object("Note", {
 export class NodeMap extends schema.map("NoteMap", Note) {}
 export class NodeList extends schema.array("NoteList", Note) {}
 
-export class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
+export class Canvas extends schema.object("Canvas", {
+	stuff: [NodeMap, NodeList],
+}) {}
 
 export const POJO = schema.object("POJO", { stuff: [NodeMap, NodeList] });
 export type POJO = NodeFromSchema<typeof POJO>;
 
-export const POJOAlpha = schemaAlpha.objectAlpha("POJO", { stuff: [NodeMap, NodeList] });
+export const POJOAlpha = schemaAlpha.objectAlpha("POJO", {
+	stuff: [NodeMap, NodeList],
+});
 {
 	type _check = requireAssignableTo<typeof POJOAlpha, ObjectNodeSchema>;
 }
@@ -97,9 +104,14 @@ export class RecursiveObject extends schema.objectRecursive("RO", {
 	type _check = ValidateRecursiveSchema<typeof RecursiveObject>;
 }
 
-export const recursiveField = schema.optionalRecursive([() => RecursiveObject, schema.number]);
+export const recursiveField = schema.optionalRecursive([
+	() => RecursiveObject,
+	schema.number,
+]);
 
-export class RecursiveMap extends schema.mapRecursive("RM", [() => RecursiveMap]) {}
+export class RecursiveMap extends schema.mapRecursive("RM", [
+	() => RecursiveMap,
+]) {}
 {
 	type _check = ValidateRecursiveSchema<typeof RecursiveMap>;
 }
@@ -116,8 +128,12 @@ export class RecursiveRecord extends schemaAlpha.recordRecursive("RR", [
  * Workaround to avoid
  * `error TS2310: Type 'RecursiveArray' recursively references itself as a base type.` in the d.ts file.
  */
-export declare type _RecursiveArrayWorkaround = FixRecursiveArraySchema<typeof RecursiveArray>;
-export class RecursiveArray extends schema.arrayRecursive("RA", [() => RecursiveArray]) {}
+export declare type _RecursiveArrayWorkaround = FixRecursiveArraySchema<
+	typeof RecursiveArray
+>;
+export class RecursiveArray extends schema.arrayRecursive("RA", [
+	() => RecursiveArray,
+]) {}
 {
 	type _check = ValidateRecursiveSchema<typeof RecursiveArray>;
 }
@@ -127,7 +143,9 @@ export class RecursiveArray extends schema.arrayRecursive("RA", [() => Recursive
  * This happens (without errors!) even if NoImplicitAny is enabled.
  * See the {@link https://github.com/microsoft/TypeScript/issues/55832 | TypeScript Issue} for more details.
  */
-export const BadArraySelf = schema.arrayRecursive("BadArraySelf", [() => BadArraySelf]);
+export const BadArraySelf = schema.arrayRecursive("BadArraySelf", [
+	() => BadArraySelf,
+]);
 {
 	type _check = ValidateRecursiveSchema<typeof BadArraySelf>;
 }

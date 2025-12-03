@@ -42,8 +42,10 @@ async function convert_package_dir(packageDir: string): Promise<void> {
 			if (exportDeclaration.isNamespaceExport()) {
 				const moduleSpecifierSourceFile =
 					exportDeclaration.getModuleSpecifierSourceFileOrThrow();
-				const namedExports = new Array<string>();
-				for (const [name] of moduleSpecifierSourceFile.getExportedDeclarations()) {
+				const namedExports: string[] = [];
+				for (const [
+					name,
+				] of moduleSpecifierSourceFile.getExportedDeclarations()) {
 					namedExports.push(name);
 				}
 				for (const name of namedExports.sort(case_insensitive_comp)) {

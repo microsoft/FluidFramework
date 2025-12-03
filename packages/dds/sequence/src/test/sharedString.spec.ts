@@ -3,36 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import { AttachState } from "@fluidframework/container-definitions";
-import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
+import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
-	Marker,
-	MergeTreeDeltaRevertible,
-	ReferenceType,
-	Side,
 	appendToMergeTreeDeltaRevertibles,
+	type ISegmentInternal,
+	type Marker,
+	type MergeTreeDeltaRevertible,
 	matchProperties,
+	ReferenceType,
 	reservedMarkerIdKey,
 	reservedMarkerSimpleTypeKey,
 	reservedTileLabelsKey,
 	revertMergeTreeDeltaRevertibles,
-	type ISegmentInternal,
+	Side,
 } from "@fluidframework/merge-tree/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
+	type MockContainerRuntimeForReconnection,
 	MockEmptyDeltaConnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
+import { strict as assert } from "assert";
 
-import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
-import { SharedStringClass, getTextAndMarkers } from "../sharedString.js";
+import { type SharedString, SharedStringFactory } from "../sequenceFactory.js";
+import { getTextAndMarkers, SharedStringClass } from "../sharedString.js";
 
 describe("SharedString", () => {
 	let sharedString: SharedString;
@@ -53,7 +52,9 @@ describe("SharedString", () => {
 		});
 
 		// Creates a new SharedString and loads it from the passed snapshot tree.
-		async function CreateStringAndCompare(summaryTree: ISummaryTree): Promise<void> {
+		async function CreateStringAndCompare(
+			summaryTree: ISummaryTree,
+		): Promise<void> {
 			const services: IChannelServices = {
 				deltaConnection: new MockEmptyDeltaConnection(),
 				objectStorage: MockStorage.createFromSummary(summaryTree),
@@ -76,23 +77,47 @@ describe("SharedString", () => {
 		function verifyAndReturnSummaryTree(): ISummaryTree {
 			const summarizeResult = sharedString.getAttachSummary();
 			const summaryObjectKeys = Object.keys(summarizeResult.summary.tree);
-			assert.strictEqual(summaryObjectKeys.length, 1, "summary should have one entries");
-			assert.strictEqual(summaryObjectKeys[0], "content", "content not present in summary");
+			assert.strictEqual(
+				summaryObjectKeys.length,
+				1,
+				"summary should have one entries",
+			);
+			assert.strictEqual(
+				summaryObjectKeys[0],
+				"content",
+				"content not present in summary",
+			);
 
 			const subTree = summarizeResult.summary.tree.content as ISummaryTree;
 			const subTreeObjectKeys = Object.keys(subTree.tree);
-			assert.strictEqual(subTreeObjectKeys.length, 1, "sub tree should have one entries");
-			assert.strictEqual(subTreeObjectKeys[0], "header", "header not present in sub tree");
+			assert.strictEqual(
+				subTreeObjectKeys.length,
+				1,
+				"sub tree should have one entries",
+			);
+			assert.strictEqual(
+				subTreeObjectKeys[0],
+				"header",
+				"header not present in sub tree",
+			);
 
 			return summarizeResult.summary;
 		}
 
 		it("can insert text", async () => {
 			sharedString.insertText(0, "hello");
-			assert.equal(sharedString.getText(), "hello", "Could not insert text at beginning");
+			assert.equal(
+				sharedString.getText(),
+				"hello",
+				"Could not insert text at beginning",
+			);
 
 			sharedString.insertText(5, "world");
-			assert.equal(sharedString.getText(), "helloworld", "Could not insert text at end");
+			assert.equal(
+				sharedString.getText(),
+				"helloworld",
+				"Could not insert text at end",
+			);
 
 			sharedString.insertText(5, " ");
 			assert.equal(
@@ -106,10 +131,18 @@ describe("SharedString", () => {
 			sharedString.insertText(0, "hello world");
 
 			sharedString.replaceText(6, 11, "there!");
-			assert.equal(sharedString.getText(), "hello there!", "Could not replace text");
+			assert.equal(
+				sharedString.getText(),
+				"hello there!",
+				"Could not replace text",
+			);
 
 			sharedString.replaceText(0, 5, "hi");
-			assert.equal(sharedString.getText(), "hi there!", "Could not replace text at beginning");
+			assert.equal(
+				sharedString.getText(),
+				"hi there!",
+				"Could not replace text at beginning",
+			);
 		});
 
 		it("can remove text", async () => {
@@ -119,7 +152,11 @@ describe("SharedString", () => {
 			assert.equal(sharedString.getText(), "hello", "Could not remove text");
 
 			sharedString.removeText(0, 3);
-			assert.equal(sharedString.getText(), "lo", "Could not remove text from beginning");
+			assert.equal(
+				sharedString.getText(),
+				"lo",
+				"Could not remove text from beginning",
+			);
 		});
 
 		it("can annotate the text", async () => {
@@ -204,7 +241,11 @@ describe("SharedString", () => {
 				undefined,
 				true,
 			);
-			assert.equal(segmentCount, 1, `Expected one segment, saw ${segmentCount} segments`);
+			assert.equal(
+				segmentCount,
+				1,
+				`Expected one segment, saw ${segmentCount} segments`,
+			);
 			assert.equal(
 				segmentLengths.length,
 				1,
@@ -228,7 +269,11 @@ describe("SharedString", () => {
 			// Verify that the simple marker can be retrieved via id.
 			const simpleMarker = sharedString.getMarkerFromId("markerId");
 			assert.equal(simpleMarker?.type, "Marker", "Could not get simple marker");
-			assert.equal(simpleMarker?.properties?.markerId, "markerId", "markerId is incorrect");
+			assert.equal(
+				simpleMarker?.properties?.markerId,
+				"markerId",
+				"markerId is incorrect",
+			);
 			assert.equal(
 				simpleMarker?.properties?.markerSimpleType,
 				"markerKeyValue",
@@ -263,7 +308,11 @@ describe("SharedString", () => {
 			const props = { color: "blue" };
 			const simpleMarker = sharedString.getMarkerFromId("markerId") as Marker;
 			sharedString.annotateMarker(simpleMarker, props);
-			assert.equal(simpleMarker.properties?.color, "blue", "Could not annotate marker");
+			assert.equal(
+				simpleMarker.properties?.color,
+				"blue",
+				"Could not annotate marker",
+			);
 		});
 
 		it("fails when the marker id is updated with a new string", () => {
@@ -276,14 +325,20 @@ describe("SharedString", () => {
 			const props = { color: "blue" };
 			const simpleMarker = sharedString.getMarkerFromId("markerId") as Marker;
 			sharedString.annotateMarker(simpleMarker, props);
-			assert.equal(simpleMarker.properties?.color, "blue", "Could not annotate marker");
+			assert.equal(
+				simpleMarker.properties?.color,
+				"blue",
+				"Could not annotate marker",
+			);
 			// Annotate the marker's ID.
 			const newIdProps = { [reservedMarkerIdKey]: "newIdValue" };
 			assert.throws(
 				() => {
 					sharedString.annotateMarker(simpleMarker, newIdProps);
 				},
-				validateAssertionError("Cannot change the markerId of an existing marker"),
+				validateAssertionError(
+					"Cannot change the markerId of an existing marker",
+				),
 				"Error from attempting to update marker was not thrown or was not the expected error",
 			);
 		});
@@ -302,7 +357,9 @@ describe("SharedString", () => {
 				() => {
 					sharedString.annotateMarker(simpleMarker, newIdProps);
 				},
-				validateAssertionError("Cannot change the markerId of an existing marker"),
+				validateAssertionError(
+					"Cannot change the markerId of an existing marker",
+				),
 				"Error from attempting to update marker was not thrown or was not the expected error",
 			);
 		});
@@ -321,7 +378,9 @@ describe("SharedString", () => {
 				() => {
 					sharedString.annotateMarker(simpleMarker, newIdProps);
 				},
-				validateAssertionError("Cannot change the markerId of an existing marker"),
+				validateAssertionError(
+					"Cannot change the markerId of an existing marker",
+				),
 				"Error from attempting to update marker was not thrown or was not the expected error",
 			);
 		});
@@ -351,7 +410,11 @@ describe("SharedString", () => {
 		it("replace zero range", async () => {
 			sharedString.insertText(0, "123");
 			sharedString.replaceText(1, 1, "\u00e4\u00c4");
-			assert.equal(sharedString.getText(), "1\u00e4\u00c423", "Could not replace zero range");
+			assert.equal(
+				sharedString.getText(),
+				"1\u00e4\u00c423",
+				"Could not replace zero range",
+			);
 		});
 
 		it("replace negative range", async () => {
@@ -359,7 +422,11 @@ describe("SharedString", () => {
 			sharedString.replaceText(2, 1, "aaa");
 			// This assert relies on the behavior that replacement for a reversed range
 			// will insert at the max end of the range but not delete the range
-			assert.equal(sharedString.getText(), "12aaa3", "Could not replace negative range");
+			assert.equal(
+				sharedString.getText(),
+				"12aaa3",
+				"Could not replace negative range",
+			);
 		});
 
 		it("can load a SharedString from summary", async () => {
@@ -411,7 +478,9 @@ describe("SharedString", () => {
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2: IChannelServices = {
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
-				objectStorage: MockStorage.createFromSummary(sharedString.getAttachSummary().summary),
+				objectStorage: MockStorage.createFromSummary(
+					sharedString.getAttachSummary().summary,
+				),
 			};
 
 			const sharedString2 = new SharedStringClass(
@@ -504,7 +573,11 @@ describe("SharedString", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify that both the shared strings inserted the text.
-			assert.equal(sharedString.getText(), "hello", "Could not insert text at beginning");
+			assert.equal(
+				sharedString.getText(),
+				"hello",
+				"Could not insert text at beginning",
+			);
 			assert.equal(
 				sharedString2.getText(),
 				"hello",
@@ -518,7 +591,11 @@ describe("SharedString", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify that both the shared strings inserted the text.
-			assert.equal(sharedString.getText(), "hello world", "Could not insert text at end");
+			assert.equal(
+				sharedString.getText(),
+				"hello world",
+				"Could not insert text at end",
+			);
 			assert.equal(
 				sharedString2.getText(),
 				"hello world",
@@ -535,7 +612,11 @@ describe("SharedString", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify that both the shared strings replaced the text.
-			assert.equal(sharedString.getText(), "hello there!", "Could not replace text");
+			assert.equal(
+				sharedString.getText(),
+				"hello there!",
+				"Could not replace text",
+			);
 			assert.equal(
 				sharedString2.getText(),
 				"hello there!",
@@ -623,7 +704,11 @@ describe("SharedString", () => {
 				undefined,
 				true,
 			);
-			assert.equal(segmentCount, 1, `Expected one segment, saw ${segmentCount} segments`);
+			assert.equal(
+				segmentCount,
+				1,
+				`Expected one segment, saw ${segmentCount} segments`,
+			);
 			assert.equal(
 				segmentLengths.length,
 				1,
@@ -648,7 +733,11 @@ describe("SharedString", () => {
 				undefined,
 				true,
 			);
-			assert.equal(segmentCount, 1, `Expected one segment, saw ${segmentCount} segments`);
+			assert.equal(
+				segmentCount,
+				1,
+				`Expected one segment, saw ${segmentCount} segments`,
+			);
 			assert.equal(
 				segmentLengths2.length,
 				1,
@@ -723,7 +812,11 @@ describe("SharedString", () => {
 
 			// Verify that the marker was annotated in both the shared strings.
 			const simpleMarker1 = sharedString.getMarkerFromId("markerId") as Marker;
-			assert.equal(simpleMarker1.properties?.color, "blue", "Could not annotate marker");
+			assert.equal(
+				simpleMarker1.properties?.color,
+				"blue",
+				"Could not annotate marker",
+			);
 
 			const simpleMarker2 = sharedString.getMarkerFromId("markerId") as Marker;
 			assert.equal(
@@ -740,10 +833,12 @@ describe("SharedString", () => {
 		let sharedString2: SharedString;
 
 		beforeEach(async () => {
-			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+			containerRuntimeFactory =
+				new MockContainerRuntimeFactoryForReconnection();
 
 			// Connect the first SharedString.
-			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			containerRuntime1 =
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1: IChannelServices = {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -887,7 +982,9 @@ describe("SharedString", () => {
 		it("annotate", () => {
 			sharedString.insertText(0, "hello world");
 			Array.from({ length: sharedString.getLength() }).forEach((_, i) =>
-				assert(matchProperties(sharedString.getPropertiesAtPosition(i), undefined)),
+				assert(
+					matchProperties(sharedString.getPropertiesAtPosition(i), undefined),
+				),
 			);
 
 			const revertibles: MergeTreeDeltaRevertible[] = [];
@@ -900,7 +997,9 @@ describe("SharedString", () => {
 			}
 			assert.equal(sharedString.getText(), "hello world");
 			Array.from({ length: sharedString.getLength() }).forEach((_, i) =>
-				assert(matchProperties(sharedString.getPropertiesAtPosition(i), { test: i })),
+				assert(
+					matchProperties(sharedString.getPropertiesAtPosition(i), { test: i }),
+				),
 			);
 
 			// undo all annotates
@@ -914,7 +1013,9 @@ describe("SharedString", () => {
 			revertMergeTreeDeltaRevertibles(sharedString, revertibles.splice(0));
 			assert.equal(sharedString.getText(), "hello world");
 			Array.from({ length: sharedString.getLength() }).forEach((_, i) =>
-				assert(matchProperties(sharedString.getPropertiesAtPosition(i), { test: i })),
+				assert(
+					matchProperties(sharedString.getPropertiesAtPosition(i), { test: i }),
+				),
 			);
 		});
 	});
@@ -979,9 +1080,15 @@ describe("Shared String Obliterate", () => {
 			"starting state should be equal",
 		);
 
-		sharedString.obliterateRange({ pos: 4, side: Side.After }, { pos: 5, side: Side.Before });
+		sharedString.obliterateRange(
+			{ pos: 4, side: Side.After },
+			{ pos: 5, side: Side.Before },
+		);
 		sharedString.insertText(5, "AAA");
-		sharedString2.obliterateRange({ pos: 4, side: Side.After }, { pos: 5, side: Side.Before });
+		sharedString2.obliterateRange(
+			{ pos: 4, side: Side.After },
+			{ pos: 5, side: Side.Before },
+		);
 		sharedString2.insertText(5, "BBB");
 
 		containerRuntimeFactory.processAllMessages();

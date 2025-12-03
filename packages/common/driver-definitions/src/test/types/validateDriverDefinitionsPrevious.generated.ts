@@ -11,12 +11,23 @@
  * Current version: 2.74.0
  */
 
-import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
+import type {
+	FullType,
+	MinimalType,
+	requireAssignableTo,
+	TypeOnly,
+} from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/driver-definitions-previous";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> =
+	| TypeOnly<T>
+	| MinimalType<T>
+	| FullType<T>
+	| typeof old
+	| typeof current
+	| requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -25,7 +36,10 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Interface_ICapabilities": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ICapabilities = requireAssignableTo<TypeOnly<old.ICapabilities>, TypeOnly<current.ICapabilities>>
+declare type old_as_current_for_Interface_ICapabilities = requireAssignableTo<
+	TypeOnly<old.ICapabilities>,
+	TypeOnly<current.ICapabilities>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -34,7 +48,10 @@ declare type old_as_current_for_Interface_ICapabilities = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Interface_ICapabilities": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ICapabilities = requireAssignableTo<TypeOnly<current.ICapabilities>, TypeOnly<old.ICapabilities>>
+declare type current_as_old_for_Interface_ICapabilities = requireAssignableTo<
+	TypeOnly<current.ICapabilities>,
+	TypeOnly<old.ICapabilities>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -43,7 +60,10 @@ declare type current_as_old_for_Interface_ICapabilities = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Interface_IClient": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IClient = requireAssignableTo<TypeOnly<old.IClient>, TypeOnly<current.IClient>>
+declare type old_as_current_for_Interface_IClient = requireAssignableTo<
+	TypeOnly<old.IClient>,
+	TypeOnly<current.IClient>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -52,7 +72,10 @@ declare type old_as_current_for_Interface_IClient = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Interface_IClient": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IClient = requireAssignableTo<TypeOnly<current.IClient>, TypeOnly<old.IClient>>
+declare type current_as_old_for_Interface_IClient = requireAssignableTo<
+	TypeOnly<current.IClient>,
+	TypeOnly<old.IClient>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -61,7 +84,10 @@ declare type current_as_old_for_Interface_IClient = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Interface_IClientDetails": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IClientDetails = requireAssignableTo<TypeOnly<old.IClientDetails>, TypeOnly<current.IClientDetails>>
+declare type old_as_current_for_Interface_IClientDetails = requireAssignableTo<
+	TypeOnly<old.IClientDetails>,
+	TypeOnly<current.IClientDetails>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -70,7 +96,10 @@ declare type old_as_current_for_Interface_IClientDetails = requireAssignableTo<T
  * typeValidation.broken:
  * "Interface_IClientDetails": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IClientDetails = requireAssignableTo<TypeOnly<current.IClientDetails>, TypeOnly<old.IClientDetails>>
+declare type current_as_old_for_Interface_IClientDetails = requireAssignableTo<
+	TypeOnly<current.IClientDetails>,
+	TypeOnly<old.IClientDetails>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -79,7 +108,10 @@ declare type current_as_old_for_Interface_IClientDetails = requireAssignableTo<T
  * typeValidation.broken:
  * "Interface_IQuorumClients": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IQuorumClients = requireAssignableTo<TypeOnly<old.IQuorumClients>, TypeOnly<current.IQuorumClients>>
+declare type old_as_current_for_Interface_IQuorumClients = requireAssignableTo<
+	TypeOnly<old.IQuorumClients>,
+	TypeOnly<current.IQuorumClients>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -88,7 +120,10 @@ declare type old_as_current_for_Interface_IQuorumClients = requireAssignableTo<T
  * typeValidation.broken:
  * "Interface_IQuorumClients": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IQuorumClients = requireAssignableTo<TypeOnly<current.IQuorumClients>, TypeOnly<old.IQuorumClients>>
+declare type current_as_old_for_Interface_IQuorumClients = requireAssignableTo<
+	TypeOnly<current.IQuorumClients>,
+	TypeOnly<old.IQuorumClients>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -97,7 +132,11 @@ declare type current_as_old_for_Interface_IQuorumClients = requireAssignableTo<T
  * typeValidation.broken:
  * "Interface_ISequencedClient": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISequencedClient = requireAssignableTo<TypeOnly<old.ISequencedClient>, TypeOnly<current.ISequencedClient>>
+declare type old_as_current_for_Interface_ISequencedClient =
+	requireAssignableTo<
+		TypeOnly<old.ISequencedClient>,
+		TypeOnly<current.ISequencedClient>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -106,7 +145,11 @@ declare type old_as_current_for_Interface_ISequencedClient = requireAssignableTo
  * typeValidation.broken:
  * "Interface_ISequencedClient": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISequencedClient = requireAssignableTo<TypeOnly<current.ISequencedClient>, TypeOnly<old.ISequencedClient>>
+declare type current_as_old_for_Interface_ISequencedClient =
+	requireAssignableTo<
+		TypeOnly<current.ISequencedClient>,
+		TypeOnly<old.ISequencedClient>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -115,7 +158,11 @@ declare type current_as_old_for_Interface_ISequencedClient = requireAssignableTo
  * typeValidation.broken:
  * "Interface_ISummaryAttachment": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISummaryAttachment = requireAssignableTo<TypeOnly<old.ISummaryAttachment>, TypeOnly<current.ISummaryAttachment>>
+declare type old_as_current_for_Interface_ISummaryAttachment =
+	requireAssignableTo<
+		TypeOnly<old.ISummaryAttachment>,
+		TypeOnly<current.ISummaryAttachment>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -124,7 +171,11 @@ declare type old_as_current_for_Interface_ISummaryAttachment = requireAssignable
  * typeValidation.broken:
  * "Interface_ISummaryAttachment": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISummaryAttachment = requireAssignableTo<TypeOnly<current.ISummaryAttachment>, TypeOnly<old.ISummaryAttachment>>
+declare type current_as_old_for_Interface_ISummaryAttachment =
+	requireAssignableTo<
+		TypeOnly<current.ISummaryAttachment>,
+		TypeOnly<old.ISummaryAttachment>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -133,7 +184,10 @@ declare type current_as_old_for_Interface_ISummaryAttachment = requireAssignable
  * typeValidation.broken:
  * "Interface_ISummaryBlob": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISummaryBlob = requireAssignableTo<TypeOnly<old.ISummaryBlob>, TypeOnly<current.ISummaryBlob>>
+declare type old_as_current_for_Interface_ISummaryBlob = requireAssignableTo<
+	TypeOnly<old.ISummaryBlob>,
+	TypeOnly<current.ISummaryBlob>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -142,7 +196,10 @@ declare type old_as_current_for_Interface_ISummaryBlob = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Interface_ISummaryBlob": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISummaryBlob = requireAssignableTo<TypeOnly<current.ISummaryBlob>, TypeOnly<old.ISummaryBlob>>
+declare type current_as_old_for_Interface_ISummaryBlob = requireAssignableTo<
+	TypeOnly<current.ISummaryBlob>,
+	TypeOnly<old.ISummaryBlob>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -151,7 +208,10 @@ declare type current_as_old_for_Interface_ISummaryBlob = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Interface_ISummaryHandle": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISummaryHandle = requireAssignableTo<TypeOnly<old.ISummaryHandle>, TypeOnly<current.ISummaryHandle>>
+declare type old_as_current_for_Interface_ISummaryHandle = requireAssignableTo<
+	TypeOnly<old.ISummaryHandle>,
+	TypeOnly<current.ISummaryHandle>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -160,7 +220,10 @@ declare type old_as_current_for_Interface_ISummaryHandle = requireAssignableTo<T
  * typeValidation.broken:
  * "Interface_ISummaryHandle": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISummaryHandle = requireAssignableTo<TypeOnly<current.ISummaryHandle>, TypeOnly<old.ISummaryHandle>>
+declare type current_as_old_for_Interface_ISummaryHandle = requireAssignableTo<
+	TypeOnly<current.ISummaryHandle>,
+	TypeOnly<old.ISummaryHandle>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -169,7 +232,10 @@ declare type current_as_old_for_Interface_ISummaryHandle = requireAssignableTo<T
  * typeValidation.broken:
  * "Interface_ISummaryTree": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISummaryTree = requireAssignableTo<TypeOnly<old.ISummaryTree>, TypeOnly<current.ISummaryTree>>
+declare type old_as_current_for_Interface_ISummaryTree = requireAssignableTo<
+	TypeOnly<old.ISummaryTree>,
+	TypeOnly<current.ISummaryTree>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -178,7 +244,10 @@ declare type old_as_current_for_Interface_ISummaryTree = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Interface_ISummaryTree": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISummaryTree = requireAssignableTo<TypeOnly<current.ISummaryTree>, TypeOnly<old.ISummaryTree>>
+declare type current_as_old_for_Interface_ISummaryTree = requireAssignableTo<
+	TypeOnly<current.ISummaryTree>,
+	TypeOnly<old.ISummaryTree>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -187,7 +256,10 @@ declare type current_as_old_for_Interface_ISummaryTree = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Interface_IUser": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IUser = requireAssignableTo<TypeOnly<old.IUser>, TypeOnly<current.IUser>>
+declare type old_as_current_for_Interface_IUser = requireAssignableTo<
+	TypeOnly<old.IUser>,
+	TypeOnly<current.IUser>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -196,7 +268,10 @@ declare type old_as_current_for_Interface_IUser = requireAssignableTo<TypeOnly<o
  * typeValidation.broken:
  * "Interface_IUser": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IUser = requireAssignableTo<TypeOnly<current.IUser>, TypeOnly<old.IUser>>
+declare type current_as_old_for_Interface_IUser = requireAssignableTo<
+	TypeOnly<current.IUser>,
+	TypeOnly<old.IUser>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -205,7 +280,10 @@ declare type current_as_old_for_Interface_IUser = requireAssignableTo<TypeOnly<c
  * typeValidation.broken:
  * "TypeAlias_ConnectionMode": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_ConnectionMode = requireAssignableTo<TypeOnly<old.ConnectionMode>, TypeOnly<current.ConnectionMode>>
+declare type old_as_current_for_TypeAlias_ConnectionMode = requireAssignableTo<
+	TypeOnly<old.ConnectionMode>,
+	TypeOnly<current.ConnectionMode>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -214,7 +292,10 @@ declare type old_as_current_for_TypeAlias_ConnectionMode = requireAssignableTo<T
  * typeValidation.broken:
  * "TypeAlias_ConnectionMode": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_ConnectionMode = requireAssignableTo<TypeOnly<current.ConnectionMode>, TypeOnly<old.ConnectionMode>>
+declare type current_as_old_for_TypeAlias_ConnectionMode = requireAssignableTo<
+	TypeOnly<current.ConnectionMode>,
+	TypeOnly<old.ConnectionMode>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -223,7 +304,10 @@ declare type current_as_old_for_TypeAlias_ConnectionMode = requireAssignableTo<T
  * typeValidation.broken:
  * "TypeAlias_SummaryObject": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_SummaryObject = requireAssignableTo<TypeOnly<old.SummaryObject>, TypeOnly<current.SummaryObject>>
+declare type old_as_current_for_TypeAlias_SummaryObject = requireAssignableTo<
+	TypeOnly<old.SummaryObject>,
+	TypeOnly<current.SummaryObject>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -232,7 +316,10 @@ declare type old_as_current_for_TypeAlias_SummaryObject = requireAssignableTo<Ty
  * typeValidation.broken:
  * "TypeAlias_SummaryObject": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_SummaryObject = requireAssignableTo<TypeOnly<current.SummaryObject>, TypeOnly<old.SummaryObject>>
+declare type current_as_old_for_TypeAlias_SummaryObject = requireAssignableTo<
+	TypeOnly<current.SummaryObject>,
+	TypeOnly<old.SummaryObject>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -241,7 +328,10 @@ declare type current_as_old_for_TypeAlias_SummaryObject = requireAssignableTo<Ty
  * typeValidation.broken:
  * "TypeAlias_SummaryType": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_SummaryType = requireAssignableTo<TypeOnly<old.SummaryType>, TypeOnly<current.SummaryType>>
+declare type old_as_current_for_TypeAlias_SummaryType = requireAssignableTo<
+	TypeOnly<old.SummaryType>,
+	TypeOnly<current.SummaryType>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -250,7 +340,10 @@ declare type old_as_current_for_TypeAlias_SummaryType = requireAssignableTo<Type
  * typeValidation.broken:
  * "TypeAlias_SummaryType": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_SummaryType = requireAssignableTo<TypeOnly<current.SummaryType>, TypeOnly<old.SummaryType>>
+declare type current_as_old_for_TypeAlias_SummaryType = requireAssignableTo<
+	TypeOnly<current.SummaryType>,
+	TypeOnly<old.SummaryType>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -259,7 +352,11 @@ declare type current_as_old_for_TypeAlias_SummaryType = requireAssignableTo<Type
  * typeValidation.broken:
  * "TypeAlias_SummaryTypeNoHandle": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_SummaryTypeNoHandle = requireAssignableTo<TypeOnly<old.SummaryTypeNoHandle>, TypeOnly<current.SummaryTypeNoHandle>>
+declare type old_as_current_for_TypeAlias_SummaryTypeNoHandle =
+	requireAssignableTo<
+		TypeOnly<old.SummaryTypeNoHandle>,
+		TypeOnly<current.SummaryTypeNoHandle>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -268,4 +365,8 @@ declare type old_as_current_for_TypeAlias_SummaryTypeNoHandle = requireAssignabl
  * typeValidation.broken:
  * "TypeAlias_SummaryTypeNoHandle": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_SummaryTypeNoHandle = requireAssignableTo<TypeOnly<current.SummaryTypeNoHandle>, TypeOnly<old.SummaryTypeNoHandle>>
+declare type current_as_old_for_TypeAlias_SummaryTypeNoHandle =
+	requireAssignableTo<
+		TypeOnly<current.SummaryTypeNoHandle>,
+		TypeOnly<old.SummaryTypeNoHandle>
+	>;

@@ -6,7 +6,11 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
-import type { FinalCompressedId, LocalCompressedId, NumericUuid } from "./identifiers.js";
+import type {
+	FinalCompressedId,
+	LocalCompressedId,
+	NumericUuid,
+} from "./identifiers.js";
 import type { SessionId, StableId } from "./types/index.js";
 import {
 	compareBigints,
@@ -25,15 +29,23 @@ import {
 export class Sessions {
 	// A range-queryable store of all sessions. A btree is used as it solves the predecessor problem for any given UUID, allowing
 	// us to quickly find the session that may have produced it.
-	private readonly uuidSpace = new BTree<NumericUuid, Session>(undefined, compareBigints);
+	private readonly uuidSpace = new BTree<NumericUuid, Session>(
+		undefined,
+		compareBigints,
+	);
 	// A fast lookup table from session ID to the session object, used to avoid accessing the slower btree
 	private readonly sessionCache = new Map<SessionId, Session>();
 
-	public constructor(sessions?: [sessionBase: NumericUuid, session: Session][]) {
+	public constructor(
+		sessions?: [sessionBase: NumericUuid, session: Session][],
+	) {
 		if (sessions !== undefined) {
 			// bulk load path
 			for (const [numeric, session] of sessions) {
-				this.sessionCache.set(stableIdFromNumericUuid(numeric) as SessionId, session);
+				this.sessionCache.set(
+					stableIdFromNumericUuid(numeric) as SessionId,
+					session,
+				);
 			}
 			this.uuidSpace = new BTree(sessions, compareBigints);
 			if (
@@ -76,7 +88,10 @@ export class Sessions {
 			return undefined;
 		}
 		const [_, session] = possibleMatch;
-		const numericDelta = subtractNumericUuids(numericStable, session.sessionUuid);
+		const numericDelta = subtractNumericUuids(
+			numericStable,
+			session.sessionUuid,
+		);
 		if (numericDelta > Number.MAX_SAFE_INTEGER) {
 			return undefined;
 		}
@@ -94,7 +109,10 @@ export class Sessions {
 			owningSession.sessionUuid,
 			genCountFromLocalId(baseLocalId) - 1,
 		);
-		const clusterMaxNumeric = offsetNumericUuid(clusterBaseNumeric, capacity - 1);
+		const clusterMaxNumeric = offsetNumericUuid(
+			clusterBaseNumeric,
+			capacity - 1,
+		);
 		let closestMatch: [NumericUuid, Session] | undefined =
 			this.uuidSpace.getPairOrNextLower(clusterMaxNumeric);
 		// Find the first session that is not the owner of this new cluster.
@@ -115,7 +133,10 @@ export class Sessions {
 		}
 
 		const [_, session] = closestMatch;
-		assert(session !== owningSession, 0x761 /* Failed to attempt to detect collisions. */);
+		assert(
+			session !== owningSession,
+			0x761 /* Failed to attempt to detect collisions. */,
+		);
 		const lastCluster = session.getLastCluster();
 		if (lastCluster === undefined) {
 			// If the closest session is empty (the local session), then it is guaranteed (probabilistically) that there are no
@@ -131,7 +152,10 @@ export class Sessions {
 	}
 
 	public equals(other: Sessions, includeLocalState: boolean): boolean {
-		const checkIsSubset = (sessionsA: Sessions, sessionsB: Sessions): boolean => {
+		const checkIsSubset = (
+			sessionsA: Sessions,
+			sessionsB: Sessions,
+		): boolean => {
 			const first = sessionsA.sessions().next();
 			const firstSessionThis = first.done ? undefined : first.value;
 			for (const [stableId, session] of sessionsA.sessionCache.entries()) {
@@ -165,7 +189,9 @@ export class Session {
 
 	public constructor(sessionId: SessionId | NumericUuid) {
 		this.sessionUuid =
-			typeof sessionId === "string" ? numericUuidFromStableId(sessionId) : sessionId;
+			typeof sessionId === "string"
+				? numericUuidFromStableId(sessionId)
+				: sessionId;
 	}
 
 	/**
@@ -209,7 +235,10 @@ export class Session {
 		searchLocal: LocalCompressedId,
 		includeAllocated: boolean,
 	): FinalCompressedId | undefined {
-		const containingCluster = this.getClusterByLocal(searchLocal, includeAllocated);
+		const containingCluster = this.getClusterByLocal(
+			searchLocal,
+			includeAllocated,
+		);
 		if (containingCluster === undefined) {
 			return undefined;
 		}
@@ -224,9 +253,8 @@ export class Session {
 		localId: LocalCompressedId,
 		includeAllocated: boolean,
 	): IdCluster | undefined {
-		const lastValidLocal: (cluster: IdCluster) => LocalCompressedId = includeAllocated
-			? lastAllocatedLocal
-			: lastFinalizedLocal;
+		const lastValidLocal: (cluster: IdCluster) => LocalCompressedId =
+			includeAllocated ? lastAllocatedLocal : lastFinalizedLocal;
 		const matchedCluster = Session.binarySearch(
 			localId,
 			this.clusterChain,
@@ -247,7 +275,9 @@ export class Session {
 	/**
 	 * Returns the cluster containing the supplied final ID, if possible.
 	 */
-	public getClusterByAllocatedFinal(final: FinalCompressedId): IdCluster | undefined {
+	public getClusterByAllocatedFinal(
+		final: FinalCompressedId,
+	): IdCluster | undefined {
 		return Session.getContainingCluster(final, this.clusterChain);
 	}
 
@@ -281,7 +311,10 @@ export class Session {
 		while (left <= right) {
 			const mid = Math.floor((left + right) / 2);
 			const value = arr[mid];
-			assert(value !== undefined, 0x9dc /* value is undefined in Session.binarySearch */);
+			assert(
+				value !== undefined,
+				0x9dc /* value is undefined in Session.binarySearch */,
+			);
 			const c = comparator(search, value);
 			if (c === 0) {
 				return value; // Found the target, return its index.
@@ -359,7 +392,8 @@ export function getAlignedFinal(
 	const clusterOffset =
 		genCountFromLocalId(localWithin) - genCountFromLocalId(cluster.baseLocalId);
 	if (clusterOffset < cluster.capacity) {
-		return ((cluster.baseFinalId as number) + clusterOffset) as FinalCompressedId;
+		return ((cluster.baseFinalId as number) +
+			clusterOffset) as FinalCompressedId;
 	}
 	return undefined;
 }
@@ -373,7 +407,8 @@ export function getAlignedLocal(
 	finalWithin: FinalCompressedId,
 ): LocalCompressedId {
 	assert(
-		finalWithin >= cluster.baseFinalId && finalWithin <= lastAllocatedFinal(cluster),
+		finalWithin >= cluster.baseFinalId &&
+			finalWithin <= lastAllocatedFinal(cluster),
 		0x763 /* Supplied ID is not within the cluster. */,
 	);
 	const finalDelta = finalWithin - cluster.baseFinalId;
@@ -384,26 +419,30 @@ export function getAlignedLocal(
  * Returns the last allocated final ID (i.e. any ID between base final and base final + capacity) within a cluster
  */
 export function lastAllocatedFinal(cluster: IdCluster): FinalCompressedId {
-	return ((cluster.baseFinalId as number) + (cluster.capacity - 1)) as FinalCompressedId;
+	return ((cluster.baseFinalId as number) +
+		(cluster.capacity - 1)) as FinalCompressedId;
 }
 
 /**
  * Returns the last allocated final ID (i.e. any ID between base final and base final + count) within a cluster
  */
 export function lastFinalizedFinal(cluster: IdCluster): FinalCompressedId {
-	return ((cluster.baseFinalId as number) + (cluster.count - 1)) as FinalCompressedId;
+	return ((cluster.baseFinalId as number) +
+		(cluster.count - 1)) as FinalCompressedId;
 }
 
 /**
  * Returns the last allocated local ID (i.e. any ID between base local and base local + capacity) within a cluster
  */
 export function lastAllocatedLocal(cluster: IdCluster): LocalCompressedId {
-	return ((cluster.baseLocalId as number) - (cluster.capacity - 1)) as LocalCompressedId;
+	return ((cluster.baseLocalId as number) -
+		(cluster.capacity - 1)) as LocalCompressedId;
 }
 
 /**
  * Returns the last allocated local ID (i.e. any ID between base local and base local + count) within a cluster
  */
 export function lastFinalizedLocal(cluster: IdCluster): LocalCompressedId {
-	return ((cluster.baseLocalId as number) - (cluster.count - 1)) as LocalCompressedId;
+	return ((cluster.baseLocalId as number) -
+		(cluster.count - 1)) as LocalCompressedId;
 }

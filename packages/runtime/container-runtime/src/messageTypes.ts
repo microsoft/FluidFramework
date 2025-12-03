@@ -70,7 +70,10 @@ export enum ContainerMessageType {
  *
  * @internal
  */
-export interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TContents> {
+export interface TypedContainerRuntimeMessage<
+	TType extends ContainerMessageType,
+	TContents,
+> {
 	/**
 	 * Type of the op, within the ContainerRuntime's domain
 	 */
@@ -97,10 +100,8 @@ export type InboundContainerRuntimeAttachMessage = TypedContainerRuntimeMessage<
  * @internal
  * @privateRemarks exported per ContainerRuntime export for testing purposes
  */
-export type OutboundContainerRuntimeAttachMessage = TypedContainerRuntimeMessage<
-	ContainerMessageType.Attach,
-	IAttachMessage
->;
+export type OutboundContainerRuntimeAttachMessage =
+	TypedContainerRuntimeMessage<ContainerMessageType.Attach, IAttachMessage>;
 export type ContainerRuntimeChunkedOpMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.ChunkedOp,
 	IChunkedOp
@@ -129,14 +130,16 @@ export type ContainerRuntimeGCMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.GC,
 	GarbageCollectionMessage
 >;
-export type InboundContainerRuntimeDocumentSchemaMessage = TypedContainerRuntimeMessage<
-	ContainerMessageType.DocumentSchemaChange,
-	IDocumentSchemaChangeMessageIncoming
->;
-export type OutboundContainerRuntimeDocumentSchemaMessage = TypedContainerRuntimeMessage<
-	ContainerMessageType.DocumentSchemaChange,
-	IDocumentSchemaChangeMessageOutgoing
->;
+export type InboundContainerRuntimeDocumentSchemaMessage =
+	TypedContainerRuntimeMessage<
+		ContainerMessageType.DocumentSchemaChange,
+		IDocumentSchemaChangeMessageIncoming
+	>;
+export type OutboundContainerRuntimeDocumentSchemaMessage =
+	TypedContainerRuntimeMessage<
+		ContainerMessageType.DocumentSchemaChange,
+		IDocumentSchemaChangeMessageOutgoing
+	>;
 
 /**
  * Represents an unrecognized TypedContainerRuntimeMessage, e.g. a message from a future version of the container runtime.

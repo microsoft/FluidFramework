@@ -12,11 +12,11 @@ import type {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	OdspDriverUrlResolver,
 	createOdspUrl,
 	getOdspUrlParts,
 	isOdcUrl,
 	isSpoUrl,
+	OdspDriverUrlResolver,
 } from "@fluidframework/odsp-driver/internal";
 import type { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions/internal";
 
@@ -78,7 +78,10 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
 		} else if (server === "www.office.com") {
 			const getRequiredParam = (name: string): string => {
 				const value = reqUrl.searchParams.get(name);
-				assert(!!value, 0x097 /* Missing param from office.com URL parameter */);
+				assert(
+					!!value,
+					0x097 /* Missing param from office.com URL parameter */,
+				);
 				return value;
 			};
 			contents = {
@@ -112,7 +115,9 @@ async function initializeFluidOfficeOrOneNote(
 ): Promise<IOdspUrlParts | undefined> {
 	const pathname = urlSource.pathname;
 	const siteDriveItemMatch =
-		/\/(p|preview|meetingnotes|notes)\/([^/]*)\/([^/]*)\/([^/]*)/.exec(pathname);
+		/\/(p|preview|meetingnotes|notes)\/([^/]*)\/([^/]*)\/([^/]*)/.exec(
+			pathname,
+		);
 	if (siteDriveItemMatch === null) {
 		return undefined;
 	}

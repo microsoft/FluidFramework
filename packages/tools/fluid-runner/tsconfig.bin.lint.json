@@ -2,11 +2,11 @@
 	"extends": "../../../common/build/build-common/tsconfig.node16.json",
 	"include": ["bin/*"],
 	"compilerOptions": {
-		"allowJs": true,
+		"allowJs": true
 	},
 	"references": [
 		{
-			"path": "./tsconfig.json",
-		},
-	],
+			"path": "./tsconfig.json"
+		}
+	]
 }

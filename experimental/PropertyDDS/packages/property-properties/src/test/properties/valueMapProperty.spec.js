@@ -14,10 +14,10 @@ const { ChangeSet } = require("@fluid-experimental/property-changeset");
 const { PropertyFactory } = require("../..");
 const { BaseProperty } = require("../..");
 
-describe("ValueMapProperty", function () {
+describe("ValueMapProperty", () => {
 	var myNode, Uint32Map;
 
-	before(function () {
+	before(() => {
 		// Register a template with a set property for the tests
 		var TestPropertyTemplate = {
 			typeid: "autodesk.tests:ValueMapTestPropertyID-1.0.0",
@@ -45,18 +45,20 @@ describe("ValueMapProperty", function () {
 		PropertyFactory._reregister(TestPropertyTemplate);
 		PropertyFactory._reregister(AllTypesTestPropertyTemplate);
 
-		myNode = PropertyFactory.create("autodesk.tests:ValueMapTestPropertyID-1.0.0");
+		myNode = PropertyFactory.create(
+			"autodesk.tests:ValueMapTestPropertyID-1.0.0",
+		);
 		Uint32Map = myNode._properties.Uint32Map;
 	});
 
 	// Helper functions for the test cases
 	var keyCounter = 0;
-	var resetKeyCounter = function () {
+	var resetKeyCounter = () => {
 		keyCounter = 0;
 	};
 
 	// Inserts a node with a given key (a new one is generated when undefined)
-	var insertEntryInRootWithKey = function (key, root) {
+	var insertEntryInRootWithKey = (key, root) => {
 		if (key === undefined) {
 			key = "node" + keyCounter++;
 		}
@@ -64,34 +66,37 @@ describe("ValueMapProperty", function () {
 	};
 
 	// Inserts a new node in the root
-	var insertNodeInRoot = function (root) {
+	var insertNodeInRoot = (root) => {
 		insertEntryInRootWithKey(undefined, root);
 	};
 
 	// Returns a functor that will insert a node with a constant key
-	var insertEntryInRootWithUnqiueKey = function () {
+	var insertEntryInRootWithUnqiueKey = () => {
 		var key = "node" + keyCounter++;
 		return insertEntryInRootWithKey.bind(undefined, key);
 	};
 
 	// Removes the first node from the root
-	var removeFirstNodeInRoot = function (root) {
+	var removeFirstNodeInRoot = (root) => {
 		var firstKey = root._properties.Uint32Map.getIds()[0];
 		root._properties.Uint32Map.remove(firstKey);
 	};
 
 	// Modifies the first node
-	var modifyEntry = function (root) {
+	var modifyEntry = (root) => {
 		var firstKey = root._properties.Uint32Map.getIds()[0];
-		root._properties.Uint32Map.set(firstKey, root._properties.Uint32Map.get(firstKey) + 1);
+		root._properties.Uint32Map.set(
+			firstKey,
+			root._properties.Uint32Map.get(firstKey) + 1,
+		);
 	};
 
-	describe("Inherited API Methods", function () {
+	describe("Inherited API Methods", () => {
 		var newMap;
-		before(function () {
+		before(() => {
 			newMap = PropertyFactory.create("Int32", "map");
 		});
-		it(".clear should work to remove all entries in the map", function () {
+		it(".clear should work to remove all entries in the map", () => {
 			newMap.insert("one", 1);
 			newMap.insert("two", 2);
 			expect(newMap.getValues()).to.deep.equal({ one: 1, two: 2 });
@@ -99,62 +104,66 @@ describe("ValueMapProperty", function () {
 			expect(newMap.getValues()).to.deep.equal({});
 		});
 
-		it(".getAsArray should return an array of map values", function () {
+		it(".getAsArray should return an array of map values", () => {
 			newMap.insert("one", 1);
 			newMap.insert("two", 2);
 			expect(newMap.getAsArray()).to.deep.equal([1, 2]);
 		});
 
-		it("getEntriesReadOnly should work", function () {
+		it("getEntriesReadOnly should work", () => {
 			newMap.insert("one", 1);
 			newMap.insert("two", 2);
 			expect(newMap.getEntriesReadOnly()).to.deep.equal({ one: 1, two: 2 });
 		});
 
-		it(".getFullTypeid should return a string of the typeid with or without collection", function () {
+		it(".getFullTypeid should return a string of the typeid with or without collection", () => {
 			expect(newMap.getFullTypeid()).to.equal("map<Int32>");
 			expect(newMap.getFullTypeid(true)).to.equal("Int32");
 		});
 
-		it(".getIds should return an array of map keys", function () {
+		it(".getIds should return an array of map keys", () => {
 			newMap.insert("one", 1);
 			newMap.insert("two", 2);
 			expect(newMap.getIds()).to.deep.equal(["one", "two"]);
 		});
 
-		it(".getValues should return an object", function () {
+		it(".getValues should return an object", () => {
 			newMap.insert("one", 1);
 			newMap.insert("two", 2);
 			expect(newMap.getValues()).to.deep.equal({ one: 1, two: 2 });
 		});
 
-		it(".has should return a boolean", function () {
+		it(".has should return a boolean", () => {
 			newMap.insert("one", 1);
 			newMap.insert("two", 2);
 			expect(newMap.has("two")).to.equal(true);
 			expect(newMap.has("three")).to.equal(false);
 		});
 
-		it(".setValues should work to set multiple values", function () {
+		it(".setValues should work to set multiple values", () => {
 			newMap.setValues({ first: 11, second: 22, third: 33 });
 			expect(newMap.get("first")).to.equal(11);
 			expect(newMap.get("third")).to.equal(33);
 		});
 
-		afterEach(function () {
+		afterEach(() => {
 			newMap.clear();
 		});
 	});
 
-	describe("Testing creation, assignment and serialization", function () {
-		it("should be empty at the beginning", function () {
+	describe("Testing creation, assignment and serialization", () => {
+		it("should be empty at the beginning", () => {
 			expect(Uint32Map.getAsArray()).to.be.empty;
 			expect(Uint32Map.getEntriesReadOnly()).to.be.empty;
-			expect(ChangeSet.isEmptyChangeSet(Uint32Map.serialize({ dirtyOnly: false }))).to.be.ok;
-			expect(ChangeSet.isEmptyChangeSet(Uint32Map.serialize({ dirtyOnly: true }))).to.be.ok;
+			expect(
+				ChangeSet.isEmptyChangeSet(Uint32Map.serialize({ dirtyOnly: false })),
+			).to.be.ok;
+			expect(
+				ChangeSet.isEmptyChangeSet(Uint32Map.serialize({ dirtyOnly: true })),
+			).to.be.ok;
 		});
 
-		it("should be possible to add entries", function () {
+		it("should be possible to add entries", () => {
 			Uint32Map.insert("value1", 1);
 			expect(Uint32Map.get("value1")).to.equal(1);
 			Uint32Map.insert("value2", 2);
@@ -175,7 +184,7 @@ describe("ValueMapProperty", function () {
 			});
 		});
 
-		it("should be possible to remove entries", function () {
+		it("should be possible to remove entries", () => {
 			Uint32Map.remove("value1");
 			expect(Uint32Map.has("value1")).to.be.not.ok;
 			Uint32Map.remove("value2");
@@ -185,7 +194,7 @@ describe("ValueMapProperty", function () {
 			expect(ChangeSet.isEmptyChangeSet(Uint32Map.serialize())).to.be.ok;
 		});
 
-		it("a remove followed by an insert should become a modify", function () {
+		it("a remove followed by an insert should become a modify", () => {
 			Uint32Map.insert("value1", 1);
 			Uint32Map.cleanDirty(
 				BaseProperty.MODIFIED_STATE_FLAGS.DIRTY |
@@ -210,7 +219,9 @@ describe("ValueMapProperty", function () {
 					BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE,
 			);
 			Uint32Map.set("value1", 3);
-			expect(ChangeSet.isEmptyChangeSet(Uint32Map.serialize({ dirtyOnly: true }))).to.be.ok;
+			expect(
+				ChangeSet.isEmptyChangeSet(Uint32Map.serialize({ dirtyOnly: true })),
+			).to.be.ok;
 
 			// This should be tracked separately for dirtyness and pending changes
 			Uint32Map.cleanDirty(
@@ -238,7 +249,7 @@ describe("ValueMapProperty", function () {
 			).to.deep.equal({ insert: { value1: 2 } });
 		});
 
-		it("deserialize should work", function () {
+		it("deserialize should work", () => {
 			var myInitialStateNode = PropertyFactory.create(
 				"autodesk.tests:ValueMapTestPropertyID-1.0.0",
 			);
@@ -252,7 +263,9 @@ describe("ValueMapProperty", function () {
 			);
 			var changes = myDeserializeNode1.deserialize(initialChangeSet);
 			expect(changes).to.deep.equal(initialChangeSet);
-			expect(myDeserializeNode1.serialize()).to.deep.equal(myInitialStateNode.serialize());
+			expect(myDeserializeNode1.serialize()).to.deep.equal(
+				myInitialStateNode.serialize(),
+			);
 			myDeserializeNode1.cleanDirty(
 				BaseProperty.MODIFIED_STATE_FLAGS.DIRTY |
 					BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE,
@@ -292,16 +305,20 @@ describe("ValueMapProperty", function () {
 			expect(deserializeChanges).to.deep.equal(changesChangeSet);
 		});
 
-		it("inserting the same key twice should throw an exception", function () {
-			var rootNode = PropertyFactory.create("autodesk.tests:ValueMapTestPropertyID-1.0.0");
+		it("inserting the same key twice should throw an exception", () => {
+			var rootNode = PropertyFactory.create(
+				"autodesk.tests:ValueMapTestPropertyID-1.0.0",
+			);
 			rootNode._properties.Uint32Map.insert("node1", 1);
-			expect(function () {
+			expect(() => {
 				rootNode._properties.Uint32Map.insert("node1", 2);
 			}).to.throw();
 		});
 
-		it("set should overwrite existing entry", function () {
-			var rootNode = PropertyFactory.create("autodesk.tests:ValueMapTestPropertyID-1.0.0");
+		it("set should overwrite existing entry", () => {
+			var rootNode = PropertyFactory.create(
+				"autodesk.tests:ValueMapTestPropertyID-1.0.0",
+			);
 
 			rootNode._properties.Uint32Map.set("node1", 0);
 			rootNode._properties.Uint32Map.set("node1", 1);
@@ -316,7 +333,9 @@ describe("ValueMapProperty", function () {
 					BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE,
 			);
 			rootNode._properties.Uint32Map.set("node1", 1);
-			expect(ChangeSet.isEmptyChangeSet(rootNode.serialize({ dirtyOnly: true }))).to.be.ok;
+			expect(
+				ChangeSet.isEmptyChangeSet(rootNode.serialize({ dirtyOnly: true })),
+			).to.be.ok;
 			expect(rootNode.isDirty()).to.be.false;
 
 			// Overwriting with a different value should result in a modify
@@ -326,7 +345,7 @@ describe("ValueMapProperty", function () {
 			).to.have.all.keys("modify");
 		});
 
-		it("casting should work as expected", function () {
+		it("casting should work as expected", () => {
 			var property = PropertyFactory.create(
 				"autodesk.tests:AllTypesValueMapTestPropertyID-1.0.0",
 			);
@@ -353,19 +372,27 @@ describe("ValueMapProperty", function () {
 			property._properties.BoolMap.set("true", 1);
 			property._properties.BoolMap.set("false", 0);
 
-			expect(property._properties.Uint32Map.get("tooLarge")).to.be.below(Math.pow(2, 32));
+			expect(property._properties.Uint32Map.get("tooLarge")).to.be.below(
+				2 ** 32,
+			);
 			expect(property._properties.Uint32Map.get("tooLarge")).to.be.above(-1);
-			expect(property._properties.Uint32Map.get("negative")).to.be.below(Math.pow(2, 32));
+			expect(property._properties.Uint32Map.get("negative")).to.be.below(
+				2 ** 32,
+			);
 			expect(property._properties.Uint32Map.get("negative")).to.be.above(-1);
 
-			expect(property._properties.Uint16Map.get("tooLarge")).to.be.below(Math.pow(2, 16));
+			expect(property._properties.Uint16Map.get("tooLarge")).to.be.below(
+				2 ** 16,
+			);
 			expect(property._properties.Uint16Map.get("tooLarge")).to.be.above(-1);
-			expect(property._properties.Uint16Map.get("negative")).to.be.below(Math.pow(2, 16));
+			expect(property._properties.Uint16Map.get("negative")).to.be.below(
+				2 ** 16,
+			);
 			expect(property._properties.Uint16Map.get("negative")).to.be.above(-1);
 
-			expect(property._properties.Uint8Map.get("tooLarge")).to.be.below(Math.pow(2, 8));
+			expect(property._properties.Uint8Map.get("tooLarge")).to.be.below(2 ** 8);
 			expect(property._properties.Uint8Map.get("tooLarge")).to.be.above(-1);
-			expect(property._properties.Uint8Map.get("negative")).to.be.below(Math.pow(2, 8));
+			expect(property._properties.Uint8Map.get("negative")).to.be.below(2 ** 8);
 			expect(property._properties.Uint8Map.get("negative")).to.be.above(-1);
 
 			expect(property._properties.Int16Map.get("tooLarge")).to.be.below(32768);
@@ -378,7 +405,9 @@ describe("ValueMapProperty", function () {
 			expect(property._properties.Int8Map.get("tooSmall")).to.be.below(128);
 			expect(property._properties.Int8Map.get("tooSmall")).to.be.above(-129);
 
-			expect(property._properties.Float32Map.get("tooLarge")).to.equal(Infinity);
+			expect(property._properties.Float32Map.get("tooLarge")).to.equal(
+				Infinity,
+			);
 			expect(property._properties.Float64Map.get("value")).to.equal(1e300);
 
 			expect(property._properties.StringMap.get("value")).to.equal("test");
@@ -387,22 +416,23 @@ describe("ValueMapProperty", function () {
 			expect(property._properties.BoolMap.get("false")).to.equal(false);
 		});
 
-		it("prettyPrint should work", function () {
-			var myProp = PropertyFactory.create("autodesk.tests:ValueMapTestPropertyID-1.0.0")
-				._properties.Uint32Map;
+		it("prettyPrint should work", () => {
+			var myProp = PropertyFactory.create(
+				"autodesk.tests:ValueMapTestPropertyID-1.0.0",
+			)._properties.Uint32Map;
 			myProp.insert("value1", 1);
 			myProp.insert("value2", 2);
 			var expectedPrettyStr =
 				"Uint32Map (Map of Uint32):\n" + "  value1: 1\n" + "  value2: 2\n";
 			var prettyStr = "";
-			myProp.prettyPrint(function (str) {
+			myProp.prettyPrint((str) => {
 				prettyStr += str + "\n";
 			});
 			expect(prettyStr).to.equal(expectedPrettyStr);
 		});
 	});
 
-	describe("squashing", function () {
+	describe("squashing", () => {
 		//
 		// Helper function which takes a sequence of callbacks that are suceessively executed
 		// and the changes applied by the callbacks are separately tracked and squashed in a
@@ -411,9 +441,11 @@ describe("ValueMapProperty", function () {
 		// Optionally, a a callback which controls the initial state before the squashing can
 		// be given as first parameter
 		//
-		var testChangeSetSquashing = function (in_options) {
+		var testChangeSetSquashing = (in_options) => {
 			resetKeyCounter();
-			var testProperty = PropertyFactory.create("autodesk.tests:ValueMapTestPropertyID-1.0.0");
+			var testProperty = PropertyFactory.create(
+				"autodesk.tests:ValueMapTestPropertyID-1.0.0",
+			);
 
 			var callbacks = in_options.callbacks;
 			if (in_options.pre) {
@@ -443,19 +475,21 @@ describe("ValueMapProperty", function () {
 				in_options.post(squashedChangeset.getSerializedChangeSet());
 			}
 
-			initialChangeset.applyChangeSet(squashedChangeset.getSerializedChangeSet());
+			initialChangeset.applyChangeSet(
+				squashedChangeset.getSerializedChangeSet(),
+			);
 			expect(initialChangeset.getSerializedChangeSet()).to.deep.equal(
 				testProperty.serialize({ dirtyOnly: false }),
 			);
 		};
 
-		it("should work for multiple independent inserts", function () {
+		it("should work for multiple independent inserts", () => {
 			testChangeSetSquashing({
 				callbacks: [insertNodeInRoot, insertNodeInRoot, insertNodeInRoot],
 			});
 		});
 
-		it("should work for inserts followed by removes", function () {
+		it("should work for inserts followed by removes", () => {
 			testChangeSetSquashing({
 				callbacks: [
 					insertNodeInRoot,
@@ -463,13 +497,13 @@ describe("ValueMapProperty", function () {
 					removeFirstNodeInRoot,
 					removeFirstNodeInRoot,
 				],
-				post: function (changeset) {
+				post: (changeset) => {
 					expect(changeset).to.be.empty;
 				},
 			});
 		});
 
-		it("of inserts and modifies should work", function () {
+		it("of inserts and modifies should work", () => {
 			testChangeSetSquashing({
 				callbacks: [
 					insertNodeInRoot,
@@ -480,50 +514,55 @@ describe("ValueMapProperty", function () {
 				],
 			});
 		});
-		it("an insert, modify and a remove should give an empty changeset", function () {
+		it("an insert, modify and a remove should give an empty changeset", () => {
 			testChangeSetSquashing({
-				callbacks: [insertNodeInRoot, modifyEntry, modifyEntry, removeFirstNodeInRoot],
-				post: function (changeset) {
+				callbacks: [
+					insertNodeInRoot,
+					modifyEntry,
+					modifyEntry,
+					removeFirstNodeInRoot,
+				],
+				post: (changeset) => {
 					expect(changeset).to.be.empty;
 				},
 			});
 		});
-		it("should work for modifies after an already existing insert", function () {
+		it("should work for modifies after an already existing insert", () => {
 			testChangeSetSquashing({
 				pre: insertNodeInRoot,
 				callbacks: [modifyEntry, modifyEntry],
 			});
 		});
-		it("of modify and remove after an already existing insert should work", function () {
+		it("of modify and remove after an already existing insert should work", () => {
 			testChangeSetSquashing({
 				pre: insertNodeInRoot,
 				callbacks: [modifyEntry, removeFirstNodeInRoot],
-				post: function (changeset) {
+				post: (changeset) => {
 					expect(changeset["map<Uint32>"].Uint32Map).to.have.all.keys("remove");
 				},
 			});
 		});
-		it("of remove and insert should result in modify", function () {
+		it("of remove and insert should result in modify", () => {
 			// Create two nodes with the same GUID
 			testChangeSetSquashing({
-				pre: function (root) {
+				pre: (root) => {
 					root._properties.Uint32Map.insert("node1", 1);
 				},
 				callbacks: [
 					removeFirstNodeInRoot,
-					function (root) {
+					(root) => {
 						root._properties.Uint32Map.insert("node1", 2);
 					},
 				],
-				post: function (changeset) {
+				post: (changeset) => {
 					expect(changeset["map<Uint32>"].Uint32Map).to.have.all.keys("modify");
 				},
 			});
 		});
 	});
 
-	describe("Rebasing", function () {
-		var testRebasing = function (in_options) {
+	describe("Rebasing", () => {
+		var testRebasing = (in_options) => {
 			// Prepare the initial state
 			var baseProperty1 = PropertyFactory.create(
 				"autodesk.tests:ValueMapTestPropertyID-1.0.0",
@@ -566,7 +605,9 @@ describe("ValueMapProperty", function () {
 			}
 
 			// Get the ChangeSets
-			var changeSet1 = new ChangeSet(baseProperty1.serialize({ dirtyOnly: true }));
+			var changeSet1 = new ChangeSet(
+				baseProperty1.serialize({ dirtyOnly: true }),
+			);
 			var changeSet2 = baseProperty2.serialize({ dirtyOnly: true });
 
 			// Perform the actual rebase
@@ -586,7 +627,9 @@ describe("ValueMapProperty", function () {
 					in_options.op2(baseProperty3);
 				}
 				var finalChangeSet = baseProperty3.serialize({ dirtyOnly: false });
-				expect(finalChangeSet).to.be.deep.equal(combinedChangeSet.getSerializedChangeSet());
+				expect(finalChangeSet).to.be.deep.equal(
+					combinedChangeSet.getSerializedChangeSet(),
+				);
 			}
 
 			if (in_options.checkResult) {
@@ -594,14 +637,14 @@ describe("ValueMapProperty", function () {
 			}
 		};
 
-		it("with a NOP should be possible", function () {
+		it("with a NOP should be possible", () => {
 			testRebasing({
 				op2: insertEntryInRootWithUnqiueKey(),
 				compareToSequential: true,
 			});
 		});
 
-		it("with independent inserts should be possible", function () {
+		it("with independent inserts should be possible", () => {
 			testRebasing({
 				op1: insertEntryInRootWithUnqiueKey(),
 				op2: insertEntryInRootWithUnqiueKey(),
@@ -609,25 +652,25 @@ describe("ValueMapProperty", function () {
 			});
 		});
 
-		it("with independent removes should be possible", function () {
+		it("with independent removes should be possible", () => {
 			testRebasing({
-				prepare: function (root) {
+				prepare: (root) => {
 					root._properties.Uint32Map.insert("entry1", 1);
 					root._properties.Uint32Map.insert("entry2", 2);
 				},
-				op1: function (root) {
+				op1: (root) => {
 					root._properties.Uint32Map.remove("entry1");
 				},
-				op2: function (root) {
+				op2: (root) => {
 					root._properties.Uint32Map.remove("entry2");
 				},
 				compareToSequential: true,
 			});
 		});
 
-		it("with a modify and a remove should possible", function () {
+		it("with a modify and a remove should possible", () => {
 			testRebasing({
-				prepare: function (root) {
+				prepare: (root) => {
 					root._properties.Uint32Map.insert("entry1", 1);
 				},
 				op1: modifyEntry,
@@ -636,15 +679,15 @@ describe("ValueMapProperty", function () {
 			});
 		});
 
-		it("with a remove and a modify should possible", function () {
+		it("with a remove and a modify should possible", () => {
 			testRebasing({
-				prepare: function (root) {
+				prepare: (root) => {
 					root._properties.Uint32Map.insert("entry1", 1);
 				},
 				op1: removeFirstNodeInRoot,
 				op2: modifyEntry,
 				compareToSequential: false,
-				checkResult: function (conflicts, changeSet) {
+				checkResult: (conflicts, changeSet) => {
 					expect(conflicts).to.have.length(1);
 					expect(conflicts[0].type).to.be.equal(
 						ChangeSet.ConflictType.ENTRY_MODIFIED_AFTER_REMOVE,
@@ -655,98 +698,106 @@ describe("ValueMapProperty", function () {
 			});
 		});
 
-		it("with two compatible removes should be possible", function () {
+		it("with two compatible removes should be possible", () => {
 			testRebasing({
-				prepare: function (root) {
+				prepare: (root) => {
 					root._properties.Uint32Map.insert("entry1", 1);
 				},
-				op1: function (root) {
+				op1: (root) => {
 					root._properties.Uint32Map.remove("entry1");
 				},
-				op2: function (root) {
+				op2: (root) => {
 					root._properties.Uint32Map.remove("entry1");
 				},
 				compareToSequential: false,
-				checkResult: function (conflicts, changeSet) {
+				checkResult: (conflicts, changeSet) => {
 					expect(ChangeSet.isEmptyChangeSet(changeSet)).to.be.ok;
 				},
 			});
 		});
 
-		it("with two conflicting modifies should be possible and report a conflict", function () {
+		it("with two conflicting modifies should be possible and report a conflict", () => {
 			testRebasing({
-				prepare: function (root) {
+				prepare: (root) => {
 					root._properties.Uint32Map.insert("entry1", 1);
 				},
-				op1: function (root) {
+				op1: (root) => {
 					root._properties.Uint32Map.set("entry1", 2);
 				},
-				op2: function (root) {
+				op2: (root) => {
 					root._properties.Uint32Map.set("entry1", 3);
 				},
 				compareToSequential: true,
-				checkResult: function (conflicts, changeSet) {
+				checkResult: (conflicts, changeSet) => {
 					expect(conflicts).to.have.length(1);
-					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.COLLIDING_SET);
+					expect(conflicts[0].type).to.be.equal(
+						ChangeSet.ConflictType.COLLIDING_SET,
+					);
 					expect(conflicts[0].path).to.be.equal("Uint32Map[entry1]");
 				},
 			});
 		});
 
-		it("with modify followed by remove+insert should be a conflicting set", function () {
+		it("with modify followed by remove+insert should be a conflicting set", () => {
 			testRebasing({
-				prepare: function (root) {
+				prepare: (root) => {
 					root._properties.Uint32Map.insert("entry1", 1);
 				},
 				op1: modifyEntry,
-				op2: function (root) {
+				op2: (root) => {
 					root._properties.Uint32Map.remove("entry1");
 					root._properties.Uint32Map.insert("entry1", 2);
 				},
 				compareToSequential: true,
-				checkResult: function (conflicts, changeSet) {
+				checkResult: (conflicts, changeSet) => {
 					expect(conflicts).to.have.length(1);
-					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.COLLIDING_SET);
+					expect(conflicts[0].type).to.be.equal(
+						ChangeSet.ConflictType.COLLIDING_SET,
+					);
 					expect(conflicts[0].path).to.be.equal("Uint32Map[entry1]");
 				},
 			});
 		});
 
-		it("with remove+insert followed by modify should be a conflicting set", function () {
+		it("with remove+insert followed by modify should be a conflicting set", () => {
 			testRebasing({
-				prepare: function (root) {
+				prepare: (root) => {
 					root._properties.Uint32Map.insert("entry1", 1);
 				},
-				op1: function (root) {
+				op1: (root) => {
 					root._properties.Uint32Map.remove("entry1");
 					root._properties.Uint32Map.insert("entry1", 2);
 				},
-				op2: function (root) {
+				op2: (root) => {
 					root._properties.Uint32Map.set("entry1", 3);
 				},
 				compareToSequential: true,
-				checkResult: function (conflicts, changeSet) {
+				checkResult: (conflicts, changeSet) => {
 					expect(conflicts).to.have.length(1);
-					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.COLLIDING_SET);
+					expect(conflicts[0].type).to.be.equal(
+						ChangeSet.ConflictType.COLLIDING_SET,
+					);
 					expect(conflicts[0].path).to.be.equal("Uint32Map[entry1]");
 				},
 			});
 		});
 
-		it("with conflicting inserts should report conflict", function () {
+		it("with conflicting inserts should report conflict", () => {
 			testRebasing({
-				prepare: function (root) {},
-				op1: function (root) {
+				prepare: (root) => {},
+				op1: (root) => {
 					root._properties.Uint32Map.insert("entry1", 1);
 				},
-				op2: function (root) {
+				op2: (root) => {
 					root._properties.Uint32Map.insert("entry1", 2);
 				},
 				compareToSequential: false,
-				checkResult: function (conflicts, changeSet) {
+				checkResult: (conflicts, changeSet) => {
 					expect(changeSet["map<Uint32>"].Uint32Map).to.have.all.keys("modify");
 					expect(conflicts).to.have.length(1);
-					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.COLLIDING_SET);
+					expect(conflicts[0].type).to.be.equal(
+						ChangeSet.ConflictType.COLLIDING_SET,
+					);
 					expect(conflicts[0].path).to.be.equal("Uint32Map[entry1]");
 				},
 			});

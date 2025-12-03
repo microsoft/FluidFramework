@@ -4,17 +4,21 @@
  */
 
 // eslint-disable-next-line import-x/no-internal-modules -- #26904: `sequence` internals used in examples
-import { getTextAndMarkers, reservedTileLabelsKey } from "@fluidframework/sequence/internal";
+import {
+	getTextAndMarkers,
+	reservedTileLabelsKey,
+} from "@fluidframework/sequence/internal";
 import {
 	Marker,
 	MergeTreeDeltaType,
 	ReferenceType,
 	TextSegment,
 } from "@fluidframework/sequence/legacy";
-import React, { useEffect, useRef } from "react";
+import type React from "react";
+import { useEffect, useRef } from "react";
 import SimpleMDE from "simplemde";
 
-import { SmdeDataObject } from "./smde.js";
+import type { SmdeDataObject } from "./smde.js";
 
 // eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
 import "simplemde/dist/simplemde.min.css";
@@ -70,7 +74,10 @@ class SmdeView {
 							smde.codemirror.posFromIndex(range.position),
 						);
 					} else if (Marker.is(segment)) {
-						smde.codemirror.replaceRange("\n", smde.codemirror.posFromIndex(range.position));
+						smde.codemirror.replaceRange(
+							"\n",
+							smde.codemirror.posFromIndex(range.position),
+						);
 					}
 				} else if (range.operation === MergeTreeDeltaType.REMOVE) {
 					if (TextSegment.is(segment)) {
@@ -78,7 +85,9 @@ class SmdeView {
 						smde.codemirror.replaceRange(
 							"",
 							smde.codemirror.posFromIndex(range.position),
-							smde.codemirror.posFromIndex(range.position + textSegment.text.length),
+							smde.codemirror.posFromIndex(
+								range.position + textSegment.text.length,
+							),
 						);
 					} else if (Marker.is(segment)) {
 						smde.codemirror.replaceRange(
@@ -135,7 +144,9 @@ export interface ISmdeReactViewProps {
 /**
  * A React view that may be applied to an SmdeDataObject to render it and allow editing.
  */
-export const SmdeReactView: React.FC<ISmdeReactViewProps> = (props: ISmdeReactViewProps) => {
+export const SmdeReactView: React.FC<ISmdeReactViewProps> = (
+	props: ISmdeReactViewProps,
+) => {
 	const { smdeDataObject } = props;
 	const htmlView = useRef<SmdeView>(new SmdeView(smdeDataObject));
 	const divRef = useRef<HTMLDivElement>(null);

@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from 'assert';
-
 import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
+import { strict as assert } from 'assert';
 import { expect } from 'chai';
 
 import { MutableStringInterner } from '../StringInterner.js';

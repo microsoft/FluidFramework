@@ -4,8 +4,8 @@
  */
 
 import type {
-	IDeltaManager,
 	ContainerWarning,
+	IDeltaManager,
 } from "@fluidframework/container-definitions/internal";
 import type {
 	ISummarizerEvents,
@@ -13,8 +13,8 @@ import type {
 } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	IEventProvider,
-	ITelemetryBaseProperties,
 	ITelemetryBaseLogger,
+	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
@@ -56,7 +56,8 @@ export interface ICancellationToken<T> {
  * Similar to AbortSignal, but using promise instead of events
  * @internal
  */
-export type ISummaryCancellationToken = ICancellationToken<SummarizerStopReason>;
+export type ISummaryCancellationToken =
+	ICancellationToken<SummarizerStopReason>;
 
 /**
  * Data required to update internal tracking state after receiving a Summary Ack.
@@ -111,7 +112,10 @@ export interface IConnectableRuntime {
 	readonly disposed: boolean;
 	readonly connected: boolean;
 	readonly clientId: string | undefined;
-	once(event: "connected" | "disconnected" | "dispose", listener: () => void): this;
+	once(
+		event: "connected" | "disconnected" | "dispose",
+		listener: () => void,
+	): this;
 }
 
 /**
@@ -123,7 +127,10 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
 	 * clientId of parent (non-summarizing) container that owns summarizer container
 	 */
 	readonly summarizerClientId: string | undefined;
-	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+	readonly deltaManager: IDeltaManager<
+		ISequencedDocumentMessage,
+		IDocumentMessage
+	>;
 	disposeFn(): void;
 	closeFn(): void;
 	on(
@@ -263,7 +270,8 @@ export interface IBaseSummarizeResult {
  * Results of submitSummary after generating the summary tree.
  * @legacy @beta
  */
-export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "stage"> {
+export interface IGenerateSummaryTreeResult
+	extends Omit<IBaseSummarizeResult, "stage"> {
 	readonly stage: "generate";
 	/**
 	 * Generated summary tree.
@@ -283,7 +291,8 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
  * Results of submitSummary after uploading the tree to storage.
  * @legacy @beta
  */
-export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "stage"> {
+export interface IUploadSummaryResult
+	extends Omit<IGenerateSummaryTreeResult, "stage"> {
 	readonly stage: "upload";
 	/**
 	 * The handle returned by storage pointing to the uploaded summary tree.
@@ -299,7 +308,8 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
  * Results of submitSummary after submitting the summarize op.
  * @legacy @beta
  */
-export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stage" | "error"> {
+export interface ISubmitSummaryOpResult
+	extends Omit<IUploadSummaryResult, "stage" | "error"> {
 	readonly stage: "submit";
 	/**
 	 * The client sequence number of the summarize op submitted for the summary.
@@ -536,7 +546,9 @@ export type ISummarizeTelemetryProperties = Pick<
 	ITelemetryBaseProperties,
 	ISummarizeTelemetryRequiredProperties
 > &
-	Partial<Pick<ITelemetryBaseProperties, ISummarizeTelemetryOptionalProperties>>;
+	Partial<
+		Pick<ITelemetryBaseProperties, ISummarizeTelemetryOptionalProperties>
+	>;
 
 /**
  * Strategy used to heuristically determine when we should run a summary
@@ -647,7 +659,9 @@ export type SummaryGeneratorTelemetry = Pick<
 	ITelemetryBaseProperties,
 	SummaryGeneratorRequiredTelemetryProperties
 > &
-	Partial<Pick<ITelemetryBaseProperties, SummaryGeneratorOptionalTelemetryProperties>>;
+	Partial<
+		Pick<ITelemetryBaseProperties, SummaryGeneratorOptionalTelemetryProperties>
+	>;
 
 export interface ISummarizeRunnerTelemetry extends ITelemetryLoggerPropertyBag {
 	/**
@@ -685,7 +699,8 @@ export interface ISummaryBaseConfiguration {
 /**
  * @legacy @beta
  */
-export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
+export interface ISummaryConfigurationHeuristics
+	extends ISummaryBaseConfiguration {
 	state: "enabled";
 	/**
 	 * Defines the maximum allowed time, since the last received Ack, before running the summary
@@ -755,7 +770,8 @@ export interface ISummaryConfigurationDisableSummarizer {
 /**
  * @legacy @beta
  */
-export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConfiguration {
+export interface ISummaryConfigurationDisableHeuristics
+	extends ISummaryBaseConfiguration {
 	state: "disableHeuristics";
 }
 
@@ -763,7 +779,8 @@ export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConf
  * Configuration used internally to indicate on-demand summaries only (no election/heuristics).
  * @legacy @beta
  */
-export interface ISummaryConfigurationWithSummaryOnRequest extends ISummaryBaseConfiguration {
+export interface ISummaryConfigurationWithSummaryOnRequest
+	extends ISummaryBaseConfiguration {
 	state: "summaryOnRequest";
 }
 

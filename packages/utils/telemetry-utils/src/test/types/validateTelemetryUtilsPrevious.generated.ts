@@ -11,12 +11,23 @@
  * Current version: 2.74.0
  */
 
-import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
+import type {
+	FullType,
+	MinimalType,
+	requireAssignableTo,
+	TypeOnly,
+} from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/telemetry-utils-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> =
+	| TypeOnly<T>
+	| MinimalType<T>
+	| FullType<T>
+	| typeof old
+	| typeof current
+	| requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -25,7 +36,11 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_EventEmitterWithErrorHandling": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_EventEmitterWithErrorHandling = requireAssignableTo<TypeOnly<old.EventEmitterWithErrorHandling>, TypeOnly<current.EventEmitterWithErrorHandling>>
+declare type old_as_current_for_Class_EventEmitterWithErrorHandling =
+	requireAssignableTo<
+		TypeOnly<old.EventEmitterWithErrorHandling>,
+		TypeOnly<current.EventEmitterWithErrorHandling>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -34,7 +49,11 @@ declare type old_as_current_for_Class_EventEmitterWithErrorHandling = requireAss
  * typeValidation.broken:
  * "Class_EventEmitterWithErrorHandling": {"backCompat": false}
  */
-declare type current_as_old_for_Class_EventEmitterWithErrorHandling = requireAssignableTo<TypeOnly<current.EventEmitterWithErrorHandling>, TypeOnly<old.EventEmitterWithErrorHandling>>
+declare type current_as_old_for_Class_EventEmitterWithErrorHandling =
+	requireAssignableTo<
+		TypeOnly<current.EventEmitterWithErrorHandling>,
+		TypeOnly<old.EventEmitterWithErrorHandling>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -43,7 +62,11 @@ declare type current_as_old_for_Class_EventEmitterWithErrorHandling = requireAss
  * typeValidation.broken:
  * "ClassStatics_EventEmitterWithErrorHandling": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_EventEmitterWithErrorHandling = requireAssignableTo<TypeOnly<typeof current.EventEmitterWithErrorHandling>, TypeOnly<typeof old.EventEmitterWithErrorHandling>>
+declare type current_as_old_for_ClassStatics_EventEmitterWithErrorHandling =
+	requireAssignableTo<
+		TypeOnly<typeof current.EventEmitterWithErrorHandling>,
+		TypeOnly<typeof old.EventEmitterWithErrorHandling>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -52,7 +75,11 @@ declare type current_as_old_for_ClassStatics_EventEmitterWithErrorHandling = req
  * typeValidation.broken:
  * "Function_createChildLogger": {"backCompat": false}
  */
-declare type current_as_old_for_Function_createChildLogger = requireAssignableTo<TypeOnly<typeof current.createChildLogger>, TypeOnly<typeof old.createChildLogger>>
+declare type current_as_old_for_Function_createChildLogger =
+	requireAssignableTo<
+		TypeOnly<typeof current.createChildLogger>,
+		TypeOnly<typeof old.createChildLogger>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -61,7 +88,11 @@ declare type current_as_old_for_Function_createChildLogger = requireAssignableTo
  * typeValidation.broken:
  * "Interface_ITelemetryErrorEventExt": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ITelemetryErrorEventExt = requireAssignableTo<TypeOnly<old.ITelemetryErrorEventExt>, TypeOnly<current.ITelemetryErrorEventExt>>
+declare type old_as_current_for_Interface_ITelemetryErrorEventExt =
+	requireAssignableTo<
+		TypeOnly<old.ITelemetryErrorEventExt>,
+		TypeOnly<current.ITelemetryErrorEventExt>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -70,7 +101,11 @@ declare type old_as_current_for_Interface_ITelemetryErrorEventExt = requireAssig
  * typeValidation.broken:
  * "Interface_ITelemetryErrorEventExt": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ITelemetryErrorEventExt = requireAssignableTo<TypeOnly<current.ITelemetryErrorEventExt>, TypeOnly<old.ITelemetryErrorEventExt>>
+declare type current_as_old_for_Interface_ITelemetryErrorEventExt =
+	requireAssignableTo<
+		TypeOnly<current.ITelemetryErrorEventExt>,
+		TypeOnly<old.ITelemetryErrorEventExt>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -79,7 +114,11 @@ declare type current_as_old_for_Interface_ITelemetryErrorEventExt = requireAssig
  * typeValidation.broken:
  * "Interface_ITelemetryGenericEventExt": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ITelemetryGenericEventExt = requireAssignableTo<TypeOnly<old.ITelemetryGenericEventExt>, TypeOnly<current.ITelemetryGenericEventExt>>
+declare type old_as_current_for_Interface_ITelemetryGenericEventExt =
+	requireAssignableTo<
+		TypeOnly<old.ITelemetryGenericEventExt>,
+		TypeOnly<current.ITelemetryGenericEventExt>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -88,7 +127,11 @@ declare type old_as_current_for_Interface_ITelemetryGenericEventExt = requireAss
  * typeValidation.broken:
  * "Interface_ITelemetryGenericEventExt": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ITelemetryGenericEventExt = requireAssignableTo<TypeOnly<current.ITelemetryGenericEventExt>, TypeOnly<old.ITelemetryGenericEventExt>>
+declare type current_as_old_for_Interface_ITelemetryGenericEventExt =
+	requireAssignableTo<
+		TypeOnly<current.ITelemetryGenericEventExt>,
+		TypeOnly<old.ITelemetryGenericEventExt>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -97,7 +140,11 @@ declare type current_as_old_for_Interface_ITelemetryGenericEventExt = requireAss
  * typeValidation.broken:
  * "Interface_ITelemetryLoggerExt": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ITelemetryLoggerExt = requireAssignableTo<TypeOnly<old.ITelemetryLoggerExt>, TypeOnly<current.ITelemetryLoggerExt>>
+declare type old_as_current_for_Interface_ITelemetryLoggerExt =
+	requireAssignableTo<
+		TypeOnly<old.ITelemetryLoggerExt>,
+		TypeOnly<current.ITelemetryLoggerExt>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -106,7 +153,11 @@ declare type old_as_current_for_Interface_ITelemetryLoggerExt = requireAssignabl
  * typeValidation.broken:
  * "Interface_ITelemetryLoggerExt": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ITelemetryLoggerExt = requireAssignableTo<TypeOnly<current.ITelemetryLoggerExt>, TypeOnly<old.ITelemetryLoggerExt>>
+declare type current_as_old_for_Interface_ITelemetryLoggerExt =
+	requireAssignableTo<
+		TypeOnly<current.ITelemetryLoggerExt>,
+		TypeOnly<old.ITelemetryLoggerExt>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -115,7 +166,11 @@ declare type current_as_old_for_Interface_ITelemetryLoggerExt = requireAssignabl
  * typeValidation.broken:
  * "Interface_ITelemetryLoggerPropertyBags": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ITelemetryLoggerPropertyBags = requireAssignableTo<TypeOnly<old.ITelemetryLoggerPropertyBags>, TypeOnly<current.ITelemetryLoggerPropertyBags>>
+declare type old_as_current_for_Interface_ITelemetryLoggerPropertyBags =
+	requireAssignableTo<
+		TypeOnly<old.ITelemetryLoggerPropertyBags>,
+		TypeOnly<current.ITelemetryLoggerPropertyBags>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -124,7 +179,11 @@ declare type old_as_current_for_Interface_ITelemetryLoggerPropertyBags = require
  * typeValidation.broken:
  * "Interface_ITelemetryLoggerPropertyBags": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ITelemetryLoggerPropertyBags = requireAssignableTo<TypeOnly<current.ITelemetryLoggerPropertyBags>, TypeOnly<old.ITelemetryLoggerPropertyBags>>
+declare type current_as_old_for_Interface_ITelemetryLoggerPropertyBags =
+	requireAssignableTo<
+		TypeOnly<current.ITelemetryLoggerPropertyBags>,
+		TypeOnly<old.ITelemetryLoggerPropertyBags>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -133,7 +192,11 @@ declare type current_as_old_for_Interface_ITelemetryLoggerPropertyBags = require
  * typeValidation.broken:
  * "Interface_ITelemetryPerformanceEventExt": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ITelemetryPerformanceEventExt = requireAssignableTo<TypeOnly<old.ITelemetryPerformanceEventExt>, TypeOnly<current.ITelemetryPerformanceEventExt>>
+declare type old_as_current_for_Interface_ITelemetryPerformanceEventExt =
+	requireAssignableTo<
+		TypeOnly<old.ITelemetryPerformanceEventExt>,
+		TypeOnly<current.ITelemetryPerformanceEventExt>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -142,7 +205,11 @@ declare type old_as_current_for_Interface_ITelemetryPerformanceEventExt = requir
  * typeValidation.broken:
  * "Interface_ITelemetryPerformanceEventExt": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ITelemetryPerformanceEventExt = requireAssignableTo<TypeOnly<current.ITelemetryPerformanceEventExt>, TypeOnly<old.ITelemetryPerformanceEventExt>>
+declare type current_as_old_for_Interface_ITelemetryPerformanceEventExt =
+	requireAssignableTo<
+		TypeOnly<current.ITelemetryPerformanceEventExt>,
+		TypeOnly<old.ITelemetryPerformanceEventExt>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -151,7 +218,11 @@ declare type current_as_old_for_Interface_ITelemetryPerformanceEventExt = requir
  * typeValidation.broken:
  * "TypeAlias_ITelemetryLoggerPropertyBag": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_ITelemetryLoggerPropertyBag = requireAssignableTo<TypeOnly<old.ITelemetryLoggerPropertyBag>, TypeOnly<current.ITelemetryLoggerPropertyBag>>
+declare type old_as_current_for_TypeAlias_ITelemetryLoggerPropertyBag =
+	requireAssignableTo<
+		TypeOnly<old.ITelemetryLoggerPropertyBag>,
+		TypeOnly<current.ITelemetryLoggerPropertyBag>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -160,7 +231,11 @@ declare type old_as_current_for_TypeAlias_ITelemetryLoggerPropertyBag = requireA
  * typeValidation.broken:
  * "TypeAlias_ITelemetryLoggerPropertyBag": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_ITelemetryLoggerPropertyBag = requireAssignableTo<TypeOnly<current.ITelemetryLoggerPropertyBag>, TypeOnly<old.ITelemetryLoggerPropertyBag>>
+declare type current_as_old_for_TypeAlias_ITelemetryLoggerPropertyBag =
+	requireAssignableTo<
+		TypeOnly<current.ITelemetryLoggerPropertyBag>,
+		TypeOnly<old.ITelemetryLoggerPropertyBag>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -169,7 +244,11 @@ declare type current_as_old_for_TypeAlias_ITelemetryLoggerPropertyBag = requireA
  * typeValidation.broken:
  * "TypeAlias_ITelemetryPropertiesExt": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_ITelemetryPropertiesExt = requireAssignableTo<TypeOnly<old.ITelemetryPropertiesExt>, TypeOnly<current.ITelemetryPropertiesExt>>
+declare type old_as_current_for_TypeAlias_ITelemetryPropertiesExt =
+	requireAssignableTo<
+		TypeOnly<old.ITelemetryPropertiesExt>,
+		TypeOnly<current.ITelemetryPropertiesExt>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -178,7 +257,11 @@ declare type old_as_current_for_TypeAlias_ITelemetryPropertiesExt = requireAssig
  * typeValidation.broken:
  * "TypeAlias_ITelemetryPropertiesExt": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_ITelemetryPropertiesExt = requireAssignableTo<TypeOnly<current.ITelemetryPropertiesExt>, TypeOnly<old.ITelemetryPropertiesExt>>
+declare type current_as_old_for_TypeAlias_ITelemetryPropertiesExt =
+	requireAssignableTo<
+		TypeOnly<current.ITelemetryPropertiesExt>,
+		TypeOnly<old.ITelemetryPropertiesExt>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -187,7 +270,11 @@ declare type current_as_old_for_TypeAlias_ITelemetryPropertiesExt = requireAssig
  * typeValidation.broken:
  * "TypeAlias_TelemetryEventCategory": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_TelemetryEventCategory = requireAssignableTo<TypeOnly<old.TelemetryEventCategory>, TypeOnly<current.TelemetryEventCategory>>
+declare type old_as_current_for_TypeAlias_TelemetryEventCategory =
+	requireAssignableTo<
+		TypeOnly<old.TelemetryEventCategory>,
+		TypeOnly<current.TelemetryEventCategory>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -196,7 +283,11 @@ declare type old_as_current_for_TypeAlias_TelemetryEventCategory = requireAssign
  * typeValidation.broken:
  * "TypeAlias_TelemetryEventCategory": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_TelemetryEventCategory = requireAssignableTo<TypeOnly<current.TelemetryEventCategory>, TypeOnly<old.TelemetryEventCategory>>
+declare type current_as_old_for_TypeAlias_TelemetryEventCategory =
+	requireAssignableTo<
+		TypeOnly<current.TelemetryEventCategory>,
+		TypeOnly<old.TelemetryEventCategory>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -205,7 +296,11 @@ declare type current_as_old_for_TypeAlias_TelemetryEventCategory = requireAssign
  * typeValidation.broken:
  * "TypeAlias_TelemetryEventPropertyTypeExt": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_TelemetryEventPropertyTypeExt = requireAssignableTo<TypeOnly<old.TelemetryEventPropertyTypeExt>, TypeOnly<current.TelemetryEventPropertyTypeExt>>
+declare type old_as_current_for_TypeAlias_TelemetryEventPropertyTypeExt =
+	requireAssignableTo<
+		TypeOnly<old.TelemetryEventPropertyTypeExt>,
+		TypeOnly<current.TelemetryEventPropertyTypeExt>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -214,7 +309,11 @@ declare type old_as_current_for_TypeAlias_TelemetryEventPropertyTypeExt = requir
  * typeValidation.broken:
  * "TypeAlias_TelemetryEventPropertyTypeExt": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_TelemetryEventPropertyTypeExt = requireAssignableTo<TypeOnly<current.TelemetryEventPropertyTypeExt>, TypeOnly<old.TelemetryEventPropertyTypeExt>>
+declare type current_as_old_for_TypeAlias_TelemetryEventPropertyTypeExt =
+	requireAssignableTo<
+		TypeOnly<current.TelemetryEventPropertyTypeExt>,
+		TypeOnly<old.TelemetryEventPropertyTypeExt>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -223,7 +322,11 @@ declare type current_as_old_for_TypeAlias_TelemetryEventPropertyTypeExt = requir
  * typeValidation.broken:
  * "TypeAlias_TelemetryEventPropertyTypes": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_TelemetryEventPropertyTypes = requireAssignableTo<TypeOnly<old.TelemetryEventPropertyTypes>, TypeOnly<current.TelemetryEventPropertyTypes>>
+declare type old_as_current_for_TypeAlias_TelemetryEventPropertyTypes =
+	requireAssignableTo<
+		TypeOnly<old.TelemetryEventPropertyTypes>,
+		TypeOnly<current.TelemetryEventPropertyTypes>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -232,4 +335,8 @@ declare type old_as_current_for_TypeAlias_TelemetryEventPropertyTypes = requireA
  * typeValidation.broken:
  * "TypeAlias_TelemetryEventPropertyTypes": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_TelemetryEventPropertyTypes = requireAssignableTo<TypeOnly<current.TelemetryEventPropertyTypes>, TypeOnly<old.TelemetryEventPropertyTypes>>
+declare type current_as_old_for_TypeAlias_TelemetryEventPropertyTypes =
+	requireAssignableTo<
+		TypeOnly<current.TelemetryEventPropertyTypes>,
+		TypeOnly<old.TelemetryEventPropertyTypes>
+	>;

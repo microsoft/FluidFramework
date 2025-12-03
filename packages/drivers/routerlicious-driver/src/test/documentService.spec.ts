@@ -3,17 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
-import { IClient } from "@fluidframework/driver-definitions";
-import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type { IClient } from "@fluidframework/driver-definitions";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { strict as assert } from "assert";
 import { stub } from "sinon";
 
 import { DefaultTokenProvider } from "../defaultTokenProvider.js";
 import { DeltaStorageService } from "../deltaStorageService.js";
 import { R11sDocumentDeltaConnection } from "../documentDeltaConnection.js";
-import { DocumentService } from "../documentService.js";
+import type { DocumentService } from "../documentService.js";
 import { RouterliciousDocumentServiceFactory } from "../documentServiceFactory.js";
 import type { IR11sResponse } from "../restWrapper.js";
 import { RestWrapper } from "../restWrapperBase.js";
@@ -22,7 +21,10 @@ class MockRestWrapper extends RestWrapper {
 	protected async request<T>(): Promise<IR11sResponse<T>> {
 		throw new Error("Method not implemented.");
 	}
-	public async get(url: string, headers?: Record<string, string>): Promise<any> {
+	public async get(
+		url: string,
+		headers?: Record<string, string>,
+	): Promise<any> {
 		const headerElements = headers
 			? Object.entries(headers)
 					.map(([key, value]) => `${key}=${value}`)
@@ -47,9 +49,8 @@ describe("DocumentService", () => {
 	let resolvedUrl;
 
 	beforeEach(async () => {
-		routerliciousDocumentServiceFactory = new RouterliciousDocumentServiceFactory(
-			new DefaultTokenProvider("jwt"),
-		);
+		routerliciousDocumentServiceFactory =
+			new RouterliciousDocumentServiceFactory(new DefaultTokenProvider("jwt"));
 		resolvedUrl = {
 			type: "fluid",
 			id: "id",
@@ -62,9 +63,10 @@ describe("DocumentService", () => {
 			},
 			tokens: {},
 		};
-		documentService = (await routerliciousDocumentServiceFactory.createDocumentService(
-			resolvedUrl as IResolvedUrl,
-		)) as DocumentService;
+		documentService =
+			(await routerliciousDocumentServiceFactory.createDocumentService(
+				resolvedUrl as IResolvedUrl,
+			)) as DocumentService;
 
 		deltaConnection = {
 			clientId: "clientId",
@@ -122,9 +124,10 @@ describe("DocumentService", () => {
 			},
 		};
 
-		const stubbedDeltaConnectionCreate = stub(R11sDocumentDeltaConnection, "create").callsFake(
-			async () => deltaConnection as R11sDocumentDeltaConnection,
-		);
+		const stubbedDeltaConnectionCreate = stub(
+			R11sDocumentDeltaConnection,
+			"create",
+		).callsFake(async () => deltaConnection as R11sDocumentDeltaConnection);
 		await documentService.connectToDeltaStream(client);
 		assert.equal(documentService.policies?.summarizeProtocolTree, true);
 		stubbedDeltaConnectionCreate.restore();
@@ -147,9 +150,10 @@ describe("DocumentService", () => {
 			},
 		};
 
-		const stubbedDeltaConnectionCreate = stub(R11sDocumentDeltaConnection, "create").callsFake(
-			async () => deltaConnection as R11sDocumentDeltaConnection,
-		);
+		const stubbedDeltaConnectionCreate = stub(
+			R11sDocumentDeltaConnection,
+			"create",
+		).callsFake(async () => deltaConnection as R11sDocumentDeltaConnection);
 
 		await documentService.connectToDeltaStream(client);
 		assert.equal(documentService.policies?.summarizeProtocolTree, false);

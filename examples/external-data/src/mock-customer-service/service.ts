@@ -8,7 +8,10 @@ import type { Server } from "node:http";
 import cors from "cors";
 import express from "express";
 
-import { type ITaskData, assertValidTaskData } from "../model-interface/index.js";
+import {
+	assertValidTaskData,
+	type ITaskData,
+} from "../model-interface/index.js";
 import { ClientManager } from "../utilities/index.js";
 
 /**
@@ -154,7 +157,9 @@ export interface ServiceProps {
  * Initializes the mock customer service.
  * @internal
  */
-export async function initializeCustomerService(props: ServiceProps): Promise<Server> {
+export async function initializeCustomerService(
+	props: ServiceProps,
+): Promise<Server> {
 	const {
 		port,
 		externalDataServiceWebhookRegistrationUrl,
@@ -217,13 +222,15 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 			try {
 				taskData = assertValidTaskData(messageData);
 			} catch (error) {
-				const errorMessage = "Malformed data received from external data service webhook.";
+				const errorMessage =
+					"Malformed data received from external data service webhook.";
 				console.error(formatLogMessage(errorMessage), error);
 				result.status(400).json({ errorMessage });
 				return;
 			}
 
-			const containerSessionRecords = clientManager.getClientSessions(externalTaskListId);
+			const containerSessionRecords =
+				clientManager.getClientSessions(externalTaskListId);
 			console.log(
 				formatLogMessage(
 					`Data update received from external data service. Notifying webhook subscribers.`,
@@ -269,12 +276,14 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const externalTaskListId = request.body?.externalTaskListId as string;
 		if (tenantId === undefined) {
-			const errorMessage = "Required property 'tenantId' not provided in request body";
+			const errorMessage =
+				"Required property 'tenantId' not provided in request body";
 			result.status(400).json({ message: errorMessage });
 			return;
 		}
 		if (documentId === undefined) {
-			const errorMessage = "Required property 'documentId' not provided in request body";
+			const errorMessage =
+				"Required property 'documentId' not provided in request body";
 			result.status(400).json({ message: errorMessage });
 			return;
 		}
@@ -331,62 +340,66 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 * @remarks Currently, the only supported request type is 'session-end' {@link SessionEndEventsListenerRequest} which enables the Fluid service to notify this service
 	 * that a particular Fluid session has ended which in turn causes this service to unregister any related webhooks to the respective Fluid session.
 	 */
-	expressApp.post("/events-listener", (request: EventsListenerRequest, result) => {
-		const eventType = request.body?.type;
+	expressApp.post(
+		"/events-listener",
+		(request: EventsListenerRequest, result) => {
+			const eventType = request.body?.type;
 
-		if (eventType === "session-end") {
-			const typedRequest = request as SessionEndEventsListenerRequest;
-			const documentId = typedRequest.body?.documentId;
-			if (documentId === undefined || typeof documentId !== "string") {
-				const errorMessage = `Missing or malformed documentId: ${documentId}`;
-				result.status(400).json({ message: errorMessage });
-				return;
+			if (eventType === "session-end") {
+				const typedRequest = request as SessionEndEventsListenerRequest;
+				const documentId = typedRequest.body?.documentId;
+				if (documentId === undefined || typeof documentId !== "string") {
+					const errorMessage = `Missing or malformed documentId: ${documentId}`;
+					result.status(400).json({ message: errorMessage });
+					return;
+				}
+
+				const tenantId = typedRequest.body?.tenantId;
+				if (tenantId === undefined || typeof tenantId !== "string") {
+					const errorMessage = `Missing or malformed tenantId: ${tenantId}`;
+					result.status(400).json({ message: errorMessage });
+					return;
+				}
+
+				// Removes the mapping of the given container URL from all task id's
+				const emptyTaskListRegistrationIds =
+					clientManager.removeAllClientTaskListRegistrations({
+						TenantId: tenantId,
+						DocumentId: documentId,
+					});
+				// If there are any task list id's that no longer have any active client sessions mapped to them
+				// then we should deregister our webhook for that task list id.
+				for (const emptyExternalTaskListId of emptyTaskListRegistrationIds) {
+					fetch(externalDataServiceWebhookUnregistrationUrl, {
+						method: "POST",
+						headers: {
+							"Access-Control-Allow-Origin": "*",
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({
+							// External data service will call our webhook echoer to notify our subscribers of the data changes.
+							url: `http://localhost:${port}/external-data-webhook?externalTaskListId=${emptyExternalTaskListId}`,
+							emptyExternalTaskListId,
+						}),
+					}).catch((error) => {
+						console.error(
+							formatLogMessage(
+								`Un-registering for data update notifications webhook with the external data service failed due to an error.`,
+							),
+							error,
+						);
+						throw error;
+					});
+				}
+			} else {
+				const errorMessage = `Unexpected event type: ${eventType}`;
+				console.error(formatLogMessage(errorMessage));
+				result.status(400).json({ errorMessage });
 			}
 
-			const tenantId = typedRequest.body?.tenantId;
-			if (tenantId === undefined || typeof tenantId !== "string") {
-				const errorMessage = `Missing or malformed tenantId: ${tenantId}`;
-				result.status(400).json({ message: errorMessage });
-				return;
-			}
-
-			// Removes the mapping of the given container URL from all task id's
-			const emptyTaskListRegistrationIds = clientManager.removeAllClientTaskListRegistrations({
-				TenantId: tenantId,
-				DocumentId: documentId,
-			});
-			// If there are any task list id's that no longer have any active client sessions mapped to them
-			// then we should deregister our webhook for that task list id.
-			for (const emptyExternalTaskListId of emptyTaskListRegistrationIds) {
-				fetch(externalDataServiceWebhookUnregistrationUrl, {
-					method: "POST",
-					headers: {
-						"Access-Control-Allow-Origin": "*",
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({
-						// External data service will call our webhook echoer to notify our subscribers of the data changes.
-						url: `http://localhost:${port}/external-data-webhook?externalTaskListId=${emptyExternalTaskListId}`,
-						emptyExternalTaskListId,
-					}),
-				}).catch((error) => {
-					console.error(
-						formatLogMessage(
-							`Un-registering for data update notifications webhook with the external data service failed due to an error.`,
-						),
-						error,
-					);
-					throw error;
-				});
-			}
-		} else {
-			const errorMessage = `Unexpected event type: ${eventType}`;
-			console.error(formatLogMessage(errorMessage));
-			result.status(400).json({ errorMessage });
-		}
-
-		result.send();
-	});
+			result.send();
+		},
+	);
 
 	const server = expressApp.listen(port.toString());
 

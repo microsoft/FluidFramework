@@ -7,6 +7,6 @@
 		"outDir": "./lib",
 		"noImplicitAny": true,
 		"noUncheckedIndexedAccess": false,
-		"exactOptionalPropertyTypes": false,
-	},
+		"exactOptionalPropertyTypes": false
+	}
 }

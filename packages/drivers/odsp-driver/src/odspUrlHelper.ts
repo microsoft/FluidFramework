@@ -49,7 +49,10 @@ export function isSpoUrl(url: URL): boolean {
 	const hostRegex = /\.sharepoint(?:-df)?\.com$/;
 	const pathRegex = /^\/_api\/v2\.1\/drives\/[^/]+\/items\/[^/]+/;
 
-	return hostRegex.test(url.host.toLowerCase()) && pathRegex.test(url.pathname.toLowerCase());
+	return (
+		hostRegex.test(url.host.toLowerCase()) &&
+		pathRegex.test(url.pathname.toLowerCase())
+	);
 }
 
 /**
@@ -69,7 +72,8 @@ export function isOdcUrl(url: URL): boolean {
 	const odcRegex = /^\/v2\.1\/(?:drive|drives\/[^/]+)\/items\/[\dA-Za-z]+!\d+/;
 
 	// Format: /v2.1/drives('ABC123')/items('ABC123!123')
-	const odcODataRegex = /^\/v2\.1\/drives\('[^/]+'\)\/items\('[\dA-Za-z]+!\d+'\)/;
+	const odcODataRegex =
+		/^\/v2\.1\/drives\('[^/]+'\)\/items\('[\dA-Za-z]+!\d+'\)/;
 
 	return odcRegex.test(path) || odcODataRegex.test(path);
 }
@@ -80,7 +84,9 @@ export function isOdcUrl(url: URL): boolean {
  * @param url - The (raw) URL to parse
  * @internal
  */
-export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefined> {
+export async function getOdspUrlParts(
+	url: URL,
+): Promise<IOdspUrlParts | undefined> {
 	const pathname = url.pathname;
 
 	// Joinsession like URL
@@ -96,7 +102,9 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 		// 4: Item ID
 		// 5: Drive ID portion of Item ID
 		joinSessionMatch =
-			/(.*)\/v2\.1\/drive(s\/([\dA-Za-z]+))?\/items\/(([\dA-Za-z]+)!\d+)/.exec(pathname);
+			/(.*)\/v2\.1\/drive(s\/([\dA-Za-z]+))?\/items\/(([\dA-Za-z]+)!\d+)/.exec(
+				pathname,
+			);
 
 		if (joinSessionMatch === null) {
 			// Try again but with the OData format ( `/drives('ABC123')/items('ABC123!456')` )
@@ -115,7 +123,8 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 
 		return { siteUrl: `${url.origin}${url.pathname}`, driveId, itemId };
 	} else {
-		joinSessionMatch = /(.*)\/_api\/v2\.1\/drives\/([^/]*)\/items\/([^/]*)(.*)/.exec(pathname);
+		joinSessionMatch =
+			/(.*)\/_api\/v2\.1\/drives\/([^/]*)\/items\/([^/]*)(.*)/.exec(pathname);
 
 		if (joinSessionMatch === null) {
 			return undefined;
@@ -132,7 +141,9 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
  * @param urlOnSite - The URL of the site or a resource on the site
  * @returns undefined if the URL doesn't match known SPDF/MSIT patterns, "SPDF" if it's SPDF, "MSIT" if it's MSIT
  */
-export function checkForKnownServerFarmType(urlOnSite: string): "SPDF" | "MSIT" | undefined {
+export function checkForKnownServerFarmType(
+	urlOnSite: string,
+): "SPDF" | "MSIT" | undefined {
 	const domain = new URL(urlOnSite).hostname.toLowerCase();
 	if (domain.endsWith(".sharepoint-df.com")) {
 		return "SPDF";

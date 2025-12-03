@@ -27,25 +27,32 @@ import {
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type ITelemetryLoggerExt,
-	PerformanceEvent,
 	isFluidError,
 	loggerToMonitoringContext,
 	normalizeError,
+	PerformanceEvent,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { v4 as uuid } from "uuid";
 
-import { type IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts.js";
+import {
+	type IVersionedValueWithEpoch,
+	persistedCacheValueVersion,
+} from "./contracts.js";
 import { ClpCompliantAppHeader } from "./contractsPublic.js";
-import type { INonPersistentCache, IOdspCache, IPersistedFileCache } from "./odspCache.js";
+import type {
+	INonPersistentCache,
+	IOdspCache,
+	IPersistedFileCache,
+} from "./odspCache.js";
 import { patchOdspResolvedUrl } from "./odspLocationRedirection.js";
 import {
-	type IOdspResponse,
 	fetchAndParseAsJSONHelper,
 	fetchArray,
 	fetchHelper,
 	getOdspResolvedUrl,
+	type IOdspResponse,
 } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 
@@ -110,15 +117,19 @@ export class EpochTracker implements IPersistedFileCache {
 		this.rateLimiter = new RateLimiter(24);
 
 		// Matches the TestOverride logic for the policy defined in odspDocumentStorageServiceBase.ts
-		this.snapshotCacheExpiryTimeoutMs = loggerToMonitoringContext(logger).config.getBoolean(
-			"Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache",
-		)
+		this.snapshotCacheExpiryTimeoutMs = loggerToMonitoringContext(
+			logger,
+		).config.getBoolean("Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache")
 			? 0
 			: maximumCacheDurationMs;
 	}
 
 	// public for UT purposes only!
-	public setEpoch(epoch: string, fromCache: boolean, fetchType: FetchTypeInternal): void {
+	public setEpoch(
+		epoch: string,
+		fromCache: boolean,
+		fetchType: FetchTypeInternal,
+	): void {
 		assert(this._fluidEpoch === undefined, 0x1db /* "epoch exists" */);
 		this._fluidEpoch = epoch;
 
@@ -143,7 +154,10 @@ export class EpochTracker implements IPersistedFileCache {
 			if (value === undefined || value.version !== persistedCacheValueVersion) {
 				return undefined;
 			}
-			assert(value.fluidEpoch !== undefined, 0x1dc /* "all entries have to have epoch" */);
+			assert(
+				value.fluidEpoch !== undefined,
+				0x1dc /* "all entries have to have epoch" */,
+			);
 			if (this._fluidEpoch === undefined) {
 				this.setEpoch(value.fluidEpoch, true, "cache");
 				// Epoch mismatch, the cached value is considerably different from what the current state of
@@ -153,7 +167,10 @@ export class EpochTracker implements IPersistedFileCache {
 			}
 			// Expire the cached snapshot if it's older than snapshotCacheExpiryTimeoutMs and immediately
 			// expire all old caches that do not have cacheEntryTime
-			if (entry.type === snapshotKey || entry.type === snapshotWithLoadingGroupIdKey) {
+			if (
+				entry.type === snapshotKey ||
+				entry.type === snapshotWithLoadingGroupIdKey
+			) {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 				const cacheTime = value.value?.cacheEntryTime;
 				const currentTime = Date.now();
@@ -173,7 +190,10 @@ export class EpochTracker implements IPersistedFileCache {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return value.value;
 		} catch (error) {
-			this.logger.sendErrorEvent({ eventName: "cacheFetchError", type: entry.type }, error);
+			this.logger.sendErrorEvent(
+				{ eventName: "cacheFetchError", type: entry.type },
+				error,
+			);
 			return undefined;
 		}
 	}
@@ -184,7 +204,10 @@ export class EpochTracker implements IPersistedFileCache {
 		assert(this._fluidEpoch !== undefined, 0x1dd /* "no epoch" */);
 		// For snapshots, the value should have the cacheEntryTime.
 		// This will be used to expire snapshots older than snapshotCacheExpiryTimeoutMs.
-		if (entry.type === snapshotKey || entry.type === snapshotWithLoadingGroupIdKey) {
+		if (
+			entry.type === snapshotKey ||
+			entry.type === snapshotWithLoadingGroupIdKey
+		) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			value.cacheEntryTime = value.cacheEntryTime ?? Date.now();
 		}
@@ -194,10 +217,15 @@ export class EpochTracker implements IPersistedFileCache {
 			version: persistedCacheValueVersion,
 			fluidEpoch: this._fluidEpoch,
 		};
-		return this.cache.put(this.fileEntryFromEntry(entry), data).catch((error) => {
-			this.logger.sendErrorEvent({ eventName: "cachePutError", type: entry.type }, error);
-			throw error;
-		});
+		return this.cache
+			.put(this.fileEntryFromEntry(entry), data)
+			.catch((error) => {
+				this.logger.sendErrorEvent(
+					{ eventName: "cachePutError", type: entry.type },
+					error,
+				);
+				throw error;
+			});
 	}
 
 	public async removeEntries(): Promise<void> {
@@ -212,7 +240,10 @@ export class EpochTracker implements IPersistedFileCache {
 		return this._fluidEpoch;
 	}
 
-	public async validateEpoch(epoch: string | undefined, fetchType: FetchType): Promise<void> {
+	public async validateEpoch(
+		epoch: string | undefined,
+		fetchType: FetchType,
+	): Promise<void> {
 		assert(epoch !== undefined, 0x584 /* response should contain epoch */);
 		try {
 			this.validateEpochFromResponse(epoch, fetchType);
@@ -275,7 +306,10 @@ export class EpochTracker implements IPersistedFileCache {
 	private async fetchCore<T>(
 		url: string,
 		fetchOptions: RequestInit,
-		fetcher: (url: string, fetchOptions: RequestInit) => Promise<IOdspResponse<T>>,
+		fetcher: (
+			url: string,
+			fetchOptions: RequestInit,
+		) => Promise<IOdspResponse<T>>,
 		fetchType: FetchType,
 		addInBody: boolean = false,
 		fetchReason?: string,
@@ -308,7 +342,8 @@ export class EpochTracker implements IPersistedFileCache {
 					isFluidError(error) &&
 					error.errorType === OdspErrorTypes.fileNotFoundOrAccessDeniedError
 				) {
-					const redirectLocation = (error as IOdspErrorAugmentations).redirectLocation;
+					const redirectLocation = (error as IOdspErrorAugmentations)
+						.redirectLocation;
 					if (redirectLocation !== undefined) {
 						const redirectUrl: IOdspResolvedUrl = patchOdspResolvedUrl(
 							this.fileEntry.resolvedUrl,
@@ -319,7 +354,9 @@ export class EpochTracker implements IPersistedFileCache {
 							redirectUrl,
 							{ driverVersion, redirectLocation },
 						);
-						locationRedirectionError.addTelemetryProperties(error.getTelemetryProperties());
+						locationRedirectionError.addTelemetryProperties(
+							error.getTelemetryProperties(),
+						);
 						throw locationRedirectionError;
 					}
 				}
@@ -363,7 +400,9 @@ export class EpochTracker implements IPersistedFileCache {
 		addInBody: boolean,
 		clientCorrelationId: string,
 	): void {
-		const isClpCompliantApp = getOdspResolvedUrl(this.fileEntry.resolvedUrl).isClpCompliantApp;
+		const isClpCompliantApp = getOdspResolvedUrl(
+			this.fileEntry.resolvedUrl,
+		).isClpCompliantApp;
 		if (addInBody) {
 			const headers: { [key: string]: string } = {};
 			headers["X-RequestStats"] = clientCorrelationId;
@@ -371,7 +410,8 @@ export class EpochTracker implements IPersistedFileCache {
 				headers["x-fluid-epoch"] = this.fluidEpoch;
 			}
 			if (isClpCompliantApp) {
-				headers[ClpCompliantAppHeader.isClpCompliantApp] = isClpCompliantApp.toString();
+				headers[ClpCompliantAppHeader.isClpCompliantApp] =
+					isClpCompliantApp.toString();
 			}
 			this.addParamInBody(fetchOptions, headers);
 		} else {
@@ -390,19 +430,28 @@ export class EpochTracker implements IPersistedFileCache {
 				addHeader("x-fluid-epoch", this.fluidEpoch);
 			}
 			if (isClpCompliantApp) {
-				addHeader(ClpCompliantAppHeader.isClpCompliantApp, isClpCompliantApp.toString());
+				addHeader(
+					ClpCompliantAppHeader.isClpCompliantApp,
+					isClpCompliantApp.toString(),
+				);
 			}
 		}
 	}
 
-	private addParamInBody(fetchOptions: RequestInit, headers: { [key: string]: string }): void {
+	private addParamInBody(
+		fetchOptions: RequestInit,
+		headers: { [key: string]: string },
+	): void {
 		// We use multi part form request for post body where we want to use this.
 		// So extract the form boundary to mark the end of form.
 		const body = fetchOptions.body;
 		assert(typeof body === "string", 0x21d /* "body is not string" */);
 		const splitBody = body.split("\r\n");
 		const firstLine = splitBody.shift();
-		assert(firstLine?.startsWith("--") === true, 0x21e /* "improper boundary format" */);
+		assert(
+			firstLine?.startsWith("--") === true,
+			0x21e /* "improper boundary format" */,
+		);
 		const formParams = [firstLine];
 		for (const [key, value] of Object.entries(headers)) {
 			formParams.push(`${key}: ${value}`);
@@ -446,14 +495,20 @@ export class EpochTracker implements IPersistedFileCache {
 		fetchType: FetchTypeInternal,
 		fromCache: boolean = false,
 	): Promise<void> {
-		if (isFluidError(error) && error.errorType === OdspErrorTypes.fileOverwrittenInStorage) {
+		if (
+			isFluidError(error) &&
+			error.errorType === OdspErrorTypes.fileOverwrittenInStorage
+		) {
 			const epochError = this.checkForEpochErrorCore(epochFromResponse);
 			if (epochError !== undefined) {
 				epochError.addTelemetryProperties({
 					fromCache,
 					fetchType,
 				});
-				this.logger.sendErrorEvent({ eventName: "fileOverwrittenInStorage" }, epochError);
+				this.logger.sendErrorEvent(
+					{ eventName: "fileOverwrittenInStorage" },
+					epochError,
+				);
 				// If the epoch mismatches, then clear all entries for such file entry from cache.
 				await this.removeEntries();
 				throw epochError;
@@ -462,10 +517,14 @@ export class EpochTracker implements IPersistedFileCache {
 			// then it was coherency 409, so rethrow it as throttling error so that it can retried. Default throttling
 			// time is 1s.
 			const newError = wrapError(error, (message: string) => {
-				return new ThrottlingError(`Coherency 409: ${message}`, 1 /* retryAfterSeconds */, {
-					[Odsp409Error]: true,
-					driverVersion,
-				});
+				return new ThrottlingError(
+					`Coherency 409: ${message}`,
+					1 /* retryAfterSeconds */,
+					{
+						[Odsp409Error]: true,
+						driverVersion,
+					},
+				);
 			});
 			throw newError;
 		}
@@ -477,14 +536,22 @@ export class EpochTracker implements IPersistedFileCache {
 		// If epoch is undefined, then don't compare it because initially for createNew or TreesLatest
 		// initializes this value. Sometimes response does not contain epoch as it is still in
 		// implementation phase at server side. In that case also, don't compare it with our epoch value.
-		if (this.fluidEpoch && epochFromResponse && this.fluidEpoch !== epochFromResponse) {
+		if (
+			this.fluidEpoch &&
+			epochFromResponse &&
+			this.fluidEpoch !== epochFromResponse
+		) {
 			// This is similar in nature to how fluidEpochMismatchError (409) is handled.
 			// Difference - client detected mismatch, instead of server detecting it.
-			return new NonRetryableError("Epoch mismatch", OdspErrorTypes.fileOverwrittenInStorage, {
-				driverVersion,
-				serverEpoch: epochFromResponse,
-				clientEpoch: this.fluidEpoch,
-			});
+			return new NonRetryableError(
+				"Epoch mismatch",
+				OdspErrorTypes.fileOverwrittenInStorage,
+				{
+					driverVersion,
+					serverEpoch: epochFromResponse,
+					clientEpoch: this.fluidEpoch,
+				},
+			);
 		}
 	}
 
@@ -526,7 +593,10 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 		let result = super.get(entry);
 
 		// equivalence of what happens in fetchAndParseAsJSON()
-		if (entry.type === snapshotKey || entry.type === snapshotWithLoadingGroupIdKey) {
+		if (
+			entry.type === snapshotKey ||
+			entry.type === snapshotWithLoadingGroupIdKey
+		) {
 			result = result
 				.then((value) => {
 					// If there is nothing in cache, we need to wait for network call to complete (and do redemption)
@@ -615,7 +685,12 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 			},
 			{ start: true, end: true, cancel: "generic" },
 		);
-		return super.fetchAndParseAsJSON<T>(url, fetchOptions, fetchType, addInBody);
+		return super.fetchAndParseAsJSON<T>(
+			url,
+			fetchOptions,
+			fetchType,
+			addInBody,
+		);
 	}
 }
 

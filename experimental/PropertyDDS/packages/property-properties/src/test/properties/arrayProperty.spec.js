@@ -35,7 +35,7 @@ var possibleChanges = {
 	2: "remove",
 };
 
-var getRandomNumbersArray = function (in_size, randomGenerator) {
+var getRandomNumbersArray = (in_size, randomGenerator) => {
 	var result = [];
 	for (var i = 0; i < in_size; i++) {
 		result.push(Math.floor(randomGenerator.random() * 100));
@@ -43,7 +43,7 @@ var getRandomNumbersArray = function (in_size, randomGenerator) {
 	return result;
 };
 
-var compareArrays = function (ap1, ap2) {
+var compareArrays = (ap1, ap2) => {
 	if (ap1.length !== ap2.length) {
 		return false;
 	}
@@ -78,7 +78,12 @@ var TestString = {
 var TestCustomArray = {
 	typeid: "autodesk.test:test.customarray-1.0.0",
 	properties: [
-		{ id: "data", typeid: "autodesk.test:test.string-1.0.0", context: "array", length: 3 },
+		{
+			id: "data",
+			typeid: "autodesk.test:test.string-1.0.0",
+			context: "array",
+			length: 3,
+		},
 	],
 };
 
@@ -89,7 +94,9 @@ var TestDynamicLengthArray = {
 
 var TestDynamicLengthNonPrimitiveArray = {
 	typeid: "autodesk.test:test.nonPrimitiveArray-1.0.0",
-	properties: [{ id: "data", typeid: "autodesk.test:test.string-1.0.0", context: "array" }],
+	properties: [
+		{ id: "data", typeid: "autodesk.test:test.string-1.0.0", context: "array" },
+	],
 };
 
 var OurArrayTestTemplate = {
@@ -136,21 +143,29 @@ var ComplexTemplate3 = {
 var ComplexArrayTemplate = {
 	typeid: "autodesk.tests:ComplexArray-1.0.0",
 	properties: [
-		{ id: "myarray", typeid: "autodesk.tests:ComplexProp-1.0.0", context: "array" },
+		{
+			id: "myarray",
+			typeid: "autodesk.tests:ComplexProp-1.0.0",
+			context: "array",
+		},
 	],
 };
 var Complex3ArrayTemplate = {
 	typeid: "autodesk.tests:Complex3Array-1.0.0",
 	properties: [
-		{ id: "myarray", typeid: "autodesk.tests:ComplexProp3-1.0.0", context: "array" },
+		{
+			id: "myarray",
+			typeid: "autodesk.tests:ComplexProp3-1.0.0",
+			context: "array",
+		},
 	],
 };
 
-describe("ArrayProperty", function () {
+describe("ArrayProperty", () => {
 	/**
 	 * Get all the objects we need in this test here.
 	 */
-	before(function () {
+	before(() => {
 		PropertyFactory._reregister(OurArrayTestTemplate);
 		PropertyFactory._reregister(TestArrayFloat32);
 		PropertyFactory._reregister(TestString);
@@ -167,10 +182,12 @@ describe("ArrayProperty", function () {
 		PropertyFactory._reregister(Complex3ArrayTemplate);
 	});
 
-	describe("API methods - non primitive arrays", function () {
+	describe("API methods - non primitive arrays", () => {
 		var myProp, stringProp1, stringProp2, stringProp3, stringProp4, myArray;
-		before(function () {
-			myProp = PropertyFactory.create("autodesk.test:test.nonPrimitiveArray-1.0.0");
+		before(() => {
+			myProp = PropertyFactory.create(
+				"autodesk.test:test.nonPrimitiveArray-1.0.0",
+			);
 			stringProp1 = PropertyFactory.create("autodesk.test:test.string-1.0.0");
 			stringProp2 = PropertyFactory.create("autodesk.test:test.string-1.0.0");
 			stringProp3 = PropertyFactory.create("autodesk.test:test.string-1.0.0");
@@ -178,7 +195,7 @@ describe("ArrayProperty", function () {
 			myArray = myProp.get("data");
 		});
 
-		it(".clear should remove all items from an array and return nothing", function () {
+		it(".clear should remove all items from an array and return nothing", () => {
 			myArray.push(stringProp1);
 			myArray.push(stringProp2);
 			expect(myArray.length).to.equal(2);
@@ -186,30 +203,30 @@ describe("ArrayProperty", function () {
 			expect(myArray.length).to.equal(0);
 		});
 
-		it(".clear should work on an empty array", function () {
-			expect(function () {
+		it(".clear should work on an empty array", () => {
+			expect(() => {
 				myArray.clear();
 			}).to.not.throw();
-			expect(function () {
+			expect(() => {
 				myArray.clear();
 			}).to.not.throw();
 		});
 
-		it(".get should return a property", function () {
+		it(".get should return a property", () => {
 			myArray.push(stringProp1);
 			var result = myArray.get(0) instanceof BaseProperty;
 			expect(result).to.be.true;
 			expect(myArray.get(0)).to.deep.equal(stringProp1);
 		});
 
-		it(".get should return a target deferenced by a chain of reference properties", function () {
-			let root = PropertyFactory.create("NodeProperty");
-			let reference = PropertyFactory.create("Reference");
-			let reference2 = PropertyFactory.create("Reference");
-			let reference3 = PropertyFactory.create("Reference");
-			let reference4 = PropertyFactory.create("Reference");
-			let reference5 = PropertyFactory.create("Reference");
-			let target = PropertyFactory.create("String");
+		it(".get should return a target deferenced by a chain of reference properties", () => {
+			const root = PropertyFactory.create("NodeProperty");
+			const reference = PropertyFactory.create("Reference");
+			const reference2 = PropertyFactory.create("Reference");
+			const reference3 = PropertyFactory.create("Reference");
+			const reference4 = PropertyFactory.create("Reference");
+			const reference5 = PropertyFactory.create("Reference");
+			const target = PropertyFactory.create("String");
 			root.insert("array", myProp);
 			root.insert("reference", reference);
 			root.insert("reference2", reference2);
@@ -228,14 +245,14 @@ describe("ArrayProperty", function () {
 			root.clear();
 		});
 
-		it(".get should return a target deferenced by a chain of reference properties with *", function () {
-			let root = PropertyFactory.create("NodeProperty");
-			let reference = PropertyFactory.create("Reference");
-			let reference2 = PropertyFactory.create("Reference");
-			let reference3 = PropertyFactory.create("Reference");
-			let reference4 = PropertyFactory.create("Reference");
-			let reference5 = PropertyFactory.create("Reference");
-			let target = PropertyFactory.create("String");
+		it(".get should return a target deferenced by a chain of reference properties with *", () => {
+			const root = PropertyFactory.create("NodeProperty");
+			const reference = PropertyFactory.create("Reference");
+			const reference2 = PropertyFactory.create("Reference");
+			const reference3 = PropertyFactory.create("Reference");
+			const reference4 = PropertyFactory.create("Reference");
+			const reference5 = PropertyFactory.create("Reference");
+			const target = PropertyFactory.create("String");
 			root.insert("array", myProp);
 			root.insert("reference", reference);
 			root.insert("reference2", reference2);
@@ -254,32 +271,45 @@ describe("ArrayProperty", function () {
 			root.clear();
 		});
 
-		it(".get should work with an array to return nested values", function () {
-			var myComplexArray = PropertyFactory.create("autodesk.tests:ComplexArray-1.0.0")
-				._properties.myarray;
-			var myComplexProp = PropertyFactory.create("autodesk.tests:ComplexProp-1.0.0");
+		it(".get should work with an array to return nested values", () => {
+			var myComplexArray = PropertyFactory.create(
+				"autodesk.tests:ComplexArray-1.0.0",
+			)._properties.myarray;
+			var myComplexProp = PropertyFactory.create(
+				"autodesk.tests:ComplexProp-1.0.0",
+			);
 			myComplexArray.push(myComplexProp);
-			expect(myComplexArray.get([0, "nest"])).to.deep.equal(myComplexArray.get(0).get("nest"));
+			expect(myComplexArray.get([0, "nest"])).to.deep.equal(
+				myComplexArray.get(0).get("nest"),
+			);
 		});
 
-		it(".get should work with an array as input", function () {
-			var testProperty1 = PropertyFactory.create("autodesk.tests:ComplexProp-1.0.0");
+		it(".get should work with an array as input", () => {
+			var testProperty1 = PropertyFactory.create(
+				"autodesk.tests:ComplexProp-1.0.0",
+			);
 			testProperty1.get("nest").get("data").setValue(1);
-			var testProperty2 = PropertyFactory.create("autodesk.tests:ComplexProp-1.0.0");
+			var testProperty2 = PropertyFactory.create(
+				"autodesk.tests:ComplexProp-1.0.0",
+			);
 			testProperty2.get("nest").get("data").setValue(2);
-			var myArray1 = PropertyFactory.create("autodesk.tests:ComplexArray-1.0.0")._properties
-				.myarray;
+			var myArray1 = PropertyFactory.create("autodesk.tests:ComplexArray-1.0.0")
+				._properties.myarray;
 			myArray1.push(testProperty1);
 			myArray1.push(testProperty2);
 			expect(myArray1.get([0, "nest", "data"]).getValue()).to.equal(1);
 		});
-		it(".get should accept raise level tokens", function () {
-			var testProperty1 = PropertyFactory.create("autodesk.tests:ComplexProp-1.0.0");
+		it(".get should accept raise level tokens", () => {
+			var testProperty1 = PropertyFactory.create(
+				"autodesk.tests:ComplexProp-1.0.0",
+			);
 			testProperty1.get("nest").get("data").setValue(7);
-			var testProperty2 = PropertyFactory.create("autodesk.tests:ComplexProp-1.0.0");
+			var testProperty2 = PropertyFactory.create(
+				"autodesk.tests:ComplexProp-1.0.0",
+			);
 			testProperty2.get("nest").get("data").setValue(8);
-			var myArray1 = PropertyFactory.create("autodesk.tests:ComplexArray-1.0.0")._properties
-				.myarray;
+			var myArray1 = PropertyFactory.create("autodesk.tests:ComplexArray-1.0.0")
+				._properties.myarray;
 			myArray1.push(testProperty1);
 			myArray1.push(testProperty2);
 			expect(
@@ -298,72 +328,95 @@ describe("ArrayProperty", function () {
 					.getValue(),
 			).to.equal(8);
 		});
-		it(".get should accept path root tokens", function () {
-			var testProperty1 = PropertyFactory.create("autodesk.tests:ComplexProp-1.0.0");
+		it(".get should accept path root tokens", () => {
+			var testProperty1 = PropertyFactory.create(
+				"autodesk.tests:ComplexProp-1.0.0",
+			);
 			testProperty1.get("nest").get("data").setValue(3);
-			var testProperty2 = PropertyFactory.create("autodesk.tests:ComplexProp-1.0.0");
+			var testProperty2 = PropertyFactory.create(
+				"autodesk.tests:ComplexProp-1.0.0",
+			);
 			testProperty2.get("nest").get("data").setValue(6);
-			var testProperty3 = PropertyFactory.create("autodesk.tests:ComplexProp-1.0.0");
+			var testProperty3 = PropertyFactory.create(
+				"autodesk.tests:ComplexProp-1.0.0",
+			);
 			testProperty3.get("nest").get("data").setValue(9);
-			var myArrayProp = PropertyFactory.create("autodesk.tests:ComplexArray-1.0.0");
+			var myArrayProp = PropertyFactory.create(
+				"autodesk.tests:ComplexArray-1.0.0",
+			);
 			var myArray1 = myArrayProp._properties.myarray;
 			myArray1.insertRange(0, [testProperty1, testProperty2, testProperty3]);
 			expect(myArray1.get([PATH_TOKENS.ROOT])).to.equal(myArrayProp);
-			expect(myArray1.get([PATH_TOKENS.ROOT, "myarray", 2])).to.equal(testProperty3);
+			expect(myArray1.get([PATH_TOKENS.ROOT, "myarray", 2])).to.equal(
+				testProperty3,
+			);
 		});
 
-		it(".getEntriesReadOnly should return an array", function () {
+		it(".getEntriesReadOnly should return an array", () => {
 			myArray.push(stringProp1);
 			myArray.push(stringProp2);
-			expect(myArray.getEntriesReadOnly()).to.deep.equal([stringProp1, stringProp2]);
+			expect(myArray.getEntriesReadOnly()).to.deep.equal([
+				stringProp1,
+				stringProp2,
+			]);
 		});
 
-		it(".getFullTypeid will return a string of the full type id with or without collection", function () {
+		it(".getFullTypeid will return a string of the full type id with or without collection", () => {
 			// defaults to false
-			expect(myArray.getFullTypeid()).to.equal("array<autodesk.test:test.string-1.0.0>");
+			expect(myArray.getFullTypeid()).to.equal(
+				"array<autodesk.test:test.string-1.0.0>",
+			);
 			// in_hideCollection: true
-			expect(myArray.getFullTypeid(true)).to.equal("autodesk.test:test.string-1.0.0");
+			expect(myArray.getFullTypeid(true)).to.equal(
+				"autodesk.test:test.string-1.0.0",
+			);
 		});
 
-		it(".getIds should return an array of string indexes", function () {
+		it(".getIds should return an array of string indexes", () => {
 			myArray.push(stringProp1);
 			myArray.push(stringProp2);
 			expect(myArray.getIds()).to.deep.equal(["0", "1"]);
 		});
 
-		it(".getLength should return the length of the array", function () {
+		it(".getLength should return the length of the array", () => {
 			expect(myArray.getLength()).to.equal(0);
 			myArray.push(stringProp1);
 			myArray.push(stringProp2);
 			expect(myArray.getLength()).to.equal(2);
 		});
 
-		it(".has should work", function () {
+		it(".has should work", () => {
 			myArray.push(stringProp1);
 			myArray.push(stringProp2);
 			expect(myArray.has(1)).to.be.true;
 			expect(myArray.has(2)).to.be.false;
 		});
 
-		it(".getRelativePath should return a valid path", function () {
-			var testProperty1 = PropertyFactory.create("autodesk.tests:ComplexProp-1.0.0");
-			var testProperty2 = PropertyFactory.create("autodesk.tests:ComplexProp-1.0.0");
-			var myArray1 = PropertyFactory.create("autodesk.tests:ComplexArray-1.0.0")._properties
-				.myarray;
+		it(".getRelativePath should return a valid path", () => {
+			var testProperty1 = PropertyFactory.create(
+				"autodesk.tests:ComplexProp-1.0.0",
+			);
+			var testProperty2 = PropertyFactory.create(
+				"autodesk.tests:ComplexProp-1.0.0",
+			);
+			var myArray1 = PropertyFactory.create("autodesk.tests:ComplexArray-1.0.0")
+				._properties.myarray;
 			myArray1.push(testProperty1);
 			myArray1.push(testProperty2);
-			expect(myArray1.get([0, "nest", "data"]).getRelativePath(myArray1)).to.equal(
-				"[0].nest.data",
-			);
-			expect(myArray1.getRelativePath(myArray1.get([0, "nest", "data"]))).to.equal(
-				"../../../",
-			);
 			expect(
-				myArray1.get([0, "nest"]).getRelativePath(myArray1.get([1, "nest", "data"])),
+				myArray1.get([0, "nest", "data"]).getRelativePath(myArray1),
+			).to.equal("[0].nest.data");
+			expect(
+				myArray1.getRelativePath(myArray1.get([0, "nest", "data"])),
+			).to.equal("../../../");
+			expect(
+				myArray1
+					.get([0, "nest"])
+					.getRelativePath(myArray1.get([1, "nest", "data"])),
 			).to.equal("../../../[0].nest");
 		});
 
-		it(".getValues should return an array of objects", function () {
+		it(".getValues should return an array of objects", () => {
 			myArray.push(stringProp1);
 			myArray.push(stringProp2);
 
@@ -382,7 +435,7 @@ describe("ArrayProperty", function () {
 			]);
 		});
 
-		it(".insert should insert a new property in a non primitive array", function () {
+		it(".insert should insert a new property in a non primitive array", () => {
 			myArray.insert(0, stringProp1);
 			expect(myArray.getLength()).to.equal(1);
 			expect(myArray.get(0)).to.deep.equal(stringProp1);
@@ -390,19 +443,22 @@ describe("ArrayProperty", function () {
 			expect(myArray.getLength()).to.equal(2);
 		});
 
-		it(".insert should push existing values to the right if index already has a property", function () {
+		it(".insert should push existing values to the right if index already has a property", () => {
 			myArray.insert(0, stringProp1);
 			myArray.insert(0, stringProp2);
-			expect(myArray.getEntriesReadOnly()).to.deep.equal([stringProp2, stringProp1]);
+			expect(myArray.getEntriesReadOnly()).to.deep.equal([
+				stringProp2,
+				stringProp1,
+			]);
 		});
 
-		it(".insertRange should insert new properties", function () {
+		it(".insertRange should insert new properties", () => {
 			myArray.insertRange(0, [stringProp1, stringProp2]);
 			expect(myArray.getLength()).to.equal(2);
 			expect(myArray.get(1)).to.deep.equal(stringProp2);
 		});
 
-		it(".insertRange should push existing values to the right if index already has a property", function () {
+		it(".insertRange should push existing values to the right if index already has a property", () => {
 			myArray.insert(0, stringProp1);
 			myArray.insertRange(0, [stringProp2, stringProp3]);
 			expect(myArray.getEntriesReadOnly()).to.deep.equal([
@@ -412,15 +468,26 @@ describe("ArrayProperty", function () {
 			]);
 		});
 
-		it("pop should remove only last element of an array and return the removed element", function () {
-			var myDynamicArray = PropertyFactory.create("autodesk.test:test.nonPrimitiveArray-1.0.0")
-				._properties.data;
+		it("pop should remove only last element of an array and return the removed element", () => {
+			var myDynamicArray = PropertyFactory.create(
+				"autodesk.test:test.nonPrimitiveArray-1.0.0",
+			)._properties.data;
 			expect(myDynamicArray.length).to.equal(0);
-			var firstString = PropertyFactory.create("autodesk.test:test.string-1.0.0");
-			var secondString = PropertyFactory.create("autodesk.test:test.string-1.0.0");
-			var thirdString = PropertyFactory.create("autodesk.test:test.string-1.0.0");
-			var fourthString = PropertyFactory.create("autodesk.test:test.string-1.0.0");
-			var fifthString = PropertyFactory.create("autodesk.test:test.string-1.0.0");
+			var firstString = PropertyFactory.create(
+				"autodesk.test:test.string-1.0.0",
+			);
+			var secondString = PropertyFactory.create(
+				"autodesk.test:test.string-1.0.0",
+			);
+			var thirdString = PropertyFactory.create(
+				"autodesk.test:test.string-1.0.0",
+			);
+			var fourthString = PropertyFactory.create(
+				"autodesk.test:test.string-1.0.0",
+			);
+			var fifthString = PropertyFactory.create(
+				"autodesk.test:test.string-1.0.0",
+			);
 
 			myDynamicArray.push(firstString);
 			myDynamicArray.push(secondString);
@@ -431,7 +498,7 @@ describe("ArrayProperty", function () {
 			expect(myDynamicArray.length).to.equal(2);
 			expect(myDynamicArray.get(0)).to.equal(firstString);
 			expect(myDynamicArray.get(1)).to.equal(secondString);
-			expect(function () {
+			expect(() => {
 				myDynamicArray.get(2);
 			}).to.throw(Error);
 
@@ -444,29 +511,34 @@ describe("ArrayProperty", function () {
 			myDynamicArray.pop();
 			myDynamicArray.pop();
 			expect(myDynamicArray.length).to.equal(0);
-			expect(function () {
+			expect(() => {
 				myDynamicArray.get(1);
 			}).to.throw(Error);
 			expect(myDynamicArray.pop()).to.equal(undefined);
 		});
 
-		it("push should add the element to the last position and return the new length of the array", function () {
-			var myDynamicArray = PropertyFactory.create("autodesk.test:test.nonPrimitiveArray-1.0.0")
-				._properties.data;
+		it("push should add the element to the last position and return the new length of the array", () => {
+			var myDynamicArray = PropertyFactory.create(
+				"autodesk.test:test.nonPrimitiveArray-1.0.0",
+			)._properties.data;
 			expect(myDynamicArray.length).to.equal(0);
-			var firstString = PropertyFactory.create("autodesk.test:test.string-1.0.0");
-			var secondString = PropertyFactory.create("autodesk.test:test.string-1.0.0");
+			var firstString = PropertyFactory.create(
+				"autodesk.test:test.string-1.0.0",
+			);
+			var secondString = PropertyFactory.create(
+				"autodesk.test:test.string-1.0.0",
+			);
 			expect(myDynamicArray.push(firstString)).to.equal(1);
 			myDynamicArray.push(secondString);
 			expect(myDynamicArray.length).to.equal(2);
 			expect(myDynamicArray.get(0)).to.equal(firstString);
 			expect(myDynamicArray.get(1)).to.equal(secondString);
-			expect(function () {
+			expect(() => {
 				myDynamicArray.get(2);
 			}).to.throw(Error);
 		});
 
-		it(".remove should remove an element from an array, moving remaining elements to the left", function () {
+		it(".remove should remove an element from an array, moving remaining elements to the left", () => {
 			myArray.push(stringProp1);
 			myArray.push(stringProp2);
 			myArray.remove(1);
@@ -476,7 +548,7 @@ describe("ArrayProperty", function () {
 			expect(myArray.getEntriesReadOnly()).to.deep.equal([stringProp3]);
 		});
 
-		it(".removeRange should remove a range of elements from an array and move the remaining elements to the left", function () {
+		it(".removeRange should remove a range of elements from an array and move the remaining elements to the left", () => {
 			myArray.push(stringProp1);
 			myArray.push(stringProp2);
 			myArray.push(stringProp3);
@@ -485,63 +557,72 @@ describe("ArrayProperty", function () {
 			expect(myArray.getEntriesReadOnly()).to.deep.equal([stringProp3]);
 		});
 
-		it(".remove and .removeRange should return the items deleted", function () {
+		it(".remove and .removeRange should return the items deleted", () => {
 			myArray.push(stringProp1);
 			myArray.push(stringProp2);
 			myArray.push(stringProp3);
 			expect(myArray.remove(0)).to.deep.equal(stringProp1);
-			expect(myArray.removeRange(0, 2)).to.deep.equal([stringProp2, stringProp3]);
+			expect(myArray.removeRange(0, 2)).to.deep.equal([
+				stringProp2,
+				stringProp3,
+			]);
 		});
 
-		it(".set changes an existing element", function () {
+		it(".set changes an existing element", () => {
 			myArray.insertRange(0, [stringProp1, stringProp2]);
 			myArray.set(1, stringProp3);
-			expect(myArray.getEntriesReadOnly()).to.deep.equal([stringProp1, stringProp3]);
+			expect(myArray.getEntriesReadOnly()).to.deep.equal([
+				stringProp1,
+				stringProp3,
+			]);
 		});
 
-		it(".setRange changes a range of existing elements", function () {
+		it(".setRange changes a range of existing elements", () => {
 			myArray.insertRange(0, [stringProp1, stringProp2]);
 			myArray.setRange(0, [stringProp3, stringProp4]);
-			expect(myArray.getEntriesReadOnly()).to.deep.equal([stringProp3, stringProp4]);
+			expect(myArray.getEntriesReadOnly()).to.deep.equal([
+				stringProp3,
+				stringProp4,
+			]);
 		});
 
-		it(".set and .setRange should throw if trying to set a non-existing element", function () {
+		it(".set and .setRange should throw if trying to set a non-existing element", () => {
 			myArray.insertRange(0, [stringProp1, stringProp2]);
-			var incorrectFn1 = function () {
+			var incorrectFn1 = () => {
 				myArray.set(3, stringProp3);
 			};
 			expect(incorrectFn1).to.throw(MSG.SET_OUT_OF_BOUNDS);
 		});
 
-		it(".setRange should throw if the offset is not an integer", function () {
+		it(".setRange should throw if the offset is not an integer", () => {
 			myArray.insertRange(0, [stringProp1, stringProp2]);
 			expect(() => {
 				myArray.setRange("test", [stringProp3, stringProp4]);
 			}).to.throw(MSG.NOT_NUMBER);
 		});
 
-		it(".setRange should throw if the in_array argument is not an array", function () {
+		it(".setRange should throw if the in_array argument is not an array", () => {
 			myArray.insertRange(0, [stringProp1, stringProp2]);
 			expect(() => {
 				myArray.setRange(1, stringProp3);
 			}).to.throw(MSG.IN_ARRAY_NOT_ARRAY + "ArrayProperty.setRange");
 		});
 
-		it(".set should throw if the offset is not an integer", function () {
+		it(".set should throw if the offset is not an integer", () => {
 			myArray.insertRange(0, [stringProp1, stringProp2]);
 			expect(() => {
 				myArray.set("test", stringProp3);
 			}).to.throw(MSG.NOT_NUMBER);
 		});
 
-		it(".set should throw if the in_value is an array", function () {
+		it(".set should throw if the in_value is an array", () => {
 			myArray.insertRange(0, [stringProp1, stringProp2]);
 			expect(() => {
 				myArray.set(0, [stringProp3, stringProp4]);
 			}).to.throw(MSG.ARRAY_SET_ONE_ELEMENT);
 		});
 
-		it(".setValues should work for custom type arrays", function () {
+		it(".setValues should work for custom type arrays", () => {
 			myArray.push(stringProp1);
 			myArray.push(stringProp2);
 			myArray.setValues({
@@ -549,7 +630,10 @@ describe("ArrayProperty", function () {
 					data: "newTest",
 				},
 			});
-			expect(myArray.getValues()).to.deep.equal([{ data: "newTest" }, { data: "" }]);
+			expect(myArray.getValues()).to.deep.equal([
+				{ data: "newTest" },
+				{ data: "" },
+			]);
 
 			stringProp3._properties.data.setValue("newNewTest");
 			myArray.setValues([stringProp3]);
@@ -557,7 +641,7 @@ describe("ArrayProperty", function () {
 			expect(myArray.getValues()).to.deep.equal([{ data: "newNewTest" }]);
 		});
 
-		it(".setValues should work to overwrite the whole array", function () {
+		it(".setValues should work to overwrite the whole array", () => {
 			myArray.push(stringProp1);
 			myArray.push(stringProp2);
 			stringProp3._properties.data.setValue("testing 123");
@@ -566,14 +650,17 @@ describe("ArrayProperty", function () {
 			expect(myArray.length).to.equal(1);
 		});
 
-		it(".setValues should work to overwrite part of the array", function () {
+		it(".setValues should work to overwrite part of the array", () => {
 			myArray.push(stringProp1);
 			myArray.push(stringProp2);
 			myArray.setValues({ 0: { data: "test test test" } });
-			expect(myArray.getValues()).to.deep.equal([{ data: "test test test" }, { data: "" }]);
+			expect(myArray.getValues()).to.deep.equal([
+				{ data: "test test test" },
+				{ data: "" },
+			]);
 		});
 
-		it(".shift should remove the first element of an array and return the removed element", function () {
+		it(".shift should remove the first element of an array and return the removed element", () => {
 			myArray.push(stringProp1);
 			myArray.push(stringProp2);
 			myArray.shift();
@@ -582,11 +669,11 @@ describe("ArrayProperty", function () {
 			expect(myArray.length).to.equal(0);
 		});
 
-		it(".shift should return undefined if called on an empty array", function () {
+		it(".shift should return undefined if called on an empty array", () => {
 			expect(myArray.shift()).to.be.undefined;
 		});
 
-		it(".unshift should add a property at the beginnig of an array and return the new length of the array", function () {
+		it(".unshift should add a property at the beginnig of an array and return the new length of the array", () => {
 			myArray.push(stringProp1);
 			myArray.push(stringProp2);
 			myArray.unshift(stringProp3);
@@ -598,32 +685,33 @@ describe("ArrayProperty", function () {
 			expect(myArray.unshift(stringProp4)).to.equal(4);
 		});
 
-		afterEach(function () {
+		afterEach(() => {
 			myArray.clear();
 		});
 	});
 
-	describe("API methods - primitive arrays", function () {
+	describe("API methods - primitive arrays", () => {
 		var myPrimitiveArray;
-		before(function () {
-			myPrimitiveArray = PropertyFactory.create("autodesk.test:test.dynamicArray-1.0.0")
-				._properties.data;
+		before(() => {
+			myPrimitiveArray = PropertyFactory.create(
+				"autodesk.test:test.dynamicArray-1.0.0",
+			)._properties.data;
 		});
 
-		it(".clear should remove all elements in the array", function () {
+		it(".clear should remove all elements in the array", () => {
 			myPrimitiveArray.insertRange(0, [1, 2, 3]);
 			expect(myPrimitiveArray.length).to.equal(3);
 			myPrimitiveArray.clear();
 			expect(myPrimitiveArray.length).to.equal(0);
 		});
 
-		it(".get should return a value", function () {
+		it(".get should return a value", () => {
 			myPrimitiveArray.insertRange(0, [1, 2, 3]);
 			var result = myPrimitiveArray.get(0);
 			expect(result).to.equal(1);
 		});
 
-		it(".getEntriesReadOnly should return an array", function () {
+		it(".getEntriesReadOnly should return an array", () => {
 			myPrimitiveArray.insertRange(0, [1, 2, 3]);
 			const result = myPrimitiveArray.getEntriesReadOnly();
 			assert.equal(result.length, 3);
@@ -632,23 +720,23 @@ describe("ArrayProperty", function () {
 			assert.equal(result[2], 3);
 		});
 
-		it("getFullTypeid should return a string of the typeid with or without collection", function () {
+		it("getFullTypeid should return a string of the typeid with or without collection", () => {
 			expect(myPrimitiveArray.getFullTypeid()).to.equal("array<Int32>");
 			expect(myPrimitiveArray.getFullTypeid(true)).to.equal("Int32");
 		});
 
-		it(".getIds should return an array of index strings", function () {
+		it(".getIds should return an array of index strings", () => {
 			myPrimitiveArray.insertRange(0, [1, 2, 3]);
 			expect(myPrimitiveArray.getIds()).to.deep.equal(["0", "1", "2"]);
 		});
 
-		it(".getLength should return the length of the array", function () {
+		it(".getLength should return the length of the array", () => {
 			expect(myPrimitiveArray.getLength()).to.equal(0);
 			myPrimitiveArray.insertRange(0, [1, 2, 3]);
 			expect(myPrimitiveArray.getLength()).to.equal(3);
 		});
 
-		it(".has should work", function () {
+		it(".has should work", () => {
 			myPrimitiveArray.insertRange(0, [1, 2, 3]);
 			expect(myPrimitiveArray.has(1)).to.be.true;
 			expect(myPrimitiveArray.has(4)).to.be.false;
@@ -659,8 +747,9 @@ describe("ArrayProperty", function () {
 			if (isBrowser && window.top.callPhantom) {
 				this.skip();
 			}
-			var MyArrayProp = PropertyFactory.create("autodesk.test:test.dynamicArray-1.0.0")
-				._properties.data;
+			var MyArrayProp = PropertyFactory.create(
+				"autodesk.test:test.dynamicArray-1.0.0",
+			)._properties.data;
 			MyArrayProp.insertRange(0, [1, 2, 3]);
 			MyArrayProp.setValues({
 				0: 12,
@@ -671,28 +760,29 @@ describe("ArrayProperty", function () {
 
 			MyArrayProp.setValues([3, 4]);
 			expect(MyArrayProp.get(0)).to.equal(3);
-			expect(function () {
+			expect(() => {
 				MyArrayProp.get(2);
 			}).to.throw();
 		});
 
-		it(".insert should insert a value in a primitive array and move other values to the right", function () {
+		it(".insert should insert a value in a primitive array and move other values to the right", () => {
 			myPrimitiveArray.insert(0, 1);
 			expect(myPrimitiveArray.length).to.equal(1);
 			myPrimitiveArray.insert(0, 2);
 			expect(myPrimitiveArray.getValues()).to.deep.equal([2, 1]);
 		});
 
-		it(".insertRange should insert a range of values and move other values to the right", function () {
+		it(".insertRange should insert a range of values and move other values to the right", () => {
 			myPrimitiveArray.insertRange(0, [1, 2, 3]);
 			expect(myPrimitiveArray.length).to.equal(3);
 			myPrimitiveArray.insertRange(1, [4, 5]);
 			expect(myPrimitiveArray.getValues()).to.deep.equal([1, 4, 5, 2, 3]);
 		});
 
-		it(".pop should remove the last item of a primitive array and return the removed value", function () {
-			var myArray = PropertyFactory.create("autodesk.test:test.dynamicArray-1.0.0")._properties
-				.data;
+		it(".pop should remove the last item of a primitive array and return the removed value", () => {
+			var myArray = PropertyFactory.create(
+				"autodesk.test:test.dynamicArray-1.0.0",
+			)._properties.data;
 			myArray.push(1);
 			myArray.push(2);
 			myArray.push(3);
@@ -703,37 +793,38 @@ describe("ArrayProperty", function () {
 			expect(myArray.pop()).to.equal(2);
 		});
 
-		it(".pop should return undefined if called on an empty array", function () {
+		it(".pop should return undefined if called on an empty array", () => {
 			expect(myPrimitiveArray.pop()).to.be.undefined;
 		});
 
-		it(".push should add a value at the end of the array and return the new length", function () {
+		it(".push should add a value at the end of the array and return the new length", () => {
 			myPrimitiveArray.push(1);
 			myPrimitiveArray.push(2);
 			expect(myPrimitiveArray.getValues()).to.deep.equal([1, 2]);
 			expect(myPrimitiveArray.push(4)).to.equal(3);
 		});
 
-		it(".remove should remove an element from the array and return that element", function () {
+		it(".remove should remove an element from the array and return that element", () => {
 			myPrimitiveArray.insertRange(0, [1, 2, 3]);
 			expect(myPrimitiveArray.remove(0)).to.equal(1);
 			expect(myPrimitiveArray.getValues()).to.deep.equal([2, 3]);
 		});
 
-		it(".removeRange should remove a range of elements from an array and return those elements", function () {
+		it(".removeRange should remove a range of elements from an array and return those elements", () => {
 			myPrimitiveArray.insertRange(0, [1, 2, 3, 4, 5]);
 			expect(myPrimitiveArray.removeRange(2, 2)).to.deep.equal([3, 4]);
 			expect(myPrimitiveArray.getValues()).to.deep.equal([1, 2, 5]);
 		});
 
-		it(".resolvePath should work on primitive arrays", function () {
+		it(".resolvePath should work on primitive arrays", () => {
 			myPrimitiveArray.insertRange(0, [1, 2, 3]);
 			expect(myPrimitiveArray.resolvePath("1")).to.equal(2);
 		});
 
-		it(".set should replace a value in a primitive array", function () {
-			var myArray = PropertyFactory.create("autodesk.test:test.dynamicArray-1.0.0")._properties
-				.data;
+		it(".set should replace a value in a primitive array", () => {
+			var myArray = PropertyFactory.create(
+				"autodesk.test:test.dynamicArray-1.0.0",
+			)._properties.data;
 			myArray.push(1);
 			myArray.push(2);
 			myArray.push(3);
@@ -742,9 +833,10 @@ describe("ArrayProperty", function () {
 			expect(myArray.getValues()).to.deep.equal([1, 2, 8]);
 		});
 
-		it(".setRange should replace values in a primitive array", function () {
-			var myArray = PropertyFactory.create("autodesk.test:test.dynamicArray-1.0.0")._properties
-				.data;
+		it(".setRange should replace values in a primitive array", () => {
+			var myArray = PropertyFactory.create(
+				"autodesk.test:test.dynamicArray-1.0.0",
+			)._properties.data;
 			myArray.push(1);
 			myArray.push(2);
 			myArray.push(3);
@@ -754,30 +846,33 @@ describe("ArrayProperty", function () {
 			expect(myArray.getValues()).to.deep.equal([1, 4, 5]);
 		});
 
-		it(".setRange should replace last value in a primitive array", function () {
-			var myArray = PropertyFactory.create("autodesk.test:test.dynamicArray-1.0.0")._properties
-				.data;
+		it(".setRange should replace last value in a primitive array", () => {
+			var myArray = PropertyFactory.create(
+				"autodesk.test:test.dynamicArray-1.0.0",
+			)._properties.data;
 			myArray.insertRange(0, [1, 2, 3, 4, 5]);
 			myArray.setRange(0, [1, 2, 3, 10, 11]);
 			expect(myArray.getValues()).to.deep.equal([1, 2, 3, 10, 11]);
 		});
 
-		it(".setValues should work to overwrite a whole array", function () {
-			arrayProp = PropertyFactory.create("autodesk.test:test.dynamicArray-1.0.0")._properties
-				.data;
+		it(".setValues should work to overwrite a whole array", () => {
+			arrayProp = PropertyFactory.create(
+				"autodesk.test:test.dynamicArray-1.0.0",
+			)._properties.data;
 			arrayProp.insertRange(0, [1, 2, 3]);
 			expect(arrayProp.get(2)).to.equal(3);
 			arrayProp.setValues([13, 14]);
 			expect(arrayProp.get(0)).to.equal(13);
-			var incorrectFn = function () {
+			var incorrectFn = () => {
 				arrayProp.get(2);
 			};
 			expect(incorrectFn).to.throw();
 		});
 
-		it("setValues should work to overwrite part of the array", function () {
-			var myArrayProp = PropertyFactory.create("autodesk.test:test.dynamicArray-1.0.0")
-				._properties.data;
+		it("setValues should work to overwrite part of the array", () => {
+			var myArrayProp = PropertyFactory.create(
+				"autodesk.test:test.dynamicArray-1.0.0",
+			)._properties.data;
 			myArrayProp.insertRange(0, [1, 2, 3]);
 			expect(myArrayProp.get(2)).to.equal(3);
 
@@ -786,41 +881,42 @@ describe("ArrayProperty", function () {
 				1: 12,
 			});
 			expect(myArrayProp.get(0)).to.equal(11);
-			var correctFn = function () {
+			var correctFn = () => {
 				myArrayProp.get(2);
 			};
 			expect(correctFn).to.not.throw();
 			expect(myArrayProp.get(2)).to.equal(3);
 		});
 
-		it(".shift should remove the first element of the array and return that element", function () {
+		it(".shift should remove the first element of the array and return that element", () => {
 			myPrimitiveArray.insertRange(0, [1, 2, 3, 4]);
 			expect(myPrimitiveArray.shift()).to.equal(1);
 			expect(myPrimitiveArray.getValues()).to.deep.equal([2, 3, 4]);
 		});
 
-		it(".unshift should add a value to the beginning of the array and return the new length", function () {
+		it(".unshift should add a value to the beginning of the array and return the new length", () => {
 			myPrimitiveArray.insertRange(0, [1, 2, 3, 4]);
 			myPrimitiveArray.unshift(5);
 			expect(myPrimitiveArray.unshift(13)).to.equal(6);
 			expect(myPrimitiveArray.getValues()).to.deep.equal([13, 5, 1, 2, 3, 4]);
 		});
 
-		afterEach(function () {
+		afterEach(() => {
 			myPrimitiveArray.clear();
 		});
 	});
 
-	describe("testing specific types of arrays", function () {
-		it("should support boolean arrays", function () {
-			var myBoolArray = PropertyFactory.create("autodesk.test:test.arraybool-1.0.0")
-				._properties.data;
+	describe("testing specific types of arrays", () => {
+		it("should support boolean arrays", () => {
+			var myBoolArray = PropertyFactory.create(
+				"autodesk.test:test.arraybool-1.0.0",
+			)._properties.data;
 			expect(myBoolArray.length).to.equal(3);
 
 			expect(myBoolArray.get(0)).to.equal(false);
 			expect(myBoolArray.get(1)).to.equal(false);
 			expect(myBoolArray.get(2)).to.equal(false);
-			expect(function () {
+			expect(() => {
 				myBoolArray.get(3);
 			}).to.throw(Error);
 
@@ -838,43 +934,61 @@ describe("ArrayProperty", function () {
 			expect(myBoolArray.get(0)).to.equal(true);
 		});
 
-		it(".set and .get should convert float index to int", function () {
-			var myArray = PropertyFactory.create("String", "array", ["item 0", "item 1", "item 2"]);
+		it(".set and .get should convert float index to int", () => {
+			var myArray = PropertyFactory.create("String", "array", [
+				"item 0",
+				"item 1",
+				"item 2",
+			]);
 			myArray.set(1.2, "item 1.2");
 			expect(myArray.getLength()).to.equal(3);
 			expect(myArray.get(1.6)).to.equal("item 1.2");
 		});
 
-		it(".set and .get should convert string index to int", function () {
-			var myArray = PropertyFactory.create("String", "array", ["item 0", "item 1", "item 2"]);
+		it(".set and .get should convert string index to int", () => {
+			var myArray = PropertyFactory.create("String", "array", [
+				"item 0",
+				"item 1",
+				"item 2",
+			]);
 			myArray.set("0.3", "item 0.3");
 			expect(myArray.getLength()).to.equal(3);
 			expect(myArray.get("0.6")).to.equal("item 0.3");
 		});
 
-		it(".set and .get should reject float index that cannot be converted to int", function () {
-			var myArray = PropertyFactory.create("String", "array", ["item 0", "item 1", "item 2"]);
+		it(".set and .get should reject float index that cannot be converted to int", () => {
+			var myArray = PropertyFactory.create("String", "array", [
+				"item 0",
+				"item 1",
+				"item 2",
+			]);
 			expect(() => myArray.set(Infinity, "item infinity")).to.throw(
 				MSG.NOT_NUMBER + "in_offset, method: ArrayProperty.setRange or .set",
 			);
 			expect(() => myArray.get(NaN)).to.throw(MSG.IN_POSITION_MUST_BE_NUMBER);
 		});
 
-		it(".set and .get should reject string index that can not be converted to int", function () {
-			var myArray = PropertyFactory.create("String", "array", ["item 0", "item 1", "item 2"]);
+		it(".set and .get should reject string index that can not be converted to int", () => {
+			var myArray = PropertyFactory.create("String", "array", [
+				"item 0",
+				"item 1",
+				"item 2",
+			]);
 			expect(() => myArray.set("2abc", "item 2abc")).to.throw(
 				MSG.NOT_NUMBER + "in_offset, method: ArrayProperty.setRange or .set",
 			);
-			expect(() => myArray.get("2abc")).to.throw(MSG.IN_POSITION_MUST_BE_NUMBER);
+			expect(() => myArray.get("2abc")).to.throw(
+				MSG.IN_POSITION_MUST_BE_NUMBER,
+			);
 		});
 	});
 
-	describe("Checking the generalized squash function of ArrayProperty", function () {
-		it("should be squashed to the expected changeset", function (done) {
+	describe("Checking the generalized squash function of ArrayProperty", () => {
+		it("should be squashed to the expected changeset", (done) => {
 			var error;
 			try {
-				arrayProp = PropertyFactory.create("autodesk.tests:ArrayTestID-1.0.0")._properties
-					.MyArray;
+				arrayProp = PropertyFactory.create("autodesk.tests:ArrayTestID-1.0.0")
+					._properties.MyArray;
 
 				arrayProp.applyChangeSet({
 					insert: [[0, [0, 0]]],
@@ -917,7 +1031,7 @@ describe("ArrayProperty", function () {
 			}
 		});
 
-		it("Merging of reversible modifications", function () {
+		it("Merging of reversible modifications", () => {
 			var base = {
 				"array<Float32>": {
 					value: {
@@ -947,10 +1061,12 @@ describe("ArrayProperty", function () {
 				const random = new DeterministicRandomGenerator(j);
 
 				try {
-					arrayProp = PropertyFactory.create("autodesk.tests:ArrayTestID-1.0.0")._properties
-						.MyArray;
+					arrayProp = PropertyFactory.create("autodesk.tests:ArrayTestID-1.0.0")
+						._properties.MyArray;
 
-					arrayProp.applyChangeSet({ insert: [[0, [1, 2, 3, 4, 5, 6, 7, 8, 9]]] });
+					arrayProp.applyChangeSet({
+						insert: [[0, [1, 2, 3, 4, 5, 6, 7, 8, 9]]],
+					});
 					arrayProp.cleanDirty();
 					var currentArrayLength;
 
@@ -960,7 +1076,8 @@ describe("ArrayProperty", function () {
 						var opOffset = 0;
 
 						if (currentArrayLength > 0) {
-							nextOpType = possibleChanges[Math.floor(random.random() * 2.999999)];
+							nextOpType =
+								possibleChanges[Math.floor(random.random() * 2.999999)];
 							opOffset = Math.min(
 								Math.floor(random.random() * currentArrayLength),
 								currentArrayLength - 1,
@@ -985,7 +1102,10 @@ describe("ArrayProperty", function () {
 								nextChangeset[nextOpType] = [];
 								nextChangeset[nextOpType].push([
 									opOffset,
-									getRandomNumbersArray(Math.floor(random.random() * 4 + 1), random),
+									getRandomNumbersArray(
+										Math.floor(random.random() * 4 + 1),
+										random,
+									),
 								]);
 								break;
 							}
@@ -993,7 +1113,10 @@ describe("ArrayProperty", function () {
 								nextChangeset[nextOpType] = [
 									[
 										opOffset,
-										getRandomNumbersArray(Math.min(random.random() * 2 + 1, opLength), random),
+										getRandomNumbersArray(
+											Math.min(random.random() * 2 + 1, opLength),
+											random,
+										),
 									],
 								];
 								break;
@@ -1002,8 +1125,9 @@ describe("ArrayProperty", function () {
 						}
 						arrayProp.applyChangeSet(nextChangeset);
 
-						var arrayPropTest = PropertyFactory.create("autodesk.tests:ArrayTestID-1.0.0")
-							._properties.MyArray;
+						var arrayPropTest = PropertyFactory.create(
+							"autodesk.tests:ArrayTestID-1.0.0",
+						)._properties.MyArray;
 						arrayPropTest.applyChangeSet({
 							insert: [[0, [1, 2, 3, 4, 5, 6, 7, 8, 9]]],
 						});
@@ -1033,18 +1157,19 @@ describe("ArrayProperty", function () {
 		});
 	});
 
-	describe("Fixed Size arrays", function () {
+	describe("Fixed Size arrays", () => {
 		// Should throw an exception when you create a primitive type and try to add it to an array
 		// that takes values of that primitive type
-		it("should support fixed size arrays for a primitive type", function () {
-			var myFloatArray = PropertyFactory.create("autodesk.test:test.arrayfloat32-1.0.0")
-				._properties.data;
+		it("should support fixed size arrays for a primitive type", () => {
+			var myFloatArray = PropertyFactory.create(
+				"autodesk.test:test.arrayfloat32-1.0.0",
+			)._properties.data;
 
 			expect(myFloatArray.length).to.equal(3);
 			expect(myFloatArray.get(0)).to.equal(0);
 			expect(myFloatArray.get(1)).to.equal(0);
 			expect(myFloatArray.get(2)).to.equal(0);
-			expect(function () {
+			expect(() => {
 				myFloatArray.get(3);
 			}).to.throw(Error);
 
@@ -1057,15 +1182,16 @@ describe("ArrayProperty", function () {
 			// expect(function() { myFloatArray.removeRange(0,1);}).to.throw(Error);
 		});
 
-		it("should support fixed size arrays for a primitive type", function () {
-			var myStringArray = PropertyFactory.create("autodesk.test:test.arraystring-1.0.0")
-				._properties.data;
+		it("should support fixed size arrays for a primitive type", () => {
+			var myStringArray = PropertyFactory.create(
+				"autodesk.test:test.arraystring-1.0.0",
+			)._properties.data;
 
 			expect(myStringArray.length).to.equal(3);
 			expect(myStringArray.get(0)).to.equal("");
 			expect(myStringArray.get(1)).to.equal("");
 			expect(myStringArray.get(2)).to.equal("");
-			expect(function () {
+			expect(() => {
 				myStringArray.get(3);
 			}).to.throw(Error);
 
@@ -1078,15 +1204,16 @@ describe("ArrayProperty", function () {
 			// expect(function() { myFloatArray.removeRange(0,1);}).to.throw(Error);
 		});
 
-		it("should support fixed size arrays for a complex type", function () {
-			var myCustomArray = PropertyFactory.create("autodesk.test:test.customarray-1.0.0")
-				._properties.data;
+		it("should support fixed size arrays for a complex type", () => {
+			var myCustomArray = PropertyFactory.create(
+				"autodesk.test:test.customarray-1.0.0",
+			)._properties.data;
 
 			expect(myCustomArray.length).to.equal(3);
 			expect(myCustomArray.get(0)).to.be.instanceof(BaseProperty);
 			expect(myCustomArray.get(1)).to.be.instanceof(BaseProperty);
 			expect(myCustomArray.get(2)).to.be.instanceof(BaseProperty);
-			expect(function () {
+			expect(() => {
 				myCustomArray.get(3);
 			}).to.throw(Error);
 
@@ -1102,12 +1229,12 @@ describe("ArrayProperty", function () {
 		});
 	});
 
-	describe("Checking normalized changeset ability of ArrayProperty", function () {
-		it("should be equal to the expected value", function (done) {
+	describe("Checking normalized changeset ability of ArrayProperty", () => {
+		it("should be equal to the expected value", (done) => {
 			var error;
 			try {
-				arrayProp = PropertyFactory.create("autodesk.tests:ArrayTestID-1.0.0")._properties
-					.MyArray;
+				arrayProp = PropertyFactory.create("autodesk.tests:ArrayTestID-1.0.0")
+					._properties.MyArray;
 
 				arrayProp.applyChangeSet({ insert: [[0, [0, 0]]] });
 				arrayProp.applyChangeSet({ insert: [[1, [2, 3, 4, 5, 6, 7, 8, 9]]] });
@@ -1128,11 +1255,11 @@ describe("ArrayProperty", function () {
 			}
 		});
 
-		it("[random numbers test] - the resulting insert should be equal to the data array", function (done) {
+		it("[random numbers test] - the resulting insert should be equal to the data array", (done) => {
 			var error;
 			try {
-				arrayProp = PropertyFactory.create("autodesk.tests:ArrayTestID-1.0.0")._properties
-					.MyArray;
+				arrayProp = PropertyFactory.create("autodesk.tests:ArrayTestID-1.0.0")
+					._properties.MyArray;
 				var currentArrayLength = 0;
 				const random = new DeterministicRandomGenerator(0);
 
@@ -1143,11 +1270,16 @@ describe("ArrayProperty", function () {
 
 					if (currentArrayLength > 0) {
 						nextOpType = possibleChanges[Math.floor(Math.random() * 2.999999)];
-						opOffset = Math.floor(Math.random() * (currentArrayLength - 0.000001));
+						opOffset = Math.floor(
+							Math.random() * (currentArrayLength - 0.000001),
+						);
 					}
 
 					var opLength =
-						1 + Math.floor(Math.random() * (currentArrayLength - opOffset - 0.0001));
+						1 +
+						Math.floor(
+							Math.random() * (currentArrayLength - opOffset - 0.0001),
+						);
 					if (opLength < 1) {
 						opLength = 1;
 					}
@@ -1163,7 +1295,10 @@ describe("ArrayProperty", function () {
 							nextChangeset[nextOpType] = [];
 							nextChangeset[nextOpType].push([
 								opOffset,
-								getRandomNumbersArray(Math.floor(Math.random() * 4 + 1), random),
+								getRandomNumbersArray(
+									Math.floor(Math.random() * 4 + 1),
+									random,
+								),
 							]);
 							break;
 						}
@@ -1194,8 +1329,12 @@ describe("ArrayProperty", function () {
 		});
 	});
 
-	describe("Checking deserialization", function () {
-		var runDeserializationTests = function (testArrayOperation, testArray, primitiveProperty) {
+	describe("Checking deserialization", () => {
+		var runDeserializationTests = (
+			testArrayOperation,
+			testArray,
+			primitiveProperty,
+		) => {
 			// Serialization into an empty array
 			var values = ["test1", "test2"];
 			testArrayOperation(values, { insert: [[0, values]] });
@@ -1235,11 +1374,13 @@ describe("ArrayProperty", function () {
 			testArrayOperation(values, {});
 		};
 
-		it("of a primitive array property", function () {
+		it("of a primitive array property", () => {
 			var stringArray = PropertyFactory.create("String", "array");
 
-			var testArrayOperation = function (values, expectedChangeSet) {
-				stringArray.deserialize(values.length !== 0 ? { insert: [[0, values]] } : {});
+			var testArrayOperation = (values, expectedChangeSet) => {
+				stringArray.deserialize(
+					values.length !== 0 ? { insert: [[0, values]] } : {},
+				);
 				expect(stringArray.getEntriesReadOnly()).to.deep.equal(values);
 				expect(
 					stringArray.serialize({
@@ -1258,21 +1399,21 @@ describe("ArrayProperty", function () {
 			runDeserializationTests(testArrayOperation, stringArray, true);
 		});
 
-		it("of a custom type array", function () {
-			var testArray = PropertyFactory.create("autodesk.test:test.string-1.0.0", "array");
+		it("of a custom type array", () => {
+			var testArray = PropertyFactory.create(
+				"autodesk.test:test.string-1.0.0",
+				"array",
+			);
 
-			var mapStringsToCustomType = function (strings) {
-				return strings.map(function (x) {
-					return {
-						String: {
-							data: x,
-						},
-						typeid: "autodesk.test:test.string-1.0.0",
-					};
-				});
-			};
+			var mapStringsToCustomType = (strings) =>
+				strings.map((x) => ({
+					String: {
+						data: x,
+					},
+					typeid: "autodesk.test:test.string-1.0.0",
+				}));
 
-			var testArrayOperation = function (values, expectedChangeSet) {
+			var testArrayOperation = (values, expectedChangeSet) => {
 				testArray.deserialize(
 					values.length !== 0
 						? {
@@ -1281,9 +1422,7 @@ describe("ArrayProperty", function () {
 						: {},
 				);
 				expect(
-					testArray.getEntriesReadOnly().map(function (x) {
-						return x.get("data").getValue();
-					}),
+					testArray.getEntriesReadOnly().map((x) => x.get("data").getValue()),
 				).to.deep.equal(values);
 
 				if (expectedChangeSet.insert) {
@@ -1310,21 +1449,25 @@ describe("ArrayProperty", function () {
 		});
 	});
 
-	describe("Checking rebasing of an ArrayProperty", function () {
-		it("a remove-modify should be correctly rebased to the given changeset and cause conflicts", function (done) {
+	describe("Checking rebasing of an ArrayProperty", () => {
+		it("a remove-modify should be correctly rebased to the given changeset and cause conflicts", (done) => {
 			var error;
 			try {
-				arrayProp = PropertyFactory.create("autodesk.tests:ArrayTestID-1.0.0")._properties
-					.MyArray;
+				arrayProp = PropertyFactory.create("autodesk.tests:ArrayTestID-1.0.0")
+					._properties.MyArray;
 
-				var arrayProp1 = PropertyFactory.create("autodesk.tests:ArrayTestID-1.0.0");
+				var arrayProp1 = PropertyFactory.create(
+					"autodesk.tests:ArrayTestID-1.0.0",
+				);
 				// prepare initial state
 				arrayProp1._properties.MyArray.applyChangeSet({
 					insert: [[0, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]]],
 				});
 
 				// create a copy of this state
-				var arrayProp2 = PropertyFactory.create("autodesk.tests:ArrayTestID-1.0.0");
+				var arrayProp2 = PropertyFactory.create(
+					"autodesk.tests:ArrayTestID-1.0.0",
+				);
 				arrayProp2.deserialize(arrayProp1._serialize(false));
 
 				// make sure the states are clear
@@ -1392,10 +1535,14 @@ describe("ArrayProperty", function () {
 			}
 		});
 
-		it("@bugfix ensure existing properties are unparented during deserialization", function () {
+		it("@bugfix ensure existing properties are unparented during deserialization", () => {
 			// Bug caused by deserialization during rebase
-			arrayProp = PropertyFactory.create(TestDynamicLengthNonPrimitiveArray.typeid);
-			const customProp = PropertyFactory.create("autodesk.test:test.string-1.0.0");
+			arrayProp = PropertyFactory.create(
+				TestDynamicLengthNonPrimitiveArray.typeid,
+			);
+			const customProp = PropertyFactory.create(
+				"autodesk.test:test.string-1.0.0",
+			);
 			arrayProp.get("data").push(customProp);
 
 			const state = arrayProp._serialize(false);
@@ -1410,10 +1557,15 @@ describe("ArrayProperty", function () {
 			expect(customProp.getParent()).to.equal(undefined);
 		});
 
-		it("rebase of independent modifies in array", function () {
-			var arrayObj = PropertyFactory.create("autodesk.tests:Complex3Array-1.0.0");
+		it("rebase of independent modifies in array", () => {
+			var arrayObj = PropertyFactory.create(
+				"autodesk.tests:Complex3Array-1.0.0",
+			);
 			var arrayProperty = arrayObj.get("myarray");
-			arrayProperty.insert(0, PropertyFactory.create("autodesk.tests:ComplexProp3-1.0.0"));
+			arrayProperty.insert(
+				0,
+				PropertyFactory.create("autodesk.tests:ComplexProp3-1.0.0"),
+			);
 			arrayObj.cleanDirty();
 
 			// Create the first change
@@ -1437,9 +1589,11 @@ describe("ArrayProperty", function () {
 		// TODO: add more rebase tests here!
 	});
 
-	describe("Using prettyPrint()", function () {
-		it("should output a pretty string with number items", function () {
-			var property = PropertyFactory.create("autodesk.test:test.arrayfloat32-1.0.0");
+	describe("Using prettyPrint()", () => {
+		it("should output a pretty string with number items", () => {
+			var property = PropertyFactory.create(
+				"autodesk.test:test.arrayfloat32-1.0.0",
+			);
 			property.resolvePath("data").set(0, 4);
 			property.resolvePath("data").set(1, 5);
 			property.resolvePath("data").set(2, 6);
@@ -1451,14 +1605,16 @@ describe("ArrayProperty", function () {
 				"    2: 6\n" +
 				"  ]\n";
 			var prettyStr = "";
-			property.prettyPrint(function (str) {
+			property.prettyPrint((str) => {
 				prettyStr += str + "\n";
 			});
 			expect(prettyStr).to.equal(expectedPrettyStr);
 		});
 
-		it("should output a pretty string with string items", function () {
-			var property = PropertyFactory.create("autodesk.test:test.arraystring-1.0.0");
+		it("should output a pretty string with string items", () => {
+			var property = PropertyFactory.create(
+				"autodesk.test:test.arraystring-1.0.0",
+			);
 			var expectedPrettyStr =
 				"undefined (autodesk.test:test.arraystring-1.0.0):\n" +
 				"  data (Array of String): [\n" +
@@ -1467,14 +1623,16 @@ describe("ArrayProperty", function () {
 				'    2: ""\n' +
 				"  ]\n";
 			var prettyStr = "";
-			property.prettyPrint(function (str) {
+			property.prettyPrint((str) => {
 				prettyStr += str + "\n";
 			});
 			expect(prettyStr).to.equal(expectedPrettyStr);
 		});
 
-		it("should output a pretty string with custom items", function () {
-			var property = PropertyFactory.create("autodesk.test:test.customarray-1.0.0");
+		it("should output a pretty string with custom items", () => {
+			var property = PropertyFactory.create(
+				"autodesk.test:test.customarray-1.0.0",
+			);
 			var expectedPrettyStr =
 				"undefined (autodesk.test:test.customarray-1.0.0):\n" +
 				"  data (Array of autodesk.test:test.string-1.0.0): [\n" +
@@ -1486,21 +1644,21 @@ describe("ArrayProperty", function () {
 				'      data (String): ""\n' +
 				"  ]\n";
 			var prettyStr = "";
-			property.prettyPrint(function (str) {
+			property.prettyPrint((str) => {
 				prettyStr += str + "\n";
 			});
 			expect(prettyStr).to.equal(expectedPrettyStr);
 		});
 	});
 
-	it("should push", function () {
+	it("should push", () => {
 		var array = PropertyFactory.create("String", "array", [0, 1, 2]);
 		array.push(3);
 		array.getLength().should.equal(4);
 		array.push([4, 5]);
 		array.getLength().should.equal(6);
 	});
-	it("should pop", function () {
+	it("should pop", () => {
 		var array = PropertyFactory.create("String", "array", [0, 1, 2]);
 		var element = array.pop();
 		element.should.equal(2);
@@ -1509,7 +1667,7 @@ describe("ArrayProperty", function () {
 	});
 	// there is no .shiftValue
 	// should replace the value with a property
-	it.skip("should shift", function () {
+	it.skip("should shift", () => {
 		var array = PropertyFactory.create("String", "array", [0, 1, 2]);
 		var element = array.shift();
 		element.should.equal(0);
@@ -1519,7 +1677,7 @@ describe("ArrayProperty", function () {
 	});
 	// there is no .unshiftValue
 	// should replace the value with a property
-	it.skip("should unshift", function () {
+	it.skip("should unshift", () => {
 		var array = PropertyFactory.create("String", "array", [0, 1, 2]);
 		array.unshift(3);
 		array.getLength().should.equal(4);
@@ -1527,15 +1685,16 @@ describe("ArrayProperty", function () {
 		array.getLength().should.equal(6);
 	});
 
-	it("should support boolean arrays", function () {
-		var myBoolArray = PropertyFactory.create("autodesk.test:test.arraybool-1.0.0")._properties
-			.data;
+	it("should support boolean arrays", () => {
+		var myBoolArray = PropertyFactory.create(
+			"autodesk.test:test.arraybool-1.0.0",
+		)._properties.data;
 		expect(myBoolArray.length).to.equal(3);
 
 		expect(myBoolArray.get(0)).to.equal(false);
 		expect(myBoolArray.get(1)).to.equal(false);
 		expect(myBoolArray.get(2)).to.equal(false);
-		expect(function () {
+		expect(() => {
 			myBoolArray.get(3);
 		}).to.throw(Error);
 
@@ -1553,75 +1712,147 @@ describe("ArrayProperty", function () {
 		expect(myBoolArray.get(0)).to.equal(true);
 	});
 
-	it(".set and .get should convert float index to int", function () {
-		var myArray = PropertyFactory.create("autodesk.test:test.string-1.0.0", "array");
-		var prop0 = PropertyFactory.create("autodesk.test:test.string-1.0.0", "single", {
-			data: "item 0",
-		});
-		var prop1 = PropertyFactory.create("autodesk.test:test.string-1.0.0", "single", {
-			data: "item 1",
-		});
-		var prop2 = PropertyFactory.create("autodesk.test:test.string-1.0.0", "single", {
-			data: "item 2",
-		});
+	it(".set and .get should convert float index to int", () => {
+		var myArray = PropertyFactory.create(
+			"autodesk.test:test.string-1.0.0",
+			"array",
+		);
+		var prop0 = PropertyFactory.create(
+			"autodesk.test:test.string-1.0.0",
+			"single",
+			{
+				data: "item 0",
+			},
+		);
+		var prop1 = PropertyFactory.create(
+			"autodesk.test:test.string-1.0.0",
+			"single",
+			{
+				data: "item 1",
+			},
+		);
+		var prop2 = PropertyFactory.create(
+			"autodesk.test:test.string-1.0.0",
+			"single",
+			{
+				data: "item 2",
+			},
+		);
 		myArray.insertRange(0, [prop0, prop1, prop2]);
-		var prop1_2 = PropertyFactory.create("autodesk.test:test.string-1.0.0", "single", {
-			data: "item 1.2",
-		});
+		var prop1_2 = PropertyFactory.create(
+			"autodesk.test:test.string-1.0.0",
+			"single",
+			{
+				data: "item 1.2",
+			},
+		);
 		myArray.set(1.2, prop1_2);
 		expect(myArray.getLength()).to.equal(3);
 		expect(myArray.get(1.6)).to.equal(prop1_2);
 	});
 
-	it(".set and .get should convert string index to int", function () {
-		var myArray = PropertyFactory.create("autodesk.test:test.string-1.0.0", "array");
-		var prop0 = PropertyFactory.create("autodesk.test:test.string-1.0.0", "single", {
-			data: "item 0",
-		});
-		var prop1 = PropertyFactory.create("autodesk.test:test.string-1.0.0", "single", {
-			data: "item 1",
-		});
-		var prop2 = PropertyFactory.create("autodesk.test:test.string-1.0.0", "single", {
-			data: "item 2",
-		});
+	it(".set and .get should convert string index to int", () => {
+		var myArray = PropertyFactory.create(
+			"autodesk.test:test.string-1.0.0",
+			"array",
+		);
+		var prop0 = PropertyFactory.create(
+			"autodesk.test:test.string-1.0.0",
+			"single",
+			{
+				data: "item 0",
+			},
+		);
+		var prop1 = PropertyFactory.create(
+			"autodesk.test:test.string-1.0.0",
+			"single",
+			{
+				data: "item 1",
+			},
+		);
+		var prop2 = PropertyFactory.create(
+			"autodesk.test:test.string-1.0.0",
+			"single",
+			{
+				data: "item 2",
+			},
+		);
 		myArray.insertRange(0, [prop0, prop1, prop2]);
-		var prop0_3 = PropertyFactory.create("autodesk.test:test.string-1.0.0", "single", {
-			data: "item 0.3",
-		});
+		var prop0_3 = PropertyFactory.create(
+			"autodesk.test:test.string-1.0.0",
+			"single",
+			{
+				data: "item 0.3",
+			},
+		);
 		myArray.set("0.3", prop0_3);
 		expect(myArray.getLength()).to.equal(3);
 		expect(myArray.get("0.6")).to.equal(prop0_3);
 	});
 
-	it(".set and .get should reject float index that cannot be converted to int", function () {
-		var myArray = PropertyFactory.create("autodesk.test:test.string-1.0.0", "array");
-		var prop0 = PropertyFactory.create("autodesk.test:test.string-1.0.0", "single", {
-			data: "item 0",
-		});
-		var prop1 = PropertyFactory.create("autodesk.test:test.string-1.0.0", "single", {
-			data: "item 1",
-		});
-		var prop2 = PropertyFactory.create("autodesk.test:test.string-1.0.0", "single", {
-			data: "item 2",
-		});
+	it(".set and .get should reject float index that cannot be converted to int", () => {
+		var myArray = PropertyFactory.create(
+			"autodesk.test:test.string-1.0.0",
+			"array",
+		);
+		var prop0 = PropertyFactory.create(
+			"autodesk.test:test.string-1.0.0",
+			"single",
+			{
+				data: "item 0",
+			},
+		);
+		var prop1 = PropertyFactory.create(
+			"autodesk.test:test.string-1.0.0",
+			"single",
+			{
+				data: "item 1",
+			},
+		);
+		var prop2 = PropertyFactory.create(
+			"autodesk.test:test.string-1.0.0",
+			"single",
+			{
+				data: "item 2",
+			},
+		);
 		myArray.insertRange(0, [prop0, prop1, prop2]);
-		expect(() => myArray.set(Infinity, prop0)).to.throw(MSG.NOT_NUMBER + "in_offset");
+		expect(() => myArray.set(Infinity, prop0)).to.throw(
+			MSG.NOT_NUMBER + "in_offset",
+		);
 		expect(() => myArray.get(NaN)).to.throw(MSG.IN_POSITION_MUST_BE_NUMBER);
 	});
 
-	it(".setValue and .getValue should reject string index that can not be converted to int", function () {
-		var myArray = PropertyFactory.create("autodesk.test:test.string-1.0.0", "array");
-		var prop0 = PropertyFactory.create("autodesk.test:test.string-1.0.0", "single", {
-			data: "item 0",
-		});
-		var prop1 = PropertyFactory.create("autodesk.test:test.string-1.0.0", "single", {
-			data: "item 1",
-		});
-		var prop2 = PropertyFactory.create("autodesk.test:test.string-1.0.0", "single", {
-			data: "item 2",
-		});
+	it(".setValue and .getValue should reject string index that can not be converted to int", () => {
+		var myArray = PropertyFactory.create(
+			"autodesk.test:test.string-1.0.0",
+			"array",
+		);
+		var prop0 = PropertyFactory.create(
+			"autodesk.test:test.string-1.0.0",
+			"single",
+			{
+				data: "item 0",
+			},
+		);
+		var prop1 = PropertyFactory.create(
+			"autodesk.test:test.string-1.0.0",
+			"single",
+			{
+				data: "item 1",
+			},
+		);
+		var prop2 = PropertyFactory.create(
+			"autodesk.test:test.string-1.0.0",
+			"single",
+			{
+				data: "item 2",
+			},
+		);
 		myArray.insertRange(0, [prop0, prop1, prop2]);
-		expect(() => myArray.set("2abc", prop0)).to.throw(MSG.NOT_NUMBER + "in_offset");
+		expect(() => myArray.set("2abc", prop0)).to.throw(
+			MSG.NOT_NUMBER + "in_offset",
+		);
 		expect(() => myArray.get("2abc")).to.throw(MSG.IN_POSITION_MUST_BE_NUMBER);
 	});
 });

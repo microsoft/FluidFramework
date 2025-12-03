@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import {
 	asLegacyAlpha,
 	createDetachedContainer,
@@ -12,7 +10,8 @@ import {
 	PendingLocalStateStore,
 } from "@fluidframework/container-loader/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { ITestFluidObject } from "@fluidframework/test-utils/internal";
+import type { ITestFluidObject } from "@fluidframework/test-utils/internal";
+import { strict as assert } from "assert";
 
 import { createLoader } from "../utils.js";
 
@@ -33,7 +32,8 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 			}),
 		);
 
-		const testFluidObject = (await container.getEntryPoint()) as ITestFluidObject;
+		const testFluidObject =
+			(await container.getEntryPoint()) as ITestFluidObject;
 		assert(
 			testFluidObject !== undefined,
 			"Expected entrypoint to be a valid ITestFluidObject",
@@ -53,8 +53,13 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 			const store = new PendingLocalStateStore<string>();
 
 			// Create container and add data
-			const { container, testFluidObject, urlResolver, codeLoader, loaderProps } =
-				await initializeContainer();
+			const {
+				container,
+				testFluidObject,
+				urlResolver,
+				codeLoader,
+				loaderProps,
+			} = await initializeContainer();
 
 			// Add data in detached state
 			testFluidObject.root.set("detached-key1", "detached-value1");
@@ -81,7 +86,11 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 			store.set("session2", pendingState2);
 
 			// Verify store contains both states (should deduplicate to same URL)
-			assert.strictEqual(store.size, 2, "Store should contain 2 session states");
+			assert.strictEqual(
+				store.size,
+				2,
+				"Store should contain 2 session states",
+			);
 			assert(store.has("session1"), "Store should contain session1");
 			assert(store.has("session2"), "Store should contain session2");
 
@@ -97,7 +106,8 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 				pendingLocalState: storedState,
 			});
 
-			const restoredTestObj = (await frozenContainer.getEntryPoint()) as ITestFluidObject;
+			const restoredTestObj =
+				(await frozenContainer.getEntryPoint()) as ITestFluidObject;
 			assert(
 				restoredTestObj !== undefined,
 				"Expected restored container to have valid entrypoint",
@@ -135,8 +145,13 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 			const store = new PendingLocalStateStore<string>();
 
 			// Create container with initial data
-			const { container, testFluidObject, urlResolver, codeLoader, loaderProps } =
-				await initializeContainer();
+			const {
+				container,
+				testFluidObject,
+				urlResolver,
+				codeLoader,
+				loaderProps,
+			} = await initializeContainer();
 
 			// Add initial data
 			testFluidObject.root.set("shared-key", "initial-value");
@@ -171,7 +186,10 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 
 			// Restore and verify deduplication worked correctly
 			const restoredState = store.get("dedup-session2");
-			assert(restoredState !== undefined, "Should retrieve dedup-session2 state");
+			assert(
+				restoredState !== undefined,
+				"Should retrieve dedup-session2 state",
+			);
 
 			const restoredContainer = await loadFrozenContainerFromPendingState({
 				codeLoader,
@@ -181,7 +199,8 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 				pendingLocalState: restoredState,
 			});
 
-			const restoredTestObj = (await restoredContainer.getEntryPoint()) as ITestFluidObject;
+			const restoredTestObj =
+				(await restoredContainer.getEntryPoint()) as ITestFluidObject;
 			assert(
 				restoredTestObj !== undefined,
 				"Expected restored container to have valid entrypoint",
@@ -211,7 +230,8 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 			const store = new PendingLocalStateStore<string>();
 
 			// Create container and simulate multiple sessions/snapshots for the same container
-			const { container, testFluidObject, urlResolver } = await initializeContainer();
+			const { container, testFluidObject, urlResolver } =
+				await initializeContainer();
 
 			// Attach to get a consistent URL
 			await container.attach(urlResolver.createCreateNewRequest("test-doc"));
@@ -231,7 +251,11 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 			// Test selective cleanup
 			store.delete("session-0");
 			store.delete("session-1");
-			assert.strictEqual(store.size, 3, "Store should contain 3 sessions after deletion");
+			assert.strictEqual(
+				store.size,
+				3,
+				"Store should contain 3 sessions after deletion",
+			);
 			assert(!store.has("session-0"), "session-0 should be deleted");
 			assert(!store.has("session-1"), "session-1 should be deleted");
 			assert(store.has("session-2"), "session-2 should still exist");
@@ -253,7 +277,11 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 			}
 
 			assert.strictEqual(keys.length, 0, "Keys iterator should be empty");
-			assert.strictEqual(entriesArray.length, 0, "Entries iterator should be empty");
+			assert.strictEqual(
+				entriesArray.length,
+				0,
+				"Entries iterator should be empty",
+			);
 		});
 	});
 });

@@ -24,11 +24,11 @@ import { applyAgentEdit } from "../../explicit-strategy/agentEditReducer.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { IdGenerator } from "../../explicit-strategy/idGenerator.js";
 import {
+	type EditLog,
 	getEditingSystemPrompt,
 	getPlanningSystemPrompt,
 	getReviewSystemPrompt,
 	toDecoratedJson,
-	type EditLog,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../explicit-strategy/promptGeneration.js";
 
@@ -87,7 +87,8 @@ describe("Prompt Generation Regression Tests", () => {
 		idGenerator = new IdGenerator();
 	});
 
-	const userAsk = "Change the completed to false for the first task and create a new edit";
+	const userAsk =
+		"Change the completed to false for the first task and create a new edit";
 	const systemRoleContext = "You're a helpful AI assistant";
 	const plan =
 		"Change the completed field to false for the todo at index 0 in the list of todos";
@@ -96,12 +97,22 @@ describe("Prompt Generation Regression Tests", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestTodoAppSchema }));
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: TestTodoAppSchema }),
+		);
 		view.initialize(initialAppState);
 
-		const actualPrompt = getPlanningSystemPrompt(view.root, userAsk, systemRoleContext);
+		const actualPrompt = getPlanningSystemPrompt(
+			view.root,
+			userAsk,
+			systemRoleContext,
+		);
 
-		snapShotTester.expectToMatchSnapshot(this, actualPrompt, "Planning_System_Prompt");
+		snapShotTester.expectToMatchSnapshot(
+			this,
+			actualPrompt,
+			"Planning_System_Prompt",
+		);
 	});
 
 	it("Editing System Prompt with no plan and empty edit log has no regression", function (this: Mocha.Context) {
@@ -109,7 +120,9 @@ describe("Prompt Generation Regression Tests", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestTodoAppSchema }));
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: TestTodoAppSchema }),
+		);
 		view.initialize(initialAppState);
 
 		idGenerator.assignIds(view.root);
@@ -139,7 +152,9 @@ describe("Prompt Generation Regression Tests", () => {
 			childNodeProperty: TestTodoAppSchema,
 		}) {}
 
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestWrapperNode }));
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: TestWrapperNode }),
+		);
 
 		view.initialize({ childNodeProperty: initialAppState });
 
@@ -165,7 +180,9 @@ describe("Prompt Generation Regression Tests", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestTodoAppSchema }));
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: TestTodoAppSchema }),
+		);
 		view.initialize(initialAppState);
 
 		idGenerator.assignIds(view.root);
@@ -191,7 +208,9 @@ describe("Prompt Generation Regression Tests", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestTodoAppSchema }));
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: TestTodoAppSchema }),
+		);
 		view.initialize(initialAppState);
 
 		idGenerator.assignIds(view.root);
@@ -225,7 +244,11 @@ describe("Prompt Generation Regression Tests", () => {
 		const simpleSchema = getSimpleSchema(Tree.schema(view.root));
 		for (const editLogEntry of editLog) {
 			try {
-				applyAgentEdit(editLogEntry.edit, idGenerator, simpleSchema.definitions);
+				applyAgentEdit(
+					editLogEntry.edit,
+					idGenerator,
+					simpleSchema.definitions,
+				);
 			} catch (error) {
 				assert(error instanceof Error);
 				editLogEntry.error = error.message;
@@ -253,7 +276,9 @@ describe("Prompt Generation Regression Tests", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestTodoAppSchema }));
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: TestTodoAppSchema }),
+		);
 		view.initialize(initialAppState);
 
 		idGenerator.assignIds(view.root);
@@ -288,7 +313,11 @@ describe("Prompt Generation Regression Tests", () => {
 		const simpleSchema = getSimpleSchema(Tree.schema(view.root));
 		for (const editLogEntry of editLog) {
 			try {
-				applyAgentEdit(editLogEntry.edit, idGenerator, simpleSchema.definitions);
+				applyAgentEdit(
+					editLogEntry.edit,
+					idGenerator,
+					simpleSchema.definitions,
+				);
 			} catch (error) {
 				assert(error instanceof Error);
 				editLogEntry.error = error.message;
@@ -316,7 +345,9 @@ describe("Prompt Generation Regression Tests", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestTodoAppSchema }));
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: TestTodoAppSchema }),
+		);
 		view.initialize(initialAppState);
 
 		idGenerator.assignIds(view.root);
@@ -342,7 +373,9 @@ describe("Prompt Generation Regression Tests", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestTodoAppSchema }));
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: TestTodoAppSchema }),
+		);
 		view.initialize(initialAppState);
 
 		idGenerator.assignIds(view.root);
@@ -373,6 +406,10 @@ describe("Prompt Generation Regression Tests", () => {
 			systemRoleContext,
 		);
 
-		snapShotTester.expectToMatchSnapshot(this, actualPrompt, "Review_System_Prompt");
+		snapShotTester.expectToMatchSnapshot(
+			this,
+			actualPrompt,
+			"Review_System_Prompt",
+		);
 	});
 });

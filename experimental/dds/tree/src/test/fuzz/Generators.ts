@@ -5,24 +5,24 @@
 
 import { IsoBuffer } from '@fluid-internal/client-utils';
 import {
-	AcceptanceCondition,
-	AsyncGenerator,
-	AsyncWeights,
-	IRandom,
+	type AcceptanceCondition,
+	type AsyncGenerator,
+	type AsyncWeights,
 	createWeightedAsyncGenerator,
 	done,
+	type IRandom,
 	makeRandom,
 } from '@fluid-private/stochastic-test-utils';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
+import type { IFluidHandle } from '@fluidframework/core-interfaces';
 
-import { BuildNode, ChangeType, StablePlace, StableRange } from '../../ChangeTypes.js';
+import { type BuildNode, ChangeType, StablePlace, StableRange } from '../../ChangeTypes.js';
 import { fail } from '../../Common.js';
-import { Definition, DetachedSequenceId, NodeId, TraitLabel } from '../../Identifiers.js';
-import { TraitLocation, TreeView, TreeViewRange } from '../../TreeView.js';
+import type { Definition, DetachedSequenceId, NodeId, TraitLabel } from '../../Identifiers.js';
+import { Side, type TraitMap, WriteFormat } from '../../persisted-types/index.js';
+import type { TraitLocation, TreeView, TreeViewRange } from '../../TreeView.js';
 import { rangeFromStableRange } from '../../TreeViewUtilities.js';
-import { Side, TraitMap, WriteFormat } from '../../persisted-types/index.js';
 
-import {
+import type {
 	EditGenerationConfig,
 	FuzzChange,
 	FuzzDelete,

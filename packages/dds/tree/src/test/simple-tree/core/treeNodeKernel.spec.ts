@@ -4,8 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-
-import { SchemaFactory, TreeBeta, TreeViewConfiguration } from "../../../simple-tree/index.js";
+import { rootFieldKey, type UpPath } from "../../../core/index.js";
 import {
 	getKernel,
 	isTreeNode,
@@ -13,10 +12,13 @@ import {
 	// TODO: test other things from "treeNodeKernel" file.
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/treeNodeKernel.js";
-
-import { describeHydration, hydrate } from "../utils.js";
+import {
+	SchemaFactory,
+	TreeBeta,
+	TreeViewConfiguration,
+} from "../../../simple-tree/index.js";
 import { getView } from "../../utils.js";
-import { rootFieldKey, type UpPath } from "../../../core/index.js";
+import { describeHydration, hydrate } from "../utils.js";
 
 describe("simple-tree proxies", () => {
 	const sb = new SchemaFactory("test");
@@ -62,12 +64,18 @@ describe("simple-tree proxies", () => {
 
 	it(`Hydrate - ref counting - end to end`, () => {
 		const child = new ChildSchema({ content: 1 });
-		const path: UpPath = { parent: undefined, parentField: rootFieldKey, parentIndex: 0 };
+		const path: UpPath = {
+			parent: undefined,
+			parentField: rootFieldKey,
+			parentIndex: 0,
+		};
 
 		const kernel = getKernel(child);
 
 		const view = getView(
-			new TreeViewConfiguration({ schema: SchemaFactory.optional(ChildSchema) }),
+			new TreeViewConfiguration({
+				schema: SchemaFactory.optional(ChildSchema),
+			}),
 		);
 		view.initialize(undefined);
 
@@ -105,7 +113,9 @@ describe("withBufferedTreeEvents", () => {
 				const eventLog: string[] = [];
 
 				TreeBeta.on(myObject, "nodeChanged", ({ changedProperties }) => {
-					eventLog.push(`nodeChanged: ${JSON.stringify([...changedProperties.keys()])}`);
+					eventLog.push(
+						`nodeChanged: ${JSON.stringify([...changedProperties.keys()])}`,
+					);
 				});
 				TreeBeta.on(myObject, "treeChanged", () => {
 					eventLog.push("treeChanged");
@@ -118,7 +128,10 @@ describe("withBufferedTreeEvents", () => {
 					myObject.foo = "world";
 					assert.deepEqual(eventLog, []);
 				});
-				assert.deepEqual(eventLog, ['nodeChanged: ["foo","baz"]', "treeChanged"]);
+				assert.deepEqual(eventLog, [
+					'nodeChanged: ["foo","baz"]',
+					"treeChanged",
+				]);
 			});
 		},
 	);

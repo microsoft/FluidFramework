@@ -4,8 +4,11 @@
  */
 
 import { createEmitter } from "@fluid-internal/client-utils";
-import type { HasListeners, Listenable } from "@fluidframework/core-interfaces/internal";
-import { assert, oob, fail } from "@fluidframework/core-utils/internal";
+import type {
+	HasListeners,
+	Listenable,
+} from "@fluidframework/core-interfaces/internal";
+import { assert, fail, oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -24,9 +27,18 @@ import {
 	type Value,
 } from "../../core/index.js";
 import {
+	currentObserver,
+	cursorForMapTreeField,
+	cursorForMapTreeNode,
+	FieldKinds,
+	type FlexFieldKind,
+	type FlexibleFieldContent,
+	type FlexibleNodeContent,
 	type FlexTreeContext,
 	FlexTreeEntityKind,
 	type FlexTreeField,
+	type FlexTreeHydratedContext,
+	type FlexTreeHydratedContextMinimal,
 	type FlexTreeNode,
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
@@ -34,32 +46,30 @@ import {
 	type FlexTreeTypedField,
 	type FlexTreeUnknownUnboxed,
 	flexTreeMarker,
+	type HydratedFlexTreeNode,
 	indexForAt,
-	type FlexTreeHydratedContext,
-	type FlexFieldKind,
-	FieldKinds,
-	type SequenceFieldEditBuilder,
-	cursorForMapTreeNode,
-	type OptionalFieldEditBuilder,
-	type ValueFieldEditBuilder,
-	type FlexibleNodeContent,
-	type FlexTreeHydratedContextMinimal,
-	type FlexibleFieldContent,
 	type MapTreeFieldViewGeneric,
 	type MapTreeNodeViewGeneric,
-	type HydratedFlexTreeNode,
-	cursorForMapTreeField,
 	type MinimalFieldMap,
-	currentObserver,
+	type OptionalFieldEditBuilder,
+	type SequenceFieldEditBuilder,
+	type ValueFieldEditBuilder,
 } from "../../feature-libraries/index.js";
-import { brand, filterIterable, getOrCreate, mapIterable } from "../../util/index.js";
-
-import type { Context } from "./context.js";
+import {
+	brand,
+	filterIterable,
+	getOrCreate,
+	mapIterable,
+} from "../../util/index.js";
 import type { ContextualFieldProvider } from "../fieldSchema.js";
+import type { Context } from "./context.js";
 import type { TreeNode } from "./treeNode.js";
 
 interface UnhydratedTreeSequenceFieldEditBuilder
-	extends SequenceFieldEditBuilder<FlexibleFieldContent, UnhydratedFlexTreeNode[]> {}
+	extends SequenceFieldEditBuilder<
+		FlexibleFieldContent,
+		UnhydratedFlexTreeNode[]
+	> {}
 
 type UnhydratedFlexTreeNodeEvents = Pick<
 	AnchorEvents,
@@ -83,7 +93,8 @@ export class UnhydratedFlexTreeNode
 
 	public get storedSchema(): TreeNodeStoredSchema {
 		return (
-			this.context.schema.nodeSchema.get(this.data.type) ?? fail(0xb46 /* missing schema */)
+			this.context.schema.nodeSchema.get(this.data.type) ??
+			fail(0xb46 /* missing schema */)
 		);
 	}
 
@@ -144,8 +155,11 @@ export class UnhydratedFlexTreeNode
 	 * Use {@link allFieldsLazy} to avoid evaluating pending defaults.
 	 */
 	public readonly fields: MinimalFieldMap<UnhydratedFlexTreeField> = {
-		get: (key: FieldKey): UnhydratedFlexTreeField | undefined => this.tryGetField(key),
-		[Symbol.iterator]: (): IterableIterator<[FieldKey, UnhydratedFlexTreeField]> => {
+		get: (key: FieldKey): UnhydratedFlexTreeField | undefined =>
+			this.tryGetField(key),
+		[Symbol.iterator]: (): IterableIterator<
+			[FieldKey, UnhydratedFlexTreeField]
+		> => {
 			currentObserver?.observeNodeFields(this);
 			return filterIterable(this.fieldsAll, ([, field]) => field.length > 0);
 		},
@@ -186,11 +200,16 @@ export class UnhydratedFlexTreeNode
 	 */
 	public adoptBy(parent: undefined): void;
 	public adoptBy(parent: UnhydratedFlexTreeField, index: number): void;
-	public adoptBy(parent: UnhydratedFlexTreeField | undefined, index?: number): void {
+	public adoptBy(
+		parent: UnhydratedFlexTreeField | undefined,
+		index?: number,
+	): void {
 		if (parent !== undefined) {
 			assert(index !== undefined, 0xa08 /* Expected index */);
 			if (this.location !== unparentedLocation) {
-				throw new UsageError("A node may not be in more than one place in the tree");
+				throw new UsageError(
+					"A node may not be in more than one place in the tree",
+				);
 			}
 			let unhydratedNode: UnhydratedFlexTreeNode | undefined = parent.parent;
 			while (unhydratedNode !== undefined) {
@@ -199,9 +218,11 @@ export class UnhydratedFlexTreeNode
 						"A node may not be inserted into a location that is under itself",
 					);
 				}
-				const parentNode: FlexTreeNode | undefined = unhydratedNode.parentField.parent.parent;
+				const parentNode: FlexTreeNode | undefined =
+					unhydratedNode.parentField.parent.parent;
 				assert(
-					parentNode === undefined || parentNode instanceof UnhydratedFlexTreeNode,
+					parentNode === undefined ||
+						parentNode instanceof UnhydratedFlexTreeNode,
 					0xb77 /* Unhydrated node's parent should be an unhydrated node */,
 				);
 				unhydratedNode = parentNode;
@@ -226,7 +247,9 @@ export class UnhydratedFlexTreeNode
 	}
 
 	public borrowCursor(): ITreeCursorSynchronous {
-		return cursorForMapTreeNode<MapTreeNodeViewGeneric<UnhydratedFlexTreeNode>>(this);
+		return cursorForMapTreeNode<MapTreeNodeViewGeneric<UnhydratedFlexTreeNode>>(
+			this,
+		);
 	}
 
 	public tryGetField(key: FieldKey): UnhydratedFlexTreeField | undefined {
@@ -256,7 +279,9 @@ export class UnhydratedFlexTreeNode
 	}
 
 	public emitChangedEvent(key: FieldKey): void {
-		this._events.emit("childrenChangedAfterBatch", { changedFields: new Set([key]) });
+		this._events.emit("childrenChangedAfterBatch", {
+			changedFields: new Set([key]),
+		});
 
 		// Also emit subtree changed event for this node and all ancestors.
 		this.#emitSubtreeChangedEvents();
@@ -356,9 +381,9 @@ export class UnhydratedFlexTreeField
 	}
 
 	public borrowCursor(): ITreeCursorSynchronous {
-		return cursorForMapTreeField<MapTreeNodeViewGeneric<UnhydratedFlexTreeNode>>(
-			this.children,
-		);
+		return cursorForMapTreeField<
+			MapTreeNodeViewGeneric<UnhydratedFlexTreeNode>
+		>(this.children);
 	}
 
 	private getPendingDefault(): ContextualFieldProvider | undefined {
@@ -399,7 +424,9 @@ export class UnhydratedFlexTreeField
 		return this.children.length;
 	}
 
-	public is<TKind2 extends FlexFieldKind>(kind: TKind2): this is FlexTreeTypedField<TKind2> {
+	public is<TKind2 extends FlexFieldKind>(
+		kind: TKind2,
+	): this is FlexTreeTypedField<TKind2> {
 		return this.schema === kind.identifier;
 	}
 
@@ -425,7 +452,9 @@ export class UnhydratedFlexTreeField
 	 * This function ensures that the parent MapTree has no empty fields (which is an invariant of `MapTree`) after the mutation.
 	 */
 	protected edit(
-		edit: (mapTrees: UnhydratedFlexTreeNode[]) => void | UnhydratedFlexTreeNode[],
+		edit: (
+			mapTrees: UnhydratedFlexTreeNode[],
+		) => void | UnhydratedFlexTreeNode[],
 	): void {
 		// Clear parents for all old map trees.
 		for (const tree of this.children) {
@@ -519,7 +548,10 @@ export class UnhydratedSequenceField
 		insert: (index, newContent): void => {
 			for (const c of newContent) {
 				assert(c !== undefined, 0xa0a /* Unexpected sparse array content */);
-				assert(c instanceof UnhydratedFlexTreeNode, 0xbb8 /* Expected unhydrated node */);
+				assert(
+					c instanceof UnhydratedFlexTreeNode,
+					0xbb8 /* Expected unhydrated node */,
+				);
 			}
 			const newContentChecked = newContent as readonly UnhydratedFlexTreeNode[];
 			this.edit((mapTrees) => {
@@ -528,7 +560,9 @@ export class UnhydratedSequenceField
 					mapTrees.splice(index, 0, ...newContentChecked);
 				} else {
 					// ...but we avoid using `splice` + spread for very large input arrays since there is a limit on how many elements can be spread (too many will overflow the stack).
-					return mapTrees.slice(0, index).concat(newContentChecked, mapTrees.slice(index));
+					return mapTrees
+						.slice(0, index)
+						.concat(newContentChecked, mapTrees.slice(index));
 				}
 			});
 		},
@@ -552,7 +586,9 @@ export class UnhydratedSequenceField
 		}
 		return this.unboxed(i);
 	}
-	public map<U>(callbackfn: (value: FlexTreeUnknownUnboxed, index: number) => U): U[] {
+	public map<U>(
+		callbackfn: (value: FlexTreeUnknownUnboxed, index: number) => U,
+	): U[] {
 		return Array.from(this, callbackfn);
 	}
 }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type ICacheEntry } from "@fluidframework/driver-definitions/internal";
+import type { ICacheEntry } from "@fluidframework/driver-definitions/internal";
 import { getKeyForCacheEntry } from "@fluidframework/driver-utils/internal";
 import { openDB } from "idb";
 
@@ -42,7 +42,10 @@ function setupDateMock(startMockTime: number) {
 }
 
 // Gets a mock cache entry from an item key, all entries returned will be for the same document.
-function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICacheEntry {
+function getMockCacheEntry(
+	itemKey: string,
+	options?: { docId: string },
+): ICacheEntry {
 	return {
 		file: {
 			docId: options?.docId ?? "myDocument",
@@ -200,7 +203,10 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 
 			const db = await getFluidCacheIndexedDbInstance();
 			expect(
-				await db.get(FluidDriverObjectStoreName, getKeyForCacheEntry(cacheEntry)),
+				await db.get(
+					FluidDriverObjectStoreName,
+					getKeyForCacheEntry(cacheEntry),
+				),
 			).toEqual({
 				cacheItemId: "shouldBeInLocalStorage",
 				cachedObject: {

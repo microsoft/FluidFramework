@@ -4,9 +4,12 @@
  */
 
 import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
-import { ITelemetryBaseLogger, type FluidObject } from "@fluidframework/core-interfaces";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type {
+	FluidObject,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
@@ -17,7 +20,9 @@ import {
  * It delegates all calls to IDocumentServiceFactory implementation passed to constructor.
  */
 
-export abstract class DocumentServiceFactoryProxy implements IDocumentServiceFactory {
+export abstract class DocumentServiceFactoryProxy
+	implements IDocumentServiceFactory
+{
 	constructor(private readonly _serviceFactory: IDocumentServiceFactory) {}
 
 	public get serviceFactory(): IDocumentServiceFactory {
@@ -29,7 +34,8 @@ export abstract class DocumentServiceFactoryProxy implements IDocumentServiceFac
 	 * for validating Loader-Driver compatibility.
 	 */
 	public get ILayerCompatDetails(): ILayerCompatDetails | undefined {
-		return (this._serviceFactory as FluidObject<ILayerCompatDetails>).ILayerCompatDetails;
+		return (this._serviceFactory as FluidObject<ILayerCompatDetails>)
+			.ILayerCompatDetails;
 	}
 
 	public async createContainer(
@@ -51,6 +57,10 @@ export abstract class DocumentServiceFactoryProxy implements IDocumentServiceFac
 		logger?: ITelemetryBaseLogger,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
-		return this.serviceFactory.createDocumentService(resolvedUrl, logger, clientIsSummarizer);
+		return this.serviceFactory.createDocumentService(
+			resolvedUrl,
+			logger,
+			clientIsSummarizer,
+		);
 	}
 }

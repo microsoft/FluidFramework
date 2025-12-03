@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
-
 import type { ITelemetryBufferedLogger } from "@fluid-internal/test-driver-definitions";
-import { type ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
+import {
+	type ITelemetryBaseEvent,
+	LogLevel,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import fs from "fs";
 
 import { pkgName, pkgVersion } from "./packageVersion.js";
 
@@ -22,7 +24,9 @@ const createInjectedLoggerIfExists = async (): Promise<
 > => {
 	if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER !== undefined) {
 		// We expect that the specified package provides a createTestLogger function.
-		const { createTestLogger } = await import(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
+		const { createTestLogger } = await import(
+			process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER
+		);
 		assert(
 			typeof createTestLogger === "function",
 			"A createTestLogger function was not provided from the specified package",
@@ -43,7 +47,11 @@ export const createLogger = async (
 	},
 ) => {
 	const baseLogger = await createInjectedLoggerIfExists();
-	const fileLogger = new FileLogger(outputDirectoryPath, fileNamePrefix, baseLogger);
+	const fileLogger = new FileLogger(
+		outputDirectoryPath,
+		fileNamePrefix,
+		baseLogger,
+	);
 	const childLogger = createChildLogger({
 		logger: fileLogger,
 		properties: {
@@ -72,7 +80,9 @@ class FileLogger implements ITelemetryBufferedLogger {
 			fs.mkdirSync(this.outputDirectoryPath, { recursive: true });
 		}
 		// sort from most common column to least common
-		const schema = [...this.schema].sort((a, b) => b[1] - a[1]).map((v) => v[0]);
+		const schema = [...this.schema]
+			.sort((a, b) => b[1] - a[1])
+			.map((v) => v[0]);
 		const data = logs.reduce(
 			(file, event) =>
 				// eslint-disable-next-line @typescript-eslint/no-base-to-string
@@ -106,7 +116,9 @@ class FileLogger implements ITelemetryBufferedLogger {
 
 		event.Event_Time = Date.now();
 		// keep track of the frequency of every log event, as we'll sort by most common on write
-		Object.keys(event).forEach((k) => this.schema.set(k, (this.schema.get(k) ?? 0) + 1));
+		Object.keys(event).forEach((k) =>
+			this.schema.set(k, (this.schema.get(k) ?? 0) + 1),
+		);
 		this.logs.push(event);
 	}
 }

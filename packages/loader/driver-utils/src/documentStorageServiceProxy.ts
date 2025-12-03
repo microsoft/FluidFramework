@@ -3,16 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type {
+	ISummaryHandle,
+	ISummaryTree,
+} from "@fluidframework/driver-definitions";
+import type {
 	FetchSource,
+	ICreateBlobResponse,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	ISnapshot,
 	ISnapshotFetchOptions,
-	ISummaryContext,
-	ICreateBlobResponse,
 	ISnapshotTree,
+	ISummaryContext,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -31,7 +34,9 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
 		return this._policies ?? this.internalStorageService.policies;
 	}
 
-	constructor(protected readonly internalStorageService: IDocumentStorageService) {}
+	constructor(
+		protected readonly internalStorageService: IDocumentStorageService,
+	) {}
 
 	public async getSnapshotTree(
 		version?: IVersion,
@@ -40,7 +45,9 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
 		return this.internalStorageService.getSnapshotTree(version, scenarioName);
 	}
 
-	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
+	public async getSnapshot(
+		snapshotFetchOptions?: ISnapshotFetchOptions,
+	): Promise<ISnapshot> {
 		if (this.internalStorageService.getSnapshot !== undefined) {
 			return this.internalStorageService.getSnapshot(snapshotFetchOptions);
 		}
@@ -67,7 +74,10 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
 		summary: ISummaryTree,
 		context: ISummaryContext,
 	): Promise<string> {
-		return this.internalStorageService.uploadSummaryWithContext(summary, context);
+		return this.internalStorageService.uploadSummaryWithContext(
+			summary,
+			context,
+		);
 	}
 
 	public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {

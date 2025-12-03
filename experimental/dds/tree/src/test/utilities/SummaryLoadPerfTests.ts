@@ -3,15 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { takeAsync } from '@fluid-private/stochastic-test-utils';
+import { BenchmarkType, benchmark } from '@fluid-tools/benchmark';
 import * as fs from 'fs';
 import { join } from 'path';
 
-import { takeAsync } from '@fluid-private/stochastic-test-utils';
-import { BenchmarkType, benchmark } from '@fluid-tools/benchmark';
-
 import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities.js';
-import { SharedTree } from '../../SharedTree.js';
 import { WriteFormat } from '../../persisted-types/index.js';
+import type { SharedTree } from '../../SharedTree.js';
 import { makeOpGenerator } from '../fuzz/Generators.js';
 import { performFuzzActions } from '../fuzz/SharedTreeFuzzTests.js';
 

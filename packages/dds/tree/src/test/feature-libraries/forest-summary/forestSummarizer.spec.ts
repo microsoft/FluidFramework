@@ -5,35 +5,31 @@
 
 import { strict as assert } from "node:assert";
 import {
-	SummaryType,
 	type ISummaryTree,
 	type SummaryObject,
+	SummaryType,
 } from "@fluidframework/driver-definitions";
 import type { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
 import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
-
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 import {
-	ForestSummarizer,
-	TreeCompressionStrategy,
+	type CodecWriteOptions,
+	FluidClientVersion,
+} from "../../../codec/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { forestSummaryContentKey } from "../../../feature-libraries/forest-summary/incrementalSummaryBuilder.js";
+import {
 	defaultSchemaPolicy,
-	makeFieldBatchCodec,
 	type FieldBatchEncodingContext,
+	ForestSummarizer,
 	type IncrementalEncodingPolicy,
+	makeFieldBatchCodec,
+	TreeCompressionStrategy,
 } from "../../../feature-libraries/index.js";
 import {
-	checkoutWithContent,
-	fieldCursorFromInsertable,
-	testIdCompressor,
-	testRevisionTagCodec,
-	type TreeStoredContentStrict,
-} from "../../utils.js";
-import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
-import {
+	type ForestType,
 	ForestTypeOptimized,
 	ForestTypeReference,
-	type ForestType,
 	type TreeCheckout,
 } from "../../../shared-tree/index.js";
 import {
@@ -42,13 +38,19 @@ import {
 	permissiveStoredSchemaGenerationOptions,
 	SchemaFactory,
 	SchemaFactoryAlpha,
-	toStoredSchema,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
+	toStoredSchema,
 } from "../../../simple-tree/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { forestSummaryContentKey } from "../../../feature-libraries/forest-summary/incrementalSummaryBuilder.js";
+import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
+import {
+	checkoutWithContent,
+	fieldCursorFromInsertable,
+	type TreeStoredContentStrict,
+	testIdCompressor,
+	testRevisionTagCodec,
+} from "../../utils.js";
 
 function createForestSummarizer(args: {
 	// The encoding strategy to use when summarizing the forest.
@@ -109,15 +111,25 @@ function validateHandlesInForestSummary(
 		| {
 				shouldContainHandle: false;
 		  }
-		| { shouldContainHandle: true; handleCount: number; lastSummary: ISummaryTree },
+		| {
+				shouldContainHandle: true;
+				handleCount: number;
+				lastSummary: ISummaryTree;
+		  },
 ) {
 	const validateHandles = (s: ISummaryTree): number => {
 		let localHandleCount = 0;
 		for (const [_, summaryObject] of Object.entries(s.tree)) {
 			if (summaryObject.type === SummaryType.Handle) {
-				assert(validationArgs.shouldContainHandle, "Expected handle to be present");
+				assert(
+					validationArgs.shouldContainHandle,
+					"Expected handle to be present",
+				);
 				// Validate that the handle exists in lastSummary
-				validateHandlePathExists(summaryObject.handle, validationArgs.lastSummary);
+				validateHandlePathExists(
+					summaryObject.handle,
+					validationArgs.lastSummary,
+				);
 				localHandleCount++;
 			} else if (summaryObject.type === SummaryType.Tree) {
 				// Recursively validate nested trees
@@ -130,7 +142,11 @@ function validateHandlesInForestSummary(
 	const expectedHandleCount = validationArgs.shouldContainHandle
 		? validationArgs.handleCount
 		: 0;
-	assert.equal(totalHandles, expectedHandleCount, "Expected handle count to match");
+	assert.equal(
+		totalHandles,
+		expectedHandleCount,
+		"Expected handle count to match",
+	);
 }
 
 /**
@@ -149,11 +165,15 @@ function validateHandlePathExists(handle: string, summaryTree: ISummaryTree) {
 			found = true;
 			if (pathParts.length > 1) {
 				assert(
-					summaryObject.type === SummaryType.Tree || summaryObject.type === SummaryType.Handle,
+					summaryObject.type === SummaryType.Tree ||
+						summaryObject.type === SummaryType.Handle,
 					`Handle path ${currentPath} should be for a subtree or a handle`,
 				);
 				if (summaryObject.type === SummaryType.Tree) {
-					validateHandlePathExists(`/${pathParts.slice(1).join("/")}`, summaryObject);
+					validateHandlePathExists(
+						`/${pathParts.slice(1).join("/")}`,
+						summaryObject,
+					);
 				}
 			}
 			break;
@@ -192,8 +212,13 @@ describe("ForestSummarizer", () => {
 		];
 		for (const { encodeType, testType, forestType } of testCases) {
 			it(`can summarize empty ${testType} forest and load from it`, async () => {
-				const { forestSummarizer } = createForestSummarizer({ encodeType, forestType });
-				const summary = forestSummarizer.summarize({ stringify: JSON.stringify });
+				const { forestSummarizer } = createForestSummarizer({
+					encodeType,
+					forestType,
+				});
+				const summary = forestSummarizer.summarize({
+					stringify: JSON.stringify,
+				});
 				assert(
 					Object.keys(summary.summary.tree).length === 1,
 					"Summary tree should only contain one entry for the forest contents",
@@ -219,7 +244,10 @@ describe("ForestSummarizer", () => {
 			it(`can summarize ${testType} forest with simple content and load from it`, async () => {
 				const schema = SchemaFactory.number;
 				const initialContent: TreeStoredContentStrict = {
-					schema: toStoredSchema(schema, permissiveStoredSchemaGenerationOptions),
+					schema: toStoredSchema(
+						schema,
+						permissiveStoredSchemaGenerationOptions,
+					),
 					get initialTree() {
 						return fieldJsonCursor([5]);
 					},
@@ -229,7 +257,9 @@ describe("ForestSummarizer", () => {
 					encodeType,
 					forestType,
 				});
-				const summary = forestSummarizer.summarize({ stringify: JSON.stringify });
+				const summary = forestSummarizer.summarize({
+					stringify: JSON.stringify,
+				});
 				assert(
 					Object.keys(summary.summary.tree).length === 1,
 					"Summary tree should only contain one entry for the forest contents",
@@ -265,9 +295,15 @@ describe("ForestSummarizer", () => {
 
 			for (const [key, value] of Object.entries(summary.tree)) {
 				if (key === forestSummaryContentKey) {
-					assert(value.type === SummaryType.Blob, "Forest summary contents not found");
+					assert(
+						value.type === SummaryType.Blob,
+						"Forest summary contents not found",
+					);
 				} else {
-					assert(value.type === SummaryType.Tree, "Incremental summary node should be a tree");
+					assert(
+						value.type === SummaryType.Tree,
+						"Incremental summary node should be a tree",
+					);
 				}
 			}
 		}
@@ -278,7 +314,10 @@ describe("ForestSummarizer", () => {
 					foo: sf.string,
 				}) {}
 				const initialContent: TreeStoredContentStrict = {
-					schema: toStoredSchema(SimpleObject, permissiveStoredSchemaGenerationOptions),
+					schema: toStoredSchema(
+						SimpleObject,
+						permissiveStoredSchemaGenerationOptions,
+					),
 					initialTree: fieldCursorFromInsertable(SimpleObject, {
 						foo: "bar",
 					}),
@@ -288,7 +327,10 @@ describe("ForestSummarizer", () => {
 					nodeIdentifier: string | undefined,
 					fieldKey: string,
 				): boolean => {
-					if (nodeIdentifier === SimpleObject.identifier && fieldKey === "foo") {
+					if (
+						nodeIdentifier === SimpleObject.identifier &&
+						fieldKey === "foo"
+					) {
 						return true;
 					}
 					return false;
@@ -302,11 +344,12 @@ describe("ForestSummarizer", () => {
 				});
 
 				// Incremental summary context for the first summary. This is needed for incremental summarization.
-				const incrementalSummaryContext: IExperimentalIncrementalSummaryContext = {
-					summarySequenceNumber: 0,
-					latestSummarySequenceNumber: -1,
-					summaryPath: "",
-				};
+				const incrementalSummaryContext: IExperimentalIncrementalSummaryContext =
+					{
+						summarySequenceNumber: 0,
+						latestSummarySequenceNumber: -1,
+						summaryPath: "",
+					};
 				const summary = forestSummarizer.summarize({
 					stringify: JSON.stringify,
 					incrementalSummaryContext,
@@ -363,7 +406,9 @@ describe("ForestSummarizer", () => {
 			 * `TreeCompressionStrategy.CompressedIncremental` since incremental summarization is only
 			 * supported by this combination.
 			 */
-			function setupForestForIncrementalSummarization(initialBoard: Root | undefined) {
+			function setupForestForIncrementalSummarization(
+				initialBoard: Root | undefined,
+			) {
 				const fieldCursor = initialBoard
 					? fieldCursorFromInsertable(Root, initialBoard)
 					: fieldJsonCursor([]);
@@ -414,11 +459,12 @@ describe("ForestSummarizer", () => {
 				);
 
 				// Incremental summary context for the first summary. This is needed for incremental summarization.
-				const incrementalSummaryContext1: IExperimentalIncrementalSummaryContext = {
-					summarySequenceNumber: 0,
-					latestSummarySequenceNumber: -1,
-					summaryPath: "",
-				};
+				const incrementalSummaryContext1: IExperimentalIncrementalSummaryContext =
+					{
+						summarySequenceNumber: 0,
+						latestSummarySequenceNumber: -1,
+						summaryPath: "",
+					};
 				const summary1 = forestSummarizer.summarize({
 					stringify: JSON.stringify,
 					incrementalSummaryContext: incrementalSummaryContext1,
@@ -431,20 +477,20 @@ describe("ForestSummarizer", () => {
 
 				// Validate that the forest can successfully load from the above summary.
 				const mockStorage = MockStorage.createFromSummary(summary1.summary);
-				const { forestSummarizer: forestSummarizer2 } = setupForestForIncrementalSummarization(
-					undefined /* initialBoard */,
-				);
+				const { forestSummarizer: forestSummarizer2 } =
+					setupForestForIncrementalSummarization(undefined /* initialBoard */);
 				await assert.doesNotReject(async () => {
 					await forestSummarizer2.load(mockStorage, JSON.parse);
 				});
 
 				// Incremental summary context for the second summary. `latestSummarySequenceNumber` should
 				// be the `summarySequenceNumber` of the previous summary.
-				const incrementalSummaryContext2: IExperimentalIncrementalSummaryContext = {
-					summarySequenceNumber: 10,
-					latestSummarySequenceNumber: 0,
-					summaryPath: "",
-				};
+				const incrementalSummaryContext2: IExperimentalIncrementalSummaryContext =
+					{
+						summarySequenceNumber: 10,
+						latestSummarySequenceNumber: 0,
+						summaryPath: "",
+					};
 				const summary2 = forestSummarizer.summarize({
 					stringify: JSON.stringify,
 					incrementalSummaryContext: incrementalSummaryContext2,
@@ -462,16 +508,18 @@ describe("ForestSummarizer", () => {
 
 			it("can incrementally summarize a forest with changes in between", async () => {
 				const itemsCount = 3;
-				const { checkout, forestSummarizer } = setupForestForIncrementalSummarization(
-					createInitialBoard(itemsCount),
-				);
+				const { checkout, forestSummarizer } =
+					setupForestForIncrementalSummarization(
+						createInitialBoard(itemsCount),
+					);
 
 				// Incremental summary context for the first summary. This is needed for incremental summarization.
-				const incrementalSummaryContext1: IExperimentalIncrementalSummaryContext = {
-					summarySequenceNumber: 0,
-					latestSummarySequenceNumber: -1,
-					summaryPath: "",
-				};
+				const incrementalSummaryContext1: IExperimentalIncrementalSummaryContext =
+					{
+						summarySequenceNumber: 0,
+						latestSummarySequenceNumber: -1,
+						summaryPath: "",
+					};
 				const summary1 = forestSummarizer.summarize({
 					stringify: JSON.stringify,
 					incrementalSummaryContext: incrementalSummaryContext1,
@@ -484,11 +532,13 @@ describe("ForestSummarizer", () => {
 
 				// Incremental summary context for the second summary. `latestSummarySequenceNumber` should
 				// be the `summarySequenceNumber` of the previous summary.
-				const incrementalSummaryContext2: IExperimentalIncrementalSummaryContext = {
-					summarySequenceNumber: 10,
-					latestSummarySequenceNumber: incrementalSummaryContext1.summarySequenceNumber,
-					summaryPath: "",
-				};
+				const incrementalSummaryContext2: IExperimentalIncrementalSummaryContext =
+					{
+						summarySequenceNumber: 10,
+						latestSummarySequenceNumber:
+							incrementalSummaryContext1.summarySequenceNumber,
+						summaryPath: "",
+					};
 				const summary2 = forestSummarizer.summarize({
 					stringify: JSON.stringify,
 					incrementalSummaryContext: incrementalSummaryContext2,
@@ -507,7 +557,9 @@ describe("ForestSummarizer", () => {
 				// summary tree nodes at the root of the summary tree and the summary tree node under it as well - these
 				// will be re-summarized and not be handles anymore.
 				// So, there should be one less than `itemsCount` number of handles than the previous summary.
-				const view = checkout.viewWith(new TreeViewConfiguration({ schema: Root }));
+				const view = checkout.viewWith(
+					new TreeViewConfiguration({ schema: Root }),
+				);
 				const root = view.root;
 				const firstItem = root.fooArray.at(0);
 				assert(firstItem !== undefined, "Could not find first item");
@@ -515,11 +567,13 @@ describe("ForestSummarizer", () => {
 
 				// Incremental summary context for the third summary. `latestSummarySequenceNumber` should
 				// be the `summarySequenceNumber` of the previous summary.
-				const incrementalSummaryContext3: IExperimentalIncrementalSummaryContext = {
-					summarySequenceNumber: 20,
-					latestSummarySequenceNumber: incrementalSummaryContext2.summarySequenceNumber,
-					summaryPath: "",
-				};
+				const incrementalSummaryContext3: IExperimentalIncrementalSummaryContext =
+					{
+						summarySequenceNumber: 20,
+						latestSummarySequenceNumber:
+							incrementalSummaryContext2.summarySequenceNumber,
+						summaryPath: "",
+					};
 				const summary3 = forestSummarizer.summarize({
 					stringify: JSON.stringify,
 					incrementalSummaryContext: incrementalSummaryContext3,
@@ -533,16 +587,18 @@ describe("ForestSummarizer", () => {
 
 			it("can incrementally summarize a forest with a summary failure in between", async () => {
 				const itemsCount = 2;
-				const { checkout, forestSummarizer } = setupForestForIncrementalSummarization(
-					createInitialBoard(itemsCount),
-				);
+				const { checkout, forestSummarizer } =
+					setupForestForIncrementalSummarization(
+						createInitialBoard(itemsCount),
+					);
 
 				// Incremental summary context for the first summary. This is needed for incremental summarization.
-				const incrementalSummaryContext1: IExperimentalIncrementalSummaryContext = {
-					summarySequenceNumber: 0,
-					latestSummarySequenceNumber: -1,
-					summaryPath: "",
-				};
+				const incrementalSummaryContext1: IExperimentalIncrementalSummaryContext =
+					{
+						summarySequenceNumber: 0,
+						latestSummarySequenceNumber: -1,
+						summaryPath: "",
+					};
 				const summary1 = forestSummarizer.summarize({
 					stringify: JSON.stringify,
 					incrementalSummaryContext: incrementalSummaryContext1,
@@ -557,7 +613,9 @@ describe("ForestSummarizer", () => {
 				// summary tree nodes at the root of the summary tree and the summary tree node under it as well - these
 				// will be re-summarized and not be handles anymore.
 				// So, there should be one less than `itemsCount` number of handles than the previous summary.
-				const view = checkout.viewWith(new TreeViewConfiguration({ schema: Root }));
+				const view = checkout.viewWith(
+					new TreeViewConfiguration({ schema: Root }),
+				);
 				const root = view.root;
 				const firstItem = root.fooArray.at(0);
 				assert(firstItem !== undefined, "Could not find first item");
@@ -565,11 +623,13 @@ describe("ForestSummarizer", () => {
 
 				// Incremental summary context for the second summary. `latestSummarySequenceNumber` should
 				// be the `summarySequenceNumber` of the previous summary.
-				const incrementalSummaryContext2: IExperimentalIncrementalSummaryContext = {
-					summarySequenceNumber: 10,
-					latestSummarySequenceNumber: incrementalSummaryContext1.summarySequenceNumber,
-					summaryPath: "",
-				};
+				const incrementalSummaryContext2: IExperimentalIncrementalSummaryContext =
+					{
+						summarySequenceNumber: 10,
+						latestSummarySequenceNumber:
+							incrementalSummaryContext1.summarySequenceNumber,
+						summaryPath: "",
+					};
 				const summary2 = forestSummarizer.summarize({
 					stringify: JSON.stringify,
 					incrementalSummaryContext: incrementalSummaryContext2,
@@ -582,11 +642,13 @@ describe("ForestSummarizer", () => {
 
 				// Incremental summary context for the third summary. This simulates a scenario where the second summary
 				// failed by setting `latestSummarySequenceNumber` to the `summarySequenceNumber` of the first summary.
-				const incrementalSummaryContext3: IExperimentalIncrementalSummaryContext = {
-					summarySequenceNumber: 20,
-					latestSummarySequenceNumber: incrementalSummaryContext1.summarySequenceNumber,
-					summaryPath: "",
-				};
+				const incrementalSummaryContext3: IExperimentalIncrementalSummaryContext =
+					{
+						summarySequenceNumber: 20,
+						latestSummarySequenceNumber:
+							incrementalSummaryContext1.summarySequenceNumber,
+						summaryPath: "",
+					};
 				const summary3 = forestSummarizer.summarize({
 					stringify: JSON.stringify,
 					incrementalSummaryContext: incrementalSummaryContext3,
@@ -607,11 +669,12 @@ describe("ForestSummarizer", () => {
 				);
 
 				// Incremental summary context for the first summary. This is needed for incremental summarization.
-				const incrementalSummaryContext1: IExperimentalIncrementalSummaryContext = {
-					summarySequenceNumber: 0,
-					latestSummarySequenceNumber: -1,
-					summaryPath: "",
-				};
+				const incrementalSummaryContext1: IExperimentalIncrementalSummaryContext =
+					{
+						summarySequenceNumber: 0,
+						latestSummarySequenceNumber: -1,
+						summaryPath: "",
+					};
 				const summary1 = forestSummarizer.summarize({
 					stringify: JSON.stringify,
 					incrementalSummaryContext: incrementalSummaryContext1,
@@ -634,7 +697,9 @@ describe("ForestSummarizer", () => {
 				// summary tree nodes at the root of the summary tree and the summary tree node under it as well - these
 				// will be re-summarized and not be handles anymore.
 				// So, there should be one less than `itemsCount` number of handles than the previous summary.
-				const view = checkout2.viewWith(new TreeViewConfiguration({ schema: Root }));
+				const view = checkout2.viewWith(
+					new TreeViewConfiguration({ schema: Root }),
+				);
 				const root = view.root;
 				const firstItem = root.fooArray.at(0);
 				assert(firstItem !== undefined, "Could not find first item");
@@ -642,11 +707,13 @@ describe("ForestSummarizer", () => {
 
 				// Incremental summary context for the second summary. `latestSummarySequenceNumber` should
 				// be the `summarySequenceNumber` of the previous summary.
-				const incrementalSummaryContext2: IExperimentalIncrementalSummaryContext = {
-					summarySequenceNumber: 10,
-					latestSummarySequenceNumber: incrementalSummaryContext1.summarySequenceNumber,
-					summaryPath: "",
-				};
+				const incrementalSummaryContext2: IExperimentalIncrementalSummaryContext =
+					{
+						summarySequenceNumber: 10,
+						latestSummarySequenceNumber:
+							incrementalSummaryContext1.summarySequenceNumber,
+						summaryPath: "",
+					};
 				// Summarize via the forest that was loaded from the first summary.
 				const summary2 = forestSummarizer2.summarize({
 					stringify: JSON.stringify,

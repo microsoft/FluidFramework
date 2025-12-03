@@ -7,7 +7,6 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IDisposable } from "@fluidframework/core-interfaces";
 import { isPromiseLike } from "@fluidframework/core-utils/internal";
 import {
-	ScopeType,
 	type ConnectionMode,
 	type IClient,
 	type IClientConfiguration,
@@ -25,6 +24,7 @@ import {
 	type ISignalClient,
 	type ISignalMessage,
 	type ITokenClaims,
+	ScopeType,
 } from "@fluidframework/driver-definitions/internal";
 
 import type { IConnectionStateChangeReason } from "./contracts.js";
@@ -53,7 +53,9 @@ export class FrozenDocumentServiceFactory implements IDocumentServiceFactory {
 			| Promise<IDocumentServiceFactory>,
 	) {}
 
-	async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+	async createDocumentService(
+		resolvedUrl: IResolvedUrl,
+	): Promise<IDocumentService> {
 		let factory = this.documentServiceFactory;
 		if (isPromiseLike(factory)) {
 			factory = await this.documentServiceFactory;
@@ -64,7 +66,9 @@ export class FrozenDocumentServiceFactory implements IDocumentServiceFactory {
 		);
 	}
 	async createContainer(): Promise<IDocumentService> {
-		throw new Error("The FrozenDocumentServiceFactory cannot be used to create containers.");
+		throw new Error(
+			"The FrozenDocumentServiceFactory cannot be used to create containers.",
+		);
 	}
 }
 
@@ -83,22 +87,30 @@ class FrozenDocumentService
 		storageOnly: true,
 	};
 	async connectToStorage(): Promise<IDocumentStorageService> {
-		return new FrozenDocumentStorageService(await this.documentService?.connectToStorage());
+		return new FrozenDocumentStorageService(
+			await this.documentService?.connectToStorage(),
+		);
 	}
 	async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
 		return frozenDocumentDeltaStorageService;
 	}
-	async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+	async connectToDeltaStream(
+		client: IClient,
+	): Promise<IDocumentDeltaConnection> {
 		return new FrozenDeltaStream();
 	}
 	dispose(): void {}
 }
 
 const frozenDocumentStorageServiceHandler = (): never => {
-	throw new Error("Operations are not supported on the FrozenDocumentStorageService.");
+	throw new Error(
+		"Operations are not supported on the FrozenDocumentStorageService.",
+	);
 };
 class FrozenDocumentStorageService implements IDocumentStorageService {
-	constructor(private readonly documentStorageService?: IDocumentStorageService) {}
+	constructor(
+		private readonly documentStorageService?: IDocumentStorageService,
+	) {}
 
 	getSnapshotTree = frozenDocumentStorageServiceHandler;
 	getSnapshot = frozenDocumentStorageServiceHandler;
@@ -173,7 +185,10 @@ export class FrozenDeltaStream
 			messages.map((operation) => {
 				return {
 					operation,
-					content: { message: "Cannot submit with storage-only connection", code: 403 },
+					content: {
+						message: "Cannot submit with storage-only connection",
+						code: 403,
+					},
 				};
 			}),
 		);
@@ -181,7 +196,10 @@ export class FrozenDeltaStream
 	submitSignal(message: unknown): void {
 		this.emit("nack", this.clientId, {
 			operation: message,
-			content: { message: "Cannot submit signal with storage-only connection", code: 403 },
+			content: {
+				message: "Cannot submit signal with storage-only connection",
+				code: 403,
+			},
 		});
 	}
 

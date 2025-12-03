@@ -9,17 +9,17 @@ import type { MinimumVersionForCollab } from "@fluidframework/runtime-definition
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	getConfigsForMinVersionForCollab,
-	validateConfigMapOverrides,
 	type ConfigMap,
-	type SemanticVersion,
 	type ConfigValidationMap,
-	configValueToMinVersionForCollab,
-	lowestMinVersionForCollab,
 	checkValidMinVersionForCollabVerbose,
 	cleanedPackageVersion,
-	validateMinimumVersionForCollab,
+	configValueToMinVersionForCollab,
 	getConfigForMinVersionForCollab,
+	getConfigsForMinVersionForCollab,
+	lowestMinVersionForCollab,
+	type SemanticVersion,
+	validateConfigMapOverrides,
+	validateMinimumVersionForCollab,
 } from "../compatibilityBase.js";
 import { pkgVersion } from "../packageVersion.js";
 
@@ -36,7 +36,12 @@ describe("compatibilityBase", () => {
 		});
 		it("sorting", () => {
 			// These checks are designed to fail if the items are not sorted according to semver, and are either left as ordered or sorted lexically.
-			const config = { "1.0.0": "A", "1.500.0": "D", "1.58.0": "B", "1.60.0": "C" };
+			const config = {
+				"1.0.0": "A",
+				"1.500.0": "D",
+				"1.58.0": "B",
+				"1.60.0": "C",
+			};
 			assert.equal(getConfigForMinVersionForCollab("1.50.0", config), "A");
 			assert.equal(getConfigForMinVersionForCollab("1.58.0", config), "B");
 			assert.equal(getConfigForMinVersionForCollab("1.59.0", config), "B");
@@ -316,7 +321,11 @@ describe("compatibilityBase", () => {
 			},
 			{
 				minVersionForCollab: "5.0.0",
-				runtimeOptions: { featureA: "a3", featureB: true, featureC: { foo: 1, bax: 10 } },
+				runtimeOptions: {
+					featureA: "a3",
+					featureB: true,
+					featureC: { foo: 1, bax: 10 },
+				},
 			},
 			{
 				minVersionForCollab: "8.0.0",
@@ -324,11 +333,17 @@ describe("compatibilityBase", () => {
 			},
 			{
 				minVersionForCollab: "9.0.0",
-				runtimeOptions: { featureC: { foo: 2, bar: "bax", qaz: true }, featureA: "a4" },
+				runtimeOptions: {
+					featureC: { foo: 2, bar: "bax", qaz: true },
+					featureA: "a4",
+				},
 			},
 			{
 				minVersionForCollab: "1.0.0",
-				runtimeOptions: { featureC: { notDocSchemaAffecting: true }, featureA: "a1" },
+				runtimeOptions: {
+					featureC: { notDocSchemaAffecting: true },
+					featureA: "a1",
+				},
 			},
 		];
 
@@ -415,26 +430,46 @@ describe("compatibilityBase", () => {
 		}[] = [
 			{
 				version: pkgVersion,
-				checks: { isValidSemver: true, isGteLowestMinVersion: true, isLtePkgVersion: true },
+				checks: {
+					isValidSemver: true,
+					isGteLowestMinVersion: true,
+					isLtePkgVersion: true,
+				},
 			},
 			{
 				version: lowestMinVersionForCollab,
-				checks: { isValidSemver: true, isGteLowestMinVersion: true, isLtePkgVersion: true },
+				checks: {
+					isValidSemver: true,
+					isGteLowestMinVersion: true,
+					isLtePkgVersion: true,
+				},
 			},
 			{
 				// Cast since this is not a valid MinimumVersionForCollab, but is a valid semver.
 				version: "0.0.0" as MinimumVersionForCollab,
-				checks: { isValidSemver: true, isGteLowestMinVersion: false, isLtePkgVersion: true },
+				checks: {
+					isValidSemver: true,
+					isGteLowestMinVersion: false,
+					isLtePkgVersion: true,
+				},
 			},
 			{
 				// Cast since this is not a valid MinimumVersionForCollab, but is a valid semver.
 				version: "1000000.0.0" as MinimumVersionForCollab,
-				checks: { isValidSemver: true, isGteLowestMinVersion: true, isLtePkgVersion: false },
+				checks: {
+					isValidSemver: true,
+					isGteLowestMinVersion: true,
+					isLtePkgVersion: false,
+				},
 			},
 			{
 				// Cast since this is not a valid MinimumVersionForCollab and is not a valid semver.
 				version: "1.2" as MinimumVersionForCollab,
-				checks: { isValidSemver: false, isGteLowestMinVersion: false, isLtePkgVersion: false },
+				checks: {
+					isValidSemver: false,
+					isGteLowestMinVersion: false,
+					isLtePkgVersion: false,
+				},
 			},
 		];
 
@@ -443,7 +478,10 @@ describe("compatibilityBase", () => {
 				const { isValidSemver, isGteLowestMinVersion, isLtePkgVersion } =
 					checkValidMinVersionForCollabVerbose(testCase.version);
 				assert.deepEqual(isValidSemver, testCase.checks.isValidSemver);
-				assert.deepEqual(isGteLowestMinVersion, testCase.checks.isGteLowestMinVersion);
+				assert.deepEqual(
+					isGteLowestMinVersion,
+					testCase.checks.isGteLowestMinVersion,
+				);
 				assert.deepEqual(isLtePkgVersion, testCase.checks.isLtePkgVersion);
 			});
 		}

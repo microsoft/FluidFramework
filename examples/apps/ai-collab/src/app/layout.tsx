@@ -9,10 +9,8 @@ import { Box } from "@mui/material";
 import { Inter } from "next/font/google";
 import Image from "next/image";
 import { SnackbarProvider } from "notistack";
-
+import type React from "react";
 import bgImg from "/public/msft-bg.webp"; // eslint-disable-line import-x/no-unresolved
-
-import React from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -48,7 +46,9 @@ export default function RootLayout({
 						}}
 					/>
 
-					<SnackbarProvider anchorOrigin={{ horizontal: "right", vertical: "top" }}>
+					<SnackbarProvider
+						anchorOrigin={{ horizontal: "right", vertical: "top" }}
+					>
 						{children}
 					</SnackbarProvider>
 				</Box>

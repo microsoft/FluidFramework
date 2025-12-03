@@ -10,9 +10,9 @@ import type { AttributionInfo } from "@fluidframework/runtime-definitions/intern
 import { Attributor, type IAttributor } from "../attributor.js";
 import {
 	AttributorSerializer,
+	chain,
 	type Encoder,
 	type SerializedAttributor,
-	chain,
 } from "../encoders.js";
 import type { InternedStringId } from "../stringInterner.js";
 
@@ -31,13 +31,16 @@ describe("AttributorSerializer", () => {
 				[2, { user: { id: "a" }, timestamp: 6001 }],
 			]);
 			const calls: unknown[] = [];
-			const serializer = new AttributorSerializer((entries) => new Attributor(entries), {
-				encode: (x): number[] => {
-					calls.push(x);
-					return x;
+			const serializer = new AttributorSerializer(
+				(entries) => new Attributor(entries),
+				{
+					encode: (x): number[] => {
+						calls.push(x);
+						return x;
+					},
+					decode: (x): number[] => x,
 				},
-				decode: (x): number[] => x,
-			});
+			);
 			assert.equal(calls.length, 0);
 			serializer.encode(attributor);
 			assert.equal(calls.length, 1);
@@ -46,13 +49,16 @@ describe("AttributorSerializer", () => {
 
 		it("on decode", () => {
 			const calls: unknown[] = [];
-			const serializer = new AttributorSerializer((entries) => new Attributor(entries), {
-				encode: (x): number[] => x,
-				decode: (x): number[] => {
-					calls.push(x);
-					return x;
+			const serializer = new AttributorSerializer(
+				(entries) => new Attributor(entries),
+				{
+					encode: (x): number[] => x,
+					decode: (x): number[] => {
+						calls.push(x);
+						return x;
+					},
 				},
-			});
+			);
 			const encoded: SerializedAttributor = {
 				interner: ["a"],
 				seqs: [1, 2],
@@ -68,7 +74,10 @@ describe("AttributorSerializer", () => {
 	});
 
 	describe("correctly round-trips", () => {
-		const testCases: { name: string; entries: Iterable<[number, AttributionInfo]> }[] = [
+		const testCases: {
+			name: string;
+			entries: Iterable<[number, AttributionInfo]>;
+		}[] = [
 			{
 				name: "empty attribution information",
 				entries: [],
@@ -103,7 +112,9 @@ describe("AttributorSerializer", () => {
 					return retVal;
 				}, makeNoopEncoder());
 				const attributor = new Attributor(entries);
-				const roundTrippedAttributor = serializer.decode(serializer.encode(attributor));
+				const roundTrippedAttributor = serializer.decode(
+					serializer.encode(attributor),
+				);
 				assert.equal(calls.length, 1);
 				assert.deepEqual(calls[0], entries);
 				assert.equal(retVal, roundTrippedAttributor);

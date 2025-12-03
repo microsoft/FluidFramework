@@ -4,16 +4,16 @@
  */
 
 import { performanceNow } from "@fluid-internal/client-utils";
-import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IDeltasFetchResult,
+	ISequencedDocumentMessage,
 	IStream,
 	IStreamResult,
-	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -90,7 +90,10 @@ export class ParallelRequests<T> {
 
 	public async run(concurrency: number) {
 		assert(concurrency > 0, 0x102 /* "invalid level of concurrency" */);
-		assert(this.working, 0x103 /* "trying to parallel run while not working" */);
+		assert(
+			this.working,
+			0x103 /* "trying to parallel run while not working" */,
+		);
 
 		let c = concurrency;
 		while (c > 0) {
@@ -103,7 +106,10 @@ export class ParallelRequests<T> {
 
 	private done() {
 		// We should satisfy request fully.
-		assert(this.to !== undefined, 0x104 /* "undefined end point for parallel fetch" */);
+		assert(
+			this.to !== undefined,
+			0x104 /* "undefined end point for parallel fetch" */,
+		);
 		assert(
 			this.nextToDeliver >= this.to,
 			0x105 /* "unexpected end point for parallel fetch" */,
@@ -178,7 +184,10 @@ export class ParallelRequests<T> {
 			this.latestRequested = Math.min(this.to, this.latestRequested);
 		}
 
-		assert(from < this.latestRequested, 0x109 /* "unexpected next chunk position" */);
+		assert(
+			from < this.latestRequested,
+			0x109 /* "unexpected next chunk position" */,
+		);
 
 		return { from, to: this.latestRequested };
 	}
@@ -192,7 +201,10 @@ export class ParallelRequests<T> {
 	}
 
 	private async addRequestCore(fromArg: number, toArg: number) {
-		assert(this.working, 0x10a /* "cannot add parallel request while not working" */);
+		assert(
+			this.working,
+			0x10a /* "cannot add parallel request while not working" */,
+		);
 
 		let from = fromArg;
 		let to = toArg;
@@ -205,13 +217,22 @@ export class ParallelRequests<T> {
 
 			// We should not be wasting time asking for something useless.
 			if (this.to !== undefined) {
-				assert(from < this.to, 0x10c /* "invalid parallel request start point" */);
+				assert(
+					from < this.to,
+					0x10c /* "invalid parallel request start point" */,
+				);
 				assert(to <= this.to, 0x10d /* "invalid parallel request end point" */);
 			}
 
 			this.requests++;
 
-			const promise = this.requestCallback(this.requests, from, to, this.to !== undefined, {});
+			const promise = this.requestCallback(
+				this.requests,
+				from,
+				to,
+				this.to !== undefined,
+				{},
+			);
 
 			// dispatch any prior received data
 			this.dispatch();
@@ -372,7 +393,10 @@ export class Queue<T> implements IStream<T> {
 	protected pushCore(value: Promise<IStreamResult<T>>) {
 		assert(!this.done, 0x112 /* "cannot push onto queue if done" */);
 		if (this.deferred) {
-			assert(this.queue.length === 0, 0x113 /* "deferred queue should be empty" */);
+			assert(
+				this.queue.length === 0,
+				0x113 /* "deferred queue should be empty" */,
+			);
 			this.deferred.resolve(value);
 			this.deferred = undefined;
 		} else {
@@ -394,7 +418,10 @@ export class Queue<T> implements IStream<T> {
 
 const waitForOnline = async (): Promise<void> => {
 	// Only wait if we have a strong signal that we're offline - otherwise assume we're online.
-	if (globalThis.navigator?.onLine === false && globalThis.addEventListener !== undefined) {
+	if (
+		globalThis.navigator?.onLine === false &&
+		globalThis.addEventListener !== undefined
+	) {
 		return new Promise<void>((resolve) => {
 			const resolveAndRemoveListener = () => {
 				resolve();
@@ -419,13 +446,19 @@ const waitForOnline = async (): Promise<void> => {
  * @returns An object with resulting ops and cancellation / partial result flags
  */
 async function getSingleOpBatch(
-	get: (telemetryProps: ITelemetryBaseProperties) => Promise<IDeltasFetchResult>,
+	get: (
+		telemetryProps: ITelemetryBaseProperties,
+	) => Promise<IDeltasFetchResult>,
 	props: ITelemetryBaseProperties,
 	strongTo: boolean,
 	logger: ITelemetryLoggerExt,
 	signal?: AbortSignal,
 	scenarioName?: string,
-): Promise<{ partial: boolean; cancel: boolean; payload: ISequencedDocumentMessage[] }> {
+): Promise<{
+	partial: boolean;
+	cancel: boolean;
+	payload: ISequencedDocumentMessage[];
+}> {
 	let lastSuccessTime: number | undefined;
 	let totalRetryAfterTime = 0;
 	let telemetryEvent: PerformanceEvent | undefined;
@@ -441,7 +474,9 @@ async function getSingleOpBatch(
 
 		try {
 			// Issue async request for deltas
-			const { messages, partialResult } = await get({ ...props, retry } /* telemetry props */);
+			const { messages, partialResult } = await get(
+				{ ...props, retry } /* telemetry props */,
+			);
 
 			// If we got messages back, return them.  Return regardless of whether we got messages back if we didn't
 			// specify a "to", since we don't have an expectation of how many to receive.
@@ -596,9 +631,15 @@ export function requestOps(
 		(deltas: ISequencedDocumentMessage[]) => {
 			// Assert continuing and right start.
 			if (lastFetch === undefined) {
-				assert(deltas[0].sequenceNumber === fromTotal, 0x26d /* "wrong start" */);
+				assert(
+					deltas[0].sequenceNumber === fromTotal,
+					0x26d /* "wrong start" */,
+				);
 			} else {
-				assert(deltas[0].sequenceNumber === lastFetch + 1, 0x26e /* "wrong start" */);
+				assert(
+					deltas[0].sequenceNumber === lastFetch + 1,
+					0x26e /* "wrong start" */,
+				);
 			}
 			lastFetch = deltas[deltas.length - 1].sequenceNumber;
 			assert(
@@ -635,10 +676,14 @@ export function requestOps(
 				requests,
 			};
 			if (manager.canceled) {
-				telemetryEvent.cancel({ ...props, error: "ops request cancelled by client" });
+				telemetryEvent.cancel({
+					...props,
+					error: "ops request cancelled by client",
+				});
 			} else {
 				assert(
-					toTotal === undefined || (lastFetch !== undefined && lastFetch >= toTotal - 1),
+					toTotal === undefined ||
+						(lastFetch !== undefined && lastFetch >= toTotal - 1),
 					0x270 /* "All requested ops fetched" */,
 				);
 				telemetryEvent.end(props);

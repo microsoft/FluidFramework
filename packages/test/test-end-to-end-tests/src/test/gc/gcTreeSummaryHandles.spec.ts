@@ -3,32 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import {
-	TestDataObjectType,
 	describeCompat,
 	itExpects,
+	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions/internal";
-import {
+import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type {
 	ContainerRuntime,
-	type ISummarizer,
+	ISummarizer,
 } from "@fluidframework/container-runtime/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
-import {
-	type ISummaryContext,
-	type ISummaryTree,
+import type {
+	ISummaryContext,
+	ISummaryTree,
 } from "@fluidframework/driver-definitions/internal";
 import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import {
-	ITestFluidObject,
-	ITestObjectProvider,
 	createSummarizer,
+	type ITestContainerConfig,
+	type ITestFluidObject,
+	type ITestObjectProvider,
 	summarizeNow,
 	waitForContainerConnection,
-	type ITestContainerConfig,
 } from "@fluidframework/test-utils/internal";
+import { strict as assert } from "assert";
 
 /**
  * Validates whether or not a GC Tree Summary Handle should be written to the summary.
@@ -52,7 +51,10 @@ describeCompat(
 		let dataStoreB: ITestFluidObject;
 		let dataStoreC: ITestFluidObject;
 
-		async function submitSummaryAndValidateState(summarizer: ISummarizer, isHandle: boolean) {
+		async function submitSummaryAndValidateState(
+			summarizer: ISummarizer,
+			isHandle: boolean,
+		) {
 			await provider.ensureSynchronized();
 			const { summaryTree, summaryVersion } = await summarizeNow(summarizer);
 			const gcObject = summaryTree.tree[gcTreeKey];
@@ -71,13 +73,18 @@ describeCompat(
 			const containerRuntime = (summarizer as any).runtime as ContainerRuntime;
 
 			const errorMessage = "Upload summary force failure";
-			const uploadSummaryUploaderFunc = containerRuntime.storage.uploadSummaryWithContext;
+			const uploadSummaryUploaderFunc =
+				containerRuntime.storage.uploadSummaryWithContext;
 			const func = async (summary: ISummaryTree, context: ISummaryContext) => {
 				throw new Error(errorMessage);
 			};
 			containerRuntime.storage.uploadSummaryWithContext = func;
-			await assert.rejects(summarizeNow(summarizer), (e: Error) => e.message === errorMessage);
-			containerRuntime.storage.uploadSummaryWithContext = uploadSummaryUploaderFunc;
+			await assert.rejects(
+				summarizeNow(summarizer),
+				(e: Error) => e.message === errorMessage,
+			);
+			containerRuntime.storage.uploadSummaryWithContext =
+				uploadSummaryUploaderFunc;
 		}
 
 		beforeEach("setup", async () => {
@@ -99,7 +106,10 @@ describeCompat(
 			await waitForContainerConnection(mainContainer);
 
 			// A gc blob should be submitted as this is the first summary
-			({ summarizer: summarizer1 } = await createSummarizer(provider, mainContainer));
+			({ summarizer: summarizer1 } = await createSummarizer(
+				provider,
+				mainContainer,
+			));
 			await submitSummaryAndValidateState(summarizer1, false /* isHandle */);
 		});
 

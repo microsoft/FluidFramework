@@ -5,26 +5,31 @@
 
 import type { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
+	ISummaryHandle,
+	ISummaryTree,
+} from "@fluidframework/driver-definitions";
 import type {
 	FetchSource,
+	ICreateBlobResponse,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	ISnapshot,
 	ISnapshotFetchOptions,
-	ISummaryContext,
-	ICreateBlobResponse,
 	ISnapshotTree,
+	ISummaryContext,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { runWithRetry } from "@fluidframework/driver-utils/internal";
 import {
-	type ITelemetryLoggerExt,
 	GenericError,
+	type ITelemetryLoggerExt,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
-export class RetriableDocumentStorageService implements IDocumentStorageService, IDisposable {
+export class RetriableDocumentStorageService
+	implements IDocumentStorageService, IDisposable
+{
 	private _disposed = false;
 	private internalStorageService: IDocumentStorageService | undefined;
 	constructor(
@@ -63,7 +68,9 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 		);
 	}
 
-	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
+	public async getSnapshot(
+		snapshotFetchOptions?: ISnapshotFetchOptions,
+	): Promise<ISnapshot> {
 		return this.runWithRetry(
 			async () =>
 				this.internalStorageServiceP.then(async (s) => {
@@ -80,7 +87,8 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
 		return this.runWithRetry(
-			async () => this.internalStorageServiceP.then(async (s) => s.readBlob(id)),
+			async () =>
+				this.internalStorageServiceP.then(async (s) => s.readBlob(id)),
 			"storage_readBlob",
 		);
 	}
@@ -116,7 +124,8 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 		//    retryAfter into account!
 		// But retry loop is required for creation flow (Container.attach)
 		assert(
-			(context.referenceSequenceNumber === 0) === (context.ackHandle === undefined),
+			(context.referenceSequenceNumber === 0) ===
+				(context.ackHandle === undefined),
 			0x251 /* "creation summary has to have seq=0 && handle === undefined" */,
 		);
 		if (context.referenceSequenceNumber !== 0) {
@@ -137,14 +146,18 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 
 	public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
 		return this.runWithRetry(
-			async () => this.internalStorageServiceP.then(async (s) => s.downloadSummary(handle)),
+			async () =>
+				this.internalStorageServiceP.then(async (s) =>
+					s.downloadSummary(handle),
+				),
 			"storage_downloadSummary",
 		);
 	}
 
 	public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
 		return this.runWithRetry(
-			async () => this.internalStorageServiceP.then(async (s) => s.createBlob(file)),
+			async () =>
+				this.internalStorageServiceP.then(async (s) => s.createBlob(file)),
 			"storage_createBlob",
 		);
 	}
@@ -166,7 +179,10 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 		return;
 	}
 
-	private async runWithRetry<T>(api: () => Promise<T>, callName: string): Promise<T> {
+	private async runWithRetry<T>(
+		api: () => Promise<T>,
+		callName: string,
+	): Promise<T> {
 		return runWithRetry(api, callName, this.logger, {
 			onRetry: (_delayInMs: number, error: unknown) =>
 				this.checkStorageDisposed(callName, error),

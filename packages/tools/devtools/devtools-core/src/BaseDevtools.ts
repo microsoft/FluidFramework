@@ -8,20 +8,27 @@ import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IClient } from "@fluidframework/driver-definitions";
 
 import type { AudienceClientMetadata } from "./AudienceMetadata.js";
-import type { ContainerKey, FluidObjectId, HasContainerKey } from "./CommonInterfaces.js";
+import type {
+	ContainerKey,
+	FluidObjectId,
+	HasContainerKey,
+} from "./CommonInterfaces.js";
 import { ContainerStateChangeKind } from "./Container.js";
 import type { ContainerStateMetadata } from "./ContainerMetadata.js";
 import type { DecomposedContainer } from "./DecomposedContainer.js";
-import type { ContainerDevtoolsFeatureFlags } from "./Features.js";
-import type { IContainerDevtools } from "./IContainerDevtools.js";
-import type { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs.js";
 import {
 	DataVisualizerGraph,
+	defaultVisualizers,
 	type FluidObjectNode,
 	type RootHandleNode,
 	VisualNodeKind,
-	defaultVisualizers,
 } from "./data-visualization/index.js";
+import type { ContainerDevtoolsFeatureFlags } from "./Features.js";
+import type { IContainerDevtools } from "./IContainerDevtools.js";
+import type {
+	AudienceChangeLogEntry,
+	ConnectionStateChangeLogEntry,
+} from "./Logs.js";
 import {
 	AudienceSummary,
 	ContainerDevtoolsFeatures,
@@ -33,13 +40,13 @@ import {
 	GetContainerState,
 	GetDataVisualization,
 	GetRootDataVisualizations,
-	type IDevtoolsMessage,
-	type ISourcedDevtoolsMessage,
-	type InboundHandlers,
-	type MessageLoggingOptions,
-	RootDataVisualizations,
 	handleIncomingWindowMessage,
+	type IDevtoolsMessage,
+	type InboundHandlers,
+	type ISourcedDevtoolsMessage,
+	type MessageLoggingOptions,
 	postMessagesToWindow,
+	RootDataVisualizations,
 } from "./messaging/index.js";
 
 /**
@@ -222,7 +229,9 @@ export abstract class BaseDevtools<TContainer extends DecomposedContainer>
 
 	// #region Data visualization handlers
 
-	protected readonly dataUpdateHandler = (visualization: FluidObjectNode): void => {
+	protected readonly dataUpdateHandler = (
+		visualization: FluidObjectNode,
+	): void => {
 		// This is called when actual data changes occur - should trigger blinking
 		this.postDataVisualization(
 			visualization.fluidObjectId,
@@ -277,7 +286,9 @@ export abstract class BaseDevtools<TContainer extends DecomposedContainer>
 			[GetDataVisualization.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as GetDataVisualization.Message;
 				if (message.data.containerKey === this.containerKey) {
-					const visualization = await this.getDataVisualization(message.data.fluidObjectId);
+					const visualization = await this.getDataVisualization(
+						message.data.fluidObjectId,
+					);
 					// This is a user-requested visualization - should NOT trigger blinking
 					this.postDataVisualization(
 						message.data.fluidObjectId,
@@ -425,7 +436,10 @@ export abstract class BaseDevtools<TContainer extends DecomposedContainer>
 		// Initialize data visualization monitoring immediately to ensure event listeners are active
 		if (this.dataVisualizer !== undefined) {
 			this.initializeDataVisualizationMonitoring().catch((error) => {
-				console.error("Failed to initialize data visualization monitoring:", error);
+				console.error(
+					"Failed to initialize data visualization monitoring:",
+					error,
+				);
 			});
 		}
 

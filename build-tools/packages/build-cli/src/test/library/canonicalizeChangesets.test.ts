@@ -9,7 +9,10 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, it } from "mocha";
 import { simpleGit } from "simple-git";
-import { DEFAULT_CHANGESET_PATH, canonicalizeChangesets } from "../../library/changesets.js";
+import {
+	canonicalizeChangesets,
+	DEFAULT_CHANGESET_PATH,
+} from "../../library/changesets.js";
 
 describe("canonicalizeChangesets", () => {
 	let testDir: string;
@@ -19,7 +22,10 @@ describe("canonicalizeChangesets", () => {
 	/**
 	 * Helper to write a changeset file and commit it to git
 	 */
-	async function writeChangesetFile(filename: string, content: string): Promise<void> {
+	async function writeChangesetFile(
+		filename: string,
+		content: string,
+	): Promise<void> {
 		const filePath = path.join(changesetDir, filename);
 		await writeFile(filePath, content);
 		// Git operations are relative to testDir, not changesetDir
@@ -44,7 +50,10 @@ describe("canonicalizeChangesets", () => {
 	});
 
 	it("should throw error when no changesets exist", async () => {
-		await assert.rejects(async () => canonicalizeChangesets(testDir), /No changesets found/);
+		await assert.rejects(
+			async () => canonicalizeChangesets(testDir),
+			/No changesets found/,
+		);
 	});
 
 	it("should determine major as highest bump type", async () => {
@@ -155,9 +164,18 @@ describe("canonicalizeChangesets", () => {
 		assert.strictEqual(bumpType, "minor");
 
 		// Verify all files were processed
-		const content1 = await readFile(path.join(changesetDir, "change-1.md"), "utf8");
-		const content2 = await readFile(path.join(changesetDir, "change-2.md"), "utf8");
-		const content3 = await readFile(path.join(changesetDir, "change-3.md"), "utf8");
+		const content1 = await readFile(
+			path.join(changesetDir, "change-1.md"),
+			"utf8",
+		);
+		const content2 = await readFile(
+			path.join(changesetDir, "change-2.md"),
+			"utf8",
+		);
+		const content3 = await readFile(
+			path.join(changesetDir, "change-3.md"),
+			"utf8",
+		);
 
 		assert.match(content1, /"@fluid\/package-a": minor/);
 		assert.match(content2, /"@fluid\/package-b": patch/);
@@ -228,10 +246,12 @@ describe("canonicalizeChangesets", () => {
 		const readPromises: Promise<void>[] = [];
 		for (let i = 0; i < 10; i++) {
 			readPromises.push(
-				readFile(path.join(changesetDir, `change-${i}.md`), "utf8").then((content) => {
-					assert.doesNotMatch(content, /__custom/);
-					assert.match(content, new RegExp(`Change ${i}`));
-				}),
+				readFile(path.join(changesetDir, `change-${i}.md`), "utf8").then(
+					(content) => {
+						assert.doesNotMatch(content, /__custom/);
+						assert.match(content, new RegExp(`Change ${i}`));
+					},
+				),
 			);
 		}
 		await Promise.all(readPromises);

@@ -3,11 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { brand } from "../../util/index.js";
-import type { SchemaUpgrade } from "./allowedTypes.js";
-import type { TreeNodeSchemaIdentifier, TreeTypeSet } from "../../core/index.js";
-import type { SimpleAllowedTypeAttributes, SimpleAllowedTypes } from "../simpleSchema.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import type {
+	TreeNodeSchemaIdentifier,
+	TreeTypeSet,
+} from "../../core/index.js";
+import { brand } from "../../util/index.js";
+import type {
+	SimpleAllowedTypeAttributes,
+	SimpleAllowedTypes,
+} from "../simpleSchema.js";
+import type { SchemaUpgrade } from "./allowedTypes.js";
 
 /**
  * Options for generating a {@link TreeStoredSchema} from view schema.

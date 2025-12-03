@@ -16,7 +16,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedSignal, type ISharedSignal } from "../../index.js";
+import { type ISharedSignal, SharedSignal } from "../../index.js";
 
 describe("SharedSignal", () => {
 	let factory: IChannelFactory;
@@ -33,7 +33,8 @@ describe("SharedSignal", () => {
 		factory = SharedSignal.getFactory();
 
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
-		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+		const containerRuntime1 =
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 		const services1 = {
 			deltaConnection: containerRuntime1.createDeltaConnection(),
 			objectStorage: new MockStorage(),

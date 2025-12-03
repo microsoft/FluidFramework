@@ -11,12 +11,23 @@
  * Current version: 2.74.0
  */
 
-import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
+import type {
+	FullType,
+	MinimalType,
+	requireAssignableTo,
+	TypeOnly,
+} from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/container-runtime-definitions-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> =
+	| TypeOnly<T>
+	| MinimalType<T>
+	| FullType<T>
+	| typeof old
+	| typeof current
+	| requireAssignableTo<true, true>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -25,7 +36,11 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Interface_IContainerRuntime": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IContainerRuntime = requireAssignableTo<TypeOnly<current.IContainerRuntime>, TypeOnly<old.IContainerRuntime>>
+declare type current_as_old_for_Interface_IContainerRuntime =
+	requireAssignableTo<
+		TypeOnly<current.IContainerRuntime>,
+		TypeOnly<old.IContainerRuntime>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -34,7 +49,11 @@ declare type current_as_old_for_Interface_IContainerRuntime = requireAssignableT
  * typeValidation.broken:
  * "Interface_IContainerRuntimeEvents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IContainerRuntimeEvents = requireAssignableTo<TypeOnly<current.IContainerRuntimeEvents>, TypeOnly<old.IContainerRuntimeEvents>>
+declare type current_as_old_for_Interface_IContainerRuntimeEvents =
+	requireAssignableTo<
+		TypeOnly<current.IContainerRuntimeEvents>,
+		TypeOnly<old.IContainerRuntimeEvents>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -43,7 +62,11 @@ declare type current_as_old_for_Interface_IContainerRuntimeEvents = requireAssig
  * typeValidation.broken:
  * "Interface_IContainerRuntimeWithResolveHandle_Deprecated": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IContainerRuntimeWithResolveHandle_Deprecated = requireAssignableTo<TypeOnly<old.IContainerRuntimeWithResolveHandle_Deprecated>, TypeOnly<current.IContainerRuntimeWithResolveHandle_Deprecated>>
+declare type old_as_current_for_Interface_IContainerRuntimeWithResolveHandle_Deprecated =
+	requireAssignableTo<
+		TypeOnly<old.IContainerRuntimeWithResolveHandle_Deprecated>,
+		TypeOnly<current.IContainerRuntimeWithResolveHandle_Deprecated>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -52,7 +75,11 @@ declare type old_as_current_for_Interface_IContainerRuntimeWithResolveHandle_Dep
  * typeValidation.broken:
  * "Interface_IContainerRuntimeWithResolveHandle_Deprecated": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IContainerRuntimeWithResolveHandle_Deprecated = requireAssignableTo<TypeOnly<current.IContainerRuntimeWithResolveHandle_Deprecated>, TypeOnly<old.IContainerRuntimeWithResolveHandle_Deprecated>>
+declare type current_as_old_for_Interface_IContainerRuntimeWithResolveHandle_Deprecated =
+	requireAssignableTo<
+		TypeOnly<current.IContainerRuntimeWithResolveHandle_Deprecated>,
+		TypeOnly<old.IContainerRuntimeWithResolveHandle_Deprecated>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -61,7 +88,11 @@ declare type current_as_old_for_Interface_IContainerRuntimeWithResolveHandle_Dep
  * typeValidation.broken:
  * "Interface_ISummarizeEventProps": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISummarizeEventProps = requireAssignableTo<TypeOnly<current.ISummarizeEventProps>, TypeOnly<old.ISummarizeEventProps>>
+declare type current_as_old_for_Interface_ISummarizeEventProps =
+	requireAssignableTo<
+		TypeOnly<current.ISummarizeEventProps>,
+		TypeOnly<old.ISummarizeEventProps>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -70,7 +101,11 @@ declare type current_as_old_for_Interface_ISummarizeEventProps = requireAssignab
  * typeValidation.broken:
  * "Interface_ISummarizerEvents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISummarizerEvents = requireAssignableTo<TypeOnly<current.ISummarizerEvents>, TypeOnly<old.ISummarizerEvents>>
+declare type current_as_old_for_Interface_ISummarizerEvents =
+	requireAssignableTo<
+		TypeOnly<current.ISummarizerEvents>,
+		TypeOnly<old.ISummarizerEvents>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -79,7 +114,11 @@ declare type current_as_old_for_Interface_ISummarizerEvents = requireAssignableT
  * typeValidation.broken:
  * "Interface_ISummarizerObservabilityProps": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISummarizerObservabilityProps = requireAssignableTo<TypeOnly<current.ISummarizerObservabilityProps>, TypeOnly<old.ISummarizerObservabilityProps>>
+declare type current_as_old_for_Interface_ISummarizerObservabilityProps =
+	requireAssignableTo<
+		TypeOnly<current.ISummarizerObservabilityProps>,
+		TypeOnly<old.ISummarizerObservabilityProps>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -88,7 +127,11 @@ declare type current_as_old_for_Interface_ISummarizerObservabilityProps = requir
  * typeValidation.broken:
  * "TypeAlias_IContainerRuntimeBaseWithCombinedEvents": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_IContainerRuntimeBaseWithCombinedEvents = requireAssignableTo<TypeOnly<current.IContainerRuntimeBaseWithCombinedEvents>, TypeOnly<old.IContainerRuntimeBaseWithCombinedEvents>>
+declare type current_as_old_for_TypeAlias_IContainerRuntimeBaseWithCombinedEvents =
+	requireAssignableTo<
+		TypeOnly<current.IContainerRuntimeBaseWithCombinedEvents>,
+		TypeOnly<old.IContainerRuntimeBaseWithCombinedEvents>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -97,4 +140,8 @@ declare type current_as_old_for_TypeAlias_IContainerRuntimeBaseWithCombinedEvent
  * typeValidation.broken:
  * "TypeAlias_SummarizerStopReason": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_SummarizerStopReason = requireAssignableTo<TypeOnly<current.SummarizerStopReason>, TypeOnly<old.SummarizerStopReason>>
+declare type current_as_old_for_TypeAlias_SummarizerStopReason =
+	requireAssignableTo<
+		TypeOnly<current.SummarizerStopReason>,
+		TypeOnly<old.SummarizerStopReason>
+	>;

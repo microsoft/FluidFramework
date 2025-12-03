@@ -8,7 +8,7 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { DirectoryFactory } from "@fluidframework/map/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 
@@ -24,7 +24,8 @@ export function apisToBundle() {
 		defaultFactory,
 		registryEntries: [["BundleTestDo", Promise.resolve(defaultFactory)]],
 		provideEntryPoint: async (runtime: IContainerRuntime) => {
-			const dataStoreHandle = await runtime.getAliasedDataStoreEntryPoint("default");
+			const dataStoreHandle =
+				await runtime.getAliasedDataStoreEntryPoint("default");
 			if (dataStoreHandle === undefined) {
 				throw new Error("default dataStore must exist");
 			}

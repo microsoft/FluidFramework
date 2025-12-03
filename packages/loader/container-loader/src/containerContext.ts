@@ -15,22 +15,25 @@ import type {
 import type {
 	IBatchMessage,
 	IContainerContext,
+	IContainerStorageService,
+	IDeltaManager,
 	ILoader,
 	ILoaderOptions,
-	IDeltaManager,
-	IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 import type { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
-import type { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import type {
-	ISnapshot,
+	IClientDetails,
+	IQuorumClients,
+} from "@fluidframework/driver-definitions";
+import type {
 	IDocumentMessage,
+	ISequencedDocumentMessage,
+	ISnapshot,
 	ISnapshotTree,
 	ISummaryContent,
 	IVersion,
 	MessageType,
-	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
@@ -71,7 +74,9 @@ export interface IContainerContextConfig
 	readonly existing: boolean;
 	readonly taggedLogger: ITelemetryLoggerExt;
 	// This "overrides" IContainerContext.snapshotWithContents to be required but allow `undefined`.
-	readonly snapshotWithContents: IContainerContext["snapshotWithContents"] | undefined;
+	readonly snapshotWithContents:
+		| IContainerContext["snapshotWithContents"]
+		| undefined;
 }
 
 /**
@@ -98,7 +103,10 @@ export class ContainerContext
 	public readonly options: ILoaderOptions;
 	public readonly scope: FluidObject;
 	public readonly baseSnapshot: ISnapshotTree | undefined;
-	public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+	public readonly deltaManager: IDeltaManager<
+		ISequencedDocumentMessage,
+		IDocumentMessage
+	>;
 	public readonly storage: IContainerStorageService;
 	public readonly quorum: IQuorumClients;
 	public readonly audience: IAudience;
@@ -133,7 +141,9 @@ export class ContainerContext
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;
 	public readonly closeFn: (error?: ICriticalContainerError) => void;
 	public readonly updateDirtyContainerState: (dirty: boolean) => void;
-	public readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>;
+	public readonly getAbsoluteUrl: (
+		relativeUrl: string,
+	) => Promise<string | undefined>;
 	public readonly clientDetails: IClientDetails;
 	public readonly existing: boolean;
 	public readonly taggedLogger: ITelemetryLoggerExt;

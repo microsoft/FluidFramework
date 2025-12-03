@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type {
+	IRequest,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import type {
 	IDocumentServiceFactory,
 	IResolvedUrl,
@@ -117,7 +120,10 @@ export interface ITestDriver {
 	 * E.g. if passed a value from a container created earlier, the driver can us it as a hint
 	 * when resolving the container  URL.
 	 */
-	createContainerUrl(testId: string, containerUrl?: IResolvedUrl): Promise<string>;
+	createContainerUrl(
+		testId: string,
+		containerUrl?: IResolvedUrl,
+	): Promise<string>;
 
 	dispose?(): void;
 }

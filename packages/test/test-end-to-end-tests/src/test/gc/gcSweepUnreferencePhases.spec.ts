@@ -3,27 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import {
-	ITestDataObject,
-	TestDataObjectType,
 	describeCompat,
+	type ITestDataObject,
+	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions/internal";
-import { IGCRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IGCRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { delay } from "@fluidframework/core-utils/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import {
+	type ISummaryTree,
+	SummaryType,
+} from "@fluidframework/driver-definitions";
 import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
-	ITestContainerConfig,
-	ITestObjectProvider,
 	createSummarizer,
 	createTestConfigProvider,
+	type ITestContainerConfig,
+	type ITestObjectProvider,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import { strict as assert } from "assert";
 
 import {
 	getGCDeletedStateFromSummary,
@@ -60,7 +62,10 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 
 	let provider: ITestObjectProvider;
 
-	const loadSummarizer = async (container: IContainer, summaryVersion?: string) => {
+	const loadSummarizer = async (
+		container: IContainer,
+		summaryVersion?: string,
+	) => {
 		return createSummarizer(
 			provider,
 			container,
@@ -72,7 +77,10 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 		);
 	};
 
-	async function isDataStoreInSummaryTree(summaryTree: ISummaryTree, dataStoreId: string) {
+	async function isDataStoreInSummaryTree(
+		summaryTree: ISummaryTree,
+		dataStoreId: string,
+	) {
 		const channelsTree =
 			(summaryTree.tree[".channels"] as ISummaryTree)?.tree ?? summaryTree.tree;
 		return dataStoreId in channelsTree;
@@ -100,16 +108,22 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 
 	it("Unreferenced objects follow the sequence [unreferenced, tombstoned, deleted]", async () => {
 		const mainContainer = await provider.makeTestContainer(testContainerConfig);
-		const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
+		const mainDataStore =
+			(await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
 
 		const { summarizer } = await loadSummarizer(mainContainer);
 
 		// create datastore
 		const dataStore =
-			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
+			await mainDataStore._context.containerRuntime.createDataStore(
+				TestDataObjectType,
+			);
 		const dataStoreHandle = dataStore.entryPoint;
-		assert(dataStoreHandle !== undefined, "Expected a handle when creating a datastore");
+		assert(
+			dataStoreHandle !== undefined,
+			"Expected a handle when creating a datastore",
+		);
 		const dataObject = (await dataStoreHandle.get()) as ITestDataObject;
 		const dataStoreId = dataObject._context.id;
 		const ddsHandle = dataObject._root.handle;
@@ -132,7 +146,8 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 			"Data Store should exist on gc graph",
 		);
 		assert(
-			gcState.gcNodes[dataStoreHandle.absolutePath].unreferencedTimestampMs !== undefined,
+			gcState.gcNodes[dataStoreHandle.absolutePath].unreferencedTimestampMs !==
+				undefined,
 			"Data Store should be unreferenced",
 		);
 		let tombstoneState = getGCTombstoneStateFromSummary(summaryTree);
@@ -168,7 +183,11 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 		summaryTree = (await summarizeNow(summarizer)).summaryTree;
 
 		const rootGCTree = summaryTree.tree[gcTreeKey];
-		assert.equal(rootGCTree?.type, SummaryType.Tree, "GC data should be a tree");
+		assert.equal(
+			rootGCTree?.type,
+			SummaryType.Tree,
+			"GC data should be a tree",
+		);
 		tombstoneState = getGCTombstoneStateFromSummary(summaryTree);
 		// After tombstoneTimeoutMs the object should be tombstoned.
 		assert(tombstoneState !== undefined, "Should have tombstone state");
@@ -217,7 +236,10 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 		// GC Sweep check
 		deletedState = getGCDeletedStateFromSummary(summaryTree);
 		assert(deletedState !== undefined, "Should have sweep state");
-		assert(deletedState.includes(dataStoreHandle.absolutePath), "Data Store should be swept");
+		assert(
+			deletedState.includes(dataStoreHandle.absolutePath),
+			"Data Store should be swept",
+		);
 		assert(
 			deletedState.includes(toFluidHandleInternal(ddsHandle).absolutePath),
 			"DDS should be swept",

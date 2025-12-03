@@ -22,7 +22,9 @@ import z from "zod";
  * @param langchainModel - The LangChain chat model to use.
  * @alpha
  */
-export function createLangchainChatModel(langchainModel: BaseChatModel): SharedTreeChatModel {
+export function createLangchainChatModel(
+	langchainModel: BaseChatModel,
+): SharedTreeChatModel {
 	return new LangchainChatModel(langchainModel);
 }
 
@@ -54,34 +56,47 @@ class LangchainChatModel implements SharedTreeChatModel {
 			},
 			{
 				name: this.editToolName,
-				description: "Invokes a JavaScript code snippet to edit a tree of application data.",
+				description:
+					"Invokes a JavaScript code snippet to edit a tree of application data.",
 				schema: z.object({
 					functionCode: z.string().describe("The JavaScript snippet code."),
 				}),
 			},
 		);
-		const runnable = this.model.bindTools?.([editingTool], { tool_choice: "auto" });
+		const runnable = this.model.bindTools?.([editingTool], {
+			tool_choice: "auto",
+		});
 		if (runnable === undefined) {
-			throw new UsageError("LLM client must support function calling or tool use.");
+			throw new UsageError(
+				"LLM client must support function calling or tool use.",
+			);
 		}
 
 		const responseMessage = await runnable.invoke(this.messages);
 		this.messages.push(responseMessage);
 
-		if (responseMessage.tool_calls !== undefined && responseMessage.tool_calls.length > 0) {
+		if (
+			responseMessage.tool_calls !== undefined &&
+			responseMessage.tool_calls.length > 0
+		) {
 			for (const toolCall of responseMessage.tool_calls) {
 				switch (toolCall.name) {
 					case editingTool.name: {
 						const toolResult = await editingTool.invoke(toolCall);
 						this.messages.push(toolResult);
 						const editResult: unknown = JSON.parse(toolResult.text);
-						if (isEditResult(editResult) && editResult.type === "tooManyEditsError") {
+						if (
+							isEditResult(editResult) &&
+							editResult.type === "tooManyEditsError"
+						) {
 							return editResult.message;
 						}
 						return this.queryEdit(edit);
 					}
 					default: {
-						this.messages.push(new HumanMessage(`Unrecognized tool call: ${toolCall.name}`));
+						this.messages.push(
+							new HumanMessage(`Unrecognized tool call: ${toolCall.name}`),
+						);
 					}
 				}
 			}

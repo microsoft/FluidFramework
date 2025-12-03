@@ -96,7 +96,9 @@ export interface IOdspFluidContainer<
 	 *
 	 * @returns A promise which resolves when the attach is complete, with the string identifier of the container.
 	 */
-	attach(props?: ContainerAttachProps<OdspContainerAttachProps>): Promise<string>;
+	attach(
+		props?: ContainerAttachProps<OdspContainerAttachProps>,
+	): Promise<string>;
 }
 
 /**

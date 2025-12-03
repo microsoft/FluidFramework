@@ -8,8 +8,8 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type ChangeRebaser,
 	type GraphCommit,
-	replaceChange,
 	type RevisionTag,
+	replaceChange,
 } from "../core/index.js";
 
 import type { SharedTreeBranchChange } from "./branch.js";
@@ -29,7 +29,10 @@ export class BranchCommitEnricher<TChange> {
 	 * Each entry is removed when it is {@link BranchCommitEnricher.enrich | retrieved}.
 	 * In the event that an entry is not explicitly removed, it will eventually be {@link WeakMap | dropped from memory} along with the associated commit.
 	 */
-	readonly #preparedCommits: WeakMap<GraphCommit<TChange>, GraphCommit<TChange>> = new Map();
+	readonly #preparedCommits: WeakMap<
+		GraphCommit<TChange>,
+		GraphCommit<TChange>
+	> = new Map();
 
 	/**
 	 * If defined, a top-level transaction has been {@link BranchCommitEnricher.commitTransaction | committed} since the last {@link BranchCommitEnricher.processChange | change has been processed}.
@@ -43,7 +46,10 @@ export class BranchCommitEnricher<TChange> {
 		enricher: ChangeEnricherReadonlyCheckout<TChange>,
 	) {
 		this.#enricher = enricher;
-		this.#transactionEnricher = new TransactionEnricher(rebaser, this.#enricher);
+		this.#transactionEnricher = new TransactionEnricher(
+			rebaser,
+			this.#enricher,
+		);
 	}
 
 	/**
@@ -55,9 +61,15 @@ export class BranchCommitEnricher<TChange> {
 			for (const newCommit of change.newCommits) {
 				const newChange =
 					this.#getOuterTransactionChange?.(newCommit.revision) ??
-					this.#enricher.updateChangeEnrichments(newCommit.change, newCommit.revision);
+					this.#enricher.updateChangeEnrichments(
+						newCommit.change,
+						newCommit.revision,
+					);
 
-				this.#preparedCommits.set(newCommit, replaceChange(newCommit, newChange));
+				this.#preparedCommits.set(
+					newCommit,
+					replaceChange(newCommit, newChange),
+				);
 			}
 		}
 
@@ -89,7 +101,8 @@ export class BranchCommitEnricher<TChange> {
 	 * @remarks This should be called _before_ the corresponding transaction commit change is {@link BranchCommitEnricher.processChange | processed}.
 	 */
 	public commitTransaction(): void {
-		this.#getOuterTransactionChange = this.#transactionEnricher.commitTransaction();
+		this.#getOuterTransactionChange =
+			this.#transactionEnricher.commitTransaction();
 	}
 
 	/**
@@ -105,8 +118,13 @@ export class BranchCommitEnricher<TChange> {
 	 * @param newCommits - The new commits to add.
 	 * @remarks This will throw an error if there is no ongoing transaction.
 	 */
-	public addTransactionCommits(newCommits: Iterable<GraphCommit<TChange>>): void {
-		assert(this.#transactionEnricher.isTransacting(), 0xa97 /* Not in transaction */);
+	public addTransactionCommits(
+		newCommits: Iterable<GraphCommit<TChange>>,
+	): void {
+		assert(
+			this.#transactionEnricher.isTransacting(),
+			0xa97 /* Not in transaction */,
+		);
 		for (const commit of newCommits) {
 			this.#transactionEnricher.addTransactionStep(commit);
 		}

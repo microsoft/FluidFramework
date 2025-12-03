@@ -7,10 +7,10 @@ import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import {
+	type MockContainerRuntime,
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-	type MockContainerRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
 
 // eslint-disable-next-line import-x/no-internal-modules
@@ -18,11 +18,12 @@ import type { IRevertible, ISharedArray } from "../../array/interfaces.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { SharedArrayFactory } from "../../array/sharedArrayFactory.js";
 import {
-	OperationType,
-	SharedArrayRevertible,
 	type ISharedArrayOperation,
 	type IToggleOperation,
+	OperationType,
+	SharedArrayRevertible,
 } from "../../index.js";
+
 interface RollbackTestSetup {
 	sharedArray: ISharedArray<number>;
 	dataStoreRuntime: MockFluidDataStoreRuntime;
@@ -32,9 +33,12 @@ interface RollbackTestSetup {
 const arrayFactory = new SharedArrayFactory<number>();
 
 function setupRollbackTest(): RollbackTestSetup {
-	const containerRuntimeFactory = new MockContainerRuntimeFactory({ flushMode: 1 }); // TurnBased
+	const containerRuntimeFactory = new MockContainerRuntimeFactory({
+		flushMode: 1,
+	}); // TurnBased
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: "1" });
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const containerRuntime =
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	const sharedArray = arrayFactory.create(dataStoreRuntime, "shared-array-1");
 	dataStoreRuntime.setAttachState(AttachState.Attached);
 	sharedArray.connect({
@@ -58,8 +62,12 @@ function createAdditionalClient(
 	containerRuntime: MockContainerRuntime;
 } {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: id });
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const sharedArray = arrayFactory.create(dataStoreRuntime, `shared-array-${id}`);
+	const containerRuntime =
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const sharedArray = arrayFactory.create(
+		dataStoreRuntime,
+		`shared-array-${id}`,
+	);
 	dataStoreRuntime.setAttachState(AttachState.Attached);
 	sharedArray.connect({
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
@@ -81,10 +89,22 @@ describe("SharedArray rollback", () => {
 		});
 		sharedArray.insert(0, 0);
 		assert.strictEqual(sharedArray.get()[0], 0, "Failed getting pending value");
-		assert.strictEqual(valueChanges.length, 1, "Should have one value change event");
+		assert.strictEqual(
+			valueChanges.length,
+			1,
+			"Should have one value change event",
+		);
 		containerRuntime.rollback?.();
-		assert.strictEqual(sharedArray.get()[0], undefined, "Value should be rolled back");
-		assert.strictEqual(valueChanges.length, 2, "Should have two value change events");
+		assert.strictEqual(
+			sharedArray.get()[0],
+			undefined,
+			"Value should be rolled back",
+		);
+		assert.strictEqual(
+			valueChanges.length,
+			2,
+			"Should have two value change events",
+		);
 		assert.strictEqual(
 			valueChanges[1].op.type,
 			OperationType.deleteEntry,
@@ -93,7 +113,8 @@ describe("SharedArray rollback", () => {
 	});
 
 	it("should rollback delete operation", () => {
-		const { sharedArray, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
+		const { sharedArray, containerRuntimeFactory, containerRuntime } =
+			setupRollbackTest();
 		sharedArray.insert(0, 0);
 		containerRuntime.flush();
 		containerRuntimeFactory.processAllMessages();
@@ -106,11 +127,27 @@ describe("SharedArray rollback", () => {
 			valueChanges.push({ op, isLocal, target });
 		});
 		sharedArray.delete(0);
-		assert.strictEqual(sharedArray.get().length, 0, "Pending value should reflect the delete");
-		assert.strictEqual(valueChanges.length, 1, "Should have one value change event");
+		assert.strictEqual(
+			sharedArray.get().length,
+			0,
+			"Pending value should reflect the delete",
+		);
+		assert.strictEqual(
+			valueChanges.length,
+			1,
+			"Should have one value change event",
+		);
 		containerRuntime.rollback?.();
-		assert.strictEqual(sharedArray.get()[0], 0, "Value should be restored by rollback");
-		assert.strictEqual(valueChanges.length, 2, "Should have two value change events");
+		assert.strictEqual(
+			sharedArray.get()[0],
+			0,
+			"Value should be restored by rollback",
+		);
+		assert.strictEqual(
+			valueChanges.length,
+			2,
+			"Should have two value change events",
+		);
 		assert.strictEqual(
 			valueChanges[1].op.type,
 			OperationType.insertEntry,
@@ -119,7 +156,8 @@ describe("SharedArray rollback", () => {
 	});
 
 	it("should rollback insert and delete operations", () => {
-		const { sharedArray, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
+		const { sharedArray, containerRuntimeFactory, containerRuntime } =
+			setupRollbackTest();
 		const valueChanges: {
 			op: ISharedArrayOperation;
 			isLocal: boolean;
@@ -141,14 +179,27 @@ describe("SharedArray rollback", () => {
 			[5, 2],
 			"Pending value should reflect the insert and delete",
 		);
-		assert.strictEqual(valueChanges.length, 2, "Should have two value change events");
+		assert.strictEqual(
+			valueChanges.length,
+			2,
+			"Should have two value change events",
+		);
 		containerRuntime.rollback?.();
-		assert.deepStrictEqual(sharedArray.get(), [1, 2], "Values should be rolled back");
-		assert.strictEqual(valueChanges.length, 4, "Should have four value change events");
+		assert.deepStrictEqual(
+			sharedArray.get(),
+			[1, 2],
+			"Values should be rolled back",
+		);
+		assert.strictEqual(
+			valueChanges.length,
+			4,
+			"Should have four value change events",
+		);
 	});
 
 	it("should not resuscitate deleted entry by remote", () => {
-		const { sharedArray, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
+		const { sharedArray, containerRuntimeFactory, containerRuntime } =
+			setupRollbackTest();
 		// Create a second client
 		const { sharedArray: sharedArray2, containerRuntime: containerRuntime2 } =
 			createAdditionalClient(containerRuntimeFactory);
@@ -173,7 +224,8 @@ describe("SharedArray rollback", () => {
 	});
 
 	it("should rollback insert and delete ops in presence of remote changes", () => {
-		const { sharedArray, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
+		const { sharedArray, containerRuntimeFactory, containerRuntime } =
+			setupRollbackTest();
 		// Create a second client
 		const { sharedArray: sharedArray2, containerRuntime: containerRuntime2 } =
 			createAdditionalClient(containerRuntimeFactory);
@@ -208,7 +260,8 @@ describe("SharedArray rollback", () => {
 	});
 
 	it("should rollback move operation", () => {
-		const { sharedArray, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
+		const { sharedArray, containerRuntimeFactory, containerRuntime } =
+			setupRollbackTest();
 		// Create a second client
 		const { sharedArray: sharedArray2, containerRuntime: containerRuntime2 } =
 			createAdditionalClient(containerRuntimeFactory);
@@ -233,7 +286,11 @@ describe("SharedArray rollback", () => {
 		);
 
 		containerRuntime.rollback?.();
-		assert.strictEqual(valueChanges.length, 2, "Should have two value change events");
+		assert.strictEqual(
+			valueChanges.length,
+			2,
+			"Should have two value change events",
+		);
 		assert.strictEqual(
 			valueChanges[0].op.type,
 			OperationType.moveEntry,
@@ -267,7 +324,8 @@ describe("SharedArray rollback", () => {
 	});
 
 	it("should rollback move ops in presence of remote changes", () => {
-		const { sharedArray, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
+		const { sharedArray, containerRuntimeFactory, containerRuntime } =
+			setupRollbackTest();
 		// Create a second client
 		const { sharedArray: sharedArray2, containerRuntime: containerRuntime2 } =
 			createAdditionalClient(containerRuntimeFactory);
@@ -304,7 +362,8 @@ describe("SharedArray rollback", () => {
 	});
 
 	it("should rollback toggle operation", () => {
-		const { sharedArray, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
+		const { sharedArray, containerRuntimeFactory, containerRuntime } =
+			setupRollbackTest();
 		// Create a second client
 		const { sharedArray: sharedArray2, containerRuntime: containerRuntime2 } =
 			createAdditionalClient(containerRuntimeFactory);
@@ -340,7 +399,11 @@ describe("SharedArray rollback", () => {
 		);
 
 		containerRuntime.rollback?.();
-		assert.strictEqual(valueChanges.length, 2, "Should have two value change events");
+		assert.strictEqual(
+			valueChanges.length,
+			2,
+			"Should have two value change events",
+		);
 		assert.strictEqual(
 			valueChanges[0].op.type,
 			OperationType.toggle,
@@ -364,7 +427,8 @@ describe("SharedArray rollback", () => {
 	});
 
 	it("should rollback toggle move operation", () => {
-		const { sharedArray, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
+		const { sharedArray, containerRuntimeFactory, containerRuntime } =
+			setupRollbackTest();
 		// Create a second client
 		const { sharedArray: sharedArray2, containerRuntime: containerRuntime2 } =
 			createAdditionalClient(containerRuntimeFactory);
@@ -401,7 +465,11 @@ describe("SharedArray rollback", () => {
 		);
 
 		containerRuntime.rollback?.();
-		assert.strictEqual(valueChanges.length, 2, "Should have two value change events");
+		assert.strictEqual(
+			valueChanges.length,
+			2,
+			"Should have two value change events",
+		);
 		assert.strictEqual(
 			valueChanges[0].op.type,
 			OperationType.toggleMove,

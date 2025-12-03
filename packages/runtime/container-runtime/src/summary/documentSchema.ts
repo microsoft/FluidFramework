@@ -18,7 +18,12 @@ import { pkgVersion } from "../packageVersion.js";
  * we want them to continue to collaborate alongside clients who support that capability, but such capability is shipping dark for now.
  * @internal
  */
-export type DocumentSchemaValueType = string | string[] | true | number | undefined;
+export type DocumentSchemaValueType =
+	| string
+	| string[]
+	| true
+	| number
+	| undefined;
 
 /**
  * ID Compressor mode.
@@ -203,7 +208,8 @@ export interface IDocumentSchemaCurrent extends Required<IDocumentSchema> {
  * However, the `info` property is optional because some older documents may not have this property, but
  * `info` is not required to be understood by all clients to be compatible.
  */
-interface IDocumentSchemaCurrentIncoming extends Omit<IDocumentSchemaCurrent, "info"> {
+interface IDocumentSchemaCurrentIncoming
+	extends Omit<IDocumentSchemaCurrent, "info"> {
 	info?: IDocumentSchemaInfo;
 }
 
@@ -215,11 +221,15 @@ interface IProperty<T = unknown> {
 
 class TrueOrUndefined implements IProperty<true | undefined> {
 	public and(persistedSchema?: true, providedSchema?: true): true | undefined {
-		return persistedSchema === true && providedSchema === true ? true : undefined;
+		return persistedSchema === true && providedSchema === true
+			? true
+			: undefined;
 	}
 
 	public or(persistedSchema?: true, providedSchema?: true): true | undefined {
-		return persistedSchema === true || providedSchema === true ? true : undefined;
+		return persistedSchema === true || providedSchema === true
+			? true
+			: undefined;
 	}
 
 	public validate(t: unknown): t is true | undefined {
@@ -236,16 +246,25 @@ class TrueOrUndefinedMax extends TrueOrUndefined {
 class MultiChoice implements IProperty<string | undefined> {
 	constructor(private readonly choices: string[]) {}
 
-	public and(persistedSchema?: string, providedSchema?: string): string | undefined {
+	public and(
+		persistedSchema?: string,
+		providedSchema?: string,
+	): string | undefined {
 		if (persistedSchema === undefined || providedSchema === undefined) {
 			return undefined;
 		}
 		return this.choices[
-			Math.min(this.choices.indexOf(persistedSchema), this.choices.indexOf(providedSchema))
+			Math.min(
+				this.choices.indexOf(persistedSchema),
+				this.choices.indexOf(providedSchema),
+			)
 		];
 	}
 
-	public or(persistedSchema?: string, providedSchema?: string): string | undefined {
+	public or(
+		persistedSchema?: string,
+		providedSchema?: string,
+	): string | undefined {
 		if (persistedSchema === undefined) {
 			return providedSchema;
 		}
@@ -253,18 +272,26 @@ class MultiChoice implements IProperty<string | undefined> {
 			return persistedSchema;
 		}
 		return this.choices[
-			Math.max(this.choices.indexOf(persistedSchema), this.choices.indexOf(providedSchema))
+			Math.max(
+				this.choices.indexOf(persistedSchema),
+				this.choices.indexOf(providedSchema),
+			)
 		];
 	}
 
 	public validate(t: unknown): boolean {
-		return t === undefined || (typeof t === "string" && this.choices.includes(t));
+		return (
+			t === undefined || (typeof t === "string" && this.choices.includes(t))
+		);
 	}
 }
 
 class IdCompressorProperty extends MultiChoice {
 	// document schema always wins!
-	public and(persistedSchema?: string, providedSchema?: string): string | undefined {
+	public and(
+		persistedSchema?: string,
+		providedSchema?: string,
+	): string | undefined {
 		return persistedSchema;
 	}
 }
@@ -339,11 +366,16 @@ function checkRuntimeCompatibility(
 	// defence in depth - it should not be possible to get here anything other than integer, but worth validating it.
 	if (typeof regSeq !== "number" || regSeq < 0 || !Number.isInteger(regSeq)) {
 		unknownProperty = "refSeq";
-	} else if (documentSchema.runtime === null || typeof documentSchema.runtime !== "object") {
+	} else if (
+		documentSchema.runtime === null ||
+		typeof documentSchema.runtime !== "object"
+	) {
 		unknownProperty = "runtime";
 	} else {
 		for (const [name, value] of Object.entries(documentSchema.runtime)) {
-			const validator = documentSchemaSupportedConfigs[name] as IProperty | undefined;
+			const validator = documentSchemaSupportedConfigs[name] as
+				| IProperty
+				| undefined;
 			if (!(validator?.validate(value) ?? false)) {
 				unknownProperty = `runtime/${name}`;
 			}
@@ -386,7 +418,8 @@ function and(
 	// We keep the persisted minVersionForCollab if present, even if the provided minVersionForCollab
 	// is higher.
 	const minVersionForCollab =
-		persistedSchema.info?.minVersionForCollab ?? providedSchema.info.minVersionForCollab;
+		persistedSchema.info?.minVersionForCollab ??
+		providedSchema.info.minVersionForCollab;
 
 	return {
 		version: currentDocumentVersionSchema,
@@ -415,7 +448,10 @@ function or(
 	const minVersionForCollab =
 		persistedSchema.info === undefined
 			? providedSchema.info.minVersionForCollab
-			: gt(persistedSchema.info.minVersionForCollab, providedSchema.info.minVersionForCollab)
+			: gt(
+						persistedSchema.info.minVersionForCollab,
+						providedSchema.info.minVersionForCollab,
+					)
 				? persistedSchema.info.minVersionForCollab
 				: providedSchema.info.minVersionForCollab;
 
@@ -438,7 +474,10 @@ function same(
 ): boolean {
 	if (
 		persistedSchema.info === undefined ||
-		lt(persistedSchema.info.minVersionForCollab, providedSchema.info.minVersionForCollab)
+		lt(
+			persistedSchema.info.minVersionForCollab,
+			providedSchema.info.minVersionForCollab,
+		)
 	) {
 		// If the persisted schema's minVersionForCollab is undefined or less than the provided schema's
 		// minVersionForCollab, then we should send a schema change op to update the minVersionForCollab.
@@ -581,7 +620,8 @@ export class DocumentsSchemaController {
 	) {
 		// For simplicity, let's only support new schema features for explicit schema control mode
 		assert(
-			features.disallowedVersions.length === 0 || features.explicitSchemaControl,
+			features.disallowedVersions.length === 0 ||
+				features.explicitSchemaControl,
 			0x949 /* not supported */,
 		);
 
@@ -592,7 +632,8 @@ export class DocumentsSchemaController {
 		// the existing document's schema. We still want to issue a warning regardless if this client can or cannot understand the
 		// schema since it may be a sign that the customer is not properly waiting for saturation before updating their
 		// `minVersionForCollab` value, which could cause disruptions to users in the future.
-		const existingMinVersionForCollab = documentMetadataSchema?.info?.minVersionForCollab;
+		const existingMinVersionForCollab =
+			documentMetadataSchema?.info?.minVersionForCollab;
 		if (
 			existingMinVersionForCollab !== undefined &&
 			gt(existingMinVersionForCollab, pkgVersion) &&
@@ -636,13 +677,19 @@ export class DocumentsSchemaController {
 					// If it's existing document and it has no schema, then it was written by legacy client.
 					// If it's a new document, then we define it's legacy-related behaviors.
 					runtime: {
-						explicitSchemaControl: boolToProp(!existing && features.explicitSchemaControl),
+						explicitSchemaControl: boolToProp(
+							!existing && features.explicitSchemaControl,
+						),
 					},
 				} satisfies IDocumentSchemaCurrent))
 			: this.desiredSchema;
 
 		checkRuntimeCompatibility(this.documentSchema, "document");
-		this.validateSeqNumber(this.documentSchema.refSeq, snapshotSequenceNumber, "summary");
+		this.validateSeqNumber(
+			this.documentSchema.refSeq,
+			snapshotSequenceNumber,
+			"summary",
+		);
 
 		// Use legacy behavior only if both document and options tell us to use legacy.
 		// Otherwise it's no longer legacy time!
@@ -664,8 +711,14 @@ export class DocumentsSchemaController {
 		} else {
 			this.sessionSchema = and(this.documentSchema, this.desiredSchema);
 			this.futureSchema = or(this.documentSchema, this.desiredSchema);
-			assert(this.sessionSchema.runtime.explicitSchemaControl === true, 0x94b /* legacy */);
-			assert(this.futureSchema.runtime.explicitSchemaControl === true, 0x94c /* legacy */);
+			assert(
+				this.sessionSchema.runtime.explicitSchemaControl === true,
+				0x94b /* legacy */,
+			);
+			assert(
+				this.futureSchema.runtime.explicitSchemaControl === true,
+				0x94c /* legacy */,
+			);
 			if (same(this.documentSchema, this.futureSchema)) {
 				this.futureSchema = undefined;
 			}
@@ -686,7 +739,9 @@ export class DocumentsSchemaController {
 		// out of legacy mode, as clients transitioning out of it would be able to use all the
 		// features that are mentioned in schema right away, without a need to go through schema transition (and thus for a session or
 		// two losing ability to use all the features)
-		const schema = this.explicitSchemaControl ? this.documentSchema : this.desiredSchema;
+		const schema = this.explicitSchemaControl
+			? this.documentSchema
+			: this.desiredSchema;
 
 		// It's important to keep refSeq at zero in legacy mode, such that transition out of it is simple and we do not have
 		// race conditions. If we put any other number (including latest seq number), then we will have two clients
@@ -706,11 +761,14 @@ export class DocumentsSchemaController {
 	 * Please consider note above constructor about race conditions - current design is to generate op only once in a session lifetime.
 	 * @returns Optional message to send.
 	 */
-	public maybeGenerateSchemaMessage(): IDocumentSchemaChangeMessageOutgoing | undefined {
+	public maybeGenerateSchemaMessage():
+		| IDocumentSchemaChangeMessageOutgoing
+		| undefined {
 		if (this.futureSchema !== undefined && !this.opPending) {
 			this.opPending = true;
 			assert(
-				this.explicitSchemaControl && this.futureSchema.runtime.explicitSchemaControl === true,
+				this.explicitSchemaControl &&
+					this.futureSchema.runtime.explicitSchemaControl === true,
 				0x94e /* not legacy */,
 			);
 			return this.futureSchema;
@@ -722,7 +780,10 @@ export class DocumentsSchemaController {
 		lastKnowSeqNumber: number,
 		message: string,
 	): void {
-		if (!Number.isInteger(schemaSeqNumber) || !(schemaSeqNumber <= lastKnowSeqNumber)) {
+		if (
+			!Number.isInteger(schemaSeqNumber) ||
+			!(schemaSeqNumber <= lastKnowSeqNumber)
+		) {
 			throw DataProcessingError.create(
 				"DocSchema: Incorrect sequence number",
 				"checkRuntimeCompat3",
@@ -750,8 +811,16 @@ export class DocumentsSchemaController {
 		sequenceNumber: number,
 	): boolean {
 		for (const content of contents) {
-			this.validateSeqNumber(content.refSeq, this.documentSchema.refSeq, "content.refSeq");
-			this.validateSeqNumber(this.documentSchema.refSeq, sequenceNumber, "refSeq");
+			this.validateSeqNumber(
+				content.refSeq,
+				this.documentSchema.refSeq,
+				"content.refSeq",
+			);
+			this.validateSeqNumber(
+				this.documentSchema.refSeq,
+				sequenceNumber,
+				"refSeq",
+			);
 			// validate is strickly less, not equal
 			assert(
 				this.documentSchema.refSeq < sequenceNumber,
@@ -766,7 +835,8 @@ export class DocumentsSchemaController {
 			// This assert should be after checking for successful CAS above.
 			// This will ensure we do not trip on our own messages that are no longer wanted as we processed someone else schema change message.
 			assert(
-				!local || (this.explicitSchemaControl && this.futureSchema !== undefined),
+				!local ||
+					(this.explicitSchemaControl && this.futureSchema !== undefined),
 				0x951 /* not sending ops */,
 			);
 

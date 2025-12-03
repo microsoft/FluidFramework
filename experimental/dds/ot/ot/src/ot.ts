@@ -5,21 +5,21 @@
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import {
+import type {
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
 	ISummaryTreeWithStats,
-	type IRuntimeMessageCollection,
-	type IRuntimeMessagesContent,
-	type ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	IFluidSerializer,
-	SharedObject,
 	createSingleBlobSummary,
+	type IFluidSerializer,
+	SharedObject,
 } from "@fluidframework/shared-object-base/internal";
 
 interface ISequencedOpInfo<TOp> {
@@ -96,7 +96,10 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 			0x5f6 /* Summarizer must not have locally pending changes. */,
 		);
 
-		return createSingleBlobSummary("header", serializer.stringify(this.global, this.handle));
+		return createSingleBlobSummary(
+			"header",
+			serializer.stringify(this.global, this.handle),
+		);
 	}
 
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
@@ -110,7 +113,9 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected processMessagesCore(
+		messagesCollection: IRuntimeMessageCollection,
+	): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
 			this.processMessage(envelope, messageContent, local);
@@ -166,7 +171,10 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 			// Adjust our queue of locally pending ops to account for the incoming op so that they
 			// may be reapplied to the global state if needed.
 			for (let i = 0; i < this.pendingOps.length; i++) {
-				this.pendingOps[i] = this.transform(this.pendingOps[i], remoteOp as TOp);
+				this.pendingOps[i] = this.transform(
+					this.pendingOps[i],
+					remoteOp as TOp,
+				);
 			}
 		}
 	}

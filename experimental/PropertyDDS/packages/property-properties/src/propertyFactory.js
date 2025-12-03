@@ -51,7 +51,10 @@ const {
 	Uint32Property,
 } = require("./properties/uintProperties");
 
-const { Float32Property, Float64Property } = require("./properties/floatProperties");
+const {
+	Float32Property,
+	Float64Property,
+} = require("./properties/floatProperties");
 
 const {
 	Int8Property,
@@ -94,7 +97,9 @@ const {
 } = require("./properties/valueArrayProperty");
 
 const { ReferenceMapProperty } = require("./properties/referenceMapProperty");
-const { ReferenceArrayProperty } = require("./properties/referenceArrayProperty");
+const {
+	ReferenceArrayProperty,
+} = require("./properties/referenceArrayProperty");
 const { EnumArrayProperty } = require("./properties/enumArrayProperty");
 
 const {
@@ -164,7 +169,10 @@ var registerLocal = function (in_template) {
 
 		// Here we are registering a user defined template. We need to check whether it is already registered
 		// as a remote template.
-		if (this._localPrimitivePropertiesAndTemplates.has(typeid) || remoteTemplates.length) {
+		if (
+			this._localPrimitivePropertiesAndTemplates.has(typeid) ||
+			remoteTemplates.length
+		) {
 			// Template already exists. The incoming template MUST match what is currently registered.
 			// If they do not match, throw an error letting the user know that the templates are incompatible.
 
@@ -191,7 +199,7 @@ var registerLocal = function (in_template) {
 			if (localValidationResults.isValid) {
 				var remoteValidationResults = { isValid: true };
 				if (remoteTemplates.length) {
-					_.every(remoteTemplates, function (template) {
+					_.every(remoteTemplates, (template) => {
 						remoteValidationResults = templateValidator.validate(
 							template.serializeCanonical(),
 							serializedInTemplate,
@@ -207,14 +215,22 @@ var registerLocal = function (in_template) {
 					MSG.TEMPLATE_MISMATCH +
 						typeid +
 						"\n  errors = " +
-						JSON.stringify(_extractErrorMessage(localValidationResults.errors), 0, 2),
+						JSON.stringify(
+							_extractErrorMessage(localValidationResults.errors),
+							0,
+							2,
+						),
 				);
 			} else if (!remoteValidationResults.isValid) {
 				throw new Error(
 					MSG.REMOTE_TEMPLATE_MISMATCH +
 						typeid +
 						"\n  errors = " +
-						JSON.stringify(_extractErrorMessage(remoteValidationResults.errors), 0, 2),
+						JSON.stringify(
+							_extractErrorMessage(remoteValidationResults.errors),
+							0,
+							2,
+						),
 				);
 			} else if (this._localPrimitivePropertiesAndTemplates.has(typeid)) {
 				// Template is already registered. Do nothing.
@@ -232,7 +248,9 @@ var registerLocal = function (in_template) {
 
 				// Semver validation passed. Add the template to the local versioned templates collection
 				if (this._localVersionedTemplates.has(typeidWithoutVersion)) {
-					this._localVersionedTemplates.item(typeidWithoutVersion).add(version, in_template);
+					this._localVersionedTemplates
+						.item(typeidWithoutVersion)
+						.add(version, in_template);
 				} else {
 					var collection = _createVersionedSortedCollection();
 					this._localVersionedTemplates.add(typeidWithoutVersion, collection);
@@ -248,7 +266,10 @@ var registerLocal = function (in_template) {
 			}
 		} else {
 			throw new Error(
-				MSG.UNVERSIONED_TEMPLATE + " Template with typeid = " + typeid + " is not versioned.",
+				MSG.UNVERSIONED_TEMPLATE +
+					" Template with typeid = " +
+					typeid +
+					" is not versioned.",
 			);
 		}
 		// Forward to the internal function
@@ -264,20 +285,17 @@ var registerLocal = function (in_template) {
  * @private
  * @returns {Array.<string>} List of error messages
  */
-var _extractErrorMessage = function (in_errors) {
-	return _.map(in_errors, function (error) {
-		return error.message;
-	});
-};
+var _extractErrorMessage = (in_errors) =>
+	_.map(in_errors, (error) => error.message);
 
 /**
  * Helper function used to create a sorted collection
  * @returns {property-common.Datastructures.SortedCollection} Empty sorted collection
  * @private
  */
-var _createVersionedSortedCollection = function () {
+var _createVersionedSortedCollection = () => {
 	var collection = new SortedCollection();
-	collection.setComparisonFunction(function (versionA, versionB) {
+	collection.setComparisonFunction((versionA, versionB) => {
 		if (semver.gt(versionA, versionB)) {
 			return 1;
 		} else if (semver.lt(versionA, versionB)) {
@@ -298,12 +316,11 @@ var _createVersionedSortedCollection = function () {
  * @returns {Array} list of unknown typeids
  */
 var _extractUnknownDependencies = function (in_template) {
-	var self = this;
 	var dependencies = PropertyTemplate.extractDependencies(in_template);
 
-	dependencies = dependencies.filter(function (typeid) {
-		return !self._localPrimitivePropertiesAndTemplates.has(typeid);
-	});
+	dependencies = dependencies.filter(
+		(typeid) => !this._localPrimitivePropertiesAndTemplates.has(typeid),
+	);
 
 	return dependencies;
 };
@@ -315,27 +332,28 @@ var _extractUnknownDependencies = function (in_template) {
  * @param {String} in_typeid - typeid of the template to retrieve
  */
 var _pushTemplateRequestTask = function (in_typeid) {
-	var that = this;
-
-	if (that.missingDependencies[in_typeid].requested === true) {
+	if (this.missingDependencies[in_typeid].requested === true) {
 		return;
 	}
-	that.missingDependencies[in_typeid].requested = true;
+	this.missingDependencies[in_typeid].requested = true;
 
 	this.templateRequestsQueue.push(
-		{ typeid: in_typeid, context: that._templateStore },
-		function (response) {
+		{ typeid: in_typeid, context: this._templateStore },
+		(response) => {
 			if (response.error) {
-				that.templateRequestsResults.errors[in_typeid] = response.error;
+				this.templateRequestsResults.errors[in_typeid] = response.error;
 			} else {
 				var template = response.template;
-				that.templateRequestsResults.schemas[in_typeid] = template;
-				var unknownDependencies = _extractUnknownDependencies.call(that, template);
+				this.templateRequestsResults.schemas[in_typeid] = template;
+				var unknownDependencies = _extractUnknownDependencies.call(
+					this,
+					template,
+				);
 
 				try {
-					registerLocal.call(that, template);
+					registerLocal.call(this, template);
 				} catch (error) {
-					that.templateRequestsResults.errors[in_typeid] = [error];
+					this.templateRequestsResults.errors[in_typeid] = [error];
 					return;
 				}
 
@@ -343,20 +361,20 @@ var _pushTemplateRequestTask = function (in_typeid) {
 				for (var d = 0; d < unknownDependencies.length; d++) {
 					var typeid = unknownDependencies[d];
 
-					if (that.missingDependencies[typeid] === undefined) {
-						that.missingDependencies[typeid] = { requested: false };
-						if (that.templateRequestsResults.errors[typeid] === undefined) {
-							that.templateRequestsResults.errors[typeid] = {};
+					if (this.missingDependencies[typeid] === undefined) {
+						this.missingDependencies[typeid] = { requested: false };
+						if (this.templateRequestsResults.errors[typeid] === undefined) {
+							this.templateRequestsResults.errors[typeid] = {};
 						}
-						if (that.templateRequestsResults.schemas[typeid] === undefined) {
-							that.templateRequestsResults.schemas[typeid] = {};
+						if (this.templateRequestsResults.schemas[typeid] === undefined) {
+							this.templateRequestsResults.schemas[typeid] = {};
 						}
 
-						_pushTemplateRequestTask.call(that, typeid);
+						_pushTemplateRequestTask.call(this, typeid);
 					}
 				}
 
-				delete that.missingDependencies[template.typeid];
+				delete this.missingDependencies[template.typeid];
 			}
 		},
 	);
@@ -523,8 +541,14 @@ class PropertyFactory {
 		};
 
 		this._registerTypeId(NamedPropertyTemplate.typeid, NamedPropertyTemplate);
-		this._registerTypeId(NamedNodePropertyTemplate.typeid, NamedNodePropertyTemplate);
-		this._registerTypeId(RelationshipPropertyTemplate.typeid, RelationshipPropertyTemplate);
+		this._registerTypeId(
+			NamedNodePropertyTemplate.typeid,
+			NamedNodePropertyTemplate,
+		);
+		this._registerTypeId(
+			RelationshipPropertyTemplate.typeid,
+			RelationshipPropertyTemplate,
+		);
 	}
 
 	/**
@@ -558,15 +582,18 @@ class PropertyFactory {
 		// 3. in_input is an array of strings (typeids) or jsons
 		// apply step 1. or 2. for all elements of array
 
-		var validateArray = function (array) {
-			var isInvalid = _.some(array, function (value) {
-				return !PropertyTemplate.isTemplate(value) && !TypeIdHelper.isTemplateTypeid(value);
-			});
+		var validateArray = (array) => {
+			var isInvalid = _.some(
+				array,
+				(value) =>
+					!PropertyTemplate.isTemplate(value) &&
+					!TypeIdHelper.isTemplateTypeid(value),
+			);
 
 			return !isInvalid;
 		};
 
-		var input_array = undefined;
+		var input_array;
 		if (PropertyTemplate.isTemplate(in_input) || typeof in_input === "string") {
 			input_array = [in_input];
 		} else if (_.isArray(in_input)) {
@@ -699,18 +726,19 @@ class PropertyFactory {
 		}
 
 		if (in_compareRemote) {
-			var that = this;
 			this._remoteScopedAndVersionedTemplates.iterate(
-				function (scope, remoteVersionedTemplates) {
+				(scope, remoteVersionedTemplates) => {
 					if (remoteVersionedTemplates.has(typeidWithoutVersion)) {
 						var previousRemoteVersion = remoteVersionedTemplates
 							.item(typeidWithoutVersion)
 							.getNearestPreviousItem(version);
 
 						if (previousRemoteVersion) {
-							validationResults = that._templateValidator.validate(
+							validationResults = this._templateValidator.validate(
 								in_template.serializeCanonical(),
-								previousRemoteVersion.getPropertyTemplate().serializeCanonical(),
+								previousRemoteVersion
+									.getPropertyTemplate()
+									.serializeCanonical(),
 							);
 							warnings.push.apply(warnings, validationResults.warnings);
 						} else {
@@ -718,7 +746,7 @@ class PropertyFactory {
 								.item(typeidWithoutVersion)
 								.getNearestNextItem(version);
 							if (nextRemoteVersion) {
-								validationResults = that._templateValidator.validate(
+								validationResults = this._templateValidator.validate(
 									nextRemoteVersion.getPropertyTemplate().serializeCanonical(),
 									in_template.serializeCanonical(),
 								);
@@ -775,15 +803,26 @@ class PropertyFactory {
 					MSG.TEMPLATE_MISMATCH +
 						typeid +
 						"\n  errors = " +
-						JSON.stringify(_extractErrorMessage(validationResults.errors), 0, 2),
+						JSON.stringify(
+							_extractErrorMessage(validationResults.errors),
+							0,
+							2,
+						),
 				);
 			}
 		} else if (in_remoteTemplate._isVersioned()) {
 			this._validateSemver(in_remoteTemplate);
-			var wrappedTemplate = new PropertyTemplateWrapper(in_remoteTemplate, in_scope);
+			var wrappedTemplate = new PropertyTemplateWrapper(
+				in_remoteTemplate,
+				in_scope,
+			);
 
 			if (this._remoteScopedAndVersionedTemplates.has(in_scope)) {
-				if (this._remoteScopedAndVersionedTemplates.item(in_scope).has(typeidWithoutVersion)) {
+				if (
+					this._remoteScopedAndVersionedTemplates
+						.item(in_scope)
+						.has(typeidWithoutVersion)
+				) {
 					if (
 						!this._remoteScopedAndVersionedTemplates
 							.item(in_scope)
@@ -807,11 +846,16 @@ class PropertyFactory {
 				var versionCollection = _createVersionedSortedCollection();
 				namespaceCollection.add(typeidWithoutVersion, versionCollection);
 				versionCollection.add(version, wrappedTemplate);
-				this._remoteScopedAndVersionedTemplates.add(in_scope, namespaceCollection);
+				this._remoteScopedAndVersionedTemplates.add(
+					in_scope,
+					namespaceCollection,
+				);
 			}
 		} else {
 			throw new Error(
-				MSG.UNVERSIONED_REMOTE_TEMPLATE + " \n" + JSON.stringify(in_remoteTemplate, 0, 2),
+				MSG.UNVERSIONED_REMOTE_TEMPLATE +
+					" \n" +
+					JSON.stringify(in_remoteTemplate, 0, 2),
 			);
 		}
 	}
@@ -822,15 +866,15 @@ class PropertyFactory {
 	 * @protected
 	 */
 	_removeScope(in_scope) {
-		var that = this;
-
 		if (this._remoteScopedAndVersionedTemplates.has(in_scope)) {
 			// remove the schemas in this scope from the inheritance cache.
-			this._remoteScopedAndVersionedTemplates.item(in_scope).iterate(function (nt, schemas) {
-				schemas.iterate(function (k, schema) {
-					delete that._inheritanceCache[schema.getPropertyTemplate().typeid];
+			this._remoteScopedAndVersionedTemplates
+				.item(in_scope)
+				.iterate((nt, schemas) => {
+					schemas.iterate((k, schema) => {
+						delete this._inheritanceCache[schema.getPropertyTemplate().typeid];
+					});
 				});
-			});
 
 			this._remoteScopedAndVersionedTemplates.remove(in_scope);
 		}
@@ -872,12 +916,16 @@ class PropertyFactory {
 		// If no context is specified we assign one
 		if (!in_context) {
 			// By default templates are registered for all contexts together, BaseProperties are registered separately
-			in_context = in_templateOrProperty instanceof PropertyTemplate ? "all" : "single";
+			in_context =
+				in_templateOrProperty instanceof PropertyTemplate ? "all" : "single";
 		}
 
 		if (in_context !== "all") {
 			if (!this._localPrimitivePropertiesAndTemplates.has(in_typeid)) {
-				this._localPrimitivePropertiesAndTemplates.add(in_typeid, new Collection());
+				this._localPrimitivePropertiesAndTemplates.add(
+					in_typeid,
+					new Collection(),
+				);
 			}
 			this._localPrimitivePropertiesAndTemplates
 				.item(in_typeid)
@@ -949,21 +997,29 @@ class PropertyFactory {
 	 */
 	_getWrapper(in_typeid, in_context, in_scope) {
 		if (this._localPrimitivePropertiesAndTemplates.has(in_typeid)) {
-			var typeidItem = this._localPrimitivePropertiesAndTemplates.item(in_typeid);
+			var typeidItem =
+				this._localPrimitivePropertiesAndTemplates.item(in_typeid);
 			if (!(typeidItem instanceof Collection)) {
 				return typeidItem;
 			} else {
 				var context = in_context || "single";
-				return this._localPrimitivePropertiesAndTemplates.item(in_typeid).item(context);
+				return this._localPrimitivePropertiesAndTemplates
+					.item(in_typeid)
+					.item(context);
 			}
-		} else if (in_scope && this._remoteScopedAndVersionedTemplates.has(in_scope)) {
+		} else if (
+			in_scope &&
+			this._remoteScopedAndVersionedTemplates.has(in_scope)
+		) {
 			var splitTypeId = TypeIdHelper.extractVersion(in_typeid);
 			if (splitTypeId.version) {
 				var typeidWithoutVersion = splitTypeId.typeidWithoutVersion;
 				var version = splitTypeId.version;
 
 				if (
-					this._remoteScopedAndVersionedTemplates.item(in_scope).has(typeidWithoutVersion) &&
+					this._remoteScopedAndVersionedTemplates
+						.item(in_scope)
+						.has(typeidWithoutVersion) &&
 					this._remoteScopedAndVersionedTemplates
 						.item(in_scope)
 						.item(typeidWithoutVersion)
@@ -989,7 +1045,9 @@ class PropertyFactory {
 	getTemplate(in_typeid) {
 		return this._localPrimitivePropertiesAndTemplates.has(in_typeid) &&
 			!TypeIdHelper.isPrimitiveType(in_typeid)
-			? this._localPrimitivePropertiesAndTemplates.item(in_typeid).getPropertyTemplate()
+			? this._localPrimitivePropertiesAndTemplates
+					.item(in_typeid)
+					.getPropertyTemplate()
 			: undefined;
 	}
 
@@ -1007,7 +1065,7 @@ class PropertyFactory {
 		var version = parsedTypeId.version;
 
 		this._remoteScopedAndVersionedTemplates.iterate(
-			function (scope, remoteVersionedTemplates) {
+			(scope, remoteVersionedTemplates) => {
 				if (
 					remoteVersionedTemplates.has(typeidWithoutVersion) &&
 					remoteVersionedTemplates.item(typeidWithoutVersion).item(version)
@@ -1053,14 +1111,16 @@ class PropertyFactory {
 			}
 		}
 
-		let propertyCreationFunction = undefined;
+		let propertyCreationFunction;
 
 		if (!this._forceInstantion) {
 			// Check, whether we already have a property creation function for this property
 			// in the cache
 			const scopeFunctionEntry = this._cachedCreationFunctions.get(in_typeid);
-			const contextFunctionEntry = scopeFunctionEntry && scopeFunctionEntry.get(in_scope);
-			propertyCreationFunction = contextFunctionEntry && contextFunctionEntry.get(context);
+			const contextFunctionEntry =
+				scopeFunctionEntry && scopeFunctionEntry.get(in_scope);
+			propertyCreationFunction =
+				contextFunctionEntry && contextFunctionEntry.get(context);
 		}
 
 		// If we don't have a cached function or are requested to explicitly instantiate the property
@@ -1083,7 +1143,12 @@ class PropertyFactory {
 			// If we don't yet have a creation function, we will create one here
 			propertyCreationFunction =
 				propertyCreationFunction ||
-				this._definePropertyCreationFunction(propertyDef, in_typeid, in_scope, context);
+				this._definePropertyCreationFunction(
+					propertyDef,
+					in_typeid,
+					in_scope,
+					context,
+				);
 
 			// Create the property by invoking the precompiled creation function
 			property = propertyCreationFunction();
@@ -1127,7 +1192,7 @@ class PropertyFactory {
 	 * @returns {BaseProperty} An instance of the property
 	 */
 	_instantiatePropertyDef(propertyDef, in_scope, in_initialProperties) {
-		let rootProperty = undefined;
+		let rootProperty;
 
 		// This stack is used to recursively iterate over the property definition
 		const creationStack = [
@@ -1147,20 +1212,29 @@ class PropertyFactory {
 				currentEntry.property._signalAllStaticMembersHaveBeenAdded(in_scope);
 
 				if (currentEntry.initialValue) {
-					this._setInitialValue(currentEntry.property, currentEntry.initialValue, true);
+					this._setInitialValue(
+						currentEntry.property,
+						currentEntry.initialValue,
+						true,
+					);
 				}
 				continue;
 			}
 
 			// Create the property instance
-			let property = new currentEntry.entry.constructorFunction(currentEntry.entry.entry);
+			const property = new currentEntry.entry.constructorFunction(
+				currentEntry.entry.entry,
+			);
 
 			// Insert / append the property to the parent
 			if (currentEntry.parent) {
 				if (currentEntry.entry.optional) {
 					currentEntry.parent._insert(property.getId(), property, true);
 				} else {
-					currentEntry.parent._append(property, currentEntry.entry.allowChildMerges);
+					currentEntry.parent._append(
+						property,
+						currentEntry.entry.allowChildMerges,
+					);
 				}
 			} else {
 				// If we are at the root, we store the property object to return it later
@@ -1175,7 +1249,9 @@ class PropertyFactory {
 
 			// Assign optional children
 			if (currentEntry.entry.optionalChildren) {
-				for (let [id, typeid] of Object.entries(currentEntry.entry.optionalChildren)) {
+				for (const [id, typeid] of Object.entries(
+					currentEntry.entry.optionalChildren,
+				)) {
 					property._addOptionalChild(id, typeid);
 				}
 			}
@@ -1191,7 +1267,7 @@ class PropertyFactory {
 				};
 				creationStack.push(parentStackEntry);
 
-				for (let [id, child] of currentEntry.entry.children) {
+				for (const [id, child] of currentEntry.entry.children) {
 					creationStack.push({
 						parent: property,
 						id: id,
@@ -1203,7 +1279,11 @@ class PropertyFactory {
 				// If there are no children, we directly assign the initial value and
 				// signal that the property has completely been initialized
 				if (currentEntry.entry.initialValue) {
-					this._setInitialValue(property, currentEntry.entry.initialValue, true);
+					this._setInitialValue(
+						property,
+						currentEntry.entry.initialValue,
+						true,
+					);
 				}
 
 				if (currentEntry.entry.signal) {
@@ -1229,7 +1309,12 @@ class PropertyFactory {
 	 *
 	 * @returns {Function} A function that creates an instance of the property
 	 */
-	_definePropertyCreationFunction(propertyDef, in_typeid, in_scope, in_context) {
+	_definePropertyCreationFunction(
+		propertyDef,
+		in_typeid,
+		in_scope,
+		in_context,
+	) {
 		// This stack is used to recursively iterate over the property definition
 		const creationStack = [
 			{
@@ -1241,7 +1326,7 @@ class PropertyFactory {
 
 		let creationFunctionSource = "";
 		let currentParameterIndex = 0;
-		let parameters = [];
+		const parameters = [];
 		let currentPropertyNumber = 0;
 		let currentPropertyVarName = "";
 		let resultVarName;
@@ -1267,7 +1352,7 @@ class PropertyFactory {
 
 			if (currentEntry.def.entry.id) {
 				let parentEntry = currentEntry.parentStackEntry;
-				let path = [currentEntry.def.entry.id];
+				const path = [currentEntry.def.entry.id];
 
 				// We have to walk the whole parent chain and extract for
 				// each parent the initial values. Entries further up in the
@@ -1277,7 +1362,8 @@ class PropertyFactory {
 						// Extract changes to be applied to this property
 						let filteredChangeSet = parentEntry.initialValue.value;
 						for (let i = 0; i < path.length; i++) {
-							filteredChangeSet = filteredChangeSet && filteredChangeSet[path[i]];
+							filteredChangeSet =
+								filteredChangeSet && filteredChangeSet[path[i]];
 						}
 
 						// Update the initial value with the extract changeset
@@ -1376,7 +1462,9 @@ class PropertyFactory {
 				// And if there are any optional children, we add them here (should this be further optimized? I
 				// propbably would not have to be done on every instantiation, those could be stored in the prototype)
 				if (currentEntry.def.optionalChildren) {
-					for (let [id, typeid] of Object.entries(currentEntry.def.optionalChildren)) {
+					for (const [id, typeid] of Object.entries(
+						currentEntry.def.optionalChildren,
+					)) {
 						creationFunctionSource += `${currentPropertyVarName}._addOptionalChild(
                             ${JSON.stringify(id)},
                             ${JSON.stringify(typeid)}
@@ -1398,7 +1486,7 @@ class PropertyFactory {
 					creationStack.push(parentStackEntry);
 
 					// Recursively add all children to the stack
-					for (let [id, child] of currentEntry.def.children) {
+					for (const [id, child] of currentEntry.def.children) {
 						creationStack.push({
 							parentVarName: currentPropertyVarName,
 							id: id,
@@ -1442,7 +1530,7 @@ class PropertyFactory {
 		creationFunctionSource += ` return ${resultVarName};`;
 
 		// Finally, create the actual JS function with the source we compiled above
-		let creationFunction = new Function(
+		const creationFunction = new Function(
 			"parameters",
 			" GuidUtils",
 			creationFunctionSource,
@@ -1478,7 +1566,10 @@ class PropertyFactory {
 		if (unsetConstant) {
 			property._unsetAsConstant();
 		}
-		if (property instanceof ValueProperty || property instanceof StringProperty) {
+		if (
+			property instanceof ValueProperty ||
+			property instanceof StringProperty
+		) {
 			property.setValue(valueParsed.value);
 		} else if (valueParsed.typed) {
 			property._setValues(valueParsed.value, true, true);
@@ -1507,7 +1598,12 @@ class PropertyFactory {
 	 * @returns {property-properties.BaseProperty|undefined} the property instance
 	 */
 	create(in_typeid, in_context, in_initialProperties) {
-		return this._createProperty(in_typeid, in_context, in_initialProperties, null);
+		return this._createProperty(
+			in_typeid,
+			in_context,
+			in_initialProperties,
+			null,
+		);
 	}
 
 	/**
@@ -1531,13 +1627,17 @@ class PropertyFactory {
 		in_scope,
 	) {
 		// Create a unique key for this constructor
-		let key = in_context === "single" ? in_typeid : in_context + "<" + in_typeid + ">";
+		let key =
+			in_context === "single" ? in_typeid : in_context + "<" + in_typeid + ">";
 
 		if (in_id !== undefined) {
 			key = key + "-" + in_id;
 		}
 
-		if (in_scope && !this._localPrimitivePropertiesAndTemplates.has(in_typeid)) {
+		if (
+			in_scope &&
+			!this._localPrimitivePropertiesAndTemplates.has(in_typeid)
+		) {
 			key += "-" + in_scope;
 		}
 
@@ -1663,8 +1763,14 @@ class PropertyFactory {
 			this._localVersionedTemplates.has(in_typeid) ||
 			this._localPrimitivePropertiesAndTemplates.has(in_typeid);
 
-		if (!registered && in_scope && this._remoteScopedAndVersionedTemplates.has(in_scope)) {
-			registered = this._remoteScopedAndVersionedTemplates.item(in_scope).has(in_typeid);
+		if (
+			!registered &&
+			in_scope &&
+			this._remoteScopedAndVersionedTemplates.has(in_scope)
+		) {
+			registered = this._remoteScopedAndVersionedTemplates
+				.item(in_scope)
+				.has(in_typeid);
 		}
 
 		return registered;
@@ -1678,7 +1784,10 @@ class PropertyFactory {
 	 * @private
 	 */
 	_isSpecializedConstructor(in_typeid) {
-		return this._localPrimitivePropertiesAndTemplates.item(in_typeid) instanceof Collection;
+		return (
+			this._localPrimitivePropertiesAndTemplates.item(in_typeid) instanceof
+			Collection
+		);
 	}
 
 	/**
@@ -1698,7 +1807,11 @@ class PropertyFactory {
 	_computeTypeid(in_propertiesEntry, in_scope, context) {
 		var typeid = in_propertiesEntry.typeid;
 		if (context === "single") {
-			var valueParsed = this._parseTypedValue(in_propertiesEntry, in_scope, context);
+			var valueParsed = this._parseTypedValue(
+				in_propertiesEntry,
+				in_scope,
+				context,
+			);
 			if (valueParsed.typed && valueParsed.typeid) {
 				typeid = in_propertiesEntry.typedValue.typeid;
 			}
@@ -1729,19 +1842,28 @@ class PropertyFactory {
 	 * @param {string} in_scope - The scope in which the property typeid is defined
 	 * @param {Object} out_propertyDef - The created property definition
 	 */
-	_createDefFromPropertyDeclaration(in_propertiesEntry, in_scope, out_propertyDef) {
+	_createDefFromPropertyDeclaration(
+		in_propertiesEntry,
+		in_scope,
+		out_propertyDef,
+	) {
 		var context =
-			in_propertiesEntry.context !== undefined ? in_propertiesEntry.context : "single";
+			in_propertiesEntry.context !== undefined
+				? in_propertiesEntry.context
+				: "single";
 		var typeid = this._computeTypeid(in_propertiesEntry, in_scope, context);
 		var referenceTarget =
 			typeid === "Reference"
-				? TypeIdHelper.extractReferenceTargetTypeIdFromReference(in_propertiesEntry.typeid)
+				? TypeIdHelper.extractReferenceTargetTypeIdFromReference(
+						in_propertiesEntry.typeid,
+					)
 				: undefined;
 
 		if (typeid) {
 			if (
 				this._isRegisteredTypeid(typeid, in_scope) &&
-				(!referenceTarget || this._hasCorrespondingRegisteredTypeid(referenceTarget, in_scope))
+				(!referenceTarget ||
+					this._hasCorrespondingRegisteredTypeid(referenceTarget, in_scope))
 			) {
 				var templateOrConstructor = this._get(typeid, context, in_scope);
 				var isSpecializedConstructor = this._isSpecializedConstructor(typeid);
@@ -1750,7 +1872,10 @@ class PropertyFactory {
 					this._isNativePropertyConstructor(templateOrConstructor) &&
 					(isSpecializedConstructor || context === "single")
 				) {
-					if (TypeIdHelper.isReferenceTypeId(typeid) || in_propertiesEntry.id !== undefined) {
+					if (
+						TypeIdHelper.isReferenceTypeId(typeid) ||
+						in_propertiesEntry.id !== undefined
+					) {
 						templateOrConstructor = this._getConstructorFunctionForTypeidAndID(
 							in_propertiesEntry.context,
 							in_propertiesEntry.typeid,
@@ -1801,7 +1926,8 @@ class PropertyFactory {
 							case "array":
 								if (isEnum) {
 									var enumPropertyEntry = deepCopy(in_propertiesEntry);
-									enumPropertyEntry._enumDictionary = templateOrConstructor._enumDictionary;
+									enumPropertyEntry._enumDictionary =
+										templateOrConstructor._enumDictionary;
 									in_propertiesEntry = enumPropertyEntry;
 
 									constructorFunction = EnumArrayProperty;
@@ -1809,15 +1935,20 @@ class PropertyFactory {
 									constructorFunction = ArrayProperty;
 								}
 								break;
-							case "set":
+							case "set": {
 								// Validate that a set inherit from a NamedProperty
 								var typeid = in_propertiesEntry.typeid;
-								if (!this.inheritsFrom(typeid, "NamedProperty", { scope: in_scope })) {
+								if (
+									!this.inheritsFrom(typeid, "NamedProperty", {
+										scope: in_scope,
+									})
+								) {
 									throw new Error(MSG.SET_ONLY_NAMED_PROPS + typeid);
 								}
 
 								constructorFunction = SetProperty;
 								break;
+							}
 							case "map":
 								constructorFunction = MapProperty;
 								break;
@@ -1845,7 +1976,7 @@ class PropertyFactory {
 			}
 
 			// If this is a declaration which contains a properties list, we have to create a new container property for it
-			let copiedPropertyEntry = Object.assign(
+			const copiedPropertyEntry = Object.assign(
 				{ typeid: "ContainerProperty" },
 				in_propertiesEntry,
 			);
@@ -1860,7 +1991,10 @@ class PropertyFactory {
 		}
 
 		// If this property inherits from NamedProperty we assign a random GUID
-		if (typeid && this.inheritsFrom(typeid, "NamedProperty", { scope: in_scope })) {
+		if (
+			typeid &&
+			this.inheritsFrom(typeid, "NamedProperty", { scope: in_scope })
+		) {
 			out_propertyDef.assignGuid = true;
 		}
 	}
@@ -1875,7 +2009,9 @@ class PropertyFactory {
 	_isNativePropertyConstructor(in_obj) {
 		// TODO: This tests seems dangerous. I think it is based on the assumption that constructor is not
 		//       overwritten in the derived classes (which it probably should be)
-		return in_obj.constructor && in_obj.constructor === ContainerProperty.constructor;
+		return (
+			in_obj.constructor && in_obj.constructor === ContainerProperty.constructor
+		);
 	}
 
 	/**
@@ -1900,16 +2036,24 @@ class PropertyFactory {
 
 			// Setting typedValue to a primitive is not supported
 			if (TypeIdHelper.isPrimitiveType(typeid)) {
-				throw new Error(MSG.TYPED_VALUES_FOR_PRIMITIVES_NOT_SUPPORTED + in_property.id);
+				throw new Error(
+					MSG.TYPED_VALUES_FOR_PRIMITIVES_NOT_SUPPORTED + in_property.id,
+				);
 			}
 
 			res.typed = true;
 			if (in_context === "single") {
 				if (!in_property.typedValue.typeid) {
-					throw new Error(MSG.FIELD_TYPEID_IS_REQUIRED + "typedValue " + typeid);
+					throw new Error(
+						MSG.FIELD_TYPEID_IS_REQUIRED + "typedValue " + typeid,
+					);
 				}
 
-				if (!this.inheritsFrom(in_property.typedValue.typeid, typeid, { scope: in_scope })) {
+				if (
+					!this.inheritsFrom(in_property.typedValue.typeid, typeid, {
+						scope: in_scope,
+					})
+				) {
 					throw new Error(
 						MSG.TYPED_VALUES_MUST_DERIVE_FROM_BASE_TYPE +
 							in_property.typedValue.typeid +
@@ -1940,7 +2084,9 @@ class PropertyFactory {
 	 */
 	_parseTemplate(in_template, in_scope, in_allowChildMerges, propertyDef) {
 		// Check if there are nested property arrays
-		if (!(in_template.inherits && in_template.inherits.indexOf("Enum") !== -1)) {
+		if (
+			!(in_template.inherits && in_template.inherits.indexOf("Enum") !== -1)
+		) {
 			if (in_template.properties) {
 				const properties = in_template.properties;
 
@@ -1950,7 +2096,11 @@ class PropertyFactory {
 					const context = properties[i].context || "single";
 					const optional = properties[i].optional || false;
 
-					const valueParsed = this._parseTypedValue(properties[i], in_scope, context);
+					const valueParsed = this._parseTypedValue(
+						properties[i],
+						in_scope,
+						context,
+					);
 
 					if (optional) {
 						propertyDef.optionalChildren = propertyDef.optionalChildren || {};
@@ -1966,14 +2116,22 @@ class PropertyFactory {
 						};
 						propertyDef.children = propertyDef.children || [];
 						propertyDef.children.unshift([properties[i].id, newChildEntry]);
-						this._createDefFromPropertyDeclaration(properties[i], in_scope, newChildEntry);
+						this._createDefFromPropertyDeclaration(
+							properties[i],
+							in_scope,
+							newChildEntry,
+						);
 					} else if (!optional) {
 						const newChildEntry = {
 							initialValue: undefined,
 						};
 						propertyDef.children = propertyDef.children || [];
 						propertyDef.children.unshift([properties[i].id, newChildEntry]);
-						this._createDefFromPropertyDeclaration(properties[i], in_scope, newChildEntry);
+						this._createDefFromPropertyDeclaration(
+							properties[i],
+							in_scope,
+							newChildEntry,
+						);
 					}
 				}
 			}
@@ -1982,7 +2140,11 @@ class PropertyFactory {
 				const constants = in_template.constants;
 				for (let i = 0; i < constants.length; i++) {
 					const context = constants[i].context || "single";
-					const valueParsed = this._parseTypedValue(constants[i], in_scope, context);
+					const valueParsed = this._parseTypedValue(
+						constants[i],
+						in_scope,
+						context,
+					);
 
 					const newChildEntry = {
 						initialValue: undefined,
@@ -1991,7 +2153,11 @@ class PropertyFactory {
 					propertyDef.children = propertyDef.children || [];
 					propertyDef.children.unshift([constants[i].id, newChildEntry]);
 
-					this._createDefFromPropertyDeclaration(constants[i], in_scope, newChildEntry);
+					this._createDefFromPropertyDeclaration(
+						constants[i],
+						in_scope,
+						newChildEntry,
+					);
 
 					if (valueParsed.value) {
 						newChildEntry.initialValue = valueParsed;
@@ -2103,7 +2269,12 @@ class PropertyFactory {
 	 * BaseProperty, but it is not explicitly listed in the template, so it is only be included if explicitly requested.
 	 * @param {string} [in_scope] - The scope in which the property typeid is defined.
 	 */
-	_getAllParentsForTemplateInternal(in_typeid, out_parents, in_includeBaseProperty, in_scope) {
+	_getAllParentsForTemplateInternal(
+		in_typeid,
+		out_parents,
+		in_includeBaseProperty,
+		in_scope,
+	) {
 		if (TypeIdHelper.isPrimitiveType(in_typeid)) {
 			// Everything inherits from BaseProperty.
 			if (in_includeBaseProperty) {
@@ -2127,14 +2298,21 @@ class PropertyFactory {
 		// Run over all parents and insert them into the parents array
 		if (template.inherits) {
 			// We have to distinguish the cases where the parents are either specified as a single string or an array
-			var parents = _.isArray(template.inherits) ? template.inherits : [template.inherits];
+			var parents = _.isArray(template.inherits)
+				? template.inherits
+				: [template.inherits];
 
 			for (var i = 0; i < parents.length; i++) {
 				// Mark it as parent
 				out_parents[parents[i]] = true;
 
 				// Continue recursively
-				this._getAllParentsForTemplateInternal(parents[i], out_parents, undefined, in_scope);
+				this._getAllParentsForTemplateInternal(
+					parents[i],
+					out_parents,
+					undefined,
+					in_scope,
+				);
 			}
 		}
 	}
@@ -2177,8 +2355,12 @@ class PropertyFactory {
 		this._localPrimitivePropertiesAndTemplates.remove(typeid);
 
 		if (this._localVersionedTemplates.has(typeidWithoutVersion)) {
-			if (this._localVersionedTemplates.item(typeidWithoutVersion).has(version)) {
-				this._localVersionedTemplates.item(typeidWithoutVersion).remove(version);
+			if (
+				this._localVersionedTemplates.item(typeidWithoutVersion).has(version)
+			) {
+				this._localVersionedTemplates
+					.item(typeidWithoutVersion)
+					.remove(version);
 			}
 		}
 
@@ -2250,10 +2432,10 @@ class PropertyFactory {
 		if (store) {
 			store
 				.retrieveTemplate(in_task.typeid)
-				.then(function (response) {
+				.then((response) => {
 					in_callback(response);
 				})
-				.catch(function (error) {
+				.catch((error) => {
 					in_callback({ error: error });
 				});
 		} else {
@@ -2288,21 +2470,25 @@ class PropertyFactory {
 			return Promise.reject(new Error(MSG.DEPENDENCIES_RESOLUTION_IN_PROGRESS));
 		}
 
-		this.templateRequestsQueue = async.queue(this._retrieveTemplateRequestWorker, 5);
-
-		var that = this;
+		this.templateRequestsQueue = async.queue(
+			this._retrieveTemplateRequestWorker,
+			5,
+		);
 
 		// 0. Inspect locally registered templates for unknown dependencies
-		this._localPrimitivePropertiesAndTemplates.iterate(function (key, type) {
+		this._localPrimitivePropertiesAndTemplates.iterate((key, type) => {
 			if (
-				!that._isSpecializedConstructor(key) &&
+				!this._isSpecializedConstructor(key) &&
 				PropertyTemplate.isTemplate(type.getPropertyTemplate())
 			) {
-				var unknownDeps = _extractUnknownDependencies.call(that, type.getPropertyTemplate());
+				var unknownDeps = _extractUnknownDependencies.call(
+					this,
+					type.getPropertyTemplate(),
+				);
 				for (var d = 0; d < unknownDeps.length; d++) {
 					var dep = unknownDeps[d];
-					if (that.missingDependencies[dep] === undefined) {
-						that.missingDependencies[dep] = { requested: false };
+					if (this.missingDependencies[dep] === undefined) {
+						this.missingDependencies[dep] = { requested: false };
 					}
 				}
 			}
@@ -2314,36 +2500,38 @@ class PropertyFactory {
 		// Push template retrieve task to the queue for unresolved typeids (missing dependencies)
 		for (var i = 0; i < typeids.length; i++) {
 			var typeid = typeids[i];
-			if (that.templateRequestsResults.errors[typeid] === undefined) {
-				that.templateRequestsResults.errors[typeid] = {};
+			if (this.templateRequestsResults.errors[typeid] === undefined) {
+				this.templateRequestsResults.errors[typeid] = {};
 			}
-			if (that.templateRequestsResults.schemas[typeid] === undefined) {
-				that.templateRequestsResults.schemas[typeid] = {};
+			if (this.templateRequestsResults.schemas[typeid] === undefined) {
+				this.templateRequestsResults.schemas[typeid] = {};
 			}
 
-			_pushTemplateRequestTask.call(that, typeid);
+			_pushTemplateRequestTask.call(this, typeid);
 		}
 
-		return new Promise(function (resolve, reject) {
-			if (that.templateRequestsQueue.length() === 0) {
+		return new Promise((resolve, reject) => {
+			if (this.templateRequestsQueue.length() === 0) {
 				resolve({ errors: {}, schemas: {} });
-				that.templateRequestsQueue = undefined;
+				this.templateRequestsQueue = undefined;
 			} else {
-				that.templateRequestsQueue.drain = function () {
-					var errors = _.compact(_.pluck(that.templateRequestsResults.errors, "typeid"));
-					var results = that.templateRequestsResults;
-					var resultsKeys = Object.keys(that.templateRequestsResults.schemas);
+				this.templateRequestsQueue.drain = () => {
+					var errors = _.compact(
+						_.pluck(this.templateRequestsResults.errors, "typeid"),
+					);
+					var results = this.templateRequestsResults;
+					var resultsKeys = Object.keys(this.templateRequestsResults.schemas);
 					var tempMissingDependencies = [];
 					let tempConstant;
 					// create missing dependencies for contextKeyType
 					for (var j = 0; j < resultsKeys.length; j++) {
-						var templateWrapper = that._getWrapper(
+						var templateWrapper = this._getWrapper(
 							results.schemas[resultsKeys[j]].typeid,
 							undefined,
 							undefined,
 						);
 						if (templateWrapper) {
-							var compiledTemplate = templateWrapper.getCompiledTemplate(that);
+							var compiledTemplate = templateWrapper.getCompiledTemplate(this);
 							if (compiledTemplate.constants) {
 								for (var s = 0; s < compiledTemplate.constants.length; s++) {
 									tempConstant = compiledTemplate.constants[s];
@@ -2356,7 +2544,9 @@ class PropertyFactory {
 										for (var z = 0; z < valueKeys.length; z++) {
 											if (
 												TypeIdHelper.isTemplateTypeid(valueKeys[z]) &&
-												!(valueKeys[z] in that.templateRequestsResults.schemas) &&
+												!(
+													valueKeys[z] in this.templateRequestsResults.schemas
+												) &&
 												!tempMissingDependencies.includes(valueKeys[z])
 											) {
 												tempMissingDependencies.push(valueKeys[z]);
@@ -2370,28 +2560,34 @@ class PropertyFactory {
 					if (tempMissingDependencies.length !== 0) {
 						for (var j = 0; j < tempMissingDependencies.length; j++) {
 							var missingTypeid = tempMissingDependencies[j];
-							if (that.missingDependencies[missingTypeid] === undefined) {
-								that.missingDependencies[missingTypeid] = { requested: false };
-								if (that.templateRequestsResults.errors[missingTypeid] === undefined) {
-									that.templateRequestsResults.errors[missingTypeid] = {};
+							if (this.missingDependencies[missingTypeid] === undefined) {
+								this.missingDependencies[missingTypeid] = { requested: false };
+								if (
+									this.templateRequestsResults.errors[missingTypeid] ===
+									undefined
+								) {
+									this.templateRequestsResults.errors[missingTypeid] = {};
 								}
-								if (that.templateRequestsResults.schemas[missingTypeid] === undefined) {
-									that.templateRequestsResults.schemas[missingTypeid] = {};
+								if (
+									this.templateRequestsResults.schemas[missingTypeid] ===
+									undefined
+								) {
+									this.templateRequestsResults.schemas[missingTypeid] = {};
 								}
 							}
-							_pushTemplateRequestTask.call(that, missingTypeid);
+							_pushTemplateRequestTask.call(this, missingTypeid);
 						}
 					}
 
-					if (that.templateRequestsQueue.length() === 0) {
-						that.templateRequestsResults = { errors: {}, schemas: {} };
+					if (this.templateRequestsQueue.length() === 0) {
+						this.templateRequestsResults = { errors: {}, schemas: {} };
 						if (errors.length && errors.length > 0) {
 							reject(new Error("Some errors occured"));
 						} else {
-							that.missingDependencies = {};
+							this.missingDependencies = {};
 							resolve(results);
 						}
-						that.templateRequestsQueue = undefined;
+						this.templateRequestsQueue = undefined;
 					}
 				};
 			}
@@ -2410,7 +2606,10 @@ class PropertyFactory {
 	instanceOf(in_property, in_primitiveTypeid, in_context) {
 		var templateConstructor = this._get(in_primitiveTypeid, in_context);
 		var result = false;
-		if (templateConstructor && this._isNativePropertyConstructor(templateConstructor)) {
+		if (
+			templateConstructor &&
+			this._isNativePropertyConstructor(templateConstructor)
+		) {
 			result = in_property instanceof templateConstructor;
 		}
 		return result;
@@ -2423,8 +2622,10 @@ class PropertyFactory {
 const PropertyFactorySingleton = new PropertyFactory();
 export { PropertyFactorySingleton as PropertyFactory };
 
-LazyLoadedProperties.AbstractStaticCollectionProperty = AbstractStaticCollectionProperty;
-LazyLoadedProperties.IndexedCollectionBaseProperty = IndexedCollectionBaseProperty;
+LazyLoadedProperties.AbstractStaticCollectionProperty =
+	AbstractStaticCollectionProperty;
+LazyLoadedProperties.IndexedCollectionBaseProperty =
+	IndexedCollectionBaseProperty;
 LazyLoadedProperties.ContainerProperty = ContainerProperty;
 LazyLoadedProperties.ArrayProperty = ArrayProperty;
 LazyLoadedProperties.EnumArrayProperty = EnumArrayProperty;

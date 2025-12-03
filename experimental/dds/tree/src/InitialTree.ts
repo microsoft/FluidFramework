@@ -5,7 +5,7 @@
 
 import type { Definition, StableNodeId } from './Identifiers.js';
 import { legacySharedTreeInitialTreeId } from './id-compressor/index.js';
-import { ChangeNode_0_0_2 } from './persisted-types/index.js';
+import type { ChangeNode_0_0_2 } from './persisted-types/index.js';
 
 /**
  * The initial tree.

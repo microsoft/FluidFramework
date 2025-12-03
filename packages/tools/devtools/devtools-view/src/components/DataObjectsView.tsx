@@ -7,18 +7,17 @@ import { Tree as FluentTree } from "@fluentui/react-components";
 import {
 	GetRootDataVisualizations,
 	type HasContainerKey,
-	type ISourcedDevtoolsMessage,
+	handleIncomingMessage,
 	type InboundHandlers,
+	type ISourcedDevtoolsMessage,
 	RootDataVisualizations,
 	type RootHandleNode,
-	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
 import { useMessageRelay } from "../MessageRelayContext.js";
-
-import { Waiting } from "./Waiting.js";
 import { TreeDataView } from "./data-visualization/index.js";
+import { Waiting } from "./Waiting.js";
 
 const loggingContext = "INLINE(VIEW)";
 
@@ -34,7 +33,9 @@ export type DataObjectsViewProps = HasContainerKey;
  *
  * Dispatches data object rendering based on those provided view {@link TreeDataView}.
  */
-export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement {
+export function DataObjectsView(
+	props: DataObjectsViewProps,
+): React.ReactElement {
 	const { containerKey } = props;
 
 	const messageRelay = useMessageRelay();
@@ -86,7 +87,12 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 		<FluentTree aria-label="Data tree view">
 			{Object.entries(rootDataHandles).map(([key, fluidObject], index) => {
 				return (
-					<TreeDataView key={key} containerKey={containerKey} label={key} node={fluidObject} />
+					<TreeDataView
+						key={key}
+						containerKey={containerKey}
+						label={key}
+						node={fluidObject}
+					/>
 				);
 			})}
 		</FluentTree>

@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import {
 	type BuildNode,
 	Change,
@@ -18,17 +16,22 @@ import {
 } from "@fluid-experimental/tree";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
-import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import { type IChannel } from "@fluidframework/datastore-definitions/internal";
-import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	type ITestObjectProvider,
 	createSummarizerFromFactory,
+	type ITestObjectProvider,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { type ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import {
+	type ITree,
+	SchemaFactory,
+	TreeViewConfiguration,
+} from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
+import { strict as assert } from "assert";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 
@@ -225,8 +228,12 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		shim2.submitMigrateOp();
 
 		// Wait for "migrated" event on both shims.
-		const promise1 = new Promise<void>((resolve) => shim1.on("migrated", () => resolve()));
-		const promise2 = new Promise<void>((resolve) => shim2.on("migrated", () => resolve()));
+		const promise1 = new Promise<void>((resolve) =>
+			shim1.on("migrated", () => resolve()),
+		);
+		const promise2 = new Promise<void>((resolve) =>
+			shim2.on("migrated", () => resolve()),
+		);
 		container1.connect();
 		await promise1;
 
@@ -241,21 +248,41 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const view2 = newTree2.viewWith(treeConfig);
 		const node1 = view1.root;
 		const node2 = view2.root;
-		assert.equal(node1.quantity, node2.quantity, "expected to migrate to the same value");
-		assert.equal(node1.quantity, originalValue, "expected no values to be updated");
+		assert.equal(
+			node1.quantity,
+			node2.quantity,
+			"expected to migrate to the same value",
+		);
+		assert.equal(
+			node1.quantity,
+			originalValue,
+			"expected no values to be updated",
+		);
 
 		// Send a v2 op and check to see that they are processed.
 		node1.quantity = newValue;
 		await provider.ensureSynchronized();
-		assert.equal(node1.quantity, node2.quantity, "expected quantity values to sync");
-		assert.equal(node1.quantity, newValue, "expected quantity values to be updated");
+		assert.equal(
+			node1.quantity,
+			node2.quantity,
+			"expected quantity values to sync",
+		);
+		assert.equal(
+			node1.quantity,
+			newValue,
+			"expected quantity values to be updated",
+		);
 
 		// Super hacky way to check to see if the v1 ops were dropped. We enable submission even though its disabled
 		(shim1 as any).preMigrationDeltaConnection.canSubmit = true;
 		updateQuantity(legacyTree1, 123);
 		await provider.ensureSynchronized();
 		assert.equal(node1.quantity, newValue, "expected no values to be updated");
-		assert.equal(getQuantity(legacyTree2), originalValue, "expected v1 ops to be dropped");
+		assert.equal(
+			getQuantity(legacyTree2),
+			originalValue,
+			"expected v1 ops to be dropped",
+		);
 		assert(!container1.closed, "Container1 should not be closed");
 		assert(!container2.closed, "Container2 should not be closed");
 	});
@@ -280,7 +307,9 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		updateQuantity(legacyTree1, 1);
 
 		// Wait for "migrated" event on both shims.
-		const promise1 = new Promise<void>((resolve) => shim1.on("migrated", () => resolve()));
+		const promise1 = new Promise<void>((resolve) =>
+			shim1.on("migrated", () => resolve()),
+		);
 		provider.opProcessingController.resumeProcessing();
 		await promise1;
 		const { summarizer } = await createSummarizerFromFactory(
@@ -291,9 +320,13 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 		const { summaryVersion } = await summarizeNow(summarizer);
 
-		const container2 = await provider.loadContainer(runtimeFactory2, undefined, {
-			[LoaderHeader.version]: summaryVersion,
-		});
+		const container2 = await provider.loadContainer(
+			runtimeFactory2,
+			undefined,
+			{
+				[LoaderHeader.version]: summaryVersion,
+			},
+		);
 		await waitForContainerConnection(container2);
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<SharedTreeShim>();
@@ -309,14 +342,30 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const view2 = newTree2.viewWith(treeConfig);
 		const node1 = view1.root;
 		const node2 = view2.root;
-		assert.equal(node1.quantity, originalValue, "Node1 should be the original value");
-		assert.equal(node2.quantity, originalValue, "Node2 should have loaded the original value");
+		assert.equal(
+			node1.quantity,
+			originalValue,
+			"Node1 should be the original value",
+		);
+		assert.equal(
+			node2.quantity,
+			originalValue,
+			"Node2 should have loaded the original value",
+		);
 
 		// Send a v2 op and check to see that they are processed.
 		node1.quantity = newValue;
 		await provider.ensureSynchronized();
-		assert.equal(node1.quantity, node2.quantity, "expected quantity values to sync");
-		assert.equal(node1.quantity, newValue, "expected quantity values to be updated");
+		assert.equal(
+			node1.quantity,
+			node2.quantity,
+			"expected quantity values to sync",
+		);
+		assert.equal(
+			node1.quantity,
+			newValue,
+			"expected quantity values to be updated",
+		);
 
 		// Super hacky way to check to see if the v1 ops were dropped. We enable submission even though its disabled
 		(shim1 as any).preMigrationDeltaConnection.canSubmit = true;
@@ -341,8 +390,16 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const address = env.contents.contents.content.address as string;
 		assert.equal(address, shim2.id, "Expected an op to be sent to the shim2");
 
-		assert.equal(node1.quantity, newValue, "expected node1 to still be newValue");
-		assert.equal(node2.quantity, newValue, "expected node2 to still be newValue");
+		assert.equal(
+			node1.quantity,
+			newValue,
+			"expected node1 to still be newValue",
+		);
+		assert.equal(
+			node2.quantity,
+			newValue,
+			"expected node2 to still be newValue",
+		);
 
 		assert(!container1.closed, "Container1 should not be closed");
 		assert(!container2.closed, "Container2 should not be closed");

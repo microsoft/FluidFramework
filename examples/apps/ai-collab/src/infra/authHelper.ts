@@ -7,8 +7,8 @@
 
 import {
 	type AccountInfo,
-	PublicClientApplication,
 	type AuthenticationResult,
+	PublicClientApplication,
 } from "@azure/msal-browser";
 import { OdspClient } from "@fluidframework/odsp-client/beta";
 
@@ -172,7 +172,10 @@ async function signedInStart(
 		try {
 			return await graphHelper.getFileStorageContainerId();
 		} catch (error) {
-			console.error("Error while fetching file storage container ID:", error as string);
+			console.error(
+				"Error while fetching file storage container ID:",
+				error as string,
+			);
 			return "";
 		}
 	};

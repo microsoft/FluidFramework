@@ -13,15 +13,16 @@ import isEmpty from "lodash/isEmpty.js";
 import isNumber from "lodash/isNumber.js";
 import range from "lodash/range.js";
 
-import { ChangeSet, SerializedChangeSet } from "../changeset.js";
+import { ChangeSet, type SerializedChangeSet } from "../changeset.js";
 
-describe("Array Operations", function () {
+describe("Array Operations", () => {
 	let guidCounter = 1;
 
 	const generateNamedEntities = (count, offsets?, type?) =>
 		range(count).map((i) => {
 			const offsetShift = offsets !== undefined ? offsets.shift() : undefined;
-			const id = offsetShift !== undefined ? guidCounter - offsetShift : guidCounter++;
+			const id =
+				offsetShift !== undefined ? guidCounter - offsetShift : guidCounter++;
 			if (type === undefined) {
 				return {
 					String: {
@@ -34,7 +35,11 @@ describe("Array Operations", function () {
 			}
 		});
 
-	function createArrayCS(arrayOperations, baseOperation?, type?): SerializedChangeSet {
+	function createArrayCS(
+		arrayOperations,
+		baseOperation?,
+		type?,
+	): SerializedChangeSet {
 		baseOperation = baseOperation || "modify";
 		type = type || "array<test:namedEntry-1.0.0>";
 		return {
@@ -76,7 +81,8 @@ describe("Array Operations", function () {
 
 		// We expect the two ranges to be non overlapping
 		const arrayCS =
-			result.getSerializedChangeSet().modify["array<test:namedEntry-1.0.0>"].array;
+			result.getSerializedChangeSet().modify["array<test:namedEntry-1.0.0>"]
+				.array;
 		const removeStart = arrayCS.remove[0][0];
 		const removeEnd = arrayCS.remove[0][0] + arrayCS.remove[0][1].length;
 		const insertStart = arrayCS.insert[0][0];
@@ -106,8 +112,8 @@ describe("Array Operations", function () {
 		// I(1,3) followed by a R(0,1). If the rebase CS would have been rebased separately
 		// with respect to those two CS, it would have remained a I(0,3).
 		expect(
-			(rebaseCS as SerializedChangeSet).modify["array<test:namedEntry-1.0.0>"].array
-				.insert[0][0],
+			(rebaseCS as SerializedChangeSet).modify["array<test:namedEntry-1.0.0>"]
+				.array.insert[0][0],
 		).to.equal(0);
 	});
 
@@ -131,9 +137,9 @@ describe("Array Operations", function () {
 			// is the result of an I(3, 3) followed by a R(0,3), it would not be moved since the insert in the baseCS
 			// is behind the insert in the rebase CS. Otherwise, if it is an I(0, 0) our rebase rules would move it
 			// to index 3 behind the other insert
-			expect(rebaseCS.modify["array<test:namedEntry-1.0.0>"].array.insert[0][0]).to.equal(
-				i === 0 ? 3 : 0,
-			);
+			expect(
+				rebaseCS.modify["array<test:namedEntry-1.0.0>"].array.insert[0][0],
+			).to.equal(i === 0 ? 3 : 0);
 
 			const combinedCS = new ChangeSet(originalRebaseCS);
 			combinedCS.toInverseChangeSet();
@@ -145,9 +151,9 @@ describe("Array Operations", function () {
 			// insert behind the original insert. This means the original insert should now be at position 0,
 			// before the insert that canceled out. Otherwise, it should be at position 4 (behind the removed
 			// range, as it was in the original CS, but now shifted by 1).
-			expect(finalCs.modify["array<test:namedEntry-1.0.0>"].array.insert[0][0]).to.equal(
-				i === 0 ? 0 : 4,
-			);
+			expect(
+				finalCs.modify["array<test:namedEntry-1.0.0>"].array.insert[0][0],
+			).to.equal(i === 0 ? 0 : 4);
 		});
 	}
 
@@ -164,7 +170,8 @@ describe("Array Operations", function () {
 		combinedCS.applyChangeSet(op2);
 
 		const arrayCS =
-			combinedCS.getSerializedChangeSet().modify["array<test:namedEntry-1.0.0>"].array;
+			combinedCS.getSerializedChangeSet().modify["array<test:namedEntry-1.0.0>"]
+				.array;
 		expect(arrayCS.insert.length).to.equal(1);
 	});
 
@@ -230,13 +237,21 @@ describe("Array Operations", function () {
 		const baseState = createArrayCS({
 			insert: createInserts([0], 20),
 		});
-		const deltaChangeSet = testRebasedApplies(localBranchChangeSet, baseChangeSet, baseState);
+		const deltaChangeSet = testRebasedApplies(
+			localBranchChangeSet,
+			baseChangeSet,
+			baseState,
+		);
 
 		// Make sure the delta changeset does not contain any other operations than the inserts from the base state
 		const arrayChangeSet =
-			deltaChangeSet.getSerializedChangeSet().modify["array<test:namedEntry-1.0.0>"].array;
+			deltaChangeSet.getSerializedChangeSet().modify[
+				"array<test:namedEntry-1.0.0>"
+			].array;
 
-		expect(arrayChangeSet[baseOperation].length).to.equal(baseInsertPositions.length);
+		expect(arrayChangeSet[baseOperation].length).to.equal(
+			baseInsertPositions.length,
+		);
 		for (let i = 0; i < baseInsertPositions.length; i++) {
 			expect(arrayChangeSet[baseOperation][i][1].length).to.equal(baseCount);
 		}
@@ -246,7 +261,16 @@ describe("Array Operations", function () {
 	}
 
 	describe("Rebase test applying the reverse, base and then rebased changeset", () => {
-		for (const basePositions of [[0], [1], [2], [5], [13], [0, 2], [0, 5], [0, 5, 13]]) {
+		for (const basePositions of [
+			[0],
+			[1],
+			[2],
+			[5],
+			[13],
+			[0, 2],
+			[0, 5],
+			[0, 5, 13],
+		]) {
 			for (const rebasePositions of [[0], [1], [5, 9], [5, 9, 12]]) {
 				it(`with base positions ${basePositions} and rebase positions ${rebasePositions}`, () => {
 					runTestApplyingReverseAndRebasedChangesetForIndependentModifications(
@@ -297,12 +321,19 @@ describe("Array Operations", function () {
 
 		const conflicts2 = [];
 		const rebasedCS2 = cloneDeep(rebaseChangeSet);
-		new ChangeSet(squashedBaseChangeSets)._rebaseChangeSet(rebasedCS2, conflicts2);
+		new ChangeSet(squashedBaseChangeSets)._rebaseChangeSet(
+			rebasedCS2,
+			conflicts2,
+		);
 		validateChangeSet(rebasedCS2);
 
 		expect(rebasedCS1).to.deep.equal(rebasedCS2);
 
-		return testRebasedApplies(cloneDeep(rebaseChangeSet), squashedBaseChangeSets, base);
+		return testRebasedApplies(
+			cloneDeep(rebaseChangeSet),
+			squashedBaseChangeSets,
+			base,
+		);
 	}
 
 	describe("Rebase Distributivity", () => {
@@ -616,7 +647,9 @@ describe("Array Operations", function () {
 
 		// Individually apply the operations
 		const separateApplysResult = new ChangeSet(cloneDeep(base));
-		operations.forEach(separateApplysResult.applyChangeSet.bind(separateApplysResult));
+		operations.forEach(
+			separateApplysResult.applyChangeSet.bind(separateApplysResult),
+		);
 		validateChangeSet(separateApplysResult);
 
 		// And apply the combined CS
@@ -662,7 +695,8 @@ describe("Array Operations", function () {
 				" with insert at the beginning",
 				" with insert at the end",
 			]) {
-				const offset = additionalInserts === " with insert at the beginning" ? 2 : 0;
+				const offset =
+					additionalInserts === " with insert at the beginning" ? 2 : 0;
 				for (const i of range(1, 9)) {
 					it(`at position ${i + offset}${additionalInserts}`, () => {
 						const initial = createArrayCS(
@@ -697,7 +731,9 @@ describe("Array Operations", function () {
 							),
 							createArrayCS(
 								{
-									insert: [[i + offset, generateNamedEntities(2, undefined, "number")]],
+									insert: [
+										[i + offset, generateNamedEntities(2, undefined, "number")],
+									],
 								},
 								undefined,
 								"array<Float64>",
@@ -944,14 +980,24 @@ describe("Array Operations", function () {
 								insertNames.push("before remove in B");
 							}
 							if (removeInsideInsertB) {
-								insertNames.push(`inside remove range in B (${removeInsideInsertB})`);
+								insertNames.push(
+									`inside remove range in B (${removeInsideInsertB})`,
+								);
 							}
 							let title = "with ";
 							title +=
-								insertNames.length === 0 ? "no inserts" : `inserts ${insertNames.join(", ")}`;
+								insertNames.length === 0
+									? "no inserts"
+									: `inserts ${insertNames.join(", ")}`;
 							it(title, () => {
-								const insertsA: [number, ReturnType<typeof generateNamedEntities>][] = [];
-								const insertsB: [number, ReturnType<typeof generateNamedEntities>][] = [];
+								const insertsA: [
+									number,
+									ReturnType<typeof generateNamedEntities>,
+								][] = [];
+								const insertsB: [
+									number,
+									ReturnType<typeof generateNamedEntities>,
+								][] = [];
 								let offset = 0;
 								if (startInsertA) {
 									insertsA.push([0, generateNamedEntities(1)]);
@@ -970,9 +1016,13 @@ describe("Array Operations", function () {
 									insertsB.push([5 + offset, generateNamedEntities(1)]);
 								}
 								if (removeInsideInsertB) {
-									const removeOffset = removeInsideInsertB === "separate" ? 1 : 0;
+									const removeOffset =
+										removeInsideInsertB === "separate" ? 1 : 0;
 
-									insertsB.push([6 + offset + removeOffset, generateNamedEntities(1)]);
+									insertsB.push([
+										6 + offset + removeOffset,
+										generateNamedEntities(1),
+									]);
 									removesB = [
 										[5 + offset + removeOffset, generateNamedEntities(1)],
 										[6 + offset + removeOffset, generateNamedEntities(1)],

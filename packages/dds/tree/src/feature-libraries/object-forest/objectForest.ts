@@ -11,10 +11,13 @@ import {
 	type Anchor,
 	AnchorSet,
 	type AnnouncedVisitor,
+	aboveRootPlaceholder,
 	type CursorLocationType,
+	combineVisitors,
 	type DeltaDetachedNodeId,
 	type DeltaVisitor,
 	type DetachedField,
+	deepCopyMapTree,
 	type FieldAnchor,
 	type FieldKey,
 	type FieldUpPath,
@@ -28,6 +31,7 @@ import {
 	type PathRootPrefix,
 	type PlaceIndex,
 	type Range,
+	rootFieldKey,
 	type TreeChunk,
 	type TreeFieldStoredSchema,
 	TreeNavigationResult,
@@ -35,25 +39,21 @@ import {
 	type TreeStoredSchemaSubscription,
 	type UpPath,
 	type Value,
-	aboveRootPlaceholder,
-	combineVisitors,
-	deepCopyMapTree,
-	rootFieldKey,
 } from "../../core/index.js";
 import {
 	assertNonNegativeSafeInteger,
 	assertValidIndex,
 	assertValidRange,
+	type Breakable,
 	brand,
 	breakingMethod,
-	type Breakable,
 	type WithBreakable,
 } from "../../util/index.js";
 import { chunkField, defaultChunkPolicy } from "../chunked-forest/index.js";
-import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
-import { type CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
 import { defaultSchemaPolicy, FieldKinds } from "../default-schema/index.js";
+import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import { isFieldInSchema, throwOutOfSchema } from "../schemaChecker.js";
+import { type CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
 
 /** A `MapTree` with mutable fields */
 interface MutableMapTree extends MapTree {
@@ -61,7 +61,10 @@ interface MutableMapTree extends MapTree {
 }
 
 /** Get a field from a `MutableMapTree`, optionally modifying the tree to create it if missing. */
-function getOrCreateField(mapTree: MutableMapTree, key: FieldKey): MutableMapTree[] {
+function getOrCreateField(
+	mapTree: MutableMapTree,
+	key: FieldKey,
+): MutableMapTree[] {
 	const field = mapTree.fields.get(key);
 	if (field !== undefined) {
 		return field;
@@ -120,12 +123,24 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 		return this.roots.fields.size === 0;
 	}
 
-	public clone(schema: TreeStoredSchemaSubscription, anchors: AnchorSet): ObjectForest {
-		return new ObjectForest(this.breaker, schema, anchors, this.additionalAsserts, this.roots);
+	public clone(
+		schema: TreeStoredSchemaSubscription,
+		anchors: AnchorSet,
+	): ObjectForest {
+		return new ObjectForest(
+			this.breaker,
+			schema,
+			anchors,
+			this.additionalAsserts,
+			this.roots,
+		);
 	}
 
 	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk[] {
-		return chunkField(cursor, { idCompressor: undefined, policy: defaultChunkPolicy });
+		return chunkField(cursor, {
+			idCompressor: undefined,
+			policy: defaultChunkPolicy,
+		});
 	}
 
 	public forgetAnchor(anchor: Anchor): void {
@@ -224,16 +239,27 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 				preEdit();
 				this.forest.delete(detachedField);
 			}
-			public create(content: readonly ITreeCursorSynchronous[], destination: FieldKey): void {
+			public create(
+				content: readonly ITreeCursorSynchronous[],
+				destination: FieldKey,
+			): void {
 				preEdit();
 				this.forest.add(content, destination);
 				this.forest.#events.emit("afterRootFieldCreated", destination);
 			}
-			public attach(source: FieldKey, count: number, destination: PlaceIndex): void {
+			public attach(
+				source: FieldKey,
+				count: number,
+				destination: PlaceIndex,
+			): void {
 				preEdit();
 				this.attachEdit(source, count, destination);
 			}
-			public detach(source: Range, destination: FieldKey, id: DeltaDetachedNodeId): void {
+			public detach(
+				source: Range,
+				destination: FieldKey,
+				id: DeltaDetachedNodeId,
+			): void {
 				preEdit();
 				this.detachEdit(source, destination);
 			}
@@ -245,7 +271,11 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 			 * Expected to match the number of nodes in the source detached field.
 			 * @param destination - The index in the current field at which to attach the content.
 			 */
-			private attachEdit(source: FieldKey, count: number, destination: PlaceIndex): void {
+			private attachEdit(
+				source: FieldKey,
+				count: number,
+				destination: PlaceIndex,
+			): void {
 				assertNonNegativeSafeInteger(count);
 				if (count === 0) {
 					return;
@@ -258,7 +288,10 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 				const currentField = getOrCreateField(parent, key);
 				assertValidIndex(destination, currentField, true);
 				const sourceField = this.forest.#roots.fields.get(source) ?? [];
-				assert(sourceField !== undefined, 0x7b7 /* Attach source field must exist */);
+				assert(
+					sourceField !== undefined,
+					0x7b7 /* Attach source field must exist */,
+				);
 				assert(
 					sourceField.length === count,
 					0x7b8 /* Attach must consume all nodes in source field */,
@@ -274,15 +307,23 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 			 * @param destination - If specified, the destination to transfer the detached range to.
 			 * If not specified, the detached range is destroyed.
 			 */
-			private detachEdit(source: Range, destination: FieldKey | undefined): void {
+			private detachEdit(
+				source: Range,
+				destination: FieldKey | undefined,
+			): void {
 				const [parent, key] = cursor.getParent();
 				assert(
-					destination === undefined || parent !== this.forest.roots || key !== destination,
+					destination === undefined ||
+						parent !== this.forest.roots ||
+						key !== destination,
 					0x7b9 /* Detach destination field must be different from current field */,
 				);
 				const currentField = getOrCreateField(parent, key);
 				assertValidRange(source, currentField);
-				const content = currentField.splice(source.start, source.end - source.start);
+				const content = currentField.splice(
+					source.start,
+					source.end - source.start,
+				);
 				if (destination !== undefined) {
 					this.forest.addFieldAsDetached(content, destination);
 				}
@@ -308,8 +349,13 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 
 		const forestVisitor = new Visitor(this);
 		const announcedVisitors: AnnouncedVisitor[] = [];
-		this.deltaVisitors.forEach((getVisitor) => announcedVisitors.push(getVisitor()));
-		const combinedVisitor = combineVisitors([forestVisitor, ...announcedVisitors]);
+		this.deltaVisitors.forEach((getVisitor) =>
+			announcedVisitors.push(getVisitor()),
+		);
+		const combinedVisitor = combineVisitors([
+			forestVisitor,
+			...announcedVisitors,
+		]);
 		this.activeVisitor = combinedVisitor;
 		return combinedVisitor;
 	}
@@ -335,7 +381,10 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 	}
 
 	private addFieldAsDetached(field: MutableMapTree[], key: FieldKey): void {
-		assert(!this.roots.fields.has(key), 0x370 /* new range must not already exist */);
+		assert(
+			!this.roots.fields.has(key),
+			0x370 /* new range must not already exist */,
+		);
 		if (field.length > 0) {
 			this.#roots.fields.set(key, field);
 		}
@@ -442,88 +491,152 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 	public buildFieldAnchor(): FieldAnchor {
 		const path = this.getFieldPath();
 		const anchor =
-			path.parent === undefined ? undefined : this.forest.anchors.track(path.parent);
+			path.parent === undefined
+				? undefined
+				: this.forest.anchors.track(path.parent);
 		return { parent: anchor, fieldKey: path.field };
 	}
 	public getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
-		assert(this.innerCursor !== undefined, 0x45f /* Cursor must be current to be used */);
+		assert(
+			this.innerCursor !== undefined,
+			0x45f /* Cursor must be current to be used */,
+		);
 		return this.innerCursor.getFieldPath(prefix);
 	}
 	public get mode(): CursorLocationType {
-		assert(this.innerCursor !== undefined, 0x42e /* Cursor must be current to be used */);
+		assert(
+			this.innerCursor !== undefined,
+			0x42e /* Cursor must be current to be used */,
+		);
 		return this.innerCursor.mode;
 	}
 
 	public nextField(): boolean {
-		assert(this.innerCursor !== undefined, 0x42f /* Cursor must be current to be used */);
+		assert(
+			this.innerCursor !== undefined,
+			0x42f /* Cursor must be current to be used */,
+		);
 		return this.innerCursor.nextField();
 	}
 	public exitField(): void {
-		assert(this.innerCursor !== undefined, 0x430 /* Cursor must be current to be used */);
+		assert(
+			this.innerCursor !== undefined,
+			0x430 /* Cursor must be current to be used */,
+		);
 		return this.innerCursor.exitField();
 	}
 	public override skipPendingFields(): boolean {
-		assert(this.innerCursor !== undefined, 0x431 /* Cursor must be current to be used */);
+		assert(
+			this.innerCursor !== undefined,
+			0x431 /* Cursor must be current to be used */,
+		);
 		return this.innerCursor.skipPendingFields();
 	}
 	public getFieldKey(): FieldKey {
-		assert(this.innerCursor !== undefined, 0x432 /* Cursor must be current to be used */);
+		assert(
+			this.innerCursor !== undefined,
+			0x432 /* Cursor must be current to be used */,
+		);
 		return this.innerCursor.getFieldKey();
 	}
 	public getFieldLength(): number {
-		assert(this.innerCursor !== undefined, 0x433 /* Cursor must be current to be used */);
+		assert(
+			this.innerCursor !== undefined,
+			0x433 /* Cursor must be current to be used */,
+		);
 		return this.innerCursor.getFieldLength();
 	}
 	public firstNode(): boolean {
-		assert(this.innerCursor !== undefined, 0x434 /* Cursor must be current to be used */);
+		assert(
+			this.innerCursor !== undefined,
+			0x434 /* Cursor must be current to be used */,
+		);
 		return this.innerCursor.firstNode();
 	}
 	public enterNode(childIndex: number): void {
-		assert(this.innerCursor !== undefined, 0x435 /* Cursor must be current to be used */);
+		assert(
+			this.innerCursor !== undefined,
+			0x435 /* Cursor must be current to be used */,
+		);
 		return this.innerCursor.enterNode(childIndex);
 	}
 	public getPath(prefix?: PathRootPrefix): UpPath {
-		assert(this.innerCursor !== undefined, 0x436 /* Cursor must be current to be used */);
-		return this.innerCursor.getPath(prefix) ?? fail(0xb27 /* no path when at root */);
+		assert(
+			this.innerCursor !== undefined,
+			0x436 /* Cursor must be current to be used */,
+		);
+		return (
+			this.innerCursor.getPath(prefix) ?? fail(0xb27 /* no path when at root */)
+		);
 	}
 	public get fieldIndex(): number {
-		assert(this.innerCursor !== undefined, 0x437 /* Cursor must be current to be used */);
+		assert(
+			this.innerCursor !== undefined,
+			0x437 /* Cursor must be current to be used */,
+		);
 		return this.innerCursor.fieldIndex;
 	}
 	public get chunkStart(): number {
-		assert(this.innerCursor !== undefined, 0x438 /* Cursor must be current to be used */);
+		assert(
+			this.innerCursor !== undefined,
+			0x438 /* Cursor must be current to be used */,
+		);
 		return this.innerCursor.chunkStart;
 	}
 	public get chunkLength(): number {
-		assert(this.innerCursor !== undefined, 0x439 /* Cursor must be current to be used */);
+		assert(
+			this.innerCursor !== undefined,
+			0x439 /* Cursor must be current to be used */,
+		);
 		return this.innerCursor.chunkLength;
 	}
 	public seekNodes(offset: number): boolean {
-		assert(this.innerCursor !== undefined, 0x43a /* Cursor must be current to be used */);
+		assert(
+			this.innerCursor !== undefined,
+			0x43a /* Cursor must be current to be used */,
+		);
 		return this.innerCursor.seekNodes(offset);
 	}
 	public nextNode(): boolean {
-		assert(this.innerCursor !== undefined, 0x43b /* Cursor must be current to be used */);
+		assert(
+			this.innerCursor !== undefined,
+			0x43b /* Cursor must be current to be used */,
+		);
 		return this.innerCursor.nextNode();
 	}
 	public exitNode(): void {
-		assert(this.innerCursor !== undefined, 0x43c /* Cursor must be current to be used */);
+		assert(
+			this.innerCursor !== undefined,
+			0x43c /* Cursor must be current to be used */,
+		);
 		return this.innerCursor.exitNode();
 	}
 	public firstField(): boolean {
-		assert(this.innerCursor !== undefined, 0x43d /* Cursor must be current to be used */);
+		assert(
+			this.innerCursor !== undefined,
+			0x43d /* Cursor must be current to be used */,
+		);
 		return this.innerCursor.firstField();
 	}
 	public enterField(key: FieldKey): void {
-		assert(this.innerCursor !== undefined, 0x43e /* Cursor must be current to be used */);
+		assert(
+			this.innerCursor !== undefined,
+			0x43e /* Cursor must be current to be used */,
+		);
 		return this.innerCursor.enterField(key);
 	}
 	public get type(): TreeNodeSchemaIdentifier {
-		assert(this.innerCursor !== undefined, 0x43f /* Cursor must be current to be used */);
+		assert(
+			this.innerCursor !== undefined,
+			0x43f /* Cursor must be current to be used */,
+		);
 		return this.innerCursor.type;
 	}
 	public get value(): Value {
-		assert(this.innerCursor !== undefined, 0x440 /* Cursor must be current to be used */);
+		assert(
+			this.innerCursor !== undefined,
+			0x440 /* Cursor must be current to be used */,
+		);
 		return this.innerCursor.value;
 	}
 
@@ -557,12 +670,18 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 	}
 
 	public getNode(): MutableMapTree {
-		assert(this.innerCursor !== undefined, 0x33e /* Cursor must be current to be used */);
+		assert(
+			this.innerCursor !== undefined,
+			0x33e /* Cursor must be current to be used */,
+		);
 		return this.innerCursor.getNode();
 	}
 
 	public getParent(): [MutableMapTree, FieldKey] {
-		assert(this.innerCursor !== undefined, 0x441 /* Cursor must be current to be used */);
+		assert(
+			this.innerCursor !== undefined,
+			0x441 /* Cursor must be current to be used */,
+		);
 		// This could be optimized to skip moving it accessing internals of cursor.
 		const key = this.innerCursor.getFieldKey();
 		this.innerCursor.exitField();
@@ -572,8 +691,15 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 	}
 
 	public fork(source?: string): ITreeSubscriptionCursor {
-		assert(this.innerCursor !== undefined, 0x460 /* Cursor must be current to be used */);
-		return new Cursor(this.forest, source ?? `fork: ${this.source}`, this.innerCursor.fork());
+		assert(
+			this.innerCursor !== undefined,
+			0x460 /* Cursor must be current to be used */,
+		);
+		return new Cursor(
+			this.forest,
+			source ?? `fork: ${this.source}`,
+			this.innerCursor.fork(),
+		);
 	}
 
 	public free(): void {

@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { SequenceEvent } from "@fluidframework/sequence/legacy";
+import type { SequenceEvent } from "@fluidframework/sequence/legacy";
 
 import { emptyObject } from "../util/index.js";
 
-import { Layout } from "./layout.js";
+import type { Layout } from "./layout.js";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
-export interface IFormatterState {}
+export type IFormatterState = {};
 
 export abstract class Formatter<TState extends IFormatterState> {
 	public abstract begin(
@@ -31,7 +31,9 @@ export abstract class Formatter<TState extends IFormatterState> {
 	}
 }
 
-export abstract class RootFormatter<TState extends IFormatterState> extends Formatter<TState> {
+export abstract class RootFormatter<
+	TState extends IFormatterState,
+> extends Formatter<TState> {
 	public abstract onChange(layout: Layout, e: SequenceEvent);
 
 	public prepare(layout: Layout, start: number, end: number) {

@@ -7,18 +7,21 @@ import { strict as assert } from "node:assert";
 
 import type { IProvideLayerCompatDetails } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { FluidErrorTypes, type ConfigTypes } from "@fluidframework/core-interfaces/internal";
+import {
+	type ConfigTypes,
+	FluidErrorTypes,
+} from "@fluidframework/core-interfaces/internal";
 import type {
 	IDocumentServiceFactory,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	createChildLogger,
 	isFluidError,
 	MockLogger,
-	wrapConfigProviderWithDefaults,
 	mixinMonitoringContext,
-	createChildLogger,
+	wrapConfigProviderWithDefaults,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -67,7 +70,9 @@ describe("loader unit test", () => {
 		});
 		const detached = await loader.createDetachedContainer({ package: "none" });
 		const detachedContainerState = detached.serialize();
-		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
+		const parsedState = JSON.parse(
+			detachedContainerState,
+		) as IPendingDetachedContainerState;
 		assert.strictEqual(parsedState.attached, false);
 		assert.strictEqual(parsedState.hasAttachmentBlobs, false);
 		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
@@ -83,7 +88,9 @@ describe("loader unit test", () => {
 		});
 		const detached = await loader.createDetachedContainer({ package: "none" });
 		const detachedContainerState = detached.serialize();
-		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
+		const parsedState = JSON.parse(
+			detachedContainerState,
+		) as IPendingDetachedContainerState;
 		assert.strictEqual(parsedState.attached, false);
 		assert.strictEqual(parsedState.hasAttachmentBlobs, true);
 		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
@@ -111,7 +118,9 @@ describe("loader unit test", () => {
 		assert.strictEqual(detached.attachState, AttachState.Attaching);
 
 		const detachedContainerState = detached.serialize();
-		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
+		const parsedState = JSON.parse(
+			detachedContainerState,
+		) as IPendingDetachedContainerState;
 		assert.strictEqual(parsedState.attached, false);
 		assert.strictEqual(parsedState.hasAttachmentBlobs, false);
 		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
@@ -130,7 +139,8 @@ describe("loader unit test", () => {
 		};
 		const loader = new Loader({
 			codeLoader: createTestCodeLoaderProxy({ createDetachedBlob: true }),
-			documentServiceFactory: createTestDocumentServiceFactoryProxy(resolvedUrl),
+			documentServiceFactory:
+				createTestDocumentServiceFactoryProxy(resolvedUrl),
 			urlResolver: failSometimeProxy<IUrlResolver>({
 				resolve: async () => resolvedUrl,
 			}),
@@ -150,7 +160,9 @@ describe("loader unit test", () => {
 		assert.strictEqual(detached.attachState, AttachState.Attaching);
 
 		const detachedContainerState = detached.serialize();
-		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
+		const parsedState = JSON.parse(
+			detachedContainerState,
+		) as IPendingDetachedContainerState;
 		assert.strictEqual(parsedState.attached, false);
 		assert.strictEqual(parsedState.hasAttachmentBlobs, true);
 		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
@@ -203,8 +215,11 @@ describe("loader unit test", () => {
 			resolve: async () => resolvedUrl,
 		});
 		const loader = new Loader({
-			codeLoader: createTestCodeLoaderProxy({ runtimeWithout_setConnectionStatus: true }),
-			documentServiceFactory: createTestDocumentServiceFactoryProxy(resolvedUrl),
+			codeLoader: createTestCodeLoaderProxy({
+				runtimeWithout_setConnectionStatus: true,
+			}),
+			documentServiceFactory:
+				createTestDocumentServiceFactoryProxy(resolvedUrl),
 			urlResolver,
 		});
 		const container = await loader.createDetachedContainer({ package: "none" });

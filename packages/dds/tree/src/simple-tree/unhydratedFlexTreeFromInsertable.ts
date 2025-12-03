@@ -4,24 +4,27 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { filterIterable, hasSingle, oneFromIterable } from "../util/index.js";
-
-import { normalizeFieldSchema, FieldKind, type ImplicitFieldSchema } from "./fieldSchema.js";
 import {
 	CompatibilityLevel,
+	contentSchemaSymbol,
 	getKernel,
 	getTreeNodeSchemaPrivateData,
 	isTreeNode,
 	type TreeNode,
 	type TreeNodeSchema,
-	contentSchemaSymbol,
 	type Unhydrated,
 	UnhydratedFlexTreeNode,
 } from "./core/index.js";
 import { getUnhydratedContext } from "./createContext.js";
+import {
+	FieldKind,
+	type ImplicitFieldSchema,
+	normalizeFieldSchema,
+} from "./fieldSchema.js";
 
 /**
  * Transforms an input {@link TypedNode} tree to an {@link UnhydratedFlexTreeNode}.
@@ -49,7 +52,9 @@ import { getUnhydratedContext } from "./createContext.js";
  * Output should comply with the provided view schema, but this is not explicitly validated:
  * validation against stored schema (to guard against document corruption) is done elsewhere.
  */
-export function unhydratedFlexTreeFromInsertable<TIn extends InsertableContent | undefined>(
+export function unhydratedFlexTreeFromInsertable<
+	TIn extends InsertableContent | undefined,
+>(
 	data: TIn,
 	allowedTypes: ImplicitFieldSchema,
 ): TIn extends undefined ? undefined : UnhydratedFlexTreeNode {
@@ -60,7 +65,9 @@ export function unhydratedFlexTreeFromInsertable<TIn extends InsertableContent |
 		if (normalizedFieldSchema.kind !== FieldKind.Optional) {
 			throw new UsageError("Got undefined for non-optional field.");
 		}
-		return undefined as TIn extends undefined ? undefined : UnhydratedFlexTreeNode;
+		return undefined as TIn extends undefined
+			? undefined
+			: UnhydratedFlexTreeNode;
 	}
 
 	const flexTree: UnhydratedFlexTreeNode = unhydratedFlexTreeFromInsertableNode(
@@ -83,7 +90,9 @@ export function unhydratedFlexTreeFromInsertableNode(
 		const inner = kernel.getInnerNodeIfUnhydrated();
 		if (inner === undefined) {
 			// The node is already hydrated, meaning that it already got inserted into the tree previously
-			throw new UsageError("A node may not be inserted into the tree more than once");
+			throw new UsageError(
+				"A node may not be inserted into the tree more than once",
+			);
 		} else {
 			if (!allowedTypes.has(kernel.schema)) {
 				throw new UsageError("Invalid schema for this context.");
@@ -99,10 +108,14 @@ export function unhydratedFlexTreeFromInsertableNode(
 	// Might not match schema due to fallbacks, see TODO on toFlexContent
 	// TODO: fix TODO in `toFlexContent`, and remove this.
 	const finalSchema =
-		oneFromIterable(filterIterable(allowedTypes, (s) => s.identifier === result[0].type)) ??
-		fail(0xc9d /* missing schema */);
+		oneFromIterable(
+			filterIterable(allowedTypes, (s) => s.identifier === result[0].type),
+		) ?? fail(0xc9d /* missing schema */);
 
-	return new UnhydratedFlexTreeNode(...result, getUnhydratedContext(finalSchema));
+	return new UnhydratedFlexTreeNode(
+		...result,
+		getUnhydratedContext(finalSchema),
+	);
 }
 
 function getType(
@@ -138,13 +151,23 @@ export function getPossibleTypes(
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
 	data: FactoryContent,
 ): TreeNodeSchema[] {
-	assert(data !== undefined, 0x889 /* undefined cannot be used as FactoryContent. */);
+	assert(
+		data !== undefined,
+		0x889 /* undefined cannot be used as FactoryContent. */,
+	);
 
 	let toCheck: Iterable<TreeNodeSchema>;
-	if (typeof data === "object" && data !== null && contentSchemaSymbol in data) {
+	if (
+		typeof data === "object" &&
+		data !== null &&
+		contentSchemaSymbol in data
+	) {
 		// If the data has an explicit brand via contentSchemaSymbol, only check that type.
 		const type = data[contentSchemaSymbol];
-		toCheck = filterIterable(allowedTypes, (schema) => schema.identifier === type);
+		toCheck = filterIterable(
+			allowedTypes,
+			(schema) => schema.identifier === type,
+		);
 	} else {
 		toCheck = allowedTypes;
 	}

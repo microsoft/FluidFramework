@@ -70,7 +70,9 @@ export class Breakable {
 			this.break(brokenBy);
 		}
 		this.break(
-			new Error(`Non-error thrown breaking ${this.name}. Thrown value: "${brokenBy}"`),
+			new Error(
+				`Non-error thrown breaking ${this.name}. Thrown value: "${brokenBy}"`,
+			),
 		);
 	}
 
@@ -128,7 +130,8 @@ export interface WithBreakable {
  * Explicitly capturing the full `Target` type is necessary to make this work with generic methods with unknown numbers of type parameters.
  */
 export function breakingMethod<
-	Target extends ((...args: any[]) => unknown) & ((this: This, ...args: Args) => Return),
+	Target extends ((...args: any[]) => unknown) &
+		((this: This, ...args: Args) => Return),
 	This extends WithBreakable,
 	Args extends never[],
 	Return,
@@ -157,7 +160,8 @@ export function breakingMethod<
  * Explicitly capturing the full `Target` type is necessary to make this work with generic methods with unknown numbers of type parameters.
  */
 export function throwIfBroken<
-	Target extends ((...args: any[]) => unknown) & ((this: This, ...args: Args) => Return),
+	Target extends ((...args: any[]) => unknown) &
+		((this: This, ...args: Args) => Return),
 	This extends WithBreakable,
 	Args extends never[],
 	Return,
@@ -185,13 +189,16 @@ const isBreakerSymbol: unique symbol = Symbol("isBreaker");
 // Accepting any function like value is desired and safe here as this does not call the provided function.
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 function markBreaker(f: Function): void {
-	(f as unknown as Record<typeof isBreakerSymbol, true>)[isBreakerSymbol] = true;
+	(f as unknown as Record<typeof isBreakerSymbol, true>)[isBreakerSymbol] =
+		true;
 }
 
 // Accepting any function like value is desired and safe here as this does not call the provided function.
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 function isBreaker(f: Function): boolean {
-	return isBreakerSymbol in (f as unknown as Record<typeof isBreakerSymbol, true>);
+	return (
+		isBreakerSymbol in (f as unknown as Record<typeof isBreakerSymbol, true>)
+	);
 }
 
 /**
@@ -202,10 +209,11 @@ function isBreaker(f: Function): boolean {
  * Does not include getters or setters, or value properties.
  * Methods already marked as {@link breakingMethod} or {@link throwIfBroken} are unaffected.
  */
-export function breakingClass<Target extends abstract new (...args: any[]) => WithBreakable>(
-	target: Target,
-	context: ClassDecoratorContext<Target>,
-): Target {
+export function breakingClass<
+	Target extends abstract new (
+		...args: any[]
+	) => WithBreakable,
+>(target: Target, context: ClassDecoratorContext<Target>): Target {
 	// This could extend target, but doing so adds an extra step in the prototype chain and makes the instances just show up as "DecoratedBreakable" in the debugger.
 	const DecoratedBreakable = target;
 
@@ -227,7 +235,11 @@ export function breakingClass<Target extends abstract new (...args: any[]) => Wi
 						if (!isBreaker(descriptor.value)) {
 							// This does not affect the original class, see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/getOwnPropertyDescriptor
 							descriptor.value = breakingMethod(descriptor.value);
-							Object.defineProperty(DecoratedBreakable.prototype, key, descriptor);
+							Object.defineProperty(
+								DecoratedBreakable.prototype,
+								key,
+								descriptor,
+							);
 						}
 					}
 				}

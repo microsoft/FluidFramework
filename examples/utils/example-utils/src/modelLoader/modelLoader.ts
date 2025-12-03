@@ -3,18 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { type IContainer, LoaderHeader } from "@fluidframework/container-definitions/legacy";
+import {
+	type IContainer,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/legacy";
 // eslint-disable-next-line import-x/no-internal-modules -- #26907: `container-loader` internal `loadContainerPaused` used in examples
 import { loadContainerPaused } from "@fluidframework/container-loader/internal";
 import {
 	createDetachedContainer,
-	ILoaderProps,
+	type ILoaderProps,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/legacy";
 import type { IRequest } from "@fluidframework/core-interfaces";
 
 import type { IDetachedModel, IModelLoader } from "./interfaces.js";
-import { IModelContainerRuntimeEntryPoint } from "./modelContainerRuntimeFactory.js";
+import type { IModelContainerRuntimeEntryPoint } from "./modelContainerRuntimeFactory.js";
 
 /**
  * @internal
@@ -62,7 +65,9 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 	// callback here, but this callback at least allows us to keep the method off the model interface.
 	// TODO: Consider making the version param optional, and in that case having a mechanism to query the codeLoader
 	// for the latest/default version to use?
-	public async createDetached(version: string): Promise<IDetachedModel<ModelType>> {
+	public async createDetached(
+		version: string,
+	): Promise<IDetachedModel<ModelType>> {
 		const container = await createDetachedContainer({
 			...this.props,
 			codeDetails: { package: version },
@@ -101,7 +106,10 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 		return model;
 	}
 
-	public async loadExistingPaused(id: string, sequenceNumber: number): Promise<ModelType> {
+	public async loadExistingPaused(
+		id: string,
+		sequenceNumber: number,
+	): Promise<ModelType> {
 		const container = await loadContainerPaused(
 			this.props,
 			{

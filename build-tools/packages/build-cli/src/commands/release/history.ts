@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
+import { detectBumpType } from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
 import chalk from "picocolors";
 import { table } from "table";
-
-import {
-	type ReleaseReport,
-	type VersionDetails,
-	getDisplayDate,
-	getDisplayDateRelative,
-	sortVersions,
-} from "../../library/index.js";
-
-import { detectBumpType } from "@fluid-tools/version-tools";
-
 import { findPackageOrReleaseGroup } from "../../args.js";
 import { packageSelectorFlag, releaseGroupFlag } from "../../flags.js";
+import {
+	getDisplayDate,
+	getDisplayDateRelative,
+	type ReleaseReport,
+	sortVersions,
+	type VersionDetails,
+} from "../../library/index.js";
 import type { ReleaseGroup, ReleasePackage } from "../../releaseGroups.js";
-import { ReleaseReportBaseCommand, type ReleaseSelectionMode } from "./report.js";
+import {
+	ReleaseReportBaseCommand,
+	type ReleaseSelectionMode,
+} from "./report.js";
 
 const DEFAULT_MIN_VERSION = "0.0.0";
 
@@ -81,11 +81,17 @@ export default class ReleaseHistoryCommand extends ReleaseReportBaseCommand<
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const releaseGroup = flags.releaseGroup ?? flags.package!;
-		this.releaseGroupName = findPackageOrReleaseGroup(releaseGroup, context)?.name;
+		this.releaseGroupName = findPackageOrReleaseGroup(
+			releaseGroup,
+			context,
+		)?.name;
 		if (this.releaseGroupName === undefined) {
-			this.error(`Can't find release group or package with name: ${releaseGroup}`, {
-				exit: 1,
-			});
+			this.error(
+				`Can't find release group or package with name: ${releaseGroup}`,
+				{
+					exit: 1,
+				},
+			);
 		}
 
 		this.releaseData = await this.collectReleaseData(
@@ -102,7 +108,10 @@ export default class ReleaseHistoryCommand extends ReleaseReportBaseCommand<
 
 		for (const [pkgOrReleaseGroup, data] of Object.entries(this.releaseData)) {
 			const versions = sortVersions([...data.versions], "version");
-			const releaseTable = this.generateAllReleasesTable(pkgOrReleaseGroup, versions);
+			const releaseTable = this.generateAllReleasesTable(
+				pkgOrReleaseGroup,
+				versions,
+			);
 
 			this.log(
 				table(releaseTable, {
@@ -131,7 +140,9 @@ export default class ReleaseHistoryCommand extends ReleaseReportBaseCommand<
 				index >= 1 ? releases[index - 1].version : DEFAULT_MIN_VERSION;
 
 			const displayDate = getDisplayDate(ver.date);
-			const highlight = this.isRecentReleaseByDate(ver.date) ? chalk.green : chalk.white;
+			const highlight = this.isRecentReleaseByDate(ver.date)
+				? chalk.green
+				: chalk.white;
 			const displayRelDate = highlight(getDisplayDateRelative(ver.date));
 
 			const bumpType = detectBumpType(displayPreviousVersion, ver.version);

@@ -8,9 +8,12 @@
 export * from "./index.js";
 
 export type { JsonString, JsonStringifyOptions } from "./jsonString.js";
-export { JsonStringify, JsonParse } from "./jsonString.js";
+export { JsonParse, JsonStringify } from "./jsonString.js";
 
-export type { JsonTypeToOpaqueJson, OpaqueJsonToJsonType } from "./jsonUtils.js";
+export type {
+	JsonTypeToOpaqueJson,
+	OpaqueJsonToJsonType,
+} from "./jsonUtils.js";
 
 // Export set of utility types re-tagged as internal for FF client convenience.
 // These types are not intended for direct use by customers and api-extractor will
@@ -75,7 +78,8 @@ export type JsonTypeWith<T> = ExposedJsonTypeWith<T>;
 /**
  * @internal
  */
-export type ReadonlyNonNullJsonObjectWith<T> = ExposedReadonlyNonNullJsonObjectWith<T>;
+export type ReadonlyNonNullJsonObjectWith<T> =
+	ExposedReadonlyNonNullJsonObjectWith<T>;
 
 /**
  * @internal
@@ -84,7 +88,11 @@ export type OpaqueJsonDeserialized<
 	T,
 	Option_AllowExactly extends unknown[] = [],
 	Option_AllowExtensionOf = never,
-> = ExposedOpaqueJsonDeserialized<T, Option_AllowExactly, Option_AllowExtensionOf>;
+> = ExposedOpaqueJsonDeserialized<
+	T,
+	Option_AllowExactly,
+	Option_AllowExtensionOf
+>;
 
 /**
  * @internal
@@ -93,7 +101,11 @@ export type OpaqueJsonSerializable<
 	T,
 	Option_AllowExactly extends unknown[] = [],
 	Option_AllowExtensionOf = never,
-> = ExposedOpaqueJsonSerializable<T, Option_AllowExactly, Option_AllowExtensionOf>;
+> = ExposedOpaqueJsonSerializable<
+	T,
+	Option_AllowExactly,
+	Option_AllowExtensionOf
+>;
 
 /**
  * @internal
@@ -101,8 +113,9 @@ export type OpaqueJsonSerializable<
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace InternalUtilityTypes {
 	/* eslint-disable jsdoc/require-jsdoc */
-	export type FlattenIntersection<T extends ExposedInternalUtilityTypes.AnyRecord> =
-		ExposedInternalUtilityTypes.FlattenIntersection<T>;
+	export type FlattenIntersection<
+		T extends ExposedInternalUtilityTypes.AnyRecord,
+	> = ExposedInternalUtilityTypes.FlattenIntersection<T>;
 	export type IfSameType<
 		X,
 		Y,

@@ -17,7 +17,10 @@ export class ObjectStoragePartition implements IChannelStorageService {
 		private readonly path: string,
 	) {
 		// `path` must not include the trailing separator.
-		assert(!path.endsWith("/"), 0x19c /* "storage service path has trailing separator" */);
+		assert(
+			!path.endsWith("/"),
+			0x19c /* "storage service path has trailing separator" */,
+		);
 	}
 
 	public async readBlob(path: string): Promise<ArrayBufferLike> {

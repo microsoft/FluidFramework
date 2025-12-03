@@ -11,13 +11,16 @@ import {
 	type LocalContainerRuntimeMessage,
 } from "../../messageTypes.js";
 import type { IBatchMetadata } from "../../metadata.js";
+import type {
+	IBatchManagerOptions,
+	LocalBatchMessage,
+} from "../../opLifecycle/index.js";
 import {
 	BatchManager,
 	estimateSocketSize,
 	generateBatchId,
 	localBatchToOutboundBatch,
 } from "../../opLifecycle/index.js";
-import type { IBatchManagerOptions, LocalBatchMessage } from "../../opLifecycle/index.js";
 
 // Make a mock op with distinguishable contents
 function op(data: string = "Some Data"): LocalContainerRuntimeMessage {
@@ -35,7 +38,8 @@ function nonDirtyableOp(): LocalContainerRuntimeMessage {
 	};
 }
 
-const generateStringOfSize = (sizeInBytes: number): string => "0".repeat(sizeInBytes);
+const generateStringOfSize = (sizeInBytes: number): string =>
+	"0".repeat(sizeInBytes);
 
 const smallMessage = (size: number = 100): LocalBatchMessage => {
 	// JSON envelope of op returned by op fn above
@@ -96,14 +100,26 @@ describe("BatchManager", () => {
 		const batchStartCsn = 123;
 		const batchId = generateBatchId(clientId, batchStartCsn);
 		const serialized = JSON.stringify({ batchId });
-		assert.equal(serialized, `{"batchId":"3627a2a9-963f-4e3b-a4d2-a31b1267ef29_[123]"}`);
+		assert.equal(
+			serialized,
+			`{"batchId":"3627a2a9-963f-4e3b-a4d2-a31b1267ef29_[123]"}`,
+		);
 	});
 
 	it("Batch reference sequence number maps to the last message", () => {
 		const batchManager = new BatchManager(defaultOptions);
-		batchManager.push({ runtimeOp: op(), referenceSequenceNumber: 0 }, /* reentrant */ false);
-		batchManager.push({ runtimeOp: op(), referenceSequenceNumber: 1 }, /* reentrant */ false);
-		batchManager.push({ runtimeOp: op(), referenceSequenceNumber: 2 }, /* reentrant */ false);
+		batchManager.push(
+			{ runtimeOp: op(), referenceSequenceNumber: 0 },
+			/* reentrant */ false,
+		);
+		batchManager.push(
+			{ runtimeOp: op(), referenceSequenceNumber: 1 },
+			/* reentrant */ false,
+		);
+		batchManager.push(
+			{ runtimeOp: op(), referenceSequenceNumber: 2 },
+			/* reentrant */ false,
+		);
 
 		assert.equal(batchManager.sequenceNumbers.referenceSequenceNumber, 2);
 	});
@@ -127,29 +143,49 @@ describe("BatchManager", () => {
 
 		// (40 bytes of content + 200 bytes overhead) x 10
 		assert.equal(
-			estimateSocketSize(localBatchToOutboundBatch({ messages, referenceSequenceNumber: 0 })),
+			estimateSocketSize(
+				localBatchToOutboundBatch({ messages, referenceSequenceNumber: 0 }),
+			),
 			2400,
 		);
 	});
 
 	it("Batch op reentry state preserved during its lifetime", () => {
 		const batchManager = new BatchManager(defaultOptions);
-		batchManager.push({ runtimeOp: op(), referenceSequenceNumber: 0 }, /* reentrant */ false);
-		batchManager.push({ runtimeOp: op(), referenceSequenceNumber: 1 }, /* reentrant */ false);
-		batchManager.push({ runtimeOp: op(), referenceSequenceNumber: 2 }, /* reentrant */ false);
+		batchManager.push(
+			{ runtimeOp: op(), referenceSequenceNumber: 0 },
+			/* reentrant */ false,
+		);
+		batchManager.push(
+			{ runtimeOp: op(), referenceSequenceNumber: 1 },
+			/* reentrant */ false,
+		);
+		batchManager.push(
+			{ runtimeOp: op(), referenceSequenceNumber: 2 },
+			/* reentrant */ false,
+		);
 
 		assert.equal(batchManager.popBatch().hasReentrantOps, false);
 
-		batchManager.push({ runtimeOp: op(), referenceSequenceNumber: 0 }, /* reentrant */ false);
+		batchManager.push(
+			{ runtimeOp: op(), referenceSequenceNumber: 0 },
+			/* reentrant */ false,
+		);
 		batchManager.push(
 			{ runtimeOp: op(), referenceSequenceNumber: 1 },
 			/* reentrant */ true,
 			/* currentClientSequenceNumber */ undefined,
 		);
-		batchManager.push({ runtimeOp: op(), referenceSequenceNumber: 2 }, /* reentrant */ false);
+		batchManager.push(
+			{ runtimeOp: op(), referenceSequenceNumber: 2 },
+			/* reentrant */ false,
+		);
 		assert.equal(batchManager.popBatch().hasReentrantOps, true);
 
-		batchManager.push({ runtimeOp: op(), referenceSequenceNumber: 0 }, /* reentrant */ false);
+		batchManager.push(
+			{ runtimeOp: op(), referenceSequenceNumber: 0 },
+			/* reentrant */ false,
+		);
 		assert.equal(batchManager.popBatch().hasReentrantOps, false);
 	});
 
@@ -218,7 +254,10 @@ describe("BatchManager", () => {
 	it("Popping the batch then rolling is not allowed", () => {
 		const batchManager = new BatchManager(defaultOptions);
 
-		batchManager.push({ runtimeOp: op(), referenceSequenceNumber: 0 }, /* reentrant */ false);
+		batchManager.push(
+			{ runtimeOp: op(), referenceSequenceNumber: 0 },
+			/* reentrant */ false,
+		);
 		const checkpoint = batchManager.checkpoint();
 		batchManager.popBatch();
 
@@ -246,7 +285,10 @@ describe("BatchManager", () => {
 
 		it("returns true if at least one message is dirtyable", () => {
 			const batchManager = new BatchManager(defaultOptions);
-			batchManager.push({ runtimeOp: dirtyableOp(), referenceSequenceNumber: 0 }, false);
+			batchManager.push(
+				{ runtimeOp: dirtyableOp(), referenceSequenceNumber: 0 },
+				false,
+			);
 			assert.equal(
 				batchManager.containsUserChanges(),
 				true,
@@ -256,8 +298,14 @@ describe("BatchManager", () => {
 
 		it("returns false if all messages are non-dirtyable", () => {
 			const batchManager = new BatchManager(defaultOptions);
-			batchManager.push({ runtimeOp: nonDirtyableOp(), referenceSequenceNumber: 0 }, false);
-			batchManager.push({ runtimeOp: nonDirtyableOp(), referenceSequenceNumber: 1 }, false);
+			batchManager.push(
+				{ runtimeOp: nonDirtyableOp(), referenceSequenceNumber: 0 },
+				false,
+			);
+			batchManager.push(
+				{ runtimeOp: nonDirtyableOp(), referenceSequenceNumber: 1 },
+				false,
+			);
 			assert.equal(
 				batchManager.containsUserChanges(),
 				false,
@@ -267,9 +315,18 @@ describe("BatchManager", () => {
 
 		it("returns true if mixed dirtyable and non-dirtyable messages", () => {
 			const batchManager = new BatchManager(defaultOptions);
-			batchManager.push({ runtimeOp: nonDirtyableOp(), referenceSequenceNumber: 0 }, false);
-			batchManager.push({ runtimeOp: dirtyableOp(), referenceSequenceNumber: 1 }, false);
-			batchManager.push({ runtimeOp: nonDirtyableOp(), referenceSequenceNumber: 2 }, false);
+			batchManager.push(
+				{ runtimeOp: nonDirtyableOp(), referenceSequenceNumber: 0 },
+				false,
+			);
+			batchManager.push(
+				{ runtimeOp: dirtyableOp(), referenceSequenceNumber: 1 },
+				false,
+			);
+			batchManager.push(
+				{ runtimeOp: nonDirtyableOp(), referenceSequenceNumber: 2 },
+				false,
+			);
 			assert.equal(
 				batchManager.containsUserChanges(),
 				true,

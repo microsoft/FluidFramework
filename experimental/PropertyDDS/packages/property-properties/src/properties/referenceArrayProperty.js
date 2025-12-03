@@ -6,12 +6,20 @@
 /**
  * @fileoverview Definition of the reference array property class
  */
-const { PathHelper, TypeIdHelper } = require("@fluid-experimental/property-changeset");
+const {
+	PathHelper,
+	TypeIdHelper,
+} = require("@fluid-experimental/property-changeset");
 const { MSG } = require("@fluid-experimental/property-common").constants;
-const { UniversalDataArray, ConsoleUtils } = require("@fluid-experimental/property-common");
+const {
+	UniversalDataArray,
+	ConsoleUtils,
+} = require("@fluid-experimental/property-common");
 const _ = require("lodash");
 
-const { AbstractStaticCollectionProperty } = require("./abstractStaticCollectionProperty");
+const {
+	AbstractStaticCollectionProperty,
+} = require("./abstractStaticCollectionProperty");
 const { BaseProperty } = require("./baseProperty");
 const { ReferenceProperty } = require("./referenceProperty");
 const { ValueArrayProperty } = require("./valueArrayProperty");
@@ -43,7 +51,9 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
 	 * @returns {string} The typeid of the nodes this reference may point to
 	 */
 	getReferenceTargetTypeId() {
-		return TypeIdHelper.extractReferenceTargetTypeIdFromReference(this.getTypeid());
+		return TypeIdHelper.extractReferenceTargetTypeIdFromReference(
+			this.getTypeid(),
+		);
 	}
 
 	/**
@@ -69,7 +79,11 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
 
 		if (_.isArray(in_ids)) {
 			// Forward handling of arrays to the AbstractStaticCollectionProperty function
-			return AbstractStaticCollectionProperty.prototype.get.call(this, in_ids, in_options);
+			return AbstractStaticCollectionProperty.prototype.get.call(
+				this,
+				in_ids,
+				in_options,
+			);
 		} else {
 			var value = this._dataArrayRef.getValue(in_ids);
 			if (value === undefined || value === "") {
@@ -122,7 +136,10 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
 	 * @throws If one of the items in in_array is defined, but is not a property or a string.
 	 */
 	insertRange(in_offset, in_array) {
-		var arr = ReferenceArrayProperty._convertInputToPaths(in_array, "insertRange");
+		var arr = ReferenceArrayProperty._convertInputToPaths(
+			in_array,
+			"insertRange",
+		);
 		ValueArrayProperty.prototype.insertRange.call(this, in_offset, arr);
 	}
 
@@ -191,14 +208,18 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
 	removeRange(in_offset, in_deleteCount) {
 		ConsoleUtils.assert(
 			_.isNumber(in_offset),
-			MSG.NOT_NUMBER + "in_offset, method: ArrayProperty.removeRange or .remove",
+			MSG.NOT_NUMBER +
+				"in_offset, method: ArrayProperty.removeRange or .remove",
 		);
 		ConsoleUtils.assert(
 			_.isNumber(in_deleteCount),
-			MSG.NOT_NUMBER + "in_deleteCount, method: ArrayProperty.removeRange or .remove",
+			MSG.NOT_NUMBER +
+				"in_deleteCount, method: ArrayProperty.removeRange or .remove",
 		);
 		ConsoleUtils.assert(
-			in_offset + in_deleteCount < this.length + 1 && in_offset >= 0 && in_deleteCount > 0,
+			in_offset + in_deleteCount < this.length + 1 &&
+				in_offset >= 0 &&
+				in_deleteCount > 0,
 			MSG.REMOVE_OUT_OF_BOUNDS +
 				"Cannot remove " +
 				in_deleteCount +
@@ -255,9 +276,11 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
 	 * @throws If in_array is not an array
 	 * @throws If one of the items in in_array is defined, but is not a property or a string.
 	 */
-	static _convertInputToPaths = function (in_array, in_callerName) {
+	static _convertInputToPaths = (in_array, in_callerName) => {
 		if (!_.isArray(in_array)) {
-			throw new TypeError(MSG.IN_ARRAY_NOT_ARRAY + "ReferenceArrayProperty." + in_callerName);
+			throw new TypeError(
+				MSG.IN_ARRAY_NOT_ARRAY + "ReferenceArrayProperty." + in_callerName,
+			);
 		}
 		var len = in_array.length;
 		var arr = new Array(len);

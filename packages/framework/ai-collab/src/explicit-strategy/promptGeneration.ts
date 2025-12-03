@@ -5,25 +5,28 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	NodeKind,
-	type ImplicitFieldSchema,
-	type TreeFieldFromImplicitField,
 	getJsonSchema,
+	getSimpleSchema,
+	type ImplicitFieldSchema,
 	type JsonFieldSchema,
 	type JsonNodeSchema,
 	type JsonSchemaRef,
 	type JsonTreeSchema,
-	getSimpleSchema,
-	Tree,
-	type TreeNode,
 	KeyEncodingOptions,
+	NodeKind,
+	Tree,
+	type TreeFieldFromImplicitField,
+	type TreeNode,
 } from "@fluidframework/tree/internal";
 // eslint-disable-next-line import-x/no-internal-modules
 import { createZodJsonValidator } from "typechat/zod";
 
 import { objectIdKey, type TreeEdit } from "./agentEditTypes.js";
 import type { IdGenerator } from "./idGenerator.js";
-import { doesNodeContainArraySchema, generateGenericEditTypes } from "./typeGeneration.js";
+import {
+	doesNodeContainArraySchema,
+	generateGenericEditTypes,
+} from "./typeGeneration.js";
 import { fail } from "./utils.js";
 
 /**
@@ -50,9 +53,10 @@ export function toDecoratedJson(
 			// assert(isTreeNode(node), "Non-TreeNode value in tree.");
 			const objId =
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-				idGenerator.getId(value) ?? fail("ID of new node should have been assigned.");
+				idGenerator.getId(value) ??
+				fail("ID of new node should have been assigned.");
 			assert(
-				!Object.prototype.hasOwnProperty.call(value, objectIdKey),
+				!Object.hasOwn(value, objectIdKey),
 				0xa7b /* Collision of object id property. */,
 			);
 			return {
@@ -227,7 +231,9 @@ export function getReviewSystemPrompt(
  * - TODO: Should probably take in a TreeNodeSchema or SimpleNodeSchema.
  * Note: For explicitly subclassed TreeNodeSchema, the developer/code facing name of the class can be recovered using `.name`: this might be useful.
  */
-export function getPromptFriendlyTreeSchema(jsonSchema: JsonTreeSchema): string {
+export function getPromptFriendlyTreeSchema(
+	jsonSchema: JsonTreeSchema,
+): string {
 	let stringifiedSchema = "";
 	for (const [name, def] of Object.entries(jsonSchema.$defs)) {
 		if (def._treeNodeSchemaKind !== NodeKind.Object) {
@@ -253,7 +259,8 @@ export function getPromptFriendlyTreeSchema(jsonSchema: JsonTreeSchema): string 
 
 		stringifiedEntry += " }";
 
-		stringifiedSchema += (stringifiedSchema === "" ? "" : " ") + stringifiedEntry;
+		stringifiedSchema +=
+			(stringifiedSchema === "" ? "" : " ") + stringifiedEntry;
 	}
 	return stringifiedSchema;
 }
@@ -296,7 +303,10 @@ function isJsonSchemaRef(field: JsonFieldSchema): field is JsonSchemaRef {
 	return (field as JsonSchemaRef).$ref !== undefined;
 }
 
-function getDef(defs: Record<string, JsonNodeSchema>, ref: string): JsonNodeSchema {
+function getDef(
+	defs: Record<string, JsonNodeSchema>,
+	ref: string,
+): JsonNodeSchema {
 	// strip the "#/$defs/" prefix
 	const strippedRef = ref.slice(8);
 	const nextDef = defs[strippedRef];

@@ -88,7 +88,10 @@ describe("MemoryBlobStorage", () => {
 		const invalidSerializedStorage = "invalid serialized storage";
 
 		assert.throws(() => {
-			tryInitializeMemoryDetachedBlobStorage(newStorage, invalidSerializedStorage);
+			tryInitializeMemoryDetachedBlobStorage(
+				newStorage,
+				invalidSerializedStorage,
+			);
 		}, "Expected an error when initializing from invalid serialized storage");
 	});
 

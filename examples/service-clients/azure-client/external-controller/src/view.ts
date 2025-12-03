@@ -112,7 +112,12 @@ export function makeDiceValuesView(
 ): void {
 	const children = makeDiceHeaderElement();
 	for (const clientValue of lastRoll.getRemotes()) {
-		children.push(...makeDiceValueElement(clientValue.attendee.attendeeId, clientValue.value));
+		children.push(
+			...makeDiceValueElement(
+				clientValue.attendee.attendeeId,
+				clientValue.value,
+			),
+		);
 	}
 	target.replaceChildren(...children);
 }
@@ -165,29 +170,43 @@ function makePresenceView(
 	logContentDiv.style.overflowY = "scroll";
 	logContentDiv.style.border = "1px solid black";
 	if (audience !== undefined) {
-		presenceConfig.presence.attendees.events.on("attendeeConnected", (attendee) => {
-			const name = audience.getMembers().get(attendee.getConnectionId())?.name;
-			const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} 🔗 with id ${attendee.attendeeId} joined`;
-			addLogEntry(logContentDiv, update);
-		});
-
-		presenceConfig.presence.attendees.events.on("attendeeDisconnected", (attendee) => {
-			// Filter for remote attendees
-			const self = audience.getMyself();
-			if (
-				self &&
-				attendee !== presenceConfig.presence.attendees.getAttendee(self.currentConnection)
-			) {
-				const name = audience.getMembers().get(attendee.getConnectionId())?.name;
-				const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} ⛓️‍💥 with id ${attendee.attendeeId} left`;
+		presenceConfig.presence.attendees.events.on(
+			"attendeeConnected",
+			(attendee) => {
+				const name = audience
+					.getMembers()
+					.get(attendee.getConnectionId())?.name;
+				const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} 🔗 with id ${attendee.attendeeId} joined`;
 				addLogEntry(logContentDiv, update);
-			}
-		});
+			},
+		);
+
+		presenceConfig.presence.attendees.events.on(
+			"attendeeDisconnected",
+			(attendee) => {
+				// Filter for remote attendees
+				const self = audience.getMyself();
+				if (
+					self &&
+					attendee !==
+						presenceConfig.presence.attendees.getAttendee(
+							self.currentConnection,
+						)
+				) {
+					const name = audience
+						.getMembers()
+						.get(attendee.getConnectionId())?.name;
+					const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} ⛓️‍💥 with id ${attendee.attendeeId} left`;
+					addLogEntry(logContentDiv, update);
+				}
+			},
+		);
 	}
 	logDiv.append(logHeaderDiv, logContentDiv);
 
 	presenceConfig.lastRoll.events.on("remoteUpdated", (update) => {
-		const connected = update.attendee.getConnectionStatus() === "Connected" ? "🔗" : "⛓️‍💥";
+		const connected =
+			update.attendee.getConnectionStatus() === "Connected" ? "🔗" : "⛓️‍💥";
 		const updateText = `updated ${update.attendee.attendeeId.slice(0, 8)}'s ${connected} last rolls to ${JSON.stringify(update.value)}`;
 		addLogEntry(logContentDiv, updateText);
 

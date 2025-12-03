@@ -10,26 +10,26 @@ import {
 	EmptyKey,
 	type FieldKey,
 	type JsonableTree,
-	type TreeNodeSchemaIdentifier,
-	type Value,
 	mapCursorField,
+	type TreeNodeSchemaIdentifier,
 	tryGetChunk,
+	type Value,
 } from "../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
 import {
-	type ChunkPolicy,
-	type FieldSchemaWithContext,
-	type ShapeFromSchemaParameters,
-	type ShapeInfo,
 	basicOnlyChunkPolicy,
+	type ChunkPolicy,
 	chunkField,
 	chunkFieldSingle,
 	chunkRange,
 	combineChunks,
 	defaultChunkPolicy,
+	type FieldSchemaWithContext,
 	insertValues,
 	polymorphic,
+	type ShapeFromSchemaParameters,
+	type ShapeInfo,
 	tryShapeFromFieldSchema,
 	tryShapeFromNodeSchema,
 	uniformChunkFromCursor,
@@ -44,19 +44,16 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
-	type IncrementalEncodingPolicy,
-	type TreeChunk,
 	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
 	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,
+	type IncrementalEncodingPolicy,
 	jsonableTreeFromCursor,
 	jsonableTreeFromFieldCursor,
+	type TreeChunk,
 } from "../../../feature-libraries/index.js";
-import { brand } from "../../../util/index.js";
-
-import { assertChunkCursorEquals, numberSequenceField } from "./fieldCursorTestUtilities.js";
-import { polygonTree, testData } from "./uniformChunkTestData.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import {
 	nullSchema,
 	numberSchema,
@@ -64,9 +61,14 @@ import {
 	stringSchema,
 	toInitialSchema,
 } from "../../../simple-tree/index.js";
+import { brand } from "../../../util/index.js";
 import { fieldJsonCursor, singleJsonCursor } from "../../json/index.js";
 import { testIdCompressor } from "../../utils.js";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
+import {
+	assertChunkCursorEquals,
+	numberSequenceField,
+} from "./fieldCursorTestUtilities.js";
+import { polygonTree, testData } from "./uniformChunkTestData.js";
 
 const builder = new SchemaFactory("chunkTree");
 const empty = builder.object("empty", {});
@@ -76,7 +78,12 @@ const optionalField = builder.optional(builder.number);
 const structOptional = builder.object("structOptional", { x: optionalField });
 const structValueField = builder.required(structValue);
 
-const schema = toInitialSchema([empty, builder.number, structValue, structOptional]);
+const schema = toInitialSchema([
+	empty,
+	builder.number,
+	structValue,
+	structOptional,
+]);
 
 function expectEqual(a: ShapeInfo, b: ShapeInfo): void {
 	assert.deepEqual(a, b);
@@ -108,27 +115,60 @@ describe("chunkTree", () => {
 		it("maxTopLevelLength and skipLastNavigation are respected", () => {
 			const uniformPolygon = polygonTree.dataFactory();
 			const polygonReference = cursorForJsonableTreeNode(polygonTree.reference);
-			const [key, pointShape, pointCount] = uniformPolygon.shape.treeShape.fieldsArray[0];
+			const [key, pointShape, pointCount] =
+				uniformPolygon.shape.treeShape.fieldsArray[0];
 			polygonReference.enterField(key);
 			polygonReference.firstNode();
-			const chunk1 = uniformChunkFromCursor(polygonReference, pointShape, 1, true);
+			const chunk1 = uniformChunkFromCursor(
+				polygonReference,
+				pointShape,
+				1,
+				true,
+			);
 			assert.equal(polygonReference.fieldIndex, 0);
-			const chunk2 = uniformChunkFromCursor(polygonReference, pointShape, 1, false);
+			const chunk2 = uniformChunkFromCursor(
+				polygonReference,
+				pointShape,
+				1,
+				false,
+			);
 			assert.equal(polygonReference.fieldIndex, 1);
-			const chunk3 = uniformChunkFromCursor(polygonReference, pointShape, 2, true);
+			const chunk3 = uniformChunkFromCursor(
+				polygonReference,
+				pointShape,
+				2,
+				true,
+			);
 			assert.equal(polygonReference.fieldIndex, 2);
-			const chunk4 = uniformChunkFromCursor(polygonReference, pointShape, 2, false);
+			const chunk4 = uniformChunkFromCursor(
+				polygonReference,
+				pointShape,
+				2,
+				false,
+			);
 			assert.equal(polygonReference.fieldIndex, 4);
 
 			// Check produced chunks are correct.
 			const pointsArray = polygonTree.reference.fields[EmptyKey];
-			const fromChunk1 = mapCursorField(chunk1.cursor(), jsonableTreeFromCursor);
+			const fromChunk1 = mapCursorField(
+				chunk1.cursor(),
+				jsonableTreeFromCursor,
+			);
 			assert.deepEqual(fromChunk1, pointsArray.slice(0, 1));
-			const fromChunk2 = mapCursorField(chunk2.cursor(), jsonableTreeFromCursor);
+			const fromChunk2 = mapCursorField(
+				chunk2.cursor(),
+				jsonableTreeFromCursor,
+			);
 			assert.deepEqual(fromChunk2, pointsArray.slice(0, 1));
-			const fromChunk3 = mapCursorField(chunk3.cursor(), jsonableTreeFromCursor);
+			const fromChunk3 = mapCursorField(
+				chunk3.cursor(),
+				jsonableTreeFromCursor,
+			);
 			assert.deepEqual(fromChunk3, pointsArray.slice(1, 3));
-			const fromChunk4 = mapCursorField(chunk4.cursor(), jsonableTreeFromCursor);
+			const fromChunk4 = mapCursorField(
+				chunk4.cursor(),
+				jsonableTreeFromCursor,
+			);
 			assert.deepEqual(fromChunk4, pointsArray.slice(2, 4));
 		});
 
@@ -153,10 +193,17 @@ describe("chunkTree", () => {
 
 		it("encodes identifiers for in-memory representation", () => {
 			const identifierField: FieldKey = brand("identifierField");
-			const stringShape = new TreeShape(brand(stringSchema.identifier), true, [], true);
-			const identifierShape = new TreeShape(brand(JsonAsTree.JsonObject.identifier), false, [
-				[identifierField, stringShape, 1],
-			]);
+			const stringShape = new TreeShape(
+				brand(stringSchema.identifier),
+				true,
+				[],
+				true,
+			);
+			const identifierShape = new TreeShape(
+				brand(JsonAsTree.JsonObject.identifier),
+				false,
+				[[identifierField, stringShape, 1]],
+			);
 
 			const compressedId = testIdCompressor.generateCompressedId();
 			const stableId = testIdCompressor.decompress(compressedId);
@@ -174,7 +221,9 @@ describe("chunkTree", () => {
 
 	describe("chunkRange", () => {
 		it("single basic chunk", () => {
-			const cursor = cursorForJsonableTreeNode({ type: brand(nullSchema.identifier) });
+			const cursor = cursorForJsonableTreeNode({
+				type: brand(nullSchema.identifier),
+			});
 			const chunks = chunkRange(
 				cursor,
 				{ policy: basicOnlyChunkPolicy, idCompressor: undefined },
@@ -193,7 +242,9 @@ describe("chunkTree", () => {
 		});
 
 		it("full field basic chunk without skipLastNavigation", () => {
-			const cursor = cursorForJsonableTreeField([{ type: brand(nullSchema.identifier) }]);
+			const cursor = cursorForJsonableTreeField([
+				{ type: brand(nullSchema.identifier) },
+			]);
 			cursor.firstNode();
 			const chunks = chunkRange(
 				cursor,
@@ -222,10 +273,10 @@ describe("chunkTree", () => {
 			);
 			assert.equal(chunks.length, 2);
 			assert.equal(cursor.fieldIndex, 2);
-			assert.deepEqual(jsonableTreeFromFieldCursor(new SequenceChunk(chunks).cursor()), [
-				{ type: nullSchema.identifier },
-				{ type: nullSchema.identifier },
-			]);
+			assert.deepEqual(
+				jsonableTreeFromFieldCursor(new SequenceChunk(chunks).cursor()),
+				[{ type: nullSchema.identifier }, { type: nullSchema.identifier }],
+			);
 		});
 
 		it("creates sequence chunks", () => {
@@ -238,7 +289,12 @@ describe("chunkTree", () => {
 
 			const cursor = cursorForJsonableTreeField(numberSequenceField(4));
 			cursor.firstNode();
-			const chunks = chunkRange(cursor, { policy, idCompressor: undefined }, 3, false);
+			const chunks = chunkRange(
+				cursor,
+				{ policy, idCompressor: undefined },
+				3,
+				false,
+			);
 			assert.equal(chunks.length, 2);
 			assert(chunks[0] instanceof SequenceChunk);
 			assert.equal(chunks[0].subChunks.length, 2);
@@ -248,7 +304,10 @@ describe("chunkTree", () => {
 			assert.equal(chunks[1].subChunks.length, 1);
 			assert(chunks[1].subChunks[0] instanceof BasicChunk);
 			assert.equal(cursor.fieldIndex, 3);
-			assertChunkCursorEquals(new SequenceChunk(chunks), numberSequenceField(3));
+			assertChunkCursorEquals(
+				new SequenceChunk(chunks),
+				numberSequenceField(3),
+			);
 		});
 
 		describe("makes sequence trees", () => {
@@ -361,7 +420,9 @@ describe("chunkTree", () => {
 		});
 
 		it("single node field", () => {
-			const trees: JsonableTree[] = [{ type: brand(numberSchema.identifier), value: 42 }];
+			const trees: JsonableTree[] = [
+				{ type: brand(numberSchema.identifier), value: 42 },
+			];
 			const cursor = cursorForJsonableTreeField(trees);
 			const chunks = chunkField(cursor, {
 				policy: basicOnlyChunkPolicy,
@@ -422,7 +483,11 @@ describe("chunkTree", () => {
 		});
 
 		it("adds refs to existing chunks", () => {
-			const basicChunk = new BasicChunk(brand(numberSchema.identifier), new Map(), 1);
+			const basicChunk = new BasicChunk(
+				brand(numberSchema.identifier),
+				new Map(),
+				1,
+			);
 			assert(!basicChunk.isShared());
 			const cursor = basicChunk.cursor();
 
@@ -449,7 +514,9 @@ describe("chunkTree", () => {
 		});
 
 		it("single node field", () => {
-			const trees: JsonableTree[] = [{ type: brand(numberSchema.identifier), value: 42 }];
+			const trees: JsonableTree[] = [
+				{ type: brand(numberSchema.identifier), value: 42 },
+			];
 			const cursor = cursorForJsonableTreeField(trees);
 			const chunk = chunkFieldSingle(cursor, {
 				policy: basicOnlyChunkPolicy,
@@ -483,7 +550,10 @@ describe("chunkTree", () => {
 			const length = 5;
 			const fieldData = numberSequenceField(length);
 			const cursor = cursorForJsonableTreeField(fieldData);
-			const chunk = chunkFieldSingle(cursor, { policy, idCompressor: undefined });
+			const chunk = chunkFieldSingle(cursor, {
+				policy,
+				idCompressor: undefined,
+			});
 
 			assert(chunk instanceof SequenceChunk);
 			assert.equal(chunk.topLevelLength, length);
@@ -501,15 +571,31 @@ describe("chunkTree", () => {
 		});
 
 		it("single chunk", () => {
-			const basicChunk = new BasicChunk(brand(numberSchema.identifier), new Map(), 42);
+			const basicChunk = new BasicChunk(
+				brand(numberSchema.identifier),
+				new Map(),
+				42,
+			);
 			const result = combineChunks([basicChunk]);
 			assert.equal(result, basicChunk);
 		});
 
 		it("multiple chunks", () => {
-			const chunk1 = new BasicChunk(brand(numberSchema.identifier), new Map(), 1);
-			const chunk2 = new BasicChunk(brand(numberSchema.identifier), new Map(), 2);
-			const chunk3 = new BasicChunk(brand(numberSchema.identifier), new Map(), 3);
+			const chunk1 = new BasicChunk(
+				brand(numberSchema.identifier),
+				new Map(),
+				1,
+			);
+			const chunk2 = new BasicChunk(
+				brand(numberSchema.identifier),
+				new Map(),
+				2,
+			);
+			const chunk3 = new BasicChunk(
+				brand(numberSchema.identifier),
+				new Map(),
+				3,
+			);
 
 			const result = combineChunks([chunk1, chunk2, chunk3]);
 			assert(result instanceof SequenceChunk);
@@ -521,7 +607,11 @@ describe("chunkTree", () => {
 		});
 
 		it("mixed chunks", () => {
-			const basicChunk = new BasicChunk(brand(numberSchema.identifier), new Map(), 1);
+			const basicChunk = new BasicChunk(
+				brand(numberSchema.identifier),
+				new Map(),
+				1,
+			);
 			const sequenceChunk = new SequenceChunk([
 				new BasicChunk(brand(numberSchema.identifier), new Map(), 2),
 				new BasicChunk(brand(numberSchema.identifier), new Map(), 3),
@@ -547,7 +637,10 @@ describe("chunkTree", () => {
 				},
 				brand(numberSchema.identifier),
 			);
-			expectEqual(info, new TreeShape(brand(numberSchema.identifier), true, []));
+			expectEqual(
+				info,
+				new TreeShape(brand(numberSchema.identifier), true, []),
+			);
 		});
 		it("empty", () => {
 			const info = tryShapeFromNodeSchema(
@@ -574,7 +667,11 @@ describe("chunkTree", () => {
 			expectEqual(
 				info,
 				new TreeShape(brand(structValue.identifier), false, [
-					[brand("x"), new TreeShape(brand(numberSchema.identifier), true, []), 1],
+					[
+						brand("x"),
+						new TreeShape(brand(numberSchema.identifier), true, []),
+						1,
+					],
 				]),
 			);
 		});
@@ -606,7 +703,9 @@ describe("chunkTree", () => {
 				shouldEncodeIncrementally,
 				shapes: new Map(),
 			};
-			const nodeSchema: TreeNodeSchemaIdentifier = brand(structValue.identifier);
+			const nodeSchema: TreeNodeSchemaIdentifier = brand(
+				structValue.identifier,
+			);
 
 			// For incremental field, `shouldEncodeIncrementally` should return true.
 			// So, the shape returned should be polymorphic.
@@ -626,7 +725,11 @@ describe("chunkTree", () => {
 			expectEqual(
 				infoNonIncremental,
 				new TreeShape(brand(structValue.identifier), false, [
-					[brand("x"), new TreeShape(brand(numberSchema.identifier), true, []), 1],
+					[
+						brand("x"),
+						new TreeShape(brand(numberSchema.identifier), true, []),
+						1,
+					],
 				]),
 			);
 		});
@@ -692,7 +795,10 @@ describe("chunkTree", () => {
 			};
 			// For incremental field, `shouldEncodeIncrementally` should return true.
 			// So, the shape returned should be undefined indicating polymorphic shape.
-			const infoIncremental = tryShapeFromFieldSchema(params, fieldSchemaWithContext);
+			const infoIncremental = tryShapeFromFieldSchema(
+				params,
+				fieldSchemaWithContext,
+			);
 			assert.equal(infoIncremental, undefined);
 
 			// For non-incremental field, `shouldEncodeIncrementally` should return false.

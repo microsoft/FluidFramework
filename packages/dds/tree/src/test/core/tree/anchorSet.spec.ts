@@ -8,6 +8,8 @@ import { strict as assert } from "node:assert";
 import {
 	type Anchor,
 	AnchorSet,
+	anchorSlot,
+	clonePath,
 	type DeltaDetachedNodeId,
 	type DeltaFieldChanges,
 	type DeltaFieldMap,
@@ -16,17 +18,16 @@ import {
 	type DetachedField,
 	type FieldKey,
 	type FieldUpPath,
-	type INormalizedUpPath,
-	type JsonableTree,
-	type UpPath,
-	anchorSlot,
-	clonePath,
 	getDetachedFieldContainingPath,
+	type INormalizedUpPath,
 	isDetachedUpPath,
+	type JsonableTree,
 	keyAsDetachedField,
 	makeDetachedFieldIndex,
 	rootFieldKey,
+	type UpPath,
 } from "../../../core/index.js";
+import { stringSchema } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
 import {
 	applyTestDelta,
@@ -35,7 +36,6 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
-import { stringSchema } from "../../../simple-tree/index.js";
 
 const fieldFoo: FieldKey = brand("foo");
 const fieldBar: FieldKey = brand("bar");
@@ -78,7 +78,9 @@ describe("AnchorSet", () => {
 			attach: moveId,
 		};
 
-		const delta = new Map([[rootFieldKey, [{ count: 1 }, moveOut, { count: 1 }, moveIn]]]);
+		const delta = new Map([
+			[rootFieldKey, [{ count: 1 }, moveOut, { count: 1 }, moveIn]],
+		]);
 		applyTestDelta(delta, anchors);
 		checkEquality(anchors.locate(anchor0), makePath([rootFieldKey, 0]));
 		checkEquality(anchors.locate(anchor1), makePath([rootFieldKey, 2]));
@@ -90,13 +92,26 @@ describe("AnchorSet", () => {
 		const [anchors, anchor1, anchor2, anchor3] = setup();
 
 		const trees = chunkFromJsonableTrees([node, node]);
-		const fieldChanges: DeltaFieldChanges = [{ count: 4 }, { count: 2, attach: buildId }];
-		applyTestDelta(makeFieldDelta(fieldChanges, makeFieldPath(fieldFoo)), anchors, {
-			build: [{ id: buildId, trees }],
-		});
+		const fieldChanges: DeltaFieldChanges = [
+			{ count: 4 },
+			{ count: 2, attach: buildId },
+		];
+		applyTestDelta(
+			makeFieldDelta(fieldChanges, makeFieldPath(fieldFoo)),
+			anchors,
+			{
+				build: [{ id: buildId, trees }],
+			},
+		);
 
-		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 7], [fieldBar, 4]));
-		checkEquality(anchors.locate(anchor2), makePath([fieldFoo, 3], [fieldBaz, 2]));
+		checkEquality(
+			anchors.locate(anchor1),
+			makePath([fieldFoo, 7], [fieldBar, 4]),
+		);
+		checkEquality(
+			anchors.locate(anchor2),
+			makePath([fieldFoo, 3], [fieldBaz, 2]),
+		);
 		checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 6]));
 	});
 
@@ -109,7 +124,10 @@ describe("AnchorSet", () => {
 			v.destroy(detachedField, 1);
 		});
 
-		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 4]));
+		checkEquality(
+			anchors.locate(anchor1),
+			makePath([fieldFoo, 4], [fieldBar, 4]),
+		);
 		checkEquality(anchors.locate(anchor2), path2);
 		assert.equal(anchors.locate(anchor3), undefined);
 		assert.doesNotThrow(() => anchors.forget(anchor3));
@@ -124,7 +142,10 @@ describe("AnchorSet", () => {
 		};
 
 		applyTestDelta(makeDelta(detachMark, makePath([fieldFoo, 4])), anchors);
-		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 4]));
+		checkEquality(
+			anchors.locate(anchor1),
+			makePath([fieldFoo, 4], [fieldBar, 4]),
+		);
 		checkEquality(anchors.locate(anchor2), path2);
 		checkRemoved(anchors.locate(anchor3), detachId);
 		assert.doesNotThrow(() => anchors.forget(anchor3));
@@ -234,9 +255,14 @@ describe("AnchorSet", () => {
 			fields: new Map([[fieldBar, [{ count: 3 }, moveIn]]]),
 		};
 
-		const delta = new Map([[fieldFoo, [{ count: 3 }, moveOut, { count: 1 }, modify]]]);
+		const delta = new Map([
+			[fieldFoo, [{ count: 3 }, moveOut, { count: 1 }, modify]],
+		]);
 		applyTestDelta(delta, anchors);
-		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 5]));
+		checkEquality(
+			anchors.locate(anchor1),
+			makePath([fieldFoo, 4], [fieldBar, 5]),
+		);
 		checkEquality(
 			anchors.locate(anchor2),
 			makePath([fieldFoo, 4], [fieldBar, 3], [fieldBaz, 2]),
@@ -259,7 +285,10 @@ describe("AnchorSet", () => {
 		applyTestDelta(makeDelta(detachMark, makePath([fieldFoo, 3])), anchors, {
 			detachedFieldIndex,
 		});
-		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 4]));
+		checkEquality(
+			anchors.locate(anchor1),
+			makePath([fieldFoo, 4], [fieldBar, 4]),
+		);
 		checkRemoved(anchors.locate(anchor2), undefined, brand("repair-0"));
 		checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
 		checkEquality(anchors.locate(anchor4), makePath([fieldFoo, 4]));
@@ -306,7 +335,10 @@ describe("AnchorSet", () => {
 		applyTestDelta(makeDelta(restoreMark, makePath([fieldFoo, 3])), anchors, {
 			detachedFieldIndex,
 		});
-		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 3], [fieldBar, 4]));
+		checkEquality(
+			anchors.locate(anchor1),
+			makePath([fieldFoo, 3], [fieldBar, 4]),
+		);
 		assert(isDetachedUpPath(anchors.locate(anchor1) as UpPath) === false);
 		checkRemoved(anchors.locate(anchor2), undefined, brand("repair-0"));
 		checkRemoved(anchors.locate(anchor3), { minor: 43 }, brand("repair-1"));
@@ -438,7 +470,8 @@ describe("AnchorSet", () => {
 			const clonedPathLonger = clonePath(pathLonger);
 
 			const internalClonedPath = anchors.internalizePath(clonedPath);
-			const internalClonedPathLonger = anchors.internalizePath(clonedPathLonger);
+			const internalClonedPathLonger =
+				anchors.internalizePath(clonedPathLonger);
 			expectEqualPaths(internalClonedPath, path);
 			expectEqualPaths(internalClonedPathLonger, pathLonger);
 			assert.equal(internalClonedPath, internalPath);
@@ -484,10 +517,16 @@ describe("AnchorSet", () => {
 		const build = [
 			{
 				id: buildId,
-				trees: chunkFromJsonableTrees([{ type: brand(stringSchema.identifier), value: "x" }]),
+				trees: chunkFromJsonableTrees([
+					{ type: brand(stringSchema.identifier), value: "x" },
+				]),
 			},
 		];
-		applyTestDelta(new Map([[rootFieldKey, [detachMark, insertMark]]]), anchors, { build });
+		applyTestDelta(
+			new Map([[rootFieldKey, [detachMark, insertMark]]]),
+			anchors,
+			{ build },
+		);
 
 		log.expect([
 			["root childrenChange", 2],
@@ -533,7 +572,12 @@ describe("AnchorSet", () => {
 			v.enterField(rootFieldKey);
 			v.enterNode(0);
 			v.enterField(fieldOne);
-			v.detach({ start: 0, end: 1 }, brand("fakeDetachDestination"), detachId, false);
+			v.detach(
+				{ start: 0, end: 1 },
+				brand("fakeDetachDestination"),
+				detachId,
+				false,
+			);
 			v.exitField(fieldOne);
 			v.enterField(fieldTwo);
 			v.attach(brand("fakeAttachSource"), 1, 0);
@@ -597,7 +641,10 @@ class UnorderedTestLogger {
 	}
 }
 
-function withVisitor(anchors: AnchorSet, action: (visitor: DeltaVisitor) => void): void {
+function withVisitor(
+	anchors: AnchorSet,
+	action: (visitor: DeltaVisitor) => void,
+): void {
 	const visitor = anchors.acquireVisitor();
 	action(visitor);
 	visitor.free();
@@ -626,15 +673,24 @@ function makePath(...steps: [PathStep, ...PathStep[]]): UpPath {
 	) as UpPath;
 }
 
-function makeFieldPath(field: FieldKey, ...stepsToFieldParent: PathStep[]): FieldUpPath {
+function makeFieldPath(
+	field: FieldKey,
+	...stepsToFieldParent: PathStep[]
+): FieldUpPath {
 	if (stepsToFieldParent.length === 0) {
 		return { parent: undefined, field };
 	}
-	const pathToParent = makePath(stepsToFieldParent[0], ...stepsToFieldParent.slice(1));
+	const pathToParent = makePath(
+		stepsToFieldParent[0],
+		...stepsToFieldParent.slice(1),
+	);
 	return { parent: pathToParent, field };
 }
 
-function checkEquality(actual: UpPath | undefined, expected: UpPath | undefined): void {
+function checkEquality(
+	actual: UpPath | undefined,
+	expected: UpPath | undefined,
+): void {
 	assert.deepEqual(clonePath(actual), clonePath(expected));
 }
 
@@ -664,7 +720,10 @@ function makeDelta(mark: DeltaMark, path: UpPath): DeltaFieldMap {
 	return makeDelta({ count: 1, fields }, path.parent);
 }
 
-function makeFieldDelta(changes: DeltaFieldChanges, path: FieldUpPath): DeltaFieldMap {
+function makeFieldDelta(
+	changes: DeltaFieldChanges,
+	path: FieldUpPath,
+): DeltaFieldMap {
 	const fields: DeltaFieldMap = new Map([[path.field, changes]]);
 	if (path.parent === undefined) {
 		return fields;

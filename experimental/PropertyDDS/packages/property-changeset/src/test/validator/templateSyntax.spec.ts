@@ -10,7 +10,6 @@
 import { expect } from "chai";
 
 import type { PropertySchema } from "../../templateValidator.js";
-import { SchemaValidator } from "../schemaValidator.js";
 // Good or bad none of the templateSchema in these imports actually conform to
 // PropertySchema type. Perhaps the type is inaccurate. Common incompatibilities
 // are missing properties of `context` and `values`.
@@ -26,12 +25,13 @@ import {
 	goodReservedTypes,
 	goodUIBorder,
 } from "../schemas/index.js";
+import { SchemaValidator } from "../schemaValidator.js";
 
-(function () {
-	describe("Simple Template Validation", function () {
+(() => {
+	describe("Simple Template Validation", () => {
 		const schemaValidator = new SchemaValidator();
 
-		it("should validate a simple file", function () {
+		it("should validate a simple file", () => {
 			const result = schemaValidator.validate(
 				goodPointId.templateSchema as unknown as PropertySchema,
 			);
@@ -40,7 +40,7 @@ import {
 			expect(result.unresolvedTypes.length).to.be.greaterThan(0);
 		});
 
-		it("should fail a file with a bad versioned typeid in it", function () {
+		it("should fail a file with a bad versioned typeid in it", () => {
 			const result = schemaValidator.validate(
 				badVersionedTypeid.templateSchema as unknown as PropertySchema,
 			);
@@ -49,7 +49,7 @@ import {
 			expect(result.errors.length).to.equal(1);
 		});
 
-		it("should fail a file with a bad primitive typeid in it", function () {
+		it("should fail a file with a bad primitive typeid in it", () => {
 			const result = schemaValidator.validate(
 				badPrimitiveTypeid.templateSchema as unknown as PropertySchema,
 			);
@@ -58,7 +58,7 @@ import {
 			expect(result.errors.length).to.be.greaterThan(0);
 		});
 
-		it("should fail when both properties and typeid/id are specified", async function () {
+		it("should fail when both properties and typeid/id are specified", async () => {
 			const result = schemaValidator.validate(
 				badBothPropertiesAndTypeid.templateSchema as unknown as PropertySchema,
 			);
@@ -67,7 +67,7 @@ import {
 			expect(result.errors.length).to.be.greaterThan(0);
 		});
 
-		it("Should permit declaration of enums inline", function () {
+		it("Should permit declaration of enums inline", () => {
 			const result = schemaValidator.validate(
 				goodUIBorder.templateSchema as unknown as PropertySchema,
 			);
@@ -77,7 +77,7 @@ import {
 			expect(result.unresolvedTypes.length).to.equal(0); // Only simple types
 		});
 
-		it("Should support both kinds of reference types", function () {
+		it("Should support both kinds of reference types", () => {
 			const result = schemaValidator.validate(
 				goodColorPalette.templateSchema as unknown as PropertySchema,
 			);
@@ -87,7 +87,7 @@ import {
 			expect(result.unresolvedTypes.length).to.be.greaterThan(0);
 		});
 
-		it("Should find errors down in nested types", function () {
+		it("Should find errors down in nested types", () => {
 			const result = schemaValidator.validate(
 				badNestedProperties.templateSchema as unknown as PropertySchema,
 			);
@@ -97,7 +97,7 @@ import {
 			expect(result.unresolvedTypes.length).to.equal(2);
 		});
 
-		it("Should extract typeids from references", function () {
+		it("Should extract typeids from references", () => {
 			const result = schemaValidator.validate(
 				goodReferenceAndRegular.templateSchema as unknown as PropertySchema,
 			);
@@ -107,7 +107,7 @@ import {
 			expect(result.unresolvedTypes.length).to.equal(1);
 		});
 
-		it("should validate a typeid with reserved type Ids", function () {
+		it("should validate a typeid with reserved type Ids", () => {
 			const result = schemaValidator.validate(
 				goodReservedTypes.templateSchema as unknown as PropertySchema,
 			);
@@ -117,7 +117,7 @@ import {
 			expect(result.unresolvedTypes.length).to.be.greaterThan(0);
 		});
 
-		it("should validate a typeid with draft as version", async function () {
+		it("should validate a typeid with draft as version", async () => {
 			const testFile9 = goodDraftAsVersion.templateSchema;
 			const result = schemaValidator.validate(
 				testFile9 as PropertySchema,
@@ -132,7 +132,7 @@ import {
 			expect(result.unresolvedTypes.length).to.be.equal(0);
 		});
 
-		it("should validate a typeid with draft as version", function () {
+		it("should validate a typeid with draft as version", () => {
 			const testFile9 = goodDraftAsVersion.templateSchema;
 			const result = schemaValidator.validate(
 				testFile9 as PropertySchema,

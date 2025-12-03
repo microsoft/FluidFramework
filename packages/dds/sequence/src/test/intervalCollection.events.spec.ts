@@ -3,21 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "assert";
-
 import { AttachState } from "@fluidframework/container-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { PropertySet, segmentIsRemoved } from "@fluidframework/merge-tree/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import {
+	type PropertySet,
+	segmentIsRemoved,
+} from "@fluidframework/merge-tree/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
+import { strict as assert, fail } from "assert";
 
-import { type ISequenceIntervalCollection } from "../intervalCollection.js";
-import { SequenceInterval } from "../intervals/index.js";
+import type { ISequenceIntervalCollection } from "../intervalCollection.js";
+import type { SequenceInterval } from "../intervals/index.js";
 import { SharedStringFactory } from "../sequenceFactory.js";
-import { SharedStringClass, ISharedString } from "../sharedString.js";
+import { type ISharedString, SharedStringClass } from "../sharedString.js";
 
 interface IntervalEventInfo {
 	interval: { start: number; end: number };
@@ -132,7 +134,8 @@ describe("SharedString interval collection event spec", () => {
 				}),
 			);
 			const interval = collection.add({ start: 0, end: 1 });
-			intervalId = interval.getIntervalId() ?? assert.fail("Expected interval to have id");
+			intervalId =
+				interval.getIntervalId() ?? assert.fail("Expected interval to have id");
 			containerRuntimeFactory.processAllMessages();
 			eventLog.length = 0;
 		});
@@ -173,21 +176,27 @@ describe("SharedString interval collection event spec", () => {
 		})[] = [];
 		let intervalId: string;
 		beforeEach(() => {
-			collection.on("changeInterval", ({ start, end }, previousInterval, local, op, slide) =>
-				eventLog.push({
-					interval: {
-						start: sharedString.localReferencePositionToPosition(start),
-						end: sharedString.localReferencePositionToPosition(end),
-					},
-					previousEndpoints: {
-						start: sharedString.localReferencePositionToPosition(previousInterval.start),
-						end: sharedString.localReferencePositionToPosition(previousInterval.end),
-					},
-					previousInterval,
-					local,
-					op,
-					slide,
-				}),
+			collection.on(
+				"changeInterval",
+				({ start, end }, previousInterval, local, op, slide) =>
+					eventLog.push({
+						interval: {
+							start: sharedString.localReferencePositionToPosition(start),
+							end: sharedString.localReferencePositionToPosition(end),
+						},
+						previousEndpoints: {
+							start: sharedString.localReferencePositionToPosition(
+								previousInterval.start,
+							),
+							end: sharedString.localReferencePositionToPosition(
+								previousInterval.end,
+							),
+						},
+						previousInterval,
+						local,
+						op,
+						slide,
+					}),
 			);
 			const _intervalId = collection.add({ start: 0, end: 1 }).getIntervalId();
 			assert(_intervalId);
@@ -235,7 +244,11 @@ describe("SharedString interval collection event spec", () => {
 		});
 
 		it("is emitted on change of properties and endpoints", () => {
-			collection.change(intervalId, { start: 2, end: 3, props: { foo: "bar" } });
+			collection.change(intervalId, {
+				start: 2,
+				end: 3,
+				props: { foo: "bar" },
+			});
 			assert.equal(eventLog.length, 1);
 			{
 				const [{ interval, previousEndpoints, local, op, slide }] = eventLog;
@@ -256,8 +269,9 @@ describe("SharedString interval collection event spec", () => {
 				containerRuntimeFactory.processAllMessages();
 				assert.equal(eventLog.length, 1);
 				{
-					const [{ interval, previousInterval, previousEndpoints, local, op, slide }] =
-						eventLog;
+					const [
+						{ interval, previousInterval, previousEndpoints, local, op, slide },
+					] = eventLog;
 					assert.deepEqual(interval, { start: 0, end: 1 });
 					const segment = previousInterval.end.getSegment();
 					assert(segment !== undefined);
@@ -276,8 +290,9 @@ describe("SharedString interval collection event spec", () => {
 				containerRuntimeFactory.processAllMessages();
 				assert.equal(eventLog.length, 1);
 				{
-					const [{ interval, previousInterval, previousEndpoints, local, op, slide }] =
-						eventLog;
+					const [
+						{ interval, previousInterval, previousEndpoints, local, op, slide },
+					] = eventLog;
 					assert.deepEqual(interval, { start: 2, end: 2 });
 					const segment = previousInterval.start.getSegment();
 					assert(segment !== undefined);
@@ -297,8 +312,14 @@ describe("SharedString interval collection event spec", () => {
 				containerRuntimeFactory.processAllMessages();
 				assert.equal(eventLog.length, 2);
 				{
-					const { interval, previousInterval, previousEndpoints, local, op, slide } =
-						eventLog[1];
+					const {
+						interval,
+						previousInterval,
+						previousEndpoints,
+						local,
+						op,
+						slide,
+					} = eventLog[1];
 					assert.deepEqual(interval, { start: 2, end: 2 });
 					const segment = previousInterval.start.getSegment();
 					assert(segment !== undefined);
@@ -322,15 +343,18 @@ describe("SharedString interval collection event spec", () => {
 		beforeEach(() => {
 			collection.on("propertyChanged", (interval, deltas, local, op) =>
 				eventLog.push({
-					id: interval.getIntervalId() ?? assert.fail("Expected interval to have id"),
+					id:
+						interval.getIntervalId() ??
+						assert.fail("Expected interval to have id"),
 					deltas,
 					local,
 					op,
 				}),
 			);
 			intervalId =
-				collection.add({ start: 0, end: 1, props: { initialProp: "baz" } }).getIntervalId() ??
-				fail("Expected interval to have id");
+				collection
+					.add({ start: 0, end: 1, props: { initialProp: "baz" } })
+					.getIntervalId() ?? fail("Expected interval to have id");
 			containerRuntimeFactory.processAllMessages();
 			eventLog.length = 0;
 		});
@@ -366,7 +390,9 @@ describe("SharedString interval collection event spec", () => {
 
 		it("only includes deltas for values that actually changed", () => {
 			const collection2 = sharedString2.getIntervalCollection("test");
-			collection2.change(intervalId, { props: { applies: true, conflictedDoesNotApply: 5 } });
+			collection2.change(intervalId, {
+				props: { applies: true, conflictedDoesNotApply: 5 },
+			});
 			assert.equal(eventLog.length, 0);
 			collection.change(intervalId, { props: { conflictedDoesNotApply: 2 } });
 			assert.equal(eventLog.length, 1);
@@ -381,7 +407,11 @@ describe("SharedString interval collection event spec", () => {
 			}
 		});
 		it("is emitted on change of properties and endpoints", () => {
-			collection.change(intervalId, { start: 2, end: 3, props: { foo: "bar" } });
+			collection.change(intervalId, {
+				start: 2,
+				end: 3,
+				props: { foo: "bar" },
+			});
 			assert.equal(eventLog.length, 1);
 			{
 				const [{ id, deltas, local, op }] = eventLog;
@@ -405,28 +435,39 @@ describe("SharedString interval collection event spec", () => {
 		})[] = [];
 		let intervalId: string;
 		beforeEach(() => {
-			collection.on("changed", (interval, deltas, previousInterval, local, slide) =>
-				eventLog.push({
-					id: interval.getIntervalId() ?? assert.fail("Expected interval to have id"),
-					deltas,
-					previousEndpoints: previousInterval
-						? {
-								start: sharedString.localReferencePositionToPosition(previousInterval.start),
-								end: sharedString.localReferencePositionToPosition(previousInterval.end),
-							}
-						: undefined,
-					previousInterval: previousInterval ?? undefined,
-					interval: {
-						start: sharedString.localReferencePositionToPosition(interval.start),
-						end: sharedString.localReferencePositionToPosition(interval.end),
-					},
-					local,
-					slide,
-				}),
+			collection.on(
+				"changed",
+				(interval, deltas, previousInterval, local, slide) =>
+					eventLog.push({
+						id:
+							interval.getIntervalId() ??
+							assert.fail("Expected interval to have id"),
+						deltas,
+						previousEndpoints: previousInterval
+							? {
+									start: sharedString.localReferencePositionToPosition(
+										previousInterval.start,
+									),
+									end: sharedString.localReferencePositionToPosition(
+										previousInterval.end,
+									),
+								}
+							: undefined,
+						previousInterval: previousInterval ?? undefined,
+						interval: {
+							start: sharedString.localReferencePositionToPosition(
+								interval.start,
+							),
+							end: sharedString.localReferencePositionToPosition(interval.end),
+						},
+						local,
+						slide,
+					}),
 			);
 			intervalId =
-				collection.add({ start: 0, end: 1, props: { initialProp: "baz" } }).getIntervalId() ??
-				fail("Expected interval to have id");
+				collection
+					.add({ start: 0, end: 1, props: { initialProp: "baz" } })
+					.getIntervalId() ?? fail("Expected interval to have id");
 			containerRuntimeFactory.processAllMessages();
 			eventLog.length = 0;
 		});
@@ -435,7 +476,9 @@ describe("SharedString interval collection event spec", () => {
 			collection.change(intervalId, { start: 2, end: 3 });
 			assert.equal(eventLog.length, 1);
 			{
-				const [{ interval, previousEndpoints, previousInterval, local, slide }] = eventLog;
+				const [
+					{ interval, previousEndpoints, previousInterval, local, slide },
+				] = eventLog;
 				assert.notEqual(previousInterval, undefined);
 				assert.deepEqual(interval, { start: 2, end: 3 });
 				assert.deepEqual(previousEndpoints, { start: 0, end: 1 });
@@ -462,7 +505,11 @@ describe("SharedString interval collection event spec", () => {
 		});
 
 		it("is emitted on change of properties and endpoints", () => {
-			collection.change(intervalId, { start: 2, end: 3, props: { foo: "bar" } });
+			collection.change(intervalId, {
+				start: 2,
+				end: 3,
+				props: { foo: "bar" },
+			});
 			// for now: allow both events to be logged (in endpoint path and props path)
 			assert.equal(eventLog.length, 2);
 			{
@@ -483,7 +530,9 @@ describe("SharedString interval collection event spec", () => {
 				containerRuntimeFactory.processAllMessages();
 				assert.equal(eventLog.length, 1);
 				{
-					const [{ interval, previousInterval, previousEndpoints, local, slide }] = eventLog;
+					const [
+						{ interval, previousInterval, previousEndpoints, local, slide },
+					] = eventLog;
 					assert.deepEqual(interval, { start: 0, end: 1 });
 					assert(previousInterval !== undefined);
 					const segment = previousInterval.end.getSegment();
@@ -502,7 +551,9 @@ describe("SharedString interval collection event spec", () => {
 				containerRuntimeFactory.processAllMessages();
 				assert.equal(eventLog.length, 1);
 				{
-					const [{ interval, previousInterval, previousEndpoints, local, slide }] = eventLog;
+					const [
+						{ interval, previousInterval, previousEndpoints, local, slide },
+					] = eventLog;
 					assert.deepEqual(interval, { start: 2, end: 2 });
 					assert(previousInterval !== undefined);
 					const segment = previousInterval.start.getSegment();
@@ -522,7 +573,13 @@ describe("SharedString interval collection event spec", () => {
 				containerRuntimeFactory.processAllMessages();
 				assert.equal(eventLog.length, 2);
 				{
-					const { interval, previousInterval, previousEndpoints, local, slide } = eventLog[1];
+					const {
+						interval,
+						previousInterval,
+						previousEndpoints,
+						local,
+						slide,
+					} = eventLog[1];
 					assert.deepEqual(interval, { start: 2, end: 2 });
 					assert(previousInterval !== undefined);
 					const segment = previousInterval.start.getSegment();
@@ -567,7 +624,9 @@ describe("SharedString interval collection event spec", () => {
 
 		it("only includes deltas for values that actually changed", () => {
 			const collection2 = sharedString2.getIntervalCollection("test");
-			collection2.change(intervalId, { props: { applies: true, conflictedDoesNotApply: 5 } });
+			collection2.change(intervalId, {
+				props: { applies: true, conflictedDoesNotApply: 5 },
+			});
 			assert.equal(eventLog.length, 0);
 			collection.change(intervalId, { props: { conflictedDoesNotApply: 2 } });
 			assert.equal(eventLog.length, 1);

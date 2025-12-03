@@ -17,13 +17,16 @@ import type {
 import { TrackingGroup, UnorderedTrackingGroup } from "../mergeTreeTracking.js";
 import { ReferenceType } from "../ops.js";
 import {
-	type MergeTreeDeltaRevertible,
 	appendToMergeTreeDeltaRevertibles,
+	type MergeTreeDeltaRevertible,
 	revertMergeTreeDeltaRevertibles,
 } from "../revertibles.js";
 
 import { createRevertDriver } from "./testClient.js";
-import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
+import {
+	createClientsAtInitialState,
+	TestClientLogger,
+} from "./testClientLogger.js";
 
 /**
  * Run a custom "spy function" every time the given method is invoked.
@@ -78,12 +81,17 @@ describe("MergeTree.Revertibles", () => {
 			appendToMergeTreeDeltaRevertibles(delta, clientB_Revertibles);
 		});
 
-		ops.push(clients.B.makeOpMessage(clients.B.insertTextLocal(0, "BB"), ++seq));
+		ops.push(
+			clients.B.makeOpMessage(clients.B.insertTextLocal(0, "BB"), ++seq),
+		);
 
 		for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
 		logger.validate({ baseText: "BB123" });
 
-		revertMergeTreeDeltaRevertibles(clientBDriver, clientB_Revertibles.splice(0));
+		revertMergeTreeDeltaRevertibles(
+			clientBDriver,
+			clientB_Revertibles.splice(0),
+		);
 
 		for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
 		logger.validate({ baseText: "123" });
@@ -97,9 +105,21 @@ describe("MergeTree.Revertibles", () => {
 		let unlinkCount = 0;
 
 		const unspy1 = spyOnMethod(TrackingGroup, "link", () => (linkCount += 1));
-		const unspy2 = spyOnMethod(TrackingGroup, "unlink", () => (unlinkCount += 1));
-		const unspy3 = spyOnMethod(UnorderedTrackingGroup, "link", () => (linkCount += 1));
-		const unspy4 = spyOnMethod(UnorderedTrackingGroup, "unlink", () => (unlinkCount += 1));
+		const unspy2 = spyOnMethod(
+			TrackingGroup,
+			"unlink",
+			() => (unlinkCount += 1),
+		);
+		const unspy3 = spyOnMethod(
+			UnorderedTrackingGroup,
+			"link",
+			() => (linkCount += 1),
+		);
+		const unspy4 = spyOnMethod(
+			UnorderedTrackingGroup,
+			"unlink",
+			() => (unlinkCount += 1),
+		);
 
 		try {
 			const clients = createClientsAtInitialState(
@@ -189,7 +209,10 @@ describe("MergeTree.Revertibles", () => {
 		for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
 		logger.validate({ baseText: "23" });
 
-		revertMergeTreeDeltaRevertibles(clientBDriver, clientB_Revertibles.splice(0));
+		revertMergeTreeDeltaRevertibles(
+			clientBDriver,
+			clientB_Revertibles.splice(0),
+		);
 
 		for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
 		logger.validate({ baseText: "123" });
@@ -230,16 +253,27 @@ describe("MergeTree.Revertibles", () => {
 			});
 
 			ops.push(
-				clients.C.makeOpMessage(clients.C.removeRangeLocal(removeStart, removeEnd), ++seq),
-				clients.B.makeOpMessage(clients.B.removeRangeLocal(removeStart, removeEnd), ++seq),
+				clients.C.makeOpMessage(
+					clients.C.removeRangeLocal(removeStart, removeEnd),
+					++seq,
+				),
+				clients.B.makeOpMessage(
+					clients.B.removeRangeLocal(removeStart, removeEnd),
+					++seq,
+				),
 			);
 
-			for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
+			for (const op of ops.splice(0))
+				for (const c of clients.all) c.applyMsg(op);
 			logger.validate({ baseText: expectedPostRemove });
 
-			revertMergeTreeDeltaRevertibles(clientBDriver, clientB_Revertibles.splice(0));
+			revertMergeTreeDeltaRevertibles(
+				clientBDriver,
+				clientB_Revertibles.splice(0),
+			);
 
-			for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
+			for (const op of ops.splice(0))
+				for (const c of clients.all) c.applyMsg(op);
 			logger.validate({ baseText: "123" });
 		});
 	}
@@ -281,8 +315,14 @@ describe("MergeTree.Revertibles", () => {
 		for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
 		logger.validate({ baseText: "23" });
 
-		revertMergeTreeDeltaRevertibles(clientBDriver, clientB_Revertibles.splice(0));
-		revertMergeTreeDeltaRevertibles(clientCDriver, clientC_Revertibles.splice(0));
+		revertMergeTreeDeltaRevertibles(
+			clientBDriver,
+			clientB_Revertibles.splice(0),
+		);
+		revertMergeTreeDeltaRevertibles(
+			clientCDriver,
+			clientC_Revertibles.splice(0),
+		);
 
 		// "123" would be the ideal final state, but due to current limitations,
 		// the eventual consistent state is "1123"
@@ -308,12 +348,20 @@ describe("MergeTree.Revertibles", () => {
 		clients.B.on("delta", (op, delta) => {
 			appendToMergeTreeDeltaRevertibles(delta, clientB_Revertibles);
 		});
-		ops.push(clients.B.makeOpMessage(clients.B.annotateRangeLocal(0, 1, { test: 1 }), ++seq));
+		ops.push(
+			clients.B.makeOpMessage(
+				clients.B.annotateRangeLocal(0, 1, { test: 1 }),
+				++seq,
+			),
+		);
 
 		for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
 		logger.validate({ baseText: "123" });
 
-		revertMergeTreeDeltaRevertibles(clientBDriver, clientB_Revertibles.splice(0));
+		revertMergeTreeDeltaRevertibles(
+			clientBDriver,
+			clientB_Revertibles.splice(0),
+		);
 
 		for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
 		logger.validate({ baseText: "123" });
@@ -352,7 +400,10 @@ describe("MergeTree.Revertibles", () => {
 
 		for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
 
-		revertMergeTreeDeltaRevertibles(clientBDriver, clientB_Revertibles.splice(0));
+		revertMergeTreeDeltaRevertibles(
+			clientBDriver,
+			clientB_Revertibles.splice(0),
+		);
 
 		for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
 
@@ -391,7 +442,10 @@ describe("MergeTree.Revertibles", () => {
 
 		for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
 
-		revertMergeTreeDeltaRevertibles(clientBDriver, clientB_Revertibles.splice(0));
+		revertMergeTreeDeltaRevertibles(
+			clientBDriver,
+			clientB_Revertibles.splice(0),
+		);
 
 		for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
 
@@ -421,7 +475,10 @@ describe("MergeTree.Revertibles", () => {
 		clients.B.on("delta", deltaCallback);
 		ops.push(
 			clients.B.makeOpMessage(clients.B.removeRangeLocal(0, 2), ++seq),
-			clients.B.makeOpMessage(clients.B.annotateRangeLocal(0, 1, { test: 1 }), ++seq),
+			clients.B.makeOpMessage(
+				clients.B.annotateRangeLocal(0, 1, { test: 1 }),
+				++seq,
+			),
 			clients.B.makeOpMessage(clients.B.removeRangeLocal(0, 1), ++seq),
 		);
 
@@ -430,7 +487,10 @@ describe("MergeTree.Revertibles", () => {
 
 		for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
 
-		revertMergeTreeDeltaRevertibles(clientBDriver, clientB_Revertibles.splice(0));
+		revertMergeTreeDeltaRevertibles(
+			clientBDriver,
+			clientB_Revertibles.splice(0),
+		);
 
 		for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
 
@@ -464,7 +524,10 @@ describe("MergeTree.Revertibles", () => {
 
 		clients.B.on("delta", deltaCallback);
 		ops.push(
-			clients.B.makeOpMessage(clients.B.annotateRangeLocal(0, 4, { test: "B" }), ++seq),
+			clients.B.makeOpMessage(
+				clients.B.annotateRangeLocal(0, 4, { test: "B" }),
+				++seq,
+			),
 			clients.B.makeOpMessage(clients.B.removeRangeLocal(1, 2), ++seq),
 		);
 
@@ -472,15 +535,22 @@ describe("MergeTree.Revertibles", () => {
 		clients.B.off("delta", deltaCallback);
 
 		ops.push(
-			clients.C.makeOpMessage(clients.C.annotateRangeLocal(3, 4, { test: "C" }), ++seq),
+			clients.C.makeOpMessage(
+				clients.C.annotateRangeLocal(3, 4, { test: "C" }),
+				++seq,
+			),
 		);
 
 		for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
 		logger.validate({ baseText: "134" });
 
 		try {
-			revertMergeTreeDeltaRevertibles(clientBDriver, clientB_Revertibles.splice(0));
-			for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
+			revertMergeTreeDeltaRevertibles(
+				clientBDriver,
+				clientB_Revertibles.splice(0),
+			);
+			for (const op of ops.splice(0))
+				for (const c of clients.all) c.applyMsg(op);
 		} catch (error) {
 			throw logger.addLogsToError(error);
 		}
@@ -510,13 +580,17 @@ describe("MergeTree.Revertibles", () => {
 				const ops: ISequencedDocumentMessage[] = [];
 
 				const clientB_Revertibles: MergeTreeDeltaRevertible[][] = [];
-				const openNewUndoRedoTransaction = (): number => clientB_Revertibles.unshift([]);
+				const openNewUndoRedoTransaction = (): number =>
+					clientB_Revertibles.unshift([]);
 				// the test logger uses these callbacks, so preserve it
 				const clientBDriver = createRevertDriver(clients.B);
 				clientBDriver.submitOpCallback = (op): number =>
 					ops.push(clients.B.makeOpMessage(op, ++seq));
 				clients.B.on("delta", (op, delta) => {
-					if (op.sequencedMessage === undefined && clientB_Revertibles.length > 0) {
+					if (
+						op.sequencedMessage === undefined &&
+						clientB_Revertibles.length > 0
+					) {
 						appendToMergeTreeDeltaRevertibles(delta, clientB_Revertibles[0]);
 					}
 				});
@@ -526,12 +600,19 @@ describe("MergeTree.Revertibles", () => {
 					afterUndoBaseText ??= clients.B.getText();
 				}
 				ops.push(
-					clients.B.makeOpMessage(clients.B.insertMarkerLocal(0, ReferenceType.Simple), ++seq),
-					clients.B.makeOpMessage(clients.B.insertMarkerLocal(1, ReferenceType.Simple), ++seq),
+					clients.B.makeOpMessage(
+						clients.B.insertMarkerLocal(0, ReferenceType.Simple),
+						++seq,
+					),
+					clients.B.makeOpMessage(
+						clients.B.insertMarkerLocal(1, ReferenceType.Simple),
+						++seq,
+					),
 				);
 
 				if (options.ackMarkerInsert) {
-					for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
+					for (const op of ops.splice(0))
+						for (const c of clients.all) c.applyMsg(op);
 					logger.validate({ baseText: afterUndoBaseText });
 				}
 
@@ -539,9 +620,12 @@ describe("MergeTree.Revertibles", () => {
 					openNewUndoRedoTransaction();
 					afterUndoBaseText ??= clients.B.getText();
 				}
-				ops.push(clients.B.makeOpMessage(clients.B.insertTextLocal(1, "B"), ++seq));
+				ops.push(
+					clients.B.makeOpMessage(clients.B.insertTextLocal(1, "B"), ++seq),
+				);
 				if (options.ackTextInsert) {
-					for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
+					for (const op of ops.splice(0))
+						for (const c of clients.all) c.applyMsg(op);
 					logger.validate({ baseText: "B" });
 				}
 
@@ -550,9 +634,12 @@ describe("MergeTree.Revertibles", () => {
 					afterUndoBaseText ??= clients.B.getText();
 				}
 
-				ops.push(clients.B.makeOpMessage(clients.B.removeRangeLocal(1, 2), ++seq));
+				ops.push(
+					clients.B.makeOpMessage(clients.B.removeRangeLocal(1, 2), ++seq),
+				);
 				if (options.ackTextRemove) {
-					for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
+					for (const op of ops.splice(0))
+						for (const c of clients.all) c.applyMsg(op);
 					logger.validate({ baseText: "" });
 				}
 
@@ -568,7 +655,8 @@ describe("MergeTree.Revertibles", () => {
 				}
 
 				if (options.ackUndo) {
-					for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
+					for (const op of ops.splice(0))
+						for (const c of clients.all) c.applyMsg(op);
 					logger.validate({ baseText: afterUndoBaseText });
 				}
 
@@ -581,7 +669,8 @@ describe("MergeTree.Revertibles", () => {
 					throw logger.addLogsToError(error);
 				}
 
-				for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
+				for (const op of ops.splice(0))
+					for (const c of clients.all) c.applyMsg(op);
 				logger.validate({ baseText: afterRevertBaseTest });
 			});
 		}

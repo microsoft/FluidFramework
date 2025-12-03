@@ -7,20 +7,20 @@ import type { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type {
-	IChannelStorageService,
 	IChannel,
 	IChannelAttributes,
 	IChannelFactory,
 	IChannelServices,
+	IChannelStorageService,
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor/internal";
 import type {
-	ISummaryTreeWithStats,
-	ITelemetryContext,
 	IExperimentalIncrementalSummaryContext,
 	IRuntimeMessageCollection,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
 	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
@@ -28,11 +28,11 @@ import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/intern
 import type { IFluidSerializer } from "./serializer.js";
 import {
 	createSharedObjectKind,
-	SharedObject,
 	type ISharedObjectKind,
+	SharedObject,
 	type SharedObjectKind,
 } from "./sharedObject.js";
-import type { ISharedObjectEvents, ISharedObject } from "./types.js";
+import type { ISharedObject, ISharedObjectEvents } from "./types.js";
 import type { IChannelView } from "./utils.js";
 
 /**
@@ -63,7 +63,9 @@ export interface SharedKernel {
 	summarizeCore(
 		serializer: IFluidSerializer,
 		telemetryContext: ITelemetryContext | undefined,
-		incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined,
+		incrementalSummaryContext:
+			| IExperimentalIncrementalSummaryContext
+			| undefined,
 		fullTree?: boolean,
 	): ISummaryTreeWithStats;
 
@@ -187,15 +189,22 @@ class SharedObjectFromKernel<
 		return (this.#lazyData ?? fail("must initializeData first")).kernel;
 	}
 
-	protected override async loadCore(storage: IChannelStorageService): Promise<void> {
-		this.#initializeData(await this.factory.loadCore(this.#kernelArgs, storage));
+	protected override async loadCore(
+		storage: IChannelStorageService,
+	): Promise<void> {
+		this.#initializeData(
+			await this.factory.loadCore(this.#kernelArgs, storage),
+		);
 	}
 
 	protected override onDisconnect(): void {
 		this.#kernel.onDisconnect();
 	}
 
-	protected override reSubmitCore(content: unknown, localOpMetadata: unknown): void {
+	protected override reSubmitCore(
+		content: unknown,
+		localOpMetadata: unknown,
+	): void {
 		this.#kernel.reSubmitCore(content, localOpMetadata);
 	}
 
@@ -203,11 +212,16 @@ class SharedObjectFromKernel<
 		this.#kernel.applyStashedOp(content);
 	}
 
-	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected override processMessagesCore(
+		messagesCollection: IRuntimeMessageCollection,
+	): void {
 		this.#kernel.processMessagesCore(messagesCollection);
 	}
 
-	protected override rollback(content: unknown, localOpMetadata: unknown): void {
+	protected override rollback(
+		content: unknown,
+		localOpMetadata: unknown,
+	): void {
 		if (this.#kernel.rollback === undefined) {
 			super.rollback(content, localOpMetadata);
 		} else {
@@ -257,7 +271,10 @@ export interface SharedKernelFactory<T extends object> {
 	/**
 	 * Create combined with {@link SharedObjectCore.loadCore}.
 	 */
-	loadCore(args: KernelArgs, storage: IChannelStorageService): Promise<FactoryOut<T>>;
+	loadCore(
+		args: KernelArgs,
+		storage: IChannelStorageService,
+	): Promise<FactoryOut<T>>;
 }
 
 /**
@@ -319,11 +336,13 @@ export interface KernelArgs {
  * Asserts when properties collide.
  * @internal
  */
-export function mergeAPIs<const Base extends object, const Extra extends object>(
-	base: Base,
-	extra: Extra,
-): asserts base is Base & Extra {
-	for (const [key, descriptor] of Object.entries(Object.getOwnPropertyDescriptors(extra))) {
+export function mergeAPIs<
+	const Base extends object,
+	const Extra extends object,
+>(base: Base, extra: Extra): asserts base is Base & Extra {
+	for (const [key, descriptor] of Object.entries(
+		Object.getOwnPropertyDescriptors(extra),
+	)) {
 		assert(!Reflect.has(base, key), 0xb9a /* colliding properties */);
 
 		// Detect and special case functions.
@@ -367,7 +386,10 @@ function forwardMethod<TArgs extends [], TReturn>(
 	if (thisWrap in f) {
 		return (...args: TArgs) => {
 			const result = f.call(oldThis, ...args);
-			assert(result === oldThis, 0xb9b /* methods returning thisWrap should return this */);
+			assert(
+				result === oldThis,
+				0xb9b /* methods returning thisWrap should return this */,
+			);
 			return newThis;
 		};
 	} else {

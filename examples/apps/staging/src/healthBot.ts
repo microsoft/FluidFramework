@@ -23,7 +23,8 @@ export const NETWORK_askHealthBotForSuggestions = async (
 ): Promise<string> => {
 	const parsedGroceryList: GroceryListPOJO = JSON.parse(groceryListString);
 	const improvedGroceryList: GroceryListPOJO = parsedGroceryList.filter(
-		(item) => item.name.localeCompare("chocolate", "en", { sensitivity: "base" }) !== 0,
+		(item) =>
+			item.name.localeCompare("chocolate", "en", { sensitivity: "base" }) !== 0,
 	);
 	improvedGroceryList.push({ id: "newItem", name: "cauliflower" });
 

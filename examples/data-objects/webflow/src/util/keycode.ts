@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export const enum KeyCode {
+export enum KeyCode {
 	backspace = "Backspace", // 8
 	tab = "Tab", // 9
 	enter = "Enter", // 13

@@ -6,9 +6,9 @@
 import { Users } from "../domains/index.js";
 import {
 	fail,
-	scoreSymbol,
 	type LLMIntegrationTest,
 	type ScorableVerboseTree,
+	scoreSymbol,
 } from "../utils.js";
 
 // We start with two users (alpardes and mapardes) and edit the alpardes user.
@@ -16,15 +16,29 @@ import {
 const expected: ScorableVerboseTree = {
 	type: "com.microsoft.fluid.tree-agent.users.Users",
 	[scoreSymbol]: (actual): number => {
-		if (typeof actual !== "object" || actual === null || Array.isArray(actual.fields)) {
+		if (
+			typeof actual !== "object" ||
+			actual === null ||
+			Array.isArray(actual.fields)
+		) {
 			return 0;
 		}
-		const required = new Map<string, { firstName: string; lastName: string; email?: string }>([
+		const required = new Map<
+			string,
+			{ firstName: string; lastName: string; email?: string }
+		>([
 			[
 				"alpardes",
-				{ firstName: "Alexander", lastName: "Pardes", email: "pardesio@gmail.com" },
+				{
+					firstName: "Alexander",
+					lastName: "Pardes",
+					email: "pardesio@gmail.com",
+				},
 			],
-			["rymagani", { firstName: "Ryan", lastName: "Magani", email: "ringom@gmail.com" }],
+			[
+				"rymagani",
+				{ firstName: "Ryan", lastName: "Magani", email: "ringom@gmail.com" },
+			],
 		]);
 		let score = 1;
 		for (const [id, { firstName, lastName }] of required) {
@@ -50,7 +64,6 @@ const expected: ScorableVerboseTree = {
 				user.fields.lastName.toLowerCase() !== lastName.toLowerCase()
 			) {
 				score -= 1 / required.size;
-				continue;
 			}
 		}
 		// Penalize if there are more than 4 users (encourage precision)

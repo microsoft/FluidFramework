@@ -8,7 +8,7 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 
 import { parseStringDataVersionTwo, readVersion } from "../dataTransform.js";
 import type {
@@ -48,7 +48,9 @@ export class InventoryListAppModel
 	public readonly supportsDataFormat = (
 		initialData: unknown,
 	): initialData is InventoryListAppModelExportFormat2 => {
-		return typeof initialData === "string" && readVersion(initialData) === "two";
+		return (
+			typeof initialData === "string" && readVersion(initialData) === "two"
+		);
 	};
 
 	// Ideally, prevent this from being called after the container has been modified at all -- i.e. only support
@@ -68,14 +70,15 @@ export class InventoryListAppModel
 		}
 	};
 
-	public readonly exportData = async (): Promise<InventoryListAppModelExportFormat2> => {
-		// Exports in version:two format (using tab delimiter between name/quantity)
-		const inventoryItems = this.inventoryList.getItems();
-		const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
-			return `${inventoryItem.name.getText()}\t${inventoryItem.quantity.toString()}`;
-		});
-		return `version:two\n${inventoryItemStrings.join("\n")}`;
-	};
+	public readonly exportData =
+		async (): Promise<InventoryListAppModelExportFormat2> => {
+			// Exports in version:two format (using tab delimiter between name/quantity)
+			const inventoryItems = this.inventoryList.getItems();
+			const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
+				return `${inventoryItem.name.getText()}\t${inventoryItem.quantity.toString()}`;
+			});
+			return `version:two\n${inventoryItemStrings.join("\n")}`;
+		};
 
 	public connected() {
 		return this.container.connectionState === ConnectionState.Connected;

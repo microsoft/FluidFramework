@@ -5,12 +5,15 @@
 
 import { strict as assert } from "node:assert";
 
-import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import {
+	type IGCTestProvider,
+	runGCTests,
+} from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import type {
-	IChannelServices,
 	IChannel,
+	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import type { ISegmentInternal } from "@fluidframework/merge-tree/internal";
 import {
@@ -33,7 +36,14 @@ import { SharedMatrix as SharedMatrixClass } from "../matrix.js";
 import type { PermutationVector } from "../permutationvector.js";
 
 import { TestConsumer } from "./testconsumer.js";
-import { check, expectSize, extract, fill, insertFragmented, matrixFactory } from "./utils.js";
+import {
+	check,
+	expectSize,
+	extract,
+	fill,
+	insertFragmented,
+	matrixFactory,
+} from "./utils.js";
 
 function createConnectedMatrix(
 	id: string,
@@ -56,7 +66,10 @@ function createConnectedMatrix(
 
 function createLocalMatrix(id: string): SharedMatrixClass {
 	const factory = new SharedMatrixFactory();
-	return factory.create(new MockFluidDataStoreRuntime(), id) as SharedMatrixClass;
+	return factory.create(
+		new MockFluidDataStoreRuntime(),
+		id,
+	) as SharedMatrixClass;
 }
 
 function createMatrixForReconnection(
@@ -68,7 +81,8 @@ function createMatrixForReconnection(
 	containerRuntime: MockContainerRuntimeForReconnection;
 } {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
+	const containerRuntime =
+		runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
@@ -139,7 +153,10 @@ describe("Matrix1", () => {
 				}
 
 				beforeEach("createMatrix", async () => {
-					matrix = matrixFactory.create(new MockFluidDataStoreRuntime(), "matrix1");
+					matrix = matrixFactory.create(
+						new MockFluidDataStoreRuntime(),
+						"matrix1",
+					);
 					if (isSetCellPolicyFWW) {
 						matrix.switchSetCellPolicy();
 					}
@@ -184,7 +201,11 @@ describe("Matrix1", () => {
 					it("1x0", async () => {
 						matrix.insertRows(/* start: */ 0, /* count: */ 1);
 						expectSize(matrix, /* rowCount: */ 1, /* colCount: */ 0);
-						expectSize(await expect([[]]), /* rowCount: */ 1, /* colCount: */ 0);
+						expectSize(
+							await expect([[]]),
+							/* rowCount: */ 1,
+							/* colCount: */ 0,
+						);
 					});
 				});
 
@@ -211,7 +232,12 @@ describe("Matrix1", () => {
 					]);
 
 					// Note: It's valid to leave the last row incomplete.
-					matrix.setCells(/* row: */ 1, /* col: */ 1, /* colCount: */ 2, [1, 2, 3, 4, 5]);
+					matrix.setCells(
+						/* row: */ 1,
+						/* col: */ 1,
+						/* colCount: */ 2,
+						[1, 2, 3, 4, 5],
+					);
 
 					await expect([
 						[undefined, undefined, undefined, undefined],
@@ -281,10 +307,20 @@ describe("Matrix1", () => {
 				it("remove 1 row, insert 2 rows", async () => {
 					matrix.insertRows(0, 4);
 					matrix.insertCols(0, 1);
-					matrix.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [0, 1, 2, 3]);
+					matrix.setCells(
+						/* row: */ 0,
+						/* col: */ 0,
+						/* colCount: */ 1,
+						[0, 1, 2, 3],
+					);
 					matrix.removeRows(2, 1);
 					matrix.insertRows(0, 2);
-					matrix.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [84, 45]);
+					matrix.setCells(
+						/* row: */ 0,
+						/* col: */ 0,
+						/* colCount: */ 1,
+						[84, 45],
+					);
 					await expect([[84], [45], [0], [1], [3]]);
 				});
 
@@ -292,7 +328,13 @@ describe("Matrix1", () => {
 					it("read/write 256x256", () => {
 						matrix.insertRows(0, 256);
 						matrix.insertCols(0, 256);
-						fill(matrix, /* row: */ 0, /* col: */ 0, /* rowCount: */ 256, /* colCount: */ 256);
+						fill(
+							matrix,
+							/* row: */ 0,
+							/* col: */ 0,
+							/* rowCount: */ 256,
+							/* colCount: */ 256,
+						);
 						check(
 							matrix,
 							/* row: */ 0,
@@ -306,7 +348,13 @@ describe("Matrix1", () => {
 				describe("fragmented", () => {
 					it("read/write 256x256", () => {
 						insertFragmented(matrix, 256, 256);
-						fill(matrix, /* row: */ 0, /* col: */ 0, /* rowCount: */ 256, /* colCount: */ 256);
+						fill(
+							matrix,
+							/* row: */ 0,
+							/* col: */ 0,
+							/* rowCount: */ 256,
+							/* colCount: */ 256,
+						);
 						check(
 							matrix,
 							/* row: */ 0,
@@ -432,14 +480,18 @@ describe("Matrix1", () => {
 						matrix1.setCell(0, 0, "x");
 						matrix2.setCell(0, 0, undefined);
 
-						await (isSetCellPolicyFWW ? expect([["x"]]) : expect([[undefined]]));
+						await (isSetCellPolicyFWW
+							? expect([["x"]])
+							: expect([[undefined]]));
 					});
 
 					it("insert and set in new row", async () => {
 						matrix1.insertCols(0, 2);
 						await expect();
 						matrix1.insertRows(0, 1);
-						matrix1.setCells(/* row: */ 0, /* col: */ 1, /* colCount: */ 1, ["x"]);
+						matrix1.setCells(/* row: */ 0, /* col: */ 1, /* colCount: */ 1, [
+							"x",
+						]);
 						await expect([[undefined, "x"]]);
 					});
 
@@ -447,7 +499,9 @@ describe("Matrix1", () => {
 						matrix1.insertRows(0, 2);
 						await expect([[], []]);
 						matrix1.insertCols(0, 1);
-						matrix1.setCells(/* row: */ 1, /* col: */ 0, /* colCount: */ 1, ["x"]);
+						matrix1.setCells(/* row: */ 1, /* col: */ 0, /* colCount: */ 1, [
+							"x",
+						]);
 						await expect([[undefined], ["x"]]);
 					});
 
@@ -658,7 +712,11 @@ describe("Matrix1", () => {
 						await expect();
 
 						matrix1.removeRows(1, 1);
-						matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["A", "B", "C"]);
+						matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [
+							"A",
+							"B",
+							"C",
+						]);
 						await expect();
 					});
 
@@ -667,14 +725,23 @@ describe("Matrix1", () => {
 					it("overlapping insert/set vs. remove/insert/set", async () => {
 						matrix1.insertRows(0, 1); // rowCount: 0, colCount: 0
 						matrix1.insertCols(0, 4); // rowCount: 1, colCount: 0
-						matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 4, [0, 1, 2, 3]);
+						matrix1.setCells(
+							/* row: */ 0,
+							/* col: */ 0,
+							/* colCount: */ 4,
+							[0, 1, 2, 3],
+						);
 						await expect([[0, 1, 2, 3]]);
 
 						matrix2.insertCols(1, 1); // rowCount: 1, colCount: 5
-						matrix2.setCells(/* row: */ 0, /* col: */ 1, /* colCount: */ 1, ["A"]);
+						matrix2.setCells(/* row: */ 0, /* col: */ 1, /* colCount: */ 1, [
+							"A",
+						]);
 						matrix1.removeCols(0, 2); // rowCount: 1, colCount: 2
 						matrix1.insertCols(0, 1); // rowCount: 1, colCount: 3
-						matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["B"]);
+						matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [
+							"B",
+						]);
 						await expect([["B", "A", 2, 3]]);
 					});
 				});
@@ -714,7 +781,8 @@ describe("Matrix1", () => {
 				};
 
 				beforeEach("createMatrices", async () => {
-					containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+					containerRuntimeFactory =
+						new MockContainerRuntimeFactoryForReconnection();
 
 					// Create the first SharedMatrix.
 					const response1 = createMatrixForReconnection(
@@ -753,7 +821,9 @@ describe("Matrix1", () => {
 
 					await expect([[undefined]]);
 
-					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["A"]);
+					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [
+						"A",
+					]);
 
 					// Note: Inserting '3' helps expose incorrect range check logic that fails to
 					//       consider unallocated handles.  Consider the empty leading segment:
@@ -782,7 +852,9 @@ describe("Matrix1", () => {
 
 					await expect([[undefined]]);
 
-					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["A"]);
+					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [
+						"A",
+					]);
 
 					// Note: Inserting '3' helps expose incorrect range check logic that fails to
 					//       consider unallocated handles.  Consider the empty leading segment:
@@ -889,13 +961,23 @@ describe("Matrix1", () => {
 				it("resubmission omits writes to recycled row/col handles", async () => {
 					matrix1.insertRows(0, 2);
 					matrix1.insertCols(0, 2);
-					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [0, 1, 2, 3]);
+					matrix1.setCells(
+						/* row: */ 0,
+						/* col: */ 0,
+						/* colCount: */ 2,
+						[0, 1, 2, 3],
+					);
 					matrix1.removeRows(1, 1);
 
 					containerRuntime1.connected = false;
 
 					matrix1.insertRows(0, 1);
-					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [28, 49]);
+					matrix1.setCells(
+						/* row: */ 0,
+						/* col: */ 0,
+						/* colCount: */ 2,
+						[28, 49],
+					);
 
 					containerRuntime1.connected = true;
 
@@ -916,7 +998,12 @@ describe("Matrix1", () => {
 					);
 
 					matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);
-					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 4, [61, 57, 7, 62]);
+					matrix1.setCells(
+						/* row: */ 0,
+						/* col: */ 0,
+						/* colCount: */ 4,
+						[61, 57, 7, 62],
+					);
 
 					containerRuntime1.connected = false;
 					containerRuntime1.connected = true;
@@ -979,7 +1066,8 @@ describe("Matrix1", () => {
 					rows: number;
 					cols: number;
 				} {
-					const matrixWithDimensions = matrix as unknown as MatrixWithDimensions;
+					const matrixWithDimensions =
+						matrix as unknown as MatrixWithDimensions;
 					assert(
 						matrixWithDimensions.rows !== undefined,
 						"Expected matrix to have rows property",
@@ -1000,7 +1088,10 @@ describe("Matrix1", () => {
 					matrix.insertRows(0, 2);
 					matrix.insertCols(0, 2);
 					matrix.setCell(0, 0, "val");
-					assert.deepEqual(findTotalReferenceCount(matrix), { rows: 0, cols: 0 });
+					assert.deepEqual(findTotalReferenceCount(matrix), {
+						rows: 0,
+						cols: 0,
+					});
 				});
 
 				it("after first submission ack", () => {
@@ -1016,15 +1107,22 @@ describe("Matrix1", () => {
 					containerRuntimeFactory.processAllMessages();
 					matrix.setCell(0, 0, "val");
 
-					assert.deepEqual(findTotalReferenceCount(matrix), { rows: 1, cols: 1 });
+					assert.deepEqual(findTotalReferenceCount(matrix), {
+						rows: 1,
+						cols: 1,
+					});
 
 					containerRuntimeFactory.processAllMessages();
 
-					assert.deepEqual(findTotalReferenceCount(matrix), { rows: 0, cols: 0 });
+					assert.deepEqual(findTotalReferenceCount(matrix), {
+						rows: 0,
+						cols: 0,
+					});
 				});
 
 				it("after resubmitted ack", () => {
-					const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+					const containerRuntimeFactory =
+						new MockContainerRuntimeFactoryForReconnection();
 					const dataStoreRuntime = new MockFluidDataStoreRuntime();
 					const matrix = matrixFactory.create(dataStoreRuntime, "A");
 					if (isSetCellPolicyFWW) {
@@ -1044,13 +1142,22 @@ describe("Matrix1", () => {
 					containerRuntime.connected = false;
 					matrix.setCell(0, 0, "val");
 
-					assert.deepEqual(findTotalReferenceCount(matrix), { rows: 1, cols: 1 });
+					assert.deepEqual(findTotalReferenceCount(matrix), {
+						rows: 1,
+						cols: 1,
+					});
 					containerRuntime.connected = true;
-					assert.deepEqual(findTotalReferenceCount(matrix), { rows: 1, cols: 1 });
+					assert.deepEqual(findTotalReferenceCount(matrix), {
+						rows: 1,
+						cols: 1,
+					});
 
 					containerRuntimeFactory.processAllMessages();
 
-					assert.deepEqual(findTotalReferenceCount(matrix), { rows: 0, cols: 0 });
+					assert.deepEqual(findTotalReferenceCount(matrix), {
+						rows: 0,
+						cols: 0,
+					});
 				});
 			});
 
@@ -1111,7 +1218,10 @@ describe("Matrix1", () => {
 							0,
 							lastAddedCol,
 						) as IFluidHandleInternal;
-						assert(deletedHandle !== undefined, "Route must be added before deleting");
+						assert(
+							deletedHandle !== undefined,
+							"Route must be added before deleting",
+						);
 
 						this.matrix1.setCell(0, lastAddedCol, undefined);
 						// Remove deleted handle's route from expected routes.
@@ -1122,8 +1232,12 @@ describe("Matrix1", () => {
 					}
 
 					public async addNestedHandles(): Promise<void> {
-						const subMatrix = createLocalMatrix(`subMatrix-${++this.subMatrixCount}`);
-						const subMatrix2 = createLocalMatrix(`subMatrix-${++this.subMatrixCount}`);
+						const subMatrix = createLocalMatrix(
+							`subMatrix-${++this.subMatrixCount}`,
+						);
+						const subMatrix2 = createLocalMatrix(
+							`subMatrix-${++this.subMatrixCount}`,
+						);
 						const containingObject = {
 							subMatrixHandle: subMatrix.handle,
 							nestedObj: {
@@ -1164,7 +1278,10 @@ describe("Matrix1", () => {
 				});
 
 				it("is disconnected", () => {
-					const matrix = matrixFactory.create(new MockFluidDataStoreRuntime(), "matrix1");
+					const matrix = matrixFactory.create(
+						new MockFluidDataStoreRuntime(),
+						"matrix1",
+					);
 					if (isSetCellPolicyFWW) {
 						matrix.switchSetCellPolicy();
 					}
@@ -1226,7 +1343,9 @@ describe("Matrix1", () => {
 				consumer: TestConsumer;
 			}> {
 				// Create a summary
-				const objectStorage = MockStorage.createFromSummary(matrix.getAttachSummary().summary);
+				const objectStorage = MockStorage.createFromSummary(
+					matrix.getAttachSummary().summary,
+				);
 
 				const dataStoreRuntime = new MockFluidDataStoreRuntime();
 				const containerRuntime =
@@ -1249,7 +1368,8 @@ describe("Matrix1", () => {
 			}
 
 			beforeEach("createMatrices", async () => {
-				containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+				containerRuntimeFactory =
+					new MockContainerRuntimeFactoryForReconnection();
 
 				// Create the first SharedMatrix.
 				const response1 = createMatrixForReconnection(
@@ -1292,14 +1412,17 @@ describe("Matrix1", () => {
 				switchPolicy(matrix1);
 
 				let eventRaised = false;
-				matrix2.on("conflict", (row, col, currentVal, rejectedVal, instance) => {
-					assert(row === 0, "row should be correct");
-					assert(col === 0, "col should be correct");
-					assert(currentVal === "A", "currentVal should be correct");
-					assert(rejectedVal === "B", "rejectedVal should be correct");
-					assert(instance.id === "matrix2", "matrix should be correct");
-					eventRaised = true;
-				});
+				matrix2.on(
+					"conflict",
+					(row, col, currentVal, rejectedVal, instance) => {
+						assert(row === 0, "row should be correct");
+						assert(col === 0, "col should be correct");
+						assert(currentVal === "A", "currentVal should be correct");
+						assert(rejectedVal === "B", "rejectedVal should be correct");
+						assert(instance.id === "matrix2", "matrix should be correct");
+						eventRaised = true;
+					},
+				);
 
 				// Disconnect the client.
 				containerRuntime1.connected = false;
@@ -1363,14 +1486,17 @@ describe("Matrix1", () => {
 				switchPolicy(matrix1);
 
 				let eventRaised = false;
-				matrix2.on("conflict", (row, col, currentVal, rejectedVal, instance) => {
-					assert(row === 0, "row should be correct");
-					assert(col === 0, "col should be correct");
-					assert(currentVal === "A", "currentVal should be correct");
-					assert(rejectedVal === "B", "rejectedVal should be correct");
-					assert(instance.id === "matrix2", "matrix should be correct");
-					eventRaised = true;
-				});
+				matrix2.on(
+					"conflict",
+					(row, col, currentVal, rejectedVal, instance) => {
+						assert(row === 0, "row should be correct");
+						assert(col === 0, "col should be correct");
+						assert(currentVal === "A", "currentVal should be correct");
+						assert(rejectedVal === "B", "rejectedVal should be correct");
+						assert(instance.id === "matrix2", "matrix should be correct");
+						eventRaised = true;
+					},
+				);
 
 				// Disconnect the client.
 				containerRuntime2.connected = false;
@@ -1477,20 +1603,23 @@ describe("Matrix1", () => {
 				await expect([[undefined]]);
 
 				let eventRaisedCount = 0;
-				matrix2.on("conflict", (row, col, currentVal, rejectedVal, instance) => {
-					assert(row === 0, "row should be correct");
-					assert(col === 0, "col should be correct");
-					assert(
-						currentVal === (eventRaisedCount === 0 ? "1st" : "3rd"),
-						"currentVal should be correct",
-					);
-					assert(
-						rejectedVal === (eventRaisedCount === 0 ? "4th" : "1st"),
-						"rejectedVal should be correct",
-					);
-					assert(instance.id === "matrix2", "matrix should be correct");
-					eventRaisedCount++;
-				});
+				matrix2.on(
+					"conflict",
+					(row, col, currentVal, rejectedVal, instance) => {
+						assert(row === 0, "row should be correct");
+						assert(col === 0, "col should be correct");
+						assert(
+							currentVal === (eventRaisedCount === 0 ? "1st" : "3rd"),
+							"currentVal should be correct",
+						);
+						assert(
+							rejectedVal === (eventRaisedCount === 0 ? "4th" : "1st"),
+							"rejectedVal should be correct",
+						);
+						assert(instance.id === "matrix2", "matrix should be correct");
+						eventRaisedCount++;
+					},
+				);
 
 				// Disconnect the client.
 				containerRuntime1.connected = false;
@@ -1510,7 +1639,10 @@ describe("Matrix1", () => {
 				containerRuntime2.connected = true;
 				// Verify that both the matrices have expected content.
 				await expect([["3rd"]]);
-				assert(eventRaisedCount === 2, "conflict event should have been raised");
+				assert(
+					eventRaisedCount === 2,
+					"conflict event should have been raised",
+				);
 			});
 
 			it("Client should get multiple conflict till its latest pending is received", async () => {
@@ -1521,12 +1653,15 @@ describe("Matrix1", () => {
 				await expect([[undefined]]);
 
 				let eventRaisedCount = 0;
-				matrix2.on("conflict", (row, col, currentVal, rejectedVal, instance) => {
-					assert(row === 0, "row should be correct");
-					assert(col === 0, "col should be correct");
-					assert(instance.id === "matrix2", "matrix should be correct");
-					eventRaisedCount++;
-				});
+				matrix2.on(
+					"conflict",
+					(row, col, currentVal, rejectedVal, instance) => {
+						assert(row === 0, "row should be correct");
+						assert(col === 0, "col should be correct");
+						assert(instance.id === "matrix2", "matrix should be correct");
+						eventRaisedCount++;
+					},
+				);
 
 				// Now switch the Policy
 				switchPolicy(matrix1);
@@ -1540,7 +1675,10 @@ describe("Matrix1", () => {
 
 				// Verify that both the matrices have expected content.
 				await expect([["5th"]]);
-				assert(eventRaisedCount === 2, "conflict event should have been raised");
+				assert(
+					eventRaisedCount === 2,
+					"conflict event should have been raised",
+				);
 			});
 
 			it("Client should send op and also apply when policy is switched to FWW but no op is sent to notify", async () => {

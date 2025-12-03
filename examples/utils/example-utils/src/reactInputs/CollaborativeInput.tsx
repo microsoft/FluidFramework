@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/legacy";
+import type {
+	SequenceDeltaEvent,
+	SharedString,
+} from "@fluidframework/sequence/legacy";
 import React from "react";
 
 /**
@@ -108,7 +111,10 @@ export class CollaborativeInput extends React.Component<
 
 	private updateInputFromSharedString() {
 		const text = this.props.sharedString.getText();
-		if (this.inputElementRef.current && this.inputElementRef.current.value !== text) {
+		if (
+			this.inputElementRef.current &&
+			this.inputElementRef.current.value !== text
+		) {
 			this.inputElementRef.current.value = text;
 		}
 	}
@@ -121,10 +127,17 @@ export class CollaborativeInput extends React.Component<
 		const newPosition = ev.currentTarget.selectionStart ?? 0;
 		const isTextInserted = newPosition - this.state.selectionStart > 0;
 		if (isTextInserted) {
-			const insertedText = newText.substring(this.state.selectionStart, newPosition);
-			const changeRangeLength = this.state.selectionEnd - this.state.selectionStart;
+			const insertedText = newText.substring(
+				this.state.selectionStart,
+				newPosition,
+			);
+			const changeRangeLength =
+				this.state.selectionEnd - this.state.selectionStart;
 			if (changeRangeLength === 0) {
-				this.props.sharedString.insertText(this.state.selectionStart, insertedText);
+				this.props.sharedString.insertText(
+					this.state.selectionStart,
+					insertedText,
+				);
 			} else {
 				this.props.sharedString.replaceText(
 					this.state.selectionStart,

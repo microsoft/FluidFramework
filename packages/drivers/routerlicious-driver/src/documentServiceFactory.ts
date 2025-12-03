@@ -7,35 +7,38 @@ import type {
 	ILayerCompatDetails,
 	IProvideLayerCompatDetails,
 } from "@fluid-internal/client-utils";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
-	FiveDaysMs,
-	IDocumentService,
-	IDocumentServiceFactory,
-	IDocumentStorageServicePolicies,
-	IResolvedUrl,
+	type FiveDaysMs,
+	type IDocumentService,
+	type IDocumentServiceFactory,
+	type IDocumentStorageServicePolicies,
+	type IResolvedUrl,
 	LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	RateLimiter,
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
+	RateLimiter,
 } from "@fluidframework/driver-utils/internal";
 import {
-	ISession,
 	convertSummaryTreeToWholeSummaryTree,
+	type ISession,
 } from "@fluidframework/server-services-client";
-import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	createChildLogger,
+	PerformanceEvent,
+} from "@fluidframework/telemetry-utils/internal";
 
-import { ICache, InMemoryCache, NullCache } from "./cache.js";
-import { INormalizedWholeSnapshot } from "./contracts.js";
-import { ISnapshotTreeVersion } from "./definitions.js";
+import { type ICache, InMemoryCache, NullCache } from "./cache.js";
+import type { INormalizedWholeSnapshot } from "./contracts.js";
+import type { ISnapshotTreeVersion } from "./definitions.js";
 import { DocumentService } from "./documentService.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
-import { IRouterliciousDriverPolicies } from "./policies.js";
+import type { IRouterliciousDriverPolicies } from "./policies.js";
 import { r11sDriverCompatDetailsForLoader } from "./r11sLayerCompatState.js";
 import {
 	RouterliciousOrdererRestWrapper,
@@ -45,7 +48,7 @@ import {
 } from "./restWrapper.js";
 import { isRouterliciousResolvedUrl } from "./routerliciousResolvedUrl.js";
 import { SessionInfoManager } from "./sessionInfoManager.js";
-import { ITokenProvider } from "./tokens.js";
+import type { ITokenProvider } from "./tokens.js";
 import { replaceDocumentIdInPath } from "./urlUtils.js";
 
 const maximumSnapshotCacheDurationMs: FiveDaysMs = 432_000_000; // 5 days in ms
@@ -71,8 +74,10 @@ export class RouterliciousDocumentServiceFactory
 {
 	private readonly driverPolicies: IRouterliciousDriverPolicies;
 	private readonly blobCache: ICache<ArrayBufferLike>;
-	private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSnapshot> = new NullCache();
-	private readonly shreddedSummaryTreeCache: ICache<ISnapshotTreeVersion> = new NullCache();
+	private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSnapshot> =
+		new NullCache();
+	private readonly shreddedSummaryTreeCache: ICache<ISnapshotTreeVersion> =
+		new NullCache();
 	private readonly sessionInfoManager: SessionInfoManager;
 
 	constructor(
@@ -89,16 +94,17 @@ export class RouterliciousDocumentServiceFactory
 		this.blobCache = new InMemoryCache<ArrayBufferLike>();
 		if (this.driverPolicies.enableInternalSummaryCaching) {
 			if (this.driverPolicies.enableWholeSummaryUpload) {
-				this.wholeSnapshotTreeCache = new InMemoryCache<INormalizedWholeSnapshot>(
-					snapshotCacheExpiryMs,
-				);
+				this.wholeSnapshotTreeCache =
+					new InMemoryCache<INormalizedWholeSnapshot>(snapshotCacheExpiryMs);
 			} else {
 				this.shreddedSummaryTreeCache = new InMemoryCache<ISnapshotTreeVersion>(
 					snapshotCacheExpiryMs,
 				);
 			}
 		}
-		this.sessionInfoManager = new SessionInfoManager(this.driverPolicies.enableDiscovery);
+		this.sessionInfoManager = new SessionInfoManager(
+			this.driverPolicies.enableDiscovery,
+		);
 	}
 
 	/**
@@ -122,9 +128,14 @@ export class RouterliciousDocumentServiceFactory
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
 		if (createNewSummary === undefined) {
-			throw new Error("Empty file summary creation isn't supported in this driver.");
+			throw new Error(
+				"Empty file summary creation isn't supported in this driver.",
+			);
 		}
-		assert(!!resolvedUrl.endpoints.ordererUrl, 0x0b2 /* "Missing orderer URL!" */);
+		assert(
+			!!resolvedUrl.endpoints.ordererUrl,
+			0x0b2 /* "Missing orderer URL!" */,
+		);
 		const parsedUrl = new URL(resolvedUrl.url);
 		if (!parsedUrl.pathname) {
 			throw new Error("Parsed url should contain tenant and doc Id!!");
@@ -137,17 +148,23 @@ export class RouterliciousDocumentServiceFactory
 		const protocolSummary = createNewSummary.tree[".protocol"];
 		const appSummary = createNewSummary.tree[".app"];
 
-		const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
+		const documentAttributes =
+			getDocAttributesFromProtocolSummary(protocolSummary);
 		const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
 
-		const logger2 = createChildLogger({ logger, namespace: "RouterliciousDriver" });
+		const logger2 = createChildLogger({
+			logger,
+			namespace: "RouterliciousDriver",
+		});
 		const ordererTokenFetcher = toInstrumentedR11sOrdererTokenFetcher(
 			tenantId,
 			undefined /* documentId */,
 			this.tokenProvider,
 			logger2,
 		);
-		const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
+		const rateLimiter = new RateLimiter(
+			this.driverPolicies.maxConcurrentOrdererRequests,
+		);
 		const ordererRestWrapper = RouterliciousOrdererRestWrapper.load(
 			ordererTokenFetcher,
 			logger2,
@@ -176,11 +193,15 @@ export class RouterliciousDocumentServiceFactory
 					await ordererRestWrapper.post<
 						{ id: string; token?: string; session?: ISession } | string
 					>(`/documents/${tenantId}`, {
-						summary: convertSummaryTreeToWholeSummaryTree(undefined, appSummary),
+						summary: convertSummaryTreeToWholeSummaryTree(
+							undefined,
+							appSummary,
+						),
 						sequenceNumber: documentAttributes.sequenceNumber,
 						values: quorumValues,
 						enableDiscovery: this.driverPolicies.enableDiscovery,
-						generateToken: this.tokenProvider.documentPostCreateCallback !== undefined,
+						generateToken:
+							this.tokenProvider.documentPostCreateCallback !== undefined,
 						isEphemeralContainer: createAsEphemeral,
 						enableAnyBinaryBlobOnFirstSummary: true,
 					})
@@ -218,8 +239,14 @@ export class RouterliciousDocumentServiceFactory
 					docId: documentId,
 				},
 				async () => {
-					if (token && this.tokenProvider.documentPostCreateCallback !== undefined) {
-						return this.tokenProvider.documentPostCreateCallback(documentId, token);
+					if (
+						token &&
+						this.tokenProvider.documentPostCreateCallback !== undefined
+					) {
+						return this.tokenProvider.documentPostCreateCallback(
+							documentId,
+							token,
+						);
 					}
 				},
 			);
@@ -227,7 +254,10 @@ export class RouterliciousDocumentServiceFactory
 			throw new DocumentPostCreateError(error);
 		}
 
-		parsedUrl.pathname = replaceDocumentIdInPath(parsedUrl.pathname, documentId);
+		parsedUrl.pathname = replaceDocumentIdInPath(
+			parsedUrl.pathname,
+			documentId,
+		);
 		const deltaStorageUrl = resolvedUrl.endpoints.deltaStorageUrl;
 		if (!deltaStorageUrl) {
 			throw new Error(
@@ -297,7 +327,9 @@ export class RouterliciousDocumentServiceFactory
 		const ordererTokenP = ordererTokenFetcher();
 		const storageTokenP = storageTokenFetcher();
 
-		const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
+		const rateLimiter = new RateLimiter(
+			this.driverPolicies.maxConcurrentOrdererRequests,
+		);
 		const ordererRestWrapper = RouterliciousOrdererRestWrapper.load(
 			ordererTokenFetcher,
 			logger2,
@@ -307,21 +339,21 @@ export class RouterliciousDocumentServiceFactory
 			ordererTokenP,
 		);
 
-		const fluidResolvedUrl: IResolvedUrl = await this.sessionInfoManager.initializeSessionInfo(
-			{
+		const fluidResolvedUrl: IResolvedUrl =
+			await this.sessionInfoManager.initializeSessionInfo({
 				session,
 				resolvedUrl,
 				documentId,
 				tenantId,
 				ordererRestWrapper,
 				logger: logger2,
-			},
-		);
+			});
 
 		const storageUrl = fluidResolvedUrl.endpoints.storageUrl;
 		const ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
 		const deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
-		const deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl || ordererUrl; // backward compatibility
+		const deltaStreamUrl =
+			fluidResolvedUrl.endpoints.deltaStreamUrl || ordererUrl; // backward compatibility
 		if (!ordererUrl || !deltaStorageUrl) {
 			throw new Error(
 				`All endpoints urls must be provided. [ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`,

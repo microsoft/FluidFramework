@@ -10,17 +10,17 @@ import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator"
 import { AttachState } from "@fluidframework/container-definitions";
 import type {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IFluidDataStoreRuntimeEvents,
 	IChannelServices,
 	IChannelStorageService,
 	IDeltaConnection,
+	IFluidDataStoreRuntime,
+	IFluidDataStoreRuntimeEvents,
 } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IExperimentalIncrementalSummaryContext,
+	IRuntimeMessageCollection,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
@@ -61,9 +61,14 @@ type OverridableType = Overridable<{
 		this: SharedObject,
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext | undefined,
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
+		incrementalSummaryContext?:
+			| IExperimentalIncrementalSummaryContext
+			| undefined,
 	) => ISummaryTreeWithStats;
-	loadCore: (this: SharedObject, services: IChannelStorageService) => Promise<void>;
+	loadCore: (
+		this: SharedObject,
+		services: IChannelStorageService,
+	) => Promise<void>;
 	processMessagesCore: (
 		this: SharedObject,
 		messagesCollection: IRuntimeMessageCollection,
@@ -84,7 +89,8 @@ function createTestSharedObject(overrides: OverridableType): {
 		protected onDisconnect = overrides?.onDisconnect?.bind(this);
 		protected applyStashedOp = overrides?.applyStashedOp?.bind(this);
 		protected didAttach =
-			overrides.didAttach?.bind(this) ?? (() => assert.fail("didAttach not set"));
+			overrides.didAttach?.bind(this) ??
+			(() => assert.fail("didAttach not set"));
 	}
 
 	const runtime = overrides?.runtime ?? {};
@@ -95,7 +101,11 @@ function createTestSharedObject(overrides: OverridableType): {
 			return this;
 		},
 		isAttached: false,
-		resolveHandle: async () => ({ status: 500, mimeType: "error", value: "error" }),
+		resolveHandle: async () => ({
+			status: 500,
+			mimeType: "error",
+			value: "error",
+		}),
 	};
 	runtime.IFluidHandleContext ??= runtime.channelsRoutingContext;
 
@@ -136,11 +146,18 @@ function createTestSharedObject(overrides: OverridableType): {
 describe("SharedObject attaching binding and connecting", () => {
 	const runtimeAttachStateAndConnectedMatrix = generatePairwiseOptions({
 		connected: [true, false],
-		attachState: [AttachState.Detached, AttachState.Attaching, AttachState.Attached],
+		attachState: [
+			AttachState.Detached,
+			AttachState.Attaching,
+			AttachState.Attached,
+		],
 	});
 
 	describe("shared object after creation", () => {
-		for (const { connected, attachState } of runtimeAttachStateAndConnectedMatrix) {
+		for (const {
+			connected,
+			attachState,
+		} of runtimeAttachStateAndConnectedMatrix) {
 			it(`!isAttached and !connected with runtime ${JSON.stringify({
 				connected,
 				attachState,
@@ -158,7 +175,8 @@ describe("SharedObject attaching binding and connecting", () => {
 		}
 
 		it("!isAttached with detached transition to attach runtime", () => {
-			const runtimeEvents = new TypedEventEmitter<IFluidDataStoreRuntimeEvents>();
+			const runtimeEvents =
+				new TypedEventEmitter<IFluidDataStoreRuntimeEvents>();
 
 			let didAttach = 0;
 			const { overrides, sharedObject } = createTestSharedObject({
@@ -183,7 +201,10 @@ describe("SharedObject attaching binding and connecting", () => {
 	});
 
 	describe("shared object after load", () => {
-		for (const { connected, attachState } of runtimeAttachStateAndConnectedMatrix) {
+		for (const {
+			connected,
+			attachState,
+		} of runtimeAttachStateAndConnectedMatrix) {
 			it(`With runtime ${JSON.stringify({
 				connected,
 				attachState,
@@ -205,18 +226,25 @@ describe("SharedObject attaching binding and connecting", () => {
 				await sharedObject.load(
 					createOverridableProxy<IChannelServices>("services", {
 						objectStorage: createOverridableProxy("objectStorage"),
-						deltaConnection: createOverridableProxy<IDeltaConnection>("deltaConnection", {
-							attach(handler) {
-								attachCalled = true;
+						deltaConnection: createOverridableProxy<IDeltaConnection>(
+							"deltaConnection",
+							{
+								attach(handler) {
+									attachCalled = true;
+								},
+								connected,
 							},
-							connected,
-						}),
+						),
 					}),
 				);
 
 				assert.strictEqual(loaded, true, "loaded");
 				assert.strictEqual(attachCalled, true, "attachCalled");
-				assert.strictEqual(didAttach, sharedObject.isAttached() ? 1 : 0, "didAttach");
+				assert.strictEqual(
+					didAttach,
+					sharedObject.isAttached() ? 1 : 0,
+					"didAttach",
+				);
 
 				assert.strictEqual(
 					sharedObject.isAttached(),
@@ -232,7 +260,8 @@ describe("SharedObject attaching binding and connecting", () => {
 		}
 
 		it("isAttached with detached transition to attach runtime", async () => {
-			const runtimeEvents = new TypedEventEmitter<IFluidDataStoreRuntimeEvents>();
+			const runtimeEvents =
+				new TypedEventEmitter<IFluidDataStoreRuntimeEvents>();
 
 			let didAttach = 0;
 			let loaded = false;
@@ -251,10 +280,13 @@ describe("SharedObject attaching binding and connecting", () => {
 			await sharedObject.load(
 				createOverridableProxy<IChannelServices>("services", {
 					objectStorage: createOverridableProxy("objectStorage"),
-					deltaConnection: createOverridableProxy<IDeltaConnection>("deltaConnection", {
-						attach(handler) {},
-						connected: overrides.runtime?.connected ?? false,
-					}),
+					deltaConnection: createOverridableProxy<IDeltaConnection>(
+						"deltaConnection",
+						{
+							attach(handler) {},
+							connected: overrides.runtime?.connected ?? false,
+						},
+					),
 				}),
 			);
 
@@ -273,7 +305,10 @@ describe("SharedObject attaching binding and connecting", () => {
 	});
 
 	describe("shared object after connect", () => {
-		for (const { connected, attachState } of runtimeAttachStateAndConnectedMatrix) {
+		for (const {
+			connected,
+			attachState,
+		} of runtimeAttachStateAndConnectedMatrix) {
 			it(`With runtime ${JSON.stringify({
 				connected,
 				attachState,
@@ -291,17 +326,24 @@ describe("SharedObject attaching binding and connecting", () => {
 				sharedObject.connect(
 					createOverridableProxy<IChannelServices>("services", {
 						objectStorage: createOverridableProxy("objectStorage"),
-						deltaConnection: createOverridableProxy<IDeltaConnection>("deltaConnection", {
-							attach(handler) {
-								attachCalled = true;
+						deltaConnection: createOverridableProxy<IDeltaConnection>(
+							"deltaConnection",
+							{
+								attach(handler) {
+									attachCalled = true;
+								},
+								connected,
 							},
-							connected,
-						}),
+						),
 					}),
 				);
 
 				assert.strictEqual(attachCalled, true, "attachCalled");
-				assert.strictEqual(didAttach, sharedObject.isAttached() ? 1 : 0, "didAttach");
+				assert.strictEqual(
+					didAttach,
+					sharedObject.isAttached() ? 1 : 0,
+					"didAttach",
+				);
 
 				assert.strictEqual(
 					sharedObject.isAttached(),
@@ -317,7 +359,8 @@ describe("SharedObject attaching binding and connecting", () => {
 		}
 
 		it("isAttached with detached transition to attach runtime", async () => {
-			const runtimeEvents = new TypedEventEmitter<IFluidDataStoreRuntimeEvents>();
+			const runtimeEvents =
+				new TypedEventEmitter<IFluidDataStoreRuntimeEvents>();
 
 			let didAttach = 0;
 			const { overrides, sharedObject } = createTestSharedObject({
@@ -332,10 +375,13 @@ describe("SharedObject attaching binding and connecting", () => {
 			sharedObject.connect(
 				createOverridableProxy<IChannelServices>("services", {
 					objectStorage: createOverridableProxy("objectStorage"),
-					deltaConnection: createOverridableProxy<IDeltaConnection>("deltaConnection", {
-						attach(handler) {},
-						connected: overrides.runtime?.connected ?? false,
-					}),
+					deltaConnection: createOverridableProxy<IDeltaConnection>(
+						"deltaConnection",
+						{
+							attach(handler) {},
+							connected: overrides.runtime?.connected ?? false,
+						},
+					),
 				}),
 			);
 
@@ -354,7 +400,10 @@ describe("SharedObject attaching binding and connecting", () => {
 	});
 
 	describe("shared object after load and connect", () => {
-		for (const { connected, attachState } of runtimeAttachStateAndConnectedMatrix) {
+		for (const {
+			connected,
+			attachState,
+		} of runtimeAttachStateAndConnectedMatrix) {
 			it(`With runtime ${JSON.stringify({
 				connected,
 				attachState,
@@ -376,20 +425,29 @@ describe("SharedObject attaching binding and connecting", () => {
 				await sharedObject.load(
 					createOverridableProxy<IChannelServices>("services", {
 						objectStorage: createOverridableProxy("objectStorage"),
-						deltaConnection: createOverridableProxy<IDeltaConnection>("deltaConnection", {
-							attach(handler) {
-								attachCalled = true;
+						deltaConnection: createOverridableProxy<IDeltaConnection>(
+							"deltaConnection",
+							{
+								attach(handler) {
+									attachCalled = true;
+								},
+								connected,
 							},
-							connected,
-						}),
+						),
 					}),
 				);
 
 				assert.strictEqual(loaded, true, "loaded");
 				assert.strictEqual(attachCalled, true, "attachCalled");
-				assert.strictEqual(didAttach, sharedObject.isAttached() ? 1 : 0, "didAttach");
+				assert.strictEqual(
+					didAttach,
+					sharedObject.isAttached() ? 1 : 0,
+					"didAttach",
+				);
 
-				sharedObject.connect(createOverridableProxy<IChannelServices>("services"));
+				sharedObject.connect(
+					createOverridableProxy<IChannelServices>("services"),
+				);
 
 				assert.strictEqual(
 					sharedObject.isAttached(),
@@ -406,7 +464,10 @@ describe("SharedObject attaching binding and connecting", () => {
 	});
 
 	describe("shared object after bindToContext", () => {
-		for (const { connected, attachState } of runtimeAttachStateAndConnectedMatrix) {
+		for (const {
+			connected,
+			attachState,
+		} of runtimeAttachStateAndConnectedMatrix) {
 			it(`With runtime ${JSON.stringify({
 				connected,
 				attachState,
@@ -440,7 +501,11 @@ describe("SharedObject attaching binding and connecting", () => {
 				});
 
 				sharedObject.bindToContext();
-				assert.strictEqual(didAttach, sharedObject.isAttached() ? 1 : 0, "didAttach");
+				assert.strictEqual(
+					didAttach,
+					sharedObject.isAttached() ? 1 : 0,
+					"didAttach",
+				);
 				assert.strictEqual(attachCalled, true, "attachCalled");
 
 				assert.strictEqual(
@@ -457,7 +522,8 @@ describe("SharedObject attaching binding and connecting", () => {
 		}
 
 		it("isAttached with detached transition to attach runtime", async () => {
-			const runtimeEvents = new TypedEventEmitter<IFluidDataStoreRuntimeEvents>();
+			const runtimeEvents =
+				new TypedEventEmitter<IFluidDataStoreRuntimeEvents>();
 			let didAttach = 0;
 			let attachCalled = false;
 			const { overrides, sharedObject } = createTestSharedObject({
@@ -471,12 +537,15 @@ describe("SharedObject attaching binding and connecting", () => {
 						sharedObject.connect(
 							createOverridableProxy<IChannelServices>("services", {
 								objectStorage: createOverridableProxy("objectStorage"),
-								deltaConnection: createOverridableProxy<IDeltaConnection>("deltaConnection", {
-									attach(handler) {
-										attachCalled = true;
+								deltaConnection: createOverridableProxy<IDeltaConnection>(
+									"deltaConnection",
+									{
+										attach(handler) {
+											attachCalled = true;
+										},
+										connected: false,
 									},
-									connected: false,
-								}),
+								),
 							}),
 						);
 					},

@@ -24,7 +24,9 @@ import { modelEntryPointPiece } from "./modelEntryPointPiece.js";
  * Helper function for casting the container's entrypoint to the expected type.  Does a little extra
  * type checking for added safety.
  */
-const getModelFromContainer = async <ModelType>(container: IContainer): Promise<ModelType> => {
+const getModelFromContainer = async <ModelType>(
+	container: IContainer,
+): Promise<ModelType> => {
 	const entryPoint = (await container.getEntryPoint()) as {
 		model: ModelType;
 	};
@@ -33,7 +35,9 @@ const getModelFromContainer = async <ModelType>(container: IContainer): Promise<
 	// a comprehensible error message.  So distrust the type by default and do some basic type checking.
 	// TODO: Now that this all lives in the container code we can probably make some stronger type assumptions.
 	if (typeof entryPoint.model !== "object") {
-		throw new TypeError("Incompatible container runtime: doesn't provide model");
+		throw new TypeError(
+			"Incompatible container runtime: doesn't provide model",
+		);
 	}
 
 	return entryPoint.model;
@@ -75,8 +79,14 @@ export class InventoryListContainerRuntimeFactory implements IRuntimeFactory {
 	): Promise<IRuntime> {
 		const compositeEntryPoint = new CompositeEntryPoint();
 		compositeEntryPoint.addEntryPointPiece(modelEntryPointPiece);
-		const migratorEntryPointPiece = makeMigratorEntryPointPiece(exportDataCallback);
+		const migratorEntryPointPiece =
+			makeMigratorEntryPointPiece(exportDataCallback);
 		compositeEntryPoint.addEntryPointPiece(migratorEntryPointPiece);
-		return loadCompositeRuntime(context, existing, compositeEntryPoint, this.runtimeOptions);
+		return loadCompositeRuntime(
+			context,
+			existing,
+			compositeEntryPoint,
+			this.runtimeOptions,
+		);
 	}
 }

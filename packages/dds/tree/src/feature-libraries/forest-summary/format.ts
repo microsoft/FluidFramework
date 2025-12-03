@@ -7,7 +7,7 @@ import { type Static, Type } from "@sinclair/typebox";
 
 import { Versioned } from "../../codec/index.js";
 import { schemaFormatV1 } from "../../core/index.js";
-import { brand, type Brand } from "../../util/index.js";
+import { type Brand, brand } from "../../util/index.js";
 
 /**
  * The format version for the forest.
@@ -34,5 +34,7 @@ const FormatGeneric = (
 		{ additionalProperties: false },
 	);
 
-export const Format = FormatGeneric(brand<ForestFormatVersion>(ForestFormatVersion.v1));
+export const Format = FormatGeneric(
+	brand<ForestFormatVersion>(ForestFormatVersion.v1),
+);
 export type Format = Static<typeof Format>;

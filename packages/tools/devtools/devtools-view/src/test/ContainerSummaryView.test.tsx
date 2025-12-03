@@ -12,10 +12,13 @@ import { render } from "@testing-library/react";
 import React from "react";
 
 import { ContainerFeatureFlagContext } from "../ContainerFeatureFlagHelper.js";
-import { MessageRelayContext } from "../MessageRelayContext.js";
 import { ContainerSummaryView } from "../components/index.js";
+import { MessageRelayContext } from "../MessageRelayContext.js";
 
-import { assertNoAccessibilityViolations, MockMessageRelay } from "./utils/index.js";
+import {
+	assertNoAccessibilityViolations,
+	MockMessageRelay,
+} from "./utils/index.js";
 
 describe("ContainerSummaryView Accessibility Check", () => {
 	const supportedFeatures: DevtoolsFeatureFlags = {

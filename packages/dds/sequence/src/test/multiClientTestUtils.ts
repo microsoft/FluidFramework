@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
+import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
+	type MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-	type MockContainerRuntimeFactoryForReconnection,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { SharedString } from "../sequenceFactory.js";
-import { type ISharedString } from "../sharedString.js";
+import type { ISharedString } from "../sharedString.js";
 
-import { Client } from "./intervalTestUtils.js";
+import type { Client } from "./intervalTestUtils.js";
 
 export function constructClient(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
@@ -28,7 +28,8 @@ export function constructClient(
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	dataStoreRuntime.options = dataStoreRuntimeOptions;
 	const sharedString: ISharedString = factory.create(dataStoreRuntime, id);
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const containerRuntime =
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services: IChannelServices = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
@@ -57,12 +58,18 @@ export async function loadClient(
 
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	dataStoreRuntime.options = dataStoreRuntimeOptions;
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const containerRuntime =
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services: IChannelServices = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: MockStorage.createFromSummary(summary),
 	};
-	const sharedString = await factory.load(dataStoreRuntime, id, services, factory.attributes);
+	const sharedString = await factory.load(
+		dataStoreRuntime,
+		id,
+		services,
+		factory.attributes,
+	);
 
 	return {
 		sharedString,

@@ -11,7 +11,7 @@ import cloneDeep from "lodash/cloneDeep.js";
 
 import { ChangeSet } from "../changeset.js";
 
-describe("Reversible ChangeSets", function () {
+describe("Reversible ChangeSets", () => {
 	it("Inverting a string map insert", () => {
 		const originalCS = {
 			"map<String>": {

@@ -9,13 +9,21 @@ import {
 	iterateListValuesWhile,
 } from "@fluidframework/core-utils/internal";
 
-import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
+import {
+	UnassignedSequenceNumber,
+	UniversalSequenceNumber,
+} from "./constants.js";
 import type {
 	AdjustParams,
 	IMergeTreeAnnotateAdjustMsg,
 	IMergeTreeAnnotateMsg,
 } from "./ops.js";
-import { type MapLike, type PropertySet, clone, createMap } from "./properties.js";
+import {
+	clone,
+	createMap,
+	type MapLike,
+	type PropertySet,
+} from "./properties.js";
 
 /**
  * Minimally copies properties and the property manager from source to destination.
@@ -43,7 +51,10 @@ export function copyPropertiesAndManager(
 
 type PropertyChange = {
 	seq: number;
-} & ({ adjust: AdjustParams; raw?: undefined } | { raw: unknown; adjust?: undefined });
+} & (
+	| { adjust: AdjustParams; raw?: undefined }
+	| { raw: unknown; adjust?: undefined }
+);
 
 interface PropertyChanges {
 	msnConsensus: unknown;
@@ -63,7 +74,8 @@ function computePropertyValue(
 				computedValue = raw;
 			} else {
 				const adjusted =
-					(typeof computedValue === "number" ? computedValue : 0) + adjust.delta;
+					(typeof computedValue === "number" ? computedValue : 0) +
+					adjust.delta;
 				if (adjust.max !== undefined && adjusted > adjust.max) {
 					computedValue = adjust.max;
 				} else if (adjust.min !== undefined && adjusted < adjust.min) {
@@ -84,15 +96,17 @@ export type PropsOrAdjust =
 	| Pick<IMergeTreeAnnotateAdjustMsg, "props" | "adjust">
 	| Pick<IMergeTreeAnnotateMsg, "props" | "adjust">;
 
-const opToChanges = (op: PropsOrAdjust, seq: number): [string, PropertyChange][] => [
+const opToChanges = (
+	op: PropsOrAdjust,
+	seq: number,
+): [string, PropertyChange][] => [
 	...Object.entries(op.props ?? {})
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		.map<[string, PropertyChange]>(([k, raw]) => [k, { raw, seq }])
 		.filter(([_, v]) => v.raw !== undefined),
-	...Object.entries(op.adjust ?? {}).map<[string, PropertyChange]>(([k, adjust]) => [
-		k,
-		{ adjust, seq },
-	]),
+	...Object.entries(op.adjust ?? {}).map<[string, PropertyChange]>(
+		([k, adjust]) => [k, { adjust, seq }],
+	),
 ];
 
 function applyChanges(
@@ -143,34 +157,39 @@ export class PropertiesManager {
 		seg: { properties?: MapLike<unknown> },
 		collaborating: boolean = false,
 	): MapLike<unknown> {
-		return applyChanges(op, seg, UniversalSequenceNumber, (properties, deltas, key, value) => {
-			// eslint-disable-next-line unicorn/no-null
-			const previousValue = properties[key] ?? null;
+		return applyChanges(
+			op,
+			seg,
+			UniversalSequenceNumber,
+			(properties, deltas, key, value) => {
+				// eslint-disable-next-line unicorn/no-null
+				const previousValue = properties[key] ?? null;
 
-			const pending = this.changes.get(key);
-			if (collaborating) {
-				assert(
-					pending !== undefined,
-					0xa6f /* Pending changes must exist for rollback when collaborating */,
-				);
-				pending.local.pop();
-				properties[key] = computePropertyValue(
-					pending.msnConsensus,
-					pending.remote.map((n) => n.data),
-					pending.local.map((n) => n.data),
-				);
-				if (pending.local.empty && pending.remote.empty) {
-					this.changes.delete(key);
+				const pending = this.changes.get(key);
+				if (collaborating) {
+					assert(
+						pending !== undefined,
+						0xa6f /* Pending changes must exist for rollback when collaborating */,
+					);
+					pending.local.pop();
+					properties[key] = computePropertyValue(
+						pending.msnConsensus,
+						pending.remote.map((n) => n.data),
+						pending.local.map((n) => n.data),
+					);
+					if (pending.local.empty && pending.remote.empty) {
+						this.changes.delete(key);
+					}
+				} else {
+					assert(
+						pending === undefined,
+						0xa70 /* Pending changes must not exist when not collaborating */,
+					);
+					properties[key] = computePropertyValue(previousValue, [value]);
 				}
-			} else {
-				assert(
-					pending === undefined,
-					0xa70 /* Pending changes must not exist when not collaborating */,
-				);
-				properties[key] = computePropertyValue(previousValue, [value]);
-			}
-			deltas[key] = previousValue;
-		});
+				deltas[key] = previousValue;
+			},
+		);
 	}
 
 	/**
@@ -216,7 +235,9 @@ export class PropertiesManager {
 					// need to track remotes at all to support emitting the legacy snapshot format, which only sharedstring
 					// uses. when we remove the ability to emit that format, we can remove all remote op tracking
 					if (value.raw !== undefined && pending.remote.empty) {
-						pending.msnConsensus = computePropertyValue(pending.msnConsensus, [value]);
+						pending.msnConsensus = computePropertyValue(pending.msnConsensus, [
+							value,
+						]);
 					} else {
 						pending.remote.push(value);
 					}
@@ -259,7 +280,9 @@ export class PropertiesManager {
 			// need to track remotes at all to support emitting the legacy snapshot format, which only sharedstring
 			// uses. when we remove the ability to emit that format, we can remove all remote op tracking
 			if (value.raw !== undefined && change.remote.empty) {
-				change.msnConsensus = computePropertyValue(change.msnConsensus, [value]);
+				change.msnConsensus = computePropertyValue(change.msnConsensus, [
+					value,
+				]);
 			} else {
 				change.remote.push(value);
 			}
@@ -307,11 +330,18 @@ export class PropertiesManager {
 	): void {
 		const newManager = (dest.propertyManager ??= new PropertiesManager());
 		dest.properties = clone(oldProps);
-		for (const [key, { local, remote, msnConsensus }] of this.changes.entries()) {
+		for (const [
+			key,
+			{ local, remote, msnConsensus },
+		] of this.changes.entries()) {
 			newManager.changes.set(key, {
 				msnConsensus,
-				remote: new DoublyLinkedList(remote.empty ? undefined : remote.map((c) => c.data)),
-				local: new DoublyLinkedList(local.empty ? undefined : local.map((c) => c.data)),
+				remote: new DoublyLinkedList(
+					remote.empty ? undefined : remote.map((c) => c.data),
+				),
+				local: new DoublyLinkedList(
+					local.empty ? undefined : local.map((c) => c.data),
+				),
 			});
 		}
 	}
@@ -334,7 +364,10 @@ export class PropertiesManager {
 		for (const [key, changes] of this.changes) {
 			properties[key] = computePropertyValue(
 				changes.msnConsensus,
-				iterateListValuesWhile(changes.remote.first, (c) => c.data.seq <= sequenceNumber),
+				iterateListValuesWhile(
+					changes.remote.first,
+					(c) => c.data.seq <= sequenceNumber,
+				),
 			);
 			if (properties[key] === null) {
 				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete

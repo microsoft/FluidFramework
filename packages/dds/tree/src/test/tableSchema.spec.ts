@@ -9,11 +9,11 @@ import { validateUsageError } from "@fluidframework/test-runtime-utils/internal"
 import { Tree, TreeAlpha } from "../shared-tree/index.js";
 import {
 	allowUnused,
+	type ConciseTree,
 	getJsonSchema,
 	KeyEncodingOptions,
 	SchemaFactoryAlpha,
 	TreeBeta,
-	type ConciseTree,
 	type TreeNode,
 } from "../simple-tree/index.js";
 import { TableSchema } from "../tableSchema.js";
@@ -22,9 +22,9 @@ import type {
 	JsonCompatibleReadOnly,
 	requireTrue,
 } from "../util/index.js";
-import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshots/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { describeHydration } from "./simple-tree/utils.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshots/index.js";
 
 const schemaFactory = new SchemaFactoryAlpha("test");
 
@@ -84,7 +84,9 @@ describe("TableFactory unit tests", () => {
 
 			// TODO: ideally the "props" property would not exist at all on the derived class.
 			// For now, it is at least an optional property and cannot be set to anything meaningful.
-			type _test = requireTrue<areSafelyAssignable<undefined, MyColumn["props"]>>;
+			type _test = requireTrue<
+				areSafelyAssignable<undefined, MyColumn["props"]>
+			>;
 			assert.equal(column.props, undefined);
 		});
 
@@ -123,7 +125,11 @@ describe("TableFactory unit tests", () => {
 				props: schemaFactory.string,
 			}) {}
 
-			const column = initializeTree(MyRow, { id: "row-0", cells: {}, props: "Row 0" });
+			const column = initializeTree(MyRow, {
+				id: "row-0",
+				cells: {},
+				props: "Row 0",
+			});
 			assert.equal(column.props, "Row 0");
 		});
 	});
@@ -895,7 +901,11 @@ describe("TableFactory unit tests", () => {
 			});
 
 			assert.throws(
-				() => table.removeColumns([column0, new Column({ id: "column-1", props: {} })]),
+				() =>
+					table.removeColumns([
+						column0,
+						new Column({ id: "column-1", props: {} }),
+					]),
 				validateUsageError(
 					/The specified column node with ID "column-1" does not exist in the table./,
 				),
@@ -1029,7 +1039,8 @@ describe("TableFactory unit tests", () => {
 			});
 
 			assert.throws(
-				() => table.removeRows([new Row({ id: "row-0", cells: {}, props: {} })]),
+				() =>
+					table.removeRows([new Row({ id: "row-0", cells: {}, props: {} })]),
 				validateUsageError(
 					/The specified row node with ID "row-0" does not exist in the table./,
 				),
@@ -1044,7 +1055,11 @@ describe("TableFactory unit tests", () => {
 			});
 
 			assert.throws(
-				() => table.removeRows([row0, new Row({ id: "row-1", cells: {}, props: {} })]),
+				() =>
+					table.removeRows([
+						row0,
+						new Row({ id: "row-1", cells: {}, props: {} }),
+					]),
 				validateUsageError(
 					/The specified row node with ID "row-1" does not exist in the table./,
 				),
@@ -1106,7 +1121,9 @@ describe("TableFactory unit tests", () => {
 
 			assert.throws(
 				() => table.removeRows(-1, undefined),
-				validateUsageError(/Expected non-negative index passed to Table.removeRows, got -1./),
+				validateUsageError(
+					/Expected non-negative index passed to Table.removeRows, got -1./,
+				),
 			);
 
 			assert.throws(
@@ -1524,7 +1541,11 @@ describe("TableFactory unit tests", () => {
 		it("data (verbose)", () => {
 			const cell0 = new Cell({ value: "Hello World!" });
 			const column0 = new Column({ id: "column-0", props: {} });
-			const row0 = new Row({ id: "row-0", cells: { "column-0": cell0 }, props: {} });
+			const row0 = new Row({
+				id: "row-0",
+				cells: { "column-0": cell0 },
+				props: {},
+			});
 			const table = new Table({
 				columns: [column0],
 				rows: [row0],
@@ -1538,13 +1559,19 @@ describe("TableFactory unit tests", () => {
 		it("data (concise)", () => {
 			const cell0 = new Cell({ value: "Hello World!" });
 			const column0 = new Column({ id: "column-0", props: {} });
-			const row0 = new Row({ id: "row-0", cells: { "column-0": cell0 }, props: {} });
+			const row0 = new Row({
+				id: "row-0",
+				cells: { "column-0": cell0 },
+				props: {},
+			});
 			const table = new Table({
 				columns: [column0],
 				rows: [row0],
 			});
 
-			takeJsonSnapshot(TreeBeta.exportConcise(table, {}) as unknown as JsonCompatibleReadOnly);
+			takeJsonSnapshot(
+				TreeBeta.exportConcise(table, {}) as unknown as JsonCompatibleReadOnly,
+			);
 		});
 	});
 

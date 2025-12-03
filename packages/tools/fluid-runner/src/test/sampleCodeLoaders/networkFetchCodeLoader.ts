@@ -13,12 +13,17 @@ import type { IFluidFileConverter } from "../../codeLoaderBundle.js";
 
 import { SampleCodeLoader } from "./sampleCodeLoader.js";
 
-async function getCodeLoader(_logger: ITelemetryBaseLogger): Promise<ICodeDetailsLoader> {
+async function getCodeLoader(
+	_logger: ITelemetryBaseLogger,
+): Promise<ICodeDetailsLoader> {
 	return new SampleCodeLoader();
 }
 
 export const executeResult = "result";
-async function execute(_container: IContainer, _options?: string): Promise<string> {
+async function execute(
+	_container: IContainer,
+	_options?: string,
+): Promise<string> {
 	// Make a network fetch call
 	await fetch("https://www.microsoft.com/");
 	return executeResult;

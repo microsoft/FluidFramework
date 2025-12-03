@@ -3,65 +3,72 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter, TypedEventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	EventEmitter,
+	stringToBuffer,
+	TypedEventEmitter,
+} from "@fluid-internal/client-utils";
 import {
 	AttachState,
-	IAudience,
-	IAudienceEvents,
-	ISelf,
+	type IAudience,
+	type IAudienceEvents,
+	type ISelf,
 } from "@fluidframework/container-definitions";
-import { ILoader, IAudienceOwner } from "@fluidframework/container-definitions/internal";
+import type {
+	IAudienceOwner,
+	ILoader,
+} from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
-import {
+import type {
 	FluidObject,
 	IFluidHandle,
 	IRequest,
 	IResponse,
-	type ITelemetryBaseLogger,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import {
+import type {
 	IFluidHandleContext,
-	type IFluidHandleInternal,
+	IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
+	IChannel,
+	IChannelFactory,
 	IChannelServices,
 	IChannelStorageService,
 	IDeltaConnection,
 	IDeltaHandler,
-	IChannel,
+	IDeltaManagerErased,
 	IFluidDataStoreRuntime,
-	IChannelFactory,
-	type IDeltaManagerErased,
 } from "@fluidframework/datastore-definitions/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import {
-	IQuorumClients,
-	ISequencedClient,
-	ISummaryTree,
+	type IQuorumClients,
+	type ISequencedClient,
+	type ISummaryTree,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
 import {
-	ITreeEntry,
-	MessageType,
-	ISequencedDocumentMessage,
+	type ISequencedDocumentMessage,
 	type ISnapshotTree,
+	type ITreeEntry,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
-	IIdCompressorCore,
 	IdCreationRange,
+	IIdCompressorCore,
 } from "@fluidframework/id-compressor/internal";
 import {
-	ISummaryTreeWithStats,
-	IGarbageCollectionData,
 	FlushMode,
-	IFluidDataStoreChannel,
-	VisibilityState,
-	type ITelemetryContext,
+	type IFluidDataStoreChannel,
+	type IGarbageCollectionData,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
+	type ISummaryTreeWithStats,
+	type ITelemetryContext,
 	type MinimumVersionForCollab,
+	VisibilityState,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	getNormalizedObjectStoragePathParts,
@@ -89,7 +96,10 @@ export class MockDeltaConnection implements IDeltaConnection {
 	public handler: IDeltaHandler | undefined;
 
 	constructor(
-		private readonly submitFn: (messageContent: any, localOpMetadata: unknown) => number,
+		private readonly submitFn: (
+			messageContent: any,
+			localOpMetadata: unknown,
+		) => number,
 		private readonly dirtyFn: () => void,
 	) {}
 
@@ -166,10 +176,11 @@ export interface IMockContainerRuntimeOptions {
 	readonly enableGroupedBatching?: boolean;
 }
 
-const defaultMockContainerRuntimeOptions: Required<IMockContainerRuntimeOptions> = {
-	flushMode: FlushMode.Immediate,
-	enableGroupedBatching: false,
-};
+const defaultMockContainerRuntimeOptions: Required<IMockContainerRuntimeOptions> =
+	{
+		flushMode: FlushMode.Immediate,
+		enableGroupedBatching: false,
+	};
 
 const makeContainerRuntimeOptions = (
 	mockContainerRuntimeOptions: IMockContainerRuntimeOptions,
@@ -200,7 +211,8 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	 * @deprecated use the associated datastore to create the delta connection
 	 */
 	protected readonly deltaConnections: MockDeltaConnection[] = [];
-	protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
+	protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] =
+		[];
 	protected readonly outbox: IInternalMockRuntimeMessage[] = [];
 	private readonly idAllocationOutbox: IInternalMockRuntimeMessage[] = [];
 	/**
@@ -212,13 +224,18 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		protected readonly dataStoreRuntime: MockFluidDataStoreRuntime,
 		protected readonly factory: MockContainerRuntimeFactory,
 		mockContainerRuntimeOptions: IMockContainerRuntimeOptions = defaultMockContainerRuntimeOptions,
-		protected readonly overrides?: { minimumSequenceNumber?: number | undefined },
+		protected readonly overrides?: {
+			minimumSequenceNumber?: number | undefined;
+		},
 	) {
 		super();
 		this.deltaManager = new MockDeltaManager(() => this.clientId);
-		this.deltaManager.inbound.on("push", (message: ISequencedDocumentMessage) => {
-			this.factory.pushMessage(message);
-		});
+		this.deltaManager.inbound.on(
+			"push",
+			(message: ISequencedDocumentMessage) => {
+				this.factory.pushMessage(message);
+			},
+		);
 
 		const msn = overrides?.minimumSequenceNumber;
 		if (msn !== undefined) {
@@ -232,7 +249,9 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		// FluidDataStoreRuntime already creates a clientId, reuse that so they are in sync.
 		this.clientId = this.dataStoreRuntime.clientId ?? uuid();
 		factory.quorum.addMember(this.clientId, {});
-		this.runtimeOptions = makeContainerRuntimeOptions(mockContainerRuntimeOptions);
+		this.runtimeOptions = makeContainerRuntimeOptions(
+			mockContainerRuntimeOptions,
+		);
 		assert(
 			this.runtimeOptions.flushMode !== FlushMode.Immediate ||
 				!this.runtimeOptions.enableGroupedBatching,
@@ -280,7 +299,9 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		const isAllocationMessage = this.isAllocationMessage(message.content);
 
 		const currentFlushMode =
-			this.#manualFlushCalls > 0 ? FlushMode.TurnBased : this.runtimeOptions.flushMode;
+			this.#manualFlushCalls > 0
+				? FlushMode.TurnBased
+				: this.runtimeOptions.flushMode;
 
 		switch (currentFlushMode) {
 			case FlushMode.Immediate: {
@@ -305,7 +326,9 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			}
 
 			default:
-				throw new Error(`Unsupported FlushMode ${this.runtimeOptions.flushMode}`);
+				throw new Error(
+					`Unsupported FlushMode ${this.runtimeOptions.flushMode}`,
+				);
 		}
 
 		return clientSequenceNumber;
@@ -315,7 +338,9 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	 * If the message is an idAllocation message, it will finalize the id range and return true.
 	 * Otherwise, it will return false.
 	 */
-	protected maybeProcessIdAllocationMessage(message: ISequencedDocumentMessage): boolean {
+	protected maybeProcessIdAllocationMessage(
+		message: ISequencedDocumentMessage,
+	): boolean {
 		if (this.isAllocationMessage(message.contents)) {
 			this.finalizeIdRange(message.contents.contents);
 			return true;
@@ -328,7 +353,8 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	): message is IMockContainerRuntimeIdAllocationMessage {
 		return (
 			message !== undefined &&
-			(message as IMockContainerRuntimeIdAllocationMessage).type === "idAllocation"
+			(message as IMockContainerRuntimeIdAllocationMessage).type ===
+				"idAllocation"
 		);
 	}
 
@@ -352,7 +378,9 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	 */
 	public flushSomeMessages(numMessages: number): void {
 		if (!Number.isInteger(numMessages) || numMessages < 0) {
-			throw new Error("flushSomeMessages: numMessages must be a non-negative integer");
+			throw new Error(
+				"flushSomeMessages: numMessages must be a non-negative integer",
+			);
 		}
 		if (this.runtimeOptions.flushMode !== FlushMode.TurnBased) {
 			return;
@@ -369,7 +397,9 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		const actualMessagesToSubmit = this.outbox.splice(0, numMessages);
 
 		// As with the runtime behavior, we need to send the idAllocationOps first
-		const messagesToSubmit = this.idAllocationOutbox.concat(actualMessagesToSubmit);
+		const messagesToSubmit = this.idAllocationOutbox.concat(
+			actualMessagesToSubmit,
+		);
 		this.idAllocationOutbox.length = 0;
 
 		let fakeClientSequenceNumber = 1;
@@ -421,12 +451,19 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		// and in the order they were allocated
 		const orderedMessages = messagesToResubmit
 			.filter((message) => message.content.type === "idAllocation")
-			.concat(messagesToResubmit.filter((message) => message.content.type !== "idAllocation"));
+			.concat(
+				messagesToResubmit.filter(
+					(message) => message.content.type !== "idAllocation",
+				),
+			);
 		orderedMessages.forEach((pendingMessage) => {
 			if (pendingMessage.content.type === "idAllocation") {
 				this.submit(pendingMessage.content, pendingMessage.localOpMetadata);
 			} else {
-				this.dataStoreRuntime.reSubmit(pendingMessage.content, pendingMessage.localOpMetadata);
+				this.dataStoreRuntime.reSubmit(
+					pendingMessage.content,
+					pendingMessage.localOpMetadata,
+				);
 			}
 		});
 	}
@@ -461,18 +498,26 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		return undefined;
 	}
 
-	private submitInternal(message: IInternalMockRuntimeMessage, clientSequenceNumber: number) {
+	private submitInternal(
+		message: IInternalMockRuntimeMessage,
+		clientSequenceNumber: number,
+	) {
 		// Here, we should instead push to the DeltaManager. And the DeltaManager will push things into the factory's messages
 		this.deltaManager.outbound.push([
 			{
 				clientSequenceNumber,
 				contents: message.content,
 				referenceSequenceNumber:
-					message.referenceSequenceNumber ?? this.deltaManager.lastSequenceNumber,
+					message.referenceSequenceNumber ??
+					this.deltaManager.lastSequenceNumber,
 				type: MessageType.Operation,
 			},
 		]);
-		this.addPendingMessage(message.content, message.localOpMetadata, clientSequenceNumber);
+		this.addPendingMessage(
+			message.content,
+			message.localOpMetadata,
+			clientSequenceNumber,
+		);
 	}
 
 	public process(message: ISequencedDocumentMessage) {
@@ -489,7 +534,11 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 					localOpMetadata,
 				},
 			];
-			this.dataStoreRuntime.processMessages({ envelope: message, local, messagesContent });
+			this.dataStoreRuntime.processMessages({
+				envelope: message,
+				local,
+				messagesContent,
+			});
 		}
 	}
 
@@ -507,7 +556,9 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		this.pendingMessages.push(pendingMessage);
 	}
 
-	protected processInternal(message: ISequencedDocumentMessage): [boolean, unknown] {
+	protected processInternal(
+		message: ISequencedDocumentMessage,
+	): [boolean, unknown] {
 		let localOpMetadata: unknown;
 		const local = this.clientId === message.clientId;
 		if (local) {
@@ -560,7 +611,9 @@ export class MockContainerRuntimeFactory {
 	constructor(
 		mockContainerRuntimeOptions: IMockContainerRuntimeOptions = defaultMockContainerRuntimeOptions,
 	) {
-		this.runtimeOptions = makeContainerRuntimeOptions(mockContainerRuntimeOptions);
+		this.runtimeOptions = makeContainerRuntimeOptions(
+			mockContainerRuntimeOptions,
+		);
 	}
 
 	public get outstandingMessageCount() {
@@ -627,7 +680,10 @@ export class MockContainerRuntimeFactory {
 		) as ISequencedDocumentMessage;
 
 		// TODO: Determine if this needs to be adapted for handling server-generated messages (which have null clientId and referenceSequenceNumber of -1).
-		this.minSeq.set(message.clientId as string, message.referenceSequenceNumber);
+		this.minSeq.set(
+			message.clientId as string,
+			message.referenceSequenceNumber,
+		);
 		if (
 			this.runtimeOptions.flushMode === FlushMode.Immediate ||
 			this.lastProcessedMessage?.clientId !== message.clientId
@@ -723,7 +779,10 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 		throw new Error("Method not implemented.");
 	}
 
-	addListener(event: string | number, listener: (...args: any[]) => void): this {
+	addListener(
+		event: string | number,
+		listener: (...args: any[]) => void,
+	): this {
 		throw new Error("Method not implemented.");
 	}
 	on(event: string | number, listener: (...args: any[]) => void): this {
@@ -744,13 +803,22 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 	once(event: string | number, listener: (...args: any[]) => void): this {
 		throw new Error("Method not implemented.");
 	}
-	prependListener(event: string | number, listener: (...args: any[]) => void): this {
+	prependListener(
+		event: string | number,
+		listener: (...args: any[]) => void,
+	): this {
 		throw new Error("Method not implemented.");
 	}
-	prependOnceListener(event: string | number, listener: (...args: any[]) => void): this {
+	prependOnceListener(
+		event: string | number,
+		listener: (...args: any[]) => void,
+	): this {
 		throw new Error("Method not implemented.");
 	}
-	removeListener(event: string | number, listener: (...args: any[]) => void): this {
+	removeListener(
+		event: string | number,
+		listener: (...args: any[]) => void,
+	): this {
 		this.eventEmitter.removeListener(event, listener);
 		return this;
 	}
@@ -770,7 +838,9 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 	listeners(event: string | number): ReturnType<EventEmitter["listeners"]> {
 		throw new Error("Method not implemented.");
 	}
-	rawListeners(event: string | number): ReturnType<EventEmitter["rawListeners"]> {
+	rawListeners(
+		event: string | number,
+	): ReturnType<EventEmitter["rawListeners"]> {
 		throw new Error("Method not implemented.");
 	}
 	emit(event: string | number, ...args: any[]): boolean {
@@ -866,7 +936,8 @@ export class MockFluidDataStoreRuntime
 		super();
 		this.clientId = overrides?.clientId ?? uuid();
 		this.entryPoint = toFluidHandleInternal(
-			overrides?.entryPoint ?? new MockHandle(null as unknown as FluidObject, "", ""),
+			overrides?.entryPoint ??
+				new MockHandle(null as unknown as FluidObject, "", ""),
 		);
 		this.id = overrides?.id ?? uuid();
 		const childLoggerProps: Parameters<typeof createChildLogger>[0] = {
@@ -882,7 +953,9 @@ export class MockFluidDataStoreRuntime
 
 		const registry = overrides?.registry;
 		if (registry) {
-			this.registry = new Map(registry.map((factory) => [factory.type, factory]));
+			this.registry = new Map(
+				registry.map((factory) => [factory.type, factory]),
+			);
 		}
 
 		this.minVersionForCollab = overrides?.minVersionForCollab;
@@ -1001,7 +1074,9 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public get visibilityState(): VisibilityState {
-		return this.isAttached ? VisibilityState.GloballyVisible : VisibilityState.NotVisible;
+		return this.isAttached
+			? VisibilityState.GloballyVisible
+			: VisibilityState.NotVisible;
 	}
 
 	public bindChannel(channel: IChannel): void {
@@ -1036,7 +1111,9 @@ export class MockFluidDataStoreRuntime
 		return;
 	}
 
-	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+	public async uploadBlob(
+		blob: ArrayBufferLike,
+	): Promise<IFluidHandle<ArrayBufferLike>> {
 		return null as any as IFluidHandle<ArrayBufferLike>;
 	}
 
@@ -1044,7 +1121,10 @@ export class MockFluidDataStoreRuntime
 		return null;
 	}
 
-	private submitMessageInternal(messageContent: any, localOpMetadata: unknown): number {
+	private submitMessageInternal(
+		messageContent: any,
+		localOpMetadata: unknown,
+	): number {
 		assert(
 			this.containerRuntime !== undefined,
 			"The container runtime has not been initialized",
@@ -1153,14 +1233,18 @@ export class MockFluidDataStoreRuntime
 		};
 	}
 
-	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
+	public setAttachState(
+		attachState: AttachState.Attaching | AttachState.Attached,
+	): void {
 		if (attachState === this._attachState) {
 			return;
 		}
 		const proposedState = attachStatesToComparableNumbers[attachState];
 		const startingState = attachStatesToComparableNumbers[this._attachState];
 		if (proposedState < startingState) {
-			throw new Error(`cannot transition back to ${attachState} from ${this.attachState}`);
+			throw new Error(
+				`cannot transition back to ${attachState} from ${this.attachState}`,
+			);
 		}
 
 		if (
@@ -1249,7 +1333,8 @@ export class MockObjectStorageService implements IChannelStorageService {
 	public async list(path: string): Promise<string[]> {
 		const pathPartsLength = getNormalizedObjectStoragePathParts(path).length;
 		return Object.keys(this.contents).filter(
-			(key) => key.startsWith(path) && key.split("/").length === pathPartsLength + 1,
+			(key) =>
+				key.startsWith(path) && key.split("/").length === pathPartsLength + 1,
 		);
 	}
 

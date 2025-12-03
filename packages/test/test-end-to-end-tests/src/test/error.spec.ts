@@ -3,23 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
-import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
 import {
+	type ILoaderProps,
+	Loader,
+} from "@fluidframework/container-loader/internal";
+import type {
 	IDocumentServiceFactory,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
-import { isILoggingError, normalizeError } from "@fluidframework/telemetry-utils/internal";
 import {
-	ITestObjectProvider,
+	isILoggingError,
+	normalizeError,
+} from "@fluidframework/telemetry-utils/internal";
+import {
+	type ITestObjectProvider,
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObjectFactory,
 } from "@fluidframework/test-utils/internal";
+import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 
 import { wrapObjectAndOverride } from "../mocking.js";
@@ -44,7 +49,9 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 			]),
 		});
 		fileName = uuid();
-		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+		const container = await loader.createDetachedContainer(
+			provider.defaultCodeDetails,
+		);
 		loaderContainerTracker.addContainer(container);
 		await container.attach(provider.driver.createCreateNewRequest(fileName));
 		assert(container.resolvedUrl);
@@ -60,12 +67,18 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 			...props,
 			logger: provider.logger,
 			urlResolver: props?.urlResolver ?? provider.urlResolver,
-			documentServiceFactory: props?.documentServiceFactory ?? provider.documentServiceFactory,
+			documentServiceFactory:
+				props?.documentServiceFactory ?? provider.documentServiceFactory,
 			codeLoader:
 				props?.codeLoader ??
-				new LocalCodeLoader([[provider.defaultCodeDetails, new TestFluidObjectFactory([])]]),
+				new LocalCodeLoader([
+					[provider.defaultCodeDetails, new TestFluidObjectFactory([])],
+				]),
 		});
-		const requestUrl = await provider.driver.createContainerUrl(fileName, containerUrl);
+		const requestUrl = await provider.driver.createContainerUrl(
+			fileName,
+			containerUrl,
+		);
 		const container = await loader.resolve({ url: requestUrl });
 		loaderContainerTracker.addContainer(container);
 		return container;
@@ -146,8 +159,15 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 
 	function assertCustomPropertySupport(err: any) {
 		err.asdf = "asdf";
-		assert(isILoggingError(err), "Error should support getTelemetryProperties()");
-		assert.equal(err.getTelemetryProperties().asdf, "asdf", "Error should have property asdf");
+		assert(
+			isILoggingError(err),
+			"Error should support getTelemetryProperties()",
+		);
+		assert.equal(
+			err.getTelemetryProperties().asdf,
+			"asdf",
+			"Error should have property asdf",
+		);
 	}
 
 	it("Check double conversion of network error", async () => {
@@ -156,7 +176,11 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 		const error2 = normalizeError(error1);
 		assertCustomPropertySupport(error1);
 		assertCustomPropertySupport(error2);
-		assert.deepEqual(networkError, error1, "networkError, error1 should be the same!");
+		assert.deepEqual(
+			networkError,
+			error1,
+			"networkError, error1 should be the same!",
+		);
 		assert.deepEqual(error1, error2, "error1, error2 should be the same!");
 	});
 });

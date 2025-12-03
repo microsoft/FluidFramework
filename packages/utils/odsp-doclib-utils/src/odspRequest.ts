@@ -5,7 +5,7 @@
 
 import fetch from "isomorphic-fetch";
 
-import { type IOdspAuthRequestInfo, authRequestWithRetry } from "./odspAuth.js";
+import { authRequestWithRetry, type IOdspAuthRequestInfo } from "./odspAuth.js";
 
 // eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
@@ -15,7 +15,9 @@ export async function getAsync(
 	url: string,
 	authRequestInfo: IOdspAuthRequestInfo,
 ): Promise<Response> {
-	return authRequest(authRequestInfo, async (config: RequestInit) => fetch(url, config));
+	return authRequest(authRequestInfo, async (config: RequestInit) =>
+		fetch(url, config),
+	);
 }
 
 // eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
@@ -76,7 +78,9 @@ async function authRequest(
 	);
 }
 
-async function safeRequestCore(requestCallback: () => Promise<Response>): Promise<Response> {
+async function safeRequestCore(
+	requestCallback: () => Promise<Response>,
+): Promise<Response> {
 	let response: Response;
 	try {
 		response = await requestCallback();

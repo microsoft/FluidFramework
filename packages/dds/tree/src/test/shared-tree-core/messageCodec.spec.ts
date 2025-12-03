@@ -4,18 +4,22 @@
  */
 
 import { strict as assert } from "node:assert";
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
-
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+import { currentVersion, DependentFormatVersion } from "../../codec/index.js";
 import type {
+	ChangeEncodingContext,
 	EncodedRevisionTag,
 	GraphCommit,
-	ChangeEncodingContext,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
+import { MessageFormatVersion } from "../../shared-tree-core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { makeMessageCodec, makeMessageCodecs } from "../../shared-tree-core/messageCodecs.js";
+import {
+	makeMessageCodec,
+	makeMessageCodecs,
+} from "../../shared-tree-core/messageCodecs.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { Message } from "../../shared-tree-core/messageFormatV1ToV4.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -28,8 +32,6 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../utils.js";
-import { currentVersion, DependentFormatVersion } from "../../codec/index.js";
-import { MessageFormatVersion } from "../../shared-tree-core/index.js";
 
 const commit1 = {
 	revision: mintRevisionTag(),
@@ -155,8 +157,17 @@ describe("message codec", () => {
 		family,
 		testCases,
 		undefined,
-		[MessageFormatVersion.v3, MessageFormatVersion.v4, MessageFormatVersion.vSharedBranches],
-		[undefined, MessageFormatVersion.v1, MessageFormatVersion.v2, MessageFormatVersion.v5],
+		[
+			MessageFormatVersion.v3,
+			MessageFormatVersion.v4,
+			MessageFormatVersion.vSharedBranches,
+		],
+		[
+			undefined,
+			MessageFormatVersion.v1,
+			MessageFormatVersion.v2,
+			MessageFormatVersion.v5,
+		],
 	);
 
 	describe("dispatching codec", () => {
@@ -179,14 +190,18 @@ describe("message codec", () => {
 				commit: {
 					revision,
 					change: TestChange.mint([], 1),
-					parent: "Extra field that should be dropped" as unknown as GraphCommit<TestChange>,
+					parent:
+						"Extra field that should be dropped" as unknown as GraphCommit<TestChange>,
 				},
 				branchId: "main",
 			};
 
-			const actual = codec.decode(codec.encode(message, { idCompressor: testIdCompressor }), {
-				idCompressor: testIdCompressor,
-			});
+			const actual = codec.decode(
+				codec.encode(message, { idCompressor: testIdCompressor }),
+				{
+					idCompressor: testIdCompressor,
+				},
+			);
 			assert.deepEqual(actual, {
 				type: "commit",
 				branchId: "main",
@@ -208,8 +223,11 @@ describe("message codec", () => {
 				version: -1,
 			} satisfies Message);
 			assert.throws(
-				() => codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor }),
-				validateUsageError(/Unsupported version -1 encountered while decoding data/),
+				() =>
+					codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor }),
+				validateUsageError(
+					/Unsupported version -1 encountered while decoding data/,
+				),
 			);
 		});
 	});

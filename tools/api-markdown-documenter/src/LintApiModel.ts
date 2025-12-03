@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail, strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 
 import {
 	ApiDocumentedItem,
@@ -41,10 +41,11 @@ export interface LintApiModelConfiguration extends LoggingConfiguration {
 /**
  * {@link LintApiModelConfiguration} defaults.
  */
-const defaultLintApiModelConfiguration: Required<Omit<LintApiModelConfiguration, "apiModel">> =
-	{
-		logger: defaultConsoleLogger,
-	};
+const defaultLintApiModelConfiguration: Required<
+	Omit<LintApiModelConfiguration, "apiModel">
+> = {
+	logger: defaultConsoleLogger,
+};
 
 // TODO: common TsdocError base (associatedItem, packageName)
 
@@ -151,7 +152,10 @@ function lintApiItem(
 	errors: MutableLinterErrors,
 ): void {
 	// If the item is documented, lint its documentation contents.
-	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
+	if (
+		apiItem instanceof ApiDocumentedItem &&
+		apiItem.tsdocComment !== undefined
+	) {
 		const comment = apiItem.tsdocComment;
 
 		// Lint `@inheritDoc` tag, if present
@@ -192,25 +196,60 @@ function lintComment(
 	apiModel: ApiModel,
 	errors: MutableLinterErrors,
 ): void {
-	checkTagsUnderTsdocNode(comment.summarySection, associatedItem, apiModel, errors);
+	checkTagsUnderTsdocNode(
+		comment.summarySection,
+		associatedItem,
+		apiModel,
+		errors,
+	);
 
 	if (comment.deprecatedBlock !== undefined) {
-		checkTagsUnderTsdocNode(comment.deprecatedBlock, associatedItem, apiModel, errors);
+		checkTagsUnderTsdocNode(
+			comment.deprecatedBlock,
+			associatedItem,
+			apiModel,
+			errors,
+		);
 	}
 
 	if (comment.remarksBlock !== undefined) {
-		checkTagsUnderTsdocNode(comment.remarksBlock, associatedItem, apiModel, errors);
+		checkTagsUnderTsdocNode(
+			comment.remarksBlock,
+			associatedItem,
+			apiModel,
+			errors,
+		);
 	}
 
 	if (comment.privateRemarks !== undefined) {
-		checkTagsUnderTsdocNode(comment.privateRemarks, associatedItem, apiModel, errors);
+		checkTagsUnderTsdocNode(
+			comment.privateRemarks,
+			associatedItem,
+			apiModel,
+			errors,
+		);
 	}
 
-	checkTagsUnderTsdocNodes(comment.params.blocks, associatedItem, apiModel, errors);
+	checkTagsUnderTsdocNodes(
+		comment.params.blocks,
+		associatedItem,
+		apiModel,
+		errors,
+	);
 
-	checkTagsUnderTsdocNodes(comment.typeParams.blocks, associatedItem, apiModel, errors);
+	checkTagsUnderTsdocNodes(
+		comment.typeParams.blocks,
+		associatedItem,
+		apiModel,
+		errors,
+	);
 
-	checkTagsUnderTsdocNodes(comment.customBlocks, associatedItem, apiModel, errors);
+	checkTagsUnderTsdocNodes(
+		comment.customBlocks,
+		associatedItem,
+		apiModel,
+		errors,
+	);
 }
 
 /**
@@ -247,7 +286,10 @@ function checkTagsUnderTsdocNode(
 		// Nodes with children ("nodes")
 		case DocNodeKind.Paragraph:
 		case DocNodeKind.Section: {
-			assert(node instanceof DocNodeContainer, 'Expected a "DocNodeContainer" node.');
+			assert(
+				node instanceof DocNodeContainer,
+				'Expected a "DocNodeContainer" node.',
+			);
 			checkTagsUnderTsdocNodes(node.nodes, associatedItem, apiModel, errors);
 			break;
 		}
@@ -324,7 +366,8 @@ function checkLinkTag(
 		return {
 			tagName: "@link",
 			sourceItem: apiItem.getScopedNameWithinPackage(),
-			packageName: apiItem.getAssociatedPackage()?.name ?? fail("Package name not found"),
+			packageName:
+				apiItem.getAssociatedPackage()?.name ?? fail("Package name not found"),
 			referenceTarget: linkTag.codeDestination.emitAsTsdoc(),
 			linkText: linkTag.linkText,
 		};
@@ -348,13 +391,18 @@ function checkInheritDocTag(
 	}
 
 	try {
-		resolveSymbolicReference(associatedItem, inheritDocTag.declarationReference, apiModel);
+		resolveSymbolicReference(
+			associatedItem,
+			inheritDocTag.declarationReference,
+			apiModel,
+		);
 	} catch {
 		return {
 			tagName: "@inheritDoc",
 			sourceItem: associatedItem.getScopedNameWithinPackage(),
 			packageName:
-				associatedItem.getAssociatedPackage()?.name ?? fail("Package name not found"),
+				associatedItem.getAssociatedPackage()?.name ??
+				fail("Package name not found"),
 			referenceTarget: inheritDocTag.declarationReference.emitAsTsdoc(),
 			linkText: undefined,
 		};

@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { ITestDriver } from "@fluid-internal/test-driver-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
-import {
+import type { ITestDriver } from "@fluid-internal/test-driver-definitions";
+import type { IRequest } from "@fluidframework/core-interfaces";
+import type {
 	IDocumentServiceFactory,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	ILocalDeltaConnectionServer,
+	type ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 
-import { LocalDriverApi, LocalDriverApiType } from "./localDriverApi.js";
+import { LocalDriverApi, type LocalDriverApiType } from "./localDriverApi.js";
 
 /**
  * @internal

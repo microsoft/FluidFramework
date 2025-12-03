@@ -3,95 +3,97 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert, fail } from "node:assert";
+import type {
+	IFluidHandle,
+	IFluidLoadable,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import type {
 	IChannelAttributes,
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import {
+	createIdCompressor,
+	type IIdCompressor,
+} from "@fluidframework/id-compressor/internal";
+import type {
+	IExperimentalIncrementalSummaryContext,
+	IRuntimeMessageCollection,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	type IChannelView,
+	type IFluidSerializer,
+	type ISharedObject,
+	type ISharedObjectHandle,
+	SharedObject,
+} from "@fluidframework/shared-object-base/internal";
+import {
 	MockFluidDataStoreRuntime,
 	MockHandle,
 } from "@fluidframework/test-runtime-utils/internal";
-
 import {
+	type CodecWriteOptions,
 	currentVersion,
 	DependentFormatVersion,
-	type CodecWriteOptions,
 } from "../../codec/index.js";
 import {
-	RevisionTagCodec,
-	tagChange,
-	TreeStoredSchemaRepository,
 	type GraphCommit,
 	type RevisionTag,
+	RevisionTagCodec,
+	TreeStoredSchemaRepository,
+	tagChange,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	DefaultChangeFamily,
 	type DefaultChangeset,
 	type DefaultEditBuilder,
-	type ModularChangeFormatVersion,
-	TreeCompressionStrategy,
 	defaultSchemaPolicy,
 	fieldKindConfigurations,
+	type ModularChangeFormatVersion,
 	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
+	TreeCompressionStrategy,
 } from "../../feature-libraries/index.js";
-import {
-	type ChangeEnricherReadonlyCheckout,
-	SquashingTransactionStack,
-	type ResubmitMachine,
-	type SharedTreeBranch,
-	SharedTreeCore,
-	type Summarizable,
-	type ChangeEnricherMutableCheckout,
-	NoOpChangeEnricher,
-	type EditManagerFormatVersion,
-	supportedEditManagerFormatVersions,
-	type MessageFormatVersion,
-	supportedMessageFormatVersions,
-} from "../../shared-tree-core/index.js";
-import { testIdCompressor } from "../utils.js";
-import { strict as assert, fail } from "node:assert";
-import {
-	SharedObject,
-	type IChannelView,
-	type IFluidSerializer,
-	type ISharedObject,
-	type ISharedObjectHandle,
-} from "@fluidframework/shared-object-base/internal";
-import type {
-	ISummaryTreeWithStats,
-	IExperimentalIncrementalSummaryContext,
-	ITelemetryContext,
-	IRuntimeMessageCollection,
-} from "@fluidframework/runtime-definitions/internal";
-import {
-	createIdCompressor,
-	type IIdCompressor,
-} from "@fluidframework/id-compressor/internal";
-import type {
-	IFluidHandle,
-	IFluidLoadable,
-	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
-import { Breakable } from "../../util/index.js";
-import { mockSerializer } from "../mockSerializer.js";
-import { TestChange } from "../testChange.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { dependenciesForChangeFormat } from "../../shared-tree/sharedTreeChangeCodecs.js";
 import {
 	changeFormatVersionForEditManager,
 	changeFormatVersionForMessage,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/sharedTree.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { dependenciesForChangeFormat } from "../../shared-tree/sharedTreeChangeCodecs.js";
+import {
+	type ChangeEnricherMutableCheckout,
+	type ChangeEnricherReadonlyCheckout,
+	type EditManagerFormatVersion,
+	type MessageFormatVersion,
+	NoOpChangeEnricher,
+	type ResubmitMachine,
+	type SharedTreeBranch,
+	SharedTreeCore,
+	SquashingTransactionStack,
+	type Summarizable,
+	supportedEditManagerFormatVersions,
+	supportedMessageFormatVersions,
+} from "../../shared-tree-core/index.js";
+import { Breakable } from "../../util/index.js";
+import { mockSerializer } from "../mockSerializer.js";
+import { TestChange } from "../testChange.js";
+import { testIdCompressor } from "../utils.js";
 
 const codecOptions: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,
 	minVersionForCollab: currentVersion,
 };
 
-class MockSharedObjectHandle extends MockHandle<ISharedObject> implements ISharedObjectHandle {
+class MockSharedObjectHandle
+	extends MockHandle<ISharedObject>
+	implements ISharedObjectHandle
+{
 	public bind(): never {
 		throw new Error("MockSharedObjectHandle.bind() unimplemented.");
 	}
@@ -138,7 +140,9 @@ export function createTree<TIndexes extends readonly Summarizable[]>(
  * @remarks
  * TODO: See note on {@link TestSharedTreeCore}.
  */
-export function createTreeSharedObject<TIndexes extends readonly Summarizable[]>(
+export function createTreeSharedObject<
+	TIndexes extends readonly Summarizable[],
+>(
 	indexes: TIndexes,
 	resubmitMachine?: ResubmitMachine<DefaultChangeset>,
 	enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
@@ -194,8 +198,8 @@ const modularChangeFormatVersionForMessage: DependentFormatVersion<
 > = DependentFormatVersion.fromPairs(
 	Array.from(supportedMessageFormatVersions, (m) => [
 		m,
-		dependenciesForChangeFormat.get(changeFormatVersionForMessage.lookup(m))?.modularChange ??
-			fail("Unknown change format"),
+		dependenciesForChangeFormat.get(changeFormatVersionForMessage.lookup(m))
+			?.modularChange ?? fail("Unknown change format"),
 	]),
 );
 
@@ -212,7 +216,10 @@ function createTreeInner(
 	enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
 	editor?: () => DefaultEditBuilder,
 ): [SharedTreeCore<DefaultEditBuilder, DefaultChangeset>, DefaultChangeFamily] {
-	const changeFamily = makeTestDefaultChangeFamily({ idCompressor, chunkCompressionStrategy });
+	const changeFamily = makeTestDefaultChangeFamily({
+		idCompressor,
+		chunkCompressionStrategy,
+	});
 	return [
 		new SharedTreeCore(
 			new Breakable("createTreeInner"),
@@ -262,7 +269,10 @@ export class TestSharedTreeCore extends SharedObject {
 		packageVersion: "0.0.0",
 	};
 
-	public readonly transaction: SquashingTransactionStack<DefaultEditBuilder, DefaultChangeset>;
+	public readonly transaction: SquashingTransactionStack<
+		DefaultEditBuilder,
+		DefaultChangeset
+	>;
 	private readonly changeFamily: DefaultChangeFamily;
 
 	public constructor(
@@ -277,11 +287,15 @@ export class TestSharedTreeCore extends SharedObject {
 		enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
 	) {
 		super(id, runtime, TestSharedTreeCore.attributes, id);
-		assert(runtime.idCompressor !== undefined, "The runtime must provide an ID compressor");
+		assert(
+			runtime.idCompressor !== undefined,
+			"The runtime must provide an ID compressor",
+		);
 		[this.kernel, this.changeFamily] = createTreeInner(
 			this,
 			this.serializer,
-			(content, localOpMetadata) => this.submitLocalMessage(content, localOpMetadata),
+			(content, localOpMetadata) =>
+				this.submitLocalMessage(content, localOpMetadata),
 			this.logger,
 			summarizables,
 			chunkCompressionStrategy,
@@ -323,7 +337,11 @@ export class TestSharedTreeCore extends SharedObject {
 			}
 		});
 		this.transaction.activeBranchEvents.on("afterChange", (event) => {
-			if (event.type === "append" && this.isAttached() && this.transaction.isInProgress()) {
+			if (
+				event.type === "append" &&
+				this.isAttached() &&
+				this.transaction.isInProgress()
+			) {
 				commitEnricher.addTransactionCommits(event.newCommits);
 			}
 		});
@@ -334,15 +352,23 @@ export class TestSharedTreeCore extends SharedObject {
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): ISummaryTreeWithStats {
-		return this.kernel.summarizeCore(serializer, telemetryContext, incrementalSummaryContext);
+		return this.kernel.summarizeCore(
+			serializer,
+			telemetryContext,
+			incrementalSummaryContext,
+		);
 	}
 
-	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected override processMessagesCore(
+		messagesCollection: IRuntimeMessageCollection,
+	): void {
 		this.kernel.processMessagesCore(messagesCollection);
 	}
 	protected onDisconnect(): void {}
 
-	protected override async loadCore(services: IChannelStorageService): Promise<void> {
+	protected override async loadCore(
+		services: IChannelStorageService,
+	): Promise<void> {
 		await this.kernel.loadCore(services);
 	}
 
@@ -351,17 +377,24 @@ export class TestSharedTreeCore extends SharedObject {
 	}
 
 	protected override applyStashedOp(
-		...args: Parameters<SharedTreeCore<DefaultEditBuilder, DefaultChangeset>["applyStashedOp"]>
+		...args: Parameters<
+			SharedTreeCore<DefaultEditBuilder, DefaultChangeset>["applyStashedOp"]
+		>
 	): void {
 		this.kernel.applyStashedOp(...args);
 	}
 
-	public getLocalBranch(): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
+	public getLocalBranch(): SharedTreeBranch<
+		DefaultEditBuilder,
+		DefaultChangeset
+	> {
 		return this.kernel.getLocalBranch();
 	}
 
 	protected override reSubmitCore(
-		...args: Parameters<SharedTreeCore<DefaultEditBuilder, DefaultChangeset>["reSubmitCore"]>
+		...args: Parameters<
+			SharedTreeCore<DefaultEditBuilder, DefaultChangeset>["reSubmitCore"]
+		>
 	): void {
 		this.kernel.reSubmitCore(...args);
 	}
@@ -371,8 +404,13 @@ export class TestSharedTreeCore extends SharedObject {
 	}
 }
 
-export class TestChangeEnricher implements ChangeEnricherReadonlyCheckout<TestChange> {
-	public updateChangeEnrichments(change: TestChange, revision: RevisionTag): TestChange {
+export class TestChangeEnricher
+	implements ChangeEnricherReadonlyCheckout<TestChange>
+{
+	public updateChangeEnrichments(
+		change: TestChange,
+		revision: RevisionTag,
+	): TestChange {
 		if (TestChange.isNonEmptyChange(change)) {
 			return {
 				inputContext: change.inputContext.map((i) => i * 1000),

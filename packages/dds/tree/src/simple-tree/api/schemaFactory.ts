@@ -3,72 +3,78 @@
  * Licensed under the MIT License.
  */
 
-import { assert, debugAssert, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	debugAssert,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-
 import type { TreeValue } from "../../core/index.js";
+import type { FlexTreeHydratedContextMinimal } from "../../feature-libraries/index.js";
 // This import is required for intellisense in @link doc comments on mouseover in VSCode.
 // eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
 import type { TreeAlpha } from "../../shared-tree/index.js";
 import {
-	type JsonCompatibleReadOnlyObject,
-	type RestrictiveStringRecord,
 	compareSets,
 	getOrCreate,
 	isReadonlyArray,
+	type JsonCompatibleReadOnlyObject,
+	type RestrictiveStringRecord,
 } from "../../util/index.js";
-import { normalizeAllowedTypes, markSchemaMostDerived, isLazy } from "../core/index.js";
 import type {
-	NodeKind,
-	WithType,
-	TreeNodeSchema,
-	TreeNodeSchemaClass,
-	TreeNodeSchemaNonClass,
-	TreeNodeSchemaBoth,
-	UnhydratedFlexTreeNode,
-	NodeSchemaMetadata,
 	ImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
+	NodeKind,
+	NodeSchemaMetadata,
+	TreeNodeSchema,
+	TreeNodeSchemaBoth,
+	TreeNodeSchemaClass,
+	TreeNodeSchemaNonClass,
+	UnhydratedFlexTreeNode,
+	WithType,
 } from "../core/index.js";
+import {
+	isLazy,
+	markSchemaMostDerived,
+	normalizeAllowedTypes,
+} from "../core/index.js";
+import {
+	createFieldSchema,
+	type DefaultProvider,
+	FieldKind,
+	// This import prevents a large number of FieldProps references in the API reports from showing up as FieldProps_2.
+	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
+	type FieldProps,
+	type FieldSchema,
+	getDefaultProvider,
+	type ImplicitFieldSchema,
+} from "../fieldSchema.js";
 import {
 	booleanSchema,
 	handleSchema,
-	nullSchema,
-	numberSchema,
-	stringSchema,
 	// This import prevents a large number of LeafSchema references in the API reports from showing up as LeafSchema_2.
 	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
 	type LeafSchema,
+	nullSchema,
+	numberSchema,
+	stringSchema,
 } from "../leafNodeSchema.js";
 import {
 	arraySchema,
+	type InsertableObjectFromSchemaRecord,
 	type MapNodeInsertableData,
 	mapSchema,
 	objectSchema,
 	type TreeArrayNode,
-	type InsertableObjectFromSchemaRecord,
 	type TreeMapNode,
 	type TreeObjectNode,
 } from "../node-kinds/index.js";
-import {
-	FieldKind,
-	type FieldSchema,
-	type ImplicitFieldSchema,
-	// This import prevents a large number of FieldProps references in the API reports from showing up as FieldProps_2.
-	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
-	type FieldProps,
-	createFieldSchema,
-	type DefaultProvider,
-	getDefaultProvider,
-} from "../fieldSchema.js";
-
-import type { System_Unsafe } from "./typesUnsafe.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import type { FlexTreeHydratedContextMinimal } from "../../feature-libraries/index.js";
 import { unhydratedFlexTreeFromInsertable } from "../unhydratedFlexTreeFromInsertable.js";
 import { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
+import type { System_Unsafe } from "./typesUnsafe.js";
 
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
@@ -432,7 +438,8 @@ export class SchemaFactory<
 	): TreeNodeSchemaNonClass<
 		ScopedSchemaName<TScope, `Map<${string}>`>,
 		NodeKind.Map,
-		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map>,
+		TreeMapNode<T> &
+			WithType<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map>,
 		MapNodeInsertableData<T>,
 		true,
 		T,
@@ -471,15 +478,31 @@ export class SchemaFactory<
 	 * This seems like a TypeScript bug getting variance backwards for overload return types since it's erroring when the relation between the overload
 	 * and the implementation is type safe, and forcing an unsafe typing instead.
 	 */
-	public map<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
-		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
+	public map<
+		const T extends ImplicitAllowedTypes,
+		const TCustomMetadata = unknown,
+	>(
+		nameOrAllowedTypes:
+			| TName
+			| ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
 		options?: NodeSchemaOptions<TCustomMetadata>,
-	): TreeNodeSchema<string, NodeKind.Map, TreeMapNode<T>, MapNodeInsertableData<T>, true, T> {
+	): TreeNodeSchema<
+		string,
+		NodeKind.Map,
+		TreeMapNode<T>,
+		MapNodeInsertableData<T>,
+		true,
+		T
+	> {
 		if (allowedTypes === undefined) {
-			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
+			const types = nameOrAllowedTypes as
+				| (T & TreeNodeSchema)
+				| readonly TreeNodeSchema[];
 			const fullName = structuralName("Map", types);
-			debugAssert(() => options === undefined || "No options for structural types");
+			debugAssert(
+				() => options === undefined || "No options for structural types",
+			);
 			return this.getStructuralType(fullName, types, () =>
 				this.namedMap(fullName, nameOrAllowedTypes as T, false, true, {}),
 			) as TreeNodeSchemaBoth<
@@ -503,7 +526,13 @@ export class SchemaFactory<
 			T,
 			undefined,
 			TCustomMetadata
-		> = this.namedMap(nameOrAllowedTypes as TName, allowedTypes, true, true, options ?? {});
+		> = this.namedMap(
+			nameOrAllowedTypes as TName,
+			allowedTypes,
+			true,
+			true,
+			options ?? {},
+		);
 		return out;
 	}
 
@@ -583,7 +612,8 @@ export class SchemaFactory<
 	): TreeNodeSchemaNonClass<
 		ScopedSchemaName<TScope, `Array<${string}>`>,
 		NodeKind.Array,
-		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array>,
+		TreeArrayNode<T> &
+			WithType<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		true,
 		T,
@@ -622,8 +652,13 @@ export class SchemaFactory<
 	 * @privateRemarks
 	 * This should return TreeNodeSchemaBoth: see note on "map" implementation for details.
 	 */
-	public array<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
-		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
+	public array<
+		const T extends ImplicitAllowedTypes,
+		const TCustomMetadata = unknown,
+	>(
+		nameOrAllowedTypes:
+			| TName
+			| ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
 		options?: NodeSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchema<
@@ -636,9 +671,13 @@ export class SchemaFactory<
 		TCustomMetadata
 	> {
 		if (allowedTypes === undefined) {
-			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
+			const types = nameOrAllowedTypes as
+				| (T & TreeNodeSchema)
+				| readonly TreeNodeSchema[];
 			const fullName = structuralName("Array", types);
-			debugAssert(() => options === undefined || "No options for structural types");
+			debugAssert(
+				() => options === undefined || "No options for structural types",
+			);
 			return this.getStructuralType(fullName, types, () =>
 				this.namedArray(fullName, nameOrAllowedTypes as T, false, true, {}),
 			) as TreeNodeSchemaClass<
@@ -662,7 +701,13 @@ export class SchemaFactory<
 			T,
 			undefined,
 			TCustomMetadata
-		> = this.namedArray(nameOrAllowedTypes as TName, allowedTypes, true, true, options ?? {});
+		> = this.namedArray(
+			nameOrAllowedTypes as TName,
+			allowedTypes,
+			true,
+			true,
+			options ?? {},
+		);
 		return out;
 	}
 
@@ -683,7 +728,9 @@ export class SchemaFactory<
 		const structural = getOrCreate(this.structuralTypes, fullName, builder);
 		const inputTypes = new Set(normalizeAllowedTypes(types));
 		const outputTypes = new Set(
-			normalizeAllowedTypes(structural.info as TreeNodeSchema | readonly TreeNodeSchema[]),
+			normalizeAllowedTypes(
+				structural.info as TreeNodeSchema | readonly TreeNodeSchema[],
+			),
 		);
 		// If our cached value had a different set of types then were requested, the user must have caused a collision.
 		const same = compareSets({ a: inputTypes, b: outputTypes });
@@ -718,7 +765,8 @@ export class SchemaFactory<
 	): TreeNodeSchemaBoth<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Array,
-		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>, NodeKind.Array>,
+		TreeArrayNode<T> &
+			WithType<ScopedSchemaName<TScope, string>, NodeKind.Array>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		ImplicitlyConstructable,
 		T,
@@ -757,7 +805,10 @@ export class SchemaFactory<
 	 *
 	 * A node may have more than one identifier field (though note that this precludes the use of the {@link TreeNodeApi.shortId|Tree.shortId()} API).
 	 */
-	public get identifier(): FieldSchema<FieldKind.Identifier, typeof this.string> {
+	public get identifier(): FieldSchema<
+		FieldKind.Identifier,
+		typeof this.string
+	> {
 		const defaultIdentifierProvider: DefaultProvider = getDefaultProvider(
 			(
 				context: FlexTreeHydratedContextMinimal | "UseGlobalContext",
@@ -792,7 +843,8 @@ export class SchemaFactory<
 	 */
 	public objectRecursive<
 		const Name extends TName,
-		const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>,
+		const T extends
+			RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>,
 	>(
 		name: Name,
 		t: T,
@@ -906,7 +958,10 @@ export class SchemaFactory<
 					 * Unfortunately attempts to do this failed to avoid the compile error this was introduced to solve.
 					 */
 					[Symbol.iterator](): Iterator<
-						[string, System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>]
+						[
+							string,
+							System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>,
+						]
 					>;
 			  }
 			// Ideally this would be
@@ -951,7 +1006,10 @@ export function scoped<
 	TScope extends string | undefined,
 	TName extends number | string,
 	Name extends TName | string,
->(factory: SchemaFactory<TScope, TName>, name: Name): ScopedSchemaName<TScope, Name> {
+>(
+	factory: SchemaFactory<TScope, TName>,
+	name: Name,
+): ScopedSchemaName<TScope, Name> {
 	return (
 		factory.scope === undefined ? `${name}` : `${factory.scope}.${name}`
 	) as ScopedSchemaName<TScope, Name>;

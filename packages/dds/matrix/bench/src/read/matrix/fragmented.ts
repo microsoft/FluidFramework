@@ -9,4 +9,7 @@ import { pointwise } from "../test";
 
 const { row, col, rowCount, colCount } = getTestArgs();
 
-pointwise("Fragmented Matrix 256x256", createFragmentedMatrix(row + rowCount, col + colCount));
+pointwise(
+	"Fragmented Matrix 256x256",
+	createFragmentedMatrix(row + rowCount, col + colCount),
+);

@@ -21,7 +21,10 @@ const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
 export interface EncodedEditManager<TChangeset> {
 	readonly trunk: readonly Readonly<SequencedCommit<TChangeset>>[];
-	readonly branches: readonly [SessionId, Readonly<EncodedSummarySessionBranch<TChangeset>>][];
+	readonly branches: readonly [
+		SessionId,
+		Readonly<EncodedSummarySessionBranch<TChangeset>>,
+	][];
 	readonly version:
 		| typeof EditManagerFormatVersion.v1
 		| typeof EditManagerFormatVersion.v2
@@ -29,7 +32,9 @@ export interface EncodedEditManager<TChangeset> {
 		| typeof EditManagerFormatVersion.v4;
 }
 
-export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
+export const EncodedEditManager = <ChangeSchema extends TSchema>(
+	tChange: ChangeSchema,
+) =>
 	Type.Object(
 		{
 			version: Type.Union([
@@ -39,7 +44,9 @@ export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: Change
 				Type.Literal(EditManagerFormatVersion.v4),
 			]),
 			trunk: Type.Array(SequencedCommit(tChange)),
-			branches: Type.Array(Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange)])),
+			branches: Type.Array(
+				Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange)]),
+			),
 		},
 		noAdditionalProps,
 	);

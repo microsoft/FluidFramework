@@ -4,23 +4,25 @@
  */
 
 import {
-	ApiItemKind,
 	type ApiEntryPoint,
 	type ApiItem,
+	ApiItemKind,
 	type ApiModel,
 	type ApiPackage,
 } from "@microsoft/api-extractor-model";
 
 import type { ApiDocument } from "../ApiDocument.js";
 import type { Section } from "../mdast/index.js";
-
-import { apiItemToDocument, apiItemToSections } from "./TransformApiItem.js";
 import {
 	type ApiItemTransformationConfiguration,
 	type ApiItemTransformationOptions,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "./configuration/index.js";
-import { createBreadcrumbParagraph, createEntryPointList } from "./helpers/index.js";
+import {
+	createBreadcrumbParagraph,
+	createEntryPointList,
+} from "./helpers/index.js";
+import { apiItemToDocument, apiItemToSections } from "./TransformApiItem.js";
 import {
 	checkForDuplicateDocumentPaths,
 	createDocument,
@@ -33,7 +35,9 @@ import {
  *
  * @public
  */
-export function transformApiModel(options: ApiItemTransformationOptions): ApiDocument[] {
+export function transformApiModel(
+	options: ApiItemTransformationOptions,
+): ApiDocument[] {
 	const config = getApiItemTransformationConfigurationWithDefaults(options);
 	const { apiModel, logger, exclude: excludeItem } = config;
 
@@ -55,10 +59,14 @@ export function transformApiModel(options: ApiItemTransformationOptions): ApiDoc
 	}
 
 	// Filter out packages not wanted per user config
-	const filteredPackages = apiModel.packages.filter((apiPackage) => !excludeItem(apiPackage));
+	const filteredPackages = apiModel.packages.filter(
+		(apiPackage) => !excludeItem(apiPackage),
+	);
 
 	if (filteredPackages.length === 0) {
-		logger.warning("No packages found after filtering per `skipPackages` configuration.");
+		logger.warning(
+			"No packages found after filtering per `skipPackages` configuration.",
+		);
 		return [];
 	}
 
@@ -82,7 +90,11 @@ export function transformApiModel(options: ApiItemTransformationOptions): ApiDoc
 
 			documentsMap.set(
 				packageItem,
-				createDocumentForSingleEntryPointPackage(packageItem, entryPoint, config),
+				createDocumentForSingleEntryPointPackage(
+					packageItem,
+					entryPoint,
+					config,
+				),
 			);
 
 			const packageDocumentItems = getDocumentItems(entryPoint, config);
@@ -97,11 +109,18 @@ export function transformApiModel(options: ApiItemTransformationOptions): ApiDoc
 
 			documentsMap.set(
 				packageItem,
-				createDocumentForMultiEntryPointPackage(packageItem, packageEntryPoints, config),
+				createDocumentForMultiEntryPointPackage(
+					packageItem,
+					packageEntryPoints,
+					config,
+				),
 			);
 
 			for (const entryPoint of packageEntryPoints) {
-				documentsMap.set(entryPoint, createDocumentForApiEntryPoint(entryPoint, config));
+				documentsMap.set(
+					entryPoint,
+					createDocumentForApiEntryPoint(entryPoint, config),
+				);
 
 				const packageDocumentItems = getDocumentItems(entryPoint, config);
 				for (const apiItem of packageDocumentItems) {
@@ -217,7 +236,9 @@ function createDocumentForSingleEntryPointPackage(
 
 	// Wrap entry-point contents with package-level docs
 	// TODO: Make package transformation configurable
-	sections.push(...config.defaultSectionLayout(apiPackage, entryPointSections, config));
+	sections.push(
+		...config.defaultSectionLayout(apiPackage, entryPointSections, config),
+	);
 
 	logger.verbose(`Package document rendered successfully.`);
 
@@ -278,7 +299,9 @@ function createDocumentForApiEntryPoint(
 ): ApiDocument {
 	const { includeBreadcrumb, logger, transformations } = config;
 
-	logger.verbose(`Generating ${apiEntryPoint.displayName} API entry-point document...`);
+	logger.verbose(
+		`Generating ${apiEntryPoint.displayName} API entry-point document...`,
+	);
 
 	const sections: Section[] = [];
 
@@ -292,8 +315,10 @@ function createDocumentForApiEntryPoint(
 
 	// Render body contents
 	sections.push(
-		...transformations[ApiItemKind.EntryPoint](apiEntryPoint, config, (childItem) =>
-			apiItemToSections(childItem, config),
+		...transformations[ApiItemKind.EntryPoint](
+			apiEntryPoint,
+			config,
+			(childItem) => apiItemToSections(childItem, config),
 		),
 	);
 

@@ -4,6 +4,12 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import type {
+	SimpleFieldSchema,
+	SimpleNodeSchema,
+	SimpleTreeSchema,
+	TreeNode,
+} from "@fluidframework/tree/internal";
 import {
 	FieldKind,
 	getSimpleSchema,
@@ -11,13 +17,7 @@ import {
 	Tree,
 	ValueSchema,
 } from "@fluidframework/tree/internal";
-import type {
-	SimpleFieldSchema,
-	SimpleNodeSchema,
-	SimpleTreeSchema,
-	TreeNode,
-} from "@fluidframework/tree/internal";
-import { z, type ZodTypeAny } from "zod";
+import { type ZodTypeAny, z } from "zod";
 
 import { objectIdKey, typeField } from "./agentEditTypes.js";
 import { fail, getOrCreate, mapIterable } from "./utils.js";
@@ -93,7 +93,10 @@ const range = z
 /**
  * Cache used to prevent repeatedly generating the same Zod validation objects for the same {@link SimpleTreeSchema} as generate propts for repeated calls to an LLM
  */
-const cache = new WeakMap<SimpleTreeSchema, ReturnType<typeof generateGenericEditTypes>>();
+const cache = new WeakMap<
+	SimpleTreeSchema,
+	ReturnType<typeof generateGenericEditTypes>
+>();
 
 /**
  * Generates a set of ZOD validation objects for the various types of data that can be put into the provided {@link SimpleTreeSchema}
@@ -130,8 +133,9 @@ export function generateGenericEditTypes(
 				}
 				case 1: {
 					return (
-						typeMap.get(tryGetSingleton(allowedTypes) ?? fail("Expected singleton")) ??
-						fail("Unknown type")
+						typeMap.get(
+							tryGetSingleton(allowedTypes) ?? fail("Expected singleton"),
+						) ?? fail("Unknown type")
 					);
 				}
 				default: {
@@ -185,7 +189,9 @@ export function generateGenericEditTypes(
 				source: z.union([objectTarget, range]),
 				destination: z.union([arrayPlace, objectPlace]),
 			})
-			.describe("Moves an object or Range of objects to a new Place or ArrayPlace.");
+			.describe(
+				"Moves an object or Range of objects to a new Place or ArrayPlace.",
+			);
 
 		const typeRecord: Record<string, ZodTypeAny> = {
 			ObjectTarget: objectTarget,
@@ -210,7 +216,9 @@ export function generateGenericEditTypes(
 		const editWrapper = z.object({
 			edit: z
 				.union(editTypes)
-				.describe("The next edit to apply to the tree, or null if the task is complete."),
+				.describe(
+					"The next edit to apply to the tree, or null if the task is complete.",
+				),
 		});
 		typeRecord.EditWrapper = editWrapper;
 
@@ -228,7 +236,8 @@ function getOrCreateType(
 	definition: string,
 ): ZodTypeAny {
 	return getOrCreate(typeMap, definition, () => {
-		const nodeSchema = definitionMap.get(definition) ?? fail("Unexpected definition");
+		const nodeSchema =
+			definitionMap.get(definition) ?? fail("Unexpected definition");
 		switch (nodeSchema.kind) {
 			case NodeKind.Object: {
 				for (const [key, field] of nodeSchema.fields) {
@@ -276,7 +285,8 @@ function getOrCreateType(
 						definitionMap.get(n) ?? fail("Unknown definition"),
 					],
 				).filter(
-					([_, schema]) => schema.kind === NodeKind.Object || schema.kind === NodeKind.Leaf,
+					([_, schema]) =>
+						schema.kind === NodeKind.Object || schema.kind === NodeKind.Leaf,
 				)) {
 					insertSet.add(name);
 				}
@@ -306,7 +316,9 @@ function getOrCreateType(
 						return z.null();
 					}
 					default: {
-						throw new Error(`Unsupported leaf kind ${NodeKind[nodeSchema.leafKind]}.`);
+						throw new Error(
+							`Unsupported leaf kind ${NodeKind[nodeSchema.leafKind]}.`,
+						);
 					}
 				}
 			}

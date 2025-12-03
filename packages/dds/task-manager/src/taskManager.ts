@@ -11,21 +11,21 @@ import {
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
-	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
+	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	SharedObject,
 	createSingleBlobSummary,
+	SharedObject,
 } from "@fluidframework/shared-object-base/internal";
 
 import type { ITaskManager, ITaskManagerEvents } from "./interfaces.js";
@@ -58,14 +58,18 @@ interface IPendingOp {
 	messageId: number;
 }
 
-function assertIsTaskManagerOperation(op: unknown): asserts op is ITaskManagerOperation {
+function assertIsTaskManagerOperation(
+	op: unknown,
+): asserts op is ITaskManagerOperation {
 	assert(
 		typeof op === "object" &&
 			op !== null &&
 			"taskId" in op &&
 			typeof op.taskId === "string" &&
 			"type" in op &&
-			(op.type === "volunteer" || op.type === "abandon" || op.type === "complete"),
+			(op.type === "volunteer" ||
+				op.type === "abandon" ||
+				op.type === "complete"),
 		0xc3b /* Not a TaskManager operation */,
 	);
 }
@@ -149,16 +153,27 @@ export class TaskManagerClass
 
 		this.opWatcher.on(
 			"volunteer",
-			(taskId: string, clientId: string, local: boolean, messageId: number | undefined) => {
+			(
+				taskId: string,
+				clientId: string,
+				local: boolean,
+				messageId: number | undefined,
+			) => {
 				if (local) {
 					const latestPendingOps = this.latestPendingOps.get(taskId);
-					assert(latestPendingOps !== undefined, 0xc3c /* No pending ops for task */);
+					assert(
+						latestPendingOps !== undefined,
+						0xc3c /* No pending ops for task */,
+					);
 					const pendingOp = latestPendingOps.shift();
 					assert(
 						pendingOp !== undefined && pendingOp.messageId === messageId,
 						0xc3d /* Unexpected op */,
 					);
-					assert(pendingOp.type === "volunteer", 0x07c /* "Unexpected op type" */);
+					assert(
+						pendingOp.type === "volunteer",
+						0x07c /* "Unexpected op type" */,
+					);
 					if (latestPendingOps.length === 0) {
 						this.latestPendingOps.delete(taskId);
 					}
@@ -170,16 +185,27 @@ export class TaskManagerClass
 
 		this.opWatcher.on(
 			"abandon",
-			(taskId: string, clientId: string, local: boolean, messageId: number | undefined) => {
+			(
+				taskId: string,
+				clientId: string,
+				local: boolean,
+				messageId: number | undefined,
+			) => {
 				if (local) {
 					const latestPendingOps = this.latestPendingOps.get(taskId);
-					assert(latestPendingOps !== undefined, 0xc3e /* No pending ops for task */);
+					assert(
+						latestPendingOps !== undefined,
+						0xc3e /* No pending ops for task */,
+					);
 					const pendingOp = latestPendingOps.shift();
 					assert(
 						pendingOp !== undefined && pendingOp.messageId === messageId,
 						0xc3f /* Unexpected op */,
 					);
-					assert(pendingOp.type === "abandon", 0x07e /* "Unexpected op type" */);
+					assert(
+						pendingOp.type === "abandon",
+						0x07e /* "Unexpected op type" */,
+					);
 					if (latestPendingOps.length === 0) {
 						this.latestPendingOps.delete(taskId);
 					}
@@ -192,10 +218,18 @@ export class TaskManagerClass
 
 		this.opWatcher.on(
 			"complete",
-			(taskId: string, clientId: string, local: boolean, messageId: number | undefined) => {
+			(
+				taskId: string,
+				clientId: string,
+				local: boolean,
+				messageId: number | undefined,
+			) => {
 				if (local) {
 					const latestPendingOps = this.latestPendingOps.get(taskId);
-					assert(latestPendingOps !== undefined, 0xc40 /* No pending ops for task */);
+					assert(
+						latestPendingOps !== undefined,
+						0xc40 /* No pending ops for task */,
+					);
 					const pendingOp = latestPendingOps.shift();
 					assert(
 						pendingOp !== undefined && pendingOp.messageId === messageId,
@@ -226,9 +260,15 @@ export class TaskManagerClass
 					return;
 				}
 
-				if (oldLockHolder !== this.clientId && newLockHolder === this.clientId) {
+				if (
+					oldLockHolder !== this.clientId &&
+					newLockHolder === this.clientId
+				) {
 					this.emit("assigned", taskId);
-				} else if (oldLockHolder === this.clientId && newLockHolder !== this.clientId) {
+				} else if (
+					oldLockHolder === this.clientId &&
+					newLockHolder !== this.clientId
+				) {
 					this.emit("lost", taskId);
 				}
 			},
@@ -367,7 +407,10 @@ export class TaskManagerClass
 				}
 			};
 
-			const checkIfAbandoned = (eventTaskId: string, messageId: number | undefined): void => {
+			const checkIfAbandoned = (
+				eventTaskId: string,
+				messageId: number | undefined,
+			): void => {
 				if (eventTaskId !== taskId) {
 					return;
 				}
@@ -385,7 +428,10 @@ export class TaskManagerClass
 				reject(new Error("Disconnected before acquiring task assignment"));
 			};
 
-			const checkIfCompleted = (eventTaskId: string, messageId: number | undefined): void => {
+			const checkIfCompleted = (
+				eventTaskId: string,
+				messageId: number | undefined,
+			): void => {
 				if (eventTaskId !== taskId) {
 					return;
 				}
@@ -424,7 +470,10 @@ export class TaskManagerClass
 			return;
 		}
 
-		if (this.readOnlyInfo.readonly === true && this.readOnlyInfo.permissions === true) {
+		if (
+			this.readOnlyInfo.readonly === true &&
+			this.readOnlyInfo.permissions === true
+		) {
 			throw new Error("Attempted to subscribe with read-only permissions");
 		}
 
@@ -457,7 +506,10 @@ export class TaskManagerClass
 			}
 		};
 
-		const checkIfAbandoned = (eventTaskId: string, messageId: number | undefined): void => {
+		const checkIfAbandoned = (
+			eventTaskId: string,
+			messageId: number | undefined,
+		): void => {
 			if (eventTaskId !== taskId) {
 				return;
 			}
@@ -480,7 +532,10 @@ export class TaskManagerClass
 			abandoned = true;
 		};
 
-		const checkIfCompleted = (eventTaskId: string, messageId: number | undefined): void => {
+		const checkIfCompleted = (
+			eventTaskId: string,
+			messageId: number | undefined,
+		): void => {
 			if (eventTaskId !== taskId) {
 				return;
 			}
@@ -585,7 +640,9 @@ export class TaskManagerClass
 	 */
 	public complete(taskId: string): void {
 		if (!this.assigned(taskId)) {
-			throw new Error("Attempted to mark task as complete while not being assigned");
+			throw new Error(
+				"Attempted to mark task as complete while not being assigned",
+			);
 		}
 
 		// If we are detached we will simulate auto-ack for the complete op. Therefore we only need to send the op if
@@ -646,7 +703,10 @@ export class TaskManagerClass
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
-		const content = await readAndParse<[string, string[]][]>(storage, snapshotFileName);
+		const content = await readAndParse<[string, string[]][]>(
+			storage,
+			snapshotFileName,
+		);
 		for (const [taskId, clientIdQueue] of content) {
 			this.taskQueues.set(taskId, clientIdQueue);
 		}
@@ -678,11 +738,17 @@ export class TaskManagerClass
 	protected reSubmitCore(content: unknown, localOpMetadata: number): void {
 		assertIsTaskManagerOperation(content);
 		const pendingOps = this.latestPendingOps.get(content.taskId);
-		assert(pendingOps !== undefined, 0xc42 /* No pending ops for task on resubmit attempt */);
+		assert(
+			pendingOps !== undefined,
+			0xc42 /* No pending ops for task on resubmit attempt */,
+		);
 		const pendingOpIndex = pendingOps.findIndex(
 			(op) => op.messageId === localOpMetadata && op.type === content.type,
 		);
-		assert(pendingOpIndex !== -1, 0xc43 /* Could not match pending op on resubmit attempt */);
+		assert(
+			pendingOpIndex !== -1,
+			0xc43 /* Could not match pending op on resubmit attempt */,
+		);
 		pendingOps.splice(pendingOpIndex, 1);
 		if (
 			content.type === "volunteer" &&
@@ -698,7 +764,9 @@ export class TaskManagerClass
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected processMessagesCore(
+		messagesCollection: IRuntimeMessageCollection,
+	): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
 			this.processMessage(envelope, messageContent, local);
@@ -780,7 +848,12 @@ export class TaskManagerClass
 			clientQueue.push(clientId);
 			const newLockHolder = clientQueue[0];
 			if (newLockHolder !== oldLockHolder) {
-				this.queueWatcher.emit("queueChange", taskId, oldLockHolder, newLockHolder);
+				this.queueWatcher.emit(
+					"queueChange",
+					taskId,
+					oldLockHolder,
+					newLockHolder,
+				);
 			}
 		}
 	}
@@ -803,7 +876,12 @@ export class TaskManagerClass
 		}
 		const newLockHolder = clientQueue[0];
 		if (newLockHolder !== oldLockHolder) {
-			this.queueWatcher.emit("queueChange", taskId, oldLockHolder, newLockHolder);
+			this.queueWatcher.emit(
+				"queueChange",
+				taskId,
+				oldLockHolder,
+				newLockHolder,
+			);
 		}
 	}
 
@@ -859,7 +937,8 @@ export class TaskManagerClass
 	 * for the latest pending ops.
 	 */
 	private queuedOptimistically(taskId: string): boolean {
-		const inQueue = this.taskQueues.get(taskId)?.includes(this.clientId) ?? false;
+		const inQueue =
+			this.taskQueues.get(taskId)?.includes(this.clientId) ?? false;
 		const latestPendingOps = this.latestPendingOps.get(taskId);
 
 		const latestPendingOp =
@@ -868,7 +947,8 @@ export class TaskManagerClass
 				: undefined;
 		const isPendingVolunteer = latestPendingOp?.type === "volunteer";
 		const isPendingAbandonOrComplete =
-			latestPendingOp?.type === "abandon" || latestPendingOp?.type === "complete";
+			latestPendingOp?.type === "abandon" ||
+			latestPendingOp?.type === "complete";
 		// We return true if the client is either in queue already or the latest pending op for this task is a volunteer op.
 		// But we should always return false if the latest pending op is an abandon or complete op.
 		return (inQueue && !isPendingAbandonOrComplete) || isPendingVolunteer;
@@ -901,10 +981,14 @@ export class TaskManagerClass
 		);
 		assertIsTaskManagerOperation(content);
 		const latestPendingOps = this.latestPendingOps.get(content.taskId);
-		assert(latestPendingOps !== undefined, 0xc46 /* No pending ops when trying to rollback */);
+		assert(
+			latestPendingOps !== undefined,
+			0xc46 /* No pending ops when trying to rollback */,
+		);
 		const pendingOpToRollback = latestPendingOps.pop();
 		assert(
-			pendingOpToRollback !== undefined && pendingOpToRollback.messageId === localOpMetadata,
+			pendingOpToRollback !== undefined &&
+				pendingOpToRollback.messageId === localOpMetadata,
 			0xc47 /* pending op mismatch */,
 		);
 		if (latestPendingOps.length === 0) {

@@ -3,29 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
-
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
-	IDocumentStorageService,
-	ISummaryContext,
-	ISnapshotTree,
-	IVersion,
-	ITree,
 	FileMode,
+	type IBlob,
+	type IDocumentStorageService,
+	type ISnapshotTree,
+	type ISummaryContext,
+	type ITree,
+	type IVersion,
 	TreeEntry,
-	IBlob,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	buildSnapshotTree,
 	convertSummaryTreeToSnapshotITree,
 } from "@fluidframework/driver-utils/internal";
 import {
-	IFileSnapshot,
+	type IFileSnapshot,
 	ReadDocumentStorageServiceBase,
 } from "@fluidframework/replay-driver/internal";
+import fs from "fs";
 
 // This ID is used by replay tool as Document Id.
 // We leverage it to figure out when container is asking for root document tree.
@@ -59,8 +58,13 @@ export class FluidFetchReader
 	 * @param version - The version contains the path of the file which contains the snapshot tree.
 	 */
 	// eslint-disable-next-line @rushstack/no-new-null
-	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
-		assert(version !== null, 0x092 /* "version input for reading snapshot tree is null!" */);
+	public async getSnapshotTree(
+		version?: IVersion,
+	): Promise<ISnapshotTree | null> {
+		assert(
+			version !== null,
+			0x092 /* "version input for reading snapshot tree is null!" */,
+		);
 		assert(
 			!version || version.treeId === FileStorageVersionTreeId,
 			0x093 /* "invalid version input for reading snapshot tree!" */,
@@ -99,7 +103,10 @@ export class FluidFetchReader
 	 * @param count - Number of versions to be returned.
 	 */
 	// eslint-disable-next-line @rushstack/no-new-null
-	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
+	public async getVersions(
+		versionId: string | null,
+		count: number,
+	): Promise<IVersion[]> {
 		if (versionId === FileStorageDocumentName || versionId === null) {
 			if (this.docTree !== null || this.versionName !== undefined) {
 				return [{ id: "latest", treeId: FileStorageVersionTreeId }];
@@ -145,7 +152,9 @@ export type ReaderConstructor = new (...args: any[]) => IDocumentStorageService;
 /**
  * @internal
  */
-export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(Base: TBase) =>
+export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
+	Base: TBase,
+) =>
 	class extends Base implements ISnapshotWriterStorage {
 		// Note: if variable name has same name as in base class, it overrides it!
 		public blobsWriter = new Map<string, ArrayBufferLike>();
@@ -159,7 +168,9 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
 		}
 
 		public onSnapshotHandler(snapshot: IFileSnapshot): void {
-			throw new Error("onSnapshotHandler is not setup! Please provide your handler!");
+			throw new Error(
+				"onSnapshotHandler is not setup! Please provide your handler!",
+			);
 		}
 
 		public async readBlob(sha: string): Promise<ArrayBufferLike> {
@@ -171,13 +182,19 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
 		}
 
 		// eslint-disable-next-line @rushstack/no-new-null
-		public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
+		public async getVersions(
+			versionId: string | null,
+			count: number,
+		): Promise<IVersion[]> {
 			// If we already saved document, that means we are getting here because of snapshot generation.
 			// Not returning tree ensures that IContainerRuntime.snapshot() would regenerate subtrees for
 			// each unchanged data store.
 			// If we want to change that, we would need to capture docId on first call and return this.latestWriterTree
 			// when latest is requested.
-			if (this.latestWriterTree && (this.docId === versionId || versionId === null)) {
+			if (
+				this.latestWriterTree &&
+				(this.docId === versionId || versionId === null)
+			) {
 				return [{ id: "latest", treeId: FileStorageVersionTreeId }];
 			}
 
@@ -189,7 +206,9 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
 		}
 
 		// eslint-disable-next-line @rushstack/no-new-null
-		public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
+		public async getSnapshotTree(
+			version?: IVersion,
+		): Promise<ISnapshotTree | null> {
 			if (this.latestWriterTree && (!version || version.id === "latest")) {
 				return this.latestWriterTree;
 			}
@@ -216,7 +235,9 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
 		public async buildTree(snapshotTree: ISnapshotTree): Promise<ITree> {
 			const tree: ITree = { entries: [] };
 
-			for (const [subTreeId, subTreeValue] of Object.entries(snapshotTree.trees)) {
+			for (const [subTreeId, subTreeValue] of Object.entries(
+				snapshotTree.trees,
+			)) {
 				const subTree = await this.buildTree(subTreeValue);
 				tree.entries.push({
 					mode: FileMode.Directory,

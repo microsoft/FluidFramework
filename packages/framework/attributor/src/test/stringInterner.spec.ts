@@ -75,7 +75,10 @@ describe("MutableStringInterner", () => {
 	});
 
 	it("can be initialized with a list of input strings that include duplicate IDs", () => {
-		const interner = new MutableStringInterner([...inputStrings, ...inputStrings]);
+		const interner = new MutableStringInterner([
+			...inputStrings,
+			...inputStrings,
+		]);
 
 		assert.equal(interner.getOrCreateInternedId(inputStrings[3]), 3);
 		assert.equal(interner.getOrCreateInternedId(inputStrings[2]), 2);

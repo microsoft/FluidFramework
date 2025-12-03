@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	createChildLogger,
 	raiseConnectedEvent,
@@ -12,10 +12,10 @@ import { v4 as uuid } from "uuid";
 
 import {
 	type IMockContainerRuntimeIdAllocationMessage,
-	IMockContainerRuntimeOptions,
+	type IMockContainerRuntimeOptions,
 	MockContainerRuntime,
 	MockContainerRuntimeFactory,
-	MockFluidDataStoreRuntime,
+	type MockFluidDataStoreRuntime,
 } from "./mocks.js";
 
 /**
@@ -42,7 +42,9 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		this.setConnectedState(connected);
 	}
 
-	protected processPendingMessages(pendingMessages: ISequencedDocumentMessage[]) {
+	protected processPendingMessages(
+		pendingMessages: ISequencedDocumentMessage[],
+	) {
 		for (const remoteMessage of pendingMessages) {
 			this.process(remoteMessage);
 		}
@@ -130,7 +132,10 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 	public async initializeWithStashedOps(
 		fromContainerRuntime: MockContainerRuntimeForReconnection,
 	) {
-		if (this.pendingMessages.length !== 0 || this.deltaManager.clientSequenceNumber !== 0) {
+		if (
+			this.pendingMessages.length !== 0 ||
+			this.deltaManager.clientSequenceNumber !== 0
+		) {
 			throw new Error("applyStashedOps must be called first, and once.");
 		}
 
@@ -166,8 +171,10 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			refSeq = 0;
 		}
 		if (
-			this.dataStoreRuntime.deltaManagerInternal.lastSequenceNumber !== refSeq ||
-			this.dataStoreRuntime.deltaManagerInternal.minimumSequenceNumber !== refSeq
+			this.dataStoreRuntime.deltaManagerInternal.lastSequenceNumber !==
+				refSeq ||
+			this.dataStoreRuntime.deltaManagerInternal.minimumSequenceNumber !==
+				refSeq
 		) {
 			throw new Error(
 				"computed min and ref seq don't match the loaded values; this indicates a bad load, or missing messages",
@@ -194,7 +201,10 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			for (const message of pendingAtSeq ?? []) {
 				// As in production, do not locally apply any stashed ID allocation messages.
 				// Instead, simply resubmit them.
-				if ((message as IMockContainerRuntimeIdAllocationMessage).type === "idAllocation") {
+				if (
+					(message as IMockContainerRuntimeIdAllocationMessage).type ===
+					"idAllocation"
+				) {
 					this.submit(message, undefined);
 				} else {
 					await this.dataStoreRuntime.applyStashedOp(message);
@@ -202,7 +212,9 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			}
 			stashedOps.delete(seq);
 		};
-		await applyStashedOpsAtSeq(this.dataStoreRuntime.deltaManagerInternal.lastSequenceNumber);
+		await applyStashedOpsAtSeq(
+			this.dataStoreRuntime.deltaManagerInternal.lastSequenceNumber,
+		);
 		// apply the saved and pending ops
 		for (const savedOp of remoteOps) {
 			this.process(savedOp);
@@ -211,7 +223,9 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			);
 		}
 		if (stashedOps.size !== 0) {
-			throw new Error("There should be no pending message after saved ops are processed");
+			throw new Error(
+				"There should be no pending message after saved ops are processed",
+			);
 		}
 		// issue a reconnect to rebase pending ops
 		this.connected = false;
@@ -240,8 +254,10 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
 
 	public clearOutstandingClientMessages(clientId: string) {
 		// Delete all the messages for client with the given clientId.
-		this.messages = this.messages.filter((message: ISequencedDocumentMessage) => {
-			return message.clientId !== clientId;
-		});
+		this.messages = this.messages.filter(
+			(message: ISequencedDocumentMessage) => {
+				return message.clientId !== clientId;
+			},
+		);
 	}
 }

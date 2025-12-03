@@ -7,19 +7,23 @@
 
 import { strict as assert } from "node:assert";
 
-import { type IRandom, describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
+import {
+	describeFuzz,
+	type IRandom,
+	makeRandom,
+} from "@fluid-private/stochastic-test-utils";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import type { SegmentGroup } from "../mergeTreeNodes.js";
 import type { IMergeTreeOp } from "../ops.js";
 
 import {
-	type IConfigRange,
-	type IMergeTreeOperationRunnerConfig,
 	annotateRange,
 	applyMessages,
 	doOverRange,
 	generateClientNames,
+	type IConfigRange,
+	type IMergeTreeOperationRunnerConfig,
 	insert,
 	removeRange,
 	runMergeTreeOperationRunner,
@@ -39,15 +43,19 @@ function applyMessagesWithReconnect(
 		clients.length > 2 && random.bool()
 			? [clients[1].longClientId!, clients[2].longClientId!]
 			: [clients[1].longClientId!];
-	const reconnectClientMsgs: Map<string, [IMergeTreeOp, SegmentGroup | SegmentGroup[]][]> =
-		new Map(reconnectingClientIds.map((id) => [id, []]));
+	const reconnectClientMsgs: Map<
+		string,
+		[IMergeTreeOp, SegmentGroup | SegmentGroup[]][]
+	> = new Map(reconnectingClientIds.map((id) => [id, []]));
 	let minSeq = 0;
 	// log and apply all the ops created in the round
 	while (messageDatas.length > 0) {
 		const [message, sg] = messageDatas.shift()!;
 		assert(message.clientId, "expected clientId to be defined");
 		if (reconnectingClientIds.includes(message.clientId)) {
-			reconnectClientMsgs.get(message.clientId)!.push([message.contents as IMergeTreeOp, sg]);
+			reconnectClientMsgs
+				.get(message.clientId)!
+				.push([message.contents as IMergeTreeOp, sg]);
 		} else {
 			message.sequenceNumber = ++seq;
 			for (const c of clients) c.applyMsg(message);
@@ -55,11 +63,18 @@ function applyMessagesWithReconnect(
 		}
 	}
 
-	const reconnectMsgs: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][] = [];
+	const reconnectMsgs: [
+		ISequencedDocumentMessage,
+		SegmentGroup | SegmentGroup[],
+	][] = [];
 	for (const [clientId, messageData] of reconnectClientMsgs.entries()) {
-		const client = clients.find(({ longClientId }) => longClientId === clientId)!;
+		const client = clients.find(
+			({ longClientId }) => longClientId === clientId,
+		)!;
 		for (const [op, segmentGroup] of messageData) {
-			const newMsg = client.makeOpMessage(client.regeneratePendingOp(op, segmentGroup, false));
+			const newMsg = client.makeOpMessage(
+				client.regeneratePendingOp(op, segmentGroup, false),
+			);
 			newMsg.minimumSequenceNumber = minSeq;
 			// apply message doesn't use the segment group, so just pass undefined
 			reconnectMsgs.push([newMsg, undefined as never]);
@@ -86,18 +101,29 @@ export const defaultOptions: IReconnectFarmConfig = {
 // Generate a list of single character client names, support up to 69 clients
 const clientNames = generateClientNames();
 
-function runReconnectFarmTests(opts: IReconnectFarmConfig, extraSeed?: number): void {
+function runReconnectFarmTests(
+	opts: IReconnectFarmConfig,
+	extraSeed?: number,
+): void {
 	doOverRange(opts.clients, opts.growthFunc.bind(opts), (clientCount) => {
 		it(`ReconnectFarm_${clientCount}_${extraSeed ?? 0}`, async () => {
-			const random = makeRandom(0xdeadbeef, 0xfeedbed, clientCount, extraSeed ?? 0);
+			const random = makeRandom(
+				0xdeadbeef,
+				0xfeedbed,
+				clientCount,
+				extraSeed ?? 0,
+			);
 			const testOpts = { ...opts };
 			if (extraSeed) {
 				testOpts.resultsFilePostfix ??= "";
 				testOpts.resultsFilePostfix += extraSeed;
 			}
 
-			const clients: TestClient[] = [new TestClient({ mergeTreeEnableAnnotateAdjust: true })];
-			for (const [i, c] of clients.entries()) c.startOrUpdateCollaboration(clientNames[i]);
+			const clients: TestClient[] = [
+				new TestClient({ mergeTreeEnableAnnotateAdjust: true }),
+			];
+			for (const [i, c] of clients.entries())
+				c.startOrUpdateCollaboration(clientNames[i]);
 
 			let seq = 0;
 			for (const c of clients) c.updateMinSeq(seq);

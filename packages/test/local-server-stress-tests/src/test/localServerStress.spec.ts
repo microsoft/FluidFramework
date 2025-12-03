@@ -9,14 +9,14 @@ import {
 	ddsModelMinimizers,
 	makeGenerator,
 	reducer,
-	saveFailures,
 	type StressOperations,
+	saveFailures,
 } from "../baseModel.js";
 import { validateAllDataStoresSaved } from "../dataStoreOperations.js";
 import { validateConsistencyOfAllDDS } from "../ddsOperations";
 import {
 	createLocalServerStressSuite,
-	LocalServerStressModel,
+	type LocalServerStressModel,
 } from "../localServerStressHarness";
 
 describe("Local Server Stress", () => {

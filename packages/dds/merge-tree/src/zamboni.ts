@@ -9,18 +9,18 @@ import { UnassignedSequenceNumber } from "./constants.js";
 import type { MergeTree } from "./mergeTree.js";
 import { MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback.js";
 import {
-	type MergeBlock,
 	assignChild,
 	getMinSeqStamp,
 	type IMergeNode,
 	type ISegmentPrivate,
 	Marker,
 	MaxNodesInBlock,
+	type MergeBlock,
 } from "./mergeTreeNodes.js";
 import { matchProperties } from "./properties.js";
-import { toRemovalInfo, removeMergeNodeInfo } from "./segmentInfos.js";
-import * as opstampUtils from "./stamps.js";
+import { removeMergeNodeInfo, toRemovalInfo } from "./segmentInfos.js";
 import type { OperationStamp } from "./stamps.js";
+import * as opstampUtils from "./stamps.js";
 
 export const zamboniSegmentsMax = 2;
 function underflow(node: MergeBlock): boolean {
@@ -28,7 +28,10 @@ function underflow(node: MergeBlock): boolean {
 }
 
 // blockUpdatePathLengths requires an OperationStamp but it is unused when passing `newStructure: true`.
-const dummyStamp: OperationStamp = { seq: UnassignedSequenceNumber, clientId: -1 };
+const dummyStamp: OperationStamp = {
+	seq: UnassignedSequenceNumber,
+	clientId: -1,
+};
 
 export function zamboniSegments(
 	mergeTree: MergeTree,
@@ -41,9 +44,14 @@ export function zamboniSegments(
 	for (let i = 0; i < zamboniSegmentsMaxCount; i++) {
 		let segmentToScour = mergeTree.segmentsToScour.peek()?.value;
 
-		segmentToScour?.segment?.propertyManager?.updateMsn(mergeTree.collabWindow.minSeq);
+		segmentToScour?.segment?.propertyManager?.updateMsn(
+			mergeTree.collabWindow.minSeq,
+		);
 
-		if (!segmentToScour || segmentToScour.maxSeq > mergeTree.collabWindow.minSeq) {
+		if (
+			!segmentToScour ||
+			segmentToScour.maxSeq > mergeTree.collabWindow.minSeq
+		) {
 			break;
 		}
 		segmentToScour = mergeTree.segmentsToScour.get()!;
@@ -113,7 +121,11 @@ export function packParent(parent: MergeBlock, mergeTree: MergeTree): void {
 				remainderCount--;
 			}
 			const packedBlock = mergeTree.makeBlock(nodeCount);
-			for (let packedNodeIndex = 0; packedNodeIndex < nodeCount; packedNodeIndex++) {
+			for (
+				let packedNodeIndex = 0;
+				packedNodeIndex < nodeCount;
+				packedNodeIndex++
+			) {
 				const nodeToPack = holdNodes[childrenPackedCount++];
 				assignChild(packedBlock, nodeToPack, packedNodeIndex, false);
 			}
@@ -138,7 +150,11 @@ export function packParent(parent: MergeBlock, mergeTree: MergeTree): void {
 	}
 }
 
-function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTree): void {
+function scourNode(
+	node: MergeBlock,
+	holdNodes: IMergeNode[],
+	mergeTree: MergeTree,
+): void {
 	// The previous segment is tracked while scouring for the purposes of merging adjacent segments
 	// when possible.
 	let prevSegment: ISegmentPrivate | undefined;
@@ -156,7 +172,8 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 		const minSeqStamp = getMinSeqStamp(mergeTree.collabWindow);
 		if (removalInfo === undefined) {
 			if (opstampUtils.lte(segment.insert, minSeqStamp)) {
-				const segmentHasPositiveLength = (mergeTree.leafLength(segment) ?? 0) > 0;
+				const segmentHasPositiveLength =
+					(mergeTree.leafLength(segment) ?? 0) > 0;
 				const canAppend =
 					prevSegment?.canAppend(segment) &&
 					matchProperties(prevSegment.properties, segment.properties) &&
@@ -173,7 +190,8 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 						undefined,
 					);
 
-					for (const tg of segment.trackingCollection.trackingGroups) tg.unlink(segment);
+					for (const tg of segment.trackingCollection.trackingGroups)
+						tg.unlink(segment);
 					removeMergeNodeInfo(segment);
 				} else {
 					holdNodes.push(segment);

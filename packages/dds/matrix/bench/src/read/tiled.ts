@@ -5,7 +5,7 @@
 
 import { pointwise } from "./test";
 
-const enum Consts {
+enum Consts {
 	logW = 4,
 	logH = 5,
 	w = 1 << logW,
@@ -38,7 +38,8 @@ function getCell<T>(r: number, c: number, grid: SparseGrid<T>): T | undefined {
 		if (t3) {
 			const t4 =
 				t3[
-					(((c >> Consts.logW) & Consts.mw) << Consts.logH) | ((r >> Consts.logH) & Consts.mh)
+					(((c >> Consts.logW) & Consts.mw) << Consts.logH) |
+						((r >> Consts.logH) & Consts.mh)
 				];
 			if (t4) {
 				return t4[((c & Consts.mw) << Consts.logH) | (r & Consts.mh)];
@@ -70,7 +71,8 @@ function setCell<T>(r: number, c: number, grid: SparseGrid<T>, value: T) {
 	}
 
 	const i4 =
-		(((c >> Consts.logW) & Consts.mw) << Consts.logH) | ((r >> Consts.logH) & Consts.mh);
+		(((c >> Consts.logW) & Consts.mw) << Consts.logH) |
+		((r >> Consts.logH) & Consts.mh);
 	let t4 = t3[i4];
 	if (t4 === undefined) {
 		t4 = t3[i4] = [];
@@ -100,7 +102,8 @@ function clearCell<T>(r: number, c: number, grid: SparseGrid<T>) {
 	}
 
 	const i4 =
-		(((c >> Consts.logW) & Consts.mw) << Consts.logH) | ((r >> Consts.logH) & Consts.mh);
+		(((c >> Consts.logW) & Consts.mw) << Consts.logH) |
+		((r >> Consts.logH) & Consts.mh);
 	const t4 = t3[i4];
 	if (t4 === undefined) {
 		return;

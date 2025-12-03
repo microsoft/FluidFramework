@@ -11,12 +11,23 @@
  * Current version: 2.74.0
  */
 
-import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
+import type {
+	FullType,
+	MinimalType,
+	requireAssignableTo,
+	TypeOnly,
+} from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/fluid-static-previous";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> =
+	| TypeOnly<T>
+	| MinimalType<T>
+	| FullType<T>
+	| typeof old
+	| typeof current
+	| requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -25,7 +36,10 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Interface_ContainerSchema": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ContainerSchema = requireAssignableTo<TypeOnly<old.ContainerSchema>, TypeOnly<current.ContainerSchema>>
+declare type old_as_current_for_Interface_ContainerSchema = requireAssignableTo<
+	TypeOnly<old.ContainerSchema>,
+	TypeOnly<current.ContainerSchema>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -34,7 +48,10 @@ declare type old_as_current_for_Interface_ContainerSchema = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ContainerSchema": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ContainerSchema = requireAssignableTo<TypeOnly<current.ContainerSchema>, TypeOnly<old.ContainerSchema>>
+declare type current_as_old_for_Interface_ContainerSchema = requireAssignableTo<
+	TypeOnly<current.ContainerSchema>,
+	TypeOnly<old.ContainerSchema>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -43,7 +60,10 @@ declare type current_as_old_for_Interface_ContainerSchema = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IConnection": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IConnection = requireAssignableTo<TypeOnly<old.IConnection>, TypeOnly<current.IConnection>>
+declare type old_as_current_for_Interface_IConnection = requireAssignableTo<
+	TypeOnly<old.IConnection>,
+	TypeOnly<current.IConnection>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -52,7 +72,10 @@ declare type old_as_current_for_Interface_IConnection = requireAssignableTo<Type
  * typeValidation.broken:
  * "Interface_IConnection": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IConnection = requireAssignableTo<TypeOnly<current.IConnection>, TypeOnly<old.IConnection>>
+declare type current_as_old_for_Interface_IConnection = requireAssignableTo<
+	TypeOnly<current.IConnection>,
+	TypeOnly<old.IConnection>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -61,7 +84,10 @@ declare type current_as_old_for_Interface_IConnection = requireAssignableTo<Type
  * typeValidation.broken:
  * "Interface_IFluidContainer": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IFluidContainer = requireAssignableTo<TypeOnly<current.IFluidContainer>, TypeOnly<old.IFluidContainer>>
+declare type current_as_old_for_Interface_IFluidContainer = requireAssignableTo<
+	TypeOnly<current.IFluidContainer>,
+	TypeOnly<old.IFluidContainer>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -70,7 +96,11 @@ declare type current_as_old_for_Interface_IFluidContainer = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IFluidContainerEvents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IFluidContainerEvents = requireAssignableTo<TypeOnly<current.IFluidContainerEvents>, TypeOnly<old.IFluidContainerEvents>>
+declare type current_as_old_for_Interface_IFluidContainerEvents =
+	requireAssignableTo<
+		TypeOnly<current.IFluidContainerEvents>,
+		TypeOnly<old.IFluidContainerEvents>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -79,7 +109,10 @@ declare type current_as_old_for_Interface_IFluidContainerEvents = requireAssigna
  * typeValidation.broken:
  * "Interface_IMember": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IMember = requireAssignableTo<TypeOnly<old.IMember>, TypeOnly<current.IMember>>
+declare type old_as_current_for_Interface_IMember = requireAssignableTo<
+	TypeOnly<old.IMember>,
+	TypeOnly<current.IMember>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -88,7 +121,10 @@ declare type old_as_current_for_Interface_IMember = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Interface_IMember": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IMember = requireAssignableTo<TypeOnly<current.IMember>, TypeOnly<old.IMember>>
+declare type current_as_old_for_Interface_IMember = requireAssignableTo<
+	TypeOnly<current.IMember>,
+	TypeOnly<old.IMember>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -97,7 +133,11 @@ declare type current_as_old_for_Interface_IMember = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Interface_IServiceAudience": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IServiceAudience = requireAssignableTo<TypeOnly<old.IServiceAudience<never>>, TypeOnly<current.IServiceAudience<never>>>
+declare type old_as_current_for_Interface_IServiceAudience =
+	requireAssignableTo<
+		TypeOnly<old.IServiceAudience<never>>,
+		TypeOnly<current.IServiceAudience<never>>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -106,7 +146,11 @@ declare type old_as_current_for_Interface_IServiceAudience = requireAssignableTo
  * typeValidation.broken:
  * "Interface_IServiceAudience": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IServiceAudience = requireAssignableTo<TypeOnly<current.IServiceAudience<never>>, TypeOnly<old.IServiceAudience<never>>>
+declare type current_as_old_for_Interface_IServiceAudience =
+	requireAssignableTo<
+		TypeOnly<current.IServiceAudience<never>>,
+		TypeOnly<old.IServiceAudience<never>>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -115,7 +159,11 @@ declare type current_as_old_for_Interface_IServiceAudience = requireAssignableTo
  * typeValidation.broken:
  * "Interface_IServiceAudienceEvents": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IServiceAudienceEvents = requireAssignableTo<TypeOnly<old.IServiceAudienceEvents<never>>, TypeOnly<current.IServiceAudienceEvents<never>>>
+declare type old_as_current_for_Interface_IServiceAudienceEvents =
+	requireAssignableTo<
+		TypeOnly<old.IServiceAudienceEvents<never>>,
+		TypeOnly<current.IServiceAudienceEvents<never>>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -124,7 +172,11 @@ declare type old_as_current_for_Interface_IServiceAudienceEvents = requireAssign
  * typeValidation.broken:
  * "Interface_IServiceAudienceEvents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IServiceAudienceEvents = requireAssignableTo<TypeOnly<current.IServiceAudienceEvents<never>>, TypeOnly<old.IServiceAudienceEvents<never>>>
+declare type current_as_old_for_Interface_IServiceAudienceEvents =
+	requireAssignableTo<
+		TypeOnly<current.IServiceAudienceEvents<never>>,
+		TypeOnly<old.IServiceAudienceEvents<never>>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -133,7 +185,11 @@ declare type current_as_old_for_Interface_IServiceAudienceEvents = requireAssign
  * typeValidation.broken:
  * "TypeAlias_CompatibilityMode": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_CompatibilityMode = requireAssignableTo<TypeOnly<old.CompatibilityMode>, TypeOnly<current.CompatibilityMode>>
+declare type old_as_current_for_TypeAlias_CompatibilityMode =
+	requireAssignableTo<
+		TypeOnly<old.CompatibilityMode>,
+		TypeOnly<current.CompatibilityMode>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -142,7 +198,11 @@ declare type old_as_current_for_TypeAlias_CompatibilityMode = requireAssignableT
  * typeValidation.broken:
  * "TypeAlias_CompatibilityMode": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_CompatibilityMode = requireAssignableTo<TypeOnly<current.CompatibilityMode>, TypeOnly<old.CompatibilityMode>>
+declare type current_as_old_for_TypeAlias_CompatibilityMode =
+	requireAssignableTo<
+		TypeOnly<current.CompatibilityMode>,
+		TypeOnly<old.CompatibilityMode>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -151,7 +211,11 @@ declare type current_as_old_for_TypeAlias_CompatibilityMode = requireAssignableT
  * typeValidation.broken:
  * "TypeAlias_ContainerAttachProps": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_ContainerAttachProps = requireAssignableTo<TypeOnly<old.ContainerAttachProps>, TypeOnly<current.ContainerAttachProps>>
+declare type old_as_current_for_TypeAlias_ContainerAttachProps =
+	requireAssignableTo<
+		TypeOnly<old.ContainerAttachProps>,
+		TypeOnly<current.ContainerAttachProps>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -160,7 +224,11 @@ declare type old_as_current_for_TypeAlias_ContainerAttachProps = requireAssignab
  * typeValidation.broken:
  * "TypeAlias_ContainerAttachProps": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_ContainerAttachProps = requireAssignableTo<TypeOnly<current.ContainerAttachProps>, TypeOnly<old.ContainerAttachProps>>
+declare type current_as_old_for_TypeAlias_ContainerAttachProps =
+	requireAssignableTo<
+		TypeOnly<current.ContainerAttachProps>,
+		TypeOnly<old.ContainerAttachProps>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -169,7 +237,10 @@ declare type current_as_old_for_TypeAlias_ContainerAttachProps = requireAssignab
  * typeValidation.broken:
  * "TypeAlias_InitialObjects": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_InitialObjects = requireAssignableTo<TypeOnly<old.InitialObjects<never>>, TypeOnly<current.InitialObjects<never>>>
+declare type old_as_current_for_TypeAlias_InitialObjects = requireAssignableTo<
+	TypeOnly<old.InitialObjects<never>>,
+	TypeOnly<current.InitialObjects<never>>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -178,7 +249,10 @@ declare type old_as_current_for_TypeAlias_InitialObjects = requireAssignableTo<T
  * typeValidation.broken:
  * "TypeAlias_InitialObjects": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_InitialObjects = requireAssignableTo<TypeOnly<current.InitialObjects<never>>, TypeOnly<old.InitialObjects<never>>>
+declare type current_as_old_for_TypeAlias_InitialObjects = requireAssignableTo<
+	TypeOnly<current.InitialObjects<never>>,
+	TypeOnly<old.InitialObjects<never>>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -187,7 +261,11 @@ declare type current_as_old_for_TypeAlias_InitialObjects = requireAssignableTo<T
  * typeValidation.broken:
  * "TypeAlias_MemberChangedListener": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_MemberChangedListener = requireAssignableTo<TypeOnly<old.MemberChangedListener<never>>, TypeOnly<current.MemberChangedListener<never>>>
+declare type old_as_current_for_TypeAlias_MemberChangedListener =
+	requireAssignableTo<
+		TypeOnly<old.MemberChangedListener<never>>,
+		TypeOnly<current.MemberChangedListener<never>>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -196,7 +274,11 @@ declare type old_as_current_for_TypeAlias_MemberChangedListener = requireAssigna
  * typeValidation.broken:
  * "TypeAlias_MemberChangedListener": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_MemberChangedListener = requireAssignableTo<TypeOnly<current.MemberChangedListener<never>>, TypeOnly<old.MemberChangedListener<never>>>
+declare type current_as_old_for_TypeAlias_MemberChangedListener =
+	requireAssignableTo<
+		TypeOnly<current.MemberChangedListener<never>>,
+		TypeOnly<old.MemberChangedListener<never>>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -205,7 +287,10 @@ declare type current_as_old_for_TypeAlias_MemberChangedListener = requireAssigna
  * typeValidation.broken:
  * "TypeAlias_Myself": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_Myself = requireAssignableTo<TypeOnly<old.Myself>, TypeOnly<current.Myself>>
+declare type old_as_current_for_TypeAlias_Myself = requireAssignableTo<
+	TypeOnly<old.Myself>,
+	TypeOnly<current.Myself>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -214,4 +299,7 @@ declare type old_as_current_for_TypeAlias_Myself = requireAssignableTo<TypeOnly<
  * typeValidation.broken:
  * "TypeAlias_Myself": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_Myself = requireAssignableTo<TypeOnly<current.Myself>, TypeOnly<old.Myself>>
+declare type current_as_old_for_TypeAlias_Myself = requireAssignableTo<
+	TypeOnly<current.Myself>,
+	TypeOnly<old.Myself>
+>;

@@ -9,10 +9,10 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
-	type ITelemetryLoggerExt,
 	DataCorruptionError,
 	DataProcessingError,
 	extractSafePropertiesFromMessage,
+	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { IBatchMetadata } from "./metadata.js";
@@ -63,7 +63,9 @@ export class InboundBatchAggregator {
 	 * Callback for DeltaManager's "op" event, for us to make decision if op processing should
 	 * be paused or not after that.
 	 */
-	private readonly afterOpProcessing = (message: ISequencedDocumentMessage): void => {
+	private readonly afterOpProcessing = (
+		message: ISequencedDocumentMessage,
+	): void => {
 		assert(
 			!this.localPaused,
 			0x294 /* "can't have op processing paused if we are processing an op" */,
@@ -112,14 +114,17 @@ export class InboundBatchAggregator {
 	/**
 	 * Called for each incoming op (i.e. inbound "push" notification)
 	 */
-	private readonly trackPending = (message: ISequencedDocumentMessage): void => {
+	private readonly trackPending = (
+		message: ISequencedDocumentMessage,
+	): void => {
 		assert(
 			this.deltaManager.inbound.length > 0,
 			0x298 /* "we have something in the queue that generates this event" */,
 		);
 
 		assert(
-			(this.currentBatchClientId === undefined) === (this.pauseSequenceNumber === undefined),
+			(this.currentBatchClientId === undefined) ===
+				(this.pauseSequenceNumber === undefined),
 			0x299 /* "non-synchronized state" */,
 		);
 
@@ -140,7 +145,9 @@ export class InboundBatchAggregator {
 						runtimeVersion: pkgVersion,
 						batchClientId:
 							// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-							this.currentBatchClientId === null ? "null" : this.currentBatchClientId,
+							this.currentBatchClientId === null
+								? "null"
+								: this.currentBatchClientId,
 						pauseSequenceNumber: this.pauseSequenceNumber,
 						localBatch: this.currentBatchClientId === this.getClientId(),
 						messageType: message.type,
@@ -156,7 +163,10 @@ export class InboundBatchAggregator {
 			return;
 		}
 
-		if (this.currentBatchClientId === undefined && batchMetadata === undefined) {
+		if (
+			this.currentBatchClientId === undefined &&
+			batchMetadata === undefined
+		) {
 			assert(
 				!this.localPaused,
 				0x29d /* "we should be processing ops when there is no active batch" */,
@@ -176,7 +186,9 @@ export class InboundBatchAggregator {
 				runtimeVersion: pkgVersion,
 				batchClientId:
 					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-					this.currentBatchClientId === null ? "null" : this.currentBatchClientId,
+					this.currentBatchClientId === null
+						? "null"
+						: this.currentBatchClientId,
 				pauseSequenceNumber: this.pauseSequenceNumber,
 				localBatch: this.currentBatchClientId === this.getClientId(),
 				localMessage: message.clientId === this.getClientId(),
@@ -220,7 +232,10 @@ export class InboundBatchAggregator {
 			this.currentBatchClientId = undefined;
 		} else {
 			// Continuation of current batch. Do nothing
-			assert(this.currentBatchClientId !== undefined, 0x2a1 /* "logic error" */);
+			assert(
+				this.currentBatchClientId !== undefined,
+				0x2a1 /* "logic error" */,
+			);
 		}
 	};
 
@@ -232,9 +247,14 @@ export class InboundBatchAggregator {
 		this.deltaManager.inbound.pause();
 	}
 
-	private resumeQueue(startBatch: number, messageEndBatch: ISequencedDocumentMessage): void {
+	private resumeQueue(
+		startBatch: number,
+		messageEndBatch: ISequencedDocumentMessage,
+	): void {
 		const endBatch = messageEndBatch.sequenceNumber;
-		const duration = this.localPaused ? performanceNow() - this.timePaused : undefined;
+		const duration = this.localPaused
+			? performanceNow() - this.timePaused
+			: undefined;
 
 		this.batchCount++;
 		if (this.batchCount % 1000 === 1) {

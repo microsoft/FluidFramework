@@ -3,13 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { getTreeNodeSchemaPrivateData, type AllowedTypesFull } from "../core/index.js";
-import { isObjectNodeSchema } from "../node-kinds/index.js";
-import type { TreeSchema } from "./configuration.js";
-import type { IncrementalEncodingPolicy } from "../../feature-libraries/index.js";
-import { oneFromIterable } from "../../util/index.js";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { FieldKey } from "../../core/index.js";
+import type { IncrementalEncodingPolicy } from "../../feature-libraries/index.js";
+import { oneFromIterable } from "../../util/index.js";
+import {
+	type AllowedTypesFull,
+	getTreeNodeSchemaPrivateData,
+} from "../core/index.js";
+import { isObjectNodeSchema } from "../node-kinds/index.js";
+import type { TreeSchema } from "./configuration.js";
 
 /**
  * A symbol when present in the {@link AnnotatedAllowedTypes.metadata}'s `custom` property as true, opts in the allowed
@@ -31,12 +34,16 @@ import type { FieldKey } from "../../core/index.js";
  * ```
  * @alpha
  */
-export const incrementalSummaryHint: unique symbol = Symbol("IncrementalSummaryHint");
+export const incrementalSummaryHint: unique symbol = Symbol(
+	"IncrementalSummaryHint",
+);
 
 /**
  * Returns true if the provided allowed types's custom metadata has {@link incrementalSummaryHint} as true.
  */
-function isIncrementalSummaryHintInAllowedTypes(allowedTypes: AllowedTypesFull): boolean {
+function isIncrementalSummaryHintInAllowedTypes(
+	allowedTypes: AllowedTypesFull,
+): boolean {
 	const customMetadata = allowedTypes.metadata.custom;
 	return (
 		customMetadata !== undefined &&
@@ -91,7 +98,9 @@ export function incrementalEncodingPolicyForAllowedTypes(
 			if (targetPropertyKey !== undefined) {
 				const fieldSchema = targetNode.fields.get(targetPropertyKey);
 				if (fieldSchema !== undefined) {
-					return isIncrementalSummaryHintInAllowedTypes(fieldSchema.allowedTypesFull);
+					return isIncrementalSummaryHintInAllowedTypes(
+						fieldSchema.allowedTypesFull,
+					);
 				}
 			}
 			return false;

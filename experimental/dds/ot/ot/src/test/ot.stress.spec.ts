@@ -3,15 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
-import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
+import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
+	type MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
+import { strict as assert } from "assert";
 import { Random } from "best-random";
 
 import { SharedDelta } from "./delta.js";
@@ -31,14 +30,11 @@ describe("SharedOT", () => {
 		 * Drains the queue of pending ops for each client and vets that all docs converged on the same state.
 		 */
 		const expect = async () => {
-			// Reconnect any disconnected clients before processing pending ops.
-			{
-				for (let i = 0; i < runtimes.length; i++) {
-					const runtime = runtimes[i];
-					if (!runtime.connected) {
-						trace?.push(`containerRuntime${i + 1}.connected = true;`);
-						runtime.connected = true;
-					}
+			for (let i = 0; i < runtimes.length; i++) {
+				const runtime = runtimes[i];
+				if (!runtime.connected) {
+					trace?.push(`containerRuntime${i + 1}.connected = true;`);
+					runtime.connected = true;
 				}
 			}
 
@@ -49,13 +45,10 @@ describe("SharedOT", () => {
 			// Verify that all docs have converged on the same final state.
 			const doc0 = docs[0];
 			const actual0 = extract(doc0);
-
-			{
-				for (let i = 1; i < docs.length; i++) {
-					const docN = docs[i];
-					const actualN = extract(docN);
-					assert.deepEqual(actual0, actualN);
-				}
+			for (let i = 1; i < docs.length; i++) {
+				const docN = docs[i];
+				const actualN = extract(docN);
+				assert.deepEqual(actual0, actualN);
 			}
 		};
 
@@ -82,7 +75,8 @@ describe("SharedOT", () => {
 				runtimes = [];
 				trace = [];
 
-				containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+				containerRuntimeFactory =
+					new MockContainerRuntimeFactoryForReconnection();
 
 				// Create docs for this stress run.
 				for (let i = 0; i < numClients; i++) {
@@ -110,7 +104,8 @@ describe("SharedOT", () => {
 				// eslint-disable-next-line no-bitwise
 				const int32 = (max = 0x7fffffff) => (float64() * max) | 0;
 
-				const randomText = () => `${float64().toString(36).substr(0, int32(12))}`;
+				const randomText = () =>
+					`${float64().toString(36).substr(0, int32(12))}`;
 
 				const insert = (docIndex: number, position: number, text: string) => {
 					trace?.push(
@@ -122,7 +117,9 @@ describe("SharedOT", () => {
 				};
 
 				const del = (docIndex: number, start: number, end: number) => {
-					trace?.push(`doc${docIndex + 1}.delete(/* start: */ ${start}, /* end: */ ${end});`);
+					trace?.push(
+						`doc${docIndex + 1}.delete(/* start: */ ${start}, /* end: */ ${end});`,
+					);
 					docs[docIndex].delete(start, end);
 				};
 
@@ -155,7 +152,10 @@ describe("SharedOT", () => {
 							break;
 					}
 
-					if (runtimes[docIndex].connected && float64() < disconnectProbability) {
+					if (
+						runtimes[docIndex].connected &&
+						float64() < disconnectProbability
+					) {
 						trace?.push(`containerRuntime${docIndex + 1}.connected = false;`);
 
 						runtimes[docIndex].connected = false;
@@ -187,7 +187,13 @@ describe("SharedOT", () => {
 			}
 		}
 
-		for (const { numClients, numOps, syncProbability, disconnectProbability, seed } of [
+		for (const {
+			numClients,
+			numOps,
+			syncProbability,
+			disconnectProbability,
+			seed,
+		} of [
 			{
 				numClients: 2,
 				numOps: 1000,
@@ -223,7 +229,13 @@ describe("SharedOT", () => {
 				// Note: Must use 'function' rather than arrow '() => { .. }' in order to set 'this.timeout(..)'
 				this.timeout(20000);
 
-				await stress(numClients, numOps, syncProbability, disconnectProbability, seed);
+				await stress(
+					numClients,
+					numOps,
+					syncProbability,
+					disconnectProbability,
+					seed,
+				);
 			});
 		}
 

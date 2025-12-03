@@ -4,7 +4,18 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { normalizeFieldSchema, type ImplicitFieldSchema } from "../fieldSchema.js";
+import { NodeKind } from "../core/index.js";
+import {
+	type ImplicitFieldSchema,
+	normalizeFieldSchema,
+} from "../fieldSchema.js";
+import { LeafNodeSchema } from "../leafNodeSchema.js";
+import {
+	ArrayNodeSchema,
+	MapNodeSchema,
+	ObjectNodeSchema,
+	RecordNodeSchema,
+} from "../node-kinds/index.js";
 import type {
 	SimpleArrayNodeSchema,
 	SimpleFieldSchema,
@@ -16,15 +27,7 @@ import type {
 	SimpleRecordNodeSchema,
 	SimpleTreeSchema,
 } from "../simpleSchema.js";
-import { NodeKind } from "../core/index.js";
-import {
-	ArrayNodeSchema,
-	MapNodeSchema,
-	ObjectNodeSchema,
-	RecordNodeSchema,
-} from "../node-kinds/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
-import { LeafNodeSchema } from "../leafNodeSchema.js";
 
 /**
  * Converts an {@link ImplicitFieldSchema} to a "simple" schema representation.
@@ -59,7 +62,9 @@ export function toSimpleTreeSchema(
 					nodeSchema instanceof RecordNodeSchema,
 				0xb60 /* Invalid schema */,
 			);
-			const outSchema = copySchemaObjects ? copySimpleNodeSchema(nodeSchema) : nodeSchema;
+			const outSchema = copySchemaObjects
+				? copySimpleNodeSchema(nodeSchema)
+				: nodeSchema;
 			definitions.set(nodeSchema.identifier, outSchema);
 		},
 	});
@@ -82,7 +87,9 @@ export function toSimpleTreeSchema(
  *
  * @remarks Caches the result on the input schema for future calls.
  */
-export function copySimpleNodeSchema(schema: SimpleNodeSchema): SimpleNodeSchema {
+export function copySimpleNodeSchema(
+	schema: SimpleNodeSchema,
+): SimpleNodeSchema {
 	const kind = schema.kind;
 	switch (kind) {
 		case NodeKind.Leaf:
@@ -98,7 +105,9 @@ export function copySimpleNodeSchema(schema: SimpleNodeSchema): SimpleNodeSchema
 	}
 }
 
-function copySimpleLeafSchema(schema: SimpleLeafNodeSchema): SimpleLeafNodeSchema {
+function copySimpleLeafSchema(
+	schema: SimpleLeafNodeSchema,
+): SimpleLeafNodeSchema {
 	return {
 		kind: NodeKind.Leaf,
 		leafKind: schema.leafKind,
@@ -118,7 +127,9 @@ function copySimpleSchemaWithAllowedTypes(
 	};
 }
 
-function copySimpleObjectSchema(schema: SimpleObjectNodeSchema): SimpleObjectNodeSchema {
+function copySimpleObjectSchema(
+	schema: SimpleObjectNodeSchema,
+): SimpleObjectNodeSchema {
 	const fields: Map<string, SimpleObjectFieldSchema> = new Map();
 	for (const [propertyKey, field] of schema.fields) {
 		// field already is a SimpleObjectFieldSchema, but copy the subset of the properties needed by this interface to get a clean simple object.

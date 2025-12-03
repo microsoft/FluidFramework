@@ -7,9 +7,9 @@ import { strict as assert } from "node:assert";
 
 import type { IRequest } from "@fluidframework/core-interfaces";
 import {
+	DriverErrorTypes,
 	type IResolvedUrl,
 	type IUrlResolver,
-	DriverErrorTypes,
 } from "@fluidframework/driver-definitions/internal";
 
 import { resolveWithLocationRedirectionHandling } from "../location-redirection-utilities/index.js";
@@ -28,7 +28,10 @@ describe("Location Redirection Handling Tests", () => {
 			resolve: async (request: IRequest) => {
 				return resolved;
 			},
-			getAbsoluteUrl: async (resolvedUrl: IResolvedUrl, relativeUrl: string) => {
+			getAbsoluteUrl: async (
+				resolvedUrl: IResolvedUrl,
+				relativeUrl: string,
+			) => {
 				return "newRequestUrl";
 			},
 		};
@@ -44,7 +47,11 @@ describe("Location Redirection Handling Tests", () => {
 				(error as any).redirectUrl = resolved;
 				throw error;
 			}
-			assert.strictEqual(request.url, "newRequestUrl", "New req url should be set");
+			assert.strictEqual(
+				request.url,
+				"newRequestUrl",
+				"New req url should be set",
+			);
 			return true;
 		};
 		const result = await resolveWithLocationRedirectionHandling<boolean>(
@@ -53,6 +60,10 @@ describe("Location Redirection Handling Tests", () => {
 			urlResolver,
 		);
 		assert(result, "Should succeed with location redirection");
-		assert.strictEqual(resolved.url, "RedirectedUrl", "Redirected location should be set");
+		assert.strictEqual(
+			resolved.url,
+			"RedirectedUrl",
+			"Redirected location should be set",
+		);
 	});
 });

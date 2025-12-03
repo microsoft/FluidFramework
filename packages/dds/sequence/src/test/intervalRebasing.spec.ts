@@ -3,16 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import { Side } from "@fluidframework/merge-tree/internal";
 import { useStrictPartialLengthChecks } from "@fluidframework/merge-tree/internal/test";
 import { MockContainerRuntimeFactoryForReconnection } from "@fluidframework/test-runtime-utils/internal";
+import { strict as assert } from "assert";
 
 import { IntervalStickiness } from "../intervals/index.js";
 
-import { Client, assertConsistent, assertSequenceIntervals } from "./intervalTestUtils.js";
-import { constructClient, constructClients, loadClient } from "./multiClientTestUtils.js";
+import {
+	assertConsistent,
+	assertSequenceIntervals,
+	type Client,
+} from "./intervalTestUtils.js";
+import {
+	constructClient,
+	constructClients,
+	loadClient,
+} from "./multiClientTestUtils.js";
 
 describe("interval rebasing", () => {
 	useStrictPartialLengthChecks();
@@ -21,7 +28,8 @@ describe("interval rebasing", () => {
 		containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
 		clients: Client[];
 	} {
-		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+		const containerRuntimeFactory =
+			new MockContainerRuntimeFactoryForReconnection();
 		return {
 			containerRuntimeFactory,
 			clients: constructClients(containerRuntimeFactory),
@@ -40,7 +48,8 @@ describe("interval rebasing", () => {
 		clients[0].containerRuntime.connected = false;
 		containerRuntimeFactory.processAllMessages();
 		await assertConsistent(clients);
-		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
+		const collection_0 =
+			clients[0].sharedString.getIntervalCollection("comments");
 		collection_0.add({ start: 12, end: 15 });
 		clients[2].sharedString.removeRange(5, 7);
 		clients[0].sharedString.removeRange(3, 5);
@@ -60,7 +69,8 @@ describe("interval rebasing", () => {
 		await assertConsistent(clients);
 		clients[0].containerRuntime.connected = false;
 		clients[1].sharedString.removeRange(0, 2);
-		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
+		const collection_0 =
+			clients[0].sharedString.getIntervalCollection("comments");
 		collection_0.add({ start: 0, end: 1 });
 		containerRuntimeFactory.processAllMessages();
 		await assertConsistent(clients);
@@ -75,7 +85,8 @@ describe("interval rebasing", () => {
 		await assertConsistent(clients);
 		clients[0].containerRuntime.connected = false;
 		clients[1].sharedString.removeRange(0, 2);
-		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
+		const collection_0 =
+			clients[0].sharedString.getIntervalCollection("comments");
 		collection_0.add({ start: 0, end: 1 });
 		containerRuntimeFactory.processAllMessages();
 		await assertConsistent(clients);
@@ -94,7 +105,8 @@ describe("interval rebasing", () => {
 		containerRuntimeFactory.processAllMessages();
 		await assertConsistent(clients);
 		clients[0].sharedString.insertText(0, "ABCDEFGHIJKLMN");
-		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
+		const collection_0 =
+			clients[0].sharedString.getIntervalCollection("comments");
 		collection_0.add({
 			start: 20,
 			end: 20,
@@ -112,7 +124,8 @@ describe("interval rebasing", () => {
 
 		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "ABC");
-		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
+		const collection_0 =
+			clients[0].sharedString.getIntervalCollection("comments");
 		collection_0.add({
 			start: 0,
 			end: 2,
@@ -128,7 +141,8 @@ describe("interval rebasing", () => {
 		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[1].sharedString.insertText(0, "F");
 		clients[0].sharedString.insertText(0, "PC");
-		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
+		const collection_0 =
+			clients[0].sharedString.getIntervalCollection("comments");
 		collection_0.add({
 			start: 0,
 			end: 1,
@@ -149,7 +163,8 @@ describe("interval rebasing", () => {
 		clients[2].sharedString.removeRange(0, 2);
 		clients[0].sharedString.insertText(0, "C");
 
-		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
+		const collection_0 =
+			clients[0].sharedString.getIntervalCollection("comments");
 		collection_0.add({
 			start: 0,
 			end: 1,
@@ -162,7 +177,8 @@ describe("interval rebasing", () => {
 	it("does not slide to invalid position when 0-length interval", async () => {
 		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "A");
-		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
+		const collection_0 =
+			clients[0].sharedString.getIntervalCollection("comments");
 		// A 0-length interval is required here to reproduce this error. If in
 		// the future we wish to stop supporting 0-length intervals, this test
 		// can be removed
@@ -176,7 +192,8 @@ describe("interval rebasing", () => {
 		await assertConsistent(clients);
 		clients[2].sharedString.removeRange(1, 3);
 		clients[1].sharedString.insertText(1, "E");
-		const collection_1 = clients[1].sharedString.getIntervalCollection("comments");
+		const collection_1 =
+			clients[1].sharedString.getIntervalCollection("comments");
 		collection_1.add({
 			start: 0,
 			end: 2,
@@ -194,7 +211,8 @@ describe("interval rebasing", () => {
 		clients[0].sharedString.insertText(0, "BC");
 		containerRuntimeFactory.processAllMessages();
 		await assertConsistent(clients);
-		const collection_1 = clients[1].sharedString.getIntervalCollection("comments");
+		const collection_1 =
+			clients[1].sharedString.getIntervalCollection("comments");
 		const interval1 = collection_1.add({
 			start: "start",
 			end: "end",
@@ -263,7 +281,8 @@ describe("interval rebasing", () => {
 		clients[1].sharedString.insertText(0, "FG");
 		clients[1].sharedString.insertText(0, "HIJ");
 		clients[0].containerRuntime.connected = false;
-		const collection_0 = clients[1].sharedString.getIntervalCollection("comments");
+		const collection_0 =
+			clients[1].sharedString.getIntervalCollection("comments");
 		collection_0.add({ start: 0, end: 7 });
 		containerRuntimeFactory.processAllMessages();
 		await assertConsistent(clients);
@@ -275,7 +294,8 @@ describe("interval rebasing", () => {
 		// All that's necessary is that the "R" segment is zamboni'd.
 		// However, due to zamboni's fragility, some care needs to be taken for that to happen.
 		// See AB#7048 for more details.
-		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+		const containerRuntimeFactory =
+			new MockContainerRuntimeFactoryForReconnection();
 		const A = constructClient(containerRuntimeFactory, "A");
 		A.sharedString.insertText(0, "Rr");
 		A.sharedString.connect(A.services);
@@ -315,7 +335,10 @@ describe("interval rebasing", () => {
 		clients[0].sharedString.insertText(1, "22222");
 		clients[0].sharedString
 			.getIntervalCollection("test collection")
-			.add({ start: { pos: 1, side: Side.After }, end: { pos: 1, side: Side.After } });
+			.add({
+				start: { pos: 1, side: Side.After },
+				end: { pos: 1, side: Side.After },
+			});
 		clients[0].sharedString.removeRange(0, 6);
 		clients[2].sharedString.removeRange(0, 2);
 		containerRuntimeFactory.processAllMessages();
@@ -393,7 +416,8 @@ describe("interval rebasing", () => {
 		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "AB");
 		clients[0].sharedString.insertText(0, "C");
-		const collection_1 = clients[0].sharedString.getIntervalCollection("comments");
+		const collection_1 =
+			clients[0].sharedString.getIntervalCollection("comments");
 		const interval1 = collection_1.add({
 			start: { pos: 0, side: Side.After },
 			end: "end",
@@ -402,7 +426,8 @@ describe("interval rebasing", () => {
 		containerRuntimeFactory.processAllMessages();
 		await assertConsistent(clients);
 		clients[2].sharedString.removeRange(1, 2);
-		const collection_2 = clients[1].sharedString.getIntervalCollection("comments");
+		const collection_2 =
+			clients[1].sharedString.getIntervalCollection("comments");
 		const interval2 = collection_2.add({
 			start: "start",
 			end: { pos: 2, side: Side.Before },
@@ -419,7 +444,8 @@ describe("interval rebasing", () => {
 		await assertConsistent(clients);
 		clients[0].sharedString.removeRange(0, 1);
 		clients[0].sharedString.insertText(0, "D");
-		const collection_1 = clients[1].sharedString.getIntervalCollection("comments");
+		const collection_1 =
+			clients[1].sharedString.getIntervalCollection("comments");
 		collection_1.add({
 			start: { pos: 0, side: Side.After },
 			end: 1,
@@ -433,7 +459,8 @@ describe("interval rebasing", () => {
 		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "D");
 		clients[0].containerRuntime.connected = false;
-		const collection_1 = clients[0].sharedString.getIntervalCollection("comments");
+		const collection_1 =
+			clients[0].sharedString.getIntervalCollection("comments");
 		const interval = collection_1.add({
 			start: "start",
 			end: 0,
@@ -448,7 +475,8 @@ describe("interval rebasing", () => {
 		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "D");
 		clients[0].containerRuntime.connected = false;
-		const collection_1 = clients[0].sharedString.getIntervalCollection("comments");
+		const collection_1 =
+			clients[0].sharedString.getIntervalCollection("comments");
 		const interval = collection_1.add({
 			start: { pos: 0, side: Side.After },
 			end: 0,
@@ -460,7 +488,8 @@ describe("interval rebasing", () => {
 	});
 
 	it("Can resubmit insert op at the end of the string", async () => {
-		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+		const containerRuntimeFactory =
+			new MockContainerRuntimeFactoryForReconnection();
 		const A = constructClient(containerRuntimeFactory, "A");
 
 		A.sharedString.insertText(0, "ABCDEF");
@@ -490,7 +519,8 @@ describe("interval rebasing", () => {
 		//   ^
 		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "A");
-		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
+		const collection_0 =
+			clients[0].sharedString.getIntervalCollection("comments");
 		const interval = collection_0.add({ start: 0, end: 0 });
 		collection_0.change(interval.getIntervalId(), { start: 0, end: 0 });
 		clients[0].containerRuntime.connected = false;
@@ -518,7 +548,8 @@ describe("interval rebasing", () => {
 		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "A");
 		clients[2].sharedString.insertText(0, "B");
-		const collection_0 = clients[2].sharedString.getIntervalCollection("comments");
+		const collection_0 =
+			clients[2].sharedString.getIntervalCollection("comments");
 		const interval = collection_0.add({ start: 0, end: 0 });
 		const intervalId = interval.getIntervalId();
 		containerRuntimeFactory.processAllMessages();
@@ -528,7 +559,8 @@ describe("interval rebasing", () => {
 		containerRuntimeFactory.processAllMessages();
 		await assertConsistent(clients);
 		clients[1].sharedString.removeRange(0, 1);
-		const collection_1 = clients[0].sharedString.getIntervalCollection("comments");
+		const collection_1 =
+			clients[0].sharedString.getIntervalCollection("comments");
 		collection_1.change(intervalId, { start: 0, end: 0 });
 		clients[2].sharedString.insertText(0, "C");
 		containerRuntimeFactory.processAllMessages();
@@ -553,7 +585,8 @@ describe("interval rebasing", () => {
 		clients[0].sharedString.insertText(0, "AC");
 		containerRuntimeFactory.processAllMessages();
 		await assertConsistent(clients);
-		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
+		const collection_0 =
+			clients[0].sharedString.getIntervalCollection("comments");
 		const interval = collection_0.add({ start: 0, end: 0 });
 		clients[0].containerRuntime.connected = false;
 		clients[0].sharedString.insertText(1, "B");
@@ -579,7 +612,9 @@ describe("interval rebasing", () => {
 		const intervals = clients[0].sharedString.getIntervalCollection("comments");
 		clients[0].sharedString.insertText(0, "012");
 		intervals.add({ start: 0, end: 2 });
-		assertSequenceIntervals(clients[0].sharedString, intervals, [{ start: 0, end: 2 }]);
+		assertSequenceIntervals(clients[0].sharedString, intervals, [
+			{ start: 0, end: 2 },
+		]);
 
 		clients[0].sharedString.insertText(1, "x");
 		clients[0].sharedString.removeRange(0, 1);
@@ -590,6 +625,8 @@ describe("interval rebasing", () => {
 
 		assert.equal(clients[0].sharedString.getText(), "x12");
 
-		assertSequenceIntervals(clients[0].sharedString, intervals, [{ start: 0, end: 2 }]);
+		assertSequenceIntervals(clients[0].sharedString, intervals, [
+			{ start: 0, end: 2 },
+		]);
 	});
 });

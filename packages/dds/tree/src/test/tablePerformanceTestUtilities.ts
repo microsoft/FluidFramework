@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+import { AttachState } from "@fluidframework/container-definitions";
 // eslint-disable-next-line import-x/no-internal-modules
 import { createIdCompressor } from "@fluidframework/id-compressor/legacy";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+import { CommitKind, type Revertible } from "../core/index.js";
+import { Tree } from "../shared-tree/index.js";
 import {
 	SchemaFactoryAlpha,
-	TreeViewConfiguration,
 	type TreeNodeFromImplicitAllowedTypes,
 	type TreeView,
+	TreeViewConfiguration,
 } from "../simple-tree/index.js";
 import { TableSchema } from "../tableSchema.js";
 import { DefaultTestSharedTreeKind } from "./utils.js";
-import { AttachState } from "@fluidframework/container-definitions";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
-import { CommitKind, type Revertible } from "../core/index.js";
-import { strict as assert } from "node:assert";
-import { Tree } from "../shared-tree/index.js";
 
 /**
  * Factory for creating a table tree schema.
@@ -81,7 +81,10 @@ export interface TableTreeOptions {
  *
  * @returns A fully initialized table tree definition, including table instance, undo/redo stacks, and a cleanup function.
  */
-export function createTableTree({ tableSize, initialCellValue }: TableTreeOptions): {
+export function createTableTree({
+	tableSize,
+	initialCellValue,
+}: TableTreeOptions): {
 	/**
 	 * The initialized table tree.
 	 */
@@ -242,7 +245,10 @@ export interface TableBenchmarkOptions extends TableTreeOptions {
 	/**
 	 * Optional action to perform on the matrix before the operation being measured.
 	 */
-	readonly beforeOperation?: (table: Table, undoRedoStack: UndoRedoManager) => void;
+	readonly beforeOperation?: (
+		table: Table,
+		undoRedoStack: UndoRedoManager,
+	) => void;
 
 	/**
 	 * The operation to be measured.
@@ -252,5 +258,8 @@ export interface TableBenchmarkOptions extends TableTreeOptions {
 	/**
 	 * Optional action to perform on the matrix after the operation being measured.
 	 */
-	readonly afterOperation?: (table: Table, undoRedoStack: UndoRedoManager) => void;
+	readonly afterOperation?: (
+		table: Table,
+		undoRedoStack: UndoRedoManager,
+	) => void;
 }

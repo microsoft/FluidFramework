@@ -3,17 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import type { BuildNode, TraitLabel } from "@fluid-experimental/tree";
-import { SharedTree as LegacySharedTree, Change, StablePlace } from "@fluid-experimental/tree";
+import {
+	Change,
+	SharedTree as LegacySharedTree,
+	StablePlace,
+} from "@fluid-experimental/tree";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedDirectory, type IDirectory } from "@fluidframework/map/internal";
+import { type IDirectory, SharedDirectory } from "@fluidframework/map/internal";
+import { strict as assert } from "assert";
 
 import { runtimeOptions } from "./utils.js";
 
@@ -38,7 +41,9 @@ const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 // The LST is very simple - it is a tree with a single node that has a quantity trait
 export function setLSTQuantity(legacyTree: LegacySharedTree, quantity: number) {
 	// Initialize the legacy tree with some data
-	const rootNode = legacyTree.currentView.getViewNode(legacyTree.currentView.root);
+	const rootNode = legacyTree.currentView.getViewNode(
+		legacyTree.currentView.root,
+	);
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const nodeId = rootNode.traits.get(legacyNodeId)![0];
 	const change: Change = Change.setPayload(nodeId, { quantity });
@@ -46,7 +51,9 @@ export function setLSTQuantity(legacyTree: LegacySharedTree, quantity: number) {
 }
 
 export function getLSTQuantity(legacyTree: LegacySharedTree): number {
-	const rootNode = legacyTree.currentView.getViewNode(legacyTree.currentView.root);
+	const rootNode = legacyTree.currentView.getViewNode(
+		legacyTree.currentView.root,
+	);
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const nodeId = rootNode.traits.get(legacyNodeId)![0];
 	const legacyNode = legacyTree.currentView.getViewNode(nodeId);
@@ -89,7 +96,10 @@ export class DOWithLST extends DataObject {
 
 	private _channel?: LegacySharedTree;
 	public get tree(): LegacySharedTree {
-		assert(this._channel !== undefined, "Tree not yet initialized in DOWithLST!");
+		assert(
+			this._channel !== undefined,
+			"Tree not yet initialized in DOWithLST!",
+		);
 		return this._channel;
 	}
 }
@@ -127,11 +137,17 @@ export class DOWithLSTAndDir extends DataObject {
 
 	protected async hasInitialized(): Promise<void> {
 		const treeHandle = this.root.get<IFluidHandle<LegacySharedTree>>("tree");
-		assert(treeHandle !== undefined, "Tree handle not stored in DOWithLSTAndDir!");
+		assert(
+			treeHandle !== undefined,
+			"Tree handle not stored in DOWithLSTAndDir!",
+		);
 		this._tree = await treeHandle.get();
 
 		const dirHandle = this.root.get<IFluidHandle<SharedDirectory>>("dir");
-		assert(dirHandle !== undefined, "Directory handle not stored in DOWithLSTAndDir!");
+		assert(
+			dirHandle !== undefined,
+			"Directory handle not stored in DOWithLSTAndDir!",
+		);
 		this._directory = await dirHandle.get();
 		this._subDirectory = this._directory.getSubDirectory("dir");
 	}
@@ -140,11 +156,17 @@ export class DOWithLSTAndDir extends DataObject {
 	private _subDirectory?: IDirectory;
 	private _tree?: LegacySharedTree;
 	public get tree(): LegacySharedTree {
-		assert(this._tree !== undefined, "Tree not yet initialized in DOWithLSTAndDir!");
+		assert(
+			this._tree !== undefined,
+			"Tree not yet initialized in DOWithLSTAndDir!",
+		);
 		return this._tree;
 	}
 	public get directory(): SharedDirectory {
-		assert(this._directory !== undefined, "Directory not yet initialized in DOWithLSTAndDir!");
+		assert(
+			this._directory !== undefined,
+			"Directory not yet initialized in DOWithLSTAndDir!",
+		);
 		return this._directory;
 	}
 	public get subDirectory(): IDirectory {
@@ -161,7 +183,10 @@ export class DOWithLSTAndDir extends DataObject {
 export class RootDO extends DataObject {
 	private _doWithLST?: DOWithLST;
 	public get doWithLST(): DOWithLST {
-		assert(this._doWithLST !== undefined, "doWithLST not yet initialized in RootDO!");
+		assert(
+			this._doWithLST !== undefined,
+			"doWithLST not yet initialized in RootDO!",
+		);
 		return this._doWithLST;
 	}
 	private _doWithLSTAndDir?: DOWithLSTAndDir;
@@ -174,13 +199,18 @@ export class RootDO extends DataObject {
 	}
 	private _tree?: LegacySharedTree;
 	public get tree(): LegacySharedTree {
-		assert(this._tree !== undefined, "sharedTree not yet initialized in RootDO2!");
+		assert(
+			this._tree !== undefined,
+			"sharedTree not yet initialized in RootDO2!",
+		);
 		return this._tree;
 	}
 
 	protected async initializingFirstTime(): Promise<void> {
 		const doWithLST = await DOWithLSTFactory.createChildInstance(this.context);
-		const doWithLSTAndDir = await DOWithLSTAndDirFactory.createChildInstance(this.context);
+		const doWithLSTAndDir = await DOWithLSTAndDirFactory.createChildInstance(
+			this.context,
+		);
 		this.root.set("a", doWithLST.handle);
 		this.root.set("b", doWithLSTAndDir.handle);
 		this.root.set("tree", doWithLST.tree.handle);
@@ -188,10 +218,14 @@ export class RootDO extends DataObject {
 
 	protected async hasInitialized(): Promise<void> {
 		const doWithLSTHandle = this.root.get<IFluidHandle<DOWithLST>>("a");
-		assert(doWithLSTHandle !== undefined, "doWithLST handle not stored in RootDO!");
+		assert(
+			doWithLSTHandle !== undefined,
+			"doWithLST handle not stored in RootDO!",
+		);
 		this._doWithLST = await doWithLSTHandle.get();
 
-		const doWithLSTAndDirHandle = this.root.get<IFluidHandle<DOWithLSTAndDir>>("b");
+		const doWithLSTAndDirHandle =
+			this.root.get<IFluidHandle<DOWithLSTAndDir>>("b");
 		assert(
 			doWithLSTAndDirHandle !== undefined,
 			"doWithLSTAndDir handle not stored in RootDO!",
@@ -217,11 +251,15 @@ export const DOWithLSTAndDirFactory = new DataObjectFactory({
 export const RootDOFactory = new DataObjectFactory({
 	type: "rootdo",
 	ctor: RootDO,
-	registryEntries: [DOWithLSTFactory.registryEntry, DOWithLSTAndDirFactory.registryEntry],
+	registryEntries: [
+		DOWithLSTFactory.registryEntry,
+		DOWithLSTAndDirFactory.registryEntry,
+	],
 });
 
-export const oldRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
-	defaultFactory: RootDOFactory,
-	registryEntries: [RootDOFactory.registryEntry],
-	runtimeOptions,
-});
+export const oldRuntimeFactory =
+	new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory: RootDOFactory,
+		registryEntries: [RootDOFactory.registryEntry],
+		runtimeOptions,
+	});

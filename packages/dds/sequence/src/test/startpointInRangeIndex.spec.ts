@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { Lazy } from "@fluidframework/core-utils/internal";
 import { TestClient } from "@fluidframework/merge-tree/internal/test";
+import { strict as assert } from "assert";
 
-import { IStartpointInRangeIndex, StartpointInRangeIndex } from "../intervalIndex/index.js";
-import { type SequenceInterval } from "../intervals/index.js";
+import {
+	type IStartpointInRangeIndex,
+	StartpointInRangeIndex,
+} from "../intervalIndex/index.js";
+import type { SequenceInterval } from "../intervals/index.js";
 
 import {
 	assertOrderedSequenceIntervals,
@@ -31,8 +33,12 @@ class TestStartpointInRangeIndex implements IStartpointInRangeIndex {
 
 	add(interval: SequenceInterval) {
 		this.intervals.push({
-			start: new Lazy(() => this.client.localReferencePositionToPosition(interval.start)),
-			end: new Lazy(() => this.client.localReferencePositionToPosition(interval.end)),
+			start: new Lazy(() =>
+				this.client.localReferencePositionToPosition(interval.start),
+			),
+			end: new Lazy(() =>
+				this.client.localReferencePositionToPosition(interval.end),
+			),
 			interval,
 		});
 	}
@@ -44,9 +50,15 @@ class TestStartpointInRangeIndex implements IStartpointInRangeIndex {
 		}
 	}
 
-	findIntervalsWithStartpointInRange(start: number, end: number): SequenceInterval[] {
+	findIntervalsWithStartpointInRange(
+		start: number,
+		end: number,
+	): SequenceInterval[] {
 		return this.intervals
-			.filter((interval) => interval.start.value >= start && interval.start.value <= end)
+			.filter(
+				(interval) =>
+					interval.start.value >= start && interval.start.value <= end,
+			)
 			.map((i) => i.interval);
 	}
 }
@@ -73,7 +85,9 @@ describe("findIntervalsWithStartpointInRange", () => {
 
 	beforeEach(() => {
 		client = new TestClient();
-		Array.from({ length: 100 }).forEach(() => client.insertTextLocal(0, "0123456789"));
+		Array.from({ length: 100 }).forEach(() =>
+			client.insertTextLocal(0, "0123456789"),
+		);
 		startpointInRangeIndex = new StartpointInRangeIndex(client);
 		createTestInterval = (p1: number, p2: number) =>
 			createTestSequenceInterval(client, p1, p2);
@@ -92,29 +106,47 @@ describe("findIntervalsWithStartpointInRange", () => {
 			});
 
 			it("when start > end for the query range", () => {
-				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(2, 1);
+				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(
+					2,
+					1,
+				);
 				assert.equal(results.length, 0);
 			});
 
 			it("when start is 0 for the query range", () => {
-				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(0, 2);
+				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(
+					0,
+					2,
+				);
 				assert.equal(results.length, 0);
 			});
 
 			it("when endpoints of the query range are negative", () => {
-				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(-2, -1);
+				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(
+					-2,
+					-1,
+				);
 				assert.equal(results.length, 0);
-				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(-1, 1);
+				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(
+					-1,
+					1,
+				);
 				assert.equal(results.length, 0);
 			});
 
 			it("when all intervals are above the query range", () => {
-				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(1, 1);
+				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(
+					1,
+					1,
+				);
 				assert.equal(results.length, 0);
 			});
 
 			it("when all intervals are below the query range", () => {
-				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(5, 6);
+				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(
+					5,
+					6,
+				);
 				assert.equal(results.length, 0);
 			});
 		});
@@ -226,7 +258,12 @@ describe("findIntervalsWithStartpointInRange", () => {
 			const max = client.getLength() - 1;
 
 			// Generate intervals randomly and add them to both index
-			const intervals = generateRandomIntervals(client, { random, count, min, max });
+			const intervals = generateRandomIntervals(client, {
+				random,
+				count,
+				min,
+				max,
+			});
 			for (const interval of intervals) {
 				testIndex.add(interval);
 				startpointInRangeIndex.add(interval);
@@ -237,8 +274,14 @@ describe("findIntervalsWithStartpointInRange", () => {
 				const start = random.integer(min, max);
 				const end = random.integer(start, max);
 				// Query intervals using both index
-				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(start, end);
-				const expected = testIndex.findIntervalsWithStartpointInRange(start, end);
+				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(
+					start,
+					end,
+				);
+				const expected = testIndex.findIntervalsWithStartpointInRange(
+					start,
+					end,
+				);
 				results.sort(compareFn);
 				expected.sort(compareFn);
 

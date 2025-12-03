@@ -4,33 +4,35 @@
  */
 
 import { strict as assert } from "node:assert";
-import {
-	decodeSimpleSchema,
-	FieldKind,
-	NodeKind,
-	SchemaFactory,
-	SchemaFactoryAlpha,
-	encodeSimpleSchema,
-	stringSchema,
-	type SimpleLeafNodeSchema,
-	type SimpleNodeSchema,
-	type SimpleObjectFieldSchema,
-	type SimpleObjectNodeSchema,
-	type SimpleTreeSchema,
-} from "../../../simple-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { createSchemaUpgrade } from "../../../simple-tree/core/index.js";
+import type { FormatValidator } from "../../../codec/index.js";
 import { ValueSchema } from "../../../core/index.js";
-
 import {
 	copySimpleTreeSchemaWithoutMetadata,
 	toSimpleTreeSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/viewSchemaToSimpleSchema.js";
-import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
-import { HasUnknownOptionalFields } from "../../testTrees.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { createSchemaUpgrade } from "../../../simple-tree/core/index.js";
+import {
+	decodeSimpleSchema,
+	encodeSimpleSchema,
+	FieldKind,
+	NodeKind,
+	SchemaFactory,
+	SchemaFactoryAlpha,
+	type SimpleLeafNodeSchema,
+	type SimpleNodeSchema,
+	type SimpleObjectFieldSchema,
+	type SimpleObjectNodeSchema,
+	type SimpleTreeSchema,
+	stringSchema,
+} from "../../../simple-tree/index.js";
 import { ajvValidator } from "../../codec/index.js";
-import type { FormatValidator } from "../../../codec/index.js";
+import {
+	takeJsonSnapshot,
+	useSnapshotDirectory,
+} from "../../snapshots/index.js";
+import { HasUnknownOptionalFields } from "../../testTrees.js";
 
 const simpleString: SimpleLeafNodeSchema = {
 	leafKind: ValueSchema.String,
@@ -87,7 +89,9 @@ describe("getSimpleSchema", () => {
 					]),
 					persistedMetadata: undefined,
 				},
-				definitions: new Map([["com.fluidframework.leaf.string", simpleString]]),
+				definitions: new Map([
+					["com.fluidframework.leaf.string", simpleString],
+				]),
 			};
 
 			assert.deepEqual(actual, expected);
@@ -101,7 +105,10 @@ describe("getSimpleSchema", () => {
 		it("Roundtrip serialization - Field Schema", () => {
 			const simpleTree = toSimpleTreeSchema(Schema, true);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = decodeSimpleSchema(encodeSimpleSchema(simpleTree), formatValidator);
+			const actual = decodeSimpleSchema(
+				encodeSimpleSchema(simpleTree),
+				formatValidator,
+			);
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -121,7 +128,9 @@ describe("getSimpleSchema", () => {
 					]),
 					persistedMetadata: undefined,
 				},
-				definitions: new Map([["com.fluidframework.leaf.string", simpleString]]),
+				definitions: new Map([
+					["com.fluidframework.leaf.string", simpleString],
+				]),
 			};
 
 			assert.deepEqual(actual, expected);
@@ -135,7 +144,10 @@ describe("getSimpleSchema", () => {
 		it("Roundtrip serialization - Leaf node", () => {
 			const simpleTree = toSimpleTreeSchema(Schema, true);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = decodeSimpleSchema(encodeSimpleSchema(simpleTree), formatValidator);
+			const actual = decodeSimpleSchema(
+				encodeSimpleSchema(simpleTree),
+				formatValidator,
+			);
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -173,7 +185,10 @@ describe("getSimpleSchema", () => {
 		it("Roundtrip serialization - Field Schema", () => {
 			const simpleTree = toSimpleTreeSchema(Schema, true);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = decodeSimpleSchema(encodeSimpleSchema(simpleTree), formatValidator);
+			const actual = decodeSimpleSchema(
+				encodeSimpleSchema(simpleTree),
+				formatValidator,
+			);
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -219,7 +234,10 @@ describe("getSimpleSchema", () => {
 		it("Roundtrip serialization - Array Schema", () => {
 			const simpleTree = toSimpleTreeSchema(Schema, true);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = decodeSimpleSchema(encodeSimpleSchema(simpleTree), formatValidator);
+			const actual = decodeSimpleSchema(
+				encodeSimpleSchema(simpleTree),
+				formatValidator,
+			);
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -265,7 +283,10 @@ describe("getSimpleSchema", () => {
 		it("Roundtrip serialization - Map schema", () => {
 			const simpleTree = toSimpleTreeSchema(Schema, true);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = decodeSimpleSchema(encodeSimpleSchema(simpleTree), formatValidator);
+			const actual = decodeSimpleSchema(
+				encodeSimpleSchema(simpleTree),
+				formatValidator,
+			);
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -311,7 +332,10 @@ describe("getSimpleSchema", () => {
 		it("Roundtrip serialization - Record schema", () => {
 			const simpleTree = toSimpleTreeSchema(Schema, true);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = decodeSimpleSchema(encodeSimpleSchema(simpleTree), formatValidator);
+			const actual = decodeSimpleSchema(
+				encodeSimpleSchema(simpleTree),
+				formatValidator,
+			);
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -385,7 +409,10 @@ describe("getSimpleSchema", () => {
 		it("Roundtrip serialization - Object schema", () => {
 			const simpleTree = toSimpleTreeSchema(Schema, true);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = decodeSimpleSchema(encodeSimpleSchema(simpleTree), formatValidator);
+			const actual = decodeSimpleSchema(
+				encodeSimpleSchema(simpleTree),
+				formatValidator,
+			);
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -445,7 +472,10 @@ describe("getSimpleSchema", () => {
 		it("Roundtrip serialization - Object schema including an identifier field", () => {
 			const simpleTree = toSimpleTreeSchema(Schema, true);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = decodeSimpleSchema(encodeSimpleSchema(simpleTree), formatValidator);
+			const actual = decodeSimpleSchema(
+				encodeSimpleSchema(simpleTree),
+				formatValidator,
+			);
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -508,7 +538,10 @@ describe("getSimpleSchema", () => {
 		it("Roundtrip serialization - Object schema including a union field", () => {
 			const simpleTree = toSimpleTreeSchema(Schema, true);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = decodeSimpleSchema(encodeSimpleSchema(simpleTree), formatValidator);
+			const actual = decodeSimpleSchema(
+				encodeSimpleSchema(simpleTree),
+				formatValidator,
+			);
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -516,7 +549,10 @@ describe("getSimpleSchema", () => {
 	describe("Recursive object schema", () => {
 		const schemaFactory = new SchemaFactory("test");
 		class Schema extends schemaFactory.objectRecursive("recursive-object", {
-			foo: schemaFactory.optionalRecursive([schemaFactory.string, () => Schema]),
+			foo: schemaFactory.optionalRecursive([
+				schemaFactory.string,
+				() => Schema,
+			]),
 		}) {}
 
 		it("toSimpleTreeSchema", () => {
@@ -527,7 +563,9 @@ describe("getSimpleSchema", () => {
 					kind: FieldKind.Required,
 					metadata: {},
 					persistedMetadata: undefined,
-					simpleAllowedTypes: new Map([["test.recursive-object", { isStaged: false }]]),
+					simpleAllowedTypes: new Map([
+						["test.recursive-object", { isStaged: false }],
+					]),
 				},
 				definitions: new Map<string, SimpleNodeSchema>([
 					[
@@ -569,7 +607,10 @@ describe("getSimpleSchema", () => {
 		it("Roundtrip serialization - Recursive object schema", () => {
 			const simpleTree = toSimpleTreeSchema(Schema, true);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = decodeSimpleSchema(encodeSimpleSchema(simpleTree), formatValidator);
+			const actual = decodeSimpleSchema(
+				encodeSimpleSchema(simpleTree),
+				formatValidator,
+			);
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -596,7 +637,10 @@ describe("getSimpleSchema", () => {
 			};
 
 			const actual = toSimpleTreeSchema(schema, true);
-			assert.deepEqual(actual.root.simpleAllowedTypes, expected.root.simpleAllowedTypes);
+			assert.deepEqual(
+				actual.root.simpleAllowedTypes,
+				expected.root.simpleAllowedTypes,
+			);
 		});
 
 		it("serialized - simpleAllowedTypes", () => {
@@ -607,7 +651,10 @@ describe("getSimpleSchema", () => {
 		it("Roundtrip serialization - simpleAllowedTypes", () => {
 			const simpleTree = toSimpleTreeSchema(schema, true);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = decodeSimpleSchema(encodeSimpleSchema(simpleTree), formatValidator);
+			const actual = decodeSimpleSchema(
+				encodeSimpleSchema(simpleTree),
+				formatValidator,
+			);
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -651,7 +698,10 @@ describe("getSimpleSchema", () => {
 		it("Roundtrip serialization - allowUnknownOptionalFields", () => {
 			const simpleTree = toSimpleTreeSchema(schema, true);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = decodeSimpleSchema(encodeSimpleSchema(simpleTree), formatValidator);
+			const actual = decodeSimpleSchema(
+				encodeSimpleSchema(simpleTree),
+				formatValidator,
+			);
 			assert.deepEqual(actual, expected);
 		});
 	});

@@ -6,12 +6,12 @@
 import { strict as assert } from "assert";
 
 import {
-	ExitBehavior,
 	asyncGeneratorFromArray,
 	chain,
 	chainAsync,
 	createWeightedAsyncGenerator,
 	createWeightedGenerator,
+	ExitBehavior,
 	generatorFromArray,
 	interleave,
 	interleaveAsync,
@@ -21,11 +21,23 @@ import {
 	takeAsync,
 } from "../generators.js";
 import { makeRandom } from "../random.js";
-import { AsyncGenerator, Generator, IRandom, done } from "../types.js";
+import {
+	type AsyncGenerator,
+	done,
+	type Generator,
+	type IRandom,
+} from "../types.js";
 
-import { Counter, chiSquaredCriticalValues, computeChiSquared } from "./utils.js";
+import {
+	Counter,
+	chiSquaredCriticalValues,
+	computeChiSquared,
+} from "./utils.js";
 
-function assertGeneratorProduces<T>(generator: Generator<T, void>, results: T[]): void {
+function assertGeneratorProduces<T>(
+	generator: Generator<T, void>,
+	results: T[],
+): void {
 	const actual: T[] = [];
 	let result = generator();
 	while (result !== done) {
@@ -122,7 +134,10 @@ describe("generators", () => {
 	const fromArrayCases = [
 		{ title: "works on an empty array", value: [] },
 		{ title: "works on an array with content", value: [1, 1] },
-		{ title: "works on an array with heterogeneous content", value: [1, "a", 2, "b"] },
+		{
+			title: "works on an array with heterogeneous content",
+			value: [1, "a", 2, "b"],
+		},
 	];
 
 	describe("generatorFromArray", () => {
@@ -136,7 +151,10 @@ describe("generators", () => {
 	describe("asyncGeneratorFromArray", () => {
 		for (const { title, value } of fromArrayCases) {
 			it(title, async () => {
-				await assertAsyncGeneratorProduces(asyncGeneratorFromArray(value), value);
+				await assertAsyncGeneratorProduces(
+					asyncGeneratorFromArray(value),
+					value,
+				);
 			});
 		}
 	});
@@ -174,7 +192,8 @@ describe("generators", () => {
 	});
 
 	describe("interleave", () => {
-		const alphabetGeneratorFactory = () => generatorFromArray(["a", "b", "c", "d"]);
+		const alphabetGeneratorFactory = () =>
+			generatorFromArray(["a", "b", "c", "d"]);
 		const numberGeneratorFactory = () => generatorFromArray([1, 2, 3, 4]);
 
 		it("alternates input generators", () => {
@@ -269,7 +288,8 @@ describe("generators", () => {
 	});
 
 	describe("interleaveAsync", () => {
-		const alphabetGeneratorFactory = () => asyncGeneratorFromArray(["a", "b", "c", "d"]);
+		const alphabetGeneratorFactory = () =>
+			asyncGeneratorFromArray(["a", "b", "c", "d"]);
 		const numberGeneratorFactory = () => asyncGeneratorFromArray([1, 2, 3, 4]);
 
 		it("alternates input generators", async () => {

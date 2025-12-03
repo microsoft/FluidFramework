@@ -4,9 +4,9 @@
  */
 
 import { fail, memoizeGetter } from './Common.js';
-import { Definition, NodeId } from './Identifiers.js';
-import { TreeView, TreeViewNode } from './TreeView.js';
-import { Payload, TraitMap, TreeNode } from './persisted-types/index.js';
+import type { Definition, NodeId } from './Identifiers.js';
+import type { Payload, TraitMap, TreeNode } from './persisted-types/index.js';
+import type { TreeView, TreeViewNode } from './TreeView.js';
 
 /**
  * A handle to a `TreeNode` that exists within a specific `TreeView`. This type provides a convenient

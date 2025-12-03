@@ -91,6 +91,10 @@ describe("client.applyMsg", () => {
 			1,
 			`Expected one segment length, saw ${segLengths.length} lengths`,
 		);
-		assert.equal(segLengths[0], 7, `Expected segment length 7, saw ${segLengths[0]}`);
+		assert.equal(
+			segLengths[0],
+			7,
+			`Expected segment length 7, saw ${segLengths[0]}`,
+		);
 	});
 });

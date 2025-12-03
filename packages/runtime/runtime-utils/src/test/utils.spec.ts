@@ -19,7 +19,10 @@ describe("Utils", () => {
 
 	it("encodeCompactIdToString() with strings", () => {
 		assert(encodeCompactIdToString("a-b-c") === "a-b-c", "text");
-		assert(encodeCompactIdToString("_abcdefghijklmn") === "_abcdefghijklmn", "text");
+		assert(
+			encodeCompactIdToString("_abcdefghijklmn") === "_abcdefghijklmn",
+			"text",
+		);
 	});
 
 	it("encodeCompactIdToString() has base of 64 (sort of)", () => {
@@ -43,8 +46,14 @@ describe("Utils", () => {
 		assert(encodeCompactIdToString(64 * 64) === "9A", "9A");
 		assert(encodeCompactIdToString(64 * 64 * 64) === "89A", "89A");
 		assert(encodeCompactIdToString(64 * 64 * 64 * 64) === "889A", "889A"); // 16M!
-		assert(encodeCompactIdToString(64 * 64 * 64 * 64 * 64) === "8889A", "8889A"); // 1G (~10^9)
-		assert(encodeCompactIdToString(64 * 64 * 64 * 64 * 64 * 64) === "88889A", "88889A");
+		assert(
+			encodeCompactIdToString(64 * 64 * 64 * 64 * 64) === "8889A",
+			"8889A",
+		); // 1G (~10^9)
+		assert(
+			encodeCompactIdToString(64 * 64 * 64 * 64 * 64 * 64) === "88889A",
+			"88889A",
+		);
 	});
 
 	it("encodeCompactIdToString() generates Unique values", () => {

@@ -8,9 +8,9 @@ import type { IDeltaManager } from "@fluidframework/container-definitions/intern
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IDocumentMessage,
-	ISnapshotTree,
-	ISequencedDocumentMessage,
 	IQuorumClients,
+	ISequencedDocumentMessage,
+	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import type {
 	AttributionInfo,
@@ -19,9 +19,14 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
-import { OpStreamAttributor, type IAttributor } from "./attributor.js";
-import { opBlobName, type IRuntimeAttributor } from "./attributorContracts.js";
-import { AttributorSerializer, chain, deltaEncoder, type Encoder } from "./encoders.js";
+import { type IAttributor, OpStreamAttributor } from "./attributor.js";
+import { type IRuntimeAttributor, opBlobName } from "./attributorContracts.js";
+import {
+	AttributorSerializer,
+	chain,
+	deltaEncoder,
+	type Encoder,
+} from "./encoders.js";
 import { makeLZ4Encoder } from "./lz4Encoder.js";
 
 export class RuntimeAttributor implements IRuntimeAttributor {
@@ -88,7 +93,8 @@ export class RuntimeAttributor implements IRuntimeAttributor {
 		if (baseSnapshotForAttributorTree === undefined) {
 			this.opAttributor = new OpStreamAttributor(deltaManager, quorum);
 		} else {
-			const id: string | undefined = baseSnapshotForAttributorTree.blobs[opBlobName];
+			const id: string | undefined =
+				baseSnapshotForAttributorTree.blobs[opBlobName];
 			assert(
 				id !== undefined,
 				0x50a /* Attributor tree should have op attributor summary blob. */,

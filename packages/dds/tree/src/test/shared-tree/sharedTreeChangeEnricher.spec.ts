@@ -4,29 +4,29 @@
  */
 
 import { strict as assert } from "node:assert";
+import { FluidClientVersion } from "../../codec/index.js";
 import {
 	type ChangesetLocalId,
 	DetachedFieldIndex,
 	type ForestRootId,
 	type IEditableForest,
+	mapCursorField,
 	type RevisionTag,
+	rootFieldKey,
 	type TaggedChange,
 	TreeStoredSchemaRepository,
-	mapCursorField,
-	rootFieldKey,
 	tagChange,
 } from "../../core/index.js";
-import { cursorToJsonObject, fieldJsonCursor } from "../json/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { optional } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
+	fieldKinds,
 	ModularChangeFamily,
 	type ModularChangeset,
 	ModularEditBuilder,
 	type TreeChunk,
-	fieldKinds,
 } from "../../feature-libraries/index.js";
 import {
 	type SharedTreeMutableChangeEnricher,
@@ -36,14 +36,17 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import type { SharedTreeChange } from "../../shared-tree/sharedTreeChangeTypes.js";
 import {
-	type IdAllocator,
-	type JsonCompatible,
 	brand,
 	disposeSymbol,
+	type IdAllocator,
 	idAllocatorFromMaxId,
+	type JsonCompatible,
 } from "../../util/index.js";
+import { initializeForest } from "../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { Change } from "../feature-libraries/optional-field/optionalFieldUtils.js";
+import { cursorToJsonObject, fieldJsonCursor } from "../json/index.js";
+import { jsonSequenceRootSchema } from "../sequenceRootUtils.js";
 import {
 	buildTestForest,
 	failCodecFamily,
@@ -52,17 +55,16 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../utils.js";
-import { FluidClientVersion } from "../../codec/index.js";
-import { jsonSequenceRootSchema } from "../sequenceRootUtils.js";
-import { initializeForest } from "../feature-libraries/index.js";
 
 const content: JsonCompatible = { x: 42 };
 
 const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily);
 
 const dataChanges: ModularChangeset[] = [];
-const defaultEditor = new DefaultEditBuilder(modularFamily, mintRevisionTag, (taggedChange) =>
-	dataChanges.push(taggedChange.change),
+const defaultEditor = new DefaultEditBuilder(
+	modularFamily,
+	mintRevisionTag,
+	(taggedChange) => dataChanges.push(taggedChange.change),
 );
 const modularBuilder = new ModularEditBuilder(
 	modularFamily,
@@ -71,11 +73,16 @@ const modularBuilder = new ModularEditBuilder(
 );
 
 // Side effects results in `dataChanges` being populated
-defaultEditor.optionalField({ parent: undefined, field: rootFieldKey }).set(undefined, false);
+defaultEditor
+	.optionalField({ parent: undefined, field: rootFieldKey })
+	.set(undefined, false);
 
 const removeRoot: SharedTreeChange = {
 	changes: [
-		{ type: "data", innerChange: dataChanges.at(0) ?? assert.fail("Expected change") },
+		{
+			type: "data",
+			innerChange: dataChanges.at(0) ?? assert.fail("Expected change"),
+		},
 	],
 };
 
@@ -93,17 +100,26 @@ export function setupEnricher() {
 		idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 		testRevisionTagCodec,
 		testIdCompressor,
-		{ jsonValidator: FormatValidatorBasic, minVersionForCollab: FluidClientVersion.v2_0 },
+		{
+			jsonValidator: FormatValidatorBasic,
+			minVersionForCollab: FluidClientVersion.v2_0,
+		},
 	);
 	const schema = new TreeStoredSchemaRepository(jsonSequenceRootSchema);
 	const forest = buildTestForest({ additionalAsserts: true, schema });
-	initializeForest(forest, fieldJsonCursor([content]), testRevisionTagCodec, testIdCompressor);
+	initializeForest(
+		forest,
+		fieldJsonCursor([content]),
+		testRevisionTagCodec,
+		testIdCompressor,
+	);
 	const enricher = new SharedTreeReadonlyChangeEnricher(
 		forest,
 		schema,
 		removedRoots,
 	) as SharedTreeReadonlyChangeEnricher & TestChangeEnricher;
-	const fork = enricher.fork() as SharedTreeMutableChangeEnricher & TestChangeEnricher;
+	const fork = enricher.fork() as SharedTreeMutableChangeEnricher &
+		TestChangeEnricher;
 	return { enricher, fork };
 }
 
@@ -177,7 +193,10 @@ describe("SharedTreeChangeEnricher", () => {
 
 		assert.equal(refreshers[0][0], tag);
 		assert.equal(refreshers[0][1], 0);
-		const refreshedTree = mapCursorField(refreshers[0][2].cursor(), cursorToJsonObject);
+		const refreshedTree = mapCursorField(
+			refreshers[0][2].cursor(),
+			cursorToJsonObject,
+		);
 		assert.deepEqual(refreshedTree, [content]);
 	});
 

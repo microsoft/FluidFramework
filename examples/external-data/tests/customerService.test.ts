@@ -11,8 +11,8 @@ import express from "express";
 import { initializeCustomerService } from "../src/mock-customer-service/index.js";
 import { customerServicePort } from "../src/mock-customer-service-interface/index.js";
 import {
-	type MockWebhook,
 	initializeExternalDataService,
+	type MockWebhook,
 } from "../src/mock-external-data-service/index.js";
 import { externalDataServicePort } from "../src/mock-external-data-service-interface/index.js";
 import type { ITaskData } from "../src/model-interface/index.js";
@@ -25,7 +25,9 @@ const externalTaskListId = "task-list-1";
 /**
  * Helper function for registering with the external service for notifications.
  */
-const registerExternalServiceWebhook = async (taskListId: string): Promise<Response> => {
+const registerExternalServiceWebhook = async (
+	taskListId: string,
+): Promise<Response> => {
 	const webhookRegistrationResponse = await fetch(
 		`http://localhost:${externalDataServicePort}/register-for-webhook`,
 		{
@@ -47,7 +49,10 @@ const registerExternalServiceWebhook = async (taskListId: string): Promise<Respo
  * Helper function for updating data within the external data service.
  * It also tests the response for a given code as well and will fail if it doesn't match.
  */
-const updateExternalData = async (data: ITaskData, taskListId: string): Promise<Response> => {
+const updateExternalData = async (
+	data: ITaskData,
+	taskListId: string,
+): Promise<Response> => {
 	const dataUpdateResponse = await fetch(
 		`http://localhost:${externalDataServicePort}/set-tasks/${taskListId}`,
 		{
@@ -97,7 +102,9 @@ const registerSessionWithCustomerService = async (
 /**
  * Helper function to configure a local express server meant to simulate the Fluid service.
  */
-const initializeMockFluidService = (localServiceApp: express.Express): express.Express => {
+const initializeMockFluidService = (
+	localServiceApp: express.Express,
+): express.Express => {
 	localServiceApp.use(express.json());
 	localServiceApp.use(cors());
 	return localServiceApp;
@@ -173,12 +180,15 @@ describe("mock-customer-service", () => {
 		// Bind listener
 		let webhookChangeNotification;
 		let wasFluidNotifiedForChange = false;
-		localServiceApp.post(`/${tenantId}/${documentId}/broadcast-signal`, (request, result) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			webhookChangeNotification = request.body;
-			wasFluidNotifiedForChange = true;
-			result.send();
-		});
+		localServiceApp.post(
+			`/${tenantId}/${documentId}/broadcast-signal`,
+			(request, result) => {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				webhookChangeNotification = request.body;
+				wasFluidNotifiedForChange = true;
+				result.send();
+			},
+		);
 
 		const localService: Server = localServiceApp.listen(localServicePort);
 
@@ -203,7 +213,10 @@ describe("mock-customer-service", () => {
 					priority: 37,
 				},
 			};
-			const dataUpdateResponse = await updateExternalData(taskDataUpdate, externalTaskListId);
+			const dataUpdateResponse = await updateExternalData(
+				taskDataUpdate,
+				externalTaskListId,
+			);
 			expect(dataUpdateResponse.status).toBe(200);
 
 			// Delay for a bit to ensure time enough for our webhook listener to have been called.
@@ -234,11 +247,14 @@ describe("mock-customer-service", () => {
 
 		// Bind listener
 		let webhookChangeNotification;
-		localServiceApp.post(`/${tenantId}/${documentId}/broadcast-signal`, (request, result) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			webhookChangeNotification = request.body;
-			result.send();
-		});
+		localServiceApp.post(
+			`/${tenantId}/${documentId}/broadcast-signal`,
+			(request, result) => {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				webhookChangeNotification = request.body;
+				result.send();
+			},
+		);
 
 		const localService: Server = localServiceApp.listen(localServicePort);
 
@@ -259,7 +275,10 @@ describe("mock-customer-service", () => {
 					priority: 37,
 				},
 			};
-			const dataUpdateResponse = await updateExternalData(taskDataUpdate, externalTaskListId);
+			const dataUpdateResponse = await updateExternalData(
+				taskDataUpdate,
+				externalTaskListId,
+			);
 			if (dataUpdateResponse.status !== 200) {
 				console.log(`Data update failed. Code: ${dataUpdateResponse.status}`);
 			}
@@ -292,11 +311,14 @@ describe("mock-customer-service", () => {
 
 		// Bind listener
 		let webhookChangeNotification;
-		localServiceApp.post(`/${tenantId}/${documentId}/broadcast-signal`, (request, result) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			webhookChangeNotification = request.body;
-			result.send();
-		});
+		localServiceApp.post(
+			`/${tenantId}/${documentId}/broadcast-signal`,
+			(request, result) => {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				webhookChangeNotification = request.body;
+				result.send();
+			},
+		);
 
 		const localService: Server = localServiceApp.listen(localServicePort);
 
@@ -317,7 +339,10 @@ describe("mock-customer-service", () => {
 					priority: 37,
 				},
 			};
-			const dataUpdateResponse = await updateExternalData(taskDataUpdate, externalTaskListId);
+			const dataUpdateResponse = await updateExternalData(
+				taskDataUpdate,
+				externalTaskListId,
+			);
 			expect(dataUpdateResponse.status).toBe(200);
 
 			// Delay for a bit to ensure time enough for our webhook listener to have been called.

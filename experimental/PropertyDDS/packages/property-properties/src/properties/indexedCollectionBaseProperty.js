@@ -15,7 +15,9 @@ const _ = require("lodash");
 const { deserialize } = require("../containerSerializer");
 const { validationsEnabled } = require("../enableValidations");
 
-const { AbstractStaticCollectionProperty } = require("./abstractStaticCollectionProperty");
+const {
+	AbstractStaticCollectionProperty,
+} = require("./abstractStaticCollectionProperty");
 const { BaseProperty } = require("./baseProperty");
 
 /**
@@ -73,7 +75,10 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
 			this._pendingChanges.modify = {};
 		}
 
-		if (in_flags === undefined || (in_flags & BaseProperty.MODIFIED_STATE_FLAGS.DIRTY) !== 0) {
+		if (
+			in_flags === undefined ||
+			(in_flags & BaseProperty.MODIFIED_STATE_FLAGS.DIRTY) !== 0
+		) {
 			// We additionally have to remove the log on the changes to our entries
 			this._dirtyChanges.insert = {};
 			this._dirtyChanges.remove = {};
@@ -95,11 +100,11 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
 					BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE;
 
 		// Clean all entries inside of the collection
-		let cleanDirtiness = (collection) => {
+		const cleanDirtiness = (collection) => {
 			var entry;
 
 			// eslint-disable-next-line no-restricted-syntax
-			for (let key in collection) {
+			for (const key in collection) {
 				entry = this._dynamicChildren[key];
 				if (entry._isDirty(in_flags)) {
 					entry.cleanDirty(in_flags);
@@ -112,7 +117,9 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
 				// Only use the dirty entries
 				cleanDirtiness(this._dirtyChanges.insert);
 				cleanDirtiness(this._dirtyChanges.modify);
-			} else if (in_flags === BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE) {
+			} else if (
+				in_flags === BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE
+			) {
 				// Only use the pending changes
 				cleanDirtiness(this._pendingChanges.insert);
 				cleanDirtiness(this._pendingChanges.modify);
@@ -169,14 +176,20 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
 				this._dirtyChanges.insert[in_key] = true;
 			} else {
 				// For primitive types we squash remove/insert combinations to modifies
-				if (this._pendingChanges.remove[in_key] && !this._pendingChanges.insert[in_key]) {
+				if (
+					this._pendingChanges.remove[in_key] &&
+					!this._pendingChanges.insert[in_key]
+				) {
 					this._pendingChanges.modify[in_key] = true;
 					delete this._pendingChanges.remove[in_key];
 				} else {
 					this._pendingChanges.insert[in_key] = true;
 				}
 
-				if (this._dirtyChanges.remove[in_key] && !this._dirtyChanges.insert[in_key]) {
+				if (
+					this._dirtyChanges.remove[in_key] &&
+					!this._dirtyChanges.insert[in_key]
+				) {
 					this._dirtyChanges.modify[in_key] = true;
 					delete this._dirtyChanges.remove[in_key];
 				} else {
@@ -265,13 +278,11 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
 			in_includeReferencedRepositories,
 		);
 
-		var that = this;
-
 		// Helper function to decide whether to include a typeid or not in the ChangeSet
-		var addEntryInChangeSet = function (in_changes, in_typeid, in_key, in_value) {
+		var addEntryInChangeSet = (in_changes, in_typeid, in_key, in_value) => {
 			// Determine where to insert the key. If necessary, an entry for the type is added.
-			if (that._containsPrimitiveTypes) {
-				in_changes[in_key] = that._serializeValue(in_value);
+			if (this._containsPrimitiveTypes) {
+				in_changes[in_key] = this._serializeValue(in_value);
 			} else {
 				in_changes[in_typeid] = in_changes[in_typeid] || {};
 				in_changes[in_typeid][in_key] = in_value;
@@ -308,7 +319,12 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
 							insert,
 							typeid,
 							key,
-							entry._serialize(false, false, undefined, in_includeReferencedRepositories),
+							entry._serialize(
+								false,
+								false,
+								undefined,
+								in_includeReferencedRepositories,
+							),
 						);
 					}
 				} else {
@@ -398,25 +414,29 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
 	 * @param {Object} [in_filteringOptions = {}] - The filtering options to consider while deserializing the property.
 	 * @param {boolean} [in_createChangeSet = true] - Should a changeset be created for this deserialization?
 	 */
-	_deserialize(in_serializedObj, in_reportToView, in_filteringOptions, in_createChangeSet) {
+	_deserialize(
+		in_serializedObj,
+		in_reportToView,
+		in_filteringOptions,
+		in_createChangeSet,
+	) {
 		var currentEntries = this._dynamicChildren;
 		var allInsertedKeys = {};
 
-		var appliedChangeset = AbstractStaticCollectionProperty.prototype._deserialize.call(
-			this,
-			in_serializedObj,
-			false,
-			in_filteringOptions,
-			in_createChangeSet,
-		);
+		var appliedChangeset =
+			AbstractStaticCollectionProperty.prototype._deserialize.call(
+				this,
+				in_serializedObj,
+				false,
+				in_filteringOptions,
+				in_createChangeSet,
+			);
 
 		// Perform updates to the children
 
 		// We make copies on two levels, since those are modified by the calls below
 		var insertedEntries =
-			_.mapValues(in_serializedObj.insert, function (x) {
-				return _.clone(x);
-			}) || {};
+			_.mapValues(in_serializedObj.insert, (x) => _.clone(x)) || {};
 		var removedEntries = {};
 		var modifiedEntries = {};
 
@@ -470,7 +490,8 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
 				for (i = 0; i < addedKeys.length; i++) {
 					if (currentEntries[addedKeys[i]] !== undefined) {
 						modifiedEntries[typeid] = modifiedEntries[typeid] || {};
-						modifiedEntries[typeid][addedKeys[i]] = insertedEntries[typeid][addedKeys[i]];
+						modifiedEntries[typeid][addedKeys[i]] =
+							insertedEntries[typeid][addedKeys[i]];
 						delete insertedEntries[typeid][addedKeys[i]];
 					}
 				}
@@ -493,7 +514,11 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
 		if (this._containsPrimitiveTypes) {
 			keys = _.keys(insertedEntries);
 			for (i = 0; i < keys.length; i++) {
-				this._insert(keys[i], this._deserializeValue(insertedEntries[keys[i]]), false);
+				this._insert(
+					keys[i],
+					this._deserializeValue(insertedEntries[keys[i]]),
+					false,
+				);
 			}
 		} else {
 			var scope = this._getScope();
@@ -505,14 +530,18 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
 		}
 
 		// If no typeids are included, we just use a placeholder for the iteration below
-		var classKeys = this._containsPrimitiveTypes ? [undefined] : _.keys(modifiedEntries);
+		var classKeys = this._containsPrimitiveTypes
+			? [undefined]
+			: _.keys(modifiedEntries);
 
 		// Finally modify the existing properties
 		var mapWasChangedByModify = false;
 		for (iClass = 0; iClass < classKeys.length; iClass++) {
 			typeid = classKeys[iClass];
 			var modifiedKeys = Object.keys(
-				this._containsPrimitiveTypes ? modifiedEntries : modifiedEntries[typeid],
+				this._containsPrimitiveTypes
+					? modifiedEntries
+					: modifiedEntries[typeid],
 			);
 			for (i = 0; i < modifiedKeys.length; i++) {
 				var changes;
@@ -524,12 +553,15 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
 					valueWasChanged =
 						this._typeid === "Int64" || this._typeid === "Uint64"
 							? // For (u)int64, we will compare (Ui/I)nt64 objects with arrays [low, high]
-								this._dynamicChildren[modifiedKeys[i]].getValueLow() !== changes[0] ||
-								this._dynamicChildren[modifiedKeys[i]].getValueHigh() !== changes[1]
+								this._dynamicChildren[modifiedKeys[i]].getValueLow() !==
+									changes[0] ||
+								this._dynamicChildren[modifiedKeys[i]].getValueHigh() !==
+									changes[1]
 							: this._dynamicChildren[modifiedKeys[i]] !== changes;
 					modifiedEntriesMap = modifiedEntries;
 					if (valueWasChanged) {
-						this._dynamicChildren[modifiedKeys[i]] = this._deserializeValue(changes);
+						this._dynamicChildren[modifiedKeys[i]] =
+							this._deserializeValue(changes);
 						// After modifying an entry, we have to update the flags
 						// If there is a pending insert, we don't need to mark this as
 						// a modify, as it will just change the insert. Otherwise, this
@@ -650,7 +682,9 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
 		// Modify entries
 		var mapWasChangedByModify = false;
 		if (in_changeSet.modify) {
-			var classKeys = this._containsPrimitiveTypes ? [undefined] : _.keys(in_changeSet.modify);
+			var classKeys = this._containsPrimitiveTypes
+				? [undefined]
+				: _.keys(in_changeSet.modify);
 			for (var iClass = 0; iClass < classKeys.length; iClass++) {
 				var modifiedEntries = this._containsPrimitiveTypes
 					? in_changeSet.modify
@@ -679,7 +713,10 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
 								mapWasChangedByModify = true;
 							}
 						} else {
-							this._dynamicChildren[key]._applyChangeset(modifiedEntries[key], false);
+							this._dynamicChildren[key]._applyChangeset(
+								modifiedEntries[key],
+								false,
+							);
 						}
 					} else {
 						throw new Error(MSG.MODIFY_NON_EXISTING_ENTRY + key);
@@ -753,10 +790,16 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
 			var classKeys = _.keys(in_pendingChangeSet.modify);
 			for (var iClass = 0; iClass < classKeys.length; iClass++) {
 				var modifiedPendingEntries =
-					(in_pendingChangeSet.modify && in_pendingChangeSet.modify[classKeys[iClass]]) || {};
+					(in_pendingChangeSet.modify &&
+						in_pendingChangeSet.modify[classKeys[iClass]]) ||
+					{};
 				var modifiedDirtyEntries =
-					(in_dirtyChangeSet.modify && in_dirtyChangeSet.modify[classKeys[iClass]]) || {};
-				keys = Object.keys(modifiedPendingEntries).concat(Object.keys(modifiedDirtyEntries));
+					(in_dirtyChangeSet.modify &&
+						in_dirtyChangeSet.modify[classKeys[iClass]]) ||
+					{};
+				keys = Object.keys(modifiedPendingEntries).concat(
+					Object.keys(modifiedDirtyEntries),
+				);
 				for (i = 0; i < keys.length; i++) {
 					key = keys[i];
 					if (this._dynamicChildren[key] !== undefined) {
@@ -790,7 +833,11 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
 		}
 
 		// Forward dirtiness propagation to base class
-		BaseProperty.prototype._setDirty.call(this, in_reportToView, in_callingChild);
+		BaseProperty.prototype._setDirty.call(
+			this,
+			in_reportToView,
+			in_callingChild,
+		);
 	}
 }
 /** Specifies, whether this is a collection of base types or of registered templates */

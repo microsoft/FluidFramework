@@ -43,7 +43,9 @@ export class GitRepo {
 	}
 
 	public async getShaForBranch(branch: string, remote?: string) {
-		const refspec = remote ? `refs/remotes/${remote}/${branch}` : `refs/heads/${branch}`;
+		const refspec = remote
+			? `refs/remotes/${remote}/${branch}`
+			: `refs/heads/${branch}`;
 		const result = await this.execNoError(`show-ref ${refspec}`);
 		if (result) {
 			const line = result.split(/\r?\n/)[0];
@@ -107,7 +109,10 @@ export class GitRepo {
 	 * Get the current git branch name
 	 */
 	public async getCurrentBranchName() {
-		const revParseOut = await this.exec("rev-parse --abbrev-ref HEAD", "get current branch");
+		const revParseOut = await this.exec(
+			"rev-parse --abbrev-ref HEAD",
+			"get current branch",
+		);
 		return revParseOut.split(/\r?\n/)[0];
 	}
 
@@ -124,7 +129,11 @@ export class GitRepo {
 	 * Push branch
 	 * @param branchName
 	 */
-	public async pushBranch(remote: string, fromBranchName: string, toBranchName: string) {
+	public async pushBranch(
+		remote: string,
+		fromBranchName: string,
+		toBranchName: string,
+	) {
 		await this.exec(
 			`push ${remote} ${fromBranchName}:${toBranchName}`,
 			`push branch ${fromBranchName}->${toBranchName} to ${remote}`,
@@ -199,8 +208,13 @@ export class GitRepo {
 		const results =
 			pattern === undefined || pattern.length === 0
 				? await this.exec(`tag -l --sort=-committerdate`, `get all tags`)
-				: await this.exec(`tag -l "${pattern}" --sort=-committerdate`, `get tags ${pattern}`);
-		const tags = results.split("\n").filter((t) => t !== undefined && t !== "" && t !== null);
+				: await this.exec(
+						`tag -l "${pattern}" --sort=-committerdate`,
+						`get tags ${pattern}`,
+					);
+		const tags = results
+			.split("\n")
+			.filter((t) => t !== undefined && t !== "" && t !== null);
 
 		traceGitRepo(`Found ${tags.length} tags.`);
 		return tags;
@@ -280,14 +294,20 @@ export class GitRepo {
 	 */
 	public async getCommitDate(gitRef: string) {
 		const result = (
-			await this.exec(`show -s --format=%cI "${gitRef}"`, `get commit date ${gitRef}`)
+			await this.exec(
+				`show -s --format=%cI "${gitRef}"`,
+				`get commit date ${gitRef}`,
+			)
 		).trim();
 		const date = parseISO(result);
 		return date;
 	}
 
 	public async setUpstream(branchName: string, remote: string = "origin") {
-		return await this.exec(`push --set-upstream ${remote} ${branchName}`, `publish branch`);
+		return await this.exec(
+			`push --set-upstream ${remote} ${branchName}`,
+			`publish branch`,
+		);
 	}
 
 	public async addRemote(repoPath: string) {

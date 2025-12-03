@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import {
+	type ISummaryBlob,
+	type ISummaryTree,
+	SummaryType,
+} from "@fluidframework/driver-definitions";
+import type {
 	ICommittedProposal,
 	IDocumentAttributes,
 } from "@fluidframework/driver-definitions/internal";
@@ -37,7 +41,9 @@ export function isCombinedAppAndProtocolSummary(
 	) {
 		return false;
 	}
-	const treeKeys = Object.keys(summary.tree).filter((t) => !optionalRootTrees.includes(t));
+	const treeKeys = Object.keys(summary.tree).filter(
+		(t) => !optionalRootTrees.includes(t),
+	);
 	if (treeKeys.length !== 2) {
 		return false;
 	}

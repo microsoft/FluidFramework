@@ -3,14 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import type { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type {
+	IDisposable,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import { assert, Deferred, Lazy } from "@fluidframework/core-utils/internal";
 import {
-	type ITelemetryLoggerExt,
 	createChildLogger,
+	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import type { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext.js";
+import type {
+	FluidDataStoreContext,
+	LocalFluidDataStoreContext,
+} from "./dataStoreContext.js";
 
 /**
  * @internal
@@ -32,7 +38,10 @@ export class DataStoreContexts
 	 * so that a caller may await the deferred's promise until such a time as the context is fully ready.
 	 * This is a superset of _contexts, since contexts remain here once the Deferred resolves.
 	 */
-	private readonly deferredContexts = new Map<string, Deferred<FluidDataStoreContext>>();
+	private readonly deferredContexts = new Map<
+		string,
+		Deferred<FluidDataStoreContext>
+	>();
 
 	// eslint-disable-next-line unicorn/consistent-function-scoping -- Property is defined once; no need to extract inner lambda
 	private readonly disposeOnce = new Lazy<void>(() => {
@@ -100,10 +109,14 @@ export class DataStoreContexts
 		return this._contexts.delete(id);
 	}
 
-	private readonly _recentlyDeletedContexts: Map<string, FluidDataStoreContext | undefined> =
-		new Map();
+	private readonly _recentlyDeletedContexts: Map<
+		string,
+		FluidDataStoreContext | undefined
+	> = new Map();
 
-	public getRecentlyDeletedContext(id: string): FluidDataStoreContext | undefined {
+	public getRecentlyDeletedContext(
+		id: string,
+	): FluidDataStoreContext | undefined {
 		return this._recentlyDeletedContexts.get(id);
 	}
 
@@ -125,7 +138,10 @@ export class DataStoreContexts
 	 */
 	public addUnbound(context: LocalFluidDataStoreContext): void {
 		const id = context.id;
-		assert(!this._contexts.has(id), 0x158 /* "Creating store with existing ID" */);
+		assert(
+			!this._contexts.has(id),
+			0x158 /* "Creating store with existing ID" */,
+		);
 
 		this._contexts.set(id, context);
 
@@ -168,7 +184,10 @@ export class DataStoreContexts
 	 */
 	public bind(id: string): void {
 		const removed: boolean = this.notBoundContexts.delete(id);
-		assert(removed, 0x159 /* "The given id was not found in notBoundContexts to delete" */);
+		assert(
+			removed,
+			0x159 /* "The given id was not found in notBoundContexts to delete" */,
+		);
 
 		this.resolveDeferred(id);
 	}
@@ -197,7 +216,10 @@ export class DataStoreContexts
 	 */
 	public addBoundOrRemoted(context: FluidDataStoreContext): void {
 		const id = context.id;
-		assert(!this._contexts.has(id), 0x15d /* "Creating store with existing ID" */);
+		assert(
+			!this._contexts.has(id),
+			0x15d /* "Creating store with existing ID" */,
+		);
 
 		this._contexts.set(id, context);
 

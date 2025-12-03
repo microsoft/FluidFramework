@@ -3,16 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { Client, PropertyAction, RedBlackTree } from "@fluidframework/merge-tree/internal";
-
-import { SequenceInterval, createTransientInterval } from "../intervals/index.js";
-import { ISharedString } from "../sharedString.js";
-
-import { type SequenceIntervalIndex } from "./intervalIndex.js";
 import {
-	HasComparisonOverride,
+	type Client,
+	type PropertyAction,
+	RedBlackTree,
+} from "@fluidframework/merge-tree/internal";
+
+import {
+	createTransientInterval,
+	type SequenceInterval,
+} from "../intervals/index.js";
+import type { ISharedString } from "../sharedString.js";
+
+import type { SequenceIntervalIndex } from "./intervalIndex.js";
+import {
 	compareOverrideables,
 	forceCompare,
+	type HasComparisonOverride,
 } from "./intervalIndexUtils.js";
 
 /**
@@ -25,7 +32,10 @@ export interface IStartpointInRangeIndex extends SequenceIntervalIndex {
 	/**
 	 * @returns an array of all intervals contained in this collection whose startpoints locate in the range [start, end] (includes both ends)
 	 */
-	findIntervalsWithStartpointInRange(start: number, end: number): SequenceInterval[];
+	findIntervalsWithStartpointInRange(
+		start: number,
+		end: number,
+	): SequenceInterval[];
 }
 
 export class StartpointInRangeIndex implements IStartpointInRangeIndex {
@@ -64,25 +74,40 @@ export class StartpointInRangeIndex implements IStartpointInRangeIndex {
 		this.intervalTree.remove(interval);
 	}
 
-	public findIntervalsWithStartpointInRange(start: number, end: number): SequenceInterval[] {
+	public findIntervalsWithStartpointInRange(
+		start: number,
+		end: number,
+	): SequenceInterval[] {
 		if (start <= 0 || start > end || this.intervalTree.isEmpty()) {
 			return [];
 		}
 		const results: SequenceInterval[] = [];
-		const action: PropertyAction<SequenceInterval, SequenceInterval> = (node) => {
+		const action: PropertyAction<SequenceInterval, SequenceInterval> = (
+			node,
+		) => {
 			results.push(node.data);
 			return true;
 		};
 
-		const transientStartInterval = createTransientInterval(start, start, this.client);
+		const transientStartInterval = createTransientInterval(
+			start,
+			start,
+			this.client,
+		);
 
 		const transientEndInterval = createTransientInterval(end, end, this.client);
 
 		// Add comparison overrides to the transient intervals
-		(transientStartInterval as Partial<HasComparisonOverride>)[forceCompare] = -1;
+		(transientStartInterval as Partial<HasComparisonOverride>)[forceCompare] =
+			-1;
 		(transientEndInterval as Partial<HasComparisonOverride>)[forceCompare] = 1;
 
-		this.intervalTree.mapRange(action, results, transientStartInterval, transientEndInterval);
+		this.intervalTree.mapRange(
+			action,
+			results,
+			transientStartInterval,
+			transientEndInterval,
+		);
 		return results;
 	}
 }

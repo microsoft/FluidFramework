@@ -5,19 +5,26 @@
 
 import * as semver from "semver";
 
-import type { ReleaseVersion, VersionBumpType, VersionBumpTypeExtended } from "./bumpTypes";
+import type {
+	ReleaseVersion,
+	VersionBumpType,
+	VersionBumpTypeExtended,
+} from "./bumpTypes";
 import {
-	DEFAULT_PRERELEASE_IDENTIFIER,
-	RC_PRERELEASE_IDENTIFER,
 	bumpInternalVersion,
+	DEFAULT_PRERELEASE_IDENTIFIER,
 	detectInternalVersionConstraintType,
 	fromInternalScheme,
 	getVersionRange,
 	isInternalVersionScheme,
+	RC_PRERELEASE_IDENTIFER,
 	toInternalScheme,
 } from "./internalVersionScheme";
 import { bumpVersionScheme, detectVersionScheme } from "./schemes";
-import { fromVirtualPatchScheme, toVirtualPatchScheme } from "./virtualPatchScheme";
+import {
+	fromVirtualPatchScheme,
+	toVirtualPatchScheme,
+} from "./virtualPatchScheme";
 
 /**
  * Return the version RANGE incremented by the bump type (major, minor, or patch).
@@ -75,7 +82,9 @@ export function bumpRange(
 		}
 
 		default: {
-			throw new Error(`${scheme} wasn't handled. Was a new version scheme added?`);
+			throw new Error(
+				`${scheme} wasn't handled. Was a new version scheme added?`,
+			);
 		}
 	}
 }
@@ -175,7 +184,9 @@ export function detectBumpType(
  * @param version - The version to check.
  * @returns True if the version is a prerelease version, false otherwise.
  */
-export function isPrereleaseVersion(version: string | semver.SemVer | undefined): boolean {
+export function isPrereleaseVersion(
+	version: string | semver.SemVer | undefined,
+): boolean {
 	if (version === undefined) {
 		return false;
 	}
@@ -224,7 +235,11 @@ export function isPrereleaseVersion(version: string | semver.SemVer | undefined)
  */
 export function getPreviousVersions(
 	version: ReleaseVersion,
-): [ReleaseVersion | undefined, ReleaseVersion | undefined, ReleaseVersion | undefined] {
+): [
+	ReleaseVersion | undefined,
+	ReleaseVersion | undefined,
+	ReleaseVersion | undefined,
+] {
 	const scheme = detectVersionScheme(version);
 	let previousMajorVersion: ReleaseVersion | undefined;
 	let previousMinorVersion: ReleaseVersion | undefined;

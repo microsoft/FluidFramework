@@ -4,7 +4,8 @@
  */
 
 import { strict as assert, fail } from "node:assert";
-
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import type { JsonableTree } from "../../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { CounterFilter } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
@@ -30,10 +31,8 @@ import {
 	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
 } from "../../../../feature-libraries/index.js";
-import { assertChunkCursorBatchEquals } from "../fieldCursorTestUtilities.js";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { testIdCompressor } from "../../../utils.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { assertChunkCursorBatchEquals } from "../fieldCursorTestUtilities.js";
 
 export function checkNodeEncode(
 	nodeEncoder: NodeEncoder,
@@ -46,7 +45,13 @@ export function checkNodeEncode(
 	nodeEncoder.encodeNode(cursor, context, buffer);
 
 	// Check round-trip
-	checkDecode([buffer], [[tree]], context.version, undefined, incrementalDecoder);
+	checkDecode(
+		[buffer],
+		[[tree]],
+		context.version,
+		undefined,
+		incrementalDecoder,
+	);
 
 	return buffer.slice(1);
 }
@@ -63,7 +68,13 @@ export function checkFieldEncode(
 	fieldEncoder.encodeField(cursor, context, buffer);
 
 	// Check round-trip
-	checkDecode([buffer], [tree], context.version, idCompressor, incrementalDecoder);
+	checkDecode(
+		[buffer],
+		[tree],
+		context.version,
+		idCompressor,
+		incrementalDecoder,
+	);
 
 	return buffer.slice(1);
 }
@@ -76,15 +87,31 @@ function checkDecode(
 	incrementalDecoder?: IncrementalDecoder,
 ): void {
 	// Check round-trips with identifiers inline and out of line
-	testDecode(buffer, tree, () => false, version, idCompressor, incrementalDecoder);
-	testDecode(buffer, tree, () => true, version, idCompressor, incrementalDecoder);
+	testDecode(
+		buffer,
+		tree,
+		() => false,
+		version,
+		idCompressor,
+		incrementalDecoder,
+	);
+	testDecode(
+		buffer,
+		tree,
+		() => true,
+		version,
+		idCompressor,
+		incrementalDecoder,
+	);
 }
 
 /**
  * Clones anything updateShapesAndIdentifiersEncoding might modify in-place.
  */
 function cloneArrays<T>(data: readonly T[]): T[] {
-	return data.map((item) => (Array.isArray(item) ? cloneArrays(item) : item)) as T[];
+	return data.map((item) =>
+		Array.isArray(item) ? cloneArrays(item) : item,
+	) as T[];
 }
 
 function testDecode(

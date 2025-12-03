@@ -91,12 +91,15 @@ export class PendingLocalStateStore<TKey> {
 	 * @throws When storing states from different container URLs
 	 */
 	set(key: TKey, pendingLocalState: string): this {
-		const state = getAttachedContainerStateFromSerializedContainer(pendingLocalState);
+		const state =
+			getAttachedContainerStateFromSerializedContainer(pendingLocalState);
 		const { savedOps, snapshotBlobs, loadedGroupIdSnapshots, url } = state;
 
 		this.#firstUrl ??= url;
 		if (this.#firstUrl !== url) {
-			throw new UsageError("PendingLocalStateStore can only be used with a single container.");
+			throw new UsageError(
+				"PendingLocalStateStore can only be used with a single container.",
+			);
 		}
 
 		for (let i = 0; i < savedOps.length; i++) {
@@ -109,7 +112,8 @@ export class PendingLocalStateStore<TKey> {
 			for (const [id, lg] of Object.entries(loadedGroupIdSnapshots)) {
 				if (
 					this.#loadingGroups[id] === undefined ||
-					lg.snapshotSequenceNumber < this.#loadingGroups[id].snapshotSequenceNumber
+					lg.snapshotSequenceNumber <
+						this.#loadingGroups[id].snapshotSequenceNumber
 				) {
 					loadedGroupIdSnapshots[id] = this.#loadingGroups[id] = lg;
 				}

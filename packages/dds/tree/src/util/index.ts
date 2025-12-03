@@ -10,146 +10,149 @@ export {
 	validateSafeInteger,
 } from "./arrayUtilities.js";
 export {
-	brand,
 	type Brand,
 	BrandedType,
+	brand,
+	brandConst,
 	type NameFromBranded,
 	type ValueFromBranded,
-	brandConst,
 } from "./brand.js";
-export { brandedNumberType, brandedStringType } from "./typeboxBrand.js";
 export {
-	brandOpaque,
-	extractFromOpaque,
-	type ExtractFromOpaque,
-	type Opaque,
-} from "./opaque.js";
+	type BrandedKey,
+	type BrandedKeyContent,
+	type BrandedMapSubset,
+	brandedSlot,
+	getOrCreateSlotContent,
+} from "./brandedMap.js";
+export {
+	Breakable,
+	breakingClass,
+	breakingMethod,
+	throwIfBroken,
+	type WithBreakable,
+} from "./breakable.js";
+export {
+	mergeTupleBTrees,
+	newTupleBTree,
+	type TupleBTree,
+} from "./bTreeUtils.js";
+export { cloneWithReplacements } from "./cloneWithReplacements.js";
+export {
+	fakeIdAllocator,
+	type IdAllocationState,
+	type IdAllocator,
+	idAllocatorFromMaxId,
+	idAllocatorFromState,
+} from "./idAllocator.js";
 export {
 	deleteFromNestedMap,
-	getOrAddInNestedMap,
-	getOrDefaultInNestedMap,
 	forEachInNestedMap,
+	getOrAddInNestedMap,
+	getOrCreateInNestedMap,
+	getOrDefaultInNestedMap,
+	mapNestedMap,
 	type NestedMap,
+	nestedMapFromFlatList,
+	nestedMapToFlatList,
+	populateNestedMap,
 	type ReadonlyNestedMap,
 	SizedNestedMap,
-	populateNestedMap,
 	setInNestedMap,
 	tryAddToNestedMap,
 	tryGetFromNestedMap,
-	mapNestedMap,
-	nestedMapToFlatList,
-	nestedMapFromFlatList,
-	getOrCreateInNestedMap,
 } from "./nestedMap.js";
-export { addToNestedSet, type NestedSet, nestedSetContains } from "./nestedSet.js";
+export {
+	addToNestedSet,
+	type NestedSet,
+	nestedSetContains,
+} from "./nestedSet.js";
 export { type OffsetList, OffsetListFactory } from "./offsetList.js";
+export {
+	brandOpaque,
+	type ExtractFromOpaque,
+	extractFromOpaque,
+	type Opaque,
+} from "./opaque.js";
+export {
+	newIntegerRangeMap,
+	RangeMap,
+	type RangeQueryResult,
+} from "./rangeMap.js";
+export {
+	type ReferenceCounted,
+	ReferenceCountedBase,
+} from "./referenceCounting.js";
+export { StackyIterator } from "./stackyIterator.js";
+export { brandedNumberType, brandedStringType } from "./typeboxBrand.js";
 export type {
+	areOnlyKeys,
 	areSafelyAssignable,
 	Contravariant,
 	Covariant,
-	eitherIsAny,
 	EnforceTypeCheckTests,
+	eitherIsAny,
 	Invariant,
 	isAny,
 	isAssignableTo,
 	isStrictSubset,
 	MakeNominal,
+	requireAssignableTo,
 	requireFalse,
 	requireTrue,
-	requireAssignableTo,
-	areOnlyKeys,
 } from "./typeCheck.js";
-export { StackyIterator } from "./stackyIterator.js";
+export type {
+	_InlineTrick,
+	_RecursiveTrick,
+	FlattenKeys,
+	IsUnion,
+	PopUnion,
+	RestrictiveReadonlyRecord,
+	RestrictiveStringRecord,
+	UnionToIntersection,
+	UnionToTuple,
+} from "./typeUtils.js";
+export { unsafeArrayToTuple } from "./typeUtils.js";
 export {
 	asMutable,
+	assertNonNegativeSafeInteger,
+	assertValidIndex,
+	assertValidRange,
+	assertValidRangeIndices,
 	balancedReduce,
+	capitalize,
 	clone,
+	compareNamed,
 	compareSets,
+	compareStrings,
+	copyPropertyIfDefined as copyProperty,
+	count,
+	defineLazyCachedProperty,
+	disposeSymbol,
+	filterIterable,
+	find,
+	getLast,
 	getOrAddEmptyToMap,
+	getOrAddInMap,
 	getOrCreate,
+	hasSingle,
+	hasSome,
+	type IDisposable,
+	invertMap,
 	isJsonObject,
 	isReadonlyArray,
+	iterableHasSome,
 	type JsonCompatible,
 	type JsonCompatibleObject,
 	type JsonCompatibleReadOnly,
 	type JsonCompatibleReadOnlyObject,
 	JsonCompatibleReadOnlySchema,
+	type Mutable,
 	makeArray,
 	mapIterable,
-	filterIterable,
-	type Mutable,
+	type Named,
+	objectToMap,
+	oneFromIterable,
 	type Populated,
 	type RecursiveReadonly,
-	assertValidIndex,
-	assertValidRange,
-	assertNonNegativeSafeInteger,
-	objectToMap,
-	invertMap,
-	oneFromIterable,
-	type Named,
-	compareNamed,
-	disposeSymbol,
-	type IDisposable,
-	capitalize,
-	assertValidRangeIndices,
 	transformObjectMap,
-	compareStrings,
-	find,
-	count,
-	getLast,
-	hasSome,
-	hasSingle,
-	defineLazyCachedProperty,
-	copyPropertyIfDefined as copyProperty,
-	getOrAddInMap,
-	iterableHasSome,
 } from "./utils.js";
-export { ReferenceCountedBase, type ReferenceCounted } from "./referenceCounting.js";
-
-export type {
-	_RecursiveTrick,
-	RestrictiveReadonlyRecord,
-	RestrictiveStringRecord,
-	_InlineTrick,
-	FlattenKeys,
-	IsUnion,
-	UnionToIntersection,
-	UnionToTuple,
-	PopUnion,
-} from "./typeUtils.js";
-
-export { unsafeArrayToTuple } from "./typeUtils.js";
-
-export {
-	type BrandedKey,
-	type BrandedKeyContent,
-	type BrandedMapSubset,
-	getOrCreateSlotContent,
-	brandedSlot,
-} from "./brandedMap.js";
-
-export {
-	RangeMap,
-	type RangeQueryResult,
-	newIntegerRangeMap,
-} from "./rangeMap.js";
-
-export {
-	type IdAllocator,
-	idAllocatorFromMaxId,
-	idAllocatorFromState,
-	type IdAllocationState,
-	fakeIdAllocator,
-} from "./idAllocator.js";
-
-export {
-	Breakable,
-	type WithBreakable,
-	breakingMethod,
-	throwIfBroken,
-	breakingClass,
-} from "./breakable.js";
-
-export { type TupleBTree, newTupleBTree, mergeTupleBTrees } from "./bTreeUtils.js";
-
-export { cloneWithReplacements } from "./cloneWithReplacements.js";

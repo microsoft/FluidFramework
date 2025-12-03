@@ -4,11 +4,11 @@
  */
 
 import { assert } from "@fluidframework/core-utils/legacy";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/legacy";
-import { PropertySet } from "@fluidframework/sequence/legacy";
+import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/legacy";
+import type { PropertySet } from "@fluidframework/sequence/legacy";
 
 import { TableDocument } from "../document.js";
-import { ITable, TableDocumentItem } from "../table.js";
+import type { ITable, TableDocumentItem } from "../table.js";
 
 /**
  * Does the following:
@@ -63,14 +63,23 @@ export function createTableWithInterception<T extends ITable>(
 		context.containerRuntime.orderSequentially(() => {
 			executingCallback = true;
 			try {
-				table.setCellValue(row, col, value, propertyInterceptionCallback(properties));
+				table.setCellValue(
+					row,
+					col,
+					value,
+					propertyInterceptionCallback(properties),
+				);
 			} finally {
 				executingCallback = false;
 			}
 		});
 	};
 
-	tableWithInterception.annotateCell = (row: number, col: number, properties: PropertySet) => {
+	tableWithInterception.annotateCell = (
+		row: number,
+		col: number,
+		properties: PropertySet,
+	) => {
 		// Wrapper methods should not be called from the interception callback as this will lead to
 		// infinite recursion.
 		assert(
@@ -106,7 +115,11 @@ export function createTableWithInterception<T extends ITable>(
 				maxRow,
 				maxCol,
 			);
-			return createTableWithInterception(tableSlice, context, propertyInterceptionCallback);
+			return createTableWithInterception(
+				tableSlice,
+				context,
+				propertyInterceptionCallback,
+			);
 		};
 	}
 

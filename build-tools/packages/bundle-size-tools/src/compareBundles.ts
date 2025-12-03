@@ -22,7 +22,10 @@ export function compareBundles(
 				`Baseline has bundle '${bundleName}' that does not appear in the comparison bundle `,
 			);
 		} else {
-			const bundleComparison: BundleComparison = { bundleName, commonBundleMetrics: {} };
+			const bundleComparison: BundleComparison = {
+				bundleName,
+				commonBundleMetrics: {},
+			};
 
 			baselineBundle.forEach((baselineMetric, metricName) => {
 				const compareMetric = compareBundle.get(metricName);
@@ -50,7 +53,9 @@ export function compareBundles(
  * Checks if a bundle comparison contains no size changes
  * @param comparisons - bundle comparison
  */
-export function bundlesContainNoChanges(comparisons: BundleComparison[]): boolean {
+export function bundlesContainNoChanges(
+	comparisons: BundleComparison[],
+): boolean {
 	for (const { commonBundleMetrics } of comparisons) {
 		const metrics = Object.values(commonBundleMetrics);
 		for (const { baseline, compare } of metrics) {

@@ -9,8 +9,8 @@ import {
 	comparePersistedSchema,
 	extractPersistedSchema,
 	FluidClientVersion,
-	FormatValidatorBasic,
 	type ForestOptions,
+	FormatValidatorBasic,
 	type ICodecOptions,
 	type ImplicitFieldSchema,
 	type JsonCompatible,
@@ -78,7 +78,10 @@ const historicalSchema: {
 					object: {
 						"": {
 							kind: "Sequence",
-							types: ["com.fluidframework.example.cli.Item", "com.fluidframework.leaf.string"],
+							types: [
+								"com.fluidframework.example.cli.Item",
+								"com.fluidframework.leaf.string",
+							],
 						},
 					},
 				},
@@ -112,11 +115,17 @@ const historicalSchema: {
 
 describe("schema", () => {
 	it("current schema matches latest historical schema", () => {
-		const current = extractPersistedSchema(config.schema, FluidClientVersion.v2_0, () => true);
+		const current = extractPersistedSchema(
+			config.schema,
+			FluidClientVersion.v2_0,
+			() => true,
+		);
 
 		// For compatibility with deep equality and simple objects, round trip via JSON to erase prototypes.
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const currentRoundTripped: JsonCompatible = JSON.parse(JSON.stringify(current));
+		const currentRoundTripped: JsonCompatible = JSON.parse(
+			JSON.stringify(current),
+		);
 
 		const previous = historicalSchema.at(-1);
 		assert(previous !== undefined);
@@ -128,10 +137,20 @@ describe("schema", () => {
 	});
 
 	describe("historical schema can be upgraded to current schema", () => {
-		const options: ForestOptions & ICodecOptions = { jsonValidator: FormatValidatorBasic };
+		const options: ForestOptions & ICodecOptions = {
+			jsonValidator: FormatValidatorBasic,
+		};
 
-		for (let documentIndex = 0; documentIndex < historicalSchema.length; documentIndex++) {
-			for (let viewIndex = 0; viewIndex < historicalSchema.length; viewIndex++) {
+		for (
+			let documentIndex = 0;
+			documentIndex < historicalSchema.length;
+			documentIndex++
+		) {
+			for (
+				let viewIndex = 0;
+				viewIndex < historicalSchema.length;
+				viewIndex++
+			) {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				it(`document ${historicalSchema[documentIndex]!.version} vs view version ${historicalSchema[viewIndex]!.version}`, () => {
 					const compat = comparePersistedSchema(

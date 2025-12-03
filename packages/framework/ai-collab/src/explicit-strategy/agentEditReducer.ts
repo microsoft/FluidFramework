@@ -5,51 +5,54 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
-import { isFluidError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
-	Tree,
-	NodeKind,
+	isFluidError,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
+import {
+	ArrayNodeSchema,
+	FieldKind,
+	FieldSchema,
 	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
+	type IterableTreeArrayContent,
+	NodeKind,
+	normalizeAllowedTypes,
+	SchemaFactory,
+	type SimpleNodeSchema,
+	Tree,
 	type TreeArrayNode,
 	type TreeNode,
 	type TreeNodeSchema,
-	type SimpleNodeSchema,
-	FieldKind,
-	FieldSchema,
-	normalizeAllowedTypes,
-	type ImplicitFieldSchema,
-	type IterableTreeArrayContent,
-	SchemaFactory,
-	ArrayNodeSchema,
 } from "@fluidframework/tree/internal";
 import { closest } from "fastest-levenshtein";
 
 import type {
 	ArrayRangeRemoveDiff,
 	ArraySingleRemoveDiff,
+	Diff,
 	InsertDiff,
 	ModifyDiff,
 	MoveRangeDiff,
 	MoveSingleDiff,
 	NodePath,
 	RemoveNodeDiff,
-	Diff,
 } from "../diffTypes.js";
 
 import {
-	type TreeEdit,
-	type ObjectTarget,
-	type Selection,
-	type Range,
-	type ObjectPlace,
 	type ArrayPlace,
+	type Modify,
+	type Move,
+	type ObjectPlace,
+	type ObjectTarget,
+	objectIdKey,
+	type Range,
+	type Remove,
+	type Selection,
+	type TreeEdit,
 	type TreeEditObject,
 	type TreeEditValue,
 	typeField,
-	type Modify,
-	type Remove,
-	type Move,
-	objectIdKey,
 } from "./agentEditTypes.js";
 import type { IdGenerator } from "./idGenerator.js";
 import type { JsonValue } from "./jsonTypes.js";
@@ -74,7 +77,10 @@ function populateDefaults(
 				0xa73 /* The typeField must be present in new JSON content */,
 			);
 			const nodeSchema = definitionMap.get(json[typeField]);
-			assert(nodeSchema?.kind === NodeKind.Object, 0xa74 /* Expected object schema */);
+			assert(
+				nodeSchema?.kind === NodeKind.Object,
+				0xa74 /* Expected object schema */,
+			);
 		}
 	}
 }
@@ -98,7 +104,9 @@ export function getSchemaIdentifier(content: TreeEditValue): string {
 				return SchemaFactory.null.identifier;
 			}
 			if (Array.isArray(content)) {
-				throw new UsageError("Arrays are not currently supported in this context");
+				throw new UsageError(
+					"Arrays are not currently supported in this context",
+				);
 			}
 			if (isFluidHandle(content)) {
 				return SchemaFactory.handle.identifier;
@@ -115,7 +123,10 @@ export function getSchemaIdentifier(content: TreeEditValue): string {
 /**
  * Converts a tree node from a {@link TreeEdit} to a {@link TreeEditObject} with the proper object IDs.
  */
-export function contentWithIds(content: TreeNode, idGenerator: IdGenerator): TreeEditObject {
+export function contentWithIds(
+	content: TreeNode,
+	idGenerator: IdGenerator,
+): TreeEditObject {
 	return JSON.parse(toDecoratedJson(idGenerator, content)) as TreeEditObject;
 }
 
@@ -142,21 +153,35 @@ export function applyAgentEdit(
 			if (!(parentNodeSchema instanceof ArrayNodeSchema)) {
 				throw new UsageError("the parent node must be an arrayNode");
 			}
-			const allowedTypes = normalizeAllowedTypes(parentNodeSchema.info).evaluate();
+			const allowedTypes = normalizeAllowedTypes(
+				parentNodeSchema.info,
+			).evaluate();
 
 			for (const allowedType of allowedTypes.values()) {
-				if (allowedType.identifier === schemaIdentifier && typeof allowedType === "function") {
-					const simpleNodeSchema = allowedType as unknown as new (dummy: unknown) => TreeNode;
+				if (
+					allowedType.identifier === schemaIdentifier &&
+					typeof allowedType === "function"
+				) {
+					const simpleNodeSchema = allowedType as unknown as new (
+						dummy: unknown,
+					) => TreeNode;
 					const insertNode = new simpleNodeSchema(treeEdit.content);
 					validator?.(insertNode);
 
-					array.insertAt(index, insertNode as unknown as IterableTreeArrayContent<never>);
+					array.insertAt(
+						index,
+						insertNode as unknown as IterableTreeArrayContent<never>,
+					);
 					return {
 						edit: {
 							...treeEdit,
 							content: contentWithIds(insertNode, idGenerator),
 						},
-						diff: createInsertDiff(insertNode, treeEdit.explanation, idGenerator),
+						diff: createInsertDiff(
+							insertNode,
+							treeEdit.explanation,
+							idGenerator,
+						),
 					};
 				}
 			}
@@ -182,9 +207,13 @@ export function applyAgentEdit(
 					const fieldKey = Tree.key(node);
 					const parentSchema = Tree.schema(parentNode);
 					const fieldSchema =
-						(parentSchema.info as Record<string, ImplicitFieldSchema>)[fieldKey] ??
-						fail("Expected field schema");
-					if (fieldSchema instanceof FieldSchema && fieldSchema.kind === FieldKind.Optional) {
+						(parentSchema.info as Record<string, ImplicitFieldSchema>)[
+							fieldKey
+						] ?? fail("Expected field schema");
+					if (
+						fieldSchema instanceof FieldSchema &&
+						fieldSchema.kind === FieldKind.Optional
+					) {
 						diff = createRemoveDiff(treeEdit, idGenerator);
 						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 						(parentNode as any)[fieldKey] = undefined;
@@ -195,7 +224,10 @@ export function applyAgentEdit(
 					}
 				}
 			} else if (isRange(source)) {
-				const { array, startIndex, endIndex } = getRangeInfo(source, idGenerator);
+				const { array, startIndex, endIndex } = getRangeInfo(
+					source,
+					idGenerator,
+				);
 				diff = createRemoveDiff(treeEdit, idGenerator);
 				array.removeRange(startIndex, endIndex);
 			} else {
@@ -208,7 +240,10 @@ export function applyAgentEdit(
 			const node = getNodeFromTarget(treeEdit.target, idGenerator);
 			const { treeNodeSchema } = getSimpleNodeSchema(node);
 
-			const nodeFieldSchemas = treeNodeSchema.info as Record<string, ImplicitFieldSchema>;
+			const nodeFieldSchemas = treeNodeSchema.info as Record<
+				string,
+				ImplicitFieldSchema
+			>;
 
 			const fieldSchema = nodeFieldSchemas[treeEdit.field];
 
@@ -256,7 +291,9 @@ export function applyAgentEdit(
 			}
 			// If the fieldSchema is a function we can grab the constructor and make an instance of that node.
 			else if (typeof fieldSchema === "function") {
-				const simpleSchema = fieldSchema as unknown as new (dummy: unknown) => TreeNode;
+				const simpleSchema = fieldSchema as unknown as new (
+					dummy: unknown,
+				) => TreeNode;
 				populateDefaults(modification, definitionMap);
 				const constructedModification = new simpleSchema(modification);
 				validator?.(constructedModification);
@@ -266,7 +303,10 @@ export function applyAgentEdit(
 				if (Array.isArray(modification)) {
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 					const field = (node as any)[treeEdit.field] as TreeArrayNode;
-					assert(Array.isArray(field), 0xa75 /* the field must be an array node */);
+					assert(
+						Array.isArray(field),
+						0xa75 /* the field must be an array node */,
+					);
 					assert(
 						Array.isArray(constructedModification),
 						0xa76 /* the modification must be an array node */,
@@ -278,7 +318,10 @@ export function applyAgentEdit(
 			}
 			// If the fieldSchema is of type FieldSchema, we can check its allowed types and set the field.
 			else if (fieldSchema instanceof FieldSchema) {
-				if (fieldSchema.kind === FieldKind.Optional && modification === undefined) {
+				if (
+					fieldSchema.kind === FieldKind.Optional &&
+					modification === undefined
+				) {
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 					(node as any)[treeEdit.field] = undefined;
 				} else {
@@ -315,11 +358,12 @@ export function applyAgentEdit(
 			// TODO: need to add schema check for valid moves
 			const source = treeEdit.source;
 			const destination = treeEdit.destination;
-			const { array: destinationArrayNode, index: destinationIndex } = getPlaceInfo(
-				destination,
+			const { array: destinationArrayNode, index: destinationIndex } =
+				getPlaceInfo(destination, idGenerator);
+			const diff: MoveSingleDiff | MoveRangeDiff = createMoveDiff(
+				treeEdit,
 				idGenerator,
 			);
-			const diff: MoveSingleDiff | MoveRangeDiff = createMoveDiff(treeEdit, idGenerator);
 			if (isObjectTarget(source)) {
 				const sourceNode = getNodeFromTarget(source, idGenerator);
 				const sourceIndex = Tree.key(sourceNode) as number;
@@ -330,7 +374,9 @@ export function applyAgentEdit(
 				}
 				const destinationArraySchema = Tree.schema(destinationArrayNode);
 				if (destinationArraySchema instanceof ArrayNodeSchema === false) {
-					throw new UsageError("the destination node must be within an arrayNode");
+					throw new UsageError(
+						"the destination node must be within an arrayNode",
+					);
 				}
 				const nodeToMove = sourceArrayNode.at(sourceIndex);
 				assert(nodeToMove !== undefined, 0xa77 /* node to move must exist */);
@@ -352,7 +398,9 @@ export function applyAgentEdit(
 				} = getRangeInfo(source, idGenerator);
 				const destinationArraySchema = Tree.schema(destinationArrayNode);
 				const allowedTypes = [
-					...normalizeAllowedTypes(destinationArraySchema.info as ImplicitAllowedTypes),
+					...normalizeAllowedTypes(
+						destinationArraySchema.info as ImplicitAllowedTypes,
+					),
 				];
 				for (let i = sourceStartIndex; i < sourceEndIndex; i++) {
 					const nodeToMove = array.at(i);
@@ -390,20 +438,27 @@ function createInvalidModifyFeedbackMsg(
 	errorType: "NONEXISTENT_FIELD" | "INVALID_TYPE",
 ): string {
 	const { treeNodeSchema } = getSimpleNodeSchema(treeNode);
-	const nodeFieldSchemas = treeNodeSchema.info as Record<string, ImplicitFieldSchema>;
+	const nodeFieldSchemas = treeNodeSchema.info as Record<
+		string,
+		ImplicitFieldSchema
+	>;
 	const messagePrefix = `You attempted an invalid modify edit on the node with id '${modifyEdit.target.target}' and schema '${treeNodeSchema.identifier}'.`;
 	let messageSuffix = "";
 	const getAllowedTypeIdentifiers = (fieldName: string): string[] => {
 		const targetFieldNodeSchema = nodeFieldSchemas[fieldName];
 		return targetFieldNodeSchema instanceof FieldSchema
-			? [...targetFieldNodeSchema.allowedTypeSet.values()].map((schema) => schema.identifier)
+			? [...targetFieldNodeSchema.allowedTypeSet.values()].map(
+					(schema) => schema.identifier,
+				)
 			: [(targetFieldNodeSchema as TreeNodeSchema).identifier];
 	};
 
 	if (errorType === "NONEXISTENT_FIELD") {
 		const nodeFieldNames = Object.keys(nodeFieldSchemas);
 		const closestPossibleFieldMatch = closest(modifyEdit.field, nodeFieldNames);
-		const allowedTypeIdentifiers = getAllowedTypeIdentifiers(closestPossibleFieldMatch);
+		const allowedTypeIdentifiers = getAllowedTypeIdentifiers(
+			closestPossibleFieldMatch,
+		);
 		const closestPossibleMatchForFieldMessage = ` If you are sure you are trying to modify this node, did you mean to use the field \`${closestPossibleFieldMatch}\` which has the following set of allowed types: \`[${allowedTypeIdentifiers.map((id) => `'${id}'`).join(", ")}]\`?`;
 		messageSuffix = ` The node's field you selected for modification \`${modifyEdit.field}\` does not exist in this node's schema. The set of available fields for this node are: \`[${nodeFieldNames.map((field) => `'${field}'`).join(", ")}]\`.${closestPossibleMatchForFieldMessage}`;
 	} else if (errorType === "INVALID_TYPE") {
@@ -443,9 +498,18 @@ interface RangeInfo {
 /**
  * Gets information about the range of nodes being targeted by an {@link Range}
  */
-export function getRangeInfo(range: Range, idGenerator: IdGenerator): RangeInfo {
-	const { array: arrayFrom, index: startIndex } = getPlaceInfo(range.from, idGenerator);
-	const { array: arrayTo, index: endIndex } = getPlaceInfo(range.to, idGenerator);
+export function getRangeInfo(
+	range: Range,
+	idGenerator: IdGenerator,
+): RangeInfo {
+	const { array: arrayFrom, index: startIndex } = getPlaceInfo(
+		range.from,
+		idGenerator,
+	);
+	const { array: arrayTo, index: endIndex } = getPlaceInfo(
+		range.to,
+		idGenerator,
+	);
 
 	if (arrayFrom !== arrayTo) {
 		throw new UsageError(
@@ -464,7 +528,8 @@ function getPlaceInfo(
 	index: number;
 } {
 	if (place.type === "arrayPlace") {
-		const parent = idGenerator.getNode(place.parentId) ?? fail("Expected parent node");
+		const parent =
+			idGenerator.getNode(place.parentId) ?? fail("Expected parent node");
 		const child = (parent as unknown as Record<string, unknown>)[place.field];
 		if (child === undefined) {
 			throw new UsageError(`No child under field field`);
@@ -490,7 +555,10 @@ function getPlaceInfo(
 		}
 		return {
 			array: parent as unknown as TreeArrayNode,
-			index: place.place === "before" ? (nodeIndex as number) : (nodeIndex as number) + 1,
+			index:
+				place.place === "before"
+					? (nodeIndex as number)
+					: (nodeIndex as number) + 1,
 		};
 	}
 }
@@ -498,7 +566,10 @@ function getPlaceInfo(
 /**
  * Returns the target node with the matching internal objectId using the provided {@link ObjectTarget}
  */
-function getNodeFromTarget(target: ObjectTarget, idGenerator: IdGenerator): TreeNode {
+function getNodeFromTarget(
+	target: ObjectTarget,
+	idGenerator: IdGenerator,
+): TreeNode {
 	const node = idGenerator.getNode(target.target);
 	assert(node !== undefined, 0xa79 /* objectId does not exist in nodeMap */);
 	return node;
@@ -509,16 +580,23 @@ function getNodeFromTarget(target: ObjectTarget, idGenerator: IdGenerator): Tree
  *
  * @throws An {@link UsageError} if the objectIdKey does not exist in the {@link IdGenerator}
  */
-function assertObjectIdsExist(treeEdit: TreeEdit, idGenerator: IdGenerator): void {
+function assertObjectIdsExist(
+	treeEdit: TreeEdit,
+	idGenerator: IdGenerator,
+): void {
 	switch (treeEdit.type) {
 		case "insert": {
 			if (treeEdit.destination.type === "objectPlace") {
 				if (idGenerator.getNode(treeEdit.destination.target) === undefined) {
-					throw new UsageError(`objectIdKey ${treeEdit.destination.target} does not exist`);
+					throw new UsageError(
+						`objectIdKey ${treeEdit.destination.target} does not exist`,
+					);
 				}
 			} else {
 				if (idGenerator.getNode(treeEdit.destination.parentId) === undefined) {
-					throw new UsageError(`objectIdKey ${treeEdit.destination.parentId} does not exist`);
+					throw new UsageError(
+						`objectIdKey ${treeEdit.destination.parentId} does not exist`,
+					);
 				}
 			}
 			break;
@@ -531,19 +609,25 @@ function assertObjectIdsExist(treeEdit: TreeEdit, idGenerator: IdGenerator): voi
 				].filter((id) => !idGenerator.getNode(id));
 
 				if (missingObjectIds.length > 0) {
-					throw new UsageError(`objectIdKeys [${missingObjectIds}] does not exist`);
+					throw new UsageError(
+						`objectIdKeys [${missingObjectIds}] does not exist`,
+					);
 				}
 			} else if (
 				isObjectTarget(treeEdit.source) &&
 				idGenerator.getNode(treeEdit.source.target) === undefined
 			) {
-				throw new UsageError(`objectIdKey ${treeEdit.source.target} does not exist`);
+				throw new UsageError(
+					`objectIdKey ${treeEdit.source.target} does not exist`,
+				);
 			}
 			break;
 		}
 		case "modify": {
 			if (idGenerator.getNode(treeEdit.target.target) === undefined) {
-				throw new UsageError(`objectIdKey ${treeEdit.target.target} does not exist`);
+				throw new UsageError(
+					`objectIdKey ${treeEdit.target.target} does not exist`,
+				);
 			}
 			break;
 		}
@@ -577,7 +661,9 @@ function assertObjectIdsExist(treeEdit: TreeEdit, idGenerator: IdGenerator): voi
 				}
 			}
 			if (invalidObjectIds.length > 0) {
-				throw new UsageError(`objectIdKeys [${invalidObjectIds}] does not exist`);
+				throw new UsageError(
+					`objectIdKeys [${invalidObjectIds}] does not exist`,
+				);
 			}
 			break;
 		}
@@ -634,7 +720,11 @@ function createInsertDiff(
  * @remarks The input object is not modified.
  */
 function removeAgentObjectIdField(oldValue: unknown): unknown {
-	if (typeof oldValue === "object" && oldValue !== null && !Array.isArray(oldValue)) {
+	if (
+		typeof oldValue === "object" &&
+		oldValue !== null &&
+		!Array.isArray(oldValue)
+	) {
 		const { [objectIdKey]: _, ...rest } = oldValue as Record<string, unknown>;
 		return rest;
 	}
@@ -649,7 +739,10 @@ function removeAgentObjectIdField(oldValue: unknown): unknown {
  * For move operations, the diff is created before the node(s) have been successfully moved,
  * since the original index is needed to restore the node(s) if the move operation need to undo.
  */
-function createModifyDiff(treeEdit: Modify, idGenerator: IdGenerator): ModifyDiff {
+function createModifyDiff(
+	treeEdit: Modify,
+	idGenerator: IdGenerator,
+): ModifyDiff {
 	const targetNode = getNodeFromTarget(treeEdit.target, idGenerator);
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 	const targetNodeAtField: unknown = (targetNode as any)[treeEdit.field];
@@ -672,9 +765,15 @@ function createModifyDiff(treeEdit: Modify, idGenerator: IdGenerator): ModifyDif
 
 	return {
 		type: "modify",
-		nodePath: createNodePathRecursive(targetNodeAtField as TreeNode, idGenerator, []),
+		nodePath: createNodePathRecursive(
+			targetNodeAtField as TreeNode,
+			idGenerator,
+			[],
+		),
 		newValue: treeEdit.modification,
-		oldValue: removeAgentObjectIdField(JSON.parse(JSON.stringify(targetNodeAtField))),
+		oldValue: removeAgentObjectIdField(
+			JSON.parse(JSON.stringify(targetNodeAtField)),
+		),
 		aiExplanation: treeEdit.explanation,
 	};
 }
@@ -696,7 +795,9 @@ function createRemoveDiff(
 		const node = getNodeFromTarget(source, idGenerator);
 		const parentNode = Tree.parent(node);
 		if (parentNode === undefined) {
-			throw new Error("Unexpectedly received a root node as the target of a remove edit");
+			throw new Error(
+				"Unexpectedly received a root node as the target of a remove edit",
+			);
 		} else if (Tree.schema(parentNode).kind === NodeKind.Array) {
 			const nodeIndex = Tree.key(node) as number;
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -712,9 +813,15 @@ function createRemoveDiff(
 			return {
 				type: "remove",
 				removalType: "remove-array-single",
-				nodePath: createNodePathRecursive(targetRemovedNode as TreeNode, idGenerator, []),
+				nodePath: createNodePathRecursive(
+					targetRemovedNode as TreeNode,
+					idGenerator,
+					[],
+				),
 				aiExplanation: treeEdit.explanation,
-				nodeContent: removeAgentObjectIdField(JSON.parse(JSON.stringify(targetRemovedNode))),
+				nodeContent: removeAgentObjectIdField(
+					JSON.parse(JSON.stringify(targetRemovedNode)),
+				),
 			};
 		} else {
 			const fieldKey = Tree.key(node);
@@ -731,9 +838,15 @@ function createRemoveDiff(
 			return {
 				type: "remove",
 				removalType: "remove-node",
-				nodePath: createNodePathRecursive(targetNodeAtField as TreeNode, idGenerator, []),
+				nodePath: createNodePathRecursive(
+					targetNodeAtField as TreeNode,
+					idGenerator,
+					[],
+				),
 				aiExplanation: treeEdit.explanation,
-				nodeContent: removeAgentObjectIdField(JSON.parse(JSON.stringify(targetNodeAtField))),
+				nodeContent: removeAgentObjectIdField(
+					JSON.parse(JSON.stringify(targetNodeAtField)),
+				),
 			};
 		}
 	} else if (isRange(source)) {
@@ -760,7 +873,9 @@ function createRemoveDiff(
 			),
 		};
 	} else {
-		throw new Error("Invalid source encountered when trying to create diff for remove edit");
+		throw new Error(
+			"Invalid source encountered when trying to create diff for remove edit",
+		);
 	}
 }
 
@@ -778,7 +893,10 @@ function createMoveDiff(
 ): MoveSingleDiff | MoveRangeDiff {
 	const source = treeEdit.source;
 	const destination = treeEdit.destination;
-	const { array: destinationArrayNode } = getPlaceInfo(destination, idGenerator);
+	const { array: destinationArrayNode } = getPlaceInfo(
+		destination,
+		idGenerator,
+	);
 
 	if (isObjectTarget(source)) {
 		const node = getNodeFromTarget(source, idGenerator);
@@ -786,7 +904,11 @@ function createMoveDiff(
 			type: "move",
 			moveType: "move-single",
 			sourceNodePath: createNodePathRecursive(node, idGenerator, []),
-			destinationNodePath: createNodePathRecursive(destinationArrayNode, idGenerator, []),
+			destinationNodePath: createNodePathRecursive(
+				destinationArrayNode,
+				idGenerator,
+				[],
+			),
 			aiExplanation: treeEdit.explanation,
 			nodeContent: removeAgentObjectIdField(JSON.parse(JSON.stringify(node))),
 		};
@@ -802,7 +924,9 @@ function createMoveDiff(
 		for (let i = sourceStartIndex; i < sourceEndIndex; i++) {
 			const nodeToMove = array.at(i);
 			if (!isPrimitive(nodeToMove)) {
-				movedNodePaths.push(createNodePathRecursive(nodeToMove as TreeNode, idGenerator, []));
+				movedNodePaths.push(
+					createNodePathRecursive(nodeToMove as TreeNode, idGenerator, []),
+				);
 				movedNodes.push(nodeToMove as TreeNode);
 			}
 		}
@@ -811,7 +935,11 @@ function createMoveDiff(
 			type: "move",
 			moveType: "move-range",
 			sourceNodePaths: movedNodePaths,
-			destinationNodePath: createNodePathRecursive(destinationArrayNode, idGenerator, []),
+			destinationNodePath: createNodePathRecursive(
+				destinationArrayNode,
+				idGenerator,
+				[],
+			),
 			aiExplanation: treeEdit.explanation,
 			nodeContents: movedNodes.map((node) =>
 				removeAgentObjectIdField(JSON.parse(JSON.stringify(node))),
@@ -829,6 +957,8 @@ interface SchemaInfo {
 
 function getSimpleNodeSchema(node: TreeNode): SchemaInfo {
 	const treeNodeSchema = Tree.schema(node);
-	const simpleNodeSchema = treeNodeSchema as unknown as new (dummy: unknown) => TreeNode;
+	const simpleNodeSchema = treeNodeSchema as unknown as new (
+		dummy: unknown,
+	) => TreeNode;
 	return { treeNodeSchema, simpleNodeSchema };
 }

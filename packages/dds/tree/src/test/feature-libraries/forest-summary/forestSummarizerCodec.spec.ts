@@ -10,7 +10,10 @@ import {
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { currentVersion, type CodecWriteOptions } from "../../../codec/index.js";
+import {
+	type CodecWriteOptions,
+	currentVersion,
+} from "../../../codec/index.js";
 import { rootFieldKey } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
@@ -26,14 +29,14 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/forest-summary/codec.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { ForestFormatVersion } from "../../../feature-libraries/forest-summary/format.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import type { Format } from "../../../feature-libraries/forest-summary/format.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { ForestFormatVersion } from "../../../feature-libraries/forest-summary/format.js";
 import {
-	FieldBatchFormatVersion,
-	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
+	FieldBatchFormatVersion,
 	makeFieldBatchCodec,
+	TreeCompressionStrategy,
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { EmptyObject } from "../../cursorTestSuite.js";
@@ -113,7 +116,10 @@ describe("ForestSummarizerCodec", () => {
 	describe("throws on receiving malformed data during encode.", () => {
 		for (const [name, data] of malformedData) {
 			it(name, () => {
-				assert.throws(() => codec.encode(data as FieldSet, context), "malformed data");
+				assert.throws(
+					() => codec.encode(data as FieldSet, context),
+					"malformed data",
+				);
 			});
 		}
 	});
@@ -130,7 +136,9 @@ describe("ForestSummarizerCodec", () => {
 						},
 						context,
 					),
-				validateUsageError(/Unsupported version 2 encountered while decoding data/),
+				validateUsageError(
+					/Unsupported version 2 encountered while decoding data/,
+				),
 			);
 		});
 
@@ -145,7 +153,9 @@ describe("ForestSummarizerCodec", () => {
 						},
 						context,
 					),
-				validateUsageError(/Unsupported version 3 encountered while decoding data/),
+				validateUsageError(
+					/Unsupported version 3 encountered while decoding data/,
+				),
 			);
 		});
 
@@ -169,7 +179,11 @@ describe("ForestSummarizerCodec", () => {
 					codec.decode(
 						{
 							version: brand<ForestFormatVersion>(ForestFormatVersion.v1),
-							fields: { version: brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v1) },
+							fields: {
+								version: brand<FieldBatchFormatVersion>(
+									FieldBatchFormatVersion.v1,
+								),
+							},
 							keys: [],
 							wrong: 5,
 						} as unknown as Format,

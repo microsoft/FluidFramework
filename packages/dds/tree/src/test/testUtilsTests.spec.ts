@@ -4,27 +4,29 @@
  */
 
 import { strict as assert } from "node:assert";
-
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 import type { JsonableTree } from "../core/index.js";
 import { brand } from "../util/index.js";
-
 import {
 	createSnapshotCompressor,
 	prepareTreeForCompare,
 	snapshotSessionId,
 } from "./utils.js";
-import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 describe("Test utils", () => {
 	describe("prepareTreeForCompare", () => {
 		it("normalizing", () => {
-			assert.deepEqual(prepareTreeForCompare([{ type: brand("foo") }]), [{ type: "foo" }]);
-			assert.deepEqual(prepareTreeForCompare([{ type: brand("foo"), fields: {} }]), [
+			assert.deepEqual(prepareTreeForCompare([{ type: brand("foo") }]), [
 				{ type: "foo" },
 			]);
-			assert.deepEqual(prepareTreeForCompare([{ type: brand("foo"), value: undefined }]), [
-				{ type: "foo" },
-			]);
+			assert.deepEqual(
+				prepareTreeForCompare([{ type: brand("foo"), fields: {} }]),
+				[{ type: "foo" }],
+			);
+			assert.deepEqual(
+				prepareTreeForCompare([{ type: brand("foo"), value: undefined }]),
+				[{ type: "foo" }],
+			);
 		});
 
 		it("without handles", () => {

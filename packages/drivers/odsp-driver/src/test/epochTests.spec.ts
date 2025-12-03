@@ -16,18 +16,22 @@ import {
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	type IFluidErrorBase,
 	createChildLogger,
+	type IFluidErrorBase,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { type IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts.js";
+import {
+	type IVersionedValueWithEpoch,
+	persistedCacheValueVersion,
+} from "../contracts.js";
 import { EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 
-import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch.js";
+import { createResponse, mockFetchOk, mockFetchSingle } from "./mockFetch.js";
 
-const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
+const createUtLocalCache = (): LocalPersistentCache =>
+	new LocalPersistentCache();
 
 describe("Tests for Epoch Tracker", () => {
 	const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
@@ -111,7 +115,10 @@ describe("Tests for Epoch Tracker", () => {
 			(await epochTracker.get(cacheEntry1)) === cacheValue1,
 			"Entry 1 should continue to exist",
 		);
-		assert((await epochTracker.get(cacheEntry2)) === undefined, "Entry 2 should not exist");
+		assert(
+			(await epochTracker.get(cacheEntry2)) === undefined,
+			"Entry 2 should not exist",
+		);
 	});
 
 	it("Epoch error when fetch error from cache should throw epoch error and clear cache", async () => {
@@ -147,7 +154,10 @@ describe("Tests for Epoch Tracker", () => {
 			(await epochTracker.get(cacheEntry1)) === cacheValue1,
 			"Entry 1 should continue to exist",
 		);
-		assert((await epochTracker.get(cacheEntry2)) === undefined, "Entry 2 should not exist");
+		assert(
+			(await epochTracker.get(cacheEntry2)) === undefined,
+			"Entry 2 should not exist",
+		);
 	});
 
 	it("Epoch error when fetch response and should clear cache", async () => {
@@ -232,7 +242,10 @@ describe("Tests for Epoch Tracker", () => {
 		} catch (error: any) {
 			success = false;
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			assert(error.XRequestStatsHeader !== undefined, "CorrelationId should be present");
+			assert(
+				error.XRequestStatsHeader !== undefined,
+				"CorrelationId should be present",
+			);
 		}
 		assert.strictEqual(success, false, "Fetching should fail!!");
 	});
@@ -268,7 +281,9 @@ describe("Tests for Epoch Tracker", () => {
 		// This will set the initial epoch value in epoch tracker.
 		await epochTracker.get(cacheEntry1);
 		try {
-			await mockFetchOk(async () => epochTracker.fetchArray("fetchUrl", {}, "test"));
+			await mockFetchOk(async () =>
+				epochTracker.fetchArray("fetchUrl", {}, "test"),
+			);
 		} catch {
 			success = false;
 		}
@@ -322,7 +337,8 @@ describe("Tests for Epoch Tracker", () => {
 		try {
 			await mockFetchSingle(
 				async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
-				async () => createResponse({ "x-fluid-epoch": "epoch1" }, undefined, 409),
+				async () =>
+					createResponse({ "x-fluid-epoch": "epoch1" }, undefined, 409),
 			);
 		} catch (error: unknown) {
 			success = false;
@@ -354,7 +370,8 @@ describe("Tests for Epoch Tracker", () => {
 		try {
 			await mockFetchSingle(
 				async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
-				async () => createResponse({ "x-fluid-epoch": "epoch2" }, undefined, 409),
+				async () =>
+					createResponse({ "x-fluid-epoch": "epoch2" }, undefined, 409),
 			);
 		} catch (error: unknown) {
 			success = false;
@@ -382,7 +399,7 @@ describe("Tests for Epoch Tracker", () => {
 						{ "x-fluid-epoch": "epoch1" },
 						{
 							error: {
-								"message": "locationMoved",
+								message: "locationMoved",
 								"@error.redirectLocation": newSiteUrl,
 							},
 						},
@@ -398,8 +415,16 @@ describe("Tests for Epoch Tracker", () => {
 			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			const newResolvedUrl: IOdspResolvedUrl = (error as any).redirectUrl;
-			assert.strictEqual(newResolvedUrl.siteUrl, newSiteUrl, "New site url should match");
-			assert.strictEqual(newResolvedUrl.driveId, driveId, "driveId should remain same");
+			assert.strictEqual(
+				newResolvedUrl.siteUrl,
+				newSiteUrl,
+				"New site url should match",
+			);
+			assert.strictEqual(
+				newResolvedUrl.driveId,
+				driveId,
+				"driveId should remain same",
+			);
 		}
 		assert.strictEqual(success, false, "Fetching should not succeed!!");
 	});

@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase, fail } from "@fluidframework/core-utils/internal";
+import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
-	NodeKind,
-	type TreeNodeSchema,
 	type AllowedTypesFull,
+	NodeKind,
 	SchemaUpgrade,
+	type TreeNodeSchema,
 } from "../core/index.js";
 import {
-	type FieldSchema,
-	type FieldSchemaAlpha,
 	FieldKind,
 	type FieldProps,
+	type FieldSchema,
+	type FieldSchemaAlpha,
 } from "../fieldSchema.js";
 import type {
 	SimpleAllowedTypeAttributes,
@@ -43,7 +43,9 @@ const factory = new SchemaFactoryAlpha(undefined);
  * If any particular choice is required for such cases, this API should not be used.
  * @alpha
  */
-export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): TreeSchema {
+export function generateSchemaFromSimpleSchema(
+	simple: SimpleTreeSchema,
+): TreeSchema {
 	const context: Context = new Map(
 		[...simple.definitions].map(
 			([id, schema]): [string, () => TreeNodeSchema & SimpleNodeSchema] => [
@@ -96,7 +98,9 @@ function generateAllowedTypes(
 ): AllowedTypesFull {
 	const types = Array.from(allowed.entries(), ([id, attributes]) => {
 		const schema = context.get(id) ?? fail(0xb5a /* Missing schema */);
-		return attributes.isStaged instanceof SchemaUpgrade ? factory.staged(schema) : schema;
+		return attributes.isStaged instanceof SchemaUpgrade
+			? factory.staged(schema)
+			: schema;
 	});
 	// TODO: AB#53315: `AllowedTypesFullFromMixed` does not correctly handle the `(AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]` case.
 	// We have to cast here in order to produce an allowed types list that can be used in tree node factory methods (e.g., `SchemaFactoryAlpha.objectAlpha`).
@@ -122,13 +126,21 @@ function generateNode(
 			});
 		}
 		case NodeKind.Array:
-			return factory.arrayAlpha(id, generateAllowedTypes(schema.simpleAllowedTypes, context), {
-				metadata: schema.metadata,
-			});
+			return factory.arrayAlpha(
+				id,
+				generateAllowedTypes(schema.simpleAllowedTypes, context),
+				{
+					metadata: schema.metadata,
+				},
+			);
 		case NodeKind.Map:
-			return factory.mapAlpha(id, generateAllowedTypes(schema.simpleAllowedTypes, context), {
-				metadata: schema.metadata,
-			});
+			return factory.mapAlpha(
+				id,
+				generateAllowedTypes(schema.simpleAllowedTypes, context),
+				{
+					metadata: schema.metadata,
+				},
+			);
 		case NodeKind.Record:
 			return factory.recordAlpha(
 				id,

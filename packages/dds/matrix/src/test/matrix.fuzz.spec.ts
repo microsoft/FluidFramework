@@ -6,17 +6,20 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	createDDSFuzzSuite,
-	registerOracle,
 	type DDSFuzzHarnessEvents,
 	type DDSFuzzModel,
 	type DDSFuzzSuiteOptions,
+	registerOracle,
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import type { SharedMatrixFactory } from "../runtime.js";
 
 import { baseSharedMatrixModel, type Operation } from "./fuzz.js";
-import { SharedMatrixOracle, type IChannelWithOracles } from "./matrixOracle.js";
+import {
+	type IChannelWithOracles,
+	SharedMatrixOracle,
+} from "./matrixOracle.js";
 
 const oracleEmitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 
@@ -52,7 +55,9 @@ describe("Matrix fuzz tests", function () {
 		emitter: oracleEmitter,
 	};
 
-	const nameModel = (workloadName: string): DDSFuzzModel<SharedMatrixFactory, Operation> => ({
+	const nameModel = (
+		workloadName: string,
+	): DDSFuzzModel<SharedMatrixFactory, Operation> => ({
 		...baseSharedMatrixModel,
 		workloadName,
 	});

@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
-import util from "util";
-
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import type {
 	IDocumentService,
@@ -13,6 +10,8 @@ import type {
 	ISnapshotTree,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
+import fs from "fs";
+import util from "util";
 
 import { formatNumber } from "./fluidAnalyzeMessages.js";
 import {
@@ -100,12 +99,23 @@ function fetchBlobs(
 	return result;
 }
 
-function createTreeBlob(tree: ISnapshotTree, prefix: string, patched: boolean): IFetchedTree {
+function createTreeBlob(
+	tree: ISnapshotTree,
+	prefix: string,
+	patched: boolean,
+): IFetchedTree {
 	const id = tree.id ?? "original";
 	const blob = stringToBuffer(JSON.stringify(tree), "utf8");
 	const filename = patched ? "tree" : `tree-${id}`;
 	const treePath = `${prefix}${filename}`;
-	return { treePath, blobId: "original tree $id", filename, blob, patched, reused: false };
+	return {
+		treePath,
+		blobId: "original tree $id",
+		filename,
+		blob,
+		patched,
+		reused: false,
+	};
 }
 
 async function fetchBlobsFromSnapshotTree(
@@ -151,11 +161,16 @@ async function fetchBlobsFromSnapshotTree(
 }
 
 function getDumpFetchedData(fetchedData: IFetchedData[]) {
-	const sorted = fetchedData.sort((a, b) => a.treePath.localeCompare(b.treePath));
+	const sorted = fetchedData.sort((a, b) =>
+		a.treePath.localeCompare(b.treePath),
+	);
 	return sorted.filter((item) => !isFetchedTree(item) || !item.patched);
 }
 
-async function dumpSnapshotTreeVerbose(name: string, fetchedData: IFetchedData[]) {
+async function dumpSnapshotTreeVerbose(
+	name: string,
+	fetchedData: IFetchedData[],
+) {
 	let size = 0;
 	const sorted = getDumpFetchedData(fetchedData);
 
@@ -183,9 +198,9 @@ async function dumpSnapshotTreeVerbose(name: string, fetchedData: IFetchedData[]
 
 	console.log("-".repeat(nameLength + 26));
 	console.log(
-		`${"Total snapshot size".padEnd(nameLength)} |        | ${formatNumber(size).padStart(
-			10,
-		)}`,
+		`${"Total snapshot size".padEnd(nameLength)} |        | ${formatNumber(
+			size,
+		).padStart(10)}`,
 	);
 }
 
@@ -214,7 +229,11 @@ async function dumpSnapshotTree(
 	return { blobCountNew, blobCount: sorted.length, size, sizeNew };
 }
 
-async function saveSnapshot(name: string, fetchedData: IFetchedData[], saveDir: string) {
+async function saveSnapshot(
+	name: string,
+	fetchedData: IFetchedData[],
+	saveDir: string,
+) {
 	const outDir = `${saveDir}/${name}/`;
 	const mkdir = util.promisify(fs.mkdir);
 
@@ -255,7 +274,10 @@ async function saveSnapshot(name: string, fetchedData: IFetchedData[], saveDir: 
 	);
 }
 
-async function fetchBlobsFromVersion(storage: IDocumentStorageService, version: IVersion) {
+async function fetchBlobsFromVersion(
+	storage: IDocumentStorageService,
+	version: IVersion,
+) {
 	const tree = await reportErrors(
 		`getSnapshotTree ${version.id}`,
 		storage.getSnapshotTree(version),

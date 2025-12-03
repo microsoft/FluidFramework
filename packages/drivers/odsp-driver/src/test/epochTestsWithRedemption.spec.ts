@@ -12,7 +12,10 @@ import {
 	OdspErrorTypes,
 	snapshotKey,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { type IFluidErrorBase, MockLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	type IFluidErrorBase,
+	MockLogger,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { EpochTrackerWithRedemption } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
@@ -98,10 +101,12 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 
 			// Initial joinSession call will return 404 but after the timeout, the call will be retried and succeed
 			await mockFetchMultiple(
-				async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "joinSession"),
+				async () =>
+					epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "joinSession"),
 				[
 					notFound,
-					async (): Promise<MockResponse> => okResponse({ "x-fluid-epoch": "epoch1" }, {}),
+					async (): Promise<MockResponse> =>
+						okResponse({ "x-fluid-epoch": "epoch1" }, {}),
 				],
 			);
 		});
@@ -121,11 +126,14 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 
 			// Initial joinSession call will return 404 but after the timeout, the call will be retried and succeed
 			await mockFetchMultiple(
-				async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "joinSession"),
+				async () =>
+					epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "joinSession"),
 				[
 					notFound, // joinSession
-					async (): Promise<MockResponse> => okResponse({ "x-fluid-epoch": "epoch1" }, {}), // "treesLatest"
-					async (): Promise<MockResponse> => okResponse({ "x-fluid-epoch": "epoch1" }, {}), // "joinSession"
+					async (): Promise<MockResponse> =>
+						okResponse({ "x-fluid-epoch": "epoch1" }, {}), // "treesLatest"
+					async (): Promise<MockResponse> =>
+						okResponse({ "x-fluid-epoch": "epoch1" }, {}), // "joinSession"
 				],
 			);
 		});
@@ -137,7 +145,8 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 				epochCallback.setCallback(async () => {
 					try {
 						await mockFetchSingle(
-							async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "treesLatest"),
+							async () =>
+								epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "treesLatest"),
 							notFound,
 							"internal",
 						);
@@ -150,7 +159,8 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 					}
 				});
 				await mockFetchSingle(
-					async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "joinSession"),
+					async () =>
+						epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "joinSession"),
 					async () => notFound({ "x-fluid-epoch": "epoch1" }),
 					"external",
 				);
@@ -173,7 +183,8 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 	describe("Tests Suite 2", () => {
 		it("Failed treesLatest call should not trigger unhandled rejection event", async () => {
 			const treesLatestP = mockFetchSingle(
-				async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "treesLatest"),
+				async () =>
+					epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "treesLatest"),
 				notFound,
 			);
 			await assert.rejects(

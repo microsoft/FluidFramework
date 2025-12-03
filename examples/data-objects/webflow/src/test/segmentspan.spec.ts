@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { TextSegment } from "@fluidframework/sequence/legacy";
+import type { TextSegment } from "@fluidframework/sequence/legacy";
 import {
-	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
+	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
+import { strict as assert } from "assert";
 
 import { FlowDocument } from "../document/index.js";
 import { SegmentSpan } from "../document/segmentspan.js";

@@ -4,22 +4,22 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IDisposable } from "@fluidframework/core-interfaces";
-import { ConnectionMode } from "@fluidframework/driver-definitions";
+import type { IDisposable } from "@fluidframework/core-interfaces";
+import type { ConnectionMode } from "@fluidframework/driver-definitions";
 import {
-	IDocumentDeltaConnection,
-	IDocumentDeltaConnectionEvents,
-	IClientConfiguration,
-	IConnected,
-	IDocumentMessage,
-	ISignalClient,
-	ITokenClaims,
+	type IClientConfiguration,
+	type IConnected,
+	type IDocumentDeltaConnection,
+	type IDocumentDeltaConnectionEvents,
+	type IDocumentMessage,
+	type ISequencedDocumentMessage,
+	type ISignalClient,
+	type ISignalMessage,
+	type ITokenClaims,
 	ScopeType,
-	ISequencedDocumentMessage,
-	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 
-import { FileDeltaStorageService } from "./fileDeltaStorageService.js";
+import type { FileDeltaStorageService } from "./fileDeltaStorageService.js";
 
 const MaxBatchDeltas = 2000;
 

@@ -3,19 +3,18 @@
  * Licensed under the MIT License.
  */
 
+export { SharedTreeBranchManager } from "./sharedTreeBranchManager.js";
 export {
-	type DifferenceCreate,
+	createMergableDiffSeries,
+	createMergableIdDiffSeries,
+	type Difference,
 	type DifferenceChange,
+	type DifferenceCreate,
 	type DifferenceMove,
 	type DifferenceRemove,
-	type Difference,
 	type ObjectPath,
 	type Options,
 	sharedTreeDiff,
-	createMergableIdDiffSeries,
-	createMergableDiffSeries,
 } from "./sharedTreeDiff.js";
 
-export { SharedTreeBranchManager } from "./sharedTreeBranchManager.js";
-
-export { sharedTreeTraverse, isTreeArrayNode, isTreeMapNode } from "./utils.js";
+export { isTreeArrayNode, isTreeMapNode, sharedTreeTraverse } from "./utils.js";

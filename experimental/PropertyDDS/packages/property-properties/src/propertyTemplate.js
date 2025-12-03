@@ -39,7 +39,7 @@ export class PropertyTemplate {
 	 * @category Properties
 	 */
 	constructor(in_params = {}) {
-		let params = deepCopy(in_params);
+		const params = deepCopy(in_params);
 		/** The identifier of the property */
 		this.id = params.id;
 		/** The type identifier of the property */
@@ -51,7 +51,10 @@ export class PropertyTemplate {
 		} else {
 			this.length = 1;
 		}
-		ConsoleUtils.assert(_.isNumber(this.length), MSG.LENGTH_MUST_BE_NUMBER + this.length);
+		ConsoleUtils.assert(
+			_.isNumber(this.length),
+			MSG.LENGTH_MUST_BE_NUMBER + this.length,
+		);
 
 		/** The context of the property */
 		this.context = params.context;
@@ -66,7 +69,9 @@ export class PropertyTemplate {
 		this.constants = params.constants;
 
 		/** Typeids of properties this property inherits from */
-		this.inherits = _.isString(params.inherits) ? [params.inherits] : params.inherits;
+		this.inherits = _.isString(params.inherits)
+			? [params.inherits]
+			: params.inherits;
 
 		if (_.includes(this.inherits, "Enum")) {
 			this._enumDictionary = this._parseEnums(this.properties);
@@ -92,11 +97,15 @@ export class PropertyTemplate {
 		if (in_currentPropertyLevel.properties) {
 			for (var i = 0; i < in_currentPropertyLevel.properties.length; i++) {
 				if (in_currentPropertyLevel.properties[i].typeid === "Enum") {
-					var dictionary = this._parseEnums(in_currentPropertyLevel.properties[i].properties);
+					var dictionary = this._parseEnums(
+						in_currentPropertyLevel.properties[i].properties,
+					);
 					in_currentPropertyLevel.properties[i]._enumDictionary = dictionary;
 				} else if (in_currentPropertyLevel.properties[i].properties) {
 					// call self
-					this._digestNestedInlineEnumProperties(in_currentPropertyLevel.properties[i]);
+					this._digestNestedInlineEnumProperties(
+						in_currentPropertyLevel.properties[i],
+					);
 				}
 			}
 		}
@@ -122,7 +131,10 @@ export class PropertyTemplate {
 			var enumEntry = in_enumProperties[i];
 			var value = enumEntry.value;
 			ConsoleUtils.assert(enumEntry.id, MSG.ENUM_TYPEID_MISSING);
-			ConsoleUtils.assert(!_.isNaN(enumEntry.value), MSG.ENUM_VALUE_NOT_NUMBER + value);
+			ConsoleUtils.assert(
+				!_.isNaN(enumEntry.value),
+				MSG.ENUM_VALUE_NOT_NUMBER + value,
+			);
 			enumDictionary.enumEntriesById[enumEntry.id] = {
 				value: value,
 				annotation: enumEntry.annotation,
@@ -134,7 +146,10 @@ export class PropertyTemplate {
 			minValue = value < minValue ? value : minValue;
 		}
 
-		enumDictionary.defaultValue = enumDictionary.enumEntriesByValue.hasOwnProperty(0)
+		enumDictionary.defaultValue = Object.hasOwn(
+			enumDictionary.enumEntriesByValue,
+			0,
+		)
 			? 0
 			: minValue;
 
@@ -208,7 +223,7 @@ export class PropertyTemplate {
 			in_target_ &&
 			(in_key_ === undefined ||
 				(in_key_ &&
-					in_target_.hasOwnProperty(in_key_) &&
+					Object.hasOwn(in_target_, in_key_) &&
 					_.isObject(in_target_[in_key_]) &&
 					in_preserve_))
 		) {
@@ -242,13 +257,18 @@ export class PropertyTemplate {
 			} else if (_.isDate(in_obj)) {
 				target = new Date(in_obj.getTime());
 			} else if (_.isRegExp(in_obj)) {
-				target = new RegExp(in_obj.source, in_obj.toString().replace(/.*\//, ""));
+				target = new RegExp(
+					in_obj.source,
+					in_obj.toString().replace(/.*\//, ""),
+				);
 				// For objects and arrays we create a new object/array
 			} else if (_.isObject(in_obj)) {
 				target = _.isArray(in_obj) ? [] : {};
 				copyMembers = true;
 			} else {
-				throw new TypeError(MSG.MISSING_CASE_IN_TEMPLATE_SERIALIZATION + this.typeid);
+				throw new TypeError(
+					MSG.MISSING_CASE_IN_TEMPLATE_SERIALIZATION + this.typeid,
+				);
 			}
 		}
 
@@ -352,7 +372,9 @@ export class PropertyTemplate {
 
 		if (template.inherits) {
 			var inherits =
-				typeof template.inherits === "string" ? [template.inherits] : template.inherits;
+				typeof template.inherits === "string"
+					? [template.inherits]
+					: template.inherits;
 			for (var i = 0; i < inherits.length; i++) {
 				var elem = TypeIdHelper.extractTypeId(inherits[i]);
 				dependencies[elem] = true;

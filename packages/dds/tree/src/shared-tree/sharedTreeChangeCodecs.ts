@@ -22,17 +22,17 @@ import {
 	type TreeStoredSchema,
 } from "../core/index.js";
 import {
-	type ModularChangeFormatVersion,
-	type ModularChangeset,
-	type SchemaChange,
 	defaultSchemaPolicy,
 	getCodecTreeForModularChangeFormat,
 	getCodecTreeForSchemaChangeFormat,
+	type ModularChangeFormatVersion,
+	type ModularChangeset,
 	makeSchemaChangeCodecs,
+	type SchemaChange,
 } from "../feature-libraries/index.js";
 import {
-	brand,
 	type Brand,
+	brand,
 	type JsonCompatibleReadOnly,
 	type Mutable,
 } from "../util/index.js";
@@ -41,10 +41,16 @@ import {
 	EncodedSharedTreeChange,
 	type EncodedSharedTreeInnerChange,
 } from "./sharedTreeChangeFormat.js";
-import type { SharedTreeChange, SharedTreeInnerChange } from "./sharedTreeChangeTypes.js";
+import type {
+	SharedTreeChange,
+	SharedTreeInnerChange,
+} from "./sharedTreeChangeTypes.js";
 
 export function makeSharedTreeChangeCodecFamily(
-	modularChangeCodecFamily: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
+	modularChangeCodecFamily: ICodecFamily<
+		ModularChangeset,
+		ChangeEncodingContext
+	>,
 	options: CodecWriteOptions,
 ): ICodecFamily<SharedTreeChange, ChangeEncodingContext> {
 	const schemaChangeCodecs = makeSchemaChangeCodecs(options);
@@ -74,7 +80,10 @@ interface ChangeFormatDependencies {
 	readonly schemaChange: SchemaFormatVersion;
 }
 
-export type SharedTreeChangeFormatVersion = Brand<3 | 4, "SharedTreeChangeFormatVersion">;
+export type SharedTreeChangeFormatVersion = Brand<
+	3 | 4,
+	"SharedTreeChangeFormatVersion"
+>;
 
 /**
  * Defines for each SharedTree change format the corresponding dependent formats to use.
@@ -86,8 +95,14 @@ export const dependenciesForChangeFormat: Map<
 	SharedTreeChangeFormatVersion,
 	ChangeFormatDependencies
 > = new Map([
-	[brand(3), { modularChange: brand(3), schemaChange: brand(SchemaFormatVersion.v1) }],
-	[brand(4), { modularChange: brand(4), schemaChange: brand(SchemaFormatVersion.v1) }],
+	[
+		brand(3),
+		{ modularChange: brand(3), schemaChange: brand(SchemaFormatVersion.v1) },
+	],
+	[
+		brand(4),
+		{ modularChange: brand(4), schemaChange: brand(SchemaFormatVersion.v1) },
+	],
 ]);
 
 export function getCodecTreeForChangeFormat(
@@ -95,7 +110,8 @@ export function getCodecTreeForChangeFormat(
 	clientVersion: MinimumVersionForCollab,
 ): CodecTree {
 	const { modularChange, schemaChange } =
-		dependenciesForChangeFormat.get(version) ?? fail(0xc78 /* Unknown change format */);
+		dependenciesForChangeFormat.get(version) ??
+		fail(0xc78 /* Unknown change format */);
 	return {
 		name: "SharedTreeChange",
 		version,

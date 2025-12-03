@@ -11,12 +11,23 @@
  * Current version: 2.74.0
  */
 
-import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
+import type {
+	FullType,
+	MinimalType,
+	requireAssignableTo,
+	TypeOnly,
+} from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/driver-utils-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> =
+	| TypeOnly<T>
+	| MinimalType<T>
+	| FullType<T>
+	| typeof old
+	| typeof current
+	| requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -25,7 +36,10 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_RateLimiter": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_RateLimiter = requireAssignableTo<TypeOnly<old.RateLimiter>, TypeOnly<current.RateLimiter>>
+declare type old_as_current_for_Class_RateLimiter = requireAssignableTo<
+	TypeOnly<old.RateLimiter>,
+	TypeOnly<current.RateLimiter>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -34,7 +48,10 @@ declare type old_as_current_for_Class_RateLimiter = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Class_RateLimiter": {"backCompat": false}
  */
-declare type current_as_old_for_Class_RateLimiter = requireAssignableTo<TypeOnly<current.RateLimiter>, TypeOnly<old.RateLimiter>>
+declare type current_as_old_for_Class_RateLimiter = requireAssignableTo<
+	TypeOnly<current.RateLimiter>,
+	TypeOnly<old.RateLimiter>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -43,7 +60,10 @@ declare type current_as_old_for_Class_RateLimiter = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "ClassStatics_RateLimiter": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_RateLimiter = requireAssignableTo<TypeOnly<typeof current.RateLimiter>, TypeOnly<typeof old.RateLimiter>>
+declare type current_as_old_for_ClassStatics_RateLimiter = requireAssignableTo<
+	TypeOnly<typeof current.RateLimiter>,
+	TypeOnly<typeof old.RateLimiter>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -52,7 +72,11 @@ declare type current_as_old_for_ClassStatics_RateLimiter = requireAssignableTo<T
  * typeValidation.broken:
  * "Enum_SummaryCompressionAlgorithm": {"forwardCompat": false}
  */
-declare type old_as_current_for_Enum_SummaryCompressionAlgorithm = requireAssignableTo<TypeOnly<old.SummaryCompressionAlgorithm>, TypeOnly<current.SummaryCompressionAlgorithm>>
+declare type old_as_current_for_Enum_SummaryCompressionAlgorithm =
+	requireAssignableTo<
+		TypeOnly<old.SummaryCompressionAlgorithm>,
+		TypeOnly<current.SummaryCompressionAlgorithm>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -61,7 +85,11 @@ declare type old_as_current_for_Enum_SummaryCompressionAlgorithm = requireAssign
  * typeValidation.broken:
  * "Enum_SummaryCompressionAlgorithm": {"backCompat": false}
  */
-declare type current_as_old_for_Enum_SummaryCompressionAlgorithm = requireAssignableTo<TypeOnly<current.SummaryCompressionAlgorithm>, TypeOnly<old.SummaryCompressionAlgorithm>>
+declare type current_as_old_for_Enum_SummaryCompressionAlgorithm =
+	requireAssignableTo<
+		TypeOnly<current.SummaryCompressionAlgorithm>,
+		TypeOnly<old.SummaryCompressionAlgorithm>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -70,7 +98,11 @@ declare type current_as_old_for_Enum_SummaryCompressionAlgorithm = requireAssign
  * typeValidation.broken:
  * "Interface_ICompressionStorageConfig": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ICompressionStorageConfig = requireAssignableTo<TypeOnly<old.ICompressionStorageConfig>, TypeOnly<current.ICompressionStorageConfig>>
+declare type old_as_current_for_Interface_ICompressionStorageConfig =
+	requireAssignableTo<
+		TypeOnly<old.ICompressionStorageConfig>,
+		TypeOnly<current.ICompressionStorageConfig>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -79,4 +111,8 @@ declare type old_as_current_for_Interface_ICompressionStorageConfig = requireAss
  * typeValidation.broken:
  * "Interface_ICompressionStorageConfig": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ICompressionStorageConfig = requireAssignableTo<TypeOnly<current.ICompressionStorageConfig>, TypeOnly<old.ICompressionStorageConfig>>
+declare type current_as_old_for_Interface_ICompressionStorageConfig =
+	requireAssignableTo<
+		TypeOnly<current.ICompressionStorageConfig>,
+		TypeOnly<old.ICompressionStorageConfig>
+	>;

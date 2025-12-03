@@ -4,9 +4,9 @@
  */
 
 import {
-	stringToBuffer,
 	type ILayerCompatDetails,
 	type IProvideLayerCompatDetails,
+	stringToBuffer,
 } from "@fluid-internal/client-utils";
 import type {
 	ICodeDetailsLoader,
@@ -14,11 +14,11 @@ import type {
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import {
-	SummaryType,
-	type IDocumentServiceFactory,
 	type IDocumentService,
+	type IDocumentServiceFactory,
 	type IDocumentStorageService,
 	type IResolvedUrl,
+	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
 import { v4 as uuid } from "uuid";
 
@@ -28,7 +28,9 @@ export function createTestDocumentServiceFactoryProxy(
 	resolvedUrl: IResolvedUrl,
 	compatibilityDetails?: ILayerCompatDetails,
 ): IDocumentServiceFactory {
-	return failSometimeProxy<IDocumentServiceFactory & IProvideLayerCompatDetails>({
+	return failSometimeProxy<
+		IDocumentServiceFactory & IProvideLayerCompatDetails
+	>({
 		createContainer: async () =>
 			failSometimeProxy<IDocumentService>({
 				policies: {},
@@ -61,29 +63,36 @@ export function createTestCodeLoaderProxy(props?: {
 							},
 							async instantiateRuntime(context, existing): Promise<IRuntime> {
 								if (existing === false && props?.createDetachedBlob === true) {
-									await context.storage.createBlob(stringToBuffer("whatever", "utf8"));
+									await context.storage.createBlob(
+										stringToBuffer("whatever", "utf8"),
+									);
 								}
 
-								return failSometimeProxy<IRuntime & IProvideLayerCompatDetails>({
-									createSummary: () => ({
-										tree: {},
-										type: SummaryType.Tree,
-									}),
-									setAttachState: () => {},
-									getPendingLocalState: () => ({
-										pending: [],
-									}),
-									disposed: false,
-									setConnectionState: props?.runtimeWithout_setConnectionStatus
-										? () => {}
-										: AbsentProperty,
-									setConnectionStatus: props?.runtimeWithout_setConnectionStatus
-										? AbsentProperty
-										: () => {
-												throw new Error("call not expected");
-											},
-									ILayerCompatDetails: props?.layerCompatDetails ?? AbsentProperty,
-								});
+								return failSometimeProxy<IRuntime & IProvideLayerCompatDetails>(
+									{
+										createSummary: () => ({
+											tree: {},
+											type: SummaryType.Tree,
+										}),
+										setAttachState: () => {},
+										getPendingLocalState: () => ({
+											pending: [],
+										}),
+										disposed: false,
+										setConnectionState:
+											props?.runtimeWithout_setConnectionStatus
+												? () => {}
+												: AbsentProperty,
+										setConnectionStatus:
+											props?.runtimeWithout_setConnectionStatus
+												? AbsentProperty
+												: () => {
+														throw new Error("call not expected");
+													},
+										ILayerCompatDetails:
+											props?.layerCompatDetails ?? AbsentProperty,
+									},
+								);
 							},
 						},
 					},

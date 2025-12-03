@@ -9,11 +9,11 @@ import { table } from "table";
 
 import { isVersionBumpTypeExtended } from "../bumpTypes";
 import {
-	MINIMUM_PUBLIC_VERSION,
 	bumpInternalVersion,
 	fromInternalScheme,
 	getVersionRange,
 	isInternalVersionScheme,
+	MINIMUM_PUBLIC_VERSION,
 	toInternalScheme,
 } from "../internalVersionScheme";
 
@@ -68,15 +68,18 @@ export default class VersionCommand extends Command {
 	static readonly examples = [
 		{
 			description: "The version can be a Fluid internal version.",
-			command: "<%= config.bin %> <%= command.id %> 2.0.0-internal.1.0.0 --type minor",
+			command:
+				"<%= config.bin %> <%= command.id %> 2.0.0-internal.1.0.0 --type minor",
 		},
 		{
 			description: "The version can also be a semver with a bump type.",
 			command: "<%= config.bin %> <%= command.id %> 1.0.0 --type minor",
 		},
 		{
-			description: "If needed, you can provide a public version to override the default.",
-			command: "<%= config.bin %> <%= command.id %> 1.0.0 --type patch --publicVersion 3.1.0",
+			description:
+				"If needed, you can provide a public version to override the default.",
+			command:
+				"<%= config.bin %> <%= command.id %> 1.0.0 --type patch --publicVersion 3.1.0",
 		},
 		{
 			description: "You can use ^ and ~ as a shorthand.",
@@ -85,7 +88,8 @@ export default class VersionCommand extends Command {
 		{
 			description:
 				"You can use the 'current' bump type to calculate ranges without bumping the version.",
-			command: "<%= config.bin %> <%= command.id %> 2.0.0-internal.1.0.0 --type current",
+			command:
+				"<%= config.bin %> <%= command.id %> 2.0.0-internal.1.0.0 --type current",
 		},
 	];
 
@@ -158,7 +162,9 @@ export default class VersionCommand extends Command {
 		this.log(tablify(data.original));
 
 		if (bumpType !== "current") {
-			this.log(`\nBUMPED to ${data.bumped.internalSchemeVersion} (${data.bumpType})`);
+			this.log(
+				`\nBUMPED to ${data.bumped.internalSchemeVersion} (${data.bumpType})`,
+			);
 			this.log(tablify(data.bumped));
 		}
 
@@ -199,7 +205,11 @@ export default class VersionCommand extends Command {
 
 function tablify(scheme: VersionScheme): string {
 	return table(Object.entries(scheme), {
-		columns: [{ alignment: "left" }, { alignment: "left" }, { alignment: "left" }],
+		columns: [
+			{ alignment: "left" },
+			{ alignment: "left" },
+			{ alignment: "left" },
+		],
 		singleLine: true,
 	});
 }

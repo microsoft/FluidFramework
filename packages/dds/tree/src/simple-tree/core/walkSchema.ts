@@ -4,11 +4,14 @@
  */
 
 import {
-	normalizeAndEvaluateAnnotatedAllowedTypes,
-	type AnnotatedAllowedType,
 	type AllowedTypesFullEvaluated,
+	type AnnotatedAllowedType,
+	normalizeAndEvaluateAnnotatedAllowedTypes,
 } from "./allowedTypes.js";
-import { getTreeNodeSchemaPrivateData, type TreeNodeSchema } from "./treeNodeSchema.js";
+import {
+	getTreeNodeSchemaPrivateData,
+	type TreeNodeSchema,
+} from "./treeNodeSchema.js";
 
 /**
  * Traverses all {@link TreeNodeSchema} schema reachable from `schema`, applying the visitor pattern.
@@ -28,7 +31,8 @@ export function walkNodeSchema(
 	// Since walkNodeSchema is used in the implementation of TreeNodeSchemaPrivateData.idempotentInitialize,
 	// Avoid depending on it here to avoid circular dependencies for recursive schema.
 	// Instead normalize/evaluate the allowed types as needed.
-	const annotatedAllowedTypes = getTreeNodeSchemaPrivateData(schema).childAllowedTypes;
+	const annotatedAllowedTypes =
+		getTreeNodeSchemaPrivateData(schema).childAllowedTypes;
 
 	for (const fieldAllowedTypes of annotatedAllowedTypes) {
 		walkAllowedTypes(
@@ -91,5 +95,7 @@ export interface SchemaVisitor {
 	 * @privateRemarks
 	 * It would be possible to combine this with `allowedTypes` into a single callback, but for the current usage this separation is more convenient.
 	 */
-	allowedTypeFilter?: (allowedType: AnnotatedAllowedType<TreeNodeSchema>) => boolean;
+	allowedTypeFilter?: (
+		allowedType: AnnotatedAllowedType<TreeNodeSchema>,
+	) => boolean;
 }

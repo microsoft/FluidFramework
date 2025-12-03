@@ -6,15 +6,18 @@
 import { delay } from "@fluidframework/core-utils/internal";
 import {
 	CloseContainer,
-	TelemetryEvent,
 	devtoolsMessageSource,
+	TelemetryEvent,
 } from "@fluidframework/devtools-core/internal";
 import { expect } from "chai";
 import { createSandbox } from "sinon";
 
 // eslint-disable-next-line import-x/no-internal-modules
 import { runBackgroundScript } from "../background/BackgroundScriptContent.js";
-import { type DevToolsInitMessage, extensionViewMessageSource } from "../messaging/index.js";
+import {
+	type DevToolsInitMessage,
+	extensionViewMessageSource,
+} from "../messaging/index.js";
 
 import { awaitListener, stubGlobals, stubPort } from "./Utilities.js";
 
@@ -31,7 +34,10 @@ describe("Background Script unit tests", () => {
 	});
 
 	it("Registers `onConnect` listener on load", async () => {
-		const onConnectListenerPromise = awaitListener(sandbox, browser.runtime.onConnect);
+		const onConnectListenerPromise = awaitListener(
+			sandbox,
+			browser.runtime.onConnect,
+		);
 
 		runBackgroundScript(browser);
 
@@ -68,7 +74,10 @@ describe("Background Script unit tests", () => {
 		};
 
 		// Inject our stubbed `onConnect`
-		const onConnectListenerPromise = awaitListener(sandbox, browser.runtime.onConnect);
+		const onConnectListenerPromise = awaitListener(
+			sandbox,
+			browser.runtime.onConnect,
+		);
 
 		// Load the background script (with stubbed `onConnect`)
 		runBackgroundScript(browser);
@@ -77,7 +86,10 @@ describe("Background Script unit tests", () => {
 		const onConnectListener = await onConnectListenerPromise;
 
 		// Inject our stubbed `onMessage` into the Port we will pass to the Background script
-		const onMessageListenerPromise = awaitListener(sandbox, devtoolsPort.onMessage);
+		const onMessageListenerPromise = awaitListener(
+			sandbox,
+			devtoolsPort.onMessage,
+		);
 
 		// Simulate background script connection init from the devtools
 		onConnectListener(devtoolsPort);
@@ -129,7 +141,10 @@ describe("Background Script unit tests", () => {
 		};
 
 		// Inject our stubbed `onConnect`
-		const onConnectListenerPromise = awaitListener(sandbox, browser.runtime.onConnect);
+		const onConnectListenerPromise = awaitListener(
+			sandbox,
+			browser.runtime.onConnect,
+		);
 
 		// Load the background script (with stubbed `onConnect`)
 		runBackgroundScript(browser);
@@ -151,7 +166,10 @@ describe("Background Script unit tests", () => {
 		expect(typeof sendMessageFromDevtools).to.equal("function");
 
 		// Wait for the Background script to register `onMessage`  listener with the Tab port.
-		const onMessageFromTabListenerPromise = awaitListener(sandbox, tabPort.onMessage);
+		const onMessageFromTabListenerPromise = awaitListener(
+			sandbox,
+			tabPort.onMessage,
+		);
 
 		// Simulate sending the init message from the devtools panel to the background script.
 		const devtoolsInitMessage: DevToolsInitMessage = {
@@ -188,7 +206,9 @@ describe("Background Script unit tests", () => {
 
 		// Post message from the Tab
 		const tabMessage = {
-			...TelemetryEvent.createMessage({} as unknown as TelemetryEvent.MessageData),
+			...TelemetryEvent.createMessage(
+				{} as unknown as TelemetryEvent.MessageData,
+			),
 			source: devtoolsMessageSource,
 		};
 		tabPort.postMessage(tabMessage);
@@ -222,7 +242,9 @@ describe("Background Script unit tests", () => {
 
 		// Post message from the Tab
 		const devtoolsMessage = {
-			...CloseContainer.createMessage({} as unknown as CloseContainer.MessageData),
+			...CloseContainer.createMessage(
+				{} as unknown as CloseContainer.MessageData,
+			),
 			source: extensionViewMessageSource,
 		};
 		devtoolsPort.postMessage(devtoolsMessage);

@@ -10,7 +10,10 @@ import {
 	InteractionRequiredAuthError,
 	type PublicClientApplication,
 } from "@azure/msal-browser";
-import type { IOdspTokenProvider, TokenResponse } from "@fluidframework/odsp-client/beta";
+import type {
+	IOdspTokenProvider,
+	TokenResponse,
+} from "@fluidframework/odsp-client/beta";
 
 // Sample implementation of the IOdspTokenProvider interface.
 // Provides the token that the Fluid service expects when asked for the Fluid container and for the WebSocket connection.
@@ -22,7 +25,9 @@ export class SampleOdspTokenProvider implements IOdspTokenProvider {
 
 	// Fetch the token for the orderer service
 	public async fetchWebsocketToken(): Promise<TokenResponse> {
-		const pushScope = ["offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All"];
+		const pushScope = [
+			"offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All",
+		];
 		const token = await this.fetchTokens(pushScope);
 		return {
 			fromCache: true,
@@ -45,14 +50,16 @@ export class SampleOdspTokenProvider implements IOdspTokenProvider {
 	private async fetchTokens(scope: string[]): Promise<string> {
 		let response: AuthenticationResult;
 		try {
-			response = await this.intializedPublicClientApplication.acquireTokenSilent({
-				scopes: scope,
-			});
-		} catch (error) {
-			if (error instanceof InteractionRequiredAuthError) {
-				response = await this.intializedPublicClientApplication.acquireTokenPopup({
+			response =
+				await this.intializedPublicClientApplication.acquireTokenSilent({
 					scopes: scope,
 				});
+		} catch (error) {
+			if (error instanceof InteractionRequiredAuthError) {
+				response =
+					await this.intializedPublicClientApplication.acquireTokenPopup({
+						scopes: scope,
+					});
 			} else {
 				throw error;
 			}

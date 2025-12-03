@@ -9,8 +9,8 @@ import type {
 } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
-	validateLayerCompatibility,
 	type ITelemetryLoggerExt,
+	validateLayerCompatibility,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { pkgVersion } from "./packageVersion.js";
@@ -46,33 +46,35 @@ export const loaderCompatDetailsForRuntime: ILayerCompatDetails = {
  * The requirements that the Runtime layer must meet to be compatible with this Loader.
  * @internal
  */
-export const runtimeSupportRequirementsForLoader: ILayerCompatSupportRequirements = {
-	/**
-	 * Minimum generation that Runtime must be at to be compatible with Loader. Note that 0 is used here for
-	 * Runtime layers before the introduction of the layer compatibility enforcement.
-	 */
-	minSupportedGeneration: 0,
-	/**
-	 * The features that the Runtime must support to be compatible with Loader.
-	 */
-	requiredFeatures: [],
-};
+export const runtimeSupportRequirementsForLoader: ILayerCompatSupportRequirements =
+	{
+		/**
+		 * Minimum generation that Runtime must be at to be compatible with Loader. Note that 0 is used here for
+		 * Runtime layers before the introduction of the layer compatibility enforcement.
+		 */
+		minSupportedGeneration: 0,
+		/**
+		 * The features that the Runtime must support to be compatible with Loader.
+		 */
+		requiredFeatures: [],
+	};
 
 /**
  * The requirements that the Driver layer must meet to be compatible with this Loader.
  * @internal
  */
-export const driverSupportRequirementsForLoader: ILayerCompatSupportRequirements = {
-	/**
-	 * Minimum generation that Driver must be at to be compatible with Loader. Note that 0 is used here for
-	 * Driver layers before the introduction of the layer compatibility enforcement.
-	 */
-	minSupportedGeneration: 0,
-	/**
-	 * The features that the Driver must support to be compatible with Loader.
-	 */
-	requiredFeatures: [],
-};
+export const driverSupportRequirementsForLoader: ILayerCompatSupportRequirements =
+	{
+		/**
+		 * Minimum generation that Driver must be at to be compatible with Loader. Note that 0 is used here for
+		 * Driver layers before the introduction of the layer compatibility enforcement.
+		 */
+		minSupportedGeneration: 0,
+		/**
+		 * The features that the Driver must support to be compatible with Loader.
+		 */
+		requiredFeatures: [],
+	};
 
 /**
  * Validates that the Runtime layer is compatible with the Loader. *

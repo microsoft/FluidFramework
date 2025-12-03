@@ -3,29 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { Lazy } from "@fluidframework/core-utils/internal";
-
 import {
 	type ErasedBaseType,
 	ErasedTypeImplementation,
 } from "@fluidframework/core-interfaces/internal";
+import { Lazy } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	getOrCreate,
-	isReadonlyArray,
 	type IsUnion,
+	isReadonlyArray,
 	type MakeNominal,
 } from "../../util/index.js";
-import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
+import type { SimpleAllowedTypeAttributes } from "../simpleSchema.js";
+import { type FlexListToUnion, isLazy, type LazyItem } from "./flexList.js";
 import {
-	NodeKind,
 	type InsertableTypedNode,
 	type NodeFromSchema,
+	NodeKind,
 	type TreeNodeSchema,
 } from "./treeNodeSchema.js";
 import { schemaAsTreeNodeValid } from "./treeNodeValid.js";
-import type { SimpleAllowedTypeAttributes } from "../simpleSchema.js";
 
 /**
  * Schema for types allowed in some location in a tree (like a field, map entry or array).
@@ -153,7 +152,8 @@ export type AllowedTypesFull<
  */
 export type AllowedTypesFullFromMixed<
 	T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
-> = UnannotateAllowedTypesList<T> & AnnotatedAllowedTypes<AnnotateAllowedTypesList<T>>;
+> = UnannotateAllowedTypesList<T> &
+	AnnotatedAllowedTypes<AnnotateAllowedTypesList<T>>;
 
 /**
  * The same as the built-in InstanceType, but works on classes with private constructors.
@@ -203,7 +203,9 @@ export class AnnotatedAllowedTypesInternal<
 		public readonly metadata: AllowedTypesMetadata = {},
 	) {
 		super();
-		this.unannotatedTypes = types.map((type) => type.type) as typeof this.unannotatedTypes;
+		this.unannotatedTypes = types.map(
+			(type) => type.type,
+		) as typeof this.unannotatedTypes;
 
 		// Since the array has been copied, mutations to it will not be handled correctly so freeze it.
 		// Support for such mutations could be added at a later date by making more things lazy.
@@ -234,7 +236,9 @@ export class AnnotatedAllowedTypesInternal<
 			return {
 				annotated,
 				set: new Set(annotated.unannotatedTypes),
-				identifiers: new Set(annotated.unannotatedTypes.map((t) => t.identifier)),
+				identifiers: new Set(
+					annotated.unannotatedTypes.map((t) => t.identifier),
+				),
 			};
 		});
 
@@ -268,11 +272,18 @@ export class AnnotatedAllowedTypesInternal<
 		return simpleAllowedTypes;
 	}
 
-	public static override [Symbol.hasInstance]<TThis extends { prototype: object }>(
+	public static override [Symbol.hasInstance]<
+		TThis extends { prototype: object },
+	>(
 		this: TThis,
 		value: unknown,
-	): value is InstanceTypeRelaxed<TThis> & AnnotatedAllowedTypesInternal & AllowedTypesFull {
-		return ErasedTypeImplementation[Symbol.hasInstance].call(this, value);
+	): value is InstanceTypeRelaxed<TThis> &
+		AnnotatedAllowedTypesInternal &
+		AllowedTypesFull {
+		return ErasedTypeImplementation[Symbol.hasInstance].call(
+			AnnotatedAllowedTypesInternal,
+			value,
+		);
 	}
 
 	public static override narrow<TThis extends { prototype: object }>(
@@ -281,7 +292,12 @@ export class AnnotatedAllowedTypesInternal<
 	): asserts value is InstanceTypeRelaxed<TThis> &
 		AnnotatedAllowedTypesInternal &
 		AllowedTypesFull {
-		if (!ErasedTypeImplementation[Symbol.hasInstance].call(this, value)) {
+		if (
+			!ErasedTypeImplementation[Symbol.hasInstance].call(
+				AnnotatedAllowedTypesInternal,
+				value,
+			)
+		) {
 			throw new TypeError("Invalid AnnotatedAllowedTypes instance");
 		}
 	}
@@ -323,8 +339,11 @@ export class AnnotatedAllowedTypesInternal<
 			},
 
 			getOwnPropertyDescriptor: (target, property) => {
-				if (Object.prototype.hasOwnProperty.call(target.unannotatedTypes, property)) {
-					const inner = Object.getOwnPropertyDescriptor(target.unannotatedTypes, property);
+				if (Object.hasOwn(target.unannotatedTypes, property)) {
+					const inner = Object.getOwnPropertyDescriptor(
+						target.unannotatedTypes,
+						property,
+					);
 					return {
 						...inner,
 						// Since these properties are not on the target, make them non-configurable to confirm with proxy invariants.
@@ -348,7 +367,8 @@ export class AnnotatedAllowedTypesInternal<
 	public static create<const T extends readonly AnnotatedAllowedType[]>(
 		types: T,
 		metadata: AllowedTypesMetadata = {},
-	): AnnotatedAllowedTypesInternal<Readonly<T>> & AllowedTypesFull<Readonly<T>> {
+	): AnnotatedAllowedTypesInternal<Readonly<T>> &
+		AllowedTypesFull<Readonly<T>> {
 		const result = new AnnotatedAllowedTypesInternal(types, metadata);
 		return result as typeof result & UnannotateAllowedTypesList<T>;
 	}
@@ -358,17 +378,33 @@ export class AnnotatedAllowedTypesInternal<
 		metadata: AllowedTypesMetadata = {},
 	): AnnotatedAllowedTypesInternal & Readonly<T> {
 		Object.freeze(types);
-		const annotatedTypes: AnnotatedAllowedType[] = types.map(normalizeToAnnotatedAllowedType);
-		const result = AnnotatedAllowedTypesInternal.create(annotatedTypes, metadata);
+		const annotatedTypes: AnnotatedAllowedType[] = types.map(
+			normalizeToAnnotatedAllowedType,
+		);
+		const result = AnnotatedAllowedTypesInternal.create(
+			annotatedTypes,
+			metadata,
+		);
 		return result as typeof result & T;
 	}
 
 	public static createMixed<
-		const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
-	>(types: T, metadata: AllowedTypesMetadata = {}): AllowedTypesFullFromMixed<T> {
+		const T extends readonly (
+			| AnnotatedAllowedType
+			| LazyItem<TreeNodeSchema>
+		)[],
+	>(
+		types: T,
+		metadata: AllowedTypesMetadata = {},
+	): AllowedTypesFullFromMixed<T> {
 		Object.freeze(types);
-		const annotatedTypes: AnnotatedAllowedType[] = types.map(normalizeToAnnotatedAllowedType);
-		const result = AnnotatedAllowedTypesInternal.create(annotatedTypes, metadata);
+		const annotatedTypes: AnnotatedAllowedType[] = types.map(
+			normalizeToAnnotatedAllowedType,
+		);
+		const result = AnnotatedAllowedTypesInternal.create(
+			annotatedTypes,
+			metadata,
+		);
 		return result as AllowedTypesFullFromMixed<T>;
 	}
 }
@@ -395,7 +431,11 @@ export function isAnnotatedAllowedType(
 ): allowedType is AnnotatedAllowedType {
 	checkForUninitializedSchema(allowedType);
 	// Class based schema, and lazy schema references report type "function": filtering them out with typeof makes narrowing based on members mostly safe
-	return typeof allowedType === "object" && "metadata" in allowedType && "type" in allowedType;
+	return (
+		typeof allowedType === "object" &&
+		"metadata" in allowedType &&
+		"type" in allowedType
+	);
 }
 
 /**
@@ -502,16 +542,18 @@ export type AnnotateAllowedTypesList<
  * Normalizes an {@link ImplicitAllowedTypes} to an {@link AllowedTypesFull}.
  * @alpha
  */
-export function normalizeAllowedTypes(types: ImplicitAllowedTypes): AllowedTypesFull {
+export function normalizeAllowedTypes(
+	types: ImplicitAllowedTypes,
+): AllowedTypesFull {
 	return normalizeAllowedTypesInternal(types);
 }
 
 /**
  * Normalizes an allowed type to an {@link AnnotatedAllowedType}, by adding empty annotations if they don't already exist.
  */
-export function normalizeToAnnotatedAllowedType<T extends LazyItem<TreeNodeSchema>>(
-	type: T | AnnotatedAllowedType<T>,
-): AnnotatedAllowedType<T> {
+export function normalizeToAnnotatedAllowedType<
+	T extends LazyItem<TreeNodeSchema>,
+>(type: T | AnnotatedAllowedType<T>): AnnotatedAllowedType<T> {
 	return isAnnotatedAllowedType(type)
 		? type
 		: {
@@ -523,7 +565,10 @@ export function normalizeToAnnotatedAllowedType<T extends LazyItem<TreeNodeSchem
 /**
  * See note inside {@link normalizeAllowedTypesInternal}.
  */
-const cachedNormalize = new WeakMap<ImplicitAllowedTypes, AllowedTypesFullInternal>();
+const cachedNormalize = new WeakMap<
+	ImplicitAllowedTypes,
+	AllowedTypesFullInternal
+>();
 
 /**
  * Normalizes allowed types to an {@link AllowedTypesFullInternal}.
@@ -573,7 +618,9 @@ const cachedLazyItem = new WeakMap<() => unknown, unknown>();
  * Caches results to handle {@link LazyItem}s which compute their resulting schema.
  * @alpha
  */
-export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>): T {
+export function evaluateLazySchema<T extends TreeNodeSchema>(
+	value: LazyItem<T>,
+): T {
 	const evaluatedSchema = isLazy(value)
 		? (getOrCreate(cachedLazyItem, value, value) as T)
 		: value;
@@ -587,7 +634,10 @@ export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>)
  * Throws a UsageError if the provided schema is undefined, most likely due to being used before it was initialized.
  */
 export function checkForUninitializedSchema(
-	schema: ImplicitAllowedTypes | LazyItem<TreeNodeSchema> | AnnotatedAllowedType,
+	schema:
+		| ImplicitAllowedTypes
+		| LazyItem<TreeNodeSchema>
+		| AnnotatedAllowedType,
 ): void {
 	if (schema === undefined) {
 		throw new UsageError(
@@ -711,12 +761,13 @@ export type Input<T extends never> = T;
  * This is a bit overly conservative, since cases like `A | [A]` give never and could give `A`.
  * @public
  */
-export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes> =
-	[TSchema] extends [TreeNodeSchema]
-		? InsertableTypedNode<TSchema>
-		: [TSchema] extends [AllowedTypes]
-			? InsertableTreeNodeFromAllowedTypes<TSchema>
-			: never;
+export type InsertableTreeNodeFromImplicitAllowedTypes<
+	TSchema extends ImplicitAllowedTypes,
+> = [TSchema] extends [TreeNodeSchema]
+	? InsertableTypedNode<TSchema>
+	: [TSchema] extends [AllowedTypes]
+		? InsertableTreeNodeFromAllowedTypes<TSchema>
+		: never;
 
 /**
  * Type of content that can be inserted into the tree for a node of the given schema.
@@ -752,6 +803,8 @@ export type InsertableTreeNodeFromAllowedTypes<TList extends AllowedTypes> =
 export type NumberKeys<
 	T,
 	Transformed = {
-		readonly [Property in keyof T as number extends Property ? never : Property]: Property;
+		readonly [Property in keyof T as number extends Property
+			? never
+			: Property]: Property;
 	},
 > = Transformed[`${number}` & keyof Transformed];

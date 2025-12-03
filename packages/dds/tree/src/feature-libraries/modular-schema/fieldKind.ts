@@ -4,8 +4,8 @@
  */
 
 import type {
-	FieldKindIdentifier,
 	FieldKindData,
+	FieldKindIdentifier,
 	Multiplicity,
 	SchemaPolicy,
 	TreeFieldStoredSchema,
@@ -54,7 +54,9 @@ export class FlexFieldKind<
 		public readonly multiplicity: TMultiplicity,
 		// TODO: stronger typing
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		private readonly options: FieldKindOptions<FieldChangeHandler<any, TEditor>>,
+		private readonly options: FieldKindOptions<
+			FieldChangeHandler<any, TEditor>
+		>,
 	) {
 		this.changeHandler = options.changeHandler;
 	}

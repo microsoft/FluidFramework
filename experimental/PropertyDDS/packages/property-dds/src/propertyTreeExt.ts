@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
@@ -20,8 +20,15 @@ import {
  * @internal
  */
 export class DeflatedPropertyTree extends SharedPropertyTree {
-	public static create(runtime: IFluidDataStoreRuntime, id?: string, queryString?: string) {
-		return runtime.createChannel(id, DeflatedPropertyTreeFactory.Type) as DeflatedPropertyTree;
+	public static create(
+		runtime: IFluidDataStoreRuntime,
+		id?: string,
+		queryString?: string,
+	) {
+		return runtime.createChannel(
+			id,
+			DeflatedPropertyTreeFactory.Type,
+		) as DeflatedPropertyTree;
 	}
 
 	public static getFactory(): IChannelFactory {
@@ -33,8 +40,15 @@ export class DeflatedPropertyTree extends SharedPropertyTree {
  * @internal
  */
 export class LZ4PropertyTree extends SharedPropertyTree {
-	public static create(runtime: IFluidDataStoreRuntime, id?: string, queryString?: string) {
-		return runtime.createChannel(id, LZ4PropertyTreeFactory.Type) as LZ4PropertyTree;
+	public static create(
+		runtime: IFluidDataStoreRuntime,
+		id?: string,
+		queryString?: string,
+	) {
+		return runtime.createChannel(
+			id,
+			LZ4PropertyTreeFactory.Type,
+		) as LZ4PropertyTree;
 	}
 
 	public static getFactory(): IChannelFactory {

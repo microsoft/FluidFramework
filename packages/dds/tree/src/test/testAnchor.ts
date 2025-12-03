@@ -6,17 +6,17 @@
 import { strict as assert } from "node:assert";
 
 import {
-	type IForestSubscription,
-	type UpPath,
-	moveToDetachedField,
 	type Anchor,
-	type ITreeSubscriptionCursor,
-	TreeNavigationResult,
-	type Value,
-	getDetachedFieldContainingPath,
-	rootField,
-	type TreeValue,
 	forEachNodeInSubtree,
+	getDetachedFieldContainingPath,
+	type IForestSubscription,
+	type ITreeSubscriptionCursor,
+	moveToDetachedField,
+	rootField,
+	TreeNavigationResult,
+	type TreeValue,
+	type UpPath,
+	type Value,
 } from "../core/index.js";
 import { TreeStatus } from "../feature-libraries/index.js";
 
@@ -32,7 +32,10 @@ export class TestAnchor {
 	/**
 	 * Returns a `TestAnchor` for the node at the given path.
 	 */
-	public static fromPath(forest: IForestSubscription, path: UpPath): TestAnchor {
+	public static fromPath(
+		forest: IForestSubscription,
+		path: UpPath,
+	): TestAnchor {
 		const cursor = forest.allocateCursor();
 		forest.moveCursorToPath(path, cursor);
 		const anchor = cursor.buildAnchor();
@@ -44,7 +47,10 @@ export class TestAnchor {
 	 * Returns a `TestAnchor` for the node with the given value.
 	 * Fails if the value is not found or found multiple times in the tree.
 	 */
-	public static fromValue(forest: IForestSubscription, value: TreeValue): TestAnchor {
+	public static fromValue(
+		forest: IForestSubscription,
+		value: TreeValue,
+	): TestAnchor {
 		const cursor = forest.allocateCursor();
 		moveToDetachedField(forest, cursor);
 		const paths: UpPath[] = [];
@@ -78,7 +84,10 @@ export class TestAnchor {
 	 */
 	public acquireCursor(): ITreeSubscriptionCursor {
 		const cursor = this.forest.allocateCursor();
-		const navigationResult = this.forest.tryMoveCursorToNode(this.anchor, cursor);
+		const navigationResult = this.forest.tryMoveCursorToNode(
+			this.anchor,
+			cursor,
+		);
 		assert.equal(navigationResult, TreeNavigationResult.Ok);
 		return cursor;
 	}

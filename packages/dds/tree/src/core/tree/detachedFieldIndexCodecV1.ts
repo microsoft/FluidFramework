@@ -7,18 +7,20 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import type { ICodecOptions, IJsonCodec } from "../../codec/index.js";
+import { brand } from "../../util/index.js";
 import {
 	type EncodedRevisionTag,
-	type RevisionTagCodec,
 	type RevisionTag,
+	type RevisionTagCodec,
 	RevisionTagSchema,
 } from "../rebase/index.js";
-
-import type { FormatV1 } from "./detachedFieldIndexFormatV1.js";
-import type { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes.js";
 import { makeDetachedFieldIndexCodecFromMajorCodec } from "./detachedFieldIndexCodecCommon.js";
 import { DetachedFieldIndexFormatVersion } from "./detachedFieldIndexFormatCommon.js";
-import { brand } from "../../util/index.js";
+import type { FormatV1 } from "./detachedFieldIndexFormatV1.js";
+import type {
+	DetachedFieldSummaryData,
+	Major,
+} from "./detachedFieldIndexTypes.js";
 
 class MajorCodec implements IJsonCodec<Major, EncodedRevisionTag> {
 	public constructor(

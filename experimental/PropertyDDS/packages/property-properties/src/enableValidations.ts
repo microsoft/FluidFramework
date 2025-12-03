@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export let validationsEnabled = {
+export const validationsEnabled = {
 	enabled: true,
 };
 

@@ -24,24 +24,24 @@ const {
 	isGUID,
 } = GuidUtils;
 
-const testGuid = function (re, base64) {
-	describe("generateGuid", function () {
-		it("should return a GUID", function (done) {
+const testGuid = (re, base64) => {
+	describe("generateGuid", () => {
+		it("should return a GUID", (done) => {
 			expect(re.test(generateGUID(base64))).to.equal(true);
 			done();
 		});
 	});
 };
 
-const testInitialization = function (firstGuid, base64) {
-	describe("initializeGUIDGenerator", function () {
+const testInitialization = (firstGuid, base64) => {
+	describe("initializeGUIDGenerator", () => {
 		// WARNING: All the tests below depend on the first it() results.
 		let guid1;
 		let guid2;
 
-		describe("using seed 0", function () {
-			describe("and enforcing it", function () {
-				it("should result in correct first GUID", function (done) {
+		describe("using seed 0", () => {
+			describe("and enforcing it", () => {
+				it("should result in correct first GUID", (done) => {
 					// Initialize with seed 0, enforce initialization
 					initializeGUIDGenerator(0, true);
 					guid1 = generateGUID(base64);
@@ -51,7 +51,7 @@ const testInitialization = function (firstGuid, base64) {
 					done();
 				});
 
-				it("should replay the same sequence when called again", function (done) {
+				it("should replay the same sequence when called again", (done) => {
 					// Do it again to confirm that re-initialization does indeed reset the sequence
 					// and that the first time was not due to testing order.
 					initializeGUIDGenerator(0, true);
@@ -60,8 +60,8 @@ const testInitialization = function (firstGuid, base64) {
 					done();
 				});
 			});
-			describe("without enforcing it", function () {
-				it("should play a different sequence", function (done) {
+			describe("without enforcing it", () => {
+				it("should play a different sequence", (done) => {
 					// Attempting to re-initialized an already initialized generator should
 					// have no effect on the sequence.
 					initializeGUIDGenerator(0);
@@ -72,8 +72,8 @@ const testInitialization = function (firstGuid, base64) {
 			});
 		});
 
-		describe("using 'null' seed and enforcing it", function () {
-			it("should results in same sequence as seed 0", function (done) {
+		describe("using 'null' seed and enforcing it", () => {
+			it("should results in same sequence as seed 0", (done) => {
 				// Do it again to confirm that re-initialization with 'null' is equivalent to zero.
 				initializeGUIDGenerator(0, true);
 				expect(generateGUID(base64)).to.equal(guid1);
@@ -82,8 +82,8 @@ const testInitialization = function (firstGuid, base64) {
 			});
 		});
 
-		describe("using non-zero seed and enforcing it", function () {
-			it("should results in a different sequence", function (done) {
+		describe("using non-zero seed and enforcing it", () => {
+			it("should results in a different sequence", (done) => {
 				initializeGUIDGenerator(1, true);
 				expect(generateGUID(base64)).to.not.equal(guid1);
 				expect(generateGUID(base64)).to.not.equal(guid2);
@@ -93,9 +93,9 @@ const testInitialization = function (firstGuid, base64) {
 	});
 };
 
-const testCorrectness = function (goodGuid, badGuid) {
-	describe("isGUID", function () {
-		it("should check if a GUID is valid", function (done) {
+const testCorrectness = (goodGuid, badGuid) => {
+	describe("isGUID", () => {
+		it("should check if a GUID is valid", (done) => {
 			expect(isGUID(goodGuid)).to.equal(true);
 			expect(isGUID(badGuid)).to.equal(false);
 			done();
@@ -103,16 +103,16 @@ const testCorrectness = function (goodGuid, badGuid) {
 	});
 };
 
-const testConversion = function (guid, guidArray, base64) {
-	describe("guidToUint32x4", function () {
-		it("should check that converting a guid to Uint32x4 is correct", function (done) {
+const testConversion = (guid, guidArray, base64) => {
+	describe("guidToUint32x4", () => {
+		it("should check that converting a guid to Uint32x4 is correct", (done) => {
 			let myGuidArray: any = guidToUint32x4(guid);
 			console.log(myGuidArray);
 			myGuidArray = Array.prototype.slice.call(myGuidArray);
 			expect(myGuidArray).to.eql(guidArray);
 			done();
 		});
-		it("should check that converting a guid to Uint32x4 with parameter array is correct", function (done) {
+		it("should check that converting a guid to Uint32x4 with parameter array is correct", (done) => {
 			let ioResult: any = new Uint32Array(4);
 			let myGuidArray: any = guidToUint32x4(guid, ioResult);
 			myGuidArray = Array.prototype.slice.call(myGuidArray);
@@ -122,16 +122,16 @@ const testConversion = function (guid, guidArray, base64) {
 		});
 	});
 
-	describe("uint32x4ToGuid", function () {
-		it("should check that converting a Uint32x4 to guid is correct", function (done) {
+	describe("uint32x4ToGuid", () => {
+		it("should check that converting a Uint32x4 to guid is correct", (done) => {
 			const myGuid = uint32x4ToGUID(guidArray, base64);
 			expect(myGuid).to.equal(guid);
 			done();
 		});
 	});
 
-	describe("uint32x4ToGUID and guidToUint32x4", function () {
-		it("should check that converting guid to Uint32x4 and back is correct", function (done) {
+	describe("uint32x4ToGUID and guidToUint32x4", () => {
+		it("should check that converting guid to Uint32x4 and back is correct", (done) => {
 			const myGuidArray = guidToUint32x4(guid);
 			const guid1 = uint32x4ToGUID(myGuidArray, base64);
 			expect(guid1).to.equal(guid);
@@ -140,21 +140,21 @@ const testConversion = function (guid, guidArray, base64) {
 	});
 };
 
-const testCombine = function (guid1, guid2, expectedGuid, base64) {
-	describe("combineGuids", function () {
-		it("should check that combining two guids will result in an expected guid", function () {
+const testCombine = (guid1, guid2, expectedGuid, base64) => {
+	describe("combineGuids", () => {
+		it("should check that combining two guids will result in an expected guid", () => {
 			expect(combineGuids(guid1, guid2, base64)).to.equal(expectedGuid);
 		});
 
-		it("should not result in the expected guid if the order of combined guids are reversed", function () {
+		it("should not result in the expected guid if the order of combined guids are reversed", () => {
 			expect(combineGuids(guid2, guid1, base64)).to.not.equal(expectedGuid);
 		});
 	});
 };
 
-const test16fromAndTo64 = function (base64, base16) {
-	describe("base64Tobase16 and base16ToBase64", function () {
-		it("should check that converting a base64 to a GUID is correct", function (done) {
+const test16fromAndTo64 = (base64, base16) => {
+	describe("base64Tobase16 and base16ToBase64", () => {
+		it("should check that converting a base64 to a GUID is correct", (done) => {
 			expect(base16ToBase64(base64Tobase16(base64))).to.equal(base64);
 			expect(base64Tobase16(base16ToBase64(base16))).to.equal(base16);
 			expect(base16ToBase64(base16)).to.equal(base64);
@@ -164,10 +164,13 @@ const test16fromAndTo64 = function (base64, base16) {
 	});
 };
 
-describe("Base16", function () {
+describe("Base16", () => {
 	testGuid(/^[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i, false);
 	testInitialization("492b176c-bdc9-0dec-7c70-087a6a7bdac2", false);
-	testCorrectness("893fa0d4-c767-4133-829f-27434bf38cc8", "893fa0d4-c?767-4133-829f-27434b-8");
+	testCorrectness(
+		"893fa0d4-c767-4133-829f-27434bf38cc8",
+		"893fa0d4-c?767-4133-829f-27434b-8",
+	);
 	testConversion(
 		"8aecac9a-45d6-8009-0000-00002c033cfb",
 		[2330766490, 1171685385, 0, 738409723],
@@ -181,7 +184,7 @@ describe("Base16", function () {
 	);
 });
 
-describe("Base64", function () {
+describe("Base64", () => {
 	testGuid(/^[\w-]{21}[agqw]$/i, true);
 	testInitialization("bBcrSewNyb16CHB8wtp7ag", true);
 	testCorrectness("mqzsigmA1kUAAAAA-zwDLA", "mqzsigmA1kUAAAAA+zw?5$");
@@ -190,7 +193,11 @@ describe("Base64", function () {
 	testCorrectness("abcdffffffDEScvF9_-_-g", "abcdffffffDEScvF9_-_-0");
 	testCorrectness("--___---___---___0123Q", "--___---___---___0123a");
 	testCorrectness("AAAAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAA%AAAAAAA");
-	testConversion("mqzsigmA1kUAAAAA-zwDLA", [2330766490, 1171685385, 0, 738409723], true);
+	testConversion(
+		"mqzsigmA1kUAAAAA-zwDLA",
+		[2330766490, 1171685385, 0, 738409723],
+		true,
+	);
 	testConversion(
 		"--___---___---___0123Q",
 		[4294963195, 4294950639, 4293917694, 3715517951],
@@ -299,7 +306,19 @@ describe("Base64", function () {
 	);
 });
 
-test16fromAndTo64("mqzsigmA1kUAAAAA-zwDLA", "8aecac9a-45d6-8009-0000-00002c033cfb");
-test16fromAndTo64("AAAAAAAAAAAAAAAAAAAAAA", "00000000-0000-0000-0000-000000000000");
-test16fromAndTo64("qtqv_f39u7sAq-7uq6urCg", "fdafdaaa-bbbb-fdfd-eeee-ab000aababab");
-test16fromAndTo64("_____5mZiIiqqgAAqqqqqg", "ffffffff-8888-9999-0000-aaaaaaaaaaaa");
+test16fromAndTo64(
+	"mqzsigmA1kUAAAAA-zwDLA",
+	"8aecac9a-45d6-8009-0000-00002c033cfb",
+);
+test16fromAndTo64(
+	"AAAAAAAAAAAAAAAAAAAAAA",
+	"00000000-0000-0000-0000-000000000000",
+);
+test16fromAndTo64(
+	"qtqv_f39u7sAq-7uq6urCg",
+	"fdafdaaa-bbbb-fdfd-eeee-ab000aababab",
+);
+test16fromAndTo64(
+	"_____5mZiIiqqgAAqqqqqg",
+	"ffffffff-8888-9999-0000-aaaaaaaaaaaa",
+);

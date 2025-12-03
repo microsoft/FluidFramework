@@ -6,7 +6,11 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type { IdCompressor } from "../idCompressor.js";
-import type { OpSpaceCompressedId, SessionSpaceCompressedId, StableId } from "../index.js";
+import type {
+	OpSpaceCompressedId,
+	SessionSpaceCompressedId,
+	StableId,
+} from "../index.js";
 import {
 	numericUuidFromStableId,
 	offsetNumericUuid,
@@ -80,7 +84,11 @@ export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
  * @param defaultValue - a function which returns a default value. This is called and used to set an initial value for the given key in the map if none exists
  * @returns either the existing value for the given key, or the newly-created value (the result of `defaultValue`)
  */
-export function getOrCreate<K, V>(map: Map<K, V>, key: K, defaultValue: (key: K) => V): V {
+export function getOrCreate<K, V>(
+	map: Map<K, V>,
+	key: K,
+	defaultValue: (key: K) => V,
+): V {
 	let value = map.get(key);
 	if (value === undefined) {
 		value = defaultValue(key);
@@ -89,8 +97,13 @@ export function getOrCreate<K, V>(map: Map<K, V>, key: K, defaultValue: (key: K)
 	return value;
 }
 
-export function incrementStableId(stableId: StableId, offset: number): StableId {
-	return stableIdFromNumericUuid(offsetNumericUuid(numericUuidFromStableId(stableId), offset));
+export function incrementStableId(
+	stableId: StableId,
+	offset: number,
+): StableId {
+	return stableIdFromNumericUuid(
+		offsetNumericUuid(numericUuidFromStableId(stableId), offset),
+	);
 }
 
 /**

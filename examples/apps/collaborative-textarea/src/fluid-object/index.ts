@@ -5,7 +5,10 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedString, type ISharedString } from "@fluidframework/sequence/legacy";
+import {
+	type ISharedString,
+	SharedString,
+} from "@fluidframework/sequence/legacy";
 
 /**
  * CollaborativeText uses the React CollaborativeTextArea to load a collaborative HTML <textarea>
@@ -31,7 +34,7 @@ export class CollaborativeText extends DataObject {
 	});
 
 	public static getFactory(): DataObjectFactory<CollaborativeText> {
-		return this.factory;
+		return CollaborativeText.factory;
 	}
 
 	protected async initializingFirstTime(): Promise<void> {
@@ -42,6 +45,8 @@ export class CollaborativeText extends DataObject {
 
 	protected async hasInitialized(): Promise<void> {
 		// Store the text if we are loading the first time or loading from existing
-		this._text = await this.root.get<IFluidHandle<SharedString>>(this.textKey)?.get();
+		this._text = await this.root
+			.get<IFluidHandle<SharedString>>(this.textKey)
+			?.get();
 	}
 }

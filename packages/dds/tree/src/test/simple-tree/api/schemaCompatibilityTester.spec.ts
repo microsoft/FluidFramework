@@ -9,17 +9,19 @@ import {
 	storedEmptyFieldSchema,
 	type TreeStoredSchema,
 } from "../../../core/index.js";
-import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
+import {
+	allowsRepoSuperset,
+	defaultSchemaPolicy,
+} from "../../../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { SchemaCompatibilityTester } from "../../../simple-tree/api/schemaCompatibilityTester.js";
 import {
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
+	SchemaFactoryAlpha,
 	TreeViewConfigurationAlpha,
 	toUpgradeSchema,
 } from "../../../simple-tree/index.js";
-import { SchemaFactoryAlpha } from "../../../simple-tree/index.js";
-
-// eslint-disable-next-line import-x/no-internal-modules
-import { SchemaCompatibilityTester } from "../../../simple-tree/api/schemaCompatibilityTester.js";
 
 const emptySchema: TreeStoredSchema = {
 	nodeSchema: new Map(),
@@ -43,11 +45,17 @@ function expectCompatibility(
 
 	// if it says upgradable, deriving a stored schema from the view schema gives one thats a superset of the old stored schema
 	if (compatibility.canUpgrade) {
-		assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, viewStored), true);
+		assert.equal(
+			allowsRepoSuperset(defaultSchemaPolicy, stored, viewStored),
+			true,
+		);
 	}
 	// if it is viewable, the old stored schema is also a superset of the new one.
 	if (compatibility.canView) {
-		assert.equal(allowsRepoSuperset(defaultSchemaPolicy, viewStored, stored), true);
+		assert.equal(
+			allowsRepoSuperset(defaultSchemaPolicy, viewStored, stored),
+			true,
+		);
 	}
 }
 
@@ -107,7 +115,9 @@ describe("SchemaCompatibilityTester", () => {
 			});
 
 			it("map", () => {
-				expectSelfEquivalent(factory.map("foo", [factory.number, factory.boolean]));
+				expectSelfEquivalent(
+					factory.map("foo", [factory.number, factory.boolean]),
+				);
 			});
 
 			it("array", () => {
@@ -138,7 +148,9 @@ describe("SchemaCompatibilityTester", () => {
 			// Add allowed types to map node
 			it("view: SomethingMap ⊃ stored: NeverMap", () => {
 				class NeverMap extends factory.map("TestNode", []) {}
-				class SomethingMap extends factory.mapRecursive("TestNode", [factory.number]) {}
+				class SomethingMap extends factory.mapRecursive("TestNode", [
+					factory.number,
+				]) {}
 				expectCompatibility(
 					{ view: SomethingMap, stored: toUpgradeSchema(NeverMap) },
 					expected,
@@ -169,7 +181,10 @@ describe("SchemaCompatibilityTester", () => {
 					y: factory.number,
 					z: factory.optional(factory.number),
 				}) {}
-				expectCompatibility({ view: Point3D, stored: toUpgradeSchema(Point2D) }, expected);
+				expectCompatibility(
+					{ view: Point3D, stored: toUpgradeSchema(Point2D) },
+					expected,
+				);
 			});
 
 			describe("due to field kind relaxation", () => {
@@ -241,20 +256,8 @@ describe("SchemaCompatibilityTester", () => {
 					expectCompatibility(
 						{
 							view: factory.array("x", factory.string),
-							stored: toUpgradeSchema(factory.object("x", { [EmptyKey]: factory.string })),
-						},
-						{
-							canView: false,
-							canUpgrade: true,
-							isEquivalent: false,
-						},
-					);
-
-					expectCompatibility(
-						{
-							view: factory.array("x", factory.string),
 							stored: toUpgradeSchema(
-								factory.object("x", { [EmptyKey]: factory.optional(factory.string) }),
+								factory.object("x", { [EmptyKey]: factory.string }),
 							),
 						},
 						{
@@ -267,7 +270,25 @@ describe("SchemaCompatibilityTester", () => {
 					expectCompatibility(
 						{
 							view: factory.array("x", factory.string),
-							stored: toUpgradeSchema(factory.object("x", { [EmptyKey]: factory.identifier })),
+							stored: toUpgradeSchema(
+								factory.object("x", {
+									[EmptyKey]: factory.optional(factory.string),
+								}),
+							),
+						},
+						{
+							canView: false,
+							canUpgrade: true,
+							isEquivalent: false,
+						},
+					);
+
+					expectCompatibility(
+						{
+							view: factory.array("x", factory.string),
+							stored: toUpgradeSchema(
+								factory.object("x", { [EmptyKey]: factory.identifier }),
+							),
 						},
 						{
 							canView: false,
@@ -325,14 +346,23 @@ describe("SchemaCompatibilityTester", () => {
 		describe("forbids viewing and upgrading", () => {
 			describe("when the view schema and stored schema are incomparable", () => {
 				// (i.e. neither is a subset of the other, hence each allows documents the other does not)
-				function expectIncomparability(a: ImplicitFieldSchema, b: ImplicitFieldSchema): void {
+				function expectIncomparability(
+					a: ImplicitFieldSchema,
+					b: ImplicitFieldSchema,
+				): void {
 					const expected: Omit<SchemaCompatibilityStatus, "canInitialize"> = {
 						canView: false,
 						canUpgrade: false,
 						isEquivalent: false,
 					};
-					expectCompatibility({ view: a, stored: toUpgradeSchema(b) }, expected);
-					expectCompatibility({ view: b, stored: toUpgradeSchema(a) }, expected);
+					expectCompatibility(
+						{ view: a, stored: toUpgradeSchema(b) },
+						expected,
+					);
+					expectCompatibility(
+						{ view: b, stored: toUpgradeSchema(a) },
+						expected,
+					);
 				}
 
 				describe("due to an allowed type difference", () => {
@@ -344,9 +374,12 @@ describe("SchemaCompatibilityTester", () => {
 						class IncompatibleObject1 extends factory.object("TestNode", {
 							x: factory.number,
 						}) {}
-						class IncompatibleObject2 extends factory.objectRecursive("TestNode", {
-							x: factory.optionalRecursive([() => IncompatibleObject2]),
-						}) {}
+						class IncompatibleObject2 extends factory.objectRecursive(
+							"TestNode",
+							{
+								x: factory.optionalRecursive([() => IncompatibleObject2]),
+							},
+						) {}
 						expectIncomparability(IncompatibleObject1, IncompatibleObject2);
 					});
 
@@ -369,7 +402,10 @@ describe("SchemaCompatibilityTester", () => {
 						factory.array(factory.number),
 						factory.optional(factory.number),
 					);
-					expectIncomparability(factory.array(factory.string), factory.identifier);
+					expectIncomparability(
+						factory.array(factory.string),
+						factory.identifier,
+					);
 				});
 
 				it("view: 2d Point vs stored: required 3d Point", () => {
@@ -405,7 +441,10 @@ describe("SchemaCompatibilityTester", () => {
 						y: factory.number,
 						z: factory.optional(factory.number),
 					}) {}
-					expectCompatibility({ view: Point2D, stored: toUpgradeSchema(Point3D) }, expected);
+					expectCompatibility(
+						{ view: Point2D, stored: toUpgradeSchema(Point3D) },
+						expected,
+					);
 				});
 
 				// This case demonstrates some need for care when allowing view schema to open documents with more flexible stored schema
@@ -431,7 +470,9 @@ describe("SchemaCompatibilityTester", () => {
 						expectCompatibility(
 							{
 								view: factory.number,
-								stored: toUpgradeSchema(factory.required([factory.number, factory.string])),
+								stored: toUpgradeSchema(
+									factory.required([factory.number, factory.string]),
+								),
 							},
 							expected,
 						);
@@ -445,19 +486,27 @@ describe("SchemaCompatibilityTester", () => {
 							x: [factory.number, factory.string],
 						}) {}
 						expectCompatibility(
-							{ view: IncompatibleObject1, stored: toUpgradeSchema(IncompatibleObject2) },
+							{
+								view: IncompatibleObject1,
+								stored: toUpgradeSchema(IncompatibleObject2),
+							},
 							expected,
 						);
 					});
 
 					it("in a map", () => {
-						class IncompatibleMap1 extends factory.map("TestNode", [factory.number]) {}
+						class IncompatibleMap1 extends factory.map("TestNode", [
+							factory.number,
+						]) {}
 						class IncompatibleMap2 extends factory.map("TestNode", [
 							factory.number,
 							factory.string,
 						]) {}
 						expectCompatibility(
-							{ view: IncompatibleMap1, stored: toUpgradeSchema(IncompatibleMap2) },
+							{
+								view: IncompatibleMap1,
+								stored: toUpgradeSchema(IncompatibleMap2),
+							},
 							expected,
 						);
 					});

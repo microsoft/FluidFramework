@@ -4,32 +4,43 @@
  */
 
 import { strict as assert } from "node:assert";
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
-
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { isStableId } from "@fluidframework/id-compressor/internal";
-
+import {
+	validateAssertionError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
+import { FieldKinds } from "../../../../feature-libraries/index.js";
+import { Tree } from "../../../../shared-tree/index.js";
+import {
+	createField,
+	UnhydratedFlexTreeNode,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../../simple-tree/core/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { createTreeNodeFromInner } from "../../../../simple-tree/core/treeNodeKernel.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { getUnhydratedContext } from "../../../../simple-tree/createContext.js";
 import {
 	type FieldKind,
-	SchemaFactory,
-	SchemaFactoryAlpha,
-	TreeViewConfiguration,
-	typeNameSymbol,
-	typeSchemaSymbol,
-	type LeafSchema,
-	type NodeBuilderData,
-	type ObjectNodeSchema,
-	type SimpleObjectNodeSchema,
-	type TreeNodeSchema,
-	type ValidateRecursiveSchema,
 	type FieldSchema,
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTreeNodeFromAllowedTypes,
 	type InsertableTypedNode,
+	type LeafSchema,
+	type NodeBuilderData,
 	type NodeFromSchema,
+	type ObjectNodeSchema,
+	SchemaFactory,
+	SchemaFactoryAlpha,
+	type SimpleObjectNodeSchema,
+	type TreeNodeSchema,
+	TreeViewConfiguration,
+	typeNameSymbol,
+	typeSchemaSymbol,
 	unhydratedFlexTreeFromInsertable,
+	type ValidateRecursiveSchema,
 } from "../../../../simple-tree/index.js";
 import type {
 	FieldHasDefault,
@@ -37,29 +48,17 @@ import type {
 	ObjectFromSchemaRecord,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../simple-tree/node-kinds/object/objectNode.js";
-import { describeHydration, hydrate, pretty } from "../../utils.js";
-import { brand } from "../../../../util/index.js";
 import type {
 	areSafelyAssignable,
 	isAssignableTo,
+	RestrictiveStringRecord,
 	requireAssignableTo,
 	requireFalse,
 	requireTrue,
-	RestrictiveStringRecord,
 } from "../../../../util/index.js";
+import { brand } from "../../../../util/index.js";
 import { getView } from "../../../utils.js";
-import { Tree } from "../../../../shared-tree/index.js";
-import { FieldKinds } from "../../../../feature-libraries/index.js";
-
-import {
-	createField,
-	UnhydratedFlexTreeNode,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../../simple-tree/core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { getUnhydratedContext } from "../../../../simple-tree/createContext.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { createTreeNodeFromInner } from "../../../../simple-tree/core/treeNodeKernel.js";
+import { describeHydration, hydrate, pretty } from "../../utils.js";
 
 const schemaFactory = new SchemaFactory("Test");
 
@@ -73,124 +72,83 @@ const schemaFactory = new SchemaFactory("Test");
 	};
 
 	type Desired = InsertableTypedNode<typeof Note>;
-
-	{
-		type result = InsertableObjectFromSchemaRecord<Info>["stuff"];
-		type _check = requireTrue<areSafelyAssignable<result, Desired>>;
-	}
-
-	{
-		type result = InsertableTreeFieldFromImplicitField<Info["stuff"]>;
-		type _check = requireTrue<areSafelyAssignable<result, Desired>>;
-	}
-
-	// Generic case
-	{
-		type result = InsertableObjectFromSchemaRecord<
-			RestrictiveStringRecord<ImplicitFieldSchema>
-		>;
-		type _check = requireAssignableTo<result, never>;
-	}
-
-	// Empty case
-	{
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-		type result = InsertableObjectFromSchemaRecord<{}>;
-		type _check = requireAssignableTo<result, Record<string, never>>;
-	}
+	type result = InsertableObjectFromSchemaRecord<Info>["stuff"];
+	type _check = requireTrue<areSafelyAssignable<result, Desired>>;
+	type result = InsertableTreeFieldFromImplicitField<Info["stuff"]>;
+	type _check = requireTrue<areSafelyAssignable<result, Desired>>;
+	type result = InsertableObjectFromSchemaRecord<
+		RestrictiveStringRecord<ImplicitFieldSchema>
+	>;
+	type _check = requireAssignableTo<result, never>;
+	// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+	type result = InsertableObjectFromSchemaRecord<{}>;
+	type _check = requireAssignableTo<result, Record<string, never>>;
 }
 
 // FieldHasDefault
 {
 	class Note extends schemaFactory.object("Note", {}) {}
+	type _check = requireFalse<FieldHasDefault<ImplicitAllowedTypes>>;
+	type _check2 = requireFalse<FieldHasDefault<ImplicitFieldSchema>>;
+	// Implicitly required field does not have a default value.
+	type _check = requireFalse<FieldHasDefault<typeof Note>>;
+	type RequiredNoteField = FieldSchema<FieldKind.Required, typeof Note>;
 
-	{
-		type _check = requireFalse<FieldHasDefault<ImplicitAllowedTypes>>;
-		type _check2 = requireFalse<FieldHasDefault<ImplicitFieldSchema>>;
-	}
+	// Required field does not have a default value.
+	type _check = requireFalse<FieldHasDefault<RequiredNoteField>>;
+	type OptionalNoteField = FieldSchema<FieldKind.Optional, typeof Note>;
 
-	// Node schema via ImplicitAllowedTypes
-	{
-		// Implicitly required field does not have a default value.
-		type _check = requireFalse<FieldHasDefault<typeof Note>>;
-	}
+	// Optional field has default.
+	type _check = requireTrue<FieldHasDefault<OptionalNoteField>>;
+	type IdentifierField = FieldSchema<
+		FieldKind.Identifier,
+		typeof SchemaFactory.string
+	>;
 
-	// Required field
-	{
-		type RequiredNoteField = FieldSchema<FieldKind.Required, typeof Note>;
+	// Identifier fields have default.
+	type _check = requireTrue<FieldHasDefault<IdentifierField>>;
+	type RequiredNoteField = FieldSchema<FieldKind.Required, typeof Note>;
+	type ImplicitlyRequiredStringField = typeof SchemaFactory.string;
+	type Union = RequiredNoteField | ImplicitlyRequiredStringField;
 
-		// Required field does not have a default value.
-		type _check = requireFalse<FieldHasDefault<RequiredNoteField>>;
-	}
+	// Field definitively does not have a default value.
+	type _check = requireFalse<FieldHasDefault<Union>>;
+	type OptionalNoteField = FieldSchema<FieldKind.Optional, typeof Note>;
+	type IdentifierField = FieldSchema<
+		FieldKind.Identifier,
+		typeof SchemaFactory.string
+	>;
+	type Union = OptionalNoteField | IdentifierField;
 
-	// Optional field
-	{
-		type OptionalNoteField = FieldSchema<FieldKind.Optional, typeof Note>;
+	// Field definitively has a default value.
+	type _check = requireTrue<FieldHasDefault<Union>>;
+	type RequiredNoteField = FieldSchema<FieldKind.Required, typeof Note>;
+	type IdentifierField = FieldSchema<
+		FieldKind.Identifier,
+		typeof SchemaFactory.string
+	>;
+	type Union = RequiredNoteField | IdentifierField;
 
-		// Optional field has default.
-		type _check = requireTrue<FieldHasDefault<OptionalNoteField>>;
-	}
-
-	// Identifier field
-	{
-		type IdentifierField = FieldSchema<FieldKind.Identifier, typeof SchemaFactory.string>;
-
-		// Identifier fields have default.
-		type _check = requireTrue<FieldHasDefault<IdentifierField>>;
-	}
-
-	// Union of required fields
-	{
-		type RequiredNoteField = FieldSchema<FieldKind.Required, typeof Note>;
-		type ImplicitlyRequiredStringField = typeof SchemaFactory.string;
-		type Union = RequiredNoteField | ImplicitlyRequiredStringField;
-
-		// Field definitively does not have a default value.
-		type _check = requireFalse<FieldHasDefault<Union>>;
-	}
-
-	// Union of optional fields
-	{
-		type OptionalNoteField = FieldSchema<FieldKind.Optional, typeof Note>;
-		type IdentifierField = FieldSchema<FieldKind.Identifier, typeof SchemaFactory.string>;
-		type Union = OptionalNoteField | IdentifierField;
-
-		// Field definitively has a default value.
-		type _check = requireTrue<FieldHasDefault<Union>>;
-	}
-
-	// Union of required and optional fields
-	{
-		type RequiredNoteField = FieldSchema<FieldKind.Required, typeof Note>;
-		type IdentifierField = FieldSchema<FieldKind.Identifier, typeof SchemaFactory.string>;
-		type Union = RequiredNoteField | IdentifierField;
-
-		// Field may or may not have a default value.
-		type _check = requireFalse<FieldHasDefault<Union>>;
-	}
+	// Field may or may not have a default value.
+	type _check = requireFalse<FieldHasDefault<Union>>;
 }
 
 // ObjectFromSchemaRecord
 {
-	// Generic case
-	{
-		type result = ObjectFromSchemaRecord<RestrictiveStringRecord<ImplicitFieldSchema>>;
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-		type _check = requireTrue<areSafelyAssignable<{}, result>>;
+	type result = ObjectFromSchemaRecord<
+		RestrictiveStringRecord<ImplicitFieldSchema>
+	>;
+	// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+	type _check = requireTrue<areSafelyAssignable<{}, result>>;
 
-		type _check3 = requireTrue<isAssignableTo<{ x: unknown }, result>>;
-	}
+	type _check3 = requireTrue<isAssignableTo<{ x: unknown }, result>>;
+	// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+	type result = ObjectFromSchemaRecord<{}>;
+	// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+	type _check = requireTrue<areSafelyAssignable<{}, result>>;
+	type _check2 = requireFalse<isAssignableTo<result, { x: unknown }>>;
 
-	// Empty case
-	{
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-		type result = ObjectFromSchemaRecord<{}>;
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-		type _check = requireTrue<areSafelyAssignable<{}, result>>;
-		type _check2 = requireFalse<isAssignableTo<result, { x: unknown }>>;
-
-		type _check3 = requireTrue<isAssignableTo<{ x: unknown }, result>>;
-	}
+	type _check3 = requireTrue<isAssignableTo<{ x: unknown }, result>>;
 }
 
 describeHydration(
@@ -269,7 +227,10 @@ describeHydration(
 				const b = hydrate([Schema, Other], { other: 6 });
 
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-				type check_ = requireAssignableTo<typeof a.constructor, number | Function>;
+				type check_ = requireAssignableTo<
+					typeof a.constructor,
+					number | Function
+				>;
 				assert.equal(a.constructor, 5);
 				assert.equal(b.constructor, Other);
 				assert(Tree.is(b, Other));
@@ -331,7 +292,8 @@ describeHydration(
 				}) {}
 				const n = init(Schema, { foo: undefined });
 				assert.deepEqual({ ...n }, {});
-				const descriptor = Reflect.getOwnPropertyDescriptor(n, "foo") ?? assert.fail();
+				const descriptor =
+					Reflect.getOwnPropertyDescriptor(n, "foo") ?? assert.fail();
 				assert.equal(descriptor.enumerable, false);
 				assert.equal(descriptor.value, undefined);
 				const keys = Object.keys(n);
@@ -344,7 +306,8 @@ describeHydration(
 				}) {}
 				const n = init(Schema, { foo: 0 });
 				assert.deepEqual({ ...n }, { foo: 0 });
-				const descriptor = Reflect.getOwnPropertyDescriptor(n, "foo") ?? assert.fail();
+				const descriptor =
+					Reflect.getOwnPropertyDescriptor(n, "foo") ?? assert.fail();
 				assert.equal(descriptor.enumerable, true);
 				assert.equal(descriptor.value, 0);
 				const keys = Object.keys(n);
@@ -576,26 +539,20 @@ describeHydration(
 				const _check1: TreeNodeSchema = ExplicitField;
 				const _check2: ObjectNodeSchema = ExplicitField;
 			}
-
-			// Non implicitly constructable
-			{
-				type TestObject = ObjectNodeSchema<
-					"x",
-					RestrictiveStringRecord<ImplicitFieldSchema>,
-					false
-				>;
-				type _check1 = requireAssignableTo<TestObject, TreeNodeSchema>;
-				type _check2 = requireAssignableTo<TestObject, ObjectNodeSchema>;
-			}
+			type TestObject = ObjectNodeSchema<
+				"x",
+				RestrictiveStringRecord<ImplicitFieldSchema>,
+				false
+			>;
+			type _check1 = requireAssignableTo<TestObject, TreeNodeSchema>;
+			type _check2 = requireAssignableTo<TestObject, ObjectNodeSchema>;
 
 			// Recursive
 			{
 				class RecursiveTest extends sf.objectRecursive("RecursiveTest", {
 					f: sf.optionalRecursive([() => RecursiveTest]),
 				}) {}
-				{
-					type _check = ValidateRecursiveSchema<typeof RecursiveTest>;
-				}
+				type _check = ValidateRecursiveSchema<typeof RecursiveTest>;
 
 				type Info = (typeof RecursiveTest)["info"];
 				type Info2 = ObjectNodeSchema["info"];
@@ -625,43 +582,40 @@ describeHydration(
 				// This line fails to compile without the workaround.
 				const _check2: ObjectNodeSchema = ExplicitField;
 			}
+			type SchemaType = ObjectNodeSchema<
+				string,
+				{ readonly f: LeafSchema<"null", null> }
+			>;
+			// @ts-expect-error Missing workaround for https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693 so this fails.
+			type _check4 = requireAssignableTo<SchemaType, ObjectNodeSchema>;
+			// It does work for the different types that make up ObjectNodeSchema however:
+			type _check5 = requireAssignableTo<SchemaType, SimpleObjectNodeSchema>;
+			type RecordX = Record<string, unknown>;
 
-			// Explicit field POJO mode typing unit tests
-			{
-				type SchemaType = ObjectNodeSchema<string, { readonly f: LeafSchema<"null", null> }>;
-				// @ts-expect-error Missing workaround for https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693 so this fails.
-				type _check4 = requireAssignableTo<SchemaType, ObjectNodeSchema>;
-				// It does work for the different types that make up ObjectNodeSchema however:
-				type _check5 = requireAssignableTo<SchemaType, SimpleObjectNodeSchema>;
-			}
+			// A type with complicated variance.
+			type Create<T extends RecordX> = (
+				data: RecordX extends T ? never : T,
+			) => unknown;
 
-			// ObjectNodeSchema assignability bug minimization
-			{
-				type RecordX = Record<string, unknown>;
+			// Two identical interfaces
+			// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+			interface X1<T extends RecordX = RecordX> extends Create<T> {}
+			// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+			interface X2<T extends RecordX = RecordX> extends Create<T> {}
 
-				// A type with complicated variance.
-				type Create<T extends RecordX> = (data: RecordX extends T ? never : T) => unknown;
+			// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+			type Input = { f: object };
+			// Compute two identical types using X1 and X2
+			type Result1 = X1<Input>;
+			type Result2 = X2<Input>;
 
-				// Two identical interfaces
-				// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-				interface X1<T extends RecordX = RecordX> extends Create<T> {}
-				// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-				interface X2<T extends RecordX = RecordX> extends Create<T> {}
-
-				// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-				type Input = { f: object };
-				// Compute two identical types using X1 and X2
-				type Result1 = X1<Input>;
-				type Result2 = X2<Input>;
-
-				// The identical types are not equal, nor are the identical interfaces.
-				type _check12 = requireAssignableTo<Result1, X2>;
-				// @ts-expect-error Missing workaround for https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693 so this fails.
-				type _check11 = requireAssignableTo<Result1, X1>; // Result from X1 is not assignable to X1, only X2
-				// @ts-expect-error Missing workaround for https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693 so this fails.
-				type _check22 = requireAssignableTo<Result2, X2>; // Result from X2 is not assignable to X2, only X1
-				type _check21 = requireAssignableTo<Result2, X1>;
-			}
+			// The identical types are not equal, nor are the identical interfaces.
+			type _check12 = requireAssignableTo<Result1, X2>;
+			// @ts-expect-error Missing workaround for https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693 so this fails.
+			type _check11 = requireAssignableTo<Result1, X1>; // Result from X1 is not assignable to X1, only X2
+			// @ts-expect-error Missing workaround for https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693 so this fails.
+			type _check22 = requireAssignableTo<Result2, X2>; // Result from X2 is not assignable to X2, only X1
+			type _check21 = requireAssignableTo<Result2, X1>;
 		});
 
 		describe("shadowing", () => {
@@ -826,7 +780,9 @@ describeHydration(
 		});
 
 		it("unhydrated default identifier access works", () => {
-			class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
+			class HasId extends schemaFactory.object("hasID", {
+				id: schemaFactory.identifier,
+			}) {}
 			const newNode = new HasId({});
 			const id = newNode.id;
 			const id2 = new HasId({}).id;
@@ -834,7 +790,9 @@ describeHydration(
 		});
 
 		it("unhydrated default identifier access via shortId returns UUID", () => {
-			class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
+			class HasId extends schemaFactory.object("hasID", {
+				id: schemaFactory.identifier,
+			}) {}
 			const newNode = new HasId({});
 			const id = Tree.shortId(newNode);
 			assert(typeof id === "string");
@@ -842,14 +800,18 @@ describeHydration(
 		});
 
 		it("unhydrated custom identifier access works", () => {
-			class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
+			class HasId extends schemaFactory.object("hasID", {
+				id: schemaFactory.identifier,
+			}) {}
 			const newNode = new HasId({ id: "x" });
 			assert.equal(newNode.id, "x");
 			assert.equal(Tree.shortId(newNode), "x");
 		});
 
 		it("custom identifier access works on POJO mode object", () => {
-			const HasId = schemaFactory.object("hasID", { id: schemaFactory.identifier });
+			const HasId = schemaFactory.object("hasID", {
+				id: schemaFactory.identifier,
+			});
 			const newNode = new HasId({ id: "x" });
 			assert.equal(newNode.id, "x");
 			assert.equal(Tree.shortId(newNode), "x");

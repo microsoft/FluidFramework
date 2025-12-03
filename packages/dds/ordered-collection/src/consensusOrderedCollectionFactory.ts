@@ -5,8 +5,8 @@
 
 import type {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
@@ -22,7 +22,9 @@ import { pkgVersion } from "./packageVersion.js";
  *
  * @internal
  */
-export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory {
+export class ConsensusQueueFactory
+	implements IConsensusOrderedCollectionFactory
+{
 	public static Type = "https://graph.microsoft.com/types/consensus-queue";
 
 	public static readonly Attributes: IChannelAttributes = {
@@ -53,7 +55,10 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
 		return collection;
 	}
 
-	public create(document: IFluidDataStoreRuntime, id: string): IConsensusOrderedCollection {
+	public create(
+		document: IFluidDataStoreRuntime,
+		id: string,
+	): IConsensusOrderedCollection {
 		const collection = new ConsensusQueueClass(id, document, this.attributes);
 		collection.initializeLocal();
 		return collection;

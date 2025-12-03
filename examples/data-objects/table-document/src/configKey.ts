@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export const enum ConfigKey {
+export enum ConfigKey {
 	name = "name",
 	docId = "docId",
 	serverUrl = "serverUrl",

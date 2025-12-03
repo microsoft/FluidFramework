@@ -24,7 +24,9 @@ export type PartialOrAbsent<T> = {
 	[P in keyof T]?: T[P] | typeof AbsentProperty;
 };
 
-export const failSometimeProxy = <T extends object>(handler: PartialOrAbsent<T>): T => {
+export const failSometimeProxy = <T extends object>(
+	handler: PartialOrAbsent<T>,
+): T => {
 	const proxy = new Proxy<T>(handler as T, {
 		get: (t, p, r): unknown => {
 			if (p === "then") {

@@ -4,31 +4,35 @@
  */
 
 import type { ListNode } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { IMergeTreeOptions } from "@fluidframework/merge-tree/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { IMergeTreeOptions } from "@fluidframework/merge-tree/internal";
 
 import type {
 	IntervalCollection,
 	ISerializedIntervalCollectionV1,
 	ISerializedIntervalCollectionV2,
 } from "./intervalCollection.js";
-import {
-	ISerializedInterval,
+import type {
 	IntervalDeltaOpType,
+	ISerializedInterval,
+	SequenceIntervalClass,
 	SerializedIntervalDelta,
-	type SequenceIntervalClass,
 } from "./intervals/index.js";
 
 export interface IntervalAddLocalMetadata {
 	type: typeof IntervalDeltaOpType.ADD;
 	localSeq: number;
-	endpointChangesNode?: ListNode<IntervalAddLocalMetadata | IntervalChangeLocalMetadata>;
+	endpointChangesNode?: ListNode<
+		IntervalAddLocalMetadata | IntervalChangeLocalMetadata
+	>;
 	interval: SequenceIntervalClass;
 }
 export interface IntervalChangeLocalMetadata {
 	type: typeof IntervalDeltaOpType.CHANGE;
 	localSeq: number;
-	endpointChangesNode?: ListNode<IntervalChangeLocalMetadata | IntervalChangeLocalMetadata>;
+	endpointChangesNode?: ListNode<
+		IntervalChangeLocalMetadata | IntervalChangeLocalMetadata
+	>;
 	interval: SequenceIntervalClass;
 }
 export interface IntervalDeleteLocalMetadata {

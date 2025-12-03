@@ -4,9 +4,10 @@
  */
 
 import { strict as assert } from "node:assert";
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
-
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	validateAssertionError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type FieldKey,
@@ -18,11 +19,11 @@ import { cursorForMapTreeNode } from "../../feature-libraries/index.js";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import-x/no-internal-modules */
 import { buildForest } from "../../feature-libraries/object-forest/index.js";
-import { Breakable, type JsonCompatible, brand } from "../../util/index.js";
-import { testForest } from "../forestTestSuite.js";
-import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
-import { fieldJsonCursor } from "../json/index.js";
 import { SchemaFactory, toInitialSchema } from "../../simple-tree/index.js";
+import { Breakable, brand, type JsonCompatible } from "../../util/index.js";
+import { testForest } from "../forestTestSuite.js";
+import { fieldJsonCursor } from "../json/index.js";
+import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 import { initializeForest } from "./initializeForest.js";
 
 describe("object-forest", () => {
@@ -36,7 +37,8 @@ describe("object-forest", () => {
 	// Currently many of its tests fail due to schema violations.
 	describe.skip("forest suite additional assertions", () => {
 		testForest({
-			factory: (schema) => buildForest(new Breakable("testForest"), schema, undefined, true),
+			factory: (schema) =>
+				buildForest(new Breakable("testForest"), schema, undefined, true),
 		});
 	});
 
@@ -61,7 +63,9 @@ describe("object-forest", () => {
 			visitor.enterField(rootFieldKey);
 			assert.throws(
 				() => visitor.attach(rootFieldKey, 1, 0),
-				validateAssertionError(/Attach source field must be different from current field/),
+				validateAssertionError(
+					/Attach source field must be different from current field/,
+				),
 			);
 			visitor.exitField(rootFieldKey);
 			visitor.free();
@@ -78,7 +82,13 @@ describe("object-forest", () => {
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
 			assert.throws(
-				() => visitor.detach({ start: 0, end: 1 }, rootFieldKey, dummyDetachedNodeId, false),
+				() =>
+					visitor.detach(
+						{ start: 0, end: 1 },
+						rootFieldKey,
+						dummyDetachedNodeId,
+						false,
+					),
 				validateAssertionError(
 					/Detach destination field must be different from current field/,
 				),
@@ -98,7 +108,10 @@ describe("object-forest", () => {
 		);
 		const cursor = forest.allocateCursor();
 		forest.moveCursorToPath(undefined, cursor);
-		assert.deepEqual(cursor.fieldIndex, cursorForMapTreeNode(forest.roots).fieldIndex);
+		assert.deepEqual(
+			cursor.fieldIndex,
+			cursorForMapTreeNode(forest.roots).fieldIndex,
+		);
 	});
 
 	it("uses cursor sources in errors", () => {
@@ -146,7 +159,9 @@ describe("object-forest", () => {
 		const forest = buildForest(
 			new Breakable("test"),
 			// Field allowing nothing
-			new TreeStoredSchemaRepository(toInitialSchema(SchemaFactory.optional([]))),
+			new TreeStoredSchemaRepository(
+				toInitialSchema(SchemaFactory.optional([])),
+			),
 			undefined,
 			true,
 		);

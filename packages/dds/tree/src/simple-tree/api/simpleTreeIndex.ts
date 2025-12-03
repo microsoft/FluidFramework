@@ -12,32 +12,35 @@ import type {
 } from "../../core/index.js";
 import {
 	AnchorTreeIndex,
-	isTreeValue,
-	type TreeIndexNodes,
 	hasElement,
+	isTreeValue,
+	type KeyFinder,
 	type TreeIndex,
 	type TreeIndexKey,
-	type KeyFinder,
+	type TreeIndexNodes,
 } from "../../feature-libraries/index.js";
+import type { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
 import { brand } from "../../util/index.js";
-import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import {
-	treeNodeFromAnchor,
+	type NodeFromSchema,
 	type TreeNode,
 	type TreeNodeSchema,
-	type NodeFromSchema,
+	treeNodeFromAnchor,
 } from "../core/index.js";
-import { treeNodeApi } from "./treeNodeApi.js";
-import type { TreeView } from "./tree.js";
+import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
-import type { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
+import type { TreeView } from "./tree.js";
+import { treeNodeApi } from "./treeNodeApi.js";
 
 /**
  * A {@link TreeIndex} that returns tree nodes given their associated keys.
  *
  * @alpha
  */
-export type SimpleTreeIndex<TKey extends TreeIndexKey, TValue> = TreeIndex<TKey, TValue>;
+export type SimpleTreeIndex<TKey extends TreeIndexKey, TValue> = TreeIndex<
+	TKey,
+	TValue
+>;
 
 /**
  * Creates a {@link SimpleTreeIndex} with a specified indexer.
@@ -140,7 +143,9 @@ export function createSimpleTreeIndex<
 	TValue,
 >(
 	view: TreeView<TFieldSchema>,
-	indexer: ((schema: TreeNodeSchema) => string | undefined) | Map<TreeNodeSchema, string>,
+	indexer:
+		| ((schema: TreeNodeSchema) => string | undefined)
+		| Map<TreeNodeSchema, string>,
 	getValue:
 		| ((nodes: TreeIndexNodes<TreeNode>) => TValue)
 		| ((nodes: TreeIndexNodes<NodeFromSchema<TreeNodeSchema>>) => TValue),
@@ -165,7 +170,9 @@ export function createSimpleTreeIndex<
 					const schemus = indexableSchemaMap.get(schemaIdentifier);
 					if (schemus !== undefined) {
 						const keyLocation =
-							typeof indexer === "function" ? indexer(schemus) : indexer.get(schemus);
+							typeof indexer === "function"
+								? indexer(schemus)
+								: indexer.get(schemus);
 						if (keyLocation !== undefined) {
 							return makeGenericKeyFinder<TKey>(brand(keyLocation), isKeyValid);
 						}
@@ -177,7 +184,9 @@ export function createSimpleTreeIndex<
 					const schemus = indexableSchemaMap.get(schemaIdentifier);
 					if (schemus !== undefined) {
 						const keyLocation =
-							typeof indexer === "function" ? indexer(schemus) : indexer.get(schemus);
+							typeof indexer === "function"
+								? indexer(schemus)
+								: indexer.get(schemus);
 						if (keyLocation !== undefined) {
 							return makeGenericKeyFinder<TKey>(brand(keyLocation), isKeyValid);
 						}

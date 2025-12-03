@@ -9,7 +9,10 @@ import cors from "cors";
 import express from "express";
 import { isWebUri } from "valid-url";
 
-import { type ITaskData, assertValidTaskData } from "../model-interface/index.js";
+import {
+	assertValidTaskData,
+	type ITaskData,
+} from "../model-interface/index.js";
 
 import { ExternalDataSource } from "./externalDataSource.js";
 import { MockWebhook } from "./webhook.js";
@@ -103,12 +106,15 @@ export interface ServiceProps {
 /**
  * Initializes the mock external data service.
  */
-export async function initializeExternalDataService(props: ServiceProps): Promise<Server> {
+export async function initializeExternalDataService(
+	props: ServiceProps,
+): Promise<Server> {
 	const { port } = props;
 	const externalDataSource: ExternalDataSource =
 		props.externalDataSource ?? new ExternalDataSource();
 	const webhookCollection =
-		props.webhookCollection ?? new Map<ExternalTaskListId, MockWebhook<ITaskData>>();
+		props.webhookCollection ??
+		new Map<ExternalTaskListId, MockWebhook<ITaskData>>();
 
 	/**
 	 * Helper function to prepend service-specific metadata to messages logged by this service.
@@ -120,8 +126,15 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	/**
 	 * Mock webhook for notifying subscribers to changes in external data.
 	 */
-	function notifyWebhookSubscribers(externalTaskListId: string, newData: ITaskData): void {
-		console.log(formatLogMessage("External data has changed. Notifying webhook subscribers."));
+	function notifyWebhookSubscribers(
+		externalTaskListId: string,
+		newData: ITaskData,
+	): void {
+		console.log(
+			formatLogMessage(
+				"External data has changed. Notifying webhook subscribers.",
+			),
+		);
 		const webhook = webhookCollection.get(externalTaskListId);
 		if (webhook === undefined) {
 			return; // No subscribers for this task list
@@ -160,107 +173,127 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	 * }
 	 * ```
 	 */
-	expressApp.post("/register-for-webhook", (request: RegisterWebhookRequest, result) => {
-		try {
-			const subscriberUrl = request.body.url;
-			if (subscriberUrl === undefined || typeof subscriberUrl !== "string") {
-				throw new InvalidRequestError(
-					'Missing or Invalid subscription URL provided. Expected under "url" property.',
-				);
-			} else if (isWebUri(subscriberUrl) === undefined) {
-				throw new InvalidRequestError("Provided subscription URL is invalid.");
-			}
-
-			const externalTaskListId = request.body.externalTaskListId;
-			if (externalTaskListId === undefined || typeof externalTaskListId !== "string") {
-				throw new InvalidRequestError(
-					`Missing or malformed taskListId in request url: ${externalTaskListId}`,
-				);
-			}
-
-			console.log(`externalTaskListId: ${externalTaskListId}`);
-			console.log(`subscriberUrl: ${subscriberUrl}`);
-			let webhook = webhookCollection.get(externalTaskListId);
-			if (webhook === undefined) {
-				webhook = new MockWebhook();
-				webhookCollection.set(externalTaskListId, webhook);
-			}
-			webhook.registerSubscriber(subscriberUrl);
-			console.log(
-				formatLogMessage(`Registered for webhook notifications at URL: "${subscriberUrl}".`),
-			);
-		} catch (error) {
-			if (error instanceof ApiError) {
-				if (error.code >= 500) {
-					console.error(formatLogMessage(error.message));
-				} else {
-					console.warn(formatLogMessage(error.message));
+	expressApp.post(
+		"/register-for-webhook",
+		(request: RegisterWebhookRequest, result) => {
+			try {
+				const subscriberUrl = request.body.url;
+				if (subscriberUrl === undefined || typeof subscriberUrl !== "string") {
+					throw new InvalidRequestError(
+						'Missing or Invalid subscription URL provided. Expected under "url" property.',
+					);
+				} else if (isWebUri(subscriberUrl) === undefined) {
+					throw new InvalidRequestError(
+						"Provided subscription URL is invalid.",
+					);
 				}
-				result.status(error.code).json({ message: error.message });
-			} else {
-				console.error(error);
-				throw error;
-			}
-		}
 
-		result.send();
-	});
+				const externalTaskListId = request.body.externalTaskListId;
+				if (
+					externalTaskListId === undefined ||
+					typeof externalTaskListId !== "string"
+				) {
+					throw new InvalidRequestError(
+						`Missing or malformed taskListId in request url: ${externalTaskListId}`,
+					);
+				}
+
+				console.log(`externalTaskListId: ${externalTaskListId}`);
+				console.log(`subscriberUrl: ${subscriberUrl}`);
+				let webhook = webhookCollection.get(externalTaskListId);
+				if (webhook === undefined) {
+					webhook = new MockWebhook();
+					webhookCollection.set(externalTaskListId, webhook);
+				}
+				webhook.registerSubscriber(subscriberUrl);
+				console.log(
+					formatLogMessage(
+						`Registered for webhook notifications at URL: "${subscriberUrl}".`,
+					),
+				);
+			} catch (error) {
+				if (error instanceof ApiError) {
+					if (error.code >= 500) {
+						console.error(formatLogMessage(error.message));
+					} else {
+						console.warn(formatLogMessage(error.message));
+					}
+					result.status(error.code).json({ message: error.message });
+				} else {
+					console.error(error);
+					throw error;
+				}
+			}
+
+			result.send();
+		},
+	);
 
 	/**
 	 * Unregisters the specified URL from receiving notifications for the specified external task list id.
 	 *
 	 * Expected request body format: {@link UnregisterWebhookRequest}
 	 */
-	expressApp.post("/unregister-webhook", (request: UnregisterWebhookRequest, result) => {
-		try {
-			// 1. Validate request data
-			const subscriberUrl = request.body.url;
-			if (typeof subscriberUrl !== "string") {
-				throw new InvalidRequestError("Missing or unexpected data in request body");
-			} else if (isWebUri(subscriberUrl) === undefined) {
-				throw new InvalidRequestError(`Provided subscriber URL is invalid ${subscriberUrl}`);
-			}
-			const externalTaskListId = request.body.externalTaskListId;
-			if (externalTaskListId === undefined || typeof externalTaskListId !== "string") {
-				throw new InvalidRequestError(
-					`Missing or malformed taskListId in request url: ${externalTaskListId}`,
-				);
+	expressApp.post(
+		"/unregister-webhook",
+		(request: UnregisterWebhookRequest, result) => {
+			try {
+				// 1. Validate request data
+				const subscriberUrl = request.body.url;
+				if (typeof subscriberUrl !== "string") {
+					throw new InvalidRequestError(
+						"Missing or unexpected data in request body",
+					);
+				} else if (isWebUri(subscriberUrl) === undefined) {
+					throw new InvalidRequestError(
+						`Provided subscriber URL is invalid ${subscriberUrl}`,
+					);
+				}
+				const externalTaskListId = request.body.externalTaskListId;
+				if (
+					externalTaskListId === undefined ||
+					typeof externalTaskListId !== "string"
+				) {
+					throw new InvalidRequestError(
+						`Missing or malformed taskListId in request url: ${externalTaskListId}`,
+					);
+				}
+
+				// 2. Find cooresponding webook for the given externalTaskListId
+				const webhook = webhookCollection.get(externalTaskListId);
+				if (webhook === undefined) {
+					throw new InvalidRequestError(
+						"Provided externalTaskListId has no outstanding webhooks",
+					);
+				}
+
+				// 3. Webhook exists, attempt to remove the subscriber from the webhook
+				if (webhook.subscribers.includes(subscriberUrl)) {
+					// 3a. Webhook exists and the provided subcriber is currently subscribed to it.
+					webhook.removeSubscriber(subscriberUrl);
+					const resultMessage = `Unregistered webhook notification for externalTaskListId ${externalTaskListId} at subscriberUrl: "${subscriberUrl}".`;
+					console.info(formatLogMessage(resultMessage));
+					result.status(200).json({ message: resultMessage });
+				} else {
+					// 3b. Webhook exists but the provided subscriber is not subscribed with the webhook.
+					const resultMessage =
+						"Provided subscriberUrl does not have a webhook registered for the given externalTaskListId";
+					console.info(formatLogMessage(resultMessage));
+					result.status(200).json({ message: resultMessage });
+				}
+			} catch (error) {
+				if (error instanceof ApiError) {
+					console.warn(formatLogMessage(error.message));
+					result.status(error.code).json({ message: error.message });
+				} else {
+					console.error(error);
+					throw error;
+				}
 			}
 
-			// 2. Find cooresponding webook for the given externalTaskListId
-			const webhook = webhookCollection.get(externalTaskListId);
-			if (webhook === undefined) {
-				throw new InvalidRequestError(
-					"Provided externalTaskListId has no outstanding webhooks",
-				);
-			}
-
-			// 3. Webhook exists, attempt to remove the subscriber from the webhook
-			if (webhook.subscribers.includes(subscriberUrl)) {
-				// 3a. Webhook exists and the provided subcriber is currently subscribed to it.
-				webhook.removeSubscriber(subscriberUrl);
-				const resultMessage = `Unregistered webhook notification for externalTaskListId ${externalTaskListId} at subscriberUrl: "${subscriberUrl}".`;
-				console.info(formatLogMessage(resultMessage));
-				result.status(200).json({ message: resultMessage });
-			} else {
-				// 3b. Webhook exists but the provided subscriber is not subscribed with the webhook.
-				const resultMessage =
-					"Provided subscriberUrl does not have a webhook registered for the given externalTaskListId";
-				console.info(formatLogMessage(resultMessage));
-				result.status(200).json({ message: resultMessage });
-			}
-		} catch (error) {
-			if (error instanceof ApiError) {
-				console.warn(formatLogMessage(error.message));
-				result.status(error.code).json({ message: error.message });
-			} else {
-				console.error(error);
-				throw error;
-			}
-		}
-
-		result.send();
-	});
+			result.send();
+		},
+	);
 
 	/**
 	 * Fetches the task list from the external data store.
@@ -283,7 +316,9 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 		if (externalTaskListId === undefined) {
 			result
 				.status(400)
-				.json({ message: "Missing parameter externalTaskListId in request url" });
+				.json({
+					message: "Missing parameter externalTaskListId in request url",
+				});
 		}
 		externalDataSource.fetchData(externalTaskListId).then(
 			async (response) => {
@@ -298,7 +333,8 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 					taskData = assertValidTaskData((responseBody as any).taskList);
 				} catch (error) {
-					const errorMessage = "Received task data received from external data source.";
+					const errorMessage =
+						"Received task data received from external data source.";
 					console.error(formatLogMessage(errorMessage), error);
 					result.status(400).json({ message: errorMessage });
 					return;
@@ -313,7 +349,9 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 					),
 					error,
 				);
-				result.status(500).json({ message: "Failed to fetch task data due to an error." });
+				result
+					.status(500)
+					.json({ message: "Failed to fetch task data due to an error." });
 			},
 		);
 	});
@@ -328,12 +366,15 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 		if (externalTaskListId === undefined) {
 			result
 				.status(400)
-				.json({ message: "Missing parameter externalTaskListId in request url" });
+				.json({
+					message: "Missing parameter externalTaskListId in request url",
+				});
 		}
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 		const messageData = request.body?.taskList;
 		if (messageData === undefined) {
-			const errorMessage = 'No task list data provided. Expected under "taskList" property.';
+			const errorMessage =
+				'No task list data provided. Expected under "taskList" property.';
 			console.error(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
 		} else {
@@ -358,7 +399,9 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 						),
 						error,
 					);
-					result.status(500).json({ message: "Failed to set task data due to an error." });
+					result
+						.status(500)
+						.json({ message: "Failed to set task data due to an error." });
 				},
 			);
 		}

@@ -3,20 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import type { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { Loader } from "@fluidframework/container-loader/internal";
 import {
-	ITestObjectProvider,
+	type ITestObjectProvider,
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObjectFactory,
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import { strict as assert } from "assert";
 
 const codeDetails: IFluidCodeDetails = { package: "test" };
 
@@ -36,7 +35,9 @@ describe("Pong", () => {
 				logger: provider.logger,
 				urlResolver: provider.urlResolver,
 				documentServiceFactory: provider.documentServiceFactory,
-				codeLoader: new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),
+				codeLoader: new LocalCodeLoader([
+					[codeDetails, new TestFluidObjectFactory([])],
+				]),
 			});
 			loaderContainerTracker.add(loader);
 		});

@@ -10,43 +10,43 @@
  */
 
 export {
-	SharedTreeSemanticAgent,
 	createContext,
+	SharedTreeSemanticAgent,
 } from "./agent.js";
 export type {
+	AsynchronousEditor,
+	Context,
 	EditResult,
-	SharedTreeChatModel,
-	SharedTreeChatQuery,
 	Logger,
 	SemanticAgentOptions,
+	SharedTreeChatModel,
+	SharedTreeChatQuery,
 	SynchronousEditor,
-	AsynchronousEditor,
 	TreeView,
 	ViewOrTree,
-	Context,
 } from "./api.js";
-export { llmDefault } from "./utils.js";
 export {
-	buildFunc,
-	exposeMethodsSymbol,
-	type ArgsTuple,
-	type ExposedMethods,
 	type Arg,
-	type FunctionDef,
-	type MethodKeys,
+	type ArgsTuple,
 	type BindableSchema,
+	buildFunc,
 	type Ctor,
-	type Infer,
+	type ExposedMethods,
+	exposeMethodsSymbol,
+	type FunctionDef,
 	type IExposedMethods,
+	type Infer,
+	type MethodKeys,
 } from "./methodBinding.js";
 export type {
-	exposePropertiesSymbol,
-	PropertyDef,
-	ExposedProperties,
-	IExposedProperties,
 	ExposableKeys,
+	ExposedProperties,
+	exposePropertiesSymbol,
+	IExposedProperties,
+	IfEquals,
+	PropertyDef,
 	ReadOnlyRequirement,
 	ReadonlyKeys,
 	TypeMatchOrError,
-	IfEquals,
 } from "./propertyBinding.js";
+export { llmDefault } from "./utils.js";

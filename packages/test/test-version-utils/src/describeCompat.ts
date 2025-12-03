@@ -9,16 +9,16 @@ import type { IPersistedCache } from "@fluidframework/driver-definitions/interna
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	getUnexpectedLogErrorException,
-	ITestObjectProvider,
+	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
 import { testBaseVersion } from "./baseVersion.js";
 import {
-	CompatConfig,
+	type CompatConfig,
 	configList,
 	isCompatVersionBelowMinVersion,
-	mochaGlobalSetup,
 	isOdspCompatCompliant,
+	mochaGlobalSetup,
 } from "./compatConfig.js";
 import {
 	CompatKind,
@@ -28,16 +28,16 @@ import {
 	tenantIndex,
 } from "./compatOptions.js";
 import {
-	getVersionedTestObjectProviderFromApis,
 	getCompatVersionedTestObjectProviderFromApis,
 	getDriverInformationWhenNoProviderIsAvailable,
+	getVersionedTestObjectProviderFromApis,
 } from "./compatUtils.js";
 import {
+	type CompatApis,
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
-	getLoaderApi,
-	CompatApis,
 	getDriverApi,
+	getLoaderApi,
 } from "./testApi.js";
 import { getRequestedVersion } from "./versionUtils.js";
 
@@ -126,10 +126,17 @@ function createCompatSuite(
 						throw new Error("Expected provider to be set up by before hook");
 					}
 					if (options?.syncSummarizer === true) {
-						provider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
+						provider.resetLoaderContainerTracker(
+							true /* syncSummarizerClients */,
+						);
 					}
-					if (options?.persistedCache !== undefined && provider.driver.type === "odsp") {
-						(provider.driver as OdspTestDriver).setPersistedCache(options.persistedCache);
+					if (
+						options?.persistedCache !== undefined &&
+						provider.driver.type === "odsp"
+					) {
+						(provider.driver as OdspTestDriver).setPersistedCache(
+							options.persistedCache,
+						);
 					}
 					return provider;
 				}, apis);
@@ -225,16 +232,26 @@ function getVersionedApis(config: CompatConfig): CompatApis {
 	}
 
 	const dataRuntimeApi = getDataRuntimeApi(
-		getRequestedVersion(testBaseVersion(config.dataRuntime), config.dataRuntime),
+		getRequestedVersion(
+			testBaseVersion(config.dataRuntime),
+			config.dataRuntime,
+		),
 	);
 	return {
 		containerRuntime: getContainerRuntimeApi(
-			getRequestedVersion(testBaseVersion(config.containerRuntime), config.containerRuntime),
+			getRequestedVersion(
+				testBaseVersion(config.containerRuntime),
+				config.containerRuntime,
+			),
 		),
 		dataRuntime: dataRuntimeApi,
 		dds: dataRuntimeApi.dds,
-		driver: getDriverApi(getRequestedVersion(testBaseVersion(config.driver), config.driver)),
-		loader: getLoaderApi(getRequestedVersion(testBaseVersion(config.loader), config.loader)),
+		driver: getDriverApi(
+			getRequestedVersion(testBaseVersion(config.driver), config.driver),
+		),
+		loader: getLoaderApi(
+			getRequestedVersion(testBaseVersion(config.loader), config.loader),
+		),
 	};
 }
 
@@ -292,7 +309,11 @@ export type CompatType = "FullCompat" | "LoaderCompat" | "NoCompat";
 
 function createCompatDescribe(): DescribeCompat {
 	const createCompatSuiteWithDefault = (
-		tests: (this: Mocha.Suite, provider: () => ITestObjectProvider, apis: CompatApis) => void,
+		tests: (
+			this: Mocha.Suite,
+			provider: () => ITestObjectProvider,
+			apis: CompatApis,
+		) => void,
 		compatVersion: CompatType,
 	) => {
 		switch (compatVersion) {

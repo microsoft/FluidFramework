@@ -4,23 +4,23 @@
  */
 
 import { performanceNow } from "@fluid-internal/client-utils";
-import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	GenericNetworkError,
 	NonRetryableError,
-	RateLimiter,
+	type RateLimiter,
 } from "@fluidframework/driver-utils/internal";
 import {
 	CorrelationIdHeaderName,
 	DriverVersionHeaderName,
-	RestLessClient,
 	getAuthorizationTokenFromCredentials,
+	RestLessClient,
 } from "@fluidframework/server-services-client";
 import {
-	ITelemetryLoggerExt,
-	PerformanceEvent,
+	type ITelemetryLoggerExt,
 	numberFromString,
+	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 import fetch from "cross-fetch";
 import safeStringify from "json-stringify-safe";
@@ -32,9 +32,12 @@ import {
 	throwR11sNetworkError,
 } from "./errorUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
-import { addOrUpdateQueryParams, type QueryStringType } from "./queryStringUtils.js";
+import {
+	addOrUpdateQueryParams,
+	type QueryStringType,
+} from "./queryStringUtils.js";
 import { RestWrapper } from "./restWrapperBase.js";
-import { ITokenProvider, ITokenResponse } from "./tokens.js";
+import type { ITokenProvider, ITokenResponse } from "./tokens.js";
 
 type AuthorizationHeaderGetter = (token: ITokenResponse) => string;
 export type TokenFetcher = (refresh?: boolean) => Promise<ITokenResponse>;
@@ -44,7 +47,9 @@ const buildRequestUrl = (requestConfig: AxiosRequestConfig) =>
 		? `${requestConfig.baseURL ?? ""}${requestConfig.url ?? ""}`
 		: (requestConfig.url ?? "");
 
-const axiosBuildRequestInitConfig = (requestConfig: AxiosRequestConfig): RequestInit => {
+const axiosBuildRequestInitConfig = (
+	requestConfig: AxiosRequestConfig,
+): RequestInit => {
 	const requestInit: RequestInit = {
 		method: requestConfig.method,
 		// NOTE: I believe that although the Axios type permits non-string values in the header, here we are
@@ -169,7 +174,9 @@ class RouterliciousRestWrapper extends RestWrapper {
 			headers: await this.generateHeaders(requestConfig.headers),
 		};
 
-		const translatedConfig = this.useRestLess ? this.restLess.translate(config) : config;
+		const translatedConfig = this.useRestLess
+			? this.restLess.translate(config)
+			: config;
 		const fetchRequestConfig = axiosBuildRequestInitConfig(translatedConfig);
 
 		const res = await this.rateLimiter.schedule(async () => {
@@ -177,17 +184,25 @@ class RouterliciousRestWrapper extends RestWrapper {
 			const result = await fetch(completeRequestUrl, fetchRequestConfig).catch(
 				async (error) => {
 					// on failure, add the request entry into the retryCounter map to count the subsequent retries, if any
-					this.retryCounter.set(requestKey, requestRetryCount ? requestRetryCount + 1 : 1);
+					this.retryCounter.set(
+						requestKey,
+						requestRetryCount ? requestRetryCount + 1 : 1,
+					);
 
 					const telemetryProps = {
 						driverVersion,
 						retryCount: requestRetryCount,
-						url: getUrlForTelemetry(completeRequestUrl.hostname, completeRequestUrl.pathname),
+						url: getUrlForTelemetry(
+							completeRequestUrl.hostname,
+							completeRequestUrl.pathname,
+						),
 						requestMethod: fetchRequestConfig.method,
 					};
 
 					// Browser Fetch throws a TypeError on network error, `node-fetch` throws a FetchError
-					const isNetworkError = ["TypeError", "FetchError"].includes(error?.name);
+					const isNetworkError = ["TypeError", "FetchError"].includes(
+						error?.name,
+					);
 					const errorMessage = isNetworkError
 						? `NetworkError: ${error.message}`
 						: safeStringify(error);
@@ -196,7 +211,9 @@ class RouterliciousRestWrapper extends RestWrapper {
 					// the error message will start with NetworkError as defined in restWrapper.ts
 					// If there exists a self-signed SSL certificates error, throw a NonRetryableError
 					// TODO: instead of relying on string matching, filter error based on the error code like we do for websocket connections
-					const err = errorMessage.includes("failed, reason: self signed certificate")
+					const err = errorMessage.includes(
+						"failed, reason: self signed certificate",
+					)
 						? new NonRetryableError(
 								errorMessage,
 								RouterliciousErrorTypes.sslCertError,
@@ -253,7 +270,10 @@ class RouterliciousRestWrapper extends RestWrapper {
 
 		// Failure
 		// on failure, add the request entry into the retryCounter map to count the subsequent retries
-		this.retryCounter.set(requestKey, requestRetryCount ? requestRetryCount + 1 : 1);
+		this.retryCounter.set(
+			requestKey,
+			requestRetryCount ? requestRetryCount + 1 : 1,
+		);
 
 		if (response.status === 401 && canRetry) {
 			// Refresh Authorization header and retry once
@@ -285,7 +305,10 @@ class RouterliciousRestWrapper extends RestWrapper {
 			{
 				...getPropsToLogFromResponse(headers),
 				driverVersion,
-				url: getUrlForTelemetry(completeRequestUrl.hostname, completeRequestUrl.pathname),
+				url: getUrlForTelemetry(
+					completeRequestUrl.hostname,
+					completeRequestUrl.pathname,
+				),
 				requestMethod: fetchRequestConfig.method,
 			},
 		);
@@ -436,7 +459,9 @@ export function toInstrumentedR11sOrdererTokenFetcher(
 	tokenProvider: ITokenProvider,
 	logger: ITelemetryLoggerExt,
 ): TokenFetcher {
-	const fetchOrdererToken = async (refreshToken?: boolean): Promise<ITokenResponse> => {
+	const fetchOrdererToken = async (
+		refreshToken?: boolean,
+	): Promise<ITokenResponse> => {
 		return PerformanceEvent.timedExecAsync(
 			logger,
 			{
@@ -463,7 +488,9 @@ export function toInstrumentedR11sStorageTokenFetcher(
 	tokenProvider: ITokenProvider,
 	logger: ITelemetryLoggerExt,
 ): TokenFetcher {
-	const fetchStorageToken = async (refreshToken?: boolean): Promise<ITokenResponse> => {
+	const fetchStorageToken = async (
+		refreshToken?: boolean,
+	): Promise<ITokenResponse> => {
 		return PerformanceEvent.timedExecAsync(
 			logger,
 			{

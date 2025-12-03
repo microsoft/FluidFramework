@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import type { ITestDriver } from "@fluid-internal/test-driver-definitions";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
+import type { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 import { strict as assert } from "assert";
-
-import { ITestDriver } from "@fluid-internal/test-driver-definitions";
-import { IContainer } from "@fluidframework/container-definitions/internal";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
-import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 const driversThatSupportBlobs: string[] = ["local", "odsp"];
 export function driverSupportsBlobs(driver: ITestDriver): boolean {

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-const isElement = (node: Node): node is Element => node.nodeType === Node.ELEMENT_NODE;
+const isElement = (node: Node): node is Element =>
+	node.nodeType === Node.ELEMENT_NODE;
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class Dom {
@@ -20,8 +21,15 @@ export class Dom {
 	 * Inserts the given 'newChild' immediately after the given 'refChild'.  If 'refChild' is undefined,
 	 * inserts 'newChild' as the first child of 'parent'.
 	 */
-	public static insertAfter(parent: Node, newChild: Node, refChild: Node | null) {
-		parent.insertBefore(newChild, refChild ? refChild.nextSibling : parent.firstChild);
+	public static insertAfter(
+		parent: Node,
+		newChild: Node,
+		refChild: Node | null,
+	) {
+		parent.insertBefore(
+			newChild,
+			refChild ? refChild.nextSibling : parent.firstChild,
+		);
 	}
 
 	public static getClientRect(node: Node, nodeOffset: number): ClientRect {

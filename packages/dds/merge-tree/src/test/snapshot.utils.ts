@@ -55,7 +55,9 @@ export class TestString {
 		private readonly options?: IMergeTreeOptionsInternal,
 		initialState: string = "",
 	) {
-		this.client = createClientsAtInitialState({ initialState, options }, id)[id]!;
+		this.client = createClientsAtInitialState({ initialState, options }, id)[
+			id
+		]!;
 		this.client.startOrUpdateCollaboration(id);
 	}
 
@@ -66,7 +68,12 @@ export class TestString {
 		);
 	}
 
-	public annotate(start: number, end: number, props: PropertySet, increaseMsn: boolean): void {
+	public annotate(
+		start: number,
+		end: number,
+		props: PropertySet,
+		increaseMsn: boolean,
+	): void {
 		this.queue(this.client.annotateRangeLocal(start, end, props)!, increaseMsn);
 	}
 
@@ -91,7 +98,11 @@ export class TestString {
 		this.queue(this.client.removeRangeLocal(start, end), increaseMsn);
 	}
 
-	public obliterateRange(start: number, end: number, increaseMsn: boolean): void {
+	public obliterateRange(
+		start: number,
+		end: number,
+		increaseMsn: boolean,
+	): void {
 		this.queue(this.client.obliterateRangeLocal(start, end), increaseMsn);
 	}
 
@@ -109,7 +120,9 @@ export class TestString {
 	}
 
 	// Ensures the MergeTree client's contents successfully roundtrip through a snapshot.
-	public async checkSnapshot(options?: IMergeTreeOptionsInternal): Promise<void> {
+	public async checkSnapshot(
+		options?: IMergeTreeOptionsInternal,
+	): Promise<void> {
 		this.applyPendingOps();
 		const expectedAttributionKeys = this.client.getAllAttributionSeqs();
 		const summary = this.getSummary();
@@ -140,8 +153,10 @@ export class TestString {
 	}
 
 	public getSummary(): ISummaryTree {
-		const snapshot = new SnapshotV1(this.client.mergeTree, this.client.logger, (id) =>
-			this.client.getLongClientId(id),
+		const snapshot = new SnapshotV1(
+			this.client.mergeTree,
+			this.client.logger,
+			(id) => this.client.getLongClientId(id),
 		);
 
 		snapshot.extractSync();
@@ -175,7 +190,8 @@ export class TestString {
 	}
 
 	public getSegment(pos: number): ISegmentPrivate {
-		const { segment } = this.client.getContainingSegment<ISegmentPrivate>(pos) ?? {};
+		const { segment } =
+			this.client.getContainingSegment<ISegmentPrivate>(pos) ?? {};
 		assert(segment !== undefined);
 		return segment;
 	}

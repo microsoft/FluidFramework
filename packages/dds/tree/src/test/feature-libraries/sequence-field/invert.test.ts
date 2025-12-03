@@ -6,18 +6,25 @@
 import {
 	type ChangeAtomId,
 	type ChangesetLocalId,
-	type RevisionTag,
 	offsetChangeAtomId,
+	type RevisionTag,
 } from "../../../core/index.js";
-import type { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
+import type {
+	NodeId,
+	SequenceField as SF,
+} from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { CellId } from "../../../feature-libraries/sequence-field/index.js";
-import { TestChange } from "../../testChange.js";
-import { mintRevisionTag } from "../../utils.js";
 import { brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
-import { invert as invertChange, assertChangesetsEqual, tagChangeInline } from "./utils.js";
+import { mintRevisionTag } from "../../utils.js";
 import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
+import {
+	assertChangesetsEqual,
+	invert as invertChange,
+	tagChangeInline,
+} from "./utils.js";
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
@@ -58,7 +65,10 @@ export function testInvert() {
 		});
 
 		it("child changes of removed content", () => {
-			const detachEvent = { revision: tag1, localId: brand<ChangesetLocalId>(0) };
+			const detachEvent = {
+				revision: tag1,
+				localId: brand<ChangesetLocalId>(0),
+			};
 			const input = Change.modifyDetached(0, childChange1, detachEvent);
 			const actual = invert(input);
 			const expected = Change.modifyDetached(
@@ -74,7 +84,10 @@ export function testInvert() {
 			const input = Change.insert(0, 2, tag1, cellId);
 			const actual = invert(input, tag2);
 			const expected = [
-				Mark.remove(2, brand(0), { idOverride: cellId, revision: tagForInvert }),
+				Mark.remove(2, brand(0), {
+					idOverride: cellId,
+					revision: tagForInvert,
+				}),
 			];
 			assertChangesetsEqual(actual, expected);
 		});
@@ -102,9 +115,16 @@ export function testInvert() {
 				Mark.revive(
 					1,
 					{ revision: tag1, localId: brand(0) },
-					{ changes: { ...childChange1, revision: tag1 }, revision: tagForInvert },
+					{
+						changes: { ...childChange1, revision: tag1 },
+						revision: tagForInvert,
+					},
 				),
-				Mark.revive(1, { revision: tag1, localId: brand(1) }, { revision: tagForInvert }),
+				Mark.revive(
+					1,
+					{ revision: tag1, localId: brand(1) },
+					{ revision: tagForInvert },
+				),
 			];
 			const actual = invert(input);
 			assertChangesetsEqual(actual, expected);
@@ -127,7 +147,9 @@ export function testInvert() {
 			const input: SF.Changeset = [
 				Mark.remove(2, { localId: brand(5) }, { idOverride: cellId }),
 			];
-			const expected = [Mark.revive(2, cellId, { id: brand(5), revision: tagForInvert })];
+			const expected = [
+				Mark.revive(2, cellId, { id: brand(5), revision: tagForInvert }),
+			];
 			const actual = invert(input);
 			assertChangesetsEqual(actual, expected);
 		});
@@ -227,7 +249,9 @@ export function testInvert() {
 
 		it("pin live nodes => skip", () => {
 			const input = [Mark.pin(1, brand(0), { changes: childChange1 })];
-			const expected: SF.Changeset = [Mark.modify({ ...childChange1, revision: tag1 })];
+			const expected: SF.Changeset = [
+				Mark.modify({ ...childChange1, revision: tag1 }),
+			];
 			const actual = invert(input);
 			assertChangesetsEqual(actual, expected);
 		});
@@ -248,7 +272,10 @@ export function testInvert() {
 
 		it("insert & remove => revive & remove", () => {
 			const transient = [
-				Mark.remove(1, brand(0), { cellId: { localId: brand(1) }, changes: childChange1 }),
+				Mark.remove(1, brand(0), {
+					cellId: { localId: brand(1) },
+					changes: childChange1,
+				}),
 			];
 
 			const inverse = invert(transient, tag1);
@@ -337,7 +364,9 @@ export function testInvert() {
 			const inverse = invert(transient, tag1);
 			const expected = [
 				Mark.attachAndDetach(
-					Mark.returnTo(1, detachId.localId, detachId, { revision: tagForInvert }),
+					Mark.returnTo(1, detachId.localId, detachId, {
+						revision: tagForInvert,
+					}),
 					Mark.remove(1, detachId.localId, {
 						idOverride: startId,
 						revision: tagForInvert,
@@ -357,7 +386,10 @@ export function testInvert() {
 			const moveAndRemove = [
 				Mark.moveOut(1, brand(0), { changes: childChange1 }),
 				{ count: 1 },
-				Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.remove(1, brand(2))),
+				Mark.attachAndDetach(
+					Mark.moveIn(1, brand(0)),
+					Mark.remove(1, brand(2)),
+				),
 			];
 
 			const inverse = invert(moveAndRemove);
@@ -398,7 +430,10 @@ export function testInvert() {
 					1,
 					brand(0),
 					{ revision: tag1, localId: brand(0) },
-					{ finalEndpoint: { localId: brand(2), revision: tag1 }, revision: tagForInvert },
+					{
+						finalEndpoint: { localId: brand(2), revision: tag1 },
+						revision: tagForInvert,
+					},
 				),
 				{ count: 1 },
 				Mark.rename(
@@ -431,7 +466,11 @@ export function testInvert() {
 				];
 
 				const actual = invert(input, tag1);
-				const expected = Change.modifyDetached(0, { ...childChange1, revision: tag1 }, cellId);
+				const expected = Change.modifyDetached(
+					0,
+					{ ...childChange1, revision: tag1 },
+					cellId,
+				);
 				assertChangesetsEqual(actual, expected);
 			});
 
@@ -440,12 +479,22 @@ export function testInvert() {
 				const input = [
 					Mark.onEmptyCell(
 						cellId,
-						Mark.remove(1, brand(0), { changes: childChange1, idOverride: cellId }),
+						Mark.remove(1, brand(0), {
+							changes: childChange1,
+							idOverride: cellId,
+						}),
 					),
 				];
 
-				const actual = invertChange(tagChangeInline(input, tag2, tag3 /* <= ignored */), tag3);
-				const expected = Change.modifyDetached(0, { ...childChange1, revision: tag2 }, cellId);
+				const actual = invertChange(
+					tagChangeInline(input, tag2, tag3 /* <= ignored */),
+					tag3,
+				);
+				const expected = Change.modifyDetached(
+					0,
+					{ ...childChange1, revision: tag2 },
+					cellId,
+				);
 				assertChangesetsEqual(actual, expected);
 			});
 

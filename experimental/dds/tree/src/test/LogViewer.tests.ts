@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from 'assert';
-
 import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
+import { strict as assert } from 'assert';
 import { expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -13,32 +12,32 @@ import { StableRange } from '../ChangeTypes.js';
 import { copyPropertyIfDefined, fail } from '../Common.js';
 import { EditLog } from '../EditLog.js';
 import { areRevisionViewsSemanticallyEqual, newEdit } from '../EditUtilities.js';
-import { EditId } from '../Identifiers.js';
+import type { EditId } from '../Identifiers.js';
 import { initialTree } from '../InitialTree.js';
 import {
 	CachingLogViewer,
 	CachingLogViewerDiagnosticEvents,
-	EditStatusCallback,
-	LogViewer,
-	SequencedEditResult,
-	SequencedEditResultCallback,
+	type EditStatusCallback,
+	type LogViewer,
+	type SequencedEditResult,
+	type SequencedEditResultCallback,
 } from '../LogViewer.js';
-import { NodeIdContext } from '../NodeIdUtilities.js';
-import { RevisionView } from '../RevisionView.js';
-import { TransactionInternal } from '../TransactionInternal.js';
+import type { NodeIdContext } from '../NodeIdUtilities.js';
 import {
 	ChangeInternal,
-	ChangeNode,
+	type ChangeNode,
 	ChangeTypeInternal,
 	ConstraintEffect,
-	Edit,
+	type Edit,
 	EditStatus,
-	SetValueInternal,
+	type SetValueInternal,
 	StablePlaceInternal,
 } from '../persisted-types/index.js';
+import { RevisionView } from '../RevisionView.js';
+import { TransactionInternal } from '../TransactionInternal.js';
 
 import { expectDefined } from './utilities/TestCommon.js';
-import { TestTree, buildLeaf } from './utilities/TestNode.js';
+import { buildLeaf, type TestTree } from './utilities/TestNode.js';
 import { refreshTestTree, testTraitLabel } from './utilities/TestUtilities.js';
 
 /**

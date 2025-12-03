@@ -3,39 +3,50 @@
  * Licensed under the MIT License.
  */
 
+import type { RestrictiveStringRecord } from "../../util/index.js";
 import {
-	AnnotatedAllowedTypesInternal,
-	createSchemaUpgrade,
-	normalizeToAnnotatedAllowedType,
 	type AllowedTypesFullFromMixed,
 	type AllowedTypesMetadata,
 	type AnnotatedAllowedType,
+	AnnotatedAllowedTypesInternal,
+	createSchemaUpgrade,
 	type ImplicitAllowedTypes,
 	type LazyItem,
 	type NodeKind,
+	normalizeToAnnotatedAllowedType,
 	type TreeNodeSchema,
 	type TreeNodeSchemaBoth,
 	type TreeNodeSchemaClass,
 	type TreeNodeSchemaNonClass,
 	type WithType,
 } from "../core/index.js";
-
+// These imports prevent a large number of type references in the API reports from showing up as *_2.
+/* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
+import type {
+	FieldKind,
+	FieldProps,
+	FieldPropsAlpha,
+	FieldSchemaAlpha,
+	ImplicitFieldSchema,
+} from "../fieldSchema.js";
+import type { LeafSchema } from "../leafNodeSchema.js";
 import {
-	objectSchema,
-	recordSchema,
 	type InsertableObjectFromSchemaRecord,
+	objectSchema,
 	type RecordNodeInsertableData,
+	recordSchema,
 	type TreeObjectNode,
 	type TreeRecordNode,
 } from "../node-kinds/index.js";
+import type { SimpleLeafNodeSchema } from "../simpleSchema.js";
 import {
 	defaultSchemaFactoryObjectOptions,
-	SchemaFactory,
-	scoped,
-	structuralName,
 	type NodeSchemaOptions,
 	type ObjectSchemaOptions,
+	SchemaFactory,
 	type ScopedSchemaName,
+	scoped,
+	structuralName,
 } from "./schemaFactory.js";
 import type {
 	AllowedTypesFullFromMixedUnsafe,
@@ -45,19 +56,6 @@ import type {
 	UnannotateAllowedTypeUnsafe,
 	Unenforced,
 } from "./typesUnsafe.js";
-
-// These imports prevent a large number of type references in the API reports from showing up as *_2.
-/* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
-import type {
-	FieldProps,
-	FieldSchemaAlpha,
-	FieldPropsAlpha,
-	FieldKind,
-	ImplicitFieldSchema,
-} from "../fieldSchema.js";
-import type { LeafSchema } from "../leafNodeSchema.js";
-import type { SimpleLeafNodeSchema } from "../simpleSchema.js";
-import type { RestrictiveStringRecord } from "../../util/index.js";
 /* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
 
 /**
@@ -107,7 +105,10 @@ export interface SchemaStaticsBeta {
 	 * This can take in {@link AnnotatedAllowedType} to preserve their annotations.
 	 */
 	readonly types: <
-		const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
+		const T extends readonly (
+			| AnnotatedAllowedType
+			| LazyItem<TreeNodeSchema>
+		)[],
 	>(
 		t: T,
 		metadata?: AllowedTypesMetadata,
@@ -137,7 +138,9 @@ export interface SchemaStaticsBeta {
 	 * In that case it could use `T extends readonly (AnnotatedAllowedTypeUnsafe | LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>)[]`.
 	 */
 	readonly typesRecursive: <
-		const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[],
+		const T extends readonly Unenforced<
+			AnnotatedAllowedType | LazyItem<TreeNodeSchema>
+		>[],
 	>(
 		t: T,
 		metadata?: AllowedTypesMetadata,
@@ -157,7 +160,9 @@ const staged = <const T extends LazyItem<TreeNodeSchema>>(
 	};
 };
 
-const types = <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>(
+const types = <
+	const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
+>(
 	t: T,
 	metadata: AllowedTypesMetadata = {},
 ): AllowedTypesFullFromMixed<T> => {
@@ -227,9 +232,10 @@ export class SchemaFactoryBeta<
 	 * The main use-case for this is when creating a collection of related schema (for example using a function that creates multiple schema).
 	 * Creating such related schema using a sub-scope helps ensure they won't collide with other schema in the parent scope.
 	 */
-	public scopedFactory<const T extends TName, TNameInner extends number | string = string>(
-		name: T,
-	): SchemaFactoryBeta<ScopedSchemaName<TScope, T>, TNameInner> {
+	public scopedFactory<
+		const T extends TName,
+		TNameInner extends number | string = string,
+	>(name: T): SchemaFactoryBeta<ScopedSchemaName<TScope, T>, TNameInner> {
 		return new SchemaFactoryBeta(scoped<TScope, TName, T>(this, name));
 	}
 
@@ -266,7 +272,8 @@ export class SchemaFactoryBeta<
 
 	public override objectRecursive<
 		const Name extends TName,
-		const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>,
+		const T extends
+			RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
@@ -389,7 +396,8 @@ export class SchemaFactoryBeta<
 	): TreeNodeSchemaClass<
 		/* Name */ ScopedSchemaName<TScope, Name>,
 		/* Kind */ NodeKind.Record,
-		/* TNode */ TreeRecordNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Record>,
+		/* TNode */ TreeRecordNode<T> &
+			WithType<ScopedSchemaName<TScope, Name>, NodeKind.Record>,
 		/* TInsertable */ RecordNodeInsertableData<T>,
 		/* ImplicitlyConstructable */ true,
 		/* Info */ T,
@@ -404,7 +412,9 @@ export class SchemaFactoryBeta<
 	 * This should return {@link TreeNodeSchemaBoth}: see note on {@link SchemaFactory.map} implementation for details.
 	 */
 	public record<const T extends ImplicitAllowedTypes>(
-		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
+		nameOrAllowedTypes:
+			| TName
+			| ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		maybeAllowedTypes?: T,
 		options?: NodeSchemaOptions,
 	): TreeNodeSchema<
@@ -416,7 +426,9 @@ export class SchemaFactoryBeta<
 		/* Info */ T
 	> {
 		if (maybeAllowedTypes === undefined) {
-			const nodeTypes = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
+			const nodeTypes = nameOrAllowedTypes as
+				| (T & TreeNodeSchema)
+				| readonly TreeNodeSchema[];
 			const fullName = structuralName("Record", nodeTypes);
 			return this.getStructuralType(fullName, nodeTypes, () =>
 				this.namedRecord(

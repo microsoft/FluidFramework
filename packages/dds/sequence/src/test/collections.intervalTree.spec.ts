@@ -3,12 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import type { PropertySet } from "@fluidframework/merge-tree/internal";
-
+import { strict as assert } from "assert";
+import type { ISerializableInterval } from "../intervals/index.js";
 import { IntervalTree } from "../intervalTree.js";
-import { ISerializableInterval } from "../intervals/index.js";
 
 class TestInterval implements ISerializableInterval {
 	constructor(
@@ -44,7 +42,10 @@ class TestInterval implements ISerializableInterval {
 	}
 
 	public union(b: TestInterval) {
-		return new TestInterval(Math.min(this.start, b.start), Math.max(this.end, b.end));
+		return new TestInterval(
+			Math.min(this.start, b.start),
+			Math.max(this.end, b.end),
+		);
 	}
 
 	public modify(label: string, start: number, end: number) {
@@ -84,7 +85,11 @@ describe("Collections.IntervalTree", () => {
 			intervalTree.map(map);
 
 			const fullWalk = range1Pass && range2Pass && range3Pass;
-			assert.equal(fullWalk, true, "Full walk of the interval tree did not occur");
+			assert.equal(
+				fullWalk,
+				true,
+				"Full walk of the interval tree did not occur",
+			);
 		});
 	});
 });

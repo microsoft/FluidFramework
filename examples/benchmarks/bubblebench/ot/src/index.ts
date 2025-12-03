@@ -8,6 +8,7 @@ import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import React from "react";
 
 import { type Bubblebench, BubblebenchInstantiationFactory } from "./main.js";
+
 export { Bubblebench, BubblebenchInstantiationFactory } from "./main.js";
 
 const bubblebenchViewCallback = (model: Bubblebench): React.ReactElement =>

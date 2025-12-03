@@ -6,31 +6,38 @@
 import { compareArrays } from '@fluidframework/core-utils/internal';
 import { v4 as uuidv4 } from 'uuid';
 
-import { BuildNode, BuildTreeNode, Change, HasVariadicTraits, StablePlace, StableRange } from './ChangeTypes.js';
-import { Mutable, copyPropertyIfDefined, fail } from './Common.js';
-import { Definition, DetachedSequenceId, EditId, NodeId, StableNodeId, TraitLabel } from './Identifiers.js';
-import { NodeIdContext, NodeIdConverter } from './NodeIdUtilities.js';
-import { comparePayloads } from './PayloadUtilities.js';
-import { TransactionView, iterateChildren } from './RevisionView.js';
-import { getChangeNode_0_0_2FromView } from './SerializationUtilities.js';
-import { TraitLocation, TreeView } from './TreeView.js';
-import { placeFromStablePlace, rangeFromStableRange } from './TreeViewUtilities.js';
 import {
-	BuildNodeInternal,
+	type BuildNode,
+	type BuildTreeNode,
+	Change,
+	type HasVariadicTraits,
+	type StablePlace,
+	StableRange,
+} from './ChangeTypes.js';
+import { copyPropertyIfDefined, fail, type Mutable } from './Common.js';
+import type { Definition, DetachedSequenceId, EditId, NodeId, StableNodeId, TraitLabel } from './Identifiers.js';
+import type { NodeIdContext, NodeIdConverter } from './NodeIdUtilities.js';
+import { comparePayloads } from './PayloadUtilities.js';
+import {
+	type BuildNodeInternal,
 	ChangeInternal,
-	ChangeNode,
-	ChangeNode_0_0_2,
-	Edit,
-	HasTraits,
-	NodeData,
-	Side,
-	StablePlaceInternal,
+	type ChangeNode,
+	type ChangeNode_0_0_2,
+	type Edit,
+	type HasTraits,
+	type NodeData,
+	type Side,
+	type StablePlaceInternal,
 	StableRangeInternal,
-	TraitLocationInternal,
-	TraitMap,
-	TreeNode,
-	TreeNodeSequence,
+	type TraitLocationInternal,
+	type TraitMap,
+	type TreeNode,
+	type TreeNodeSequence,
 } from './persisted-types/index.js';
+import { iterateChildren, type TransactionView } from './RevisionView.js';
+import { getChangeNode_0_0_2FromView } from './SerializationUtilities.js';
+import type { TraitLocation, TreeView } from './TreeView.js';
+import { placeFromStablePlace, rangeFromStableRange } from './TreeViewUtilities.js';
 
 /**
  * Functions for constructing and comparing Edits.

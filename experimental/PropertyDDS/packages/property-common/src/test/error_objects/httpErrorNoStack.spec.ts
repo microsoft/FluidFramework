@@ -13,40 +13,40 @@ import { expect } from "chai";
 
 import { HTTPError, HTTPErrorNoStack } from "../../index";
 
-describe("property-common.HTTPErrorNoStack", function () {
+describe("property-common.HTTPErrorNoStack", () => {
 	const errorMsg = "a test error message";
 
-	describe("object", function () {
-		it("is instanceof Error", function (done) {
+	describe("object", () => {
+		it("is instanceof Error", (done) => {
 			expect(new HTTPErrorNoStack() instanceof Error).to.equal(true);
 			done();
 		});
 
-		it("is instanceof HTTPError", function (done) {
+		it("is instanceof HTTPError", (done) => {
 			expect(new HTTPErrorNoStack() instanceof HTTPError).to.equal(true);
 			done();
 		});
 
-		it("is instanceof HTTPErrorNoStack", function (done) {
+		it("is instanceof HTTPErrorNoStack", (done) => {
 			expect(new HTTPErrorNoStack() instanceof HTTPErrorNoStack).to.equal(true);
 			done();
 		});
 
-		it("has no stack parameter", function (done) {
+		it("has no stack parameter", (done) => {
 			const httpErrorNoStack = new HTTPErrorNoStack(errorMsg);
 			expect(httpErrorNoStack.stack).to.equal(undefined);
 			done();
 		});
 	});
 
-	describe("flags", function () {
-		it("default at 0", function (done) {
+	describe("flags", () => {
+		it("default at 0", (done) => {
 			const actual = new HTTPErrorNoStack(errorMsg);
 			expect(actual.flags).to.equal(0);
 			done();
 		});
 
-		it("can be quiet", function (done) {
+		it("can be quiet", (done) => {
 			const actual = new HTTPErrorNoStack(
 				errorMsg,
 				undefined,
@@ -60,7 +60,7 @@ describe("property-common.HTTPErrorNoStack", function () {
 			done();
 		});
 
-		it("can be extended", function (done) {
+		it("can be extended", (done) => {
 			const actual = new HTTPErrorNoStack(
 				errorMsg,
 				undefined,

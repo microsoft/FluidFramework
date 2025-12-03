@@ -7,17 +7,21 @@
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
 	IChannelFactory,
+	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import { FileMode, MessageType, TreeEntry } from "@fluidframework/driver-definitions/internal";
 import type { ITree } from "@fluidframework/driver-definitions/internal";
+import {
+	FileMode,
+	MessageType,
+	TreeEntry,
+} from "@fluidframework/driver-definitions/internal";
 import type {
-	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
+	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
@@ -49,8 +53,14 @@ export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 	 * @param id - optional name of the shared signal
 	 * @returns newly create shared signal (but not attached yet)
 	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedSignalClass {
-		return runtime.createChannel(id, SharedSignalFactory.Type) as SharedSignalClass;
+	public static create(
+		runtime: IFluidDataStoreRuntime,
+		id?: string,
+	): SharedSignalClass {
+		return runtime.createChannel(
+			id,
+			SharedSignalFactory.Type,
+		) as SharedSignalClass;
 	}
 
 	/**
@@ -74,7 +84,12 @@ export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
 	) {
-		super(id, runtime, attributes, "loop_sharedSignal_" /* telemetryContextPrefix */);
+		super(
+			id,
+			runtime,
+			attributes,
+			"loop_sharedSignal_" /* telemetryContextPrefix */,
+		);
 	}
 
 	/**
@@ -96,7 +111,9 @@ export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 		this.submitLocalMessage(op);
 	}
 
-	protected summarizeCore(_serializer: IFluidSerializer): ISummaryTreeWithStats {
+	protected summarizeCore(
+		_serializer: IFluidSerializer,
+	): ISummaryTreeWithStats {
 		const tree: ITree = {
 			entries: [
 				{
@@ -135,7 +152,9 @@ export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected processMessagesCore(
+		messagesCollection: IRuntimeMessageCollection,
+	): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
 			this.processMessage(envelope, messageContent, local);
@@ -147,7 +166,10 @@ export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 		messageContent: IRuntimeMessagesContent,
 		local: boolean,
 	): void {
-		if ((messageEnvelope.type as MessageType) === MessageType.Operation && !local) {
+		if (
+			(messageEnvelope.type as MessageType) === MessageType.Operation &&
+			!local
+		) {
 			const op = messageContent.contents as ISignalOperation<T>;
 
 			switch (op.type) {

@@ -13,8 +13,8 @@ import {
 	SchemaFactory,
 	SharedTree,
 	Tree,
-	TreeViewConfiguration,
 	type TreeNode,
+	TreeViewConfiguration,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/tree/internal";
 import { after } from "mocha";
@@ -141,7 +141,9 @@ const zodCandidateSchema = zod.object({
 	name: zod.string(),
 	candidateId: zod.string(),
 	yearsOfExperience: zod.number(),
-	availability: zod.array(zod.enum(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"])),
+	availability: zod.array(
+		zod.enum(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]),
+	),
 });
 
 const zodOnSiteScheduleSchema = zod.object({
@@ -196,7 +198,9 @@ const treeNodeValidatorFn = (treeNode: TreeNode): void => {
 				break;
 			}
 			default: {
-				throw new Error(`Unknown schema identifier during validation: ${schema.identifier}`);
+				throw new Error(
+					`Unknown schema identifier during validation: ${schema.identifier}`,
+				);
 			}
 		}
 	} catch (error) {
@@ -234,7 +238,8 @@ describe.skip("AI Job Listings App Benchmark", () => {
 		const successRate =
 			// eslint-disable-next-line unicorn/no-array-reduce
 			Object.values(completedTasksBenchmark).reduce((acc, benchmark) => {
-				const rate = benchmark.successfulSubTasks.length / benchmark.totalSubTasks;
+				const rate =
+					benchmark.successfulSubTasks.length / benchmark.totalSubTasks;
 				return acc + rate;
 			}, 0) / Object.keys(completedTasksBenchmark).length;
 
@@ -250,7 +255,8 @@ describe.skip("AI Job Listings App Benchmark", () => {
 		view.initialize(createTestData());
 		const taskBencharmarkTitle =
 			"Create a new Job with the title 'QA tester' and add a candidate named 'John Doe', who is only available on mondays and tuesdays, to the job.";
-		const createQaTesterJobSubTaskTitle = "Create a new Job with the title 'QA tester'";
+		const createQaTesterJobSubTaskTitle =
+			"Create a new Job with the title 'QA tester'";
 		const addJohnDoeCandidateSubTaskTitle =
 			"Add a candidate named 'John Doe', who is only available on mondays and tuesdays, to the job.";
 		const johnDoeAvailabilitySubTaskTitle =
@@ -283,7 +289,8 @@ describe.skip("AI Job Listings App Benchmark", () => {
 				},
 				validator: treeNodeValidatorFn,
 			});
-			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs = Date.now() - startTime;
+			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs =
+				Date.now() - startTime;
 		} catch (error) {
 			let errorMessage: string | undefined;
 			if (error instanceof Error) {
@@ -292,7 +299,8 @@ describe.skip("AI Job Listings App Benchmark", () => {
 
 			completedTasksBenchmark[taskBencharmarkTitle].status = "failure";
 			completedTasksBenchmark[taskBencharmarkTitle].errorMessage = errorMessage;
-			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs = Date.now() - startTime;
+			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs =
+				Date.now() - startTime;
 			return;
 		}
 
@@ -400,7 +408,8 @@ describe.skip("AI Job Listings App Benchmark", () => {
 				},
 				validator: treeNodeValidatorFn,
 			});
-			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs = Date.now() - startTime;
+			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs =
+				Date.now() - startTime;
 		} catch (error) {
 			let errorMessage: string | undefined;
 			if (error instanceof Error) {
@@ -409,7 +418,8 @@ describe.skip("AI Job Listings App Benchmark", () => {
 
 			completedTasksBenchmark[taskBencharmarkTitle].status = "failure";
 			completedTasksBenchmark[taskBencharmarkTitle].errorMessage = errorMessage;
-			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs = Date.now() - startTime;
+			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs =
+				Date.now() - startTime;
 			return;
 		}
 
@@ -495,7 +505,8 @@ describe.skip("AI Job Listings App Benchmark", () => {
 				jobId: "2",
 				jobState: "Open",
 				jobTitle: "Project Manager",
-				jobDescription: "We are looking for a project manager to join our team.",
+				jobDescription:
+					"We are looking for a project manager to join our team.",
 				candidates: [],
 				onSiteSchedule: [],
 			}),
@@ -538,7 +549,8 @@ describe.skip("AI Job Listings App Benchmark", () => {
 				},
 				validator: treeNodeValidatorFn,
 			});
-			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs = Date.now() - startTime;
+			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs =
+				Date.now() - startTime;
 		} catch (error) {
 			let errorMessage: string | undefined;
 			if (error instanceof Error) {
@@ -547,7 +559,8 @@ describe.skip("AI Job Listings App Benchmark", () => {
 
 			completedTasksBenchmark[taskBencharmarkTitle].status = "failure";
 			completedTasksBenchmark[taskBencharmarkTitle].errorMessage = errorMessage;
-			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs = Date.now() - startTime;
+			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs =
+				Date.now() - startTime;
 			return;
 		}
 
@@ -598,7 +611,8 @@ describe.skip("AI Job Listings App Benchmark", () => {
 				jobId: "2",
 				jobState: "Open",
 				jobTitle: "Project Manager",
-				jobDescription: "We are looking for a project manager to join our team.",
+				jobDescription:
+					"We are looking for a project manager to join our team.",
 				candidates: [
 					new Candidate({
 						candidateId: "2",
@@ -610,7 +624,9 @@ describe.skip("AI Job Listings App Benchmark", () => {
 				onSiteSchedule: [],
 			}),
 		);
-		const jobNode = view.root.jobsList.find((job: Job) => job.jobTitle === "Project Manager");
+		const jobNode = view.root.jobsList.find(
+			(job: Job) => job.jobTitle === "Project Manager",
+		);
 
 		const taskBencharmarkTitle =
 			"Setup an interview for Will Smith that will take place on Thursday. Select any 2 interviewers and add them to interviewers list";
@@ -618,7 +634,8 @@ describe.skip("AI Job Listings App Benchmark", () => {
 			"Setup an interview for Will Smith that will take place on Thursday.";
 		const addInterviewersSubTaskTitle =
 			"Select any 2 interviewers and add them to interviewers list";
-		const interviewersAvailablilitySubTaskTitle = "Interviewers are available on Thursday";
+		const interviewersAvailablilitySubTaskTitle =
+			"Interviewers are available on Thursday";
 
 		completedTasksBenchmark[taskBencharmarkTitle] = {
 			status: "success",
@@ -647,7 +664,8 @@ describe.skip("AI Job Listings App Benchmark", () => {
 				},
 				validator: treeNodeValidatorFn,
 			});
-			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs = Date.now() - startTime;
+			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs =
+				Date.now() - startTime;
 		} catch (error) {
 			let errorMessage: string | undefined;
 			if (error instanceof Error) {
@@ -656,7 +674,8 @@ describe.skip("AI Job Listings App Benchmark", () => {
 
 			completedTasksBenchmark[taskBencharmarkTitle].status = "failure";
 			completedTasksBenchmark[taskBencharmarkTitle].errorMessage = errorMessage;
-			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs = Date.now() - startTime;
+			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs =
+				Date.now() - startTime;
 			return;
 		}
 
@@ -673,7 +692,8 @@ describe.skip("AI Job Listings App Benchmark", () => {
 				);
 				return {
 					status:
-						foundOnsiteInterview !== undefined && foundOnsiteInterview.day === "Thursday",
+						foundOnsiteInterview !== undefined &&
+						foundOnsiteInterview.day === "Thursday",
 					data: foundOnsiteInterview,
 				};
 			},
@@ -707,7 +727,9 @@ describe.skip("AI Job Listings App Benchmark", () => {
 						const matchedInterviewer = view.root.interviewerPool.find(
 							(interviewer) => interviewer.interviewerId === interviewerId,
 						);
-						if (matchedInterviewer?.availability.includes("Thursday") === false) {
+						if (
+							matchedInterviewer?.availability.includes("Thursday") === false
+						) {
 							return { status: false };
 						}
 					}
@@ -733,7 +755,8 @@ describe.skip("AI Job Listings App Benchmark", () => {
 				jobId: targetJobId,
 				jobState: "Open",
 				jobTitle: "Project Manager",
-				jobDescription: "We are looking for a project manager to join our team.",
+				jobDescription:
+					"We are looking for a project manager to join our team.",
 				candidates: [
 					new Candidate({
 						candidateId: "2",
@@ -743,13 +766,19 @@ describe.skip("AI Job Listings App Benchmark", () => {
 					}),
 				],
 				onSiteSchedule: [
-					new OnSiteSchedule({ day: "Thursday", interviewerIds: [], candidateId: "2" }),
+					new OnSiteSchedule({
+						day: "Thursday",
+						interviewerIds: [],
+						candidateId: "2",
+					}),
 				],
 			}),
 		);
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const jobNode = view.root.jobsList.find((job: Job) => job.jobId === targetJobId)!;
+		const jobNode = view.root.jobsList.find(
+			(job: Job) => job.jobId === targetJobId,
+		)!;
 
 		const taskBencharmarkTitle =
 			"Add Alice Johnson and Charlie Brown to list of interviewers for Will Smith's onsite.";
@@ -779,7 +808,8 @@ describe.skip("AI Job Listings App Benchmark", () => {
 					maxModelCalls: 5,
 				},
 			});
-			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs = Date.now() - startTime;
+			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs =
+				Date.now() - startTime;
 		} catch (error) {
 			let errorMessage: string | undefined;
 			if (error instanceof Error) {
@@ -788,7 +818,8 @@ describe.skip("AI Job Listings App Benchmark", () => {
 
 			completedTasksBenchmark[taskBencharmarkTitle].status = "failure";
 			completedTasksBenchmark[taskBencharmarkTitle].errorMessage = errorMessage;
-			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs = Date.now() - startTime;
+			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs =
+				Date.now() - startTime;
 			return;
 		}
 
@@ -798,15 +829,16 @@ describe.skip("AI Job Listings App Benchmark", () => {
 			taskBencharmarkTitle,
 			() => {
 				const interviewIds = jobNode.onSiteSchedule[0]?.interviewerIds;
-				const foundInterviewers = view.root.interviewerPool.filter((interviewer) =>
-					interviewIds?.includes(interviewer.interviewerId),
+				const foundInterviewers = view.root.interviewerPool.filter(
+					(interviewer) => interviewIds?.includes(interviewer.interviewerId),
 				);
 				return {
 					status:
 						foundInterviewers.length === 2 &&
 						foundInterviewers.every(
 							(interviewer) =>
-								interviewer.name === "Alice Johnson" || interviewer.name === "Charlie Brown",
+								interviewer.name === "Alice Johnson" ||
+								interviewer.name === "Charlie Brown",
 						),
 				};
 			},
@@ -830,7 +862,8 @@ describe.skip("AI Job Listings App Benchmark", () => {
 				jobId: targetJobId,
 				jobState: "Open",
 				jobTitle: "Project Manager",
-				jobDescription: "We are looking for a project manager to join our team.",
+				jobDescription:
+					"We are looking for a project manager to join our team.",
 				candidates: [
 					new Candidate({
 						candidateId: "2",
@@ -841,13 +874,19 @@ describe.skip("AI Job Listings App Benchmark", () => {
 				],
 				onSiteSchedule: [
 					// Note alice johnson's id is 10 and included in the  initial data from createTestData()
-					new OnSiteSchedule({ day: "Thursday", interviewerIds: ["10"], candidateId: "2" }),
+					new OnSiteSchedule({
+						day: "Thursday",
+						interviewerIds: ["10"],
+						candidateId: "2",
+					}),
 				],
 			}),
 		);
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const jobNode = view.root.jobsList.find((job: Job) => job.jobId === targetJobId)!;
+		const jobNode = view.root.jobsList.find(
+			(job: Job) => job.jobId === targetJobId,
+		)!;
 
 		const taskBencharmarkTitle =
 			"Remove Alice Johnson from Will Smith onsite interview schedule.";
@@ -877,7 +916,8 @@ describe.skip("AI Job Listings App Benchmark", () => {
 					maxModelCalls: 5,
 				},
 			});
-			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs = Date.now() - startTime;
+			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs =
+				Date.now() - startTime;
 		} catch (error) {
 			let errorMessage: string | undefined;
 			if (error instanceof Error) {
@@ -886,7 +926,8 @@ describe.skip("AI Job Listings App Benchmark", () => {
 
 			completedTasksBenchmark[taskBencharmarkTitle].status = "failure";
 			completedTasksBenchmark[taskBencharmarkTitle].errorMessage = errorMessage;
-			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs = Date.now() - startTime;
+			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs =
+				Date.now() - startTime;
 			return;
 		}
 
@@ -925,7 +966,8 @@ function measureSubTaskBenchmark<TestData = undefined>(
 
 		// Recalculate the status of the benchmark task based on sucessful and failed sub tasks.
 		benchmarkTask.status =
-			benchmarkTask.successfulSubTasks.length > 0 && benchmarkTask.failedSubTasks.length === 0
+			benchmarkTask.successfulSubTasks.length > 0 &&
+			benchmarkTask.failedSubTasks.length === 0
 				? "success"
 				: benchmarkTask.successfulSubTasks.length === 0
 					? "failure"

@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, performanceNow } from "@fluid-internal/client-utils";
+import {
+	performanceNow,
+	TypedEventEmitter,
+} from "@fluid-internal/client-utils";
 import type {
 	IDeltaQueue,
 	IDeltaQueueEvents,
@@ -35,7 +38,9 @@ export class DeltaQueue<T>
 	 * When processing is ongoing, holds a deferred that will resolve once processing stops.
 	 * Undefined when not processing.
 	 */
-	private processingPromise: Promise<{ count: number; duration: number }> | undefined;
+	private processingPromise:
+		| Promise<{ count: number; duration: number }>
+		| undefined;
 
 	public get disposed(): boolean {
 		return this.isDisposed;

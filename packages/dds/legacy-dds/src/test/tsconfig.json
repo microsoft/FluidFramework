@@ -8,12 +8,12 @@
 		"noUncheckedIndexedAccess": false,
 		"exactOptionalPropertyTypes": false,
 		"declaration": true,
-		"declarationMap": true,
+		"declarationMap": true
 	},
 	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../..",
-		},
-	],
+			"path": "../.."
+		}
+	]
 }

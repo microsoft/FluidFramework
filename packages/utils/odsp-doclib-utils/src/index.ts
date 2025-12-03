@@ -12,9 +12,9 @@ export {
 	getOdspScope,
 	getPushRefreshTokenFn,
 	getRefreshTokenFn,
-	type IPublicClientConfig,
 	type IOdspAuthRequestInfo,
 	type IOdspTokens,
+	type IPublicClientConfig,
 	pushScope,
 	refreshTokens,
 	type TokenRequestCredentials,
@@ -50,4 +50,9 @@ export {
 	throwOdspNetworkError,
 	tryParseErrorResponse,
 } from "./odspErrorUtils.js";
-export { getAsync, postAsync, putAsync, unauthPostAsync } from "./odspRequest.js";
+export {
+	getAsync,
+	postAsync,
+	putAsync,
+	unauthPostAsync,
+} from "./odspRequest.js";

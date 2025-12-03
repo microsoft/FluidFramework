@@ -73,7 +73,10 @@ export class SharedMatrixOracle {
 			this.onConflict(row, col, currentValue, conflictingValue);
 		};
 
-		if (this.shared.connected && this.shared.isSetCellConflictResolutionPolicyFWW()) {
+		if (
+			this.shared.connected &&
+			this.shared.isSetCellConflictResolutionPolicyFWW()
+		) {
 			this.shared.on("conflict", this.conflictListener);
 		}
 	}
@@ -129,7 +132,11 @@ export class SharedMatrixOracle {
 		);
 
 		// Only validate conflicts when the matrix is connected
-		if (this.shared.connected && row < this.shared.rowCount && col < this.shared.colCount) {
+		if (
+			this.shared.connected &&
+			row < this.shared.rowCount &&
+			col < this.shared.colCount
+		) {
 			this.latestConflict.set(`${row},${col}`, {
 				row,
 				col,
@@ -153,7 +160,8 @@ export class SharedMatrixOracle {
 
 		// Validate conflict history
 		for (const [, conflict] of this.latestConflict) {
-			const { row, col, currentValue, conflictingValue, cellValue, lastEvent } = conflict;
+			const { row, col, currentValue, conflictingValue, cellValue, lastEvent } =
+				conflict;
 			const inBounds = row < this.shared.rowCount && col < this.shared.colCount;
 			const actual = inBounds ? this.shared.getCell(row, col) : undefined;
 
@@ -221,6 +229,8 @@ export interface IChannelWithOracles extends SharedMatrix {
  * Type guard for SharedMatrix with an oracle
  * @internal
  */
-export function hasSharedMatrixOracle(s: ISharedMatrix): s is IChannelWithOracles {
+export function hasSharedMatrixOracle(
+	s: ISharedMatrix,
+): s is IChannelWithOracles {
 	return "matrixOracle" in s && s.matrixOracle instanceof SharedMatrixOracle;
 }

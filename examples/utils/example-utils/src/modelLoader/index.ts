@@ -8,8 +8,8 @@ export {
 	IModelLoader,
 } from "./interfaces.js";
 export {
-	ModelContainerRuntimeFactory,
 	IModelContainerRuntimeEntryPoint,
+	ModelContainerRuntimeFactory,
 } from "./modelContainerRuntimeFactory.js";
 export { ModelLoader } from "./modelLoader.js";
 export { SessionStorageModelLoader } from "./sessionStorageModelLoader.js";

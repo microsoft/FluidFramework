@@ -3,17 +3,24 @@
  * Licensed under the MIT License.
  */
 
+import {
+	describeCompat,
+	type ITestDataObject,
+} from "@fluid-private/test-version-utils";
+import { asLegacyAlpha } from "@fluidframework/container-loader/internal";
+import type {
+	ConfigTypes,
+	IConfigProviderBase,
+} from "@fluidframework/core-interfaces";
+import type {
+	ITestContainerConfig,
+	ITestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 import { strict as assert } from "assert";
 
-import { describeCompat, type ITestDataObject } from "@fluid-private/test-version-utils";
-import { asLegacyAlpha } from "@fluidframework/container-loader/internal";
-import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import {
-	type ITestObjectProvider,
-	ITestContainerConfig,
-} from "@fluidframework/test-utils/internal";
-
-const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+const configProvider = (
+	settings: Record<string, ConfigTypes>,
+): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 
@@ -38,7 +45,9 @@ describeCompat(
 		});
 
 		it("Can create loadingGroupId", async () => {
-			const container = asLegacyAlpha(await provider.makeTestContainer(testContainerConfig));
+			const container = asLegacyAlpha(
+				await provider.makeTestContainer(testContainerConfig),
+			);
 			const mainObject = (await container.getEntryPoint()) as ITestDataObject;
 			mainObject._root.set("1", "1");
 			mainObject._root.set("2", "2");
@@ -57,7 +66,11 @@ describeCompat(
 
 			// Load from the pending state
 			const container2 = asLegacyAlpha(
-				await provider.loadTestContainer(testContainerConfig, undefined, pendingState),
+				await provider.loadTestContainer(
+					testContainerConfig,
+					undefined,
+					pendingState,
+				),
 			);
 
 			// Container2 to have the same initial sequence number as container as they loaded from the same base snapshot

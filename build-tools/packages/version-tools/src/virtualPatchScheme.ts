@@ -58,7 +58,8 @@ export function bumpVirtualPatchVersion(
 			virtualVersion.patch += VIRTUAL_PATCH_FORMAT_MULTIPLIER;
 			// adjust down to the nearest thousand
 			virtualVersion.patch =
-				virtualVersion.patch - (virtualVersion.patch % VIRTUAL_PATCH_FORMAT_MULTIPLIER);
+				virtualVersion.patch -
+				(virtualVersion.patch % VIRTUAL_PATCH_FORMAT_MULTIPLIER);
 			break;
 		}
 		case "patch": {
@@ -87,19 +88,24 @@ export function fromVirtualPatchScheme(
 	assert(parsedVersion !== null, `Parsed as null: ${virtualPatchVersion}`);
 
 	if (!isVirtualPatch(parsedVersion)) {
-		throw new Error(`Version is not using the virtualPatch scheme: ${virtualPatchVersion}`);
+		throw new Error(
+			`Version is not using the virtualPatch scheme: ${virtualPatchVersion}`,
+		);
 	}
 
 	const major = parsedVersion.minor;
 	const minor =
-		(parsedVersion.patch - (parsedVersion.patch % VIRTUAL_PATCH_FORMAT_MULTIPLIER)) /
+		(parsedVersion.patch -
+			(parsedVersion.patch % VIRTUAL_PATCH_FORMAT_MULTIPLIER)) /
 		VIRTUAL_PATCH_FORMAT_MULTIPLIER;
 	const patch = parsedVersion.patch % VIRTUAL_PATCH_FORMAT_MULTIPLIER;
 
 	const convertedVersionString = `${major}.${minor}.${patch}`;
 	const newSemVer = semver.parse(convertedVersionString);
 	if (newSemVer === null) {
-		throw new Error(`Couldn't convert ${convertedVersionString} to a standard semver.`);
+		throw new Error(
+			`Couldn't convert ${convertedVersionString} to a standard semver.`,
+		);
 	}
 
 	return newSemVer;
@@ -111,7 +117,9 @@ export function fromVirtualPatchScheme(
  * @param virtualPatchVersion - A version.
  * @returns The translated virtualPatch version.
  */
-export function toVirtualPatchScheme(version: semver.SemVer | string): semver.SemVer {
+export function toVirtualPatchScheme(
+	version: semver.SemVer | string,
+): semver.SemVer {
 	const parsedVersion = semver.parse(version);
 	assert(parsedVersion !== null, `Parsed as null: ${version}`);
 
@@ -133,7 +141,9 @@ export function toVirtualPatchScheme(version: semver.SemVer | string): semver.Se
 	const convertedVersionString = `${major}.${minor}.${patch}`;
 	const newSemVer = semver.parse(convertedVersionString);
 	if (newSemVer === null) {
-		throw new Error(`Couldn't convert ${convertedVersionString} to a standard semver.`);
+		throw new Error(
+			`Couldn't convert ${convertedVersionString} to a standard semver.`,
+		);
 	}
 
 	return newSemVer;

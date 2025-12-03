@@ -4,7 +4,7 @@
  */
 
 import type { Mark, MarkList } from "./types.js";
-import { isNoopMark, isTombstone, tryMergeMarks as tryMergeMarks } from "./utils.js";
+import { isNoopMark, isTombstone, tryMergeMarks } from "./utils.js";
 
 /**
  * Helper class for constructing an offset list of marks that...

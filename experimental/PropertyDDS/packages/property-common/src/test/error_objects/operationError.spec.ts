@@ -13,22 +13,22 @@ import { expect } from "chai";
 
 import { OperationError } from "../../index";
 
-describe("property-common.OperationError", function () {
+describe("property-common.OperationError", () => {
 	const errorMsg = "a test error message";
 	const operation = "TestOperation";
 
-	describe("object", function () {
-		it("is instanceof Error", function (done) {
+	describe("object", () => {
+		it("is instanceof Error", (done) => {
 			expect(new OperationError() instanceof Error).to.equal(true);
 			done();
 		});
 
-		it("is instanceof OperationError", function (done) {
+		it("is instanceof OperationError", (done) => {
 			expect(new OperationError() instanceof OperationError).to.equal(true);
 			done();
 		});
 
-		it("stringifies", function (done) {
+		it("stringifies", (done) => {
 			const actual = JSON.stringify(new OperationError(errorMsg));
 			const expected = '{"flags":0,"name":"OperationError"}';
 			expect(actual).to.equal(expected);
@@ -36,8 +36,8 @@ describe("property-common.OperationError", function () {
 		});
 	});
 
-	describe("toString", function () {
-		it("basic error message", function (done) {
+	describe("toString", () => {
+		it("basic error message", (done) => {
 			const expected = `OperationError: ${errorMsg}`;
 			const actual = new OperationError(errorMsg).toString();
 			expect(actual).to.not.equal(undefined);
@@ -45,7 +45,7 @@ describe("property-common.OperationError", function () {
 			done();
 		});
 
-		it("full OperationError", function (done) {
+		it("full OperationError", (done) => {
 			const code = 99;
 			const expected = `OperationError[${operation}, ${code}, 1 [TRANSIENT]]: ${errorMsg}`;
 			const actual = new OperationError(
@@ -58,14 +58,14 @@ describe("property-common.OperationError", function () {
 			done();
 		});
 
-		it("partial OperationError", function (done) {
+		it("partial OperationError", (done) => {
 			const expected = `OperationError[${operation}]: ${errorMsg}`;
 			const actual = new OperationError(errorMsg, operation);
 			expect(actual.toString()).to.have.string(expected);
 			done();
 		});
 
-		it("code only", function (done) {
+		it("code only", (done) => {
 			const code = 99;
 			const expected = `OperationError[${code}]: ${errorMsg}`;
 			const actual = new OperationError(errorMsg, undefined, code);
@@ -73,7 +73,7 @@ describe("property-common.OperationError", function () {
 			done();
 		});
 
-		it("extended flags", function (done) {
+		it("extended flags", (done) => {
 			const code = 99;
 			const expected = `OperationError[${operation}, ${code}, 5 [TRANSIENT]]: ${errorMsg}`;
 			const actual = new OperationError(
@@ -87,33 +87,33 @@ describe("property-common.OperationError", function () {
 		});
 	});
 
-	describe("fields", function () {
-		it("name", function (done) {
+	describe("fields", () => {
+		it("name", (done) => {
 			const actual = new OperationError();
 			expect(actual.name).to.equal("OperationError");
 			done();
 		});
 
-		it("stack", function (done) {
+		it("stack", (done) => {
 			const actual = new OperationError();
 			expect(actual).to.have.property("stack");
 			done();
 		});
 
-		it("operation", function (done) {
+		it("operation", (done) => {
 			const actual = new OperationError(errorMsg, operation);
 			expect(actual.operation).to.equal(operation);
 			done();
 		});
 
-		it("statusCode", function (done) {
+		it("statusCode", (done) => {
 			const code = 99;
 			const actual = new OperationError(errorMsg, operation, code);
 			expect(actual.statusCode).to.equal(code);
 			done();
 		});
 
-		it("can set the stack", function (done) {
+		it("can set the stack", (done) => {
 			const e = new OperationError();
 			const e2 = new Error();
 			e.stack = e2.stack;
@@ -121,14 +121,19 @@ describe("property-common.OperationError", function () {
 		});
 	});
 
-	describe("flags", function () {
-		it("default at 0", function (done) {
-			const actual = new OperationError(errorMsg, operation, undefined, undefined);
+	describe("flags", () => {
+		it("default at 0", (done) => {
+			const actual = new OperationError(
+				errorMsg,
+				operation,
+				undefined,
+				undefined,
+			);
 			expect(actual.flags).to.equal(0);
 			done();
 		});
 
-		it("can be transiant", function (done) {
+		it("can be transiant", (done) => {
 			const actual = new OperationError(
 				errorMsg,
 				operation,
@@ -140,7 +145,7 @@ describe("property-common.OperationError", function () {
 			done();
 		});
 
-		it("can be quiet", function (done) {
+		it("can be quiet", (done) => {
 			const actual = new OperationError(
 				errorMsg,
 				operation,
@@ -152,7 +157,7 @@ describe("property-common.OperationError", function () {
 			done();
 		});
 
-		it("can be transient and quiet", function (done) {
+		it("can be transient and quiet", (done) => {
 			const actual = new OperationError(
 				errorMsg,
 				operation,
@@ -167,7 +172,7 @@ describe("property-common.OperationError", function () {
 			done();
 		});
 
-		it("can be extended", function (done) {
+		it("can be extended", (done) => {
 			const actual = new OperationError(
 				errorMsg,
 				operation,

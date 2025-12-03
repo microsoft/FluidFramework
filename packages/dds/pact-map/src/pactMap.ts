@@ -7,21 +7,21 @@ import { EventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
-	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
+	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	SharedObject,
 	createSingleBlobSummary,
+	SharedObject,
 } from "@fluidframework/shared-object-base/internal";
 
 import type { IAcceptedPact, IPactMap, IPactMapEvents } from "./interfaces.js";
@@ -181,7 +181,12 @@ export class PactMapClass<T = unknown>
 			// takes effect.  This more closely resembles the pattern in the attached state, where the ack will not
 			// be received synchronously.
 			queueMicrotask(() => {
-				this.handleIncomingSet(key, value, 0 /* refSeq */, 0 /* setSequenceNumber */);
+				this.handleIncomingSet(
+					key,
+					value,
+					0 /* refSeq */,
+					0 /* setSequenceNumber */,
+				);
 			});
 			return;
 		}
@@ -224,7 +229,9 @@ export class PactMapClass<T = unknown>
 	 */
 	private getSignoffClients(): string[] {
 		// If detached, we don't need anyone to sign off.  Otherwise, we need all currently connected clients.
-		return this.isAttached() ? [...this.runtime.getQuorum().getMembers().keys()] : [];
+		return this.isAttached()
+			? [...this.runtime.getQuorum().getMembers().keys()]
+			: [];
 	}
 
 	private readonly handleIncomingSet = (
@@ -239,7 +246,8 @@ export class PactMapClass<T = unknown>
 		// proposals on the ground.
 		const proposalValid =
 			currentValue === undefined ||
-			(currentValue.pending === undefined && currentValue.accepted.sequenceNumber <= refSeq);
+			(currentValue.pending === undefined &&
+				currentValue.accepted.sequenceNumber <= refSeq);
 		if (!proposalValid) {
 			return;
 		}
@@ -322,7 +330,8 @@ export class PactMapClass<T = unknown>
 
 				if (pending.expectedSignoffs.length === 0) {
 					// The pending value has settled
-					const clientLeaveSequenceNumber = this.deltaManager.lastSequenceNumber;
+					const clientLeaveSequenceNumber =
+						this.deltaManager.lastSequenceNumber;
 					this.values.set(key, {
 						accepted: {
 							value: pending.value,
@@ -344,14 +353,20 @@ export class PactMapClass<T = unknown>
 	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		const allEntries = [...this.values.entries()];
-		return createSingleBlobSummary(snapshotFileName, JSON.stringify(allEntries));
+		return createSingleBlobSummary(
+			snapshotFileName,
+			JSON.stringify(allEntries),
+		);
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
-		const content = await readAndParse<[string, Pact<T>][]>(storage, snapshotFileName);
+		const content = await readAndParse<[string, Pact<T>][]>(
+			storage,
+			snapshotFileName,
+		);
 		for (const [key, value] of content) {
 			this.values.set(key, value);
 		}
@@ -392,7 +407,9 @@ export class PactMapClass<T = unknown>
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected processMessagesCore(
+		messagesCollection: IRuntimeMessageCollection,
+	): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
 			this.processMessage(envelope, messageContent, local);

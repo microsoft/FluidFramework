@@ -4,12 +4,13 @@
  */
 
 import { strict as assert } from "node:assert";
+import {
+	bumpVersionScheme,
+	detectVersionScheme,
+} from "@fluid-tools/version-tools";
+import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 import type { Machine } from "jssm";
 import chalk from "picocolors";
-
-import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
-
-import { bumpVersionScheme, detectVersionScheme } from "@fluid-tools/version-tools";
 
 import { getDefaultInterdependencyRange } from "../config.js";
 import {
@@ -20,9 +21,16 @@ import {
 } from "../library/index.js";
 import type { CommandLogger } from "../logging.js";
 import type { MachineState } from "../machines/index.js";
-import { type ReleaseGroup, type ReleasePackage, isReleaseGroup } from "../releaseGroups.js";
+import {
+	isReleaseGroup,
+	type ReleaseGroup,
+	type ReleasePackage,
+} from "../releaseGroups.js";
 import type { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
-import { BaseStateHandler, type StateHandlerFunction } from "./stateHandlers.js";
+import {
+	BaseStateHandler,
+	type StateHandlerFunction,
+} from "./stateHandlers.js";
 
 /**
  * Bumps any pre-release dependencies that have been released.
@@ -101,10 +109,16 @@ export const doBumpReleasedDependencies: StateHandlerFunction = async (
 		}
 	}
 
-	const remainingReleaseGroupsToBump = difference(preReleaseGroups, updatedDeps);
+	const remainingReleaseGroupsToBump = difference(
+		preReleaseGroups,
+		updatedDeps,
+	);
 	const remainingPackagesToBump = difference(preReleasePackages, updatedPkgs);
 
-	if (remainingReleaseGroupsToBump.size === 0 && remainingPackagesToBump.size === 0) {
+	if (
+		remainingReleaseGroupsToBump.size === 0 &&
+		remainingPackagesToBump.size === 0
+	) {
 		// This is the same command as run above, but this time we write the changes. There are more
 		// efficient ways to do this but this is simple.
 		({ updatedPackages, updatedDependencies } = await npmCheckUpdates(
@@ -156,7 +170,8 @@ export const doReleaseGroupBump: StateHandlerFunction = async (
 ): Promise<boolean> => {
 	if (testMode) return true;
 
-	const { bumpType, context, releaseGroup, releaseVersion, shouldInstall } = data;
+	const { bumpType, context, releaseGroup, releaseVersion, shouldInstall } =
+		data;
 
 	const rgRepo = isReleaseGroup(releaseGroup)
 		? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -178,7 +193,9 @@ export const doReleaseGroupBump: StateHandlerFunction = async (
 		context,
 		rgRepo,
 		newVersion,
-		rgRepo instanceof MonoRepo ? getDefaultInterdependencyRange(rgRepo, context) : undefined,
+		rgRepo instanceof MonoRepo
+			? getDefaultInterdependencyRange(rgRepo, context)
+			: undefined,
 		log,
 	);
 

@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
 import {
 	checkCompatibility,
-	normalizeFieldSchema,
-	importCompatibilitySchemaSnapshot,
-	SchemaFactory,
 	exportCompatibilitySchemaSnapshot,
-	TreeViewConfiguration,
+	importCompatibilitySchemaSnapshot,
+	normalizeFieldSchema,
 	type SchemaCompatibilityStatus,
+	SchemaFactory,
+	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
-import { strict as assert } from "node:assert";
 
 describe("snapshotCompatibilityChecker", () => {
 	it("parse and snapshot can roundtrip schema", () => {
@@ -27,7 +27,9 @@ describe("snapshotCompatibilityChecker", () => {
 
 		assert.equal(normalizedView.allowedTypeSet.size, 1);
 		assert.equal(
-			normalizedView.allowedTypesIdentifiers.has("com.fluidframework.leaf.string"),
+			normalizedView.allowedTypesIdentifiers.has(
+				"com.fluidframework.leaf.string",
+			),
 			true,
 		);
 	});
@@ -66,11 +68,15 @@ describe("snapshotCompatibilityChecker", () => {
 			y: factory.number,
 		}) {}
 		const viewSchema = new TreeViewConfiguration({ schema: Point2D });
-		const encodedSchema = JSON.stringify(exportCompatibilitySchemaSnapshot(viewSchema));
+		const encodedSchema = JSON.stringify(
+			exportCompatibilitySchemaSnapshot(viewSchema),
+		);
 
 		// Load the past view schema from the snapshot (in-memory for the purposes of this test)
 		// This snapshot is assumed to be the same as Point3D, except missing `z`.
-		const oldViewSchema = importCompatibilitySchemaSnapshot(JSON.parse(encodedSchema));
+		const oldViewSchema = importCompatibilitySchemaSnapshot(
+			JSON.parse(encodedSchema),
+		);
 
 		// Build the current view schema
 		class Point3D extends factory.object("Point", {
@@ -83,7 +89,10 @@ describe("snapshotCompatibilityChecker", () => {
 		const currentViewSchema = new TreeViewConfiguration({ schema: Point3D });
 
 		// Check to see if the document created by the historical view schema can be opened with the current view schema
-		const backwardsCompatibilityStatus = checkCompatibility(oldViewSchema, currentViewSchema);
+		const backwardsCompatibilityStatus = checkCompatibility(
+			oldViewSchema,
+			currentViewSchema,
+		);
 
 		// z is not present in Point2D, so the schema must be upgraded
 		assert.equal(backwardsCompatibilityStatus.canView, false);
@@ -92,7 +101,10 @@ describe("snapshotCompatibilityChecker", () => {
 		assert.equal(backwardsCompatibilityStatus.canUpgrade, true);
 
 		// Test what the old version of the application would do with a tree using the new schema:
-		const forwardsCompatibilityStatus = checkCompatibility(currentViewSchema, oldViewSchema);
+		const forwardsCompatibilityStatus = checkCompatibility(
+			currentViewSchema,
+			oldViewSchema,
+		);
 
 		// If the old schema set allowUnknownOptionalFields, this would be true, but since it did not,
 		// we assert that there is forwards compatibility break:

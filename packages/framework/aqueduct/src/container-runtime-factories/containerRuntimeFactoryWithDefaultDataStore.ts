@@ -9,7 +9,11 @@ import type {
 	// eslint-disable-next-line import-x/no-deprecated
 	IContainerRuntimeWithResolveHandle_Deprecated,
 } from "@fluidframework/container-runtime-definitions/internal";
-import type { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import type {
+	FluidObject,
+	IRequest,
+	IResponse,
+} from "@fluidframework/core-interfaces";
 // eslint-disable-next-line import-x/no-deprecated
 import type { RuntimeRequestHandler } from "@fluidframework/request-handler/internal";
 import type {
@@ -23,7 +27,9 @@ import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory.js";
 
 const defaultDataStoreId = "default";
 
-async function getDefaultFluidObject(runtime: IContainerRuntime): Promise<FluidObject> {
+async function getDefaultFluidObject(
+	runtime: IContainerRuntime,
+): Promise<FluidObject> {
 	const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
 	if (entryPoint === undefined) {
 		throw new Error("default dataStore must exist");
@@ -89,7 +95,9 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 			if (parser.pathParts.length === 0) {
 				// This cast is safe as loadContainerRuntime is called in the base class
 				// eslint-disable-next-line import-x/no-deprecated
-				return (runtime as IContainerRuntimeWithResolveHandle_Deprecated).resolveHandle({
+				return (
+					runtime as IContainerRuntimeWithResolveHandle_Deprecated
+				).resolveHandle({
 					url: `/${defaultDataStoreId}${parser.query}`,
 					headers: request.headers,
 				});
@@ -109,7 +117,9 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 	/**
 	 * {@inheritDoc BaseContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
-	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
+	protected async containerInitializingFirstTime(
+		runtime: IContainerRuntime,
+	): Promise<void> {
 		const dataStore = await runtime.createDataStore(this.defaultFactory.type);
 		await dataStore.trySetAlias(defaultDataStoreId);
 	}

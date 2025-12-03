@@ -3,15 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { createFuzzDescribe, makeRandom } from "@fluid-private/stochastic-test-utils";
+import {
+	createFuzzDescribe,
+	makeRandom,
+} from "@fluid-private/stochastic-test-utils";
 
 import {
-	type IConfigRange,
-	type IMergeTreeOperationRunnerConfig,
-	type TestOperation,
 	doOverRange,
 	generateClientNames,
+	type IConfigRange,
+	type IMergeTreeOperationRunnerConfig,
 	runMergeTreeOperationRunner,
+	type TestOperation,
 } from "./mergeTreeOperationRunner.js";
 import {
 	annotateWithField,
@@ -56,7 +59,10 @@ export const defaultOptions: IObliterateFarmConfig = {
 // Generate a list of single character client names, support up to 69 clients
 const clientNames = generateClientNames();
 
-function runObliterateFarmTests(opts: IObliterateFarmConfig, extraSeed?: number): void {
+function runObliterateFarmTests(
+	opts: IObliterateFarmConfig,
+	extraSeed?: number,
+): void {
 	doOverRange(opts.minLength, opts.growthFunc, (minLength) => {
 		for (const { name, config } of [
 			{
@@ -81,7 +87,12 @@ function runObliterateFarmTests(opts: IObliterateFarmConfig, extraSeed?: number)
 			},
 		])
 			it(`${name}: ObliterateFarm_${minLength}`, async () => {
-				const random = makeRandom(0xdeadbeef, 0xfeedbed, minLength, extraSeed ?? 0);
+				const random = makeRandom(
+					0xdeadbeef,
+					0xfeedbed,
+					minLength,
+					extraSeed ?? 0,
+				);
 
 				const clients: TestClient[] = [
 					new TestClient({
@@ -90,7 +101,8 @@ function runObliterateFarmTests(opts: IObliterateFarmConfig, extraSeed?: number)
 						mergeTreeEnableAnnotateAdjust: true,
 					}),
 				];
-				for (const [i, c] of clients.entries()) c.startOrUpdateCollaboration(clientNames[i]);
+				for (const [i, c] of clients.entries())
+					c.startOrUpdateCollaboration(clientNames[i]);
 
 				let seq = 0;
 				while (clients.length < config.clients.max) {
@@ -109,7 +121,13 @@ function runObliterateFarmTests(opts: IObliterateFarmConfig, extraSeed?: number)
 						clients.push(newClient);
 					}
 
-					seq = runMergeTreeOperationRunner(random, seq, clients, minLength, config);
+					seq = runMergeTreeOperationRunner(
+						random,
+						seq,
+						clients,
+						minLength,
+						config,
+					);
 				}
 			}).timeout(30 * 10000);
 	});

@@ -21,7 +21,10 @@ import { createElement } from "react";
 // eslint-disable-next-line import-x/no-internal-modules
 import { createRoot } from "react-dom/client";
 
-import { DiceRollerContainerRuntimeFactory, type EntryPoint } from "./container/index.js";
+import {
+	DiceRollerContainerRuntimeFactory,
+	type EntryPoint,
+} from "./container/index.js";
 import { renderCursorPresence } from "./cursor.js";
 import { DiceRollerView } from "./view.js";
 
@@ -34,7 +37,9 @@ const {
 } = await createExampleDriver(service);
 
 const codeLoader: ICodeDetailsLoader = {
-	load: async (details: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
+	load: async (
+		details: IFluidCodeDetails,
+	): Promise<IFluidModuleWithDetails> => {
 		return {
 			module: { fluidExport: new DiceRollerContainerRuntimeFactory() },
 			details,
@@ -77,14 +82,17 @@ if (location.hash.length === 0) {
 	});
 }
 
-const { diceRoller, presence } = (await container.getEntryPoint()) as EntryPoint;
+const { diceRoller, presence } =
+	(await container.getEntryPoint()) as EntryPoint;
 
 // Render view
 const appDiv = document.getElementById("app") as HTMLDivElement;
 const appRoot = createRoot(appDiv);
 appRoot.render(createElement(DiceRollerView, { diceRoller }));
 
-const cursorContentDiv = document.getElementById("cursor-position") as HTMLDivElement;
+const cursorContentDiv = document.getElementById(
+	"cursor-position",
+) as HTMLDivElement;
 renderCursorPresence(presence, cursorContentDiv);
 
 // Update url and tab title

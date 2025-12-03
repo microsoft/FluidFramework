@@ -6,12 +6,12 @@
 import { strict as assert } from "node:assert";
 
 import {
+	independentView,
 	SchemaFactory,
 	TreeViewConfiguration,
-	independentView,
 } from "@fluidframework/tree/alpha";
-import { SharedTreeSemanticAgent } from "@fluidframework/tree-agent/alpha";
 import type { SharedTreeChatModel } from "@fluidframework/tree-agent/alpha";
+import { SharedTreeSemanticAgent } from "@fluidframework/tree-agent/alpha";
 
 import { createSesEditExecutor } from "../executor.js";
 
@@ -37,7 +37,9 @@ describe.skip("SES edit executor", () => {
 	});
 
 	it("passes globals to the compartment", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		const view = independentView(
+			new TreeViewConfiguration({ schema: sf.string }),
+		);
 		view.initialize("Initial");
 		const editor = createSesEditExecutor({
 			lockdownOptions,
@@ -60,7 +62,9 @@ describe.skip("SES edit executor", () => {
 	});
 
 	it("returns a code error when SES blocks the generated code", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		const view = independentView(
+			new TreeViewConfiguration({ schema: sf.string }),
+		);
 		view.initialize("Initial");
 		const editor = createSesEditExecutor({ lockdownOptions });
 		const model: SharedTreeChatModel = {
@@ -75,7 +79,11 @@ describe.skip("SES edit executor", () => {
 		const agent = new SharedTreeSemanticAgent(model, view, { editor });
 		const response = await agent.query("Attempt forbidden edit");
 		assert.match(response, /is not extensible/i);
-		assert.equal(view.root, "Initial", "Tree should not change after SES rejection");
+		assert.equal(
+			view.root,
+			"Initial",
+			"Tree should not change after SES rejection",
+		);
 	});
 });
 

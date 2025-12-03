@@ -5,9 +5,9 @@
 
 import {
 	FileMode,
-	IAttachment,
-	IBlob,
-	ITree,
+	type IAttachment,
+	type IBlob,
+	type ITree,
 	TreeEntry,
 } from "@fluidframework/driver-definitions/internal";
 

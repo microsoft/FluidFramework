@@ -4,23 +4,23 @@
  */
 
 import {
-	IDocumentStorageService,
-	IDocumentStorageServicePolicies,
+	type IDocumentStorageService,
+	type IDocumentStorageServicePolicies,
+	type ISnapshotTree,
+	type IVersion,
 	LoaderCachingPolicy,
-	ISnapshotTree,
-	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	DocumentStorageServiceProxy,
 	PrefetchDocumentStorageService,
 } from "@fluidframework/driver-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import { ICache } from "./cache.js";
-import { INormalizedWholeSnapshot } from "./contracts.js";
-import { ISnapshotTreeVersion } from "./definitions.js";
-import { GitManager } from "./gitManager.js";
-import { IRouterliciousDriverPolicies } from "./policies.js";
+import type { ICache } from "./cache.js";
+import type { INormalizedWholeSnapshot } from "./contracts.js";
+import type { ISnapshotTreeVersion } from "./definitions.js";
+import type { GitManager } from "./gitManager.js";
+import type { IRouterliciousDriverPolicies } from "./policies.js";
 import { ShreddedSummaryDocumentStorageService } from "./shreddedSummaryDocumentStorageService.js";
 import { WholeSummaryDocumentStorageService } from "./wholeSummaryDocumentStorageService.js";
 
@@ -103,11 +103,15 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 		);
 	}
 
-	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
+	public async getSnapshotTree(
+		version?: IVersion,
+	): Promise<ISnapshotTree | null> {
 		const tree = await this.internalStorageService.getSnapshotTree(version);
 		if (tree !== null) {
 			this._logTailSha =
-				".logTail" in tree.trees ? tree.trees[".logTail"].blobs.logTail : undefined;
+				".logTail" in tree.trees
+					? tree.trees[".logTail"].blobs.logTail
+					: undefined;
 		}
 		return tree;
 	}

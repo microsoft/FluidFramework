@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryBaseLogger, LogLevel, Tagged } from "@fluidframework/core-interfaces";
+import type {
+	ITelemetryBaseLogger,
+	LogLevel,
+	Tagged,
+} from "@fluidframework/core-interfaces";
 
 /**
  * The categories FF uses when instrumenting the code.
@@ -31,7 +35,10 @@ export type TelemetryEventPropertyTypeExt =
 	| boolean
 	| undefined
 	| (string | number | boolean)[]
-	| Record<string, string | number | boolean | undefined | (string | number | boolean)[]>;
+	| Record<
+			string,
+			string | number | boolean | undefined | (string | number | boolean)[]
+	  >;
 
 /**
  * JSON-serializable properties, which will be logged with telemetry.
@@ -97,7 +104,8 @@ export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
  * @remarks Maps to category = "performance"
  * @legacy @beta
  */
-export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt {
+export interface ITelemetryPerformanceEventExt
+	extends ITelemetryGenericEventExt {
 	/**
 	 * Duration of event (optional)
 	 */

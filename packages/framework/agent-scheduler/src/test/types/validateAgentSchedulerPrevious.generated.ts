@@ -12,11 +12,22 @@
  */
 
 import type * as old from "@fluidframework/agent-scheduler-previous/internal";
-import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
+import type {
+	FullType,
+	MinimalType,
+	requireAssignableTo,
+	TypeOnly,
+} from "@fluidframework/build-tools";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> =
+	| TypeOnly<T>
+	| MinimalType<T>
+	| FullType<T>
+	| typeof old
+	| typeof current
+	| requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -25,7 +36,11 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_AgentSchedulerFactory": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_AgentSchedulerFactory = requireAssignableTo<TypeOnly<old.AgentSchedulerFactory>, TypeOnly<current.AgentSchedulerFactory>>
+declare type old_as_current_for_Class_AgentSchedulerFactory =
+	requireAssignableTo<
+		TypeOnly<old.AgentSchedulerFactory>,
+		TypeOnly<current.AgentSchedulerFactory>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -34,7 +49,11 @@ declare type old_as_current_for_Class_AgentSchedulerFactory = requireAssignableT
  * typeValidation.broken:
  * "Class_AgentSchedulerFactory": {"backCompat": false}
  */
-declare type current_as_old_for_Class_AgentSchedulerFactory = requireAssignableTo<TypeOnly<current.AgentSchedulerFactory>, TypeOnly<old.AgentSchedulerFactory>>
+declare type current_as_old_for_Class_AgentSchedulerFactory =
+	requireAssignableTo<
+		TypeOnly<current.AgentSchedulerFactory>,
+		TypeOnly<old.AgentSchedulerFactory>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -43,7 +62,10 @@ declare type current_as_old_for_Class_AgentSchedulerFactory = requireAssignableT
  * typeValidation.broken:
  * "Class_TaskSubscription": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_TaskSubscription = requireAssignableTo<TypeOnly<old.TaskSubscription>, TypeOnly<current.TaskSubscription>>
+declare type old_as_current_for_Class_TaskSubscription = requireAssignableTo<
+	TypeOnly<old.TaskSubscription>,
+	TypeOnly<current.TaskSubscription>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -52,7 +74,10 @@ declare type old_as_current_for_Class_TaskSubscription = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Class_TaskSubscription": {"backCompat": false}
  */
-declare type current_as_old_for_Class_TaskSubscription = requireAssignableTo<TypeOnly<current.TaskSubscription>, TypeOnly<old.TaskSubscription>>
+declare type current_as_old_for_Class_TaskSubscription = requireAssignableTo<
+	TypeOnly<current.TaskSubscription>,
+	TypeOnly<old.TaskSubscription>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -61,7 +86,11 @@ declare type current_as_old_for_Class_TaskSubscription = requireAssignableTo<Typ
  * typeValidation.broken:
  * "ClassStatics_AgentSchedulerFactory": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_AgentSchedulerFactory = requireAssignableTo<TypeOnly<typeof current.AgentSchedulerFactory>, TypeOnly<typeof old.AgentSchedulerFactory>>
+declare type current_as_old_for_ClassStatics_AgentSchedulerFactory =
+	requireAssignableTo<
+		TypeOnly<typeof current.AgentSchedulerFactory>,
+		TypeOnly<typeof old.AgentSchedulerFactory>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -70,7 +99,11 @@ declare type current_as_old_for_ClassStatics_AgentSchedulerFactory = requireAssi
  * typeValidation.broken:
  * "ClassStatics_TaskSubscription": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_TaskSubscription = requireAssignableTo<TypeOnly<typeof current.TaskSubscription>, TypeOnly<typeof old.TaskSubscription>>
+declare type current_as_old_for_ClassStatics_TaskSubscription =
+	requireAssignableTo<
+		TypeOnly<typeof current.TaskSubscription>,
+		TypeOnly<typeof old.TaskSubscription>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -79,7 +112,10 @@ declare type current_as_old_for_ClassStatics_TaskSubscription = requireAssignabl
  * typeValidation.broken:
  * "Interface_IAgentScheduler": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IAgentScheduler = requireAssignableTo<TypeOnly<old.IAgentScheduler>, TypeOnly<current.IAgentScheduler>>
+declare type old_as_current_for_Interface_IAgentScheduler = requireAssignableTo<
+	TypeOnly<old.IAgentScheduler>,
+	TypeOnly<current.IAgentScheduler>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -88,7 +124,10 @@ declare type old_as_current_for_Interface_IAgentScheduler = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IAgentScheduler": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IAgentScheduler = requireAssignableTo<TypeOnly<current.IAgentScheduler>, TypeOnly<old.IAgentScheduler>>
+declare type current_as_old_for_Interface_IAgentScheduler = requireAssignableTo<
+	TypeOnly<current.IAgentScheduler>,
+	TypeOnly<old.IAgentScheduler>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -97,7 +136,11 @@ declare type current_as_old_for_Interface_IAgentScheduler = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IAgentSchedulerEvents": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IAgentSchedulerEvents = requireAssignableTo<TypeOnly<old.IAgentSchedulerEvents>, TypeOnly<current.IAgentSchedulerEvents>>
+declare type old_as_current_for_Interface_IAgentSchedulerEvents =
+	requireAssignableTo<
+		TypeOnly<old.IAgentSchedulerEvents>,
+		TypeOnly<current.IAgentSchedulerEvents>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -106,7 +149,11 @@ declare type old_as_current_for_Interface_IAgentSchedulerEvents = requireAssigna
  * typeValidation.broken:
  * "Interface_IAgentSchedulerEvents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IAgentSchedulerEvents = requireAssignableTo<TypeOnly<current.IAgentSchedulerEvents>, TypeOnly<old.IAgentSchedulerEvents>>
+declare type current_as_old_for_Interface_IAgentSchedulerEvents =
+	requireAssignableTo<
+		TypeOnly<current.IAgentSchedulerEvents>,
+		TypeOnly<old.IAgentSchedulerEvents>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -115,7 +162,11 @@ declare type current_as_old_for_Interface_IAgentSchedulerEvents = requireAssigna
  * typeValidation.broken:
  * "Interface_IProvideAgentScheduler": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IProvideAgentScheduler = requireAssignableTo<TypeOnly<old.IProvideAgentScheduler>, TypeOnly<current.IProvideAgentScheduler>>
+declare type old_as_current_for_Interface_IProvideAgentScheduler =
+	requireAssignableTo<
+		TypeOnly<old.IProvideAgentScheduler>,
+		TypeOnly<current.IProvideAgentScheduler>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -124,7 +175,11 @@ declare type old_as_current_for_Interface_IProvideAgentScheduler = requireAssign
  * typeValidation.broken:
  * "Interface_IProvideAgentScheduler": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IProvideAgentScheduler = requireAssignableTo<TypeOnly<current.IProvideAgentScheduler>, TypeOnly<old.IProvideAgentScheduler>>
+declare type current_as_old_for_Interface_IProvideAgentScheduler =
+	requireAssignableTo<
+		TypeOnly<current.IProvideAgentScheduler>,
+		TypeOnly<old.IProvideAgentScheduler>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -133,7 +188,11 @@ declare type current_as_old_for_Interface_IProvideAgentScheduler = requireAssign
  * typeValidation.broken:
  * "Interface_ITaskSubscriptionEvents": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ITaskSubscriptionEvents = requireAssignableTo<TypeOnly<old.ITaskSubscriptionEvents>, TypeOnly<current.ITaskSubscriptionEvents>>
+declare type old_as_current_for_Interface_ITaskSubscriptionEvents =
+	requireAssignableTo<
+		TypeOnly<old.ITaskSubscriptionEvents>,
+		TypeOnly<current.ITaskSubscriptionEvents>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -142,7 +201,11 @@ declare type old_as_current_for_Interface_ITaskSubscriptionEvents = requireAssig
  * typeValidation.broken:
  * "Interface_ITaskSubscriptionEvents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ITaskSubscriptionEvents = requireAssignableTo<TypeOnly<current.ITaskSubscriptionEvents>, TypeOnly<old.ITaskSubscriptionEvents>>
+declare type current_as_old_for_Interface_ITaskSubscriptionEvents =
+	requireAssignableTo<
+		TypeOnly<current.ITaskSubscriptionEvents>,
+		TypeOnly<old.ITaskSubscriptionEvents>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -151,4 +214,7 @@ declare type current_as_old_for_Interface_ITaskSubscriptionEvents = requireAssig
  * typeValidation.broken:
  * "Variable_IAgentScheduler": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_IAgentScheduler = requireAssignableTo<TypeOnly<typeof current.IAgentScheduler>, TypeOnly<typeof old.IAgentScheduler>>
+declare type current_as_old_for_Variable_IAgentScheduler = requireAssignableTo<
+	TypeOnly<typeof current.IAgentScheduler>,
+	TypeOnly<typeof old.IAgentScheduler>
+>;

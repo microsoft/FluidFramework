@@ -30,12 +30,19 @@ const {
  * @param {string} config.originalPath - Path to the document being modified.
  */
 function includeTransform(content, options, config) {
-	const { path: relativeFilePath, start: startLineString, end: endLineString } = options;
+	const {
+		path: relativeFilePath,
+		start: startLineString,
+		end: endLineString,
+	} = options;
 	const { originalPath: documentFilePath } = config;
 
 	const startLine =
-		startLineString === undefined ? undefined : Number.parseInt(startLineString);
-	const endLine = endLineString === undefined ? undefined : Number.parseInt(endLineString);
+		startLineString === undefined
+			? undefined
+			: Number.parseInt(startLineString);
+	const endLine =
+		endLineString === undefined ? undefined : Number.parseInt(endLineString);
 
 	if (!relativeFilePath) {
 		throw new Error(
@@ -43,11 +50,17 @@ function includeTransform(content, options, config) {
 		);
 	}
 
-	const resolvedFilePath = resolveRelativePath(documentFilePath, relativeFilePath);
+	const resolvedFilePath = resolveRelativePath(
+		documentFilePath,
+		relativeFilePath,
+	);
 
 	try {
 		const fileContents = readFile(resolvedFilePath, startLine, endLine);
-		const section = formattedSectionText(fileContents, /* headingOptions: */ undefined);
+		const section = formattedSectionText(
+			fileContents,
+			/* headingOptions: */ undefined,
+		);
 
 		return formattedEmbeddedContentBody(section);
 	} catch (error) {

@@ -12,13 +12,17 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
+	createDDSFuzzSuite,
 	type DDSFuzzHarnessEvents,
 	type DDSFuzzModel,
 	type DDSFuzzTestState,
-	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
-import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils.js";
+import {
+	SharedTreeTestFactory,
+	toJsonableTree,
+	validateTree,
+} from "../../utils.js";
 
 import {
 	type EditGeneratorOpWeights,
@@ -29,9 +33,9 @@ import {
 	viewFromState,
 } from "./fuzzEditGenerators.js";
 import {
-	applyForkMergeOperation,
 	applyConstraint,
 	applyFieldEdit,
+	applyForkMergeOperation,
 	applySynchronizationOp,
 	applyUndoRedoEdit,
 } from "./fuzzEditReducers.js";
@@ -50,7 +54,10 @@ interface BranchedTreeFuzzTestState extends FuzzTestState {
 	branch?: FuzzTransactionView;
 }
 
-const fuzzComposedVsIndividualReducer = combineReducers<Operation, BranchedTreeFuzzTestState>({
+const fuzzComposedVsIndividualReducer = combineReducers<
+	Operation,
+	BranchedTreeFuzzTestState
+>({
 	treeEdit: (state, { edit }) => {
 		switch (edit.type) {
 			case "fieldEdit": {
@@ -72,7 +79,11 @@ const fuzzComposedVsIndividualReducer = combineReducers<Operation, BranchedTreeF
 	undoRedo: (state, { operation }) => {
 		const tree = state.main ?? assert.fail();
 		assert(isRevertibleSharedTreeView(tree.checkout));
-		applyUndoRedoEdit(tree.checkout.undoStack, tree.checkout.redoStack, operation);
+		applyUndoRedoEdit(
+			tree.checkout.undoStack,
+			tree.checkout.redoStack,
+			operation,
+		);
 		return state;
 	},
 	synchronizeTrees: (state) => {
@@ -122,8 +133,10 @@ describe("Fuzz - composed vs individual changes", () => {
 	};
 
 	describe("converges to the same tree", () => {
-		const generatorFactory = (): AsyncGenerator<Operation, BranchedTreeFuzzTestState> =>
-			takeAsync(opsPerRun, makeOpGenerator(composeVsIndividualWeights));
+		const generatorFactory = (): AsyncGenerator<
+			Operation,
+			BranchedTreeFuzzTestState
+		> => takeAsync(opsPerRun, makeOpGenerator(composeVsIndividualWeights));
 
 		const model: DDSFuzzModel<
 			SharedTreeTestFactory,
@@ -140,7 +153,8 @@ describe("Fuzz - composed vs individual changes", () => {
 		emitter.on("testStart", (initialState: BranchedTreeFuzzTestState) => {
 			initialState.main = viewFromState(initialState, initialState.clients[0]);
 
-			const forkedView = initialState.main.fork() as unknown as FuzzTransactionView;
+			const forkedView =
+				initialState.main.fork() as unknown as FuzzTransactionView;
 			const treeSchema = initialState.main.currentSchema;
 
 			forkedView.currentSchema =
@@ -150,7 +164,10 @@ describe("Fuzz - composed vs individual changes", () => {
 			initialState.transactionViews?.delete(initialState.clients[0].channel);
 			const transactionViews = new Map();
 
-			transactionViews.set(initialState.clients[0].channel, initialState.branch);
+			transactionViews.set(
+				initialState.clients[0].channel,
+				initialState.branch,
+			);
 			initialState.transactionViews = transactionViews;
 		});
 		emitter.on("testEnd", (finalState: BranchedTreeFuzzTestState) => {

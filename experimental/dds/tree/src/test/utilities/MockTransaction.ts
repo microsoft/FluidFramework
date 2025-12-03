@@ -4,14 +4,14 @@
  */
 
 import { Result } from '../../Common.js';
-import { RevisionView } from '../../RevisionView.js';
+import { type ChangeInternal, EditStatus } from '../../persisted-types/index.js';
+import type { RevisionView } from '../../RevisionView.js';
 import {
-	ChangeResult,
+	type ChangeResult,
 	GenericTransaction,
-	GenericTransactionPolicy,
-	TransactionInternal,
+	type GenericTransactionPolicy,
+	type TransactionInternal,
 } from '../../TransactionInternal.js';
-import { ChangeInternal, EditStatus } from '../../persisted-types/index.js';
 
 /**
  * @internal

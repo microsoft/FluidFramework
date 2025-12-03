@@ -4,10 +4,10 @@
  */
 
 import type {
-	IContainer,
 	ICodeDetailsLoader,
-	IFluidCodeDetails,
+	IContainer,
 	IContainerPolicies,
+	IFluidCodeDetails,
 } from "@fluidframework/container-definitions/internal";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import type {
@@ -23,13 +23,13 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import { DriverHeader } from "@fluidframework/driver-definitions/internal";
 import {
-	GenericError,
-	normalizeError,
 	createChildMonitoringContext,
-	mixinMonitoringContext,
-	sessionStorageConfigProvider,
-	PerformanceEvent,
+	GenericError,
 	isFluidError,
+	mixinMonitoringContext,
+	normalizeError,
+	PerformanceEvent,
+	sessionStorageConfigProvider,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -45,8 +45,12 @@ import type {
 } from "./summarizerResultTypes.js";
 
 interface OnDemandSummarizeResultsPromises {
-	readonly summarySubmitted: Promise<SummarizeOnDemandResults["summarySubmitted"]>;
-	readonly summaryOpBroadcasted: Promise<SummarizeOnDemandResults["summaryOpBroadcasted"]>;
+	readonly summarySubmitted: Promise<
+		SummarizeOnDemandResults["summarySubmitted"]
+	>;
+	readonly summaryOpBroadcasted: Promise<
+		SummarizeOnDemandResults["summaryOpBroadcasted"]
+	>;
 }
 
 interface OnDemandSummarizeOptions {
@@ -57,7 +61,9 @@ interface OnDemandSummarizeOptions {
 
 interface SummarizerLike {
 	readonly ISummarizer?: SummarizerLike;
-	summarizeOnDemand(options: OnDemandSummarizeOptions): OnDemandSummarizeResultsPromises;
+	summarizeOnDemand(
+		options: OnDemandSummarizeOptions,
+	): OnDemandSummarizeResultsPromises;
 }
 
 /**
@@ -126,7 +132,8 @@ export interface ICreateAndLoadContainerProps {
  * Props used to load a container.
  * @legacy @beta
  */
-export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProps {
+export interface ILoadExistingContainerProps
+	extends ICreateAndLoadContainerProps {
 	/**
 	 * The request to resolve the container.
 	 */
@@ -151,7 +158,8 @@ export type ILoadSummarizerContainerProps = Omit<
  * Props used to create a detached container.
  * @legacy @beta
  */
-export interface ICreateDetachedContainerProps extends ICreateAndLoadContainerProps {
+export interface ICreateDetachedContainerProps
+	extends ICreateAndLoadContainerProps {
 	/**
 	 * The code details for the container to be created.
 	 */
@@ -162,7 +170,8 @@ export interface ICreateDetachedContainerProps extends ICreateAndLoadContainerPr
  * Props used to rehydrate a detached container.
  * @legacy @beta
  */
-export interface IRehydrateDetachedContainerProps extends ICreateAndLoadContainerProps {
+export interface IRehydrateDetachedContainerProps
+	extends ICreateAndLoadContainerProps {
 	/**
 	 * The serialized state returned by calling serialize on another container
 	 */
@@ -179,10 +188,13 @@ export async function createDetachedContainer(
 	createDetachedContainerProps: ICreateDetachedContainerProps,
 ): Promise<IContainer> {
 	const loader = new Loader(createDetachedContainerProps);
-	return loader.createDetachedContainer(createDetachedContainerProps.codeDetails, {
-		canReconnect: createDetachedContainerProps.allowReconnect,
-		clientDetailsOverride: createDetachedContainerProps.clientDetailsOverride,
-	});
+	return loader.createDetachedContainer(
+		createDetachedContainerProps.codeDetails,
+		{
+			canReconnect: createDetachedContainerProps.allowReconnect,
+			clientDetailsOverride: createDetachedContainerProps.clientDetailsOverride,
+		},
+	);
 }
 
 /**
@@ -199,7 +211,8 @@ export async function rehydrateDetachedContainer(
 		rehydrateDetachedContainerProps.serializedState,
 		{
 			canReconnect: rehydrateDetachedContainerProps.allowReconnect,
-			clientDetailsOverride: rehydrateDetachedContainerProps.clientDetailsOverride,
+			clientDetailsOverride:
+				rehydrateDetachedContainerProps.clientDetailsOverride,
 		},
 	);
 }
@@ -241,7 +254,9 @@ export async function loadFrozenContainerFromPendingState(
 ): Promise<IContainer> {
 	return loadExistingContainer({
 		...props,
-		documentServiceFactory: createFrozenDocumentServiceFactory(props.documentServiceFactory),
+		documentServiceFactory: createFrozenDocumentServiceFactory(
+			props.documentServiceFactory,
+		),
 	});
 }
 
@@ -254,7 +269,11 @@ export async function loadFrozenContainerFromPendingState(
 export async function loadSummarizerContainerAndMakeSummary(
 	loadSummarizerContainerProps: ILoadSummarizerContainerProps,
 ): Promise<LoadSummarizerSummaryResult> {
-	const { logger, configProvider, request: originalRequest } = loadSummarizerContainerProps;
+	const {
+		logger,
+		configProvider,
+		request: originalRequest,
+	} = loadSummarizerContainerProps;
 	const telemetryProps = {
 		loaderId: uuid(),
 		loaderVersion: pkgVersion,
@@ -301,7 +320,8 @@ export async function loadSummarizerContainerAndMakeSummary(
 				if (container.getEntryPoint === undefined) {
 					throw new GenericError("container.getEntryPoint() is undefined");
 				}
-				const fluidObject = (await container.getEntryPoint()) as FluidObject<SummarizerLike>;
+				const fluidObject =
+					(await container.getEntryPoint()) as FluidObject<SummarizerLike>;
 				const summarizer = fluidObject?.ISummarizer;
 				if (summarizer === undefined) {
 					throw new GenericError("Summarizer entry point not available");

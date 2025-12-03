@@ -7,10 +7,13 @@
  * @fileoverview Helper functions to work with typeid strings
  */
 
-// @ts-ignore
+// @ts-expect-error
 import { constants } from "@fluid-experimental/property-common";
 
-import { NativeTypes, TemplateSchema as templateSchemaJson } from "../templateSchema.js";
+import {
+	NativeTypes,
+	TemplateSchema as templateSchemaJson,
+} from "../templateSchema.js";
 
 const { MSG } = constants;
 
@@ -43,7 +46,8 @@ export namespace TypeIdHelper {
 	 * @internal
 	 */
 	export function isPrimitiveType(in_typeid: string): boolean {
-		const primitiveTypes = templateSchemaJson["$defs"]["primitive-typeid"]["enum"];
+		const primitiveTypes =
+			templateSchemaJson["$defs"]["primitive-typeid"]["enum"];
 
 		if (in_typeid === undefined || in_typeid === "") {
 			return false;
@@ -75,7 +79,8 @@ export namespace TypeIdHelper {
 	 * @internal
 	 */
 	export function isReservedType(in_typeid: string): boolean {
-		const reservedTypes = templateSchemaJson["$defs"]["reserved-typeid"]["enum"];
+		const reservedTypes =
+			templateSchemaJson["$defs"]["reserved-typeid"]["enum"];
 		return reservedTypes.indexOf(in_typeid) >= 0;
 	}
 
@@ -104,10 +109,15 @@ export namespace TypeIdHelper {
 	 * @returns The typeid without context, the context and if we have an enum type
 	 * @internal
 	 */
-	export function extractContext(in_typeid: string | undefined): ExtractedContext {
+	export function extractContext(
+		in_typeid: string | undefined,
+	): ExtractedContext {
 		const bracketIndex = in_typeid.indexOf("<");
 		if (bracketIndex !== -1 && in_typeid.endsWith(">")) {
-			let typeid = in_typeid.substr(bracketIndex + 1, in_typeid.length - bracketIndex - 2);
+			let typeid = in_typeid.substr(
+				bracketIndex + 1,
+				in_typeid.length - bracketIndex - 2,
+			);
 			let context = in_typeid.substr(0, bracketIndex);
 
 			// Special case to handle collections without a typeid (e.g. "map<>", which should
@@ -200,7 +210,9 @@ export namespace TypeIdHelper {
 	 * @return The type of the referenced property
 	 * @internal
 	 */
-	export function extractReferenceTargetTypeIdFromReference(in_typeid: string): string {
+	export function extractReferenceTargetTypeIdFromReference(
+		in_typeid: string,
+	): string {
 		// in_enum
 		return in_typeid.substr(0, 10) === "Reference<"
 			? in_typeid.substr(10, in_typeid.length - 11)
@@ -227,9 +239,9 @@ export namespace TypeIdHelper {
 	 * @internal
 	 */
 	export function extractTypeId(in_typeid): string {
-		const matches = in_typeid.match(/\<(.*?)\>/);
+		const matches = in_typeid.match(/<(.*?)>/);
 		return matches !== null && matches.length > 0
-			? matches[0].replace(/[\<\>]/gi, "")
+			? matches[0].replace(/[<>]/gi, "")
 			: in_typeid;
 	}
 
@@ -244,7 +256,10 @@ export namespace TypeIdHelper {
 	 * @returns True if in_baseTypeid is a parent of in_typeid.
 	 * @internal
 	 */
-	export function nativeInheritsFrom(in_typeid: string, in_baseTypeid: string): boolean {
+	export function nativeInheritsFrom(
+		in_typeid: string,
+		in_baseTypeid: string,
+	): boolean {
 		if (!in_typeid || !in_baseTypeid) {
 			throw new Error(MSG.TYPEID_NOT_DEFINED);
 		}
@@ -273,7 +288,7 @@ export namespace TypeIdHelper {
 			return false;
 		}
 
-		let parents = NativeTypes[in_typeid]["inherits"];
+		const parents = NativeTypes[in_typeid]["inherits"];
 
 		// recursively call the function for the parent of the typeid
 		for (let i = 0; i < parents.length; i++) {

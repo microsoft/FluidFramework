@@ -36,13 +36,17 @@ export type ISequencedProposal = { sequenceNumber: number } & IProposal;
  * Adds the sequence number at which the message was approved to an {@link ISequencedProposal}.
  * @legacy @beta
  */
-export type IApprovedProposal = { approvalSequenceNumber: number } & ISequencedProposal;
+export type IApprovedProposal = {
+	approvalSequenceNumber: number;
+} & ISequencedProposal;
 
 /**
  * Adds the sequence number at which the message was committed to an {@link IApprovedProposal}.
  * @legacy @beta
  */
-export type ICommittedProposal = { commitSequenceNumber: number } & IApprovedProposal;
+export type ICommittedProposal = {
+	commitSequenceNumber: number;
+} & IApprovedProposal;
 
 /**
  * Interface for tracking clients in the Quorum.
@@ -51,7 +55,10 @@ export type ICommittedProposal = { commitSequenceNumber: number } & IApprovedPro
 export interface IQuorumClients {
 	getMembers(): Map<string, ISequencedClient>;
 	getMember(clientId: string): ISequencedClient | undefined;
-	on(event: "addMember", listener: (clientId: string, details: ISequencedClient) => void);
+	on(
+		event: "addMember",
+		listener: (clientId: string, details: ISequencedClient) => void,
+	);
 	on(event: "removeMember", listener: (clientId: string) => void);
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	on(event: "error", listener: (message: any) => void);

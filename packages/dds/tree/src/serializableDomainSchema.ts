@@ -6,9 +6,9 @@
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import {
+	type FixRecursiveArraySchema,
 	SchemaFactory,
 	SchemaFactoryBeta,
-	type FixRecursiveArraySchema,
 	type TreeNodeFromImplicitAllowedTypes,
 	type ValidateRecursiveSchema,
 } from "./simple-tree/index.js";
@@ -58,7 +58,10 @@ export namespace FluidSerializableAsTree {
 	 * Do not use. Exists only as a workaround for {@link https://github.com/microsoft/TypeScript/issues/59550} and {@link https://github.com/microsoft/rushstack/issues/4429}.
 	 * @system @beta
 	 */
-	export const _APIExtractorWorkaroundObjectBase = sf.recordRecursive("object", Tree);
+	export const _APIExtractorWorkaroundObjectBase = sf.recordRecursive(
+		"object",
+		Tree,
+	);
 
 	/**
 	 * Arbitrary Fluid Serializable object as a {@link TreeNode}.
@@ -89,15 +92,17 @@ export namespace FluidSerializableAsTree {
 	 * Testing for this in examples/utils/import-testing now shows it has to reference FluidSerializableAsTree.Array instead.
 	 * @system @beta
 	 */
-	export declare type _RecursiveArrayWorkaroundJsonArray = FixRecursiveArraySchema<
-		typeof Array
-	>;
+	export declare type _RecursiveArrayWorkaroundJsonArray =
+		FixRecursiveArraySchema<typeof Array>;
 
 	/**
 	 * Do not use. Exists only as a workaround for {@link https://github.com/microsoft/TypeScript/issues/59550} and {@link https://github.com/microsoft/rushstack/issues/4429}.
 	 * @system @beta
 	 */
-	export const _APIExtractorWorkaroundArrayBase = sf.arrayRecursive("array", Tree);
+	export const _APIExtractorWorkaroundArrayBase = sf.arrayRecursive(
+		"array",
+		Tree,
+	);
 
 	/**
 	 * Arbitrary Fluid Serializable array as a {@link TreeNode}.

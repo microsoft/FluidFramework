@@ -5,10 +5,16 @@
 
 import { strict as assert } from "node:assert";
 
-import type { AzureClient, AzureContainerServices } from "@fluidframework/azure-client";
+import type {
+	AzureClient,
+	AzureContainerServices,
+} from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
-import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import type {
+	ContainerSchema,
+	IFluidContainer,
+} from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/legacy";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import type { AxiosResponse } from "axios";
@@ -20,7 +26,7 @@ import {
 	ScopeType,
 } from "./AzureClientFactory.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
-import { configProvider, waitForMember, getTestMatrix } from "./utils.js";
+import { configProvider, getTestMatrix, waitForMember } from "./utils.js";
 
 const testMatrix = getTestMatrix();
 for (const testOpts of testMatrix) {
@@ -49,26 +55,38 @@ for (const testOpts of testMatrix) {
 			let container: IFluidContainer;
 			let services: AzureContainerServices;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
-					ephemeralSummaryTrees.findOriginalMember,
-					"test-user-id-1",
-					"test-user-name-1",
-				);
+				const containerResponse: AxiosResponse | undefined =
+					await createContainerFromPayload(
+						ephemeralSummaryTrees.findOriginalMember,
+						"test-user-id-1",
+						"test-user-name-1",
+					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container, services } = await client.getContainer(containerId, schema, "2"));
+				({ container, services } = await client.getContainer(
+					containerId,
+					schema,
+					"2",
+				));
 			} else {
 				({ container, services } = await client.createContainer(schema, "2"));
 				containerId = await container.attach();
 			}
 
 			if (container.connectionState !== ConnectionState.Connected) {
-				await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-					durationMs: connectTimeoutMs,
-					errorMsg: "container connect() timeout",
-				});
+				await timeoutPromise(
+					(resolve) => container.once("connected", () => resolve()),
+					{
+						durationMs: connectTimeoutMs,
+						errorMsg: "container connect() timeout",
+					},
+				);
 			}
 
-			assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
+			assert.strictEqual(
+				typeof containerId,
+				"string",
+				"Attach did not return a string ID",
+			);
 			assert.strictEqual(
 				container.attachState,
 				AttachState.Attached,
@@ -77,10 +95,18 @@ for (const testOpts of testMatrix) {
 
 			/* This is a workaround for a known bug, we should have one member (self) upon container connection */
 			const myself = await waitForMember(services.audience, "test-user-id-1");
-			assert.notStrictEqual(myself, undefined, "We should have myself at this point.");
+			assert.notStrictEqual(
+				myself,
+				undefined,
+				"We should have myself at this point.",
+			);
 
 			const members = services.audience.getMembers();
-			assert.strictEqual(members.size, 1, "We should have only one member at this point.");
+			assert.strictEqual(
+				members.size,
+				1,
+				"We should have only one member at this point.",
+			);
 		});
 
 		/**
@@ -94,26 +120,38 @@ for (const testOpts of testMatrix) {
 			let container: IFluidContainer;
 			let services: AzureContainerServices;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
-					ephemeralSummaryTrees.findPartnerMember,
-					"test-user-id-1",
-					"test-user-name-1",
-				);
+				const containerResponse: AxiosResponse | undefined =
+					await createContainerFromPayload(
+						ephemeralSummaryTrees.findPartnerMember,
+						"test-user-id-1",
+						"test-user-name-1",
+					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container, services } = await client.getContainer(containerId, schema, "2"));
+				({ container, services } = await client.getContainer(
+					containerId,
+					schema,
+					"2",
+				));
 			} else {
 				({ container, services } = await client.createContainer(schema, "2"));
 				containerId = await container.attach();
 			}
 
 			if (container.connectionState !== ConnectionState.Connected) {
-				await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-					durationMs: connectTimeoutMs,
-					errorMsg: "container connect() timeout",
-				});
+				await timeoutPromise(
+					(resolve) => container.once("connected", () => resolve()),
+					{
+						durationMs: connectTimeoutMs,
+						errorMsg: "container connect() timeout",
+					},
+				);
 			}
 
-			assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
+			assert.strictEqual(
+				typeof containerId,
+				"string",
+				"Attach did not return a string ID",
+			);
 			assert.strictEqual(
 				container.attachState,
 				AttachState.Attached,
@@ -121,8 +159,15 @@ for (const testOpts of testMatrix) {
 			);
 
 			/* This is a workaround for a known bug, we should have one member (self) upon container connection */
-			const originalSelf = await waitForMember(services.audience, "test-user-id-1");
-			assert.notStrictEqual(originalSelf, undefined, "We should have myself at this point.");
+			const originalSelf = await waitForMember(
+				services.audience,
+				"test-user-id-1",
+			);
+			assert.notStrictEqual(
+				originalSelf,
+				undefined,
+				"We should have myself at this point.",
+			);
 
 			const client2 = createAzureClient(
 				"test-user-id-2",
@@ -132,14 +177,29 @@ for (const testOpts of testMatrix) {
 					"Fluid.Container.ForceWriteConnection": true,
 				}),
 			);
-			const { services: servicesGet } = await client2.getContainer(containerId, schema, "2");
+			const { services: servicesGet } = await client2.getContainer(
+				containerId,
+				schema,
+				"2",
+			);
 
 			/* This is a workaround for a known bug, we should have one member (self) upon container connection */
-			const partner = await waitForMember(servicesGet.audience, "test-user-id-2");
-			assert.notStrictEqual(partner, undefined, "We should have partner at this point.");
+			const partner = await waitForMember(
+				servicesGet.audience,
+				"test-user-id-2",
+			);
+			assert.notStrictEqual(
+				partner,
+				undefined,
+				"We should have partner at this point.",
+			);
 
 			const members = servicesGet.audience.getMembers();
-			assert.strictEqual(members.size, 2, "We should have two members at this point.");
+			assert.strictEqual(
+				members.size,
+				2,
+				"We should have two members at this point.",
+			);
 
 			assert.notStrictEqual(
 				partner?.id,
@@ -158,11 +218,12 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
-					ephemeralSummaryTrees.observeMemberLeaving,
-					"test-user-id-1",
-					"test-user-name-1",
-				);
+				const containerResponse: AxiosResponse | undefined =
+					await createContainerFromPayload(
+						ephemeralSummaryTrees.observeMemberLeaving,
+						"test-user-id-1",
+						"test-user-name-1",
+					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container } = await client.getContainer(containerId, schema, "2"));
 			} else {
@@ -171,10 +232,13 @@ for (const testOpts of testMatrix) {
 			}
 
 			if (container.connectionState !== ConnectionState.Connected) {
-				await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-					durationMs: connectTimeoutMs,
-					errorMsg: "container connect() timeout",
-				});
+				await timeoutPromise(
+					(resolve) => container.once("connected", () => resolve()),
+					{
+						durationMs: connectTimeoutMs,
+						errorMsg: "container connect() timeout",
+					},
+				);
 			}
 
 			const client2 = createAzureClient(
@@ -185,14 +249,29 @@ for (const testOpts of testMatrix) {
 					"Fluid.Container.ForceWriteConnection": true,
 				}),
 			);
-			const { services: servicesGet } = await client2.getContainer(containerId, schema, "2");
+			const { services: servicesGet } = await client2.getContainer(
+				containerId,
+				schema,
+				"2",
+			);
 
 			/* This is a workaround for a known bug, we should have one member (self) upon container connection */
-			const partner = await waitForMember(servicesGet.audience, "test-user-id-2");
-			assert.notStrictEqual(partner, undefined, "We should have partner at this point.");
+			const partner = await waitForMember(
+				servicesGet.audience,
+				"test-user-id-2",
+			);
+			assert.notStrictEqual(
+				partner,
+				undefined,
+				"We should have partner at this point.",
+			);
 
 			let members = servicesGet.audience.getMembers();
-			assert.strictEqual(members.size, 2, "We should have two members at this point.");
+			assert.strictEqual(
+				members.size,
+				2,
+				"We should have two members at this point.",
+			);
 
 			container.disconnect();
 
@@ -203,7 +282,11 @@ for (const testOpts of testMatrix) {
 			});
 
 			members = servicesGet.audience.getMembers();
-			assert.strictEqual(members.size, 1, "We should have one member left at this point.");
+			assert.strictEqual(
+				members.size,
+				1,
+				"We should have one member left at this point.",
+			);
 		});
 
 		/**
@@ -212,31 +295,43 @@ for (const testOpts of testMatrix) {
 		 * Expected behavior: upon resolving container, the read-only partner member should be able
 		 * to resolve original member, and the original member should be able to observe the read-only member.
 		 */
-		it("can find read-only partner member", async function () {
+		it("can find read-only partner member", async () => {
 			let containerId: string;
 			let container: IFluidContainer;
 			let services: AzureContainerServices;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
-					ephemeralSummaryTrees.observeMemberLeaving,
-					"test-user-id-1",
-					"test-user-name-1",
-				);
+				const containerResponse: AxiosResponse | undefined =
+					await createContainerFromPayload(
+						ephemeralSummaryTrees.observeMemberLeaving,
+						"test-user-id-1",
+						"test-user-name-1",
+					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container, services } = await client.getContainer(containerId, schema, "2"));
+				({ container, services } = await client.getContainer(
+					containerId,
+					schema,
+					"2",
+				));
 			} else {
 				({ container, services } = await client.createContainer(schema, "2"));
 				containerId = await container.attach();
 			}
 
 			if (container.connectionState !== ConnectionState.Connected) {
-				await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-					durationMs: connectTimeoutMs,
-					errorMsg: "container connect() timeout",
-				});
+				await timeoutPromise(
+					(resolve) => container.once("connected", () => resolve()),
+					{
+						durationMs: connectTimeoutMs,
+						errorMsg: "container connect() timeout",
+					},
+				);
 			}
 
-			assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
+			assert.strictEqual(
+				typeof containerId,
+				"string",
+				"Attach did not return a string ID",
+			);
 			assert.strictEqual(
 				container.attachState,
 				AttachState.Attached,
@@ -244,8 +339,15 @@ for (const testOpts of testMatrix) {
 			);
 
 			/* This is a workaround for a known bug, we should have one member (self) upon container connection */
-			const originalSelf = await waitForMember(services.audience, "test-user-id-1");
-			assert.notStrictEqual(originalSelf, undefined, "We should have myself at this point.");
+			const originalSelf = await waitForMember(
+				services.audience,
+				"test-user-id-1",
+			);
+			assert.notStrictEqual(
+				originalSelf,
+				undefined,
+				"We should have myself at this point.",
+			);
 
 			const partnerClient = createAzureClient(
 				"test-user-id-2",
@@ -268,8 +370,15 @@ for (const testOpts of testMatrix) {
 			}
 
 			/* This is a workaround for a known bug, we should have one member (self) upon container connection */
-			const partnerSelf = await waitForMember(partnerServices.audience, "test-user-id-2");
-			assert.notStrictEqual(partnerSelf, undefined, "We should have partner at this point.");
+			const partnerSelf = await waitForMember(
+				partnerServices.audience,
+				"test-user-id-2",
+			);
+			assert.notStrictEqual(
+				partnerSelf,
+				undefined,
+				"We should have partner at this point.",
+			);
 
 			const originalSelfSeenByPartner = await waitForMember(
 				partnerServices.audience,
@@ -322,15 +431,16 @@ for (const testOpts of testMatrix) {
 		 * memberRemoved event and have correct partner count. Upon new read-only partner joining,
 		 * the original read-only partner should observe memberAdded event and have correct partner count.
 		 */
-		it("can observe member leaving and joining in read-only mode", async function () {
+		it("can observe member leaving and joining in read-only mode", async () => {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
-					ephemeralSummaryTrees.observeMemberLeaving,
-					"test-user-id-1",
-					"test-user-name-1",
-				);
+				const containerResponse: AxiosResponse | undefined =
+					await createContainerFromPayload(
+						ephemeralSummaryTrees.observeMemberLeaving,
+						"test-user-id-1",
+						"test-user-name-1",
+					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container } = await client.getContainer(containerId, schema, "2"));
 			} else {
@@ -339,10 +449,13 @@ for (const testOpts of testMatrix) {
 			}
 
 			if (container.connectionState !== ConnectionState.Connected) {
-				await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-					durationMs: connectTimeoutMs,
-					errorMsg: "client1 container connect() timeout",
-				});
+				await timeoutPromise(
+					(resolve) => container.once("connected", () => resolve()),
+					{
+						durationMs: connectTimeoutMs,
+						errorMsg: "client1 container connect() timeout",
+					},
+				);
 			}
 
 			const partnerClient = createAzureClient(
@@ -365,12 +478,23 @@ for (const testOpts of testMatrix) {
 				);
 			}
 			/* This is a workaround for a known bug, we should have one member (self) upon container connection */
-			const partnerSelf = await waitForMember(partnerServices.audience, "test-user-id-2");
-			assert.notStrictEqual(partnerSelf, undefined, "We should have partner at this point.");
+			const partnerSelf = await waitForMember(
+				partnerServices.audience,
+				"test-user-id-2",
+			);
+			assert.notStrictEqual(
+				partnerSelf,
+				undefined,
+				"We should have partner at this point.",
+			);
 
 			await waitForMember(partnerServices.audience, "test-user-id-1");
 			let members = partnerServices.audience.getMembers();
-			assert.strictEqual(members.size, 2, "We should have two members at this point.");
+			assert.strictEqual(
+				members.size,
+				2,
+				"We should have two members at this point.",
+			);
 
 			const partnerClientMemberRemoveP = new Promise<void>((resolve) => {
 				partnerServices.audience.on("memberRemoved", () => {
@@ -383,7 +507,11 @@ for (const testOpts of testMatrix) {
 			await partnerClientMemberRemoveP;
 
 			members = partnerServices.audience.getMembers();
-			assert.strictEqual(members.size, 1, "We should have one member left at this point.");
+			assert.strictEqual(
+				members.size,
+				1,
+				"We should have one member left at this point.",
+			);
 
 			const partnerClientMemberAddP = new Promise<void>((resolve) => {
 				partnerServices.audience.on("memberAdded", () => {
@@ -412,7 +540,10 @@ for (const testOpts of testMatrix) {
 			}
 
 			/* This is a workaround for a known bug, we should have one member (self) upon container connection */
-			const partnerSelf2 = await waitForMember(partnerServices2.audience, "test-user-id-3");
+			const partnerSelf2 = await waitForMember(
+				partnerServices2.audience,
+				"test-user-id-3",
+			);
 			assert.notStrictEqual(
 				partnerSelf2,
 				undefined,
@@ -422,7 +553,11 @@ for (const testOpts of testMatrix) {
 			await partnerClientMemberAddP;
 
 			members = partnerServices.audience.getMembers();
-			assert.strictEqual(members.size, 2, "We should have two members again at this point.");
+			assert.strictEqual(
+				members.size,
+				2,
+				"We should have two members again at this point.",
+			);
 			assert.strict(
 				members.has("test-user-id-3"),
 				"Original read-only partner should see new read-only partner.",

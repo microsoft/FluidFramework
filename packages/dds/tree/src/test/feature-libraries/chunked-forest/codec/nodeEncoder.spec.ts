@@ -15,29 +15,32 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
+	asFieldEncoder,
 	EncoderContext,
 	type FieldEncoder,
-	asFieldEncoder,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { NodeShapeBasedEncoder } from "../../../../feature-libraries/chunked-forest/codec/nodeEncoder.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
-import { brand } from "../../../../util/index.js";
-
-import { checkNodeEncode } from "./checkEncode.js";
-import { testIdCompressor } from "../../../utils.js";
 import { FieldBatchFormatVersion } from "../../../../feature-libraries/index.js";
+import { brand } from "../../../../util/index.js";
+import { testIdCompressor } from "../../../utils.js";
+import { checkNodeEncode } from "./checkEncode.js";
 
-const fieldBatchVersion = brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v1);
+const fieldBatchVersion = brand<FieldBatchFormatVersion>(
+	FieldBatchFormatVersion.v1,
+);
 
 describe("nodeShape", () => {
 	describe("NodeShapeBasedEncoder", () => {
 		it("empty node", () => {
 			const shape = new NodeShapeBasedEncoder(undefined, false, [], undefined);
 			const identifierCounter = new Counter<string>();
-			shape.countReferencedShapesAndIdentifiers(identifierCounter, () => fail());
+			shape.countReferencedShapesAndIdentifiers(identifierCounter, () =>
+				fail(),
+			);
 			assert(identifierCounter.buildTable().indexToValue.length === 0);
 
 			const context = new EncoderContext(
@@ -56,10 +59,17 @@ describe("nodeShape", () => {
 		});
 
 		it("typed node with value", () => {
-			const shape = new NodeShapeBasedEncoder(brand("foo"), true, [], undefined);
+			const shape = new NodeShapeBasedEncoder(
+				brand("foo"),
+				true,
+				[],
+				undefined,
+			);
 
 			const identifierCounter = new Counter<string>();
-			shape.countReferencedShapesAndIdentifiers(identifierCounter, () => fail());
+			shape.countReferencedShapesAndIdentifiers(identifierCounter, () =>
+				fail(),
+			);
 			const context = new EncoderContext(
 				() => fail(),
 				() => fail(),
@@ -89,7 +99,12 @@ describe("nodeShape", () => {
 			const fieldShapeLocal = context.nestedArrayEncoder(
 				new NodeShapeBasedEncoder(undefined, false, [], undefined),
 			);
-			const shape = new NodeShapeBasedEncoder(undefined, undefined, [], fieldShapeLocal);
+			const shape = new NodeShapeBasedEncoder(
+				undefined,
+				undefined,
+				[],
+				fieldShapeLocal,
+			);
 
 			const tree: JsonableTree = {
 				type: brand("type"),
@@ -129,7 +144,12 @@ describe("nodeShape", () => {
 				new NodeShapeBasedEncoder(brand("1"), false, [], undefined),
 			);
 			// Shape which encodes to just the value.
-			const shapeValueOnly = new NodeShapeBasedEncoder(brand("2"), true, [], undefined);
+			const shapeValueOnly = new NodeShapeBasedEncoder(
+				brand("2"),
+				true,
+				[],
+				undefined,
+			);
 
 			// Shape which encodes to nested array of values.
 			const shapeValues = context.nestedArrayEncoder(shapeValueOnly);
@@ -140,7 +160,10 @@ describe("nodeShape", () => {
 				true,
 				[
 					{ key: brand("nothing"), encoder: fieldEncoder1 },
-					{ key: brand("shapeValueOnly"), encoder: asFieldEncoder(shapeValueOnly) },
+					{
+						key: brand("shapeValueOnly"),
+						encoder: asFieldEncoder(shapeValueOnly),
+					},
 					{ key: brand("shapeValues"), encoder: shapeValues },
 				],
 				undefined,

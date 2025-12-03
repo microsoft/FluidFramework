@@ -4,6 +4,7 @@
  */
 
 import type { ErasedType } from "@fluidframework/core-interfaces";
+import { allowUnused } from "../../simple-tree/index.js";
 import {
 	type Brand,
 	brand,
@@ -17,7 +18,6 @@ import type {
 	requireFalse,
 	requireTrue,
 } from "../../util/index.js";
-import { allowUnused } from "../../simple-tree/index.js";
 
 // These tests currently just cover the type checking, so its all compile time.
 
@@ -52,7 +52,9 @@ export type T4 = Brand<{ test: number }, E4>;
 export type T5 = Brand<{ test: number }, E5>;
 
 // Check strong typing
-type _check1 = requireFalse<isAssignableTo<E4, E5>> | requireFalse<isAssignableTo<T4, T5>>;
+type _check1 =
+	| requireFalse<isAssignableTo<E4, E5>>
+	| requireFalse<isAssignableTo<T4, T5>>;
 
 // brandConst
 {

@@ -13,11 +13,11 @@ import {
 	type FieldAnchor,
 	type FieldKey,
 	type ITreeSubscriptionCursor,
+	rootFieldKey,
 	type TreeFieldStoredSchema,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	type UpPath,
-	rootFieldKey,
 } from "../../../core/index.js";
 import {
 	LazyField,
@@ -27,41 +27,43 @@ import {
 	unboxedFlexNode,
 } from "../../../feature-libraries/flex-tree/lazyField.js";
 import {
-	FieldKinds,
-	MockNodeIdentifierManager,
+	Context,
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
-	Context,
+	FieldKinds,
 	isFlexTreeNode,
+	MockNodeIdentifierManager,
 	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
+import {
+	getStoredSchema,
+	numberSchema,
+	restrictiveStoredSchemaGenerationOptions,
+	SchemaFactory,
+	stringSchema,
+	toInitialSchema,
+} from "../../../simple-tree/index.js";
 import { brand, disposeSymbol } from "../../../util/index.js";
+import { singleJsonCursor } from "../../json/index.js";
 import {
 	fieldCursorFromInsertable,
 	flexTreeViewWithContent,
 	forestWithContent,
 	MockTreeCheckout,
 } from "../../utils.js";
-
 import {
 	getReadonlyContext,
 	initializeCursor,
 	readonlyTreeWithContent,
 	rootFieldAnchor,
 } from "./utils.js";
-import {
-	numberSchema,
-	SchemaFactory,
-	stringSchema,
-	getStoredSchema,
-	toInitialSchema,
-	restrictiveStoredSchemaGenerationOptions,
-} from "../../../simple-tree/index.js";
-import { singleJsonCursor } from "../../json/index.js";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
 const detachedField: FieldKey = brand("detached");
-const detachedFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: detachedField };
+const detachedFieldAnchor: FieldAnchor = {
+	parent: undefined,
+	fieldKey: detachedField,
+};
 
 /**
  * Test {@link LazyField} implementation.
@@ -92,12 +94,17 @@ describe("LazyField", () => {
 		);
 		cursor.free();
 		assert.throws(
-			() => optionalField.editor.set(undefined, optionalField.length === undefined),
-			validateAssertionError(/only allowed on fields with TreeStatus.InDocument status/),
+			() =>
+				optionalField.editor.set(undefined, optionalField.length === undefined),
+			validateAssertionError(
+				/only allowed on fields with TreeStatus.InDocument status/,
+			),
 		);
 		assert.throws(
 			() => valueField.editor.set(mapTreeFromCursor(singleJsonCursor({}))),
-			validateAssertionError(/only allowed on fields with TreeStatus.InDocument status/),
+			validateAssertionError(
+				/only allowed on fields with TreeStatus.InDocument status/,
+			),
 		);
 	});
 
@@ -162,10 +169,15 @@ describe("LazyField", () => {
 		cursor.enterNode(0);
 		cursor.enterField(brand("foo"));
 
-		const leafField = new TestLazyField(context, FieldKinds.required.identifier, cursor, {
-			parent: parentAnchor,
-			fieldKey: brand("foo"),
-		});
+		const leafField = new TestLazyField(
+			context,
+			FieldKinds.required.identifier,
+			cursor,
+			{
+				parent: parentAnchor,
+				fieldKey: brand("foo"),
+			},
+		);
 		assert.equal(leafField.parent, rootField.boxedAt(0));
 	});
 
@@ -247,7 +259,10 @@ describe("LazyField", () => {
 			cursor.enterNode(0); // Root node field has 1 node; move into it
 
 			assert.equal(
-				unboxedFlexNode(context, cursor, { fieldKey: brand("x"), parent: undefined }),
+				unboxedFlexNode(context, cursor, {
+					fieldKey: brand("x"),
+					parent: undefined,
+				}),
 				"Hello world",
 			);
 		});
@@ -260,7 +275,10 @@ describe("LazyField", () => {
 			cursor.enterNode(0); // Root node field has 1 node; move into it
 
 			assert.equal(
-				unboxedFlexNode(context, cursor, { fieldKey: brand("x"), parent: undefined }),
+				unboxedFlexNode(context, cursor, {
+					fieldKey: brand("x"),
+					parent: undefined,
+				}),
 				null,
 			);
 		});
@@ -274,7 +292,10 @@ describe("LazyField", () => {
 
 			assert(
 				isFlexTreeNode(
-					unboxedFlexNode(context, cursor, { fieldKey: brand("x"), parent: undefined }),
+					unboxedFlexNode(context, cursor, {
+						fieldKey: brand("x"),
+						parent: undefined,
+					}),
 				),
 			);
 		});
@@ -312,7 +333,12 @@ describe("LazyField", () => {
 				schema,
 				initialTree: 42,
 			});
-			const field = new LazyOptionalField(context, rootSchema.kind, cursor, rootFieldAnchor);
+			const field = new LazyOptionalField(
+				context,
+				rootSchema.kind,
+				cursor,
+				rootFieldAnchor,
+			);
 
 			it("atIndex", () => {
 				assert.equal(field.atIndex(0), 42);
@@ -341,7 +367,12 @@ describe("LazyField", () => {
 				schema,
 				initialTree: undefined,
 			});
-			const field = new LazyOptionalField(context, rootSchema.kind, cursor, rootFieldAnchor);
+			const field = new LazyOptionalField(
+				context,
+				rootSchema.kind,
+				cursor,
+				rootFieldAnchor,
+			);
 
 			it("atIndex", () => {
 				// Invalid to request the value if there isn't one.
@@ -371,7 +402,10 @@ describe("LazyField", () => {
 			});
 			assert(view.root.is(FieldKinds.optional));
 			assert.equal(view.root.content, 5);
-			view.root.editor.set(mapTreeFromCursor(singleJsonCursor(6)), view.root.length === 0);
+			view.root.editor.set(
+				mapTreeFromCursor(singleJsonCursor(6)),
+				view.root.length === 0,
+			);
 			assert.equal(view.root.content, 6);
 			view.root.editor.set(undefined, view.root.length === 0);
 			assert.equal(view.root.content, undefined);
@@ -400,7 +434,12 @@ describe("LazyField", () => {
 			initialTree,
 		});
 
-		const field = new LazyValueField(context, rootSchema.kind, cursor, rootFieldAnchor);
+		const field = new LazyValueField(
+			context,
+			rootSchema.kind,
+			cursor,
+			rootFieldAnchor,
+		);
 
 		it("atIndex", () => {
 			assert.equal(field.atIndex(0), initialTree);
@@ -452,7 +491,10 @@ describe("LazyField", () => {
 			nodeSchema: new Map([
 				[
 					brand(numberSchema.identifier),
-					getStoredSchema(numberSchema, restrictiveStoredSchemaGenerationOptions),
+					getStoredSchema(
+						numberSchema,
+						restrictiveStoredSchemaGenerationOptions,
+					),
 				],
 			]),
 		};
@@ -475,7 +517,12 @@ describe("LazyField", () => {
 			);
 			const cursor = initializeCursor(context, rootFieldAnchor);
 
-			return new LazySequence(context, rootSchema.kind, cursor, rootFieldAnchor);
+			return new LazySequence(
+				context,
+				rootSchema.kind,
+				cursor,
+				rootFieldAnchor,
+			);
 		}
 
 		it("atIndex", () => {

@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { strict as assert } from "assert";
 
 import { MockHandle } from "../mockHandle.js";
 import {
@@ -35,8 +34,12 @@ describe("MockContainerRuntime", () => {
 			idCompressor: secondIdCompressor,
 		});
 
-		const firstContainerRuntime = factory.createContainerRuntime(firstDataStoreRuntime);
-		const secondContainerRuntime = factory.createContainerRuntime(secondDataStoreRuntime);
+		const firstContainerRuntime = factory.createContainerRuntime(
+			firstDataStoreRuntime,
+		);
+		const secondContainerRuntime = factory.createContainerRuntime(
+			secondDataStoreRuntime,
+		);
 		// Generate an ID in the first client
 		const id = firstIdCompressor.generateCompressedId();
 		const opSpaceId = firstIdCompressor.normalizeToOpSpace(id);
@@ -51,17 +54,23 @@ describe("MockContainerRuntime", () => {
 
 		factory.processAllMessages();
 
-		const normalizedId = secondDataStoreRuntime.idCompressor?.normalizeToSessionSpace(
-			opSpaceId,
-			firstIdCompressor.localSessionId,
-		);
+		const normalizedId =
+			secondDataStoreRuntime.idCompressor?.normalizeToSessionSpace(
+				opSpaceId,
+				firstIdCompressor.localSessionId,
+			);
 
-		const secondNormalizedId = firstDataStoreRuntime.idCompressor?.normalizeToSessionSpace(
-			secondOpSpaceId,
-			secondIdCompressor.localSessionId,
-		);
+		const secondNormalizedId =
+			firstDataStoreRuntime.idCompressor?.normalizeToSessionSpace(
+				secondOpSpaceId,
+				secondIdCompressor.localSessionId,
+			);
 
-		assert.strictEqual(normalizedId, 0, "Should have finalized the ID in both containers.");
+		assert.strictEqual(
+			normalizedId,
+			0,
+			"Should have finalized the ID in both containers.",
+		);
 		assert.strictEqual(
 			secondNormalizedId,
 			513,
@@ -87,30 +96,30 @@ describe("createSnapshotTreeFromContents", () => {
 
 	it("creates snapshot tree with single blob at root", () => {
 		const contents = {
-			"blob1": "content1",
+			blob1: "content1",
 		};
 		const snapshotTree = createSnapshotTreeFromContents(contents);
 
 		assert.deepStrictEqual(snapshotTree, {
 			trees: {},
 			blobs: {
-				"blob1": "content1",
+				blob1: "content1",
 			},
 		});
 	});
 
 	it("creates snapshot tree with multiple blobs at root", () => {
 		const contents = {
-			"blob1": "content1",
-			"blob2": "content2",
+			blob1: "content1",
+			blob2: "content2",
 		};
 		const snapshotTree = createSnapshotTreeFromContents(contents);
 
 		assert.deepStrictEqual(snapshotTree, {
 			trees: {},
 			blobs: {
-				"blob1": "content1",
-				"blob2": "content2",
+				blob1: "content1",
+				blob2: "content2",
 			},
 		});
 	});
@@ -126,7 +135,7 @@ describe("createSnapshotTreeFromContents", () => {
 				dir1: {
 					trees: {},
 					blobs: {
-						"blob": "content1",
+						blob: "content1",
 					},
 				},
 			},
@@ -147,7 +156,7 @@ describe("createSnapshotTreeFromContents", () => {
 						subdir: {
 							trees: {},
 							blobs: {
-								"blob": "content1",
+								blob: "content1",
 							},
 						},
 					},
@@ -160,7 +169,7 @@ describe("createSnapshotTreeFromContents", () => {
 
 	it("creates snapshot tree with mixed structure", () => {
 		const contents = {
-			"root": "root content",
+			root: "root content",
 			"dir1/blob1": "content1",
 			"dir1/blob2": "content2",
 			"dir1/subdir/blob": "nested content",
@@ -175,24 +184,24 @@ describe("createSnapshotTreeFromContents", () => {
 						subdir: {
 							trees: {},
 							blobs: {
-								"blob": "nested content",
+								blob: "nested content",
 							},
 						},
 					},
 					blobs: {
-						"blob1": "content1",
-						"blob2": "content2",
+						blob1: "content1",
+						blob2: "content2",
 					},
 				},
 				dir2: {
 					trees: {},
 					blobs: {
-						"blob": "other content",
+						blob: "other content",
 					},
 				},
 			},
 			blobs: {
-				"root": "root content",
+				root: "root content",
 			},
 		});
 	});
@@ -208,7 +217,7 @@ describe("createSnapshotTreeFromContents", () => {
 				dir1: {
 					trees: {},
 					blobs: {
-						"blob": "content1",
+						blob: "content1",
 					},
 				},
 			},

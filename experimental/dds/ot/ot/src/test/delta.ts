@@ -3,18 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IChannelAttributes,
 	IChannelFactory,
-	IFluidDataStoreRuntime,
 	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import Delta from "quill-delta";
 
 import { SharedOT } from "../index.js";
 
 export class SharedDelta extends SharedOT<Delta, Delta> {
-	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedDelta {
+	public static create(
+		runtime: IFluidDataStoreRuntime,
+		id?: string,
+	): SharedDelta {
 		return runtime.createChannel(id, DeltaFactory.Type) as SharedDelta;
 	}
 
@@ -22,7 +25,11 @@ export class SharedDelta extends SharedOT<Delta, Delta> {
 		return new DeltaFactory();
 	}
 
-	constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
+	constructor(
+		id: string,
+		runtime: IFluidDataStoreRuntime,
+		attributes: IChannelAttributes,
+	) {
 		super(id, runtime, attributes, /* initialValue: */ new Delta());
 	}
 

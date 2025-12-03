@@ -5,11 +5,15 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { type TreeStoredSchema, rootFieldKey, schemaDataIsEmpty } from "../core/index.js";
 import {
-	FieldKinds,
+	rootFieldKey,
+	schemaDataIsEmpty,
+	type TreeStoredSchema,
+} from "../core/index.js";
+import {
 	allowsRepoSuperset,
 	defaultSchemaPolicy,
+	FieldKinds,
 	type IDefaultEditBuilder,
 	type TreeChunk,
 } from "../feature-libraries/index.js";
@@ -59,7 +63,10 @@ export function initialize(
 			// These kinds are known to tolerate empty, so use the schema as is:
 			intermediateSchema = newSchema;
 		} else {
-			assert(rootKind === FieldKinds.required.identifier, 0x5c8 /* Unexpected kind */);
+			assert(
+				rootKind === FieldKinds.required.identifier,
+				0x5c8 /* Unexpected kind */,
+			);
 			// Replace value kind with optional kind in root field schema:
 			intermediateSchema = {
 				nodeSchema: newSchema.nodeSchema,
@@ -114,7 +121,8 @@ function initializeFromChunk(
 ): void {
 	const field = { field: rootFieldKey, parent: undefined };
 	assert(
-		checkout.storedSchema.rootFieldSchema.kind === FieldKinds.optional.identifier,
+		checkout.storedSchema.rootFieldSchema.kind ===
+			FieldKinds.optional.identifier,
 		0xc11 /* initializerFromChunk only supports optional roots */,
 	);
 	const fieldEditor = checkout.editor.optionalField(field);
@@ -122,5 +130,8 @@ function initializeFromChunk(
 		contentChunk.topLevelLength <= 1,
 		0x7f4 /* optional field content should normalize at most one item */,
 	);
-	fieldEditor.set(contentChunk.topLevelLength === 0 ? undefined : contentChunk, true);
+	fieldEditor.set(
+		contentChunk.topLevelLength === 0 ? undefined : contentChunk,
+		true,
+	);
 }

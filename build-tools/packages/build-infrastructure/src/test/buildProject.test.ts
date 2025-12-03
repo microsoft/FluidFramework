@@ -4,9 +4,8 @@
  */
 
 import { strict as assert } from "node:assert";
-
-import { expect } from "chai";
 import * as chai from "chai";
+import { expect } from "chai";
 import assertArrays from "chai-arrays";
 import { describe, it } from "mocha";
 import * as semver from "semver";
@@ -43,7 +42,9 @@ describe("loadBuildProject", () => {
 				"main workspace has the wrong number of release groups",
 			);
 
-			const mainReleaseGroup = repo.releaseGroups.get("main" as ReleaseGroupName);
+			const mainReleaseGroup = repo.releaseGroups.get(
+				"main" as ReleaseGroupName,
+			);
 			expect(mainReleaseGroup).to.not.be.undefined;
 			expect(mainReleaseGroup?.packages.length).to.equal(
 				5,
@@ -64,7 +65,9 @@ describe("loadBuildProject", () => {
 
 		it("releaseGroupDependencies", async () => {
 			const repo = loadBuildProject(testRepoRoot);
-			const mainReleaseGroup = repo.releaseGroups.get("main" as ReleaseGroupName);
+			const mainReleaseGroup = repo.releaseGroups.get(
+				"main" as ReleaseGroupName,
+			);
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- test data (validated by another test) guarantees this has a value
 			const actualDependencies = mainReleaseGroup!.releaseGroupDependencies;
 			const names = actualDependencies.map((r) => r.name as string);
@@ -99,7 +102,9 @@ describe("loadBuildProject", () => {
 
 		it("releaseGroupDependencies", async () => {
 			const repo = loadBuildProject(findGitRootSync());
-			const clientReleaseGroup = repo.releaseGroups.get("client" as ReleaseGroupName);
+			const clientReleaseGroup = repo.releaseGroups.get(
+				"client" as ReleaseGroupName,
+			);
 			assert(clientReleaseGroup !== undefined);
 
 			const actualDependencies = clientReleaseGroup.releaseGroupDependencies;
@@ -137,7 +142,8 @@ describe("setDependencyRange", () => {
 		const allCorrect = main.packages.every((pkg) => {
 			const dependencies = pkg.packageJson.dependencies ?? {};
 
-			const group2PkgDUpdated = (dependencies["@group2/pkg-d"] ?? "2.0.0") === "2.0.0";
+			const group2PkgDUpdated =
+				(dependencies["@group2/pkg-d"] ?? "2.0.0") === "2.0.0";
 
 			return group2PkgDUpdated;
 		});
@@ -154,11 +160,14 @@ describe("setDependencyRange", () => {
 
 			const pkgbUpdated = (dependencies["pkg-b"] ?? "2.0.0") === "2.0.0";
 
-			const pkgcUpdated = (dependencies["@private/pkg-c"] ?? "2.0.0") === "2.0.0";
+			const pkgcUpdated =
+				(dependencies["@private/pkg-c"] ?? "2.0.0") === "2.0.0";
 
-			const sharedUpdated = (dependencies["@shared/shared"] ?? "2.0.0") === "2.0.0";
+			const sharedUpdated =
+				(dependencies["@shared/shared"] ?? "2.0.0") === "2.0.0";
 
-			const pkgdUpdated = (dependencies["@group2/pkg-d"] ?? "2.0.0") === "2.0.0";
+			const pkgdUpdated =
+				(dependencies["@group2/pkg-d"] ?? "2.0.0") === "2.0.0";
 
 			return pkgbUpdated && pkgcUpdated && sharedUpdated && pkgdUpdated;
 		});
@@ -175,7 +184,8 @@ describe("setDependencyRange", () => {
 
 			const pkgbUpdated = (dependencies["pkg-b"] ?? "2.0.0") === "2.0.0";
 
-			const sharedUpdated = (dependencies["@shared/shared"] ?? "2.0.0") === "2.0.0";
+			const sharedUpdated =
+				(dependencies["@shared/shared"] ?? "2.0.0") === "2.0.0";
 
 			return pkgbUpdated && sharedUpdated;
 		});

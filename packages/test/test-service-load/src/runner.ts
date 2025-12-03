@@ -3,26 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	DriverEndpoint,
 	ITestDriver,
 	TestDriverTypes,
 } from "@fluid-internal/test-driver-definitions";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import {
+	type IContainer,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
 	asLegacyAlpha,
-	loadExistingContainer,
 	type ILoaderProps,
+	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
-import { IRequestHeader } from "@fluidframework/core-interfaces";
+import type { IRequestHeader } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { getRetryDelayFromError } from "@fluidframework/driver-utils/internal";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
-import { GenericError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
+import {
+	GenericError,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 import commander from "commander";
 
 import { createLogger } from "./FileLogger.js";
@@ -31,7 +37,7 @@ import {
 	FaultInjectionError,
 } from "./faultInjectionDriver.js";
 import { getProfile } from "./getProfile.js";
-import { ILoadTest, IRunConfig } from "./loadTestDataStore.js";
+import type { ILoadTest, IRunConfig } from "./loadTestDataStore.js";
 import {
 	generateConfigurations,
 	generateLoaderOptions,
@@ -55,21 +61,34 @@ async function main() {
 	};
 	commander
 		.version("0.0.1")
-		.requiredOption("-d, --driver <driver>", "Which test driver info to use", "odsp")
+		.requiredOption(
+			"-d, --driver <driver>",
+			"Which test driver info to use",
+			"odsp",
+		)
 		.requiredOption(
 			"-p, --profile <profile>",
 			"Which test profile to use from testConfig.json",
 			"ci",
 		)
-		.requiredOption("-u --url <url>", "Load an existing data store from the url")
+		.requiredOption(
+			"-u --url <url>",
+			"Load an existing data store from the url",
+		)
 		.requiredOption(
 			"-r, --runId <runId>",
 			"run a child process with the given id. Requires --url option.",
 			parseIntArg,
 		)
-		.requiredOption("-s, --seed <number>", "Seed for this runners random number generator")
+		.requiredOption(
+			"-s, --seed <number>",
+			"Seed for this runners random number generator",
+		)
 		.requiredOption("-o, --outputDir <path>", "Path for log output files")
-		.option("-e, --driverEndpoint <endpoint>", "Which endpoint should the driver target?")
+		.option(
+			"-e, --driverEndpoint <endpoint>",
+			"Which endpoint should the driver target?",
+		)
 		.option(
 			"-l, --log <filter>",
 			"Filter debug logging. If not provided, uses DEBUG env variable.",
@@ -179,7 +198,9 @@ async function main() {
 	}
 }
 
-function* factoryPermutations<T extends IDocumentServiceFactory>(create: () => T) {
+function* factoryPermutations<T extends IDocumentServiceFactory>(
+	create: () => T,
+) {
 	let counter = 0;
 	const factoryReused = create();
 
@@ -226,11 +247,21 @@ async function runnerProcess(
 	// Assigning no-op value due to linter.
 	let metricsCleanup: () => void = () => {};
 
-	const optionsOverride = getOptionOverride(runConfig.testConfig, driver, endpoint);
+	const optionsOverride = getOptionOverride(
+		runConfig.testConfig,
+		driver,
+		endpoint,
+	);
 
 	const loaderOptions = generateLoaderOptions(seed, optionsOverride?.loader);
-	const containerOptions = generateRuntimeOptions(seed, optionsOverride?.container);
-	const configurations = generateConfigurations(seed, optionsOverride?.configurations);
+	const containerOptions = generateRuntimeOptions(
+		seed,
+		optionsOverride?.container,
+	);
+	const configurations = generateConfigurations(
+		seed,
+		optionsOverride?.configurations,
+	);
 
 	const testDriver: ITestDriver = await createTestDriver(
 		driver,
@@ -244,7 +275,10 @@ async function runnerProcess(
 	// Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths
 	// At the same time we want to test newly created factory.
 	const iterator = factoryPermutations(
-		() => new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory()),
+		() =>
+			new FaultInjectionDocumentServiceFactory(
+				testDriver.createDocumentServiceFactory(),
+			),
 	);
 
 	let done = false;
@@ -256,20 +290,25 @@ async function runnerProcess(
 		try {
 			const nextFactoryPermutation = iterator.next();
 			if (nextFactoryPermutation.done === true) {
-				throw new Error("Factory permutation iterator is expected to cycle forever");
+				throw new Error(
+					"Factory permutation iterator is expected to cycle forever",
+				);
 			}
 			const { documentServiceFactory, headers } = nextFactoryPermutation.value;
 
 			// Construct the loader
-			runConfig.loaderConfig = loaderOptions[runConfig.runId % loaderOptions.length];
+			runConfig.loaderConfig =
+				loaderOptions[runConfig.runId % loaderOptions.length];
 			// non-null guaranteed by bounds check
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const testConfiguration = configurations[runConfig.runId % configurations.length]!;
+			const testConfiguration =
+				configurations[runConfig.runId % configurations.length]!;
 			runConfig.logger.sendTelemetryEvent({
 				eventName: "RunConfigOptions",
 				details: JSON.stringify({
 					loaderOptions: runConfig.loaderConfig,
-					containerOptions: containerOptions[runConfig.runId % containerOptions.length],
+					containerOptions:
+						containerOptions[runConfig.runId % containerOptions.length],
 					logLevel: runConfig.logger.minLogLevel,
 					configurations: { ...globalConfigurations, ...testConfiguration },
 				}),
@@ -329,7 +368,12 @@ async function runnerProcess(
 			// If undefined then no fault injection.
 			const faultInjection = runConfig.testConfig.faultInjectionMs;
 			if (faultInjection) {
-				scheduleContainerClose(container, runConfig, faultInjection.min, faultInjection.max);
+				scheduleContainerClose(
+					container,
+					runConfig,
+					faultInjection.min,
+					faultInjection.max,
+				);
 				scheduleFaultInjection(
 					documentServiceFactory,
 					container,
@@ -394,7 +438,10 @@ function scheduleFaultInjection(
 ) {
 	const schedule = () => {
 		const { random } = runConfig;
-		const injectionTime = random.integer(faultInjectionMinMs, faultInjectionMaxMs);
+		const injectionTime = random.integer(
+			faultInjectionMinMs,
+			faultInjectionMaxMs,
+		);
 		printStatus(
 			runConfig,
 			`fault injection in ${(injectionTime / 60000).toString().substring(0, 4)} min`,
@@ -450,7 +497,10 @@ function scheduleContainerClose(
 	new Promise<void>((resolve) => {
 		// wait for the container to connect write
 		container.once("closed", () => resolve());
-		if (container.connectionState !== ConnectionState.Connected && !container.closed) {
+		if (
+			container.connectionState !== ConnectionState.Connected &&
+			!container.closed
+		) {
 			container.once("connected", () => {
 				resolve();
 			});
@@ -472,7 +522,10 @@ function scheduleContainerClose(
 
 					// only the oldest quarter of active clients are scheduled to leave this time.
 					// this will bias toward the summarizer client which is always quorum index 0.
-					if (quorumIndex >= 0 && quorumIndex <= runConfig.testConfig.numClients / 4) {
+					if (
+						quorumIndex >= 0 &&
+						quorumIndex <= runConfig.testConfig.numClients / 4
+					) {
 						quorum.off("removeMember", scheduleLeave);
 						const leaveTime = runConfig.random.integer(
 							faultInjectionMinMs,
@@ -484,7 +537,9 @@ function scheduleContainerClose(
 						);
 						setTimeout(() => {
 							if (!container.closed) {
-								container.close(new FaultInjectionError("scheduleContainerClose", false));
+								container.close(
+									new FaultInjectionError("scheduleContainerClose", false),
+								);
 							}
 						}, leaveTime);
 					}
@@ -515,7 +570,10 @@ async function scheduleOffline(
 	stashPercent = 0.5,
 ): Promise<string | undefined> {
 	return new Promise<void>((resolve) => {
-		if (container.connectionState !== ConnectionState.Connected && !container.closed) {
+		if (
+			container.connectionState !== ConnectionState.Connected &&
+			!container.closed
+		) {
 			container.once("connected", () => resolve());
 			container.once("closed", () => resolve());
 			container.once("disposed", () => resolve());
@@ -529,8 +587,13 @@ async function scheduleOffline(
 					return undefined;
 				}
 				const { random } = runConfig;
-				const injectionTime = random.integer(offlineDelayMinMs, offlineDelayMaxMs);
-				await new Promise<void>((resolve) => setTimeout(resolve, injectionTime));
+				const injectionTime = random.integer(
+					offlineDelayMinMs,
+					offlineDelayMaxMs,
+				);
+				await new Promise<void>((resolve) =>
+					setTimeout(resolve, injectionTime),
+				);
 
 				if (container.closed) {
 					return undefined;
@@ -538,8 +601,14 @@ async function scheduleOffline(
 				assert(container.resolvedUrl !== undefined, "no url");
 				const ds = dsf.documentServices.get(container.resolvedUrl);
 				assert(!!ds, "no documentServices");
-				const offlineTime = random.integer(offlineDurationMinMs, offlineDurationMaxMs);
-				printStatus(runConfig, `going offline for ${offlineTime / 1000} seconds!`);
+				const offlineTime = random.integer(
+					offlineDurationMinMs,
+					offlineDurationMaxMs,
+				);
+				printStatus(
+					runConfig,
+					`going offline for ${offlineTime / 1000} seconds!`,
+				);
 				ds.goOffline();
 
 				await new Promise<void>((resolve) => setTimeout(resolve, offlineTime));
@@ -551,7 +620,8 @@ async function scheduleOffline(
 					random.real() < stashPercent
 				) {
 					printStatus(runConfig, "closing offline container!");
-					const pendingState = await asLegacyAlpha(container).getPendingLocalState();
+					const pendingState =
+						await asLegacyAlpha(container).getPendingLocalState();
 					container.close();
 					return pendingState;
 				}
@@ -590,8 +660,9 @@ async function setupOpsMetrics(
 				return maybeUserName;
 			}
 
-			const userName: string | undefined = userContainer.getQuorum().getMember(clientId)
-				?.client.user.id;
+			const userName: string | undefined = userContainer
+				.getQuorum()
+				.getMember(clientId)?.client.user.id;
 			if (userName !== undefined && userName.length > 0) {
 				clientIdUserNameMap[clientId] = userName;
 				return userName;

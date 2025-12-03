@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-import { OpenAI, AzureOpenAI } from "openai";
+import { AzureOpenAI, OpenAI } from "openai";
 
 /**
  * Creates an OpenAI Client session.
@@ -89,7 +89,8 @@ export class MochaSnapshotUnitTester {
 		const testName: string = snapshotFileName;
 		const snapshotFile: string = path.join(snapshotDir, `${testName}.snap`);
 
-		const shouldUpdateSnapshot: boolean = process.env.UPDATE_SNAPSHOTS === "true";
+		const shouldUpdateSnapshot: boolean =
+			process.env.UPDATE_SNAPSHOTS === "true";
 
 		const doesFileAlreadyExist = fs.existsSync(snapshotFile);
 		if (doesFileAlreadyExist && !shouldUpdateSnapshot) {
@@ -125,10 +126,12 @@ export class MochaSnapshotUnitTester {
 	/**
 	 * Generate metadata headers for the snapshot.
 	 */
-	private generateMetadata(additionalMetadata?: Record<string, string>): string {
+	private generateMetadata(
+		additionalMetadata?: Record<string, string>,
+	): string {
 		const metadataEntries = {
 			"Generated on": new Date().toISOString(),
-			"description": "This is a snapshot file utilized for testing purposes.",
+			description: "This is a snapshot file utilized for testing purposes.",
 			...additionalMetadata,
 		};
 

@@ -5,7 +5,7 @@
 
 /* eslint-disable no-bitwise */
 
-import { Random } from "best-random";
+import type { Random } from "best-random";
 
 // Perf: We avoid the use of an ES6 'class' for a modest performance gain, but allow the use
 //       of the 'new' keyword using a ctor interface (node 12? x64).
@@ -35,9 +35,11 @@ export type XSaddCtor = new (
  *
  * @internal
  */
-export const XSadd: XSaddCtor = function (...seed: number[]): Random {
+export const XSadd: XSaddCtor = ((...seed: number[]): Random => {
 	// eslint-disable-next-line no-param-reassign
-	seed = seed.length ? seed : [...new Array(4)].map(() => (Math.random() * 0x100000000) | 0);
+	seed = seed.length
+		? seed
+		: [...new Array(4)].map(() => (Math.random() * 0x100000000) | 0);
 
 	// Scramble the seeds using an LCG w/Borosh-Niederreiter multiplier.  This reduces correlation
 	// between similar initial seeds.  This also helps to avoid unintentionally encountering low bit
@@ -86,4 +88,4 @@ export const XSadd: XSaddCtor = function (...seed: number[]): Random {
 		uint53,
 		float64: () => uint53() / 0x20000000000000,
 	};
-} as any;
+}) as any;

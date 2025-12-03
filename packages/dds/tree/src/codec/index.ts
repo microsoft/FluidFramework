@@ -4,30 +4,30 @@
  */
 
 export {
-	type FormatVersion,
+	type CodecTree,
+	type CodecWriteOptions,
+	currentVersion,
 	DependentFormatVersion,
+	extractJsonValidator,
+	FluidClientVersion,
+	type FormatValidator,
+	FormatValidatorNoOp,
+	type FormatVersion,
 	type IBinaryCodec,
 	type ICodecFamily,
 	type ICodecOptions,
-	type CodecWriteOptions,
 	type IDecoder,
 	type IEncoder,
 	type IJsonCodec,
 	type IMultiFormatCodec,
 	type JsonValidator,
+	jsonableCodecTree,
 	makeCodecFamily,
 	type SchemaValidationFunction,
+	toFormatValidator,
 	unitCodec,
 	withDefaultBinaryEncoding,
 	withSchemaValidation,
-	FluidClientVersion,
-	currentVersion,
-	toFormatValidator,
-	FormatValidatorNoOp,
-	type FormatValidator,
-	type CodecTree,
-	jsonableCodecTree,
-	extractJsonValidator,
 } from "./codec.js";
 export {
 	DiscriminatedUnionDispatcher,
@@ -35,9 +35,9 @@ export {
 	unionOptions,
 } from "./discriminatedUnions.js";
 export {
-	Versioned,
+	makeDiscontinuedCodecVersion,
+	makeVersionDispatchingCodec,
 	makeVersionedCodec,
 	makeVersionedValidatedCodec,
-	makeVersionDispatchingCodec,
-	makeDiscontinuedCodecVersion,
+	Versioned,
 } from "./versioned/index.js";

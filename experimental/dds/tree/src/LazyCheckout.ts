@@ -4,10 +4,10 @@
  */
 
 import { Checkout } from './Checkout.js';
-import { EditId } from './Identifiers.js';
-import { RevisionView } from './RevisionView.js';
-import { EditCommittedEventArguments, SharedTree } from './SharedTree.js';
-import { ValidEditingResult } from './TransactionInternal.js';
+import type { EditId } from './Identifiers.js';
+import type { RevisionView } from './RevisionView.js';
+import type { EditCommittedEventArguments, SharedTree } from './SharedTree.js';
+import type { ValidEditingResult } from './TransactionInternal.js';
 
 /**
  * Checkout that only updates its view of the tree when explicitly requested.

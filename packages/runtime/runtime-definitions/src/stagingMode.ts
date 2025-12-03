@@ -40,7 +40,9 @@ export interface StageControlsInternal extends StageControlsAlpha {
 	 * made by this container will additionally flow freely to the ordering service.
 	 * @param options - Options when committing changes.
 	 */
-	readonly commitChanges: (options?: Partial<CommitStagedChangesOptionsInternal>) => void;
+	readonly commitChanges: (
+		options?: Partial<CommitStagedChangesOptionsInternal>,
+	) => void;
 }
 
 /**
@@ -68,7 +70,8 @@ export interface StageControlsAlpha {
  * Experimental extension of {@link IContainerRuntimeBase} to support staging mode.
  * @internal
  */
-export interface IContainerRuntimeBaseInternal extends ContainerRuntimeBaseAlpha {
+export interface IContainerRuntimeBaseInternal
+	extends ContainerRuntimeBaseAlpha {
 	/**
 	 * Enters staging mode, allowing changes to be staged before being committed or discarded.
 	 * @returns Controls for committing or discarding staged changes.
@@ -99,6 +102,8 @@ export interface ContainerRuntimeBaseAlpha extends IContainerRuntimeBase {
  * @legacy @alpha
  * @sealed
  */
-export function asLegacyAlpha(base: IContainerRuntimeBase): ContainerRuntimeBaseAlpha {
+export function asLegacyAlpha(
+	base: IContainerRuntimeBase,
+): ContainerRuntimeBaseAlpha {
 	return base as ContainerRuntimeBaseAlpha;
 }

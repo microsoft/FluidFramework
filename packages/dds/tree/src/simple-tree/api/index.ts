@@ -3,131 +3,137 @@
  * Licensed under the MIT License.
  */
 
+export {
+	type ConciseTree,
+	conciseFromCursor,
+	replaceConciseTreeHandles,
+} from "./conciseTree.js";
 export type {
-	TreeSchema,
-	ITreeViewConfiguration,
 	ITreeConfigurationOptions,
+	ITreeViewConfiguration,
+	TreeSchema,
 } from "./configuration.js";
 export {
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 } from "./configuration.js";
-export type {
-	ITree,
-	TreeView,
-	ViewableTree,
-	TreeViewEvents,
-	SchemaCompatibilityStatus,
-	TreeViewAlpha,
-	TreeViewBeta,
-	TreeBranch,
-	TreeBranchAlpha,
-	TreeBranchEvents,
-	ITreeAlpha,
-} from "./tree.js";
-export { asTreeViewAlpha } from "./tree.js";
-export { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
+export { createFromCursor } from "./create.js";
 export {
-	SchemaFactory,
-	type ScopedSchemaName,
-	type ObjectSchemaOptionsAlpha,
-	type ObjectSchemaOptions,
-	type NodeSchemaOptions,
-	type NodeSchemaOptionsAlpha,
-	type SchemaFactory_base,
-} from "./schemaFactory.js";
-export { SchemaFactoryBeta, type SchemaStaticsBeta } from "./schemaFactoryBeta.js";
-export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
+	type CustomTreeNode,
+	type CustomTreeValue,
+	customFromCursorStored,
+	type HandleConverter,
+	KeyEncodingOptions,
+	replaceHandles,
+	type TreeEncodingOptions,
+	type TreeParsingOptions,
+	tryStoredSchemaAsArray,
+} from "./customTree.js";
+export {
+	type DirtyTreeMap,
+	type DirtyTreeStatus,
+	trackDirtyNodes,
+} from "./dirtyIndex.js";
+export type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
+export { getJsonSchema } from "./getJsonSchema.js";
+export { getSimpleSchema } from "./getSimpleSchema.js";
+export {
+	createIdentifierIndex,
+	type IdentifierIndex,
+} from "./identifierIndex.js";
+export {
+	incrementalEncodingPolicyForAllowedTypes,
+	incrementalSummaryHint,
+} from "./incrementalAllowedTypes.js";
 export type {
-	ValidateRecursiveSchema,
-	FixRecursiveArraySchema,
-	ValidateRecursiveSchemaTemplate,
-	FixRecursiveRecursionLimit,
-} from "./schemaFactoryRecursive.js";
-export { allowUnused } from "./schemaFactoryRecursive.js";
+	JsonArrayNodeSchema,
+	JsonFieldSchema,
+	JsonLeafNodeSchema,
+	JsonLeafSchemaType,
+	JsonMapNodeSchema,
+	JsonNodeSchema,
+	JsonNodeSchemaBase,
+	JsonObjectNodeSchema,
+	JsonRecordNodeSchema,
+	JsonRefPath,
+	JsonSchemaId,
+	JsonSchemaRef,
+	JsonSchemaType,
+	JsonStringKeyPatternProperties,
+	JsonTreeSchema,
+} from "./jsonSchema.js";
+export { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
 export {
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
 } from "./schemaCreationUtilities.js";
 export {
-	getIdentifierFromNode,
-	getPropertyKeyFromStoredKey,
-	getStoredKey,
-	treeNodeApi,
-	type TreeNodeApi,
-	tryGetSchema,
-} from "./treeNodeApi.js";
-export { createFromCursor } from "./create.js";
+	type NodeSchemaOptions,
+	type NodeSchemaOptionsAlpha,
+	type ObjectSchemaOptions,
+	type ObjectSchemaOptionsAlpha,
+	SchemaFactory,
+	type SchemaFactory_base,
+	type ScopedSchemaName,
+} from "./schemaFactory.js";
+export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
 export {
-	type DirtyTreeStatus,
-	trackDirtyNodes,
-	type DirtyTreeMap,
-} from "./dirtyIndex.js";
-export {
-	type JsonSchemaId,
-	type JsonSchemaType,
-	type JsonObjectNodeSchema,
-	type JsonArrayNodeSchema,
-	type JsonMapNodeSchema,
-	type JsonLeafNodeSchema,
-	type JsonSchemaRef,
-	type JsonRefPath,
-	type JsonNodeSchema,
-	type JsonNodeSchemaBase,
-	type JsonTreeSchema,
-	type JsonFieldSchema,
-	type JsonLeafSchemaType,
-	type JsonRecordNodeSchema,
-	type JsonStringKeyPatternProperties,
-} from "./jsonSchema.js";
-export type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
-export { getJsonSchema } from "./getJsonSchema.js";
-export { getSimpleSchema } from "./getSimpleSchema.js";
-export { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
+	SchemaFactoryBeta,
+	type SchemaStaticsBeta,
+} from "./schemaFactoryBeta.js";
 export type {
-	Unenforced,
-	FieldSchemaAlphaUnsafe,
-	ArrayNodeCustomizableSchemaUnsafe,
-	MapNodeCustomizableSchemaUnsafe,
-	System_Unsafe,
-	TreeRecordNodeUnsafe,
-	UnannotateAllowedTypeUnsafe,
-	AnnotatedAllowedTypeUnsafe,
-	AnnotatedAllowedTypesUnsafe,
-	AllowedTypesFullUnsafe,
-	AllowedTypesFullFromMixedUnsafe,
-	UnannotateAllowedTypesListUnsafe,
-	AnnotateAllowedTypesListUnsafe,
-} from "./typesUnsafe.js";
-
+	FixRecursiveArraySchema,
+	FixRecursiveRecursionLimit,
+	ValidateRecursiveSchema,
+	ValidateRecursiveSchemaTemplate,
+} from "./schemaFactoryRecursive.js";
+export { allowUnused } from "./schemaFactoryRecursive.js";
+export { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
+export { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
 export {
-	type VerboseTreeNode,
-	type VerboseTree,
-	applySchemaToParserOptions,
-	cursorFromVerbose,
-	verboseFromCursor,
-	replaceVerboseTreeHandles,
-} from "./verboseTree.js";
-
+	decodeSimpleSchema,
+	encodeSimpleSchema,
+} from "./simpleSchemaCodec.js";
 export {
-	type TreeEncodingOptions,
-	customFromCursorStored,
-	type CustomTreeNode,
-	type CustomTreeValue,
-	tryStoredSchemaAsArray,
-	replaceHandles,
-	type HandleConverter,
-	KeyEncodingOptions,
-	type TreeParsingOptions,
-} from "./customTree.js";
-
+	createSimpleTreeIndex,
+	type SimpleTreeIndex,
+} from "./simpleTreeIndex.js";
 export {
-	type ConciseTree,
-	conciseFromCursor,
-	replaceConciseTreeHandles,
-} from "./conciseTree.js";
-
+	checkCompatibility,
+	exportCompatibilitySchemaSnapshot,
+	importCompatibilitySchemaSnapshot,
+} from "./snapshotCompatibilityChecker.js";
+export {
+	comparePersistedSchema,
+	extractPersistedSchema,
+} from "./storedSchema.js";
+export {
+	type NodeInDocumentConstraint,
+	type RunTransactionParams,
+	rollback,
+	type TransactionCallbackStatus,
+	type TransactionConstraint,
+	type TransactionResult,
+	type TransactionResultExt,
+	type TransactionResultFailed,
+	type TransactionResultSuccess,
+	type VoidTransactionCallbackStatus,
+} from "./transactionTypes.js";
+export type {
+	ITree,
+	ITreeAlpha,
+	SchemaCompatibilityStatus,
+	TreeBranch,
+	TreeBranchAlpha,
+	TreeBranchEvents,
+	TreeView,
+	TreeViewAlpha,
+	TreeViewBeta,
+	TreeViewEvents,
+	ViewableTree,
+} from "./tree.js";
+export { asTreeViewAlpha } from "./tree.js";
 export {
 	borrowCursorFromTreeNodeOrValue,
 	exportConcise,
@@ -136,43 +142,36 @@ export {
 	TreeBeta,
 	type TreeChangeEventsBeta,
 } from "./treeBeta.js";
-export { createSimpleTreeIndex, type SimpleTreeIndex } from "./simpleTreeIndex.js";
-export {
-	createIdentifierIndex,
-	type IdentifierIndex,
-} from "./identifierIndex.js";
-
-export {
-	extractPersistedSchema,
-	comparePersistedSchema,
-} from "./storedSchema.js";
-
-export {
-	type TransactionConstraint,
-	type NodeInDocumentConstraint,
-	type RunTransactionParams,
-	type VoidTransactionCallbackStatus,
-	type TransactionCallbackStatus,
-	type TransactionResult,
-	type TransactionResultExt,
-	type TransactionResultSuccess,
-	type TransactionResultFailed,
-	rollback,
-} from "./transactionTypes.js";
-
-export { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
-export { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 export type { TreeChangeEvents } from "./treeChangeEvents.js";
 export {
-	incrementalEncodingPolicyForAllowedTypes,
-	incrementalSummaryHint,
-} from "./incrementalAllowedTypes.js";
+	getIdentifierFromNode,
+	getPropertyKeyFromStoredKey,
+	getStoredKey,
+	type TreeNodeApi,
+	treeNodeApi,
+	tryGetSchema,
+} from "./treeNodeApi.js";
+export type {
+	AllowedTypesFullFromMixedUnsafe,
+	AllowedTypesFullUnsafe,
+	AnnotateAllowedTypesListUnsafe,
+	AnnotatedAllowedTypesUnsafe,
+	AnnotatedAllowedTypeUnsafe,
+	ArrayNodeCustomizableSchemaUnsafe,
+	FieldSchemaAlphaUnsafe,
+	MapNodeCustomizableSchemaUnsafe,
+	System_Unsafe,
+	TreeRecordNodeUnsafe,
+	UnannotateAllowedTypesListUnsafe,
+	UnannotateAllowedTypeUnsafe,
+	Unenforced,
+} from "./typesUnsafe.js";
 export {
-	encodeSimpleSchema,
-	decodeSimpleSchema,
-} from "./simpleSchemaCodec.js";
-export {
-	exportCompatibilitySchemaSnapshot,
-	importCompatibilitySchemaSnapshot,
-	checkCompatibility,
-} from "./snapshotCompatibilityChecker.js";
+	applySchemaToParserOptions,
+	cursorFromVerbose,
+	replaceVerboseTreeHandles,
+	type VerboseTree,
+	type VerboseTreeNode,
+	verboseFromCursor,
+} from "./verboseTree.js";
+export { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";

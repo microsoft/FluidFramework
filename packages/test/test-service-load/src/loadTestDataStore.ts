@@ -3,38 +3,46 @@
  * Licensed under the MIT License.
  */
 
-import * as crypto from "crypto";
-
-import { IRandom } from "@fluid-private/stochastic-test-utils";
+import type { IRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
-import { ILoaderOptions } from "@fluidframework/container-definitions/internal";
-import {
+import type { ILoaderOptions } from "@fluidframework/container-definitions/internal";
+import type {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
-import { ISharedCounter, SharedCounter } from "@fluidframework/counter/internal";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	IDirectory,
-	ISharedDirectory,
-	ISharedMap,
+	type ISharedCounter,
+	SharedCounter,
+} from "@fluidframework/counter/internal";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import {
+	type IDirectory,
+	type ISharedDirectory,
+	type ISharedMap,
 	SharedMap,
 } from "@fluidframework/map/internal";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
+import type { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
-import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import {
+	type ITaskManager,
+	TaskManager,
+} from "@fluidframework/task-manager/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import * as crypto from "crypto";
 
 import type { TestConfiguration } from "./testConfigFile.js";
 import { printStatus } from "./utils.js";
-import { VirtualDataStoreFactory, type VirtualDataStore } from "./virtualDataStore.js";
+import {
+	type VirtualDataStore,
+	VirtualDataStoreFactory,
+} from "./virtualDataStore.js";
 
 export interface IRunConfig {
 	runId: number;
@@ -95,7 +103,10 @@ class LoadTestDataStoreModel {
 
 		await new Promise<void>((resolve) => {
 			const resolveIfDisposedOrCaughtUp = (op?: ISequencedDocumentMessage) => {
-				if (runtime.disposed || (op !== undefined && lastKnownSeq <= op.sequenceNumber)) {
+				if (
+					runtime.disposed ||
+					(op !== undefined && lastKnownSeq <= op.sequenceNumber)
+				) {
 					deltaManager.off("op", resolveIfDisposedOrCaughtUp);
 					runtime.off("dispose", resolveIfDisposedOrCaughtUp);
 					resolve();
@@ -125,7 +136,9 @@ class LoadTestDataStoreModel {
 		if (!root.has(gcDataStoreIdKey)) {
 			// The data store for this pair doesn't exist, create it and store its url.
 			gcDataStore =
-				await LoadTestDataStoreInstantiationFactory.createInstance(containerRuntime);
+				await LoadTestDataStoreInstantiationFactory.createInstance(
+					containerRuntime,
+				);
 			// Force the new data store to be attached.
 			root.set("Fake", gcDataStore.handle);
 			root.delete("Fake");
@@ -134,7 +147,9 @@ class LoadTestDataStoreModel {
 		// If we did not create the data store above, load it by getting its url.
 		if (gcDataStore === undefined) {
 			const gcDataStoreId = root.get(gcDataStoreIdKey);
-			const response = await (containerRuntime as ContainerRuntime).resolveHandle({
+			const response = await (
+				containerRuntime as ContainerRuntime
+			).resolveHandle({
 				url: `/${gcDataStoreId}`,
 			});
 			if (response.status !== 200 || response.mimeType !== "fluid/object") {
@@ -173,9 +188,15 @@ class LoadTestDataStoreModel {
 			runDir.set(sharedMapKey, SharedMap.create(runtime).handle);
 		}
 
-		const counter = await runDir.get<IFluidHandle<ISharedCounter>>(counterKey)?.get();
-		const taskmanager = await root.get<IFluidHandle<ITaskManager>>(taskManagerKey)?.get();
-		const sharedmap = await runDir.get<IFluidHandle<ISharedMap>>(sharedMapKey)?.get();
+		const counter = await runDir
+			.get<IFluidHandle<ISharedCounter>>(counterKey)
+			?.get();
+		const taskmanager = await root
+			.get<IFluidHandle<ITaskManager>>(taskManagerKey)
+			?.get();
+		const sharedmap = await runDir
+			.get<IFluidHandle<ISharedMap>>(sharedMapKey)
+			?.get();
 		const dataStoresSharedMap = await root
 			.get<IFluidHandle<ISharedMap>>(dataStoresSharedMapKey)
 			?.get();
@@ -193,7 +214,11 @@ class LoadTestDataStoreModel {
 			throw new Error("dataStoresSharedMap not available");
 		}
 
-		const gcDataStore = await this.getGCDataStore(config, root, containerRuntime);
+		const gcDataStore = await LoadTestDataStoreModel.getGCDataStore(
+			config,
+			root,
+			containerRuntime,
+		);
 
 		const dataModel = new LoadTestDataStoreModel(
 			root,
@@ -249,7 +274,8 @@ class LoadTestDataStoreModel {
 		const halfClients = Math.floor(this.config.testConfig.numClients / 2);
 		// The runners are paired up and each pair shares a single taskId
 		this.taskId = `op_sender${config.runId % halfClients}`;
-		this.partnerId = (this.config.runId + halfClients) % this.config.testConfig.numClients;
+		this.partnerId =
+			(this.config.runId + halfClients) % this.config.testConfig.numClients;
 		const changed = (taskId) => {
 			this.deferUntilConnected(
 				() => {
@@ -273,14 +299,17 @@ class LoadTestDataStoreModel {
 
 		// calculate the number of blobs we will upload
 		const clientBlobCount =
-			Math.trunc((config.testConfig.totalBlobCount ?? 0) / config.testConfig.numClients) +
+			Math.trunc(
+				(config.testConfig.totalBlobCount ?? 0) / config.testConfig.numClients,
+			) +
 			(this.config.runId <
 			(config.testConfig.totalBlobCount ?? 0) % config.testConfig.numClients
 				? 1
 				: 0);
 		this.isBlobWriter = clientBlobCount > 0;
 		if (this.isBlobWriter) {
-			const clientOpCount = config.testConfig.totalSendCount / config.testConfig.numClients;
+			const clientOpCount =
+				config.testConfig.totalSendCount / config.testConfig.numClients;
 			const blobsPerOp = clientBlobCount / clientOpCount;
 
 			// start uploading blobs where we left off
@@ -293,7 +322,10 @@ class LoadTestDataStoreModel {
 						const value = this.counter.value;
 						if (!local) {
 							// this is an old op, we should have already uploaded this blob
-							this.blobCount = Math.max(this.blobCount, Math.trunc(value * blobsPerOp));
+							this.blobCount = Math.max(
+								this.blobCount,
+								Math.trunc(value * blobsPerOp),
+							);
 							return;
 						}
 						const newBlobs =
@@ -303,13 +335,18 @@ class LoadTestDataStoreModel {
 
 						if (newBlobs > 0) {
 							this.blobUploads.push(
-								...[...Array(newBlobs)].map(async () => this.writeBlob(this.blobCount++)),
+								...[...Array(newBlobs)].map(async () =>
+									this.writeBlob(this.blobCount++),
+								),
 							);
 						}
 					},
 					(error) => {
 						if (!runtime.disposed) {
-							this.config.logger.sendErrorEvent({ eventName: "Counter_OnOp" }, error);
+							this.config.logger.sendErrorEvent(
+								{ eventName: "Counter_OnOp" },
+								error,
+							);
 						}
 					},
 				),
@@ -318,8 +355,11 @@ class LoadTestDataStoreModel {
 
 		// download any blobs our partner may upload
 		const partnerBlobCount =
-			Math.trunc(config.testConfig.totalBlobCount ?? 0 / config.testConfig.numClients) +
-			(this.partnerId < (config.testConfig.totalBlobCount ?? 0 % config.testConfig.numClients)
+			Math.trunc(
+				config.testConfig.totalBlobCount ?? 0 / config.testConfig.numClients,
+			) +
+			(this.partnerId <
+			(config.testConfig.totalBlobCount ?? 0 % config.testConfig.numClients)
 				? 1
 				: 0);
 
@@ -351,7 +391,10 @@ class LoadTestDataStoreModel {
 		}
 	}
 
-	private deferUntilConnected(callback: () => void, errorHandler: (error) => void) {
+	private deferUntilConnected(
+		callback: () => void,
+		errorHandler: (error) => void,
+	) {
 		Promise.resolve()
 			.then(() => {
 				if (this.runtime.connected) {
@@ -397,7 +440,10 @@ class LoadTestDataStoreModel {
 		}
 		const blobSize = this.config.testConfig.blobSize ?? defaultBlobSize;
 		// upload a unique blob, since they may be deduped otherwise
-		const buffer = Buffer.alloc(blobSize, `${this.config.runId}/${blobNumber}:`);
+		const buffer = Buffer.alloc(
+			blobSize,
+			`${this.config.runId}/${blobNumber}:`,
+		);
 		assert(buffer.byteLength === blobSize, "incorrect buffer size");
 		const handle = await this.runtime.uploadBlob(buffer);
 		if (!this.runtime.disposed) {
@@ -481,7 +527,7 @@ class LoadTestDataStoreModel {
 					return "0 B";
 				}
 				const i = Math.floor(Math.log(bytes) / Math.log(1024));
-				return `${(bytes / Math.pow(1024, i)).toFixed(decimals)} ${" KMGTPEZY"[i]}B`;
+				return `${(bytes / 1024 ** i).toFixed(decimals)} ${" KMGTPEZY"[i]}B`;
 			};
 			const now = Date.now();
 			const totalMin = (now - this.startTime) / 60000;
@@ -503,12 +549,18 @@ class LoadTestDataStoreModel {
 					` run time: ${taskMin.toFixed(2).toString().padStart(5)} min`,
 				` total time: ${totalMin.toFixed(2).toString().padStart(5)} min`,
 				`hasTask: ${this.assigned().toString().padStart(5)}`,
-				blobsEnabled ? `blobWriter: ${this.isBlobWriter.toString().padStart(5)}` : "",
+				blobsEnabled
+					? `blobWriter: ${this.isBlobWriter.toString().padStart(5)}`
+					: "",
 				blobsEnabled
 					? `blobs uploaded: ${formatBytes(this.blobCount * blobSize).padStart(8)}`
 					: "",
-				!disposed ? `audience: ${this.runtime.getAudience().getMembers().size}` : "",
-				!disposed ? `quorum: ${this.runtime.getQuorum().getMembers().size}` : "",
+				!disposed
+					? `audience: ${this.runtime.getAudience().getMembers().size}`
+					: "",
+				!disposed
+					? `quorum: ${this.runtime.getQuorum().getMembers().size}`
+					: "",
 			);
 		}
 	}
@@ -561,7 +613,10 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		if (config.verbose) {
 			const printProgress = () => {
 				dataModel.printStatus();
-				timeout = setTimeout(printProgress, config.testConfig.progressIntervalMs);
+				timeout = setTimeout(
+					printProgress,
+					config.testConfig.progressIntervalMs,
+				);
 			};
 			timeout = setTimeout(printProgress, config.testConfig.progressIntervalMs);
 		}
@@ -588,7 +643,8 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 
 	async sendOps(dataModel: LoadTestDataStoreModel, config: IRunConfig) {
 		const cycleMs = config.testConfig.readWriteCycleMs;
-		const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
+		const clientSendCount =
+			config.testConfig.totalSendCount / config.testConfig.numClients;
 		const opsSendType = config.testConfig.opsSendType ?? "staggeredReadWrite";
 		const opsPerCycle = (config.testConfig.opRatePerMin * cycleMs) / 60000;
 		const opsGapMs = cycleMs / opsPerCycle;
@@ -596,7 +652,10 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 			typeof config.testConfig.content?.opSizeinBytes === "undefined"
 				? 0
 				: config.testConfig.content.opSizeinBytes;
-		assert(opSizeinBytes >= 0, "opSizeinBytes must be greater than or equal to zero.");
+		assert(
+			opSizeinBytes >= 0,
+			"opSizeinBytes must be greater than or equal to zero.",
+		);
 
 		const generateStringOfSize = (sizeInBytes: number): string =>
 			new Array(sizeInBytes + 1).join("0");
@@ -611,23 +670,30 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				? Math.floor(Math.random() * opSizeinBytes)
 				: opSizeinBytes;
 		const largeOpRate = Math.max(
-			Math.floor((config.testConfig.content?.largeOpRate ?? 1) / config.testConfig.numClients),
+			Math.floor(
+				(config.testConfig.content?.largeOpRate ?? 1) /
+					config.testConfig.numClients,
+			),
 			1,
 		);
 		// To avoid having all clients send their large payloads at roughly the same time
 		const largeOpJitter = Math.min(config.runId, largeOpRate);
 		// To avoid growing the file size unnecessarily, not all clients should be sending large ops
-		const maxClientsSendingLargeOps = config.testConfig.content?.numClients ?? 1;
+		const maxClientsSendingLargeOps =
+			config.testConfig.content?.numClients ?? 1;
 
 		// Data Virtualization rates
-		const maxClientsForVirtualDatastores = config.testConfig.virtualization?.numClients ?? 1;
+		const maxClientsForVirtualDatastores =
+			config.testConfig.virtualization?.numClients ?? 1;
 		const virtualCreateRate =
 			config.testConfig.virtualization?.createRate !== undefined
-				? config.testConfig.virtualization.createRate / config.testConfig.numClients
+				? config.testConfig.virtualization.createRate /
+					config.testConfig.numClients
 				: undefined;
 		const virtualLoadRate =
 			config.testConfig.virtualization?.loadRate !== undefined
-				? config.testConfig.virtualization.loadRate / config.testConfig.numClients
+				? config.testConfig.virtualization.loadRate /
+					config.testConfig.numClients
 				: undefined;
 
 		let opsSent = 0;
@@ -778,7 +844,9 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		};
 
 		const enableQuickRampDown = () => {
-			return opsSendType === "staggeredReadWrite" && opSizeinBytes === 0 ? true : false;
+			return opsSendType === "staggeredReadWrite" && opSizeinBytes === 0
+				? true
+				: false;
 		};
 
 		const sendSingleOpAndThenWait =
@@ -802,14 +870,19 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 					};
 
 		try {
-			while (dataModel.counter.value < clientSendCount && !this.runtime.disposed) {
+			while (
+				dataModel.counter.value < clientSendCount &&
+				!this.runtime.disposed
+			) {
 				// this enables a quick ramp down. due to restart, some clients can lag
 				// leading to a slow ramp down. so if there are less than half the clients
 				// and it's partner is done, return true to complete the runner.
 				if (enableQuickRampDown()) {
 					if (
-						this.runtime.getAudience().getMembers().size < config.testConfig.numClients / 2 &&
-						((await dataModel.getPartnerCounter())?.value ?? 0) >= clientSendCount
+						this.runtime.getAudience().getMembers().size <
+							config.testConfig.numClients / 2 &&
+						((await dataModel.getPartnerCounter())?.value ?? 0) >=
+							clientSendCount
 					) {
 						return true;
 					}
@@ -869,7 +942,11 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		maxClients: number,
 		runId: number,
 	) {
-		return runId < maxClients && createRate !== undefined && opsSent % createRate === 0;
+		return (
+			runId < maxClients &&
+			createRate !== undefined &&
+			opsSent % createRate === 0
+		);
 	}
 
 	/**
@@ -886,14 +963,17 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		maxClients: number,
 		runId: number,
 	) {
-		return runId < maxClients && loadRate !== undefined && opsSent % loadRate === 0;
+		return (
+			runId < maxClients && loadRate !== undefined && opsSent % loadRate === 0
+		);
 	}
 
 	async sendSignals(config: IRunConfig) {
 		const clientSignalsSendCount =
 			typeof config.testConfig.totalSignalsSendCount === "undefined"
 				? 0
-				: config.testConfig.totalSignalsSendCount / config.testConfig.numClients;
+				: config.testConfig.totalSignalsSendCount /
+					config.testConfig.numClients;
 		const cycleMs = config.testConfig.readWriteCycleMs;
 		const signalsPerCycle =
 			typeof config.testConfig.signalsPerMin === "undefined"
@@ -902,7 +982,10 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		const signalsGapMs = cycleMs / signalsPerCycle;
 		let submittedSignals = 0;
 		try {
-			while (submittedSignals < clientSignalsSendCount && !this.runtime.disposed) {
+			while (
+				submittedSignals < clientSignalsSendCount &&
+				!this.runtime.disposed
+			) {
 				// all the clients are sending signals;
 				// with signals, there is no particular need to have staggered writers and readers
 				if (this.runtime.connected) {
@@ -924,7 +1007,9 @@ const LoadTestDataStoreInstantiationFactory = new DataObjectFactory({
 	sharedObjects: [SharedCounter.getFactory(), TaskManager.getFactory()],
 });
 
-export const createFluidExport = (runtimeOptions?: IContainerRuntimeOptions | undefined) =>
+export const createFluidExport = (
+	runtimeOptions?: IContainerRuntimeOptions | undefined,
+) =>
 	new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: LoadTestDataStoreInstantiationFactory,
 		registryEntries: [

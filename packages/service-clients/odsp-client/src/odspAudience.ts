@@ -36,7 +36,9 @@ interface OdspUser {
 export function createOdspAudienceMember(audienceMember: IClient): OdspMember {
 	const user = audienceMember.user as unknown as OdspUser;
 	assert(
-		user.name !== undefined || user.email !== undefined || user.oid !== undefined,
+		user.name !== undefined ||
+			user.email !== undefined ||
+			user.oid !== undefined,
 		0x836 /* Provided user was not an "OdspUser". */,
 	);
 

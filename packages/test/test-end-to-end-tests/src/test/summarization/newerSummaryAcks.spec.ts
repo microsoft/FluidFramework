@@ -3,31 +3,34 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
-import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import {
+	describeCompat,
+	type ITestDataObject,
+	itExpects,
+} from "@fluid-private/test-version-utils";
 import type {
 	ISummaryAckMessage,
 	ISummaryOpMessage,
 	Summarizer,
 	SummaryCollection,
 } from "@fluidframework/container-runtime/internal";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
-	MessageType,
 	type ISequencedDocumentMessage,
 	type ISummaryAck,
 	type ISummaryContent,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	ITestContainerConfig,
-	ITestObjectProvider,
 	createSummarizer,
 	createTestConfigProvider,
+	type ITestContainerConfig,
+	type ITestObjectProvider,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-import { createSandbox, SinonSandbox } from "sinon";
+import { strict as assert } from "assert";
+import { createSandbox, type SinonSandbox } from "sinon";
 
 import { reconnectSummarizerToBeElected } from "../gc/index.js";
 
@@ -72,7 +75,10 @@ describeCompat(
 
 		beforeEach("getTestObjectProvider", async () => {
 			provider = getTestObjectProvider({ syncSummarizer: true });
-			configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 0);
+			configProvider.set(
+				"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs",
+				0,
+			);
 		});
 
 		afterEach(() => {
@@ -84,15 +90,21 @@ describeCompat(
 			"closes the container on getting a newer summary ack and fetching the corresponding snapshot",
 			[{ eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed" }],
 			async () => {
-				const container1 = await provider.makeTestContainer(testContainerConfig);
-				const defaultDataStore1 = (await container1.getEntryPoint()) as ITestDataObject;
+				const container1 =
+					await provider.makeTestContainer(testContainerConfig);
+				const defaultDataStore1 =
+					(await container1.getEntryPoint()) as ITestDataObject;
 				defaultDataStore1._root.set("1", "2");
 
 				// Create 2 summarizers. They should both load from the first snapshot. The first summarizer will
 				// summarize and the second one will get the summary ack.
-				const { summarizer: summarizer1 } = await createSummarizer(provider, container1, {
-					loaderProps: { configProvider },
-				});
+				const { summarizer: summarizer1 } = await createSummarizer(
+					provider,
+					container1,
+					{
+						loaderProps: { configProvider },
+					},
+				);
 				const { summarizer: summarizer2, container: summarizer2Container } =
 					await createSummarizer(provider, container1, {
 						loaderProps: { configProvider },
@@ -113,7 +125,10 @@ describeCompat(
 				// will be processed as well since it's sequenced before this op.
 				defaultDataStore1._root.set("2", "3");
 				await provider.ensureSynchronized();
-				await assert.rejects(async () => summarizeNow(summarizer2), "Summarize should fail");
+				await assert.rejects(
+					async () => summarizeNow(summarizer2),
+					"Summarize should fail",
+				);
 				assert.strictEqual(
 					summarizer2Container.disposed,
 					true,
@@ -131,7 +146,8 @@ describeCompat(
 		 */
 		it("doesn't fail on getting a newer summary ack and fetching a snapshot older than the ack's snapshot", async () => {
 			const container1 = await provider.makeTestContainer(testContainerConfig);
-			const defaultDataStore1 = (await container1.getEntryPoint()) as ITestDataObject;
+			const defaultDataStore1 =
+				(await container1.getEntryPoint()) as ITestDataObject;
 
 			const mockLogger = new MockLogger();
 			const createResult = await createSummarizer(
@@ -176,7 +192,9 @@ describeCompat(
 
 			const summaryAck: ISummaryAck = {
 				handle: summaryAckHandle,
-				summaryProposal: { summarySequenceNumber: fakeSummaryOp.sequenceNumber },
+				summaryProposal: {
+					summarySequenceNumber: fakeSummaryOp.sequenceNumber,
+				},
 			};
 			const fakeSummaryAck: ISummaryAckMessage = {
 				...fakeSummaryOp,
@@ -191,13 +209,19 @@ describeCompat(
 			summaryCollection.handleOp(fakeSummaryOp);
 			summaryCollection.handleOp(fakeSummaryAck);
 
-			const getSnapshotTreeSpy = sandbox.spy(summarizer.runtime.storage, "getSnapshotTree");
+			const getSnapshotTreeSpy = sandbox.spy(
+				summarizer.runtime.storage,
+				"getSnapshotTree",
+			);
 			const uploadSummarySpy = sandbox.spy(
 				summarizer.runtime.storage,
 				"uploadSummaryWithContext",
 			);
 
-			await assert.doesNotReject(summarizeNow(summarizer), "Summarize should not fail");
+			await assert.doesNotReject(
+				summarizeNow(summarizer),
+				"Summarize should not fail",
+			);
 			assert.notStrictEqual(
 				summarizerContainer.disposed,
 				true,

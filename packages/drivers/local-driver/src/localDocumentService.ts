@@ -4,9 +4,9 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IClient } from "@fluidframework/driver-definitions";
-import {
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IClient } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
 	IDocumentService,
@@ -15,8 +15,8 @@ import {
 	IDocumentStorageService,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
-import { ITokenProvider } from "@fluidframework/routerlicious-driver";
-import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import type { ITokenProvider } from "@fluidframework/routerlicious-driver";
+import type { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { GitManager } from "@fluidframework/server-services-client";
 import { TestHistorian } from "@fluidframework/server-test-utils";
 
@@ -44,8 +44,13 @@ export class LocalDocumentService
 		private readonly tokenProvider: ITokenProvider,
 		private readonly tenantId: string,
 		private readonly documentId: string,
-		private readonly documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>,
-		public readonly policies: IDocumentServicePolicies = { supportGetSnapshotApi: true },
+		private readonly documentDeltaConnectionsMap: Map<
+			string,
+			LocalDocumentDeltaConnection
+		>,
+		public readonly policies: IDocumentServicePolicies = {
+			supportGetSnapshotApi: true,
+		},
 		private readonly innerDocumentService?: IDocumentService,
 		private readonly logger?: ITelemetryBaseLogger,
 	) {
@@ -61,7 +66,9 @@ export class LocalDocumentService
 		return new LocalDocumentStorageService(
 			this.documentId,
 			new GitManager(
-				new TestHistorian(this.localDeltaConnectionServer.testDbFactory.testDatabase),
+				new TestHistorian(
+					this.localDeltaConnectionServer.testDbFactory.testDatabase,
+				),
 			),
 			{
 				maximumCacheDurationMs: 432_000_000, // 5 days in ms. Not actually enforced but shouldn't matter for any local driver scenario
@@ -89,7 +96,9 @@ export class LocalDocumentService
 	 * Creates and returns a delta stream for local use.
 	 * @param client - client data
 	 */
-	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+	public async connectToDeltaStream(
+		client: IClient,
+	): Promise<IDocumentDeltaConnection> {
 		if (this.policies.storageOnly === true) {
 			throw new Error("can't connect to delta stream in storage-only mode");
 		}

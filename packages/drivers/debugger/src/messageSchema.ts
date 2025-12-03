@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Schema } from "jsonschema";
+import type { Schema } from "jsonschema";
 
 export const joinContentsSchema = {
 	type: "null",
@@ -273,7 +273,14 @@ export const opContentsMapSchema = {
 				},
 				type: {
 					type: "string",
-					enum: ["act", "set", "delete", "clear", "createSubDirectory", "deleteSubDirectory"],
+					enum: [
+						"act",
+						"set",
+						"delete",
+						"clear",
+						"createSubDirectory",
+						"deleteSubDirectory",
+					],
 				},
 			},
 			required: ["type"],
@@ -297,7 +304,9 @@ export const opContentsMapSchema = {
 					required: ["path"],
 				},
 				{
-					properties: { type: { enum: ["createSubDirectory", "deleteSubDirectory"] } },
+					properties: {
+						type: { enum: ["createSubDirectory", "deleteSubDirectory"] },
+					},
 					required: ["path", "subdirName"],
 				},
 			],

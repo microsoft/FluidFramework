@@ -14,6 +14,7 @@ import type {
  */
 export class InventoryListAppModel implements IInventoryListAppModel {
 	public constructor(
-		public readonly migratingInventoryList: IInventoryList & IMigrateBackingData,
+		public readonly migratingInventoryList: IInventoryList &
+			IMigrateBackingData,
 	) {}
 }

@@ -4,15 +4,18 @@
  */
 
 import { strict as assert } from "node:assert";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
-
-import { type ICodecFamily, type IJsonCodec, makeCodecFamily } from "../../../codec/index.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
+import { gt } from "semver-ts";
+import {
+	type ICodecFamily,
+	type IJsonCodec,
+	makeCodecFamily,
+} from "../../../codec/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { ClientVersionDispatchingCodecBuilder } from "../../../codec/versioned/codec.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import { pkgVersion } from "../../../packageVersion.js";
-import { gt } from "semver-ts";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 describe("versioned Codecs", () => {
 	describe("ClientVersionDispatchingCodecBuilder", () => {

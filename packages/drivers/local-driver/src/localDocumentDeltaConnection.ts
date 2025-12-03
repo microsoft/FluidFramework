@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
-import { IClient } from "@fluidframework/driver-definitions";
+import type { IClient } from "@fluidframework/driver-definitions";
 import {
-	IConnect,
-	IDocumentMessage,
+	type IConnect,
+	type IDocumentMessage,
 	NackErrorType,
 } from "@fluidframework/driver-definitions/internal";
-import { LocalWebSocketServer } from "@fluidframework/server-local-server";
-import { IWebSocketServer } from "@fluidframework/server-services-core";
+import type { LocalWebSocketServer } from "@fluidframework/server-local-server";
+import type { IWebSocketServer } from "@fluidframework/server-services-core";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import type { Socket } from "socket.io-client";
 
@@ -48,7 +48,11 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 		// but should be fine because this delta connection is for local use only.
 		const socketWithListener = socket as unknown as Socket;
 
-		const deltaConnection = new LocalDocumentDeltaConnection(socketWithListener, id, logger);
+		const deltaConnection = new LocalDocumentDeltaConnection(
+			socketWithListener,
+			id,
+			logger,
+		);
 
 		const connectMessage: IConnect = {
 			client,
@@ -62,7 +66,11 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 		return deltaConnection;
 	}
 
-	constructor(socket: Socket, documentId: string, logger?: ITelemetryBaseLogger) {
+	constructor(
+		socket: Socket,
+		documentId: string,
+		logger?: ITelemetryBaseLogger,
+	) {
 		super(socket, documentId, createChildLogger({ logger }));
 	}
 

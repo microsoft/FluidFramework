@@ -7,12 +7,15 @@ import type {
 	IChannel,
 	IChannelAttributes,
 	IChannelFactory,
-	IFluidDataStoreRuntime,
 	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
-import { type ISharedMatrix, SharedMatrix as SharedMatrixClass } from "./matrix.js";
+import {
+	type ISharedMatrix,
+	SharedMatrix as SharedMatrixClass,
+} from "./matrix.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
@@ -51,7 +54,10 @@ export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix> {
 		return matrix;
 	}
 
-	public create(document: IFluidDataStoreRuntime, id: string): ISharedMatrix & IChannel {
+	public create(
+		document: IFluidDataStoreRuntime,
+		id: string,
+	): ISharedMatrix & IChannel {
 		const matrix = new SharedMatrixClass(document, id, this.attributes);
 		matrix.initializeLocal();
 		return matrix;
@@ -62,7 +68,8 @@ export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix> {
  * Entrypoint for {@link ISharedMatrix} creation.
  * @legacy @beta
  */
-export const SharedMatrix = createSharedObjectKind<ISharedMatrix>(SharedMatrixFactory);
+export const SharedMatrix =
+	createSharedObjectKind<ISharedMatrix>(SharedMatrixFactory);
 
 /**
  * Convenience alias for {@link ISharedMatrix}. Prefer to use {@link ISharedMatrix} when referring to

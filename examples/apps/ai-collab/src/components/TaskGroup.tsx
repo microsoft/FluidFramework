@@ -4,25 +4,25 @@
  */
 
 import {
-	aiCollab,
 	type AiCollabErrorResponse,
 	type AiCollabSuccessResponse,
 	type ApplyEditSuccess,
-	type Difference,
+	aiCollab,
 	type Diff,
-	type ModifyDiff,
+	type Difference,
 	type InsertDiff,
-	type RemoveDiff,
+	type ModifyDiff,
 	type MoveDiff,
+	type RemoveDiff,
 } from "@fluidframework/ai-collab/alpha";
 import {
 	CommitKind,
-	RevertibleStatus,
-	Tree,
-	TreeAlpha,
 	type CommitMetadata,
 	type Revertible,
 	type RevertibleFactory,
+	RevertibleStatus,
+	Tree,
+	TreeAlpha,
 	type TreeBranch,
 	type TreeViewAlpha,
 } from "@fluidframework/tree/alpha";
@@ -45,9 +45,6 @@ import {
 import type { TreeView } from "fluid-framework";
 import { useSnackbar } from "notistack";
 import React, { useEffect, useState } from "react";
-
-import { TaskCard } from "./TaskCard";
-
 import { getOpenAiClient } from "@/infra/openAiClient";
 import {
 	aiCollabLlmTreeNodeValidator,
@@ -55,6 +52,7 @@ import {
 	type SharedTreeTaskGroup,
 } from "@/types/sharedTreeAppSchema";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
+import { TaskCard } from "./TaskCard";
 
 export function TaskGroup(props: {
 	treeView: TreeView<typeof SharedTreeAppState>;
@@ -68,7 +66,9 @@ export function TaskGroup(props: {
 	const [isDescriptionEditing, setIsDescriptionEditing] = useState(false);
 	const [isDiffModalOpen, setIsDiffModalOpen] = useState(false);
 
-	const [popoverAnchor, setPopoverAnchor] = useState<HTMLButtonElement | undefined>(undefined);
+	const [popoverAnchor, setPopoverAnchor] = useState<
+		HTMLButtonElement | undefined
+	>(undefined);
 	const [isAiTaskRunning, setIsAiTaskRunning] = useState<boolean>(false);
 	const [llmBranchData, setLlmBranchData] = useState<{
 		readonly diffs: readonly Diff[];
@@ -80,7 +80,10 @@ export function TaskGroup(props: {
 	const [undoStack, setUndoStack] = useState<Revertible[]>([]);
 	const [redoStack, setRedoStack] = useState<Revertible[]>([]);
 
-	useSharedTreeRerender({ sharedTreeNode: props.sharedTreeTaskGroup, logId: "TaskGroup" });
+	useSharedTreeRerender({
+		sharedTreeNode: props.sharedTreeTaskGroup,
+		logId: "TaskGroup",
+	});
 
 	/**
 	 * Create undo and redo stacks of {@link Revertible}.
@@ -152,12 +155,18 @@ export function TaskGroup(props: {
 					const revertible = getRevertible(onRevertibleDisposed);
 					if (commit.kind === CommitKind.Undo) {
 						setRedoStack((prevRedoStack) => {
-							const newRedoStack = trimStackToMaxSize([...prevRedoStack, revertible]);
+							const newRedoStack = trimStackToMaxSize([
+								...prevRedoStack,
+								revertible,
+							]);
 							return newRedoStack;
 						});
 					} else {
 						setUndoStack((prevUndoStack) => {
-							const newUndoStack = trimStackToMaxSize([...prevUndoStack, revertible]);
+							const newUndoStack = trimStackToMaxSize([
+								...prevUndoStack,
+								revertible,
+							]);
 							return newUndoStack;
 						});
 					}
@@ -216,54 +225,62 @@ export function TaskGroup(props: {
 		try {
 			// 1. Get the current branch, the new branch and associated task group to be used for ai collaboration
 			const { currentBranch, newBranchTree, newBranchTaskGroup } =
-				getNewSharedTreeBranchAndTaskGroup(props.treeView.root, props.sharedTreeTaskGroup);
-			console.log("ai-collab Branch Task Group BEFORE:", { ...newBranchTaskGroup });
+				getNewSharedTreeBranchAndTaskGroup(
+					props.treeView.root,
+					props.sharedTreeTaskGroup,
+				);
+			console.log("ai-collab Branch Task Group BEFORE:", {
+				...newBranchTaskGroup,
+			});
 
 			// 2. execute the ai collaboration
-			const response: AiCollabSuccessResponse | AiCollabErrorResponse = await aiCollab({
-				openAI: {
-					client: getOpenAiClient(),
-					modelName: "gpt-4o",
-				},
-				treeNode: newBranchTaskGroup,
-				prompt: {
-					systemRoleContext:
-						"You are a manager that is helping out with a project management tool. You have been asked to edit a group of tasks.",
-					userAsk: userRequest,
-				},
-				limiters: {
-					maxModelCalls: 30,
-				},
-				planningStep: true,
-				finalReviewStep: false,
-				validator: aiCollabLlmTreeNodeValidator,
-				debugEventLogHandler: (event) => {
-					console.log(`Received event: ${event.eventName}`);
-					if (
-						event.eventName === "APPLIED_EDIT_SUCCESS" ||
-						event.eventName === "APPLIED_EDIT_FAILURE"
-					) {
-						console.log(
-							`${
-								event.eventName === "APPLIED_EDIT_SUCCESS"
-									? "Succesfully applied"
-									: "Failed to appply"
-							} tree edit: ${JSON.stringify(
-								(event as unknown as ApplyEditSuccess).edit,
-								undefined,
-								2,
-							)}`,
-						);
-					}
-				},
-			});
+			const response: AiCollabSuccessResponse | AiCollabErrorResponse =
+				await aiCollab({
+					openAI: {
+						client: getOpenAiClient(),
+						modelName: "gpt-4o",
+					},
+					treeNode: newBranchTaskGroup,
+					prompt: {
+						systemRoleContext:
+							"You are a manager that is helping out with a project management tool. You have been asked to edit a group of tasks.",
+						userAsk: userRequest,
+					},
+					limiters: {
+						maxModelCalls: 30,
+					},
+					planningStep: true,
+					finalReviewStep: false,
+					validator: aiCollabLlmTreeNodeValidator,
+					debugEventLogHandler: (event) => {
+						console.log(`Received event: ${event.eventName}`);
+						if (
+							event.eventName === "APPLIED_EDIT_SUCCESS" ||
+							event.eventName === "APPLIED_EDIT_FAILURE"
+						) {
+							console.log(
+								`${
+									event.eventName === "APPLIED_EDIT_SUCCESS"
+										? "Succesfully applied"
+										: "Failed to appply"
+								} tree edit: ${JSON.stringify(
+									(event as unknown as ApplyEditSuccess).edit,
+									undefined,
+									2,
+								)}`,
+							);
+						}
+					},
+				});
 
 			// 3. Handle the response from the ai collaboration
 			if (response.status !== "success") {
 				throw new Error(response.errorMessage);
 			}
 
-			console.log("ai-collab Branch Task Group AFTER:", { ...newBranchTaskGroup });
+			console.log("ai-collab Branch Task Group AFTER:", {
+				...newBranchTaskGroup,
+			});
 
 			setLlmBranchData({
 				diffs: response.diffs,
@@ -272,10 +289,13 @@ export function TaskGroup(props: {
 				newBranchTargetNode: newBranchTaskGroup,
 			});
 			setIsDiffModalOpen(true);
-			enqueueSnackbar(`Copilot: I've completed your request - "${userRequest}"`, {
-				variant: "success",
-				autoHideDuration: 5000,
-			});
+			enqueueSnackbar(
+				`Copilot: I've completed your request - "${userRequest}"`,
+				{
+					variant: "success",
+					autoHideDuration: 5000,
+				},
+			);
 		} catch (error) {
 			enqueueSnackbar(
 				`Copilot: Something went wrong processing your request - ${error instanceof Error ? error.message : "unknown error"}`,
@@ -427,7 +447,12 @@ export function TaskGroup(props: {
 					>
 						<Box
 							component="form"
-							sx={{ display: "flex", width: "500px", alignItems: "center", p: 2 }}
+							sx={{
+								display: "flex",
+								width: "500px",
+								alignItems: "center",
+								p: 2,
+							}}
 							// eslint-disable-next-line @typescript-eslint/no-misused-promises
 							onSubmit={async (e) => {
 								e.preventDefault();
@@ -475,7 +500,9 @@ export function TaskGroup(props: {
 						id="input-description-label-id"
 						label="Description"
 						value={props.sharedTreeTaskGroup.description}
-						onChange={(e) => (props.sharedTreeTaskGroup.description = e.target.value)}
+						onChange={(e) =>
+							(props.sharedTreeTaskGroup.description = e.target.value)
+						}
 						fullWidth
 						slotProps={{
 							input: {
@@ -503,18 +530,28 @@ export function TaskGroup(props: {
 			</Stack>
 
 			{/* Render Task Card list */}
-			<Stack direction="row" spacing={{ xs: 1, sm: 2 }} useFlexGap sx={{ flexWrap: "wrap" }}>
+			<Stack
+				direction="row"
+				spacing={{ xs: 1, sm: 2 }}
+				useFlexGap
+				sx={{ flexWrap: "wrap" }}
+			>
 				{props.sharedTreeTaskGroup.tasks.map((task) => {
 					const modifyDiffs =
-						props.diffs?.filter((diff): diff is ModifyDiff => diff.type === "modify") ?? [];
+						props.diffs?.filter(
+							(diff): diff is ModifyDiff => diff.type === "modify",
+						) ?? [];
 					const matchingModifyDiffs = modifyDiffs.filter(
 						(diff: ModifyDiff) =>
 							// Modify diffs are a field level edit, so the first path will be the field and the second will be the node.
-							diff.nodePath.length > 1 && diff.nodePath[1]?.shortId === Tree.shortId(task),
+							diff.nodePath.length > 1 &&
+							diff.nodePath[1]?.shortId === Tree.shortId(task),
 					);
 
 					const insertDiffs =
-						props.diffs?.filter((diff): diff is InsertDiff => diff.type === "insert") ?? [];
+						props.diffs?.filter(
+							(diff): diff is InsertDiff => diff.type === "insert",
+						) ?? [];
 					const matchingInsertDiffs = insertDiffs.filter(
 						(diff: InsertDiff) =>
 							// Insert diffs are a node level edit, so the first path will be the node.
@@ -522,7 +559,9 @@ export function TaskGroup(props: {
 					);
 
 					const removeDiffs =
-						props.diffs?.filter((diff): diff is RemoveDiff => diff.type === "remove") ?? [];
+						props.diffs?.filter(
+							(diff): diff is RemoveDiff => diff.type === "remove",
+						) ?? [];
 					// TODO - Since the Target node has been deleted, this will never match to a remove diff.
 					// One possible correct way to handle this case, is to take deleted node ui diffs, take the `RemoveDiff.nodeContent / RemoveDiff.nodeContents` and use that
 					// to render a special 'removed' task card that cannot be interacted with and is not a part of the tree.
@@ -541,7 +580,9 @@ export function TaskGroup(props: {
 					});
 
 					const moveDiffs =
-						props.diffs?.filter((diff): diff is MoveDiff => diff.type === "move") ?? [];
+						props.diffs?.filter(
+							(diff): diff is MoveDiff => diff.type === "move",
+						) ?? [];
 					const matchingMoveDiffs = moveDiffs.filter((diff: MoveDiff) => {
 						if (diff.moveType === "move-single") {
 							return diff.sourceNodePath[0]?.shortId === Tree.shortId(task);
@@ -582,13 +623,18 @@ export function TaskGroup(props: {
 				Engineers
 			</Typography>
 
-			<Stack direction="row" spacing={{ xs: 1, sm: 2 }} sx={{ flexWrap: "wrap" }}>
+			<Stack
+				direction="row"
+				spacing={{ xs: 1, sm: 2 }}
+				sx={{ flexWrap: "wrap" }}
+			>
 				{props.sharedTreeTaskGroup.engineers.map((engineer) => {
 					const engineerCapacity = props.sharedTreeTaskGroup.tasks
 						.filter((task) => task.assignee === engineer.name)
 						.reduce((acc, task) => acc + task.complexity, 0);
 
-					const capacityColor = engineerCapacity > engineer.maxCapacity ? "red" : "green";
+					const capacityColor =
+						engineerCapacity > engineer.maxCapacity ? "red" : "green";
 
 					return (
 						<Card sx={{ p: 2, width: 400 }} key={engineer.name}>
@@ -638,7 +684,15 @@ function TaskGroupDiffModal(props: {
 	readonly diffs: readonly Diff[];
 	newBranchTargetNode: SharedTreeTaskGroup;
 }): JSX.Element {
-	const { isOpen, onClose, onAccept, onDecline, treeView, newBranchTargetNode, diffs } = props;
+	const {
+		isOpen,
+		onClose,
+		onAccept,
+		onDecline,
+		treeView,
+		newBranchTargetNode,
+		diffs,
+	} = props;
 
 	return (
 		<Dialog

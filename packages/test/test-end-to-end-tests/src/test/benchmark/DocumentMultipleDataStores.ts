@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import {
 	assertDocumentTypeInfo,
 	isDocumentMultipleDataStoresInfo,
@@ -14,13 +12,16 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
+	type IContainer,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
+import type {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 	ISummarizer,
 } from "@fluidframework/container-runtime/internal";
-import {
+import type {
 	ConfigTypes,
 	IConfigProviderBase,
 	IFluidHandle,
@@ -28,19 +29,22 @@ import {
 } from "@fluidframework/core-interfaces";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
+import { strict as assert } from "assert";
 
-import {
+import type {
 	IDocumentLoaderAndSummarizer,
 	IDocumentProps,
 	ISummarizeResult,
 } from "./DocumentCreator.js";
 
-const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+const configProvider = (
+	settings: Record<string, ConfigTypes>,
+): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 
@@ -78,7 +82,9 @@ class TestDataObject extends DataObject {
 		assert(mapHandle !== undefined, "SharedMap not found");
 		this.map = await mapHandle.get();
 
-		const sharedStringHandle = this.root.get<IFluidHandle<SharedString>>(this.sharedStringKey);
+		const sharedStringHandle = this.root.get<IFluidHandle<SharedString>>(
+			this.sharedStringKey,
+		);
 		assert(sharedStringHandle !== undefined, "SharedString not found");
 		this.sharedString = await sharedStringHandle.get();
 	}
@@ -113,7 +119,9 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 		return this.props.logger;
 	}
 
-	private async ensureContainerConnectedWriteMode(container: IContainer): Promise<void> {
+	private async ensureContainerConnectedWriteMode(
+		container: IContainer,
+	): Promise<void> {
 		const resolveIfActive = (res: () => void) => {
 			if (container.deltaManager.active) {
 				res();
@@ -144,10 +152,13 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 		);
 		// Data stores are not created as to not generate too many ops, and hit the # of ops limit.
 		// This is a workaround to prevent that.
-		const totalIterations = this.numberDataStoreCounts / this.dsCountsPerIteration;
+		const totalIterations =
+			this.numberDataStoreCounts / this.dsCountsPerIteration;
 		for (let i = 0; i < totalIterations; i++) {
 			for (let j = 0; j < this.dsCountsPerIteration; j++) {
-				const dataStore = await this.dataObjectFactory.createInstance(this.containerRuntime);
+				const dataStore = await this.dataObjectFactory.createInstance(
+					this.containerRuntime,
+				);
 				this.mainDataStore._root.set(`dataStore${j}`, dataStore.handle);
 			}
 			await this.waitForContainerSave(this._mainContainer);
@@ -179,15 +190,20 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 			runtimeOptions,
 		});
 
-		assertDocumentTypeInfo(this.props.documentTypeInfo, this.props.documentType);
+		assertDocumentTypeInfo(
+			this.props.documentTypeInfo,
+			this.props.documentType,
+		);
 		// Now TypeScript knows that info.documentTypeInfo is either DocumentMapInfo or DocumentMultipleDataStoresInfo
 		// and info.documentType is either "DocumentMap" or "DocumentMultipleDataStores"
 		assert(isDocumentMultipleDataStoresInfo(this.props.documentTypeInfo));
 
 		switch (this.props.documentType) {
 			case "DocumentMultipleDataStores":
-				this.numberDataStoreCounts = this.props.documentTypeInfo.numberDataStores;
-				this.dsCountsPerIteration = this.props.documentTypeInfo.numberDataStoresPerIteration;
+				this.numberDataStoreCounts =
+					this.props.documentTypeInfo.numberDataStores;
+				this.dsCountsPerIteration =
+					this.props.documentTypeInfo.numberDataStoresPerIteration;
 				break;
 			default:
 				throw new Error("Invalid document type");
@@ -195,13 +211,18 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 	}
 
 	public async initializeDocument(): Promise<void> {
-		this._mainContainer = await this.props.provider.createContainer(this.runtimeFactory, {
-			logger: this.props.logger,
-			configProvider: configProvider(featureGates),
-		});
+		this._mainContainer = await this.props.provider.createContainer(
+			this.runtimeFactory,
+			{
+				logger: this.props.logger,
+				configProvider: configProvider(featureGates),
+			},
+		);
 		this.props.provider.updateDocumentId(this._mainContainer.resolvedUrl);
-		this.mainDataStore = (await this._mainContainer.getEntryPoint()) as TestDataObject;
-		this.containerRuntime = this.mainDataStore._context.containerRuntime as ContainerRuntime;
+		this.mainDataStore =
+			(await this._mainContainer.getEntryPoint()) as TestDataObject;
+		this.containerRuntime = this.mainDataStore._context
+			.containerRuntime as ContainerRuntime;
 		this.mainDataStore._root.set("mode", "write");
 		await this.ensureContainerConnectedWriteMode(this._mainContainer);
 		await this.createDataStores();
@@ -226,7 +247,10 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 
 		const loader = this.props.provider.createLoader(
 			[[this.props.provider.defaultCodeDetails, this.runtimeFactory]],
-			{ logger: this.props.logger, configProvider: configProvider(featureGates) },
+			{
+				logger: this.props.logger,
+				configProvider: configProvider(featureGates),
+			},
 		);
 		const container2 = await loader.resolve(request);
 		return container2;
@@ -244,7 +268,10 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 		summaryVersion?: string,
 		closeContainer: boolean = true,
 	): Promise<ISummarizeResult> {
-		assert(_container !== undefined, "Container should be initialized before summarize");
+		assert(
+			_container !== undefined,
+			"Container should be initialized before summarize",
+		);
 		const { container: containerClient, summarizer: summarizerClient } =
 			await createSummarizerFromFactory(
 				this.props.provider,
@@ -258,7 +285,10 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 			);
 
 		const newSummaryVersion = await this.waitForSummary(summarizerClient);
-		assert(newSummaryVersion !== undefined, "summaryVersion needs to be valid.");
+		assert(
+			newSummaryVersion !== undefined,
+			"summaryVersion needs to be valid.",
+		);
 		if (closeContainer) {
 			summarizerClient.close();
 		}

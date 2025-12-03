@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { forestSummaryKey, ForestSummarizer } from "./forestSummarizer.js";
 export { getCodecTreeForForestFormat } from "./codec.js";
+export { ForestSummarizer, forestSummaryKey } from "./forestSummarizer.js";
 export { ForestFormatVersion } from "./format.js";

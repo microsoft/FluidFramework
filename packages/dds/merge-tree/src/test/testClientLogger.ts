@@ -13,13 +13,18 @@ import { UnassignedSequenceNumber } from "../constants.js";
 import type { IMergeTreeOptions } from "../index.js";
 import {
 	type IMergeTreeDeltaOpArgs,
-	MergeTreeMaintenanceType,
 	type IMergeTreeMaintenanceCallbackArgs,
+	MergeTreeMaintenanceType,
 } from "../mergeTreeDeltaCallback.js";
+import {
+	type IMergeNode,
+	type ISegmentPrivate,
+	Marker,
+	seqLTE,
+} from "../mergeTreeNodes.js";
 import { depthFirstNodeWalk } from "../mergeTreeNodeWalk.js";
-import { type IMergeNode, Marker, seqLTE, type ISegmentPrivate } from "../mergeTreeNodes.js";
 import { type IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
-import { type PropertySet, matchProperties } from "../properties.js";
+import { matchProperties, type PropertySet } from "../properties.js";
 import type { IHasInsertionInfo, IHasRemovalInfo } from "../segmentInfos.js";
 import type { RemoveOperationStamp } from "../stamps.js";
 import { TextSegment, TextSegmentGranularity } from "../textSegment.js";
@@ -35,9 +40,17 @@ function getOpString(msg: ISequencedDocumentMessage | undefined): string {
 	let opPos;
 	if (op.type === MergeTreeDeltaType.OBLITERATE_SIDED) {
 		const pos1Side =
-			op.type === MergeTreeDeltaType.OBLITERATE_SIDED ? (op.pos1.before ? "[" : "(") : "";
+			op.type === MergeTreeDeltaType.OBLITERATE_SIDED
+				? op.pos1.before
+					? "["
+					: "("
+				: "";
 		const pos2Side =
-			op.type === MergeTreeDeltaType.OBLITERATE_SIDED ? (op.pos2.before ? ")" : "]") : "";
+			op.type === MergeTreeDeltaType.OBLITERATE_SIDED
+				? op.pos2.before
+					? ")"
+					: "]"
+				: "";
 		opPos = `@${pos1Side}${op.pos1.pos},${op.pos2.pos}${pos2Side}`;
 	} else {
 		opPos =
@@ -68,7 +81,9 @@ function matchPropertiesHandleEmpty(
 	return matchProperties(a, b) || (arePropsEmpty(a) && arePropsEmpty(b));
 }
 
-type ClientMap<TClientName extends string> = Partial<Record<TClientName, TestClient>>;
+type ClientMap<TClientName extends string> = Partial<
+	Record<TClientName, TestClient>
+>;
 
 export function createClientsAtInitialState<
 	TClients extends ClientMap<TClientName>,
@@ -107,7 +122,7 @@ export class TestClientLogger {
 	public static toString(clients: readonly TestClient[]): string {
 		return (
 			clients
-				.map((c) => this.getSegString(c))
+				.map((c) => TestClientLogger.getSegString(c))
 				// eslint-disable-next-line unicorn/no-array-reduce
 				.reduce<[string, string]>(
 					(pv, cv) => {
@@ -153,7 +168,8 @@ export class TestClientLogger {
 			logHeaders.push("op", `client ${c.longClientId}`);
 			const callback = (deltaArgs: IMergeTreeDeltaOpArgs | undefined): void => {
 				if (
-					this.lastDeltaArgs?.sequencedMessage !== deltaArgs?.sequencedMessage ||
+					this.lastDeltaArgs?.sequencedMessage !==
+						deltaArgs?.sequencedMessage ||
 					this.lastDeltaArgs?.op !== deltaArgs?.op
 				) {
 					this.addNewLogLine();
@@ -211,7 +227,9 @@ export class TestClientLogger {
 			while (this.roundLogLines.length > 0) {
 				const logLine = this.roundLogLines.shift();
 				if (logLine?.some((c) => c.trim().length > 0)) {
-					console.log(logLine.map((v, i) => v.padEnd(this.paddings[i])).join(" | "));
+					console.log(
+						logLine.map((v, i) => v.padEnd(this.paddings[i])).join(" | "),
+					);
 				}
 			}
 		}
@@ -245,8 +263,8 @@ export class TestClientLogger {
 		const baseText = opts?.baseText ?? this.clients[0].getText();
 		const errorPrefix = opts?.errorPrefix ? `${opts?.errorPrefix}: ` : "";
 		// cache all the properties of client 0 for faster look up
-		const properties = Array.from({ length: this.clients[0].getLength() }).map((_, i) =>
-			this.clients[0].getPropertiesAtPosition(i),
+		const properties = Array.from({ length: this.clients[0].getLength() }).map(
+			(_, i) => this.clients[0].getPropertiesAtPosition(i),
 		);
 		for (const c of this.clients) {
 			if (opts?.baseText === undefined && c === this.clients[0]) {
@@ -275,30 +293,36 @@ export class TestClientLogger {
 				continue;
 			}
 			let pos = 0;
-			depthFirstNodeWalk(c.mergeTree.root, c.mergeTree.root.children[0], undefined, (seg) => {
-				if (toMoveOrRemove(seg) === undefined) {
-					const segProps = seg.properties;
-					for (let i = 0; i < seg.cachedLength; i++) {
-						if (!matchPropertiesHandleEmpty(segProps, properties[pos + i])) {
-							assert.deepStrictEqual(
-								segProps,
-								properties[pos + i],
-								`${errorPrefix}\n${this.toString()}\nClient ${
-									c.longClientId
-								} does not match client ${this.clients[0].longClientId} properties at pos ${
-									pos + i
-								}`,
-							);
+			depthFirstNodeWalk(
+				c.mergeTree.root,
+				c.mergeTree.root.children[0],
+				undefined,
+				(seg) => {
+					if (toMoveOrRemove(seg) === undefined) {
+						const segProps = seg.properties;
+						for (let i = 0; i < seg.cachedLength; i++) {
+							if (!matchPropertiesHandleEmpty(segProps, properties[pos + i])) {
+								assert.deepStrictEqual(
+									segProps,
+									properties[pos + i],
+									`${errorPrefix}\n${this.toString()}\nClient ${
+										c.longClientId
+									} does not match client ${this.clients[0].longClientId} properties at pos ${
+										pos + i
+									}`,
+								);
+							}
 						}
+						pos += seg.cachedLength;
 					}
-					pos += seg.cachedLength;
-				}
-			});
+				},
+			);
 		}
 
 		if (opts?.clear === true) {
 			this.roundLogLines.splice(1, this.roundLogLines.length);
-			for (const [i, v] of this.roundLogLines[0].entries()) this.paddings[i] = v.length;
+			for (const [i, v] of this.roundLogLines[0].entries())
+				this.paddings[i] = v.length;
 			this.addNewLogLine(); // capture initial state
 		}
 		return baseText;
@@ -354,7 +378,10 @@ export class TestClientLogger {
 	 * (e.g. precomputing removed string representations, casting to the more internal segment interfaces to view insertion/removal info
 	 * rather than import typeguards, etc.)
 	 */
-	private static getSegString(client: TestClient): { acked: string; local: string } {
+	private static getSegString(client: TestClient): {
+		acked: string;
+		local: string;
+	} {
 		let acked: string = "";
 		let local: string = "";
 		const nodes = new DoublyLinkedList<IMergeNode>([client.mergeTree.root]);
@@ -372,7 +399,11 @@ export class TestClientLogger {
 					}
 					parent = node.parent;
 				}
-				const text = TextSegment.is(node) ? node.text : Marker.is(node) ? "¶" : undefined;
+				const text = TextSegment.is(node)
+					? node.text
+					: Marker.is(node)
+						? "¶"
+						: undefined;
 				if (text !== undefined) {
 					const insertionSeq = (node as IHasInsertionInfo).insert.seq;
 					const removedNode = toMoveOrRemove(node);
@@ -410,13 +441,25 @@ export class TestClientLogger {
 }
 
 const maxSegmentLength = TextSegmentGranularity * 2;
-const underscores = Array.from({ length: maxSegmentLength }, (_, i) => "_".repeat(i));
-const spaces = Array.from({ length: maxSegmentLength }, (_, i) => " ".repeat(i));
-const dashes = Array.from({ length: maxSegmentLength }, (_, i) => "-".repeat(i));
-const asterisks = Array.from({ length: maxSegmentLength }, (_, i) => "*".repeat(i));
-const tildes = Array.from({ length: maxSegmentLength }, (_, i) => "~".repeat(i));
+const underscores = Array.from({ length: maxSegmentLength }, (_, i) =>
+	"_".repeat(i),
+);
+const spaces = Array.from({ length: maxSegmentLength }, (_, i) =>
+	" ".repeat(i),
+);
+const dashes = Array.from({ length: maxSegmentLength }, (_, i) =>
+	"-".repeat(i),
+);
+const asterisks = Array.from({ length: maxSegmentLength }, (_, i) =>
+	"*".repeat(i),
+);
+const tildes = Array.from({ length: maxSegmentLength }, (_, i) =>
+	"~".repeat(i),
+);
 
-function toMoveOrRemove(segment: ISegmentPrivate): RemoveOperationStamp | undefined {
+function toMoveOrRemove(
+	segment: ISegmentPrivate,
+): RemoveOperationStamp | undefined {
 	if ((segment as unknown as IHasRemovalInfo).removes !== undefined) {
 		return (segment as unknown as IHasRemovalInfo).removes[0];
 	}

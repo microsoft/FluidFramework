@@ -12,15 +12,19 @@ import { constants } from "@fluid-experimental/property-common";
 import isNumber from "lodash/isNumber.js";
 import isString from "lodash/isString.js";
 
-// @ts-ignore
+// @ts-expect-error
 
-import { SerializedChangeSet } from "../changeset.js";
+import type { SerializedChangeSet } from "../changeset.js";
 
 import { ArrayIteratorOperationTypes } from "./operationTypes.js";
 
 const { MSG } = constants;
 
-type genericArray = (number | string | (SerializedChangeSet & { typeid: string }))[];
+type genericArray = (
+	| number
+	| string
+	| (SerializedChangeSet & { typeid: string })
+)[];
 export type arrayInsertList = [number, string | genericArray];
 export type arrayModifyList =
 	| [number, string | genericArray]
@@ -73,7 +77,10 @@ export interface NOPOperation
 	operation?: [];
 }
 
-export type NoneNOPOperation = RemoveOperation | InsertOperation | ModifyOperation;
+export type NoneNOPOperation =
+	| RemoveOperation
+	| InsertOperation
+	| ModifyOperation;
 export type GenericOperation = NoneNOPOperation | NOPOperation;
 
 /**
@@ -87,7 +94,11 @@ export class ArrayChangeSetIterator {
 
 	private readonly _changeSet: SerializedChangeSet;
 	private _copiedModifies: string | any[];
-	private readonly _currentIndices: { insert: number; remove: number; modify: number };
+	private readonly _currentIndices: {
+		insert: number;
+		remove: number;
+		modify: number;
+	};
 	private _currentOffset: number;
 	private _lastOperationIndex: number;
 	private _lastOperationOffset: number;
@@ -156,7 +167,8 @@ export class ArrayChangeSetIterator {
 		) {
 			type = ArrayChangeSetIterator.types.REMOVE;
 			currentIndex = this._changeSet.remove[this._currentIndices.remove][0];
-			let currentLength = this._changeSet.remove[this._currentIndices.remove][1];
+			let currentLength =
+				this._changeSet.remove[this._currentIndices.remove][1];
 			if (!isNumber(currentLength)) {
 				currentLength = currentLength.length;
 			}
@@ -165,7 +177,8 @@ export class ArrayChangeSetIterator {
 			if (
 				this._changeSet.insert &&
 				this._currentIndices.insert < this._changeSet.insert.length &&
-				this._changeSet.insert[this._currentIndices.insert][0] <= currentIndex + currentLength
+				this._changeSet.insert[this._currentIndices.insert][0] <=
+					currentIndex + currentLength
 			) {
 				(this._op as InsertOperation).removeInsertOperation =
 					this._changeSet.insert[this._currentIndices.insert];
@@ -212,7 +225,8 @@ export class ArrayChangeSetIterator {
 			case ArrayChangeSetIterator.types.INSERT:
 				this._op.type = ArrayChangeSetIterator.types.INSERT;
 				// Define the return value
-				this._op.operation = this._changeSet.insert[this._currentIndices.insert];
+				this._op.operation =
+					this._changeSet.insert[this._currentIndices.insert];
 				this._op.offset = this._currentOffset;
 				// Update the current offset. For an insert we have to increase it by the number of the inserted elements
 				this._lastOperationOffset += (this._op.operation[1] as any).length;
@@ -220,10 +234,11 @@ export class ArrayChangeSetIterator {
 				// Shift the internal index
 				this._currentIndices.insert++;
 				break;
-			case ArrayChangeSetIterator.types.REMOVE:
+			case ArrayChangeSetIterator.types.REMOVE: {
 				this._op.type = ArrayChangeSetIterator.types.REMOVE;
 				// Define the return value
-				this._op.operation = this._changeSet.remove[this._currentIndices.remove];
+				this._op.operation =
+					this._changeSet.remove[this._currentIndices.remove];
 				this._op.offset = this._currentOffset;
 				// Update the current offset. For a remove we have to decrement it by the number of the removed elements
 				var removedElements = isNumber(this._op.operation[1])
@@ -234,6 +249,7 @@ export class ArrayChangeSetIterator {
 				// Shift the internal index
 				this._currentIndices.remove++;
 				break;
+			}
 			case ArrayChangeSetIterator.types.MODIFY: {
 				this._op.type = ArrayChangeSetIterator.types.MODIFY;
 				this._op.offset = this._currentOffset;
@@ -246,7 +262,8 @@ export class ArrayChangeSetIterator {
 					this._changeSet.insert[this._currentIndices.insert][0] < modifyEnd
 				) {
 					// we have an overlap and need to cut the modify
-					const insertPosition = this._changeSet.insert[this._currentIndices.insert][0];
+					const insertPosition =
+						this._changeSet.insert[this._currentIndices.insert][0];
 
 					// if we haven't copied the change set's modifies yet, we need to do that now
 					if (this._copiedModifies === this._changeSet.modify) {
@@ -260,10 +277,18 @@ export class ArrayChangeSetIterator {
 					// build a partial modify and cut the remaining one:
 					const partialModify: arrayModifyList = [nextModify[0], undefined];
 					if (isString(nextModify[1])) {
-						partialModify[1] = nextModify[1].substr(0, insertPosition - nextModify[0]);
-						nextModify[1] = nextModify[1].substr(insertPosition - nextModify[0]);
+						partialModify[1] = nextModify[1].substr(
+							0,
+							insertPosition - nextModify[0],
+						);
+						nextModify[1] = nextModify[1].substr(
+							insertPosition - nextModify[0],
+						);
 					} else {
-						partialModify[1] = nextModify[1].splice(0, insertPosition - nextModify[0]);
+						partialModify[1] = nextModify[1].splice(
+							0,
+							insertPosition - nextModify[0],
+						);
 					}
 
 					nextModify[0] = insertPosition;

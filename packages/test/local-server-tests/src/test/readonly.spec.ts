@@ -3,28 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { type IRuntimeFactory } from "@fluidframework/container-definitions/internal";
+import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 import {
 	createDetachedContainer,
-	loadExistingContainer,
 	type ILoadExistingContainerProps,
+	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
 import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
-import { type FluidObject } from "@fluidframework/core-interfaces/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import { SharedMap, ISharedMap } from "@fluidframework/map/internal";
+import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
 import { createLoader } from "../utils.js";
 
 const mapFactory = SharedMap.getFactory();
-const sharedObjectRegistry = new Map<string, IChannelFactory>([[mapFactory.type, mapFactory]]);
+const sharedObjectRegistry = new Map<string, IChannelFactory>([
+	[mapFactory.type, mapFactory],
+]);
 
 class DefaultDataStore {
 	public static create(runtime: IFluidDataStoreRuntime) {
@@ -104,7 +106,9 @@ const runtimeFactory: IRuntimeFactory = {
 			provideEntryPoint: async (rt) => {
 				const maybeRoot = await rt.getAliasedDataStoreEntryPoint("default");
 				if (maybeRoot === undefined) {
-					const ds = await rt.createDataStore(DefaultDataStoreFactory.instance.type);
+					const ds = await rt.createDataStore(
+						DefaultDataStoreFactory.instance.type,
+					);
 					await ds.trySetAlias("default");
 				}
 				const root = await rt.getAliasedDataStoreEntryPoint("default");
@@ -123,7 +127,10 @@ async function createContainerAndGetLoadProps(): Promise<ILoadExistingContainerP
 		runtimeFactory,
 	});
 
-	const container = await createDetachedContainer({ ...loaderProps, codeDetails });
+	const container = await createDetachedContainer({
+		...loaderProps,
+		codeDetails,
+	});
 	await container.getEntryPoint();
 
 	await container.attach(urlResolver.createCreateNewRequest("test"));
@@ -142,16 +149,23 @@ describe("readonly", () => {
 			runtimeFactory,
 		});
 
-		const container = await createDetachedContainer({ ...loaderProps, codeDetails });
+		const container = await createDetachedContainer({
+			...loaderProps,
+			codeDetails,
+		});
 
-		const entrypoint: FluidObject<DefaultDataStore> = await container.getEntryPoint();
+		const entrypoint: FluidObject<DefaultDataStore> =
+			await container.getEntryPoint();
 
 		assert(
 			entrypoint.DefaultDataStore !== undefined,
 			"container entrypoint must be DefaultDataStore",
 		);
 
-		assert(entrypoint.DefaultDataStore.isReadOnly() === false, "shouldn't be readonly");
+		assert(
+			entrypoint.DefaultDataStore.isReadOnly() === false,
+			"shouldn't be readonly",
+		);
 		assert(
 			entrypoint.DefaultDataStore.readonlyEventCount === 0,
 			"shouldn't be any readonly events",
@@ -159,7 +173,10 @@ describe("readonly", () => {
 
 		await container.attach(urlResolver.createCreateNewRequest("test"));
 
-		assert(entrypoint.DefaultDataStore.isReadOnly() === false, "shouldn't be readonly");
+		assert(
+			entrypoint.DefaultDataStore.isReadOnly() === false,
+			"shouldn't be readonly",
+		);
 		assert(
 			entrypoint.DefaultDataStore.readonlyEventCount === 0,
 			"shouldn't be any readonly events",
@@ -171,14 +188,18 @@ describe("readonly", () => {
 			await createContainerAndGetLoadProps(),
 		);
 
-		const entrypoint: FluidObject<DefaultDataStore> = await loadedContainer.getEntryPoint();
+		const entrypoint: FluidObject<DefaultDataStore> =
+			await loadedContainer.getEntryPoint();
 
 		assert(
 			entrypoint.DefaultDataStore !== undefined,
 			"container entrypoint must be DefaultDataStore",
 		);
 
-		assert(entrypoint.DefaultDataStore.isReadOnly() === false, "shouldn't be readonly");
+		assert(
+			entrypoint.DefaultDataStore.isReadOnly() === false,
+			"shouldn't be readonly",
+		);
 		assert(
 			entrypoint.DefaultDataStore.readonlyEventCount === 0,
 			"shouldn't be any readonly events",
@@ -190,7 +211,8 @@ describe("readonly", () => {
 			await createContainerAndGetLoadProps(),
 		);
 
-		const entrypoint: FluidObject<DefaultDataStore> = await loadedContainer.getEntryPoint();
+		const entrypoint: FluidObject<DefaultDataStore> =
+			await loadedContainer.getEntryPoint();
 
 		assert(
 			entrypoint.DefaultDataStore !== undefined,
@@ -199,7 +221,10 @@ describe("readonly", () => {
 
 		loadedContainer.forceReadonly?.(true);
 
-		assert(entrypoint.DefaultDataStore.isReadOnly() === true, "should be readonly");
+		assert(
+			entrypoint.DefaultDataStore.isReadOnly() === true,
+			"should be readonly",
+		);
 		assert(
 			entrypoint.DefaultDataStore.readonlyEventCount === 1,
 			"should be any readonly events",
@@ -213,14 +238,18 @@ describe("readonly", () => {
 
 		loadedContainer.forceReadonly?.(true);
 
-		const entrypoint: FluidObject<DefaultDataStore> = await loadedContainer.getEntryPoint();
+		const entrypoint: FluidObject<DefaultDataStore> =
+			await loadedContainer.getEntryPoint();
 
 		assert(
 			entrypoint.DefaultDataStore !== undefined,
 			"container entrypoint must be DefaultDataStore",
 		);
 
-		assert(entrypoint.DefaultDataStore.isReadOnly() === true, "should be readonly");
+		assert(
+			entrypoint.DefaultDataStore.isReadOnly() === true,
+			"should be readonly",
+		);
 		assert(
 			entrypoint.DefaultDataStore.readonlyEventCount === 0,
 			"shouldn't be any readonly events",

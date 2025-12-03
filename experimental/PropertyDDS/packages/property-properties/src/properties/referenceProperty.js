@@ -7,11 +7,16 @@
  * @fileoverview Definition of the ReferenceProperty class
  */
 
-const { PathHelper, TypeIdHelper } = require("@fluid-experimental/property-changeset");
+const {
+	PathHelper,
+	TypeIdHelper,
+} = require("@fluid-experimental/property-changeset");
 const { MSG } = require("@fluid-experimental/property-common").constants;
 const _ = require("lodash");
 
-const { AbstractStaticCollectionProperty } = require("./abstractStaticCollectionProperty");
+const {
+	AbstractStaticCollectionProperty,
+} = require("./abstractStaticCollectionProperty");
 const { BaseProperty } = require("./baseProperty");
 const { _castFunctors } = require("./primitiveTypeCasts");
 const { ValueProperty } = require("./valueProperty");
@@ -56,7 +61,9 @@ export class ReferenceProperty extends ValueProperty {
 	 * @returns {string} The typeid of the nodes this reference may point to
 	 */
 	getReferenceTargetTypeId() {
-		return TypeIdHelper.extractReferenceTargetTypeIdFromReference(this.getTypeid());
+		return TypeIdHelper.extractReferenceTargetTypeIdFromReference(
+			this.getTypeid(),
+		);
 	}
 
 	/**
@@ -84,7 +91,10 @@ export class ReferenceProperty extends ValueProperty {
 		}
 
 		// Since this is a reference property, we return undefined, if reference resolution is disabled
-		if (in_options.referenceResolutionMode !== BaseProperty.REFERENCE_RESOLUTION.ALWAYS) {
+		if (
+			in_options.referenceResolutionMode !==
+			BaseProperty.REFERENCE_RESOLUTION.ALWAYS
+		) {
 			return undefined;
 		}
 
@@ -120,7 +130,8 @@ export class ReferenceProperty extends ValueProperty {
 		if (
 			in_options &&
 			in_options.referenceResolutionMode &&
-			in_options.referenceResolutionMode === BaseProperty.REFERENCE_RESOLUTION.NEVER
+			in_options.referenceResolutionMode ===
+				BaseProperty.REFERENCE_RESOLUTION.NEVER
 		) {
 			return undefined;
 		}
@@ -215,7 +226,9 @@ export class ReferenceProperty extends ValueProperty {
 		} else if (in_value instanceof String) {
 			path = String(in_value);
 		} else {
-			throw new TypeError(MSG.PROPERTY_OR_UNDEFINED + "(" + typeof in_value + ") " + in_value);
+			throw new TypeError(
+				MSG.PROPERTY_OR_UNDEFINED + "(" + typeof in_value + ") " + in_value,
+			);
 		}
 		return path;
 	}

@@ -6,8 +6,8 @@
 import {
 	type ApiCallSignature,
 	type ApiClass,
-	type ApiConstructSignature,
 	type ApiConstructor,
+	type ApiConstructSignature,
 	type ApiEnum,
 	type ApiEnumMember,
 	type ApiFunction,
@@ -67,7 +67,9 @@ export function apiItemToDocument(
 		itemKind === ApiItemKind.Package ||
 		itemKind === ApiItemKind.EntryPoint
 	) {
-		throw new Error(`Provided API item kind must be handled specially: "${itemKind}".`);
+		throw new Error(
+			`Provided API item kind must be handled specially: "${itemKind}".`,
+		);
 	}
 
 	if (!shouldItemBeIncluded(apiItem, config)) {
@@ -84,7 +86,9 @@ export function apiItemToDocument(
 
 	const logger = config.logger;
 
-	logger.verbose(`Generating document for ${apiItem.displayName} (${itemKind})...`);
+	logger.verbose(
+		`Generating document for ${apiItem.displayName} (${itemKind})...`,
+	);
 
 	const sections: Section[] = [];
 
@@ -126,7 +130,9 @@ export function apiItemToSections(
 		itemKind === ApiItemKind.Package ||
 		itemKind === ApiItemKind.EntryPoint
 	) {
-		throw new Error(`Provided API item kind must be handled specially: "${itemKind}".`);
+		throw new Error(
+			`Provided API item kind must be handled specially: "${itemKind}".`,
+		);
 	}
 
 	if (!shouldItemBeIncluded(apiItem, config)) {
@@ -140,7 +146,9 @@ export function apiItemToSections(
 	const transformChildren = (childItem: ApiItem): Section[] =>
 		apiItemToSections(childItem, config);
 
-	logger.verbose(`Generating documentation section for ${apiItem.displayName}...`);
+	logger.verbose(
+		`Generating documentation section for ${apiItem.displayName}...`,
+	);
 
 	let sections: Section[];
 	switch (itemKind) {
@@ -170,7 +178,10 @@ export function apiItemToSections(
 		}
 
 		case ApiItemKind.Constructor: {
-			sections = transformations[ApiItemKind.Constructor](apiItem as ApiConstructor, config);
+			sections = transformations[ApiItemKind.Constructor](
+				apiItem as ApiConstructor,
+				config,
+			);
 			break;
 		}
 
@@ -184,12 +195,18 @@ export function apiItemToSections(
 		}
 
 		case ApiItemKind.EnumMember: {
-			sections = transformations[ApiItemKind.EnumMember](apiItem as ApiEnumMember, config);
+			sections = transformations[ApiItemKind.EnumMember](
+				apiItem as ApiEnumMember,
+				config,
+			);
 			break;
 		}
 
 		case ApiItemKind.Function: {
-			sections = transformations[ApiItemKind.Function](apiItem as ApiFunction, config);
+			sections = transformations[ApiItemKind.Function](
+				apiItem as ApiFunction,
+				config,
+			);
 			break;
 		}
 
@@ -211,7 +228,10 @@ export function apiItemToSections(
 		}
 
 		case ApiItemKind.Method: {
-			sections = transformations[ApiItemKind.Method](apiItem as ApiMethod, config);
+			sections = transformations[ApiItemKind.Method](
+				apiItem as ApiMethod,
+				config,
+			);
 			break;
 		}
 
@@ -233,7 +253,10 @@ export function apiItemToSections(
 		}
 
 		case ApiItemKind.Property: {
-			sections = transformations[ApiItemKind.Property](apiItem as ApiProperty, config);
+			sections = transformations[ApiItemKind.Property](
+				apiItem as ApiProperty,
+				config,
+			);
 			break;
 		}
 
@@ -255,7 +278,10 @@ export function apiItemToSections(
 		}
 
 		case ApiItemKind.Variable: {
-			sections = transformations[ApiItemKind.Variable](apiItem as ApiVariable, config);
+			sections = transformations[ApiItemKind.Variable](
+				apiItem as ApiVariable,
+				config,
+			);
 			break;
 		}
 

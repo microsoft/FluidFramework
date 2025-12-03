@@ -3,17 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IChannelAttributes,
 	IChannelFactory,
-	IFluidDataStoreRuntime,
 	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { Marker, TextSegment } from "@fluidframework/merge-tree/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { pkgVersion } from "./packageVersion.js";
-import { SharedStringClass, SharedStringSegment, type ISharedString } from "./sharedString.js";
+import {
+	type ISharedString,
+	SharedStringClass,
+	type SharedStringSegment,
+} from "./sharedString.js";
 
 export class SharedStringFactory implements IChannelFactory<ISharedString> {
 	// TODO rename back to https://graph.microsoft.com/types/mergeTree/string once paparazzi is able to dynamically
@@ -65,7 +69,10 @@ export class SharedStringFactory implements IChannelFactory<ISharedString> {
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
 	 */
-	public create(document: IFluidDataStoreRuntime, id: string): SharedStringClass {
+	public create(
+		document: IFluidDataStoreRuntime,
+		id: string,
+	): SharedStringClass {
 		const sharedString = new SharedStringClass(document, id, this.attributes);
 		sharedString.initializeLocal();
 		return sharedString;
@@ -76,7 +83,8 @@ export class SharedStringFactory implements IChannelFactory<ISharedString> {
  * Entrypoint for {@link ISharedString} creation.
  * @legacy @beta
  */
-export const SharedString = createSharedObjectKind<ISharedString>(SharedStringFactory);
+export const SharedString =
+	createSharedObjectKind<ISharedString>(SharedStringFactory);
 
 /**
  * Alias for {@link ISharedString} for compatibility.

@@ -8,8 +8,11 @@ import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import type { IResolvedUrl } from "./urlResolver.js";
 
 // Omit `dataCorruptionError` and `dataProcessingError` from the list of values inherited from FluidErrorTypes
-const { dataCorruptionError, dataProcessingError, ...FluidErrorTypesExceptDataTypes } =
-	FluidErrorTypes;
+const {
+	dataCorruptionError,
+	dataProcessingError,
+	...FluidErrorTypesExceptDataTypes
+} = FluidErrorTypes;
 
 /**
  * Different error types the Driver may report out to the Host.
@@ -109,7 +112,8 @@ export const DriverErrorTypes = {
  * {@inheritDoc (DriverErrorTypes:variable)}
  * @legacy @beta
  */
-export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
+export type DriverErrorTypes =
+	(typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
 /**
  * Interface describing errors and warnings raised by any driver code.

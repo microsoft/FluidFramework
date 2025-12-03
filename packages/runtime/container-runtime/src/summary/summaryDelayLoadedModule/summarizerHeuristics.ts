@@ -7,10 +7,10 @@ import { Timer } from "@fluidframework/core-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type {
-	ISummaryConfigurationHeuristics,
 	ISummarizeAttempt,
 	ISummarizeHeuristicData,
 	ISummarizeHeuristicRunner,
+	ISummaryConfigurationHeuristics,
 	ISummaryHeuristicStrategy,
 } from "../summarizerTypes.js";
 import type { SummarizeReason } from "../summarizerUtils.js";
@@ -67,7 +67,9 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 		this._lastSuccessfulSummary = { ...attemptBaseline };
 	}
 
-	public updateWithLastSummaryAckInfo(lastSummary: Readonly<ISummarizeAttempt>): void {
+	public updateWithLastSummaryAckInfo(
+		lastSummary: Readonly<ISummarizeAttempt>,
+	): void {
 		this._lastAttempt = lastSummary;
 		this._lastSuccessfulSummary = { ...lastSummary };
 	}
@@ -171,7 +173,8 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
 			this.configuration.runtimeOpWeight,
 			this.configuration.nonRuntimeOpWeight,
 		);
-		const minOpsForLastSummaryAttempt = this.configuration.minOpsForLastSummaryAttempt;
+		const minOpsForLastSummaryAttempt =
+			this.configuration.minOpsForLastSummaryAttempt;
 
 		this.logger.sendTelemetryEvent({
 			eventName: "ShouldRunLastSummary",
@@ -197,7 +200,8 @@ class MaxTimeSummaryHeuristicStrategy implements ISummaryHeuristicStrategy {
 		configuration: ISummaryConfigurationHeuristics,
 		heuristicData: ISummarizeHeuristicData,
 	): boolean {
-		const timeSinceLastSummary = Date.now() - heuristicData.lastSuccessfulSummary.summaryTime;
+		const timeSinceLastSummary =
+			Date.now() - heuristicData.lastSuccessfulSummary.summaryTime;
 		return timeSinceLastSummary > configuration.maxTime;
 	}
 }
@@ -208,7 +212,9 @@ function getWeightedNumberOfOps(
 	runtimeOpWeight: number,
 	nonRuntimeOpWeight: number,
 ): number {
-	return runtimeOpWeight * runtimeOpCount + nonRuntimeOpWeight * nonRuntimeOpCount;
+	return (
+		runtimeOpWeight * runtimeOpCount + nonRuntimeOpWeight * nonRuntimeOpCount
+	);
 }
 
 /**
@@ -235,5 +241,8 @@ function getDefaultSummaryHeuristicStrategies(): (
 	| MaxTimeSummaryHeuristicStrategy
 	| WeightedOpsSummaryHeuristicStrategy
 )[] {
-	return [new MaxTimeSummaryHeuristicStrategy(), new WeightedOpsSummaryHeuristicStrategy()];
+	return [
+		new MaxTimeSummaryHeuristicStrategy(),
+		new WeightedOpsSummaryHeuristicStrategy(),
+	];
 }

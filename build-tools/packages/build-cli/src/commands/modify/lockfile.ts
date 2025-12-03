@@ -6,7 +6,10 @@
 import { updatePackageJsonFile } from "@fluid-tools/build-infrastructure";
 import { Flags } from "@oclif/core";
 import execa from "execa";
-import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args.js";
+import {
+	findPackageOrReleaseGroup,
+	packageOrReleaseGroupArg,
+} from "../../args.js";
 import { BaseCommand } from "../../library/index.js";
 
 /**
@@ -72,9 +75,9 @@ export default class UpdateDependencyInLockfileCommand extends BaseCommand<
 			if (json.pnpm.overrides === undefined) {
 				json.pnpm.overrides = {};
 			}
-			const currentOverrideVersion = json.pnpm.overrides[this.flags.dependencyName] as
-				| string
-				| undefined;
+			const currentOverrideVersion = json.pnpm.overrides[
+				this.flags.dependencyName
+			] as string | undefined;
 			if (currentOverrideVersion !== undefined) {
 				this.error(
 					`A pnpm override for the specified dependency already exists (${this.flags.dependencyName}: "${currentOverrideVersion}". Cannot continue.`,

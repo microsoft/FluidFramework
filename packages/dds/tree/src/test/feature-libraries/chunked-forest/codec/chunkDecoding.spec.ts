@@ -7,43 +7,46 @@ import { strict as assert } from "node:assert";
 
 import { compareArrays } from "@fluidframework/core-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
-
+import type {
+	TreeNodeSchemaIdentifier,
+	TreeValue,
+} from "../../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { BasicChunk } from "../../../../feature-libraries/chunked-forest/basicChunk.js";
 import {
 	type ChunkDecoder,
-	type StreamCursor,
 	readStream,
+	type StreamCursor,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
 import {
-	InlineArrayDecoder,
-	IncrementalChunkDecoder,
-	NestedArrayDecoder,
-	NodeDecoder,
 	aggregateChunks,
 	anyDecoder,
 	deaggregateChunks,
 	decode,
+	IncrementalChunkDecoder,
+	InlineArrayDecoder,
+	NestedArrayDecoder,
+	NodeDecoder,
 	readValue,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { DecoderContext } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
-import {
-	type EncodedChunkShape,
-	SpecialField,
-	FieldBatchFormatVersion,
-	type EncodedFieldBatch,
-	type EncodedNodeShape,
-	validVersions,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/format.js";
 import type {
 	ChunkReferenceId,
 	IncrementalDecoder,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
+import {
+	type EncodedChunkShape,
+	type EncodedFieldBatch,
+	type EncodedNodeShape,
+	FieldBatchFormatVersion,
+	SpecialField,
+	validVersions,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/format.js";
 import {
 	emptyChunk,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -51,12 +54,14 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { SequenceChunk } from "../../../../feature-libraries/chunked-forest/sequenceChunk.js";
 import type { TreeChunk } from "../../../../feature-libraries/index.js";
-import { type ReferenceCountedBase, brand } from "../../../../util/index.js";
-import { assertChunkCursorEquals } from "../fieldCursorTestUtilities.js";
+import { brand, type ReferenceCountedBase } from "../../../../util/index.js";
 import { testIdCompressor } from "../../../utils.js";
-import type { TreeNodeSchemaIdentifier, TreeValue } from "../../../../core/index.js";
+import { assertChunkCursorEquals } from "../fieldCursorTestUtilities.js";
 
-function assertRefCount(item: ReferenceCountedBase, count: 0 | 1 | "shared"): void {
+function assertRefCount(
+	item: ReferenceCountedBase,
+	count: 0 | 1 | "shared",
+): void {
 	switch (count) {
 		case 0:
 			assert(item.isUnreferenced());
@@ -76,7 +81,11 @@ function assertRefCount(item: ReferenceCountedBase, count: 0 | 1 | "shared"): vo
 /**
  * Appends a message to the log read from the stream when decoding (if not provided as `message`), and returns a ref to the provided chunk.
  */
-function makeLoggingDecoder(log: string[], chunk: TreeChunk, message?: string): ChunkDecoder {
+function makeLoggingDecoder(
+	log: string[],
+	chunk: TreeChunk,
+	message?: string,
+): ChunkDecoder {
 	return {
 		decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
 			log.push(message ?? (readStream(stream) as string));
@@ -114,7 +123,10 @@ describe("chunkDecoding", () => {
 
 	describe("readValue", () => {
 		it("unknown shape", () => {
-			const stream: StreamCursor = { data: [false, true, "x", true, 1], offset: 0 };
+			const stream: StreamCursor = {
+				data: [false, true, "x", true, 1],
+				offset: 0,
+			};
 			assert.equal(readValue(stream, undefined, idDecodingContext), undefined);
 			assert.equal(readValue(stream, undefined, idDecodingContext), "x");
 			assert.equal(readValue(stream, undefined, idDecodingContext), 1);
@@ -142,7 +154,10 @@ describe("chunkDecoding", () => {
 				const compressedId = testIdCompressor.generateCompressedId();
 				const stableId = testIdCompressor.decompress(compressedId);
 				const stream: StreamCursor = { data: [compressedId], offset: 0 };
-				assert.equal(readValue(stream, SpecialField.Identifier, idDecodingContext), stableId);
+				assert.equal(
+					readValue(stream, SpecialField.Identifier, idDecodingContext),
+					stableId,
+				);
 				assert.equal(stream.offset, 1);
 			});
 		});
@@ -286,7 +301,10 @@ describe("chunkDecoding", () => {
 		const log: string[] = [];
 		const basic0 = new BasicChunk(brand("0"), new Map());
 		const basic1 = new BasicChunk(brand("1"), new Map());
-		const decoders = [makeLoggingDecoder(log, basic0), makeLoggingDecoder(log, basic1)];
+		const decoders = [
+			makeLoggingDecoder(log, basic0),
+			makeLoggingDecoder(log, basic1),
+		];
 		const stream = { data: [0, "a", 0, "b", 1, "c"], offset: 0 };
 		assert.equal(anyDecoder.decode(decoders, stream), basic0);
 		assert.equal(anyDecoder.decode(decoders, stream), basic0);
@@ -354,7 +372,9 @@ describe("chunkDecoding", () => {
 			);
 			const stream = { data: [compressedId], offset: 0 };
 			const result = decoder.decode([], stream);
-			assertChunkCursorEquals(result, [{ type: brand("identifier"), value: stableId }]);
+			assertChunkCursorEquals(result, [
+				{ type: brand("identifier"), value: stableId },
+			]);
 		});
 
 		it("dynamic", () => {
@@ -375,7 +395,13 @@ describe("chunkDecoding", () => {
 				cache,
 			);
 			const stream = {
-				data: ["type", true, "value", ["a", "l1", 0, "l2"], ["c", "g1", 1, "g2", "e", "g3"]],
+				data: [
+					"type",
+					true,
+					"value",
+					["a", "l1", 0, "l2"],
+					["c", "g1", 1, "g2", "e", "g3"],
+				],
 				offset: 0,
 			};
 			const result = decoder.decode(decoders, stream);
@@ -396,7 +422,10 @@ describe("chunkDecoding", () => {
 			const cache = new DecoderContext(
 				["key"],
 				// This is unused, but used to bounds check the index into decoders, so it needs 2 items.
-				[null as unknown as EncodedChunkShape, null as unknown as EncodedChunkShape],
+				[
+					null as unknown as EncodedChunkShape,
+					null as unknown as EncodedChunkShape,
+				],
 				idDecodingContext,
 				undefined /* incrementalDecoder */,
 			);
@@ -428,7 +457,9 @@ describe("chunkDecoding", () => {
 	});
 
 	describe("EncodedIncrementalChunkShape", () => {
-		const fieldBatchVersion = brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v2);
+		const fieldBatchVersion = brand<FieldBatchFormatVersion>(
+			FieldBatchFormatVersion.v2,
+		);
 
 		function createMockIncrementalDecoder(
 			chunksMap: Map<ChunkReferenceId, EncodedFieldBatch>,
@@ -436,7 +467,10 @@ describe("chunkDecoding", () => {
 			return {
 				decodeIncrementalChunk: (referenceId, chunkDecoder) => {
 					const batch = chunksMap.get(referenceId);
-					assert(batch !== undefined, `Chunk with reference ID ${referenceId} not found`);
+					assert(
+						batch !== undefined,
+						`Chunk with reference ID ${referenceId} not found`,
+					);
 					return chunkDecoder(batch);
 				},
 			};
@@ -475,7 +509,12 @@ describe("chunkDecoding", () => {
 			chunksMap.set(referenceId, emptyBatch);
 
 			const mockIncrementalDecoder = createMockIncrementalDecoder(chunksMap);
-			const cache = new DecoderContext([], [], idDecodingContext, mockIncrementalDecoder);
+			const cache = new DecoderContext(
+				[],
+				[],
+				idDecodingContext,
+				mockIncrementalDecoder,
+			);
 			const decoder = new IncrementalChunkDecoder(cache);
 			const stream = { data: [referenceId], offset: 0 };
 
@@ -495,7 +534,12 @@ describe("chunkDecoding", () => {
 
 			chunksMap.set(referenceId, batch);
 			const mockIncrementalDecoder = createMockIncrementalDecoder(chunksMap);
-			const cache = new DecoderContext([], [], idDecodingContext, mockIncrementalDecoder);
+			const cache = new DecoderContext(
+				[],
+				[],
+				idDecodingContext,
+				mockIncrementalDecoder,
+			);
 			const decoder = new IncrementalChunkDecoder(cache);
 			const stream = { data: [referenceId], offset: 0 };
 
@@ -538,7 +582,12 @@ describe("chunkDecoding", () => {
 			chunksMap.set(referenceId2, batch2);
 
 			const mockIncrementalDecoder = createMockIncrementalDecoder(chunksMap);
-			const cache = new DecoderContext([], [], idDecodingContext, mockIncrementalDecoder);
+			const cache = new DecoderContext(
+				[],
+				[],
+				idDecodingContext,
+				mockIncrementalDecoder,
+			);
 			const decoder = new IncrementalChunkDecoder(cache);
 			const stream = { data: [referenceId1], offset: 0 };
 
@@ -582,7 +631,12 @@ describe("chunkDecoding", () => {
 			chunksMap.set(referenceId, emptyBatch);
 
 			const mockIncrementalDecoder = createMockIncrementalDecoder(chunksMap);
-			const cache = new DecoderContext([], [], idDecodingContext, mockIncrementalDecoder);
+			const cache = new DecoderContext(
+				[],
+				[],
+				idDecodingContext,
+				mockIncrementalDecoder,
+			);
 			const decoder = new IncrementalChunkDecoder(cache);
 			const stream = { data: [referenceId], offset: 0 };
 

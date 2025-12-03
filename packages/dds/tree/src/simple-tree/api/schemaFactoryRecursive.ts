@@ -5,16 +5,16 @@
 
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import type {
-	NodeKind,
-	TreeNodeSchema,
-	WithType,
-	TreeNode,
 	ImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
+	NodeKind,
+	TreeNode,
+	TreeNodeSchema,
 	TreeNodeSchemaClass,
+	WithType,
 } from "../core/index.js";
-import type { InsertableObjectFromSchemaRecord } from "../node-kinds/index.js";
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
+import type { InsertableObjectFromSchemaRecord } from "../node-kinds/index.js";
 
 /**
  * Compile time check for validity of a recursive schema.
@@ -137,7 +137,9 @@ import type { ImplicitFieldSchema } from "../fieldSchema.js";
  * TODO: this currently does not reject `any`, but ideally should.
  * @public
  */
-export type ValidateRecursiveSchema<T extends ValidateRecursiveSchemaTemplate<T>> = true;
+export type ValidateRecursiveSchema<
+	T extends ValidateRecursiveSchemaTemplate<T>,
+> = true;
 
 /**
  * Validation logic used by {@link ValidateRecursiveSchema}.
@@ -163,7 +165,9 @@ export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchemaClass> =
 				? Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>>
 				: unknown;
 			[NodeKind.Map]: T["info"] extends ImplicitAllowedTypes
-				? Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>]>
+				? Iterable<
+						[string, InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>]
+					>
 				: unknown;
 			[NodeKind.Record]: {
 				readonly [P in string]: InsertableTreeNodeFromImplicitAllowedTypes<T>;
@@ -287,4 +291,6 @@ export function allowUnused<T>(t?: T): void {}
  *
  * @beta
  */
-export type FixRecursiveArraySchema<T> = T extends TreeNodeSchema ? undefined : undefined;
+export type FixRecursiveArraySchema<T> = T extends TreeNodeSchema
+	? undefined
+	: undefined;

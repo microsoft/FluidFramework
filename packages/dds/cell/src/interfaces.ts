@@ -81,7 +81,8 @@ export interface ISharedCellEvents<T> extends ISharedObjectEvents {
  */
 // TODO: use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>> {
+export interface ISharedCell<T = any>
+	extends ISharedObject<ISharedCellEvents<T>> {
 	/**
 	 * Retrieves the cell value.
 	 *

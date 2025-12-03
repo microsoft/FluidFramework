@@ -9,8 +9,10 @@ import path from "node:path";
 
 import detectIndent from "detect-indent";
 import fsePkg from "fs-extra";
+
 // eslint-disable-next-line import-x/no-named-as-default-member -- Imports are written this way for CJS/ESM compat
 const { writeJson, writeJsonSync } = fsePkg;
+
 import sortPackageJson from "sort-package-json";
 
 import type { PackageJson } from "./types.js";
@@ -64,7 +66,9 @@ export function writePackageJson<J extends PackageJson = PackageJson>(
 	pkgJson: J,
 	indent: string,
 ): void {
-	return writeJsonSync(packagePath, sortPackageJson(pkgJson), { spaces: indent });
+	return writeJsonSync(packagePath, sortPackageJson(pkgJson), {
+		spaces: indent,
+	});
 }
 
 /**
@@ -79,14 +83,17 @@ export function writePackageJson<J extends PackageJson = PackageJson>(
  * @remarks
  * The package.json is always sorted using sort-package-json.
  */
-export async function updatePackageJsonFileAsync<J extends PackageJson = PackageJson>(
+export async function updatePackageJsonFileAsync<
+	J extends PackageJson = PackageJson,
+>(
 	packagePath: string,
 	packageTransformer: (json: J) => Promise<void>,
 ): Promise<void> {
 	const resolvedPath = packagePath.endsWith("package.json")
 		? packagePath
 		: path.join(packagePath, "package.json");
-	const [pkgJson, indent] = await readPackageJsonAndIndentAsync<J>(resolvedPath);
+	const [pkgJson, indent] =
+		await readPackageJsonAndIndentAsync<J>(resolvedPath);
 
 	// Transform the package.json
 	await packageTransformer(pkgJson);
@@ -98,9 +105,9 @@ export async function updatePackageJsonFileAsync<J extends PackageJson = Package
  * Reads a package.json file from a path, detects its indentation, and returns both the JSON as an object and
  * indentation.
  */
-async function readPackageJsonAndIndentAsync<J extends PackageJson = PackageJson>(
-	pathToJson: string,
-): Promise<[json: J, indent: string]> {
+async function readPackageJsonAndIndentAsync<
+	J extends PackageJson = PackageJson,
+>(pathToJson: string): Promise<[json: J, indent: string]> {
 	return readFile(pathToJson, { encoding: "utf8" }).then((contents) => {
 		const indentation = detectIndent(contents).indent || "\t";
 		const pkgJson: J = JSON.parse(contents) as J;

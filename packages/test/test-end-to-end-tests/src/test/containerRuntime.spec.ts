@@ -3,17 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
-import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions/internal";
+import {
+	describeCompat,
+	type ITestDataObject,
+} from "@fluid-private/test-version-utils";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import { CompressionAlgorithms } from "@fluidframework/container-runtime/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	type ITestContainerConfig,
-	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
+	type ITestContainerConfig,
+	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
+import { strict as assert } from "assert";
 // eslint-disable-next-line import-x/no-internal-modules
 import semverGt from "semver/functions/gt.js";
 
@@ -105,7 +107,11 @@ describeCompat(
 						// 0x162 compressed & chunked op is processed by 1.3 that does not understand compression,
 						//       and thus fails on empty address property (of compressed op), after unchunking happens.
 						const error =
-							crash && explicitSchemaControl ? "0x122" : chunking ? "0x162" : "0x121";
+							crash && explicitSchemaControl
+								? "0x122"
+								: chunking
+									? "0x162"
+									: "0x121";
 						provider.tracker.registerExpectedEvent({
 							eventName: "fluid:telemetry:Container:ContainerClose",
 							category: "error",
@@ -187,10 +193,17 @@ describeCompat(
 					it(`test explicitSchemaControl = ${explicitSchemaControl}, compression = ${compression}, chunking = ${chunking}`, async function () {
 						// Skip this test for R11s and ODSP as its timing is flaky.
 						// This test is covering client logic and the coverage from other drivers/endpoints is sufficient.
-						if (provider.driver.type === "odsp" || provider.driver.type === "r11s") {
+						if (
+							provider.driver.type === "odsp" ||
+							provider.driver.type === "r11s"
+						) {
 							this.skip();
 						}
-						await testSchemaControl(explicitSchemaControl, compression, chunking);
+						await testSchemaControl(
+							explicitSchemaControl,
+							compression,
+							chunking,
+						);
 					});
 				}
 			}
@@ -198,95 +211,99 @@ describeCompat(
 	},
 );
 
-describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider, apis) => {
-	let provider: ITestObjectProvider;
+describeCompat(
+	"Id Compressor Schema change",
+	"NoCompat",
+	(getTestObjectProvider, apis) => {
+		let provider: ITestObjectProvider;
 
-	async function loadContainer(options: ITestContainerConfig) {
-		return provider.loadTestContainer(options);
-	}
-
-	async function getEntryPoint(container: IContainer) {
-		return getContainerEntryPointBackCompat<ITestDataObject>(container);
-	}
-
-	beforeEach("getTestObjectProvider", async () => {
-		provider = getTestObjectProvider();
-	});
-
-	it("upgrade with explicitSchemaControl = false", async () => {
-		await testUpgrade(false);
-	});
-
-	it("upgrade with explicitSchemaControl = true", async () => {
-		await testUpgrade(true);
-	});
-
-	async function testUpgrade(explicitSchemaControl: boolean) {
-		const options: ITestContainerConfig = {
-			runtimeOptions: {
-				explicitSchemaControl: true,
-			},
-		};
-
-		const container = await provider.makeTestContainer({
-			runtimeOptions: {
-				explicitSchemaControl: false,
-				enableRuntimeIdCompressor: undefined,
-			},
-		});
-		const entry = await getEntryPoint(container);
-		entry._root.set("someKey", "someValue");
-
-		// ensure that old container is fully loaded (connected)
-		await provider.ensureSynchronized();
-
-		const container2 = await loadContainer({
-			runtimeOptions: {
-				explicitSchemaControl,
-				enableRuntimeIdCompressor: "delayed",
-			},
-		});
-		const entry2 = await getEntryPoint(container2);
-
-		// Send some ops, it will trigger schema change ops
-		// This will also trigger delay loading of ID compressor for both clients!
-		entry2._root.set("someKey2", "someValue");
-		await provider.ensureSynchronized();
-
-		// ID compressor loading is async. THere is no way to check when it's done.
-		// To be safe, make another round of sending-waiting
-		entry2._root.set("someKey2", "someValue");
-		await provider.ensureSynchronized();
-
-		// Now we should have new schema, ID compressor loaded, and be able to allocate ID range
-		// In order for ID compressor to produce short IDs, the following needs to happen:
-		// 1. Request unique ID (will initially get long ID)
-		// 2. Send any op (will trigger ID compressor to reserve short IDs)
-		entry._context.containerRuntime.generateDocumentUniqueId();
-		entry._root.set("someKey3", "someValue");
-		entry2._context.containerRuntime.generateDocumentUniqueId();
-		entry2._root.set("someKey4", "someValue");
-		await provider.ensureSynchronized();
-
-		const id = entry._context.containerRuntime.generateDocumentUniqueId();
-		const id2 = entry2._context.containerRuntime.generateDocumentUniqueId();
-
-		if (explicitSchemaControl) {
-			// Now ID compressor should give us short IDs!
-			assert(Number.isInteger(id));
-			assert(Number.isInteger(id2));
-		} else {
-			// Runtime will not change enableRuntimeIdCompressor setting if explicitSchemaControl is off
-			// Other containers will not expect ID compressor ops and will fail, thus runtime does not allow this upgrade.
-			// generateDocumentUniqueId() works, but gives long IDs
-			assert(!Number.isInteger(id));
-			assert(!Number.isInteger(id2));
+		async function loadContainer(options: ITestContainerConfig) {
+			return provider.loadTestContainer(options);
 		}
 
-		assert(!container.closed);
-		assert(!container2.closed);
-	}
-});
+		async function getEntryPoint(container: IContainer) {
+			return getContainerEntryPointBackCompat<ITestDataObject>(container);
+		}
+
+		beforeEach("getTestObjectProvider", async () => {
+			provider = getTestObjectProvider();
+		});
+
+		it("upgrade with explicitSchemaControl = false", async () => {
+			await testUpgrade(false);
+		});
+
+		it("upgrade with explicitSchemaControl = true", async () => {
+			await testUpgrade(true);
+		});
+
+		async function testUpgrade(explicitSchemaControl: boolean) {
+			const options: ITestContainerConfig = {
+				runtimeOptions: {
+					explicitSchemaControl: true,
+				},
+			};
+
+			const container = await provider.makeTestContainer({
+				runtimeOptions: {
+					explicitSchemaControl: false,
+					enableRuntimeIdCompressor: undefined,
+				},
+			});
+			const entry = await getEntryPoint(container);
+			entry._root.set("someKey", "someValue");
+
+			// ensure that old container is fully loaded (connected)
+			await provider.ensureSynchronized();
+
+			const container2 = await loadContainer({
+				runtimeOptions: {
+					explicitSchemaControl,
+					enableRuntimeIdCompressor: "delayed",
+				},
+			});
+			const entry2 = await getEntryPoint(container2);
+
+			// Send some ops, it will trigger schema change ops
+			// This will also trigger delay loading of ID compressor for both clients!
+			entry2._root.set("someKey2", "someValue");
+			await provider.ensureSynchronized();
+
+			// ID compressor loading is async. THere is no way to check when it's done.
+			// To be safe, make another round of sending-waiting
+			entry2._root.set("someKey2", "someValue");
+			await provider.ensureSynchronized();
+
+			// Now we should have new schema, ID compressor loaded, and be able to allocate ID range
+			// In order for ID compressor to produce short IDs, the following needs to happen:
+			// 1. Request unique ID (will initially get long ID)
+			// 2. Send any op (will trigger ID compressor to reserve short IDs)
+			entry._context.containerRuntime.generateDocumentUniqueId();
+			entry._root.set("someKey3", "someValue");
+			entry2._context.containerRuntime.generateDocumentUniqueId();
+			entry2._root.set("someKey4", "someValue");
+			await provider.ensureSynchronized();
+
+			const id = entry._context.containerRuntime.generateDocumentUniqueId();
+			const id2 = entry2._context.containerRuntime.generateDocumentUniqueId();
+
+			if (explicitSchemaControl) {
+				// Now ID compressor should give us short IDs!
+				assert(Number.isInteger(id));
+				assert(Number.isInteger(id2));
+			} else {
+				// Runtime will not change enableRuntimeIdCompressor setting if explicitSchemaControl is off
+				// Other containers will not expect ID compressor ops and will fail, thus runtime does not allow this upgrade.
+				// generateDocumentUniqueId() works, but gives long IDs
+				assert(!Number.isInteger(id));
+				assert(!Number.isInteger(id2));
+			}
+
+			assert(!container.closed);
+			assert(!container2.closed);
+		}
+	},
+);
 
 describeCompat(
 	"minVersionForCollab (FullCompat)",
@@ -366,98 +383,102 @@ describeCompat(
 	},
 );
 
-describeCompat("minVersionForCollab (NoCompat)", "NoCompat", (getTestObjectProvider, apis) => {
-	let provider: ITestObjectProvider;
-	let logger: MockLogger;
+describeCompat(
+	"minVersionForCollab (NoCompat)",
+	"NoCompat",
+	(getTestObjectProvider, apis) => {
+		let provider: ITestObjectProvider;
+		let logger: MockLogger;
 
-	beforeEach("getTestObjectProvider", async () => {
-		provider = getTestObjectProvider();
-		logger = new MockLogger();
-	});
+		beforeEach("getTestObjectProvider", async () => {
+			provider = getTestObjectProvider();
+			logger = new MockLogger();
+		});
 
-	/**
-	 * This tests that minVersionForCollab is updated properly when a client with a higher
-	 * minVersionForCollab loads the document. If it's lower than the current minVersionForCollab,
-	 * then we will continue to use the existing minVersionForCollab.
-	 */
-	it("minVersionForCollab is set on creation", async function () {
-		const options1: ITestContainerConfig = {
-			loaderProps: {
-				logger,
-			},
-			minVersionForCollab: "2.0.0",
-		};
-		await provider.makeTestContainer(options1);
-		logger.assertMatchAny([
-			{
-				eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
-				category: "generic",
+		/**
+		 * This tests that minVersionForCollab is updated properly when a client with a higher
+		 * minVersionForCollab loads the document. If it's lower than the current minVersionForCollab,
+		 * then we will continue to use the existing minVersionForCollab.
+		 */
+		it("minVersionForCollab is set on creation", async () => {
+			const options1: ITestContainerConfig = {
+				loaderProps: {
+					logger,
+				},
 				minVersionForCollab: "2.0.0",
-			},
-		]);
-	});
+			};
+			await provider.makeTestContainer(options1);
+			logger.assertMatchAny([
+				{
+					eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
+					category: "generic",
+					minVersionForCollab: "2.0.0",
+				},
+			]);
+		});
 
-	it("minVersionForCollab is not updated if new version is lower", async function () {
-		const options1: ITestContainerConfig = {
-			loaderProps: {
-				logger,
-			},
-			minVersionForCollab: "2.40.0",
-		};
-		await provider.makeTestContainer(options1);
-		logger.assertMatchAny([
-			{
-				eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
-				category: "generic",
+		it("minVersionForCollab is not updated if new version is lower", async () => {
+			const options1: ITestContainerConfig = {
+				loaderProps: {
+					logger,
+				},
 				minVersionForCollab: "2.40.0",
-			},
-		]);
+			};
+			await provider.makeTestContainer(options1);
+			logger.assertMatchAny([
+				{
+					eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
+					category: "generic",
+					minVersionForCollab: "2.40.0",
+				},
+			]);
 
-		const options2: ITestContainerConfig = {
-			loaderProps: {
-				logger,
-			},
-			minVersionForCollab: "2.0.0",
-		};
-		await provider.loadTestContainer(options2);
-		logger.assertMatchAny([
-			{
-				eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
-				category: "generic",
-				minVersionForCollab: "2.40.0",
-			},
-		]);
-	});
-
-	it("minVersionForCollab is updated if new version is higher", async function () {
-		const options1: ITestContainerConfig = {
-			loaderProps: {
-				logger,
-			},
-			minVersionForCollab: "2.0.0",
-		};
-		await provider.makeTestContainer(options1);
-		logger.assertMatchAny([
-			{
-				eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
-				category: "generic",
+			const options2: ITestContainerConfig = {
+				loaderProps: {
+					logger,
+				},
 				minVersionForCollab: "2.0.0",
-			},
-		]);
+			};
+			await provider.loadTestContainer(options2);
+			logger.assertMatchAny([
+				{
+					eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
+					category: "generic",
+					minVersionForCollab: "2.40.0",
+				},
+			]);
+		});
 
-		const options2: ITestContainerConfig = {
-			loaderProps: {
-				logger,
-			},
-			minVersionForCollab: "2.35.0",
-		};
-		await provider.loadTestContainer(options2);
-		logger.assertMatchAny([
-			{
-				eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
-				category: "generic",
+		it("minVersionForCollab is updated if new version is higher", async () => {
+			const options1: ITestContainerConfig = {
+				loaderProps: {
+					logger,
+				},
+				minVersionForCollab: "2.0.0",
+			};
+			await provider.makeTestContainer(options1);
+			logger.assertMatchAny([
+				{
+					eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
+					category: "generic",
+					minVersionForCollab: "2.0.0",
+				},
+			]);
+
+			const options2: ITestContainerConfig = {
+				loaderProps: {
+					logger,
+				},
 				minVersionForCollab: "2.35.0",
-			},
-		]);
-	});
-});
+			};
+			await provider.loadTestContainer(options2);
+			logger.assertMatchAny([
+				{
+					eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
+					category: "generic",
+					minVersionForCollab: "2.35.0",
+				},
+			]);
+		});
+	},
+);

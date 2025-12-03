@@ -6,7 +6,7 @@
 import { compareArrays } from '@fluidframework/core-utils/internal';
 import { compareFluidHandles, isFluidHandle } from '@fluidframework/runtime-utils';
 
-import { Payload } from './persisted-types/index.js';
+import type { Payload } from './persisted-types/index.js';
 
 /**
  * @returns true if two `Payloads` are identical.

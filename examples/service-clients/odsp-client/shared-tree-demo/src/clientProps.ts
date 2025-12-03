@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { OdspClientProps, OdspConnectionConfig } from "@fluidframework/odsp-client/beta";
+import type {
+	OdspClientProps,
+	OdspConnectionConfig,
+} from "@fluidframework/odsp-client/beta";
 
 import { OdspTestTokenProvider } from "./tokenProvider.js";
 

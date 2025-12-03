@@ -4,9 +4,9 @@
  */
 
 import {
+	type Attendee,
 	type Presence,
 	StateFactory,
-	type Attendee,
 	type StatesWorkspace,
 	type StatesWorkspaceSchema,
 } from "@fluidframework/presence/beta";
@@ -25,7 +25,10 @@ export type UserPresence = StatesWorkspace<typeof statesSchema>;
 
 // Takes a presence object and returns the user presence object that contains the shared object states
 export function buildUserPresence(presence: Presence): UserPresence {
-	const states = presence.states.getWorkspace(`name:user-avatar-states`, statesSchema);
+	const states = presence.states.getWorkspace(
+		`name:user-avatar-states`,
+		statesSchema,
+	);
 	return states;
 }
 
@@ -35,7 +38,8 @@ export class PresenceManager {
 	// A map of SessionClient to UserInfo, where users can share their info with other users
 	private readonly userInfoMap: Map<Attendee, User> = new Map();
 	// A callback method to get updates when remote UserInfo changes
-	private userInfoCallback: (userInfoMap: Map<Attendee, User>) => void = () => {};
+	private userInfoCallback: (userInfoMap: Map<Attendee, User>) => void =
+		() => {};
 
 	constructor(private readonly presence: Presence) {
 		// Address for the presence state, this is used to organize the presence states and avoid conflicts
@@ -90,7 +94,9 @@ export class PresenceManager {
 	}
 
 	// Allows the app to listen for updates to the userInfoMap
-	setUserInfoUpdateListener(callback: (userInfoMap: Map<Attendee, User>) => void): void {
+	setUserInfoUpdateListener(
+		callback: (userInfoMap: Map<Attendee, User>) => void,
+	): void {
 		this.userInfoCallback = callback;
 	}
 
@@ -101,9 +107,13 @@ export class PresenceManager {
 		for (const sessionClient of sessionList) {
 			// If local user or remote user is connected, then only add it to the list
 			try {
-				const userInfo = this.usersState.states.onlineUsers.getRemote(sessionClient).value;
+				const userInfo =
+					this.usersState.states.onlineUsers.getRemote(sessionClient).value;
 				// If the user is local user, then add it to the beginning of the list
-				if (sessionClient.attendeeId === this.presence.attendees.getMyself().attendeeId) {
+				if (
+					sessionClient.attendeeId ===
+					this.presence.attendees.getMyself().attendeeId
+				) {
 					userInfoList.push(userInfo);
 				} else {
 					// If the user is remote user, then add it to the end of the list

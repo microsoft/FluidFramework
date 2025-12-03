@@ -5,15 +5,15 @@
 
 import { EventEmitter } from "@fluid-example/example-utils";
 import {
-	BuildNode,
+	type BuildNode,
 	Change,
 	EagerCheckout,
-	SharedTree as LegacySharedTree,
+	type SharedTree as LegacySharedTree,
 	StablePlace,
 	StableRange,
-	TraitLabel,
-	TreeView,
-	TreeViewNode,
+	type TraitLabel,
+	type TreeView,
+	type TreeViewNode,
 } from "@fluid-experimental/tree";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
@@ -68,7 +68,10 @@ export class LegacyTreeInventoryItem
 	}
 }
 
-export class LegacyTreeInventoryListController extends EventEmitter implements IInventoryList {
+export class LegacyTreeInventoryListController
+	extends EventEmitter
+	implements IInventoryList
+{
 	public static initializeTree(tree: LegacySharedTree): void {
 		const inventoryNode: BuildNode = {
 			definition: "inventory",
@@ -140,18 +143,22 @@ export class LegacyTreeInventoryListController extends EventEmitter implements I
 					const newQuantity = quantityNode.payload as number;
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const inventoryItemNodeId = quantityNode.parentage!.parent;
-					const inventoryItemNode = this._tree.currentView.getViewNode(inventoryItemNodeId);
+					const inventoryItemNode =
+						this._tree.currentView.getViewNode(inventoryItemNodeId);
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const idNodeId = inventoryItemNode.traits.get("id" as TraitLabel)![0];
 					const idNode = this._tree.currentView.getViewNode(idNodeId);
 					const inventoryItemId = idNode.payload as string;
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					this._inventoryItems.get(inventoryItemId)!.handleQuantityUpdate(newQuantity);
+					this._inventoryItems
+						.get(inventoryItemId)!
+						.handleQuantityUpdate(newQuantity);
 				}
 			}
 
 			for (const inventoryNodeId of added) {
-				const inventoryItemNode = this._tree.currentView.getViewNode(inventoryNodeId);
+				const inventoryItemNode =
+					this._tree.currentView.getViewNode(inventoryNodeId);
 				// Filter to just the inventoryItem nodes.  Each addition will result in four added nodes (inventoryItem, id, name, quantity).
 				if (inventoryItemNode.definition === "inventoryItem") {
 					const addedInventoryItem =
@@ -171,7 +178,8 @@ export class LegacyTreeInventoryListController extends EventEmitter implements I
 					const idNodeId = inventoryItemNode.traits.get("id" as TraitLabel)![0];
 					const idNode = before.getViewNode(idNodeId);
 					const inventoryItemId = idNode.payload as string;
-					const deletedInventoryItem = this._inventoryItems.get(inventoryItemId);
+					const deletedInventoryItem =
+						this._inventoryItems.get(inventoryItemId);
 					this._inventoryItems.delete(inventoryItemId);
 					this.emit("itemDeleted", deletedInventoryItem);
 				}
@@ -180,7 +188,9 @@ export class LegacyTreeInventoryListController extends EventEmitter implements I
 
 		// Last step of initializing is to populate our map of InventoryItems.
 		// Note that this._tree.currentView.root is the ID of the root node, not the root node itself.
-		const rootNode = this._tree.currentView.getViewNode(this._tree.currentView.root);
+		const rootNode = this._tree.currentView.getViewNode(
+			this._tree.currentView.root,
+		);
 		const inventoryItemsNodeIds = this._tree.currentView
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			.getViewNode(rootNode.traits.get("inventory" as TraitLabel)![0])
@@ -189,7 +199,8 @@ export class LegacyTreeInventoryListController extends EventEmitter implements I
 		// that case before attempting to iterate over its members.
 		if (inventoryItemsNodeIds !== undefined) {
 			for (const inventoryItemNodeId of inventoryItemsNodeIds) {
-				const inventoryItemNode = this._tree.currentView.getViewNode(inventoryItemNodeId);
+				const inventoryItemNode =
+					this._tree.currentView.getViewNode(inventoryItemNodeId);
 				const newInventoryItem =
 					this.makeInventoryItemFromInventoryItemNode(inventoryItemNode);
 				this._inventoryItems.set(newInventoryItem.id, newInventoryItem);
@@ -217,7 +228,9 @@ export class LegacyTreeInventoryListController extends EventEmitter implements I
 				},
 			},
 		};
-		const rootNode = this._tree.currentView.getViewNode(this._tree.currentView.root);
+		const rootNode = this._tree.currentView.getViewNode(
+			this._tree.currentView.root,
+		);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const inventoryNodeId = rootNode.traits.get("inventory" as TraitLabel)![0];
 		this._tree.applyEdit(
@@ -254,7 +267,9 @@ export class LegacyTreeInventoryListController extends EventEmitter implements I
 		const name = nameNode.payload as string;
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const quantityNodeId = inventoryItemNode.traits.get("quantity" as TraitLabel)![0];
+		const quantityNodeId = inventoryItemNode.traits.get(
+			"quantity" as TraitLabel,
+		)![0];
 		const quantityNode = this._tree.currentView.getViewNode(quantityNodeId);
 		const quantity = quantityNode.payload as number;
 
@@ -263,9 +278,17 @@ export class LegacyTreeInventoryListController extends EventEmitter implements I
 		};
 
 		const deleteItem = () => {
-			this._tree.applyEdit(Change.delete(StableRange.only(inventoryItemNode.identifier)));
+			this._tree.applyEdit(
+				Change.delete(StableRange.only(inventoryItemNode.identifier)),
+			);
 		};
 
-		return new LegacyTreeInventoryItem(id, name, quantity, setQuantity, deleteItem);
+		return new LegacyTreeInventoryItem(
+			id,
+			name,
+			quantity,
+			setQuantity,
+			deleteItem,
+		);
 	}
 }

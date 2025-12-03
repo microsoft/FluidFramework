@@ -11,12 +11,23 @@
  * Current version: 2.74.0
  */
 
-import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
+import type {
+	FullType,
+	MinimalType,
+	requireAssignableTo,
+	TypeOnly,
+} from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/sequence-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> =
+	| TypeOnly<T>
+	| MinimalType<T>
+	| FullType<T>
+	| typeof old
+	| typeof current
+	| requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -25,7 +36,10 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_BaseSegment": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_BaseSegment = requireAssignableTo<TypeOnly<old.BaseSegment>, TypeOnly<current.BaseSegment>>
+declare type old_as_current_for_Class_BaseSegment = requireAssignableTo<
+	TypeOnly<old.BaseSegment>,
+	TypeOnly<current.BaseSegment>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -34,7 +48,10 @@ declare type old_as_current_for_Class_BaseSegment = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Class_BaseSegment": {"backCompat": false}
  */
-declare type current_as_old_for_Class_BaseSegment = requireAssignableTo<TypeOnly<current.BaseSegment>, TypeOnly<old.BaseSegment>>
+declare type current_as_old_for_Class_BaseSegment = requireAssignableTo<
+	TypeOnly<current.BaseSegment>,
+	TypeOnly<old.BaseSegment>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -43,7 +60,10 @@ declare type current_as_old_for_Class_BaseSegment = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Class_Marker": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_Marker = requireAssignableTo<TypeOnly<old.Marker>, TypeOnly<current.Marker>>
+declare type old_as_current_for_Class_Marker = requireAssignableTo<
+	TypeOnly<old.Marker>,
+	TypeOnly<current.Marker>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -52,7 +72,10 @@ declare type old_as_current_for_Class_Marker = requireAssignableTo<TypeOnly<old.
  * typeValidation.broken:
  * "Class_Marker": {"backCompat": false}
  */
-declare type current_as_old_for_Class_Marker = requireAssignableTo<TypeOnly<current.Marker>, TypeOnly<old.Marker>>
+declare type current_as_old_for_Class_Marker = requireAssignableTo<
+	TypeOnly<current.Marker>,
+	TypeOnly<old.Marker>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -61,7 +84,10 @@ declare type current_as_old_for_Class_Marker = requireAssignableTo<TypeOnly<curr
  * typeValidation.broken:
  * "Class_TextSegment": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_TextSegment = requireAssignableTo<TypeOnly<old.TextSegment>, TypeOnly<current.TextSegment>>
+declare type old_as_current_for_Class_TextSegment = requireAssignableTo<
+	TypeOnly<old.TextSegment>,
+	TypeOnly<current.TextSegment>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -70,7 +96,10 @@ declare type old_as_current_for_Class_TextSegment = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Class_TextSegment": {"backCompat": false}
  */
-declare type current_as_old_for_Class_TextSegment = requireAssignableTo<TypeOnly<current.TextSegment>, TypeOnly<old.TextSegment>>
+declare type current_as_old_for_Class_TextSegment = requireAssignableTo<
+	TypeOnly<current.TextSegment>,
+	TypeOnly<old.TextSegment>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -79,7 +108,10 @@ declare type current_as_old_for_Class_TextSegment = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Class_TrackingGroup": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_TrackingGroup = requireAssignableTo<TypeOnly<old.TrackingGroup>, TypeOnly<current.TrackingGroup>>
+declare type old_as_current_for_Class_TrackingGroup = requireAssignableTo<
+	TypeOnly<old.TrackingGroup>,
+	TypeOnly<current.TrackingGroup>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -88,7 +120,10 @@ declare type old_as_current_for_Class_TrackingGroup = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "Class_TrackingGroup": {"backCompat": false}
  */
-declare type current_as_old_for_Class_TrackingGroup = requireAssignableTo<TypeOnly<current.TrackingGroup>, TypeOnly<old.TrackingGroup>>
+declare type current_as_old_for_Class_TrackingGroup = requireAssignableTo<
+	TypeOnly<current.TrackingGroup>,
+	TypeOnly<old.TrackingGroup>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -97,7 +132,10 @@ declare type current_as_old_for_Class_TrackingGroup = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "ClassStatics_BaseSegment": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_BaseSegment = requireAssignableTo<TypeOnly<typeof current.BaseSegment>, TypeOnly<typeof old.BaseSegment>>
+declare type current_as_old_for_ClassStatics_BaseSegment = requireAssignableTo<
+	TypeOnly<typeof current.BaseSegment>,
+	TypeOnly<typeof old.BaseSegment>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -106,7 +144,10 @@ declare type current_as_old_for_ClassStatics_BaseSegment = requireAssignableTo<T
  * typeValidation.broken:
  * "ClassStatics_Marker": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_Marker = requireAssignableTo<TypeOnly<typeof current.Marker>, TypeOnly<typeof old.Marker>>
+declare type current_as_old_for_ClassStatics_Marker = requireAssignableTo<
+	TypeOnly<typeof current.Marker>,
+	TypeOnly<typeof old.Marker>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -115,7 +156,10 @@ declare type current_as_old_for_ClassStatics_Marker = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "ClassStatics_TextSegment": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_TextSegment = requireAssignableTo<TypeOnly<typeof current.TextSegment>, TypeOnly<typeof old.TextSegment>>
+declare type current_as_old_for_ClassStatics_TextSegment = requireAssignableTo<
+	TypeOnly<typeof current.TextSegment>,
+	TypeOnly<typeof old.TextSegment>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -124,7 +168,11 @@ declare type current_as_old_for_ClassStatics_TextSegment = requireAssignableTo<T
  * typeValidation.broken:
  * "ClassStatics_TrackingGroup": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_TrackingGroup = requireAssignableTo<TypeOnly<typeof current.TrackingGroup>, TypeOnly<typeof old.TrackingGroup>>
+declare type current_as_old_for_ClassStatics_TrackingGroup =
+	requireAssignableTo<
+		TypeOnly<typeof current.TrackingGroup>,
+		TypeOnly<typeof old.TrackingGroup>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -133,7 +181,10 @@ declare type current_as_old_for_ClassStatics_TrackingGroup = requireAssignableTo
  * typeValidation.broken:
  * "Enum_IntervalType": {"forwardCompat": false}
  */
-declare type old_as_current_for_Enum_IntervalType = requireAssignableTo<TypeOnly<old.IntervalType>, TypeOnly<current.IntervalType>>
+declare type old_as_current_for_Enum_IntervalType = requireAssignableTo<
+	TypeOnly<old.IntervalType>,
+	TypeOnly<current.IntervalType>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -142,7 +193,10 @@ declare type old_as_current_for_Enum_IntervalType = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Enum_IntervalType": {"backCompat": false}
  */
-declare type current_as_old_for_Enum_IntervalType = requireAssignableTo<TypeOnly<current.IntervalType>, TypeOnly<old.IntervalType>>
+declare type current_as_old_for_Enum_IntervalType = requireAssignableTo<
+	TypeOnly<current.IntervalType>,
+	TypeOnly<old.IntervalType>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -151,7 +205,10 @@ declare type current_as_old_for_Enum_IntervalType = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Enum_ReferenceType": {"forwardCompat": false}
  */
-declare type old_as_current_for_Enum_ReferenceType = requireAssignableTo<TypeOnly<old.ReferenceType>, TypeOnly<current.ReferenceType>>
+declare type old_as_current_for_Enum_ReferenceType = requireAssignableTo<
+	TypeOnly<old.ReferenceType>,
+	TypeOnly<current.ReferenceType>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -160,7 +217,10 @@ declare type old_as_current_for_Enum_ReferenceType = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "Enum_ReferenceType": {"backCompat": false}
  */
-declare type current_as_old_for_Enum_ReferenceType = requireAssignableTo<TypeOnly<current.ReferenceType>, TypeOnly<old.ReferenceType>>
+declare type current_as_old_for_Enum_ReferenceType = requireAssignableTo<
+	TypeOnly<current.ReferenceType>,
+	TypeOnly<old.ReferenceType>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -169,7 +229,10 @@ declare type current_as_old_for_Enum_ReferenceType = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "Enum_Side": {"forwardCompat": false}
  */
-declare type old_as_current_for_Enum_Side = requireAssignableTo<TypeOnly<old.Side>, TypeOnly<current.Side>>
+declare type old_as_current_for_Enum_Side = requireAssignableTo<
+	TypeOnly<old.Side>,
+	TypeOnly<current.Side>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -178,7 +241,10 @@ declare type old_as_current_for_Enum_Side = requireAssignableTo<TypeOnly<old.Sid
  * typeValidation.broken:
  * "Enum_Side": {"backCompat": false}
  */
-declare type current_as_old_for_Enum_Side = requireAssignableTo<TypeOnly<current.Side>, TypeOnly<old.Side>>
+declare type current_as_old_for_Enum_Side = requireAssignableTo<
+	TypeOnly<current.Side>,
+	TypeOnly<old.Side>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -187,7 +253,11 @@ declare type current_as_old_for_Enum_Side = requireAssignableTo<TypeOnly<current
  * typeValidation.broken:
  * "Function_appendAddIntervalToRevertibles": {"backCompat": false}
  */
-declare type current_as_old_for_Function_appendAddIntervalToRevertibles = requireAssignableTo<TypeOnly<typeof current.appendAddIntervalToRevertibles>, TypeOnly<typeof old.appendAddIntervalToRevertibles>>
+declare type current_as_old_for_Function_appendAddIntervalToRevertibles =
+	requireAssignableTo<
+		TypeOnly<typeof current.appendAddIntervalToRevertibles>,
+		TypeOnly<typeof old.appendAddIntervalToRevertibles>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -196,7 +266,11 @@ declare type current_as_old_for_Function_appendAddIntervalToRevertibles = requir
  * typeValidation.broken:
  * "Function_appendChangeIntervalToRevertibles": {"backCompat": false}
  */
-declare type current_as_old_for_Function_appendChangeIntervalToRevertibles = requireAssignableTo<TypeOnly<typeof current.appendChangeIntervalToRevertibles>, TypeOnly<typeof old.appendChangeIntervalToRevertibles>>
+declare type current_as_old_for_Function_appendChangeIntervalToRevertibles =
+	requireAssignableTo<
+		TypeOnly<typeof current.appendChangeIntervalToRevertibles>,
+		TypeOnly<typeof old.appendChangeIntervalToRevertibles>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -205,7 +279,11 @@ declare type current_as_old_for_Function_appendChangeIntervalToRevertibles = req
  * typeValidation.broken:
  * "Function_appendDeleteIntervalToRevertibles": {"backCompat": false}
  */
-declare type current_as_old_for_Function_appendDeleteIntervalToRevertibles = requireAssignableTo<TypeOnly<typeof current.appendDeleteIntervalToRevertibles>, TypeOnly<typeof old.appendDeleteIntervalToRevertibles>>
+declare type current_as_old_for_Function_appendDeleteIntervalToRevertibles =
+	requireAssignableTo<
+		TypeOnly<typeof current.appendDeleteIntervalToRevertibles>,
+		TypeOnly<typeof old.appendDeleteIntervalToRevertibles>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -214,7 +292,11 @@ declare type current_as_old_for_Function_appendDeleteIntervalToRevertibles = req
  * typeValidation.broken:
  * "Function_appendIntervalPropertyChangedToRevertibles": {"backCompat": false}
  */
-declare type current_as_old_for_Function_appendIntervalPropertyChangedToRevertibles = requireAssignableTo<TypeOnly<typeof current.appendIntervalPropertyChangedToRevertibles>, TypeOnly<typeof old.appendIntervalPropertyChangedToRevertibles>>
+declare type current_as_old_for_Function_appendIntervalPropertyChangedToRevertibles =
+	requireAssignableTo<
+		TypeOnly<typeof current.appendIntervalPropertyChangedToRevertibles>,
+		TypeOnly<typeof old.appendIntervalPropertyChangedToRevertibles>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -223,7 +305,11 @@ declare type current_as_old_for_Function_appendIntervalPropertyChangedToRevertib
  * typeValidation.broken:
  * "Function_appendSharedStringDeltaToRevertibles": {"backCompat": false}
  */
-declare type current_as_old_for_Function_appendSharedStringDeltaToRevertibles = requireAssignableTo<TypeOnly<typeof current.appendSharedStringDeltaToRevertibles>, TypeOnly<typeof old.appendSharedStringDeltaToRevertibles>>
+declare type current_as_old_for_Function_appendSharedStringDeltaToRevertibles =
+	requireAssignableTo<
+		TypeOnly<typeof current.appendSharedStringDeltaToRevertibles>,
+		TypeOnly<typeof old.appendSharedStringDeltaToRevertibles>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -232,7 +318,11 @@ declare type current_as_old_for_Function_appendSharedStringDeltaToRevertibles = 
  * typeValidation.broken:
  * "Function_createOverlappingIntervalsIndex": {"backCompat": false}
  */
-declare type current_as_old_for_Function_createOverlappingIntervalsIndex = requireAssignableTo<TypeOnly<typeof current.createOverlappingIntervalsIndex>, TypeOnly<typeof old.createOverlappingIntervalsIndex>>
+declare type current_as_old_for_Function_createOverlappingIntervalsIndex =
+	requireAssignableTo<
+		TypeOnly<typeof current.createOverlappingIntervalsIndex>,
+		TypeOnly<typeof old.createOverlappingIntervalsIndex>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -241,7 +331,11 @@ declare type current_as_old_for_Function_createOverlappingIntervalsIndex = requi
  * typeValidation.broken:
  * "Function_discardSharedStringRevertibles": {"backCompat": false}
  */
-declare type current_as_old_for_Function_discardSharedStringRevertibles = requireAssignableTo<TypeOnly<typeof current.discardSharedStringRevertibles>, TypeOnly<typeof old.discardSharedStringRevertibles>>
+declare type current_as_old_for_Function_discardSharedStringRevertibles =
+	requireAssignableTo<
+		TypeOnly<typeof current.discardSharedStringRevertibles>,
+		TypeOnly<typeof old.discardSharedStringRevertibles>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -250,7 +344,11 @@ declare type current_as_old_for_Function_discardSharedStringRevertibles = requir
  * typeValidation.broken:
  * "Function_revertSharedStringRevertibles": {"backCompat": false}
  */
-declare type current_as_old_for_Function_revertSharedStringRevertibles = requireAssignableTo<TypeOnly<typeof current.revertSharedStringRevertibles>, TypeOnly<typeof old.revertSharedStringRevertibles>>
+declare type current_as_old_for_Function_revertSharedStringRevertibles =
+	requireAssignableTo<
+		TypeOnly<typeof current.revertSharedStringRevertibles>,
+		TypeOnly<typeof old.revertSharedStringRevertibles>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -259,7 +357,10 @@ declare type current_as_old_for_Function_revertSharedStringRevertibles = require
  * typeValidation.broken:
  * "Interface_IInterval": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IInterval = requireAssignableTo<TypeOnly<old.IInterval>, TypeOnly<current.IInterval>>
+declare type old_as_current_for_Interface_IInterval = requireAssignableTo<
+	TypeOnly<old.IInterval>,
+	TypeOnly<current.IInterval>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -268,7 +369,10 @@ declare type old_as_current_for_Interface_IInterval = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "Interface_IInterval": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IInterval = requireAssignableTo<TypeOnly<current.IInterval>, TypeOnly<old.IInterval>>
+declare type current_as_old_for_Interface_IInterval = requireAssignableTo<
+	TypeOnly<current.IInterval>,
+	TypeOnly<old.IInterval>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -277,7 +381,11 @@ declare type current_as_old_for_Interface_IInterval = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "Interface_InteriorSequencePlace": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_InteriorSequencePlace = requireAssignableTo<TypeOnly<old.InteriorSequencePlace>, TypeOnly<current.InteriorSequencePlace>>
+declare type old_as_current_for_Interface_InteriorSequencePlace =
+	requireAssignableTo<
+		TypeOnly<old.InteriorSequencePlace>,
+		TypeOnly<current.InteriorSequencePlace>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -286,7 +394,11 @@ declare type old_as_current_for_Interface_InteriorSequencePlace = requireAssigna
  * typeValidation.broken:
  * "Interface_InteriorSequencePlace": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_InteriorSequencePlace = requireAssignableTo<TypeOnly<current.InteriorSequencePlace>, TypeOnly<old.InteriorSequencePlace>>
+declare type current_as_old_for_Interface_InteriorSequencePlace =
+	requireAssignableTo<
+		TypeOnly<current.InteriorSequencePlace>,
+		TypeOnly<old.InteriorSequencePlace>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -295,7 +407,10 @@ declare type current_as_old_for_Interface_InteriorSequencePlace = requireAssigna
  * typeValidation.broken:
  * "Interface_ISegment": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISegment = requireAssignableTo<TypeOnly<old.ISegment>, TypeOnly<current.ISegment>>
+declare type old_as_current_for_Interface_ISegment = requireAssignableTo<
+	TypeOnly<old.ISegment>,
+	TypeOnly<current.ISegment>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -304,7 +419,10 @@ declare type old_as_current_for_Interface_ISegment = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "Interface_ISegment": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISegment = requireAssignableTo<TypeOnly<current.ISegment>, TypeOnly<old.ISegment>>
+declare type current_as_old_for_Interface_ISegment = requireAssignableTo<
+	TypeOnly<current.ISegment>,
+	TypeOnly<old.ISegment>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -313,7 +431,11 @@ declare type current_as_old_for_Interface_ISegment = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "Interface_ISequenceDeltaRange": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISequenceDeltaRange = requireAssignableTo<TypeOnly<old.ISequenceDeltaRange>, TypeOnly<current.ISequenceDeltaRange>>
+declare type old_as_current_for_Interface_ISequenceDeltaRange =
+	requireAssignableTo<
+		TypeOnly<old.ISequenceDeltaRange>,
+		TypeOnly<current.ISequenceDeltaRange>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -322,7 +444,11 @@ declare type old_as_current_for_Interface_ISequenceDeltaRange = requireAssignabl
  * typeValidation.broken:
  * "Interface_ISequenceDeltaRange": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISequenceDeltaRange = requireAssignableTo<TypeOnly<current.ISequenceDeltaRange>, TypeOnly<old.ISequenceDeltaRange>>
+declare type current_as_old_for_Interface_ISequenceDeltaRange =
+	requireAssignableTo<
+		TypeOnly<current.ISequenceDeltaRange>,
+		TypeOnly<old.ISequenceDeltaRange>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -331,7 +457,11 @@ declare type current_as_old_for_Interface_ISequenceDeltaRange = requireAssignabl
  * typeValidation.broken:
  * "Interface_ISequenceIntervalCollection": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISequenceIntervalCollection = requireAssignableTo<TypeOnly<old.ISequenceIntervalCollection>, TypeOnly<current.ISequenceIntervalCollection>>
+declare type old_as_current_for_Interface_ISequenceIntervalCollection =
+	requireAssignableTo<
+		TypeOnly<old.ISequenceIntervalCollection>,
+		TypeOnly<current.ISequenceIntervalCollection>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -340,7 +470,11 @@ declare type old_as_current_for_Interface_ISequenceIntervalCollection = requireA
  * typeValidation.broken:
  * "Interface_ISequenceIntervalCollection": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISequenceIntervalCollection = requireAssignableTo<TypeOnly<current.ISequenceIntervalCollection>, TypeOnly<old.ISequenceIntervalCollection>>
+declare type current_as_old_for_Interface_ISequenceIntervalCollection =
+	requireAssignableTo<
+		TypeOnly<current.ISequenceIntervalCollection>,
+		TypeOnly<old.ISequenceIntervalCollection>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -349,7 +483,11 @@ declare type current_as_old_for_Interface_ISequenceIntervalCollection = requireA
  * typeValidation.broken:
  * "Interface_ISequenceIntervalCollectionEvents": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISequenceIntervalCollectionEvents = requireAssignableTo<TypeOnly<old.ISequenceIntervalCollectionEvents>, TypeOnly<current.ISequenceIntervalCollectionEvents>>
+declare type old_as_current_for_Interface_ISequenceIntervalCollectionEvents =
+	requireAssignableTo<
+		TypeOnly<old.ISequenceIntervalCollectionEvents>,
+		TypeOnly<current.ISequenceIntervalCollectionEvents>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -358,7 +496,11 @@ declare type old_as_current_for_Interface_ISequenceIntervalCollectionEvents = re
  * typeValidation.broken:
  * "Interface_ISequenceIntervalCollectionEvents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISequenceIntervalCollectionEvents = requireAssignableTo<TypeOnly<current.ISequenceIntervalCollectionEvents>, TypeOnly<old.ISequenceIntervalCollectionEvents>>
+declare type current_as_old_for_Interface_ISequenceIntervalCollectionEvents =
+	requireAssignableTo<
+		TypeOnly<current.ISequenceIntervalCollectionEvents>,
+		TypeOnly<old.ISequenceIntervalCollectionEvents>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -367,7 +509,11 @@ declare type current_as_old_for_Interface_ISequenceIntervalCollectionEvents = re
  * typeValidation.broken:
  * "Interface_ISequenceOverlappingIntervalsIndex": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISequenceOverlappingIntervalsIndex = requireAssignableTo<TypeOnly<old.ISequenceOverlappingIntervalsIndex>, TypeOnly<current.ISequenceOverlappingIntervalsIndex>>
+declare type old_as_current_for_Interface_ISequenceOverlappingIntervalsIndex =
+	requireAssignableTo<
+		TypeOnly<old.ISequenceOverlappingIntervalsIndex>,
+		TypeOnly<current.ISequenceOverlappingIntervalsIndex>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -376,7 +522,11 @@ declare type old_as_current_for_Interface_ISequenceOverlappingIntervalsIndex = r
  * typeValidation.broken:
  * "Interface_ISequenceOverlappingIntervalsIndex": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISequenceOverlappingIntervalsIndex = requireAssignableTo<TypeOnly<current.ISequenceOverlappingIntervalsIndex>, TypeOnly<old.ISequenceOverlappingIntervalsIndex>>
+declare type current_as_old_for_Interface_ISequenceOverlappingIntervalsIndex =
+	requireAssignableTo<
+		TypeOnly<current.ISequenceOverlappingIntervalsIndex>,
+		TypeOnly<old.ISequenceOverlappingIntervalsIndex>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -385,7 +535,11 @@ declare type current_as_old_for_Interface_ISequenceOverlappingIntervalsIndex = r
  * typeValidation.broken:
  * "Interface_ISerializedInterval": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISerializedInterval = requireAssignableTo<TypeOnly<old.ISerializedInterval>, TypeOnly<current.ISerializedInterval>>
+declare type old_as_current_for_Interface_ISerializedInterval =
+	requireAssignableTo<
+		TypeOnly<old.ISerializedInterval>,
+		TypeOnly<current.ISerializedInterval>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -394,7 +548,11 @@ declare type old_as_current_for_Interface_ISerializedInterval = requireAssignabl
  * typeValidation.broken:
  * "Interface_ISerializedInterval": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISerializedInterval = requireAssignableTo<TypeOnly<current.ISerializedInterval>, TypeOnly<old.ISerializedInterval>>
+declare type current_as_old_for_Interface_ISerializedInterval =
+	requireAssignableTo<
+		TypeOnly<current.ISerializedInterval>,
+		TypeOnly<old.ISerializedInterval>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -403,7 +561,11 @@ declare type current_as_old_for_Interface_ISerializedInterval = requireAssignabl
  * typeValidation.broken:
  * "Interface_ISharedSegmentSequence": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISharedSegmentSequence = requireAssignableTo<TypeOnly<old.ISharedSegmentSequence<never>>, TypeOnly<current.ISharedSegmentSequence<never>>>
+declare type old_as_current_for_Interface_ISharedSegmentSequence =
+	requireAssignableTo<
+		TypeOnly<old.ISharedSegmentSequence<never>>,
+		TypeOnly<current.ISharedSegmentSequence<never>>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -412,7 +574,11 @@ declare type old_as_current_for_Interface_ISharedSegmentSequence = requireAssign
  * typeValidation.broken:
  * "Interface_ISharedSegmentSequence": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISharedSegmentSequence = requireAssignableTo<TypeOnly<current.ISharedSegmentSequence<never>>, TypeOnly<old.ISharedSegmentSequence<never>>>
+declare type current_as_old_for_Interface_ISharedSegmentSequence =
+	requireAssignableTo<
+		TypeOnly<current.ISharedSegmentSequence<never>>,
+		TypeOnly<old.ISharedSegmentSequence<never>>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -421,7 +587,11 @@ declare type current_as_old_for_Interface_ISharedSegmentSequence = requireAssign
  * typeValidation.broken:
  * "Interface_ISharedSegmentSequenceEvents": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISharedSegmentSequenceEvents = requireAssignableTo<TypeOnly<old.ISharedSegmentSequenceEvents>, TypeOnly<current.ISharedSegmentSequenceEvents>>
+declare type old_as_current_for_Interface_ISharedSegmentSequenceEvents =
+	requireAssignableTo<
+		TypeOnly<old.ISharedSegmentSequenceEvents>,
+		TypeOnly<current.ISharedSegmentSequenceEvents>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -430,7 +600,11 @@ declare type old_as_current_for_Interface_ISharedSegmentSequenceEvents = require
  * typeValidation.broken:
  * "Interface_ISharedSegmentSequenceEvents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISharedSegmentSequenceEvents = requireAssignableTo<TypeOnly<current.ISharedSegmentSequenceEvents>, TypeOnly<old.ISharedSegmentSequenceEvents>>
+declare type current_as_old_for_Interface_ISharedSegmentSequenceEvents =
+	requireAssignableTo<
+		TypeOnly<current.ISharedSegmentSequenceEvents>,
+		TypeOnly<old.ISharedSegmentSequenceEvents>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -439,7 +613,10 @@ declare type current_as_old_for_Interface_ISharedSegmentSequenceEvents = require
  * typeValidation.broken:
  * "Interface_ISharedString": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISharedString = requireAssignableTo<TypeOnly<old.ISharedString>, TypeOnly<current.ISharedString>>
+declare type old_as_current_for_Interface_ISharedString = requireAssignableTo<
+	TypeOnly<old.ISharedString>,
+	TypeOnly<current.ISharedString>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -448,7 +625,10 @@ declare type old_as_current_for_Interface_ISharedString = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Interface_ISharedString": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISharedString = requireAssignableTo<TypeOnly<current.ISharedString>, TypeOnly<old.ISharedString>>
+declare type current_as_old_for_Interface_ISharedString = requireAssignableTo<
+	TypeOnly<current.ISharedString>,
+	TypeOnly<old.ISharedString>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -457,7 +637,11 @@ declare type current_as_old_for_Interface_ISharedString = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Interface_LocalReferencePosition": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_LocalReferencePosition = requireAssignableTo<TypeOnly<current.LocalReferencePosition>, TypeOnly<old.LocalReferencePosition>>
+declare type current_as_old_for_Interface_LocalReferencePosition =
+	requireAssignableTo<
+		TypeOnly<current.LocalReferencePosition>,
+		TypeOnly<old.LocalReferencePosition>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -466,7 +650,10 @@ declare type current_as_old_for_Interface_LocalReferencePosition = requireAssign
  * typeValidation.broken:
  * "Interface_MapLike": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_MapLike = requireAssignableTo<TypeOnly<old.MapLike<never>>, TypeOnly<current.MapLike<never>>>
+declare type old_as_current_for_Interface_MapLike = requireAssignableTo<
+	TypeOnly<old.MapLike<never>>,
+	TypeOnly<current.MapLike<never>>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -475,7 +662,10 @@ declare type old_as_current_for_Interface_MapLike = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Interface_MapLike": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_MapLike = requireAssignableTo<TypeOnly<current.MapLike<never>>, TypeOnly<old.MapLike<never>>>
+declare type current_as_old_for_Interface_MapLike = requireAssignableTo<
+	TypeOnly<current.MapLike<never>>,
+	TypeOnly<old.MapLike<never>>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -484,7 +674,11 @@ declare type current_as_old_for_Interface_MapLike = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Interface_ReferencePosition": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ReferencePosition = requireAssignableTo<TypeOnly<old.ReferencePosition>, TypeOnly<current.ReferencePosition>>
+declare type old_as_current_for_Interface_ReferencePosition =
+	requireAssignableTo<
+		TypeOnly<old.ReferencePosition>,
+		TypeOnly<current.ReferencePosition>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -493,7 +687,11 @@ declare type old_as_current_for_Interface_ReferencePosition = requireAssignableT
  * typeValidation.broken:
  * "Interface_ReferencePosition": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ReferencePosition = requireAssignableTo<TypeOnly<current.ReferencePosition>, TypeOnly<old.ReferencePosition>>
+declare type current_as_old_for_Interface_ReferencePosition =
+	requireAssignableTo<
+		TypeOnly<current.ReferencePosition>,
+		TypeOnly<old.ReferencePosition>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -502,7 +700,11 @@ declare type current_as_old_for_Interface_ReferencePosition = requireAssignableT
  * typeValidation.broken:
  * "Interface_SequenceDeltaEvent": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_SequenceDeltaEvent = requireAssignableTo<TypeOnly<old.SequenceDeltaEvent>, TypeOnly<current.SequenceDeltaEvent>>
+declare type old_as_current_for_Interface_SequenceDeltaEvent =
+	requireAssignableTo<
+		TypeOnly<old.SequenceDeltaEvent>,
+		TypeOnly<current.SequenceDeltaEvent>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -511,7 +713,11 @@ declare type old_as_current_for_Interface_SequenceDeltaEvent = requireAssignable
  * typeValidation.broken:
  * "Interface_SequenceDeltaEvent": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_SequenceDeltaEvent = requireAssignableTo<TypeOnly<current.SequenceDeltaEvent>, TypeOnly<old.SequenceDeltaEvent>>
+declare type current_as_old_for_Interface_SequenceDeltaEvent =
+	requireAssignableTo<
+		TypeOnly<current.SequenceDeltaEvent>,
+		TypeOnly<old.SequenceDeltaEvent>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -520,7 +726,10 @@ declare type current_as_old_for_Interface_SequenceDeltaEvent = requireAssignable
  * typeValidation.broken:
  * "Interface_SequenceEvent": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_SequenceEvent = requireAssignableTo<TypeOnly<old.SequenceEvent>, TypeOnly<current.SequenceEvent>>
+declare type old_as_current_for_Interface_SequenceEvent = requireAssignableTo<
+	TypeOnly<old.SequenceEvent>,
+	TypeOnly<current.SequenceEvent>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -529,7 +738,10 @@ declare type old_as_current_for_Interface_SequenceEvent = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Interface_SequenceEvent": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_SequenceEvent = requireAssignableTo<TypeOnly<current.SequenceEvent>, TypeOnly<old.SequenceEvent>>
+declare type current_as_old_for_Interface_SequenceEvent = requireAssignableTo<
+	TypeOnly<current.SequenceEvent>,
+	TypeOnly<old.SequenceEvent>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -538,7 +750,11 @@ declare type current_as_old_for_Interface_SequenceEvent = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Interface_SequenceInterval": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_SequenceInterval = requireAssignableTo<TypeOnly<old.SequenceInterval>, TypeOnly<current.SequenceInterval>>
+declare type old_as_current_for_Interface_SequenceInterval =
+	requireAssignableTo<
+		TypeOnly<old.SequenceInterval>,
+		TypeOnly<current.SequenceInterval>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -547,7 +763,11 @@ declare type old_as_current_for_Interface_SequenceInterval = requireAssignableTo
  * typeValidation.broken:
  * "Interface_SequenceInterval": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_SequenceInterval = requireAssignableTo<TypeOnly<current.SequenceInterval>, TypeOnly<old.SequenceInterval>>
+declare type current_as_old_for_Interface_SequenceInterval =
+	requireAssignableTo<
+		TypeOnly<current.SequenceInterval>,
+		TypeOnly<old.SequenceInterval>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -556,7 +776,11 @@ declare type current_as_old_for_Interface_SequenceInterval = requireAssignableTo
  * typeValidation.broken:
  * "Interface_SequenceIntervalIndex": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_SequenceIntervalIndex = requireAssignableTo<TypeOnly<old.SequenceIntervalIndex>, TypeOnly<current.SequenceIntervalIndex>>
+declare type old_as_current_for_Interface_SequenceIntervalIndex =
+	requireAssignableTo<
+		TypeOnly<old.SequenceIntervalIndex>,
+		TypeOnly<current.SequenceIntervalIndex>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -565,7 +789,11 @@ declare type old_as_current_for_Interface_SequenceIntervalIndex = requireAssigna
  * typeValidation.broken:
  * "Interface_SequenceIntervalIndex": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_SequenceIntervalIndex = requireAssignableTo<TypeOnly<current.SequenceIntervalIndex>, TypeOnly<old.SequenceIntervalIndex>>
+declare type current_as_old_for_Interface_SequenceIntervalIndex =
+	requireAssignableTo<
+		TypeOnly<current.SequenceIntervalIndex>,
+		TypeOnly<old.SequenceIntervalIndex>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -574,7 +802,11 @@ declare type current_as_old_for_Interface_SequenceIntervalIndex = requireAssigna
  * typeValidation.broken:
  * "Interface_SequenceMaintenanceEvent": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_SequenceMaintenanceEvent = requireAssignableTo<TypeOnly<old.SequenceMaintenanceEvent>, TypeOnly<current.SequenceMaintenanceEvent>>
+declare type old_as_current_for_Interface_SequenceMaintenanceEvent =
+	requireAssignableTo<
+		TypeOnly<old.SequenceMaintenanceEvent>,
+		TypeOnly<current.SequenceMaintenanceEvent>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -583,7 +815,11 @@ declare type old_as_current_for_Interface_SequenceMaintenanceEvent = requireAssi
  * typeValidation.broken:
  * "Interface_SequenceMaintenanceEvent": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_SequenceMaintenanceEvent = requireAssignableTo<TypeOnly<current.SequenceMaintenanceEvent>, TypeOnly<old.SequenceMaintenanceEvent>>
+declare type current_as_old_for_Interface_SequenceMaintenanceEvent =
+	requireAssignableTo<
+		TypeOnly<current.SequenceMaintenanceEvent>,
+		TypeOnly<old.SequenceMaintenanceEvent>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -592,7 +828,11 @@ declare type current_as_old_for_Interface_SequenceMaintenanceEvent = requireAssi
  * typeValidation.broken:
  * "TypeAlias_DeserializeCallback": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_DeserializeCallback = requireAssignableTo<TypeOnly<old.DeserializeCallback>, TypeOnly<current.DeserializeCallback>>
+declare type old_as_current_for_TypeAlias_DeserializeCallback =
+	requireAssignableTo<
+		TypeOnly<old.DeserializeCallback>,
+		TypeOnly<current.DeserializeCallback>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -601,7 +841,11 @@ declare type old_as_current_for_TypeAlias_DeserializeCallback = requireAssignabl
  * typeValidation.broken:
  * "TypeAlias_DeserializeCallback": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_DeserializeCallback = requireAssignableTo<TypeOnly<current.DeserializeCallback>, TypeOnly<old.DeserializeCallback>>
+declare type current_as_old_for_TypeAlias_DeserializeCallback =
+	requireAssignableTo<
+		TypeOnly<current.DeserializeCallback>,
+		TypeOnly<old.DeserializeCallback>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -610,7 +854,10 @@ declare type current_as_old_for_TypeAlias_DeserializeCallback = requireAssignabl
  * typeValidation.broken:
  * "TypeAlias_IntervalOpType": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_IntervalOpType = requireAssignableTo<TypeOnly<old.IntervalOpType>, TypeOnly<current.IntervalOpType>>
+declare type old_as_current_for_TypeAlias_IntervalOpType = requireAssignableTo<
+	TypeOnly<old.IntervalOpType>,
+	TypeOnly<current.IntervalOpType>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -619,7 +866,10 @@ declare type old_as_current_for_TypeAlias_IntervalOpType = requireAssignableTo<T
  * typeValidation.broken:
  * "TypeAlias_IntervalOpType": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_IntervalOpType = requireAssignableTo<TypeOnly<current.IntervalOpType>, TypeOnly<old.IntervalOpType>>
+declare type current_as_old_for_TypeAlias_IntervalOpType = requireAssignableTo<
+	TypeOnly<current.IntervalOpType>,
+	TypeOnly<old.IntervalOpType>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -628,7 +878,11 @@ declare type current_as_old_for_TypeAlias_IntervalOpType = requireAssignableTo<T
  * typeValidation.broken:
  * "TypeAlias_IntervalRevertible": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_IntervalRevertible = requireAssignableTo<TypeOnly<old.IntervalRevertible>, TypeOnly<current.IntervalRevertible>>
+declare type old_as_current_for_TypeAlias_IntervalRevertible =
+	requireAssignableTo<
+		TypeOnly<old.IntervalRevertible>,
+		TypeOnly<current.IntervalRevertible>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -637,7 +891,11 @@ declare type old_as_current_for_TypeAlias_IntervalRevertible = requireAssignable
  * typeValidation.broken:
  * "TypeAlias_IntervalRevertible": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_IntervalRevertible = requireAssignableTo<TypeOnly<current.IntervalRevertible>, TypeOnly<old.IntervalRevertible>>
+declare type current_as_old_for_TypeAlias_IntervalRevertible =
+	requireAssignableTo<
+		TypeOnly<current.IntervalRevertible>,
+		TypeOnly<old.IntervalRevertible>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -646,7 +904,11 @@ declare type current_as_old_for_TypeAlias_IntervalRevertible = requireAssignable
  * typeValidation.broken:
  * "TypeAlias_IntervalStickiness": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_IntervalStickiness = requireAssignableTo<TypeOnly<old.IntervalStickiness>, TypeOnly<current.IntervalStickiness>>
+declare type old_as_current_for_TypeAlias_IntervalStickiness =
+	requireAssignableTo<
+		TypeOnly<old.IntervalStickiness>,
+		TypeOnly<current.IntervalStickiness>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -655,7 +917,11 @@ declare type old_as_current_for_TypeAlias_IntervalStickiness = requireAssignable
  * typeValidation.broken:
  * "TypeAlias_IntervalStickiness": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_IntervalStickiness = requireAssignableTo<TypeOnly<current.IntervalStickiness>, TypeOnly<old.IntervalStickiness>>
+declare type current_as_old_for_TypeAlias_IntervalStickiness =
+	requireAssignableTo<
+		TypeOnly<current.IntervalStickiness>,
+		TypeOnly<old.IntervalStickiness>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -664,7 +930,11 @@ declare type current_as_old_for_TypeAlias_IntervalStickiness = requireAssignable
  * typeValidation.broken:
  * "TypeAlias_MergeTreeDeltaType": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_MergeTreeDeltaType = requireAssignableTo<TypeOnly<old.MergeTreeDeltaType>, TypeOnly<current.MergeTreeDeltaType>>
+declare type old_as_current_for_TypeAlias_MergeTreeDeltaType =
+	requireAssignableTo<
+		TypeOnly<old.MergeTreeDeltaType>,
+		TypeOnly<current.MergeTreeDeltaType>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -673,7 +943,11 @@ declare type old_as_current_for_TypeAlias_MergeTreeDeltaType = requireAssignable
  * typeValidation.broken:
  * "TypeAlias_MergeTreeDeltaType": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_MergeTreeDeltaType = requireAssignableTo<TypeOnly<current.MergeTreeDeltaType>, TypeOnly<old.MergeTreeDeltaType>>
+declare type current_as_old_for_TypeAlias_MergeTreeDeltaType =
+	requireAssignableTo<
+		TypeOnly<current.MergeTreeDeltaType>,
+		TypeOnly<old.MergeTreeDeltaType>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -682,7 +956,10 @@ declare type current_as_old_for_TypeAlias_MergeTreeDeltaType = requireAssignable
  * typeValidation.broken:
  * "TypeAlias_PropertySet": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_PropertySet = requireAssignableTo<TypeOnly<old.PropertySet>, TypeOnly<current.PropertySet>>
+declare type old_as_current_for_TypeAlias_PropertySet = requireAssignableTo<
+	TypeOnly<old.PropertySet>,
+	TypeOnly<current.PropertySet>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -691,7 +968,10 @@ declare type old_as_current_for_TypeAlias_PropertySet = requireAssignableTo<Type
  * typeValidation.broken:
  * "TypeAlias_PropertySet": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_PropertySet = requireAssignableTo<TypeOnly<current.PropertySet>, TypeOnly<old.PropertySet>>
+declare type current_as_old_for_TypeAlias_PropertySet = requireAssignableTo<
+	TypeOnly<current.PropertySet>,
+	TypeOnly<old.PropertySet>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -700,7 +980,10 @@ declare type current_as_old_for_TypeAlias_PropertySet = requireAssignableTo<Type
  * typeValidation.broken:
  * "TypeAlias_SequencePlace": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_SequencePlace = requireAssignableTo<TypeOnly<old.SequencePlace>, TypeOnly<current.SequencePlace>>
+declare type old_as_current_for_TypeAlias_SequencePlace = requireAssignableTo<
+	TypeOnly<old.SequencePlace>,
+	TypeOnly<current.SequencePlace>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -709,7 +992,10 @@ declare type old_as_current_for_TypeAlias_SequencePlace = requireAssignableTo<Ty
  * typeValidation.broken:
  * "TypeAlias_SequencePlace": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_SequencePlace = requireAssignableTo<TypeOnly<current.SequencePlace>, TypeOnly<old.SequencePlace>>
+declare type current_as_old_for_TypeAlias_SequencePlace = requireAssignableTo<
+	TypeOnly<current.SequencePlace>,
+	TypeOnly<old.SequencePlace>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -718,7 +1004,10 @@ declare type current_as_old_for_TypeAlias_SequencePlace = requireAssignableTo<Ty
  * typeValidation.broken:
  * "TypeAlias_SharedString": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_SharedString = requireAssignableTo<TypeOnly<old.SharedString>, TypeOnly<current.SharedString>>
+declare type old_as_current_for_TypeAlias_SharedString = requireAssignableTo<
+	TypeOnly<old.SharedString>,
+	TypeOnly<current.SharedString>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -727,7 +1016,10 @@ declare type old_as_current_for_TypeAlias_SharedString = requireAssignableTo<Typ
  * typeValidation.broken:
  * "TypeAlias_SharedString": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_SharedString = requireAssignableTo<TypeOnly<current.SharedString>, TypeOnly<old.SharedString>>
+declare type current_as_old_for_TypeAlias_SharedString = requireAssignableTo<
+	TypeOnly<current.SharedString>,
+	TypeOnly<old.SharedString>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -736,7 +1028,11 @@ declare type current_as_old_for_TypeAlias_SharedString = requireAssignableTo<Typ
  * typeValidation.broken:
  * "TypeAlias_SharedStringRevertible": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_SharedStringRevertible = requireAssignableTo<TypeOnly<old.SharedStringRevertible>, TypeOnly<current.SharedStringRevertible>>
+declare type old_as_current_for_TypeAlias_SharedStringRevertible =
+	requireAssignableTo<
+		TypeOnly<old.SharedStringRevertible>,
+		TypeOnly<current.SharedStringRevertible>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -745,7 +1041,11 @@ declare type old_as_current_for_TypeAlias_SharedStringRevertible = requireAssign
  * typeValidation.broken:
  * "TypeAlias_SharedStringRevertible": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_SharedStringRevertible = requireAssignableTo<TypeOnly<current.SharedStringRevertible>, TypeOnly<old.SharedStringRevertible>>
+declare type current_as_old_for_TypeAlias_SharedStringRevertible =
+	requireAssignableTo<
+		TypeOnly<current.SharedStringRevertible>,
+		TypeOnly<old.SharedStringRevertible>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -754,7 +1054,11 @@ declare type current_as_old_for_TypeAlias_SharedStringRevertible = requireAssign
  * typeValidation.broken:
  * "TypeAlias_SharedStringSegment": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_SharedStringSegment = requireAssignableTo<TypeOnly<old.SharedStringSegment>, TypeOnly<current.SharedStringSegment>>
+declare type old_as_current_for_TypeAlias_SharedStringSegment =
+	requireAssignableTo<
+		TypeOnly<old.SharedStringSegment>,
+		TypeOnly<current.SharedStringSegment>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -763,7 +1067,11 @@ declare type old_as_current_for_TypeAlias_SharedStringSegment = requireAssignabl
  * typeValidation.broken:
  * "TypeAlias_SharedStringSegment": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_SharedStringSegment = requireAssignableTo<TypeOnly<current.SharedStringSegment>, TypeOnly<old.SharedStringSegment>>
+declare type current_as_old_for_TypeAlias_SharedStringSegment =
+	requireAssignableTo<
+		TypeOnly<current.SharedStringSegment>,
+		TypeOnly<old.SharedStringSegment>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -772,7 +1080,10 @@ declare type current_as_old_for_TypeAlias_SharedStringSegment = requireAssignabl
  * typeValidation.broken:
  * "Variable_IntervalOpType": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_IntervalOpType = requireAssignableTo<TypeOnly<typeof current.IntervalOpType>, TypeOnly<typeof old.IntervalOpType>>
+declare type current_as_old_for_Variable_IntervalOpType = requireAssignableTo<
+	TypeOnly<typeof current.IntervalOpType>,
+	TypeOnly<typeof old.IntervalOpType>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -781,7 +1092,11 @@ declare type current_as_old_for_Variable_IntervalOpType = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Variable_IntervalStickiness": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_IntervalStickiness = requireAssignableTo<TypeOnly<typeof current.IntervalStickiness>, TypeOnly<typeof old.IntervalStickiness>>
+declare type current_as_old_for_Variable_IntervalStickiness =
+	requireAssignableTo<
+		TypeOnly<typeof current.IntervalStickiness>,
+		TypeOnly<typeof old.IntervalStickiness>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -790,7 +1105,11 @@ declare type current_as_old_for_Variable_IntervalStickiness = requireAssignableT
  * typeValidation.broken:
  * "Variable_MergeTreeDeltaType": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_MergeTreeDeltaType = requireAssignableTo<TypeOnly<typeof current.MergeTreeDeltaType>, TypeOnly<typeof old.MergeTreeDeltaType>>
+declare type current_as_old_for_Variable_MergeTreeDeltaType =
+	requireAssignableTo<
+		TypeOnly<typeof current.MergeTreeDeltaType>,
+		TypeOnly<typeof old.MergeTreeDeltaType>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -799,7 +1118,11 @@ declare type current_as_old_for_Variable_MergeTreeDeltaType = requireAssignableT
  * typeValidation.broken:
  * "Variable_reservedMarkerIdKey": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_reservedMarkerIdKey = requireAssignableTo<TypeOnly<typeof current.reservedMarkerIdKey>, TypeOnly<typeof old.reservedMarkerIdKey>>
+declare type current_as_old_for_Variable_reservedMarkerIdKey =
+	requireAssignableTo<
+		TypeOnly<typeof current.reservedMarkerIdKey>,
+		TypeOnly<typeof old.reservedMarkerIdKey>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -808,4 +1131,7 @@ declare type current_as_old_for_Variable_reservedMarkerIdKey = requireAssignable
  * typeValidation.broken:
  * "Variable_SharedString": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_SharedString = requireAssignableTo<TypeOnly<typeof current.SharedString>, TypeOnly<typeof old.SharedString>>
+declare type current_as_old_for_Variable_SharedString = requireAssignableTo<
+	TypeOnly<typeof current.SharedString>,
+	TypeOnly<typeof old.SharedString>
+>;

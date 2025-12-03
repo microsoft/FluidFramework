@@ -4,16 +4,16 @@
  */
 
 import {
+	getDataStoreEntryPoint,
 	type IFluidMountableView,
 	ModelContainerRuntimeFactory,
 	MountableView,
-	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
-import { IContainer } from "@fluidframework/container-definitions/legacy";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
+import type { IContainer } from "@fluidframework/container-definitions/legacy";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 import React from "react";
 
-import { IDiceRoller } from "./interface.js";
+import type { IDiceRoller } from "./interface.js";
 import { DiceRollerInstantiationFactory } from "./model.js";
 import { DiceRollerView } from "./view.js";
 
@@ -48,15 +48,23 @@ export class DiceRollerContainerRuntimeFactory extends ModelContainerRuntimeFact
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-		const diceRoller = await runtime.createDataStore(DiceRollerInstantiationFactory.type);
+		const diceRoller = await runtime.createDataStore(
+			DiceRollerInstantiationFactory.type,
+		);
 		await diceRoller.trySetAlias(diceRollerId);
 	}
 
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
-	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-		const diceRoller = await getDataStoreEntryPoint<IDiceRoller>(runtime, diceRollerId);
+	protected async createModel(
+		runtime: IContainerRuntime,
+		container: IContainer,
+	) {
+		const diceRoller = await getDataStoreEntryPoint<IDiceRoller>(
+			runtime,
+			diceRollerId,
+		);
 
 		const mountableView = new MountableView(
 			React.createElement(DiceRollerView, { model: diceRoller }),

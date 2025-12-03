@@ -14,7 +14,7 @@ import {
 	type RevisionTag,
 	replaceAtomRevisions,
 } from "../../core/index.js";
-
+import { brandConst } from "../../util/index.js";
 import type {
 	FieldChangeDelta,
 	FieldChangeHandler,
@@ -25,11 +25,13 @@ import type {
 	RelevantRemovedRootsFromChild,
 	ToDelta,
 } from "./fieldChangeHandler.js";
-import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";
-import { newGenericChangeset, type GenericChangeset } from "./genericFieldKindTypes.js";
-import type { NodeId } from "./modularChangeTypes.js";
 import { FlexFieldKind } from "./fieldKind.js";
-import { brandConst } from "../../util/index.js";
+import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";
+import {
+	type GenericChangeset,
+	newGenericChangeset,
+} from "./genericFieldKindTypes.js";
+import type { NodeId } from "./modularChangeTypes.js";
 
 /**
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
@@ -49,7 +51,10 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			return newGenericChangeset(Array.from(changes));
 		},
 	},
-	intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta): FieldChangeDelta => {
+	intoDelta: (
+		change: GenericChangeset,
+		deltaFromChild: ToDelta,
+	): FieldChangeDelta => {
 		let nodeIndex = 0;
 		const markList: DeltaMark[] = [];
 		for (const [index, nodeChange] of change.entries()) {
@@ -87,7 +92,9 @@ function compose(
 
 function getNestedChanges(change: GenericChangeset): NestedChangesIndices {
 	// For generic changeset, the indices in the input and output contexts are the same.
-	return change.toArray().map(([index, nodeChange]) => [nodeChange, index, index]);
+	return change
+		.toArray()
+		.map(([index, nodeChange]) => [nodeChange, index, index]);
 }
 
 function rebaseGenericChange(
@@ -160,7 +167,9 @@ function replaceRevisions(
 	oldRevisions: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
 ): GenericChangeset {
-	return changeset.mapValues((node) => replaceAtomRevisions(node, oldRevisions, newRevision));
+	return changeset.mapValues((node) =>
+		replaceAtomRevisions(node, oldRevisions, newRevision),
+	);
 }
 
 /**
@@ -169,7 +178,10 @@ function replaceRevisions(
 export const genericFieldKind: FlexFieldKind = new FlexFieldKind(
 	brandConst("ModularEditBuilder.Generic")<FieldKindIdentifier>(),
 	Multiplicity.Sequence,
-	{ changeHandler: genericChangeHandler, allowedMonotonicUpgrade: (types, other) => false },
+	{
+		changeHandler: genericChangeHandler,
+		allowedMonotonicUpgrade: (types, other) => false,
+	},
 );
 
 /**

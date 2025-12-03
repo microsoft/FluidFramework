@@ -4,17 +4,21 @@
  */
 
 // eslint-disable-next-line import-x/no-internal-modules -- #26904: `sequence` internals used in examples
-import { getTextAndMarkers, reservedTileLabelsKey } from "@fluidframework/sequence/internal";
+import {
+	getTextAndMarkers,
+	reservedTileLabelsKey,
+} from "@fluidframework/sequence/internal";
 import {
 	Marker,
 	MergeTreeDeltaType,
 	ReferenceType,
-	SequenceDeltaEvent,
-	SharedString,
+	type SequenceDeltaEvent,
+	type SharedString,
 	TextSegment,
 } from "@fluidframework/sequence/legacy";
 import CodeMirror from "codemirror";
-import React, { useEffect, useRef } from "react";
+import type React from "react";
+import { useEffect, useRef } from "react";
 
 /* eslint-disable import-x/no-unassigned-import, import-x/no-internal-modules */
 import "codemirror/lib/codemirror.css";
@@ -22,7 +26,7 @@ import "codemirror/mode/javascript/javascript.js";
 import "./style.css";
 /* eslint-enable import-x/no-unassigned-import, import-x/no-internal-modules */
 
-import { CodeMirrorPresenceManager, PresenceManager } from "./presence.js";
+import { CodeMirrorPresenceManager, type PresenceManager } from "./presence.js";
 
 class CodeMirrorView {
 	private textArea: HTMLTextAreaElement | undefined;
@@ -191,7 +195,9 @@ export const CodeMirrorReactView: React.FC<ICodeMirrorReactViewProps> = (
 	props: ICodeMirrorReactViewProps,
 ) => {
 	const { text, presenceManager } = props;
-	const htmlView = useRef<CodeMirrorView>(new CodeMirrorView(text, presenceManager));
+	const htmlView = useRef<CodeMirrorView>(
+		new CodeMirrorView(text, presenceManager),
+	);
 	const divRef = useRef<HTMLDivElement>(null);
 	useEffect(() => {
 		if (divRef.current !== null) {

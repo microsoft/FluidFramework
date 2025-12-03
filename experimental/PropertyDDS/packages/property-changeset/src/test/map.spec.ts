@@ -8,7 +8,7 @@ import { expect } from "chai";
 import { ChangeSet } from "../changeset.js";
 import { isEmptyChangeSet } from "../changeset_operations/isEmptyChangeset.js";
 
-describe("Map rebase ChangeSets", function () {
+describe("Map rebase ChangeSets", () => {
 	it("Case 1", () => {
 		const originalCS = JSON.parse(
 			'{"modify":{"NodeProperty":{"a":{"NodeProperty":{"b":{"map<Bool>":{"c":{"modify":{"1":{"value":true,"oldValue":true}}}}}}}}}}',

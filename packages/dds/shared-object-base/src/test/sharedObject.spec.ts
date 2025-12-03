@@ -9,14 +9,14 @@ import { strict as assert } from "node:assert";
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IGarbageCollectionData,
-	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
+	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 import { isSerializedHandle } from "@fluidframework/runtime-utils/internal";
 import {
@@ -46,7 +46,9 @@ class MySharedObject extends SharedObject {
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
 		throw new Error("Method not implemented.");
 	}
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected processMessagesCore(
+		messagesCollection: IRuntimeMessageCollection,
+	): void {
 		throw new Error("Method not implemented.");
 	}
 	protected onDisconnect(): void {
@@ -75,17 +77,24 @@ class MySharedObjectCore extends SharedObjectCore {
 
 		this.attached = attached;
 		// See call site in SharedObjectCore.submitLocalMessage
-		Object.assign(this, { services: { deltaConnection: { submit: submitFnOverride } } });
+		Object.assign(this, {
+			services: { deltaConnection: { submit: submitFnOverride } },
+		});
 	}
 
 	// Make submitLocalMessage public for testing
-	public submitLocalMessage(content: unknown, localOpMetadata: unknown = undefined): void {
+	public submitLocalMessage(
+		content: unknown,
+		localOpMetadata: unknown = undefined,
+	): void {
 		super.submitLocalMessage(content, localOpMetadata);
 	}
 
 	public stubSubmitFn(submitFn: sinon.SinonSpy): void {
 		// See call site in SharedObjectCore.submitLocalMessage
-		Object.assign(this, { services: { deltaConnection: { submit: submitFn } } });
+		Object.assign(this, {
+			services: { deltaConnection: { submit: submitFn } },
+		});
 	}
 
 	public override isAttached(): boolean {
@@ -93,7 +102,9 @@ class MySharedObjectCore extends SharedObjectCore {
 	}
 	private readonly attached: boolean;
 
-	protected readonly serializer = new FluidSerializer({} as unknown as IFluidHandleContext);
+	protected readonly serializer = new FluidSerializer(
+		{} as unknown as IFluidHandleContext,
+	);
 
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		throw new Error("Method not implemented.");
@@ -101,7 +112,9 @@ class MySharedObjectCore extends SharedObjectCore {
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
 		throw new Error("Method not implemented.");
 	}
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected processMessagesCore(
+		messagesCollection: IRuntimeMessageCollection,
+	): void {
 		throw new Error("Method not implemented.");
 	}
 	protected onDisconnect(): void {
@@ -110,7 +123,10 @@ class MySharedObjectCore extends SharedObjectCore {
 	protected applyStashedOp(content: unknown): void {
 		throw new Error("Method not implemented.");
 	}
-	public getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats {
+	public getAttachSummary(
+		fullTree?: boolean,
+		trackState?: boolean,
+	): ISummaryTreeWithStats {
 		throw new Error("Method not implemented.");
 	}
 	public async summarize(
@@ -128,15 +144,22 @@ describe("SharedObject", () => {
 	it("rejects slashes in id", () => {
 		const invalidId = "beforeSlash/afterSlash";
 		const codeBlock = (): SharedObject => new MySharedObject(invalidId);
-		assert.throws(codeBlock, validateAssertionError("Id cannot contain slashes"));
+		assert.throws(
+			codeBlock,
+			validateAssertionError("Id cannot contain slashes"),
+		);
 	});
 });
 
 describe("SharedObjectCore", () => {
 	it("rejects slashes in id", () => {
 		const invalidId = "beforeSlash/afterSlash";
-		const codeBlock = (): SharedObjectCore => new MySharedObjectCore({ id: invalidId });
-		assert.throws(codeBlock, validateAssertionError("Id cannot contain slashes"));
+		const codeBlock = (): SharedObjectCore =>
+			new MySharedObjectCore({ id: invalidId });
+		assert.throws(
+			codeBlock,
+			validateAssertionError("Id cannot contain slashes"),
+		);
 	});
 
 	describe("handle encoding in submitLocalMessage", () => {
@@ -154,11 +177,14 @@ describe("SharedObjectCore", () => {
 		};
 
 		const serializedMockHandleMatcher = sinon.match(
-			(value: unknown) => isSerializedHandle(value) && value.url === mockHandle.absolutePath,
+			(value: unknown) =>
+				isSerializedHandle(value) && value.url === mockHandle.absolutePath,
 			"serialized handle string",
 		);
 
-		function set_submitMessagesWithoutEncodingHandles(value: boolean | undefined): void {
+		function set_submitMessagesWithoutEncodingHandles(
+			value: boolean | undefined,
+		): void {
 			(
 				dataStoreRuntime as unknown as {
 					submitMessagesWithoutEncodingHandles?: boolean;
@@ -286,14 +312,25 @@ describe("SharedObjectCore", () => {
 				"Object reference should be unchanged",
 			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/dot-notation
-			const pendingHandles: Set<MockHandle<string>> = sharedObject.handle["pendingHandles"];
+			const pendingHandles: Set<MockHandle<string>> =
+				sharedObject.handle["pendingHandles"];
 
-			assert.strictEqual(pendingHandles.size, 1, "There should be one pending handle");
-			assert(pendingHandles.has(mockHandle), "Pending handles should include the mock handle");
+			assert.strictEqual(
+				pendingHandles.size,
+				1,
+				"There should be one pending handle",
+			);
+			assert(
+				pendingHandles.has(mockHandle),
+				"Pending handles should include the mock handle",
+			);
 		});
 
 		it("binds handle object with handle in nested object", async () => {
-			const result = bindHandles(messageContentWithNestedHandle, sharedObject.handle);
+			const result = bindHandles(
+				messageContentWithNestedHandle,
+				sharedObject.handle,
+			);
 
 			assert.deepStrictEqual(
 				result,
@@ -301,14 +338,25 @@ describe("SharedObjectCore", () => {
 				"Object reference should be unchanged",
 			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/dot-notation
-			const pendingHandles: Set<MockHandle<string>> = sharedObject.handle["pendingHandles"];
+			const pendingHandles: Set<MockHandle<string>> =
+				sharedObject.handle["pendingHandles"];
 
-			assert.strictEqual(pendingHandles.size, 1, "There should be one pending handle");
-			assert(pendingHandles.has(mockHandle), "Pending handles should include the mock handle");
+			assert.strictEqual(
+				pendingHandles.size,
+				1,
+				"There should be one pending handle",
+			);
+			assert(
+				pendingHandles.has(mockHandle),
+				"Pending handles should include the mock handle",
+			);
 		});
 
 		it("binds handle object with handle in array", async () => {
-			const result = bindHandles(messageContentWithHandleInArray, sharedObject.handle);
+			const result = bindHandles(
+				messageContentWithHandleInArray,
+				sharedObject.handle,
+			);
 
 			assert.deepStrictEqual(
 				result,
@@ -316,10 +364,18 @@ describe("SharedObjectCore", () => {
 				"Object reference should be unchanged",
 			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/dot-notation
-			const pendingHandles: Set<MockHandle<string>> = sharedObject.handle["pendingHandles"];
+			const pendingHandles: Set<MockHandle<string>> =
+				sharedObject.handle["pendingHandles"];
 
-			assert.strictEqual(pendingHandles.size, 1, "There should be one pending handle");
-			assert(pendingHandles.has(mockHandle), "Pending handles should include the mock handle");
+			assert.strictEqual(
+				pendingHandles.size,
+				1,
+				"There should be one pending handle",
+			);
+			assert(
+				pendingHandles.has(mockHandle),
+				"Pending handles should include the mock handle",
+			);
 		});
 	});
 });

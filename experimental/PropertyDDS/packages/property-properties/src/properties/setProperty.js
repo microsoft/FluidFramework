@@ -7,13 +7,20 @@
  * @fileoverview Definition of the set property class
  */
 
-const { PathHelper, TypeIdHelper } = require("@fluid-experimental/property-changeset");
+const {
+	PathHelper,
+	TypeIdHelper,
+} = require("@fluid-experimental/property-changeset");
 const { MSG } = require("@fluid-experimental/property-common").constants;
 const _ = require("lodash");
 
-const { AbstractStaticCollectionProperty } = require("./abstractStaticCollectionProperty");
+const {
+	AbstractStaticCollectionProperty,
+} = require("./abstractStaticCollectionProperty");
 const { BaseProperty } = require("./baseProperty");
-const { IndexedCollectionBaseProperty } = require("./indexedCollectionBaseProperty");
+const {
+	IndexedCollectionBaseProperty,
+} = require("./indexedCollectionBaseProperty");
 const { LazyLoadedProperties: Property } = require("./lazyLoadedProperties");
 
 var PATH_TOKENS = BaseProperty.PATH_TOKENS;
@@ -76,7 +83,8 @@ export class SetProperty extends IndexedCollectionBaseProperty {
 		for (var i = 0; i < ids.length; i++) {
 			var child = this.get(ids[i]);
 			result[ids[i]] =
-				child instanceof Property.ValueProperty || child instanceof Property.StringProperty
+				child instanceof Property.ValueProperty ||
+				child instanceof Property.StringProperty
 					? this.get(ids[i]).getValue()
 					: child.getValues();
 		}
@@ -135,7 +143,10 @@ export class SetProperty extends IndexedCollectionBaseProperty {
 	 * @throws if a property already exists with the same guid as in_property
 	 */
 	insert(in_property) {
-		if (in_property instanceof AbstractStaticCollectionProperty && in_property.has("guid")) {
+		if (
+			in_property instanceof AbstractStaticCollectionProperty &&
+			in_property.has("guid")
+		) {
 			var guid = in_property.getGuid();
 			this._insert(guid, in_property, true);
 		} else {
@@ -156,7 +167,10 @@ export class SetProperty extends IndexedCollectionBaseProperty {
 	set(in_property) {
 		this._checkIsNotReadOnly(true);
 
-		if (in_property instanceof AbstractStaticCollectionProperty && in_property.has("guid")) {
+		if (
+			in_property instanceof AbstractStaticCollectionProperty &&
+			in_property.has("guid")
+		) {
 			var guid = in_property.getGuid();
 			if (this.has(guid)) {
 				this.remove(guid);
@@ -225,7 +239,11 @@ export class SetProperty extends IndexedCollectionBaseProperty {
 	get(in_ids, in_options) {
 		if (_.isArray(in_ids)) {
 			// Forward handling of arrays to the BaseProperty function
-			return AbstractStaticCollectionProperty.prototype.get.call(this, in_ids, in_options);
+			return AbstractStaticCollectionProperty.prototype.get.call(
+				this,
+				in_ids,
+				in_options,
+			);
 		} else {
 			var prop = this;
 			in_options = in_options || {};
@@ -275,29 +293,27 @@ export class SetProperty extends IndexedCollectionBaseProperty {
 	 */
 	_setValuesInternal(in_properties, in_typed) {
 		this._checkIsNotReadOnly(true);
-
-		var that = this;
-		_.each(in_properties, function (property) {
+		_.each(in_properties, (property) => {
 			if (property instanceof BaseProperty) {
-				that.set(property);
+				this.set(property);
 			} else {
 				// If value is a JSON object (i.e: passed through a default value), create the property and add it to the set.
 				if (in_typed) {
-					that.set(
+					this.set(
 						Property.PropertyFactory._createProperty(
-							property.typeid || that._typeid,
+							property.typeid || this._typeid,
 							null,
 							property.value,
-							that._getScope(),
+							this._getScope(),
 						),
 					);
 				} else {
-					that.set(
+					this.set(
 						Property.PropertyFactory._createProperty(
-							that._typeid,
+							this._typeid,
 							null,
 							property,
-							that._getScope(),
+							this._getScope(),
 						),
 					);
 				}
@@ -369,9 +385,8 @@ export class SetProperty extends IndexedCollectionBaseProperty {
 	 * Delete all values from Set
 	 */
 	clear() {
-		var that = this;
-		this.getIds().forEach(function (id) {
-			that.remove(id);
+		this.getIds().forEach((id) => {
+			this.remove(id);
 		});
 	}
 }

@@ -3,13 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 import fs from "fs";
 
-import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
+import { generateStrings, LocationBase } from "./generateSharedStrings.js";
 
-import { LocationBase, generateStrings } from "./generateSharedStrings.js";
-
-for (const { snapshotPath, expected, snapshotIsNormalized } of generateStrings()) {
+for (const {
+	snapshotPath,
+	expected,
+	snapshotIsNormalized,
+} of generateStrings()) {
 	const summaryTree = expected.getAttachSummary().summary;
 	const snapshotTree = convertSummaryTreeToITree(summaryTree);
 	if (snapshotIsNormalized || snapshotPath === "v1Intervals/withV1Intervals") {

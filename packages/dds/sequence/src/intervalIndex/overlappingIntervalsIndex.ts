@@ -4,30 +4,33 @@
  */
 
 import {
-	Client,
-	SequencePlace,
+	type Client,
 	endpointPosAndSide,
+	type SequencePlace,
 } from "@fluidframework/merge-tree/internal";
-
-import { IntervalNode, IntervalTree } from "../intervalTree.js";
 import {
-	SequenceInterval,
-	SequenceIntervalClass,
 	createTransientInterval,
+	type SequenceInterval,
+	type SequenceIntervalClass,
 } from "../intervals/index.js";
-import { ISharedString } from "../sharedString.js";
+import { type IntervalNode, IntervalTree } from "../intervalTree.js";
+import type { ISharedString } from "../sharedString.js";
 
-import { type SequenceIntervalIndex } from "./intervalIndex.js";
+import type { SequenceIntervalIndex } from "./intervalIndex.js";
 
 /**
  * @legacy @beta
  */
-export interface ISequenceOverlappingIntervalsIndex extends SequenceIntervalIndex {
+export interface ISequenceOverlappingIntervalsIndex
+	extends SequenceIntervalIndex {
 	/**
 	 * @returns an array of all intervals contained in this collection that overlap the range
 	 * `[start end]`.
 	 */
-	findOverlappingIntervals(start: SequencePlace, end: SequencePlace): SequenceInterval[];
+	findOverlappingIntervals(
+		start: SequencePlace,
+		end: SequencePlace,
+	): SequenceInterval[];
 
 	/**
 	 * Gathers the interval results based on specified parameters.
@@ -40,7 +43,9 @@ export interface ISequenceOverlappingIntervalsIndex extends SequenceIntervalInde
 	): void;
 }
 
-export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsIndex {
+export class OverlappingIntervalsIndex
+	implements ISequenceOverlappingIntervalsIndex
+{
 	protected readonly intervalTree = new IntervalTree<SequenceIntervalClass>();
 	protected readonly client: Client;
 
@@ -145,7 +150,9 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 		if (
 			startPos === undefined ||
 			endPos === undefined ||
-			(typeof startPos === "number" && typeof endPos === "number" && endPos < startPos) ||
+			(typeof startPos === "number" &&
+				typeof endPos === "number" &&
+				endPos < startPos) ||
 			(startPos === "end" && endPos !== "end") ||
 			(startPos !== "start" && endPos === "start") ||
 			this.intervalTree.intervals.isEmpty()

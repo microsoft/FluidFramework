@@ -11,12 +11,23 @@
  * Current version: 2.74.0
  */
 
-import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
+import type {
+	FullType,
+	MinimalType,
+	requireAssignableTo,
+	TypeOnly,
+} from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/container-loader-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> =
+	| TypeOnly<T>
+	| MinimalType<T>
+	| FullType<T>
+	| typeof old
+	| typeof current
+	| requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -25,7 +36,10 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_Loader": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_Loader = requireAssignableTo<TypeOnly<old.Loader>, TypeOnly<current.Loader>>
+declare type old_as_current_for_Class_Loader = requireAssignableTo<
+	TypeOnly<old.Loader>,
+	TypeOnly<current.Loader>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -34,7 +48,10 @@ declare type old_as_current_for_Class_Loader = requireAssignableTo<TypeOnly<old.
  * typeValidation.broken:
  * "Class_Loader": {"backCompat": false}
  */
-declare type current_as_old_for_Class_Loader = requireAssignableTo<TypeOnly<current.Loader>, TypeOnly<old.Loader>>
+declare type current_as_old_for_Class_Loader = requireAssignableTo<
+	TypeOnly<current.Loader>,
+	TypeOnly<old.Loader>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -43,7 +60,10 @@ declare type current_as_old_for_Class_Loader = requireAssignableTo<TypeOnly<curr
  * typeValidation.broken:
  * "ClassStatics_Loader": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_Loader = requireAssignableTo<TypeOnly<typeof current.Loader>, TypeOnly<typeof old.Loader>>
+declare type current_as_old_for_ClassStatics_Loader = requireAssignableTo<
+	TypeOnly<typeof current.Loader>,
+	TypeOnly<typeof old.Loader>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -52,7 +72,10 @@ declare type current_as_old_for_ClassStatics_Loader = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "Enum_ConnectionState": {"forwardCompat": false}
  */
-declare type old_as_current_for_Enum_ConnectionState = requireAssignableTo<TypeOnly<old.ConnectionState>, TypeOnly<current.ConnectionState>>
+declare type old_as_current_for_Enum_ConnectionState = requireAssignableTo<
+	TypeOnly<old.ConnectionState>,
+	TypeOnly<current.ConnectionState>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -61,7 +84,10 @@ declare type old_as_current_for_Enum_ConnectionState = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Enum_ConnectionState": {"backCompat": false}
  */
-declare type current_as_old_for_Enum_ConnectionState = requireAssignableTo<TypeOnly<current.ConnectionState>, TypeOnly<old.ConnectionState>>
+declare type current_as_old_for_Enum_ConnectionState = requireAssignableTo<
+	TypeOnly<current.ConnectionState>,
+	TypeOnly<old.ConnectionState>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -70,7 +96,11 @@ declare type current_as_old_for_Enum_ConnectionState = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Function_createDetachedContainer": {"backCompat": false}
  */
-declare type current_as_old_for_Function_createDetachedContainer = requireAssignableTo<TypeOnly<typeof current.createDetachedContainer>, TypeOnly<typeof old.createDetachedContainer>>
+declare type current_as_old_for_Function_createDetachedContainer =
+	requireAssignableTo<
+		TypeOnly<typeof current.createDetachedContainer>,
+		TypeOnly<typeof old.createDetachedContainer>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -79,7 +109,11 @@ declare type current_as_old_for_Function_createDetachedContainer = requireAssign
  * typeValidation.broken:
  * "Function_loadExistingContainer": {"backCompat": false}
  */
-declare type current_as_old_for_Function_loadExistingContainer = requireAssignableTo<TypeOnly<typeof current.loadExistingContainer>, TypeOnly<typeof old.loadExistingContainer>>
+declare type current_as_old_for_Function_loadExistingContainer =
+	requireAssignableTo<
+		TypeOnly<typeof current.loadExistingContainer>,
+		TypeOnly<typeof old.loadExistingContainer>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -88,7 +122,11 @@ declare type current_as_old_for_Function_loadExistingContainer = requireAssignab
  * typeValidation.broken:
  * "Function_rehydrateDetachedContainer": {"backCompat": false}
  */
-declare type current_as_old_for_Function_rehydrateDetachedContainer = requireAssignableTo<TypeOnly<typeof current.rehydrateDetachedContainer>, TypeOnly<typeof old.rehydrateDetachedContainer>>
+declare type current_as_old_for_Function_rehydrateDetachedContainer =
+	requireAssignableTo<
+		TypeOnly<typeof current.rehydrateDetachedContainer>,
+		TypeOnly<typeof old.rehydrateDetachedContainer>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -97,7 +135,11 @@ declare type current_as_old_for_Function_rehydrateDetachedContainer = requireAss
  * typeValidation.broken:
  * "Function_resolveWithLocationRedirectionHandling": {"backCompat": false}
  */
-declare type current_as_old_for_Function_resolveWithLocationRedirectionHandling = requireAssignableTo<TypeOnly<typeof current.resolveWithLocationRedirectionHandling>, TypeOnly<typeof old.resolveWithLocationRedirectionHandling>>
+declare type current_as_old_for_Function_resolveWithLocationRedirectionHandling =
+	requireAssignableTo<
+		TypeOnly<typeof current.resolveWithLocationRedirectionHandling>,
+		TypeOnly<typeof old.resolveWithLocationRedirectionHandling>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -106,7 +148,11 @@ declare type current_as_old_for_Function_resolveWithLocationRedirectionHandling 
  * typeValidation.broken:
  * "Function_tryParseCompatibleResolvedUrl": {"backCompat": false}
  */
-declare type current_as_old_for_Function_tryParseCompatibleResolvedUrl = requireAssignableTo<TypeOnly<typeof current.tryParseCompatibleResolvedUrl>, TypeOnly<typeof old.tryParseCompatibleResolvedUrl>>
+declare type current_as_old_for_Function_tryParseCompatibleResolvedUrl =
+	requireAssignableTo<
+		TypeOnly<typeof current.tryParseCompatibleResolvedUrl>,
+		TypeOnly<typeof old.tryParseCompatibleResolvedUrl>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -115,7 +161,11 @@ declare type current_as_old_for_Function_tryParseCompatibleResolvedUrl = require
  * typeValidation.broken:
  * "Function_waitContainerToCatchUp": {"backCompat": false}
  */
-declare type current_as_old_for_Function_waitContainerToCatchUp = requireAssignableTo<TypeOnly<typeof current.waitContainerToCatchUp>, TypeOnly<typeof old.waitContainerToCatchUp>>
+declare type current_as_old_for_Function_waitContainerToCatchUp =
+	requireAssignableTo<
+		TypeOnly<typeof current.waitContainerToCatchUp>,
+		TypeOnly<typeof old.waitContainerToCatchUp>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -124,7 +174,11 @@ declare type current_as_old_for_Function_waitContainerToCatchUp = requireAssigna
  * typeValidation.broken:
  * "Interface_IBaseProtocolHandler": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IBaseProtocolHandler = requireAssignableTo<TypeOnly<old.IBaseProtocolHandler>, TypeOnly<current.IBaseProtocolHandler>>
+declare type old_as_current_for_Interface_IBaseProtocolHandler =
+	requireAssignableTo<
+		TypeOnly<old.IBaseProtocolHandler>,
+		TypeOnly<current.IBaseProtocolHandler>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -133,7 +187,11 @@ declare type old_as_current_for_Interface_IBaseProtocolHandler = requireAssignab
  * typeValidation.broken:
  * "Interface_IBaseProtocolHandler": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IBaseProtocolHandler = requireAssignableTo<TypeOnly<current.IBaseProtocolHandler>, TypeOnly<old.IBaseProtocolHandler>>
+declare type current_as_old_for_Interface_IBaseProtocolHandler =
+	requireAssignableTo<
+		TypeOnly<current.IBaseProtocolHandler>,
+		TypeOnly<old.IBaseProtocolHandler>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -142,7 +200,11 @@ declare type current_as_old_for_Interface_IBaseProtocolHandler = requireAssignab
  * typeValidation.broken:
  * "Interface_ICodeDetailsLoader": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ICodeDetailsLoader = requireAssignableTo<TypeOnly<old.ICodeDetailsLoader>, TypeOnly<current.ICodeDetailsLoader>>
+declare type old_as_current_for_Interface_ICodeDetailsLoader =
+	requireAssignableTo<
+		TypeOnly<old.ICodeDetailsLoader>,
+		TypeOnly<current.ICodeDetailsLoader>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -151,7 +213,11 @@ declare type old_as_current_for_Interface_ICodeDetailsLoader = requireAssignable
  * typeValidation.broken:
  * "Interface_ICodeDetailsLoader": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ICodeDetailsLoader = requireAssignableTo<TypeOnly<current.ICodeDetailsLoader>, TypeOnly<old.ICodeDetailsLoader>>
+declare type current_as_old_for_Interface_ICodeDetailsLoader =
+	requireAssignableTo<
+		TypeOnly<current.ICodeDetailsLoader>,
+		TypeOnly<old.ICodeDetailsLoader>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -160,7 +226,11 @@ declare type current_as_old_for_Interface_ICodeDetailsLoader = requireAssignable
  * typeValidation.broken:
  * "Interface_ICreateAndLoadContainerProps": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ICreateAndLoadContainerProps = requireAssignableTo<TypeOnly<old.ICreateAndLoadContainerProps>, TypeOnly<current.ICreateAndLoadContainerProps>>
+declare type old_as_current_for_Interface_ICreateAndLoadContainerProps =
+	requireAssignableTo<
+		TypeOnly<old.ICreateAndLoadContainerProps>,
+		TypeOnly<current.ICreateAndLoadContainerProps>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -169,7 +239,11 @@ declare type old_as_current_for_Interface_ICreateAndLoadContainerProps = require
  * typeValidation.broken:
  * "Interface_ICreateAndLoadContainerProps": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ICreateAndLoadContainerProps = requireAssignableTo<TypeOnly<current.ICreateAndLoadContainerProps>, TypeOnly<old.ICreateAndLoadContainerProps>>
+declare type current_as_old_for_Interface_ICreateAndLoadContainerProps =
+	requireAssignableTo<
+		TypeOnly<current.ICreateAndLoadContainerProps>,
+		TypeOnly<old.ICreateAndLoadContainerProps>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -178,7 +252,11 @@ declare type current_as_old_for_Interface_ICreateAndLoadContainerProps = require
  * typeValidation.broken:
  * "Interface_ICreateDetachedContainerProps": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ICreateDetachedContainerProps = requireAssignableTo<TypeOnly<old.ICreateDetachedContainerProps>, TypeOnly<current.ICreateDetachedContainerProps>>
+declare type old_as_current_for_Interface_ICreateDetachedContainerProps =
+	requireAssignableTo<
+		TypeOnly<old.ICreateDetachedContainerProps>,
+		TypeOnly<current.ICreateDetachedContainerProps>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -187,7 +265,11 @@ declare type old_as_current_for_Interface_ICreateDetachedContainerProps = requir
  * typeValidation.broken:
  * "Interface_ICreateDetachedContainerProps": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ICreateDetachedContainerProps = requireAssignableTo<TypeOnly<current.ICreateDetachedContainerProps>, TypeOnly<old.ICreateDetachedContainerProps>>
+declare type current_as_old_for_Interface_ICreateDetachedContainerProps =
+	requireAssignableTo<
+		TypeOnly<current.ICreateDetachedContainerProps>,
+		TypeOnly<old.ICreateDetachedContainerProps>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -196,7 +278,11 @@ declare type current_as_old_for_Interface_ICreateDetachedContainerProps = requir
  * typeValidation.broken:
  * "Interface_IFluidModuleWithDetails": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IFluidModuleWithDetails = requireAssignableTo<TypeOnly<old.IFluidModuleWithDetails>, TypeOnly<current.IFluidModuleWithDetails>>
+declare type old_as_current_for_Interface_IFluidModuleWithDetails =
+	requireAssignableTo<
+		TypeOnly<old.IFluidModuleWithDetails>,
+		TypeOnly<current.IFluidModuleWithDetails>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -205,7 +291,11 @@ declare type old_as_current_for_Interface_IFluidModuleWithDetails = requireAssig
  * typeValidation.broken:
  * "Interface_IFluidModuleWithDetails": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IFluidModuleWithDetails = requireAssignableTo<TypeOnly<current.IFluidModuleWithDetails>, TypeOnly<old.IFluidModuleWithDetails>>
+declare type current_as_old_for_Interface_IFluidModuleWithDetails =
+	requireAssignableTo<
+		TypeOnly<current.IFluidModuleWithDetails>,
+		TypeOnly<old.IFluidModuleWithDetails>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -214,7 +304,10 @@ declare type current_as_old_for_Interface_IFluidModuleWithDetails = requireAssig
  * typeValidation.broken:
  * "Interface_ILoaderProps": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ILoaderProps = requireAssignableTo<TypeOnly<old.ILoaderProps>, TypeOnly<current.ILoaderProps>>
+declare type old_as_current_for_Interface_ILoaderProps = requireAssignableTo<
+	TypeOnly<old.ILoaderProps>,
+	TypeOnly<current.ILoaderProps>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -223,7 +316,10 @@ declare type old_as_current_for_Interface_ILoaderProps = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Interface_ILoaderProps": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ILoaderProps = requireAssignableTo<TypeOnly<current.ILoaderProps>, TypeOnly<old.ILoaderProps>>
+declare type current_as_old_for_Interface_ILoaderProps = requireAssignableTo<
+	TypeOnly<current.ILoaderProps>,
+	TypeOnly<old.ILoaderProps>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -232,7 +328,10 @@ declare type current_as_old_for_Interface_ILoaderProps = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Interface_ILoaderServices": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ILoaderServices = requireAssignableTo<TypeOnly<old.ILoaderServices>, TypeOnly<current.ILoaderServices>>
+declare type old_as_current_for_Interface_ILoaderServices = requireAssignableTo<
+	TypeOnly<old.ILoaderServices>,
+	TypeOnly<current.ILoaderServices>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -241,7 +340,10 @@ declare type old_as_current_for_Interface_ILoaderServices = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ILoaderServices": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ILoaderServices = requireAssignableTo<TypeOnly<current.ILoaderServices>, TypeOnly<old.ILoaderServices>>
+declare type current_as_old_for_Interface_ILoaderServices = requireAssignableTo<
+	TypeOnly<current.ILoaderServices>,
+	TypeOnly<old.ILoaderServices>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -250,7 +352,11 @@ declare type current_as_old_for_Interface_ILoaderServices = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ILoadExistingContainerProps": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ILoadExistingContainerProps = requireAssignableTo<TypeOnly<old.ILoadExistingContainerProps>, TypeOnly<current.ILoadExistingContainerProps>>
+declare type old_as_current_for_Interface_ILoadExistingContainerProps =
+	requireAssignableTo<
+		TypeOnly<old.ILoadExistingContainerProps>,
+		TypeOnly<current.ILoadExistingContainerProps>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -259,7 +365,11 @@ declare type old_as_current_for_Interface_ILoadExistingContainerProps = requireA
  * typeValidation.broken:
  * "Interface_ILoadExistingContainerProps": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ILoadExistingContainerProps = requireAssignableTo<TypeOnly<current.ILoadExistingContainerProps>, TypeOnly<old.ILoadExistingContainerProps>>
+declare type current_as_old_for_Interface_ILoadExistingContainerProps =
+	requireAssignableTo<
+		TypeOnly<current.ILoadExistingContainerProps>,
+		TypeOnly<old.ILoadExistingContainerProps>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -268,7 +378,10 @@ declare type current_as_old_for_Interface_ILoadExistingContainerProps = requireA
  * typeValidation.broken:
  * "Interface_IParsedUrl": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IParsedUrl = requireAssignableTo<TypeOnly<old.IParsedUrl>, TypeOnly<current.IParsedUrl>>
+declare type old_as_current_for_Interface_IParsedUrl = requireAssignableTo<
+	TypeOnly<old.IParsedUrl>,
+	TypeOnly<current.IParsedUrl>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -277,7 +390,10 @@ declare type old_as_current_for_Interface_IParsedUrl = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Interface_IParsedUrl": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IParsedUrl = requireAssignableTo<TypeOnly<current.IParsedUrl>, TypeOnly<old.IParsedUrl>>
+declare type current_as_old_for_Interface_IParsedUrl = requireAssignableTo<
+	TypeOnly<current.IParsedUrl>,
+	TypeOnly<old.IParsedUrl>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -286,7 +402,11 @@ declare type current_as_old_for_Interface_IParsedUrl = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Interface_IProtocolHandler": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IProtocolHandler = requireAssignableTo<TypeOnly<old.IProtocolHandler>, TypeOnly<current.IProtocolHandler>>
+declare type old_as_current_for_Interface_IProtocolHandler =
+	requireAssignableTo<
+		TypeOnly<old.IProtocolHandler>,
+		TypeOnly<current.IProtocolHandler>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -295,7 +415,11 @@ declare type old_as_current_for_Interface_IProtocolHandler = requireAssignableTo
  * typeValidation.broken:
  * "Interface_IProtocolHandler": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IProtocolHandler = requireAssignableTo<TypeOnly<current.IProtocolHandler>, TypeOnly<old.IProtocolHandler>>
+declare type current_as_old_for_Interface_IProtocolHandler =
+	requireAssignableTo<
+		TypeOnly<current.IProtocolHandler>,
+		TypeOnly<old.IProtocolHandler>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -304,7 +428,10 @@ declare type current_as_old_for_Interface_IProtocolHandler = requireAssignableTo
  * typeValidation.broken:
  * "Interface_IQuorumSnapshot": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IQuorumSnapshot = requireAssignableTo<TypeOnly<old.IQuorumSnapshot>, TypeOnly<current.IQuorumSnapshot>>
+declare type old_as_current_for_Interface_IQuorumSnapshot = requireAssignableTo<
+	TypeOnly<old.IQuorumSnapshot>,
+	TypeOnly<current.IQuorumSnapshot>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -313,7 +440,10 @@ declare type old_as_current_for_Interface_IQuorumSnapshot = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IQuorumSnapshot": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IQuorumSnapshot = requireAssignableTo<TypeOnly<current.IQuorumSnapshot>, TypeOnly<old.IQuorumSnapshot>>
+declare type current_as_old_for_Interface_IQuorumSnapshot = requireAssignableTo<
+	TypeOnly<current.IQuorumSnapshot>,
+	TypeOnly<old.IQuorumSnapshot>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -322,7 +452,11 @@ declare type current_as_old_for_Interface_IQuorumSnapshot = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IRehydrateDetachedContainerProps": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IRehydrateDetachedContainerProps = requireAssignableTo<TypeOnly<old.IRehydrateDetachedContainerProps>, TypeOnly<current.IRehydrateDetachedContainerProps>>
+declare type old_as_current_for_Interface_IRehydrateDetachedContainerProps =
+	requireAssignableTo<
+		TypeOnly<old.IRehydrateDetachedContainerProps>,
+		TypeOnly<current.IRehydrateDetachedContainerProps>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -331,7 +465,11 @@ declare type old_as_current_for_Interface_IRehydrateDetachedContainerProps = req
  * typeValidation.broken:
  * "Interface_IRehydrateDetachedContainerProps": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IRehydrateDetachedContainerProps = requireAssignableTo<TypeOnly<current.IRehydrateDetachedContainerProps>, TypeOnly<old.IRehydrateDetachedContainerProps>>
+declare type current_as_old_for_Interface_IRehydrateDetachedContainerProps =
+	requireAssignableTo<
+		TypeOnly<current.IRehydrateDetachedContainerProps>,
+		TypeOnly<old.IRehydrateDetachedContainerProps>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -340,7 +478,11 @@ declare type current_as_old_for_Interface_IRehydrateDetachedContainerProps = req
  * typeValidation.broken:
  * "Interface_IScribeProtocolState": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IScribeProtocolState = requireAssignableTo<TypeOnly<old.IScribeProtocolState>, TypeOnly<current.IScribeProtocolState>>
+declare type old_as_current_for_Interface_IScribeProtocolState =
+	requireAssignableTo<
+		TypeOnly<old.IScribeProtocolState>,
+		TypeOnly<current.IScribeProtocolState>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -349,7 +491,11 @@ declare type old_as_current_for_Interface_IScribeProtocolState = requireAssignab
  * typeValidation.broken:
  * "Interface_IScribeProtocolState": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IScribeProtocolState = requireAssignableTo<TypeOnly<current.IScribeProtocolState>, TypeOnly<old.IScribeProtocolState>>
+declare type current_as_old_for_Interface_IScribeProtocolState =
+	requireAssignableTo<
+		TypeOnly<current.IScribeProtocolState>,
+		TypeOnly<old.IScribeProtocolState>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -358,7 +504,11 @@ declare type current_as_old_for_Interface_IScribeProtocolState = requireAssignab
  * typeValidation.broken:
  * "TypeAlias_ProtocolHandlerBuilder": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_ProtocolHandlerBuilder = requireAssignableTo<TypeOnly<old.ProtocolHandlerBuilder>, TypeOnly<current.ProtocolHandlerBuilder>>
+declare type old_as_current_for_TypeAlias_ProtocolHandlerBuilder =
+	requireAssignableTo<
+		TypeOnly<old.ProtocolHandlerBuilder>,
+		TypeOnly<current.ProtocolHandlerBuilder>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -367,7 +517,11 @@ declare type old_as_current_for_TypeAlias_ProtocolHandlerBuilder = requireAssign
  * typeValidation.broken:
  * "TypeAlias_ProtocolHandlerBuilder": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_ProtocolHandlerBuilder = requireAssignableTo<TypeOnly<current.ProtocolHandlerBuilder>, TypeOnly<old.ProtocolHandlerBuilder>>
+declare type current_as_old_for_TypeAlias_ProtocolHandlerBuilder =
+	requireAssignableTo<
+		TypeOnly<current.ProtocolHandlerBuilder>,
+		TypeOnly<old.ProtocolHandlerBuilder>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -376,7 +530,11 @@ declare type current_as_old_for_TypeAlias_ProtocolHandlerBuilder = requireAssign
  * typeValidation.broken:
  * "TypeAlias_QuorumClientsSnapshot": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_QuorumClientsSnapshot = requireAssignableTo<TypeOnly<old.QuorumClientsSnapshot>, TypeOnly<current.QuorumClientsSnapshot>>
+declare type old_as_current_for_TypeAlias_QuorumClientsSnapshot =
+	requireAssignableTo<
+		TypeOnly<old.QuorumClientsSnapshot>,
+		TypeOnly<current.QuorumClientsSnapshot>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -385,7 +543,11 @@ declare type old_as_current_for_TypeAlias_QuorumClientsSnapshot = requireAssigna
  * typeValidation.broken:
  * "TypeAlias_QuorumClientsSnapshot": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_QuorumClientsSnapshot = requireAssignableTo<TypeOnly<current.QuorumClientsSnapshot>, TypeOnly<old.QuorumClientsSnapshot>>
+declare type current_as_old_for_TypeAlias_QuorumClientsSnapshot =
+	requireAssignableTo<
+		TypeOnly<current.QuorumClientsSnapshot>,
+		TypeOnly<old.QuorumClientsSnapshot>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -394,7 +556,11 @@ declare type current_as_old_for_TypeAlias_QuorumClientsSnapshot = requireAssigna
  * typeValidation.broken:
  * "TypeAlias_QuorumProposalsSnapshot": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_QuorumProposalsSnapshot = requireAssignableTo<TypeOnly<old.QuorumProposalsSnapshot>, TypeOnly<current.QuorumProposalsSnapshot>>
+declare type old_as_current_for_TypeAlias_QuorumProposalsSnapshot =
+	requireAssignableTo<
+		TypeOnly<old.QuorumProposalsSnapshot>,
+		TypeOnly<current.QuorumProposalsSnapshot>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -403,4 +569,8 @@ declare type old_as_current_for_TypeAlias_QuorumProposalsSnapshot = requireAssig
  * typeValidation.broken:
  * "TypeAlias_QuorumProposalsSnapshot": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_QuorumProposalsSnapshot = requireAssignableTo<TypeOnly<current.QuorumProposalsSnapshot>, TypeOnly<old.QuorumProposalsSnapshot>>
+declare type current_as_old_for_TypeAlias_QuorumProposalsSnapshot =
+	requireAssignableTo<
+		TypeOnly<current.QuorumProposalsSnapshot>,
+		TypeOnly<old.QuorumProposalsSnapshot>
+	>;

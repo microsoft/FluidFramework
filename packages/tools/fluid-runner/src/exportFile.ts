@@ -3,32 +3,40 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
-
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
+	type ILoaderProps,
 	loadExistingContainer,
 	waitContainerToCatchUp,
-	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver/internal";
 import {
 	type ITelemetryLoggerExt,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
+import * as fs from "fs";
 
 import type { IFluidFileConverter } from "./codeLoaderBundle.js";
 import { FakeUrlResolver } from "./fakeUrlResolver.js";
 /* eslint-disable import-x/no-internal-modules */
 import type { ITelemetryOptions } from "./logger/fileLogger.js";
-import { createLogger, getTelemetryFileValidationError } from "./logger/loggerUtils.js";
-import { getArgsValidationError, getSnapshotFileContent, timeoutPromise } from "./utils.js";
+import {
+	createLogger,
+	getTelemetryFileValidationError,
+} from "./logger/loggerUtils.js";
+import {
+	getArgsValidationError,
+	getSnapshotFileContent,
+	timeoutPromise,
+} from "./utils.js";
 /* eslint-enable import-x/no-internal-modules */
 
 /**
  * @legacy @beta
  */
-export type IExportFileResponse = IExportFileResponseSuccess | IExportFileResponseFailure;
+export type IExportFileResponse =
+	| IExportFileResponseSuccess
+	| IExportFileResponseFailure;
 
 /**
  * @legacy @beta
@@ -75,11 +83,19 @@ export async function exportFile(
 			logger,
 			{ eventName: "ExportFile" },
 			async () => {
-				const argsValidationError = getArgsValidationError(inputFile, outputFile, timeout);
+				const argsValidationError = getArgsValidationError(
+					inputFile,
+					outputFile,
+					timeout,
+				);
 				if (argsValidationError) {
 					const eventName = clientArgsValidationError;
 					logger.sendErrorEvent({ eventName, message: argsValidationError });
-					return { success: false, eventName, errorMessage: argsValidationError };
+					return {
+						success: false,
+						eventName,
+						errorMessage: argsValidationError,
+					};
 				}
 
 				fs.writeFileSync(
@@ -100,7 +116,12 @@ export async function exportFile(
 	} catch (error) {
 		const eventName = "Client_UnexpectedError";
 		logger.sendErrorEvent({ eventName }, error);
-		return { success: false, eventName, errorMessage: "Unexpected error", error };
+		return {
+			success: false,
+			eventName,
+			errorMessage: "Unexpected error",
+			error,
+		};
 	} finally {
 		await fileLogger.close();
 	}
@@ -128,7 +149,8 @@ export async function createContainerAndExecute(
 
 		const loaderProps: ILoaderProps = {
 			urlResolver: new FakeUrlResolver(),
-			documentServiceFactory: createLocalOdspDocumentServiceFactory(localOdspSnapshot),
+			documentServiceFactory:
+				createLocalOdspDocumentServiceFactory(localOdspSnapshot),
 			codeLoader: await fluidFileConverter.getCodeLoader(logger),
 			scope: await fluidFileConverter.getScope?.(logger),
 			logger,
@@ -145,13 +167,17 @@ export async function createContainerAndExecute(
 		});
 		await waitContainerToCatchUp(container);
 
-		return PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {
-			try {
-				return await fluidFileConverter.execute(container, options);
-			} finally {
-				container.dispose();
-			}
-		});
+		return PerformanceEvent.timedExecAsync(
+			logger,
+			{ eventName: "ExportFile" },
+			async () => {
+				try {
+					return await fluidFileConverter.execute(container, options);
+				} finally {
+					container.dispose();
+				}
+			},
+		);
 	};
 
 	// eslint-disable-next-line unicorn/prefer-ternary

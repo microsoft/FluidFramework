@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Type, type ObjectOptions, type Static } from "@sinclair/typebox";
+import { type ObjectOptions, type Static, Type } from "@sinclair/typebox";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
@@ -64,7 +64,9 @@ export const SimpleObjectFieldSchemaFormat = Type.Object(
 	},
 	noAdditionalProps,
 );
-export type SimpleObjectFieldSchemaFormat = Static<typeof SimpleObjectFieldSchemaFormat>;
+export type SimpleObjectFieldSchemaFormat = Static<
+	typeof SimpleObjectFieldSchemaFormat
+>;
 
 /**
  * Persisted format for an array node schema in the simple schema format.
@@ -77,7 +79,9 @@ export const SimpleArrayNodeSchemaFormat = Type.Object(
 	},
 	noAdditionalProps,
 );
-export type SimpleArrayNodeSchemaFormat = Static<typeof SimpleArrayNodeSchemaFormat>;
+export type SimpleArrayNodeSchemaFormat = Static<
+	typeof SimpleArrayNodeSchemaFormat
+>;
 
 /**
  * Persisted format for a map node schema in the simple schema format.
@@ -90,7 +94,9 @@ export const SimpleMapNodeSchemaFormat = Type.Object(
 	},
 	noAdditionalProps,
 );
-export type SimpleMapNodeSchemaFormat = Static<typeof SimpleMapNodeSchemaFormat>;
+export type SimpleMapNodeSchemaFormat = Static<
+	typeof SimpleMapNodeSchemaFormat
+>;
 
 /**
  * Persisted format for a record node schema in the simple schema format.
@@ -103,7 +109,9 @@ export const SimpleRecordNodeSchemaFormat = Type.Object(
 	},
 	noAdditionalProps,
 );
-export type SimpleRecordNodeSchemaFormat = Static<typeof SimpleRecordNodeSchemaFormat>;
+export type SimpleRecordNodeSchemaFormat = Static<
+	typeof SimpleRecordNodeSchemaFormat
+>;
 
 /**
  * Persisted format for a leaf node schema in the simple schema format.
@@ -116,7 +124,9 @@ export const SimpleLeafNodeSchemaFormat = Type.Object(
 	},
 	noAdditionalProps,
 );
-export type SimpleLeafNodeSchemaFormat = Static<typeof SimpleLeafNodeSchemaFormat>;
+export type SimpleLeafNodeSchemaFormat = Static<
+	typeof SimpleLeafNodeSchemaFormat
+>;
 
 /**
  * Persisted format for the field schemas of an object node in the simple schema format.
@@ -125,7 +135,9 @@ export const SimpleObjectFieldSchemasFormat = Type.Record(
 	Type.String(),
 	SimpleObjectFieldSchemaFormat,
 );
-export type SimpleObjectFieldSchemasFormat = Static<typeof SimpleObjectFieldSchemasFormat>;
+export type SimpleObjectFieldSchemasFormat = Static<
+	typeof SimpleObjectFieldSchemasFormat
+>;
 
 /**
  * Persisted format for an object node schema in the simple schema format.
@@ -139,7 +151,9 @@ export const SimpleObjectNodeSchemaFormat = Type.Object(
 	},
 	noAdditionalProps,
 );
-export type SimpleObjectNodeSchemaFormat = Static<typeof SimpleObjectNodeSchemaFormat>;
+export type SimpleObjectNodeSchemaFormat = Static<
+	typeof SimpleObjectNodeSchemaFormat
+>;
 
 /**
  * Discriminated union of all possible node schemas.
@@ -153,7 +167,9 @@ export const SimpleNodeSchemaUnionFormat = Type.Object({
 	leaf: Type.Optional(SimpleLeafNodeSchemaFormat),
 	object: Type.Optional(SimpleObjectNodeSchemaFormat),
 });
-export type SimpleNodeSchemaUnionFormat = Static<typeof SimpleNodeSchemaUnionFormat>;
+export type SimpleNodeSchemaUnionFormat = Static<
+	typeof SimpleNodeSchemaUnionFormat
+>;
 
 /**
  * Helper type for the schema definitions map in the persisted format.
@@ -162,7 +178,9 @@ export const SimpleSchemaDefinitionsFormat = Type.Record(
 	Type.String(),
 	SimpleNodeSchemaUnionFormat,
 );
-export type SimpleSchemaDefinitionsFormat = Static<typeof SimpleSchemaDefinitionsFormat>;
+export type SimpleSchemaDefinitionsFormat = Static<
+	typeof SimpleSchemaDefinitionsFormat
+>;
 
 /**
  * Persisted format for the entire tree schema in the simple schema format.

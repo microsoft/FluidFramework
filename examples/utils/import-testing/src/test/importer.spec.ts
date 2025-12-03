@@ -4,7 +4,12 @@
  */
 
 import { strict as assert } from "node:assert";
-
+import type {
+	areSafelyAssignable,
+	requireAssignableTo,
+	requireTrue,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "@fluidframework/tree/internal";
 import {
 	JsonAsTree,
 	SchemaFactory,
@@ -13,15 +18,14 @@ import {
 	TreeViewConfiguration,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/tree/internal";
-import type {
-	areSafelyAssignable,
-	requireTrue,
-	requireAssignableTo,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "@fluidframework/tree/internal";
 
 import { Empty001, Empty020, largeUnion } from "../largeExport.js";
-import { BadArraySelf, GoodArraySelf, RecursiveMap, RecursiveRecord } from "../testExports.js";
+import {
+	BadArraySelf,
+	GoodArraySelf,
+	RecursiveMap,
+	RecursiveRecord,
+} from "../testExports.js";
 
 describe("import tests", () => {
 	it("recursive record", () => {
@@ -114,7 +118,9 @@ describe("import tests", () => {
 
 	// See also the unit tests for JsonAsTree in tree's jsonDomainSchema.spec.ts
 	it("Iterator types", () => {
-		type ImportedArrayNodeIterator = ReturnType<JsonAsTree.Array[typeof Symbol.iterator]>;
+		type ImportedArrayNodeIterator = ReturnType<
+			JsonAsTree.Array[typeof Symbol.iterator]
+		>;
 		type ImportedObjectNodeIterator = ReturnType<
 			JsonAsTree.JsonObject[typeof Symbol.iterator]
 		>;
@@ -131,7 +137,17 @@ describe("import tests", () => {
 		>;
 
 		type ObjectIterator = IterableIterator<
-			[string, string | number | boolean | JsonAsTree.JsonObject | JsonAsTree.Array | null]
+			[
+				string,
+				(
+					| string
+					| number
+					| boolean
+					| JsonAsTree.JsonObject
+					| JsonAsTree.Array
+					| null
+				),
+			]
 		>;
 
 		type _checkArray = requireTrue<
@@ -173,7 +189,9 @@ describe("import tests", () => {
 	it("LargeImport", () => {
 		const schema = new SchemaFactory("com.example");
 
-		class LargeUnionObjectNode extends schema.object("ObjectNode", { x: largeUnion }) {}
+		class LargeUnionObjectNode extends schema.object("ObjectNode", {
+			x: largeUnion,
+		}) {}
 
 		const config = new TreeViewConfiguration({
 			schema: LargeUnionObjectNode,

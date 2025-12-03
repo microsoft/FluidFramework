@@ -6,7 +6,10 @@
 import { SchemaFactory } from "@fluidframework/tree/internal";
 import { z } from "zod";
 
-import { exposePropertiesSymbol, type ExposedProperties } from "../propertyBinding.js";
+import {
+	type ExposedProperties,
+	exposePropertiesSymbol,
+} from "../propertyBinding.js";
 
 const sf = new SchemaFactory("test");
 
@@ -28,7 +31,9 @@ const sf = new SchemaFactory("test");
 		}
 
 		public testMethod(): void {}
-		public static [exposePropertiesSymbol](properties: ExposedProperties): void {
+		public static [exposePropertiesSymbol](
+			properties: ExposedProperties,
+		): void {
 			// existing public property
 			properties.exposeProperty(C, "testProperty", { schema: z.string() });
 			// field passed into the schema factory
@@ -36,14 +41,20 @@ const sf = new SchemaFactory("test");
 			// getter and setter exists, so no readOnly flag required.
 			properties.exposeProperty(C, "property", { schema: z.string() });
 			// only getter exists, so readOnly flag is required
-			properties.exposeProperty(C, "getTestProperty", { schema: z.string(), readOnly: true });
+			properties.exposeProperty(C, "getTestProperty", {
+				schema: z.string(),
+				readOnly: true,
+			});
 
 			// @ts-expect-error: incorrect spelling / not a key.
 			properties.exposeProperty(C, "testPropertyyy", { schema: z.string() });
 			// @ts-expect-error: incorrect type
 			properties.exposeProperty(C, "testProperty", { schema: z.number() });
 			// @ts-expect-error: incorrect readOnly flag for a writable property
-			properties.exposeProperty(C, "testProperty", { schema: z.string(), readOnly: true });
+			properties.exposeProperty(C, "testProperty", {
+				schema: z.string(),
+				readOnly: true,
+			});
 			// @ts-expect-error: needs readOnly flag, since there is no setter.
 			properties.exposeProperty(C, "getTestProperty", { schema: z.string() });
 			// @ts-expect-error: method names are not exposable.

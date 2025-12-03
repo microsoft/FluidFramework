@@ -31,7 +31,10 @@ class TimerWithNoDefaultTimeout extends Timer {
 /**
  * The collection of UnreferencedStateTrackers for all unreferenced nodes. Ensures stopTracking is called when deleting
  */
-export class UnreferencedStateTrackerMap extends Map<string, UnreferencedStateTracker> {
+export class UnreferencedStateTrackerMap extends Map<
+	string,
+	UnreferencedStateTracker
+> {
 	/**
 	 * Delete the given key, and stop tracking if that node was actually unreferenced
 	 */
@@ -119,7 +122,9 @@ export class UnreferencedStateTracker {
 
 			// After the node becomes inactive, start the tombstone timer after which the node will be ready for tombstone.
 			if (this.tombstoneTimeoutMs !== undefined) {
-				this.tombstoneTimer.restart(this.tombstoneTimeoutMs - this.inactiveTimeoutMs);
+				this.tombstoneTimer.restart(
+					this.tombstoneTimeoutMs - this.inactiveTimeoutMs,
+				);
 			}
 		});
 
@@ -130,7 +135,8 @@ export class UnreferencedStateTracker {
 	 * Updates the unreferenced state based on the provided timestamp.
 	 */
 	public updateTracking(currentReferenceTimestampMs: number): void {
-		const unreferencedDurationMs = currentReferenceTimestampMs - this.unreferencedTimestampMs;
+		const unreferencedDurationMs =
+			currentReferenceTimestampMs - this.unreferencedTimestampMs;
 
 		// Below we will set the appropriate timer (or none). Any running timers are superceded by the new currentReferenceTimestampMs
 		this.clearTimers();
@@ -138,7 +144,8 @@ export class UnreferencedStateTracker {
 		// If the node has been unreferenced long enough, update the state to SweepReady.
 		if (
 			this.tombstoneTimeoutMs !== undefined &&
-			unreferencedDurationMs >= this.tombstoneTimeoutMs + this.sweepGracePeriodMs
+			unreferencedDurationMs >=
+				this.tombstoneTimeoutMs + this.sweepGracePeriodMs
 		) {
 			this._state = UnreferencedState.SweepReady;
 			return;
@@ -153,7 +160,9 @@ export class UnreferencedStateTracker {
 			this._state = UnreferencedState.TombstoneReady;
 
 			this.sweepTimer.restart(
-				this.tombstoneTimeoutMs + this.sweepGracePeriodMs - unreferencedDurationMs,
+				this.tombstoneTimeoutMs +
+					this.sweepGracePeriodMs -
+					unreferencedDurationMs,
 			);
 			return;
 		}
@@ -164,7 +173,9 @@ export class UnreferencedStateTracker {
 			this._state = UnreferencedState.Inactive;
 
 			if (this.tombstoneTimeoutMs !== undefined) {
-				this.tombstoneTimer.restart(this.tombstoneTimeoutMs - unreferencedDurationMs);
+				this.tombstoneTimer.restart(
+					this.tombstoneTimeoutMs - unreferencedDurationMs,
+				);
 			}
 			return;
 		}

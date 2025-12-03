@@ -5,19 +5,23 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
-	Serializable,
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannelFactory,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
+	Serializable,
 } from "@fluidframework/datastore-definitions/internal";
 import type { ITree } from "@fluidframework/driver-definitions/internal";
-import { FileMode, MessageType, TreeEntry } from "@fluidframework/driver-definitions/internal";
+import {
+	FileMode,
+	MessageType,
+	TreeEntry,
+} from "@fluidframework/driver-definitions/internal";
 import type {
-	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
+	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
@@ -25,19 +29,19 @@ import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { v4 as uuid } from "uuid";
 
 import type {
-	ISharedArrayEvents,
 	ISharedArray,
+	ISharedArrayEvents,
 	ISharedArrayRevertible,
 	SerializableTypeForSharedArray,
 	SharedArrayEntry,
-	SnapshotFormat,
 	SharedArrayEntryCore,
+	SnapshotFormat,
 } from "./interfaces.js";
 import { SharedArrayFactory } from "./sharedArrayFactory.js";
 import type {
-	ISharedArrayOperation,
 	IDeleteOperation,
 	IMoveOperation,
+	ISharedArrayOperation,
 	IToggleMoveOperation,
 	IToggleOperation,
 } from "./sharedArrayOperations.js";
@@ -75,7 +79,8 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 * Used to prevent resuscitating entries while rolling back a delete operation.
 	 * We should not rollback to life an entry that was deleted by remote clients.
 	 */
-	private readonly remoteDeleteWithLocalPendingDelete: Set<string> = new Set<string>();
+	private readonly remoteDeleteWithLocalPendingDelete: Set<string> =
+		new Set<string>();
 
 	/**
 	 * Create a new shared array
@@ -88,7 +93,10 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		runtime: IFluidDataStoreRuntime,
 		id?: string,
 	): SharedArrayClass<T> {
-		return runtime.createChannel(id, SharedArrayFactory.Type) as SharedArrayClass<T>;
+		return runtime.createChannel(
+			id,
+			SharedArrayFactory.Type,
+		) as SharedArrayClass<T>;
 	}
 
 	/**
@@ -96,7 +104,9 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 *
 	 * @returns a factory that creates and load SharedArray
 	 */
-	public static getFactory<T extends SerializableTypeForSharedArray>(): IChannelFactory {
+	public static getFactory<
+		T extends SerializableTypeForSharedArray,
+	>(): IChannelFactory {
 		return new SharedArrayFactory<T>();
 	}
 
@@ -113,7 +123,12 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
 	) {
-		super(id, runtime, attributes, "loop_sharedArray_" /* telemetryContextPrefix */);
+		super(
+			id,
+			runtime,
+			attributes,
+			"loop_sharedArray_" /* telemetryContextPrefix */,
+		);
 		this.sharedArray = [];
 		this.idToEntryMap = new Map<string, SharedArrayEntry<T>>();
 	}
@@ -123,7 +138,9 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 * Note: This is only a snapshot of the array
 	 */
 	public get(): readonly T[] {
-		return this.sharedArray.filter((item) => !item.isDeleted).map((entry) => entry.value);
+		return this.sharedArray
+			.filter((item) => !item.isDeleted)
+			.map((entry) => entry.value);
 	}
 
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
@@ -175,7 +192,11 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		let itemIndex: number = 0;
 
 		if (ref !== undefined) {
-			for (itemIndex = this.sharedArray.length - 1; itemIndex > 0; itemIndex -= 1) {
+			for (
+				itemIndex = this.sharedArray.length - 1;
+				itemIndex > 0;
+				itemIndex -= 1
+			) {
 				const item = this.sharedArray[itemIndex];
 				if (item && !item.isDeleted && item.value === ref) {
 					break;
@@ -195,14 +216,21 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 
 	public insert<TWrite>(index: number, value: Serializable<TWrite> & T): void {
 		if (index < 0) {
-			throw new Error("Invalid input: Insertion index provided is less than 0.");
+			throw new Error(
+				"Invalid input: Insertion index provided is less than 0.",
+			);
 		}
 		this.insertCore(this.findInternalInsertionIndex(index), value);
 	}
 
-	private insertCore<TWrite>(indexInternal: number, value: Serializable<TWrite> & T): void {
+	private insertCore<TWrite>(
+		indexInternal: number,
+		value: Serializable<TWrite> & T,
+	): void {
 		const insertAfterEntryId =
-			indexInternal >= 1 ? this.sharedArray[indexInternal - 1]?.entryId : undefined;
+			indexInternal >= 1
+				? this.sharedArray[indexInternal - 1]?.entryId
+				: undefined;
 		const newEntryId = this.createAddEntry(indexInternal, value);
 
 		const op = {
@@ -254,7 +282,11 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		for (let toIndex = 0; toIndex < values.length; toIndex += 1) {
 			const value = values[toIndex];
 			// Can skip searching first <toIndex> indices, as they contain elements we already moved.
-			for (let fromIndex = toIndex; fromIndex < this.sharedArray.length; fromIndex += 1) {
+			for (
+				let fromIndex = toIndex;
+				fromIndex < this.sharedArray.length;
+				fromIndex += 1
+			) {
 				const item = this.sharedArray[fromIndex];
 				assert(item !== undefined, 0xb91 /* Invalid index */);
 				if (item.value !== value) {
@@ -305,10 +337,15 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 
 	private moveCore(fromIndexInternal: number, toIndexInternal: number): void {
 		const insertAfterEntryId =
-			toIndexInternal >= 1 ? this.sharedArray[toIndexInternal - 1]?.entryId : undefined;
+			toIndexInternal >= 1
+				? this.sharedArray[toIndexInternal - 1]?.entryId
+				: undefined;
 		const entryId = this.sharedArray[fromIndexInternal]?.entryId;
 		assert(entryId !== undefined, 0xb92 /* Invalid index */);
-		const changedToEntryId = this.createMoveEntry(fromIndexInternal, toIndexInternal);
+		const changedToEntryId = this.createMoveEntry(
+			fromIndexInternal,
+			toIndexInternal,
+		);
 
 		const op: IMoveOperation = {
 			type: OperationType.moveEntry,
@@ -563,7 +600,9 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected processMessagesCore(
+		messagesCollection: IRuntimeMessageCollection,
+	): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
 			this.processMessage(envelope, messageContent, local);
@@ -630,7 +669,10 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			}
 			const newEntry = this.createNewEntry(entryId, value);
 			newEntry.isAckPending = false;
-			this.addEntry(this.getInternalInsertIndexByIgnoringLocalPendingInserts(index), newEntry);
+			this.addEntry(
+				this.getInternalInsertIndexByIgnoringLocalPendingInserts(index),
+				newEntry,
+			);
 		}
 	}
 
@@ -720,7 +762,11 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 
 		let countDown = countEntries;
 		let entriesIterator = 0;
-		for (; entriesIterator < this.sharedArray.length; entriesIterator = entriesIterator + 1) {
+		for (
+			;
+			entriesIterator < this.sharedArray.length;
+			entriesIterator = entriesIterator + 1
+		) {
 			const entry = this.sharedArray[entriesIterator];
 			assert(entry !== undefined, 0xb93 /* Invalid index */);
 			if (entry.isDeleted === false) {
@@ -741,7 +787,10 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		return this.findInternalIndex(index);
 	}
 
-	private createAddEntry<TWrite>(index: number, value: Serializable<TWrite> & T): string {
+	private createAddEntry<TWrite>(
+		index: number,
+		value: Serializable<TWrite> & T,
+	): string {
 		const newEntry = this.createNewEntry(uuid(), value);
 		this.addEntry(index, newEntry);
 		return newEntry.entryId;
@@ -760,7 +809,10 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		this.idToEntryMap.set(newEntry.entryId, newEntry);
 	}
 
-	private emitValueChangedEvent(op: ISharedArrayOperation, isLocal: boolean): void {
+	private emitValueChangedEvent(
+		op: ISharedArrayOperation,
+		isLocal: boolean,
+	): void {
 		this.emit("valueChanged", op, isLocal, this);
 	}
 
@@ -839,7 +891,9 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	/**
 	 * Returns the index of the first entry starting with startIndex that does not have the isAckPending flag
 	 */
-	private getInternalInsertIndexByIgnoringLocalPendingInserts(startIndex: number): number {
+	private getInternalInsertIndexByIgnoringLocalPendingInserts(
+		startIndex: number,
+	): number {
 		let localOpsIterator = startIndex;
 		for (
 			;
@@ -905,7 +959,10 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 * at previous position deleted and appending the entry at the new position at the end of the double linked
 	 * list for that entry.value.
 	 */
-	private updateLiveEntry(oldLiveEntryEntryId: string, newLiveEntryEntryId: string): void {
+	private updateLiveEntry(
+		oldLiveEntryEntryId: string,
+		newLiveEntryEntryId: string,
+	): void {
 		const oldLiveEntry = this.getEntryForId(oldLiveEntryEntryId);
 		const newLiveEntry = this.getEntryForId(newLiveEntryEntryId);
 		if (oldLiveEntryEntryId === newLiveEntryEntryId) {
@@ -951,7 +1008,10 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		if (insertAfterEntryId !== undefined) {
 			index = this.findIndexOfEntryId(insertAfterEntryId) + 1;
 		}
-		const newEntry = this.createNewEntry<SerializableTypeForSharedArray>(entryId, value);
+		const newEntry = this.createNewEntry<SerializableTypeForSharedArray>(
+			entryId,
+			value,
+		);
 		newEntry.isAckPending = true;
 		this.addEntry(index, newEntry);
 	}

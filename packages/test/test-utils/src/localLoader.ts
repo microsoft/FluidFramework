@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	ICodeDetailsLoader,
 	IContainer,
 	IFluidCodeDetails,
@@ -12,17 +12,20 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import {
 	createDetachedContainer,
-	Loader,
 	type ICreateDetachedContainerProps,
 	type ILoaderProps,
+	Loader,
 } from "@fluidframework/container-loader/internal";
-import { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import {
+import type {
+	IRequest,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
+import type {
 	IDocumentServiceFactory,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 
-import { LocalCodeLoader, fluidEntryPoint } from "./localCodeLoader.js";
+import { type fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader.js";
 
 /**
  * Creates a loader with the given package entries and driver.

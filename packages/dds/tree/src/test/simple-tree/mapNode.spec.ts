@@ -4,16 +4,17 @@
  */
 
 import { strict as assert } from "node:assert";
-
-import { SchemaFactory, type NodeFromSchema } from "../../simple-tree/index.js";
-import { describeHydration } from "./utils.js";
 import { Tree } from "../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { isTreeNode } from "../../simple-tree/core/index.js";
+import { type NodeFromSchema, SchemaFactory } from "../../simple-tree/index.js";
+import { describeHydration } from "./utils.js";
 
 const schemaFactory = new SchemaFactory("Test");
 
-const object = schemaFactory.object("object", { content: schemaFactory.number });
+const object = schemaFactory.object("object", {
+	content: schemaFactory.number,
+});
 
 const schema = schemaFactory.object("parent", {
 	map: schemaFactory.map(schemaFactory.string),

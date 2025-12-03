@@ -8,12 +8,12 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	BlobCore,
+	codeToBytesMap,
+	getValueSafely,
 	MarkerCodes,
 	MarkerCodesEnd,
 	MarkerCodesStart,
 	NodeCore,
-	codeToBytesMap,
-	getValueSafely,
 } from "./zipItDataRepresentationUtils.js";
 
 /**
@@ -170,7 +170,10 @@ function serializeDictionaryString(
 			bytes >= lengthOfDataLen,
 			0x283 /* "Length of data len should fit in the bytes from the map" */,
 		);
-		assert(bytes >= idLength, 0x284 /* "Length of id should fit in the bytes from the map" */);
+		assert(
+			bytes >= idLength,
+			0x284 /* "Length of id should fit in the bytes from the map" */,
+		);
 		// Assign and write id for const string.
 		buffer.write(id, bytes);
 		// Write length of const string.
@@ -193,7 +196,11 @@ function serializeString(
 	content: string,
 	codeMap = binaryBytesToCodeMap,
 ): void {
-	serializeBlob(buffer, IsoBuffer.from(content, "utf8"), utf8StringBytesToCodeMap);
+	serializeBlob(
+		buffer,
+		IsoBuffer.from(content, "utf8"),
+		utf8StringBytesToCodeMap,
+	);
 }
 
 /**
@@ -235,8 +242,14 @@ function serializeNodeCore(
 			// For a tree node start and end with set/list start and end marker codes.
 			const startCode = MarkerCodesStart[child.type];
 			const endCode = MarkerCodesEnd[child.type];
-			assert(startCode !== undefined, 0x285 /* "Start code should not undefined" */);
-			assert(endCode !== undefined, 0x286 /* "End code should not undefined" */);
+			assert(
+				startCode !== undefined,
+				0x285 /* "Start code should not undefined" */,
+			);
+			assert(
+				endCode !== undefined,
+				0x286 /* "End code should not undefined" */,
+			);
 			buffer.write(startCode);
 			serializeNodeCore(buffer, child, dictionary);
 			buffer.write(endCode);

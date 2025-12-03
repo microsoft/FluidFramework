@@ -41,12 +41,31 @@ describe("client.rebasePosition", () => {
 	it("rebase on a variety of seqNumberFrom values", () => {
 		client.insertTextRemote(0, "abc", undefined, ++seq, 0, remoteUserLongId);
 		client.removeRangeRemote(0, 1, ++seq, seq - 1, remoteUserLongId);
-		client.insertTextRemote(1, "XYZ@", undefined, ++seq, seq - 1, remoteUserLongId);
+		client.insertTextRemote(
+			1,
+			"XYZ@",
+			undefined,
+			++seq,
+			seq - 1,
+			remoteUserLongId,
+		);
 
 		const rebasedPos0 = client.rebasePosition(6 /* into "hello world" */, 0, 0);
-		const rebasedPos1 = client.rebasePosition(6 /* into "abchello world" */, 1, 0);
-		const rebasedPos2 = client.rebasePosition(6 /* into "bchello world" */, 2, 0);
-		const rebasedPos3 = client.rebasePosition(6 /* into "bXYZ@chello world" */, 3, 0);
+		const rebasedPos1 = client.rebasePosition(
+			6 /* into "abchello world" */,
+			1,
+			0,
+		);
+		const rebasedPos2 = client.rebasePosition(
+			6 /* into "bchello world" */,
+			2,
+			0,
+		);
+		const rebasedPos3 = client.rebasePosition(
+			6 /* into "bXYZ@chello world" */,
+			3,
+			0,
+		);
 
 		assert.equal(getTextAt(rebasedPos0), "w");
 		assert.equal(getTextAt(rebasedPos1), "l");
@@ -87,39 +106,67 @@ describe("client.rebasePosition", () => {
 
 		it("rebase past remote insert", () => {
 			client.insertTextRemote(0, "abc", undefined, ++seq, 0, remoteUserLongId);
-			const rebasedPos = client.rebasePosition(6 /* index 6 into "hello world" */, 0, 0);
+			const rebasedPos = client.rebasePosition(
+				6 /* index 6 into "hello world" */,
+				0,
+				0,
+			);
 			const rebasedPos1 = client.rebasePosition(
 				6 /* index 6 into "hello123456 world" */,
 				0,
 				1,
 			);
-			const rebasedPos2 = client.rebasePosition(6 /* index 6 into "hel123456 world" */, 0, 2);
+			const rebasedPos2 = client.rebasePosition(
+				6 /* index 6 into "hel123456 world" */,
+				0,
+				2,
+			);
 
 			expectTextAtRebasedPosMatches(rebasedPos, "w");
 
-			client.applyMsg(client.makeOpMessage(op1, ++seq, 0, localUserLongId), true);
+			client.applyMsg(
+				client.makeOpMessage(op1, ++seq, 0, localUserLongId),
+				true,
+			);
 			expectTextAtRebasedPosMatches(rebasedPos1, "2");
 
-			client.applyMsg(client.makeOpMessage(op2, ++seq, 0, localUserLongId), true);
+			client.applyMsg(
+				client.makeOpMessage(op2, ++seq, 0, localUserLongId),
+				true,
+			);
 			expectTextAtRebasedPosMatches(rebasedPos2, "4");
 		});
 
 		it("rebase past remote delete", () => {
 			client.removeRangeRemote(0, 2, ++seq, 0, remoteUserLongId);
-			const rebasedPos = client.rebasePosition(6 /* index 6 into "hello world" */, 0, 0);
+			const rebasedPos = client.rebasePosition(
+				6 /* index 6 into "hello world" */,
+				0,
+				0,
+			);
 			const rebasedPos1 = client.rebasePosition(
 				6 /* index 6 into "hello123456 world" */,
 				0,
 				1,
 			);
-			const rebasedPos2 = client.rebasePosition(6 /* index 6 into "hel123456 world" */, 0, 2);
+			const rebasedPos2 = client.rebasePosition(
+				6 /* index 6 into "hel123456 world" */,
+				0,
+				2,
+			);
 
 			expectTextAtRebasedPosMatches(rebasedPos, "w");
 
-			client.applyMsg(client.makeOpMessage(op1, ++seq, 0, localUserLongId), true);
+			client.applyMsg(
+				client.makeOpMessage(op1, ++seq, 0, localUserLongId),
+				true,
+			);
 			expectTextAtRebasedPosMatches(rebasedPos1, "2");
 
-			client.applyMsg(client.makeOpMessage(op2, ++seq, 0, localUserLongId), true);
+			client.applyMsg(
+				client.makeOpMessage(op2, ++seq, 0, localUserLongId),
+				true,
+			);
 			expectTextAtRebasedPosMatches(rebasedPos2, "4");
 		});
 
@@ -128,13 +175,21 @@ describe("client.rebasePosition", () => {
 		// as this caught a bug with the original implementation.
 		it("rebase mid local delete", () => {
 			client.removeRangeRemote(0, 2, ++seq, 0, remoteUserLongId);
-			const rebasedPos = client.rebasePosition(4 /* index 4 into "hello world" */, 0, 0);
+			const rebasedPos = client.rebasePosition(
+				4 /* index 4 into "hello world" */,
+				0,
+				0,
+			);
 			const rebasedPos1 = client.rebasePosition(
 				4 /* index 4 into "hello123456 world" */,
 				0,
 				1,
 			);
-			const rebasedPos2 = client.rebasePosition(4 /* index 4 into "hel123456 world" */, 0, 2);
+			const rebasedPos2 = client.rebasePosition(
+				4 /* index 4 into "hel123456 world" */,
+				0,
+				2,
+			);
 
 			assert.equal(rebasedPos, 2);
 			assert.equal(rebasedPos1, 2);

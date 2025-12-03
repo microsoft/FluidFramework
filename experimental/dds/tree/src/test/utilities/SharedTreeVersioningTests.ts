@@ -3,30 +3,34 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from 'assert';
-
 import { LoaderHeader } from '@fluidframework/container-definitions/internal';
-import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
+import type { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { MockFluidDataStoreRuntime, validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
+import { strict as assert } from 'assert';
 import { expect } from 'chai';
 
-import { BuildNode, Change, StablePlace, StableRange } from '../../ChangeTypes.js';
-import { Mutable } from '../../Common.js';
-import { EditLog } from '../../EditLog.js';
+import { type BuildNode, Change, StablePlace, StableRange } from '../../ChangeTypes.js';
+import type { Mutable } from '../../Common.js';
+import type { EditLog } from '../../EditLog.js';
 import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities.js';
 import { SharedTreeDiagnosticEvent } from '../../EventTypes.js';
-import { NodeId, StableNodeId, TraitLabel } from '../../Identifiers.js';
+import type { NodeId, StableNodeId, TraitLabel } from '../../Identifiers.js';
+import {
+	SharedTreeOpType,
+	type SharedTreeUpdateOp,
+	type TreeNodeSequence,
+	WriteFormat,
+} from '../../persisted-types/index.js';
 import { SharedTree } from '../../SharedTree.js';
 import { TreeNodeHandle } from '../../TreeNodeHandle.js';
 import { nilUuid } from '../../UuidUtilities.js';
-import { SharedTreeOpType, SharedTreeUpdateOp, TreeNodeSequence, WriteFormat } from '../../persisted-types/index.js';
 import { applyTestEdits } from '../Summary.tests.js';
 
 import { buildLeaf } from './TestNode.js';
 import {
-	SharedTreeTestingComponents,
-	SharedTreeTestingOptions,
 	applyNoop,
+	type SharedTreeTestingComponents,
+	type SharedTreeTestingOptions,
 	setUpLocalServerTestSharedTree,
 	setUpTestTree,
 	spyOnSubmittedOps,
@@ -344,7 +348,7 @@ export function runSharedTreeVersioningTests(
 		it('generates unique IDs after upgrading from 0.0.2', async () => {
 			const idCount = 100;
 
-			const { testObjectProvider, tree: tree } = await setUpLocalServerTestSharedTree({
+			const { testObjectProvider, tree } = await setUpLocalServerTestSharedTree({
 				writeFormat: WriteFormat.v0_0_2,
 			});
 
@@ -475,7 +479,7 @@ export function runSharedTreeVersioningTests(
 		}).timeout(10000);
 
 		it('attributes all pre-upgrade IDs to the nil UUID after upgrading from 0.0.2', async () => {
-			const { testObjectProvider, tree: tree } = await setUpLocalServerTestSharedTree({
+			const { testObjectProvider, tree } = await setUpLocalServerTestSharedTree({
 				writeFormat: WriteFormat.v0_0_2,
 			});
 

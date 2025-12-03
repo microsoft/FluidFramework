@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
@@ -13,7 +13,7 @@ import {
 
 import { DocumentServiceFactoryProxy } from "../../documentServiceFactoryProxy.js";
 
-import { ICompressionStorageConfig } from "./compressionTypes.js";
+import type { ICompressionStorageConfig } from "./compressionTypes.js";
 import { DocumentServiceCompressionAdapter } from "./documentServiceCompressionAdapter.js";
 import { DocumentStorageServiceCompressionAdapter as DocumentStorageServiceSummaryBlobCompressionAdapter } from "./summaryblob/index.js";
 
@@ -33,10 +33,11 @@ export class DocumentServiceFactoryCompressionAdapter extends DocumentServiceFac
 	): Promise<IDocumentService> {
 		if (createNewSummary !== undefined) {
 			const configForInitial = this._config;
-			const newAppSumary = DocumentStorageServiceSummaryBlobCompressionAdapter.compressSummary(
-				createNewSummary.tree[".app"] as ISummaryTree,
-				configForInitial,
-			);
+			const newAppSumary =
+				DocumentStorageServiceSummaryBlobCompressionAdapter.compressSummary(
+					createNewSummary.tree[".app"] as ISummaryTree,
+					configForInitial,
+				);
 			createNewSummary.tree[".app"] = newAppSumary;
 		}
 		const service = await this.serviceFactory.createContainer(
@@ -48,8 +49,11 @@ export class DocumentServiceFactoryCompressionAdapter extends DocumentServiceFac
 		return new DocumentServiceCompressionAdapter(service, this._config);
 	}
 
-	public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
-		const service = await this.serviceFactory.createDocumentService(resolvedUrl);
+	public async createDocumentService(
+		resolvedUrl: IResolvedUrl,
+	): Promise<IDocumentService> {
+		const service =
+			await this.serviceFactory.createDocumentService(resolvedUrl);
 		return new DocumentServiceCompressionAdapter(service, this._config);
 	}
 }

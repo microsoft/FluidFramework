@@ -5,7 +5,11 @@
 
 import type { ValueSchema } from "../core/index.js";
 import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
-import type { NodeKind, SchemaUpgrade, SimpleNodeSchemaBase } from "./core/index.js";
+import type {
+	NodeKind,
+	SchemaUpgrade,
+	SimpleNodeSchemaBase,
+} from "./core/index.js";
 import type { FieldKind, FieldSchemaMetadata } from "./fieldSchema.js";
 
 /*
@@ -46,7 +50,10 @@ export interface SimpleNodeSchemaBaseAlpha<
  * Refers to the types by identifier.
  * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
  */
-export type SimpleAllowedTypes = ReadonlyMap<string, SimpleAllowedTypeAttributes>;
+export type SimpleAllowedTypes = ReadonlyMap<
+	string,
+	SimpleAllowedTypeAttributes
+>;
 
 /**
  * A {@link SimpleNodeSchema} for an object node.
@@ -152,7 +159,8 @@ export interface SimpleRecordNodeSchema<out TCustomMetadata = unknown>
  * @alpha
  * @sealed
  */
-export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBaseAlpha<NodeKind.Leaf> {
+export interface SimpleLeafNodeSchema
+	extends SimpleNodeSchemaBaseAlpha<NodeKind.Leaf> {
 	/**
 	 * The kind of leaf node.
 	 */

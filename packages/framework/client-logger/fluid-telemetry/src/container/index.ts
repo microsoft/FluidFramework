@@ -4,17 +4,17 @@
  */
 
 export {
-	IFluidContainerSystemEventNames,
 	type IFluidContainerSystemEventName,
+	IFluidContainerSystemEventNames,
 } from "./containerSystemEvents.js";
 
 export {
-	type ContainerTelemetryEventName,
-	ContainerTelemetryEventNames,
-	type IContainerTelemetry,
 	type ContainerConnectedTelemetry,
 	type ContainerDisconnectedTelemetry,
 	type ContainerDisposedTelemetry,
+	type ContainerTelemetryEventName,
+	ContainerTelemetryEventNames,
+	type IContainerTelemetry,
 } from "./containerTelemetry.js";
 
 export { ContainerTelemetryManager } from "./telemetryManager.js";

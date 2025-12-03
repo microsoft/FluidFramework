@@ -33,12 +33,17 @@ describe("Shared String Obliterate", () => {
 	// C calls rebase() after it already normalized segments once and then made changes to the tree
 	// without inbounding any subsequent SharedString ops (so the last normalization refSeq was never advanced).
 	it("Is able to compute correct rebased segments pre-normalization consistently", async () => {
-		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection({
-			flushMode: FlushMode.TurnBased,
-			enableGroupedBatching: true,
-		});
+		const containerRuntimeFactory =
+			new MockContainerRuntimeFactoryForReconnection({
+				flushMode: FlushMode.TurnBased,
+				enableGroupedBatching: true,
+			});
 
-		const clients = constructClients(containerRuntimeFactory, 3, datastoreRuntimeOptions);
+		const clients = constructClients(
+			containerRuntimeFactory,
+			3,
+			datastoreRuntimeOptions,
+		);
 		const [
 			{ containerRuntime: _runtimeA, sharedString: A },
 			{ containerRuntime: _runtimeB, sharedString: B },
@@ -53,7 +58,10 @@ describe("Shared String Obliterate", () => {
 		processAllMessages(containerRuntimeFactory, clients);
 		C.insertText(0, "E");
 		runtimeC.connected = true;
-		C.obliterateRange({ pos: 5, side: Side.After }, { pos: 14, side: Side.Before });
+		C.obliterateRange(
+			{ pos: 5, side: Side.After },
+			{ pos: 14, side: Side.Before },
+		);
 
 		runtimeC.rebase();
 		processAllMessages(containerRuntimeFactory, clients);
@@ -69,22 +77,33 @@ describe("Shared String Obliterate", () => {
 	// The fix applied at the time this test was added: invalidate any cached computations at the time of (re-)rebase
 	// when we see there have been any remote OR local changes, rather than just remote ones.
 	it("Invalidates cached obliterate rebased results on subsequent local ops", async () => {
-		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection({
-			flushMode: FlushMode.TurnBased,
-			enableGroupedBatching: true,
-		});
+		const containerRuntimeFactory =
+			new MockContainerRuntimeFactoryForReconnection({
+				flushMode: FlushMode.TurnBased,
+				enableGroupedBatching: true,
+			});
 
 		// Only the first client performs ops, but having a second client is still useful for validating consistency.
-		const clients = constructClients(containerRuntimeFactory, 2, datastoreRuntimeOptions);
+		const clients = constructClients(
+			containerRuntimeFactory,
+			2,
+			datastoreRuntimeOptions,
+		);
 		const [{ containerRuntime: runtimeA, sharedString: A }] = clients;
 
 		A.insertText(0, "01234567");
 		processAllMessages(containerRuntimeFactory, clients);
 
-		A.obliterateRange({ pos: 4, side: Side.After }, { pos: 6, side: Side.Before });
+		A.obliterateRange(
+			{ pos: 4, side: Side.After },
+			{ pos: 6, side: Side.Before },
+		);
 		runtimeA.rebase();
 		runtimeA.connected = false;
-		A.obliterateRange({ pos: 3, side: Side.After }, { pos: 6, side: Side.After });
+		A.obliterateRange(
+			{ pos: 3, side: Side.After },
+			{ pos: 6, side: Side.After },
+		);
 		runtimeA.connected = true;
 
 		processAllMessages(containerRuntimeFactory, clients);

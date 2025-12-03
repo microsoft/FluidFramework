@@ -4,18 +4,18 @@
  */
 
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
-import { IEvent } from '@fluidframework/core-interfaces';
+import type { IEvent } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
 import Denque from 'denque';
 
 import { fail, noop } from './Common.js';
-import { EditLog, SequencedOrderedEditId } from './EditLog.js';
-import { EditId } from './Identifiers.js';
-import { ReconciliationChange, ReconciliationEdit, ReconciliationPath } from './ReconciliationPath.js';
-import { Revision, RevisionValueCache } from './RevisionValueCache.js';
-import { RevisionView } from './RevisionView.js';
-import { EditingResult, TransactionInternal } from './TransactionInternal.js';
-import { ChangeInternal, Edit, EditStatus } from './persisted-types/index.js';
+import type { EditLog, SequencedOrderedEditId } from './EditLog.js';
+import type { EditId } from './Identifiers.js';
+import { type ChangeInternal, type Edit, EditStatus } from './persisted-types/index.js';
+import type { ReconciliationChange, ReconciliationEdit, ReconciliationPath } from './ReconciliationPath.js';
+import { type Revision, RevisionValueCache } from './RevisionValueCache.js';
+import type { RevisionView } from './RevisionView.js';
+import { type EditingResult, TransactionInternal } from './TransactionInternal.js';
 
 /**
  * Callback for when an edit is applied (meaning the result of applying it to a particular revision is computed).

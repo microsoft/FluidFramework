@@ -14,23 +14,26 @@ import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import {
 	type FetchSource,
+	type IDocumentAttributes,
 	type IResolvedUrl,
+	type ISequencedDocumentMessage,
 	type ISnapshot,
 	type ISnapshotFetchOptions,
-	type IDocumentAttributes,
 	type ISnapshotTree,
 	type IVersion,
 	MessageType,
-	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
-import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
-import { useFakeTimers, type SinonFakeTimers } from "sinon";
+import {
+	MockLogger,
+	mixinMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
+import { type SinonFakeTimers, useFakeTimers } from "sinon";
 
 import {
 	type IPendingContainerState,
-	SerializedStateManager,
 	type ISerializedStateManagerDocumentStorageService,
+	SerializedStateManager,
 	type SnapshotWithBlobs,
 } from "../serializedStateManager.js";
 
@@ -55,7 +58,10 @@ const initialSnapshot: ISnapshot = {
 	blobContents: new Map([
 		[
 			"attributesId-0",
-			stringToBuffer('{"minimumSequenceNumber" : 0, "sequenceNumber": 0}', "utf8"),
+			stringToBuffer(
+				'{"minimumSequenceNumber" : 0, "sequenceNumber": 0}',
+				"utf8",
+			),
 		],
 	]),
 	latestSequenceNumber: undefined,
@@ -75,7 +81,9 @@ for (let i = 1; i <= savedOpsSize; i++) {
 const pendingLocalState: IPendingContainerState = {
 	attached: true,
 	baseSnapshot: snapshotTree,
-	snapshotBlobs: { ["attributesId-0"]: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}' },
+	snapshotBlobs: {
+		["attributesId-0"]: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}',
+	},
 	pendingRuntimeState: {},
 	savedOps,
 	url: "fluid",
@@ -83,7 +91,9 @@ const pendingLocalState: IPendingContainerState = {
 
 const eventEmitter = new EventEmitter();
 
-class MockStorageAdapter implements ISerializedStateManagerDocumentStorageService {
+class MockStorageAdapter
+	implements ISerializedStateManagerDocumentStorageService
+{
 	public readonly blobs = new Map<string, ArrayBufferLike>();
 	private snapshot: ISnapshotTree;
 
@@ -134,7 +144,10 @@ class MockStorageAdapter implements ISerializedStateManagerDocumentStorageServic
 		return this.blobs.get(id) as ArrayBufferLike;
 	}
 
-	public uploadSummary(sequenceNumber: number, updateLatest: boolean = true): void {
+	public uploadSummary(
+		sequenceNumber: number,
+		updateLatest: boolean = true,
+	): void {
 		const attributesIds = `attributesId-${sequenceNumber}`;
 		if (updateLatest) {
 			this.snapshot = structuredClone(this.snapshot);
@@ -153,7 +166,9 @@ class MockStorageAdapter implements ISerializedStateManagerDocumentStorageServic
 type ISerializedStateManagerRuntime = Pick<IRuntime, "getPendingLocalState">;
 
 class MockRuntime implements ISerializedStateManagerRuntime {
-	public getPendingLocalState(_props?: IGetPendingLocalStateProps | undefined): unknown {
+	public getPendingLocalState(
+		_props?: IGetPendingLocalStateProps | undefined,
+	): unknown {
 		return { pending: {} };
 	}
 }
@@ -168,7 +183,11 @@ const resolvedUrl: IResolvedUrl = {
 
 const errorFn = (error: Error, expected: string): boolean => {
 	assert.notStrictEqual(error.message, undefined, "error is undefined");
-	assert.strictEqual(error.message, expected, `Unexpected error: ${error.message}`);
+	assert.strictEqual(
+		error.message,
+		expected,
+		`Unexpected error: ${error.message}`,
+	);
 	return true;
 };
 
@@ -178,7 +197,8 @@ const getAttributesFromPendingState = (
 	if (pendingState.baseSnapshot === undefined) {
 		throw new Error("base snapshot should be valid");
 	}
-	const attributesId = pendingState.baseSnapshot.trees[".protocol"].blobs.attributes;
+	const attributesId =
+		pendingState.baseSnapshot.trees[".protocol"].blobs.attributes;
 	const attributes = pendingState.snapshotBlobs[attributesId];
 	return JSON.parse(attributes) as IDocumentAttributes;
 };
@@ -192,10 +212,14 @@ function generateSavedOp(seq: number): ISequencedDocumentMessage {
 	} as unknown as ISequencedDocumentMessage;
 }
 
-function enableOfflineSnapshotRefresh(logger: ITelemetryBaseLogger): ITelemetryBaseLogger {
+function enableOfflineSnapshotRefresh(
+	logger: ITelemetryBaseLogger,
+): ITelemetryBaseLogger {
 	return mixinMonitoringContext(logger, {
 		getRawConfig: (name) =>
-			name === "Fluid.Container.enableOfflineSnapshotRefresh" ? true : undefined,
+			name === "Fluid.Container.enableOfflineSnapshotRefresh"
+				? true
+				: undefined,
 	}).logger;
 }
 
@@ -226,7 +250,10 @@ describe("serializedStateManager", () => {
 						resolvedUrl,
 					),
 				(error: Error) =>
-					errorFn(error, "Can't get pending local state unless offline load is enabled"),
+					errorFn(
+						error,
+						"Can't get pending local state unless offline load is enabled",
+					),
 				"container can get local state with offline load disabled",
 			);
 		});
@@ -264,10 +291,8 @@ describe("serializedStateManager", () => {
 				() => false,
 				() => false,
 			);
-			const { snapshot: baseSnapshot, version } = await serializedStateManager.fetchSnapshot(
-				undefined,
-				pending,
-			);
+			const { snapshot: baseSnapshot, version } =
+				await serializedStateManager.fetchSnapshot(undefined, pending);
 			assert(baseSnapshot !== undefined);
 			assert.strictEqual(version, undefined);
 			const state = await serializedStateManager.getPendingLocalState(
@@ -289,10 +314,8 @@ describe("serializedStateManager", () => {
 				() => false,
 				() => false,
 			);
-			const { snapshot: baseSnapshot, version } = await serializedStateManager.fetchSnapshot(
-				undefined,
-				undefined,
-			);
+			const { snapshot: baseSnapshot, version } =
+				await serializedStateManager.fetchSnapshot(undefined, undefined);
 			assert(baseSnapshot !== undefined);
 			assert.strictEqual(version?.id, "fromStorage");
 			assert.strictEqual(version.treeId, "fromStorage");
@@ -353,8 +376,16 @@ describe("serializedStateManager", () => {
 			const parsed = JSON.parse(state) as IPendingContainerState;
 			assert.strictEqual(parsed.baseSnapshot.id, "fromPending");
 			const attributes = getAttributesFromPendingState(parsed);
-			assert.strictEqual(attributes.sequenceNumber, 0, "wrong snapshot sequence number");
-			assert.strictEqual(parsed.savedOps[0].sequenceNumber, 1, "wrong first saved op");
+			assert.strictEqual(
+				attributes.sequenceNumber,
+				0,
+				"wrong snapshot sequence number",
+			);
+			assert.strictEqual(
+				parsed.savedOps[0].sequenceNumber,
+				1,
+				"wrong first saved op",
+			);
 			assert.strictEqual(
 				parsed.savedOps[parsed.savedOps.length - 1].sequenceNumber,
 				lastProcessedOpSequenceNumber,
@@ -402,8 +433,16 @@ describe("serializedStateManager", () => {
 			const parsed = JSON.parse(state) as IPendingContainerState;
 			assert.strictEqual(parsed.baseSnapshot.id, "fromPending");
 			const attributes = getAttributesFromPendingState(parsed);
-			assert.strictEqual(attributes.sequenceNumber, 0, "wrong snapshot sequence number");
-			assert.strictEqual(parsed.savedOps[0].sequenceNumber, 1, "wrong first saved op");
+			assert.strictEqual(
+				attributes.sequenceNumber,
+				0,
+				"wrong snapshot sequence number",
+			);
+			assert.strictEqual(
+				parsed.savedOps[0].sequenceNumber,
+				1,
+				"wrong first saved op",
+			);
 			assert.strictEqual(
 				parsed.savedOps[parsed.savedOps.length - 1].sequenceNumber,
 				lastProcessedOpSequenceNumber,
@@ -485,11 +524,10 @@ describe("serializedStateManager", () => {
 					serializedStateManager.addProcessedOp(savedOp);
 				}
 
-				const { snapshot, version } = await serializedStateManager.fetchSnapshot(
-					undefined,
-					pending,
-				);
-				const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(snapshot);
+				const { snapshot, version } =
+					await serializedStateManager.fetchSnapshot(undefined, pending);
+				const baseSnapshotTree: ISnapshotTree | undefined =
+					getSnapshotTree(snapshot);
 				assert.strictEqual(baseSnapshotTree.id, "fromPending");
 				assert.strictEqual(version, undefined);
 				// It'll wait until getLatestSnapshotInfo finish. This ensures we attempted to refresh
@@ -497,7 +535,10 @@ describe("serializedStateManager", () => {
 				await serializedStateManager.refreshSnapshotP;
 				if (isDirty) {
 					logger.assertMatchNone([
-						{ eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing" },
+						{
+							eventName:
+								"serializedStateManager:OldSnapshotFetchWhileRefreshing",
+						},
 					]);
 					saved = true;
 					eventEmitter.emit("saved");
@@ -554,7 +595,10 @@ describe("serializedStateManager", () => {
 				await serializedStateManager.refreshSnapshotP;
 				if (isDirty) {
 					logger.assertMatchNone([
-						{ eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing" },
+						{
+							eventName:
+								"serializedStateManager:OldSnapshotFetchWhileRefreshing",
+						},
 					]);
 					saved = true;
 					eventEmitter.emit("saved");
@@ -609,7 +653,10 @@ describe("serializedStateManager", () => {
 				await serializedStateManager.refreshSnapshotP;
 				if (isDirty) {
 					logger.assertMatchNone([
-						{ eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing" },
+						{
+							eventName:
+								"serializedStateManager:OldSnapshotFetchWhileRefreshing",
+						},
 						{ eventName: "serializedStateManager:SnapshotRefreshed" },
 					]);
 					saved = true;
@@ -621,7 +668,11 @@ describe("serializedStateManager", () => {
 					resolvedUrl,
 				);
 				const parsed = JSON.parse(state) as IPendingContainerState;
-				assert.strictEqual(parsed.baseSnapshot.id, "fromStorage", "snapshot was not updated");
+				assert.strictEqual(
+					parsed.baseSnapshot.id,
+					"fromStorage",
+					"snapshot was not updated",
+				);
 				const attributes = getAttributesFromPendingState(parsed);
 				assert.strictEqual(
 					attributes.sequenceNumber,
@@ -706,7 +757,10 @@ describe("serializedStateManager", () => {
 				}
 				if (isDirty) {
 					logger.assertMatchNone([
-						{ eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing" },
+						{
+							eventName:
+								"serializedStateManager:OldSnapshotFetchWhileRefreshing",
+						},
 						{ eventName: "serializedStateManager:SnapshotRefreshed" },
 					]);
 					saved = true;
@@ -822,7 +876,10 @@ describe("serializedStateManager", () => {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const parsed = JSON.parse(state);
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				assert.strictEqual(parsed.pendingRuntimeState.sessionExpiryTimerStarted, undefined);
+				assert.strictEqual(
+					parsed.pendingRuntimeState.sessionExpiryTimerStarted,
+					undefined,
+				);
 			});
 
 			it(`session expiry time when snapshot is refreshed but no saved event. isDirty: ${isDirty}`, async () => {
@@ -866,10 +923,15 @@ describe("serializedStateManager", () => {
 				// when we're not dirty at fetching time.
 				if (isDirty) {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-					assert.strictEqual(parsed.pendingRuntimeState.sessionExpiryTimerStarted, undefined);
+					assert.strictEqual(
+						parsed.pendingRuntimeState.sessionExpiryTimerStarted,
+						undefined,
+					);
 				} else {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-					assert(parsed.pendingRuntimeState.sessionExpiryTimerStarted !== undefined);
+					assert(
+						parsed.pendingRuntimeState.sessionExpiryTimerStarted !== undefined,
+					);
 				}
 			});
 
@@ -916,7 +978,9 @@ describe("serializedStateManager", () => {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const parsed = JSON.parse(state);
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				assert(parsed.pendingRuntimeState.sessionExpiryTimerStarted !== undefined);
+				assert(
+					parsed.pendingRuntimeState.sessionExpiryTimerStarted !== undefined,
+				);
 			});
 		}
 	});
@@ -957,7 +1021,11 @@ describe("serializedStateManager", () => {
 				resolvedUrl,
 			);
 			const parsed = JSON.parse(state) as IPendingContainerState;
-			assert.strictEqual(parsed.baseSnapshot.id, "fromStorage", "snapshot was not updated");
+			assert.strictEqual(
+				parsed.baseSnapshot.id,
+				"fromStorage",
+				"snapshot was not updated",
+			);
 			const attributes = getAttributesFromPendingState(parsed);
 			assert.strictEqual(
 				attributes.sequenceNumber,
@@ -1010,7 +1078,10 @@ describe("serializedStateManager", () => {
 
 				if (isDirty) {
 					logger.assertMatchNone([
-						{ eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing" },
+						{
+							eventName:
+								"serializedStateManager:OldSnapshotFetchWhileRefreshing",
+						},
 						{ eventName: "serializedStateManager:SnapshotRefreshed" },
 					]);
 					saved = true;
@@ -1066,7 +1137,10 @@ describe("serializedStateManager", () => {
 
 				if (isDirty) {
 					logger.assertMatchNone([
-						{ eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing" },
+						{
+							eventName:
+								"serializedStateManager:OldSnapshotFetchWhileRefreshing",
+						},
 						{ eventName: "serializedStateManager:SnapshotRefreshed" },
 					]);
 					saved = true;
@@ -1139,7 +1213,10 @@ describe("serializedStateManager", () => {
 
 				if (isDirty) {
 					logger.assertMatchNone([
-						{ eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing" },
+						{
+							eventName:
+								"serializedStateManager:OldSnapshotFetchWhileRefreshing",
+						},
 						{ eventName: "serializedStateManager:SnapshotRefreshed" },
 					]);
 					saved = true;
@@ -1199,7 +1276,10 @@ describe("serializedStateManager", () => {
 
 				if (isDirty) {
 					logger.assertMatchNone([
-						{ eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing" },
+						{
+							eventName:
+								"serializedStateManager:OldSnapshotFetchWhileRefreshing",
+						},
 						{ eventName: "serializedStateManager:SnapshotRefreshed" },
 					]);
 					saved = true;
@@ -1268,7 +1348,10 @@ describe("serializedStateManager", () => {
 				await serializedStateManager.refreshSnapshotP;
 				if (isDirty) {
 					logger.assertMatchNone([
-						{ eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing" },
+						{
+							eventName:
+								"serializedStateManager:OldSnapshotFetchWhileRefreshing",
+						},
 					]);
 					saved = true;
 					eventEmitter.emit("saved");
@@ -1342,7 +1425,10 @@ describe("serializedStateManager", () => {
 				}
 				if (isDirty) {
 					logger.assertMatchNone([
-						{ eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing" },
+						{
+							eventName:
+								"serializedStateManager:OldSnapshotFetchWhileRefreshing",
+						},
 						{ eventName: "serializedStateManager:SnapshotRefreshed" },
 					]);
 					saved = true;

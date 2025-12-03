@@ -3,23 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	fail,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 
 import {
-	type ChangeAtomId,
-	type ChangesetLocalId,
-	type RevisionMetadataSource,
-	type RevisionTag,
 	areEqualChangeAtomIdOpts,
 	areEqualChangeAtomIds,
+	type ChangeAtomId,
+	type ChangesetLocalId,
 	makeChangeAtomId,
+	type RevisionMetadataSource,
+	type RevisionTag,
 } from "../../core/index.js";
-import { type Mutable, brand } from "../../util/index.js";
+import { brand, type Mutable } from "../../util/index.js";
 import {
-	CrossFieldTarget,
-	type NodeId,
 	type CrossFieldKeyRange,
+	CrossFieldTarget,
 	type NestedChangesIndices,
+	type NodeId,
 } from "../modular-schema/index.js";
 
 import type {
@@ -31,6 +35,7 @@ import type {
 import {
 	type Attach,
 	type AttachAndDetach,
+	type CellCount,
 	type CellId,
 	type CellMark,
 	type Changeset,
@@ -45,7 +50,6 @@ import {
 	type NoopMark,
 	NoopMarkType,
 	type Remove,
-	type CellCount,
 	type Rename,
 } from "./types.js";
 
@@ -99,7 +103,8 @@ export function isNewAttachEffect(
 		(isAttach(effect) &&
 			cellId !== undefined &&
 			(effect.revision ?? revision) === (cellId.revision ?? revision)) ||
-		(isAttachAndDetachEffect(effect) && isNewAttachEffect(effect.attach, cellId, revision))
+		(isAttachAndDetachEffect(effect) &&
+			isNewAttachEffect(effect.attach, cellId, revision))
 	);
 }
 
@@ -119,17 +124,27 @@ export function isReattach(mark: Mark): boolean {
 	return isReattachEffect(mark, mark.cellId);
 }
 
-export function isReattachEffect(effect: MarkEffect, cellId: CellId | undefined): boolean {
+export function isReattachEffect(
+	effect: MarkEffect,
+	cellId: CellId | undefined,
+): boolean {
 	return isAttach(effect) && !isNewAttachEffect(effect, cellId);
 }
 
 export function isActiveReattach(
 	mark: Mark,
 ): mark is CellMark<Insert> & { conflictsWith?: undefined } {
-	return isAttach(mark) && isReattachEffect(mark, mark.cellId) && mark.cellId !== undefined;
+	return (
+		isAttach(mark) &&
+		isReattachEffect(mark, mark.cellId) &&
+		mark.cellId !== undefined
+	);
 }
 
-export function areEqualCellIds(a: CellId | undefined, b: CellId | undefined): boolean {
+export function areEqualCellIds(
+	a: CellId | undefined,
+	b: CellId | undefined,
+): boolean {
 	return areEqualChangeAtomIdOpts(a, b);
 }
 
@@ -202,9 +217,16 @@ export function compareCellPositionsUsingTombstones(
 	if (areEqualChangeAtomIds(oldMarkCell, newMarkCell)) {
 		return CellOrder.SameCell;
 	}
-	const oldChangeKnowsOfNewMarkCellRevision = oldChangeKnowledge.has(newMarkCell.revision);
-	const newChangeKnowsOfOldMarkCellRevision = newChangeKnowledge.has(oldMarkCell.revision);
-	if (oldChangeKnowsOfNewMarkCellRevision && newChangeKnowsOfOldMarkCellRevision) {
+	const oldChangeKnowsOfNewMarkCellRevision = oldChangeKnowledge.has(
+		newMarkCell.revision,
+	);
+	const newChangeKnowsOfOldMarkCellRevision = newChangeKnowledge.has(
+		oldMarkCell.revision,
+	);
+	if (
+		oldChangeKnowsOfNewMarkCellRevision &&
+		newChangeKnowsOfOldMarkCellRevision
+	) {
 		// If both changesets know of both cells, but we've been asked to compare different cells,
 		// Then either the changesets they originate from do not represent the same context,
 		// or the ordering of their cells in inconsistent.
@@ -250,13 +272,19 @@ export function compareCellPositionsUsingTombstones(
 		const newCellRevisionIndex = metadata.getIndex(newMarkCell.revision);
 
 		// If the metadata defines an ordering for the revisions then the cell from the newer revision comes first.
-		if (newCellRevisionIndex !== undefined && oldCellRevisionIndex !== undefined) {
+		if (
+			newCellRevisionIndex !== undefined &&
+			oldCellRevisionIndex !== undefined
+		) {
 			return newCellRevisionIndex > oldCellRevisionIndex
 				? CellOrder.NewThenOld
 				: CellOrder.OldThenNew;
 		}
 
-		if (newCellRevisionIndex === undefined && oldCellRevisionIndex === undefined) {
+		if (
+			newCellRevisionIndex === undefined &&
+			oldCellRevisionIndex === undefined
+		) {
 			// While it is possible for both marks to refer to cells that were named in revisions that are outside
 			// the scope of the metadata, such a scenario should be handled above due to the fact that one of the two
 			// changesets should have tombstones or marks for both cells.
@@ -284,7 +312,9 @@ export function compareCellPositionsUsingTombstones(
 		// The absence of metadata for a cell with a defined revision means that the cell is from a revision that
 		// predates the edits that are within the scope of the metadata. Such a cell is therefore older than the one
 		// for which we do have metadata.
-		return oldCellRevisionIndex === undefined ? CellOrder.NewThenOld : CellOrder.OldThenNew;
+		return oldCellRevisionIndex === undefined
+			? CellOrder.NewThenOld
+			: CellOrder.OldThenNew;
 	}
 }
 
@@ -364,7 +394,9 @@ export function normalizeCellRename(
 /**
  * Preserves the semantics of the given `mark` but repackages it into an `AttachAndDetach` mark if it is not already one.
  */
-export function asAttachAndDetach(mark: CellMark<CellRename>): CellMark<AttachAndDetach> {
+export function asAttachAndDetach(
+	mark: CellMark<CellRename>,
+): CellMark<AttachAndDetach> {
 	if (mark.type === "AttachAndDetach") {
 		return mark;
 	}
@@ -398,7 +430,9 @@ export function cloneMark<TMark extends Mark>(mark: TMark): TMark {
 	return clone;
 }
 
-export function cloneMarkEffect<TEffect extends MarkEffect>(effect: TEffect): TEffect {
+export function cloneMarkEffect<TEffect extends MarkEffect>(
+	effect: TEffect,
+): TEffect {
 	const clone = { ...effect };
 	if (clone.type === "AttachAndDetach") {
 		clone.attach = cloneMarkEffect(clone.attach);
@@ -418,7 +452,10 @@ export function cloneCellId(id: CellId): CellId {
  * @param ignorePairing - When true, the length of a paired mark (e.g. MoveIn/MoveOut) whose matching mark is not active
  * will be treated the same as if the matching mark were active.
  */
-export function getOutputLength(mark: Mark, ignorePairing: boolean = false): number {
+export function getOutputLength(
+	mark: Mark,
+	ignorePairing: boolean = false,
+): number {
 	return areOutputCellsEmpty(mark) ? 0 : mark.count;
 }
 
@@ -442,16 +479,25 @@ export function markHasCellEffect(mark: Mark): boolean {
 	return areInputCellsEmpty(mark) !== areOutputCellsEmpty(mark);
 }
 
-export function isAttachAndDetachEffect(effect: MarkEffect): effect is AttachAndDetach {
+export function isAttachAndDetachEffect(
+	effect: MarkEffect,
+): effect is AttachAndDetach {
 	return effect.type === "AttachAndDetach";
 }
 
-export function isDetachOfRemovedNodes(mark: Mark): mark is CellMark<DetachOfRemovedNodes> {
+export function isDetachOfRemovedNodes(
+	mark: Mark,
+): mark is CellMark<DetachOfRemovedNodes> {
 	return isDetach(mark) && mark.cellId !== undefined;
 }
 
-export function isImpactfulCellRename(mark: Mark): mark is CellMark<CellRename> {
-	return (isAttachAndDetachEffect(mark) || isDetachOfRemovedNodes(mark)) && isImpactful(mark);
+export function isImpactfulCellRename(
+	mark: Mark,
+): mark is CellMark<CellRename> {
+	return (
+		(isAttachAndDetachEffect(mark) || isDetachOfRemovedNodes(mark)) &&
+		isImpactful(mark)
+	);
 }
 
 export function areInputCellsEmpty(mark: Mark): mark is EmptyInputCellMark {
@@ -510,7 +556,10 @@ export function isImpactful(mark: Mark): boolean {
 				return true;
 			}
 			const outputId = getOutputCellId(mark);
-			assert(outputId !== undefined, 0x824 /* Remove marks must have an output cell ID */);
+			assert(
+				outputId !== undefined,
+				0x824 /* Remove marks must have an output cell ID */,
+			);
 			return !areEqualChangeAtomIds(inputId, outputId);
 		}
 		case "AttachAndDetach":
@@ -518,7 +567,10 @@ export function isImpactful(mark: Mark): boolean {
 			return true;
 		case "MoveIn":
 			// MoveIn marks always target an empty cell.
-			assert(mark.cellId !== undefined, 0x825 /* MoveIn marks should target empty cells */);
+			assert(
+				mark.cellId !== undefined,
+				0x825 /* MoveIn marks should target empty cells */,
+			);
 			return true;
 		case "Insert":
 			// A Revive has no impact if the nodes are already in the document.
@@ -528,8 +580,14 @@ export function isImpactful(mark: Mark): boolean {
 	}
 }
 
-export function isTombstone(mark: Mark): mark is CellMark<NoopMark> & { cellId: CellId } {
-	return mark.type === NoopMarkType && mark.cellId !== undefined && mark.changes === undefined;
+export function isTombstone(
+	mark: Mark,
+): mark is CellMark<NoopMark> & { cellId: CellId } {
+	return (
+		mark.type === NoopMarkType &&
+		mark.cellId !== undefined &&
+		mark.changes === undefined
+	);
 }
 
 export function isNoopMark(mark: Mark): mark is CellMark<NoopMark> {
@@ -582,7 +640,8 @@ function areMergeableChangeAtoms(
 	}
 
 	return (
-		lhs.revision === rhs.revision && areAdjacentIdRanges(lhs.localId, lhsCount, rhs.localId)
+		lhs.revision === rhs.revision &&
+		areAdjacentIdRanges(lhs.localId, lhsCount, rhs.localId)
 	);
 }
 
@@ -620,7 +679,10 @@ function areMergeableCellIds(
  * @returns `lhs` iff the function was able to mutate `lhs` to include the effects of `rhs`.
  * When `undefined` is returned, `lhs` is left untouched.
  */
-export function tryMergeMarks(lhs: Mark, rhs: Readonly<Mark>): Mark | undefined {
+export function tryMergeMarks(
+	lhs: Mark,
+	rhs: Readonly<Mark>,
+): Mark | undefined {
 	if (rhs.type !== lhs.type) {
 		return undefined;
 	}
@@ -656,8 +718,16 @@ function tryMergeEffects(
 
 	if (rhs.type === "AttachAndDetach") {
 		const lhsAttachAndDetach = lhs as AttachAndDetach;
-		const attach = tryMergeEffects(lhsAttachAndDetach.attach, rhs.attach, lhsCount);
-		const detach = tryMergeEffects(lhsAttachAndDetach.detach, rhs.detach, lhsCount);
+		const attach = tryMergeEffects(
+			lhsAttachAndDetach.attach,
+			rhs.attach,
+			lhsCount,
+		);
+		const detach = tryMergeEffects(
+			lhsAttachAndDetach.detach,
+			rhs.detach,
+			lhsCount,
+		);
 		if (attach === undefined || detach === undefined) {
 			return undefined;
 		}
@@ -670,12 +740,17 @@ function tryMergeEffects(
 	}
 
 	if (
-		(lhs as Partial<HasRevisionTag>).revision !== (rhs as Partial<HasRevisionTag>).revision
+		(lhs as Partial<HasRevisionTag>).revision !==
+		(rhs as Partial<HasRevisionTag>).revision
 	) {
 		return undefined;
 	}
 
-	if (isDetach(lhs) && isDetach(rhs) && !haveMergeableIdOverrides(lhs, lhsCount, rhs)) {
+	if (
+		isDetach(lhs) &&
+		isDetach(rhs) &&
+		!haveMergeableIdOverrides(lhs, lhsCount, rhs)
+	) {
 		return undefined;
 	}
 
@@ -685,7 +760,11 @@ function tryMergeEffects(
 			const lhsMoveIn = lhs as MoveIn;
 			if (
 				(lhsMoveIn.id as number) + lhsCount === rhs.id &&
-				areMergeableChangeAtoms(lhsMoveIn.finalEndpoint, lhsCount, rhs.finalEndpoint)
+				areMergeableChangeAtoms(
+					lhsMoveIn.finalEndpoint,
+					lhsCount,
+					rhs.finalEndpoint,
+				)
 			) {
 				return lhsMoveIn;
 			}
@@ -713,7 +792,11 @@ function tryMergeEffects(
 			if (
 				(lhsMoveOut.id as number) + lhsCount === rhs.id &&
 				haveMergeableIdOverrides(lhsMoveOut, lhsCount, rhs) &&
-				areMergeableChangeAtoms(lhsMoveOut.finalEndpoint, lhsCount, rhs.finalEndpoint)
+				areMergeableChangeAtoms(
+					lhsMoveOut.finalEndpoint,
+					lhsCount,
+					rhs.finalEndpoint,
+				)
 			) {
 				return lhsMoveOut;
 			}
@@ -745,7 +828,10 @@ function tryMergeEffects(
  * @returns A pair of marks equivalent to the original `mark`
  * such that the first returned mark has input length `length`.
  */
-export function splitMark<TMark extends Mark>(mark: TMark, length: number): [TMark, TMark] {
+export function splitMark<TMark extends Mark>(
+	mark: TMark,
+	length: number,
+): [TMark, TMark] {
 	const markLength = mark.count;
 	const remainder = markLength - length;
 	if (length < 1 || remainder < 1) {
@@ -781,7 +867,10 @@ export function splitMarkEffect<TEffect extends MarkEffect>(
 			return [effect1, effect2];
 		}
 		case "MoveIn": {
-			const effect2: TEffect = { ...effect, id: (effect.id as number) + length };
+			const effect2: TEffect = {
+				...effect,
+				id: (effect.id as number) + length,
+			};
 			const move2 = effect2 as MoveIn;
 			if (move2.finalEndpoint !== undefined) {
 				move2.finalEndpoint = splitDetachEvent(move2.finalEndpoint, length);
@@ -794,7 +883,10 @@ export function splitMarkEffect<TEffect extends MarkEffect>(
 			const effect2 = { ...effect, id: id2 };
 			const effect2Remove = effect2 as Mutable<Remove>;
 			if (effect2Remove.idOverride !== undefined) {
-				effect2Remove.idOverride = splitDetachEvent(effect2Remove.idOverride, length);
+				effect2Remove.idOverride = splitDetachEvent(
+					effect2Remove.idOverride,
+					length,
+				);
 			}
 			return [effect1, effect2];
 		}
@@ -803,7 +895,10 @@ export function splitMarkEffect<TEffect extends MarkEffect>(
 			const effect2 = { ...effect };
 			const effect2Rename = effect2 as Mutable<Rename>;
 			if (effect2Rename.idOverride !== undefined) {
-				effect2Rename.idOverride = splitDetachEvent(effect2Rename.idOverride, length);
+				effect2Rename.idOverride = splitDetachEvent(
+					effect2Rename.idOverride,
+					length,
+				);
 			}
 			return [effect1, effect2];
 		}
@@ -847,7 +942,10 @@ export function splitMarkEffect<TEffect extends MarkEffect>(
 }
 
 function splitDetachEvent(detachEvent: CellId, length: number): CellId {
-	return { ...detachEvent, localId: brand((detachEvent.localId as number) + length) };
+	return {
+		...detachEvent,
+		localId: brand((detachEvent.localId as number) + length),
+	};
 }
 
 // TODO: Refactor MarkEffect into a field of CellMark so this function isn't necessary.
@@ -871,10 +969,10 @@ export function omitMarkEffect(mark: CellMark<unknown>): CellMark<NoopMark> {
 	return noopMark;
 }
 
-export function withNodeChange<TMark extends CellMark<TKind>, TKind extends MarkEffect>(
-	mark: TMark,
-	changes: NodeId | undefined,
-): TMark {
+export function withNodeChange<
+	TMark extends CellMark<TKind>,
+	TKind extends MarkEffect,
+>(mark: TMark, changes: NodeId | undefined): TMark {
 	const newMark = { ...mark };
 	if (changes !== undefined) {
 		newMark.changes = changes;
@@ -923,7 +1021,9 @@ function addRevision(effect: MarkEffect, revision: RevisionTag): void {
 }
 
 export function getEndpoint(effect: MoveMarkEffect): ChangeAtomId {
-	return effect.finalEndpoint ?? { revision: effect.revision, localId: effect.id };
+	return (
+		effect.finalEndpoint ?? { revision: effect.revision, localId: effect.id }
+	);
 }
 
 export function getCrossFieldKeys(change: Changeset): CrossFieldKeyRange[] {

@@ -154,7 +154,9 @@ export class Timer implements ITimer {
 		if (this.runningState) {
 			const duration = ms ?? this.runningState.intendedDuration;
 			const handlerToUse =
-				handler ?? this.runningState.restart?.handler ?? this.runningState.handler;
+				handler ??
+				this.runningState.restart?.handler ??
+				this.runningState.handler;
 			const remainingTime = this.calculateRemainingTime(this.runningState);
 
 			if (duration < remainingTime) {
@@ -181,7 +183,11 @@ export class Timer implements ITimer {
 		}
 	}
 
-	private startCore(duration: number, handler: () => void, intendedDuration: number): void {
+	private startCore(
+		duration: number,
+		handler: () => void,
+		intendedDuration: number,
+	): void {
 		this.clear();
 		this.runningState = {
 			startTick: this.getCurrentTick(),
@@ -272,16 +278,24 @@ export class PromiseTimer implements IPromiseTimer {
 	}
 
 	public constructor(defaultTimeout: number, defaultHandler: () => void) {
-		this.timer = new Timer(defaultTimeout, () => this.wrapHandler(defaultHandler));
+		this.timer = new Timer(defaultTimeout, () =>
+			this.wrapHandler(defaultHandler),
+		);
 	}
 
 	/**
 	 * {@inheritDoc IPromiseTimer.start}
 	 */
-	public async start(ms?: number, handler?: () => void): Promise<IPromiseTimerResult> {
+	public async start(
+		ms?: number,
+		handler?: () => void,
+	): Promise<IPromiseTimerResult> {
 		this.clear();
 		this.deferred = new Deferred<IPromiseTimerResult>();
-		this.timer.start(ms, handler ? (): void => this.wrapHandler(handler) : undefined);
+		this.timer.start(
+			ms,
+			handler ? (): void => this.wrapHandler(handler) : undefined,
+		);
 		return this.deferred.promise;
 	}
 

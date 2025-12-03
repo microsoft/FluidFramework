@@ -12,63 +12,59 @@
  * @packageDocumentation
  */
 
-export {
-	type DifferenceCreate,
-	type DifferenceChange,
-	type DifferenceMove,
-	type DifferenceRemove,
-	type Difference,
-	type ObjectPath,
-	type Options,
-	sharedTreeDiff,
-	createMergableIdDiffSeries,
-	createMergableDiffSeries,
-	SharedTreeBranchManager,
-	sharedTreeTraverse,
-} from "./implicit-strategy/index.js";
-
+export { aiCollab } from "./aiCollab.js";
+export type {
+	AiCollabErrorResponse,
+	AiCollabOptions,
+	AiCollabSuccessResponse,
+	DebugEvent,
+	DebugEventLogHandler,
+	EventFlowDebugEvent,
+	OpenAiClientOptions,
+	TokenLimits,
+	TokenUsage,
+} from "./aiCollabApi.js";
+export type {
+	ArrayRangeRemoveDiff,
+	ArraySingleRemoveDiff,
+	Diff,
+	DiffBase,
+	InsertDiff,
+	ModifyDiff,
+	MoveDiff,
+	MoveRangeDiff,
+	MoveSingleDiff,
+	NodePath,
+	RemoveDiff,
+	RemoveNodeDiff,
+} from "./diffTypes.js";
 export type {
 	ApplyEditFailure,
 	ApplyEditSuccess,
 	CoreEventLoopCompleted,
 	CoreEventLoopStarted,
+	EventFlowDebugName,
+	EventFlowDebugNames,
 	FinalReviewCompleted,
 	FinalReviewStarted,
 	GenerateTreeEditCompleted,
 	GenerateTreeEditStarted,
 	LlmApiCallDebugEvent,
+	LlmTreeEdit,
 	PlanningPromptCompleted,
 	PlanningPromptStarted,
-	LlmTreeEdit,
-	EventFlowDebugName,
-	EventFlowDebugNames,
 } from "./explicit-strategy/index.js";
-
 export {
-	type AiCollabOptions,
-	type AiCollabSuccessResponse,
-	type AiCollabErrorResponse,
-	type TokenUsage,
-	type TokenLimits,
-	type OpenAiClientOptions,
-	type DebugEvent,
-	type DebugEventLogHandler,
-	type EventFlowDebugEvent,
-} from "./aiCollabApi.js";
-
-export {
-	type DiffBase,
-	type Diff,
-	type NodePath,
-	type InsertDiff,
-	type ModifyDiff,
-	type RemoveDiff,
-	type RemoveNodeDiff,
-	type ArraySingleRemoveDiff,
-	type ArrayRangeRemoveDiff,
-	type MoveDiff,
-	type MoveSingleDiff,
-	type MoveRangeDiff,
-} from "./diffTypes.js";
-
-export { aiCollab } from "./aiCollab.js";
+	createMergableDiffSeries,
+	createMergableIdDiffSeries,
+	type Difference,
+	type DifferenceChange,
+	type DifferenceCreate,
+	type DifferenceMove,
+	type DifferenceRemove,
+	type ObjectPath,
+	type Options,
+	SharedTreeBranchManager,
+	sharedTreeDiff,
+	sharedTreeTraverse,
+} from "./implicit-strategy/index.js";

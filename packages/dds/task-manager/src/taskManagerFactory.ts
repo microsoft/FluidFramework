@@ -6,8 +6,8 @@
 import type {
 	IChannelAttributes,
 	IChannelFactory,
-	IFluidDataStoreRuntime,
 	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
@@ -19,7 +19,8 @@ import { TaskManagerClass } from "./taskManager.js";
  * The factory that defines the task queue
  */
 export class TaskManagerFactory implements IChannelFactory<ITaskManager> {
-	public static readonly Type = "https://graph.microsoft.com/types/task-manager";
+	public static readonly Type =
+		"https://graph.microsoft.com/types/task-manager";
 
 	public static readonly Attributes: IChannelAttributes = {
 		type: TaskManagerFactory.Type,

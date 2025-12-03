@@ -6,14 +6,17 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { IDiceRoller } from "../dataObject.js";
+import type { IDiceRoller } from "../dataObject.js";
 
 /**
  * Render Dice into a given HTMLElement as a text character, with a button to roll it.
  * @param diceRoller - The dice roller to be rendered
  * @param div - The HTMLElement to render into
  */
-export function reactRenderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement) {
+export function reactRenderDiceRoller(
+	diceRoller: IDiceRoller,
+	div: HTMLDivElement,
+) {
 	ReactDOM.render(<DiceRollerView model={diceRoller} />, div);
 }
 

@@ -7,9 +7,9 @@ import { strict as assert } from "node:assert";
 
 import {
 	type AnnouncedVisitor,
+	combineVisitors,
 	type DeltaVisitor,
 	type FieldKey,
-	combineVisitors,
 } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 
@@ -55,7 +55,10 @@ class LoggingVisitor implements DeltaVisitor {
 	}
 }
 
-class LoggingAnnouncedVisitor extends LoggingVisitor implements AnnouncedVisitor {
+class LoggingAnnouncedVisitor
+	extends LoggingVisitor
+	implements AnnouncedVisitor
+{
 	public readonly type = "Announced";
 	public afterCreate(): void {
 		this.log("afterCreate");

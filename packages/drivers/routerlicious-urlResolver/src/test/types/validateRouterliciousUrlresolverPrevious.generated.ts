@@ -11,12 +11,23 @@
  * Current version: 2.74.0
  */
 
-import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
+import type {
+	FullType,
+	MinimalType,
+	requireAssignableTo,
+	TypeOnly,
+} from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/routerlicious-urlresolver-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> =
+	| TypeOnly<T>
+	| MinimalType<T>
+	| FullType<T>
+	| typeof old
+	| typeof current
+	| requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -25,7 +36,11 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_RouterliciousUrlResolver": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_RouterliciousUrlResolver = requireAssignableTo<TypeOnly<old.RouterliciousUrlResolver>, TypeOnly<current.RouterliciousUrlResolver>>
+declare type old_as_current_for_Class_RouterliciousUrlResolver =
+	requireAssignableTo<
+		TypeOnly<old.RouterliciousUrlResolver>,
+		TypeOnly<current.RouterliciousUrlResolver>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -34,7 +49,11 @@ declare type old_as_current_for_Class_RouterliciousUrlResolver = requireAssignab
  * typeValidation.broken:
  * "Class_RouterliciousUrlResolver": {"backCompat": false}
  */
-declare type current_as_old_for_Class_RouterliciousUrlResolver = requireAssignableTo<TypeOnly<current.RouterliciousUrlResolver>, TypeOnly<old.RouterliciousUrlResolver>>
+declare type current_as_old_for_Class_RouterliciousUrlResolver =
+	requireAssignableTo<
+		TypeOnly<current.RouterliciousUrlResolver>,
+		TypeOnly<old.RouterliciousUrlResolver>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -43,7 +62,11 @@ declare type current_as_old_for_Class_RouterliciousUrlResolver = requireAssignab
  * typeValidation.broken:
  * "ClassStatics_RouterliciousUrlResolver": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_RouterliciousUrlResolver = requireAssignableTo<TypeOnly<typeof current.RouterliciousUrlResolver>, TypeOnly<typeof old.RouterliciousUrlResolver>>
+declare type current_as_old_for_ClassStatics_RouterliciousUrlResolver =
+	requireAssignableTo<
+		TypeOnly<typeof current.RouterliciousUrlResolver>,
+		TypeOnly<typeof old.RouterliciousUrlResolver>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -52,7 +75,10 @@ declare type current_as_old_for_ClassStatics_RouterliciousUrlResolver = requireA
  * typeValidation.broken:
  * "Interface_IAlfredUser": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IAlfredUser = requireAssignableTo<TypeOnly<old.IAlfredUser>, TypeOnly<current.IAlfredUser>>
+declare type old_as_current_for_Interface_IAlfredUser = requireAssignableTo<
+	TypeOnly<old.IAlfredUser>,
+	TypeOnly<current.IAlfredUser>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -61,7 +87,10 @@ declare type old_as_current_for_Interface_IAlfredUser = requireAssignableTo<Type
  * typeValidation.broken:
  * "Interface_IAlfredUser": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IAlfredUser = requireAssignableTo<TypeOnly<current.IAlfredUser>, TypeOnly<old.IAlfredUser>>
+declare type current_as_old_for_Interface_IAlfredUser = requireAssignableTo<
+	TypeOnly<current.IAlfredUser>,
+	TypeOnly<old.IAlfredUser>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -70,7 +99,10 @@ declare type current_as_old_for_Interface_IAlfredUser = requireAssignableTo<Type
  * typeValidation.broken:
  * "Interface_IConfig": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IConfig = requireAssignableTo<TypeOnly<old.IConfig>, TypeOnly<current.IConfig>>
+declare type old_as_current_for_Interface_IConfig = requireAssignableTo<
+	TypeOnly<old.IConfig>,
+	TypeOnly<current.IConfig>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -79,4 +111,7 @@ declare type old_as_current_for_Interface_IConfig = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Interface_IConfig": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IConfig = requireAssignableTo<TypeOnly<current.IConfig>, TypeOnly<old.IConfig>>
+declare type current_as_old_for_Interface_IConfig = requireAssignableTo<
+	TypeOnly<current.IConfig>,
+	TypeOnly<old.IConfig>
+>;

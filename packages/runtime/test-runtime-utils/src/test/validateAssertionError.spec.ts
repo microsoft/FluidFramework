@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict } from "assert";
-
 import { assert, fail } from "@fluidframework/core-utils/internal";
+import { strict } from "assert";
 
 import { shortCodeMap } from "../assertionShortCodesMap.js";
 import { validateAssertionError } from "../validateAssertionError.js";

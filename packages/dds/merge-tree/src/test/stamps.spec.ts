@@ -6,8 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import { UnassignedSequenceNumber } from "../constants.js";
-import * as opstampUtils from "../stamps.js";
 import type { OperationStamp } from "../stamps.js";
+import * as opstampUtils from "../stamps.js";
 
 function lessThan(a: OperationStamp, b: OperationStamp): boolean {
 	const result = opstampUtils.lessThan(a, b);
@@ -50,8 +50,16 @@ describe("opstampUtils", () => {
 	const acked1: OperationStamp = { clientId: 1, seq: 1 };
 	const acked2: OperationStamp = { clientId: 2, seq: 2 };
 	const acked3: OperationStamp = { clientId: 1, seq: 3 };
-	const local1: OperationStamp = { clientId: 1, seq: UnassignedSequenceNumber, localSeq: 1 };
-	const local2: OperationStamp = { clientId: 1, seq: UnassignedSequenceNumber, localSeq: 2 };
+	const local1: OperationStamp = {
+		clientId: 1,
+		seq: UnassignedSequenceNumber,
+		localSeq: 1,
+	};
+	const local2: OperationStamp = {
+		clientId: 1,
+		seq: UnassignedSequenceNumber,
+		localSeq: 2,
+	};
 	describe("equality", () => {
 		it("returns true for reference equal stamps", () => {
 			for (const stamp of [acked1, acked2, acked3, local1, local2]) {

@@ -4,14 +4,14 @@
  */
 
 import type { ChangeAtomId, RevisionTag } from "../../../core/index.js";
-import { mintRevisionTag } from "../../utils.js";
-import { type Mutable, brand } from "../../../util/index.js";
 import {
 	type OptionalChangeset,
 	optionalChangeRebaser,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
-import { Change, assertEqual } from "./optionalFieldUtils.js";
+import { brand, type Mutable } from "../../../util/index.js";
+import { mintRevisionTag } from "../../utils.js";
+import { assertEqual, Change } from "./optionalFieldUtils.js";
 
 const tag0: RevisionTag = mintRevisionTag();
 const tag1: RevisionTag = mintRevisionTag();
@@ -46,7 +46,11 @@ function runCases(outputRev: RevisionTag | undefined) {
 	}
 
 	function process(changeset: OptionalChangeset): OptionalChangeset {
-		return optionalChangeRebaser.replaceRevisions(changeset, inputRevs, outputRev);
+		return optionalChangeRebaser.replaceRevisions(
+			changeset,
+			inputRevs,
+			outputRev,
+		);
 	}
 
 	it("moves", () => {
@@ -71,27 +75,53 @@ function runCases(outputRev: RevisionTag | undefined) {
 		assertEqual(process(Change.child(atom1)), Change.child(atomOut1));
 		assertEqual(process(Change.child(atom2)), Change.child(atomOut2));
 		assertEqual(process(Change.child(atom3)), Change.child(atomOut3));
-		assertEqual(process(Change.childAt(atom0, atom0)), Change.childAt(atom0, atom0));
-		assertEqual(process(Change.childAt(atom1, atom1)), Change.childAt(atomOut1, atomOut1));
-		assertEqual(process(Change.childAt(atom2, atom2)), Change.childAt(atomOut2, atomOut2));
-		assertEqual(process(Change.childAt(atom3, atom3)), Change.childAt(atomOut3, atomOut3));
+		assertEqual(
+			process(Change.childAt(atom0, atom0)),
+			Change.childAt(atom0, atom0),
+		);
+		assertEqual(
+			process(Change.childAt(atom1, atom1)),
+			Change.childAt(atomOut1, atomOut1),
+		);
+		assertEqual(
+			process(Change.childAt(atom2, atom2)),
+			Change.childAt(atomOut2, atomOut2),
+		);
+		assertEqual(
+			process(Change.childAt(atom3, atom3)),
+			Change.childAt(atomOut3, atomOut3),
+		);
 	});
 
 	it("replace", () => {
 		assertEqual(
-			process(Change.atOnce(Change.clear("self", atom0), Change.move(atom1, "self"))),
+			process(
+				Change.atOnce(Change.clear("self", atom0), Change.move(atom1, "self")),
+			),
 			Change.atOnce(Change.clear("self", atom0), Change.move(atomOut1, "self")),
 		);
 		assertEqual(
-			process(Change.atOnce(Change.clear("self", atom1), Change.move(atom2, "self"))),
-			Change.atOnce(Change.clear("self", atomOut1), Change.move(atomOut2, "self")),
+			process(
+				Change.atOnce(Change.clear("self", atom1), Change.move(atom2, "self")),
+			),
+			Change.atOnce(
+				Change.clear("self", atomOut1),
+				Change.move(atomOut2, "self"),
+			),
 		);
 		assertEqual(
-			process(Change.atOnce(Change.clear("self", atom2), Change.move(atom3, "self"))),
-			Change.atOnce(Change.clear("self", atomOut3), Change.move(atomOut3, "self")),
+			process(
+				Change.atOnce(Change.clear("self", atom2), Change.move(atom3, "self")),
+			),
+			Change.atOnce(
+				Change.clear("self", atomOut3),
+				Change.move(atomOut3, "self"),
+			),
 		);
 		assertEqual(
-			process(Change.atOnce(Change.clear("self", atom3), Change.move(atom0, "self"))),
+			process(
+				Change.atOnce(Change.clear("self", atom3), Change.move(atom0, "self")),
+			),
 			Change.atOnce(Change.clear("self", atomOut3), Change.move(atom0, "self")),
 		);
 	});

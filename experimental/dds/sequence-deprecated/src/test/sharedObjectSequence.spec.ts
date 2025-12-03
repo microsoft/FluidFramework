@@ -3,20 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
-import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import {
+	type IGCTestProvider,
+	runGCTests,
+} from "@fluid-private/test-dds-utils";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
+import { strict as assert } from "assert";
 
-import { SharedObjectSequenceFactory, type SharedObjectSequence } from "../sequenceFactory.js";
+import {
+	type SharedObjectSequence,
+	SharedObjectSequenceFactory,
+} from "../sequenceFactory.js";
 import { SharedObjectSequenceClass } from "../sharedObjectSequence.js";
 
-function createConnectedSequence(id: string, runtimeFactory: MockContainerRuntimeFactory) {
+function createConnectedSequence(
+	id: string,
+	runtimeFactory: MockContainerRuntimeFactory,
+) {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const sequence = new SharedObjectSequenceClass(
 		dataStoreRuntime,
@@ -35,7 +43,10 @@ function createConnectedSequence(id: string, runtimeFactory: MockContainerRuntim
 
 function createLocalSequence(id: string) {
 	const factory = new SharedObjectSequenceFactory();
-	return factory.create(new MockFluidDataStoreRuntime(), id) as SharedObjectSequence<unknown>;
+	return factory.create(
+		new MockFluidDataStoreRuntime(),
+		id,
+	) as SharedObjectSequence<unknown>;
 }
 
 describe("SharedObjectSequence", () => {
@@ -49,8 +60,14 @@ describe("SharedObjectSequence", () => {
 
 			constructor() {
 				this.containerRuntimeFactory = new MockContainerRuntimeFactory();
-				this.sequence1 = createConnectedSequence("sequence1", this.containerRuntimeFactory);
-				this.sequence2 = createConnectedSequence("sequence2", this.containerRuntimeFactory);
+				this.sequence1 = createConnectedSequence(
+					"sequence1",
+					this.containerRuntimeFactory,
+				);
+				this.sequence2 = createConnectedSequence(
+					"sequence2",
+					this.containerRuntimeFactory,
+				);
 			}
 
 			public get sharedObject() {
@@ -63,8 +80,12 @@ describe("SharedObjectSequence", () => {
 			}
 
 			public async addOutboundRoutes() {
-				const subSequence1 = createLocalSequence(`subSequence-${++this.subSequenceCount}`);
-				const subSequence2 = createLocalSequence(`subSequence-${++this.subSequenceCount}`);
+				const subSequence1 = createLocalSequence(
+					`subSequence-${++this.subSequenceCount}`,
+				);
+				const subSequence2 = createLocalSequence(
+					`subSequence-${++this.subSequenceCount}`,
+				);
 				this.sequence1.insert(this.sequence1.getLength(), [
 					subSequence1.handle,
 					subSequence2.handle,
@@ -77,7 +98,10 @@ describe("SharedObjectSequence", () => {
 			}
 
 			public async deleteOutboundRoutes() {
-				assert(this.sequence1.getLength() > 0, "Route must be added before deleting");
+				assert(
+					this.sequence1.getLength() > 0,
+					"Route must be added before deleting",
+				);
 				const lastElementIndex = this.sequence1.getLength() - 1;
 				// Get the handles that were last added.
 				const deletedHandles = this.sequence1.getRange(
@@ -105,8 +129,12 @@ describe("SharedObjectSequence", () => {
 			}
 
 			public async addNestedHandles() {
-				const subSequence1 = createLocalSequence(`subSequence-${++this.subSequenceCount}`);
-				const subSequence2 = createLocalSequence(`subSequence-${++this.subSequenceCount}`);
+				const subSequence1 = createLocalSequence(
+					`subSequence-${++this.subSequenceCount}`,
+				);
+				const subSequence2 = createLocalSequence(
+					`subSequence-${++this.subSequenceCount}`,
+				);
 				const containingObject = {
 					subSequence1Handle: subSequence1.handle,
 					nestedObj: {

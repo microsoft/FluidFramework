@@ -11,13 +11,16 @@ import type { BrandedType } from "../../../util/index.js";
 
 import {
 	type ChunkDecoder,
-	type StreamCursor,
 	getChecked,
 	readStream,
+	type StreamCursor,
 } from "./chunkCodecUtilities.js";
 import type { IdDecodingContext } from "./chunkDecoding.js";
-import type { EncodedFieldBatchGeneric, IdentifierOrIndex } from "./formatGeneric.js";
 import type { IncrementalDecoder } from "./codecs.js";
+import type {
+	EncodedFieldBatchGeneric,
+	IdentifierOrIndex,
+} from "./formatGeneric.js";
 
 /**
  * General purpose shape based tree decoder which gets its support for specific shapes from the caller.
@@ -32,7 +35,9 @@ export function decode<TEncodedShape extends object, TContext>(
 	batch: EncodedFieldBatchGeneric<TEncodedShape>,
 	rootDecoder: ChunkDecoder,
 ): TreeChunk[] {
-	const decoders = batch.shapes.map((shape) => decoderLibrary.dispatch(shape, context));
+	const decoders = batch.shapes.map((shape) =>
+		decoderLibrary.dispatch(shape, context),
+	);
 	const chunks: TreeChunk[] = [];
 	for (const field of batch.data) {
 		const stream = { data: field, offset: 0 };
@@ -79,10 +84,9 @@ export class DecoderContext<TEncodedShape = unknown> {
 /**
  * Read one identifier from the stream, advancing the stream offset.
  */
-export function readStreamIdentifier<T extends string & BrandedType<string, string>>(
-	stream: StreamCursor,
-	context: DecoderContext,
-): T {
+export function readStreamIdentifier<
+	T extends string & BrandedType<string, string>,
+>(stream: StreamCursor, context: DecoderContext): T {
 	const content = readStream(stream);
 	assert(
 		typeof content === "number" || typeof content === "string",

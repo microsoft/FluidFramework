@@ -6,12 +6,12 @@
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import { type ISequenceIntervalCollection } from "../intervalCollection.js";
+import type { ISequenceIntervalCollection } from "../intervalCollection.js";
 import {
 	createOverlappingIntervalsIndex,
 	type ISequenceOverlappingIntervalsIndex,
 } from "../intervalIndex/index.js";
-import { SharedString, SharedStringFactory } from "../sequenceFactory.js";
+import { type SharedString, SharedStringFactory } from "../sequenceFactory.js";
 
 /**
  * Note: Merge-tree has a number of perf tests for core operations (insert, remove, annotate).
@@ -36,7 +36,10 @@ function runFindOverlappingIntervalsBenchmark({
 	let overlappingIntervalsIndex: ISequenceOverlappingIntervalsIndex;
 
 	const setupSharedString = () => {
-		sharedString = new SharedStringFactory().create(new MockFluidDataStoreRuntime(), "id");
+		sharedString = new SharedStringFactory().create(
+			new MockFluidDataStoreRuntime(),
+			"id",
+		);
 		for (let i = 0; i < segmentCount; i++) {
 			sharedString.insertText(0, "a".repeat(segmentLength));
 			if (i % 2 === 0) {
@@ -80,7 +83,10 @@ function runFindOverlappingIntervalsBenchmark({
 		benchmarkFn: () => {
 			const start = (segmentLength * segmentCount) / 2;
 			const end = start + segmentLength;
-			for (const interval of overlappingIntervalsIndex.findOverlappingIntervals(start, end)) {
+			for (const interval of overlappingIntervalsIndex.findOverlappingIntervals(
+				start,
+				end,
+			)) {
 				sharedString.localReferencePositionToPosition(interval.start);
 				sharedString.localReferencePositionToPosition(interval.end);
 			}

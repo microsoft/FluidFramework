@@ -3,18 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
-import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
+import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import { ReferenceType } from "@fluidframework/merge-tree/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
+import { strict as assert } from "assert";
 
-import { SharedString, SharedStringClass } from "../index.js";
+import { type SharedString, SharedStringClass } from "../index.js";
 import { SharedStringFactory } from "../sequenceFactory.js";
 
 function applyOperations(
@@ -121,7 +120,10 @@ describe("SharedString Summary Load", () => {
 
 	it("Validate New Format Load", async () => {
 		const containerRuntimeFactory = new MockContainerRuntimeFactory();
-		const options = { newMergeTreeSnapshotFormat: true, mergeTreeSnapshotChunkSize };
+		const options = {
+			newMergeTreeSnapshotFormat: true,
+			mergeTreeSnapshotChunkSize,
+		};
 		const [remoteSharedString, summaryTree] = generateSummaryTree(
 			containerRuntimeFactory,
 			options,

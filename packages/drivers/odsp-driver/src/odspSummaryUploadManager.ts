@@ -7,8 +7,8 @@ import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	type ISummaryTree,
-	SummaryType,
 	type SummaryObject,
+	SummaryType,
 } from "@fluidframework/driver-definitions";
 import type { ISummaryContext } from "@fluidframework/driver-definitions/internal";
 import {
@@ -18,9 +18,9 @@ import {
 import type { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type ITelemetryLoggerExt,
+	loggerToMonitoringContext,
 	type MonitoringContext,
 	PerformanceEvent,
-	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type {
@@ -101,7 +101,10 @@ export class OdspSummaryUploadManager {
 			sequenceNumber: referenceSequenceNumber,
 			// no ack handle implies this is initial summary after empty file creation.
 			// send container payload so server will use it without a summary op
-			type: containsProtocolTree || parentHandle === undefined ? "container" : "channel",
+			type:
+				containsProtocolTree || parentHandle === undefined
+					? "container"
+					: "channel",
 		};
 
 		return getWithRetryForTokenRefresh(async (options) => {
@@ -114,13 +117,15 @@ export class OdspSummaryUploadManager {
 
 			const headers = getHeadersWithAuth(authHeader);
 			headers["Content-Type"] = "application/json";
-			const relayServiceTenantAndSessionId = this.relayServiceTenantAndSessionId();
+			const relayServiceTenantAndSessionId =
+				this.relayServiceTenantAndSessionId();
 			// This would be undefined in case of summary is uploaded in detached container with attachment
 			// blobs flow where summary is uploaded without connecting to push.
 			if (relayServiceTenantAndSessionId !== undefined) {
-				headers["If-Match"] = `fluid:sessionid=${relayServiceTenantAndSessionId}${
-					parentHandle ? `;containerid=${parentHandle}` : ""
-				}`;
+				headers["If-Match"] =
+					`fluid:sessionid=${relayServiceTenantAndSessionId}${
+						parentHandle ? `;containerid=${parentHandle}` : ""
+					}`;
 			}
 
 			const postBody = JSON.stringify(snapshot);
@@ -138,15 +143,16 @@ export class OdspSummaryUploadManager {
 					type: snapshot.type,
 				},
 				async () => {
-					const response = await this.epochTracker.fetchAndParseAsJSON<IWriteSummaryResponse>(
-						url,
-						{
-							body: postBody,
-							headers,
-							method: "POST",
-						},
-						"uploadSummary",
-					);
+					const response =
+						await this.epochTracker.fetchAndParseAsJSON<IWriteSummaryResponse>(
+							url,
+							{
+								body: postBody,
+								headers,
+								method: "POST",
+							},
+							"uploadSummary",
+						);
 					return response.content;
 				},
 			);
@@ -202,7 +208,9 @@ export class OdspSummaryUploadManager {
 						rootNodeName,
 					);
 					value = result.snapshotTree;
-					unreferenced = markUnreferencedNodes ? summaryObject.unreferenced : undefined;
+					unreferenced = markUnreferencedNodes
+						? summaryObject.unreferenced
+						: undefined;
 					groupId = summaryObject.groupId;
 					blobs += result.blobs;
 					break;
@@ -225,7 +233,9 @@ export class OdspSummaryUploadManager {
 				}
 				case SummaryType.Handle: {
 					if (!parentHandle) {
-						throw new Error("Parent summary does not exist to reference by handle.");
+						throw new Error(
+							"Parent summary does not exist to reference by handle.",
+						);
 					}
 					let handlePath = summaryObject.handle;
 					if (handlePath.length > 0 && !handlePath.startsWith("/")) {

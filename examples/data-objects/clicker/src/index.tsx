@@ -5,7 +5,7 @@
 
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
-import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/legacy";
 import { TaskManager } from "@fluidframework/task-manager/legacy";
 import React from "react";
@@ -41,9 +41,11 @@ export class Clicker extends DataObject<{ Events: IClickerEvents }> {
 	}
 
 	protected async hasInitialized() {
-		const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
+		const counterHandle =
+			this.root.get<IFluidHandle<SharedCounter>>(counterKey);
 		this._counter = await counterHandle?.get();
-		const taskManagerHandle = this.root.get<IFluidHandle<TaskManager>>(taskManagerKey);
+		const taskManagerHandle =
+			this.root.get<IFluidHandle<TaskManager>>(taskManagerKey);
 		this._taskManager = await taskManagerHandle?.get();
 
 		this.counter.on("incremented", () => {
@@ -106,7 +108,10 @@ export interface ClickerState {
 }
 
 /* eslint-disable react/prop-types -- TypeScript interfaces provide compile-time prop validation */
-export class ClickerReactView extends React.Component<ClickerProps, ClickerState> {
+export class ClickerReactView extends React.Component<
+	ClickerProps,
+	ClickerState
+> {
 	constructor(props: ClickerProps) {
 		super(props);
 
@@ -124,7 +129,10 @@ export class ClickerReactView extends React.Component<ClickerProps, ClickerState
 	render() {
 		return (
 			<div>
-				<span className="clicker-value-class" id={`clicker-value-${Date.now().toString()}`}>
+				<span
+					className="clicker-value-class"
+					id={`clicker-value-${Date.now().toString()}`}
+				>
 					{this.state.value}
 				</span>
 				<button
@@ -148,7 +156,9 @@ export const ClickerInstantiationFactory = new DataObjectFactory({
 	sharedObjects: [SharedCounter.getFactory(), TaskManager.getFactory()],
 });
 
-const clickerViewCallback = (clicker: Clicker) => <ClickerReactView clicker={clicker} />;
+const clickerViewCallback = (clicker: Clicker) => (
+	<ClickerReactView clicker={clicker} />
+);
 
 export const fluidExport = new ContainerViewRuntimeFactory<Clicker>(
 	ClickerInstantiationFactory,

@@ -11,9 +11,9 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules -- #26987: `local-driver` internal LocalSessionStorageDbFactory used in examples
 import { LocalSessionStorageDbFactory } from "@fluidframework/local-driver/internal";
 import {
+	createLocalResolverCreateNewRequest,
 	LocalDocumentServiceFactory,
 	LocalResolver,
-	createLocalResolverCreateNewRequest,
 } from "@fluidframework/local-driver/legacy";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
@@ -36,14 +36,20 @@ const updateTabForId = (id: string) => {
 };
 
 const urlResolver = new LocalResolver();
-const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
-const codeLoader = new StaticCodeLoader(new GroceryListContainerRuntimeFactory());
+const localServer = LocalDeltaConnectionServer.create(
+	new LocalSessionStorageDbFactory(),
+);
+const codeLoader = new StaticCodeLoader(
+	new GroceryListContainerRuntimeFactory(),
+);
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-export async function createContainerAndRenderInElement(element: HTMLDivElement) {
+export async function createContainerAndRenderInElement(
+	element: HTMLDivElement,
+) {
 	let id: string;
 	let groceryList: ISuggestionGroceryList;
 

@@ -4,6 +4,7 @@
  */
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	AnchorSet,
 	type DeltaDetachedNodeId,
@@ -15,21 +16,20 @@ import {
 	visitDelta,
 } from "../core/index.js";
 import {
-	type TreeChunk,
 	chunkTree,
 	defaultChunkPolicy,
 	intoDelta,
 	relevantRemovedRoots,
+	type TreeChunk,
 	updateRefreshers as updateDataChangeRefreshers,
 } from "../feature-libraries/index.js";
-import { disposeSymbol } from "../util/index.js";
-import { updateRefreshers } from "./sharedTreeChangeFamily.js";
-import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type {
 	ChangeEnricherMutableCheckout,
 	ChangeEnricherReadonlyCheckout,
 } from "../shared-tree-core/index.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { disposeSymbol } from "../util/index.js";
+import { updateRefreshers } from "./sharedTreeChangeFamily.js";
+import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 
 export class SharedTreeReadonlyChangeEnricher
 	implements ChangeEnricherReadonlyCheckout<SharedTreeChange>
@@ -65,7 +65,9 @@ export class SharedTreeReadonlyChangeEnricher
 		);
 	}
 
-	private readonly getDetachedRoot = (id: DeltaDetachedNodeId): TreeChunk | undefined => {
+	private readonly getDetachedRoot = (
+		id: DeltaDetachedNodeId,
+	): TreeChunk | undefined => {
 		const root = this.removedRoots.tryGetEntry(id);
 		if (root !== undefined) {
 			const cursor = this.forest.getCursorAboveDetachedFields();
@@ -85,12 +87,17 @@ export class SharedTreeMutableChangeEnricher
 	extends SharedTreeReadonlyChangeEnricher
 	implements ChangeEnricherMutableCheckout<SharedTreeChange>
 {
-	public applyTipChange(change: SharedTreeChange, revision?: RevisionTag): void {
+	public applyTipChange(
+		change: SharedTreeChange,
+		revision?: RevisionTag,
+	): void {
 		for (const dataOrSchemaChange of change.changes) {
 			const type = dataOrSchemaChange.type;
 			switch (type) {
 				case "data": {
-					const delta = intoDelta(tagChange(dataOrSchemaChange.innerChange, revision));
+					const delta = intoDelta(
+						tagChange(dataOrSchemaChange.innerChange, revision),
+					);
 					const visitor = this.forest.acquireVisitor();
 					visitDelta(delta, visitor, this.removedRoots, revision);
 					visitor.free();

@@ -8,7 +8,10 @@
  */
 
 import { TypeIdHelper } from "../helpers/typeidHelper.js";
-import { type PropertySchema, TemplateValidator } from "../templateValidator.js";
+import {
+	type PropertySchema,
+	TemplateValidator,
+} from "../templateValidator.js";
 import type { SchemaValidationResult } from "../validationResultBuilder.js";
 
 export class SchemaValidator {
@@ -66,7 +69,11 @@ export class SchemaValidator {
 			}, 5);
 		});
 
-	getAllParentsForTemplate(in_typeid: string, out_parents, in_includeBaseProperty) {
+	getAllParentsForTemplate(
+		in_typeid: string,
+		out_parents,
+		in_includeBaseProperty,
+	) {
 		if (TypeIdHelper.isPrimitiveType(in_typeid)) {
 			// Everything inherits from BaseProperty.
 			if (in_includeBaseProperty) {
@@ -128,23 +135,23 @@ export class SchemaValidator {
 		in_skipSemver = in_skipSemver || false;
 
 		if (in_async) {
-			let options = {
+			const options = {
 				inheritsFromAsync: this.inheritsFromAsync as any,
 				hasSchemaAsync: this.hasSchemaAsync as any,
 				skipSemver: in_skipSemver,
 				allowDraft: in_allowDraft,
 			};
-			let templateValidator = new TemplateValidator(options);
+			const templateValidator = new TemplateValidator(options);
 
 			return templateValidator.validateAsync(in_schema, in_previousSchema);
 		} else {
-			let options = {
+			const options = {
 				inheritsFrom: this.inheritsFrom as any,
 				hasSchema: this.hasSchema as any,
 				skipSemver: in_skipSemver,
 				allowDraft: in_allowDraft,
 			};
-			let templateValidator = new TemplateValidator(options);
+			const templateValidator = new TemplateValidator(options);
 
 			return templateValidator.validate(in_schema, in_previousSchema);
 		}

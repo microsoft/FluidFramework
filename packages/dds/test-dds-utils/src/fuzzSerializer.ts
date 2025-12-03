@@ -9,8 +9,8 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	isSerializedHandle,
 	type ISerializedHandle,
+	isSerializedHandle,
 	RemoteFluidObjectHandle,
 } from "@fluidframework/runtime-utils/internal";
 import {

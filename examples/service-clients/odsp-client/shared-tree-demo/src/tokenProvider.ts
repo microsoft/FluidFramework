@@ -4,7 +4,10 @@
  */
 
 import { PublicClientApplication } from "@azure/msal-browser";
-import type { IOdspTokenProvider, TokenResponse } from "@fluidframework/odsp-client/beta";
+import type {
+	IOdspTokenProvider,
+	TokenResponse,
+} from "@fluidframework/odsp-client/beta";
 
 // Helper function to authenticate the user
 export async function createMsalInstance(): Promise<PublicClientApplication> {
@@ -37,10 +40,16 @@ export async function createMsalInstance(): Promise<PublicClientApplication> {
 }
 
 export class OdspTestTokenProvider implements IOdspTokenProvider {
-	private readonly msalInstance: Promise<PublicClientApplication> = createMsalInstance();
+	private readonly msalInstance: Promise<PublicClientApplication> =
+		createMsalInstance();
 
-	public async fetchWebsocketToken(siteUrl: string, refresh: boolean): Promise<TokenResponse> {
-		const pushScope = ["offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All"];
+	public async fetchWebsocketToken(
+		siteUrl: string,
+		refresh: boolean,
+	): Promise<TokenResponse> {
+		const pushScope = [
+			"offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All",
+		];
 		const token = await this.fetchTokens(pushScope);
 		return {
 			fromCache: true,
@@ -48,7 +57,10 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 		};
 	}
 
-	public async fetchStorageToken(siteUrl: string, refresh: boolean): Promise<TokenResponse> {
+	public async fetchStorageToken(
+		siteUrl: string,
+		refresh: boolean,
+	): Promise<TokenResponse> {
 		const storageScope = [`${siteUrl}/Container.Selected`];
 
 		const token = await this.fetchTokens(storageScope);

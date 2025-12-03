@@ -3,21 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
-import { IClient } from "@fluidframework/driver-definitions";
+import type { IClient } from "@fluidframework/driver-definitions";
 import {
 	DriverErrorTypes,
-	IResolvedUrl,
 	type IAnyDriverError,
+	type IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
+import { strict as assert } from "assert";
 import { stub } from "sinon";
 import type { Socket } from "socket.io-client";
 
 import { R11sServiceClusterDrainingErrorCode } from "../contracts.js";
 import { DefaultTokenProvider } from "../defaultTokenProvider.js";
-import { DocumentService } from "../documentService.js";
+import type { DocumentService } from "../documentService.js";
 import { RouterliciousDocumentServiceFactory } from "../documentServiceFactory.js";
 import { RouterliciousErrorTypes } from "../errorUtils.js";
 import * as socketModule from "../socketModule.js";
@@ -116,9 +115,8 @@ describe("Routerlicious Socket Error Handling", () => {
 	] as const satisfies IErrorScenario[];
 
 	beforeEach(async () => {
-		routerliciousDocumentServiceFactory = new RouterliciousDocumentServiceFactory(
-			new DefaultTokenProvider("jwt"),
-		);
+		routerliciousDocumentServiceFactory =
+			new RouterliciousDocumentServiceFactory(new DefaultTokenProvider("jwt"));
 		resolvedUrl = {
 			type: "fluid",
 			id: "id",
@@ -131,9 +129,10 @@ describe("Routerlicious Socket Error Handling", () => {
 			},
 			tokens: {},
 		};
-		documentService = (await routerliciousDocumentServiceFactory.createDocumentService(
-			resolvedUrl,
-		)) as DocumentService;
+		documentService =
+			(await routerliciousDocumentServiceFactory.createDocumentService(
+				resolvedUrl,
+			)) as DocumentService;
 	});
 
 	describe("on 'connect_document_error'", () => {
@@ -147,7 +146,9 @@ describe("Routerlicious Socket Error Handling", () => {
 				});
 
 				await assert.rejects(
-					mockSocket(socket, async () => documentService.connectToDeltaStream(client)),
+					mockSocket(socket, async () =>
+						documentService.connectToDeltaStream(client),
+					),
 					{
 						errorType: scenario.expectedErrorType,
 						scenarioName: "connect_document_error",
@@ -171,9 +172,11 @@ describe("Routerlicious Socket Error Handling", () => {
 				);
 
 				// Use a promise to deterministically wait for the "disconnect" event.
-				const disconnectPromise = new Promise<IAnyDriverError | undefined>((resolve) => {
-					connection.on("disconnect", resolve);
-				});
+				const disconnectPromise = new Promise<IAnyDriverError | undefined>(
+					(resolve) => {
+						connection.on("disconnect", resolve);
+					},
+				);
 
 				socket.sendErrorEvent(scenario.errorToThrow);
 				const error = await disconnectPromise;
@@ -184,9 +187,15 @@ describe("Routerlicious Socket Error Handling", () => {
 					scenario.expectedErrorType,
 					`Error type should be ${scenario.expectedErrorType}`,
 				);
-				assert.strictEqual(error.scenarioName, "error", "Scenario name should be 'error'");
+				assert.strictEqual(
+					error.scenarioName,
+					"error",
+					"Scenario name should be 'error'",
+				);
 
-				const telemetryProps = isFluidError(error) ? error.getTelemetryProperties() : {};
+				const telemetryProps = isFluidError(error)
+					? error.getTelemetryProperties()
+					: {};
 				assert.strictEqual(
 					telemetryProps.internalErrorCode,
 					scenario.expectedInternalErrorCode,

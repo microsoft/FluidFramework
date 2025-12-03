@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-export { ICaretBounds, ICaretEvent, CaretEventType, caretEnter, caretLeave } from "./caret.js";
+export {
+	CaretEventType,
+	caretEnter,
+	caretLeave,
+	ICaretBounds,
+	ICaretEvent,
+} from "./caret.js";
 export { ICommand } from "./command.js";
 export {
 	Direction,

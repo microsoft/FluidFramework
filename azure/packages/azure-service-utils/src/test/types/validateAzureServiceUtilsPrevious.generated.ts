@@ -12,11 +12,22 @@
  */
 
 import type * as old from "@fluidframework/azure-service-utils-previous/internal";
-import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
+import type {
+	FullType,
+	MinimalType,
+	requireAssignableTo,
+	TypeOnly,
+} from "@fluidframework/build-tools";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> =
+	| TypeOnly<T>
+	| MinimalType<T>
+	| FullType<T>
+	| typeof old
+	| typeof current
+	| requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -25,7 +36,10 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Enum_ScopeType": {"forwardCompat": false}
  */
-declare type old_as_current_for_Enum_ScopeType = requireAssignableTo<TypeOnly<old.ScopeType>, TypeOnly<current.ScopeType>>
+declare type old_as_current_for_Enum_ScopeType = requireAssignableTo<
+	TypeOnly<old.ScopeType>,
+	TypeOnly<current.ScopeType>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -34,7 +48,10 @@ declare type old_as_current_for_Enum_ScopeType = requireAssignableTo<TypeOnly<ol
  * typeValidation.broken:
  * "Enum_ScopeType": {"backCompat": false}
  */
-declare type current_as_old_for_Enum_ScopeType = requireAssignableTo<TypeOnly<current.ScopeType>, TypeOnly<old.ScopeType>>
+declare type current_as_old_for_Enum_ScopeType = requireAssignableTo<
+	TypeOnly<current.ScopeType>,
+	TypeOnly<old.ScopeType>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -43,7 +60,10 @@ declare type current_as_old_for_Enum_ScopeType = requireAssignableTo<TypeOnly<cu
  * typeValidation.broken:
  * "Function_generateToken": {"backCompat": false}
  */
-declare type current_as_old_for_Function_generateToken = requireAssignableTo<TypeOnly<typeof current.generateToken>, TypeOnly<typeof old.generateToken>>
+declare type current_as_old_for_Function_generateToken = requireAssignableTo<
+	TypeOnly<typeof current.generateToken>,
+	TypeOnly<typeof old.generateToken>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -52,7 +72,10 @@ declare type current_as_old_for_Function_generateToken = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Interface_IUser": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IUser = requireAssignableTo<TypeOnly<old.IUser>, TypeOnly<current.IUser>>
+declare type old_as_current_for_Interface_IUser = requireAssignableTo<
+	TypeOnly<old.IUser>,
+	TypeOnly<current.IUser>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -61,4 +84,7 @@ declare type old_as_current_for_Interface_IUser = requireAssignableTo<TypeOnly<o
  * typeValidation.broken:
  * "Interface_IUser": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IUser = requireAssignableTo<TypeOnly<current.IUser>, TypeOnly<old.IUser>>
+declare type current_as_old_for_Interface_IUser = requireAssignableTo<
+	TypeOnly<current.IUser>,
+	TypeOnly<old.IUser>
+>;

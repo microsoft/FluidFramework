@@ -10,31 +10,31 @@ import type {
 } from "@fluidframework/tree";
 import { NodeKind, TreeNode } from "@fluidframework/tree";
 import type {
-	ReadableField,
 	FactoryContentObject,
 	InsertableContent,
+	ReadableField,
 	ReadSchema,
 } from "@fluidframework/tree/alpha";
 import { ObjectNodeSchema, Tree, TreeAlpha } from "@fluidframework/tree/alpha";
 
 import type {
-	SharedTreeChatModel,
-	EditResult,
-	SemanticAgentOptions,
-	Logger,
 	AsynchronousEditor,
 	Context,
+	EditResult,
+	Logger,
+	SemanticAgentOptions,
+	SharedTreeChatModel,
 	SynchronousEditor,
 	ViewOrTree,
 } from "./api.js";
 import { getPrompt, stringifyTree } from "./prompt.js";
 import { Subtree } from "./subtree.js";
 import {
-	llmDefault,
 	findSchemas,
+	isNamedSchema,
+	llmDefault,
 	toErrorString,
 	unqualifySchema,
-	isNamedSchema,
 } from "./utils.js";
 
 /**
@@ -51,7 +51,9 @@ const defaultMaxSequentialEdits = 20;
 export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 	// Converted from ECMAScript private fields (#name) to TypeScript private members for easier debugger inspection.
 	private readonly outerTree: Subtree<TSchema>;
-	private readonly editor: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
+	private readonly editor:
+		| SynchronousEditor<TSchema>
+		| AsynchronousEditor<TSchema>;
 	/**
 	 * Whether or not the outer tree has changed since the last query finished.
 	 */
@@ -117,7 +119,8 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 		// Fork a branch that will live for the lifetime of this query (which can be multiple LLM calls if the there are errors or the LLM decides to take multiple steps to accomplish a task).
 		// The branch will be merged back into the outer branch if and only if the query succeeds.
 		const queryTree = this.outerTree.fork();
-		const maxEditCount = this.options?.maximumSequentialEdits ?? defaultMaxSequentialEdits;
+		const maxEditCount =
+			this.options?.maximumSequentialEdits ?? defaultMaxSequentialEdits;
 		let active = true;
 		let editCount = 0;
 		let rollbackEdits = false;
@@ -175,10 +178,14 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
  * Creates an unhydrated node of the given schema with the given value.
  * @remarks If the schema is an object with {@link llmDefault | default values}, this function populates the node with those defaults.
  */
-function constructTreeNode(schema: TreeNodeSchema, content: FactoryContentObject): TreeNode {
+function constructTreeNode(
+	schema: TreeNodeSchema,
+	content: FactoryContentObject,
+): TreeNode {
 	let toInsert = content;
 	if (schema instanceof ObjectNodeSchema) {
-		const contentWithDefaults: Record<string, InsertableContent | undefined> = {};
+		const contentWithDefaults: Record<string, InsertableContent | undefined> =
+			{};
 		for (const [key, field] of schema.fields) {
 			if (content[key] === undefined) {
 				if (
@@ -216,7 +223,9 @@ async function applyTreeFunction<TSchema extends ImplicitFieldSchema>(
 	logger: Logger | undefined,
 ): Promise<EditResult> {
 	logger?.log(`### Editing Tool Invoked\n\n`);
-	logger?.log(`#### Generated Code\n\n\`\`\`javascript\n${editCode}\n\`\`\`\n\n`);
+	logger?.log(
+		`#### Generated Code\n\n\`\`\`javascript\n${editCode}\n\`\`\`\n\n`,
+	);
 
 	// Fork a branch to edit. If the edit fails or produces an error, we discard this branch, otherwise we merge it.
 	const editTree = tree.fork();
@@ -263,11 +272,16 @@ export function createContext<TSchema extends ImplicitFieldSchema>(
 	const subTree = new Subtree(tree);
 	// Stick the tree schema constructors on an object passed to the function so that the LLM can create new nodes.
 	const create: Record<string, (input: FactoryContentObject) => TreeNode> = {};
-	const is: Record<string, <T extends TreeNode>(input: unknown) => input is T> = {};
-	for (const schema of findSchemas(subTree.schema, (s) => isNamedSchema(s.identifier))) {
+	const is: Record<string, <T extends TreeNode>(input: unknown) => input is T> =
+		{};
+	for (const schema of findSchemas(subTree.schema, (s) =>
+		isNamedSchema(s.identifier),
+	)) {
 		const name = unqualifySchema(schema.identifier);
-		create[name] = (input: FactoryContentObject) => constructTreeNode(schema, input);
-		is[name] = <T extends TreeNode>(input: unknown): input is T => Tree.is(input, schema);
+		create[name] = (input: FactoryContentObject) =>
+			constructTreeNode(schema, input);
+		is[name] = <T extends TreeNode>(input: unknown): input is T =>
+			Tree.is(input, schema);
 	}
 
 	return {

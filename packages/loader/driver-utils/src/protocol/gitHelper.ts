@@ -6,10 +6,10 @@
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	FileMode,
-	IGitTree,
-	ISnapshotTreeEx,
+	type IGitTree,
+	type ISnapshotTreeEx,
+	type SummaryObject,
 	SummaryType,
-	SummaryObject,
 } from "@fluidframework/driver-definitions/internal";
 
 /**
@@ -20,7 +20,8 @@ import {
  * @internal
  */
 export function getGitMode(value: SummaryObject): string {
-	const type = value.type === SummaryType.Handle ? value.handleType : value.type;
+	const type =
+		value.type === SummaryType.Handle ? value.handleType : value.type;
 	switch (type) {
 		case SummaryType.Blob:
 		case SummaryType.Attachment:
@@ -40,7 +41,8 @@ export function getGitMode(value: SummaryObject): string {
  * @internal
  */
 export function getGitType(value: SummaryObject): "blob" | "tree" {
-	const type = value.type === SummaryType.Handle ? value.handleType : value.type;
+	const type =
+		value.type === SummaryType.Handle ? value.handleType : value.type;
 
 	switch (type) {
 		case SummaryType.Blob:
@@ -73,7 +75,9 @@ export function buildGitTreeHierarchy(
 	lookup[""] = root;
 
 	for (const entry of flatTree.tree) {
-		const entryPath = removeAppTreePrefix ? entry.path.replace(/^\.app\//, "") : entry.path;
+		const entryPath = removeAppTreePrefix
+			? entry.path.replace(/^\.app\//, "")
+			: entry.path;
 		const lastIndex = entryPath.lastIndexOf("/");
 		const entryPathDir = entryPath.slice(0, Math.max(0, lastIndex));
 		const entryPathBase = entryPath.slice(lastIndex + 1);

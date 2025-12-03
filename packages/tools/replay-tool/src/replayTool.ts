@@ -22,7 +22,10 @@ const optionsArray = [
 		"--write",
 		"Write out snapshots. Behavior is controlled by --snapfreq & --storageSnapshots",
 	],
-	["--compare", "Compares snapshots to snapshots previously saved on disk. Used in testing"],
+	[
+		"--compare",
+		"Compares snapshots to snapshots previously saved on disk. Used in testing",
+	],
 	"Processing:",
 	["--snapfreq <N>", "A snapshot will be taken after every <N>th op"],
 	[
@@ -76,7 +79,7 @@ class ReplayProcessArgs extends ReplayArgs {
 					i += 1;
 					this.inDirName = this.parseStrArg(i);
 					break;
-				case "--from":
+				case "--from": {
 					i += 1;
 					const from = this.parseStrArg(i);
 
@@ -97,6 +100,7 @@ class ReplayProcessArgs extends ReplayArgs {
 						this.from = paramNumber;
 					}
 					break;
+				}
 				case "--to":
 					i += 1;
 					this.to = this.parseIntArg(i);

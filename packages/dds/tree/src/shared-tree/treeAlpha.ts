@@ -3,93 +3,108 @@
  * Licensed under the MIT License.
  */
 
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	assert,
 	debugAssert,
 	fail,
 	unreachableCase,
 } from "@fluidframework/core-utils/internal";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
-	asIndex,
-	getKernel,
-	TreeNode,
-	type Unhydrated,
-	TreeBeta,
-	tryGetSchema,
-	createFromCursor,
-	FieldKind,
-	normalizeFieldSchema,
-	type ImplicitFieldSchema,
-	type InsertableField,
-	type TreeFieldFromImplicitField,
-	type TreeLeafValue,
-	type UnsafeUnknownSchema,
-	applySchemaToParserOptions,
-	cursorFromVerbose,
-	verboseFromCursor,
-	type TreeEncodingOptions,
-	type VerboseTree,
-	extractPersistedSchema,
-	type TreeBranch,
-	TreeViewConfigurationAlpha,
-	getStoredKey,
-	getPropertyKeyFromStoredKey,
-	treeNodeApi,
-	getIdentifierFromNode,
-	unhydratedFlexTreeFromInsertable,
-	getOrCreateNodeFromInnerNode,
-	getOrCreateNodeFromInnerUnboxedNode,
-	getInnerNode,
-	NodeKind,
-	tryGetTreeNodeForField,
-	isObjectNodeSchema,
-	isTreeNode,
-	toInitialSchema,
-	convertField,
-	toUnhydratedSchema,
-	type TreeParsingOptions,
-	type NodeChangedData,
-	type ConciseTree,
-	importConcise,
-	exportConcise,
-	borrowCursorFromTreeNodeOrValue,
-	contentSchemaSymbol,
-	type TreeNodeSchema,
-} from "../simple-tree/index.js";
-import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
-import {
-	FluidClientVersion,
-	type ICodecOptions,
 	type CodecWriteOptions,
+	FluidClientVersion,
 	FormatValidatorNoOp,
+	type ICodecOptions,
 } from "../codec/index.js";
-import { EmptyKey, type FieldKey, type ITreeCursorSynchronous } from "../core/index.js";
+import {
+	EmptyKey,
+	type FieldKey,
+	type ITreeCursorSynchronous,
+} from "../core/index.js";
 import {
 	cursorForMapTreeField,
 	defaultSchemaPolicy,
-	isTreeValue,
-	makeFieldBatchCodec,
-	mapTreeFromCursor,
-	TreeCompressionStrategy,
 	type FieldBatch,
 	type FieldBatchEncodingContext,
-	type LocalNodeIdentifier,
-	type FlexTreeSequenceField,
 	type FlexTreeNode,
+	type FlexTreeSequenceField,
+	isTreeValue,
+	type LocalNodeIdentifier,
+	makeFieldBatchCodec,
+	mapTreeFromCursor,
 	type Observer,
+	TreeCompressionStrategy,
 	withObservation,
 } from "../feature-libraries/index.js";
 import type { TreeBranchAlpha } from "../simple-tree/index.js";
-import { independentInitializedView, type ViewContent } from "./independentView.js";
-import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
-import { isFluidHandle } from "@fluidframework/runtime-utils";
+import {
+	applySchemaToParserOptions,
+	asIndex,
+	borrowCursorFromTreeNodeOrValue,
+	type ConciseTree,
+	contentSchemaSymbol,
+	convertField,
+	createFromCursor,
+	cursorFromVerbose,
+	exportConcise,
+	extractPersistedSchema,
+	FieldKind,
+	getIdentifierFromNode,
+	getInnerNode,
+	getKernel,
+	getOrCreateNodeFromInnerNode,
+	getOrCreateNodeFromInnerUnboxedNode,
+	getPropertyKeyFromStoredKey,
+	getStoredKey,
+	type ImplicitFieldSchema,
+	type InsertableField,
+	importConcise,
+	isObjectNodeSchema,
+	isTreeNode,
+	type NodeChangedData,
+	NodeKind,
+	normalizeFieldSchema,
+	TreeBeta,
+	type TreeBranch,
+	type TreeEncodingOptions,
+	type TreeFieldFromImplicitField,
+	type TreeLeafValue,
+	TreeNode,
+	type TreeNodeSchema,
+	type TreeParsingOptions,
+	TreeViewConfigurationAlpha,
+	toInitialSchema,
+	toUnhydratedSchema,
+	treeNodeApi,
+	tryGetSchema,
+	tryGetTreeNodeForField,
+	type Unhydrated,
+	type UnsafeUnknownSchema,
+	unhydratedFlexTreeFromInsertable,
+	type VerboseTree,
+	verboseFromCursor,
+} from "../simple-tree/index.js";
+import {
+	brand,
+	extractFromOpaque,
+	type JsonCompatible,
+} from "../util/index.js";
+import {
+	independentInitializedView,
+	type ViewContent,
+} from "./independentView.js";
+import {
+	SchematizingSimpleTreeView,
+	ViewSlot,
+} from "./schematizingTreeView.js";
 
-const identifier: TreeIdentifierUtils = (node: TreeNode): string | undefined => {
+const identifier: TreeIdentifierUtils = (
+	node: TreeNode,
+): string | undefined => {
 	const nodeIdentifier = getIdentifierFromNode(node, "uncompressed");
 	if (typeof nodeIdentifier === "number") {
 		throw new TypeError("identifier should be uncompressed.");
@@ -97,16 +112,23 @@ const identifier: TreeIdentifierUtils = (node: TreeNode): string | undefined => 
 	return nodeIdentifier;
 };
 
-identifier.shorten = (branch: TreeBranch, nodeIdentifier: string): number | undefined => {
-	const nodeKeyManager = (branch as SchematizingSimpleTreeView<ImplicitFieldSchema>)
-		.nodeKeyManager;
+identifier.shorten = (
+	branch: TreeBranch,
+	nodeIdentifier: string,
+): number | undefined => {
+	const nodeKeyManager = (
+		branch as SchematizingSimpleTreeView<ImplicitFieldSchema>
+	).nodeKeyManager;
 	const localNodeKey = nodeKeyManager.tryLocalizeNodeIdentifier(nodeIdentifier);
-	return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : undefined;
+	return localNodeKey !== undefined
+		? extractFromOpaque(localNodeKey)
+		: undefined;
 };
 
 identifier.lengthen = (branch: TreeBranch, nodeIdentifier: number): string => {
-	const nodeKeyManager = (branch as SchematizingSimpleTreeView<ImplicitFieldSchema>)
-		.nodeKeyManager;
+	const nodeKeyManager = (
+		branch as SchematizingSimpleTreeView<ImplicitFieldSchema>
+	).nodeKeyManager;
 	return nodeKeyManager.stabilizeNodeIdentifier(
 		nodeIdentifier as unknown as LocalNodeIdentifier,
 	);
@@ -118,9 +140,12 @@ identifier.getShort = (node: TreeNode): number | undefined => {
 };
 
 identifier.create = (branch: TreeBranch): string => {
-	const nodeKeyManager = (branch as SchematizingSimpleTreeView<ImplicitFieldSchema>)
-		.nodeKeyManager;
-	return nodeKeyManager.stabilizeNodeIdentifier(nodeKeyManager.generateLocalNodeIdentifier());
+	const nodeKeyManager = (
+		branch as SchematizingSimpleTreeView<ImplicitFieldSchema>
+	).nodeKeyManager;
+	return nodeKeyManager.stabilizeNodeIdentifier(
+		nodeKeyManager.generateLocalNodeIdentifier(),
+	);
 };
 
 Object.freeze(identifier);
@@ -255,7 +280,9 @@ export interface TreeAlpha {
 	/**
 	 * {@inheritDoc (TreeBeta:interface).importConcise}
 	 */
-	importConcise<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+	importConcise<
+		const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
+	>(
 		schema: UnsafeUnknownSchema extends TSchema
 			? ImplicitFieldSchema
 			: TSchema & ImplicitFieldSchema,
@@ -271,7 +298,10 @@ export interface TreeAlpha {
 	 * @privateRemarks Note: this was retained on this interface because {@link (TreeAlpha:interface).importConcise} exists.
 	 * It should be removed if/when that is removed from this interface.
 	 */
-	exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
+	exportConcise(
+		node: TreeNode | TreeLeafValue,
+		options?: TreeEncodingOptions,
+	): ConciseTree;
 
 	/**
 	 * {@inheritDoc (TreeBeta:interface).(exportConcise:2)}
@@ -314,7 +344,10 @@ export interface TreeAlpha {
 	 *
 	 * 3. When easy access to the type is desired.
 	 */
-	exportVerbose(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): VerboseTree;
+	exportVerbose(
+		node: TreeNode | TreeLeafValue,
+		options?: TreeEncodingOptions,
+	): VerboseTree;
 
 	/**
 	 * Export the content of the provided `tree` in a compressed JSON compatible format.
@@ -334,7 +367,10 @@ export interface TreeAlpha {
 	 */
 	exportCompressed(
 		tree: TreeNode | TreeLeafValue,
-		options: { idCompressor?: IIdCompressor } & Pick<CodecWriteOptions, "minVersionForCollab">,
+		options: { idCompressor?: IIdCompressor } & Pick<
+			CodecWriteOptions,
+			"minVersionForCollab"
+		>,
 	): JsonCompatible<IFluidHandle>;
 
 	/**
@@ -390,7 +426,10 @@ export interface TreeAlpha {
 	 * @see {@link (TreeAlpha:interface).key2}
 	 * @see {@link (TreeNodeApi:interface).parent}
 	 */
-	child(node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
+	child(
+		node: TreeNode,
+		key: string | number,
+	): TreeNode | TreeLeafValue | undefined;
 
 	/**
 	 * Gets the children of the provided node, paired with their property keys under the node.
@@ -547,10 +586,10 @@ export interface TreeAlpha {
 	 * view.root.pet = pet; // No error - it's a Dog.
 	 * ```
 	 */
-	tagContentSchema<TSchema extends TreeNodeSchema, TContent extends InsertableField<TSchema>>(
-		schema: TSchema,
-		content: TContent,
-	): TContent;
+	tagContentSchema<
+		TSchema extends TreeNodeSchema,
+		TContent extends InsertableField<TSchema>,
+	>(schema: TSchema, content: TContent): TContent;
 }
 
 /**
@@ -666,10 +705,15 @@ class NodeSubscription {
 
 				if (!onlyOnce) {
 					// TODO: better APIS should be provided which make handling this case practical.
-					throw new UsageError("Observation tracking for parents is currently not supported.");
+					throw new UsageError(
+						"Observation tracking for parents is currently not supported.",
+					);
 				}
 
-				const parent = withObservation(undefined, () => node.parentField.parent);
+				const parent = withObservation(
+					undefined,
+					() => node.parentField.parent,
+				);
 
 				if (parent.parent === undefined) {
 					// TODO: better APIS should be provided which make handling this case practical.
@@ -715,7 +759,10 @@ function trackObservations<TResult>(
 		onInvalidation();
 	};
 
-	const { observer, unsubscribe } = NodeSubscription.createObserver(invalidate, onlyOnce);
+	const { observer, unsubscribe } = NodeSubscription.createObserver(
+		invalidate,
+		onlyOnce,
+	);
 	const result = withObservation(observer, trackDuring);
 	observing = false;
 
@@ -782,7 +829,8 @@ export const TreeAlpha: TreeAlpha = {
 			data as InsertableField<UnsafeUnknownSchema>,
 			schema,
 		);
-		const result = mapTree === undefined ? undefined : getOrCreateNodeFromInnerNode(mapTree);
+		const result =
+			mapTree === undefined ? undefined : getOrCreateNodeFromInnerNode(mapTree);
 		return result as Unhydrated<
 			TSchema extends ImplicitFieldSchema
 				? TreeFieldFromImplicitField<TSchema>
@@ -790,7 +838,9 @@ export const TreeAlpha: TreeAlpha = {
 		>;
 	},
 
-	importConcise<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+	importConcise<
+		const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
+	>(
 		schema: UnsafeUnknownSchema extends TSchema
 			? ImplicitFieldSchema
 			: TSchema & ImplicitFieldSchema,
@@ -828,7 +878,10 @@ export const TreeAlpha: TreeAlpha = {
 		);
 	},
 
-	exportVerbose(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): VerboseTree {
+	exportVerbose(
+		node: TreeNode | TreeLeafValue,
+		options?: TreeEncodingOptions,
+	): VerboseTree {
 		if (isTreeValue(node)) {
 			return node;
 		}
@@ -841,7 +894,10 @@ export const TreeAlpha: TreeAlpha = {
 
 	exportCompressed(
 		node: TreeNode | TreeLeafValue,
-		options: { idCompressor?: IIdCompressor } & Pick<CodecWriteOptions, "minVersionForCollab">,
+		options: { idCompressor?: IIdCompressor } & Pick<
+			CodecWriteOptions,
+			"minVersionForCollab"
+		>,
 	): JsonCompatible<IFluidHandle> {
 		const schema = tryGetSchema(node) ?? fail(0xacf /* invalid input */);
 		const codec = makeFieldBatchCodec({
@@ -880,7 +936,11 @@ export const TreeAlpha: TreeAlpha = {
 		const content: ViewContent = {
 			// Always use a v1 schema codec for consistency.
 			// TODO: reevaluate how staged schema should behave in schema import/export APIs before stabilizing this.
-			schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_0, () => true),
+			schema: extractPersistedSchema(
+				config.schema,
+				FluidClientVersion.v2_0,
+				() => true,
+			),
 			tree: compressedData,
 			idCompressor: options.idCompressor ?? createIdCompressor(),
 		};
@@ -911,14 +971,18 @@ export const TreeAlpha: TreeAlpha = {
 	): TreeNode | TreeLeafValue | undefined => {
 		const flexNode = getInnerNode(node);
 		debugAssert(
-			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
+			() =>
+				!flexNode.context.isDisposed() ||
+				"The provided tree node has been disposed.",
 		);
 
 		const schema = treeNodeApi.schema(node);
 
 		switch (schema.kind) {
 			case NodeKind.Array: {
-				const sequence = flexNode.tryGetField(EmptyKey) as FlexTreeSequenceField | undefined;
+				const sequence = flexNode.tryGetField(EmptyKey) as
+					| FlexTreeSequenceField
+					| undefined;
 
 				// Empty sequence - cannot have children.
 				if (sequence === undefined) {
@@ -978,10 +1042,14 @@ export const TreeAlpha: TreeAlpha = {
 		}
 	},
 
-	children(node: TreeNode): [propertyKey: string | number, child: TreeNode | TreeLeafValue][] {
+	children(
+		node: TreeNode,
+	): [propertyKey: string | number, child: TreeNode | TreeLeafValue][] {
 		const flexNode = getInnerNode(node);
 		debugAssert(
-			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
+			() =>
+				!flexNode.context.isDisposed() ||
+				"The provided tree node has been disposed.",
 		);
 
 		const schema = treeNodeApi.schema(node);
@@ -989,14 +1057,19 @@ export const TreeAlpha: TreeAlpha = {
 		const result: [string | number, TreeNode | TreeLeafValue][] = [];
 		switch (schema.kind) {
 			case NodeKind.Array: {
-				const sequence = flexNode.tryGetField(EmptyKey) as FlexTreeSequenceField | undefined;
+				const sequence = flexNode.tryGetField(EmptyKey) as
+					| FlexTreeSequenceField
+					| undefined;
 				if (sequence === undefined) {
 					break;
 				}
 
 				for (let index = 0; index < sequence.length; index++) {
 					const childFlexTree = sequence.at(index);
-					assert(childFlexTree !== undefined, 0xbc4 /* Sequence child was undefined. */);
+					assert(
+						childFlexTree !== undefined,
+						0xbc4 /* Sequence child was undefined. */,
+					);
 					const childTree = getOrCreateNodeFromInnerUnboxedNode(childFlexTree);
 					result.push([index, childTree]);
 				}
@@ -1038,10 +1111,10 @@ export const TreeAlpha: TreeAlpha = {
 		return result;
 	},
 
-	tagContentSchema<TSchema extends TreeNodeSchema, TNode extends InsertableField<TSchema>>(
-		schema: TSchema,
-		node: TNode,
-	): TNode {
+	tagContentSchema<
+		TSchema extends TreeNodeSchema,
+		TNode extends InsertableField<TSchema>,
+	>(schema: TSchema, node: TNode): TNode {
 		if (typeof node === "object" && node !== null && !isFluidHandle(node)) {
 			Reflect.defineProperty(node, contentSchemaSymbol, {
 				configurable: false,

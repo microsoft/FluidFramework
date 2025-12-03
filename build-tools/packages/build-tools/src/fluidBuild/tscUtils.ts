@@ -143,13 +143,15 @@ function toLowerCase(x: string) {
 	return x.toLowerCase();
 }
 // eslint-disable-next-line no-useless-escape
-const fileNameLowerCaseRegExp = /[^\u0130\u0131\u00DFa-z0-9\\/:\-_\. ]+/g;
+const fileNameLowerCaseRegExp = /[^\u0130\u0131\u00DFa-z0-9\\/:\-_. ]+/g;
 
 function createGetCanonicalFileName(tsLib: typeof ts) {
 	return tsLib.sys.useCaseSensitiveFileNames
 		? (x: string) => x
 		: (x: string) =>
-				fileNameLowerCaseRegExp.test(x) ? x.replace(fileNameLowerCaseRegExp, toLowerCase) : x;
+				fileNameLowerCaseRegExp.test(x)
+					? x.replace(fileNameLowerCaseRegExp, toLowerCase)
+					: x;
 }
 
 function createGetSourceFileVersion(tsLib: typeof ts) {
@@ -218,12 +220,18 @@ function createTscUtil(tsLib: typeof ts) {
 			return parsedCommand;
 		},
 
-		findConfigFile: (directory: string, parsedCommand: ts.ParsedCommandLine | undefined) => {
+		findConfigFile: (
+			directory: string,
+			parsedCommand: ts.ParsedCommandLine | undefined,
+		) => {
 			let tsConfigFullPath: string | undefined;
 			const project = parsedCommand?.options.project;
 			if (project !== undefined) {
 				tsConfigFullPath = path.resolve(directory, project);
-				if (fs.existsSync(tsConfigFullPath) && fs.statSync(tsConfigFullPath).isDirectory()) {
+				if (
+					fs.existsSync(tsConfigFullPath) &&
+					fs.statSync(tsConfigFullPath).isDirectory()
+				) {
 					tsConfigFullPath = path.join(tsConfigFullPath, "tsconfig.json");
 				}
 			} else {
@@ -238,7 +246,9 @@ function createTscUtil(tsLib: typeof ts) {
 				} else {
 					// Assume there will be a local tsconfig.json and it is just currently missing.
 					tsConfigFullPath = path.join(directory, "tsconfig.json");
-					console.warn(`Warning: no config file found; assuming ${tsConfigFullPath}`);
+					console.warn(
+						`Warning: no config file found; assuming ${tsConfigFullPath}`,
+					);
 				}
 			}
 			return tsConfigFullPath;

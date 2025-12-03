@@ -11,7 +11,8 @@ import {
 	TextSegment,
 } from "@fluidframework/sequence/legacy";
 import * as monaco from "monaco-editor";
-import React, { useEffect, useRef } from "react";
+import type React from "react";
+import { useEffect, useRef } from "react";
 
 /**
  * Compilation options for Monaco to use on TypeScript
@@ -53,20 +54,27 @@ export interface IMonacoViewProps {
 	sharedString: SharedString;
 }
 
-export const MonacoView: React.FC<IMonacoViewProps> = (props: IMonacoViewProps) => {
+export const MonacoView: React.FC<IMonacoViewProps> = (
+	props: IMonacoViewProps,
+) => {
 	const { sharedString } = props;
 	const viewElementRef = useRef<HTMLDivElement>(null);
 
 	// Should only need to set the compiler options once ever
 	useEffect(() => {
-		monaco.languages.typescript.typescriptDefaults.setCompilerOptions(defaultCompilerOptions);
+		monaco.languages.typescript.typescriptDefaults.setCompilerOptions(
+			defaultCompilerOptions,
+		);
 	}, []);
 
 	// If the sharedString we're using for the model is ever rebound to a different shared string, we need to throw
 	// all the monaco stuff away, recreate it, and reregister all event listeners appropriately.
 	// TODO: There is probably some cleanup that should happen on the monaco resources that we are throwing away.
 	useEffect(() => {
-		const codeModel = monaco.editor.createModel(sharedString.getText(), "typescript");
+		const codeModel = monaco.editor.createModel(
+			sharedString.getText(),
+			"typescript",
+		);
 		const outputModel = monaco.editor.createModel("", "javascript");
 		if (viewElementRef.current === null) {
 			throw new Error("View element div is missing!");
@@ -103,7 +111,10 @@ export const MonacoView: React.FC<IMonacoViewProps> = (props: IMonacoViewProps) 
 						);
 					}
 				} else {
-					sharedString.removeText(change.rangeOffset, change.rangeOffset + change.rangeLength);
+					sharedString.removeText(
+						change.rangeOffset,
+						change.rangeOffset + change.rangeLength,
+					);
 				}
 			}
 		});
@@ -123,9 +134,15 @@ export const MonacoView: React.FC<IMonacoViewProps> = (props: IMonacoViewProps) 
 				 * @param offset1 - Starting offset
 				 * @param offset2 - Ending offset
 				 */
-				const offsetsToRange = (offset1: number, offset2?: number): monaco.Range => {
+				const offsetsToRange = (
+					offset1: number,
+					offset2?: number,
+				): monaco.Range => {
 					const pos1 = codeModel.getPositionAt(offset1);
-					const pos2 = typeof offset2 === "number" ? codeModel.getPositionAt(offset2) : pos1;
+					const pos2 =
+						typeof offset2 === "number"
+							? codeModel.getPositionAt(offset2)
+							: pos1;
 					const range = new monaco.Range(
 						pos1.lineNumber,
 						pos1.column,

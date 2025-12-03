@@ -8,10 +8,10 @@ import { strict as assert } from "node:assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	type GraphCommit,
-	type RevisionTag,
 	findAncestor,
 	findCommonAncestor,
+	type GraphCommit,
+	type RevisionTag,
 	rootFieldKey,
 } from "../../core/index.js";
 import {
@@ -20,12 +20,16 @@ import {
 	type DefaultEditBuilder,
 } from "../../feature-libraries/index.js";
 import {
+	onForkTransitive,
 	SharedTreeBranch,
 	type SharedTreeBranchChange,
-	onForkTransitive,
 } from "../../shared-tree-core/index.js";
 import { brand } from "../../util/index.js";
-import { chunkFromJsonableTrees, failCodecFamily, mintRevisionTag } from "../utils.js";
+import {
+	chunkFromJsonableTrees,
+	failCodecFamily,
+	mintRevisionTag,
+} from "../utils.js";
 
 const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
 
@@ -372,7 +376,11 @@ describe("Branches", () => {
 			revision: nullRevisionTag,
 		};
 
-		const branch = new SharedTreeBranch(initCommit, defaultChangeFamily, mintRevisionTag);
+		const branch = new SharedTreeBranch(
+			initCommit,
+			defaultChangeFamily,
+			mintRevisionTag,
+		);
 		let head = branch.getHead();
 		branch.events.on("beforeChange", (c) => {
 			// Check that the branch head never changes in the "before" event; it should only change after the "after" event.
@@ -394,8 +402,12 @@ describe("Branches", () => {
 
 	/** Apply an arbitrary but unique change to the given branch and return the tag for the new commit */
 	function change(branch: DefaultBranch): RevisionTag {
-		const content = chunkFromJsonableTrees([{ type: brand("TestValue"), value: changeValue }]);
-		branch.editor.valueField({ parent: undefined, field: rootFieldKey }).set(content);
+		const content = chunkFromJsonableTrees([
+			{ type: brand("TestValue"), value: changeValue },
+		]);
+		branch.editor
+			.valueField({ parent: undefined, field: rootFieldKey })
+			.set(content);
 		return branch.getHead().revision;
 	}
 

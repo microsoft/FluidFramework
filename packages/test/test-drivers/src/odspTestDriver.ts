@@ -3,34 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import os from "os";
-
-import { ITestDriver, OdspEndpoint } from "@fluid-internal/test-driver-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
-import {
+import type {
+	ITestDriver,
+	OdspEndpoint,
+} from "@fluid-internal/test-driver-definitions";
+import type { IRequest } from "@fluidframework/core-interfaces";
+import type {
 	IDocumentServiceFactory,
+	IPersistedCache,
 	IUrlResolver,
-	type IPersistedCache,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	IPublicClientConfig,
 	getDriveId,
 	getDriveItemByRootFileName,
+	type IPublicClientConfig,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import type {
 	HostStoragePolicy,
 	OdspResourceTokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	OdspTokenConfig,
-	OdspTokenManager,
 	getMicrosoftConfiguration,
+	type OdspTokenConfig,
+	OdspTokenManager,
 	odspTokensCache,
 } from "@fluidframework/tool-utils/internal";
+import { strict as assert } from "assert";
+import os from "os";
 import { compare } from "semver";
 
-import { OdspDriverApi, OdspDriverApiType } from "./odspDriverApi.js";
+import { OdspDriverApi, type OdspDriverApiType } from "./odspDriverApi.js";
 
 const passwordTokenConfig = (username, password): OdspTokenConfig => ({
 	type: "password",
@@ -133,11 +135,15 @@ export function getOdspCredentials(
 			const tenantNames = Object.keys(tenants);
 			const tenant = tenantNames[tenantIndex % tenantNames.length];
 			if (tenant === undefined) {
-				throw new Error("tenant should not be undefined when getting odsp credentials");
+				throw new Error(
+					"tenant should not be undefined when getting odsp credentials",
+				);
 			}
 			const tenantInfo = tenants[tenant];
 			if (tenantInfo === undefined) {
-				throw new Error("tenantInfo should not be undefined when getting odsp credentials");
+				throw new Error(
+					"tenantInfo should not be undefined when getting odsp credentials",
+				);
 			}
 			// Translate all the user from that user to the full user principal name by appending the tenant domain
 			const range = tenantInfo.range;
@@ -172,7 +178,9 @@ export function getOdspCredentials(
 		// Need to choose one out of the set as these account might be from different tenant
 		const username = requestedUserName ?? Object.keys(passwords)[0];
 		if (username === undefined) {
-			throw new Error("username should not be undefined when getting odsp credentials");
+			throw new Error(
+				"username should not be undefined when getting odsp credentials",
+			);
 		}
 		const userPass = passwords[username];
 		if (userPass === undefined) {
@@ -190,17 +198,27 @@ export function getOdspCredentials(
  */
 export class OdspTestDriver implements ITestDriver {
 	// Share the tokens and driverId across multiple instance of the test driver
-	private static readonly odspTokenManager = new OdspTokenManager(odspTokensCache);
+	private static readonly odspTokenManager = new OdspTokenManager(
+		odspTokensCache,
+	);
 	private static readonly driveIdPCache = new Map<string, Promise<string>>();
 	// Choose a single random user up front for legacy driver which doesn't support isolateSocketCache
 	private static readonly legacyDriverUserRandomIndex = Math.random();
-	private static async getDriveIdFromConfig(tokenConfig: TokenConfig): Promise<string> {
+	private static async getDriveIdFromConfig(
+		tokenConfig: TokenConfig,
+	): Promise<string> {
 		const siteUrl = tokenConfig.siteUrl;
 		try {
 			return await getDriveId(siteUrl, "", undefined, {
-				accessToken: await this.getStorageToken({ siteUrl, refresh: false }, tokenConfig),
+				accessToken: await OdspTestDriver.getStorageToken(
+					{ siteUrl, refresh: false },
+					tokenConfig,
+				),
 				refreshTokenFn: async () =>
-					this.getStorageToken({ siteUrl, refresh: true }, tokenConfig),
+					OdspTestDriver.getStorageToken(
+						{ siteUrl, refresh: true },
+						tokenConfig,
+					),
 			});
 		} catch (ex) {
 			if (tokenConfig.supportsBrowserAuth !== true) {
@@ -208,12 +226,15 @@ export class OdspTestDriver implements ITestDriver {
 			}
 		}
 		return getDriveId(siteUrl, "", undefined, {
-			accessToken: await this.getStorageToken(
+			accessToken: await OdspTestDriver.getStorageToken(
 				{ siteUrl, refresh: false, useBrowserAuth: true },
 				tokenConfig,
 			),
 			refreshTokenFn: async () =>
-				this.getStorageToken({ siteUrl, refresh: true, useBrowserAuth: true }, tokenConfig),
+				OdspTestDriver.getStorageToken(
+					{ siteUrl, refresh: true, useBrowserAuth: true },
+					tokenConfig,
+				),
 		});
 	}
 
@@ -231,7 +252,11 @@ export class OdspTestDriver implements ITestDriver {
 		const tenantIndex = config?.tenantIndex ?? 0;
 		assertOdspEndpoint(config?.odspEndpointName);
 		const endpointName = config?.odspEndpointName ?? "odsp";
-		const creds = getOdspCredentials(endpointName, tenantIndex, config?.username);
+		const creds = getOdspCredentials(
+			endpointName,
+			tenantIndex,
+			config?.username,
+		);
 		// Pick a random one on the list (only supported for >= 0.46)
 		const randomUserIndex =
 			compare(api.version, "0.46.0") >= 0
@@ -246,7 +271,10 @@ export class OdspTestDriver implements ITestDriver {
 
 		let siteUrl: string;
 		let tenantName: string;
-		if (emailServer.startsWith("http://") || emailServer.startsWith("https://")) {
+		if (
+			emailServer.startsWith("http://") ||
+			emailServer.startsWith("https://")
+		) {
 			// it's already a site url
 			tenantName = new URL(emailServer).hostname;
 			siteUrl = emailServer;
@@ -260,7 +288,7 @@ export class OdspTestDriver implements ITestDriver {
 		const options = config?.options ?? {};
 		options.isolateSocketCache = true;
 
-		return this.create(
+		return OdspTestDriver.create(
 			{
 				username,
 				password,
@@ -277,17 +305,17 @@ export class OdspTestDriver implements ITestDriver {
 	}
 
 	private static async getDriveId(siteUrl: string, tokenConfig: TokenConfig) {
-		let driveIdP = this.driveIdPCache.get(siteUrl);
+		let driveIdP = OdspTestDriver.driveIdPCache.get(siteUrl);
 		if (driveIdP) {
 			return driveIdP;
 		}
 
-		driveIdP = this.getDriveIdFromConfig(tokenConfig);
-		this.driveIdPCache.set(siteUrl, driveIdP);
+		driveIdP = OdspTestDriver.getDriveIdFromConfig(tokenConfig);
+		OdspTestDriver.driveIdPCache.set(siteUrl, driveIdP);
 		try {
 			return await driveIdP;
 		} catch (e) {
-			this.driveIdPCache.delete(siteUrl);
+			OdspTestDriver.driveIdPCache.delete(siteUrl);
 			throw e;
 		}
 	}
@@ -306,7 +334,10 @@ export class OdspTestDriver implements ITestDriver {
 			...getMicrosoftConfiguration(),
 		};
 
-		const driveId = await this.getDriveId(loginConfig.siteUrl, tokenConfig);
+		const driveId = await OdspTestDriver.getDriveId(
+			loginConfig.siteUrl,
+			tokenConfig,
+		);
 		const directoryParts = [directory];
 
 		// if we are in a azure dev ops build use the build id in the dir path
@@ -323,7 +354,13 @@ export class OdspTestDriver implements ITestDriver {
 			options,
 		};
 
-		return new OdspTestDriver(driverConfig, api, tenantName, userIndex, endpointName);
+		return new OdspTestDriver(
+			driverConfig,
+			api,
+			tenantName,
+			userIndex,
+			endpointName,
+		);
 	}
 
 	private static async getStorageToken(
@@ -333,7 +370,7 @@ export class OdspTestDriver implements ITestDriver {
 		const host = new URL(options.siteUrl).host;
 
 		if (options.useBrowserAuth === true) {
-			const browserTokens = await this.odspTokenManager.getOdspTokens(
+			const browserTokens = await OdspTestDriver.odspTokenManager.getOdspTokens(
 				host,
 				config,
 				{
@@ -354,7 +391,7 @@ export class OdspTestDriver implements ITestDriver {
 		}
 		// This function can handle token request for any multiple sites.
 		// Where the test driver is for a specific site.
-		const tokens = await this.odspTokenManager.getOdspTokens(
+		const tokens = await OdspTestDriver.odspTokenManager.getOdspTokens(
 			host,
 			config,
 			passwordTokenConfig(config.username, config.password),
@@ -391,7 +428,8 @@ export class OdspTestDriver implements ITestDriver {
 				`/${this.config.directory}/${testId}.tstFluid`,
 				{
 					accessToken: await this.getStorageToken({ siteUrl, refresh: false }),
-					refreshTokenFn: async () => this.getStorageToken({ siteUrl, refresh: false }),
+					refreshTokenFn: async () =>
+						this.getStorageToken({ siteUrl, refresh: false }),
 				},
 				false,
 				this.config.driveId,

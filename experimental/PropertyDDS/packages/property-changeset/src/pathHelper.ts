@@ -7,7 +7,7 @@
  * @fileoverview Helper functions to work with path strings
  */
 
-// @ts-ignore
+// @ts-expect-error
 import { constants } from "@fluid-experimental/property-common";
 
 const { PROPERTY_PATH_DELIMITER, MSG } = constants;
@@ -20,7 +20,7 @@ export type PathTree = Map<string, PathTree>;
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace PathHelper {
-	const RE_ALL_OPEN_SQUARE_BRACKETS = new RegExp("[[]", "g");
+	const RE_ALL_OPEN_SQUARE_BRACKETS = /[[]/g;
 
 	/**
 	 * Token Types
@@ -49,10 +49,10 @@ export namespace PathHelper {
 	 * @returns the tokens from the path string
 	 * @internal
 	 */
-	export const tokenizePathString = function (
+	export const tokenizePathString = (
 		in_path: string,
 		out_types?: TOKEN_TYPES[],
-	): string[] {
+	): string[] => {
 		const tokens = [];
 		let currentToken = "";
 
@@ -71,7 +71,7 @@ export namespace PathHelper {
 			path_start = 1;
 		} else if (in_path.substr(0, 3) === "../") {
 			// Handle relative paths by extracting the number steps above
-			var extractLevel = function (current_path) {
+			var extractLevel = (current_path) => {
 				if (current_path.substr(0, 3) === "../") {
 					if (out_types) {
 						out_types.push(TOKEN_TYPES.RAISE_LEVEL_TOKEN);
@@ -144,7 +144,7 @@ export namespace PathHelper {
 		let atStartToken = false;
 		let allowSegmentStart = true;
 
-		const storeNextToken = function (tokenType) {
+		const storeNextToken = (tokenType) => {
 			// Make sure, this is not an empty token (E.g. a .. or a [] )
 			if (!tokenStarted) {
 				if (!atStartToken) {
@@ -335,7 +335,7 @@ export namespace PathHelper {
 	 * @returns quoted path string
 	 * @internal
 	 */
-	export const quotePathSegment = function (in_pathSegment: string): string {
+	export const quotePathSegment = (in_pathSegment: string): string => {
 		// WARNING: I use RegExps here, as the normal replace
 		//          function only replaces the first occurrence
 
@@ -357,14 +357,22 @@ export namespace PathHelper {
 	 * @return unquoted path string
 	 * @internal
 	 */
-	export const unquotePathSegment = function (in_quotedPathSegment: string): string {
+	export const unquotePathSegment = (in_quotedPathSegment: string): string => {
 		if (typeof in_quotedPathSegment !== "string") {
-			throw new TypeError(`Expecting a string as a path: ${in_quotedPathSegment}`);
+			throw new TypeError(
+				`Expecting a string as a path: ${in_quotedPathSegment}`,
+			);
 		}
 
-		if (in_quotedPathSegment.startsWith('"') && in_quotedPathSegment.endsWith('"')) {
+		if (
+			in_quotedPathSegment.startsWith('"') &&
+			in_quotedPathSegment.endsWith('"')
+		) {
 			// We remove double quotes
-			in_quotedPathSegment = in_quotedPathSegment.substr(1, in_quotedPathSegment.length - 2);
+			in_quotedPathSegment = in_quotedPathSegment.substr(
+				1,
+				in_quotedPathSegment.length - 2,
+			);
 
 			// Then we unescape escape symbols
 			in_quotedPathSegment = in_quotedPathSegment.replace(/\\\\/g, "\\");
@@ -384,18 +392,17 @@ export namespace PathHelper {
 	 * @returns quoted path string
 	 * @internal
 	 */
-	export const quotePathSegmentIfNeeded = function (in_pathSegment: string): string {
-		return in_pathSegment.indexOf(PROPERTY_PATH_DELIMITER) !== -1 ||
-			in_pathSegment.indexOf('"') !== -1 ||
-			in_pathSegment.indexOf("\\") !== -1 ||
-			in_pathSegment.indexOf("/") !== -1 ||
-			in_pathSegment.indexOf("*") !== -1 ||
-			in_pathSegment.indexOf("[") !== -1 ||
-			in_pathSegment.indexOf("]") !== -1 ||
-			in_pathSegment.length === 0
+	export const quotePathSegmentIfNeeded = (in_pathSegment: string): string =>
+		in_pathSegment.indexOf(PROPERTY_PATH_DELIMITER) !== -1 ||
+		in_pathSegment.indexOf('"') !== -1 ||
+		in_pathSegment.indexOf("\\") !== -1 ||
+		in_pathSegment.indexOf("/") !== -1 ||
+		in_pathSegment.indexOf("*") !== -1 ||
+		in_pathSegment.indexOf("[") !== -1 ||
+		in_pathSegment.indexOf("]") !== -1 ||
+		in_pathSegment.length === 0
 			? quotePathSegment(in_pathSegment)
 			: in_pathSegment;
-	};
 
 	/**
 	 * This function checks, whether the supplied path is a valid repository absolute path.
@@ -405,7 +412,7 @@ export namespace PathHelper {
 	 * @param in_path - The path to check
 	 * @internal
 	 */
-	export const checkValidRepositoryAbsolutePath = function (in_path: string) {
+	export const checkValidRepositoryAbsolutePath = (in_path: string) => {
 		if (
 			in_path !== "" && // either an empty reference
 			!in_path.startsWith("/")
@@ -424,7 +431,9 @@ export namespace PathHelper {
 	 * @return Absolute path in canonical form
 	 * @internal
 	 */
-	export const convertAbsolutePathToCanonical = function (in_absolutePath: string): string {
+	export const convertAbsolutePathToCanonical = (
+		in_absolutePath: string,
+	): string => {
 		const tokenTypes = [];
 		const tokens = tokenizePathString(in_absolutePath, tokenTypes);
 		let path = "";
@@ -467,10 +476,10 @@ export namespace PathHelper {
 	 * @returns Absolute path of the child property in canonical form
 	 * @internal
 	 */
-	export const getChildAbsolutePathCanonical = function (
+	export const getChildAbsolutePathCanonical = (
 		in_parentAbsolutePathCanonical: string,
 		in_childId: string,
-	): string {
+	): string => {
 		const childPath = quotePathSegmentIfNeeded(String(in_childId));
 		return in_parentAbsolutePathCanonical
 			? in_parentAbsolutePathCanonical + PROPERTY_PATH_DELIMITER + childPath
@@ -509,10 +518,10 @@ export namespace PathHelper {
 	 * 'FULLY_COVERED', only the first matching path is returned.
 	 * @internal
 	 */
-	export const getPathCoverage = function (
+	export const getPathCoverage = (
 		in_basePath: string,
 		in_paths: string[],
-	): BasePathCoverage {
+	): BasePathCoverage => {
 		// First, check if the base path is entirely included in one of the paths
 		for (let i = 0; i < in_paths.length; i++) {
 			if (in_basePath.startsWith(in_paths[i])) {

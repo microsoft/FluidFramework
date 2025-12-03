@@ -7,9 +7,9 @@ import { cosmiconfigSync } from "cosmiconfig";
 
 import {
 	type IPackage,
+	isIPackage,
 	type PackageName,
 	type ReleaseGroupName,
-	isIPackage,
 } from "./types.js";
 
 /**
@@ -114,7 +114,10 @@ export interface IFluidBuildDirs {
 /**
  * @deprecated Use buildProject and associated types instead.
  */
-export type IFluidBuildDirEntry = string | IFluidBuildDir | (string | IFluidBuildDir)[];
+export type IFluidBuildDirEntry =
+	| string
+	| IFluidBuildDir
+	| (string | IFluidBuildDir)[];
 
 /**
  * Configures a package or release group

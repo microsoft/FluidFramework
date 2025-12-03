@@ -8,37 +8,35 @@ import {
 	validateAssertionError,
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
-
+import type { FlexTreeNode } from "../../feature-libraries/index.js";
+import {
+	CompatibilityLevel,
+	type InternalTreeNode,
+	inPrototypeChain,
+	NodeKind,
+	privateDataSymbol,
+	type TreeNodeSchema,
+	type TreeNodeSchemaInitializedData,
+	type TreeNodeSchemaPrivateData,
+	typeNameSymbol,
+	typeSchemaSymbol,
+	UnhydratedFlexTreeNode,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../simple-tree/core/index.js";
 import {
 	createTreeNodeSchemaPrivateData,
 	type MostDerivedData,
 	TreeNodeValid,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/treeNodeValid.js";
-
-import type { FlexTreeNode } from "../../feature-libraries/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { numberSchema } from "../../simple-tree/leafNodeSchema.js";
-import { brand } from "../../util/index.js";
 import {
 	getTreeNodeSchemaInitializedData,
 	getUnhydratedContext,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/createContext.js";
-import {
-	inPrototypeChain,
-	NodeKind,
-	typeNameSymbol,
-	typeSchemaSymbol,
-	type InternalTreeNode,
-	type TreeNodeSchema,
-	UnhydratedFlexTreeNode,
-	type TreeNodeSchemaInitializedData,
-	privateDataSymbol,
-	CompatibilityLevel,
-	type TreeNodeSchemaPrivateData,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../simple-tree/core/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { numberSchema } from "../../simple-tree/leafNodeSchema.js";
+import { brand } from "../../util/index.js";
 
 describe("TreeNodeValid", () => {
 	class MockFlexNode extends UnhydratedFlexTreeNode {
@@ -70,9 +68,14 @@ describe("TreeNodeValid", () => {
 				flexNode: FlexTreeNode,
 			): TreeNodeValid<T2> {
 				log.push("prepareInstance");
-				assert(inPrototypeChain(Reflect.getPrototypeOf(instance), Subclass.prototype));
+				assert(
+					inPrototypeChain(
+						Reflect.getPrototypeOf(instance),
+						Subclass.prototype,
+					),
+				);
 				assert(flexNode instanceof MockFlexNode);
-				assert.equal(this, Subclass);
+				assert.equal(Subclass, Subclass);
 				return customThis as TreeNodeValid<T2>;
 			}
 
@@ -81,20 +84,27 @@ describe("TreeNodeValid", () => {
 				instance: TreeNodeValid<T2>,
 				input: T2,
 			): UnhydratedFlexTreeNode {
-				assert.equal(this, Subclass);
-				assert(inPrototypeChain(Reflect.getPrototypeOf(instance), Subclass.prototype));
+				assert.equal(Subclass, Subclass);
+				assert(
+					inPrototypeChain(
+						Reflect.getPrototypeOf(instance),
+						Subclass.prototype,
+					),
+				);
 				log.push(`buildRawNode ${input}`);
 				return new MockFlexNode(Subclass);
 			}
 
-			protected static override constructorCached: MostDerivedData | undefined = undefined;
+			protected static override constructorCached: MostDerivedData | undefined =
+				undefined;
 
 			protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
 				log.push("oneTimeSetup");
-				return getTreeNodeSchemaInitializedData(this, handler);
+				return getTreeNodeSchemaInitializedData(Subclass, handler);
 			}
 
-			public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
+			public static readonly childTypes: ReadonlySet<TreeNodeSchema> =
+				new Set();
 
 			public override get [typeNameSymbol](): string {
 				throw new Error("Method not implemented.");
@@ -104,7 +114,7 @@ describe("TreeNodeValid", () => {
 			}
 
 			public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-				return (privateData ??= createTreeNodeSchemaPrivateData(this, []));
+				return (privateData ??= createTreeNodeSchemaPrivateData(Subclass, []));
 			}
 
 			public constructor(input: number | InternalTreeNode) {
@@ -149,9 +159,15 @@ describe("TreeNodeValid", () => {
 			}
 		}
 
-		assert.throws(() => new Subclass(), validateAssertionError(/invalid schema class/));
+		assert.throws(
+			() => new Subclass(),
+			validateAssertionError(/invalid schema class/),
+		);
 		// Ensure oneTimeSetup doesn't prevent error from rethrowing
-		assert.throws(() => new Subclass(), validateAssertionError(/invalid schema class/));
+		assert.throws(
+			() => new Subclass(),
+			validateAssertionError(/invalid schema class/),
+		);
 	});
 
 	it("multiple subclass valid", () => {
@@ -164,7 +180,8 @@ describe("TreeNodeValid", () => {
 			public static readonly metadata = {};
 			public static readonly info = numberSchema;
 			public static readonly implicitlyConstructable: false;
-			public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
+			public static readonly childTypes: ReadonlySet<TreeNodeSchema> =
+				new Set();
 			public static readonly simpleAllowedTypes = [];
 
 			public static override buildRawNode<T2>(
@@ -172,7 +189,7 @@ describe("TreeNodeValid", () => {
 				instance: TreeNodeValid<T2>,
 				input: T2,
 			): UnhydratedFlexTreeNode {
-				return new MockFlexNode(this as unknown as TreeNodeSchema);
+				return new MockFlexNode(Subclass as unknown as TreeNodeSchema);
 			}
 
 			public override get [typeNameSymbol](): string {
@@ -186,21 +203,23 @@ describe("TreeNodeValid", () => {
 			}
 
 			public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-				return (privateData ??= createTreeNodeSchemaPrivateData(this, []));
+				return (privateData ??= createTreeNodeSchemaPrivateData(Subclass, []));
 			}
 		}
 
 		class A extends Subclass {
-			protected static override constructorCached: MostDerivedData | undefined = undefined;
+			protected static override constructorCached: MostDerivedData | undefined =
+				undefined;
 
 			protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
 				log.push("A");
-				return getTreeNodeSchemaInitializedData(this, handler);
+				return getTreeNodeSchemaInitializedData(A, handler);
 			}
 		}
 
 		class B extends Subclass {
-			protected static override constructorCached: MostDerivedData | undefined = undefined;
+			protected static override constructorCached: MostDerivedData | undefined =
+				undefined;
 
 			protected static override oneTimeSetup<T2>(
 				this: typeof TreeNodeValid<T2>,
@@ -226,7 +245,8 @@ describe("TreeNodeValid", () => {
 			public static readonly metadata = {};
 			public static readonly info = numberSchema;
 			public static readonly implicitlyConstructable: false;
-			public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
+			public static readonly childTypes: ReadonlySet<TreeNodeSchema> =
+				new Set();
 			public static readonly simpleAllowedTypes = [];
 
 			public static override buildRawNode<T2>(
@@ -234,7 +254,7 @@ describe("TreeNodeValid", () => {
 				instance: TreeNodeValid<T2>,
 				input: T2,
 			): UnhydratedFlexTreeNode {
-				return new MockFlexNode(this as unknown as TreeNodeSchema);
+				return new MockFlexNode(Subclass as unknown as TreeNodeSchema);
 			}
 
 			public override get [typeNameSymbol](): string {
@@ -249,14 +269,15 @@ describe("TreeNodeValid", () => {
 		}
 
 		class A extends Subclass {
-			protected static override constructorCached: MostDerivedData | undefined = undefined;
+			protected static override constructorCached: MostDerivedData | undefined =
+				undefined;
 
 			protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
-				log.push(this.name);
-				return getTreeNodeSchemaInitializedData(this, handler);
+				log.push(A.name);
+				return getTreeNodeSchemaInitializedData(A, handler);
 			}
 			public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-				return (privateData ??= createTreeNodeSchemaPrivateData(this, []));
+				return (privateData ??= createTreeNodeSchemaPrivateData(A, []));
 			}
 		}
 

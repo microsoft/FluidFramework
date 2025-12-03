@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type SequenceInterval } from "../intervals/index.js";
+import type { SequenceInterval } from "../intervals/index.js";
 
 /**
  * Collection of intervals.

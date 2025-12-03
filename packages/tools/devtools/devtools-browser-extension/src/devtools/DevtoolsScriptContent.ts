@@ -10,7 +10,9 @@ import { formatDevtoolsScriptMessageForLogging } from "./Logging.js";
  * Factored out for testability.
  */
 export function runDevtoolsScript(browser: typeof chrome): void {
-	console.log(formatDevtoolsScriptMessageForLogging("Initializing Devtools Script."));
+	console.log(
+		formatDevtoolsScriptMessageForLogging("Initializing Devtools Script."),
+	);
 
 	// When our extension view is launched, open the root visualization view.
 	browser.devtools.panels.create(
@@ -19,10 +21,14 @@ export function runDevtoolsScript(browser: typeof chrome): void {
 		"devtools/rootView.html",
 		(panel) => {
 			panel.onShown.addListener((window) => {
-				console.log(formatDevtoolsScriptMessageForLogging("Devtools view shown."));
+				console.log(
+					formatDevtoolsScriptMessageForLogging("Devtools view shown."),
+				);
 			});
 			panel.onHidden.addListener(() => {
-				console.log(formatDevtoolsScriptMessageForLogging("Devtools view hidden."));
+				console.log(
+					formatDevtoolsScriptMessageForLogging("Devtools view hidden."),
+				);
 			});
 		},
 	);

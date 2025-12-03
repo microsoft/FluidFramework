@@ -8,24 +8,31 @@ import {
 	CollaborativeTextArea,
 	SharedStringHelper,
 } from "@fluid-example/example-utils";
-import type { SharedString } from "@fluidframework/sequence/legacy";
-import React, { useEffect, useState } from "react";
 import { useTree } from "@fluidframework/react/alpha";
+import type { SharedString } from "@fluidframework/sequence/legacy";
+import type React from "react";
+import { useEffect, useState } from "react";
 
 // eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";
-import { type TodoItem } from "../Todo/index.js";
+import type { TodoItem } from "../Todo/index.js";
 
 interface TodoItemViewProps {
 	readonly todoItemModel: TodoItem;
 	readonly className?: string;
 }
 
-export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => {
+export const TodoItemView: React.FC<TodoItemViewProps> = (
+	props: TodoItemViewProps,
+) => {
 	const { todoItemModel, className } = props;
 
-	const [itemTitle, setItemTitle] = useState<SharedString | undefined>(undefined);
-	const [itemDescription, setItemDescription] = useState<SharedString | undefined>(undefined);
+	const [itemTitle, setItemTitle] = useState<SharedString | undefined>(
+		undefined,
+	);
+	const [itemDescription, setItemDescription] = useState<
+		SharedString | undefined
+	>(undefined);
 	const [detailsVisible, setDetailsVisible] = useState<boolean>(false);
 
 	useTree(todoItemModel);
@@ -42,7 +49,9 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
 		});
 	}, [todoItemModel.description]);
 
-	const checkChangedHandler = (e: React.ChangeEvent<HTMLInputElement>): void => {
+	const checkChangedHandler = (
+		e: React.ChangeEvent<HTMLInputElement>,
+	): void => {
 		todoItemModel.completed = e.target.checked;
 	};
 
@@ -51,7 +60,9 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
 	}
 
 	return (
-		<div className={`todo-item${className !== undefined ? ` ${className}` : ""}`}>
+		<div
+			className={`todo-item${className !== undefined ? ` ${className}` : ""}`}
+		>
 			<h2 className="todo-item-header">
 				<input
 					type="checkbox"
@@ -68,7 +79,10 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
 				>
 					{detailsVisible ? "▲" : "▼"}
 				</button>
-				<CollaborativeInput sharedString={itemTitle} className="todo-item-input" />
+				<CollaborativeInput
+					sharedString={itemTitle}
+					className="todo-item-input"
+				/>
 			</h2>
 			{detailsVisible && (
 				<CollaborativeTextArea

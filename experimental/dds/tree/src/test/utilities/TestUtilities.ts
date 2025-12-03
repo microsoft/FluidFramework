@@ -3,21 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { resolve } from 'path';
-
 import { LocalServerTestDriver } from '@fluid-private/test-drivers';
 import { AttachState } from '@fluidframework/container-definitions';
-import {
-	type IContainer,
-	type IFluidCodeDetails,
-	type IHostLoader,
-} from '@fluidframework/container-definitions/internal';
+import type { IContainer, IFluidCodeDetails, IHostLoader } from '@fluidframework/container-definitions/internal';
 import { asLegacyAlpha, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader/internal';
 import { DefaultSummaryConfiguration, SummaryCollection } from '@fluidframework/container-runtime/internal';
-import type { ConfigTypes, IConfigProviderBase, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import type {
+	ConfigTypes,
+	IConfigProviderBase,
+	IFluidHandle,
+	IRequestHeader,
+	ITelemetryBaseLogger,
+} from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
+import type { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import { createChildLogger } from '@fluidframework/telemetry-utils/internal';
 import {
 	MockContainerRuntimeFactory,
@@ -25,24 +24,25 @@ import {
 	MockStorage,
 } from '@fluidframework/test-runtime-utils/internal';
 import {
-	ChannelFactoryRegistry,
-	ITestFluidObject,
-	ITestObjectProvider,
+	type ChannelFactoryRegistry,
+	createAndAttachContainer,
+	type ITestFluidObject,
+	type ITestObjectProvider,
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
 	TestObjectProvider,
-	createAndAttachContainer,
 } from '@fluidframework/test-utils/internal';
 import { expect } from 'chai';
+import { resolve } from 'path';
 import { v5 as uuidv5 } from 'uuid';
 
-import { BuildNode, Change, StablePlace } from '../../ChangeTypes.js';
-import { ReplaceRecursive, fail, identity } from '../../Common.js';
-import { OrderedEditSet } from '../../EditLog.js';
+import { type BuildNode, type Change, StablePlace } from '../../ChangeTypes.js';
+import { fail, identity, type ReplaceRecursive } from '../../Common.js';
+import type { OrderedEditSet } from '../../EditLog.js';
 import { newEdit, setTrait } from '../../EditUtilities.js';
 import { SharedTreeDiagnosticEvent } from '../../EventTypes.js';
 import { convertEditIds } from '../../IdConversion.js';
-import {
+import type {
 	AttributionId,
 	DetachedSequenceId,
 	EditId,
@@ -52,31 +52,30 @@ import {
 	StableNodeId,
 } from '../../Identifiers.js';
 import { initialTree } from '../../InitialTree.js';
+import { IdCompressor } from '../../id-compressor/index.js';
+import { createSessionId } from '../../id-compressor/NumericUuid.js';
 import {
-	NodeIdContext,
-	NodeIdConverter,
-	NodeIdNormalizer,
 	getNodeId,
 	getNodeIdContext,
+	type NodeIdContext,
+	type NodeIdConverter,
+	type NodeIdNormalizer,
 } from '../../NodeIdUtilities.js';
-import { getChangeNodeFromViewNode } from '../../SerializationUtilities.js';
-import { SharedTree, SharedTreeFactory, SharedTreeOptions_0_0_2 } from '../../SharedTree.js';
-import { TraitLocation, TreeView } from '../../TreeView.js';
-import { createSessionId } from '../../id-compressor/NumericUuid.js';
-import { IdCompressor } from '../../id-compressor/index.js';
 import {
 	ChangeInternal,
-	Edit,
-	NodeData,
-	Payload,
-	SharedTreeOp,
-	SharedTreeOp_0_0_2,
-	WriteFormat,
+	type Edit,
+	type NodeData,
+	type Payload,
 	reservedIdCount,
+	type SharedTreeOp,
+	type SharedTreeOp_0_0_2,
+	WriteFormat,
 } from '../../persisted-types/index.js';
-
-import { RefreshingTestTree, SimpleTestTree, TestTree, buildLeaf } from './TestNode.js';
+import { getChangeNodeFromViewNode } from '../../SerializationUtilities.js';
+import { SharedTree, type SharedTreeFactory, type SharedTreeOptions_0_0_2 } from '../../SharedTree.js';
+import type { TraitLocation, TreeView } from '../../TreeView.js';
 import { _dirname } from './dirname.cjs';
+import { buildLeaf, RefreshingTestTree, SimpleTestTree, type TestTree } from './TestNode.js';
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents {

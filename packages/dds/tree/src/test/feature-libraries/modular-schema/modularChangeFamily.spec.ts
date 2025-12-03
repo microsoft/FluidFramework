@@ -6,7 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
-
+import { deepFreeze as deepFreezeBase } from "@fluidframework/test-runtime-utils/internal";
+import { BTree } from "@tylerbu/sorted-btree-es6";
 import {
 	type CodecWriteOptions,
 	currentVersion,
@@ -14,61 +15,85 @@ import {
 	makeCodecFamily,
 } from "../../../codec/index.js";
 import {
-	type FieldChangeHandler,
-	genericFieldKind,
-	type ModularChangeset,
-	FlexFieldKind,
-	type RelevantRemovedRootsFromChild,
-	defaultChunkPolicy,
-	type TreeChunk,
-	cursorForJsonableTreeField,
-	chunkFieldSingle,
-	makeFieldBatchCodec,
-	type NodeId,
-	type FieldKindConfiguration,
-	type FieldKindConfigurationEntry,
-	makeModularChangeCodecFamily,
-	ModularChangeFamily,
-	type EncodedModularChangeset,
-	type FieldChangeRebaser,
-	type FieldEditor,
-	type EditDescription,
-	jsonableTreeFromFieldCursor,
-} from "../../../feature-libraries/index.js";
-import {
-	makeAnonChange,
-	makeDetachedNodeId,
-	type RevisionTag,
-	tagChange,
-	type TaggedChange,
-	type FieldKindIdentifier,
-	type FieldKey,
-	type UpPath,
-	revisionMetadataSourceFromInfo,
+	type ChangeAtomIdMap,
+	type ChangeEncodingContext,
+	type DeltaDetachedNodeId,
 	type DeltaFieldChanges,
 	type DeltaRoot,
-	type DeltaDetachedNodeId,
-	type ChangeEncodingContext,
-	type ChangeAtomIdMap,
-	Multiplicity,
-	replaceAtomRevisions,
+	type FieldKey,
+	type FieldKindIdentifier,
 	type FieldUpPath,
+	Multiplicity,
+	makeAnonChange,
+	makeDetachedNodeId,
 	type RevisionInfo,
+	type RevisionTag,
+	replaceAtomRevisions,
+	revisionMetadataSourceFromInfo,
+	type TaggedChange,
+	tagChange,
+	type UpPath,
 } from "../../../core/index.js";
 import {
-	type Mutable,
+	chunkFieldSingle,
+	cursorForJsonableTreeField,
+	defaultChunkPolicy,
+	type EditDescription,
+	type EncodedModularChangeset,
+	type FieldChangeHandler,
+	type FieldChangeRebaser,
+	type FieldEditor,
+	type FieldKindConfiguration,
+	type FieldKindConfigurationEntry,
+	FlexFieldKind,
+	genericFieldKind,
+	jsonableTreeFromFieldCursor,
+	ModularChangeFamily,
+	type ModularChangeset,
+	makeFieldBatchCodec,
+	makeModularChangeCodecFamily,
+	type NodeId,
+	type RelevantRemovedRootsFromChild,
+	type TreeChunk,
+} from "../../../feature-libraries/index.js";
+import type {
+	EncodedNodeChangeset,
+	FieldChangeDelta,
+	FieldChangeEncodingContext,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/index.js";
+import {
+	getFieldKind,
+	intoDelta,
+	relevantRemovedRoots as relevantDetachedTreesImplementation,
+	updateRefreshers,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import {
+	type ChangeAtomIdBTree,
+	type CrossFieldKeyTable,
+	type FieldChangeMap,
+	type FieldId,
+	type NodeChangeset,
+	newCrossFieldKeyTable,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
+import {
 	brand,
 	brandConst,
 	idAllocatorFromMaxId,
+	type Mutable,
 	nestedMapFromFlatList,
 	newTupleBTree,
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../../util/index.js";
+import { ajvValidator } from "../../codec/index.js";
+import { fieldJsonCursor } from "../../json/index.js";
 import {
-	type EncodingTestData,
 	assertDeltaEqual,
 	chunkFromJsonTrees,
+	type EncodingTestData,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	testChangeReceiver,
@@ -76,34 +101,7 @@ import {
 	testRevisionTagCodec,
 	treeChunkFromCursor,
 } from "../../utils.js";
-
 import { type ValueChangeset, valueField } from "./basicRebasers.js";
-import { ajvValidator } from "../../codec/index.js";
-import { fieldJsonCursor } from "../../json/index.js";
-import {
-	newCrossFieldKeyTable,
-	type ChangeAtomIdBTree,
-	type CrossFieldKeyTable,
-	type FieldChangeMap,
-	type FieldId,
-	type NodeChangeset,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
-import {
-	getFieldKind,
-	intoDelta,
-	updateRefreshers,
-	relevantRemovedRoots as relevantDetachedTreesImplementation,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import type {
-	EncodedNodeChangeset,
-	FieldChangeDelta,
-	FieldChangeEncodingContext,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/index.js";
-import { deepFreeze as deepFreezeBase } from "@fluidframework/test-runtime-utils/internal";
-import { BTree } from "@tylerbu/sorted-btree-es6";
 import { assertEqual, Change, removeAliases } from "./modularChangesetUtil.js";
 
 type SingleNodeChangeset = NodeId | undefined;
@@ -115,15 +113,23 @@ const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
 	invert: (change) => change,
 	mute: (change: SingleNodeChangeset) => change,
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base),
-	prune: (change, pruneChild) => (change === undefined ? undefined : pruneChild(change)),
+	prune: (change, pruneChild) =>
+		change === undefined ? undefined : pruneChild(change),
 	replaceRevisions: (change, oldRevisions, newRevision) =>
-		change !== undefined ? replaceAtomRevisions(change, oldRevisions, newRevision) : undefined,
+		change !== undefined
+			? replaceAtomRevisions(change, oldRevisions, newRevision)
+			: undefined,
 };
 
 const singleNodeEditor: FieldEditor<SingleNodeChangeset> = {
-	buildChildChanges: (changes: Iterable<[number, NodeId]>): SingleNodeChangeset => {
+	buildChildChanges: (
+		changes: Iterable<[number, NodeId]>,
+	): SingleNodeChangeset => {
 		const changesArray = Array.from(changes);
-		assert(changesArray.length <= 1, "This field kind only supports one node in its field");
+		assert(
+			changesArray.length <= 1,
+			"This field kind only supports one node in its field",
+		);
 		return changesArray[0] === undefined ? undefined : changesArray[0][1];
 	},
 };
@@ -136,11 +142,15 @@ const singleNodeCodec: IJsonCodec<
 	FieldChangeEncodingContext
 > = {
 	encode: (change, context) => {
-		return change === undefined ? emptyEncodedChange : context.encodeNode(change);
+		return change === undefined
+			? emptyEncodedChange
+			: context.encodeNode(change);
 	},
 
 	decode: (encoded, context) => {
-		return encoded === emptyEncodedChange ? undefined : context.decodeNode(encoded);
+		return encoded === emptyEncodedChange
+			? undefined
+			: context.decodeNode(encoded);
 	},
 };
 
@@ -149,7 +159,12 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	codecsFactory: (revisionTagCodec) => makeCodecFamily([[1, singleNodeCodec]]),
 	editor: singleNodeEditor,
 	intoDelta: (change, deltaFromChild): FieldChangeDelta => ({
-		local: [{ count: 1, fields: change !== undefined ? deltaFromChild(change) : undefined }],
+		local: [
+			{
+				count: 1,
+				fields: change !== undefined ? deltaFromChild(change) : undefined,
+			},
+		],
 	}),
 	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
 		change !== undefined ? relevantRemovedRootsFromChild(change) : [],
@@ -165,7 +180,10 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 const singleNodeField = new FlexFieldKind(
 	brandConst("SingleNode")<FieldKindIdentifier>(),
 	Multiplicity.Single,
-	{ changeHandler: singleNodeHandler, allowedMonotonicUpgrade: (a, b) => false },
+	{
+		changeHandler: singleNodeHandler,
+		allowedMonotonicUpgrade: (a, b) => false,
+	},
 );
 
 export const fieldKindConfiguration: FieldKindConfiguration = new Map<
@@ -209,9 +227,17 @@ const nodeId1: NodeId = { localId: brand(1) };
 const nodeId2: NodeId = { localId: brand(2) };
 
 const pathA: FieldUpPath = { parent: undefined, field: fieldA };
-const pathA0: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 0 };
+const pathA0: UpPath = {
+	parent: undefined,
+	parentField: fieldA,
+	parentIndex: 0,
+};
 const pathB: FieldUpPath = { parent: undefined, field: fieldB };
-const pathB0: UpPath = { parent: undefined, parentField: fieldB, parentIndex: 0 };
+const pathB0: UpPath = {
+	parent: undefined,
+	parentField: fieldB,
+	parentIndex: 0,
+};
 const pathA0A: FieldUpPath = { parent: pathA0, field: fieldA };
 const pathA0B: FieldUpPath = { parent: pathA0, field: fieldB };
 const pathB0A: FieldUpPath = { parent: pathB0, field: fieldA };
@@ -491,11 +517,17 @@ describe("ModularChangeFamily", () => {
 				]),
 			};
 
-			assertEqual(family.compose([makeAnonChange(change1), makeAnonChange(change2)]), change1);
+			assertEqual(
+				family.compose([makeAnonChange(change1), makeAnonChange(change2)]),
+				change1,
+			);
 		});
 
 		it("compose specific ○ specific", () => {
-			const expectedRevision: RevisionInfo[] = [{ revision: tag1 }, { revision: tag2 }];
+			const expectedRevision: RevisionInfo[] = [
+				{ revision: tag1 },
+				{ revision: tag2 },
+			];
 			const expectedCompose = {
 				...tagChangeInline(
 					Change.build(
@@ -518,14 +550,20 @@ describe("ModularChangeFamily", () => {
 			};
 
 			const composed = removeAliases(
-				family.compose([makeAnonChange(rootChange1a), makeAnonChange(rootChange2)]),
+				family.compose([
+					makeAnonChange(rootChange1a),
+					makeAnonChange(rootChange2),
+				]),
 			);
 
 			assertEqual(composed, expectedCompose);
 		});
 
 		it("compose specific ○ generic", () => {
-			const expectedRevision: RevisionInfo[] = [{ revision: tag1 }, { revision: tag2 }];
+			const expectedRevision: RevisionInfo[] = [
+				{ revision: tag1 },
+				{ revision: tag2 },
+			];
 			const expectedCompose = {
 				...tagChangeInline(
 					Change.build(
@@ -548,14 +586,20 @@ describe("ModularChangeFamily", () => {
 			};
 
 			const composed = removeAliases(
-				family.compose([makeAnonChange(rootChange1a), makeAnonChange(rootChange2Generic)]),
+				family.compose([
+					makeAnonChange(rootChange1a),
+					makeAnonChange(rootChange2Generic),
+				]),
 			);
 
 			assertEqual(composed, expectedCompose);
 		});
 
 		it("compose generic ○ specific", () => {
-			const expectedRevision: RevisionInfo[] = [{ revision: tag1 }, { revision: tag2 }];
+			const expectedRevision: RevisionInfo[] = [
+				{ revision: tag1 },
+				{ revision: tag2 },
+			];
 			const expectedCompose = {
 				...tagChangeInline(
 					Change.build(
@@ -579,14 +623,20 @@ describe("ModularChangeFamily", () => {
 			};
 
 			const composed = removeAliases(
-				family.compose([makeAnonChange(rootChange1aGeneric), makeAnonChange(rootChange2)]),
+				family.compose([
+					makeAnonChange(rootChange1aGeneric),
+					makeAnonChange(rootChange2),
+				]),
 			);
 
 			assertEqual(composed, expectedCompose);
 		});
 
 		it("compose generic ○ generic", () => {
-			const expectedRevision: RevisionInfo[] = [{ revision: tag1 }, { revision: tag2 }];
+			const expectedRevision: RevisionInfo[] = [
+				{ revision: tag1 },
+				{ revision: tag2 },
+			];
 			const expectedCompose = {
 				...tagChangeInline(
 					Change.build(
@@ -880,7 +930,9 @@ describe("ModularChangeFamily", () => {
 
 			const expected: ModularChangeset = {
 				...Change.empty(),
-				refreshers: newTupleBTree([[[tag3 as RevisionTag | undefined, brand(0)], node1Chunk]]),
+				refreshers: newTupleBTree([
+					[[tag3 as RevisionTag | undefined, brand(0)], node1Chunk],
+				]),
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
 
@@ -951,7 +1003,11 @@ describe("ModularChangeFamily", () => {
 			};
 
 			assertEqual(
-				family.invert(makeAnonChange(rootChange1aGeneric), false, revisionForInvert),
+				family.invert(
+					makeAnonChange(rootChange1aGeneric),
+					false,
+					revisionForInvert,
+				),
 				expectedInverse,
 			);
 		});
@@ -1050,7 +1106,10 @@ describe("ModularChangeFamily", () => {
 				{
 					count: 1,
 					fields: new Map([
-						[fieldA, [{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } }]],
+						[
+							fieldA,
+							[{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } }],
+						],
 					]),
 				},
 			];
@@ -1166,24 +1225,41 @@ describe("ModularChangeFamily", () => {
 			) => {
 				return [
 					...change.shallow.map((id) => makeDetachedNodeId(id.major, id.minor)),
-					...change.nested.flatMap((c) => Array.from(relevantRemovedRootsFromChild(c))),
+					...change.nested.flatMap((c) =>
+						Array.from(relevantRemovedRootsFromChild(c)),
+					),
 				];
 			},
-		} as unknown as FieldChangeHandler<HasRemovedRootsRefs, FieldEditor<HasRemovedRootsRefs>>;
-		const hasRemovedRootsRefsField = new FlexFieldKind(fieldKind, Multiplicity.Single, {
-			changeHandler: handler,
-			allowedMonotonicUpgrade: (a, b) => false,
-		});
+		} as unknown as FieldChangeHandler<
+			HasRemovedRootsRefs,
+			FieldEditor<HasRemovedRootsRefs>
+		>;
+		const hasRemovedRootsRefsField = new FlexFieldKind(
+			fieldKind,
+			Multiplicity.Single,
+			{
+				changeHandler: handler,
+				allowedMonotonicUpgrade: (a, b) => false,
+			},
+		);
 		const mockFieldKinds = new Map([[fieldKind, hasRemovedRootsRefsField]]);
 
-		function relevantRemovedRoots(input: ModularChangeset): DeltaDetachedNodeId[] {
+		function relevantRemovedRoots(
+			input: ModularChangeset,
+		): DeltaDetachedNodeId[] {
 			deepFreeze(input);
-			return Array.from(relevantDetachedTreesImplementation(input, mockFieldKinds));
+			return Array.from(
+				relevantDetachedTreesImplementation(input, mockFieldKinds),
+			);
 		}
 
-		function nodeChangeFromHasRemovedRootsRefs(changeset: HasRemovedRootsRefs): NodeChangeset {
+		function nodeChangeFromHasRemovedRootsRefs(
+			changeset: HasRemovedRootsRefs,
+		): NodeChangeset {
 			return {
-				fieldChanges: new Map([[fieldA, { fieldKind, change: brand(changeset) }]]),
+				fieldChanges: new Map([
+					[fieldA, { fieldKind, change: brand(changeset) }],
+				]),
 			};
 		}
 
@@ -1238,10 +1314,18 @@ describe("ModularChangeFamily", () => {
 			const input: ModularChangeset = {
 				...Change.empty(),
 				nodeChanges: newTupleBTree([
-					[[nodeId1.revision, nodeId1.localId], nodeChangeFromHasRemovedRootsRefs(changeB)],
-					[[nodeId2.revision, nodeId2.localId], nodeChangeFromHasRemovedRootsRefs(changeC)],
+					[
+						[nodeId1.revision, nodeId1.localId],
+						nodeChangeFromHasRemovedRootsRefs(changeB),
+					],
+					[
+						[nodeId2.revision, nodeId2.localId],
+						nodeChangeFromHasRemovedRootsRefs(changeC),
+					],
 				]),
-				fieldChanges: new Map([[brand("fA"), { fieldKind, change: brand(changeA) }]]),
+				fieldChanges: new Map([
+					[brand("fA"), { fieldKind, change: brand(changeA) }],
+				]),
 			};
 
 			const actual = relevantRemovedRoots(input);
@@ -1312,12 +1396,16 @@ describe("ModularChangeFamily", () => {
 			assert.equal(nodesChunk.topLevelLength, 2);
 			const input: ModularChangeset = {
 				...Change.empty(),
-				builds: newTupleBTree([[[aMajor as RevisionTag | undefined, brand(3)], nodesChunk]]),
+				builds: newTupleBTree([
+					[[aMajor as RevisionTag | undefined, brand(3)], nodesChunk],
+				]),
 			};
 
 			const expected: ModularChangeset = {
 				...Change.empty(),
-				builds: newTupleBTree([[[aMajor as RevisionTag | undefined, brand(3)], nodesChunk]]),
+				builds: newTupleBTree([
+					[[aMajor as RevisionTag | undefined, brand(3)], nodesChunk],
+				]),
 			};
 
 			const withBuilds = updateRefreshers(input, getDetachedNode, [
@@ -1339,7 +1427,11 @@ describe("ModularChangeFamily", () => {
 					]),
 				};
 
-				const withBuilds = updateRefreshers(input, getDetachedNode, [a1, a2, b1]);
+				const withBuilds = updateRefreshers(input, getDetachedNode, [
+					a1,
+					a2,
+					b1,
+				]);
 				assertEqual(withBuilds, expected);
 			});
 
@@ -1383,19 +1475,28 @@ describe("ModularChangeFamily", () => {
 					]),
 				};
 
-				const withBuilds = updateRefreshers(input, getDetachedNode, [a1, a2, b1]);
+				const withBuilds = updateRefreshers(input, getDetachedNode, [
+					a1,
+					a2,
+					b1,
+				]);
 				assertEqual(withBuilds, expected);
 			});
 
 			it("throws if the detached node is not available and requireRefreshers is true", () => {
 				const input: ModularChangeset = Change.empty();
-				assert.throws(() => updateRefreshers(input, getDetachedNode, [{ minor: 2 }]));
+				assert.throws(() =>
+					updateRefreshers(input, getDetachedNode, [{ minor: 2 }]),
+				);
 			});
 		});
 	});
 
 	describe("Encoding", () => {
-		function assertEquivalent(change1: ModularChangeset, change2: ModularChangeset) {
+		function assertEquivalent(
+			change1: ModularChangeset,
+			change2: ModularChangeset,
+		) {
 			const normalized1 = normalizeChangeset(change1);
 			const normalized2 = normalizeChangeset(change2);
 			assertEqual(normalized1, normalized2);
@@ -1417,7 +1518,10 @@ describe("ModularChangeFamily", () => {
 				["with constraint", inlineRevision(rootChange3, tag1), context],
 				[
 					"with violated constraint",
-					inlineRevision({ ...buildChangeset([]), constraintViolationCount: 42 }, tag1),
+					inlineRevision(
+						{ ...buildChangeset([]), constraintViolationCount: 42 },
+						tag1,
+					),
 					context,
 				],
 				[
@@ -1448,7 +1552,11 @@ describe("ModularChangeFamily", () => {
 					),
 					context,
 				],
-				["with node existence constraint", inlineRevision(rootChange4, tag1), context],
+				[
+					"with node existence constraint",
+					inlineRevision(rootChange4, tag1),
+					context,
+				],
 				[
 					"without node field changes",
 					inlineRevision(rootChangeWithoutNodeFieldChanges, tag1),
@@ -1484,7 +1592,10 @@ describe("ModularChangeFamily", () => {
 					fieldA,
 					genericFieldKind.identifier,
 					genericFieldKind.changeHandler.createEmpty(),
-					Change.node(0, Change.field(fieldB, valueField.identifier, valueChange1a)),
+					Change.node(
+						0,
+						Change.field(fieldB, valueField.identifier, valueChange1a),
+					),
 				),
 			),
 			tag1,
@@ -1513,7 +1624,11 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 	const crossFieldKeyTable: CrossFieldKeyTable = newCrossFieldKeyTable();
 
 	const remapNodeId = (nodeId: NodeId): NodeId => {
-		const newId = tryGetFromNestedMap(idRemappings, nodeId.revision, nodeId.localId);
+		const newId = tryGetFromNestedMap(
+			idRemappings,
+			nodeId.revision,
+			nodeId.localId,
+		);
 		assert(newId !== undefined, "Unknown node ID");
 		return newId;
 	};
@@ -1525,7 +1640,10 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 	};
 
 	const normalizeNodeChanges = (nodeId: NodeId): NodeId => {
-		const nodeChangeset = change.nodeChanges.get([nodeId.revision, nodeId.localId]);
+		const nodeChangeset = change.nodeChanges.get([
+			nodeId.revision,
+			nodeId.localId,
+		]);
 		assert(nodeChangeset !== undefined, "Unknown node ID");
 
 		const normalizedNodeChangeset: NodeChangeset = { ...nodeChangeset };
@@ -1551,7 +1669,10 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 		const normalizedFieldChanges: FieldChangeMap = new Map();
 
 		for (const [field, fieldChange] of fields) {
-			const changeHandler = getFieldKind(fieldKinds, fieldChange.fieldKind).changeHandler;
+			const changeHandler = getFieldKind(
+				fieldKinds,
+				fieldChange.fieldKind,
+			).changeHandler;
 
 			// TODO: This relies on field kinds calling prune child on all changes,
 			// while pruning is supposed to be an optimization which could be skipped.
@@ -1560,10 +1681,15 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 				changeHandler.rebaser.prune(fieldChange.change, normalizeNodeChanges),
 			);
 
-			const crossFieldKeys = changeHandler.getCrossFieldKeys(fieldChange.change);
+			const crossFieldKeys = changeHandler.getCrossFieldKeys(
+				fieldChange.change,
+			);
 			for (const { key, count } of crossFieldKeys) {
 				const prevId = change.crossFieldKeys.getFirst(key, count)?.value;
-				assert(prevId !== undefined, "Should be an entry for each cross-field key");
+				assert(
+					prevId !== undefined,
+					"Should be an entry for each cross-field key",
+				);
 				crossFieldKeyTable.set(key, count, remapFieldId(prevId));
 			}
 		}
@@ -1587,12 +1713,17 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 		normal.builds = brand(change.builds.mapValues(deepCloneChunkedTree));
 	}
 	if (change.refreshers !== undefined) {
-		normal.refreshers = brand(change.refreshers.mapValues(deepCloneChunkedTree));
+		normal.refreshers = brand(
+			change.refreshers.mapValues(deepCloneChunkedTree),
+		);
 	}
 	return normal;
 }
 
-function inlineRevision(change: ModularChangeset, revision: RevisionTag): ModularChangeset {
+function inlineRevision(
+	change: ModularChangeset,
+	revision: RevisionTag,
+): ModularChangeset {
 	return family.changeRevision(change, revision);
 }
 
@@ -1620,7 +1751,9 @@ function buildChangeset(edits: EditDescription[]): ModularChangeset {
 
 function buildExistsConstraint(path: UpPath): ModularChangeset {
 	const edits: ModularChangeset[] = [];
-	const editor = family.buildEditor((taggedChange) => edits.push(taggedChange.change));
+	const editor = family.buildEditor((taggedChange) =>
+		edits.push(taggedChange.change),
+	);
 	editor.addNodeExistsConstraint(path, mintRevisionTag());
 	return edits[0];
 }

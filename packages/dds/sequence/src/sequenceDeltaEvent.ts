@@ -5,16 +5,16 @@
 
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
-	Client,
-	IMergeTreeDeltaCallbackArgs,
-	IMergeTreeDeltaOpArgs,
-	IMergeTreeMaintenanceCallbackArgs,
-	ISegment,
-	MergeTreeDeltaOperationType,
-	MergeTreeDeltaOperationTypes,
+	type Client,
+	type IMergeTreeDeltaCallbackArgs,
+	type IMergeTreeDeltaOpArgs,
+	type IMergeTreeMaintenanceCallbackArgs,
+	type ISegment,
+	type MergeTreeDeltaOperationType,
+	type MergeTreeDeltaOperationTypes,
 	MergeTreeDeltaType,
 	MergeTreeMaintenanceType,
-	PropertySet,
+	type PropertySet,
 	SortedSegmentSet,
 } from "@fluidframework/merge-tree/internal";
 
@@ -27,7 +27,8 @@ import {
  * @legacy @beta
  */
 export interface SequenceEvent<
-	TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes,
+	TOperation extends
+		MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes,
 > {
 	readonly deltaOperation: TOperation;
 
@@ -57,12 +58,15 @@ export interface SequenceEvent<
 	readonly last: Readonly<ISequenceDeltaRange<TOperation>>;
 }
 export abstract class SequenceEventClass<
-	TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes,
+	TOperation extends
+		MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes,
 > implements SequenceEvent<TOperation>
 {
 	public readonly isLocal: boolean;
 	public readonly deltaOperation: TOperation;
-	private readonly sortedRanges: Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>;
+	private readonly sortedRanges: Lazy<
+		SortedSegmentSet<ISequenceDeltaRange<TOperation>>
+	>;
 	private readonly pFirst: Lazy<ISequenceDeltaRange<TOperation>>;
 	private readonly pLast: Lazy<ISequenceDeltaRange<TOperation>>;
 
@@ -86,7 +90,9 @@ export abstract class SequenceEventClass<
 		this.deltaOperation = deltaArgs.operation;
 		this.isLocal = opArgs?.sequencedMessage === undefined;
 
-		this.sortedRanges = new Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>(() => {
+		this.sortedRanges = new Lazy<
+			SortedSegmentSet<ISequenceDeltaRange<TOperation>>
+		>(() => {
 			const set = new SortedSegmentSet<ISequenceDeltaRange<TOperation>>();
 			this.deltaArgs.deltaSegments.forEach((delta) => {
 				const newRange: ISequenceDeltaRange<TOperation> = {
@@ -154,7 +160,8 @@ export abstract class SequenceEventClass<
  * Ops may get multiple events. For instance, an insert-replace will get a remove then an insert event.
  * @legacy @beta
  */
-export interface SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
+export interface SequenceDeltaEvent
+	extends SequenceEvent<MergeTreeDeltaOperationType> {
 	readonly opArgs: IMergeTreeDeltaOpArgs;
 
 	/**
@@ -183,7 +190,8 @@ export class SequenceDeltaEventClass
  * They will not take into consideration any future modifications performed to the underlying sequence and merge tree.
  * @legacy @beta
  */
-export interface SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
+export interface SequenceMaintenanceEvent
+	extends SequenceEvent<MergeTreeMaintenanceType> {
 	readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
 }
 export class SequenceMaintenanceEventClass
@@ -209,7 +217,8 @@ export class SequenceMaintenanceEventClass
  * @legacy @beta
  */
 export interface ISequenceDeltaRange<
-	TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes,
+	TOperation extends
+		MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes,
 > {
 	/**
 	 * The type of operation that changed this range.

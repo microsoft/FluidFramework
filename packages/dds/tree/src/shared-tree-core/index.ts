@@ -4,70 +4,46 @@
  */
 
 export {
+	type BranchId,
 	onForkTransitive,
 	SharedTreeBranch,
 	type SharedTreeBranchChange,
 	type SharedTreeBranchEvents,
-	type BranchId,
 } from "./branch.js";
-
 export {
-	TransactionResult,
-	type Transactor,
-	type TransactionEvents,
-	TransactionStack,
-	SquashingTransactionStack,
-	type OnPush,
-	type OnPop,
-} from "./transaction.js";
-
-export {
-	SharedTreeCore,
-	type Summarizable,
-	type SummaryElementParser,
-	type SummaryElementStringifier,
-	type ClonableSchemaAndPolicy,
-	type SharedTreeCoreOptionsInternal,
-} from "./sharedTreeCore.js";
-
-export type { ResubmitMachine } from "./resubmitMachine.js";
-export { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
-
-export {
-	type ChangeEnricherReadonlyCheckout,
 	type ChangeEnricherMutableCheckout,
+	type ChangeEnricherReadonlyCheckout,
 	NoOpChangeEnricher,
 } from "./changeEnricher.js";
-
+export { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 export {
-	makeEditManagerCodec,
-	getCodecTreeForEditManagerFormatWithChange,
-	type EditManagerCodecOptions,
+	EditManager,
+	minimumPossibleSequenceNumber,
+	type SharedBranchSummaryData,
+	type SummaryData,
+} from "./editManager.js";
+export {
 	clientVersionToEditManagerFormatVersion,
+	type EditManagerCodecOptions,
 	editManagerFormatVersionSelectorForSharedBranches,
+	getCodecTreeForEditManagerFormatWithChange,
+	makeEditManagerCodec,
 } from "./editManagerCodecs.js";
+export type {
+	Commit,
+	EncodedCommit,
+	SeqNumber,
+	SequencedCommit,
+	SummarySessionBranch,
+} from "./editManagerFormatCommons.js";
 export {
 	EditManagerFormatVersion,
 	supportedEditManagerFormatVersions,
 } from "./editManagerFormatCommons.js";
 export { EditManagerSummarizer } from "./editManagerSummarizer.js";
 export {
-	EditManager,
-	minimumPossibleSequenceNumber,
-	type SummaryData,
-	type SharedBranchSummaryData,
-} from "./editManager.js";
-export type {
-	Commit,
-	SeqNumber,
-	SequencedCommit,
-	SummarySessionBranch,
-	EncodedCommit,
-} from "./editManagerFormatCommons.js";
-
-export {
-	getCodecTreeForMessageFormatWithChange,
 	clientVersionToMessageFormatVersion,
+	getCodecTreeForMessageFormatWithChange,
 	messageFormatVersionSelectorForSharedBranches,
 } from "./messageCodecs.js";
 export {
@@ -75,3 +51,21 @@ export {
 	messageFormatVersions,
 	supportedMessageFormatVersions,
 } from "./messageFormat.js";
+export type { ResubmitMachine } from "./resubmitMachine.js";
+export {
+	type ClonableSchemaAndPolicy,
+	SharedTreeCore,
+	type SharedTreeCoreOptionsInternal,
+	type Summarizable,
+	type SummaryElementParser,
+	type SummaryElementStringifier,
+} from "./sharedTreeCore.js";
+export {
+	type OnPop,
+	type OnPush,
+	SquashingTransactionStack,
+	type TransactionEvents,
+	TransactionResult,
+	TransactionStack,
+	type Transactor,
+} from "./transaction.js";

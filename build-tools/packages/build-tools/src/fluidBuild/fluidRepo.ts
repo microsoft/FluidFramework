@@ -8,7 +8,11 @@ import * as path from "path";
 import { MonoRepo } from "../common/monoRepo";
 import { type Package, Packages } from "../common/npmPackage";
 import type { ExecAsyncResult } from "../common/utils";
-import type { IFluidBuildDir, IFluidBuildDirEntry, IFluidBuildDirs } from "./fluidBuildConfig";
+import type {
+	IFluidBuildDir,
+	IFluidBuildDirEntry,
+	IFluidBuildDirs,
+} from "./fluidBuildConfig";
 
 /**
  * @deprecated Should not be used outside the build-tools package.
@@ -27,7 +31,9 @@ export class FluidRepo {
 		fluidBuildDirs?: IFluidBuildDirs,
 	) {
 		// Expand to full IFluidRepoPackage and full path
-		const normalizeEntry = (item: IFluidBuildDirEntry): IFluidBuildDir | IFluidBuildDir[] => {
+		const normalizeEntry = (
+			item: IFluidBuildDirEntry,
+		): IFluidBuildDir | IFluidBuildDir[] => {
 			if (Array.isArray(item)) {
 				return item.map((entry) => normalizeEntry(entry) as IFluidBuildDir);
 			}
@@ -68,7 +74,9 @@ export class FluidRepo {
 	}
 
 	public createPackageMap() {
-		return new Map<string, Package>(this.packages.packages.map((pkg) => [pkg.name, pkg]));
+		return new Map<string, Package>(
+			this.packages.packages.map((pkg) => [pkg.name, pkg]),
+		);
 	}
 
 	public reload() {

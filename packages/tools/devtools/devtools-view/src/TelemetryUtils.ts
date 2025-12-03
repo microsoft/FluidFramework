@@ -18,7 +18,9 @@ import React from "react";
  * receives; it should only pass them to the logger provided via {@link DevtoolsPanelProps.usageTelemetryLogger | the
  * usageTelemetryLogger prop for DevtoolsPanel} instead (if any).
  */
-export const LoggerContext = React.createContext<ITelemetryLoggerExt | undefined>(undefined);
+export const LoggerContext = React.createContext<
+	ITelemetryLoggerExt | undefined
+>(undefined);
 
 /**
  * Gets the {@link @fluidframework/telemetry-utils#ITelemetryLoggerExt} provided through an {@link LoggerContext}.
@@ -62,7 +64,8 @@ const telemetryOptInKey: string = "fluid:devtools:telemetry:optIn";
  * @returns boolean representing whether telemetry collection is enabled
  * @internal
  */
-export const isTelemetryOptInEnabled = (): boolean => getStorageValue(telemetryOptInKey);
+export const isTelemetryOptInEnabled = (): boolean =>
+	getStorageValue(telemetryOptInKey);
 
 /**
  * Hook for getting and setting the usage telemetry opt-in setting, backed by brower's local storage.

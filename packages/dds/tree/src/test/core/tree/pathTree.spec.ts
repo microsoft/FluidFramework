@@ -6,14 +6,14 @@
 import { strict as assert } from "node:assert";
 
 import {
-	type FieldKey,
-	type UpPath,
 	clonePath,
 	compareFieldUpPaths,
 	compareUpPaths,
+	type FieldKey,
 	getDepth,
 	rootField,
 	rootFieldKey,
+	type UpPath,
 } from "../../../core/index.js";
 // This import is targeting the code being tested
 // eslint-disable-next-line import-x/no-internal-modules
@@ -139,7 +139,10 @@ describe("pathTree", () => {
 			),
 		);
 		assert(
-			!compareFieldUpPaths({ field: fooKey, parent: root }, { field: fooKey, parent: child }),
+			!compareFieldUpPaths(
+				{ field: fooKey, parent: root },
+				{ field: fooKey, parent: child },
+			),
 		);
 	});
 

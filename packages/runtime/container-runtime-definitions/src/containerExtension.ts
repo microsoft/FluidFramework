@@ -17,8 +17,8 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import type { IQuorumClients } from "@fluidframework/driver-definitions/internal";
 import type {
-	ContainerExtensionId,
 	ContainerExtensionExpectations,
+	ContainerExtensionId,
 	ExtensionCompatibilityDetails,
 	UnknownExtensionInstantiation,
 } from "@fluidframework/runtime-definitions/internal";
@@ -63,8 +63,12 @@ export type ExtensionMessage<
  * @sealed
  * @internal
  */
-export type OutboundExtensionMessage<TMessage extends TypedMessage = TypedMessage> =
-	ExtensionMessage<{ type: TMessage["type"]; content: JsonSerializable<TMessage["content"]> }>;
+export type OutboundExtensionMessage<
+	TMessage extends TypedMessage = TypedMessage,
+> = ExtensionMessage<{
+	type: TMessage["type"];
+	content: JsonSerializable<TMessage["content"]>;
+}>;
 
 /**
  * Brand for value that has not been verified.
@@ -106,7 +110,9 @@ export type OutboundExtensionMessage<TMessage extends TypedMessage = TypedMessag
  * @sealed
  * @internal
  */
-export declare class UnverifiedBrand<T> extends BrandedType<UnverifiedBrand<unknown>> {
+export declare class UnverifiedBrand<T> extends BrandedType<
+	UnverifiedBrand<unknown>
+> {
 	protected readonly UnverifiedValue: T;
 	private constructor();
 }
@@ -117,7 +123,9 @@ export declare class UnverifiedBrand<T> extends BrandedType<UnverifiedBrand<unkn
  * @sealed
  * @internal
  */
-export type RawInboundExtensionMessage<TMessage extends TypedMessage = TypedMessage> =
+export type RawInboundExtensionMessage<
+	TMessage extends TypedMessage = TypedMessage,
+> =
 	// `TMessage extends TypedMessage` encourages processing union elements individually
 	TMessage extends TypedMessage
 		? InternalUtilityTypes.FlattenIntersection<
@@ -142,7 +150,9 @@ export type RawInboundExtensionMessage<TMessage extends TypedMessage = TypedMess
  * @sealed
  * @internal
  */
-export type VerifiedInboundExtensionMessage<TMessage extends TypedMessage = TypedMessage> =
+export type VerifiedInboundExtensionMessage<
+	TMessage extends TypedMessage = TypedMessage,
+> =
 	// `TMessage extends TypedMessage` encourages processing union elements individually
 	TMessage extends TypedMessage
 		? InternalUtilityTypes.FlattenIntersection<
@@ -168,7 +178,9 @@ export type VerifiedInboundExtensionMessage<TMessage extends TypedMessage = Type
  * @sealed
  * @internal
  */
-export type InboundExtensionMessage<TMessage extends TypedMessage = TypedMessage> =
+export type InboundExtensionMessage<
+	TMessage extends TypedMessage = TypedMessage,
+> =
 	| RawInboundExtensionMessage<TMessage>
 	| VerifiedInboundExtensionMessage<TMessage>;
 
@@ -229,7 +241,11 @@ export interface ContainerExtension<
 		>,
 		newCompatibilityRequest: ExtensionCompatibilityDetails,
 	): Readonly<
-		ExtensionInstantiationResult<TRequestedInterface, TRuntimeProperties, TUseContext>
+		ExtensionInstantiationResult<
+			TRequestedInterface,
+			TRuntimeProperties,
+			TUseContext
+		>
 	>;
 
 	/**
@@ -254,7 +270,9 @@ export interface ContainerExtension<
 	 */
 	processSignal?: (
 		addressChain: string[],
-		signalMessage: InboundExtensionMessage<TRuntimeProperties["SignalMessages"]>,
+		signalMessage: InboundExtensionMessage<
+			TRuntimeProperties["SignalMessages"]
+		>,
 		local: boolean,
 	) => void;
 }
@@ -302,9 +320,9 @@ export type JoinedStatus =
  * @internal
  */
 export interface ExtensionHostEvents {
-	"disconnected": () => void;
-	"joined": (props: { clientId: ClientConnectionId; canWrite: boolean }) => void;
-	"operabilityChanged": (canWrite: boolean) => void;
+	disconnected: () => void;
+	joined: (props: { clientId: ClientConnectionId; canWrite: boolean }) => void;
+	operabilityChanged: (canWrite: boolean) => void;
 }
 
 /**
@@ -316,7 +334,9 @@ export interface ExtensionHostEvents {
  * @sealed
  * @internal
  */
-export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProperties> {
+export interface ExtensionHost<
+	TRuntimeProperties extends ExtensionRuntimeProperties,
+> {
 	/**
 	 * Gets the current joined status of the container.
 	 *
@@ -386,7 +406,9 @@ export interface ContainerExtensionFactory<
 > extends ContainerExtensionExpectations {
 	resolvePriorInstantiation(
 		priorInstantiation: UnknownExtensionInstantiation,
-	): Readonly<ExtensionInstantiationResult<TInterface, TRuntimeProperties, TUseContext>>;
+	): Readonly<
+		ExtensionInstantiationResult<TInterface, TRuntimeProperties, TUseContext>
+	>;
 
 	/**
 	 * @param host - Host runtime for extension to work against
@@ -407,7 +429,11 @@ export interface ContainerExtensionFactory<
 	 */
 	[Symbol.hasInstance]: (
 		instance: unknown,
-	) => instance is ExtensionInstantiationResult<TInterface, TRuntimeProperties, TUseContext>;
+	) => instance is ExtensionInstantiationResult<
+		TInterface,
+		TRuntimeProperties,
+		TUseContext
+	>;
 }
 
 /**
@@ -429,7 +455,11 @@ export interface ContainerExtensionStore {
 		TUseContext extends unknown[] = [],
 	>(
 		id: ContainerExtensionId,
-		factory: ContainerExtensionFactory<TInterface, TRuntimeProperties, TUseContext>,
+		factory: ContainerExtensionFactory<
+			TInterface,
+			TRuntimeProperties,
+			TUseContext
+		>,
 		...context: TUseContext
 	): TInterface;
 }

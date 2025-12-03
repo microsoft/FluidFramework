@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { getSimpleSchema, walkFieldSchema } from "@fluidframework/tree/internal";
-import type { ImplicitFieldSchema, SimpleTreeSchema } from "@fluidframework/tree/internal";
+import type {
+	ImplicitFieldSchema,
+	SimpleTreeSchema,
+} from "@fluidframework/tree/internal";
+import {
+	getSimpleSchema,
+	walkFieldSchema,
+} from "@fluidframework/tree/internal";
 
 import type { BindableSchema } from "./methodBinding.js";
 import { getExposedMethods, isBindableSchema } from "./methodBinding.js";
@@ -15,7 +21,10 @@ import {
 } from "./renderSchemaTypeScript.js";
 import { getOrCreate } from "./utils.js";
 
-const promptSchemaCache = new WeakMap<SimpleTreeSchema, SchemaTypeScriptRenderResult>();
+const promptSchemaCache = new WeakMap<
+	SimpleTreeSchema,
+	SchemaTypeScriptRenderResult
+>();
 
 /**
  * Generates TypeScript declarations for the schemas reachable from the provided root field schema.

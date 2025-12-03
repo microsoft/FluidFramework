@@ -6,16 +6,21 @@
 import { validateMessages } from "@fluidframework/driver-base/internal";
 import type {
 	IDocumentDeltaStorageService,
-	IStream,
 	ISequencedDocumentMessage,
+	IStream,
 } from "@fluidframework/driver-definitions/internal";
-import { Queue, emptyMessageStream } from "@fluidframework/driver-utils/internal";
+import {
+	emptyMessageStream,
+	Queue,
+} from "@fluidframework/driver-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Implementation of IDocumentDeltaStorageService that will return snapshot ops when fetching messages
  */
-export class LocalOdspDeltaStorageService implements IDocumentDeltaStorageService {
+export class LocalOdspDeltaStorageService
+	implements IDocumentDeltaStorageService
+{
 	constructor(
 		private readonly logger: ITelemetryLoggerExt,
 		private snapshotOps: ISequencedDocumentMessage[],
@@ -34,7 +39,9 @@ export class LocalOdspDeltaStorageService implements IDocumentDeltaStorageServic
 
 		const queue = new Queue<ISequencedDocumentMessage[]>();
 		const messages = this.snapshotOps.filter(
-			(op) => op.sequenceNumber >= from && (to === undefined || op.sequenceNumber < to),
+			(op) =>
+				op.sequenceNumber >= from &&
+				(to === undefined || op.sequenceNumber < to),
 		);
 		validateMessages("cached", messages, from, this.logger);
 

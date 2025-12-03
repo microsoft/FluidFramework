@@ -27,7 +27,8 @@ export interface IDevtoolsMessage<TData = unknown> {
  *
  * @internal
  */
-export interface ISourcedDevtoolsMessage<TData = unknown> extends IDevtoolsMessage<TData> {
+export interface ISourcedDevtoolsMessage<TData = unknown>
+	extends IDevtoolsMessage<TData> {
 	/**
 	 * Identifies the source of the message.
 	 * Can be used to filter the messages being listened to / accepted.

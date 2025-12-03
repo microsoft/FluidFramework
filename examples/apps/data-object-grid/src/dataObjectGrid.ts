@@ -12,8 +12,8 @@ import { v4 as uuid } from "uuid";
 
 import {
 	dataObjectRegistry,
-	registryEntries,
 	type ISingleHandleItem,
+	registryEntries,
 } from "./dataObjectRegistry.js";
 
 /**
@@ -46,7 +46,9 @@ export interface IDataObjectGrid<T = unknown> extends EventEmitter {
 	/**
 	 * Get a React element view of the specified item.
 	 */
-	readonly getViewForItem: (item: IDataObjectGridItem<T>) => Promise<JSX.Element>;
+	readonly getViewForItem: (
+		item: IDataObjectGridItem<T>,
+	) => Promise<JSX.Element>;
 }
 
 /**
@@ -75,7 +77,10 @@ export interface IDataObjectGridItem<T = unknown> {
 /**
  * DataObjectGrid manages multiple subcomponents and their layouts.
  */
-export class DataObjectGrid extends DataObject implements IDataObjectGrid<ISingleHandleItem> {
+export class DataObjectGrid
+	extends DataObject
+	implements IDataObjectGrid<ISingleHandleItem>
+{
 	public static readonly ComponentName = "@fluid-example/data-object-grid";
 
 	private static readonly factory = new DataObjectFactory({

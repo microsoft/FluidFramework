@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { ReplayArgs, ReplayTool } from "@fluid-internal/replay-tool";
+import { Deferred } from "@fluidframework/core-utils/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { strict as assert } from "assert";
 import fs from "fs";
 import nodePath from "path";
-
-import { ReplayArgs, ReplayTool } from "@fluid-internal/replay-tool";
-import { Deferred } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { _dirname } from "./dirname.cjs";
 import { getMetadata, writeMetadataFile } from "./metadata.js";
@@ -116,7 +115,8 @@ export async function processOneNode(args: IWorkerArgs) {
 	replayArgs.outDirName = `${args.folder}/${currentSnapshots}`;
 	replayArgs.snapFreq = args.snapFreq;
 	replayArgs.testSummaries = args.testSummaries;
-	replayArgs.write = args.mode === Mode.NewSnapshots || args.mode === Mode.UpdateSnapshots;
+	replayArgs.write =
+		args.mode === Mode.NewSnapshots || args.mode === Mode.UpdateSnapshots;
 	replayArgs.compare = args.mode === Mode.Compare;
 	// Make it easier to see problems in stress tests
 	replayArgs.expandFiles = args.mode === Mode.Stress;
@@ -142,7 +142,9 @@ export async function processOneNode(args: IWorkerArgs) {
 			throw new Error(`Errors\n ${errors.join("\n")}`);
 		}
 	} catch (error) {
-		console.error(`Unhandled Error processing \n ${JSON.stringify(args)}\n ${error}`);
+		console.error(
+			`Unhandled Error processing \n ${JSON.stringify(args)}\n ${error}`,
+		);
 		throw error;
 	}
 }
@@ -259,11 +261,16 @@ async function processNodeForUpdatingSnapshots(
 	);
 
 	const versionFileName = `${currentSnapshotsDir}/snapshotVersion.json`;
-	assert(fs.existsSync(versionFileName), `Version file ${versionFileName} does not exist`);
+	assert(
+		fs.existsSync(versionFileName),
+		`Version file ${versionFileName} does not exist`,
+	);
 
 	// Get the version of the current snapshots. This becomes the the folder name under the "src_snapshots" folder
 	// where these snapshots will be moved.
-	const versionContent = JSON.parse(fs.readFileSync(`${versionFileName}`, "utf-8"));
+	const versionContent = JSON.parse(
+		fs.readFileSync(`${versionFileName}`, "utf-8"),
+	);
 	const currentSnapshotsVersion = versionContent.snapshotVersion;
 
 	// If the current snapshots version is the same as the current version of the runtime (pkgVersion), don't move
@@ -274,7 +281,9 @@ async function processNodeForUpdatingSnapshots(
 		const newSrcDir = `${data.folder}/${srcSnapshots}/${currentSnapshotsVersion}`;
 		fs.mkdirSync(newSrcDir, { recursive: true });
 
-		for (const subNode of fs.readdirSync(currentSnapshotsDir, { withFileTypes: true })) {
+		for (const subNode of fs.readdirSync(currentSnapshotsDir, {
+			withFileTypes: true,
+		})) {
 			assert(!subNode.isDirectory());
 			fs.copyFileSync(
 				`${currentSnapshotsDir}/${subNode.name}`,
@@ -287,9 +296,13 @@ async function processNodeForUpdatingSnapshots(
 	await processNode(data, concurrently, limiter);
 
 	// Update the version of the current snapshots to the latest version.
-	fs.writeFileSync(versionFileName, JSON.stringify({ snapshotVersion: pkgVersion }), {
-		encoding: "utf-8",
-	});
+	fs.writeFileSync(
+		versionFileName,
+		JSON.stringify({ snapshotVersion: pkgVersion }),
+		{
+			encoding: "utf-8",
+		},
+	);
 }
 
 /**
@@ -318,9 +331,13 @@ async function processNodeForNewSnapshots(
 
 	const versionFileName = `${currentSnapshotsDir}/snapshotVersion.json`;
 	// Write the versions file to the current snapshots dir.
-	fs.writeFileSync(versionFileName, JSON.stringify({ snapshotVersion: pkgVersion }), {
-		encoding: "utf-8",
-	});
+	fs.writeFileSync(
+		versionFileName,
+		JSON.stringify({ snapshotVersion: pkgVersion }),
+		{
+			encoding: "utf-8",
+		},
+	);
 
 	// Write the metadata file.
 	writeMetadataFile(data.folder);
@@ -346,13 +363,19 @@ async function processNodeForBackCompat(data: IWorkerArgs) {
 	const messages = JSON.parse(
 		fs.readFileSync(messagesFile).toString("utf-8"),
 	) as ISequencedDocumentMessage[];
-	const seqToMessage = new Map(messages.map((message) => [message.sequenceNumber, message]));
+	const seqToMessage = new Map(
+		messages.map((message) => [message.sequenceNumber, message]),
+	);
 
 	// Snapshots in current format is under "currentSnapshots" directory.
 	const currentSnapshotsDir = `${data.folder}/${currentSnapshots}`;
 
 	// Validate that we can load snapshot in current format and write it in current snapshot format.
-	await validateSnapshots(currentSnapshotsDir, currentSnapshotsDir, seqToMessage);
+	await validateSnapshots(
+		currentSnapshotsDir,
+		currentSnapshotsDir,
+		seqToMessage,
+	);
 
 	// Snapshots in old format are under "srcSnapshots" directory. If we don't have any, there is nothing more to do.
 	const srcSnapshotsDir = `${data.folder}/${srcSnapshots}`;
@@ -413,7 +436,11 @@ async function processNode(
 							`If you changed snapshot representation and validated new format is backward` +
 							` compatible, you can run 'npm run test:update' to update baseline snapshot files.\n` +
 							`Check README.md for more details.`;
-						reject(new Error(`${JSON.stringify(workerData)}\n${message}\n\n${extra}`));
+						reject(
+							new Error(
+								`${JSON.stringify(workerData)}\n${message}\n\n${extra}`,
+							),
+						);
 					} else {
 						reject(new Error(`${JSON.stringify(workerData)}\n${message}`));
 					}
@@ -453,7 +480,9 @@ function cleanFailedSnapshots(dir: string) {
 		return;
 	}
 
-	for (const node of fs.readdirSync(failedSnapshotsDir, { withFileTypes: true })) {
+	for (const node of fs.readdirSync(failedSnapshotsDir, {
+		withFileTypes: true,
+	})) {
 		if (node.isDirectory()) {
 			continue;
 		}

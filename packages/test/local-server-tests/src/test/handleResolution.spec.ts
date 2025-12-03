@@ -3,23 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import {
 	createDetachedContainer,
 	loadExistingContainer,
 	rehydrateDetachedContainer,
 } from "@fluidframework/container-loader/internal";
-import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
+import type {
+	FluidObject,
+	IFluidHandle,
+} from "@fluidframework/core-interfaces";
 import { LocalResolver } from "@fluidframework/local-driver/internal";
-import { type IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
+import type { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
-	LoaderContainerTracker,
 	getContainerEntryPointBackCompat,
-	waitForContainerConnection,
 	type ITestFluidObject,
+	LoaderContainerTracker,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import { strict as assert } from "assert";
 
 import { createLoader } from "../utils";
 
@@ -30,8 +32,12 @@ async function createNonRootDataObject(
 	containerRuntime: IContainerRuntimeBase,
 ): Promise<ITestFluidObject> {
 	const dataStore = await containerRuntime.createDataStore("default");
-	const maybeTestDo: FluidObject<ITestFluidObject> = await dataStore.entryPoint.get();
-	assert(maybeTestDo.ITestFluidObject !== undefined, "Failed to get ITestFluidObject");
+	const maybeTestDo: FluidObject<ITestFluidObject> =
+		await dataStore.entryPoint.get();
+	assert(
+		maybeTestDo.ITestFluidObject !== undefined,
+		"Failed to get ITestFluidObject",
+	);
 	return maybeTestDo.ITestFluidObject;
 }
 
@@ -39,10 +45,17 @@ async function getAndValidateDataObject(
 	fromDataObject: ITestFluidObject,
 	key: string,
 ): Promise<ITestFluidObject> {
-	const dataObjectHandle = fromDataObject.root.get<IFluidHandle<ITestFluidObject>>(key);
-	assert(dataObjectHandle !== undefined, `Data object handle for key ${key} not found`);
+	const dataObjectHandle =
+		fromDataObject.root.get<IFluidHandle<ITestFluidObject>>(key);
+	assert(
+		dataObjectHandle !== undefined,
+		`Data object handle for key ${key} not found`,
+	);
 	const dataObject = await dataObjectHandle.get();
-	assert(dataObject !== undefined, `Data object for key ${key} must be visible`);
+	assert(
+		dataObject !== undefined,
+		`Data object for key ${key} must be visible`,
+	);
 	return dataObject;
 }
 
@@ -64,7 +77,8 @@ describe("Multi-level handle access", () => {
 		});
 		const container1 = await createDetachedContainer(loader);
 
-		const dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		const dataObject1 =
+			await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		const containerRuntime1 = dataObject1.context.containerRuntime;
 
 		const dataObject2 = await createNonRootDataObject(containerRuntime1);
@@ -112,9 +126,16 @@ describe("Multi-level handle access", () => {
 		loaderContainerTracker.addContainer(container2);
 		await loaderContainerTracker.ensureSynchronized();
 
-		const dataObject1C2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
-		const dataObject2C2 = await getAndValidateDataObject(dataObject1C2, "dataObject2");
-		const dataObject3C2 = await getAndValidateDataObject(dataObject2C2, "dataObject3");
+		const dataObject1C2 =
+			await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		const dataObject2C2 = await getAndValidateDataObject(
+			dataObject1C2,
+			"dataObject2",
+		);
+		const dataObject3C2 = await getAndValidateDataObject(
+			dataObject2C2,
+			"dataObject3",
+		);
 
 		// Validate that the data objects are accessible from the root of the second container.
 		await assert.doesNotReject(
@@ -155,7 +176,8 @@ describe("Multi-level handle access", () => {
 		await waitForContainerConnection(container1);
 		loaderContainerTracker.addContainer(container1);
 
-		const dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		const dataObject1 =
+			await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		const containerRuntime1 = dataObject1.context.containerRuntime;
 
 		const dataObject2 = await createNonRootDataObject(containerRuntime1);
@@ -188,9 +210,16 @@ describe("Multi-level handle access", () => {
 		loaderContainerTracker.addContainer(container2);
 		await loaderContainerTracker.ensureSynchronized();
 
-		const dataObject1C2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
-		const dataObject2C2 = await getAndValidateDataObject(dataObject1C2, "dataObject2");
-		const dataObject3C2 = await getAndValidateDataObject(dataObject2C2, "dataObject3");
+		const dataObject1C2 =
+			await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		const dataObject2C2 = await getAndValidateDataObject(
+			dataObject1C2,
+			"dataObject2",
+		);
+		const dataObject3C2 = await getAndValidateDataObject(
+			dataObject2C2,
+			"dataObject3",
+		);
 
 		// Validate that the data objects are accessible from the root of the second container.
 		await assert.doesNotReject(
@@ -226,7 +255,8 @@ describe("Multi-level handle access", () => {
 		const container1 = await createDetachedContainer(loader);
 		loaderContainerTracker.addContainer(container1);
 
-		const dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		const dataObject1 =
+			await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		const containerRuntime1 = dataObject1.context.containerRuntime;
 
 		const dataObject2 = await createNonRootDataObject(containerRuntime1);
@@ -262,9 +292,16 @@ describe("Multi-level handle access", () => {
 		await waitForContainerConnection(container2);
 		loaderContainerTracker.addContainer(container2);
 
-		const dataObjectC2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
-		const dataObject2C2 = await getAndValidateDataObject(dataObjectC2, "dataObject2");
-		const dataObject3C2 = await getAndValidateDataObject(dataObject2C2, "dataObject3");
+		const dataObjectC2 =
+			await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		const dataObject2C2 = await getAndValidateDataObject(
+			dataObjectC2,
+			"dataObject2",
+		);
+		const dataObject3C2 = await getAndValidateDataObject(
+			dataObject2C2,
+			"dataObject3",
+		);
 
 		// Validate that the data objects are accessible from the root of the rehydrated container.
 		await assert.doesNotReject(

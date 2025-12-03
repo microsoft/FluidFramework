@@ -14,7 +14,11 @@ import {
 	RemoteObliteratePerspective,
 } from "../perspective.js";
 import type { IHasInsertionInfo, IHasRemovalInfo } from "../segmentInfos.js";
-import type { InsertOperationStamp, OperationStamp, RemoveOperationStamp } from "../stamps.js";
+import type {
+	InsertOperationStamp,
+	OperationStamp,
+	RemoveOperationStamp,
+} from "../stamps.js";
 
 const clientId = 17;
 describe("PriorPerspective", () => {
@@ -39,11 +43,23 @@ describe("PriorPerspective", () => {
 
 	it("Uses operations to determine segment visibility", () => {
 		const insert: InsertOperationStamp = { type: "insert", seq: 5, clientId };
-		const remove1: RemoveOperationStamp = { type: "setRemove", seq: 10, clientId };
-		const remove2: RemoveOperationStamp = { type: "sliceRemove", seq: 12, clientId };
-		const seg1 = { insert } satisfies IHasInsertionInfo as unknown as ISegmentLeaf;
-		const seg2: ISegmentLeaf = { insert, removes: [remove1] } satisfies IHasInsertionInfo &
-			IHasRemovalInfo as unknown as ISegmentLeaf;
+		const remove1: RemoveOperationStamp = {
+			type: "setRemove",
+			seq: 10,
+			clientId,
+		};
+		const remove2: RemoveOperationStamp = {
+			type: "sliceRemove",
+			seq: 12,
+			clientId,
+		};
+		const seg1 = {
+			insert,
+		} satisfies IHasInsertionInfo as unknown as ISegmentLeaf;
+		const seg2: ISegmentLeaf = {
+			insert,
+			removes: [remove1],
+		} satisfies IHasInsertionInfo & IHasRemovalInfo as unknown as ISegmentLeaf;
 		const seg3 = {
 			insert,
 			removes: [remove1, remove2],
@@ -81,10 +97,18 @@ describe("PriorPerspective", () => {
 describe("LocalReconnectingPerspective", () => {
 	const refSeq = 10;
 	const localSeq = 20;
-	const perspective = new LocalReconnectingPerspective(refSeq, clientId, localSeq);
+	const perspective = new LocalReconnectingPerspective(
+		refSeq,
+		clientId,
+		localSeq,
+	);
 	it("sees operations from the same client at or below localSeq", () => {
 		for (let i = 0; i <= localSeq; i++) {
-			const stamp: OperationStamp = { seq: UnassignedSequenceNumber, clientId, localSeq: i };
+			const stamp: OperationStamp = {
+				seq: UnassignedSequenceNumber,
+				clientId,
+				localSeq: i,
+			};
 			assert.ok(perspective.hasOccurred(stamp), `Failed for localSeq ${i}`);
 		}
 	});
@@ -128,8 +152,15 @@ describe("LocalDefaultPerspective", () => {
 		}
 
 		for (const localSeq of [0, 1, 5, 100, 1000]) {
-			const stamp: OperationStamp = { seq: UnassignedSequenceNumber, clientId, localSeq };
-			assert.ok(perspective.hasOccurred(stamp), `Failed for localSeq ${localSeq}`);
+			const stamp: OperationStamp = {
+				seq: UnassignedSequenceNumber,
+				clientId,
+				localSeq,
+			};
+			assert.ok(
+				perspective.hasOccurred(stamp),
+				`Failed for localSeq ${localSeq}`,
+			);
 		}
 	});
 });
@@ -139,7 +170,11 @@ describe("RemoteObliteratePerspective", () => {
 	it("Sees all inserts", () => {
 		for (const id of [0, 1, 2, 3, clientId]) {
 			for (const refSeq of [0, 1, 5, 100, 1000]) {
-				const stamp: InsertOperationStamp = { type: "insert", seq: 1, clientId: id };
+				const stamp: InsertOperationStamp = {
+					type: "insert",
+					seq: 1,
+					clientId: id,
+				};
 				assert.ok(
 					perspective.hasOccurred(stamp),
 					`Failed for clientId ${id} and refSeq ${refSeq}`,
@@ -154,7 +189,10 @@ describe("RemoteObliteratePerspective", () => {
 				clientId,
 				localSeq,
 			};
-			assert.ok(perspective.hasOccurred(stamp), `Failed for localSeq ${localSeq}`);
+			assert.ok(
+				perspective.hasOccurred(stamp),
+				`Failed for localSeq ${localSeq}`,
+			);
 		}
 	});
 
@@ -181,7 +219,10 @@ describe("RemoteObliteratePerspective", () => {
 					clientId,
 					localSeq,
 				};
-				assert.ok(!perspective.hasOccurred(stamp), `Failed for localSeq ${localSeq}`);
+				assert.ok(
+					!perspective.hasOccurred(stamp),
+					`Failed for localSeq ${localSeq}`,
+				);
 			}
 		}
 	});

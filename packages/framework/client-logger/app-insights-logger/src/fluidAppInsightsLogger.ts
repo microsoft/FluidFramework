@@ -147,7 +147,10 @@ class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	 */
 	private readonly baseLoggingClient: ApplicationInsights;
 	private readonly config: FluidAppInsightsLoggerConfig;
-	public constructor(client: ApplicationInsights, config?: FluidAppInsightsLoggerConfig) {
+	public constructor(
+		client: ApplicationInsights,
+		config?: FluidAppInsightsLoggerConfig,
+	) {
 		this.baseLoggingClient = client;
 		// Deep copy config to prevent issues if user mutates the object they passed in
 		this.config = config
@@ -193,11 +196,13 @@ class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	private shouldSendEvent(event: ITelemetryBaseEvent): boolean {
 		// No events should be sent by default in "inclusive" mode, and all events should be
 		// sent by default in "exclusive" mode.
-		let shouldSendEvent = this.config.filtering.mode === "inclusive" ? false : true;
+		let shouldSendEvent =
+			this.config.filtering.mode === "inclusive" ? false : true;
 		if (this.doesEventMatchFilter(event)) {
 			// If the event does match a filter, in "inclusive" filter mode that means it should
 			// be sent (included). In "exclusive" mode the opposite is true.
-			shouldSendEvent = this.config.filtering.mode === "inclusive" ? true : false;
+			shouldSendEvent =
+				this.config.filtering.mode === "inclusive" ? true : false;
 		}
 		return shouldSendEvent;
 	}
@@ -220,7 +225,10 @@ class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	 */
 	private doesEventMatchFilter(event: ITelemetryBaseEvent): boolean {
 		for (const filter of this.config.filtering.filters ?? []) {
-			if ("namespacePattern" in filter && filter.namespacePattern !== undefined) {
+			if (
+				"namespacePattern" in filter &&
+				filter.namespacePattern !== undefined
+			) {
 				if (event.eventName.startsWith(filter.namespacePattern)) {
 					// Found matching namespace pattern, since filters are ordered in most specific first,
 					// this is the most specific, relevant matching filter for the event.
@@ -271,7 +279,6 @@ class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 				if (doesFilterCategoriesMatch) {
 					return true;
 				} else {
-					continue;
 				}
 			} else {
 				return true;
@@ -290,14 +297,18 @@ class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 		const uniqueFilterNamespaces = new Set<string>();
 
 		for (const filter of filters) {
-			if ("namespacePattern" in filter && filter.namespacePattern !== undefined) {
+			if (
+				"namespacePattern" in filter &&
+				filter.namespacePattern !== undefined
+			) {
 				if (uniqueFilterNamespaces.has(filter.namespacePattern)) {
 					throw new Error("Cannot have duplicate namespace pattern filters");
 				} else {
 					uniqueFilterNamespaces.add(filter.namespacePattern);
 				}
 
-				for (const patternException of filter.namespacePatternExceptions ?? []) {
+				for (const patternException of filter.namespacePatternExceptions ??
+					[]) {
 					if (!patternException.startsWith(filter.namespacePattern)) {
 						throw new Error(
 							"Cannot have a namespace pattern exception that is not a child of the parent namespace",
@@ -308,11 +319,15 @@ class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 				// These are filters that only contain "categories". For the purpose of this validation logic, we are treating filters
 				// that does not contain a defined namespace as the the same as a blank "" namespace pattern (which will match any event).
 				if (uniqueFilterNamespaces.has("")) {
-					throw new Error("Cannot have multiple filters that only define categories");
+					throw new Error(
+						"Cannot have multiple filters that only define categories",
+					);
 				}
 				uniqueFilterNamespaces.add("");
 			} else {
-				throw new Error("Invalid filter does not have either a namespace or a category.");
+				throw new Error(
+					"Invalid filter does not have either a namespace or a category.",
+				);
 			}
 		}
 	}

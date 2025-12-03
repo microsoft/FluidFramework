@@ -5,14 +5,14 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { getW3CData } from "@fluidframework/driver-base/internal";
-import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import { ISession } from "@fluidframework/server-services-client";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type { ISession } from "@fluidframework/server-services-client";
 import {
+	type ITelemetryLoggerExt,
 	PerformanceEvent,
-	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { RouterliciousOrdererRestWrapper } from "./restWrapper.js";
+import type { RouterliciousOrdererRestWrapper } from "./restWrapper.js";
 import { getDiscoveredFluidResolvedUrl } from "./urlUtils.js";
 
 /**
@@ -68,7 +68,10 @@ export class SessionInfoManager {
 		);
 
 		if (session !== undefined) {
-			this.sessionInfoMap.set(url, getDiscoveredFluidResolvedUrl(resolvedUrl, session));
+			this.sessionInfoMap.set(
+				url,
+				getDiscoveredFluidResolvedUrl(resolvedUrl, session),
+			);
 			this.sessionLastDiscoveredMap.set(url, Date.now());
 		} else if (!this.sessionInfoMap.has(url)) {
 			this.sessionInfoMap.set(url, resolvedUrl);
@@ -110,7 +113,9 @@ export class SessionInfoManager {
 		};
 	}
 
-	private async fetchAndUpdateSessionInfo(params: IGetSessionInfoParams): Promise<void> {
+	private async fetchAndUpdateSessionInfo(
+		params: IGetSessionInfoParams,
+	): Promise<void> {
 		const { documentId, ordererRestWrapper, logger, resolvedUrl } = params;
 
 		const url = getDiscoverSessionUrl(params);

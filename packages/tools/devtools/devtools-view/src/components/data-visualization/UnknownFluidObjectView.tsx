@@ -4,7 +4,7 @@
  */
 
 import type { FluidUnknownObjectNode } from "@fluidframework/devtools-core/internal";
-import React from "react";
+import type React from "react";
 
 import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";
 import { TreeHeader } from "./TreeHeader.js";
@@ -13,7 +13,8 @@ import { TreeItem } from "./TreeItem.js";
 /**
  * {@link UnknownFluidObjectView} input props.
  */
-export type UnknownFluidObjectViewProps = DataVisualizationTreeProps<FluidUnknownObjectNode>;
+export type UnknownFluidObjectViewProps =
+	DataVisualizationTreeProps<FluidUnknownObjectNode>;
 
 /**
  * Render data with type VisualNodeKind.FluidUnknownObjectNode and render its children.

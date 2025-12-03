@@ -9,9 +9,9 @@ import type { IFluidSerializer } from '@fluidframework/shared-object-base/intern
 import { fail } from './Common.js';
 import { getNumberOfHandlesFromEditLogSummary } from './EditLog.js';
 import {
-	SharedTreeSummary,
-	SharedTreeSummaryBase,
-	SharedTreeSummary_0_0_2,
+	type SharedTreeSummary,
+	type SharedTreeSummary_0_0_2,
+	type SharedTreeSummaryBase,
 	WriteFormat,
 } from './persisted-types/index.js';
 

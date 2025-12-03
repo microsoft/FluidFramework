@@ -8,7 +8,10 @@ import path from "node:path";
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-
+import {
+	type CodecWriteOptions,
+	FluidClientVersion,
+} from "../../../codec/index.js";
 import {
 	DetachedFieldIndex,
 	type ForestRootId,
@@ -21,29 +24,31 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../core/tree/detachedFieldIndexCodecs.js";
 // eslint-disable-next-line import-x/no-internal-modules
+import { DetachedFieldIndexFormatVersion } from "../../../core/tree/detachedFieldIndexFormatCommon.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import type { FormatV1 } from "../../../core/tree/detachedFieldIndexFormatV1.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { FormatV2 } from "../../../core/tree/detachedFieldIndexFormatV2.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { DetachedFieldSummaryData } from "../../../core/tree/detachedFieldIndexTypes.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { DetachedFieldIndexFormatVersion } from "../../../core/tree/detachedFieldIndexFormatCommon.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
-	type IdAllocator,
-	type JsonCompatibleReadOnly,
 	brand,
+	type IdAllocator,
 	idAllocatorFromMaxId,
+	type JsonCompatibleReadOnly,
 } from "../../../util/index.js";
-import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import {
+	takeJsonSnapshot,
+	useSnapshotDirectory,
+} from "../../snapshots/index.js";
+import {
+	assertIsSessionId,
+	createSnapshotCompressor,
+	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
-	createSnapshotCompressor,
-	assertIsSessionId,
-	mintRevisionTag,
 } from "../../utils.js";
-import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 
 const mintedTag = testIdCompressor.generateCompressedId();
 const finalizedTag = testIdCompressor.normalizeToOpSpace(mintedTag);
@@ -221,7 +226,9 @@ function generateTestCases(
 			validFor: new Set([DetachedFieldIndexFormatVersion.v2]),
 			data: {
 				maxId,
-				data: new Map([[unfinalizedRevision, new Map([[0, { root: brand(1) }]])]]),
+				data: new Map([
+					[unfinalizedRevision, new Map([[0, { root: brand(1) }]])],
+				]),
 			},
 			idCompressor: unfinalizedCompressor,
 		},
@@ -271,7 +278,11 @@ describe("DetachedFieldIndex Codecs", () => {
 					idCompressor,
 				);
 				for (const version of family.getSupportedFormats()) {
-					if (validFor !== undefined && version !== undefined && !validFor.has(version)) {
+					if (
+						validFor !== undefined &&
+						version !== undefined &&
+						!validFor.has(version)
+					) {
 						continue;
 					}
 					it(`version ${version}`, () => {
@@ -285,7 +296,11 @@ describe("DetachedFieldIndex Codecs", () => {
 		}
 	});
 	describe("loadData", () => {
-		const codec = makeDetachedFieldIndexCodec(testRevisionTagCodec, options, testIdCompressor);
+		const codec = makeDetachedFieldIndexCodec(
+			testRevisionTagCodec,
+			options,
+			testIdCompressor,
+		);
 		for (const [version, cases] of validData) {
 			describe(`accepts correct version ${version} data`, () => {
 				for (const [name, data] of cases) {
@@ -319,7 +334,11 @@ describe("DetachedFieldIndex Codecs", () => {
 					idCompressor,
 				);
 				for (const version of family.getSupportedFormats()) {
-					if (validFor !== undefined && version !== undefined && !validFor.has(version)) {
+					if (
+						validFor !== undefined &&
+						version !== undefined &&
+						!validFor.has(version)
+					) {
 						continue;
 					}
 					const dir = path.join("detached-field-index", name);
@@ -361,16 +380,25 @@ describe("DetachedFieldIndex methods", () => {
 			const revisionTag2 = mintRevisionTag();
 			detachedIndex.createEntry(detachedNodeId1, revisionTag2, 2);
 
-			const rootIds = Array.from(detachedIndex.getRootsLastTouchedByRevision(revisionTag2));
+			const rootIds = Array.from(
+				detachedIndex.getRootsLastTouchedByRevision(revisionTag2),
+			);
 			assert.equal(rootIds.length, 2);
 
 			const entries = Array.from(detachedIndex.entries());
 			assert.deepEqual(entries, [
-				{ root: rootIds[0], latestRelevantRevision: revisionTag2, id: detachedNodeId1 },
+				{
+					root: rootIds[0],
+					latestRelevantRevision: revisionTag2,
+					id: detachedNodeId1,
+				},
 				{
 					root: rootIds[1],
 					latestRelevantRevision: revisionTag2,
-					id: { major: detachedNodeId1.major, minor: detachedNodeId1.minor + 1 },
+					id: {
+						major: detachedNodeId1.major,
+						minor: detachedNodeId1.minor + 1,
+					},
 				},
 			]);
 		});
@@ -389,8 +417,16 @@ describe("DetachedFieldIndex methods", () => {
 
 		const entries = Array.from(detachedIndex.entries());
 		assert.deepEqual(entries, [
-			{ root: rootId1, latestRelevantRevision: revisionTag2, id: detachedNodeId1 },
-			{ root: rootId2, latestRelevantRevision: revisionTag2, id: detachedNodeId2 },
+			{
+				root: rootId1,
+				latestRelevantRevision: revisionTag2,
+				id: detachedNodeId1,
+			},
+			{
+				root: rootId2,
+				latestRelevantRevision: revisionTag2,
+				id: detachedNodeId2,
+			},
 			{
 				root: rootId2 + 1,
 				latestRelevantRevision: revisionTag2,
@@ -412,19 +448,27 @@ describe("DetachedFieldIndex methods", () => {
 
 		const revisionTag3 = mintRevisionTag();
 		const detachedNodeId3 = makeDetachedNodeId(revisionTag1, 4);
-		const undeletedRootId = detachedIndex.createEntry(detachedNodeId3, revisionTag3);
+		const undeletedRootId = detachedIndex.createEntry(
+			detachedNodeId3,
+			revisionTag3,
+		);
 
 		detachedIndex.deleteRootsLastTouchedByRevision(revisionTag2);
 		assert.equal(detachedIndex.tryGetEntry(detachedNodeId1), undefined);
 		assert.equal(detachedIndex.tryGetEntry(detachedNodeId2), undefined);
-		assert.equal(detachedIndex.tryGetEntry(makeDetachedNodeId(revisionTag1, 3)), undefined);
+		assert.equal(
+			detachedIndex.tryGetEntry(makeDetachedNodeId(revisionTag1, 3)),
+			undefined,
+		);
 		assert.equal(detachedIndex.tryGetEntry(detachedNodeId3), undeletedRootId);
 	});
 
 	it("deleteRootsLastTouchedByRevision for an unknown revision does not throw", () => {
 		const detachedIndex = makeDetachedFieldIndex();
 		const revisionTag1 = mintRevisionTag();
-		assert.doesNotThrow(() => detachedIndex.deleteRootsLastTouchedByRevision(revisionTag1));
+		assert.doesNotThrow(() =>
+			detachedIndex.deleteRootsLastTouchedByRevision(revisionTag1),
+		);
 	});
 
 	it("deleteEntry removes single entry, and throws if entry does not exist", () => {
@@ -472,7 +516,10 @@ describe("DetachedFieldIndex methods", () => {
 		assert.equal(detachedIndex2.tryGetEntry(detachedNodeId), rootId);
 
 		// Check that loadData set the latestRelevantRevision to undefined.
-		assert.equal(Array.from(detachedIndex2.entries())[0].latestRelevantRevision, undefined);
+		assert.equal(
+			Array.from(detachedIndex2.entries())[0].latestRelevantRevision,
+			undefined,
+		);
 
 		// Check that the maxId is preserved, and doesn't reset
 		const emptyId = detachedIndex2.createEntry(undefined, undefined);
@@ -497,14 +544,20 @@ describe("DetachedFieldIndex methods", () => {
 		// Sets the new revision tag after loading
 		const revisionTag3 = mintRevisionTag();
 		detachedIndex2.setRevisionsForLoadedData(revisionTag3);
-		assert.equal(Array.from(detachedIndex2.entries())[0].latestRelevantRevision, revisionTag3);
+		assert.equal(
+			Array.from(detachedIndex2.entries())[0].latestRelevantRevision,
+			revisionTag3,
+		);
 		// Check that it was last touched by revisionTag3
-		assert.deepEqual(Array.from(detachedIndex2.getRootsLastTouchedByRevision(revisionTag3)), [
-			rootId,
-		]);
+		assert.deepEqual(
+			Array.from(detachedIndex2.getRootsLastTouchedByRevision(revisionTag3)),
+			[rootId],
+		);
 
 		// Throws if setRevisionsForLoadedData is called more than once.
-		assert.throws(() => detachedIndex2.setRevisionsForLoadedData(mintRevisionTag()));
+		assert.throws(() =>
+			detachedIndex2.setRevisionsForLoadedData(mintRevisionTag()),
+		);
 	});
 
 	describe("getRootsLastTouchedByRevision", () => {
@@ -516,15 +569,17 @@ describe("DetachedFieldIndex methods", () => {
 
 			const revisionTag2 = mintRevisionTag();
 			const rootId = detachedIndex.createEntry(detachedNodeId, revisionTag2);
-			assert.deepEqual(Array.from(detachedIndex.getRootsLastTouchedByRevision(revisionTag2)), [
-				rootId,
-			]);
+			assert.deepEqual(
+				Array.from(detachedIndex.getRootsLastTouchedByRevision(revisionTag2)),
+				[rootId],
+			);
 
 			const revisionTag3 = mintRevisionTag();
 			detachedIndex.updateLatestRevision(detachedNodeId, revisionTag3);
-			assert.deepEqual(Array.from(detachedIndex.getRootsLastTouchedByRevision(revisionTag3)), [
-				rootId,
-			]);
+			assert.deepEqual(
+				Array.from(detachedIndex.getRootsLastTouchedByRevision(revisionTag3)),
+				[rootId],
+			);
 			assert.deepEqual(
 				Array.from(detachedIndex.getRootsLastTouchedByRevision(revisionTag2)),
 				[],
@@ -560,6 +615,9 @@ describe("DetachedFieldIndex methods", () => {
 		const detachedNodeId2 = makeDetachedNodeId(revisionTag1, 2);
 		const rootId = detachedIndex.createEntry(detachedNodeId);
 		const rootId2 = detachedIndex.createEntry(detachedNodeId2);
-		assert.notEqual(detachedIndex.toFieldKey(rootId), detachedIndex.toFieldKey(rootId2));
+		assert.notEqual(
+			detachedIndex.toFieldKey(rootId),
+			detachedIndex.toFieldKey(rootId2),
+		);
 	});
 });

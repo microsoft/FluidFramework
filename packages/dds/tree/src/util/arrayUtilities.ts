@@ -14,7 +14,9 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
  */
 export function validateSafeInteger(index: number, apiName: string): void {
 	if (!Number.isSafeInteger(index)) {
-		throw new UsageError(`Expected a safe integer passed to ${apiName}, got ${index}.`);
+		throw new UsageError(
+			`Expected a safe integer passed to ${apiName}, got ${index}.`,
+		);
 	}
 }
 
@@ -27,7 +29,9 @@ export function validateSafeInteger(index: number, apiName: string): void {
 export function validatePositiveIndex(index: number, apiName: string): void {
 	validateSafeInteger(index, apiName);
 	if (index < 0) {
-		throw new UsageError(`Expected non-negative index passed to ${apiName}, got ${index}.`);
+		throw new UsageError(
+			`Expected non-negative index passed to ${apiName}, got ${index}.`,
+		);
 	}
 }
 

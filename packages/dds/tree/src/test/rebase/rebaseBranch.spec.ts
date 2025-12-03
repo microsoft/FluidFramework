@@ -9,14 +9,18 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 // Allow importing from these specific files which are being tested:
 import {
-	type GraphCommit,
-	type RevisionTag,
 	findAncestor,
 	findCommonAncestor,
+	type GraphCommit,
+	type RevisionTag,
 	rebaseBranch,
 	/* eslint-disable-next-line import-x/no-internal-modules */
 } from "../../core/rebase/index.js";
-import { type NonEmptyTestChange, TestChange, TestChangeRebaser } from "../testChange.js";
+import {
+	type NonEmptyTestChange,
+	TestChange,
+	TestChangeRebaser,
+} from "../testChange.js";
 import { mintRevisionTag } from "../utils.js";
 
 function newCommit(
@@ -57,7 +61,10 @@ describe("rebaseBranch", () => {
 		assert(changes.length === 0, "Fewer commits than changes");
 	}
 
-	function assertOutputContext(change?: TestChange, ...expected: number[]): void {
+	function assertOutputContext(
+		change?: TestChange,
+		...expected: number[]
+	): void {
 		const outputContext =
 			(change as NonEmptyTestChange | undefined)?.outputContext ??
 			fail("Expected output context");

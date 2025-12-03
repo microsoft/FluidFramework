@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export { Versioned } from "./format.js";
 export {
+	makeDiscontinuedCodecVersion,
+	makeVersionDispatchingCodec,
 	makeVersionedCodec,
 	makeVersionedValidatedCodec,
-	makeVersionDispatchingCodec,
-	makeDiscontinuedCodecVersion,
 } from "./codec.js";
+export { Versioned } from "./format.js";

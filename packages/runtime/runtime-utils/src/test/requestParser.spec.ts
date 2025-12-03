@@ -45,7 +45,9 @@ describe("RequestParser", () => {
 	describe(".createSubRequest with special characters", () => {
 		let requestParser: RequestParser;
 		beforeEach(() => {
-			requestParser = RequestParser.create({ url: "//dataStoreId!@//some!@//route!@//" });
+			requestParser = RequestParser.create({
+				url: "//dataStoreId!@//some!@//route!@//",
+			});
 		});
 		it("Create request from part 0", () => {
 			assert.strictEqual(
@@ -54,7 +56,10 @@ describe("RequestParser", () => {
 			);
 		});
 		it("Create request from part 1", () => {
-			assert.strictEqual(requestParser.createSubRequest(1).url, "/some!@/route!@");
+			assert.strictEqual(
+				requestParser.createSubRequest(1).url,
+				"/some!@/route!@",
+			);
 		});
 		it("Create request from part 2", () => {
 			assert.strictEqual(requestParser.createSubRequest(2).url, "/route!@");
@@ -89,7 +94,7 @@ describe("RequestParser", () => {
 		});
 	});
 
-	const testSubRequest = function (uri: string): void {
+	const testSubRequest = (uri: string): void => {
 		describe(".createSubRequest with query params", () => {
 			let requestParser2: RequestParser;
 			beforeEach(() => {
@@ -114,7 +119,10 @@ describe("RequestParser", () => {
 				);
 			});
 			it("Create request from parts length", () => {
-				assert.strictEqual(requestParser2.createSubRequest(3).url, "/?query1=1&query2=2");
+				assert.strictEqual(
+					requestParser2.createSubRequest(3).url,
+					"/?query1=1&query2=2",
+				);
 			});
 			it("Create request from invalid part ", () => {
 				assert.throws(() => requestParser2.createSubRequest(4));

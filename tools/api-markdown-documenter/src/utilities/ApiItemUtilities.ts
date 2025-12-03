@@ -6,8 +6,8 @@
 import {
 	type ApiCallSignature,
 	type ApiClass,
-	type ApiConstructSignature,
 	type ApiConstructor,
+	type ApiConstructSignature,
 	ApiDocumentedItem,
 	type ApiEntryPoint,
 	type ApiFunction,
@@ -60,7 +60,9 @@ export type ValidApiItemKind = Exclude<ApiItemKind, ApiItemKind.None>;
 export function getApiItemKind(apiItem: ApiItem): ValidApiItemKind {
 	switch (apiItem.kind) {
 		case ApiItemKind.None: {
-			throw new Error(`Encountered an API item with kind "None": "${apiItem.displayName}".`);
+			throw new Error(
+				`Encountered an API item with kind "None": "${apiItem.displayName}".`,
+			);
 		}
 		default: {
 			return apiItem.kind;
@@ -200,7 +202,10 @@ export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined {
  */
 function getQualifiedDisplayName(apiItem: ApiItem): string {
 	let qualifiedName: string = apiItem.displayName;
-	if (ApiParameterListMixin.isBaseClassOf(apiItem) && apiItem.overloadIndex > 1) {
+	if (
+		ApiParameterListMixin.isBaseClassOf(apiItem) &&
+		apiItem.overloadIndex > 1
+	) {
 		// Subtract one for compatibility with earlier releases of API Documenter.
 		// (This will get revamped when we fix GitHub issue #1308)
 		qualifiedName += `_${apiItem.overloadIndex - 1}`;
@@ -216,7 +221,7 @@ function getQualifiedDisplayName(apiItem: ApiItem): string {
  */
 export function getFileSafeNameForApiItemName(apiItemName: string): string {
 	// eslint-disable-next-line unicorn/better-regex, no-useless-escape
-	const badFilenameCharsRegExp: RegExp = /[^a-z0-9_\-\.]/gi;
+	const badFilenameCharsRegExp: RegExp = /[^a-z0-9_\-.]/gi;
 
 	// Note: This can introduce naming collisions.
 	// TODO: once the following issue has been resolved in api-extractor, we may be able to clean this up:
@@ -263,7 +268,10 @@ export function getUnscopedPackageName(apiPackage: ApiPackage): string {
  *
  * @returns The filtered list of items.
  */
-export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[]): ApiItem[] {
+export function filterByKind(
+	apiItems: readonly ApiItem[],
+	kinds: ApiItemKind[],
+): ApiItem[] {
 	return apiItems.filter((apiMember) => kinds.includes(apiMember.kind));
 }
 
@@ -331,7 +339,10 @@ export function getEffectiveReleaseLevel(apiItem: ApiItem): ReleaseLevel {
  */
 export function getModifierTags(apiItem: ApiItem): ReadonlySet<string> {
 	const modifierTags = new Set<string>();
-	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
+	if (
+		apiItem instanceof ApiDocumentedItem &&
+		apiItem.tsdocComment !== undefined
+	) {
 		for (const tag of apiItem.tsdocComment.modifierTagSet.nodes) {
 			modifierTags.add(tag.tagName);
 		}
@@ -367,7 +378,10 @@ export function hasModifierTag(apiItem: ApiItem, tagName: string): boolean {
  *
  * @public
  */
-export function ancestryHasModifierTag(apiItem: ApiItem, tagName: string): boolean {
+export function ancestryHasModifierTag(
+	apiItem: ApiItem,
+	tagName: string,
+): boolean {
 	if (hasModifierTag(apiItem, tagName)) {
 		return true;
 	}
@@ -467,8 +481,13 @@ function getCustomBlockSectionForSingleInstanceTag(
  *
  * @public
  */
-export function getExampleBlocks(apiItem: ApiItem): readonly DocSection[] | undefined {
-	return getCustomBlockSectionsForMultiInstanceTags(apiItem, StandardTags.example.tagName);
+export function getExampleBlocks(
+	apiItem: ApiItem,
+): readonly DocSection[] | undefined {
+	return getCustomBlockSectionsForMultiInstanceTags(
+		apiItem,
+		StandardTags.example.tagName,
+	);
 }
 
 /**
@@ -480,9 +499,16 @@ export function getExampleBlocks(apiItem: ApiItem): readonly DocSection[] | unde
  *
  * @public
  */
-export function getSeeBlocks(apiItem: ApiItem): readonly DocSection[] | undefined {
-	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.seeBlocks !== undefined) {
-		const seeBlocks = apiItem.tsdocComment.seeBlocks.map((block) => block.content);
+export function getSeeBlocks(
+	apiItem: ApiItem,
+): readonly DocSection[] | undefined {
+	if (
+		apiItem instanceof ApiDocumentedItem &&
+		apiItem.tsdocComment?.seeBlocks !== undefined
+	) {
+		const seeBlocks = apiItem.tsdocComment.seeBlocks.map(
+			(block) => block.content,
+		);
 		return seeBlocks.length === 0 ? undefined : seeBlocks;
 	}
 	return undefined;
@@ -497,8 +523,13 @@ export function getSeeBlocks(apiItem: ApiItem): readonly DocSection[] | undefine
  *
  * @public
  */
-export function getThrowsBlocks(apiItem: ApiItem): readonly DocSection[] | undefined {
-	return getCustomBlockSectionsForMultiInstanceTags(apiItem, StandardTags.throws.tagName);
+export function getThrowsBlocks(
+	apiItem: ApiItem,
+): readonly DocSection[] | undefined {
+	return getCustomBlockSectionsForMultiInstanceTags(
+		apiItem,
+		StandardTags.throws.tagName,
+	);
 }
 
 /**
@@ -566,7 +597,8 @@ export function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined {
  */
 export function isDeprecated(apiItem: ApiItem): boolean {
 	return (
-		apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.deprecatedBlock !== undefined
+		apiItem instanceof ApiDocumentedItem &&
+		apiItem.tsdocComment?.deprecatedBlock !== undefined
 	);
 }
 
@@ -623,19 +655,31 @@ export function getModifiers(
 ): ApiModifier[] {
 	const modifiers: ApiModifier[] = [];
 
-	if (isOptional(apiItem) && !(modifiersToOmit?.includes(ApiModifier.Optional) ?? false)) {
+	if (
+		isOptional(apiItem) &&
+		!(modifiersToOmit?.includes(ApiModifier.Optional) ?? false)
+	) {
 		modifiers.push(ApiModifier.Optional);
 	}
 
-	if (isReadonly(apiItem) && !(modifiersToOmit?.includes(ApiModifier.Readonly) ?? false)) {
+	if (
+		isReadonly(apiItem) &&
+		!(modifiersToOmit?.includes(ApiModifier.Readonly) ?? false)
+	) {
 		modifiers.push(ApiModifier.Readonly);
 	}
 
-	if (isStatic(apiItem) && !(modifiersToOmit?.includes(ApiModifier.Static) ?? false)) {
+	if (
+		isStatic(apiItem) &&
+		!(modifiersToOmit?.includes(ApiModifier.Static) ?? false)
+	) {
 		modifiers.push(ApiModifier.Static);
 	}
 
-	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
+	if (
+		apiItem instanceof ApiDocumentedItem &&
+		apiItem.tsdocComment !== undefined
+	) {
 		if (
 			apiItem.tsdocComment.modifierTagSet.isVirtual() &&
 			!(modifiersToOmit?.includes(ApiModifier.Virtual) ?? false)

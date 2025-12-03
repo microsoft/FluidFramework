@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IUser } from "@fluidframework/driver-definitions";
-import { ITokenClaims, ScopeType } from "@fluidframework/driver-definitions/internal";
+import type { IUser } from "@fluidframework/driver-definitions";
+import type {
+	ITokenClaims,
+	ScopeType,
+} from "@fluidframework/driver-definitions/internal";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
 

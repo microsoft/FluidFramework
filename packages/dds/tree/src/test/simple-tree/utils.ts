@@ -3,23 +3,23 @@
  * Licensed under the MIT License.
  */
 
+import type { TreeCheckout } from "../../shared-tree/index.js";
+import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
 import {
-	isTreeNode,
-	isTreeNodeSchemaClass,
-	TreeViewConfiguration,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
+	isTreeNode,
+	isTreeNodeSchemaClass,
 	type NodeKind,
 	type TreeFieldFromImplicitField,
 	type TreeLeafValue,
 	type TreeNode,
 	type TreeNodeSchema,
+	TreeViewConfiguration,
 	type UnsafeUnknownSchema,
 } from "../../simple-tree/index.js";
 import { getView } from "../utils.js";
-import type { TreeCheckout } from "../../shared-tree/index.js";
-import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
 
 /**
  * Initializes a node with the given schema and content.
@@ -33,7 +33,12 @@ import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
  */
 export function initNode<
 	TInsertable,
-	TSchema extends TreeNodeSchema<string, NodeKind, TreeNode | TreeLeafValue, TInsertable>,
+	TSchema extends TreeNodeSchema<
+		string,
+		NodeKind,
+		TreeNode | TreeLeafValue,
+		TInsertable
+	>,
 >(
 	schema: TSchema,
 	content: TInsertable,
@@ -67,7 +72,12 @@ export function describeHydration(
 	runBoth: (
 		init: <
 			TInsertable,
-			TSchema extends TreeNodeSchema<string, NodeKind, TreeNode | TreeLeafValue, TInsertable>,
+			TSchema extends TreeNodeSchema<
+				string,
+				NodeKind,
+				TreeNode | TreeLeafValue,
+				TInsertable
+			>,
 		>(
 			schema: TSchema,
 			tree: TInsertable,
@@ -94,9 +104,13 @@ export function describeHydration(
  */
 export function hydrate<const TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
-	initialTree: InsertableField<TSchema> | InsertableTreeFieldFromImplicitField<TSchema>,
+	initialTree:
+		| InsertableField<TSchema>
+		| InsertableTreeFieldFromImplicitField<TSchema>,
 ): TreeFieldFromImplicitField<TSchema> {
-	const view = getView(new TreeViewConfiguration({ schema, enableSchemaValidation: true }));
+	const view = getView(
+		new TreeViewConfiguration({ schema, enableSchemaValidation: true }),
+	);
 	view.initialize(initialTree as InsertableField<TSchema>);
 	return view.root;
 }
@@ -136,9 +150,14 @@ export function pretty(arg: unknown): number | string {
  * @returns A new tree view for a branch of the input tree view, and an {@link TreeCheckoutFork} object that can be
  * used to merge the branch back into the original view.
  */
-export function getViewForForkedBranch<const TSchema extends ImplicitFieldSchema>(
+export function getViewForForkedBranch<
+	const TSchema extends ImplicitFieldSchema,
+>(
 	originalView: SchematizingSimpleTreeView<TSchema>,
-): { forkView: SchematizingSimpleTreeView<TSchema>; forkCheckout: TreeCheckout } {
+): {
+	forkView: SchematizingSimpleTreeView<TSchema>;
+	forkCheckout: TreeCheckout;
+} {
 	const forkCheckout = originalView.checkout.branch();
 	return {
 		forkView: new SchematizingSimpleTreeView<TSchema>(

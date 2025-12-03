@@ -11,12 +11,23 @@
  * Current version: 2.74.0
  */
 
-import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
+import type {
+	FullType,
+	MinimalType,
+	requireAssignableTo,
+	TypeOnly,
+} from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/counter-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> =
+	| TypeOnly<T>
+	| MinimalType<T>
+	| FullType<T>
+	| typeof old
+	| typeof current
+	| requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -25,7 +36,10 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Interface_ISharedCounter": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISharedCounter = requireAssignableTo<TypeOnly<old.ISharedCounter>, TypeOnly<current.ISharedCounter>>
+declare type old_as_current_for_Interface_ISharedCounter = requireAssignableTo<
+	TypeOnly<old.ISharedCounter>,
+	TypeOnly<current.ISharedCounter>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -34,7 +48,10 @@ declare type old_as_current_for_Interface_ISharedCounter = requireAssignableTo<T
  * typeValidation.broken:
  * "Interface_ISharedCounter": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISharedCounter = requireAssignableTo<TypeOnly<current.ISharedCounter>, TypeOnly<old.ISharedCounter>>
+declare type current_as_old_for_Interface_ISharedCounter = requireAssignableTo<
+	TypeOnly<current.ISharedCounter>,
+	TypeOnly<old.ISharedCounter>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -43,7 +60,11 @@ declare type current_as_old_for_Interface_ISharedCounter = requireAssignableTo<T
  * typeValidation.broken:
  * "Interface_ISharedCounterEvents": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISharedCounterEvents = requireAssignableTo<TypeOnly<old.ISharedCounterEvents>, TypeOnly<current.ISharedCounterEvents>>
+declare type old_as_current_for_Interface_ISharedCounterEvents =
+	requireAssignableTo<
+		TypeOnly<old.ISharedCounterEvents>,
+		TypeOnly<current.ISharedCounterEvents>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -52,7 +73,11 @@ declare type old_as_current_for_Interface_ISharedCounterEvents = requireAssignab
  * typeValidation.broken:
  * "Interface_ISharedCounterEvents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISharedCounterEvents = requireAssignableTo<TypeOnly<current.ISharedCounterEvents>, TypeOnly<old.ISharedCounterEvents>>
+declare type current_as_old_for_Interface_ISharedCounterEvents =
+	requireAssignableTo<
+		TypeOnly<current.ISharedCounterEvents>,
+		TypeOnly<old.ISharedCounterEvents>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -61,7 +86,10 @@ declare type current_as_old_for_Interface_ISharedCounterEvents = requireAssignab
  * typeValidation.broken:
  * "TypeAlias_SharedCounter": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_SharedCounter = requireAssignableTo<TypeOnly<old.SharedCounter>, TypeOnly<current.SharedCounter>>
+declare type old_as_current_for_TypeAlias_SharedCounter = requireAssignableTo<
+	TypeOnly<old.SharedCounter>,
+	TypeOnly<current.SharedCounter>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -70,7 +98,10 @@ declare type old_as_current_for_TypeAlias_SharedCounter = requireAssignableTo<Ty
  * typeValidation.broken:
  * "TypeAlias_SharedCounter": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_SharedCounter = requireAssignableTo<TypeOnly<current.SharedCounter>, TypeOnly<old.SharedCounter>>
+declare type current_as_old_for_TypeAlias_SharedCounter = requireAssignableTo<
+	TypeOnly<current.SharedCounter>,
+	TypeOnly<old.SharedCounter>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -79,4 +110,7 @@ declare type current_as_old_for_TypeAlias_SharedCounter = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Variable_SharedCounter": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_SharedCounter = requireAssignableTo<TypeOnly<typeof current.SharedCounter>, TypeOnly<typeof old.SharedCounter>>
+declare type current_as_old_for_Variable_SharedCounter = requireAssignableTo<
+	TypeOnly<typeof current.SharedCounter>,
+	TypeOnly<typeof old.SharedCounter>
+>;

@@ -5,7 +5,7 @@
 
 import { assert } from '@fluidframework/core-utils/internal';
 
-import { ReplaceRecursive, assertNotUndefined } from '../Common.js';
+import { assertNotUndefined, type ReplaceRecursive } from '../Common.js';
 import type {
 	Definition,
 	DetachedSequenceId,
@@ -26,28 +26,28 @@ import type {
 } from '../id-compressor/index.js';
 
 import {
-	BuildInternal_0_0_2,
+	type BuildInternal_0_0_2,
 	ChangeTypeInternal,
-	ConstraintEffect,
-	ConstraintInternal_0_0_2,
-	DetachInternal_0_0_2,
-	Edit,
-	EditWithoutId,
-	InsertInternal_0_0_2,
-	NodeData,
-	Payload,
-	SetValueInternal_0_0_2,
-	SharedTreeNoOp,
-	SharedTreeOpType,
-	SharedTreeSummaryBase,
-	SharedTreeUpdateOp,
+	type ConstraintEffect,
+	type ConstraintInternal_0_0_2,
+	type DetachInternal_0_0_2,
+	type Edit,
+	type EditWithoutId,
+	type InsertInternal_0_0_2,
+	type NodeData,
+	type Payload,
+	type SetValueInternal_0_0_2,
+	type SharedTreeNoOp,
+	type SharedTreeOpType,
+	type SharedTreeSummaryBase,
+	type SharedTreeUpdateOp,
 	Side,
-	StablePlaceInternal_0_0_2,
-	TraitLocationInternal_0_0_2,
-	TreeNode,
-	TreeNodeSequence,
-	VersionedOp,
-	WriteFormat,
+	type StablePlaceInternal_0_0_2,
+	type TraitLocationInternal_0_0_2,
+	type TreeNode,
+	type TreeNodeSequence,
+	type VersionedOp,
+	type WriteFormat,
 } from './0.0.2.js';
 
 /**

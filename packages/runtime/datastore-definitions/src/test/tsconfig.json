@@ -4,12 +4,12 @@
 		"rootDir": "./",
 		"outDir": "../../lib/test",
 		"types": [],
-		"noEmit": true,
+		"noEmit": true
 	},
 	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../..",
-		},
-	],
+			"path": "../.."
+		}
+	]
 }

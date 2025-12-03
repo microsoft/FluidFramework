@@ -6,15 +6,15 @@
 import { strict as assert } from "node:assert";
 
 import { SchemaFactory, type TreeNode } from "@fluidframework/tree";
-import { allowUnused } from "@fluidframework/tree/internal";
 import type { requireAssignableTo } from "@fluidframework/tree/internal";
+import { allowUnused } from "@fluidframework/tree/internal";
 
 import {
+	type IsMappableObjectType,
+	type PropTreeNode,
 	toPropTreeNode,
 	toPropTreeRecord,
 	unwrapPropTreeNode,
-	type IsMappableObjectType,
-	type PropTreeNode,
 	type WrapNodes,
 	type WrapPropTreeNodeRecord,
 } from "../propNode.js";
@@ -54,9 +54,14 @@ describe("propNode", () => {
 	it("NodeRecord", () => {
 		const builder = new SchemaFactory("tree-react-api");
 
-		class Inventory extends builder.object("Inventory", { nuts: builder.number }) {}
+		class Inventory extends builder.object("Inventory", {
+			nuts: builder.number,
+		}) {}
 
-		const record = toPropTreeRecord({ num: 5, node: new Inventory({ nuts: 5 }) });
+		const record = toPropTreeRecord({
+			num: 5,
+			node: new Inventory({ nuts: 5 }),
+		});
 		const prop = record.node;
 
 		// @ts-expect-error Read access should be removed
@@ -73,21 +78,33 @@ describe("propNode", () => {
 		class Node extends builder.object("Node", {}) {}
 
 		type Wrapped = WrapPropTreeNodeRecord<{ a: 1; b: Node }>;
-		allowUnused<requireAssignableTo<Wrapped, { a: 1; b: PropTreeNode<Node> }>>();
+		allowUnused<
+			requireAssignableTo<Wrapped, { a: 1; b: PropTreeNode<Node> }>
+		>();
 	});
 
 	it("IsMappableObjectType", () => {
-		allowUnused<requireAssignableTo<IsMappableObjectType<{ x: number }>, true>>();
-		allowUnused<requireAssignableTo<IsMappableObjectType<{ readonly x: number }>, true>>();
-		allowUnused<requireAssignableTo<IsMappableObjectType<Record<string, number>>, true>>();
+		allowUnused<
+			requireAssignableTo<IsMappableObjectType<{ x: number }>, true>
+		>();
+		allowUnused<
+			requireAssignableTo<IsMappableObjectType<{ readonly x: number }>, true>
+		>();
+		allowUnused<
+			requireAssignableTo<IsMappableObjectType<Record<string, number>>, true>
+		>();
 		allowUnused<requireAssignableTo<IsMappableObjectType<number[]>, true>>();
 
 		// Interestingly, maps are not nominally typed:
-		allowUnused<requireAssignableTo<IsMappableObjectType<Map<number, number>>, true>>();
+		allowUnused<
+			requireAssignableTo<IsMappableObjectType<Map<number, number>>, true>
+		>();
 		// Constructors are not mappable:
 		allowUnused<requireAssignableTo<IsMappableObjectType<typeof Map>, false>>();
 		// Nor are functions
-		allowUnused<requireAssignableTo<IsMappableObjectType<() => number>, false>>();
+		allowUnused<
+			requireAssignableTo<IsMappableObjectType<() => number>, false>
+		>();
 
 		class Nominal {
 			public constructor(x: number) {}
@@ -152,10 +169,15 @@ describe("propNode", () => {
 		allowUnused<requireAssignableTo<WrapNodes<Nominal>, Nominal>>();
 		allowUnused<requireAssignableTo<WrapNodes<Node>, PropTreeNode<Node>>>();
 		allowUnused<
-			requireAssignableTo<WrapNodes<{ a: 1; b: Node }>, { a: 1; b: PropTreeNode<Node> }>
+			requireAssignableTo<
+				WrapNodes<{ a: 1; b: Node }>,
+				{ a: 1; b: PropTreeNode<Node> }
+			>
 		>();
 		// Must not break existing PropTreeNode types:
-		allowUnused<requireAssignableTo<WrapNodes<PropTreeNode<Node>>, PropTreeNode<Node>>>();
+		allowUnused<
+			requireAssignableTo<WrapNodes<PropTreeNode<Node>>, PropTreeNode<Node>>
+		>();
 
 		// Does not break maps, though also doesn't wrap the values:
 		// Note: WrappedMap intentionally preserves the named type here: intellisense for this should be `type WrappedMap = Map<number, Node>`.
@@ -164,12 +186,20 @@ describe("propNode", () => {
 		allowUnused<requireAssignableTo<WrappedMap, Map<number, Node>>>();
 
 		// Does not break maps
-		allowUnused<requireAssignableTo<WrapNodes<Map<number, number>>, Map<number, number>>>();
+		allowUnused<
+			requireAssignableTo<WrapNodes<Map<number, number>>, Map<number, number>>
+		>();
 
 		// Avoids breaking nominal types while recursing into objects:
 		allowUnused<
 			requireAssignableTo<
-				WrapNodes<{ a: 1; b: Node; c: Nominal; d: typeof Nominal; e: { inner: Node } }>,
+				WrapNodes<{
+					a: 1;
+					b: Node;
+					c: Nominal;
+					d: typeof Nominal;
+					e: { inner: Node };
+				}>,
 				{
 					a: 1;
 					b: PropTreeNode<Node>;
@@ -192,7 +222,11 @@ describe("propNode", () => {
 		allowUnused<
 			requireAssignableTo<
 				WrapNodes<{ a: 1 } | { b: Node } | number | Nominal | Node>,
-				{ a: 1 } | { b: PropTreeNode<Node> } | number | Nominal | PropTreeNode<Node>
+				| { a: 1 }
+				| { b: PropTreeNode<Node> }
+				| number
+				| Nominal
+				| PropTreeNode<Node>
 			>
 		>();
 
@@ -212,10 +246,17 @@ describe("propNode", () => {
 				: T;
 		type PropTreeIfNode<T> = T extends TreeNode ? PropTreeNode<T> : T;
 
-		type MappedDeepMixed = MappedDeep<{ a: 1; b: Node; c: Nominal; d: typeof Nominal }>;
+		type MappedDeepMixed = MappedDeep<{
+			a: 1;
+			b: Node;
+			c: Nominal;
+			d: typeof Nominal;
+		}>;
 
 		// DeepWrappedMixed removed the nominal typing! Thats bad!
-		allowUnused<requireAssignableTo<MappedDeepMixed["c"], { unrelated?: unknown }>>();
+		allowUnused<
+			requireAssignableTo<MappedDeepMixed["c"], { unrelated?: unknown }>
+		>();
 
 		// @ts-expect-error The fact that "d" was a constructor was erased. Thats bad!
 		type Y = ConstructorParameters<MappedDeepMixed["d"]>;
@@ -225,11 +266,17 @@ describe("propNode", () => {
 
 		// Child transformed correctly:
 		allowUnused<
-			requireAssignableTo<MappedDeepNominal2, { readonly child: PropTreeNode<Node> }>
+			requireAssignableTo<
+				MappedDeepNominal2,
+				{ readonly child: PropTreeNode<Node> }
+			>
 		>();
 		// But lost the nominal typing:
 		allowUnused<
-			requireAssignableTo<{ readonly child: PropTreeNode<Node> }, MappedDeepNominal2>
+			requireAssignableTo<
+				{ readonly child: PropTreeNode<Node> },
+				MappedDeepNominal2
+			>
 		>();
 	});
 });

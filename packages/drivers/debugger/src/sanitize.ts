@@ -21,7 +21,7 @@
 import fs from "node:fs";
 import process from "node:process";
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { Sanitizer } from "./sanitizer.js";
 
@@ -29,11 +29,15 @@ function printUsage() {
 	console.log("Usage:");
 	console.log("   node sanitize [--full | --noBail] <input>");
 	console.log("Where");
-	console.log("  [--full] - scrub fully (result cannot be loaded in Fluid Preview)");
+	console.log(
+		"  [--full] - scrub fully (result cannot be loaded in Fluid Preview)",
+	);
 	console.log(
 		"  [--noBail] - don't bail out when encountering an unknown message format (it won't be scrubbed",
 	);
-	console.log("  <input> - file path to message.json - file downloaded by FluidFetch tool");
+	console.log(
+		"  <input> - file path to message.json - file downloaded by FluidFetch tool",
+	);
 	console.log("Note: <input> is sanitized in place");
 	process.exit(-1);
 }

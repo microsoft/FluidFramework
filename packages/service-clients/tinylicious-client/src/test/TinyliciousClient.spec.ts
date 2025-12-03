@@ -21,8 +21,11 @@ import { ContainerMessageType } from "@fluidframework/container-runtime/internal
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { ConnectionMode } from "@fluidframework/driver-definitions";
 import { ScopeType } from "@fluidframework/driver-definitions/internal";
-import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import { SharedMap, SharedDirectory } from "@fluidframework/map/internal";
+import type {
+	ContainerSchema,
+	IFluidContainer,
+} from "@fluidframework/fluid-static";
+import { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-driver/internal";
 
@@ -45,27 +48,31 @@ const runtimeOf = (dataObject: TestDataObject): IContainerRuntime =>
 const connectionModeOf = (container: IFluidContainer): ConnectionMode =>
 	(container as any).container.connectionMode as ConnectionMode;
 
-const allDataCorruption = async (containers: IFluidContainer[]): Promise<boolean> =>
+const allDataCorruption = async (
+	containers: IFluidContainer[],
+): Promise<boolean> =>
 	Promise.all(
 		containers.map(
 			async (c) =>
 				new Promise<boolean>((resolve) =>
 					c.once("disposed", (error) => {
-						resolve(error?.errorType === ContainerErrorTypes.dataCorruptionError);
+						resolve(
+							error?.errorType === ContainerErrorTypes.dataCorruptionError,
+						);
 					}),
 				),
 		),
 	).then((all) => !all.includes(false));
 
 for (const compatibilityMode of ["1", "2"] as const) {
-	describe(`TinyliciousClient (compatibilityMode: ${compatibilityMode})`, function () {
+	describe(`TinyliciousClient (compatibilityMode: ${compatibilityMode})`, () => {
 		let tinyliciousClient: TinyliciousClient;
 		const schema = {
 			initialObjects: {
 				map1: SharedMap,
 			},
 		} satisfies ContainerSchema;
-		beforeEach(function () {
+		beforeEach(() => {
 			tinyliciousClient = new TinyliciousClient();
 		});
 
@@ -76,7 +83,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		 * Expected behavior: an error should not be thrown nor should a rejected promise
 		 * be returned.
 		 */
-		it("can create instance without specifying port number", async function () {
+		it("can create instance without specifying port number", async () => {
 			const containerAndServicesP = tinyliciousClient.createContainer(
 				schema,
 				compatibilityMode,
@@ -95,11 +102,14 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		 * Expected behavior: an error should not be thrown nor should a rejected promise
 		 * be returned.
 		 */
-		it("can create a container successfully with port number specification", async function () {
+		it("can create a container successfully with port number specification", async () => {
 			const clientProps = { connection: { port: 7070 } };
 			const clientWithPort = new TinyliciousClient(clientProps);
 
-			const containerAndServicesP = clientWithPort.createContainer(schema, compatibilityMode);
+			const containerAndServicesP = clientWithPort.createContainer(
+				schema,
+				compatibilityMode,
+			);
 
 			await assert.doesNotReject(
 				containerAndServicesP,
@@ -113,7 +123,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		 *
 		 * Expected behavior: an error should be thrown when trying to get a non-existent container.
 		 */
-		it("cannot load improperly created container (cannot load a non-existent container)", async function () {
+		it("cannot load improperly created container (cannot load a non-existent container)", async () => {
 			const containerAndServicesP = tinyliciousClient.getContainer(
 				"containerConfig",
 				schema,
@@ -143,7 +153,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		 * Expected behavior: an error should not be thrown nor should a rejected promise
 		 * be returned.
 		 */
-		it("can create a container and services successfully", async function () {
+		it("can create a container and services successfully", async () => {
 			const containerAndServicesP = tinyliciousClient.createContainer(
 				schema,
 				compatibilityMode,
@@ -156,8 +166,11 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			);
 		});
 
-		it("creates a container with detached state", async function () {
-			const { container } = await tinyliciousClient.createContainer(schema, compatibilityMode);
+		it("creates a container with detached state", async () => {
+			const { container } = await tinyliciousClient.createContainer(
+				schema,
+				compatibilityMode,
+			);
 			assert.strictEqual(
 				container.attachState,
 				AttachState.Detached,
@@ -165,11 +178,18 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			);
 		});
 
-		it("creates a container that can only be attached once", async function () {
-			const { container } = await tinyliciousClient.createContainer(schema, compatibilityMode);
+		it("creates a container that can only be attached once", async () => {
+			const { container } = await tinyliciousClient.createContainer(
+				schema,
+				compatibilityMode,
+			);
 			const containerId = await container.attach();
 
-			assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
+			assert.strictEqual(
+				typeof containerId,
+				"string",
+				"Attach did not return a string ID",
+			);
 			assert.strictEqual(
 				container.attachState,
 				AttachState.Attached,
@@ -189,11 +209,9 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		 *
 		 * Expected behavior: containerCreate should have the identical SharedMap ID as containerGet.
 		 */
-		it("can get a container successfully", async function () {
-			const { container: containerCreate } = await tinyliciousClient.createContainer(
-				schema,
-				compatibilityMode,
-			);
+		it("can get a container successfully", async () => {
+			const { container: containerCreate } =
+				await tinyliciousClient.createContainer(schema, compatibilityMode);
 			const containerId = await containerCreate.attach();
 			await new Promise<void>((resolve, reject) => {
 				containerCreate.on("connected", () => {
@@ -208,7 +226,11 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			);
 			const map1Create = containerCreate.initialObjects.map1;
 			const map1Get = containerGet.initialObjects.map1;
-			assert.strictEqual(map1Get.id, map1Create.id, "Error getting a container");
+			assert.strictEqual(
+				map1Get.id,
+				map1Create.id,
+				"Error getting a container",
+			);
 		});
 
 		/**
@@ -217,11 +239,9 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		 * Expected behavior: initialObjects value loaded in two different containers should mirror
 		 * each other after value is changed.
 		 */
-		it("can change initialObjects value", async function () {
-			const { container: containerCreate } = await tinyliciousClient.createContainer(
-				schema,
-				compatibilityMode,
-			);
+		it("can change initialObjects value", async () => {
+			const { container: containerCreate } =
+				await tinyliciousClient.createContainer(schema, compatibilityMode);
 			const containerId = await containerCreate.attach();
 			await timeoutPromise((resolve, reject) => {
 				containerCreate.on("connected", () => {
@@ -271,7 +291,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		 * object's id and containerConfig ID should be identical since it's now attached to
 		 * the container.
 		 */
-		it("can create/add loadable objects (DDS) dynamically during runtime", async function () {
+		it("can create/add loadable objects (DDS) dynamically during runtime", async () => {
 			const dynamicSchema = {
 				initialObjects: {
 					map1: SharedMap,
@@ -309,7 +329,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		 * object's id and containerConfig ID should be identical since it's now attached to
 		 * the container.
 		 */
-		it("can create/add loadable objects (custom data object) dynamically during runtime", async function () {
+		it("can create/add loadable objects (custom data object) dynamically during runtime", async () => {
 			const dynamicSchema = {
 				initialObjects: {
 					map1: SharedMap,
@@ -317,10 +337,11 @@ for (const compatibilityMode of ["1", "2"] as const) {
 				dynamicObjectTypes: [TestDataObject],
 			} satisfies ContainerSchema;
 
-			const { container: createFluidContainer } = await tinyliciousClient.createContainer(
-				dynamicSchema,
-				compatibilityMode,
-			);
+			const { container: createFluidContainer } =
+				await tinyliciousClient.createContainer(
+					dynamicSchema,
+					compatibilityMode,
+				);
 			await createFluidContainer.attach();
 			await new Promise<void>((resolve, reject) => {
 				createFluidContainer.on("connected", () => {
@@ -343,17 +364,18 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		 * Expected behavior: Injecting faulty op should force FluidContainer to close, while emitting
 		 * error event.
 		 */
-		it("can process data corruption events", async function () {
+		it("can process data corruption events", async () => {
 			const dynamicSchema = {
 				initialObjects: {
 					do1: TestDataObject,
 				},
 			} satisfies ContainerSchema;
 
-			const { container: createFluidContainer } = await tinyliciousClient.createContainer(
-				dynamicSchema,
-				compatibilityMode,
-			);
+			const { container: createFluidContainer } =
+				await tinyliciousClient.createContainer(
+					dynamicSchema,
+					compatibilityMode,
+				);
 			await createFluidContainer.attach();
 			await new Promise<void>((resolve, reject) => {
 				createFluidContainer.on("connected", () => {
@@ -374,11 +396,16 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		 *
 		 * Expected behavior: TinyliciousClient should start the container with the connectionMode in `read`.
 		 */
-		it("can create a container with only read permission in read mode", async function () {
-			const tokenProvider = new InsecureTinyliciousTokenProvider([ScopeType.DocRead]);
+		it("can create a container with only read permission in read mode", async () => {
+			const tokenProvider = new InsecureTinyliciousTokenProvider([
+				ScopeType.DocRead,
+			]);
 			const client = new TinyliciousClient({ connection: { tokenProvider } });
 
-			const { container } = await client.createContainer(schema, compatibilityMode);
+			const { container } = await client.createContainer(
+				schema,
+				compatibilityMode,
+			);
 			const containerId = await container.attach();
 			await timeoutPromise((resolve) => container.once("connected", resolve), {
 				durationMs: 1000,
@@ -410,14 +437,17 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		 *
 		 * Expected behavior: TinyliciousClient should start the container with the connectionMode in `write`
 		 */
-		it("can create a container with read and write permissions in write mode", async function () {
+		it("can create a container with read and write permissions in write mode", async () => {
 			const tokenProvider = new InsecureTinyliciousTokenProvider([
 				ScopeType.DocRead,
 				ScopeType.DocWrite,
 			]);
 			const client = new TinyliciousClient({ connection: { tokenProvider } });
 
-			const { container } = await client.createContainer(schema, compatibilityMode);
+			const { container } = await client.createContainer(
+				schema,
+				compatibilityMode,
+			);
 			const containerId = await container.attach();
 			await timeoutPromise((resolve) => container.once("connected", resolve), {
 				durationMs: 1000,
@@ -446,7 +476,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		 * Scenario: Ensure that the types of 'initialObjects' are preserved when the container
 		 * schema type is statically known.
 		 */
-		it("preserves types of 'initialObjects'", async function () {
+		it("preserves types of 'initialObjects'", async () => {
 			const { container } = await tinyliciousClient.createContainer(
 				{
 					initialObjects: {

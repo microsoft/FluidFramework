@@ -15,12 +15,14 @@ import {
 	makeVersionDispatchingCodec,
 	withSchemaValidation,
 } from "../../codec/index.js";
-import { getCodecTreeForSchemaFormat, makeSchemaCodec } from "../schema-index/index.js";
-
-import { EncodedSchemaChange } from "./schemaChangeFormat.js";
-import type { SchemaChange } from "./schemaChangeTypes.js";
 import { SchemaFormatVersion } from "../../core/index.js";
 import { brand } from "../../util/index.js";
+import {
+	getCodecTreeForSchemaFormat,
+	makeSchemaCodec,
+} from "../schema-index/index.js";
+import { EncodedSchemaChange } from "./schemaChangeFormat.js";
+import type { SchemaChange } from "./schemaChangeTypes.js";
 
 /**
  * Create a family of schema change codecs.
@@ -31,8 +33,14 @@ export function makeSchemaChangeCodecs(
 	options: CodecWriteOptions,
 ): ICodecFamily<SchemaChange> {
 	return makeCodecFamily([
-		[SchemaFormatVersion.v1, makeSchemaChangeCodecV1(options, brand(SchemaFormatVersion.v1))],
-		[SchemaFormatVersion.v2, makeSchemaChangeCodecV1(options, brand(SchemaFormatVersion.v2))],
+		[
+			SchemaFormatVersion.v1,
+			makeSchemaChangeCodecV1(options, brand(SchemaFormatVersion.v1)),
+		],
+		[
+			SchemaFormatVersion.v2,
+			makeSchemaChangeCodecV1(options, brand(SchemaFormatVersion.v2)),
+		],
 	]);
 }
 
@@ -95,5 +103,9 @@ function makeSchemaChangeCodecV1(
 		encodedSchema: EncodedSchemaChange,
 	};
 
-	return withSchemaValidation(EncodedSchemaChange, schemaChangeCodec, options.jsonValidator);
+	return withSchemaValidation(
+		EncodedSchemaChange,
+		schemaChangeCodec,
+		options.jsonValidator,
+	);
 }

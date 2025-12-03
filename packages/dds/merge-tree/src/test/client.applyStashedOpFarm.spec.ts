@@ -10,11 +10,11 @@ import type { SegmentGroup } from "../mergeTreeNodes.js";
 import { type IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
 
 import {
-	type IConfigRange,
-	type IMergeTreeOperationRunnerConfig,
 	annotateRange,
 	doOverRange,
 	generateClientNames,
+	type IConfigRange,
+	type IMergeTreeOperationRunnerConfig,
 	insert,
 	removeRange,
 	runMergeTreeOperationRunner,
@@ -29,11 +29,13 @@ function applyMessagesWithReconnect(
 	stashClients: readonly TestClient[],
 ): number {
 	let seq = startingSeq;
-	const reconnectClientMsgs: [IMergeTreeOp, SegmentGroup | SegmentGroup[]][] = [];
+	const reconnectClientMsgs: [IMergeTreeOp, SegmentGroup | SegmentGroup[]][] =
+		[];
 	let minSeq = 0;
 
 	// apply ops as stashed ops except for client #1
-	const stashedOps: [IMergeTreeOp, SegmentGroup | SegmentGroup[], number][] = [];
+	const stashedOps: [IMergeTreeOp, SegmentGroup | SegmentGroup[], number][] =
+		[];
 	for (const messageData of messageDatas) {
 		if (messageData[0].clientId !== clients[1].longClientId) {
 			const index = clients
@@ -87,7 +89,10 @@ function applyMessagesWithReconnect(
 	}
 	// all stash and normal clients should now be in the same state,
 	// except #1 (normal) which still has local changes
-	TestClientLogger.validate([...clients.filter((_, i) => i !== 1), ...stashClients]);
+	TestClientLogger.validate([
+		...clients.filter((_, i) => i !== 1),
+		...stashClients,
+	]);
 
 	// regenerate ops for client #1
 	const reconnectMsgs: ISequencedDocumentMessage[] = [];
@@ -162,21 +167,29 @@ function runApplyStashedOpFarmTests(
 ): void {
 	doOverRange(opts.clients, opts.growthFunc.bind(opts), (clientCount) => {
 		it(`applyStashedOpFarm_${clientCount}`, async () => {
-			const random = makeRandom(0xdeadbeef, 0xfeedbed, clientCount, extraSeed ?? 0);
+			const random = makeRandom(
+				0xdeadbeef,
+				0xfeedbed,
+				clientCount,
+				extraSeed ?? 0,
+			);
 			const testOpts = { ...opts };
 			if (extraSeed) {
 				testOpts.resultsFilePostfix ??= "";
 				testOpts.resultsFilePostfix += extraSeed;
 			}
 
-			const clients: TestClient[] = [new TestClient({ mergeTreeEnableAnnotateAdjust: true })];
+			const clients: TestClient[] = [
+				new TestClient({ mergeTreeEnableAnnotateAdjust: true }),
+			];
 			// This test is based on reconnectFarm, but we keep a second set of clients. For
 			// these clients, we apply the generated ops as stashed ops, then regenerate
 			// them to simulate resubmit(), then apply them. In the end, they should arrive
 			// at the same state as the "normal" set of clients
 			let stashClients: TestClient[] = [];
 
-			for (const [i, c] of clients.entries()) c.startOrUpdateCollaboration(clientNames[i]);
+			for (const [i, c] of clients.entries())
+				c.startOrUpdateCollaboration(clientNames[i]);
 			stashClients = [new TestClient({ mergeTreeEnableAnnotateAdjust: true })];
 			for (const [i, c] of stashClients.entries())
 				c.startOrUpdateCollaboration(clientNames[i]);

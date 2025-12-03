@@ -4,12 +4,11 @@
  */
 
 export {
+	allowsFieldSuperset,
 	allowsRepoSuperset,
 	allowsTreeSchemaIdentifierSuperset,
-	allowsFieldSuperset,
 	allowsTreeSuperset,
 } from "./comparison.js";
-export { isNeverField, isNeverTree } from "./isNeverTree.js";
 export {
 	addCrossFieldQuery,
 	type CrossFieldManager,
@@ -19,30 +18,53 @@ export {
 	setInCrossFieldMap,
 } from "./crossFieldQueries.js";
 export {
-	ChangesetLocalIdSchema,
-	EncodedChangeAtomId,
-	EncodedRevisionInfo,
-	EncodedModularChangeset,
-	EncodedNodeChangeset,
-} from "./modularChangeFormat.js";
-export { FlexFieldKind, type FullSchemaPolicy } from "./fieldKind.js";
-export {
-	type FieldChangeHandler,
 	type FieldChangeDelta,
+	type FieldChangeEncodingContext,
+	type FieldChangeHandler,
 	type FieldChangeRebaser,
 	type FieldEditor,
+	type NestedChangesIndices,
+	NodeAttachState,
 	type NodeChangeComposer,
 	type NodeChangeInverter,
-	type NodeChangeRebaser,
 	type NodeChangePruner,
-	referenceFreeFieldChangeRebaser,
+	type NodeChangeRebaser,
 	type RebaseRevisionMetadata,
 	type RelevantRemovedRootsFromChild,
+	referenceFreeFieldChangeRebaser,
 	type ToDelta,
-	NodeAttachState,
-	type FieldChangeEncodingContext,
-	type NestedChangesIndices,
 } from "./fieldChangeHandler.js";
+export { FlexFieldKind, type FullSchemaPolicy } from "./fieldKind.js";
+export type {
+	FieldKindConfiguration,
+	FieldKindConfigurationEntry,
+} from "./fieldKindConfiguration.js";
+export {
+	convertGenericChange,
+	genericChangeHandler,
+	genericFieldKind,
+} from "./genericFieldKind.js";
+export type { GenericChangeset } from "./genericFieldKindTypes.js";
+export { isNeverField, isNeverTree } from "./isNeverTree.js";
+export { makeModularChangeCodecFamily } from "./modularChangeCodecs.js";
+export {
+	type EditDescription,
+	type FieldEditDescription,
+	type GlobalEditDescription,
+	intoDelta,
+	ModularChangeFamily,
+	ModularEditBuilder,
+	rebaseRevisionMetadataFromInfo,
+	relevantRemovedRoots,
+	updateRefreshers,
+} from "./modularChangeFamily.js";
+export {
+	ChangesetLocalIdSchema,
+	EncodedChangeAtomId,
+	EncodedModularChangeset,
+	EncodedNodeChangeset,
+	EncodedRevisionInfo,
+} from "./modularChangeFormat.js";
 export type {
 	CrossFieldKey,
 	CrossFieldKeyRange,
@@ -54,25 +76,3 @@ export type {
 	NodeExistsConstraint,
 	NodeId,
 } from "./modularChangeTypes.js";
-export {
-	convertGenericChange,
-	genericChangeHandler,
-	genericFieldKind,
-} from "./genericFieldKind.js";
-export type { GenericChangeset } from "./genericFieldKindTypes.js";
-export {
-	ModularChangeFamily,
-	ModularEditBuilder,
-	type EditDescription,
-	type GlobalEditDescription,
-	type FieldEditDescription,
-	rebaseRevisionMetadataFromInfo,
-	intoDelta,
-	relevantRemovedRoots,
-	updateRefreshers,
-} from "./modularChangeFamily.js";
-export { makeModularChangeCodecFamily } from "./modularChangeCodecs.js";
-export type {
-	FieldKindConfiguration,
-	FieldKindConfigurationEntry,
-} from "./fieldKindConfiguration.js";

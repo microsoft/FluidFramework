@@ -8,29 +8,29 @@ import {
 	makeStyles,
 	mergeClasses,
 	shorthands,
-	tokens,
 	Tooltip,
+	tokens,
 } from "@fluentui/react-components";
 import {
-	QuestionCircle16Regular,
 	ArrowSync16Regular,
+	Attach16Regular,
 	CatchUp16Regular,
-	Run16Regular,
+	Delete16Regular,
+	Dismiss24Regular,
+	DocumentDataLink16Regular,
+	DocumentDismiss16Regular,
 	LockClosed16Regular,
 	PlugConnected16Regular,
 	PlugDisconnected16Regular,
-	Delete16Regular,
-	Dismiss24Regular,
-	Attach16Regular,
-	DocumentDataLink16Regular,
-	DocumentDismiss16Regular,
+	QuestionCircle16Regular,
+	Run16Regular,
 } from "@fluentui/react-icons";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type {
-	HasContainerKey,
-	DevtoolsFeatureFlags,
 	ContainerKey,
 	ContainerStateMetadata,
+	DevtoolsFeatureFlags,
+	HasContainerKey,
 	InboundHandlers,
 	ISourcedDevtoolsMessage,
 } from "@fluidframework/devtools-core/internal";
@@ -52,12 +52,12 @@ const useMenuStyles = makeStyles({
 	root: {
 		...shorthands.gap("0px", "10px"),
 		...shorthands.padding("10px"),
-		"boxSizing": "border-box",
-		"display": "flex",
-		"flexDirection": "column",
-		"height": "100%",
-		"overflowY": "auto",
-		"minWidth": "200px",
+		boxSizing: "border-box",
+		display: "flex",
+		flexDirection: "column",
+		height: "100%",
+		overflowY: "auto",
+		minWidth: "200px",
 		// Ensures the last div/component is anchored to the bottom.
 		"> :last-child": {
 			marginTop: "auto",
@@ -74,11 +74,11 @@ const useMenuStyles = makeStyles({
 
 	// TODO: dedupe with MenuItem
 	button: {
-		"alignItems": "center",
-		"cursor": "pointer",
-		"display": "flex",
-		"flexDirection": "row",
-		"paddingLeft": "5px",
+		alignItems: "center",
+		cursor: "pointer",
+		display: "flex",
+		flexDirection: "row",
+		paddingLeft: "5px",
 		"&:hover": {
 			color: tokens.colorNeutralForeground1Hover,
 			backgroundColor: tokens.colorNeutralBackground1Hover,
@@ -187,7 +187,9 @@ function RefreshButton(): React.ReactElement {
 	function handleRefreshClick(): void {
 		// Query for list of Containers
 		messageRelay.postMessage(getContainerListMessage);
-		usageLogger?.sendTelemetryEvent({ eventName: "ContainerRefreshButtonClicked" });
+		usageLogger?.sendTelemetryEvent({
+			eventName: "ContainerRefreshButtonClicked",
+		});
 	}
 
 	return (
@@ -282,7 +284,8 @@ export function MenuSectionLabelHeader(
 /**
  * Props for {@link MenuSectionButtonHeader}
  */
-export interface MenuSectionButtonHeaderProps extends MenuSectionLabelHeaderProps {
+export interface MenuSectionButtonHeaderProps
+	extends MenuSectionLabelHeaderProps {
 	/**
 	 * Callback function that runs when the header is clicked.
 	 */
@@ -329,7 +332,10 @@ export function MenuSectionButtonHeader(
 ): React.ReactElement {
 	const { label, icon, onClick, altText, isActive } = props;
 	const styles = useMenuSectionButtonHeaderStyles();
-	const style = mergeClasses(styles.root, isActive ? styles.active : styles.inactive);
+	const style = mergeClasses(
+		styles.root,
+		isActive ? styles.active : styles.inactive,
+	);
 
 	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
 		if ((event.key === "Enter" || event.key === " ") && onClick) {
@@ -377,19 +383,19 @@ export interface MenuItemProps {
 
 const useMenuItemStyles = makeStyles({
 	root: {
-		"alignItems": "stretch",
-		"cursor": "pointer",
-		"display": "flex",
-		"flexDirection": "column",
-		"padding": "3px 6px",
-		"margin": "1px 4px",
-		"borderRadius": "4px",
-		"border": `1px solid ${tokens.colorNeutralStroke2}`,
-		"backgroundColor": tokens.colorNeutralBackground1,
-		"transition": "all 0.15s ease-in-out",
-		"minWidth": "140px",
-		"maxWidth": "150px",
-		"flex": "0 1 auto",
+		alignItems: "stretch",
+		cursor: "pointer",
+		display: "flex",
+		flexDirection: "column",
+		padding: "3px 6px",
+		margin: "1px 4px",
+		borderRadius: "4px",
+		border: `1px solid ${tokens.colorNeutralStroke2}`,
+		backgroundColor: tokens.colorNeutralBackground1,
+		transition: "all 0.15s ease-in-out",
+		minWidth: "140px",
+		maxWidth: "150px",
+		flex: "0 1 auto",
 		"&:hover": {
 			color: tokens.colorNeutralForeground1Hover,
 			backgroundColor: tokens.colorNeutralBackground1Hover,
@@ -531,7 +537,9 @@ export function MenuItem(props: MenuItemProps): React.ReactElement {
 								<span className={styles.textSpan}>{text}</span>
 							</div>
 							<div className={styles.bottomRow}>
-								{stateIcon && <div className={styles.iconsRow}>{stateIcon}</div>}
+								{stateIcon && (
+									<div className={styles.iconsRow}>{stateIcon}</div>
+								)}
 							</div>
 						</>
 					)}
@@ -600,20 +608,30 @@ interface ConnectionStateIconProps {
  * Displays an icon with tooltip for the given connection state.
  * Returns undefined if the connection state doesn't have a corresponding icon.
  */
-function ConnectionStateIcon(props: ConnectionStateIconProps): React.ReactElement | undefined {
+function ConnectionStateIcon(
+	props: ConnectionStateIconProps,
+): React.ReactElement | undefined {
 	const { connectionState } = props;
 
 	switch (connectionState) {
 		case ConnectionState.Connected: {
 			return (
-				<Tooltip content="Container is connected" relationship="label" key="connected">
+				<Tooltip
+					content="Container is connected"
+					relationship="label"
+					key="connected"
+				>
 					<PlugConnected16Regular />
 				</Tooltip>
 			);
 		}
 		case ConnectionState.Disconnected: {
 			return (
-				<Tooltip content="Container is disconnected" relationship="label" key="disconnected">
+				<Tooltip
+					content="Container is disconnected"
+					relationship="label"
+					key="disconnected"
+				>
 					<PlugDisconnected16Regular />
 				</Tooltip>
 			);
@@ -631,7 +649,11 @@ function ConnectionStateIcon(props: ConnectionStateIconProps): React.ReactElemen
 		}
 		case ConnectionState.CatchingUp: {
 			return (
-				<Tooltip content="Container is catching up" relationship="label" key="catching-up">
+				<Tooltip
+					content="Container is catching up"
+					relationship="label"
+					key="catching-up"
+				>
 					<CatchUp16Regular />
 				</Tooltip>
 			);
@@ -657,27 +679,41 @@ interface AttachStateIconProps {
  * Displays an icon with tooltip for the given attach state.
  * Returns undefined if the attach state doesn't have a corresponding icon.
  */
-function AttachStateIcon(props: AttachStateIconProps): React.ReactElement | undefined {
+function AttachStateIcon(
+	props: AttachStateIconProps,
+): React.ReactElement | undefined {
 	const { attachState } = props;
 
 	switch (attachState) {
 		case "Detached": {
 			return (
-				<Tooltip content="Container is detached" relationship="label" key="detached">
+				<Tooltip
+					content="Container is detached"
+					relationship="label"
+					key="detached"
+				>
 					<DocumentDismiss16Regular />
 				</Tooltip>
 			);
 		}
 		case "Attaching": {
 			return (
-				<Tooltip content="Container is attaching" relationship="label" key="attaching">
+				<Tooltip
+					content="Container is attaching"
+					relationship="label"
+					key="attaching"
+				>
 					<DocumentDataLink16Regular />
 				</Tooltip>
 			);
 		}
 		case "Attached": {
 			return (
-				<Tooltip content="Container is attached" relationship="label" key="attached">
+				<Tooltip
+					content="Container is attached"
+					relationship="label"
+					key="attached"
+				>
 					<Attach16Regular />
 				</Tooltip>
 			);
@@ -724,17 +760,24 @@ interface ContainersMenuSectionProps {
  * @remarks Displays a spinner while the Container list is being loaded (if the list is undefined),
  * and displays a note when there are no registered Containers (if the list is empty).
  */
-function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactElement {
-	const { containers, selectContainer, currentContainerSelection, onRemoveContainer } = props;
+function ContainersMenuSection(
+	props: ContainersMenuSectionProps,
+): React.ReactElement {
+	const {
+		containers,
+		selectContainer,
+		currentContainerSelection,
+		onRemoveContainer,
+	} = props;
 
 	const messageRelay = useMessageRelay();
 	const styles = useMenuItemStyles();
 	const [containerStates, setContainerStates] = React.useState<
 		Map<ContainerKey, ContainerStateMetadata>
 	>(new Map());
-	const [containersWithChanges, setContainersWithChanges] = React.useState<Set<string>>(
-		new Set(),
-	);
+	const [containersWithChanges, setContainersWithChanges] = React.useState<
+		Set<string>
+	>(new Set());
 	const [changeIndicatorTimers, setChangeIndicatorTimers] = React.useState<
 		Map<string, ReturnType<typeof setTimeout>>
 	>(new Map());
@@ -758,7 +801,9 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 				const message = untypedMessage as DataVisualization.Message;
 				const containerKey = message.data.containerKey;
 
-				if (message.data.reason === DataVisualization.UpdateReason.DataChanged) {
+				if (
+					message.data.reason === DataVisualization.UpdateReason.DataChanged
+				) {
 					const existingTimer = changeIndicatorTimers.get(containerKey);
 					if (existingTimer !== undefined) clearTimeout(existingTimer);
 
@@ -766,14 +811,18 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 
 					const timer = setTimeout(() => {
 						setContainersWithChanges(
-							(prev) => new Set([...prev].filter((key) => key !== containerKey)),
+							(prev) =>
+								new Set([...prev].filter((key) => key !== containerKey)),
 						);
 						setChangeIndicatorTimers(
-							(prev) => new Map([...prev].filter(([key]) => key !== containerKey)),
+							(prev) =>
+								new Map([...prev].filter(([key]) => key !== containerKey)),
 						);
 					}, 1000);
 
-					setChangeIndicatorTimers((prev) => new Map(prev).set(containerKey, timer));
+					setChangeIndicatorTimers((prev) =>
+						new Map(prev).set(containerKey, timer),
+					);
 				}
 
 				return true;
@@ -786,7 +835,9 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 		}
 		messageRelay.on("message", messageHandler);
 		for (const containerKey of containers) {
-			messageRelay.postMessage(GetContainerState.createMessage({ containerKey }));
+			messageRelay.postMessage(
+				GetContainerState.createMessage({ containerKey }),
+			);
 		}
 		return (): void => {
 			messageRelay.off("message", messageHandler);
@@ -814,7 +865,11 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 						// Check disposed state first - if closed, only show dispose icon
 						if (state.closed) {
 							stateIcons = [
-								<Tooltip content="Container is disposed" relationship="label" key="disposed">
+								<Tooltip
+									content="Container is disposed"
+									relationship="label"
+									key="disposed"
+								>
 									<Delete16Regular />
 								</Tooltip>,
 							];
@@ -822,7 +877,9 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 							// Add connection state icon
 							if (state.connectionState !== undefined) {
 								const connectionIcon = (
-									<ConnectionStateIcon connectionState={state.connectionState} />
+									<ConnectionStateIcon
+										connectionState={state.connectionState}
+									/>
 								);
 								if (connectionIcon !== undefined) {
 									stateIcons.push(connectionIcon);
@@ -831,7 +888,9 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 
 							// Add attach state icon
 							if (state.attachState !== undefined) {
-								const attachIcon = <AttachStateIcon attachState={state.attachState} />;
+								const attachIcon = (
+									<AttachStateIcon attachState={state.attachState} />
+								);
 								if (attachIcon !== undefined) {
 									stateIcons.push(attachIcon);
 								}
@@ -851,14 +910,20 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 					} else {
 						// No state information available (container still loading)
 						stateIcons = [
-							<Tooltip content="Container state unknown" relationship="label" key="unknown">
+							<Tooltip
+								content="Container state unknown"
+								relationship="label"
+								key="unknown"
+							>
 								<QuestionCircle16Regular />
 							</Tooltip>,
 						];
 					}
 
 					// Wrap multiple icons in a container
-					const stateIcon = <div className={styles.multipleStateIcons}>{stateIcons}</div>;
+					const stateIcon = (
+						<div className={styles.multipleStateIcons}>{stateIcons}</div>
+					);
 
 					return (
 						<MenuItem
@@ -870,7 +935,11 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 								selectContainer(`${containerKey}`);
 							}}
 							hasChanges={containersWithChanges.has(containerKey)}
-							onRemove={onRemoveContainer ? () => onRemoveContainer(containerKey) : () => {}}
+							onRemove={
+								onRemoveContainer
+									? () => onRemoveContainer(containerKey)
+									: () => {}
+							}
 						/>
 					);
 				})}
@@ -880,7 +949,9 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 
 	return (
 		<MenuSection
-			header={<MenuSectionLabelHeader label="Containers" icon={<RefreshButton />} />}
+			header={
+				<MenuSectionLabelHeader label="Containers" icon={<RefreshButton />} />
+			}
 			key="container-selection-menu-section"
 		>
 			{containerSectionInnerView}
@@ -892,8 +963,13 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
  * Menu component for {@link DevtoolsView}.
  */
 export function Menu(props: MenuProps): React.ReactElement {
-	const { currentSelection, setSelection, supportedFeatures, containers, onRemoveContainer } =
-		props;
+	const {
+		currentSelection,
+		setSelection,
+		supportedFeatures,
+		containers,
+		onRemoveContainer,
+	} = props;
 	const usageLogger = useLogger();
 
 	const styles = useMenuStyles();
@@ -1015,6 +1091,8 @@ export function Menu(props: MenuProps): React.ReactElement {
 	);
 
 	return (
-		<div className={styles.root}>{menuSections.length === 0 ? <Waiting /> : menuSections}</div>
+		<div className={styles.root}>
+			{menuSections.length === 0 ? <Waiting /> : menuSections}
+		</div>
 	);
 }

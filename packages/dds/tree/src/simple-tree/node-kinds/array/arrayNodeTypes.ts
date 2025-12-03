@@ -3,18 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import type { TreeArrayNode } from "./arrayNode.js";
-import { NodeKind } from "../../core/index.js";
 import type {
-	TreeNodeSchemaClass,
-	TreeNodeSchema,
-	TreeNodeSchemaNonClass,
-	WithType,
 	ImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
+	TreeNodeSchema,
+	TreeNodeSchemaClass,
+	TreeNodeSchemaNonClass,
+	WithType,
 } from "../../core/index.js";
-
+import { NodeKind } from "../../core/index.js";
 import type { SimpleArrayNodeSchema } from "../../simpleSchema.js";
+import type { TreeArrayNode } from "./arrayNode.js";
 
 /**
  * A schema for customizable {@link (TreeArrayNode:interface)}s.
@@ -66,7 +65,9 @@ export interface ArrayNodePojoEmulationSchema<
  * perhaps if moving to an order independent way to pass generic arguments, adding support for them here would make sense.
  * @alpha
  */
-export type ArrayNodeSchema = ArrayNodeCustomizableSchema | ArrayNodePojoEmulationSchema;
+export type ArrayNodeSchema =
+	| ArrayNodeCustomizableSchema
+	| ArrayNodePojoEmulationSchema;
 
 /**
  * @alpha
@@ -86,6 +87,8 @@ export const ArrayNodeSchema = {
  * If at some point we want to have internal only APIs for ArrayNodeSchema (like done for objects),
  * this can include those since its not the public facing API.
  */
-export function isArrayNodeSchema(schema: TreeNodeSchema): schema is ArrayNodeSchema {
+export function isArrayNodeSchema(
+	schema: TreeNodeSchema,
+): schema is ArrayNodeSchema {
 	return schema.kind === NodeKind.Array;
 }

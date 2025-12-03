@@ -4,7 +4,7 @@
  */
 
 import { fail } from "@fluidframework/core-utils/internal";
-
+import type { CodecTree } from "../../codec/index.js";
 import {
 	type ChangeAtomId,
 	type DeltaDetachedNodeId,
@@ -12,7 +12,9 @@ import {
 	forbiddenFieldKindIdentifier,
 	Multiplicity,
 } from "../../core/index.js";
+import { type Brand, brand, brandConst } from "../../util/index.js";
 import {
+	allowsTreeSchemaIdentifierSuperset,
 	type FieldChangeDelta,
 	type FieldChangeHandler,
 	type FieldEditor,
@@ -20,9 +22,8 @@ import {
 	type FieldKindConfigurationEntry,
 	FlexFieldKind,
 	type FullSchemaPolicy,
-	type ToDelta,
-	allowsTreeSchemaIdentifierSuperset,
 	referenceFreeFieldChangeRebaser,
+	type ToDelta,
 } from "../modular-schema/index.js";
 import {
 	type OptionalChangeset,
@@ -31,13 +32,10 @@ import {
 	optionalFieldEditor,
 } from "../optional-field/index.js";
 import {
-	sequenceFieldChangeHandler,
 	type SequenceFieldEditor,
+	sequenceFieldChangeHandler,
 } from "../sequence-field/index.js";
-
 import { noChangeCodecFamily } from "./noChangeCodecs.js";
-import type { CodecTree } from "../../codec/index.js";
-import { brand, brandConst, type Brand } from "../../util/index.js";
 
 /**
  * ChangeHandler that only handles no-op / identity changes.
@@ -50,7 +48,9 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 		mute: (changes: 0) => 0,
 	}),
 	codecsFactory: () => noChangeCodecFamily,
-	editor: { buildChildChanges: () => fail(0xb0d /* Child changes not supported */) },
+	editor: {
+		buildChildChanges: () => fail(0xb0d /* Child changes not supported */),
+	},
 	intoDelta: (change, deltaFromChild: ToDelta): FieldChangeDelta => ({}),
 	relevantRemovedRoots: (change): Iterable<DeltaDetachedNodeId> => [],
 	isEmpty: (change: 0) => true,
@@ -80,19 +80,22 @@ const optionalIdentifier = brandConst("Optional")<FieldKindIdentifier>();
 /**
  * 0 or 1 items.
  */
-export const optional = new FlexFieldKind(optionalIdentifier, Multiplicity.Optional, {
-	changeHandler: optionalChangeHandler,
-	allowedMonotonicUpgrade: (types, other) =>
-		(other.kind === sequence.identifier || other.kind === optionalIdentifier) &&
-		allowsTreeSchemaIdentifierSuperset(types, other.types),
-});
+export const optional = new FlexFieldKind(
+	optionalIdentifier,
+	Multiplicity.Optional,
+	{
+		changeHandler: optionalChangeHandler,
+		allowedMonotonicUpgrade: (types, other) =>
+			(other.kind === sequence.identifier ||
+				other.kind === optionalIdentifier) &&
+			allowsTreeSchemaIdentifierSuperset(types, other.types),
+	},
+);
 
 export const requiredFieldEditor: RequiredFieldEditor = {
 	...optionalFieldEditor,
-	set: (ids: {
-		fill: ChangeAtomId;
-		detach: ChangeAtomId;
-	}): OptionalChangeset => optionalFieldEditor.set(false, ids),
+	set: (ids: { fill: ChangeAtomId; detach: ChangeAtomId }): OptionalChangeset =>
+		optionalFieldEditor.set(false, ids),
 };
 
 export const requiredFieldChangeHandler: FieldChangeHandler<
@@ -108,47 +111,60 @@ const requiredIdentifier = brandConst("Value")<FieldKindIdentifier>();
 /**
  * Exactly one item.
  */
-export const required = new FlexFieldKind(requiredIdentifier, Multiplicity.Single, {
-	changeHandler: requiredFieldChangeHandler,
-	allowedMonotonicUpgrade: (types, other) =>
-		// By omitting Identifier here,
-		// this is making a policy choice that a schema upgrade cannot be done from required to identifier.
-		// Since an identifier can be upgraded into a required field,
-		// preventing the inverse helps ensure that schema upgrades are monotonic.
-		// Which direction is allowed is a subjective policy choice.
-		(other.kind === sequence.identifier ||
-			other.kind === requiredIdentifier ||
-			other.kind === optional.identifier) &&
-		allowsTreeSchemaIdentifierSuperset(types, other.types),
-});
+export const required = new FlexFieldKind(
+	requiredIdentifier,
+	Multiplicity.Single,
+	{
+		changeHandler: requiredFieldChangeHandler,
+		allowedMonotonicUpgrade: (types, other) =>
+			// By omitting Identifier here,
+			// this is making a policy choice that a schema upgrade cannot be done from required to identifier.
+			// Since an identifier can be upgraded into a required field,
+			// preventing the inverse helps ensure that schema upgrades are monotonic.
+			// Which direction is allowed is a subjective policy choice.
+			(other.kind === sequence.identifier ||
+				other.kind === requiredIdentifier ||
+				other.kind === optional.identifier) &&
+			allowsTreeSchemaIdentifierSuperset(types, other.types),
+	},
+);
 
 const sequenceIdentifier = brandConst("Sequence")<FieldKindIdentifier>();
 
 /**
  * 0 or more items.
  */
-export const sequence = new FlexFieldKind(sequenceIdentifier, Multiplicity.Sequence, {
-	changeHandler: sequenceFieldChangeHandler,
-	allowedMonotonicUpgrade: (types, other) =>
-		other.kind === sequenceIdentifier &&
-		allowsTreeSchemaIdentifierSuperset(types, other.types),
-});
+export const sequence = new FlexFieldKind(
+	sequenceIdentifier,
+	Multiplicity.Sequence,
+	{
+		changeHandler: sequenceFieldChangeHandler,
+		allowedMonotonicUpgrade: (types, other) =>
+			other.kind === sequenceIdentifier &&
+			allowsTreeSchemaIdentifierSuperset(types, other.types),
+	},
+);
 
-const identifierFieldIdentifier = brandConst("Identifier")<FieldKindIdentifier>();
+const identifierFieldIdentifier =
+	brandConst("Identifier")<FieldKindIdentifier>();
 
 /**
  * Exactly one identifier.
  */
-export const identifier = new FlexFieldKind(identifierFieldIdentifier, Multiplicity.Single, {
-	changeHandler: noChangeHandler,
-	allowedMonotonicUpgrade: (types, other) =>
-		// Allows upgrading from identifier to required: which way this upgrade is allowed to go is a subjective policy choice.
-		(other.kind === sequence.identifier ||
-			other.kind === requiredIdentifier ||
-			other.kind === optional.identifier ||
-			other.kind === identifierFieldIdentifier) &&
-		allowsTreeSchemaIdentifierSuperset(types, other.types),
-});
+export const identifier = new FlexFieldKind(
+	identifierFieldIdentifier,
+	Multiplicity.Single,
+	{
+		changeHandler: noChangeHandler,
+		allowedMonotonicUpgrade: (types, other) =>
+			// Allows upgrading from identifier to required: which way this upgrade is allowed to go is a subjective policy choice.
+			(other.kind === sequence.identifier ||
+				other.kind === requiredIdentifier ||
+				other.kind === optional.identifier ||
+				other.kind === identifierFieldIdentifier) &&
+			allowsTreeSchemaIdentifierSuperset(types, other.types),
+	},
+);
 
 /**
  * Exactly 0 items.
@@ -215,12 +231,16 @@ export const fieldKindConfigurations: ReadonlyMap<
 	],
 ]);
 
-export type ModularChangeFormatVersion = Brand<3 | 4, "ModularChangeFormatVersion">;
+export type ModularChangeFormatVersion = Brand<
+	3 | 4,
+	"ModularChangeFormatVersion"
+>;
 export function getCodecTreeForModularChangeFormat(
 	version: ModularChangeFormatVersion,
 ): CodecTree {
 	const dependencies =
-		fieldKindConfigurations.get(version) ?? fail(0xc7c /* Unknown modular change format */);
+		fieldKindConfigurations.get(version) ??
+		fail(0xc7c /* Unknown modular change format */);
 	const children: CodecTree[] = Array.from(dependencies.entries()).map(
 		([key, { formatVersion }]) => ({
 			name: `FieldKind:${key}`,
@@ -241,9 +261,13 @@ export function getCodecTreeForModularChangeFormat(
  * Before making a SharedTree format change which impacts which set of field kinds are allowed,
  * code which uses this should be audited for compatibility considerations.
  */
-export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> = new Map(
-	[required, optional, sequence, identifier, forbidden].map((s) => [s.identifier, s]),
-);
+export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> =
+	new Map(
+		[required, optional, sequence, identifier, forbidden].map((s) => [
+			s.identifier,
+			s,
+		]),
+	);
 
 // Create named Aliases for nicer intellisense.
 
@@ -251,7 +275,11 @@ export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> = new M
 // TODO: ensure thy work in generated docs.
 // TODO: add these comments to the rest of the cases below.
 export interface Required
-	extends FlexFieldKind<RequiredFieldEditor, typeof requiredIdentifier, Multiplicity.Single> {}
+	extends FlexFieldKind<
+		RequiredFieldEditor,
+		typeof requiredIdentifier,
+		Multiplicity.Single
+	> {}
 export interface Optional
 	extends FlexFieldKind<
 		OptionalFieldEditor,

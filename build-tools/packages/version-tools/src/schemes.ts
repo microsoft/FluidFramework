@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import * as semver from "semver";
 
-import { type VersionBumpTypeExtended, isVersionBumpType } from "./bumpTypes";
+import { isVersionBumpType, type VersionBumpTypeExtended } from "./bumpTypes";
 import {
 	bumpInternalVersion,
 	isInternalVersionRange,
@@ -26,7 +26,11 @@ import { bumpVirtualPatchVersion, isVirtualPatch } from "./virtualPatchScheme";
  *
  * - "virtualPatch" is the 0.36.1002 scheme.
  */
-export type VersionScheme = "semver" | "internal" | "internalPrerelease" | "virtualPatch";
+export type VersionScheme =
+	| "semver"
+	| "internal"
+	| "internalPrerelease"
+	| "virtualPatch";
 
 /**
  * A typeguard to check if a string is a {@link VersionScheme}.
@@ -45,7 +49,9 @@ export function isVersionScheme(scheme: string): scheme is VersionScheme {
  * @param rangeOrVersion - a version or range string.
  * @returns The version scheme that the string is in.
  */
-export function detectVersionScheme(rangeOrVersion: string | semver.SemVer): VersionScheme {
+export function detectVersionScheme(
+	rangeOrVersion: string | semver.SemVer,
+): VersionScheme {
 	// First check if the string is a valid internal version
 	if (isInternalVersionScheme(rangeOrVersion)) {
 		return "internal";
@@ -73,7 +79,9 @@ export function detectVersionScheme(rangeOrVersion: string | semver.SemVer): Ver
 
 		const coercedVersion = semver.coerce(rangeOrVersion);
 		if (coercedVersion === null) {
-			throw new Error(`Couldn't parse a usable version from '${rangeOrVersion}'.`);
+			throw new Error(
+				`Couldn't parse a usable version from '${rangeOrVersion}'.`,
+			);
 		}
 
 		const operator = rangeOrVersion.slice(0, 1);
@@ -104,7 +112,10 @@ export function bumpVersionScheme(
 	scheme?: VersionScheme,
 ): semver.SemVer {
 	const sv = semver.parse(version);
-	assert(sv !== null && version !== undefined, `Not a valid semver: ${version}`);
+	assert(
+		sv !== null && version !== undefined,
+		`Not a valid semver: ${version}`,
+	);
 	if (scheme === undefined) {
 		// eslint-disable-next-line no-param-reassign
 		scheme = detectVersionScheme(version);
@@ -129,7 +140,9 @@ export function bumpVersionScheme(
 		}
 		case "internal": {
 			if (version === undefined || !isInternalVersionScheme(version)) {
-				throw new Error(`Version is not in the ${scheme} version scheme: ${version}`);
+				throw new Error(
+					`Version is not in the ${scheme} version scheme: ${version}`,
+				);
 			}
 			return bumpInternalVersion(version, bumpType);
 		}
@@ -170,7 +183,10 @@ export function getLatestReleaseFromList(
 	return latest;
 }
 
-export function sortVersions(versionList: string[], allowPrereleases = false): string[] {
+export function sortVersions(
+	versionList: string[],
+	allowPrereleases = false,
+): string[] {
 	let list: string[] = [];
 
 	// Check if the versionList is version strings or tag names
@@ -188,7 +204,8 @@ export function sortVersions(versionList: string[], allowPrereleases = false): s
 			if (v === undefined) {
 				return false;
 			}
-			const hasSemverPrereleaseSection = semver.prerelease(v)?.length ?? 0 !== 0;
+			const hasSemverPrereleaseSection =
+				semver.prerelease(v)?.length ?? 0 !== 0;
 			const scheme = detectVersionScheme(v);
 			const isPrerelease =
 				scheme === "internalPrerelease" ||

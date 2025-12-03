@@ -8,7 +8,7 @@
 import { strict as assert } from "node:assert";
 
 import type { Client } from "../client.js";
-import { type PropertySet, matchProperties } from "../properties.js";
+import { matchProperties, type PropertySet } from "../properties.js";
 
 import { TestClient } from "./testClient.js";
 
@@ -46,7 +46,9 @@ export function clientGetPropertiesAtPositionTest(): boolean {
 	const testResult3 = checkGetPropertiesAtPos(client, 3);
 	const testResult4 = checkGetPropertiesAtPos(client, 17);
 
-	return (((testResult1 === testResult2) === testResult3) === testResult4) === true;
+	return (
+		(((testResult1 === testResult2) === testResult3) === testResult4) === true
+	);
 }
 
 function checkGetSegmentExtentsOfPos(
@@ -57,7 +59,8 @@ function checkGetSegmentExtentsOfPos(
 	verbose = false,
 ): boolean {
 	const segExtents = client.getRangeExtentsOfPosition(pos);
-	const result = segExtents.posStart === posStart && segExtents.posAfterEnd === posAfterEnd;
+	const result =
+		segExtents.posStart === posStart && segExtents.posAfterEnd === posAfterEnd;
 	if (!result && verbose) {
 		console.log(`At pos: ${pos}`);
 		console.log(`Expected extents -> start: ${posStart} end: ${posAfterEnd}`);

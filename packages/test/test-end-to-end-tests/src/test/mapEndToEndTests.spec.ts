@@ -3,22 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { IErrorBase, IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { IErrorBase, IFluidHandle } from "@fluidframework/core-interfaces";
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {
-	ChannelFactoryRegistry,
+	type ChannelFactoryRegistry,
 	DataObjectFactoryType,
-	ITestContainerConfig,
-	ITestFluidObject,
-	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
+	type ITestContainerConfig,
+	type ITestFluidObject,
+	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
+import { strict as assert } from "assert";
 
 describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
@@ -41,15 +40,18 @@ describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 
 	beforeEach("createContainers", async () => {
 		const container1 = await provider.makeTestContainer(testContainerConfig);
-		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		dataObject1 =
+			await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		sharedMap1 = await dataObject1.getSharedObject<ISharedMap>(mapId);
 
 		const container2 = await provider.loadTestContainer(testContainerConfig);
-		const dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		const dataObject2 =
+			await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		sharedMap2 = await dataObject2.getSharedObject<ISharedMap>(mapId);
 
 		const container3 = await provider.loadTestContainer(testContainerConfig);
-		const dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
+		const dataObject3 =
+			await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 		sharedMap3 = await dataObject3.getSharedObject<ISharedMap>(mapId);
 
 		sharedMap1.set("testKey1", "testValue");
@@ -59,11 +61,23 @@ describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 
 	function expectAllValues(msg, key, value1, value2, value3) {
 		const user1Value = sharedMap1.get(key);
-		assert.equal(user1Value, value1, `Incorrect value for ${key} in container 1 ${msg}`);
+		assert.equal(
+			user1Value,
+			value1,
+			`Incorrect value for ${key} in container 1 ${msg}`,
+		);
 		const user2Value = sharedMap2.get(key);
-		assert.equal(user2Value, value2, `Incorrect value for ${key} in container 2 ${msg}`);
+		assert.equal(
+			user2Value,
+			value2,
+			`Incorrect value for ${key} in container 2 ${msg}`,
+		);
 		const user3Value = sharedMap3.get(key);
-		assert.equal(user3Value, value3, `Incorrect value for ${key} in container 3 ${msg}`);
+		assert.equal(
+			user3Value,
+			value3,
+			`Incorrect value for ${key} in container 3 ${msg}`,
+		);
 	}
 
 	function expectAllBeforeValues(key, value1, value2, value3) {
@@ -130,19 +144,31 @@ describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 		let user3ValueChangedCount: number = 0;
 		sharedMap1.on("valueChanged", (changed, local) => {
 			if (!local) {
-				assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 1");
+				assert.equal(
+					changed.key,
+					"testKey1",
+					"Incorrect value for testKey1 in container 1",
+				);
 				user1ValueChangedCount = user1ValueChangedCount + 1;
 			}
 		});
 		sharedMap2.on("valueChanged", (changed, local) => {
 			if (!local) {
-				assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 2");
+				assert.equal(
+					changed.key,
+					"testKey1",
+					"Incorrect value for testKey1 in container 2",
+				);
 				user2ValueChangedCount = user2ValueChangedCount + 1;
 			}
 		});
 		sharedMap3.on("valueChanged", (changed, local) => {
 			if (!local) {
-				assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 3");
+				assert.equal(
+					changed.key,
+					"testKey1",
+					"Incorrect value for testKey1 in container 3",
+				);
 				user3ValueChangedCount = user3ValueChangedCount + 1;
 			}
 		});
@@ -354,16 +380,40 @@ describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 
 		// When an unattached map refers to another unattached map, both remain unattached
 		detachedMap1.set("newSharedMap", detachedMap2.handle);
-		assert.equal(sharedMap1.isAttached(), true, "sharedMap1 should be attached");
-		assert.equal(detachedMap1.isAttached(), false, "detachedMap1 should not be attached");
-		assert.equal(detachedMap2.isAttached(), false, "detachedMap2 should not be attached");
+		assert.equal(
+			sharedMap1.isAttached(),
+			true,
+			"sharedMap1 should be attached",
+		);
+		assert.equal(
+			detachedMap1.isAttached(),
+			false,
+			"detachedMap1 should not be attached",
+		);
+		assert.equal(
+			detachedMap2.isAttached(),
+			false,
+			"detachedMap2 should not be attached",
+		);
 
 		// When referring map becomes attached, the referred map becomes attached
 		// and the attachment transitively passes to a second referred map
 		sharedMap1.set("newSharedMap", detachedMap1.handle);
-		assert.equal(sharedMap1.isAttached(), true, "sharedMap1 should be attached");
-		assert.equal(detachedMap1.isAttached(), true, "detachedMap1 should be attached");
-		assert.equal(detachedMap2.isAttached(), true, "detachedMap2 should be attached");
+		assert.equal(
+			sharedMap1.isAttached(),
+			true,
+			"sharedMap1 should be attached",
+		);
+		assert.equal(
+			detachedMap1.isAttached(),
+			true,
+			"detachedMap1 should be attached",
+		);
+		assert.equal(
+			detachedMap2.isAttached(),
+			true,
+			"detachedMap2 should be attached",
+		);
 	});
 });
 
@@ -393,12 +443,15 @@ describeCompat(
 
 		beforeEach("setup", async () => {
 			container1 = await provider.makeTestContainer(testContainerConfig);
-			dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+			dataObject1 =
+				await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 			sharedMap1 = await dataObject1.getSharedObject<ISharedMap>(mapId);
-			containerRuntime = dataObject1.context.containerRuntime as IContainerRuntime;
+			containerRuntime = dataObject1.context
+				.containerRuntime as IContainerRuntime;
 
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+			dataObject2 =
+				await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 			sharedMap2 = await dataObject2.getSharedObject<ISharedMap>(mapId);
 		});
 

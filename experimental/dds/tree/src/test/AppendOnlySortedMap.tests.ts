@@ -5,9 +5,8 @@
 
 /* eslint-disable no-bitwise */
 
-import { strict as assert } from 'assert';
-
 import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
+import { strict as assert } from 'assert';
 import { expect } from 'chai';
 
 import { assertNotUndefined, compareFiniteNumbers } from '../Common.js';

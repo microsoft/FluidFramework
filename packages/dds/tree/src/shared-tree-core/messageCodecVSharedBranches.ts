@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { type TAnySchema, Type } from "@sinclair/typebox";
-
-import { type ICodecOptions, type IJsonCodec, withSchemaValidation } from "../codec/index.js";
+import {
+	type ICodecOptions,
+	type IJsonCodec,
+	withSchemaValidation,
+} from "../codec/index.js";
 import type {
 	ChangeEncodingContext,
 	ChangeFamilyCodec,
@@ -13,13 +17,11 @@ import type {
 	RevisionTag,
 } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
-
+import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
+import type { MessageEncodingContext } from "./messageCodecs.js";
+import type { MessageFormatVersion } from "./messageFormat.js";
 import { Message } from "./messageFormatVSharedBranches.js";
 import type { DecodedMessage } from "./messageTypes.js";
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { MessageEncodingContext } from "./messageCodecs.js";
-import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
-import type { MessageFormatVersion } from "./messageFormat.js";
 
 export function makeSharedBranchesCodecWithVersion<TChangeset>(
 	changeCodec: ChangeFamilyCodec<TChangeset>,
@@ -67,7 +69,10 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 								revision: undefined,
 							}),
 							originatorId: message.sessionId,
-							changeset: changeCodec.encode(message.commit.change, changeContext),
+							changeset: changeCodec.encode(
+								message.commit.change,
+								changeContext,
+							),
 							branchId: encodeBranchId(context.idCompressor, message.branchId),
 							version,
 						} satisfies Message & JsonCompatibleReadOnly;
@@ -100,7 +105,11 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 					idCompressor: context.idCompressor,
 				};
 
-				const branchId = decodeBranchId(context.idCompressor, encodedBranchId, changeContext);
+				const branchId = decodeBranchId(
+					context.idCompressor,
+					encodedBranchId,
+					changeContext,
+				);
 
 				if (changeset === undefined) {
 					return { type: "branch", sessionId: originatorId, branchId };
@@ -110,7 +119,10 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 					encodedRevision !== undefined,
 					0xc6a /* Commit messages must have a revision */,
 				);
-				const revision = revisionTagCodec.decode(encodedRevision, changeContext);
+				const revision = revisionTagCodec.decode(
+					encodedRevision,
+					changeContext,
+				);
 
 				return {
 					type: "commit",

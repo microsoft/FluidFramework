@@ -11,12 +11,23 @@
  * Current version: 2.74.0
  */
 
-import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
+import type {
+	FullType,
+	MinimalType,
+	requireAssignableTo,
+	TypeOnly,
+} from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/local-driver-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> =
+	| TypeOnly<T>
+	| MinimalType<T>
+	| FullType<T>
+	| typeof old
+	| typeof current
+	| requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -25,7 +36,11 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_LocalDocumentServiceFactory": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_LocalDocumentServiceFactory = requireAssignableTo<TypeOnly<old.LocalDocumentServiceFactory>, TypeOnly<current.LocalDocumentServiceFactory>>
+declare type old_as_current_for_Class_LocalDocumentServiceFactory =
+	requireAssignableTo<
+		TypeOnly<old.LocalDocumentServiceFactory>,
+		TypeOnly<current.LocalDocumentServiceFactory>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -34,7 +49,11 @@ declare type old_as_current_for_Class_LocalDocumentServiceFactory = requireAssig
  * typeValidation.broken:
  * "Class_LocalDocumentServiceFactory": {"backCompat": false}
  */
-declare type current_as_old_for_Class_LocalDocumentServiceFactory = requireAssignableTo<TypeOnly<current.LocalDocumentServiceFactory>, TypeOnly<old.LocalDocumentServiceFactory>>
+declare type current_as_old_for_Class_LocalDocumentServiceFactory =
+	requireAssignableTo<
+		TypeOnly<current.LocalDocumentServiceFactory>,
+		TypeOnly<old.LocalDocumentServiceFactory>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -43,7 +62,10 @@ declare type current_as_old_for_Class_LocalDocumentServiceFactory = requireAssig
  * typeValidation.broken:
  * "Class_LocalResolver": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_LocalResolver = requireAssignableTo<TypeOnly<old.LocalResolver>, TypeOnly<current.LocalResolver>>
+declare type old_as_current_for_Class_LocalResolver = requireAssignableTo<
+	TypeOnly<old.LocalResolver>,
+	TypeOnly<current.LocalResolver>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -52,7 +74,10 @@ declare type old_as_current_for_Class_LocalResolver = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "Class_LocalResolver": {"backCompat": false}
  */
-declare type current_as_old_for_Class_LocalResolver = requireAssignableTo<TypeOnly<current.LocalResolver>, TypeOnly<old.LocalResolver>>
+declare type current_as_old_for_Class_LocalResolver = requireAssignableTo<
+	TypeOnly<current.LocalResolver>,
+	TypeOnly<old.LocalResolver>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -61,7 +86,11 @@ declare type current_as_old_for_Class_LocalResolver = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "ClassStatics_LocalDocumentServiceFactory": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_LocalDocumentServiceFactory = requireAssignableTo<TypeOnly<typeof current.LocalDocumentServiceFactory>, TypeOnly<typeof old.LocalDocumentServiceFactory>>
+declare type current_as_old_for_ClassStatics_LocalDocumentServiceFactory =
+	requireAssignableTo<
+		TypeOnly<typeof current.LocalDocumentServiceFactory>,
+		TypeOnly<typeof old.LocalDocumentServiceFactory>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -70,7 +99,11 @@ declare type current_as_old_for_ClassStatics_LocalDocumentServiceFactory = requi
  * typeValidation.broken:
  * "ClassStatics_LocalResolver": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_LocalResolver = requireAssignableTo<TypeOnly<typeof current.LocalResolver>, TypeOnly<typeof old.LocalResolver>>
+declare type current_as_old_for_ClassStatics_LocalResolver =
+	requireAssignableTo<
+		TypeOnly<typeof current.LocalResolver>,
+		TypeOnly<typeof old.LocalResolver>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -79,4 +112,8 @@ declare type current_as_old_for_ClassStatics_LocalResolver = requireAssignableTo
  * typeValidation.broken:
  * "Function_createLocalResolverCreateNewRequest": {"backCompat": false}
  */
-declare type current_as_old_for_Function_createLocalResolverCreateNewRequest = requireAssignableTo<TypeOnly<typeof current.createLocalResolverCreateNewRequest>, TypeOnly<typeof old.createLocalResolverCreateNewRequest>>
+declare type current_as_old_for_Function_createLocalResolverCreateNewRequest =
+	requireAssignableTo<
+		TypeOnly<typeof current.createLocalResolverCreateNewRequest>,
+		TypeOnly<typeof old.createLocalResolverCreateNewRequest>
+	>;

@@ -3,11 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { type ObjectOptions, type Static, type TSchema, Type } from "@sinclair/typebox";
+import {
+	type ObjectOptions,
+	type Static,
+	type TSchema,
+	Type,
+} from "@sinclair/typebox";
 
 import { unionOptions } from "../../codec/index.js";
 import { RevisionTagSchema } from "../../core/index.js";
-import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "../modular-schema/index.js";
+import {
+	ChangesetLocalIdSchema,
+	EncodedChangeAtomId,
+} from "../modular-schema/index.js";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
@@ -21,7 +29,9 @@ const IdRange = Type.Tuple([ChangesetLocalIdSchema, CellCount]);
 
 export const CellId = EncodedChangeAtomId;
 
-const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagSchema) });
+const HasRevisionTag = Type.Object({
+	revision: Type.Optional(RevisionTagSchema),
+});
 
 const Insert = Type.Composite([HasMoveId, HasRevisionTag], noAdditionalProps);
 
@@ -48,7 +58,10 @@ const Remove = Type.Composite(
 	noAdditionalProps,
 );
 
-const MoveOut = Type.Composite([HasMoveFields, DetachFields], noAdditionalProps);
+const MoveOut = Type.Composite(
+	[HasMoveFields, DetachFields],
+	noAdditionalProps,
+);
 
 const Attach = Type.Object(
 	{
@@ -130,9 +143,14 @@ export namespace Encoded {
 	export type AttachAndDetach = Static<typeof AttachAndDetach>;
 	export type MarkEffect = Static<typeof MarkEffect>;
 
-	export type CellMark<Schema extends TSchema, TNodeChange extends TSchema> = Static<
-		ReturnType<typeof CellMark<Schema, TNodeChange>>
+	export type CellMark<
+		Schema extends TSchema,
+		TNodeChange extends TSchema,
+	> = Static<ReturnType<typeof CellMark<Schema, TNodeChange>>>;
+	export type Mark<Schema extends TSchema> = Static<
+		ReturnType<typeof Mark<Schema>>
 	>;
-	export type Mark<Schema extends TSchema> = Static<ReturnType<typeof Mark<Schema>>>;
-	export type Changeset<Schema extends TSchema> = Static<ReturnType<typeof Changeset<Schema>>>;
+	export type Changeset<Schema extends TSchema> = Static<
+		ReturnType<typeof Changeset<Schema>>
+	>;
 }

@@ -6,7 +6,7 @@
 import { EventEmitter } from "@fluid-example/example-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 // eslint-disable-next-line import-x/no-internal-modules -- #26903: `cell` internals used in examples
-import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
+import { type ISharedCell, SharedCell } from "@fluidframework/cell/internal";
 import { SharedString } from "@fluidframework/sequence/legacy";
 import { v4 as uuid } from "uuid";
 
@@ -60,7 +60,10 @@ export class InventoryList extends DataObject implements IInventoryList {
 		const quantityCell: ISharedCell<number> = SharedCell.create(this.runtime);
 		quantityCell.set(quantity);
 		const id = uuid();
-		this.root.set(id, { name: nameString.handle, quantity: quantityCell.handle });
+		this.root.set(id, {
+			name: nameString.handle,
+			quantity: quantityCell.handle,
+		});
 	};
 
 	public readonly deleteItem = (id: string) => {
@@ -85,7 +88,11 @@ export class InventoryList extends DataObject implements IInventoryList {
 		if (this.root.get(id) === undefined) {
 			return;
 		}
-		const newInventoryItem = new InventoryItem(id, nameSharedString, quantitySharedCell);
+		const newInventoryItem = new InventoryItem(
+			id,
+			nameSharedString,
+			quantitySharedCell,
+		);
 		this.inventoryItems.set(id, newInventoryItem);
 		this.emit("itemAdded", newInventoryItem);
 	};
@@ -122,7 +129,10 @@ export class InventoryList extends DataObject implements IInventoryList {
 				itemData.name.get(),
 				itemData.quantity.get(),
 			]);
-			this.inventoryItems.set(id, new InventoryItem(id, nameSharedString, quantitySharedCell));
+			this.inventoryItems.set(
+				id,
+				new InventoryItem(id, nameSharedString, quantitySharedCell),
+			);
 		}
 	}
 }

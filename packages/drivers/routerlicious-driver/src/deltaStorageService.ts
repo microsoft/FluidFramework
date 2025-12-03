@@ -3,14 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { getW3CData, validateMessages } from "@fluidframework/driver-base/internal";
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
+	getW3CData,
+	validateMessages,
+} from "@fluidframework/driver-base/internal";
+import type {
 	IDeltaStorageService,
 	IDeltasFetchResult,
 	IDocumentDeltaStorageService,
-	IStream,
 	ISequencedDocumentMessage,
+	IStream,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	emptyMessageStream,
@@ -19,12 +22,12 @@ import {
 	streamObserver,
 } from "@fluidframework/driver-utils/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { DocumentStorageService } from "./documentStorageService.js";
-import { RestWrapper } from "./restWrapperBase.js";
+import type { DocumentStorageService } from "./documentStorageService.js";
+import type { RestWrapper } from "./restWrapperBase.js";
 
 /**
  * Maximum number of ops we can fetch at a time. This should be kept at 2k, as
@@ -38,7 +41,9 @@ const MaxBatchDeltas = 2000;
 /**
  * Storage service limited to only being able to fetch documents for a specific document
  */
-export class DocumentDeltaStorageService implements IDocumentDeltaStorageService {
+export class DocumentDeltaStorageService
+	implements IDocumentDeltaStorageService
+{
 	constructor(
 		private readonly tenantId: string,
 		private readonly id: string,
@@ -82,9 +87,17 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 				const messages = this.snapshotOps.filter(
 					(op) => op.sequenceNumber >= from && op.sequenceNumber < to,
 				);
-				validateMessages("snapshotOps", messages, from, this.logger, false /* strict */);
+				validateMessages(
+					"snapshotOps",
+					messages,
+					from,
+					this.logger,
+					false /* strict */,
+				);
 				if (messages.length > 0 && messages[0].sequenceNumber === from) {
-					this.snapshotOps = this.snapshotOps.filter((op) => op.sequenceNumber >= to);
+					this.snapshotOps = this.snapshotOps.filter(
+						(op) => op.sequenceNumber >= to,
+					);
 					opsFromSnapshot += messages.length;
 					return { messages, partialResult: true };
 				}
@@ -98,13 +111,23 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 				to,
 				fetchReason,
 			);
-			validateMessages("storage", ops.messages, from, this.logger, false /* strict */);
+			validateMessages(
+				"storage",
+				ops.messages,
+				from,
+				this.logger,
+				false /* strict */,
+			);
 			opsFromStorage += ops.messages.length;
 			return ops;
 		};
 
 		const stream = requestOps(
-			async (from: number, to: number, telemetryProps: ITelemetryBaseProperties) => {
+			async (
+				from: number,
+				to: number,
+				telemetryProps: ITelemetryBaseProperties,
+			) => {
 				const result = await requestCallback(from, to, telemetryProps);
 				// Catch all case, just in case
 				validateMessages("catch all", result.messages, from, this.logger);
@@ -141,7 +164,8 @@ export class DeltaStorageService implements IDeltaStorageService {
 		private readonly url: string,
 		private readonly restWrapper: RestWrapper,
 		private readonly logger: ITelemetryLoggerExt,
-		private readonly getRestWrapper: () => Promise<RestWrapper> = async () => this.restWrapper,
+		private readonly getRestWrapper: () => Promise<RestWrapper> = async () =>
+			this.restWrapper,
 		private readonly getDeltaStorageUrl: () => string = () => this.url,
 	) {}
 
@@ -162,16 +186,20 @@ export class DeltaStorageService implements IDeltaStorageService {
 			async (event) => {
 				const restWrapper = await this.getRestWrapper();
 				const url = this.getDeltaStorageUrl();
-				const response = await restWrapper.get<ISequencedDocumentMessage[]>(url, {
-					from: from - 1,
-					to,
-					fetchReason: fetchReason ?? "",
-				});
+				const response = await restWrapper.get<ISequencedDocumentMessage[]>(
+					url,
+					{
+						from: from - 1,
+						to,
+						fetchReason: fetchReason ?? "",
+					},
+				);
 				event.end({
 					length: response.content.length,
 					details: JSON.stringify({
 						firstOpSeqNumber: response.content[0]?.sequenceNumber,
-						lastOpSeqNumber: response.content[response.content.length - 1]?.sequenceNumber,
+						lastOpSeqNumber:
+							response.content[response.content.length - 1]?.sequenceNumber,
 					}),
 					...response.propsToLog,
 					...getW3CData(response.requestUrl, "xmlhttprequest"),

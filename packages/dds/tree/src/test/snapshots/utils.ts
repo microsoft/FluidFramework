@@ -16,7 +16,9 @@ import { takeJsonSnapshot } from "./snapshotTools.js";
 
 function getSummaryTypeName(summaryObject: SummaryObject): "blob" | "tree" {
 	const type =
-		summaryObject.type === SummaryType.Handle ? summaryObject.handleType : summaryObject.type;
+		summaryObject.type === SummaryType.Handle
+			? summaryObject.handleType
+			: summaryObject.type;
 
 	switch (type) {
 		case SummaryType.Blob:
@@ -39,7 +41,11 @@ function getSummaryTypeName(summaryObject: SummaryObject): "blob" | "tree" {
  * double-JSON-stringification and makes it easier to diff using line-by-line
  * tools.
  */
-function serializeTree(parentHandle: string, tree: ISummaryTree, rootNodeName: string) {
+function serializeTree(
+	parentHandle: string,
+	tree: ISummaryTree,
+	rootNodeName: string,
+) {
 	const entries: { type: "blob" | "tree" }[] = [];
 
 	for (const key of Object.keys(tree.tree)) {
@@ -69,7 +75,9 @@ function serializeTree(parentHandle: string, tree: ISummaryTree, rootNodeName: s
 			}
 			case SummaryType.Handle: {
 				if (!parentHandle) {
-					throw new Error("Parent summary does not exist to reference by handle.");
+					throw new Error(
+						"Parent summary does not exist to reference by handle.",
+					);
 				}
 				let handlePath = summaryObject.handle;
 				if (handlePath.length > 0 && !handlePath.startsWith("/")) {
@@ -84,7 +92,9 @@ function serializeTree(parentHandle: string, tree: ISummaryTree, rootNodeName: s
 				break;
 			}
 			default: {
-				throw new Error(`Unknown type: ${(summaryObject as SummaryObject).type}`);
+				throw new Error(
+					`Unknown type: ${(summaryObject as SummaryObject).type}`,
+				);
 			}
 		}
 
@@ -93,7 +103,11 @@ function serializeTree(parentHandle: string, tree: ISummaryTree, rootNodeName: s
 		};
 		let entry;
 		if (value !== undefined) {
-			assert.equal(id, undefined, "Snapshot entry has both a tree value and a referenced id!");
+			assert.equal(
+				id,
+				undefined,
+				"Snapshot entry has both a tree value and a referenced id!",
+			);
 			entry = {
 				...baseEntry,
 				[encodeURIComponent(key)]: value,

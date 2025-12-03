@@ -4,14 +4,14 @@
  */
 
 import { strict as assert } from "node:assert";
-import { brand } from "../../util/index.js";
+import type { FieldKey } from "../../core/index.js";
 import {
+	createIdentifierIndex,
 	SchemaFactory,
 	TreeViewConfiguration,
-	createIdentifierIndex,
 } from "../../simple-tree/index.js";
+import { brand } from "../../util/index.js";
 import { getView } from "../utils.js";
-import type { FieldKey } from "../../core/index.js";
 
 /** The identifier of the parent node */
 const parentId: FieldKey = brand("parentId");

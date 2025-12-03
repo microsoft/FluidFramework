@@ -4,20 +4,19 @@
  */
 
 import { strict as assert } from "node:assert";
-
+import { exportSimpleSchema } from "../../../shared-tree/index.js";
 import {
 	generateSchemaFromSimpleSchema,
 	getSimpleSchema,
-	SchemaFactory,
-	toInitialSchema,
 	type ImplicitFieldSchema,
-	type ValidateRecursiveSchema,
-	type SimpleObjectNodeSchema,
 	isObjectNodeSchema,
+	SchemaFactory,
 	SchemaFactoryAlpha,
 	SchemaUpgrade,
+	type SimpleObjectNodeSchema,
+	toInitialSchema,
+	type ValidateRecursiveSchema,
 } from "../../../simple-tree/index.js";
-import { exportSimpleSchema } from "../../../shared-tree/index.js";
 import { testTreeSchema } from "../../cursorTestSuite.js";
 import { HasUnknownOptionalFields, testSimpleTrees } from "../../testTrees.js";
 
@@ -54,9 +53,7 @@ describe("schemaFromSimple", () => {
 			class A extends schema.objectRecursive("A", {
 				field: schema.optionalRecursive([() => A]),
 			}) {}
-			{
-				type _check = ValidateRecursiveSchema<typeof A>;
-			}
+			type _check = ValidateRecursiveSchema<typeof A>;
 			roundtrip(A);
 		});
 
@@ -84,7 +81,9 @@ describe("schemaFromSimple", () => {
 			assert.equal(simpleObjectSchema.allowUnknownOptionalFields, true);
 
 			const viewSchema = generateSchemaFromSimpleSchema(simpleSchema);
-			const objectViewSchema = viewSchema.definitions.get("test.hasUnknownOptionalFields");
+			const objectViewSchema = viewSchema.definitions.get(
+				"test.hasUnknownOptionalFields",
+			);
 			assert(
 				objectViewSchema !== undefined && isObjectNodeSchema(objectViewSchema),
 				"expected object node schema",
@@ -109,7 +108,9 @@ describe("schemaFromSimple", () => {
 			assert.equal(simpleObjectSchema.allowUnknownOptionalFields, false);
 
 			const viewSchema = generateSchemaFromSimpleSchema(simpleSchema);
-			const objectViewSchema = viewSchema.definitions.get("test.hasNoUnknownOptionalFields");
+			const objectViewSchema = viewSchema.definitions.get(
+				"test.hasNoUnknownOptionalFields",
+			);
 			assert(
 				objectViewSchema !== undefined && isObjectNodeSchema(objectViewSchema),
 				"expected object node schema",
@@ -126,12 +127,13 @@ describe("schemaFromSimple", () => {
 			const rootField = simpleSchema.root;
 
 			assert(
-				rootField.simpleAllowedTypes.get("com.fluidframework.leaf.string")?.isStaged instanceof
-					SchemaUpgrade,
+				rootField.simpleAllowedTypes.get("com.fluidframework.leaf.string")
+					?.isStaged instanceof SchemaUpgrade,
 			);
 
 			assert.equal(
-				rootField.simpleAllowedTypes.get("com.fluidframework.leaf.number")?.isStaged,
+				rootField.simpleAllowedTypes.get("com.fluidframework.leaf.number")
+					?.isStaged,
 				false,
 			);
 
@@ -144,7 +146,8 @@ describe("schemaFromSimple", () => {
 			);
 
 			assert.equal(
-				rootFieldView.simpleAllowedTypes.get("com.fluidframework.leaf.number")?.isStaged,
+				rootFieldView.simpleAllowedTypes.get("com.fluidframework.leaf.number")
+					?.isStaged,
 				false,
 			);
 		});

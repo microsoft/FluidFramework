@@ -19,7 +19,7 @@ import ReactDOM from "react-dom";
 
 import {
 	CollaborativeTextContainerRuntimeFactory,
-	ICollaborativeTextAppModel,
+	type ICollaborativeTextAppModel,
 } from "./container.js";
 
 // Initialize the Devtools logger
@@ -39,10 +39,11 @@ createContainerAndRenderInElement().then((fluidContainer) => {
  * requires making async calls.
  */
 async function createContainerAndRenderInElement(): Promise<ICollaborativeTextAppModel> {
-	const sessionStorageModelLoader = new SessionStorageModelLoader<ICollaborativeTextAppModel>(
-		new StaticCodeLoader(new CollaborativeTextContainerRuntimeFactory()),
-		logger,
-	);
+	const sessionStorageModelLoader =
+		new SessionStorageModelLoader<ICollaborativeTextAppModel>(
+			new StaticCodeLoader(new CollaborativeTextContainerRuntimeFactory()),
+			logger,
+		);
 
 	let id: string;
 	let model: ICollaborativeTextAppModel;
@@ -51,7 +52,8 @@ async function createContainerAndRenderInElement(): Promise<ICollaborativeTextAp
 		// Normally our code loader is expected to match up with the version passed here.
 		// But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
 		// the version doesn't actually matter.
-		const createResponse = await sessionStorageModelLoader.createDetached("1.0");
+		const createResponse =
+			await sessionStorageModelLoader.createDetached("1.0");
 		model = createResponse.model;
 		id = await createResponse.attach();
 	} else {
@@ -68,7 +70,9 @@ async function createContainerAndRenderInElement(): Promise<ICollaborativeTextAp
 		<React.StrictMode>
 			<div className="text-area" id="text-area-id">
 				<CollaborativeTextArea
-					sharedStringHelper={new SharedStringHelper(model.collaborativeText.text)}
+					sharedStringHelper={
+						new SharedStringHelper(model.collaborativeText.text)
+					}
 				/>
 			</div>
 		</React.StrictMode>,

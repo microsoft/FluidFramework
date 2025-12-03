@@ -6,15 +6,14 @@
 import { delay } from "@fluidframework/core-utils/internal";
 import {
 	CloseContainer,
-	TelemetryEvent,
 	devtoolsMessageSource,
+	TelemetryEvent,
 } from "@fluidframework/devtools-core/internal";
 import { expect } from "chai";
 import { createSandbox } from "sinon";
-
-import type { Globals } from "../Globals.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { runContentScript } from "../content/ContentScriptContent.js";
+import type { Globals } from "../Globals.js";
 import { extensionViewMessageSource } from "../messaging/index.js";
 
 import { awaitListener, stubGlobals, stubPort } from "./Utilities.js";
@@ -33,7 +32,10 @@ describe("Content Script unit tests", () => {
 	it("Registers `onConnect` listener on load", async () => {
 		const { browser } = globals;
 
-		const onConnectListenerPromise = awaitListener(sandbox, browser.runtime.onConnect);
+		const onConnectListenerPromise = awaitListener(
+			sandbox,
+			browser.runtime.onConnect,
+		);
 
 		runContentScript(browser, globals.window);
 
@@ -48,7 +50,10 @@ describe("Content Script unit tests", () => {
 		const backgroundPort = stubPort("background-port");
 
 		// Inject our stubbed `onConnect`
-		const onConnectListenerPromise = awaitListener(sandbox, browser.runtime.onConnect);
+		const onConnectListenerPromise = awaitListener(
+			sandbox,
+			browser.runtime.onConnect,
+		);
 
 		// Load the Content script (with stubbed `onConnect`)
 		runContentScript(browser, globals.window);
@@ -57,7 +62,10 @@ describe("Content Script unit tests", () => {
 		const onConnectListener = await onConnectListenerPromise;
 
 		// Inject our stubbed `onMessage` into the Background Script port we will pass to the Content script
-		const onMessageListenerPromise = awaitListener(sandbox, backgroundPort.onMessage);
+		const onMessageListenerPromise = awaitListener(
+			sandbox,
+			backgroundPort.onMessage,
+		);
 
 		// Simulate connection from Background Script.
 		onConnectListener(backgroundPort);
@@ -80,7 +88,10 @@ describe("Content Script unit tests", () => {
 		const backgroundPort = stubPort("background-port");
 
 		// Inject our stubbed `onConnect`
-		const onConnectListenerPromise = awaitListener(sandbox, browser.runtime.onConnect);
+		const onConnectListenerPromise = awaitListener(
+			sandbox,
+			browser.runtime.onConnect,
+		);
 
 		// Load the Content script (with stubbed `onConnect`)
 		runContentScript(browser, globals.window);
@@ -98,7 +109,8 @@ describe("Content Script unit tests", () => {
 		// Simulate background script connection init from the devtools
 		connectFromBackground(backgroundPort);
 
-		const backgroundOnMessageListener = await backgroundOnMessageListenerPromise;
+		const backgroundOnMessageListener =
+			await backgroundOnMessageListenerPromise;
 		expect(typeof backgroundOnMessageListener).to.equal("function");
 
 		// Update our port stubs to correctly send messages to the Content script
@@ -119,7 +131,9 @@ describe("Content Script unit tests", () => {
 
 		// Post message from the Background script
 		const windowMessage = {
-			...TelemetryEvent.createMessage({} as unknown as TelemetryEvent.MessageData),
+			...TelemetryEvent.createMessage(
+				{} as unknown as TelemetryEvent.MessageData,
+			),
 			source: devtoolsMessageSource,
 		};
 		window.postMessage(windowMessage, "*");
@@ -165,7 +179,9 @@ describe("Content Script unit tests", () => {
 
 		// Post message from the Tab
 		const backgroundMessage = {
-			...CloseContainer.createMessage({} as unknown as CloseContainer.MessageData),
+			...CloseContainer.createMessage(
+				{} as unknown as CloseContainer.MessageData,
+			),
 			source: extensionViewMessageSource,
 		};
 		backgroundPort.postMessage(backgroundMessage);

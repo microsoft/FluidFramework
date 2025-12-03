@@ -3,22 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import fs from "fs";
-import path from "path";
-
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
+import { strict as assert } from "assert";
+import fs from "fs";
+import path from "path";
 
-import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
+import { type SharedString, SharedStringFactory } from "../sequenceFactory.js";
 import { SharedStringClass } from "../sharedString.js";
 
 import { _dirname } from "./dirname.cjs";
-import { LocationBase, generateStrings } from "./generateSharedStrings.js";
+import { generateStrings, LocationBase } from "./generateSharedStrings.js";
 
 function assertIntervalCollectionsAreEquivalent(
 	actual: SharedString,
@@ -40,10 +39,14 @@ function assertIntervalCollectionsAreEquivalent(
 			const expectedInterval = expectedCollection.getIntervalById(intervalId);
 			assert(expectedInterval);
 			const start = actual.localReferencePositionToPosition(interval.start);
-			const expectedStart = expected.localReferencePositionToPosition(expectedInterval.start);
+			const expectedStart = expected.localReferencePositionToPosition(
+				expectedInterval.start,
+			);
 			assert.equal(start, expectedStart, message);
 			const end = actual.localReferencePositionToPosition(interval.end);
-			const expectedEnd = expected.localReferencePositionToPosition(expectedInterval.end);
+			const expectedEnd = expected.localReferencePositionToPosition(
+				expectedInterval.end,
+			);
 			assert.equal(end, expectedEnd, message);
 		}
 	}
@@ -104,7 +107,10 @@ describe("SharedString Snapshot Version", () => {
 	) {
 		it(name, async () => {
 			const filename = `${fileBase}${name}.json`;
-			assert(fs.existsSync(filename), `test snapshot file does not exist: ${filename}`);
+			assert(
+				fs.existsSync(filename),
+				`test snapshot file does not exist: ${filename}`,
+			);
 			const data = fs.readFileSync(filename, "utf8");
 			const sharedString = await loadSharedString("fakeId", data);
 			// test rebuilt sharedString against the original
@@ -134,9 +140,20 @@ describe("SharedString Snapshot Version", () => {
 
 	function generateSnapshotRebuildTests() {
 		describe("Snapshot rebuild", () => {
-			for (const { snapshotPath, expected, snapshotIsNormalized } of generateStrings()) {
-				if (snapshotIsNormalized || snapshotPath === "v1Intervals/withV1Intervals") {
-					generateSnapshotRebuildTest(snapshotPath, expected, snapshotIsNormalized);
+			for (const {
+				snapshotPath,
+				expected,
+				snapshotIsNormalized,
+			} of generateStrings()) {
+				if (
+					snapshotIsNormalized ||
+					snapshotPath === "v1Intervals/withV1Intervals"
+				) {
+					generateSnapshotRebuildTest(
+						snapshotPath,
+						expected,
+						snapshotIsNormalized,
+					);
 				}
 			}
 		});
@@ -146,7 +163,10 @@ describe("SharedString Snapshot Version", () => {
 	function generateSnapshotDiffTest(name: string, testString: SharedString) {
 		it(name, async () => {
 			const filename = `${fileBase}${name}.json`;
-			assert(fs.existsSync(filename), `test snapshot file does not exist: ${filename}`);
+			assert(
+				fs.existsSync(filename),
+				`test snapshot file does not exist: ${filename}`,
+			);
 			const data = fs.readFileSync(filename, "utf8").trim();
 			const dataObject = JSON.parse(data);
 
@@ -181,7 +201,9 @@ describe("SharedString Snapshot Version", () => {
 		originalString.initializeLocal();
 		originalString.insertText(0, "ABCD");
 		const collectionId = "015e0f46-efa3-42d7-a9ab-970ecc376df9";
-		originalString.getIntervalCollection(collectionId).add({ start: 1, end: 2 });
+		originalString
+			.getIntervalCollection(collectionId)
+			.add({ start: 1, end: 2 });
 		const summaryTree = originalString.getAttachSummary().summary;
 		const snapshotTree = convertSummaryTreeToITree(summaryTree);
 		const serializedSnapshot = JSON.stringify(snapshotTree);
@@ -190,8 +212,13 @@ describe("SharedString Snapshot Version", () => {
 			`intervalCollections/${collectionId}`,
 		);
 
-		assert(denormalizedSnapshot.includes(`intervalCollections/${collectionId}`));
-		const rehydratedString = await loadSharedString("rehydrated", serializedSnapshot);
+		assert(
+			denormalizedSnapshot.includes(`intervalCollections/${collectionId}`),
+		);
+		const rehydratedString = await loadSharedString(
+			"rehydrated",
+			serializedSnapshot,
+		);
 		const rehydratedFromDenormalizedString = await loadSharedString(
 			"denormalized",
 			denormalizedSnapshot,

@@ -6,8 +6,8 @@
 import {
 	type ApiCallSignature,
 	type ApiClass,
-	type ApiConstructSignature,
 	type ApiConstructor,
+	type ApiConstructSignature,
 	type ApiEntryPoint,
 	type ApiEnum,
 	type ApiEnumMember,
@@ -107,27 +107,38 @@ export interface ApiItemTransformations {
 const defaultApiItemTransformationOptions: ApiItemTransformations = {
 	[ApiItemKind.CallSignature]:
 		DefaultTransformationImplementations.transformApiItemWithoutChildren,
-	[ApiItemKind.Class]: DefaultTransformationImplementations.transformApiTypeLike,
-	[ApiItemKind.Constructor]: DefaultTransformationImplementations.transformApiFunctionLike,
+	[ApiItemKind.Class]:
+		DefaultTransformationImplementations.transformApiTypeLike,
+	[ApiItemKind.Constructor]:
+		DefaultTransformationImplementations.transformApiFunctionLike,
 	[ApiItemKind.ConstructSignature]:
 		DefaultTransformationImplementations.transformApiFunctionLike,
-	[ApiItemKind.EntryPoint]: DefaultTransformationImplementations.transformApiEntryPoint,
+	[ApiItemKind.EntryPoint]:
+		DefaultTransformationImplementations.transformApiEntryPoint,
 	[ApiItemKind.Enum]: DefaultTransformationImplementations.transformApiEnum,
 	[ApiItemKind.EnumMember]:
 		DefaultTransformationImplementations.transformApiItemWithoutChildren,
-	[ApiItemKind.Function]: DefaultTransformationImplementations.transformApiFunctionLike,
+	[ApiItemKind.Function]:
+		DefaultTransformationImplementations.transformApiFunctionLike,
 	[ApiItemKind.IndexSignature]:
 		DefaultTransformationImplementations.transformApiItemWithoutChildren,
-	[ApiItemKind.Interface]: DefaultTransformationImplementations.transformApiTypeLike,
-	[ApiItemKind.Method]: DefaultTransformationImplementations.transformApiFunctionLike,
-	[ApiItemKind.MethodSignature]: DefaultTransformationImplementations.transformApiFunctionLike,
+	[ApiItemKind.Interface]:
+		DefaultTransformationImplementations.transformApiTypeLike,
+	[ApiItemKind.Method]:
+		DefaultTransformationImplementations.transformApiFunctionLike,
+	[ApiItemKind.MethodSignature]:
+		DefaultTransformationImplementations.transformApiFunctionLike,
 	[ApiItemKind.Model]: DefaultTransformationImplementations.transformApiModel,
-	[ApiItemKind.Namespace]: DefaultTransformationImplementations.transformApiNamespace,
-	[ApiItemKind.Property]: DefaultTransformationImplementations.transformApiItemWithoutChildren,
+	[ApiItemKind.Namespace]:
+		DefaultTransformationImplementations.transformApiNamespace,
+	[ApiItemKind.Property]:
+		DefaultTransformationImplementations.transformApiItemWithoutChildren,
 	[ApiItemKind.PropertySignature]:
 		DefaultTransformationImplementations.transformApiItemWithoutChildren,
-	[ApiItemKind.TypeAlias]: DefaultTransformationImplementations.transformApiTypeLike,
-	[ApiItemKind.Variable]: DefaultTransformationImplementations.transformApiItemWithoutChildren,
+	[ApiItemKind.TypeAlias]:
+		DefaultTransformationImplementations.transformApiTypeLike,
+	[ApiItemKind.Variable]:
+		DefaultTransformationImplementations.transformApiItemWithoutChildren,
 };
 
 /**

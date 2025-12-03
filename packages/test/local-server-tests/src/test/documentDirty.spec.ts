@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import type {
+	IContainer,
+	IFluidCodeDetails,
+} from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
 	createDetachedContainer,
@@ -20,17 +21,18 @@ import {
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { asLegacyAlpha } from "@fluidframework/runtime-definitions/internal";
 import {
-	ILocalDeltaConnectionServer,
+	type ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
 	createAndAttachContainerUsingProps,
-	ITestFluidObject,
+	type ITestFluidObject,
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObjectFactory,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import { strict as assert } from "assert";
 
 const nonDirtyableOp = {
 	type: "GC",
@@ -77,7 +79,11 @@ describe("Document Dirty", () => {
 		function registerSavedContainerHandler(): void {
 			containerRuntime.on("saved", () => {
 				wasMarkedCleanRuntimeCount += 1;
-				assert.equal(containerRuntime.isDirty, false, "Document is marked clean");
+				assert.equal(
+					containerRuntime.isDirty,
+					false,
+					"Document is marked clean",
+				);
 				assert.equal(
 					wasMarkedDirtyRuntimeCount,
 					wasMarkedCleanRuntimeCount,
@@ -106,7 +112,11 @@ describe("Document Dirty", () => {
 		function registerDirtyContainerHandler(): void {
 			containerRuntime.on("dirty", () => {
 				wasMarkedDirtyRuntimeCount += 1;
-				assert.equal(containerRuntime.isDirty, true, "Document is marked dirty");
+				assert.equal(
+					containerRuntime.isDirty,
+					true,
+					"Document is marked dirty",
+				);
 				assert.equal(
 					wasMarkedDirtyRuntimeCount - wasMarkedCleanRuntimeCount,
 					1,
@@ -137,7 +147,9 @@ describe("Document Dirty", () => {
 
 			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 				defaultFactory,
-				registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+				registryEntries: [
+					[defaultFactory.type, Promise.resolve(defaultFactory)],
+				],
 			});
 
 			const urlResolver = new LocalResolver();
@@ -163,13 +175,16 @@ describe("Document Dirty", () => {
 
 		beforeEach(async () => {
 			deltaConnectionServer = LocalDeltaConnectionServer.create();
-			documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+			documentServiceFactory = new LocalDocumentServiceFactory(
+				deltaConnectionServer,
+			);
 			loaderContainerTracker = new LoaderContainerTracker();
 
 			// Create the first container, component and DDSes.
 			container = await createContainer();
 			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime_WithSubmit;
+			containerRuntime = dataObject.context
+				.containerRuntime as IContainerRuntime_WithSubmit;
 			sharedMap = await dataObject.getSharedObject<ISharedMap>(mapId);
 
 			// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
@@ -299,7 +314,8 @@ describe("Document Dirty", () => {
 				// Submit a non-dirtyable op
 				containerRuntime.submit(nonDirtyableOp);
 
-				const stageControls = asLegacyAlpha(containerRuntime).enterStagingMode();
+				const stageControls =
+					asLegacyAlpha(containerRuntime).enterStagingMode();
 
 				// Submit an op in staging mode - we will discard it later
 				sharedMap.set("key", "value");
@@ -530,7 +546,9 @@ describe("Document Dirty", () => {
 
 			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 				defaultFactory,
-				registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+				registryEntries: [
+					[defaultFactory.type, Promise.resolve(defaultFactory)],
+				],
 			});
 
 			const urlResolver = new LocalResolver();
@@ -556,7 +574,11 @@ describe("Document Dirty", () => {
 		function registerSavedContainerHandler(): void {
 			containerRuntime.on("saved", () => {
 				wasMarkedCleanRuntimeCount += 1;
-				assert.equal(containerRuntime.isDirty, false, "Document is marked clean");
+				assert.equal(
+					containerRuntime.isDirty,
+					false,
+					"Document is marked clean",
+				);
 				assert.equal(
 					wasMarkedCleanRuntimeCount - wasMarkedDirtyRuntimeCount,
 					1,
@@ -585,7 +607,11 @@ describe("Document Dirty", () => {
 		function registerDirtyContainerHandler(): void {
 			containerRuntime.on("dirty", () => {
 				wasMarkedDirtyRuntimeCount += 1;
-				assert.equal(containerRuntime.isDirty, true, "Document is marked dirty");
+				assert.equal(
+					containerRuntime.isDirty,
+					true,
+					"Document is marked dirty",
+				);
 				assert.equal(
 					wasMarkedDirtyRuntimeCount,
 					wasMarkedCleanRuntimeCount,
@@ -640,13 +666,16 @@ describe("Document Dirty", () => {
 
 		beforeEach(async () => {
 			deltaConnectionServer = LocalDeltaConnectionServer.create();
-			documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+			documentServiceFactory = new LocalDocumentServiceFactory(
+				deltaConnectionServer,
+			);
 			loaderContainerTracker = new LoaderContainerTracker();
 
 			// Create the first container, component and DDSes.
 			container = await createDetachedContainerForTest();
 			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime_WithSubmit;
+			containerRuntime = dataObject.context
+				.containerRuntime as IContainerRuntime_WithSubmit;
 			sharedMap = await dataObject.getSharedObject<ISharedMap>(mapId);
 
 			// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is

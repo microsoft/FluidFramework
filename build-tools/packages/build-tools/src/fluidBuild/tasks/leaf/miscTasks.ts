@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { readFile, readdir, stat } from "node:fs/promises";
+import { readdir, readFile, stat } from "node:fs/promises";
 import * as path from "node:path";
 
 import picomatch from "picomatch";
@@ -229,7 +229,9 @@ export class GenVerTask extends LeafTask {
 				return false;
 			}
 			if (this.node.pkg.version !== match[2]) {
-				this.traceTrigger("package version in src/packageVersion.ts not matched");
+				this.traceTrigger(
+					"package version in src/packageVersion.ts not matched",
+				);
 				return false;
 			}
 			return true;
@@ -252,7 +254,9 @@ export class TypeValidationTask extends LeafWithFileStatDoneFileTask {
 			this.inputFiles = [path.join(this.node.pkg.directory, "package.json")];
 			// Casting as any is a workaround because the typeValidation-related types are in build-cli.
 			// Eventually the common stuff will be split into a shared package; tracked by AB#13197.
-			if (!((this.node.pkg.packageJson as any).typeValidation?.disabled === true)) {
+			if (
+				!((this.node.pkg.packageJson as any).typeValidation?.disabled === true)
+			) {
 				// TODO: depend on all of input to product tsc, which impacts the API.
 				// This task is effectively a TscDependentTask with additional input,
 				// but some packages build tests including type tests as part of
@@ -262,7 +266,9 @@ export class TypeValidationTask extends LeafWithFileStatDoneFileTask {
 				// The package.json file of prior package is a pretty good representative
 				// for exposed types of prior package. If this is missing, task won't be
 				// incremental. That is okay because task will also fail.
-				this.inputFiles.push(getTypeTestPreviousPackageDetails(this.node.pkg).packageJsonPath);
+				this.inputFiles.push(
+					getTypeTestPreviousPackageDetails(this.node.pkg).packageJsonPath,
+				);
 			}
 		}
 		return this.inputFiles;
@@ -275,7 +281,10 @@ export class TypeValidationTask extends LeafWithFileStatDoneFileTask {
 	protected async getOutputFiles(): Promise<string[]> {
 		if (this.outputFiles === undefined) {
 			// Assumes all typetest output is in src/test/types
-			const typetestGlob = path.join(this.node.pkg.directory, "src/test/types/**");
+			const typetestGlob = path.join(
+				this.node.pkg.directory,
+				"src/test/types/**",
+			);
 			this.outputFiles = await globFn(typetestGlob, { nodir: true });
 		}
 		return this.outputFiles;
@@ -303,7 +312,7 @@ export class GoodFence extends LeafWithFileStatDoneFileTask {
 				});
 			});
 
-			this.inputFiles = new Array(...tsFileSet.keys());
+			this.inputFiles = [...tsFileSet.keys()];
 		}
 		return this.inputFiles;
 	}
@@ -335,7 +344,9 @@ export class DepCruiseTask extends LeafWithFileStatDoneFileTask {
 					const fullPath = path.join(this.node.pkg.directory, scan.base);
 					const files = await readdir(fullPath, { recursive: true });
 					inputFiles.push(
-						...files.filter((file) => match(file)).map((file) => path.join(fullPath, file)),
+						...files
+							.filter((file) => match(file))
+							.map((file) => path.join(fullPath, file)),
 					);
 				} else {
 					const fullPath = path.resolve(this.node.pkg.directory, file);

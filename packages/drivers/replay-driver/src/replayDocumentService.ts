@@ -4,18 +4,18 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IClient } from "@fluidframework/driver-definitions";
-import {
-	IDocumentServiceEvents,
-	IDocumentService,
-	IDocumentStorageService,
+import type { IClient } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentDeltaConnection,
-	IResolvedUrl,
 	IDocumentDeltaStorageService,
+	IDocumentService,
+	IDocumentServiceEvents,
+	IDocumentStorageService,
+	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
 
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService.js";
-import { ReplayController } from "./replayController.js";
+import type { ReplayController } from "./replayController.js";
 import { ReplayDocumentDeltaConnection } from "./replayDocumentDeltaConnection.js";
 
 /**
@@ -80,7 +80,9 @@ export class ReplayDocumentService
 	 * @param client - Client that connects to socket.
 	 * @returns returns the delta stream service which replay ops from --from to --to arguments.
 	 */
-	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+	public async connectToDeltaStream(
+		client: IClient,
+	): Promise<IDocumentDeltaConnection> {
 		return this.deltaStorage;
 	}
 }

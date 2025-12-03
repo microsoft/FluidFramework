@@ -14,8 +14,8 @@ export function Explanation(): JSX.Element {
 	return (
 		<div className="flex flex-col max-w-md gap-4 justify-left my-32 select-none">
 			<BlackBox>
-				Copy the full URL to another browser tab or send it to someone to see that the data is
-				synched between clients.
+				Copy the full URL to another browser tab or send it to someone to see
+				that the data is synched between clients.
 			</BlackBox>
 		</div>
 	);
@@ -23,7 +23,9 @@ export function Explanation(): JSX.Element {
 
 export function BlackBox(props: { children: ReactNode }): JSX.Element {
 	return (
-		<div className="text-xl bg-black text-white p-4 rounded shadow-md">{props.children}</div>
+		<div className="text-xl bg-black text-white p-4 rounded shadow-md">
+			{props.children}
+		</div>
 	);
 }
 
@@ -149,7 +151,11 @@ export function ReactApp(props: {
 	return (
 		<div className="flex flex-col justify-items-center items-center w-full h-full">
 			<TopRow app={appRoot} />
-			<Canvas app={appRoot} canvasSize={props.canvasSize} cellSize={props.cellSize} />
+			<Canvas
+				app={appRoot}
+				canvasSize={props.canvasSize}
+				cellSize={props.cellSize}
+			/>
 			<Explanation />
 		</div>
 	);

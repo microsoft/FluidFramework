@@ -17,10 +17,10 @@ import {
 	compatKind,
 	compatVersions,
 	driver,
-	r11sEndpointName,
-	tenantIndex,
-	reinstall,
 	odspEndpointName,
+	r11sEndpointName,
+	reinstall,
+	tenantIndex,
 } from "./compatOptions.js";
 import { pkgVersion } from "./packageVersion.js";
 import { ensurePackageInstalled } from "./testApi.js";
@@ -189,7 +189,9 @@ const genLoaderBackCompatConfig = (compatVersion: number): CompatConfig[] => {
 	];
 };
 
-const genDriverLoaderBackCompatConfig = (compatVersion: number): CompatConfig[] => {
+const genDriverLoaderBackCompatConfig = (
+	compatVersion: number,
+): CompatConfig[] => {
 	const compatVersionStr =
 		typeof compatVersion === "string"
 			? `${compatVersion} (N)`
@@ -205,7 +207,9 @@ const genDriverLoaderBackCompatConfig = (compatVersion: number): CompatConfig[] 
 	];
 };
 
-const getNumberOfVersionsToGoBack = (numOfVersionsAboveV2Int1: number = 0): number => {
+const getNumberOfVersionsToGoBack = (
+	numOfVersionsAboveV2Int1: number = 0,
+): number => {
 	const semverVersion = semver.parse(codeVersion);
 	assert(semverVersion !== null, `Unexpected pkg version '${codeVersion}'`);
 
@@ -218,11 +222,15 @@ const getNumberOfVersionsToGoBack = (numOfVersionsAboveV2Int1: number = 0): numb
 	return numOfInternalMajorsBeforePublic2dot0 - numOfVersionsAboveV2Int1;
 };
 
-const genFullBackCompatConfig = (driverVersionsAboveV2Int1: number = 0): CompatConfig[] => {
+const genFullBackCompatConfig = (
+	driverVersionsAboveV2Int1: number = 0,
+): CompatConfig[] => {
 	// not working with new rc version
 	const _configList: CompatConfig[] = [];
 
-	const loaderVersionBackCompatCount = getNumberOfVersionsToGoBack(driverVersionsAboveV2Int1);
+	const loaderVersionBackCompatCount = getNumberOfVersionsToGoBack(
+		driverVersionsAboveV2Int1,
+	);
 
 	// This makes the assumption N and N-1 scenarios are already fully tested thus skipping 0 and -1.
 	// This loop goes as far back as 2.0.0.internal.1.y.z.
@@ -233,7 +241,9 @@ const genFullBackCompatConfig = (driverVersionsAboveV2Int1: number = 0): CompatC
 	}
 
 	// Splitting the two allows us to still test driver-loader while skipping older loader-driver versions are no longer supported
-	const driverVersionBackCompatCount = getNumberOfVersionsToGoBack(driverVersionsAboveV2Int1);
+	const driverVersionBackCompatCount = getNumberOfVersionsToGoBack(
+		driverVersionsAboveV2Int1,
+	);
 	for (let i = 2; i < driverVersionBackCompatCount; i++) {
 		_configList.push(...genDriverLoaderBackCompatConfig(-i));
 	}
@@ -245,17 +255,29 @@ const genFullBackCompatConfig = (driverVersionsAboveV2Int1: number = 0): CompatC
  * It helps to filter out lower verions configs that the ones intended to be tested on a
  * particular suite.
  */
-export function isCompatVersionBelowMinVersion(minVersion: string, config: CompatConfig) {
+export function isCompatVersionBelowMinVersion(
+	minVersion: string,
+	config: CompatConfig,
+) {
 	let lowerVersion: string | number = config.compatVersion;
 	// For cross-client there are 2 versions being tested. Get the lower one.
 	if (config.kind === CompatKind.CrossClient) {
 		lowerVersion =
-			semver.compare(config.compatVersion as string, config.loadVersion as string) > 0
+			semver.compare(
+				config.compatVersion as string,
+				config.loadVersion as string,
+			) > 0
 				? (config.loadVersion as string)
 				: config.compatVersion;
 	}
-	const compatVersion = getRequestedVersion(baseVersionForMinCompat, lowerVersion);
-	const minReqVersion = getRequestedVersion(testBaseVersion(minVersion), minVersion);
+	const compatVersion = getRequestedVersion(
+		baseVersionForMinCompat,
+		lowerVersion,
+	);
+	const minReqVersion = getRequestedVersion(
+		testBaseVersion(minVersion),
+		minVersion,
+	);
 	return semver.compare(compatVersion, minReqVersion) < 0;
 }
 
@@ -325,7 +347,11 @@ function genCompatConfig(versionDetails: {
  * @internal
  */
 export const genCrossClientCompatConfig = (): CompatConfig[] => {
-	const currentVersion = getRequestedVersion(pkgVersion, 0, false /* adjustMajorPublic */);
+	const currentVersion = getRequestedVersion(
+		pkgVersion,
+		0,
+		false /* adjustMajorPublic */,
+	);
 
 	// We build a map of all the versions we want to test the current version against.
 	// The key is the version and the value is a string describing the delta from the current version.
@@ -338,7 +364,11 @@ export const genCrossClientCompatConfig = (): CompatConfig[] => {
 	defaultCompatVersions.currentCrossClientVersionDeltas
 		.filter((delta) => delta !== 0) // skip current build
 		.forEach((delta) => {
-			const v = getRequestedVersion(pkgVersion, delta, false /* adjustMajorPublic */);
+			const v = getRequestedVersion(
+				pkgVersion,
+				delta,
+				false /* adjustMajorPublic */,
+			);
 			if (semver.gte(v, "1.0.0")) {
 				deltaVersions.set(v, `N${delta} fast train`);
 			}
@@ -349,7 +379,11 @@ export const genCrossClientCompatConfig = (): CompatConfig[] => {
 	defaultCompatVersions.currentCrossClientVersionDeltas
 		.filter((delta) => delta !== 0) // skip current build
 		.forEach((delta) => {
-			const v = getRequestedVersion(pkgVersion, delta, true /* adjustMajorPublic */);
+			const v = getRequestedVersion(
+				pkgVersion,
+				delta,
+				true /* adjustMajorPublic */,
+			);
 			if (semver.gte(v, "1.0.0")) {
 				if (deltaVersions.has(v)) {
 					deltaVersions.set(v, `${deltaVersions.get(v)}/N${delta} slow train`);
@@ -427,7 +461,9 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 			_configList.push(...genFullBackCompatConfig());
 		}
 		if (process.env.fluid__test__backCompat === "V2_INT_3") {
-			_configList.push(...genFullBackCompatConfig(defaultNumOfDriverVersionsAboveV2Int1));
+			_configList.push(
+				...genFullBackCompatConfig(defaultNumOfDriverVersionsAboveV2Int1),
+			);
 		}
 	} else {
 		compatVersions.forEach((value) => {
@@ -443,7 +479,9 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 					break;
 				}
 				case "V2_INT_3": {
-					_configList.push(...genFullBackCompatConfig(defaultNumOfDriverVersionsAboveV2Int1));
+					_configList.push(
+						...genFullBackCompatConfig(defaultNumOfDriverVersionsAboveV2Int1),
+					);
 					break;
 				}
 				case "CROSS_CLIENT": {
@@ -464,7 +502,9 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 
 	if (compatKind !== undefined) {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		_configList = _configList.filter((value) => compatKind!.includes(value.kind));
+		_configList = _configList.filter((value) =>
+			compatKind!.includes(value.kind),
+		);
 	}
 	return _configList;
 });
@@ -507,7 +547,9 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
  * @internal
  */
 export async function mochaGlobalSetup() {
-	const versions = new Set(configList.value.map((value) => value.compatVersion));
+	const versions = new Set(
+		configList.value.map((value) => value.compatVersion),
+	);
 	if (versions.size === 0) {
 		return;
 	}

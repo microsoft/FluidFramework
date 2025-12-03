@@ -9,11 +9,18 @@ import { fileURLToPath } from "node:url";
 import { ApiModel } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 
-import { lintApiModel, type LinterErrors } from "../LintApiModel.js";
+import { type LinterErrors, lintApiModel } from "../LintApiModel.js";
 import { loadModel } from "../LoadModel.js";
 
 const dirname = Path.dirname(fileURLToPath(import.meta.url));
-const testModelsDirectoryPath = Path.resolve(dirname, "..", "..", "src", "test", "test-data");
+const testModelsDirectoryPath = Path.resolve(
+	dirname,
+	"..",
+	"..",
+	"src",
+	"test",
+	"test-data",
+);
 
 describe("lintApiModel", () => {
 	it("Empty API Model yields no errors", async () => {
@@ -24,7 +31,10 @@ describe("lintApiModel", () => {
 	});
 
 	it("API Model with invalid links yields the expected errors", async () => {
-		const modelDirectoryPath = Path.resolve(testModelsDirectoryPath, "simple-suite-test");
+		const modelDirectoryPath = Path.resolve(
+			testModelsDirectoryPath,
+			"simple-suite-test",
+		);
 
 		const apiModel = await loadModel({ modelDirectoryPath });
 

@@ -78,7 +78,10 @@ export function verifyLinkedGroceries(
 	) {
 		return false;
 	}
-	const verboseNode = node as { type?: unknown; fields?: Record<string, unknown> };
+	const verboseNode = node as {
+		type?: unknown;
+		fields?: Record<string, unknown>;
+	};
 	if (verboseNode.type !== "com.microsoft.fluid.tree-agent.groceries.Grocery") {
 		return false;
 	}

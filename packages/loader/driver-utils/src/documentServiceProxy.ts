@@ -4,8 +4,8 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IClient } from "@fluidframework/driver-definitions";
-import {
+import type { IClient } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
 	IDocumentService,
@@ -39,7 +39,9 @@ export abstract class DocumentServiceProxy
 		return this._service.connectToDeltaStorage();
 	}
 
-	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+	public async connectToDeltaStream(
+		client: IClient,
+	): Promise<IDocumentDeltaConnection> {
 		return this._service.connectToDeltaStream(client);
 	}
 

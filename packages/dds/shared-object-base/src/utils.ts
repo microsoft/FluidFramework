@@ -65,7 +65,10 @@ export function makeHandlesSerializable(
  * @returns The mostly-plain object with handle objects within
  * @legacy @beta
  */
-export function parseHandles(value: unknown, serializer: IFluidSerializer): unknown {
+export function parseHandles(
+	value: unknown,
+	serializer: IFluidSerializer,
+): unknown {
 	return serializer.decode(value);
 }
 
@@ -94,7 +97,10 @@ export function bindHandles<T = unknown>(value: T, bind: IFluidHandle): T {
 	const nodesToProcess: unknown[] = [value];
 	const visitedNodes = new Set<unknown>();
 
-	assert(isISharedObjectHandle(bind), 0xc85 /* bind must be an ISharedObjectHandle */);
+	assert(
+		isISharedObjectHandle(bind),
+		0xc85 /* bind must be an ISharedObjectHandle */,
+	);
 
 	while (nodesToProcess.length > 0) {
 		const node = nodesToProcess.pop();

@@ -21,10 +21,12 @@ export interface WorkerExecResult {
 	memoryUsage?: NodeJS.MemoryUsage;
 }
 
-const workers: { [key: string]: (message: WorkerMessage) => Promise<WorkerExecResult> } = {
-	"tsc": compile,
+const workers: {
+	[key: string]: (message: WorkerMessage) => Promise<WorkerExecResult>;
+} = {
+	tsc: compile,
 	"fluid-tsc": fluidCompile,
-	"eslint": lint,
+	eslint: lint,
 	"api-extractor": apiExtractorWorker,
 };
 
@@ -51,7 +53,9 @@ async function messageHandler(msg: WorkerMessage): Promise<WorkerExecResult> {
 			code: -1,
 		};
 	}
-	return collectMemoryUsage ? { ...res, memoryUsage: process.memoryUsage() } : res;
+	return collectMemoryUsage
+		? { ...res, memoryUsage: process.memoryUsage() }
+		: res;
 }
 
 if (parentPort) {
@@ -66,7 +70,9 @@ if (parentPort) {
 		messageHandler(message).then(process.send!.bind(process));
 	});
 	process.on("uncaughtException", (error) => {
-		console.error(`ERROR: Uncaught exception. ${error.message}\n${error.stack}`);
+		console.error(
+			`ERROR: Uncaught exception. ${error.message}\n${error.stack}`,
+		);
 		process.exit(-1);
 	});
 	process.on("unhandledRejection", (reason) => {

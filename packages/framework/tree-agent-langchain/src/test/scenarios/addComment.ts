@@ -5,92 +5,89 @@
 
 import type { VerboseTree } from "@fluidframework/tree/alpha";
 
-import { Page, Paragraph, Sentence, Word, Span } from "../domains/index.js";
-import { scoreSymbol, type LLMIntegrationTest, type ScorableVerboseTree } from "../utils.js";
+import { Page, Paragraph, Sentence, Span, Word } from "../domains/index.js";
+import {
+	type LLMIntegrationTest,
+	type ScorableVerboseTree,
+	scoreSymbol,
+} from "../utils.js";
 
 const expected: ScorableVerboseTree = {
-	"type": "com.microsoft.fluid.tree-agent.text.Page",
-	"fields": {
-		"paragraphs": {
-			"type":
-				'com.microsoft.fluid.tree-agent.text.Array<["com.microsoft.fluid.tree-agent.text.Paragraph"]>',
-			"fields": [
+	type: "com.microsoft.fluid.tree-agent.text.Page",
+	fields: {
+		paragraphs: {
+			type: 'com.microsoft.fluid.tree-agent.text.Array<["com.microsoft.fluid.tree-agent.text.Paragraph"]>',
+			fields: [
 				{
-					"type": "com.microsoft.fluid.tree-agent.text.Paragraph",
-					"fields": {
-						"sentences": {
-							"type":
-								'com.microsoft.fluid.tree-agent.text.Array<["com.microsoft.fluid.tree-agent.text.Sentence"]>',
-							"fields": [
+					type: "com.microsoft.fluid.tree-agent.text.Paragraph",
+					fields: {
+						sentences: {
+							type: 'com.microsoft.fluid.tree-agent.text.Array<["com.microsoft.fluid.tree-agent.text.Sentence"]>',
+							fields: [
 								{
-									"type": "com.microsoft.fluid.tree-agent.text.Sentence",
-									"fields": {
-										"words": {
-											"type":
-												'com.microsoft.fluid.tree-agent.text.Array<["com.microsoft.fluid.tree-agent.text.Span","com.microsoft.fluid.tree-agent.text.Word"]>',
-											"fields": [
+									type: "com.microsoft.fluid.tree-agent.text.Sentence",
+									fields: {
+										words: {
+											type: 'com.microsoft.fluid.tree-agent.text.Array<["com.microsoft.fluid.tree-agent.text.Span","com.microsoft.fluid.tree-agent.text.Word"]>',
+											fields: [
 												{
-													"type": "com.microsoft.fluid.tree-agent.text.Word",
-													"fields": {
-														"characters": "Bagels",
+													type: "com.microsoft.fluid.tree-agent.text.Word",
+													fields: {
+														characters: "Bagels",
 													},
 												},
 												{
-													"type": "com.microsoft.fluid.tree-agent.text.Word",
-													"fields": {
-														"characters": "are",
+													type: "com.microsoft.fluid.tree-agent.text.Word",
+													fields: {
+														characters: "are",
 													},
 												},
 												{
-													"type": "com.microsoft.fluid.tree-agent.text.Span",
-													"fields": {
-														"words": {
-															"type":
-																'com.microsoft.fluid.tree-agent.text.Array<["com.microsoft.fluid.tree-agent.text.Word"]>',
-															"fields": [
+													type: "com.microsoft.fluid.tree-agent.text.Span",
+													fields: {
+														words: {
+															type: 'com.microsoft.fluid.tree-agent.text.Array<["com.microsoft.fluid.tree-agent.text.Word"]>',
+															fields: [
 																{
-																	"type": "com.microsoft.fluid.tree-agent.text.Word",
-																	"fields": {
-																		"characters": "a",
+																	type: "com.microsoft.fluid.tree-agent.text.Word",
+																	fields: {
+																		characters: "a",
 																	},
 																},
 																{
-																	"type": "com.microsoft.fluid.tree-agent.text.Word",
-																	"fields": {
-																		"characters": "real",
-																	},
-																},
-															],
-														},
-														"bold": false,
-														"italic": true,
-														"comments": {
-															"type":
-																'com.microsoft.fluid.tree-agent.text.Array<["com.fluidframework.leaf.string"]>',
-															"fields": ["6633f83b-c7b6-4f5e-9a9d-8f1e4f451b9a"],
-														},
-													},
-												},
-												{
-													"type": "com.microsoft.fluid.tree-agent.text.Span",
-													"fields": {
-														"words": {
-															"type":
-																'com.microsoft.fluid.tree-agent.text.Array<["com.microsoft.fluid.tree-agent.text.Word"]>',
-															"fields": [
-																{
-																	"type": "com.microsoft.fluid.tree-agent.text.Word",
-																	"fields": {
-																		"characters": "treat",
+																	type: "com.microsoft.fluid.tree-agent.text.Word",
+																	fields: {
+																		characters: "real",
 																	},
 																},
 															],
 														},
-														"bold": false,
-														"italic": true,
-														"comments": {
-															"type":
-																'com.microsoft.fluid.tree-agent.text.Array<["com.fluidframework.leaf.string"]>',
+														bold: false,
+														italic: true,
+														comments: {
+															type: 'com.microsoft.fluid.tree-agent.text.Array<["com.fluidframework.leaf.string"]>',
+															fields: ["6633f83b-c7b6-4f5e-9a9d-8f1e4f451b9a"],
+														},
+													},
+												},
+												{
+													type: "com.microsoft.fluid.tree-agent.text.Span",
+													fields: {
+														words: {
+															type: 'com.microsoft.fluid.tree-agent.text.Array<["com.microsoft.fluid.tree-agent.text.Word"]>',
+															fields: [
+																{
+																	type: "com.microsoft.fluid.tree-agent.text.Word",
+																	fields: {
+																		characters: "treat",
+																	},
+																},
+															],
+														},
+														bold: false,
+														italic: true,
+														comments: {
+															type: 'com.microsoft.fluid.tree-agent.text.Array<["com.fluidframework.leaf.string"]>',
 															[scoreSymbol]: (
 																actual: VerboseTree<never>,
 																actualTree: VerboseTree<never>,
@@ -115,7 +112,10 @@ const expected: ScorableVerboseTree = {
 																				!Array.isArray(c.fields) &&
 																				typeof c.fields.identifier === "string"
 																			) {
-																				return c.fields.identifier === actual.fields[0];
+																				return (
+																					c.fields.identifier ===
+																					actual.fields[0]
+																				);
 																			}
 																		})
 																	) {
@@ -137,9 +137,8 @@ const expected: ScorableVerboseTree = {
 				},
 			],
 		},
-		"comments": {
-			"type":
-				'com.microsoft.fluid.tree-agent.text.Array<["com.microsoft.fluid.tree-agent.text.Comment"]>',
+		comments: {
+			type: 'com.microsoft.fluid.tree-agent.text.Array<["com.microsoft.fluid.tree-agent.text.Comment"]>',
 			[scoreSymbol]: (actual: VerboseTree<never>): number => {
 				if (
 					typeof actual === "object" &&
@@ -147,7 +146,11 @@ const expected: ScorableVerboseTree = {
 					Array.isArray(actual.fields) &&
 					actual.fields.length === 2 &&
 					actual.fields.some((c) => {
-						if (typeof c === "object" && c !== null && !Array.isArray(c.fields)) {
+						if (
+							typeof c === "object" &&
+							c !== null &&
+							!Array.isArray(c.fields)
+						) {
 							return c.fields.text === "Makes me think of Halloween :)";
 						}
 						return false;

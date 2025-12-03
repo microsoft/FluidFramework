@@ -11,12 +11,23 @@
  * Current version: 2.74.0
  */
 
-import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
+import type {
+	FullType,
+	MinimalType,
+	requireAssignableTo,
+	TypeOnly,
+} from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/tree-previous";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> =
+	| TypeOnly<T>
+	| MinimalType<T>
+	| FullType<T>
+	| typeof old
+	| typeof current
+	| requireAssignableTo<true, true>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -25,7 +36,10 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_FieldSchema": {"backCompat": false}
  */
-declare type current_as_old_for_Class_FieldSchema = requireAssignableTo<TypeOnly<current.FieldSchema>, TypeOnly<old.FieldSchema>>
+declare type current_as_old_for_Class_FieldSchema = requireAssignableTo<
+	TypeOnly<current.FieldSchema>,
+	TypeOnly<old.FieldSchema>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -34,7 +48,11 @@ declare type current_as_old_for_Class_FieldSchema = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Class_IterableTreeArrayContent": {"backCompat": false}
  */
-declare type current_as_old_for_Class_IterableTreeArrayContent = requireAssignableTo<TypeOnly<current.IterableTreeArrayContent<never>>, TypeOnly<old.IterableTreeArrayContent<never>>>
+declare type current_as_old_for_Class_IterableTreeArrayContent =
+	requireAssignableTo<
+		TypeOnly<current.IterableTreeArrayContent<never>>,
+		TypeOnly<old.IterableTreeArrayContent<never>>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -43,7 +61,10 @@ declare type current_as_old_for_Class_IterableTreeArrayContent = requireAssignab
  * typeValidation.broken:
  * "Class_SchemaFactory": {"backCompat": false}
  */
-declare type current_as_old_for_Class_SchemaFactory = requireAssignableTo<TypeOnly<current.SchemaFactory>, TypeOnly<old.SchemaFactory>>
+declare type current_as_old_for_Class_SchemaFactory = requireAssignableTo<
+	TypeOnly<current.SchemaFactory>,
+	TypeOnly<old.SchemaFactory>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -52,7 +73,10 @@ declare type current_as_old_for_Class_SchemaFactory = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "Class_TreeNode": {"backCompat": false}
  */
-declare type current_as_old_for_Class_TreeNode = requireAssignableTo<TypeOnly<current.TreeNode>, TypeOnly<old.TreeNode>>
+declare type current_as_old_for_Class_TreeNode = requireAssignableTo<
+	TypeOnly<current.TreeNode>,
+	TypeOnly<old.TreeNode>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -61,7 +85,11 @@ declare type current_as_old_for_Class_TreeNode = requireAssignableTo<TypeOnly<cu
  * typeValidation.broken:
  * "Class_TreeViewConfiguration": {"backCompat": false}
  */
-declare type current_as_old_for_Class_TreeViewConfiguration = requireAssignableTo<TypeOnly<current.TreeViewConfiguration>, TypeOnly<old.TreeViewConfiguration>>
+declare type current_as_old_for_Class_TreeViewConfiguration =
+	requireAssignableTo<
+		TypeOnly<current.TreeViewConfiguration>,
+		TypeOnly<old.TreeViewConfiguration>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -70,7 +98,10 @@ declare type current_as_old_for_Class_TreeViewConfiguration = requireAssignableT
  * typeValidation.broken:
  * "ClassStatics_FieldSchema": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_FieldSchema = requireAssignableTo<TypeOnly<typeof current.FieldSchema>, TypeOnly<typeof old.FieldSchema>>
+declare type current_as_old_for_ClassStatics_FieldSchema = requireAssignableTo<
+	TypeOnly<typeof current.FieldSchema>,
+	TypeOnly<typeof old.FieldSchema>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -79,7 +110,11 @@ declare type current_as_old_for_ClassStatics_FieldSchema = requireAssignableTo<T
  * typeValidation.broken:
  * "ClassStatics_IterableTreeArrayContent": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_IterableTreeArrayContent = requireAssignableTo<TypeOnly<typeof current.IterableTreeArrayContent>, TypeOnly<typeof old.IterableTreeArrayContent>>
+declare type current_as_old_for_ClassStatics_IterableTreeArrayContent =
+	requireAssignableTo<
+		TypeOnly<typeof current.IterableTreeArrayContent>,
+		TypeOnly<typeof old.IterableTreeArrayContent>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -88,7 +123,11 @@ declare type current_as_old_for_ClassStatics_IterableTreeArrayContent = requireA
  * typeValidation.broken:
  * "ClassStatics_SchemaFactory": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_SchemaFactory = requireAssignableTo<TypeOnly<typeof current.SchemaFactory>, TypeOnly<typeof old.SchemaFactory>>
+declare type current_as_old_for_ClassStatics_SchemaFactory =
+	requireAssignableTo<
+		TypeOnly<typeof current.SchemaFactory>,
+		TypeOnly<typeof old.SchemaFactory>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -97,7 +136,10 @@ declare type current_as_old_for_ClassStatics_SchemaFactory = requireAssignableTo
  * typeValidation.broken:
  * "ClassStatics_TreeNode": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_TreeNode = requireAssignableTo<TypeOnly<typeof current.TreeNode>, TypeOnly<typeof old.TreeNode>>
+declare type current_as_old_for_ClassStatics_TreeNode = requireAssignableTo<
+	TypeOnly<typeof current.TreeNode>,
+	TypeOnly<typeof old.TreeNode>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -106,7 +148,11 @@ declare type current_as_old_for_ClassStatics_TreeNode = requireAssignableTo<Type
  * typeValidation.broken:
  * "ClassStatics_TreeViewConfiguration": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_TreeViewConfiguration = requireAssignableTo<TypeOnly<typeof current.TreeViewConfiguration>, TypeOnly<typeof old.TreeViewConfiguration>>
+declare type current_as_old_for_ClassStatics_TreeViewConfiguration =
+	requireAssignableTo<
+		TypeOnly<typeof current.TreeViewConfiguration>,
+		TypeOnly<typeof old.TreeViewConfiguration>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -115,7 +161,10 @@ declare type current_as_old_for_ClassStatics_TreeViewConfiguration = requireAssi
  * typeValidation.broken:
  * "Enum_CommitKind": {"forwardCompat": false}
  */
-declare type old_as_current_for_Enum_CommitKind = requireAssignableTo<TypeOnly<old.CommitKind>, TypeOnly<current.CommitKind>>
+declare type old_as_current_for_Enum_CommitKind = requireAssignableTo<
+	TypeOnly<old.CommitKind>,
+	TypeOnly<current.CommitKind>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -124,7 +173,10 @@ declare type old_as_current_for_Enum_CommitKind = requireAssignableTo<TypeOnly<o
  * typeValidation.broken:
  * "Enum_CommitKind": {"backCompat": false}
  */
-declare type current_as_old_for_Enum_CommitKind = requireAssignableTo<TypeOnly<current.CommitKind>, TypeOnly<old.CommitKind>>
+declare type current_as_old_for_Enum_CommitKind = requireAssignableTo<
+	TypeOnly<current.CommitKind>,
+	TypeOnly<old.CommitKind>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -133,7 +185,10 @@ declare type current_as_old_for_Enum_CommitKind = requireAssignableTo<TypeOnly<c
  * typeValidation.broken:
  * "Enum_FieldKind": {"forwardCompat": false}
  */
-declare type old_as_current_for_Enum_FieldKind = requireAssignableTo<TypeOnly<old.FieldKind>, TypeOnly<current.FieldKind>>
+declare type old_as_current_for_Enum_FieldKind = requireAssignableTo<
+	TypeOnly<old.FieldKind>,
+	TypeOnly<current.FieldKind>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -142,7 +197,10 @@ declare type old_as_current_for_Enum_FieldKind = requireAssignableTo<TypeOnly<ol
  * typeValidation.broken:
  * "Enum_FieldKind": {"backCompat": false}
  */
-declare type current_as_old_for_Enum_FieldKind = requireAssignableTo<TypeOnly<current.FieldKind>, TypeOnly<old.FieldKind>>
+declare type current_as_old_for_Enum_FieldKind = requireAssignableTo<
+	TypeOnly<current.FieldKind>,
+	TypeOnly<old.FieldKind>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -151,7 +209,10 @@ declare type current_as_old_for_Enum_FieldKind = requireAssignableTo<TypeOnly<cu
  * typeValidation.broken:
  * "Enum_NodeKind": {"forwardCompat": false}
  */
-declare type old_as_current_for_Enum_NodeKind = requireAssignableTo<TypeOnly<old.NodeKind>, TypeOnly<current.NodeKind>>
+declare type old_as_current_for_Enum_NodeKind = requireAssignableTo<
+	TypeOnly<old.NodeKind>,
+	TypeOnly<current.NodeKind>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -160,7 +221,10 @@ declare type old_as_current_for_Enum_NodeKind = requireAssignableTo<TypeOnly<old
  * typeValidation.broken:
  * "Enum_NodeKind": {"backCompat": false}
  */
-declare type current_as_old_for_Enum_NodeKind = requireAssignableTo<TypeOnly<current.NodeKind>, TypeOnly<old.NodeKind>>
+declare type current_as_old_for_Enum_NodeKind = requireAssignableTo<
+	TypeOnly<current.NodeKind>,
+	TypeOnly<old.NodeKind>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -169,7 +233,10 @@ declare type current_as_old_for_Enum_NodeKind = requireAssignableTo<TypeOnly<cur
  * typeValidation.broken:
  * "Enum_RevertibleStatus": {"forwardCompat": false}
  */
-declare type old_as_current_for_Enum_RevertibleStatus = requireAssignableTo<TypeOnly<old.RevertibleStatus>, TypeOnly<current.RevertibleStatus>>
+declare type old_as_current_for_Enum_RevertibleStatus = requireAssignableTo<
+	TypeOnly<old.RevertibleStatus>,
+	TypeOnly<current.RevertibleStatus>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -178,7 +245,10 @@ declare type old_as_current_for_Enum_RevertibleStatus = requireAssignableTo<Type
  * typeValidation.broken:
  * "Enum_RevertibleStatus": {"backCompat": false}
  */
-declare type current_as_old_for_Enum_RevertibleStatus = requireAssignableTo<TypeOnly<current.RevertibleStatus>, TypeOnly<old.RevertibleStatus>>
+declare type current_as_old_for_Enum_RevertibleStatus = requireAssignableTo<
+	TypeOnly<current.RevertibleStatus>,
+	TypeOnly<old.RevertibleStatus>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -187,7 +257,10 @@ declare type current_as_old_for_Enum_RevertibleStatus = requireAssignableTo<Type
  * typeValidation.broken:
  * "Enum_TreeStatus": {"forwardCompat": false}
  */
-declare type old_as_current_for_Enum_TreeStatus = requireAssignableTo<TypeOnly<old.TreeStatus>, TypeOnly<current.TreeStatus>>
+declare type old_as_current_for_Enum_TreeStatus = requireAssignableTo<
+	TypeOnly<old.TreeStatus>,
+	TypeOnly<current.TreeStatus>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -196,7 +269,10 @@ declare type old_as_current_for_Enum_TreeStatus = requireAssignableTo<TypeOnly<o
  * typeValidation.broken:
  * "Enum_TreeStatus": {"backCompat": false}
  */
-declare type current_as_old_for_Enum_TreeStatus = requireAssignableTo<TypeOnly<current.TreeStatus>, TypeOnly<old.TreeStatus>>
+declare type current_as_old_for_Enum_TreeStatus = requireAssignableTo<
+	TypeOnly<current.TreeStatus>,
+	TypeOnly<old.TreeStatus>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -205,7 +281,10 @@ declare type current_as_old_for_Enum_TreeStatus = requireAssignableTo<TypeOnly<c
  * typeValidation.broken:
  * "Interface_CommitMetadata": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_CommitMetadata = requireAssignableTo<TypeOnly<current.CommitMetadata>, TypeOnly<old.CommitMetadata>>
+declare type current_as_old_for_Interface_CommitMetadata = requireAssignableTo<
+	TypeOnly<current.CommitMetadata>,
+	TypeOnly<old.CommitMetadata>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -214,7 +293,10 @@ declare type current_as_old_for_Interface_CommitMetadata = requireAssignableTo<T
  * typeValidation.broken:
  * "Interface_FieldProps": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_FieldProps = requireAssignableTo<TypeOnly<old.FieldProps>, TypeOnly<current.FieldProps>>
+declare type old_as_current_for_Interface_FieldProps = requireAssignableTo<
+	TypeOnly<old.FieldProps>,
+	TypeOnly<current.FieldProps>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -223,7 +305,10 @@ declare type old_as_current_for_Interface_FieldProps = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Interface_FieldProps": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_FieldProps = requireAssignableTo<TypeOnly<current.FieldProps>, TypeOnly<old.FieldProps>>
+declare type current_as_old_for_Interface_FieldProps = requireAssignableTo<
+	TypeOnly<current.FieldProps>,
+	TypeOnly<old.FieldProps>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -232,7 +317,11 @@ declare type current_as_old_for_Interface_FieldProps = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Interface_FieldSchemaMetadata": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_FieldSchemaMetadata = requireAssignableTo<TypeOnly<current.FieldSchemaMetadata>, TypeOnly<old.FieldSchemaMetadata>>
+declare type current_as_old_for_Interface_FieldSchemaMetadata =
+	requireAssignableTo<
+		TypeOnly<current.FieldSchemaMetadata>,
+		TypeOnly<old.FieldSchemaMetadata>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -241,7 +330,11 @@ declare type current_as_old_for_Interface_FieldSchemaMetadata = requireAssignabl
  * typeValidation.broken:
  * "Interface_InternalTreeNode": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_InternalTreeNode = requireAssignableTo<TypeOnly<current.InternalTreeNode>, TypeOnly<old.InternalTreeNode>>
+declare type current_as_old_for_Interface_InternalTreeNode =
+	requireAssignableTo<
+		TypeOnly<current.InternalTreeNode>,
+		TypeOnly<old.InternalTreeNode>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -250,7 +343,10 @@ declare type current_as_old_for_Interface_InternalTreeNode = requireAssignableTo
  * typeValidation.broken:
  * "Interface_ITree": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ITree = requireAssignableTo<TypeOnly<current.ITree>, TypeOnly<old.ITree>>
+declare type current_as_old_for_Interface_ITree = requireAssignableTo<
+	TypeOnly<current.ITree>,
+	TypeOnly<old.ITree>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -259,7 +355,11 @@ declare type current_as_old_for_Interface_ITree = requireAssignableTo<TypeOnly<c
  * typeValidation.broken:
  * "Interface_ITreeConfigurationOptions": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ITreeConfigurationOptions = requireAssignableTo<TypeOnly<old.ITreeConfigurationOptions>, TypeOnly<current.ITreeConfigurationOptions>>
+declare type old_as_current_for_Interface_ITreeConfigurationOptions =
+	requireAssignableTo<
+		TypeOnly<old.ITreeConfigurationOptions>,
+		TypeOnly<current.ITreeConfigurationOptions>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -268,7 +368,11 @@ declare type old_as_current_for_Interface_ITreeConfigurationOptions = requireAss
  * typeValidation.broken:
  * "Interface_ITreeConfigurationOptions": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ITreeConfigurationOptions = requireAssignableTo<TypeOnly<current.ITreeConfigurationOptions>, TypeOnly<old.ITreeConfigurationOptions>>
+declare type current_as_old_for_Interface_ITreeConfigurationOptions =
+	requireAssignableTo<
+		TypeOnly<current.ITreeConfigurationOptions>,
+		TypeOnly<old.ITreeConfigurationOptions>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -277,7 +381,11 @@ declare type current_as_old_for_Interface_ITreeConfigurationOptions = requireAss
  * typeValidation.broken:
  * "Interface_ITreeViewConfiguration": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ITreeViewConfiguration = requireAssignableTo<TypeOnly<old.ITreeViewConfiguration>, TypeOnly<current.ITreeViewConfiguration>>
+declare type old_as_current_for_Interface_ITreeViewConfiguration =
+	requireAssignableTo<
+		TypeOnly<old.ITreeViewConfiguration>,
+		TypeOnly<current.ITreeViewConfiguration>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -286,7 +394,11 @@ declare type old_as_current_for_Interface_ITreeViewConfiguration = requireAssign
  * typeValidation.broken:
  * "Interface_ITreeViewConfiguration": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ITreeViewConfiguration = requireAssignableTo<TypeOnly<current.ITreeViewConfiguration>, TypeOnly<old.ITreeViewConfiguration>>
+declare type current_as_old_for_Interface_ITreeViewConfiguration =
+	requireAssignableTo<
+		TypeOnly<current.ITreeViewConfiguration>,
+		TypeOnly<old.ITreeViewConfiguration>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -295,7 +407,10 @@ declare type current_as_old_for_Interface_ITreeViewConfiguration = requireAssign
  * typeValidation.broken:
  * "Interface_MakeNominal": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_MakeNominal = requireAssignableTo<TypeOnly<current.MakeNominal>, TypeOnly<old.MakeNominal>>
+declare type current_as_old_for_Interface_MakeNominal = requireAssignableTo<
+	TypeOnly<current.MakeNominal>,
+	TypeOnly<old.MakeNominal>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -304,7 +419,11 @@ declare type current_as_old_for_Interface_MakeNominal = requireAssignableTo<Type
  * typeValidation.broken:
  * "Interface_NodeInDocumentConstraint": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_NodeInDocumentConstraint = requireAssignableTo<TypeOnly<old.NodeInDocumentConstraint>, TypeOnly<current.NodeInDocumentConstraint>>
+declare type old_as_current_for_Interface_NodeInDocumentConstraint =
+	requireAssignableTo<
+		TypeOnly<old.NodeInDocumentConstraint>,
+		TypeOnly<current.NodeInDocumentConstraint>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -313,7 +432,11 @@ declare type old_as_current_for_Interface_NodeInDocumentConstraint = requireAssi
  * typeValidation.broken:
  * "Interface_NodeInDocumentConstraint": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_NodeInDocumentConstraint = requireAssignableTo<TypeOnly<current.NodeInDocumentConstraint>, TypeOnly<old.NodeInDocumentConstraint>>
+declare type current_as_old_for_Interface_NodeInDocumentConstraint =
+	requireAssignableTo<
+		TypeOnly<current.NodeInDocumentConstraint>,
+		TypeOnly<old.NodeInDocumentConstraint>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -322,7 +445,11 @@ declare type current_as_old_for_Interface_NodeInDocumentConstraint = requireAssi
  * typeValidation.broken:
  * "Interface_NodeSchemaMetadata": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_NodeSchemaMetadata = requireAssignableTo<TypeOnly<current.NodeSchemaMetadata>, TypeOnly<old.NodeSchemaMetadata>>
+declare type current_as_old_for_Interface_NodeSchemaMetadata =
+	requireAssignableTo<
+		TypeOnly<current.NodeSchemaMetadata>,
+		TypeOnly<old.NodeSchemaMetadata>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -331,7 +458,11 @@ declare type current_as_old_for_Interface_NodeSchemaMetadata = requireAssignable
  * typeValidation.broken:
  * "Interface_NodeSchemaOptions": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_NodeSchemaOptions = requireAssignableTo<TypeOnly<old.NodeSchemaOptions>, TypeOnly<current.NodeSchemaOptions>>
+declare type old_as_current_for_Interface_NodeSchemaOptions =
+	requireAssignableTo<
+		TypeOnly<old.NodeSchemaOptions>,
+		TypeOnly<current.NodeSchemaOptions>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -340,7 +471,10 @@ declare type old_as_current_for_Interface_NodeSchemaOptions = requireAssignableT
  * typeValidation.broken:
  * "Interface_Revertible": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_Revertible = requireAssignableTo<TypeOnly<current.Revertible>, TypeOnly<old.Revertible>>
+declare type current_as_old_for_Interface_Revertible = requireAssignableTo<
+	TypeOnly<current.Revertible>,
+	TypeOnly<old.Revertible>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -349,7 +483,10 @@ declare type current_as_old_for_Interface_Revertible = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Interface_RunTransaction": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_RunTransaction = requireAssignableTo<TypeOnly<current.RunTransaction>, TypeOnly<old.RunTransaction>>
+declare type current_as_old_for_Interface_RunTransaction = requireAssignableTo<
+	TypeOnly<current.RunTransaction>,
+	TypeOnly<old.RunTransaction>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -358,7 +495,11 @@ declare type current_as_old_for_Interface_RunTransaction = requireAssignableTo<T
  * typeValidation.broken:
  * "Interface_SchemaCompatibilityStatus": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_SchemaCompatibilityStatus = requireAssignableTo<TypeOnly<current.SchemaCompatibilityStatus>, TypeOnly<old.SchemaCompatibilityStatus>>
+declare type current_as_old_for_Interface_SchemaCompatibilityStatus =
+	requireAssignableTo<
+		TypeOnly<current.SchemaCompatibilityStatus>,
+		TypeOnly<old.SchemaCompatibilityStatus>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -367,7 +508,10 @@ declare type current_as_old_for_Interface_SchemaCompatibilityStatus = requireAss
  * typeValidation.broken:
  * "Interface_TreeArrayNode": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_TreeArrayNode = requireAssignableTo<TypeOnly<current.TreeArrayNode>, TypeOnly<old.TreeArrayNode>>
+declare type current_as_old_for_Interface_TreeArrayNode = requireAssignableTo<
+	TypeOnly<current.TreeArrayNode>,
+	TypeOnly<old.TreeArrayNode>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -376,7 +520,11 @@ declare type current_as_old_for_Interface_TreeArrayNode = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Interface_TreeChangeEvents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_TreeChangeEvents = requireAssignableTo<TypeOnly<current.TreeChangeEvents>, TypeOnly<old.TreeChangeEvents>>
+declare type current_as_old_for_Interface_TreeChangeEvents =
+	requireAssignableTo<
+		TypeOnly<current.TreeChangeEvents>,
+		TypeOnly<old.TreeChangeEvents>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -385,7 +533,10 @@ declare type current_as_old_for_Interface_TreeChangeEvents = requireAssignableTo
  * typeValidation.broken:
  * "Interface_TreeMapNode": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_TreeMapNode = requireAssignableTo<TypeOnly<current.TreeMapNode>, TypeOnly<old.TreeMapNode>>
+declare type current_as_old_for_Interface_TreeMapNode = requireAssignableTo<
+	TypeOnly<current.TreeMapNode>,
+	TypeOnly<old.TreeMapNode>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -394,7 +545,10 @@ declare type current_as_old_for_Interface_TreeMapNode = requireAssignableTo<Type
  * typeValidation.broken:
  * "Interface_TreeNodeApi": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_TreeNodeApi = requireAssignableTo<TypeOnly<current.TreeNodeApi>, TypeOnly<old.TreeNodeApi>>
+declare type current_as_old_for_Interface_TreeNodeApi = requireAssignableTo<
+	TypeOnly<current.TreeNodeApi>,
+	TypeOnly<old.TreeNodeApi>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -403,7 +557,11 @@ declare type current_as_old_for_Interface_TreeNodeApi = requireAssignableTo<Type
  * typeValidation.broken:
  * "Interface_TreeNodeSchemaCore": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_TreeNodeSchemaCore = requireAssignableTo<TypeOnly<current.TreeNodeSchemaCore<never,never,never>>, TypeOnly<old.TreeNodeSchemaCore<never,never,never>>>
+declare type current_as_old_for_Interface_TreeNodeSchemaCore =
+	requireAssignableTo<
+		TypeOnly<current.TreeNodeSchemaCore<never, never, never>>,
+		TypeOnly<old.TreeNodeSchemaCore<never, never, never>>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -412,7 +570,10 @@ declare type current_as_old_for_Interface_TreeNodeSchemaCore = requireAssignable
  * typeValidation.broken:
  * "Interface_TreeView": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_TreeView = requireAssignableTo<TypeOnly<current.TreeView<never>>, TypeOnly<old.TreeView<never>>>
+declare type current_as_old_for_Interface_TreeView = requireAssignableTo<
+	TypeOnly<current.TreeView<never>>,
+	TypeOnly<old.TreeView<never>>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -421,7 +582,10 @@ declare type current_as_old_for_Interface_TreeView = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "Interface_TreeViewEvents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_TreeViewEvents = requireAssignableTo<TypeOnly<current.TreeViewEvents>, TypeOnly<old.TreeViewEvents>>
+declare type current_as_old_for_Interface_TreeViewEvents = requireAssignableTo<
+	TypeOnly<current.TreeViewEvents>,
+	TypeOnly<old.TreeViewEvents>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -430,7 +594,10 @@ declare type current_as_old_for_Interface_TreeViewEvents = requireAssignableTo<T
  * typeValidation.broken:
  * "Interface_WithType": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_WithType = requireAssignableTo<TypeOnly<current.WithType>, TypeOnly<old.WithType>>
+declare type current_as_old_for_Interface_WithType = requireAssignableTo<
+	TypeOnly<current.WithType>,
+	TypeOnly<old.WithType>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -439,7 +606,11 @@ declare type current_as_old_for_Interface_WithType = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "TypeAlias_ImplicitAllowedTypes": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_ImplicitAllowedTypes = requireAssignableTo<TypeOnly<old.ImplicitAllowedTypes>, TypeOnly<current.ImplicitAllowedTypes>>
+declare type old_as_current_for_TypeAlias_ImplicitAllowedTypes =
+	requireAssignableTo<
+		TypeOnly<old.ImplicitAllowedTypes>,
+		TypeOnly<current.ImplicitAllowedTypes>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -448,7 +619,11 @@ declare type old_as_current_for_TypeAlias_ImplicitAllowedTypes = requireAssignab
  * typeValidation.broken:
  * "TypeAlias_ImplicitAllowedTypes": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_ImplicitAllowedTypes = requireAssignableTo<TypeOnly<current.ImplicitAllowedTypes>, TypeOnly<old.ImplicitAllowedTypes>>
+declare type current_as_old_for_TypeAlias_ImplicitAllowedTypes =
+	requireAssignableTo<
+		TypeOnly<current.ImplicitAllowedTypes>,
+		TypeOnly<old.ImplicitAllowedTypes>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -457,7 +632,11 @@ declare type current_as_old_for_TypeAlias_ImplicitAllowedTypes = requireAssignab
  * typeValidation.broken:
  * "TypeAlias_ImplicitFieldSchema": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_ImplicitFieldSchema = requireAssignableTo<TypeOnly<old.ImplicitFieldSchema>, TypeOnly<current.ImplicitFieldSchema>>
+declare type old_as_current_for_TypeAlias_ImplicitFieldSchema =
+	requireAssignableTo<
+		TypeOnly<old.ImplicitFieldSchema>,
+		TypeOnly<current.ImplicitFieldSchema>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -466,7 +645,11 @@ declare type old_as_current_for_TypeAlias_ImplicitFieldSchema = requireAssignabl
  * typeValidation.broken:
  * "TypeAlias_ImplicitFieldSchema": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_ImplicitFieldSchema = requireAssignableTo<TypeOnly<current.ImplicitFieldSchema>, TypeOnly<old.ImplicitFieldSchema>>
+declare type current_as_old_for_TypeAlias_ImplicitFieldSchema =
+	requireAssignableTo<
+		TypeOnly<current.ImplicitFieldSchema>,
+		TypeOnly<old.ImplicitFieldSchema>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -475,7 +658,11 @@ declare type current_as_old_for_TypeAlias_ImplicitFieldSchema = requireAssignabl
  * typeValidation.broken:
  * "TypeAlias_InsertableTreeFieldFromImplicitField": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_InsertableTreeFieldFromImplicitField = requireAssignableTo<TypeOnly<old.InsertableTreeFieldFromImplicitField<never>>, TypeOnly<current.InsertableTreeFieldFromImplicitField<never>>>
+declare type old_as_current_for_TypeAlias_InsertableTreeFieldFromImplicitField =
+	requireAssignableTo<
+		TypeOnly<old.InsertableTreeFieldFromImplicitField<never>>,
+		TypeOnly<current.InsertableTreeFieldFromImplicitField<never>>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -484,7 +671,11 @@ declare type old_as_current_for_TypeAlias_InsertableTreeFieldFromImplicitField =
  * typeValidation.broken:
  * "TypeAlias_InsertableTreeFieldFromImplicitField": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_InsertableTreeFieldFromImplicitField = requireAssignableTo<TypeOnly<current.InsertableTreeFieldFromImplicitField<never>>, TypeOnly<old.InsertableTreeFieldFromImplicitField<never>>>
+declare type current_as_old_for_TypeAlias_InsertableTreeFieldFromImplicitField =
+	requireAssignableTo<
+		TypeOnly<current.InsertableTreeFieldFromImplicitField<never>>,
+		TypeOnly<old.InsertableTreeFieldFromImplicitField<never>>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -493,7 +684,11 @@ declare type current_as_old_for_TypeAlias_InsertableTreeFieldFromImplicitField =
  * typeValidation.broken:
  * "TypeAlias_InsertableTreeNodeFromImplicitAllowedTypes": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_InsertableTreeNodeFromImplicitAllowedTypes = requireAssignableTo<TypeOnly<old.InsertableTreeNodeFromImplicitAllowedTypes<never>>, TypeOnly<current.InsertableTreeNodeFromImplicitAllowedTypes<never>>>
+declare type old_as_current_for_TypeAlias_InsertableTreeNodeFromImplicitAllowedTypes =
+	requireAssignableTo<
+		TypeOnly<old.InsertableTreeNodeFromImplicitAllowedTypes<never>>,
+		TypeOnly<current.InsertableTreeNodeFromImplicitAllowedTypes<never>>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -502,7 +697,11 @@ declare type old_as_current_for_TypeAlias_InsertableTreeNodeFromImplicitAllowedT
  * typeValidation.broken:
  * "TypeAlias_InsertableTreeNodeFromImplicitAllowedTypes": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_InsertableTreeNodeFromImplicitAllowedTypes = requireAssignableTo<TypeOnly<current.InsertableTreeNodeFromImplicitAllowedTypes<never>>, TypeOnly<old.InsertableTreeNodeFromImplicitAllowedTypes<never>>>
+declare type current_as_old_for_TypeAlias_InsertableTreeNodeFromImplicitAllowedTypes =
+	requireAssignableTo<
+		TypeOnly<current.InsertableTreeNodeFromImplicitAllowedTypes<never>>,
+		TypeOnly<old.InsertableTreeNodeFromImplicitAllowedTypes<never>>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -511,7 +710,11 @@ declare type current_as_old_for_TypeAlias_InsertableTreeNodeFromImplicitAllowedT
  * typeValidation.broken:
  * "TypeAlias_InsertableTypedNode": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_InsertableTypedNode = requireAssignableTo<TypeOnly<old.InsertableTypedNode<never>>, TypeOnly<current.InsertableTypedNode<never>>>
+declare type old_as_current_for_TypeAlias_InsertableTypedNode =
+	requireAssignableTo<
+		TypeOnly<old.InsertableTypedNode<never>>,
+		TypeOnly<current.InsertableTypedNode<never>>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -520,7 +723,11 @@ declare type old_as_current_for_TypeAlias_InsertableTypedNode = requireAssignabl
  * typeValidation.broken:
  * "TypeAlias_InsertableTypedNode": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_InsertableTypedNode = requireAssignableTo<TypeOnly<current.InsertableTypedNode<never>>, TypeOnly<old.InsertableTypedNode<never>>>
+declare type current_as_old_for_TypeAlias_InsertableTypedNode =
+	requireAssignableTo<
+		TypeOnly<current.InsertableTypedNode<never>>,
+		TypeOnly<old.InsertableTypedNode<never>>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -529,7 +736,10 @@ declare type current_as_old_for_TypeAlias_InsertableTypedNode = requireAssignabl
  * typeValidation.broken:
  * "TypeAlias_IsListener": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_IsListener = requireAssignableTo<TypeOnly<old.IsListener<never>>, TypeOnly<current.IsListener<never>>>
+declare type old_as_current_for_TypeAlias_IsListener = requireAssignableTo<
+	TypeOnly<old.IsListener<never>>,
+	TypeOnly<current.IsListener<never>>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -538,7 +748,10 @@ declare type old_as_current_for_TypeAlias_IsListener = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "TypeAlias_IsListener": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_IsListener = requireAssignableTo<TypeOnly<current.IsListener<never>>, TypeOnly<old.IsListener<never>>>
+declare type current_as_old_for_TypeAlias_IsListener = requireAssignableTo<
+	TypeOnly<current.IsListener<never>>,
+	TypeOnly<old.IsListener<never>>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -547,7 +760,10 @@ declare type current_as_old_for_TypeAlias_IsListener = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "TypeAlias_LazyItem": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_LazyItem = requireAssignableTo<TypeOnly<old.LazyItem>, TypeOnly<current.LazyItem>>
+declare type old_as_current_for_TypeAlias_LazyItem = requireAssignableTo<
+	TypeOnly<old.LazyItem>,
+	TypeOnly<current.LazyItem>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -556,7 +772,10 @@ declare type old_as_current_for_TypeAlias_LazyItem = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "TypeAlias_LazyItem": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_LazyItem = requireAssignableTo<TypeOnly<current.LazyItem>, TypeOnly<old.LazyItem>>
+declare type current_as_old_for_TypeAlias_LazyItem = requireAssignableTo<
+	TypeOnly<current.LazyItem>,
+	TypeOnly<old.LazyItem>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -565,7 +784,10 @@ declare type current_as_old_for_TypeAlias_LazyItem = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "TypeAlias_Listenable": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_Listenable = requireAssignableTo<TypeOnly<old.Listenable<never>>, TypeOnly<current.Listenable<never>>>
+declare type old_as_current_for_TypeAlias_Listenable = requireAssignableTo<
+	TypeOnly<old.Listenable<never>>,
+	TypeOnly<current.Listenable<never>>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -574,7 +796,10 @@ declare type old_as_current_for_TypeAlias_Listenable = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "TypeAlias_Listenable": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_Listenable = requireAssignableTo<TypeOnly<current.Listenable<never>>, TypeOnly<old.Listenable<never>>>
+declare type current_as_old_for_TypeAlias_Listenable = requireAssignableTo<
+	TypeOnly<current.Listenable<never>>,
+	TypeOnly<old.Listenable<never>>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -583,7 +808,10 @@ declare type current_as_old_for_TypeAlias_Listenable = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "TypeAlias_Listeners": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_Listeners = requireAssignableTo<TypeOnly<old.Listeners<never>>, TypeOnly<current.Listeners<never>>>
+declare type old_as_current_for_TypeAlias_Listeners = requireAssignableTo<
+	TypeOnly<old.Listeners<never>>,
+	TypeOnly<current.Listeners<never>>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -592,7 +820,10 @@ declare type old_as_current_for_TypeAlias_Listeners = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "TypeAlias_Listeners": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_Listeners = requireAssignableTo<TypeOnly<current.Listeners<never>>, TypeOnly<old.Listeners<never>>>
+declare type current_as_old_for_TypeAlias_Listeners = requireAssignableTo<
+	TypeOnly<current.Listeners<never>>,
+	TypeOnly<old.Listeners<never>>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -601,7 +832,10 @@ declare type current_as_old_for_TypeAlias_Listeners = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "TypeAlias_NodeFromSchema": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_NodeFromSchema = requireAssignableTo<TypeOnly<old.NodeFromSchema<never>>, TypeOnly<current.NodeFromSchema<never>>>
+declare type old_as_current_for_TypeAlias_NodeFromSchema = requireAssignableTo<
+	TypeOnly<old.NodeFromSchema<never>>,
+	TypeOnly<current.NodeFromSchema<never>>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -610,7 +844,10 @@ declare type old_as_current_for_TypeAlias_NodeFromSchema = requireAssignableTo<T
  * typeValidation.broken:
  * "TypeAlias_NodeFromSchema": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_NodeFromSchema = requireAssignableTo<TypeOnly<current.NodeFromSchema<never>>, TypeOnly<old.NodeFromSchema<never>>>
+declare type current_as_old_for_TypeAlias_NodeFromSchema = requireAssignableTo<
+	TypeOnly<current.NodeFromSchema<never>>,
+	TypeOnly<old.NodeFromSchema<never>>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -619,7 +856,10 @@ declare type current_as_old_for_TypeAlias_NodeFromSchema = requireAssignableTo<T
  * typeValidation.broken:
  * "TypeAlias_Off": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_Off = requireAssignableTo<TypeOnly<old.Off>, TypeOnly<current.Off>>
+declare type old_as_current_for_TypeAlias_Off = requireAssignableTo<
+	TypeOnly<old.Off>,
+	TypeOnly<current.Off>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -628,7 +868,10 @@ declare type old_as_current_for_TypeAlias_Off = requireAssignableTo<TypeOnly<old
  * typeValidation.broken:
  * "TypeAlias_Off": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_Off = requireAssignableTo<TypeOnly<current.Off>, TypeOnly<old.Off>>
+declare type current_as_old_for_TypeAlias_Off = requireAssignableTo<
+	TypeOnly<current.Off>,
+	TypeOnly<old.Off>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -637,7 +880,11 @@ declare type current_as_old_for_TypeAlias_Off = requireAssignableTo<TypeOnly<cur
  * typeValidation.broken:
  * "TypeAlias_RestrictiveReadonlyRecord": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_RestrictiveReadonlyRecord = requireAssignableTo<TypeOnly<old.RestrictiveReadonlyRecord<never,never>>, TypeOnly<current.RestrictiveReadonlyRecord<never,never>>>
+declare type old_as_current_for_TypeAlias_RestrictiveReadonlyRecord =
+	requireAssignableTo<
+		TypeOnly<old.RestrictiveReadonlyRecord<never, never>>,
+		TypeOnly<current.RestrictiveReadonlyRecord<never, never>>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -646,7 +893,11 @@ declare type old_as_current_for_TypeAlias_RestrictiveReadonlyRecord = requireAss
  * typeValidation.broken:
  * "TypeAlias_RestrictiveReadonlyRecord": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_RestrictiveReadonlyRecord = requireAssignableTo<TypeOnly<current.RestrictiveReadonlyRecord<never,never>>, TypeOnly<old.RestrictiveReadonlyRecord<never,never>>>
+declare type current_as_old_for_TypeAlias_RestrictiveReadonlyRecord =
+	requireAssignableTo<
+		TypeOnly<current.RestrictiveReadonlyRecord<never, never>>,
+		TypeOnly<old.RestrictiveReadonlyRecord<never, never>>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -655,7 +906,11 @@ declare type current_as_old_for_TypeAlias_RestrictiveReadonlyRecord = requireAss
  * typeValidation.broken:
  * "TypeAlias_RevertibleFactory": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_RevertibleFactory = requireAssignableTo<TypeOnly<current.RevertibleFactory>, TypeOnly<old.RevertibleFactory>>
+declare type current_as_old_for_TypeAlias_RevertibleFactory =
+	requireAssignableTo<
+		TypeOnly<current.RevertibleFactory>,
+		TypeOnly<old.RevertibleFactory>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -664,7 +919,11 @@ declare type current_as_old_for_TypeAlias_RevertibleFactory = requireAssignableT
  * typeValidation.broken:
  * "TypeAlias_TransactionConstraint": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_TransactionConstraint = requireAssignableTo<TypeOnly<old.TransactionConstraint>, TypeOnly<current.TransactionConstraint>>
+declare type old_as_current_for_TypeAlias_TransactionConstraint =
+	requireAssignableTo<
+		TypeOnly<old.TransactionConstraint>,
+		TypeOnly<current.TransactionConstraint>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -673,7 +932,11 @@ declare type old_as_current_for_TypeAlias_TransactionConstraint = requireAssigna
  * typeValidation.broken:
  * "TypeAlias_TransactionConstraint": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_TransactionConstraint = requireAssignableTo<TypeOnly<current.TransactionConstraint>, TypeOnly<old.TransactionConstraint>>
+declare type current_as_old_for_TypeAlias_TransactionConstraint =
+	requireAssignableTo<
+		TypeOnly<current.TransactionConstraint>,
+		TypeOnly<old.TransactionConstraint>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -682,7 +945,11 @@ declare type current_as_old_for_TypeAlias_TransactionConstraint = requireAssigna
  * typeValidation.broken:
  * "TypeAlias_TreeFieldFromImplicitField": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_TreeFieldFromImplicitField = requireAssignableTo<TypeOnly<old.TreeFieldFromImplicitField>, TypeOnly<current.TreeFieldFromImplicitField>>
+declare type old_as_current_for_TypeAlias_TreeFieldFromImplicitField =
+	requireAssignableTo<
+		TypeOnly<old.TreeFieldFromImplicitField>,
+		TypeOnly<current.TreeFieldFromImplicitField>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -691,7 +958,11 @@ declare type old_as_current_for_TypeAlias_TreeFieldFromImplicitField = requireAs
  * typeValidation.broken:
  * "TypeAlias_TreeFieldFromImplicitField": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_TreeFieldFromImplicitField = requireAssignableTo<TypeOnly<current.TreeFieldFromImplicitField>, TypeOnly<old.TreeFieldFromImplicitField>>
+declare type current_as_old_for_TypeAlias_TreeFieldFromImplicitField =
+	requireAssignableTo<
+		TypeOnly<current.TreeFieldFromImplicitField>,
+		TypeOnly<old.TreeFieldFromImplicitField>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -700,7 +971,10 @@ declare type current_as_old_for_TypeAlias_TreeFieldFromImplicitField = requireAs
  * typeValidation.broken:
  * "TypeAlias_TreeLeafValue": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_TreeLeafValue = requireAssignableTo<TypeOnly<old.TreeLeafValue>, TypeOnly<current.TreeLeafValue>>
+declare type old_as_current_for_TypeAlias_TreeLeafValue = requireAssignableTo<
+	TypeOnly<old.TreeLeafValue>,
+	TypeOnly<current.TreeLeafValue>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -709,7 +983,10 @@ declare type old_as_current_for_TypeAlias_TreeLeafValue = requireAssignableTo<Ty
  * typeValidation.broken:
  * "TypeAlias_TreeLeafValue": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_TreeLeafValue = requireAssignableTo<TypeOnly<current.TreeLeafValue>, TypeOnly<old.TreeLeafValue>>
+declare type current_as_old_for_TypeAlias_TreeLeafValue = requireAssignableTo<
+	TypeOnly<current.TreeLeafValue>,
+	TypeOnly<old.TreeLeafValue>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -718,7 +995,11 @@ declare type current_as_old_for_TypeAlias_TreeLeafValue = requireAssignableTo<Ty
  * typeValidation.broken:
  * "TypeAlias_TreeNodeFromImplicitAllowedTypes": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_TreeNodeFromImplicitAllowedTypes = requireAssignableTo<TypeOnly<old.TreeNodeFromImplicitAllowedTypes>, TypeOnly<current.TreeNodeFromImplicitAllowedTypes>>
+declare type old_as_current_for_TypeAlias_TreeNodeFromImplicitAllowedTypes =
+	requireAssignableTo<
+		TypeOnly<old.TreeNodeFromImplicitAllowedTypes>,
+		TypeOnly<current.TreeNodeFromImplicitAllowedTypes>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -727,7 +1008,11 @@ declare type old_as_current_for_TypeAlias_TreeNodeFromImplicitAllowedTypes = req
  * typeValidation.broken:
  * "TypeAlias_TreeNodeFromImplicitAllowedTypes": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_TreeNodeFromImplicitAllowedTypes = requireAssignableTo<TypeOnly<current.TreeNodeFromImplicitAllowedTypes>, TypeOnly<old.TreeNodeFromImplicitAllowedTypes>>
+declare type current_as_old_for_TypeAlias_TreeNodeFromImplicitAllowedTypes =
+	requireAssignableTo<
+		TypeOnly<current.TreeNodeFromImplicitAllowedTypes>,
+		TypeOnly<old.TreeNodeFromImplicitAllowedTypes>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -736,7 +1021,10 @@ declare type current_as_old_for_TypeAlias_TreeNodeFromImplicitAllowedTypes = req
  * typeValidation.broken:
  * "TypeAlias_TreeNodeSchema": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_TreeNodeSchema = requireAssignableTo<TypeOnly<current.TreeNodeSchema>, TypeOnly<old.TreeNodeSchema>>
+declare type current_as_old_for_TypeAlias_TreeNodeSchema = requireAssignableTo<
+	TypeOnly<current.TreeNodeSchema>,
+	TypeOnly<old.TreeNodeSchema>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -745,7 +1033,11 @@ declare type current_as_old_for_TypeAlias_TreeNodeSchema = requireAssignableTo<T
  * typeValidation.broken:
  * "TypeAlias_TreeNodeSchemaClass": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_TreeNodeSchemaClass = requireAssignableTo<TypeOnly<current.TreeNodeSchemaClass>, TypeOnly<old.TreeNodeSchemaClass>>
+declare type current_as_old_for_TypeAlias_TreeNodeSchemaClass =
+	requireAssignableTo<
+		TypeOnly<current.TreeNodeSchemaClass>,
+		TypeOnly<old.TreeNodeSchemaClass>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -754,7 +1046,10 @@ declare type current_as_old_for_TypeAlias_TreeNodeSchemaClass = requireAssignabl
  * typeValidation.broken:
  * "TypeAlias_TreeObjectNode": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_TreeObjectNode = requireAssignableTo<TypeOnly<old.TreeObjectNode<never>>, TypeOnly<current.TreeObjectNode<never>>>
+declare type old_as_current_for_TypeAlias_TreeObjectNode = requireAssignableTo<
+	TypeOnly<old.TreeObjectNode<never>>,
+	TypeOnly<current.TreeObjectNode<never>>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -763,7 +1058,10 @@ declare type old_as_current_for_TypeAlias_TreeObjectNode = requireAssignableTo<T
  * typeValidation.broken:
  * "TypeAlias_TreeObjectNode": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_TreeObjectNode = requireAssignableTo<TypeOnly<current.TreeObjectNode<never>>, TypeOnly<old.TreeObjectNode<never>>>
+declare type current_as_old_for_TypeAlias_TreeObjectNode = requireAssignableTo<
+	TypeOnly<current.TreeObjectNode<never>>,
+	TypeOnly<old.TreeObjectNode<never>>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -772,7 +1070,10 @@ declare type current_as_old_for_TypeAlias_TreeObjectNode = requireAssignableTo<T
  * typeValidation.broken:
  * "TypeAlias_Unenforced": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_Unenforced = requireAssignableTo<TypeOnly<old.Unenforced<never>>, TypeOnly<current.Unenforced<never>>>
+declare type old_as_current_for_TypeAlias_Unenforced = requireAssignableTo<
+	TypeOnly<old.Unenforced<never>>,
+	TypeOnly<current.Unenforced<never>>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -781,7 +1082,10 @@ declare type old_as_current_for_TypeAlias_Unenforced = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "TypeAlias_Unenforced": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_Unenforced = requireAssignableTo<TypeOnly<current.Unenforced<never>>, TypeOnly<old.Unenforced<never>>>
+declare type current_as_old_for_TypeAlias_Unenforced = requireAssignableTo<
+	TypeOnly<current.Unenforced<never>>,
+	TypeOnly<old.Unenforced<never>>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -790,7 +1094,10 @@ declare type current_as_old_for_TypeAlias_Unenforced = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "TypeAlias_Unhydrated": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_Unhydrated = requireAssignableTo<TypeOnly<old.Unhydrated<never>>, TypeOnly<current.Unhydrated<never>>>
+declare type old_as_current_for_TypeAlias_Unhydrated = requireAssignableTo<
+	TypeOnly<old.Unhydrated<never>>,
+	TypeOnly<current.Unhydrated<never>>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -799,7 +1106,10 @@ declare type old_as_current_for_TypeAlias_Unhydrated = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "TypeAlias_Unhydrated": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_Unhydrated = requireAssignableTo<TypeOnly<current.Unhydrated<never>>, TypeOnly<old.Unhydrated<never>>>
+declare type current_as_old_for_TypeAlias_Unhydrated = requireAssignableTo<
+	TypeOnly<current.Unhydrated<never>>,
+	TypeOnly<old.Unhydrated<never>>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -808,7 +1118,11 @@ declare type current_as_old_for_TypeAlias_Unhydrated = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "TypeAlias_ValidateRecursiveSchema": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_ValidateRecursiveSchema = requireAssignableTo<TypeOnly<old.ValidateRecursiveSchema<never>>, TypeOnly<current.ValidateRecursiveSchema<never>>>
+declare type old_as_current_for_TypeAlias_ValidateRecursiveSchema =
+	requireAssignableTo<
+		TypeOnly<old.ValidateRecursiveSchema<never>>,
+		TypeOnly<current.ValidateRecursiveSchema<never>>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -817,7 +1131,11 @@ declare type old_as_current_for_TypeAlias_ValidateRecursiveSchema = requireAssig
  * typeValidation.broken:
  * "TypeAlias_ValidateRecursiveSchema": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_ValidateRecursiveSchema = requireAssignableTo<TypeOnly<current.ValidateRecursiveSchema<never>>, TypeOnly<old.ValidateRecursiveSchema<never>>>
+declare type current_as_old_for_TypeAlias_ValidateRecursiveSchema =
+	requireAssignableTo<
+		TypeOnly<current.ValidateRecursiveSchema<never>>,
+		TypeOnly<old.ValidateRecursiveSchema<never>>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -826,7 +1144,10 @@ declare type current_as_old_for_TypeAlias_ValidateRecursiveSchema = requireAssig
  * typeValidation.broken:
  * "Variable_rollback": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_rollback = requireAssignableTo<TypeOnly<typeof current.rollback>, TypeOnly<typeof old.rollback>>
+declare type current_as_old_for_Variable_rollback = requireAssignableTo<
+	TypeOnly<typeof current.rollback>,
+	TypeOnly<typeof old.rollback>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -835,7 +1156,10 @@ declare type current_as_old_for_Variable_rollback = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Variable_Tree": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_Tree = requireAssignableTo<TypeOnly<typeof current.Tree>, TypeOnly<typeof old.Tree>>
+declare type current_as_old_for_Variable_Tree = requireAssignableTo<
+	TypeOnly<typeof current.Tree>,
+	TypeOnly<typeof old.Tree>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -844,4 +1168,7 @@ declare type current_as_old_for_Variable_Tree = requireAssignableTo<TypeOnly<typ
  * typeValidation.broken:
  * "Variable_TreeArrayNode": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_TreeArrayNode = requireAssignableTo<TypeOnly<typeof current.TreeArrayNode>, TypeOnly<typeof old.TreeArrayNode>>
+declare type current_as_old_for_Variable_TreeArrayNode = requireAssignableTo<
+	TypeOnly<typeof current.TreeArrayNode>,
+	TypeOnly<typeof old.TreeArrayNode>
+>;

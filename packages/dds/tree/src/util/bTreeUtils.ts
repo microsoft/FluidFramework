@@ -5,7 +5,7 @@
 
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
-import { brand, type Brand } from "./brand.js";
+import { type Brand, brand } from "./brand.js";
 
 export type TupleBTree<K, V> = Brand<BTree<K, V>, "TupleBTree">;
 
@@ -16,7 +16,10 @@ export function newTupleBTree<K extends readonly unknown[], V>(
 }
 
 // This assumes that the arrays are the same length.
-function compareTuples(arrayA: readonly unknown[], arrayB: readonly unknown[]): number {
+function compareTuples(
+	arrayA: readonly unknown[],
+	arrayB: readonly unknown[],
+): number {
 	for (let i = 0; i < arrayA.length; i++) {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const a = arrayA[i] as any;

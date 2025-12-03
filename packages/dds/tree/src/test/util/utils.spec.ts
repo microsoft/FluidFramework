@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-
+import { benchmark } from "@fluid-tools/benchmark";
 import {
 	balancedReduce,
 	capitalize,
@@ -15,7 +15,6 @@ import {
 	oneFromIterable,
 	transformObjectMap,
 } from "../../util/index.js";
-import { benchmark } from "@fluid-tools/benchmark";
 
 describe("Utils", () => {
 	it("capitalize", () => {
@@ -153,7 +152,11 @@ describe("Utils", () => {
 				assert(Math.abs(a.length - b.length) <= 1);
 				return a + b;
 			};
-			const actual = balancedReduce(["A", "B", "C", "E", "F", "G", "H"], delegate, factory);
+			const actual = balancedReduce(
+				["A", "B", "C", "E", "F", "G", "H"],
+				delegate,
+				factory,
+			);
 			assert.equal(actual, "ABCEFGH");
 			assert.equal(factoryCallCount, 0);
 			assert.equal(delegateCallCount, 6);

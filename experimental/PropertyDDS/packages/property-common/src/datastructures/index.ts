@@ -9,13 +9,13 @@ export {
 	BoolDataArray,
 	Float32DataArray,
 	Float64DataArray,
+	Int8DataArray,
 	Int16DataArray,
 	Int32DataArray,
-	Int8DataArray,
 	StringDataArray,
+	Uint8DataArray,
 	Uint16DataArray,
 	Uint32DataArray,
-	Uint8DataArray,
 	UniversalDataArray,
 } from "./dataArray";
 export { Int64, Integer64, Uint64 } from "./integer64";

@@ -7,7 +7,7 @@ import { StringBuilder } from "@rushstack/node-core-library";
 import chalk from "picocolors";
 
 // eslint-disable-next-line import-x/no-deprecated
-import { MonoRepoKind, indentString } from "./library/index.js";
+import { indentString, MonoRepoKind } from "./library/index.js";
 import type { CommandLogger } from "./logging.js";
 import type { ReleaseGroup, ReleasePackage } from "./releaseGroups.js";
 
@@ -50,7 +50,10 @@ interface Section {
 /**
  * Map release groups to ADO pipeline
  */
-export const ADOPipelineLinks = new Map<ReleasePackage | ReleaseGroup | undefined, string>([
+export const ADOPipelineLinks = new Map<
+	ReleasePackage | ReleaseGroup | undefined,
+	string
+>([
 	[
 		// eslint-disable-next-line import-x/no-deprecated
 		MonoRepoKind.Client,
@@ -62,7 +65,10 @@ export const ADOPipelineLinks = new Map<ReleasePackage | ReleaseGroup | undefine
 		"https://dev.azure.com/fluidframework/internal/_build?definitionId=30",
 	],
 	// eslint-disable-next-line import-x/no-deprecated
-	[MonoRepoKind.Azure, "https://dev.azure.com/fluidframework/internal/_build?definitionId=85"],
+	[
+		MonoRepoKind.Azure,
+		"https://dev.azure.com/fluidframework/internal/_build?definitionId=85",
+	],
 	[
 		// eslint-disable-next-line import-x/no-deprecated
 		MonoRepoKind.BuildTools,
@@ -80,7 +86,10 @@ export const ADOPipelineLinks = new Map<ReleasePackage | ReleaseGroup | undefine
 		"@fluidframework/test-tools",
 		"https://dev.azure.com/fluidframework/internal/_build?definitionId=13",
 	],
-	["tinylicious", "https://dev.azure.com/fluidframework/internal/_build?definitionId=22"],
+	[
+		"tinylicious",
+		"https://dev.azure.com/fluidframework/internal/_build?definitionId=22",
+	],
 	[
 		"@fluidframework/build-common",
 		"https://dev.azure.com/fluidframework/internal/_build?definitionId=3",

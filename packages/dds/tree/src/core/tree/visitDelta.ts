@@ -5,18 +5,20 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { type NestedMap, setInNestedMap, tryGetFromNestedMap } from "../../util/index.js";
-
+import {
+	type NestedMap,
+	setInNestedMap,
+	tryGetFromNestedMap,
+} from "../../util/index.js";
+import type { RevisionTag } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
-
-import { mapCursorField, type ITreeCursorSynchronous } from "./cursor.js";
+import type { TreeChunk } from "./chunk.js";
+import { type ITreeCursorSynchronous, mapCursorField } from "./cursor.js";
 import type * as Delta from "./delta.js";
 import { areDetachedNodeIdsEqual, offsetDetachId } from "./deltaUtil.js";
 import type { DetachedFieldIndex } from "./detachedFieldIndex.js";
 import type { ForestRootId, Major, Minor } from "./detachedFieldIndexTypes.js";
 import type { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
-import type { RevisionTag } from "../rebase/index.js";
-import type { TreeChunk } from "./chunk.js";
 
 /**
  * Implementation notes:
@@ -174,7 +176,10 @@ function transferRoots(
 		// This if statement prevents that from happening.
 		if (!areDetachedNodeIdsEqual(oldId, newId)) {
 			for (let i = 0; i < count; i += 1) {
-				atomized.push({ oldId: offsetDetachId(oldId, i), newId: offsetDetachId(newId, i) });
+				atomized.push({
+					oldId: offsetDetachId(oldId, i),
+					newId: offsetDetachId(newId, i),
+				});
 			}
 		}
 		return atomized;
@@ -217,7 +222,10 @@ function transferRoots(
 			visitor.exitField(oldField);
 			detachedFieldIndex.deleteEntry(oldId);
 		}
-		assert(delayed.length < priorSize, 0x7cf /* transferRoots should make progress */);
+		assert(
+			delayed.length < priorSize,
+			0x7cf /* transferRoots should make progress */,
+		);
 		nextBatch = delayed;
 	}
 }
@@ -243,7 +251,10 @@ export interface DeltaVisitor {
 	 * @param destination - The key for a new detached field.
 	 * A field with this key must not already exist.
 	 */
-	create(content: readonly ITreeCursorSynchronous[], destination: FieldKey): void;
+	create(
+		content: readonly ITreeCursorSynchronous[],
+		destination: FieldKey,
+	): void;
 	/**
 	 * Recursively destroys the given detached field and all of the nodes within it.
 	 * @param detachedField - The key for the detached field to destroy.
@@ -359,7 +370,11 @@ interface PassConfig {
 	readonly rootDestructions: Delta.DetachedNodeDestruction[];
 }
 
-type Pass = (delta: Delta.FieldChanges, visitor: DeltaVisitor, config: PassConfig) => void;
+type Pass = (
+	delta: Delta.FieldChanges,
+	visitor: DeltaVisitor,
+	config: PassConfig,
+) => void;
 
 function visitFieldMarks(
 	fields: Delta.FieldMap | undefined,
@@ -410,12 +425,20 @@ function detachPass(
 		if (mark.detach !== undefined) {
 			for (let i = 0; i < mark.count; i += 1) {
 				const id = offsetDetachId(mark.detach, i);
-				const root = config.detachedFieldIndex.createEntry(id, config.latestRevision);
+				const root = config.detachedFieldIndex.createEntry(
+					id,
+					config.latestRevision,
+				);
 				if (mark.fields !== undefined) {
 					config.attachPassRoots.set(root, mark.fields);
 				}
 				const field = config.detachedFieldIndex.toFieldKey(root);
-				visitor.detach({ start: index, end: index + 1 }, field, id, mark.attach !== undefined);
+				visitor.detach(
+					{ start: index, end: index + 1 },
+					field,
+					id,
+					mark.attach !== undefined,
+				);
 			}
 		}
 		if (mark.detach === undefined && mark.attach === undefined) {
@@ -434,7 +457,10 @@ function buildTrees(
 	for (const [i, tree] of trees.entries()) {
 		const offsettedId = offsetDetachId(id, i);
 		let root = detachedFieldIndex.tryGetEntry(offsettedId);
-		assert(root === undefined, 0x929 /* Unable to build tree that already exists */);
+		assert(
+			root === undefined,
+			0x929 /* Unable to build tree that already exists */,
+		);
 		root = detachedFieldIndex.createEntry(offsettedId, latestRevision);
 		const field = detachedFieldIndex.toFieldKey(root);
 		visitor.create([tree], field);
@@ -470,7 +496,13 @@ function processGlobal(
 			if (root === undefined) {
 				const tree = tryGetFromNestedMap(config.refreshers, id.major, id.minor);
 				assert(tree !== undefined, 0x928 /* refresher data not found */);
-				buildTrees(id, [tree], config.detachedFieldIndex, config.latestRevision, visitor);
+				buildTrees(
+					id,
+					[tree],
+					config.detachedFieldIndex,
+					config.latestRevision,
+					visitor,
+				);
 				root = config.detachedFieldIndex.getEntry(id);
 			}
 			// the revision is updated for any refresher data included in the delta that is used

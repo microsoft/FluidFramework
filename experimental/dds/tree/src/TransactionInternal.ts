@@ -5,36 +5,36 @@
 
 import { assert } from '@fluidframework/core-utils/internal';
 
-import { Result, assertWithMessage, copyPropertyIfDefined, fail } from './Common.js';
+import { assertWithMessage, copyPropertyIfDefined, fail, Result } from './Common.js';
 import {
-	BadPlaceValidationResult,
-	BadRangeValidationResult,
-	PlaceValidationResult,
-	RangeValidationResultKind,
+	type BadPlaceValidationResult,
+	type BadRangeValidationResult,
 	detachRange,
 	insertIntoTrait,
+	PlaceValidationResult,
+	RangeValidationResultKind,
 	validateStablePlace,
 	validateStableRange,
 } from './EditUtilities.js';
-import { DetachedSequenceId, NodeId, TraitLabel, isDetachedSequenceId } from './Identifiers.js';
-import { ReconciliationChange, ReconciliationPath } from './ReconciliationPath.js';
-import { RevisionView, TransactionView } from './RevisionView.js';
-import { TreeViewNode } from './TreeView.js';
-import { rangeFromStableRange } from './TreeViewUtilities.js';
+import { type DetachedSequenceId, isDetachedSequenceId, type NodeId, type TraitLabel } from './Identifiers.js';
 import {
-	BuildInternal,
-	BuildNodeInternal,
-	ChangeInternal,
+	type BuildInternal,
+	type BuildNodeInternal,
+	type ChangeInternal,
 	ChangeTypeInternal,
 	ConstraintEffect,
-	ConstraintInternal,
-	DetachInternal,
+	type ConstraintInternal,
+	type DetachInternal,
 	EditStatus,
-	InsertInternal,
-	SetValueInternal,
-	StablePlaceInternal,
-	StableRangeInternal,
+	type InsertInternal,
+	type SetValueInternal,
+	type StablePlaceInternal,
+	type StableRangeInternal,
 } from './persisted-types/index.js';
+import type { ReconciliationChange, ReconciliationPath } from './ReconciliationPath.js';
+import type { RevisionView, TransactionView } from './RevisionView.js';
+import type { TreeViewNode } from './TreeView.js';
+import { rangeFromStableRange } from './TreeViewUtilities.js';
 
 /**
  * Result of applying a transaction.
@@ -784,7 +784,7 @@ export namespace TransactionInternal {
 				const traits = new Map<TraitLabel, readonly NodeId[]>();
 				// eslint-disable-next-line no-restricted-syntax
 				for (const key in node.traits) {
-					if (Object.prototype.hasOwnProperty.call(node.traits, key)) {
+					if (Object.hasOwn(node.traits, key)) {
 						const children = node.traits[key];
 						if (children.length > 0) {
 							const childIds: NodeId[] = [];

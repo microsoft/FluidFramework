@@ -8,22 +8,24 @@ import { strict as assert } from "node:assert";
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import {
 	BenchmarkType,
-	benchmarkCustom,
 	benchmark,
+	benchmarkCustom,
 	type IMeasurementReporter,
 } from "@fluid-tools/benchmark";
 import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
-import type { ITree } from "@fluidframework/driver-definitions/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type { ITree } from "@fluidframework/driver-definitions/internal";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 import {
 	MockDeltaConnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-
-import { TestTreeProviderLite, configureBenchmarkHooks, testIdCompressor } from "../utils.js";
-import { TreeViewConfiguration, type ImplicitFieldSchema } from "../../simple-tree/index.js";
+import {
+	type ImplicitFieldSchema,
+	TreeViewConfiguration,
+} from "../../simple-tree/index.js";
+import { configuredSharedTree } from "../../treeFactory.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContentTyped } from "../feature-libraries/flex-tree/utils.js";
 import {
@@ -32,19 +34,31 @@ import {
 	makeJsWideTreeWithEndValue,
 	WideRoot,
 } from "../scalableTestTrees.js";
-import { configuredSharedTree } from "../../treeFactory.js";
+import {
+	configureBenchmarkHooks,
+	TestTreeProviderLite,
+	testIdCompressor,
+} from "../utils.js";
 
 // TODO: these tests currently only cover tree content.
 // It might make sense to extend them to cover complex collaboration windows.
 
 // number of nodes in test for wide trees
-const nodesCountWide: [numberOfNodes: number, minLength: number, maxLength: number][] = [
+const nodesCountWide: [
+	numberOfNodes: number,
+	minLength: number,
+	maxLength: number,
+][] = [
 	[1, 1000, 7000],
 	[10, 1000, 10000],
 	[100, 1000, 500000],
 ];
 // number of nodes in test for deep trees
-const nodesCountDeep: [numberOfNodes: number, minLength: number, maxLength: number][] = [
+const nodesCountDeep: [
+	numberOfNodes: number,
+	minLength: number,
+	maxLength: number,
+][] = [
 	[10, 1000, 25000],
 	[100, 1000, 1000000],
 	[200, 1000, 5000000],
@@ -133,7 +147,12 @@ describe("Summary benchmarks", () => {
 					const datastoreRuntime = new MockFluidDataStoreRuntime({
 						idCompressor: testIdCompressor,
 					});
-					await factory.load(datastoreRuntime, "test", services, factory.attributes);
+					await factory.load(
+						datastoreRuntime,
+						"test",
+						services,
+						factory.attributes,
+					);
 				},
 			});
 		}
@@ -180,7 +199,9 @@ function getSummaryTree<T extends ImplicitFieldSchema>(
 ): ISummaryTree {
 	const provider = new TestTreeProviderLite();
 	const tree = provider.trees[0];
-	const view = tree.kernel.viewWith(new TreeViewConfiguration({ schema: content.schema }));
+	const view = tree.kernel.viewWith(
+		new TreeViewConfiguration({ schema: content.schema }),
+	);
 	view.initialize(content.initialTree);
 	provider.synchronizeMessages();
 	const { summary } = tree.getAttachSummary(true);

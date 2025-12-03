@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
+import { type ISharedCell, SharedCell } from "@fluidframework/cell/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { SharedMap } from "@fluidframework/map/internal";
@@ -11,19 +11,21 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 import { expect } from "chai";
 
 import { EditType } from "../CommonInterfaces.js";
-import { getKeyForFluidObject } from "../FluidObjectKey.js";
 import {
+	createHandleNode,
 	DataVisualizerGraph,
+	defaultVisualizers,
 	type FluidObjectTreeNode,
 	type FluidObjectValueNode,
 	VisualNodeKind,
-	createHandleNode,
-	defaultVisualizers,
 } from "../data-visualization/index.js";
+import { getKeyForFluidObject } from "../FluidObjectKey.js";
 
 describe("DataVisualizerGraph unit tests", () => {
 	it("Single root DDS (SharedCounter)", async () => {
-		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedCounter.getFactory()] });
+		const runtime = new MockFluidDataStoreRuntime({
+			registry: [SharedCounter.getFactory()],
+		});
 		const sharedCounter = SharedCounter.create(runtime, "test-counter");
 		const counterId = getKeyForFluidObject(sharedCounter);
 
@@ -156,7 +158,10 @@ describe("DataVisualizerGraph unit tests", () => {
 		const sharedCounter = SharedCounter.create(runtime, "test-counter");
 		const counterId = getKeyForFluidObject(sharedCounter);
 		sharedCounter.increment(42);
-		const sharedCell = SharedCell.create(runtime, "test-cell") as ISharedCell<string>;
+		const sharedCell = SharedCell.create(
+			runtime,
+			"test-cell",
+		) as ISharedCell<string>;
 		const cellId = getKeyForFluidObject(sharedCell);
 		sharedCell.set("Hello world");
 

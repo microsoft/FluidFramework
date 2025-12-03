@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type TreeArrayNode, NodeKind } from "@fluidframework/tree";
+import { NodeKind, type TreeArrayNode } from "@fluidframework/tree";
 
 import { isTreeMapNode, sharedTreeTraverse } from "./utils.js";
 
@@ -120,17 +120,25 @@ export function sharedTreeDiff(
 	const oldObjArrayItemIdsToIndex =
 		isObjArray === false || options.useObjectIds === undefined
 			? new Map<string | number, number>()
-			: createObjectArrayItemIdsToIndexMap(obj, options.useObjectIds.idAttributeName);
+			: createObjectArrayItemIdsToIndexMap(
+					obj,
+					options.useObjectIds.idAttributeName,
+				);
 
 	const newObjArrayItemIdsToIndex =
 		isNewObjArray === false || options.useObjectIds === undefined
 			? new Map<string | number, number>()
-			: createObjectArrayItemIdsToIndexMap(newObj, options.useObjectIds.idAttributeName);
+			: createObjectArrayItemIdsToIndexMap(
+					newObj,
+					options.useObjectIds.idAttributeName,
+				);
 
 	const objectKeys = isTreeMapNode(obj) ? obj.keys() : Object.keys(obj);
 	// We compare existence and values of all attributes within the old against new object, looking for removals or changes.
 	for (const key of objectKeys) {
-		const objValue: unknown = isTreeMapNode(obj) ? obj.get(key as string) : obj[key];
+		const objValue: unknown = isTreeMapNode(obj)
+			? obj.get(key as string)
+			: obj[key];
 		const path = isObjArray ? +key : key;
 		// 1. First, check if the key within the old object, exists within the new object. If it doesn't exist this would be an attribute removal.
 		if (!(key in newObj)) {
@@ -203,7 +211,8 @@ export function sharedTreeDiff(
 			areCompatibleObjects &&
 			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unsafe-member-access
 			!richTypes[Object.getPrototypeOf(objValue)?.constructor?.name] &&
-			(!options.cyclesFix || !_stack.includes(objValue as Record<string, unknown>))
+			(!options.cyclesFix ||
+				!_stack.includes(objValue as Record<string, unknown>))
 		) {
 			if (options.useObjectIds === undefined) {
 				const nestedDiffs = sharedTreeDiff(
@@ -253,7 +262,8 @@ export function sharedTreeDiff(
 					// 2a.2 The object id's are different, their attributes cannot be compared.
 					// We need to find the new index of the object, if it exists in the new array and do a diff comparison.
 					else {
-						const newIndexOfOldObject = newObjArrayItemIdsToIndex.get(oldObjectId);
+						const newIndexOfOldObject =
+							newObjArrayItemIdsToIndex.get(oldObjectId);
 						// The object no longer exists in the new array, therefore it was removed.
 						if (newIndexOfOldObject === undefined) {
 							diffs.push({
@@ -277,7 +287,9 @@ export function sharedTreeDiff(
 							// An object could have been moved AND changed. We need to check for this.
 							const nestedDiffs = sharedTreeDiff(
 								obj[path] as Record<string, unknown> | unknown[],
-								newObj[newIndexOfOldObject] as Record<string, unknown> | unknown[],
+								newObj[newIndexOfOldObject] as
+									| Record<string, unknown>
+									| unknown[],
 								options,
 								options.cyclesFix === true
 									? [..._stack, objValue as Record<string, unknown> | unknown[]]
@@ -320,7 +332,7 @@ export function sharedTreeDiff(
 					? // eslint-disable-next-line prefer-template, @typescript-eslint/no-base-to-string
 						objValue + "" === newObjValue + ""
 					: // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-						// @ts-ignore
+						// @ts-expect-error
 						+objValue === +newObjValue)
 			)
 		) {
@@ -332,14 +344,19 @@ export function sharedTreeDiff(
 				objectId:
 					options.useObjectIds?.idAttributeName === undefined
 						? undefined
-						: (newObj[options.useObjectIds.idAttributeName] as string | number | undefined),
+						: (newObj[options.useObjectIds.idAttributeName] as
+								| string
+								| number
+								| undefined),
 			});
 		}
 	}
 
 	// 3. Finally, we check for new keys in the new object that did not exist in the old object.
 	// The existence of new keys may signal new values or moved values.
-	const newObjKeys = isTreeMapNode(newObj) ? newObj.keys() : Object.keys(newObj);
+	const newObjKeys = isTreeMapNode(newObj)
+		? newObj.keys()
+		: Object.keys(newObj);
 	for (const key of newObjKeys) {
 		const newObjValue: unknown = isTreeMapNode(newObj)
 			? newObj.get(key as string)
@@ -379,7 +396,6 @@ export function sharedTreeDiff(
 						value: newObjValue,
 						objectId,
 					});
-					continue;
 				}
 				// If either the object's id attribute does not exist or the original array does not contain an object with the given id
 				// Then we assume this was a newly created object.
@@ -414,7 +430,10 @@ export function sharedTreeDiff(
 					| number
 					| undefined;
 				// If this object has an id and it does not exist in the old array, then it was created.
-				if (objectId !== undefined && oldObjArrayItemIdsToIndex.has(objectId) === false) {
+				if (
+					objectId !== undefined &&
+					oldObjArrayItemIdsToIndex.has(objectId) === false
+				) {
 					diffs.push({
 						type: "CREATE",
 						path: [path],
@@ -422,7 +441,6 @@ export function sharedTreeDiff(
 					});
 				}
 			} else {
-				continue;
 			}
 		}
 	}
@@ -432,10 +450,13 @@ export function sharedTreeDiff(
 /**
  * Type Guard that determines if a given object is an array of type unknown[] or {@link TreeArrayNode}.
  */
-function isArrayOrTreeArrayNode(obj: unknown): obj is unknown[] | TreeArrayNode {
+function isArrayOrTreeArrayNode(
+	obj: unknown,
+): obj is unknown[] | TreeArrayNode {
 	if (typeof obj === "object" && obj !== null) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const maybeNodeKind: unknown = Object.getPrototypeOf(obj)?.constructor?.kind;
+		const maybeNodeKind: unknown =
+			Object.getPrototypeOf(obj)?.constructor?.kind;
 		const isTreeArrayNode = maybeNodeKind === NodeKind.Array;
 		return Array.isArray(obj) || isTreeArrayNode;
 	}
@@ -453,7 +474,9 @@ function createObjectArrayItemIdsToIndexMap(
 	for (let i = 0; i < obj.length; i++) {
 		const objArrayItem = obj[i];
 		if (typeof objArrayItem === "object" && objArrayItem !== null) {
-			const id = (objArrayItem as Record<string, unknown>)[idAttributeName] as string | number;
+			const id = (objArrayItem as Record<string, unknown>)[idAttributeName] as
+				| string
+				| number;
 			if (objArrayItemIdsToIndex.has(id)) {
 				throw new TypeError(`Duplicate object id found: ${id}`);
 			} else if (id !== undefined) {
@@ -523,7 +546,10 @@ export function createMergableIdDiffSeries(
 			const maxIndex = diff.newIndex;
 			for (const [id, index] of diffAdjustedObjectIndexes.entries()) {
 				const shouldIndexBeShifted =
-					id !== objectId && index <= maxIndex && index >= minIndex && index - 1 >= 0;
+					id !== objectId &&
+					index <= maxIndex &&
+					index >= minIndex &&
+					index - 1 >= 0;
 				if (shouldIndexBeShifted) {
 					diffAdjustedObjectIndexes.set(id, index - 1);
 				}
@@ -554,7 +580,8 @@ export function createMergableIdDiffSeries(
 	): void => {
 		const removalIndex = diff.path[diff.path.length - 1] as number;
 		for (const [id, index] of diffAdjustedObjectIndexes.entries()) {
-			const shouldIndexBeShifted = id !== objectId && index > removalIndex && index - 1 >= 0;
+			const shouldIndexBeShifted =
+				id !== objectId && index > removalIndex && index - 1 >= 0;
 			if (shouldIndexBeShifted) {
 				diffAdjustedObjectIndexes.set(id, index - 1);
 			}
@@ -576,9 +603,9 @@ export function createMergableIdDiffSeries(
 
 		for (const diff of arrayDiffs) {
 			if (diff.type === "MOVE") {
-				const objectId = (diff.value as Record<string, unknown>)[idAttributeName] as
-					| string
-					| number;
+				const objectId = (diff.value as Record<string, unknown>)[
+					idAttributeName
+				] as string | number;
 				const sourceIndex = diff.path[diff.path.length - 1] as number;
 
 				// 1. Prior moves may render the next move redundant.
@@ -606,16 +633,22 @@ export function createMergableIdDiffSeries(
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					arrayDiffsMarkedForEndReorder.get(arrayUuid)!.push(diff);
 				} else {
-					shiftIndexesFromMove(diff, targetArray, diffAdjustedObjectIndexes, objectId);
+					shiftIndexesFromMove(
+						diff,
+						targetArray,
+						diffAdjustedObjectIndexes,
+						objectId,
+					);
 				}
 			}
 			if (diff.type === "REMOVE") {
-				const objectId = (diff.oldValue as Record<string, unknown>)[idAttributeName] as
-					| string
-					| number;
+				const objectId = (diff.oldValue as Record<string, unknown>)[
+					idAttributeName
+				] as string | number;
 				const targetIndex = diff.path[diff.path.length - 1] as number;
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const currentDiffAdjustedIndex = diffAdjustedObjectIndexes.get(objectId)!;
+				const currentDiffAdjustedIndex =
+					diffAdjustedObjectIndexes.get(objectId)!;
 				if (targetIndex !== diffAdjustedObjectIndexes.get(objectId)) {
 					// A Prior Remove or Move Diff moved the object to a new index, so update the diff source index to point to the new index.
 					diff.path[diff.path.length - 1] = currentDiffAdjustedIndex;

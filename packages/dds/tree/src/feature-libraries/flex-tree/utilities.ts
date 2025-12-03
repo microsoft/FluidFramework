@@ -5,8 +5,8 @@
 
 import {
 	type AnchorNode,
-	type DetachedField,
 	anchorSlot,
+	type DetachedField,
 	getDetachedFieldContainingPath,
 	rootField,
 	type SchemaAndPolicy,
@@ -19,8 +19,12 @@ import { TreeStatus } from "./flexTreeTypes.js";
  * @param detachedField - the detached field you want to check.
  * @returns the {@link TreeStatus} from the detached field provided.
  */
-export function treeStatusFromDetachedField(detachedField: DetachedField): TreeStatus {
-	return detachedField === rootField ? TreeStatus.InDocument : TreeStatus.Removed;
+export function treeStatusFromDetachedField(
+	detachedField: DetachedField,
+): TreeStatus {
+	return detachedField === rootField
+		? TreeStatus.InDocument
+		: TreeStatus.Removed;
 }
 
 /**

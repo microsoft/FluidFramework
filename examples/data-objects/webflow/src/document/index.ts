@@ -4,39 +4,42 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
-import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/legacy";
 import {
 	createDetachedLocalReferencePosition,
 	createRemoveRangeOp,
 	// eslint-disable-next-line import-x/no-internal-modules -- #26905: `merge-tree` internals used in examples
 } from "@fluidframework/merge-tree/internal";
-import { IMergeTreeRemoveMsg, refGetTileLabels } from "@fluidframework/merge-tree/legacy";
+import {
+	type IMergeTreeRemoveMsg,
+	refGetTileLabels,
+} from "@fluidframework/merge-tree/legacy";
 // eslint-disable-next-line import-x/no-internal-modules -- #26904: `sequence` internals used in examples
 import { reservedTileLabelsKey } from "@fluidframework/sequence/internal";
 import {
-	ISegment,
-	LocalReferencePosition,
+	type ISegment,
+	type LocalReferencePosition,
 	Marker,
 	MergeTreeDeltaType,
-	PropertySet,
-	ReferencePosition,
+	type PropertySet,
+	type ReferencePosition,
 	ReferenceType,
-	SequenceDeltaEvent,
-	SequenceMaintenanceEvent,
+	type SequenceDeltaEvent,
+	type SequenceMaintenanceEvent,
 	SharedString,
-	SharedStringSegment,
+	type SharedStringSegment,
 	TextSegment,
 } from "@fluidframework/sequence/legacy";
 
 import { documentType } from "../package.js";
-import { IHTMLAttributes } from "../util/attr.js";
-import { TagName, TokenList, clamp } from "../util/index.js";
+import type { IHTMLAttributes } from "../util/attr.js";
+import { clamp, TagName, TokenList } from "../util/index.js";
 
 import { debug } from "./debug.js";
 import { SegmentSpan } from "./segmentspan.js";
 
-export const enum DocSegmentKind {
+export enum DocSegmentKind {
 	text = "text",
 	paragraph = "<p>",
 	lineBreak = "<br>",
@@ -53,11 +56,11 @@ const tilesAndRanges = new Set([
 	DocSegmentKind.beginTags,
 ]);
 
-const enum Workaround {
+enum Workaround {
 	checkpoint = "*",
 }
 
-export const enum DocTile {
+export enum DocTile {
 	paragraph = DocSegmentKind.paragraph,
 	checkpoint = Workaround.checkpoint,
 }
@@ -73,11 +76,12 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
 	} else if (Marker.is(segment)) {
 		const markerType = segment.refType;
 		switch (markerType) {
-			case ReferenceType.Tile:
+			case ReferenceType.Tile: {
 				const kind = refGetTileLabels(segment)[0] as DocSegmentKind;
 				assert(tilesAndRanges.has(kind), `Unknown tile/range label.`);
 
 				return kind;
+			}
 			default:
 				return DocSegmentKind.endTags;
 		}
@@ -86,7 +90,9 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
 
 const empty = Object.freeze({});
 
-export const getCss = (segment: ISegment): Readonly<{ style?: string; classList?: string }> =>
+export const getCss = (
+	segment: ISegment,
+): Readonly<{ style?: string; classList?: string }> =>
 	segment.properties || empty;
 
 type LeafAction = (
@@ -167,7 +173,9 @@ export class FlowDocument extends DataObject {
 
 	protected async initializingFirstTime(props?: any): Promise<void> {
 		// For 'findTile(..)', we must enable tracking of left/rightmost tiles:
-		Object.assign(this.runtime, { options: { ...(this.runtime.options || {}) } });
+		Object.assign(this.runtime, {
+			options: { ...(this.runtime.options || {}) },
+		});
 
 		this.sharedString = SharedString.create(this.runtime);
 		this.root.set(textId, this.sharedString.handle);
@@ -181,7 +189,9 @@ export class FlowDocument extends DataObject {
 
 	protected async initializingFromExisting(): Promise<void> {
 		// For 'findTile(..)', we must enable tracking of left/rightmost tiles:
-		Object.assign(this.runtime, { options: { ...(this.runtime.options || {}) } });
+		Object.assign(this.runtime, {
+			options: { ...(this.runtime.options || {}) },
+		});
 
 		const handle = this.root.get<IFluidHandle<SharedString>>(textId);
 		if (handle === undefined) {
@@ -210,7 +220,9 @@ export class FlowDocument extends DataObject {
 
 	public getPosition(segment: ISegment) {
 		// Special case for ReferencePosition to end of document.  (See comments on 'endOfTextSegment').
-		return segment === endOfTextSegment ? this.length : this.sharedString.getPosition(segment);
+		return segment === endOfTextSegment
+			? this.length
+			: this.sharedString.getPosition(segment);
 	}
 
 	public addLocalRef(position: number) {
@@ -276,7 +288,9 @@ export class FlowDocument extends DataObject {
 
 						if (!(endPos < end)) {
 							// If not, add the end tag removal to the group op.
-							debug(`  also remove end tag '</${endTag.properties.tag}>' at ${endPos}.`);
+							debug(
+								`  also remove end tag '</${endTag.properties.tag}>' at ${endPos}.`,
+							);
 							ops.push(createRemoveRangeOp(endPos, endPos + 1));
 						}
 						break;
@@ -293,7 +307,9 @@ export class FlowDocument extends DataObject {
 						if (!(_start <= startPos)) {
 							// If not, remove any positions up to, but excluding the current segment
 							// and adjust the pending removal range to just after this marker.
-							debug(`  exclude end tag '</${segment.properties.tag}>' at ${position}.`);
+							debug(
+								`  exclude end tag '</${segment.properties.tag}>' at ${position}.`,
+							);
 
 							// If the preserved end tag is at the beginning of the removal range, no remove op
 							// is necessary.  Just skip over it.
@@ -382,7 +398,9 @@ export class FlowDocument extends DataObject {
 	public addCssClass(start: number, end: number, ...classNames: string[]) {
 		if (classNames.length > 0) {
 			const newClasses = classNames.join(" ");
-			this.updateCssClassList(start, end, (classList) => TokenList.set(classList, newClasses));
+			this.updateCssClassList(start, end, (classList) =>
+				TokenList.set(classList, newClasses),
+			);
 		}
 	}
 
@@ -414,17 +432,29 @@ export class FlowDocument extends DataObject {
 		this.sharedString.annotateRange(start, end, { attr });
 	}
 
-	public searchForMarker(startPos: number, markerLabel: string, forwards: boolean) {
+	public searchForMarker(
+		startPos: number,
+		markerLabel: string,
+		forwards: boolean,
+	) {
 		return this.sharedString.searchForMarker(startPos, markerLabel, forwards);
 	}
 
 	public findParagraph(position: number) {
-		const maybeStart = this.searchForMarker(position, DocTile.paragraph, /* forwards: */ true);
+		const maybeStart = this.searchForMarker(
+			position,
+			DocTile.paragraph,
+			/* forwards: */ true,
+		);
 		const start = maybeStart
 			? this.sharedString.localReferencePositionToPosition(maybeStart)
 			: 0;
 
-		const maybeEnd = this.searchForMarker(position, DocTile.paragraph, /* forwards: */ false);
+		const maybeEnd = this.searchForMarker(
+			position,
+			DocTile.paragraph,
+			/* forwards: */ false,
+		);
 		const end = maybeEnd
 			? this.sharedString.localReferencePositionToPosition(maybeEnd) + 1
 			: this.length;
@@ -465,13 +495,14 @@ export class FlowDocument extends DataObject {
 						s.push(`<${tag}>`);
 					}
 					break;
-				case DocSegmentKind.endTags:
+				case DocSegmentKind.endTags: {
 					_segment = this.getStart(_segment as Marker);
 					const tags = _segment.properties.tags.slice().reverse();
 					for (const tag of tags) {
 						s.push(`</${tag}>`);
 					}
 					break;
+				}
 				default:
 					s.push(kind);
 			}
@@ -480,7 +511,11 @@ export class FlowDocument extends DataObject {
 		return s.join("");
 	}
 
-	private getOppositeMarker(marker: Marker, oldPrefixLength: number, newPrefix: string) {
+	private getOppositeMarker(
+		marker: Marker,
+		oldPrefixLength: number,
+		newPrefix: string,
+	) {
 		return this.sharedString.getMarkerFromId(
 			`${newPrefix}${marker.getId().slice(oldPrefixLength)}`,
 		);

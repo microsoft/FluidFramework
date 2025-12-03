@@ -4,7 +4,10 @@
  */
 
 import { performanceNow } from "@fluid-internal/client-utils";
-import type { IDisposable, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type {
+	IDisposable,
+	ITelemetryBaseProperties,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { roundToDecimalPlaces } from "./mathTools.js";
@@ -107,12 +110,13 @@ export interface ICustomData<T> {
  *
  * @internal
  */
-export type MeasureReturnType<TMeasureReturn, TCustomMetrics> = TCustomMetrics extends void
-	? TMeasureReturn
-	: ICustomData<TCustomMetrics> &
-			(TMeasureReturn extends void
-				? Partial<Record<"returnValue", never>>
-				: { returnValue: TMeasureReturn });
+export type MeasureReturnType<TMeasureReturn, TCustomMetrics> =
+	TCustomMetrics extends void
+		? TMeasureReturn
+		: ICustomData<TCustomMetrics> &
+				(TMeasureReturn extends void
+					? Partial<Record<"returnValue", never>>
+					: { returnValue: TMeasureReturn });
 
 /**
  * Helper class that executes a specified code block and writes an
@@ -166,7 +170,10 @@ export class SampledTelemetryHelper<
 		private readonly logger: ITelemetryLoggerExt,
 		private readonly sampleThreshold: number,
 		private readonly includeAggregateMetrics: boolean = false,
-		private readonly perBucketProperties = new Map<string, ITelemetryBaseProperties>(),
+		private readonly perBucketProperties = new Map<
+			string,
+			ITelemetryBaseProperties
+		>(),
 	) {}
 
 	/**
@@ -213,7 +220,10 @@ export class SampledTelemetryHelper<
 		}
 
 		if (this.isCustomData(returnValue)) {
-			loggerData = this.accumulateCustomData(returnValue.customData, loggerData);
+			loggerData = this.accumulateCustomData(
+				returnValue.customData,
+				loggerData,
+			);
 		}
 
 		if (m.count >= this.sampleThreshold) {
@@ -254,10 +264,16 @@ export class SampledTelemetryHelper<
 		return loggerData;
 	}
 
-	private processCustomData(loggerData: LoggerData, count: number): Record<string, number> {
+	private processCustomData(
+		loggerData: LoggerData,
+		count: number,
+	): Record<string, number> {
 		const processedCustomData: Record<string, number> = {};
 
-		if (loggerData.dataSums === undefined || loggerData.dataMaxes === undefined) {
+		if (
+			loggerData.dataSums === undefined ||
+			loggerData.dataMaxes === undefined
+		) {
 			return processedCustomData;
 		}
 
@@ -281,7 +297,10 @@ export class SampledTelemetryHelper<
 
 		const measurements = loggerData.measurements;
 
-		const processedCustomData = this.processCustomData(loggerData, measurements.count);
+		const processedCustomData = this.processCustomData(
+			loggerData,
+			measurements.count,
+		);
 
 		if (measurements.count !== 0) {
 			const bucketProperties = this.perBucketProperties.get(bucket);

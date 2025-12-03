@@ -5,8 +5,6 @@
 
 /* eslint-disable @typescript-eslint/dot-notation */
 
-import { strict as assert } from "assert";
-
 import { AttachState } from "@fluidframework/container-definitions";
 import { IntervalType } from "@fluidframework/sequence-previous/internal";
 import {
@@ -14,11 +12,12 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
+import { strict as assert } from "assert";
 
-import { type ISequenceIntervalCollection } from "../intervalCollection.js";
+import type { ISequenceIntervalCollection } from "../intervalCollection.js";
 import type { IMapOperation } from "../intervalCollectionMap.js";
 import { IntervalOpType } from "../intervals/index.js";
-import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
+import { type SharedString, SharedStringFactory } from "../sequenceFactory.js";
 import { SharedStringClass } from "../sharedString.js";
 
 const assertIntervals = (
@@ -33,7 +32,11 @@ const assertIntervals = (
 			0,
 			sharedString.getLength() - 1,
 		);
-		assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
+		assert.deepEqual(
+			actual,
+			overlapping,
+			"Interval search returned inconsistent results",
+		);
 	}
 	assert.strictEqual(
 		actual.length,

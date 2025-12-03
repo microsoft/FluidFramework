@@ -51,7 +51,11 @@ export default class UpdateGenerationLayerCommand extends PackageCommand<
 
 	protected async processPackage(pkg: Package): Promise<void> {
 		const { generationDir, outFile, minimumCompatWindowMonths } = this.flags;
-		const generationFileFullPath = path.join(pkg.directory, generationDir, outFile);
+		const generationFileFullPath = path.join(
+			pkg.directory,
+			generationDir,
+			outFile,
+		);
 
 		const currentPkgVersion = pkg.version;
 		// "patch" versions do trigger generation updates.
@@ -81,7 +85,9 @@ export default class UpdateGenerationLayerCommand extends PackageCommand<
 			}
 		}
 
-		const currentReleaseDate = formatISO(new Date(), { representation: "date" });
+		const currentReleaseDate = formatISO(new Date(), {
+			representation: "date",
+		});
 		const newFluidCompatMetadata: IFluidCompatibilityMetadata = {
 			generation: newGeneration,
 			releaseDate: currentReleaseDate,
@@ -90,9 +96,13 @@ export default class UpdateGenerationLayerCommand extends PackageCommand<
 		updatePackageJsonFile(pkg.directory, (json: PackageJson) => {
 			json.fluidCompatMetadata = newFluidCompatMetadata;
 		});
-		await writeFile(generationFileFullPath, generateLayerFileContent(newGeneration), {
-			encoding: "utf8",
-		});
+		await writeFile(
+			generationFileFullPath,
+			generateLayerFileContent(newGeneration),
+			{
+				encoding: "utf8",
+			},
+		);
 		this.info(`Layer generation updated to ${newGeneration}`);
 	}
 }
@@ -179,7 +189,9 @@ export function maybeGetNewGeneration(
 	// Only "minor" or "major" version changes trigger generation updates.
 	const result = diff(currentPkgVersion, fluidCompatMetadata.releasePkgVersion);
 	if (result === null || (result !== "minor" && result !== "major")) {
-		log.verbose(`No minor or major release since last update; skipping generation update.`);
+		log.verbose(
+			`No minor or major release since last update; skipping generation update.`,
+		);
 		return undefined;
 	}
 
@@ -200,7 +212,9 @@ export function maybeGetNewGeneration(
 		throw new Error("Current date is older that previous release date");
 	}
 	const daysBetweenReleases = Math.round(timeDiff / (1000 * 60 * 60 * 24));
-	const monthsBetweenReleases = Math.floor(daysBetweenReleases / daysInMonthApproximation);
+	const monthsBetweenReleases = Math.floor(
+		daysBetweenReleases / daysInMonthApproximation,
+	);
 	log.verbose(`Previous release date: ${previousReleaseDate}, Today: ${today}`);
 	log.verbose(
 		`Time between releases: ${daysBetweenReleases} day(s) or ~${monthsBetweenReleases} month(s)`,
@@ -210,7 +224,9 @@ export function maybeGetNewGeneration(
 		fluidCompatMetadata.generation +
 		Math.min(monthsBetweenReleases, minimumCompatWindowMonths - 1);
 	if (newGeneration === fluidCompatMetadata.generation) {
-		log.verbose(`Generation remains the same (${newGeneration}); skipping generation update.`);
+		log.verbose(
+			`Generation remains the same (${newGeneration}); skipping generation update.`,
+		);
 		return undefined;
 	}
 	return newGeneration;

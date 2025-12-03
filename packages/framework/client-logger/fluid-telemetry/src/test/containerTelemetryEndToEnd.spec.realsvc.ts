@@ -13,10 +13,10 @@ import { spy } from "sinon";
 
 import { startTelemetry } from "../factory/index.js";
 import {
-	ContainerTelemetryEventNames,
 	type ContainerConnectedTelemetry,
 	type ContainerDisconnectedTelemetry,
 	type ContainerDisposedTelemetry,
+	ContainerTelemetryEventNames,
 	type IFluidTelemetry,
 	type ITelemetryConsumer,
 } from "../index.js";
@@ -66,31 +66,37 @@ describe("container telemetry E2E", () => {
 
 		// We don't know exactly when the given container events that we're looking for will fire so we have to
 		// wrap the container.on(...) event handler within a promise that will be awaited at the end of the test.
-		const { actualContainerTelemetry, expectedContainerTelemetry } = await timeoutPromise<{
-			actualContainerTelemetry: ContainerConnectedTelemetry;
-			expectedContainerTelemetry: ContainerConnectedTelemetry;
-		}>(
-			(resolve) => {
-				container.on("connected", () => {
-					// We are making an assumption here that the 'connected' event is the first and only event sent to the ITelemetryConsumer.
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const containerTelemetryFromSpy = telemetryConsumerConsumeSpy.getCalls()[0]!
-						.args[0] as ContainerConnectedTelemetry;
+		const { actualContainerTelemetry, expectedContainerTelemetry } =
+			await timeoutPromise<{
+				actualContainerTelemetry: ContainerConnectedTelemetry;
+				expectedContainerTelemetry: ContainerConnectedTelemetry;
+			}>(
+				(resolve) => {
+					container.on("connected", () => {
+						// We are making an assumption here that the 'connected' event is the first and only event sent to the ITelemetryConsumer.
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						const containerTelemetryFromSpy =
+							telemetryConsumerConsumeSpy.getCalls()[0]!
+								.args[0] as ContainerConnectedTelemetry;
 
-					resolve({
-						actualContainerTelemetry: containerTelemetryFromSpy,
-						expectedContainerTelemetry: {
-							eventName: ContainerTelemetryEventNames.CONNECTED,
-							containerId,
-							// containerInstanceId is a uniquely generated UUID by the fluid-telemetry's ContainerEventTelemetryProducer class.
-							// We can't use the underlying container's id because it is not exposed by IFluidContainer.
-							containerInstanceId: containerTelemetryFromSpy.containerInstanceId,
-						},
+						resolve({
+							actualContainerTelemetry: containerTelemetryFromSpy,
+							expectedContainerTelemetry: {
+								eventName: ContainerTelemetryEventNames.CONNECTED,
+								containerId,
+								// containerInstanceId is a uniquely generated UUID by the fluid-telemetry's ContainerEventTelemetryProducer class.
+								// We can't use the underlying container's id because it is not exposed by IFluidContainer.
+								containerInstanceId:
+									containerTelemetryFromSpy.containerInstanceId,
+							},
+						});
 					});
-				});
-			},
-			{ durationMs: 5000, errorMsg: "timeout while waiting for container 'connected' event" },
-		);
+				},
+				{
+					durationMs: 5000,
+					errorMsg: "timeout while waiting for container 'connected' event",
+				},
+			);
 
 		expect(expectedContainerTelemetry).to.deep.equal(actualContainerTelemetry);
 		// We won't know what the container containerInstanceId will be but we can still check that it is defined.
@@ -111,40 +117,43 @@ describe("container telemetry E2E", () => {
 
 		// We don't know exactly when the given container events that we're looking for will fire so we have to
 		// wrap the container.on(...) event handler within a promise that will be awaited at the end of the test.
-		const { actualContainerTelemetry, expectedContainerTelemetry } = await timeoutPromise<{
-			actualContainerTelemetry: ContainerDisconnectedTelemetry;
-			expectedContainerTelemetry: ContainerDisconnectedTelemetry;
-		}>(
-			(resolve) => {
-				// Event handler 1: As soon as the container connects, we're ready to initiate a disconnect.
-				container.on("connected", () => {
-					container.disconnect();
-				});
-
-				container.on("disconnected", () => {
-					// We are making an assumption here that the 'disconnected' event is the second sent to the ITelemetryConsumer.
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const containerTelemetryFromSpy = telemetryConsumerConsumeSpy.getCalls()[1]!
-						.args[0] as ContainerDisconnectedTelemetry;
-
-					resolve({
-						actualContainerTelemetry: containerTelemetryFromSpy,
-						expectedContainerTelemetry: {
-							eventName: ContainerTelemetryEventNames.DISCONNECTED,
-							containerId,
-							// containerInstanceId is a uniquely generated UUID by the fluid-telemetry's ContainerEventTelemetryProducer class.
-							// We can't use the underlying container's id because it is not exposed by IFluidContainer.
-							containerInstanceId: containerTelemetryFromSpy.containerInstanceId,
-						},
+		const { actualContainerTelemetry, expectedContainerTelemetry } =
+			await timeoutPromise<{
+				actualContainerTelemetry: ContainerDisconnectedTelemetry;
+				expectedContainerTelemetry: ContainerDisconnectedTelemetry;
+			}>(
+				(resolve) => {
+					// Event handler 1: As soon as the container connects, we're ready to initiate a disconnect.
+					container.on("connected", () => {
+						container.disconnect();
 					});
-				});
-			},
-			{
-				durationMs: 5000,
-				errorMsg:
-					"timeout while waiting for container 'connected' and/or 'disconnected' event",
-			},
-		);
+
+					container.on("disconnected", () => {
+						// We are making an assumption here that the 'disconnected' event is the second sent to the ITelemetryConsumer.
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						const containerTelemetryFromSpy =
+							telemetryConsumerConsumeSpy.getCalls()[1]!
+								.args[0] as ContainerDisconnectedTelemetry;
+
+						resolve({
+							actualContainerTelemetry: containerTelemetryFromSpy,
+							expectedContainerTelemetry: {
+								eventName: ContainerTelemetryEventNames.DISCONNECTED,
+								containerId,
+								// containerInstanceId is a uniquely generated UUID by the fluid-telemetry's ContainerEventTelemetryProducer class.
+								// We can't use the underlying container's id because it is not exposed by IFluidContainer.
+								containerInstanceId:
+									containerTelemetryFromSpy.containerInstanceId,
+							},
+						});
+					});
+				},
+				{
+					durationMs: 5000,
+					errorMsg:
+						"timeout while waiting for container 'connected' and/or 'disconnected' event",
+				},
+			);
 
 		expect(expectedContainerTelemetry).to.deep.equal(actualContainerTelemetry);
 		// We won't know what the container containerInstanceId will be but we can still check that it is defined.
@@ -165,45 +174,48 @@ describe("container telemetry E2E", () => {
 
 		// We don't know exactly when the given container events that we're looking for will fire so we have to
 		// wrap the container.on(...) event handler within a promise that will be awaited at the end of the test.
-		const { actualContainerTelemetry, expectedContainerTelemetry } = await timeoutPromise<{
-			actualContainerTelemetry: ContainerDisposedTelemetry;
-			expectedContainerTelemetry: ContainerDisposedTelemetry;
-		}>(
-			(resolve, reject) => {
-				// Event handler 1: As soon as the container connects, we're ready to initiate a disconnect.
-				container.on("connected", () => {
-					container.disconnect();
-				});
-
-				// Event handler 2: As soon as the container disconnects, we're ready to initiate a dispose.
-				container.on("disconnected", () => {
-					container.dispose();
-				});
-
-				container.on("disposed", () => {
-					// We are making an assumption here that the 'disposed' event is the third sent to the ITelemetryConsumer.
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const containerTelemetryFromSpy = telemetryConsumerConsumeSpy.getCalls()[2]!
-						.args[0] as ContainerDisposedTelemetry;
-
-					resolve({
-						actualContainerTelemetry: containerTelemetryFromSpy,
-						expectedContainerTelemetry: {
-							eventName: ContainerTelemetryEventNames.DISPOSED,
-							containerId,
-							// containerInstanceId is a uniquely generated UUID by the fluid-telemetry's ContainerEventTelemetryProducer class.
-							// We can't use the underlying container's id because it is not exposed by IFluidContainer.
-							containerInstanceId: containerTelemetryFromSpy.containerInstanceId,
-						},
+		const { actualContainerTelemetry, expectedContainerTelemetry } =
+			await timeoutPromise<{
+				actualContainerTelemetry: ContainerDisposedTelemetry;
+				expectedContainerTelemetry: ContainerDisposedTelemetry;
+			}>(
+				(resolve, reject) => {
+					// Event handler 1: As soon as the container connects, we're ready to initiate a disconnect.
+					container.on("connected", () => {
+						container.disconnect();
 					});
-				});
-			},
-			{
-				durationMs: 5000,
-				errorMsg:
-					"timeout while waiting for container 'connected' and/or 'disconnected' event",
-			},
-		);
+
+					// Event handler 2: As soon as the container disconnects, we're ready to initiate a dispose.
+					container.on("disconnected", () => {
+						container.dispose();
+					});
+
+					container.on("disposed", () => {
+						// We are making an assumption here that the 'disposed' event is the third sent to the ITelemetryConsumer.
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						const containerTelemetryFromSpy =
+							telemetryConsumerConsumeSpy.getCalls()[2]!
+								.args[0] as ContainerDisposedTelemetry;
+
+						resolve({
+							actualContainerTelemetry: containerTelemetryFromSpy,
+							expectedContainerTelemetry: {
+								eventName: ContainerTelemetryEventNames.DISPOSED,
+								containerId,
+								// containerInstanceId is a uniquely generated UUID by the fluid-telemetry's ContainerEventTelemetryProducer class.
+								// We can't use the underlying container's id because it is not exposed by IFluidContainer.
+								containerInstanceId:
+									containerTelemetryFromSpy.containerInstanceId,
+							},
+						});
+					});
+				},
+				{
+					durationMs: 5000,
+					errorMsg:
+						"timeout while waiting for container 'connected' and/or 'disconnected' event",
+				},
+			);
 
 		expect(expectedContainerTelemetry).to.deep.equal(actualContainerTelemetry);
 		// We won't know what the container containerInstanceId will be but we can still check that it is defined.

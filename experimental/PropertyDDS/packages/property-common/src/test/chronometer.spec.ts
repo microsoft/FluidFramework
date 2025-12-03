@@ -12,49 +12,65 @@ import sinon from "sinon";
 
 import { Chronometer } from "../chronometer";
 
-describe("property-common.Chronometer", function () {
-	it("should exist", function () {
+describe("property-common.Chronometer", () => {
+	it("should exist", () => {
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 		expect(Chronometer).to.exist;
 	});
 
-	describe("elapsed", function () {
-		it("measures milliseconds", function (done) {
+	describe("elapsed", () => {
+		it("measures milliseconds", (done) => {
 			const expectedResultMilliSec = 50;
 			const chrono = new Chronometer();
-			setTimeout(function () {
+			setTimeout(() => {
 				chrono.stop();
-				expect(chrono.elapsedSec()).to.be.at.most((expectedResultMilliSec + 500) / 1000);
-				expect(chrono.elapsedMilliSec()).to.be.at.least(expectedResultMilliSec - 25);
-				expect(chrono.elapsedMilliSec()).to.be.at.most(expectedResultMilliSec + 500);
+				expect(chrono.elapsedSec()).to.be.at.most(
+					(expectedResultMilliSec + 500) / 1000,
+				);
+				expect(chrono.elapsedMilliSec()).to.be.at.least(
+					expectedResultMilliSec - 25,
+				);
+				expect(chrono.elapsedMilliSec()).to.be.at.most(
+					expectedResultMilliSec + 500,
+				);
 				done();
 			}, expectedResultMilliSec);
 		});
 
-		it("measures microseconds", function (done) {
+		it("measures microseconds", (done) => {
 			const expectedResultMilliSec = 10;
 			const chrono = new Chronometer();
-			setTimeout(function () {
+			setTimeout(() => {
 				chrono.stop();
-				expect(chrono.elapsedSec()).to.be.at.most((expectedResultMilliSec + 500) / 1000);
-				expect(chrono.elapsedMicroSec()).to.be.at.least((expectedResultMilliSec - 25) * 1000);
-				expect(chrono.elapsedMicroSec()).to.be.at.most((expectedResultMilliSec + 500) * 1000);
+				expect(chrono.elapsedSec()).to.be.at.most(
+					(expectedResultMilliSec + 500) / 1000,
+				);
+				expect(chrono.elapsedMicroSec()).to.be.at.least(
+					(expectedResultMilliSec - 25) * 1000,
+				);
+				expect(chrono.elapsedMicroSec()).to.be.at.most(
+					(expectedResultMilliSec + 500) * 1000,
+				);
 				done();
 			}, expectedResultMilliSec);
 		});
 
-		it("@flaky measures seconds", function (done) {
+		it("@flaky measures seconds", (done) => {
 			const expectedResultMilliSec = 100;
 			const chrono = new Chronometer();
-			setTimeout(function () {
+			setTimeout(() => {
 				chrono.stop();
-				expect(chrono.elapsedSec()).to.be.at.most(expectedResultMilliSec / 1000 + 50);
-				expect(chrono.elapsedMilliSec()).to.be.at.most(expectedResultMilliSec + 50);
+				expect(chrono.elapsedSec()).to.be.at.most(
+					expectedResultMilliSec / 1000 + 50,
+				);
+				expect(chrono.elapsedMilliSec()).to.be.at.most(
+					expectedResultMilliSec + 50,
+				);
 				done();
 			}, 10);
 		});
 
-		it("times promises", async function () {
+		it("times promises", async () => {
 			const clock = sinon.useFakeTimers();
 			const expectedElapsedMilliSec = 50;
 			const expectedResult = 199999;
@@ -63,12 +79,14 @@ describe("property-common.Chronometer", function () {
 				resolve = _resolve;
 			});
 
-			setTimeout(function () {
+			setTimeout(() => {
 				resolve(expectedResult);
 			}, expectedElapsedMilliSec);
 
-			const expectations: Promise<void> = Chronometer.timePromise(async () => promise)
-				.then(function (timedResult) {
+			const expectations: Promise<void> = Chronometer.timePromise(
+				async () => promise,
+			)
+				.then((timedResult) => {
 					expect(timedResult.chrono.elapsedMilliSec()).to.be.at.least(
 						expectedElapsedMilliSec - 5,
 					);
@@ -83,7 +101,7 @@ describe("property-common.Chronometer", function () {
 					);
 					expect(timedResult.result).to.equal(expectedResult);
 				})
-				.then(function () {
+				.then(() => {
 					clock.restore();
 				});
 
@@ -92,7 +110,7 @@ describe("property-common.Chronometer", function () {
 			return expectations;
 		});
 
-		it("@bugfix Cannot read property '0' of undefined", function (done) {
+		it("@bugfix Cannot read property '0' of undefined", (done) => {
 			let chrono = new Chronometer();
 			// Prior to the bug fix, not stopping the chrono before measuring elapsed time
 			// causes "Cannot read property '0' of undefined":

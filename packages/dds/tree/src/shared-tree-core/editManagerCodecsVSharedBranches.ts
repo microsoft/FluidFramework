@@ -23,12 +23,14 @@ import {
 	JsonCompatibleReadOnlySchema,
 	type Mutable,
 } from "../util/index.js";
-
-import type { SharedBranchSummaryData, SummaryData } from "./editManager.js";
-import { EncodedEditManager } from "./editManagerFormatVSharedBranches.js";
-import { decodeSharedBranch, encodeSharedBranch } from "./editManagerCodecsCommons.js";
-import type { EncodedSharedBranch } from "./editManagerFormatCommons.js";
 import type { BranchId } from "./branch.js";
+import type { SharedBranchSummaryData, SummaryData } from "./editManager.js";
+import {
+	decodeSharedBranch,
+	encodeSharedBranch,
+} from "./editManagerCodecsCommons.js";
+import type { EncodedSharedBranch } from "./editManagerFormatCommons.js";
+import { EncodedEditManager } from "./editManagerFormatVSharedBranches.js";
 
 export interface EditManagerEncodingContext {
 	idCompressor: IIdCompressor;
@@ -68,7 +70,10 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 	> = withSchemaValidation(
 		format,
 		{
-			encode: (data: SummaryData<TChangeset>, context: EditManagerEncodingContext) => {
+			encode: (
+				data: SummaryData<TChangeset>,
+				context: EditManagerEncodingContext,
+			) => {
 				const mainBranch = encodeSharedBranch(
 					changeCodec,
 					revisionTagCodec,
@@ -120,7 +125,10 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 				};
 
 				if (json.branches !== undefined) {
-					const branches = new Map<BranchId, SharedBranchSummaryData<TChangeset>>();
+					const branches = new Map<
+						BranchId,
+						SharedBranchSummaryData<TChangeset>
+					>();
 					for (const branch of json.branches) {
 						const decodedBranch = decodeSharedBranch(
 							changeCodec,
@@ -133,7 +141,10 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 							decodedBranch.id !== undefined,
 							0xc66 /* Shared branches must have an id */,
 						);
-						assert(!branches.has(decodedBranch.id), 0xc67 /* Duplicate shared branch id */);
+						assert(
+							!branches.has(decodedBranch.id),
+							0xc67 /* Duplicate shared branch id */,
+						);
 						branches.set(decodedBranch.id, decodedBranch);
 					}
 

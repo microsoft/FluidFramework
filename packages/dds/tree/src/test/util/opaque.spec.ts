@@ -4,19 +4,19 @@
  */
 
 import type {
+	areSafelyAssignable,
 	Brand,
 	BrandedType,
-	areSafelyAssignable,
 	isAny,
 	isAssignableTo,
 	requireFalse,
 	requireTrue,
 } from "../../util/index.js";
 import {
-	type ExtractFromOpaque,
-	type Opaque,
 	brandOpaque,
+	type ExtractFromOpaque,
 	extractFromOpaque,
+	type Opaque,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import-x/no-internal-modules */
 } from "../../util/opaque.js";

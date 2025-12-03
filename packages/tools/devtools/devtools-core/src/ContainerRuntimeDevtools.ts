@@ -135,7 +135,8 @@ export class DecomposedContainerForContainerRuntime
 	private readonly attachedHandler = (): boolean => this.emit("attached");
 	private readonly connectedHandler = (clientId: string): boolean =>
 		this.emit("connected", clientId);
-	private readonly disconnectedHandler = (): boolean => this.emit("disconnected");
+	private readonly disconnectedHandler = (): boolean =>
+		this.emit("disconnected");
 	private readonly disposedHandler = (): boolean => {
 		// IContainerRuntime emits "dispose" (no error) but we emit "disposed" to match IContainerEvents
 		// Since IContainerRuntime doesn't provide error info, we emit without error parameter
@@ -159,7 +160,9 @@ export class DecomposedContainerForContainerRuntime
 
 	public get connectionState(): ConnectionState {
 		// Normal connection state logic - readonly state is handled separately via readOnlyInfo
-		return this.runtime.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
+		return this.runtime.connected
+			? ConnectionState.Connected
+			: ConnectionState.Disconnected;
 	}
 
 	public get closed(): boolean {

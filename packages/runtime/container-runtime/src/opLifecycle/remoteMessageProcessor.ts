@@ -5,8 +5,8 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	MessageType,
 	type ISequencedDocumentMessage,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 
 import {
@@ -17,8 +17,8 @@ import {
 import { asBatchMetadata } from "../metadata.js";
 
 import type { OpDecompressor } from "./opDecompressor.js";
-import { type OpGroupingManager, isGroupedBatch } from "./opGroupingManager.js";
-import { type OpSplitter, isChunkedMessage } from "./opSplitter.js";
+import { isGroupedBatch, type OpGroupingManager } from "./opGroupingManager.js";
+import { isChunkedMessage, type OpSplitter } from "./opSplitter.js";
 /**
  * Info about the batch we learn when we process the first message
  */
@@ -160,7 +160,10 @@ export class RemoteMessageProcessor {
 
 		if (isGroupedBatch(message)) {
 			// We should be awaiting a new batch (batchInProgress false)
-			assert(!this.batchInProgress, 0x9d3 /* Grouped batch interrupting another batch */);
+			assert(
+				!this.batchInProgress,
+				0x9d3 /* Grouped batch interrupting another batch */,
+			);
 			const batchId = asBatchMetadata(message.metadata)?.batchId;
 			const groupedMessages = this.opGroupingManager
 				.ungroupOp(message)
@@ -198,7 +201,10 @@ export class RemoteMessageProcessor {
 		const batchMetadataFlag = asBatchMetadata(message.metadata)?.batch;
 		if (!this.batchInProgress) {
 			// We are waiting for a new batch
-			assert(batchMetadataFlag !== false, 0x9d5 /* Unexpected batch end marker */);
+			assert(
+				batchMetadataFlag !== false,
+				0x9d5 /* Unexpected batch end marker */,
+			);
 
 			// Start of a new multi-message batch
 			if (batchMetadataFlag === true) {
@@ -229,7 +235,10 @@ export class RemoteMessageProcessor {
 				groupedBatch: false,
 			};
 		}
-		assert(batchMetadataFlag !== true, 0x9d6 /* Unexpected batch start marker */);
+		assert(
+			batchMetadataFlag !== true,
+			0x9d6 /* Unexpected batch start marker */,
+		);
 
 		// Clear batchInProgress state if the batch is ending
 		if (batchMetadataFlag === false) {
@@ -251,7 +260,9 @@ export class RemoteMessageProcessor {
  * becomes a InboundSequencedContainerRuntimeMessage by the time the function returns
  * (but there is no runtime validation of the 'type').
  */
-function unpack(message: ISequencedDocumentMessage): InboundSequencedContainerRuntimeMessage {
+function unpack(
+	message: ISequencedDocumentMessage,
+): InboundSequencedContainerRuntimeMessage {
 	// We assume the contents is an InboundContainerRuntimeMessage (the message is "packed")
 	const contents = message.contents as InboundContainerRuntimeMessage;
 

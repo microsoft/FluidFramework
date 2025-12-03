@@ -6,20 +6,23 @@
 import type { EventEmitterEventType } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import type { ITelemetryBaseProperties, ErasedType } from "@fluidframework/core-interfaces";
+import type {
+	ErasedType,
+	ITelemetryBaseProperties,
+} from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleInternal,
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
-	IChannelServices,
-	IChannelStorageService,
 	IChannel,
 	IChannelAttributes,
 	IChannelFactory,
-	IFluidDataStoreRuntime,
+	IChannelServices,
+	IChannelStorageService,
 	IDeltaHandler,
+	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
 import type {
@@ -27,31 +30,31 @@ import type {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	type IExperimentalIncrementalSummaryContext,
-	type ISummaryTreeWithStats,
-	type ITelemetryContext,
-	type IGarbageCollectionData,
 	blobCountPropertyName,
-	totalBlobSizePropertyName,
+	type IExperimentalIncrementalSummaryContext,
+	type IGarbageCollectionData,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
+	type ISummaryTreeWithStats,
+	type ITelemetryContext,
+	totalBlobSizePropertyName,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	toDeltaManagerInternal,
 	type TelemetryContext,
+	toDeltaManagerInternal,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	type ITelemetryLoggerExt,
+	createChildLogger,
 	DataProcessingError,
 	EventEmitterWithErrorHandling,
-	type MonitoringContext,
-	SampledTelemetryHelper,
-	createChildLogger,
-	loggerToMonitoringContext,
-	tagCodeArtifacts,
 	type ICustomData,
 	type IFluidErrorBase,
+	type ITelemetryLoggerExt,
 	LoggingError,
+	loggerToMonitoringContext,
+	type MonitoringContext,
+	SampledTelemetryHelper,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -130,7 +133,9 @@ export abstract class SharedObjectCore<
 	/**
 	 * Tracks error that closed this object.
 	 */
-	private closeError?: ReturnType<typeof DataProcessingError.wrapIfUnrecognized>;
+	private closeError?: ReturnType<
+		typeof DataProcessingError.wrapIfUnrecognized
+	>;
 
 	/**
 	 * Gets the connection state
@@ -175,7 +180,8 @@ export abstract class SharedObjectCore<
 		});
 		this.mc = loggerToMonitoringContext(this.logger);
 
-		const { opProcessingHelper, callbacksHelper } = this.setUpSampledTelemetryHelpers();
+		const { opProcessingHelper, callbacksHelper } =
+			this.setUpSampledTelemetryHelpers();
 		this.opProcessingHelper = opProcessingHelper;
 		this.callbacksHelper = callbacksHelper;
 	}
@@ -183,7 +189,10 @@ export abstract class SharedObjectCore<
 	/**
 	 * Accessor for `this.runtime`'s {@link @fluidframework/datastore-definitions#IFluidDataStoreRuntime.deltaManager} as a {@link @fluidframework/container-definitions/internal#IDeltaManager}
 	 */
-	protected get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
+	protected get deltaManager(): IDeltaManager<
+		ISequencedDocumentMessage,
+		IDocumentMessage
+	> {
 		return toDeltaManagerInternal(this.runtime.deltaManager);
 	}
 
@@ -194,20 +203,28 @@ export abstract class SharedObjectCore<
 	 * to variables to avoid complaints from TypeScript.
 	 */
 	private setUpSampledTelemetryHelpers(): {
-		opProcessingHelper: SampledTelemetryHelper<void, ProcessTelemetryProperties>;
+		opProcessingHelper: SampledTelemetryHelper<
+			void,
+			ProcessTelemetryProperties
+		>;
 		callbacksHelper: SampledTelemetryHelper<boolean>;
 	} {
 		assert(
 			this.mc !== undefined && this.logger !== undefined,
 			0x349 /* this.mc and/or this.logger has not been set */,
 		);
-		const opProcessingHelper = new SampledTelemetryHelper<void, ProcessTelemetryProperties>(
+		const opProcessingHelper = new SampledTelemetryHelper<
+			void,
+			ProcessTelemetryProperties
+		>(
 			{
 				eventName: "ddsOpProcessing",
 				category: "performance",
 			},
 			this.logger,
-			this.mc.config.getNumber("Fluid.SharedObject.OpProcessingTelemetrySampling") ?? 1000,
+			this.mc.config.getNumber(
+				"Fluid.SharedObject.OpProcessingTelemetrySampling",
+			) ?? 1000,
 			true,
 			new Map<string, ITelemetryBaseProperties>([
 				["local", { localOp: true }],
@@ -220,7 +237,9 @@ export abstract class SharedObjectCore<
 				category: "performance",
 			},
 			this.logger,
-			this.mc.config.getNumber("Fluid.SharedObject.DdsCallbacksTelemetrySampling") ?? 1000,
+			this.mc.config.getNumber(
+				"Fluid.SharedObject.DdsCallbacksTelemetrySampling",
+			) ?? 1000,
 			true,
 		);
 
@@ -262,7 +281,10 @@ export abstract class SharedObjectCore<
 	 * DDS state does not match what user sees. Because of it DDS moves to "corrupted state" and does not
 	 * allow processing of ops or local changes, which very quickly results in container closure.
 	 */
-	private eventListenerErrorHandler(event: EventEmitterEventType, e: unknown): void {
+	private eventListenerErrorHandler(
+		event: EventEmitterEventType,
+		e: unknown,
+	): void {
 		const error = DataProcessingError.wrapIfUnrecognized(
 			e,
 			"SharedObjectEventListenerException",
@@ -277,7 +299,8 @@ export abstract class SharedObjectCore<
 		// Ensure didAttach is only called once, and we only register a single event
 		// but we still call setConnectionState as our existing mocks don't
 		// always propagate connection state
-		this.setBoundAndHandleAttach = () => this.setConnectionState(this.runtime.connected);
+		this.setBoundAndHandleAttach = () =>
+			this.setConnectionState(this.runtime.connected);
 		this._isBoundToContext = true;
 		// eslint-disable-next-line unicorn/consistent-function-scoping
 		const runDidAttach: () => void = () => {
@@ -348,7 +371,10 @@ export abstract class SharedObjectCore<
 	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).isAttached}
 	 */
 	public isAttached(): boolean {
-		return this._isBoundToContext && this.runtime.attachState !== AttachState.Detached;
+		return (
+			this._isBoundToContext &&
+			this.runtime.attachState !== AttachState.Detached
+		);
 	}
 
 	/**
@@ -411,7 +437,9 @@ export abstract class SharedObjectCore<
 	 *
 	 */
 	/* eslint-enable jsdoc/check-indentation */
-	protected abstract processMessagesCore(messagesCollection: IRuntimeMessageCollection): void;
+	protected abstract processMessagesCore(
+		messagesCollection: IRuntimeMessageCollection,
+	): void;
 
 	/**
 	 * Called when the object has disconnected from the delta stream.
@@ -432,7 +460,10 @@ export abstract class SharedObjectCore<
 	 * and not sent to the server. This will be sent back when this message is received back from the server. This is
 	 * also sent if we are asked to resubmit the message.
 	 */
-	protected submitLocalMessage(content: unknown, localOpMetadata: unknown = undefined): void {
+	protected submitLocalMessage(
+		content: unknown,
+		localOpMetadata: unknown = undefined,
+	): void {
 		this.verifyNotClosed();
 		if (this.isAttached()) {
 			// NOTE: We may also be encoding in the ContainerRuntime layer.
@@ -492,7 +523,9 @@ export abstract class SharedObjectCore<
 			loggerToMonitoringContext(this.logger).config.getBoolean(
 				"Fluid.SharedObject.AllowStagingModeWithoutSquashing",
 			) ??
-			(this.runtime.options.allowStagingModeWithoutSquashing as boolean | undefined) ??
+			(this.runtime.options.allowStagingModeWithoutSquashing as
+				| boolean
+				| undefined) ??
 			true;
 		if (allowStagingModeWithoutSquashing) {
 			this.reSubmitCore(content, localOpMetadata);
@@ -517,7 +550,9 @@ export abstract class SharedObjectCore<
 		return new Promise<T>((resolve, reject) => {
 			rejectBecauseDispose = () =>
 				reject(
-					new Error("FluidDataStoreRuntime disposed while this ack-based Promise was pending"),
+					new Error(
+						"FluidDataStoreRuntime disposed while this ack-based Promise was pending",
+					),
 				);
 
 			if (this.runtime.disposed) {
@@ -547,7 +582,11 @@ export abstract class SharedObjectCore<
 			setConnectionState: (connected: boolean) => {
 				this.setConnectionState(connected);
 			},
-			reSubmit: (content: unknown, localOpMetadata: unknown, squash?: boolean) => {
+			reSubmit: (
+				content: unknown,
+				localOpMetadata: unknown,
+				squash?: boolean,
+			) => {
 				this.reSubmit(content, localOpMetadata, squash);
 			},
 			applyStashedOp: (content: unknown): void => {
@@ -609,7 +648,11 @@ export abstract class SharedObjectCore<
 
 		// Decode any handles in the contents before processing the messages.
 		const decodedMessagesContent: IRuntimeMessagesContent[] = [];
-		for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
+		for (const {
+			contents,
+			localOpMetadata,
+			clientSequenceNumber,
+		} of messagesContent) {
 			const decodedMessageContent: IRuntimeMessagesContent = {
 				contents: parseHandles(contents, this.serializer),
 				localOpMetadata,
@@ -639,7 +682,8 @@ export abstract class SharedObjectCore<
 				};
 				this.processMessagesCore(decodedMessagesCollection);
 				const telemetryProperties: ProcessTelemetryProperties = {
-					sequenceDifference: envelope.sequenceNumber - envelope.referenceSequenceNumber,
+					sequenceDifference:
+						envelope.sequenceNumber - envelope.referenceSequenceNumber,
 				};
 				return {
 					customData: telemetryProperties,
@@ -658,7 +702,11 @@ export abstract class SharedObjectCore<
 	 * @param squash - Optional. If `true`, the message will be resubmitted in a squashed form. If `undefined` or `false`,
 	 * the legacy behavior (no squashing) will be used. Defaults to `false` for backward compatibility.
 	 */
-	private reSubmit(content: unknown, localOpMetadata: unknown, squash?: boolean): void {
+	private reSubmit(
+		content: unknown,
+		localOpMetadata: unknown,
+		squash?: boolean,
+	): void {
 		// Back-compat: squash argument may not be provided by container-runtime layer.
 		// Default to previous behavior (no squash).
 		if (squash ?? false) {
@@ -718,7 +766,10 @@ export abstract class SharedObjectCore<
 	 * @param args - Arguments for the event
 	 * @returns Whatever `super.emit()` returns.
 	 */
-	private emitInternal(event: EventEmitterEventType, ...args: unknown[]): boolean {
+	private emitInternal(
+		event: EventEmitterEventType,
+		...args: unknown[]
+	): boolean {
 		return super.emit(event, ...args);
 	}
 
@@ -851,7 +902,9 @@ export abstract class SharedObject<
 
 		let gcData: IGarbageCollectionData;
 		try {
-			const handleVisitor = new GCHandleVisitor(this.runtime.channelsRoutingContext);
+			const handleVisitor = new GCHandleVisitor(
+				this.runtime.channelsRoutingContext,
+			);
 			this.processGCDataCore(handleVisitor);
 			// The GC data for this shared object contains a single GC node. The outbound routes of this node are the
 			// routes of handles serialized during summarization.
@@ -911,7 +964,11 @@ export abstract class SharedObject<
 				this.telemetryContextPrefix,
 				propertyName,
 			) ?? 0) as number;
-			telemetryContext.set(this.telemetryContextPrefix, propertyName, prevTotal + incrementBy);
+			telemetryContext.set(
+				this.telemetryContextPrefix,
+				propertyName,
+				prevTotal + incrementBy,
+			);
 		}
 	}
 }
@@ -997,7 +1054,9 @@ export interface SharedObjectKind<out TSharedObject = unknown>
  * @internal
  */
 export function createSharedObjectKind<TSharedObject>(
-	factory: (new () => IChannelFactory<TSharedObject>) & { readonly Type: string },
+	factory: (new () => IChannelFactory<TSharedObject>) & {
+		readonly Type: string;
+	},
 ): ISharedObjectKind<TSharedObject> & SharedObjectKind<TSharedObject> {
 	const result: ISharedObjectKind<TSharedObject> &
 		Omit<SharedObjectKind<TSharedObject>, "brand"> = {

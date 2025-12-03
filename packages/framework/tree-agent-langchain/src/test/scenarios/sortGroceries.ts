@@ -4,7 +4,11 @@
  */
 
 import { Grocery, GroceryList } from "../domains/index.js";
-import { scoreSymbol, type LLMIntegrationTest, type ScorableVerboseTree } from "../utils.js";
+import {
+	type LLMIntegrationTest,
+	type ScorableVerboseTree,
+	scoreSymbol,
+} from "../utils.js";
 
 const alphabeticalGroceries = [
 	{ name: "Apples", price: 1.49, purchased: false },
@@ -19,11 +23,17 @@ const alphabeticalGroceries = [
 	{ name: "Jam", price: 4.59, purchased: false },
 ] as const;
 
-const priceSortedGroceries = [...alphabeticalGroceries].sort((a, b) => a.price - b.price);
+const priceSortedGroceries = [...alphabeticalGroceries].sort(
+	(a, b) => a.price - b.price,
+);
 
 const expected: ScorableVerboseTree = {
 	[scoreSymbol]: (actual): number => {
-		if (typeof actual !== "object" || actual === null || !Array.isArray(actual.fields)) {
+		if (
+			typeof actual !== "object" ||
+			actual === null ||
+			!Array.isArray(actual.fields)
+		) {
 			return 0;
 		}
 		if (actual.fields.length !== priceSortedGroceries.length) {
@@ -35,14 +45,22 @@ const expected: ScorableVerboseTree = {
 			if (expectedItem === undefined) {
 				return 0;
 			}
-			if (typeof node !== "object" || node === null || Array.isArray(node.fields)) {
+			if (
+				typeof node !== "object" ||
+				node === null ||
+				Array.isArray(node.fields)
+			) {
 				return 0;
 			}
 			if (node.type !== "com.microsoft.fluid.tree-agent.groceries.Grocery") {
 				return 0;
 			}
 			const nodeFields = node.fields;
-			if (typeof nodeFields !== "object" || nodeFields === null || Array.isArray(nodeFields)) {
+			if (
+				typeof nodeFields !== "object" ||
+				nodeFields === null ||
+				Array.isArray(nodeFields)
+			) {
 				return 0;
 			}
 			if (nodeFields.name !== expectedItem.name) {
@@ -72,6 +90,7 @@ export const sortGroceriesTest = {
 	prompt: "Please sort the groceries array by price from lowest to highest.",
 	expected,
 	options: {
-		domainHints: "You manage a grocery list to help a user with his or her shopping.",
+		domainHints:
+			"You manage a grocery list to help a user with his or her shopping.",
 	},
 } as const satisfies LLMIntegrationTest<typeof GroceryList>;

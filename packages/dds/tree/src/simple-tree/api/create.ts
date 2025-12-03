@@ -9,26 +9,29 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	CursorLocationType,
 	forbiddenFieldKindIdentifier,
+	type ITreeCursorSynchronous,
 	mapCursorField,
 	mapCursorFields,
-	type ITreeCursorSynchronous,
 	type SchemaAndPolicy,
 	type TreeFieldStoredSchema,
 } from "../../core/index.js";
-import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../fieldSchema.js";
-import {
-	type Context,
-	getOrCreateNodeFromInnerNode,
-	type Unhydrated,
-	UnhydratedFlexTreeNode,
-	createField,
-} from "../core/index.js";
 import {
 	defaultSchemaPolicy,
 	isFieldInSchema,
 	throwOutOfSchema,
 } from "../../feature-libraries/index.js";
+import {
+	type Context,
+	createField,
+	getOrCreateNodeFromInnerNode,
+	type Unhydrated,
+	UnhydratedFlexTreeNode,
+} from "../core/index.js";
 import { getUnhydratedContext } from "../createContext.js";
+import type {
+	ImplicitFieldSchema,
+	TreeFieldFromImplicitField,
+} from "../fieldSchema.js";
 import { unknownTypeError } from "./customTree.js";
 
 /**
@@ -44,8 +47,12 @@ export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
 	contextForNewNodes?: Context,
 ): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 	const context = contextForNewNodes ?? getUnhydratedContext(schema);
-	assert(context.flexContext.isHydrated() === false, 0xbfe /* Expected unhydrated context */);
-	const mapTrees = cursor === undefined ? [] : [unhydratedFlexTreeFromCursor(context, cursor)];
+	assert(
+		context.flexContext.isHydrated() === false,
+		0xbfe /* Expected unhydrated context */,
+	);
+	const mapTrees =
+		cursor === undefined ? [] : [unhydratedFlexTreeFromCursor(context, cursor)];
 
 	const schemaAndPolicy: SchemaAndPolicy = {
 		policy: defaultSchemaPolicy,
@@ -53,7 +60,12 @@ export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
 	};
 
 	// Assuming the caller provides the correct `contextForNewNodes`, this should handle unknown optional fields.
-	isFieldInSchema(mapTrees, destinationSchema, schemaAndPolicy, throwOutOfSchema);
+	isFieldInSchema(
+		mapTrees,
+		destinationSchema,
+		schemaAndPolicy,
+		throwOutOfSchema,
+	);
 
 	if (mapTrees.length === 0) {
 		return undefined as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
@@ -80,10 +92,14 @@ export function unhydratedFlexTreeFromCursor(
 	context: Context,
 	cursor: ITreeCursorSynchronous,
 ): UnhydratedFlexTreeNode {
-	assert(cursor.mode === CursorLocationType.Nodes, 0xbb4 /* Expected nodes cursor */);
+	assert(
+		cursor.mode === CursorLocationType.Nodes,
+		0xbb4 /* Expected nodes cursor */,
+	);
 	const identifier = cursor.type;
 	const storedSchema =
-		context.flexContext.schema.nodeSchema.get(identifier) ?? unknownTypeError(identifier);
+		context.flexContext.schema.nodeSchema.get(identifier) ??
+		unknownTypeError(identifier);
 
 	const fields = new Map(
 		mapCursorFields(cursor, () => {
@@ -105,7 +121,9 @@ export function unhydratedFlexTreeFromCursor(
 					context.flexContext,
 					fieldSchema.kind,
 					cursor.getFieldKey(),
-					mapCursorField(cursor, () => unhydratedFlexTreeFromCursor(context, cursor)),
+					mapCursorField(cursor, () =>
+						unhydratedFlexTreeFromCursor(context, cursor),
+					),
 				),
 			];
 		}),

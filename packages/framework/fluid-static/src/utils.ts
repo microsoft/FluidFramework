@@ -4,7 +4,10 @@
  */
 
 import type { DataObjectKind } from "@fluidframework/aqueduct/internal";
-import type { FluidObjectKeys, IFluidLoadable } from "@fluidframework/core-interfaces";
+import type {
+	FluidObjectKeys,
+	IFluidLoadable,
+} from "@fluidframework/core-interfaces";
 import { oob } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelFactory,
@@ -53,7 +56,8 @@ export function isDataObjectKind(
 
 	if (
 		isDataObject ===
-		((obj as Partial<ISharedObjectKind<IFluidLoadable>>).getFactory !== undefined)
+		((obj as Partial<ISharedObjectKind<IFluidLoadable>>).getFactory !==
+			undefined)
 	) {
 		// TODO: Currently nothing in the types or docs requires an actual DataObjectClass to not have a member called "getFactory" so there is a risk of this being a false positive.
 		// Refactoring the use of LoadableObjectClass such that explicit down casting is not required (for example by having a single factory API shared by both cases) could avoid problems like this.
@@ -158,7 +162,9 @@ export const compatibilityModeToMinVersionForCollab = {
  * Determines if the provided schema is a valid tree-based container schema.
  * @internal
  */
-export function isTreeContainerSchema(schema: ContainerSchema): schema is TreeContainerSchema {
+export function isTreeContainerSchema(
+	schema: ContainerSchema,
+): schema is TreeContainerSchema {
 	const schemaEntries = Object.entries(schema.initialObjects);
 	if (schemaEntries.length !== 1) {
 		return false;

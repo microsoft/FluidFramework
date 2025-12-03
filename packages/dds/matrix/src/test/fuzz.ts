@@ -5,16 +5,25 @@
 
 import { strict as assert } from "node:assert";
 
-import type { AsyncGenerator, Generator } from "@fluid-private/stochastic-test-utils";
+import type {
+	AsyncGenerator,
+	Generator,
+} from "@fluid-private/stochastic-test-utils";
 import {
 	combineReducers,
 	createWeightedGenerator,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
-import type { DDSFuzzTestState, DDSFuzzModel } from "@fluid-private/test-dds-utils";
+import type {
+	DDSFuzzModel,
+	DDSFuzzTestState,
+} from "@fluid-private/test-dds-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
-import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import {
+	isFluidHandle,
+	toFluidHandleInternal,
+} from "@fluidframework/runtime-utils/internal";
 
 import type { MatrixItem } from "../ops.js";
 import { SharedMatrix, type SharedMatrixFactory } from "../runtime.js";
@@ -78,13 +87,21 @@ async function assertMatricesAreEquivalent<T>(
 		b.colCount,
 		`${a.id} and ${b.id} have different number of columns.`,
 	);
-	assert.equal(a.rowCount, b.rowCount, `${a.id} and ${b.id} have different number of rows.`);
+	assert.equal(
+		a.rowCount,
+		b.rowCount,
+		`${a.id} and ${b.id} have different number of rows.`,
+	);
 	for (let row = 0; row < a.rowCount; row++) {
 		for (let col = 0; col < a.colCount; col++) {
 			const aVal = a.getCell(row, col);
 			const bVal = b.getCell(row, col);
-			const aHandle = isFluidHandle(aVal) ? toFluidHandleInternal(aVal).absolutePath : aVal;
-			const bHandle = isFluidHandle(bVal) ? toFluidHandleInternal(bVal).absolutePath : bVal;
+			const aHandle = isFluidHandle(aVal)
+				? toFluidHandleInternal(aVal).absolutePath
+				: aVal;
+			const bHandle = isFluidHandle(bVal)
+				? toFluidHandleInternal(bVal).absolutePath
+				: bVal;
 			assert.deepEqual(
 				aHandle,
 				bHandle,
@@ -207,8 +224,16 @@ function makeGenerator(
 		],
 		[insertRows, insertRowsWeight],
 		[insertCols, insertColsWeight],
-		[removeRows, removeRowsWeight, (state): boolean => state.client.channel.rowCount > 0],
-		[removeCols, removeColsWeight, (state): boolean => state.client.channel.colCount > 0],
+		[
+			removeRows,
+			removeRowsWeight,
+			(state): boolean => state.client.channel.rowCount > 0,
+		],
+		[
+			removeCols,
+			removeColsWeight,
+			(state): boolean => state.client.channel.colCount > 0,
+		],
 		[
 			switchSetCellPolicy,
 			switchSetCellPolicyWeight,

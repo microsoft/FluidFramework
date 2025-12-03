@@ -3,13 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	fail,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 
 import {
 	type ChangeAtomId,
+	offsetChangeAtomId,
 	type RevisionMetadataSource,
 	type RevisionTag,
-	offsetChangeAtomId,
 } from "../../core/index.js";
 import type { IdAllocator } from "../../util/index.js";
 import {
@@ -23,14 +27,14 @@ import type { MoveMarkEffect } from "./helperTypes.js";
 import { MarkListFactory } from "./markListFactory.js";
 import { MarkQueue } from "./markQueue.js";
 import {
-	type MoveEffect,
-	type MoveEffectTable,
 	getCrossFieldTargetFromMove,
 	getMoveEffect,
 	getMoveIn,
 	isMoveIn,
 	isMoveMark,
 	isMoveOut,
+	type MoveEffect,
+	type MoveEffectTable,
 	setMoveEffect,
 } from "./moveEffectTable.js";
 import {
@@ -46,11 +50,11 @@ import {
 	NoopMarkType,
 } from "./types.js";
 import {
-	CellOrder,
 	areEqualCellIds,
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
 	asAttachAndDetach,
+	CellOrder,
 	cellSourcesFromMarks,
 	compareCellPositionsUsingTombstones,
 	extractMarkEffect,
@@ -110,7 +114,12 @@ function composeMarkLists(
 	revisionMetadata: RevisionMetadataSource,
 ): MarkList {
 	const factory = new MarkListFactory();
-	const queue = new ComposeQueue(baseMarkList, newMarkList, moveEffects, revisionMetadata);
+	const queue = new ComposeQueue(
+		baseMarkList,
+		newMarkList,
+		moveEffects,
+		revisionMetadata,
+	);
 	while (!queue.isEmpty()) {
 		const { baseMark, newMark } = queue.pop();
 		if (newMark === undefined) {
@@ -167,10 +176,18 @@ function composeMarks(
 	composeChild: NodeChangeComposer,
 	moveEffects: MoveEffectTable,
 ): Mark {
-	const nodeChange = handleNodeChanges(baseMark, newMark, composeChild, moveEffects);
+	const nodeChange = handleNodeChanges(
+		baseMark,
+		newMark,
+		composeChild,
+		moveEffects,
+	);
 
 	return withUpdatedEndpoint(
-		withNodeChange(composeMarksIgnoreChild(baseMark, newMark, moveEffects), nodeChange),
+		withNodeChange(
+			composeMarksIgnoreChild(baseMark, newMark, moveEffects),
+			nodeChange,
+		),
 		baseMark.count,
 		moveEffects,
 	);
@@ -202,7 +219,10 @@ function composeMarksIgnoreChild(
 		);
 		return isDetach(baseMark)
 			? { ...baseMark, idOverride: newMark.idOverride }
-			: { ...baseMark, detach: { ...baseMark.detach, idOverride: newMark.idOverride } };
+			: {
+					...baseMark,
+					detach: { ...baseMark.detach, idOverride: newMark.idOverride },
+				};
 	}
 
 	if (isImpactfulCellRename(newMark)) {
@@ -220,7 +240,10 @@ function composeMarksIgnoreChild(
 				count: baseMark.count,
 			};
 
-			if (isMoveIn(newAttachAndDetach.attach) && isMoveOut(newAttachAndDetach.detach)) {
+			if (
+				isMoveIn(newAttachAndDetach.attach) &&
+				isMoveOut(newAttachAndDetach.detach)
+			) {
 				assert(isMoveOut(baseMark), 0x808 /* Unexpected mark type */);
 
 				// The base changeset and new changeset both move these nodes.
@@ -284,7 +307,10 @@ function composeMarksIgnoreChild(
 			handleMovePivot(baseMark.count, originalAttach, finalDetach, moveEffects);
 
 			if (areEqualCellIds(newOutputId, baseAttachAndDetach.cellId)) {
-				return { count: baseAttachAndDetach.count, cellId: baseAttachAndDetach.cellId };
+				return {
+					count: baseAttachAndDetach.count,
+					cellId: baseAttachAndDetach.cellId,
+				};
 			}
 
 			// `newMark`'s attach portion cancels with `baseMark`'s detach portion.
@@ -293,7 +319,12 @@ function composeMarksIgnoreChild(
 				finalDetach.revision = detachRevision;
 			}
 
-			return normalizeCellRename(baseMark.cellId, baseMark.count, originalAttach, finalDetach);
+			return normalizeCellRename(
+				baseMark.cellId,
+				baseMark.count,
+				originalAttach,
+				finalDetach,
+			);
 		}
 
 		return normalizeCellRename(
@@ -315,7 +346,10 @@ function composeMarksIgnoreChild(
 				baseAttachAndDetach.attach.revision,
 			);
 
-			if (isMoveIn(baseAttachAndDetach.attach) && isMoveOut(baseAttachAndDetach.detach)) {
+			if (
+				isMoveIn(baseAttachAndDetach.attach) &&
+				isMoveOut(baseAttachAndDetach.detach)
+			) {
 				assert(isMoveIn(newMark), 0x809 /* Unexpected mark type */);
 
 				const originalAttachId = {
@@ -403,7 +437,13 @@ function handleMovePivot(
 		const finalSource = getEndpoint(baseAttach);
 		const finalDest = getEndpoint(newDetach);
 
-		setEndpoint(moveEffects, CrossFieldTarget.Source, finalSource, count, finalDest);
+		setEndpoint(
+			moveEffects,
+			CrossFieldTarget.Source,
+			finalSource,
+			count,
+			finalDest,
+		);
 
 		const truncatedEndpoint1 = getTruncatedEndpointForInner(
 			moveEffects,
@@ -423,7 +463,13 @@ function handleMovePivot(
 			);
 		}
 
-		setEndpoint(moveEffects, CrossFieldTarget.Destination, finalDest, count, finalSource);
+		setEndpoint(
+			moveEffects,
+			CrossFieldTarget.Destination,
+			finalDest,
+			count,
+			finalSource,
+		);
 
 		const truncatedEndpoint2 = getTruncatedEndpointForInner(
 			moveEffects,
@@ -457,7 +503,10 @@ function createNoopMark(
 ): Mark {
 	const mark: CellMark<NoopMark> = { count: length };
 	if (nodeChange !== undefined) {
-		assert(length === 1, 0x692 /* A mark with a node change must have length one */);
+		assert(
+			length === 1,
+			0x692 /* A mark with a node change must have length one */,
+		);
 		mark.changes = nodeChange;
 	}
 	if (cellId !== undefined) {
@@ -502,7 +551,8 @@ function composeMark<TMark extends Mark>(
 	moveEffects: MoveEffectTable,
 	composeChild: (node: NodeId) => NodeId | undefined,
 ): TMark {
-	const nodeChanges = mark.changes !== undefined ? composeChild(mark.changes) : undefined;
+	const nodeChanges =
+		mark.changes !== undefined ? composeChild(mark.changes) : undefined;
 	const updatedMark = withUpdatedEndpoint(mark, mark.count, moveEffects);
 	return withNodeChange(updatedMark, nodeChanges);
 }
@@ -521,7 +571,10 @@ export class ComposeQueue {
 	) {
 		this.baseMarks = new MarkQueue(baseMarks, moveEffects);
 		this.newMarks = new MarkQueue(newMarks, moveEffects);
-		this.baseMarksCellSources = cellSourcesFromMarks(baseMarks, getOutputCellId);
+		this.baseMarksCellSources = cellSourcesFromMarks(
+			baseMarks,
+			getOutputCellId,
+		);
 		this.newMarksCellSources = cellSourcesFromMarks(newMarks, getInputCellId);
 	}
 
@@ -540,7 +593,8 @@ export class ComposeQueue {
 			return this.dequeueBase();
 		} else if (areOutputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
 			const baseCellId: ChangeAtomId =
-				getOutputCellId(baseMark) ?? fail(0xb29 /* Expected defined output ID */);
+				getOutputCellId(baseMark) ??
+				fail(0xb29 /* Expected defined output ID */);
 
 			if (markEmptiesCells(baseMark) && baseCellId.revision === undefined) {
 				// The base revision should always be defined except when squashing changes into a transaction.
@@ -555,7 +609,10 @@ export class ComposeQueue {
 			}
 
 			const newCellId = getInputCellId(newMark);
-			assert(newCellId !== undefined, 0x89d /* Both marks should have cell IDs */);
+			assert(
+				newCellId !== undefined,
+				0x89d /* Both marks should have cell IDs */,
+			);
 			const comparison = compareCellPositionsUsingTombstones(
 				baseCellId,
 				newCellId,
@@ -589,13 +646,21 @@ export class ComposeQueue {
 			this.moveEffects.onMoveIn(movedChanges);
 		}
 
-		const newMark = createNoopMark(baseMark.count, movedChanges, getOutputCellId(baseMark));
+		const newMark = createNoopMark(
+			baseMark.count,
+			movedChanges,
+			getOutputCellId(baseMark),
+		);
 		return { baseMark, newMark };
 	}
 
 	private dequeueNew(length: number = Number.POSITIVE_INFINITY): ComposeMarks {
 		const newMark = this.newMarks.dequeueUpTo(length);
-		const baseMark = createNoopMark(newMark.count, undefined, getInputCellId(newMark));
+		const baseMark = createNoopMark(
+			newMark.count,
+			undefined,
+			getInputCellId(newMark),
+		);
 
 		return {
 			baseMark,
@@ -610,7 +675,10 @@ export class ComposeQueue {
 		const movedChanges = getMovedChangesFromMark(this.moveEffects, baseMark);
 
 		if (movedChanges !== undefined) {
-			assert(newMark.changes === undefined, 0x8da /* Unexpected node changeset collision */);
+			assert(
+				newMark.changes === undefined,
+				0x8da /* Unexpected node changeset collision */,
+			);
 			newMark = withNodeChange(newMark, movedChanges);
 		}
 
@@ -680,7 +748,9 @@ function setModifyAfter(
 	const count = 1;
 	const effect = getMoveEffect(moveEffects, target, revision, id, count, false);
 	const newEffect: MoveEffect =
-		effect.value !== undefined ? { ...effect.value, modifyAfter } : { modifyAfter };
+		effect.value !== undefined
+			? { ...effect.value, modifyAfter }
+			: { modifyAfter };
 	setMoveEffect(moveEffects, target, revision, id, count, newEffect);
 }
 
@@ -691,9 +761,24 @@ function setEndpoint(
 	count: number,
 	endpoint: ChangeAtomId,
 ): void {
-	const effect = getMoveEffect(moveEffects, target, id.revision, id.localId, count, false);
-	const newEffect = effect.value !== undefined ? { ...effect.value, endpoint } : { endpoint };
-	setMoveEffect(moveEffects, target, id.revision, id.localId, effect.length, newEffect);
+	const effect = getMoveEffect(
+		moveEffects,
+		target,
+		id.revision,
+		id.localId,
+		count,
+		false,
+	);
+	const newEffect =
+		effect.value !== undefined ? { ...effect.value, endpoint } : { endpoint };
+	setMoveEffect(
+		moveEffects,
+		target,
+		id.revision,
+		id.localId,
+		effect.length,
+		newEffect,
+	);
 
 	const remainingCount = count - effect.length;
 	if (remainingCount > 0) {
@@ -714,13 +799,26 @@ function setTruncatedEndpoint(
 	count: number,
 	truncatedEndpoint: ChangeAtomId,
 ): void {
-	const effect = getMoveEffect(moveEffects, target, id.revision, id.localId, count);
+	const effect = getMoveEffect(
+		moveEffects,
+		target,
+		id.revision,
+		id.localId,
+		count,
+	);
 	const newEffect =
 		effect.value !== undefined
 			? { ...effect.value, truncatedEndpoint }
 			: { truncatedEndpoint };
 
-	setMoveEffect(moveEffects, target, id.revision, id.localId, effect.length, newEffect);
+	setMoveEffect(
+		moveEffects,
+		target,
+		id.revision,
+		id.localId,
+		effect.length,
+		newEffect,
+	);
 
 	const remainingCount = count - effect.length;
 	if (remainingCount > 0) {
@@ -741,12 +839,25 @@ function setTruncatedEndpointForInner(
 	count: number,
 	truncatedEndpointForInner: ChangeAtomId,
 ): void {
-	const effect = getMoveEffect(moveEffects, target, id.revision, id.localId, count);
+	const effect = getMoveEffect(
+		moveEffects,
+		target,
+		id.revision,
+		id.localId,
+		count,
+	);
 	const newEffect =
 		effect.value !== undefined
 			? { ...effect.value, truncatedEndpointForInner }
 			: { truncatedEndpointForInner };
-	setMoveEffect(moveEffects, target, id.revision, id.localId, effect.length, newEffect);
+	setMoveEffect(
+		moveEffects,
+		target,
+		id.revision,
+		id.localId,
+		effect.length,
+		newEffect,
+	);
 
 	const remainingCount = count - effect.length;
 	if (remainingCount > 0) {
@@ -794,8 +905,13 @@ function withUpdatedEndpoint<TMark extends MarkEffect>(
 	return output;
 }
 
-function changeFinalEndpoint(mark: MoveMarkEffect, endpoint: ChangeAtomId): void {
-	if (areEqualCellIds(endpoint, { revision: mark.revision, localId: mark.id })) {
+function changeFinalEndpoint(
+	mark: MoveMarkEffect,
+	endpoint: ChangeAtomId,
+): void {
+	if (
+		areEqualCellIds(endpoint, { revision: mark.revision, localId: mark.id })
+	) {
 		delete mark.finalEndpoint;
 	} else {
 		mark.finalEndpoint = endpoint;
@@ -810,7 +926,10 @@ function getComposedEndpoint(
 	count: number,
 ): ChangeAtomId | undefined {
 	const effect = getMoveEffect(moveEffects, target, revision, id, count);
-	assert(effect.length === count, 0x815 /* Expected effect to cover entire mark */);
+	assert(
+		effect.length === count,
+		0x815 /* Expected effect to cover entire mark */,
+	);
 	return effect.value?.truncatedEndpoint ?? effect.value?.endpoint;
 }
 
@@ -822,6 +941,9 @@ function getTruncatedEndpointForInner(
 	count: number,
 ): ChangeAtomId | undefined {
 	const effect = getMoveEffect(moveEffects, target, revision, id, count);
-	assert(effect.length === count, 0x934 /* Expected effect to cover entire mark */);
+	assert(
+		effect.length === count,
+		0x934 /* Expected effect to cover entire mark */,
+	);
 	return effect.value?.truncatedEndpointForInner;
 }

@@ -41,9 +41,12 @@ export interface ISingleHandleItem {
 }
 
 function createSingleHandleItem(subFactory: IFluidDataStoreFactory) {
-	return async (context: IFluidDataStoreContext): Promise<ISingleHandleItem> => {
+	return async (
+		context: IFluidDataStoreContext,
+	): Promise<ISingleHandleItem> => {
 		const packagePath = [...context.packagePath, subFactory.type];
-		const dataStore = await context.containerRuntime.createDataStore(packagePath);
+		const dataStore =
+			await context.containerRuntime.createDataStore(packagePath);
 		return {
 			handle: dataStore.entryPoint as IFluidHandle,
 		};
@@ -74,7 +77,9 @@ const getCollaborativeTextView = async (
 ): Promise<React.ReactElement> => {
 	const handle = serializableObject.handle as IFluidHandle<CollaborativeText>;
 	const collaborativeText = await handle.get();
-	return React.createElement(CollaborativeTextView, { text: collaborativeText.text });
+	return React.createElement(CollaborativeTextView, {
+		text: collaborativeText.text,
+	});
 };
 
 const getProseMirrorView = async (
@@ -92,7 +97,10 @@ const getSliderCoordinateView = async (
 ): Promise<React.ReactElement> => {
 	const handle = serializableObject.handle as IFluidHandle<Coordinate>;
 	const model = await handle.get();
-	return React.createElement(SliderCoordinateView, { label: "Coordinate", model });
+	return React.createElement(SliderCoordinateView, {
+		label: "Coordinate",
+		model,
+	});
 };
 
 /**
@@ -145,15 +153,16 @@ const sliderCoordinateItemEntry: IDataObjectGridItemEntry<ISingleHandleItem> = {
 /**
  * The registry for our app, containing the options for data objects that can be inserted into the grid.
  */
-export const dataObjectRegistry = new Map<string, IDataObjectGridItemEntry<ISingleHandleItem>>(
-	[
-		["clicker", clickerItemEntry],
-		["codemirror", codemirrorItemEntry],
-		["textbox", textboxItemEntry],
-		["prosemirror", prosemirrorItemEntry],
-		["slider-coordinate", sliderCoordinateItemEntry],
-	],
-);
+export const dataObjectRegistry = new Map<
+	string,
+	IDataObjectGridItemEntry<ISingleHandleItem>
+>([
+	["clicker", clickerItemEntry],
+	["codemirror", codemirrorItemEntry],
+	["textbox", textboxItemEntry],
+	["prosemirror", prosemirrorItemEntry],
+	["slider-coordinate", sliderCoordinateItemEntry],
+]);
 
 /**
  * The registry entries the container runtime will use to instantiate the data stores.

@@ -5,14 +5,14 @@
 
 import {
 	SharedTree as LegacySharedTree,
-	MigrationShim,
+	type MigrationShim,
 	MigrationShimFactory,
-	SharedTreeShim,
+	type SharedTreeShim,
 	SharedTreeShimFactory,
 } from "@fluid-experimental/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ITree } from "@fluidframework/tree";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { ITree } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/legacy";
 
 import type {
@@ -69,7 +69,10 @@ const migrationShimFactory = new MigrationShimFactory(
 );
 const newTreeShimFactory = new SharedTreeShimFactory(newTreeFactory);
 
-export class InventoryList extends DataObject implements IInventoryList, IMigrateBackingData {
+export class InventoryList
+	extends DataObject
+	implements IInventoryList, IMigrateBackingData
+{
 	private _model: IInventoryList | undefined;
 	private _writeOk: boolean | undefined;
 	private _shim: MigrationShim | SharedTreeShim | undefined;

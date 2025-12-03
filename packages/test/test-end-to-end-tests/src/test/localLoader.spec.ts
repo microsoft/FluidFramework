@@ -3,27 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { IDataObjectProps } from "@fluidframework/aqueduct/internal";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type {
+	IContainer,
+	IFluidCodeDetails,
+} from "@fluidframework/container-definitions/internal";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter/internal";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
-import { SharedStringClass, type SharedString } from "@fluidframework/sequence/internal";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import {
-	ITestFluidObject,
-	ITestObjectProvider,
-	LoaderContainerTracker,
-	TestFluidObjectFactory,
+	type SharedString,
+	SharedStringClass,
+} from "@fluidframework/sequence/internal";
+import {
 	createAndAttachContainer,
 	createDocumentId,
 	createLoader,
+	type ITestFluidObject,
+	type ITestObjectProvider,
+	LoaderContainerTracker,
+	TestFluidObjectFactory,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import { strict as assert } from "assert";
 
 const counterKey = "count";
 
@@ -81,7 +86,8 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 
 		protected async hasInitialized() {
-			const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
+			const counterHandle =
+				this.root.get<IFluidHandle<SharedCounter>>(counterKey);
 			assert(counterHandle);
 			this.counter = await counterHandle.get();
 		}
@@ -158,7 +164,10 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 
 		beforeEach("setup", async () => {
 			const documentId = createDocumentId();
-			const container = await createContainer(documentId, testDataObjectFactory);
+			const container = await createContainer(
+				documentId,
+				testDataObjectFactory,
+			);
 			dataObject = (await container.getEntryPoint()) as TestDataObject;
 		});
 
@@ -175,7 +184,10 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 			const documentId = createDocumentId();
 
 			// Create / load both instance of TestDataObject before applying ops.
-			const container1 = await createContainer(documentId, testDataObjectFactory);
+			const container1 = await createContainer(
+				documentId,
+				testDataObjectFactory,
+			);
 			const dataObject1 = (await container1.getEntryPoint()) as TestDataObject;
 
 			const container2 = await loadContainer(
@@ -221,7 +233,10 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 
 		it("late open / early close", async () => {
 			const documentId = createDocumentId();
-			const container1 = await createContainer(documentId, testDataObjectFactory);
+			const container1 = await createContainer(
+				documentId,
+				testDataObjectFactory,
+			);
 			const dataObject1 = (await container1.getEntryPoint()) as TestDataObject;
 
 			dataObject1.increment();
@@ -272,9 +287,12 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 
 			beforeEach("setup", async () => {
 				const documentId = createDocumentId();
-				const factory = new TestFluidObjectFactory([["text", SharedString.getFactory()]]);
+				const factory = new TestFluidObjectFactory([
+					["text", SharedString.getFactory()],
+				]);
 				const container = await createContainer(documentId, factory);
-				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+				const dataObject =
+					(await container.getEntryPoint()) as ITestFluidObject;
 				text = await dataObject.getSharedObject("text");
 			});
 
@@ -294,13 +312,19 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 
 			beforeEach("setup", async () => {
 				const documentId = createDocumentId();
-				const factory = new TestFluidObjectFactory([["text", SharedString.getFactory()]]);
+				const factory = new TestFluidObjectFactory([
+					["text", SharedString.getFactory()],
+				]);
 
 				const container1 = await createContainer(documentId, factory);
 				dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 				text1 = await dataObject1.getSharedObject<SharedString>("text");
 
-				const container2 = await loadContainer(documentId, container1.resolvedUrl, factory);
+				const container2 = await loadContainer(
+					documentId,
+					container1.resolvedUrl,
+					factory,
+				);
 				dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 				text2 = await dataObject2.getSharedObject<SharedString>("text");
 			});
@@ -364,7 +388,11 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 				await loaderContainerTracker.pauseProcessing();
 
 				dataObject1.increment();
-				assert.equal(dataObject1.value, 1, "Expected user 1 to see the local increment");
+				assert.equal(
+					dataObject1.value,
+					1,
+					"Expected user 1 to see the local increment",
+				);
 				assert.equal(
 					dataObject2.value,
 					0,
@@ -379,10 +407,18 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 				);
 
 				await loaderContainerTracker.processIncoming(container2);
-				assert.equal(dataObject2.value, 1, "Expected user 2 to see the increment now");
+				assert.equal(
+					dataObject2.value,
+					1,
+					"Expected user 2 to see the increment now",
+				);
 
 				dataObject2.increment();
-				assert.equal(dataObject2.value, 2, "Expected user 2 to see the local increment");
+				assert.equal(
+					dataObject2.value,
+					2,
+					"Expected user 2 to see the local increment",
+				);
 				assert.equal(
 					dataObject1.value,
 					1,
@@ -397,7 +433,11 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 				);
 
 				await loaderContainerTracker.processIncoming(container1);
-				assert.equal(dataObject1.value, 2, "Expected user 1 to see the increment now");
+				assert.equal(
+					dataObject1.value,
+					2,
+					"Expected user 1 to see the increment now",
+				);
 			});
 		});
 	});

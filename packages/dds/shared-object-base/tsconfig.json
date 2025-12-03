@@ -6,6 +6,6 @@
 		"rootDir": "./src",
 		"outDir": "./lib",
 		"noUncheckedIndexedAccess": false,
-		"exactOptionalPropertyTypes": false,
-	},
+		"exactOptionalPropertyTypes": false
+	}
 }

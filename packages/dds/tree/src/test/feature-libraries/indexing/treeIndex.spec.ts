@@ -4,34 +4,36 @@
  */
 
 import { strict as assert } from "node:assert";
-
-import { getView, TestTreeProviderLite } from "../../utils.js";
 import {
-	type FlexTreeNode,
-	AnchorTreeIndex,
-	isTreeValue,
-} from "../../../feature-libraries/index.js";
-import {
-	forEachNode,
 	type AnchorNode,
 	type FieldKey,
+	forEachNode,
 	type IEditableForest,
 	type ITreeSubscriptionCursor,
 	type TreeValue,
 } from "../../../core/index.js";
-import { brand, disposeSymbol, getOrCreate } from "../../../util/index.js";
 import {
-	getInnerNode,
-	SchemaFactory,
-	TreeViewConfiguration,
-	type TreeNode,
-} from "../../../simple-tree/index.js";
+	AnchorTreeIndex,
+	type FlexTreeNode,
+	getOrCreateHydratedFlexTreeNode,
+	isTreeValue,
+} from "../../../feature-libraries/index.js";
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
 import { Tree } from "../../../shared-tree/index.js";
-import { getOrCreateHydratedFlexTreeNode } from "../../../feature-libraries/index.js";
-import { getOrCreateNodeFromInnerNode } from "../../../simple-tree/index.js";
+import {
+	getInnerNode,
+	getOrCreateNodeFromInnerNode,
+	SchemaFactory,
+	type TreeNode,
+	TreeViewConfiguration,
+} from "../../../simple-tree/index.js";
+import { brand, disposeSymbol, getOrCreate } from "../../../util/index.js";
+import { getView, TestTreeProviderLite } from "../../utils.js";
 
-function readStringField(cursor: ITreeSubscriptionCursor, fieldKey: FieldKey): string {
+function readStringField(
+	cursor: ITreeSubscriptionCursor,
+	fieldKey: FieldKey,
+): string {
 	cursor.enterField(fieldKey);
 	cursor.enterNode(0);
 	const { value } = cursor;
@@ -76,12 +78,17 @@ describe("tree indexes", () => {
 	): TreeNode | TreeValue {
 		const cursor = forest.allocateCursor();
 		forest.moveCursorToPath(anchorNode, cursor);
-		const flexNode = getOrCreateHydratedFlexTreeNode(root.getFlexTreeContext(), cursor);
+		const flexNode = getOrCreateHydratedFlexTreeNode(
+			root.getFlexTreeContext(),
+			cursor,
+		);
 		cursor.free();
 		return getOrCreateNodeFromInnerNode(flexNode);
 	}
 
-	function createIndex(root: SchematizingSimpleTreeView<typeof IndexableParent>) {
+	function createIndex(
+		root: SchematizingSimpleTreeView<typeof IndexableParent>,
+	) {
 		const anchorIds = new Map<AnchorNode, number>();
 		const { forest } = root.checkout;
 		let indexedAnchorNodeCount = 0;
@@ -114,7 +121,9 @@ describe("tree indexes", () => {
 
 		return {
 			index,
-			assertContents(...expected: [key: string, ...values: readonly TreeNode[]][]): void {
+			assertContents(
+				...expected: [key: string, ...values: readonly TreeNode[]][]
+			): void {
 				function assertSameElements(
 					actual: Iterable<unknown>,
 					expectedSet: Iterable<unknown>,
@@ -173,7 +182,9 @@ describe("tree indexes", () => {
 	}
 
 	it("can look up nodes in an initial tree", () => {
-		const { view, parent } = createView(new IndexableChild({ childKey: childId }));
+		const { view, parent } = createView(
+			new IndexableChild({ childKey: childId }),
+		);
 		const { assertContents } = createIndex(view);
 		const child = parent.child;
 		assert(child !== undefined);
@@ -245,7 +256,9 @@ describe("tree indexes", () => {
 
 							// Early exit if no colors were found
 							if (colors.size === 0) {
-								throw new Error("there should be no empty nests for these tests");
+								throw new Error(
+									"there should be no empty nests for these tests",
+								);
 							}
 
 							// Find the color with the maximum count
@@ -270,7 +283,10 @@ describe("tree indexes", () => {
 				(anchorNode: AnchorNode) => {
 					const cursor = forest.allocateCursor();
 					forest.moveCursorToPath(anchorNode, cursor);
-					const flexNode = getOrCreateHydratedFlexTreeNode(root.getFlexTreeContext(), cursor);
+					const flexNode = getOrCreateHydratedFlexTreeNode(
+						root.getFlexTreeContext(),
+						cursor,
+					);
 					cursor.free();
 					const simpleTree = getOrCreateNodeFromInnerNode(flexNode);
 					if (!isTreeValue(simpleTree)) {
@@ -281,7 +297,9 @@ describe("tree indexes", () => {
 
 			return {
 				index,
-				assertContents(...expected: [key: string, ...values: readonly TreeNode[]][]): void {
+				assertContents(
+					...expected: [key: string, ...values: readonly TreeNode[]][]
+				): void {
 					function assertSameElements(
 						actual: Iterable<unknown>,
 						expectedSet: Iterable<unknown>,
@@ -342,7 +360,9 @@ describe("tree indexes", () => {
 		it("when a node is replaced", () => {
 			const config = new TreeViewConfiguration({ schema: Root });
 			const view = getView(config);
-			const nest = new Nest({ bird: { eggs: [{ color: "blue" }, { color: "red" }] } });
+			const nest = new Nest({
+				bird: { eggs: [{ color: "blue" }, { color: "red" }] },
+			});
 			view.initialize({ nests: [nest] });
 
 			const { assertContents } = createNestIndex(view);
@@ -356,7 +376,9 @@ describe("tree indexes", () => {
 		it("when a node is added", () => {
 			const config = new TreeViewConfiguration({ schema: Root });
 			const view = getView(config);
-			const nest = new Nest({ bird: { eggs: [{ color: "blue" }, { color: "red" }] } });
+			const nest = new Nest({
+				bird: { eggs: [{ color: "blue" }, { color: "red" }] },
+			});
 			view.initialize({ nests: [nest] });
 
 			const { assertContents } = createNestIndex(view);
@@ -370,7 +392,9 @@ describe("tree indexes", () => {
 		it("when a node is detached", () => {
 			const config = new TreeViewConfiguration({ schema: Root });
 			const view = getView(config);
-			const nest = new Nest({ bird: { eggs: [{ color: "blue" }, { color: "red" }] } });
+			const nest = new Nest({
+				bird: { eggs: [{ color: "blue" }, { color: "red" }] },
+			});
 			view.initialize({ nests: [nest] });
 
 			const { assertContents } = createNestIndex(view);
@@ -383,7 +407,9 @@ describe("tree indexes", () => {
 	});
 
 	it("does not include nodes that are detached when the index is created", () => {
-		const { view, parent } = createView(new IndexableChild({ childKey: childId }));
+		const { view, parent } = createView(
+			new IndexableChild({ childKey: childId }),
+		);
 		const child = parent.child;
 		assert(child !== undefined);
 		parent.child = undefined;
@@ -392,7 +418,9 @@ describe("tree indexes", () => {
 	});
 
 	it("does not include a removed node", () => {
-		const { view, parent } = createView(new IndexableChild({ childKey: childId }));
+		const { view, parent } = createView(
+			new IndexableChild({ childKey: childId }),
+		);
 		const { assertContents } = createIndex(view);
 		const child = parent.child;
 		assert(child !== undefined);
@@ -402,7 +430,9 @@ describe("tree indexes", () => {
 
 	it("can look up multiple nodes with the same key", () => {
 		// Give the child the same ID as the parent (`parentId` rather than `childId`)
-		const { view, parent } = createView(new IndexableChild({ childKey: parentId }));
+		const { view, parent } = createView(
+			new IndexableChild({ childKey: parentId }),
+		);
 		const { assertContents } = createIndex(view);
 		const child = parent.child;
 		assert(child !== undefined);
@@ -453,7 +483,9 @@ describe("tree indexes", () => {
 	});
 
 	it("does not receive updates once disposed", () => {
-		const { view, parent } = createView(new IndexableChild({ childKey: childId }));
+		const { view, parent } = createView(
+			new IndexableChild({ childKey: childId }),
+		);
 		const { index } = createIndex(view);
 		index.dispose();
 
@@ -468,7 +500,9 @@ describe("tree indexes", () => {
 		assert.throws(() => index[disposeSymbol]());
 
 		// check that disposal works using either api call
-		const { view: view2 } = createView(new IndexableChild({ childKey: childId }));
+		const { view: view2 } = createView(
+			new IndexableChild({ childKey: childId }),
+		);
 		const { index: index2 } = createIndex(view2);
 		index2.dispose();
 		assert.throws(() => index2.dispose());
@@ -478,7 +512,10 @@ describe("tree indexes", () => {
 		const provider = new TestTreeProviderLite(1);
 		const tree = provider.trees[0];
 		const view = tree.kernel.viewWith(
-			new TreeViewConfiguration({ schema: IndexableParent, enableSchemaValidation: true }),
+			new TreeViewConfiguration({
+				schema: IndexableParent,
+				enableSchemaValidation: true,
+			}),
 		);
 		view.initialize(
 			new IndexableParent({

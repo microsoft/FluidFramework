@@ -10,20 +10,28 @@ import type {
 	ISummarizerObservabilityProps,
 	SummarizerStopReason,
 } from "@fluidframework/container-runtime-definitions/internal";
-import type { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert, Deferred, PromiseTimer, delay } from "@fluidframework/core-utils/internal";
+import type {
+	IDisposable,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
+import {
+	assert,
+	Deferred,
+	delay,
+	PromiseTimer,
+} from "@fluidframework/core-utils/internal";
 import {
 	DriverErrorTypes,
-	MessageType,
 	type ISequencedDocumentMessage,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	type MonitoringContext,
-	UsageError,
 	createChildLogger,
 	createChildMonitoringContext,
-	isFluidError,
 	type ITelemetryLoggerExt,
+	isFluidError,
+	type MonitoringContext,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { opSize } from "../../opProperties.js";
@@ -36,25 +44,35 @@ import type {
 	ISummarizeHeuristicData,
 	ISummarizeHeuristicRunner,
 	ISummarizeOptions,
-	ISummarizerRuntime,
 	ISummarizeRunnerTelemetry,
+	ISummarizerRuntime,
 	ISummarizeTelemetryProperties,
 	ISummaryCancellationToken,
 	ISummaryConfiguration,
 	SubmitSummaryResult,
 } from "../summarizerTypes.js";
-import { raceTimer, RetriableSummaryError, type SummarizeReason } from "../summarizerUtils.js";
+import {
+	RetriableSummaryError,
+	raceTimer,
+	type SummarizeReason,
+} from "../summarizerUtils.js";
 import type {
 	IAckedSummary,
 	IClientSummaryWatcher,
 	SummaryCollection,
 } from "../summaryCollection.js";
 
-import { defaultMaxAttempts, defaultMaxAttemptsForSubmitFailures } from "./summarizer.js";
+import {
+	defaultMaxAttempts,
+	defaultMaxAttemptsForSubmitFailures,
+} from "./summarizer.js";
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics.js";
 import { SummaryGenerator } from "./summaryGenerator.js";
 import { SummarizeResultBuilder } from "./summaryResultBuilder.js";
-import type { EnqueueSummarizeResult, ISummarizeResults } from "./summaryResultTypes.js";
+import type {
+	EnqueueSummarizeResult,
+	ISummarizeResults,
+} from "./summaryResultTypes.js";
 
 const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 10 minutes
 
@@ -74,9 +92,13 @@ export class RunningSummarizer
 		summaryWatcher: IClientSummaryWatcher,
 		configuration: ISummaryConfiguration,
 
-		submitSummaryCallback: (options: ISubmitSummaryOptions) => Promise<SubmitSummaryResult>,
+		submitSummaryCallback: (
+			options: ISubmitSummaryOptions,
+		) => Promise<SubmitSummaryResult>,
 
-		refreshLatestSummaryAckCallback: (options: IRefreshSummaryAckOptions) => Promise<void>,
+		refreshLatestSummaryAckCallback: (
+			options: IRefreshSummaryAckOptions,
+		) => Promise<void>,
 		heuristicData: ISummarizeHeuristicData,
 		summaryCollection: SummaryCollection,
 
@@ -103,26 +125,30 @@ export class RunningSummarizer
 		// This is done primarily to handle scenarios where the summarizer loads from a cached snapshot and there
 		// is newer one available. The ack for the newer summary is processed before summarizing because otherwise
 		// that summary would fail as it has an older parent.
-		let nextReferenceSequenceNumber = runtime.deltaManager.initialSequenceNumber + 1;
+		let nextReferenceSequenceNumber =
+			runtime.deltaManager.initialSequenceNumber + 1;
 		const latestAck = summaryCollection.latestAck;
 		if (
 			latestAck !== undefined &&
 			latestAck.summaryOp.referenceSequenceNumber >= nextReferenceSequenceNumber
 		) {
 			await summarizer.handleSummaryAck(latestAck);
-			nextReferenceSequenceNumber = latestAck.summaryOp.referenceSequenceNumber + 1;
+			nextReferenceSequenceNumber =
+				latestAck.summaryOp.referenceSequenceNumber + 1;
 		}
 
 		await summarizer.waitStart();
 
 		// Process summary acks asynchronously
 		// Note: no exceptions are thrown from processIncomingSummaryAcks handler as it handles all exceptions
-		summarizer.processIncomingSummaryAcks(nextReferenceSequenceNumber).catch((error) => {
-			createChildLogger({ logger }).sendErrorEvent(
-				{ eventName: "HandleSummaryAckFatalError" },
-				error,
-			);
-		});
+		summarizer
+			.processIncomingSummaryAcks(nextReferenceSequenceNumber)
+			.catch((error) => {
+				createChildLogger({ logger }).sendErrorEvent(
+					{ eventName: "HandleSummaryAckFatalError" },
+					error,
+				);
+			});
 
 		// Update heuristic counts
 		// By the time we get here, there are potentially ops missing from the heuristic summary counts
@@ -144,7 +170,8 @@ export class RunningSummarizer
 		}
 
 		// Update last seq number (in case the handlers haven't processed anything yet)
-		heuristicData.lastOpSequenceNumber = runtime.deltaManager.lastSequenceNumber;
+		heuristicData.lastOpSequenceNumber =
+			runtime.deltaManager.lastSequenceNumber;
 
 		// Start heuristics
 		summarizer.heuristicRunner?.start();
@@ -191,8 +218,9 @@ export class RunningSummarizer
 	 * These are necessary to store outside of methods because of the logic around runnning a lastSummary.
 	 * We want the lastSummary to also be captured as "all attempts failed".
 	 */
-	private lastSummarizeFailureEventProps: Omit<ISummarizeEventProps, "result"> | undefined =
-		undefined;
+	private lastSummarizeFailureEventProps:
+		| Omit<ISummarizeEventProps, "result">
+		| undefined = undefined;
 
 	private constructor(
 		baseLogger: ITelemetryBaseLogger,
@@ -208,7 +236,9 @@ export class RunningSummarizer
 		private readonly summaryCollection: SummaryCollection,
 
 		private readonly cancellationToken: ISummaryCancellationToken,
-		private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
+		private readonly stopSummarizerCallback: (
+			reason: SummarizerStopReason,
+		) => void,
 
 		private readonly runtime: ISummarizerRuntime,
 	) {
@@ -259,8 +289,10 @@ export class RunningSummarizer
 				eventName: "SummaryAckWaitTimeout",
 				message: "Pending summary ack not received in time",
 				maxAckWaitTime,
-				referenceSequenceNumber: this.heuristicData.lastAttempt.refSequenceNumber,
-				summarySequenceNumber: this.heuristicData.lastAttempt.summarySequenceNumber,
+				referenceSequenceNumber:
+					this.heuristicData.lastAttempt.refSequenceNumber,
+				summarySequenceNumber:
+					this.heuristicData.lastAttempt.summarySequenceNumber,
 				timePending: Date.now() - this.heuristicData.lastAttempt.summaryTime,
 			});
 		});
@@ -269,15 +301,19 @@ export class RunningSummarizer
 			if (this.pendingAckTimer.hasTimer) {
 				this.mc.logger.sendTelemetryEvent({
 					eventName: "MissingSummaryAckFoundByOps",
-					referenceSequenceNumber: this.heuristicData.lastAttempt.refSequenceNumber,
-					summarySequenceNumber: this.heuristicData.lastAttempt.summarySequenceNumber,
+					referenceSequenceNumber:
+						this.heuristicData.lastAttempt.refSequenceNumber,
+					summarySequenceNumber:
+						this.heuristicData.lastAttempt.summarySequenceNumber,
 				});
 				this.pendingAckTimer.clear();
 			}
 		});
 
 		const immediatelyRefreshLatestSummaryAck =
-			this.mc.config.getBoolean("Fluid.Summarizer.immediatelyRefreshLatestSummaryAck") ?? true;
+			this.mc.config.getBoolean(
+				"Fluid.Summarizer.immediatelyRefreshLatestSummaryAck",
+			) ?? true;
 		this.generator = new SummaryGenerator(
 			this.pendingAckTimer,
 			this.heuristicData,
@@ -296,7 +332,10 @@ export class RunningSummarizer
 		);
 
 		// Listen to runtime for ops
-		this.runtimeListener = (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => {
+		this.runtimeListener = (
+			op: ISequencedDocumentMessage,
+			runtimeMessage?: boolean,
+		) => {
 			this.handleOp(op, runtimeMessage === true);
 		};
 		this.runtime.on("op", this.runtimeListener);
@@ -316,7 +355,8 @@ export class RunningSummarizer
 
 	private async handleSummaryAck(ack: IAckedSummary): Promise<void> {
 		const refSequenceNumber = ack.summaryOp.referenceSequenceNumber;
-		const summaryLogger = this.tryGetCorrelatedLogger(refSequenceNumber) ?? this.mc.logger;
+		const summaryLogger =
+			this.tryGetCorrelatedLogger(refSequenceNumber) ?? this.mc.logger;
 		const summaryOpHandle = ack.summaryOp.contents.handle;
 		const summaryAckHandle = ack.summaryAck.contents.handle;
 		while (this.summarizingLock !== undefined) {
@@ -350,30 +390,32 @@ export class RunningSummarizer
 	private readonly refreshLatestSummaryAckAndHandleError = async (
 		options: IRefreshSummaryAckOptions,
 	): Promise<void> => {
-		return this.refreshLatestSummaryAckCallback(options).catch(async (error) => {
-			// If the error is 404, so maybe the fetched version no longer exists on server. We just
-			// ignore this error in that case, as that means we will have another summaryAck for the
-			// latest version with which we will refresh the state. However in case of single commit
-			// summary, we might be missing a summary ack, so in that case we are still fine as the
-			// code in `submitSummary` function in container runtime, will refresh the latest state
-			// by calling `prefetchLatestSummaryThenClose`. We will load the next summarizer from the
-			// updated state and be fine.
-			const isIgnoredError =
-				isFluidError(error) &&
-				error.errorType === DriverErrorTypes.fileNotFoundOrAccessDeniedError;
+		return this.refreshLatestSummaryAckCallback(options).catch(
+			async (error) => {
+				// If the error is 404, so maybe the fetched version no longer exists on server. We just
+				// ignore this error in that case, as that means we will have another summaryAck for the
+				// latest version with which we will refresh the state. However in case of single commit
+				// summary, we might be missing a summary ack, so in that case we are still fine as the
+				// code in `submitSummary` function in container runtime, will refresh the latest state
+				// by calling `prefetchLatestSummaryThenClose`. We will load the next summarizer from the
+				// updated state and be fine.
+				const isIgnoredError =
+					isFluidError(error) &&
+					error.errorType === DriverErrorTypes.fileNotFoundOrAccessDeniedError;
 
-			options.summaryLogger.sendTelemetryEvent(
-				{
-					eventName: isIgnoredError
-						? "HandleSummaryAckErrorIgnored"
-						: "HandleLastSummaryAckError",
-					referenceSequenceNumber: options.summaryRefSeq,
-					proposalHandle: options.proposalHandle,
-					ackHandle: options.ackHandle,
-				},
-				error,
-			);
-		});
+				options.summaryLogger.sendTelemetryEvent(
+					{
+						eventName: isIgnoredError
+							? "HandleSummaryAckErrorIgnored"
+							: "HandleLastSummaryAckError",
+						referenceSequenceNumber: options.summaryRefSeq,
+						proposalHandle: options.proposalHandle,
+						ackHandle: options.ackHandle,
+					},
+					error,
+				);
+			},
+		);
 	};
 
 	/**
@@ -384,7 +426,9 @@ export class RunningSummarizer
 	 * @param referenceSequenceNumber - The referenceSequenceNumber of the summary from which to start processing
 	 * acks.
 	 */
-	private async processIncomingSummaryAcks(referenceSequenceNumber: number): Promise<void> {
+	private async processIncomingSummaryAcks(
+		referenceSequenceNumber: number,
+	): Promise<void> {
 		// Start waiting for acks that are for summaries newer that the one this client loaded from.
 		let nextReferenceSequenceNumber = referenceSequenceNumber;
 		while (!this.disposed) {
@@ -392,7 +436,8 @@ export class RunningSummarizer
 				nextReferenceSequenceNumber,
 			);
 			await this.handleSummaryAck(ackedSummary);
-			nextReferenceSequenceNumber = ackedSummary.summaryOp.referenceSequenceNumber + 1;
+			nextReferenceSequenceNumber =
+				ackedSummary.summaryOp.referenceSequenceNumber + 1;
 		}
 	}
 
@@ -426,7 +471,10 @@ export class RunningSummarizer
 	 */
 	private heuristicRunnerMicroTaskExists = false;
 
-	public handleOp(op: ISequencedDocumentMessage, runtimeMessage: boolean): void {
+	public handleOp(
+		op: ISequencedDocumentMessage,
+		runtimeMessage: boolean,
+	): void {
 		this.heuristicData.lastOpSequenceNumber = op.sequenceNumber;
 
 		if (runtimeMessage) {
@@ -542,9 +590,13 @@ export class RunningSummarizer
 		// it has race conditions with summaries submitted by this same client.
 		this.summaryCollection.unsetPendingAckTimerTimeoutCallback();
 
-		if (waitStartResult.result === "done" && waitStartResult.value !== undefined) {
+		if (
+			waitStartResult.result === "done" &&
+			waitStartResult.value !== undefined
+		) {
 			this.heuristicData.updateWithLastSummaryAckInfo({
-				refSequenceNumber: waitStartResult.value.summaryOp.referenceSequenceNumber,
+				refSequenceNumber:
+					waitStartResult.value.summaryOp.referenceSequenceNumber,
 				// This will be the Summarizer starting point so only use timestamps from client's machine.
 				summaryTime: Date.now(),
 				summarySequenceNumber: waitStartResult.value.summaryOp.sequenceNumber,
@@ -628,9 +680,13 @@ export class RunningSummarizer
 					...options,
 					summaryLogger,
 					cancellationToken: this.cancellationToken,
-					latestSummaryRefSeqNum: this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
+					latestSummaryRefSeqNum:
+						this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
 				};
-				const summarizeResult = this.generator.summarize(summaryOptions, resultsBuilder);
+				const summarizeResult = this.generator.summarize(
+					summaryOptions,
+					resultsBuilder,
+				);
 				// ensure we wait till the end of the process
 				const result = await summarizeResult.receivedSummaryAckOrNack;
 
@@ -665,8 +721,10 @@ export class RunningSummarizer
 					);
 					if (isLastSummary) {
 						this.lastSummarizeFailureEventProps = {
-							currentAttempt: (this.lastSummarizeFailureEventProps?.currentAttempt ?? 0) + 1,
-							maxAttempts: (this.lastSummarizeFailureEventProps?.currentAttempt ?? 0) + 1,
+							currentAttempt:
+								(this.lastSummarizeFailureEventProps?.currentAttempt ?? 0) + 1,
+							maxAttempts:
+								(this.lastSummarizeFailureEventProps?.currentAttempt ?? 0) + 1,
 							error: result.error,
 							failureMessage: result.message,
 						};
@@ -708,7 +766,10 @@ export class RunningSummarizer
 				this.afterSummaryAction();
 			},
 		).catch((error) => {
-			this.mc.logger.sendErrorEvent({ eventName: "UnexpectedSummarizeError" }, error);
+			this.mc.logger.sendErrorEvent(
+				{ eventName: "UnexpectedSummarizeError" },
+				error,
+			);
 		});
 	}
 
@@ -746,7 +807,8 @@ export class RunningSummarizer
 				summaryLogger,
 				cancellationToken: this.cancellationToken,
 				finalAttempt,
-				latestSummaryRefSeqNum: this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
+				latestSummaryRefSeqNum:
+					this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
 			};
 			const summarizeResult = this.generator.summarize(summaryOptions);
 			return { summarizeProps, summarizeResult };
@@ -777,7 +839,10 @@ export class RunningSummarizer
 				break;
 			}
 
-			const attemptResult = attemptSummarize(currentAttempt, false /* finalAttempt */);
+			const attemptResult = attemptSummarize(
+				currentAttempt,
+				false /* finalAttempt */,
+			);
 			results = attemptResult.summarizeResult;
 
 			// Ack / nack is the final step, so if it succeeds we're done.
@@ -814,7 +879,10 @@ export class RunningSummarizer
 
 			// Break if the failure doesn't have "retryAfterSeconds" or we are one less from max number of attempts.
 			// Note that the final attempt if "retryAfterSeconds" does exist happens outside of the do..while loop.
-			if (retryAfterSeconds === undefined || currentAttempt >= maxAttempts - 1) {
+			if (
+				retryAfterSeconds === undefined ||
+				currentAttempt >= maxAttempts - 1
+			) {
 				done = true;
 			}
 
@@ -846,12 +914,17 @@ export class RunningSummarizer
 		// If summarization wasn't successful above and the failure contains "retryAfterSeconds", perform one last
 		// attempt. This gives a chance to the runtime to perform additional steps in the last attempt.
 		if (retryAfterSeconds !== undefined) {
-			const { summarizeResult } = attemptSummarize(++currentAttempt, true /* finalAttempt */);
+			const { summarizeResult } = attemptSummarize(
+				++currentAttempt,
+				true /* finalAttempt */,
+			);
 			// Ack / nack is the final step, so if it succeeds we're done.
 			const ackNackResult = await summarizeResult.receivedSummaryAckOrNack;
 			status = ackNackResult.success ? "success" : "failure";
 			error = ackNackResult.success ? undefined : ackNackResult.error;
-			failureMessage = ackNackResult.success ? undefined : ackNackResult.message;
+			failureMessage = ackNackResult.success
+				? undefined
+				: ackNackResult.message;
 			const eventProps: ISummarizeEventProps & ISummarizerObservabilityProps = {
 				result: status,
 				currentAttempt,
@@ -929,16 +1002,19 @@ export class RunningSummarizer
 		// return a promise that caller can await before trying again.
 		if (this.summarizingLock !== undefined) {
 			// The heuristics are blocking concurrent summarize attempts.
-			throw new UsageError("Attempted to run an already-running summarizer on demand");
+			throw new UsageError(
+				"Attempted to run an already-running summarizer on demand",
+			);
 		}
 
 		const { reason, ...summarizeOptions } = options;
 		if (options.retryOnFailure === true) {
-			this.summarizeOnDemandWithRetries(`onDemand;${reason}`, resultsBuilder).catch(
-				(error: IRetriableFailureError) => {
-					resultsBuilder.fail("summarize failed", error);
-				},
-			);
+			this.summarizeOnDemandWithRetries(
+				`onDemand;${reason}`,
+				resultsBuilder,
+			).catch((error: IRetriableFailureError) => {
+				resultsBuilder.fail("summarize failed", error);
+			});
 		} else {
 			this.trySummarizeOnce(
 				{ summarizeReason: `onDemand/${reason}` },
@@ -952,8 +1028,15 @@ export class RunningSummarizer
 	/**
 	 *{@inheritdoc (ISummarizer:interface).enqueueSummarize}
 	 */
-	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
-		const { reason, afterSequenceNumber = 0, override = false, ...summarizeOptions } = options;
+	public enqueueSummarize(
+		options: IEnqueueSummarizeOptions,
+	): EnqueueSummarizeResult {
+		const {
+			reason,
+			afterSequenceNumber = 0,
+			override = false,
+			...summarizeOptions
+		} = options;
 		let overridden = false;
 		if (this.enqueuedSummary !== undefined) {
 			if (!override) {
@@ -994,7 +1077,8 @@ export class RunningSummarizer
 		}
 		if (
 			this.enqueuedSummary === undefined ||
-			this.heuristicData.lastOpSequenceNumber < this.enqueuedSummary.afterSequenceNumber ||
+			this.heuristicData.lastOpSequenceNumber <
+				this.enqueuedSummary.afterSequenceNumber ||
 			this.summarizingLock !== undefined
 		) {
 			// If no enqueued summary is ready or a summary is already in progress, take no action.

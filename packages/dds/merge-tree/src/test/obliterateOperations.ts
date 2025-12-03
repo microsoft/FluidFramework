@@ -13,7 +13,11 @@ import type { IRandom } from "@fluid-private/stochastic-test-utils";
 import type { IMergeTreeInsertMsg, IMergeTreeOp } from "../ops.js";
 import { type InteriorSequencePlace, Side } from "../sequencePlace.js";
 
-import { annotateRange, removeRange, type TestOperation } from "./mergeTreeOperationRunner.js";
+import {
+	annotateRange,
+	removeRange,
+	type TestOperation,
+} from "./mergeTreeOperationRunner.js";
 import type { TestClient } from "./testClient.js";
 
 const posInField = (
@@ -22,7 +26,10 @@ const posInField = (
 ): { startPos: number; endPos: number } | undefined => {
 	const isFieldCharacter = (char: string): boolean =>
 		Number.isInteger(Number(char)) || char === "{" || char === "}";
-	if (pos >= client.getLength() || !isFieldCharacter(client.getText(pos, pos + 1))) {
+	if (
+		pos >= client.getLength() ||
+		!isFieldCharacter(client.getText(pos, pos + 1))
+	) {
 		// pos is not within a field.
 		return undefined;
 	}
@@ -39,7 +46,10 @@ const posInField = (
 		startPos--;
 	}
 
-	while (endPos < client.getLength() && client.getText(endPos, endPos + 1) !== "}") {
+	while (
+		endPos < client.getLength() &&
+		client.getText(endPos, endPos + 1) !== "}"
+	) {
 		const text = client.getText(endPos, endPos + 1);
 		assert(
 			Number.isInteger(Number(text)) || text === "{",
@@ -48,7 +58,10 @@ const posInField = (
 		endPos++;
 	}
 
-	assert(client.getText(startPos, startPos + 1) === "{", "Start separator not found");
+	assert(
+		client.getText(startPos, startPos + 1) === "{",
+		"Start separator not found",
+	);
 	assert(
 		endPos < client.getLength() && client.getText(endPos, endPos + 1) === "}",
 		"End separator not found",
@@ -73,7 +86,9 @@ const getFieldEndpoints = (
 
 const generateFieldText = (client: TestClient, random: IRandom): string => {
 	const chunkLength = random.integer(1, 10);
-	return (client.longClientId!.codePointAt(0)! % 10).toString().repeat(chunkLength);
+	return (client.longClientId!.codePointAt(0)! % 10)
+		.toString()
+		.repeat(chunkLength);
 };
 
 const insertFieldText = (
@@ -196,7 +211,10 @@ export const insertAvoidField: TestOperation = (
 	if (endpoints !== undefined) {
 		start = endpoints.startPos;
 	}
-	return client.insertTextLocal(start, client.longClientId!.repeat(random.integer(1, 3)));
+	return client.insertTextLocal(
+		start,
+		client.longClientId!.repeat(random.integer(1, 3)),
+	);
 };
 
 export const removeWithField: TestOperation = (

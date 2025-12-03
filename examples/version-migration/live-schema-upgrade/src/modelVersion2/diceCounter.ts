@@ -5,9 +5,12 @@
 
 import type { EventEmitter } from "@fluid-example/example-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/legacy";
-import { ISharedCounter, SharedCounter } from "@fluidframework/counter/legacy";
+import {
+	type ISharedCounter,
+	SharedCounter,
+} from "@fluidframework/counter/legacy";
 
 /**
  * IDiceCounter describes the public API surface for our dice counter data object.
@@ -57,16 +60,22 @@ export class DiceCounter extends DataObject implements IDiceCounter {
 			// Get the existing counter if we didn't initialize it.
 			const sharedCounterHandle =
 				this.root.get<IFluidHandle<ISharedCounter>>(sharedCounterKey);
-			assert(sharedCounterHandle !== undefined, "sharedCounterHandle should be defined");
+			assert(
+				sharedCounterHandle !== undefined,
+				"sharedCounterHandle should be defined",
+			);
 			this._counter = await sharedCounterHandle.get();
 			// Ensure the count is up to date when we load.
 			this.count = this._counter.value;
 		}
 
-		this._counter.on("incremented", (incrementAmount: number, newValue: number) => {
-			this.count = newValue;
-			this.emit("incremented");
-		});
+		this._counter.on(
+			"incremented",
+			(incrementAmount: number, newValue: number) => {
+				this.count = newValue;
+				this.emit("incremented");
+			},
+		);
 	}
 
 	public readonly increment = () => {

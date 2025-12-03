@@ -3,16 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from 'assert';
-
 import { take } from '@fluid-private/stochastic-test-utils';
 import { MockLogger } from '@fluidframework/telemetry-utils/internal';
 import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
+import { strict as assert } from 'assert';
 import { expect } from 'chai';
 import { v4, v5 } from 'uuid';
 
 import { assertNotUndefined, fail } from '../Common.js';
-import {
+import type {
 	FinalCompressedId,
 	LocalCompressedId,
 	OpSpaceCompressedId,
@@ -20,32 +19,32 @@ import {
 	SessionSpaceCompressedId,
 	StableId,
 } from '../Identifiers.js';
-import { assertIsStableId, generateStableId, isStableId } from '../UuidUtilities.js';
 import {
-	IdCompressor,
 	hasOngoingSession,
+	IdCompressor,
 	isFinalId,
 	isLocalId,
 	legacySharedTreeInitialTreeId,
 } from '../id-compressor/IdCompressor.js';
 import { getIds } from '../id-compressor/IdRange.js';
+import type { IdCreationRange, UnackedLocalId } from '../id-compressor/index.js';
 import {
 	createSessionId,
 	incrementUuid,
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
 } from '../id-compressor/NumericUuid.js';
-import type { IdCreationRange, UnackedLocalId } from '../id-compressor/index.js';
+import { assertIsStableId, generateStableId, isStableId } from '../UuidUtilities.js';
 
 import {
-	Client,
-	DestinationClient,
-	IdCompressorTestNetwork,
-	MetaClient,
 	attributionIds,
+	Client,
 	createCompressor,
+	DestinationClient,
 	expectSerializes,
 	generateCompressedIds,
+	IdCompressorTestNetwork,
+	MetaClient,
 	makeOpGenerator,
 	performFuzzActions,
 	roundtrip,

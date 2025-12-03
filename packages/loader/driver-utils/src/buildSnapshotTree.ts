@@ -7,10 +7,10 @@ import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	FileMode,
-	IGitTree,
-	IGitTreeEntry,
-	ISnapshotTree,
-	ITreeEntry,
+	type IGitTree,
+	type IGitTreeEntry,
+	type ISnapshotTree,
+	type ITreeEntry,
 	TreeEntry,
 } from "@fluidframework/driver-definitions/internal";
 
@@ -73,7 +73,10 @@ function flattenCore(
  * @param blobMap - a map of blob's sha1 to content
  * @returns A flatten with of the ITreeEntry
  */
-function flatten(tree: ITreeEntry[], blobMap: Map<string, ArrayBufferLike>): IGitTree {
+function flatten(
+	tree: ITreeEntry[],
+	blobMap: Map<string, ArrayBufferLike>,
+): IGitTree {
 	const entries = flattenCore("", tree, blobMap);
 	return {
 		sha: "",

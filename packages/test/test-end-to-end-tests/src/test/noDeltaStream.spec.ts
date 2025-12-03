@@ -3,12 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import {
-	IContainerLoadMode,
+	type IContainerLoadMode,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import {
@@ -19,28 +17,30 @@ import {
 	DefaultSummaryConfiguration,
 	SummaryCollection,
 } from "@fluidframework/container-runtime/internal";
-import {
+import type {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	ITestContainerConfig,
-	ITestFluidObject,
-	ITestObjectProvider,
 	createLoader,
 	createLoaderProps,
 	getContainerEntryPointBackCompat,
+	type ITestContainerConfig,
+	type ITestFluidObject,
+	type ITestObjectProvider,
 	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
+import { strict as assert } from "assert";
 
 import { wrapObjectAndOverride } from "../mocking.js";
 
-const loadOptions: IContainerLoadMode[] = generatePairwiseOptions<IContainerLoadMode>({
-	deltaConnection: [undefined, "none", "delayed"],
-	opsBeforeReturn: [undefined, "cached", "all"],
-});
+const loadOptions: IContainerLoadMode[] =
+	generatePairwiseOptions<IContainerLoadMode>({
+		deltaConnection: [undefined, "none", "delayed"],
+		opsBeforeReturn: [undefined, "cached", "all"],
+	});
 
 const testConfigs = generatePairwiseOptions({
 	loadOptions,
@@ -124,17 +124,25 @@ describeCompat(
 					containerResolvedUrl = initContainer.resolvedUrl;
 
 					const initDataObject =
-						await getContainerEntryPointBackCompat<ITestFluidObject>(initContainer);
+						await getContainerEntryPointBackCompat<ITestFluidObject>(
+							initContainer,
+						);
 					for (let i = 0; i < maxOps; i++) {
 						initDataObject.root.set(i.toString(), i);
 					}
 					if (initContainer.isDirty) {
-						await timeoutPromise((res) => initContainer.once("saved", () => res()), {
-							durationMs: timeout / 2,
-							errorMsg: "Not saved before timeout",
-						});
+						await timeoutPromise(
+							(res) => initContainer.once("saved", () => res()),
+							{
+								durationMs: timeout / 2,
+								errorMsg: "Not saved before timeout",
+							},
+						);
 					}
-					scenarioToSeqNum.set(scenario, initContainer.deltaManager.lastSequenceNumber);
+					scenarioToSeqNum.set(
+						scenario,
+						initContainer.deltaManager.lastSequenceNumber,
+					);
 					initContainer.close();
 				}
 				const containerUrl = await provider.driver.createContainerUrl(
@@ -170,7 +178,9 @@ describeCompat(
 
 					// Force the container into write mode to ensure a summary will be created
 					const dataObject =
-						await getContainerEntryPointBackCompat<ITestFluidObject>(summaryContainer);
+						await getContainerEntryPointBackCompat<ITestFluidObject>(
+							summaryContainer,
+						);
 					dataObject.root.set("Force write", 0);
 
 					const summaryCollection = new SummaryCollection(
@@ -178,11 +188,17 @@ describeCompat(
 						createChildLogger(),
 					);
 
-					await timeoutPromise((res) => summaryCollection.once("summaryAck", () => res()), {
-						durationMs: timeout / 2,
-						errorMsg: "Not summary acked before timeout",
-					});
-					scenarioToSeqNum.set(scenario, summaryContainer.deltaManager.lastSequenceNumber);
+					await timeoutPromise(
+						(res) => summaryCollection.once("summaryAck", () => res()),
+						{
+							durationMs: timeout / 2,
+							errorMsg: "Not summary acked before timeout",
+						},
+					);
+					scenarioToSeqNum.set(
+						scenario,
+						summaryContainer.deltaManager.lastSequenceNumber,
+					);
 					summaryContainer.close();
 				}
 			}
@@ -232,7 +248,9 @@ describeCompat(
 						request: { url: containerUrl },
 					});
 					const validationDataObject =
-						await getContainerEntryPointBackCompat<ITestFluidObject>(validationContainer);
+						await getContainerEntryPointBackCompat<ITestFluidObject>(
+							validationContainer,
+						);
 
 					const storageOnlyDsF = wrapObjectAndOverride<IDocumentServiceFactory>(
 						provider.documentServiceFactory,
@@ -262,7 +280,9 @@ describeCompat(
 
 					if (testConfig.opsUpToSeqNumber !== undefined) {
 						// Define sequenceNumber if opsUpToSeqNumber is set, otherwise leave undefined
-						const sequenceNumber = testConfig.opsUpToSeqNumber ? lastKnownSeqNum : undefined;
+						const sequenceNumber = testConfig.opsUpToSeqNumber
+							? lastKnownSeqNum
+							: undefined;
 						const storageOnlyContainer = await loadContainerPaused(
 							storageOnlyLoaderProps,
 							{
@@ -305,7 +325,11 @@ describeCompat(
 						const deltaManager = storageOnlyContainer.deltaManager;
 
 						storageOnlyContainer.connect();
-						assert.strictEqual(deltaManager.active, false, "deltaManager.active");
+						assert.strictEqual(
+							deltaManager.active,
+							false,
+							"deltaManager.active",
+						);
 						assert.ok(
 							deltaManager.readOnlyInfo.readonly,
 							"deltaManager.readOnlyInfo.readonly",
@@ -320,7 +344,9 @@ describeCompat(
 						);
 
 						const storageOnlyDataObject =
-							await getContainerEntryPointBackCompat<ITestFluidObject>(storageOnlyContainer);
+							await getContainerEntryPointBackCompat<ITestFluidObject>(
+								storageOnlyContainer,
+							);
 						for (const key of validationDataObject.root.keys()) {
 							assert.strictEqual(
 								storageOnlyDataObject.root.get(key),

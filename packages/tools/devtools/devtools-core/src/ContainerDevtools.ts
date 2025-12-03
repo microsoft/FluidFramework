@@ -128,7 +128,9 @@ export class ContainerDevtools extends BaseDevtools<IContainer> {
 			[CloseContainer.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as CloseContainer.Message;
 				if (message.data.containerKey === props.containerKey) {
-					props.container.close(/* TODO: Specify devtools reason here once it is supported */);
+					props.container.close(
+						/* TODO: Specify devtools reason here once it is supported */
+					);
 					return true;
 				}
 				return false;

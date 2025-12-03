@@ -57,11 +57,12 @@ export type MessageFormatVersion = Brand<
 	(typeof MessageFormatVersion)[keyof typeof MessageFormatVersion],
 	"MessageFormatVersion"
 >;
-export const supportedMessageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set([
-	MessageFormatVersion.v3,
-	MessageFormatVersion.v4,
-	MessageFormatVersion.vSharedBranches,
-] as MessageFormatVersion[]);
+export const supportedMessageFormatVersions: ReadonlySet<MessageFormatVersion> =
+	new Set([
+		MessageFormatVersion.v3,
+		MessageFormatVersion.v4,
+		MessageFormatVersion.vSharedBranches,
+	] as MessageFormatVersion[]);
 export const messageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set(
 	Object.values(MessageFormatVersion) as MessageFormatVersion[],
 );

@@ -11,12 +11,23 @@
  * Current version: 2.74.0
  */
 
-import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
+import type {
+	FullType,
+	MinimalType,
+	requireAssignableTo,
+	TypeOnly,
+} from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/devtools-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> =
+	| TypeOnly<T>
+	| MinimalType<T>
+	| FullType<T>
+	| typeof old
+	| typeof current
+	| requireAssignableTo<true, true>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -25,7 +36,11 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Function_createDevtoolsLogger": {"backCompat": false}
  */
-declare type current_as_old_for_Function_createDevtoolsLogger = requireAssignableTo<TypeOnly<typeof current.createDevtoolsLogger>, TypeOnly<typeof old.createDevtoolsLogger>>
+declare type current_as_old_for_Function_createDevtoolsLogger =
+	requireAssignableTo<
+		TypeOnly<typeof current.createDevtoolsLogger>,
+		TypeOnly<typeof old.createDevtoolsLogger>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -34,7 +49,11 @@ declare type current_as_old_for_Function_createDevtoolsLogger = requireAssignabl
  * typeValidation.broken:
  * "Function_initializeDevtools": {"backCompat": false}
  */
-declare type current_as_old_for_Function_initializeDevtools = requireAssignableTo<TypeOnly<typeof current.initializeDevtools>, TypeOnly<typeof old.initializeDevtools>>
+declare type current_as_old_for_Function_initializeDevtools =
+	requireAssignableTo<
+		TypeOnly<typeof current.initializeDevtools>,
+		TypeOnly<typeof old.initializeDevtools>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -43,7 +62,11 @@ declare type current_as_old_for_Function_initializeDevtools = requireAssignableT
  * typeValidation.broken:
  * "Interface_ContainerDevtoolsProps": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ContainerDevtoolsProps = requireAssignableTo<TypeOnly<current.ContainerDevtoolsProps>, TypeOnly<old.ContainerDevtoolsProps>>
+declare type current_as_old_for_Interface_ContainerDevtoolsProps =
+	requireAssignableTo<
+		TypeOnly<current.ContainerDevtoolsProps>,
+		TypeOnly<old.ContainerDevtoolsProps>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -52,7 +75,10 @@ declare type current_as_old_for_Interface_ContainerDevtoolsProps = requireAssign
  * typeValidation.broken:
  * "Interface_DevtoolsProps": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_DevtoolsProps = requireAssignableTo<TypeOnly<current.DevtoolsProps>, TypeOnly<old.DevtoolsProps>>
+declare type current_as_old_for_Interface_DevtoolsProps = requireAssignableTo<
+	TypeOnly<current.DevtoolsProps>,
+	TypeOnly<old.DevtoolsProps>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -61,7 +87,10 @@ declare type current_as_old_for_Interface_DevtoolsProps = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Interface_IDevtools": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IDevtools = requireAssignableTo<TypeOnly<current.IDevtools>, TypeOnly<old.IDevtools>>
+declare type current_as_old_for_Interface_IDevtools = requireAssignableTo<
+	TypeOnly<current.IDevtools>,
+	TypeOnly<old.IDevtools>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -70,7 +99,10 @@ declare type current_as_old_for_Interface_IDevtools = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "Interface_IDevtoolsLogger": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IDevtoolsLogger = requireAssignableTo<TypeOnly<current.IDevtoolsLogger>, TypeOnly<old.IDevtoolsLogger>>
+declare type current_as_old_for_Interface_IDevtoolsLogger = requireAssignableTo<
+	TypeOnly<current.IDevtoolsLogger>,
+	TypeOnly<old.IDevtoolsLogger>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -79,7 +111,10 @@ declare type current_as_old_for_Interface_IDevtoolsLogger = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_ContainerKey": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_ContainerKey = requireAssignableTo<TypeOnly<old.ContainerKey>, TypeOnly<current.ContainerKey>>
+declare type old_as_current_for_TypeAlias_ContainerKey = requireAssignableTo<
+	TypeOnly<old.ContainerKey>,
+	TypeOnly<current.ContainerKey>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -88,4 +123,7 @@ declare type old_as_current_for_TypeAlias_ContainerKey = requireAssignableTo<Typ
  * typeValidation.broken:
  * "TypeAlias_ContainerKey": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_ContainerKey = requireAssignableTo<TypeOnly<current.ContainerKey>, TypeOnly<old.ContainerKey>>
+declare type current_as_old_for_TypeAlias_ContainerKey = requireAssignableTo<
+	TypeOnly<current.ContainerKey>,
+	TypeOnly<old.ContainerKey>
+>;

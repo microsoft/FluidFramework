@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDiceRoller } from "./dataObject.js";
+import type { IDiceRoller } from "./dataObject.js";
 import {
 	jsRenderDiceRoller,
 	reactRenderDiceRoller,

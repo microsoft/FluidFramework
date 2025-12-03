@@ -7,19 +7,19 @@
  * This package provides an implementation and types for producing and consuming telemetry for Fluid Framework applications
  * @packageDocumentation
  */
-export { type ICriticalContainerError } from "@fluidframework/container-definitions";
-export {
-	type IFluidTelemetry,
-	type FluidTelemetryEventName,
-	type ITelemetryConsumer,
+export type { ICriticalContainerError } from "@fluidframework/container-definitions";
+export { AppInsightsTelemetryConsumer } from "./app-insights/index.js";
+export type {
+	FluidTelemetryEventName,
+	IFluidTelemetry,
+	ITelemetryConsumer,
 } from "./common/index.js";
 export {
-	type IContainerTelemetry,
-	type ContainerTelemetryEventName,
-	ContainerTelemetryEventNames,
 	type ContainerConnectedTelemetry,
 	type ContainerDisconnectedTelemetry,
 	type ContainerDisposedTelemetry,
+	type ContainerTelemetryEventName,
+	ContainerTelemetryEventNames,
+	type IContainerTelemetry,
 } from "./container/index.js";
-export { AppInsightsTelemetryConsumer } from "./app-insights/index.js";
 export { startTelemetry, type TelemetryConfig } from "./factory/index.js";

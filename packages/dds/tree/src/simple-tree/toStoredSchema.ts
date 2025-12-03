@@ -4,26 +4,30 @@
  */
 
 import {
-	unreachableCase,
 	fail,
 	transformMapValues,
+	unreachableCase,
 } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	EmptyKey,
+	type FieldKey,
+	type FieldKindIdentifier,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
-	type FieldKey,
-	type FieldKindIdentifier,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 } from "../core/index.js";
 import { FieldKinds, type FlexFieldKind } from "../feature-libraries/index.js";
-import { brand, getOrCreate, type JsonCompatibleReadOnlyObject } from "../util/index.js";
+import {
+	brand,
+	getOrCreate,
+	type JsonCompatibleReadOnlyObject,
+} from "../util/index.js";
 
 import {
 	allowedTypeFilter,
@@ -34,7 +38,11 @@ import {
 	type StoredFromViewSchemaGenerationOptions,
 	type StoredSchemaGenerationOptions,
 } from "./core/index.js";
-import { FieldKind, normalizeFieldSchema, type ImplicitFieldSchema } from "./fieldSchema.js";
+import {
+	FieldKind,
+	type ImplicitFieldSchema,
+	normalizeFieldSchema,
+} from "./fieldSchema.js";
 import type {
 	SimpleAllowedTypes,
 	SimpleFieldSchema,
@@ -48,13 +56,15 @@ const viewToStoredCache = new WeakMap<
 	WeakMap<ImplicitFieldSchema, TreeStoredSchema>
 >();
 
-export const restrictiveStoredSchemaGenerationOptions: StoredSchemaGenerationOptions = {
-	includeStaged: () => false,
-};
+export const restrictiveStoredSchemaGenerationOptions: StoredSchemaGenerationOptions =
+	{
+		includeStaged: () => false,
+	};
 
-export const permissiveStoredSchemaGenerationOptions: StoredSchemaGenerationOptions = {
-	includeStaged: () => true,
-};
+export const permissiveStoredSchemaGenerationOptions: StoredSchemaGenerationOptions =
+	{
+		includeStaged: () => true,
+	};
 
 /**
  * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema} for use in schema upgrades.
@@ -101,7 +111,8 @@ export function toStoredSchema(
 	const cache = getOrCreate(viewToStoredCache, options, () => new WeakMap());
 	return getOrCreate(cache, root, () => {
 		const normalized = normalizeFieldSchema(root);
-		const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
+		const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> =
+			new Map();
 		walkFieldSchema(normalized, {
 			node(schema) {
 				if (nodeSchema.has(brand(schema.identifier))) {
@@ -163,7 +174,8 @@ export function convertField(
 	options: StoredSchemaGenerationOptions,
 ): TreeFieldStoredSchema {
 	const kind: FieldKindIdentifier =
-		convertFieldKind.get(schema.kind)?.identifier ?? fail(0xae3 /* Invalid field kind */);
+		convertFieldKind.get(schema.kind)?.identifier ??
+		fail(0xae3 /* Invalid field kind */);
 	const types = convertAllowedTypes(schema.simpleAllowedTypes, options);
 	return { kind, types, persistedMetadata: schema.persistedMetadata };
 }
@@ -217,7 +229,10 @@ export function getStoredSchema(
 		case NodeKind.Object: {
 			const fields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
 			for (const fieldSchema of schema.fields.values()) {
-				fields.set(brand(fieldSchema.storedKey), convertField(fieldSchema, options));
+				fields.set(
+					brand(fieldSchema.storedKey),
+					convertField(fieldSchema, options),
+				);
 			}
 			return new ObjectNodeStoredSchema(fields, schema.persistedMetadata);
 		}

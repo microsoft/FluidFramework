@@ -5,28 +5,33 @@
 
 /* Utilities to manage finding, installing and loading legacy versions */
 
-import { ExecOptions, execFileSync, execFile } from "node:child_process";
+import { type ExecOptions, execFile, execFileSync } from "node:child_process";
 import {
 	existsSync,
 	mkdirSync,
-	rmdirSync,
 	readdirSync,
 	readFileSync,
+	rmdirSync,
 	writeFileSync,
 } from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { detectVersionScheme, fromInternalScheme } from "@fluid-tools/version-tools";
-import { LazyPromise, assert } from "@fluidframework/core-utils/internal";
+import {
+	detectVersionScheme,
+	fromInternalScheme,
+} from "@fluid-tools/version-tools";
+import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import { lock } from "proper-lockfile";
 import * as semver from "semver";
 
 import { pkgVersion } from "./packageVersion.js";
-import { InstalledPackage } from "./testApi.js";
+import type { InstalledPackage } from "./testApi.js";
 
 // Assuming this file is in `lib`, so go to `..\node_modules\.legacy` as the install location
-const baseModulePath = fileURLToPath(new URL("../node_modules/.legacy", import.meta.url));
+const baseModulePath = fileURLToPath(
+	new URL("../node_modules/.legacy", import.meta.url),
+);
 const installedJsonPath = path.join(baseModulePath, "installed.json");
 const getModulePath = (version: string) => path.join(baseModulePath, version);
 
@@ -43,14 +48,18 @@ interface InstalledJson {
 let cachedInstalledJson: InstalledJson | undefined;
 function writeAndUpdateInstalledJson(data: InstalledJson) {
 	cachedInstalledJson = data;
-	writeFileSync(installedJsonPath, JSON.stringify(data, undefined, 2), { encoding: "utf8" });
+	writeFileSync(installedJsonPath, JSON.stringify(data, undefined, 2), {
+		encoding: "utf8",
+	});
 }
 
 async function ensureInstalledJson() {
 	if (existsSync(installedJsonPath)) {
 		return;
 	}
-	const release = await lock(fileURLToPath(import.meta.url), { retries: { forever: true } });
+	const release = await lock(fileURLToPath(import.meta.url), {
+		retries: { forever: true },
+	});
 	try {
 		// Check it again under the lock
 		if (existsSync(installedJsonPath)) {
@@ -65,7 +74,9 @@ async function ensureInstalledJson() {
 		release();
 	}
 }
-const ensureInstalledJsonLazy = new LazyPromise(async () => ensureInstalledJson());
+const ensureInstalledJsonLazy = new LazyPromise(async () =>
+	ensureInstalledJson(),
+);
 
 function readInstalledJsonNoLock(): InstalledJson {
 	const data = readFileSync(installedJsonPath, { encoding: "utf8" });
@@ -113,7 +124,9 @@ async function removeInstalled(version: string) {
 	const release = await lock(installedJsonPath, { retries: { forever: true } });
 	try {
 		const installedJson = readInstalledJsonNoLock();
-		installedJson.installed = installedJson.installed.filter((value) => value !== version);
+		installedJson.installed = installedJson.installed.filter(
+			(value) => value !== version,
+		);
 		writeAndUpdateInstalledJson(installedJson);
 	} finally {
 		release();
@@ -123,7 +136,9 @@ async function removeInstalled(version: string) {
 // See https://github.com/nodejs/node-v0.x-archive/issues/2318.
 // Note that execFile and execFileSync are used to avoid command injection vulnerability flagging from CodeQL.
 const npmCmd =
-	process.platform.includes("win") && !process.platform.includes("darwin") ? "npm.cmd" : "npm";
+	process.platform.includes("win") && !process.platform.includes("darwin")
+		? "npm.cmd"
+		: "npm";
 
 /**
  * @internal
@@ -165,7 +180,12 @@ export function resolveVersion(requested: string, installed: boolean) {
 		try {
 			result = execFileSync(
 				npmCmd,
-				["v", `"@fluidframework/container-loader@${requested}"`, "version", "--json"],
+				[
+					"v",
+					`"@fluidframework/container-loader@${requested}"`,
+					"version",
+					"--json",
+				],
 				{
 					encoding: "utf8",
 					// When using npm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
@@ -183,8 +203,11 @@ export function resolveVersion(requested: string, installed: boolean) {
 		}
 
 		try {
-			const versions: string | string[] = result !== "" ? JSON.parse(result) : "";
-			const version = Array.isArray(versions) ? versions.sort(semver.rcompare)[0] : versions;
+			const versions: string | string[] =
+				result !== "" ? JSON.parse(result) : "";
+			const version = Array.isArray(versions)
+				? versions.sort(semver.rcompare)[0]
+				: versions;
 			if (version) {
 				resolutionCache.set(requested, version);
 				return version;
@@ -344,14 +367,18 @@ export function checkInstalled(requested: string) {
 /**
  * @internal
  */
-export const loadPackage = async (modulePath: string, pkg: string): Promise<any> => {
+export const loadPackage = async (
+	modulePath: string,
+	pkg: string,
+): Promise<any> => {
 	const pkgPath = path.join(modulePath, "node_modules", pkg);
 	// Because we put legacy versions in a specific subfolder of node_modules (.legacy/<version>), we need to reimplement
 	// some of Node's module loading logic here.
 	// It would be ideal to remove the need for this duplication (e.g. by using node:module APIs instead) if possible.
-	const pkgJson: { main?: string; exports?: string | Record<string, any> } = JSON.parse(
-		readFileSync(path.join(pkgPath, "package.json"), { encoding: "utf8" }),
-	);
+	const pkgJson: { main?: string; exports?: string | Record<string, any> } =
+		JSON.parse(
+			readFileSync(path.join(pkgPath, "package.json"), { encoding: "utf8" }),
+		);
 	// See: https://nodejs.org/docs/latest-v18.x/api/packages.html#package-entry-points
 	let primaryExport: string;
 	if (pkgJson.exports !== undefined) {
@@ -377,7 +404,9 @@ export const loadPackage = async (modulePath: string, pkg: string): Promise<any>
 						? exp.require.default
 						: exp.default;
 			if (primaryExport === undefined) {
-				throw new Error(`Package ${pkg} defined subpath exports but no '.' entry.`);
+				throw new Error(
+					`Package ${pkg} defined subpath exports but no '.' entry.`,
+				);
 			}
 		}
 	} else {
@@ -405,7 +434,9 @@ function calculateRequestedRange(
 		return requested;
 	}
 	if (requested > 0) {
-		throw new Error("Only negative values are supported for `requested` param.");
+		throw new Error(
+			"Only negative values are supported for `requested` param.",
+		);
 	}
 
 	const scheme = detectVersionScheme(baseVersion);
@@ -415,11 +446,12 @@ function calculateRequestedRange(
 		adjustPublicMajor === false &&
 		(scheme === "internal" || scheme === "internalPrerelease")
 	) {
-		const [publicVersion, internalVersion, prereleaseIdentifier] = fromInternalScheme(
-			baseVersion,
-			/** allowPrereleases */ true,
-			/** allowAnyPrereleaseId */ true,
-		);
+		const [publicVersion, internalVersion, prereleaseIdentifier] =
+			fromInternalScheme(
+				baseVersion,
+				/** allowPrereleases */ true,
+				/** allowAnyPrereleaseId */ true,
+			);
 
 		const internalSchemeRange = internalSchema(
 			publicVersion.version,
@@ -444,7 +476,12 @@ function calculateRequestedRange(
 	if (adjustPublicMajor === false && version.major > 1) {
 		if (version.minor < 10) {
 			// If 2.0 <= N < 2.10, then we can pretend that N is RC6 (*which doesn't exist*) and calculate the range as if it were an internal version.
-			const internalSchemeRange = internalSchema("2.0.0", "6.0.0", "rc", requested);
+			const internalSchemeRange = internalSchema(
+				"2.0.0",
+				"6.0.0",
+				"rc",
+				requested,
+			);
 			return internalSchemeRange;
 		} else {
 			// For each requested version to go back, we go back 10 minor versions. If requested is -2, then we need to go back 20 minor versions.
@@ -466,7 +503,8 @@ function calculateRequestedRange(
 			}
 			// Here we know that the requested version will be >=2.0, so we can avoid all the RC releases.
 			// If N >= 2.10, then the range we need to return for N-1 starts at legacy breaking minor before the one N belongs to.
-			const lowerMinorRange = Math.floor((version.minor - legacyMinorsToSkip) / 10) * 10;
+			const lowerMinorRange =
+				Math.floor((version.minor - legacyMinorsToSkip) / 10) * 10;
 			const upperMinorRange = lowerMinorRange + 10;
 			// Here we do a range that, when resolved, will result in the latest minor version that satisfies the request.
 			return `>=${version.major}.${lowerMinorRange}.0-0 <${version.major}.${upperMinorRange}.0-0`;
@@ -483,7 +521,8 @@ function calculateRequestedRange(
 
 		// Minor number in 0.xx release represent a major change hence different rules
 		// are applied for computing the requested version.
-		const requestedMinorVersion = lastPrereleaseVersion.minor + requestedMajorVersion;
+		const requestedMinorVersion =
+			lastPrereleaseVersion.minor + requestedMajorVersion;
 		// too old a version / non existing version requested
 		if (requestedMinorVersion <= 0) {
 			// cap at min version
@@ -526,7 +565,11 @@ export function getRequestedVersion(
 	requested?: number | string,
 	adjustPublicMajor: boolean = false,
 ): string {
-	const calculatedRange = calculateRequestedRange(baseVersion, requested, adjustPublicMajor);
+	const calculatedRange = calculateRequestedRange(
+		baseVersion,
+		requested,
+		adjustPublicMajor,
+	);
 	try {
 		// Returns the exact version that was requested (i.e. 2.0.0-rc.2.0.2).
 		// Will throw if the requested version range is not valid.
@@ -535,7 +578,11 @@ export function getRequestedVersion(
 		// If we tried fetching N-1 and it failed, try N-2. It is possible that we are trying to bump the current branch
 		// to a new version. If that is the case, then N-1 may not be published yet, and we should try to use N-2 in it's place.
 		if (requested === -1) {
-			const resolvedVersion = getRequestedVersion(baseVersion, -2, adjustPublicMajor);
+			const resolvedVersion = getRequestedVersion(
+				baseVersion,
+				-2,
+				adjustPublicMajor,
+			);
 			// Here we cache the result so we don't have to enter the try/catch flow again.
 			// Note: This will cache the resolved version range (i.e. >=2.0.0-rc.4.0.0 <2.0.0-rc.5.0.0). Because of this,
 			// it will not cause any conflicts when trying to fetch the current version
@@ -567,10 +614,18 @@ function internalSchema(
 			if (parsed.major + requested < 1) {
 				// If the request will evaluate to a pre-RC release, we need to convert the request
 				// to the equivalent internal release request.
-				return internalSchema("2.0.0", "8.0.0", "internal", requested + parsed.major);
+				return internalSchema(
+					"2.0.0",
+					"8.0.0",
+					"internal",
+					requested + parsed.major,
+				);
 			}
 		}
-	} else if (semver.eq(publicVersion, "2.0.0") && semver.lt(internalVersion, "2.0.0")) {
+	} else if (
+		semver.eq(publicVersion, "2.0.0") &&
+		semver.lt(internalVersion, "2.0.0")
+	) {
 		if (requested === -1) {
 			return `^1.0.0-0`;
 		}
@@ -628,7 +683,8 @@ function internalSchema(
 export function versionHasMovedSparsedMatrix(version: string): boolean {
 	// SparseMatrix was moved to "@fluid-experimental/sequence-deprecated" in "2.0.0-internal.2.0.0"
 	return (
-		version >= "2.0.0-internal.2.0.0" || (!version.includes("internal") && version >= "2.0.0")
+		version >= "2.0.0-internal.2.0.0" ||
+		(!version.includes("internal") && version >= "2.0.0")
 	);
 }
 

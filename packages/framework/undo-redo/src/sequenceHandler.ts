@@ -4,18 +4,21 @@
  */
 
 import {
-	type ISegment,
-	type MergeTreeDeltaRevertible,
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,
+	type ISegment,
+	type MergeTreeDeltaRevertible,
 	revertMergeTreeDeltaRevertibles,
 } from "@fluidframework/merge-tree/internal";
 import type {
-	SequenceDeltaEvent,
 	ISharedSegmentSequence,
+	SequenceDeltaEvent,
 } from "@fluidframework/sequence/internal";
 
-import type { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager.js";
+import type {
+	IRevertible,
+	UndoRedoStackManager,
+} from "./undoRedoStackManager.js";
 
 /**
  * A shared segment sequence undo redo handler that will add all local sequences changes to the provided
@@ -32,11 +35,15 @@ export class SharedSegmentSequenceUndoRedoHandler {
 		this.stackManager.on("changePushed", () => this.sequences.clear());
 	}
 
-	public attachSequence<T extends ISegment>(sequence: ISharedSegmentSequence<T>): void {
+	public attachSequence<T extends ISegment>(
+		sequence: ISharedSegmentSequence<T>,
+	): void {
 		sequence.on("sequenceDelta", this.sequenceDeltaHandler);
 	}
 
-	public detachSequence<T extends ISegment>(sequence: ISharedSegmentSequence<T>): void {
+	public detachSequence<T extends ISegment>(
+		sequence: ISharedSegmentSequence<T>,
+	): void {
 		sequence.off("sequenceDelta", this.sequenceDeltaHandler);
 	}
 

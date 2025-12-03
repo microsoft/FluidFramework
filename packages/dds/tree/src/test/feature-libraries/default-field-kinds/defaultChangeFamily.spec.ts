@@ -6,27 +6,29 @@
 import { strict as assert } from "node:assert";
 
 import {
+	applyDelta,
 	type DeltaRoot,
 	EmptyKey,
 	type FieldKey,
 	type IForestSubscription,
 	type JsonableTree,
-	type TaggedChange,
-	type UpPath,
-	applyDelta,
 	makeDetachedFieldIndex,
 	mapCursorField,
 	moveToDetachedField,
 	rootFieldKey,
+	type TaggedChange,
+	type UpPath,
 } from "../../../core/index.js";
 import {
+	cursorForJsonableTreeField,
 	DefaultChangeFamily,
 	type DefaultChangeset,
 	DefaultEditBuilder,
-	cursorForJsonableTreeField,
 	intoDelta,
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries/index.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
+import { numberSchema, stringSchema } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
 import {
 	assertDeltaEqual,
@@ -37,8 +39,6 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
-import { numberSchema, stringSchema } from "../../../simple-tree/index.js";
 import { initializeForest } from "../initializeForest.js";
 
 const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
@@ -96,7 +96,10 @@ const root_bar0_bar0: UpPath = {
 	parentIndex: 0,
 };
 
-const nodeX: JsonableTree = { type: brand(stringSchema.identifier), value: "X" };
+const nodeX: JsonableTree = {
+	type: brand(stringSchema.identifier),
+	value: "X",
+};
 const nodeXChunk = chunkFromJsonableTrees([nodeX]);
 
 function assertDeltasEqual(actual: DeltaRoot[], expected: DeltaRoot[]): void {
@@ -132,12 +135,16 @@ function initializeEditableForest(data?: JsonableTree): {
 		testRevisionTagCodec,
 		testIdCompressor,
 	);
-	const builder = new DefaultEditBuilder(family, mintRevisionTag, (taggedChange) => {
-		changes.push(taggedChange);
-		const delta = intoDelta(taggedChange);
-		deltas.push(delta);
-		applyDelta(delta, taggedChange.revision, forest, detachedFieldIndex);
-	});
+	const builder = new DefaultEditBuilder(
+		family,
+		mintRevisionTag,
+		(taggedChange) => {
+			changes.push(taggedChange);
+			const delta = intoDelta(taggedChange);
+			deltas.push(delta);
+			applyDelta(delta, taggedChange.revision, forest, detachedFieldIndex);
+		},
+	);
 	return {
 		forest,
 		builder,
@@ -179,7 +186,9 @@ describe("DefaultEditBuilder", () => {
 		assert.equal(deltas.length, 1);
 		fooEditor.insert(
 			0,
-			chunkFromJsonableTrees([{ type: brand(numberSchema.identifier), value: 42 }]),
+			chunkFromJsonableTrees([
+				{ type: brand(numberSchema.identifier), value: 42 },
+			]),
 		);
 		expectForest(forest, {
 			type: brand(JsonAsTree.JsonObject.identifier),
@@ -243,7 +252,9 @@ describe("DefaultEditBuilder", () => {
 			const { builder, forest } = initializeEditableForest({
 				type: brand(JsonAsTree.JsonObject.identifier),
 			});
-			builder.optionalField({ parent: undefined, field: rootKey }).set(nodeXChunk, false);
+			builder
+				.optionalField({ parent: undefined, field: rootKey })
+				.set(nodeXChunk, false);
 			expectForest(forest, nodeX);
 		});
 
@@ -263,7 +274,9 @@ describe("DefaultEditBuilder", () => {
 					],
 				},
 			});
-			builder.optionalField({ parent: root_foo2, field: fooKey }).set(nodeXChunk, false);
+			builder
+				.optionalField({ parent: root_foo2, field: fooKey })
+				.set(nodeXChunk, false);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -284,7 +297,9 @@ describe("DefaultEditBuilder", () => {
 
 		it("Can set an empty root field", () => {
 			const { builder, forest } = initializeEditableForest();
-			builder.optionalField({ parent: undefined, field: rootKey }).set(nodeXChunk, true);
+			builder
+				.optionalField({ parent: undefined, field: rootKey })
+				.set(nodeXChunk, true);
 			expectForest(forest, nodeX);
 		});
 
@@ -299,14 +314,19 @@ describe("DefaultEditBuilder", () => {
 					],
 				},
 			});
-			builder.optionalField({ parent: root_foo2, field: fooKey }).set(nodeXChunk, true);
+			builder
+				.optionalField({ parent: root_foo2, field: fooKey })
+				.set(nodeXChunk, true);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{ type: brand(numberSchema.identifier), value: 0 },
 						{ type: brand(numberSchema.identifier), value: 1 },
-						{ type: brand(JsonAsTree.JsonObject.identifier), fields: { foo: [nodeX] } },
+						{
+							type: brand(JsonAsTree.JsonObject.identifier),
+							fields: { foo: [nodeX] },
+						},
 					],
 				},
 			};
@@ -317,7 +337,9 @@ describe("DefaultEditBuilder", () => {
 	describe("Sequence Field Edits", () => {
 		it("Can insert a root node", () => {
 			const { builder, forest } = initializeEditableForest();
-			builder.sequenceField({ parent: undefined, field: rootKey }).insert(0, nodeXChunk);
+			builder
+				.sequenceField({ parent: undefined, field: rootKey })
+				.insert(0, nodeXChunk);
 			expectForest(forest, nodeX);
 		});
 
@@ -343,7 +365,9 @@ describe("DefaultEditBuilder", () => {
 					],
 				},
 			});
-			builder.sequenceField({ parent: root_foo2, field: fooKey }).insert(5, nodeXChunk);
+			builder
+				.sequenceField({ parent: root_foo2, field: fooKey })
+				.insert(5, nodeXChunk);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -436,7 +460,13 @@ describe("DefaultEditBuilder", () => {
 					],
 				},
 			});
-			builder.move({ parent: root, field: fooKey }, 0, 3, { parent: root, field: fooKey }, 4);
+			builder.move(
+				{ parent: root, field: fooKey },
+				0,
+				3,
+				{ parent: root, field: fooKey },
+				4,
+			);
 			const treeView = toJsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
@@ -464,7 +494,13 @@ describe("DefaultEditBuilder", () => {
 					],
 				},
 			});
-			builder.move({ parent: root, field: fooKey }, 1, 3, { parent: root, field: fooKey }, 0);
+			builder.move(
+				{ parent: root, field: fooKey },
+				1,
+				3,
+				{ parent: root, field: fooKey },
+				0,
+			);
 			const treeView = toJsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
@@ -492,7 +528,13 @@ describe("DefaultEditBuilder", () => {
 					],
 				},
 			});
-			builder.move({ parent: root, field: fooKey }, 1, 2, { parent: root, field: fooKey }, 2);
+			builder.move(
+				{ parent: root, field: fooKey },
+				1,
+				2,
+				{ parent: root, field: fooKey },
+				2,
+			);
 			const treeView = toJsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
@@ -521,7 +563,13 @@ describe("DefaultEditBuilder", () => {
 					bar: [{ type: brand(numberSchema.identifier), value: 0 }],
 				},
 			});
-			builder.move({ parent: root, field: fooKey }, 1, 3, { parent: root, field: barKey }, 1);
+			builder.move(
+				{ parent: root, field: fooKey },
+				1,
+				3,
+				{ parent: root, field: barKey },
+				1,
+			);
 			const treeView = toJsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
@@ -943,7 +991,13 @@ describe("DefaultEditBuilder", () => {
 					bar: [{ type: brand(numberSchema.identifier), value: 0 }],
 				},
 			});
-			builder.move({ parent: root, field: fooKey }, 0, 3, { parent: root, field: barKey }, 1);
+			builder.move(
+				{ parent: root, field: fooKey },
+				0,
+				3,
+				{ parent: root, field: barKey },
+				1,
+			);
 			const treeView = toJsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),

@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { AttachState, IAudience } from "@fluidframework/container-definitions";
+import type {
+	AttachState,
+	IAudience,
+} from "@fluidframework/container-definitions";
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import type {
 	FluidObject,
@@ -19,11 +22,14 @@ import type {
 	IFluidHandleInternal,
 	IProvideFluidHandleContext,
 } from "@fluidframework/core-interfaces/internal";
-import type { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
+import type {
+	IClientDetails,
+	IQuorumClients,
+} from "@fluidframework/driver-definitions";
 import type {
 	IDocumentMessage,
-	ISnapshotTree,
 	ISequencedDocumentMessage,
+	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
@@ -119,7 +125,8 @@ export const VisibilityState = {
 /**
  * @legacy @beta
  */
-export type VisibilityState = (typeof VisibilityState)[keyof typeof VisibilityState];
+export type VisibilityState =
+	(typeof VisibilityState)[keyof typeof VisibilityState];
 
 /**
  * @legacy @beta
@@ -130,7 +137,10 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 	 * Indicates the beginning of an incoming batch of ops
 	 * @param op - The first op in the batch. Can be inspected to learn about the sequence numbers relevant for this batch.
 	 */
-	(event: "batchBegin", listener: (op: Omit<ISequencedDocumentMessage, "contents">) => void);
+	(
+		event: "batchBegin",
+		listener: (op: Omit<ISequencedDocumentMessage, "contents">) => void,
+	);
 	/**
 	 * Indicates the end of an incoming batch of ops
 	 * @param error - If an error occurred while processing the batch, it is provided here.
@@ -138,15 +148,24 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 	 */
 	(
 		event: "batchEnd",
-		listener: (error: unknown, op: Omit<ISequencedDocumentMessage, "contents">) => void,
+		listener: (
+			error: unknown,
+			op: Omit<ISequencedDocumentMessage, "contents">,
+		) => void,
 	);
 	/**
 	 * Indicates that an incoming op has been processed.
 	 * @param runtimeMessage - tells if op is runtime op. If it is, it was unpacked, i.e. its type and content
 	 * represent internal container runtime type / content. i.e. A grouped batch of N ops will result in N "op" events
 	 */
-	(event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void);
-	(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
+	(
+		event: "op",
+		listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void,
+	);
+	(
+		event: "signal",
+		listener: (message: IInboundSignalMessage, local: boolean) => void,
+	);
 	(event: "dispose", listener: () => void);
 }
 
@@ -203,7 +222,8 @@ export interface IDataStore {
  * @legacy @beta
  * @sealed
  */
-export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
+export interface IContainerRuntimeBase
+	extends IEventProvider<IContainerRuntimeBaseEvents> {
 	readonly baseLogger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
 	readonly disposed: boolean;
@@ -225,7 +245,11 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
+	submitSignal: (
+		type: string,
+		content: unknown,
+		targetClientId?: string,
+	) => void;
 
 	/**
 	 * Creates a data store and returns an object that exposes a handle to the data store's entryPoint, and also serves
@@ -238,7 +262,10 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * When not specified the datastore will belong to a `default` group. Read more about it in this
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
 	 */
-	createDataStore(pkg: string | PackagePath, loadingGroupId?: string): Promise<IDataStore>;
+	createDataStore(
+		pkg: string | PackagePath,
+		loadingGroupId?: string,
+	): Promise<IDataStore>;
 
 	/**
 	 * Creates detached data store context. Only after context.attachRuntime() is called,
@@ -259,7 +286,9 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * @returns The data store's entry point ({@link @fluidframework/core-interfaces#IFluidHandle}) if it exists and is aliased.
 	 * Returns undefined if no data store has been assigned the given alias.
 	 */
-	getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
+	getAliasedDataStoreEntryPoint(
+		alias: string,
+	): Promise<IFluidHandle<FluidObject> | undefined>;
 
 	/**
 	 * Get an absolute url for a provided container-relative request.
@@ -427,7 +456,12 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * See remarks about squashing contract on `CommitStagedChangesOptionsExperimental`.
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
-	reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean): void;
+	reSubmit(
+		type: string,
+		content: any,
+		localOpMetadata: unknown,
+		squash?: boolean,
+	): void;
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	applyStashedOp(content: any): Promise<unknown>;
@@ -449,7 +483,9 @@ export interface IFluidDataStoreChannel extends IDisposable {
 
 	request(request: IRequest): Promise<IResponse>;
 
-	setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+	setAttachState(
+		attachState: AttachState.Attaching | AttachState.Attached,
+	): void;
 }
 
 /**
@@ -506,7 +542,10 @@ export interface IFluidParentContext
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
 	 */
 	readonly minVersionForCollab?: MinimumVersionForCollab;
-	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+	readonly deltaManager: IDeltaManager<
+		ISequencedDocumentMessage,
+		IDocumentMessage
+	>;
 	readonly storage: IRuntimeStorageService;
 	readonly baseLogger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
@@ -565,7 +604,11 @@ export interface IFluidParentContext
 	 * serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
+	submitSignal: (
+		type: string,
+		content: unknown,
+		targetClientId?: string,
+	) => void;
 
 	/**
 	 * Called to make the data store locally visible in the container. This happens automatically for root data stores
@@ -615,7 +658,11 @@ export interface IFluidParentContext
 	 * @param toPath - The absolute path of the outbound node that is referenced.
 	 * @param messageTimestampMs - The timestamp of the message that added the reference.
 	 */
-	addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number): void;
+	addedGCOutboundRoute(
+		fromPath: string,
+		toPath: string,
+		messageTimestampMs?: number,
+	): void;
 }
 
 /**

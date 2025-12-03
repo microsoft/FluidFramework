@@ -3,24 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
-import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
-import { IRequest, IResponse } from "@fluidframework/core-interfaces";
-import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import {
+	describeCompat,
+	type ITestDataObject,
+} from "@fluid-private/test-version-utils";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import type { IRequest, IResponse } from "@fluidframework/core-interfaces";
+import type {
+	IFluidHandleContext,
+	IFluidHandleInternal,
+} from "@fluidframework/core-interfaces/internal";
 // This test doesn't care to test compat of the Fluid handle implementation, it's just used for convenience
 // to simulate an unknown object.
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import { FluidHandleBase } from "@fluidframework/runtime-utils/internal";
 import {
-	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
+	type ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import { strict as assert } from "assert";
 
 import { defaultGCConfig } from "./gcTestConfigs.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
@@ -93,13 +97,18 @@ describeCompat("GC unknown handles", "FullCompat", (getTestObjectProvider) => {
 		}
 
 		mainContainer = await provider.makeTestContainer(defaultGCConfig);
-		dataStoreA = await getContainerEntryPointBackCompat<ITestDataObject>(mainContainer);
+		dataStoreA =
+			await getContainerEntryPointBackCompat<ITestDataObject>(mainContainer);
 		await waitForContainerConnection(mainContainer);
 
-		const summarizerContainer = await provider.loadTestContainer(defaultGCConfig);
+		const summarizerContainer =
+			await provider.loadTestContainer(defaultGCConfig);
 		const summarizerDataStoreA =
-			await getContainerEntryPointBackCompat<ITestDataObject>(summarizerContainer);
-		summarizerRuntime = summarizerDataStoreA._context.containerRuntime as ContainerRuntime;
+			await getContainerEntryPointBackCompat<ITestDataObject>(
+				summarizerContainer,
+			);
+		summarizerRuntime = summarizerDataStoreA._context
+			.containerRuntime as ContainerRuntime;
 		await waitForContainerConnection(summarizerContainer);
 	});
 

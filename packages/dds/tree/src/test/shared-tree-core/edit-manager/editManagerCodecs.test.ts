@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
 import type { SessionId } from "@fluidframework/id-compressor";
-
+import { DependentFormatVersion } from "../../../codec/index.js";
 import type { ChangeEncodingContext } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -23,8 +24,6 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
-import { strict as assert } from "node:assert";
-import { DependentFormatVersion } from "../../../codec/index.js";
 
 const tags = Array.from({ length: 3 }, mintRevisionTag);
 
@@ -55,7 +54,11 @@ const dummyContext = {
 	revision: undefined,
 	idCompressor: testIdCompressor,
 };
-const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodingContext> = {
+const testCases: EncodingTestData<
+	SummaryData<TestChange>,
+	unknown,
+	ChangeEncodingContext
+> = {
 	successes: [
 		[
 			"empty",
@@ -180,7 +183,9 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 				"missing sessionId",
 				{
 					base: tags[0],
-					commits: [{ change: TestChange.mint([0], 1), revision: mintRevisionTag() }],
+					commits: [
+						{ change: TestChange.mint([0], 1), revision: mintRevisionTag() },
+					],
 				},
 				dummyContext,
 			],
@@ -189,7 +194,9 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 				"commit with parent field",
 				{
 					main: {
-						trunk: trunkCommits.slice(0, 1).map((commit) => ({ ...commit, parent: 0 })),
+						trunk: trunkCommits
+							.slice(0, 1)
+							.map((commit) => ({ ...commit, parent: 0 })),
 						peerLocalBranches: [],
 					},
 				},
@@ -216,7 +223,11 @@ export function testCodec() {
 			testCases,
 			assertEquivalentSummaryDataIgnoreOriginator,
 			[EditManagerFormatVersion.v3, EditManagerFormatVersion.v4],
-			[EditManagerFormatVersion.v1, EditManagerFormatVersion.v2, EditManagerFormatVersion.v5],
+			[
+				EditManagerFormatVersion.v1,
+				EditManagerFormatVersion.v2,
+				EditManagerFormatVersion.v5,
+			],
 		);
 
 		makeEncodingTestSuite(family, testCases, undefined, [

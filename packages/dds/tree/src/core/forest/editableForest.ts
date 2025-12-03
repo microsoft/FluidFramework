@@ -37,7 +37,9 @@ export interface TreeLocation {
 	readonly index: number;
 }
 
-export function isFieldLocation(range: FieldLocation | DetachedField): range is FieldLocation {
+export function isFieldLocation(
+	range: FieldLocation | DetachedField,
+): range is FieldLocation {
 	return typeof range === "object";
 }
 

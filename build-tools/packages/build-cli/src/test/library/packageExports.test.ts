@@ -10,7 +10,10 @@ import type { Logger, PackageJson } from "@fluidframework/build-tools";
 import { assert } from "chai";
 import { describe, it } from "mocha";
 
-import type { ExportData, Node10CompatExportData } from "../../library/packageExports.js";
+import type {
+	ExportData,
+	Node10CompatExportData,
+} from "../../library/packageExports.js";
 import { queryTypesResolutionPathsFromPackageExports } from "../../library/packageExports.js";
 
 const typeOnlyExportPackage: PackageJson = {
@@ -128,7 +131,10 @@ function genTestData(
 ): {
 	query: Map<string | RegExp, string | undefined>;
 	commonExportResults: Map<string, ExportData>;
-	commonNode10CompatExportResults: Map<string, Pick<ExportData, "relPath" | "isTypeOnly">>;
+	commonNode10CompatExportResults: Map<
+		string,
+		Pick<ExportData, "relPath" | "isTypeOnly">
+	>;
 	typeOnlyExportResults: Map<string, ExportData>;
 	doubleReferenceExportResults: Map<string, ExportData>;
 } {
@@ -282,12 +288,13 @@ describe("library/packageExports", () => {
 				} = genTestData(path, condition);
 
 				it("finds path in common package export pattern", () => {
-					const { mapKeyToOutput } = queryTypesResolutionPathsFromPackageExports(
-						commonExportsPackage,
-						query,
-						{ node10TypeCompat: false, onlyFirstMatches: true },
-						logger,
-					);
+					const { mapKeyToOutput } =
+						queryTypesResolutionPathsFromPackageExports(
+							commonExportsPackage,
+							query,
+							{ node10TypeCompat: false, onlyFirstMatches: true },
+							logger,
+						);
 
 					// Verify
 					assert(logger.calls.length === 0, "logs nothing of interest");
@@ -295,12 +302,13 @@ describe("library/packageExports", () => {
 				});
 
 				it("finds type only export paths", () => {
-					const { mapKeyToOutput } = queryTypesResolutionPathsFromPackageExports(
-						typeOnlyExportPackage,
-						query,
-						{ node10TypeCompat: false, onlyFirstMatches: true },
-						logger,
-					);
+					const { mapKeyToOutput } =
+						queryTypesResolutionPathsFromPackageExports(
+							typeOnlyExportPackage,
+							query,
+							{ node10TypeCompat: false, onlyFirstMatches: true },
+							logger,
+						);
 
 					// Verify
 					assert(logger.calls.length === 0, "logs nothing of interest");
@@ -308,12 +316,13 @@ describe("library/packageExports", () => {
 				});
 
 				it("warns on double referenced export paths", () => {
-					const { mapKeyToOutput } = queryTypesResolutionPathsFromPackageExports(
-						doubleReferencingExportsPackage,
-						query,
-						{ node10TypeCompat: false, onlyFirstMatches: true },
-						logger,
-					);
+					const { mapKeyToOutput } =
+						queryTypesResolutionPathsFromPackageExports(
+							doubleReferencingExportsPackage,
+							query,
+							{ node10TypeCompat: false, onlyFirstMatches: true },
+							logger,
+						);
 
 					// Verify
 					assert(logger.calls.length === 1, "logs one warning");

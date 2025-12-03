@@ -12,7 +12,10 @@ const { Int64, Uint64 } = require("@fluid-experimental/property-common");
 const _ = require("lodash");
 
 const { validationsEnabled } = require("../enableValidations");
-const { Int64Property, Uint64Property } = require("../properties/intProperties");
+const {
+	Int64Property,
+	Uint64Property,
+} = require("../properties/intProperties");
 
 const { BaseProperty } = require("./baseProperty");
 const { MapProperty } = require("./mapProperty");
@@ -44,7 +47,9 @@ export class ValueMapProperty extends MapProperty {
 	 * @throws if a value already exists for in_key
 	 */
 	insert(in_key, in_value) {
-		var castedValue = this._castFunctor ? this._castFunctor(in_value) : in_value;
+		var castedValue = this._castFunctor
+			? this._castFunctor(in_value)
+			: in_value;
 		this._insert(in_key, castedValue, true);
 	}
 
@@ -98,7 +103,7 @@ export class ValueMapProperty extends MapProperty {
 			prefix = '"';
 			suffix = '"';
 		}
-		_.mapValues(this._dynamicChildren, function (val, key) {
+		_.mapValues(this._dynamicChildren, (val, key) => {
 			printFct(indent + key + ": " + prefix + val + suffix);
 		});
 	}
@@ -113,7 +118,9 @@ export class ValueMapProperty extends MapProperty {
 		if (validationsEnabled.enabled) {
 			this._checkIsNotReadOnly(true);
 		}
-		var castedValue = this._castFunctor ? this._castFunctor(in_value) : in_value;
+		var castedValue = this._castFunctor
+			? this._castFunctor(in_value)
+			: in_value;
 		if (this._dynamicChildren[in_key] !== castedValue) {
 			if (validationsEnabled.enabled) {
 				this._checkIsNotReadOnly(true);
@@ -174,9 +181,15 @@ export class ValueMapProperty extends MapProperty {
 
 		// Modify entries
 		if (in_pendingChangeSet.modify) {
-			var modifiedPendingEntries = in_pendingChangeSet ? in_pendingChangeSet.modify || {} : {};
-			var modifiedDirtyEntries = in_dirtyChangeSet ? in_dirtyChangeSet.modify || {} : {};
-			keys = Object.keys(modifiedPendingEntries).concat(Object.keys(modifiedDirtyEntries));
+			var modifiedPendingEntries = in_pendingChangeSet
+				? in_pendingChangeSet.modify || {}
+				: {};
+			var modifiedDirtyEntries = in_dirtyChangeSet
+				? in_dirtyChangeSet.modify || {}
+				: {};
+			keys = Object.keys(modifiedPendingEntries).concat(
+				Object.keys(modifiedDirtyEntries),
+			);
 			for (i = 0; i < keys.length; i++) {
 				key = keys[i];
 				if (this._dynamicChildren[key] !== undefined) {
@@ -350,7 +363,9 @@ export class Integer64MapProperty extends ValueMapProperty {
 	 * @param {Int64|Uint64|string|number} in_value - The value or property to store in the map
 	 */
 	set(in_key, in_value) {
-		var castedValue = this._castFunctor ? this._castFunctor(in_value) : in_value;
+		var castedValue = this._castFunctor
+			? this._castFunctor(in_value)
+			: in_value;
 		var myValue = this._dynamicChildren[in_key];
 		if (myValue === undefined) {
 			this._insert(in_key, castedValue, true);
@@ -383,10 +398,11 @@ export class Integer64MapProperty extends ValueMapProperty {
 	_prettyPrintChildren(indent, printFct) {
 		indent += "  ";
 		var int64Prop;
-		_.mapValues(this._dynamicChildren, function (val, key) {
+		_.mapValues(this._dynamicChildren, (val, key) => {
 			// TODO: The 'toString()' function is defined on Integer64Property, so we need to create
 			//       such object to use it. It would be better to have it in Utils Integer64.prototype.toString
-			int64Prop = val instanceof Int64 ? new Int64Property({}) : new Uint64Property({});
+			int64Prop =
+				val instanceof Int64 ? new Int64Property({}) : new Uint64Property({});
 			int64Prop.setValueLow(val.getValueLow());
 			int64Prop.setValueHigh(val.getValueHigh());
 			printFct(indent + key + ": " + int64Prop);

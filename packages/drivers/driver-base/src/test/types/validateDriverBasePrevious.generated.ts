@@ -11,12 +11,23 @@
  * Current version: 2.74.0
  */
 
-import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
+import type {
+	FullType,
+	MinimalType,
+	requireAssignableTo,
+	TypeOnly,
+} from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/driver-base-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> =
+	| TypeOnly<T>
+	| MinimalType<T>
+	| FullType<T>
+	| typeof old
+	| typeof current
+	| requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -25,7 +36,11 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_DocumentDeltaConnection": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_DocumentDeltaConnection = requireAssignableTo<TypeOnly<old.DocumentDeltaConnection>, TypeOnly<current.DocumentDeltaConnection>>
+declare type old_as_current_for_Class_DocumentDeltaConnection =
+	requireAssignableTo<
+		TypeOnly<old.DocumentDeltaConnection>,
+		TypeOnly<current.DocumentDeltaConnection>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -34,7 +49,11 @@ declare type old_as_current_for_Class_DocumentDeltaConnection = requireAssignabl
  * typeValidation.broken:
  * "Class_DocumentDeltaConnection": {"backCompat": false}
  */
-declare type current_as_old_for_Class_DocumentDeltaConnection = requireAssignableTo<TypeOnly<current.DocumentDeltaConnection>, TypeOnly<old.DocumentDeltaConnection>>
+declare type current_as_old_for_Class_DocumentDeltaConnection =
+	requireAssignableTo<
+		TypeOnly<current.DocumentDeltaConnection>,
+		TypeOnly<old.DocumentDeltaConnection>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -43,7 +62,11 @@ declare type current_as_old_for_Class_DocumentDeltaConnection = requireAssignabl
  * typeValidation.broken:
  * "ClassStatics_DocumentDeltaConnection": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_DocumentDeltaConnection = requireAssignableTo<TypeOnly<typeof current.DocumentDeltaConnection>, TypeOnly<typeof old.DocumentDeltaConnection>>
+declare type current_as_old_for_ClassStatics_DocumentDeltaConnection =
+	requireAssignableTo<
+		TypeOnly<typeof current.DocumentDeltaConnection>,
+		TypeOnly<typeof old.DocumentDeltaConnection>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -52,7 +75,10 @@ declare type current_as_old_for_ClassStatics_DocumentDeltaConnection = requireAs
  * typeValidation.broken:
  * "Function_getW3CData": {"backCompat": false}
  */
-declare type current_as_old_for_Function_getW3CData = requireAssignableTo<TypeOnly<typeof current.getW3CData>, TypeOnly<typeof old.getW3CData>>
+declare type current_as_old_for_Function_getW3CData = requireAssignableTo<
+	TypeOnly<typeof current.getW3CData>,
+	TypeOnly<typeof old.getW3CData>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -61,7 +87,11 @@ declare type current_as_old_for_Function_getW3CData = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "Function_promiseRaceWithWinner": {"backCompat": false}
  */
-declare type current_as_old_for_Function_promiseRaceWithWinner = requireAssignableTo<TypeOnly<typeof current.promiseRaceWithWinner>, TypeOnly<typeof old.promiseRaceWithWinner>>
+declare type current_as_old_for_Function_promiseRaceWithWinner =
+	requireAssignableTo<
+		TypeOnly<typeof current.promiseRaceWithWinner>,
+		TypeOnly<typeof old.promiseRaceWithWinner>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -70,4 +100,7 @@ declare type current_as_old_for_Function_promiseRaceWithWinner = requireAssignab
  * typeValidation.broken:
  * "Function_validateMessages": {"backCompat": false}
  */
-declare type current_as_old_for_Function_validateMessages = requireAssignableTo<TypeOnly<typeof current.validateMessages>, TypeOnly<typeof old.validateMessages>>
+declare type current_as_old_for_Function_validateMessages = requireAssignableTo<
+	TypeOnly<typeof current.validateMessages>,
+	TypeOnly<typeof old.validateMessages>
+>;

@@ -4,16 +4,17 @@
  */
 
 import { type ObjectOptions, type Static, Type } from "@sinclair/typebox";
-
+import { unionOptions } from "../../codec/index.js";
 import { JsonCompatibleReadOnlySchema } from "../../util/index.js";
 import {
 	FieldKindIdentifierSchema,
 	PersistedValueSchema,
 	TreeNodeSchemaIdentifierSchema,
 } from "./formatV1.js";
-import { unionOptions } from "../../codec/index.js";
 
-export const PersistedMetadataFormat = Type.Optional(JsonCompatibleReadOnlySchema);
+export const PersistedMetadataFormat = Type.Optional(
+	JsonCompatibleReadOnlySchema,
+);
 
 const FieldSchemaFormatBase = Type.Object({
 	kind: FieldKindIdentifierSchema,
@@ -23,7 +24,10 @@ const FieldSchemaFormatBase = Type.Object({
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
-export const FieldSchemaFormat = Type.Composite([FieldSchemaFormatBase], noAdditionalProps);
+export const FieldSchemaFormat = Type.Composite(
+	[FieldSchemaFormatBase],
+	noAdditionalProps,
+);
 
 /**
  * Format for the content of a {@link TreeNodeStoredSchema}.
@@ -48,7 +52,9 @@ export const TreeNodeSchemaUnionFormat = Type.Object(
 	unionOptions,
 );
 
-export type TreeNodeSchemaUnionFormat = Static<typeof TreeNodeSchemaUnionFormat>;
+export type TreeNodeSchemaUnionFormat = Static<
+	typeof TreeNodeSchemaUnionFormat
+>;
 
 /**
  * Format for {@link TreeNodeStoredSchema}.

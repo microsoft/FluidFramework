@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { ITreeCursorSynchronous, TreeFieldStoredSchema } from "../../core/index.js";
+import type {
+	ITreeCursorSynchronous,
+	TreeFieldStoredSchema,
+} from "../../core/index.js";
 import {
 	defaultSchemaPolicy,
 	FieldKinds,
@@ -15,11 +18,11 @@ import {
 	getKernel,
 	getOrCreateNodeFromInnerNode,
 	isTreeNode,
-	UnhydratedContext,
 	type NodeKind,
 	type TreeLeafValue,
 	type TreeNode,
 	type Unhydrated,
+	UnhydratedContext,
 	type WithType,
 } from "../core/index.js";
 import { getUnhydratedContext } from "../createContext.js";
@@ -29,17 +32,19 @@ import type {
 	TreeFieldFromImplicitField,
 } from "../fieldSchema.js";
 import {
-	unhydratedFlexTreeFromInsertable,
 	type InsertableContent,
+	unhydratedFlexTreeFromInsertable,
 } from "../unhydratedFlexTreeFromInsertable.js";
-
+import type {
+	InsertableField,
+	UnsafeUnknownSchema,
+} from "../unsafeUnknownSchema.js";
+import { type ConciseTree, conciseFromCursor } from "./conciseTree.js";
 import { createFromCursor } from "./create.js";
-import { conciseFromCursor, type ConciseTree } from "./conciseTree.js";
 import type { TreeEncodingOptions } from "./customTree.js";
-import { cursorFromVerbose } from "./verboseTree.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
 import { treeNodeApi } from "./treeNodeApi.js";
-import type { InsertableField, UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
+import { cursorFromVerbose } from "./verboseTree.js";
 
 // Tests for this file are grouped with those for treeNodeApi.ts as that is where this functionality will eventually land,
 // and where most of the actual implementation is for much of it.
@@ -110,7 +115,10 @@ export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode>
 	nodeChanged: (
 		data: NodeChangedData<TNode> &
 			// Make the properties of object, map, and record nodes required:
-			(TNode extends WithType<string, NodeKind.Map | NodeKind.Object | NodeKind.Record>
+			(TNode extends WithType<
+				string,
+				NodeKind.Map | NodeKind.Object | NodeKind.Record
+			>
 				? Required<Pick<NodeChangedData<TNode>, "changedProperties">>
 				: unknown),
 	) => void;
@@ -160,7 +168,10 @@ export interface TreeBeta {
 	/**
 	 * Copy a snapshot of the current version of a TreeNode into a {@link ConciseTree}.
 	 */
-	exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
+	exportConcise(
+		node: TreeNode | TreeLeafValue,
+		options?: TreeEncodingOptions,
+	): ConciseTree;
 
 	/**
 	 * Copy a snapshot of the current version of a TreeNode into a {@link ConciseTree}, allowing undefined.
@@ -252,7 +263,9 @@ export function importConcise<TSchema extends ImplicitFieldSchema>(
 /**
  * {@inheritDoc (TreeAlpha:interface).importConcise}
  */
-export function importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+export function importConcise<
+	TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
+>(
 	schema: UnsafeUnknownSchema extends TSchema
 		? ImplicitFieldSchema
 		: TSchema & ImplicitFieldSchema,
@@ -262,7 +275,9 @@ export function importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknow
 		? TreeFieldFromImplicitField<TSchema>
 		: TreeNode | TreeLeafValue | undefined
 >;
-export function importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+export function importConcise<
+	TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
+>(
 	schema: UnsafeUnknownSchema extends TSchema
 		? ImplicitFieldSchema
 		: TSchema & ImplicitFieldSchema,
@@ -277,7 +292,8 @@ export function importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknow
 		data as InsertableField<UnsafeUnknownSchema>,
 		schema,
 	);
-	const result = mapTree === undefined ? undefined : getOrCreateNodeFromInnerNode(mapTree);
+	const result =
+		mapTree === undefined ? undefined : getOrCreateNodeFromInnerNode(mapTree);
 	return result as Unhydrated<
 		TSchema extends ImplicitFieldSchema
 			? TreeFieldFromImplicitField<TSchema>
@@ -347,16 +363,22 @@ export const TreeBeta: TreeBeta = {
 			defaultSchemaPolicy,
 			kernel.context.flexContext.schema,
 		);
-		const context = new Context(flexContext, getUnhydratedContext(kernel.schema).schema);
+		const context = new Context(
+			flexContext,
+			getUnhydratedContext(kernel.schema).schema,
+		);
 
 		const fieldSchema: TreeFieldStoredSchema = {
 			kind: FieldKinds.required.identifier,
 			types: new Set([brand(kernel.schema.identifier)]),
 			persistedMetadata: undefined,
 		};
-		return createFromCursor(kernel.schema, cursor, fieldSchema, context) as Unhydrated<
-			TreeFieldFromImplicitField<TSchema>
-		>;
+		return createFromCursor(
+			kernel.schema,
+			cursor,
+			fieldSchema,
+			context,
+		) as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 	},
 
 	create<const TSchema extends ImplicitFieldSchema>(
@@ -367,7 +389,8 @@ export const TreeBeta: TreeBeta = {
 			data as InsertableContent | undefined,
 			schema,
 		);
-		const result = mapTree === undefined ? undefined : getOrCreateNodeFromInnerNode(mapTree);
+		const result =
+			mapTree === undefined ? undefined : getOrCreateNodeFromInnerNode(mapTree);
 		return result as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 	},
 };

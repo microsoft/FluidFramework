@@ -9,9 +9,17 @@ import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
 
 import type { ChangeFamilyEditor, ChangeRebaser } from "../../../core/index.js";
-import type { Commit, EditManager, SeqNumber } from "../../../shared-tree-core/index.js";
+import type {
+	Commit,
+	EditManager,
+	SeqNumber,
+} from "../../../shared-tree-core/index.js";
 import { brand, clone } from "../../../util/index.js";
-import { TestChange, type TestChangeFamily, asDelta } from "../../testChange.js";
+import {
+	asDelta,
+	TestChange,
+	type TestChangeFamily,
+} from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
 
 import {
@@ -19,7 +27,11 @@ import {
 	checkChangeList,
 	testChangeEditManagerFactory,
 } from "./editManagerTestUtils.js";
-export type TestEditManager = EditManager<ChangeFamilyEditor, TestChange, TestChangeFamily>;
+export type TestEditManager = EditManager<
+	ChangeFamilyEditor,
+	TestChange,
+	TestChangeFamily
+>;
 
 /**
  * Represents the minting and sending of a new local change.
@@ -85,7 +97,10 @@ interface UnitTestPullStep {
  */
 type UnitTestPullStepWithIntention = UnitTestPullStep & { intention: number };
 
-type UnitTestScenarioStep = UnitTestPushStep | UnitTestAckStep | UnitTestPullStep;
+type UnitTestScenarioStep =
+	| UnitTestPushStep
+	| UnitTestAckStep
+	| UnitTestPullStep;
 /**
  * An extension of the scenario step with an intention property which will be assigned by the test infra.
  * The intention property represents the change associated with a step. Note that an ack step will have the intention
@@ -253,7 +268,8 @@ export function runUnitTestScenario(
 									(s): s is UnitTestPullStepWithIntention =>
 										s.type === "Pull" && s.from === peer,
 								)
-								.find((s) => s.seq > sequenceNumber)?.ref ?? Number.POSITIVE_INFINITY,
+								.find((s) => s.seq > sequenceNumber)?.ref ??
+							Number.POSITIVE_INFINITY,
 					)
 					.reduce((p, c) => Math.min(p, c), Number.POSITIVE_INFINITY);
 
@@ -266,7 +282,8 @@ export function runUnitTestScenario(
 		/**
 		 * The sequence number of the last sequenced in the scenario.
 		 */
-		const finalSequencedEdit = [...steps].reverse().find((s) => s.type !== "Push")?.seq ?? 0;
+		const finalSequencedEdit =
+			[...steps].reverse().find((s) => s.type !== "Push")?.seq ?? 0;
 		/**
 		 * The Ack steps of the scenario
 		 */
@@ -280,8 +297,13 @@ export function runUnitTestScenario(
 		/**
 		 * Process a set of steps that are part of the same bunch.
 		 */
-		const processBunchOfSteps = (bunchOfSteps: UnitTestScenarioStepWithIntention[]) => {
-			assert(bunchOfSteps.length > 0, "Invalid test scenario: empty bunch of steps");
+		const processBunchOfSteps = (
+			bunchOfSteps: UnitTestScenarioStepWithIntention[],
+		) => {
+			assert(
+				bunchOfSteps.length > 0,
+				"Invalid test scenario: empty bunch of steps",
+			);
 			const commits: TestCommit[] = [];
 			let minimumSequenceNumber: number = 0;
 			for (const step of bunchOfSteps) {
@@ -321,9 +343,13 @@ export function runUnitTestScenario(
 						localCommits.push(commit);
 						knownToLocal.push({ intention, seq });
 						// Local changes should always lead to a delta that is equivalent to the local change.
-						manager.getLocalBranch("main").apply({ change: changeset, revision });
+						manager
+							.getLocalBranch("main")
+							.apply({ change: changeset, revision });
 						assert.deepEqual(
-							asDelta(manager.getLocalBranch("main").getHead().change.intentions),
+							asDelta(
+								manager.getLocalBranch("main").getHead().change.intentions,
+							),
 							asDelta([intention]),
 						);
 						break;
@@ -350,7 +376,9 @@ export function runUnitTestScenario(
 						 */
 						const peerTrunkChangesFilter = (
 							s: UnitTestScenarioStepWithIntention,
-						): s is UnitTestAckStepWithIntention | UnitTestPullStepWithIntention =>
+						): s is
+							| UnitTestAckStepWithIntention
+							| UnitTestPullStepWithIntention =>
 							s.type !== "Push" && s.seq <= step.ref;
 						/**
 						 * Filter that includes changes that were local to the issuer of this commit.
@@ -374,7 +402,8 @@ export function runUnitTestScenario(
 							...steps.filter(peerLocalChangesFilter),
 						].map(
 							(s) =>
-								s.intention ?? fail("Sequenced changes must all have an intention property"),
+								s.intention ??
+								fail("Sequenced changes must all have an intention property"),
 						);
 						const commit: TestCommit = {
 							revision: mintRevisionTag(),
@@ -488,14 +517,17 @@ export function runUnitTestScenario(
 		// reference sequence number.
 		let bunch: UnitTestScenarioStepWithIntention[] = [];
 		const isSameBunch = (step: UnitTestScenarioStepWithIntention) => {
-			const previousStep = bunch.length > 0 ? bunch[bunch.length - 1] : undefined;
+			const previousStep =
+				bunch.length > 0 ? bunch[bunch.length - 1] : undefined;
 			if (previousStep === undefined) {
 				return true;
 			}
 			switch (step.type) {
 				case "Push":
 				case "Ack":
-					return previousStep.type === step.type && previousStep.seq === step.seq;
+					return (
+						previousStep.type === step.type && previousStep.seq === step.seq
+					);
 				case "Pull":
 					return (
 						previousStep.type === "Pull" &&

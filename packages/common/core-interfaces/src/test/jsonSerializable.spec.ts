@@ -34,197 +34,197 @@ import type {
 } from "./testValues.js";
 // This import list should be kept mostly in-sync with jsonDeserialized.spec.ts. Deltas should be commented.
 import {
-	boolean,
-	number,
-	string,
-	numericEnumValue,
-	NumericEnum,
-	stringEnumValue,
-	StringEnum,
-	constHeterogenousEnumValue,
-	ConstHeterogenousEnum,
-	computedEnumValue,
-	ComputedEnum,
-	objectWithLiterals,
-	arrayOfLiterals,
-	tupleWithLiterals,
-	symbol,
-	uniqueSymbol,
-	bigint,
 	aFunction,
-	unknownValueOfSimpleRecord,
-	unknownValueWithBigint,
-	voidValue,
-	stringOrSymbol,
-	bigintOrString,
-	bigintOrSymbol,
-	numberOrBigintOrSymbol,
-	functionWithProperties,
-	objectAndFunction,
-	arrayOfNumbers,
-	arrayOfNumbersSparse,
-	arrayOfNumbersOrUndefined,
+	arrayOfBigintOrObjects,
+	arrayOfBigintOrSymbols,
 	arrayOfBigints,
-	arrayOfSymbols,
-	arrayOfUnknown,
 	arrayOfFunctions,
 	arrayOfFunctionsWithProperties,
-	arrayOfObjectAndFunctions,
-	arrayOfBigintOrObjects,
-	arrayOfSymbolOrObjects,
-	arrayOfBigintOrSymbols,
+	arrayOfLiterals,
 	arrayOfNumberBigintOrSymbols,
-	readonlyArrayOfNumbers,
-	readonlyArrayOfObjects,
-	object,
+	arrayOfNumbers,
+	arrayOfNumbersOrUndefined,
+	arrayOfNumbersSparse,
+	arrayOfObjectAndFunctions,
+	arrayOfSymbolOrObjects,
+	arrayOfSymbols,
+	arrayOfUnknown,
+	bigint,
+	bigintOrString,
+	bigintOrSymbol,
+	boolean,
+	brandedNumber,
+	brandedObject,
+	brandedObjectWithString,
+	brandedString,
+	brandedStringAliasIndexOfBooleans,
+	brandedStringAliasIndexOfNumbers,
+	brandedStringAliasIndexOfTrueOrUndefined,
+	brandedStringAliasRecordOfBooleans,
+	brandedStringAliasRecordOfNumbers,
+	brandedStringIndexOfBooleans,
+	brandedStringIndexOfNumbers,
+	brandedStringRecordOfBooleans,
+	brandedStringRecordOfNumbers,
+	ComputedEnum,
+	ConstHeterogenousEnum,
+	classInstanceWithPrivateData,
+	classInstanceWithPrivateDataAndIsFunction,
+	classInstanceWithPrivateGetter,
+	classInstanceWithPrivateMethod,
+	classInstanceWithPrivateSetter,
+	classInstanceWithPublicData,
+	classInstanceWithPublicDataAndIsFunction,
+	classInstanceWithPublicMethod,
+	computedEnumValue,
+	constHeterogenousEnumValue,
+	datastore,
 	emptyObject,
-	objectWithBoolean,
-	objectWithNumber,
-	objectWithString,
-	objectWithSymbol,
-	objectWithBigint,
-	objectWithFunction,
-	objectWithFunctionWithProperties,
-	objectWithObjectAndFunction,
-	objectWithBigintOrString,
-	objectWithBigintOrSymbol,
-	objectWithNumberOrBigintOrSymbol,
-	objectWithFunctionOrSymbol,
-	objectWithStringOrSymbol,
-	objectWithUndefined,
-	objectWithUnknown,
-	objectWithOptionalUnknown,
-	// See tests in jsonSerializable.exactOptionalPropertyTypes.(true|false).spec.ts
-	// objectWithOptionalUndefined,
-	objectWithOptionalSymbol,
-	objectWithOptionalBigint,
-	objectWithNumberKey,
-	objectWithSymbolKey,
-	objectWithUniqueSymbolKey,
-	objectWithArrayOfNumbers,
-	objectWithArrayOfNumbersSparse,
-	objectWithArrayOfNumbersOrUndefined,
+	fluidHandleToNumber,
+	functionObjectWithPrivateData,
+	functionObjectWithPublicData,
+	functionWithProperties,
+	immutableJsonObject,
+	jsonObject,
+	jsonStringOfBigInt,
+	jsonStringOfObjectWithArrayOfNumbers,
+	jsonStringOfString,
+	jsonStringOfStringRecordOfNumberOrUndefined,
+	jsonStringOfStringRecordOfNumbers,
+	jsonStringOfUnknown,
+	mapOfStringsToNumbers,
+	mixedRecordOfUnknown,
+	NumericEnum,
+	number,
+	numberOrBigintOrSymbol,
+	numericEnumValue,
+	object,
+	objectAndFunction,
+	objectInheritingOptionalRecursionAndWithNestedSymbol,
+	objectWithAlternatingRecursion,
+	objectWithArrayOfBigintOrObjects,
 	objectWithArrayOfBigints,
-	objectWithArrayOfSymbols,
-	objectWithArrayOfUnknown,
 	objectWithArrayOfFunctions,
 	objectWithArrayOfFunctionsWithProperties,
+	objectWithArrayOfNumbers,
+	objectWithArrayOfNumbersOrUndefined,
+	objectWithArrayOfNumbersSparse,
 	objectWithArrayOfObjectAndFunctions,
-	objectWithArrayOfBigintOrObjects,
 	objectWithArrayOfSymbolOrObjects,
-	objectWithReadonlyArrayOfNumbers,
-	objectWithOptionalNumberNotPresent,
-	objectWithOptionalNumberUndefined,
-	objectWithOptionalNumberDefined,
-	objectWithNumberOrUndefinedUndefined,
-	objectWithNumberOrUndefinedNumbered,
-	objectWithOptionalUndefinedEnclosingRequiredUndefined,
-	objectWithReadonly,
-	objectWithReadonlyViaGetter,
+	objectWithArrayOfSymbols,
+	objectWithArrayOfUnknown,
+	objectWithBigint,
+	objectWithBigintOrString,
+	objectWithBigintOrSymbol,
+	objectWithBoolean,
+	objectWithBrandedNumber,
+	objectWithBrandedString,
+	objectWithClassWithPrivateDataInOptionalRecursion,
+	objectWithEmbeddedRecursion,
+	objectWithFluidHandle,
+	objectWithFluidHandleOrRecursion,
+	objectWithFunction,
+	objectWithFunctionOrSymbol,
+	objectWithFunctionWithProperties,
 	objectWithGetter,
 	objectWithGetterViaValue,
-	objectWithSetter,
-	objectWithSetterViaValue,
+	objectWithLiterals,
 	objectWithMatchedGetterAndSetterProperty,
 	objectWithMatchedGetterAndSetterPropertyViaValue,
 	objectWithMismatchedGetterAndSetterProperty,
 	objectWithMismatchedGetterAndSetterPropertyViaValue,
 	objectWithNever,
-	stringRecordOfNumbers,
-	stringRecordOfUndefined,
-	stringRecordOfNumberOrUndefined,
-	stringRecordOfSymbolOrBoolean,
-	stringRecordOfUnknown,
-	stringOrNumberRecordOfStrings,
-	stringOrNumberRecordOfObjects,
+	objectWithNumber,
+	objectWithNumberKey,
+	objectWithNumberOrBigintOrSymbol,
+	objectWithNumberOrUndefinedNumbered,
+	objectWithNumberOrUndefinedUndefined,
+	objectWithObjectAndFunction,
+	objectWithOpaqueDeserializedUnknown,
+	objectWithOpaqueSerializableUnknown,
+	objectWithOptionalBigint,
+	objectWithOptionalNumberDefined,
+	objectWithOptionalNumberNotPresent,
+	objectWithOptionalNumberUndefined,
+	objectWithOptionalRecursion,
+	// See tests in jsonSerializable.exactOptionalPropertyTypes.(true|false).spec.ts
+	// objectWithOptionalUndefined,
+	objectWithOptionalSymbol,
+	objectWithOptionalUndefinedEnclosingRequiredUndefined,
+	objectWithOptionalUnknown,
+	objectWithOptionalUnknownAdjacentToOptionalRecursion,
+	objectWithOptionalUnknownInOptionalRecursion,
+	objectWithPossibleRecursion,
+	objectWithReadonly,
+	objectWithReadonlyArrayOfNumbers,
+	objectWithReadonlyViaGetter,
+	objectWithSelfReference,
+	objectWithSetter,
+	objectWithSetterViaValue,
+	objectWithString,
+	objectWithStringOrSymbol,
+	objectWithSymbol,
+	objectWithSymbolKey,
+	objectWithSymbolOrRecursion,
+	objectWithUndefined,
+	objectWithUniqueSymbolKey,
+	objectWithUnknown,
+	objectWithUnknownAdjacentToOptionalRecursion,
+	objectWithUnknownInOptionalRecursion,
+	opaqueDeserializedInRecursiveStructure,
+	opaqueDeserializedObject,
+	opaqueDeserializedObjectExpectingBigintSupport,
+	opaqueDeserializedObjectRequiringBigintSupport,
+	opaqueDeserializedUnknown,
+	opaqueSerializableAndDeserializedInRecursiveStructure,
+	opaqueSerializableAndDeserializedObject,
+	opaqueSerializableAndDeserializedObjectExpectingBigintSupport,
+	opaqueSerializableAndDeserializedObjectRequiringBigintSupport,
+	opaqueSerializableAndDeserializedUnknown,
+	opaqueSerializableInRecursiveStructure,
+	opaqueSerializableObject,
+	opaqueSerializableObjectExpectingBigintSupport,
+	opaqueSerializableObjectRequiringBigintSupport,
+	opaqueSerializableUnknown,
 	partialStringRecordOfNumbers,
 	partialStringRecordOfUnknown,
-	templatedRecordOfNumbers,
-	partialTemplatedRecordOfNumbers,
-	templatedRecordOfUnknown,
-	mixedRecordOfUnknown,
-	stringRecordOfNumbersOrStringsWithKnownProperties,
-	stringRecordOfUnknownWithKnownProperties,
 	partialStringRecordOfUnknownWithKnownProperties,
-	stringRecordOfUnknownWithOptionalKnownProperties,
-	stringRecordOfUnknownWithKnownUnknown,
-	stringRecordOfUnknownWithOptionalKnownUnknown,
-	stringOrNumberRecordOfStringWithKnownNumber,
-	stringOrNumberRecordOfUndefinedWithKnownNumber,
-	objectWithPossibleRecursion,
-	objectWithOptionalRecursion,
-	objectWithEmbeddedRecursion,
-	objectWithAlternatingRecursion,
-	objectWithSelfReference,
-	objectWithSymbolOrRecursion,
-	objectWithUnknownAdjacentToOptionalRecursion,
-	objectWithOptionalUnknownAdjacentToOptionalRecursion,
-	objectWithUnknownInOptionalRecursion,
-	objectWithOptionalUnknownInOptionalRecursion,
+	partialTemplatedRecordOfNumbers,
+	readonlyArrayOfNumbers,
+	readonlyArrayOfObjects,
+	readonlyMapOfStringsToNumbers,
+	readonlySetOfNumbers,
+	StringEnum,
 	selfRecursiveFunctionWithProperties,
 	selfRecursiveObjectAndFunction,
-	objectInheritingOptionalRecursionAndWithNestedSymbol,
-	simpleJson,
-	simpleImmutableJson,
-	jsonObject,
-	immutableJsonObject,
-	classInstanceWithPrivateData,
-	classInstanceWithPrivateMethod,
-	classInstanceWithPrivateGetter,
-	classInstanceWithPrivateSetter,
-	classInstanceWithPublicData,
-	classInstanceWithPublicMethod,
-	objectWithClassWithPrivateDataInOptionalRecursion,
-	functionObjectWithPrivateData,
-	functionObjectWithPublicData,
-	classInstanceWithPrivateDataAndIsFunction,
-	classInstanceWithPublicDataAndIsFunction,
-	mapOfStringsToNumbers,
-	readonlyMapOfStringsToNumbers,
 	setOfNumbers,
-	readonlySetOfNumbers,
-	brandedNumber,
-	brandedString,
-	brandedObject,
-	brandedObjectWithString,
-	objectWithBrandedNumber,
-	objectWithBrandedString,
-	brandedStringIndexOfBooleans,
-	brandedStringAliasIndexOfBooleans,
-	brandedStringRecordOfBooleans,
-	brandedStringAliasRecordOfBooleans,
-	brandedStringIndexOfNumbers,
-	brandedStringAliasIndexOfNumbers,
-	brandedStringRecordOfNumbers,
-	brandedStringAliasRecordOfNumbers,
-	brandedStringAliasIndexOfTrueOrUndefined,
-	datastore,
-	fluidHandleToNumber,
-	objectWithFluidHandle,
-	objectWithFluidHandleOrRecursion,
-	opaqueSerializableObject,
-	opaqueDeserializedObject,
-	opaqueSerializableAndDeserializedObject,
-	opaqueSerializableUnknown,
-	opaqueDeserializedUnknown,
-	opaqueSerializableAndDeserializedUnknown,
-	objectWithOpaqueSerializableUnknown,
-	objectWithOpaqueDeserializedUnknown,
-	opaqueSerializableInRecursiveStructure,
-	opaqueDeserializedInRecursiveStructure,
-	opaqueSerializableAndDeserializedInRecursiveStructure,
-	opaqueSerializableObjectRequiringBigintSupport,
-	opaqueDeserializedObjectRequiringBigintSupport,
-	opaqueSerializableAndDeserializedObjectRequiringBigintSupport,
-	opaqueSerializableObjectExpectingBigintSupport,
-	opaqueDeserializedObjectExpectingBigintSupport,
-	opaqueSerializableAndDeserializedObjectExpectingBigintSupport,
-	jsonStringOfString,
-	jsonStringOfObjectWithArrayOfNumbers,
-	jsonStringOfStringRecordOfNumbers,
-	jsonStringOfStringRecordOfNumberOrUndefined,
-	jsonStringOfBigInt,
-	jsonStringOfUnknown,
+	simpleImmutableJson,
+	simpleJson,
+	string,
+	stringEnumValue,
+	stringOrNumberRecordOfObjects,
+	stringOrNumberRecordOfStrings,
+	stringOrNumberRecordOfStringWithKnownNumber,
+	stringOrNumberRecordOfUndefinedWithKnownNumber,
+	stringOrSymbol,
+	stringRecordOfNumberOrUndefined,
+	stringRecordOfNumbers,
+	stringRecordOfNumbersOrStringsWithKnownProperties,
+	stringRecordOfSymbolOrBoolean,
+	stringRecordOfUndefined,
+	stringRecordOfUnknown,
+	stringRecordOfUnknownWithKnownProperties,
+	stringRecordOfUnknownWithKnownUnknown,
+	stringRecordOfUnknownWithOptionalKnownProperties,
+	stringRecordOfUnknownWithOptionalKnownUnknown,
+	symbol,
+	templatedRecordOfNumbers,
+	templatedRecordOfUnknown,
+	tupleWithLiterals,
+	uniqueSymbol,
+	unknownValueOfSimpleRecord,
+	unknownValueWithBigint,
+	voidValue,
 } from "./testValues.js";
 
 /**
@@ -267,7 +267,9 @@ export function passThru<
 	// Don't use nullish coalescing here to allow for `null` to be expected.
 	const expected =
 		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-		expectedDeserialization === undefined ? filteredIn : expectedDeserialization;
+		expectedDeserialization === undefined
+			? filteredIn
+			: expectedDeserialization;
 	assert.deepStrictEqual(result, expected);
 	return { filteredIn, out: result as JsonDeserialized<T, Options> };
 }
@@ -305,10 +307,11 @@ function passThruIgnoreInaccessibleMembers<const T, TExpected>(
 	>;
 	out: JsonDeserialized<T>;
 } {
-	return passThru<T, TExpected, { IgnoreInaccessibleMembers: "ignore-inaccessible-members" }>(
-		filteredIn,
-		expected,
-	);
+	return passThru<
+		T,
+		TExpected,
+		{ IgnoreInaccessibleMembers: "ignore-inaccessible-members" }
+	>(filteredIn, expected);
 }
 
 /**
@@ -316,7 +319,10 @@ function passThruIgnoreInaccessibleMembers<const T, TExpected>(
  */
 function passThruHandlingBigint<const T, TExpected>(
 	filteredIn: JsonSerializable<T, { AllowExactly: [bigint] }>,
-	expectedDeserialization?: JsonDeserialized<TExpected, { AllowExactly: [bigint] }>,
+	expectedDeserialization?: JsonDeserialized<
+		TExpected,
+		{ AllowExactly: [bigint] }
+	>,
 ): {
 	filteredIn: JsonSerializable<T, { AllowExactly: [bigint] }>;
 	out: JsonDeserialized<T, { AllowExactly: [bigint] }>;
@@ -327,7 +333,10 @@ function passThruHandlingBigint<const T, TExpected>(
 	}
 	if (expectedDeserialization !== undefined) {
 		// When there is a failure, checking the stringified value can be helpful.
-		const expectedStringified = JSON.stringify(expectedDeserialization, replaceBigInt);
+		const expectedStringified = JSON.stringify(
+			expectedDeserialization,
+			replaceBigInt,
+		);
 		assert.equal(stringified, expectedStringified);
 	}
 	const out = JSON.parse(stringified, reviveBigInt) as JsonDeserialized<
@@ -337,7 +346,9 @@ function passThruHandlingBigint<const T, TExpected>(
 	const expected =
 		// Don't use nullish coalescing here to allow for `null` to be expected.
 		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-		expectedDeserialization === undefined ? filteredIn : expectedDeserialization;
+		expectedDeserialization === undefined
+			? filteredIn
+			: expectedDeserialization;
 	assert.deepStrictEqual(out, expected);
 	return { filteredIn, out };
 }
@@ -382,7 +393,10 @@ function passThruHandlingFluidHandle<const T>(
 } {
 	return {
 		filteredIn,
-		out: undefined as unknown as JsonDeserialized<T, { AllowExtensionOf: IFluidHandle }>,
+		out: undefined as unknown as JsonDeserialized<
+			T,
+			{ AllowExtensionOf: IFluidHandle }
+		>,
 	};
 }
 
@@ -397,7 +411,10 @@ function passThruAllowingUnknown<const T>(
 } {
 	return {
 		filteredIn,
-		out: undefined as unknown as JsonDeserialized<T, { AllowExactly: [unknown] }>,
+		out: undefined as unknown as JsonDeserialized<
+			T,
+			{ AllowExactly: [unknown] }
+		>,
 	};
 }
 
@@ -455,7 +472,9 @@ describe("JsonSerializable", () => {
 				assertIdenticalTypes(filteredIn, out);
 			});
 			it("`JsonString<{ arrayOfNumbers: number[] }>`", () => {
-				const { filteredIn, out } = passThru(jsonStringOfObjectWithArrayOfNumbers);
+				const { filteredIn, out } = passThru(
+					jsonStringOfObjectWithArrayOfNumbers,
+				);
 				assertIdenticalTypes(filteredIn, jsonStringOfObjectWithArrayOfNumbers);
 				assertIdenticalTypes(filteredIn, out);
 			});
@@ -465,8 +484,13 @@ describe("JsonSerializable", () => {
 				assertIdenticalTypes(filteredIn, out);
 			});
 			it("`JsonString<Record<string, number | undefined>>`", () => {
-				const { filteredIn, out } = passThru(jsonStringOfStringRecordOfNumberOrUndefined);
-				assertIdenticalTypes(filteredIn, jsonStringOfStringRecordOfNumberOrUndefined);
+				const { filteredIn, out } = passThru(
+					jsonStringOfStringRecordOfNumberOrUndefined,
+				);
+				assertIdenticalTypes(
+					filteredIn,
+					jsonStringOfStringRecordOfNumberOrUndefined,
+				);
 				assertIdenticalTypes(filteredIn, out);
 			});
 			it("JsonString<bigint>", () => {
@@ -646,12 +670,20 @@ describe("JsonSerializable", () => {
 				const { filteredIn, out } = passThru(
 					stringRecordOfNumbersOrStringsWithKnownProperties,
 				);
-				assertIdenticalTypes(filteredIn, stringRecordOfNumbersOrStringsWithKnownProperties);
+				assertIdenticalTypes(
+					filteredIn,
+					stringRecordOfNumbersOrStringsWithKnownProperties,
+				);
 				assertIdenticalTypes(filteredIn, out);
 			});
 			it("`string`|`number` indexed record of `strings` with known `number` property (unassignable)", () => {
-				const { filteredIn, out } = passThru(stringOrNumberRecordOfStringWithKnownNumber);
-				assertIdenticalTypes(filteredIn, stringOrNumberRecordOfStringWithKnownNumber);
+				const { filteredIn, out } = passThru(
+					stringOrNumberRecordOfStringWithKnownNumber,
+				);
+				assertIdenticalTypes(
+					filteredIn,
+					stringOrNumberRecordOfStringWithKnownNumber,
+				);
 				assertIdenticalTypes(filteredIn, out);
 			});
 
@@ -671,7 +703,9 @@ describe("JsonSerializable", () => {
 				assertIdenticalTypes(filteredIn, out);
 			});
 			it("branded-`string` alias record of `boolean`s", () => {
-				const { filteredIn, out } = passThru(brandedStringAliasRecordOfBooleans);
+				const { filteredIn, out } = passThru(
+					brandedStringAliasRecordOfBooleans,
+				);
 				assertIdenticalTypes(filteredIn, brandedStringAliasRecordOfBooleans);
 				assertIdenticalTypes(filteredIn, out);
 			});
@@ -757,15 +791,23 @@ describe("JsonSerializable", () => {
 				assertIdenticalTypes(filteredIn, out);
 			});
 			it("object with matched getter and setter implemented via value", () => {
-				const { filteredIn, out } = passThru(objectWithMatchedGetterAndSetterPropertyViaValue);
-				assertIdenticalTypes(filteredIn, objectWithMatchedGetterAndSetterPropertyViaValue);
+				const { filteredIn, out } = passThru(
+					objectWithMatchedGetterAndSetterPropertyViaValue,
+				);
+				assertIdenticalTypes(
+					filteredIn,
+					objectWithMatchedGetterAndSetterPropertyViaValue,
+				);
 				assertIdenticalTypes(filteredIn, out);
 			});
 			it("object with mismatched getter and setter implemented via value", () => {
 				const { filteredIn, out } = passThru(
 					objectWithMismatchedGetterAndSetterPropertyViaValue,
 				);
-				assertIdenticalTypes(filteredIn, objectWithMismatchedGetterAndSetterPropertyViaValue);
+				assertIdenticalTypes(
+					filteredIn,
+					objectWithMismatchedGetterAndSetterPropertyViaValue,
+				);
 				assertIdenticalTypes(filteredIn, out);
 			});
 
@@ -834,12 +876,17 @@ describe("JsonSerializable", () => {
 
 			describe("object with optional property", () => {
 				it("without property", () => {
-					const { filteredIn, out } = passThru(objectWithOptionalNumberNotPresent);
+					const { filteredIn, out } = passThru(
+						objectWithOptionalNumberNotPresent,
+					);
 					assertIdenticalTypes(filteredIn, objectWithOptionalNumberNotPresent);
 					assertIdenticalTypes(filteredIn, out);
 				});
 				it("with undefined value", () => {
-					const { filteredIn, out } = passThru(objectWithOptionalNumberUndefined, {});
+					const { filteredIn, out } = passThru(
+						objectWithOptionalNumberUndefined,
+						{},
+					);
 					assertIdenticalTypes(filteredIn, objectWithOptionalNumberUndefined);
 					assertIdenticalTypes(filteredIn, out);
 				});
@@ -863,8 +910,13 @@ describe("JsonSerializable", () => {
 					assertIdenticalTypes(filteredIn, out);
 				});
 				it("opaque serializable and deserialized object", () => {
-					const { filteredIn, out } = passThru(opaqueSerializableAndDeserializedObject);
-					assertIdenticalTypes(filteredIn, opaqueSerializableAndDeserializedObject);
+					const { filteredIn, out } = passThru(
+						opaqueSerializableAndDeserializedObject,
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						opaqueSerializableAndDeserializedObject,
+					);
 					// @ts-expect-error In this case, `out` has a unique `OpaqueJsonDeserialized` result.
 					assertIdenticalTypes(filteredIn, out);
 				});
@@ -880,31 +932,50 @@ describe("JsonSerializable", () => {
 					assertIdenticalTypes(filteredIn, out);
 				});
 				it("opaque serializable and deserialized unknown", () => {
-					const { filteredIn, out } = passThru(opaqueSerializableAndDeserializedUnknown);
-					assertIdenticalTypes(filteredIn, opaqueSerializableAndDeserializedUnknown);
+					const { filteredIn, out } = passThru(
+						opaqueSerializableAndDeserializedUnknown,
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						opaqueSerializableAndDeserializedUnknown,
+					);
 					// @ts-expect-error In this case, `out` has a unique `OpaqueJsonDeserialized` result.
 					assertIdenticalTypes(filteredIn, out);
 				});
 				it("object with opaque serializable unknown", () => {
-					const { filteredIn, out } = passThru(objectWithOpaqueSerializableUnknown);
+					const { filteredIn, out } = passThru(
+						objectWithOpaqueSerializableUnknown,
+					);
 					assertIdenticalTypes(filteredIn, objectWithOpaqueSerializableUnknown);
 					// @ts-expect-error In this case, `out` has a unique `OpaqueJsonDeserialized` result.
 					assertIdenticalTypes(filteredIn, out);
 				});
 				it("object with opaque deserialized unknown", () => {
-					const { filteredIn, out } = passThru(objectWithOpaqueDeserializedUnknown);
+					const { filteredIn, out } = passThru(
+						objectWithOpaqueDeserializedUnknown,
+					);
 					assertIdenticalTypes(filteredIn, objectWithOpaqueDeserializedUnknown);
 					assertIdenticalTypes(filteredIn, out);
 				});
 				it("recursive type with opaque serializable unknown", () => {
-					const { filteredIn, out } = passThru(opaqueSerializableInRecursiveStructure);
-					assertIdenticalTypes(filteredIn, opaqueSerializableInRecursiveStructure);
+					const { filteredIn, out } = passThru(
+						opaqueSerializableInRecursiveStructure,
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						opaqueSerializableInRecursiveStructure,
+					);
 					// @ts-expect-error In this case, `out` has a unique `OpaqueJsonDeserialized` result.
 					assertIdenticalTypes(filteredIn, out);
 				});
 				it("recursive type with opaque deserialized unknown", () => {
-					const { filteredIn, out } = passThru(opaqueDeserializedInRecursiveStructure);
-					assertIdenticalTypes(filteredIn, opaqueDeserializedInRecursiveStructure);
+					const { filteredIn, out } = passThru(
+						opaqueDeserializedInRecursiveStructure,
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						opaqueDeserializedInRecursiveStructure,
+					);
 					assertIdenticalTypes(filteredIn, out);
 				});
 				it("recursive type with opaque serializable and deserialized unknown", () => {
@@ -956,7 +1027,10 @@ describe("JsonSerializable", () => {
 			describe("known defect expectations", () => {
 				describe("getters and setters allowed but do not propagate", () => {
 					it("object with `readonly` implemented via getter", () => {
-						const { filteredIn, out } = passThru(objectWithReadonlyViaGetter, {});
+						const { filteredIn, out } = passThru(
+							objectWithReadonlyViaGetter,
+							{},
+						);
 						assertIdenticalTypes(filteredIn, objectWithReadonlyViaGetter);
 						assertIdenticalTypes(filteredIn, out);
 					});
@@ -974,8 +1048,14 @@ describe("JsonSerializable", () => {
 					});
 
 					it("object with matched getter and setter", () => {
-						const { filteredIn, out } = passThru(objectWithMatchedGetterAndSetterProperty, {});
-						assertIdenticalTypes(filteredIn, objectWithMatchedGetterAndSetterProperty);
+						const { filteredIn, out } = passThru(
+							objectWithMatchedGetterAndSetterProperty,
+							{},
+						);
+						assertIdenticalTypes(
+							filteredIn,
+							objectWithMatchedGetterAndSetterProperty,
+						);
 						assertIdenticalTypes(filteredIn, out);
 					});
 
@@ -984,7 +1064,10 @@ describe("JsonSerializable", () => {
 							objectWithMismatchedGetterAndSetterProperty,
 							{},
 						);
-						assertIdenticalTypes(filteredIn, objectWithMismatchedGetterAndSetterProperty);
+						assertIdenticalTypes(
+							filteredIn,
+							objectWithMismatchedGetterAndSetterProperty,
+						);
 						assertIdenticalTypes(filteredIn, out);
 					});
 				});
@@ -1013,7 +1096,12 @@ describe("JsonSerializable", () => {
 				});
 
 				it("sparse array of supported types", () => {
-					const { filteredIn, out } = passThru(arrayOfNumbersSparse, [0, null, null, 3]);
+					const { filteredIn, out } = passThru(arrayOfNumbersSparse, [
+						0,
+						null,
+						null,
+						3,
+					]);
 					assertIdenticalTypes(filteredIn, arrayOfNumbersSparse);
 					assertIdenticalTypes(filteredIn, out);
 				});
@@ -1034,7 +1122,7 @@ describe("JsonSerializable", () => {
 			it("const enums are never readable", () => {
 				// ... and thus don't need accounted for by JsonDeserialized.
 
-				const enum LocalConstHeterogenousEnum {
+				enum LocalConstHeterogenousEnum {
 					zero,
 					a = "a",
 				}
@@ -1083,7 +1171,9 @@ describe("JsonSerializable", () => {
 				); // {} value is actually supported; so, no runtime error.
 				assertIdenticalTypes(
 					filteredIn,
-					createInstanceOf<JsonTypeWith<never> | OpaqueJsonSerializable<unknown>>(),
+					createInstanceOf<
+						JsonTypeWith<never> | OpaqueJsonSerializable<unknown>
+					>(),
 				);
 			});
 			it("`symbol`", () => {
@@ -1119,7 +1209,10 @@ describe("JsonSerializable", () => {
 				filteredIn satisfies never;
 				// Keep this assert at end of scope to avoid assertion altering type
 				const varTypeof = typeof aFunction;
-				assert(varTypeof === "function", "plain function is a function at runtime");
+				assert(
+					varTypeof === "function",
+					"plain function is a function at runtime",
+				);
 			});
 			it("function with supported properties", () => {
 				const { filteredIn } = passThruThrows(
@@ -1130,7 +1223,10 @@ describe("JsonSerializable", () => {
 				filteredIn satisfies never;
 				// Keep this assert at end of scope to avoid assertion altering type
 				const varTypeof = typeof functionWithProperties;
-				assert(varTypeof === "function", "function with properties is a function at runtime");
+				assert(
+					varTypeof === "function",
+					"function with properties is a function at runtime",
+				);
 			});
 			it("object and function", () => {
 				const { filteredIn } = passThru(
@@ -1141,7 +1237,10 @@ describe("JsonSerializable", () => {
 				filteredIn satisfies never;
 				// Keep this assert at end of scope to avoid assertion altering type
 				const varTypeof = typeof objectAndFunction;
-				assert(varTypeof === "object", "object assigned a function is an object at runtime");
+				assert(
+					varTypeof === "object",
+					"object assigned a function is an object at runtime",
+				);
 			});
 			it("object with function with supported properties", () => {
 				const { filteredIn } = passThru(
@@ -1149,7 +1248,10 @@ describe("JsonSerializable", () => {
 					objectWithFunctionWithProperties,
 					{},
 				);
-				assertIdenticalTypes(filteredIn, createInstanceOf<{ function: never }>());
+				assertIdenticalTypes(
+					filteredIn,
+					createInstanceOf<{ function: never }>(),
+				);
 			});
 			it("object with object and function", () => {
 				const { filteredIn } = passThru(
@@ -1219,7 +1321,10 @@ describe("JsonSerializable", () => {
 					object,
 					// object's value is actually supported; so, no runtime error.
 				);
-				assertIdenticalTypes(filteredIn, createInstanceOf<NonNullJsonObjectWith<never>>());
+				assertIdenticalTypes(
+					filteredIn,
+					createInstanceOf<NonNullJsonObjectWith<never>>(),
+				);
 			});
 			it("`void`", () => {
 				const { filteredIn } = passThru(
@@ -1308,7 +1413,9 @@ describe("JsonSerializable", () => {
 					);
 					assertIdenticalTypes(
 						filteredIn,
-						createInstanceOf<(JsonTypeWith<never> | OpaqueJsonSerializable<unknown>)[]>(),
+						createInstanceOf<
+							(JsonTypeWith<never> | OpaqueJsonSerializable<unknown>)[]
+						>(),
 					);
 				});
 				it("array of functions", () => {
@@ -1343,7 +1450,9 @@ describe("JsonSerializable", () => {
 					);
 					assertIdenticalTypes(
 						filteredIn,
-						createInstanceOf<(number | SerializationErrorPerUndefinedArrayElement)[]>(),
+						createInstanceOf<
+							(number | SerializationErrorPerUndefinedArrayElement)[]
+						>(),
 					);
 				});
 				it("array of `bigint` or basic object", () => {
@@ -1352,7 +1461,10 @@ describe("JsonSerializable", () => {
 						arrayOfBigintOrObjects,
 						new TypeError("Do not know how to serialize a BigInt"),
 					);
-					assertIdenticalTypes(filteredIn, createInstanceOf<{ property: string }[]>());
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{ property: string }[]>(),
+					);
 				});
 				it("array of `symbol` or basic object", () => {
 					const { filteredIn } = passThru(
@@ -1360,7 +1472,10 @@ describe("JsonSerializable", () => {
 						arrayOfSymbolOrObjects,
 						[null],
 					);
-					assertIdenticalTypes(filteredIn, createInstanceOf<{ property: string }[]>());
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{ property: string }[]>(),
+					);
 				});
 				it("array of `bigint | symbol`s", () => {
 					const { filteredIn } = passThru(
@@ -1387,7 +1502,10 @@ describe("JsonSerializable", () => {
 						objectWithBigint,
 						new TypeError("Do not know how to serialize a BigInt"),
 					);
-					assertIdenticalTypes(filteredIn, createInstanceOf<{ bigint: never }>());
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{ bigint: never }>(),
+					);
 				});
 				it("object with optional `bigint`", () => {
 					const { filteredIn } = passThruThrows(
@@ -1395,7 +1513,10 @@ describe("JsonSerializable", () => {
 						objectWithOptionalBigint,
 						new TypeError("Do not know how to serialize a BigInt"),
 					);
-					assertIdenticalTypes(filteredIn, createInstanceOf<{ bigint?: never }>());
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{ bigint?: never }>(),
+					);
 				});
 				it("object with exactly `symbol`", () => {
 					const { filteredIn } = passThru(
@@ -1403,7 +1524,10 @@ describe("JsonSerializable", () => {
 						objectWithSymbol,
 						{},
 					);
-					assertIdenticalTypes(filteredIn, createInstanceOf<{ symbol: never }>());
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{ symbol: never }>(),
+					);
 				});
 				it("object with optional `symbol`", () => {
 					const { filteredIn } = passThru(
@@ -1411,7 +1535,10 @@ describe("JsonSerializable", () => {
 						objectWithOptionalSymbol,
 						{},
 					);
-					assertIdenticalTypes(filteredIn, createInstanceOf<{ symbol?: never }>());
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{ symbol?: never }>(),
+					);
 				});
 				it("object with exactly `function`", () => {
 					const { filteredIn } = passThru(
@@ -1419,7 +1546,10 @@ describe("JsonSerializable", () => {
 						objectWithFunction,
 						{},
 					);
-					assertIdenticalTypes(filteredIn, createInstanceOf<{ function: never }>());
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{ function: never }>(),
+					);
 				});
 				it("object with exactly `Function | symbol`", () => {
 					const { filteredIn } = passThru(
@@ -1427,7 +1557,10 @@ describe("JsonSerializable", () => {
 						objectWithFunctionOrSymbol,
 						{},
 					);
-					assertIdenticalTypes(filteredIn, createInstanceOf<{ functionOrSymbol: never }>());
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{ functionOrSymbol: never }>(),
+					);
 				});
 				it("object with exactly `string | symbol`", () => {
 					const { filteredIn } = passThru(
@@ -1435,7 +1568,10 @@ describe("JsonSerializable", () => {
 						objectWithStringOrSymbol,
 						{},
 					);
-					assertIdenticalTypes(filteredIn, createInstanceOf<{ stringOrSymbol: string }>());
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{ stringOrSymbol: string }>(),
+					);
 				});
 				it("object with exactly `bigint | string`", () => {
 					const { filteredIn } = passThru(
@@ -1443,7 +1579,10 @@ describe("JsonSerializable", () => {
 						objectWithBigintOrString,
 						// value is a string; so no runtime error.
 					);
-					assertIdenticalTypes(filteredIn, createInstanceOf<{ bigintOrString: string }>());
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{ bigintOrString: string }>(),
+					);
 				});
 				it("object with exactly `bigint | symbol`", () => {
 					const { filteredIn } = passThru(
@@ -1451,7 +1590,10 @@ describe("JsonSerializable", () => {
 						objectWithBigintOrSymbol,
 						{},
 					);
-					assertIdenticalTypes(filteredIn, createInstanceOf<{ bigintOrSymbol: never }>());
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{ bigintOrSymbol: never }>(),
+					);
 				});
 				it("object with exactly `number | bigint | symbol`", () => {
 					const { filteredIn } = passThru(
@@ -1470,7 +1612,10 @@ describe("JsonSerializable", () => {
 						stringRecordOfSymbolOrBoolean,
 						{ boolean },
 					);
-					assertIdenticalTypes(filteredIn, createInstanceOf<Record<string, boolean>>());
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<Record<string, boolean>>(),
+					);
 				});
 				it("object with exactly `unknown`", () => {
 					const { filteredIn } = passThru(
@@ -1480,7 +1625,9 @@ describe("JsonSerializable", () => {
 					assertIdenticalTypes(
 						filteredIn,
 						createInstanceOf<{
-							unknown: { "error required property may not allow `unknown` value": never };
+							unknown: {
+								"error required property may not allow `unknown` value": never;
+							};
 						}>(),
 					);
 				});
@@ -1492,7 +1639,9 @@ describe("JsonSerializable", () => {
 					assertIdenticalTypes(
 						filteredIn,
 						createInstanceOf<{
-							optUnknown?: JsonTypeWith<never> | OpaqueJsonSerializable<unknown>;
+							optUnknown?:
+								| JsonTypeWith<never>
+								| OpaqueJsonSerializable<unknown>;
 						}>(),
 					);
 				});
@@ -1503,7 +1652,10 @@ describe("JsonSerializable", () => {
 						objectWithArrayOfBigints,
 						new TypeError("Do not know how to serialize a BigInt"),
 					);
-					assertIdenticalTypes(filteredIn, createInstanceOf<{ arrayOfBigints: never[] }>());
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{ arrayOfBigints: never[] }>(),
+					);
 				});
 				it("object with array of `symbol`s", () => {
 					const { filteredIn } = passThru(
@@ -1511,7 +1663,10 @@ describe("JsonSerializable", () => {
 						objectWithArrayOfSymbols,
 						{ arrayOfSymbols: [null] },
 					);
-					assertIdenticalTypes(filteredIn, createInstanceOf<{ arrayOfSymbols: never[] }>());
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{ arrayOfSymbols: never[] }>(),
+					);
 				});
 				it("object with array of `unknown`", () => {
 					const { filteredIn } = passThru(
@@ -1521,7 +1676,10 @@ describe("JsonSerializable", () => {
 					assertIdenticalTypes(
 						filteredIn,
 						createInstanceOf<{
-							arrayOfUnknown: (JsonTypeWith<never> | OpaqueJsonSerializable<unknown>)[];
+							arrayOfUnknown: (
+								| JsonTypeWith<never>
+								| OpaqueJsonSerializable<unknown>
+							)[];
 						}>(),
 					);
 				});
@@ -1531,7 +1689,10 @@ describe("JsonSerializable", () => {
 						objectWithArrayOfFunctions,
 						{ arrayOfFunctions: [null] },
 					);
-					assertIdenticalTypes(filteredIn, createInstanceOf<{ arrayOfFunctions: never[] }>());
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{ arrayOfFunctions: never[] }>(),
+					);
 				});
 				it("object with array of functions with properties", () => {
 					const { filteredIn } = passThru(
@@ -1579,7 +1740,9 @@ describe("JsonSerializable", () => {
 					);
 					assertIdenticalTypes(
 						filteredIn,
-						createInstanceOf<{ arrayOfBigintOrObjects: { property: string }[] }>(),
+						createInstanceOf<{
+							arrayOfBigintOrObjects: { property: string }[];
+						}>(),
 					);
 				});
 				it("object with array of `symbol` or basic object", () => {
@@ -1590,7 +1753,9 @@ describe("JsonSerializable", () => {
 					);
 					assertIdenticalTypes(
 						filteredIn,
-						createInstanceOf<{ arrayOfSymbolOrObjects: { property: string }[] }>(),
+						createInstanceOf<{
+							arrayOfSymbolOrObjects: { property: string }[];
+						}>(),
 					);
 				});
 				it("object with array of `bigint | symbol`s", () => {
@@ -1635,7 +1800,9 @@ describe("JsonSerializable", () => {
 					assertIdenticalTypes(
 						filteredIn,
 						createInstanceOf<{
-							[x: string]: JsonTypeWith<never> | OpaqueJsonSerializable<unknown>;
+							[x: string]:
+								| JsonTypeWith<never>
+								| OpaqueJsonSerializable<unknown>;
 						}>(),
 					);
 				});
@@ -1647,7 +1814,9 @@ describe("JsonSerializable", () => {
 					assertIdenticalTypes(
 						filteredIn,
 						createInstanceOf<{
-							[x: string]: JsonTypeWith<never> | OpaqueJsonSerializable<unknown>;
+							[x: string]:
+								| JsonTypeWith<never>
+								| OpaqueJsonSerializable<unknown>;
 						}>(),
 					);
 				});
@@ -1747,7 +1916,10 @@ describe("JsonSerializable", () => {
 						objectWithNestedFunctionWithPropertiesAndRecursion,
 						{},
 					);
-					assertIdenticalTypes(filteredIn, createInstanceOf<{ outerFnOjb: never }>());
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{ outerFnOjb: never }>(),
+					);
 				});
 				it("nested object and function with recursion", () => {
 					const objectWithNestedObjectAndFunctionWithRecursion = {
@@ -1758,7 +1930,10 @@ describe("JsonSerializable", () => {
 						objectWithNestedObjectAndFunctionWithRecursion,
 						{ outerFnOjb: { recurse: {} } },
 					);
-					assertIdenticalTypes(filteredIn, createInstanceOf<{ outerFnOjb: never }>());
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{ outerFnOjb: never }>(),
+					);
 				});
 
 				it("object with inherited recursion extended with unsupported properties", () => {
@@ -1789,7 +1964,9 @@ describe("JsonSerializable", () => {
 						assertIdenticalTypes(
 							filteredIn,
 							createInstanceOf<{
-								undef: { "error required property may not allow `undefined` value": never };
+								undef: {
+									"error required property may not allow `undefined` value": never;
+								};
 							}>(),
 						);
 					});
@@ -1926,7 +2103,9 @@ describe("JsonSerializable", () => {
 						assertIdenticalTypes(
 							filteredIn,
 							createInstanceOf<{
-								unknown: { "error required property may not allow `unknown` value": never };
+								unknown: {
+									"error required property may not allow `unknown` value": never;
+								};
 							}>(),
 						);
 					});
@@ -2113,7 +2292,9 @@ describe("JsonSerializable", () => {
 					assertIdenticalTypes(
 						filteredIn,
 						createInstanceOf<
-							OpaqueJsonSerializable<{ readonlyArrayOfNumbers: readonly number[] }>
+							OpaqueJsonSerializable<{
+								readonlyArrayOfNumbers: readonly number[];
+							}>
 						>(),
 					);
 				});
@@ -2125,7 +2306,9 @@ describe("JsonSerializable", () => {
 					assertIdenticalTypes(
 						filteredIn,
 						createInstanceOf<
-							OpaqueJsonDeserialized<{ readonlyArrayOfNumbers: readonly number[] }>
+							OpaqueJsonDeserialized<{
+								readonlyArrayOfNumbers: readonly number[];
+							}>
 						>(),
 					);
 				});
@@ -2137,8 +2320,12 @@ describe("JsonSerializable", () => {
 					assertIdenticalTypes(
 						filteredIn,
 						createInstanceOf<
-							OpaqueJsonSerializable<{ readonlyArrayOfNumbers: readonly number[] }> &
-								OpaqueJsonDeserialized<{ readonlyArrayOfNumbers: readonly number[] }>
+							OpaqueJsonSerializable<{
+								readonlyArrayOfNumbers: readonly number[];
+							}> &
+								OpaqueJsonDeserialized<{
+									readonlyArrayOfNumbers: readonly number[];
+								}>
 						>(),
 					);
 				});
@@ -2245,7 +2432,9 @@ describe("JsonSerializable", () => {
 			);
 			assertIdenticalTypes(
 				filteredIn,
-				createInstanceOf<JsonTypeWith<never> | OpaqueJsonSerializable<unknown>>(),
+				createInstanceOf<
+					JsonTypeWith<never> | OpaqueJsonSerializable<unknown>
+				>(),
 			);
 		});
 
@@ -2305,7 +2494,9 @@ describe("JsonSerializable", () => {
 					assertIdenticalTypes(filteredIn, out);
 				});
 				it("object with optional `bigint`", () => {
-					const { filteredIn, out } = passThruHandlingBigint(objectWithOptionalBigint);
+					const { filteredIn, out } = passThruHandlingBigint(
+						objectWithOptionalBigint,
+					);
 					assertIdenticalTypes(filteredIn, objectWithOptionalBigint);
 					assertIdenticalTypes(filteredIn, out);
 				});
@@ -2315,7 +2506,9 @@ describe("JsonSerializable", () => {
 					assertIdenticalTypes(filteredIn, out);
 				});
 				it("array of `bigint` or basic object", () => {
-					const { filteredIn, out } = passThruHandlingBigint(arrayOfBigintOrObjects);
+					const { filteredIn, out } = passThruHandlingBigint(
+						arrayOfBigintOrObjects,
+					);
 					assertIdenticalTypes(filteredIn, arrayOfBigintOrObjects);
 					assertIdenticalTypes(filteredIn, out);
 				});
@@ -2323,17 +2516,24 @@ describe("JsonSerializable", () => {
 					const objectWithSpecificFn = {
 						specificFn: (v: string) => v.length,
 					};
-					const { filteredIn, out } = passThruHandlingSpecificFunction(objectWithSpecificFn);
+					const { filteredIn, out } =
+						passThruHandlingSpecificFunction(objectWithSpecificFn);
 					assertIdenticalTypes(filteredIn, objectWithSpecificFn);
 					assertIdenticalTypes(filteredIn, out);
 				});
 				it("`IFluidHandle`", () => {
-					const { filteredIn, out } = passThruHandlingFluidHandle(fluidHandleToNumber);
-					assertIdenticalTypes(filteredIn, createInstanceOf<IFluidHandle<number>>());
+					const { filteredIn, out } =
+						passThruHandlingFluidHandle(fluidHandleToNumber);
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<IFluidHandle<number>>(),
+					);
 					assertIdenticalTypes(filteredIn, out);
 				});
 				it("object with `IFluidHandle`", () => {
-					const { filteredIn, out } = passThruHandlingFluidHandle(objectWithFluidHandle);
+					const { filteredIn, out } = passThruHandlingFluidHandle(
+						objectWithFluidHandle,
+					);
 					assertIdenticalTypes(filteredIn, objectWithFluidHandle);
 					assertIdenticalTypes(filteredIn, out);
 				});
@@ -2358,22 +2558,30 @@ describe("JsonSerializable", () => {
 					assertIdenticalTypes(filteredIn, out);
 				});
 				it("object with array of `unknown`", () => {
-					const { filteredIn, out } = passThruAllowingUnknown(objectWithArrayOfUnknown);
+					const { filteredIn, out } = passThruAllowingUnknown(
+						objectWithArrayOfUnknown,
+					);
 					assertIdenticalTypes(filteredIn, objectWithArrayOfUnknown);
 					assertIdenticalTypes(filteredIn, out);
 				});
 				it("object with optional `unknown`", () => {
-					const { filteredIn, out } = passThruAllowingUnknown(objectWithOptionalUnknown);
+					const { filteredIn, out } = passThruAllowingUnknown(
+						objectWithOptionalUnknown,
+					);
 					assertIdenticalTypes(filteredIn, objectWithOptionalUnknown);
 					assertIdenticalTypes(filteredIn, out);
 				});
 				it("`string` indexed record of `unknown`", () => {
-					const { filteredIn, out } = passThruAllowingUnknown(stringRecordOfUnknown);
+					const { filteredIn, out } = passThruAllowingUnknown(
+						stringRecordOfUnknown,
+					);
 					assertIdenticalTypes(filteredIn, stringRecordOfUnknown);
 					assertIdenticalTypes(filteredIn, out);
 				});
 				it("templated record of `unknown`", () => {
-					const { filteredIn, out } = passThruAllowingUnknown(templatedRecordOfUnknown);
+					const { filteredIn, out } = passThruAllowingUnknown(
+						templatedRecordOfUnknown,
+					);
 					assertIdenticalTypes(templatedRecordOfUnknown, filteredIn);
 					assertIdenticalTypes(filteredIn, templatedRecordOfUnknown);
 					assertIdenticalTypes(filteredIn, out);
@@ -2382,25 +2590,36 @@ describe("JsonSerializable", () => {
 					const { filteredIn, out } = passThruAllowingUnknown(
 						stringRecordOfUnknownWithKnownProperties,
 					);
-					assertIdenticalTypes(filteredIn, stringRecordOfUnknownWithKnownProperties);
+					assertIdenticalTypes(
+						filteredIn,
+						stringRecordOfUnknownWithKnownProperties,
+					);
 					assertIdenticalTypes(filteredIn, out);
 				});
 				it("`string` indexed record of `unknown` and optional known properties", () => {
 					const { filteredIn, out } = passThruAllowingUnknown(
 						stringRecordOfUnknownWithOptionalKnownProperties,
 					);
-					assertIdenticalTypes(filteredIn, stringRecordOfUnknownWithOptionalKnownProperties);
+					assertIdenticalTypes(
+						filteredIn,
+						stringRecordOfUnknownWithOptionalKnownProperties,
+					);
 					assertIdenticalTypes(filteredIn, out);
 				});
 				it("`string` indexed record of `unknown` and optional known `unknown`", () => {
 					const { filteredIn, out } = passThruAllowingUnknown(
 						stringRecordOfUnknownWithOptionalKnownUnknown,
 					);
-					assertIdenticalTypes(filteredIn, stringRecordOfUnknownWithOptionalKnownUnknown);
+					assertIdenticalTypes(
+						filteredIn,
+						stringRecordOfUnknownWithOptionalKnownUnknown,
+					);
 					assertIdenticalTypes(filteredIn, out);
 				});
 				it("`Partial<>` `string` indexed record of `unknown`", () => {
-					const { filteredIn, out } = passThruAllowingUnknown(partialStringRecordOfUnknown);
+					const { filteredIn, out } = passThruAllowingUnknown(
+						partialStringRecordOfUnknown,
+					);
 					assertIdenticalTypes(partialStringRecordOfUnknown, filteredIn);
 					assertIdenticalTypes(filteredIn, partialStringRecordOfUnknown);
 					assertIdenticalTypes(filteredIn, out);
@@ -2409,7 +2628,10 @@ describe("JsonSerializable", () => {
 					const { filteredIn, out } = passThruAllowingUnknown(
 						partialStringRecordOfUnknownWithKnownProperties,
 					);
-					assertIdenticalTypes(filteredIn, partialStringRecordOfUnknownWithKnownProperties);
+					assertIdenticalTypes(
+						filteredIn,
+						partialStringRecordOfUnknownWithKnownProperties,
+					);
 					assertIdenticalTypes(filteredIn, out);
 				});
 				it("object with optional `unknown` adjacent to recursion", () => {
@@ -2426,7 +2648,10 @@ describe("JsonSerializable", () => {
 					const { filteredIn, out } = passThruAllowingUnknown(
 						objectWithOptionalUnknownInOptionalRecursion,
 					);
-					assertIdenticalTypes(filteredIn, objectWithOptionalUnknownInOptionalRecursion);
+					assertIdenticalTypes(
+						filteredIn,
+						objectWithOptionalUnknownInOptionalRecursion,
+					);
 					assertIdenticalTypes(filteredIn, out);
 				});
 			});
@@ -2471,7 +2696,10 @@ describe("JsonSerializable", () => {
 						object,
 						// object's value is actually supported; so, no runtime error.
 					);
-					assertIdenticalTypes(filteredIn, createInstanceOf<NonNullJsonObjectWith<bigint>>());
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<NonNullJsonObjectWith<bigint>>(),
+					);
 				});
 				it("object with non-alternately allowed too generic function", () => {
 					const objectWithGenericFn = {

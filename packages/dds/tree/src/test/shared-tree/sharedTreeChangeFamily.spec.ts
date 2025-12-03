@@ -6,23 +6,23 @@
 import { strict as assert } from "node:assert";
 
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
-import { currentVersion, type CodecWriteOptions } from "../../codec/index.js";
+import { type CodecWriteOptions, currentVersion } from "../../codec/index.js";
 import {
 	type DeltaDetachedNodeId,
-	type TreeStoredSchema,
 	makeAnonChange,
 	revisionMetadataSourceFromInfo,
 	rootFieldKey,
+	type TreeStoredSchema,
 } from "../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { forbidden } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
+	fieldKinds,
 	ModularChangeFamily,
 	type ModularChangeset,
-	type TreeChunk,
-	fieldKinds,
 	type SchemaChange,
+	type TreeChunk,
 } from "../../feature-libraries/index.js";
 import {
 	SharedTreeChangeFamily,
@@ -53,8 +53,10 @@ const fieldBatchCodec = {
 };
 
 const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily);
-const defaultEditor = new DefaultEditBuilder(modularFamily, mintRevisionTag, (taggedChange) =>
-	dataChanges.push(taggedChange.change),
+const defaultEditor = new DefaultEditBuilder(
+	modularFamily,
+	mintRevisionTag,
+	(taggedChange) => dataChanges.push(taggedChange.change),
 );
 
 // Side effects results in `dataChanges` being populated
@@ -85,7 +87,10 @@ const stSchemaChange: SharedTreeChange = {
 	changes: [
 		{
 			type: "schema",
-			innerChange: { schema: { new: emptySchema, old: emptySchema }, isInverse: false },
+			innerChange: {
+				schema: { new: emptySchema, old: emptySchema },
+				isInverse: false,
+			},
 		},
 	],
 };
@@ -244,7 +249,11 @@ describe("SharedTreeChangeFamily", () => {
 					changes: [
 						{
 							type: "data",
-							innerChange: modularFamily.invert(makeAnonChange(dataChange1), isRollback, tag),
+							innerChange: modularFamily.invert(
+								makeAnonChange(dataChange1),
+								isRollback,
+								tag,
+							),
 						},
 					],
 				};
@@ -318,9 +327,15 @@ describe("SharedTreeChangeFamily", () => {
 		it("updates all data changes", () => {
 			const input: SharedTreeChange = {
 				changes: [
-					{ innerChange: [idInForest1] as unknown as ModularChangeset, type: "data" },
+					{
+						innerChange: [idInForest1] as unknown as ModularChangeset,
+						type: "data",
+					},
 					schemaChange,
-					{ innerChange: [idInForest2] as unknown as ModularChangeset, type: "data" },
+					{
+						innerChange: [idInForest2] as unknown as ModularChangeset,
+						type: "data",
+					},
 				],
 			};
 			const updated = testUpdateRefreshers(input);
@@ -335,15 +350,24 @@ describe("SharedTreeChangeFamily", () => {
 		it("excludes refreshers from later changes if they are included in earlier changes", () => {
 			const input: SharedTreeChange = {
 				changes: [
-					{ innerChange: [idInForest1] as unknown as ModularChangeset, type: "data" },
-					schemaChange,
 					{
-						innerChange: [idInForest1, idInForest2] as unknown as ModularChangeset,
+						innerChange: [idInForest1] as unknown as ModularChangeset,
 						type: "data",
 					},
 					schemaChange,
 					{
-						innerChange: [idInForest1, idInForest2] as unknown as ModularChangeset,
+						innerChange: [
+							idInForest1,
+							idInForest2,
+						] as unknown as ModularChangeset,
+						type: "data",
+					},
+					schemaChange,
+					{
+						innerChange: [
+							idInForest1,
+							idInForest2,
+						] as unknown as ModularChangeset,
 						type: "data",
 					},
 				],
@@ -362,7 +386,10 @@ describe("SharedTreeChangeFamily", () => {
 		it("throws for missing refreshers in first data change", () => {
 			const input: SharedTreeChange = {
 				changes: [
-					{ innerChange: [idNotInForest] as unknown as ModularChangeset, type: "data" },
+					{
+						innerChange: [idNotInForest] as unknown as ModularChangeset,
+						type: "data",
+					},
 				],
 			};
 			assert.throws(() => testUpdateRefreshers(input));
@@ -370,10 +397,16 @@ describe("SharedTreeChangeFamily", () => {
 		it("tolerates missing refreshers in later data changes", () => {
 			const input: SharedTreeChange = {
 				changes: [
-					{ innerChange: [idInForest1] as unknown as ModularChangeset, type: "data" },
+					{
+						innerChange: [idInForest1] as unknown as ModularChangeset,
+						type: "data",
+					},
 					schemaChange,
 					{
-						innerChange: [idNotInForest, idInForest2] as unknown as ModularChangeset,
+						innerChange: [
+							idNotInForest,
+							idInForest2,
+						] as unknown as ModularChangeset,
 						type: "data",
 					},
 				],

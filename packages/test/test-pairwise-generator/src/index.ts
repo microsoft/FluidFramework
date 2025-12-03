@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Engine, MersenneTwister19937, pick } from "random-js";
+import { type Engine, MersenneTwister19937, pick } from "random-js";
 
 /**
  * Converts all properties of an object to arrays of the
@@ -52,7 +52,9 @@ function applyPairToPartial<T extends Record<string, any>>(
 				(pair.iKey in partial &&
 					!(pair.jKey in partial) &&
 					partial[pair.iKey] === pair.iVal) ||
-				(pair.jKey in partial && !(pair.iKey in partial) && partial[pair.jKey] === pair.jVal)
+				(pair.jKey in partial &&
+					!(pair.iKey in partial) &&
+					partial[pair.jKey] === pair.jVal)
 			) {
 				matchingPartials.push(partial);
 			}
@@ -87,7 +89,9 @@ export function generatePairwiseOptions<T extends Record<string, any>>(
 
 	// sort keys biggest to smallest, and prune those with only an undefined option
 	const matrixKeys: (keyof T)[] = Object.keys(optionsMatrix)
-		.filter((k) => optionsMatrix[k].length > 1 || optionsMatrix[k][0] !== undefined)
+		.filter(
+			(k) => optionsMatrix[k].length > 1 || optionsMatrix[k][0] !== undefined,
+		)
 		.sort((a, b) => optionsMatrix[b].length - optionsMatrix[a].length);
 
 	if (matrixKeys.length === 0) {

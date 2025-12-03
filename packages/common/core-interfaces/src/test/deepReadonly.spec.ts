@@ -15,154 +15,154 @@ import type {
 	ReadonlyObjectWithOptionalRecursion,
 } from "./testValues.js";
 import {
-	boolean,
-	number,
-	string,
-	numericEnumValue,
-	NumericEnum,
-	stringEnumValue,
-	StringEnum,
-	constHeterogenousEnumValue,
-	ConstHeterogenousEnum,
-	computedEnumValue,
-	ComputedEnum,
-	objectWithLiterals,
-	arrayOfLiterals,
-	tupleWithLiterals,
-	symbol,
-	uniqueSymbol,
-	bigint,
 	aFunction,
-	unknownValueOfSimpleRecord,
-	voidValue,
-	never,
-	stringOrSymbol,
-	bigintOrString,
-	bigintOrSymbol,
-	numberOrBigintOrSymbol,
-	functionWithProperties,
-	objectAndFunction,
-	arrayOfNumbers,
-	arrayOfNumbersSparse,
-	arrayOfNumbersOrUndefined,
+	arrayOfBigintOrObjects,
+	arrayOfBigintOrSymbols,
 	arrayOfBigints,
-	arrayOfSymbols,
 	arrayOfFunctions,
 	arrayOfFunctionsWithProperties,
-	arrayOfObjectAndFunctions,
-	arrayOfBigintOrSymbols,
+	arrayOfLiterals,
 	arrayOfNumberBigintOrSymbols,
-	arrayOfBigintOrObjects,
+	arrayOfNumbers,
+	arrayOfNumbersOrUndefined,
+	arrayOfNumbersSparse,
+	arrayOfObjectAndFunctions,
 	arrayOfSymbolOrObjects,
-	readonlyArrayOfNumbers,
-	readonlyArrayOfObjects,
-	object,
+	arrayOfSymbols,
+	bigint,
+	bigintOrString,
+	bigintOrSymbol,
+	boolean,
+	brandedNumber,
+	brandedObject,
+	brandedObjectWithString,
+	brandedString,
+	ComputedEnum,
+	ConstHeterogenousEnum,
+	classInstanceWithPrivateData,
+	classInstanceWithPrivateDataAndIsFunction,
+	classInstanceWithPrivateGetter,
+	classInstanceWithPrivateMethod,
+	classInstanceWithPrivateSetter,
+	classInstanceWithPublicData,
+	classInstanceWithPublicDataAndIsFunction,
+	classInstanceWithPublicMethod,
+	computedEnumValue,
+	constHeterogenousEnumValue,
 	emptyObject,
-	objectWithBoolean,
-	objectWithNumber,
-	objectWithString,
-	objectWithSymbol,
-	objectWithBigint,
-	objectWithFunction,
-	objectWithFunctionWithProperties,
-	objectWithObjectAndFunction,
-	objectWithBigintOrString,
-	objectWithBigintOrSymbol,
-	objectWithNumberOrBigintOrSymbol,
-	objectWithFunctionOrSymbol,
-	objectWithStringOrSymbol,
-	objectWithUnknown,
-	objectWithOptionalUnknown,
-	objectWithUndefined,
-	objectWithOptionalUndefined,
-	objectWithOptionalBigint,
-	objectWithNumberKey,
-	objectWithSymbolKey,
-	objectWithUniqueSymbolKey,
-	objectWithArrayOfNumbers,
-	objectWithArrayOfNumbersOrUndefined,
+	erasedType,
+	fluidHandleToNumber,
+	fluidHandleToRecord,
+	functionObjectWithPrivateData,
+	functionObjectWithPublicData,
+	functionWithProperties,
+	immutableJsonObject,
+	jsonObject,
+	mapOfPointToRecord,
+	mapOfStringsToNumbers,
+	mixedRecordOfUnknown,
+	NumericEnum,
+	never,
+	number,
+	numberOrBigintOrSymbol,
+	numericEnumValue,
+	object,
+	objectAndFunction,
+	objectInheritingOptionalRecursionAndWithNestedSymbol,
+	objectWithAlternatingRecursion,
+	objectWithArrayOfBigintOrObjects,
 	objectWithArrayOfBigints,
-	objectWithArrayOfSymbols,
-	objectWithArrayOfUnknown,
 	objectWithArrayOfFunctions,
 	objectWithArrayOfFunctionsWithProperties,
+	objectWithArrayOfNumbers,
+	objectWithArrayOfNumbersOrUndefined,
 	objectWithArrayOfObjectAndFunctions,
-	objectWithArrayOfBigintOrObjects,
 	objectWithArrayOfSymbolOrObjects,
-	objectWithReadonlyArrayOfNumbers,
-	objectWithOptionalNumberNotPresent,
-	objectWithNumberOrUndefinedUndefined,
-	objectWithReadonly,
-	objectWithReadonlyViaGetter,
+	objectWithArrayOfSymbols,
+	objectWithArrayOfUnknown,
+	objectWithBigint,
+	objectWithBigintOrString,
+	objectWithBigintOrSymbol,
+	objectWithBoolean,
+	objectWithBrandedNumber,
+	objectWithBrandedString,
+	objectWithEmbeddedRecursion,
+	objectWithFluidHandle,
+	objectWithFluidHandleOrRecursion,
+	objectWithFunction,
+	objectWithFunctionOrSymbol,
+	objectWithFunctionWithProperties,
 	objectWithGetter,
 	objectWithGetterViaValue,
-	objectWithSetter,
+	objectWithLiterals,
 	objectWithMatchedGetterAndSetterProperty,
 	objectWithMatchedGetterAndSetterPropertyViaValue,
 	objectWithMismatchedGetterAndSetterProperty,
 	objectWithMismatchedGetterAndSetterPropertyViaValue,
 	objectWithNever,
-	stringRecordOfNumbers,
-	stringRecordOfUnknown,
-	stringOrNumberRecordOfStrings,
-	stringOrNumberRecordOfObjects,
+	objectWithNumber,
+	objectWithNumberKey,
+	objectWithNumberOrBigintOrSymbol,
+	objectWithNumberOrUndefinedUndefined,
+	objectWithObjectAndFunction,
+	objectWithOptionalBigint,
+	objectWithOptionalNumberNotPresent,
+	objectWithOptionalRecursion,
+	objectWithOptionalUndefined,
+	objectWithOptionalUnknown,
+	objectWithPossibleRecursion,
+	objectWithReadonly,
+	objectWithReadonlyArrayOfNumbers,
+	objectWithReadonlyViaGetter,
+	objectWithSetter,
+	objectWithString,
+	objectWithStringOrSymbol,
+	objectWithSymbol,
+	objectWithSymbolKey,
+	objectWithSymbolOrRecursion,
+	objectWithUndefined,
+	objectWithUniqueSymbolKey,
+	objectWithUnknown,
 	partialStringRecordOfNumbers,
 	partialStringRecordOfUnknown,
-	templatedRecordOfNumbers,
-	mixedRecordOfUnknown,
-	stringRecordOfNumbersOrStringsWithKnownProperties,
-	stringRecordOfUnknownWithOptionalKnownProperties,
-	stringOrNumberRecordOfStringWithKnownNumber,
-	objectWithPossibleRecursion,
-	objectWithOptionalRecursion,
-	readonlyObjectWithOptionalRecursion,
-	objectWithEmbeddedRecursion,
-	readonlyObjectWithEmbeddedRecursion,
-	objectWithAlternatingRecursion,
+	readonlyArrayOfNumbers,
+	readonlyArrayOfObjects,
+	readonlyMapOfPointToRecord,
+	readonlyMapOfStringsToNumbers,
 	readonlyObjectWithAlternatingRecursion,
-	objectWithSymbolOrRecursion,
+	readonlyObjectWithEmbeddedRecursion,
+	readonlyObjectWithFluidHandleOrRecursion,
+	readonlyObjectWithOptionalRecursion,
 	readonlyObjectWithSymbolOrRecursion,
-	objectWithFluidHandleOrRecursion,
-	stringRecordWithRecursionOrNumber,
-	readonlyStringRecordWithRecursionOrNumber,
-	selfRecursiveFunctionWithProperties,
-	selfRecursiveObjectAndFunction,
 	readonlySelfRecursiveFunctionWithProperties,
 	readonlySelfRecursiveObjectAndFunction,
-	objectInheritingOptionalRecursionAndWithNestedSymbol,
-	simpleJson,
-	simpleImmutableJson,
-	jsonObject,
-	immutableJsonObject,
-	classInstanceWithPrivateData,
-	classInstanceWithPrivateMethod,
-	classInstanceWithPrivateGetter,
-	classInstanceWithPrivateSetter,
-	classInstanceWithPublicData,
-	classInstanceWithPublicMethod,
-	functionObjectWithPrivateData,
-	functionObjectWithPublicData,
-	classInstanceWithPrivateDataAndIsFunction,
-	classInstanceWithPublicDataAndIsFunction,
-	mapOfStringsToNumbers,
-	readonlyMapOfStringsToNumbers,
-	mapOfPointToRecord,
-	readonlyMapOfPointToRecord,
-	setOfNumbers,
 	readonlySetOfNumbers,
-	setOfRecords,
 	readonlySetOfRecords,
-	brandedNumber,
-	brandedString,
-	brandedObject,
-	brandedObjectWithString,
-	objectWithBrandedNumber,
-	objectWithBrandedString,
-	fluidHandleToNumber,
-	fluidHandleToRecord,
-	objectWithFluidHandle,
-	readonlyObjectWithFluidHandleOrRecursion,
-	erasedType,
+	readonlyStringRecordWithRecursionOrNumber,
+	StringEnum,
+	selfRecursiveFunctionWithProperties,
+	selfRecursiveObjectAndFunction,
+	setOfNumbers,
+	setOfRecords,
+	simpleImmutableJson,
+	simpleJson,
+	string,
+	stringEnumValue,
+	stringOrNumberRecordOfObjects,
+	stringOrNumberRecordOfStrings,
+	stringOrNumberRecordOfStringWithKnownNumber,
+	stringOrSymbol,
+	stringRecordOfNumbers,
+	stringRecordOfNumbersOrStringsWithKnownProperties,
+	stringRecordOfUnknown,
+	stringRecordOfUnknownWithOptionalKnownProperties,
+	stringRecordWithRecursionOrNumber,
+	symbol,
+	templatedRecordOfNumbers,
+	tupleWithLiterals,
+	uniqueSymbol,
+	unknownValueOfSimpleRecord,
+	voidValue,
 } from "./testValues.js";
 
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
@@ -320,7 +320,10 @@ describe("DeepReadonly", () => {
 		});
 		it("array of numbers or undefined", () => {
 			const result = makeReadonly(arrayOfNumbersOrUndefined);
-			assertIdenticalTypes(result, createInstanceOf<readonly (number | undefined)[]>());
+			assertIdenticalTypes(
+				result,
+				createInstanceOf<readonly (number | undefined)[]>(),
+			);
 		});
 		it("array of bigint or basic object", () => {
 			const result = makeReadonly(arrayOfBigintOrObjects);
@@ -353,23 +356,33 @@ describe("DeepReadonly", () => {
 			const result = makeReadonly(arrayOfFunctionsWithProperties);
 			assertIdenticalTypes(
 				result,
-				createInstanceOf<readonly ((() => number) & { readonly property: number })[]>(),
+				createInstanceOf<
+					readonly ((() => number) & { readonly property: number })[]
+				>(),
 			);
 		});
 		it("array of objects and functions", () => {
 			const result = makeReadonly(arrayOfObjectAndFunctions);
 			assertIdenticalTypes(
 				result,
-				createInstanceOf<readonly ({ readonly property: number } & (() => number))[]>(),
+				createInstanceOf<
+					readonly ({ readonly property: number } & (() => number))[]
+				>(),
 			);
 		});
 		it("array of `bigint | symbol`", () => {
 			const result = makeReadonly(arrayOfBigintOrSymbols);
-			assertIdenticalTypes(result, createInstanceOf<readonly (bigint | symbol)[]>());
+			assertIdenticalTypes(
+				result,
+				createInstanceOf<readonly (bigint | symbol)[]>(),
+			);
 		});
 		it("array of `number | bigint | symbol`", () => {
 			const result = makeReadonly(arrayOfNumberBigintOrSymbols);
-			assertIdenticalTypes(result, createInstanceOf<readonly (number | bigint | symbol)[]>());
+			assertIdenticalTypes(
+				result,
+				createInstanceOf<readonly (number | bigint | symbol)[]>(),
+			);
 		});
 	});
 
@@ -395,51 +408,87 @@ describe("DeepReadonly", () => {
 
 		it("object with `boolean`", () => {
 			const result = makeReadonly(objectWithBoolean);
-			assertIdenticalTypes(result, createInstanceOf<{ readonly boolean: boolean }>());
+			assertIdenticalTypes(
+				result,
+				createInstanceOf<{ readonly boolean: boolean }>(),
+			);
 		});
 		it("object with `number`", () => {
 			const result = makeReadonly(objectWithNumber);
-			assertIdenticalTypes(result, createInstanceOf<{ readonly number: number }>());
+			assertIdenticalTypes(
+				result,
+				createInstanceOf<{ readonly number: number }>(),
+			);
 		});
 		it("object with `string`", () => {
 			const result = makeReadonly(objectWithString);
-			assertIdenticalTypes(result, createInstanceOf<{ readonly string: string }>());
+			assertIdenticalTypes(
+				result,
+				createInstanceOf<{ readonly string: string }>(),
+			);
 		});
 		it("object with `bigint`", () => {
 			const result = makeReadonly(objectWithBigint);
-			assertIdenticalTypes(result, createInstanceOf<{ readonly bigint: bigint }>());
+			assertIdenticalTypes(
+				result,
+				createInstanceOf<{ readonly bigint: bigint }>(),
+			);
 		});
 		it("object with `symbol`", () => {
 			const result = makeReadonly(objectWithSymbol);
-			assertIdenticalTypes(result, createInstanceOf<{ readonly symbol: symbol }>());
+			assertIdenticalTypes(
+				result,
+				createInstanceOf<{ readonly symbol: symbol }>(),
+			);
 		});
 		it("object with function", () => {
 			const result = makeReadonly(objectWithFunction);
-			assertIdenticalTypes(result, createInstanceOf<{ readonly function: () => void }>());
+			assertIdenticalTypes(
+				result,
+				createInstanceOf<{ readonly function: () => void }>(),
+			);
 		});
 		it("object with `unknown`", () => {
 			const result = makeReadonly(objectWithUnknown);
-			assertIdenticalTypes(result, createInstanceOf<{ readonly unknown: unknown }>());
+			assertIdenticalTypes(
+				result,
+				createInstanceOf<{ readonly unknown: unknown }>(),
+			);
 		});
 		it("object with required `undefined`", () => {
 			const result = makeReadonly(objectWithUndefined);
-			assertIdenticalTypes(result, createInstanceOf<{ readonly undef: undefined }>());
+			assertIdenticalTypes(
+				result,
+				createInstanceOf<{ readonly undef: undefined }>(),
+			);
 		});
 		it("object with optional `undefined`", () => {
 			const result = makeReadonly(objectWithOptionalUndefined);
-			assertIdenticalTypes(result, createInstanceOf<{ readonly optUndef?: undefined }>());
+			assertIdenticalTypes(
+				result,
+				createInstanceOf<{ readonly optUndef?: undefined }>(),
+			);
 		});
 		it("object with optional `bigint`", () => {
 			const result = makeReadonly(objectWithOptionalBigint);
-			assertIdenticalTypes(result, createInstanceOf<{ readonly bigint?: bigint }>());
+			assertIdenticalTypes(
+				result,
+				createInstanceOf<{ readonly bigint?: bigint }>(),
+			);
 		});
 		it("object with optional `unknown`", () => {
 			const result = makeReadonly(objectWithOptionalUnknown);
-			assertIdenticalTypes(result, createInstanceOf<{ readonly optUnknown?: unknown }>());
+			assertIdenticalTypes(
+				result,
+				createInstanceOf<{ readonly optUnknown?: unknown }>(),
+			);
 		});
 		it("object with exactly `never`", () => {
 			const result = makeReadonly(objectWithNever);
-			assertIdenticalTypes(result, createInstanceOf<{ readonly never: never }>());
+			assertIdenticalTypes(
+				result,
+				createInstanceOf<{ readonly never: never }>(),
+			);
 		});
 		it("object with `number | undefined`", () => {
 			const result = makeReadonly(objectWithNumberOrUndefinedUndefined);
@@ -475,14 +524,18 @@ describe("DeepReadonly", () => {
 			const result = makeReadonly(objectWithFunctionOrSymbol);
 			assertIdenticalTypes(
 				result,
-				createInstanceOf<{ readonly functionOrSymbol: (() => void) | symbol }>(),
+				createInstanceOf<{
+					readonly functionOrSymbol: (() => void) | symbol;
+				}>(),
 			);
 		});
 		it("object with `number | bigint | symbol`", () => {
 			const result = makeReadonly(objectWithNumberOrBigintOrSymbol);
 			assertIdenticalTypes(
 				result,
-				createInstanceOf<{ readonly numberOrBigintOrSymbol: number | bigint | symbol }>(),
+				createInstanceOf<{
+					readonly numberOrBigintOrSymbol: number | bigint | symbol;
+				}>(),
 			);
 		});
 
@@ -515,11 +568,17 @@ describe("DeepReadonly", () => {
 		});
 		it("object with symbol key", () => {
 			const result = makeReadonly(objectWithSymbolKey);
-			assertIdenticalTypes(result, createInstanceOf<{ readonly [x: symbol]: string }>());
+			assertIdenticalTypes(
+				result,
+				createInstanceOf<{ readonly [x: symbol]: string }>(),
+			);
 		});
 		it("object with unique symbol key", () => {
 			const result = makeReadonly(objectWithUniqueSymbolKey);
-			assertIdenticalTypes(result, createInstanceOf<{ readonly [uniqueSymbol]: string }>());
+			assertIdenticalTypes(
+				result,
+				createInstanceOf<{ readonly [uniqueSymbol]: string }>(),
+			);
 		});
 
 		it("object with array of `number`s", () => {
@@ -563,7 +622,9 @@ describe("DeepReadonly", () => {
 			const result = makeReadonly(objectWithArrayOfFunctions);
 			assertIdenticalTypes(
 				result,
-				createInstanceOf<{ readonly arrayOfFunctions: readonly (typeof aFunction)[] }>(),
+				createInstanceOf<{
+					readonly arrayOfFunctions: readonly (typeof aFunction)[];
+				}>(),
 			);
 		});
 		it("object with array of functions with properties", () => {
@@ -620,7 +681,9 @@ describe("DeepReadonly", () => {
 			const result = makeReadonly(objectWithReadonlyArrayOfNumbers);
 			assertIdenticalTypes(
 				result,
-				createInstanceOf<{ readonly readonlyArrayOfNumbers: readonly number[] }>(),
+				createInstanceOf<{
+					readonly readonlyArrayOfNumbers: readonly number[];
+				}>(),
 			);
 		});
 
@@ -653,28 +716,40 @@ describe("DeepReadonly", () => {
 			const result = makeReadonly(stringOrNumberRecordOfObjects);
 			assertIdenticalTypes(
 				result,
-				createInstanceOf<Readonly<Record<string | number, { readonly string: string }>>>(),
+				createInstanceOf<
+					Readonly<Record<string | number, { readonly string: string }>>
+				>(),
 			);
 		});
 		it("`string` indexed record of `number`|`string`s with known properties", () => {
-			const result = makeReadonly(stringRecordOfNumbersOrStringsWithKnownProperties);
+			const result = makeReadonly(
+				stringRecordOfNumbersOrStringsWithKnownProperties,
+			);
 			assertIdenticalTypes(
 				result,
-				createInstanceOf<Readonly<typeof stringRecordOfNumbersOrStringsWithKnownProperties>>(),
+				createInstanceOf<
+					Readonly<typeof stringRecordOfNumbersOrStringsWithKnownProperties>
+				>(),
 			);
 		});
 		it("`string` indexed record of `unknown` and optional known properties", () => {
-			const result = makeReadonly(stringRecordOfUnknownWithOptionalKnownProperties);
+			const result = makeReadonly(
+				stringRecordOfUnknownWithOptionalKnownProperties,
+			);
 			assertIdenticalTypes(
 				result,
-				createInstanceOf<Readonly<typeof stringRecordOfUnknownWithOptionalKnownProperties>>(),
+				createInstanceOf<
+					Readonly<typeof stringRecordOfUnknownWithOptionalKnownProperties>
+				>(),
 			);
 		});
 		it("`string`|`number` indexed record of `strings` with known `number` property (unassignable)", () => {
 			const result = makeReadonly(stringOrNumberRecordOfStringWithKnownNumber);
 			assertIdenticalTypes(
 				result,
-				createInstanceOf<Readonly<typeof stringOrNumberRecordOfStringWithKnownNumber>>(),
+				createInstanceOf<
+					Readonly<typeof stringOrNumberRecordOfStringWithKnownNumber>
+				>(),
 			);
 		});
 		it("`Partial<>` `string` indexed record of `numbers`", () => {
@@ -706,7 +781,10 @@ describe("DeepReadonly", () => {
 		});
 		it("templated record of `numbers`", () => {
 			const result = makeReadonly(mixedRecordOfUnknown);
-			assertIdenticalTypes(result, createInstanceOf<Readonly<typeof mixedRecordOfUnknown>>());
+			assertIdenticalTypes(
+				result,
+				createInstanceOf<Readonly<typeof mixedRecordOfUnknown>>(),
+			);
 		});
 
 		it("object with recursion and `symbol`", () => {
@@ -723,7 +801,9 @@ describe("DeepReadonly", () => {
 			const objectWithSelfRecursiveFunctionWithProperties = {
 				outerFnOjb: selfRecursiveFunctionWithProperties,
 			};
-			const result = makeReadonly(objectWithSelfRecursiveFunctionWithProperties);
+			const result = makeReadonly(
+				objectWithSelfRecursiveFunctionWithProperties,
+			);
 			const expected = {
 				outerFnOjb: readonlySelfRecursiveFunctionWithProperties,
 			} as const;
@@ -745,7 +825,10 @@ describe("DeepReadonly", () => {
 			interface ReadonlyObjectWithPossibleRecursion {
 				readonly [x: string]: ReadonlyObjectWithPossibleRecursion | string;
 			}
-			assertIdenticalTypes(result, createInstanceOf<ReadonlyObjectWithPossibleRecursion>());
+			assertIdenticalTypes(
+				result,
+				createInstanceOf<ReadonlyObjectWithPossibleRecursion>(),
+			);
 		});
 		it("object with optional type recursion", () => {
 			const result = makeReadonly(objectWithOptionalRecursion);
@@ -769,7 +852,10 @@ describe("DeepReadonly", () => {
 				createInstanceOf<{
 					readonly outer: {
 						readonly recursive?: ReadonlyObjectWithOptionalRecursion;
-						readonly complex: { readonly number: number; readonly symbol: symbol };
+						readonly complex: {
+							readonly number: number;
+							readonly symbol: symbol;
+						};
 					};
 				}>(),
 			);
@@ -813,7 +899,9 @@ describe("DeepReadonly", () => {
 		});
 
 		it("object with matched getter and setter implemented via value", () => {
-			const result = makeReadonly(objectWithMatchedGetterAndSetterPropertyViaValue);
+			const result = makeReadonly(
+				objectWithMatchedGetterAndSetterPropertyViaValue,
+			);
 			assertIdenticalTypes(
 				result,
 				createInstanceOf<{
@@ -822,7 +910,9 @@ describe("DeepReadonly", () => {
 			);
 		});
 		it("object with mismatched getter and setter implemented via value", () => {
-			const result = makeReadonly(objectWithMismatchedGetterAndSetterPropertyViaValue);
+			const result = makeReadonly(
+				objectWithMismatchedGetterAndSetterPropertyViaValue,
+			);
 			assertIdenticalTypes(
 				result,
 				createInstanceOf<{
@@ -852,7 +942,10 @@ describe("DeepReadonly", () => {
 		describe("class instance", () => {
 			it("with public data", () => {
 				const result = makeReadonly(classInstanceWithPublicData);
-				assertIdenticalTypes(result, createInstanceOf<Readonly<ClassWithPublicData>>());
+				assertIdenticalTypes(
+					result,
+					createInstanceOf<Readonly<ClassWithPublicData>>(),
+				);
 			});
 			it("with public method", () => {
 				const result = makeReadonly(classInstanceWithPublicMethod);
@@ -873,7 +966,10 @@ describe("DeepReadonly", () => {
 
 		it("object with optional property (remains optional)", () => {
 			const result = makeReadonly(objectWithOptionalNumberNotPresent);
-			assertIdenticalTypes(result, createInstanceOf<{ readonly optNumber?: number }>());
+			assertIdenticalTypes(
+				result,
+				createInstanceOf<{ readonly optNumber?: number }>(),
+			);
 		});
 	});
 
@@ -985,11 +1081,17 @@ describe("DeepReadonly", () => {
 		describe("`IFluidHandle<T>` becomes `Readonly<IFluidHandle<T>>`", () => {
 			it("`IFluidHandle<number>`", () => {
 				const result = makeReadonly(fluidHandleToNumber);
-				assertIdenticalTypes(result, createInstanceOf<Readonly<typeof fluidHandleToNumber>>());
+				assertIdenticalTypes(
+					result,
+					createInstanceOf<Readonly<typeof fluidHandleToNumber>>(),
+				);
 			});
 			it("`IFluidHandle<{...}>` generic remains intact by default", () => {
 				const result = makeReadonly(fluidHandleToRecord);
-				assertIdenticalTypes(result, createInstanceOf<Readonly<typeof fluidHandleToRecord>>());
+				assertIdenticalTypes(
+					result,
+					createInstanceOf<Readonly<typeof fluidHandleToRecord>>(),
+				);
 			});
 			it("`IFluidHandle<{...}>` generic becomes deeply immutable when enabled", () => {
 				const result = makeReadonlyDeepeningHandleTypes(fluidHandleToRecord);
@@ -998,7 +1100,10 @@ describe("DeepReadonly", () => {
 					createInstanceOf<
 						Readonly<
 							IFluidHandle<{
-								readonly [p: string]: { readonly x: number; readonly y: number };
+								readonly [p: string]: {
+									readonly x: number;
+									readonly y: number;
+								};
 							}>
 						>
 					>(),
@@ -1152,7 +1257,9 @@ describe("DeepReadonly", () => {
 		});
 		describe("that are immutable keep generics intact when deepening disabled", () => {
 			it("ReadonlyMap<object, object>", () => {
-				const result = makeReadonlyNoGenericsDeepening(readonlyMapOfPointToRecord);
+				const result = makeReadonlyNoGenericsDeepening(
+					readonlyMapOfPointToRecord,
+				);
 				assertIdenticalTypes(result, readonlyMapOfPointToRecord);
 				result satisfies typeof readonlyMapOfPointToRecord;
 			});
@@ -1238,7 +1345,10 @@ describe("DeepReadonly", () => {
 			});
 			it("`object & BrandedType<T>`", () => {
 				const result = makeReadonly(brandedObjectWithString);
-				assertIdenticalTypes(result, createInstanceOf<{ readonly string: string }>());
+				assertIdenticalTypes(
+					result,
+					createInstanceOf<{ readonly string: string }>(),
+				);
 			});
 		});
 	});
@@ -1277,7 +1387,9 @@ describe("DeepReadonly", () => {
 
 	describe("using `RecurseLimit` limits processing of recursive types", () => {
 		it("no recursion: object with optional type recursion is readonly once", () => {
-			const result = makeReadonlyBailingOnRecursiveTypes(objectWithOptionalRecursion);
+			const result = makeReadonlyBailingOnRecursiveTypes(
+				objectWithOptionalRecursion,
+			);
 			assertIdenticalTypes(
 				result,
 				createInstanceOf<{
@@ -1286,7 +1398,9 @@ describe("DeepReadonly", () => {
 			);
 		});
 		it("3 recursions: object with optional type recursion is readonly thru 4 levels", () => {
-			const result = makeReadonlyWithRecurseLimitThree(objectWithOptionalRecursion);
+			const result = makeReadonlyWithRecurseLimitThree(
+				objectWithOptionalRecursion,
+			);
 			assertIdenticalTypes(
 				result,
 				createInstanceOf<{
@@ -1310,7 +1424,10 @@ describe("DeepReadonly", () => {
 				const result = makeReadonly(objectWithSetter);
 				// @ts-expect-error `setter` is no longer mutable
 				assertIdenticalTypes(result, objectWithSetter);
-				assertIdenticalTypes(result, createInstanceOf<{ readonly setter: string }>());
+				assertIdenticalTypes(
+					result,
+					createInstanceOf<{ readonly setter: string }>(),
+				);
 
 				// Read from setter only produces `undefined` but is typed as `string`.
 				const originalSetterValue = objectWithSetter.setter;
@@ -1321,11 +1438,15 @@ describe("DeepReadonly", () => {
 
 				assert.throws(() => {
 					objectWithSetter.setter = "test string 1";
-				}, new Error("ClassImplementsObjectWithSetter writing 'setter' as test string 1"));
+				}, new Error(
+					"ClassImplementsObjectWithSetter writing 'setter' as test string 1",
+				));
 				assert.throws(() => {
 					// @ts-expect-error Cannot assign to 'setter' because it is a read-only property.
 					result.setter = "test string 2";
-				}, new Error("ClassImplementsObjectWithSetter writing 'setter' as test string 2"));
+				}, new Error(
+					"ClassImplementsObjectWithSetter writing 'setter' as test string 2",
+				));
 			});
 		});
 

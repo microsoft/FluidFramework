@@ -5,9 +5,12 @@
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
 
-import type { TreeValue, TreeChunk } from "../../../core/index.js";
+import type { TreeChunk, TreeValue } from "../../../core/index.js";
 import { assertValidIndex } from "../../../util/index.js";
-import { type FluidSerializableReadOnly, assertAllowedValue } from "../../valueUtilities.js";
+import {
+	assertAllowedValue,
+	type FluidSerializableReadOnly,
+} from "../../valueUtilities.js";
 
 /**
  * Utilities related to chunk encoding and decoding that do not depend on specific chunk types or formats.
@@ -31,7 +34,9 @@ export class Counter<T> {
 	 *
 	 * @param filter - determines which items should be included in the table.
 	 */
-	public buildTable(filter: CounterFilter<T> = (): boolean => true): DeduplicationTable<T> {
+	public buildTable(
+		filter: CounterFilter<T> = (): boolean => true,
+	): DeduplicationTable<T> {
 		const data: T[] = [...this.counts.keys()];
 		// Sort in descending order by count, giving priority (smaller indexes) to more commonly used values.
 		data.sort((a, b) => (this.counts.get(b) ?? 0) - (this.counts.get(a) ?? 0));
@@ -87,12 +92,17 @@ export interface DeduplicationTable<T> {
  * even if that means the next entry (at index 10) loses more than one character due to 10 being two digits instead of the one digit it would have been at index 9.
  * This means that this filter is not guaranteed to be optimal, but it should always be quite close.
  */
-export function jsonMinimizingFilter(s: string, value: number, count: number): boolean {
+export function jsonMinimizingFilter(
+	s: string,
+	value: number,
+	count: number,
+): boolean {
 	// The most practical way to compute how long s will be with quoting and escaping
 	// is to actually quote and escape it with JSON.stringify:
 	const quotedAndEscaped = JSON.stringify(s);
 	// Account for count instances of value, and one instance of a `,s` which would go in the table.
-	const lengthUsingTable = String(value).length * count + quotedAndEscaped.length + 1;
+	const lengthUsingTable =
+		String(value).length * count + quotedAndEscaped.length + 1;
 	// Account for count instances of s.
 	const lengthWithoutTable = quotedAndEscaped.length * count;
 	// Break ties to not use the table to avoid needing a lookup,

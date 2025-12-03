@@ -3,31 +3,33 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions/internal";
-import {
+import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	type ISummaryTree,
+	SummaryType,
+} from "@fluidframework/driver-definitions";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import {
-	Marker,
+	type Marker,
 	ReferenceType,
 	reservedMarkerIdKey,
 } from "@fluidframework/merge-tree/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	getContainerEntryPointBackCompat,
+	type ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo/internal";
+import { strict as assert } from "assert";
 
 /**
  * Validates this scenario: When all references to a data store are deleted, the data store is marked as unreferenced
@@ -67,7 +69,9 @@ describeCompat(
 			}
 
 			protected async hasInitialized() {
-				const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
+				const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(
+					this.matrixKey,
+				);
 				assert(matrixHandle !== undefined, "SharedMatrix not found");
 				this.matrix = await matrixHandle.get();
 
@@ -103,7 +107,9 @@ describeCompat(
 			apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore,
 			{
 				defaultFactory,
-				registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+				registryEntries: [
+					[defaultFactory.type, Promise.resolve(defaultFactory)],
+				],
 				runtimeOptions,
 			},
 		);
@@ -122,7 +128,10 @@ describeCompat(
 		 *
 		 * - The unreferenced property in its entry in the summary should be true.
 		 */
-		async function validateDataStoreInSummary(dataStoreId: string, referenced: boolean) {
+		async function validateDataStoreInSummary(
+			dataStoreId: string,
+			referenced: boolean,
+		) {
 			await provider.ensureSynchronized();
 			const { summary } = await containerRuntime.summarize({
 				runGC: true,
@@ -132,7 +141,8 @@ describeCompat(
 			});
 
 			let dataStoreTree: ISummaryTree | undefined;
-			const channelsTree = (summary.tree[".channels"] as ISummaryTree)?.tree ?? summary.tree;
+			const channelsTree =
+				(summary.tree[".channels"] as ISummaryTree)?.tree ?? summary.tree;
 			for (const [id, summaryObject] of Object.entries(channelsTree)) {
 				if (id === dataStoreId) {
 					assert(
@@ -144,7 +154,10 @@ describeCompat(
 				}
 			}
 
-			assert(dataStoreTree !== undefined, `Data store ${dataStoreId} tree not in summary`);
+			assert(
+				dataStoreTree !== undefined,
+				`Data store ${dataStoreId} tree not in summary`,
+			);
 
 			if (referenced) {
 				assert(
@@ -171,8 +184,10 @@ describeCompat(
 			}
 
 			const container = await createContainer();
-			mainDataStore = await getContainerEntryPointBackCompat<TestDataObject>(container);
-			containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
+			mainDataStore =
+				await getContainerEntryPointBackCompat<TestDataObject>(container);
+			containerRuntime = mainDataStore._context
+				.containerRuntime as ContainerRuntime;
 			await waitForContainerConnection(container);
 		});
 
@@ -180,7 +195,8 @@ describeCompat(
 			it("should reflect undo / redo of data stores in the next summary", async () => {
 				// Create a second data store (dataStore2).
 
-				const dataStore2 = await defaultFactory.createInstance(containerRuntime);
+				const dataStore2 =
+					await defaultFactory.createInstance(containerRuntime);
 				// Add the handle of dataStore2 to the matrix to mark it as referenced.
 				mainDataStore.matrix.setCell(0, 0, dataStore2.handle);
 				await validateDataStoreInSummary(dataStore2.id, true /* referenced */);
@@ -203,7 +219,8 @@ describeCompat(
 		describe("SharedString", () => {
 			it("should reflect unreferenced data stores in the next summary", async () => {
 				// Create a second data store (dataStore2).
-				const dataStore2 = await defaultFactory.createInstance(containerRuntime);
+				const dataStore2 =
+					await defaultFactory.createInstance(containerRuntime);
 
 				// Add the handle of dataStore2 to the shared string to mark it as referenced.
 				mainDataStore.sharedString.insertText(0, "Hello");

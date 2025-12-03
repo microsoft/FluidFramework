@@ -5,22 +5,22 @@
 
 import {
 	Divider,
+	makeStyles,
 	type SelectTabData,
 	type SelectTabEvent,
+	shorthands,
 	Tab,
 	TabList,
 	type TabValue,
-	makeStyles,
-	shorthands,
 } from "@fluentui/react-components";
 import {
 	type ContainerDevtoolsFeatureFlags,
 	ContainerDevtoolsFeatures,
 	GetContainerDevtoolsFeatures,
 	type HasContainerKey,
-	type ISourcedDevtoolsMessage,
-	type InboundHandlers,
 	handleIncomingMessage,
+	type InboundHandlers,
+	type ISourcedDevtoolsMessage,
 } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
@@ -83,7 +83,9 @@ const useStyles = makeStyles({
  * Container-level stats to display, including Container states and history, Audience state and history, and Container
  * data.
  */
-export function ContainerDevtoolsView(props: ContainerDevtoolsViewProps): React.ReactElement {
+export function ContainerDevtoolsView(
+	props: ContainerDevtoolsViewProps,
+): React.ReactElement {
 	const { containerKey } = props;
 
 	// Set of features supported by the corresponding Container-level devtools instance.
@@ -121,7 +123,9 @@ export function ContainerDevtoolsView(props: ContainerDevtoolsViewProps): React.
 		messageRelay.on("message", messageHandler);
 
 		// Query for supported feature set
-		messageRelay.postMessage(GetContainerDevtoolsFeatures.createMessage({ containerKey }));
+		messageRelay.postMessage(
+			GetContainerDevtoolsFeatures.createMessage({ containerKey }),
+		);
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);
@@ -151,7 +155,9 @@ interface _ContainerDevtoolsViewProps extends HasContainerKey {
 /**
  * Internal {@link ContainerDevtoolsView}, displayed after supported feature set has been acquired from the webpage.
  */
-function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.ReactElement {
+function _ContainerDevtoolsView(
+	props: _ContainerDevtoolsViewProps,
+): React.ReactElement {
 	const { containerKey, supportedFeatures } = props;
 
 	const styles = useStyles();
@@ -185,7 +191,9 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 			break;
 		}
 		default: {
-			throw new Error(`Unrecognized PanelView selection value: "${innerViewSelection}".`);
+			throw new Error(
+				`Unrecognized PanelView selection value: "${innerViewSelection}".`,
+			);
 		}
 	}
 
@@ -198,7 +206,9 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 	};
 
 	return (
-		<ContainerFeatureFlagContext.Provider value={{ containerFeatureFlags: supportedFeatures }}>
+		<ContainerFeatureFlagContext.Provider
+			value={{ containerFeatureFlags: supportedFeatures }}
+		>
 			<div className={styles.root}>
 				<ContainerSummaryView containerKey={containerKey} />
 				<Divider appearance="strong" />

@@ -5,15 +5,15 @@
 
 import type {
 	IEvent,
-	IEventThisPlaceHolder,
 	IEventProvider,
+	IEventThisPlaceHolder,
 } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
-	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannel,
+	IChannelAttributes,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
@@ -27,10 +27,10 @@ import {
 	segmentIsRemoved,
 } from "@fluidframework/merge-tree/internal";
 import type {
-	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
+	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ObjectStoragePartition,
@@ -60,10 +60,13 @@ import {
 	SnapshotPath,
 	type VectorOp,
 } from "./ops.js";
-import { PermutationVector, reinsertSegmentIntoVector } from "./permutationvector.js";
+import {
+	PermutationVector,
+	reinsertSegmentIntoVector,
+} from "./permutationvector.js";
 import { ensureRange } from "./range.js";
 import { deserializeBlob } from "./serialization.js";
-import { SparseArray2D, type RecurArray } from "./sparsearray2d.js";
+import { type RecurArray, SparseArray2D } from "./sparsearray2d.js";
 import type { IUndoConsumer } from "./types.js";
 import { MatrixUndoProvider } from "./undoprovider.js";
 
@@ -264,7 +267,8 @@ export class SharedMatrix<T = any>
 	 * on the SharedMatrix op is 11.
 	 */
 	private readonly inFlightRefSeqs = new Deque<number>();
-	readonly getMinInFlightRefSeq = (): number | undefined => this.inFlightRefSeqs.get(0);
+	readonly getMinInFlightRefSeq = (): number | undefined =>
+		this.inFlightRefSeqs.get(0);
 
 	private readonly rows: PermutationVector; // Map logical row to storage handle (if any)
 	private readonly cols: PermutationVector; // Map logical col to storage handle (if any)
@@ -338,7 +342,9 @@ export class SharedMatrix<T = any>
 
 	// #region IMatrixProducer
 
-	openMatrix(consumer: IMatrixConsumer<MatrixItem<T>>): IMatrixReader<MatrixItem<T>> {
+	openMatrix(
+		consumer: IMatrixConsumer<MatrixItem<T>>,
+	): IMatrixReader<MatrixItem<T>> {
 		this.consumers.add(consumer);
 		return this;
 	}
@@ -448,7 +454,13 @@ export class SharedMatrix<T = any>
 			this.cells.setCell(rowHandle, colHandle, value);
 
 			if (this.isAttached() && rollback !== true) {
-				const pending = this.sendSetCellOp(row, col, value, rowHandle, colHandle);
+				const pending = this.sendSetCellOp(
+					row,
+					col,
+					value,
+					rowHandle,
+					colHandle,
+				);
 				if (pending.local.length === 1) {
 					pending.consensus ??= oldValue;
 				}
@@ -509,7 +521,10 @@ export class SharedMatrix<T = any>
 		};
 
 		this.submitLocalMessage(op, metadata);
-		const pendingCell: PendingCellChanges<T> = this.pending.getCell(rowHandle, colHandle) ?? {
+		const pendingCell: PendingCellChanges<T> = this.pending.getCell(
+			rowHandle,
+			colHandle,
+		) ?? {
 			local: [],
 		};
 		pendingCell.local.push({ localSeq, value });
@@ -639,7 +654,11 @@ export class SharedMatrix<T = any>
 	}
 
 	public _undoRemoveRows(rowStart: number, spec: IJSONSegment): void {
-		const { op, inserted } = reinsertSegmentIntoVector(this.rows, rowStart, spec);
+		const { op, inserted } = reinsertSegmentIntoVector(
+			this.rows,
+			rowStart,
+			spec,
+		);
 		assert(op !== undefined, 0x8b6 /* must be defined */);
 		this.submitRowMessage(op);
 
@@ -658,12 +677,22 @@ export class SharedMatrix<T = any>
 
 		// Avoid reentrancy by raising change notifications after the op is queued.
 		for (const consumer of this.consumers.values()) {
-			consumer.cellsChanged(rowStart, /* colStart: */ 0, rowCount, this.colCount, this);
+			consumer.cellsChanged(
+				rowStart,
+				/* colStart: */ 0,
+				rowCount,
+				this.colCount,
+				this,
+			);
 		}
 	}
 
 	/***/ public _undoRemoveCols(colStart: number, spec: IJSONSegment): void {
-		const { op, inserted } = reinsertSegmentIntoVector(this.cols, colStart, spec);
+		const { op, inserted } = reinsertSegmentIntoVector(
+			this.cols,
+			colStart,
+			spec,
+		);
 		assert(op !== undefined, 0x8b7 /* must be defined */);
 		this.submitColMessage(op);
 
@@ -682,7 +711,13 @@ export class SharedMatrix<T = any>
 
 		// Avoid reentrancy by raising change notifications after the op is queued.
 		for (const consumer of this.consumers.values()) {
-			consumer.cellsChanged(/* rowStart: */ 0, colStart, this.rowCount, colCount, this);
+			consumer.cellsChanged(
+				/* rowStart: */ 0,
+				colStart,
+				this.rowCount,
+				colCount,
+				this,
+			);
 		}
 	}
 
@@ -764,7 +799,10 @@ export class SharedMatrix<T = any>
 		return ++this.rows.getCollabWindow().localSeq;
 	}
 
-	protected submitLocalMessage(message: unknown, localOpMetadata?: unknown): void {
+	protected submitLocalMessage(
+		message: unknown,
+		localOpMetadata?: unknown,
+	): void {
 		// TODO: Recommend moving this assertion into SharedObject
 		//       (See https://github.com/microsoft/FluidFramework/issues/2559)
 		assert(
@@ -777,7 +815,8 @@ export class SharedMatrix<T = any>
 
 		// Ensure that row/col 'localSeq' are synchronized (see 'nextLocalSeq()').
 		assert(
-			this.rows.getCollabWindow().localSeq === this.cols.getCollabWindow().localSeq,
+			this.rows.getCollabWindow().localSeq ===
+				this.cols.getCollabWindow().localSeq,
 			0x01e /* "Row and col collab window 'localSeq' desynchronized!" */,
 		);
 	}
@@ -793,7 +832,8 @@ export class SharedMatrix<T = any>
 
 	protected onConnect(): void {
 		assert(
-			this.rows.getCollabWindow().collaborating === this.cols.getCollabWindow().collaborating,
+			this.rows.getCollabWindow().collaborating ===
+				this.cols.getCollabWindow().collaborating,
 			0x01f /* "Row and col collab window 'collaborating' status desynchronized!" */,
 		);
 
@@ -810,7 +850,11 @@ export class SharedMatrix<T = any>
 		const segment: ISegmentInternal | undefined = ref.getSegment();
 		const offset = ref.getOffset();
 		// If the segment that contains the position is removed, then this setCell op should do nothing.
-		if (segment === undefined || offset === undefined || segmentIsRemoved(segment)) {
+		if (
+			segment === undefined ||
+			offset === undefined ||
+			segmentIsRemoved(segment)
+		) {
 			return;
 		}
 
@@ -827,8 +871,14 @@ export class SharedMatrix<T = any>
 
 		if (content.type === MatrixOp.set && content.target === undefined) {
 			const setOp = content;
-			const { rowHandle, colHandle, localSeq, rowsRef, colsRef, referenceSeqNumber } =
-				localOpMetadata as ISetOpMetadata;
+			const {
+				rowHandle,
+				colHandle,
+				localSeq,
+				rowsRef,
+				colsRef,
+				referenceSeqNumber,
+			} = localOpMetadata as ISetOpMetadata;
 
 			// If after rebasing the op, we get a valid row/col number, that means the row/col
 			// handles have not been recycled and we can safely use them.
@@ -838,11 +888,20 @@ export class SharedMatrix<T = any>
 			this.cols.removeLocalReferencePosition(colsRef);
 
 			const pendingCell = this.pending.getCell(rowHandle, colHandle);
-			assert(pendingCell !== undefined, 0xba4 /* local operation must have a pending array */);
+			assert(
+				pendingCell !== undefined,
+				0xba4 /* local operation must have a pending array */,
+			);
 			const { local } = pendingCell;
-			assert(local !== undefined, 0xba5 /* local operation must have a pending array */);
+			assert(
+				local !== undefined,
+				0xba5 /* local operation must have a pending array */,
+			);
 			const localSeqIndex = local.findIndex((p) => p.localSeq === localSeq);
-			assert(localSeqIndex >= 0, 0xba6 /* local operation must have a pending entry */);
+			assert(
+				localSeqIndex >= 0,
+				0xba6 /* local operation must have a pending entry */,
+			);
 			const [change] = local.splice(localSeqIndex, 1);
 			assert(change.localSeq === localSeq, 0xba7 /* must match */);
 
@@ -857,9 +916,17 @@ export class SharedMatrix<T = any>
 				// whether op was made in FWW or not.
 				(this.fwwPolicy.state !== "on" ||
 					referenceSeqNumber >=
-						(this.fwwPolicy.cellLastWriteTracker.getCell(rowHandle, colHandle)?.seqNum ?? 0))
+						(this.fwwPolicy.cellLastWriteTracker.getCell(rowHandle, colHandle)
+							?.seqNum ?? 0))
 			) {
-				this.sendSetCellOp(row, col, setOp.value, rowHandle, colHandle, localSeq);
+				this.sendSetCellOp(
+					row,
+					col,
+					setOp.value,
+					rowHandle,
+					colHandle,
+					localSeq,
+				);
 			}
 		} else {
 			switch (content.target) {
@@ -899,11 +966,17 @@ export class SharedMatrix<T = any>
 				assert(contents.type === MatrixOp.set, 0xba8 /* only sets supported */);
 				const setMetadata = localOpMetadata as ISetOpMetadata;
 
-				const pendingCell = this.pending.getCell(setMetadata.rowHandle, setMetadata.colHandle);
+				const pendingCell = this.pending.getCell(
+					setMetadata.rowHandle,
+					setMetadata.colHandle,
+				);
 				assert(pendingCell !== undefined, 0xba9 /* must have pending */);
 
 				const change = pendingCell.local.pop();
-				assert(change?.localSeq === setMetadata.localSeq, 0xbaa /* must have change */);
+				assert(
+					change?.localSeq === setMetadata.localSeq,
+					0xbaa /* must have change */,
+				);
 
 				const previous =
 					pendingCell.local.length > 0
@@ -946,7 +1019,11 @@ export class SharedMatrix<T = any>
 				setCellLwwToFwwPolicySwitchOpSeqNumber,
 				cellLastWriteTracker,
 				// Cast is needed since the (de)serializer returns content of type `any`.
-			] = (await deserializeBlob(storage, SnapshotPath.cells, this.serializer)) as [
+			] = (await deserializeBlob(
+				storage,
+				SnapshotPath.cells,
+				this.serializer,
+			)) as [
 				RecurArray<MatrixItem<T>>,
 				unknown,
 				number,
@@ -988,10 +1065,8 @@ export class SharedMatrix<T = any>
 			0x85f /* should be in Fww mode when calling this method */,
 		);
 		assert(message.clientId !== null, 0x860 /* clientId should not be null */);
-		const lastCellModificationDetails = this.fwwPolicy.cellLastWriteTracker.getCell(
-			rowHandle,
-			colHandle,
-		);
+		const lastCellModificationDetails =
+			this.fwwPolicy.cellLastWriteTracker.getCell(rowHandle, colHandle);
 		// If someone tried to Overwrite the cell value or first write on this cell or
 		// same client tried to modify the cell.
 		return (
@@ -1004,7 +1079,9 @@ export class SharedMatrix<T = any>
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected processMessagesCore(
+		messagesCollection: IRuntimeMessageCollection,
+	): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
 			this.processMessage(envelope, messageContent, local);
@@ -1025,7 +1102,10 @@ export class SharedMatrix<T = any>
 		const localOpMetadata = messageContent.localOpMetadata;
 		if (local) {
 			const recordedRefSeq = this.inFlightRefSeqs.shift();
-			assert(recordedRefSeq !== undefined, 0x8ba /* No pending recorded refSeq found */);
+			assert(
+				recordedRefSeq !== undefined,
+				0x8ba /* No pending recorded refSeq found */,
+			);
 			// TODO: AB#7076: Some equivalent assert should be enabled. This fails some e2e stashed op tests because
 			// the deltaManager may have seen more messages than the runtime has processed while amidst the stashed op
 			// flow, so e.g. when `applyStashedOp` is called and the DDS is put in a state where it expects an ack for
@@ -1063,7 +1143,10 @@ export class SharedMatrix<T = any>
 					};
 				}
 
-				assert(msg.clientId !== null, 0x861 /* clientId should not be null!! */);
+				assert(
+					msg.clientId !== null,
+					0x861 /* clientId should not be null!! */,
+				);
 				if (local) {
 					// We are receiving the ACK for a local pending set operation.
 					const { rowHandle, colHandle, localSeq, rowsRef, colsRef } =
@@ -1110,16 +1193,29 @@ export class SharedMatrix<T = any>
 						if (this.shouldSetCellBasedOnFWW(rowHandle, colHandle, msg)) {
 							const previousValue = this.cells.getCell(rowHandle, colHandle);
 							this.cells.setCell(rowHandle, colHandle, value);
-							this.fwwPolicy.cellLastWriteTracker.setCell(rowHandle, colHandle, {
-								seqNum: msg.sequenceNumber,
-								clientId: msg.clientId,
-							});
+							this.fwwPolicy.cellLastWriteTracker.setCell(
+								rowHandle,
+								colHandle,
+								{
+									seqNum: msg.sequenceNumber,
+									clientId: msg.clientId,
+								},
+							);
 							if (pendingCell !== undefined) {
 								pendingCell.consensus = value;
 							}
-							if (adjustedRow.pos !== undefined && adjustedCol.pos !== undefined) {
+							if (
+								adjustedRow.pos !== undefined &&
+								adjustedCol.pos !== undefined
+							) {
 								for (const consumer of this.consumers.values()) {
-									consumer.cellsChanged(adjustedRow.pos, adjustedCol.pos, 1, 1, this);
+									consumer.cellsChanged(
+										adjustedRow.pos,
+										adjustedCol.pos,
+										1,
+										1,
+										this,
+									);
 								}
 								// Check is there are any pending changes, which will be rejected. If so raise conflict.
 								if (pendingCell !== undefined && pendingCell.local.length > 0) {
@@ -1141,9 +1237,18 @@ export class SharedMatrix<T = any>
 							// If there is a pending (unACKed) local write to the same cell, skip the current op
 							// since it "happened before" the pending write.
 							this.cells.setCell(rowHandle, colHandle, value);
-							if (adjustedRow.pos !== undefined && adjustedCol.pos !== undefined) {
+							if (
+								adjustedRow.pos !== undefined &&
+								adjustedCol.pos !== undefined
+							) {
 								for (const consumer of this.consumers.values()) {
-									consumer.cellsChanged(adjustedRow.pos, adjustedCol.pos, 1, 1, this);
+									consumer.cellsChanged(
+										adjustedRow.pos,
+										adjustedCol.pos,
+										1,
+										1,
+										this,
+									);
 								}
 							}
 						} else {
@@ -1250,7 +1355,8 @@ export class SharedMatrix<T = any>
 			}
 			this.setCell(content.row, content.col, content.value);
 		} else {
-			const vector = content.target === SnapshotPath.cols ? this.cols : this.rows;
+			const vector =
+				content.target === SnapshotPath.cols ? this.cols : this.rows;
 			vector.applyStashedOp(content);
 			if (content.target === SnapshotPath.cols) {
 				this.submitColMessage(content);

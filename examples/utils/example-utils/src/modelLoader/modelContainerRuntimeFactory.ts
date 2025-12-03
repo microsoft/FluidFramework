@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IContainer,
 	IContainerContext,
 	IRuntime,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/legacy";
 import {
+	type IContainerRuntimeOptions,
 	loadContainerRuntime,
-	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/legacy";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
-import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/legacy";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
+import type { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/legacy";
 
 /**
  * @internal
@@ -28,7 +28,9 @@ export interface IModelContainerRuntimeEntryPoint<ModelType> {
  * It also requires a createModel method to returns the expected model type.
  * @internal
  */
-export abstract class ModelContainerRuntimeFactory<ModelType> implements IRuntimeFactory {
+export abstract class ModelContainerRuntimeFactory<ModelType>
+	implements IRuntimeFactory
+{
 	public get IRuntimeFactory() {
 		return this;
 	}
@@ -72,14 +74,18 @@ export abstract class ModelContainerRuntimeFactory<ModelType> implements IRuntim
 	 * is created. This likely includes creating any initial data stores that are expected to be there at the outset.
 	 * @param runtime - The container runtime for the container being initialized
 	 */
-	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {}
+	protected async containerInitializingFirstTime(
+		runtime: IContainerRuntime,
+	): Promise<void> {}
 
 	/**
 	 * Subclasses may override containerHasInitialized to perform any steps after the container has initialized.
 	 * This likely includes loading any data stores that are expected to be there at the outset.
 	 * @param runtime - The container runtime for the container being initialized
 	 */
-	protected async containerHasInitialized(runtime: IContainerRuntime): Promise<void> {}
+	protected async containerHasInitialized(
+		runtime: IContainerRuntime,
+	): Promise<void> {}
 
 	/**
 	 * Subclasses must implement createModel, which should build a ModelType given the runtime and container.

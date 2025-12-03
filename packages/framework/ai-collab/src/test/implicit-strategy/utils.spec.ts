@@ -61,7 +61,7 @@ describe("sharedTreeTraverse", () => {
 			nestedMap: schemaFactory.map("TreeMap", [schemaFactory.boolean]),
 		}) {}
 
-		const treeNode = new TreeNode({ nestedMap: { "key": true } });
+		const treeNode = new TreeNode({ nestedMap: { key: true } });
 		const path = ["nestedMap", "key"];
 
 		assert.strictEqual(
@@ -73,7 +73,9 @@ describe("sharedTreeTraverse", () => {
 	// --------------------------------------------------------
 
 	it("Simple Map Traversal", () => {
-		class TreeNode extends schemaFactory.map("TreeNode", [schemaFactory.boolean]) {}
+		class TreeNode extends schemaFactory.map("TreeNode", [
+			schemaFactory.boolean,
+		]) {}
 
 		const treeNode = new TreeNode({ test: true });
 		const path = ["test"];
@@ -119,7 +121,7 @@ describe("sharedTreeTraverse", () => {
 			schemaFactory.map("NestedMap", [schemaFactory.boolean]),
 		]) {}
 
-		const treeNode = new TreeNode({ nestedMap: { "key": true } });
+		const treeNode = new TreeNode({ nestedMap: { key: true } });
 		const path = ["nestedMap", "key"];
 
 		assert.strictEqual(
@@ -131,7 +133,10 @@ describe("sharedTreeTraverse", () => {
 	// --------------------------------------------------------
 
 	it("Simple Array Traversal", () => {
-		class TreeNode extends schemaFactory.array("Array", schemaFactory.boolean) {}
+		class TreeNode extends schemaFactory.array(
+			"Array",
+			schemaFactory.boolean,
+		) {}
 
 		const treeNode = new TreeNode([true]);
 		const path = [0];
@@ -180,7 +185,7 @@ describe("sharedTreeTraverse", () => {
 			schemaFactory.map("NestedMap", [schemaFactory.boolean]),
 		) {}
 
-		const treeNode = new TreeNode([{ "key": true }]);
+		const treeNode = new TreeNode([{ key: true }]);
 		const path = [0, "key"];
 
 		assert.strictEqual(

@@ -8,14 +8,21 @@ import {
 	stringToBuffer,
 	Uint8ArrayToArrayBuffer,
 } from "@fluid-internal/client-utils";
-import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils/internal";
-import { type ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import {
+	assert,
+	compareArrays,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
+import {
+	type ISummaryTree,
+	SummaryType,
+} from "@fluidframework/driver-definitions";
 import {
 	DriverErrorTypes,
 	type IDocumentAttributes,
-	type ISnapshotTree,
 	type IDocumentStorageService,
 	type ISnapshot,
+	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	type CombinedAppAndProtocolSummary,
@@ -24,9 +31,9 @@ import {
 	readAndParse,
 } from "@fluidframework/driver-utils/internal";
 import {
+	type IFluidErrorBase,
 	LoggingError,
 	UsageError,
-	type IFluidErrorBase,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -80,7 +87,9 @@ export interface IParsedUrl {
  * @returns The IParsedUrl representing the input URL, or undefined if the format was not supported
  * @legacy @beta
  */
-export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined {
+export function tryParseCompatibleResolvedUrl(
+	url: string,
+): IParsedUrl | undefined {
 	const parsed = new URL(url);
 	if (typeof parsed.pathname !== "string") {
 		throw new LoggingError("Failed to parse pathname");
@@ -147,7 +156,10 @@ function convertSummaryToISnapshot(
 	for (const [key, summaryObject] of Object.entries(summary.tree)) {
 		switch (summaryObject.type) {
 			case SummaryType.Tree: {
-				const innerSnapshot = convertSummaryToISnapshot(summaryObject, blobContents);
+				const innerSnapshot = convertSummaryToISnapshot(
+					summaryObject,
+					blobContents,
+				);
 				snapshotTree.trees[key] = innerSnapshot.snapshotTree;
 				break;
 			}
@@ -174,7 +186,10 @@ function convertSummaryToISnapshot(
 			}
 			default: {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-				unreachableCase(summaryObject, `Unknown tree type ${(summaryObject as any).type}`);
+				unreachableCase(
+					summaryObject,
+					`Unknown tree type ${(summaryObject as any).type}`,
+				);
 			}
 		}
 	}
@@ -195,7 +210,9 @@ function convertSummaryToISnapshot(
  * Note, this assumes the ISnapshot sequence number is defined. Otherwise an assert will be thrown
  * @param snapshot - ISnapshot
  */
-export function convertSnapshotToSnapshotInfo(snapshot: ISnapshot): SerializedSnapshotInfo {
+export function convertSnapshotToSnapshotInfo(
+	snapshot: ISnapshot,
+): SerializedSnapshotInfo {
 	assert(
 		snapshot.sequenceNumber !== undefined,
 		0x93a /* Snapshot sequence number is missing */,
@@ -222,7 +239,9 @@ export function convertSnapshotInfoToSnapshot(
 	snapshotInfo: SerializedSnapshotInfo,
 ): ISnapshot {
 	const blobContents = new Map<string, ArrayBuffer>();
-	for (const [blobId, serializedContent] of Object.entries(snapshotInfo.snapshotBlobs)) {
+	for (const [blobId, serializedContent] of Object.entries(
+		snapshotInfo.snapshotBlobs,
+	)) {
 		blobContents.set(blobId, stringToBuffer(serializedContent, "utf8"));
 	}
 	return {
@@ -250,7 +269,8 @@ function convertProtocolAndAppSummaryToISnapshot(
 	};
 
 	combinedSummary.tree[".protocol"] = protocolSummaryTree;
-	const snapshotTreeWithBlobContents = convertSummaryToISnapshot(combinedSummary);
+	const snapshotTreeWithBlobContents =
+		convertSummaryToISnapshot(combinedSummary);
 	return snapshotTreeWithBlobContents;
 }
 
@@ -270,14 +290,19 @@ export const getISnapshotFromSerializedContainer = (
 	return snapshotTreeWithBlobContents;
 };
 
-export function getProtocolSnapshotTree(snapshot: ISnapshotTree): ISnapshotTree {
+export function getProtocolSnapshotTree(
+	snapshot: ISnapshotTree,
+): ISnapshotTree {
 	return ".protocol" in snapshot.trees ? snapshot.trees[".protocol"] : snapshot;
 }
 
 export const combineSnapshotTreeAndSnapshotBlobs = ({
 	blobContents,
 	snapshotTree,
-}: Pick<ISnapshot, "blobContents" | "snapshotTree">): ISnapshotTreeWithBlobContents => {
+}: Pick<
+	ISnapshot,
+	"blobContents" | "snapshotTree"
+>): ISnapshotTreeWithBlobContents => {
 	const currentTreeBlobs: { [path: string]: ArrayBufferLike } = {};
 
 	// Process blobs in the current level
@@ -291,7 +316,10 @@ export const combineSnapshotTreeAndSnapshotBlobs = ({
 	// Recursively process trees in the current level
 	const trees: { [path: string]: ISnapshotTreeWithBlobContents } = {};
 	for (const [path, tree] of Object.entries(snapshotTree.trees)) {
-		trees[path] = combineSnapshotTreeAndSnapshotBlobs({ snapshotTree: tree, blobContents });
+		trees[path] = combineSnapshotTreeAndSnapshotBlobs({
+			snapshotTree: tree,
+			blobContents,
+		});
 	}
 
 	// Create a new snapshot tree with blob contents and processed trees
@@ -337,7 +365,9 @@ function isPendingDetachedContainerState(
  * @param snapshot - The ISnapshot to convert.
  * @returns A SnapshotWithBlobs containing the base snapshot and serialized blob contents.
  */
-export function convertISnapshotToSnapshotWithBlobs(snapshot: ISnapshot): SnapshotWithBlobs {
+export function convertISnapshotToSnapshotWithBlobs(
+	snapshot: ISnapshot,
+): SnapshotWithBlobs {
 	const snapshotBlobs: ISerializableBlobContents = {};
 	for (const [id, blob] of snapshot.blobContents.entries()) {
 		snapshotBlobs[id] = bufferToString(blob, "utf8");
@@ -368,11 +398,14 @@ export function getDetachedContainerStateFromSerializedContainer(
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
 			...convertISnapshotToSnapshotWithBlobs(snapshot),
-			hasAttachmentBlobs: parsedContainerState.tree[hasBlobsSummaryTree] !== undefined,
+			hasAttachmentBlobs:
+				parsedContainerState.tree[hasBlobsSummaryTree] !== undefined,
 		};
 		return detachedContainerState;
 	} else {
-		throw new UsageError("Cannot rehydrate detached container. Incorrect format");
+		throw new UsageError(
+			"Cannot rehydrate detached container. Incorrect format",
+		);
 	}
 }
 
@@ -420,7 +453,10 @@ export const runSingle = <A extends any[], R>(
 			}
 			return running.result;
 		}
-		running = { args, result: func(...args).finally(() => (running = undefined)) };
+		running = {
+			args,
+			result: func(...args).finally(() => (running = undefined)),
+		};
 		return running.result;
 	};
 };
@@ -442,7 +478,10 @@ export async function getDocumentAttributes(
 			? tree.trees[".protocol"].blobs.attributes
 			: tree.blobs[".attributes"];
 
-	const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
+	const attributes = await readAndParse<IDocumentAttributes>(
+		storage,
+		attributesHash,
+	);
 
 	return attributes;
 }

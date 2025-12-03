@@ -3,22 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import {
 	MockDocumentDeltaConnection,
 	MockDocumentService,
 } from "@fluid-private/test-loader-utils";
 import {
 	AttachState,
-	IContainerContext,
-	ICriticalContainerError,
-	IRuntime,
+	type IContainerContext,
+	type ICriticalContainerError,
+	type IRuntime,
 } from "@fluidframework/container-definitions/internal";
 // eslint-disable-next-line import-x/no-internal-modules
 import { ConnectionManager } from "@fluidframework/container-loader/internal/test/connectionManager";
 // eslint-disable-next-line import-x/no-internal-modules
-import { IConnectionManagerFactoryArgs } from "@fluidframework/container-loader/internal/test/contracts";
+import type { IConnectionManagerFactoryArgs } from "@fluidframework/container-loader/internal/test/contracts";
 // eslint-disable-next-line import-x/no-internal-modules
 import { DeltaManager } from "@fluidframework/container-loader/internal/test/deltaManager";
 import {
@@ -27,19 +25,23 @@ import {
 } from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import-x/no-internal-modules
 import { DeltaScheduler } from "@fluidframework/container-runtime/internal/test/deltaScheduler";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { IClient } from "@fluidframework/driver-definitions";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { IClient } from "@fluidframework/driver-definitions";
 import {
-	ISequencedDocumentSystemMessage,
+	type ISequencedDocumentMessage,
+	type ISequencedDocumentSystemMessage,
 	MessageType,
-	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	createChildLogger,
 	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
-import { MockAudience, MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
-import { SinonFakeTimers, useFakeTimers } from "sinon";
+import {
+	MockAudience,
+	MockQuorumClients,
+} from "@fluidframework/test-runtime-utils/internal";
+import { strict as assert } from "assert";
+import { type SinonFakeTimers, useFakeTimers } from "sinon";
 
 describe("Container Runtime", () => {
 	/**
@@ -90,13 +92,18 @@ describe("Container Runtime", () => {
 			});
 		}
 
-		async function emitMessages(messages: ISequencedDocumentMessage[]): Promise<void> {
+		async function emitMessages(
+			messages: ISequencedDocumentMessage[],
+		): Promise<void> {
 			deltaConnection.emitOp(docId, messages);
 			// Yield the event loop because the inbound op will be processed asynchronously.
 			await yieldEventLoop();
 		}
 
-		function getMessages(clientId: string, count: number): ISequencedDocumentMessage[] {
+		function getMessages(
+			clientId: string,
+			count: number,
+		): ISequencedDocumentMessage[] {
 			const messages: Partial<ISequencedDocumentMessage>[] = [];
 			for (let i = 0; i < count; i++) {
 				const message: Partial<ISequencedDocumentMessage> = {
@@ -166,7 +173,10 @@ describe("Container Runtime", () => {
 				runtimeOptions: {},
 				provideEntryPoint: mockProvideEntryPoint,
 			});
-			assert(containerRuntime !== undefined, "Container runtime should be defined");
+			assert(
+				containerRuntime !== undefined,
+				"Container runtime should be defined",
+			);
 
 			containerRuntime.on("batchBegin", () => {
 				// When we receive a "batchBegin" event, we should not have any outstanding
@@ -217,7 +227,10 @@ describe("Container Runtime", () => {
 			const count = 2;
 			const clientId: string = "test-client";
 
-			const messages: ISequencedDocumentMessage[] = getMessages(clientId, count);
+			const messages: ISequencedDocumentMessage[] = getMessages(
+				clientId,
+				count,
+			);
 			// Add batch begin and batch end metadata to the messages.
 			messages[0].metadata = { batch: true };
 			messages[count - 1].metadata = { batch: false };
@@ -229,7 +242,11 @@ describe("Container Runtime", () => {
 				1,
 				"Did not receive correct batchBegin event for the batch",
 			);
-			assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd event for the batch");
+			assert.strictEqual(
+				1,
+				batchEnd,
+				"Did not receive correct batchEnd event for the batch",
+			);
 		});
 
 		it("Non-batch messages that take longer than DeltaScheduler's processing time to process", async () => {
@@ -241,7 +258,10 @@ describe("Container Runtime", () => {
 			const clientId: string = "test-client";
 			let numberOfTurns = 1;
 
-			const messages: ISequencedDocumentMessage[] = getMessages(clientId, count);
+			const messages: ISequencedDocumentMessage[] = getMessages(
+				clientId,
+				count,
+			);
 			await emitMessages(messages);
 
 			// Non-batch messages should take more than one turn (`count` turns in this case). Keep yielding until we
@@ -280,7 +300,10 @@ describe("Container Runtime", () => {
 			const count = 3;
 			const clientId: string = "test-client";
 
-			const messages: ISequencedDocumentMessage[] = getMessages(clientId, count);
+			const messages: ISequencedDocumentMessage[] = getMessages(
+				clientId,
+				count,
+			);
 			// Add batch begin and batch end metadata to the messages.
 			messages[1].metadata = { batch: true };
 			messages[count - 1].metadata = { batch: false };
@@ -292,7 +315,11 @@ describe("Container Runtime", () => {
 				1,
 				"Did not receive correct batchBegin event for the batch",
 			);
-			assert.strictEqual(batchEnd, 1, "Did not receive correct batchEnd event for the batch");
+			assert.strictEqual(
+				batchEnd,
+				1,
+				"Did not receive correct batchEnd event for the batch",
+			);
 
 			// Yield the event loop so that the batch messages can be processed.
 			await yieldEventLoop();
@@ -304,7 +331,11 @@ describe("Container Runtime", () => {
 				2,
 				"Did not receive correct batchBegin event for the batch",
 			);
-			assert.strictEqual(batchEnd, 2, "Did not receive correct batchEnd event for the batch");
+			assert.strictEqual(
+				batchEnd,
+				2,
+				"Did not receive correct batchEnd event for the batch",
+			);
 		});
 
 		it(`Batch messages followed by a non-batch message that take longer than
@@ -316,7 +347,10 @@ describe("Container Runtime", () => {
 			const count = 3;
 			const clientId: string = "test-client";
 
-			const messages: ISequencedDocumentMessage[] = getMessages(clientId, count);
+			const messages: ISequencedDocumentMessage[] = getMessages(
+				clientId,
+				count,
+			);
 			// Add batch begin and batch end metadata to the messages.
 			messages[0].metadata = { batch: true };
 			messages[count - 2].metadata = { batch: false };
@@ -328,7 +362,11 @@ describe("Container Runtime", () => {
 				1,
 				"Did not receive correct batchBegin event for the batch",
 			);
-			assert.strictEqual(batchEnd, 1, "Did not receive correct batchEnd event for the batch");
+			assert.strictEqual(
+				batchEnd,
+				1,
+				"Did not receive correct batchEnd event for the batch",
+			);
 
 			// Yield the event loop so that the single non-batch op can be processed.
 			await yieldEventLoop();
@@ -340,18 +378,28 @@ describe("Container Runtime", () => {
 				2,
 				"Did not receive correct batchBegin event for the batch",
 			);
-			assert.strictEqual(batchEnd, 2, "Did not receive correct batchEnd event for the batch");
+			assert.strictEqual(
+				batchEnd,
+				2,
+				"Did not receive correct batchEnd event for the batch",
+			);
 		});
 
 		it("Reconnects after receiving a leave op", async () => {
 			let deltaConnection2 = new MockDocumentDeltaConnection("test");
-			const service2 = new MockDocumentService(undefined, (newClient?: IClient) => {
-				deltaConnection2 = new MockDocumentDeltaConnection("test");
-				deltaConnection2.mode = newClient?.mode ?? "write";
-				return deltaConnection2;
-			});
+			const service2 = new MockDocumentService(
+				undefined,
+				(newClient?: IClient) => {
+					deltaConnection2 = new MockDocumentDeltaConnection("test");
+					deltaConnection2.mode = newClient?.mode ?? "write";
+					return deltaConnection2;
+				},
+			);
 
-			const client = { mode: "write", details: { capabilities: { interactive: true } } };
+			const client = {
+				mode: "write",
+				details: { capabilities: { interactive: true } },
+			};
 
 			const deltaManager2 = new DeltaManager<ConnectionManager>(
 				() => service2,

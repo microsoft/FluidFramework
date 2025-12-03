@@ -3,54 +3,59 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import * as path from "path";
-
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
-	AcceptanceCondition,
-	AsyncGenerator,
-	Reducer,
+	type AcceptanceCondition,
+	type AsyncGenerator,
 	combineReducers,
 	createWeightedAsyncGenerator,
+	type Reducer,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
-	DDSFuzzModel,
-	DDSFuzzSuiteOptions,
-	DDSFuzzTestState,
-	registerOracle,
 	type DDSFuzzHarnessEvents,
+	type DDSFuzzModel,
+	type DDSFuzzSuiteOptions,
+	type DDSFuzzTestState,
+	registerOracle,
 } from "@fluid-private/test-dds-utils";
-import {
+import type {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	type Serializable,
 	IChannelServices,
+	IFluidDataStoreRuntime,
+	Serializable,
 } from "@fluidframework/datastore-definitions/internal";
 import {
-	endpointPosAndSide,
-	PropertySet,
-	Side,
 	type AdjustParams,
+	endpointPosAndSide,
 	type InteriorSequencePlace,
 	type MapLike,
+	type PropertySet,
 	type SequencePlace,
+	Side,
 } from "@fluidframework/merge-tree/internal";
+import { strict as assert } from "assert";
+import * as path from "path";
 
 import {
-	toOptionalSequencePlace,
-	toSequencePlace,
 	type IntervalCollection,
 	type ISequenceIntervalCollection,
+	toOptionalSequencePlace,
+	toSequencePlace,
 } from "../../intervalCollection.js";
-import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
+import {
+	revertSharedStringRevertibles,
+	type SharedStringRevertible,
+} from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
-import { ISharedString, type SharedStringClass } from "../../sharedString.js";
+import type { ISharedString, SharedStringClass } from "../../sharedString.js";
 import { _dirname } from "../dirname.cjs";
 import { assertEquivalentSharedStrings } from "../intervalTestUtils.js";
 
-import { hasSharedStringOracle, type IChannelWithOracles } from "./oracleUtils.js";
+import {
+	hasSharedStringOracle,
+	type IChannelWithOracles,
+} from "./oracleUtils.js";
 import { SharedStringOracle } from "./sharedStringOracle.js";
 
 export type RevertibleSharedString = ISharedString & {
@@ -59,7 +64,9 @@ export type RevertibleSharedString = ISharedString & {
 	// being added into the revertibles stack.
 	isCurrentRevert: boolean;
 };
-export function isRevertibleSharedString(s: ISharedString): s is RevertibleSharedString {
+export function isRevertibleSharedString(
+	s: ISharedString,
+): s is RevertibleSharedString {
 	return (s as RevertibleSharedString).revertibles !== undefined;
 }
 
@@ -146,7 +153,9 @@ export interface RevertibleWeights {
 }
 
 export type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval;
-export type OperationWithRevert = IntervalOperation | RevertSharedStringRevertibles;
+export type OperationWithRevert =
+	| IntervalOperation
+	| RevertSharedStringRevertibles;
 export type TextOperation =
 	| AddText
 	| RemoveRange
@@ -187,7 +196,8 @@ export interface IntervalOperationGenerationConfig
 	intervalCollectionNamePool?: string[];
 	propertyNamePool?: string[];
 	validateInterval?: number;
-	weights?: RevertibleWeights & SharedStringOperationGenerationConfig["weights"];
+	weights?: RevertibleWeights &
+		SharedStringOperationGenerationConfig["weights"];
 }
 
 export const defaultSharedStringOperationGenerationConfig: Required<SharedStringOperationGenerationConfig> =
@@ -227,12 +237,15 @@ export interface LoggingInfo {
 
 function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
 	for (const id of loggingInfo.clientIds) {
-		const { channel } = state.clients.find((s) => s.containerRuntime.clientId === id) ?? {};
+		const { channel } =
+			state.clients.find((s) => s.containerRuntime.clientId === id) ?? {};
 		assert(channel);
 		const labels = channel.getIntervalCollectionLabels();
 		const interval = Array.from(labels)
 			.map((label) =>
-				channel.getIntervalCollection(label).getIntervalById(loggingInfo.intervalId),
+				channel
+					.getIntervalCollection(label)
+					.getIntervalById(loggingInfo.intervalId),
 			)
 			.find((result) => result !== undefined);
 
@@ -305,7 +318,10 @@ export function makeReducer<TState extends FuzzTestState>(
 			const collection = client.channel.getIntervalCollection(collectionName);
 			collection.removeIntervalById(id);
 		},
-		changeInterval: ({ client }, { id, start, end, collectionName, properties }) => {
+		changeInterval: (
+			{ client },
+			{ id, start, end, collectionName, properties },
+		) => {
 			const collection = client.channel.getIntervalCollection(collectionName);
 			if (start !== undefined && end !== undefined) {
 				collection.change(id, {
@@ -320,7 +336,10 @@ export function makeReducer<TState extends FuzzTestState>(
 		revertSharedStringRevertibles: ({ client }, { editsToRevert }) => {
 			assert(isRevertibleSharedString(client.channel));
 			client.channel.isCurrentRevert = true;
-			const few = client.channel.revertibles.splice(-editsToRevert, editsToRevert);
+			const few = client.channel.revertibles.splice(
+				-editsToRevert,
+				editsToRevert,
+			);
 			revertSharedStringRevertibles(client.channel, few);
 			client.channel.isCurrentRevert = false;
 		},
@@ -332,7 +351,10 @@ export function makeReducer<TState extends FuzzTestState>(
 export function createSharedStringGeneratorOperations(
 	optionsParam?: SharedStringOperationGenerationConfig,
 ) {
-	const options = { ...defaultSharedStringOperationGenerationConfig, ...(optionsParam ?? {}) };
+	const options = {
+		...defaultSharedStringOperationGenerationConfig,
+		...(optionsParam ?? {}),
+	};
 
 	// All subsequent helper functions are generators; note that they don't actually apply any operations.
 	function startPosition({ random, client }: ClientOpState): number {
@@ -341,13 +363,19 @@ export function createSharedStringGeneratorOperations(
 
 	function exclusiveRange(state: ClientOpState): RangeSpec {
 		const start = startPosition(state);
-		const end = state.random.integer(start + 1, state.client.channel.getLength());
+		const end = state.random.integer(
+			start + 1,
+			state.client.channel.getLength(),
+		);
 		return { start, end };
 	}
 
 	function exclusiveRangeLeaveChar(state: ClientOpState): RangeSpec {
 		const start = state.random.integer(0, state.client.channel.getLength() - 2);
-		const end = state.random.integer(start + 1, state.client.channel.getLength() - 1);
+		const end = state.random.integer(
+			start + 1,
+			state.client.channel.getLength() - 1,
+		);
 		return { start, end };
 	}
 
@@ -360,7 +388,9 @@ export function createSharedStringGeneratorOperations(
 		};
 	}
 
-	async function obliterateRange(state: ClientOpState): Promise<ObliterateRange> {
+	async function obliterateRange(
+		state: ClientOpState,
+	): Promise<ObliterateRange> {
 		if (state.client.channel.getLength() > 0 && state.random.bool(0.2)) {
 			return { type: "obliterateRange", ...exclusiveRange(state) };
 		}
@@ -371,8 +401,11 @@ export function createSharedStringGeneratorOperations(
 		const start = Math.min(num1, num2);
 		const end = Math.max(num1, num2);
 		const startSide =
-			start === end ? Side.Before : state.random.pick([Side.Before, Side.After]);
-		const endSide = start === end ? Side.After : state.random.pick([Side.Before, Side.After]);
+			start === end
+				? Side.Before
+				: state.random.pick([Side.Before, Side.After]);
+		const endSide =
+			start === end ? Side.After : state.random.pick([Side.Before, Side.After]);
 		return {
 			type: "obliterateRange",
 			start: { pos: start, side: startSide },
@@ -383,7 +416,12 @@ export function createSharedStringGeneratorOperations(
 	async function annotateRange(state: ClientOpState): Promise<AnnotateRange> {
 		const { random } = state;
 		const key = random.pick(options.propertyNamePool);
-		const value = random.pick([random.string(5), random.handle(), undefined, null]);
+		const value = random.pick([
+			random.string(5),
+			random.handle(),
+			undefined,
+			null,
+		]);
 		return {
 			type: "annotateRange",
 			...exclusiveRange(state),
@@ -391,7 +429,9 @@ export function createSharedStringGeneratorOperations(
 		};
 	}
 
-	async function annotateAdjustRange(state: ClientOpState): Promise<AnnotateAdjustRange> {
+	async function annotateAdjustRange(
+		state: ClientOpState,
+	): Promise<AnnotateAdjustRange> {
 		const { random } = state;
 		const key = random.pick(options.propertyNamePool);
 		const max = random.pick([undefined, random.integer(-10, 100)]);
@@ -412,16 +452,22 @@ export function createSharedStringGeneratorOperations(
 		return { type: "removeRange", ...exclusiveRange(state) };
 	}
 
-	async function removeRangeLeaveChar(state: ClientOpState): Promise<RemoveRange> {
+	async function removeRangeLeaveChar(
+		state: ClientOpState,
+	): Promise<RemoveRange> {
 		return { type: "removeRange", ...exclusiveRangeLeaveChar(state) };
 	}
 
 	const lengthSatisfies =
-		(criteria: (length: number) => boolean): AcceptanceCondition<ClientOpState> =>
+		(
+			criteria: (length: number) => boolean,
+		): AcceptanceCondition<ClientOpState> =>
 		({ client }) =>
 			criteria(client.channel.getLength());
 	const hasNonzeroLength = lengthSatisfies((length) => length > 0);
-	const isShorterThanMaxLength = lengthSatisfies((length) => length < options.maxStringLength);
+	const isShorterThanMaxLength = lengthSatisfies(
+		(length) => length < options.maxStringLength,
+	);
 
 	return {
 		startPosition,
@@ -457,7 +503,10 @@ export class SharedStringFuzzFactory extends SharedStringFactory {
 		return super.load(runtime, id, services, attributes);
 	}
 
-	public create(document: IFluidDataStoreRuntime, id: string): SharedStringClass {
+	public create(
+		document: IFluidDataStoreRuntime,
+		id: string,
+	): SharedStringClass {
 		setSharedStringRuntimeOptions(document);
 		return super.create(document, id);
 	}
@@ -560,7 +609,9 @@ export const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
 		clientAddProbability: 0.1,
 	},
 	defaultTestCount: 100,
-	saveFailures: { directory: path.join(_dirname, "../../src/test/fuzz/results") },
+	saveFailures: {
+		directory: path.join(_dirname, "../../src/test/fuzz/results"),
+	},
 	testSquashResubmit: true,
 	emitter: oracleEmitter,
 };
@@ -581,7 +632,10 @@ export function makeIntervalOperationGenerator(
 		isShorterThanMaxLength,
 	} = createSharedStringGeneratorOperations(optionsParam);
 
-	const options = { ...defaultIntervalOperationGenerationConfig, ...(optionsParam ?? {}) };
+	const options = {
+		...defaultIntervalOperationGenerationConfig,
+		...(optionsParam ?? {}),
+	};
 
 	function isNonEmpty(collection: ISequenceIntervalCollection): boolean {
 		for (const _ of collection) {
@@ -603,7 +657,9 @@ export function makeIntervalOperationGenerator(
 	function inclusiveRangeWithUndefined(
 		state: ClientOpState,
 	): RangeSpec | { start: undefined; end: undefined } {
-		return state.random.bool() ? inclusiveRange(state) : { start: undefined, end: undefined };
+		return state.random.bool()
+			? inclusiveRange(state)
+			: { start: undefined, end: undefined };
 	}
 
 	function propertySet(state: ClientOpState): PropertySet {
@@ -620,23 +676,33 @@ export function makeIntervalOperationGenerator(
 		return propSet;
 	}
 
-	function propertySetWithUndefined(state: ClientOpState): PropertySet | undefined {
+	function propertySetWithUndefined(
+		state: ClientOpState,
+	): PropertySet | undefined {
 		return state.random.bool() ? propertySet(state) : undefined;
 	}
 
-	function nonEmptyIntervalCollection({ client, random }: ClientOpState): string {
-		const nonEmptyLabels = Array.from(client.channel.getIntervalCollectionLabels()).filter(
-			(label) => {
-				const collection = client.channel.getIntervalCollection(label);
-				return isNonEmpty(collection);
-			},
-		);
+	function nonEmptyIntervalCollection({
+		client,
+		random,
+	}: ClientOpState): string {
+		const nonEmptyLabels = Array.from(
+			client.channel.getIntervalCollectionLabels(),
+		).filter((label) => {
+			const collection = client.channel.getIntervalCollection(label);
+			return isNonEmpty(collection);
+		});
 		return random.pick(nonEmptyLabels);
 	}
 
-	function interval(state: ClientOpState): { collectionName: string; id: string } {
+	function interval(state: ClientOpState): {
+		collectionName: string;
+		id: string;
+	} {
 		const collectionName = nonEmptyIntervalCollection(state);
-		const intervals = Array.from(state.client.channel.getIntervalCollection(collectionName));
+		const intervals = Array.from(
+			state.client.channel.getIntervalCollection(collectionName),
+		);
 		const id = state.random.pick(intervals)?.getIntervalId();
 		assert(id);
 
@@ -652,8 +718,14 @@ export function makeIntervalOperationGenerator(
 			type: "addInterval",
 			collectionName: state.random.pick(options.intervalCollectionNamePool),
 			id: state.random.uuid4(),
-			start: toSequencePlace(start, state.random.pick([Side.Before, Side.After, undefined])),
-			end: toSequencePlace(end, state.random.pick([Side.Before, Side.After, undefined])),
+			start: toSequencePlace(
+				start,
+				state.random.pick([Side.Before, Side.After, undefined]),
+			),
+			end: toSequencePlace(
+				end,
+				state.random.pick([Side.Before, Side.After, undefined]),
+			),
 		};
 	}
 
@@ -688,7 +760,9 @@ export function makeIntervalOperationGenerator(
 			return isNonEmpty(collection);
 		});
 
-	const hasNotTooManyIntervals: AcceptanceCondition<ClientOpState> = ({ client }) => {
+	const hasNotTooManyIntervals: AcceptanceCondition<ClientOpState> = ({
+		client,
+	}) => {
 		let intervalCount = 0;
 		for (const label of client.channel.getIntervalCollectionLabels()) {
 			for (const _ of client.channel.getIntervalCollection(label)) {
@@ -720,16 +794,27 @@ export function makeIntervalOperationGenerator(
 		],
 		[annotateRange, usableWeights.annotateRange, hasNonzeroLength],
 		[obliterateRange, usableWeights.obliterateRange, hasNonzeroLength],
-		[addInterval, usableWeights.addInterval, all(hasNotTooManyIntervals, hasNonzeroLength)],
+		[
+			addInterval,
+			usableWeights.addInterval,
+			all(hasNotTooManyIntervals, hasNonzeroLength),
+		],
 		[deleteInterval, usableWeights.deleteInterval, hasAnInterval],
-		[changeInterval, usableWeights.changeInterval, all(hasAnInterval, hasNonzeroLength)],
+		[
+			changeInterval,
+			usableWeights.changeInterval,
+			all(hasAnInterval, hasNonzeroLength),
+		],
 	]);
 }
 
 export const baseIntervalModel = {
 	...baseModel,
 	generatorFactory: () =>
-		takeAsync(100, makeIntervalOperationGenerator(defaultIntervalOperationGenerationConfig)),
+		takeAsync(
+			100,
+			makeIntervalOperationGenerator(defaultIntervalOperationGenerationConfig),
+		),
 };
 
 export function makeSharedStringOperationGenerator(
@@ -775,6 +860,8 @@ export const baseSharedStringModel = {
 	generatorFactory: () =>
 		takeAsync(
 			100,
-			makeSharedStringOperationGenerator(defaultIntervalOperationGenerationConfig),
+			makeSharedStringOperationGenerator(
+				defaultIntervalOperationGenerationConfig,
+			),
 		),
 };

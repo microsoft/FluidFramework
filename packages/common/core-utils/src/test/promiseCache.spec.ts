@@ -4,11 +4,9 @@
  */
 
 import { strict as assert } from "node:assert";
-
+import { PromiseCache } from "@fluidframework/core-utils/internal";
 import type { SinonFakeTimers } from "sinon";
 import { useFakeTimers } from "sinon";
-
-import { PromiseCache } from "@fluidframework/core-utils/internal";
 
 describe("PromiseCache", () => {
 	describe("Basic Cache Mechanism", () => {
@@ -90,7 +88,8 @@ describe("PromiseCache", () => {
 			throw new Error(removeOnError ? "remove" : "Don't remove");
 		};
 
-		const removeOnErrorByMessage = (error: Error): boolean => error.message === "remove";
+		const removeOnErrorByMessage = (error: Error): boolean =>
+			error.message === "remove";
 		let pc: PromiseCache<number, string> | undefined;
 
 		it("asyncFn run immediately and only if key not set", () => {
@@ -121,7 +120,8 @@ describe("PromiseCache", () => {
 			pc = new PromiseCache<number, string>({
 				removeOnError: removeOnErrorByMessage,
 			});
-			const asyncFn = async (): Promise<string> => thrower(false /* removeOnError */);
+			const asyncFn = async (): Promise<string> =>
+				thrower(false /* removeOnError */);
 
 			const addOrGet1 = pc.addOrGet(1, asyncFn);
 			await assert.rejects(addOrGet1);
@@ -133,7 +133,8 @@ describe("PromiseCache", () => {
 			pc = new PromiseCache<number, string>({
 				removeOnError: removeOnErrorByMessage,
 			});
-			const asyncFn = async (): Promise<string> => thrower(false /* removeOnError */);
+			const asyncFn = async (): Promise<string> =>
+				thrower(false /* removeOnError */);
 
 			const add2 = pc.add(2, asyncFn);
 			assert.equal(add2, true);
@@ -148,7 +149,8 @@ describe("PromiseCache", () => {
 			pc = new PromiseCache<number, string>({
 				removeOnError: removeOnErrorByMessage,
 			});
-			const asyncFn = async (): Promise<string> => thrower(false /* removeOnError */);
+			const asyncFn = async (): Promise<string> =>
+				thrower(false /* removeOnError */);
 
 			const p3 = pc.addOrGet(3, asyncFn);
 			await assert.rejects(p3);
@@ -160,7 +162,8 @@ describe("PromiseCache", () => {
 			pc = new PromiseCache<number, string>({
 				removeOnError: removeOnErrorByMessage,
 			});
-			const asyncFn = async (): Promise<string> => thrower(false /* removeOnError */);
+			const asyncFn = async (): Promise<string> =>
+				thrower(false /* removeOnError */);
 
 			const add4 = pc.add(4, asyncFn);
 			assert.equal(add4, true);
@@ -175,11 +178,16 @@ describe("PromiseCache", () => {
 			pc = new PromiseCache<number, string>({
 				removeOnError: removeOnErrorByMessage,
 			});
-			const asyncFn = async (): Promise<string> => thrower(true /* removeOnError */);
+			const asyncFn = async (): Promise<string> =>
+				thrower(true /* removeOnError */);
 
 			const p5 = pc.addOrGet(5, asyncFn);
 			const contains5a = pc.has(5);
-			assert.equal(contains5a, true, "Shouldn't be removed yet; hasn't run yet");
+			assert.equal(
+				contains5a,
+				true,
+				"Shouldn't be removed yet; hasn't run yet",
+			);
 
 			await assert.rejects(p5);
 			const contains5b = pc.has(5);
@@ -190,7 +198,8 @@ describe("PromiseCache", () => {
 			pc = new PromiseCache<number, string>({
 				removeOnError: removeOnErrorByMessage,
 			});
-			const asyncFn = async (): Promise<string> => thrower(true /* removeOnError */);
+			const asyncFn = async (): Promise<string> =>
+				thrower(true /* removeOnError */);
 
 			const add6 = pc.add(6, asyncFn);
 			assert.equal(add6, true);
@@ -208,11 +217,16 @@ describe("PromiseCache", () => {
 			pc = new PromiseCache<number, string>({
 				removeOnError: removeOnErrorByMessage,
 			});
-			const asyncFn = async (): Promise<string> => thrower(true /* removeOnError */);
+			const asyncFn = async (): Promise<string> =>
+				thrower(true /* removeOnError */);
 
 			const p7 = pc.addOrGet(7, asyncFn);
 			const contains7a = pc.has(7);
-			assert.equal(contains7a, true, "Shouldn't be removed yet; hasn't run yet");
+			assert.equal(
+				contains7a,
+				true,
+				"Shouldn't be removed yet; hasn't run yet",
+			);
 
 			await assert.rejects(p7);
 			const contains7b = pc.has(7);
@@ -223,7 +237,8 @@ describe("PromiseCache", () => {
 			pc = new PromiseCache<number, string>({
 				removeOnError: removeOnErrorByMessage,
 			});
-			const asyncFn = async (): Promise<string> => thrower(true /* removeOnError */);
+			const asyncFn = async (): Promise<string> =>
+				thrower(true /* removeOnError */);
 
 			const add8 = pc.add(8, asyncFn);
 			assert.equal(add8, true);

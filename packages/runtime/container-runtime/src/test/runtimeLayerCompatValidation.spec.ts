@@ -22,8 +22,8 @@ import {
 	isLayerIncompatibilityError,
 } from "@fluidframework/telemetry-utils/internal";
 import {
-	MockDeltaManager,
 	MockAudience,
+	MockDeltaManager,
 	MockQuorumClients,
 } from "@fluidframework/test-runtime-utils/internal";
 import Sinon from "sinon";
@@ -31,11 +31,11 @@ import Sinon from "sinon";
 import { ContainerRuntime } from "../containerRuntime.js";
 import { pkgVersion } from "../packageVersion.js";
 import {
-	loaderSupportRequirementsForRuntime,
-	validateLoaderCompatibility,
-	validateDatastoreCompatibility,
 	dataStoreSupportRequirementsForRuntime,
+	loaderSupportRequirementsForRuntime,
 	runtimeCoreCompatDetails,
+	validateDatastoreCompatibility,
+	validateLoaderCompatibility,
 } from "../runtimeLayerCompatState.js";
 
 import { createLocalDataStoreContext } from "./dataStoreCreationHelper.js";
@@ -54,9 +54,14 @@ function validateFailureProperties(
 	incompatibleLayer: FluidLayer,
 	unsupportedFeatures?: string[],
 ): boolean {
-	assert(isLayerIncompatibilityError(error), "Error should be a layerIncompatibilityError");
+	assert(
+		isLayerIncompatibilityError(error),
+		"Error should be a layerIncompatibilityError",
+	);
 	assert(typeof error.details === "string", "Error details should be present");
-	const detailedProperties = JSON.parse(error.details) as ITelemetryBaseProperties;
+	const detailedProperties = JSON.parse(
+		error.details,
+	) as ITelemetryBaseProperties;
 	assert.strictEqual(
 		detailedProperties.isGenerationCompatible,
 		isGenerationCompatible,
@@ -70,7 +75,11 @@ function validateFailureProperties(
 		"Incompatible layer type not as expected",
 	);
 
-	assert.strictEqual(error.layerVersion, pkgVersion, "Runtime version not as expected");
+	assert.strictEqual(
+		error.layerVersion,
+		pkgVersion,
+		"Runtime version not as expected",
+	);
 	assert.strictEqual(
 		detailedProperties.layerGeneration,
 		runtimeCoreCompatDetails.generation,
@@ -124,7 +133,10 @@ async function createAndLoadRuntime(
 async function createAndLoadDataStore(
 	compatibilityDetails?: ILayerCompatDetails,
 ): Promise<void> {
-	const localDataStoreContext = createLocalDataStoreContext({}, compatibilityDetails);
+	const localDataStoreContext = createLocalDataStoreContext(
+		{},
+		compatibilityDetails,
+	);
 	await localDataStoreContext.realize();
 }
 
@@ -163,11 +175,15 @@ describe("Runtime Layer compatibility", () => {
 			const layerSupportRequirements = testCase.layerSupportRequirements;
 			let originalRequiredFeatures: readonly string[];
 			beforeEach(() => {
-				originalRequiredFeatures = [...layerSupportRequirements.requiredFeatures];
+				originalRequiredFeatures = [
+					...layerSupportRequirements.requiredFeatures,
+				];
 			});
 
 			afterEach(() => {
-				layerSupportRequirements.requiredFeatures = [...originalRequiredFeatures];
+				layerSupportRequirements.requiredFeatures = [
+					...originalRequiredFeatures,
+				];
 			});
 
 			describe(`Validate ${testCase.layerType} Compatibility`, () => {
@@ -175,9 +191,12 @@ describe("Runtime Layer compatibility", () => {
 					// Older layer will not have ILayerCompatDetails defined.
 					assert.doesNotThrow(
 						() =>
-							testCase.validateCompatibility(undefined /* maybeCompatDetails */, () => {
-								throw new Error("should not dispose");
-							}),
+							testCase.validateCompatibility(
+								undefined /* maybeCompatDetails */,
+								() => {
+									throw new Error("should not dispose");
+								},
+							),
 						`Runtime should be compatible with older ${testCase.layerType} layer`,
 					);
 				});
@@ -187,7 +206,9 @@ describe("Runtime Layer compatibility", () => {
 					const layerCompatDetails: ILayerCompatDetails = {
 						pkgVersion,
 						generation: layerSupportRequirements.minSupportedGeneration,
-						supportedFeatures: new Set(layerSupportRequirements.requiredFeatures),
+						supportedFeatures: new Set(
+							layerSupportRequirements.requiredFeatures,
+						),
 					};
 					assert.doesNotThrow(
 						() =>
@@ -201,11 +222,14 @@ describe("Runtime Layer compatibility", () => {
 				it(`Loader generation is incompatible with ${testCase.layerType}`, () => {
 					const disposeFn = Sinon.fake();
 					layerSupportRequirements.requiredFeatures = ["feature1", "feature2"];
-					const layerGeneration = layerSupportRequirements.minSupportedGeneration - 1;
+					const layerGeneration =
+						layerSupportRequirements.minSupportedGeneration - 1;
 					const layerCompatDetails: ILayerCompatDetails = {
 						pkgVersion,
 						generation: layerGeneration,
-						supportedFeatures: new Set(layerSupportRequirements.requiredFeatures),
+						supportedFeatures: new Set(
+							layerSupportRequirements.requiredFeatures,
+						),
 					};
 					assert.throws(
 						() => testCase.validateCompatibility(layerCompatDetails, disposeFn),
@@ -223,7 +247,8 @@ describe("Runtime Layer compatibility", () => {
 
 				it(`Runtime features are incompatible with ${testCase.layerType}`, () => {
 					const disposeFn = Sinon.fake();
-					const layerGeneration = layerSupportRequirements.minSupportedGeneration;
+					const layerGeneration =
+						layerSupportRequirements.minSupportedGeneration;
 					const requiredFeatures = ["feature2", "feature3"];
 					layerSupportRequirements.requiredFeatures = requiredFeatures;
 
@@ -250,7 +275,8 @@ describe("Runtime Layer compatibility", () => {
 
 				it(`Runtime generation and features are both incompatible with ${testCase.layerType}`, () => {
 					const disposeFn = Sinon.fake();
-					const layerGeneration = layerSupportRequirements.minSupportedGeneration - 1;
+					const layerGeneration =
+						layerSupportRequirements.minSupportedGeneration - 1;
 					const requiredFeatures = ["feature2"];
 					layerSupportRequirements.requiredFeatures = requiredFeatures;
 
@@ -285,7 +311,9 @@ describe("Runtime Layer compatibility", () => {
 		const testCases: {
 			layerType: "loader" | "dataStore";
 			layerSupportRequirements: ILayerCompatSupportRequirementsOverride;
-			createAndLoad: (compatibilityDetails?: ILayerCompatDetails) => Promise<void>;
+			createAndLoad: (
+				compatibilityDetails?: ILayerCompatDetails,
+			) => Promise<void>;
 		}[] = [
 			{
 				layerType: "loader",
@@ -313,7 +341,8 @@ describe("Runtime Layer compatibility", () => {
 				it(`${testCase.layerType} with generation >= minSupportedGeneration is compatible`, async () => {
 					const layerCompatDetails: ILayerCompatDetails = {
 						pkgVersion,
-						generation: testCase.layerSupportRequirements.minSupportedGeneration,
+						generation:
+							testCase.layerSupportRequirements.minSupportedGeneration,
 						supportedFeatures: new Set(),
 					};
 
@@ -324,7 +353,8 @@ describe("Runtime Layer compatibility", () => {
 				});
 
 				it(`${testCase.layerType} with generation < minSupportedGeneration is not compatible`, async () => {
-					const layerGeneration = testCase.layerSupportRequirements.minSupportedGeneration - 1;
+					const layerGeneration =
+						testCase.layerSupportRequirements.minSupportedGeneration - 1;
 					const layerCompatDetails: ILayerCompatDetails = {
 						pkgVersion,
 						generation: layerGeneration,

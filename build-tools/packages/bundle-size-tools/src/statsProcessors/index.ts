@@ -7,7 +7,10 @@ export {
 	BundleBuddyConfigProcessorOptions,
 	getBundleBuddyConfigProcessor,
 } from "./bundleBuddyConfigProcessor";
-export { EntryStatsProcessorOptions, getEntryStatsProcessor } from "./entryStatsProcessor";
+export {
+	EntryStatsProcessorOptions,
+	getEntryStatsProcessor,
+} from "./entryStatsProcessor";
 export {
 	getTotalSizeStatsProcessor,
 	TotalSizeStatsProcessorOptions,

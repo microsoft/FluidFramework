@@ -11,9 +11,12 @@ import {
 	MockFluidDataStoreRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { IBenchmarkParameters, benchmarkAll } from "./DocumentCreator.js";
+import { benchmarkAll, type IBenchmarkParameters } from "./DocumentCreator.js";
 
-function createLocalMatrix(id: string, dataStoreRuntime: MockFluidDataStoreRuntime) {
+function createLocalMatrix(
+	id: string,
+	dataStoreRuntime: MockFluidDataStoreRuntime,
+) {
 	return SharedMatrix.create(dataStoreRuntime, id);
 }
 
@@ -49,7 +52,10 @@ describeCompat("PAS Test", "NoCompat", () => {
 				for (let i = 0; i < rowSize; i++) {
 					for (let j = 0; j < columnSize; j++) {
 						const id = `${j},${i}`;
-						const sharedString: SharedString = createString(id, dataStoreRuntime);
+						const sharedString: SharedString = createString(
+							id,
+							dataStoreRuntime,
+						);
 						sharedString.insertText(0, "testValue");
 						this.matrix.setCell(i, j, sharedString.handle);
 					}

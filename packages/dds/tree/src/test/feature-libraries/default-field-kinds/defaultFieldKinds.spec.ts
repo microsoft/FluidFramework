@@ -24,16 +24,23 @@ import {
 } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { OptionalChangeset } from "../../../feature-libraries/optional-field/index.js";
-import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
-import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
 import {
-	Change,
+	brand,
+	fakeIdAllocator,
+	idAllocatorFromMaxId,
+} from "../../../util/index.js";
+import { TestNodeId } from "../../testNodeId.js";
+import {
+	defaultRevisionMetadataFromChanges,
+	mintRevisionTag,
+} from "../../utils.js";
+import {
 	assertEqual,
 	assertTaggedEqual,
+	Change,
 	tagChangeInline,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../optional-field/optionalFieldUtils.js";
-import { TestNodeId } from "../../testNodeId.js";
 
 /**
  * A change to a child encoding as a simple placeholder string.
@@ -83,8 +90,10 @@ describe("defaultFieldKinds", () => {
 	// These tests are covering required field usage patterns of optional field's rebaser (which required field uses).
 	// These patterns should be covered in the optional field tests and not be needed here (except perhaps for a minimal integration test).
 	describe("required field rebaser", () => {
-		const fieldHandler: FieldChangeHandler<OptionalChangeset, RequiredFieldEditor> =
-			requiredFieldChangeHandler;
+		const fieldHandler: FieldChangeHandler<
+			OptionalChangeset,
+			RequiredFieldEditor
+		> = requiredFieldChangeHandler;
 
 		const childChange1 = Change.child(nodeChange1);
 		const childChange2 = Change.child(nodeChange2);
@@ -127,7 +136,10 @@ describe("defaultFieldKinds", () => {
 			),
 		);
 
-		const simpleChildComposer = (a: NodeId | undefined, b: NodeId | undefined) => {
+		const simpleChildComposer = (
+			a: NodeId | undefined,
+			b: NodeId | undefined,
+		) => {
 			assert(a === undefined || b === undefined);
 			return a ?? b ?? fail("Expected a defined node changeset");
 		};
@@ -147,10 +159,19 @@ describe("defaultFieldKinds", () => {
 			});
 
 			it("a field change and a child change", () => {
-				const taggedChildChange1 = tagChangeInline(childChange1, mintRevisionTag());
+				const taggedChildChange1 = tagChangeInline(
+					childChange1,
+					mintRevisionTag(),
+				);
 				const expected = Change.atOnce(
-					Change.move({ localId: brand(41), revision: change1.revision }, "self"),
-					Change.clear("self", { localId: brand(1), revision: change1.revision }),
+					Change.move(
+						{ localId: brand(41), revision: change1.revision },
+						"self",
+					),
+					Change.clear("self", {
+						localId: brand(1),
+						revision: change1.revision,
+					}),
 					Change.childAt(
 						{ localId: brand(41), revision: change1.revision },
 						{ ...nodeChange1, revision: taggedChildChange1.revision },
@@ -177,8 +198,14 @@ describe("defaultFieldKinds", () => {
 					defaultRevisionMetadataFromChanges([change1]),
 				);
 				const expected2 = Change.atOnce(
-					Change.move({ localId: brand(41), revision: change1.revision }, "self"),
-					Change.clear("self", { localId: brand(1), revision: change1.revision }),
+					Change.move(
+						{ localId: brand(41), revision: change1.revision },
+						"self",
+					),
+					Change.clear("self", {
+						localId: brand(1),
+						revision: change1.revision,
+					}),
 					Change.child(nodeChange1),
 				);
 				assertEqual(actual, expected2);
@@ -200,7 +227,10 @@ describe("defaultFieldKinds", () => {
 		});
 
 		it("can invert children", () => {
-			const taggedChange = { revision: mintRevisionTag(), change: change1WithChildChange };
+			const taggedChange = {
+				revision: mintRevisionTag(),
+				change: change1WithChildChange,
+			};
 			const inverted = fieldHandler.rebaser.invert(
 				taggedChange.change,
 				true,
@@ -211,8 +241,14 @@ describe("defaultFieldKinds", () => {
 			);
 
 			const expected = Change.atOnce(
-				Change.clear("self", { localId: brand(41), revision: taggedChange.revision }),
-				Change.move({ localId: brand(1), revision: taggedChange.revision }, "self"),
+				Change.clear("self", {
+					localId: brand(41),
+					revision: taggedChange.revision,
+				}),
+				Change.move(
+					{ localId: brand(1), revision: taggedChange.revision },
+					"self",
+				),
 				Change.child(nodeChange1),
 			);
 			assertEqual(inverted, expected);
@@ -233,14 +269,21 @@ describe("defaultFieldKinds", () => {
 		});
 
 		it("can rebase child changes", () => {
-			const childRebaser = (change: NodeId | undefined, base: NodeId | undefined) => {
+			const childRebaser = (
+				change: NodeId | undefined,
+				base: NodeId | undefined,
+			) => {
 				assert.deepEqual(change, nodeChange2);
 				assert.deepEqual(base, nodeChange1);
 				return arbitraryChildChange;
 			};
 
-			const baseChange = fieldHandler.editor.buildChildChanges([[0, nodeChange1]]);
-			const changeToRebase = fieldHandler.editor.buildChildChanges([[0, nodeChange2]]);
+			const baseChange = fieldHandler.editor.buildChildChanges([
+				[0, nodeChange1],
+			]);
+			const changeToRebase = fieldHandler.editor.buildChildChanges([
+				[0, nodeChange2],
+			]);
 
 			assert.deepEqual(
 				fieldHandler.rebaser.rebase(

@@ -8,8 +8,8 @@ import { strict as assert } from "node:assert";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import {
-	MessageType,
 	type ISequencedDocumentMessage,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
@@ -21,9 +21,6 @@ import type {
 } from "../../messageTypes.js";
 import {
 	BatchManager,
-	type OutboundBatchMessage,
-	type OutboundBatch,
-	type OutboundSingletonBatch,
 	type BatchStartInfo,
 	ensureContentsDeserialized,
 	type InboundMessageResult,
@@ -31,12 +28,17 @@ import {
 	OpDecompressor,
 	OpGroupingManager,
 	OpSplitter,
+	type OutboundBatch,
+	type OutboundBatchMessage,
+	type OutboundSingletonBatch,
 	RemoteMessageProcessor,
 } from "../../opLifecycle/index.js";
 
 import { compressMultipleMessageBatch } from "./legacyCompression.js";
 
-function isSingletonBatch(batch: OutboundBatch): batch is OutboundSingletonBatch {
+function isSingletonBatch(
+	batch: OutboundBatch,
+): batch is OutboundSingletonBatch {
 	return batch.messages.length === 1;
 }
 
@@ -64,7 +66,10 @@ describe("RemoteMessageProcessor", () => {
 		);
 	}
 
-	function getOutboundMessage(value: string, batchMetadata?: boolean): OutboundBatchMessage {
+	function getOutboundMessage(
+		value: string,
+		batchMetadata?: boolean,
+	): OutboundBatchMessage {
 		return {
 			metadata:
 				batchMetadata === undefined
@@ -176,7 +181,9 @@ describe("RemoteMessageProcessor", () => {
 						mockLogger,
 					);
 					// NOTE: This function still supports batches with empty placeholder ops, we just need to cast to use it.
-					batch = splitter.splitSingletonBatchMessage(batch as OutboundSingletonBatch);
+					batch = splitter.splitSingletonBatchMessage(
+						batch as OutboundSingletonBatch,
+					);
 				}
 			}
 			let startSeqNum = outboundMessages.length + 1;
@@ -203,7 +210,8 @@ describe("RemoteMessageProcessor", () => {
 				switch (result?.type) {
 					case "fullBatch": {
 						assert(
-							option.compressionAndChunking.chunking || outboundMessages.length === 1,
+							option.compressionAndChunking.chunking ||
+								outboundMessages.length === 1,
 							"Apart from chunking, expected fullBatch for single-message batch only (includes Grouped Batches)",
 						);
 						batchStart = result.batchStart;
@@ -264,7 +272,12 @@ describe("RemoteMessageProcessor", () => {
 		// Define the test messages grouped by batch
 		type TestMessageInput = Pick<
 			ISequencedDocumentMessage,
-			"clientId" | "clientSequenceNumber" | "type" | "contents" | "metadata" | "compression"
+			| "clientId"
+			| "clientSequenceNumber"
+			| "type"
+			| "contents"
+			| "metadata"
+			| "compression"
 		> & { contents: InboundContainerRuntimeMessage };
 		interface TestBatchInput {
 			messages: TestMessageInput[];
@@ -346,11 +359,18 @@ describe("RemoteMessageProcessor", () => {
 		const processor = getMessageProcessor();
 		const processResults = testBatchesInput.flatMap(({ messages }) =>
 			messages.map((message) => {
-				return processor.process(message as ISequencedDocumentMessage, () => {});
+				return processor.process(
+					message as ISequencedDocumentMessage,
+					() => {},
+				);
 			}),
 		);
 
-		assert.deepStrictEqual(processResults, expectedResults, "unexpected output from process");
+		assert.deepStrictEqual(
+			processResults,
+			expectedResults,
+			"unexpected output from process",
+		);
 	});
 
 	describe("Throws on invalid batches", () => {
@@ -400,7 +420,9 @@ describe("RemoteMessageProcessor", () => {
 
 			assert.throws(
 				() => {
-					inboundMessages.map((message) => processor.process(message, () => {}));
+					inboundMessages.map((message) =>
+						processor.process(message, () => {}),
+					);
 				},
 				(e: Error) => {
 					return e.message === "0x9d6";
@@ -445,7 +467,9 @@ describe("RemoteMessageProcessor", () => {
 
 			assert.throws(
 				() => {
-					inboundMessages.map((message) => processor.process(message, () => {}));
+					inboundMessages.map((message) =>
+						processor.process(message, () => {}),
+					);
 				},
 				(e: Error) => {
 					return e.message === "0x9d5";
@@ -476,7 +500,11 @@ describe("RemoteMessageProcessor", () => {
 			"fullBatch",
 			"Single message should yield a 'fullBatch' result",
 		);
-		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
+		assert.strictEqual(
+			processResult.length,
+			1,
+			"only expected a single processed message",
+		);
 		const [inboundMessage] = processResult.messages;
 
 		assert.deepStrictEqual(inboundMessage.contents, contents.contents);
@@ -499,7 +527,11 @@ describe("RemoteMessageProcessor", () => {
 			"fullBatch",
 			"Single message should yield a 'fullBatch' result",
 		);
-		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
+		assert.strictEqual(
+			processResult.length,
+			1,
+			"only expected a single processed message",
+		);
 		const [inboundMessage] = processResult.messages;
 
 		assert.deepStrictEqual(inboundMessage.contents, message.contents);

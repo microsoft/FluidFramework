@@ -10,7 +10,10 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import type { ISharingLinkKind } from "@fluidframework/odsp-driver-definitions/internal";
 
-import { buildOdspShareLinkReqParams, getContainerPackageName } from "./odspUtils.js";
+import {
+	buildOdspShareLinkReqParams,
+	getContainerPackageName,
+} from "./odspUtils.js";
 
 /**
  * Create the request object with url and headers for creating a new file on OneDrive Sharepoint
@@ -33,7 +36,8 @@ export function createOdspCreateContainerRequest(
 	createShareLinkType?: ISharingLinkKind,
 	containerPackageInfo?: IContainerPackageInfo | undefined,
 ): IRequest {
-	const shareLinkRequestParams = buildOdspShareLinkReqParams(createShareLinkType);
+	const shareLinkRequestParams =
+		buildOdspShareLinkReqParams(createShareLinkType);
 	const createNewRequest: IRequest = {
 		url: `${siteUrl}?driveId=${encodeURIComponent(driveId)}&path=${encodeURIComponent(
 			filePath,

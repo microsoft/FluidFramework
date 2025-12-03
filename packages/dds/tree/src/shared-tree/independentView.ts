@@ -6,13 +6,13 @@
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	type IIdCompressor,
 	createIdCompressor,
+	type IIdCompressor,
 } from "@fluidframework/id-compressor/internal";
 
 import {
-	FluidClientVersion,
 	type CodecWriteOptions,
+	FluidClientVersion,
 	type ICodecOptions,
 } from "../codec/index.js";
 import {
@@ -22,34 +22,37 @@ import {
 	TreeStoredSchemaRepository,
 } from "../core/index.js";
 import {
+	combineChunks,
 	createNodeIdentifierManager,
+	defaultIncrementalEncodingPolicy,
+	defaultSchemaPolicy,
+	type FieldBatchEncodingContext,
 	makeFieldBatchCodec,
 	makeSchemaCodec,
-	type FieldBatchEncodingContext,
-	defaultSchemaPolicy,
 	TreeCompressionStrategy,
-	defaultIncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { Format } from "../feature-libraries/schema-index/formatV1.js";
 import type {
-	TreeViewConfiguration,
 	ImplicitFieldSchema,
-	TreeViewAlpha,
 	ITreeAlpha,
-	ViewableTree,
-	TreeView,
 	ReadSchema,
-	VerboseTree,
 	SimpleTreeSchema,
+	TreeView,
+	TreeViewAlpha,
+	TreeViewConfiguration,
+	VerboseTree,
+	ViewableTree,
 } from "../simple-tree/index.js";
 import {
-	type JsonCompatibleReadOnly,
-	type JsonCompatible,
 	Breakable,
-	oneFromIterable,
 	brand,
+	type JsonCompatible,
+	type JsonCompatibleReadOnly,
+	oneFromIterable,
 } from "../util/index.js";
+import { initialize, initializerFromChunk } from "./schematizeTree.js";
+import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import {
 	buildConfiguredForest,
 	defaultSharedTreeOptions,
@@ -57,9 +60,6 @@ import {
 	type ForestOptions,
 } from "./sharedTree.js";
 import { createTreeCheckout } from "./treeCheckout.js";
-import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
-import { initialize, initializerFromChunk } from "./schematizeTree.js";
-import { combineChunks } from "../feature-libraries/index.js";
 
 /**
  * Create an uninitialized {@link TreeView} that is not tied to any {@link ITree} instance.
@@ -74,7 +74,9 @@ export function independentView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	options?: ForestOptions & { idCompressor?: IIdCompressor | undefined },
 ): TreeViewAlpha<TSchema> {
-	return createIndependentTreeAlpha(options).viewWith(config) as TreeViewAlpha<TSchema>;
+	return createIndependentTreeAlpha(options).viewWith(
+		config,
+	) as TreeViewAlpha<TSchema>;
 }
 
 /**
@@ -88,7 +90,9 @@ export function independentView<const TSchema extends ImplicitFieldSchema>(
  * TODO: Providing an API which generates a {@link ViewableTree} extended with export options from {@link ITreeAlpha} and maybe even branching APIs would likely be better that just exposing a {@link TreeViewAlpha}.
  * @alpha
  */
-export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(
+export function independentInitializedView<
+	const TSchema extends ImplicitFieldSchema,
+>(
 	config: TreeViewConfiguration<TSchema>,
 	options: ForestOptions & ICodecOptions,
 	content: ViewContent,
@@ -147,9 +151,9 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
  * Something like https://github.com/microsoft/FluidFramework/pull/25422 might be a better long term stable/public solution.
  * @beta
  */
-export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSchema>(
-	options?: ForestOptions,
-): ViewableTree {
+export function createIndependentTreeBeta<
+	const TSchema extends ImplicitFieldSchema,
+>(options?: ForestOptions): ViewableTree {
 	return createIndependentTreeAlpha<TSchema>(options);
 }
 
@@ -169,17 +173,24 @@ export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSch
  * If keeping the option here, maybe a separate function of overload would be better? Or maybe flatten ViewContent inline to deduplicate the idCompressor options?
  * @alpha
  */
-export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(
+export function createIndependentTreeAlpha<
+	const TSchema extends ImplicitFieldSchema,
+>(
 	options?: ForestOptions &
 		(
 			| ({ idCompressor?: IIdCompressor | undefined } & { content?: undefined })
-			| (ICodecOptions & { content: ViewContent } & { idCompressor?: undefined })
+			| (ICodecOptions & { content: ViewContent } & {
+					idCompressor?: undefined;
+			  })
 		),
 ): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema"> {
 	const breaker = new Breakable("independentView");
 	const idCompressor: IIdCompressor =
-		options?.idCompressor ?? options?.content?.idCompressor ?? createIdCompressor();
-	const mintRevisionTag = (): RevisionTag => idCompressor.generateCompressedId();
+		options?.idCompressor ??
+		options?.content?.idCompressor ??
+		createIdCompressor();
+	const mintRevisionTag = (): RevisionTag =>
+		idCompressor.generateCompressedId();
 	const revisionTagCodec = new RevisionTagCodec(idCompressor);
 
 	// To ensure the forest is in schema when constructed, start it with an empty schema and set the schema repository content later.
@@ -193,11 +204,16 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 		defaultIncrementalEncodingPolicy,
 	);
 
-	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
-		forest,
-		schema: schemaRepository,
-		breaker,
-	});
+	const checkout = createTreeCheckout(
+		idCompressor,
+		mintRevisionTag,
+		revisionTagCodec,
+		{
+			forest,
+			schema: schemaRepository,
+			breaker,
+		},
+	);
 
 	if (options?.content !== undefined) {
 		// Any version can be passed down to `makeSchemaCodec` and `makeFieldBatchCodec` here.
@@ -206,7 +222,10 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 			...options,
 			minVersionForCollab: FluidClientVersion.v2_0,
 		};
-		const schemaCodec = makeSchemaCodec(writeOptions, brand(SchemaFormatVersion.v1));
+		const schemaCodec = makeSchemaCodec(
+			writeOptions,
+			brand(SchemaFormatVersion.v1),
+		);
 		const fieldBatchCodec = makeFieldBatchCodec(writeOptions);
 		const newSchema = schemaCodec.decode(options.content.schema as Format);
 
@@ -220,10 +239,16 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 			options.content.tree as JsonCompatibleReadOnly,
 			context,
 		);
-		assert(fieldCursors.length === 1, 0xa5b /* must have exactly 1 field in batch */);
+		assert(
+			fieldCursors.length === 1,
+			0xa5b /* must have exactly 1 field in batch */,
+		);
 
 		const fieldCursor = oneFromIterable(fieldCursors);
-		assert(fieldCursor !== undefined, 0xc94 /* expected exactly one field in batch */);
+		assert(
+			fieldCursor !== undefined,
+			0xc94 /* expected exactly one field in batch */,
+		);
 
 		initialize(
 			checkout,
@@ -238,11 +263,14 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 		viewWith<TRoot extends ImplicitFieldSchema>(
 			config: TreeViewConfiguration<TRoot>,
 		): TreeView<TRoot> {
-			const out: TreeViewAlpha<TSchema> = new SchematizingSimpleTreeView<TSchema>(
-				checkout,
-				config as TreeViewConfiguration as TreeViewConfiguration<ReadSchema<TSchema>>,
-				createNodeIdentifierManager(idCompressor),
-			);
+			const out: TreeViewAlpha<TSchema> =
+				new SchematizingSimpleTreeView<TSchema>(
+					checkout,
+					config as TreeViewConfiguration as TreeViewConfiguration<
+						ReadSchema<TSchema>
+					>,
+					createNodeIdentifierManager(idCompressor),
+				);
 			return out as unknown as TreeView<TRoot>;
 		},
 

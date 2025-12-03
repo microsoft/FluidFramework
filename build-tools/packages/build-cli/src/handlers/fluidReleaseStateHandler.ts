@@ -42,7 +42,10 @@ import {
 	checkTypeTestPrepare,
 	checkValidReleaseGroup,
 } from "./checkFunctions.js";
-import { doBumpReleasedDependencies, doReleaseGroupBump } from "./doFunctions.js";
+import {
+	doBumpReleasedDependencies,
+	doReleaseGroupBump,
+} from "./doFunctions.js";
 import { InitFailedStateHandler } from "./initFailedStateHandler.js";
 import {
 	promptToCommitChanges,
@@ -57,7 +60,10 @@ import {
 	promptToRunMinorReleaseCommand,
 	promptToRunTypeTests,
 } from "./promptFunctions.js";
-import { BaseStateHandler, type StateHandlerFunction } from "./stateHandlers.js";
+import {
+	BaseStateHandler,
+	type StateHandlerFunction,
+} from "./stateHandlers.js";
 
 /**
  * Data that is passed to all the handling functions for the {@link FluidReleaseMachine}. This data is intended to be
@@ -151,76 +157,78 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
 	/**
 	 * A map of state machine states to the function that should be called to handle that state.
 	 */
-	private readonly stateHandlerMap: Map<string, StateHandlerFunction> = new Map([
-		["AskForReleaseType", askForReleaseType],
-		["CheckAssertTagging", checkAssertTagging],
-		["CheckBranchName", checkBranchName],
-		["CheckBranchName2", checkBranchName],
-		["CheckBranchName3", checkBranchName],
-		["CheckBranchUpToDate", checkBranchUpToDate],
-		["CheckChangelogs", checkChangelogs],
-		["checkCompatLayerGeneration", checkCompatLayerGeneration],
-		["CheckDependenciesInstalled", checkDependenciesInstalled],
-		["CheckDoesReleaseFromReleaseBranch", checkDoesReleaseFromReleaseBranch],
-		["CheckDoesReleaseFromReleaseBranch2", checkDoesReleaseFromReleaseBranch],
-		["CheckDoesReleaseFromReleaseBranch3", checkDoesReleaseFromReleaseBranch],
-		["CheckHasRemote", checkHasRemote],
-		["CheckMainNextIntegrated", checkMainNextIntegrated],
-		["CheckNoPrereleaseDependencies", checkNoPrereleaseDependencies],
-		["CheckNoPrereleaseDependencies2", checkNoPrereleaseDependencies],
-		["CheckNoPrereleaseDependencies3", checkNoPrereleaseDependencies],
-		["CheckOnReleaseBranch", checkOnReleaseBranch],
-		["CheckOnReleaseBranch2", checkOnReleaseBranch],
-		["CheckOnReleaseBranch3", checkOnReleaseBranch],
-		["CheckPolicy", checkPolicy],
-		["CheckReleaseBranchExists", checkReleaseBranchExists],
-		["CheckReleaseGroupIsBumped", checkReleaseGroupIsBumped],
-		["CheckReleaseGroupIsBumpedMinor", checkReleaseGroupIsBumped],
-		["CheckReleaseGroupIsBumpedMinor2", checkReleaseGroupIsBumped],
-		["CheckReleaseGroupIsBumpedPatch", checkReleaseGroupIsBumped],
-		["CheckReleaseGroupIsBumpedPatch2", checkReleaseGroupIsBumped],
-		["CheckReleaseIsDone", checkReleaseIsDone],
-		["CheckReleaseIsDone2", checkReleaseIsDone],
-		["CheckReleaseIsDone3", checkReleaseIsDone],
-		["CheckReleaseNotes", checkReleaseNotes],
-		["CheckShouldCommitBump", checkShouldCommit],
-		["CheckShouldCommitDeps", checkShouldCommit],
-		["CheckShouldCommitReleasedDepsBump", checkShouldCommitReleasedDepsBump],
-		["CheckShouldRunOptionalChecks", checkShouldRunOptionalChecks],
-		["CheckTypeTestGenerate", checkTypeTestGenerate],
-		["CheckTypeTestGenerate2", checkTypeTestGenerate],
-		["CheckTypeTestPrepare", checkTypeTestPrepare],
-		["CheckTypeTestPrepare2", checkTypeTestPrepare],
-		["CheckValidReleaseGroup", checkValidReleaseGroup],
-		["DoBumpReleasedDependencies", doBumpReleasedDependencies],
-		["DoMajorRelease", handleBumpType],
-		["DoMinorRelease", handleBumpType],
-		["DoPatchRelease", handleBumpType],
-		["DoReleaseGroupBump", doReleaseGroupBump],
-		["PromptToCommitBump", promptToCommitChanges],
-		["PromptToCommitDeps", promptToCommitChanges],
-		["PromptToCommitPolicy", promptToCommitChanges],
-		["PromptToCommitReleasedDepsBump", promptToCommitChanges],
-		["PromptToCreateReleaseBranch", promptToCreateReleaseBranch],
-		["PromptToGenerateChangelogs", promptToGenerateChangelogs],
-		["PromptToGenerateReleaseNotes", promptToGenerateReleaseNotes],
-		["PromptToIntegrateNext", promptToIntegrateNext],
-		["PromptToPRBump", promptToPRBump],
-		["PromptToPRDeps", promptToPRDeps],
-		["PromptToPRReleasedDepsBump", promptToPRDeps],
-		["PromptToRelease", promptToRelease],
-		["PromptToReleaseDeps", promptToReleaseDeps],
-		["PromptToRunMinorReleaseCommand", promptToRunMinorReleaseCommand],
-		["PromptToRunTypeTests", promptToRunTypeTests],
-
+	private readonly stateHandlerMap: Map<string, StateHandlerFunction> = new Map(
 		[
-			"ReleaseComplete",
-			async (_, __, ___, log): Promise<boolean> => {
-				log.info(chalk.green("Release complete!"));
-				return true;
-			},
+			["AskForReleaseType", askForReleaseType],
+			["CheckAssertTagging", checkAssertTagging],
+			["CheckBranchName", checkBranchName],
+			["CheckBranchName2", checkBranchName],
+			["CheckBranchName3", checkBranchName],
+			["CheckBranchUpToDate", checkBranchUpToDate],
+			["CheckChangelogs", checkChangelogs],
+			["checkCompatLayerGeneration", checkCompatLayerGeneration],
+			["CheckDependenciesInstalled", checkDependenciesInstalled],
+			["CheckDoesReleaseFromReleaseBranch", checkDoesReleaseFromReleaseBranch],
+			["CheckDoesReleaseFromReleaseBranch2", checkDoesReleaseFromReleaseBranch],
+			["CheckDoesReleaseFromReleaseBranch3", checkDoesReleaseFromReleaseBranch],
+			["CheckHasRemote", checkHasRemote],
+			["CheckMainNextIntegrated", checkMainNextIntegrated],
+			["CheckNoPrereleaseDependencies", checkNoPrereleaseDependencies],
+			["CheckNoPrereleaseDependencies2", checkNoPrereleaseDependencies],
+			["CheckNoPrereleaseDependencies3", checkNoPrereleaseDependencies],
+			["CheckOnReleaseBranch", checkOnReleaseBranch],
+			["CheckOnReleaseBranch2", checkOnReleaseBranch],
+			["CheckOnReleaseBranch3", checkOnReleaseBranch],
+			["CheckPolicy", checkPolicy],
+			["CheckReleaseBranchExists", checkReleaseBranchExists],
+			["CheckReleaseGroupIsBumped", checkReleaseGroupIsBumped],
+			["CheckReleaseGroupIsBumpedMinor", checkReleaseGroupIsBumped],
+			["CheckReleaseGroupIsBumpedMinor2", checkReleaseGroupIsBumped],
+			["CheckReleaseGroupIsBumpedPatch", checkReleaseGroupIsBumped],
+			["CheckReleaseGroupIsBumpedPatch2", checkReleaseGroupIsBumped],
+			["CheckReleaseIsDone", checkReleaseIsDone],
+			["CheckReleaseIsDone2", checkReleaseIsDone],
+			["CheckReleaseIsDone3", checkReleaseIsDone],
+			["CheckReleaseNotes", checkReleaseNotes],
+			["CheckShouldCommitBump", checkShouldCommit],
+			["CheckShouldCommitDeps", checkShouldCommit],
+			["CheckShouldCommitReleasedDepsBump", checkShouldCommitReleasedDepsBump],
+			["CheckShouldRunOptionalChecks", checkShouldRunOptionalChecks],
+			["CheckTypeTestGenerate", checkTypeTestGenerate],
+			["CheckTypeTestGenerate2", checkTypeTestGenerate],
+			["CheckTypeTestPrepare", checkTypeTestPrepare],
+			["CheckTypeTestPrepare2", checkTypeTestPrepare],
+			["CheckValidReleaseGroup", checkValidReleaseGroup],
+			["DoBumpReleasedDependencies", doBumpReleasedDependencies],
+			["DoMajorRelease", handleBumpType],
+			["DoMinorRelease", handleBumpType],
+			["DoPatchRelease", handleBumpType],
+			["DoReleaseGroupBump", doReleaseGroupBump],
+			["PromptToCommitBump", promptToCommitChanges],
+			["PromptToCommitDeps", promptToCommitChanges],
+			["PromptToCommitPolicy", promptToCommitChanges],
+			["PromptToCommitReleasedDepsBump", promptToCommitChanges],
+			["PromptToCreateReleaseBranch", promptToCreateReleaseBranch],
+			["PromptToGenerateChangelogs", promptToGenerateChangelogs],
+			["PromptToGenerateReleaseNotes", promptToGenerateReleaseNotes],
+			["PromptToIntegrateNext", promptToIntegrateNext],
+			["PromptToPRBump", promptToPRBump],
+			["PromptToPRDeps", promptToPRDeps],
+			["PromptToPRReleasedDepsBump", promptToPRDeps],
+			["PromptToRelease", promptToRelease],
+			["PromptToReleaseDeps", promptToReleaseDeps],
+			["PromptToRunMinorReleaseCommand", promptToRunMinorReleaseCommand],
+			["PromptToRunTypeTests", promptToRunTypeTests],
+
+			[
+				"ReleaseComplete",
+				async (_, __, ___, log): Promise<boolean> => {
+					log.info(chalk.green("Release complete!"));
+					return true;
+				},
+			],
 		],
-	]);
+	);
 
 	async handleState(
 		state: MachineState,
@@ -232,7 +240,13 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
 		const handlerFunction = this.stateHandlerMap.get(state);
 
 		if (handlerFunction === undefined) {
-			const superHandled = await super.handleState(state, machine, testMode, log, data);
+			const superHandled = await super.handleState(
+				state,
+				machine,
+				testMode,
+				log,
+				data,
+			);
 			return superHandled;
 		}
 

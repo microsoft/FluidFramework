@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { HasContainerKey, VisualTreeNode } from "@fluidframework/devtools-core/internal";
-import React from "react";
+import type {
+	HasContainerKey,
+	VisualTreeNode,
+} from "@fluidframework/devtools-core/internal";
+import type React from "react";
 
 import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";
 import { TreeDataView } from "./TreeDataView.js";
@@ -26,7 +29,12 @@ export function TreeView(props: TreeViewProps): React.ReactElement {
 	const metadata = JSON.stringify(node.metadata);
 
 	const childNodes = Object.entries(node.children).map(([key, fluidObject]) => (
-		<TreeDataView key={key} containerKey={containerKey} label={key} node={fluidObject} />
+		<TreeDataView
+			key={key}
+			containerKey={containerKey}
+			label={key}
+			node={fluidObject}
+		/>
 	));
 
 	const header = (

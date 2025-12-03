@@ -7,8 +7,8 @@ export {
 	arraySchema,
 	asIndex,
 	IterableTreeArrayContent,
-	TreeArrayNode,
 	type ReadonlyArrayNode,
+	TreeArrayNode,
 } from "./arrayNode.js";
 export {
 	type ArrayNodeCustomizableSchema,

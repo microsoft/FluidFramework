@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { isExampleDriverService, type ExampleDriverService } from "./interfaces.js";
+import {
+	type ExampleDriverService,
+	isExampleDriverService,
+} from "./interfaces.js";
 
 declare const EXAMPLE_DRIVER_SERVICE: string | undefined;
 /**
@@ -18,7 +21,9 @@ export const getSpecifiedServiceFromWebpack = (): ExampleDriverService => {
 		);
 	}
 	if (!isExampleDriverService(service)) {
-		throw new Error(`EXAMPLE_DRIVER_SERVICE not a recognized driver type: ${service}`);
+		throw new Error(
+			`EXAMPLE_DRIVER_SERVICE not a recognized driver type: ${service}`,
+		);
 	}
 	return service;
 };

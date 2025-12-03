@@ -6,15 +6,19 @@
 import Path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { ApiItemKind, type ApiItem, type ApiPackage } from "@microsoft/api-extractor-model";
+import {
+	type ApiItem,
+	ApiItemKind,
+	type ApiPackage,
+} from "@microsoft/api-extractor-model";
 import { FileSystem } from "@rushstack/node-core-library";
 import { expect } from "chai";
 import { compare } from "dir-compare";
 
 import {
 	ApiItemUtilities,
-	HierarchyKind,
 	type HierarchyConfiguration,
+	HierarchyKind,
 	type HierarchyOptions,
 } from "../index.js";
 
@@ -82,7 +86,10 @@ export namespace HierarchyConfigurations {
 		[ApiItemKind.TypeAlias]: HierarchyKind.Section,
 		[ApiItemKind.Variable]: HierarchyKind.Section,
 
-		getDocumentName: (apiItem: ApiItem, config: HierarchyConfiguration): string => {
+		getDocumentName: (
+			apiItem: ApiItem,
+			config: HierarchyConfiguration,
+		): string => {
 			switch (apiItem.kind) {
 				case ApiItemKind.Model: {
 					return "index";
@@ -92,7 +99,10 @@ export namespace HierarchyConfigurations {
 				}
 				default: {
 					// Let the system generate a unique name that accounts for folder hierarchy.
-					return ApiItemUtilities.createQualifiedDocumentNameForApiItem(apiItem, config);
+					return ApiItemUtilities.createQualifiedDocumentNameForApiItem(
+						apiItem,
+						config,
+					);
 				}
 			}
 		},
@@ -130,7 +140,10 @@ export namespace HierarchyConfigurations {
 				}
 				default: {
 					// Let the system generate a unique name that accounts for folder hierarchy.
-					return ApiItemUtilities.createQualifiedDocumentNameForApiItem(apiItem, config);
+					return ApiItemUtilities.createQualifiedDocumentNameForApiItem(
+						apiItem,
+						config,
+					);
 				}
 			}
 		},
@@ -175,7 +188,10 @@ export namespace HierarchyConfigurations {
 				}
 				default: {
 					// Let the system generate a unique name that accounts for folder hierarchy.
-					return ApiItemUtilities.createQualifiedDocumentNameForApiItem(apiItem, config);
+					return ApiItemUtilities.createQualifiedDocumentNameForApiItem(
+						apiItem,
+						config,
+					);
 				}
 			}
 		},
@@ -210,6 +226,8 @@ export async function compareDocumentationSuiteSnapshot(
 			destinationPath: snapshotDirectoryPath,
 		});
 
-		expect.fail(`Snapshot test encountered ${result.differencesFiles} file diffs.`);
+		expect.fail(
+			`Snapshot test encountered ${result.differencesFiles} file diffs.`,
+		);
 	}
 }

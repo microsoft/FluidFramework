@@ -4,11 +4,14 @@
  */
 
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
-import type { IFileEntry, ISnapshot } from "@fluidframework/driver-definitions/internal";
+import type {
+	IFileEntry,
+	ISnapshot,
+} from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/driver-utils/internal";
 import type {
-	IOdspResolvedUrl,
 	InstrumentedStorageTokenFetcher,
+	IOdspResolvedUrl,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type ITelemetryLoggerExt,
@@ -16,14 +19,17 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { IWriteSummaryResponse } from "./../contracts.js";
-import { ClpCompliantAppHeader, FileMetadataHeader } from "./../contractsPublic.js";
+import {
+	ClpCompliantAppHeader,
+	FileMetadataHeader,
+} from "./../contractsPublic.js";
 import { createOdspUrl } from "./../createOdspUrl.js";
 import type { EpochTracker } from "./../epochTracker.js";
 import { OdspDriverUrlResolver } from "./../odspDriverUrlResolver.js";
 import { getApiRoot } from "./../odspUrlHelper.js";
 import {
-	type IExistingFileInfo,
 	createCacheSnapshotKey,
+	type IExistingFileInfo,
 	snapshotWithLoadingGroupIdSupported,
 } from "./../odspUtils.js";
 import {
@@ -56,14 +62,17 @@ export async function createNewContainerOnExistingFile(
 	eTag?: string,
 ): Promise<IOdspResolvedUrl> {
 	if (createNewSummary === undefined) {
-		throw new UsageError("createNewSummary must exist to create a new container");
+		throw new UsageError(
+			"createNewSummary must exist to create a new container",
+		);
 	}
 
 	const baseUrl = `${getApiRoot(new URL(fileInfo.siteUrl))}/drives/${fileInfo.driveId}/items/${
 		fileInfo.itemId
 	}`;
 
-	const containerSnapshot = convertSummaryIntoContainerSnapshot(createNewSummary);
+	const containerSnapshot =
+		convertSummaryIntoContainerSnapshot(createNewSummary);
 
 	const initialUrl = `${baseUrl}/opStream/snapshots/snapshot`;
 
@@ -73,17 +82,18 @@ export async function createNewContainerOnExistingFile(
 		additionalHeaders["If-Match"] = eTag;
 	}
 
-	const { id: summaryHandle } = await createNewFluidContainerCore<IWriteSummaryResponse>({
-		containerSnapshot,
-		getAuthHeader,
-		logger,
-		initialUrl,
-		forceAccessTokenViaAuthorizationHeader,
-		epochTracker,
-		telemetryName: "CreateNewContainerOnExistingFile",
-		fetchType: "uploadSummary",
-		additionalHeaders,
-	});
+	const { id: summaryHandle } =
+		await createNewFluidContainerCore<IWriteSummaryResponse>({
+			containerSnapshot,
+			getAuthHeader,
+			logger,
+			initialUrl,
+			forceAccessTokenViaAuthorizationHeader,
+			epochTracker,
+			telemetryName: "CreateNewContainerOnExistingFile",
+			fetchType: "uploadSummary",
+			additionalHeaders,
+		});
 
 	const odspUrl = createOdspUrl({ ...fileInfo, dataStorePath: "/" });
 	const resolver = new OdspDriverUrlResolver();
@@ -107,7 +117,9 @@ export async function createNewContainerOnExistingFile(
 		await epochTracker.put(
 			createCacheSnapshotKey(
 				odspResolvedUrl,
-				snapshotWithLoadingGroupIdSupported(loggerToMonitoringContext(logger).config),
+				snapshotWithLoadingGroupIdSupported(
+					loggerToMonitoringContext(logger).config,
+				),
 			),
 			snapshot,
 		);

@@ -28,7 +28,12 @@ describe("snapshot tests", () => {
 				};
 				const testTrees = generateTestTrees(options);
 
-				for (const { name: testName, runScenario, skip = false, only = false } of testTrees) {
+				for (const {
+					name: testName,
+					runScenario,
+					skip = false,
+					only = false,
+				} of testTrees) {
 					const itFn = only ? it.only : skip ? it.skip : it;
 
 					itFn(testName, async () => {

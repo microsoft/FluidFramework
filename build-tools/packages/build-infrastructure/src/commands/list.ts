@@ -18,7 +18,8 @@ export class ListCommand extends Command {
 
 	static override flags = {
 		path: Flags.directory({
-			description: "Path to start searching for the Build project configuration.",
+			description:
+				"Path to start searching for the Build project configuration.",
 			default: ".",
 		}),
 		full: Flags.boolean({
@@ -56,7 +57,10 @@ export class ListCommand extends Command {
 					this.logIndent(pkgMessage, 4);
 				}
 
-				const { releaseGroups, workspaces } = getAllDependencies(repo, releaseGroup.packages);
+				const { releaseGroups, workspaces } = getAllDependencies(
+					repo,
+					releaseGroup.packages,
+				);
 				if (releaseGroups.length > 0 || workspaces.length > 0) {
 					this.log();
 					this.logIndent(colors.bold("Depends on:"), 3);

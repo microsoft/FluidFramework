@@ -162,11 +162,14 @@ function readmeFooterTransform(content, options, config) {
 	if (options.scripts === "TRUE") {
 		options.pkg = relativePackageJsonPath;
 		const scriptsTable = scripts(content, options, config);
-		sections.push(generatePackageScriptsSection(scriptsTable, sectionHeadingOptions));
+		sections.push(
+			generatePackageScriptsSection(scriptsTable, sectionHeadingOptions),
+		);
 	}
 
-	const includeClientRequirementsSection = parseBooleanOption(options.clientRequirements, () =>
-		isPublic(packageMetadata),
+	const includeClientRequirementsSection = parseBooleanOption(
+		options.clientRequirements,
+		() => isPublic(packageMetadata),
 	);
 	if (includeClientRequirementsSection) {
 		sections.push(generateClientRequirementsSection(sectionHeadingOptions));
@@ -251,7 +254,8 @@ function libraryReadmeHeaderTransform(content, options, config) {
 	const sections = [];
 
 	// Note: if the user specified an explicit scope, that takes precedence over the package namespace.
-	const scopeKind = options.packageScopeNotice ?? getScopeKindFromPackage(packageName);
+	const scopeKind =
+		options.packageScopeNotice ?? getScopeKindFromPackage(packageName);
 	const scopeNoticeSection = generatePackageScopeNotice(scopeKind);
 	if (scopeNoticeSection !== undefined) {
 		sections.push(scopeNoticeSection);
@@ -265,7 +269,10 @@ function libraryReadmeHeaderTransform(content, options, config) {
 		sections.push(generateDependencyGuidelines(sectionHeadingOptions));
 	}
 
-	const includeInstallationSection = parseBooleanOption(options.installation, isPackagePublic);
+	const includeInstallationSection = parseBooleanOption(
+		options.installation,
+		isPackagePublic,
+	);
 	if (includeInstallationSection) {
 		sections.push(
 			generateInstallationInstructionsSection(
@@ -281,10 +288,15 @@ function libraryReadmeHeaderTransform(content, options, config) {
 		true,
 	);
 	if (includeImportInstructionsSection) {
-		sections.push(generateImportInstructionsSection(packageMetadata, sectionHeadingOptions));
+		sections.push(
+			generateImportInstructionsSection(packageMetadata, sectionHeadingOptions),
+		);
 	}
 
-	const includeApiDocsSection = parseBooleanOption(options.apiDocs, isPackagePublic);
+	const includeApiDocsSection = parseBooleanOption(
+		options.apiDocs,
+		isPackagePublic,
+	);
 	if (includeApiDocsSection) {
 		sections.push(generateApiDocsSection(packageName, sectionHeadingOptions));
 	}
@@ -518,7 +530,10 @@ module.exports = {
 		 * ```
 		 */
 		TRADEMARK: (content, options, config) =>
-			templateTransform("Trademark-Template.md", parseHeadingOptions(options, "Trademark")),
+			templateTransform(
+				"Trademark-Template.md",
+				parseHeadingOptions(options, "Trademark"),
+			),
 
 		/**
 		 * Generates a README section with fluid-framework contribution guidelines.
@@ -593,7 +608,10 @@ module.exports = {
 		 * ```
 		 */
 		HELP: (content, options, config) =>
-			templateTransform("Help-Template.md", parseHeadingOptions(options, "Help")),
+			templateTransform(
+				"Help-Template.md",
+				parseHeadingOptions(options, "Help"),
+			),
 
 		/**
 		 * See {@link packageScriptsTransform}.

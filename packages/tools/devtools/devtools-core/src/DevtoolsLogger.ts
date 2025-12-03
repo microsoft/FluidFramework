@@ -7,18 +7,17 @@ import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-
-import type { ITimestampedTelemetryEvent } from "./TelemetryMetadata.js";
 import {
 	GetTelemetryHistory,
+	handleIncomingWindowMessage,
 	type IDevtoolsMessage,
 	type InboundHandlers,
 	type MessageLoggingOptions,
+	postMessagesToWindow,
 	TelemetryEvent,
 	TelemetryHistory,
-	handleIncomingWindowMessage,
-	postMessagesToWindow,
 } from "./messaging/index.js";
+import type { ITimestampedTelemetryEvent } from "./TelemetryMetadata.js";
 
 /**
  * Logger implementation that posts all telemetry events to the window (globalThis object).
@@ -163,6 +162,8 @@ class DevtoolsLogger implements IDevtoolsLogger {
  *
  * @beta
  */
-export function createDevtoolsLogger(baseLogger?: ITelemetryBaseLogger): IDevtoolsLogger {
+export function createDevtoolsLogger(
+	baseLogger?: ITelemetryBaseLogger,
+): IDevtoolsLogger {
 	return new DevtoolsLogger(baseLogger);
 }

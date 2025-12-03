@@ -4,22 +4,33 @@
  */
 
 declare module "@fluid-experimental/property-properties" {
-	import { ChangeSet, SerializedChangeSet } from "@fluid-experimental/property-changeset";
+	import {
+		ChangeSet,
+		SerializedChangeSet,
+	} from "@fluid-experimental/property-changeset";
 	namespace PROPERTY_TREE_NS {
 		class EventEmitter {
 			static defaultMaxListeners: number;
 			emit(type: string): boolean;
-			addListener(type: string, listener: (...args: any[]) => any): EventEmitter;
+			addListener(
+				type: string,
+				listener: (...args: any[]) => any,
+			): EventEmitter;
 			static listenerCount(emitter: EventEmitter, type: string): number;
 			listenerCount(type: string): number;
 			listeners(type: string): (...args: any[]) => any[];
-			static makeEventEmitter(constructor: (...args: any[]) => any): (...args: any[]) => any;
+			static makeEventEmitter(
+				constructor: (...args: any[]) => any,
+			): (...args: any[]) => any;
 			off(type: string, listener: (...args: any[]) => any): EventEmitter;
 			on(type: string, listener: (...args: any[]) => any): EventEmitter;
 			once(type: string, listener: (...args: any[]) => any): EventEmitter;
 			register(event: string, cb: (...args: any[]) => any): string;
 			removeAllListeners(type: string): EventEmitter;
-			removeListener(type: string, listener: (...args: any[]) => any): EventEmitter;
+			removeListener(
+				type: string,
+				listener: (...args: any[]) => any,
+			): EventEmitter;
 			setMaxListeners(n: number): EventEmitter;
 			trigger(event: string, caller: object, argsArr?: any): void;
 			unregister(event: string, key: string): boolean;
@@ -204,11 +215,12 @@ declare module "@fluid-experimental/property-properties" {
 			id: string; // id of the property (null, if the GUID should be used for the ID)
 			typeid: string; // The type identifier
 		};
-		type RepositoryReferenceProperty_RepositoryReferenceProperty_in_params_TYPE = {
-			id: string; // id of the property
-			name: string; // Name of the property
-			typeid: string; // The type identifier
-		};
+		type RepositoryReferenceProperty_RepositoryReferenceProperty_in_params_TYPE =
+			{
+				id: string; // id of the property
+				name: string; // Name of the property
+				typeid: string; // The type identifier
+			};
 		type ValueProperty_ValueProperty_in_params_TYPE = {
 			dataObj: object; // optional argument containing an object
 			//                  that should be used as the backing store of this value
@@ -344,7 +356,11 @@ declare module "@fluid-experimental/property-properties" {
 			| "repository.write"
 			| "repository.delete"
 			| "repository.share";
-		type BranchPermission = "branch.read" | "branch.write" | "branch.delete" | "branch.share";
+		type BranchPermission =
+			| "branch.read"
+			| "branch.write"
+			| "branch.delete"
+			| "branch.share";
 		type PropertyPermission =
 			| "property.read"
 			| "property.insert"
@@ -557,7 +573,9 @@ declare module "@fluid-experimental/property-properties" {
 			 * present this property will fail constructing.
 			 * @param in_params the parameters
 			 */
-			constructor(in_params: ContainerProperty_ContainerProperty_in_params_TYPE);
+			constructor(
+				in_params: ContainerProperty_ContainerProperty_in_params_TYPE,
+			);
 			/**
 			 * Returns the sub-property having the given name, or following the given paths, in this property.
 			 * @param in_ids the ID or IDs of the property or an array of IDs
@@ -787,7 +805,7 @@ declare module "@fluid-experimental/property-properties" {
 			constructor(
 				in_params: ArrayProperty_ArrayProperty_in_params_TYPE,
 				in_constructor: object,
-				in_primitiveType: Boolean,
+				in_primitiveType: boolean,
 				in_scope: string | undefined,
 			);
 
@@ -858,7 +876,10 @@ declare module "@fluid-experimental/property-properties" {
 			 *  and shifts remaining values to the left.
 			 * E.g. [1, 2, 3, 4, 5]  .removeRange(1, 3) => [1, 5]
 			 */
-			removeRange(in_offset: number, in_deleteCount: number): Array<any> | Array<BaseProperty>;
+			removeRange(
+				in_offset: number,
+				in_deleteCount: number,
+			): Array<any> | Array<BaseProperty>;
 			/**
 			 * Sets the array properties elements to the content of the given array
 			 * All changed elements must already exist. This will overwrite existing elements.
@@ -893,7 +914,9 @@ declare module "@fluid-experimental/property-properties" {
 			 * returns the enum string at position 3 of the array
 			 * @param in_params the parameters
 			 */
-			constructor(in_params: EnumArrayProperty_EnumArrayProperty_in_params_TYPE);
+			constructor(
+				in_params: EnumArrayProperty_EnumArrayProperty_in_params_TYPE,
+			);
 			/**
 			 * inserts the content of a given array into the array property
 			 * @param in_offset target index
@@ -1035,7 +1058,7 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * Returns an object with all the nested values contained in this property
 			 */
-			getValues<T = String[]>(): T;
+			getValues<T = string[]>(): T;
 			/**
 			 * Removes the last element of the array
 			 */
@@ -1235,7 +1258,9 @@ declare module "@fluid-experimental/property-properties" {
 			 * Initializes the Binary Property with the required instance items.
 			 * @param in_params List of parameters.
 			 */
-			initialize(in_params: BinaryProperty_initialize_in_params_TYPE): Promise<any>;
+			initialize(
+				in_params: BinaryProperty_initialize_in_params_TYPE,
+			): Promise<any>;
 			/**
 			 * Checks to see whether the BinaryProperty is in the passed in state.
 			 */
@@ -1289,12 +1314,18 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * Add a listener for a given type of event.
 			 */
-			addListener(eventName: string, eventListener: (...args: any[]) => any): void;
+			addListener(
+				eventName: string,
+				eventListener: (...args: any[]) => any,
+			): void;
 			/**
 			 * Remove a listener for a given type of event. Iff a listener was removed,
 			 * an event 'removeListener' will be emitted.
 			 */
-			removeListener(eventName: string, eventListener: (...args: any[]) => any): void;
+			removeListener(
+				eventName: string,
+				eventListener: (...args: any[]) => any,
+			): void;
 			/**
 			 * Register template which are used to instantiate properties.
 			 *
@@ -1327,7 +1358,9 @@ declare module "@fluid-experimental/property-properties" {
 			 * Validate a template
 			 * Check that the template is syntactically correct as well as semantically correct.
 			 */
-			validate(in_template: PropertyTemplate | PropertyTemplateType): object | undefined;
+			validate(
+				in_template: PropertyTemplate | PropertyTemplateType,
+			): object | undefined;
 			/**
 			 * Get template based on typeid
 			 *
@@ -1420,14 +1453,18 @@ declare module "@fluid-experimental/property-properties" {
 			 * @param in_options.metadata.name The human readable name of the branch.
 			 *                                              If not specified, it defaults to the guid.
 			 */
-			initialize(in_options?: Workspace_initialize_in_options_TYPE): Promise<BranchNode>;
+			initialize(
+				in_options?: Workspace_initialize_in_options_TYPE,
+			): Promise<BranchNode>;
 			/**
 			 * Create and checkout a branch from the currently active commit
 			 * @param in_options Additional options
 			 * @param in_options.metadata.name The human readable name of the branch.
 			 *   If not specified, it defaults to the guid.
 			 */
-			branch(in_options?: Workspace_branch_in_options_TYPE): Promise<BranchNode>;
+			branch(
+				in_options?: Workspace_branch_in_options_TYPE,
+			): Promise<BranchNode>;
 			/**
 			 * Commit the current pending changes. The new commit node will be
 			 * the new head of the current branch. In detached head state, a new branch will be created.
@@ -1436,7 +1473,9 @@ declare module "@fluid-experimental/property-properties" {
 			 * rebasing the local branch and synchronizing with the remote repository.
 			 * @param in_options Additional options
 			 */
-			commit(in_options?: Workspace_commit_in_options_TYPE): Promise<CommitNode>;
+			commit(
+				in_options?: Workspace_commit_in_options_TYPE,
+			): Promise<CommitNode>;
 			/**
 			 * Check whether the Workspace has checked out a urn
 			 */
@@ -1457,7 +1496,7 @@ declare module "@fluid-experimental/property-properties" {
 			 * the branch. You can still commit changes but they will not be commited to
 			 * the original branch.
 			 */
-			isDetachedHead(): Boolean;
+			isDetachedHead(): boolean;
 
 			/**
 			 * Get the Urn currently used by the workspace
@@ -1472,7 +1511,7 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * Returns whether there are changes that have not yet been committed.
 			 */
-			hasPendingChanges(): Boolean;
+			hasPendingChanges(): boolean;
 
 			/**
 			 * Returns the ChangeSet of all pending changes.
@@ -1483,11 +1522,11 @@ declare module "@fluid-experimental/property-properties" {
 			 * Will return false if the workspace has local commits not yet pushed to the remote
 			 * branch, or if the remote branches has commits not yet pulled to the workspace.
 			 */
-			isSynchronized(): Boolean;
+			isSynchronized(): boolean;
 			/**
 			 * Whether a workspace is destroyed
 			 */
-			isDestroyed(): Boolean;
+			isDestroyed(): boolean;
 			/**
 			 * Performs a rebase of a branch onto another branch.
 			 *
@@ -1675,7 +1714,10 @@ declare module "@fluid-experimental/property-properties" {
 			 */
 			getTemplate(
 				in_name?: string | null,
-			): { [index: string]: PropertyTemplateType } | PropertyTemplateType | undefined;
+			):
+				| { [index: string]: PropertyTemplateType }
+				| PropertyTemplateType
+				| undefined;
 			/**
 			 * Leaves the branch if working on an active branch then destroys the workspace
 			 * NOTE: The workspace will no longer be usable after calling this function
@@ -1701,7 +1743,10 @@ declare module "@fluid-experimental/property-properties" {
 			 * @param in_params List of branch meta data
 			 * @param in_headNode The head node of the branch
 			 */
-			constructor(in_params: BranchNode_BranchNode_in_params_TYPE, in_headNode: CommitNode);
+			constructor(
+				in_params: BranchNode_BranchNode_in_params_TYPE,
+				in_headNode: CommitNode,
+			);
 			/**
 			 * Returns the name of the branch. If no name was specified, returns a unique id.
 			 */
@@ -2108,7 +2153,9 @@ declare module "@fluid-experimental/property-properties" {
 			 * This makes it possible to store it in a set collection.
 			 * @param in_params List of parameters
 			 */
-			constructor(in_params: NamedNodeProperty_NamedNodeProperty_in_params_TYPE);
+			constructor(
+				in_params: NamedNodeProperty_NamedNodeProperty_in_params_TYPE,
+			);
 			/**
 			 * Appends a property
 			 */
@@ -2150,7 +2197,9 @@ declare module "@fluid-experimental/property-properties" {
 			 * Stores the information to which CheckedOutRepositoryInfo object this root property belongs.
 			 * Note: these functions should only be used internally (within the PropertySets library)
 			 */
-			protected _getCheckedOutRepositoryInfo(): CheckedOutRepositoryInfo | undefined;
+			protected _getCheckedOutRepositoryInfo():
+				| CheckedOutRepositoryInfo
+				| undefined;
 			/**
 			 * Returns the name of all the static sub-properties of this property.
 			 */
@@ -2187,7 +2236,9 @@ declare module "@fluid-experimental/property-properties" {
 			 * @param in_childNode - The child for which the path is returned
 			 * @return The path segment to resolve the child property under this property
 			 */
-			protected _getPathSegmentForChildNode(in_childNode: NamedProperty): string;
+			protected _getPathSegmentForChildNode(
+				in_childNode: NamedProperty,
+			): string;
 			/**
 			 * Inserts a property into the set
 			 */
@@ -2269,13 +2320,15 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * Determines if the argument is a template structure
 			 */
-			public isTemplate(): Boolean;
+			public isTemplate(): boolean;
 			/**
 			 * Extracts typeids directly referred to in a template
 			 */
 			public extractDependencies(): Array<any>;
 
-			public static extractDependencies(template: PropertyTemplateType): Array<any>;
+			public static extractDependencies(
+				template: PropertyTemplateType,
+			): Array<any>;
 
 			constants: any[];
 
@@ -2585,7 +2638,7 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * Checks whether the referenced properties are available
 			 */
-			areReferencesAvailable(): Boolean;
+			areReferencesAvailable(): boolean;
 			/**
 			 * Update the reference and set it to the given commit, branch and repository
 			 * TODO: Can we also provide automatic updates for the repository when this property is already in a repository?

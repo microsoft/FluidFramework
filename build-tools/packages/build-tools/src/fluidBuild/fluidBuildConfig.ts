@@ -4,7 +4,10 @@
  */
 
 import type { InterdependencyRange } from "@fluid-tools/version-tools";
-import type { TaskDefinitionsOnDisk, TaskFileDependencies } from "./fluidTaskDefinitions";
+import type {
+	TaskDefinitionsOnDisk,
+	TaskFileDependencies,
+} from "./fluidTaskDefinitions";
 
 /**
  * The version of the fluidBuild configuration currently used.
@@ -85,7 +88,10 @@ export interface IFluidBuildDir {
 	defaultInterdependencyRange?: InterdependencyRange;
 }
 
-export type IFluidBuildDirEntry = string | IFluidBuildDir | (string | IFluidBuildDir)[];
+export type IFluidBuildDirEntry =
+	| string
+	| IFluidBuildDir
+	| (string | IFluidBuildDir)[];
 
 export interface IFluidBuildDirs {
 	[name: string]: IFluidBuildDirEntry;

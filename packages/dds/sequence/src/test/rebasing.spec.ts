@@ -3,19 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import { AttachState } from "@fluidframework/container-definitions";
-import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree/internal";
+import type { IMergeTreeInsertMsg } from "@fluidframework/merge-tree/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
-	MockContainerRuntime,
+	type MockContainerRuntime,
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
+import { strict as assert } from "assert";
 
-import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
+import { type SharedString, SharedStringFactory } from "../sequenceFactory.js";
 import { SharedStringClass } from "../sharedString.js";
 
 [
@@ -62,7 +61,9 @@ import { SharedStringClass } from "../sharedString.js";
 		};
 
 		beforeEach(async () => {
-			containerRuntimeFactory = new MockContainerRuntimeFactory(testConfig.options);
+			containerRuntimeFactory = new MockContainerRuntimeFactory(
+				testConfig.options,
+			);
 			[sharedString1, containerRuntime1] = await createSharedString(
 				"shared-string-1",
 				containerRuntimeFactory,

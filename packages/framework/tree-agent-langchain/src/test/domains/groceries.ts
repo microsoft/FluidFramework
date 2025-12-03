@@ -15,7 +15,8 @@ export class Grocery extends sf.objectRecursive(
 	{
 		name: sf.required(sf.string, {
 			metadata: {
-				description: "The name of the grocery item as it should appear on the list.",
+				description:
+					"The name of the grocery item as it should appear on the list.",
 			},
 		}),
 		price: sf.required(sf.number, {
@@ -30,7 +31,8 @@ export class Grocery extends sf.objectRecursive(
 		}),
 		nextGrocery: sf.optionalRecursive([() => Grocery], {
 			metadata: {
-				description: "The next grocery item to purchase after this one, if any.",
+				description:
+					"The next grocery item to purchase after this one, if any.",
 			},
 		}),
 	},

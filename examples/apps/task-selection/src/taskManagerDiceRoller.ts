@@ -4,11 +4,11 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/legacy";
 import { TaskManager } from "@fluidframework/task-manager/legacy";
 
-import { IDiceRoller } from "./interface.js";
+import type { IDiceRoller } from "./interface.js";
 
 const taskManagerKey = "taskManager";
 // The root is map-like, so we'll use this key for storing the value.
@@ -46,7 +46,8 @@ export class TaskManagerDiceRoller extends DataObject implements IDiceRoller {
 			}
 		});
 
-		const taskManagerHandle = this.root.get<IFluidHandle<TaskManager>>(taskManagerKey);
+		const taskManagerHandle =
+			this.root.get<IFluidHandle<TaskManager>>(taskManagerKey);
 		this._taskManager = await taskManagerHandle?.get();
 
 		this.subscribeToAutoRoll();

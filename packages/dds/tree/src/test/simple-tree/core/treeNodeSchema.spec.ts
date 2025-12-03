@@ -3,40 +3,46 @@
  * Licensed under the MIT License.
  */
 
+import type { TreeValue } from "../../../core/index.js";
+import type {
+	InsertableTypedNode,
+	NodeBuilderData,
+	NodeFromSchema,
+	NodeKind,
+	TreeLeafValue,
+	TreeNodeSchema,
+	TreeNodeSchemaClass,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/core/treeNodeSchema.js";
 import {
-	SchemaFactory,
 	type AllowedTypes,
 	type booleanSchema,
 	type numberSchema,
+	SchemaFactory,
 	type stringSchema,
 	type TreeNode,
 } from "../../../simple-tree/index.js";
+import {
+	objectSchema,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/node-kinds/index.js";
 import type {
 	areSafelyAssignable,
 	requireAssignableTo,
 	requireTrue,
 } from "../../../util/index.js";
-import {
-	objectSchema,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/node-kinds/index.js";
-
-import type {
-	InsertableTypedNode,
-	NodeBuilderData,
-	NodeFromSchema,
-	TreeLeafValue,
-	TreeNodeSchema,
-	NodeKind,
-	TreeNodeSchemaClass,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/core/treeNodeSchema.js";
-
-import type { TreeValue } from "../../../core/index.js";
 
 // TreeNodeSchemaCore constructor variance
 {
-	type S1 = TreeNodeSchemaClass<string, NodeKind, TreeNode, 0, false, unknown, 1 | 2>;
+	type S1 = TreeNodeSchemaClass<
+		string,
+		NodeKind,
+		TreeNode,
+		0,
+		false,
+		unknown,
+		1 | 2
+	>;
 	type S2 = TreeNodeSchemaClass<
 		string,
 		NodeKind,
@@ -48,17 +54,18 @@ import type { TreeValue } from "../../../core/index.js";
 	>;
 	type Combo = S1 | S2;
 	// Ensure that two schema with different TConstructorExtra behave contravariantly
-	type Extra = Combo extends TreeNodeSchemaClass<
-		string,
-		NodeKind,
-		TreeNode,
-		0,
-		false,
-		unknown,
-		infer R
-	>
-		? R
-		: "Nope";
+	type Extra =
+		Combo extends TreeNodeSchemaClass<
+			string,
+			NodeKind,
+			TreeNode,
+			0,
+			false,
+			unknown,
+			infer R
+		>
+			? R
+			: "Nope";
 	type _check = requireTrue<areSafelyAssignable<Extra, 2>>;
 }
 
@@ -87,7 +94,12 @@ const schema = new SchemaFactory("com.example");
 	}
 
 	// Class that implements both TreeNodeSchemaNonClass and TreeNodeSchemaNonClass
-	class CustomizedBoth extends objectSchema("B", { x: [schema.number] }, true, {}) {
+	class CustomizedBoth extends objectSchema(
+		"B",
+		{ x: [schema.number] },
+		true,
+		{},
+	) {
 		public customized = true;
 	}
 
@@ -140,4 +152,6 @@ class B extends schema.object("B", { x: [schema.number, schema.null] }) {}
 }
 
 // TreeLeafValue
-type _checkTreeLeafValue = requireTrue<areSafelyAssignable<TreeLeafValue, TreeValue>>;
+type _checkTreeLeafValue = requireTrue<
+	areSafelyAssignable<TreeLeafValue, TreeValue>
+>;

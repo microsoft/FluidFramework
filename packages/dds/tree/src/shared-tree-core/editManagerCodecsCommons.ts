@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 
 import type { IJsonCodec, IMultiFormatCodec } from "../codec/index.js";
 import type {
@@ -13,15 +13,19 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import { mapIterable, type JsonCompatibleReadOnly, type Mutable } from "../util/index.js";
+import {
+	type JsonCompatibleReadOnly,
+	type Mutable,
+	mapIterable,
+} from "../util/index.js";
+import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
+import type { SharedBranchSummaryData } from "./editManager.js";
 import type {
 	Commit,
 	EncodedCommit,
 	EncodedSharedBranch,
 	SequencedCommit,
 } from "./editManagerFormatCommons.js";
-import type { SharedBranchSummaryData } from "./editManager.js";
-import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
 
 export interface EditManagerEncodingContext {
 	idCompressor: IIdCompressor;
@@ -52,12 +56,18 @@ function encodeCommit<TChangeset, T extends Commit<TChangeset>>(
 			idCompressor: context.idCompressor,
 			revision: undefined,
 		}),
-		change: changeCodec.json.encode(commit.change, { ...context, revision: commit.revision }),
+		change: changeCodec.json.encode(commit.change, {
+			...context,
+			revision: commit.revision,
+		}),
 	};
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function decodeCommit<TChangeset, T extends EncodedCommit<JsonCompatibleReadOnly>>(
+function decodeCommit<
+	TChangeset,
+	T extends EncodedCommit<JsonCompatibleReadOnly>,
+>(
 	changeCodec: IMultiFormatCodec<
 		TChangeset,
 		JsonCompatibleReadOnly,
@@ -112,24 +122,27 @@ export function encodeSharedBranch<TChangeset>(
 				revision: undefined,
 			}),
 		),
-		peers: Array.from(data.peerLocalBranches.entries(), ([sessionId, branch]) => [
-			sessionId,
-			{
-				base: revisionTagCodec.encode(branch.base, {
-					originatorId: sessionId,
-					idCompressor: context.idCompressor,
-					revision: undefined,
-				}),
-				commits: branch.commits.map((commit) =>
-					encodeCommit(changeCodec, revisionTagCodec, commit, {
-						originatorId: commit.sessionId,
+		peers: Array.from(
+			data.peerLocalBranches.entries(),
+			([sessionId, branch]) => [
+				sessionId,
+				{
+					base: revisionTagCodec.encode(branch.base, {
+						originatorId: sessionId,
 						idCompressor: context.idCompressor,
-						schema: context.schema,
 						revision: undefined,
 					}),
-				),
-			},
-		]),
+					commits: branch.commits.map((commit) =>
+						encodeCommit(changeCodec, revisionTagCodec, commit, {
+							originatorId: commit.sessionId,
+							idCompressor: context.idCompressor,
+							schema: context.schema,
+							revision: undefined,
+						}),
+					),
+				},
+			],
+		),
 	};
 	if (data.session !== undefined) {
 		json.session = data.session;

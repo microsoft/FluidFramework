@@ -19,14 +19,14 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import type {
 	HostStoragePolicy,
-	IOdspResolvedUrl,
 	InstrumentedStorageTokenFetcher,
+	IOdspResolvedUrl,
 	TokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
+	createChildMonitoringContext,
 	type ITelemetryLoggerExt,
 	type MonitoringContext,
-	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { HostStoragePolicyInternal } from "./contracts.js";
@@ -79,7 +79,9 @@ export class OdspDocumentService
 		resolvedUrl: IResolvedUrl,
 		getAuthHeader: InstrumentedStorageTokenFetcher,
 		// eslint-disable-next-line @rushstack/no-new-null
-		getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
+		getWebsocketToken:
+			| ((options: TokenFetchOptions) => Promise<string | null>)
+			| undefined,
 		logger: ITelemetryLoggerExt,
 		cache: IOdspCache,
 		hostPolicy: HostStoragePolicy,
@@ -147,13 +149,16 @@ export class OdspDocumentService
 			logger,
 			properties: {
 				all: {
-					odc: hasOdcOrigin(new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl)),
+					odc: hasOdcOrigin(
+						new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl),
+					),
 				},
 			},
 		});
 
 		this.hostPolicy = hostPolicy;
-		this.hostPolicy.supportGetSnapshotApi = this._policies.supportGetSnapshotApi;
+		this.hostPolicy.supportGetSnapshotApi =
+			this._policies.supportGetSnapshotApi;
 		if (this.clientIsSummarizer) {
 			this.hostPolicy = { ...this.hostPolicy, summarizerClient: true };
 		}
@@ -183,14 +188,18 @@ export class OdspDocumentService
 				this.epochTracker,
 				// flushCallback
 				async () => {
-					const currentConnection = this.odspDelayLoadedDeltaStream?.currentDeltaConnection;
+					const currentConnection =
+						this.odspDelayLoadedDeltaStream?.currentDeltaConnection;
 					if (currentConnection !== undefined && !currentConnection.disposed) {
 						return currentConnection.flush();
 					}
-					throw new Error("Disconnected while uploading summary (attempt to perform flush())");
+					throw new Error(
+						"Disconnected while uploading summary (attempt to perform flush())",
+					);
 				},
 				() => {
-					return this.odspDelayLoadedDeltaStream?.relayServiceTenantAndSessionId;
+					return this.odspDelayLoadedDeltaStream
+						?.relayServiceTenantAndSessionId;
 				},
 				this.mc.config.getNumber("Fluid.Driver.Odsp.snapshotFormatFetchType"),
 			);
@@ -231,7 +240,8 @@ export class OdspDocumentService
 			},
 			// Ops requestFromSocket Callback.
 			(from, to) => {
-				const currentConnection = this.odspDelayLoadedDeltaStream?.currentDeltaConnection;
+				const currentConnection =
+					this.odspDelayLoadedDeltaStream?.currentDeltaConnection;
 				if (currentConnection !== undefined && !currentConnection.disposed) {
 					currentConnection.requestOps(from, to);
 				}
@@ -246,7 +256,9 @@ export class OdspDocumentService
 	 *
 	 * @returns returns the document delta stream service for onedrive/sharepoint driver.
 	 */
-	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+	public async connectToDeltaStream(
+		client: IClient,
+	): Promise<IDocumentDeltaConnection> {
 		if (this.socketModuleP === undefined) {
 			this.socketModuleP = this.getDelayLoadedDeltaStream();
 		}
@@ -270,7 +282,10 @@ export class OdspDocumentService
 	 * @returns The delta stream object.
 	 */
 	private async getDelayLoadedDeltaStream(): Promise<OdspDelayLoadedDeltaStream> {
-		assert(this.odspSocketModuleLoaded === false, 0x507 /* Should be loaded only once */);
+		assert(
+			this.odspSocketModuleLoaded === false,
+			0x507 /* Should be loaded only once */,
+		);
 		const module = await import(
 			/* webpackChunkName: "socketModule" */ "./odspDelayLoadedDeltaStream.js"
 		)
@@ -279,7 +294,10 @@ export class OdspDocumentService
 				return m;
 			})
 			.catch((error) => {
-				this.mc.logger.sendErrorEvent({ eventName: "SocketModuleLoadFailed" }, error);
+				this.mc.logger.sendErrorEvent(
+					{ eventName: "SocketModuleLoadFailed" },
+					error,
+				);
 				throw error;
 			});
 		this.odspDelayLoadedDeltaStream = new module.OdspDelayLoadedDeltaStream(
@@ -292,7 +310,8 @@ export class OdspDocumentService
 			this.hostPolicy,
 			this.epochTracker,
 			(ops: ISequencedDocumentMessage[]) => this.opsReceived(ops),
-			(metadata: Record<string, string>) => this.emit("metadataUpdate", metadata),
+			(metadata: Record<string, string>) =>
+				this.emit("metadataUpdate", metadata),
 			this.socketReferenceKeyPrefix,
 		);
 		return this.odspDelayLoadedDeltaStream;
@@ -337,7 +356,9 @@ export class OdspDocumentService
 				},
 				read: async (key: string): Promise<string | undefined> =>
 					// typing workaround because this.cache.persistedCache.get returns `Promise<any>`
-					this.cache.persistedCache.get({ ...opsKey, key }) as Promise<string | undefined>,
+					this.cache.persistedCache.get({ ...opsKey, key }) as Promise<
+						string | undefined
+					>,
 				remove: (): void => {
 					this.cache.persistedCache.removeEntries().catch(() => {});
 				},

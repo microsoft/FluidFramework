@@ -84,7 +84,10 @@ export function setCorners<T extends IMatrix<U>, U>(matrix: T): void {
 export function checkCorners<T extends IMatrix<U>, U>(matrix: T): void {
 	assert.equal(matrix.getCell(0, 0), "TopLeft");
 	assert.equal(matrix.getCell(0, matrix.colCount - 1), "TopRight");
-	assert.equal(matrix.getCell(matrix.rowCount - 1, matrix.colCount - 1), "BottomRight");
+	assert.equal(
+		matrix.getCell(matrix.rowCount - 1, matrix.colCount - 1),
+		"BottomRight",
+	);
 	assert.equal(matrix.getCell(matrix.rowCount - 1, 0), "BottomLeft");
 }
 
@@ -179,8 +182,16 @@ export function expectSize<T>(
 	colCount: number,
 ): void {
 	withReader(matrix, (reader) => {
-		assert.equal(reader.rowCount, rowCount, "'matrix' must have expected number of rows.");
-		assert.equal(reader.colCount, colCount, "'matrix' must have expected number of columns.");
+		assert.equal(
+			reader.rowCount,
+			rowCount,
+			"'matrix' must have expected number of rows.",
+		);
+		assert.equal(
+			reader.colCount,
+			colCount,
+			"'matrix' must have expected number of columns.",
+		);
 	});
 }
 

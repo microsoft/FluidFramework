@@ -4,6 +4,6 @@
  */
 
 export {
-	renderDocument,
 	type RenderMarkdownConfiguration,
+	renderDocument,
 } from "./Render.js";

@@ -5,6 +5,6 @@
 	"include": ["index.js"],
 	"compilerOptions": {
 		"allowJs": true,
-		"noEmit": true,
-	},
+		"noEmit": true
+	}
 }

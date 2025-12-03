@@ -39,7 +39,9 @@ export interface ExclusiveMapTree extends NodeData, MapTree {
  * @privateRemarks This is implemented iteratively (rather than recursively, which is much simpler)
  * to avoid the possibility of a stack overflow for very deep trees.
  */
-export function deepCopyMapTree(mapTree: MinimalMapTreeNodeView): ExclusiveMapTree {
+export function deepCopyMapTree(
+	mapTree: MinimalMapTreeNodeView,
+): ExclusiveMapTree {
 	type Next = [
 		fields: ExclusiveMapTree["fields"],
 		sourceFields: MinimalMapTreeNodeView["fields"],

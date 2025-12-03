@@ -134,7 +134,9 @@ export abstract class ErasedBaseType<out Name = unknown> {
  */
 export abstract class ErasedTypeImplementation<
 	TInterface extends ErasedBaseType,
-> extends ErasedBaseType<TInterface extends ErasedBaseType<infer Name> ? Name : never> {
+> extends ErasedBaseType<
+	TInterface extends ErasedBaseType<infer Name> ? Name : never
+> {
 	protected readonly brand!: (
 		dummy: never,
 	) => TInterface extends ErasedBaseType<infer Name> ? Name : never;
@@ -153,7 +155,10 @@ export abstract class ErasedTypeImplementation<
 		return (
 			typeof value === "object" &&
 			value !== null &&
-			Object.prototype.isPrototypeOf.call(this.prototype, value)
+			Object.prototype.isPrototypeOf.call(
+				ErasedTypeImplementation.prototype,
+				value,
+			)
 		);
 	}
 
@@ -171,7 +176,12 @@ export abstract class ErasedTypeImplementation<
 		this: TThis,
 		value: ErasedBaseType | InstanceTypeRelaxed<TThis>,
 	): asserts value is InstanceTypeRelaxed<TThis> {
-		if (!ErasedTypeImplementation[Symbol.hasInstance].call(this, value as object)) {
+		if (
+			!ErasedTypeImplementation[Symbol.hasInstance].call(
+				ErasedTypeImplementation,
+				value as object,
+			)
+		) {
 			throw new TypeError("Invalid ErasedBaseType instance");
 		}
 	}
@@ -192,4 +202,6 @@ export abstract class ErasedTypeImplementation<
  * This is based on the trick in {@link https://stackoverflow.com/a/74657881}.
  * @internal
  */
-export type InstanceTypeRelaxed<TClass> = InstanceType<(new () => never) & TClass>;
+export type InstanceTypeRelaxed<TClass> = InstanceType<
+	(new () => never) & TClass
+>;

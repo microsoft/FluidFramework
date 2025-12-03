@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import {
 	type BuildNode,
 	Change,
@@ -18,16 +16,21 @@ import {
 } from "@fluid-experimental/tree";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
-import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { type IChannel } from "@fluidframework/datastore-definitions/internal";
+import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
-	type ITestObjectProvider,
 	createSummarizerFromFactory,
+	type ITestObjectProvider,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-import { type ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import {
+	type ITree,
+	SchemaFactory,
+	TreeViewConfiguration,
+} from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
+import { strict as assert } from "assert";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 
@@ -134,7 +137,9 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 		newTreeFactory,
 		(legacyTree, newTree) => {
 			// Migration code that the customer writes
-			const rootNode = legacyTree.currentView.getViewNode(legacyTree.currentView.root);
+			const rootNode = legacyTree.currentView.getViewNode(
+				legacyTree.currentView.root,
+			);
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const nodeId = rootNode.traits.get(legacyNodeId)![0];
 			const legacyNode = legacyTree.currentView.getViewNode(nodeId);
@@ -172,10 +177,14 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 		const legacyTree = testObj.getTree<LegacySharedTree>();
 
 		// Initialize the legacy tree with some data
-		const rootNode = legacyTree.currentView.getViewNode(legacyTree.currentView.root);
+		const rootNode = legacyTree.currentView.getViewNode(
+			legacyTree.currentView.root,
+		);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const nodeId = rootNode.traits.get(legacyNodeId)![0];
-		const change: Change = Change.setPayload(nodeId, { quantity: originalValue });
+		const change: Change = Change.setPayload(nodeId, {
+			quantity: originalValue,
+		});
 		legacyTree.applyEdit(change);
 		// make sure changes are saved.
 		await provider.ensureSynchronized();
@@ -229,8 +238,14 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 
 		// Verify that the trees have been swapped by checking the attributes type
-		assert(shim1.currentTree.attributes.type === newTreeFactory.type, "should have migrated");
-		assert(shim2.currentTree.attributes.type === newTreeFactory.type, "should have migrated");
+		assert(
+			shim1.currentTree.attributes.type === newTreeFactory.type,
+			"should have migrated",
+		);
+		assert(
+			shim2.currentTree.attributes.type === newTreeFactory.type,
+			"should have migrated",
+		);
 
 		// Get the migrated values from the new tree
 		const tree1 = shim1.currentTree as ITree;
@@ -252,7 +267,10 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 		// Test that we can modify/send ops with the new Shared Tree
 		treeNode1.quantity = 5;
 		await provider.ensureSynchronized();
-		assert(treeNode2.quantity === treeNode1.quantity, "Failed to update the new tree via op");
+		assert(
+			treeNode2.quantity === treeNode1.quantity,
+			"Failed to update the new tree via op",
+		);
 	});
 
 	it("Can Hot Swap, summarize, and load from that summary", async () => {
@@ -280,9 +298,13 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 		const { summaryVersion } = await summarizeNow(summarizer);
 
 		// Load a new container
-		const container2 = await provider.loadContainer(runtimeFactory2, undefined, {
-			[LoaderHeader.version]: summaryVersion,
-		});
+		const container2 = await provider.loadContainer(
+			runtimeFactory2,
+			undefined,
+			{
+				[LoaderHeader.version]: summaryVersion,
+			},
+		);
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<SharedTreeShim>();
 

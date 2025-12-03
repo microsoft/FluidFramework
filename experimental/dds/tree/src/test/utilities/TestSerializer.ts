@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, IRequest, IResponse } from '@fluidframework/core-interfaces';
+import type { IFluidHandle, IRequest, IResponse } from '@fluidframework/core-interfaces';
 import { FluidHandleBase } from '@fluidframework/runtime-utils/internal';
-import { IFluidSerializer } from '@fluidframework/shared-object-base/internal';
+import type { IFluidSerializer } from '@fluidframework/shared-object-base/internal';
 
 export class TestFluidSerializer implements IFluidSerializer {
 	public constructor() {}

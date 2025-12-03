@@ -3,34 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
-import {
+import type {
 	IContainer,
 	IFluidCodeDetails,
 	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
 import {
-	loadExistingContainer,
 	type ILoaderProps,
+	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
-import { IUrlResolver, MessageType } from "@fluidframework/driver-definitions/internal";
+import {
+	type IUrlResolver,
+	MessageType,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
 } from "@fluidframework/local-driver/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import {
-	ILocalDeltaConnectionServer,
+	type ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
-	ITestFluidObject,
-	LoaderContainerTracker,
-	TestFluidObjectFactory,
 	createAndAttachContainerUsingProps,
 	createLoaderProps,
+	type ITestFluidObject,
+	LoaderContainerTracker,
+	TestFluidObjectFactory,
 } from "@fluidframework/test-utils/internal";
+import { strict as assert } from "assert";
 
 /**
  * Creates a loader with the given package entries and a delta connection server.
@@ -43,7 +45,9 @@ function createLocalLoaderProps(
 	urlResolver: IUrlResolver,
 	options?: ILoaderOptions,
 ): ILoaderProps {
-	const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+	const documentServiceFactory = new LocalDocumentServiceFactory(
+		deltaConnectionServer,
+	);
 
 	return createLoaderProps(
 		packageEntries,
@@ -62,7 +66,9 @@ describe("LocalTestServer", () => {
 		package: "localServerTestPackage",
 		config: {},
 	};
-	const factory = new TestFluidObjectFactory([[stringId, SharedString.getFactory()]]);
+	const factory = new TestFluidObjectFactory([
+		[stringId, SharedString.getFactory()],
+	]);
 
 	let deltaConnectionServer: ILocalDeltaConnectionServer;
 	let urlResolver: LocalResolver;
@@ -153,20 +159,52 @@ describe("LocalTestServer", () => {
 
 			sharedString1.insertText(0, "A");
 			sharedString2.insertText(0, "C");
-			assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
-			assert.equal(user2ReceivedMsgCount, 0, "User2 received message count is incorrect");
+			assert.equal(
+				user1ReceivedMsgCount,
+				0,
+				"User1 received message count is incorrect",
+			);
+			assert.equal(
+				user2ReceivedMsgCount,
+				0,
+				"User2 received message count is incorrect",
+			);
 
 			await loaderContainerTracker.ensureSynchronized(container1);
-			assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
-			assert.equal(user2ReceivedMsgCount, 0, "User2 received message count is incorrect");
+			assert.equal(
+				user1ReceivedMsgCount,
+				0,
+				"User1 received message count is incorrect",
+			);
+			assert.equal(
+				user2ReceivedMsgCount,
+				0,
+				"User2 received message count is incorrect",
+			);
 
 			await loaderContainerTracker.ensureSynchronized(container2);
-			assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
-			assert.equal(user2ReceivedMsgCount, 1, "User2 received message count is incorrect");
+			assert.equal(
+				user1ReceivedMsgCount,
+				0,
+				"User1 received message count is incorrect",
+			);
+			assert.equal(
+				user2ReceivedMsgCount,
+				1,
+				"User2 received message count is incorrect",
+			);
 
 			await loaderContainerTracker.processIncoming(container1);
-			assert.equal(user1ReceivedMsgCount, 1, "User1 received message count is incorrect");
-			assert.equal(user2ReceivedMsgCount, 1, "User2 received message count is incorrect");
+			assert.equal(
+				user1ReceivedMsgCount,
+				1,
+				"User1 received message count is incorrect",
+			);
+			assert.equal(
+				user2ReceivedMsgCount,
+				1,
+				"User2 received message count is incorrect",
+			);
 
 			sharedString1.insertText(0, "B");
 			await loaderContainerTracker.ensureSynchronized();
@@ -177,8 +215,16 @@ describe("LocalTestServer", () => {
 				"Shared string not synced",
 			);
 			assert.equal(sharedString1.getText().length, 3, sharedString1.getText());
-			assert.equal(user1ReceivedMsgCount, 1, "User1 received message count is incorrect");
-			assert.equal(user2ReceivedMsgCount, 2, "User2 received message count is incorrect");
+			assert.equal(
+				user1ReceivedMsgCount,
+				1,
+				"User1 received message count is incorrect",
+			);
+			assert.equal(
+				user2ReceivedMsgCount,
+				2,
+				"User2 received message count is incorrect",
+			);
 		});
 	});
 

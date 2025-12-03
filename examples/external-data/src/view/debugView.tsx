@@ -4,7 +4,8 @@
  */
 
 import isEqual from "lodash.isequal";
-import React, { useEffect, useState } from "react";
+import type React from "react";
+import { useEffect, useState } from "react";
 
 import { externalDataServicePort } from "../mock-external-data-service-interface/index.js";
 import type { ITaskData } from "../model-interface/index.js";
@@ -17,7 +18,9 @@ const externalTaskListId = "task-list-1";
  */
 async function fetchExternalServiceData(
 	externalData: Record<string, unknown>,
-	setExternalData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>,
+	setExternalData: React.Dispatch<
+		React.SetStateAction<Record<string, unknown>>
+	>,
 ): Promise<void> {
 	try {
 		const response = await fetch(
@@ -34,11 +37,17 @@ async function fetchExternalServiceData(
 		const responseBody = (await response.json()) as Record<string, unknown>;
 		const newData = responseBody.taskList as ITaskData;
 		if (newData !== undefined && !isEqual(newData, externalData)) {
-			console.log("APP: External data has changed. Updating local state with:\n", newData);
+			console.log(
+				"APP: External data has changed. Updating local state with:\n",
+				newData,
+			);
 			setExternalData(newData);
 		}
 	} catch (error) {
-		console.error("APP: An error was encountered while polling external data:", error);
+		console.error(
+			"APP: An error was encountered while polling external data:",
+			error,
+		);
 	}
 }
 
@@ -62,7 +71,7 @@ export const DebugView: React.FC = () => {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
-interface IExternalDataDebugViewProps {}
+type IExternalDataDebugViewProps = {};
 
 const ExternalDataDebugView: React.FC<IExternalDataDebugViewProps> = (
 	props: IExternalDataDebugViewProps,
@@ -70,7 +79,9 @@ const ExternalDataDebugView: React.FC<IExternalDataDebugViewProps> = (
 	const [externalData, setExternalData] = useState({});
 	useEffect(() => {
 		// Run once immediately to run without waiting.
-		fetchExternalServiceData(externalData, setExternalData).catch(console.error);
+		fetchExternalServiceData(externalData, setExternalData).catch(
+			console.error,
+		);
 	}, [externalData, setExternalData]);
 	const parsedExternalData = isEqual(externalData, {})
 		? []
@@ -113,7 +124,9 @@ function debugResetExternalData(): void {
 			"Access-Control-Allow-Origin": "*",
 		},
 	}).catch((error) => {
-		console.error(`APP: Encountered an error resetting external data:\n${error}`);
+		console.error(
+			`APP: Encountered an error resetting external data:\n${error}`,
+		);
 	});
 }
 
@@ -149,10 +162,14 @@ const ExternalServerTaskRow: React.FC<IExternalServerTaskRowProps> = (
 	const idChangeHandler = (e: React.SyntheticEvent<HTMLInputElement>): void => {
 		task.id = e.currentTarget.value;
 	};
-	const nameChangeHandler = (e: React.SyntheticEvent<HTMLInputElement>): void => {
+	const nameChangeHandler = (
+		e: React.SyntheticEvent<HTMLInputElement>,
+	): void => {
 		task.name = e.currentTarget.value;
 	};
-	const priorityChangeHandler = (e: React.SyntheticEvent<HTMLInputElement>): void => {
+	const priorityChangeHandler = (
+		e: React.SyntheticEvent<HTMLInputElement>,
+	): void => {
 		task.priority = Number.parseInt(e.currentTarget.value, 10);
 	};
 
@@ -200,13 +217,21 @@ export const ExternalServerTaskListView: React.FC = () => {
 	const [externalData, setExternalData] = useState({});
 	useEffect(() => {
 		// HACK: Populate the external view form with the data in the external server to start off with
-		fetchExternalServiceData(externalData, setExternalData).catch(console.error);
+		fetchExternalServiceData(externalData, setExternalData).catch(
+			console.error,
+		);
 
 		return (): void => {};
 	}, [externalData, setExternalData]);
 	const parsedExternalData = Object.entries(externalData as ITaskData);
-	const tasks = parsedExternalData.map(([id, { name, priority }]) => ({ id, name, priority }));
-	const taskRows = tasks.map((task) => <ExternalServerTaskRow key={task.id} task={task} />);
+	const tasks = parsedExternalData.map(([id, { name, priority }]) => ({
+		id,
+		name,
+		priority,
+	}));
+	const taskRows = tasks.map((task) => (
+		<ExternalServerTaskRow key={task.id} task={task} />
+	));
 	const writeToExternalServer = async (): Promise<void> => {
 		const formattedTasks = {};
 		for (const task of tasks) {

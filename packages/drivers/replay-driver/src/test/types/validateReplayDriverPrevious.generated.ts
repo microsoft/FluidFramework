@@ -11,12 +11,23 @@
  * Current version: 2.74.0
  */
 
-import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
+import type {
+	FullType,
+	MinimalType,
+	requireAssignableTo,
+	TypeOnly,
+} from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/replay-driver-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> =
+	| TypeOnly<T>
+	| MinimalType<T>
+	| FullType<T>
+	| typeof old
+	| typeof current
+	| requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -25,7 +36,10 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_FileSnapshotReader": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_FileSnapshotReader = requireAssignableTo<TypeOnly<old.FileSnapshotReader>, TypeOnly<current.FileSnapshotReader>>
+declare type old_as_current_for_Class_FileSnapshotReader = requireAssignableTo<
+	TypeOnly<old.FileSnapshotReader>,
+	TypeOnly<current.FileSnapshotReader>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -34,7 +48,10 @@ declare type old_as_current_for_Class_FileSnapshotReader = requireAssignableTo<T
  * typeValidation.broken:
  * "Class_FileSnapshotReader": {"backCompat": false}
  */
-declare type current_as_old_for_Class_FileSnapshotReader = requireAssignableTo<TypeOnly<current.FileSnapshotReader>, TypeOnly<old.FileSnapshotReader>>
+declare type current_as_old_for_Class_FileSnapshotReader = requireAssignableTo<
+	TypeOnly<current.FileSnapshotReader>,
+	TypeOnly<old.FileSnapshotReader>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -43,7 +60,11 @@ declare type current_as_old_for_Class_FileSnapshotReader = requireAssignableTo<T
  * typeValidation.broken:
  * "Class_ReadDocumentStorageServiceBase": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_ReadDocumentStorageServiceBase = requireAssignableTo<TypeOnly<old.ReadDocumentStorageServiceBase>, TypeOnly<current.ReadDocumentStorageServiceBase>>
+declare type old_as_current_for_Class_ReadDocumentStorageServiceBase =
+	requireAssignableTo<
+		TypeOnly<old.ReadDocumentStorageServiceBase>,
+		TypeOnly<current.ReadDocumentStorageServiceBase>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -52,7 +73,11 @@ declare type old_as_current_for_Class_ReadDocumentStorageServiceBase = requireAs
  * typeValidation.broken:
  * "Class_ReadDocumentStorageServiceBase": {"backCompat": false}
  */
-declare type current_as_old_for_Class_ReadDocumentStorageServiceBase = requireAssignableTo<TypeOnly<current.ReadDocumentStorageServiceBase>, TypeOnly<old.ReadDocumentStorageServiceBase>>
+declare type current_as_old_for_Class_ReadDocumentStorageServiceBase =
+	requireAssignableTo<
+		TypeOnly<current.ReadDocumentStorageServiceBase>,
+		TypeOnly<old.ReadDocumentStorageServiceBase>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -61,7 +86,10 @@ declare type current_as_old_for_Class_ReadDocumentStorageServiceBase = requireAs
  * typeValidation.broken:
  * "Class_ReplayController": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_ReplayController = requireAssignableTo<TypeOnly<old.ReplayController>, TypeOnly<current.ReplayController>>
+declare type old_as_current_for_Class_ReplayController = requireAssignableTo<
+	TypeOnly<old.ReplayController>,
+	TypeOnly<current.ReplayController>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -70,7 +98,10 @@ declare type old_as_current_for_Class_ReplayController = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Class_ReplayController": {"backCompat": false}
  */
-declare type current_as_old_for_Class_ReplayController = requireAssignableTo<TypeOnly<current.ReplayController>, TypeOnly<old.ReplayController>>
+declare type current_as_old_for_Class_ReplayController = requireAssignableTo<
+	TypeOnly<current.ReplayController>,
+	TypeOnly<old.ReplayController>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -79,7 +110,11 @@ declare type current_as_old_for_Class_ReplayController = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Class_ReplayDocumentService": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_ReplayDocumentService = requireAssignableTo<TypeOnly<old.ReplayDocumentService>, TypeOnly<current.ReplayDocumentService>>
+declare type old_as_current_for_Class_ReplayDocumentService =
+	requireAssignableTo<
+		TypeOnly<old.ReplayDocumentService>,
+		TypeOnly<current.ReplayDocumentService>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -88,7 +123,11 @@ declare type old_as_current_for_Class_ReplayDocumentService = requireAssignableT
  * typeValidation.broken:
  * "Class_ReplayDocumentService": {"backCompat": false}
  */
-declare type current_as_old_for_Class_ReplayDocumentService = requireAssignableTo<TypeOnly<current.ReplayDocumentService>, TypeOnly<old.ReplayDocumentService>>
+declare type current_as_old_for_Class_ReplayDocumentService =
+	requireAssignableTo<
+		TypeOnly<current.ReplayDocumentService>,
+		TypeOnly<old.ReplayDocumentService>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -97,7 +136,11 @@ declare type current_as_old_for_Class_ReplayDocumentService = requireAssignableT
  * typeValidation.broken:
  * "Class_ReplayDocumentServiceFactory": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_ReplayDocumentServiceFactory = requireAssignableTo<TypeOnly<old.ReplayDocumentServiceFactory>, TypeOnly<current.ReplayDocumentServiceFactory>>
+declare type old_as_current_for_Class_ReplayDocumentServiceFactory =
+	requireAssignableTo<
+		TypeOnly<old.ReplayDocumentServiceFactory>,
+		TypeOnly<current.ReplayDocumentServiceFactory>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -106,7 +149,11 @@ declare type old_as_current_for_Class_ReplayDocumentServiceFactory = requireAssi
  * typeValidation.broken:
  * "Class_ReplayDocumentServiceFactory": {"backCompat": false}
  */
-declare type current_as_old_for_Class_ReplayDocumentServiceFactory = requireAssignableTo<TypeOnly<current.ReplayDocumentServiceFactory>, TypeOnly<old.ReplayDocumentServiceFactory>>
+declare type current_as_old_for_Class_ReplayDocumentServiceFactory =
+	requireAssignableTo<
+		TypeOnly<current.ReplayDocumentServiceFactory>,
+		TypeOnly<old.ReplayDocumentServiceFactory>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -115,7 +162,10 @@ declare type current_as_old_for_Class_ReplayDocumentServiceFactory = requireAssi
  * typeValidation.broken:
  * "Class_SnapshotStorage": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_SnapshotStorage = requireAssignableTo<TypeOnly<old.SnapshotStorage>, TypeOnly<current.SnapshotStorage>>
+declare type old_as_current_for_Class_SnapshotStorage = requireAssignableTo<
+	TypeOnly<old.SnapshotStorage>,
+	TypeOnly<current.SnapshotStorage>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -124,7 +174,10 @@ declare type old_as_current_for_Class_SnapshotStorage = requireAssignableTo<Type
  * typeValidation.broken:
  * "Class_SnapshotStorage": {"backCompat": false}
  */
-declare type current_as_old_for_Class_SnapshotStorage = requireAssignableTo<TypeOnly<current.SnapshotStorage>, TypeOnly<old.SnapshotStorage>>
+declare type current_as_old_for_Class_SnapshotStorage = requireAssignableTo<
+	TypeOnly<current.SnapshotStorage>,
+	TypeOnly<old.SnapshotStorage>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -133,7 +186,11 @@ declare type current_as_old_for_Class_SnapshotStorage = requireAssignableTo<Type
  * typeValidation.broken:
  * "Class_StaticStorageDocumentServiceFactory": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_StaticStorageDocumentServiceFactory = requireAssignableTo<TypeOnly<old.StaticStorageDocumentServiceFactory>, TypeOnly<current.StaticStorageDocumentServiceFactory>>
+declare type old_as_current_for_Class_StaticStorageDocumentServiceFactory =
+	requireAssignableTo<
+		TypeOnly<old.StaticStorageDocumentServiceFactory>,
+		TypeOnly<current.StaticStorageDocumentServiceFactory>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -142,7 +199,11 @@ declare type old_as_current_for_Class_StaticStorageDocumentServiceFactory = requ
  * typeValidation.broken:
  * "Class_StaticStorageDocumentServiceFactory": {"backCompat": false}
  */
-declare type current_as_old_for_Class_StaticStorageDocumentServiceFactory = requireAssignableTo<TypeOnly<current.StaticStorageDocumentServiceFactory>, TypeOnly<old.StaticStorageDocumentServiceFactory>>
+declare type current_as_old_for_Class_StaticStorageDocumentServiceFactory =
+	requireAssignableTo<
+		TypeOnly<current.StaticStorageDocumentServiceFactory>,
+		TypeOnly<old.StaticStorageDocumentServiceFactory>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -151,7 +212,11 @@ declare type current_as_old_for_Class_StaticStorageDocumentServiceFactory = requ
  * typeValidation.broken:
  * "ClassStatics_FileSnapshotReader": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_FileSnapshotReader = requireAssignableTo<TypeOnly<typeof current.FileSnapshotReader>, TypeOnly<typeof old.FileSnapshotReader>>
+declare type current_as_old_for_ClassStatics_FileSnapshotReader =
+	requireAssignableTo<
+		TypeOnly<typeof current.FileSnapshotReader>,
+		TypeOnly<typeof old.FileSnapshotReader>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -160,7 +225,11 @@ declare type current_as_old_for_ClassStatics_FileSnapshotReader = requireAssigna
  * typeValidation.broken:
  * "ClassStatics_ReadDocumentStorageServiceBase": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_ReadDocumentStorageServiceBase = requireAssignableTo<TypeOnly<typeof current.ReadDocumentStorageServiceBase>, TypeOnly<typeof old.ReadDocumentStorageServiceBase>>
+declare type current_as_old_for_ClassStatics_ReadDocumentStorageServiceBase =
+	requireAssignableTo<
+		TypeOnly<typeof current.ReadDocumentStorageServiceBase>,
+		TypeOnly<typeof old.ReadDocumentStorageServiceBase>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -169,7 +238,11 @@ declare type current_as_old_for_ClassStatics_ReadDocumentStorageServiceBase = re
  * typeValidation.broken:
  * "ClassStatics_ReplayController": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_ReplayController = requireAssignableTo<TypeOnly<typeof current.ReplayController>, TypeOnly<typeof old.ReplayController>>
+declare type current_as_old_for_ClassStatics_ReplayController =
+	requireAssignableTo<
+		TypeOnly<typeof current.ReplayController>,
+		TypeOnly<typeof old.ReplayController>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -178,7 +251,11 @@ declare type current_as_old_for_ClassStatics_ReplayController = requireAssignabl
  * typeValidation.broken:
  * "ClassStatics_ReplayDocumentService": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_ReplayDocumentService = requireAssignableTo<TypeOnly<typeof current.ReplayDocumentService>, TypeOnly<typeof old.ReplayDocumentService>>
+declare type current_as_old_for_ClassStatics_ReplayDocumentService =
+	requireAssignableTo<
+		TypeOnly<typeof current.ReplayDocumentService>,
+		TypeOnly<typeof old.ReplayDocumentService>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -187,7 +264,11 @@ declare type current_as_old_for_ClassStatics_ReplayDocumentService = requireAssi
  * typeValidation.broken:
  * "ClassStatics_ReplayDocumentServiceFactory": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_ReplayDocumentServiceFactory = requireAssignableTo<TypeOnly<typeof current.ReplayDocumentServiceFactory>, TypeOnly<typeof old.ReplayDocumentServiceFactory>>
+declare type current_as_old_for_ClassStatics_ReplayDocumentServiceFactory =
+	requireAssignableTo<
+		TypeOnly<typeof current.ReplayDocumentServiceFactory>,
+		TypeOnly<typeof old.ReplayDocumentServiceFactory>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -196,7 +277,11 @@ declare type current_as_old_for_ClassStatics_ReplayDocumentServiceFactory = requ
  * typeValidation.broken:
  * "ClassStatics_SnapshotStorage": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_SnapshotStorage = requireAssignableTo<TypeOnly<typeof current.SnapshotStorage>, TypeOnly<typeof old.SnapshotStorage>>
+declare type current_as_old_for_ClassStatics_SnapshotStorage =
+	requireAssignableTo<
+		TypeOnly<typeof current.SnapshotStorage>,
+		TypeOnly<typeof old.SnapshotStorage>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -205,7 +290,11 @@ declare type current_as_old_for_ClassStatics_SnapshotStorage = requireAssignable
  * typeValidation.broken:
  * "ClassStatics_StaticStorageDocumentServiceFactory": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_StaticStorageDocumentServiceFactory = requireAssignableTo<TypeOnly<typeof current.StaticStorageDocumentServiceFactory>, TypeOnly<typeof old.StaticStorageDocumentServiceFactory>>
+declare type current_as_old_for_ClassStatics_StaticStorageDocumentServiceFactory =
+	requireAssignableTo<
+		TypeOnly<typeof current.StaticStorageDocumentServiceFactory>,
+		TypeOnly<typeof old.StaticStorageDocumentServiceFactory>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -214,7 +303,10 @@ declare type current_as_old_for_ClassStatics_StaticStorageDocumentServiceFactory
  * typeValidation.broken:
  * "Interface_IFileSnapshot": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IFileSnapshot = requireAssignableTo<TypeOnly<old.IFileSnapshot>, TypeOnly<current.IFileSnapshot>>
+declare type old_as_current_for_Interface_IFileSnapshot = requireAssignableTo<
+	TypeOnly<old.IFileSnapshot>,
+	TypeOnly<current.IFileSnapshot>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -223,4 +315,7 @@ declare type old_as_current_for_Interface_IFileSnapshot = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Interface_IFileSnapshot": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IFileSnapshot = requireAssignableTo<TypeOnly<current.IFileSnapshot>, TypeOnly<old.IFileSnapshot>>
+declare type current_as_old_for_Interface_IFileSnapshot = requireAssignableTo<
+	TypeOnly<current.IFileSnapshot>,
+	TypeOnly<old.IFileSnapshot>
+>;

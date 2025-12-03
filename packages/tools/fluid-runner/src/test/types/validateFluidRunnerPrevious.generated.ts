@@ -11,12 +11,23 @@
  * Current version: 2.74.0
  */
 
-import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
+import type {
+	FullType,
+	MinimalType,
+	requireAssignableTo,
+	TypeOnly,
+} from "@fluidframework/build-tools";
 import type * as old from "@fluidframework/fluid-runner-previous/internal";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
+declare type MakeUnusedImportErrorsGoAway<T> =
+	| TypeOnly<T>
+	| MinimalType<T>
+	| FullType<T>
+	| typeof old
+	| typeof current
+	| requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -25,7 +36,10 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Enum_OutputFormat": {"forwardCompat": false}
  */
-declare type old_as_current_for_Enum_OutputFormat = requireAssignableTo<TypeOnly<old.OutputFormat>, TypeOnly<current.OutputFormat>>
+declare type old_as_current_for_Enum_OutputFormat = requireAssignableTo<
+	TypeOnly<old.OutputFormat>,
+	TypeOnly<current.OutputFormat>
+>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -34,7 +48,10 @@ declare type old_as_current_for_Enum_OutputFormat = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Enum_OutputFormat": {"backCompat": false}
  */
-declare type current_as_old_for_Enum_OutputFormat = requireAssignableTo<TypeOnly<current.OutputFormat>, TypeOnly<old.OutputFormat>>
+declare type current_as_old_for_Enum_OutputFormat = requireAssignableTo<
+	TypeOnly<current.OutputFormat>,
+	TypeOnly<old.OutputFormat>
+>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -43,7 +60,11 @@ declare type current_as_old_for_Enum_OutputFormat = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Interface_IExportFileResponseFailure": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IExportFileResponseFailure = requireAssignableTo<TypeOnly<old.IExportFileResponseFailure>, TypeOnly<current.IExportFileResponseFailure>>
+declare type old_as_current_for_Interface_IExportFileResponseFailure =
+	requireAssignableTo<
+		TypeOnly<old.IExportFileResponseFailure>,
+		TypeOnly<current.IExportFileResponseFailure>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -52,7 +73,11 @@ declare type old_as_current_for_Interface_IExportFileResponseFailure = requireAs
  * typeValidation.broken:
  * "Interface_IExportFileResponseFailure": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IExportFileResponseFailure = requireAssignableTo<TypeOnly<current.IExportFileResponseFailure>, TypeOnly<old.IExportFileResponseFailure>>
+declare type current_as_old_for_Interface_IExportFileResponseFailure =
+	requireAssignableTo<
+		TypeOnly<current.IExportFileResponseFailure>,
+		TypeOnly<old.IExportFileResponseFailure>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -61,7 +86,11 @@ declare type current_as_old_for_Interface_IExportFileResponseFailure = requireAs
  * typeValidation.broken:
  * "Interface_IExportFileResponseSuccess": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IExportFileResponseSuccess = requireAssignableTo<TypeOnly<old.IExportFileResponseSuccess>, TypeOnly<current.IExportFileResponseSuccess>>
+declare type old_as_current_for_Interface_IExportFileResponseSuccess =
+	requireAssignableTo<
+		TypeOnly<old.IExportFileResponseSuccess>,
+		TypeOnly<current.IExportFileResponseSuccess>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -70,7 +99,11 @@ declare type old_as_current_for_Interface_IExportFileResponseSuccess = requireAs
  * typeValidation.broken:
  * "Interface_IExportFileResponseSuccess": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IExportFileResponseSuccess = requireAssignableTo<TypeOnly<current.IExportFileResponseSuccess>, TypeOnly<old.IExportFileResponseSuccess>>
+declare type current_as_old_for_Interface_IExportFileResponseSuccess =
+	requireAssignableTo<
+		TypeOnly<current.IExportFileResponseSuccess>,
+		TypeOnly<old.IExportFileResponseSuccess>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -79,7 +112,11 @@ declare type current_as_old_for_Interface_IExportFileResponseSuccess = requireAs
  * typeValidation.broken:
  * "Interface_IFluidFileConverter": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IFluidFileConverter = requireAssignableTo<TypeOnly<old.IFluidFileConverter>, TypeOnly<current.IFluidFileConverter>>
+declare type old_as_current_for_Interface_IFluidFileConverter =
+	requireAssignableTo<
+		TypeOnly<old.IFluidFileConverter>,
+		TypeOnly<current.IFluidFileConverter>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -88,7 +125,11 @@ declare type old_as_current_for_Interface_IFluidFileConverter = requireAssignabl
  * typeValidation.broken:
  * "Interface_IFluidFileConverter": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IFluidFileConverter = requireAssignableTo<TypeOnly<current.IFluidFileConverter>, TypeOnly<old.IFluidFileConverter>>
+declare type current_as_old_for_Interface_IFluidFileConverter =
+	requireAssignableTo<
+		TypeOnly<current.IFluidFileConverter>,
+		TypeOnly<old.IFluidFileConverter>
+	>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -97,7 +138,11 @@ declare type current_as_old_for_Interface_IFluidFileConverter = requireAssignabl
  * typeValidation.broken:
  * "TypeAlias_IExportFileResponse": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_IExportFileResponse = requireAssignableTo<TypeOnly<old.IExportFileResponse>, TypeOnly<current.IExportFileResponse>>
+declare type old_as_current_for_TypeAlias_IExportFileResponse =
+	requireAssignableTo<
+		TypeOnly<old.IExportFileResponse>,
+		TypeOnly<current.IExportFileResponse>
+	>;
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -106,4 +151,8 @@ declare type old_as_current_for_TypeAlias_IExportFileResponse = requireAssignabl
  * typeValidation.broken:
  * "TypeAlias_IExportFileResponse": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_IExportFileResponse = requireAssignableTo<TypeOnly<current.IExportFileResponse>, TypeOnly<old.IExportFileResponse>>
+declare type current_as_old_for_TypeAlias_IExportFileResponse =
+	requireAssignableTo<
+		TypeOnly<current.IExportFileResponse>,
+		TypeOnly<old.IExportFileResponse>
+	>;
