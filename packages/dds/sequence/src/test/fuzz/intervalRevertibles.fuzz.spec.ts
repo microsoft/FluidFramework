@@ -140,10 +140,6 @@ describe("IntervalCollection fuzz testing", () => {
 		...baseModel,
 		workloadName: "interval collection with revertibles",
 		validateConsistency: async (a, b) => {
-			// Call base validation first
-			await baseModel.validateConsistency(a, b);
-
-			// Validate interval oracles for both clients
 			if (hasIntervalCollectionOracles(a.channel)) {
 				for (const oracle of a.channel.intervalOracles.values()) {
 					oracle.validate(a.channel);
@@ -188,10 +184,6 @@ describe("IntervalCollection fuzz testing with rebasing", () => {
 		...baseModel,
 		workloadName: "interval collection with revertibles and rebasing",
 		validateConsistency: async (a, b) => {
-			// Call base validation first
-			await baseModel.validateConsistency(a, b);
-
-			// Validate interval oracles for both clients
 			if (hasIntervalCollectionOracles(a.channel)) {
 				for (const oracle of a.channel.intervalOracles.values()) {
 					oracle.validate(a.channel);

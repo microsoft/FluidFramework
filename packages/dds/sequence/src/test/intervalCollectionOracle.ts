@@ -122,7 +122,7 @@ export class IntervalCollectionOracle {
 	};
 	private readonly changed = (
 		interval: SequenceInterval,
-		propertyDeltas: any,
+		propertyDeltas: PropertySet,
 		previousInterval: any,
 		local: boolean,
 		slide: boolean,
@@ -132,8 +132,10 @@ export class IntervalCollectionOracle {
 			"BUG: changed event received with undefined interval - violates API contract",
 		);
 		assert(
-			previousInterval !== undefined || propertyDeltas !== undefined,
-			"BUG: changed event has both previousInterval and propertyDeltas undefined - violates API contract",
+			propertyDeltas !== undefined &&
+				propertyDeltas !== null &&
+				typeof propertyDeltas === "object",
+			"BUG: changed 'propertyDeltas' must be a non-null object (can be empty) - violates API contract",
 		);
 		const existing = this.intervals.get(interval.getIntervalId());
 		assert(
@@ -144,10 +146,8 @@ export class IntervalCollectionOracle {
 			existing.start = interval.start;
 			existing.end = interval.end;
 		}
-		if (propertyDeltas !== undefined && propertyDeltas !== null) {
-			for (const key of Object.keys(propertyDeltas)) {
-				existing.properties[key] = interval.properties[key];
-			}
+		for (const key of Object.keys(propertyDeltas)) {
+			existing.properties[key] = interval.properties[key];
 		}
 	};
 	validate(sharedString: SharedString) {

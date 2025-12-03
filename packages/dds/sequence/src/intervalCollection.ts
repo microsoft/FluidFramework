@@ -1122,7 +1122,7 @@ export class IntervalCollection
 		previousInterval.start.refType = ReferenceType.Transient;
 		previousInterval.end.refType = ReferenceType.Transient;
 		this.emit("changeInterval", interval, previousInterval, local, op, slide);
-		this.emit("changed", interval, undefined, previousInterval ?? undefined, local, slide);
+		this.emit("changed", interval, {}, previousInterval ?? undefined, local, slide);
 		previousInterval.start.refType = startRefType;
 		previousInterval.end.refType = endRefType;
 	}
@@ -1488,11 +1488,12 @@ export class IntervalCollection
 				localInterval !== undefined &&
 				(localInterval === interval || localOpMetadata.type === "add")
 			) {
+				// Use deleteExistingInterval (not removeExistingInterval) to ensure the deleteInterval
+				// event is emitted when intervals slide off during rebasing.
 				this.deleteExistingInterval({ interval: localInterval, local: true });
 			}
 			return undefined;
 		}
-
 		const { start, end } = rebasedEndpoint;
 		if (
 			interval.start.getSegment() !== start.segment ||
