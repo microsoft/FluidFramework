@@ -67,10 +67,7 @@ export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
  * @system
  * @beta
  */
-export type Accessor<
-	T,
-	BaseAccessor extends ValueAccessor<T>,
-> = BaseAccessor extends ProxiedValueAccessor<T>
+export type Accessor<T, BaseAccessor extends ValueAccessor<T>> = BaseAccessor extends ProxiedValueAccessor<T>
 	? () => DeepReadonly<JsonDeserialized<T>> | undefined
 	: BaseAccessor extends RawValueAccessor<T>
 		? DeepReadonly<JsonDeserialized<T>>
@@ -107,10 +104,8 @@ export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
  * @sealed
  * @beta
  */
-export interface LatestClientData<
-	T,
-	TValueAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>,
-> extends LatestData<T, TValueAccessor> {
+export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>>
+	extends LatestData<T, TValueAccessor> {
 	/**
 	 * Associated {@link Attendee}.
 	 */
@@ -134,9 +129,7 @@ export type StateSchemaValidator<T> = (
 	unvalidatedData: unknown,
 ) => JsonDeserialized<T> | undefined;
 
-type StateSchemaValidatorToOpaque<T> = (
-	rawData: OpaqueJsonDeserialized<T>,
-) => OpaqueJsonDeserialized<T> | undefined;
+type StateSchemaValidatorToOpaque<T> = (rawData: OpaqueJsonDeserialized<T>) => OpaqueJsonDeserialized<T> | undefined;
 
 function createGetterFunction<T>(
 	clientState: ValidatableRequiredState<T>,

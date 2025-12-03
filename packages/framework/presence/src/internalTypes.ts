@@ -4,10 +4,7 @@
  */
 
 import type { ExtensionHost as ContainerExtensionHost } from "@fluidframework/container-runtime-definitions/internal";
-import type {
-	InternalUtilityTypes,
-	OpaqueJsonDeserialized,
-} from "@fluidframework/core-interfaces/internal";
+import type { InternalUtilityTypes, OpaqueJsonDeserialized } from "@fluidframework/core-interfaces/internal";
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { AttendeeId, Attendee } from "./presence.js";
@@ -59,10 +56,7 @@ export type IEphemeralRuntime = Omit<ExtensionHost, "logger" | "submitAddressedS
 		 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 		 */
 		submitSignal: (
-			message:
-				| OutboundAcknowledgementMessage
-				| OutboundClientJoinMessage
-				| OutboundDatastoreUpdateMessage,
+			message: OutboundAcknowledgementMessage | OutboundClientJoinMessage | OutboundDatastoreUpdateMessage,
 		) => void;
 	};
 
@@ -74,8 +68,7 @@ export type IEphemeralRuntime = Omit<ExtensionHost, "logger" | "submitAddressedS
  */
 export interface ValueManager<
 	TValue,
-	TValueState extends
-		InternalTypes.ValueDirectoryOrState<TValue> = InternalTypes.ValueDirectoryOrState<TValue>,
+	TValueState extends InternalTypes.ValueDirectoryOrState<TValue> = InternalTypes.ValueDirectoryOrState<TValue>,
 > {
 	// State objects should provide value - implement Required<ValueManager<...>>
 	readonly value?: TValueState;
@@ -141,9 +134,7 @@ export interface ValidatableValueDirectory<T> {
  * @remarks
  * This is the validatable version of {@link InternalTypes.ValueDirectoryOrState}.
  */
-export type ValidatableValueDirectoryOrState<T> =
-	| ValidatableRequiredState<T>
-	| ValidatableValueDirectory<T>;
+export type ValidatableValueDirectoryOrState<T> = ValidatableRequiredState<T> | ValidatableValueDirectory<T>;
 
 /**
  * Transforms basic value datastore / protocol type into equivalent type
@@ -177,9 +168,7 @@ export type ValidatableValueStructure<
 					}
 				>
 			>
-		: T extends
-					| InternalTypes.ValueRequiredState<infer TValue>
-					| InternalTypes.ValueOptionalState<infer TValue>
+		: T extends InternalTypes.ValueRequiredState<infer TValue> | InternalTypes.ValueOptionalState<infer TValue>
 			? InternalUtilityTypes.FlattenIntersection<
 					Omit<T, keyof ValidatableMetadata<TValue>> & ValidatableMetadata<TValue>
 				>

@@ -10,21 +10,13 @@ import type {
 } from "@fluidframework/container-runtime-definitions/internal";
 import type { IEmitter, Listenable } from "@fluidframework/core-interfaces/internal";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
-import type {
-	ITelemetryLoggerExt,
-	MonitoringContext,
-} from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt, MonitoringContext } from "@fluidframework/telemetry-utils/internal";
 import { createChildMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type { ExtensionRuntimeProperties, IEphemeralRuntime } from "./internalTypes.js";
-import type {
-	AttendeesEvents,
-	AttendeeId,
-	PresenceWithNotifications as Presence,
-	PresenceEvents,
-} from "./presence.js";
+import type { AttendeesEvents, AttendeeId, PresenceWithNotifications as Presence, PresenceEvents } from "./presence.js";
 import type { PresenceDatastoreManager } from "./presenceDatastoreManager.js";
 import { PresenceDatastoreManagerImpl } from "./presenceDatastoreManager.js";
 import type { SignalMessages } from "./protocol.js";
@@ -68,8 +60,7 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 		getWorkspace: <TSchema extends NotificationsWorkspaceSchema>(
 			workspaceAddress: WorkspaceAddress,
 			requestedContent: TSchema,
-		): NotificationsWorkspace<TSchema> =>
-			this.datastoreManager.getWorkspace(`n:${workspaceAddress}`, requestedContent),
+		): NotificationsWorkspace<TSchema> => this.datastoreManager.getWorkspace(`n:${workspaceAddress}`, requestedContent),
 	};
 
 	private readonly mc: MonitoringContext | undefined = undefined;
@@ -131,16 +122,8 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 	 * @param message - Unverified message to be processed
 	 * @param local - Whether the message originated locally (`true`) or remotely (`false`)
 	 */
-	public processSignal(
-		addressChain: string[],
-		message: InboundExtensionMessage<SignalMessages>,
-		local: boolean,
-	): void {
-		this.datastoreManager.processSignal(
-			message,
-			local,
-			/* optional */ addressChain[0] === "?",
-		);
+	public processSignal(addressChain: string[], message: InboundExtensionMessage<SignalMessages>, local: boolean): void {
+		this.datastoreManager.processSignal(message, local, /* optional */ addressChain[0] === "?");
 	}
 }
 
@@ -157,8 +140,7 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 function setupSubComponents(
 	attendeeId: AttendeeId,
 	runtime: IEphemeralRuntime,
-	events: Listenable<PresenceEvents & AttendeesEvents> &
-		IEmitter<PresenceEvents & AttendeesEvents>,
+	events: Listenable<PresenceEvents & AttendeesEvents> & IEmitter<PresenceEvents & AttendeesEvents>,
 	logger: ITelemetryLoggerExt | undefined,
 	presence: Presence,
 ): [PresenceDatastoreManager, SystemWorkspace] {

@@ -47,9 +47,7 @@ class PresenceManagerDataObject extends LoadableFluidObject {
 			// Signals) is readily detectable here and use that presence manager directly.
 			const runtime = this.runtime;
 			const events = createEmitter<ExtensionHostEvents>();
-			runtime.on("connected", (clientId) =>
-				events.emit("joined", { clientId, canWrite: true }),
-			);
+			runtime.on("connected", (clientId) => events.emit("joined", { clientId, canWrite: true }));
 			runtime.on("disconnected", () => events.emit("disconnected"));
 
 			const manager = createPresenceManager({
@@ -60,8 +58,7 @@ class PresenceManagerDataObject extends LoadableFluidObject {
 				getAudience: runtime.getAudience.bind(runtime),
 				submitSignal: (message: OutboundPresenceMessage) =>
 					runtime.submitSignal(message.type, message.content, message.targetClientId),
-				supportedFeatures:
-					new Set() /* We do not implement feature detection here since this is a deprecated path */,
+				supportedFeatures: new Set() /* We do not implement feature detection here since this is a deprecated path */,
 			});
 			this.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
 				assertSignalMessageIsValid(message);
@@ -81,10 +78,7 @@ class PresenceManagerFactory {
 		return value instanceof PresenceManagerDataObject;
 	}
 
-	public readonly factory = new BasicDataStoreFactory(
-		"@fluidframework/presence",
-		PresenceManagerDataObject,
-	);
+	public readonly factory = new BasicDataStoreFactory("@fluidframework/presence", PresenceManagerDataObject);
 }
 
 /**
@@ -108,10 +102,9 @@ export declare class ExperimentalPresenceDO {
  * @deprecated Use {@link getPresence} instead.
  * @alpha
  */
-export const ExperimentalPresenceManager =
-	new PresenceManagerFactory() as unknown as SharedObjectKind<
-		IFluidLoadable & ExperimentalPresenceDO
-	>;
+export const ExperimentalPresenceManager = new PresenceManagerFactory() as unknown as SharedObjectKind<
+	IFluidLoadable & ExperimentalPresenceDO
+>;
 
 /**
  * Acquire Presence from a DataStore based Presence Manager

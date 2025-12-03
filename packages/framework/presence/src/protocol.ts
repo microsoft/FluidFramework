@@ -76,8 +76,7 @@ export type OutboundDatastoreUpdateMessage = OutboundExtensionMessage<DatastoreU
 /**
  * Inbound and verified datastore update message
  */
-export type InboundDatastoreUpdateMessage =
-	VerifiedInboundExtensionMessage<DatastoreUpdateMessage>;
+export type InboundDatastoreUpdateMessage = VerifiedInboundExtensionMessage<DatastoreUpdateMessage>;
 
 /**
  * Client join message type.
@@ -131,7 +130,4 @@ export type OutboundPresenceMessage =
 /**
  * Messages structures that can be sent and received as understood in the presence protocol
  */
-export type SignalMessages =
-	| AcknowledgementMessage
-	| ClientJoinMessage
-	| DatastoreUpdateMessage;
+export type SignalMessages = AcknowledgementMessage | ClientJoinMessage | DatastoreUpdateMessage;

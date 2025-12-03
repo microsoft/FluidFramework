@@ -24,9 +24,7 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	export type IfNotificationListener<Event, IfListener, Else> = Event extends (
-		...args: infer P
-	) => void
+	export type IfNotificationListener<Event, IfListener, Else> = Event extends (...args: infer P) => void
 		? CoreInternalUtilityTypes.IfSameType<P, JsonSerializable<P>, IfListener, Else>
 		: Else;
 
@@ -58,9 +56,7 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	export type JsonDeserializedParameters<T extends (...args: any[]) => any> = T extends (
-		...args: infer P
-	) => any
+	export type JsonDeserializedParameters<T extends (...args: any[]) => any> = T extends (...args: infer P) => any
 		? JsonDeserialized<P>
 		: never;
 
@@ -69,9 +65,7 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	export type JsonSerializableParameters<T extends (...args: any[]) => any> = T extends (
-		...args: infer P
-	) => any
+	export type JsonSerializableParameters<T extends (...args: any[]) => any> = T extends (...args: infer P) => any
 		? JsonSerializable<P>
 		: never;
 }

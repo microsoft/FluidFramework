@@ -72,11 +72,7 @@ module.exports = {
 		{
 			label: "Overridden server dependencies should always be exact versions",
 			dependencyTypes: ["pnpmOverrides"],
-			dependencies: [
-				"@fluidframework/gitresources",
-				"@fluidframework/protocol-base",
-				"@fluidframework/server-*",
-			],
+			dependencies: ["@fluidframework/gitresources", "@fluidframework/protocol-base", "@fluidframework/server-*"],
 			packages: ["**"],
 			range: "",
 		},

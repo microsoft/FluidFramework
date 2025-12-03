@@ -20,22 +20,14 @@ import type {
 	ValidatableValueStructure,
 } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
-import type {
-	AttendeeId,
-	PresenceWithNotifications as Presence,
-	PresenceEvents,
-} from "./presence.js";
+import type { AttendeeId, PresenceWithNotifications as Presence, PresenceEvents } from "./presence.js";
 import type {
 	ClientUpdateEntry,
 	RuntimeLocalUpdateOptions,
 	PresenceStatesInternal,
 	ValueElementMap,
 } from "./presenceStates.js";
-import {
-	createPresenceStates,
-	mergeUntrackedDatastore,
-	mergeValueDirectory,
-} from "./presenceStates.js";
+import { createPresenceStates, mergeUntrackedDatastore, mergeValueDirectory } from "./presenceStates.js";
 import type {
 	DatastoreMessageContent,
 	GeneralDatastoreMessageContent,
@@ -46,11 +38,7 @@ import type {
 	SignalMessages,
 	SystemDatastore,
 } from "./protocol.js";
-import {
-	acknowledgementMessageType,
-	datastoreUpdateMessageType,
-	joinMessageType,
-} from "./protocol.js";
+import { acknowledgementMessageType, datastoreUpdateMessageType, joinMessageType } from "./protocol.js";
 import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
 import { TimerManager } from "./timerManager.js";
 import type {
@@ -80,11 +68,7 @@ const internalWorkspaceTypes: Readonly<Record<string, "States" | "Notifications"
 	n: "Notifications",
 } as const;
 
-const knownMessageTypes = new Set([
-	joinMessageType,
-	datastoreUpdateMessageType,
-	acknowledgementMessageType,
-]);
+const knownMessageTypes = new Set([joinMessageType, datastoreUpdateMessageType, acknowledgementMessageType]);
 function isPresenceMessage(
 	message: InboundExtensionMessage<SignalMessages>,
 ): message is InboundDatastoreUpdateMessage | InboundClientJoinMessage {
@@ -119,11 +103,7 @@ export interface PresenceDatastoreManager {
 		internalWorkspaceAddress: `n:${WorkspaceAddress}`,
 		requestedContent: TSchema,
 	): NotificationsWorkspace<TSchema>;
-	processSignal(
-		message: InboundExtensionMessage<SignalMessages>,
-		local: boolean,
-		optional: boolean,
-	): void;
+	processSignal(message: InboundExtensionMessage<SignalMessages>, local: boolean, optional: boolean): void;
 }
 
 function mergeGeneralDatastoreMessageContent(
@@ -303,8 +283,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		// Lack of anyone likely means that this client is very freshly joined
 		// and has not received any Join Signals (type="join") from the service
 		// yet.
-		const { audience, selfPresent, interactiveMembersExcludingSelf } =
-			this.getAudienceInformation(selfClientId);
+		const { audience, selfPresent, interactiveMembersExcludingSelf } = this.getAudienceInformation(selfClientId);
 
 		if (interactiveMembersExcludingSelf.all.size === 0 && alternateProvider !== undefined) {
 			if (selfPresent) {
@@ -426,10 +405,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			workspaceDatastore = this.datastore[internalWorkspaceAddress] = {};
 		}
 
-		const localUpdate = (
-			states: { [key: string]: ClientUpdateEntry },
-			options: RuntimeLocalUpdateOptions,
-		): void => {
+		const localUpdate = (states: { [key: string]: ClientUpdateEntry }, options: RuntimeLocalUpdateOptions): void => {
 			// Check for connectivity before sending updates.
 			if (this.runtime.getJoinedStatus() === "disconnected") {
 				return;
@@ -473,10 +449,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	 * Enqueues a new message to be sent. The message may be queued or may be sent immediately depending on the state of
 	 * the send timer, other messages in the queue, the configured allowed latency, etc.
 	 */
-	private enqueueMessage(
-		data: GeneralDatastoreMessageContent | "sendAll",
-		options: RuntimeLocalUpdateOptions,
-	): void {
+	private enqueueMessage(data: GeneralDatastoreMessageContent | "sendAll", options: RuntimeLocalUpdateOptions): void {
 		if (this.queuedData !== "sendAll") {
 			this.queuedData =
 				data === "sendAll"
@@ -585,8 +558,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			const workspaceData: GeneralDatastoreMessageContent[typeof workspaceAddress] = {};
 
 			for (const [stateName, clientRecord] of objectEntries(workspace)) {
-				const cleanClientRecord: GeneralDatastoreMessageContent[typeof workspaceAddress][typeof stateName] =
-					{};
+				const cleanClientRecord: GeneralDatastoreMessageContent[typeof workspaceAddress][typeof stateName] = {};
 
 				for (const [attendeeId, valueData] of objectEntries(clientRecord)) {
 					cleanClientRecord[attendeeId] = this.stripValidationFromValueData(valueData);
@@ -632,9 +604,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		// only has optional properties over InternalTypes.Value*State and
 		// thus readily does satisfy. If `validatedValue?: never` is uncommented
 		// in Value*State then this will fail.
-		valueData satisfies
-			| InternalTypes.ValueRequiredState<unknown>
-			| InternalTypes.ValueOptionalState<unknown>;
+		valueData satisfies InternalTypes.ValueRequiredState<unknown> | InternalTypes.ValueOptionalState<unknown>;
 		return valueData as T;
 	}
 
@@ -688,11 +658,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		this.queuedData = undefined;
 	}
 
-	public processSignal(
-		message: InboundExtensionMessage<SignalMessages>,
-		local: boolean,
-		optional: boolean,
-	): void {
+	public processSignal(message: InboundExtensionMessage<SignalMessages>, local: boolean, optional: boolean): void {
 		const received = Date.now();
 		assert(message.clientId !== null, 0xa3a /* Map received signal without clientId */);
 		if (!isPresenceMessage(message)) {
@@ -707,9 +673,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// messages have more weight, but that diminishes as new messages
 			// contribute.
 			this.returnedMessages = Math.min(this.returnedMessages + 1, 256);
-			this.averageLatency =
-				(this.averageLatency * (this.returnedMessages - 1) + deliveryDelta) /
-				this.returnedMessages;
+			this.averageLatency = (this.averageLatency * (this.returnedMessages - 1) + deliveryDelta) / this.returnedMessages;
 			return;
 		}
 
@@ -728,9 +692,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			this.stopWaitingAndJoin(selfClientId, /* alternateProvider */ message.clientId);
 		}
 
-		const timeModifier =
-			received -
-			(this.averageLatency + message.content.avgLatency + message.content.sendTimestamp);
+		const timeModifier = received - (this.averageLatency + message.content.avgLatency + message.content.sendTimestamp);
 
 		const postUpdateActions: PostUpdateAction[] = [];
 
@@ -810,9 +772,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			}
 
 			// Separate internal type prefix from public workspace address
-			const match = /^([^:]):([^:]+:.+)$/.exec(workspaceAddress) as
-				| null
-				| [string, string, WorkspaceAddress];
+			const match = /^([^:]):([^:]+:.+)$/.exec(workspaceAddress) as null | [string, string, WorkspaceAddress];
 
 			if (match === null) {
 				continue;
@@ -834,12 +794,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			const workspace = this.workspaces.get(workspaceAddress);
 			if (workspace) {
 				postUpdateActions.push(
-					...workspace.internal.processUpdate(
-						received,
-						timeModifier,
-						remoteDatastore,
-						message.clientId,
-					),
+					...workspace.internal.processUpdate(received, timeModifier, remoteDatastore, message.clientId),
 				);
 			} else {
 				// All broadcast state is kept even if not currently registered, unless a value
@@ -878,10 +833,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				}
 			} else {
 				// No response needed yet - schedule a later attempt
-				this.broadcastRequestsTimer.setTimeout(
-					this.sendJoinResponseIfStillNeeded,
-					minResponseTime - now,
-				);
+				this.broadcastRequestsTimer.setTimeout(this.sendJoinResponseIfStillNeeded, minResponseTime - now);
 			}
 		}
 	};
@@ -897,10 +849,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	 * response patterns. The convenience of being client connection id will allow
 	 * correlation with other telemetry where it is often called just `clientId`.
 	 */
-	private prepareJoinResponse(
-		updateProviders: ClientConnectionId[],
-		requestor: ClientConnectionId,
-	): void {
+	private prepareJoinResponse(updateProviders: ClientConnectionId[], requestor: ClientConnectionId): void {
 		// We must be connected to receive this message, so clientId should be defined.
 		// If it isn't then, not really a problem; just won't be in provider or audience list.
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -919,10 +868,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				// Compute order quorum join order (indicated by sequenceNumber)
 				relativeResponseOrder = 0;
 				for (const { client, sequenceNumber } of quorumMembers.values()) {
-					if (
-						sequenceNumber < self.sequenceNumber &&
-						client.details.capabilities.interactive
-					) {
+					if (sequenceNumber < self.sequenceNumber && client.details.capabilities.interactive) {
 						relativeResponseOrder++;
 					}
 				}
@@ -939,8 +885,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// When not named to provide update, wait an additional amount
 			// of time for those named or others to respond.
 			joinResponseDelayMs +=
-				broadcastJoinResponseDelaysMs.backupResponderIncrement *
-				(3 * updateProviders.length + relativeResponseOrder);
+				broadcastJoinResponseDelaysMs.backupResponderIncrement * (3 * updateProviders.length + relativeResponseOrder);
 		}
 
 		// Add the requestor to the list of clients that will receive the broadcast.
@@ -954,8 +899,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// Check if requestor count meets or exceeds count of other audience
 			// members indicating that we effectively have a complete snapshot
 			// (once the current message being processed is processed).
-			const { selfPresent, interactiveMembersExcludingSelf } =
-				this.getAudienceInformation(selfClientId);
+			const { selfPresent, interactiveMembersExcludingSelf } = this.getAudienceInformation(selfClientId);
 			if (
 				// Self-present check is done to help ensure that audience
 				// information is accurate. If self is not present, audience
@@ -986,15 +930,9 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		} else {
 			// Check if there isn't already a timer scheduled to send a join
 			// response with in this request's deadline.
-			if (
-				this.broadcastRequestsTimer.hasExpired() ||
-				deadlineTime < this.broadcastRequestsTimer.expireTime
-			) {
+			if (this.broadcastRequestsTimer.hasExpired() || deadlineTime < this.broadcastRequestsTimer.expireTime) {
 				// Set or update the timer.
-				this.broadcastRequestsTimer.setTimeout(
-					this.sendJoinResponseIfStillNeeded,
-					joinResponseDelayMs,
-				);
+				this.broadcastRequestsTimer.setTimeout(this.sendJoinResponseIfStillNeeded, joinResponseDelayMs);
 			}
 		}
 	}

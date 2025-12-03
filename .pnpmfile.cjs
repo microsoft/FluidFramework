@@ -47,8 +47,7 @@ function overridesPeerDependencies(pkg) {
 	}
 
 	const applicableRemapPeerDependencies = remapPeerDependencies.filter(
-		(remap) =>
-			remap.package === pkg.name && pkg.version.startsWith(remap.packageVersionPrefix),
+		(remap) => remap.package === pkg.name && pkg.version.startsWith(remap.packageVersionPrefix),
 	);
 
 	if (applicableRemapPeerDependencies.length === 0) {

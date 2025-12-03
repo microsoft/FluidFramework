@@ -4,10 +4,7 @@
  */
 
 import type { InboundExtensionMessage } from "@fluidframework/container-runtime-definitions/internal";
-import type {
-	InternalUtilityTypes,
-	JsonDeserialized,
-} from "@fluidframework/core-interfaces/internal";
+import type { InternalUtilityTypes, JsonDeserialized } from "@fluidframework/core-interfaces/internal";
 import type { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/internal";
 import { spy } from "sinon";
@@ -49,16 +46,12 @@ export function createInstanceOf<T>(): T {
 	return undefined as T;
 }
 
-type SpecificAttendeeId<T extends string> = string extends T
-	? never
-	: Exclude<T & AttendeeId, never>;
+type SpecificAttendeeId<T extends string> = string extends T ? never : Exclude<T & AttendeeId, never>;
 
 /**
  * Forms {@link AttendeeId} for a specific attendee
  */
-export function createSpecificAttendeeId<const T extends string>(
-	id: T,
-): SpecificAttendeeId<T> {
+export function createSpecificAttendeeId<const T extends string>(id: T): SpecificAttendeeId<T> {
 	return id as SpecificAttendeeId<T>;
 }
 
@@ -176,12 +169,12 @@ export function prepareConnectedPresence(
 		updateProviders.length = 3;
 	}
 
-	const expectedClientJoin: OutboundClientJoinMessage &
-		Partial<Pick<InboundClientJoinMessage, "clientId">> = generateBasicClientJoin(clock.now, {
-		attendeeId,
-		clientConnectionId,
-		updateProviders,
-	});
+	const expectedClientJoin: OutboundClientJoinMessage & Partial<Pick<InboundClientJoinMessage, "clientId">> =
+		generateBasicClientJoin(clock.now, {
+			attendeeId,
+			clientConnectionId,
+			updateProviders,
+		});
 	delete expectedClientJoin.clientId;
 	runtime.signalsExpected.push([expectedClientJoin]);
 
@@ -253,10 +246,7 @@ export function prepareConnectedPresence(
 /**
  * Asserts that all expected telemetry and signals were sent.
  */
-export function assertFinalExpectations(
-	runtime: MockEphemeralRuntime,
-	logger?: EventAndErrorTrackingLogger,
-): void {
+export function assertFinalExpectations(runtime: MockEphemeralRuntime, logger?: EventAndErrorTrackingLogger): void {
 	// Make sure all expected events were logged and there are no unexpected errors.
 	const logErrors = getUnexpectedLogErrorException(logger);
 	if (logErrors) {

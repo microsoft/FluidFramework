@@ -17,12 +17,7 @@ import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import type { FlattenUnionWithOptionals } from "./internalUtils.js";
-import {
-	asDeeplyReadonly,
-	asDeeplyReadonlyDeserializedJson,
-	objectEntries,
-	toOpaqueJson,
-} from "./internalUtils.js";
+import { asDeeplyReadonly, asDeeplyReadonlyDeserializedJson, objectEntries, toOpaqueJson } from "./internalUtils.js";
 import { createValidatedGetter } from "./latestValueTypes.js";
 import type {
 	LatestClientData,
@@ -42,10 +37,7 @@ import { brandIVM } from "./valueManager.js";
  * @sealed
  * @beta
  */
-export interface LatestEvents<
-	T,
-	TRemoteValueAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>,
-> {
+export interface LatestEvents<T, TRemoteValueAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
 	/**
 	 * Raised when remote client's value is updated, which may be the same value.
 	 *
@@ -89,10 +81,7 @@ export type LatestRaw<T> = Latest<T, RawValueAccessor<T>>;
  * @sealed
  * @beta
  */
-export interface Latest<
-	T,
-	TRemoteAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>,
-> {
+export interface Latest<T, TRemoteAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
 	/**
 	 * Containing {@link Presence}
 	 */
@@ -134,10 +123,7 @@ export interface Latest<
 }
 
 class LatestValueManagerImpl<T, Key extends string>
-	implements
-		LatestRaw<T>,
-		Latest<T>,
-		Required<ValueManager<T, InternalTypes.ValueRequiredState<T>>>
+	implements LatestRaw<T>, Latest<T>, Required<ValueManager<T, InternalTypes.ValueRequiredState<T>>>
 {
 	public readonly events = createEmitter<LatestEvents<T, ValueAccessor<T>>>();
 	public readonly controls: OptionalBroadcastControl;
@@ -206,11 +192,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		};
 	}
 
-	public update(
-		attendee: Attendee,
-		_received: number,
-		value: InternalTypes.ValueRequiredState<T>,
-	): PostUpdateAction[] {
+	public update(attendee: Attendee, _received: number, value: InternalTypes.ValueRequiredState<T>): PostUpdateAction[] {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const attendeeId = attendee.attendeeId;
 		const currentState = allKnownStates.states[attendeeId];
@@ -314,11 +296,7 @@ export interface LatestFactory {
  */
 export const latest: LatestFactory = <T extends object | null, Key extends string = string>(
 	args: FlattenUnionWithOptionals<LatestArguments<T> | LatestArgumentsRaw<T>>,
-): InternalTypes.ManagerFactory<
-	Key,
-	InternalTypes.ValueRequiredState<T>,
-	LatestRaw<T> & Latest<T>
-> => {
+): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T> & Latest<T>> => {
 	const { local, settings, validator } = args;
 	// Latest takes ownership of the initial local value but makes a shallow
 	// copy for basic protection.
@@ -330,23 +308,14 @@ export const latest: LatestFactory = <T extends object | null, Key extends strin
 	};
 	const factory = (
 		key: Key,
-		datastoreHandle: InternalTypes.StateDatastoreHandle<
-			Key,
-			InternalTypes.ValueRequiredState<T>
-		>,
+		datastoreHandle: InternalTypes.StateDatastoreHandle<Key, InternalTypes.ValueRequiredState<T>>,
 	): {
 		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
 		manager: InternalTypes.StateValue<LatestRaw<T> & Latest<T>>;
 	} => ({
 		initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
 		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(
-			new LatestValueManagerImpl(
-				key,
-				datastoreFromHandle(datastoreHandle),
-				value,
-				settings,
-				validator,
-			),
+			new LatestValueManagerImpl(key, datastoreFromHandle(datastoreHandle), value, settings, validator),
 		),
 	});
 	return Object.assign(factory, { instanceBase: LatestValueManagerImpl });

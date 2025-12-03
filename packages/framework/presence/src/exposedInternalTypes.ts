@@ -139,11 +139,9 @@ export namespace InternalTypes {
 	 *
 	 * @system
 	 */
-	export type ManagerFactory<
-		TKey extends string,
-		TValue extends ValueDirectoryOrState<any>,
-		TManager,
-	> = { instanceBase: new (...args: any[]) => any } & ((
+	export type ManagerFactory<TKey extends string, TValue extends ValueDirectoryOrState<any>, TManager> = {
+		instanceBase: new (...args: any[]) => any;
+	} & ((
 		key: TKey,
 		datastoreHandle: StateDatastoreHandle<TKey, TValue>,
 	) => {

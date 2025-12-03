@@ -14,12 +14,7 @@ import { Notifications, StateFactory } from "../index.js";
 import { toOpaqueJson } from "../internalUtils.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
-import {
-	assertFinalExpectations,
-	connectionId2,
-	prepareConnectedPresence,
-	attendeeId2,
-} from "./testUtils.js";
+import { assertFinalExpectations, connectionId2, prepareConnectedPresence, attendeeId2 } from "./testUtils.js";
 
 describe("Presence", () => {
 	describe("batching", () => {
@@ -41,13 +36,7 @@ describe("Presence", () => {
 			clock.setSystemTime(initialTime);
 
 			// Set up the presence connection.
-			presence = prepareConnectedPresence(
-				runtime,
-				attendeeId2,
-				connectionId2,
-				clock,
-				logger,
-			).presence;
+			presence = prepareConnectedPresence(runtime, attendeeId2, connectionId2, clock, logger).presence;
 
 			// Note that while the initialTime was set to 500, the prepareConnectedPresence call advances
 			// it. Set a consistent start time for all tests.
@@ -819,8 +808,10 @@ describe("Presence", () => {
 
 				// Configure a notifications workspace
 				// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-				const notificationsWorkspace: NotificationsWorkspace<{}> =
-					presence.notifications.getWorkspace("name:testNotificationWorkspace", {});
+				const notificationsWorkspace: NotificationsWorkspace<{}> = presence.notifications.getWorkspace(
+					"name:testNotificationWorkspace",
+					{},
+				);
 
 				notificationsWorkspace.add(
 					"testEvents",
@@ -939,8 +930,10 @@ describe("Presence", () => {
 				}); // will be queued, deadline is 1110
 
 				// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-				const notificationsWorkspace: NotificationsWorkspace<{}> =
-					presence.notifications.getWorkspace("name:testNotificationWorkspace", {});
+				const notificationsWorkspace: NotificationsWorkspace<{}> = presence.notifications.getWorkspace(
+					"name:testNotificationWorkspace",
+					{},
+				);
 
 				notificationsWorkspace.add(
 					"testEvents",

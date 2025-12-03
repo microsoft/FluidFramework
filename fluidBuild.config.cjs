@@ -22,14 +22,7 @@ module.exports = {
 	version: 1,
 	tasks: {
 		"ci:build": {
-			dependsOn: [
-				"compile",
-				"lint",
-				"ci:build:api-reports",
-				"ci:build:docs",
-				"build:manifest",
-				"build:readme",
-			],
+			dependsOn: ["compile", "lint", "ci:build:api-reports", "ci:build:docs", "build:manifest", "build:readme"],
 			script: false,
 		},
 		"full": {
@@ -301,12 +294,7 @@ module.exports = {
 		"protocol-def": "common/lib/protocol-definitions",
 
 		// Tools
-		"tools": [
-			"tools/api-markdown-documenter",
-			"tools/benchmark",
-			"tools/getkeys",
-			"tools/test-tools",
-		],
+		"tools": ["tools/api-markdown-documenter", "tools/benchmark", "tools/getkeys", "tools/test-tools"],
 	},
 
 	// `flub check policy` config. It applies to the whole repo.
@@ -477,21 +465,9 @@ module.exports = {
 				// Docs directory breaks cleaning down into multiple scripts.
 				"docs/package.json",
 			],
-			"npm-strange-package-name": [
-				"server/gitrest/package.json",
-				"server/historian/package.json",
-				"package.json",
-			],
-			"npm-package-readmes": [
-				"server/gitrest/package.json",
-				"server/historian/package.json",
-				"package.json",
-			],
-			"npm-package-folder-name": [
-				"server/gitrest/package.json",
-				"server/historian/package.json",
-				"package.json",
-			],
+			"npm-strange-package-name": ["server/gitrest/package.json", "server/historian/package.json", "package.json"],
+			"npm-package-readmes": ["server/gitrest/package.json", "server/historian/package.json", "package.json"],
+			"npm-package-folder-name": ["server/gitrest/package.json", "server/historian/package.json", "package.json"],
 			"npm-package-json-script-dep": [],
 			"npm-package-license": [
 				// test packages

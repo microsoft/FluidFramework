@@ -5,10 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import type {
-	JsonDeserialized,
-	JsonSerializable,
-} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+import type { JsonDeserialized, JsonSerializable } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 import type { InternalTypes } from "../exposedInternalTypes.js";
 import type { Presence } from "../presence.js";
@@ -46,10 +43,7 @@ declare function createValueManager<T, Key extends string>(
 	initial: JsonSerializable<T>,
 ): { instanceBase: new () => unknown } & ((
 	key: Key,
-	datastoreHandle: InternalTypes.StateDatastoreHandle<
-		Key,
-		InternalTypes.ValueRequiredState<T>
-	>,
+	datastoreHandle: InternalTypes.StateDatastoreHandle<Key, InternalTypes.ValueRequiredState<T>>,
 ) => {
 	value: InternalTypes.ValueRequiredState<T>;
 	manager: InternalTypes.StateValue<JsonDeserialized<T>>;
@@ -107,8 +101,5 @@ export function checkCompiles(): void {
 		// @ts-expect-error should error on exact optional property
 		createValueManager<{ undef?: number }, "optionalUndefined">({ undef: undefined }),
 	);
-	states.add(
-		"optionalUndefinedPreferred",
-		createValueManager<{ undef?: number }, "optionalUndefinedPreferred">({}),
-	);
+	states.add("optionalUndefinedPreferred", createValueManager<{ undef?: number }, "optionalUndefinedPreferred">({}));
 }

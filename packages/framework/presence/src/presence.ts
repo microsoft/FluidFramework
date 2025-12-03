@@ -110,8 +110,9 @@ export interface Attendee<SpecificAttendeeId extends AttendeeId = AttendeeId> {
  * Utility type limiting to a specific attendee. (A attendee with
  * a specific session ID - not just any session ID.)
  */
-export type SpecificAttendee<SpecificAttendeeId extends AttendeeId> =
-	string extends SpecificAttendeeId ? never : Attendee<SpecificAttendeeId>;
+export type SpecificAttendee<SpecificAttendeeId extends AttendeeId> = string extends SpecificAttendeeId
+	? never
+	: Attendee<SpecificAttendeeId>;
 
 /**
  * Events from {@link Presence.attendees}.
@@ -154,10 +155,7 @@ export interface PresenceEvents {
 	 * be done before the event handler returns to ensure no notifications
 	 * are missed.
 	 */
-	workspaceActivated: (
-		workspaceAddress: WorkspaceAddress,
-		type: "States" | "Notifications" | "Unknown",
-	) => void;
+	workspaceActivated: (workspaceAddress: WorkspaceAddress, type: "States" | "Notifications" | "Unknown") => void;
 }
 
 /**

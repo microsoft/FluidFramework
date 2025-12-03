@@ -24,10 +24,7 @@ import { StateFactory } from "@fluidframework/presence/beta";
 const testWorkspaceName = "name:testWorkspaceA";
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function createLatestMapManager(
-	presence: Presence,
-	valueControlSettings?: BroadcastControlSettings,
-) {
+function createLatestMapManager(presence: Presence, valueControlSettings?: BroadcastControlSettings) {
 	const workspace = presence.states.getWorkspace(testWorkspaceName, {
 		fixedMap: StateFactory.latestMap({
 			local: { key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } },
@@ -114,24 +111,21 @@ type TestMapData =
 export function checkCompiles(): void {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	const presence = {} as Presence;
-	const statesWorkspace = presence.states.getWorkspace(
-		"name:testStatesWorkspaceWithLatestMap",
-		{
-			fixedMap: StateFactory.latestMap({
-				local: {
-					key1: { x: 0, y: 0 },
-					key2: { ref: "default", someId: 0 },
-				},
-			}),
-			validatedMap: StateFactory.latestMap({
-				local: {
-					key1: { x: 0, y: 0 },
-					key2: { ref: "default", someId: 0 },
-				},
-				validator: (data) => data as TestMapData,
-			}),
-		},
-	);
+	const statesWorkspace = presence.states.getWorkspace("name:testStatesWorkspaceWithLatestMap", {
+		fixedMap: StateFactory.latestMap({
+			local: {
+				key1: { x: 0, y: 0 },
+				key2: { ref: "default", someId: 0 },
+			},
+		}),
+		validatedMap: StateFactory.latestMap({
+			local: {
+				key1: { x: 0, y: 0 },
+				key2: { ref: "default", someId: 0 },
+			},
+			validator: (data) => data as TestMapData,
+		}),
+	});
 	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
 	const workspace: typeof statesWorkspace = statesWorkspace;
 	const props = workspace.states;
@@ -154,15 +148,9 @@ export function checkCompiles(): void {
 		console.log(key, value);
 	}
 
-	assertIdenticalTypes(
-		props.validatedMap,
-		createInstanceOf<LatestMap<TestMapData, "key1" | "key2">>(),
-	);
+	assertIdenticalTypes(props.validatedMap, createInstanceOf<LatestMap<TestMapData, "key1" | "key2">>());
 
-	assertIdenticalTypes(
-		props.fixedMap,
-		createInstanceOf<LatestMapRaw<TestMapData, "key1" | "key2">>(),
-	);
+	assertIdenticalTypes(props.fixedMap, createInstanceOf<LatestMapRaw<TestMapData, "key1" | "key2">>());
 
 	// Get a reference to one of the remote attendees
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion

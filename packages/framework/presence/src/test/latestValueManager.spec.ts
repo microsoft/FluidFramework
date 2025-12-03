@@ -26,10 +26,7 @@ const testWorkspaceName = "name:testWorkspaceA";
 /* eslint-disable unicorn/no-null -- API null support must be tested */
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function createLatestManager(
-	presence: Presence,
-	valueControlSettings?: BroadcastControlSettings,
-) {
+function createLatestManager(presence: Presence, valueControlSettings?: BroadcastControlSettings) {
 	const workspace = presence.states.getWorkspace(testWorkspaceName, {
 		camera: StateFactory.latest({
 			local: { x: 0, y: 0, z: 0 },
@@ -174,8 +171,7 @@ export function checkCompiles(): void {
 
 	workspace.add("caret", StateFactory.latest({ local: { id: "", pos: 0 } }));
 
-	const fakeAdd =
-		workspace.states.caret.local.pos + props.camera.local.z + props.cursor.local.x;
+	const fakeAdd = workspace.states.caret.local.pos + props.camera.local.z + props.cursor.local.x;
 	console.log(fakeAdd);
 
 	// @ts-expect-error local may be set wholly, but partially it is readonly
@@ -188,10 +184,7 @@ export function checkCompiles(): void {
 		console.log(attendee.attendeeId, value);
 	}
 
-	function logRemoteValue<T>({
-		attendee,
-		value,
-	}: Pick<LatestClientData<T>, "attendee" | "value">): void {
+	function logRemoteValue<T>({ attendee, value }: Pick<LatestClientData<T>, "attendee" | "value">): void {
 		console.log(attendee.attendeeId, value());
 	}
 
@@ -220,9 +213,7 @@ export function checkCompiles(): void {
 	}
 
 	// Get a reference to one of the remote attendees
-	const attendee2 = [...cursor.getStateAttendees()].find(
-		(attendee) => attendee !== presence.attendees.getMyself(),
-	);
+	const attendee2 = [...cursor.getStateAttendees()].find((attendee) => attendee !== presence.attendees.getMyself());
 	assert(attendee2 !== undefined);
 
 	// Get a remote raw value

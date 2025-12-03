@@ -91,7 +91,7 @@
 		"includes": ["**", "!**/dist/**", "!**/lib/**"],
 		"formatWithErrors": true,
 		"indentStyle": "tab",
-		"lineWidth": 95,
+		"lineWidth": 120,
 		"lineEnding": "lf"
 	},
 	"javascript": {

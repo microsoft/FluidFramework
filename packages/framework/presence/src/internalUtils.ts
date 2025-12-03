@@ -56,9 +56,7 @@ export const objectEntriesWithoutUndefined = Object.entries as <const T>(
 /**
  * Object.keys retyped to preserve known keys and their types.
  */
-export const objectKeys = Object.keys as <const T>(
-	o: T,
-) => (keyof MapNumberIndicesToStrings<T>)[];
+export const objectKeys = Object.keys as <const T>(o: T) => (keyof MapNumberIndicesToStrings<T>)[];
 
 /**
  * Retrieve a value from a record with the given key, or create a new entry if
@@ -155,22 +153,14 @@ export function toOpaqueJson<const T>(
  * Future: This definition is identical to one in `packages/dds/tree/src/util/typeUtils.ts`
  * and should be consolidated.
  */
-type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (
-	k: infer U,
-) => unknown
-	? U
-	: never;
+type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (k: infer U) => unknown ? U : never;
 
 /**
  * Generates a union of types that are the remainder from a simple
  * Pick combination (that is the set of common properties).
  */
 type PickRemainder<T> =
-	Pick<T, keyof T> extends infer Common
-		? T extends unknown
-			? Omit<T, keyof Common>
-			: never
-		: never;
+	Pick<T, keyof T> extends infer Common ? (T extends unknown ? Omit<T, keyof Common> : never) : never;
 
 /**
  * Combines union of structure into a single structure where common properties

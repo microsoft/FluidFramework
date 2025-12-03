@@ -35,9 +35,7 @@ export interface NotificationsManagerEvents {
  * @sealed
  * @alpha
  */
-export interface NotificationListenable<
-	TListeners extends InternalUtilityTypes.NotificationListeners<TListeners>,
-> {
+export interface NotificationListenable<TListeners extends InternalUtilityTypes.NotificationListeners<TListeners>> {
 	/**
 	 * Register a notification listener.
 	 * @param notificationName - the name of the notification
@@ -51,10 +49,7 @@ export interface NotificationListenable<
 	 */
 	on<K extends keyof InternalUtilityTypes.NotificationListeners<TListeners>>(
 		notificationName: K,
-		listener: (
-			sender: Attendee,
-			...args: InternalUtilityTypes.JsonDeserializedParameters<TListeners[K]>
-		) => void,
+		listener: (sender: Attendee, ...args: InternalUtilityTypes.JsonDeserializedParameters<TListeners[K]>) => void,
 	): Off;
 
 	/**
@@ -67,10 +62,7 @@ export interface NotificationListenable<
 	 */
 	off<K extends keyof InternalUtilityTypes.NotificationListeners<TListeners>>(
 		notificationName: K,
-		listener: (
-			sender: Attendee,
-			...args: InternalUtilityTypes.JsonDeserializedParameters<TListeners[K]>
-		) => void,
+		listener: (sender: Attendee, ...args: InternalUtilityTypes.JsonDeserializedParameters<TListeners[K]>) => void,
 	): void;
 }
 
@@ -80,9 +72,7 @@ export interface NotificationListenable<
  * @sealed
  * @alpha
  */
-export type NotificationSubscriptions<
-	E extends InternalUtilityTypes.NotificationListeners<E>,
-> = {
+export type NotificationSubscriptions<E extends InternalUtilityTypes.NotificationListeners<E>> = {
 	[K in string & keyof InternalUtilityTypes.NotificationListeners<E>]: (
 		sender: Attendee,
 		...args: InternalUtilityTypes.JsonDeserializedParameters<E[K]>
@@ -129,9 +119,7 @@ export interface NotificationEmitter<E extends InternalUtilityTypes.Notification
  * @sealed
  * @alpha
  */
-export interface NotificationsManager<
-	T extends InternalUtilityTypes.NotificationListeners<T>,
-> {
+export interface NotificationsManager<T extends InternalUtilityTypes.NotificationListeners<T>> {
 	/**
 	 * Containing {@link Presence}
 	 */
@@ -159,15 +147,10 @@ export interface NotificationsManager<
  */
 const recordKeys = Object.keys as <K extends string>(o: Partial<Record<K, unknown>>) => K[];
 
-class NotificationsManagerImpl<
-	T extends InternalUtilityTypes.NotificationListeners<T>,
-	Key extends string,
-> implements
+class NotificationsManagerImpl<T extends InternalUtilityTypes.NotificationListeners<T>, Key extends string>
+	implements
 		NotificationsManager<T>,
-		ValueManager<
-			InternalTypes.NotificationType,
-			InternalTypes.ValueRequiredState<InternalTypes.NotificationType>
-		>
+		ValueManager<InternalTypes.NotificationType, InternalTypes.ValueRequiredState<InternalTypes.NotificationType>>
 {
 	public readonly events = createEmitter<NotificationsManagerEvents>();
 
@@ -213,10 +196,7 @@ class NotificationsManagerImpl<
 
 	public constructor(
 		private readonly key: Key,
-		private readonly datastore: StateDatastore<
-			Key,
-			InternalTypes.ValueRequiredState<InternalTypes.NotificationType>
-		>,
+		private readonly datastore: StateDatastore<Key, InternalTypes.ValueRequiredState<InternalTypes.NotificationType>>,
 		initialSubscriptions: Partial<NotificationSubscriptions<T>>,
 	) {
 		// Add event listeners provided at instantiation
@@ -249,14 +229,10 @@ class NotificationsManagerImpl<
 		if (this.notificationsInternal.hasListeners(eventName)) {
 			// Without schema validation, we don't know that the args are the correct type.
 			// For now we assume the user is sending the correct types and there is no corruption along the way.
-			const args = [attendee, ...value.args] as Parameters<
-				NotificationSubscriptions<T>[typeof eventName]
-			>;
+			const args = [attendee, ...value.args] as Parameters<NotificationSubscriptions<T>[typeof eventName]>;
 			postUpdateActions.push(() => this.notificationsInternal.emit(eventName, ...args));
 		} else {
-			postUpdateActions.push(() =>
-				this.events.emit("unattendedNotification", value.name, attendee, ...value.args),
-			);
+			postUpdateActions.push(() => this.events.emit("unattendedNotification", value.name, attendee, ...value.args));
 		}
 		return postUpdateActions;
 	}
@@ -271,10 +247,7 @@ class NotificationsManagerImpl<
  *
  * @alpha
  */
-export function Notifications<
-	T extends InternalUtilityTypes.NotificationListeners<T>,
-	Key extends string = string,
->(
+export function Notifications<T extends InternalUtilityTypes.NotificationListeners<T>, Key extends string = string>(
 	initialSubscriptions: Partial<NotificationSubscriptions<T>>,
 ): InternalTypes.ManagerFactory<
 	Key,
@@ -294,13 +267,7 @@ export function Notifications<
 			NotificationsManagerImpl<T, Key>,
 			InternalTypes.NotificationType,
 			InternalTypes.ValueRequiredState<InternalTypes.NotificationType>
-		>(
-			new NotificationsManagerImpl(
-				key,
-				datastoreFromHandle(datastoreHandle),
-				initialSubscriptions,
-			),
-		),
+		>(new NotificationsManagerImpl(key, datastoreFromHandle(datastoreHandle), initialSubscriptions)),
 	});
 	return Object.assign(factory, { instanceBase: NotificationsManagerImpl });
 }
