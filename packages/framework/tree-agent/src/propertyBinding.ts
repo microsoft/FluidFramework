@@ -8,7 +8,7 @@ import type { TreeNodeSchema, TreeNodeSchemaClass } from "@fluidframework/tree";
 import type { ZodType, ZodTypeAny, ZodTypeDef, infer as ZodInfer } from "zod";
 
 import type { BindableSchema, Ctor } from "./methodBinding.js";
-import { instanceOf } from "./utils.js";
+import { instanceOf } from "./renderZodTypeScript.js";
 
 /**
  * A symbol used to expose properties to the LLM.
