@@ -15,8 +15,8 @@ import type { Opaque } from "type-fest";
 import { Biome2ConfigReader } from "./biome2Config";
 import type { Configuration as BiomeConfigRaw } from "./biomeConfigTypes";
 import { loadRawBiomeConfigFile, resolveExtendsChainGeneric } from "./biomeConfigUtils";
-import type { GitRepo } from "./gitRepo";
 import { type BiomeMajorVersion, detectBiomeVersion } from "./biomeVersion";
+import type { GitRepo } from "./gitRepo";
 
 // switch to regular import once building ESM
 const findUp = import("find-up");

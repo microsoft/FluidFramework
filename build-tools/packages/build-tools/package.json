@@ -31,7 +31,7 @@
 		"format": "npm run format:biome",
 		"format:biome": "biome check --write .",
 		"json-schema-to-typescript:biomeConfigTypes": "json2ts --input node_modules/@biomejs/biome/configuration_schema.json --output src/common/biomeConfigTypes.d.ts",
-		"json-schema-to-typescript:biome2ConfigTypes": "echo 'To generate Biome 2.x types, install @biomejs/biome@2.x and run: json2ts --input node_modules/@biomejs/biome/configuration_schema.json --output src/common/biome2ConfigTypes.d.ts'",
+		"json-schema-to-typescript:biome2ConfigTypes": "json2ts --input node_modules/biome2/configuration_schema.json --output src/common/biome2ConfigTypes.d.ts",
 		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
 		"list-repo-files": "cd ../../.. && git ls-files -co --exclude-standard",
