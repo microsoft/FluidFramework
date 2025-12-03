@@ -306,7 +306,7 @@ export const CheckCompatLayerGeneration: CheckFunction = async (
 	if (!isUpToDate) {
 		return {
 			message: "Layer generation needs to be updated.",
-			fixCommand: "pnpm run -r layerGeneration:gen",
+			fixCommand: "pnpm run layerGeneration:gen",
 		};
 	}
 

@@ -11,7 +11,7 @@ import execa from "execa";
 import type { Machine } from "jssm";
 
 import { bumpVersionScheme } from "@fluid-tools/version-tools";
-import { FluidRepo } from "@fluidframework/build-tools";
+import { FluidRepo, type Package } from "@fluidframework/build-tools";
 
 import {
 	generateBumpDepsBranchName,
@@ -924,7 +924,7 @@ export const checkCompatLayerGeneration: StateHandlerFunction = async (
 ): Promise<boolean> => {
 	if (testMode) return true;
 
-	const { context, bumpType } = data;
+	const { context, bumpType, releaseGroup } = data;
 
 	if (bumpType === "patch") {
 		log.verbose(`Skipping layer compat generation check for patch release.`);
@@ -932,7 +932,12 @@ export const checkCompatLayerGeneration: StateHandlerFunction = async (
 		return true;
 	}
 
-	const isUpToDate = await runCompatLayerGenerationCheck(context.fullPackageMap.values());
+	// Get packages for the release group or individual package being released
+	const packagesToCheck = isReleaseGroup(releaseGroup)
+		? context.packagesInReleaseGroup(releaseGroup)
+		: [context.fullPackageMap.get(releaseGroup)].filter((pkg): pkg is Package => pkg !== undefined);
+
+	const isUpToDate = await runCompatLayerGenerationCheck(packagesToCheck);
 
 	if (!isUpToDate) {
 		log.logHr();
