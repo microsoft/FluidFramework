@@ -72,7 +72,7 @@ import { combineChunks } from "../feature-libraries/index.js";
  */
 export function independentView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-	options: ForestOptions & { idCompressor?: IIdCompressor | undefined },
+	options?: ForestOptions & { idCompressor?: IIdCompressor | undefined },
 ): TreeViewAlpha<TSchema> {
 	return createIndependentTreeAlpha(options).viewWith(config) as TreeViewAlpha<TSchema>;
 }

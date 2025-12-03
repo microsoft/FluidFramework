@@ -4,12 +4,13 @@
  */
 
 import { getTreeNodeSchemaPrivateData, type AllowedTypesFull } from "../core/index.js";
-import { isObjectNodeSchema } from "../node-kinds/index.js";
+import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
 import type { TreeSchema } from "./configuration.js";
 import type { IncrementalEncodingPolicy } from "../../feature-libraries/index.js";
 import { oneFromIterable } from "../../util/index.js";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { FieldKey } from "../../core/index.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * A symbol when present in the {@link AnnotatedAllowedTypes.metadata}'s `custom` property as true, opts in the allowed
@@ -68,7 +69,7 @@ function isIncrementalSummaryHintInAllowedTypes(allowedTypes: AllowedTypesFull):
 export function incrementalEncodingPolicyForAllowedTypes(
 	rootSchema: TreeSchema,
 ): IncrementalEncodingPolicy {
-	return (targetNodeIdentifier: string | undefined, targetFieldKey: string) => {
+	return (targetNodeIdentifier: string | undefined, targetFieldKey?: string) => {
 		if (targetNodeIdentifier === undefined) {
 			// Root fields cannot be allowed types, so we don't incrementally summarize them.
 			return false;
@@ -85,6 +86,11 @@ export function incrementalEncodingPolicyForAllowedTypes(
 		}
 
 		if (isObjectNodeSchema(targetNode)) {
+			if (targetFieldKey === undefined) {
+				throw new UsageError(
+					`Field key must be provided for object or array node '${targetNodeIdentifier}'`,
+				);
+			}
 			const targetPropertyKey = targetNode.storedKeyToPropertyKey.get(
 				targetFieldKey as FieldKey,
 			);
@@ -95,6 +101,12 @@ export function incrementalEncodingPolicyForAllowedTypes(
 				}
 			}
 			return false;
+		}
+
+		if (targetFieldKey !== undefined && !isArrayNodeSchema(targetNode)) {
+			throw new UsageError(
+				`Field key must not be provided for leaf, map or record node '${targetNodeIdentifier}'`,
+			);
 		}
 
 		const allowedTypes = oneFromIterable(
