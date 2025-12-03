@@ -9,8 +9,6 @@
 import { Build } from 'azure-devops-node-api/interfaces/BuildInterfaces';
 import type { CommentThreadStatus } from 'azure-devops-node-api/interfaces/GitInterfaces';
 import { Compiler } from 'webpack';
-import type JSZip from 'jszip';
-import { jszip } from 'jszip';
 import type { StatsCompilation } from 'webpack';
 import { WebApi } from 'azure-devops-node-api';
 import type Webpack from 'webpack';
@@ -183,7 +181,7 @@ export function getBuilds(adoConnection: WebApi, options: GetBuildOptions): Prom
 export function getBuildTagForCommit(commitHash: string): string;
 
 // @public
-export function getBundleBuddyConfigFileFromZip(jsZip: JSZip, relativePath: string): Promise<BundleBuddyConfig>;
+export function getBundleBuddyConfigFileFromZip(files: UnzippedContents, relativePath: string): Promise<BundleBuddyConfig>;
 
 // @public
 export function getBundleBuddyConfigFromFileSystem(path: string): Promise<BundleBuddyConfig>;
@@ -209,7 +207,7 @@ export function getBundleFilePathsFromFolder(relativePathsInFolder: string[]): B
 export function getBundlePathsFromFileSystem(bundleReportPath: string): Promise<BundleFileData[]>;
 
 // @public
-export function getBundlePathsFromZipObject(jsZip: JSZip): BundleFileData[];
+export function getBundlePathsFromZipObject(files: UnzippedContents): BundleFileData[];
 
 // @public (undocumented)
 export function getBundleSummaries(args: GetBundleSummariesArgs): Promise<BundleSummaries>;
@@ -251,13 +249,13 @@ export function getSimpleComment(message: string, baselineCommit: string): strin
 export function getStatsFileFromFileSystem(path: string): Promise<StatsCompilation>;
 
 // @public
-export function getStatsFileFromZip(jsZip: JSZip, relativePath: string): Promise<StatsCompilation>;
+export function getStatsFileFromZip(files: UnzippedContents, relativePath: string): Promise<StatsCompilation>;
 
 // @public
 export function getTotalSizeStatsProcessor(options: TotalSizeStatsProcessorOptions): WebpackStatsProcessor;
 
 // @public
-export function getZipObjectFromArtifact(adoConnection: WebApi, projectName: string, buildNumber: number, bundleAnalysisArtifactName: string): Promise<JSZip>;
+export function getZipObjectFromArtifact(adoConnection: WebApi, projectName: string, buildNumber: number, bundleAnalysisArtifactName: string): Promise<UnzippedContents>;
 
 // @public (undocumented)
 export interface IADOConstants {
@@ -295,8 +293,11 @@ export interface TotalSizeStatsProcessorOptions {
     metricName: string;
 }
 
-// @public (undocumented)
-export function unzipStream(stream: NodeJS.ReadableStream): Promise<jszip>;
+// @public
+export type UnzippedContents = Map<string, Buffer>;
+
+// @public
+export function unzipStream(stream: NodeJS.ReadableStream, baseFolder?: string): Promise<UnzippedContents>;
 
 // @public
 export type WebpackStatsProcessor = (stats: StatsCompilation, config: BundleBuddyConfig | undefined) => BundleMetricSet | undefined;
