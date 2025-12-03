@@ -369,7 +369,7 @@ describe("getSimpleSchema", () => {
 						"test.object",
 						{
 							kind: NodeKind.Object,
-							metadata: {},
+							metadata: { custom: undefined, description: undefined },
 							persistedMetadata: undefined,
 							allowUnknownOptionalFields: false,
 							fields: new Map<string, SimpleObjectFieldSchema>([
@@ -445,7 +445,7 @@ describe("getSimpleSchema", () => {
 						"test.object",
 						{
 							kind: NodeKind.Object,
-							metadata: {},
+							metadata: { custom: undefined, description: undefined },
 							persistedMetadata: undefined,
 							allowUnknownOptionalFields: false,
 							fields: new Map([
