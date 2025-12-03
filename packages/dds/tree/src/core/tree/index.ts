@@ -121,5 +121,6 @@ export { DetachedFieldIndex } from "./detachedFieldIndex.js";
 
 export { getCodecTreeForDetachedFieldIndexFormat } from "./detachedFieldIndexCodecs.js";
 export { type DetachedFieldIndexFormatVersion } from "./detachedFieldIndexFormatCommon.js";
+export { type FormatV1 } from "./detachedFieldIndexFormatV1.js";
 
 export { type ForestRootId } from "./detachedFieldIndexTypes.js";

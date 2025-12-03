@@ -4,7 +4,12 @@
  */
 
 import { strict as assert } from "node:assert";
-import { SummaryType, type SummaryObject } from "@fluidframework/driver-definitions/internal";
+import {
+	SummaryType,
+	type ISummaryBlob,
+	type ISummaryTree,
+	type SummaryObject,
+} from "@fluidframework/driver-definitions/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
@@ -14,9 +19,11 @@ import {
 	DetachedFieldIndexSummaryFormatVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/detachedFieldIndexSummarizer.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { FormatV1 } from "../../core/tree/detachedFieldIndexFormatV1.js";
 import { FluidClientVersion } from "../../codec/index.js";
 import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
-import { type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
+import { brand, type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
 import {
 	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
@@ -40,6 +47,15 @@ function createDetachedFieldIndexSummarizer(options?: {
 	);
 	return { summarizer, index };
 }
+
+// Create detached field data version 1 for testing loading old summaries
+const mintedTag = testIdCompressor.generateCompressedId();
+const finalizedTag = testIdCompressor.normalizeToOpSpace(mintedTag);
+const detachedFieldDataV1: FormatV1 = {
+	version: brand(DetachedFieldIndexSummaryFormatVersion.v1),
+	data: [[brand(finalizedTag), 0, brand(1)]],
+	maxId: brand(-1),
+};
 
 describe("DetachedFieldIndexSummarizer", () => {
 	describe("Summary metadata validation", () => {
@@ -94,18 +110,20 @@ describe("DetachedFieldIndexSummarizer", () => {
 			await assert.doesNotReject(async () => summarizer2.load(mockStorage, JSON.parse));
 		});
 
-		it("loads with no metadata blob", async () => {
-			const { summarizer } = createDetachedFieldIndexSummarizer();
-
-			const summary = summarizer.summarize({
-				stringify: JSON.stringify,
-			});
-
-			// Delete metadata blob from the summary
-			Reflect.deleteProperty(summary.summary.tree, summarizablesMetadataKey);
+		it("loads version 1 with no metadata blob", async () => {
+			const summaryBlob: ISummaryBlob = {
+				type: SummaryType.Blob,
+				content: JSON.stringify(detachedFieldDataV1),
+			};
+			const summaryTree: ISummaryTree = {
+				type: SummaryType.Tree,
+				tree: {
+					[DetachedFieldIndexSummarizer.key]: summaryBlob,
+				},
+			};
 
 			// Should load successfully
-			const mockStorage = MockStorage.createFromSummary(summary.summary);
+			const mockStorage = MockStorage.createFromSummary(summaryTree);
 			const { summarizer: summarizer2 } = createDetachedFieldIndexSummarizer();
 
 			await assert.doesNotReject(async () => summarizer2.load(mockStorage, JSON.parse));

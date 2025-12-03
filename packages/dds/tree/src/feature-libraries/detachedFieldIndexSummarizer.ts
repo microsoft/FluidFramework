@@ -63,12 +63,13 @@ function minVersionToDetachedFieldIndexSummaryFormatVersion(
  * Provides methods for summarizing and loading a tree index.
  */
 export class DetachedFieldIndexSummarizer extends VersionedSummarizer implements Summarizable {
+	public static readonly key: string = "DetachedFieldIndex";
 	public constructor(
 		private readonly detachedFieldIndex: DetachedFieldIndex,
 		minVersionForCollab: MinimumVersionForCollab,
 	) {
 		super(
-			"DetachedFieldIndex",
+			DetachedFieldIndexSummarizer.key,
 			minVersionToDetachedFieldIndexSummaryFormatVersion(minVersionForCollab),
 			supportedVersions,
 			DetachedFieldIndexSummaryFormatVersion.v1,
