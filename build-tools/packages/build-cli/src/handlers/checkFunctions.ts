@@ -937,7 +937,7 @@ export const checkCompatLayerGeneration: StateHandlerFunction = async (
 	if (!isUpToDate) {
 		log.logHr();
 		log.errorLog(
-			`Layer generation needs to be updated. Please create a PR for the changes and merge before retrying.`,
+			`Compat layer generation needs to be updated. Run "pnpm run layerGeneration:gen" from the repo root, then create a PR for the changes and merge before retrying.`,
 		);
 		BaseStateHandler.signalFailure(machine, state);
 		return false;
