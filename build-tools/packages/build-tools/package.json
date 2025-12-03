@@ -48,8 +48,6 @@
 		"detect-indent": "^6.1.0",
 		"find-up": "^7.0.0",
 		"fs-extra": "^11.3.2",
-		"glob": "^7.2.3",
-		"globby": "^11.1.0",
 		"ignore": "^7.0.5",
 		"json5": "^2.2.3",
 		"lodash.isequal": "^4.5.0",
@@ -60,6 +58,7 @@
 		"rimraf": "^6.1.2",
 		"semver": "^7.7.3",
 		"sort-package-json": "1.57.0",
+		"tinyglobby": "^0.2.15",
 		"ts-deepmerge": "^7.0.3",
 		"typescript": "~5.4.5",
 		"yaml": "^2.8.1"
@@ -71,11 +70,9 @@
 		"@fluidframework/eslint-config-fluid": "^8.1.0",
 		"@types/async": "^3.2.25",
 		"@types/fs-extra": "^11.0.4",
-		"@types/glob": "^7.2.0",
 		"@types/lodash.isequal": "^4.5.8",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^22.19.1",
-
 		"@types/semver": "^7.7.1",
 		"eslint": "~8.57.0",
 		"json-schema-to-typescript": "^15.0.4",

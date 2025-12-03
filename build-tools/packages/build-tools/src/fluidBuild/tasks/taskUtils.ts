@@ -7,8 +7,7 @@ import { existsSync } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import * as path from "path";
-import * as glob from "glob";
-import globby from "globby";
+import { glob as tinyglobbyGlob } from "tinyglobby";
 
 import type { PackageJson } from "../../common/npmPackage";
 import { lookUpDirSync } from "../../common/utils";
@@ -79,15 +78,61 @@ export function toPosixPath(s: string) {
 	return path.sep === "\\" ? s.replace(/\\/g, "/") : s;
 }
 
-export async function globFn(pattern: string, options: glob.IOptions = {}): Promise<string[]> {
-	return new Promise((resolve, reject) => {
-		glob.default(pattern, options, (err, matches) => {
-			if (err) {
-				reject(err);
-			}
-			resolve(matches);
-		});
+/**
+ * Options for {@link globFn}.
+ * This interface maps to the options supported by tinyglobby.
+ */
+export interface GlobFnOptions {
+	/**
+	 * The current working directory to use for relative patterns.
+	 */
+	cwd?: string;
+
+	/**
+	 * When true, only returns files (excludes directories).
+	 * @defaultValue true
+	 */
+	nodir?: boolean;
+
+	/**
+	 * When true, includes dotfiles in the results.
+	 * @defaultValue false
+	 */
+	dot?: boolean;
+
+	/**
+	 * When true, returns absolute paths instead of relative paths.
+	 * @defaultValue false
+	 */
+	absolute?: boolean;
+
+	/**
+	 * Patterns to exclude from the results.
+	 */
+	ignore?: string | string[];
+
+	/**
+	 * When true, follows symbolic links.
+	 * @defaultValue true
+	 */
+	follow?: boolean;
+}
+
+export async function globFn(pattern: string, options: GlobFnOptions = {}): Promise<string[]> {
+	const { cwd, nodir = true, dot = false, absolute = false, ignore, follow = true } = options;
+
+	// Map options from glob/globby-style to tinyglobby-style
+	const results = await tinyglobbyGlob(pattern, {
+		cwd,
+		onlyFiles: nodir,
+		dot,
+		absolute,
+		ignore: ignore === undefined ? undefined : Array.isArray(ignore) ? ignore : [ignore],
+		followSymbolicLinks: follow,
 	});
+
+	// tinyglobby returns directories with trailing slashes, remove them for consistency
+	return results.map((p) => (p.endsWith("/") ? p.slice(0, -1) : p));
 }
 
 export async function loadModule(modulePath: string, moduleType?: string) {
@@ -124,19 +169,80 @@ export interface GlobWithGitignoreOptions {
  * @returns An array of absolute paths to all files that match the globs.
  *
  * @remarks
- * When migrating from globby to tinyglobby, this function will need to be updated to manually
- * handle gitignore filtering since tinyglobby doesn't have built-in gitignore support.
- * The approach is to use `git ls-files --others --ignored --exclude-standard` to get ignored files
- * and add them to the ignore list.
+ * This function uses tinyglobby for globbing and the `ignore` package for gitignore filtering.
+ * The gitignore patterns are read from .gitignore files in the file system hierarchy.
  */
 export async function globWithGitignore(
 	patterns: readonly string[],
 	options: GlobWithGitignoreOptions,
 ): Promise<string[]> {
-	const { cwd, gitignore = true } = options;
-	return globby([...patterns], {
+	const { cwd, gitignore: applyGitignore = true } = options;
+
+	// Get all files matching the patterns
+	const files = await tinyglobbyGlob([...patterns], {
 		cwd,
 		absolute: true,
-		gitignore,
 	});
+
+	if (!applyGitignore) {
+		return files;
+	}
+
+	// Filter files using gitignore rules
+	return filterByGitignore(files, cwd);
+}
+
+/**
+ * Filters an array of absolute file paths using gitignore rules.
+ * Reads .gitignore files from the filesystem and applies them to filter files.
+ */
+async function filterByGitignore(files: string[], cwd: string): Promise<string[]> {
+	// Dynamically import the ignore package
+	const ignore = await import("ignore");
+	const ig = ignore.default();
+
+	// Find and read .gitignore files in the cwd and parent directories
+	const gitignorePatterns = await readGitignorePatterns(cwd);
+	if (gitignorePatterns.length > 0) {
+		ig.add(gitignorePatterns);
+	}
+
+	// Convert absolute paths to relative paths for filtering, then convert back
+	return files.filter((file) => {
+		const relativePath = path.relative(cwd, file);
+		// Only filter files that are within the cwd
+		if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+			return true;
+		}
+		return !ig.ignores(toPosixPath(relativePath));
+	});
+}
+
+/**
+ * Reads gitignore patterns from .gitignore files in the given directory and its parents.
+ */
+async function readGitignorePatterns(dir: string): Promise<string[]> {
+	const patterns: string[] = [];
+	let currentDir = dir;
+
+	// Walk up the directory tree to find .gitignore files
+	while (currentDir !== path.dirname(currentDir)) {
+		const gitignorePath = path.join(currentDir, ".gitignore");
+		if (existsSync(gitignorePath)) {
+			try {
+				const content = await readFile(gitignorePath, "utf8");
+				// Parse gitignore content - each non-empty, non-comment line is a pattern
+				const filePatterns = content
+					.split("\n")
+					.map((line) => line.trim())
+					.filter((line) => line && !line.startsWith("#"));
+				patterns.push(...filePatterns);
+			} catch {
+				// Ignore errors reading .gitignore files
+			}
+		}
+		currentDir = path.dirname(currentDir);
+	}
+
+	return patterns;
 }
