@@ -4,6 +4,7 @@
  */
 
 export { Constants } from "./constants";
+export { WriteSummaryTraceStage } from "./definitions";
 export { readSummary } from "./readWholeSummary";
 export {
 	ISummaryWriteFeatureFlags,
