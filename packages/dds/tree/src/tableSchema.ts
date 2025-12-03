@@ -455,6 +455,7 @@ export namespace System_TableSchema {
 		 * The implicit typing is intentional.
 		 */
 		const tableFields = {
+			// TODO: empty key (stored)
 			table: schemaFactory.required(schemaFactory.object("Table", {
 				rows: schemaFactory.array("Table.rows", rowSchema),
 				columns: schemaFactory.array("Table.columns", columnSchema),
@@ -471,10 +472,17 @@ export namespace System_TableSchema {
 			})
 			implements TableSchema.Table<TInputScope, TCellSchema, TColumnSchema, TRowSchema>
 		{
+			/**
+			 * @deprecated Use {@link Table.empty} instead.
+			 */
+			public constructor(node?: InternalTreeNode | undefined) {
+				super(node ?? {table: { columns: [], rows: [] }});
+			}
+
 			public static empty<TThis extends TableConstructorType>(
 				this: TThis,
 			): InstanceType<TThis> {
-				return new this({table: { columns: [], rows: [] }}) as InstanceType<TThis>;
+				return new this() as InstanceType<TThis>;
 			}
 
 			public get columns(): TreeArrayNode<TColumnSchema> {
@@ -908,8 +916,8 @@ export namespace System_TableSchema {
 		type TableValueType = TreeNode &
 			TableSchema.Table<TInputScope, TCellSchema, TColumnSchema, TRowSchema> &
 			WithType<ScopedSchemaName<Scope, "TableRoot">>;
-		type TableInsertableType = InsertableObjectFromSchemaRecord<typeof tableFields>;
-		type TableConstructorType = new (data: TableInsertableType) => TableValueType;
+		type TableInsertableType = never; // InsertableObjectFromSchemaRecord<typeof tableFields>;
+		type TableConstructorType = new (data?: InternalTreeNode | undefined) => TableValueType;
 
 		// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
 		// for the private brand field of TreeNode.
@@ -920,9 +928,10 @@ export namespace System_TableSchema {
 			/* Name */ ScopedSchemaName<Scope, "TableRoot">,
 			/* Kind */ NodeKind.Object,
 			/* TNode */ TableValueType,
-			/* TInsertable */ object & TableInsertableType,
-			/* ImplicitlyConstructable */ true,
-			/* Info */ typeof tableFields
+			/* TInsertable */ TableInsertableType,
+			/* ImplicitlyConstructable */ false,
+			/* Info */ typeof tableFields,
+			/* TConstructorExtra */ undefined
 		> & {
 			/**
 			 * Create an empty table.

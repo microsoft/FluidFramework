@@ -135,10 +135,9 @@ describe("TableFactory unit tests", () => {
 				cell: schemaFactory.string,
 			}) {}
 
-			const _table = new MyTable({
-				columns: [{ id: "column-0" }],
-				rows: [{ id: "row-0", cells: {} }],
-			});
+			const foo = MyTable.empty();
+
+			const _table = new MyTable();
 		});
 
 		it("Can create with custom column schema", () => {
