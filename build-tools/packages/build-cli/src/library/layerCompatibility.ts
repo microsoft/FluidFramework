@@ -104,7 +104,9 @@ export function maybeGetNewGeneration(
 		fluidCompatMetadata.generation +
 		Math.min(monthsBetweenReleases, minimumCompatWindowMonths - 1);
 	if (newGeneration === fluidCompatMetadata.generation) {
-		log?.verbose(`Generation remains the same (${newGeneration}); skipping generation update.`);
+		log?.verbose(
+			`Generation remains the same (${newGeneration}); skipping generation update.`,
+		);
 		return undefined;
 	}
 	return newGeneration;

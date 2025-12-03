@@ -935,7 +935,9 @@ export const checkCompatLayerGeneration: StateHandlerFunction = async (
 	// Get packages for the release group or individual package being released
 	const packagesToCheck = isReleaseGroup(releaseGroup)
 		? context.packagesInReleaseGroup(releaseGroup)
-		: [context.fullPackageMap.get(releaseGroup)].filter((pkg): pkg is Package => pkg !== undefined);
+		: [context.fullPackageMap.get(releaseGroup)].filter(
+				(pkg): pkg is Package => pkg !== undefined,
+			);
 
 	const isUpToDate = await runCompatLayerGenerationCheck(packagesToCheck);
 

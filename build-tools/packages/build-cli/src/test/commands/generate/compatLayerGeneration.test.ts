@@ -104,7 +104,9 @@ describe("generate:compatLayerGeneration", () => {
 
 		// Create a date monthsSincePreviousRelease months ago
 		const oldDate = new Date();
-		oldDate.setDate(oldDate.getDate() - monthsSincePreviousRelease * DAYS_IN_MONTH_APPROXIMATION);
+		oldDate.setDate(
+			oldDate.getDate() - monthsSincePreviousRelease * DAYS_IN_MONTH_APPROXIMATION,
+		);
 		const oldDateString = formatISO(oldDate, { representation: "date" });
 		const mockMetadata: IFluidCompatibilityMetadata = {
 			generation: previousGeneration,
@@ -128,7 +130,9 @@ describe("generate:compatLayerGeneration", () => {
 
 		// Create a date monthsSincePreviousRelease months ago
 		const oldDate = new Date();
-		oldDate.setDate(oldDate.getDate() - monthsSincePreviousRelease * DAYS_IN_MONTH_APPROXIMATION);
+		oldDate.setDate(
+			oldDate.getDate() - monthsSincePreviousRelease * DAYS_IN_MONTH_APPROXIMATION,
+		);
 		const oldDateString = formatISO(oldDate, { representation: "date" });
 		const mockMetadata: IFluidCompatibilityMetadata = {
 			generation: previousGeneration,
