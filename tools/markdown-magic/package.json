@@ -32,7 +32,7 @@
 		"yargs": "17.7.2"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.9.3",
+		"@biomejs/biome": "~2.3.8",
 		"@fluidframework/build-common": "^2.0.3"
 	},
 	"dependencyComments": [

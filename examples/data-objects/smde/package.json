@@ -37,7 +37,7 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.9.3",
+		"@biomejs/biome": "~2.3.8",
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-example/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",

@@ -34,7 +34,7 @@
 		"typescript": "~5.4.5"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.9.3",
+		"@biomejs/biome": "~2.3.8",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"concurrently": "^8.2.1",
