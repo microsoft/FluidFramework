@@ -1,4 +1,5 @@
 # Test gitignore
 # The entries here don't exist in the repo, they are created by tests when they run.
+# The entries here don't exist in the repo, they are created by tests when they run.
 gitignored/
 *.ignored
