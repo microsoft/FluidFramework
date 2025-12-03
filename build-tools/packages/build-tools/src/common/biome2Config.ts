@@ -74,11 +74,14 @@ export async function getAllBiome2ConfigPaths(configPath: string): Promise<strin
  * Walks up the directory tree from the given directory to find parent Biome config files.
  * Stops when a config with `root: true` is found or when the filesystem root is reached.
  *
+ * @param startDir - The directory containing the child config file. Parent discovery starts
+ *                   from this directory's parent (i.e., startDir itself is not searched).
  * @returns Array of config paths in order from root to nearest parent (not including the starting directory)
  */
 async function findParentBiome2Configs(startDir: string): Promise<string[]> {
 	const configs: string[] = [];
-	let currentDir = path.dirname(startDir); // Start from parent of the starting directory
+	// Start from parent directory - we don't want to include the config in startDir
+	let currentDir = path.dirname(startDir);
 	const fsRoot = path.parse(startDir).root;
 
 	while (currentDir !== fsRoot) {

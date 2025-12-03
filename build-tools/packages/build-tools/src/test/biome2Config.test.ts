@@ -230,8 +230,8 @@ describe("Biome 2.x config loading", () => {
 
 		it("child config has root: false", async () => {
 			const config = await loadBiome2Config(childConfig);
-			// root should be false (or undefined, which is treated as false)
-			assert(config.root === false || config.root === undefined || config.root === null);
+			// root should be false or not set (treated as false)
+			assert(config.root !== true, "child config should not have root: true");
 		});
 
 		it("parent config has root: true", async () => {
