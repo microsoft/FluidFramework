@@ -557,9 +557,16 @@ function getLengthToSplitMark(mark: Mark, context: FieldChangeEncodingContext): 
 		case "Remove":
 			count = context.isAttachId(getDetachedRootId(mark), count).length;
 			break;
-		case "Rename":
-			// XXX
+		case "Rename": {
+			count = context.getInputRootId(mark.idOverride, count).length;
+			count = context.isAttachId(mark.idOverride, count).length;
+			count = context.isDetachId(mark.idOverride, count).length;
+			const cellId = mark.cellId ?? fail("Rename should have cell ID");
+			const renameEntry = context.rootRenames.getFirst(cellId, count);
+			count = renameEntry.length;
+			count = context.isAttachId(renameEntry.value ?? cellId, count).length;
 			break;
+		}
 		default:
 			break;
 	}
