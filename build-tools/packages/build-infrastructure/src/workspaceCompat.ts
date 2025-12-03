@@ -153,9 +153,22 @@ function filterByGitignoreSync(files: string[], cwd: string): string[] {
 }
 
 /**
+ * Cache for gitignore patterns per directory path.
+ * This avoids re-reading .gitignore files for the same directory.
+ */
+const gitignorePatternsCache = new Map<string, string[]>();
+
+/**
  * Reads gitignore patterns from .gitignore files in the given directory and its parents synchronously.
+ * Results are cached per directory path to avoid repeated filesystem reads.
  */
 function readGitignorePatternsSync(dir: string): string[] {
+	// Check cache first
+	const cached = gitignorePatternsCache.get(dir);
+	if (cached !== undefined) {
+		return cached;
+	}
+
 	const patterns: string[] = [];
 	let currentDir = dir;
 
@@ -178,5 +191,7 @@ function readGitignorePatternsSync(dir: string): string[] {
 		currentDir = path.dirname(currentDir);
 	}
 
+	// Cache the result
+	gitignorePatternsCache.set(dir, patterns);
 	return patterns;
 }

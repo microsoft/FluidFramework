@@ -219,9 +219,22 @@ async function filterByGitignore(files: string[], cwd: string): Promise<string[]
 }
 
 /**
+ * Cache for gitignore patterns per directory path.
+ * This avoids re-reading .gitignore files for the same directory.
+ */
+const gitignorePatternsCache = new Map<string, string[]>();
+
+/**
  * Reads gitignore patterns from .gitignore files in the given directory and its parents.
+ * Results are cached per directory path to avoid repeated filesystem reads.
  */
 async function readGitignorePatterns(dir: string): Promise<string[]> {
+	// Check cache first
+	const cached = gitignorePatternsCache.get(dir);
+	if (cached !== undefined) {
+		return cached;
+	}
+
 	const patterns: string[] = [];
 	let currentDir = dir;
 
@@ -244,5 +257,7 @@ async function readGitignorePatterns(dir: string): Promise<string[]> {
 		currentDir = path.dirname(currentDir);
 	}
 
+	// Cache the result
+	gitignorePatternsCache.set(dir, patterns);
 	return patterns;
 }
