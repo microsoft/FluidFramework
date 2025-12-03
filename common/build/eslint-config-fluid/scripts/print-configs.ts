@@ -16,11 +16,19 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { ESLint } from "eslint";
+import { loadESLint } from "eslint";
 import sortJson from "sort-json";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Determine which config files to use based on ESLINT_USE_FLAT_CONFIG
+// NOTE: This is an ESLint limitation - loadESLint() only loads the correct ESLint class,
+// but we still need to manually determine which config file format to use.
+// Legacy ESLint cannot read flat config files (.mjs), and FlatESLint cannot read legacy config files (.js/.cjs).
+const useFlatConfig = process.env.ESLINT_USE_FLAT_CONFIG === "true";
+const configDir = useFlatConfig ? "../.eslint-print-configs" : "..";
+const configExt = useFlatConfig ? ".mjs" : ".js";
 
 interface ConfigToPrint {
 	name: string;
@@ -31,37 +39,45 @@ interface ConfigToPrint {
 const configsToPrint: ConfigToPrint[] = [
 	{
 		name: "default",
-		configPath: path.join(__dirname, "..", ".eslint-print-configs", "recommended.mjs"),
+		configPath: path.join(__dirname, configDir, useFlatConfig ? "recommended.mjs" : "index.js"),
 		sourceFilePath: path.join(__dirname, "..", "src", "file.ts"),
 	},
 	{
 		name: "minimal",
-		configPath: path.join(__dirname, "..", ".eslint-print-configs", "minimal.mjs"),
+		configPath: path.join(
+			__dirname,
+			configDir,
+			`minimal${useFlatConfig ? "" : "-deprecated"}${configExt}`,
+		),
 		sourceFilePath: path.join(__dirname, "..", "src", "file.ts"),
 	},
 	{
 		name: "react",
-		configPath: path.join(__dirname, "..", ".eslint-print-configs", "recommended.mjs"),
+		configPath: path.join(__dirname, configDir, useFlatConfig ? "recommended.mjs" : "index.js"),
 		sourceFilePath: path.join(__dirname, "..", "src", "file.tsx"),
 	},
 	{
 		name: "recommended",
-		configPath: path.join(__dirname, "..", ".eslint-print-configs", "recommended.mjs"),
+		configPath: path.join(__dirname, configDir, `recommended${configExt}`),
 		sourceFilePath: path.join(__dirname, "..", "src", "file.ts"),
 	},
 	{
 		name: "strict",
-		configPath: path.join(__dirname, "..", ".eslint-print-configs", "strict.mjs"),
+		configPath: path.join(__dirname, configDir, `strict${configExt}`),
 		sourceFilePath: path.join(__dirname, "..", "src", "file.ts"),
 	},
 	{
 		name: "strict-biome",
-		configPath: path.join(__dirname, "..", ".eslint-print-configs", "strict.mjs"),
+		configPath: path.join(
+			__dirname,
+			configDir,
+			`strict${useFlatConfig ? "" : "-biome"}${configExt}`,
+		),
 		sourceFilePath: path.join(__dirname, "..", "src", "file.ts"),
 	},
 	{
 		name: "test",
-		configPath: path.join(__dirname, "..", ".eslint-print-configs", "recommended.mjs"),
+		configPath: path.join(__dirname, configDir, `recommended${configExt}`),
 		sourceFilePath: path.join(__dirname, "..", "src", "test", "file.ts"),
 	},
 ];
@@ -71,6 +87,10 @@ const configsToPrint: ConfigToPrint[] = [
  */
 async function generateConfig(filePath: string, configPath: string): Promise<string> {
 	console.log(`Generating config for ${filePath} using ${configPath}`);
+
+	// loadESLint() respects ESLINT_USE_FLAT_CONFIG and returns the appropriate ESLint class.
+	// However, it's the caller's responsibility to provide config files in the correct format.
+	const ESLint = await loadESLint();
 	const eslint = new ESLint({
 		overrideConfigFile: configPath,
 	});
@@ -82,15 +102,17 @@ async function generateConfig(filePath: string, configPath: string): Promise<str
 	}
 
 	// Serialize and parse to create a clean copy without any circular references or non-serializable values
-	// that might exist in the ESLint config object (even though JSON.stringify handles them fine,
-	// sort-json may encounter issues with them)
 	const cleanConfig = JSON.parse(JSON.stringify(config));
 
-	// Remove the languageOptions property because it contains environment-specific paths and large
-	// globals objects that cause unnecessary diffs. The actual rules configuration is more important
-	// for tracking changes.
-	if (cleanConfig.languageOptions) {
-		delete cleanConfig.languageOptions;
+	// Remove properties that contain environment-specific paths
+	if (useFlatConfig) {
+		// For flat configs, remove languageOptions which has environment-specific paths and large globals
+		if (cleanConfig.languageOptions) {
+			delete cleanConfig.languageOptions;
+		}
+	} else {
+		// For legacy configs, remove the parser property
+		delete cleanConfig.parser;
 	}
 
 	// Generate the new content with sorting applied

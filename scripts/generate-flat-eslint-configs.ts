@@ -1,5 +1,3 @@
-#!/usr/bin/env tsx
-
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -17,11 +15,10 @@
  * Output: eslint.config.mjs alongside the existing .eslintrc.cjs (which is left intact for now).
  */
 
-import { promises as fs } from "fs";
-import * as path from "path";
-import { pathToFileURL } from "url";
+import { promises as fs } from "node:fs";
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 
-import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, "..");
