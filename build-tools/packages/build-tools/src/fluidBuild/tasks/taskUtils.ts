@@ -121,7 +121,7 @@ export async function loadModule(modulePath: string, moduleType?: string) {
 
 /**
  * Shuffles an array in place using Fisher-Yates algorithm.
- * Used for testing order-independence when FLUID_BUILD_TEST_RANDOM_ORDER is set.
+ * Used for testing order-independence when FLUID_BUILD_TEST_RANDOM_ORDER is set to "true".
  *
  * @param array - The array to shuffle
  * @returns The shuffled array (same reference, modified in place)

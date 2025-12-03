@@ -15,7 +15,7 @@ const globTestDataPath = path.resolve(testDataPath, "glob");
 
 /**
  * Helper to extract relative paths from absolute results for easier testing.
- * Converts absolute paths to paths relative to globTestDataPath for assertions.
+ * Converts absolute paths to paths relative to globTestDataPath and sorts them, to enable robust equality assertions.
  */
 function toRelativePaths(results: string[]): string[] {
 	return results.map((f) => path.relative(globTestDataPath, f)).sort();
