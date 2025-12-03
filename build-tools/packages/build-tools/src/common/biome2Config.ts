@@ -11,6 +11,7 @@ import type { Opaque } from "type-fest";
 
 import type { Configuration as Biome2ConfigRaw } from "./biome2ConfigTypes";
 import {
+	filterFilesWithOrderedPatterns,
 	filterFilesWithPatterns,
 	getClosestBiomeConfigPath,
 	loadRawBiomeConfigFile,
@@ -226,31 +227,48 @@ export function parseIncludes(includes: string[] | undefined | null): {
 }
 
 /**
+ * Given a Biome 2.x config object, returns the ordered patterns from 'includes' across the 'files'
+ * and the specified section ('formatter' or 'linter') in the config.
+ *
+ * Patterns are returned in declaration order, which is essential for correct re-inclusion behavior.
+ * In Biome 2.x, patterns like `["**", "!test/**", "test/special/**"]` are processed in order:
+ * 1. Include all files (**)
+ * 2. Exclude test/** (!test/**)
+ * 3. Re-include test/special/** (test/special/**)
+ *
+ * See: {@link https://biomejs.dev/reference/configuration/#filesinclude}
+ *
+ * @param config - A resolved/merged Biome 2.x configuration.
+ * @param section - The config section to extract patterns from ('formatter' or 'linter').
+ * @returns An array of patterns in declaration order, with negation prefixes preserved.
+ */
+export function getOrderedPatternsFromBiome2Config(
+	config: Biome2ConfigResolved,
+	section: Biome2ConfigSection,
+): string[] {
+	const patterns: string[] = [];
+
+	// Add patterns from files.includes first
+	if (config.files?.includes) {
+		patterns.push(...config.files.includes);
+	}
+
+	// Add section-specific patterns
+	const sectionConfig = config[section];
+	if (sectionConfig?.includes) {
+		patterns.push(...sectionConfig.includes);
+	}
+
+	return patterns;
+}
+
+/**
  * Given a Biome 2.x config object, returns the combined settings for 'includes' across the 'files'
  * and the specified section ('formatter' or 'linter') in the config.
  *
  * This function parses the unified 'includes' field and returns separate include and ignore patterns.
  *
- * @remarks
- *
- * KNOWN LIMITATION - Negation Pattern Ordering:
- *
- * In Biome 2.x, patterns in `includes` are processed in declaration order, allowing for complex
- * re-inclusion patterns like `["!test/**", "test/special/**"]` (exclude test/, but re-include test/special/).
- *
- * Our implementation separates include and ignore patterns, applying all includes first, then all ignores.
- * This means re-inclusion patterns will NOT work correctly - the ignore will always win.
- *
- * This limitation may cause OVERMATCHING (including more files than Biome would) in edge cases where
- * re-inclusion patterns are used. However, it will NOT cause undermatching (missing files that should
- * be cached), which is acceptable for our caching use case.
- *
- * To fully support ordered negation patterns, we would need to:
- * 1. Process patterns in declaration order
- * 2. Use a library that supports incremental include/exclude (the `ignore` library can do this)
- * 3. Refactor `filterFilesWithPatterns` to accept an ordered pattern list instead of separate sets
- *
- * See: {@link https://biomejs.dev/reference/configuration/#filesinclude}
+ * @deprecated Use {@link getOrderedPatternsFromBiome2Config} instead for correct re-inclusion pattern handling.
  *
  * @param config - A resolved/merged Biome 2.x configuration.
  * @param section - The config section to extract patterns from ('formatter' or 'linter').
@@ -325,10 +343,7 @@ export async function getBiome2FormattedFiles(
 	directory: string,
 	gitRepo: GitRepo,
 ): Promise<string[]> {
-	const { includePatterns, ignorePatterns } = getSettingValuesFromBiome2Config(
-		config,
-		"formatter",
-	);
+	const orderedPatterns = getOrderedPatternsFromBiome2Config(config, "formatter");
 
 	// KNOWN LIMITATION: In Biome 2.x, globs are resolved relative to the configuration file location.
 	// However, since we're matching against repo-root-relative paths from git, we prepend **/ to
@@ -344,15 +359,14 @@ export async function getBiome2FormattedFiles(
 	// 3. Apply patterns relative to their source config's directory
 	//
 	// We avoid double-prefixing patterns that already start with **/.
-	const prefixGlob = (glob: string): string => (glob.startsWith("**/") ? glob : `**/${glob}`);
+	const prefixGlob = (glob: string): string => {
+		const isNegation = glob.startsWith("!");
+		const pattern = isNegation ? glob.slice(1) : glob;
+		const prefixed = pattern.startsWith("**/") ? pattern : `**/${pattern}`;
+		return isNegation ? `!${prefixed}` : prefixed;
+	};
 
-	return filterFilesWithPatterns(
-		includePatterns,
-		ignorePatterns,
-		directory,
-		gitRepo,
-		prefixGlob,
-	);
+	return filterFilesWithOrderedPatterns(orderedPatterns, directory, gitRepo, prefixGlob);
 }
 
 /**

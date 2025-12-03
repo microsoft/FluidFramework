@@ -13,10 +13,12 @@ import {
 	Biome2ConfigReader,
 	type Biome2ConfigResolved,
 	getBiome2FormattedFilesFromDirectory,
+	getOrderedPatternsFromBiome2Config,
 	getSettingValuesFromBiome2Config,
 	loadBiome2Config,
 	parseIncludes,
 } from "../common/biome2Config";
+import { filterFilesWithOrderedPatterns } from "../common/biomeConfigUtils";
 import { GitRepo } from "../common/gitRepo";
 import { getResolvedFluidRoot } from "../fluidBuild/fluidUtils";
 import { testDataPath } from "./init";
@@ -326,47 +328,66 @@ describe("Biome 2.x config loading", () => {
 		});
 	});
 
-	describe("parseIncludes - pattern ordering behavior", () => {
-		// These tests document the KNOWN LIMITATION with re-inclusion patterns
-		// See remarks on getSettingValuesFromBiome2Config for details
+	describe("parseIncludes - pattern separation (deprecated approach)", () => {
+		// These tests document the parseIncludes function's behavior, which separates patterns by type.
+		// For correct re-inclusion handling, use getOrderedPatternsFromBiome2Config instead.
 
-		it("separates patterns regardless of order (known limitation)", () => {
-			// In Biome 2.x, this pattern would mean: exclude test/**, then re-include test/special/**
-			// Our implementation separates them, so re-inclusion won't work
+		it("separates patterns by type (loses ordering)", () => {
 			const includes = ["!test/**", "test/special/**"];
 			const result = parseIncludes(includes);
 
-			// We separate them into two arrays, losing the ordering information
+			// parseIncludes separates them into two arrays
 			assert.deepEqual(result.includePatterns, ["test/special/**"]);
 			assert.deepEqual(result.ignorePatterns, ["test/**"]);
 		});
 
 		it("handles mixed include and negation patterns", () => {
-			// In Biome 2.x: include src/**, exclude test/**, re-include test/unit/**
 			const includes = ["src/**", "!test/**", "test/unit/**"];
 			const result = parseIncludes(includes);
 
-			// Our implementation groups by type, not by order
 			assert.deepEqual(result.includePatterns, ["src/**", "test/unit/**"]);
 			assert.deepEqual(result.ignorePatterns, ["test/**"]);
 		});
+	});
 
-		it("handles all negation patterns first then include (edge case)", () => {
-			// Pattern like: exclude everything first, then re-include specific paths
-			const includes = ["!**", "src/**", "lib/**"];
-			const result = parseIncludes(includes);
+	describe("getOrderedPatternsFromBiome2Config", () => {
+		const testConfig = path.resolve(testDataPath, "biome2/reinclusion-test/config.jsonc");
 
-			// All includes are separated from ignores
-			assert.deepEqual(result.includePatterns, ["src/**", "lib/**"]);
-			assert.deepEqual(result.ignorePatterns, ["**"]);
+		it("preserves pattern order for re-inclusion support", async () => {
+			const config = await loadBiome2Config(testConfig);
+			const patterns = getOrderedPatternsFromBiome2Config(config, "formatter");
+
+			// Should preserve the exact order from the config
+			assert.deepEqual(patterns, ["**", "!test/**", "test/special/**"]);
+		});
+
+		it("includes patterns from both files and section", async () => {
+			const config = await loadBiome2Config(
+				path.resolve(testDataPath, "biome2/pkg-a/config.jsonc"),
+			);
+			const patterns = getOrderedPatternsFromBiome2Config(config, "formatter");
+
+			// Should have patterns from files.includes
+			assert(patterns.includes("pkg-a-include/**"));
+			assert(patterns.includes("!pkg-a-ignore/**"));
+
+			// Should have patterns from formatter.includes
+			assert(patterns.includes("include-formatter/**"));
+			assert(patterns.includes("!ignore-formatter/**"));
 		});
 	});
 
-	describe("re-inclusion pattern behavior (known limitation)", () => {
-		// These tests document how our implementation differs from true Biome 2.x behavior
-		// when re-inclusion patterns are used
+	describe("re-inclusion pattern behavior", () => {
+		// These tests verify that our ordered pattern processing correctly handles
+		// re-inclusion patterns like ["**", "!test/**", "test/special/**"]
 
 		const testConfig = path.resolve(testDataPath, "biome2/reinclusion-test/config.jsonc");
+		let gitRepo: GitRepo;
+
+		before(async () => {
+			const repoRoot = await getResolvedFluidRoot(true);
+			gitRepo = new GitRepo(repoRoot);
+		});
 
 		it("config uses re-inclusion pattern", async () => {
 			const config = await loadBiome2Config(testConfig);
@@ -375,43 +396,24 @@ describe("Biome 2.x config loading", () => {
 			assert(config.files!.includes!.includes("test/special/**"));
 		});
 
-		it("parseIncludes separates re-inclusion patterns (loses ordering)", () => {
-			// In true Biome 2.x, pattern ["**", "!test/**", "test/special/**"] would:
-			// 1. Include all files (**)
-			// 2. Exclude test/** (!test/**)
-			// 3. Re-include test/special/** (test/special/**)
-			// Result: all files except test/, plus test/special/
-
-			// Our implementation separates them:
-			const result = parseIncludes(["**", "!test/**", "test/special/**"]);
-			assert.deepEqual(result.includePatterns, ["**", "test/special/**"]);
-			assert.deepEqual(result.ignorePatterns, ["test/**"]);
-
-			// When applied with our implementation:
-			// - Include: ** (all files) + test/special/** (already included by **)
-			// - Ignore: test/** (including test/special/**)
-			// Result: all files except test/** (test/special/ is WRONGLY excluded)
-			// This is the KNOWN LIMITATION documented in getSettingValuesFromBiome2Config
-		});
-
-		it("getSettingValuesFromBiome2Config returns separated patterns", async () => {
+		it("getOrderedPatternsFromBiome2Config preserves re-inclusion order", async () => {
 			const config = await loadBiome2Config(testConfig);
-			const { includePatterns, ignorePatterns } = getSettingValuesFromBiome2Config(
-				config,
-				"formatter",
+			const patterns = getOrderedPatternsFromBiome2Config(config, "formatter");
+
+			// Pattern order should be: **, !test/**, test/special/**
+			const testIndex = patterns.indexOf("!test/**");
+			const specialIndex = patterns.indexOf("test/special/**");
+
+			assert(testIndex !== -1, "should have !test/** pattern");
+			assert(specialIndex !== -1, "should have test/special/** pattern");
+			assert(
+				testIndex < specialIndex,
+				"!test/** should come before test/special/** to enable re-inclusion",
 			);
-
-			// Include patterns from files.includes (non-negated patterns)
-			assert(includePatterns.has("**"), "should have ** include");
-			assert(includePatterns.has("test/special/**"), "should have test/special/** include");
-
-			// Ignore patterns from files.includes (negated patterns without the !)
-			assert(ignorePatterns.has("test/**"), "should have test/** ignore");
 		});
 
-		// NOTE: File matching tests are skipped because they require git-tracked files.
-		// The above tests document the pattern separation behavior and the known limitation.
-		// To test actual file matching with re-inclusion patterns, the test files would need
-		// to be committed to git first.
+		// NOTE: End-to-end file matching tests with re-inclusion patterns would require
+		// git-tracked files in the test data. The above tests verify the pattern extraction
+		// and ordering logic. The filterFilesWithOrderedPatterns function is tested separately.
 	});
 });
