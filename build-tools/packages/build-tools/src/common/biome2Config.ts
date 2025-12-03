@@ -233,8 +233,11 @@ export async function getBiome2FormattedFiles(
 	// However, since we're matching against repo-root-relative paths from git,
 	// we need to prepend **/ to the patterns to match anywhere in the path.
 	// This is similar to how Biome 1.x handled patterns implicitly.
-	const prefixedIncludes = [...includePatterns].map((glob) => `**/${glob}`);
-	const prefixedIgnores = [...ignorePatterns].map((glob) => `**/${glob}`);
+	// We avoid double-prefixing patterns that already start with **/.
+	const prefixGlob = (glob: string): string =>
+		glob.startsWith("**/") ? glob : `**/${glob}`;
+	const prefixedIncludes = [...includePatterns].map(prefixGlob);
+	const prefixedIgnores = [...ignorePatterns].map(prefixGlob);
 
 	/**
 	 * All files that could possibly be formatted before Biome include and ignore entries are applied. Paths are relative
