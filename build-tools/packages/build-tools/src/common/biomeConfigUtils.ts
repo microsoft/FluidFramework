@@ -10,9 +10,10 @@ import * as JSON5 from "json5";
 /**
  * Minimal interface for a Biome configuration that includes the extends field.
  * This is used for shared config loading logic between Biome 1.x and 2.x.
+ * In Biome 2.x, extends can be a string or string[]. In Biome 1.x, it's only string[].
  */
 export interface BiomeConfigWithExtends {
-	extends?: string[] | null;
+	extends?: string[] | string | null;
 }
 
 /**
@@ -48,8 +49,10 @@ export async function resolveExtendsChainGeneric<T extends BiomeConfigWithExtend
 	let extendedConfigPaths: string[] = [];
 
 	if (config.extends) {
+		// Normalize extends to always be an array (Biome 2.x allows string or string[])
+		const extendsArray = Array.isArray(config.extends) ? config.extends : [config.extends];
 		const pathsNested = await Promise.all(
-			config.extends.map((configToExtend) =>
+			extendsArray.map((configToExtend) =>
 				resolveExtendsChainGeneric(
 					path.join(path.dirname(configPath), configToExtend),
 					loadConfig,

@@ -11,7 +11,7 @@ import multimatch from "multimatch";
 import { merge } from "ts-deepmerge";
 import type { Opaque } from "type-fest";
 
-import type { Configuration2 as Biome2ConfigRaw } from "./biome2ConfigTypes";
+import type { Configuration as Biome2ConfigRaw } from "./biome2ConfigTypes";
 import { loadRawBiomeConfigFile, resolveExtendsChainGeneric } from "./biomeConfigUtils";
 import type { GitRepo } from "./gitRepo";
 
