@@ -33,7 +33,6 @@ import {
 	getContainerRuntimeApi,
 	getDriverApi,
 	CompatApis,
-	getCompatModeFromKind,
 } from "./testApi.js";
 import { getRequestedVersion } from "./versionUtils.js";
 
@@ -361,7 +360,6 @@ function createE2EDocCompatSuite(
 						getRequestedVersion(testBaseVersion(config.dataRuntime), config.dataRuntime),
 					);
 					const apis: CompatApis = {
-						mode: getCompatModeFromKind(config.kind),
 						containerRuntime: getContainerRuntimeApi(
 							getRequestedVersion(
 								testBaseVersion(config.containerRuntime),
