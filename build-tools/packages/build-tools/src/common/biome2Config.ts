@@ -234,8 +234,7 @@ export async function getBiome2FormattedFiles(
 	// we need to prepend **/ to the patterns to match anywhere in the path.
 	// This is similar to how Biome 1.x handled patterns implicitly.
 	// We avoid double-prefixing patterns that already start with **/.
-	const prefixGlob = (glob: string): string =>
-		glob.startsWith("**/") ? glob : `**/${glob}`;
+	const prefixGlob = (glob: string): string => (glob.startsWith("**/") ? glob : `**/${glob}`);
 	const prefixedIncludes = [...includePatterns].map(prefixGlob);
 	const prefixedIgnores = [...ignorePatterns].map(prefixGlob);
 

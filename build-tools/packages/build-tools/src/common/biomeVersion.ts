@@ -121,39 +121,3 @@ export async function detectBiomeVersion(
 	// Fall back to CLI detection
 	return detectBiomeVersionFromCli(startDir);
 }
-
-/**
- * Checks if the config file uses Biome 2.x format by looking for the new `includes` field
- * instead of separate `include` and `ignore` fields.
- *
- * This is a heuristic detection method that can be used when version detection is not possible.
- *
- * @param configPath - Path to the Biome config file.
- * @returns true if the config appears to use Biome 2.x format, false otherwise.
- */
-export async function detectBiome2ConfigFormat(configPath: string): Promise<boolean> {
-	try {
-		const content = await readFile(configPath, "utf8");
-		// Look for the `includes` field pattern (Biome 2.x)
-		// vs `include` and `ignore` fields (Biome 1.x)
-		const hasIncludes = /"includes"\s*:/i.test(content);
-		const hasInclude = /"include"\s*:/i.test(content);
-		const hasIgnore = /"ignore"\s*:/i.test(content);
-
-		// If `includes` is present and neither `include` nor `ignore` is present,
-		// it's likely a Biome 2.x config
-		if (hasIncludes && !hasInclude && !hasIgnore) {
-			return true;
-		}
-
-		// If `include` or `ignore` is present, it's likely a Biome 1.x config
-		if (hasInclude || hasIgnore) {
-			return false;
-		}
-
-		// Default to 1.x format if we can't determine
-		return false;
-	} catch {
-		return false;
-	}
-}

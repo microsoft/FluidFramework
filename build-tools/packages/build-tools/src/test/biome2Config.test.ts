@@ -177,4 +177,39 @@ describe("Biome 2.x config loading", () => {
 			);
 		});
 	});
+
+	describe("nested config with extends", () => {
+		const testConfig = path.resolve(testDataPath, "biome2/pkg-b/config.jsonc");
+		let gitRepo: GitRepo;
+
+		before(async () => {
+			const repoRoot = await getResolvedFluidRoot(true);
+			gitRepo = new GitRepo(repoRoot);
+		});
+
+		it("loads config that extends another config which extends a base", async () => {
+			// pkg-b/config.jsonc extends pkg-a/config.jsonc which extends baseconfig.jsonc
+			const config = await loadBiome2Config(testConfig);
+			assert(config !== undefined);
+
+			// Should inherit ignoreUnknown from base config
+			assert.equal(config.files!.ignoreUnknown, true);
+
+			// Should have includes from pkg-b
+			assert(config.files!.includes!.includes("pkg-b-include/**"));
+			assert(config.files!.includes!.includes("!pkg-b-ignore/**"));
+		});
+
+		it("has correct formatted files for nested extended config", async () => {
+			const config = await Biome2ConfigReader.create(testConfig, gitRepo);
+			const { formattedFiles } = config;
+
+			// Should include file from pkg-b-include
+			const pkgBFile = path.resolve(testDataPath, "biome2/pkg-b/pkg-b-include/sourceFile.ts");
+			assert(
+				formattedFiles.includes(pkgBFile),
+				`expected ${pkgBFile} to be in formatted files`,
+			);
+		});
+	});
 });

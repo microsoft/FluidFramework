@@ -13,13 +13,10 @@ import { merge } from "ts-deepmerge";
 // Opaque is deprecated in newer type-fest versions (replaced by Tagged); we pin type-fest 2.x for current CommonJS
 import type { Opaque } from "type-fest";
 
+import { Biome2ConfigReader } from "./biome2Config";
 import type { Configuration as BiomeConfigRaw } from "./biomeConfigTypes";
 import type { GitRepo } from "./gitRepo";
-import {
-	type BiomeMajorVersion,
-	type BiomeVersionInfo,
-	detectBiomeVersion,
-} from "./biomeVersion";
+import { type BiomeMajorVersion, detectBiomeVersion } from "./biomeVersion";
 
 // switch to regular import once building ESM
 const findUp = import("find-up");
@@ -273,27 +270,11 @@ export class BiomeConfigReader {
 	}
 }
 
-// Re-export version detection utilities
-export { detectBiomeVersion, type BiomeMajorVersion, type BiomeVersionInfo };
-
-// Re-export Biome 2.x types and reader
-export {
-	Biome2ConfigReader,
-	type Biome2ConfigResolved,
-	getAllBiome2ConfigPaths,
-	getBiome2FormattedFiles,
-	getBiome2FormattedFilesFromDirectory,
-	getSettingValuesFromBiome2Config,
-	loadBiome2Config,
-	parseIncludes,
-	type Biome2ConfigSection,
-} from "./biome2Config";
-
 /**
  * A common interface for both Biome 1.x and 2.x config readers.
  * This interface defines the properties that are available on both readers.
  */
-export interface IBiomeConfigReader {
+export interface BiomeConfigReaderInterface {
 	/**
 	 * The absolute path to the closest (most specific) config file.
 	 */
@@ -328,10 +309,7 @@ export async function createBiomeConfigReader(
 	directoryOrConfigFile: string,
 	gitRepo: GitRepo,
 	forceVersion?: BiomeMajorVersion,
-): Promise<IBiomeConfigReader> {
-	// Import dynamically to avoid circular dependencies
-	const { Biome2ConfigReader: Reader2 } = await import("./biome2Config.js");
-
+): Promise<BiomeConfigReaderInterface> {
 	let majorVersion: BiomeMajorVersion;
 
 	if (forceVersion !== undefined) {
@@ -343,7 +321,7 @@ export async function createBiomeConfigReader(
 	}
 
 	if (majorVersion === 2) {
-		return Reader2.create(directoryOrConfigFile, gitRepo);
+		return Biome2ConfigReader.create(directoryOrConfigFile, gitRepo);
 	}
 
 	// Default to Biome 1.x reader
