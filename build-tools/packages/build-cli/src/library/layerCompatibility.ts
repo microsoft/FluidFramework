@@ -7,8 +7,16 @@ import type { IFluidCompatibilityMetadata, Logger } from "@fluidframework/build-
 import { formatISO, isDate, isValid, parseISO } from "date-fns";
 import { diff, parse } from "semver";
 
-// Approximate month as 33 days to add some buffer and avoid over-counting months in longer spans.
-export const daysInMonthApproximation = 33;
+/**
+ * Approximate month as 33 days to add some buffer and avoid over-counting months in longer spans.
+ */
+export const DAYS_IN_MONTH_APPROXIMATION = 33;
+
+/**
+ * The default minimum compatibility window in months for layer generation.
+ * This matches the default value used in the layerCompatGeneration command.
+ */
+export const DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS = 3;
 
 /**
  * Determines if the current package version represents a patch release.
@@ -49,7 +57,8 @@ export function isCurrentPackageVersionPatch(pkgVersion: string): boolean {
  * @param currentPkgVersion - The current package version to compare against the stored version
  * @param fluidCompatMetadata - The existing Fluid compatibility metadata from the previous generation
  * @param minimumCompatWindowMonths - The maximum number of months of compatibility to maintain across layers
- * @param log - Logger instance for verbose output about the calculation process
+ * @param log - Optional logger instance for verbose output about the calculation process
+ * @param currentDate - Optional current date for testing purposes. Defaults to new Date()
  * @returns The new generation number if an update is needed, or undefined if no update is required
  *
  * @throws Error When the generation file content doesn't match the expected format
@@ -59,16 +68,17 @@ export function maybeGetNewGeneration(
 	currentPkgVersion: string,
 	fluidCompatMetadata: IFluidCompatibilityMetadata,
 	minimumCompatWindowMonths: number,
-	log: Logger,
+	log?: Logger,
+	currentDate: Date = new Date(),
 ): number | undefined {
 	// Only "minor" or "major" version changes trigger generation updates.
 	const result = diff(currentPkgVersion, fluidCompatMetadata.releasePkgVersion);
 	if (result === null || (result !== "minor" && result !== "major")) {
-		log.verbose(`No minor or major release since last update; skipping generation update.`);
+		log?.verbose(`No minor or major release since last update; skipping generation update.`);
 		return undefined;
 	}
 
-	log.verbose(
+	log?.verbose(
 		`Previous package version: ${fluidCompatMetadata.releasePkgVersion}, Current package version: ${currentPkgVersion}`,
 	);
 
@@ -79,15 +89,14 @@ export function maybeGetNewGeneration(
 		);
 	}
 
-	const today = new Date();
-	const timeDiff = today.getTime() - previousReleaseDate.getTime();
+	const timeDiff = currentDate.getTime() - previousReleaseDate.getTime();
 	if (timeDiff < 0) {
 		throw new Error("Current date is older that previous release date");
 	}
 	const daysBetweenReleases = Math.round(timeDiff / (1000 * 60 * 60 * 24));
-	const monthsBetweenReleases = Math.floor(daysBetweenReleases / daysInMonthApproximation);
-	log.verbose(`Previous release date: ${previousReleaseDate}, Today: ${today}`);
-	log.verbose(
+	const monthsBetweenReleases = Math.floor(daysBetweenReleases / DAYS_IN_MONTH_APPROXIMATION);
+	log?.verbose(`Previous release date: ${previousReleaseDate}, Today: ${currentDate}`);
+	log?.verbose(
 		`Time between releases: ${daysBetweenReleases} day(s) or ~${monthsBetweenReleases} month(s)`,
 	);
 
@@ -95,7 +104,7 @@ export function maybeGetNewGeneration(
 		fluidCompatMetadata.generation +
 		Math.min(monthsBetweenReleases, minimumCompatWindowMonths - 1);
 	if (newGeneration === fluidCompatMetadata.generation) {
-		log.verbose(`Generation remains the same (${newGeneration}); skipping generation update.`);
+		log?.verbose(`Generation remains the same (${newGeneration}); skipping generation update.`);
 		return undefined;
 	}
 	return newGeneration;

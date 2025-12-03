@@ -932,7 +932,7 @@ export const checkCompatLayerGeneration: StateHandlerFunction = async (
 		return true;
 	}
 
-	const isUpToDate = await runCompatLayerGenerationCheck(context);
+	const isUpToDate = await runCompatLayerGenerationCheck(context.fullPackageMap.values());
 
 	if (!isUpToDate) {
 		log.logHr();

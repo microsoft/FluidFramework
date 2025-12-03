@@ -7,14 +7,12 @@ import { MonoRepo, type Package } from "@fluidframework/build-tools";
 import execa from "execa";
 import { ResetMode } from "simple-git";
 import type { Context } from "./context.js";
-import { isCurrentPackageVersionPatch, maybeGetNewGeneration } from "./layerCompatibility.js";
+import {
+	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
+	isCurrentPackageVersionPatch,
+	maybeGetNewGeneration,
+} from "./layerCompatibility.js";
 import { getPreReleaseDependencies } from "./package.js";
-
-/**
- * The default minimum compatibility window in months for layer generation.
- * This matches the default value used in the layerCompatGeneration command.
- */
-const DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS = 3;
 
 /**
  * An async function that executes a release preparation check. The function returns a {@link CheckResult} with details
@@ -252,12 +250,14 @@ export const CheckNoUntaggedAsserts: CheckFunction = async (
  * 3. The command will create the `fluidCompatMetadata` field in package.json with generation 1
  *    and generate the layer generation file (e.g., `src/layerGenerationState.ts`)
  *
- * @param context - The repository context.
+ * @param packages - The list of packages to check.
  * @returns `true` if all configured packages have up-to-date layer generation metadata, `false` if any updates are needed.
  */
-export async function runCompatLayerGenerationCheck(context: Context): Promise<boolean> {
+export async function runCompatLayerGenerationCheck(
+	packages: Iterable<Package>,
+): Promise<boolean> {
 	// Check all packages that have fluidCompatMetadata
-	for (const pkg of context.fullPackageMap.values()) {
+	for (const pkg of packages) {
 		const { fluidCompatMetadata } = pkg.packageJson;
 
 		// Skip packages without compatibility metadata - not all packages need layer compatibility
@@ -272,21 +272,11 @@ export async function runCompatLayerGenerationCheck(context: Context): Promise<b
 			continue;
 		}
 
-		// Use a no-op logger since we don't want verbose output during checks
-		const noopLogger = {
-			log: () => {},
-			verbose: () => {},
-			info: () => {},
-			warning: () => {},
-			errorLog: () => {},
-		};
-
-		// Check if this package needs a generation update
+		// Check if this package needs a generation update (no logger for checks)
 		const newGeneration = maybeGetNewGeneration(
 			currentPkgVersion,
 			fluidCompatMetadata,
 			DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
-			noopLogger,
 		);
 
 		// If any package needs an update, return false
@@ -303,10 +293,15 @@ export async function runCompatLayerGenerationCheck(context: Context): Promise<b
  * Checks that the compatibility layer generation is up to date. Any necessary changes will return a failure result.
  */
 export const CheckCompatLayerGeneration: CheckFunction = async (
-	context: Context,
-	_releaseGroupOrPackage: MonoRepo | Package,
+	_context: Context,
+	releaseGroupOrPackage: MonoRepo | Package,
 ): Promise<CheckResult> => {
-	const isUpToDate = await runCompatLayerGenerationCheck(context);
+	const packagesToCheck =
+		releaseGroupOrPackage instanceof MonoRepo
+			? releaseGroupOrPackage.packages
+			: [releaseGroupOrPackage];
+
+	const isUpToDate = await runCompatLayerGenerationCheck(packagesToCheck);
 
 	if (!isUpToDate) {
 		return {
