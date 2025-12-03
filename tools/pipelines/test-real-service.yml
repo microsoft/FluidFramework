@@ -9,16 +9,6 @@ name: $(Build.BuildId)
 trigger: none
 pr: none
 
-parameters:
-# If true, the routerlicious tests will run against the PPE (aka non-prod) environment.
-# This can be useful when we need to make changes to the routerlicious cluster
-# and we can make them in the PPE environment first before making them in the "prod" environment
-# that the tests normally target.
-- name: useR11sPpeEnvironment
-  displayName: Use PPE Routerlicious environment?
-  type: boolean
-  default: false
-
 resources:
   pipelines:
   - pipeline: client
@@ -100,44 +90,6 @@ stages:
         # Disable colorization for tinylicious logs (not useful when printing to a file)
         logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
         logger__morganFormat: tiny
-
-  # end-to-end tests routerlicious
-  - template: /tools/pipelines/templates/include-test-real-service.yml@self
-    parameters:
-      stageId: e2e_routerlicious
-      stageDisplayName: e2e - routerlicious
-      poolBuild: Small-eastus2
-      testPackage: ${{ variables.testPackage }}
-      testWorkspace: ${{ variables.testWorkspace }}
-      artifactBuildId: $(resources.pipeline.client.runID)
-      testCommand: test:realsvc:routerlicious:report
-      lockBehavior: sequential
-      continueOnError: true
-      ${{ if eq(parameters.useR11sPpeEnvironment, true) }}:
-        r11sSelfSignedCertSecureFile: wu2-ppe-tls-certificate.pem
-      ${{ else }}:
-        r11sSelfSignedCertSecureFile: wu2-tls-certificate.pem
-      stageVariables:
-        - group: e2e-r11s-lock
-      splitTestVariants:
-        - name: Non-compat
-          flags: --compatVersion=0
-        - name: N-1
-          flags: --compatVersion=-1
-        - name: LTS
-          flags: --compatVersion=LTS
-        - name: Cross-Client
-          flags: --compatVersion=CROSS_CLIENT
-      cacheCompatVersionsInstalls: true
-      uploadTestPassRateTelemetry: true
-      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
-      env:
-        ${{ if eq(parameters.useR11sPpeEnvironment, true) }}:
-          fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s-ppe)
-        ${{ else }}:
-          fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s)
-        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
-        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
   # end-to-end tests docker
   - template: templates/include-test-real-service.yml
