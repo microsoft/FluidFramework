@@ -3,12 +3,12 @@
 	"compilerOptions": {
 		"rootDir": "./",
 		"outDir": "../../../lib/test/mocha",
-		"types": ["mocha", "node"]
+		"types": ["mocha", "node"],
 	},
 	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../../.."
-		}
-	]
+			"path": "../../..",
+		},
+	],
 }

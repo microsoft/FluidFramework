@@ -9,6 +9,6 @@
 		"noImplicitAny": true,
 		// TODO: AB#34171 Enable noUncheckedIndexedAccess for packages/dds/merge-tree
 		"noUncheckedIndexedAccess": false,
-		"exactOptionalPropertyTypes": false
-	}
+		"exactOptionalPropertyTypes": false,
+	},
 }

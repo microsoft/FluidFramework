@@ -5,6 +5,6 @@
 		"rootDir": "./src",
 		"outDir": "./lib",
 		"types": ["node"],
-		"exactOptionalPropertyTypes": false
-	}
+		"exactOptionalPropertyTypes": false,
+	},
 }

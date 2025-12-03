@@ -9,6 +9,6 @@
 		"preserveConstEnums": true,
 		"exactOptionalPropertyTypes": false,
 		"lib": ["ES2020", "DOM", "DOM.Iterable"],
-		"skipLibCheck": true
-	}
+		"skipLibCheck": true,
+	},
 }

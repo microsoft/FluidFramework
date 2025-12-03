@@ -4,12 +4,12 @@
 		"rootDir": "./",
 		"outDir": "../../../dist/test/jest",
 		"types": ["jest", "jest-environment-puppeteer", "node", "puppeteer"],
-		"exactOptionalPropertyTypes": false
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../../../tsconfig.cjs.json"
-		}
-	]
+			"path": "../../../tsconfig.cjs.json",
+		},
+	],
 }

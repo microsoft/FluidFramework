@@ -4,8 +4,8 @@
 		"rootDir": "./src",
 		"outDir": "./lib",
 		"baseUrl": ".",
-		"noUncheckedIndexedAccess": false
+		"noUncheckedIndexedAccess": false,
 	},
 	"include": ["src/**/*"],
-	"exclude": ["src/test/**/*"]
+	"exclude": ["src/test/**/*"],
 }

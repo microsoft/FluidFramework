@@ -6,11 +6,11 @@
 		"rootDir": "./",
 		"outDir": "../../lib/test",
 		"types": ["node", "mocha", "chai"],
-		"exactOptionalPropertyTypes": false
+		"exactOptionalPropertyTypes": false,
 	},
 	"references": [
 		{
-			"path": "../.."
-		}
-	]
+			"path": "../..",
+		},
+	],
 }

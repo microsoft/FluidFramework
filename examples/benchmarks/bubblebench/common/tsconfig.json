@@ -5,7 +5,7 @@
 		"rootDir": "./src",
 		"outDir": "./lib",
 		"types": ["react", "react-dom"],
-		"noUncheckedIndexedAccess": false
+		"noUncheckedIndexedAccess": false,
 	},
-	"include": ["src/**/*"]
+	"include": ["src/**/*"],
 }

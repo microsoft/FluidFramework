@@ -16,12 +16,12 @@
 		"exactOptionalPropertyTypes": false,
 		// FixRecursiveArraySchema depends on compilation order dependent behavior in the packages that import the generated d.ts file with libCheck enabled.
 		// Since this package imports such an export, disable incrementality to avoid issues with the build that require clean building in come cases.
-		"incremental": false
+		"incremental": false,
 	},
 	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../.."
-		}
-	]
+			"path": "../..",
+		},
+	],
 }

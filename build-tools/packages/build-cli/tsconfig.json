@@ -10,6 +10,6 @@
 		"noUnusedLocals": false, // Checked in lint instead so unused variables do not block compilation
 		"target": "ES2022",
 		"noUncheckedIndexedAccess": false,
-		"exactOptionalPropertyTypes": false
-	}
+		"exactOptionalPropertyTypes": false,
+	},
 }

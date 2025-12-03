@@ -333,12 +333,10 @@ describe("interval rebasing", () => {
 		clients[1].containerRuntime.connected = false;
 		clients[1].sharedString.insertText(0, "11");
 		clients[0].sharedString.insertText(1, "22222");
-		clients[0].sharedString
-			.getIntervalCollection("test collection")
-			.add({
-				start: { pos: 1, side: Side.After },
-				end: { pos: 1, side: Side.After },
-			});
+		clients[0].sharedString.getIntervalCollection("test collection").add({
+			start: { pos: 1, side: Side.After },
+			end: { pos: 1, side: Side.After },
+		});
 		clients[0].sharedString.removeRange(0, 6);
 		clients[2].sharedString.removeRange(0, 2);
 		containerRuntimeFactory.processAllMessages();

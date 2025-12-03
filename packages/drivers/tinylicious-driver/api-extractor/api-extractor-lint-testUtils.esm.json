@@ -6,8 +6,8 @@
 		"extractorMessageReporting": {
 			// No release tags are used for custom test utilities
 			"ae-missing-release-tag": {
-				"logLevel": "none"
-			}
-		}
-	}
+				"logLevel": "none",
+			},
+		},
+	},
 }

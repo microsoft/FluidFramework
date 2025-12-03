@@ -314,11 +314,9 @@ export async function initializeExternalDataService(
 	expressApp.get("/fetch-tasks/:externalTaskListId", (request, result) => {
 		const externalTaskListId = request.params?.externalTaskListId;
 		if (externalTaskListId === undefined) {
-			result
-				.status(400)
-				.json({
-					message: "Missing parameter externalTaskListId in request url",
-				});
+			result.status(400).json({
+				message: "Missing parameter externalTaskListId in request url",
+			});
 		}
 		externalDataSource.fetchData(externalTaskListId).then(
 			async (response) => {
@@ -364,11 +362,9 @@ export async function initializeExternalDataService(
 	expressApp.post("/set-tasks/:externalTaskListId", (request, result) => {
 		const externalTaskListId = request.params?.externalTaskListId;
 		if (externalTaskListId === undefined) {
-			result
-				.status(400)
-				.json({
-					message: "Missing parameter externalTaskListId in request url",
-				});
+			result.status(400).json({
+				message: "Missing parameter externalTaskListId in request url",
+			});
 		}
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 		const messageData = request.body?.taskList;

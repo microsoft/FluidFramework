@@ -1,3 +1,17 @@
 {
-	"root": false
+	"root": false,
+	"overrides": [
+		{
+			"includes": ["**/.vscode/**/*.json", "**/tsconfig*.json"],
+			"json": {
+				"parser": {
+					"allowComments": true,
+					"allowTrailingCommas": true
+				},
+				"formatter": {
+					"trailingCommas": "all"
+				}
+			}
+		}
+	]
 }

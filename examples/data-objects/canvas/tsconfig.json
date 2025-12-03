@@ -7,10 +7,10 @@
 			"puppeteer",
 			"jest-environment-puppeteer",
 			"expect-puppeteer",
-			"react"
+			"react",
 		],
 		"noUncheckedIndexedAccess": false,
-		"exactOptionalPropertyTypes": false
+		"exactOptionalPropertyTypes": false,
 	},
-	"include": ["src/**/*"]
+	"include": ["src/**/*"],
 }
