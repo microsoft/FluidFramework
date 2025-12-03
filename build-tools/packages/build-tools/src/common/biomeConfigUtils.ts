@@ -36,11 +36,13 @@ export async function loadRawBiomeConfigFile<T extends BiomeConfigWithExtends>(
  *
  * @param configPath - The path to the config file
  * @param loadConfig - Function to load a raw config (used to read the extends field)
- * @returns Array of config paths including the config itself and all its extends, in merge order
+ * @param includeConfigPath - Whether to include the config itself in the result (default: true)
+ * @returns Array of config paths in merge order
  */
 export async function resolveExtendsChainGeneric<T extends BiomeConfigWithExtends>(
 	configPath: string,
 	loadConfig: (path: string) => Promise<T>,
+	includeConfigPath = true,
 ): Promise<string[]> {
 	const config = await loadConfig(configPath);
 	let extendedConfigPaths: string[] = [];
@@ -51,12 +53,16 @@ export async function resolveExtendsChainGeneric<T extends BiomeConfigWithExtend
 				resolveExtendsChainGeneric(
 					path.join(path.dirname(configPath), configToExtend),
 					loadConfig,
+					true, // Always include in recursive calls
 				),
 			),
 		);
 		extendedConfigPaths = pathsNested.flat();
 	}
 
-	extendedConfigPaths.push(configPath);
+	if (includeConfigPath) {
+		extendedConfigPaths.push(configPath);
+	}
+
 	return extendedConfigPaths;
 }

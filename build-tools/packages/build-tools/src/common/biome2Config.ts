@@ -48,9 +48,12 @@ export async function getAllBiome2ConfigPaths(configPath: string): Promise<strin
 
 	// First, handle explicit extends declarations
 	if (config.extends) {
-		extendedConfigPaths = await resolveExtendsChainGeneric(configPath, loadRawBiome2Config);
-		// Remove the last element (configPath itself) since we'll add it at the end
-		extendedConfigPaths.pop();
+		// Get only the extended configs, not configPath itself (we'll add it at the end)
+		extendedConfigPaths = await resolveExtendsChainGeneric(
+			configPath,
+			loadRawBiome2Config,
+			false,
+		);
 	}
 
 	// If this config doesn't have root: true and doesn't have explicit extends,
@@ -76,7 +79,8 @@ export async function getAllBiome2ConfigPaths(configPath: string): Promise<strin
  *          with all extends chains resolved
  */
 async function findParentBiome2Configs(startDir: string): Promise<string[]> {
-	const configs: string[] = [];
+	// Collect configs in child-to-root order, then reverse at the end
+	const configsChildToRoot: string[][] = [];
 	// Start from parent directory - we don't want to include the config in startDir
 	let currentDir = path.dirname(startDir);
 	const fsRoot = path.parse(startDir).root;
@@ -92,8 +96,8 @@ async function findParentBiome2Configs(startDir: string): Promise<string[]> {
 				loadRawBiome2Config,
 			);
 
-			// Insert at the beginning since we want root configs first
-			configs.unshift(...parentConfigPaths);
+			// Add to the list (we'll reverse at the end)
+			configsChildToRoot.push(parentConfigPaths);
 
 			// If this config has root: true, stop walking up
 			if (config.root === true) {
@@ -103,7 +107,8 @@ async function findParentBiome2Configs(startDir: string): Promise<string[]> {
 		currentDir = path.dirname(currentDir);
 	}
 
-	return configs;
+	// Reverse and flatten to get root-to-child order
+	return configsChildToRoot.reverse().flat();
 }
 
 /**
