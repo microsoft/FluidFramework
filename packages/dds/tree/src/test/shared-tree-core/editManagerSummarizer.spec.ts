@@ -29,19 +29,15 @@ import type { EncodedEditManager } from "../../shared-tree-core/editManagerForma
 import {
 	EditManagerFormatVersion,
 	editManagerFormatVersions,
-	type SequencedCommit,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree-core/editManagerFormatCommons.js";
 import { DependentFormatVersion, FluidClientVersion } from "../../codec/index.js";
-import { failCodecFamily, mintRevisionTag, testIdCompressor } from "../utils.js";
+import { testIdCompressor } from "../utils.js";
 import { RevisionTagCodec } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { editManagerFactory } from "./edit-manager/editManagerTestUtils.js";
 import { testChangeFamilyFactory } from "../testChange.js";
-import { DefaultChangeFamily, type DefaultChangeset } from "../../feature-libraries/index.js";
-import type { SessionId } from "@fluidframework/id-compressor";
-import { brand } from "../../util/index.js";
 
 function createEditManagerSummarizer(options?: {
 	minVersionForCollab?: MinimumVersionForCollab;
@@ -125,18 +121,9 @@ describe("EditManagerSummarizer", () => {
 
 		it("loads version 1 with no metadata blob", async () => {
 			// Create data in v1 summary format.
-			const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
-			const trunk: SequencedCommit<DefaultChangeset>[] = [
-				{
-					revision: mintRevisionTag(),
-					change: defaultChangeFamily.rebaser.compose([]),
-					sessionId: "1" as SessionId,
-					sequenceNumber: brand(1),
-				},
-			];
-			const editManagerDataV1: EncodedEditManager<DefaultChangeset> = {
+			const editManagerDataV1: EncodedEditManager<unknown> = {
 				version: EditManagerFormatVersion.v3,
-				trunk,
+				trunk: [],
 				branches: [],
 			};
 			const editManagerBlob: ISummaryBlob = {
