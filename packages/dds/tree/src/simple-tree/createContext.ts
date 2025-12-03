@@ -19,6 +19,9 @@ import { toStoredSchema, toUnhydratedSchema } from "./toStoredSchema.js";
 
 const contextCache: WeakMap<ImplicitFieldSchema, Context> = new WeakMap();
 
+/**
+ * See note in {@link getUnhydratedContext}.
+ */
 let getUnhydratedContextIsRunning = false;
 
 /**

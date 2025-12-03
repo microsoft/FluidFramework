@@ -29,21 +29,21 @@ export type ExpectStored = typeof ExpectStored;
 export const Unchanged = Symbol("Unchanged");
 export type Unchanged = typeof Unchanged;
 
-/**
- * Marker type indicating that the input schema is already a stored schema.
- */
-// export const ToView = Symbol("ToView");
-// export type ToView = typeof ToView;
-
 export type StoredSchemaGenerationOptions =
 	| StoredFromViewSchemaGenerationOptions
 	| ExpectStored;
 
+/**
+ * Options for transforming a schema.
+ * @remarks
+ * See also {@link generateSchemaFromSimpleSchema} for a different schema transformation.
+ * Note that if we want to make `generateSchemaFromSimpleSchema` consume view simple-schema, and use these transformation APIs to generate that view simple-schema from a stored simple-schema,
+ * we will need to add a "ToView" option here.
+ */
 export type SimpleSchemaTransformationOptions =
 	| StoredFromViewSchemaGenerationOptions
 	| ExpectStored
 	| Unchanged;
-//	| ToView; // Maybe include this
 
 function isStoredFromView(
 	options: SimpleSchemaTransformationOptions,

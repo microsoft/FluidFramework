@@ -13,9 +13,9 @@ import {
 	type TreeNodeSchema,
 } from "../core/index.js";
 import {
-	permissiveStoredSchemaGenerationOptions,
-	restrictiveStoredSchemaGenerationOptions,
-	toStoredSchema,
+	toInitialSchema,
+	toUnhydratedSchema,
+	transformSimpleSchema,
 } from "../toStoredSchema.js";
 import {
 	isArrayNodeSchema,
@@ -209,6 +209,9 @@ export class TreeViewConfiguration<
 		// Ambiguity errors are lower priority to report than invalid schema errors, so collect these in an array and report them all at once.
 		const ambiguityErrors: string[] = [];
 
+		// Validate the schema and collect ambiguity errors.
+		// This does a lot of validation (throwing usage errors as a side effect) in addition to just collecting ambiguity errors.
+		// ambiguityErrors are considered a lower priority, so only thrown if no other errors are found.
 		walkFieldSchema(config.schema, {
 			allowedTypes({ types }: AllowedTypesFullEvaluated): void {
 				checkUnion(
@@ -224,11 +227,6 @@ export class TreeViewConfiguration<
 			const deduplicated = new Set(ambiguityErrors);
 			throw new UsageError(`Ambiguous schema found:\n${[...deduplicated].join("\n")}`);
 		}
-
-		// Eagerly perform this conversion to surface errors sooner.
-		// Includes detection of duplicate schema identifiers.
-		toStoredSchema(config.schema, restrictiveStoredSchemaGenerationOptions);
-		toStoredSchema(config.schema, permissiveStoredSchemaGenerationOptions);
 	}
 }
 
@@ -255,6 +253,10 @@ export class TreeViewConfigurationAlpha<
 		const treeSchema = createTreeSchema(this.schema);
 		this.root = treeSchema.root;
 		this.definitions = treeSchema.definitions;
+
+		// Eagerly perform these conversions to surface errors sooner.
+		toInitialSchema(this.root);
+		transformSimpleSchema(treeSchema, toUnhydratedSchema);
 	}
 }
 
