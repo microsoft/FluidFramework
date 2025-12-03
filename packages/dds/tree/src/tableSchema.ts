@@ -25,11 +25,14 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 	type InternalTreeNode,
 	SchemaFactory,
+	scoped,
 	type ImplicitFieldSchema,
 	withBufferedTreeEvents,
 	type TreeRecordNode,
+	objectSchema,
 } from "./simple-tree/index.js";
 import { validateIndex, validateIndexRange } from "./util/index.js";
+import { EmptyKey } from "./core/index.js";
 
 // Future improvement TODOs:
 // - Omit `cells` property from Row insertion type.
@@ -450,39 +453,75 @@ export namespace System_TableSchema {
 		type RowValueInternalType = RowValueType & RowPrivate<TCellSchema>;
 
 		/**
+		 * {@link Table} inner fields.
+		 * @remarks Extracted for re-use as construction parameters.
+		 * @see {@link Table.create}.
+		 */
+		const tableInnerFields = {
+			rows: schemaFactory.array("Table.rows", rowSchema),
+			columns: schemaFactory.array("Table.columns", columnSchema),
+		} as const satisfies Record<string, ImplicitFieldSchema>;
+
+		/**
 		 * {@link Table} fields.
 		 * @remarks Extracted for re-use in returned type signature defined later in this function.
 		 * The implicit typing is intentional.
 		 */
 		const tableFields = {
-			// TODO: empty key (stored)
-			table: schemaFactory.required(schemaFactory.object("Table", {
-				rows: schemaFactory.array("Table.rows", rowSchema),
-				columns: schemaFactory.array("Table.columns", columnSchema),
-			}))
+			table: schemaFactory.required(schemaFactory.object("Table", tableInnerFields), {
+				// Use an empty key in the stored schema format to help prevent schema-unaware edits from being
+				// made to the table, which may violate intended invariants.
+				key: EmptyKey,
+			}),
 		} as const satisfies Record<string, ImplicitFieldSchema>;
+
+		type TableValueType = TreeNode &
+			TableSchema.Table<TInputScope, TCellSchema, TColumnSchema, TRowSchema> &
+			WithType<ScopedSchemaName<Scope, "TableRoot">>;
+		// Prevent users from calling the table node constructor directly.
+		// They should use the static `create` factory method instead.
+		type TableInsertableType = never;
+		type TableConstructorType = new (data?: InternalTreeNode | undefined) => TableValueType;
 
 		/**
 		 * The Table schema
 		 */
 		class Table
-			extends schemaFactory.object("TableRoot", tableFields, {
-				// Will make it easier to evolve this schema in the future.
-				allowUnknownOptionalFields: true,
-			})
+			// Calling the objectSchema factory directly rather than using the schemaFactory so we can specify
+			// `implicitlyConstructable: false`, which the SchemaFactory APIs do not yet support.
+			// TODO: when support for configuring `implicitlyConstructable`is added to SchemaFactory, switch to
+			// using that instead.
+			extends objectSchema(
+				/* identifier: */ scoped(schemaFactory as SchemaFactory<Scope>, "TableRoot"),
+				/* info: */ tableFields,
+				/* implicitlyConstructable: */ false,
+				/* nodeOptions: */ {
+					// Will make it easier to evolve this schema in the future.
+					allowUnknownOptionalFields: true,
+				},
+			)
 			implements TableSchema.Table<TInputScope, TCellSchema, TColumnSchema, TRowSchema>
 		{
-			/**
-			 * @deprecated Use {@link Table.empty} instead.
-			 */
 			public constructor(node?: InternalTreeNode | undefined) {
-				super(node ?? {table: { columns: [], rows: [] }});
+				super(node ?? { table: { columns: [], rows: [] } });
 			}
 
-			public static empty<TThis extends TableConstructorType>(
+			public static create<TThis extends TableConstructorType>(
 				this: TThis,
+				initialContents?:
+					| InsertableObjectFromSchemaRecord<typeof tableInnerFields>
+					| undefined,
 			): InstanceType<TThis> {
-				return new this() as InstanceType<TThis>;
+				// TODO: input validation
+				return new this(
+					initialContents === undefined
+						? undefined
+						: ({
+								table: initialContents,
+								// We have typed our constructor to prevent users from calling it directly with insertable contents.
+								// But the base constructor still allows it. Cast to work around this.
+							} as unknown as InternalTreeNode),
+				) as InstanceType<TThis>;
 			}
 
 			public get columns(): TreeArrayNode<TColumnSchema> {
@@ -604,7 +643,8 @@ export namespace System_TableSchema {
 				if (typeof indexOrColumns === "number" || indexOrColumns === undefined) {
 					let removedColumns: ColumnValueType[] | undefined;
 					const startIndex = indexOrColumns ?? 0;
-					const endIndex = count === undefined ? this.table.columns.length : startIndex + count;
+					const endIndex =
+						count === undefined ? this.table.columns.length : startIndex + count;
 
 					// If there are no columns to remove, do nothing
 					if (startIndex === endIndex) {
@@ -625,7 +665,12 @@ export namespace System_TableSchema {
 						}
 
 						// Second, remove the column nodes:
-						removeRangeFromArray(startIndex, endIndex, this.table.columns, "Table.removeColumns");
+						removeRangeFromArray(
+							startIndex,
+							endIndex,
+							this.table.columns,
+							"Table.removeColumns",
+						);
 						removedColumns = columnsToRemove;
 					});
 					return removedColumns ?? fail(0xc1f /* Transaction did not complete. */);
@@ -678,7 +723,12 @@ export namespace System_TableSchema {
 						return [];
 					}
 
-					return removeRangeFromArray(startIndex, endIndex, this.table.rows, "Table.removeRows");
+					return removeRangeFromArray(
+						startIndex,
+						endIndex,
+						this.table.rows,
+						"Table.removeRows",
+					);
 				}
 
 				// If there are no rows to remove, do nothing
@@ -913,12 +963,6 @@ export namespace System_TableSchema {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(Table as any)[tableSchemaSymbol] = true;
 
-		type TableValueType = TreeNode &
-			TableSchema.Table<TInputScope, TCellSchema, TColumnSchema, TRowSchema> &
-			WithType<ScopedSchemaName<Scope, "TableRoot">>;
-		type TableInsertableType = never; // InsertableObjectFromSchemaRecord<typeof tableFields>;
-		type TableConstructorType = new (data?: InternalTreeNode | undefined) => TableValueType;
-
 		// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
 		// for the private brand field of TreeNode.
 		// This numeric id doesn't seem to be stable over incremental builds, and thus causes diffs in the API extractor reports.
@@ -934,9 +978,19 @@ export namespace System_TableSchema {
 			/* TConstructorExtra */ undefined
 		> & {
 			/**
-			 * Create an empty table.
+			 * Create a table with initial contents.
+			 * @param initialContents - The initial contents of the table.
+			 * If not provided, an empty table will be constructed.
+			 * @remarks Performs the following input validation:
+			 * - Ensures that any cells specified in the initial rows correspond to existing columns in the initial columns.
+			 * - Ensures that all column and row IDs are unique.
 			 */
-			empty<TThis extends TableConstructorType>(this: TThis): InstanceType<TThis>;
+			create<TThis extends TableConstructorType>(
+				this: TThis,
+				initialContents?:
+					| InsertableObjectFromSchemaRecord<typeof tableInnerFields>
+					| undefined,
+			): InstanceType<TThis>;
 		} = Table;
 
 		// Return the table schema
@@ -1025,7 +1079,7 @@ function removeRangeFromArray<TNodeSchema extends ImplicitAllowedTypes>(
  * 	cell: schemaFactory.string,
  * }) {}
  *
- * const table = new MyTable({
+ * const table = MyTable.create({
  * 	columns: [{ id: "column-0" }],
  * 	rows: [{ id: "row-0", cells: { "column-0": "Hello world!" } }],
  * });
@@ -1326,10 +1380,16 @@ export namespace TableSchema {
 
 	/**
 	 * A table.
+	 *
+	 * @remarks Table schema is created via the {@link TableSchema.(table:1)} factory.
+	 * Node instances of the schema type should be constructed via the static `create` method on the schema class.
+	 * E.g. `const table = MyTableSchema.create({ columns, rows});`
+	 *
 	 * @typeParam TScope - The {@link SchemaFactory.scope | schema factory scope}.
 	 * @typeParam TCell - The type of the cells in the table.
 	 * @typeParam TColumn - The type of the columns in the table.
 	 * @typeParam TRow - The type of the rows in the table.
+	 *
 	 * @sealed @alpha
 	 */
 	export interface Table<

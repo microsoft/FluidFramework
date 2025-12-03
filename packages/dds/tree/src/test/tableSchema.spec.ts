@@ -135,9 +135,9 @@ describe("TableFactory unit tests", () => {
 				cell: schemaFactory.string,
 			}) {}
 
-			const foo = MyTable.empty();
+			const foo = MyTable.create();
 
-			const _table = new MyTable();
+			const _table = MyTable.create();
 		});
 
 		it("Can create with custom column schema", () => {
@@ -155,7 +155,7 @@ describe("TableFactory unit tests", () => {
 				column: MyColumn,
 			}) {}
 
-			const _table = new MyTable({
+			const _table = MyTable.create({
 				columns: [{ id: "column-0", props: { label: "Column 0" } }],
 				rows: [{ id: "row-0", cells: {} }],
 			});
@@ -176,7 +176,7 @@ describe("TableFactory unit tests", () => {
 				row: MyRow,
 			}) {}
 
-			const _table = new MyTable({
+			const _table = MyTable.create({
 				columns: [{ id: "column-0" }],
 				rows: [{ id: "row-0", props: { label: "Row 0" }, cells: {} }],
 			});
@@ -205,7 +205,7 @@ describe("TableFactory unit tests", () => {
 				row: MyRow,
 			}) {}
 
-			const _table = new MyTable({
+			const _table = MyTable.create({
 				columns: [{ id: "column-0", props: { label: "Column 0" } }],
 				rows: [{ id: "row-0", props: { label: "Row 0" }, cells: {} }],
 			});
@@ -241,19 +241,19 @@ describe("TableFactory unit tests", () => {
 				cell: schemaFactory.string,
 			}) {
 				// Custom property on derived class included to verify that the
-				// return type of `Table.empty()` is correct.
+				// return type of `Table.create()` is correct.
 				public customProp: string = "Hello world!";
 			}
 
-			const table = initializeTree(MyTable, MyTable.empty());
-			assertEqualTrees(table, { columns: [], rows: [] });
+			const table = initializeTree(MyTable, MyTable.create());
+			assertEqualTrees(table, { table: { columns: [], rows: [] } });
 			assert(table.customProp === "Hello world!");
 		});
 
 		it("Non-empty", () => {
 			const table = initializeTree(
 				Table,
-				new Table({
+				Table.create({
 					columns: [
 						new Column({
 							id: "column-0",
@@ -276,48 +276,52 @@ describe("TableFactory unit tests", () => {
 			);
 
 			assertEqualTrees(table, {
-				columns: [
-					{
-						id: "column-0",
-						props: { label: "Column 0" },
-					},
-					{
-						id: "column-1",
-						props: { label: "Column 1" },
-					},
-				],
-				rows: [
-					{
-						id: "row-0",
-						cells: {},
-					},
-					{
-						id: "row-1",
-						cells: {
-							"column-1": {
-								value: "Hello world!",
+				table: {
+					columns: [
+						{
+							id: "column-0",
+							props: { label: "Column 0" },
+						},
+						{
+							id: "column-1",
+							props: { label: "Column 1" },
+						},
+					],
+					rows: [
+						{
+							id: "row-0",
+							cells: {},
+						},
+						{
+							id: "row-1",
+							cells: {
+								"column-1": {
+									value: "Hello world!",
+								},
 							},
 						},
-					},
-				],
+					],
+				},
 			});
 		});
 	});
 
 	describeHydration("insertColumns", (initializeTree) => {
 		it("Insert empty columns list", () => {
-			const tree = initializeTree(Table, Table.empty());
+			const tree = initializeTree(Table, Table.create());
 
 			tree.insertColumns({ index: 0, columns: [] });
 
 			assertEqualTrees(tree, {
-				columns: [],
-				rows: [],
+				table: {
+					columns: [],
+					rows: [],
+				},
 			});
 		});
 
 		it("Insert single column into empty list", () => {
-			const table = initializeTree(Table, Table.empty());
+			const table = initializeTree(Table, Table.create());
 
 			table.insertColumns({
 				index: 0,
@@ -330,30 +334,35 @@ describe("TableFactory unit tests", () => {
 			});
 
 			assertEqualTrees(table, {
-				columns: [
-					{
-						id: "column-0",
-						props: {},
-					},
-				],
-				rows: [],
+				table: {
+					columns: [
+						{
+							id: "column-0",
+							props: {},
+						},
+					],
+					rows: [],
+				},
 			});
 		});
 
 		it("Insert columns into non-empty list", () => {
-			const table = initializeTree(Table, {
-				columns: [
-					{
-						id: "column-a",
-						props: {},
-					},
-					{
-						id: "column-b",
-						props: {},
-					},
-				],
-				rows: [],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [
+						{
+							id: "column-a",
+							props: {},
+						},
+						{
+							id: "column-b",
+							props: {},
+						},
+					],
+					rows: [],
+				}),
+			);
 
 			table.insertColumns({
 				index: 1,
@@ -370,42 +379,47 @@ describe("TableFactory unit tests", () => {
 			});
 
 			assertEqualTrees(table, {
-				columns: [
-					{
-						id: "column-a",
-						props: {},
-					},
-					{
-						id: "column-c",
-						props: {},
-					},
-					{
-						id: "column-d",
-						props: {},
-					},
-					{
-						id: "column-b",
-						props: {},
-					},
-				],
-				rows: [],
+				table: {
+					columns: [
+						{
+							id: "column-a",
+							props: {},
+						},
+						{
+							id: "column-c",
+							props: {},
+						},
+						{
+							id: "column-d",
+							props: {},
+						},
+						{
+							id: "column-b",
+							props: {},
+						},
+					],
+					rows: [],
+				},
 			});
 		});
 
 		it("Append columns", () => {
-			const table = initializeTree(Table, {
-				columns: [
-					{
-						id: "column-a",
-						props: {},
-					},
-					{
-						id: "column-b",
-						props: {},
-					},
-				],
-				rows: [],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [
+						{
+							id: "column-a",
+							props: {},
+						},
+						{
+							id: "column-b",
+							props: {},
+						},
+					],
+					rows: [],
+				}),
+			);
 
 			table.insertColumns({
 				columns: [
@@ -421,43 +435,47 @@ describe("TableFactory unit tests", () => {
 			});
 
 			assertEqualTrees(table, {
-				columns: [
-					{
-						id: "column-a",
-						props: {},
-					},
-					{
-						id: "column-b",
-						props: {},
-					},
-					{
-						id: "column-c",
-						props: {},
-					},
-					{
-						id: "column-d",
-						props: {},
-					},
-				],
-				rows: [],
+				table: {
+					columns: [
+						{
+							id: "column-a",
+							props: {},
+						},
+						{
+							id: "column-b",
+							props: {},
+						},
+						{
+							id: "column-c",
+							props: {},
+						},
+						{
+							id: "column-d",
+							props: {},
+						},
+					],
+					rows: [],
+				},
 			});
 		});
 	});
 
 	describeHydration("insertRows", (initializeTree) => {
 		it("Insert empty rows list", () => {
-			const table = initializeTree(Table, Table.empty());
+			const table = initializeTree(Table, Table.create());
 
 			table.insertRows({ index: 0, rows: [] });
 
 			assertEqualTrees(table, {
-				columns: [],
-				rows: [],
+				table: {
+					columns: [],
+					rows: [],
+				},
 			});
 		});
 
 		it("Insert single row into empty list", () => {
-			const table = initializeTree(Table, Table.empty());
+			const table = initializeTree(Table, Table.create());
 
 			table.insertRows({
 				index: 0,
@@ -471,33 +489,38 @@ describe("TableFactory unit tests", () => {
 			});
 
 			assertEqualTrees(table, {
-				columns: [],
-				rows: [
-					{
-						id: "row-0",
-						cells: {},
-						props: {},
-					},
-				],
+				table: {
+					columns: [],
+					rows: [
+						{
+							id: "row-0",
+							cells: {},
+							props: {},
+						},
+					],
+				},
 			});
 		});
 
 		it("Insert rows into non-empty list", () => {
-			const table = initializeTree(Table, {
-				rows: [
-					{
-						id: "row-a",
-						cells: {},
-						props: {},
-					},
-					{
-						id: "row-b",
-						cells: {},
-						props: {},
-					},
-				],
-				columns: [],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					rows: [
+						{
+							id: "row-a",
+							cells: {},
+							props: {},
+						},
+						{
+							id: "row-b",
+							cells: {},
+							props: {},
+						},
+					],
+					columns: [],
+				}),
+			);
 
 			table.insertRows({
 				index: 1,
@@ -516,48 +539,53 @@ describe("TableFactory unit tests", () => {
 			});
 
 			assertEqualTrees(table, {
-				columns: [],
-				rows: [
-					{
-						id: "row-a",
-						cells: {},
-						props: {},
-					},
-					{
-						id: "row-c",
-						cells: {},
-						props: {},
-					},
-					{
-						id: "row-d",
-						cells: {},
-						props: {},
-					},
-					{
-						id: "row-b",
-						cells: {},
-						props: {},
-					},
-				],
+				table: {
+					columns: [],
+					rows: [
+						{
+							id: "row-a",
+							cells: {},
+							props: {},
+						},
+						{
+							id: "row-c",
+							cells: {},
+							props: {},
+						},
+						{
+							id: "row-d",
+							cells: {},
+							props: {},
+						},
+						{
+							id: "row-b",
+							cells: {},
+							props: {},
+						},
+					],
+				},
 			});
 		});
 
 		it("Append rows", () => {
-			const table = initializeTree(Table, {
-				rows: [
-					{
-						id: "row-a",
-						cells: {},
-						props: {},
-					},
-					{
-						id: "row-b",
-						cells: {},
-						props: {},
-					},
-				],
-				columns: [],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					rows: [
+						{
+							id: "row-a",
+							cells: {},
+							props: {},
+						},
+						{
+							id: "row-b",
+							cells: {},
+							props: {},
+						},
+					],
+					columns: [],
+				}),
+			);
 
 			table.insertRows({
 				rows: [
@@ -575,50 +603,55 @@ describe("TableFactory unit tests", () => {
 			});
 
 			assertEqualTrees(table, {
-				columns: [],
-				rows: [
-					{
-						id: "row-a",
-						cells: {},
-						props: {},
-					},
-					{
-						id: "row-b",
-						cells: {},
-						props: {},
-					},
-					{
-						id: "row-c",
-						cells: {},
-						props: {},
-					},
-					{
-						id: "row-d",
-						cells: {},
-						props: {},
-					},
-				],
+				table: {
+					columns: [],
+					rows: [
+						{
+							id: "row-a",
+							cells: {},
+							props: {},
+						},
+						{
+							id: "row-b",
+							cells: {},
+							props: {},
+						},
+						{
+							id: "row-c",
+							cells: {},
+							props: {},
+						},
+						{
+							id: "row-d",
+							cells: {},
+							props: {},
+						},
+					],
+				},
 			});
 		});
 	});
 
 	describeHydration("setCell", (initializeTree) => {
 		it("Set cell in a valid location", () => {
-			const table = initializeTree(Table, {
-				columns: [
-					{
-						id: "column-0",
-						props: {},
-					},
-				],
-				rows: [
-					{
-						id: "row-0",
-						cells: {},
-						props: {},
-					},
-				],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [
+						{
+							id: "column-0",
+							props: {},
+						},
+					],
+					rows: [
+						{
+							id: "row-0",
+							cells: {},
+							props: {},
+						},
+					],
+				}),
+			);
 
 			// By not specifying an index, the column should be appended to the end of the list.
 			table.setCell({
@@ -630,42 +663,47 @@ describe("TableFactory unit tests", () => {
 			});
 
 			assertEqualTrees(table, {
-				columns: [
-					{
-						id: "column-0",
-						props: {},
-					},
-				],
-				rows: [
-					{
-						id: "row-0",
-						cells: {
-							"column-0": {
-								value: "Hello world!",
-							},
+				table: {
+					columns: [
+						{
+							id: "column-0",
+							props: {},
 						},
-						props: {},
-					},
-				],
+					],
+					rows: [
+						{
+							id: "row-0",
+							cells: {
+								"column-0": {
+									value: "Hello world!",
+								},
+							},
+							props: {},
+						},
+					],
+				},
 			});
 		});
 
 		it("Setting cell in an invalid location errors", () => {
-			const table = initializeTree(Table, {
-				columns: [
-					{
-						id: "column-0",
-						props: {},
-					},
-				],
-				rows: [
-					{
-						id: "row-0",
-						cells: {},
-						props: {},
-					},
-				],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [
+						{
+							id: "column-0",
+							props: {},
+						},
+					],
+					rows: [
+						{
+							id: "row-0",
+							cells: {},
+							props: {},
+						},
+					],
+				}),
+			);
 
 			// Invalid row
 			assert.throws(
@@ -697,92 +735,109 @@ describe("TableFactory unit tests", () => {
 
 	describeHydration("removeColumns", (initializeTree) => {
 		it("Remove empty list", () => {
-			const table = initializeTree(Table, {
-				columns: [
-					new Column({
-						id: "column-0",
-						props: {},
-					}),
-				],
-				rows: [
-					new Row({
-						id: "row-0",
-						cells: {
-							"column-0": { value: "Hello world!" },
-						},
-						props: {},
-					}),
-				],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [
+						new Column({
+							id: "column-0",
+							props: {},
+						}),
+					],
+					rows: [
+						new Row({
+							id: "row-0",
+							cells: {
+								"column-0": { value: "Hello world!" },
+							},
+							props: {},
+						}),
+					],
+				}),
+			);
 
 			table.removeColumns([]);
 			assertEqualTrees(table, {
-				columns: [{ id: "column-0", props: {} }],
-				rows: [
-					{
-						id: "row-0",
-						cells: {
-							"column-0": { value: "Hello world!" },
+				table: {
+					columns: [{ id: "column-0", props: {} }],
+					rows: [
+						{
+							id: "row-0",
+							cells: {
+								"column-0": { value: "Hello world!" },
+							},
+							props: {},
 						},
-						props: {},
-					},
-				],
+					],
+				},
 			});
 		});
 
 		it("Remove empty range", () => {
-			const table = initializeTree(Table, {
-				columns: [new Column({ id: "column-0", props: {} })],
-				rows: [],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [new Column({ id: "column-0", props: {} })],
+					rows: [],
+				}),
+			);
 
 			table.removeColumns(0, 0);
 			assertEqualTrees(table, {
-				columns: [{ id: "column-0", props: {} }],
-				rows: [],
+				table: {
+					columns: [{ id: "column-0", props: {} }],
+					rows: [],
+				},
 			});
 		});
 
 		it("Remove single column", () => {
 			const column0 = new Column({ id: "column-0", props: {} });
 			const column1 = new Column({ id: "column-1", props: {} });
-			const table = initializeTree(Table, {
-				columns: [column0, column1],
-				rows: [
-					new Row({
-						id: "row-0",
-						cells: {
-							"column-0": { value: "Hello world!" },
-						},
-						props: {},
-					}),
-				],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [column0, column1],
+					rows: [
+						new Row({
+							id: "row-0",
+							cells: {
+								"column-0": { value: "Hello world!" },
+							},
+							props: {},
+						}),
+					],
+				}),
+			);
 
 			// Remove column0 (by node)
 			table.removeColumns([column0]);
 			assertEqualTrees(table, {
-				columns: [{ id: "column-1", props: {} }],
-				rows: [
-					{
-						id: "row-0",
-						cells: {},
-						props: {},
-					},
-				],
+				table: {
+					columns: [{ id: "column-1", props: {} }],
+					rows: [
+						{
+							id: "row-0",
+							cells: {},
+							props: {},
+						},
+					],
+				},
 			});
 
 			// Remove column1 (by ID)
 			table.removeColumns(["column-1"]);
 			assertEqualTrees(table, {
-				columns: [],
-				rows: [
-					{
-						id: "row-0",
-						cells: {},
-						props: {},
-					},
-				],
+				table: {
+					columns: [],
+					rows: [
+						{
+							id: "row-0",
+							cells: {},
+							props: {},
+						},
+					],
+				},
 			});
 		});
 
@@ -791,48 +846,55 @@ describe("TableFactory unit tests", () => {
 			const column1 = new Column({ id: "column-1", props: {} });
 			const column2 = new Column({ id: "column-2", props: {} });
 			const column3 = new Column({ id: "column-3", props: {} });
-			const table = initializeTree(Table, {
-				columns: [column0, column1, column2, column3],
-				rows: [
-					new Row({
-						id: "row-0",
-						cells: {
-							"column-0": { value: "Hello world!" },
-						},
-						props: {},
-					}),
-				],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [column0, column1, column2, column3],
+					rows: [
+						new Row({
+							id: "row-0",
+							cells: {
+								"column-0": { value: "Hello world!" },
+							},
+							props: {},
+						}),
+					],
+				}),
+			);
 
 			// Remove columns 1 and 3 (by node)
 			table.removeColumns([column1, column3]);
 			assertEqualTrees(table, {
-				columns: [
-					{ id: "column-0", props: {} },
-					{ id: "column-2", props: {} },
-				],
-				rows: [
-					{
-						id: "row-0",
-						cells: {
-							"column-0": { value: "Hello world!" },
+				table: {
+					columns: [
+						{ id: "column-0", props: {} },
+						{ id: "column-2", props: {} },
+					],
+					rows: [
+						{
+							id: "row-0",
+							cells: {
+								"column-0": { value: "Hello world!" },
+							},
+							props: {},
 						},
-						props: {},
-					},
-				],
+					],
+				},
 			});
 
 			// Remove columns 2 and 0 (by ID)
 			table.removeColumns([column2.id, column0.id]);
 			assertEqualTrees(table, {
-				columns: [],
-				rows: [
-					{
-						id: "row-0",
-						cells: {},
-						props: {},
-					},
-				],
+				table: {
+					columns: [],
+					rows: [
+						{
+							id: "row-0",
+							cells: {},
+							props: {},
+						},
+					],
+				},
 			});
 		});
 
@@ -841,42 +903,50 @@ describe("TableFactory unit tests", () => {
 			const column1 = new Column({ id: "column-1", props: {} });
 			const column2 = new Column({ id: "column-2", props: {} });
 			const column3 = new Column({ id: "column-3", props: {} });
-			const table = initializeTree(Table, {
-				columns: [column0, column1, column2, column3],
-				rows: [
-					new Row({
-						id: "row-0",
-						cells: {
-							"column-0": { value: "Hello" },
-							"column-2": { value: "world" },
-						},
-					}),
-				],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [column0, column1, column2, column3],
+					rows: [
+						new Row({
+							id: "row-0",
+							cells: {
+								"column-0": { value: "Hello" },
+								"column-2": { value: "world" },
+							},
+						}),
+					],
+				}),
+			);
 
 			// Remove columns 1-2
 			table.removeColumns(1, 2);
 			assertEqualTrees(table, {
-				columns: [
-					{ id: "column-0", props: {} },
-					{ id: "column-3", props: {} },
-				],
-				rows: [
-					{
-						id: "row-0",
-						cells: {
-							"column-0": { value: "Hello" },
+				table: {
+					columns: [
+						{ id: "column-0", props: {} },
+						{ id: "column-3", props: {} },
+					],
+					rows: [
+						{
+							id: "row-0",
+							cells: {
+								"column-0": { value: "Hello" },
+							},
 						},
-					},
-				],
+					],
+				},
 			});
 		});
 
 		it("Removing a single column that doesn't exist on table errors", () => {
-			const table = initializeTree(Table, {
-				columns: [],
-				rows: [],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [],
+					rows: [],
+				}),
+			);
 
 			assert.throws(
 				() => table.removeColumns([new Column({ id: "column-0", props: {} })]),
@@ -888,10 +958,13 @@ describe("TableFactory unit tests", () => {
 
 		it("Removing multiple columns errors if at least one column doesn't exist", () => {
 			const column0 = new Column({ id: "column-0", props: {} });
-			const table = initializeTree(Table, {
-				columns: [column0],
-				rows: [],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [column0],
+					rows: [],
+				}),
+			);
 
 			assert.throws(
 				() => table.removeColumns([column0, new Column({ id: "column-1", props: {} })]),
@@ -907,10 +980,13 @@ describe("TableFactory unit tests", () => {
 		it("Removing by range fails for invalid ranges", () => {
 			const column0 = new Column({ id: "column-0", props: {} });
 			const column1 = new Column({ id: "column-1", props: {} });
-			const table = initializeTree(Table, {
-				columns: [column0, column1],
-				rows: [],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [column0, column1],
+					rows: [],
+				}),
+			);
 
 			assert.throws(
 				() => table.removeColumns(-1, undefined),
@@ -940,48 +1016,60 @@ describe("TableFactory unit tests", () => {
 
 	describeHydration("removeRows", (initializeTree) => {
 		it("Remove empty list", () => {
-			const table = initializeTree(Table, {
-				columns: [],
-				rows: [
-					new Row({
-						id: "row-0",
-						cells: {},
-					}),
-				],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [],
+					rows: [
+						new Row({
+							id: "row-0",
+							cells: {},
+						}),
+					],
+				}),
+			);
 
 			table.removeRows([]);
 			assertEqualTrees(table, {
-				columns: [],
-				rows: [
-					{
-						id: "row-0",
-						cells: {},
-					},
-				],
+				table: {
+					columns: [],
+					rows: [
+						{
+							id: "row-0",
+							cells: {},
+						},
+					],
+				},
 			});
 		});
 
 		it("Remove single row", () => {
 			const row0 = new Row({ id: "row-0", cells: {}, props: {} });
 			const row1 = new Row({ id: "row-1", cells: {}, props: {} });
-			const table = initializeTree(Table, {
-				columns: [],
-				rows: [row0, row1],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [],
+					rows: [row0, row1],
+				}),
+			);
 
 			// Remove row0 (by node)
 			table.removeRows([row0]);
 			assertEqualTrees(table, {
-				columns: [],
-				rows: [{ id: "row-1", cells: {}, props: {} }],
+				table: {
+					columns: [],
+					rows: [{ id: "row-1", cells: {}, props: {} }],
+				},
 			});
 
 			// Remove row1 (by ID)
 			table.removeRows(["row-1"]);
 			assertEqualTrees(table, {
-				columns: [],
-				rows: [],
+				table: {
+					columns: [],
+					rows: [],
+				},
 			});
 		});
 
@@ -990,42 +1078,52 @@ describe("TableFactory unit tests", () => {
 			const row1 = new Row({ id: "row-1", cells: {}, props: {} });
 			const row2 = new Row({ id: "row-2", cells: {}, props: {} });
 			const row3 = new Row({ id: "row-3", cells: {}, props: {} });
-			const table = initializeTree(Table, {
-				columns: [],
-				rows: [row0, row1, row2, row3],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [],
+					rows: [row0, row1, row2, row3],
+				}),
+			);
 
 			// Remove rows 1 and 3 (by node)
 			table.removeRows([row1, row3]);
 			assertEqualTrees(table, {
-				columns: [],
-				rows: [
-					{
-						id: "row-0",
-						cells: {},
-						props: {},
-					},
-					{
-						id: "row-2",
-						cells: {},
-						props: {},
-					},
-				],
+				table: {
+					columns: [],
+					rows: [
+						{
+							id: "row-0",
+							cells: {},
+							props: {},
+						},
+						{
+							id: "row-2",
+							cells: {},
+							props: {},
+						},
+					],
+				},
 			});
 
 			// Remove rows 2 and 0 (by ID)
 			table.removeRows([row2.id, row0.id]);
 			assertEqualTrees(table, {
-				columns: [],
-				rows: [],
+				table: {
+					columns: [],
+					rows: [],
+				},
 			});
 		});
 
 		it("Removing single row that doesn't exist on table errors", () => {
-			const table = initializeTree(Table, {
-				columns: [],
-				rows: [],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [],
+					rows: [],
+				}),
+			);
 
 			assert.throws(
 				() => table.removeRows([new Row({ id: "row-0", cells: {}, props: {} })]),
@@ -1037,10 +1135,13 @@ describe("TableFactory unit tests", () => {
 
 		it("Removing multiple rows errors if at least one row doesn't exist", () => {
 			const row0 = new Row({ id: "row-0", cells: {}, props: {} });
-			const table = initializeTree(Table, {
-				columns: [],
-				rows: [row0],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [],
+					rows: [row0],
+				}),
+			);
 
 			assert.throws(
 				() => table.removeRows([row0, new Row({ id: "row-1", cells: {}, props: {} })]),
@@ -1054,15 +1155,20 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("Remove empty range", () => {
-			const table = initializeTree(Table, {
-				columns: [],
-				rows: [new Row({ id: "row-0", cells: {}, props: {} })],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [],
+					rows: [new Row({ id: "row-0", cells: {}, props: {} })],
+				}),
+			);
 
 			table.removeRows(0, 0);
 			assertEqualTrees(table, {
-				columns: [],
-				rows: [{ id: "row-0", cells: {}, props: {} }],
+				table: {
+					columns: [],
+					rows: [{ id: "row-0", cells: {}, props: {} }],
+				},
 			});
 		});
 
@@ -1071,37 +1177,45 @@ describe("TableFactory unit tests", () => {
 			const row1 = new Row({ id: "row-1", cells: {}, props: {} });
 			const row2 = new Row({ id: "row-2", cells: {}, props: {} });
 			const row3 = new Row({ id: "row-3", cells: {}, props: {} });
-			const table = initializeTree(Table, {
-				columns: [],
-				rows: [row0, row1, row2, row3],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [],
+					rows: [row0, row1, row2, row3],
+				}),
+			);
 
 			// Remove rows 1-2
 			table.removeRows(1, 2);
 			assertEqualTrees(table, {
-				columns: [],
-				rows: [
-					{
-						id: "row-0",
-						cells: {},
-						props: {},
-					},
-					{
-						id: "row-3",
-						cells: {},
-						props: {},
-					},
-				],
+				table: {
+					columns: [],
+					rows: [
+						{
+							id: "row-0",
+							cells: {},
+							props: {},
+						},
+						{
+							id: "row-3",
+							cells: {},
+							props: {},
+						},
+					],
+				},
 			});
 		});
 
 		it("Removing by range fails for invalid ranges", () => {
 			const row0 = new Row({ id: "row-0", cells: {}, props: {} });
 			const row1 = new Row({ id: "row-1", cells: {}, props: {} });
-			const table = initializeTree(Table, {
-				columns: [],
-				rows: [row0, row1],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [],
+					rows: [row0, row1],
+				}),
+			);
 
 			assert.throws(
 				() => table.removeRows(-1, undefined),
@@ -1129,21 +1243,24 @@ describe("TableFactory unit tests", () => {
 
 	describeHydration("removeCell", (initializeTree) => {
 		it("Remove cell in valid location with existing data", () => {
-			const table = initializeTree(Table, {
-				columns: [
-					{
-						id: "column-0",
-						props: {},
-					},
-				],
-				rows: [
-					{
-						id: "row-0",
-						cells: {},
-						props: {},
-					},
-				],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [
+						{
+							id: "column-0",
+							props: {},
+						},
+					],
+					rows: [
+						{
+							id: "row-0",
+							cells: {},
+							props: {},
+						},
+					],
+				}),
+			);
 			const cellKey = {
 				row: "row-0",
 				column: "column-0",
@@ -1154,76 +1271,86 @@ describe("TableFactory unit tests", () => {
 			});
 			table.removeCell(cellKey);
 			assertEqualTrees(table, {
-				columns: [
-					{
-						id: "column-0",
-						props: {},
-					},
-				],
-				rows: [
-					{
-						id: "row-0",
-						cells: {},
-						props: {},
-					},
-				],
+				table: {
+					columns: [
+						{
+							id: "column-0",
+							props: {},
+						},
+					],
+					rows: [
+						{
+							id: "row-0",
+							cells: {},
+							props: {},
+						},
+					],
+				},
 			});
 		});
 
 		it("Remove cell in valid location with no data", () => {
-			const table = initializeTree(Table, {
-				columns: [
-					{
-						id: "column-0",
-						props: {},
-					},
-				],
-				rows: [
-					{
-						id: "row-0",
-						cells: {},
-						props: {},
-					},
-				],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [
+						{
+							id: "column-0",
+							props: {},
+						},
+					],
+					rows: [
+						{
+							id: "row-0",
+							cells: {},
+							props: {},
+						},
+					],
+				}),
+			);
 			const cellKey = {
 				row: "row-0",
 				column: "column-0",
 			};
 			table.removeCell(cellKey);
 			assertEqualTrees(table, {
-				columns: [
-					{
-						id: "column-0",
-						props: {},
-					},
-				],
-				rows: [
-					{
-						id: "row-0",
-						cells: {},
-						props: {},
-					},
-				],
+				table: {
+					columns: [
+						{
+							id: "column-0",
+							props: {},
+						},
+					],
+					rows: [
+						{
+							id: "row-0",
+							cells: {},
+							props: {},
+						},
+					],
+				},
 			});
 		});
 
 		it("Removing cell from nonexistent row and column errors", () => {
-			const table = initializeTree(Table, {
-				columns: [
-					{
-						id: "column-0",
-						props: {},
-					},
-				],
-				rows: [
-					{
-						id: "row-0",
-						cells: {},
-						props: {},
-					},
-				],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [
+						{
+							id: "column-0",
+							props: {},
+						},
+					],
+					rows: [
+						{
+							id: "row-0",
+							cells: {},
+							props: {},
+						},
+					],
+				}),
+			);
 
 			// Invalid row
 			assert.throws(
@@ -1249,7 +1376,7 @@ describe("TableFactory unit tests", () => {
 
 	describeHydration("Responding to changes", (initializeTree) => {
 		it("Responding to any changes in the table", () => {
-			const table = initializeTree(Table, Table.empty());
+			const table = initializeTree(Table, Table.create());
 
 			let eventCount = 0;
 
@@ -1300,7 +1427,7 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("Responding to column list changes", () => {
-			const table = initializeTree(Table, Table.empty());
+			const table = initializeTree(Table, Table.create());
 
 			let eventCount = 0;
 
@@ -1359,10 +1486,13 @@ describe("TableFactory unit tests", () => {
 				props: {},
 			});
 
-			const table = initializeTree(Table, {
-				columns: [column0, column1],
-				rows: [row0, row1],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [column0, column1],
+					rows: [row0, row1],
+				}),
+			);
 
 			// Get cell (by indices)
 			const getByIndices = table.getCell({ row: 1, column: 0 });
@@ -1422,10 +1552,13 @@ describe("TableFactory unit tests", () => {
 				props: {},
 			});
 
-			const table = initializeTree(Table, {
-				columns: [column0, column1],
-				rows: [row0, row1],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [column0, column1],
+					rows: [row0, row1],
+				}),
+			);
 
 			// Get row (by index)
 			const getByIndex = table.getRow(1);
@@ -1479,10 +1612,13 @@ describe("TableFactory unit tests", () => {
 				props: {},
 			});
 
-			const table = initializeTree(Table, {
-				columns: [column0, column1],
-				rows: [row0, row1],
-			});
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [column0, column1],
+					rows: [row0, row1],
+				}),
+			);
 
 			// Get column (by index)
 			const getByIndex = table.getColumn(1);
@@ -1524,7 +1660,7 @@ describe("TableFactory unit tests", () => {
 			const cell0 = new Cell({ value: "Hello World!" });
 			const column0 = new Column({ id: "column-0", props: {} });
 			const row0 = new Row({ id: "row-0", cells: { "column-0": cell0 }, props: {} });
-			const table = new Table({
+			const table = Table.create({
 				columns: [column0],
 				rows: [row0],
 			});
@@ -1538,7 +1674,7 @@ describe("TableFactory unit tests", () => {
 			const cell0 = new Cell({ value: "Hello World!" });
 			const column0 = new Column({ id: "column-0", props: {} });
 			const row0 = new Row({ id: "row-0", cells: { "column-0": cell0 }, props: {} });
-			const table = new Table({
+			const table = Table.create({
 				columns: [column0],
 				rows: [row0],
 			});
@@ -1556,7 +1692,7 @@ describe("TableFactory unit tests", () => {
 				cell: schemaFactory.string,
 			}) {}
 
-			const table = new MyTable({
+			const table = MyTable.create({
 				columns: [{ id: "column-0" }],
 				rows: [{ id: "row-0", cells: { "column-0": "Hello world!" } }],
 			});
@@ -1586,7 +1722,7 @@ describe("TableFactory unit tests", () => {
 				row: MyRow,
 			}) {}
 
-			const table = new MyTable({
+			const table = MyTable.create({
 				columns: [
 					new MyColumn({ props: { label: "Entry" } }),
 					new MyColumn({ props: { label: "Date" } }),
@@ -1607,7 +1743,7 @@ describe("TableFactory unit tests", () => {
 				cell: schemaFactory.string,
 			}) {}
 
-			const table = new MyTable({
+			const table = MyTable.create({
 				columns: [{ id: "column-0" }],
 				rows: [{ id: "row-0", cells: {} }],
 			});
@@ -1629,7 +1765,7 @@ describe("TableFactory unit tests", () => {
 				cell: schemaFactory.string,
 			}) {}
 
-			const table = new MyTable({
+			const table = MyTable.create({
 				columns: [{ id: "column-0" }],
 				rows: [{ id: "row-0", cells: {} }],
 			});

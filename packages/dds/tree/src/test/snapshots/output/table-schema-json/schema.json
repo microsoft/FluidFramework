@@ -1,5 +1,5 @@
 {
-  "$ref": "#/$defs/test.table.Table",
+  "$ref": "#/$defs/test.table.TableRoot",
   "$defs": {
     "com.fluidframework.leaf.string": {
       "type": "string",
@@ -117,6 +117,19 @@
       "required": [
         "rows",
         "columns"
+      ],
+      "additionalProperties": false
+    },
+    "test.table.TableRoot": {
+      "type": "object",
+      "_treeNodeSchemaKind": 2,
+      "properties": {
+        "table": {
+          "$ref": "#/$defs/test.table.Table"
+        }
+      },
+      "required": [
+        "table"
       ],
       "additionalProperties": false
     }
