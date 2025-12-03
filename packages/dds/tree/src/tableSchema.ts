@@ -455,15 +455,17 @@ export namespace System_TableSchema {
 		 * The implicit typing is intentional.
 		 */
 		const tableFields = {
-			rows: schemaFactory.array("Table.rows", rowSchema),
-			columns: schemaFactory.array("Table.columns", columnSchema),
+			table: schemaFactory.required(schemaFactory.object("Table", {
+				rows: schemaFactory.array("Table.rows", rowSchema),
+				columns: schemaFactory.array("Table.columns", columnSchema),
+			}))
 		} as const satisfies Record<string, ImplicitFieldSchema>;
 
 		/**
 		 * The Table schema
 		 */
 		class Table
-			extends schemaFactory.object("Table", tableFields, {
+			extends schemaFactory.object("TableRoot", tableFields, {
 				// Will make it easier to evolve this schema in the future.
 				allowUnknownOptionalFields: true,
 			})
@@ -472,7 +474,15 @@ export namespace System_TableSchema {
 			public static empty<TThis extends TableConstructorType>(
 				this: TThis,
 			): InstanceType<TThis> {
-				return new this({ columns: [], rows: [] }) as InstanceType<TThis>;
+				return new this({table: { columns: [], rows: [] }}) as InstanceType<TThis>;
+			}
+
+			public get columns(): TreeArrayNode<TColumnSchema> {
+				return this.table.columns;
+			}
+
+			public get rows(): TreeArrayNode<TRowSchema> {
+				return this.table.rows;
 			}
 
 			public getColumn(indexOrId: number | string): ColumnValueType | undefined {
@@ -508,13 +518,13 @@ export namespace System_TableSchema {
 				// See: https://github.com/microsoft/TypeScript/issues/52144
 				if (index === undefined) {
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					this.columns.insertAtEnd(TreeArrayNode.spread(columns) as any);
+					this.table.columns.insertAtEnd(TreeArrayNode.spread(columns) as any);
 				} else {
 					// Ensure specified index is valid
-					validateIndex(index, this.columns, "Table.insertColumns", true);
+					validateIndex(index, this.table.columns, "Table.insertColumns", true);
 
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					this.columns.insertAt(index, TreeArrayNode.spread(columns) as any);
+					this.table.columns.insertAt(index, TreeArrayNode.spread(columns) as any);
 				}
 
 				// Inserting the input nodes into the tree hydrates them, making them usable as nodes.
@@ -529,7 +539,7 @@ export namespace System_TableSchema {
 
 				// Ensure specified index is valid
 				if (index !== undefined) {
-					validateIndex(index, this.rows, "Table.insertRows", true);
+					validateIndex(index, this.table.rows, "Table.insertRows", true);
 				}
 
 				// Note: TypeScript is unable to narrow the type of the row type correctly here, hence the casts below.
@@ -557,10 +567,10 @@ export namespace System_TableSchema {
 				// See: https://github.com/microsoft/TypeScript/issues/52144
 				if (index === undefined) {
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					this.rows.insertAtEnd(TreeArrayNode.spread(rows) as any);
+					this.table.rows.insertAtEnd(TreeArrayNode.spread(rows) as any);
 				} else {
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					this.rows.insertAt(index, TreeArrayNode.spread(rows) as any);
+					this.table.rows.insertAt(index, TreeArrayNode.spread(rows) as any);
 				}
 
 				// Inserting the input nodes into the tree hydrates them, making them usable as nodes.
@@ -586,17 +596,17 @@ export namespace System_TableSchema {
 				if (typeof indexOrColumns === "number" || indexOrColumns === undefined) {
 					let removedColumns: ColumnValueType[] | undefined;
 					const startIndex = indexOrColumns ?? 0;
-					const endIndex = count === undefined ? this.columns.length : startIndex + count;
+					const endIndex = count === undefined ? this.table.columns.length : startIndex + count;
 
 					// If there are no columns to remove, do nothing
 					if (startIndex === endIndex) {
 						return [];
 					}
 
-					validateIndexRange(startIndex, endIndex, this.columns, "Table.removeColumns");
+					validateIndexRange(startIndex, endIndex, this.table.columns, "Table.removeColumns");
 
 					this.#applyEditsInBatch(() => {
-						const columnsToRemove = this.columns.slice(
+						const columnsToRemove = this.table.columns.slice(
 							startIndex,
 							endIndex,
 						) as ColumnValueType[];
@@ -607,7 +617,7 @@ export namespace System_TableSchema {
 						}
 
 						// Second, remove the column nodes:
-						removeRangeFromArray(startIndex, endIndex, this.columns, "Table.removeColumns");
+						removeRangeFromArray(startIndex, endIndex, this.table.columns, "Table.removeColumns");
 						removedColumns = columnsToRemove;
 					});
 					return removedColumns ?? fail(0xc1f /* Transaction did not complete. */);
@@ -630,7 +640,7 @@ export namespace System_TableSchema {
 						// So if we throw an error here for any column, no columns will be removed.
 						for (const columnToRemove of columnsToRemove) {
 							// Remove the corresponding cell from all rows.
-							for (const row of this.rows) {
+							for (const row of this.table.rows) {
 								// TypeScript is unable to narrow the row type correctly here, hence the cast.
 								// See: https://github.com/microsoft/TypeScript/issues/52144
 								this.removeCell({
@@ -640,7 +650,7 @@ export namespace System_TableSchema {
 							}
 
 							// We have already validated that all of the columns exist above, so this is safe.
-							this.columns.removeAt(this.columns.indexOf(columnToRemove));
+							this.table.columns.removeAt(this.table.columns.indexOf(columnToRemove));
 						}
 					});
 					return columnsToRemove;
@@ -653,14 +663,14 @@ export namespace System_TableSchema {
 			): RowValueType[] {
 				if (typeof indexOrRows === "number" || indexOrRows === undefined) {
 					const startIndex = indexOrRows ?? 0;
-					const endIndex = count === undefined ? this.columns.length : startIndex + count;
+					const endIndex = count === undefined ? this.table.rows.length : startIndex + count;
 
 					// If there are no rows to remove, do nothing
 					if (startIndex === endIndex) {
 						return [];
 					}
 
-					return removeRangeFromArray(startIndex, endIndex, this.rows, "Table.removeRows");
+					return removeRangeFromArray(startIndex, endIndex, this.table.rows, "Table.removeRows");
 				}
 
 				// If there are no rows to remove, do nothing
@@ -681,8 +691,8 @@ export namespace System_TableSchema {
 					// So if we throw an error here for any row, no rows will be removed.
 					for (const rowToRemove of rowsToRemove) {
 						// We have already validated that all of the rows exist above, so this is safe.
-						const index = this.rows.indexOf(rowToRemove);
-						this.rows.removeAt(index);
+						const index = this.table.rows.indexOf(rowToRemove);
+						this.table.rows.removeAt(index);
 					}
 				});
 				return rowsToRemove;
@@ -709,7 +719,7 @@ export namespace System_TableSchema {
 			 * Removes the cell corresponding with the specified column from each row in the table.
 			 */
 			#removeCells(column: ColumnValueType): void {
-				for (const row of this.rows) {
+				for (const row of this.table.rows) {
 					// TypeScript is unable to narrow the row type correctly here, hence the cast.
 					// See: https://github.com/microsoft/TypeScript/issues/52144
 					this.removeCell({
@@ -757,25 +767,25 @@ export namespace System_TableSchema {
 				columnOrIdOrIndex: ColumnValueType | string | number,
 			): ColumnValueType | undefined {
 				if (typeof columnOrIdOrIndex === "number") {
-					if (columnOrIdOrIndex < 0 || columnOrIdOrIndex >= this.columns.length) {
+					if (columnOrIdOrIndex < 0 || columnOrIdOrIndex >= this.table.columns.length) {
 						return undefined;
 					}
 					// TypeScript is unable to narrow the types correctly here, hence the cast.
 					// See: https://github.com/microsoft/TypeScript/issues/52144
-					return this.columns[columnOrIdOrIndex] as ColumnValueType;
+					return this.table.columns[columnOrIdOrIndex] as ColumnValueType;
 				}
 
 				if (typeof columnOrIdOrIndex === "string") {
 					const columnId = columnOrIdOrIndex;
 					// TypeScript is unable to narrow the types correctly here, hence the casts.
 					// See: https://github.com/microsoft/TypeScript/issues/52144
-					return this.columns.find((col) => (col as ColumnValueType).id === columnId) as
+					return this.table.columns.find((col) => (col as ColumnValueType).id === columnId) as
 						| ColumnValueType
 						| undefined;
 				}
 
 				// If the user provided a node, ensure it actually exists in this table.
-				if (!this.columns.includes(columnOrIdOrIndex)) {
+				if (!this.table.columns.includes(columnOrIdOrIndex)) {
 					return undefined;
 				}
 
@@ -830,25 +840,25 @@ export namespace System_TableSchema {
 			 */
 			#tryGetRow(rowOrIdOrIndex: RowValueType | string | number): RowValueType | undefined {
 				if (typeof rowOrIdOrIndex === "number") {
-					if (rowOrIdOrIndex < 0 || rowOrIdOrIndex >= this.rows.length) {
+					if (rowOrIdOrIndex < 0 || rowOrIdOrIndex >= this.table.rows.length) {
 						return undefined;
 					}
 					// TypeScript is unable to narrow the types correctly here, hence the cast.
 					// See: https://github.com/microsoft/TypeScript/issues/52144
-					return this.rows[rowOrIdOrIndex] as RowValueType;
+					return this.table.rows[rowOrIdOrIndex] as RowValueType;
 				}
 
 				if (typeof rowOrIdOrIndex === "string") {
 					const rowId = rowOrIdOrIndex;
 					// TypeScript is unable to narrow the types correctly here, hence the casts.
 					// See: https://github.com/microsoft/TypeScript/issues/52144
-					return this.rows.find((row) => (row as RowValueType).id === rowId) as
+					return this.table.rows.find((row) => (row as RowValueType).id === rowId) as
 						| RowValueType
 						| undefined;
 				}
 
 				// If the user provided a node, ensure it actually exists in this table.
-				if (!this.rows.includes(rowOrIdOrIndex)) {
+				if (!this.table.rows.includes(rowOrIdOrIndex)) {
 					return undefined;
 				}
 
@@ -897,7 +907,7 @@ export namespace System_TableSchema {
 
 		type TableValueType = TreeNode &
 			TableSchema.Table<TInputScope, TCellSchema, TColumnSchema, TRowSchema> &
-			WithType<ScopedSchemaName<Scope, "Table">>;
+			WithType<ScopedSchemaName<Scope, "TableRoot">>;
 		type TableInsertableType = InsertableObjectFromSchemaRecord<typeof tableFields>;
 		type TableConstructorType = new (data: TableInsertableType) => TableValueType;
 
@@ -907,7 +917,7 @@ export namespace System_TableSchema {
 		// This is avoided by doing this type conversion.
 		// The conversion is done via assignment instead of `as` to get stronger type safety.
 		const TableSchemaType: TreeNodeSchemaClass<
-			/* Name */ ScopedSchemaName<Scope, "Table">,
+			/* Name */ ScopedSchemaName<Scope, "TableRoot">,
 			/* Kind */ NodeKind.Object,
 			/* TNode */ TableValueType,
 			/* TInsertable */ object & TableInsertableType,
