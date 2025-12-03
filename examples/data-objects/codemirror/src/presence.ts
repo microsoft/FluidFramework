@@ -55,7 +55,7 @@ export class PresenceManager extends EventEmitter {
 		});
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
+	// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 	public send(location: {}) {
 		if (this.runtime.connected) {
 			console.log(`sending new presence signal: ${JSON.stringify(location)}`);

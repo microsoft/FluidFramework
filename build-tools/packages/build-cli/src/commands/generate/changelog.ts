@@ -16,7 +16,7 @@ import { inc } from "semver";
 import { CleanOptions } from "simple-git";
 
 import { checkFlags, releaseGroupFlag, semverFlag } from "../../flags.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { canonicalizeChangesets } from "../../library/changesets.js";
 import { BaseCommand } from "../../library/index.js";
 import { isReleaseGroup } from "../../releaseGroups.js";

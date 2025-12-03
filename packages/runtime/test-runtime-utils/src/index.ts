@@ -30,7 +30,6 @@ export {
 export { MockStorage } from "./mockStorage.js";
 export {
 	validateAssertionError,
-	validateAssertionError2,
 	validateUsageError,
 	validateTypeError,
 	validateError,

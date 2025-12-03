@@ -151,7 +151,13 @@ describe("message codec", () => {
 		},
 	);
 
-	makeEncodingTestSuite(family, testCases);
+	makeEncodingTestSuite(
+		family,
+		testCases,
+		undefined,
+		[MessageFormatVersion.v3, MessageFormatVersion.v4, MessageFormatVersion.vSharedBranches],
+		[undefined, MessageFormatVersion.v1, MessageFormatVersion.v2, MessageFormatVersion.v5],
+	);
 
 	describe("dispatching codec", () => {
 		const codec = makeMessageCodec(
@@ -190,55 +196,6 @@ describe("message codec", () => {
 					change: TestChange.mint([], 1),
 				},
 			});
-		});
-
-		it("accepts unversioned messages as version 1", () => {
-			const revision = 1 as EncodedRevisionTag;
-			const originatorId = createSessionId();
-			const encoded = JSON.stringify({
-				revision,
-				originatorId,
-				changeset: {},
-			} satisfies Message);
-			const actual = codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor });
-			assert.deepEqual(actual, {
-				type: "commit",
-				commit: {
-					revision: testRevisionTagCodec.decode(revision, {
-						originatorId,
-						revision: undefined,
-						idCompressor: testIdCompressor,
-					}),
-					change: {},
-				},
-				sessionId: originatorId,
-				branchId: "main",
-			} satisfies DecodedMessage<unknown>);
-		});
-
-		it("accepts version 1 messages as version 1", () => {
-			const revision = 1 as EncodedRevisionTag;
-			const originatorId = createSessionId();
-			const encoded = JSON.stringify({
-				revision,
-				originatorId,
-				changeset: {},
-				version: MessageFormatVersion.v1,
-			} satisfies Message);
-			const actual = codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor });
-			assert.deepEqual(actual, {
-				type: "commit",
-				commit: {
-					revision: testRevisionTagCodec.decode(revision, {
-						originatorId,
-						revision: undefined,
-						idCompressor: testIdCompressor,
-					}),
-					change: {},
-				},
-				sessionId: originatorId,
-				branchId: "main",
-			} satisfies DecodedMessage<unknown>);
 		});
 
 		it("rejects messages with invalid versions", () => {
