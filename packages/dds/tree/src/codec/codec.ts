@@ -521,9 +521,9 @@ export const FluidClientVersion = {
 	v2_52: "2.52.0",
 
 	/**
-	 * Fluid Framework Client 2.74 and newer.
+	 * Fluid Framework Client 2.73 and newer.
 	 * @remarks
-	 * New formats introduced in 2.74:
+	 * New formats introduced in 2.73:
 	 * - FieldBatchFormatVersion v2
 	 */
 	v2_73: "2.73.0",

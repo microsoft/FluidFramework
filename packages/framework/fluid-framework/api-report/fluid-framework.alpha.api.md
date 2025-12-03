@@ -394,6 +394,7 @@ export const FluidClientVersion: {
     readonly v2_0: "2.0.0";
     readonly v2_43: "2.43.0";
     readonly v2_52: "2.52.0";
+    readonly v2_73: "2.73.0";
     readonly v2_74: "2.74.0";
 };
 
