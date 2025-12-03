@@ -79,6 +79,9 @@ export async function getAllBiome2ConfigPaths(configPath: string): Promise<strin
  * @param startDir - The directory containing the child config file. Parent discovery starts
  *                   from this directory's parent (i.e., startDir itself is not searched).
  * @param stopAt - Optional directory path to stop searching at. Typically the git repo root.
+ *                 If not provided, the search continues until `root: true` is found or filesystem root is reached.
+ *                 Note: This parameter is currently not passed from `getAllBiome2ConfigPaths()`, but the function
+ *                 properly stops at `root: true` which is the standard Biome behavior.
  * @returns Array of config paths in order from root to nearest parent (not including the starting directory),
  *          with all extends chains resolved
  */
