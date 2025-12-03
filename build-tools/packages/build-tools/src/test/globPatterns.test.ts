@@ -64,16 +64,16 @@ describe("globFn (glob wrapper for task utilities)", () => {
 			const relativePaths = toRelativePaths(results);
 			assert.deepEqual(relativePaths, [
 				"dotfiles/visible.ts",
-				"ignore-test/exclude.ts",
-				"ignore-test/include.ts",
-				"nested/dir1/file1.ts",
-				"nested/dir1/file2.ts",
-				"nested/dir2/file1.ts",
-				"nested/dir2/file2.ts",
-				"nested/file3.ts",
-				"tracked.ts",
 				"file1.ts",
 				"file2.ts",
+				"ignore-test/exclude.ts",
+				"ignore-test/include.ts",
+				"nested/deep/file1.ts",
+				"nested/deep/file2.ts",
+				"nested/deep/file3.ts",
+				"nested/file1.ts",
+				"nested/file2.ts",
+				"tracked.ts",
 			].sort());
 		});
 
@@ -148,8 +148,9 @@ describe("globFn (glob wrapper for task utilities)", () => {
 	describe("cwd option", () => {
 		it("uses cwd as base for relative patterns", async () => {
 			const results = await globFn("*.ts", { cwd: globTestDataPath, nodir: true });
-			const relativePaths = toRelativePaths(results);
-			assert.deepEqual(relativePaths, ["file1.ts", "file2.ts", "tracked.ts"]);
+			// When using cwd without absolute:true, results are already relative to cwd
+			const sorted = results.map((f) => f).sort();
+			assert.deepEqual(sorted, ["file1.ts", "file2.ts", "tracked.ts"]);
 		});
 	});
 
@@ -170,6 +171,23 @@ describe("globFn (glob wrapper for task utilities)", () => {
 			}
 			const relativePaths = results.map((f) => f).sort();
 			assert.deepEqual(relativePaths, ["file1.ts", "file2.ts", "tracked.ts"]);
+		});
+	});
+
+	describe("ordering behavior", () => {
+		it("returns results in sorted order (glob library default)", async () => {
+			const results = await globFn("**/*.ts", {
+				cwd: globTestDataPath,
+				nodir: true,
+			});
+			const isSorted = results.every((item, index) => {
+				if (index === 0) return true;
+				return item >= results[index - 1];
+			});
+			assert(
+				isSorted,
+				`Expected results to be sorted, but got: ${results.slice(0, 5).join(", ")}...`,
+			);
 		});
 	});
 });
@@ -232,11 +250,11 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 			"gitignored/shouldBeIgnored.ts",
 			"ignore-test/exclude.ts",
 			"ignore-test/include.ts",
-			"nested/dir1/file1.ts",
-			"nested/dir1/file2.ts",
-			"nested/dir2/file1.ts",
-			"nested/dir2/file2.ts",
-			"nested/file3.ts",
+			"nested/deep/file1.ts",
+			"nested/deep/file2.ts",
+			"nested/deep/file3.ts",
+			"nested/file1.ts",
+			"nested/file2.ts",
 			"tracked.ts",
 		].sort());
 	});
@@ -256,11 +274,11 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 			"file2.ts",
 			"ignore-test/exclude.ts",
 			"ignore-test/include.ts",
-			"nested/dir1/file1.ts",
-			"nested/dir1/file2.ts",
-			"nested/dir2/file1.ts",
-			"nested/dir2/file2.ts",
-			"nested/file3.ts",
+			"nested/deep/file1.ts",
+			"nested/deep/file2.ts",
+			"nested/deep/file3.ts",
+			"nested/file1.ts",
+			"nested/file2.ts",
 			"tracked.ts",
 		].sort());
 	});
@@ -276,11 +294,11 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 			"file2.ts",
 			"ignore-test/exclude.ts",
 			"ignore-test/include.ts",
-			"nested/dir1/file1.ts",
-			"nested/dir1/file2.ts",
-			"nested/dir2/file1.ts",
-			"nested/dir2/file2.ts",
-			"nested/file3.ts",
+			"nested/deep/file1.ts",
+			"nested/deep/file2.ts",
+			"nested/deep/file3.ts",
+			"nested/file1.ts",
+			"nested/file2.ts",
 			"tracked.ts",
 		].sort());
 	});
@@ -332,11 +350,11 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 			"file2.ts",
 			"ignore-test/exclude.ts",
 			"ignore-test/include.ts",
-			"nested/dir1/file1.ts",
-			"nested/dir1/file2.ts",
-			"nested/dir2/file1.ts",
-			"nested/dir2/file2.ts",
-			"nested/file3.ts",
+			"nested/deep/file1.ts",
+			"nested/deep/file2.ts",
+			"nested/deep/file3.ts",
+			"nested/file1.ts",
+			"nested/file2.ts",
 			"tracked.ts",
 		].sort());
 	});
@@ -356,5 +374,36 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 		});
 		const relativePaths = toRelativePaths(results);
 		assert.deepEqual(relativePaths, ["file1.ts", "file2.ts", "file3.mjs", "tracked.ts"]);
+	});
+
+	describe("ordering behavior", () => {
+		it("returns results in breadth-first order (globby library behavior)", async () => {
+			const results = await globWithGitignore(["**/*.ts"], {
+				cwd: globTestDataPath,
+				gitignore: false,
+			});
+			// Convert to relative paths for easier comparison
+			const relativePaths = results.map((f) => path.relative(globTestDataPath, f));
+			
+			// globby (fast-glob) returns results in breadth-first order:
+			// files at the root level come before files in subdirectories
+			// This is NOT lexicographically sorted
+			assert(relativePaths.length > 0, "Should have results");
+			
+			// Verify that files in root come before files in subdirectories
+			const rootFiles = relativePaths.filter((p) => !p.includes(path.sep));
+			const nestedFiles = relativePaths.filter((p) => p.includes(path.sep));
+			
+			// Find indices
+			const lastRootIndex = relativePaths.lastIndexOf(rootFiles[rootFiles.length - 1]);
+			const firstNestedIndex = relativePaths.indexOf(nestedFiles[0]);
+			
+			assert(
+				lastRootIndex < firstNestedIndex,
+				`Expected root files to come before nested files. ` +
+				`Last root file "${rootFiles[rootFiles.length - 1]}" at index ${lastRootIndex}, ` +
+				`first nested "${nestedFiles[0]}" at index ${firstNestedIndex}`,
+			);
+		});
 	});
 });
