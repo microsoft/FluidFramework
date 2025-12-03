@@ -7,6 +7,7 @@ import {
 	unreachableCase,
 	fail,
 	transformMapValues,
+	assert,
 } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -24,7 +25,13 @@ import {
 	type TreeTypeSet,
 } from "../core/index.js";
 import { FieldKinds, type FlexFieldKind } from "../feature-libraries/index.js";
-import { brand, getOrCreate, type JsonCompatibleReadOnlyObject } from "../util/index.js";
+import {
+	brand,
+	filterIterable,
+	getOrCreate,
+	mapIterable,
+	type JsonCompatibleReadOnlyObject,
+} from "../util/index.js";
 
 import {
 	ExpectStored,
@@ -156,11 +163,11 @@ export function transformSimpleSchema(
 	schema: SimpleTreeSchema,
 	options: SimpleSchemaTransformationOptions,
 ): SimpleTreeSchema {
-	const definitions = new Map<string, SimpleNodeSchema>();
+	const simpleNodeSchema = new Map<string, SimpleNodeSchema>();
 	const root = filterFieldAllowedTypes(schema.root, options);
 	const queue = Array.from(root.simpleAllowedTypes.keys());
 	for (const identifier of queue) {
-		getOrCreate(definitions, identifier, (id) => {
+		getOrCreate(simpleNodeSchema, identifier, (id) => {
 			const nodeSchema = schema.definitions.get(id) ?? fail("missing schema");
 			const transformed = transformSimpleNodeSchema(nodeSchema, options);
 			const kind = transformed.kind;
@@ -183,6 +190,18 @@ export function transformSimpleSchema(
 			return transformed;
 		});
 	}
+	// Copy simpleNodeSchema, but in the order from the original schema.definitions
+	// Currently we do not specify anything about the order of definitions, but it is nicer to have a stable order and some tests rely on it.
+	const definitions = new Map<string, SimpleNodeSchema>(
+		mapIterable(
+			filterIterable(schema.definitions.keys(), (id) => simpleNodeSchema.has(id)),
+			(id) => [id, simpleNodeSchema.get(id) ?? fail("missing schema")],
+		),
+	);
+	assert(
+		definitions.size === simpleNodeSchema.size,
+		"Reachable schema missing from input TreeSchema",
+	);
 	return { root, definitions };
 }
 
