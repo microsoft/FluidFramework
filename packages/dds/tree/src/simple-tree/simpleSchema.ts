@@ -291,15 +291,14 @@ export interface SimpleAllowedTypeAttributes<out Type extends SchemaType = Schem
  */
 export enum SchemaType {
 	/**
-	 * Schema is a stored schema, meaning it expresses exactly what is legal to persist in a SharedTree.
+	 * The schema is a stored schema, meaning it expresses exactly what could be validly persisted in a SharedTree.
 	 */
 	Stored,
 	/**
-	 * Schema is a view schema, meaning it expresses how to view data which using a compatible stored schema.
+	 * The schema is a view schema, meaning it expresses how to view data which is using a compatible stored schema.
 	 */
 	View,
 }
-
 /**
  * A simple, shallow representation of a schema for a field.
  *
