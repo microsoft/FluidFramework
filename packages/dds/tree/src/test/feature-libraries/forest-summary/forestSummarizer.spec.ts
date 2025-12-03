@@ -45,6 +45,8 @@ import {
 	toStoredSchema,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
+	type ImplicitFieldSchema,
+	type InsertableField,
 } from "../../../simple-tree/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -162,6 +164,137 @@ function validateHandlePathExists(handle: string, summaryTree: ISummaryTree) {
 	assert(found, `Handle path ${currentPath} not found in summary tree`);
 }
 
+/**
+ * Validates that the summary in incremental by validating that there is at least one node for incremental fields.
+ * @param summary - The summary to validate.
+ * @param incrementalNodeCount - The expected number of nodes for incremental fields at the top-level. If provided,
+ * the summary is validated to have at exactly these many nodes at the top-level. Otherwise, this validation is skipped.
+ */
+function validateSummaryIsIncremental(summary: ISummaryTree, incrementalNodeCount?: number) {
+	assert(
+		Object.keys(summary.tree).length >= 2,
+		"There should be at least one node for incremental fields",
+	);
+
+	let incrementalNodesFound = 0;
+	for (const [key, value] of Object.entries(summary.tree)) {
+		if (key === forestSummaryContentKey) {
+			assert(value.type === SummaryType.Blob, "Forest summary contents not found");
+		} else {
+			assert(value.type === SummaryType.Tree, "Incremental summary node should be a tree");
+			incrementalNodesFound++;
+		}
+	}
+	if (incrementalNodeCount !== undefined) {
+		assert.equal(
+			incrementalNodesFound,
+			incrementalNodeCount,
+			"Incremental node count does not match expected value",
+		);
+	}
+}
+
+function validateSummaryIsNotIncremental(summary: ISummaryTree) {
+	assert(
+		Object.keys(summary.tree).length === 1,
+		"There should be no nodes for incremental fields",
+	);
+}
+
+async function summarizeAndValidateIncrementality<TSchema extends ImplicitFieldSchema>(
+	schema: TSchema,
+	data: InsertableField<TSchema>,
+	incrementalNodeCount: number,
+) {
+	const shouldEncodeIncrementally = incrementalEncodingPolicyForAllowedTypes(
+		new TreeViewConfigurationAlpha({ schema }),
+	);
+
+	const initialContent: TreeStoredContentStrict = {
+		schema: toStoredSchema(schema, permissiveStoredSchemaGenerationOptions),
+		initialTree: fieldCursorFromInsertable(schema, data),
+	};
+
+	const { forestSummarizer } = createForestSummarizer({
+		initialContent,
+		encodeType: TreeCompressionStrategy.CompressedIncremental,
+		forestType: ForestTypeOptimized,
+		shouldEncodeIncrementally,
+	});
+
+	// Incremental summary context for the first summary. This is needed for incremental summarization.
+	const incrementalSummaryContext: IExperimentalIncrementalSummaryContext = {
+		summarySequenceNumber: 0,
+		latestSummarySequenceNumber: -1,
+		summaryPath: "",
+	};
+	const summary = forestSummarizer.summarize({
+		stringify: JSON.stringify,
+		incrementalSummaryContext,
+	});
+
+	if (incrementalNodeCount === 0) {
+		validateSummaryIsNotIncremental(summary.summary);
+	} else {
+		validateSummaryIsIncremental(summary.summary, incrementalNodeCount);
+	}
+
+	// Validate that the forest can successfully load from the above summary.
+	const mockStorage = MockStorage.createFromSummary(summary.summary);
+	const { forestSummarizer: forestSummarizer2 } = createForestSummarizer({
+		encodeType: TreeCompressionStrategy.CompressedIncremental,
+		forestType: ForestTypeOptimized,
+		shouldEncodeIncrementally,
+	});
+	await assert.doesNotReject(async () => {
+		await forestSummarizer2.load(mockStorage, JSON.parse);
+	});
+}
+
+const sf = new SchemaFactoryAlpha("IncrementalSummarization");
+
+class ObjectNodeSchema extends sf.object("objectNodeSchema", {
+	foo: sf.types([{ type: sf.string, metadata: {} }], {
+		custom: { [incrementalSummaryHint]: true },
+	}),
+}) {}
+
+class FooMap extends sf.mapAlpha(
+	"fooMap",
+	sf.types([{ type: sf.string, metadata: {} }], {
+		custom: { [incrementalSummaryHint]: true },
+	}),
+) {}
+class MapNodeSchema extends sf.object("mapNodeSchema", {
+	fooMap: FooMap,
+}) {}
+
+class FooArray extends sf.arrayAlpha(
+	"fooArray",
+	sf.types([{ type: sf.string, metadata: {} }], {
+		custom: { [incrementalSummaryHint]: true },
+	}),
+) {}
+class ArrayNodeSchema extends sf.object("arrayNodeSchema", {
+	fooArray: FooArray,
+}) {}
+
+class FooRecord extends sf.recordAlpha(
+	"fooRecord",
+	sf.types([{ type: sf.string, metadata: {} }], {
+		custom: { [incrementalSummaryHint]: true },
+	}),
+) {}
+class RecordNodeSchema extends sf.object("recordNodeSchema", {
+	fooRecord: FooRecord,
+}) {}
+
+const LeafNodeSchema = sf.required(
+	sf.types([{ type: sf.string, metadata: {} }], {
+		custom: { [incrementalSummaryHint]: true },
+	}),
+);
+
 describe("ForestSummarizer", () => {
 	describe("Summarize and Load", () => {
 		const testCases: {
@@ -255,74 +388,54 @@ describe("ForestSummarizer", () => {
 	});
 
 	describe("Incremental summarization", () => {
-		const sf = new SchemaFactoryAlpha("IncrementalSummarization");
-
-		function validateSummaryIsIncremental(summary: ISummaryTree) {
-			assert(
-				Object.keys(summary.tree).length >= 2,
-				"There should be at least one node for incremental fields",
-			);
-
-			for (const [key, value] of Object.entries(summary.tree)) {
-				if (key === forestSummaryContentKey) {
-					assert(value.type === SummaryType.Blob, "Forest summary contents not found");
-				} else {
-					assert(value.type === SummaryType.Tree, "Incremental summary node should be a tree");
-				}
-			}
-		}
-
-		describe("Simple schema", () => {
-			it("can incrementally summarize forest with simple content", async () => {
-				class SimpleObject extends sf.object("simpleObject", {
-					foo: sf.string,
-				}) {}
-				const initialContent: TreeStoredContentStrict = {
-					schema: toStoredSchema(SimpleObject, permissiveStoredSchemaGenerationOptions),
-					initialTree: fieldCursorFromInsertable(SimpleObject, {
+		describe("simple schema", () => {
+			it("object nodes", async () => {
+				await summarizeAndValidateIncrementality(
+					ObjectNodeSchema,
+					{
 						foo: "bar",
-					}),
-				};
+					},
+					1 /* incrementalNodeCount */,
+				);
+			});
 
-				const shouldEncodeIncrementally = (
-					nodeIdentifier: string | undefined,
-					fieldKey: string,
-				): boolean => {
-					if (nodeIdentifier === SimpleObject.identifier && fieldKey === "foo") {
-						return true;
-					}
-					return false;
-				};
+			it("map nodes", async () => {
+				await summarizeAndValidateIncrementality(
+					MapNodeSchema,
+					{
+						fooMap: new FooMap({ key1: "value1", key2: "value2" }),
+					},
+					2 /* incrementalNodeCount */,
+				);
+			});
 
-				const { forestSummarizer } = createForestSummarizer({
-					initialContent,
-					encodeType: TreeCompressionStrategy.CompressedIncremental,
-					forestType: ForestTypeOptimized,
-					shouldEncodeIncrementally,
-				});
+			it("array nodes", async () => {
+				await summarizeAndValidateIncrementality(
+					ArrayNodeSchema,
+					{
+						fooArray: new FooArray(["value1", "value2"]),
+					},
+					2 /* incrementalNodeCount */,
+				);
+			});
 
-				// Incremental summary context for the first summary. This is needed for incremental summarization.
-				const incrementalSummaryContext: IExperimentalIncrementalSummaryContext = {
-					summarySequenceNumber: 0,
-					latestSummarySequenceNumber: -1,
-					summaryPath: "",
-				};
-				const summary = forestSummarizer.summarize({
-					stringify: JSON.stringify,
-					incrementalSummaryContext,
-				});
-				validateSummaryIsIncremental(summary.summary);
+			it("record nodes", async () => {
+				await summarizeAndValidateIncrementality(
+					RecordNodeSchema,
+					{
+						fooRecord: new FooRecord({ key1: "value1", key2: "value2" }),
+					},
+					2 /* incrementalNodeCount */,
+				);
+			});
 
-				// Validate that the forest can successfully load from the above summary.
-				const mockStorage = MockStorage.createFromSummary(summary.summary);
-				const { forestSummarizer: forestSummarizer2 } = createForestSummarizer({
-					encodeType: TreeCompressionStrategy.CompressedIncremental,
-					forestType: ForestTypeOptimized,
-					shouldEncodeIncrementally,
-				});
-				await assert.doesNotReject(async () => {
-					await forestSummarizer2.load(mockStorage, JSON.parse);
-				});
+			it("leaf nodes", async () => {
+				// Leaf nodes are not incrementally summarized.
+				await summarizeAndValidateIncrementality(
+					LeafNodeSchema,
+					"leaf value",
+					0 /* incrementalNodeCount */,
+				);
 			});
 		});
 
@@ -330,9 +443,9 @@ describe("ForestSummarizer", () => {
 			/**
 			 * The property `bar` will be incrementally summarized as a single {@link TreeChunk}
 			 * generated by calling {@link ChunkedForest.chunkField} during summarization.
-			 * A summary tree node will be created for each such property under `FooItem`'s summary tree node.
+			 * A summary tree node will be created for each such property under `BarItem`'s summary tree node.
 			 */
-			class FooItem extends sf.objectAlpha("fooItem", {
+			class BarItem extends sf.objectAlpha("barItem", {
 				id: sf.number,
 				bar: sf.types([{ type: sf.string, metadata: {} }], {
 					custom: { [incrementalSummaryHint]: true },
@@ -344,16 +457,16 @@ describe("ForestSummarizer", () => {
 			 * generated by calling {@link ChunkedForest.chunkField} during summarization.
 			 * A summary tree node will be created for each of these items under the Forest's root summary tree node.
 			 */
-			class MyFooArray extends sf.arrayAlpha(
-				"myFooArray",
-				sf.types([{ type: FooItem, metadata: {} }], {
+			class BarArray extends sf.arrayAlpha(
+				"barArray",
+				sf.types([{ type: BarItem, metadata: {} }], {
 					custom: { [incrementalSummaryHint]: true },
 				}),
 			) {}
 
 			class Root extends sf.objectAlpha("root", {
 				rootId: sf.number,
-				fooArray: MyFooArray,
+				barArray: BarArray,
 			}) {}
 
 			/**
@@ -391,10 +504,10 @@ describe("ForestSummarizer", () => {
 			 */
 			function createInitialBoard(itemsCount: number) {
 				let nextItemId = 10;
-				const fooArray: FooItem[] = [];
+				const barArray: BarItem[] = [];
 				for (let i = 0; i < itemsCount; i++) {
-					fooArray.push(
-						new FooItem({
+					barArray.push(
+						new BarItem({
 							id: nextItemId,
 							bar: `Item ${nextItemId} bar`,
 						}),
@@ -403,7 +516,7 @@ describe("ForestSummarizer", () => {
 				}
 				return new Root({
 					rootId: 1,
-					fooArray,
+					barArray,
 				});
 			}
 
@@ -509,7 +622,7 @@ describe("ForestSummarizer", () => {
 				// So, there should be one less than `itemsCount` number of handles than the previous summary.
 				const view = checkout.viewWith(new TreeViewConfiguration({ schema: Root }));
 				const root = view.root;
-				const firstItem = root.fooArray.at(0);
+				const firstItem = root.barArray.at(0);
 				assert(firstItem !== undefined, "Could not find first item");
 				firstItem.bar = "Updated bar";
 
@@ -559,7 +672,7 @@ describe("ForestSummarizer", () => {
 				// So, there should be one less than `itemsCount` number of handles than the previous summary.
 				const view = checkout.viewWith(new TreeViewConfiguration({ schema: Root }));
 				const root = view.root;
-				const firstItem = root.fooArray.at(0);
+				const firstItem = root.barArray.at(0);
 				assert(firstItem !== undefined, "Could not find first item");
 				firstItem.bar = "Updated bar";
 
@@ -636,7 +749,7 @@ describe("ForestSummarizer", () => {
 				// So, there should be one less than `itemsCount` number of handles than the previous summary.
 				const view = checkout2.viewWith(new TreeViewConfiguration({ schema: Root }));
 				const root = view.root;
-				const firstItem = root.fooArray.at(0);
+				const firstItem = root.barArray.at(0);
 				assert(firstItem !== undefined, "Could not find first item");
 				firstItem.bar = "Updated bar";
 
