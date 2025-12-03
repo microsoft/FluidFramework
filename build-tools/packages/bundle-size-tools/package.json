@@ -41,9 +41,9 @@
 	},
 	"dependencies": {
 		"azure-devops-node-api": "^11.2.0",
+		"fflate": "^0.8.2",
 		"jszip": "^3.10.1",
 		"msgpack-lite": "^0.1.26",
-		"pako": "^2.1.0",
 		"typescript": "~5.4.5",
 		"webpack": "^5.103.0"
 	},
@@ -55,7 +55,6 @@
 		"@microsoft/api-extractor": "^7.55.1",
 		"@types/msgpack-lite": "^0.1.12",
 		"@types/node": "^22.19.1",
-		"@types/pako": "^2.0.4",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.57.0",
 		"rimraf": "^6.1.2"
