@@ -40,7 +40,7 @@ export abstract class VersionedSummarizer implements Summarizable {
 		supportedVersions: Set<number>;
 		/**
 		 * The default format version to use if the summary doesn't have metadata blob.
-		 * This is true for summaries that were written before versioning was added for summaries.
+		 * This is used for summaries that were written before versioning was added for summaries.
 		 */
 		defaultVersion: number;
 	}) {
@@ -102,9 +102,7 @@ export abstract class VersionedSummarizer implements Summarizable {
 			version = metadata.version;
 		}
 		if (!this.supportedVersions.has(version)) {
-			throw new UsageError(
-				`Cannot read version ${version} of shared tree summary. Upgrade to a supported version.`,
-			);
+			throw new UsageError(`Cannot read version ${version} of shared tree summary.`);
 		}
 		await this.loadInternal(services, parse);
 	}
