@@ -35,9 +35,7 @@ import {
 
 import {
 	ExpectStored,
-	filterViewData,
 	NodeKind,
-	preservesViewData,
 	Unchanged,
 	type SimpleSchemaTransformationOptions,
 	type StoredFromViewSchemaGenerationOptions,
@@ -417,19 +415,10 @@ function filterFieldAllowedTypes(
 }
 
 /**
- * Converts a {@link SimpleAllowedTypes} to a stored schema.
- * @param schema - The schema to convert.
- * @param options - The options to use for filtering.
- * @returns The converted stored schema.
+ * Converts a stored {@link SimpleAllowedTypes} to a {@link TreeTypeSet}.
  */
 function convertAllowedTypes(schema: SimpleAllowedTypes<SchemaType.Stored>): TreeTypeSet {
-	const filtered: TreeNodeSchemaIdentifier[] = [];
-	for (const [type, data] of schema) {
-		if (allowedTypeFilter(data, ExpectStored)) {
-			filtered.push(brand<TreeNodeSchemaIdentifier>(type));
-		}
-	}
-	return new Set(filtered);
+	return new Set(schema.keys() as Iterable<TreeNodeSchemaIdentifier>);
 }
 
 /**
@@ -463,4 +452,21 @@ function allowedTypeFilter(
 	}
 
 	return options.includeStaged(data.isStaged);
+}
+
+function isStoredFromView(
+	options: SimpleSchemaTransformationOptions,
+): options is StoredFromViewSchemaGenerationOptions {
+	return typeof options === "object" && "includeStaged" in options;
+}
+
+function filterViewData<T>(
+	options: SimpleSchemaTransformationOptions,
+	data: T,
+): T | undefined {
+	return preservesViewData(options) ? data : undefined;
+}
+
+function preservesViewData(options: SimpleSchemaTransformationOptions): boolean {
+	return isStoredFromView(options) ? false : options === Unchanged;
 }

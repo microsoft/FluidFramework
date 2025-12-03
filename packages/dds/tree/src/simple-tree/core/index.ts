@@ -117,8 +117,6 @@ export {
 	type StoredSchemaGenerationOptions,
 	type StoredFromViewSchemaGenerationOptions,
 	ExpectStored,
-	filterViewData,
 	type SimpleSchemaTransformationOptions,
 	Unchanged,
-	preservesViewData,
 } from "./toStored.js";

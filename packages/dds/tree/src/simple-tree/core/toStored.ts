@@ -29,6 +29,9 @@ export type ExpectStored = typeof ExpectStored;
 export const Unchanged = Symbol("Unchanged");
 export type Unchanged = typeof Unchanged;
 
+/**
+ * Subset of {@link SimpleSchemaTransformationOptions} for when the output is a known to be a stored schema.
+ */
 export type StoredSchemaGenerationOptions =
 	| StoredFromViewSchemaGenerationOptions
 	| ExpectStored;
@@ -44,20 +47,3 @@ export type SimpleSchemaTransformationOptions =
 	| StoredFromViewSchemaGenerationOptions
 	| ExpectStored
 	| Unchanged;
-
-function isStoredFromView(
-	options: SimpleSchemaTransformationOptions,
-): options is StoredFromViewSchemaGenerationOptions {
-	return typeof options === "object" && "includeStaged" in options;
-}
-
-export function filterViewData<T>(
-	options: SimpleSchemaTransformationOptions,
-	data: T,
-): T | undefined {
-	return preservesViewData(options) ? data : undefined;
-}
-
-export function preservesViewData(options: SimpleSchemaTransformationOptions): boolean {
-	return isStoredFromView(options) ? false : options === Unchanged;
-}
