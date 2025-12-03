@@ -1469,6 +1469,7 @@ export interface SimpleNodeSchemaBase<out TNodeKind extends NodeKind, out TCusto
 
 // @alpha @sealed @system
 export interface SimpleNodeSchemaBaseAlpha<out Type extends SchemaType, out TNodeKind extends NodeKind, out TCustomMetadata = unknown> extends SimpleNodeSchemaBase<TNodeKind, TCustomMetadata> {
+    // (undocumented)
     readonly metadata: SimpleNodeSchemaBase<TNodeKind, TCustomMetadata>["metadata"] & (Type extends SchemaType.View ? unknown : {
         readonly custom?: undefined;
         readonly description?: undefined;
