@@ -6,13 +6,15 @@
 import { strict as assert } from "node:assert/strict";
 import { stat } from "node:fs/promises";
 import path from "node:path";
-import ignore from "ignore";
-import multimatch from "multimatch";
 import { merge } from "ts-deepmerge";
 import type { Opaque } from "type-fest";
 
 import type { Configuration as Biome2ConfigRaw } from "./biome2ConfigTypes";
-import { loadRawBiomeConfigFile, resolveExtendsChainGeneric } from "./biomeConfigUtils";
+import {
+	filterFilesWithPatterns,
+	loadRawBiomeConfigFile,
+	resolveExtendsChainGeneric,
+} from "./biomeConfigUtils";
 import type { GitRepo } from "./gitRepo";
 
 // switch to regular import once building ESM
@@ -70,22 +72,29 @@ export async function getAllBiome2ConfigPaths(configPath: string): Promise<strin
 
 /**
  * Walks up the directory tree from the given directory to find parent Biome config files.
- * Stops when a config with `root: true` is found or when the filesystem root is reached.
+ * Stops when a config with `root: true` is found, when the stopAt directory is reached,
+ * or when the filesystem root is reached.
  * For each parent config found, recursively resolves any `extends` declarations.
  *
  * @param startDir - The directory containing the child config file. Parent discovery starts
  *                   from this directory's parent (i.e., startDir itself is not searched).
+ * @param stopAt - Optional directory path to stop searching at. Typically the git repo root.
  * @returns Array of config paths in order from root to nearest parent (not including the starting directory),
  *          with all extends chains resolved
  */
-async function findParentBiome2Configs(startDir: string): Promise<string[]> {
-	// Collect configs in child-to-root order, then reverse at the end
-	const configsChildToRoot: string[][] = [];
-	// Start from parent directory - we don't want to include the config in startDir
+async function findParentBiome2Configs(startDir: string, stopAt?: string): Promise<string[]> {
+	// Use find-up to locate parent configs, stopping at the specified directory
+	const foundConfigs: string[] = [];
 	let currentDir = path.dirname(startDir);
 	const fsRoot = path.parse(startDir).root;
+	const stopAtNormalized = stopAt ? path.normalize(stopAt) : undefined;
 
 	while (currentDir !== fsRoot) {
+		// Stop if we've reached the stopAt directory
+		if (stopAtNormalized && path.normalize(currentDir) === stopAtNormalized) {
+			break;
+		}
+
 		const configPath = await findBiome2ConfigInDirectory(currentDir);
 		if (configPath) {
 			const config = await loadRawBiome2Config(configPath);
@@ -97,7 +106,7 @@ async function findParentBiome2Configs(startDir: string): Promise<string[]> {
 			);
 
 			// Add to the list (we'll reverse at the end)
-			configsChildToRoot.push(parentConfigPaths);
+			foundConfigs.push(...parentConfigPaths);
 
 			// If this config has root: true, stop walking up
 			if (config.root === true) {
@@ -107,32 +116,38 @@ async function findParentBiome2Configs(startDir: string): Promise<string[]> {
 		currentDir = path.dirname(currentDir);
 	}
 
-	// Reverse and flatten to get root-to-child order
-	return configsChildToRoot.reverse().flat();
+	// Reverse to get root-to-child order
+	return foundConfigs.reverse();
 }
 
 /**
- * Looks for a Biome config file in the given directory.
- * @returns The path to the config file if found, undefined otherwise.
+ * Looks for a Biome config file in the given directory by checking for known config file names.
+ *
+ * @param dir - The directory to search in.
+ * @returns The absolute path to the config file if found, undefined otherwise.
  */
 async function findBiome2ConfigInDirectory(dir: string): Promise<string | undefined> {
-	const possibleNames = ["biome.json", "biome.jsonc"];
-	for (const name of possibleNames) {
+	const configNames = ["biome.json", "biome.jsonc"];
+
+	for (const name of configNames) {
 		const configPath = path.join(dir, name);
 		try {
 			await stat(configPath);
 			return configPath;
 		} catch {
-			// File doesn't exist, try next
+			// File doesn't exist, continue to next name
 		}
 	}
 	return undefined;
 }
 
 /**
- * Loads a Biome 2.x configuration file. If the config extends others or has parent configs in the directory tree,
- * those are loaded recursively and the results are merged. Array-type values are not merged, in accordance with
+ * Loads a Biome 2.x configuration file by following all `extends` declarations and parent config
+ * discovery, then merging the results. Array-type values are not merged, in accordance with
  * how Biome applies configs.
+ *
+ * @param configPath - Absolute path to a Biome 2.x configuration file.
+ * @returns The fully resolved and merged configuration.
  *
  * @remarks
  *
@@ -144,17 +159,23 @@ async function findBiome2ConfigInDirectory(dir: string): Promise<string | undefi
  */
 export async function loadBiome2Config(configPath: string): Promise<Biome2ConfigResolved> {
 	const allConfigPaths = await getAllBiome2ConfigPaths(configPath);
-	return loadBiome2Configs(allConfigPaths);
+	return mergeMultipleBiome2Configs(allConfigPaths);
 }
 
 /**
- * Loads a set of Biome 2.x configs, such as that returned by {@link getAllBiome2ConfigPaths}. The configs are loaded
- * recursively and the results are merged. Array-type values are not merged, in accordance with how Biome applies
- * configs.
+ * Loads and merges multiple Biome 2.x config files in the specified order.
+ * Configs are merged sequentially, with later configs overriding earlier ones.
+ * Array-type values are not merged, in accordance with how Biome applies configs.
+ *
+ * @param configPaths - Array of absolute paths to config files, ordered from base to most specific.
+ *                      Each config's values will override those from earlier configs.
+ * @returns The merged configuration.
  */
-async function loadBiome2Configs(allConfigPaths: string[]): Promise<Biome2ConfigResolved> {
+async function mergeMultipleBiome2Configs(
+	configPaths: string[],
+): Promise<Biome2ConfigResolved> {
 	const allConfigs = await Promise.all(
-		allConfigPaths.map((pathToConfig) => loadRawBiome2Config(pathToConfig)),
+		configPaths.map((pathToConfig) => loadRawBiome2Config(pathToConfig)),
 	);
 
 	const mergedConfig = merge.withOptions(
@@ -208,6 +229,24 @@ export function parseIncludes(includes: string[] | undefined | null): {
  * and the specified section ('formatter' or 'linter') in the config.
  *
  * This function parses the unified 'includes' field and returns separate include and ignore patterns.
+ *
+ * @remarks
+ *
+ * In Biome 2.x, negation patterns (prefixed with `!`) are processed in order within the `includes` array.
+ * However, when we separate them here, we apply all include patterns first, then all ignore patterns.
+ * This is safe because:
+ * 1. Our use case is to determine the final set of files, not to support re-inclusion patterns
+ * 2. In Biome 1.x, `include` and `ignore` were already separate arrays
+ * 3. The ignore library we use applies patterns in the order they're added
+ *
+ * For complex patterns with re-inclusions (e.g., `["!test/**", "test/special/**"]`), the behavior may
+ * differ slightly from Biome's native behavior. This is an acceptable trade-off for our use case.
+ *
+ * See: {@link https://biomejs.dev/reference/configuration/#filesinclude}
+ *
+ * @param config - A resolved/merged Biome 2.x configuration.
+ * @param section - The config section to extract patterns from ('formatter' or 'linter').
+ * @returns An object with Sets of include and ignore patterns (ignore patterns have the `!` prefix removed).
  */
 export function getSettingValuesFromBiome2Config(
 	config: Biome2ConfigResolved,
@@ -309,32 +348,14 @@ export async function getBiome2FormattedFiles(
 	// This is similar to how Biome 1.x handled patterns implicitly.
 	// We avoid double-prefixing patterns that already start with **/.
 	const prefixGlob = (glob: string): string => (glob.startsWith("**/") ? glob : `**/${glob}`);
-	const prefixedIncludes = [...includePatterns].map(prefixGlob);
-	const prefixedIgnores = [...ignorePatterns].map(prefixGlob);
 
-	/**
-	 * All files that could possibly be formatted before Biome include and ignore entries are applied. Paths are relative
-	 * to the root of the repo.
-	 */
-	const gitLsFiles = new Set(await gitRepo.getFiles(directory));
-
-	/**
-	 * An array of repo-relative paths to files included via the 'includes' patterns in the Biome 2.x config.
-	 */
-	const includedPaths =
-		prefixedIncludes.length > 0
-			? // If there are includes, then we filter the possible files using the include globs
-				multimatch([...gitLsFiles], prefixedIncludes)
-			: // No Biome includes were provided, so we include everything git enumerated
-				[...gitLsFiles];
-
-	const ignoreObject = ignore().add(prefixedIgnores);
-	// Note that ignoreObject.filter expects the paths to be relative to the repo root.
-	const filtered = ignoreObject.filter(includedPaths);
-
-	// Convert repo root-relative paths to absolute paths
-	const repoRoot = gitRepo.resolvedRoot;
-	return filtered.map((filePath) => path.resolve(repoRoot, filePath));
+	return filterFilesWithPatterns(
+		includePatterns,
+		ignorePatterns,
+		directory,
+		gitRepo,
+		prefixGlob,
+	);
 }
 
 /**
@@ -389,7 +410,7 @@ export class Biome2ConfigReader {
 		}
 
 		const allConfigs = await getAllBiome2ConfigPaths(configFile);
-		const mergedConfig = await loadBiome2Configs(allConfigs);
+		const mergedConfig = await mergeMultipleBiome2Configs(allConfigs);
 		const files = await getBiome2FormattedFiles(mergedConfig, directory, gitRepo);
 		return new Biome2ConfigReader(configFile, allConfigs, mergedConfig, files);
 	}

@@ -5,7 +5,11 @@
 
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import ignore from "ignore";
 import * as JSON5 from "json5";
+import multimatch from "multimatch";
+
+import type { GitRepo } from "./gitRepo";
 
 /**
  * Minimal interface for a Biome configuration that includes the extends field.
@@ -68,4 +72,48 @@ export async function resolveExtendsChainGeneric<T extends BiomeConfigWithExtend
 	}
 
 	return extendedConfigPaths;
+}
+
+/**
+ * Filters files from git using include and ignore patterns.
+ * This is shared logic used by both Biome 1.x and 2.x config readers.
+ *
+ * @param includePatterns - Patterns to include files. If empty, all files from git are included.
+ * @param ignorePatterns - Patterns to exclude files from the included set.
+ * @param directory - The repo-root-relative directory to enumerate files from.
+ * @param gitRepo - A GitRepo instance that is used to enumerate files.
+ * @param prefixGlob - Optional function to transform patterns (e.g., prepend "**\/").
+ * @returns Array of absolute paths to files that match the patterns.
+ */
+export async function filterFilesWithPatterns(
+	includePatterns: Set<string>,
+	ignorePatterns: Set<string>,
+	directory: string,
+	gitRepo: GitRepo,
+	prefixGlob?: (glob: string) => string,
+): Promise<string[]> {
+	// Apply prefix function if provided
+	const prefixedIncludes = prefixGlob
+		? [...includePatterns].map(prefixGlob)
+		: [...includePatterns];
+	const prefixedIgnores = prefixGlob
+		? [...ignorePatterns].map(prefixGlob)
+		: [...ignorePatterns];
+
+	// Get all files from git (these are already filtered by .gitignore)
+	const gitLsFiles = new Set(await gitRepo.getFiles(directory));
+
+	// Apply include patterns
+	const includedPaths =
+		prefixedIncludes.length > 0
+			? multimatch([...gitLsFiles], prefixedIncludes)
+			: [...gitLsFiles];
+
+	// Apply ignore patterns
+	const ignoreObject = ignore().add(prefixedIgnores);
+	const filtered = ignoreObject.filter(includedPaths);
+
+	// Convert repo root-relative paths to absolute paths
+	const repoRoot = gitRepo.resolvedRoot;
+	return filtered.map((filePath) => path.resolve(repoRoot, filePath));
 }
