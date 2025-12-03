@@ -47,7 +47,6 @@ import {
 	ForestIncrementalSummaryBehavior,
 	ForestIncrementalSummaryBuilder,
 } from "./incrementalSummaryBuilder.js";
-import { TreeCompressionStrategyExtended } from "../treeCompressionUtils.js";
 import {
 	forestSummaryContentKey,
 	ForestSummaryFormatVersion,
@@ -55,6 +54,7 @@ import {
 	minVersionToForestSummaryFormatVersion,
 	supportedForestSummaryFormatVersions,
 } from "./summaryTypes.js";
+import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
 /**
  * Provides methods for summarizing and loading a forest.
@@ -88,7 +88,7 @@ export class ForestSummarizer extends VersionedSummarizer implements Summarizabl
 		this.codec = makeForestSummarizerCodec(options, fieldBatchCodec);
 		this.incrementalSummaryBuilder = new ForestIncrementalSummaryBuilder(
 			encoderContext.encodeType ===
-				TreeCompressionStrategyExtended.CompressedIncremental /* enableIncrementalSummary */,
+				TreeCompressionStrategy.CompressedIncremental /* enableIncrementalSummary */,
 			(cursor: ITreeCursorSynchronous) => this.forest.chunkField(cursor),
 			shouldEncodeIncrementally,
 			initialSequenceNumber,

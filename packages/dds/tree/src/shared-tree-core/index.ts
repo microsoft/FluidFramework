@@ -24,7 +24,7 @@ export {
 export {
 	SharedTreeCore,
 	type ClonableSchemaAndPolicy,
-	type SharedTreeCoreOptionsInternal as SharedTreCoreOptionsInternal,
+	type SharedTreeCoreOptionsInternal,
 } from "./sharedTreeCore.js";
 export {
 	SharedTreeSummaryFormatVersion,
