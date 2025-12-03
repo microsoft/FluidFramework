@@ -14,7 +14,7 @@ export const DAYS_IN_MONTH_APPROXIMATION = 33;
 
 /**
  * The default minimum compatibility window in months for layer generation.
- * This matches the default value used in the layerCompatGeneration command.
+ * This matches the default value used in the compatLayerGeneration command.
  */
 export const DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS = 3;
 

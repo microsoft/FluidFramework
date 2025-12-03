@@ -245,7 +245,7 @@ export const CheckNoUntaggedAsserts: CheckFunction = async (
  * **Setting up a new package for layer compatibility:**
  * To add layer compatibility to a package that doesn't have it yet:
  * 1. Add a `layerGeneration:gen` script to the package's package.json:
- *    `"layerGeneration:gen": "flub generate layerCompatGeneration --dir . -v"`
+ *    `"layerGeneration:gen": "flub generate compatLayerGeneration --dir . -v"`
  * 2. Run the command to initialize the package: `pnpm run layerGeneration:gen`
  * 3. The command will create the `fluidCompatMetadata` field in package.json with generation 1
  *    and generate the layer generation file (e.g., `src/layerGenerationState.ts`)
