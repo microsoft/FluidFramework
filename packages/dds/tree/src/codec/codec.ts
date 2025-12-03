@@ -525,6 +525,13 @@ export const FluidClientVersion = {
 	 * @remarks
 	 * New formats introduced in 2.74:
 	 * - FieldBatchFormatVersion v2
+	 */
+	v2_73: "2.73.0",
+
+	/**
+	 * Fluid Framework Client 2.74 and newer.
+	 * @remarks
+	 * New formats introduced in 2.74:
 	 * - SharedTreeSummaryFormatVersion v2
 	 * - DetachedFieldIndexSummaryFormatVersion v2
 	 * - SchemaSummaryFormatVersion v2
