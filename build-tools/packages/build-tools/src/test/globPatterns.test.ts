@@ -37,7 +37,8 @@ function assertAbsolutePaths(results: string[], expectedBasenames?: string[]): v
 /**
  * Tests for globFn wrapper function in taskUtils.ts.
  *
- * The globFn wrapper is used by:
+ * @privateRemarks
+ * The following usage notes are for test development context and may become outdated:
  * - CopyfilesTask (with options: nodir, dot, follow, ignore)
  * - TypeValidationTask (with option: nodir)
  * - GoodFence (with option: nodir)
@@ -62,19 +63,22 @@ describe("globFn (glob wrapper for task utilities)", () => {
 			const pattern = path.join(globTestDataPath, "**/*.ts");
 			const results = await globFn(pattern, { nodir: true });
 			const relativePaths = toRelativePaths(results);
-			assert.deepEqual(relativePaths, [
-				"dotfiles/visible.ts",
-				"file1.ts",
-				"file2.ts",
-				"ignore-test/exclude.ts",
-				"ignore-test/include.ts",
-				"nested/deep/file1.ts",
-				"nested/deep/file2.ts",
-				"nested/deep/file3.ts",
-				"nested/file1.ts",
-				"nested/file2.ts",
-				"tracked.ts",
-			].sort());
+			assert.deepEqual(
+				relativePaths,
+				[
+					"dotfiles/visible.ts",
+					"file1.ts",
+					"file2.ts",
+					"ignore-test/exclude.ts",
+					"ignore-test/include.ts",
+					"nested/deep/file1.ts",
+					"nested/deep/file2.ts",
+					"nested/deep/file3.ts",
+					"nested/file1.ts",
+					"nested/file2.ts",
+					"tracked.ts",
+				].sort(),
+			);
 		});
 
 		it("returns empty array for no matches", async () => {
@@ -120,7 +124,11 @@ describe("globFn (glob wrapper for task utilities)", () => {
 			const pattern = path.join(globTestDataPath, "dotfiles/*");
 			const results = await globFn(pattern, { nodir: true, dot: true });
 			const relativePaths = toRelativePaths(results);
-			assert.deepEqual(relativePaths, ["dotfiles/.config", "dotfiles/.hidden", "dotfiles/visible.ts"]);
+			assert.deepEqual(relativePaths, [
+				"dotfiles/.config",
+				"dotfiles/.hidden",
+				"dotfiles/visible.ts",
+			]);
 		});
 	});
 
@@ -204,13 +212,26 @@ describe("toPosixPath utility", () => {
 		const result = toPosixPath(input);
 		assert.equal(result, "src/utils/file.ts");
 	});
+
+	it("converts Windows absolute paths to POSIX format", () => {
+		const input = "C:\\Users\\username\\project\\src\\file.ts";
+		const result = toPosixPath(input);
+		assert.equal(result, "C:/Users/username/project/src/file.ts");
+	});
+
+	it("preserves POSIX absolute paths", () => {
+		const input = "/home/username/project/src/file.ts";
+		const result = toPosixPath(input);
+		assert.equal(result, "/home/username/project/src/file.ts");
+	});
 });
 
 /**
  * Tests for globWithGitignore function in taskUtils.ts.
  *
- * This function is used by LeafWithGlobInputOutputDoneFileTask.getFiles() to get input/output files
- * for tasks with gitignore support.
+ * @privateRemarks
+ * The following usage note is for test development context and may become outdated:
+ * - Used by LeafWithGlobInputOutputDoneFileTask.getFiles() for input/output files with gitignore support
  */
 describe("globWithGitignore (LeafTask file enumeration)", () => {
 	const gitIgnoredDir = path.join(globTestDataPath, "gitignored");
@@ -243,20 +264,23 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 			gitignore: false,
 		});
 		const relativePaths = toRelativePaths(results);
-		assert.deepEqual(relativePaths, [
-			"dotfiles/visible.ts",
-			"file1.ts",
-			"file2.ts",
-			"gitignored/shouldBeIgnored.ts",
-			"ignore-test/exclude.ts",
-			"ignore-test/include.ts",
-			"nested/deep/file1.ts",
-			"nested/deep/file2.ts",
-			"nested/deep/file3.ts",
-			"nested/file1.ts",
-			"nested/file2.ts",
-			"tracked.ts",
-		].sort());
+		assert.deepEqual(
+			relativePaths,
+			[
+				"dotfiles/visible.ts",
+				"file1.ts",
+				"file2.ts",
+				"gitignored/shouldBeIgnored.ts",
+				"ignore-test/exclude.ts",
+				"ignore-test/include.ts",
+				"nested/deep/file1.ts",
+				"nested/deep/file2.ts",
+				"nested/deep/file3.ts",
+				"nested/file1.ts",
+				"nested/file2.ts",
+				"tracked.ts",
+			].sort(),
+		);
 	});
 
 	it("excludes gitignored files when gitignore option is true", async () => {
@@ -268,19 +292,22 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 			gitignore: true,
 		});
 		const relativePaths = toRelativePaths(results);
-		assert.deepEqual(relativePaths, [
-			"dotfiles/visible.ts",
-			"file1.ts",
-			"file2.ts",
-			"ignore-test/exclude.ts",
-			"ignore-test/include.ts",
-			"nested/deep/file1.ts",
-			"nested/deep/file2.ts",
-			"nested/deep/file3.ts",
-			"nested/file1.ts",
-			"nested/file2.ts",
-			"tracked.ts",
-		].sort());
+		assert.deepEqual(
+			relativePaths,
+			[
+				"dotfiles/visible.ts",
+				"file1.ts",
+				"file2.ts",
+				"ignore-test/exclude.ts",
+				"ignore-test/include.ts",
+				"nested/deep/file1.ts",
+				"nested/deep/file2.ts",
+				"nested/deep/file3.ts",
+				"nested/file1.ts",
+				"nested/file2.ts",
+				"tracked.ts",
+			].sort(),
+		);
 	});
 
 	it("excludes gitignored files by default", async () => {
@@ -288,19 +315,22 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 			cwd: globTestDataPath,
 		});
 		const relativePaths = toRelativePaths(results);
-		assert.deepEqual(relativePaths, [
-			"dotfiles/visible.ts",
-			"file1.ts",
-			"file2.ts",
-			"ignore-test/exclude.ts",
-			"ignore-test/include.ts",
-			"nested/deep/file1.ts",
-			"nested/deep/file2.ts",
-			"nested/deep/file3.ts",
-			"nested/file1.ts",
-			"nested/file2.ts",
-			"tracked.ts",
-		].sort());
+		assert.deepEqual(
+			relativePaths,
+			[
+				"dotfiles/visible.ts",
+				"file1.ts",
+				"file2.ts",
+				"ignore-test/exclude.ts",
+				"ignore-test/include.ts",
+				"nested/deep/file1.ts",
+				"nested/deep/file2.ts",
+				"nested/deep/file3.ts",
+				"nested/file1.ts",
+				"nested/file2.ts",
+				"tracked.ts",
+			].sort(),
+		);
 	});
 
 	it("excludes files matching gitignore patterns", async () => {
@@ -342,21 +372,26 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 		});
 		const relativePaths = toRelativePaths(results);
 		// shouldBeIgnored.ts is in gitignored/ directory which is in .gitignore
-		assert(!relativePaths.includes("gitignored/shouldBeIgnored.ts"), 
-			"gitignored/shouldBeIgnored.ts should be excluded");
-		assert.deepEqual(relativePaths, [
-			"dotfiles/visible.ts",
-			"file1.ts",
-			"file2.ts",
-			"ignore-test/exclude.ts",
-			"ignore-test/include.ts",
-			"nested/deep/file1.ts",
-			"nested/deep/file2.ts",
-			"nested/deep/file3.ts",
-			"nested/file1.ts",
-			"nested/file2.ts",
-			"tracked.ts",
-		].sort());
+		assert(
+			!relativePaths.includes("gitignored/shouldBeIgnored.ts"),
+			"gitignored/shouldBeIgnored.ts should be excluded",
+		);
+		assert.deepEqual(
+			relativePaths,
+			[
+				"dotfiles/visible.ts",
+				"file1.ts",
+				"file2.ts",
+				"ignore-test/exclude.ts",
+				"ignore-test/include.ts",
+				"nested/deep/file1.ts",
+				"nested/deep/file2.ts",
+				"nested/deep/file3.ts",
+				"nested/file1.ts",
+				"nested/file2.ts",
+				"tracked.ts",
+			].sort(),
+		);
 	});
 
 	it("returns absolute paths", async () => {
@@ -384,25 +419,25 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 			});
 			// Convert to relative paths for easier comparison
 			const relativePaths = results.map((f) => path.relative(globTestDataPath, f));
-			
+
 			// globby (fast-glob) returns results in breadth-first order:
 			// files at the root level come before files in subdirectories
 			// This is NOT lexicographically sorted
 			assert(relativePaths.length > 0, "Should have results");
-			
+
 			// Verify that files in root come before files in subdirectories
 			const rootFiles = relativePaths.filter((p) => !p.includes(path.sep));
 			const nestedFiles = relativePaths.filter((p) => p.includes(path.sep));
-			
+
 			// Find indices
 			const lastRootIndex = relativePaths.lastIndexOf(rootFiles[rootFiles.length - 1]);
 			const firstNestedIndex = relativePaths.indexOf(nestedFiles[0]);
-			
+
 			assert(
 				lastRootIndex < firstNestedIndex,
 				`Expected root files to come before nested files. ` +
-				`Last root file "${rootFiles[rootFiles.length - 1]}" at index ${lastRootIndex}, ` +
-				`first nested "${nestedFiles[0]}" at index ${firstNestedIndex}`,
+					`Last root file "${rootFiles[rootFiles.length - 1]}" at index ${lastRootIndex}, ` +
+					`first nested "${nestedFiles[0]}" at index ${firstNestedIndex}`,
 			);
 		});
 	});
