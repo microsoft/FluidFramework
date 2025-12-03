@@ -76,7 +76,7 @@ export function getApiExtractorConfigFilePath(commandLine: string): string {
 }
 
 export function toPosixPath(s: string) {
-	return path.sep === "\\" ? s.replace(/\\/g, "/") : s;
+	return s.replace(/\\/g, "/");
 }
 
 export async function globFn(pattern: string, options: glob.IOptions = {}): Promise<string[]> {
@@ -119,15 +119,10 @@ export interface GlobWithGitignoreOptions {
  * Glob files with optional gitignore support. This function is used by LeafWithGlobInputOutputDoneFileTask
  * to get input and output files for tasks.
  *
- * @param patterns - Glob patterns to match files.
+ * @param patterns - Glob patterns to match files. Patterns should be relative paths (e.g., "src/**\/*.ts").
+ * Absolute patterns are not recommended as they may behave unexpectedly with the cwd option.
  * @param options - Options for the glob operation.
  * @returns An array of absolute paths to all files that match the globs.
- *
- * @remarks
- * When migrating from globby to tinyglobby, this function will need to be updated to manually
- * handle gitignore filtering since tinyglobby doesn't have built-in gitignore support.
- * The approach is to use `git ls-files --others --ignored --exclude-standard` to get ignored files
- * and add them to the ignore list.
  */
 export async function globWithGitignore(
 	patterns: readonly string[],
