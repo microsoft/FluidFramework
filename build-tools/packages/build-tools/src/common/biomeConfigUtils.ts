@@ -209,9 +209,8 @@ export async function filterFilesWithOrderedPatterns(
 				result.delete(f);
 			}
 		} else {
-			// Re-inclusion: add back matching files from original set
-			const ig = ignore().add([pattern]);
-			const toAdd = allFiles.filter((f) => ig.ignores(f));
+			// Re-inclusion: add back matching files from original set using multimatch
+			const toAdd = multimatch(allFiles, [pattern]);
 			for (const f of toAdd) {
 				result.add(f);
 			}
