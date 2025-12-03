@@ -16,7 +16,7 @@ overrides:
   oclif>@aws-sdk/client-s3: npm:empty-npm-package@1.0.0
   axios@<0.30.0: ^0.30.0
 
-pnpmfileChecksum: sha256-UgK94jvekjDphs6M2itZJZ9CcCzYY0xcxZhNXJw7D28=
+pnpmfileChecksum: sha256-LFgI8Kx1iFaREwUPOG+cvwslzczhRjf3twe+lvhNQNw=
 
 patchedDependencies:
   '@microsoft/api-extractor@7.52.11':
