@@ -12,13 +12,11 @@ import type { Opaque } from "type-fest";
 import type { Configuration as Biome2ConfigRaw } from "./biome2ConfigTypes";
 import {
 	filterFilesWithPatterns,
+	getClosestBiomeConfigPath,
 	loadRawBiomeConfigFile,
 	resolveExtendsChainGeneric,
 } from "./biomeConfigUtils";
 import type { GitRepo } from "./gitRepo";
-
-// switch to regular import once building ESM
-const findUp = import("find-up");
 
 /**
  * Convenience type to represent a Biome 2.x config that has been loaded while following and merging the
@@ -278,26 +276,6 @@ export function getSettingValuesFromBiome2Config(
 }
 
 /**
- * Returns the absolute path to the closest Biome config file found from the current working directory up to the root
- * of the repo.
- *
- * @throws If a Biome config file cannot be found.
- */
-export async function getClosestBiome2ConfigPath(
-	cwd: string,
-	stopAt?: string,
-): Promise<string> {
-	return (await findUp)
-		.findUp(["biome.json", "biome.jsonc"], { cwd, stopAt })
-		.then((config) => {
-			if (config === undefined) {
-				throw new Error(`Can't find biome config file`);
-			}
-			return config;
-		});
-}
-
-/**
  * Return an array of absolute paths to files that Biome 2.x would format under the provided path. Note that .gitignored
  * paths are always excluded, regardless of the "vcs" setting in the Biome configuration.
  *
@@ -320,7 +298,7 @@ export async function getBiome2FormattedFilesFromDirectory(
 		configFile = directoryOrConfigFile;
 		directory = path.relative(gitRepo.resolvedRoot, path.dirname(directoryOrConfigFile));
 	} else {
-		configFile = await getClosestBiome2ConfigPath(directoryOrConfigFile);
+		configFile = await getClosestBiomeConfigPath(directoryOrConfigFile);
 		directory = path.relative(gitRepo.resolvedRoot, directoryOrConfigFile);
 	}
 	const config = await loadBiome2Config(configFile);
@@ -408,7 +386,7 @@ export class Biome2ConfigReader {
 			configFile = directoryOrConfigFile;
 			directory = path.relative(gitRepo.resolvedRoot, path.dirname(directoryOrConfigFile));
 		} else {
-			configFile = await getClosestBiome2ConfigPath(directoryOrConfigFile);
+			configFile = await getClosestBiomeConfigPath(directoryOrConfigFile);
 			directory = path.relative(gitRepo.resolvedRoot, directoryOrConfigFile);
 		}
 

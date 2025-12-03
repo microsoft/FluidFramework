@@ -14,14 +14,12 @@ import { Biome2ConfigReader } from "./biome2Config";
 import type { Configuration as BiomeConfigRaw } from "./biomeConfigTypes";
 import {
 	filterFilesWithPatterns,
+	getClosestBiomeConfigPath,
 	loadRawBiomeConfigFile,
 	resolveExtendsChainGeneric,
 } from "./biomeConfigUtils";
 import { type BiomeMajorVersion, detectBiomeVersion } from "./biomeVersion";
 import type { GitRepo } from "./gitRepo";
-
-// switch to regular import once building ESM
-const findUp = import("find-up");
 
 /**
  * Convenience type to represent a Biome config that has been loaded while following and merging the
@@ -101,26 +99,6 @@ export function getSettingValuesFromBiomeConfig(
 }
 
 /**
- * Returns the absolute path to the closest Biome config file found from the current working directory up to the root
- * of the repo.
- *
- * @throws If a Biome config file cannot be found.
- */
-export async function getClosestBiomeConfigPath(
-	cwd: string,
-	stopAt?: string,
-): Promise<string> {
-	return (await findUp)
-		.findUp(["biome.json", "biome.jsonc"], { cwd, stopAt })
-		.then((config) => {
-			if (config === undefined) {
-				throw new Error(`Can't find biome config file`);
-			}
-			return config;
-		});
-}
-
-/**
  * Return an array of absolute paths to files that Biome would format under the provided path. Note that .gitignored
  * paths are always excluded, regardless of the "vcs" setting in the Biome configuration.
  *
@@ -183,12 +161,14 @@ export async function getBiomeFormattedFiles(
 }
 
 /**
- * A class used to simplify access to a Biome config when you want to just load a config and get the file list and
+ * A class used to simplify access to a Biome 1.x config when you want to just load a config and get the file list and
  * config details. Given a directory and a GitRepo instance, the class calculates and caches the configs and formatted
  * files. Using this class can be more convenient than using the free functions, especially when you need access to all
  * the configs and formatted files.
+ *
+ * For Biome 2.x configs, use {@link Biome2ConfigReader} instead.
  */
-export class BiomeConfigReader {
+export class BiomeConfigReaderV1 {
 	public get closestConfig(): string {
 		assert(
 			this.allConfigs.length > 0,
@@ -216,7 +196,7 @@ export class BiomeConfigReader {
 	public static async create(
 		directoryOrConfigFile: string,
 		gitRepo: GitRepo,
-	): Promise<BiomeConfigReader> {
+	): Promise<BiomeConfigReaderV1> {
 		/**
 		 * The repo root-relative path to the directory being used as the Biome working directory.
 		 */
@@ -233,7 +213,7 @@ export class BiomeConfigReader {
 		const allConfigs = await getAllBiomeConfigPaths(configFile);
 		const mergedConfig = await loadBiomeConfigs(allConfigs);
 		const files = await getBiomeFormattedFiles(mergedConfig, directory, gitRepo);
-		return new BiomeConfigReader(configFile, allConfigs, mergedConfig, files);
+		return new BiomeConfigReaderV1(configFile, allConfigs, mergedConfig, files);
 	}
 }
 
@@ -241,7 +221,7 @@ export class BiomeConfigReader {
  * A common interface for both Biome 1.x and 2.x config readers.
  * This interface defines the properties that are available on both readers.
  */
-export interface BiomeConfigReaderInterface {
+export interface BiomeConfigReader {
 	/**
 	 * The absolute path to the closest (most specific) config file.
 	 */
@@ -276,7 +256,7 @@ export async function createBiomeConfigReader(
 	directoryOrConfigFile: string,
 	gitRepo: GitRepo,
 	forceVersion?: BiomeMajorVersion,
-): Promise<BiomeConfigReaderInterface> {
+): Promise<BiomeConfigReader> {
 	let majorVersion: BiomeMajorVersion;
 
 	if (forceVersion !== undefined) {
@@ -292,5 +272,5 @@ export async function createBiomeConfigReader(
 	}
 
 	// Default to Biome 1.x reader
-	return BiomeConfigReader.create(directoryOrConfigFile, gitRepo);
+	return BiomeConfigReaderV1.create(directoryOrConfigFile, gitRepo);
 }

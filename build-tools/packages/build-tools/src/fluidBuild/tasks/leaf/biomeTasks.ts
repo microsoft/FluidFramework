@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { BiomeConfigReader } from "../../../common/biomeConfig";
+import { BiomeConfigReaderV1 } from "../../../common/biomeConfig";
+import type { BiomeConfigReader } from "../../../common/biomeConfig";
 import { LeafWithFileStatDoneFileTask } from "./leafTask";
 
 /**
@@ -28,7 +29,7 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 
 	private async getBiomeConfigReader(): Promise<BiomeConfigReader> {
 		if (this._configReader === undefined) {
-			this._configReader = await BiomeConfigReader.create(
+			this._configReader = await BiomeConfigReaderV1.create(
 				this.node.pkg.directory,
 				this.context.gitRepo,
 			);

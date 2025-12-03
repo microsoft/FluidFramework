@@ -10,7 +10,7 @@
 import { strict as assert } from "node:assert/strict";
 import path from "node:path";
 import {
-	BiomeConfigReader,
+	BiomeConfigReaderV1,
 	type BiomeConfigResolved,
 	getBiomeFormattedFilesFromDirectory,
 	getSettingValuesFromBiomeConfig,
@@ -33,12 +33,12 @@ describe("Biome config loading", () => {
 		});
 
 		it("loads", async () => {
-			const config = await BiomeConfigReader.create(testDir, gitRepo);
+			const config = await BiomeConfigReaderV1.create(testDir, gitRepo);
 			assert(config !== undefined);
 		});
 
 		it("has correct formatted files list", async () => {
-			const config = await BiomeConfigReader.create(testDir, gitRepo);
+			const config = await BiomeConfigReaderV1.create(testDir, gitRepo);
 			const expected = [
 				path.resolve(
 					testDataPath,
@@ -62,7 +62,7 @@ describe("Biome config loading", () => {
 		});
 
 		it("returns only files matching files.includes", async () => {
-			const config = await BiomeConfigReader.create(
+			const config = await BiomeConfigReaderV1.create(
 				path.resolve(testDataPath, "biome/pkg-b/include-md-only.jsonc"),
 				gitRepo,
 			);

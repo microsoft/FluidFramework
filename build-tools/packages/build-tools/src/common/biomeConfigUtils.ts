@@ -11,6 +11,9 @@ import multimatch from "multimatch";
 
 import type { GitRepo } from "./gitRepo";
 
+// switch to regular import once building ESM
+const findUp = import("find-up");
+
 /**
  * Minimal interface for a Biome configuration that includes the extends field.
  * This is used for shared config loading logic between Biome 1.x and 2.x.
@@ -72,6 +75,28 @@ export async function resolveExtendsChainGeneric<T extends BiomeConfigWithExtend
 	}
 
 	return extendedConfigPaths;
+}
+
+/**
+ * Returns the absolute path to the closest Biome config file found from the current working directory up to the root
+ * of the repo. This function works for both Biome 1.x and 2.x configs since they use the same file names.
+ *
+ * @param cwd - The current working directory to start the search from.
+ * @param stopAt - Optional directory to stop the search at.
+ * @throws If a Biome config file cannot be found.
+ */
+export async function getClosestBiomeConfigPath(
+	cwd: string,
+	stopAt?: string,
+): Promise<string> {
+	return (await findUp)
+		.findUp(["biome.json", "biome.jsonc"], { cwd, stopAt })
+		.then((config) => {
+			if (config === undefined) {
+				throw new Error(`Can't find biome config file`);
+			}
+			return config;
+		});
 }
 
 /**
