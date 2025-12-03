@@ -431,7 +431,7 @@ export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 export function importCompatibilitySchemaSnapshot(config: JsonCompatibleReadOnly): TreeViewConfiguration;
 
 // @alpha
-export type IncrementalEncodingPolicy = (nodeIdentifier: string | undefined, fieldKey: string) => boolean;
+export type IncrementalEncodingPolicy = (nodeIdentifier: string | undefined, fieldKey?: string) => boolean;
 
 // @alpha
 export function incrementalEncodingPolicyForAllowedTypes(rootSchema: TreeSchema): IncrementalEncodingPolicy;

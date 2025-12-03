@@ -15284,6 +15284,9 @@ importers:
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../test-utils
+      '@fluidframework/tree':
+        specifier: workspace:~
+        version: link:../../dds/tree
       nconf:
         specifier: ^0.12.0
         version: 0.12.1
