@@ -39,3 +39,14 @@ export {
 	type Infer,
 	type IExposedMethods,
 } from "./methodBinding.js";
+export type {
+	exposePropertiesSymbol,
+	PropertyDef,
+	ExposedProperties,
+	IExposedProperties,
+	ExposableKeys,
+	ReadOnlyRequirement,
+	ReadonlyKeys,
+	TypeMatchOrError,
+	IfEquals,
+} from "./propertyBinding.js";

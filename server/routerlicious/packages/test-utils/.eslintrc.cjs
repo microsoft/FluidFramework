@@ -12,7 +12,7 @@ module.exports = {
 		"@typescript-eslint/consistent-type-assertions": "off",
 		"@typescript-eslint/no-unsafe-return": "off",
 		"@typescript-eslint/no-use-before-define": "off",
-		"import/no-nodejs-modules": "off",
+		"import-x/no-nodejs-modules": "off",
 		"no-case-declarations": "off",
 		"promise/catch-or-return": ["error", { allowFinally: true }],
 
@@ -21,7 +21,7 @@ module.exports = {
 		"@typescript-eslint/strict-boolean-expressions": "off",
 
 		// TODO: remove usages of deprecated APIs and remove this override
-		"import/no-deprecated": "warn",
+		"import-x/no-deprecated": "warn",
 
 		// TODO: fix violations and remove this override
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",

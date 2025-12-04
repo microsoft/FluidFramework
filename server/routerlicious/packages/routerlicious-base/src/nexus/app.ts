@@ -49,9 +49,9 @@ export function create(
 	} else {
 		app.use(alternativeMorganLoggerMiddleware(loggerFormat));
 	}
-	// eslint-disable-next-line import/namespace
+	// eslint-disable-next-line import-x/namespace
 	app.use(bodyParser.json());
-	// eslint-disable-next-line import/namespace
+	// eslint-disable-next-line import-x/namespace
 	app.use(bodyParser.urlencoded({ extended: false }));
 
 	const healthEndpoints = createHealthCheckEndpoints("nexus", startupCheck, readinessCheck);

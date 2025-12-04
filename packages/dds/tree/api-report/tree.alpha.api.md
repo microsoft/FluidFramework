@@ -169,6 +169,9 @@ export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidH
     [key: string]: ConciseTree<THandle>;
 };
 
+// @alpha
+export function configuredSharedTreeAlpha(options: SharedTreeOptions): SharedObjectKind<ITree>;
+
 // @beta
 export function configuredSharedTreeBeta(options: SharedTreeOptionsBeta): SharedObjectKind<ITree>;
 
@@ -428,10 +431,19 @@ export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 export function importCompatibilitySchemaSnapshot(config: JsonCompatibleReadOnly): TreeViewConfiguration;
 
 // @alpha
+export type IncrementalEncodingPolicy = (nodeIdentifier: string | undefined, fieldKey?: string) => boolean;
+
+// @alpha
+export function incrementalEncodingPolicyForAllowedTypes(rootSchema: TreeSchema): IncrementalEncodingPolicy;
+
+// @alpha
+export const incrementalSummaryHint: unique symbol;
+
+// @alpha
 export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & ICodecOptions, content: ViewContent): TreeViewAlpha<TSchema>;
 
 // @alpha
-export function independentView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & {
+export function independentView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options?: ForestOptions & {
     idCompressor?: IIdCompressor | undefined;
 }): TreeViewAlpha<TSchema>;
 
@@ -1021,21 +1033,10 @@ export interface SharedTreeFormatOptions {
     treeEncodeType: TreeCompressionStrategy;
 }
 
-// @alpha
-export const SharedTreeFormatVersion: {
-    readonly v1: 1;
-    readonly v2: 2;
-    readonly v3: 3;
-    readonly v5: 5;
-    readonly vSharedBranches: 100;
-};
-
-// @alpha
-export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
-
 // @alpha @input
-export interface SharedTreeOptions extends Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions>, SharedTreeOptionsBeta {
+export interface SharedTreeOptions extends SharedTreeOptionsBeta, Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions> {
     readonly enableSharedBranches?: boolean;
+    shouldEncodeIncrementally?: IncrementalEncodingPolicy;
 }
 
 // @beta @input
@@ -1043,7 +1044,7 @@ export type SharedTreeOptionsBeta = ForestOptions;
 
 // @alpha @sealed
 export interface SimpleAllowedTypeAttributes {
-    readonly isStaged: boolean | undefined;
+    readonly isStaged: false | SchemaUpgrade | undefined;
 }
 
 // @alpha @sealed
@@ -1487,6 +1488,7 @@ export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode> extends
 // @alpha
 export enum TreeCompressionStrategy {
     Compressed = 0,
+    CompressedIncremental = 2,
     Uncompressed = 1
 }
 
