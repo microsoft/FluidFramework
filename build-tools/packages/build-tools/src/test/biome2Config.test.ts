@@ -381,12 +381,6 @@ describe("Biome 2.x config loading", () => {
 		// re-inclusion patterns like ["**", "!test/**", "test/special/**"]
 
 		const testConfig = path.resolve(testDataPath, "biome2/reinclusion-test/config.jsonc");
-		let gitRepo: GitRepo;
-
-		before(async () => {
-			const repoRoot = await getResolvedFluidRoot(true);
-			gitRepo = new GitRepo(repoRoot);
-		});
 
 		it("config uses re-inclusion pattern", async () => {
 			const config = await loadBiome2Config(testConfig);
