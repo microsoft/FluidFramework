@@ -56,7 +56,8 @@ import {
 export default class GenerateTypetestsCommand extends PackageCommand<
 	typeof GenerateTypetestsCommand
 > {
-	static readonly description = "Generates type tests for a package or group of packages.";
+	static readonly description =
+		"Generates type tests for a package or group of packages.\n\nEnvironment Variables:\n  FLUB_TYPETEST_SKIP_VERSION_OUTPUT - When set, preserves existing version information in the generated type test files instead of updating to the current package versions.";
 
 	static readonly flags = {
 		entrypoint: Flags.custom<ApiLevel>({
@@ -175,15 +176,15 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 
 		if (skipVersionOutput) {
 			const existingVersions = readExistingVersions(typeTestOutputFile);
-			if (existingVersions !== undefined) {
+			if (existingVersions === undefined) {
+				this.verbose(
+					`${pkg.nameColored}: FLUB_TYPETEST_SKIP_VERSION_OUTPUT is set but no existing file found, using current versions`,
+				);
+			} else {
 				previousVersionToUse = existingVersions.previousVersion;
 				currentVersionToUse = existingVersions.currentVersion;
 				this.verbose(
 					`${pkg.nameColored}: Using existing versions from file: previous=${previousVersionToUse}, current=${currentVersionToUse}`,
-				);
-			} else {
-				this.verbose(
-					`${pkg.nameColored}: FLUB_TYPETEST_SKIP_VERSION_OUTPUT is set but no existing file found, using current versions`,
 				);
 			}
 		}
@@ -288,9 +289,11 @@ export function readExistingVersions(
 	}
 
 	try {
-		const content = readFileSync(filePath, "utf-8");
-		const previousVersionMatch = content.match(/Baseline \(previous\) version: (.+)/);
-		const currentVersionMatch = content.match(/Current version: (.+)/);
+		const content = readFileSync(filePath, "utf8");
+		const previousVersionRegex = /Baseline \(previous\) version: (.+)/;
+		const currentVersionRegex = /Current version: (.+)/;
+		const previousVersionMatch = previousVersionRegex.exec(content);
+		const currentVersionMatch = currentVersionRegex.exec(content);
 
 		if (previousVersionMatch && currentVersionMatch) {
 			return {
