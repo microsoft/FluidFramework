@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 
 import {
@@ -139,7 +140,7 @@ describe("generate:typetests", () => {
 	});
 
 	describe("readExistingVersions", () => {
-		const testDir = "/tmp/typetest-test";
+		const testDir = path.join(tmpdir(), "typetest-test");
 		const testFile = path.join(testDir, "test.generated.ts");
 
 		before(() => {
