@@ -26,14 +26,14 @@ import { readAndParseSnapshotBlob } from "../util/index.js";
  * It handles versioning of summaries - writing version metadata to summaries
  * and checking version compatibility when loading.
  */
-export abstract class VersionedSummarizer implements Summarizable {
+export abstract class VersionedSummarizer<TVersion extends number> implements Summarizable {
 	public constructor(
 		/** {@link Summarizable.key} */
 		public readonly key: string,
 		/** The format version of the summary to write in the summary metadata. */
-		private readonly writeVersion: number,
+		private readonly writeVersion: TVersion,
 		/** The set of supported versions that a summary can have for this summarizer to load it. */
-		private readonly supportedVersions: ReadonlySet<number>,
+		private readonly supportedVersions: ReadonlySet<TVersion>,
 		/**
 		 * Whether to support loading summaries before versioning was added, i.e., summaries without metadata blob.
 		 * @remarks
@@ -95,7 +95,7 @@ export abstract class VersionedSummarizer implements Summarizable {
 				services,
 				(contents) => parse(contents),
 			);
-			const version = metadata.version;
+			const version = metadata.version as TVersion;
 			if (!this.supportedVersions.has(version)) {
 				throw new UsageError(`Cannot read version ${version} of shared tree summary.`);
 			}

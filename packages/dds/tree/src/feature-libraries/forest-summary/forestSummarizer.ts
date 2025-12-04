@@ -52,13 +52,17 @@ import {
 	forestSummaryKey,
 	minVersionToForestSummaryFormatVersion,
 	supportedForestSummaryFormatVersions,
+	type ForestSummaryFormatVersion,
 } from "./summaryTypes.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
 /**
  * Provides methods for summarizing and loading a forest.
  */
-export class ForestSummarizer extends VersionedSummarizer implements Summarizable {
+export class ForestSummarizer
+	extends VersionedSummarizer<ForestSummaryFormatVersion>
+	implements Summarizable
+{
 	private readonly codec: ForestCodec;
 
 	private readonly incrementalSummaryBuilder: ForestIncrementalSummaryBuilder;

@@ -66,6 +66,7 @@ import {
 	minVersionToSharedTreeSummaryFormatVersion,
 	summarizablesTreeKey,
 	supportedSharedTreeSummaryFormatVersions,
+	type SharedTreeSummaryFormatVersion,
 	type Summarizable,
 	type SummaryElementParser,
 	type SummaryElementStringifier,
@@ -86,7 +87,7 @@ export interface SharedTreeCoreOptionsInternal
  */
 @breakingClass
 export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
-	extends VersionedSummarizer
+	extends VersionedSummarizer<SharedTreeSummaryFormatVersion>
 	implements WithBreakable, Summarizable
 {
 	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;

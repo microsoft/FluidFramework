@@ -66,7 +66,7 @@ function minVersionToEditManagerSummaryFormatVersion(
  * Provides methods for summarizing and loading an `EditManager`
  */
 export class EditManagerSummarizer<TChangeset>
-	extends VersionedSummarizer
+	extends VersionedSummarizer<EditManagerSummaryFormatVersion>
 	implements Summarizable
 {
 	public static readonly key = "EditManager";

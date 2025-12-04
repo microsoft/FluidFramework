@@ -70,7 +70,10 @@ function minVersionToSchemaSummaryFormatVersion(
 /**
  * Provides methods for summarizing and loading a schema repository.
  */
-export class SchemaSummarizer extends VersionedSummarizer implements Summarizable {
+export class SchemaSummarizer
+	extends VersionedSummarizer<SchemaSummaryFormatVersion>
+	implements Summarizable
+{
 	private schemaIndexLastChangedSeq: number | undefined;
 
 	public constructor(

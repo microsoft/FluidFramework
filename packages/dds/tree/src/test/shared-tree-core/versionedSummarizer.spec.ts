@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType, type ISummaryBlob } from "@fluidframework/driver-definitions/internal";
-import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -17,9 +17,35 @@ import {
 	type SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
 
-class TestVersionedSummarizer extends VersionedSummarizer {
+class TestUnversionedSummarizer {
+	public constructor(public readonly key: string) {}
+
+	public summarize(props: {
+		stringify: SummaryElementStringifier;
+		fullTree?: boolean;
+		trackState?: boolean;
+		builder: SummaryTreeBuilder;
+	}): void {
+		// Add some test content to the builder
+		props.builder.addBlob(this.key, props.stringify({ data: "test" }));
+	}
+}
+
+class TestVersionedSummarizer extends VersionedSummarizer<number> {
 	public summarizeInternalCallCount = 0;
 	public loadInternalCallCount = 0;
+
+	private readonly unversionedSummarizer: TestUnversionedSummarizer;
+
+	public constructor(
+		key: string,
+		writeVersion: number,
+		supportedVersions: ReadonlySet<number>,
+		supportPreVersioningFormat: boolean,
+	) {
+		super(key, writeVersion, supportedVersions, supportPreVersioningFormat);
+		this.unversionedSummarizer = new TestUnversionedSummarizer(key);
+	}
 
 	protected summarizeInternal(props: {
 		stringify: SummaryElementStringifier;
@@ -28,8 +54,7 @@ class TestVersionedSummarizer extends VersionedSummarizer {
 		builder: SummaryTreeBuilder;
 	}): void {
 		this.summarizeInternalCallCount++;
-		// Add some test content to the builder
-		props.builder.addBlob(this.key, props.stringify({ data: "test" }));
+		this.unversionedSummarizer.summarize(props);
 	}
 
 	protected async loadInternal(
@@ -116,39 +141,32 @@ describe("VersionedSummarizer", () => {
 		});
 
 		it("load successful: no metadata is supported", async () => {
-			const version = 1;
-			const summarizer = new TestVersionedSummarizer(
+			const unversionedSummarizer = new TestUnversionedSummarizer("testKey");
+			const builder = new SummaryTreeBuilder();
+			unversionedSummarizer.summarize({ stringify, builder });
+			const unversionedSummary = builder.getSummaryTree();
+
+			// Create another summarizer which doesn't support the default version anymore.
+			const newStorage = MockStorage.createFromSummary(unversionedSummary.summary);
+			const newVersion = 2;
+			const newSummarizer = new TestVersionedSummarizer(
 				"testKey",
-				version,
-				new Set([version]),
-				true /* supportPreVersioningFormat */,
+				newVersion,
+				new Set([newVersion]),
+				false /* supportPreVersioningFormat */,
 			);
-
-			// Create a summary and delete the metadata blob to simulate older clients without metadata.
-			const summary = summarizer.summarize({ stringify });
-			Reflect.deleteProperty(summary.summary.tree, summarizablesMetadataKey);
-
-			// Load from the summary
-			const storage = MockStorage.createFromSummary(summary.summary);
-			await assert.doesNotReject(summarizer.load(storage, parse));
+			await assert.doesNotReject(newSummarizer.load(newStorage, parse));
 		});
 
 		it("load fails: no metadata is not supported", async () => {
-			const oldVersion = 1;
-			const summarizer = new TestVersionedSummarizer(
-				"testKey",
-				oldVersion,
-				new Set([oldVersion]),
-				true /* supportPreVersioningFormat */,
-			);
+			const unversionedSummarizer = new TestUnversionedSummarizer("testKey");
+			const builder = new SummaryTreeBuilder();
+			unversionedSummarizer.summarize({ stringify, builder });
+			const unversionedSummary = builder.getSummaryTree();
 
-			// Create a summary and delete the metadata blob.
-			const summary = summarizer.summarize({ stringify });
-			Reflect.deleteProperty(summary.summary.tree, summarizablesMetadataKey);
-
-			const newStorage = MockStorage.createFromSummary(summary.summary);
 			// Create another summarizer which doesn't support the default version anymore.
-			const newVersion = oldVersion + 1;
+			const newStorage = MockStorage.createFromSummary(unversionedSummary.summary);
+			const newVersion = 2;
 			const newSummarizer = new TestVersionedSummarizer(
 				"testKey",
 				newVersion,
