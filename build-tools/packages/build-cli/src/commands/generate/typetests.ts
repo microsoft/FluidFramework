@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { existsSync, realpathSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import {
