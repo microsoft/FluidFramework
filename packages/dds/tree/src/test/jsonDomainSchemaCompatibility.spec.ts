@@ -15,16 +15,10 @@ import {
 	TreeViewConfiguration,
 } from "../simple-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
+import { testSrcPath } from "./testSrcPath.cjs";
 
 class SnapshotIO {
-	private readonly snapshotDirectory: string;
-
-	public constructor(snapshotDirectory?: string) {
-		// Store compatibility snapshots with source code. Unlike the snapshots that snapshotTools.ts manages, these snapshots should not be
-		// be regenerated automatically, as they are used to verify compatibility over time.
-		const directoryName = __dirname;
-		this.snapshotDirectory = snapshotDirectory ?? path.join(directoryName, "schemaSnapshots");
-	}
+	public constructor(private readonly snapshotDirectory: string) {}
 
 	public writeSchemaSnapshot(snapshotName: string, viewSchema: TreeViewConfiguration): void {
 		const snapshot = exportCompatibilitySchemaSnapshot(viewSchema);
@@ -44,7 +38,8 @@ class SnapshotIO {
 		const snapshots: Map<string, TreeViewConfiguration> = new Map();
 		for (const file of files) {
 			if (file.endsWith(".json")) {
-				snapshots.set(path.basename(file), this.readSchemaSnapshot(file));
+				const snapshotName = path.basename(file, ".json");
+				snapshots.set(snapshotName, this.readSchemaSnapshot(snapshotName));
 			}
 		}
 		return snapshots;
@@ -52,11 +47,13 @@ class SnapshotIO {
 }
 
 describe("JsonDomain schema compatibility", () => {
-	const snapshotIO = new SnapshotIO();
+	// Store compatibility snapshots with source code. Unlike the snapshots that snapshotTools.ts manages, these snapshots should not be
+	// be regenerated automatically, as they are used to verify compatibility over time.
+	const snapshotIO = new SnapshotIO(path.join(testSrcPath, "jsonDomainSchemaSnapshots"));
 
-	it.only("write current view schema snapshot", () => {
+	it.skip("write current view schema snapshot", () => {
 		snapshotIO.writeSchemaSnapshot(
-			`jsonDomainViewSchema_${pkgVersion}.json`,
+			`jsonDomainViewSchema_${pkgVersion}`,
 			new TreeViewConfiguration({ schema: JsonAsTree.Tree }),
 		);
 	});
@@ -77,11 +74,11 @@ describe("JsonDomain schema compatibility", () => {
 	});
 
 	it("current persisted schema can read content written by historical view schemas", () => {
-		const currentPersistedSchema = new TreeViewConfiguration({ schema: JsonAsTree.Tree });
+		const currentViewSchema = new TreeViewConfiguration({ schema: JsonAsTree.Tree });
 		const previousViewSchemas = snapshotIO.readAllSchemaSnapshots();
 		for (const [name, previousViewSchema] of previousViewSchemas) {
 			const forwardsCompatibilityStatus = checkCompatibility(
-				currentPersistedSchema,
+				currentViewSchema,
 				previousViewSchema,
 			);
 			assert(
