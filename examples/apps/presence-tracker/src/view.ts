@@ -71,7 +71,10 @@ export function renderMousePresence(
 	mouseTracker.on("mousePositionChanged", onPositionChanged);
 }
 
-export function renderControlPanel(mouseTracker: MouseTracker, controlPanel: HTMLDivElement): void {
+export function renderControlPanel(
+	mouseTracker: MouseTracker,
+	controlPanel: HTMLDivElement,
+): void {
 	controlPanel.style.paddingBottom = "10px";
 	const slider = document.createElement("input");
 	slider.type = "range";
