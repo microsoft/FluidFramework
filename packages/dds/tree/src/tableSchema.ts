@@ -86,6 +86,33 @@ export interface RowPrivate<
  */
 export namespace System_TableSchema {
 	/**
+	 * A list of items in a table whose elements may be rearranged, but not inserted or removed.
+	 *
+	 * @privateRemarks Used by {@link TableSchema.Table} for its `rows` and `columns` properties to allow basic rearrangement operations on the underlying sequences without permitting mutation operations that might violate table invariants.
+	 *
+	 * @alpha @system
+	 */
+	export type RearrangeableList<TItemSchema extends ImplicitAllowedTypes> = TreeNode &
+		readonly TreeNodeFromImplicitAllowedTypes<TItemSchema>[] & {
+			// #region Capture the subset of item rearrangement methods from `TreeArrayNode` that do not allow moving between lists.
+
+			/** {@inheritDoc (TreeArrayNode:interface).(moveToEnd:1)} */
+			moveToEnd(sourceIndex: number): void;
+			/** {@inheritDoc (TreeArrayNode:interface).(moveToStart:1)} */
+			moveToStart(sourceIndex: number): void;
+			/** {@inheritDoc (TreeArrayNode:interface).(moveToIndex:1)} */
+			moveToIndex(sourceIndex: number, destinationIndex: number): void;
+			/** {@inheritDoc (TreeArrayNode:interface).(moveRangeToEnd:1)} */
+			moveRangeToEnd(startIndex: number, endIndex: number): void;
+			/** {@inheritDoc (TreeArrayNode:interface).(moveRangeToStart:1)} */
+			moveRangeToStart(startIndex: number, endIndex: number): void;
+			/** {@inheritDoc (TreeArrayNode:interface).(moveRangeToIndex:1)} */
+			moveRangeToIndex(startIndex: number, endIndex: number, destinationIndex: number): void;
+
+			// #endregion
+		};
+
+	/**
 	 * Default type used for column and row "props" fields.
 	 * @privateRemarks
 	 * Longer term, it would be better to simply omit "props" altogether by default.
@@ -524,15 +551,12 @@ export namespace System_TableSchema {
 				) as InstanceType<TThis>;
 			}
 
-			public get columns(): TreeNode &
-				readonly TreeNodeFromImplicitAllowedTypes<TColumnSchema>[] {
-				return this.table.columns as TreeNode &
-					readonly TreeNodeFromImplicitAllowedTypes<TColumnSchema>[];
+			public get columns(): RearrangeableList<TColumnSchema> {
+				return this.table.columns as RearrangeableList<TColumnSchema>;
 			}
 
-			public get rows(): TreeNode & readonly TreeNodeFromImplicitAllowedTypes<TRowSchema>[] {
-				return this.table.rows as TreeNode &
-					readonly TreeNodeFromImplicitAllowedTypes<TRowSchema>[];
+			public get rows(): RearrangeableList<TRowSchema> {
+				return this.table.rows as RearrangeableList<TRowSchema>;
 			}
 
 			public getColumn(indexOrId: number | string): ColumnValueType | undefined {
@@ -1404,12 +1428,12 @@ export namespace TableSchema {
 		/**
 		 * The table's columns.
 		 */
-		readonly columns: TreeNode & readonly TreeNodeFromImplicitAllowedTypes<TColumn>[];
+		readonly columns: System_TableSchema.RearrangeableList<TColumn>;
 
 		/**
 		 * The table's rows.
 		 */
-		readonly rows: TreeNode & readonly TreeNodeFromImplicitAllowedTypes<TRow>[];
+		readonly rows: System_TableSchema.RearrangeableList<TRow>;
 
 		/**
 		 * Gets a table column by its {@link TableSchema.Column.id}.

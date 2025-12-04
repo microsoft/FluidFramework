@@ -1553,6 +1553,15 @@ export namespace System_TableSchema {
     export interface OptionsWithSchemaFactory<TSchemaFactory extends SchemaFactoryBeta> {
         readonly schemaFactory: TSchemaFactory;
     }
+    // @system
+    export type RearrangeableList<TItemSchema extends ImplicitAllowedTypes> = TreeNode & readonly TreeNodeFromImplicitAllowedTypes<TItemSchema>[] & {
+        moveToEnd(sourceIndex: number): void;
+        moveToStart(sourceIndex: number): void;
+        moveToIndex(sourceIndex: number, destinationIndex: number): void;
+        moveRangeToEnd(startIndex: number, endIndex: number): void;
+        moveRangeToStart(startIndex: number, endIndex: number): void;
+        moveRangeToIndex(startIndex: number, endIndex: number, destinationIndex: number): void;
+    };
     // @sealed @system
     export type RowSchemaBase<TScope extends string | undefined = string | undefined, TCellSchema extends ImplicitAllowedTypes = ImplicitAllowedTypes, TPropsSchema extends ImplicitFieldSchema = ImplicitFieldSchema> = ReturnType<typeof createRowSchema<TScope, TCellSchema, TPropsSchema>>;
     // @system
@@ -1684,7 +1693,7 @@ export namespace TableSchema {
     }
     // @sealed
     export interface Table<TScope extends string | undefined, TCell extends ImplicitAllowedTypes, TColumn extends System_TableSchema.ColumnSchemaBase<TScope, TCell>, TRow extends System_TableSchema.RowSchemaBase<TScope, TCell>> {
-        readonly columns: TreeNode & readonly TreeNodeFromImplicitAllowedTypes<TColumn>[];
+        readonly columns: System_TableSchema.RearrangeableList<TColumn>;
         getCell(key: CellKey<TColumn, TRow>): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
         getColumn(id: string): TreeNodeFromImplicitAllowedTypes<TColumn> | undefined;
         getColumn(index: number): TreeNodeFromImplicitAllowedTypes<TColumn> | undefined;
@@ -1699,7 +1708,7 @@ export namespace TableSchema {
         removeRows(index?: number | undefined, count?: number | undefined): TreeNodeFromImplicitAllowedTypes<TRow>[];
         removeRows(rows: readonly TreeNodeFromImplicitAllowedTypes<TRow>[]): TreeNodeFromImplicitAllowedTypes<TRow>[];
         removeRows(rows: readonly string[]): TreeNodeFromImplicitAllowedTypes<TRow>[];
-        readonly rows: TreeNode & readonly TreeNodeFromImplicitAllowedTypes<TRow>[];
+        readonly rows: System_TableSchema.RearrangeableList<TRow>;
         setCell(params: SetCellParameters<TCell, TColumn, TRow>): void;
     }
     export function table<const TScope extends string | undefined, const TCell extends ImplicitAllowedTypes>(params: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryBeta<TScope>, TCell>): System_TableSchema.TableSchemaBase<TScope, TCell, System_TableSchema.ColumnSchemaBase<TScope, TCell, System_TableSchema.DefaultPropsType>, System_TableSchema.RowSchemaBase<TScope, TCell, System_TableSchema.DefaultPropsType>>;
