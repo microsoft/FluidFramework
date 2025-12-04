@@ -6,7 +6,7 @@ It exports the following shared ESLint configs:
 
 ## ESLint 9 Flat Config Support
 
-This package supports **ESLint 9 flat config format** via the `flat.mjs` export. All packages in the repository use `eslint.config.mjs` files that import from this module.
+This package supports **ESLint 9 flat config format** via the `flat.mjs` export. Packages can use `eslint.config.mjs` files that import from this module.
 
 For flat config (ESLint 9), import from `@fluidframework/eslint-config-fluid/flat.mjs`:
 

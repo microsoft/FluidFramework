@@ -27,7 +27,7 @@ interface PackageTarget {
 	packageDir: string;
 	legacyConfigPath: string;
 	flatVariant: "strict" | "minimalDeprecated" | "recommended";
-	legacyConfig?: any;
+	legacyConfig?: unknown;
 }
 
 async function findLegacyConfigs(): Promise<PackageTarget[]> {
@@ -91,7 +91,7 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 function buildFlatConfigContent(
 	packageDir: string,
 	variant: PackageTarget["flatVariant"],
-	legacyConfig?: any,
+	legacyConfig?: unknown,
 ): string {
 	const flatSource = path
 		.relative(
