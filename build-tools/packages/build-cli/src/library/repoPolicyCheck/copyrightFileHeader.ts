@@ -117,7 +117,7 @@ export const handlers: Handler[] = [
 	},
 	{
 		name: "js-ts-copyright-file-header",
-		match: /(^|\/)[^/]+\.c?[jt]sx?$/i,
+		match: /(^|\/)[^/]+\.[cm]?[jt]sx?$/i,
 		handler: makeHandler({
 			type: "JavaScript/TypeScript",
 			headerStart: /(#![^\n]*\r?\n)?\/\*!\r?\n/, // Begins with optional hashbang followed by '/*!'
