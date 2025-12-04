@@ -562,4 +562,70 @@ describe("DetachedFieldIndex methods", () => {
 		const rootId2 = detachedIndex.createEntry(detachedNodeId2);
 		assert.notEqual(detachedIndex.toFieldKey(rootId), detachedIndex.toFieldKey(rootId2));
 	});
+
+	describe("snapshotting", () => {
+		it("loading a snapshot restores the index state", () => {
+			const index = makeDetachedFieldIndex();
+			const revisionTag1 = mintRevisionTag();
+			index.createEntry(makeDetachedNodeId(revisionTag1, 1));
+
+			const originalData = index.encode();
+			const snapshot = index.createSnapshot();
+
+			// Make changes to the index
+			index.deleteEntry(makeDetachedNodeId(revisionTag1, 1));
+			index.createEntry(makeDetachedNodeId(revisionTag1, 2), revisionTag1);
+			assert.notDeepEqual(index.encode(), originalData);
+
+			snapshot.restore();
+			assert.deepEqual(index.encode(), originalData);
+		});
+
+		it("multiple snapshots can exist for the same index", () => {
+			const index = makeDetachedFieldIndex();
+			const revisionTag1 = mintRevisionTag();
+			index.createEntry(makeDetachedNodeId(revisionTag1, 1));
+
+			const originalData = index.encode();
+			const snapshot1 = index.createSnapshot();
+
+			// Make changes to the index
+			index.deleteEntry(makeDetachedNodeId(revisionTag1, 1));
+			index.createEntry(makeDetachedNodeId(revisionTag1, 2), revisionTag1);
+			assert.notDeepEqual(index.encode(), originalData);
+
+			const changedData = index.encode();
+			const snapshot2 = index.createSnapshot();
+
+			snapshot1.restore();
+			assert.deepEqual(index.encode(), originalData);
+
+			snapshot2.restore();
+			assert.deepEqual(index.encode(), changedData);
+		});
+
+		it("a snapshot can be restored multiple times", () => {
+			const index = makeDetachedFieldIndex();
+			const revisionTag1 = mintRevisionTag();
+			index.createEntry(makeDetachedNodeId(revisionTag1, 1));
+
+			const originalData = index.encode();
+			const snapshot = index.createSnapshot();
+
+			// Make changes to the index
+			index.deleteEntry(makeDetachedNodeId(revisionTag1, 1));
+			index.createEntry(makeDetachedNodeId(revisionTag1, 2), revisionTag1);
+			assert.notDeepEqual(index.encode(), originalData);
+
+			snapshot.restore();
+			assert.deepEqual(index.encode(), originalData);
+
+			// Make more changes to the index
+			index.createEntry(makeDetachedNodeId(revisionTag1, 3), revisionTag1);
+			assert.notDeepEqual(index.encode(), originalData);
+
+			snapshot.restore();
+			assert.deepEqual(index.encode(), originalData);
+		});
+	});
 });

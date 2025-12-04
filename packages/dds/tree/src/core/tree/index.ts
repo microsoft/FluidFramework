@@ -117,7 +117,11 @@ export {
 	type ChunkedCursor,
 } from "./chunk.js";
 
-export { DetachedFieldIndex } from "./detachedFieldIndex.js";
+export {
+	DetachedFieldIndex,
+	type DetachedFieldIndexSnapshot,
+	type ReadOnlyDetachedFieldIndex,
+} from "./detachedFieldIndex.js";
 
 export { getCodecTreeForDetachedFieldIndexFormat } from "./detachedFieldIndexCodecs.js";
 export { type DetachedFieldIndexFormatVersion } from "./detachedFieldIndexFormatCommon.js";
