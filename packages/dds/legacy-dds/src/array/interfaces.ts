@@ -111,6 +111,12 @@ export interface SharedArrayEntry<T extends SerializableTypeForSharedArray>
 	 */
 	isLocalPendingMove: number;
 
+	/**
+	 * Optional flag indicating that this entry has been rolled back
+	 *
+	 * Used to prevent undo/redo operations that have already been rolled back.
+	 *
+	 */
 	isRollback?: boolean;
 }
 
