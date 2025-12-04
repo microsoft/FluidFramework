@@ -479,6 +479,16 @@ function filterViewData<T>(
 	return preservesViewData(options) ? data : undefined;
 }
 
+/**
+ * Determines if the provided options indicate that view specific data should be preserved.
+ * @remarks
+ * This assumes that stored simple schema should not contain view specific data.
+ * Therefore the only case where what this returns should matter is when the input schema is view schema
+ * (and thus there might be view specific data).
+ */
 function preservesViewData(options: SimpleSchemaTransformationOptions): boolean {
-	return isStoredFromView(options) ? false : options === Unchanged;
+	// As noted above in the doc comment, the only case we care about the return value is when the input is a view schema.
+	// There are two such cases: isStoredFromView where we return false, and Unchanged when applied to a view schema, where we return true.
+	// It does not matter what we return in other cases, so for simplicity they just end up as "true".
+	return isStoredFromView(options) ? false : true;
 }
