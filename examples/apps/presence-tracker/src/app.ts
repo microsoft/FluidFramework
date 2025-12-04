@@ -49,6 +49,7 @@ async function start(): Promise<void> {
 		// This uploads the container to the service and connects to the collaboration session.
 		id = await container.attach();
 		// The newly attached container is given a unique ID that can be used to access the container in another session
+		// eslint-disable-next-line require-atomic-updates
 		location.hash = id;
 	} else {
 		id = location.hash.slice(1);
@@ -65,6 +66,7 @@ async function start(): Promise<void> {
 	const appPresence = presence.states.getWorkspace("name:trackerData", {});
 
 	// Update the browser URL and the window title with the actual container ID
+	// eslint-disable-next-line require-atomic-updates
 	location.hash = id;
 	document.title = id;
 
@@ -84,7 +86,9 @@ async function start(): Promise<void> {
 	renderControlPanel(mouseTracker, controlPanelDiv);
 
 	// Setting "fluid*" and these helpers are just for our test automation
-	const buildAttendeeMap = () => {
+	// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+	const buildAttendeeMap = (): {} => {
+		// eslint-disable-next-line unicorn/no-array-reduce
 		return [...presence.attendees.getAttendees()].reduce((map, a) => {
 			map[a.attendeeId] = a.getConnectionStatus();
 			return map;
@@ -126,4 +130,8 @@ async function start(): Promise<void> {
 	/* eslint-enable @typescript-eslint/dot-notation */
 }
 
-start().catch(console.error);
+try {
+	await start();
+} catch (error) {
+	console.error(error);
+}
