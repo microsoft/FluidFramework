@@ -1,0 +1,657 @@
+[
+    {
+        "seed": 4229284835392797,
+        "type": "insert",
+        "index": 0,
+        "value": "iEF",
+        "clientId": "A"
+    },
+    {
+        "seed": 3492605260162540,
+        "type": "insert",
+        "index": 1,
+        "value": "Vf6Rx",
+        "clientId": "A"
+    },
+    {
+        "seed": 657284575671207,
+        "type": "move",
+        "oldIndex": 1,
+        "newIndex": 1,
+        "DEBUG_value": "Vf6Rx",
+        "clientId": "A"
+    },
+    {
+        "seed": 2231696052017682,
+        "type": "move",
+        "oldIndex": 0,
+        "newIndex": 0,
+        "DEBUG_value": "iEF",
+        "clientId": "A"
+    },
+    {
+        "seed": 2146487134492750,
+        "type": "move",
+        "oldIndex": 0,
+        "newIndex": 0,
+        "DEBUG_value": "iEF",
+        "clientId": "A"
+    },
+    {
+        "seed": 835714726755713,
+        "type": "rehydrate"
+    },
+    {
+        "seed": 3358913248212422,
+        "type": "applyThenRollback",
+        "ddsOp": {
+            "type": "insert",
+            "index": 2,
+            "value": "v3Q"
+        },
+        "clientId": "A"
+    },
+    {
+        "seed": 5966008011392251,
+        "type": "delete",
+        "index": 1,
+        "DEBUG_value": "Vf6Rx",
+        "clientId": "A"
+    },
+    {
+        "seed": 6762816207527561,
+        "type": "insert",
+        "index": 1,
+        "value": "ondev",
+        "clientId": "A"
+    },
+    {
+        "seed": 4887990019247392,
+        "type": "insert",
+        "index": 1,
+        "value": "P3b1T",
+        "clientId": "A"
+    },
+    {
+        "seed": 659391522115754,
+        "type": "applyThenRollback",
+        "ddsOp": {
+            "type": "move",
+            "oldIndex": 3,
+            "newIndex": 4,
+            "DEBUG_value": "v3Q"
+        },
+        "clientId": "A"
+    },
+    {
+        "seed": 1627181493407280,
+        "type": "attach"
+    },
+    {
+        "seed": 5587513399715559,
+        "type": "synchronize"
+    },
+    {
+        "seed": 711398694600076,
+        "type": "applyThenRollback",
+        "ddsOp": {
+            "type": "insert",
+            "index": 0,
+            "value": "3"
+        },
+        "clientId": "A"
+    },
+    {
+        "seed": 6276178507176038,
+        "type": "addClient",
+        "addedClientId": "D",
+        "canBeStashed": true
+    },
+    {
+        "seed": 5013262329867945,
+        "type": "insert",
+        "index": 2,
+        "value": "qT",
+        "clientId": "D"
+    },
+    {
+        "seed": 8663825981372319,
+        "type": "insert",
+        "index": 4,
+        "value": "mWAM",
+        "clientId": "B"
+    },
+    {
+        "seed": 6108117967840682,
+        "type": "delete",
+        "index": 1,
+        "DEBUG_value": "P3b1T",
+        "clientId": "A"
+    },
+    {
+        "seed": 4496550896237259,
+        "type": "stashClient",
+        "existingClientId": "D",
+        "newClientId": "D_1"
+    },
+    {
+        "seed": 6291191330108595,
+        "type": "move",
+        "oldIndex": 0,
+        "newIndex": 2,
+        "DEBUG_value": "iEF",
+        "clientId": "A"
+    },
+    {
+        "seed": 3205458348964601,
+        "type": "insert",
+        "index": 0,
+        "value": "X9Grx",
+        "clientId": "D_1"
+    },
+    {
+        "seed": 5085651320747738,
+        "type": "applyThenRollback",
+        "ddsOp": {
+            "type": "insert",
+            "index": 1,
+            "value": "vxmk"
+        },
+        "clientId": "C"
+    },
+    {
+        "seed": 4573439431966792,
+        "type": "applyThenRollback",
+        "ddsOp": {
+            "type": "insert",
+            "index": 4,
+            "value": "o"
+        },
+        "clientId": "D_1"
+    },
+    {
+        "seed": 6529619825356492,
+        "type": "synchronize"
+    },
+    {
+        "seed": 7567785699964930,
+        "type": "applyThenRollback",
+        "ddsOp": {
+            "type": "delete",
+            "index": 1,
+            "DEBUG_value": "qT"
+        },
+        "clientId": "A"
+    },
+    {
+        "seed": 7495818511634388,
+        "type": "insert",
+        "index": 6,
+        "value": "qKLY",
+        "clientId": "A"
+    },
+    {
+        "seed": 5834029870990226,
+        "type": "applyThenRollback",
+        "ddsOp": {
+            "type": "move",
+            "oldIndex": 3,
+            "newIndex": 4,
+            "DEBUG_value": "iEF"
+        },
+        "clientId": "D_1"
+    },
+    {
+        "seed": 1985257980053508,
+        "type": "delete",
+        "index": 0,
+        "DEBUG_value": "X9Grx",
+        "clientId": "B"
+    },
+    {
+        "seed": 7526597300284616,
+        "type": "applyThenRollback",
+        "ddsOp": {
+            "type": "insertBulkAfter",
+            "ref": "qKLY",
+            "values": [
+                "q1gaH",
+                "f"
+            ]
+        },
+        "clientId": "A"
+    },
+    {
+        "seed": 1048126005043280,
+        "type": "applyThenRollback",
+        "ddsOp": {
+            "type": "insert",
+            "index": 0,
+            "value": "1b"
+        },
+        "clientId": "C"
+    },
+    {
+        "seed": 5620898669681347,
+        "type": "delete",
+        "index": 2,
+        "DEBUG_value": "iEF",
+        "clientId": "B"
+    },
+    {
+        "seed": 4760027494584601,
+        "type": "toggle",
+        "entryId": "479916c8-6751-4e0d-b3c8-1ea6d807d330",
+        "DEBUG_value": "vxmk",
+        "clientId": "C"
+    },
+    {
+        "seed": 3272605921132170,
+        "type": "addClient",
+        "addedClientId": "E",
+        "canBeStashed": false
+    },
+    {
+        "seed": 5623140051410687,
+        "type": "insert",
+        "index": 4,
+        "value": "yDaW",
+        "clientId": "B"
+    },
+    {
+        "seed": 5528086592729281,
+        "type": "synchronize"
+    },
+    {
+        "seed": 462939370535307,
+        "type": "delete",
+        "index": 3,
+        "DEBUG_value": "mWAM",
+        "clientId": "E"
+    },
+    {
+        "seed": 7149643966519504,
+        "type": "changeConnectionState",
+        "connected": false,
+        "clientId": "B"
+    },
+    {
+        "seed": 2526405125249416,
+        "type": "insert",
+        "index": 2,
+        "value": "9gZTe",
+        "clientId": "A"
+    },
+    {
+        "seed": 8524578766498457,
+        "type": "toggle",
+        "entryId": "f9e706e7-e4f7-4f2a-8494-324ccaf42057",
+        "DEBUG_value": "X9Grx",
+        "clientId": "B"
+    },
+    {
+        "seed": 5256686598735844,
+        "type": "move",
+        "oldIndex": 0,
+        "newIndex": 4,
+        "DEBUG_value": "qT",
+        "clientId": "E"
+    },
+    {
+        "seed": 461073314441909,
+        "type": "changeConnectionState",
+        "connected": false,
+        "clientId": "A"
+    },
+    {
+        "seed": 3106095383215778,
+        "type": "applyThenRollback",
+        "ddsOp": {
+            "type": "delete",
+            "index": 0,
+            "DEBUG_value": "ondev"
+        },
+        "clientId": "E"
+    },
+    {
+        "seed": 3547242944417323,
+        "type": "toggle",
+        "entryId": "23afe9d9-5f6e-4982-9e18-36b0ea5ccea6",
+        "clientId": "B"
+    },
+    {
+        "seed": 7539337485486219,
+        "type": "insert",
+        "index": 4,
+        "value": "eS",
+        "clientId": "C"
+    },
+    {
+        "seed": 6863210579242512,
+        "type": "insert",
+        "index": 0,
+        "value": "S",
+        "clientId": "A"
+    },
+    {
+        "seed": 533356849372291,
+        "type": "synchronize"
+    },
+    {
+        "seed": 3396534655113581,
+        "type": "changeConnectionState",
+        "connected": false,
+        "clientId": "D_1"
+    },
+    {
+        "seed": 3862445649858840,
+        "type": "move",
+        "oldIndex": 0,
+        "newIndex": 2,
+        "DEBUG_value": "ondev",
+        "clientId": "D_1"
+    },
+    {
+        "seed": 3273016300888820,
+        "type": "insert",
+        "index": 2,
+        "value": "we",
+        "clientId": "B"
+    },
+    {
+        "seed": 6243208211658233,
+        "type": "insert",
+        "index": 2,
+        "value": "BMrw",
+        "clientId": "A"
+    },
+    {
+        "seed": 5586241292205672,
+        "type": "delete",
+        "index": 4,
+        "DEBUG_value": "qT",
+        "clientId": "D_1"
+    },
+    {
+        "seed": 2940914099532867,
+        "type": "move",
+        "oldIndex": 2,
+        "newIndex": 4,
+        "DEBUG_value": "eS",
+        "clientId": "C"
+    },
+    {
+        "seed": 364032092926569,
+        "type": "delete",
+        "index": 1,
+        "DEBUG_value": "ondev",
+        "clientId": "D_1"
+    },
+    {
+        "seed": 5435057847792473,
+        "type": "stashClient",
+        "existingClientId": "C",
+        "newClientId": "C_1"
+    },
+    {
+        "seed": 2899377332774619,
+        "type": "changeConnectionState",
+        "connected": true,
+        "clientId": "B"
+    },
+    {
+        "seed": 3175501936414956,
+        "type": "insertBulkAfter",
+        "ref": "eS",
+        "values": [
+            "5N"
+        ],
+        "clientId": "D_1"
+    },
+    {
+        "seed": 4575989158731019,
+        "type": "synchronize"
+    },
+    {
+        "seed": 4010922744121465,
+        "type": "insert",
+        "index": 5,
+        "value": "HaWpE",
+        "clientId": "D_1"
+    },
+    {
+        "seed": 2957719613302480,
+        "type": "insertBulkAfter",
+        "ref": "qT",
+        "values": [
+            "Aa",
+            "r",
+            "e3G6N"
+        ],
+        "clientId": "E"
+    },
+    {
+        "seed": 6329507701390963,
+        "type": "changeConnectionState",
+        "connected": false,
+        "clientId": "E"
+    },
+    {
+        "seed": 5966702595642338,
+        "type": "changeConnectionState",
+        "connected": true,
+        "clientId": "E"
+    },
+    {
+        "seed": 6437391164577562,
+        "type": "toggleMove",
+        "oldEntryId": "1edcf305-a512-4b41-a098-c58468698947",
+        "newEntryId": "b6d94339-e3fa-4efb-a626-cc7081e99fe4",
+        "DEBUG_value": "eS",
+        "clientId": "B"
+    },
+    {
+        "seed": 5364029044353363,
+        "type": "move",
+        "oldIndex": 3,
+        "newIndex": 0,
+        "DEBUG_value": "ondev",
+        "clientId": "B"
+    },
+    {
+        "seed": 3521246051694610,
+        "type": "delete",
+        "index": 6,
+        "DEBUG_value": "eS",
+        "clientId": "E"
+    },
+    {
+        "seed": 7579905065478145,
+        "type": "insert",
+        "index": 8,
+        "value": "Muo4",
+        "clientId": "B"
+    },
+    {
+        "seed": 4370601158284644,
+        "type": "insert",
+        "index": 7,
+        "value": "Uy",
+        "clientId": "A"
+    },
+    {
+        "seed": 1268392779362878,
+        "type": "delete",
+        "index": 0,
+        "DEBUG_value": "X9Grx",
+        "clientId": "C_1"
+    },
+    {
+        "seed": 6297903903858737,
+        "type": "synchronize"
+    },
+    {
+        "seed": 5635240945884360,
+        "type": "move",
+        "oldIndex": 2,
+        "newIndex": 6,
+        "DEBUG_value": "5N",
+        "clientId": "D_1"
+    },
+    {
+        "seed": 8782352572683497,
+        "type": "delete",
+        "index": 9,
+        "DEBUG_value": "e3G6N",
+        "clientId": "B"
+    },
+    {
+        "seed": 3611142469079625,
+        "type": "insertBulkAfter",
+        "ref": "qT",
+        "values": [
+            "md6"
+        ],
+        "clientId": "C_1"
+    },
+    {
+        "seed": 5019439181011188,
+        "type": "insert",
+        "index": 2,
+        "value": "1q",
+        "clientId": "D_1"
+    },
+    {
+        "seed": 8759064592891015,
+        "type": "changeConnectionState",
+        "connected": false,
+        "clientId": "E"
+    },
+    {
+        "seed": 5568702708417434,
+        "type": "delete",
+        "index": 5,
+        "DEBUG_value": "qT",
+        "clientId": "B"
+    },
+    {
+        "seed": 7191964861281071,
+        "type": "insert",
+        "index": 8,
+        "value": "ifB",
+        "clientId": "C_1"
+    },
+    {
+        "seed": 7862766852973527,
+        "type": "insert",
+        "index": 4,
+        "value": "eQP2f",
+        "clientId": "A"
+    },
+    {
+        "seed": 8958083851424308,
+        "type": "move",
+        "oldIndex": 6,
+        "newIndex": 0,
+        "DEBUG_value": "5N",
+        "clientId": "D_1"
+    },
+    {
+        "seed": 3449566761348226,
+        "type": "applyThenRollback",
+        "ddsOp": {
+            "type": "move",
+            "oldIndex": 3,
+            "newIndex": 4,
+            "DEBUG_value": "1q"
+        },
+        "clientId": "D_1"
+    },
+    {
+        "seed": 143400807964241,
+        "type": "synchronize"
+    },
+    {
+        "seed": 6158906169297782,
+        "type": "move",
+        "oldIndex": 4,
+        "newIndex": 4,
+        "DEBUG_value": "yDaW",
+        "clientId": "D_1"
+    },
+    {
+        "seed": 7167184698059758,
+        "type": "insertBulkAfter",
+        "ref": "r",
+        "values": [
+            "n2Sq",
+            "utc59"
+        ],
+        "clientId": "C_1"
+    },
+    {
+        "seed": 6091874810733465,
+        "type": "changeConnectionState",
+        "connected": true,
+        "clientId": "D_1"
+    },
+    {
+        "seed": 8193823253125490,
+        "type": "delete",
+        "index": 2,
+        "DEBUG_value": "BMrw",
+        "clientId": "A"
+    },
+    {
+        "seed": 3515449815299589,
+        "type": "toggleMove",
+        "oldEntryId": "10190ae8-c66b-4b9a-aec0-1f1353723998",
+        "newEntryId": "114b372d-25de-40fc-969c-ca4b54dc8b06",
+        "DEBUG_value": "ondev",
+        "clientId": "E"
+    },
+    {
+        "seed": 2441016742049706,
+        "type": "applyThenRollback",
+        "ddsOp": {
+            "type": "insert",
+            "index": 11,
+            "value": "8hznb"
+        },
+        "clientId": "C_1"
+    },
+    {
+        "seed": 5399988961579128,
+        "type": "applyThenRollback",
+        "ddsOp": {
+            "type": "delete",
+            "index": 4,
+            "DEBUG_value": "yDaW"
+        },
+        "clientId": "E"
+    },
+    {
+        "seed": 5979128526549068,
+        "type": "toggle",
+        "entryId": "1689e369-17cf-440b-8ad0-3572576d92c2",
+        "DEBUG_value": "Aa",
+        "clientId": "D_1"
+    },
+    {
+        "seed": 803486806325918,
+        "type": "changeConnectionState",
+        "connected": true,
+        "clientId": "E"
+    },
+    {
+        "seed": 108282989571424,
+        "type": "toggleMove",
+        "oldEntryId": "2a700bb3-1f57-4ea1-a2f8-2651508c3fda",
+        "newEntryId": "6d34c957-6d74-4092-9fe8-44230e88df4c",
+        "clientId": "C_1"
+    },
+    {
+        "seed": 6924847559370333,
+        "type": "synchronize"
+    }
+]
