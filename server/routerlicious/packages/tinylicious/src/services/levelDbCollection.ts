@@ -67,12 +67,12 @@ export class Collection<T> implements ICollection<T> {
 
 	public async update(filter: any, set: any, addToSet: any): Promise<void> {
 		const value = await this.findOneInternal(filter);
-		if (!value) {
-			throw new Error("Not found");
-		} else {
+		if (value) {
 			// eslint-disable-next-line import-x/namespace
 			_.extend(value, set);
 			return this.insertOne(value);
+		} else {
+			throw new Error("Not found");
 		}
 	}
 
@@ -82,12 +82,12 @@ export class Collection<T> implements ICollection<T> {
 
 	public async upsert(filter: any, set: any, addToSet: any): Promise<void> {
 		const value = await this.findOneInternal(filter);
-		if (!value) {
-			return this.insertOne(set);
-		} else {
+		if (value) {
 			// eslint-disable-next-line import-x/namespace
 			_.extend(value, set);
 			return this.insertOne(value);
+		} else {
+			return this.insertOne(set);
 		}
 	}
 
@@ -107,13 +107,13 @@ export class Collection<T> implements ICollection<T> {
 
 	public async insertMany(values: any[], ordered: boolean): Promise<void> {
 		const batchValues: { type: "put"; key: string; value: any }[] = [];
-		values.forEach((value) => {
+		for (const value of values) {
 			batchValues.push({
 				type: "put",
 				key: this.getKey(value),
 				value,
 			});
-		});
+		}
 		return this.db.batch(batchValues);
 	}
 
@@ -157,18 +157,18 @@ export class Collection<T> implements ICollection<T> {
 		function getValueByKey(propertyBag, key: string) {
 			const keys = key.split(".");
 			let v = propertyBag;
-			keys.forEach((splitKey) => {
+			for (const splitKey of keys) {
 				v = v[splitKey];
-			});
+			}
 			return v;
 		}
 
 		const values: any[] = [];
-		this.property.indexes.forEach((key) => {
+		for (const key of this.property.indexes) {
 			const innerValue = getValueByKey(value, key);
 			// Leveldb does lexicographic comparison. We need to encode a number for numeric comparison.
 			values.push(isNaN(innerValue) ? innerValue : charwise.encode(Number(innerValue)));
-		});
+		}
 
 		return values.join("!");
 	}

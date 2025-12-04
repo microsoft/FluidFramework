@@ -15,7 +15,7 @@ const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 export interface EncodedEditManager<TChangeset> {
-	readonly version: typeof EditManagerFormatVersion.v5;
+	readonly version: typeof EditManagerFormatVersion.vSharedBranches;
 	readonly originator: SessionId;
 	readonly main: EncodedSharedBranch<TChangeset>;
 	readonly branches?: readonly EncodedSharedBranch<TChangeset>[];
@@ -24,7 +24,7 @@ export interface EncodedEditManager<TChangeset> {
 export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object(
 		{
-			version: Type.Union([Type.Literal(EditManagerFormatVersion.v5)]),
+			version: Type.Literal(EditManagerFormatVersion.vSharedBranches),
 			originator: SessionIdSchema,
 			main: EncodedSharedBranch(tChange),
 			branches: Type.Optional(Type.Array(EncodedSharedBranch(tChange))),

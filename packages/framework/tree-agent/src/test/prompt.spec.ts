@@ -200,6 +200,38 @@ describe("Prompt generation", () => {
 			assert.ok(prompt.includes("# Editing Maps"));
 		}
 	});
+
+	it("sanitizes schema names that contain invalid characters", () => {
+		class InvalidlyNamedObject extends sf.object("Test-Object!", { value: sf.string }) {}
+
+		const view = getView(InvalidlyNamedObject, { value: "test" });
+		const prompt = getPrompt({
+			subtree: new Subtree(view),
+			editToolName: "EditTreeTool",
+		});
+
+		assert.ok(prompt.includes("Test_Object_"));
+		assert.ok(
+			!prompt.includes("Test-Object!"),
+			"The unsanitized identifier should not show up in the prompt",
+		);
+	});
+
+	it("sanitizes schema names that have leading digit", () => {
+		class LeadingDigit extends sf.object("1TestObject", { value: sf.string }) {}
+
+		const view = getView(LeadingDigit, { value: "test" });
+		const prompt = getPrompt({
+			subtree: new Subtree(view),
+			editToolName: "EditTreeTool",
+		});
+
+		assert.ok(prompt.includes("_1TestObject"));
+		assert.ok(
+			!prompt.includes("test.1TestObject"),
+			"The unsanitized identifier should not show up in the prompt",
+		);
+	});
 });
 
 describe("Prompt snapshot", () => {
