@@ -487,7 +487,7 @@ export interface ISequenceIntervalCollection
 	 * @param start - interval start position (inclusive)
 	 * @param end - interval end position (exclusive)
 	 * @param props - properties of the interval
-	 * @returns - the created interval
+	 * @returns the created interval
 	 * @remarks See documentation on {@link SequenceInterval} for comments on
 	 * interval endpoint semantics: there are subtleties with how the current
 	 * half-open behavior is represented.
@@ -626,7 +626,7 @@ export interface ISequenceIntervalCollection
 	): void;
 
 	/**
-	 * @deprecated - Users must manually attach the corresponding interval index to utilize this functionality, for instance:
+	 * @deprecated Users must manually attach the corresponding interval index to utilize this functionality, for instance:
 	 *
 	 * ```typescript
 	 * const overlappingIntervalsIndex = createOverlappingIntervalsIndex(sharedString);
@@ -645,7 +645,7 @@ export interface ISequenceIntervalCollection
 	map(fn: (interval: SequenceInterval) => void): void;
 
 	/**
-	 * @deprecated - due to the forthcoming change where the endpointIndex will no longer be
+	 * @deprecated due to the forthcoming change where the endpointIndex will no longer be
 	 * automatically added to the collection. Users are advised to independently attach the
 	 * index to the collection and utilize the API accordingly, for instance:
 	 * ```typescript
@@ -658,7 +658,7 @@ export interface ISequenceIntervalCollection
 	previousInterval(pos: number): SequenceInterval | undefined;
 
 	/**
-	 * @deprecated - due to the forthcoming change where the endpointIndex will no longer be
+	 * @deprecated due to the forthcoming change where the endpointIndex will no longer be
 	 * automatically added to the collection. Users are advised to independently attach the
 	 * index to the collection and utilize the API accordingly, for instance:
 	 * ```typescript
@@ -1122,7 +1122,7 @@ export class IntervalCollection
 		previousInterval.start.refType = ReferenceType.Transient;
 		previousInterval.end.refType = ReferenceType.Transient;
 		this.emit("changeInterval", interval, previousInterval, local, op, slide);
-		this.emit("changed", interval, undefined, previousInterval ?? undefined, local, slide);
+		this.emit("changed", interval, {}, previousInterval ?? undefined, local, slide);
 		previousInterval.start.refType = startRefType;
 		previousInterval.end.refType = endRefType;
 	}
@@ -1431,7 +1431,7 @@ export class IntervalCollection
 				}
 			}
 
-			if (deltaProps !== undefined && Object.keys(deltaProps).length > 0) {
+			if (isLatestInterval && deltaProps !== undefined && Object.keys(deltaProps).length > 0) {
 				this.emit("propertyChanged", latestInterval, deltaProps, local, op);
 				this.emit("changed", latestInterval, deltaProps, undefined, local, false);
 			}
@@ -1482,17 +1482,18 @@ export class IntervalCollection
 		const rebasedEndpoint = this.computeRebasedPositions(localOpMetadata, squash);
 		const localInterval = this.getIntervalById(id);
 
-		// if the interval slid off the string, rebase the op to be a noop and delete the interval.
+		// if the interval slides off the string, rebase the op to be a noop and delete the interval.
 		if (rebasedEndpoint === "detached") {
 			if (
 				localInterval !== undefined &&
 				(localInterval === interval || localOpMetadata.type === "add")
 			) {
-				this.localCollection?.removeExistingInterval(localInterval);
+				// Use deleteExistingInterval (not removeExistingInterval) to ensure the deleteInterval
+				// event is emitted when intervals slide off during rebasing.
+				this.deleteExistingInterval({ interval: localInterval, local: true });
 			}
 			return undefined;
 		}
-
 		const { start, end } = rebasedEndpoint;
 		if (
 			interval.start.getSegment() !== start.segment ||

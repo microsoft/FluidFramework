@@ -4,8 +4,13 @@
  */
 
 import type { ImplicitFieldSchema, TreeNode } from "@fluidframework/tree";
-// This is used for doc links
-import type { FactoryContentObject, ReadableField } from "@fluidframework/tree/alpha";
+// These are used for doc links
+import type {
+	FactoryContentObject,
+	ReadableField,
+	TreeBranchAlpha,
+	TreeViewAlpha,
+} from "@fluidframework/tree/alpha";
 
 /**
  * Logger interface for logging events from a {@link SharedTreeSemanticAgent}.
@@ -19,31 +24,153 @@ export interface Logger {
 }
 
 /**
+ * A SharedTree view for use by a {@link SharedTreeSemanticAgent}.
+ * @alpha
+ * @privateRemarks This is a subset of the TreeViewAlpha functionality because if take it wholesale, it causes problems with invariance of the generic parameters.
+ */
+export type TreeView<TRoot extends ImplicitFieldSchema> = Pick<
+	TreeViewAlpha<TRoot>,
+	"root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"
+> &
+	TreeBranchAlpha;
+
+/**
+ * A value that is either a {@link TreeView} or a subtree within a {@link TreeView}.
+ * @alpha
+ */
+export type ViewOrTree<TSchema extends ImplicitFieldSchema> =
+	| TreeView<TSchema>
+	| (ReadableField<TSchema> & TreeNode);
+
+/**
+ * The context object available to generated code when editing a tree.
+ * @remarks This object is provided to JavaScript code executed by the {@link SynchronousEditor | editor} as a variable named `context`.
+ * It contains the current state of the tree and utilities for creating and inspecting tree nodes.
+ *
+ * Use {@link createContext} to create a context.
+ * @alpha
+ */
+export interface Context<TSchema extends ImplicitFieldSchema> {
+	/**
+	 * The root of the tree that can be read or modified.
+	 * @remarks
+	 * You can read properties and navigate through the tree starting from this root.
+	 * You can also assign a new value to this property to replace the entire tree, as long as the new value is one of the types allowed at the root.
+	 *
+	 * Example: Read the current root with `const currentRoot = context.root;`
+	 *
+	 * Example: Replace the entire root with `context.root = context.create.MyRootType({ });`
+	 */
+	root: ReadableField<TSchema>;
+
+	/**
+	 * A collection of builder functions for creating new tree nodes.
+	 * @remarks
+	 * Each property on this object is named after a type in the tree schema.
+	 * Call the corresponding function to create a new node of that type.
+	 * Always use these builder functions when creating new nodes rather than plain JavaScript objects.
+	 *
+	 * Example: Create a new Person node with `context.create.Person({ name: "Alice", age: 30 })`
+	 */
+	create: Record<string, (input: FactoryContentObject) => TreeNode>;
+
+	/**
+	 * A collection of type-checking functions for tree nodes.
+	 * @remarks
+	 * Each property on this object is named after a type in the tree schema.
+	 * Call the corresponding function to check if a node is of that specific type.
+	 * This is useful when working with nodes that could be one of multiple types.
+	 *
+	 * Example: Check if a node is a Person with `if (context.is.Person(node)) { console.log(node.name); }`
+	 */
+	is: Record<string, <T extends TreeNode>(input: T) => input is T>;
+
+	/**
+	 * Checks if the given node is an array.
+	 */
+	isArray(value: unknown): boolean;
+
+	/**
+	 * Checks if the given node is a map.
+	 */
+	isMap(value: unknown): boolean;
+
+	/**
+	 * Returns the parent node of the given child node.
+	 * @param child - The node whose parent you want to find.
+	 * @returns The parent node, or `undefined` if the node is the root or is not in the tree.
+	 * @remarks
+	 * Example: Get the parent with `const parent = context.parent(childNode);`
+	 */
+	parent(child: TreeNode): TreeNode | undefined;
+
+	/**
+	 * Returns the key or index of the given node within its parent.
+	 * @param child - The node whose key you want to find.
+	 * @returns A string key if the node is in an object or map, or a numeric index if the node is in an array.
+	 * @remarks
+	 * For a node in an object, this might return a string like "firstName".
+	 * For a node in an array, this might return a number like 0, 1, 2, etc.
+	 *
+	 * Example: `const key = context.key(childNode);`
+	 */
+	key(child: TreeNode): string | number;
+}
+
+/**
+ * A synchronous function that executes a string of JavaScript code to perform an edit within a {@link SharedTreeSemanticAgent}.
+ * @param tree - The tree to edit.
+ * @param code - The JavaScript code that should be executed.
+ * @throws Any error thrown by the executed code.
+ * @remarks The code expects a variable named `context` to be in scope, which provides access to the tree and utilities for creating and inspecting nodes.
+ * A context can be created for a given tree via the {@link createContext} function.
+ * @example
+ * ```ts
+ * // A simple editor implementation that runs the provided code via a JavaScript Function.
+ * new Function("context", code)(createContext(tree));
+ * ```
+ * @alpha
+ */
+export type SynchronousEditor<TSchema extends ImplicitFieldSchema> = (
+	tree: ViewOrTree<TSchema>,
+	code: string,
+) => void;
+
+/**
+ * An asynchronous function that executes a string of JavaScript code to perform an edit within a {@link SharedTreeSemanticAgent}.
+ * @param tree - The tree to edit.
+ * @param code - The JavaScript code that should be executed.
+ * @throws Any error thrown by the executed code.
+ * @remarks The code expects a variable named `context` to be in scope, which provides access to the tree and utilities for creating and inspecting nodes.
+ * A context can be created for a given tree via the {@link createContext} function.
+ * @example
+ * ```ts
+ * // A simple editor implementation that runs the provided code via a JavaScript Function.
+ * await new Function("context", code)(createContext(tree));
+ * ```
+ * @alpha
+ */
+export type AsynchronousEditor<TSchema extends ImplicitFieldSchema> = (
+	tree: ViewOrTree<TSchema>,
+	code: string,
+) => Promise<void>;
+
+/**
  * Options used to parameterize the creation of a {@link SharedTreeSemanticAgent}.
  * @alpha
  */
-export interface SemanticAgentOptions {
+export interface SemanticAgentOptions<TSchema extends ImplicitFieldSchema> {
 	/**
 	 * Additional information about the application domain that will be included in the context provided to the {@link SharedTreeChatModel | model}.
 	 */
 	domainHints?: string;
 	/**
-	 * Validates any generated JavaScript created by the {@link SharedTreeChatModel.editToolName | model's editing tool}.
-	 * @remarks This happens before the code is executed - execution can be intercepted by using the {@link SemanticAgentOptions.executeEdit | executeEdit} callback.
-	 * @param code - The generated JavaScript code as a string.
-	 * @throws If the code is invalid, this function should throw an error with a human-readable message describing why it is invalid.
+	 * Executes any generated JavaScript created by the {@link SharedTreeChatModel.editToolName | model's editing tool}.
+	 * @remarks If an error is thrown while executing the code, it will be caught and the message will be forwarded to the {@link SharedTreeChatModel | model} for debugging.
+	 * @remarks If this function is not provided, the generated code will be executed using a simple JavaScript eval which may not provide sufficient security guarantees for some environments.
+	 * Run the code in a sandboxed environment or use a library such as SES to provide a more secure implementation - see `@fluidframework/tree-agent-ses` for a drop-in implementation.
 	 */
-	validateEdit?: (code: string) => void | Promise<void>;
-	/**
-	 * Evaluates/runs any generated JavaScript created by the {@link SharedTreeChatModel.editToolName | model's editing tool}.
-	 * @remarks This happens only after the code has been successfully validated by the optional {@link SemanticAgentOptions.validateEdit | validateEdit} function.
-	 * @param context - An object that must be provided to the generated code as a variable named "context" in its top-level scope.
-	 * @param code - The generated JavaScript code as a string.
-	 * @throws If an error is thrown while executing the code, it will be caught and the message will be forwarded to the model for debugging.
-	 * @remarks If this function is not provided, the generated code will be executed using a simple `eval` call, which may not provide sufficient security guarantees for some environments.
-	 * Use a library such as SES to provide a more secure implementation - see `@fluidframework/tree-agent-ses` for a drop-in implementation.
-	 */
-	executeEdit?: (context: Record<string, unknown>, code: string) => void | Promise<void>;
+	editor?: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
 	/**
 	 * The maximum number of sequential edits the LLM can make before we assume it's stuck in a loop.
 	 */
@@ -64,18 +191,11 @@ export interface EditResult {
 	 * @remarks
 	 * - `success`: The edit was successfully applied.
 	 * - `disabledError`: The model is not allowed to edit the tree (i.e. {@link SharedTreeChatModel.editToolName} was not provided).
-	 * - `validationError`: The provided JavaScript did not pass the optional {@link SemanticAgentOptions.validateEdit} function.
-	 * - `executionError`: An error was thrown while parsing or executing the provided JavaScript.
+	 * - `editingError`: An error was thrown while parsing or executing the provided JavaScript.
 	 * - `tooManyEditsError`: The {@link SharedTreeChatQuery.edit} function has been called more than the number of times specified by {@link SemanticAgentOptions.maximumSequentialEdits} for the same message.
 	 * - `expiredError`: The {@link SharedTreeChatQuery.edit} function was called after the issuing query has already completed.
 	 */
-	type:
-		| "success"
-		| "disabledError"
-		| "validationError"
-		| "executionError"
-		| "tooManyEditsError"
-		| "expiredError";
+	type: "success" | "disabledError" | "editingError" | "tooManyEditsError" | "expiredError";
 
 	/**
 	 * A human-readable message describing the result of the edit attempt.
@@ -152,14 +272,3 @@ export interface SharedTreeChatModel {
 	 */
 	query(message: SharedTreeChatQuery): Promise<string>;
 }
-
-/**
- * A function that edits a SharedTree.
- */
-export type EditFunction<TSchema extends ImplicitFieldSchema> = ({
-	root,
-	create,
-}: {
-	root: ReadableField<TSchema>;
-	create: Record<string, (input: FactoryContentObject) => TreeNode>;
-}) => void | Promise<void>;

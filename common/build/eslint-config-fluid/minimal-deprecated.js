@@ -69,7 +69,7 @@ module.exports = {
 		es2024: false,
 		node: true,
 	},
-	extends: ["./base", "plugin:eslint-comments/recommended", "prettier"],
+	extends: ["./base", "prettier"],
 	globals: {
 		Atomics: "readonly",
 		SharedArrayBuffer: "readonly",
@@ -107,6 +107,7 @@ module.exports = {
 	ignorePatterns: [
 		// Don't lint generated packageVersion files.
 		"**/packageVersion.ts",
+		"**/layerGenerationState.ts",
 	],
 	rules: {
 		/**
@@ -153,7 +154,7 @@ module.exports = {
 		/**
 		 * Encourages minimal disabling of eslint rules, while still permitting whole-file exclusions.
 		 */
-		"eslint-comments/disable-enable-pair": [
+		"@eslint-community/eslint-comments/disable-enable-pair": [
 			"error",
 			{
 				allowWholeFile: true,
@@ -231,10 +232,6 @@ module.exports = {
 		"@typescript-eslint/explicit-function-return-type": "off",
 		"@typescript-eslint/explicit-member-accessibility": "off",
 
-		/**
-		 * Disabled because we will lean on the formatter (i.e. prettier) to enforce indentation policy.
-		 */
-		"@typescript-eslint/indent": "off",
 		"@typescript-eslint/member-ordering": "off",
 		"@typescript-eslint/no-explicit-any": "off",
 		"@typescript-eslint/no-unused-vars": "off",
@@ -287,22 +284,7 @@ module.exports = {
 
 		// #region FORMATTING RULES
 
-		// We use formatting tools like Biome or prettier to format code, so most formatting-related rules are superfluous
-		// and are disabled. Running fewer rules also improves lint performance.
-
-		// The rules below are also deprecated in more recent versions of eslint/plugins
-		"@typescript-eslint/brace-style": "off",
-		"@typescript-eslint/comma-spacing": "off",
-		"@typescript-eslint/func-call-spacing": "off",
-		"@typescript-eslint/keyword-spacing": "off",
-		"@typescript-eslint/member-delimiter-style": "off",
-		"@typescript-eslint/semi": "off",
-		"@typescript-eslint/space-before-function-paren": "off",
-		"@typescript-eslint/space-infix-ops": "off",
-		"@typescript-eslint/type-annotation-spacing": "off",
-
 		// The rules below are deprecated in our current version of eslint/plugins
-		"@typescript-eslint/object-curly-spacing": "off",
 		"array-bracket-spacing": "off",
 		"arrow-spacing": "off",
 		"block-spacing": "off",

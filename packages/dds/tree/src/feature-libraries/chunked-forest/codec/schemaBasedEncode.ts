@@ -16,8 +16,8 @@ import {
 	ValueSchema,
 	Multiplicity,
 	identifierFieldKindIdentifier,
+	type SchemaPolicy,
 } from "../../../core/index.js";
-import type { FullSchemaPolicy } from "../../modular-schema/index.js";
 
 import {
 	EncoderContext,
@@ -31,10 +31,61 @@ import {
 	incrementalFieldEncoder,
 } from "./compressedEncode.js";
 import type { FieldBatch } from "./fieldBatch.js";
-import { type EncodedFieldBatch, type EncodedValueShape, SpecialField } from "./format.js";
+import {
+	type EncodedFieldBatch,
+	type EncodedFieldBatchV1,
+	type EncodedFieldBatchV2,
+	type EncodedValueShape,
+	FieldBatchFormatVersion,
+	SpecialField,
+} from "./format.js";
 import type { IncrementalEncoder } from "./codecs.js";
 import { NodeShapeBasedEncoder } from "./nodeEncoder.js";
 import { defaultIncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
+import { brand, oneFromIterable } from "../../../util/index.js";
+
+/**
+ * Encode data from `fieldBatch` in into an `EncodedChunk` using {@link FieldBatchFormatVersion.v1}.
+ * @remarks See {@link schemaCompressedEncode} for more details.
+ * This version does not support incremental encoding.
+ */
+export function schemaCompressedEncodeV1(
+	schema: StoredSchemaCollection,
+	policy: SchemaPolicy,
+	fieldBatch: FieldBatch,
+	idCompressor: IIdCompressor,
+): EncodedFieldBatchV1 {
+	return schemaCompressedEncode(
+		schema,
+		policy,
+		fieldBatch,
+		idCompressor,
+		undefined /* incrementalEncoder */,
+		brand(FieldBatchFormatVersion.v1),
+	);
+}
+
+/**
+ * Encode data from `fieldBatch` in into an `EncodedChunk` using {@link FieldBatchFormatVersion.v2}.
+ * @remarks See {@link schemaCompressedEncode} for more details.
+ * Incremental encoding is supported from this version onwards.
+ */
+export function schemaCompressedEncodeV2(
+	schema: StoredSchemaCollection,
+	policy: SchemaPolicy,
+	fieldBatch: FieldBatch,
+	idCompressor: IIdCompressor,
+	incrementalEncoder: IncrementalEncoder | undefined,
+): EncodedFieldBatchV2 {
+	return schemaCompressedEncode(
+		schema,
+		policy,
+		fieldBatch,
+		idCompressor,
+		incrementalEncoder,
+		brand(FieldBatchFormatVersion.v2),
+	);
+}
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk`.
@@ -46,24 +97,26 @@ import { defaultIncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js
  * Optimized for encoded size and encoding performance.
  * TODO: This function should eventually also take in the root FieldSchema to more efficiently compress the nodes.
  */
-export function schemaCompressedEncode(
+function schemaCompressedEncode(
 	schema: StoredSchemaCollection,
-	policy: FullSchemaPolicy,
+	policy: SchemaPolicy,
 	fieldBatch: FieldBatch,
 	idCompressor: IIdCompressor,
-	incrementalEncoder?: IncrementalEncoder,
+	incrementalEncoder: IncrementalEncoder | undefined,
+	version: FieldBatchFormatVersion,
 ): EncodedFieldBatch {
 	return compressedEncode(
 		fieldBatch,
-		buildContext(schema, policy, idCompressor, incrementalEncoder),
+		buildContext(schema, policy, idCompressor, incrementalEncoder, version),
 	);
 }
 
 export function buildContext(
 	storedSchema: StoredSchemaCollection,
-	policy: FullSchemaPolicy,
+	policy: SchemaPolicy,
 	idCompressor: IIdCompressor,
-	incrementalEncoder?: IncrementalEncoder,
+	incrementalEncoder: IncrementalEncoder | undefined,
+	version: FieldBatchFormatVersion,
 ): EncoderContext {
 	const context: EncoderContext = new EncoderContext(
 		(fieldBuilder: FieldEncodeBuilder, schemaName: TreeNodeSchemaIdentifier) =>
@@ -73,6 +126,7 @@ export function buildContext(
 		policy.fieldKinds,
 		idCompressor,
 		incrementalEncoder,
+		version,
 	);
 	return context;
 }
@@ -87,7 +141,7 @@ export function getFieldEncoder(
 	storedSchema: StoredSchemaCollection,
 ): FieldEncoder {
 	const kind = context.fieldShapes.get(field.kind) ?? fail(0xb52 /* missing FieldKind */);
-	const type = oneFromSet(field.types);
+	const type = oneFromIterable(field.types);
 	const nodeEncoder =
 		type !== undefined ? nodeBuilder.nodeEncoderFromSchema(type) : anyNodeEncoder;
 	if (kind.multiplicity === Multiplicity.Single) {
@@ -126,16 +180,16 @@ export function getNodeEncoder(
 	schemaName: TreeNodeSchemaIdentifier,
 	incrementalEncoder?: IncrementalEncoder,
 ): NodeShapeBasedEncoder {
+	const shouldEncodeIncrementally =
+		incrementalEncoder?.shouldEncodeIncrementally ?? defaultIncrementalEncodingPolicy;
 	const schema =
 		storedSchema.nodeSchema.get(schemaName) ?? fail(0xb53 /* missing node schema */);
 
+	// This handles both object and array nodes.
 	if (schema instanceof ObjectNodeStoredSchema) {
 		// TODO:Performance:
 		// consider moving some optional and sequence fields to extra fields if they are commonly empty
 		// to reduce encoded size.
-
-		const shouldEncodeIncrementally =
-			incrementalEncoder?.shouldEncodeIncrementally ?? defaultIncrementalEncodingPolicy;
 		const objectNodeFields: KeyedFieldEncoder[] = [];
 		for (const [key, field] of schema.objectNodeFields ?? []) {
 			const fieldEncoder = shouldEncodeIncrementally(schemaName, key)
@@ -159,28 +213,16 @@ export function getNodeEncoder(
 		);
 		return shape;
 	}
+
+	// This handles both maps and record nodes.
 	if (schema instanceof MapNodeStoredSchema) {
-		const shape = new NodeShapeBasedEncoder(
-			schemaName,
-			false,
-			[],
-			fieldBuilder.fieldEncoderFromSchema(schema.mapFields),
-		);
+		const fieldEncoder = shouldEncodeIncrementally(schemaName)
+			? incrementalFieldEncoder
+			: fieldBuilder.fieldEncoderFromSchema(schema.mapFields);
+		const shape = new NodeShapeBasedEncoder(schemaName, false, [], fieldEncoder);
 		return shape;
 	}
 	fail(0xb54 /* unsupported node kind */);
-}
-
-export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
-	if (set === undefined) {
-		return undefined;
-	}
-	if (set.size !== 1) {
-		return undefined;
-	}
-	for (const item of set) {
-		return item;
-	}
 }
 
 function valueShapeFromSchema(schema: ValueSchema | undefined): undefined | EncodedValueShape {

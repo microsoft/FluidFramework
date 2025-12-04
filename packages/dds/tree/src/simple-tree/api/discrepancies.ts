@@ -90,12 +90,12 @@ export interface AllowedTypeDiscrepancy extends FieldDiscrepancyLocation {
 	readonly mismatch: "allowedTypes";
 	/**
 	 * Annotated allowed types in viewed schema
-	 * (excluding {@link SchemaStaticsAlpha.staged | staged} schema) which are not allowed in stored schema.
+	 * (excluding {@link SchemaStaticsBeta.staged | staged} schema) which are not allowed in stored schema.
 	 */
 	readonly view: readonly AnnotatedAllowedType<TreeNodeSchema>[];
 	/**
 	 * Allowed type identifiers in stored schema which are not allowed in view schema
-	 * (including the view schema's {@link SchemaStaticsAlpha.staged | staged} schema).
+	 * (including the view schema's {@link SchemaStaticsBeta.staged | staged} schema).
 	 */
 	readonly stored: readonly TreeNodeSchemaIdentifier[];
 }

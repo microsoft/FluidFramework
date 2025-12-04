@@ -19,7 +19,6 @@ import {
 import { compareSets } from "../../util/index.js";
 
 import type { FullSchemaPolicy } from "./fieldKind.js";
-import { withEditor } from "./fieldKindWithEditor.js";
 import { isNeverTree } from "./isNeverTree.js";
 
 /**
@@ -133,9 +132,9 @@ export function allowsFieldSuperset(
 	original: TreeFieldStoredSchema,
 	superset: TreeFieldStoredSchema,
 ): boolean {
-	return withEditor(
-		policy.fieldKinds.get(original.kind) ?? fail(0xb1b /* missing kind */),
-	).allowsFieldSuperset(policy, originalData, original.types, superset);
+	return (
+		policy.fieldKinds.get(original.kind) ?? fail(0xb1b /* missing kind */)
+	).allowedMonotonicUpgrade(policy, originalData, original.types, superset);
 }
 
 /**

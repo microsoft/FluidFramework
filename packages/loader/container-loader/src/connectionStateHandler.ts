@@ -572,7 +572,7 @@ export class ConnectionStateHandler implements IConnectionStateHandler {
 
 	/**
 	 * Tells if need to wait for "self" to show up in audience.
-	 * @returns - true if we should wait for "self" to appear in audience.
+	 * @returns true if we should wait for "self" to appear in audience.
 	 * false is returned only for "read" connections, and only if this.readClientsWaitForJoinSignal is false.
 	 */
 	private shouldWaitForSelf(): boolean {

@@ -46,6 +46,7 @@ export interface ICollaborativeInputState {
  * Given a {@link @fluidframework/sequence#SharedString}, will produce a collaborative input element.
  * @internal
  */
+/* eslint-disable react/prop-types -- TypeScript interfaces provide compile-time prop validation */
 export class CollaborativeInput extends React.Component<
 	ICollaborativeInputProps,
 	ICollaborativeInputState
@@ -152,3 +153,4 @@ export class CollaborativeInput extends React.Component<
 		this.setState({ selectionEnd, selectionStart });
 	};
 }
+/* eslint-enable react/prop-types */

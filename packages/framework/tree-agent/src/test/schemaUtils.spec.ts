@@ -9,18 +9,17 @@ import { strict as assert } from "node:assert";
 
 import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 
-import {
-	getFriendlyName,
-	unqualifySchema,
-	findNamedSchemas,
-	isNamedSchema,
-} from "../utils.js";
+import { getFriendlyName, unqualifySchema, findSchemas, isNamedSchema } from "../utils.js";
 
 const sf = new SchemaFactoryAlpha("test.scope");
 class TestObject extends sf.object("TestObject", { value: sf.string }) {}
 class NamedStringArray extends sf.array("NamedStringArray", sf.string) {}
 class NamedStringMap extends sf.map("NamedStringMap", sf.string) {}
 class NamedStringRecord extends sf.record("NamedStringRecord", sf.string) {}
+
+// Schema objects with invalid typescript type characters.
+class InvalidCharacters extends sf.object("Test-Object!", { value: sf.string }) {}
+class LeadingDigit extends sf.object("1TestObject", { value: sf.string }) {}
 
 describe("getFriendlyName", () => {
 	it("returns the name for a named object schema", () => {
@@ -57,6 +56,10 @@ describe("getFriendlyName", () => {
 	it("handles arrays of object schemas", () => {
 		const ArrayOfObjects = sf.array(TestObject);
 		assert.equal(getFriendlyName(ArrayOfObjects), "TestObject[]");
+
+		// Object with invalid characters
+		const ArrayOfObjectsWithInvalidCharacters = sf.array(InvalidCharacters);
+		assert.equal(getFriendlyName(ArrayOfObjectsWithInvalidCharacters), "Test_Object_[]");
 	});
 
 	it("handles maps of array schemas", () => {
@@ -144,6 +147,25 @@ describe("getFriendlyName", () => {
 			getFriendlyName(OuterMap),
 			"Map<string, Record<string, Map<string, TestObject>>[]>",
 		);
+
+		// Object with invalid characters
+
+		const InnerMap2 = sf.map(InvalidCharacters);
+		const InnerRecord2 = sf.record(InnerMap2);
+		const InnerArray2 = sf.array(InnerRecord2);
+		const OuterMap2 = sf.map(InnerArray2);
+		assert.equal(
+			getFriendlyName(OuterMap2),
+			"Map<string, Record<string, Map<string, Test_Object_>>[]>",
+		);
+	});
+
+	it("sanitizes invalid characters to underscores.", () => {
+		assert.equal(getFriendlyName(InvalidCharacters), "Test_Object_");
+	});
+
+	it("prefixes an underscore when the name starts with an invalid character", () => {
+		assert.equal(getFriendlyName(LeadingDigit), "_1TestObject");
 	});
 });
 
@@ -154,6 +176,30 @@ describe("unqualifySchema", () => {
 
 	it("returns the original name when no scope is present", () => {
 		assert.equal(unqualifySchema("NoScopeName"), "NoScopeName");
+	});
+
+	it("sanitizes invalid characters to underscores.", () => {
+		// With strings
+		assert.equal(unqualifySchema("Test-Object"), "Test_Object");
+		assert.equal(unqualifySchema("Test Object"), "Test_Object");
+
+		// With schema identifiers from schemafactory,
+		assert.equal(unqualifySchema(InvalidCharacters.identifier), "Test_Object_");
+	});
+
+	it("prefixes an underscore when the name starts with an invalid character", () => {
+		// With strings
+		assert.equal(unqualifySchema("1TestObject"), "_1TestObject");
+		assert.equal(unqualifySchema("-TestObject"), "_TestObject");
+
+		// With schema identifiers from schemafactory,
+		assert.equal(unqualifySchema(LeadingDigit.identifier), "_1TestObject");
+	});
+
+	it("returns stable names for valid identifiers", () => {
+		assert.equal(unqualifySchema("TestObject"), "TestObject");
+		assert.equal(unqualifySchema("com.fluidframework.TestObject"), "TestObject");
+		assert.equal(unqualifySchema("ABC123_$"), "ABC123_$");
 	});
 });
 
@@ -216,7 +262,7 @@ describe("findNamedSchemas", () => {
 		}) {}
 
 		const identifiers: string[] = [];
-		for (const s of findNamedSchemas(Root)) {
+		for (const s of findSchemas(Root, (schema) => isNamedSchema(schema.identifier))) {
 			identifiers.push((s as { identifier: string }).identifier);
 		}
 		assert.equal(identifiers.length, new Set(identifiers).size);

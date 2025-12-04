@@ -8,7 +8,10 @@
 import { strict as assert } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockFluidDataStoreRuntime,
+	validateTypeError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type FieldSchema,
@@ -28,15 +31,16 @@ import {
 	type AllowedTypesFull,
 	type ImplicitAllowedTypes,
 	type AllowedTypes,
+	SchemaFactoryBeta,
 } from "../../../simple-tree/index.js";
 import {
 	allowUnused,
 	type ValidateRecursiveSchema,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/schemaFactoryRecursive.js";
 import type {
 	System_Unsafe,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/typesUnsafe.js";
 import { SharedTree } from "../../../treeFactory.js";
 import type {
@@ -47,7 +51,6 @@ import type {
 } from "../../../util/index.js";
 
 import { hydrate } from "../utils.js";
-import { validateTypeError } from "../../utils.js";
 
 // Tests for SchemaFactoryRecursive.ts and the recursive API subset of SchemaFactory and SchemaFactoryAlpha.
 // It is a bit odd/non-conventional to put the tests for the recursive methods of SchemaFactory here:
@@ -498,7 +501,41 @@ describe("SchemaFactory Recursive methods", () => {
 			}
 		});
 
-		it("Node schema metadata", () => {
+		it("Node schema metadata - beta", () => {
+			const factory = new SchemaFactoryBeta("");
+			class Foo extends factory.objectRecursive(
+				"Foo",
+				{ bar: [() => Foo] },
+				{
+					metadata: {
+						description: "A recursive object called Foo",
+						custom: { baz: true },
+					},
+				},
+			) {}
+
+			const custom = Foo.metadata.custom;
+
+			// Currently it is impossible to have required custom metadata: it always includes undefined as an option.
+			// TODO: having a way to make metadata required would be nice.
+			type _check1 = requireTrue<
+				areSafelyAssignable<typeof custom, { baz: true } | undefined>
+			>;
+			assert(custom !== undefined);
+
+			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
+			const baz = custom.baz;
+
+			type _check2 = requireTrue<areSafelyAssignable<typeof baz, true>>;
+
+			// This must be checked after the types are checked to avoid it narrowing and making the type checks above not test anything.
+			assert.deepEqual(Foo.metadata, {
+				description: "A recursive object called Foo",
+				custom: { baz: true },
+			});
+		});
+
+		it("Node schema metadata - alpha", () => {
 			const factory = new SchemaFactoryAlpha("");
 			class Foo extends factory.objectRecursive(
 				"Foo",
@@ -511,14 +548,25 @@ describe("SchemaFactory Recursive methods", () => {
 				},
 			) {}
 
+			const custom = Foo.metadata.custom;
+
+			// Currently it is impossible to have required custom metadata: it always includes undefined as an option.
+			// TODO: having a way to make metadata required would be nice.
+			type _check1 = requireTrue<
+				areSafelyAssignable<typeof custom, { baz: true } | undefined>
+			>;
+			assert(custom !== undefined);
+
+			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
+			const baz = custom.baz;
+
+			type _check2 = requireTrue<areSafelyAssignable<typeof baz, true>>;
+
+			// This must be checked after the types are checked to avoid it narrowing and making the type checks above not test anything.
 			assert.deepEqual(Foo.metadata, {
 				description: "A recursive object called Foo",
 				custom: { baz: true },
 			});
-
-			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
-			const baz = Foo.metadata.custom.baz;
-			type _check1 = requireTrue<areSafelyAssignable<typeof baz, true>>;
 		});
 	});
 	describe("ValidateRecursiveSchema", () => {
@@ -999,7 +1047,7 @@ describe("SchemaFactory Recursive methods", () => {
 				// Check constructor
 				type TBuild = NodeBuilderData<typeof RecordRecursive>;
 				type _check2 = requireAssignableTo<RecordRecursive, TBuild>;
-				// eslint-disable-next-line @typescript-eslint/ban-types
+				// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 				type _check3 = requireAssignableTo<{}, TBuild>;
 				type _check4 = requireAssignableTo<{ a: RecordRecursive }, TBuild>;
 				type _check5 = requireAssignableTo<Record<string, TInsert>, TBuild>;
@@ -1331,7 +1379,7 @@ describe("SchemaFactory Recursive methods", () => {
 	 * Currently this collection of test cases covers one specific edge case: schema which do not use explicit sub-classing.
 	 * Our current guidance says this pattern is not supported for recursive schema.
 	 *
-	 * These patterns also [break type safety in .d.ts generation](https://github.com/microsoft/TypeScript/issues/55832):
+	 * These patterns also {@link https://github.com/microsoft/TypeScript/issues/55832 | break type safety in .d.ts generation}:
 	 * this is one of the reasons they are not supported.
 	 * The import-testing package has test coverage for this aspect.
 	 * They also have poorer error quality and IntelliSense (for example the compiler and IntelliSense disagree on which are valid).
