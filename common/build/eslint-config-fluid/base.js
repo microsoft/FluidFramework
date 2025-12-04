@@ -45,9 +45,8 @@ module.exports = {
 
 		/**
 		 * Disallow `-` immediately following a JSDoc/TSDoc tag (e.g. `@deprecated - foo`).
-		 * FIXME: https://dev.azure.com/fluidframework/internal/_workitems/edit/29535
 		 */
-		"@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": "off",
+		"@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": "error",
 
 		/**
 		 * Disallow file path based links in JSDoc/TSDoc comments.
