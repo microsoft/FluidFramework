@@ -474,7 +474,9 @@ export namespace System_TableSchema {
 
 		type CellValueType = TreeNodeFromImplicitAllowedTypes<TCellSchema>;
 		type ColumnValueType = TreeNodeFromImplicitAllowedTypes<TColumnSchema>;
+		type ColumnInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>;
 		type RowValueType = TreeNodeFromImplicitAllowedTypes<TRowSchema>;
+		type RowInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>;
 
 		// Internal version of RowValueType that exposes the `cells` property for use within Table methods.
 		type RowValueInternalType = RowValueType & RowPrivate<TCellSchema>;
@@ -594,15 +596,24 @@ export namespace System_TableSchema {
 				columns,
 				index,
 			}: TableSchema.InsertColumnsParameters<TColumnSchema>): ColumnValueType[] {
+				// #region Input validation
+
+				// Ensure specified index is valid
+				if (index !== undefined) {
+					validateIndex(index, this.table.columns, "Table.insertColumns", true);
+				}
+
+				// Ensure the new columns being inserted are valid
+				this.#validateNewColumns(columns);
+
+				// #endregion
+
 				// TypeScript is unable to narrow the column type correctly here, hence the casts below.
 				// See: https://github.com/microsoft/TypeScript/issues/52144
 				if (index === undefined) {
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					this.table.columns.insertAtEnd(TreeArrayNode.spread(columns) as any);
 				} else {
-					// Ensure specified index is valid
-					validateIndex(index, this.table.columns, "Table.insertColumns", true);
-
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					this.table.columns.insertAt(index, TreeArrayNode.spread(columns) as any);
 				}
@@ -622,24 +633,8 @@ export namespace System_TableSchema {
 					validateIndex(index, this.table.rows, "Table.insertRows", true);
 				}
 
-				// Note: TypeScript is unable to narrow the type of the row type correctly here, hence the casts below.
-				// See: https://github.com/microsoft/TypeScript/issues/52144
-				for (const newRow of rows) {
-					// If the row contains cells, verify that the table contains the columns for those cells.
-					// Note: we intentionally hide `cells` on `IRow` to avoid leaking the internal data representation as much as possible, so we have to cast here.
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					if ((newRow as any).cells !== undefined) {
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						const keys: string[] = Object.keys((newRow as any).cells);
-						for (const key of keys) {
-							if (!this.#containsColumnWithId(key)) {
-								throw new UsageError(
-									`Attempted to insert row a cell under column ID "${key}", but the table does not contain a column with that ID.`,
-								);
-							}
-						}
-					}
-				}
+				// Ensure the new rows being inserted are valid
+				this.#validateNewRows(rows);
 
 				// #endregion
 
@@ -967,6 +962,72 @@ export namespace System_TableSchema {
 					Table._throwMissingRowError(rowOrIdOrIndex);
 				}
 				return row;
+			}
+
+			#validateNewColumns(newColumns: readonly ColumnInsertableType[]): void {
+				const existingColumnIds = new Set<string>(Array.from(this.table.columns, (column) => (column as ColumnValueType).id));
+				const newColumnIds = new Set<string>();
+				for (const newColumn of newColumns) {
+					// #region Ensure each column ID is unique
+					const newColumnId = (newColumn as ColumnValueType).id;
+					if (existingColumnIds.has(newColumnId)) {
+						throw new UsageError(
+							`Attempted to insert a column with ID "${newColumnId}", but a column with that ID already exists in the table.`,
+						);
+					}
+					if (newColumnIds.has(newColumnId)) {
+						throw new UsageError(
+							`Attempted to insert multiple columns with ID "${newColumnId}". Column IDs must be unique.`,
+						);
+					}
+					newColumnIds.add(newColumnId);
+				}
+			}
+
+			/**
+			 * Validates the provided list of new rows being inserted into the table.
+			 * @throws Throws a `UsageError` if any of the following conditions are met:
+			 * - A row with a duplicate ID is being inserted.
+			 * - A row is being inserted that contains cells for columns that do not exist in the table.
+			 */
+			#validateNewRows(newRows: readonly RowInsertableType[]): void {
+				const existingRowIds = new Set<string>(Array.from(this.table.rows, (row) => (row as RowValueType).id));
+				const newRowIds = new Set<string>();
+				for (const newRow of newRows) {
+					// #region Ensure each row ID is unique
+					const newRowId = (newRow as RowValueType).id;
+					if (existingRowIds.has(newRowId)) {
+						throw new UsageError(
+							`Attempted to insert a row with ID "${newRowId}", but a row with that ID already exists in the table.`,
+						);
+					}
+					if (newRowIds.has(newRowId)) {
+						throw new UsageError(
+							`Attempted to insert multiple rows with ID "${newRowId}". Row IDs must be unique.`,
+						);
+					}
+					newRowIds.add(newRowId);
+
+					// #endregion
+
+					// #region If the row contains cells, verify that the table contains the columns for those cells
+
+					// Note: we intentionally hide `cells` on `IRow` to avoid leaking the internal data representation as much as possible, so we have to cast here.
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					if ((newRow as any).cells !== undefined) {
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						const keys: string[] = Object.keys((newRow as any).cells);
+						for (const key of keys) {
+							if (!this.#containsColumnWithId(key)) {
+								throw new UsageError(
+									`Attempted to insert a row containing a cell under column ID "${key}", but the table does not contain a column with that ID.`,
+								);
+							}
+						}
+					}
+
+					// #endregion
+				}
 			}
 
 			/**
