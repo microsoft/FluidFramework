@@ -336,7 +336,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 */
 	public toggle(entryId: string): void {
 		const liveEntry = this.getLiveEntry(entryId);
-		if (liveEntry?.isRollback) {
+		if (liveEntry?.isRollback === true) {
 			return;
 		}
 		const isDeleted = !liveEntry.isDeleted;
@@ -373,7 +373,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 */
 	public toggleMove(oldEntryId: string, newEntryId: string): void {
 		const liveEntry = this.getLiveEntry(newEntryId);
-		if (liveEntry?.isRollback) {
+		if (liveEntry?.isRollback === true) {
 			return;
 		}
 		if (this.getEntryForId(newEntryId).isDeleted) {
