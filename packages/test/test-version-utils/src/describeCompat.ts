@@ -38,7 +38,6 @@ import {
 	getLoaderApi,
 	CompatApis,
 	getDriverApi,
-	getCompatModeFromKind,
 } from "./testApi.js";
 import { getRequestedVersion } from "./versionUtils.js";
 
@@ -198,7 +197,6 @@ function createCompatSuite(
  * Get versioned APIs for the given config.
  */
 function getVersionedApis(config: CompatConfig): CompatApis {
-	const mode = getCompatModeFromKind(config.kind);
 	// If this is cross-clients compat scenario, make sure we use the correct versions
 	if (config.kind === CompatKind.CrossClient) {
 		assert(
@@ -213,7 +211,6 @@ function getVersionedApis(config: CompatConfig): CompatApis {
 		const dataRuntime = getDataRuntimeApi(config.createVersion);
 		const dataRuntimeForLoading = getDataRuntimeApi(config.loadVersion);
 		return {
-			mode,
 			containerRuntime: getContainerRuntimeApi(config.createVersion),
 			containerRuntimeForLoading: getContainerRuntimeApi(config.loadVersion),
 			dataRuntime,
@@ -231,7 +228,6 @@ function getVersionedApis(config: CompatConfig): CompatApis {
 		getRequestedVersion(testBaseVersion(config.dataRuntime), config.dataRuntime),
 	);
 	return {
-		mode,
 		containerRuntime: getContainerRuntimeApi(
 			getRequestedVersion(testBaseVersion(config.containerRuntime), config.containerRuntime),
 		),
