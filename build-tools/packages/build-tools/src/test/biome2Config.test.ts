@@ -18,7 +18,6 @@ import {
 	loadBiome2Config,
 	parseIncludes,
 } from "../common/biome2Config";
-import { filterFilesWithOrderedPatterns } from "../common/biomeConfigUtils";
 import { GitRepo } from "../common/gitRepo";
 import { getResolvedFluidRoot } from "../fluidBuild/fluidUtils";
 import { testDataPath } from "./init";

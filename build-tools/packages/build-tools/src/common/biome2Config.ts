@@ -12,7 +12,6 @@ import type { Opaque } from "type-fest";
 import type { Configuration as Biome2ConfigRaw } from "./biome2ConfigTypes";
 import {
 	filterFilesWithOrderedPatterns,
-	filterFilesWithPatterns,
 	getClosestBiomeConfigPath,
 	loadRawBiomeConfigFile,
 	resolveExtendsChainGeneric,
