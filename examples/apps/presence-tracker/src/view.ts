@@ -5,8 +5,7 @@
 
 import { Picker } from "emoji-picker-element";
 
-import type { FocusTracker } from "./FocusTracker.js";
-import type { IFocusState } from "./FocusTracker.js";
+import type { FocusTracker, IFocusState } from "./FocusTracker.js";
 import type { MouseTracker } from "./MouseTracker.js";
 
 export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement): void {
