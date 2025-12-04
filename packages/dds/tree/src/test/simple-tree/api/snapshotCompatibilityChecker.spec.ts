@@ -25,7 +25,7 @@ describe("snapshotCompatibilityChecker", () => {
 		const snapshot = exportCompatibilitySchemaSnapshot(view);
 		const parsedView = importCompatibilitySchemaSnapshot(snapshot);
 
-		const normalizedView = normalizeFieldSchema(view.schema);
+		const normalizedView = normalizeFieldSchema(parsedView.schema);
 
 		assert.equal(normalizedView.allowedTypeSet.size, 1);
 		assert.equal(
