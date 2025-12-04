@@ -103,6 +103,7 @@ const _extractTypeid = function (typeidOrReference: string) {
  * @param in_typeid - A PropertySet typeid. For example: 'TeamLeoValidation2:ColorID-1.0.0'.
  * @returns The semver 'x.y.z' version string, or null if in_typeid is not a valid PropertySet typeid.
  */
+// eslint-disable-next-line @typescript-eslint/no-restricted-types
 const _getSemverFromTypeId = function (in_typeid: string): string | null {
 	const semverRegex = /.*-(.*)$/g;
 	const match = semverRegex.exec(in_typeid);
@@ -267,6 +268,7 @@ const _psetDeepEquals = function (
  * @param in_typeid - A PropertySet typeid. For example: 'TeamLeoValidation2:ColorID-1.0.0'.
  * @returns The typeid, without a semver.
  */
+// eslint-disable-next-line @typescript-eslint/no-restricted-types
 const _stripSemverFromTypeId = function (in_typeid: string): string | null {
 	const semverRegex = /(.*)-.*$/g;
 	const match = semverRegex.exec(in_typeid);

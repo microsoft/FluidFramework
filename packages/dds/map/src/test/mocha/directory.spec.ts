@@ -427,7 +427,7 @@ describe("Directory", () => {
 					directory.set(undefined as unknown as string, "testValue");
 				}, "Should throw for key of undefined");
 				assert.throws(() => {
-					// eslint-disable-next-line unicorn/no-null
+					// eslint-disable-next-line @typescript-eslint/no-restricted-types
 					directory.set(null as unknown as string, "testValue");
 				}, "Should throw for key of null");
 			});
@@ -437,7 +437,7 @@ describe("Directory", () => {
 					directory.createSubDirectory(undefined as unknown as string);
 				}, "Should throw for undefined subDirectory name");
 				assert.throws(() => {
-					// eslint-disable-next-line unicorn/no-null
+					// eslint-disable-next-line @typescript-eslint/no-restricted-types
 					directory.createSubDirectory(null as unknown as string);
 				}, "Should throw for null subDirectory name");
 			});

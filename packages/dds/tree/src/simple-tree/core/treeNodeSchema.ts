@@ -632,5 +632,5 @@ export type NodeBuilderData<T extends TreeNodeSchemaCore<string, NodeKind, boole
  * Some limitations apply, see the documentation for {@link SchemaStatics.number} and {@link SchemaStatics.string} for those restrictions.
  * @public
  */
-// eslint-disable-next-line @rushstack/no-new-null
+// eslint-disable-next-line @typescript-eslint/no-restricted-types
 export type TreeLeafValue = number | string | boolean | IFluidHandle | null;

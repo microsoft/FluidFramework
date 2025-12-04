@@ -251,7 +251,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	public static async create(
 		tenantId: string,
 		documentId: string,
-		// eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		token: string | null,
 		client: IClient,
 		url: string,

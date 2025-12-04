@@ -144,7 +144,7 @@ export class PropertiesManager {
 		collaborating: boolean = false,
 	): MapLike<unknown> {
 		return applyChanges(op, seg, UniversalSequenceNumber, (properties, deltas, key, value) => {
-			// eslint-disable-next-line unicorn/no-null
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			const previousValue = properties[key] ?? null;
 
 			const pending = this.changes.get(key);
@@ -198,7 +198,7 @@ export class PropertiesManager {
 			return this.rollbackProperties(op, seg, collaborating);
 		}
 		const rtn = applyChanges(op, seg, seq, (properties, deltas, key, value) => {
-			// eslint-disable-next-line unicorn/no-null
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			const previousValue = properties[key] ?? null;
 			if (collaborating) {
 				const pending: PropertyChanges | undefined = this.changes.get(key) ?? {

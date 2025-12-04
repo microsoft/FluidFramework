@@ -41,7 +41,7 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 		this._disposed = true;
 	}
 
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
 		return this.runWithRetry(
 			async () => this.internalStorageService.getSnapshotTree(version),
@@ -66,7 +66,7 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 	}
 
 	public async getVersions(
-		// eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		versionId: string | null,
 		count: number,
 		scenarioName?: string,

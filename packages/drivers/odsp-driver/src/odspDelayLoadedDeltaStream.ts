@@ -91,9 +91,8 @@ export class OdspDelayLoadedDeltaStream {
 		public readonly odspResolvedUrl: IOdspResolvedUrl,
 		public policies: IDocumentServicePolicies,
 		private readonly getAuthHeader: InstrumentedStorageTokenFetcher,
-		private readonly getWebsocketToken:
-			| ((options: TokenFetchOptions) => Promise<string | null>)
-			| undefined,
+		private readonly getWebsocketToken: // eslint-disable-next-line @typescript-eslint/no-restricted-types
+		((options: TokenFetchOptions) => Promise<string | null>) | undefined,
 		private readonly mc: MonitoringContext,
 		private readonly cache: IOdspCache,
 		private readonly hostPolicy: HostStoragePolicy,
@@ -149,8 +148,7 @@ export class OdspDelayLoadedDeltaStream {
 			// websocket token or whether it is returned with joinSession response payload
 			const requestWebsocketTokenFromJoinSession = this.getWebsocketToken === undefined;
 			const websocketTokenPromise = requestWebsocketTokenFromJoinSession
-				? // eslint-disable-next-line unicorn/no-null
-					Promise.resolve(null)
+				? Promise.resolve(null)
 				: this.getWebsocketToken(options);
 
 			const annotateAndRethrowConnectionError = (step: string) => (error: unknown) => {
@@ -179,7 +177,7 @@ export class OdspDelayLoadedDeltaStream {
 				websocketTokenPromise.catch(annotateAndRethrowConnectionError("getWebsocketToken")),
 			]);
 
-			// eslint-disable-next-line unicorn/no-null
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			const finalWebsocketToken = websocketToken ?? websocketEndpoint.socketToken ?? null;
 			if (finalWebsocketToken === null) {
 				throw this.annotateConnectionError(
@@ -544,6 +542,7 @@ export class OdspDelayLoadedDeltaStream {
 	private async createDeltaConnection(
 		tenantId: string,
 		documentId: string,
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		token: string | null,
 		client: IClient,
 		webSocketUrl: string,

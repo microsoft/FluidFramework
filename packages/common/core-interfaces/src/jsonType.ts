@@ -18,7 +18,7 @@
  * @beta
  */
 export type JsonTypeWith<T> =
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	| null
 	| boolean
 	| number
@@ -54,7 +54,7 @@ export type NonNullJsonObjectWith<T> =
  * @beta
  */
 export type ReadonlyJsonTypeWith<TReadonlyAlternates> =
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	| null
 	| boolean
 	| number

@@ -20,7 +20,7 @@ export type TreeIndexNodes<TNode> = readonly [first: TNode, ...rest: TNode[]];
  *
  * @alpha
  */
-// eslint-disable-next-line @rushstack/no-new-null
+// eslint-disable-next-line @typescript-eslint/no-restricted-types
 export type TreeIndexKey = number | string | boolean | IFluidHandle | null;
 
 /**

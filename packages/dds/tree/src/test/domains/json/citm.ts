@@ -4,7 +4,7 @@
  */
 
 // This file replicates data which contains nulls, and thus the nulls introduced here are not new.
-/* eslint-disable @rushstack/no-new-null */
+/* eslint-disable @typescript-eslint/no-restricted-types */
 
 import { type IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
 

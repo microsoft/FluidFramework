@@ -75,9 +75,11 @@ export class AgentScheduler
 		existing: boolean,
 	): Promise<IAgentScheduler> {
 		let root: ISharedMap;
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		let consensusRegisterCollection: ConsensusRegisterCollection<string | null>;
 		if (existing) {
 			root = (await runtime.getChannel("root")) as ISharedMap;
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			const handle = await mapWait<IFluidHandle<ConsensusRegisterCollection<string | null>>>(
 				root,
 				schedulerId,
@@ -136,6 +138,7 @@ export class AgentScheduler
 	constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly context: IFluidDataStoreContext,
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		private readonly consensusRegisterCollection: ConsensusRegisterCollection<string | null>,
 	) {
 		super();
@@ -219,7 +222,7 @@ export class AgentScheduler
 	public pickedTasks(): string[] {
 		return [...this.runningTasks.values()];
 	}
-	/* eslint-disable unicorn/no-null */
+	/* eslint-disable @typescript-eslint/no-restricted-types */
 	private async registerCore(taskUrls: string[]): Promise<void> {
 		if (taskUrls.length > 0) {
 			const registersP: Promise<void>[] = [];
@@ -382,7 +385,7 @@ export class AgentScheduler
 			}
 		}
 	}
-	/* eslint-enable unicorn/no-null */
+	/* eslint-enable @typescript-eslint/no-restricted-types */
 
 	private isActive(): boolean {
 		// Scheduler should be active in detached container.

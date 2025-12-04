@@ -237,6 +237,7 @@ class LatestValueManagerImpl<T, Key extends string>
  * @param value - The object to clone
  * @returns A shallow clone of the input value
  */
+// eslint-disable-next-line @typescript-eslint/no-restricted-types
 export function shallowCloneNullableObject<T extends object | null>(value: T): T {
 	return value === null ? value : shallowCloneObject(value);
 }
@@ -247,6 +248,7 @@ export function shallowCloneNullableObject<T extends object | null>(value: T): T
  * @input
  * @beta
  */
+// eslint-disable-next-line @typescript-eslint/no-restricted-types
 export interface LatestArgumentsRaw<T extends object | null> {
 	/**
 	 * The initial value of the local state.
@@ -269,6 +271,7 @@ export interface LatestArgumentsRaw<T extends object | null> {
  * @input
  * @beta
  */
+// eslint-disable-next-line @typescript-eslint/no-restricted-types
 export interface LatestArguments<T extends object | null> extends LatestArgumentsRaw<T> {
 	/**
 	 * See {@link StateSchemaValidator}.
@@ -293,6 +296,7 @@ export interface LatestFactory {
 	 * This overload is used when called with {@link LatestArguments}.
 	 * That is, if a validator function is provided.
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	<T extends object | null, Key extends string = string>(
 		args: LatestArguments<T>,
 	): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
@@ -304,6 +308,7 @@ export interface LatestFactory {
 	 * This overload is used when called with {@link LatestArgumentsRaw}.
 	 * That is, if a validator function is _not_ provided.
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	<T extends object | null, Key extends string = string>(
 		args: LatestArgumentsRaw<T>,
 	): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
@@ -314,6 +319,7 @@ export interface LatestFactory {
 /**
  * Factory for creating a {@link Latest} or {@link LatestRaw} State object.
  */
+// eslint-disable-next-line @typescript-eslint/no-restricted-types
 export const latest: LatestFactory = <T extends object | null, Key extends string = string>(
 	args: FlattenUnionWithOptionals<LatestArguments<T> | LatestArgumentsRaw<T>>,
 ): InternalTypes.ManagerFactory<

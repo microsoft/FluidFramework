@@ -257,7 +257,7 @@ export function checkCompiles(): void {
 		"primitiveMap",
 		StateFactory.latestMap({
 			local: {
-				// eslint-disable-next-line unicorn/no-null
+				// eslint-disable-next-line @typescript-eslint/no-restricted-types
 				null: null,
 				string: "string",
 				number: 0,
@@ -278,7 +278,7 @@ export function checkCompiles(): void {
 	// Caller can always use explicit generic specification to be
 	// completely clear about the types.
 	localPrimitiveMap.set("number", false);
-	// eslint-disable-next-line unicorn/no-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	localPrimitiveMap.set("boolean", null);
 	localPrimitiveMap.set("null", "null");
 

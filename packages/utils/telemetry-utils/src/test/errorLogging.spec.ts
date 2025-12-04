@@ -7,7 +7,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable unicorn/no-null */
+/* eslint-disable @typescript-eslint/no-restricted-types */
 
 import { strict as assert } from "node:assert";
 

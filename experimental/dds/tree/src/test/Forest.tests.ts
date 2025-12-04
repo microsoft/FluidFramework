@@ -284,6 +284,7 @@ describe('Forest', () => {
 		}
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	function expectSuccessfulReplace(forest: Forest, nodeId: NodeId, payload: Payload | null): void {
 		const forestWithReplace = forest.setValue(nodeId, payload);
 		const newNode = forestWithReplace.get(nodeId);

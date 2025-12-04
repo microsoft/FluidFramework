@@ -309,7 +309,7 @@ export class Forest {
 	 * @param nodeId - the id of the node
 	 * @param value - the new value
 	 */
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public setValue(nodeId: NodeId, value: Payload | null): Forest {
 		const node = this.nodes.get(nodeId);
 		assert(node !== undefined, 0x61b /* can not replace payload for node that does not exist */);

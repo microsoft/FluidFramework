@@ -333,10 +333,10 @@ export class Sanitizer {
 	 * @param excludedKeys - object keys for which to skip replacement when not in fullScrub
 	 */
 	replaceObject(
-		// eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		input: object | null,
 		excludedKeys: Set<string> = this.defaultExcludedKeys,
-		// eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	): object | null {
 		// File might contain actual nulls
 		if (input === null || input === undefined) {

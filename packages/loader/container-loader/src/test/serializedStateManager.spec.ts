@@ -112,13 +112,13 @@ class MockStorageAdapter implements ISerializedStateManagerDocumentStorageServic
 	public async getSnapshotTree(
 		_version?: IVersion | undefined,
 		_scenarioName?: string | undefined,
-		// eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	): Promise<ISnapshotTree | null> {
 		return this.snapshot;
 	}
 
 	public async getVersions(
-		// eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		_versionId: string | null,
 		_count: number,
 		_scenarioName?: string | undefined,

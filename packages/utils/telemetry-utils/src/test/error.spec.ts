@@ -147,7 +147,7 @@ describe("Errors", () => {
 
 		it("Should not fail coercing malformed inputs", () => {
 			const originalMalformations = [
-				// eslint-disable-next-line unicorn/no-null
+				// eslint-disable-next-line @typescript-eslint/no-restricted-types
 				null,
 				undefined,
 				false,

@@ -5122,7 +5122,7 @@ export class ContainerRuntime
 					targetAckHandle?: string | undefined;
 				} = { targetRefSeq, targetAckHandle };
 				const trace = Trace.start();
-
+				// eslint-disable-next-line @typescript-eslint/no-restricted-types
 				let snapshotTree: ISnapshotTree | null;
 				const scenarioName = "RefreshLatestSummaryAckFetch";
 				// If loader supplied us the ISnapshot when loading, the new getSnapshotApi is supported and feature gate is ON, then use the
@@ -5144,7 +5144,7 @@ export class ContainerRuntime
 					snapshotTree = snapshot.snapshotTree;
 				} else {
 					const versions = await this.storage.getVersions(
-						// eslint-disable-next-line unicorn/no-null
+						// eslint-disable-next-line @typescript-eslint/no-restricted-types
 						null,
 						1,
 						scenarioName,

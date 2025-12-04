@@ -230,10 +230,10 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	public async getSnapshotTree(
 		version?: IVersion,
 		scenarioName?: string,
-		// eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	): Promise<ISnapshotTree | null> {
 		if (!this.snapshotUrl) {
-			// eslint-disable-next-line unicorn/no-null
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			return null;
 		}
 		return super.getSnapshotTree(version, scenarioName);
@@ -465,7 +465,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	}
 
 	public async getVersions(
-		// eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		blobid: string | null,
 		count: number,
 		scenarioName?: string,

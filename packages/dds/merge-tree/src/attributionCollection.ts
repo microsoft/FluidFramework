@@ -29,7 +29,7 @@ export interface SequenceOffsets {
 	 * @remarks We use null here rather than undefined as round-tripping through JSON converts
 	 * undefineds to null anyway
 	 */
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	seqs: (number | AttributionKey | null)[];
 	posBreakpoints: number[];
 }
@@ -47,9 +47,9 @@ export interface SerializedAttributionCollection extends SequenceOffsets {
  * @legacy @beta
  */
 export interface IAttributionCollectionSpec<T> {
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	root: Iterable<{ offset: number; key: T | null }>;
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	channels?: { [name: string]: Iterable<{ offset: number; key: T | null }> };
 	length: number;
 }
@@ -140,9 +140,9 @@ export interface IAttributionCollection<T> {
 
 // note: treats null and undefined as equivalent
 export function areEqualAttributionKeys(
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	a: AttributionKey | null | undefined,
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	b: AttributionKey | null | undefined,
 ): boolean {
 	if (!a && !b) {
@@ -176,6 +176,7 @@ export function areEqualAttributionKeys(
 
 export class AttributionCollection implements IAttributionCollection<AttributionKey> {
 	private offsets: number[] = [];
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	private keys: (AttributionKey | null)[] = [];
 
 	private channels?: { [name: string]: AttributionCollection };
@@ -186,7 +187,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 
 	public constructor(
 		private _length: number,
-		// eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		baseEntry?: AttributionKey | null,
 	) {
 		if (baseEntry !== undefined) {
@@ -316,14 +317,14 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 				const thisCollection = (this.channels[key] ??= new AttributionCollection(
 					this.length,
 					// Null is needed as null and undefined have different meanings in the context of attribution collections.
-					// eslint-disable-next-line unicorn/no-null
+					// eslint-disable-next-line @typescript-eslint/no-restricted-types
 					null,
 				));
 				thisCollection.append(collection);
 			}
 			for (const [key, collection] of this.channelEntries) {
 				if (other.channels?.[key] === undefined) {
-					// eslint-disable-next-line unicorn/no-null
+					// eslint-disable-next-line @typescript-eslint/no-restricted-types
 					collection.append(new AttributionCollection(other.length, null));
 				}
 			}
@@ -415,11 +416,11 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 			for (const segment of segments) {
 				const attribution = new AttributionCollection(segment.cachedLength);
 				// This function is defined here to allow for the creation of a new collection for each segment.
-				// eslint-disable-next-line unicorn/consistent-function-scoping
+				// eslint-disable-next-line unicorn/consistent-function-scoping, @typescript-eslint/no-restricted-types
 				const pushEntry = (offset: number, seq: AttributionKey | number | null): void => {
 					attribution.offsets.push(offset);
 					attribution.keys.push(
-						// eslint-disable-next-line unicorn/no-null
+						// eslint-disable-next-line @typescript-eslint/no-restricted-types
 						seq === null ? null : typeof seq === "object" ? seq : { type: "op", seq },
 					);
 				};
@@ -475,7 +476,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		const allChannelNames = new Set<string>();
 		for (const segment of segments) {
 			const collection =
-				// eslint-disable-next-line unicorn/no-null
+				// eslint-disable-next-line @typescript-eslint/no-restricted-types
 				segment.attribution ?? new AttributionCollection(segment.cachedLength, null);
 			const spec = collection.getAll();
 			allCollectionSpecs.push(spec);
@@ -489,10 +490,13 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		const extractSequenceOffsets = (
 			getSpecEntries: (
 				spec: IAttributionCollectionSpec<AttributionKey>,
+				// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			) => Iterable<{ offset: number; key: AttributionKey | null }>,
 		): SerializedAttributionCollection => {
 			const posBreakpoints: number[] = [];
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			const seqs: (number | AttributionKey | null)[] = [];
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			let mostRecentAttributionKey: AttributionKey | null | undefined;
 			let cumulativePos = 0;
 
@@ -507,7 +511,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 						!areEqualAttributionKeys(key, mostRecentAttributionKey)
 					) {
 						posBreakpoints.push(offset + cumulativePos);
-						// eslint-disable-next-line unicorn/no-null
+						// eslint-disable-next-line @typescript-eslint/no-restricted-types
 						seqs.push(key ? (key.type === "op" ? key.seq : key) : null);
 					}
 					mostRecentAttributionKey = key;
@@ -524,7 +528,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 			const channels: { [name: string]: SequenceOffsets } = {};
 			for (const name of allChannelNames) {
 				const { posBreakpoints, seqs } = extractSequenceOffsets(
-					// eslint-disable-next-line unicorn/no-null
+					// eslint-disable-next-line @typescript-eslint/no-restricted-types
 					(spec) => spec.channels?.[name] ?? [{ offset: 0, key: null }],
 				);
 				channels[name] = { posBreakpoints, seqs };

@@ -29,6 +29,7 @@ export interface ICache {
 }
 
 export class OpsCache {
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	private readonly batches: Map<number, null | IBatch> = new Map();
 	private timer: ReturnType<typeof setTimeout> | undefined;
 
@@ -114,7 +115,7 @@ export class OpsCache {
 			if (currentBatch.remainingSlots === 0) {
 				// batch is full, flush to cache
 				this.write(batchNumber, currentBatch);
-				// eslint-disable-next-line unicorn/no-null
+				// eslint-disable-next-line @typescript-eslint/no-restricted-types
 				this.batches.set(batchNumber, null);
 			} else {
 				this.scheduleTimer();

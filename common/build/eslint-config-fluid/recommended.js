@@ -22,7 +22,6 @@ module.exports = {
 	plugins: ["eslint-plugin-tsdoc"],
 	rules: {
 		// RECOMMENDED RULES
-		"@rushstack/no-new-null": "error",
 		"no-empty": "error",
 		"no-void": "error",
 		"require-atomic-updates": "error",
@@ -60,6 +59,11 @@ module.exports = {
 		 * @remarks This rule also directly conflicts with prettier's formatting of nested ternary expressions.
 		 */
 		"unicorn/no-nested-ternary": "off",
+
+		/**
+		 * Disabled in favor of "@typescript-eslint/no-restricted-types, which is more effective.
+		 */
+		"unicorn/no-null": "off",
 
 		/**
 		 * Disabled due to false positives / disruptive behavior of auto-fix.

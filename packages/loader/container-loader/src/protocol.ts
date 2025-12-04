@@ -34,7 +34,7 @@ interface SystemSignalContent {
 
 interface InboundSystemSignal<TSignalContent extends SystemSignalContent>
 	extends ISignalMessage<{ type: never; content: TSignalContent }> {
-	// eslint-disable-next-line @rushstack/no-new-null -- `null` is used in JSON protocol to indicate system message
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types -- `null` is used in JSON protocol to indicate system message
 	readonly clientId: null;
 }
 
@@ -138,7 +138,7 @@ export class ProtocolHandler extends ProtocolOpHandler implements ProtocolHandle
 	): IProcessMessageResult {
 		// Check and report if we're getting messages from a clientId that we previously
 		// flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
-		// eslint-disable-next-line unicorn/no-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		if (message.clientId != null) {
 			const client = this.quorum.getMember(message.clientId);
 

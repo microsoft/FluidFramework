@@ -523,7 +523,7 @@ export type ChangePropType<T, Prop extends keyof T, TPropNew> = Omit<T, Prop> & 
 	[_ in Prop]: TPropNew;
 };
 
-// eslint-disable-next-line @rushstack/no-new-null
+// eslint-disable-next-line @typescript-eslint/no-restricted-types
 type Primitive = string | number | bigint | boolean | null | symbol | undefined;
 
 /**

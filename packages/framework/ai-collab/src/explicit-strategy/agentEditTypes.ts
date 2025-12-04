@@ -75,7 +75,7 @@ export type TreeEditValue = JsonPrimitive | TreeEditObject | TreeEditArray;
  * we need to wrap to avoid anyOf at the root level when generating the necessary JSON Schema.
  */
 export interface EditWrapper {
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	edit: TreeEdit | null;
 }
 

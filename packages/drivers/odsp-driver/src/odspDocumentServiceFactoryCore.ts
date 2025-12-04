@@ -307,7 +307,8 @@ export class OdspDocumentServiceFactoryCore
 		const webSocketTokenFetcher =
 			this.getWebsocketToken === undefined
 				? undefined
-				: async (options: TokenFetchOptions): Promise<string | null> =>
+				: // eslint-disable-next-line @typescript-eslint/no-restricted-types
+					async (options: TokenFetchOptions): Promise<string | null> =>
 						// websocket expects a plain token
 						toInstrumentedOdspTokenFetcher(
 							extLogger,

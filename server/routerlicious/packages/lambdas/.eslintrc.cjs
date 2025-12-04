@@ -9,7 +9,7 @@ module.exports = {
 		"@rushstack/no-new-null": "off",
 		"import-x/no-nodejs-modules": "off",
 		"promise/catch-or-return": ["error", { allowFinally: true }],
-		"unicorn/no-null": "off",
+		"@typescript-eslint/no-restricted-types": "off",
 
 		// TODO: fix violations and remove these overrides
 		"@typescript-eslint/no-explicit-any": "off",

@@ -58,6 +58,7 @@ export class ReplayControllerStatic extends ReplayController {
 		return true;
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
 		return [];
 	}

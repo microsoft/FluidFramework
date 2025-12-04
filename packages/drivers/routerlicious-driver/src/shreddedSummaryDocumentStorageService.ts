@@ -75,6 +75,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 		});
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
 		const id = versionId ? versionId : this.id;
 		const commits = await PerformanceEvent.timedExecAsync(
@@ -96,6 +97,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 		}));
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTreeEx | null> {
 		let requestVersion = version;
 		if (!requestVersion) {
@@ -217,6 +219,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 
 	private async getPreviousFullSnapshot(
 		parentHandle: string,
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	): Promise<ISnapshotTreeEx | null | undefined> {
 		return parentHandle
 			? this.getVersions(parentHandle, 1).then(async (versions) => {

@@ -19,7 +19,10 @@ import {
  * @internal
  */
 export abstract class ReadDocumentStorageServiceBase implements IDocumentStorageService {
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public abstract getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
+
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public abstract getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
 	public abstract readBlob(blobId: string): Promise<ArrayBufferLike>;
 

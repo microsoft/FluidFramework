@@ -323,7 +323,7 @@ export type JsonCompatible<TExtra = never> =
 	| string
 	| number
 	| boolean
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	| null
 	| JsonCompatible<TExtra>[]
 	| JsonCompatibleObject<TExtra>
@@ -354,7 +354,7 @@ export type JsonCompatibleReadOnly =
 	| string
 	| number
 	| boolean
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	| null
 	| readonly JsonCompatibleReadOnly[]
 	| JsonCompatibleReadOnlyObject;

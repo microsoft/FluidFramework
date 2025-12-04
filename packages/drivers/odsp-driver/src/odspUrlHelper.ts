@@ -86,6 +86,7 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 	// Joinsession like URL
 	// Pick a regex based on the hostname
 	// TODO This will only support ODC using api.onedrive.com, update to handle the future (share links etc)
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	let joinSessionMatch: RegExpExecArray | null;
 	if (hasOdcOrigin(url)) {
 		// Capture groups:

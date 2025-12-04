@@ -118,7 +118,7 @@ export function bumpVersionScheme(
 				case "major":
 				case "minor":
 				case "patch": {
-					// eslint-disable-next-line unicorn/no-null
+					// eslint-disable-next-line @typescript-eslint/no-restricted-types
 					return sv?.inc(bumpType) ?? null;
 				}
 				default: {

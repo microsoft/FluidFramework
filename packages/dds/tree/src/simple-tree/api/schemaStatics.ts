@@ -77,7 +77,7 @@ export interface SchemaStatics {
 	 * This {@link TreeNodeSchema} node provides the option to include nulls in trees when desired.
 	 * Unless directly inter-operating with existing data using null, consider other approaches, like wrapping the value in an optional field, or using a more specifically named empty object node.
 	 */
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	readonly null: LeafSchema<"null", null>;
 
 	/**

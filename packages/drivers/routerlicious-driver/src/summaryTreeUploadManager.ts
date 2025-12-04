@@ -22,6 +22,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 		private readonly blobsShaCache: Map<string, string>,
 		private readonly getPreviousFullSnapshot: (
 			parentHandle: string,
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		) => Promise<ISnapshotTreeEx | null | undefined>,
 	) {}
 

@@ -145,6 +145,7 @@ Step to move: <input type='number' id='steps' value='1' min='1' style='width:50p
  * @internal
  */
 export class DebuggerUI {
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public static create(controller: IDebuggerController): DebuggerUI | null {
 		if (
 			typeof window !== "object" ||

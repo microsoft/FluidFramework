@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 
 import { areStringsEquivalent } from "../util/index.js";
 
+// eslint-disable-next-line @typescript-eslint/no-restricted-types
 function test(left: string | undefined | null, right: string | undefined | null) {
 	const isLeftEmpty = left === "" || left === null || left === undefined;
 	const isRightEmpty = right === "" || right === null || right === undefined;

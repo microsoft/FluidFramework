@@ -25,6 +25,7 @@ import { PathHelper, PathTree } from "./pathHelper.js";
 
 const { PROPERTY_PATH_DELIMITER, MSG } = constants;
 
+// eslint-disable-next-line @typescript-eslint/no-restricted-types
 type NextFn = (err?: Error | null | undefined | string, result?: unknown) => void;
 
 /**
@@ -84,10 +85,12 @@ export namespace Utils {
 	function _traverseChangeSetRecursivelyAsync(
 		in_preCallback: (
 			context: TraversalContext,
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			next: (err?: Error | null | undefined | string, result?: unknown) => void,
 		) => any,
 		in_postCallback: (
 			context: TraversalContext,
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			next: (err?: Error | null | undefined | string, result?: unknown) => void,
 		) => any,
 		in_context: TraversalContext,

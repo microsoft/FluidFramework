@@ -186,16 +186,16 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 	public async getSnapshotTree(
 		version?: IVersion,
 		scenarioName?: string,
-		// eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	): Promise<ISnapshotTree | null> {
 		let id: string;
 		if (version?.id) {
 			id = version.id;
 		} else {
-			// eslint-disable-next-line unicorn/no-null
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			const versions = await this.getVersions(null, 1, scenarioName);
 			if (!versions || versions.length === 0) {
-				// eslint-disable-next-line unicorn/no-null
+				// eslint-disable-next-line @typescript-eslint/no-restricted-types
 				return null;
 			}
 			id = versions[0].id;
@@ -203,7 +203,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 
 		const snapshotTree = await this.readTree(id, scenarioName);
 		if (!snapshotTree) {
-			// eslint-disable-next-line unicorn/no-null
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			return null;
 		}
 
@@ -215,7 +215,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 	): Promise<ISnapshot>;
 
 	public abstract getVersions(
-		// eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		blobid: string | null,
 		count: number,
 		scenarioName?: string,
@@ -239,13 +239,14 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		this.blobCache.addBlobs(blobs);
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	private async readTree(id: string, scenarioName?: string): Promise<ISnapshotTree | null> {
 		let tree = this.commitCache.get(id);
 		if (!tree) {
 			tree = await this.fetchTreeFromSnapshot(id, scenarioName);
 		}
 
-		// eslint-disable-next-line unicorn/no-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		return tree ?? null;
 	}
 

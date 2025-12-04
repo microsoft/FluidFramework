@@ -23,7 +23,7 @@ import { StateFactory } from "@fluidframework/presence/beta";
 
 const testWorkspaceName = "name:testWorkspaceA";
 
-/* eslint-disable unicorn/no-null -- API null support must be tested */
+/* eslint-disable @typescript-eslint/no-restricted-types -- API null support must be tested */
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createLatestManager(
@@ -243,4 +243,4 @@ export function checkCompiles(): void {
 	logRemoteValue({ attendee: attendee2, value: latestData.value });
 }
 
-/* eslint-enable unicorn/no-null */
+/* eslint-enable @typescript-eslint/no-restricted-types */

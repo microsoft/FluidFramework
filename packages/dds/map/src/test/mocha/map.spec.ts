@@ -132,7 +132,7 @@ describe("Map", () => {
 					map.set(undefined as unknown as string, "one");
 				}, "Should throw for key of undefined");
 				assert.throws(() => {
-					// eslint-disable-next-line unicorn/no-null
+					// eslint-disable-next-line @typescript-eslint/no-restricted-types
 					map.set(null as unknown as string, "two");
 				}, "Should throw for key of null");
 			});

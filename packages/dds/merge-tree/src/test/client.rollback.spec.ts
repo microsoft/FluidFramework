@@ -129,7 +129,7 @@ describe("client.rollback", () => {
 			foo: "bar",
 		});
 		const marker = client.getMarkerFromId("markerId") as Marker;
-		// eslint-disable-next-line unicorn/no-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		client.annotateMarker(marker, { foo: null });
 		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 
@@ -158,7 +158,7 @@ describe("client.rollback", () => {
 		client.annotateMarker(marker, {
 			[reservedMarkerIdKey]: "markerId",
 			abc: "def",
-			// eslint-disable-next-line unicorn/no-null
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			foo: null,
 		});
 		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());

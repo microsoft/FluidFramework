@@ -900,7 +900,7 @@ export class ConnectionManager implements IConnectionManager {
 		// protocol in Container.
 		const clearSignal = {
 			// API uses null
-			// eslint-disable-next-line unicorn/no-null
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			clientId: null, // system message
 			content: JsonStringify({
 				type: SignalType.Clear,
@@ -914,7 +914,7 @@ export class ConnectionManager implements IConnectionManager {
 
 		const clientJoinSignals = (connection.initialClients ?? []).map((priorClient) => ({
 			// API uses null
-			// eslint-disable-next-line unicorn/no-null
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			clientId: null, // system signal
 			content: JsonStringify({
 				type: SignalType.ClientJoin,

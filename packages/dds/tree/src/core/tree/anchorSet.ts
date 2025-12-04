@@ -387,7 +387,7 @@ export class AnchorSet implements AnchorLocator {
 	 * @param path - the path to the node to be tracked. If null, returns an anchor
 	 * which is permanently invalid.
 	 */
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	public track(path: UpPath | null): Anchor {
 		if (path === null) {
 			return NeverAnchor;

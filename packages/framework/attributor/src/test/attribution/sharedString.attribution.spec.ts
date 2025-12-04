@@ -383,7 +383,7 @@ function spyOnOperations(baseGenerator: Generator<Operation, FuzzTestState>): {
  * alternate type.
  */
 type JsonDeserializedTypeWith<T> =
-	// eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types
 	| null
 	| boolean
 	| number
@@ -407,7 +407,7 @@ type NonSymbolWithUndefinedNonFunctionPropertyOf<T extends object> = Exclude<
 	undefined | symbol
 >;
 
-/* eslint-disable @rushstack/no-new-null, @typescript-eslint/no-unsafe-function-type -- the type below needs to accept null and
+/* eslint-disable @typescript-eslint/no-restricted-types, @typescript-eslint/no-unsafe-function-type -- the type below needs to accept null and
   Function; the lint disable is here so as not to interfere with the inline comments explaining what the type does and
   how it works. */
 /**
@@ -458,7 +458,7 @@ type JsonDeserialized<T, TReplaced = never> = /* test for 'any' */ boolean exten
 							}
 					: /* not an object => */ never
 				: /* function => */ never;
-/* eslint-enable @rushstack/no-new-null, @typescript-eslint/no-unsafe-function-type */
+/* eslint-enable @typescript-eslint/no-restricted-types, @typescript-eslint/no-unsafe-function-type */
 
 function readJson<T>(filepath: string): JsonDeserialized<T> {
 	return JSON.parse(readFileSync(filepath, { encoding: "utf8" })) as JsonDeserialized<T>;

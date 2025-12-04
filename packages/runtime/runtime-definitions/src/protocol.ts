@@ -66,7 +66,7 @@ export interface IAttachMessage {
  * @legacy @beta
  */
 export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
-	// eslint-disable-next-line @rushstack/no-new-null -- TODO: breaking change; protocol might even explicitly use null
+	// eslint-disable-next-line @typescript-eslint/no-restricted-types -- TODO: breaking change; protocol might even explicitly use null
 	snapshot: IAttachMessage["snapshot"] | null;
 };
 

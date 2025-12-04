@@ -389,6 +389,7 @@ async function* generateEdits(
 			eventFlowStatus: "COMPLETED",
 			eventFlowTraceId: generateTreeEditEventFlowId,
 			isLlmResponseValid: wrapper?.edit !== undefined,
+			// eslint-disable-next-line @typescript-eslint/no-restricted-types
 			llmGeneratedEdit: wrapper?.edit as Record<string, unknown> | null,
 		} satisfies GenerateTreeEditCompleted);
 

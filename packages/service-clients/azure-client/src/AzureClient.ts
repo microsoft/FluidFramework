@@ -267,7 +267,7 @@ export class AzureClient {
 		const storage = await documentService.connectToStorage();
 
 		// External API uses null
-		// eslint-disable-next-line unicorn/no-null
+		// eslint-disable-next-line @typescript-eslint/no-restricted-types
 		const versions = await storage.getVersions(null, options?.maxCount ?? MAX_VERSION_COUNT);
 
 		return versions.map((item) => {
