@@ -24,6 +24,7 @@
     "plugins": [
         "@eslint-community/eslint-comments",
         "import-x",
+        "depend",
         "@fluid-internal/fluid",
         "unused-imports",
         "promise",
@@ -1060,6 +1061,15 @@
         ],
         "default-case": [
             "error"
+        ],
+        "depend/ban-dependencies": [
+            "error",
+            {
+                "allowed": [
+                    "axios",
+                    "fs-extra"
+                ]
+            }
         ],
         "dot-location": [
             "off"
