@@ -38,13 +38,13 @@ export class OdspContainerServices
 		});
 	}
 
-	readonly #readonlyEventHandler = (readonly: boolean): void => {
-		this.emit("readOnlyStateChanged", readonly);
+	readonly #readonlyEventHandler = (): void => {
+		this.emit("readOnlyStateChanged");
 	};
 
 	readonly #metadataUpdateEventHandler = (metadata: Record<string, string>): void => {
 		if (metadata.sensitivityLabelsInfo !== undefined) {
-			this.emit("sensitivityLabelChanged", metadata.sensitivityLabelsInfo);
+			this.emit("sensitivityLabelsInfoChanged");
 		}
 	};
 

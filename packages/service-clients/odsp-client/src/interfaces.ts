@@ -91,12 +91,14 @@ export interface OdspContainerAttachProps {
 export interface IOdspContainerServicesEvents extends IEvent {
 	/**
 	 * Emitted when the read-only state of the container changes.
+	 * Consumers can call `OdspContainerServices.getReadOnlyState()` to get the updated value.
 	 */
-	(event: "readOnlyStateChanged", listener: (readonly: boolean) => void): void;
+	(event: "readOnlyStateChanged", listener: () => void): void;
 	/**
 	 * Emitted when the sensitivity label of the container changes.
+	 * Consumers can call `OdspContainerServices.getSensitivityLabelsInfo()` to get the updated value.
 	 */
-	(event: "sensitivityLabelChanged", listener: (sensitivityLabelsInfo: string) => void): void;
+	(event: "sensitivityLabelsInfoChanged", listener: () => void): void;
 }
 
 /**
