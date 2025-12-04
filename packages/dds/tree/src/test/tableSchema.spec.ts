@@ -1441,7 +1441,7 @@ describe("TableFactory unit tests", () => {
 			table.insertColumns({
 				columns: [
 					{ id: "column-0", props: {} },
-					{ id: "column-0", props: {} },
+					{ id: "column-1", props: {} },
 				],
 			});
 			assert.equal(eventCount, 1);
