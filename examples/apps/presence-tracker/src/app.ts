@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { getPresence } from "@fluidframework/presence/beta";
+import {
+	getPresence,
+	type AttendeeId,
+	type AttendeeStatus,
+} from "@fluidframework/presence/beta";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 import type { ContainerSchema, IFluidContainer } from "fluid-framework";
 
@@ -86,13 +90,15 @@ async function start(): Promise<void> {
 	renderControlPanel(mouseTracker, controlPanelDiv);
 
 	// Setting "fluid*" and these helpers are just for our test automation
-	// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-	const buildAttendeeMap = (): {} => {
+	const buildAttendeeMap = (): Record<AttendeeId, AttendeeStatus> => {
 		// eslint-disable-next-line unicorn/no-array-reduce
-		return [...presence.attendees.getAttendees()].reduce((map, a) => {
-			map[a.attendeeId] = a.getConnectionStatus();
-			return map;
-		}, {});
+		return [...presence.attendees.getAttendees()].reduce<Record<AttendeeId, AttendeeStatus>>(
+			(map, a) => {
+				map[a.attendeeId] = a.getConnectionStatus();
+				return map;
+			},
+			{},
+		);
 	};
 	const checkAttendees = (expected: Record<string, string>): boolean => {
 		const actual = buildAttendeeMap();
