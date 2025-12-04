@@ -33,18 +33,38 @@ const minimalDeprecated = compat.config({
 // Use projectService for automatic tsconfig discovery instead of manual project configuration.
 // This eliminates the need to manually configure project paths and handles test files automatically.
 // See: https://typescript-eslint.io/packages/parser#projectservice
+// Note: tsconfigRootDir is not set here to allow the parser to discover the correct project root
+// from the location of the file being linted. This also allows the tsdoc plugin to find tsdoc.json
+// files in the correct location.
 const useProjectService = {
 	files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
 	languageOptions: {
 		parserOptions: {
 			projectService: true,
-			tsconfigRootDir: import.meta.dirname,
 		},
 	},
 };
 recommended.push(useProjectService);
 strict.push(useProjectService);
 minimalDeprecated.push(useProjectService);
+
+// For test files, disable projectService and use explicit project paths.
+// This is needed because most packages use TypeScript project references where test files
+// are in separate tsconfig files (e.g., src/test/tsconfig.json) that are excluded from the main tsconfig.
+// ProjectService doesn't handle this pattern well, so we explicitly specify the common project paths.
+// Packages can override this configuration if they have different test setups.
+const testProjectConfig = {
+	files: ["src/test/**", "*.spec.ts", "*.test.ts"],
+	languageOptions: {
+		parserOptions: {
+			projectService: false,
+			project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+		},
+	},
+};
+recommended.push(testProjectConfig);
+strict.push(testProjectConfig);
+minimalDeprecated.push(testProjectConfig);
 
 // Disable type-aware parsing for JS files and .d.ts files.
 // JavaScript files don't have TypeScript type information.

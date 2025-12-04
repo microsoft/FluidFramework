@@ -177,21 +177,38 @@ function buildFlatConfigContent(
 	// Check if there are local rules or overrides to include
 	const hasLocalRules = legacyConfig?.rules && Object.keys(legacyConfig.rules).length > 0;
 	const hasOverrides = legacyConfig?.overrides && legacyConfig.overrides.length > 0;
+	
+	// Check if there's a non-standard project configuration
+	let hasNonStandardProject = false;
+	if (legacyConfig?.parserOptions?.project && Array.isArray(legacyConfig.parserOptions.project)) {
+		const projectPaths = legacyConfig.parserOptions.project;
+		const isStandardPattern = projectPaths.length === 2 && 
+			projectPaths.includes("./tsconfig.json") && 
+			projectPaths.includes("./src/test/tsconfig.json");
+		hasNonStandardProject = !isStandardPattern;
+	}
 
-	if (!hasLocalRules && !hasOverrides) {
+	if (!hasLocalRules && !hasOverrides && !hasNonStandardProject) {
 		// Simple case: no local customizations
 		configContent += `export default [...${variant}];\n`;
 	} else {
-		// Complex case: include local rules/overrides
+		// Complex case: include local rules/overrides/custom project config
 		configContent += `const config = [\n\t...${variant},\n`;
 
 		if (hasLocalRules) {
 			// Split rules into type-aware and non-type-aware
+			// Type-aware rules that are disabled should be applied globally, not just to non-test files
 			const typeAwareRules: Record<string, any> = {};
 			const otherRules: Record<string, any> = {};
 
 			for (const [ruleName, ruleConfig] of Object.entries(legacyConfig.rules)) {
-				if (TYPE_AWARE_RULES.has(ruleName)) {
+				const isTypeAware = TYPE_AWARE_RULES.has(ruleName);
+				const isDisabled = ruleConfig === "off" || ruleConfig === 0 || 
+					(Array.isArray(ruleConfig) && (ruleConfig[0] === "off" || ruleConfig[0] === 0));
+				
+				// Type-aware rules that are disabled should apply to all files
+				// Type-aware rules that are enabled should only apply to non-test files
+				if (isTypeAware && !isDisabled) {
 					typeAwareRules[ruleName] = ruleConfig;
 				} else {
 					otherRules[ruleName] = ruleConfig;
@@ -221,6 +238,28 @@ function buildFlatConfigContent(
 				if (override.rules) {
 					configContent += `\t\trules: ${JSON.stringify(override.rules, null, 2).replace(/\n/g, "\n\t\t")},\n`;
 				}
+				configContent += `\t},\n`;
+			}
+		}
+
+		// Add parserOptions.project configuration only if it's non-standard
+		// The default shared config already handles the common pattern: ["./tsconfig.json", "./src/test/tsconfig.json"]
+		// Only add custom project config if the package uses a different pattern
+		if (legacyConfig?.parserOptions?.project && Array.isArray(legacyConfig.parserOptions.project)) {
+			const projectPaths = legacyConfig.parserOptions.project;
+			const isStandardPattern = projectPaths.length === 2 && 
+				projectPaths.includes("./tsconfig.json") && 
+				projectPaths.includes("./src/test/tsconfig.json");
+			
+			if (!isStandardPattern) {
+				configContent += `\t{\n`;
+				configContent += `\t\tfiles: ["src/test/**", "*.spec.ts", "*.test.ts"],\n`;
+				configContent += `\t\tlanguageOptions: {\n`;
+				configContent += `\t\t\tparserOptions: {\n`;
+				configContent += `\t\t\t\tprojectService: false,\n`;
+				configContent += `\t\t\t\tproject: ${JSON.stringify(projectPaths)},\n`;
+				configContent += `\t\t\t},\n`;
+				configContent += `\t\t},\n`;
 				configContent += `\t},\n`;
 			}
 		}
