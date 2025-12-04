@@ -539,7 +539,13 @@ export namespace System_TableSchema {
 					| InsertableObjectFromSchemaRecord<typeof tableInnerFields>
 					| undefined,
 			): InstanceType<TThis> {
-				// TODO: input validation
+				// #region Input validation
+
+				// TODO: ensure unique row/column IDs
+
+				// TODO: ensure all cells in initialContents.rows refer to valid columns in initialContents.columns
+
+				// #endregion
 				return new this(
 					initialContents === undefined
 						? undefined
