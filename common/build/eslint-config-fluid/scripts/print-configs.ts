@@ -23,7 +23,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Determine which config files to use based on ESLINT_USE_FLAT_CONFIG
-// NOTE: This is an ESLint limitation - loadESLint() only loads the correct ESLint class,
+// NOTE: loadESLint() returns the appropriate ESLint class based on ESLINT_USE_FLAT_CONFIG,
 // but we still need to manually determine which config file format to use.
 // Legacy ESLint cannot read flat config files (.mjs), and FlatESLint cannot read legacy config files (.js/.cjs).
 const useFlatConfig = process.env.ESLINT_USE_FLAT_CONFIG === "true";
