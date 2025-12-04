@@ -120,25 +120,23 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 
 	const registryMapping = {};
 	for (const value of Object.values(api.dds)) {
-		/**
-		 * Skip dds that may not be available in this version of the api.
-		 * Not all versions have all dds. See {@link PackageToInstall} for details.
-		 */
-		if (value?.getFactory === undefined) {
-			continue;
-		}
 		registryMapping[value.getFactory().type] = value.getFactory();
 	}
 
 	function convertRegistry(registry: ChannelFactoryRegistry = []): ChannelFactoryRegistry {
 		const oldRegistry: [string | undefined, IChannelFactory][] = [];
 		for (const [key, factory] of registry) {
-			const oldFactory = registryMapping[factory.type];
-			if (oldFactory === undefined) {
-				throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
+			if (factory.type === "https://graph.microsoft.com/types/tree") {
+				oldRegistry.push([key, factory]);
+			} else {
+				const oldFactory = registryMapping[factory.type];
+				if (oldFactory === undefined) {
+					throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
+				}
+				oldRegistry.push([key, oldFactory]);
 			}
-			oldRegistry.push([key, oldFactory]);
 		}
+
 		return oldRegistry;
 	}
 
@@ -177,7 +175,7 @@ export const getDataStoreFactory = createGetDataStoreFactoryFunction(
  * @internal
  */
 export async function getVersionedTestObjectProviderFromApis(
-	apis: Omit<CompatApis, "dds" | "mode">,
+	apis: Omit<CompatApis, "dds">,
 	driverConfig?: {
 		type?: TestDriverTypes;
 		config?: FluidTestDriverConfig;

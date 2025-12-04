@@ -12,7 +12,6 @@ import nconf from "nconf";
 
 /**
  * Different kind of compat version config
- * @internal
  */
 export const CompatKind = {
 	None: "None",
