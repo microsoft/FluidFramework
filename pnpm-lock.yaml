@@ -201,8 +201,8 @@ importers:
         specifier: ~4.5.0
         version: 4.5.0(eslint@8.57.1)
       '@fluid-internal/eslint-plugin-fluid':
-        specifier: ^0.4.0
-        version: 0.4.0(eslint@8.57.1)(typescript@5.4.5)
+        specifier: ^0.4.1
+        version: 0.4.1(eslint@8.57.1)(typescript@5.4.5)
       '@rushstack/eslint-patch':
         specifier: ~1.12.0
         version: 1.12.0
@@ -18068,8 +18068,8 @@ packages:
   '@fluid-internal/client-utils@2.73.0':
     resolution: {integrity: sha512-M+vH9pa0i54m2EqFUB/C4pDsKMK36IIKgUSJiqQhwsCZ8vN3SDkdBvCmCJsR8GoiQcIxH0GBy3PJ8oremO9grQ==}
 
-  '@fluid-internal/eslint-plugin-fluid@0.4.0':
-    resolution: {integrity: sha512-eynZFyJ1YbTUJmf4WtvF6AqmB7cnRhJv2Q/L7XdHVIjgwyoZWbmZhCP1FZ+hHIpkrLmmewFI0Kh+JhTKM/9m0w==}
+  '@fluid-internal/eslint-plugin-fluid@0.4.1':
+    resolution: {integrity: sha512-JTFmMtNDJ+pR0Z0jvreXgq2GymqcCSD0InclRQfimEJ4KzIwdHCPHCmODlll1FG/Qp852baMYgdKHHD4qqRP/w==}
     peerDependencies:
       eslint: ^8.57.0 || ^9.37.0
 
@@ -30392,7 +30392,7 @@ snapshots:
       events_pkg: events@3.3.0
       sha.js: 2.4.12
 
-  '@fluid-internal/eslint-plugin-fluid@0.4.0(eslint@8.57.1)(typescript@5.4.5)':
+  '@fluid-internal/eslint-plugin-fluid@0.4.1(eslint@8.57.1)(typescript@5.4.5)':
     dependencies:
       '@microsoft/tsdoc': 0.15.1
       '@typescript-eslint/parser': 8.46.2(eslint@8.57.1)(typescript@5.4.5)
