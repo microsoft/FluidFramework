@@ -105,7 +105,11 @@ const dataRuntimePackageEntries: PackageToInstall[] = [
 	{ pkgName: "@fluidframework/tree", minVersion: "2.0.0" },
 ];
 
-// Combined list of all packages to install.
+/**
+ * The list of all the packages to install for compatibility testing.
+ * If this list is changed, the {@link revision} in `versionUtils.ts`should be incremented to force re-installation. If
+ * not, the pipelines that run the compatibility tests may fail as the packages may be fetched from the cache.
+ */
 const packageListToInstall: PackageToInstall[] = [
 	...driverPackageEntries,
 	...loaderPackageEntries,
