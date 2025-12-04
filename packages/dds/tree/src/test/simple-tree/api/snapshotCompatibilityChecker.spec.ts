@@ -50,7 +50,7 @@ describe("snapshotCompatibilityChecker", () => {
 		// If roundtripSnapshot is true, store the old schema as a JSON string and then load it.
 		if (roundtripSnapshot) {
 			const encodedSchema = JSON.stringify(exportCompatibilitySchemaSnapshot(oldViewSchema));
-			oldViewSchema = importCompatibilitySchemaSnapshot(JSON.parse(oldViewSchema));
+			oldViewSchema = importCompatibilitySchemaSnapshot(JSON.parse(encodedSchema));
 		}
 
 		// Build the current view schema
