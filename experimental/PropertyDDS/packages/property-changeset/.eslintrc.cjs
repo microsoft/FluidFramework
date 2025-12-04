@@ -57,10 +57,7 @@ module.exports = {
 		"depend/ban-dependencies": [
 			"error",
 			{
-				allowed: [
-					"lodash",
-					"traverse",
-				],
+				allowed: ["lodash", "traverse"],
 			},
 		],
 

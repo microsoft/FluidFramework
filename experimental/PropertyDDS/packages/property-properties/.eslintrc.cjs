@@ -59,10 +59,7 @@ module.exports = {
 		"depend/ban-dependencies": [
 			"error",
 			{
-				allowed: [
-					"lodash",
-					"underscore",
-				],
+				allowed: ["lodash", "underscore"],
 			},
 		],
 
