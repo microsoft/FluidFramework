@@ -543,9 +543,28 @@ export namespace System_TableSchema {
 			): InstanceType<TThis> {
 				// #region Input validation
 
-				// TODO: ensure unique row/column IDs
+				const columns = (initialContents?.columns as Iterable<ColumnInsertableType> | undefined) ?? [];
 
-				// TODO: ensure all cells in initialContents.rows refer to valid columns in initialContents.columns
+				const columnIds = new Set<string>();
+				for (const column of columns ?? []) {
+					columnIds.add((column as ColumnValueType).id);
+				}
+
+				const rows = (initialContents?.rows as Iterable<RowInsertableType> | undefined) ?? [];
+
+				Table._validateNewColumns(
+					columns,
+					// New table, so no existing rows to validate against
+					new Set()
+				);
+
+				Table._validateNewRows(
+					rows,
+					// New table, so no existing rows to validate against
+					new Set(),
+					// No existing columns to validate cells against, but we do need to validate the new rows against the new columns
+					columnIds
+				);
 
 				// #endregion
 				return new this(
@@ -964,8 +983,31 @@ export namespace System_TableSchema {
 				return row;
 			}
 
+			/**
+			 * Validates the provided list of new columns being inserted into the table.
+			 * @throws Throws a `UsageError` if any of the following conditions are met:
+			 * - A column with a duplicate ID is being inserted.
+			 */
 			#validateNewColumns(newColumns: readonly ColumnInsertableType[]): void {
-				const existingColumnIds = new Set<string>(Array.from(this.table.columns, (column) => (column as ColumnValueType).id));
+				return Table._validateNewColumns(newColumns, new Set(this.table.columns.map((column) => (column as ColumnValueType).id)));
+			}
+
+			/**
+			 * Validates the provided list of new rows being inserted into the table.
+			 * @throws Throws a `UsageError` if any of the following conditions are met:
+			 * - A row with a duplicate ID is being inserted.
+			 * - A row is being inserted that contains cells for columns that do not exist in the table.
+			 */
+			#validateNewRows(newRows: readonly RowInsertableType[]): void {
+				return Table._validateNewRows(newRows, new Set(this.table.rows.map((row) => (row as RowValueType).id)), new Set(this.table.columns.map((column) => (column as ColumnValueType).id)));
+			}
+
+			/**
+			 * Validates the provided list of new columns being inserted into the table.
+			 * @throws Throws a `UsageError` if any of the following conditions are met:
+			 * - A column with a duplicate ID is being inserted.
+			 */
+			private static _validateNewColumns(newColumns: Iterable<ColumnInsertableType>, existingColumnIds: Set<string>): void {
 				const newColumnIds = new Set<string>();
 				for (const newColumn of newColumns) {
 					// #region Ensure each column ID is unique
@@ -990,11 +1032,11 @@ export namespace System_TableSchema {
 			 * - A row with a duplicate ID is being inserted.
 			 * - A row is being inserted that contains cells for columns that do not exist in the table.
 			 */
-			#validateNewRows(newRows: readonly RowInsertableType[]): void {
-				const existingRowIds = new Set<string>(Array.from(this.table.rows, (row) => (row as RowValueType).id));
+			private static _validateNewRows(newRows: Iterable<RowInsertableType>, existingRowIds: Set<string>, columnIds: Set<string>): void {
 				const newRowIds = new Set<string>();
 				for (const newRow of newRows) {
 					// #region Ensure each row ID is unique
+
 					const newRowId = (newRow as RowValueType).id;
 					if (existingRowIds.has(newRowId)) {
 						throw new UsageError(
@@ -1018,7 +1060,7 @@ export namespace System_TableSchema {
 						// eslint-disable-next-line @typescript-eslint/no-explicit-any
 						const keys: string[] = Object.keys((newRow as any).cells);
 						for (const key of keys) {
-							if (!this.#containsColumnWithId(key)) {
+							if (!columnIds.has(key)) {
 								throw new UsageError(
 									`Attempted to insert a row containing a cell under column ID "${key}", but the table does not contain a column with that ID.`,
 								);
