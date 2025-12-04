@@ -44,18 +44,13 @@ describe("snapshotCompatibilityChecker", () => {
 			y: factory.number,
 		}) {}
 
-		let oldViewSchema: TreeViewConfiguration;
+		// This is the same as Point3D, except missing `z`.
+		let oldViewSchema: TreeViewConfiguration = new TreeViewConfiguration({ schema: Point2D });
 
-		// If roundtripSnapshot is true, we store the old schema as a JSON string and then load it
+		// If roundtripSnapshot is true, store the old schema as a JSON string and then load it.
 		if (roundtripSnapshot) {
-			const viewSchema = new TreeViewConfiguration({ schema: Point2D });
-			const encodedSchema = JSON.stringify(exportCompatibilitySchemaSnapshot(viewSchema));
-
-			// Load the past view schema from the snapshot (in-memory for the purposes of this test)
-			// This snapshot is assumed to be the same as Point3D, except missing `z`.
-			oldViewSchema = importCompatibilitySchemaSnapshot(JSON.parse(encodedSchema));
-		} else {
-			oldViewSchema = new TreeViewConfiguration({ schema: Point2D });
+			const encodedSchema = JSON.stringify(exportCompatibilitySchemaSnapshot(oldViewSchema));
+			oldViewSchema = importCompatibilitySchemaSnapshot(JSON.parse(oldViewSchema));
 		}
 
 		// Build the current view schema
