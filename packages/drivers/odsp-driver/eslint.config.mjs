@@ -45,7 +45,8 @@ const config = [
 		    "error",
 		    {
 		      "allow": [
-		        "node:assert"
+		        "node:assert",
+		        "node:fs"
 		      ]
 		    }
 		  ]

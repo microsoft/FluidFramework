@@ -61,10 +61,39 @@ const testProjectConfig = {
 			project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 		},
 	},
+	rules: {
+		// Test files are run in Node.js and commonly need Node.js built-in modules
+		"import-x/no-nodejs-modules": [
+			"error",
+			{
+				allow: [
+					"node:assert",
+					"node:fs",
+					"node:path",
+					"node:crypto",
+					"assert",
+					"fs",
+					"path",
+					"crypto",
+				],
+			},
+		],
+	},
 };
 recommended.push(testProjectConfig);
 strict.push(testProjectConfig);
 minimalDeprecated.push(testProjectConfig);
+
+// CommonJS files (.cts, .cjs) can use __dirname and require, which are valid in CommonJS
+const cjsFileConfig = {
+	files: ["**/*.cts", "**/*.cjs"],
+	rules: {
+		"unicorn/prefer-module": "off", // __dirname and require are valid in CommonJS
+	},
+};
+recommended.push(cjsFileConfig);
+strict.push(cjsFileConfig);
+minimalDeprecated.push(cjsFileConfig);
 
 // Disable type-aware parsing for JS files and .d.ts files.
 // JavaScript files don't have TypeScript type information.

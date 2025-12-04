@@ -45,7 +45,7 @@ module.exports = {
 				"unicorn/prefer-module": "off",
 
 				// Test files are run in node only so additional node libraries can be used.
-				"import-x/no-nodejs-modules": ["error", { allow: ["node:assert"] }],
+				"import-x/no-nodejs-modules": ["error", { allow: ["node:assert", "node:fs"] }],
 			},
 		},
 	],
