@@ -543,7 +543,8 @@ export namespace System_TableSchema {
 			): InstanceType<TThis> {
 				// #region Input validation
 
-				const columns = (initialContents?.columns as Iterable<ColumnInsertableType> | undefined) ?? [];
+				const columns =
+					(initialContents?.columns as Iterable<ColumnInsertableType> | undefined) ?? [];
 
 				const columnIds = new Set<string>();
 				for (const column of columns ?? []) {
@@ -555,7 +556,7 @@ export namespace System_TableSchema {
 				Table._validateNewColumns(
 					columns,
 					// New table, so no existing rows to validate against
-					new Set()
+					new Set(),
 				);
 
 				Table._validateNewRows(
@@ -563,7 +564,7 @@ export namespace System_TableSchema {
 					// New table, so no existing rows to validate against
 					new Set(),
 					// No existing columns to validate cells against, but we do need to validate the new rows against the new columns
-					columnIds
+					columnIds,
 				);
 
 				// #endregion
@@ -989,7 +990,10 @@ export namespace System_TableSchema {
 			 * - A column with a duplicate ID is being inserted.
 			 */
 			#validateNewColumns(newColumns: readonly ColumnInsertableType[]): void {
-				return Table._validateNewColumns(newColumns, new Set(this.table.columns.map((column) => (column as ColumnValueType).id)));
+				return Table._validateNewColumns(
+					newColumns,
+					new Set(this.table.columns.map((column) => (column as ColumnValueType).id)),
+				);
 			}
 
 			/**
@@ -999,7 +1003,11 @@ export namespace System_TableSchema {
 			 * - A row is being inserted that contains cells for columns that do not exist in the table.
 			 */
 			#validateNewRows(newRows: readonly RowInsertableType[]): void {
-				return Table._validateNewRows(newRows, new Set(this.table.rows.map((row) => (row as RowValueType).id)), new Set(this.table.columns.map((column) => (column as ColumnValueType).id)));
+				return Table._validateNewRows(
+					newRows,
+					new Set(this.table.rows.map((row) => (row as RowValueType).id)),
+					new Set(this.table.columns.map((column) => (column as ColumnValueType).id)),
+				);
 			}
 
 			/**
@@ -1007,7 +1015,10 @@ export namespace System_TableSchema {
 			 * @throws Throws a `UsageError` if any of the following conditions are met:
 			 * - A column with a duplicate ID is being inserted.
 			 */
-			private static _validateNewColumns(newColumns: Iterable<ColumnInsertableType>, existingColumnIds: Set<string>): void {
+			private static _validateNewColumns(
+				newColumns: Iterable<ColumnInsertableType>,
+				existingColumnIds: Set<string>,
+			): void {
 				const newColumnIds = new Set<string>();
 				for (const newColumn of newColumns) {
 					// #region Ensure each column ID is unique
@@ -1032,7 +1043,11 @@ export namespace System_TableSchema {
 			 * - A row with a duplicate ID is being inserted.
 			 * - A row is being inserted that contains cells for columns that do not exist in the table.
 			 */
-			private static _validateNewRows(newRows: Iterable<RowInsertableType>, existingRowIds: Set<string>, columnIds: Set<string>): void {
+			private static _validateNewRows(
+				newRows: Iterable<RowInsertableType>,
+				existingRowIds: Set<string>,
+				columnIds: Set<string>,
+			): void {
 				const newRowIds = new Set<string>();
 				for (const newRow of newRows) {
 					// #region Ensure each row ID is unique
