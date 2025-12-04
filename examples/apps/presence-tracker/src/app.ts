@@ -33,7 +33,7 @@ export type PresenceTrackerSchema = typeof containerSchema;
  *
  * @remarks We wrap this in an async function so we can await Fluid's async calls.
  */
-async function start() {
+async function start(): Promise<void> {
 	const client = new TinyliciousClient();
 	let container: IFluidContainer<PresenceTrackerSchema>;
 
@@ -74,13 +74,13 @@ async function start() {
 
 	initializeReactions(presence, mouseTracker);
 
-	const focusDiv = document.getElementById("focus-content") as HTMLDivElement;
+	const focusDiv = document.querySelector("#focus-content") as HTMLDivElement;
 	renderFocusPresence(focusTracker, focusDiv);
 
-	const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
+	const mouseContentDiv = document.querySelector("#mouse-position") as HTMLDivElement;
 	renderMousePresence(mouseTracker, focusTracker, mouseContentDiv);
 
-	const controlPanelDiv = document.getElementById("control-panel") as HTMLDivElement;
+	const controlPanelDiv = document.querySelector("#control-panel") as HTMLDivElement;
 	renderControlPanel(mouseTracker, controlPanelDiv);
 
 	// Setting "fluid*" and these helpers are just for our test automation
