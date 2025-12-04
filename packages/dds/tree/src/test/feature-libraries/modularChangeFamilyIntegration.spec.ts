@@ -24,7 +24,7 @@ import {
 	fieldKindConfigurations,
 	optional,
 	sequence,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
@@ -69,9 +69,8 @@ import {
 	Change,
 	normalizeDelta,
 	removeAliases,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "./modular-schema/modularChangesetUtil.js";
-// eslint-disable-next-line import/no-internal-modules
 // eslint-disable-next-line import-x/no-internal-modules
 import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
 import type { SessionId } from "@fluidframework/id-compressor";

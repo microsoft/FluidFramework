@@ -52,7 +52,6 @@ import {
 	isAttach,
 	isDetach,
 	isNewAttach,
-	isNoopMark,
 	isRename,
 	isTombstone,
 	markEmptiesCells,

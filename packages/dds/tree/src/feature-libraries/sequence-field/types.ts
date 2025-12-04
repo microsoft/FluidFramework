@@ -74,8 +74,10 @@ export interface HasRevisionTag {
 export interface Attach extends HasMoveId, HasRevisionTag {
 	type: "Insert";
 
-	// XXX: Deduplicate with the field on Detach
 	// XXX: Use this ID as main ID when serializing
+	/**
+	 * This field should only be used if the attach is a pin.
+	 */
 	detachCellId?: ChangeAtomId;
 }
 
@@ -105,10 +107,10 @@ export interface Detach extends HasRevisionTag {
 	 * This applies to the cell where the node is being detached from,
 	 * or the last cell the node occupied if it is already detached.
 	 *
-	 * This field is used to represent the composition of two moves.
-	 *
+	 * This field is used to represent the composition of a pin and a detach.
+	 * The composition will be the second detach but with the pin's detachId as detachCellId.
 	 */
-	readonly detachCellId?: CellId;
+	detachCellId?: ChangeAtomId;
 
 	/**
 	 * When set, this represents a rename of this cell to be applied after the detach.

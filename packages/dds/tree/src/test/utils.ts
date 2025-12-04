@@ -180,7 +180,6 @@ import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/in
 // eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 import type { Transactor } from "../shared-tree-core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import {
 	configuredSharedTree,
 	configuredSharedTreeInternal,
@@ -532,7 +531,7 @@ export class TestTreeProviderLite {
  * after the spy is no longer needed.
  */
 export function spyOnMethod(
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 	methodClass: Function,
 	methodName: string,
 	spy: () => void,
