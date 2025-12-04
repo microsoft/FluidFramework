@@ -27,6 +27,9 @@ import { createTreeSchema } from "../treeSchema.js";
 export function getSimpleSchema(
 	schema: ImplicitFieldSchema,
 ): SimpleTreeSchema<SchemaType.View> {
+	// Convert the input into a TreeSchema: This API should probably be updated to take in a TreeSchema directly
+	// (and maybe a clean way to make TreeSchema from ImplicitFieldSchema other than TreeViewConfigurationAlpha should be provided).
 	const treeSchema = createTreeSchema(schema);
+	// Do the actual copy into clean simple schema objects.
 	return transformSimpleSchema(treeSchema, Unchanged);
 }
