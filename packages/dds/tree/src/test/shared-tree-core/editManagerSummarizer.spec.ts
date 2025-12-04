@@ -119,8 +119,8 @@ describe("EditManagerSummarizer", () => {
 			await assert.doesNotReject(async () => summarizer2.load(mockStorage, JSON.parse));
 		});
 
-		it("loads version 1 with no metadata blob", async () => {
-			// Create data in v1 summary format.
+		it("loads pre-versioning format with no metadata blob", async () => {
+			// Create data in v1 summary format .
 			const editManagerDataV1: EncodedEditManager<unknown> = {
 				version: EditManagerFormatVersion.v3,
 				trunk: [],

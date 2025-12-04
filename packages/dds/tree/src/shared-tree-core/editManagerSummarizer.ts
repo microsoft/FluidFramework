@@ -69,6 +69,7 @@ export class EditManagerSummarizer<TChangeset>
 	extends VersionedSummarizer
 	implements Summarizable
 {
+	public static readonly key = "EditManager";
 	public constructor(
 		private readonly editManager: EditManager<
 			ChangeFamilyEditor,
@@ -86,10 +87,10 @@ export class EditManagerSummarizer<TChangeset>
 		private readonly schemaAndPolicy?: SchemaAndPolicy,
 	) {
 		super(
-			"EditManager",
+			EditManagerSummarizer.key,
 			minVersionToEditManagerSummaryFormatVersion(minVersionForCollab),
 			supportedVersions,
-			EditManagerSummaryFormatVersion.v1,
+			true /* supportPreVersioningFormat */,
 		);
 	}
 

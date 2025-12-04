@@ -864,7 +864,7 @@ describe("ForestSummarizer", () => {
 			await assert.doesNotReject(async () => forestSummarizer2.load(mockStorage, JSON.parse));
 		});
 
-		it("loads version 1 with no metadata blob", async () => {
+		it("loads pre-versioning format with no metadata blob", async () => {
 			// Create data in v1 summary format.
 			const forestDataV1: FormatV1 = {
 				version: brand(ForestFormatVersion.v1),

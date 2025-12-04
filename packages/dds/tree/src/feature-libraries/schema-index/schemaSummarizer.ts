@@ -83,7 +83,7 @@ export class SchemaSummarizer extends VersionedSummarizer implements Summarizabl
 			"Schema",
 			minVersionToSchemaSummaryFormatVersion(minVersionForCollab),
 			supportedVersions,
-			SchemaSummaryFormatVersion.v1,
+			true /* supportPreVersioningFormat */,
 		);
 		this.schema.events.on("afterSchemaChange", () => {
 			// Invalidate the cache, as we need to regenerate the blob if the schema changes

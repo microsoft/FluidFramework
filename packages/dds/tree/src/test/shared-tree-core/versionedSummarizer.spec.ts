@@ -51,7 +51,7 @@ describe("VersionedSummarizer", () => {
 				"testKey",
 				version,
 				new Set([version]),
-				version,
+				true /* supportPreVersioningFormat */,
 			);
 
 			summarizer.summarize({ stringify });
@@ -67,7 +67,7 @@ describe("VersionedSummarizer", () => {
 				"testKey",
 				version,
 				new Set([version]),
-				version,
+				true /* supportPreVersioningFormat */,
 			);
 
 			const summary = summarizer.summarize({ stringify });
@@ -88,7 +88,7 @@ describe("VersionedSummarizer", () => {
 				"testKey",
 				version,
 				new Set([version]),
-				version,
+				true /* supportPreVersioningFormat */,
 			);
 
 			const summaryWithStats = summarizer.summarize({ stringify });
@@ -107,7 +107,7 @@ describe("VersionedSummarizer", () => {
 				"testKey",
 				version,
 				new Set([version]),
-				version,
+				true /* supportPreVersioningFormat */,
 			);
 
 			const storage = new MockStorage();
@@ -121,7 +121,7 @@ describe("VersionedSummarizer", () => {
 				"testKey",
 				version,
 				new Set([version]),
-				version,
+				true /* supportPreVersioningFormat */,
 			);
 
 			// Create a summary and delete the metadata blob to simulate older clients without metadata.
@@ -139,7 +139,7 @@ describe("VersionedSummarizer", () => {
 				"testKey",
 				oldVersion,
 				new Set([oldVersion]),
-				oldVersion,
+				true /* supportPreVersioningFormat */,
 			);
 
 			// Create a summary and delete the metadata blob.
@@ -153,7 +153,7 @@ describe("VersionedSummarizer", () => {
 				"testKey",
 				newVersion,
 				new Set([newVersion]),
-				oldVersion,
+				false /* supportPreVersioningFormat */,
 			);
 			await assert.rejects(
 				newSummarizer.load(newStorage, parse),
@@ -168,7 +168,7 @@ describe("VersionedSummarizer", () => {
 				"testKey",
 				version,
 				new Set([version]),
-				version,
+				true /* supportPreVersioningFormat */,
 			);
 			const summary = summarizer.summarize({ stringify });
 
@@ -183,7 +183,7 @@ describe("VersionedSummarizer", () => {
 				"testKey",
 				newVersion,
 				new Set([newVersion]),
-				newVersion,
+				true /* supportPreVersioningFormat */,
 			);
 			const newSummary = newSummarizer.summarize({ stringify });
 
@@ -193,7 +193,7 @@ describe("VersionedSummarizer", () => {
 				"testKey",
 				oldVersion,
 				new Set([oldVersion]),
-				oldVersion,
+				true /* supportPreVersioningFormat */,
 			);
 
 			const oldStorage = MockStorage.createFromSummary(newSummary.summary);
@@ -209,7 +209,7 @@ describe("VersionedSummarizer", () => {
 				"testKey",
 				oldVersion,
 				new Set([oldVersion]),
-				oldVersion,
+				true /* supportPreVersioningFormat */,
 			);
 			const oldSummary = oldSummarizer.summarize({ stringify });
 
@@ -219,7 +219,7 @@ describe("VersionedSummarizer", () => {
 				"testKey",
 				newVersion,
 				new Set([oldVersion, newVersion]),
-				newVersion,
+				true /* supportPreVersioningFormat */,
 			);
 			const newStorage = MockStorage.createFromSummary(oldSummary.summary);
 			await assert.doesNotReject(newSummarizer.load(newStorage, parse));

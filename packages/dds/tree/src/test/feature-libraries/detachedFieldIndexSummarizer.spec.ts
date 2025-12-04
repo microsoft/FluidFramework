@@ -106,7 +106,7 @@ describe("DetachedFieldIndexSummarizer", () => {
 			await assert.doesNotReject(async () => summarizer2.load(mockStorage, JSON.parse));
 		});
 
-		it("loads version 1 with no metadata blob", async () => {
+		it("loads pre-versioning format with no metadata blob", async () => {
 			// Create data in v1 summary format.
 			const mintedTag = testIdCompressor.generateCompressedId();
 			const finalizedTag = testIdCompressor.normalizeToOpSpace(mintedTag);

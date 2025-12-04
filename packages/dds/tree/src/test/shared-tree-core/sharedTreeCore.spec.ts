@@ -10,6 +10,7 @@ import type { IEvent } from "@fluidframework/core-interfaces";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
+	type ISummaryBlob,
 	type ISummaryTree,
 	type SummaryObject,
 	SummaryType,
@@ -43,6 +44,7 @@ import type {
 } from "../../feature-libraries/index.js";
 import { Tree } from "../../shared-tree/index.js";
 import {
+	EditManagerFormatVersion,
 	SharedTreeSummaryFormatVersion,
 	summarizablesMetadataKey,
 	type ChangeEnricherReadonlyCheckout,
@@ -65,6 +67,17 @@ import {
 import { createTree, createTreeSharedObject, TestSharedTreeCore } from "./utils.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { mockSerializer } from "../mockSerializer.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { EncodedEditManager } from "../../shared-tree-core/editManagerFormatV1toV4.js";
+import {
+	EditManagerSummarizer,
+	stringKey,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../shared-tree-core/editManagerSummarizer.js";
+import {
+	summarizablesTreeKey,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../shared-tree-core/summaryTypes.js";
 
 const enableSchemaValidation = true;
 
@@ -186,18 +199,44 @@ describe("SharedTreeCore", () => {
 			);
 		});
 
-		it("loads with no metadata blob", async () => {
+		it("loads pre-versioning format with no metadata blob", async () => {
+			// Create data in v1 summary format. EditManager summary is needed because the SharedTreeCore
+			// creates an EditManagerSummarizer by default.
+			const editManagerDataV1: EncodedEditManager<unknown> = {
+				version: EditManagerFormatVersion.v3,
+				trunk: [],
+				branches: [],
+			};
+			const editManagerBlob: ISummaryBlob = {
+				type: SummaryType.Blob,
+				content: JSON.stringify(editManagerDataV1),
+			};
+			const sharedTreeSummary: ISummaryTree = {
+				type: SummaryType.Tree,
+				tree: {
+					[summarizablesTreeKey]: {
+						type: SummaryType.Tree,
+						tree: {
+							[EditManagerSummarizer.key]: {
+								type: SummaryType.Tree,
+								tree: {
+									[stringKey]: editManagerBlob,
+								},
+							},
+						},
+					},
+				},
+			};
+
 			const tree = createTree({
 				indexes: [],
 			});
-			const { summary } = tree.summarizeCore(mockSerializer);
-
-			// Delete metadata blob from the summary
-			Reflect.deleteProperty(summary.tree, summarizablesMetadataKey);
 
 			// Should load successfully
 			await assert.doesNotReject(async () =>
-				tree.loadCore(MockSharedObjectServices.createFromSummary(summary).objectStorage),
+				tree.loadCore(
+					MockSharedObjectServices.createFromSummary(sharedTreeSummary).objectStorage,
+				),
 			);
 		});
 

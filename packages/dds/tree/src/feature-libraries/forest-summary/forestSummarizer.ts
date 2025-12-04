@@ -49,7 +49,6 @@ import {
 } from "./incrementalSummaryBuilder.js";
 import {
 	forestSummaryContentKey,
-	ForestSummaryFormatVersion,
 	forestSummaryKey,
 	minVersionToForestSummaryFormatVersion,
 	supportedForestSummaryFormatVersions,
@@ -81,7 +80,7 @@ export class ForestSummarizer extends VersionedSummarizer implements Summarizabl
 			forestSummaryKey,
 			minVersionToForestSummaryFormatVersion(options.minVersionForCollab),
 			supportedForestSummaryFormatVersions,
-			ForestSummaryFormatVersion.v1,
+			true /* supportPreVersioningFormat */,
 		);
 
 		// TODO: this should take in CodecWriteOptions, and use it to pick the write version.

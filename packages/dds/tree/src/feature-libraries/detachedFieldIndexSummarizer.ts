@@ -71,7 +71,7 @@ export class DetachedFieldIndexSummarizer extends VersionedSummarizer implements
 			"DetachedFieldIndex",
 			minVersionToDetachedFieldIndexSummaryFormatVersion(minVersionForCollab),
 			supportedVersions,
-			DetachedFieldIndexSummaryFormatVersion.v1,
+			true /* supportPreVersioningFormat */,
 		);
 	}
 

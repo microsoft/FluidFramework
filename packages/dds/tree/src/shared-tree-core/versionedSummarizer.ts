@@ -35,13 +35,12 @@ export abstract class VersionedSummarizer implements Summarizable {
 		/** The set of supported versions that a summary can have for this summarizer to load it. */
 		private readonly supportedVersions: ReadonlySet<number>,
 		/**
-		 * The default format version to use if the summary during load doesn't have metadata blob.
-		 * This is used for summaries that were written before versioning was added for summaries.
+		 * Whether to support loading summaries before versioning was added, i.e., summaries without metadata blob.
 		 * @remarks
 		 * This version may not be supported if the support for the version before metadata blob was dropped.
 		 * In that case, this will not be present in `supportedVersions` and an error will be thrown during load.
 		 */
-		private readonly defaultReadVersion: number,
+		private readonly supportPreVersioningFormat: boolean,
 	) {
 		assert(
 			this.supportedVersions.has(this.writeVersion),
@@ -90,18 +89,20 @@ export abstract class VersionedSummarizer implements Summarizable {
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
 	): Promise<void> {
-		// This is the version before metadata blob with version is written into the summary.
-		let version = this.defaultReadVersion;
 		if (await services.contains(summarizablesMetadataKey)) {
 			const metadata = await readAndParseSnapshotBlob<SharedTreeSummarizableMetadata>(
 				summarizablesMetadataKey,
 				services,
 				(contents) => parse(contents),
 			);
-			version = metadata.version;
-		}
-		if (!this.supportedVersions.has(version)) {
-			throw new UsageError(`Cannot read version ${version} of shared tree summary.`);
+			const version = metadata.version;
+			if (!this.supportedVersions.has(version)) {
+				throw new UsageError(`Cannot read version ${version} of shared tree summary.`);
+			}
+		} else if (!this.supportPreVersioningFormat) {
+			throw new UsageError(
+				`Cannot read summary without version metadata for shared tree summary.`,
+			);
 		}
 		await this.loadInternal(services, parse);
 	}

@@ -64,7 +64,6 @@ import type { ResubmitMachine } from "./resubmitMachine.js";
 import type { MessageFormatVersion } from "./messageFormat.js";
 import {
 	minVersionToSharedTreeSummaryFormatVersion,
-	SharedTreeSummaryFormatVersion,
 	summarizablesTreeKey,
 	supportedSharedTreeSummaryFormatVersions,
 	type Summarizable,
@@ -151,7 +150,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			summarizablesTreeKey,
 			minVersionToSharedTreeSummaryFormatVersion(options.minVersionForCollab),
 			supportedSharedTreeSummaryFormatVersions,
-			SharedTreeSummaryFormatVersion.v1,
+			true /* supportPreVersioningFormat */,
 		);
 
 		this.schemaAndPolicy = {

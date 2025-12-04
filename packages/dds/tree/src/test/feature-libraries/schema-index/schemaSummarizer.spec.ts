@@ -131,7 +131,7 @@ describe("schemaSummarizer", () => {
 			await assert.doesNotReject(async () => summarizer2.load(mockStorage, JSON.parse));
 		});
 
-		it("loads version 1 with no metadata blob", async () => {
+		it("loads pre-versioning format with no metadata blob", async () => {
 			// Create data in v1 summary format.
 			const schemaDataV1: SchemaFormatV1 = {
 				version: SchemaFormatVersion.v1,
