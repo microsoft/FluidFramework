@@ -23,7 +23,7 @@ import { lock } from "proper-lockfile";
 import * as semver from "semver";
 
 import { pkgVersion } from "./packageVersion.js";
-import { InstalledPackage, type PackageToInstall } from "./testApi.js";
+import { InstalledPackage } from "./testApi.js";
 
 // Assuming this file is in `lib`, so go to `..\node_modules\.legacy` as the install location
 const baseModulePath = fileURLToPath(new URL("../node_modules/.legacy", import.meta.url));
@@ -215,7 +215,7 @@ async function ensureModulePath(version: string, modulePath: string) {
  */
 export async function ensureInstalled(
 	requested: string,
-	packageList: PackageToInstall[],
+	packageList: string[],
 	force: boolean,
 ): Promise<InstalledPackage | undefined> {
 	if (requested === pkgVersion) {
@@ -230,12 +230,7 @@ export async function ensureInstalled(
 
 	await ensureModulePath(version, modulePath);
 
-	// Adjust package list based on the minVersion for each package. If the requested version is
-	// less than the minVersion, skip that package.
-	const adjustedPackageList = packageList
-		.filter((entry) => semver.gte(version, entry.minVersion))
-		.map((entry) => entry.pkgName);
-
+	const adjustedPackageList = [...packageList];
 	if (versionHasMovedSparsedMatrix(version)) {
 		adjustedPackageList.push("@fluid-experimental/sequence-deprecated");
 	}
