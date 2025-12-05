@@ -91,6 +91,9 @@ export namespace System_TableSchema {
 	 *
 	 * @privateRemarks Used by {@link TableSchema.Table} for its `rows` and `columns` properties to allow basic rearrangement operations on the underlying sequences without permitting mutation operations that might violate table invariants.
 	 *
+	 * Note: this can't reasonably be implemented via `Pick<ArrayNode<...>>` because we only want to include the
+	 * subset of its method overloads which do not support moving items between lists.
+	 *
 	 * @alpha @system
 	 */
 	export type RearrangeableList<TItemSchema extends ImplicitAllowedTypes> = TreeNode &
