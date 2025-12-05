@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/build-tools",
-	"version": "0.61.0",
+	"version": "0.62.0",
 	"description": "Fluid Build tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -75,7 +75,6 @@
 		"@types/lodash.isequal": "^4.5.8",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^22.19.1",
-
 		"@types/semver": "^7.7.1",
 		"eslint": "~8.57.0",
 		"json-schema-to-typescript": "^15.0.4",

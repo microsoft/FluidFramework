@@ -11,7 +11,6 @@ import crypto from "crypto";
 import * as path from "path";
 import type { AsyncPriorityQueue } from "async";
 import registerDebug from "debug";
-import globby from "globby";
 import chalk from "picocolors";
 
 import { defaultLogger } from "../../../common/logging";
@@ -30,6 +29,7 @@ import {
 } from "../../fluidBuildConfig";
 import { options } from "../../options";
 import { Task, type TaskExec } from "../task";
+import { globWithGitignore } from "../taskUtils";
 
 const { log } = defaultLogger;
 const traceTaskTrigger = registerDebug("fluid-build:task:trigger");
@@ -738,13 +738,10 @@ export abstract class LeafWithGlobInputOutputDoneFileTask extends LeafWithFileSt
 		const globs = mode === "input" ? await this.getInputGlobs() : await this.getOutputGlobs();
 		const excludeGitIgnoredFiles: boolean = this.gitIgnore.includes(mode);
 
-		const files = await globby(globs, {
+		return globWithGitignore(globs, {
 			cwd: this.node.pkg.directory,
-			// file paths returned from getInputFiles and getOutputFiles should always be absolute
-			absolute: true,
 			gitignore: excludeGitIgnoredFiles,
 		});
-		return files;
 	}
 }
 

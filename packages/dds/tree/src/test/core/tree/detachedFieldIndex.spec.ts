@@ -151,7 +151,7 @@ interface TestCase {
 	readonly name: string;
 	readonly data: DetachedFieldSummaryData;
 	/** The set of versions that this test case is valid for */
-	readonly validFor?: ReadonlySet<number>;
+	readonly validFor?: ReadonlySet<number | string>;
 	/** The id compressor to use for this test case */
 	readonly idCompressor: IIdCompressor;
 }
@@ -561,5 +561,71 @@ describe("DetachedFieldIndex methods", () => {
 		const rootId = detachedIndex.createEntry(detachedNodeId);
 		const rootId2 = detachedIndex.createEntry(detachedNodeId2);
 		assert.notEqual(detachedIndex.toFieldKey(rootId), detachedIndex.toFieldKey(rootId2));
+	});
+
+	describe("checkpoints", () => {
+		it("invoking a checkpoint restores the index state", () => {
+			const index = makeDetachedFieldIndex();
+			const revisionTag1 = mintRevisionTag();
+			index.createEntry(makeDetachedNodeId(revisionTag1, 1));
+
+			const originalData = index.encode();
+			const restore = index.createCheckpoint();
+
+			// Make changes to the index
+			index.deleteEntry(makeDetachedNodeId(revisionTag1, 1));
+			index.createEntry(makeDetachedNodeId(revisionTag1, 2), revisionTag1);
+			assert.notDeepEqual(index.encode(), originalData);
+
+			restore();
+			assert.deepEqual(index.encode(), originalData);
+		});
+
+		it("multiple checkpoints can exist for the same index", () => {
+			const index = makeDetachedFieldIndex();
+			const revisionTag1 = mintRevisionTag();
+			index.createEntry(makeDetachedNodeId(revisionTag1, 1));
+
+			const originalData = index.encode();
+			const restore1 = index.createCheckpoint();
+
+			// Make changes to the index
+			index.deleteEntry(makeDetachedNodeId(revisionTag1, 1));
+			index.createEntry(makeDetachedNodeId(revisionTag1, 2), revisionTag1);
+			assert.notDeepEqual(index.encode(), originalData);
+
+			const changedData = index.encode();
+			const restore2 = index.createCheckpoint();
+
+			restore1();
+			assert.deepEqual(index.encode(), originalData);
+
+			restore2();
+			assert.deepEqual(index.encode(), changedData);
+		});
+
+		it("a checkpoint can be restored multiple times", () => {
+			const index = makeDetachedFieldIndex();
+			const revisionTag1 = mintRevisionTag();
+			index.createEntry(makeDetachedNodeId(revisionTag1, 1));
+
+			const originalData = index.encode();
+			const restore = index.createCheckpoint();
+
+			// Make changes to the index
+			index.deleteEntry(makeDetachedNodeId(revisionTag1, 1));
+			index.createEntry(makeDetachedNodeId(revisionTag1, 2), revisionTag1);
+			assert.notDeepEqual(index.encode(), originalData);
+
+			restore();
+			assert.deepEqual(index.encode(), originalData);
+
+			// Make more changes to the index
+			index.createEntry(makeDetachedNodeId(revisionTag1, 3), revisionTag1);
+			assert.notDeepEqual(index.encode(), originalData);
+
+			restore();
+			assert.deepEqual(index.encode(), originalData);
+		});
 	});
 });
