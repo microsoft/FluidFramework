@@ -59,6 +59,7 @@ import {
 import { brand, disposeSymbol } from "../../util/index.js";
 import {
 	chunkFromJsonableTrees,
+	createTestUndoRedoStacks,
 	SharedTreeTestFactory,
 	StringArray,
 	TestTreeProviderLite,
@@ -415,7 +416,7 @@ describe("SharedTreeCore", () => {
 		]);
 	});
 
-	it("Does not submit changes that were aborted in an outer transaction", async () => {
+	it("Tolerates aborting an outer transaction", async () => {
 		const provider = new TestTreeProviderLite(2);
 		const view1 = provider.trees[0].viewWith(
 			new TreeViewConfiguration({
@@ -449,17 +450,32 @@ describe("SharedTreeCore", () => {
 		assert.deepEqual([...root1], ["A", "B"]);
 		assert.deepEqual([...root2], ["A", "B"]);
 
-		// Make an additional change to ensure that all changes from the previous transactions were flushed
+		// Make additional changes to ensure that all changes from the previous transactions were flushed
+		// and that future edits that require refreshers work as expected.
+		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
+			provider.trees[0].kernel.checkout.events,
+		);
 		Tree.runTransaction(root1, () => {
 			root1.insertAtEnd("C");
 		});
-
 		provider.synchronizeMessages();
 		assert.deepEqual([...root1], ["A", "B", "C"]);
 		assert.deepEqual([...root2], ["A", "B", "C"]);
+
+		(undoStack.pop() ?? assert.fail("Expected undo")).revert();
+		provider.synchronizeMessages();
+		assert.deepEqual([...root1], ["A", "B"]);
+		assert.deepEqual([...root2], ["A", "B"]);
+
+		// This redo operation requires a refresher.
+		(redoStack.pop() ?? assert.fail("Expected redo")).revert();
+		provider.synchronizeMessages();
+		assert.deepEqual([...root1], ["A", "B", "C"]);
+		assert.deepEqual([...root2], ["A", "B", "C"]);
+		unsubscribe();
 	});
 
-	it("Does not submit changes that were aborted in an inner transaction", async () => {
+	it("Tolerates aborting an inner transaction", async () => {
 		const provider = new TestTreeProviderLite(2);
 		const view1 = provider.trees[0].viewWith(
 			new TreeViewConfiguration({
@@ -497,14 +513,29 @@ describe("SharedTreeCore", () => {
 		assert.deepEqual([...root1], ["B"]);
 		assert.deepEqual([...root2], ["B"]);
 
-		// Make an additional change to ensure that all changes from the previous transactions were flushed
+		// Make additional changes to ensure that all changes from the previous transactions were flushed
+		// and that future edits that require refreshers work as expected.
+		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
+			provider.trees[0].kernel.checkout.events,
+		);
 		Tree.runTransaction(root1, () => {
 			root1.insertAtEnd("C");
 		});
-
 		provider.synchronizeMessages();
+		assert.deepEqual([...root1], ["B", "C"]);
 		assert.deepEqual([...root2], ["B", "C"]);
+
+		(undoStack.pop() ?? assert.fail("Expected undo")).revert();
+		provider.synchronizeMessages();
+		assert.deepEqual([...root1], ["B"]);
+		assert.deepEqual([...root2], ["B"]);
+
+		// This redo operation requires a refresher.
+		(redoStack.pop() ?? assert.fail("Expected redo")).revert();
+		provider.synchronizeMessages();
+		assert.deepEqual([...root1], ["B", "C"]);
 		assert.deepEqual([...root2], ["B", "C"]);
+		unsubscribe();
 	});
 
 	describe("commit enrichment", () => {
