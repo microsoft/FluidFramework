@@ -42,7 +42,7 @@ import { makeDetachedFieldIndexCodec } from "./detachedFieldIndexCodecs.js";
  */
 export interface ReadOnlyDetachedFieldIndex {
 	/**
-	 * Creates a deep clone of this DetachedFieldIndex.
+	 * Creates a deep clone of this `DetachedFieldIndex`.
 	 */
 	clone(): DetachedFieldIndex;
 
@@ -53,13 +53,13 @@ export interface ReadOnlyDetachedFieldIndex {
 	toFieldKey(id: ForestRootId): FieldKey;
 
 	/**
-	 * Returns the FieldKey associated with the given id.
+	 * Returns the `ForestRootId` associated with the given id.
 	 * Returns undefined if no such id is known to the index.
 	 */
 	tryGetEntry(id: Delta.DetachedNodeId): ForestRootId | undefined;
 
 	/**
-	 * Returns the FieldKey associated with the given id.
+	 * Returns the `ForestRootId` associated with the given id.
 	 * Fails if no such id is known to the index.
 	 */
 	getEntry(id: Delta.DetachedNodeId): ForestRootId;
