@@ -10,8 +10,8 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-		  "@fluid-internal/fluid/no-unchecked-record-access": "warn",
-		  "import-x/no-nodejs-modules": "off"
+			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+			"import-x/no-nodejs-modules": "off",
 		},
 	},
 ];
