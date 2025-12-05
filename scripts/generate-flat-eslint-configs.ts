@@ -448,8 +448,11 @@ ${typeImport}import { ${variant} } from "${importPath}";
 				projectPaths.includes("./src/test/tsconfig.json");
 
 			if (!isStandardPattern) {
+				// When parserOptions.project is at the top level in the legacy config,
+				// it applies to ALL files, not just test files. We need to apply it
+				// to all TypeScript files to override the shared config's projectService.
 				configContent += `\t{\n`;
-				configContent += `\t\tfiles: ["src/test/**", "*.spec.ts", "*.test.ts"],\n`;
+				configContent += `\t\tfiles: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],\n`;
 				configContent += `\t\tlanguageOptions: {\n`;
 				configContent += `\t\t\tparserOptions: {\n`;
 				configContent += `\t\t\t\tprojectService: false,\n`;

@@ -31,7 +31,7 @@ const config: Linter.Config[] = [
 		},
 	},
 	{
-		files: ["src/test/**", "*.spec.ts", "*.test.ts"],
+		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
 		languageOptions: {
 			parserOptions: {
 				projectService: false,

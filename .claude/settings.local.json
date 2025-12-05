@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm install:*)",
+      "Bash(pnpm tsx:*)",
+      "Bash(npx tsx:*)",
+      "Bash(node --import tsx scripts/generate-flat-eslint-configs.ts:*)",
+      "Bash(./node_modules/.bin/tsx:*)",
+      "Bash(tsx:*)",
+      "Bash(pnpm exec tsx:*)",
+      "Bash(./common/build/eslint-config-fluid/node_modules/.bin/tsx:*)",
+      "Bash(npx eslint:*)",
+      "Bash(node --experimental-strip-types:*)",
+      "Bash(/home/tylerbu/code/FluidFramework/common/build/eslint-config-fluid/node_modules/.bin/tsx:*)",
+      "Bash(pnpm format:*)",
+      "Bash(pnpm add:*)",
+      "Bash(find:*)",
+      "Bash(pnpm eslint:*)",
+      "Bash(ls:*)",
+      "Bash(npx prettier:*)",
+      "Bash(while read mjs_file)",
+      "Bash(do mts_file=\"$mjs_file%.mjs.mts\")",
+      "Bash(if [ -f \"$mts_file\" ])",
+      "Bash(then rm -f \"$mjs_file\")",
+      "Bash(echo:*)",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(/bin/bash -c 'for mjs_file in $(find . -name \"\"eslint.config.mjs\"\"); do mts_file=\"\"${mjs_file%.mjs}.mts\"\"; if [ -f \"\"$mts_file\"\" ]; then rm -f \"\"$mjs_file\"\" && echo \"\"Deleted: $mjs_file\"\"; fi; done')",
+      "Bash(git checkout:*)",
+      "Bash(rm:*)",
+      "Bash(grep:*)",
+      "Bash(node -e:*)",
+      "Bash(timeout 600 pnpm eslint:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

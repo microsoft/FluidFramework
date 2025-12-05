@@ -9,7 +9,7 @@ import { strict } from "../../../../common/build/eslint-config-fluid/flat.mts";
 const config: Linter.Config[] = [
 	...strict,
 	{
-		files: ["src/test/**", "*.spec.ts", "*.test.ts"],
+		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
 		languageOptions: {
 			parserOptions: {
 				projectService: false,
