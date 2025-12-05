@@ -51,13 +51,19 @@ const globalIgnores = {
 };
 
 /** @type {FlatConfigArray} */
-const recommended = [globalIgnores, ...compat.config({ extends: [path.join(__dirname, "recommended.js")] })];
+const recommended = [
+	globalIgnores,
+	...compat.config({ extends: [path.join(__dirname, "recommended.js")] }),
+];
 /** @type {FlatConfigArray} */
 const strict = [globalIgnores, ...compat.config({ extends: [path.join(__dirname, "strict.js")] })];
 /** @type {FlatConfigArray} */
-const minimalDeprecated = [globalIgnores, ...compat.config({
-	extends: [path.join(__dirname, "minimal-deprecated.js")],
-})];
+const minimalDeprecated = [
+	globalIgnores,
+	...compat.config({
+		extends: [path.join(__dirname, "minimal-deprecated.js")],
+	}),
+];
 
 // Use projectService for automatic tsconfig discovery instead of manual project configuration.
 // This eliminates the need to manually configure project paths and handles test files automatically.
