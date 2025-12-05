@@ -110,19 +110,28 @@ function buildFlatConfigContent(
 
 	let configContent = `/* eslint-disable */\n/**\n * GENERATED FILE - DO NOT EDIT DIRECTLY.\n * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts\n */\nimport { ${variant} } from '${importPath}';\n\n`;
 
-	// Check if there are local rules or overrides to include
+	// Check if there are local customizations to include
 	const hasLocalRules = legacyConfig?.rules && Object.keys(legacyConfig.rules).length > 0;
+	const hasParserOptions = legacyConfig?.parserOptions && Object.keys(legacyConfig.parserOptions).length > 0;
 	const hasOverrides = legacyConfig?.overrides && legacyConfig.overrides.length > 0;
 
-	if (!hasLocalRules && !hasOverrides) {
+	if (!hasLocalRules && !hasParserOptions && !hasOverrides) {
 		// Simple case: no local customizations
 		configContent += `export default [...${variant}];\n`;
 	} else {
-		// Complex case: include local rules/overrides
+		// Complex case: include local rules/overrides/parserOptions
 		configContent += `const config = [\n\t...${variant},\n`;
 
-		if (hasLocalRules) {
-			configContent += `\t{\n\t\trules: ${JSON.stringify(legacyConfig.rules, null, 2).replace(/\n/g, "\n\t\t")},\n\t},\n`;
+		// Add root-level customizations if present
+		if (hasLocalRules || hasParserOptions) {
+			configContent += `\t{\n`;
+			if (hasParserOptions) {
+				configContent += `\t\tlanguageOptions: {\n\t\t\tparserOptions: ${JSON.stringify(legacyConfig.parserOptions, null, 2).replace(/\n/g, "\n\t\t\t")},\n\t\t},\n`;
+			}
+			if (hasLocalRules) {
+				configContent += `\t\trules: ${JSON.stringify(legacyConfig.rules, null, 2).replace(/\n/g, "\n\t\t")},\n`;
+			}
+			configContent += `\t},\n`;
 		}
 
 		if (hasOverrides) {
@@ -133,6 +142,9 @@ function buildFlatConfigContent(
 				}
 				if (override.excludedFiles) {
 					configContent += `\t\tignores: ${JSON.stringify(override.excludedFiles)},\n`;
+				}
+				if (override.parserOptions) {
+					configContent += `\t\tlanguageOptions: {\n\t\t\tparserOptions: ${JSON.stringify(override.parserOptions, null, 2).replace(/\n/g, "\n\t\t\t")},\n\t\t},\n`;
 				}
 				if (override.rules) {
 					configContent += `\t\trules: ${JSON.stringify(override.rules, null, 2).replace(/\n/g, "\n\t\t")},\n`;
