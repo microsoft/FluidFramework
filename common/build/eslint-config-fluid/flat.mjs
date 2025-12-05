@@ -25,14 +25,39 @@ const compat = new FlatCompat({
 	allConfig: eslintJs.configs.all,
 });
 
+// Global ignores for all configs.
+// In flat config, a config object with only `ignores` is treated as a global ignore pattern.
+// See: https://eslint.org/docs/latest/use/configure/configuration-files#globally-ignoring-files-with-ignores
+const globalIgnores = {
+	ignores: [
+		// Build output directories
+		"**/dist/**",
+		"**/lib/**",
+		"**/build/**",
+
+		// Dependencies
+		"**/node_modules/**",
+
+		// Generated files (from minimal-deprecated.js ignorePatterns)
+		"**/packageVersion.ts",
+		"**/layerGenerationState.ts",
+		"**/*.generated.ts",
+		"**/*.generated.js",
+
+		// Common non-source directories
+		"**/coverage/**",
+		"**/.nyc_output/**",
+	],
+};
+
 /** @type {FlatConfigArray} */
-const recommended = compat.config({ extends: [path.join(__dirname, "recommended.js")] });
+const recommended = [globalIgnores, ...compat.config({ extends: [path.join(__dirname, "recommended.js")] })];
 /** @type {FlatConfigArray} */
-const strict = compat.config({ extends: [path.join(__dirname, "strict.js")] });
+const strict = [globalIgnores, ...compat.config({ extends: [path.join(__dirname, "strict.js")] })];
 /** @type {FlatConfigArray} */
-const minimalDeprecated = compat.config({
+const minimalDeprecated = [globalIgnores, ...compat.config({
 	extends: [path.join(__dirname, "minimal-deprecated.js")],
-});
+})];
 
 // Use projectService for automatic tsconfig discovery instead of manual project configuration.
 // This eliminates the need to manually configure project paths and handles test files automatically.

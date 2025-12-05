@@ -28,11 +28,12 @@ interface PackageTarget {
 	legacyConfigPath: string;
 	flatVariant: "strict" | "minimalDeprecated" | "recommended";
 	legacyConfig?: unknown;
+	eslintIgnorePatterns?: string[];
 }
 
 async function findLegacyConfigs(): Promise<PackageTarget[]> {
 	const results: PackageTarget[] = [];
-	const topDirs = ["packages", "experimental", "examples", "azure", "tools", "server"]; // exclude common/build from traversal
+	const topDirs = ["packages", "experimental", "examples", "azure", "tools"]; // exclude common/build and server from traversal
 
 	async function walk(dir: string): Promise<void> {
 		let entries;
@@ -77,7 +78,26 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 					);
 					legacyConfig = JSON.parse(result);
 				} catch (e) {
-					console.warn(`Warning: Could not load ${legacyPath}:`, e);
+					console.error(`Error: Could not load ${legacyPath}:`, e);
+				}
+
+				// Check for .eslintignore file
+				let eslintIgnorePatterns: string[] | undefined;
+				const eslintIgnorePath = path.join(full, ".eslintignore");
+				try {
+					const ignoreContent = await fs.readFile(eslintIgnorePath, "utf8");
+					// Parse .eslintignore: each non-empty, non-comment line is a pattern
+					eslintIgnorePatterns = ignoreContent
+						.split("\n")
+						.map((line) => line.trim())
+						.filter((line) => line.length > 0 && !line.startsWith("#"));
+					if (eslintIgnorePatterns.length > 0) {
+						console.log(`  Found .eslintignore with ${eslintIgnorePatterns.length} patterns in ${full}`);
+					} else {
+						eslintIgnorePatterns = undefined;
+					}
+				} catch {
+					// No .eslintignore file - that's fine
 				}
 
 				if (legacyConfig !== undefined) {
@@ -86,9 +106,10 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 						legacyConfigPath: legacyPath,
 						flatVariant: variant,
 						legacyConfig,
+						eslintIgnorePatterns,
 					});
 				} else {
-					console.warn(`Skipping package at ${full} due to failed legacy config load.`);
+					console.error(`Skipping package at ${full} due to failed legacy config load.`);
 				}
 			} catch {
 				/* no legacy config here - skip this directory */
@@ -98,7 +119,9 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 		}
 	}
 
+	console.log("Scanning for legacy .eslintrc.cjs configs...");
 	for (const top of topDirs) {
+		console.log(`  Scanning ${top}/...`);
 		await walk(path.join(repoRoot, top));
 	}
 	return results;
@@ -170,6 +193,7 @@ function buildFlatConfigContent(
 	packageDir: string,
 	variant: PackageTarget["flatVariant"],
 	legacyConfig?: unknown,
+	eslintIgnorePatterns?: string[],
 ): string {
 	const flatSource = path
 		.relative(
@@ -184,6 +208,7 @@ function buildFlatConfigContent(
 	// Check if there are local rules or overrides to include
 	const hasLocalRules = legacyConfig?.rules && Object.keys(legacyConfig.rules).length > 0;
 	const hasOverrides = legacyConfig?.overrides && legacyConfig.overrides.length > 0;
+	const hasEslintIgnore = eslintIgnorePatterns && eslintIgnorePatterns.length > 0;
 
 	// Check if there's a non-standard project configuration
 	let hasNonStandardProject = false;
@@ -195,7 +220,7 @@ function buildFlatConfigContent(
 		hasNonStandardProject = !isStandardPattern;
 	}
 
-	if (!hasLocalRules && !hasOverrides && !hasNonStandardProject) {
+	if (!hasLocalRules && !hasOverrides && !hasNonStandardProject && !hasEslintIgnore) {
 		// Simple case: no local customizations
 		configContent += `export default [...${variant}];\n`;
 	} else {
@@ -271,6 +296,15 @@ function buildFlatConfigContent(
 			}
 		}
 
+		// Add .eslintignore patterns as global ignores
+		// In flat config, a config object with only `ignores` is treated as global
+		if (hasEslintIgnore) {
+			configContent += `\t// Migrated from .eslintignore\n`;
+			configContent += `\t{\n`;
+			configContent += `\t\tignores: ${JSON.stringify(eslintIgnorePatterns, null, 2).replace(/\n/g, "\n\t\t")},\n`;
+			configContent += `\t},\n`;
+		}
+
 		configContent += `];\n\nexport default config;\n`;
 	}
 
@@ -278,11 +312,13 @@ function buildFlatConfigContent(
 }
 
 async function writeFlatConfigs(targets: PackageTarget[]): Promise<void> {
+	console.log(`\nGenerating ${targets.length} flat config files...`);
 	for (const t of targets) {
 		const outPath = path.join(t.packageDir, "eslint.config.mjs");
 		// Always overwrite if legacy config exists (we only process dirs with .eslintrc.cjs)
-		const content = buildFlatConfigContent(t.packageDir, t.flatVariant, t.legacyConfig);
+		const content = buildFlatConfigContent(t.packageDir, t.flatVariant, t.legacyConfig, t.eslintIgnorePatterns);
 		await fs.writeFile(outPath, content, "utf8");
+		console.log(`  Generated: ${path.relative(repoRoot, outPath)} (${t.flatVariant})`);
 	}
 }
 

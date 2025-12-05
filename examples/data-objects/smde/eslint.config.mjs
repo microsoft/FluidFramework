@@ -17,6 +17,12 @@ const config = [
 		  ]
 		},
 	},
+	// Migrated from .eslintignore
+	{
+		ignores: [
+		  "*.spec.ts"
+		],
+	},
 ];
 
 export default config;

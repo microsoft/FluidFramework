@@ -5,4 +5,14 @@
  */
 import { recommended } from '../../../common/build/eslint-config-fluid/flat.mjs';
 
-export default [...recommended];
+const config = [
+	...recommended,
+	// Migrated from .eslintignore
+	{
+		ignores: [
+		  "test-d"
+		],
+	},
+];
+
+export default config;
