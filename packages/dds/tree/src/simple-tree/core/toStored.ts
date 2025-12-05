@@ -24,7 +24,9 @@ export const ExpectStored = Symbol("ExpectStored");
 export type ExpectStored = typeof ExpectStored;
 
 /**
- * Marker type indicating that the input schema is already a stored schema.
+ * Marker type indicating that the input schema should not be transformed: data accessible from the simple schema API surface should be copied as is.
+ * @remarks
+ * The only real use-cases for this are deep-copying simple schema, and copying objects that implement more than just simple schema (such as {@link TreeSchema}) into simple object without extra prototypes and properties.
  */
 export const Unchanged = Symbol("Unchanged");
 export type Unchanged = typeof Unchanged;
