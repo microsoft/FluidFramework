@@ -100,9 +100,7 @@ export abstract class VersionedSummarizer<TVersion extends number> implements Su
 				throw new UsageError(`Cannot read version ${version} of shared tree summary.`);
 			}
 		} else if (!this.supportPreVersioningFormat) {
-			throw new UsageError(
-				`Cannot read summary without version metadata for shared tree summary.`,
-			);
+			throw new UsageError(`Cannot read summary without versioning for shared tree summary.`);
 		}
 		await this.loadInternal(services, parse);
 	}

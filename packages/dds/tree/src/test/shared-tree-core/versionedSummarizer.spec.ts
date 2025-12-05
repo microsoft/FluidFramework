@@ -138,7 +138,7 @@ describe("VersionedSummarizer", () => {
 			assert(summarizer.loadInternalCallCount === 1, "loadInternal should be called once");
 		});
 
-		it("load successful: no metadata is supported", async () => {
+		it("load successful: pre-versioning format is supported", async () => {
 			const unversionedSummarizer = new TestUnversionedSummarizer("testKey");
 			const builder = new SummaryTreeBuilder();
 			unversionedSummarizer.summarize({ stringify, builder });
@@ -151,7 +151,7 @@ describe("VersionedSummarizer", () => {
 				"testKey",
 				newVersion,
 				new Set([newVersion]),
-				false /* supportPreVersioningFormat */,
+				true /* supportPreVersioningFormat */,
 			);
 			await assert.doesNotReject(newSummarizer.load(newStorage, parse));
 		});
@@ -173,7 +173,7 @@ describe("VersionedSummarizer", () => {
 			);
 			await assert.rejects(
 				newSummarizer.load(newStorage, parse),
-				validateUsageError(/Cannot read version/),
+				validateUsageError(/Cannot read summary without versioning/),
 			);
 		});
 
