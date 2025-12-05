@@ -3,41 +3,35 @@
  * GENERATED FILE - DO NOT EDIT DIRECTLY.
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts
  */
-import { minimalDeprecated } from '../../../common/build/eslint-config-fluid/flat.mjs';
+import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mjs";
 
 const config = [
 	...minimalDeprecated,
 	{
 		rules: {
-		  "@typescript-eslint/strict-boolean-expressions": "off",
-		  "unicorn/filename-case": [
-		    "error",
-		    {
-		      "cases": {
-		        "camelCase": true,
-		        "pascalCase": true
-		      },
-		      "ignore": [
-		        {}
-		      ]
-		    }
-		  ],
-		  "import-x/no-nodejs-modules": [
-		    "error"
-		  ]
+			"@typescript-eslint/strict-boolean-expressions": "off",
+			"unicorn/filename-case": [
+				"error",
+				{
+					"cases": {
+						"camelCase": true,
+						"pascalCase": true,
+					},
+					"ignore": [{}],
+				},
+			],
+			"import-x/no-nodejs-modules": ["error"],
 		},
 	},
 	{
-		files: ["*.spec.ts","src/test/**"],
+		files: ["*.spec.ts", "src/test/**"],
 		rules: {
-		  "import-x/no-nodejs-modules": [
-		    "error",
-		    {
-		      "allow": [
-		        "assert"
-		      ]
-		    }
-		  ]
+			"import-x/no-nodejs-modules": [
+				"error",
+				{
+					"allow": ["assert"],
+				},
+			],
 		},
 	},
 ];

@@ -3,49 +3,45 @@
  * GENERATED FILE - DO NOT EDIT DIRECTLY.
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts
  */
-import { recommended } from '../../../common/build/eslint-config-fluid/flat.mjs';
+import { recommended } from "../../../common/build/eslint-config-fluid/flat.mjs";
 
 const config = [
 	...recommended,
 	{
 		rules: {
-		  "import-x/no-internal-modules": [
-		    "error",
-		    {
-		      "allow": [
-		        "@fluidframework/*/beta",
-		        "@fluidframework/*/alpha",
-		        "next/**",
-		        "@/actions/**",
-		        "@/types/**",
-		        "@/infra/**",
-		        "@/components/**",
-		        "@/app/**",
-		        "@fluidframework/ai-collab/alpha"
-		      ]
-		    }
-		  ],
-		  "import-x/no-extraneous-dependencies": [
-		    "error",
-		    {
-		      "devDependencies": true
-		    }
-		  ]
+			"import-x/no-internal-modules": [
+				"error",
+				{
+					"allow": [
+						"@fluidframework/*/beta",
+						"@fluidframework/*/alpha",
+						"next/**",
+						"@/actions/**",
+						"@/types/**",
+						"@/infra/**",
+						"@/components/**",
+						"@/app/**",
+						"@fluidframework/ai-collab/alpha",
+					],
+				},
+			],
+			"import-x/no-extraneous-dependencies": [
+				"error",
+				{
+					"devDependencies": true,
+				},
+			],
 		},
 	},
 	{
 		files: ["src/actions/task.ts"],
 		rules: {
-		  "import-x/no-nodejs-modules": [
-		    "error",
-		    {
-		      "allow": [
-		        "node:fs",
-		        "node:path",
-		        "node:url"
-		      ]
-		    }
-		  ]
+			"import-x/no-nodejs-modules": [
+				"error",
+				{
+					"allow": ["node:fs", "node:path", "node:url"],
+				},
+			],
 		},
 	},
 	{

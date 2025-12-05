@@ -3,21 +3,19 @@
  * GENERATED FILE - DO NOT EDIT DIRECTLY.
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts
  */
-import { minimalDeprecated } from '../../../common/build/eslint-config-fluid/flat.mjs';
+import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mjs";
 
 const config = [
 	...minimalDeprecated,
 	{
 		rules: {
-		  "@typescript-eslint/strict-boolean-expressions": "off",
-		  "@fluid-internal/fluid/no-unchecked-record-access": "warn"
+			"@typescript-eslint/strict-boolean-expressions": "off",
+			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 		},
 	},
 	// Migrated from .eslintignore
 	{
-		ignores: [
-		  "*.spec.ts"
-		],
+		ignores: ["*.spec.ts"],
 	},
 ];
 

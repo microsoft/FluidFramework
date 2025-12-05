@@ -92,7 +92,9 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 						.map((line) => line.trim())
 						.filter((line) => line.length > 0 && !line.startsWith("#"));
 					if (eslintIgnorePatterns.length > 0) {
-						console.log(`  Found .eslintignore with ${eslintIgnorePatterns.length} patterns in ${full}`);
+						console.log(
+							`  Found .eslintignore with ${eslintIgnorePatterns.length} patterns in ${full}`,
+						);
 					} else {
 						eslintIgnorePatterns = undefined;
 					}
@@ -212,9 +214,13 @@ function buildFlatConfigContent(
 
 	// Check if there's a non-standard project configuration
 	let hasNonStandardProject = false;
-	if (legacyConfig?.parserOptions?.project && Array.isArray(legacyConfig.parserOptions.project)) {
+	if (
+		legacyConfig?.parserOptions?.project &&
+		Array.isArray(legacyConfig.parserOptions.project)
+	) {
 		const projectPaths = legacyConfig.parserOptions.project;
-		const isStandardPattern = projectPaths.length === 2 &&
+		const isStandardPattern =
+			projectPaths.length === 2 &&
 			projectPaths.includes("./tsconfig.json") &&
 			projectPaths.includes("./src/test/tsconfig.json");
 		hasNonStandardProject = !isStandardPattern;
@@ -235,7 +241,9 @@ function buildFlatConfigContent(
 
 			for (const [ruleName, ruleConfig] of Object.entries(legacyConfig.rules)) {
 				const isTypeAware = TYPE_AWARE_RULES.has(ruleName);
-				const isDisabled = ruleConfig === "off" || ruleConfig === 0 ||
+				const isDisabled =
+					ruleConfig === "off" ||
+					ruleConfig === 0 ||
 					(Array.isArray(ruleConfig) && (ruleConfig[0] === "off" || ruleConfig[0] === 0));
 
 				// Type-aware rules that are disabled should apply to all files
@@ -277,9 +285,13 @@ function buildFlatConfigContent(
 		// Add parserOptions.project configuration only if it's non-standard
 		// The default shared config already handles the common pattern: ["./tsconfig.json", "./src/test/tsconfig.json"]
 		// Only add custom project config if the package uses a different pattern
-		if (legacyConfig?.parserOptions?.project && Array.isArray(legacyConfig.parserOptions.project)) {
+		if (
+			legacyConfig?.parserOptions?.project &&
+			Array.isArray(legacyConfig.parserOptions.project)
+		) {
 			const projectPaths = legacyConfig.parserOptions.project;
-			const isStandardPattern = projectPaths.length === 2 &&
+			const isStandardPattern =
+				projectPaths.length === 2 &&
 				projectPaths.includes("./tsconfig.json") &&
 				projectPaths.includes("./src/test/tsconfig.json");
 
@@ -316,7 +328,12 @@ async function writeFlatConfigs(targets: PackageTarget[]): Promise<void> {
 	for (const t of targets) {
 		const outPath = path.join(t.packageDir, "eslint.config.mjs");
 		// Always overwrite if legacy config exists (we only process dirs with .eslintrc.cjs)
-		const content = buildFlatConfigContent(t.packageDir, t.flatVariant, t.legacyConfig, t.eslintIgnorePatterns);
+		const content = buildFlatConfigContent(
+			t.packageDir,
+			t.flatVariant,
+			t.legacyConfig,
+			t.eslintIgnorePatterns,
+		);
 		await fs.writeFile(outPath, content, "utf8");
 		console.log(`  Generated: ${path.relative(repoRoot, outPath)} (${t.flatVariant})`);
 	}

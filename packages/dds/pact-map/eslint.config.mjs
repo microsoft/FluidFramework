@@ -3,21 +3,19 @@
  * GENERATED FILE - DO NOT EDIT DIRECTLY.
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts
  */
-import { strict } from '../../../common/build/eslint-config-fluid/flat.mjs';
+import { strict } from "../../../common/build/eslint-config-fluid/flat.mjs";
 
 const config = [
 	...strict,
 	{
-		files: ["*.spec.ts","src/test/**"],
+		files: ["*.spec.ts", "src/test/**"],
 		rules: {
-		  "import-x/no-nodejs-modules": [
-		    "error",
-		    {
-		      "allow": [
-		        "node:assert"
-		      ]
-		    }
-		  ]
+			"import-x/no-nodejs-modules": [
+				"error",
+				{
+					"allow": ["node:assert"],
+				},
+			],
 		},
 	},
 ];

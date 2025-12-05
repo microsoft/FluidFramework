@@ -3,14 +3,14 @@
  * GENERATED FILE - DO NOT EDIT DIRECTLY.
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts
  */
-import { minimalDeprecated } from '../../../common/build/eslint-config-fluid/flat.mjs';
+import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mjs";
 
 const config = [
 	...minimalDeprecated,
 	{
 		rules: {
-		  "@fluid-internal/fluid/no-unchecked-record-access": "warn",
-		  "import-x/no-nodejs-modules": "off"
+			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+			"import-x/no-nodejs-modules": "off",
 		},
 	},
 ];
