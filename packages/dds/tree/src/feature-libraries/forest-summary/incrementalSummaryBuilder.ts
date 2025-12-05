@@ -4,10 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type {
-	IExperimentalIncrementalSummaryContext,
-	ISummaryTreeWithStats,
-} from "@fluidframework/runtime-definitions/internal";
+import type { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import {
 	brand,
@@ -30,21 +27,7 @@ import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal"
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { SummaryElementStringifier } from "../../shared-tree-core/index.js";
-
-/**
- * The key for the blob under ForestSummarizer's root.
- * This blob contains the ForestCodec's output.
- * See {@link ForestIncrementalSummaryBuilder} for details on the summary structure.
- */
-export const forestSummaryContentKey = "ForestTree";
-
-/**
- * The contents of an incremental chunk is under a summary tree node with its {@link ChunkReferenceId} as the key.
- * The inline portion of the chunk content is encoded with the forest codec is stored in a blob with this key.
- * The rest of the chunk contents  is stored in the summary tree under the summary tree node.
- * See the summary format in {@link ForestIncrementalSummaryBuilder} for more details.
- */
-const chunkContentsBlobKey = "contents";
+import { chunkContentsBlobKey, forestSummaryContentKey } from "./summaryTypes.js";
 
 /**
  * State that tells whether a summary is currently being tracked.
@@ -299,11 +282,13 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	 * contents of the chunks.
 	 * @param readAndParse - A function that reads and parses a blob from the storage service.
 	 */
-	public async load(
-		services: IChannelStorageService,
-		readAndParseChunk: <T extends JsonCompatible<IFluidHandle>>(id: string) => Promise<T>,
-	): Promise<void> {
-		const forestTree = services.getSnapshotTree?.();
+	public async load(args: {
+		services: IChannelStorageService;
+		readAndParseChunk: <T extends JsonCompatible<IFluidHandle>>(
+			chunkBlobPath: string,
+		) => Promise<T>;
+	}): Promise<void> {
+		const forestTree = args.services.getSnapshotTree?.();
 		// Snapshot tree should be available when loading forest's contents. However, it is an optional function
 		// and may not be implemented by the storage service.
 		if (forestTree === undefined) {
@@ -321,12 +306,13 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 			for (const [chunkReferenceId, chunkSnapshotTree] of Object.entries(snapshotTree.trees)) {
 				const chunkSubTreePath = `${parentTreeKey}${chunkReferenceId}`;
 				const chunkContentsPath = `${chunkSubTreePath}/${chunkContentsBlobKey}`;
-				if (!(await services.contains(chunkContentsPath))) {
+				if (!(await args.services.contains(chunkContentsPath))) {
 					throw new LoggingError(
 						`SharedTree: Cannot find contents for incremental chunk ${chunkContentsPath}`,
 					);
 				}
-				const chunkContents = await readAndParseChunk<EncodedFieldBatch>(chunkContentsPath);
+				const chunkContents =
+					await args.readAndParseChunk<EncodedFieldBatch>(chunkContentsPath);
 				this.loadedChunksMap.set(chunkReferenceId, {
 					encodedContents: chunkContents,
 					summaryPath: chunkSubTreePath,
@@ -357,8 +343,9 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		fullTree: boolean;
 		incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined;
 		stringify: SummaryElementStringifier;
+		builder: SummaryTreeBuilder;
 	}): ForestIncrementalSummaryBehavior {
-		const { fullTree, incrementalSummaryContext, stringify } = args;
+		const { fullTree, incrementalSummaryContext, stringify, builder } = args;
 		// If there is no incremental summary context, do not summarize incrementally. This happens in two scenarios:
 		// 1. When summarizing a detached container, i.e., the first ever summary.
 		// 2. When running GC, the default behavior is to call summarize on DDS without incrementalSummaryContext.
@@ -374,7 +361,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 			summarySequenceNumber: incrementalSummaryContext.summarySequenceNumber,
 			latestSummaryBasePath: incrementalSummaryContext.summaryPath,
 			chunkSummaryPath: [],
-			parentSummaryBuilder: new SummaryTreeBuilder(),
+			parentSummaryBuilder: builder,
 			fullTree,
 			stringify,
 		};
@@ -469,25 +456,24 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	 * @param incrementalSummaryContext - The context for the incremental summary that contains the sequence numbers.
 	 * If this is undefined, the summary tree will only contain a summary blob for `forestSummaryContent`.
 	 * @param forestSummaryContent - The stringified ForestCodec output of top-level Forest content.
+	 * @param builder - The summary tree builder to use to add the forest's contents. Note that if tracking an incremental
+	 * summary, this builder will be the same as the one tracked in `trackedSummaryProperties`.
 	 * @returns the Forest's summary tree.
 	 */
 	public completeSummary(args: {
 		incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined;
 		forestSummaryContent: string;
-	}): ISummaryTreeWithStats {
-		const { incrementalSummaryContext, forestSummaryContent } = args;
+		builder: SummaryTreeBuilder;
+	}): void {
+		const { incrementalSummaryContext, forestSummaryContent, builder } = args;
 		if (!this.enableIncrementalSummary || incrementalSummaryContext === undefined) {
-			const summaryBuilder = new SummaryTreeBuilder();
-			summaryBuilder.addBlob(forestSummaryContentKey, forestSummaryContent);
-			return summaryBuilder.getSummaryTree();
+			builder.addBlob(forestSummaryContentKey, forestSummaryContent);
+			return;
 		}
 
 		validateTrackingSummary(this.forestSummaryState, this.trackedSummaryProperties);
 
-		this.trackedSummaryProperties.parentSummaryBuilder.addBlob(
-			forestSummaryContentKey,
-			forestSummaryContent,
-		);
+		builder.addBlob(forestSummaryContentKey, forestSummaryContent);
 
 		// Copy over the entries from the latest summary to the current summary.
 		// In the current summary, there can be fields that haven't changed since the latest summary and the chunks
@@ -516,9 +502,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		}
 
 		this.forestSummaryState = ForestSummaryTrackingState.ReadyToTrack;
-		const summaryTree = this.trackedSummaryProperties.parentSummaryBuilder.getSummaryTree();
 		this.trackedSummaryProperties = undefined;
-		return summaryTree;
 	}
 
 	/**
