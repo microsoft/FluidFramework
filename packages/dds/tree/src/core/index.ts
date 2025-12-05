@@ -84,7 +84,7 @@ export {
 	isCursor,
 	DetachedFieldIndex,
 	type ReadOnlyDetachedFieldIndex,
-	type DetachedFieldIndexSnapshot,
+	type DetachedFieldIndexCheckpoint,
 	type ForestRootId,
 	getDetachedFieldContainingPath,
 	aboveRootPlaceholder,

@@ -457,12 +457,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				const disposeForks = this.disposeForksAfterTransaction
 					? trackForksForDisposal(this)
 					: undefined;
-				// When each transaction is started, take a snapshot of the current state of removed roots
-				const removedRootsSnapshot = this._removedRoots.createSnapshot();
+				// When each transaction is started, make a restorable checkpoint of the current state of removed roots
+				const restoreRemovedRoots = this._removedRoots.createCheckpoint();
 				return (result) => {
 					switch (result) {
 						case TransactionResult.Abort:
-							removedRootsSnapshot.restore();
+							restoreRemovedRoots();
 							break;
 						case TransactionResult.Commit:
 							if (!this.transaction.isInProgress()) {

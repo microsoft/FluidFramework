@@ -563,31 +563,31 @@ describe("DetachedFieldIndex methods", () => {
 		assert.notEqual(detachedIndex.toFieldKey(rootId), detachedIndex.toFieldKey(rootId2));
 	});
 
-	describe("snapshotting", () => {
-		it("loading a snapshot restores the index state", () => {
+	describe("checkpoints", () => {
+		it("invoking a checkpoint restores the index state", () => {
 			const index = makeDetachedFieldIndex();
 			const revisionTag1 = mintRevisionTag();
 			index.createEntry(makeDetachedNodeId(revisionTag1, 1));
 
 			const originalData = index.encode();
-			const snapshot = index.createSnapshot();
+			const restore = index.createCheckpoint();
 
 			// Make changes to the index
 			index.deleteEntry(makeDetachedNodeId(revisionTag1, 1));
 			index.createEntry(makeDetachedNodeId(revisionTag1, 2), revisionTag1);
 			assert.notDeepEqual(index.encode(), originalData);
 
-			snapshot.restore();
+			restore();
 			assert.deepEqual(index.encode(), originalData);
 		});
 
-		it("multiple snapshots can exist for the same index", () => {
+		it("multiple checkpoints can exist for the same index", () => {
 			const index = makeDetachedFieldIndex();
 			const revisionTag1 = mintRevisionTag();
 			index.createEntry(makeDetachedNodeId(revisionTag1, 1));
 
 			const originalData = index.encode();
-			const snapshot1 = index.createSnapshot();
+			const restore1 = index.createCheckpoint();
 
 			// Make changes to the index
 			index.deleteEntry(makeDetachedNodeId(revisionTag1, 1));
@@ -595,36 +595,36 @@ describe("DetachedFieldIndex methods", () => {
 			assert.notDeepEqual(index.encode(), originalData);
 
 			const changedData = index.encode();
-			const snapshot2 = index.createSnapshot();
+			const restore2 = index.createCheckpoint();
 
-			snapshot1.restore();
+			restore1();
 			assert.deepEqual(index.encode(), originalData);
 
-			snapshot2.restore();
+			restore2();
 			assert.deepEqual(index.encode(), changedData);
 		});
 
-		it("a snapshot can be restored multiple times", () => {
+		it("a checkpoint can be restored multiple times", () => {
 			const index = makeDetachedFieldIndex();
 			const revisionTag1 = mintRevisionTag();
 			index.createEntry(makeDetachedNodeId(revisionTag1, 1));
 
 			const originalData = index.encode();
-			const snapshot = index.createSnapshot();
+			const restore = index.createCheckpoint();
 
 			// Make changes to the index
 			index.deleteEntry(makeDetachedNodeId(revisionTag1, 1));
 			index.createEntry(makeDetachedNodeId(revisionTag1, 2), revisionTag1);
 			assert.notDeepEqual(index.encode(), originalData);
 
-			snapshot.restore();
+			restore();
 			assert.deepEqual(index.encode(), originalData);
 
 			// Make more changes to the index
 			index.createEntry(makeDetachedNodeId(revisionTag1, 3), revisionTag1);
 			assert.notDeepEqual(index.encode(), originalData);
 
-			snapshot.restore();
+			restore();
 			assert.deepEqual(index.encode(), originalData);
 		});
 	});

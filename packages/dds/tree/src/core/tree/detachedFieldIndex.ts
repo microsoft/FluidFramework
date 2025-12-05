@@ -63,20 +63,13 @@ export interface ReadOnlyDetachedFieldIndex {
 	 * Fails if no such id is known to the index.
 	 */
 	getEntry(id: Delta.DetachedNodeId): ForestRootId;
-
-	/**
-	 * Creates a snapshot of the current state of the DetachedFieldIndex.
-	 */
-	createSnapshot(): DetachedFieldIndexSnapshot;
 }
 
-export interface DetachedFieldIndexSnapshot {
-	/**
-	 * Restores the DetachedFieldIndex to the state it was in when the snapshot was created.
-	 * Can be called multiple times.
-	 */
-	restore(): void;
-}
+/**
+ * Restores the originating DetachedFieldIndex to the state it was in when the checkpoint was created.
+ * Can be invoked multiple times.
+ */
+export type DetachedFieldIndexCheckpoint = () => void;
 
 /**
  * The tree index records detached field IDs and associates them with a change atom ID.
@@ -148,23 +141,21 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 	}
 
 	/**
-	 * Creates a restorable snapshot of the current state of the DetachedFieldIndex.
+	 * Creates a restorable checkpoint of the current state of the DetachedFieldIndex.
 	 */
-	public createSnapshot(): DetachedFieldIndexSnapshot {
+	public createCheckpoint(): DetachedFieldIndexCheckpoint {
 		const clone = this.clone();
-		return {
-			restore: () => {
-				this.purge();
-				populateNestedMap(clone.detachedNodeToField, this.detachedNodeToField, true);
-				populateNestedMap(
-					clone.latestRelevantRevisionToFields,
-					this.latestRelevantRevisionToFields,
-					true,
-				);
-				this.rootIdAllocator = idAllocatorFromMaxId(
-					clone.rootIdAllocator.getMaxId(),
-				) as IdAllocator<ForestRootId>;
-			},
+		return () => {
+			this.purge();
+			populateNestedMap(clone.detachedNodeToField, this.detachedNodeToField, true);
+			populateNestedMap(
+				clone.latestRelevantRevisionToFields,
+				this.latestRelevantRevisionToFields,
+				true,
+			);
+			this.rootIdAllocator = idAllocatorFromMaxId(
+				clone.rootIdAllocator.getMaxId(),
+			) as IdAllocator<ForestRootId>;
 		};
 	}
 

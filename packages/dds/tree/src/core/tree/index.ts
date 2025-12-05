@@ -119,7 +119,7 @@ export {
 
 export {
 	DetachedFieldIndex,
-	type DetachedFieldIndexSnapshot,
+	type DetachedFieldIndexCheckpoint,
 	type ReadOnlyDetachedFieldIndex,
 } from "./detachedFieldIndex.js";
 
