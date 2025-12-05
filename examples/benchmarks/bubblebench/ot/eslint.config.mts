@@ -10,6 +10,19 @@ const config: Linter.Config[] = [
 	...recommended,
 	{
 		rules: {
+		  "import-x/no-internal-modules": [
+		    "error",
+		    {
+		      "allow": [
+		        "@fluidframework/*/{beta,alpha,legacy,legacy/alpha}",
+		        "fluid-framework/{beta,alpha,legacy,legacy/alpha}",
+		        "@fluid-experimental/**",
+		        "@fluidframework/*/test-utils",
+		        "@fluid-example/*/{beta,alpha}",
+		        "*/index.js"
+		      ]
+		    }
+		  ],
 		  "@fluid-internal/fluid/no-unchecked-record-access": "warn"
 		},
 	},
@@ -17,6 +30,26 @@ const config: Linter.Config[] = [
 		files: ["**/*.jsx", "**/*.tsx"],
 		rules: {
 		  "react/no-deprecated": "off"
+		},
+	},
+	{
+		files: ["*.spec.ts","src/test/**","tests/**"],
+		rules: {
+		  "import-x/no-internal-modules": [
+		    "error",
+		    {
+		      "allow": [
+		        "@fluidframework/*/{beta,alpha,legacy,legacy/alpha}",
+		        "fluid-framework/{beta,alpha,legacy,legacy/alpha}",
+		        "@fluid-experimental/**",
+		        "@fluidframework/*/test-utils",
+		        "@fluid-example/*/{beta,alpha}",
+		        "*/index.js",
+		        "@fluidframework/test-utils/internal",
+		        "*/*.js"
+		      ]
+		    }
+		  ]
 		},
 	},
 ];

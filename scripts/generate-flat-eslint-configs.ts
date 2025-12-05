@@ -41,6 +41,8 @@ interface PackageTarget {
 	flatVariant: "strict" | "minimalDeprecated" | "recommended";
 	legacyConfig?: unknown;
 	eslintIgnorePatterns?: string[];
+	/** Rules and overrides merged from local extends (e.g., ../../.eslintrc.cjs) */
+	extendedLocalConfig?: { rules?: Record<string, unknown>; overrides?: unknown[] };
 }
 
 async function findLegacyConfigs(): Promise<PackageTarget[]> {
@@ -115,12 +117,74 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 				}
 
 				if (legacyConfig !== undefined) {
+					// Check for local extends (e.g., "../../.eslintrc.cjs") and load their rules/overrides
+					let extendedLocalConfig:
+						| { rules?: Record<string, unknown>; overrides?: unknown[] }
+						| undefined;
+					const config = legacyConfig as {
+						extends?: string | string[];
+						rules?: Record<string, unknown>;
+						overrides?: unknown[];
+					};
+					if (config.extends) {
+						const extendsList = Array.isArray(config.extends)
+							? config.extends
+							: [config.extends];
+						for (const ext of extendsList) {
+							// Only handle local relative paths to .eslintrc.cjs files
+							if (ext.startsWith("./") || ext.startsWith("../")) {
+								const extPath = path.resolve(full, ext);
+								if (extPath.endsWith(".eslintrc.cjs") || extPath.endsWith(".cjs")) {
+									try {
+										const { execFileSync } = await import("child_process");
+										const extPathEscaped = extPath
+											.replace(/\\/g, "\\\\")
+											.replace(/'/g, "\\'");
+										const extResult = execFileSync(
+											"node",
+											[
+												"-e",
+												`console.log(JSON.stringify(require('${extPathEscaped}')))`,
+											],
+											{ cwd: repoRoot, encoding: "utf8" },
+										);
+										const extConfig = JSON.parse(extResult) as {
+											rules?: Record<string, unknown>;
+											overrides?: unknown[];
+										};
+										if (extConfig.rules || extConfig.overrides) {
+											console.log(`  Merging extended config from ${ext}`);
+											extendedLocalConfig = extendedLocalConfig ?? {};
+											if (extConfig.rules) {
+												extendedLocalConfig.rules = {
+													...extendedLocalConfig.rules,
+													...extConfig.rules,
+												};
+											}
+											if (extConfig.overrides) {
+												extendedLocalConfig.overrides = [
+													...(extendedLocalConfig.overrides ?? []),
+													...extConfig.overrides,
+												];
+											}
+										}
+									} catch (extErr) {
+										console.warn(
+											`  Warning: Could not load extended config ${ext}: ${extErr}`,
+										);
+									}
+								}
+							}
+						}
+					}
+
 					results.push({
 						packageDir: full,
 						legacyConfigPath: legacyPath,
 						flatVariant: variant,
 						legacyConfig,
 						eslintIgnorePatterns,
+						extendedLocalConfig,
 					});
 				} else {
 					console.error(`Skipping package at ${full} due to failed legacy config load.`);
@@ -210,6 +274,7 @@ function buildFlatConfigContent(
 	eslintIgnorePatterns?: string[],
 	finalize: boolean = false,
 	typescript: boolean = false,
+	extendedLocalConfig?: { rules?: Record<string, unknown>; overrides?: unknown[] },
 ): string {
 	const flatSource = path
 		.relative(
@@ -247,8 +312,19 @@ ${typeImport}import { ${variant} } from "${importPath}";
 	let configContent = header;
 
 	// Check if there are local rules or overrides to include
-	const hasLocalRules = legacyConfig?.rules && Object.keys(legacyConfig.rules).length > 0;
-	const hasOverrides = legacyConfig?.overrides && legacyConfig.overrides.length > 0;
+	// Merge rules from extended local config with direct rules
+	const mergedRules = {
+		...(extendedLocalConfig?.rules ?? {}),
+		...(legacyConfig?.rules ?? {}),
+	};
+	// Merge overrides from extended local config with direct overrides
+	const mergedOverrides = [
+		...(extendedLocalConfig?.overrides ?? []),
+		...(legacyConfig?.overrides ?? []),
+	];
+
+	const hasLocalRules = Object.keys(mergedRules).length > 0;
+	const hasOverrides = mergedOverrides.length > 0;
 	const hasEslintIgnore = eslintIgnorePatterns && eslintIgnorePatterns.length > 0;
 
 	// Check if there's a non-standard project configuration
@@ -281,7 +357,7 @@ ${typeImport}import { ${variant} } from "${importPath}";
 			// These need to be in a separate block scoped to the file types where the plugin is loaded
 			const reactRules: Record<string, any> = {};
 
-			for (const [ruleName, ruleConfig] of Object.entries(legacyConfig.rules)) {
+			for (const [ruleName, ruleConfig] of Object.entries(mergedRules)) {
 				const isTypeAware = TYPE_AWARE_RULES.has(ruleName);
 				const isDisabled =
 					ruleConfig === "off" ||
@@ -322,7 +398,12 @@ ${typeImport}import { ${variant} } from "${importPath}";
 		let overrideHandlesTestParserOptions = false;
 
 		if (hasOverrides) {
-			for (const override of legacyConfig.overrides) {
+			for (const override of mergedOverrides as Array<{
+				files?: string | string[];
+				excludedFiles?: string | string[];
+				parserOptions?: { project?: string[] };
+				rules?: Record<string, unknown>;
+			}>) {
 				configContent += `\t{\n`;
 				if (override.files) {
 					configContent += `\t\tfiles: ${JSON.stringify(override.files)},\n`;
@@ -412,6 +493,7 @@ async function writeFlatConfigs(
 			t.eslintIgnorePatterns,
 			finalize,
 			typescript,
+			t.extendedLocalConfig,
 		);
 		await fs.writeFile(outPath, content, "utf8");
 		console.log(`  Generated: ${path.relative(repoRoot, outPath)} (${t.flatVariant})`);
