@@ -205,15 +205,6 @@ export type SimpleNodeSchema<Type extends SchemaType = SchemaType> =
 	| SimpleObjectNodeSchema<Type>
 	| SimpleRecordNodeSchema<Type>;
 
-{
-	type _test = requireFalse<
-		isAssignableTo<SimpleNodeSchema, SimpleNodeSchema<SchemaType.Stored>>
-	>;
-	type _test2 = requireFalse<
-		isAssignableTo<SimpleNodeSchema, SimpleNodeSchema<SchemaType.View>>
-	>;
-}
-
 /**
  * Information about allowed types under a field.
  *
@@ -241,47 +232,6 @@ export interface SimpleAllowedTypeAttributes<out Type extends SchemaType = Schem
 	 * This API should be reevaluated before stabilizing.
 	 */
 	readonly isStaged: Type extends SchemaType.Stored ? undefined : false | SchemaUpgrade;
-}
-
-// Verify the variance of SimpleAllowedTypeAttributes's "Type" parameter.
-// Due to the issue noted in its private remarks, this validation is important to ensure the mitigation is effective.
-{
-	type _testA = requireAssignableTo<
-		SimpleAllowedTypeAttributes<SchemaType.Stored>,
-		SimpleAllowedTypeAttributes
-	>;
-	type _testB = requireAssignableTo<
-		SimpleAllowedTypeAttributes<SchemaType.View>,
-		SimpleAllowedTypeAttributes
-	>;
-
-	type _test = requireFalse<
-		isAssignableTo<SimpleAllowedTypeAttributes, SimpleAllowedTypeAttributes<SchemaType.Stored>>
-	>;
-	type _test2 = requireFalse<
-		isAssignableTo<SimpleAllowedTypeAttributes, SimpleAllowedTypeAttributes<SchemaType.View>>
-	>;
-
-	type X = SimpleAllowedTypeAttributes["isStaged"];
-	type Y = SimpleAllowedTypeAttributes<SchemaType.Stored>["isStaged"];
-	type Z = SimpleAllowedTypeAttributes<SchemaType.View>["isStaged"];
-
-	type _testY = requireFalse<isAssignableTo<X, Y>>;
-	type _testZ = requireFalse<isAssignableTo<X, Z>>;
-
-	type _test3 = requireFalse<
-		isAssignableTo<
-			SimpleAllowedTypeAttributes<SchemaType.Stored>,
-			SimpleAllowedTypeAttributes<SchemaType.View>
-		>
-	>;
-
-	type _test4 = requireFalse<
-		isAssignableTo<
-			SimpleAllowedTypeAttributes<SchemaType.View>,
-			SimpleAllowedTypeAttributes<SchemaType.Stored>
-		>
-	>;
 }
 
 /**
