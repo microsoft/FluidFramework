@@ -7,8 +7,8 @@ import type {
 	IConfigProviderBase,
 	IDisposable,
 	IEvent,
-	IEventProvider,
 	ITelemetryBaseLogger,
+	Listenable,
 } from "@fluidframework/core-interfaces";
 import type {
 	ContainerAttachProps,
@@ -93,12 +93,12 @@ export interface IOdspContainerServicesEvents extends IEvent {
 	 * Emitted when the read-only state of the container changes.
 	 * Consumers can call `OdspContainerServices.getReadOnlyState()` to get the updated value.
 	 */
-	(event: "readOnlyStateChanged", listener: () => void): void;
+	readOnlyStateChanged: () => void;
 	/**
 	 * Emitted when the sensitivity label of the container changes.
 	 * Consumers can call `OdspContainerServices.getSensitivityLabelsInfo()` to get the updated value.
 	 */
-	(event: "sensitivityLabelsInfoChanged", listener: () => void): void;
+	sensitivityLabelsInfoChanged: () => void;
 }
 
 /**
@@ -130,9 +130,8 @@ export interface IOdspFluidContainer<
  * @beta
  * @sealed
  */
-export interface OdspContainerServices
-	extends IEventProvider<IOdspContainerServicesEvents>,
-		IDisposable {
+export interface OdspContainerServices extends IDisposable {
+	events: Listenable<IOdspContainerServicesEvents>;
 	/**
 	 * Provides an object that facilitates obtaining information about users present in the Fluid session, as well as listeners for roster changes triggered by users joining or leaving the session.
 	 */
