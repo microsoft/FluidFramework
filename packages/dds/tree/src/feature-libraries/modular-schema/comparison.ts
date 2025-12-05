@@ -132,7 +132,6 @@ export function allowsValueSuperset(
  * This prevents infinite upgrade loops where two clients could keep upgrading between two schema.
  *
  * @remarks
- *
  * True if a client should be able to {@link TreeView.upgradeSchema} from a field schema using this field kind and `originalTypes` to `superset`.
  *
  * @privateRemarks
