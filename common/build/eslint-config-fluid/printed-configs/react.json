@@ -26,6 +26,7 @@
     "plugins": [
         "@eslint-community/eslint-comments",
         "import-x",
+        "depend",
         "@fluid-internal/fluid",
         "unused-imports",
         "promise",
@@ -68,7 +69,7 @@
             "error"
         ],
         "@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": [
-            "off"
+            "error"
         ],
         "@fluid-internal/fluid/no-markdown-links-in-jsdoc": [
             "error"
@@ -1073,6 +1074,15 @@
         ],
         "default-case": [
             "error"
+        ],
+        "depend/ban-dependencies": [
+            "error",
+            {
+                "allowed": [
+                    "axios",
+                    "fs-extra"
+                ]
+            }
         ],
         "dot-location": [
             "off"

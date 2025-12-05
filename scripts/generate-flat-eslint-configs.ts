@@ -27,7 +27,7 @@ interface PackageTarget {
 	packageDir: string;
 	legacyConfigPath: string;
 	flatVariant: "strict" | "minimalDeprecated" | "recommended";
-	legacyConfig?: any;
+	legacyConfig?: unknown;
 }
 
 async function findLegacyConfigs(): Promise<PackageTarget[]> {
@@ -67,9 +67,12 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 				// We'll use a separate Node.js process to require() the CommonJS config
 				let legacyConfig;
 				try {
-					const { execSync } = await import("child_process");
-					const result = execSync(
-						`node -e "console.log(JSON.stringify(require('${legacyPath}')))"`,
+					const { execFileSync } = await import("child_process");
+					// Escape legacyPath for JS string literal
+					const legacyPathEscaped = legacyPath.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+					const result = execFileSync(
+						"node",
+						["-e", `console.log(JSON.stringify(require('${legacyPathEscaped}')))`],
 						{ cwd: repoRoot, encoding: "utf8" },
 					);
 					legacyConfig = JSON.parse(result);
@@ -77,12 +80,16 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 					console.warn(`Warning: Could not load ${legacyPath}:`, e);
 				}
 
-				results.push({
-					packageDir: full,
-					legacyConfigPath: legacyPath,
-					flatVariant: variant,
-					legacyConfig,
-				});
+				if (legacyConfig !== undefined) {
+					results.push({
+						packageDir: full,
+						legacyConfigPath: legacyPath,
+						flatVariant: variant,
+						legacyConfig,
+					});
+				} else {
+					console.warn(`Skipping package at ${full} due to failed legacy config load.`);
+				}
 			} catch {
 				/* no legacy config here - skip this directory */
 			}
@@ -162,7 +169,7 @@ const TYPE_AWARE_RULES = new Set([
 function buildFlatConfigContent(
 	packageDir: string,
 	variant: PackageTarget["flatVariant"],
-	legacyConfig?: any,
+	legacyConfig?: unknown,
 ): string {
 	const flatSource = path
 		.relative(

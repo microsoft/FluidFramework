@@ -13,7 +13,7 @@ Key features:
 - Generated `eslint.config.mjs` files for all packages in the repository
 - Script to regenerate flat configs: `pnpm tsx scripts/generate-flat-eslint-configs.ts`
 
-All packages in the repository now use `eslint.config.mjs` instead of `.eslintrc.cjs`.
+Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the legacy `.eslintrc.cjs` format remains supported for backward compatibility. Migration is optional and not required.
 
 ## [9.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v9.0_0)
 

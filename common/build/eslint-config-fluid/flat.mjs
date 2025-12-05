@@ -12,6 +12,10 @@ import eslintJs from "@eslint/js";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
+/**
+ * @typedef {import("eslint").Linter.FlatConfig[]} FlatConfigArray
+ */
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -21,11 +25,11 @@ const compat = new FlatCompat({
 	allConfig: eslintJs.configs.all,
 });
 
-/** @type {import("eslint").Linter.FlatConfig[]} */
+/** @type {FlatConfigArray} */
 const recommended = compat.config({ extends: [path.join(__dirname, "recommended.js")] });
-/** @type {import("eslint").Linter.FlatConfig[]} */
+/** @type {FlatConfigArray} */
 const strict = compat.config({ extends: [path.join(__dirname, "strict.js")] });
-/** @type {import("eslint").Linter.FlatConfig[]} */
+/** @type {FlatConfigArray} */
 const minimalDeprecated = compat.config({
 	extends: [path.join(__dirname, "minimal-deprecated.js")],
 });

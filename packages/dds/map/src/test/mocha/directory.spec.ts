@@ -1918,7 +1918,6 @@ describe("Directory", () => {
 				this.directory2 = createConnectedDirectory("directory2", this.containerRuntimeFactory);
 			}
 
-			/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 			/**
 			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.sharedObject}
 			 */
@@ -1998,7 +1997,6 @@ describe("Directory", () => {
 					toFluidHandleInternal(subMap2.handle).absolutePath,
 				);
 			}
-			/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 		}
 
 		runGCTests(GCSharedDirectoryProvider);

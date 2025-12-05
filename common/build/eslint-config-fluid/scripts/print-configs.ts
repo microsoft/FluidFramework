@@ -23,11 +23,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Determine which config files to use based on ESLINT_USE_FLAT_CONFIG
-// NOTE: This is an ESLint limitation - loadESLint() only loads the correct ESLint class,
+// NOTE: loadESLint() returns the appropriate ESLint class based on ESLINT_USE_FLAT_CONFIG,
 // but we still need to manually determine which config file format to use.
 // Legacy ESLint cannot read flat config files (.mjs), and FlatESLint cannot read legacy config files (.js/.cjs).
 const useFlatConfig = process.env.ESLINT_USE_FLAT_CONFIG === "true";
+
+// During the hybrid ESLint 8/9 migration, we need to maintain both legacy (.js/.cjs) and flat (.mjs) configs.
+// The .eslint-print-configs directory contains standalone flat configs that can be loaded by ESLint 9
+// without requiring the legacy config infrastructure.
 const configDir = useFlatConfig ? "../.eslint-print-configs" : "..";
+
+// File extensions differ between legacy (.js) and flat (.mjs) config formats.
+// Using .mjs for flat configs ensures they're treated as ES modules.
 const configExt = useFlatConfig ? ".mjs" : ".js";
 
 interface ConfigToPrint {
@@ -36,24 +43,26 @@ interface ConfigToPrint {
 	sourceFilePath: string;
 }
 
+// Legacy configs use "index.js" for default and "minimal-deprecated.js" for minimal.
+// Flat configs use "recommended.mjs" for default and "minimal.mjs" for minimal.
+const defaultConfigFile = useFlatConfig ? "recommended.mjs" : "index.js";
+const minimalConfigFile = `minimal${useFlatConfig ? "" : "-deprecated"}${configExt}`;
+const strictBiomeConfigFile = `strict${useFlatConfig ? "" : "-biome"}${configExt}`;
+
 const configsToPrint: ConfigToPrint[] = [
 	{
 		name: "default",
-		configPath: path.join(__dirname, configDir, useFlatConfig ? "recommended.mjs" : "index.js"),
+		configPath: path.join(__dirname, configDir, defaultConfigFile),
 		sourceFilePath: path.join(__dirname, "..", "src", "file.ts"),
 	},
 	{
 		name: "minimal",
-		configPath: path.join(
-			__dirname,
-			configDir,
-			`minimal${useFlatConfig ? "" : "-deprecated"}${configExt}`,
-		),
+		configPath: path.join(__dirname, configDir, minimalConfigFile),
 		sourceFilePath: path.join(__dirname, "..", "src", "file.ts"),
 	},
 	{
 		name: "react",
-		configPath: path.join(__dirname, configDir, useFlatConfig ? "recommended.mjs" : "index.js"),
+		configPath: path.join(__dirname, configDir, defaultConfigFile),
 		sourceFilePath: path.join(__dirname, "..", "src", "file.tsx"),
 	},
 	{
@@ -68,11 +77,7 @@ const configsToPrint: ConfigToPrint[] = [
 	},
 	{
 		name: "strict-biome",
-		configPath: path.join(
-			__dirname,
-			configDir,
-			`strict${useFlatConfig ? "" : "-biome"}${configExt}`,
-		),
+		configPath: path.join(__dirname, configDir, strictBiomeConfigFile),
 		sourceFilePath: path.join(__dirname, "..", "src", "file.ts"),
 	},
 	{
@@ -95,7 +100,7 @@ async function generateConfig(filePath: string, configPath: string): Promise<str
 		overrideConfigFile: configPath,
 	});
 
-	const config = (await eslint.calculateConfigForFile(filePath)) as any;
+	const config = (await eslint.calculateConfigForFile(filePath)) as unknown;
 	if (!config) {
 		console.warn("Warning: ESLint returned undefined config for " + filePath);
 		return "{}\n";
