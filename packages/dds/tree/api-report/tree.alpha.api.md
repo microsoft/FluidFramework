@@ -438,7 +438,9 @@ export interface IFileSystemMethods {
     // (undocumented)
     join: (parentPath: string, childPath: string) => string;
     // (undocumented)
-    mkdirSync: (dir: string) => void;
+    mkdirSync: (dir: string, options?: {
+        recursive: true;
+    }) => void;
     // (undocumented)
     readdirSync: (dir: string) => string[];
     // (undocumented)

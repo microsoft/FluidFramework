@@ -149,7 +149,13 @@ export interface IFileSystemMethods {
 
 	// We include the encoding here to match the function overload for readFileSync that returns a string.
 	readFileSync: (file: string, encoding: "utf8") => string;
-	mkdirSync: (dir: string) => void;
+	mkdirSync: (
+		dir: string,
+		options?: {
+			// Allow users to specify nested directories be created if they do not exist.
+			recursive: true;
+		},
+	) => void;
 	readdirSync: (dir: string) => string[];
 	join: (parentPath: string, childPath: string) => string;
 	basename: (path: string, ext?: string) => string;
@@ -251,6 +257,6 @@ export class SnapshotCompatibilityChecker {
 	}
 
 	private ensureSnapshotDirectoryExists(): void {
-		this.fileSystemMethods.mkdirSync(this.snapshotDirectory);
+		this.fileSystemMethods.mkdirSync(this.snapshotDirectory, { recursive: true });
 	}
 }
