@@ -10,17 +10,14 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-		  "@typescript-eslint/strict-boolean-expressions": "off",
-		  "import-x/no-nodejs-modules": "off",
-		  "import-x/no-extraneous-dependencies": [
-		    "error",
-		    {
-		      "devDependencies": [
-		        "src/utils.ts",
-		        "src/test/**"
-		      ]
-		    }
-		  ]
+			"@typescript-eslint/strict-boolean-expressions": "off",
+			"import-x/no-nodejs-modules": "off",
+			"import-x/no-extraneous-dependencies": [
+				"error",
+				{
+					"devDependencies": ["src/utils.ts", "src/test/**"],
+				},
+			],
 		},
 	},
 	{

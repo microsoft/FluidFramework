@@ -137,15 +137,10 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 								if (extPath.endsWith(".eslintrc.cjs") || extPath.endsWith(".cjs")) {
 									try {
 										const { execFileSync } = await import("child_process");
-										const extPathEscaped = extPath
-											.replace(/\\/g, "\\\\")
-											.replace(/'/g, "\\'");
+										const extPathEscaped = extPath.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 										const extResult = execFileSync(
 											"node",
-											[
-												"-e",
-												`console.log(JSON.stringify(require('${extPathEscaped}')))`,
-											],
+											["-e", `console.log(JSON.stringify(require('${extPathEscaped}')))`],
 											{ cwd: repoRoot, encoding: "utf8" },
 										);
 										const extConfig = JSON.parse(extResult) as {

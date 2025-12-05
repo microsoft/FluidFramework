@@ -10,22 +10,22 @@ const config: Linter.Config[] = [
 	...strict,
 	{
 		rules: {
-		  "import-x/no-unassigned-import": "off",
-		  "@typescript-eslint/strict-boolean-expressions": "off",
-		  "unicorn/prevent-abbreviations": [
-		    "error",
-		    {
-		      "allowList": {
-		        "i": true
-		      }
-		    }
-		  ]
+			"import-x/no-unassigned-import": "off",
+			"@typescript-eslint/strict-boolean-expressions": "off",
+			"unicorn/prevent-abbreviations": [
+				"error",
+				{
+					"allowList": {
+						"i": true,
+					},
+				},
+			],
 		},
 	},
 	{
 		files: ["src/test/types/*"],
 		rules: {
-		  "unicorn/prevent-abbreviations": "off"
+			"unicorn/prevent-abbreviations": "off",
 		},
 	},
 ];

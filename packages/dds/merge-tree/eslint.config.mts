@@ -10,18 +10,18 @@ const config: Linter.Config[] = [
 	...recommended,
 	{
 		rules: {
-		  "@typescript-eslint/no-use-before-define": "off",
-		  "@typescript-eslint/strict-boolean-expressions": "off",
-		  "keyword-spacing": "off",
-		  "no-case-declarations": "off",
-		  "prefer-arrow/prefer-arrow-functions": "off",
-		  "unicorn/no-useless-spread": "off"
+			"@typescript-eslint/no-use-before-define": "off",
+			"@typescript-eslint/strict-boolean-expressions": "off",
+			"keyword-spacing": "off",
+			"no-case-declarations": "off",
+			"prefer-arrow/prefer-arrow-functions": "off",
+			"unicorn/no-useless-spread": "off",
 		},
 	},
 	{
-		files: ["*.spec.ts","src/test/**"],
+		files: ["*.spec.ts", "src/test/**"],
 		rules: {
-		  "unicorn/consistent-function-scoping": "off"
+			"unicorn/consistent-function-scoping": "off",
 		},
 	},
 ];

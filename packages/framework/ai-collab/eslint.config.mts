@@ -9,16 +9,14 @@ import { strict } from "../../../common/build/eslint-config-fluid/flat.mts";
 const config: Linter.Config[] = [
 	...strict,
 	{
-		files: ["*.spec.ts","src/test/**"],
+		files: ["*.spec.ts", "src/test/**"],
 		rules: {
-		  "import-x/no-internal-modules": [
-		    "error",
-		    {
-		      "allow": [
-		        "*/index.js"
-		      ]
-		    }
-		  ]
+			"import-x/no-internal-modules": [
+				"error",
+				{
+					"allow": ["*/index.js"],
+				},
+			],
 		},
 	},
 ];
