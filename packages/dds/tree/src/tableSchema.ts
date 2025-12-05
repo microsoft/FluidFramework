@@ -538,7 +538,12 @@ export namespace System_TableSchema {
 			public static create<TThis extends TableConstructorType>(
 				this: TThis,
 				initialContents?:
-					| InsertableObjectFromSchemaRecord<typeof tableInnerFields>
+					| TableSchema.TableFactoryMethodParameters<
+							TInputScope,
+							TCellSchema,
+							TColumnSchema,
+							TRowSchema
+					  >
 					| undefined,
 			): InstanceType<TThis> {
 				// #region Input validation
@@ -1139,7 +1144,12 @@ export namespace System_TableSchema {
 			create<TThis extends TableConstructorType>(
 				this: TThis,
 				initialContents?:
-					| InsertableObjectFromSchemaRecord<typeof tableInnerFields>
+					| TableSchema.TableFactoryMethodParameters<
+							TInputScope,
+							TCellSchema,
+							TColumnSchema,
+							TRowSchema
+					  >
 					| undefined,
 			): InstanceType<TThis>;
 		} = Table;
@@ -1458,7 +1468,7 @@ export namespace TableSchema {
 
 	/**
 	 * A key to uniquely identify a cell within a table.
-	 * @alpha
+	 * @input @alpha
 	 */
 	export interface CellKey<
 		TColumn extends ImplicitAllowedTypes,
@@ -1477,7 +1487,7 @@ export namespace TableSchema {
 
 	/**
 	 * {@link TableSchema.Table.insertColumns} parameters.
-	 * @alpha
+	 * @input @alpha
 	 */
 	export interface InsertColumnsParameters<TColumn extends ImplicitAllowedTypes> {
 		/**
@@ -1494,7 +1504,7 @@ export namespace TableSchema {
 
 	/**
 	 * {@link TableSchema.Table.insertRows} parameters.
-	 * @alpha
+	 * @input @alpha
 	 */
 	export interface InsertRowsParameters<TRow extends ImplicitAllowedTypes> {
 		/**
@@ -1511,7 +1521,7 @@ export namespace TableSchema {
 
 	/**
 	 * {@link TableSchema.Table.setCell} parameters.
-	 * @alpha
+	 * @input @alpha
 	 */
 	export interface SetCellParameters<
 		TCell extends ImplicitAllowedTypes,
@@ -1703,6 +1713,30 @@ export namespace TableSchema {
 		removeCell(
 			key: CellKey<TColumn, TRow>,
 		): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
+	}
+
+	/**
+	 * Input parameters for {@link TableSchema.Table}'s `create` factory method.
+	 * @input @alpha
+	 */
+	export interface TableFactoryMethodParameters<
+		TScope extends string | undefined,
+		TCell extends ImplicitAllowedTypes,
+		TColumn extends System_TableSchema.ColumnSchemaBase<TScope, TCell>,
+		TRow extends System_TableSchema.RowSchemaBase<TScope, TCell>,
+	> {
+		/**
+		 * Initial columns for the table.
+		 */
+		readonly columns?:
+			| Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TColumn>>
+			| undefined;
+
+		/**
+		 * Initial rows for the table.
+		 * @remarks If any cells are specified, they will be validated against the IDs of the provided columns.
+		 */
+		readonly rows?: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TRow>> | undefined;
 	}
 
 	/**
