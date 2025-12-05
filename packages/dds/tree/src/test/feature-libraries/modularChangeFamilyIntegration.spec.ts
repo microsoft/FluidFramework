@@ -2303,12 +2303,16 @@ describe("ModularChangeFamily integration", () => {
 			const detachId3: ChangeAtomId = { revision: tag1, localId: brand(4) };
 			const attachId3: ChangeAtomId = { revision: tag1, localId: brand(5) };
 
+			// This represents the composition of:
+			// - move from cell 1 to cell 2,
+			// - move from cell 2 back to cell 1
+			// - move from cell 1 to cell 3
 			return Change.build(
 				{ family, maxId: 5, revisions },
 				Change.field(fieldA, sequence.identifier, [
 					MarkMaker.remove(1, detachId3, {
-						detachCellId: detachId3,
-						cellRename: detachId1,
+						detachCellId: detachId1,
+						cellRename: detachId3,
 					}),
 					MarkMaker.rename(1, attachId1, detachId2),
 					MarkMaker.insert(1, attachId3, { id: detachId3.localId }),
@@ -2430,9 +2434,7 @@ describe("ModularChangeFamily integration", () => {
 				maxId: 3,
 			},
 			Change.field(fieldA, sequence.identifier, [MarkMaker.rename(1, oldId, moveOutId)]),
-			Change.field(fieldB, sequence.identifier, [
-				MarkMaker.rename(1, { revision: tag1, localId: brand(2) }, removeId),
-			]),
+			Change.field(fieldB, sequence.identifier, [MarkMaker.rename(1, moveInId, removeId)]),
 		);
 
 		const moveDetachedWithCellDetachId = family.rebase(
