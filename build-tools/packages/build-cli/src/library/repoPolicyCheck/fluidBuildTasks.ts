@@ -4,30 +4,22 @@
  */
 
 import fs from "node:fs";
-import { createRequire } from "node:module";
 import path from "node:path";
-import {
-	updatePackageJsonFile,
-	updatePackageJsonFileAsync,
-} from "@fluid-tools/build-infrastructure";
+import { updatePackageJsonFile } from "@fluid-tools/build-infrastructure";
 import {
 	FluidRepo,
 	type Package,
 	type PackageJson,
 	TscUtils,
-	getEsLintConfigFilePath,
 	getFluidBuildConfig,
 	getTaskDefinitions,
 	normalizeGlobalTaskDefinitions,
 } from "@fluidframework/build-tools";
-import JSON5 from "json5";
 import * as semver from "semver";
 import type { TsConfigJson } from "type-fest";
 import { getFlubConfig } from "../../config.js";
 import { type Handler, readFile } from "./common.js";
 import { FluidBuildDatabase } from "./fluidBuildDatabase.js";
-
-const require = createRequire(import.meta.url);
 
 /**
  * Get and cache the tsc check ignore setting
@@ -162,129 +154,6 @@ function findTscScript(json: Readonly<PackageJson>, project: string): string | u
 		return undefined;
 	}
 	throw new Error(`'${project}' used in scripts '${tscScripts.join("', '")}'`);
-}
-
-// This should be TSESLint.Linter.Config or .ConfigType from @typescript-eslint/utils
-// but that can only be used once this project is using Node16 resolution. PR #20972
-// We could derive type from @typescript-eslint/eslint-plugin, but that it will add
-// peer dependency requirements.
-interface EslintConfig {
-	parserOptions?: {
-		// https://typescript-eslint.io/packages/parser/#project
-		// eslint-disable-next-line @rushstack/no-new-null
-		project?: string | string[] | boolean | null;
-	};
-}
-/**
- * Get a list of build script names that the eslint depends on, based on .eslintrc file.
- * @remarks eslint does not depend on build tasks for the projects it references. (The
- * projects' configurations guide eslint typescript parser to use original typescript
- * source.) The packages that those projects depend on must be built. So effectively
- * eslint has the same prerequisites as the build tasks for the projects referenced.
- * @param packageDir - directory of the package
- * @param root - directory of the Fluid repo root
- * @param json - content of the package.json
- * @returns list of build script names that the eslint depends on
- */
-async function eslintGetScriptDependencies(
-	packageDir: string,
-	root: string,
-	json: Readonly<PackageJson>,
-): Promise<(string | string[])[]> {
-	if (json.scripts?.eslint === undefined) {
-		return [];
-	}
-
-	const eslintConfig = getEsLintConfigFilePath(packageDir);
-	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-	if (!eslintConfig) {
-		throw new Error(`Unable to find eslint config file for package in ${packageDir}`);
-	}
-
-	let config: EslintConfig;
-	try {
-		const { ext } = path.parse(eslintConfig);
-		if (ext === ".mjs") {
-			throw new Error(`Eslint config '${eslintConfig}' is ESM; only CommonJS is supported.`);
-		}
-
-		if (ext !== ".js" && ext !== ".cjs") {
-			// TODO: optimize double read for TscDependentTask.getDoneFileContent and there.
-			const configFile = fs.readFileSync(eslintConfig, "utf8");
-			config = JSON5.parse(configFile);
-		} else {
-			// This code assumes that the eslint config will be in CommonJS, because if it's ESM the require call will fail.
-			config = require(path.resolve(eslintConfig)) as EslintConfig;
-			if (config === undefined) {
-				throw new Error(`Exports not found in ${eslintConfig}`);
-			}
-		}
-	} catch (error) {
-		throw new Error(`Unable to load eslint config file ${eslintConfig}. ${error}`);
-	}
-
-	let projects = config.parserOptions?.project;
-	if (!Array.isArray(projects) && typeof projects !== "string") {
-		// "config" is normally the raw configuration as file is on disk and has not
-		// resolved and merged any extends specifications. So, "project" is what is
-		// set in top file.
-		if (projects === false || projects === null) {
-			// type based linting is disabled - assume no task prerequisites
-			return [];
-		}
-		// @typescript-eslint/parser allows true to mean use closest tsconfig.json, but we want
-		// explicit listings for dependency clarity.
-		if (projects === true) {
-			throw new Error(
-				`${json.name} eslint config's 'parserOptions' setting has 'project' set to 'true', which is unsupported by fluid-build. Please specify one or more tsconfig files instead.`,
-			);
-		}
-		// projects === undefined, which @typescript-eslint/eslint-plugin handles by using
-		// project path: ./tsconfig.json.
-		projects = ["./tsconfig.json"];
-	}
-	const projectsArray = Array.isArray(projects) ? projects : [projects];
-
-	// Get the build scripts for the projects
-	const siblingTscScripts = projectsArray
-		// Projects with ".lint." in the name are not required to have other associated tasks.
-		.filter((project) => !project.includes(".lint."))
-		.map((project) => {
-			const found = findTscScript(json, project);
-
-			if (found === undefined) {
-				throw new Error(
-					`Unable to find tsc script using project '${project}' specified in '${eslintConfig}' within package '${json.name}'`,
-				);
-			}
-
-			return found;
-		});
-	if (siblingTscScripts.length === 0) {
-		return [];
-	}
-
-	// Get the dependencies for the sibling tsc scripts that are the dependencies for eslint
-	const packageMap = getFluidPackageMap(root);
-	const emptyIgnoreSet = new Set<string>();
-	const collectiveDependencies: (string | string[])[] = [];
-	for (const script of siblingTscScripts) {
-		const scriptCommands = json.scripts[script];
-		if (scriptCommands === undefined) {
-			throw new Error(
-				`internal inconsistency - expected '${script}' not found in package '${json.name}'`,
-			);
-		}
-		for (const commandUntrimmed of scriptCommands.split("&&")) {
-			const command = commandUntrimmed.trim();
-			if (shouldProcessScriptForTsc(script, command, emptyIgnoreSet)) {
-				collectiveDependencies.push(
-					...getTscCommandDependencies(packageDir, json, script, command, packageMap),
-				);
-			}
-		}
-	}
-	return collectiveDependencies;
 }
 
 /**
@@ -723,46 +592,6 @@ function checkTscDependencies({
 
 const match = /(^|\/)package\.json/i;
 export const handlers: Handler[] = [
-	{
-		name: "fluid-build-tasks-eslint",
-		match,
-		handler: async (file: string, root: string): Promise<string | undefined> => {
-			let json: PackageJson;
-			try {
-				json = JSON.parse(readFile(file)) as PackageJson;
-			} catch {
-				return `Error parsing JSON file: ${file}`;
-			}
-
-			if (!isFluidBuildEnabled(root, json)) {
-				return;
-			}
-			try {
-				const scriptDeps = await eslintGetScriptDependencies(path.dirname(file), root, json);
-				return checkTaskDeps(root, json, "eslint", scriptDeps);
-			} catch (error: unknown) {
-				return (error as Error).message;
-			}
-		},
-		resolver: async (
-			file: string,
-			root: string,
-		): Promise<{ resolved: boolean; message?: string }> => {
-			let result: { resolved: boolean; message?: string } = { resolved: true };
-			await updatePackageJsonFileAsync(path.dirname(file), async (json) => {
-				if (!isFluidBuildEnabled(root, json)) {
-					return;
-				}
-				try {
-					const scriptDeps = await eslintGetScriptDependencies(path.dirname(file), root, json);
-					patchTaskDeps(root, json, "eslint", scriptDeps);
-				} catch (error: unknown) {
-					result = { resolved: false, message: (error as Error).message };
-				}
-			});
-			return result;
-		},
-	},
 	{
 		/**
 		 * Checks that all tsc project files (tsconfig.json), are only used once as the main
