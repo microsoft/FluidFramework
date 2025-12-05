@@ -64,7 +64,7 @@ class Table extends TableSchema.table({
 	row: Row,
 }) {}
 
-describe("TableFactory unit tests", () => {
+describe.only("TableFactory unit tests", () => {
 	/**
 	 * Compares a tree with an expected "concise" tree representation.
 	 * Fails if they are not equivalent.
@@ -129,85 +129,165 @@ describe("TableFactory unit tests", () => {
 	});
 
 	describe("Table Schema", () => {
-		it("Can create without custom column/row schema", () => {
-			class MyTable extends TableSchema.table({
-				schemaFactory,
-				cell: schemaFactory.string,
-			}) {}
+		describe("Construction", () => {
+			it("Can create without custom column/row schema", () => {
+				class MyTable extends TableSchema.table({
+					schemaFactory,
+					cell: schemaFactory.string,
+				}) {}
 
-			const foo = MyTable.create();
-
-			const _table = MyTable.create();
-		});
-
-		it("Can create with custom column schema", () => {
-			const MyCell = schemaFactory.string;
-			class MyColumn extends TableSchema.column({
-				schemaFactory,
-				cell: MyCell,
-				props: schemaFactory.object("column-props", {
-					label: schemaFactory.string,
-				}),
-			}) {}
-			class MyTable extends TableSchema.table({
-				schemaFactory,
-				cell: MyCell,
-				column: MyColumn,
-			}) {}
-
-			const _table = MyTable.create({
-				columns: [{ id: "column-0", props: { label: "Column 0" } }],
-				rows: [{ id: "row-0", cells: {} }],
+				MyTable.create();
 			});
-		});
 
-		it("Can create with custom row schema", () => {
-			const MyCell = schemaFactory.string;
-			class MyRow extends TableSchema.row({
-				schemaFactory,
-				cell: MyCell,
-				props: schemaFactory.object("row-props", {
-					label: schemaFactory.string,
-				}),
-			}) {}
-			class MyTable extends TableSchema.table({
-				schemaFactory,
-				cell: schemaFactory.string,
-				row: MyRow,
-			}) {}
+			it("Can create with custom column schema", () => {
+				const MyCell = schemaFactory.string;
+				class MyColumn extends TableSchema.column({
+					schemaFactory,
+					cell: MyCell,
+					props: schemaFactory.object("column-props", {
+						label: schemaFactory.string,
+					}),
+				}) {}
+				class MyTable extends TableSchema.table({
+					schemaFactory,
+					cell: MyCell,
+					column: MyColumn,
+				}) {}
 
-			const _table = MyTable.create({
-				columns: [{ id: "column-0" }],
-				rows: [{ id: "row-0", props: { label: "Row 0" }, cells: {} }],
+				MyTable.create({
+					columns: [{ id: "column-0", props: { label: "Column 0" } }],
+					rows: [{ id: "row-0", cells: {} }],
+				});
 			});
-		});
 
-		it("Can create with custom column and row schema", () => {
-			const MyCell = schemaFactory.string;
-			class MyColumn extends TableSchema.column({
-				schemaFactory,
-				cell: MyCell,
-				props: schemaFactory.object("column-props", {
-					label: schemaFactory.string,
-				}),
-			}) {}
-			class MyRow extends TableSchema.row({
-				schemaFactory,
-				cell: MyCell,
-				props: schemaFactory.object("row-props", {
-					label: schemaFactory.string,
-				}),
-			}) {}
-			class MyTable extends TableSchema.table({
-				schemaFactory,
-				cell: schemaFactory.string,
-				column: MyColumn,
-				row: MyRow,
-			}) {}
+			it("Can create with custom row schema", () => {
+				const MyCell = schemaFactory.string;
+				class MyRow extends TableSchema.row({
+					schemaFactory,
+					cell: MyCell,
+					props: schemaFactory.object("row-props", {
+						label: schemaFactory.string,
+					}),
+				}) {}
+				class MyTable extends TableSchema.table({
+					schemaFactory,
+					cell: schemaFactory.string,
+					row: MyRow,
+				}) {}
 
-			const _table = MyTable.create({
-				columns: [{ id: "column-0", props: { label: "Column 0" } }],
-				rows: [{ id: "row-0", props: { label: "Row 0" }, cells: {} }],
+				MyTable.create({
+					columns: [{ id: "column-0" }],
+					rows: [{ id: "row-0", props: { label: "Row 0" }, cells: {} }],
+				});
+			});
+
+			it("Can create with custom column and row schema", () => {
+				const MyCell = schemaFactory.string;
+				class MyColumn extends TableSchema.column({
+					schemaFactory,
+					cell: MyCell,
+					props: schemaFactory.object("column-props", {
+						label: schemaFactory.string,
+					}),
+				}) {}
+				class MyRow extends TableSchema.row({
+					schemaFactory,
+					cell: MyCell,
+					props: schemaFactory.object("row-props", {
+						label: schemaFactory.string,
+					}),
+				}) {}
+				class MyTable extends TableSchema.table({
+					schemaFactory,
+					cell: schemaFactory.string,
+					column: MyColumn,
+					row: MyRow,
+				}) {}
+
+				MyTable.create({
+					columns: [{ id: "column-0", props: { label: "Column 0" } }],
+					rows: [{ id: "row-0", props: { label: "Row 0" }, cells: {} }],
+				});
+			});
+
+			// We intentionally prevent such usage of the table schema constructor for a couple of reasons.
+			// Instead, we encourage users to use the static `create` method.
+			// This test exists to ensure that this does not regress.
+			it("Cannot call constructor with insertable contents", () => {
+				// The below structure mirrors the shape of the insertable contents accepted by the `create` method.
+				// Ensure the type-system prevents passing this structure to the constructor.
+				// This is also expected to fail at runtime.
+				assert.throws(
+					() =>
+						new Table({
+							// @ts-expect-error -- Constructor does not allow insertable contents
+							columns: [],
+							rows: [],
+						}),
+					validateUsageError(
+						/The provided data is incompatible with all of the types allowed by the schema./,
+					),
+				);
+
+				// The below structure mirrors the shape of the actual underlying tree structure, which is intended
+				// to be opaque to the user.
+				// This is not expected to fail at runtime, but the type-system should prevent it.
+				new Table({
+					// @ts-expect-error -- Constructor does not allow insertable contents
+					table: {
+						columns: [],
+						rows: [],
+					},
+				});
+			});
+
+			it("Disallows inserting multiple rows with the same ID", () => {
+				assert.throws(
+					() =>
+						Table.create({
+							columns: [],
+							rows: [new Row({ id: "row-0", cells: {} }), new Row({ id: "row-0", cells: {} })],
+						}),
+					validateUsageError(
+						/Attempted to insert multiple rows with ID "row-0". Row IDs must be unique./,
+					),
+				);
+			});
+
+			it("Disallows inserting multiple columns with the same ID", () => {
+				assert.throws(
+					() =>
+						Table.create({
+							columns: [
+								new Column({ id: "column-0", props: {} }),
+								new Column({ id: "column-0", props: {} }),
+							],
+							rows: [],
+						}),
+					validateUsageError(
+						/Attempted to insert multiple columns with ID "column-0". Column IDs must be unique./,
+					),
+				);
+			});
+
+			it("Disallows inserting rows with cells under non-existent columns", () => {
+				assert.throws(
+					() =>
+						Table.create({
+							columns: [new Column({ id: "column-0", props: {} })],
+							rows: [
+								new Row({
+									id: "row-0",
+									cells: {
+										"column-1": { value: "Hello world!" },
+									},
+								}),
+							],
+						}),
+					validateUsageError(
+						/Attempted to insert a row containing a cell under column ID "column-1", but the table does not contain a column with that ID./,
+					),
+				);
 			});
 		});
 
@@ -458,6 +538,36 @@ describe("TableFactory unit tests", () => {
 				},
 			});
 		});
+
+		it("Cannot insert column with an existing ID", () => {
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [
+						{
+							id: "column-0",
+							props: {},
+						},
+					],
+					rows: [],
+				}),
+			);
+
+			assert.throws(
+				() =>
+					table.insertColumns({
+						columns: [
+							{
+								id: "column-0",
+								props: {},
+							},
+						],
+					}),
+				validateUsageError(
+					/Attempted to insert a column with ID "column-0", but a column with that ID already exists in the table./,
+				),
+			);
+		});
 	});
 
 	describeHydration("insertRows", (initializeTree) => {
@@ -629,6 +739,68 @@ describe("TableFactory unit tests", () => {
 					],
 				},
 			});
+		});
+
+		it("Cannot insert row with an existing ID", () => {
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [],
+					rows: [
+						{
+							id: "row-0",
+							cells: {},
+						},
+					],
+				}),
+			);
+
+			assert.throws(
+				() =>
+					table.insertRows({
+						rows: [
+							{
+								id: "row-0",
+								cells: {},
+							},
+						],
+					}),
+				validateUsageError(
+					/Attempted to insert a row with ID "row-0", but a row with that ID already exists in the table./,
+				),
+			);
+		});
+
+		it("Cannot insert row with cells under non-existent columns", () => {
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [
+						{
+							id: "column-0",
+							props: {},
+						},
+					],
+					rows: [],
+				}),
+			);
+
+			assert.throws(
+				() =>
+					table.insertRows({
+						rows: [
+							{
+								id: "row-0",
+								cells: {
+									"column-1": { value: "Hello world!" },
+								},
+							},
+						],
+					}),
+				validateUsageError(
+					/Attempted to insert a row containing a cell under column ID "column-1", but the table does not contain a column with that ID./,
+				),
+			);
 		});
 	});
 
