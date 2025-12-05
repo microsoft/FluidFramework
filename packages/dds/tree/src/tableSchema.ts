@@ -552,7 +552,7 @@ export namespace System_TableSchema {
 					(initialContents?.columns as Iterable<ColumnInsertableType> | undefined) ?? [];
 
 				const columnIds = new Set<string>();
-				for (const column of columns ?? []) {
+				for (const column of columns) {
 					columnIds.add((column as ColumnValueType).id);
 				}
 
