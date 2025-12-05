@@ -18,6 +18,12 @@ const config: Linter.Config[] = [
 		  "unicorn/no-useless-spread": "off"
 		},
 	},
+	{
+		files: ["*.spec.ts","src/test/**"],
+		rules: {
+		  "unicorn/consistent-function-scoping": "off"
+		},
+	},
 ];
 
 export default config;

@@ -20,7 +20,8 @@ const config: Linter.Config[] = [
 		        "node:path"
 		      ]
 		    }
-		  ]
+		  ],
+		  "unicorn/consistent-function-scoping": "off"
 		},
 	},
 ];

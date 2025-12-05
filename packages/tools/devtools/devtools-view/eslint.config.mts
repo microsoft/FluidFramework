@@ -29,6 +29,12 @@ const config: Linter.Config[] = [
 		},
 	},
 	{
+		files: ["**/*.jsx", "**/*.tsx"],
+		rules: {
+		  "react-hooks/rules-of-hooks": "warn"
+		},
+	},
+	{
 		files: ["src/test/**"],
 		rules: {
 		  "import-x/no-nodejs-modules": "off",

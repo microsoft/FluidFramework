@@ -222,6 +222,10 @@ const reactHooksEslint9Upgrade = {
 		// react-hooks/set-state-in-effect: Warns about calling setState synchronously in effects
 		// https://github.com/facebook/react/pull/30224
 		"react-hooks/set-state-in-effect": "warn",
+
+		// react-hooks/static-components: Warns about creating components during render
+		// https://github.com/facebook/react/pull/30239
+		"react-hooks/static-components": "warn",
 	},
 };
 recommended.push(reactHooksEslint9Upgrade);
