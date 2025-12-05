@@ -112,7 +112,8 @@ function buildFlatConfigContent(
 
 	// Check if there are local customizations to include
 	const hasLocalRules = legacyConfig?.rules && Object.keys(legacyConfig.rules).length > 0;
-	const hasParserOptions = legacyConfig?.parserOptions && Object.keys(legacyConfig.parserOptions).length > 0;
+	const hasParserOptions =
+		legacyConfig?.parserOptions && Object.keys(legacyConfig.parserOptions).length > 0;
 	const hasOverrides = legacyConfig?.overrides && legacyConfig.overrides.length > 0;
 
 	if (!hasLocalRules && !hasParserOptions && !hasOverrides) {
