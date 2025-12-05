@@ -10,9 +10,9 @@ const config: Linter.Config[] = [
 	...recommended,
 	{
 		rules: {
-			"@typescript-eslint/strict-boolean-expressions": "off",
-			"@typescript-eslint/unbound-method": "off",
-			"import-x/no-unassigned-import": "off",
+		  "@typescript-eslint/strict-boolean-expressions": "off",
+		  "@typescript-eslint/unbound-method": "off",
+		  "import-x/no-unassigned-import": "off"
 		},
 	},
 ];

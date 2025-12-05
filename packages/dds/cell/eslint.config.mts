@@ -10,7 +10,7 @@ const config: Linter.Config[] = [
 	...strict,
 	{
 		rules: {
-			"unicorn/numeric-separators-style": "off",
+		  "unicorn/numeric-separators-style": "off"
 		},
 	},
 ];

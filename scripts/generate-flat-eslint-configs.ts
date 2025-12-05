@@ -277,6 +277,9 @@ ${typeImport}import { ${variant} } from "${importPath}";
 			// Type-aware rules that are disabled should be applied globally, not just to non-test files
 			const typeAwareRules: Record<string, any> = {};
 			const otherRules: Record<string, any> = {};
+			// Rules for plugins configured via extends in the base config (react, react-hooks)
+			// These need to be in a separate block scoped to the file types where the plugin is loaded
+			const reactRules: Record<string, any> = {};
 
 			for (const [ruleName, ruleConfig] of Object.entries(legacyConfig.rules)) {
 				const isTypeAware = TYPE_AWARE_RULES.has(ruleName);
@@ -285,9 +288,13 @@ ${typeImport}import { ${variant} } from "${importPath}";
 					ruleConfig === 0 ||
 					(Array.isArray(ruleConfig) && (ruleConfig[0] === "off" || ruleConfig[0] === 0));
 
-				// Type-aware rules that are disabled should apply to all files
-				// Type-aware rules that are enabled should only apply to non-test files
-				if (isTypeAware && !isDisabled) {
+				// React and react-hooks rules need to be in a block scoped to jsx/tsx files
+				// where the plugin is loaded by the base config
+				if (ruleName.startsWith("react/") || ruleName.startsWith("react-hooks/")) {
+					reactRules[ruleName] = ruleConfig;
+				} else if (isTypeAware && !isDisabled) {
+					// Type-aware rules that are disabled should apply to all files
+					// Type-aware rules that are enabled should only apply to non-test files
 					typeAwareRules[ruleName] = ruleConfig;
 				} else {
 					otherRules[ruleName] = ruleConfig;
@@ -303,7 +310,16 @@ ${typeImport}import { ${variant} } from "${importPath}";
 			if (Object.keys(typeAwareRules).length > 0) {
 				configContent += `\t{\n\t\tfiles: ["**/*.{ts,tsx}"],\n\t\tignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],\n\t\trules: ${JSON.stringify(typeAwareRules, null, 2).replace(/\n/g, "\n\t\t")},\n\t},\n`;
 			}
+
+			// Add react/react-hooks rules scoped to jsx/tsx files where the plugin is loaded
+			// The base config (minimal-deprecated.js) loads react and react-hooks plugins for *.jsx and *.tsx files
+			if (Object.keys(reactRules).length > 0) {
+				configContent += `\t{\n\t\tfiles: ["**/*.jsx", "**/*.tsx"],\n\t\trules: ${JSON.stringify(reactRules, null, 2).replace(/\n/g, "\n\t\t")},\n\t},\n`;
+			}
 		}
+
+		// Track if any override already handles parserOptions for test files
+		let overrideHandlesTestParserOptions = false;
 
 		if (hasOverrides) {
 			for (const override of legacyConfig.overrides) {
@@ -313,6 +329,20 @@ ${typeImport}import { ${variant} } from "${importPath}";
 				}
 				if (override.excludedFiles) {
 					configContent += `\t\tignores: ${JSON.stringify(override.excludedFiles)},\n`;
+				}
+				// Handle parserOptions.project in overrides
+				if (override.parserOptions?.project) {
+					configContent += `\t\tlanguageOptions: {\n`;
+					configContent += `\t\t\tparserOptions: {\n`;
+					configContent += `\t\t\t\tprojectService: false,\n`;
+					configContent += `\t\t\t\tproject: ${JSON.stringify(override.parserOptions.project)},\n`;
+					configContent += `\t\t\t},\n`;
+					configContent += `\t\t},\n`;
+					// Check if this override targets test files
+					const files = Array.isArray(override.files) ? override.files : [override.files];
+					if (files.some((f: string) => f.includes("test") || f.includes("spec"))) {
+						overrideHandlesTestParserOptions = true;
+					}
 				}
 				if (override.rules) {
 					configContent += `\t\trules: ${JSON.stringify(override.rules, null, 2).replace(/\n/g, "\n\t\t")},\n`;
@@ -324,7 +354,9 @@ ${typeImport}import { ${variant} } from "${importPath}";
 		// Add parserOptions.project configuration only if it's non-standard
 		// The default shared config already handles the common pattern: ["./tsconfig.json", "./src/test/tsconfig.json"]
 		// Only add custom project config if the package uses a different pattern
+		// Skip if an override already handles test file parserOptions
 		if (
+			!overrideHandlesTestParserOptions &&
 			legacyConfig?.parserOptions?.project &&
 			Array.isArray(legacyConfig.parserOptions.project)
 		) {

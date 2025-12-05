@@ -10,7 +10,7 @@ const config: Linter.Config[] = [
 	...strict,
 	{
 		rules: {
-			"@typescript-eslint/consistent-indexed-object-style": "off",
+		  "@typescript-eslint/consistent-indexed-object-style": "off"
 		},
 	},
 ];

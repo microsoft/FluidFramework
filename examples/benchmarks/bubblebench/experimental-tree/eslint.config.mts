@@ -10,9 +10,14 @@ const config: Linter.Config[] = [
 	...recommended,
 	{
 		rules: {
-			"react/no-deprecated": "off",
-			"@typescript-eslint/no-unsafe-argument": "off",
-			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		  "@typescript-eslint/no-unsafe-argument": "off",
+		  "@fluid-internal/fluid/no-unchecked-record-access": "warn"
+		},
+	},
+	{
+		files: ["**/*.jsx", "**/*.tsx"],
+		rules: {
+		  "react/no-deprecated": "off"
 		},
 	},
 ];

@@ -10,9 +10,9 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-			"@typescript-eslint/prefer-nullish-coalescing": "off",
-			"@typescript-eslint/strict-boolean-expressions": "off",
-			"import-x/no-nodejs-modules": "off",
+		  "@typescript-eslint/prefer-nullish-coalescing": "off",
+		  "@typescript-eslint/strict-boolean-expressions": "off",
+		  "import-x/no-nodejs-modules": "off"
 		},
 	},
 ];

@@ -10,8 +10,13 @@ const config: Linter.Config[] = [
 	...recommended,
 	{
 		rules: {
-			"@typescript-eslint/strict-boolean-expressions": "off",
-			"react/no-deprecated": "off",
+		  "@typescript-eslint/strict-boolean-expressions": "off"
+		},
+	},
+	{
+		files: ["**/*.jsx", "**/*.tsx"],
+		rules: {
+		  "react/no-deprecated": "off"
 		},
 	},
 ];

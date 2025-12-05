@@ -9,8 +9,9 @@ import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/fla
 const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
+		files: ["**/*.jsx", "**/*.tsx"],
 		rules: {
-			"react/no-deprecated": "off",
+		  "react/no-deprecated": "off"
 		},
 	},
 ];

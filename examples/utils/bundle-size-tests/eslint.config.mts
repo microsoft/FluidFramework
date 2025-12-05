@@ -10,6 +10,12 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		files: ["src/test/**/*"],
+		languageOptions: {
+			parserOptions: {
+				projectService: false,
+				project: ["./src/test/tsconfig.json"],
+			},
+		},
 	},
 ];
 

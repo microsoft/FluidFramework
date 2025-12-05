@@ -10,7 +10,7 @@ const config: Linter.Config[] = [
 	...strict,
 	{
 		rules: {
-			"import-x/no-extraneous-dependencies": "warn",
+		  "import-x/no-extraneous-dependencies": "warn"
 		},
 	},
 ];

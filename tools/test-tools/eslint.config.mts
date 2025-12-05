@@ -3,10 +3,10 @@
  * GENERATED FILE - DO NOT EDIT DIRECTLY.
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts
  */
-import { recommended } from "../../common/build/eslint-config-fluid/flat.mjs";
+import type { Linter } from "eslint";
+import { recommended } from "../../common/build/eslint-config-fluid/flat.mts";
 
-/** @type {import("eslint").Linter.Config[]} */
-const config = [
+const config: Linter.Config[] = [
 	...recommended,
 	{
 		rules: {

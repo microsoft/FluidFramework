@@ -10,32 +10,32 @@ const config: Linter.Config[] = [
 	...strict,
 	{
 		rules: {
-			"@fluid-internal/fluid/no-unchecked-record-access": "off",
-			"@typescript-eslint/class-literal-property-style": "off",
-			"@typescript-eslint/no-unsafe-enum-comparison": "off",
-			"unicorn/prevent-abbreviations": [
-				"error",
-				{
-					"allowList": {
-						"i": true,
-					},
-				},
-			],
-			"unicorn/prefer-module": "off",
-			"unicorn/prefer-negative-index": "off",
-			"import-x/no-nodejs-modules": "off",
+		  "@fluid-internal/fluid/no-unchecked-record-access": "off",
+		  "@typescript-eslint/class-literal-property-style": "off",
+		  "@typescript-eslint/no-unsafe-enum-comparison": "off",
+		  "unicorn/prevent-abbreviations": [
+		    "error",
+		    {
+		      "allowList": {
+		        "i": true
+		      }
+		    }
+		  ],
+		  "unicorn/prefer-module": "off",
+		  "unicorn/prefer-negative-index": "off",
+		  "import/no-nodejs-modules": "off"
 		},
 	},
 	{
 		files: ["src/**/test/**"],
 		rules: {
-			"import-x/no-extraneous-dependencies": [
-				"error",
-				{
-					"devDependencies": true,
-				},
-			],
-			"@typescript-eslint/no-unused-expressions": "off",
+		  "import/no-extraneous-dependencies": [
+		    "error",
+		    {
+		      "devDependencies": true
+		    }
+		  ],
+		  "@typescript-eslint/no-unused-expressions": "off"
 		},
 	},
 	{

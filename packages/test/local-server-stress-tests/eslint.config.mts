@@ -3,15 +3,14 @@
  * GENERATED FILE - DO NOT EDIT DIRECTLY.
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts
  */
-import { minimalDeprecated } from '../../../../common/build/eslint-config-fluid/flat.mjs';
+import type { Linter } from "eslint";
+import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
 
-const config = [
+const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-		  "import/no-nodejs-modules": "off",
-		  "@typescript-eslint/prefer-nullish-coalescing": "off",
-		  "@typescript-eslint/strict-boolean-expressions": "off"
+		  "import-x/no-nodejs-modules": "off"
 		},
 	},
 	{
@@ -19,7 +18,7 @@ const config = [
 		languageOptions: {
 			parserOptions: {
 				projectService: false,
-				project: ["./tsconfig.json"],
+				project: ["./src/tsconfig.json"],
 			},
 		},
 	},

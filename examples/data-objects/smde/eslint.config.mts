@@ -10,17 +10,19 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-			"import-x/no-extraneous-dependencies": [
-				"error",
-				{
-					"devDependencies": true,
-				},
-			],
+		  "import-x/no-extraneous-dependencies": [
+		    "error",
+		    {
+		      "devDependencies": true
+		    }
+		  ]
 		},
 	},
 	// Migrated from .eslintignore
 	{
-		ignores: ["*.spec.ts"],
+		ignores: [
+		  "*.spec.ts"
+		],
 	},
 ];
 

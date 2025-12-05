@@ -10,13 +10,15 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-			"@typescript-eslint/strict-boolean-expressions": "off",
-			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		  "@typescript-eslint/strict-boolean-expressions": "off",
+		  "@fluid-internal/fluid/no-unchecked-record-access": "warn"
 		},
 	},
 	// Migrated from .eslintignore
 	{
-		ignores: ["*.spec.ts"],
+		ignores: [
+		  "*.spec.ts"
+		],
 	},
 ];
 

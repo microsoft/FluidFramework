@@ -10,43 +10,40 @@ const config: Linter.Config[] = [
 	...strict,
 	{
 		rules: {
-			"import-x/no-internal-modules": [
-				"error",
-				{
-					"allow": [
-						"@fluidframework/*/alpha",
-						"@fluidframework/*/beta",
-						"@fluidframework/*/legacy",
-						"@fluidframework/*/internal",
-					],
-				},
-			],
+		  "import-x/no-internal-modules": [
+		    "error",
+		    {
+		      "allow": [
+		        "@fluidframework/*/alpha",
+		        "@fluidframework/*/beta",
+		        "@fluidframework/*/legacy",
+		        "@fluidframework/*/internal"
+		      ]
+		    }
+		  ]
 		},
 	},
 	{
 		files: ["src/test/**/*"],
-		rules: {
-			"import-x/no-internal-modules": [
-				"error",
-				{
-					"allow": [
-						"*/index.js",
-						"@fluidframework/*/alpha",
-						"@fluidframework/*/beta",
-						"@fluidframework/*/legacy",
-						"@fluidframework/*/internal",
-					],
-				},
-			],
-		},
-	},
-	{
-		files: ["src/test/**", "*.spec.ts", "*.test.ts"],
 		languageOptions: {
 			parserOptions: {
 				projectService: false,
-				project: ["./tsconfig.json"],
+				project: ["./src/test/tsconfig.json"],
 			},
+		},
+		rules: {
+		  "import-x/no-internal-modules": [
+		    "error",
+		    {
+		      "allow": [
+		        "*/index.js",
+		        "@fluidframework/*/alpha",
+		        "@fluidframework/*/beta",
+		        "@fluidframework/*/legacy",
+		        "@fluidframework/*/internal"
+		      ]
+		    }
+		  ]
 		},
 	},
 ];

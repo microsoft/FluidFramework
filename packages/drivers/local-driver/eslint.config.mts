@@ -10,18 +10,20 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-			"@typescript-eslint/strict-boolean-expressions": "off",
+		  "@typescript-eslint/strict-boolean-expressions": "off"
 		},
 	},
 	{
-		files: ["*.spec.ts", "src/test/**"],
+		files: ["*.spec.ts","src/test/**"],
 		rules: {
-			"import-x/no-nodejs-modules": [
-				"error",
-				{
-					"allow": ["assert"],
-				},
-			],
+		  "import-x/no-nodejs-modules": [
+		    "error",
+		    {
+		      "allow": [
+		        "assert"
+		      ]
+		    }
+		  ]
 		},
 	},
 ];

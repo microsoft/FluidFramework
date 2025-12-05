@@ -10,8 +10,13 @@ const config: Linter.Config[] = [
 	...recommended,
 	{
 		rules: {
-			"react/no-deprecated": "off",
-			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		  "@fluid-internal/fluid/no-unchecked-record-access": "warn"
+		},
+	},
+	{
+		files: ["**/*.jsx", "**/*.tsx"],
+		rules: {
+		  "react/no-deprecated": "off"
 		},
 	},
 ];

@@ -10,7 +10,7 @@ const config: Linter.Config[] = [
 	...recommended,
 	{
 		rules: {
-			"@typescript-eslint/unbound-method": "off",
+		  "@typescript-eslint/unbound-method": "off"
 		},
 	},
 ];

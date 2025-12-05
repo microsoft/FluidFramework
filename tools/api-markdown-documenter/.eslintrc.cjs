@@ -34,7 +34,7 @@ module.exports = {
 		"unicorn/prefer-negative-index": "off",
 
 		// This package is exclusively used in a Node.js context
-		"import-x/no-nodejs-modules": "off",
+		"import/no-nodejs-modules": "off",
 	},
 	overrides: [
 		{
@@ -43,7 +43,7 @@ module.exports = {
 			plugins: ["chai-expect", "chai-friendly"],
 			extends: ["plugin:chai-expect/recommended", "plugin:chai-friendly/recommended"],
 			rules: {
-				"import-x/no-extraneous-dependencies": [
+				"import/no-extraneous-dependencies": [
 					"error",
 					{
 						devDependencies: true,

@@ -9,8 +9,9 @@ import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts"
 const config: Linter.Config[] = [
 	...recommended,
 	{
+		files: ["**/*.jsx", "**/*.tsx"],
 		rules: {
-			"react/no-deprecated": "off",
+		  "react/no-deprecated": "off"
 		},
 	},
 	{

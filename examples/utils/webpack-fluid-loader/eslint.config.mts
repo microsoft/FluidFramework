@@ -10,11 +10,11 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-			"@typescript-eslint/no-use-before-define": "off",
-			"@typescript-eslint/strict-boolean-expressions": "off",
-			"import-x/no-nodejs-modules": "off",
-			"no-case-declarations": "off",
-			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		  "@typescript-eslint/no-use-before-define": "off",
+		  "@typescript-eslint/strict-boolean-expressions": "off",
+		  "import-x/no-nodejs-modules": "off",
+		  "no-case-declarations": "off",
+		  "@fluid-internal/fluid/no-unchecked-record-access": "warn"
 		},
 	},
 ];
