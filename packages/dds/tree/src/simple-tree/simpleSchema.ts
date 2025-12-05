@@ -269,7 +269,9 @@ export interface SimpleFieldSchema<Type extends SchemaType = SchemaType> {
 	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes<Type>>;
 
 	/**
-	 * {@inheritDoc FieldSchemaMetadata}
+	 * Metadata for this field schema, see {@link FieldSchemaMetadata}.
+	 * @remarks
+	 * As this is the non-persisted portion of the metadata, it is forced to store only undefined in the `SchemaType.Stored` case.
 	 */
 	readonly metadata: FieldSchemaMetadata &
 		(Type extends SchemaType.View
