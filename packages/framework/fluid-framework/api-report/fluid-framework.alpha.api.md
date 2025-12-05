@@ -1493,6 +1493,26 @@ export function singletonSchema<TScope extends string, TName extends string | nu
     readonly value: TName;
 }, Record<string, never>, true, Record<string, never>, undefined>;
 
+// @alpha
+export class SnapshotCompatibilityChecker {
+    constructor(snapshotDirectory: string, fileSystemMethods: {
+        writeFileSync: (file: string, data: string, options?: {
+            encoding?: "utf8";
+        }) => void;
+        readFileSync: (file: string, encoding: "utf8") => string;
+        mkdirSync: (dir: string) => void;
+        readdirSync: (dir: string) => string[];
+        join: (...paths: string[]) => string;
+        basename: (path: string, ext?: string) => string;
+    });
+    // (undocumented)
+    readAllSchemaSnapshots(): Map<string, TreeViewConfiguration>;
+    // (undocumented)
+    readSchemaSnapshot(snapshotName: string): TreeViewConfiguration;
+    // (undocumented)
+    writeSchemaSnapshot(snapshotName: string, viewSchema: TreeViewConfiguration): void;
+}
+
 // @alpha @system
 export namespace System_TableSchema {
     // @sealed @system

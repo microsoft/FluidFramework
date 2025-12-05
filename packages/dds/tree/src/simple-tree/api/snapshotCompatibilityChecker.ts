@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { toStoredSchema } from "../toStoredSchema.js";
 import { TreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
@@ -132,4 +133,124 @@ export function importCompatibilitySchemaSnapshot(
 	// We construct a TreeViewConfiguration here with the default parameters. The default set of validation parameters are fine for
 	// a schema produced by `generateSchemaFromSimpleSchema`.
 	return new TreeViewConfiguration({ schema: viewSchema.root });
+}
+
+/**
+ * The file system methods required by {@link SnapshotCompatibilityChecker}.
+ *
+ * @privateRemarks
+ * This interface is designed to be compatible with both Node.js `fs` and `path` modules. It is needed to avoid direct dependencies
+ * on Node.js APIs in the core library code, allowing for greater portability and easier testing.
+ *
+ * @alpha
+ */
+export interface IFileSystemMethods {
+	writeFileSync: (file: string, data: string, options?: { encoding?: "utf8" }) => void;
+
+	// We include the encoding here to match the function overload for readFileSync that returns a string.
+	readFileSync: (file: string, encoding: "utf8") => string;
+	mkdirSync: (dir: string) => void;
+	readdirSync: (dir: string) => string[];
+	join: (parentPath: string, childPath: string) => string;
+	basename: (path: string, ext?: string) => string;
+}
+
+/**
+ * The combined compatibility status for both backwards and forwards compatibility checks.
+ *
+ * @alpha
+ */
+export interface CombinedSchemaCompatibilityStatus {
+	snapshotName: string;
+	backwardsCompatibilityStatus: Omit<SchemaCompatibilityStatus, "canInitialize">;
+	forwardsCompatibilityStatus: Omit<SchemaCompatibilityStatus, "canInitialize">;
+}
+
+/**
+ * The high-level API for checking snapshot compatibility and generating new snapshots.
+ *
+ * @alpha
+ */
+export class SnapshotCompatibilityChecker {
+	public constructor(
+		private readonly snapshotDirectory: string,
+		private readonly fileSystemMethods: IFileSystemMethods,
+	) {}
+
+	public checkCompatibility(
+		appVersion: string,
+		currentViewSchema: TreeViewConfiguration,
+		mode: "test" | "update",
+	): Map<string, CombinedSchemaCompatibilityStatus> {
+		const previousViewSchemas = this.readAllSchemaSnapshots();
+		if (!previousViewSchemas.has(appVersion)) {
+			if (mode === "test") {
+				throw new UsageError(`No snapshot found for version ${appVersion}`);
+			} else if (mode === "update") {
+				this.writeSchemaSnapshot(appVersion, currentViewSchema);
+			}
+		}
+
+		const compatibilityStatuses: Map<string, CombinedSchemaCompatibilityStatus> = new Map();
+
+		for (const [name, previousViewSchema] of previousViewSchemas) {
+			const backwardsCompatibilityStatus = checkCompatibility(
+				previousViewSchema,
+				currentViewSchema,
+			);
+
+			const forwardsCompatibilityStatus = checkCompatibility(
+				currentViewSchema,
+				previousViewSchema,
+			);
+
+			compatibilityStatuses.set(name, {
+				snapshotName: name,
+				backwardsCompatibilityStatus,
+				forwardsCompatibilityStatus,
+			});
+		}
+
+		return compatibilityStatuses;
+	}
+
+	public writeSchemaSnapshot(snapshotName: string, viewSchema: TreeViewConfiguration): void {
+		const snapshot = exportCompatibilitySchemaSnapshot(viewSchema);
+		const fullPath = this.fileSystemMethods.join(
+			this.snapshotDirectory,
+			`${snapshotName}.json`,
+		);
+		this.ensureSnapshotDirectoryExists();
+		this.fileSystemMethods.writeFileSync(fullPath, JSON.stringify(snapshot), {
+			encoding: "utf8",
+		});
+	}
+
+	public readSchemaSnapshot(snapshotName: string): TreeViewConfiguration {
+		const fullPath = this.fileSystemMethods.join(
+			this.snapshotDirectory,
+			`${snapshotName}.json`,
+		);
+		const snapshot = JSON.parse(
+			this.fileSystemMethods.readFileSync(fullPath, "utf8"),
+		) as JsonCompatibleReadOnly;
+		return importCompatibilitySchemaSnapshot(snapshot);
+	}
+
+	public readAllSchemaSnapshots(): Map<string, TreeViewConfiguration> {
+		this.ensureSnapshotDirectoryExists();
+		const files = this.fileSystemMethods.readdirSync(this.snapshotDirectory);
+		const snapshots: Map<string, TreeViewConfiguration> = new Map();
+		for (const file of files) {
+			if (file.endsWith(".json")) {
+				const snapshotName = file.slice(0, ".json".length * -1);
+				snapshots.set(snapshotName, this.readSchemaSnapshot(snapshotName));
+			}
+		}
+		return snapshots;
+	}
+
+	private ensureSnapshotDirectoryExists(): void {
+		this.fileSystemMethods.mkdirSync(this.snapshotDirectory);
+	}
 }

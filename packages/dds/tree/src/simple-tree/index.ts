@@ -288,4 +288,7 @@ export {
 	exportCompatibilitySchemaSnapshot,
 	importCompatibilitySchemaSnapshot,
 	checkCompatibility,
+	SnapshotCompatibilityChecker,
+	type CombinedSchemaCompatibilityStatus,
+	type IFileSystemMethods,
 } from "./api/index.js";

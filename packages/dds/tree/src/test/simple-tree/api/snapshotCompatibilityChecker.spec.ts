@@ -11,8 +11,12 @@ import {
 	exportCompatibilitySchemaSnapshot,
 	TreeViewConfiguration,
 	type SchemaCompatibilityStatus,
+	SnapshotCompatibilityChecker,
 } from "../../../simple-tree/index.js";
 import { strict as assert } from "node:assert";
+import { testSrcPath } from "../../testSrcPath.cjs";
+import path from "node:path";
+import fs from "node:fs";
 
 describe("snapshotCompatibilityChecker", () => {
 	it("parse and snapshot can roundtrip schema", () => {
@@ -98,5 +102,72 @@ describe("snapshotCompatibilityChecker", () => {
 		// we assert that there is forwards compatibility break:
 		// this means these two versions of the application cannot collaborate on content using these schema.
 		assert.equal(forwardsCompatibilityStatus.canView, false);
+	});
+});
+
+describe("snapshotCompatibilityChecker - high-level API", () => {
+	const checker = new SnapshotCompatibilityChecker(
+		path.join(testSrcPath, "schemaSnapshots", "point"),
+		{
+			...fs,
+			...path,
+		},
+	);
+
+	it("write current view schema snapshot", () => {
+		const factory = new SchemaFactory("test");
+
+		class Point2D extends factory.object("Point", {
+			x: factory.number,
+			y: factory.number,
+		}) {}
+
+		class Point3D extends factory.object("Point", {
+			x: factory.number,
+			y: factory.number,
+			z: factory.optional(factory.number),
+		}) {}
+
+		checker.checkCompatibility(
+			"1.0.0",
+			new TreeViewConfiguration({ schema: Point2D }),
+			"update",
+		);
+
+		checker.checkCompatibility(
+			"2.0.0",
+			new TreeViewConfiguration({ schema: Point3D }),
+			"update",
+		);
+	});
+
+	it.skip("check current view schema against historical persisted schemas", () => {
+		const factory = new SchemaFactory("test");
+
+		class Point3D extends factory.object("Point", {
+			x: factory.number,
+			y: factory.number,
+			z: factory.optional(factory.number),
+		}) {}
+
+		const results = checker.checkCompatibility(
+			"2.0.0",
+			new TreeViewConfiguration({ schema: Point3D }),
+			"test",
+		);
+
+		assert.equal(results.size, 2);
+
+		const resultV1 = results.get("1.0.0");
+		assert(resultV1 !== undefined);
+		assert.equal(resultV1.backwardsCompatibilityStatus.canView, false);
+		assert.equal(resultV1.backwardsCompatibilityStatus.canUpgrade, true);
+		assert.equal(resultV1.forwardsCompatibilityStatus.canView, false);
+
+		const resultV2 = results.get("2.0.0");
+		assert(resultV2 !== undefined);
+		assert.equal(resultV2.backwardsCompatibilityStatus.canView, true);
+		assert.equal(resultV2.backwardsCompatibilityStatus.canUpgrade, true);
+		assert.equal(resultV2.forwardsCompatibilityStatus.canView, true);
 	});
 });

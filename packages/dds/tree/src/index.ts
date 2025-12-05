@@ -288,6 +288,9 @@ export {
 	exportCompatibilitySchemaSnapshot,
 	importCompatibilitySchemaSnapshot,
 	checkCompatibility,
+	SnapshotCompatibilityChecker,
+	type CombinedSchemaCompatibilityStatus,
+	type IFileSystemMethods,
 	incrementalSummaryHint,
 	incrementalEncodingPolicyForAllowedTypes,
 } from "./simple-tree/index.js";

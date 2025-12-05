@@ -148,6 +148,16 @@ export interface CodecWriteOptions extends ICodecOptions {
     readonly minVersionForCollab: MinimumVersionForCollab;
 }
 
+// @alpha
+export interface CombinedSchemaCompatibilityStatus {
+    // (undocumented)
+    backwardsCompatibilityStatus: Omit<SchemaCompatibilityStatus, "canInitialize">;
+    // (undocumented)
+    forwardsCompatibilityStatus: Omit<SchemaCompatibilityStatus, "canInitialize">;
+    // (undocumented)
+    snapshotName: string;
+}
+
 // @public
 export enum CommitKind {
     Default = 0,
@@ -420,6 +430,24 @@ export interface ICodecOptions {
 
 // @alpha
 export type IdentifierIndex = SimpleTreeIndex<string, TreeNode>;
+
+// @alpha
+export interface IFileSystemMethods {
+    // (undocumented)
+    basename: (path: string, ext?: string) => string;
+    // (undocumented)
+    join: (parentPath: string, childPath: string) => string;
+    // (undocumented)
+    mkdirSync: (dir: string) => void;
+    // (undocumented)
+    readdirSync: (dir: string) => string[];
+    // (undocumented)
+    readFileSync: (file: string, encoding: "utf8") => string;
+    // (undocumented)
+    writeFileSync: (file: string, data: string, options?: {
+        encoding?: "utf8";
+    }) => void;
+}
 
 // @public
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
@@ -1113,6 +1141,19 @@ export interface SimpleTreeSchema {
 export function singletonSchema<TScope extends string, TName extends string | number>(factory: SchemaFactory<TScope, TName>, name: TName): TreeNodeSchemaClass<ScopedSchemaName<TScope, TName>, NodeKind.Object, TreeNode & {
     readonly value: TName;
 }, Record<string, never>, true, Record<string, never>, undefined>;
+
+// @alpha
+export class SnapshotCompatibilityChecker {
+    constructor(snapshotDirectory: string, fileSystemMethods: IFileSystemMethods);
+    // (undocumented)
+    checkCompatibility(appVersion: string, currentViewSchema: TreeViewConfiguration, mode: "test" | "update"): Map<string, CombinedSchemaCompatibilityStatus>;
+    // (undocumented)
+    readAllSchemaSnapshots(): Map<string, TreeViewConfiguration>;
+    // (undocumented)
+    readSchemaSnapshot(snapshotName: string): TreeViewConfiguration;
+    // (undocumented)
+    writeSchemaSnapshot(snapshotName: string, viewSchema: TreeViewConfiguration): void;
+}
 
 // @alpha @system
 export namespace System_TableSchema {
