@@ -11,7 +11,7 @@ import {
 	areInputCellsEmpty,
 	splitMark,
 	tryMergeMarks,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/utils.js";
 import { brand } from "../../../util/index.js";
 import { testIdCompressor } from "../../utils.js";

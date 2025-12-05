@@ -1,6 +1,44 @@
 # @fluidframework/eslint-config-fluid Changelog
 
-## [8.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v8.0_0)
+## Unreleased
+
+### ESLint 9 Flat Config Support
+
+This package now supports ESLint 9 flat config format via a new `flat.mjs` export. The flat config wraps existing configs using `FlatCompat` from `@eslint/eslintrc` for backward compatibility.
+
+Key features:
+
+- New `flat.mjs` module exports `recommended`, `strict`, and `minimalDeprecated` configs for ESLint 9
+- Automatic handling of type-aware parsing configuration for JavaScript files and test files
+- Generated `eslint.config.mjs` files for all packages in the repository
+- Script to regenerate flat configs: `pnpm tsx scripts/generate-flat-eslint-configs.ts`
+
+Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the legacy `.eslintrc.cjs` format remains supported for backward compatibility. Migration is optional and not required.
+
+## [9.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v9.0_0)
+
+### eslint-plugin-eslint-comments replaced by @eslint-community/eslint-plugin-eslint-comments
+
+The package now uses rules from
+[@eslint-community/eslint-plugin-eslint-comments](https://eslint-community.github.io/eslint-plugin-eslint-comments/)
+v4.5.0 instead of eslint-plugin-eslint-comments v3.2.0. Integrating this change will require renaming eslint disable
+comments and overrides, but the changes are mechanical.
+
+## [8.1.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v8.1.0)
+
+### import-x/order rule simplified
+
+The `import-x/order` rule configuration has been simplified to use basic grouping without alphabetization or newlines-between settings. This provides more flexibility in import ordering while still maintaining consistent grouping of import types.
+
+### Resolver configuration updated
+
+The TypeScript resolver configuration has been updated to work correctly with the repository's build setup. The resolver no longer requires explicit name and options wrapping, and uses the resolver directly.
+
+### no-hyphen-after-jsdoc-tag rule disabled
+
+The `@fluid-internal/fluid/no-hyphen-after-jsdoc-tag` rule has been temporarily disabled pending resolution of ADO work item 29535.
+
+## [8.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v8.0.0)
 
 ### eslint-plugin-import replaced by eslint-plugin-import-x
 

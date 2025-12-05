@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
@@ -14,16 +15,16 @@ import {
 	unhydratedFlexTreeFromInsertable,
 } from "../../../simple-tree/index.js";
 import { SharedTree } from "../../../treeFactory.js";
-import { getView, validateUsageError } from "../../utils.js";
+import { getView } from "../../utils.js";
 import { Tree } from "../../../shared-tree/index.js";
 import {
 	createFieldSchema,
 	FieldKind,
 	getDefaultProvider,
 	type ConstantFieldProvider,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/fieldSchema.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { UnhydratedFlexTreeNode } from "../../../simple-tree/core/index.js";
 
 const schema = new SchemaFactory("com.example");

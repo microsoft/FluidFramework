@@ -22,7 +22,7 @@ import {
 } from "@fluidframework/tree/internal";
 import { SharedTreeSemanticAgent, type TreeView } from "@fluidframework/tree-agent/alpha";
 import { ChatAnthropic } from "@langchain/anthropic";
-import type { BaseChatModel } from "@langchain/core/language_models/chat_models"; // eslint-disable-line import/no-internal-modules
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models"; // eslint-disable-line import-x/no-internal-modules
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatOpenAI } from "@langchain/openai";
 
@@ -40,25 +40,6 @@ export function fail(message: string): never {
  */
 export function failUsage(message: string): never {
 	throw new UsageError(message);
-}
-
-/**
- * Validates that the error is a UsageError with the expected error message.
- */
-export function validateUsageError(expectedErrorMsg: string | RegExp): (error: Error) => true {
-	return (error: Error) => {
-		assert(error instanceof UsageError);
-		if (
-			typeof expectedErrorMsg === "string"
-				? error.message !== expectedErrorMsg
-				: !expectedErrorMsg.test(error.message)
-		) {
-			throw new Error(
-				`Unexpected assertion thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
-			);
-		}
-		return true;
-	};
 }
 
 /**
@@ -133,7 +114,7 @@ async function queryDomain<TSchema extends ImplicitFieldSchema>(
 		readonly log?: (text: string) => void;
 	},
 ): Promise<TreeView<TSchema>> {
-	const view = independentView(new TreeViewConfiguration({ schema }), {});
+	const view = independentView(new TreeViewConfiguration({ schema }));
 	view.initialize(initialTree);
 	const client = createLangchainChatModel(createLlmClient(provider));
 	const logger = options?.log === undefined ? undefined : { log: options.log };

@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { oob, unreachableCase } from "@fluidframework/core-utils/internal";
-import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+import { MockHandle, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { TreeStatus } from "../../../feature-libraries/index.js";
 import {
@@ -40,17 +40,17 @@ import {
 	type InsertableTreeNodeFromAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type UnannotateAllowedTypesList,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/index.js";
 import {
 	SchemaFactory,
 	schemaFromValue,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/schemaFactory.js";
 import {
 	schemaStaticsStable,
 	type SchemaStatics,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/schemaStatics.js";
 import {
 	brand,
@@ -62,7 +62,7 @@ import {
 } from "../../../util/index.js";
 
 import { hydrate } from "../utils.js";
-import { getView, TestTreeProviderLite, validateUsageError } from "../../utils.js";
+import { getView, TestTreeProviderLite } from "../../utils.js";
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
 import { EmptyKey } from "../../../core/index.js";
 

@@ -15,14 +15,14 @@ import {
 	ForestIncrementalSummaryBehavior,
 	ForestIncrementalSummaryBuilder,
 	ForestSummaryTrackingState,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/forest-summary/incrementalSummaryBuilder.js";
 import {
 	type EncodedFieldBatch,
 	type ChunkReferenceId,
 	type TreeChunk,
 	defaultIncrementalEncodingPolicy,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/index.js";
 import type { ITreeCursorSynchronous } from "../../../core/index.js";
 import { brand, type JsonCompatible } from "../../../util/index.js";
@@ -159,7 +159,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 						incrementalSummaryContext,
 						stringify,
 					}),
-				(error: Error) => validateAssertionError(error, /Already tracking/),
+				validateAssertionError(/Already tracking/),
 			);
 			assert.equal(builder.forestSummaryState, ForestSummaryTrackingState.Tracking);
 		});
@@ -225,7 +225,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 						incrementalSummaryContext: localIncrementalSummaryContext,
 						forestSummaryContent: mockForestSummaryContent,
 					}),
-				(error: Error) => validateAssertionError(error, /Not tracking/),
+				validateAssertionError(/Not tracking/),
 			);
 			assert.equal(builder.forestSummaryState, ForestSummaryTrackingState.ReadyToTrack);
 		});
@@ -350,7 +350,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			const builder = createIncrementalSummaryBuilder();
 			assert.throws(
 				() => builder.encodeIncrementalField(testCursor, () => mockEncodedChunk),
-				(error: Error) => validateAssertionError(error, /Not tracking/),
+				validateAssertionError(/Not tracking/),
 			);
 		});
 
@@ -570,7 +570,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 					builder.decodeIncrementalChunk(999 as ChunkReferenceId, (encoded) => {
 						return getMockChunk();
 					}),
-				(error: Error) => validateAssertionError(error, "Encoded incremental chunk not found"),
+				validateAssertionError("Encoded incremental chunk not found"),
 			);
 		});
 	});

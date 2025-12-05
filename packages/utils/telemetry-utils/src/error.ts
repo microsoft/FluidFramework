@@ -6,7 +6,7 @@
 import type { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
 	FluidErrorTypes,
-	layerIncompatibilityErrorSymbol,
+	FluidErrorTypesAlpha,
 	type IGenericError,
 	type ILayerIncompatibilityError,
 	type IUsageError,
@@ -222,10 +222,10 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
  * @internal
  */
 export class LayerIncompatibilityError
-	extends UsageError
+	extends LoggingError
 	implements ILayerIncompatibilityError
 {
-	public [layerIncompatibilityErrorSymbol] = true as const;
+	public readonly errorType = FluidErrorTypesAlpha.layerIncompatibilityError;
 	public readonly layer: string;
 	public readonly layerVersion: string;
 	public readonly incompatibleLayer: string;

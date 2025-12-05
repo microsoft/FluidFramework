@@ -51,7 +51,7 @@ import {
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
-	type TreeCompressionStrategyPrivate,
+	type TreeCompressionStrategy,
 	allowsRepoSuperset,
 	buildForest,
 	createNodeIdentifierManager,
@@ -287,7 +287,7 @@ export function createTreeCheckout(
 		forest?: IEditableForest;
 		fieldBatchCodec?: FieldBatchCodec;
 		removedRoots?: DetachedFieldIndex;
-		chunkCompressionStrategy?: TreeCompressionStrategyPrivate;
+		chunkCompressionStrategy?: TreeCompressionStrategy;
 		logger?: ITelemetryLoggerExt;
 		breaker?: Breakable;
 		disposeForksAfterTransaction?: boolean;
@@ -300,13 +300,11 @@ export function createTreeCheckout(
 		jsonValidator: FormatValidatorNoOp,
 		minVersionForCollab: FluidClientVersion.v2_0,
 	};
-	const defaultFieldBatchVersion = 1;
 	const changeFamily =
 		args?.changeFamily ??
 		new SharedTreeChangeFamily(
 			revisionTagCodec,
-			args?.fieldBatchCodec ??
-				makeFieldBatchCodec(defaultCodecOptions, defaultFieldBatchVersion),
+			args?.fieldBatchCodec ?? makeFieldBatchCodec(defaultCodecOptions),
 			defaultCodecOptions,
 			args?.chunkCompressionStrategy,
 			idCompressor,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-nodejs-modules
+// eslint-disable-next-line import-x/no-nodejs-modules
 import { strict as assert } from "assert";
 
 import { EventEmitter } from "@fluid-example/example-utils";
@@ -339,7 +339,7 @@ export class Layout extends EventEmitter {
 		}
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
+	// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 	public pushTag<T extends {}>(tag: TagName, props?: T) {
 		const element = this.elementForTag(tag);
 		if (props) {
@@ -353,7 +353,7 @@ export class Layout extends EventEmitter {
 		this.popNode(count);
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
+	// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 	public emitTag<T extends {}>(tag: TagName, props?: T) {
 		const element = this.elementForTag(tag);
 		if (props) {

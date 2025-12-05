@@ -40,11 +40,11 @@ import type {
 	IDirectoryEvents,
 	IDirectoryValueChanged,
 	ISharedDirectory,
-	ISharedDirectoryEvents,
+	ISharedDirectoryEventsInternal,
 	IValueChanged,
 } from "./interfaces.js";
 import type {
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	ISerializableValue,
 	ISerializedValue,
 } from "./internalInterfaces.js";
@@ -108,7 +108,7 @@ export interface IDirectorySetOperation {
 	/**
 	 * Value to be set on the key.
 	 */
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	value: ISerializableValue;
 }
 
@@ -301,7 +301,7 @@ export interface IDirectoryDataObject {
 	/**
 	 * Key/value date set by the user.
 	 */
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	storage?: Record<string, ISerializableValue>;
 
 	/**
@@ -402,7 +402,7 @@ interface SequenceData {
  * @sealed
  */
 export class SharedDirectory
-	extends SharedObject<ISharedDirectoryEvents>
+	extends SharedObject<ISharedDirectoryEventsInternal>
 	implements ISharedDirectory
 {
 	/**
@@ -777,7 +777,7 @@ export class SharedDirectory
 					const parsedSerializable = parseHandles(
 						serializable,
 						this.serializer,
-						// eslint-disable-next-line import/no-deprecated
+						// eslint-disable-next-line import-x/no-deprecated
 					) as ISerializableValue;
 					migrateIfSharedSerializable(parsedSerializable, this.serializer, this.handle);
 					currentSubDir.populateStorage(key, parsedSerializable.value);
@@ -1036,7 +1036,7 @@ export class SharedDirectory
 				if (!currentSubDirObject.storage) {
 					currentSubDirObject.storage = {};
 				}
-				// eslint-disable-next-line import/no-deprecated
+				// eslint-disable-next-line import-x/no-deprecated
 				const result: ISerializableValue = {
 					type: value.type,
 					value: value.value && (JSON.parse(value.value) as object),
@@ -1570,6 +1570,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		if (!this.directory.isAttached()) {
 			this.sequencedStorageData.clear();
 			this.directory.emit("clear", true, this.directory);
+			this.directory.emit("clearInternal", this.absolutePath, true, this.directory);
 			return;
 		}
 
@@ -1581,6 +1582,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		this.pendingStorageData.push(pendingClear);
 
 		this.directory.emit("clear", true, this.directory);
+		this.directory.emit("clearInternal", this.absolutePath, true, this.directory);
 		const op: IDirectoryOperation = {
 			type: "clear",
 			path: this.absolutePath,
@@ -1907,14 +1909,17 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			// is no optimistically-applied local pending clear that would supersede this remote clear.
 			if (!this.pendingStorageData.some((entry) => entry.type === "clear")) {
 				this.directory.emit("clear", local, this.directory);
+				this.directory.emit("clearInternal", this.absolutePath, local, this.directory);
 			}
 
 			// For pending set operations, emit valueChanged events
+			// Include 'path' so listeners can identify which subdirectory the change occurred in
 			for (const { key, previousValue } of pendingSets) {
 				this.directory.emit(
 					"valueChanged",
 					{
 						key,
+						path: this.absolutePath,
 						previousValue,
 					},
 					local,

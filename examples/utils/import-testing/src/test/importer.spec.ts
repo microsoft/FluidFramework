@@ -11,13 +11,13 @@ import {
 	SchemaFactoryAlpha,
 	TableSchema,
 	TreeViewConfiguration,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/tree/internal";
 import type {
 	areSafelyAssignable,
 	requireTrue,
 	requireAssignableTo,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/tree/internal";
 
 import { Empty001, Empty020, largeUnion } from "../largeExport.js";
