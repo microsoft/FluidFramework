@@ -6,7 +6,7 @@
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import type { IFluidHandle, Listenable } from "@fluidframework/core-interfaces/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import {
 	UsageError,
 	type ITelemetryLoggerExt,
@@ -96,6 +96,7 @@ import {
 	type CustomTreeNode,
 } from "../simple-tree/index.js";
 import { getCheckout, SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import { isStableId } from "@fluidframework/id-compressor/internal";
 
 /**
  * Events for {@link ITreeCheckout}.
@@ -557,7 +558,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						return {
 							version: 1,
 							revision,
-							parent: commit.parent.revision,
+							originatorId: this.idCompressor.localSessionId,
 							change: encodedChange,
 						} satisfies SerializedChange;
 					},
@@ -597,10 +598,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		if (!isSerializedChange(serializedChange)) {
 			throw new UsageError(`Cannot apply change. Invalid serialized change format.`);
 		}
-		const { revision, parent, change } = serializedChange;
-		if (parent !== this.#transaction.activeBranch.getHead().revision) {
+		const { revision, originatorId, change } = serializedChange;
+		if (originatorId !== this.idCompressor.localSessionId) {
 			throw new UsageError(
-				`Cannot apply change. A serialized changed must be applied to the same branch state as it was created from.`,
+				`Cannot apply change. A serialized changed must be applied to the same SharedTree as it was created from.`,
 			);
 		}
 		const context: ChangeEncodingContext = {
@@ -1262,8 +1263,8 @@ function verboseFromCursor(
 interface SerializedChange {
 	version: 1;
 	revision: RevisionTag;
-	parent: RevisionTag;
 	change: JsonCompatibleReadOnly;
+	originatorId: SessionId;
 }
 
 function isSerializedChange(value: unknown): value is SerializedChange {
@@ -1274,7 +1275,8 @@ function isSerializedChange(value: unknown): value is SerializedChange {
 	return (
 		change.version === 1 &&
 		(change.revision === "root" || typeof change.revision === "number") &&
-		(change.parent === "root" || typeof change.parent === "number") &&
+		typeof change.originatorId === "string" &&
+		isStableId(change.originatorId) &&
 		change.change !== undefined
 	);
 }
