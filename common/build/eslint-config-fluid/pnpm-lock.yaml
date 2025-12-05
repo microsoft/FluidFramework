@@ -14,6 +14,9 @@ importers:
       '@eslint-community/eslint-plugin-eslint-comments':
         specifier: ~4.5.0
         version: 4.5.0(eslint@8.57.1)
+      '@eslint/js':
+        specifier: ^8.57.1
+        version: 8.57.1
       '@fluid-internal/eslint-plugin-fluid':
         specifier: ^0.4.1
         version: 0.4.1(eslint@8.57.1)(typescript@5.4.5)
@@ -78,6 +81,9 @@ importers:
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
@@ -779,6 +785,11 @@ packages:
   concurrently@8.2.2:
     resolution: {integrity: sha512-1dP4gpXFhei8IOtlXRE/T/4H88ElHgTiUzh71YUmtjTEHMSRS2Z/fgOxHSxxusGHogsRfxNq1vyAwxSC+EVyDg==}
     engines: {node: ^14.13.0 || >=16.0.0}
+    hasBin: true
+
+  cross-env@7.0.3:
+    resolution: {integrity: sha512-+/HKd6EgcQCJGh2PSjZuUitQBQynKor4wrFbRg4DtAgS1aWO+gU52xpH7M9ScGgXSYmAVS9bIJ8EzuaGw0oNAw==}
+    engines: {node: '>=10.14', npm: '>=6', yarn: '>=1'}
     hasBin: true
 
   cross-spawn@7.0.6:
@@ -2765,6 +2776,10 @@ snapshots:
       supports-color: 8.1.1
       tree-kill: 1.2.2
       yargs: 17.7.2
+
+  cross-env@7.0.3:
+    dependencies:
+      cross-spawn: 7.0.6
 
   cross-spawn@7.0.6:
     dependencies:
