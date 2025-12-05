@@ -63,10 +63,7 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 					const legacyPathEscaped = legacyPath.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 					const result = execFileSync(
 						"node",
-						[
-							"-e",
-							`console.log(JSON.stringify(require('${legacyPathEscaped}')))`
-						],
+						["-e", `console.log(JSON.stringify(require('${legacyPathEscaped}')))`],
 						{ cwd: repoRoot, encoding: "utf8" },
 					);
 					legacyConfig = JSON.parse(result);
