@@ -1,15 +1,15 @@
 {
-  "type": "test.table.Table",
+  "type": "com.fluidframework.table<test>.Table",
   "fields": {
     "rows": {
-      "type": "test.table.Table.rows",
+      "type": "com.fluidframework.table<test>.Table.rows",
       "fields": [
         {
-          "type": "test.table.Row",
+          "type": "com.fluidframework.table<test>.Row",
           "fields": {
             "id": "row-0",
             "cells": {
-              "type": "test.table.Row.cells",
+              "type": "com.fluidframework.table<test>.Row.cells",
               "fields": {
                 "column-0": {
                   "type": "test.table-cell",
@@ -28,10 +28,10 @@
       ]
     },
     "columns": {
-      "type": "test.table.Table.columns",
+      "type": "com.fluidframework.table<test>.Table.columns",
       "fields": [
         {
-          "type": "test.table.Column",
+          "type": "com.fluidframework.table<test>.Column",
           "fields": {
             "id": "column-0",
             "props": {

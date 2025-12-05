@@ -112,7 +112,6 @@ import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/inde
 import { AttachState } from "@fluidframework/container-definitions";
 import { JsonAsTree } from "../../jsonDomainSchema.js";
 import {
-	toSimpleTreeSchema,
 	TreeBeta,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/api/index.js";
@@ -2492,10 +2491,15 @@ describe("SharedTree", () => {
 	it("exportVerbose & exportSimpleSchema", () => {
 		const tree = treeTestFactory();
 		assert.deepEqual(tree.exportVerbose(), undefined);
-		assert.deepEqual(
-			tree.exportSimpleSchema(),
-			toSimpleTreeSchema(SchemaFactory.optional([]), true),
-		);
+		assert.deepEqual(tree.exportSimpleSchema(), {
+			definitions: new Map(),
+			root: {
+				kind: FieldKind.Optional,
+				simpleAllowedTypes: new Map(),
+				metadata: {},
+				persistedMetadata: undefined,
+			},
+		} satisfies SimpleTreeSchema);
 
 		const config = new TreeViewConfiguration({
 			schema: numberSchema,
