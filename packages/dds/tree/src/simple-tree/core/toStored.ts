@@ -10,7 +10,7 @@ import type { SchemaUpgrade } from "./allowedTypes.js";
  */
 export interface StoredFromViewSchemaGenerationOptions {
 	/**
-	 * Determines whether to include staged schema in the resulting stored schema.
+	 * Determines whether to include {@link SchemaStaticsBeta.staged | staged} allowed types in the resulting stored schema.
 	 * @remarks
 	 * Due to caching, the behavior of this function must be pure.
 	 */
