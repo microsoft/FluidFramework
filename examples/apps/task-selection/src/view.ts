@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IDiceRoller } from "./interface.js";
+import type { IDiceRoller } from "./interface.js";
 
 /**
  * Render an IDiceRoller into a given div as a text character, with a button to roll it.
  * @param diceRoller - The Data Object to be rendered
  * @param div - The div to render into
  */
-export function renderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement) {
+export function renderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement): void {
 	const wrapperDiv = document.createElement("div");
 	wrapperDiv.style.textAlign = "center";
 	div.append(wrapperDiv);
