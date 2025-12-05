@@ -22,8 +22,6 @@ class TestUnversionedSummarizer {
 
 	public summarize(props: {
 		stringify: SummaryElementStringifier;
-		fullTree?: boolean;
-		trackState?: boolean;
 		builder: SummaryTreeBuilder;
 	}): void {
 		// Add some test content to the builder
