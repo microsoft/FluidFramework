@@ -286,7 +286,7 @@ export interface TreeBranchAlpha extends TreeBranch {
 	): TransactionResult;
 
 	/**
-	 * Apply a serialized changed to this branch.
+	 * Apply a serialized change to this branch.
 	 * @param change - the change to apply.
 	 * Changes are acquired via `getChange` in a branch's {@link TreeBranchEvents.changed | "changed"} event.
 	 * @remarks Changes may only be applied to the same SharedTree/session and the same branch state from which they were generated.
