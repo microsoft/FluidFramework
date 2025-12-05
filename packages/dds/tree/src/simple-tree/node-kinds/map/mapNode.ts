@@ -65,7 +65,7 @@ import type {
 import { recordLikeDataToFlexContent } from "../common.js";
 import { MapNodeStoredSchema } from "../../../core/index.js";
 import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
-import type { SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
+import type { SchemaType, SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 
 /**
  * A map of string keys to tree objects.
@@ -306,7 +306,10 @@ export function mapSchema<
 			return lazyAllowedTypesIdentifiers.value;
 		}
 
-		public static get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
+		public static get simpleAllowedTypes(): ReadonlyMap<
+			string,
+			SimpleAllowedTypeAttributes<SchemaType.View>
+		> {
 			return lazySimpleAllowedTypes.value;
 		}
 

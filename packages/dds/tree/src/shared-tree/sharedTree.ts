@@ -97,6 +97,7 @@ import {
 	type ITreeAlpha,
 	type SimpleObjectFieldSchema,
 	type SimpleAllowedTypeAttributes,
+	type SchemaType,
 } from "../simple-tree/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
@@ -507,7 +508,9 @@ export class SharedTreeKernel
 	public onDisconnect(): void {}
 }
 
-export function exportSimpleSchema(storedSchema: TreeStoredSchema): SimpleTreeSchema {
+export function exportSimpleSchema(
+	storedSchema: TreeStoredSchema,
+): SimpleTreeSchema<SchemaType.Stored> {
 	return {
 		root: exportSimpleFieldSchemaStored(storedSchema.rootFieldSchema),
 		definitions: new Map(
@@ -823,8 +826,8 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
  */
 function buildSimpleAllowedTypeAttributesForStoredSchema(
 	types: TreeTypeSet,
-): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
-	const allowedTypesInfo = new Map<string, SimpleAllowedTypeAttributes>();
+): ReadonlyMap<string, SimpleAllowedTypeAttributes<SchemaType.Stored>> {
+	const allowedTypesInfo = new Map<string, SimpleAllowedTypeAttributes<SchemaType.Stored>>();
 	for (const type of types) {
 		// Stored schemas do not have staged upgrades
 		allowedTypesInfo.set(type, { isStaged: undefined });
@@ -832,7 +835,9 @@ function buildSimpleAllowedTypeAttributesForStoredSchema(
 	return allowedTypesInfo;
 }
 
-function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFieldSchema {
+function exportSimpleFieldSchemaStored(
+	schema: TreeFieldStoredSchema,
+): SimpleFieldSchema<SchemaType.Stored> {
 	let kind: FieldKind;
 	switch (schema.kind) {
 		case FieldKinds.identifier.identifier:
@@ -866,7 +871,9 @@ function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFie
  * Note on SimpleNodeSchema construction: In the persisted format `persistedMetadata` is just called `metadata` whereas the `metadata`
  * field on SimpleNodeSchema is not persisted.
  */
-function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeSchema {
+function exportSimpleNodeSchemaStored(
+	schema: TreeNodeStoredSchema,
+): SimpleNodeSchema<SchemaType.Stored> {
 	const arrayTypes = tryStoredSchemaAsArray(schema);
 	if (arrayTypes !== undefined) {
 		return {
@@ -877,7 +884,7 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 		};
 	}
 	if (schema instanceof ObjectNodeStoredSchema) {
-		const fields = new Map<FieldKey, SimpleObjectFieldSchema>();
+		const fields = new Map<FieldKey, SimpleObjectFieldSchema<SchemaType.Stored>>();
 		for (const [storedKey, field] of schema.objectNodeFields) {
 			fields.set(storedKey, { ...exportSimpleFieldSchemaStored(field), storedKey });
 		}
