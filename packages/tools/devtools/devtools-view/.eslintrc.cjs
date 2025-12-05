@@ -39,6 +39,12 @@ module.exports = {
 				allow: ["@testing-library/jest-dom"],
 			},
 		],
+
+		/**
+		 * TODO: This should be re-enabled once we are on eslint 9
+		 * and the react plugins are upgraded to more recent versions
+		 */
+		"react-hooks/rules-of-hooks": "warn",
 	},
 	overrides: [
 		{
