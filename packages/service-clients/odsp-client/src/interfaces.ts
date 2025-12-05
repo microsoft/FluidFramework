@@ -6,7 +6,6 @@
 import type {
 	IConfigProviderBase,
 	IDisposable,
-	IEvent,
 	ITelemetryBaseLogger,
 	Listenable,
 } from "@fluidframework/core-interfaces";
@@ -88,7 +87,7 @@ export interface OdspContainerAttachProps {
  * @beta
  * @sealed
  */
-export interface IOdspContainerServicesEvents extends IEvent {
+export interface IOdspContainerServicesEvents {
 	/**
 	 * Emitted when the read-only state of the container changes.
 	 * Consumers can call `OdspContainerServices.getReadOnlyState()` to get the updated value.
