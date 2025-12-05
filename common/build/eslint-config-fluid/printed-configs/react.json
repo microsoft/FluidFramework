@@ -1714,7 +1714,7 @@
             "warn"
         ],
         "react-hooks/rules-of-hooks": [
-            "error"
+            "warn"
         ],
         "react/display-name": [
             2
