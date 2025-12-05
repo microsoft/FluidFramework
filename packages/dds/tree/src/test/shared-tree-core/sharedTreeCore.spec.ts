@@ -321,7 +321,7 @@ describe("SharedTreeCore", () => {
 		assert.deepEqual([...root1], ["A", "B"]);
 		assert.deepEqual([...root2], ["A", "B"]);
 
-		// Make an additional changes to ensure that all changes from the previous transactions were flushed
+		// Make additional changes to ensure that all changes from the previous transactions were flushed
 		// and that future edits that require refreshers work as expected.
 		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
 			provider.trees[0].kernel.checkout.events,
@@ -346,7 +346,7 @@ describe("SharedTreeCore", () => {
 		unsubscribe();
 	});
 
-	it("Tolerates aborting  an inner transaction", async () => {
+	it("Tolerates aborting an inner transaction", async () => {
 		const provider = new TestTreeProviderLite(2);
 		const view1 = provider.trees[0].viewWith(
 			new TreeViewConfiguration({
@@ -384,7 +384,7 @@ describe("SharedTreeCore", () => {
 		assert.deepEqual([...root1], ["B"]);
 		assert.deepEqual([...root2], ["B"]);
 
-		// Make an additional changes to ensure that all changes from the previous transactions were flushed
+		// Make additional changes to ensure that all changes from the previous transactions were flushed
 		// and that future edits that require refreshers work as expected.
 		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
 			provider.trees[0].kernel.checkout.events,
