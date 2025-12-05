@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
+import fs from "node:fs";
 
 import { Uint8ArrayToString } from "@fluidframework/common-utils";
 import type { IBlob, ICreateBlobParams, ICreateBlobResponse } from "@fluidframework/gitresources";
