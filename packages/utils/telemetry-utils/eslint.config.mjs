@@ -5,4 +5,7 @@
  */
 import { strict } from "../../../common/build/eslint-config-fluid/flat.mjs";
 
-export default [...strict];
+/** @type {import("eslint").Linter.Config[]} */
+const config = [...strict];
+
+export default config;

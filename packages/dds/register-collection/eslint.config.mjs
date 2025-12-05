@@ -5,4 +5,7 @@
  */
 import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mjs";
 
-export default [...minimalDeprecated];
+/** @type {import("eslint").Linter.Config[]} */
+const config = [...minimalDeprecated];
+
+export default config;

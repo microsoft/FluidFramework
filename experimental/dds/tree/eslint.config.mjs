@@ -5,6 +5,7 @@
  */
 import { minimalDeprecated } from '../../../common/build/eslint-config-fluid/flat.mjs';
 
+/** @type {import("eslint").Linter.Config[]} */
 const config = [
 	...minimalDeprecated,
 	{

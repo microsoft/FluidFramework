@@ -13,6 +13,10 @@
  *  - Extracts local rules and overrides from .eslintrc.cjs and includes them in the flat config.
  *
  * Output: eslint.config.mjs alongside the existing .eslintrc.cjs (which is left intact for now).
+ *
+ * Options:
+ *   --finalize  Perform a final migration: generate configs without "GENERATED FILE" boilerplate,
+ *               then delete the source .eslintrc.cjs and .eslintignore files.
  */
 
 import { promises as fs } from "node:fs";
@@ -22,6 +26,10 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, "..");
+
+// Parse command-line arguments
+const args = process.argv.slice(2);
+const finalizeMode = args.includes("--finalize");
 
 interface PackageTarget {
 	packageDir: string;
@@ -196,6 +204,7 @@ function buildFlatConfigContent(
 	variant: PackageTarget["flatVariant"],
 	legacyConfig?: unknown,
 	eslintIgnorePatterns?: string[],
+	finalize: boolean = false,
 ): string {
 	const flatSource = path
 		.relative(
@@ -205,7 +214,28 @@ function buildFlatConfigContent(
 		.replace(/\\/g, "/");
 	const importPath = flatSource.startsWith(".") ? flatSource : `./${flatSource}`;
 
-	let configContent = `/* eslint-disable */\n/**\n * GENERATED FILE - DO NOT EDIT DIRECTLY.\n * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts\n */\nimport { ${variant} } from '${importPath}';\n\n`;
+	// In finalize mode, generate a clean config without the "GENERATED FILE" boilerplate
+	const header = finalize
+		? `/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import type { Linter } from "eslint";
+import { ${variant} } from "${importPath}";
+
+`
+		: `/* eslint-disable */
+/**
+ * GENERATED FILE - DO NOT EDIT DIRECTLY.
+ * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts
+ */
+import type { Linter } from "eslint";
+import { ${variant} } from '${importPath}';
+
+`;
+
+	let configContent = header;
 
 	// Check if there are local rules or overrides to include
 	const hasLocalRules = legacyConfig?.rules && Object.keys(legacyConfig.rules).length > 0;
@@ -228,10 +258,10 @@ function buildFlatConfigContent(
 
 	if (!hasLocalRules && !hasOverrides && !hasNonStandardProject && !hasEslintIgnore) {
 		// Simple case: no local customizations
-		configContent += `export default [...${variant}];\n`;
+		configContent += `const config: Linter.Config[] = [...${variant}];\n\nexport default config;\n`;
 	} else {
 		// Complex case: include local rules/overrides/custom project config
-		configContent += `const config = [\n\t...${variant},\n`;
+		configContent += `const config: Linter.Config[] = [\n\t...${variant},\n`;
 
 		if (hasLocalRules) {
 			// Split rules into type-aware and non-type-aware
@@ -323,8 +353,9 @@ function buildFlatConfigContent(
 	return configContent;
 }
 
-async function writeFlatConfigs(targets: PackageTarget[]): Promise<void> {
-	console.log(`\nGenerating ${targets.length} flat config files...`);
+async function writeFlatConfigs(targets: PackageTarget[], finalize: boolean): Promise<void> {
+	const mode = finalize ? "Finalizing" : "Generating";
+	console.log(`\n${mode} ${targets.length} flat config files...`);
 	for (const t of targets) {
 		const outPath = path.join(t.packageDir, "eslint.config.mjs");
 		// Always overwrite if legacy config exists (we only process dirs with .eslintrc.cjs)
@@ -333,18 +364,52 @@ async function writeFlatConfigs(targets: PackageTarget[]): Promise<void> {
 			t.flatVariant,
 			t.legacyConfig,
 			t.eslintIgnorePatterns,
+			finalize,
 		);
 		await fs.writeFile(outPath, content, "utf8");
 		console.log(`  Generated: ${path.relative(repoRoot, outPath)} (${t.flatVariant})`);
+
+		// In finalize mode, delete the legacy config files
+		if (finalize) {
+			// Delete .eslintrc.cjs
+			try {
+				await fs.unlink(t.legacyConfigPath);
+				console.log(`    Deleted: ${path.relative(repoRoot, t.legacyConfigPath)}`);
+			} catch (e) {
+				console.error(`    Failed to delete ${t.legacyConfigPath}:`, e);
+			}
+
+			// Delete .eslintignore if it existed
+			if (t.eslintIgnorePatterns && t.eslintIgnorePatterns.length > 0) {
+				const eslintIgnorePath = path.join(t.packageDir, ".eslintignore");
+				try {
+					await fs.unlink(eslintIgnorePath);
+					console.log(`    Deleted: ${path.relative(repoRoot, eslintIgnorePath)}`);
+				} catch (e) {
+					console.error(`    Failed to delete ${eslintIgnorePath}:`, e);
+				}
+			}
+		}
 	}
 }
 
 async function main() {
+	if (finalizeMode) {
+		console.log("Running in FINALIZE mode - will delete legacy configs after generation.\n");
+	}
+
 	const targets = await findLegacyConfigs();
-	await writeFlatConfigs(targets);
-	console.log(
-		`Generated ${targets.length} flat config files from legacy .eslintrc.cjs configs.`,
-	);
+	await writeFlatConfigs(targets, finalizeMode);
+
+	if (finalizeMode) {
+		console.log(
+			`\nFinalized ${targets.length} flat config files and deleted legacy .eslintrc.cjs configs.`,
+		);
+	} else {
+		console.log(
+			`Generated ${targets.length} flat config files from legacy .eslintrc.cjs configs.`,
+		);
+	}
 }
 
 main().catch((err) => {
