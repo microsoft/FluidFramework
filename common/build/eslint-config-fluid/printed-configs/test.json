@@ -1203,6 +1203,8 @@
             2,
             {
                 "allow": [
+                    "@fluid*/*/test*",
+                    "@fluid*/*/internal/test*",
                     "@fluid-example/*/internal",
                     "@fluid-experimental/*/internal",
                     "@fluid-internal/*/internal",

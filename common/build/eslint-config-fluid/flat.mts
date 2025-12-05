@@ -178,9 +178,10 @@ recommended.push(testProjectConfig);
 strict.push(testProjectConfig);
 minimalDeprecated.push(testProjectConfig);
 
-// Override import-x/no-internal-modules for all files to include /legacy imports.
+// Override import-x/no-internal-modules for non-test files to include /legacy imports.
 // The base config (via FlatCompat) only allows /internal imports.
 // This adds /legacy support which is needed for backwards compatibility during API transitions.
+// NOTE: This config excludes test files so that testProjectConfig's more permissive rule takes precedence.
 const internalModulesConfig = {
 	files: [
 		"**/*.ts",
@@ -192,6 +193,7 @@ const internalModulesConfig = {
 		"**/*.mjs",
 		"**/*.cjs",
 	],
+	ignores: ["src/test/**", "*.spec.ts", "*.test.ts", "**/test/**", "**/tests/**"],
 	rules: {
 		"import-x/no-internal-modules": [
 			"error",
