@@ -132,7 +132,7 @@ export abstract class Task {
 
 	public async run(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
 		if (await this.isUpToDate()) {
-			return BuildResult.UpToDate;
+			return BuildResult.LocalCacheHit;
 		}
 		if (!this.runP) {
 			this.runP = this.runTask(q);

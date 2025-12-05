@@ -22,12 +22,14 @@ import {
 import type { BuildContext } from "../../buildContext";
 import { type BuildPackage } from "../../buildGraph";
 import { BuildResult, summarizeBuildResult } from "../../buildResult";
+import { STATUS_SYMBOLS } from "../../buildStatusSymbols";
 import {
 	type GitIgnoreSetting,
 	type GitIgnoreSettingValue,
 	gitignoreDefaultValue,
 } from "../../fluidBuildConfig";
 import { options } from "../../options";
+import type { CacheEntry } from "../../sharedCache/types.js";
 import { Task, type TaskExec } from "../task";
 import { globWithGitignore } from "../taskUtils";
 
@@ -189,8 +191,33 @@ export abstract class LeafTask extends Task {
 			log(`[${taskNum}/${totalTask}] ${this.node.pkg.nameColored}: ${this.command}`);
 		}
 		const startTime = Date.now();
+
+		// Check shared cache before executing
+		const { entry: cacheEntry, lookupPerformed: lookupWasPerformed } =
+			await this.checkSharedCache();
+
+		if (cacheEntry) {
+			// Cache hit! Restore outputs from cache
+			const restoreResult = await this.restoreFromCache(cacheEntry);
+			if (restoreResult.success) {
+				return this.execDone(
+					startTime,
+					BuildResult.CachedSuccess,
+					undefined,
+					cacheEntry.manifest.executionTimeMs,
+				);
+			}
+			// Cache restore failed, fall through to normal execution
+			// Only warn on unexpected failures (I/O errors, corruption), not expected issues
+			if (restoreResult.isUnexpectedFailure) {
+				console.warn(
+					`${this.node.pkg.nameColored}: warning: cache restore failed unexpectedly: ${restoreResult.error ?? "unknown error"}`,
+				);
+			}
+		}
+
 		if (this.recheckLeafIsUpToDate && !this.forced && (await this.checkLeafIsUpToDate())) {
-			return this.execDone(startTime, BuildResult.UpToDate);
+			return this.execDone(startTime, BuildResult.LocalCacheHit);
 		}
 		const ret = await this.execCore();
 
@@ -209,7 +236,18 @@ export abstract class LeafTask extends Task {
 		}
 
 		await this.markExecDone();
-		return this.execDone(startTime, BuildResult.Success, ret.worker);
+
+		// Write to cache after successful execution
+		const executionTime = Date.now() - startTime;
+		const cacheWriteResult = await this.writeToCache(executionTime, ret, lookupWasPerformed);
+
+		return this.execDone(
+			startTime,
+			cacheWriteResult.success ? BuildResult.SuccessWithCacheWrite : BuildResult.Success,
+			ret.worker,
+			undefined,
+			cacheWriteResult.reason,
+		);
 	}
 
 	private async execCore(): Promise<TaskExecResult> {
@@ -285,18 +323,33 @@ export abstract class LeafTask extends Task {
 		return errorMessages;
 	}
 
-	private execDone(startTime: number, status: BuildResult, worker?: boolean) {
+	private execDone(
+		startTime: number,
+		status: BuildResult,
+		worker?: boolean,
+		originalExecutionTimeMs?: number,
+		cacheSkipReason?: string,
+	) {
 		if (!options.showExec) {
 			let statusCharacter: string = " ";
 			switch (status) {
 				case BuildResult.Success:
-					statusCharacter = chalk.greenBright("\u2713");
+					statusCharacter = chalk.yellowBright(STATUS_SYMBOLS.SUCCESS);
 					break;
 				case BuildResult.UpToDate:
-					statusCharacter = chalk.cyanBright("-");
+					statusCharacter = chalk.cyanBright(STATUS_SYMBOLS.UP_TO_DATE);
 					break;
 				case BuildResult.Failed:
-					statusCharacter = chalk.redBright("x");
+					statusCharacter = chalk.redBright(STATUS_SYMBOLS.FAILED);
+					break;
+				case BuildResult.CachedSuccess:
+					statusCharacter = chalk.blueBright(STATUS_SYMBOLS.CACHED_SUCCESS);
+					break;
+				case BuildResult.SuccessWithCacheWrite:
+					statusCharacter = chalk.greenBright(STATUS_SYMBOLS.SUCCESS_WITH_CACHE_WRITE);
+					break;
+				case BuildResult.LocalCacheHit:
+					statusCharacter = chalk.greenBright(STATUS_SYMBOLS.LOCAL_CACHE_HIT);
 					break;
 			}
 
@@ -310,9 +363,18 @@ export abstract class LeafTask extends Task {
 			const elapsedTime = (Date.now() - startTime) / 1000;
 			const workerMsg = worker ? "[worker] " : "";
 			const suffix = this.isIncremental ? "" : " (non-incremental)";
+			let timeSavedMsg = "";
+			if (status === BuildResult.CachedSuccess && originalExecutionTimeMs !== undefined) {
+				const timeSavedSeconds = (originalExecutionTimeMs / 1000 - elapsedTime).toFixed(3);
+				timeSavedMsg = ` (saved ${timeSavedSeconds}s)`;
+			}
+			let cacheSkipMsg = "";
+			if (cacheSkipReason) {
+				cacheSkipMsg = ` (cache not uploaded: ${cacheSkipReason})`;
+			}
 			const statusString = `[${taskNum}/${totalTask}] ${statusCharacter} ${
 				this.node.pkg.nameColored
-			}: ${workerMsg}${this.command} - ${elapsedTime.toFixed(3)}s${suffix}`;
+			}: ${workerMsg}${this.command} - ${elapsedTime.toFixed(3)}s${timeSavedMsg}${suffix}${cacheSkipMsg}`;
 			log(statusString);
 			if (status === BuildResult.Failed) {
 				this.node.context.failedTaskLines.push(statusString);
@@ -443,6 +505,295 @@ export abstract class LeafTask extends Task {
 	protected traceError(msg: string) {
 		traceError(`${this.nameColored}: ${msg}`);
 	}
+
+	/**
+	 * Check if outputs are available in shared cache.
+	 *
+	 * This method computes the cache key based on task inputs and queries
+	 * the shared cache to see if a matching entry exists.
+	 *
+	 * @returns Object with cache entry (if found) and whether lookup was performed
+	 */
+	protected async checkSharedCache(): Promise<{
+		entry: CacheEntry | undefined;
+		lookupPerformed: boolean;
+	}> {
+		const sharedCache = this.context.sharedCache;
+		if (!sharedCache) {
+			return { entry: undefined, lookupPerformed: false };
+		}
+
+		try {
+			// Gather input files for cache key computation
+			const inputFiles = await this.getCacheInputFiles();
+			if (!inputFiles) {
+				// Task doesn't support cache input detection
+				return { entry: undefined, lookupPerformed: false };
+			}
+
+			// Filter out directories and hash all input files
+			const inputHashes = await Promise.all(
+				inputFiles.map(async (filePath) => {
+					const absolutePath = this.getPackageFileFullPath(filePath);
+					try {
+						const stats = await stat(absolutePath);
+						if (!stats.isFile()) {
+							// Skip directories and other non-file entries
+							return null;
+						}
+						const hash = await this.node.context.fileHashCache.getFileHash(absolutePath);
+						return { path: filePath, hash };
+					} catch (error) {
+						// Skip files that can't be accessed (might have been deleted)
+						this.traceError(
+							`Failed to hash input file ${filePath}: ${error instanceof Error ? error.message : String(error)}`,
+						);
+						return null;
+					}
+				}),
+			).then(
+				(results) =>
+					results.filter((r) => r !== null) as Array<{ path: string; hash: string }>,
+			);
+
+			// Prepare cache key inputs (global components come from SharedCacheManager)
+			const cacheKeyInputs = {
+				packageName: this.node.pkg.name,
+				taskName: this.taskName ?? this.executable,
+				executable: this.executable,
+				command: this.command,
+				inputHashes,
+				...sharedCache.getGlobalKeyComponents(),
+			};
+
+			// Look up in cache
+			const entry = await sharedCache.lookup(cacheKeyInputs);
+			return { entry, lookupPerformed: true };
+		} catch (error) {
+			// Only warn on unexpected errors - the lookup itself logs expected cache misses at debug level
+			// We only get here on exceptions during input file hashing or other unexpected issues
+			console.warn(
+				`${this.node.pkg.nameColored}: warning: cache lookup failed due to unexpected error: ${error instanceof Error ? error.message : String(error)}`,
+			);
+			return { entry: undefined, lookupPerformed: false };
+		}
+	}
+
+	/**
+	 * Restore outputs from a cache entry to the workspace.
+	 *
+	 * This copies cached output files to their expected locations and
+	 * updates task state to reflect the cache hit.
+	 *
+	 * @param cacheEntry - The cache entry to restore from
+	 * @returns Restore result with success status and statistics
+	 */
+	protected async restoreFromCache(cacheEntry: {
+		cacheKey: string;
+		entryPath: string;
+		manifest: any;
+	}) {
+		const sharedCache = this.context.sharedCache;
+		if (!sharedCache) {
+			return {
+				success: false,
+				filesRestored: 0,
+				bytesRestored: 0,
+				restoreTimeMs: 0,
+				isUnexpectedFailure: false,
+			};
+		}
+
+		try {
+			// Get output file paths
+			const outputFiles = await this.getCacheOutputFiles();
+			if (!outputFiles) {
+				return {
+					success: false,
+					filesRestored: 0,
+					bytesRestored: 0,
+					restoreTimeMs: 0,
+					isUnexpectedFailure: false,
+				};
+			}
+
+			// Restore files from cache
+			const result = await sharedCache.restore(cacheEntry, this.node.pkg.directory);
+
+			// Write done file if this task uses one (handled by markCacheRestoreDone)
+			if (result.success) {
+				await this.markCacheRestoreDone();
+			}
+
+			return result;
+		} catch (error) {
+			// This is an unexpected error during restore setup/completion
+			console.warn(
+				`${this.node.pkg.nameColored}: warning: cache restore failed unexpectedly: ${error instanceof Error ? error.message : String(error)}`,
+			);
+			return {
+				success: false,
+				filesRestored: 0,
+				bytesRestored: 0,
+				restoreTimeMs: 0,
+				isUnexpectedFailure: true,
+			};
+		}
+	}
+
+	/**
+	 * Write task outputs to shared cache after successful execution.
+	 *
+	 * This captures output files and stores them in the cache for future reuse.
+	 *
+	 * @param executionTimeMs - Time taken to execute the task in milliseconds
+	 * @param execResult - Result from task execution (for stdout/stderr)
+	 * @param lookupWasPerformed - Whether a cache lookup was performed before execution
+	 */
+	protected async writeToCache(
+		executionTimeMs: number,
+		execResult?: TaskExecResult,
+		lookupWasPerformed: boolean = true,
+	): Promise<{ success: boolean; reason?: string }> {
+		const sharedCache = this.context.sharedCache;
+		if (!sharedCache) {
+			// No warning - this is expected when cache is not configured
+			return { success: false };
+		}
+
+		try {
+			// Gather input files for cache key computation
+			const inputFiles = await this.getCacheInputFiles();
+			if (!inputFiles) {
+				this.traceError("Cache write skipped: unable to determine input files");
+				return { success: false, reason: "unable to determine input files" };
+			}
+
+			// Get output files
+			const outputFiles = await this.getCacheOutputFiles();
+			if (!outputFiles) {
+				this.traceError("Cache write skipped: unable to determine output files");
+				return { success: false, reason: "unable to determine output files" };
+			}
+
+			// Always include the donefile as an output (if this task has one)
+			// This enables sharing build/lint status across workspaces
+			const doneFile = (this as any).doneFile as string | undefined;
+			if (doneFile && !outputFiles.includes(doneFile)) {
+				outputFiles.push(doneFile);
+			}
+
+			// Filter out directories and hash all input files
+			const inputHashes = await Promise.all(
+				inputFiles.map(async (filePath) => {
+					const absolutePath = this.getPackageFileFullPath(filePath);
+					try {
+						const stats = await stat(absolutePath);
+						if (!stats.isFile()) {
+							// Skip directories and other non-file entries
+							return null;
+						}
+						const hash = await this.node.context.fileHashCache.getFileHash(absolutePath);
+						return { path: filePath, hash };
+					} catch (error) {
+						// Skip files that can't be accessed (might have been deleted)
+						this.traceError(
+							`Failed to hash input file ${filePath}: ${error instanceof Error ? error.message : String(error)}`,
+						);
+						return null;
+					}
+				}),
+			).then(
+				(results) =>
+					results.filter((r) => r !== null) as Array<{ path: string; hash: string }>,
+			);
+
+			// Prepare cache key inputs (global components come from SharedCacheManager)
+			const cacheKeyInputs = {
+				packageName: this.node.pkg.name,
+				taskName: this.taskName ?? this.executable,
+				executable: this.executable,
+				command: this.command,
+				inputHashes,
+				...sharedCache.getGlobalKeyComponents(),
+			};
+
+			// Prepare task outputs - filter out files that don't exist
+			const existingOutputFiles = outputFiles.filter((relativePath) => {
+				const fullPath = this.getPackageFileFullPath(relativePath);
+				return existsSync(fullPath);
+			});
+
+			// Check if any outputs were produced
+			if (existingOutputFiles.length === 0) {
+				const reason = "no output files found";
+				console.warn(
+					`${this.node.pkg.nameColored}: cache write skipped - ${reason} (expected ${outputFiles.length} files)`,
+				);
+				return { success: false, reason };
+			}
+
+			const taskOutputs = {
+				files: existingOutputFiles.map((relativePath) => ({
+					sourcePath: this.getPackageFileFullPath(relativePath),
+					relativePath,
+				})),
+				stdout: execResult?.stdout ?? "",
+				stderr: execResult?.stderr ?? "",
+				exitCode: execResult?.error ? (execResult.error.code ?? 1) : 0,
+				executionTimeMs,
+			};
+
+			// Store in cache
+			const storeResult = await sharedCache.store(
+				cacheKeyInputs,
+				taskOutputs,
+				this.node.pkg.directory,
+				lookupWasPerformed,
+			);
+			return storeResult;
+		} catch (error) {
+			// Only warn on unexpected errors during cache write preparation
+			const reason = error instanceof Error ? error.message : String(error);
+			console.warn(
+				`${this.node.pkg.nameColored}: cache write failed due to unexpected error: ${reason}`,
+			);
+			return { success: false, reason };
+		}
+	}
+
+	/**
+	 * Get the list of input files for cache key computation.
+	 *
+	 * Subclasses should override this to provide their specific input files.
+	 * Return undefined if the task doesn't support cache input detection.
+	 *
+	 * @returns Array of relative paths to input files, or undefined
+	 */
+	protected async getCacheInputFiles(): Promise<string[] | undefined> {
+		return undefined;
+	}
+
+	/**
+	 * Get the list of output files to cache.
+	 *
+	 * Subclasses should override this to provide their specific output files.
+	 * Return undefined if the task doesn't support cache output detection.
+	 *
+	 * @returns Array of relative paths to output files, or undefined
+	 */
+	protected async getCacheOutputFiles(): Promise<string[] | undefined> {
+		return undefined;
+	}
+
+	/**
+	 * Mark task as done after cache restore.
+	 *
+	 * This is a hook for tasks to update their state after cache restoration.
+	 * Default implementation does nothing. Subclasses can override.
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-empty-function
+	protected async markCacheRestoreDone(): Promise<void> {}
 }
 
 /**
@@ -537,6 +888,15 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 			.digest("hex")
 			.substring(0, 8);
 		return `${name}-${hash}.done.build.log`;
+	}
+
+	/**
+	 * Mark task as done after cache restore.
+	 *
+	 * For done file tasks, we write the done file after cache restoration.
+	 */
+	protected override async markCacheRestoreDone(): Promise<void> {
+		await this.markExecDone();
 	}
 
 	/**
@@ -673,6 +1033,32 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			return undefined;
 		}
 	}
+
+	protected override async getCacheInputFiles(): Promise<string[] | undefined> {
+		try {
+			const inputFiles = await this.getInputFiles();
+			const pkgDir = this.node.pkg.directory;
+			return inputFiles.map((f) => {
+				return path.isAbsolute(f) ? path.relative(pkgDir, f) : f;
+			});
+		} catch (e: any) {
+			this.traceError(`error getting cache input files: ${e.message}`);
+			return undefined;
+		}
+	}
+
+	protected override async getCacheOutputFiles(): Promise<string[] | undefined> {
+		try {
+			const outputFiles = await this.getOutputFiles();
+			const pkgDir = this.node.pkg.directory;
+			return outputFiles.map((f) => {
+				return path.isAbsolute(f) ? path.relative(pkgDir, f) : f;
+			});
+		} catch (e: any) {
+			this.traceError(`error getting cache output files: ${e.message}`);
+			return undefined;
+		}
+	}
 }
 
 /**
@@ -741,6 +1127,8 @@ export abstract class LeafWithGlobInputOutputDoneFileTask extends LeafWithFileSt
 		return globWithGitignore(globs, {
 			cwd: this.node.pkg.directory,
 			gitignore: excludeGitIgnoredFiles,
+			// Only return files, not directories
+			onlyFiles: true,
 		});
 	}
 }

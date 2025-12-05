@@ -53,6 +53,7 @@ class BuildGraphContext implements BuildContext {
 	public readonly fluidBuildConfig: IFluidBuildConfig;
 	public readonly repoRoot: string;
 	public readonly gitRepo: GitRepo;
+	public readonly sharedCache?: import("./sharedCache/sharedCacheManager").SharedCacheManager;
 	constructor(
 		public readonly repoPackageMap: Map<string, Package>,
 		readonly buildContext: BuildContext,
@@ -61,6 +62,7 @@ class BuildGraphContext implements BuildContext {
 		this.fluidBuildConfig = buildContext.fluidBuildConfig;
 		this.repoRoot = buildContext.repoRoot;
 		this.gitRepo = buildContext.gitRepo;
+		this.sharedCache = buildContext.sharedCache;
 	}
 }
 
@@ -600,6 +602,45 @@ export class BuildGraph {
 		summaryLines.unshift(chalk.redBright("Failed Tasks:"));
 		summaryLines.push(chalk.yellow(`Did not run ${notRunCount} tasks due to prior failures.`));
 		return summaryLines.join("\n");
+	}
+
+	public get taskStats() {
+		return this.context.taskStats;
+	}
+
+	public get cacheStatsSummary(): string | undefined {
+		const sharedCache = this.context.sharedCache;
+		if (!sharedCache) {
+			return undefined;
+		}
+
+		const stats = sharedCache.getStatistics();
+		const totalLookups = stats.hitCount + stats.missCount;
+		if (totalLookups === 0) {
+			return undefined;
+		}
+
+		const hitRate = ((stats.hitCount / totalLookups) * 100).toFixed(1);
+		const cacheSizeMB = (stats.totalSize / 1024 / 1024).toFixed(2);
+
+		// Format time saved as hours, minutes, seconds
+		const timeSavedMs = stats.timeSavedMs;
+		const hours = Math.floor(timeSavedMs / (1000 * 60 * 60));
+		const minutes = Math.floor((timeSavedMs % (1000 * 60 * 60)) / (1000 * 60));
+		const seconds = Math.floor((timeSavedMs % (1000 * 60)) / 1000);
+
+		let timeSavedStr: string;
+		if (hours > 0) {
+			timeSavedStr = `${hours}h ${minutes}m ${seconds}s`;
+		} else if (minutes > 0) {
+			timeSavedStr = `${minutes}m ${seconds}s`;
+		} else {
+			timeSavedStr = `${seconds}s`;
+		}
+
+		return chalk.magentaBright(
+			`Cache: ${stats.hitCount} hits, ${stats.missCount} misses (${hitRate}% hit rate) | ${stats.totalEntries} entries, ${cacheSizeMB} MB | ${timeSavedStr} saved`,
+		);
 	}
 
 	private getBuildPackage(
