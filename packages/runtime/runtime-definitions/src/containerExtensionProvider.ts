@@ -66,7 +66,6 @@ export interface ContainerExtensionExpectations {
 	): Readonly<UnknownExtensionInstantiation>;
 }
 
-/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 /**
  * Unique identifier for extension
  *
@@ -84,7 +83,6 @@ export interface ContainerExtensionExpectations {
  * @internal
  */
 export type ContainerExtensionId = `${string}:${string}`;
-/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 
 /**
  * @sealed

@@ -18,10 +18,12 @@ import {
 	ValueSchema,
 	storedEmptyFieldSchema,
 	type TreeStoredSchema,
+	Multiplicity,
 } from "../../../core/index.js";
 import { FieldKinds, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 import {
 	allowsFieldSuperset,
+	allowsMultiplicitySuperset,
 	allowsRepoSuperset,
 	allowsTreeSchemaIdentifierSuperset,
 	allowsTreeSuperset,
@@ -142,7 +144,48 @@ describe("Schema Comparison", () => {
 		);
 	});
 
-	it("allowsFieldSuperset", () => {
+	it("allowsFieldSuperset-non-monotonic", () => {
+		const repo = new TreeStoredSchemaRepository();
+		updateTreeSchema(repo, brand("never"), neverTree);
+		updateTreeSchema(repo, emptyTree.name, emptyTree.schema);
+		const neverField2: TreeFieldStoredSchema = fieldSchema(FieldKinds.required, [
+			brand("never"),
+		]);
+		const identifierField = fieldSchema(FieldKinds.identifier, [emptyTree.name]);
+		const sequenceField = fieldSchema(FieldKinds.sequence, [emptyTree.name]);
+		const compare = (a: TreeFieldStoredSchema, b: TreeFieldStoredSchema): boolean =>
+			allowsFieldSuperset(defaultSchemaPolicy, repo, a, b, false);
+		testOrder(compare, [neverField, storedEmptyFieldSchema, fieldOptionalEmptyTree]);
+		testOrder(compare, [neverField, fieldRequiredEmptyTree]);
+		testOrder(compare, [fieldRequiredEmptyTree, fieldOptionalEmptyTree, sequenceField]);
+		testOrder(compare, [identifierField, fieldOptionalEmptyTree, sequenceField]);
+		assert.equal(
+			getOrdering(fieldRequiredEmptyTree, storedEmptyFieldSchema, compare),
+			Ordering.Incomparable,
+		);
+		assert.equal(
+			getOrdering(identifierField, fieldRequiredEmptyTree, compare),
+			Ordering.Equal,
+		);
+		testPartialOrder(
+			compare,
+			[
+				neverField,
+				neverField2,
+				storedEmptyFieldSchema,
+				fieldRequiredEmptyTree,
+				fieldRequiredEmptyTree,
+				sequenceField,
+				identifierField,
+			],
+			[
+				[neverField, neverField2],
+				[identifierField, fieldRequiredEmptyTree],
+			],
+		);
+	});
+
+	it("allowsFieldSuperset-monotonic", () => {
 		const repo = new TreeStoredSchemaRepository();
 		updateTreeSchema(repo, brand("never"), neverTree);
 		updateTreeSchema(repo, emptyTree.name, emptyTree.schema);
@@ -153,7 +196,7 @@ describe("Schema Comparison", () => {
 		const sequenceField = fieldSchema(FieldKinds.sequence, [emptyTree.name]);
 		const compare = (a: TreeFieldStoredSchema, b: TreeFieldStoredSchema): boolean =>
 			allowsFieldSuperset(defaultSchemaPolicy, repo, a, b);
-		testOrder(compare, [neverField, storedEmptyFieldSchema, fieldOptionalEmptyTree]);
+		testOrder(compare, [storedEmptyFieldSchema, fieldOptionalEmptyTree]);
 		testOrder(compare, [neverField, fieldRequiredEmptyTree]);
 		testOrder(compare, [
 			identifierField,
@@ -161,6 +204,15 @@ describe("Schema Comparison", () => {
 			fieldOptionalEmptyTree,
 			sequenceField,
 		]);
+		assert.equal(getOrdering(neverField, neverField2, compare), Ordering.Superset);
+		assert.equal(
+			getOrdering(neverField, storedEmptyFieldSchema, compare),
+			Ordering.Incomparable,
+		);
+		assert.equal(
+			getOrdering(neverField2, storedEmptyFieldSchema, compare),
+			Ordering.Incomparable,
+		);
 		assert.equal(
 			getOrdering(fieldRequiredEmptyTree, storedEmptyFieldSchema, compare),
 			Ordering.Incomparable,
@@ -176,7 +228,7 @@ describe("Schema Comparison", () => {
 				sequenceField,
 				identifierField,
 			],
-			[[neverField, neverField2]],
+			[],
 		);
 	});
 
@@ -184,20 +236,24 @@ describe("Schema Comparison", () => {
 		const repo = new TreeStoredSchemaRepository();
 		updateTreeSchema(repo, emptyTree.name, emptyTree.schema);
 		const identifierField = fieldSchema(FieldKinds.identifier, [emptyTree.name]);
+
+		// Required to Identifier
 		{
-			const result = FieldKinds.required.allowedMonotonicUpgrade(
+			const result = allowsFieldSuperset(
 				defaultSchemaPolicy,
 				repo,
-				new Set([emptyTree.name]),
+				fieldRequiredEmptyTree,
 				identifierField,
 			);
 			assert.equal(result, false);
 		}
+
+		// Identifier to Required
 		{
-			const result = FieldKinds.identifier.allowedMonotonicUpgrade(
+			const result = allowsFieldSuperset(
 				defaultSchemaPolicy,
 				repo,
-				new Set([emptyTree.name]),
+				identifierField,
 				fieldRequiredEmptyTree,
 			);
 			assert.equal(result, true);
@@ -413,6 +469,29 @@ describe("Schema Comparison", () => {
 			compare,
 			[neverTree, neverTree2, undefined, numberLeaf],
 			[[neverTree, neverTree2, undefined]],
+		);
+	});
+
+	it("allowsMultiplicitySuperset", () => {
+		testOrder(allowsMultiplicitySuperset, [
+			Multiplicity.Forbidden,
+			Multiplicity.Optional,
+			Multiplicity.Sequence,
+		]);
+		testOrder(allowsMultiplicitySuperset, [
+			Multiplicity.Single,
+			Multiplicity.Optional,
+			Multiplicity.Sequence,
+		]);
+		testPartialOrder(
+			allowsMultiplicitySuperset,
+			[
+				Multiplicity.Forbidden,
+				Multiplicity.Optional,
+				Multiplicity.Sequence,
+				Multiplicity.Single,
+			],
+			[],
 		);
 	});
 

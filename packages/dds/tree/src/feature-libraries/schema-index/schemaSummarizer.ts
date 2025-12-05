@@ -9,10 +9,10 @@ import type { IChannelStorageService } from "@fluidframework/datastore-definitio
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
 	IExperimentalIncrementalSummaryContext,
-	ISummaryTreeWithStats,
 	ITelemetryContext,
+	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import type { IJsonCodec } from "../../codec/index.js";
 import {
@@ -21,30 +21,73 @@ import {
 	type TreeStoredSchema,
 	schemaDataIsEmpty,
 } from "../../core/index.js";
-import type {
-	Summarizable,
-	SummaryElementParser,
-	SummaryElementStringifier,
+import {
+	VersionedSummarizer,
+	type Summarizable,
+	type SummaryElementParser,
+	type SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
 import type { JsonCompatible } from "../../util/index.js";
 import type { CollabWindow } from "../incrementalSummarizationUtils.js";
 
 import { encodeRepo } from "./codec.js";
 
-const schemaStringKey = "SchemaString";
+export const schemaStringKey = "SchemaString";
+
+/**
+ * The versions for the schema summary format.
+ */
+export const enum SchemaSummaryFormatVersion {
+	/**
+	 * This version represents summary format before summary versioning was introduced.
+	 */
+	v1 = 1,
+	/**
+	 * This version adds metadata to the summary. This is backward compatible with version 1.
+	 */
+	v2 = 2,
+	/**
+	 * The latest version of the summary. Must be updated when a new version is added.
+	 */
+	vLatest = v2,
+}
+
+const supportedVersions = new Set<SchemaSummaryFormatVersion>([
+	SchemaSummaryFormatVersion.v1,
+	SchemaSummaryFormatVersion.v2,
+]);
+
+/**
+ * Returns the summary version to use as per the given minimum version for collab.
+ */
+function minVersionToSchemaSummaryFormatVersion(
+	version: MinimumVersionForCollab,
+): SchemaSummaryFormatVersion {
+	// Currently, version 2 is written which adds metadata blob to the summary.
+	return SchemaSummaryFormatVersion.v2;
+}
+
 /**
  * Provides methods for summarizing and loading a schema repository.
  */
-export class SchemaSummarizer implements Summarizable {
-	public readonly key = "Schema";
-
+export class SchemaSummarizer
+	extends VersionedSummarizer<SchemaSummaryFormatVersion>
+	implements Summarizable
+{
 	private schemaIndexLastChangedSeq: number | undefined;
 
 	public constructor(
 		private readonly schema: MutableTreeStoredSchema,
 		collabWindow: CollabWindow,
 		private readonly codec: IJsonCodec<TreeStoredSchema>,
+		minVersionForCollab: MinimumVersionForCollab,
 	) {
+		super(
+			"Schema",
+			minVersionToSchemaSummaryFormatVersion(minVersionForCollab),
+			supportedVersions,
+			true /* supportPreVersioningFormat */,
+		);
 		this.schema.events.on("afterSchemaChange", () => {
 			// Invalidate the cache, as we need to regenerate the blob if the schema changes
 			// We are assuming that schema changes from remote ops are valid, as we are in a summarization context.
@@ -52,16 +95,15 @@ export class SchemaSummarizer implements Summarizable {
 		});
 	}
 
-	public summarize(props: {
+	protected summarizeInternal(props: {
 		stringify: SummaryElementStringifier;
 		fullTree?: boolean;
 		trackState?: boolean;
 		telemetryContext?: ITelemetryContext;
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
-	}): ISummaryTreeWithStats {
-		const incrementalSummaryContext = props.incrementalSummaryContext;
-		const builder = new SummaryTreeBuilder();
-		const fullTree = props.fullTree ?? false;
+		builder: SummaryTreeBuilder;
+	}): void {
+		const { builder, incrementalSummaryContext, stringify, fullTree = false } = props;
 		if (
 			!fullTree &&
 			incrementalSummaryContext !== undefined &&
@@ -74,13 +116,12 @@ export class SchemaSummarizer implements Summarizable {
 				`${incrementalSummaryContext.summaryPath}/${schemaStringKey}`,
 			);
 		} else {
-			const dataString = JSON.stringify(this.codec.encode(this.schema));
+			const dataString = stringify(this.codec.encode(this.schema));
 			builder.addBlob(schemaStringKey, dataString);
 		}
-		return builder.getSummaryTree();
 	}
 
-	public async load(
+	protected async loadInternal(
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
 	): Promise<void> {

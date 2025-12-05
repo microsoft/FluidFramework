@@ -1617,7 +1617,7 @@ const tree7 = {
 																						value: {
 																							type: "blob",
 																							content:
-																								'{"trunk":[],"branches":[],"version":2}',
+																								'{"trunk":[],"branches":[],"version":3}',
 																							encoding: "utf8",
 																						},
 																						unreferenced: undefined,
@@ -1874,7 +1874,7 @@ const tree8 = {
 																						value: {
 																							type: "blob",
 																							content:
-																								'{"trunk":[],"branches":[],"version":2}',
+																								'{"trunk":[],"branches":[],"version":3}',
 																							encoding: "utf8",
 																						},
 																						unreferenced: undefined,

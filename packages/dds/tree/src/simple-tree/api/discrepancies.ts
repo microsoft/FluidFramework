@@ -43,7 +43,7 @@ import {
 	type FieldSchema,
 } from "../fieldSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
-import type { TreeSchema } from "./configuration.js";
+import type { TreeSchema } from "../treeSchema.js";
 import { tryStoredSchemaAsArray } from "./customTree.js";
 import { FieldKinds } from "../../feature-libraries/index.js";
 

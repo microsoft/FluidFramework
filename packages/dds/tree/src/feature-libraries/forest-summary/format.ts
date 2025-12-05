@@ -5,9 +5,9 @@
 
 import { type Static, Type } from "@sinclair/typebox";
 
-import { Versioned } from "../../codec/index.js";
 import { schemaFormatV1 } from "../../core/index.js";
 import { brand, type Brand } from "../../util/index.js";
+import { EncodedFieldBatch } from "../chunked-forest/index.js";
 
 /**
  * The format version for the forest.
@@ -29,10 +29,10 @@ const FormatGeneric = (
 		{
 			version: Type.Literal(version),
 			keys: Type.Array(schemaFormatV1.FieldKeySchema),
-			fields: Versioned,
+			fields: EncodedFieldBatch,
 		},
 		{ additionalProperties: false },
 	);
 
-export const Format = FormatGeneric(brand<ForestFormatVersion>(ForestFormatVersion.v1));
-export type Format = Static<typeof Format>;
+export const FormatV1 = FormatGeneric(brand<ForestFormatVersion>(ForestFormatVersion.v1));
+export type FormatV1 = Static<typeof FormatV1>;

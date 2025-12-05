@@ -23,7 +23,7 @@ import { lock } from "proper-lockfile";
 import * as semver from "semver";
 
 import { pkgVersion } from "./packageVersion.js";
-import { InstalledPackage } from "./testApi.js";
+import { InstalledPackage, type PackageToInstall } from "./testApi.js";
 
 // Assuming this file is in `lib`, so go to `..\node_modules\.legacy` as the install location
 const baseModulePath = fileURLToPath(new URL("../node_modules/.legacy", import.meta.url));
@@ -33,7 +33,7 @@ const getModulePath = (version: string) => path.join(baseModulePath, version);
 const resolutionCache = new Map<string, string>();
 
 // Increment the revision if we want to force installation (e.g. package list changed)
-const revision = 3;
+export const revision = 4;
 
 interface InstalledJson {
 	revision: number;
@@ -215,7 +215,7 @@ async function ensureModulePath(version: string, modulePath: string) {
  */
 export async function ensureInstalled(
 	requested: string,
-	packageList: string[],
+	packageList: PackageToInstall[],
 	force: boolean,
 ): Promise<InstalledPackage | undefined> {
 	if (requested === pkgVersion) {
@@ -230,7 +230,12 @@ export async function ensureInstalled(
 
 	await ensureModulePath(version, modulePath);
 
-	const adjustedPackageList = [...packageList];
+	// Adjust package list based on the minVersion for each package. If the requested version is
+	// less than the minVersion, skip that package.
+	const adjustedPackageList = packageList
+		.filter((entry) => semver.gte(version, entry.minVersion))
+		.map((entry) => entry.pkgName);
+
 	if (versionHasMovedSparsedMatrix(version)) {
 		adjustedPackageList.push("@fluid-experimental/sequence-deprecated");
 	}

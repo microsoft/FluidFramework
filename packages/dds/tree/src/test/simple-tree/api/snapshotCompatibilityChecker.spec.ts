@@ -10,7 +10,9 @@ import {
 	SchemaFactory,
 	exportCompatibilitySchemaSnapshot,
 	TreeViewConfiguration,
-	type SchemaCompatibilityStatus,
+	SchemaFactoryBeta,
+	stringSchema,
+	numberSchema,
 } from "../../../simple-tree/index.js";
 import { strict as assert } from "node:assert";
 
@@ -23,7 +25,7 @@ describe("snapshotCompatibilityChecker", () => {
 		const snapshot = exportCompatibilitySchemaSnapshot(view);
 		const parsedView = importCompatibilitySchemaSnapshot(snapshot);
 
-		const normalizedView = normalizeFieldSchema(view.schema);
+		const normalizedView = normalizeFieldSchema(parsedView.schema);
 
 		assert.equal(normalizedView.allowedTypeSet.size, 1);
 		assert.equal(
@@ -32,31 +34,7 @@ describe("snapshotCompatibilityChecker", () => {
 		);
 	});
 
-	it("checkCompatibility detects incompatible schemas", () => {
-		const factory = new SchemaFactory("test");
-		class Point2D extends factory.object("Point", {
-			x: factory.number,
-			y: factory.number,
-		}) {}
-		class Point3D extends factory.object("Point", {
-			x: factory.number,
-			y: factory.number,
-			z: factory.optional(factory.number),
-		}) {}
-
-		const storedAsView = new TreeViewConfiguration({ schema: Point2D });
-		const view = new TreeViewConfiguration({ schema: Point3D });
-		const compatibility = checkCompatibility(storedAsView, view);
-
-		const expected: Omit<SchemaCompatibilityStatus, "canInitialize"> = {
-			canView: false,
-			canUpgrade: true,
-			isEquivalent: false,
-		};
-		assert.deepEqual(compatibility, expected);
-	});
-
-	it("checkCompatibility detects compatible schemas", () => {
+	function checkCompatibilityDetectsUpgradeableSchemas(roundtripSnapshot: boolean): void {
 		const factory = new SchemaFactory("test");
 
 		// The past view schema, for the purposes of illustration. This wouldn't normally appear as a concrete schema in the test
@@ -65,12 +43,15 @@ describe("snapshotCompatibilityChecker", () => {
 			x: factory.number,
 			y: factory.number,
 		}) {}
-		const viewSchema = new TreeViewConfiguration({ schema: Point2D });
-		const encodedSchema = JSON.stringify(exportCompatibilitySchemaSnapshot(viewSchema));
 
-		// Load the past view schema from the snapshot (in-memory for the purposes of this test)
-		// This snapshot is assumed to be the same as Point3D, except missing `z`.
-		const oldViewSchema = importCompatibilitySchemaSnapshot(JSON.parse(encodedSchema));
+		// This is the same as Point3D, except missing `z`.
+		let oldViewSchema: TreeViewConfiguration = new TreeViewConfiguration({ schema: Point2D });
+
+		// If roundtripSnapshot is true, store the old schema as a JSON string and then load it.
+		if (roundtripSnapshot) {
+			const encodedSchema = JSON.stringify(exportCompatibilitySchemaSnapshot(oldViewSchema));
+			oldViewSchema = importCompatibilitySchemaSnapshot(JSON.parse(encodedSchema));
+		}
 
 		// Build the current view schema
 		class Point3D extends factory.object("Point", {
@@ -98,5 +79,75 @@ describe("snapshotCompatibilityChecker", () => {
 		// we assert that there is forwards compatibility break:
 		// this means these two versions of the application cannot collaborate on content using these schema.
 		assert.equal(forwardsCompatibilityStatus.canView, false);
+	}
+
+	it("checkCompatibility detects upgradeable schemas", () => {
+		checkCompatibilityDetectsUpgradeableSchemas(false);
+	});
+
+	it("checkCompatibility detects upgradeable schemas - snapshot test", () => {
+		checkCompatibilityDetectsUpgradeableSchemas(true);
+	});
+
+	it("checkCompatibility: allowUnknownOptionalFields", () => {
+		const factory = new SchemaFactoryBeta("test");
+
+		// Point2D is constructed with allowUnknownOptionalFields, so it can read Point3D trees
+		// even though it does not know about the optional field `z`.
+		class Point2D extends factory.object(
+			"Point",
+			{
+				x: factory.number,
+				y: factory.number,
+			},
+			{ allowUnknownOptionalFields: true },
+		) {}
+		class Point3D extends factory.object("Point", {
+			x: factory.number,
+			y: factory.number,
+			z: factory.optional(factory.number),
+		}) {}
+
+		const oldViewSchema = new TreeViewConfiguration({ schema: Point2D });
+		const currentViewSchema = new TreeViewConfiguration({ schema: Point3D });
+
+		// Check to see if a document created with the current view schema can be opened with the historical view schema
+		const backwardsCompatibilityStatus = checkCompatibility(oldViewSchema, currentViewSchema);
+
+		// The current view schema has a superset of the fields on the old view schema, so the schema must be upgraded to add the new
+		// optional field `z`.
+		assert.equal(backwardsCompatibilityStatus.canView, false);
+		assert.equal(backwardsCompatibilityStatus.canUpgrade, true);
+
+		// Test what the old version of the application would do with a tree using the new schema:
+		const forwardsCompatibilityStatus = checkCompatibility(currentViewSchema, oldViewSchema);
+
+		// Content created with the current schema can be viewed by the old schema due to allowUnknownOptionalFields
+		assert.equal(forwardsCompatibilityStatus.canView, true);
+	});
+
+	it("checkCompatibility: staged schema", () => {
+		const factory = new SchemaFactoryBeta("test");
+		const oldSchema = factory.optional(
+			factory.types([numberSchema, factory.staged(stringSchema)]),
+		);
+		const currentSchema = factory.optional([stringSchema, numberSchema]);
+
+		const oldViewSchema = new TreeViewConfiguration({ schema: oldSchema });
+		const currentViewSchema = new TreeViewConfiguration({ schema: currentSchema });
+
+		// Check to see if the document created by the historical view schema can be opened with the current view schema
+		const backwardsCompatibilityStatus = checkCompatibility(oldViewSchema, currentViewSchema);
+
+		// The current view schema has a superset of the non-staged allowed types on the old schema, and therefore the old
+		// stored schema must be upgraded before it can be viewed.
+		assert.equal(backwardsCompatibilityStatus.canView, false);
+		assert.equal(backwardsCompatibilityStatus.canUpgrade, true);
+
+		// Check to see if a document created with the current view schema can be opened with the historical view schema
+		const forwardsCompatibilityStatus = checkCompatibility(currentViewSchema, oldViewSchema);
+
+		// The current schema's string schema is supported by the old schema's staged string schema
+		assert.equal(forwardsCompatibilityStatus.canView, true);
 	});
 });

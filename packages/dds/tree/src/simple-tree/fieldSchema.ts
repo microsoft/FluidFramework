@@ -31,7 +31,11 @@ import type {
 } from "./core/index.js";
 import { AnnotatedAllowedTypesInternal, normalizeAllowedTypes } from "./core/index.js";
 
-import type { SimpleAllowedTypeAttributes, SimpleFieldSchema } from "./simpleSchema.js";
+import type {
+	SchemaType,
+	SimpleAllowedTypeAttributes,
+	SimpleFieldSchema,
+} from "./simpleSchema.js";
 import type { UnsafeUnknownSchema } from "./unsafeUnknownSchema.js";
 import type { InsertableContent } from "./unhydratedFlexTreeFromInsertable.js";
 
@@ -383,7 +387,7 @@ export class FieldSchemaAlpha<
 		TCustomMetadata = unknown,
 	>
 	extends FieldSchema<Kind, Types, TCustomMetadata>
-	implements SimpleFieldSchema
+	implements SimpleFieldSchema<SchemaType.View>
 {
 	private readonly propsAlpha: FieldPropsAlpha<TCustomMetadata> | undefined;
 
@@ -412,7 +416,10 @@ export class FieldSchemaAlpha<
 		return this.allowedTypesFull.evaluateIdentifiers();
 	}
 
-	public get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
+	public get simpleAllowedTypes(): ReadonlyMap<
+		string,
+		SimpleAllowedTypeAttributes<SchemaType.View>
+	> {
 		return AnnotatedAllowedTypesInternal.evaluateSimpleAllowedTypes(this.allowedTypesFull);
 	}
 

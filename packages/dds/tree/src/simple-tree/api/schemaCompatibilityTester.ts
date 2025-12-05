@@ -9,7 +9,7 @@ import { allowsRepoSuperset, defaultSchemaPolicy } from "../../feature-libraries
 import type { SchemaCompatibilityStatus } from "./tree.js";
 import { getDiscrepanciesInAllowedContent } from "./discrepancies.js";
 import { toUpgradeSchema } from "../toStoredSchema.js";
-import type { TreeSchema } from "./configuration.js";
+import type { TreeSchema } from "../treeSchema.js";
 
 /**
  * A collection of View information for schema

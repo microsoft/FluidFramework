@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { MergeTreeDeltaType, TextSegment } from "@fluidframework/merge-tree/internal";
 
 import type { SequenceDeltaEvent } from "../../sequenceDeltaEvent.js";
 import type { SharedString } from "../../sequenceFactory.js";
+import { IntervalCollectionOracle } from "../intervalCollectionOracle.js";
 
 /**
  * Oracle that mirrors a single SharedString instance by listening to events
@@ -15,12 +18,20 @@ import type { SharedString } from "../../sequenceFactory.js";
  */
 export class SharedStringOracle {
 	private readonly model: string[] = [];
+	private readonly intervalOracle: Map<string, IntervalCollectionOracle> = new Map();
 	private readonly onDelta = (event: SequenceDeltaEvent) => this.applyDelta(event);
 
-	constructor(private readonly shared: SharedString) {
-		this.model = shared.getText().split("");
+	constructor(private readonly sharedString: SharedString) {
+		this.model = sharedString.getText().split("");
 
-		this.shared.on("sequenceDelta", this.onDelta);
+		// create interval oracles for each label
+		for (const label of this.sharedString.getIntervalCollectionLabels()) {
+			const collection = this.sharedString.getIntervalCollection(label);
+			const oracle = new IntervalCollectionOracle(collection);
+			this.intervalOracle.set(label, oracle);
+		}
+
+		this.sharedString.on("sequenceDelta", this.onDelta);
 	}
 
 	private applyDelta(e: SequenceDeltaEvent) {
@@ -59,14 +70,24 @@ export class SharedStringOracle {
 	 * Throws an error if there’s a mismatch.
 	 */
 	validate() {
-		const actual = this.shared.getText();
+		const actual = this.sharedString.getText();
 		const mirror = this.model.join("");
-		if (actual !== mirror) {
-			throw new Error(`SharedStringOracle mismatch: expected="${mirror}", actual="${actual}"`);
+		assert.deepStrictEqual(
+			actual,
+			mirror,
+			`SharedStringOracle mismatch: expected="${mirror}", actual="${actual}"`,
+		);
+
+		// validate intervals
+		for (const [, oracle] of this.intervalOracle) {
+			oracle.validate(this.sharedString);
 		}
 	}
 
 	dispose() {
-		this.shared.off("sequenceDelta", this.onDelta);
+		this.sharedString.off("sequenceDelta", this.onDelta);
+		for (const oracle of this.intervalOracle.values()) {
+			oracle.dispose();
+		}
 	}
 }

@@ -11,7 +11,9 @@
     },
     "ignorePatterns": [
         "**/packageVersion.ts",
-        "**/layerGenerationState.ts"
+        "**/layerGenerationState.ts",
+        "**/*.generated.ts",
+        "**/*.generated.js"
     ],
     "parserOptions": {
         "ecmaFeatures": {
@@ -24,6 +26,7 @@
     "plugins": [
         "@eslint-community/eslint-comments",
         "import-x",
+        "depend",
         "@fluid-internal/fluid",
         "unused-imports",
         "promise",
@@ -64,7 +67,7 @@
             "error"
         ],
         "@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": [
-            "off"
+            "error"
         ],
         "@fluid-internal/fluid/no-markdown-links-in-jsdoc": [
             "error"
@@ -1080,6 +1083,15 @@
         "default-case": [
             "error"
         ],
+        "depend/ban-dependencies": [
+            "error",
+            {
+                "allowed": [
+                    "axios",
+                    "fs-extra"
+                ]
+            }
+        ],
         "dot-location": [
             "off"
         ],
@@ -1337,14 +1349,11 @@
             "off"
         ],
         "max-len": [
-            "error",
+            "off",
             {
-                "code": 120,
-                "ignoreTrailingComments": true,
-                "ignoreUrls": true,
-                "ignoreStrings": true,
-                "ignoreTemplateLiterals": true,
-                "ignoreRegExpLiterals": true
+                "ignoreRegExpLiterals": false,
+                "ignoreStrings": false,
+                "code": 120
             }
         ],
         "max-lines": [

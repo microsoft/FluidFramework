@@ -1,5 +1,5 @@
 {
-  "$ref": "#/$defs/test.table.Table",
+  "$ref": "#/$defs/com.fluidframework.table<test>.Table",
   "$defs": {
     "com.fluidframework.leaf.string": {
       "type": "string",
@@ -18,7 +18,7 @@
       ],
       "additionalProperties": false
     },
-    "test.table.Row.cells": {
+    "com.fluidframework.table<test>.Row.cells": {
       "type": "object",
       "_treeNodeSchemaKind": 4,
       "patternProperties": {
@@ -42,7 +42,7 @@
       "required": [],
       "additionalProperties": false
     },
-    "test.table.Row": {
+    "com.fluidframework.table<test>.Row": {
       "type": "object",
       "_treeNodeSchemaKind": 2,
       "properties": {
@@ -50,7 +50,7 @@
           "$ref": "#/$defs/com.fluidframework.leaf.string"
         },
         "cells": {
-          "$ref": "#/$defs/test.table.Row.cells",
+          "$ref": "#/$defs/com.fluidframework.table<test>.Row.cells",
           "description": "The cells of the table row, keyed by column ID."
         },
         "props": {
@@ -62,11 +62,11 @@
       ],
       "additionalProperties": false
     },
-    "test.table.Table.rows": {
+    "com.fluidframework.table<test>.Table.rows": {
       "type": "array",
       "_treeNodeSchemaKind": 1,
       "items": {
-        "$ref": "#/$defs/test.table.Row"
+        "$ref": "#/$defs/com.fluidframework.table<test>.Row"
       }
     },
     "test.table-column-props": {
@@ -80,7 +80,7 @@
       "required": [],
       "additionalProperties": false
     },
-    "test.table.Column": {
+    "com.fluidframework.table<test>.Column": {
       "type": "object",
       "_treeNodeSchemaKind": 2,
       "properties": {
@@ -96,22 +96,22 @@
       ],
       "additionalProperties": false
     },
-    "test.table.Table.columns": {
+    "com.fluidframework.table<test>.Table.columns": {
       "type": "array",
       "_treeNodeSchemaKind": 1,
       "items": {
-        "$ref": "#/$defs/test.table.Column"
+        "$ref": "#/$defs/com.fluidframework.table<test>.Column"
       }
     },
-    "test.table.Table": {
+    "com.fluidframework.table<test>.Table": {
       "type": "object",
       "_treeNodeSchemaKind": 2,
       "properties": {
         "rows": {
-          "$ref": "#/$defs/test.table.Table.rows"
+          "$ref": "#/$defs/com.fluidframework.table<test>.Table.rows"
         },
         "columns": {
-          "$ref": "#/$defs/test.table.Table.columns"
+          "$ref": "#/$defs/com.fluidframework.table<test>.Table.columns"
         }
       },
       "required": [

@@ -45,10 +45,10 @@ describe("makeFieldBatchCodec", () => {
 			assert.equal(encoded.version, FieldBatchFormatVersion.v1);
 		});
 
-		it("uses v2 format for FluidClientVersion.v2_73", () => {
+		it("uses v2 format for FluidClientVersion.v2_74", () => {
 			const codec = makeFieldBatchCodec({
 				jsonValidator: ajvValidator,
-				minVersionForCollab: FluidClientVersion.v2_73,
+				minVersionForCollab: FluidClientVersion.v2_74,
 			});
 
 			const input = cursorForJsonableTreeField([simpleTestData]);
@@ -64,10 +64,10 @@ describe("makeFieldBatchCodec", () => {
 	});
 
 	describe("TreeCompressionStrategy.CompressedIncremental", () => {
-		it("succeeds for minVersionForCollab FluidClientVersion.v2_73", () => {
+		it("succeeds for minVersionForCollab FluidClientVersion.v2_74", () => {
 			const codec = makeFieldBatchCodec({
 				jsonValidator: ajvValidator,
-				minVersionForCollab: FluidClientVersion.v2_73,
+				minVersionForCollab: FluidClientVersion.v2_74,
 			});
 
 			const input = cursorForJsonableTreeField([simpleTestData]);
@@ -123,7 +123,7 @@ describe("makeFieldBatchCodec", () => {
 		it("v2 codec encodes and decodes correctly", () => {
 			const codec = makeFieldBatchCodec({
 				jsonValidator: ajvValidator,
-				minVersionForCollab: FluidClientVersion.v2_73,
+				minVersionForCollab: FluidClientVersion.v2_74,
 			});
 
 			const input = cursorForJsonableTreeField([simpleTestData]);

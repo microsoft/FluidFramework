@@ -15,7 +15,7 @@ import type {
 	TreeNodeFromImplicitAllowedTypes,
 } from "../../core/index.js";
 
-import type { SimpleRecordNodeSchema } from "../../simpleSchema.js";
+import type { SchemaType, SimpleRecordNodeSchema } from "../../simpleSchema.js";
 import type { RestrictiveStringRecord } from "../../../util/index.js";
 
 /**
@@ -83,7 +83,7 @@ export interface RecordNodeCustomizableSchema<
 			/* TConstructorExtra */ undefined,
 			/* TCustomMetadata */ TCustomMetadata
 		>,
-		SimpleRecordNodeSchema<TCustomMetadata> {}
+		SimpleRecordNodeSchema<SchemaType.View, TCustomMetadata> {}
 
 /**
  * A schema for POJO emulation mode {@link (TreeMapNode:interface)}s.
@@ -104,7 +104,7 @@ export interface RecordNodePojoEmulationSchema<
 			/* TConstructorExtra */ undefined,
 			/* TCustomMetadata */ TCustomMetadata
 		>,
-		SimpleRecordNodeSchema<TCustomMetadata> {}
+		SimpleRecordNodeSchema<SchemaType.View, TCustomMetadata> {}
 
 /**
  * A schema for {@link (TreeRecordNode:interface)}s.

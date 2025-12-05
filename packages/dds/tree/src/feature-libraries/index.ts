@@ -12,7 +12,7 @@ export { allowsValue, assertAllowedValue, isTreeValue } from "./valueUtilities.j
 export {
 	ForestSummarizer,
 	getCodecTreeForForestFormat,
-	type ForestFormatVersion,
+	ForestFormatVersion,
 } from "./forest-summary/index.js";
 export {
 	cursorForMapTreeField,

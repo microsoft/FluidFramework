@@ -691,7 +691,6 @@ function mixinSynchronization<TOperation extends BaseOperation>(
 const hasSelectedClientSpec = (op: unknown): op is SelectedClientSpec =>
 	(op as SelectedClientSpec).clientTag !== undefined;
 
-/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 /**
  * Mixes in the ability to select a client to perform an operation on.
  * Makes this available to existing generators and reducers in the passed-in model via {@link LocalServerStressState.client}
@@ -702,7 +701,6 @@ const hasSelectedClientSpec = (op: unknown): op is SelectedClientSpec =>
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
 function mixinClientSelection<TOperation extends BaseOperation>(
-	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 	model: LocalServerStressModel<TOperation>,
 	_: LocalServerStressOptions,
 ): LocalServerStressModel<TOperation> {

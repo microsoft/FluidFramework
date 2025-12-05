@@ -38,9 +38,43 @@ import type {
 import { makeDetachedFieldIndexCodec } from "./detachedFieldIndexCodecs.js";
 
 /**
+ * Readonly interface for {@link DetachedFieldIndex}.
+ */
+export interface ReadOnlyDetachedFieldIndex {
+	/**
+	 * Creates a deep clone of this `DetachedFieldIndex`.
+	 */
+	clone(): DetachedFieldIndex;
+
+	/**
+	 * Returns a field key for the given ID.
+	 * This does not save the field key on the index. To do so, call {@link createEntry}.
+	 */
+	toFieldKey(id: ForestRootId): FieldKey;
+
+	/**
+	 * Returns the `ForestRootId` associated with the given id.
+	 * Returns undefined if no such id is known to the index.
+	 */
+	tryGetEntry(id: Delta.DetachedNodeId): ForestRootId | undefined;
+
+	/**
+	 * Returns the `ForestRootId` associated with the given id.
+	 * Fails if no such id is known to the index.
+	 */
+	getEntry(id: Delta.DetachedNodeId): ForestRootId;
+}
+
+/**
+ * Restores the originating DetachedFieldIndex to the state it was in when the checkpoint was created.
+ * Can be invoked multiple times.
+ */
+export type DetachedFieldIndexCheckpoint = () => void;
+
+/**
  * The tree index records detached field IDs and associates them with a change atom ID.
  */
-export class DetachedFieldIndex {
+export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 	/**
 	 * A mapping from detached node ids to detached fields.
 	 */
@@ -104,6 +138,25 @@ export class DetachedFieldIndex {
 			true,
 		);
 		return clone;
+	}
+
+	/**
+	 * Creates a restorable checkpoint of the current state of the DetachedFieldIndex.
+	 */
+	public createCheckpoint(): DetachedFieldIndexCheckpoint {
+		const clone = this.clone();
+		return () => {
+			this.purge();
+			populateNestedMap(clone.detachedNodeToField, this.detachedNodeToField, true);
+			populateNestedMap(
+				clone.latestRelevantRevisionToFields,
+				this.latestRelevantRevisionToFields,
+				true,
+			);
+			this.rootIdAllocator = idAllocatorFromMaxId(
+				clone.rootIdAllocator.getMaxId(),
+			) as IdAllocator<ForestRootId>;
+		};
 	}
 
 	public *entries(): Generator<{
@@ -201,26 +254,14 @@ export class DetachedFieldIndex {
 		}
 	}
 
-	/**
-	 * Returns a field key for the given ID.
-	 * This does not save the field key on the index. To do so, call {@link createEntry}.
-	 */
 	public toFieldKey(id: ForestRootId): FieldKey {
 		return brand(`${this.name}-${id}`);
 	}
 
-	/**
-	 * Returns the FieldKey associated with the given id.
-	 * Returns undefined if no such id is known to the index.
-	 */
 	public tryGetEntry(id: Delta.DetachedNodeId): ForestRootId | undefined {
 		return tryGetFromNestedMap(this.detachedNodeToField, id.major, id.minor)?.root;
 	}
 
-	/**
-	 * Returns the FieldKey associated with the given id.
-	 * Fails if no such id is known to the index.
-	 */
 	public getEntry(id: Delta.DetachedNodeId): ForestRootId {
 		const key = this.tryGetEntry(id);
 		assert(key !== undefined, 0x7aa /* Unknown removed node ID */);

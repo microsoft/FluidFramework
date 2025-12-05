@@ -115,8 +115,8 @@ export {
 export type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
 export {
 	type StoredSchemaGenerationOptions,
-	convertAllowedTypes,
-	allowedTypeFilter,
 	type StoredFromViewSchemaGenerationOptions,
 	ExpectStored,
+	type SimpleSchemaTransformationOptions,
+	Unchanged,
 } from "./toStored.js";

@@ -13,7 +13,7 @@ import type {
 	ImplicitAllowedTypes,
 } from "../../core/index.js";
 
-import type { SimpleMapNodeSchema } from "../../simpleSchema.js";
+import type { SchemaType, SimpleMapNodeSchema } from "../../simpleSchema.js";
 
 /**
  * A schema for customizable {@link (TreeMapNode:interface)}s.
@@ -34,7 +34,7 @@ export interface MapNodeCustomizableSchema<
 			undefined,
 			TCustomMetadata
 		>,
-		SimpleMapNodeSchema<TCustomMetadata> {}
+		SimpleMapNodeSchema<SchemaType.View, TCustomMetadata> {}
 
 /**
  * A schema for POJO emulation mode {@link (TreeMapNode:interface)}s.
@@ -55,7 +55,7 @@ export interface MapNodePojoEmulationSchema<
 			undefined,
 			TCustomMetadata
 		>,
-		SimpleMapNodeSchema<TCustomMetadata> {}
+		SimpleMapNodeSchema<SchemaType.View, TCustomMetadata> {}
 
 /**
  * A schema for {@link (TreeMapNode:interface)}s.

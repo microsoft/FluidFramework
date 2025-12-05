@@ -44,7 +44,7 @@ export const MessageFormatVersion = {
 	 * This version number was used internally for testing shared branches.
 	 * This format was never made stable.
 	 * This version number is kept here solely to avoid reusing the number: it is not supported for either reading or writing.
-	 * @deprecated - use {@link MessageFormatVersion.vSharedBranches} for testing shared branches.
+	 * @deprecated Use {@link MessageFormatVersion.vSharedBranches} for testing shared branches.
 	 */
 	v5: 5,
 	/**

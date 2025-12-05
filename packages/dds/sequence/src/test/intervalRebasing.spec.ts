@@ -8,7 +8,6 @@ import { strict as assert } from "assert";
 import { Side } from "@fluidframework/merge-tree/internal";
 import { useStrictPartialLengthChecks } from "@fluidframework/merge-tree/internal/test";
 import { MockContainerRuntimeFactoryForReconnection } from "@fluidframework/test-runtime-utils/internal";
-
 import { IntervalStickiness } from "../intervals/index.js";
 
 import { Client, assertConsistent, assertSequenceIntervals } from "./intervalTestUtils.js";
@@ -591,5 +590,226 @@ describe("interval rebasing", () => {
 		assert.equal(clients[0].sharedString.getText(), "x12");
 
 		assertSequenceIntervals(clients[0].sharedString, intervals, [{ start: 0, end: 2 }]);
+	});
+
+	it("emits deleteInterval event when interval slides off during rebasing", async () => {
+		const { containerRuntimeFactory, clients } = setup3Clients();
+
+		// Set up initial content - use a scenario that causes interval to slide off
+		clients[0].sharedString.insertText(0, "012Z45");
+		clients[2].sharedString.insertText(0, "X");
+		containerRuntimeFactory.processAllMessages();
+		await assertConsistent(clients);
+
+		clients[1].sharedString.insertText(0, "01234567");
+		clients[0].containerRuntime.connected = false;
+		containerRuntimeFactory.processAllMessages();
+		await assertConsistent(clients);
+
+		clients[0].sharedString.insertText(0, "ABCDEFGHIJKLMN");
+		const collection_0 = clients[0].sharedString.getIntervalCollection("test");
+		const interval = collection_0.add({ start: 20, end: 20 });
+		const intervalId = interval.getIntervalId();
+
+		// Track deleteInterval events
+		let deleteEventFired = false;
+		let deletedIntervalId: string | undefined;
+		// eslint-disable-next-line @typescript-eslint/no-shadow
+		collection_0.on("deleteInterval", (interval, local, op) => {
+			deleteEventFired = true;
+			deletedIntervalId = interval?.getIntervalId();
+		});
+
+		// Cause the interval to slide off
+		clients[2].sharedString.removeRange(13, 15);
+		containerRuntimeFactory.processAllMessages();
+		await assertConsistent(clients);
+
+		// Reconnect - this triggers rebasing where the interval will slide off
+		clients[0].containerRuntime.connected = true;
+		containerRuntimeFactory.processAllMessages();
+		await assertConsistent(clients);
+
+		// Verify the deleteInterval event was emitted
+		// If the interval slides off, it should have been deleted and event emitted
+		const finalInterval = collection_0.getIntervalById(intervalId);
+		if (!finalInterval) {
+			// Interval slide off - verify event was emitted
+			assert.equal(
+				deleteEventFired,
+				true,
+				"deleteInterval event should be emitted when interval slides off during rebasing",
+			);
+			assert.equal(deletedIntervalId, intervalId, "deleted interval ID should match");
+		}
+	});
+
+	it("does not emit events with undefined interval for deleted intervals", async () => {
+		const { containerRuntimeFactory, clients } = setup3Clients();
+
+		// Set up initial content
+		clients[0].sharedString.insertText(0, "ABCD");
+		containerRuntimeFactory.processAllMessages();
+		await assertConsistent(clients);
+
+		// Add interval on client 0
+		const collection_0 = clients[0].sharedString.getIntervalCollection("test");
+		const collection_1 = clients[1].sharedString.getIntervalCollection("test");
+		const interval_0 = collection_0.add({ start: 1, end: 3 }); // BC
+		const intervalId = interval_0.getIntervalId();
+
+		containerRuntimeFactory.processAllMessages();
+		await assertConsistent(clients);
+
+		// Track all events to ensure interval is never undefined
+		let eventWithUndefinedInterval = false;
+		const checkInterval = (interval) => {
+			if (interval === undefined) {
+				eventWithUndefinedInterval = true;
+			}
+		};
+
+		collection_1.on("changeInterval", (interval) => checkInterval(interval));
+		collection_1.on("propertyChanged", (interval) => checkInterval(interval));
+		collection_1.on("changed", (interval) => checkInterval(interval));
+
+		// Client 0: Delete the interval locally
+		collection_0.removeIntervalById(intervalId);
+
+		// Client 1: Change properties of the same interval before seeing the delete
+		clients[1].containerRuntime.connected = false;
+		collection_1.change(intervalId, { props: { foo: "bar" } });
+
+		// Process delete op first
+		containerRuntimeFactory.processOneMessage();
+
+		// Reconnect client 1 and process the property change
+		clients[1].containerRuntime.connected = true;
+		containerRuntimeFactory.processAllMessages();
+		await assertConsistent(clients);
+
+		// Verify no events were emitted with undefined interval
+		assert.equal(
+			eventWithUndefinedInterval,
+			false,
+			"events should never be emitted with undefined interval",
+		);
+
+		// Verify interval is deleted on both clients
+		assert.equal(
+			collection_0.getIntervalById(intervalId),
+			undefined,
+			"interval should be deleted on client 0",
+		);
+		assert.equal(
+			collection_1.getIntervalById(intervalId),
+			undefined,
+			"interval should be deleted on client 1",
+		);
+	});
+
+	it("does not emit changeInterval event with undefined for deleted interval with endpoint changes", async () => {
+		const { containerRuntimeFactory, clients } = setup3Clients();
+
+		clients[0].sharedString.insertText(0, "ABCDEFGH");
+		containerRuntimeFactory.processAllMessages();
+		await assertConsistent(clients);
+
+		const collection_0 = clients[0].sharedString.getIntervalCollection("test");
+		const collection_1 = clients[1].sharedString.getIntervalCollection("test");
+		const interval_0 = collection_0.add({ start: 1, end: 3 });
+		const intervalId = interval_0.getIntervalId();
+
+		containerRuntimeFactory.processAllMessages();
+		await assertConsistent(clients);
+
+		// Track changeInterval events to ensure interval is never undefined
+		let changeEventWithUndefinedInterval = false;
+		collection_1.on("changeInterval", (interval, previousInterval, local, op) => {
+			if (interval === undefined) {
+				changeEventWithUndefinedInterval = true;
+			}
+		});
+
+		// Client 0: Delete the interval
+		collection_0.removeIntervalById(intervalId);
+
+		// Client 1: Change endpoints of the same interval before seeing the delete
+		clients[1].containerRuntime.connected = false;
+		collection_1.change(intervalId, { start: 2, end: 4 });
+
+		// Process delete op first
+		containerRuntimeFactory.processOneMessage();
+
+		// Reconnect client 1 and process the endpoint change
+		clients[1].containerRuntime.connected = true;
+		containerRuntimeFactory.processAllMessages();
+		await assertConsistent(clients);
+
+		// Verify no changeInterval events were emitted with undefined interval
+		assert.equal(
+			changeEventWithUndefinedInterval,
+			false,
+			"changeInterval event should never be emitted with undefined interval",
+		);
+
+		// Verify interval is deleted on both clients
+		assert.equal(collection_0.getIntervalById(intervalId), undefined);
+		assert.equal(collection_1.getIntervalById(intervalId), undefined);
+	});
+
+	it("does not emit events with undefined when interval deleted during concurrent add", async () => {
+		const { containerRuntimeFactory, clients } = setup3Clients();
+
+		clients[0].sharedString.insertText(0, "ABCD");
+		containerRuntimeFactory.processAllMessages();
+		await assertConsistent(clients);
+
+		const collection_0 = clients[0].sharedString.getIntervalCollection("test");
+		const collection_1 = clients[1].sharedString.getIntervalCollection("test");
+
+		// Client 0 adds an interval
+		const interval_0 = collection_0.add({ start: 1, end: 3 });
+		const intervalId = interval_0.getIntervalId();
+
+		// Process client 0's add so both clients have the interval
+		containerRuntimeFactory.processAllMessages();
+		await assertConsistent(clients);
+
+		// Client 1 disconnects and tries to modify the interval
+		clients[1].containerRuntime.connected = false;
+		collection_1.change(intervalId, { props: { modified: true } });
+
+		// Meanwhile, Client 0 deletes the interval
+		collection_0.removeIntervalById(intervalId);
+		containerRuntimeFactory.processOneMessage();
+
+		// Track events on client 1 to ensure interval is never undefined
+		let eventWithUndefinedInterval = false;
+		const checkInterval = (interval) => {
+			if (interval === undefined) {
+				eventWithUndefinedInterval = true;
+			}
+		};
+
+		collection_1.on("deleteInterval", (interval) => checkInterval(interval));
+		collection_1.on("propertyChanged", (interval) => checkInterval(interval));
+		collection_1.on("changed", (interval) => checkInterval(interval));
+
+		// Reconnect client 1 and process its change (which arrives after delete)
+		clients[1].containerRuntime.connected = true;
+		containerRuntimeFactory.processAllMessages();
+		await assertConsistent(clients);
+
+		// Verify no events were emitted with undefined interval
+		assert.equal(
+			eventWithUndefinedInterval,
+			false,
+			"no events should be emitted with undefined interval during concurrent modify/delete",
+		);
+
+		// Verify final state - interval should be deleted on both
+		assert.equal(collection_0.getIntervalById(intervalId), undefined);
+		assert.equal(collection_1.getIntervalById(intervalId), undefined);
 	});
 });

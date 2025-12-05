@@ -176,7 +176,6 @@ export {
 	allowUnused,
 	type FieldSchemaAlphaUnsafe,
 	getIdentifierFromNode,
-	type TreeSchema,
 	type ValidateRecursiveSchemaTemplate,
 	type FixRecursiveRecursionLimit,
 	schemaStatics,
@@ -188,6 +187,11 @@ export {
 	incrementalSummaryHint,
 	incrementalEncodingPolicyForAllowedTypes,
 	type SchemaFactory_base,
+	encodeSchemaCompatibilitySnapshot,
+	decodeSchemaCompatibilitySnapshot,
+	exportCompatibilitySchemaSnapshot,
+	importCompatibilitySchemaSnapshot,
+	checkCompatibility,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,
@@ -201,6 +205,7 @@ export type {
 	SimpleObjectFieldSchema,
 	SimpleRecordNodeSchema,
 	SimpleAllowedTypeAttributes,
+	SchemaType,
 } from "./simpleSchema.js";
 export {
 	type ImplicitFieldSchema,
@@ -265,11 +270,9 @@ export {
 } from "./prepareForInsertion.js";
 export {
 	toStoredSchema,
-	getStoredSchema,
 	convertFieldKind,
 	toUpgradeSchema,
 	toInitialSchema,
-	convertField,
 	toUnhydratedSchema,
 	restrictiveStoredSchemaGenerationOptions,
 	permissiveStoredSchemaGenerationOptions,
@@ -282,10 +285,5 @@ export {
 	nullSchema,
 } from "./leafNodeSchema.js";
 export type { LeafSchema } from "./leafNodeSchema.js";
-export {
-	encodeSimpleSchema,
-	decodeSimpleSchema,
-	exportCompatibilitySchemaSnapshot,
-	importCompatibilitySchemaSnapshot,
-	checkCompatibility,
-} from "./api/index.js";
+export { getUnhydratedContext } from "./createContext.js";
+export { type TreeSchema, createTreeSchema } from "./treeSchema.js";

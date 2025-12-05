@@ -188,7 +188,8 @@
 		"run-script-os": "^1.1.6",
 		"syncpack": "^13.0.2",
 		"ts2esm": "^1.4.0",
-		"typescript": "~5.4.5"
+		"typescript": "~5.4.5",
+		"@monorepo-utils/workspaces-to-typescript-project-references": "^2.11.0"
 	},
 	"packageManager": "pnpm@10.18.3+sha512.bbd16e6d7286fd7e01f6b3c0b3c932cda2965c06a908328f74663f10a9aea51f1129eea615134bf992831b009eabe167ecb7008b597f40ff9bc75946aadfb08d",
 	"engines": {
