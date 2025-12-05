@@ -518,7 +518,7 @@ export namespace System_TableSchema {
 		class Table
 			// Calling the objectSchema factory directly rather than using the schemaFactory so we can specify
 			// `implicitlyConstructable: false`, which the SchemaFactory APIs do not yet support.
-			// TODO: when support for configuring `implicitlyConstructable`is added to SchemaFactory, switch to
+			// TODO: when support for configuring `implicitlyConstructable` is added to SchemaFactory, switch to
 			// using that instead.
 			extends objectSchema(
 				/* identifier: */ scoped(schemaFactory as SchemaFactory<Scope>, "TableRoot"),
