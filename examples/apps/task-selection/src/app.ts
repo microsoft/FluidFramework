@@ -37,6 +37,7 @@ async function start(): Promise<void> {
 	}
 
 	// update the browser URL and the window title with the actual container ID
+	// eslint-disable-next-line require-atomic-updates
 	location.hash = id;
 	document.title = id;
 
