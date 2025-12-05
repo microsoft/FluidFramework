@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
+import { EventEmitter } from "node:events";
 
 import type { ICollection, IDb, IDbFactory } from "@fluidframework/server-services-core";
 

@@ -24,8 +24,5 @@ module.exports = {
 		"@typescript-eslint/no-unused-vars": "error",
 
 		"@typescript-eslint/switch-exhaustiveness-check": "error",
-
-		// This package is exclusively used in a Node.js context
-		"import/no-nodejs-modules": "off",
 	},
 };
