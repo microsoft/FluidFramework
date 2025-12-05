@@ -205,6 +205,29 @@ recommended.push(internalModulesConfig);
 strict.push(internalModulesConfig);
 minimalDeprecated.push(internalModulesConfig);
 
+// ESLint 9 upgrade: Disable new react-hooks rules that were introduced in eslint-plugin-react-hooks 7.0.
+// These rules have violations across the codebase that need to be addressed incrementally.
+// TODO: Fix violations and enable these rules as errors.
+const reactHooksEslint9Upgrade = {
+	files: ["**/*.jsx", "**/*.tsx"],
+	rules: {
+		// react-hooks/immutability: Warns about mutating variables during render
+		// https://github.com/facebook/react/pull/29456
+		"react-hooks/immutability": "warn",
+
+		// react-hooks/refs: Warns about reading refs during render (before useEffect)
+		// https://github.com/facebook/react/pull/29516
+		"react-hooks/refs": "warn",
+
+		// react-hooks/set-state-in-effect: Warns about calling setState synchronously in effects
+		// https://github.com/facebook/react/pull/30224
+		"react-hooks/set-state-in-effect": "warn",
+	},
+};
+recommended.push(reactHooksEslint9Upgrade);
+strict.push(reactHooksEslint9Upgrade);
+minimalDeprecated.push(reactHooksEslint9Upgrade);
+
 // CommonJS files (.cts, .cjs) can use __dirname and require, which are valid in CommonJS
 const cjsFileConfig = {
 	files: ["**/*.cts", "**/*.cjs"],
