@@ -170,7 +170,8 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		const currentVersionBase = `${major(currentPackageJson.version)}.${minor(currentPackageJson.version)}.${patch(currentPackageJson.version)}`;
 
 		// Check if we should skip version output and use existing versions
-		// The environment variable is set to 'true' or 'false' as a string from the pipeline
+		// The environment variable is set from the pipeline's testBuild variable, which evaluates
+		// to 'true' for test/* branches or 'false' for other branches
 		const skipVersionOutput =
 			process.env.FLUB_TYPETEST_SKIP_VERSION_OUTPUT !== undefined &&
 			process.env.FLUB_TYPETEST_SKIP_VERSION_OUTPUT !== "false";
