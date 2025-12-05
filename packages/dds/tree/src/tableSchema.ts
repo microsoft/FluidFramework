@@ -560,7 +560,7 @@ export namespace System_TableSchema {
 
 				Table._validateNewColumns(
 					columns,
-					// New table, so no existing rows to validate against
+					// New table, so no existing columns to validate against
 					new Set(),
 				);
 
