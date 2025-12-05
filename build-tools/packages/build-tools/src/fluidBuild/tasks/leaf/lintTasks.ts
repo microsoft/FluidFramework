@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import path from "node:path";
+
 import {
 	getEsLintConfigFilePath,
 	getInstalledPackageVersion,
@@ -65,27 +67,66 @@ export class EsLintTask extends LeafWithGlobInputOutputDoneFileTask {
 	}
 
 	/**
+	 * Parses the eslint command to extract the target directory/file patterns.
+	 * ESLint commands typically follow the format: `eslint [options] <files/directories>`
+	 *
+	 * @returns Array of target paths from the eslint command, or ["src"] as default
+	 */
+	private getEslintTargets(): string[] {
+		// Parse command line arguments, filtering out options (those starting with -)
+		const args = this.command.split(/\s+/).slice(1); // Skip "eslint" itself
+		const targets: string[] = [];
+
+		for (const arg of args) {
+			// Skip option flags and their values
+			if (arg.startsWith("-")) {
+				continue;
+			}
+			// Skip known option values that follow flags like --format
+			if (["stylish", "compact", "json", "junit", "tap", "unix"].includes(arg)) {
+				continue;
+			}
+			targets.push(arg);
+		}
+
+		// Default to "src" if no targets specified
+		return targets.length > 0 ? targets : ["src"];
+	}
+
+	/**
 	 * Input globs include TypeScript/JavaScript source files and the eslint config file.
 	 * The lock file is also included via the includeLockFiles property (default true).
 	 */
 	protected async getInputGlobs(): Promise<readonly string[]> {
-		// Get the relative path to the config file
+		// Get the relative path to the config file using path.relative for cleaner handling
 		const configRelPath = toPosixPath(
-			this.configFileFullPath.replace(this.node.pkg.directory, "").replace(/^[/\\]/, ""),
+			path.relative(this.node.pkg.directory, this.configFileFullPath),
 		);
 
-		// Common source file globs for eslint
-		return [
-			"src/**/*.ts",
-			"src/**/*.tsx",
-			"src/**/*.js",
-			"src/**/*.jsx",
-			"src/**/*.mts",
-			"src/**/*.mjs",
-			"src/**/*.cts",
-			"src/**/*.cjs",
-			configRelPath,
-		];
+		// Get target directories/files from the eslint command
+		const targets = this.getEslintTargets();
+
+		// Build input globs based on the eslint targets
+		const inputGlobs: string[] = [];
+		for (const target of targets) {
+			const posixTarget = toPosixPath(target);
+			// Add globs for all supported file extensions under each target directory
+			inputGlobs.push(
+				`${posixTarget}/**/*.ts`,
+				`${posixTarget}/**/*.tsx`,
+				`${posixTarget}/**/*.js`,
+				`${posixTarget}/**/*.jsx`,
+				`${posixTarget}/**/*.mts`,
+				`${posixTarget}/**/*.mjs`,
+				`${posixTarget}/**/*.cts`,
+				`${posixTarget}/**/*.cjs`,
+			);
+		}
+
+		// Add the config file to inputs
+		inputGlobs.push(configRelPath);
+
+		return inputGlobs;
 	}
 
 	/**
