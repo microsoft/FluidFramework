@@ -108,6 +108,7 @@
 		"esm-loader-css": "^1.0.4",
 		"file-loader": "^3.0.1",
 		"html-loader": "^5.1.0",
+		"jiti": "^2.6.1",
 		"jsdom": "^16.7.0",
 		"jsdom-global": "^3.0.2",
 		"mocha": "^10.8.2",
