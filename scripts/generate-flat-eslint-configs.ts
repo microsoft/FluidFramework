@@ -184,13 +184,13 @@ function buildFlatConfigContent(
 	// Check if there are local rules or overrides to include
 	const hasLocalRules = legacyConfig?.rules && Object.keys(legacyConfig.rules).length > 0;
 	const hasOverrides = legacyConfig?.overrides && legacyConfig.overrides.length > 0;
-	
+
 	// Check if there's a non-standard project configuration
 	let hasNonStandardProject = false;
 	if (legacyConfig?.parserOptions?.project && Array.isArray(legacyConfig.parserOptions.project)) {
 		const projectPaths = legacyConfig.parserOptions.project;
-		const isStandardPattern = projectPaths.length === 2 && 
-			projectPaths.includes("./tsconfig.json") && 
+		const isStandardPattern = projectPaths.length === 2 &&
+			projectPaths.includes("./tsconfig.json") &&
 			projectPaths.includes("./src/test/tsconfig.json");
 		hasNonStandardProject = !isStandardPattern;
 	}
@@ -210,9 +210,9 @@ function buildFlatConfigContent(
 
 			for (const [ruleName, ruleConfig] of Object.entries(legacyConfig.rules)) {
 				const isTypeAware = TYPE_AWARE_RULES.has(ruleName);
-				const isDisabled = ruleConfig === "off" || ruleConfig === 0 || 
+				const isDisabled = ruleConfig === "off" || ruleConfig === 0 ||
 					(Array.isArray(ruleConfig) && (ruleConfig[0] === "off" || ruleConfig[0] === 0));
-				
+
 				// Type-aware rules that are disabled should apply to all files
 				// Type-aware rules that are enabled should only apply to non-test files
 				if (isTypeAware && !isDisabled) {
@@ -254,10 +254,10 @@ function buildFlatConfigContent(
 		// Only add custom project config if the package uses a different pattern
 		if (legacyConfig?.parserOptions?.project && Array.isArray(legacyConfig.parserOptions.project)) {
 			const projectPaths = legacyConfig.parserOptions.project;
-			const isStandardPattern = projectPaths.length === 2 && 
-				projectPaths.includes("./tsconfig.json") && 
+			const isStandardPattern = projectPaths.length === 2 &&
+				projectPaths.includes("./tsconfig.json") &&
 				projectPaths.includes("./src/test/tsconfig.json");
-			
+
 			if (!isStandardPattern) {
 				configContent += `\t{\n`;
 				configContent += `\t\tfiles: ["src/test/**", "*.spec.ts", "*.test.ts"],\n`;
