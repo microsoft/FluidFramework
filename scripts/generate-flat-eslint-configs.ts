@@ -12,11 +12,14 @@
  *  - Otherwise (includes base or recommended) => use recommended.
  *  - Extracts local rules and overrides from .eslintrc.cjs and includes them in the flat config.
  *
- * Output: eslint.config.mjs alongside the existing .eslintrc.cjs (which is left intact for now).
+ * Output: eslint.config.mjs (or .mts with --typescript) alongside the existing .eslintrc.cjs (which is left intact for now).
  *
  * Options:
- *   --finalize  Perform a final migration: generate configs without "GENERATED FILE" boilerplate,
- *               then delete the source .eslintrc.cjs and .eslintignore files.
+ *   --finalize    Perform a final migration: generate configs without "GENERATED FILE" boilerplate,
+ *                 then delete the source .eslintrc.cjs and .eslintignore files.
+ *   --typescript  Generate TypeScript config files (.mts) instead of JavaScript (.mjs).
+ *                 Requires 'jiti' to be installed (can be at workspace root).
+ *                 See: https://eslint.org/docs/latest/use/configure/configuration-files#typescript-configuration-files
  */
 
 import { promises as fs } from "node:fs";
@@ -30,6 +33,7 @@ const repoRoot = path.resolve(__dirname, "..");
 // Parse command-line arguments
 const args = process.argv.slice(2);
 const finalizeMode = args.includes("--finalize");
+const typescriptMode = args.includes("--typescript");
 
 interface PackageTarget {
 	packageDir: string;
@@ -205,6 +209,7 @@ function buildFlatConfigContent(
 	legacyConfig?: unknown,
 	eslintIgnorePatterns?: string[],
 	finalize: boolean = false,
+	typescript: boolean = false,
 ): string {
 	const flatSource = path
 		.relative(
@@ -214,6 +219,12 @@ function buildFlatConfigContent(
 		.replace(/\\/g, "/");
 	const importPath = flatSource.startsWith(".") ? flatSource : `./${flatSource}`;
 
+	// TypeScript mode uses `import type` and inline type annotations
+	// JavaScript mode uses JSDoc comments for type annotations
+	const typeImport = typescript ? `import type { Linter } from "eslint";\n` : "";
+	const configType = typescript ? `: Linter.Config[]` : "";
+	const jsdocType = typescript ? "" : `/** @type {import("eslint").Linter.Config[]} */\n`;
+
 	// In finalize mode, generate a clean config without the "GENERATED FILE" boilerplate
 	const header = finalize
 		? `/*!
@@ -221,8 +232,7 @@ function buildFlatConfigContent(
  * Licensed under the MIT License.
  */
 
-import type { Linter } from "eslint";
-import { ${variant} } from "${importPath}";
+${typeImport}import { ${variant} } from "${importPath}";
 
 `
 		: `/* eslint-disable */
@@ -230,8 +240,7 @@ import { ${variant} } from "${importPath}";
  * GENERATED FILE - DO NOT EDIT DIRECTLY.
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts
  */
-import type { Linter } from "eslint";
-import { ${variant} } from '${importPath}';
+${typeImport}import { ${variant} } from "${importPath}";
 
 `;
 
@@ -258,10 +267,10 @@ import { ${variant} } from '${importPath}';
 
 	if (!hasLocalRules && !hasOverrides && !hasNonStandardProject && !hasEslintIgnore) {
 		// Simple case: no local customizations
-		configContent += `const config: Linter.Config[] = [...${variant}];\n\nexport default config;\n`;
+		configContent += `${jsdocType}const config${configType} = [...${variant}];\n\nexport default config;\n`;
 	} else {
 		// Complex case: include local rules/overrides/custom project config
-		configContent += `const config: Linter.Config[] = [\n\t...${variant},\n`;
+		configContent += `${jsdocType}const config${configType} = [\n\t...${variant},\n`;
 
 		if (hasLocalRules) {
 			// Split rules into type-aware and non-type-aware
@@ -353,11 +362,16 @@ import { ${variant} } from '${importPath}';
 	return configContent;
 }
 
-async function writeFlatConfigs(targets: PackageTarget[], finalize: boolean): Promise<void> {
+async function writeFlatConfigs(
+	targets: PackageTarget[],
+	finalize: boolean,
+	typescript: boolean,
+): Promise<void> {
 	const mode = finalize ? "Finalizing" : "Generating";
-	console.log(`\n${mode} ${targets.length} flat config files...`);
+	const ext = typescript ? "mts" : "mjs";
+	console.log(`\n${mode} ${targets.length} flat config files (.${ext})...`);
 	for (const t of targets) {
-		const outPath = path.join(t.packageDir, "eslint.config.mjs");
+		const outPath = path.join(t.packageDir, `eslint.config.${ext}`);
 		// Always overwrite if legacy config exists (we only process dirs with .eslintrc.cjs)
 		const content = buildFlatConfigContent(
 			t.packageDir,
@@ -365,6 +379,7 @@ async function writeFlatConfigs(targets: PackageTarget[], finalize: boolean): Pr
 			t.legacyConfig,
 			t.eslintIgnorePatterns,
 			finalize,
+			typescript,
 		);
 		await fs.writeFile(outPath, content, "utf8");
 		console.log(`  Generated: ${path.relative(repoRoot, outPath)} (${t.flatVariant})`);
@@ -397,17 +412,22 @@ async function main() {
 	if (finalizeMode) {
 		console.log("Running in FINALIZE mode - will delete legacy configs after generation.\n");
 	}
+	if (typescriptMode) {
+		// See: https://eslint.org/docs/latest/use/configure/configuration-files#typescript-configuration-files
+		console.log("Running in TYPESCRIPT mode - generating .mts files (requires jiti).\n");
+	}
 
 	const targets = await findLegacyConfigs();
-	await writeFlatConfigs(targets, finalizeMode);
+	await writeFlatConfigs(targets, finalizeMode, typescriptMode);
 
+	const ext = typescriptMode ? ".mts" : ".mjs";
 	if (finalizeMode) {
 		console.log(
-			`\nFinalized ${targets.length} flat config files and deleted legacy .eslintrc.cjs configs.`,
+			`\nFinalized ${targets.length} flat config files (${ext}) and deleted legacy .eslintrc.cjs configs.`,
 		);
 	} else {
 		console.log(
-			`Generated ${targets.length} flat config files from legacy .eslintrc.cjs configs.`,
+			`Generated ${targets.length} flat config files (${ext}) from legacy .eslintrc.cjs configs.`,
 		);
 	}
 }
