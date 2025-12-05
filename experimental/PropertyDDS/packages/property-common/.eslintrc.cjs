@@ -15,5 +15,11 @@ module.exports = {
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 		"prefer-arrow-callback": "off",
 		"tsdoc/syntax": "off",
+		"depend/ban-dependencies": [
+			"error",
+			{
+				allowed: ["lodash"],
+			},
+		],
 	},
 };
