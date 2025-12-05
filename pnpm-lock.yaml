@@ -2400,8 +2400,8 @@ importers:
         specifier: ~7.33.2
         version: 7.33.2(eslint@8.57.1)
       eslint-plugin-react-hooks:
-        specifier: ~4.6.0
-        version: 4.6.2(eslint@8.57.1)
+        specifier: ~5.2.0
+        version: 5.2.0(eslint@8.57.1)
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.97.1)
@@ -2924,8 +2924,8 @@ importers:
         specifier: ~7.33.2
         version: 7.33.2(eslint@8.57.1)
       eslint-plugin-react-hooks:
-        specifier: ~4.6.0
-        version: 4.6.2(eslint@8.57.1)
+        specifier: ~5.2.0
+        version: 5.2.0(eslint@8.57.1)
       expect-puppeteer:
         specifier: ^9.0.2
         version: 9.0.2
@@ -11033,8 +11033,8 @@ importers:
         specifier: ~7.33.2
         version: 7.33.2(eslint@8.57.1)
       eslint-plugin-react-hooks:
-        specifier: ~4.6.0
-        version: 4.6.2(eslint@8.57.1)
+        specifier: ~5.2.0
+        version: 5.2.0(eslint@8.57.1)
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -15999,8 +15999,8 @@ importers:
         specifier: ~7.33.2
         version: 7.33.2(eslint@8.57.1)
       eslint-plugin-react-hooks:
-        specifier: ~4.6.0
-        version: 4.6.2(eslint@8.57.1)
+        specifier: ~5.2.0
+        version: 5.2.0(eslint@8.57.1)
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.97.1)
@@ -16186,8 +16186,8 @@ importers:
         specifier: ~7.33.2
         version: 7.33.2(eslint@8.57.1)
       eslint-plugin-react-hooks:
-        specifier: ~4.6.0
-        version: 4.6.2(eslint@8.57.1)
+        specifier: ~5.2.0
+        version: 5.2.0(eslint@8.57.1)
       globby:
         specifier: ^13.2.2
         version: 13.2.2
@@ -22383,12 +22383,6 @@ packages:
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
       eslint: ^7.0.0 || ^8.0.0 || ^9.0.0
-
-  eslint-plugin-react-hooks@4.6.2:
-    resolution: {integrity: sha512-QzliNJq4GinDBcD8gPB5v0wh6g8q3SUi6EFF0x8N/BL9PoVs0atuGc47ozMRyOWAKdwaZ5OnbOEa3WR+dSGKuQ==}
-    engines: {node: '>=10'}
-    peerDependencies:
-      eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0
 
   eslint-plugin-react-hooks@5.2.0:
     resolution: {integrity: sha512-+f15FfK64YQwZdJNELETdn5ibXEUQmW1DZL6KXhNnc2heoy/sg9VJJeT7n8TlMWouzWqSWavFkIhHyIbIAEapg==}
@@ -36809,10 +36803,6 @@ snapshots:
   eslint-plugin-promise@7.2.1(eslint@8.57.1):
     dependencies:
       '@eslint-community/eslint-utils': 4.9.0(eslint@8.57.1)
-      eslint: 8.57.1
-
-  eslint-plugin-react-hooks@4.6.2(eslint@8.57.1):
-    dependencies:
       eslint: 8.57.1
 
   eslint-plugin-react-hooks@5.2.0(eslint@8.57.1):
