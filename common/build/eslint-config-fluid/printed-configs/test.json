@@ -11,7 +11,9 @@
     },
     "ignorePatterns": [
         "**/packageVersion.ts",
-        "**/layerGenerationState.ts"
+        "**/layerGenerationState.ts",
+        "**/*.generated.ts",
+        "**/*.generated.js"
     ],
     "parserOptions": {
         "ecmaFeatures": {
@@ -1304,14 +1306,11 @@
             "off"
         ],
         "max-len": [
-            "error",
+            "off",
             {
-                "code": 120,
-                "ignoreTrailingComments": true,
-                "ignoreUrls": true,
-                "ignoreStrings": true,
-                "ignoreTemplateLiterals": true,
-                "ignoreRegExpLiterals": true
+                "ignoreRegExpLiterals": false,
+                "ignoreStrings": false,
+                "code": 120
             }
         ],
         "max-lines": [

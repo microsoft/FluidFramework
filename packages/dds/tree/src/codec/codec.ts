@@ -527,6 +527,18 @@ export const FluidClientVersion = {
 	 * - FieldBatchFormatVersion v2
 	 */
 	v2_73: "2.73.0",
+
+	/**
+	 * Fluid Framework Client 2.74 and newer.
+	 * @remarks
+	 * New formats introduced in 2.74:
+	 * - SharedTreeSummaryFormatVersion v2
+	 * - DetachedFieldIndexSummaryFormatVersion v2
+	 * - SchemaSummaryFormatVersion v2
+	 * - EditManagerSummaryFormatVersion v2
+	 * - ForestSummaryFormatVersion v2
+	 */
+	v2_74: "2.74.0",
 } as const satisfies Record<string, MinimumVersionForCollab>;
 
 /**

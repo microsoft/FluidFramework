@@ -41,6 +41,11 @@ const factory = new SchemaFactoryAlpha(undefined);
  *
  * This API bakes in some arbitrary policy choices for how to handle data that is not included in the SimpleTreeSchema API, for example the value of `allowUnknownOptionalFields`.
  * If any particular choice is required for such cases, this API should not be used.
+ *
+ * @privateRemarks
+ * TODO: Add the ability for consumers to inject custom policy.
+ * For example, allow nodes with table schema identifiers to dispatch to `TableSchema` factory APIs.
+ *
  * @alpha
  */
 export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): TreeSchema {
