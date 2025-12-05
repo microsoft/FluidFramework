@@ -52,6 +52,15 @@ const config = [
 		  "quote-props": "off",
 		  "tsdoc/syntax": "off",
 		  "unicorn/better-regex": "off",
+		  "depend/ban-dependencies": [
+		    "error",
+		    {
+		      "allowed": [
+		        "lodash",
+		        "underscore"
+		      ]
+		    }
+		  ],
 		  "@fluid-internal/fluid/no-unchecked-record-access": "warn"
 		},
 	},

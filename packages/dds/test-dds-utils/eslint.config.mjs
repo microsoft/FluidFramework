@@ -17,7 +17,15 @@ const config = [
 		      "fixStyle": "inline-type-imports"
 		    }
 		  ],
-		  "@typescript-eslint/no-import-type-side-effects": "error"
+		  "@typescript-eslint/no-import-type-side-effects": "error",
+		  "depend/ban-dependencies": [
+		    "error",
+		    {
+		      "allowed": [
+		        "execa"
+		      ]
+		    }
+		  ]
 		},
 	},
 	{

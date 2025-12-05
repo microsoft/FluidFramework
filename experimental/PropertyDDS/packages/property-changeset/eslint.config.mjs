@@ -50,6 +50,15 @@ const config = [
 		  "tsdoc/syntax": "off",
 		  "unicorn/better-regex": "off",
 		  "unicorn/filename-case": "off",
+		  "depend/ban-dependencies": [
+		    "error",
+		    {
+		      "allowed": [
+		        "lodash",
+		        "traverse"
+		      ]
+		    }
+		  ],
 		  "@fluid-internal/fluid/no-unchecked-record-access": "warn"
 		},
 	},

@@ -17,7 +17,15 @@ const config = [
 		      ]
 		    }
 		  ],
-		  "react/no-deprecated": "off"
+		  "react/no-deprecated": "off",
+		  "depend/ban-dependencies": [
+		    "error",
+		    {
+		      "allowed": [
+		        "lodash.isequal"
+		      ]
+		    }
+		  ]
 		},
 	},
 	{
