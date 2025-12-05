@@ -69,6 +69,9 @@ const viewToStoredCache = new WeakMap<
 
 /**
  * Maximally restrictive transformation of a view to stored schema.
+ * @remarks
+ * This should only be used when the intent is to produce a stored schema is as restrictive as possible while still being compatible with the input view schema.
+ * This is typically used for cases where backwards compatibility with past versions of an application is required, like {@link toUpgradeSchema} or {@link toInitialSchema}.
  */
 export const restrictiveStoredSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions =
 	{
@@ -78,6 +81,9 @@ export const restrictiveStoredSchemaGenerationOptions: StoredFromViewSchemaGener
 /**
  * Maximally permissive transformation of a view to stored schema.
  * @remarks
+ * This should only be used when the intent is to produce a stored schema which allows as much as possible while still being compatible with the input view schema.
+ * This is typically used for cases where forwards compatibility with future versions of an application is required, like {@link toUnhydratedSchema}.
+ *
  * This is unable to include unknown optional fields in the output, which makes it not truly maximally permissive.
  *
  * TODO: {@link StoredFromViewSchemaGenerationOptions} could be updated to allow a way to inject extra optional fields.
