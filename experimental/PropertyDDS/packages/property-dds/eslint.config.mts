@@ -4,21 +4,24 @@
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts
  */
 import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../../common/build/eslint-config-fluid/flat.mjs";
+import { minimalDeprecated } from "../../../../common/build/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-			"@typescript-eslint/strict-boolean-expressions": "off",
-			"tsdoc/syntax": "off",
-			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
-			"depend/ban-dependencies": [
-				"error",
-				{
-					"allowed": ["axios", "lodash"],
-				},
-			],
+		  "@typescript-eslint/strict-boolean-expressions": "off",
+		  "tsdoc/syntax": "off",
+		  "@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		  "depend/ban-dependencies": [
+		    "error",
+		    {
+		      "allowed": [
+		        "axios",
+		        "lodash"
+		      ]
+		    }
+		  ]
 		},
 	},
 ];

@@ -4,13 +4,13 @@
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts
  */
 import type { Linter } from "eslint";
-import { strict } from "../../../common/build/eslint-config-fluid/flat.mjs";
+import { strict } from "../../../common/build/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
 	...strict,
 	{
 		rules: {
-			"import-x/no-nodejs-modules": "off",
+		  "import-x/no-nodejs-modules": "off"
 		},
 	},
 ];

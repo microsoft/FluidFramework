@@ -9,12 +9,11 @@
 
 import { FlatCompat } from "@eslint/eslintrc";
 import eslintJs from "@eslint/js";
-import { fileURLToPath } from "node:url";
+import type { Linter } from "eslint";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-/**
- * @typedef {import("eslint").Linter.FlatConfig[]} FlatConfigArray
- */
+type FlatConfigArray = Linter.Config[];
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -50,15 +49,15 @@ const globalIgnores = {
 	],
 };
 
-/** @type {FlatConfigArray} */
-const recommended = [
+const recommended: FlatConfigArray = [
 	globalIgnores,
 	...compat.config({ extends: [path.join(__dirname, "recommended.js")] }),
 ];
-/** @type {FlatConfigArray} */
-const strict = [globalIgnores, ...compat.config({ extends: [path.join(__dirname, "strict.js")] })];
-/** @type {FlatConfigArray} */
-const minimalDeprecated = [
+const strict: FlatConfigArray = [
+	globalIgnores,
+	...compat.config({ extends: [path.join(__dirname, "strict.js")] }),
+];
+const minimalDeprecated: FlatConfigArray = [
 	globalIgnores,
 	...compat.config({
 		extends: [path.join(__dirname, "minimal-deprecated.js")],
@@ -83,13 +82,59 @@ recommended.push(useProjectService);
 strict.push(useProjectService);
 minimalDeprecated.push(useProjectService);
 
+// Shared list of permitted imports for configuring the `import-x/no-internal-modules` rule.
+// This matches the permittedImports from minimal-deprecated.js with additional /legacy support
+const permittedImports = [
+	// Within Fluid Framework allow import of '/internal' from other FF packages.
+	"@fluid-example/*/internal",
+	"@fluid-experimental/*/internal",
+	"@fluid-internal/*/internal",
+	"@fluid-private/*/internal",
+	"@fluid-tools/*/internal",
+	"@fluidframework/*/internal",
+
+	// Allow /legacy imports for backwards compatibility during API transition
+	"@fluid-example/*/legacy",
+	"@fluid-experimental/*/legacy",
+	"@fluid-internal/*/legacy",
+	"@fluid-private/*/legacy",
+	"@fluid-tools/*/legacy",
+	"@fluidframework/*/legacy",
+
+	// Experimental package APIs and exports are unknown, so allow any imports from them.
+	"@fluid-experimental/**",
+
+	// Allow imports from sibling and ancestral sibling directories,
+	// but not from cousin directories. Parent is allowed but only
+	// because there isn't a known way to deny it.
+	"*/index.js",
+];
+
+// Restricted import paths for all code (applies to both production and test).
+const restrictedImportPaths = [
+	// Prefer strict assertions
+	// See: <https://nodejs.org/api/assert.html#strict-assertion-mode>
+	{
+		name: "assert",
+		importNames: ["default"],
+		message: 'Use `strict` instead. E.g. `import { strict as assert } from "node:assert";`',
+	},
+	{
+		name: "node:assert",
+		importNames: ["default"],
+		message: 'Use `strict` instead. E.g. `import { strict as assert } from "node:assert";`',
+	},
+];
+
 // For test files, disable projectService and use explicit project paths.
 // This is needed because most packages use TypeScript project references where test files
 // are in separate tsconfig files (e.g., src/test/tsconfig.json) that are excluded from the main tsconfig.
 // ProjectService doesn't handle this pattern well, so we explicitly specify the common project paths.
 // Packages can override this configuration if they have different test setups.
+//
+// This config also includes all the rule overrides from minimal-deprecated.js test override (lines 430-468)
 const testProjectConfig = {
-	files: ["src/test/**", "*.spec.ts", "*.test.ts"],
+	files: ["src/test/**", "*.spec.ts", "*.test.ts", "**/test/**", "**/tests/**"],
 	languageOptions: {
 		parserOptions: {
 			projectService: false,
@@ -97,27 +142,68 @@ const testProjectConfig = {
 		},
 	},
 	rules: {
-		// Test files are run in Node.js and commonly need Node.js built-in modules
-		"import-x/no-nodejs-modules": [
+		// Rules disabled for test files (from minimal-deprecated.js lines 440-447)
+		"@typescript-eslint/no-invalid-this": "off",
+		"@typescript-eslint/unbound-method": "off", // This rule has false positives in many of our test projects.
+		"import-x/no-nodejs-modules": "off", // Node libraries are OK for test files.
+		"import-x/no-deprecated": "off", // Deprecated APIs are OK to use in test files.
+		"@typescript-eslint/consistent-type-exports": "off",
+		"@typescript-eslint/consistent-type-imports": "off",
+
+		// For test files, remove the pattern restriction that blocks importing from parent index files.
+		// Only keep the paths restriction (about assert imports).
+		// This matches minimal-deprecated.js lines 449-454
+		"@typescript-eslint/no-restricted-imports": [
 			"error",
 			{
-				allow: [
-					"node:assert",
-					"node:fs",
-					"node:path",
-					"node:crypto",
-					"assert",
-					"fs",
-					"path",
-					"crypto",
-				],
+				paths: restrictedImportPaths,
 			},
 		],
+
+		// For test files only, additionally allow import of '/test*' and '/internal/test*' exports.
+		// This matches minimal-deprecated.js lines 456-464
+		"import-x/no-internal-modules": [
+			"error",
+			{
+				allow: ["@fluid*/*/test*", "@fluid*/*/internal/test*"].concat(permittedImports),
+			},
+		],
+
+		// Test code may leverage dev dependencies
+		// This matches minimal-deprecated.js line 467
+		"import-x/no-extraneous-dependencies": ["error", { devDependencies: true }],
 	},
 };
 recommended.push(testProjectConfig);
 strict.push(testProjectConfig);
 minimalDeprecated.push(testProjectConfig);
+
+// Override import-x/no-internal-modules for all files to include /legacy imports.
+// The base config (via FlatCompat) only allows /internal imports.
+// This adds /legacy support which is needed for backwards compatibility during API transitions.
+const internalModulesConfig = {
+	files: [
+		"**/*.ts",
+		"**/*.tsx",
+		"**/*.mts",
+		"**/*.cts",
+		"**/*.js",
+		"**/*.jsx",
+		"**/*.mjs",
+		"**/*.cjs",
+	],
+	rules: {
+		"import-x/no-internal-modules": [
+			"error",
+			{
+				allow: permittedImports,
+			},
+		],
+	},
+};
+recommended.push(internalModulesConfig);
+strict.push(internalModulesConfig);
+minimalDeprecated.push(internalModulesConfig);
 
 // CommonJS files (.cts, .cjs) can use __dirname and require, which are valid in CommonJS
 const cjsFileConfig = {
