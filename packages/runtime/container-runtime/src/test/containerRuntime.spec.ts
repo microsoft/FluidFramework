@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	stringToBuffer,
 	type ILayerCompatDetails,
@@ -3871,6 +3872,25 @@ describe("Runtime", () => {
 
 			it("minVersionForCollab = 1.0.0", async () => {
 				const minVersionForCollab = "1.0.0";
+				const logger = new MockLogger();
+				await assert.rejects(
+					async () => {
+						await ContainerRuntime.loadRuntime2({
+							context: getMockContext({ logger }) as IContainerContext,
+							registry: new FluidDataStoreRegistry([]),
+							existing: false,
+							runtimeOptions: {},
+							provideEntryPoint: mockProvideEntryPoint,
+							minVersionForCollab,
+						});
+					},
+					(e) =>
+						e instanceof UsageError && e.message.match(/Invalid minVersionForCollab/) !== null,
+				);
+			});
+
+			it("minVersionForCollab = 1.4.0", async () => {
+				const minVersionForCollab = "1.4.0";
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime2({
 					context: getMockContext({ logger }) as IContainerContext,
