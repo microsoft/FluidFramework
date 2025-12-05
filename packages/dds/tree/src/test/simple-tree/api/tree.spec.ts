@@ -308,10 +308,12 @@ describe("simple-tree tree", () => {
 			assert.equal(viewA.root, 4);
 		});
 
-		it("fail to apply to a branch with different state", () => {
+		it("fail to apply to a branch in another session", () => {
 			const config = new TreeViewConfiguration({ schema: schema.number });
 			const viewA = getView(config);
 			viewA.initialize(3);
+			const viewB = getView(config);
+			viewB.initialize(3);
 
 			let change: JsonCompatibleReadOnly | undefined;
 			viewA.events.on("changed", (metadata) => {
@@ -319,10 +321,11 @@ describe("simple-tree tree", () => {
 				change = metadata.getChange();
 			});
 			viewA.root = 4;
+
 			const c = change ?? assert.fail("change not captured");
 			assert.throws(() => {
-				viewA.applyChange(c);
-			}, /cannot apply change.*same branch state/i);
+				viewB.applyChange(c);
+			}, /cannot apply change.*same sharedtree/i);
 		});
 
 		it("error if malformed", () => {
