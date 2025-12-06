@@ -1,16 +1,13 @@
 {
+	"root": false,
 	"$schema": "../../../../../node_modules/@biomejs/biome/configuration_schema.json",
-	"extends": ["../base.jsonc"],
 	"files": {
-		"include": ["pkg-a-include/**"],
-		"ignore": ["pkg-a-ignore/**"]
+		"includes": ["**/pkg-a-include/**", "!**/pkg-a-ignore"]
 	},
 	"formatter": {
-		"include": ["include-formatter/**"],
-		"ignore": ["ignore-formatter/**"]
+		"includes": ["**/include-formatter/**", "!**/ignore-formatter/**"]
 	},
 	"linter": {
-		"include": ["include-linter/**"],
-		"ignore": ["ignore-linter/**"]
+		"includes": ["**/include-linter/**", "!**/ignore-linter/**"]
 	}
 }
