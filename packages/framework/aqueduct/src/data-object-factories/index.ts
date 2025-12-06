@@ -7,5 +7,7 @@ export { DataObjectFactory } from "./dataObjectFactory.js";
 export {
 	type DataObjectFactoryProps,
 	PureDataObjectFactory,
+	type CreateDataObjectProps,
 } from "./pureDataObjectFactory.js";
 export { TreeDataObjectFactory } from "./treeDataObjectFactory.js";
+export { MigrationDataObjectFactory } from "./migrationDataObjectFactory.js";

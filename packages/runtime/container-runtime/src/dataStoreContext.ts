@@ -703,6 +703,8 @@ export abstract class FluidDataStoreContext
 			channel.dispose();
 		}
 
+		await factory.afterBindRuntime?.(channel);
+
 		return channel;
 	}
 

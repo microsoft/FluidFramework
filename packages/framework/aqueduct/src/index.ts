@@ -23,6 +23,8 @@ export {
 	type DataObjectFactoryProps,
 	PureDataObjectFactory,
 	TreeDataObjectFactory,
+	MigrationDataObjectFactory,
+	type CreateDataObjectProps,
 } from "./data-object-factories/index.js";
 export {
 	DataObject,
@@ -32,6 +34,14 @@ export {
 	PureDataObject,
 	TreeDataObject,
 	createDataObjectKind,
+	MigrationDataObject,
+} from "./data-objects/index.js";
+export type {
+	IMigrationInfo,
+	IProvideMigrationInfo,
+	ModelDescriptor,
+	RootDirectoryView,
+	RootTreeView,
 } from "./data-objects/index.js";
 export {
 	BaseContainerRuntimeFactory,
@@ -39,3 +49,4 @@ export {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
 } from "./container-runtime-factories/index.js";
+export type { IDelayLoadChannelFactory } from "./channel-factories/index.js";

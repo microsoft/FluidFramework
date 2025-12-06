@@ -61,6 +61,7 @@ declare type current_as_old_for_Class_ContainerRuntimeFactoryWithDefaultDataStor
  * typeValidation.broken:
  * "Class_DataObject": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_DataObject = requireAssignableTo<TypeOnly<old.DataObject>, TypeOnly<current.DataObject>>
 
 /*
@@ -133,6 +134,7 @@ declare type current_as_old_for_Class_PureDataObjectFactory = requireAssignableT
  * typeValidation.broken:
  * "Class_TreeDataObject": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_TreeDataObject = requireAssignableTo<TypeOnly<old.TreeDataObject>, TypeOnly<current.TreeDataObject>>
 
 /*
