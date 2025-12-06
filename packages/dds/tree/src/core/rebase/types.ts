@@ -196,7 +196,7 @@ export type ChangeMetadata = CommitMetadata &
 				/**
 				 * A serializable object that encodes the change.
 				 * @remarks This change object can be {@link TreeBranchAlpha.applyChange | applied to another branch} in the same state as the one which generated it.
-				 * The change object must be applied to the same SharedTree (in the same session/runtime) as it was created from.
+				 * The change object must be applied to a SharedTree with the same IdCompressor session ID as it was created from.
 				 * @privateRemarks
 				 * This is a `SerializedChange` from treeCheckout.ts.
 				 */
