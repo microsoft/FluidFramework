@@ -651,6 +651,10 @@ export class NetworkInformation {
 // @internal (undocumented)
 export function parseToken(tenantId: string, authorization: string | undefined): string | undefined;
 
+// @internal
+const performance_2: Performance;
+export { performance_2 as performance }
+
 // @internal (undocumented)
 export function promiseTimeout(mSec: number, promise: Promise<any>): Promise<any>;
 
