@@ -11,7 +11,7 @@ import execa from "execa";
 import type { Machine } from "jssm";
 
 import { bumpVersionScheme } from "@fluid-tools/version-tools";
-import { FluidRepo } from "@fluidframework/build-tools";
+import { FluidRepo, type Package } from "@fluidframework/build-tools";
 
 import {
 	generateBumpDepsBranchName,
@@ -23,6 +23,7 @@ import {
 	getReleaseSourceForReleaseGroup,
 	isReleased,
 } from "../library/index.js";
+import { runCompatLayerGenerationCheck } from "../library/releasePrepChecks.js";
 import type { CommandLogger } from "../logging.js";
 import type { MachineState } from "../machines/index.js";
 import { type ReleaseSource, isReleaseGroup } from "../releaseGroups.js";
@@ -923,7 +924,7 @@ export const checkCompatLayerGeneration: StateHandlerFunction = async (
 ): Promise<boolean> => {
 	if (testMode) return true;
 
-	const { context, bumpType } = data;
+	const { context, bumpType, releaseGroup } = data;
 
 	if (bumpType === "patch") {
 		log.verbose(`Skipping layer compat generation check for patch release.`);
@@ -931,21 +932,19 @@ export const checkCompatLayerGeneration: StateHandlerFunction = async (
 		return true;
 	}
 
-	// layerGeneration:gen should be run from the root. It will only update packages that have the layerGeneration:gen
-	// script defined in their package.json.
-	const result = await execa.command(`pnpm run -r layerGeneration:gen`, {
-		cwd: context.root,
-	});
-	log.verbose(result.stdout);
+	// Get packages for the release group or individual package being released
+	const packagesToCheck = isReleaseGroup(releaseGroup)
+		? context.packagesInReleaseGroup(releaseGroup)
+		: [context.fullPackageMap.get(releaseGroup)].filter(
+				(pkg): pkg is Package => pkg !== undefined,
+			);
 
-	// check for policy check violation
-	const gitRepo = await context.getGitRepository();
-	const afterPolicyCheckStatus = await gitRepo.gitClient.status();
-	const isClean = afterPolicyCheckStatus.isClean();
-	if (!isClean) {
+	const isUpToDate = await runCompatLayerGenerationCheck(packagesToCheck);
+
+	if (!isUpToDate) {
 		log.logHr();
 		log.errorLog(
-			`Layer generation needs to be updated. Please create a PR for the changes and merge before retrying.\n${afterPolicyCheckStatus.files.map((fileStatus) => `${fileStatus.index} ${fileStatus.path}`).join("\n")}`,
+			`Compat layer generation needs to be updated. Run "pnpm run layerGeneration:gen" from the repo root, then create a PR for the changes and merge before retrying.`,
 		);
 		BaseStateHandler.signalFailure(machine, state);
 		return false;

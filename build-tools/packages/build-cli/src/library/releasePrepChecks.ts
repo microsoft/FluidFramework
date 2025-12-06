@@ -7,6 +7,11 @@ import { MonoRepo, type Package } from "@fluidframework/build-tools";
 import execa from "execa";
 import { ResetMode } from "simple-git";
 import type { Context } from "./context.js";
+import {
+	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
+	isCurrentPackageVersionPatch,
+	maybeGetNewGeneration,
+} from "./layerCompatibility.js";
 import { getPreReleaseDependencies } from "./package.js";
 
 /**
@@ -227,4 +232,83 @@ export const CheckNoUntaggedAsserts: CheckFunction = async (
 			fixCommand: "pnpm run policy-check:asserts",
 		};
 	}
+};
+
+/**
+ * Checks if any packages need a compatibility layer generation update using the layer generation functions directly.
+ * This is a shared helper function used by both the prepare command checks and the state machine checks.
+ *
+ * Only validates packages that already have `fluidCompatMetadata` configured. This is appropriate for
+ * release checks since we only want to validate packages that are already participating in layer compatibility.
+ * Packages without metadata are skipped - not all packages need layer compatibility.
+ *
+ * **Setting up a new package for layer compatibility:**
+ * To add layer compatibility to a package that doesn't have it yet:
+ * 1. Add a `layerGeneration:gen` script to the package's package.json:
+ *    `"layerGeneration:gen": "flub generate compatLayerGeneration --dir . -v"`
+ * 2. Run the command to initialize the package: `pnpm run layerGeneration:gen`
+ * 3. The command will create the `fluidCompatMetadata` field in package.json with generation 1
+ *    and generate the layer generation file (e.g., `src/layerGenerationState.ts`)
+ *
+ * @param packages - The list of packages to check.
+ * @returns `true` if all configured packages have up-to-date layer generation metadata, `false` if any updates are needed.
+ */
+export async function runCompatLayerGenerationCheck(
+	packages: Iterable<Package>,
+): Promise<boolean> {
+	// Check all packages that have fluidCompatMetadata
+	for (const pkg of packages) {
+		const { fluidCompatMetadata } = pkg.packageJson;
+
+		// Skip packages without compatibility metadata - not all packages need layer compatibility
+		if (fluidCompatMetadata === undefined) {
+			continue;
+		}
+
+		const currentPkgVersion = pkg.version;
+
+		// Skip patch versions as they don't trigger generation updates
+		if (isCurrentPackageVersionPatch(currentPkgVersion)) {
+			continue;
+		}
+
+		// Check if this package needs a generation update (no logger for checks)
+		const newGeneration = maybeGetNewGeneration(
+			currentPkgVersion,
+			fluidCompatMetadata,
+			DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
+		);
+
+		// If any package needs an update, return false
+		if (newGeneration !== undefined) {
+			return false;
+		}
+	}
+
+	// All packages are up to date
+	return true;
+}
+
+/**
+ * Checks that the compatibility layer generation is up to date. Any necessary changes will return a failure result.
+ */
+export const CheckCompatLayerGeneration: CheckFunction = async (
+	_context: Context,
+	releaseGroupOrPackage: MonoRepo | Package,
+): Promise<CheckResult> => {
+	const packagesToCheck =
+		releaseGroupOrPackage instanceof MonoRepo
+			? releaseGroupOrPackage.packages
+			: [releaseGroupOrPackage];
+
+	const isUpToDate = await runCompatLayerGenerationCheck(packagesToCheck);
+
+	if (!isUpToDate) {
+		return {
+			message: "Layer generation needs to be updated.",
+			fixCommand: "pnpm run layerGeneration:gen",
+		};
+	}
+
+	return;
 };
