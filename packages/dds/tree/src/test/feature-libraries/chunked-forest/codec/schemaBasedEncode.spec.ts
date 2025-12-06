@@ -70,7 +70,7 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
-	getStoredSchema,
+	toStoredSchema,
 	restrictiveStoredSchemaGenerationOptions,
 	toInitialSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -213,11 +213,11 @@ describe("schemaBasedEncoding", () => {
 				fieldBatchVersion,
 			);
 			const log: string[] = [];
-			const storedSchema: TreeFieldStoredSchema = {
-				kind: FieldKinds.identifier.identifier,
-				types: new Set([brand(stringSchema.identifier)]),
-				persistedMetadata: undefined,
-			};
+
+			const storedSchema = toStoredSchema(
+				SchemaFactoryAlpha.identifier(),
+				restrictiveStoredSchemaGenerationOptions,
+			);
 
 			const fieldEncoder = getFieldEncoder(
 				{
@@ -226,16 +226,9 @@ describe("schemaBasedEncoding", () => {
 						return identifierShape;
 					},
 				},
-				storedSchema,
+				storedSchema.rootFieldSchema,
 				context,
-				{
-					nodeSchema: new Map([
-						[
-							brand(stringSchema.identifier),
-							getStoredSchema(stringSchema, restrictiveStoredSchemaGenerationOptions),
-						],
-					]),
-				},
+				storedSchema,
 			);
 			const compressedId = testIdCompressor.generateCompressedId();
 			const stableId = testIdCompressor.decompress(compressedId);
