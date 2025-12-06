@@ -19,6 +19,8 @@ module.exports = {
 					"error",
 					{ allow: ["node:assert", "node:fs", "node:path"] },
 				],
+				// TODO: fix violations and enable
+				"unicorn/consistent-function-scoping": "off",
 			},
 		},
 	],

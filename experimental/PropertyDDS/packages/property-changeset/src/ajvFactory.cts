@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
+
 import Ajv from "ajv";
 import ajvKeywords from "ajv-keywords";
 

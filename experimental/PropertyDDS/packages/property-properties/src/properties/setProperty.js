@@ -63,10 +63,10 @@ export class SetProperty extends IndexedCollectionBaseProperty {
 	 *
 	 * ```json
 	 * {
-	 *   position: {
-	 *     x: 2,
-	 *     y: 5
-	 *   }
+	 * position: {
+	 * x: 2,
+	 * y: 5
+	 * }
 	 * }
 	 * ```
 	 */
