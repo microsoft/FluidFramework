@@ -6,10 +6,10 @@
 import { join } from "path";
 import type { WebApi } from "azure-devops-node-api";
 import { BuildResult, BuildStatus } from "azure-devops-node-api/interfaces/BuildInterfaces";
-import type JSZip from "jszip";
 
 import type { BundleComparison, BundleComparisonResult } from "../BundleBuddyTypes";
 import { compareBundles } from "../compareBundles";
+import type { UnzippedContents } from "../utilities";
 import { getBaselineCommit, getBuilds, getPriorCommit } from "../utilities";
 import {
 	getBundlePathsFromZipObject,
@@ -216,7 +216,9 @@ export class ADOSizeComparator {
 		}
 	}
 
-	private async createComparisonFromZip(baselineZip: JSZip): Promise<BundleComparison[]> {
+	private async createComparisonFromZip(
+		baselineZip: UnzippedContents,
+	): Promise<BundleComparison[]> {
 		const baselineZipBundlePaths = getBundlePathsFromZipObject(baselineZip);
 
 		const prBundleFileSystemPaths = await getBundlePathsFromFileSystem(this.localReportPath);
