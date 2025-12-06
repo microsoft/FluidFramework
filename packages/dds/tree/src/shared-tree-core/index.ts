@@ -71,10 +71,13 @@ export type {
 	EncodedCommit,
 } from "./editManagerFormatCommons.js";
 
+export type { DecodedMessage } from "./messageTypes.js";
 export {
 	getCodecTreeForMessageFormatWithChange,
 	clientVersionToMessageFormatVersion,
 	messageFormatVersionSelectorForSharedBranches,
+	makeMessageCodec,
+	type MessageEncodingContext,
 } from "./messageCodecs.js";
 export {
 	MessageFormatVersion,

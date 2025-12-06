@@ -6,7 +6,7 @@
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import type { IFluidHandle, Listenable } from "@fluidframework/core-interfaces/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import {
 	UsageError,
 	type ITelemetryLoggerExt,
@@ -20,7 +20,6 @@ import {
 	type AnchorSetRootEvents,
 	type ChangeFamily,
 	CommitKind,
-	type CommitMetadata,
 	type DeltaVisitor,
 	type DetachedFieldIndex,
 	type IEditableForest,
@@ -48,6 +47,8 @@ import {
 	type TreeNodeStoredSchema,
 	LeafNodeStoredSchema,
 	diffHistories,
+	type ChangeMetadata,
+	type ChangeEncodingContext,
 	type ReadOnlyDetachedFieldIndex,
 } from "../core/index.js";
 import {
@@ -69,7 +70,13 @@ import {
 	type SharedTreeBranchChange,
 	type Transactor,
 } from "../shared-tree-core/index.js";
-import { Breakable, disposeSymbol, getOrCreate, type WithBreakable } from "../util/index.js";
+import {
+	Breakable,
+	disposeSymbol,
+	getOrCreate,
+	type JsonCompatibleReadOnly,
+	type WithBreakable,
+} from "../util/index.js";
 
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
@@ -90,6 +97,7 @@ import {
 	type CustomTreeNode,
 } from "../simple-tree/index.js";
 import { getCheckout, SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import { isStableId } from "@fluidframework/id-compressor/internal";
 
 /**
  * Events for {@link ITreeCheckout}.
@@ -123,7 +131,7 @@ export interface CheckoutEvents {
 	 * @param getRevertible - a function provided that allows users to get a revertible for the change. If not provided,
 	 * this change is not revertible.
 	 */
-	changed(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
+	changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
 
 	/**
 	 * Fired when a new branch is created from this checkout.
@@ -537,7 +545,31 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						};
 
 				let withinEventContext = true;
-				this.#events.emit("changed", { isLocal: true, kind }, getRevertible);
+
+				const metadata: ChangeMetadata = {
+					kind,
+					isLocal: true,
+					getChange: () => {
+						const context: ChangeEncodingContext = {
+							idCompressor: this.idCompressor,
+							originatorId: this.idCompressor.localSessionId,
+							revision,
+						};
+						const encodedChange = this.changeFamily.codecs
+							.resolve(4)
+							.json.encode(change, context);
+
+						assert(commit.parent !== undefined, "Expected applied commit to be parented");
+						return {
+							version: 1,
+							revision,
+							originatorId: this.idCompressor.localSessionId,
+							change: encodedChange,
+						} satisfies SerializedChange;
+					},
+				};
+
+				this.#events.emit("changed", metadata, getRevertible);
 				withinEventContext = false;
 			}
 		} else if (this.isRemoteChangeEvent(event)) {
@@ -563,6 +595,28 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			event.newCommits.forEach((commit) => this.validateCommit(commit));
 		}
 	};
+
+	/**
+	 * Applies the given serialized change (as was produced via a `"changed"` event of another checkout) to this checkout.
+	 */
+	public applySerializedChange(serializedChange: JsonCompatibleReadOnly): void {
+		if (!isSerializedChange(serializedChange)) {
+			throw new UsageError(`Cannot apply change. Invalid serialized change format.`);
+		}
+		const { revision, originatorId, change } = serializedChange;
+		if (originatorId !== this.idCompressor.localSessionId) {
+			throw new UsageError(
+				`Cannot apply change. A serialized changed must be applied to the same SharedTree as it was created from.`,
+			);
+		}
+		const context: ChangeEncodingContext = {
+			idCompressor: this.idCompressor,
+			originatorId: this.idCompressor.localSessionId,
+			revision,
+		};
+		const decodedChange = this.changeFamily.codecs.resolve(4).json.decode(change, context);
+		this.applyChange(decodedChange, revision);
+	}
 
 	// Revision is the revision of the commit, if any, which caused this change.
 	private applyChange(change: SharedTreeChange, revision?: RevisionTag): void {
@@ -1209,4 +1263,25 @@ function verboseFromCursor(
 		type: reader.type,
 		fields: fields as CustomTreeNode<IFluidHandle>,
 	};
+}
+
+interface SerializedChange {
+	version: 1;
+	revision: RevisionTag;
+	change: JsonCompatibleReadOnly;
+	originatorId: SessionId;
+}
+
+function isSerializedChange(value: unknown): value is SerializedChange {
+	if (typeof value !== "object" || value === null) {
+		return false;
+	}
+	const change = value as Partial<SerializedChange>;
+	return (
+		change.version === 1 &&
+		(change.revision === "root" || typeof change.revision === "number") &&
+		typeof change.originatorId === "string" &&
+		isStableId(change.originatorId) &&
+		change.change !== undefined
+	);
 }

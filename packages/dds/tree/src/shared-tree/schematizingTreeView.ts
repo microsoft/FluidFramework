@@ -66,6 +66,7 @@ import {
 	type Breakable,
 	breakingClass,
 	disposeSymbol,
+	type JsonCompatibleReadOnly,
 	type WithBreakable,
 } from "../util/index.js";
 
@@ -163,6 +164,10 @@ export class SchematizingSimpleTreeView<
 				this.events.emit("commitApplied", data, getRevertible);
 			}),
 		);
+	}
+
+	public applyChange(change: JsonCompatibleReadOnly): void {
+		this.checkout.applySerializedChange(change);
 	}
 
 	public hasRootSchema<TSchema extends ImplicitFieldSchema>(
