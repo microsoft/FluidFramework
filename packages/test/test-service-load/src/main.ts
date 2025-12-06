@@ -41,6 +41,19 @@ const readRunOptions = () => {
 			"Flag indicating whether to create a document corresponding \
         to the testId passed",
 		)
+		.option(
+			"--mixedVersions",
+			"Enable mixed-version testing with previous major version (N-1)",
+		)
+		.option(
+			"--previousVersionRatio <ratio>",
+			"Ratio of clients that should use previous version (0.0-1.0). Default: 0.5",
+			"0.5",
+		)
+		.option(
+			"--previousVersionOverride <version>",
+			"Override the previous version to use instead of auto-calculating N-1",
+		)
 		.parse(process.argv);
 
 	const driver: TestDriverTypes = commander.driver;
@@ -55,6 +68,17 @@ const readRunOptions = () => {
 	const credFilePath: string | undefined = commander.credFile;
 	const enableMetrics: boolean = commander.enableMetrics ?? false;
 	const createTestId: boolean = commander.createTestId ?? false;
+	const mixedVersions: boolean = commander.mixedVersions ?? false;
+	const previousVersionRatio: number = parseFloat(commander.previousVersionRatio);
+	const previousVersionOverride: string | undefined = commander.previousVersionOverride;
+
+	// Validate previousVersionRatio
+	if (
+		mixedVersions &&
+		(isNaN(previousVersionRatio) || previousVersionRatio < 0 || previousVersionRatio > 1)
+	) {
+		throw new Error("previousVersionRatio must be a number between 0.0 and 1.0");
+	}
 
 	return {
 		driver,
@@ -69,6 +93,9 @@ const readRunOptions = () => {
 		credFilePath,
 		enableMetrics,
 		createTestId,
+		mixedVersions,
+		previousVersionRatio,
+		previousVersionOverride,
 	};
 };
 
@@ -86,6 +113,9 @@ const main = async () => {
 		credFilePath,
 		enableMetrics,
 		createTestId,
+		mixedVersions,
+		previousVersionRatio,
+		previousVersionOverride,
 	} = readRunOptions();
 
 	if (log !== undefined) {
@@ -126,6 +156,9 @@ const main = async () => {
 			profileName,
 			logger,
 			outputDir,
+			mixedVersions,
+			previousVersionRatio,
+			previousVersionOverride,
 		});
 		result = 0;
 	} finally {
