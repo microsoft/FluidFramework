@@ -44,7 +44,6 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
-	type IncrementalEncodingPolicy,
 	type TreeChunk,
 	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
@@ -58,11 +57,15 @@ import { brand } from "../../../util/index.js";
 import { assertChunkCursorEquals, numberSequenceField } from "./fieldCursorTestUtilities.js";
 import { polygonTree, testData } from "./uniformChunkTestData.js";
 import {
+	incrementalEncodingPolicyForAllowedTypes,
+	incrementalSummaryHint,
 	nullSchema,
 	numberSchema,
 	SchemaFactory,
+	SchemaFactoryAlpha,
 	stringSchema,
 	toInitialSchema,
+	TreeViewConfigurationAlpha,
 } from "../../../simple-tree/index.js";
 import { fieldJsonCursor, singleJsonCursor } from "../../json/index.js";
 import { testIdCompressor } from "../../utils.js";
@@ -74,7 +77,6 @@ const valueField = builder.required(builder.number);
 const structValue = builder.object("structValue", { x: valueField });
 const optionalField = builder.optional(builder.number);
 const structOptional = builder.object("structOptional", { x: optionalField });
-const structValueField = builder.required(structValue);
 
 const schema = toInitialSchema([empty, builder.number, structValue, structOptional]);
 
@@ -591,22 +593,21 @@ describe("chunkTree", () => {
 			expectEqual(info, polymorphic);
 		});
 		it("incremental", () => {
-			const shouldEncodeIncrementally: IncrementalEncodingPolicy = (
-				nodeIdentifier: string | undefined,
-				fieldKey: string,
-			) => {
-				if (nodeIdentifier === structValue.identifier && fieldKey === "x") {
-					return true;
-				}
-				return false;
-			};
+			const sf = new SchemaFactoryAlpha("chunkTree");
+			const structValueIncremental = sf.object("structValue", {
+				foo: sf.types([{ type: sf.number, metadata: {} }], {
+					custom: { [incrementalSummaryHint]: true },
+				}),
+			});
 			const params: ShapeFromSchemaParameters = {
-				schema,
+				schema: toInitialSchema([structValueIncremental]),
 				policy: defaultSchemaPolicy,
-				shouldEncodeIncrementally,
+				shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(
+					new TreeViewConfigurationAlpha({ schema: structValueIncremental }),
+				),
 				shapes: new Map(),
 			};
-			const nodeSchema: TreeNodeSchemaIdentifier = brand(structValue.identifier);
+			const nodeSchema: TreeNodeSchemaIdentifier = brand(structValueIncremental.identifier);
 
 			// For incremental field, `shouldEncodeIncrementally` should return true.
 			// So, the shape returned should be polymorphic.
@@ -625,8 +626,8 @@ describe("chunkTree", () => {
 			);
 			expectEqual(
 				infoNonIncremental,
-				new TreeShape(brand(structValue.identifier), false, [
-					[brand("x"), new TreeShape(brand(numberSchema.identifier), true, []), 1],
+				new TreeShape(brand(structValueIncremental.identifier), false, [
+					[brand("foo"), new TreeShape(brand(numberSchema.identifier), true, []), 1],
 				]),
 			);
 		});
@@ -670,24 +671,24 @@ describe("chunkTree", () => {
 			assert.equal(info, undefined);
 		});
 		it("incrementalField", () => {
-			const shouldEncodeIncrementally: IncrementalEncodingPolicy = (
-				nodeIdentifier: string | undefined,
-				fieldKey: string,
-			) => {
-				if (nodeIdentifier === structValue.identifier && fieldKey === "x") {
-					return true;
-				}
-				return false;
-			};
+			const sf = new SchemaFactoryAlpha("chunkTree");
+			const structValueIncremental = sf.object("structValue", {
+				foo: sf.types([{ type: sf.number, metadata: {} }], {
+					custom: { [incrementalSummaryHint]: true },
+				}),
+			});
+			const structValueFieldIncremental = sf.required(structValueIncremental);
 			const params: ShapeFromSchemaParameters = {
-				schema,
+				schema: toInitialSchema([structValueIncremental]),
 				policy: defaultSchemaPolicy,
-				shouldEncodeIncrementally,
+				shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(
+					new TreeViewConfigurationAlpha({ schema: structValueFieldIncremental }),
+				),
 				shapes: new Map(),
 			};
 			const fieldSchemaWithContext: FieldSchemaWithContext = {
 				parentNodeSchema: brand("root"),
-				fieldSchema: toInitialSchema(structValueField).rootFieldSchema,
+				fieldSchema: toInitialSchema(structValueFieldIncremental).rootFieldSchema,
 				key: brand("key"),
 			};
 			// For incremental field, `shouldEncodeIncrementally` should return true.

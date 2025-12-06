@@ -12,6 +12,7 @@ import {
 	getJsonSchema,
 	KeyEncodingOptions,
 	SchemaFactoryAlpha,
+	SchemaFactoryBeta,
 	TreeBeta,
 	type ConciseTree,
 	type TreeNode,
@@ -20,6 +21,7 @@ import { TableSchema } from "../tableSchema.js";
 import type {
 	areSafelyAssignable,
 	JsonCompatibleReadOnly,
+	requireFalse,
 	requireTrue,
 } from "../util/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshots/index.js";
@@ -1509,6 +1511,51 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
+	describeHydration("Recursive tables", (initializeTree) => {
+		it("Can create table schema with recursive types", () => {
+			const mySchemaFactory = new SchemaFactoryBeta("test-recursive");
+			class MyCell extends mySchemaFactory.objectRecursive("MyCell", {
+				title: mySchemaFactory.string,
+				subTable: mySchemaFactory.optionalRecursive([() => MyTable]),
+			}) {}
+
+			class MyColumn extends TableSchema.column({
+				schemaFactory: mySchemaFactory,
+				cell: MyCell,
+			}) {}
+
+			class MyRow extends TableSchema.row({
+				schemaFactory: mySchemaFactory,
+				cell: MyCell,
+			}) {}
+
+			class MyTable extends TableSchema.table({
+				schemaFactory: mySchemaFactory,
+				cell: MyCell,
+				column: MyColumn,
+				row: MyRow,
+			}) {}
+
+			initializeTree(MyTable, {
+				columns: [new MyColumn({ id: "column-0" })],
+				rows: [
+					new MyRow({
+						id: "row-0",
+						cells: {
+							"column-0": new MyCell({
+								title: "0-0",
+								subTable: new MyTable({
+									columns: [],
+									rows: [],
+								}),
+							}),
+						},
+					}),
+				],
+			});
+		});
+	});
+
 	describe("JSON serialization", () => {
 		useSnapshotDirectory("table-schema-json");
 
@@ -1547,6 +1594,24 @@ describe("TableFactory unit tests", () => {
 			takeJsonSnapshot(TreeBeta.exportConcise(table, {}) as unknown as JsonCompatibleReadOnly);
 		});
 	});
+
+	// Type tests validating that table schema scopes correctly prevent cross-scope assignments.
+	{
+		const schemaFactoryA = new SchemaFactoryBeta("scope-a");
+		const schemaFactoryB = new SchemaFactoryBeta("scope-b");
+
+		class TableA extends TableSchema.table({
+			schemaFactory: schemaFactoryA,
+			cell: schemaFactoryA.string,
+		}) {}
+
+		class TableB extends TableSchema.table({
+			schemaFactory: schemaFactoryB,
+			cell: schemaFactoryB.string,
+		}) {}
+
+		type _typeCheck = requireFalse<areSafelyAssignable<TableA, TableB>>;
+	}
 
 	// The code within the following tests is included in TSDoc comments in the source code.
 	// If you need to update any of these, please update the corresponding TSDoc comments as well.
