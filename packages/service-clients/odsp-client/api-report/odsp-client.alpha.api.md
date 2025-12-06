@@ -16,6 +16,7 @@ export interface IOdspContainerServicesEvents {
 // @beta
 export interface IOdspFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IFluidContainer<TContainerSchema> {
     attach(props?: ContainerAttachProps<OdspContainerAttachProps>): Promise<string>;
+    serialize(): string;
 }
 
 // @beta
@@ -34,6 +35,10 @@ export class OdspClient {
     }>;
     // (undocumented)
     getContainer<T extends ContainerSchema>(id: string, containerSchema: T): Promise<{
+        container: IOdspFluidContainer<T>;
+        services: OdspContainerServices;
+    }>;
+    rehydrateContainer<T extends ContainerSchema>(serializedContainer: string, containerSchema: T): Promise<{
         container: IOdspFluidContainer<T>;
         services: OdspContainerServices;
     }>;
