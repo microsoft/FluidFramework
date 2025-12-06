@@ -490,6 +490,10 @@ PACKAGE FILTER FLAGS
 
 DESCRIPTION
   Generates type tests for a package or group of packages.
+
+  Environment Variables:
+  FLUB_TYPETEST_SKIP_VERSION_OUTPUT - When set, preserves existing version information in the generated type test files
+  instead of updating to the current package versions.
 ```
 
 _See code: [src/commands/generate/typetests.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/typetests.ts)_
