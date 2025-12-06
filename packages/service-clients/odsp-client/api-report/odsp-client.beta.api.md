@@ -56,8 +56,10 @@ export interface OdspConnectionConfig {
 
 // @beta (undocumented)
 export interface OdspContainerAttachProps {
+    eTag?: string;
     fileName: string | undefined;
     filePath: string | undefined;
+    itemId?: string;
 }
 
 // @beta @sealed
