@@ -32,27 +32,6 @@ USAGE
 <!-- commands -->
 # Command Topics
 
-* [`flub autocomplete`](docs/autocomplete.md) - Display autocomplete installation instructions.
-* [`flub bump`](docs/bump.md) - Bump the version of packages, release groups, and their dependencies.
-* [`flub check`](docs/check.md) - Check commands are used to verify repo state, apply policy, etc.
-* [`flub commands`](docs/commands.md) - List all flub commands.
-* [`flub exec`](docs/exec.md) - Run a shell command in the context of a package or release group.
-* [`flub generate`](docs/generate.md) - Generate commands are used to create/update code, docs, readmes, etc.
-* [`flub help`](docs/help.md) - Display help for flub.
-* [`flub info`](docs/info.md) - Get info about the repo, release groups, and packages.
-* [`flub legacy`](docs/legacy.md) - Legacy commands that have been replaced by newer implementations.
-* [`flub list`](docs/list.md) - List packages in a release group in topological order.
-* [`flub merge`](docs/merge.md) - Sync branches depending on the batch size passed
-* [`flub modify`](docs/modify.md) - Modify commands are used to modify projects to add or remove dependencies, update Fluid imports, etc.
-* [`flub promote`](docs/promote.md) - Promote commands are used to promote packages published to an npm registry.
-* [`flub publish`](docs/publish.md) - Publish commands are used to publish packages to an npm registry.
-* [`flub release`](docs/release.md) - Release commands are used to manage the Fluid release process.
-* [`flub rename-types`](docs/rename-types.md) - Renames type declaration files from .d.ts to .d.mts.
-* [`flub report`](docs/report.md) - Report analysis about the codebase, like code coverage and bundle size measurements.
-* [`flub transform`](docs/transform.md) - Transform commands are used to transform code, docs, etc. into alternative forms.
-* [`flub typetests`](docs/typetests.md) - Updates configuration for type tests in package.json files. If the previous version changes after running preparation, then npm install must be run before building.
-* [`flub vnext`](docs/vnext.md) - Vnext commands are new implementations of standard flub commands using new infrastructure.
-
 <!-- commandsstop -->
 <!-- prettier-ignore-stop -->
 
