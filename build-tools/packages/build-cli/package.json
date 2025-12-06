@@ -228,6 +228,9 @@
 			"generate": {
 				"description": "Generate commands are used to create/update code, docs, readmes, etc."
 			},
+			"legacy": {
+				"description": "Legacy commands that have been replaced by newer implementations."
+			},
 			"modify": {
 				"description": "Modify commands are used to modify projects to add or remove dependencies, update Fluid imports, etc."
 			},

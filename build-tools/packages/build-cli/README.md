@@ -40,6 +40,7 @@ USAGE
 * [`flub generate`](docs/generate.md) - Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub help`](docs/help.md) - Display help for flub.
 * [`flub info`](docs/info.md) - Get info about the repo, release groups, and packages.
+* [`flub legacy`](docs/legacy.md) - Legacy commands that have been replaced by newer implementations.
 * [`flub list`](docs/list.md) - List packages in a release group in topological order.
 * [`flub merge`](docs/merge.md) - Sync branches depending on the batch size passed
 * [`flub modify`](docs/modify.md) - Modify commands are used to modify projects to add or remove dependencies, update Fluid imports, etc.

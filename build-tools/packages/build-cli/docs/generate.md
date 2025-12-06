@@ -140,7 +140,7 @@ _See code: [src/commands/generate/bundleStats.ts](https://github.com/microsoft/F
 
 ## `flub generate changelog`
 
-Generate a changelog for packages based on changesets.
+Generate a changelog for packages based on changesets. Note that this process deletes the changeset files!
 
 ```
 USAGE
@@ -159,7 +159,10 @@ LOGGING FLAGS
       --quiet    Disable all logging.
 
 DESCRIPTION
-  Generate a changelog for packages based on changesets.
+  Generate a changelog for packages based on changesets. Note that this process deletes the changeset files!
+
+ALIASES
+  $ flub generate changelogs
 
 EXAMPLES
   Generate changelogs for the client release group.
