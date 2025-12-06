@@ -47,14 +47,14 @@ export interface LocalStateUpdateOptions {
  */
 export interface StateDatastore<
 	TKey extends string,
-	TUpdateValue extends InternalTypes.ValueDirectoryOrState<unknown>,
+	TLocalUpdateValue extends InternalTypes.ValueDirectoryOrState<unknown>,
 	TStoredValue extends
-		ValidatableValueDirectoryOrState<unknown> = ValidatableValueStructure<TUpdateValue>,
+		ValidatableValueDirectoryOrState<unknown> = ValidatableValueStructure<TLocalUpdateValue>,
 > {
 	readonly presence: Presence;
 	localUpdate(
 		key: TKey,
-		value: TUpdateValue & {
+		value: TLocalUpdateValue & {
 			ignoreUnmonitored?: true;
 		},
 		options: LocalStateUpdateOptions,

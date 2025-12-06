@@ -51,7 +51,7 @@ describe("Presence", () => {
 				x: number;
 				y: number;
 			},
-			string
+			`key${number}`
 		> {
 			const presence = createPresenceManager(new MockEphemeralRuntime());
 			const workspace = presence.states.getWorkspace(testWorkspaceName, {
@@ -216,7 +216,7 @@ export function checkCompiles(): void {
 		key,
 		value,
 	}: Pick<
-		LatestMapItemUpdatedClientData<T, string | number, RawValueAccessor<T>>,
+		LatestMapItemUpdatedClientData<T, string, RawValueAccessor<T>>,
 		"attendee" | "key" | "value"
 	>): void {
 		console.log(attendee.attendeeId, key, value);
