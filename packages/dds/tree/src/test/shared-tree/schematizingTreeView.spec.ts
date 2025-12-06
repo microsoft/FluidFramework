@@ -50,6 +50,7 @@ import { brand } from "../../util/index.js";
 import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
 import { testDocumentIndependentView } from "../testTrees.js";
 import { fieldJsonCursor } from "../json/index.js";
+import { CommitKind } from "../../core/index.js";
 
 const schema = new SchemaFactoryAlpha("com.example");
 const config = new TreeViewConfiguration({ schema: schema.number });
@@ -1116,6 +1117,216 @@ describe("SchematizingSimpleTreeView", () => {
 
 				stack.unsubscribe();
 			});
+		});
+	});
+
+	describe("transaction labels", () => {
+		it("exposes label via currentTransactionLabel during commitApplied", () => {
+			const view = getTestObjectView();
+
+			const labels: unknown[] = [];
+
+			view.events.on("commitApplied", (meta) => {
+				if (meta.isLocal) {
+					labels.push(SchematizingSimpleTreeView.currentTransactionLabel);
+				}
+			});
+
+			const testLabel = "testLabel";
+			const runTransactionResult = view.runTransaction(
+				() => {
+					view.root.content = 0;
+				},
+				{ label: testLabel },
+			);
+
+			// Check that transaction was applied.
+			assert.equal(runTransactionResult.success, true);
+
+			// Check that correct label was exposed.
+			assert.deepEqual(labels, [testLabel]);
+
+			// Check that transaction label has been cleared.
+			assert.equal(SchematizingSimpleTreeView.currentTransactionLabel, undefined);
+		});
+
+		it("currentTransactionLabel is undefined for unlabeled transactions", () => {
+			const view = getTestObjectView();
+
+			const labels: unknown[] = [];
+
+			view.events.on("commitApplied", (meta) => {
+				if (meta.isLocal) {
+					labels.push(SchematizingSimpleTreeView.currentTransactionLabel);
+				}
+			});
+
+			const runTransactionResult = view.runTransaction(() => {
+				view.root.content = 0;
+			});
+
+			// Check that transaction was applied.
+			assert.equal(runTransactionResult.success, true);
+			assert.equal(view.root.content, 0);
+
+			// Check that correct label was exposed.
+			assert.deepEqual(labels, [undefined]);
+
+			// Check that transaction label has been cleared.
+			assert.equal(SchematizingSimpleTreeView.currentTransactionLabel, undefined);
+		});
+
+		it("exposes the correct labels for multiple transactions", () => {
+			const view = getTestObjectView();
+
+			const labels: unknown[] = [];
+
+			view.events.on("commitApplied", (meta) => {
+				if (meta.isLocal) {
+					labels.push(SchematizingSimpleTreeView.currentTransactionLabel);
+				}
+			});
+
+			const testLabel1 = "testLabel1";
+			const runTransactionResult1 = view.runTransaction(
+				() => {
+					view.root.content = 0;
+				},
+				{ label: testLabel1 },
+			);
+
+			// run second transaction with no label
+			const runTransactionResult2 = view.runTransaction(() => {
+				view.root.content = 1;
+			});
+
+			const testLabel3 = "testLabel3";
+			const runTransactionResult3 = view.runTransaction(
+				() => {
+					view.root.content = 2;
+				},
+				{ label: testLabel3 },
+			);
+			// Check that transactions were applied.
+			assert.equal(runTransactionResult1.success, true);
+			assert.equal(runTransactionResult2.success, true);
+			assert.equal(runTransactionResult3.success, true);
+
+			// Check that correct label was exposed.
+			assert.deepEqual(labels, [testLabel1, undefined, testLabel3]);
+
+			// Check that transaction label has been cleared.
+			assert.equal(SchematizingSimpleTreeView.currentTransactionLabel, undefined);
+		});
+	});
+
+	describe("label-based grouping for undo", () => {
+		it("groups multiple transactions with the same label into a single undo group", () => {
+			const view = getTestObjectView();
+
+			interface LabeledGroup {
+				label: unknown;
+				revertibles: { revert(): void }[];
+			}
+
+			const undoGroups: LabeledGroup[] = [];
+
+			view.events.on("commitApplied", (meta, getRevertible) => {
+				// Omit remote, Undo/Redo commits
+				if (meta.isLocal && getRevertible !== undefined && meta.kind === CommitKind.Default) {
+					const label = SchematizingSimpleTreeView.currentTransactionLabel;
+					const revertible = getRevertible();
+
+					// Check if the latest group contains the same label.
+					const latestGroup = undoGroups[undoGroups.length - 1];
+					if (
+						label !== undefined &&
+						latestGroup !== undefined &&
+						label === latestGroup.label
+					) {
+						latestGroup.revertibles.push(revertible);
+					} else {
+						undoGroups.push({ label, revertibles: [revertible] });
+					}
+				}
+			});
+
+			const undoLatestGroup = () => {
+				const latestGroup = undoGroups.pop() ?? fail("There are currently no undo groups.");
+				for (const revertible of latestGroup.revertibles.reverse()) {
+					revertible.revert();
+				}
+			};
+
+			const initialRootContent = view.root.content;
+
+			// Edit group 1
+			const testLabel1 = "testLabel1";
+
+			const runTransactionResult1 = view.runTransaction(
+				() => {
+					view.root.content = 1;
+				},
+				{ label: testLabel1 },
+			);
+			assert.equal(runTransactionResult1.success, true);
+			assert.equal(view.root.content, 1);
+
+			const runTransactionResult2 = view.runTransaction(
+				() => {
+					view.root.content = 2;
+				},
+				{ label: testLabel1 },
+			);
+			assert.equal(runTransactionResult2.success, true);
+			assert.equal(view.root.content, 2);
+
+			const runTransactionResult3 = view.runTransaction(
+				() => {
+					view.root.content = 3;
+				},
+				{ label: testLabel1 },
+			);
+			assert.equal(runTransactionResult3.success, true);
+			assert.equal(view.root.content, 3);
+
+			// Edit group 2
+			const testLabel2 = "testLabel2";
+
+			const runTransactionResult4 = view.runTransaction(
+				() => {
+					view.root.content = 4;
+				},
+				{ label: testLabel2 },
+			);
+			assert.equal(runTransactionResult4.success, true);
+			assert.equal(view.root.content, 4);
+
+			const runTransactionResult5 = view.runTransaction(
+				() => {
+					view.root.content = 5;
+				},
+				{ label: testLabel2 },
+			);
+			assert.equal(runTransactionResult5.success, true);
+			assert.equal(view.root.content, 5);
+
+			const runTransactionResult6 = view.runTransaction(
+				() => {
+					view.root.content = 6;
+				},
+				{ label: testLabel2 },
+			);
+			assert.equal(runTransactionResult6.success, true);
+			assert.equal(view.root.content, 6);
+
+			// This should undo all the edits from group 2.
+			undoLatestGroup();
+			assert.equal(view.root.content, 3);
+
+			// This should undo all the edits from group 1
+			undoLatestGroup();
+			assert.equal(view.root.content, initialRootContent);
 		});
 	});
 });
