@@ -55,8 +55,6 @@ DESCRIPTION
 
 ALIASES
   $ flub vnext generate changelogs
-  $ flub generate changelog
-  $ flub generate changelogs
 
 EXAMPLES
   Generate changelogs for the client release group.
