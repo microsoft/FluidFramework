@@ -16,7 +16,7 @@ import { inc } from "semver";
 import { CleanOptions } from "simple-git";
 
 import { checkFlags, releaseGroupFlag, semverFlag } from "../../../flags.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { canonicalizeChangesets } from "../../../library/changesets.js";
 import { BaseCommand } from "../../../library/index.js";
 import { isReleaseGroup } from "../../../releaseGroups.js";
@@ -38,17 +38,16 @@ async function replaceInFile(
  * https://github.com/changesets/changesets/issues/595. What we would like to do is generate the changelogs without
  * doing version bumping, but that feature does not exist in the changeset tools.
  *
- * @deprecated This command is deprecated. Use 'flub generate changelog' instead.
+ * @deprecated This command is deprecated. Use 'flub vnext generate changelog' instead.
  */
 export default class GenerateChangeLogCommand extends BaseCommand<
 	typeof GenerateChangeLogCommand
 > {
 	static readonly description =
-		"[DEPRECATED] Generate a changelog for packages based on changesets. Use 'flub generate changelog' instead.";
+		"[DEPRECATED] Generate a changelog for packages based on changesets. Use 'flub vnext generate changelog' instead.";
 
-	static readonly deprecateAliases = true;
 	static readonly deprecated = {
-		message: "This command is deprecated. Use 'flub generate changelog' instead.",
+		message: "This command is deprecated. Use 'flub vnext generate changelog' instead.",
 	};
 
 	static readonly flags = {

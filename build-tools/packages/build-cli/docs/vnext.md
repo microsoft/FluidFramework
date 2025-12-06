@@ -4,6 +4,7 @@
 Vnext commands are new implementations of standard flub commands using new infrastructure.
 
 * [`flub vnext check latestVersions`](#flub-vnext-check-latestversions)
+* [`flub vnext generate changelog`](#flub-vnext-generate-changelog)
 
 ## `flub vnext check latestVersions`
 
@@ -31,3 +32,36 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/vnext/check/latestVersions.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/vnext/check/latestVersions.ts)_
+
+## `flub vnext generate changelog`
+
+Generate a changelog for packages based on changesets. Note that this process deletes the changeset files!
+
+```
+USAGE
+  $ flub vnext generate changelog -g <value> [-v | --quiet] [--version <value>]
+
+FLAGS
+  -g, --releaseGroup=<value>  (required) The name of a release group.
+      --version=<value>       The version for which to generate the changelog. If this is not provided, the version of
+                              the package according to package.json will be used.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Generate a changelog for packages based on changesets. Note that this process deletes the changeset files!
+
+ALIASES
+  $ flub vnext generate changelogs
+  $ flub generate changelog
+  $ flub generate changelogs
+
+EXAMPLES
+  Generate changelogs for the client release group.
+
+    $ flub vnext generate changelog --releaseGroup client
+```
+
+_See code: [src/commands/vnext/generate/changelog.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/vnext/generate/changelog.ts)_

@@ -7,7 +7,7 @@ Legacy commands that have been replaced by newer implementations.
 
 ## `flub legacy generate changelog`
 
-[DEPRECATED] Generate a changelog for packages based on changesets. Use 'flub generate changelog' instead.
+[DEPRECATED] Generate a changelog for packages based on changesets. Use 'flub vnext generate changelog' instead.
 
 ```
 USAGE
@@ -26,7 +26,7 @@ LOGGING FLAGS
       --quiet    Disable all logging.
 
 DESCRIPTION
-  [DEPRECATED] Generate a changelog for packages based on changesets. Use 'flub generate changelog' instead.
+  [DEPRECATED] Generate a changelog for packages based on changesets. Use 'flub vnext generate changelog' instead.
 
 EXAMPLES
   Generate changelogs for the client release group.

@@ -6,7 +6,6 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate assertTags`](#flub-generate-asserttags)
 * [`flub generate buildVersion`](#flub-generate-buildversion)
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
-* [`flub generate changelog`](#flub-generate-changelog)
 * [`flub generate changeset`](#flub-generate-changeset)
 * [`flub generate compatLayerGeneration`](#flub-generate-compatlayergeneration)
 * [`flub generate entrypoints`](#flub-generate-entrypoints)
@@ -137,38 +136,6 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/generate/bundleStats.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/bundleStats.ts)_
-
-## `flub generate changelog`
-
-Generate a changelog for packages based on changesets. Note that this process deletes the changeset files!
-
-```
-USAGE
-  $ flub generate changelog -g <value> [-v | --quiet] [--version <value>]
-
-FLAGS
-  -g, --releaseGroup=<value>  (required) The name of a release group.
-      --version=<value>       The version for which to generate the changelog. If this is not provided, the version of
-                              the package according to package.json will be used.
-
-LOGGING FLAGS
-  -v, --verbose  Enable verbose logging.
-      --quiet    Disable all logging.
-
-DESCRIPTION
-  Generate a changelog for packages based on changesets. Note that this process deletes the changeset files!
-
-ALIASES
-  $ flub vnext generate changelog
-  $ flub vnext generate changelogs
-
-EXAMPLES
-  Generate changelogs for the client release group.
-
-    $ flub generate changelog --releaseGroup client
-```
-
-_See code: [src/commands/generate/changelog.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/changelog.ts)_
 
 ## `flub generate changeset`
 
