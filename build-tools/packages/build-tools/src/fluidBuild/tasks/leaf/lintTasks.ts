@@ -9,6 +9,11 @@ import path from "node:path";
 import { getEsLintConfigFilePath, getInstalledPackageVersion } from "../taskUtils";
 import { TscDependentTask } from "./tscTask";
 
+/**
+ * Path to the shared eslint-config-fluid package relative to the repo root.
+ */
+const sharedEslintConfigPath = "common/build/eslint-config-fluid";
+
 export class TsLintTask extends TscDependentTask {
 	protected get configFileFullPaths() {
 		return [this.getPackageFileFullPath("tslint.json")];
@@ -21,36 +26,16 @@ export class TsLintTask extends TscDependentTask {
 
 export class EsLintTask extends TscDependentTask {
 	private _configFileFullPath: string | undefined;
-	private _sharedConfigDir: string | undefined | null;
-
-	/**
-	 * Tries to find the shared eslint-config-fluid directory.
-	 * Returns the directory path if found, or null if not available.
-	 */
-	private get sharedConfigDir(): string | null {
-		if (this._sharedConfigDir === undefined) {
-			try {
-				// Try to resolve @fluidframework/eslint-config-fluid from the package's node_modules
-				const resolvedPath = require.resolve("@fluidframework/eslint-config-fluid", {
-					paths: [this.node.pkg.directory],
-				});
-				// The resolved path points to the main file (index.js), so get its directory
-				this._sharedConfigDir = path.dirname(resolvedPath);
-			} catch {
-				// Package not found - this is fine, some packages might not use shared config
-				this._sharedConfigDir = null;
-			}
-		}
-		return this._sharedConfigDir;
-	}
 
 	/**
 	 * Gets the absolute paths to shared eslint config files that should be tracked.
 	 * These are files from @fluidframework/eslint-config-fluid that affect linting behavior.
 	 */
 	private getSharedConfigFiles(): string[] {
-		const sharedDir = this.sharedConfigDir;
-		if (sharedDir === null) {
+		const sharedDir = path.join(this.context.repoRoot, sharedEslintConfigPath);
+
+		// If the shared config directory doesn't exist, skip tracking
+		if (!existsSync(sharedDir)) {
 			return [];
 		}
 
