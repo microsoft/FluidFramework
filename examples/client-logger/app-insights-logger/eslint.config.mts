@@ -1,0 +1,65 @@
+/* eslint-disable */
+/**
+ * GENERATED FILE - DO NOT EDIT DIRECTLY.
+ * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
+ */
+import type { Linter } from "eslint";
+import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
+
+const config: Linter.Config[] = [
+	...recommended,
+	{
+		rules: {
+			"import-x/no-internal-modules": [
+				"error",
+				{
+					"allow": [
+						"@fluidframework/*/{beta,alpha,legacy,legacy/alpha}",
+						"fluid-framework/{beta,alpha,legacy,legacy/alpha}",
+						"@fluid-experimental/**",
+						"@fluidframework/*/test-utils",
+						"@fluid-example/*/{beta,alpha}",
+						"*/index.js",
+					],
+				},
+			],
+		},
+	},
+	{
+		files: ["**/*.jsx", "**/*.tsx"],
+		rules: {
+			"react/no-deprecated": "off",
+		},
+	},
+	{
+		files: ["*.spec.ts", "src/test/**", "tests/**"],
+		rules: {
+			"import-x/no-internal-modules": [
+				"error",
+				{
+					"allow": [
+						"@fluidframework/*/{beta,alpha,legacy,legacy/alpha}",
+						"fluid-framework/{beta,alpha,legacy,legacy/alpha}",
+						"@fluid-experimental/**",
+						"@fluidframework/*/test-utils",
+						"@fluid-example/*/{beta,alpha}",
+						"*/index.js",
+						"@fluidframework/test-utils/internal",
+						"*/*.js",
+					],
+				},
+			],
+		},
+	},
+	{
+		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
+		languageOptions: {
+			parserOptions: {
+				projectService: false,
+				project: ["./tsconfig.json"],
+			},
+		},
+	},
+];
+
+export default config;

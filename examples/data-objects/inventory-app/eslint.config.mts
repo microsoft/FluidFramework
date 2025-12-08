@@ -1,0 +1,84 @@
+/* eslint-disable */
+/**
+ * GENERATED FILE - DO NOT EDIT DIRECTLY.
+ * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
+ */
+import type { Linter } from "eslint";
+import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
+
+const config: Linter.Config[] = [
+	...recommended,
+	{
+		rules: {
+			"import-x/no-internal-modules": [
+				"error",
+				{
+					"allow": [
+						"@fluidframework/*/{beta,alpha,legacy,legacy/alpha}",
+						"fluid-framework/{beta,alpha,legacy,legacy/alpha}",
+						"@fluid-experimental/**",
+						"@fluidframework/*/test-utils",
+						"@fluid-example/*/{beta,alpha}",
+						"*/index.js",
+					],
+				},
+			],
+		},
+	},
+	{
+		files: ["**/*.jsx", "**/*.tsx"],
+		rules: {
+			"react/no-deprecated": "off",
+			"react-hooks/exhaustive-deps": ["error"],
+			"react-hooks/rules-of-hooks": "error",
+			"react/jsx-key": [
+				"error",
+				{
+					"checkFragmentShorthand": true,
+					"checkKeyMustBeforeSpread": true,
+					"warnOnDuplicates": true,
+				},
+			],
+			"react/jsx-boolean-value": ["error", "always"],
+			"react/jsx-fragments": "error",
+			"react/no-string-refs": "error",
+			"react/no-unstable-nested-components": [
+				"error",
+				{
+					"allowAsProps": true,
+				},
+			],
+			"react/self-closing-comp": "error",
+			"react/jsx-no-target-blank": "error",
+			"react/jsx-no-useless-fragment": [
+				"error",
+				{
+					"allowExpressions": true,
+				},
+			],
+			"react/prop-types": "off",
+		},
+	},
+	{
+		files: ["*.spec.ts", "src/test/**", "tests/**"],
+		rules: {
+			"import-x/no-internal-modules": [
+				"error",
+				{
+					"allow": [
+						"@fluidframework/*/{beta,alpha,legacy,legacy/alpha}",
+						"fluid-framework/{beta,alpha,legacy,legacy/alpha}",
+						"@fluid-experimental/**",
+						"@fluidframework/*/test-utils",
+						"@fluid-example/*/{beta,alpha}",
+						"*/index.js",
+						"@fluidframework/test-utils/internal",
+						"*/*.js",
+					],
+				},
+			],
+		},
+	},
+];
+
+export default config;

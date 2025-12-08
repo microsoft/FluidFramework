@@ -298,7 +298,7 @@ ${typeImport}import { ${variant} } from "${importPath}";
 		: `/* eslint-disable */
 /**
  * GENERATED FILE - DO NOT EDIT DIRECTLY.
- * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts
+ * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts${typescriptMode ? " --typescript" : ""}
  */
 ${typeImport}import { ${variant} } from "${importPath}";
 
