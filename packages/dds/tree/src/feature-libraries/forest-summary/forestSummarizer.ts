@@ -71,7 +71,7 @@ export class ForestSummarizer
 	private readonly codec: ForestCodec;
 
 	private readonly incrementalSummaryBuilder: ForestIncrementalSummaryBuilder;
-	private readonly summaryFormatWriteVersion: ForestSummaryFormatVersion;
+	private readonly forestRootSummaryContentKey: string;
 
 	/**
 	 * @param encoderContext - The schema if provided here must be mutated by the caller to keep it up to date.
@@ -95,16 +95,20 @@ export class ForestSummarizer
 
 		this.codec = makeForestSummarizerCodec(options, fieldBatchCodec);
 
-		this.summaryFormatWriteVersion = minVersionToForestSummaryFormatVersion(
-			options.minVersionForCollab,
-		);
 		const forestFormatWriteVersion = clientVersionToForestFormatVersion(
 			options.minVersionForCollab,
 		);
+		const summaryFormatWriteVersion = minVersionToForestSummaryFormatVersion(
+			options.minVersionForCollab,
+		);
+		this.forestRootSummaryContentKey = getForestRootSummaryContentKey(
+			summaryFormatWriteVersion,
+		);
+
 		// Incremental summary is supported from ForestFormatVersion.v2 and ForestSummaryFormatVersion.v3 onwards.
 		const enableIncrementalSummary =
 			forestFormatWriteVersion >= ForestFormatVersion.v2 &&
-			this.summaryFormatWriteVersion >= ForestSummaryFormatVersion.v3 &&
+			summaryFormatWriteVersion >= ForestSummaryFormatVersion.v3 &&
 			encoderContext.encodeType === TreeCompressionStrategy.CompressedIncremental;
 		this.incrementalSummaryBuilder = new ForestIncrementalSummaryBuilder(
 			enableIncrementalSummary,
@@ -170,9 +174,7 @@ export class ForestSummarizer
 		this.incrementalSummaryBuilder.completeSummary({
 			incrementalSummaryContext,
 			forestSummaryRootContent: stringify(encoded),
-			forestSummaryRootContentKey: getForestRootSummaryContentKey(
-				this.summaryFormatWriteVersion,
-			),
+			forestSummaryRootContentKey: this.forestRootSummaryContentKey,
 			builder,
 		});
 	}
@@ -182,7 +184,7 @@ export class ForestSummarizer
 		parse: SummaryElementParser,
 		version: ForestSummaryFormatVersion | undefined,
 	): Promise<void> {
-		// Get the key of the summary blob where the top-level forest content based on the summary format version.
+		// Get the key of the summary blob where the top-level forest content is stored based on the summary format version.
 		// If the summary was generated as `ForestIncrementalSummaryBehavior.SingleBlob`, this blob will contain all
 		// of forest's contents.
 		// If the summary was generated as `ForestIncrementalSummaryBehavior.Incremental`, this blob will contain only
