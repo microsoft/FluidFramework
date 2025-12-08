@@ -291,6 +291,8 @@ export {
 	checkCompatibility,
 	incrementalSummaryHint,
 	incrementalEncodingPolicyForAllowedTypes,
+	eraseSchemaDetails,
+	eraseSubclassableSchemaDetails,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
