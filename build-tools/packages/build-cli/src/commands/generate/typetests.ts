@@ -80,11 +80,10 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 				"Use the public entrypoint as a fallback if the requested entrypoint is not found.",
 			default: false,
 		}),
-		skipVersionBump: Flags.boolean({
+		skipVersionOutput: Flags.boolean({
 			description:
 				"Skip updating version information in generated type test files. When set, preserves existing version information instead of updating to current package versions.",
 			env: "FLUB_TYPETEST_SKIP_VERSION_OUTPUT",
-			hidden: true,
 			default: false,
 		}),
 		...PackageCommand.flags,
@@ -93,7 +92,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 	protected defaultSelection = "dir" as PackageSelectionDefault;
 
 	protected async processPackage(pkg: Package): Promise<void> {
-		const { entrypoint: entrypointFlag, outDir, outFile, skipVersionBump } = this.flags;
+		const { entrypoint: entrypointFlag, outDir, outFile, skipVersionOutput } = this.flags;
 		const pkgJson: PackageWithTypeTestSettings = pkg.packageJson;
 		const entrypoint: ApiLevel =
 			entrypointFlag ??
@@ -179,11 +178,11 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		let previousVersionToUse = previousPackageJson.version;
 		let currentVersionToUse = currentVersionBase;
 
-		if (skipVersionBump) {
+		if (skipVersionOutput) {
 			const existingVersions = readExistingVersions(typeTestOutputFile);
 			if (existingVersions === undefined) {
 				this.verbose(
-					`${pkg.nameColored}: skipVersionBump is set but no existing file found, using current versions`,
+					`${pkg.nameColored}: skipVersionOutput is set but no existing file found, using current versions`,
 				);
 			} else {
 				previousVersionToUse = existingVersions.previousVersion;
