@@ -47,7 +47,7 @@ module.exports = {
 		// #region `unicorn` rule overrides
 
 		/**
-		 * Consider enabling in the future.
+		 * TODO: Consider enabling in the future.
 		 */
 		"unicorn/import-style": "off",
 
@@ -99,17 +99,17 @@ module.exports = {
 		"unicorn/prefer-event-target": "off",
 
 		/**
-		 * Enable in a future update; warning for now to surface occurrences without breaking builds.
+		 * TODO: Enable in a future update; warning for now to surface occurrences without breaking builds.
 		 */
 		"unicorn/prefer-string-raw": "warn",
 
 		/**
-		 * Enable in a future update; warning for now to surface occurrences without breaking builds.
+		 * TODO: Enable in a future update; warning for now to surface occurrences without breaking builds.
 		 */
 		"unicorn/prefer-string-replace-all": "warn",
 
 		/**
-		 * Enable in a future update; warning for now to surface occurrences without breaking builds.
+		 * TODO: Enable in a future update; warning for now to surface occurrences without breaking builds.
 		 */
 		"unicorn/prefer-structured-clone": "warn",
 
