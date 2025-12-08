@@ -50,8 +50,6 @@ import {
 	isObjectNodeSchema,
 	isTreeNode,
 	toInitialSchema,
-	convertField,
-	toUnhydratedSchema,
 	type TreeParsingOptions,
 	type NodeChangedData,
 	type ConciseTree,
@@ -60,6 +58,7 @@ import {
 	borrowCursorFromTreeNodeOrValue,
 	contentSchemaSymbol,
 	type TreeNodeSchema,
+	getUnhydratedContext,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import {
@@ -824,7 +823,7 @@ export const TreeAlpha: TreeAlpha = {
 		return createFromCursor(
 			schema,
 			cursor,
-			convertField(normalizeFieldSchema(schema), toUnhydratedSchema),
+			getUnhydratedContext(schema).flexContext.schema.rootFieldSchema,
 		);
 	},
 

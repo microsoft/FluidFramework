@@ -14,6 +14,9 @@ importers:
       '@eslint-community/eslint-plugin-eslint-comments':
         specifier: ~4.5.0
         version: 4.5.0(eslint@8.57.1)
+      '@eslint/js':
+        specifier: ^8.57.1
+        version: 8.57.1
       '@fluid-internal/eslint-plugin-fluid':
         specifier: ^0.4.1
         version: 0.4.1(eslint@8.57.1)(typescript@5.4.5)
@@ -78,6 +81,9 @@ importers:
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
@@ -810,6 +816,11 @@ packages:
 
   core-js-compat@3.46.0:
     resolution: {integrity: sha512-p9hObIIEENxSV8xIu+V68JjSeARg6UVMG5mR+JEUguG3sI6MsiS1njz2jHmyJDvA+8jX/sytkBHup6kxhM9law==}
+
+  cross-env@7.0.3:
+    resolution: {integrity: sha512-+/HKd6EgcQCJGh2PSjZuUitQBQynKor4wrFbRg4DtAgS1aWO+gU52xpH7M9ScGgXSYmAVS9bIJ8EzuaGw0oNAw==}
+    engines: {node: '>=10.14', npm: '>=6', yarn: '>=1'}
+    hasBin: true
 
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
@@ -2858,6 +2869,10 @@ snapshots:
     dependencies:
       browserslist: 4.26.3
 
+  cross-env@7.0.3:
+    dependencies:
+      cross-spawn: 7.0.6
+
   cross-spawn@7.0.6:
     dependencies:
       path-key: 3.1.1
@@ -3124,7 +3139,7 @@ snapshots:
     dependencies:
       empathic: 2.0.0
       module-replacements: 2.10.1
-      semver: 7.7.2
+      semver: 7.7.3
 
   eslint-plugin-import-x@4.16.1(@typescript-eslint/utils@8.46.1(eslint@8.57.1)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint@8.57.1):
     dependencies:
