@@ -185,6 +185,7 @@ export {
 	type AnnotateAllowedTypesList,
 	type AllowedTypesFull,
 	type AllowedTypesFullFromMixed,
+	type SchemaType,
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
@@ -283,8 +284,8 @@ export {
 	type SchemaFactory_base,
 	type NumberKeys,
 	type SimpleAllowedTypeAttributes,
-	encodeSimpleSchema,
-	decodeSimpleSchema,
+	encodeSchemaCompatibilitySnapshot,
+	decodeSchemaCompatibilitySnapshot,
 	exportCompatibilitySchemaSnapshot,
 	importCompatibilitySchemaSnapshot,
 	checkCompatibility,

@@ -4,7 +4,6 @@
  */
 
 export type {
-	TreeSchema,
 	ITreeViewConfiguration,
 	ITreeConfigurationOptions,
 } from "./configuration.js";
@@ -29,6 +28,7 @@ export { asTreeViewAlpha } from "./tree.js";
 export { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
 export {
 	SchemaFactory,
+	scoped,
 	type ScopedSchemaName,
 	type ObjectSchemaOptionsAlpha,
 	type ObjectSchemaOptions,
@@ -161,15 +161,14 @@ export {
 } from "./transactionTypes.js";
 
 export { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
-export { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 export type { TreeChangeEvents } from "./treeChangeEvents.js";
 export {
 	incrementalEncodingPolicyForAllowedTypes,
 	incrementalSummaryHint,
 } from "./incrementalAllowedTypes.js";
 export {
-	encodeSimpleSchema,
-	decodeSimpleSchema,
+	encodeSchemaCompatibilitySnapshot,
+	decodeSchemaCompatibilitySnapshot,
 } from "./simpleSchemaCodec.js";
 export {
 	exportCompatibilitySchemaSnapshot,

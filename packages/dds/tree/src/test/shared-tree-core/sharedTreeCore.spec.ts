@@ -10,6 +10,7 @@ import type { IEvent } from "@fluidframework/core-interfaces";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
+	type ISummaryBlob,
 	type ISummaryTree,
 	type SummaryObject,
 	SummaryType,
@@ -26,6 +27,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
+	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -41,18 +43,23 @@ import type {
 	ModularChangeset,
 } from "../../feature-libraries/index.js";
 import { Tree } from "../../shared-tree/index.js";
-import type {
-	ChangeEnricherReadonlyCheckout,
-	EditManager,
-	ResubmitMachine,
-	SharedTreeCore,
-	Summarizable,
-	SummaryElementParser,
-	SummaryElementStringifier,
+import {
+	EditManagerFormatVersion,
+	SharedTreeSummaryFormatVersion,
+	summarizablesMetadataKey,
+	type ChangeEnricherReadonlyCheckout,
+	type EditManager,
+	type ResubmitMachine,
+	type SharedTreeCore,
+	type SharedTreeSummarizableMetadata,
+	type Summarizable,
+	type SummaryElementParser,
+	type SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
 import { brand, disposeSymbol } from "../../util/index.js";
 import {
 	chunkFromJsonableTrees,
+	createTestUndoRedoStacks,
 	SharedTreeTestFactory,
 	StringArray,
 	TestTreeProviderLite,
@@ -61,17 +68,32 @@ import {
 import { createTree, createTreeSharedObject, TestSharedTreeCore } from "./utils.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { mockSerializer } from "../mockSerializer.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { EncodedEditManager } from "../../shared-tree-core/editManagerFormatV1toV4.js";
+import {
+	EditManagerSummarizer,
+	stringKey,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../shared-tree-core/editManagerSummarizer.js";
+import {
+	summarizablesTreeKey,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../shared-tree-core/summaryTypes.js";
 
 const enableSchemaValidation = true;
 
 describe("SharedTreeCore", () => {
 	it("summarizes without indexes", async () => {
-		const tree = createTree([]);
+		const tree = createTree({ indexes: [] });
 		const { summary, stats } = tree.summarizeCore(mockSerializer);
 		assert(summary !== undefined);
 		assert(stats !== undefined);
 		assert.equal(stats.treeNodeCount, 3);
-		assert.equal(stats.blobNodeCount, 1); // EditManager is always summarized
+		// EditManager is always summarized. So, there should be 3 blobs
+		// 1. Tree's metadata blob
+		// 2. EditManager's content blob
+		// 3. EditManager's metadata blob
+		assert.equal(stats.blobNodeCount, 3);
 		assert.equal(stats.handleNodeCount, 0);
 	});
 
@@ -81,8 +103,8 @@ describe("SharedTreeCore", () => {
 			let loaded = false;
 			summarizable.on("loaded", () => (loaded = true));
 			const summarizables = [summarizable] as const;
-			const tree = createTree(summarizables);
-			const defaultSummary = createTree([]).summarizeCore(mockSerializer);
+			const tree = createTree({ indexes: summarizables });
+			const defaultSummary = createTree({ indexes: [] }).summarizeCore(mockSerializer);
 			await tree.loadCore(
 				MockSharedObjectServices.createFromSummary(defaultSummary.summary).objectStorage,
 			);
@@ -98,7 +120,7 @@ describe("SharedTreeCore", () => {
 				}
 			});
 			const summarizables = [summarizable] as const;
-			const tree = createTree(summarizables);
+			const tree = createTree({ indexes: summarizables });
 			const { summary } = tree.summarizeCore(mockSerializer);
 			await tree.loadCore(MockSharedObjectServices.createFromSummary(summary).objectStorage);
 			assert.equal(loadedBlob, true);
@@ -112,7 +134,7 @@ describe("SharedTreeCore", () => {
 			let summarizedB = false;
 			summarizableB.on("summarizeAttached", () => (summarizedB = true));
 			const summarizables = [summarizableA, summarizableB] as const;
-			const tree = createTree(summarizables);
+			const tree = createTree({ indexes: summarizables });
 			const { summary, stats } = tree.summarizeCore(mockSerializer);
 			assert(summarizedA, "Expected summarizable A to summarize");
 			assert(summarizedB, "Expected summarizable B to summarize");
@@ -131,6 +153,114 @@ describe("SharedTreeCore", () => {
 				stats.treeNodeCount,
 				5,
 				"Expected summary stats to correctly count tree nodes",
+			);
+		});
+	});
+
+	describe("Summary metadata validation", () => {
+		it("writes metadata blob with version 2", async () => {
+			const tree = createTree({
+				indexes: [],
+			});
+			const { summary } = tree.summarizeCore(mockSerializer);
+			const metadataBlob: SummaryObject | undefined = summary.tree[summarizablesMetadataKey];
+			assert(metadataBlob !== undefined, "Metadata blob should exist");
+			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
+			const metadataContent = JSON.parse(
+				metadataBlob.content as string,
+			) as SharedTreeSummarizableMetadata;
+			assert.equal(
+				metadataContent.version,
+				SharedTreeSummaryFormatVersion.v2,
+				"Metadata version should be 2",
+			);
+		});
+
+		it("loads with metadata blob with version 2", async () => {
+			const tree = createTree({
+				indexes: [],
+			});
+			const { summary } = tree.summarizeCore(mockSerializer);
+			const metadataBlob: SummaryObject | undefined = summary.tree[summarizablesMetadataKey];
+			assert(metadataBlob !== undefined, "Metadata blob should exist");
+			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
+			const metadataContent = JSON.parse(
+				metadataBlob.content as string,
+			) as SharedTreeSummarizableMetadata;
+			assert.equal(
+				metadataContent.version,
+				SharedTreeSummaryFormatVersion.v2,
+				"Metadata version should be 2",
+			);
+
+			await assert.doesNotReject(
+				async () =>
+					tree.loadCore(MockSharedObjectServices.createFromSummary(summary).objectStorage),
+				"Should load successfully with metadata version 1",
+			);
+		});
+
+		it("loads pre-versioning format with no metadata blob", async () => {
+			// Create data in v1 summary format. EditManager summary is needed because the SharedTreeCore
+			// creates an EditManagerSummarizer by default.
+			const editManagerDataV1: EncodedEditManager<unknown> = {
+				version: EditManagerFormatVersion.v3,
+				trunk: [],
+				branches: [],
+			};
+			const editManagerBlob: ISummaryBlob = {
+				type: SummaryType.Blob,
+				content: JSON.stringify(editManagerDataV1),
+			};
+			const sharedTreeSummary: ISummaryTree = {
+				type: SummaryType.Tree,
+				tree: {
+					[summarizablesTreeKey]: {
+						type: SummaryType.Tree,
+						tree: {
+							[EditManagerSummarizer.key]: {
+								type: SummaryType.Tree,
+								tree: {
+									[stringKey]: editManagerBlob,
+								},
+							},
+						},
+					},
+				},
+			};
+
+			const tree = createTree({
+				indexes: [],
+			});
+
+			// Should load successfully
+			await assert.doesNotReject(async () =>
+				tree.loadCore(
+					MockSharedObjectServices.createFromSummary(sharedTreeSummary).objectStorage,
+				),
+			);
+		});
+
+		it("fail to load with metadata blob with version > latest", async () => {
+			const tree = createTree({
+				indexes: [],
+			});
+			const { summary } = tree.summarizeCore(mockSerializer);
+
+			// Modify metadata to have version > latest
+			const metadataBlob: SummaryObject | undefined = summary.tree[summarizablesMetadataKey];
+			assert(metadataBlob !== undefined, "Metadata blob should exist");
+			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
+			const modifiedMetadata: SharedTreeSummarizableMetadata = {
+				version: SharedTreeSummaryFormatVersion.vLatest + 1,
+			};
+			metadataBlob.content = JSON.stringify(modifiedMetadata);
+
+			// Should fail to load with version > latest
+			await assert.rejects(
+				async () =>
+					tree.loadCore(MockSharedObjectServices.createFromSummary(summary).objectStorage),
+				validateUsageError(/Cannot read version/),
 			);
 		});
 	});
@@ -286,7 +416,7 @@ describe("SharedTreeCore", () => {
 		]);
 	});
 
-	it("Does not submit changes that were aborted in an outer transaction", async () => {
+	it("Tolerates aborting an outer transaction", async () => {
 		const provider = new TestTreeProviderLite(2);
 		const view1 = provider.trees[0].viewWith(
 			new TreeViewConfiguration({
@@ -320,17 +450,32 @@ describe("SharedTreeCore", () => {
 		assert.deepEqual([...root1], ["A", "B"]);
 		assert.deepEqual([...root2], ["A", "B"]);
 
-		// Make an additional change to ensure that all changes from the previous transactions were flushed
+		// Make additional changes to ensure that all changes from the previous transactions were flushed
+		// and that future edits that require refreshers work as expected.
+		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
+			provider.trees[0].kernel.checkout.events,
+		);
 		Tree.runTransaction(root1, () => {
 			root1.insertAtEnd("C");
 		});
-
 		provider.synchronizeMessages();
 		assert.deepEqual([...root1], ["A", "B", "C"]);
 		assert.deepEqual([...root2], ["A", "B", "C"]);
+
+		(undoStack.pop() ?? assert.fail("Expected undo")).revert();
+		provider.synchronizeMessages();
+		assert.deepEqual([...root1], ["A", "B"]);
+		assert.deepEqual([...root2], ["A", "B"]);
+
+		// This redo operation requires a refresher.
+		(redoStack.pop() ?? assert.fail("Expected redo")).revert();
+		provider.synchronizeMessages();
+		assert.deepEqual([...root1], ["A", "B", "C"]);
+		assert.deepEqual([...root2], ["A", "B", "C"]);
+		unsubscribe();
 	});
 
-	it("Does not submit changes that were aborted in an inner transaction", async () => {
+	it("Tolerates aborting an inner transaction", async () => {
 		const provider = new TestTreeProviderLite(2);
 		const view1 = provider.trees[0].viewWith(
 			new TreeViewConfiguration({
@@ -368,14 +513,29 @@ describe("SharedTreeCore", () => {
 		assert.deepEqual([...root1], ["B"]);
 		assert.deepEqual([...root2], ["B"]);
 
-		// Make an additional change to ensure that all changes from the previous transactions were flushed
+		// Make additional changes to ensure that all changes from the previous transactions were flushed
+		// and that future edits that require refreshers work as expected.
+		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
+			provider.trees[0].kernel.checkout.events,
+		);
 		Tree.runTransaction(root1, () => {
 			root1.insertAtEnd("C");
 		});
-
 		provider.synchronizeMessages();
+		assert.deepEqual([...root1], ["B", "C"]);
 		assert.deepEqual([...root2], ["B", "C"]);
+
+		(undoStack.pop() ?? assert.fail("Expected undo")).revert();
+		provider.synchronizeMessages();
+		assert.deepEqual([...root1], ["B"]);
+		assert.deepEqual([...root2], ["B"]);
+
+		// This redo operation requires a refresher.
+		(redoStack.pop() ?? assert.fail("Expected redo")).revert();
+		provider.synchronizeMessages();
+		assert.deepEqual([...root1], ["B", "C"]);
 		assert.deepEqual([...root2], ["B", "C"]);
+		unsubscribe();
 	});
 
 	describe("commit enrichment", () => {

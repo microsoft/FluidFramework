@@ -21,7 +21,6 @@ import {
 	FlexFieldKind,
 	type FullSchemaPolicy,
 	type ToDelta,
-	allowsTreeSchemaIdentifierSuperset,
 	referenceFreeFieldChangeRebaser,
 } from "../modular-schema/index.js";
 import {
@@ -76,15 +75,20 @@ export interface RequiredFieldEditor extends FieldEditor<OptionalChangeset> {
 }
 
 const optionalIdentifier = brandConst("Optional")<FieldKindIdentifier>();
+const requiredIdentifier = brandConst("Value")<FieldKindIdentifier>();
+const sequenceIdentifier = brandConst("Sequence")<FieldKindIdentifier>();
+const identifierFieldIdentifier = brandConst("Identifier")<FieldKindIdentifier>();
 
 /**
  * 0 or 1 items.
  */
 export const optional = new FlexFieldKind(optionalIdentifier, Multiplicity.Optional, {
 	changeHandler: optionalChangeHandler,
-	allowedMonotonicUpgrade: (types, other) =>
-		(other.kind === sequence.identifier || other.kind === optionalIdentifier) &&
-		allowsTreeSchemaIdentifierSuperset(types, other.types),
+	allowMonotonicUpgradeFrom: new Set([
+		identifierFieldIdentifier,
+		requiredIdentifier,
+		forbiddenFieldKindIdentifier,
+	]),
 });
 
 export const requiredFieldEditor: RequiredFieldEditor = {
@@ -103,51 +107,38 @@ export const requiredFieldChangeHandler: FieldChangeHandler<
 	editor: requiredFieldEditor,
 };
 
-const requiredIdentifier = brandConst("Value")<FieldKindIdentifier>();
-
 /**
  * Exactly one item.
  */
 export const required = new FlexFieldKind(requiredIdentifier, Multiplicity.Single, {
 	changeHandler: requiredFieldChangeHandler,
-	allowedMonotonicUpgrade: (types, other) =>
-		// By omitting Identifier here,
-		// this is making a policy choice that a schema upgrade cannot be done from required to identifier.
-		// Since an identifier can be upgraded into a required field,
-		// preventing the inverse helps ensure that schema upgrades are monotonic.
-		// Which direction is allowed is a subjective policy choice.
-		(other.kind === sequence.identifier ||
-			other.kind === requiredIdentifier ||
-			other.kind === optional.identifier) &&
-		allowsTreeSchemaIdentifierSuperset(types, other.types),
+	allowMonotonicUpgradeFrom: new Set([identifierFieldIdentifier]),
 });
-
-const sequenceIdentifier = brandConst("Sequence")<FieldKindIdentifier>();
 
 /**
  * 0 or more items.
  */
 export const sequence = new FlexFieldKind(sequenceIdentifier, Multiplicity.Sequence, {
 	changeHandler: sequenceFieldChangeHandler,
-	allowedMonotonicUpgrade: (types, other) =>
-		other.kind === sequenceIdentifier &&
-		allowsTreeSchemaIdentifierSuperset(types, other.types),
+	allowMonotonicUpgradeFrom: new Set([
+		required.identifier,
+		optional.identifier,
+		identifierFieldIdentifier,
+		forbiddenFieldKindIdentifier,
+	]),
 });
-
-const identifierFieldIdentifier = brandConst("Identifier")<FieldKindIdentifier>();
 
 /**
  * Exactly one identifier.
  */
 export const identifier = new FlexFieldKind(identifierFieldIdentifier, Multiplicity.Single, {
 	changeHandler: noChangeHandler,
-	allowedMonotonicUpgrade: (types, other) =>
-		// Allows upgrading from identifier to required: which way this upgrade is allowed to go is a subjective policy choice.
-		(other.kind === sequence.identifier ||
-			other.kind === requiredIdentifier ||
-			other.kind === optional.identifier ||
-			other.kind === identifierFieldIdentifier) &&
-		allowsTreeSchemaIdentifierSuperset(types, other.types),
+	// By omitting required here,
+	// this is making a policy choice that a schema upgrade cannot be done from required to identifier.
+	// Since an identifier can be upgraded into a required field,
+	// preventing the inverse helps ensure that schema upgrades are monotonic.
+	// Which direction is allowed is a subjective policy choice.
+	allowMonotonicUpgradeFrom: new Set([]),
 });
 
 /**
@@ -183,9 +174,7 @@ export const forbidden = new FlexFieldKind(
 	Multiplicity.Forbidden,
 	{
 		changeHandler: noChangeHandler,
-		// All multiplicities other than Value support empty.
-		allowedMonotonicUpgrade: (types, other) =>
-			fieldKinds.get(other.kind)?.multiplicity !== Multiplicity.Single,
+		allowMonotonicUpgradeFrom: new Set(),
 	},
 );
 
