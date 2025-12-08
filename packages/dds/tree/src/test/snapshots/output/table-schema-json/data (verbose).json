@@ -1,7 +1,7 @@
 {
   "type": "com.fluidframework.table<test>.TableRoot",
   "fields": {
-    "table": {
+    "": {
       "type": "com.fluidframework.table<test>.Table",
       "fields": {
         "rows": {
