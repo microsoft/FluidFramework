@@ -4307,15 +4307,20 @@ function fixupRebasedDetachLocations(table: RebaseTable): void {
 		length,
 		value: detachLocation,
 	} of table.rebasedRootNodes.detachLocations.entries()) {
-		if (detachLocation.nodeId !== undefined) {
+		const normalizedDetachLocation = normalizeFieldId(
+			detachLocation,
+			table.baseChange.nodeAliases,
+		);
+
+		if (normalizedDetachLocation.nodeId !== undefined) {
 			const rebasedNodeId = getFromChangeAtomIdMap(
 				table.baseToRebasedNodeId,
-				detachLocation.nodeId,
+				normalizedDetachLocation.nodeId,
 			);
 
 			if (rebasedNodeId !== undefined) {
 				table.rebasedRootNodes.detachLocations.set(start, length, {
-					...detachLocation,
+					...normalizedDetachLocation,
 					nodeId: rebasedNodeId,
 				});
 			}
