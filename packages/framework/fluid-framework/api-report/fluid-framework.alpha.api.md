@@ -294,6 +294,12 @@ export abstract class ErasedType<out Name = unknown> {
 }
 
 // @alpha
+export function eraseSchemaDetails<TNode extends TreeNode, ExtraSchemaProperties = unknown>(): <T extends ExtraSchemaProperties & TreeNodeSchema<string, NodeKind, TNode>>(schema: T) => T extends TreeNodeSchema<infer Name, infer _Kind, infer _Node extends TNode, infer _TBuild, infer _ImplicitlyConstructable, infer _Info, infer _TCustomMetadata> ? ExtraSchemaProperties & TreeNodeSchema<Name, NodeKind, TNode, never, false> : unknown;
+
+// @alpha
+export function eraseSubclassableSchemaDetails<TNode extends TreeNode, ExtraSchemaProperties = unknown>(): <T extends ExtraSchemaProperties & TreeNodeSchemaClass<string, NodeKind, TNode>>(schema: T) => T extends TreeNodeSchemaClass<infer Name, infer _Kind, infer _Node extends TNode, infer _TBuild, infer _ImplicitlyConstructable, infer _Info, infer _TCustomMetadata> ? ExtraSchemaProperties & TreeNodeSchemaClass<Name, NodeKind, TNode, never, false> : unknown;
+
+// @alpha
 export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>): T;
 
 // @alpha
