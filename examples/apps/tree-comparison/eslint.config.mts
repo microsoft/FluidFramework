@@ -5,45 +5,14 @@
  */
 import type { Linter } from "eslint";
 import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
+import sharedConfig from "../../eslint.config.data.mts";
 
 const config: Linter.Config[] = [
 	...minimalDeprecated,
+	...sharedConfig,
 	{
 		rules: {
-			"import-x/no-internal-modules": [
-				"error",
-				{
-					"allow": [
-						"@fluidframework/*/{beta,alpha,legacy,legacy/alpha}",
-						"fluid-framework/{beta,alpha,legacy,legacy/alpha}",
-						"@fluid-experimental/**",
-						"@fluidframework/*/test-utils",
-						"@fluid-example/*/{beta,alpha}",
-						"*/index.js",
-					],
-				},
-			],
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
-		},
-	},
-	{
-		files: ["*.spec.ts", "src/test/**", "tests/**"],
-		rules: {
-			"import-x/no-internal-modules": [
-				"error",
-				{
-					"allow": [
-						"@fluidframework/*/{beta,alpha,legacy,legacy/alpha}",
-						"fluid-framework/{beta,alpha,legacy,legacy/alpha}",
-						"@fluid-experimental/**",
-						"@fluidframework/*/test-utils",
-						"@fluid-example/*/{beta,alpha}",
-						"*/index.js",
-						"@fluidframework/test-utils/internal",
-						"*/*.js",
-					],
-				},
-			],
 		},
 	},
 ];

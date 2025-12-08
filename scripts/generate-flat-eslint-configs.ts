@@ -6,6 +6,11 @@
 /**
  * Generates ESLint 9 flat config files for packages that currently use legacy .eslintrc.cjs configs.
  *
+ * Shared Config Detection:
+ *  - Detects `.eslintrc.data.cjs` files which are shared config files that export configuration data
+ *  - Creates corresponding `eslint.config.data.mts` flat config files
+ *  - When packages extend from these shared configs, imports are added instead of duplicating rules
+ *
  * Heuristic:
  *  - If .eslintrc.cjs extends "@fluidframework/eslint-config-fluid/strict" => use strict flat config.
  *  - If it extends "@fluidframework/eslint-config-fluid/minimal-deprecated" => use minimalDeprecated.
@@ -43,11 +48,118 @@ interface PackageTarget {
 	eslintIgnorePatterns?: string[];
 	/** Rules and overrides merged from local extends (e.g., ../../.eslintrc.cjs) */
 	extendedLocalConfig?: { rules?: Record<string, unknown>; overrides?: unknown[] };
+	/** Path to a shared flat config to import from (relative to packageDir) */
+	sharedFlatConfigImport?: string;
 }
 
-async function findLegacyConfigs(): Promise<PackageTarget[]> {
+interface SharedConfigTarget {
+	configPath: string;
+	alternativePaths?: string[];
+	outputPath: string;
+	legacyConfig: unknown;
+}
+
+/**
+ * Find shared ESLint config files that should be converted to flat configs and imported by other packages.
+ *
+ * Currently supports:
+ *  - `.eslintrc.data.cjs` files that export configuration objects
+ *  - Automatically detects if there's a corresponding `.eslintrc.cjs` that re-exports the data config
+ *
+ * To add a new shared config pattern:
+ *  1. Create a `.eslintrc.data.cjs` file in a directory (e.g., `my-folder/.eslintrc.data.cjs`)
+ *  2. Export your shared rules/overrides: `module.exports = { rules: {...}, overrides: [...] }`
+ *     - Or export via a property: `module.exports = { lintConfig: { rules: {...} } }`
+ *  3. In child packages, extend from the parent: `extends: ["...", "../../.eslintrc.cjs"]`
+ *  4. Run this script - it will:
+ *     - Generate `my-folder/eslint.config.data.mts` with the shared flat config
+ *     - Update child packages to import from `../../eslint.config.data.mts`
+ */
+async function findSharedConfigs(): Promise<SharedConfigTarget[]> {
+	const results: SharedConfigTarget[] = [];
+	const topDirs = ["packages", "experimental", "examples", "azure", "tools"];
+
+	// Search for .eslintrc.data.cjs files that might be shared configs
+	// These are configs that export configuration data to be consumed by other configs
+	async function searchForDataConfigs(dir: string): Promise<void> {
+		let entries;
+		try {
+			entries = await fs.readdir(dir, { withFileTypes: true });
+		} catch {
+			return;
+		}
+
+		for (const entry of entries) {
+			const fullPath = path.join(dir, entry.name);
+
+			if (entry.isDirectory() && entry.name !== "node_modules") {
+				await searchForDataConfigs(fullPath);
+			} else if (entry.isFile() && entry.name === ".eslintrc.data.cjs") {
+				// Found a shared data config - load it
+				try {
+					const { execFileSync } = await import("child_process");
+					const escapedPath = fullPath.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+					const result = execFileSync(
+						"node",
+						["-e", `console.log(JSON.stringify(require('${escapedPath}')))`],
+						{ cwd: repoRoot, encoding: "utf8" },
+					);
+					const legacyConfig = JSON.parse(result);
+
+					// Extract the lintConfig property if it exists (e.g., examples/.eslintrc.data.cjs)
+					const actualConfig = legacyConfig.lintConfig || legacyConfig;
+
+					// Check if there's a corresponding .eslintrc.cjs that re-exports this
+					const baseDir = path.dirname(fullPath);
+					const reexportPath = path.join(baseDir, ".eslintrc.cjs");
+					const alternativePaths: string[] = [];
+
+					try {
+						await fs.access(reexportPath);
+						// Check if it references the .data.cjs file
+						const reexportContent = await fs.readFile(reexportPath, "utf8");
+						if (reexportContent.includes(".eslintrc.data.cjs")) {
+							alternativePaths.push(reexportPath);
+						}
+					} catch {
+						// No re-export file
+					}
+
+					// Generate output path: .eslintrc.data.cjs -> eslint.config.data.mts
+					const outputPath = path.join(baseDir, "eslint.config.data.mts");
+
+					results.push({
+						configPath: fullPath,
+						alternativePaths: alternativePaths.length > 0 ? alternativePaths : undefined,
+						outputPath,
+						legacyConfig: actualConfig,
+					});
+					console.log(`  Found shared config: ${path.relative(repoRoot, fullPath)}`);
+				} catch (e) {
+					console.error(`  Error loading shared config ${fullPath}:`, e);
+				}
+			}
+		}
+	}
+
+	for (const top of topDirs) {
+		await searchForDataConfigs(path.join(repoRoot, top));
+	}
+
+	return results;
+}
+
+async function findLegacyConfigs(
+	sharedConfigs: SharedConfigTarget[],
+): Promise<PackageTarget[]> {
 	const results: PackageTarget[] = [];
 	const topDirs = ["packages", "experimental", "examples", "azure", "tools"]; // exclude common/build and server from traversal
+
+	// Build a map of directory paths that have shared configs
+	const sharedConfigDirs = new Set<string>();
+	for (const shared of sharedConfigs) {
+		sharedConfigDirs.add(path.dirname(shared.configPath));
+	}
 
 	async function walk(dir: string): Promise<void> {
 		let entries;
@@ -121,6 +233,7 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 					let extendedLocalConfig:
 						| { rules?: Record<string, unknown>; overrides?: unknown[] }
 						| undefined;
+					let sharedFlatConfigImport: string | undefined;
 					const config = legacyConfig as {
 						extends?: string | string[];
 						rules?: Record<string, unknown>;
@@ -135,38 +248,56 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 							if (ext.startsWith("./") || ext.startsWith("../")) {
 								const extPath = path.resolve(full, ext);
 								if (extPath.endsWith(".eslintrc.cjs") || extPath.endsWith(".cjs")) {
-									try {
-										const { execFileSync } = await import("child_process");
-										const extPathEscaped = extPath.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-										const extResult = execFileSync(
-											"node",
-											["-e", `console.log(JSON.stringify(require('${extPathEscaped}')))`],
-											{ cwd: repoRoot, encoding: "utf8" },
-										);
-										const extConfig = JSON.parse(extResult) as {
-											rules?: Record<string, unknown>;
-											overrides?: unknown[];
-										};
-										if (extConfig.rules || extConfig.overrides) {
-											console.log(`  Merging extended config from ${ext}`);
-											extendedLocalConfig = extendedLocalConfig ?? {};
-											if (extConfig.rules) {
-												extendedLocalConfig.rules = {
-													...extendedLocalConfig.rules,
-													...extConfig.rules,
-												};
+									// Check if this is a shared config we're generating a flat config for
+									const matchingShared = sharedConfigs.find(
+										(s) => s.configPath === extPath || s.alternativePaths?.includes(extPath),
+									);
+									if (matchingShared) {
+										// Instead of merging, reference the shared flat config
+										const relPath = path
+											.relative(full, matchingShared.outputPath)
+											.replace(/\\/g, "/");
+										sharedFlatConfigImport = relPath.startsWith(".")
+											? relPath
+											: `./${relPath}`;
+										console.log(`  Will import shared config from ${sharedFlatConfigImport}`);
+									} else {
+										// Merge rules from extended configs that aren't shared flat configs
+										try {
+											const { execFileSync } = await import("child_process");
+											const extPathEscaped = extPath
+												.replace(/\\/g, "\\\\")
+												.replace(/'/g, "\\'");
+											const extResult = execFileSync(
+												"node",
+												["-e", `console.log(JSON.stringify(require('${extPathEscaped}')))`],
+												{ cwd: repoRoot, encoding: "utf8" },
+											);
+											const extConfig = JSON.parse(extResult) as {
+												rules?: Record<string, unknown>;
+												overrides?: unknown[];
+											};
+											if (extConfig.rules || extConfig.overrides) {
+												console.log(`  Merging extended config from ${ext}`);
+												extendedLocalConfig = extendedLocalConfig ?? {};
+												if (extConfig.rules) {
+													extendedLocalConfig.rules = {
+														...extendedLocalConfig.rules,
+														...extConfig.rules,
+													};
+												}
+												if (extConfig.overrides) {
+													extendedLocalConfig.overrides = [
+														...(extendedLocalConfig.overrides ?? []),
+														...extConfig.overrides,
+													];
+												}
 											}
-											if (extConfig.overrides) {
-												extendedLocalConfig.overrides = [
-													...(extendedLocalConfig.overrides ?? []),
-													...extConfig.overrides,
-												];
-											}
+										} catch (extErr) {
+											console.warn(
+												`  Warning: Could not load extended config ${ext}: ${extErr}`,
+											);
 										}
-									} catch (extErr) {
-										console.warn(
-											`  Warning: Could not load extended config ${ext}: ${extErr}`,
-										);
 									}
 								}
 							}
@@ -180,6 +311,7 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 						legacyConfig,
 						eslintIgnorePatterns,
 						extendedLocalConfig,
+						sharedFlatConfigImport,
 					});
 				} else {
 					console.error(`Skipping package at ${full} due to failed legacy config load.`);
@@ -198,6 +330,77 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 		await walk(path.join(repoRoot, top));
 	}
 	return results;
+}
+
+function buildSharedConfigContent(
+	configDir: string,
+	legacyConfig: unknown,
+	finalize: boolean,
+	typescript: boolean,
+): string {
+	const config = legacyConfig as {
+		rules?: Record<string, unknown>;
+		overrides?: unknown[];
+	};
+
+	// TypeScript mode uses `import type` and inline type annotations
+	const typeImport = typescript ? `import type { Linter } from "eslint";\n\n` : "";
+	const configType = typescript ? `: Linter.Config[]` : "";
+	const jsdocType = typescript ? "" : `/** @type {import("eslint").Linter.Config[]} */\n`;
+
+	const header = finalize
+		? `/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+/**
+ * Shared ESLint configuration for examples.
+ * Extend this in your example's eslint.config.mts to avoid duplicating common rules.
+ */
+
+${typeImport}`
+		: `/* eslint-disable */
+/**
+ * GENERATED FILE - DO NOT EDIT DIRECTLY.
+ * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts${typescript ? " --typescript" : ""}
+ * 
+ * Shared ESLint configuration for examples.
+ * Extend this in your example's eslint.config.mts to avoid duplicating common rules.
+ */
+${typeImport}`;
+
+	let configContent = header;
+	configContent += `${jsdocType}const config${configType} = [\n`;
+
+	// Add rules
+	if (config.rules && Object.keys(config.rules).length > 0) {
+		configContent += `\t{\n\t\trules: ${JSON.stringify(config.rules, null, 2).replace(/\n/g, "\n\t\t")},\n\t},\n`;
+	}
+
+	// Add overrides
+	if (config.overrides && config.overrides.length > 0) {
+		for (const override of config.overrides as Array<{
+			files?: string | string[];
+			excludedFiles?: string | string[];
+			rules?: Record<string, unknown>;
+		}>) {
+			configContent += `\t{\n`;
+			if (override.files) {
+				configContent += `\t\tfiles: ${JSON.stringify(override.files)},\n`;
+			}
+			if (override.excludedFiles) {
+				configContent += `\t\tignores: ${JSON.stringify(override.excludedFiles)},\n`;
+			}
+			if (override.rules) {
+				configContent += `\t\trules: ${JSON.stringify(override.rules, null, 2).replace(/\n/g, "\n\t\t")},\n`;
+			}
+			configContent += `\t},\n`;
+		}
+	}
+
+	configContent += `];\n\nexport default config;\n`;
+	return configContent;
 }
 
 // List of TypeScript-ESLint rules that require type information
@@ -270,6 +473,7 @@ function buildFlatConfigContent(
 	finalize: boolean = false,
 	typescript: boolean = false,
 	extendedLocalConfig?: { rules?: Record<string, unknown>; overrides?: unknown[] },
+	sharedFlatConfigImport?: string,
 ): string {
 	const flatSource = path
 		.relative(
@@ -285,6 +489,12 @@ function buildFlatConfigContent(
 	const configType = typescript ? `: Linter.Config[]` : "";
 	const jsdocType = typescript ? "" : `/** @type {import("eslint").Linter.Config[]} */\n`;
 
+	// Build imports
+	let imports = `${typeImport}import { ${variant} } from "${importPath}";\n`;
+	if (sharedFlatConfigImport) {
+		imports += `import sharedConfig from "${sharedFlatConfigImport}";\n`;
+	}
+
 	// In finalize mode, generate a clean config without the "GENERATED FILE" boilerplate
 	const header = finalize
 		? `/*!
@@ -292,31 +502,30 @@ function buildFlatConfigContent(
  * Licensed under the MIT License.
  */
 
-${typeImport}import { ${variant} } from "${importPath}";
-
+${imports}
 `
 		: `/* eslint-disable */
 /**
  * GENERATED FILE - DO NOT EDIT DIRECTLY.
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts${typescriptMode ? " --typescript" : ""}
  */
-${typeImport}import { ${variant} } from "${importPath}";
-
+${imports}
 `;
 
 	let configContent = header;
 
 	// Check if there are local rules or overrides to include
-	// Merge rules from extended local config with direct rules
-	const mergedRules = {
-		...(extendedLocalConfig?.rules ?? {}),
-		...(legacyConfig?.rules ?? {}),
-	};
-	// Merge overrides from extended local config with direct overrides
-	const mergedOverrides = [
-		...(extendedLocalConfig?.overrides ?? []),
-		...(legacyConfig?.overrides ?? []),
-	];
+	// If using a shared config, don't merge rules from extendedLocalConfig since they come from the shared config
+	const mergedRules = sharedFlatConfigImport
+		? { ...(legacyConfig?.rules ?? {}) }
+		: {
+				...(extendedLocalConfig?.rules ?? {}),
+				...(legacyConfig?.rules ?? {}),
+			};
+	// Merge overrides from extended local config with direct overrides (unless using shared config)
+	const mergedOverrides = sharedFlatConfigImport
+		? [...(legacyConfig?.overrides ?? [])]
+		: [...(extendedLocalConfig?.overrides ?? []), ...(legacyConfig?.overrides ?? [])];
 
 	const hasLocalRules = Object.keys(mergedRules).length > 0;
 	const hasOverrides = mergedOverrides.length > 0;
@@ -338,10 +547,16 @@ ${typeImport}import { ${variant} } from "${importPath}";
 
 	if (!hasLocalRules && !hasOverrides && !hasNonStandardProject && !hasEslintIgnore) {
 		// Simple case: no local customizations
-		configContent += `${jsdocType}const config${configType} = [...${variant}];\n\nexport default config;\n`;
+		const baseConfig = sharedFlatConfigImport
+			? `...${variant}, ...sharedConfig`
+			: `...${variant}`;
+		configContent += `${jsdocType}const config${configType} = [${baseConfig}];\n\nexport default config;\n`;
 	} else {
 		// Complex case: include local rules/overrides/custom project config
-		configContent += `${jsdocType}const config${configType} = [\n\t...${variant},\n`;
+		const baseConfig = sharedFlatConfigImport
+			? `...${variant},\n\t...sharedConfig,\n`
+			: `...${variant},\n`;
+		configContent += `${jsdocType}const config${configType} = [\n\t${baseConfig}`;
 
 		if (hasLocalRules) {
 			// Split rules into type-aware and non-type-aware
@@ -472,6 +687,27 @@ ${typeImport}import { ${variant} } from "${importPath}";
 	return configContent;
 }
 
+async function writeSharedConfigs(
+	sharedConfigs: SharedConfigTarget[],
+	finalize: boolean,
+	typescript: boolean,
+): Promise<void> {
+	if (sharedConfigs.length === 0) return;
+
+	const ext = typescript ? "mts" : "mjs";
+	console.log(`\nGenerating ${sharedConfigs.length} shared flat config file(s) (.${ext})...`);
+	for (const shared of sharedConfigs) {
+		const content = buildSharedConfigContent(
+			path.dirname(shared.outputPath),
+			shared.legacyConfig,
+			finalize,
+			typescript,
+		);
+		await fs.writeFile(shared.outputPath, content, "utf8");
+		console.log(`  Generated: ${path.relative(repoRoot, shared.outputPath)}`);
+	}
+}
+
 async function writeFlatConfigs(
 	targets: PackageTarget[],
 	finalize: boolean,
@@ -491,6 +727,7 @@ async function writeFlatConfigs(
 			finalize,
 			typescript,
 			t.extendedLocalConfig,
+			t.sharedFlatConfigImport,
 		);
 		await fs.writeFile(outPath, content, "utf8");
 		console.log(`  Generated: ${path.relative(repoRoot, outPath)} (${t.flatVariant})`);
@@ -528,7 +765,10 @@ async function main() {
 		console.log("Running in TYPESCRIPT mode - generating .mts files (requires jiti).\n");
 	}
 
-	const targets = await findLegacyConfigs();
+	const sharedConfigs = await findSharedConfigs();
+	const targets = await findLegacyConfigs(sharedConfigs);
+
+	await writeSharedConfigs(sharedConfigs, finalizeMode, typescriptMode);
 	await writeFlatConfigs(targets, finalizeMode, typescriptMode);
 
 	const ext = typescriptMode ? ".mts" : ".mjs";
@@ -538,7 +778,7 @@ async function main() {
 		);
 	} else {
 		console.log(
-			`Generated ${targets.length} flat config files (${ext}) from legacy .eslintrc.cjs configs.`,
+			`Generated ${sharedConfigs.length} shared config(s) and ${targets.length} flat config files (${ext}) from legacy .eslintrc.cjs configs.`,
 		);
 	}
 }

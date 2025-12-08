@@ -5,46 +5,8 @@
  */
 import type { Linter } from "eslint";
 import { strict } from "../../../common/build/eslint-config-fluid/flat.mts";
+import sharedConfig from "../../eslint.config.data.mts";
 
-const config: Linter.Config[] = [
-	...strict,
-	{
-		rules: {
-			"import-x/no-internal-modules": [
-				"error",
-				{
-					"allow": [
-						"@fluidframework/*/{beta,alpha,legacy,legacy/alpha}",
-						"fluid-framework/{beta,alpha,legacy,legacy/alpha}",
-						"@fluid-experimental/**",
-						"@fluidframework/*/test-utils",
-						"@fluid-example/*/{beta,alpha}",
-						"*/index.js",
-					],
-				},
-			],
-		},
-	},
-	{
-		files: ["*.spec.ts", "src/test/**", "tests/**"],
-		rules: {
-			"import-x/no-internal-modules": [
-				"error",
-				{
-					"allow": [
-						"@fluidframework/*/{beta,alpha,legacy,legacy/alpha}",
-						"fluid-framework/{beta,alpha,legacy,legacy/alpha}",
-						"@fluid-experimental/**",
-						"@fluidframework/*/test-utils",
-						"@fluid-example/*/{beta,alpha}",
-						"*/index.js",
-						"@fluidframework/test-utils/internal",
-						"*/*.js",
-					],
-				},
-			],
-		},
-	},
-];
+const config: Linter.Config[] = [...strict, ...sharedConfig];
 
 export default config;
