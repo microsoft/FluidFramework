@@ -12,10 +12,10 @@ const schema = {
 	}),
 } as const satisfies StatesWorkspaceSchema;
 
-export function renderCursorPresence(presence: Presence, div: HTMLDivElement) {
+export function renderCursorPresence(presence: Presence, div: HTMLDivElement): void {
 	const cursorStates = presence.states.getWorkspace("name:app-cursor", schema).states.cursor;
 
-	const onRemotePositionChanged = () => {
+	const onRemotePositionChanged = (): void => {
 		div.innerHTML = "";
 
 		const rect = div.getBoundingClientRect();
@@ -30,7 +30,7 @@ export function renderCursorPresence(presence: Presence, div: HTMLDivElement) {
 				posDiv.style.left = `${data.value.x + rect.width / 2}px`;
 				posDiv.style.top = `${data.value.y - 16}px`;
 				posDiv.style.fontWeight = "bold";
-				div.appendChild(posDiv);
+				div.append(posDiv);
 			}
 		}
 	};

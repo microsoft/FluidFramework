@@ -41,13 +41,13 @@ class DiceRoller implements IDiceRoller {
 		});
 	}
 
-	public get value() {
-		const value = this.map.get(diceValueKey);
+	public get value(): number {
+		const value: unknown = this.map.get(diceValueKey);
 		assert(typeof value === "number", "Bad dice value");
 		return value;
 	}
 
-	public readonly roll = () => {
+	public readonly roll = (): void => {
 		const rollValue = Math.floor(Math.random() * 6) + 1;
 		this.map.set(diceValueKey, rollValue);
 	};
