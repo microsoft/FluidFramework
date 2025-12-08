@@ -20,6 +20,7 @@ Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the leg
 **react-hooks/rules-of-hooks**: Temporarily downgraded from `"error"` to `"warn"` until ESLint 9 migration completes and React plugins are upgraded to more recent versions.
 
 **New unicorn rules** (enabled as `"error"` by default):
+
 - `unicorn/consistent-empty-array-spread`
 - `unicorn/no-anonymous-default-export`
 - `unicorn/no-await-in-promise-methods`
@@ -30,10 +31,12 @@ Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the leg
 - `unicorn/no-unnecessary-polyfills`
 
 **Unicorn rules disabled** (consider enabling in future):
+
 - `unicorn/import-style`: Changed from `"error"` to `"off"`
 - `unicorn/consistent-destructuring`: Changed from `"error"` to `"off"`
 
 **Unicorn rules changed to warnings** (to surface occurrences without breaking builds):
+
 - `unicorn/prefer-at`: Changed from `"off"` to `"warn"`
 - `unicorn/prefer-string-raw`: New rule set to `"warn"`
 - `unicorn/prefer-string-replace-all`: Changed from `"off"` to `"warn"`
