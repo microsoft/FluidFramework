@@ -110,7 +110,7 @@ export function createTableTree({ tableSize, initialCellValue }: TableTreeOption
 		}),
 	);
 
-	treeView.initialize(Table.empty());
+	treeView.initialize(Table.create());
 	const table = treeView.root;
 
 	const columns = Array.from({ length: tableSize }, () => new Column({}));

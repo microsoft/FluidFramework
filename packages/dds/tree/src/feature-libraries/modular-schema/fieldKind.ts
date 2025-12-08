@@ -8,14 +8,10 @@ import type {
 	FieldKindData,
 	Multiplicity,
 	SchemaPolicy,
-	TreeFieldStoredSchema,
-	TreeStoredSchema,
-	TreeTypeSet,
 } from "../../core/index.js";
 import type { MakeNominal } from "../../util/index.js";
 
 import type { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler.js";
-import { isNeverField } from "./isNeverTree.js";
 
 /**
  * Functionality for FieldKinds that is stable,
@@ -54,37 +50,9 @@ export class FlexFieldKind<
 		public readonly multiplicity: TMultiplicity,
 		// TODO: stronger typing
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		private readonly options: FieldKindOptions<FieldChangeHandler<any, TEditor>>,
+		public readonly options: FieldKindOptions<FieldChangeHandler<any, TEditor>>,
 	) {
 		this.changeHandler = options.changeHandler;
-	}
-
-	/**
-	 * True if a client should be able to {@link TreeView.upgradeSchema} from a field schema using this field kind and `originalTypes` to `superset`.
-	 *
-	 * @privateRemarks
-	 * See also {@link FieldKindOptions.allowedMonotonicUpgrade} for constraints on the implementation.
-	 */
-	public allowedMonotonicUpgrade(
-		policy: SchemaPolicy,
-		originalData: TreeStoredSchema,
-		originalTypes: TreeTypeSet,
-		superset: TreeFieldStoredSchema,
-	): boolean {
-		if (
-			isNeverField(policy, originalData, {
-				kind: this.identifier,
-				types: originalTypes,
-				// Metadata is not used for this check.
-				persistedMetadata: undefined,
-			})
-		) {
-			return true;
-		}
-		if (isNeverField(policy, originalData, superset)) {
-			return false;
-		}
-		return this.options.allowedMonotonicUpgrade(originalTypes, superset);
 	}
 }
 
@@ -101,11 +69,11 @@ export interface FieldKindOptions<TFieldChangeHandler> {
 	readonly changeHandler: TFieldChangeHandler;
 
 	/**
-	 * True if a client should be able to {@link TreeView.upgradeSchema} from a field schema using this field kind and `originalTypes` to `superset`.
+	 * The set of field kinds which can be migrated to this one by a {@link TreeView.upgradeSchema}.
 	 * @remarks
 	 * Must return false if such an upgrade could violate any invariants of `superset` for any document which is compatible with `this` + `originalTypes`.
 	 *
-	 * Unlike the rest of the FieldKind API, this function may change over time without changing the FieldKind identifier without causing decoherence between clients.
+	 * Unlike the rest of the FieldKind API, this may change over time without changing the FieldKind identifier without causing decoherence between clients.
 	 * It has a different set of constraints:
 	 *
 	 * - This must never allow an upgrade that could violate any invariants of any field kind required by any version of client for any document content (that was not already invalid).
@@ -119,16 +87,13 @@ export interface FieldKindOptions<TFieldChangeHandler> {
 	 * Such cases, if allowed, could lead to cycles if their inverse is also allowed.
 	 * These cases, if supported, can be removed, but if doing so must be documented and still considered when avoiding cycles.
 	 *
-	 * Used by {@link FlexFieldKind.allowedMonotonicUpgrade}, which handles the `never` cases (empty type sets) before calling this: the implementer does not need to handle those.
+	 * Used by {@link allowsFieldSuperset}.
 	 *
 	 * TODO: this design is rather limiting, and there is some planned work in this area:
 	 * - Provide schema upgrade schema not reliant on this to ensure monotonicity of schema upgrades like AB#7482.
 	 * - This monotonic upgrade scheme can remain useful for features like AB#53604 so it should be kept and refined.
 	 */
-	readonly allowedMonotonicUpgrade: (
-		originalTypes: TreeTypeSet,
-		superset: TreeFieldStoredSchema,
-	) => boolean;
+	readonly allowMonotonicUpgradeFrom: ReadonlySet<FieldKindIdentifier>;
 
 	/**
 	 * Kinds (in addition to this) whose edits can be processed by changeHandler.
