@@ -80,6 +80,29 @@ export function toPosixPath(s: string) {
 }
 
 /**
+ * Shuffles an array in place using Fisher-Yates algorithm.
+ * Used for testing order-independence when FLUID_BUILD_TEST_RANDOM_ORDER is set.
+ *
+ * @param array - The array to shuffle
+ * @returns The shuffled array (same reference, modified in place)
+ */
+function shuffleArray<T>(array: T[]): T[] {
+	for (let i = array.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[array[i], array[j]] = [array[j], array[i]];
+	}
+	return array;
+}
+
+/**
+ * Returns true if runtime order randomization is enabled for testing.
+ * When enabled, glob functions will randomize their results to expose order dependencies.
+ */
+function isRandomOrderTestMode(): boolean {
+	return process.env.FLUID_BUILD_TEST_RANDOM_ORDER === "true";
+}
+
+/**
  * Options for {@link globFn}.
  * This interface maps to the options supported by tinyglobby.
  */
@@ -134,7 +157,15 @@ export async function globFn(pattern: string, options: GlobFnOptions = {}): Prom
 
 	// When nodir is false (i.e., onlyFiles is false), tinyglobby returns directories
 	// with trailing slashes. Remove them for backwards compatibility with the glob package.
-	return results.map((p) => (p.endsWith("/") ? p.slice(0, -1) : p));
+	const normalized = results.map((p) => (p.endsWith("/") ? p.slice(0, -1) : p));
+
+	// Test mode: randomize order to expose ordering dependencies
+	if (isRandomOrderTestMode()) {
+		return shuffleArray([...normalized]);
+	}
+
+	// Sort results for consistent ordering (tinyglobby does not guarantee sorted order)
+	return normalized.sort();
 }
 
 export async function loadModule(modulePath: string, moduleType?: string) {
@@ -173,6 +204,9 @@ export interface GlobWithGitignoreOptions {
  * @remarks
  * This function uses tinyglobby for globbing and the `ignore` package for gitignore filtering.
  * The gitignore patterns are read from .gitignore files in the file system hierarchy.
+ * When the environment variable `FLUID_BUILD_TEST_RANDOM_ORDER` is set to "true", results will be
+ * randomly shuffled to expose code that incorrectly depends on glob result ordering. This should only
+ * be used in test/CI environments.
  */
 export async function globWithGitignore(
 	patterns: readonly string[],
@@ -186,12 +220,14 @@ export async function globWithGitignore(
 		absolute: true,
 	});
 
-	if (!applyGitignore) {
-		return files;
+	const filtered = !applyGitignore ? files : await filterByGitignore(files, cwd);
+
+	// Test mode: randomize order to expose ordering dependencies
+	if (isRandomOrderTestMode()) {
+		return shuffleArray([...filtered]);
 	}
 
-	// Filter files using gitignore rules
-	return filterByGitignore(files, cwd);
+	return filtered;
 }
 
 /**
