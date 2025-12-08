@@ -342,7 +342,6 @@ export const FluidClientVersion: {
     readonly v2_52: "2.52.0";
     readonly v2_73: "2.73.0";
     readonly v2_74: "2.74.0";
-    readonly vDetachedRoots: "2.99999.0";
 };
 
 // @beta
@@ -1043,6 +1042,7 @@ export interface SharedTreeFormatOptions {
 
 // @alpha @input
 export interface SharedTreeOptions extends SharedTreeOptionsBeta, Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions> {
+    readonly enableDetachRootEditing?: boolean;
     readonly enableSharedBranches?: boolean;
     shouldEncodeIncrementally?: IncrementalEncodingPolicy;
 }
