@@ -5,6 +5,10 @@
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	getConfigForMinVersionForCollab,
+	lowestMinVersionForCollab,
+} from "@fluidframework/runtime-utils/internal";
 
 import {
 	type CodecTree,
@@ -29,7 +33,7 @@ import { brand, type JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { SummaryData } from "./editManager.js";
 import { makeV1CodecWithVersion } from "./editManagerCodecsV1toV4.js";
-import { makeV5CodecWithVersion } from "./editManagerCodecsV5.js";
+import { makeSharedBranchesCodecWithVersion } from "./editManagerCodecsVSharedBranches.js";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
 	EditManagerFormatVersion,
@@ -50,12 +54,14 @@ export function clientVersionToEditManagerFormatVersion(
 	clientVersion: MinimumVersionForCollab,
 	writeVersionOverride?: EditManagerFormatVersion,
 ): EditManagerFormatVersion {
-	const compatibleVersion: EditManagerFormatVersion =
-		clientVersion < FluidClientVersion.v2_43
-			? brand(EditManagerFormatVersion.v3)
-			: clientVersion < FluidClientVersion.vDetachedRoots
-				? brand(EditManagerFormatVersion.v4)
-				: brand(EditManagerFormatVersion.vDetachedRoots);
+	const compatibleVersion: EditManagerFormatVersion = brand(
+		getConfigForMinVersionForCollab(clientVersion, {
+			[lowestMinVersionForCollab]: EditManagerFormatVersion.v3,
+			[FluidClientVersion.v2_43]: EditManagerFormatVersion.v4,
+			[FluidClientVersion.vDetachedRoots]: EditManagerFormatVersion.vDetachedRoots,
+		}),
+	);
+
 	return writeVersionOverride ?? compatibleVersion;
 }
 
@@ -65,7 +71,7 @@ export function clientVersionToEditManagerFormatVersion(
 export function editManagerFormatVersionSelectorForSharedBranches(
 	clientVersion: MinimumVersionForCollab,
 ): EditManagerFormatVersion {
-	return brand(EditManagerFormatVersion.v5);
+	return brand(EditManagerFormatVersion.vSharedBranches);
 }
 
 export interface EditManagerCodecOptions {
@@ -141,11 +147,13 @@ export function makeEditManagerCodecs<TChangeset>(
 					makeV1CodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
 			}
-			case EditManagerFormatVersion.v5: {
+			case EditManagerFormatVersion.v5:
+				return [version, makeDiscontinuedCodecVersion(options, version, "2.74.0")];
+			case EditManagerFormatVersion.vSharedBranches: {
 				const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
 				return [
 					version,
-					makeV5CodecWithVersion(changeCodec, revisionTagCodec, options, version),
+					makeSharedBranchesCodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
 			}
 			default:

@@ -8,6 +8,7 @@ export {
 	allowsTreeSchemaIdentifierSuperset,
 	allowsFieldSuperset,
 	allowsTreeSuperset,
+	allowsMultiplicitySuperset,
 } from "./comparison.js";
 export { isNeverField, isNeverTree } from "./isNeverTree.js";
 export {

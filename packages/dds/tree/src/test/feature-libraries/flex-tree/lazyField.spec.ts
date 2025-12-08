@@ -7,7 +7,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { validateAssertionError2 as validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type FieldAnchor,
@@ -53,9 +53,9 @@ import {
 	numberSchema,
 	SchemaFactory,
 	stringSchema,
-	getStoredSchema,
 	toInitialSchema,
 	restrictiveStoredSchemaGenerationOptions,
+	toStoredSchema,
 } from "../../../simple-tree/index.js";
 import { singleJsonCursor } from "../../json/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
@@ -451,13 +451,8 @@ describe("LazyField", () => {
 			persistedMetadata: undefined,
 		};
 		const schema: TreeStoredSchema = {
+			...toStoredSchema(numberSchema, restrictiveStoredSchemaGenerationOptions),
 			rootFieldSchema: rootSchema,
-			nodeSchema: new Map([
-				[
-					brand(numberSchema.identifier),
-					getStoredSchema(numberSchema, restrictiveStoredSchemaGenerationOptions),
-				],
-			]),
 		};
 
 		/**

@@ -854,7 +854,6 @@ export class ContainerRuntime
 		IProvideFluidHandleContext,
 		IProvideLayerCompatDetails
 {
-	/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 	/**
 	 * Load the stores from a snapshot and returns the runtime.
 	 * @param params - An object housing the runtime properties.
@@ -883,7 +882,6 @@ export class ContainerRuntime
 			registry: new FluidDataStoreRegistry(params.registryEntries),
 		});
 	}
-	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 
 	/**
 	 * Load the stores from a snapshot and returns the runtime.
@@ -4349,6 +4347,7 @@ export class ContainerRuntime
 				if (lastAckedContext !== this.lastAckedSummaryContext) {
 					return {
 						continue: false,
+						// eslint-disable-next-line @typescript-eslint/no-base-to-string
 						error: `Last summary changed while summarizing. ${this.lastAckedSummaryContext} !== ${lastAckedContext}`,
 					};
 				}

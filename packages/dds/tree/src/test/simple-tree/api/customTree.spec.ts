@@ -6,10 +6,8 @@
 import { strict as assert, fail } from "node:assert";
 
 import {
-	getStoredSchema,
-	restrictiveStoredSchemaGenerationOptions,
+	numberSchema,
 	SchemaFactoryAlpha,
-	schemaStatics,
 	toInitialSchema,
 } from "../../../simple-tree/index.js";
 
@@ -27,6 +25,15 @@ import { singleJsonCursor } from "../../json/index.js";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import { fieldCursorFromInsertable } from "../../utils.js";
+import {
+	EmptyKey,
+	LeafNodeStoredSchema,
+	ObjectNodeStoredSchema,
+	ValueSchema,
+	type TreeFieldStoredSchema,
+} from "../../../core/index.js";
+import { brand } from "../../../util/index.js";
+import { FieldKinds } from "../../../feature-libraries/index.js";
 
 const schemaFactory = new SchemaFactoryAlpha("Test");
 
@@ -161,28 +168,44 @@ describe("simple-tree customTree", () => {
 	});
 
 	it("tryStoredSchemaAsArray", () => {
-		const arraySchema = schemaFactory.arrayAlpha("A", schemaFactory.number);
+		const numberSequence: TreeFieldStoredSchema = {
+			kind: FieldKinds.sequence.identifier,
+			types: new Set([brand(numberSchema.identifier)]),
+			persistedMetadata: {},
+		};
 		const arrayCase = tryStoredSchemaAsArray(
-			getStoredSchema(arraySchema, restrictiveStoredSchemaGenerationOptions),
+			new ObjectNodeStoredSchema(new Map([[EmptyKey, numberSequence]])),
 		);
 		assert.deepEqual(arrayCase, new Set([schemaFactory.number.identifier]));
 
-		const objectSchema = schemaFactory.objectAlpha("x", {});
-		const objectCase = tryStoredSchemaAsArray(
-			getStoredSchema(objectSchema, restrictiveStoredSchemaGenerationOptions),
+		const namedCase = tryStoredSchemaAsArray(
+			new ObjectNodeStoredSchema(new Map([[brand("x"), numberSequence]])),
 		);
-		assert.deepEqual(objectCase, undefined);
+		assert.deepEqual(namedCase, undefined);
+		const optionalCase = tryStoredSchemaAsArray(
+			new ObjectNodeStoredSchema(
+				new Map([[EmptyKey, { ...numberSequence, kind: FieldKinds.optional.identifier }]]),
+			),
+		);
+		assert.deepEqual(optionalCase, undefined);
 
-		const objectSchemaEmptyKey = schemaFactory.objectAlpha("x", {
-			[""]: schemaFactory.number,
-		});
-		const objectEmptyKeyCase = tryStoredSchemaAsArray(
-			getStoredSchema(objectSchemaEmptyKey, restrictiveStoredSchemaGenerationOptions),
+		const requiredCase = tryStoredSchemaAsArray(
+			new ObjectNodeStoredSchema(
+				new Map([
+					[
+						EmptyKey,
+						{
+							...numberSequence,
+							kind: FieldKinds.required.identifier,
+						},
+					],
+				]),
+			),
 		);
-		assert.deepEqual(objectEmptyKeyCase, undefined);
+		assert.deepEqual(requiredCase, undefined);
 
 		const nonObjectCase = tryStoredSchemaAsArray(
-			getStoredSchema(schemaStatics.number, restrictiveStoredSchemaGenerationOptions),
+			new LeafNodeStoredSchema(ValueSchema.Boolean),
 		);
 		assert.deepEqual(nonObjectCase, undefined);
 	});

@@ -214,6 +214,7 @@ export function testCodec() {
 		makeDiscontinuedEncodingTestSuite(family, [
 			EditManagerFormatVersion.v1,
 			EditManagerFormatVersion.v2,
+			EditManagerFormatVersion.v5,
 		]);
 
 		makeEncodingTestSuite(
@@ -228,7 +229,9 @@ export function testCodec() {
 			],
 		);
 
-		makeEncodingTestSuite(family, testCases, undefined, [EditManagerFormatVersion.v5]);
+		makeEncodingTestSuite(family, testCases, undefined, [
+			EditManagerFormatVersion.vSharedBranches,
+		]);
 
 		// TODO: testing EditManagerSummarizer class itself, specifically for attachment and normal summaries.
 		// TODO: format compatibility tests to detect breaking of existing documents.

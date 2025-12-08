@@ -9,7 +9,7 @@ import { Type } from "@sinclair/typebox";
 
 import { type IJsonCodec, withSchemaValidation } from "../../codec/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
-import { validateAssertionError2 as validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 describe("Codec APIs", () => {
 	describe("withSchemaValidation", () => {

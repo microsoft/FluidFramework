@@ -24,7 +24,7 @@ import {
 	MockAudience,
 	MockDeltaManager,
 	MockQuorumClients,
-	validateAssertionError2 as validateAssertionError,
+	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 import { type SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
 

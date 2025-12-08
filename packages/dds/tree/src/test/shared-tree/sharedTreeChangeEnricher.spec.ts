@@ -82,11 +82,11 @@
 
 // // const revision1 = testIdCompressor.generateCompressedId();
 
-// // interface TestChangeEnricher {
-// // 	forest: IEditableForest;
-// // 	removedRoots: DetachedFieldIndex;
-// // 	fork(): SharedTreeMutableChangeEnricher & TestChangeEnricher;
-// // }
+// interface TestChangeEnricher {
+// 	borrowedForest: IEditableForest;
+// 	borrowedRemovedRoots: DetachedFieldIndex;
+// 	fork(): SharedTreeMutableChangeEnricher & TestChangeEnricher;
+// }
 
 // export function setupEnricher() {
 // 	const removedRoots = new DetachedFieldIndex(
@@ -108,21 +108,21 @@
 // 	return { enricher, fork };
 // }
 
-// // describe("SharedTreeChangeEnricher", () => {
-// // 	it("applies tip changes to fork", () => {
-// // 		const { enricher, fork } = setupEnricher();
-// // 		assert.deepEqual(jsonTreeFromForest(enricher.forest), [content]);
-// // 		assert.deepEqual(Array.from(enricher.removedRoots.entries()), []);
+// describe("SharedTreeChangeEnricher", () => {
+// 	it("applies tip changes to fork", () => {
+// 		const { enricher, fork } = setupEnricher();
+// 		assert.deepEqual(jsonTreeFromForest(enricher.borrowedForest), [content]);
+// 		assert.deepEqual(Array.from(enricher.borrowedRemovedRoots.entries()), []);
 
-// // 		fork.applyTipChange(removeRoot, revision1);
+// // // 		fork.applyTipChange(removeRoot, revision1);
 
-// // 		assert.deepEqual(jsonTreeFromForest(fork.forest), []);
-// // 		assert.equal(Array.from(fork.removedRoots.entries()).length, 1);
+// 		assert.deepEqual(jsonTreeFromForest(fork.borrowedForest), []);
+// 		assert.equal(Array.from(fork.borrowedRemovedRoots.entries()).length, 1);
 
-// // 		// The original enricher should not have been modified
-// // 		assert.deepEqual(jsonTreeFromForest(enricher.forest), [content]);
-// // 		assert.deepEqual(Array.from(enricher.removedRoots.entries()), []);
-// // 	});
+// 		// The original enricher should not have been modified
+// 		assert.deepEqual(jsonTreeFromForest(enricher.borrowedForest), [content]);
+// 		assert.deepEqual(Array.from(enricher.borrowedRemovedRoots.entries()), []);
+// 	});
 
 // // 	it("updates enrichments", () => {
 // // 		const { fork } = setupEnricher();

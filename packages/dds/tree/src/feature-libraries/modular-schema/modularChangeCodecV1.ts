@@ -42,10 +42,7 @@ import {
 	type FieldBatchCodec,
 	type TreeChunk,
 } from "../chunked-forest/index.js";
-import {
-	TreeCompressionStrategy,
-	type TreeCompressionStrategyPrivate,
-} from "../treeCompressionUtils.js";
+import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 import type {
 	FieldKindConfiguration,
 	FieldKindConfigurationEntry,
@@ -108,7 +105,7 @@ export function makeModularChangeCodecV1(
 	>,
 	fieldsCodec: FieldBatchCodec,
 	codecOptions: ICodecOptions,
-	chunkCompressionStrategy: TreeCompressionStrategyPrivate = TreeCompressionStrategy.Compressed,
+	chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
 ): ModularChangeCodec {
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	const getMapEntry = ({ kind, formatVersion }: FieldKindConfigurationEntry) => {

@@ -252,9 +252,11 @@ export interface ICodecFamily<TDecoded, TContext = void> {
 /**
  * A version stamp for encoded data.
  *
+ * Strings are used for formats that are not yet officially supported.
+ * When such formats become officially supported/stable, they will be switched to using a number.
  * Undefined is tolerated to enable the scenario where data was not initially versioned.
  */
-export type FormatVersion = number | undefined;
+export type FormatVersion = number | string | undefined;
 
 /**
  * A format version which is dependent on some parent format version.
@@ -525,6 +527,18 @@ export const FluidClientVersion = {
 	 * - FieldBatchFormatVersion v2
 	 */
 	v2_73: "2.73.0",
+
+	/**
+	 * Fluid Framework Client 2.74 and newer.
+	 * @remarks
+	 * New formats introduced in 2.74:
+	 * - SharedTreeSummaryFormatVersion v2
+	 * - DetachedFieldIndexSummaryFormatVersion v2
+	 * - SchemaSummaryFormatVersion v2
+	 * - EditManagerSummaryFormatVersion v2
+	 * - ForestSummaryFormatVersion v2
+	 */
+	v2_74: "2.74.0",
 
 	/**
 	 * Not ready for production use.

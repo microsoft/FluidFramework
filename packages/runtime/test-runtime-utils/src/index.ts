@@ -29,7 +29,7 @@ export {
 } from "./mocksForReconnection.js";
 export { MockStorage } from "./mockStorage.js";
 export {
-	validateAssertionError2,
+	validateAssertionError,
 	validateUsageError,
 	validateTypeError,
 	validateError,

@@ -156,12 +156,13 @@ describe("message codec", () => {
 		undefined,
 		MessageFormatVersion.v1,
 		MessageFormatVersion.v2,
+		MessageFormatVersion.v5,
 	]);
 
 	makeEncodingTestSuite(family, testCases, undefined, [
 		MessageFormatVersion.v3,
 		MessageFormatVersion.v4,
-		MessageFormatVersion.v5,
+		MessageFormatVersion.vSharedBranches,
 		MessageFormatVersion.vDetachedRoots,
 	]);
 

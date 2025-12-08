@@ -82,7 +82,7 @@ describe("import tests", () => {
 			row: Row,
 		}) {}
 
-		const _table = new Table({
+		const _table = Table.create({
 			columns: [
 				new Column({
 					props: {
