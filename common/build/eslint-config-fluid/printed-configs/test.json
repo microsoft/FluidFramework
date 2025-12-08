@@ -10,7 +10,10 @@
         "SharedArrayBuffer": "readonly"
     },
     "ignorePatterns": [
-        "**/packageVersion.ts"
+        "**/packageVersion.ts",
+        "**/layerGenerationState.ts",
+        "**/*.generated.ts",
+        "**/*.generated.js"
     ],
     "parserOptions": {
         "ecmaFeatures": {
@@ -21,8 +24,9 @@
         "sourceType": "module"
     },
     "plugins": [
-        "eslint-comments",
-        "import",
+        "@eslint-community/eslint-comments",
+        "import-x",
+        "depend",
         "@fluid-internal/fluid",
         "unused-imports",
         "promise",
@@ -40,6 +44,33 @@
         ],
         "@babel/semi": [
             "off"
+        ],
+        "@eslint-community/eslint-comments/disable-enable-pair": [
+            "error",
+            {
+                "allowWholeFile": true
+            }
+        ],
+        "@eslint-community/eslint-comments/no-aggregating-enable": [
+            "error"
+        ],
+        "@eslint-community/eslint-comments/no-duplicate-disable": [
+            "error"
+        ],
+        "@eslint-community/eslint-comments/no-unlimited-disable": [
+            "error"
+        ],
+        "@eslint-community/eslint-comments/no-unused-enable": [
+            "error"
+        ],
+        "@fluid-internal/fluid/no-file-path-links-in-jsdoc": [
+            "error"
+        ],
+        "@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": [
+            "error"
+        ],
+        "@fluid-internal/fluid/no-markdown-links-in-jsdoc": [
+            "error"
         ],
         "@fluid-internal/fluid/no-member-release-tags": [
             "error"
@@ -608,9 +639,6 @@
         "@typescript-eslint/ban-tslint-comment": [
             "error"
         ],
-        "@typescript-eslint/ban-types": [
-            "error"
-        ],
         "@typescript-eslint/block-spacing": [
             "off"
         ],
@@ -621,8 +649,7 @@
             "error"
         ],
         "@typescript-eslint/comma-dangle": [
-            "off",
-            "always-multiline"
+            "off"
         ],
         "@typescript-eslint/comma-spacing": [
             "off"
@@ -711,6 +738,9 @@
         "@typescript-eslint/no-array-constructor": [
             "error"
         ],
+        "@typescript-eslint/no-array-delete": [
+            "error"
+        ],
         "@typescript-eslint/no-base-to-string": [
             "error"
         ],
@@ -729,7 +759,7 @@
         "@typescript-eslint/no-empty-function": [
             "off"
         ],
-        "@typescript-eslint/no-empty-interface": [
+        "@typescript-eslint/no-empty-object-type": [
             "error"
         ],
         "@typescript-eslint/no-explicit-any": [
@@ -767,9 +797,6 @@
         ],
         "@typescript-eslint/no-invalid-this": [
             "off"
-        ],
-        "@typescript-eslint/no-loss-of-precision": [
-            "error"
         ],
         "@typescript-eslint/no-magic-numbers": [
             "off"
@@ -826,9 +853,6 @@
         "@typescript-eslint/no-this-alias": [
             "error"
         ],
-        "@typescript-eslint/no-throw-literal": [
-            "error"
-        ],
         "@typescript-eslint/no-unnecessary-qualifier": [
             "error"
         ],
@@ -856,10 +880,16 @@
         "@typescript-eslint/no-unsafe-enum-comparison": [
             "off"
         ],
+        "@typescript-eslint/no-unsafe-function-type": [
+            "error"
+        ],
         "@typescript-eslint/no-unsafe-member-access": [
             "error"
         ],
         "@typescript-eslint/no-unsafe-return": [
+            "error"
+        ],
+        "@typescript-eslint/no-unsafe-unary-minus": [
             "error"
         ],
         "@typescript-eslint/no-unused-expressions": [
@@ -871,7 +901,7 @@
         "@typescript-eslint/no-use-before-define": [
             "off"
         ],
-        "@typescript-eslint/no-var-requires": [
+        "@typescript-eslint/no-wrapper-object-types": [
             "error"
         ],
         "@typescript-eslint/non-nullable-type-assertion-style": [
@@ -880,7 +910,13 @@
         "@typescript-eslint/object-curly-spacing": [
             "off"
         ],
+        "@typescript-eslint/only-throw-error": [
+            "error"
+        ],
         "@typescript-eslint/prefer-as-const": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-find": [
             "error"
         ],
         "@typescript-eslint/prefer-for-of": [
@@ -901,7 +937,13 @@
         "@typescript-eslint/prefer-optional-chain": [
             "error"
         ],
+        "@typescript-eslint/prefer-promise-reject-errors": [
+            "error"
+        ],
         "@typescript-eslint/prefer-readonly": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-regexp-exec": [
             "error"
         ],
         "@typescript-eslint/prefer-string-starts-ends-with": [
@@ -911,12 +953,7 @@
             "error"
         ],
         "@typescript-eslint/quotes": [
-            0,
-            "double",
-            {
-                "allowTemplateLiterals": true,
-                "avoidEscape": true
-            }
+            0
         ],
         "@typescript-eslint/require-await": [
             "off"
@@ -931,19 +968,13 @@
             "error"
         ],
         "@typescript-eslint/semi": [
-            "off",
-            "always"
+            "off"
         ],
         "@typescript-eslint/space-before-blocks": [
             "off"
         ],
         "@typescript-eslint/space-before-function-paren": [
-            "off",
-            {
-                "anonymous": "never",
-                "asyncArrow": "always",
-                "named": "never"
-            }
+            "off"
         ],
         "@typescript-eslint/space-infix-ops": [
             "off"
@@ -1033,6 +1064,15 @@
         "default-case": [
             "error"
         ],
+        "depend/ban-dependencies": [
+            "error",
+            {
+                "allowed": [
+                    "axios",
+                    "fs-extra"
+                ]
+            }
+        ],
         "dot-location": [
             "off"
         ],
@@ -1045,24 +1085,6 @@
         "eqeqeq": [
             "error",
             "smart"
-        ],
-        "eslint-comments/disable-enable-pair": [
-            "error",
-            {
-                "allowWholeFile": true
-            }
-        ],
-        "eslint-comments/no-aggregating-enable": [
-            "error"
-        ],
-        "eslint-comments/no-duplicate-disable": [
-            "error"
-        ],
-        "eslint-comments/no-unlimited-disable": [
-            "error"
-        ],
-        "eslint-comments/no-unused-enable": [
-            "error"
         ],
         "flowtype/boolean-style": [
             "off"
@@ -1127,34 +1149,34 @@
         "implicit-arrow-linebreak": [
             "off"
         ],
-        "import/default": [
-            2
-        ],
-        "import/export": [
-            2
-        ],
-        "import/named": [
-            "off"
-        ],
-        "import/namespace": [
-            2
-        ],
-        "import/no-default-export": [
+        "import-x/default": [
             "error"
         ],
-        "import/no-deprecated": [
+        "import-x/export": [
+            "error"
+        ],
+        "import-x/named": [
             "off"
         ],
-        "import/no-duplicates": [
-            1
+        "import-x/namespace": [
+            "error"
         ],
-        "import/no-extraneous-dependencies": [
+        "import-x/no-default-export": [
+            "error"
+        ],
+        "import-x/no-deprecated": [
+            "off"
+        ],
+        "import-x/no-duplicates": [
+            "warn"
+        ],
+        "import-x/no-extraneous-dependencies": [
             "error",
             {
                 "devDependencies": true
             }
         ],
-        "import/no-internal-modules": [
+        "import-x/no-internal-modules": [
             "error",
             {
                 "allow": [
@@ -1171,38 +1193,44 @@
                 ]
             }
         ],
-        "import/no-named-as-default": [
-            1
+        "import-x/no-named-as-default": [
+            "warn"
         ],
-        "import/no-named-as-default-member": [
-            1
+        "import-x/no-named-as-default-member": [
+            "warn"
         ],
-        "import/no-nodejs-modules": [
+        "import-x/no-nodejs-modules": [
             "off"
         ],
-        "import/no-unassigned-import": [
+        "import-x/no-unassigned-import": [
             "error"
         ],
-        "import/no-unresolved": [
-            2,
-            {
-                "caseSensitive": true,
-                "caseSensitiveStrict": false
-            }
-        ],
-        "import/no-unused-modules": [
-            "error"
-        ],
-        "import/order": [
+        "import-x/no-unresolved": [
             "error",
             {
-                "newlines-between": "always",
-                "alphabetize": {
-                    "order": "asc",
-                    "caseInsensitive": false,
-                    "orderImportKind": "ignore"
-                },
+                "caseSensitive": true
+            }
+        ],
+        "import-x/no-unused-modules": [
+            "error"
+        ],
+        "import-x/order": [
+            "error",
+            {
+                "newlines-between": "ignore",
+                "groups": [
+                    [
+                        "builtin",
+                        "external",
+                        "internal",
+                        "parent",
+                        "sibling",
+                        "index"
+                    ]
+                ],
                 "distinctGroup": true,
+                "sortTypesGroup": false,
+                "named": false,
                 "warnOnUnassignedImports": false
             }
         ],
@@ -1278,14 +1306,11 @@
             "off"
         ],
         "max-len": [
-            "error",
+            "off",
             {
-                "code": 120,
-                "ignoreTrailingComments": true,
-                "ignoreUrls": true,
-                "ignoreStrings": true,
-                "ignoreTemplateLiterals": true,
-                "ignoreRegExpLiterals": true
+                "ignoreRegExpLiterals": false,
+                "ignoreStrings": false,
+                "code": 120
             }
         ],
         "max-lines": [
@@ -1322,7 +1347,7 @@
             "error"
         ],
         "no-class-assign": [
-            "error"
+            "off"
         ],
         "no-comma-dangle": [
             "off"
@@ -1427,7 +1452,7 @@
             "error"
         ],
         "no-loss-of-precision": [
-            "off"
+            "error"
         ],
         "no-magic-numbers": [
             "off"
@@ -1466,6 +1491,9 @@
         ],
         "no-new-func": [
             "error"
+        ],
+        "no-new-native-nonconstructor": [
+            "off"
         ],
         "no-new-symbol": [
             "off"
@@ -2290,27 +2318,30 @@
         ]
     },
     "settings": {
-        "import/extensions": [
+        "import-x/extensions": [
             ".ts",
             ".tsx",
             ".d.ts",
             ".js",
             ".jsx",
-            ".jsx"
+            ".jsx",
+            ".cjs",
+            ".mjs"
         ],
-        "import/external-module-folders": [
+        "import-x/external-module-folders": [
             "node_modules",
             "node_modules/@types"
         ],
-        "import/parsers": {
+        "import-x/parsers": {
             "@typescript-eslint/parser": [
                 ".ts",
                 ".tsx",
                 ".d.ts",
-                ".tsx"
+                ".cts",
+                ".mts"
             ]
         },
-        "import/resolver": {
+        "import-x/resolver": {
             "typescript": {
                 "extensions": [
                     ".ts",
@@ -2331,16 +2362,6 @@
                     "node-addons",
                     "browser",
                     "default"
-                ]
-            },
-            "node": {
-                "extensions": [
-                    ".ts",
-                    ".cts",
-                    ".mts",
-                    ".tsx",
-                    ".js",
-                    ".jsx"
                 ]
             }
         },

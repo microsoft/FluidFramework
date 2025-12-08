@@ -7,6 +7,17 @@
 // @beta
 export type IOdspAudience = IServiceAudience<OdspMember>;
 
+// @beta @sealed
+export interface IOdspContainerServicesEvents {
+    readOnlyStateChanged: () => void;
+    sensitivityLabelsInfoChanged: () => void;
+}
+
+// @beta
+export interface IOdspFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IFluidContainer<TContainerSchema> {
+    attach(props?: ContainerAttachProps<OdspContainerAttachProps>): Promise<string>;
+}
+
 // @beta
 export interface IOdspTokenProvider {
     fetchStorageToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
@@ -18,12 +29,12 @@ export class OdspClient {
     constructor(properties: OdspClientProps);
     // (undocumented)
     createContainer<T extends ContainerSchema>(containerSchema: T): Promise<{
-        container: IFluidContainer<T>;
+        container: IOdspFluidContainer<T>;
         services: OdspContainerServices;
     }>;
     // (undocumented)
     getContainer<T extends ContainerSchema>(id: string, containerSchema: T): Promise<{
-        container: IFluidContainer<T>;
+        container: IOdspFluidContainer<T>;
         services: OdspContainerServices;
     }>;
 }
@@ -43,9 +54,19 @@ export interface OdspConnectionConfig {
     tokenProvider: IOdspTokenProvider;
 }
 
-// @beta
-export interface OdspContainerServices {
+// @beta (undocumented)
+export interface OdspContainerAttachProps {
+    fileName: string | undefined;
+    filePath: string | undefined;
+}
+
+// @beta @sealed
+export interface OdspContainerServices extends IDisposable {
     audience: IOdspAudience;
+    // (undocumented)
+    events: Listenable<IOdspContainerServicesEvents>;
+    getReadOnlyState(): boolean | undefined;
+    getSensitivityLabelsInfo(): string | undefined;
 }
 
 // @beta

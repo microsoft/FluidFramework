@@ -53,7 +53,7 @@ describe("SharedJson1", () => {
 
 		describe("APIs", () => {
 			it("Can create a OT", () => {
-				assert.ok(ot, "Could not create a OT");
+				assert(ot !== undefined, "Could not create a OT");
 			});
 
 			describe("insert()", () => {
@@ -131,6 +131,7 @@ describe("SharedJson1", () => {
 				assert.deepEqual(
 					actual1,
 					actual2,
+					// eslint-disable-next-line @typescript-eslint/no-base-to-string
 					`docs must converge (doc1: '${actual1}', doc2: '${actual2}'${
 						expected !== undefined ? ` expected: '${expected}'` : ""
 					})`,
@@ -140,6 +141,7 @@ describe("SharedJson1", () => {
 					assert.deepEqual(
 						actual1,
 						expected,
+						// eslint-disable-next-line @typescript-eslint/no-base-to-string
 						`docs must match expected (expected '${expected}', but got '${actual1}')`,
 					);
 				}

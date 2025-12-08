@@ -126,7 +126,7 @@ export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	subscribeToLocalBranch(manager);
 	for (let iChange = 0; iChange < localEditCount; iChange++) {
 		const revision = mintRevisionTag();
-		manager.localBranch.apply({ change: mintChange(undefined), revision });
+		manager.getLocalBranch("main").apply({ change: mintChange(undefined), revision });
 	}
 	const trunkSessionId = "trunk" as SessionId;
 	const trunkEdits = makeArray(trunkEditCount, () => {
@@ -140,7 +140,7 @@ export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	const run = () => {
 		// If bunchCommits is true, send all trunk edit commits to the EditManager together.
 		if (bunchCommits) {
-			manager.addSequencedChanges(trunkEdits, trunkSessionId, brand(1), brand(0));
+			manager.addSequencedChanges(trunkEdits, trunkSessionId, brand(1), brand(0), "main");
 		} else {
 			for (let iChange = 0; iChange < trunkEditCount; iChange++) {
 				const commit = trunkEdits[iChange];
@@ -149,6 +149,7 @@ export function rebaseLocalEditsOverTrunkEdits<TChange>(
 					commit.sessionId,
 					brand(iChange + 1),
 					brand(iChange),
+					"main",
 				);
 			}
 		}
@@ -235,6 +236,7 @@ export function rebasePeerEditsOverTrunkEdits<TChange>(
 			"trunk" as SessionId,
 			brand(iChange + 1),
 			brand(iChange),
+			"main",
 		);
 	}
 	const peerSessionId = "peer" as SessionId;
@@ -254,6 +256,7 @@ export function rebasePeerEditsOverTrunkEdits<TChange>(
 				peerSessionId,
 				brand(trunkEditCount + 1),
 				brand(0),
+				"main",
 			);
 		} else {
 			for (let iChange = 0; iChange < peerEditCount; iChange++) {
@@ -263,6 +266,7 @@ export function rebasePeerEditsOverTrunkEdits<TChange>(
 					commit.sessionId,
 					brand(iChange + trunkEditCount + 1),
 					brand(0),
+					"main",
 				);
 			}
 		}
@@ -347,6 +351,7 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 			"trunk" as SessionId,
 			brand(iChange + 1),
 			brand(iChange),
+			"main",
 		);
 	}
 	const peerEdits = makeArray(editCount, () => {
@@ -365,6 +370,7 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 				commit.sessionId,
 				brand(iChange + editCount + 1),
 				brand(iChange),
+				"main",
 			);
 		}
 	};
@@ -448,7 +454,13 @@ export function rebaseConcurrentPeerEdits<TChange>(
 	const run = () => {
 		for (let iChange = 0; iChange < peerEdits.length; iChange++) {
 			const commit = peerEdits[iChange];
-			manager.addSequencedChanges([commit], commit.sessionId, brand(iChange + 1), brand(0));
+			manager.addSequencedChanges(
+				[commit],
+				commit.sessionId,
+				brand(iChange + 1),
+				brand(0),
+				"main",
+			);
 		}
 	};
 	return defer ? run : run();
@@ -459,7 +471,9 @@ export function checkChangeList(manager: TestEditManager, intentions: number[]):
 }
 
 export function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestChange>[] {
-	return manager.getTrunkChanges().concat(manager.getLocalChanges());
+	return manager
+		.getTrunkChanges("main")
+		.concat(manager.getLocalCommits("main").map((c) => c.change));
 }
 
 /** Adds a sequenced change to an `EditManager` and returns the delta that was caused by the change */
@@ -468,11 +482,13 @@ export function addSequencedChanges(
 	...args: Parameters<(typeof editManager)["addSequencedChanges"]>
 ): DeltaRoot {
 	let delta: DeltaRoot = emptyDelta;
-	const offChange = editManager.localBranch.events.on("afterChange", ({ change }) => {
-		if (change !== undefined) {
-			delta = asDelta(change.change.intentions);
-		}
-	});
+	const offChange = editManager
+		.getLocalBranch("main")
+		.events.on("afterChange", ({ change }) => {
+			if (change !== undefined) {
+				delta = asDelta(change.change.intentions);
+			}
+		});
 	editManager.addSequencedChanges(...args);
 	offChange();
 	return delta;
@@ -482,7 +498,7 @@ export function addSequencedChanges(
 function subscribeToLocalBranch<TChange>(
 	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
 ): void {
-	manager.localBranch.events.on("afterChange", (branchChange) => {
+	manager.getLocalBranch("main").events.on("afterChange", (branchChange) => {
 		// Reading the change property causes lazy computation to occur, and is important to accurately emulate SharedTree behavior
 		const _change = branchChange.change;
 	});

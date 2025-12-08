@@ -107,8 +107,10 @@ export interface IDocumentSchemaInfo {
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for additional details on `minVersionForCollab`.
 	 *
 	 * @remarks
-	 * We use `SemanticVersion` instead of `MinimumVersionForCollab` since we may open future documents that with a
+	 * We use `SemanticVersion` instead of `MinimumVersionForCollab` since we may open future documents with a
 	 * minVersionForCollab version that `MinimumVersionForCollab` does not support.
+	 * Note that in such a case (where minVersionForCollab is not a valid `MinimumVersionForCollab`),
+	 * loading the document might not work since this version of the runtime may not support it.
 	 */
 	minVersionForCollab: SemanticVersion;
 }
@@ -342,7 +344,7 @@ function checkRuntimeCompatibility(
 	} else {
 		for (const [name, value] of Object.entries(documentSchema.runtime)) {
 			const validator = documentSchemaSupportedConfigs[name] as IProperty | undefined;
-			if (validator === undefined || !validator.validate(value)) {
+			if (!(validator?.validate(value) ?? false)) {
 				unknownProperty = `runtime/${name}`;
 			}
 		}
@@ -740,7 +742,7 @@ export class DocumentsSchemaController {
 	 * @param contents - contents of the messages
 	 * @param local - whether op is local
 	 * @param sequenceNumber - sequence number of the op
-	 * @returns - true if schema was accepted, otherwise false (rejected due to failed CAS)
+	 * @returns true if schema was accepted, otherwise false (rejected due to failed CAS)
 	 */
 	public processDocumentSchemaMessages(
 		contents: IDocumentSchemaChangeMessageIncoming[],
@@ -809,7 +811,7 @@ export class DocumentsSchemaController {
  */
 function isDevBuild(version: string): boolean {
 	const parsed = parse(version);
-	return parsed !== null && parsed.prerelease.includes("test");
+	return parsed?.prerelease.includes("test") ?? false;
 }
 
 /* eslint-enable jsdoc/check-indentation */

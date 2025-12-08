@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { createIdCompressor } from "@fluidframework/id-compressor/legacy";
 import {
 	SchemaFactoryAlpha,
@@ -110,7 +110,7 @@ export function createTableTree({ tableSize, initialCellValue }: TableTreeOption
 		}),
 	);
 
-	treeView.initialize(Table.empty());
+	treeView.initialize(Table.create());
 	const table = treeView.root;
 
 	const columns = Array.from({ length: tableSize }, () => new Column({}));

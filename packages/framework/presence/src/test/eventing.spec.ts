@@ -171,7 +171,7 @@ describe("Presence", () => {
 			  };
 
 		function verifyState(attendee: Attendee, verifications: StateVerification[]): void {
-			assert.ok(attendee, "Eventing does not reflect new attendee");
+			assert(attendee !== undefined, "Eventing does not reflect new attendee");
 			assert.strictEqual(
 				attendee.attendeeId,
 				"attendeeId-1",
@@ -260,6 +260,7 @@ describe("Presence", () => {
 						newId: (_attendee: Attendee, _id: number) => {},
 					}),
 				);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				notificationManager = workspace.states.testEvents;
 			}
 		}

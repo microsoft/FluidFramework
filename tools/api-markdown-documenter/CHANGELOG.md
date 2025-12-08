@@ -1,5 +1,34 @@
 # @fluid-tools/api-markdown-documenter
 
+## 0.23.2
+
+### 🐞 Bug Fixes
+
+- Fixed an issue where `MarkdownRenderer` would emit trailing `\` characters when processing certain summary comments.
+
+## 0.23.1
+
+### 🐞 Bug Fixes
+
+- Fixed an issue where HTML content generated within Markdown was not properly escaping its inner content for Markdown.
+    - Markdown in HTML in Markdown is supported by many Markdown processors.
+      However, the libraries we use for converting Markdown to HTML assume that the resulting contents will be used in an HTML context, not a Markdown one.
+      So, they do not escape the text content as needed for a Markdown context.
+      This was causing some textual content in multi-line table cells to not be correctly escaped, and therefore parsed as Markdown content when it would not have been otherwise.
+
+## 0.23.0
+
+`LayoutUtilities.createTypeParametersSection` now returns `undefined` when the item has no type paramters.
+This aligns the behavior of this function with other section creation helpers.
+
+### 🐞 Bug Fixes
+
+- Fixed an issue where HTML headings were being generated with unescaped child content.
+  This caused headings for signatures with generic type parameters to be interpreted like HTML rather than as plain text.
+- Fixed an issue where HTML table cell content was generated with line breaks for formatting.
+  This would break Markdown table syntax.
+  Line breaks are now omitted in this context.
+
 ## 0.22.0
 
 ### Documentation Domain has been removed

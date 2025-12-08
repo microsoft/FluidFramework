@@ -8,7 +8,7 @@ import {
 	type FieldChangeEncodingContext,
 	SequenceField as SF,
 } from "../../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { Changeset } from "../../../feature-libraries/sequence-field/index.js";
 import { brand, type JsonCompatibleReadOnly } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
@@ -24,7 +24,7 @@ import { generatePopulatedMarks } from "./populatedMarks.js";
 import { ChangeMaker as Change, cases, MarkMaker as Mark } from "./testEdits.js";
 import { assertChangesetsEqual, inlineRevision } from "./utils.js";
 import { withSchemaValidation } from "../../../codec/index.js";
-import { typeboxValidator } from "../../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 
 type TestCase = [string, Changeset, FieldChangeEncodingContext];
 
@@ -85,7 +85,11 @@ export function testCodecs() {
 					const codec = sequenceFieldCodec.resolve(version);
 					const jsonCodec =
 						codec.json.encodedSchema !== undefined
-							? withSchemaValidation(codec.json.encodedSchema, codec.json, typeboxValidator)
+							? withSchemaValidation(
+									codec.json.encodedSchema,
+									codec.json,
+									FormatValidatorBasic,
+								)
 							: codec.json;
 					const actual = jsonCodec.decode(changeset, context);
 					assertChangesetsEqual(actual, expected);
@@ -103,55 +107,6 @@ const renameLikeAttachAndDetach: readonly {
 	readonly version: number;
 	readonly changeset: JsonCompatibleReadOnly;
 }[] = [
-	{
-		version: 1,
-		changeset: [
-			{
-				"count": 1,
-				"effect": {
-					"attachAndDetach": {
-						"attach": {
-							"moveIn": {
-								"revision": encodedTag1,
-								"id": 0,
-							},
-						},
-						"detach": {
-							"moveOut": {
-								"revision": encodedTag1,
-								"idOverride": {
-									"type": 0,
-									"id": {
-										"atom": [2, encodedTag2],
-									},
-								},
-								"id": 3,
-							},
-						},
-					},
-				},
-				"cellId": {
-					"atom": [1, encodedTag1],
-				},
-				"changes": {
-					"fieldChanges": [
-						{
-							"fieldKey": "",
-							"fieldKind": "",
-							"change": {
-								"localId": 2,
-								"testChange": {
-									"inputContext": [],
-									"intentions": [1],
-									"outputContext": [1],
-								},
-							},
-						},
-					],
-				},
-			},
-		],
-	},
 	{
 		version: 2,
 		changeset: [

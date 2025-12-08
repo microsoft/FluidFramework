@@ -266,7 +266,7 @@ export interface DDSFuzzModel<
 	 * Equivalence validation function, which should verify that the provided channels contain the same data.
 	 * This is run at each synchronization point for all connected clients (as disconnected clients won't
 	 * necessarily have the same set of ops applied).
-	 * @throws - An informative error if the channels don't have equivalent data.
+	 * @throws An informative error if the channels don't have equivalent data.
 	 */
 	validateConsistency: (
 		channelA: Client<TChannelFactory>,
@@ -1791,7 +1791,32 @@ export function createSuite<
 				}
 			});
 		}
+
+		afterEach(() => {
+			disposeAllOracles();
+		});
 	});
+}
+
+const activeOracles: Set<{ dispose: () => void }> = new Set();
+
+/**
+ * Tracks oracles created during fuzz runs so they can be disposed after each test.
+ * @internal
+ */
+export function registerOracle(oracle: { dispose: () => void }): void {
+	activeOracles.add(oracle);
+}
+
+/**
+ * Dispose all oracles
+ * @internal
+ */
+function disposeAllOracles(): void {
+	for (const oracle of activeOracles) {
+		oracle.dispose();
+	}
+	activeOracles.clear();
 }
 
 const getFullModel = <

@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 # test-service-clients pipeline
+# pipeline: https://dev.azure.com/fluidframework/internal/_build?definitionId=80
 
 name: $(Build.BuildId)
 
@@ -19,6 +20,10 @@ resources:
       - main
       - next
       - lts
+  repositories:
+    - repository: ff_pipeline_host
+      type: git
+      name: ff_pipeline_host
 
 variables:
 - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
@@ -52,6 +57,7 @@ stages:
       artifactBuildId: $(resources.pipeline.client.runID)
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
+        FLUID_TEST_SCALE: true # run longer duration tests
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
         azure__fluid__relay__service__tenantId: $(azure-fluid-relay-service-tenantId)
@@ -69,6 +75,7 @@ stages:
       artifactBuildId: $(resources.pipeline.client.runID)
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
+        FLUID_TEST_SCALE: true # run longer duration tests
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
         # Disable colorization for tinylicious logs (not useful when printing to a file)
@@ -82,10 +89,11 @@ stages:
       poolBuild: Small-eastus2
       testPackage: ${{ variables.testOdspPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
-      testCommand: test:realsvc:odsp:run
+      testCommand: test:realsvc:odsp
       artifactBuildId: $(resources.pipeline.client.runID)
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
+        FLUID_TEST_SCALE: true # run longer duration tests
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
         odsp__client__clientId: $(odsp-client-clientId)

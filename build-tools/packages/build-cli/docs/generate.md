@@ -8,6 +8,7 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
 * [`flub generate changelog`](#flub-generate-changelog)
 * [`flub generate changeset`](#flub-generate-changeset)
+* [`flub generate compatLayerGeneration`](#flub-generate-compatlayergeneration)
 * [`flub generate entrypoints`](#flub-generate-entrypoints)
 * [`flub generate node10Entrypoints`](#flub-generate-node10entrypoints)
 * [`flub generate packlist`](#flub-generate-packlist)
@@ -85,19 +86,19 @@ USAGE
     [--patch <value>] [--base <value>] [--tag <value>] [-i <value>] [--packageTypes none|alpha|beta|public|untrimmed]
 
 FLAGS
-  -i, --includeInternalVersions=<value>  Include Fluid internal versions.
+  -i, --includeInternalVersions=<value>  [env: VERSION_INCLUDE_INTERNAL_VERSIONS] Include Fluid internal versions.
       --base=<value>                     The base version. This will be read from package.json if not provided.
-      --build=<value>                    (required) The CI build number.
-      --packageTypes=<option>            [default: none] If provided, the version generated will include extra strings
-                                         based on the TypeScript types that are expected to be used. This flag should
-                                         only be used in the Fluid Framework CI pipeline.
+      --build=<value>                    (required) [env: VERSION_BUILDNUMBER] The CI build number.
+      --packageTypes=<option>            [default: none, env: PACKAGE_TYPES_FIELD] If provided, the version generated
+                                         will include extra strings based on the TypeScript types that are expected to
+                                         be used. This flag should only be used in the Fluid Framework CI pipeline.
                                          <options: none|alpha|beta|public|untrimmed>
-      --patch=<value>                    Indicates the build should use "simple patch versioning" where the value of the
-                                         --build flag is used as the patch version.
-      --release=<option>                 Indicates the build is a release build.
+      --patch=<value>                    [env: VERSION_PATCH] Indicates the build should use "simple patch versioning"
+                                         where the value of the --build flag is used as the patch version.
+      --release=<option>                 [env: VERSION_RELEASE] Indicates the build is a release build.
                                          <options: release|prerelease|none>
-      --tag=<value>                      The tag name to use.
-      --testBuild=<value>                Indicates the build is a test build.
+      --tag=<value>                      [env: VERSION_TAGNAME] The tag name to use.
+      --testBuild=<value>                [env: TEST_BUILD] Indicates the build is a test build.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
@@ -224,6 +225,60 @@ EXAMPLES
 ```
 
 _See code: [src/commands/generate/changeset.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/changeset.ts)_
+
+## `flub generate compatLayerGeneration`
+
+Updates the generation and release date for layer compatibility.
+
+```
+USAGE
+  $ flub generate compatLayerGeneration [-v | --quiet] [--generationDir <value>] [--outFile <value>] [--minimumCompatWindowMonths
+    <value>] [--concurrency <value>] [--branch <value> [--changed | [--all | --dir <value>... | --packages | -g
+    client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... | --skipScope
+    <value>...]
+
+FLAGS
+  --concurrency=<value>                [default: 25] The number of tasks to execute concurrently.
+  --generationDir=<value>              [default: ./src] The directory where the generation file is located.
+  --minimumCompatWindowMonths=<value>  [default: 3] The minimum compatibility window in months that is supported across
+                                       all Fluid layers.
+  --outFile=<value>                    [default: layerGenerationState.ts] Output the results to this file.
+
+PACKAGE SELECTION FLAGS
+  -g, --releaseGroup=<option>...      Run on all child packages within the specified release groups. This does not
+                                      include release group root packages. To include those, use the --releaseGroupRoot
+                                      argument. Cannot be used with --all.
+                                      <options: client|server|azure|build-tools|gitrest|historian|all>
+      --all                           Run on all packages and release groups. Cannot be used with --dir, --packages,
+                                      --releaseGroup, or --releaseGroupRoot.
+      --branch=<value>                [default: main] Select only packages that have been changed when compared to this
+                                      base branch. Can only be used with --changed.
+      --changed                       Select packages that have changed when compared to a base branch. Use the --branch
+                                      option to specify a different base branch. Cannot be used with --all.
+      --dir=<value>...                Run on the package in this directory. Cannot be used with --all.
+      --packages                      Run on all independent packages in the repo. Cannot be used with --all.
+      --releaseGroupRoot=<option>...  Run on the root package of the specified release groups. This does not include any
+                                      child packages within the release group. To include those, use the --releaseGroup
+                                      argument. Cannot be used with --all.
+                                      <options: client|server|azure|build-tools|gitrest|historian|all>
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+PACKAGE FILTER FLAGS
+  --[no-]private          Only include private packages. Use --no-private to exclude private packages instead.
+  --scope=<value>...      Package scopes to filter to. If provided, only packages whose scope matches the flag will be
+                          included. Cannot be used with --skipScope.
+  --skipScope=<value>...  Package scopes to filter out. If provided, packages whose scope matches the flag will be
+                          excluded. Cannot be used with --scope.
+
+DESCRIPTION
+  Updates the generation and release date for layer compatibility.
+```
+
+_See code: [src/commands/generate/compatLayerGeneration.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/compatLayerGeneration.ts)_
 
 ## `flub generate entrypoints`
 

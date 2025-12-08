@@ -52,14 +52,15 @@ export {
 	type TreeIndex,
 	type TreeIndexKey,
 	type TreeIndexNodes,
+	type IncrementalEncodingPolicy,
 } from "./feature-libraries/index.js";
 
 export {
 	type ITreeInternal,
 	type SharedTreeOptions,
+	type SharedTreeOptionsBeta,
 	type ForestType,
 	type SharedTreeFormatOptions,
-	SharedTreeFormatVersion,
 	Tree,
 	type RunTransaction,
 	type ForestOptions,
@@ -69,8 +70,11 @@ export {
 	independentInitializedView,
 	type ViewContent,
 	TreeAlpha,
+	type ObservationResults,
 	type TreeIdentifierUtils,
 	independentView,
+	createIndependentTreeBeta,
+	createIndependentTreeAlpha,
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
@@ -91,8 +95,10 @@ export {
 	type TreeViewEvents,
 	SchemaFactory,
 	SchemaFactoryBeta,
+	type SchemaStaticsBeta,
 	SchemaFactoryAlpha,
-	type SchemaFactoryObjectOptions,
+	type ObjectSchemaOptionsAlpha,
+	type ObjectSchemaOptions,
 	type ImplicitFieldSchema,
 	type TreeFieldFromImplicitField,
 	type TreeChangeEvents,
@@ -120,6 +126,7 @@ export {
 	type WithType,
 	type NodeChangedData,
 	type SchemaUpgrade,
+	contentSchemaSymbol,
 	// Types not really intended for public use, but used in links.
 	// Can not be moved to internalTypes since doing so causes app code to throw errors like:
 	// Error: src/simple-tree/objectNode.ts:72:1 - (ae-unresolved-link) The @link reference could not be resolved: The package "@fluidframework/tree" does not have an export "TreeNodeApi"
@@ -134,6 +141,13 @@ export {
 	type ArrayNodeCustomizableSchemaUnsafe,
 	type MapNodeCustomizableSchemaUnsafe,
 	type TreeRecordNodeUnsafe,
+	type UnannotateAllowedTypeUnsafe,
+	type AnnotatedAllowedTypeUnsafe,
+	type AnnotatedAllowedTypesUnsafe,
+	type AllowedTypesFullUnsafe,
+	type AllowedTypesFullFromMixedUnsafe,
+	type UnannotateAllowedTypesListUnsafe,
+	type AnnotateAllowedTypesListUnsafe,
 	// System types (not in Internal types for various reasons, like doc links or cannot be named errors).
 	type typeSchemaSymbol,
 	type TreeNodeSchemaNonClass,
@@ -145,12 +159,16 @@ export {
 	type IdentifierIndex,
 	createSimpleTreeIndex,
 	createIdentifierIndex,
+	type DirtyTreeStatus,
+	trackDirtyNodes,
+	type DirtyTreeMap,
 	// experimental @alpha APIs:
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
 	type UnsafeUnknownSchema,
 	type TreeViewAlpha,
+	type TreeViewBeta,
 	type InsertableField,
 	type Insertable,
 	type InsertableContent,
@@ -158,21 +176,16 @@ export {
 	type FactoryContentObject,
 	type ReadableField,
 	type ReadSchema,
-	type ImplicitAnnotatedAllowedTypes,
-	type ImplicitAnnotatedFieldSchema,
 	type AnnotatedAllowedType,
 	type AnnotatedAllowedTypes,
-	type NormalizedAnnotatedAllowedTypes,
+	type AllowedTypesFullEvaluated,
 	type AllowedTypeMetadata,
 	type AllowedTypesMetadata,
-	type InsertableObjectFromAnnotatedSchemaRecord,
-	type UnannotateImplicitAllowedTypes,
-	type UnannotateAllowedTypes,
-	type UnannotateAllowedType,
 	type UnannotateAllowedTypesList,
-	type UnannotateImplicitFieldSchema,
-	type UnannotateSchemaRecord,
-	type SchemaStaticsAlpha,
+	type AnnotateAllowedTypesList,
+	type AllowedTypesFull,
+	type AllowedTypesFullFromMixed,
+	type SchemaType,
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
@@ -226,6 +239,7 @@ export {
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,
 	type TreeBranch,
+	type TreeBranchAlpha,
 	type TreeBranchEvents,
 	asTreeViewAlpha,
 	type NodeSchemaOptions,
@@ -267,10 +281,23 @@ export {
 	type TreeRecordNode,
 	KeyEncodingOptions,
 	type TreeParsingOptions,
+	type SchemaFactory_base,
+	type NumberKeys,
+	type SimpleAllowedTypeAttributes,
+	encodeSchemaCompatibilitySnapshot,
+	decodeSchemaCompatibilitySnapshot,
+	exportCompatibilitySchemaSnapshot,
+	importCompatibilitySchemaSnapshot,
+	checkCompatibility,
+	incrementalSummaryHint,
+	incrementalEncodingPolicyForAllowedTypes,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
 	configuredSharedTree,
+	configuredSharedTreeAlpha,
+	configuredSharedTreeBeta,
+	configuredSharedTreeBetaLegacy,
 } from "./treeFactory.js";
 export { SharedTreeAttributes, SharedTreeFactoryType } from "./sharedTreeAttributes.js";
 export { persistedToSimpleSchema } from "./shared-tree/index.js";
@@ -278,14 +305,11 @@ export { persistedToSimpleSchema } from "./shared-tree/index.js";
 export {
 	type ICodecOptions,
 	type CodecWriteOptions,
-	type JsonValidator,
-	type SchemaValidationFunction,
 	FluidClientVersion,
 	type FormatValidator,
 	FormatValidatorNoOp,
 } from "./codec/index.js";
-export { noopValidator } from "./codec/index.js";
-export { typeboxValidator, FormatValidatorBasic } from "./external-utilities/index.js";
+export { FormatValidatorBasic } from "./external-utilities/index.js";
 
 export type {
 	// Type Testing
@@ -328,3 +352,4 @@ export type { MapNodeInsertableData } from "./simple-tree/index.js";
 export { JsonAsTree } from "./jsonDomainSchema.js";
 export { FluidSerializableAsTree } from "./serializableDomainSchema.js";
 export { TableSchema, type System_TableSchema } from "./tableSchema.js";
+export { asAlpha, asBeta } from "./api.js";

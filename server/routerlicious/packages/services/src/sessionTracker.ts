@@ -104,7 +104,8 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 			lastClientLeaveTime: undefined,
 			telemetryProperties: {
 				hadWriteClient:
-					existingSession?.telemetryProperties?.hadWriteClient || client.isWriteClient,
+					(existingSession?.telemetryProperties?.hadWriteClient ?? false) ||
+					client.isWriteClient,
 				totalClientsJoined:
 					(existingSession?.telemetryProperties?.totalClientsJoined ?? 0) +
 					totalCurrentClients,
@@ -216,8 +217,8 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		});
 	}
 
-	public async pruneInactiveSessions(): Promise<void> {
-		return this.pruneInactiveSessionsCore().catch((error) => {
+	public async pruneInactiveSessions(limit?: number): Promise<void> {
+		return this.pruneInactiveSessionsCore(limit).catch((error) => {
 			Lumberjack.error("Failed to prune inactive sessions", undefined, error);
 			throw error;
 		});
@@ -248,7 +249,7 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		return true;
 	}
 
-	private async pruneInactiveSessionsCore(): Promise<void> {
+	private async pruneInactiveSessionsCore(limit?: number): Promise<void> {
 		// Add a buffer to the session activity timeout to prevent pruning sessions that are already
 		// being closed or have just been closed normally.
 		const inactiveSessionPruningBuffer = Math.round(0.1 * this.sessionActivityTimeoutMs);
@@ -272,7 +273,7 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 					error,
 				);
 			});
-		});
+		}, limit);
 	}
 
 	private async getSessionAndClients(
@@ -331,7 +332,7 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		// Session end timer expired and no clients are connected, so end the session.
 		const now = Date.now();
 		// Use the latest session information if available, otherwise use the passed session
-		const finalSession = latestSessionInformation || session;
+		const finalSession = latestSessionInformation ?? session;
 		const sessionDurationInMs = now - finalSession.firstClientJoinTime;
 		const metric = Lumberjack.newLumberMetric(LumberEventName.NexusSessionResult, {
 			...getLumberBaseProperties(finalSession.documentId, finalSession.tenantId),
@@ -349,9 +350,9 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 					: undefined,
 			...finalSession.telemetryProperties,
 			// Explicitly include session-level metrics using CommonProperties enum values
-			[CommonProperties.sessionOpCount]: finalSession.telemetryProperties.sessionOpCount || 0,
+			[CommonProperties.sessionOpCount]: finalSession.telemetryProperties.sessionOpCount ?? 0,
 			[CommonProperties.sessionSignalCount]:
-				finalSession.telemetryProperties.sessionSignalCount || 0,
+				finalSession.telemetryProperties.sessionSignalCount ?? 0,
 		});
 		// The lumber metric is created at the end of the session, so "timestamp" is the end time, rather than the usual "start time".
 		// Override the timestamp to be the start time of the session.

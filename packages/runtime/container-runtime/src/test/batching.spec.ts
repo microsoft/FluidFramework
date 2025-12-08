@@ -30,6 +30,7 @@ import { type SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
 
 import type { ChannelCollection } from "../channelCollection.js";
 import { ContainerRuntime } from "../containerRuntime.js";
+import { FluidDataStoreRegistry } from "../dataStoreRegistry.js";
 import { ContainerMessageType } from "../messageTypes.js";
 
 describe("Runtime batching", () => {
@@ -79,9 +80,9 @@ describe("Runtime batching", () => {
 
 	beforeEach(async () => {
 		mockDeltaManager = new MockDeltaManager();
-		containerRuntime = await ContainerRuntime.loadRuntime({
+		containerRuntime = await ContainerRuntime.loadRuntime2({
 			context: getMockContext(mockDeltaManager) as IContainerContext,
-			registryEntries: [],
+			registry: new FluidDataStoreRegistry([]),
 			existing: false,
 			runtimeOptions: {},
 			provideEntryPoint: mockProvideEntryPoint,
@@ -203,7 +204,7 @@ describe("Runtime batching", () => {
 
 			assert.throws(
 				() => processBatch(batch, containerRuntime),
-				(e: Error) => validateAssertionError(e, "batch presence was validated above"),
+				validateAssertionError("batch presence was validated above"),
 				"Batch end without batch start should fail",
 			);
 		});
@@ -215,7 +216,7 @@ describe("Runtime batching", () => {
 
 			assert.throws(
 				() => processBatch(batch, containerRuntime),
-				(e: Error) => validateAssertionError(e, "there can't be active batch"),
+				validateAssertionError("there can't be active batch"),
 				"Batch with multiple batch starts should fail",
 			);
 		});
@@ -355,7 +356,7 @@ describe("Runtime batching", () => {
 			} as unknown as ISequencedDocumentMessage;
 			assert.throws(
 				() => containerRuntime.process(modernRuntimeMessage, false /* local */),
-				(e: Error) => validateAssertionError(e, "Failed processing op in test"),
+				validateAssertionError("Failed processing op in test"),
 				"Message processing should have failed",
 			);
 
@@ -401,7 +402,7 @@ describe("Runtime batching", () => {
 
 			assert.throws(
 				() => containerRuntime.process(legacyMessage, false /* local */),
-				(e: Error) => validateAssertionError(e, "Failed processing op in test"),
+				validateAssertionError("Failed processing op in test"),
 				"Message processing should have failed",
 			);
 
@@ -445,7 +446,7 @@ describe("Runtime batching", () => {
 
 			assert.throws(
 				() => containerRuntime.process(nonRuntimeMessage, false /* local */),
-				(e: Error) => validateAssertionError(e, "Failed processing op in test"),
+				validateAssertionError("Failed processing op in test"),
 				"Message processing should have failed",
 			);
 

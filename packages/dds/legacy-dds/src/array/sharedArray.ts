@@ -11,12 +11,14 @@ import type {
 	IChannelFactory,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import type {
-	ISequencedDocumentMessage,
-	ITree,
-} from "@fluidframework/driver-definitions/internal";
+import type { ITree } from "@fluidframework/driver-definitions/internal";
 import { FileMode, MessageType, TreeEntry } from "@fluidframework/driver-definitions/internal";
-import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type {
+	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
@@ -334,6 +336,9 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 */
 	public toggle(entryId: string): void {
 		const liveEntry = this.getLiveEntry(entryId);
+		if (liveEntry?.isRollback === true) {
+			return;
+		}
 		const isDeleted = !liveEntry.isDeleted;
 
 		// Adding local pending counter
@@ -367,6 +372,10 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 * @param newEntryId - EntryId of the to be live entry
 	 */
 	public toggleMove(oldEntryId: string, newEntryId: string): void {
+		const liveEntry = this.getLiveEntry(newEntryId);
+		if (liveEntry?.isRollback === true) {
+			return;
+		}
 		if (this.getEntryForId(newEntryId).isDeleted) {
 			return;
 		}
@@ -398,6 +407,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			case OperationType.insertEntry: {
 				const liveEntry = this.getLiveEntry(arrayOp.entryId);
 				liveEntry.isDeleted = true;
+				liveEntry.isRollback = true;
 				const deleteOp: IDeleteOperation = {
 					type: OperationType.deleteEntry,
 					entryId: arrayOp.entryId,
@@ -413,6 +423,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				} else {
 					const liveEntry = this.getLiveEntry(arrayOp.entryId);
 					liveEntry.isDeleted = false;
+					liveEntry.isRollback = true;
 					const insertOp = {
 						type: OperationType.insertEntry,
 						entryId: arrayOp.entryId,
@@ -431,6 +442,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				if (this.getEntryForId(newEntryId).isDeleted) {
 					return;
 				}
+				this.getEntryForId(oldEntryId).isRollback = true;
 				this.updateLiveEntry(newEntryId, oldEntryId);
 				const inputEntry = this.getEntryForId(oldEntryId);
 				inputEntry.prevEntryId = undefined;
@@ -452,6 +464,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				// Toggling the isDeleted flag to undo the last operation for the skip list payload/value
 				liveEntry.isDeleted = !isDeleted;
 				liveEntry.isLocalPendingDelete -= 1;
+				liveEntry.isRollback = true;
 
 				const toggleOp: IToggleOperation = {
 					type: OperationType.toggle,
@@ -464,6 +477,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			case OperationType.toggleMove: {
 				const { entryId: oldEntryId, changedToEntryId: newEntryId } = arrayOp;
 				this.getEntryForId(oldEntryId).isLocalPendingMove -= 1;
+				this.getEntryForId(newEntryId).isRollback = true;
 				this.updateLiveEntry(oldEntryId, newEntryId);
 
 				const toggleMoveOp: IToggleMoveOperation = {
@@ -484,7 +498,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 * Load share array from snapshot
 	 *
 	 * @param storage - the storage to get the snapshot from
-	 * @returns - promise that resolved when the load is completed
+	 * @returns promise that resolved when the load is completed
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const header = await storage.readBlob(snapshotFileName);
@@ -559,21 +573,23 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	}
 
 	/**
-	 * Process a shared array operation
-	 *
-	 * @param message - the message to prepare
-	 * @param local - whether the message was sent by the local client
-	 * @param _localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
-	 * For messages from a remote client, this will be undefined.
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */
-	protected processCore(
-		message: ISequencedDocumentMessage,
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent, local);
+		}
+	}
+
+	private processMessage(
+		messageEnvelope: ISequencedMessageEnvelope,
+		messageContent: IRuntimeMessagesContent,
 		local: boolean,
-		_localOpMetadata: unknown,
 	): void {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-		if (message.type === MessageType.Operation) {
-			const op = message.contents as ISharedArrayOperation<T>;
+		if (messageEnvelope.type === MessageType.Operation) {
+			const op = messageContent.contents as ISharedArrayOperation<T>;
 			switch (op.type) {
 				case OperationType.insertEntry: {
 					this.handleInsertOp<SerializableTypeForSharedArray>(
@@ -702,7 +718,8 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			}
 		} else if (
 			!this.isLocalPending(op.entryId, "isLocalPendingDelete") &&
-			!this.isLocalPending(op.entryId, "isLocalPendingMove")
+			!this.isLocalPending(op.entryId, "isLocalPendingMove") &&
+			this.getLiveEntry(op.entryId).isDeleted === false
 		) {
 			this.updateLiveEntry(this.getLiveEntry(op.entryId).entryId, op.entryId);
 		}
@@ -993,7 +1010,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 						newElement.isDeleted = isDeleted;
 					}
 				}
-				newElement.isLocalPendingMove += 1;
+				opEntry.isLocalPendingMove += 1;
 				break;
 			}
 			case OperationType.toggle: {

@@ -3,44 +3,65 @@
  * Licensed under the MIT License.
  */
 
-import type { SessionId } from "@fluidframework/id-compressor";
-import { type TSchema, Type } from "@sinclair/typebox";
-
-import { type EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
-import type { JsonCompatibleReadOnly } from "../util/index.js";
+import type { Brand } from "../util/index.js";
 
 /**
- * The format of messages that SharedTree sends and receives.
+ * The format version for the message.
  */
-export interface Message {
+export const MessageFormatVersion = {
 	/**
-	 * The revision tag for the change in this message
+	 * NOTE: this is written as `undefined` rather than `0` in the wire format.
+	 * Introduced and retired prior to 2.0.
+	 * Reading and writing capability removed in 2.73.0.
 	 */
-	readonly revision: EncodedRevisionTag;
+	undefined: 0,
 	/**
-	 * The stable ID that identifies the originator of the message.
+	 * Introduced and retired prior to 2.0.
+	 * Reading and writing capability removed in 2.73.0.
 	 */
-	readonly originatorId: SessionId;
+	v1: 1,
 	/**
-	 * The changeset to be applied.
+	 * Introduced and retired prior to 2.0.
+	 * Reading and writing capability removed in 2.73.0.
 	 */
-	readonly changeset: JsonCompatibleReadOnly;
-
+	v2: 2,
 	/**
-	 * The version of the message. This controls how the message is encoded.
-	 *
-	 * This was not set historically and was added before making any breaking changes to the format.
-	 * For that reason, absence of a 'version' field is synonymous with version 1.
+	 * Introduced prior to 2.0 and used beyond.
+	 * Reading capability must be maintained for backwards compatibility.
+	 * Writing capability needs to be maintained so long as {@link lowestMinVersionForCollab} is less than 2.2.0.
 	 */
-	readonly version?: number;
-}
-
-// Return type is intentionally derived.
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const Message = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
-	Type.Object({
-		revision: RevisionTagSchema,
-		originatorId: SessionIdSchema,
-		changeset: tChange,
-		version: Type.Optional(Type.Number()),
-	});
+	v3: 3,
+	/**
+	 * Introduced in 2.2.0.
+	 * Was inadvertently made usable for writing in 2.43.0 (through configuredSharedTree) and remains available.
+	 * Reading capability must be maintained for backwards compatibility.
+	 * Writing capability could be dropped in favor of {@link MessageFormatVersion.v3},
+	 * but doing so would make the pattern of writable versions more complex and gain little
+	 * because most of the logic for this format is shared with {@link MessageFormatVersion.v3}.
+	 */
+	v4: 4,
+	/**
+	 * This version number was used internally for testing shared branches.
+	 * This format was never made stable.
+	 * This version number is kept here solely to avoid reusing the number: it is not supported for either reading or writing.
+	 * @deprecated Use {@link MessageFormatVersion.vSharedBranches} for testing shared branches.
+	 */
+	v5: 5,
+	/**
+	 * Not yet released.
+	 * Only used for testing shared branches.
+	 */
+	vSharedBranches: "shared-branches|v0.1",
+} as const;
+export type MessageFormatVersion = Brand<
+	(typeof MessageFormatVersion)[keyof typeof MessageFormatVersion],
+	"MessageFormatVersion"
+>;
+export const supportedMessageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set([
+	MessageFormatVersion.v3,
+	MessageFormatVersion.v4,
+	MessageFormatVersion.vSharedBranches,
+] as MessageFormatVersion[]);
+export const messageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set(
+	Object.values(MessageFormatVersion) as MessageFormatVersion[],
+);

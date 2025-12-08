@@ -26,6 +26,7 @@ import {
 	appendIntervalPropertyChangedToRevertibles,
 	appendSharedStringDeltaToRevertibles,
 } from "../../revertibles.js";
+import { IntervalCollectionOracle } from "../intervalCollectionOracle.js";
 
 import {
 	FuzzTestState,
@@ -39,16 +40,20 @@ import {
 	isRevertibleSharedString,
 	makeIntervalOperationGenerator,
 } from "./fuzzUtils.js";
+import { hasIntervalCollectionOracles, type IChannelWithOracles } from "./oracleUtils.js";
 
 const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 
 emitter.on("clientCreate", (client) => {
-	const channel = client.channel as RevertibleSharedString;
+	const channel = client.channel as RevertibleSharedString & IChannelWithOracles;
 	channel.revertibles = [];
 	channel.isCurrentRevert = false;
+	channel.intervalOracles = new Map();
 
 	channel.on("createIntervalCollection", (label) => {
 		const collection = channel.getIntervalCollection(label);
+		const oracle = new IntervalCollectionOracle(collection);
+		channel.intervalOracles.set(label, oracle);
 
 		assert(isRevertibleSharedString(channel));
 		collection.on("addInterval", (interval, local, op) => {
@@ -134,6 +139,19 @@ describe("IntervalCollection fuzz testing", () => {
 	const model: DDSFuzzModel<SharedStringFuzzFactory, RevertOperation, FuzzTestState> = {
 		...baseModel,
 		workloadName: "interval collection with revertibles",
+		validateConsistency: async (a, b) => {
+			if (hasIntervalCollectionOracles(a.channel)) {
+				for (const oracle of a.channel.intervalOracles.values()) {
+					oracle.validate(a.channel);
+				}
+			}
+
+			if (hasIntervalCollectionOracles(b.channel)) {
+				for (const oracle of b.channel.intervalOracles.values()) {
+					oracle.validate(b.channel);
+				}
+			}
+		},
 		generatorFactory: () =>
 			take(
 				100,
@@ -165,6 +183,19 @@ describe("IntervalCollection fuzz testing with rebasing", () => {
 	const model: DDSFuzzModel<SharedStringFuzzFactory, RevertOperation, FuzzTestState> = {
 		...baseModel,
 		workloadName: "interval collection with revertibles and rebasing",
+		validateConsistency: async (a, b) => {
+			if (hasIntervalCollectionOracles(a.channel)) {
+				for (const oracle of a.channel.intervalOracles.values()) {
+					oracle.validate(a.channel);
+				}
+			}
+
+			if (hasIntervalCollectionOracles(b.channel)) {
+				for (const oracle of b.channel.intervalOracles.values()) {
+					oracle.validate(b.channel);
+				}
+			}
+		},
 		generatorFactory: () =>
 			take(
 				100,

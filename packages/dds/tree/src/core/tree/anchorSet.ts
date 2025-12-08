@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { createEmitter } from "@fluid-internal/client-utils";
-import type { Listenable } from "@fluidframework/core-interfaces/internal";
+import type { HasListeners, Listenable } from "@fluidframework/core-interfaces/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import {
@@ -210,7 +210,7 @@ export interface AnchorNode extends INormalizedUpPath<AnchorNode> {
 	/**
 	 * Events for this anchor node.
 	 */
-	readonly events: Listenable<AnchorEvents>;
+	readonly events: Listenable<AnchorEvents> & HasListeners<AnchorEvents>;
 
 	/**
 	 * Allows access to data stored on the Anchor in "slots".

@@ -15,22 +15,25 @@ import type {
 } from "@fluidframework/core-interfaces";
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { LazyPromise } from "@fluidframework/core-utils/internal";
+import type { LocalFluidDataStoreRuntimeMessage } from "@fluidframework/datastore/internal";
 import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore/internal";
 import { type ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
 import type { IBlob, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type {
+	IGarbageCollectionData,
+	CreateChildSummarizerNodeFn,
+	IFluidDataStoreChannel,
+	IFluidDataStoreContext,
+	IFluidDataStoreFactory,
+	IFluidDataStoreRegistry,
+	IGarbageCollectionDetailsBase,
+	SummarizeInternalFn,
+	IContainerRuntimeBase,
+	IRuntimeStorageService,
+} from "@fluidframework/runtime-definitions/internal";
 import {
-	type IGarbageCollectionData,
-	type CreateChildSummarizerNodeFn,
 	CreateSummarizerNodeSource,
-	type IFluidDataStoreChannel,
-	type IFluidDataStoreContext,
-	type IFluidDataStoreFactory,
-	type IFluidDataStoreRegistry,
-	type IGarbageCollectionDetailsBase,
-	type SummarizeInternalFn,
 	channelsTreeName,
-	type IContainerRuntimeBase,
-	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -108,9 +111,7 @@ describe("Data Store Context Tests", () => {
 						snapshotTree: undefined,
 					});
 
-				assert.throws(codeBlock, (e: Error) =>
-					validateAssertionError(e, "Data store ID contains slash"),
-				);
+				assert.throws(codeBlock, validateAssertionError("Data store ID contains slash"));
 			});
 
 			it("Errors thrown during realize are wrapped as DataProcessingError", async () => {
@@ -379,11 +380,14 @@ describe("Data Store Context Tests", () => {
 				});
 				await localDataStoreContext.realize();
 
-				localDataStoreContext.submitMessage(
-					DataStoreMessageType.ChannelOp,
-					"summarizer message",
-					{},
-				);
+				const message = {
+					type: DataStoreMessageType.ChannelOp,
+					content: {
+						address: "address",
+						contents: "summarizer message",
+					},
+				} satisfies LocalFluidDataStoreRuntimeMessage;
+				localDataStoreContext.submitMessage(message.type, message.content, {});
 
 				const expectedEvents = [
 					{
@@ -420,11 +424,14 @@ describe("Data Store Context Tests", () => {
 
 				let eventCount = 0;
 				for (let i = 0; i < 15; i++) {
-					localDataStoreContext.submitMessage(
-						DataStoreMessageType.ChannelOp,
-						`summarizer message ${i}`,
-						{},
-					);
+					const message = {
+						type: DataStoreMessageType.ChannelOp,
+						content: {
+							address: "address",
+							contents: `summarizer message ${i}`,
+						},
+					} satisfies LocalFluidDataStoreRuntimeMessage;
+					localDataStoreContext.submitMessage(message.type, message.content, {});
 				}
 				for (const event of mockLogger.events) {
 					if (
@@ -660,9 +667,7 @@ describe("Data Store Context Tests", () => {
 						snapshot: undefined,
 					});
 
-				assert.throws(codeBlock, (e: Error) =>
-					validateAssertionError(e, "Data store ID contains slash"),
-				);
+				assert.throws(codeBlock, validateAssertionError("Data store ID contains slash"));
 			});
 			describe("writing with isolated channels enabled", () =>
 				testGenerateAttributes({
@@ -1061,9 +1066,7 @@ describe("Data Store Context Tests", () => {
 						channelToDataStoreFn,
 					});
 
-				assert.throws(codeBlock, (e: Error) =>
-					validateAssertionError(e, "Data store ID contains slash"),
-				);
+				assert.throws(codeBlock, validateAssertionError("Data store ID contains slash"));
 			});
 
 			describe("should error on attach if data store cannot be constructed/initialized", () => {
