@@ -31,8 +31,7 @@ import {
 	type TreeRecordNode,
 	objectSchema,
 	eraseSubclassableSchemaDetails,
-	// This makes the API report slightly cleaner.
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports -- This makes the API report slightly cleaner.
 	TreeNodeSchemaCore,
 } from "./simple-tree/index.js";
 import { validateIndex, validateIndexRange } from "./util/index.js";

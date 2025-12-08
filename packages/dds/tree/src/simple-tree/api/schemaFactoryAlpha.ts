@@ -397,14 +397,14 @@ export class SchemaFactoryAlpha<
 }
 
 /**
- * Type erase details of a schema.
+ * Type-erase details of a schema.
  * @remarks
  * This can be used to type erase the details of a schema including the node's type (such as its fields and APIs for modifying those fields).
  * This is intended for use on component boundaries to support encapsulation of implementation details, including the exact schema.
  *
  * This is best applied to a top level "component node" which wraps the actual component content (in a single required object node field) allowing more cases of schema evolution to be carried out as implementation details of the component.
  *
- * Since this type erases the schema details, the remaining API will need to provide ways to construct instances of the node and access its contents.
+ * Since this type-erases the schema details, the remaining API will need to provide ways to construct instances of the node and access its contents.
  * Typically construction is done via static functions on the schema which can be included in `ExtraSchemaProperties`,
  * and access to contents is done via properties of TNode (usually methods).
  * @alpha
