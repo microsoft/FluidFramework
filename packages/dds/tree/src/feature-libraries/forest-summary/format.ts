@@ -14,13 +14,17 @@ import { EncodedFieldBatch } from "../chunked-forest/index.js";
  */
 export const ForestFormatVersion = {
 	v1: 1,
+	/** This format supports incremental encoding */
+	v2: 2,
 } as const;
 export type ForestFormatVersion = Brand<
 	(typeof ForestFormatVersion)[keyof typeof ForestFormatVersion],
 	"ForestFormatVersion"
 >;
 
-const FormatGeneric = (
+export const validVersions = new Set([...Object.values(ForestFormatVersion)]);
+
+export const FormatGeneric = (
 	version: ForestFormatVersion,
 	// Return type is intentionally derived.
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -33,6 +37,10 @@ const FormatGeneric = (
 		},
 		{ additionalProperties: false },
 	);
+export type Format = Static<ReturnType<typeof FormatGeneric>>;
 
 export const FormatV1 = FormatGeneric(brand<ForestFormatVersion>(ForestFormatVersion.v1));
 export type FormatV1 = Static<typeof FormatV1>;
+
+export const FormatV2 = FormatGeneric(brand<ForestFormatVersion>(ForestFormatVersion.v2));
+export type FormatV2 = Static<typeof FormatV2>;
