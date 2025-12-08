@@ -126,7 +126,7 @@ function loadWorkspacesFromLegacyConfigEntry(
  * Converts a path to use forward slashes (POSIX style).
  */
 function toPosixPath(s: string): string {
-	return path.sep === "\\" ? s.replace(/\\/g, "/") : s;
+	return s.replace(/\\/g, "/");
 }
 
 /**

@@ -76,7 +76,7 @@ export function getApiExtractorConfigFilePath(commandLine: string): string {
 }
 
 export function toPosixPath(s: string) {
-	return path.sep === "\\" ? s.replace(/\\/g, "/") : s;
+	return s.replace(/\\/g, "/");
 }
 
 /**
