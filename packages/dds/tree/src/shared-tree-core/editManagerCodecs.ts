@@ -58,7 +58,6 @@ export function clientVersionToEditManagerFormatVersion(
 		getConfigForMinVersionForCollab(clientVersion, {
 			[lowestMinVersionForCollab]: EditManagerFormatVersion.v3,
 			[FluidClientVersion.v2_43]: EditManagerFormatVersion.v4,
-			[FluidClientVersion.vDetachedRoots]: EditManagerFormatVersion.vDetachedRoots,
 		}),
 	);
 
@@ -72,6 +71,15 @@ export function editManagerFormatVersionSelectorForSharedBranches(
 	clientVersion: MinimumVersionForCollab,
 ): EditManagerFormatVersion {
 	return brand(EditManagerFormatVersion.vSharedBranches);
+}
+
+/**
+ * Returns the version that should be used for testing shared branches.
+ */
+export function editManagerFormatVersionSelectorForDetachedRootEditing(
+	clientVersion: MinimumVersionForCollab,
+): EditManagerFormatVersion {
+	return brand(EditManagerFormatVersion.vDetachedRoots);
 }
 
 export interface EditManagerCodecOptions {

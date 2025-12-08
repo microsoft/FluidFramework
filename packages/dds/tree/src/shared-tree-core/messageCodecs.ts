@@ -55,7 +55,6 @@ export function clientVersionToMessageFormatVersion(
 		getConfigForMinVersionForCollab(clientVersion, {
 			[lowestMinVersionForCollab]: MessageFormatVersion.v3,
 			[FluidClientVersion.v2_43]: MessageFormatVersion.v4,
-			[FluidClientVersion.vDetachedRoots]: MessageFormatVersion.vDetachedRoots,
 		}),
 	);
 	return writeVersionOverride ?? compatibleVersion;
@@ -81,6 +80,15 @@ export function messageFormatVersionSelectorForSharedBranches(
 	clientVersion: MinimumVersionForCollab,
 ): MessageFormatVersion {
 	return brand(MessageFormatVersion.vSharedBranches);
+}
+
+/**
+ * Returns the version that should be used for testing detached root editing.
+ */
+export function messageFormatVersionSelectorForDetachedRootEditing(
+	clientVersion: MinimumVersionForCollab,
+): MessageFormatVersion {
+	return brand(MessageFormatVersion.vDetachedRoots);
 }
 
 export function makeMessageCodec<TChangeset>(

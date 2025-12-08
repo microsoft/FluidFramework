@@ -539,13 +539,6 @@ export const FluidClientVersion = {
 	 * - ForestSummaryFormatVersion v2
 	 */
 	v2_74: "2.74.0",
-
-	/**
-	 * Not ready for production use.
-	 * Used for testing detached root support.
-	 * @privateRemarks TODO: introduce or reuse official version when merging into main.
-	 */
-	vDetachedRoots: "2.99999.0",
 } as const satisfies Record<string, MinimumVersionForCollab>;
 
 /**
