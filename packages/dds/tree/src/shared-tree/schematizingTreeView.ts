@@ -88,21 +88,6 @@ export class SchematizingSimpleTreeView<
 > implements TreeViewAlpha<TRootSchema>, WithBreakable
 {
 	/**
-	 * Optional user-provided label associated with the transaction as a commit is being applied, if provided.
-	 * This value is intended to be read within event handlers like `commitApplied`.
-	 * This value is cleared after each transaction to prevent providing stale/incorrect labels.
-	 */
-	private static _currentTransactionLabel: unknown | undefined;
-
-	public static get currentTransactionLabel(): unknown | undefined {
-		return this._currentTransactionLabel;
-	}
-
-	public static setCurrentTransactionLabel(label: unknown | undefined): void {
-		this._currentTransactionLabel = label;
-	}
-
-	/**
 	 * This is set to undefined when this object is disposed or the view schema does not support viewing the document's stored schema.
 	 *
 	 * The view schema may be incompatible with the stored schema. Use `compatibility` to check.
@@ -311,39 +296,43 @@ export class SchematizingSimpleTreeView<
 			addConstraintsToTransaction(this.checkout, constraintsOnRevert, constraints);
 		};
 
-		this.checkout.transaction.start();
+		const executeTransaction = ():
+			| TransactionResultExt<TSuccessValue, TFailureValue>
+			| TransactionResult => {
+			this.checkout.transaction.start();
 
-		// Validate preconditions before running the transaction callback.
-		addConstraints(false /* constraintsOnRevert */, params?.preconditions);
-		const transactionCallbackStatus = transaction();
-		const rollback = transactionCallbackStatus?.rollback;
-		const value = (
-			transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
-		)?.value;
+			// Validate preconditions before running the transaction callback.
+			addConstraints(false /* constraintsOnRevert */, params?.preconditions);
+			const transactionCallbackStatus = transaction();
+			const rollback = transactionCallbackStatus?.rollback;
+			const value = (
+				transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
+			)?.value;
 
-		if (rollback === true) {
-			this.checkout.transaction.abort();
-			return value !== undefined
-				? { success: false, value: value as TFailureValue }
-				: { success: false };
-		}
+			if (rollback === true) {
+				this.checkout.transaction.abort();
+				return value !== undefined
+					? { success: false, value: value as TFailureValue }
+					: { success: false };
+			}
 
-		// Validate preconditions on revert after running the transaction callback and was successful.
-		addConstraints(
-			true /* constraintsOnRevert */,
-			transactionCallbackStatus?.preconditionsOnRevert,
-		);
+			// Validate preconditions on revert after running the transaction callback and was successful.
+			addConstraints(
+				true /* constraintsOnRevert */,
+				transactionCallbackStatus?.preconditionsOnRevert,
+			);
 
-		// Set the label before commit, and clear the label after commit.
-		SchematizingSimpleTreeView.setCurrentTransactionLabel(params?.label);
-		try {
 			this.checkout.transaction.commit();
-		} finally {
-			SchematizingSimpleTreeView.setCurrentTransactionLabel(undefined);
+
+			return value !== undefined
+				? { success: true, value: value as TSuccessValue }
+				: { success: true };
+		};
+
+		if (params?.label !== undefined) {
+			return this.checkout.runWithTransactionLabel(params.label, () => executeTransaction());
 		}
-		return value !== undefined
-			? { success: true, value: value as TSuccessValue }
-			: { success: true };
+		return executeTransaction();
 	}
 
 	private ensureUndisposed(): void {

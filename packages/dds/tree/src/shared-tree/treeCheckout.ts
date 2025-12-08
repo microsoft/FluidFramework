@@ -20,7 +20,6 @@ import {
 	type AnchorSetRootEvents,
 	type ChangeFamily,
 	CommitKind,
-	type CommitMetadata,
 	type DeltaVisitor,
 	type DetachedFieldIndex,
 	type IEditableForest,
@@ -48,6 +47,7 @@ import {
 	type TreeNodeStoredSchema,
 	LeafNodeStoredSchema,
 	diffHistories,
+	type CommitMetadataAlpha,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -122,7 +122,7 @@ export interface CheckoutEvents {
 	 * @param getRevertible - a function provided that allows users to get a revertible for the change. If not provided,
 	 * this change is not revertible.
 	 */
-	changed(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
+	changed(data: CommitMetadataAlpha, getRevertible?: RevertibleAlphaFactory): void;
 
 	/**
 	 * Fired when a new branch is created from this checkout.
@@ -370,6 +370,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	private editLock: EditLock;
 
+	// User-defined label associated with the transaction whose commit is currently being produced for this checkout.
+	public transactionLabel?: unknown;
+
 	private readonly views = new Set<TreeView<ImplicitFieldSchema>>();
 
 	/**
@@ -419,6 +422,18 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.#transaction = this.createTransactionStack(branch);
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
 		this.registerForBranchEvents();
+	}
+
+	public runWithTransactionLabel<TLabel, TResult>(
+		label: TLabel,
+		fn: (label: TLabel) => TResult,
+	): TResult {
+		this.transactionLabel = label;
+		try {
+			return fn(label);
+		} finally {
+			this.transactionLabel = undefined;
+		}
 	}
 
 	private registerForBranchEvents(): void {
@@ -532,12 +547,22 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						};
 
 				let withinEventContext = true;
-				this.#events.emit("changed", { isLocal: true, kind }, getRevertible);
+				const metaData: CommitMetadataAlpha = {
+					isLocal: true,
+					kind,
+					label: this.transactionLabel,
+				};
+				this.#events.emit("changed", metaData, getRevertible);
 				withinEventContext = false;
 			}
 		} else if (this.isRemoteChangeEvent(event)) {
 			// TODO: figure out how to plumb through commit kind info for remote changes
-			this.#events.emit("changed", { isLocal: false, kind: CommitKind.Default });
+			const metaData: CommitMetadataAlpha = {
+				isLocal: false,
+				kind: CommitKind.Default,
+				label: this.transactionLabel,
+			};
+			this.#events.emit("changed", metaData);
 		}
 	};
 

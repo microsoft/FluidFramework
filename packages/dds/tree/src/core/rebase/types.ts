@@ -184,6 +184,18 @@ export interface CommitMetadata {
 }
 
 /**
+ * Extended commit metadata that includes an optional user-provided label.
+ * @alpha
+ */
+export interface CommitMetadataAlpha extends CommitMetadata {
+	/**
+	 * Optional label provided by the user when commit was created.
+	 * This can be used by undo/redo to group or classify edits.
+	 */
+	label?: unknown;
+}
+
+/**
  * Creates a new graph commit object. This is useful for creating copies of commits with different parentage.
  * @param parent - the parent of the new commit
  * @param commit - the contents of the new commit object

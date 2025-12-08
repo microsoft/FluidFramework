@@ -1121,14 +1121,14 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	describe("transaction labels", () => {
-		it("exposes label via currentTransactionLabel during commitApplied", () => {
+		it("exposes label via CommitMetadataAlpha during commitApplied", () => {
 			const view = getTestObjectView();
 
 			const labels: unknown[] = [];
 
 			view.events.on("commitApplied", (meta) => {
 				if (meta.isLocal) {
-					labels.push(SchematizingSimpleTreeView.currentTransactionLabel);
+					labels.push(meta.label);
 				}
 			});
 
@@ -1145,19 +1145,16 @@ describe("SchematizingSimpleTreeView", () => {
 
 			// Check that correct label was exposed.
 			assert.deepEqual(labels, [testLabel]);
-
-			// Check that transaction label has been cleared.
-			assert.equal(SchematizingSimpleTreeView.currentTransactionLabel, undefined);
 		});
 
-		it("currentTransactionLabel is undefined for unlabeled transactions", () => {
+		it("CommitMetadataAlpha.label is undefined for unlabeled transactions", () => {
 			const view = getTestObjectView();
 
 			const labels: unknown[] = [];
 
 			view.events.on("commitApplied", (meta) => {
 				if (meta.isLocal) {
-					labels.push(SchematizingSimpleTreeView.currentTransactionLabel);
+					labels.push(meta.label);
 				}
 			});
 
@@ -1171,9 +1168,6 @@ describe("SchematizingSimpleTreeView", () => {
 
 			// Check that correct label was exposed.
 			assert.deepEqual(labels, [undefined]);
-
-			// Check that transaction label has been cleared.
-			assert.equal(SchematizingSimpleTreeView.currentTransactionLabel, undefined);
 		});
 
 		it("exposes the correct labels for multiple transactions", () => {
@@ -1183,7 +1177,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 			view.events.on("commitApplied", (meta) => {
 				if (meta.isLocal) {
-					labels.push(SchematizingSimpleTreeView.currentTransactionLabel);
+					labels.push(meta.label);
 				}
 			});
 
@@ -1214,9 +1208,6 @@ describe("SchematizingSimpleTreeView", () => {
 
 			// Check that correct label was exposed.
 			assert.deepEqual(labels, [testLabel1, undefined, testLabel3]);
-
-			// Check that transaction label has been cleared.
-			assert.equal(SchematizingSimpleTreeView.currentTransactionLabel, undefined);
 		});
 	});
 
@@ -1234,7 +1225,7 @@ describe("SchematizingSimpleTreeView", () => {
 			view.events.on("commitApplied", (meta, getRevertible) => {
 				// Omit remote, Undo/Redo commits
 				if (meta.isLocal && getRevertible !== undefined && meta.kind === CommitKind.Default) {
-					const label = SchematizingSimpleTreeView.currentTransactionLabel;
+					const label = meta.label;
 					const revertible = getRevertible();
 
 					// Check if the latest group contains the same label.

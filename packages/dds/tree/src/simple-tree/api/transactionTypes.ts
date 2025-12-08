@@ -125,7 +125,10 @@ export interface RunTransactionParams {
 	readonly preconditions?: readonly TransactionConstraint[];
 	/**
 	 * An optional user-defined label for this transaction.
-	 * This can be used for grouping logic for Undo/Redo operations.
+	 *
+	 * This label is associated with the commit produced by this transaction, and is surfaced through {@link CommitMetadataAlpha.label},
+	 * in the `commitApplied` event.
+	 *
 	 */
 	readonly label?: unknown;
 }
