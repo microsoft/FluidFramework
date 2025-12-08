@@ -903,6 +903,7 @@ export interface RunTransaction {
 
 // @alpha @input
 export interface RunTransactionParams {
+    readonly label?: unknown;
     readonly preconditions?: readonly TransactionConstraint[];
 }
 

@@ -123,4 +123,9 @@ export interface RunTransactionParams {
 	 * this client and ignored by all other clients.
 	 */
 	readonly preconditions?: readonly TransactionConstraint[];
+	/**
+	 * An optional user-defined label for this transaction.
+	 * This can be used for grouping logic for Undo/Redo operations.
+	 */
+	readonly label?: unknown;
 }
