@@ -67,12 +67,14 @@ const minimalDeprecated: FlatConfigArray = [
 // Use projectService for automatic tsconfig discovery instead of manual project configuration.
 // This eliminates the need to manually configure project paths and handles test files automatically.
 // See: https://typescript-eslint.io/packages/parser#projectservice
+// Note: tsconfigRootDir is not set here to allow the parser to discover the correct project root
+// from the location of the file being linted. This also allows the tsdoc plugin to find tsdoc.json
+// files in the correct location.
 const useProjectService = {
 	files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
 	languageOptions: {
 		parserOptions: {
 			projectService: true,
-			tsconfigRootDir: import.meta.dirname,
 		},
 	},
 };
@@ -176,9 +178,10 @@ recommended.push(testProjectConfig);
 strict.push(testProjectConfig);
 minimalDeprecated.push(testProjectConfig);
 
-// Override import-x/no-internal-modules for all files to include /legacy imports.
+// Override import-x/no-internal-modules for non-test files to include /legacy imports.
 // The base config (via FlatCompat) only allows /internal imports.
 // This adds /legacy support which is needed for backwards compatibility during API transitions.
+// NOTE: This config excludes test files so that testProjectConfig's more permissive rule takes precedence.
 const internalModulesConfig = {
 	files: [
 		"**/*.ts",
@@ -190,6 +193,7 @@ const internalModulesConfig = {
 		"**/*.mjs",
 		"**/*.cjs",
 	],
+	ignores: ["src/test/**", "*.spec.ts", "*.test.ts", "**/test/**", "**/tests/**"],
 	rules: {
 		"import-x/no-internal-modules": [
 			"error",
@@ -202,6 +206,33 @@ const internalModulesConfig = {
 recommended.push(internalModulesConfig);
 strict.push(internalModulesConfig);
 minimalDeprecated.push(internalModulesConfig);
+
+// ESLint 9 upgrade: Disable new react-hooks rules that were introduced in eslint-plugin-react-hooks 7.0.
+// These rules have violations across the codebase that need to be addressed incrementally.
+// TODO: Fix violations and enable these rules as errors.
+const reactHooksEslint9Upgrade = {
+	files: ["**/*.jsx", "**/*.tsx"],
+	rules: {
+		// react-hooks/immutability: Warns about mutating variables during render
+		// https://github.com/facebook/react/pull/29456
+		"react-hooks/immutability": "warn",
+
+		// react-hooks/refs: Warns about reading refs during render (before useEffect)
+		// https://github.com/facebook/react/pull/29516
+		"react-hooks/refs": "warn",
+
+		// react-hooks/set-state-in-effect: Warns about calling setState synchronously in effects
+		// https://github.com/facebook/react/pull/30224
+		"react-hooks/set-state-in-effect": "warn",
+
+		// react-hooks/static-components: Warns about creating components during render
+		// https://github.com/facebook/react/pull/30239
+		"react-hooks/static-components": "warn",
+	},
+};
+recommended.push(reactHooksEslint9Upgrade);
+strict.push(reactHooksEslint9Upgrade);
+minimalDeprecated.push(reactHooksEslint9Upgrade);
 
 // CommonJS files (.cts, .cjs) can use __dirname and require, which are valid in CommonJS
 const cjsFileConfig = {
@@ -227,6 +258,7 @@ minimalDeprecated.push(jsNoProject);
 
 // Disable type-required @typescript-eslint rules for pure JS files and .d.ts files.
 // These rules require TypeScript's type-checker, which isn't available for JavaScript files.
+// .d.ts files are declaration files and shouldn't be linted with type-aware rules.
 const jsTypeAwareDisable = {
 	files: ["**/*.js", "**/*.cjs", "**/*.mjs", "**/*.d.ts"],
 	rules: {
