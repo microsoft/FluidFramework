@@ -56,8 +56,7 @@ import {
 export default class GenerateTypetestsCommand extends PackageCommand<
 	typeof GenerateTypetestsCommand
 > {
-	static readonly description =
-		"Generates type tests for a package or group of packages.\n\nEnvironment Variables:\n  FLUB_TYPETEST_SKIP_VERSION_OUTPUT - When set, preserves existing version information in the generated type test files instead of updating to the current package versions.";
+	static readonly description = "Generates type tests for a package or group of packages.";
 
 	static readonly flags = {
 		entrypoint: Flags.custom<ApiLevel>({
@@ -81,13 +80,20 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 				"Use the public entrypoint as a fallback if the requested entrypoint is not found.",
 			default: false,
 		}),
+		skipVersionBump: Flags.boolean({
+			description:
+				"Skip updating version information in generated type test files. When set, preserves existing version information instead of updating to current package versions.",
+			env: "FLUB_TYPETEST_SKIP_VERSION_OUTPUT",
+			hidden: true,
+			default: false,
+		}),
 		...PackageCommand.flags,
 	} as const;
 
 	protected defaultSelection = "dir" as PackageSelectionDefault;
 
 	protected async processPackage(pkg: Package): Promise<void> {
-		const { entrypoint: entrypointFlag, outDir, outFile } = this.flags;
+		const { entrypoint: entrypointFlag, outDir, outFile, skipVersionBump } = this.flags;
 		const pkgJson: PackageWithTypeTestSettings = pkg.packageJson;
 		const entrypoint: ApiLevel =
 			entrypointFlag ??
@@ -170,19 +176,14 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		const currentVersionBase = `${major(currentPackageJson.version)}.${minor(currentPackageJson.version)}.${patch(currentPackageJson.version)}`;
 
 		// Check if we should skip version output and use existing versions
-		// The environment variable is set from the pipeline's testBuild variable, which evaluates
-		// to 'true' for test/* branches or 'false' for other branches
-		const skipVersionOutput =
-			process.env.FLUB_TYPETEST_SKIP_VERSION_OUTPUT !== undefined &&
-			process.env.FLUB_TYPETEST_SKIP_VERSION_OUTPUT !== "false";
 		let previousVersionToUse = previousPackageJson.version;
 		let currentVersionToUse = currentVersionBase;
 
-		if (skipVersionOutput) {
+		if (skipVersionBump) {
 			const existingVersions = readExistingVersions(typeTestOutputFile);
 			if (existingVersions === undefined) {
 				this.verbose(
-					`${pkg.nameColored}: FLUB_TYPETEST_SKIP_VERSION_OUTPUT is set but no existing file found, using current versions`,
+					`${pkg.nameColored}: skipVersionBump is set but no existing file found, using current versions`,
 				);
 			} else {
 				previousVersionToUse = existingVersions.previousVersion;
