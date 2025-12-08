@@ -1,46 +1,51 @@
 {
-  "type": "com.fluidframework.table<test>.Table",
+  "type": "com.fluidframework.table<test>.TableRoot",
   "fields": {
-    "rows": {
-      "type": "com.fluidframework.table<test>.Table.rows",
-      "fields": [
-        {
-          "type": "com.fluidframework.table<test>.Row",
-          "fields": {
-            "id": "row-0",
-            "cells": {
-              "type": "com.fluidframework.table<test>.Row.cells",
+    "table": {
+      "type": "com.fluidframework.table<test>.Table",
+      "fields": {
+        "rows": {
+          "type": "com.fluidframework.table<test>.Table.rows",
+          "fields": [
+            {
+              "type": "com.fluidframework.table<test>.Row",
               "fields": {
-                "column-0": {
-                  "type": "test.table-cell",
+                "id": "row-0",
+                "cells": {
+                  "type": "com.fluidframework.table<test>.Row.cells",
                   "fields": {
-                    "value": "Hello World!"
+                    "column-0": {
+                      "type": "test.table-cell",
+                      "fields": {
+                        "value": "Hello World!"
+                      }
+                    }
                   }
+                },
+                "props": {
+                  "type": "test.table-row-props",
+                  "fields": {}
                 }
               }
-            },
-            "props": {
-              "type": "test.table-row-props",
-              "fields": {}
             }
-          }
-        }
-      ]
-    },
-    "columns": {
-      "type": "com.fluidframework.table<test>.Table.columns",
-      "fields": [
-        {
-          "type": "com.fluidframework.table<test>.Column",
-          "fields": {
-            "id": "column-0",
-            "props": {
-              "type": "test.table-column-props",
-              "fields": {}
+          ]
+        },
+        "columns": {
+          "type": "com.fluidframework.table<test>.Table.columns",
+          "fields": [
+            {
+              "type": "com.fluidframework.table<test>.Column",
+              "fields": {
+                "id": "column-0",
+                "props": {
+                  "type": "test.table-column-props",
+                  "fields": {}
+                }
+              }
             }
-          }
+          ]
         }
-      ]
+      }
     }
   }
 }
