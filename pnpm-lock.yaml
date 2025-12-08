@@ -261,8 +261,8 @@ importers:
         specifier: ~7.0.1
         version: 7.0.1(eslint@9.39.1(jiti@2.6.1))
       eslint-plugin-tsdoc:
-        specifier: ~0.4.0
-        version: 0.4.0
+        specifier: ~0.5.0
+        version: 0.5.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       eslint-plugin-unicorn:
         specifier: ~54.0.0
         version: 54.0.0(eslint@9.39.1(jiti@2.6.1))
@@ -17567,10 +17567,6 @@ packages:
     peerDependencies:
       '@babel/core': ^7.0.0-0
 
-  '@babel/runtime@7.27.0':
-    resolution: {integrity: sha512-VtPOkrdPHZsKc/clNqyi9WUA8TINkZ4cGk63UUE3u4pmB2k+ZMQRDuIOagv8UVd6j7k0T3+RRIb7beKTebNbcw==}
-    engines: {node: '>=6.9.0'}
-
   '@babel/runtime@7.28.4':
     resolution: {integrity: sha512-Q/N6JNWvIvPnLDvjlE1OUBLPQHH6l3CltCEsHIujp45zQUSSh8K+gHnaEX45yAT1nyngnINhvWtzN+Nb9D8RAQ==}
     engines: {node: '>=6.9.0'}
@@ -19269,9 +19265,6 @@ packages:
   '@jridgewell/source-map@0.3.6':
     resolution: {integrity: sha512-1ZJTZebgqllO79ue2bm3rIGud/bOe0pP5BjSRCRxxYkEZS8STV7zN84UBbiYu7jy+eCKSnVIUgoWWE/tt+shMQ==}
 
-  '@jridgewell/sourcemap-codec@1.5.0':
-    resolution: {integrity: sha512-gv3ZRaISU3fjPAgNsriBRqGWQL6quFx04YMPW/zD8XMLsU32mhCCbfbO6KZFLjvYpCZ8zyDEgqsgf+PwPaM7GQ==}
-
   '@jridgewell/sourcemap-codec@1.5.5':
     resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
 
@@ -19438,8 +19431,14 @@ packages:
   '@microsoft/tsdoc-config@0.17.1':
     resolution: {integrity: sha512-UtjIFe0C6oYgTnad4q1QP4qXwLhe6tIpNTRStJ2RZEPIkqQPREAwE5spzVxsdn9UaEMUqhh0AqSx3X4nWAKXWw==}
 
+  '@microsoft/tsdoc-config@0.18.0':
+    resolution: {integrity: sha512-8N/vClYyfOH+l4fLkkr9+myAoR6M7akc8ntBJ4DJdWH2b09uVfr71+LTMpNyG19fNqWDg8KEDZhx5wxuqHyGjw==}
+
   '@microsoft/tsdoc@0.15.1':
     resolution: {integrity: sha512-4aErSrCR/On/e5G2hDP0wjooqDdauzEbIq8hIkIe5pXV0rtWJZvdCEKL0ykZxex+IxIwBp0eGeV48hQN07dXtw==}
+
+  '@microsoft/tsdoc@0.16.0':
+    resolution: {integrity: sha512-xgAyonlVVS+q7Vc7qLW0UrJU7rSFcETRWsqdXZtjzRU8dF+6CkozTK4V4y1LwOX7j8r/vHphjDeMeGI4tNGeGA==}
 
   '@mixer/webpack-bundle-compare@0.1.1':
     resolution: {integrity: sha512-EJe72ByalyTcG7CDdopfGGOnyUqmj1XQD9nF4VgS+FVKAIc97YGiQ4Dlz2B3uUVxuigdGDxh3kIri5f+u5ajKg==}
@@ -22953,8 +22952,8 @@ packages:
     peerDependencies:
       eslint: ^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9.7
 
-  eslint-plugin-tsdoc@0.4.0:
-    resolution: {integrity: sha512-MT/8b4aKLdDClnS8mP3R/JNjg29i0Oyqd/0ym6NnQf+gfKbJJ4ZcSh2Bs1H0YiUMTBwww5JwXGTWot/RwyJ7aQ==}
+  eslint-plugin-tsdoc@0.5.0:
+    resolution: {integrity: sha512-ush8ehCwub2rgE16OIgQPFyj/o0k3T8kL++9IrAI4knsmupNo8gvfO2ERgDHWWgTC5MglbwLVRswU93HyXqNpw==}
 
   eslint-plugin-unicorn@54.0.0:
     resolution: {integrity: sha512-XxYLRiYtAWiAjPv6z4JREby1TAE2byBC7wlh0V4vWDCpccOSU1KovWV//jqPXF6bq3WKxqX9rdjoRQ1EhdmNdQ==}
@@ -26901,9 +26900,6 @@ packages:
   regenerator-runtime@0.13.11:
     resolution: {integrity: sha512-kY1AZVr2Ra+t+piVaJ4gxaFaReZVH40AKNo7UCX6W+dEwBo/2oZJzqfuN1qLq1oL45o56cPaTXELwrTh8Fpggg==}
 
-  regenerator-runtime@0.14.1:
-    resolution: {integrity: sha512-dYnhHh0nJoMfnkZs6GmmhFknAGRrLznOu5nc9ML+EJxGvrx6H7teuevqVqCuPcPK//3eDrrjQhehXVx9cnkGdw==}
-
   regexp-tree@0.1.27:
     resolution: {integrity: sha512-iETxpjK6YoRWJG5o6hXLwvjYAoW+FEZn9os0PD/b6AP6xQwsa/Y7lCVgIixBbUPMfhu+i2LtdeAqVTgGlQarfA==}
     hasBin: true
@@ -27028,11 +27024,6 @@ packages:
   resolve.exports@2.0.3:
     resolution: {integrity: sha512-OcXjMsGdhL4XnbShKpAcSqPMzQoYkYyhbEaeSko47MjRP9NfEQMhZkXL1DoFlt9LWQn4YttrdnV6X2OiyzBi+A==}
     engines: {node: '>=10'}
-
-  resolve@1.22.10:
-    resolution: {integrity: sha512-NPRy+/ncIMeDlTAsuqwKIiferiawhefFJtkNSW0qZJEqMEb+qBt/77B/jGeeek+F0uOeN05CDa6HXbbIgtVX4w==}
-    engines: {node: '>= 0.4'}
-    hasBin: true
 
   resolve@1.22.11:
     resolution: {integrity: sha512-RfqAvLnMl313r7c9oclB1HhUEAezcpLjz95wFH4LVuhk9JF/r22qmVP9AMmOU4vMX7Q8pN8jwNg/CSpdFnMjTQ==}
@@ -29371,10 +29362,6 @@ snapshots:
       '@babel/core': 7.26.0
       '@babel/helper-plugin-utils': 7.25.9
 
-  '@babel/runtime@7.27.0':
-    dependencies:
-      regenerator-runtime: 0.14.1
-
   '@babel/runtime@7.28.4': {}
 
   '@babel/template@7.27.2':
@@ -29632,7 +29619,7 @@ snapshots:
   '@emotion/babel-plugin@11.13.5':
     dependencies:
       '@babel/helper-module-imports': 7.25.9
-      '@babel/runtime': 7.27.0
+      '@babel/runtime': 7.28.4
       '@emotion/hash': 0.9.2
       '@emotion/memoize': 0.9.0
       '@emotion/serialize': 1.3.3
@@ -29663,7 +29650,7 @@ snapshots:
 
   '@emotion/react@11.14.0(@types/react@18.3.15)(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.27.0
+      '@babel/runtime': 7.28.4
       '@emotion/babel-plugin': 11.13.5
       '@emotion/cache': 11.14.0
       '@emotion/serialize': 1.3.3
@@ -29689,7 +29676,7 @@ snapshots:
 
   '@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.15)(react@18.3.1))(@types/react@18.3.15)(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.27.0
+      '@babel/runtime': 7.28.4
       '@emotion/babel-plugin': 11.13.5
       '@emotion/is-prop-valid': 1.3.1
       '@emotion/react': 11.14.0(@types/react@18.3.15)(react@18.3.1)
@@ -33210,7 +33197,7 @@ snapshots:
   '@jridgewell/gen-mapping@0.3.5':
     dependencies:
       '@jridgewell/set-array': 1.2.1
-      '@jridgewell/sourcemap-codec': 1.5.0
+      '@jridgewell/sourcemap-codec': 1.5.5
       '@jridgewell/trace-mapping': 0.3.25
 
   '@jridgewell/resolve-uri@3.1.2': {}
@@ -33222,14 +33209,12 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.5
       '@jridgewell/trace-mapping': 0.3.25
 
-  '@jridgewell/sourcemap-codec@1.5.0': {}
-
   '@jridgewell/sourcemap-codec@1.5.5': {}
 
   '@jridgewell/trace-mapping@0.3.25':
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
-      '@jridgewell/sourcemap-codec': 1.5.0
+      '@jridgewell/sourcemap-codec': 1.5.5
 
   '@jridgewell/trace-mapping@0.3.9':
     dependencies:
@@ -33314,7 +33299,7 @@ snapshots:
 
   '@manypkg/find-root@1.1.0':
     dependencies:
-      '@babel/runtime': 7.27.0
+      '@babel/runtime': 7.28.4
       '@types/node': 18.19.86
       find-up: 4.1.0
       fs-extra: 8.1.0
@@ -33325,7 +33310,7 @@ snapshots:
 
   '@manypkg/get-packages@1.1.3':
     dependencies:
-      '@babel/runtime': 7.27.0
+      '@babel/runtime': 7.28.4
       '@changesets/types': 4.1.0
       '@manypkg/find-root': 1.1.0
       fs-extra: 8.1.0
@@ -33378,7 +33363,7 @@ snapshots:
       '@rushstack/ts-command-line': 5.0.2(@types/node@18.19.86)
       lodash: 4.17.21
       minimatch: 10.0.3
-      resolve: 1.22.10
+      resolve: 1.22.11
       semver: 7.5.4
       source-map: 0.6.1
       typescript: 5.8.2
@@ -33450,7 +33435,7 @@ snapshots:
 
   '@microsoft/microsoft-graph-client@3.0.7(@azure/identity@4.5.0)(@azure/msal-browser@3.27.0)':
     dependencies:
-      '@babel/runtime': 7.27.0
+      '@babel/runtime': 7.28.4
       tslib: 2.8.1
     optionalDependencies:
       '@azure/identity': 4.5.0
@@ -33463,9 +33448,18 @@ snapshots:
       '@microsoft/tsdoc': 0.15.1
       ajv: 8.12.0
       jju: 1.4.0
-      resolve: 1.22.10
+      resolve: 1.22.11
+
+  '@microsoft/tsdoc-config@0.18.0':
+    dependencies:
+      '@microsoft/tsdoc': 0.16.0
+      ajv: 8.12.0
+      jju: 1.4.0
+      resolve: 1.22.11
 
   '@microsoft/tsdoc@0.15.1': {}
+
+  '@microsoft/tsdoc@0.16.0': {}
 
   '@mixer/webpack-bundle-compare@0.1.1':
     dependencies:
@@ -33508,7 +33502,7 @@ snapshots:
 
   '@mui/base@5.0.0-beta.58(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.27.0
+      '@babel/runtime': 7.28.4
       '@floating-ui/react-dom': 2.1.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@mui/types': 7.2.21(@types/react@18.3.15)
       '@mui/utils': 6.0.0-rc.0(@types/react@18.3.15)(react@18.3.1)
@@ -33524,7 +33518,7 @@ snapshots:
 
   '@mui/icons-material@6.2.1(@mui/material@6.3.1(@emotion/react@11.14.0(@types/react@18.3.15)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.15)(react@18.3.1))(@types/react@18.3.15)(react@18.3.1))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.15)(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.27.0
+      '@babel/runtime': 7.28.4
       '@mui/material': 6.3.1(@emotion/react@11.14.0(@types/react@18.3.15)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.15)(react@18.3.1))(@types/react@18.3.15)(react@18.3.1))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
     optionalDependencies:
@@ -33532,7 +33526,7 @@ snapshots:
 
   '@mui/lab@6.0.0-beta.9(@emotion/react@11.14.0(@types/react@18.3.15)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.15)(react@18.3.1))(@types/react@18.3.15)(react@18.3.1))(@mui/material@6.3.1(@emotion/react@11.14.0(@types/react@18.3.15)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.15)(react@18.3.1))(@types/react@18.3.15)(react@18.3.1))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.27.0
+      '@babel/runtime': 7.28.4
       '@mui/base': 5.0.0-beta.58(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@mui/material': 6.3.1(@emotion/react@11.14.0(@types/react@18.3.15)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.15)(react@18.3.1))(@types/react@18.3.15)(react@18.3.1))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@mui/system': 6.3.1(@emotion/react@11.14.0(@types/react@18.3.15)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.15)(react@18.3.1))(@types/react@18.3.15)(react@18.3.1))(@types/react@18.3.15)(react@18.3.1)
@@ -33549,7 +33543,7 @@ snapshots:
 
   '@mui/material@6.3.1(@emotion/react@11.14.0(@types/react@18.3.15)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.15)(react@18.3.1))(@types/react@18.3.15)(react@18.3.1))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.27.0
+      '@babel/runtime': 7.28.4
       '@mui/core-downloads-tracker': 6.3.1
       '@mui/system': 6.3.1(@emotion/react@11.14.0(@types/react@18.3.15)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.15)(react@18.3.1))(@types/react@18.3.15)(react@18.3.1))(@types/react@18.3.15)(react@18.3.1)
       '@mui/types': 7.2.21(@types/react@18.3.15)
@@ -33570,7 +33564,7 @@ snapshots:
 
   '@mui/private-theming@6.3.1(@types/react@18.3.15)(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.27.0
+      '@babel/runtime': 7.28.4
       '@mui/utils': 6.3.1(@types/react@18.3.15)(react@18.3.1)
       prop-types: 15.8.1
       react: 18.3.1
@@ -33579,7 +33573,7 @@ snapshots:
 
   '@mui/styled-engine@6.3.1(@emotion/react@11.14.0(@types/react@18.3.15)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.15)(react@18.3.1))(@types/react@18.3.15)(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.27.0
+      '@babel/runtime': 7.28.4
       '@emotion/cache': 11.14.0
       '@emotion/serialize': 1.3.3
       '@emotion/sheet': 1.4.0
@@ -33592,7 +33586,7 @@ snapshots:
 
   '@mui/system@6.3.1(@emotion/react@11.14.0(@types/react@18.3.15)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.15)(react@18.3.1))(@types/react@18.3.15)(react@18.3.1))(@types/react@18.3.15)(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.27.0
+      '@babel/runtime': 7.28.4
       '@mui/private-theming': 6.3.1(@types/react@18.3.15)(react@18.3.1)
       '@mui/styled-engine': 6.3.1(@emotion/react@11.14.0(@types/react@18.3.15)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.15)(react@18.3.1))(@types/react@18.3.15)(react@18.3.1))(react@18.3.1)
       '@mui/types': 7.2.21(@types/react@18.3.15)
@@ -33612,7 +33606,7 @@ snapshots:
 
   '@mui/utils@6.0.0-rc.0(@types/react@18.3.15)(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.27.0
+      '@babel/runtime': 7.28.4
       '@mui/types': 7.2.21(@types/react@18.3.15)
       '@types/prop-types': 15.7.14
       clsx: 2.1.1
@@ -33624,7 +33618,7 @@ snapshots:
 
   '@mui/utils@6.3.1(@types/react@18.3.15)(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.27.0
+      '@babel/runtime': 7.28.4
       '@mui/types': 7.2.21(@types/react@18.3.15)
       '@types/prop-types': 15.7.14
       clsx: 2.1.1
@@ -34109,7 +34103,7 @@ snapshots:
       fs-extra: 7.0.1
       import-lazy: 4.0.0
       jju: 1.4.0
-      resolve: 1.22.10
+      resolve: 1.22.11
       semver: 7.5.4
       z-schema: 5.0.5
     optionalDependencies:
@@ -34123,14 +34117,14 @@ snapshots:
       fs-extra: 11.3.0
       import-lazy: 4.0.0
       jju: 1.4.0
-      resolve: 1.22.10
+      resolve: 1.22.11
       semver: 7.5.4
     optionalDependencies:
       '@types/node': 18.19.86
 
   '@rushstack/rig-package@0.5.3':
     dependencies:
-      resolve: 1.22.10
+      resolve: 1.22.11
       strip-json-comments: 3.1.1
 
   '@rushstack/terminal@0.15.4(@types/node@18.19.86)':
@@ -34286,7 +34280,7 @@ snapshots:
   '@testing-library/dom@10.4.1':
     dependencies:
       '@babel/code-frame': 7.27.1
-      '@babel/runtime': 7.27.0
+      '@babel/runtime': 7.28.4
       '@types/aria-query': 5.0.4
       aria-query: 5.3.0
       dom-accessibility-api: 0.5.16
@@ -34297,7 +34291,7 @@ snapshots:
   '@testing-library/jest-dom@5.17.0':
     dependencies:
       '@adobe/css-tools': 4.4.1
-      '@babel/runtime': 7.27.0
+      '@babel/runtime': 7.28.4
       '@types/testing-library__jest-dom': 5.14.9
       aria-query: 5.3.2
       chalk: 3.0.0
@@ -34308,7 +34302,7 @@ snapshots:
 
   '@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.27.0
+      '@babel/runtime': 7.28.4
       '@testing-library/dom': 10.4.1
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
@@ -36791,7 +36785,7 @@ snapshots:
 
   date-fns@2.30.0:
     dependencies:
-      '@babel/runtime': 7.27.0
+      '@babel/runtime': 7.28.4
 
   dayjs@1.11.13: {}
 
@@ -36994,7 +36988,7 @@ snapshots:
 
   dom-helpers@5.2.1:
     dependencies:
-      '@babel/runtime': 7.27.0
+      '@babel/runtime': 7.28.4
       csstype: 3.1.3
 
   dom-serializer@1.4.1:
@@ -37515,10 +37509,15 @@ snapshots:
       string.prototype.matchall: 4.0.12
       string.prototype.repeat: 1.0.0
 
-  eslint-plugin-tsdoc@0.4.0:
+  eslint-plugin-tsdoc@0.5.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5):
     dependencies:
-      '@microsoft/tsdoc': 0.15.1
-      '@microsoft/tsdoc-config': 0.17.1
+      '@microsoft/tsdoc': 0.16.0
+      '@microsoft/tsdoc-config': 0.18.0
+      '@typescript-eslint/utils': 8.46.2(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
+    transitivePeerDependencies:
+      - eslint
+      - supports-color
+      - typescript
 
   eslint-plugin-unicorn@54.0.0(eslint@9.39.1(jiti@2.6.1)):
     dependencies:
@@ -40156,7 +40155,7 @@ snapshots:
 
   magic-string@0.30.15:
     dependencies:
-      '@jridgewell/sourcemap-codec': 1.5.0
+      '@jridgewell/sourcemap-codec': 1.5.5
 
   make-dir@2.1.0:
     dependencies:
@@ -41882,7 +41881,7 @@ snapshots:
       postcss: 8.5.3
       postcss-value-parser: 4.2.0
       read-cache: 1.0.0
-      resolve: 1.22.10
+      resolve: 1.22.11
 
   postcss-js@4.0.1(postcss@8.5.3):
     dependencies:
@@ -42379,7 +42378,7 @@ snapshots:
 
   react-transition-group@4.4.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
-      '@babel/runtime': 7.27.0
+      '@babel/runtime': 7.28.4
       dom-helpers: 5.2.1
       loose-envify: 1.4.0
       prop-types: 15.8.1
@@ -42498,7 +42497,7 @@ snapshots:
 
   rechoir@0.8.0:
     dependencies:
-      resolve: 1.22.10
+      resolve: 1.22.11
 
   redent@3.0.0:
     dependencies:
@@ -42525,8 +42524,6 @@ snapshots:
       which-builtin-type: 1.2.1
 
   regenerator-runtime@0.13.11: {}
-
-  regenerator-runtime@0.14.1: {}
 
   regexp-tree@0.1.27: {}
 
@@ -42688,12 +42685,6 @@ snapshots:
 
   resolve.exports@2.0.3: {}
 
-  resolve@1.22.10:
-    dependencies:
-      is-core-module: 2.16.1
-      path-parse: 1.0.7
-      supports-preserve-symlinks-flag: 1.0.0
-
   resolve@1.22.11:
     dependencies:
       is-core-module: 2.16.1
@@ -42757,7 +42748,7 @@ snapshots:
 
   rtl-css-js@1.16.1:
     dependencies:
-      '@babel/runtime': 7.27.0
+      '@babel/runtime': 7.28.4
 
   run-async@2.4.1: {}
 
@@ -43734,7 +43725,7 @@ snapshots:
       postcss-load-config: 4.0.2(postcss@8.5.3)(ts-node@10.9.2(@types/node@18.19.86)(typescript@5.4.5))
       postcss-nested: 6.2.0(postcss@8.5.3)
       postcss-selector-parser: 6.1.2
-      resolve: 1.22.10
+      resolve: 1.22.11
       sucrase: 3.35.0
     transitivePeerDependencies:
       - ts-node
