@@ -213,6 +213,8 @@ Example extending in `package.json`:
 }
 ```
 
+For a complete example with multiple scenarios, see [File Dependency Extension Example](./docs/file-dependency-extension-example.md).
+
 When building release group, by default, it will trigger the task on all the packages within the release group. That also mean
 that scripts at the release group root are not considered.
 
