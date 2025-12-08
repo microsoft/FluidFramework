@@ -212,7 +212,7 @@ describe("message codec", () => {
 				revision,
 				originatorId,
 				changeset: {},
-				version: -1,
+				version: -1 as Message["version"],
 			} satisfies Message);
 			assert.throws(
 				() => codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor }),

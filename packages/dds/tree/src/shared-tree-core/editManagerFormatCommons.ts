@@ -165,7 +165,7 @@ export const EditManagerFormatVersion = {
 	 * Not yet released.
 	 * Only used for testing detached roots.
 	 */
-	vDetachedRoots: 101,
+	vDetachedRoots: "detached-roots|v0.1",
 } as const;
 export type EditManagerFormatVersion = Brand<
 	(typeof EditManagerFormatVersion)[keyof typeof EditManagerFormatVersion],
