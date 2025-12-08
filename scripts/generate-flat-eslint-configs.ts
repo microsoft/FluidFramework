@@ -199,7 +199,6 @@ async function findLegacyConfigs(): Promise<PackageTarget[]> {
 	}
 	return results;
 }
-}
 
 // List of TypeScript-ESLint rules that require type information
 // These rules should not be applied to test files since the base config disables project for them
@@ -470,7 +469,7 @@ ${typeImport}import { ${variant} } from "${importPath}";
 
 		configContent += `];\n\nexport default config;\n`;
 	}
-  return configContent;
+	return configContent;
 }
 
 async function writeFlatConfigs(
@@ -543,9 +542,8 @@ async function main() {
 		);
 	}
 }
-}
 
 main().catch((err) => {
-  console.error(err);
-  process.exit(1);
+	console.error(err);
+	process.exit(1);
 });
