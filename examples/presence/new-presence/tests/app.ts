@@ -67,7 +67,7 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 		// Should be the same as the uuid we generated above.
 		id = container.resolvedUrl.id;
 	} else {
-		id = location.hash.substring(1);
+		id = location.hash.slice(1);
 		container = await loadExistingContainer({
 			request: { url: `${window.location.origin}/${id}` },
 			urlResolver,
