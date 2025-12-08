@@ -26,17 +26,23 @@ export class TsLintTask extends TscDependentTask {
 
 export class EsLintTask extends TscDependentTask {
 	private _configFileFullPath: string | undefined;
+	private _sharedConfigFiles: string[] | undefined;
 
 	/**
 	 * Gets the absolute paths to shared eslint config files that should be tracked.
 	 * These are files from @fluidframework/eslint-config-fluid that affect linting behavior.
 	 */
 	private getSharedConfigFiles(): string[] {
+		if (this._sharedConfigFiles !== undefined) {
+			return this._sharedConfigFiles;
+		}
+
 		const sharedDir = path.join(this.context.repoRoot, sharedEslintConfigPath);
 
 		// If the shared config directory doesn't exist, skip tracking
 		if (!existsSync(sharedDir)) {
-			return [];
+			this._sharedConfigFiles = [];
+			return this._sharedConfigFiles;
 		}
 
 		// Track the main config files from the shared eslint-config-fluid package
@@ -58,7 +64,8 @@ export class EsLintTask extends TscDependentTask {
 			}
 		}
 
-		return files;
+		this._sharedConfigFiles = files;
+		return this._sharedConfigFiles;
 	}
 
 	protected get configFileFullPaths() {
