@@ -30,15 +30,23 @@ import {
 } from "../../codec/index.js";
 
 /**
- * Encodes a simple schema (view or stored) into a serializable format.
+ * Encodes the compatibility impacting subset of simple schema (view or stored) into a serializable format.
+ *
  * @remarks The JSON-compatible schema returned from this method is only intended for use in snapshots/comparisons of schemas.
  * It is not possible to reconstruct a full schema (including metadata and persistedMetadata) from the encoded format.
  * @param treeSchema - The tree schema to convert.
  * @returns A serializable representation of the schema.
  *
+ * @privateRemarks
+ * Encodes to {@link Format.SimpleTreeSchemaFormat}.
+ *
+ * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
+ *
  * @alpha
  */
-export function encodeSimpleSchema(simpleSchema: SimpleTreeSchema): JsonCompatibleReadOnly {
+export function encodeSchemaCompatibilitySnapshot(
+	simpleSchema: SimpleTreeSchema,
+): JsonCompatibleReadOnly {
 	// Convert types to serializable forms
 	const encodedDefinitions: Format.SimpleSchemaDefinitionsFormat = {};
 
@@ -63,9 +71,15 @@ export function encodeSimpleSchema(simpleSchema: SimpleTreeSchema): JsonCompatib
  * @returns A decoded simple schema.
  * @throws Will throw a usage error if the encoded schema is not in the expected format.
  *
+ * @privateRemarks
+ * If a validator is not provided, this implicitly performs an unsafe type conversion:
+ * this is something our user facing APIs generally avoid doing, and should be reconsidered before stabilizing.
+ *
+ * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
+ *
  * @alpha
  */
-export function decodeSimpleSchema(
+export function decodeSchemaCompatibilitySnapshot(
 	encodedSchema: JsonCompatibleReadOnly,
 	validator?: FormatValidator,
 ): SimpleTreeSchema {

@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
+	Multiplicity,
 	ObjectNodeStoredSchema,
 	type TreeFieldStoredSchema,
 	type TreeNodeStoredSchema,
@@ -19,7 +20,7 @@ import {
 import { compareSets } from "../../util/index.js";
 
 import type { FullSchemaPolicy } from "./fieldKind.js";
-import { isNeverTree } from "./isNeverTree.js";
+import { isNeverField, isNeverTree } from "./isNeverTree.js";
 
 /**
  * Returns true iff `superset` is a superset of `original`.
@@ -125,16 +126,46 @@ export function allowsValueSuperset(
  * Returns true iff `superset` is a superset of `original`.
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
+ *
+ * @param monotonicOnly - If true, only allow changes of field kinds which are explicitly listed in {@link FieldKindOptions.allowMonotonicUpgradeFrom}.
+ * This prevents this function from considering two different schema as equivalent, preventing upgrades which would allow their inverse.
+ * This prevents infinite upgrade loops where two clients could keep upgrading between two schema.
+ *
+ * @remarks
+ * True if a client should be able to {@link TreeView.upgradeSchema} from a field schema using this field kind and `originalTypes` to `superset`.
+ *
+ * @privateRemarks
+ * See also {@link FieldKindOptions.allowMonotonicUpgradeFrom} for constraints on the implementation.
  */
 export function allowsFieldSuperset(
 	policy: FullSchemaPolicy,
 	originalData: TreeStoredSchema,
 	original: TreeFieldStoredSchema,
 	superset: TreeFieldStoredSchema,
+	monotonicOnly: boolean = true,
 ): boolean {
-	return (
-		policy.fieldKinds.get(original.kind) ?? fail(0xb1b /* missing kind */)
-	).allowedMonotonicUpgrade(policy, originalData, original.types, superset);
+	if (!monotonicOnly) {
+		if (isNeverField(policy, originalData, original)) {
+			return true;
+		}
+	}
+
+	if (!allowsTreeSchemaIdentifierSuperset(original.types, superset.types)) {
+		return false;
+	}
+
+	if (original.kind === superset.kind) {
+		return true;
+	}
+
+	const supersetKind = policy.fieldKinds.get(superset.kind) ?? fail(0xb1b /* missing kind */);
+
+	if (monotonicOnly) {
+		return supersetKind.options.allowMonotonicUpgradeFrom.has(original.kind);
+	} else {
+		const originalKind = policy.fieldKinds.get(original.kind) ?? fail("missing kind");
+		return allowsMultiplicitySuperset(originalKind.multiplicity, supersetKind.multiplicity);
+	}
 }
 
 /**
@@ -191,4 +222,31 @@ export function allowsRepoSuperset(
 	// Any schema in superset not in original are already known to be superset of original since they are "never" due to being missing.
 	// Therefore, we do not need to check them.
 	return true;
+}
+
+/**
+ * Returns true iff `superset` is a superset of `original`.
+ *
+ * This does not require a strict (aka proper) superset: equivalent schema will return true.
+ */
+export function allowsMultiplicitySuperset(
+	original: Multiplicity,
+	superset: Multiplicity,
+): boolean {
+	if (original === superset) {
+		return true;
+	}
+
+	switch (superset) {
+		case Multiplicity.Forbidden:
+			return false;
+		case Multiplicity.Optional:
+			return original === Multiplicity.Single || original === Multiplicity.Forbidden;
+		case Multiplicity.Single:
+			return false;
+		case Multiplicity.Sequence:
+			return true;
+		default:
+			return unreachableCase(superset);
+	}
 }
