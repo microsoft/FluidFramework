@@ -51,6 +51,7 @@ export {
 	type EditManagerCodecOptions,
 	clientVersionToEditManagerFormatVersion,
 	editManagerFormatVersionSelectorForSharedBranches,
+	editManagerFormatVersionSelectorForDetachedRootEditing,
 } from "./editManagerCodecs.js";
 export {
 	EditManagerFormatVersion,
@@ -75,6 +76,7 @@ export {
 	getCodecTreeForMessageFormatWithChange,
 	clientVersionToMessageFormatVersion,
 	messageFormatVersionSelectorForSharedBranches,
+	messageFormatVersionSelectorForDetachedRootEditing,
 } from "./messageCodecs.js";
 export {
 	MessageFormatVersion,

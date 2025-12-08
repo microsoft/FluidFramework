@@ -29,7 +29,9 @@ import type { ITree } from "./simple-tree/index.js";
 import { Breakable, copyProperty } from "./util/index.js";
 import { FluidClientVersion } from "./codec/index.js";
 import {
+	editManagerFormatVersionSelectorForDetachedRootEditing,
 	editManagerFormatVersionSelectorForSharedBranches,
+	messageFormatVersionSelectorForDetachedRootEditing,
 	messageFormatVersionSelectorForSharedBranches,
 } from "./shared-tree-core/index.js";
 
@@ -203,7 +205,7 @@ export function configuredSharedTreeInternal(
 
 export function resolveOptions(options: SharedTreeOptions): SharedTreeOptionsInternal {
 	const internal: SharedTreeOptionsInternal = {
-		...resolveSharedBranchesOptions(options.enableSharedBranches),
+		...resolveFormatOptions(options),
 	};
 	for (const optionName of Object.keys(options)) {
 		copyProperty(options, optionName, internal);
@@ -211,12 +213,23 @@ export function resolveOptions(options: SharedTreeOptions): SharedTreeOptionsInt
 	return internal;
 }
 
-function resolveSharedBranchesOptions(
-	enableSharedBranches: boolean | undefined,
-): SharedTreeOptionsInternal {
-	return enableSharedBranches === true ? sharedBranchesOptions : {};
+function resolveFormatOptions(options: SharedTreeOptions): SharedTreeOptionsInternal {
+	if (options.enableSharedBranches === true && options.enableDetachRootEditing === true) {
+		throw new UsageError("enableDetachRootEditing cannot be used with enableSharedBranches.");
+	}
+	if (options.enableSharedBranches === true) {
+		return sharedBranchesOptions;
+	}
+	if (options.enableDetachRootEditing === true) {
+		return detachRootEditingOptions;
+	}
+	return {};
 }
 const sharedBranchesOptions: SharedTreeOptionsInternal = {
 	messageFormatSelector: messageFormatVersionSelectorForSharedBranches,
 	editManagerFormatSelector: editManagerFormatVersionSelectorForSharedBranches,
+};
+const detachRootEditingOptions: SharedTreeOptionsInternal = {
+	messageFormatSelector: messageFormatVersionSelectorForDetachedRootEditing,
+	editManagerFormatSelector: editManagerFormatVersionSelectorForDetachedRootEditing,
 };

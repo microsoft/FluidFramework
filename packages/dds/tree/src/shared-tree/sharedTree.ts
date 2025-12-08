@@ -684,6 +684,12 @@ export interface SharedTreeOptions
 	 */
 	readonly enableSharedBranches?: boolean;
 	/**
+	 * Experimental feature flag to enable the ability to edit detached roots.
+	 * This feature is not yet complete and should not be used in production.
+	 * Defaults to false.
+	 */
+	readonly enableDetachRootEditing?: boolean;
+	/**
 	 * Returns whether a node / field should be incrementally encoded.
 	 * @remarks
 	 * See {@link IncrementalEncodingPolicy}.
@@ -823,6 +829,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	editManagerFormatSelector: clientVersionToEditManagerFormatVersion,
 	messageFormatSelector: clientVersionToMessageFormatVersion,
 	enableSharedBranches: false,
+	enableDetachRootEditing: false,
 };
 
 /**
