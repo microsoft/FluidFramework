@@ -6,16 +6,6 @@
 import { getEsLintConfigFilePath, getInstalledPackageVersion } from "../taskUtils";
 import { TscDependentTask } from "./tscTask";
 
-export class TsLintTask extends TscDependentTask {
-	protected get configFileFullPaths() {
-		return [this.getPackageFileFullPath("tslint.json")];
-	}
-
-	protected async getToolVersion() {
-		return getInstalledPackageVersion("tslint", this.node.pkg.directory);
-	}
-}
-
 export class EsLintTask extends TscDependentTask {
 	private _configFileFullPath: string | undefined;
 	protected get configFileFullPaths() {
