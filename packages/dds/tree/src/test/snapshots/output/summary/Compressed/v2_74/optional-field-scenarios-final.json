@@ -196,6 +196,24 @@
                                       },
                                       "c": [
                                         [
+                                          4,
+                                          {
+                                            "fieldChanges": [
+                                              {
+                                                "fieldKey": "root 3 child",
+                                                "fieldKind": "Optional",
+                                                "change": {
+                                                  "r": {
+                                                    "e": true,
+                                                    "d": 5,
+                                                    "s": 6
+                                                  }
+                                                }
+                                              }
+                                            ]
+                                          }
+                                        ],
+                                        [
                                           [
                                             3,
                                             516
@@ -210,24 +228,6 @@
                                                     "e": false,
                                                     "d": 0,
                                                     "s": 1
-                                                  }
-                                                }
-                                              }
-                                            ]
-                                          }
-                                        ],
-                                        [
-                                          4,
-                                          {
-                                            "fieldChanges": [
-                                              {
-                                                "fieldKey": "root 3 child",
-                                                "fieldKind": "Optional",
-                                                "change": {
-                                                  "r": {
-                                                    "e": true,
-                                                    "d": 5,
-                                                    "s": 6
                                                   }
                                                 }
                                               }
@@ -308,7 +308,7 @@
                           "change": [
                             {
                               "data": {
-                                "maxId": 7,
+                                "maxId": 9,
                                 "changes": [
                                   {
                                     "fieldKey": "rootFieldKey",
