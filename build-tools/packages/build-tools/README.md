@@ -114,6 +114,12 @@ doesn't have to appear on every package and will be ignored if it is not found.
 The task definitions is an object with task names as keys, the task dependencies and config to define the action of the task.
 For more details, see the definition `TaskDefinitionsOnDisk` in [./src/common/fluidTaskDefinitions.ts](./src/common/fluidTaskDefinitions.ts)
 
+Task definitions support several properties:
+- `dependsOn`: Array of task dependencies (supports `"..."` to extend from global config)
+- `before`/`after`: Weak dependencies that only affect ordering
+- `script`: Whether this is a script task (default: true) or just a dependency target (false)
+- `files`: File dependencies for incremental builds (supports `"..."` to extend from global config) - see [File Dependencies](#file-dependencies)
+
 For example:
 
 ```js
@@ -156,6 +162,54 @@ For example:
 			// (if the task exists)
 		}
 	}
+}
+```
+
+#### File Dependencies
+
+For tasks that aren't automatically tracked by `fluid-build` (i.e., tasks that use unknown executables or custom scripts), you can
+explicitly specify which files a task depends on using the `files` property in task definitions. This enables incremental builds for
+custom tasks by tracking input and output files.
+
+The `files` property can be specified:
+- Globally in `fluidBuild.config.cjs` for all packages
+- Per-package in `package.json` under `fluidBuild.tasks`
+
+Similar to task dependencies, you can use `"..."` to extend file dependencies from the global configuration instead of replacing them.
+
+Example in `fluidBuild.config.cjs`:
+
+```js
+module.exports = {
+   tasks: {
+      "custom-codegen": {
+         dependsOn: ["tsc"],
+         files: {
+            inputGlobs: ["src/**/*.template", "config.json"],
+            outputGlobs: ["generated/**/*.ts"],
+            gitignore: ["input"],           // Optional: apply gitignore to inputs (default: ["input"])
+            includeLockFiles: true          // Optional: include lock files as inputs (default: true)
+         }
+      }
+   }
+}
+```
+
+Example extending in `package.json`:
+
+```jsonc
+{
+   "fluidBuild": {
+      "tasks": {
+         "custom-codegen": {
+            "dependsOn": ["..."],
+            "files": {
+               "inputGlobs": ["...", "extra-config.json"],  // Extends global inputGlobs
+               "outputGlobs": ["..."]                       // Inherits global outputGlobs
+            }
+         }
+      }
+   }
 }
 ```
 
