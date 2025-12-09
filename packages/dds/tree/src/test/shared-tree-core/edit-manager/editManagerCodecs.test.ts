@@ -19,6 +19,7 @@ import { TestChange } from "../../testChange.js";
 import {
 	type EncodingTestData,
 	makeEncodingTestSuite,
+	makeDiscontinuedEncodingTestSuite,
 	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
@@ -209,14 +210,16 @@ export function testCodec() {
 				jsonValidator: FormatValidatorBasic,
 			},
 		);
+		makeDiscontinuedEncodingTestSuite(family,
+			[EditManagerFormatVersion.v1, EditManagerFormatVersion.v2, EditManagerFormatVersion.v5]
+		);
 
 		// Versions 1 through 4 do not encode the summary originator ID.
 		makeEncodingTestSuite(
 			family,
 			testCases,
 			assertEquivalentSummaryDataIgnoreOriginator,
-			[EditManagerFormatVersion.v3, EditManagerFormatVersion.v4],
-			[EditManagerFormatVersion.v1, EditManagerFormatVersion.v2, EditManagerFormatVersion.v5],
+			[EditManagerFormatVersion.v3, EditManagerFormatVersion.v4]
 		);
 
 		makeEncodingTestSuite(family, testCases, undefined, [

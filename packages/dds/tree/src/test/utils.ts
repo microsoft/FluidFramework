@@ -1054,8 +1054,23 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 	encodingTestData: EncodingTestData<TDecoded, TEncoded, TContext>,
 	assertEquivalent: (a: TDecoded, b: TDecoded) => void = assertDeepEqual,
 	supportedVersions?: FormatVersion[],
-	discontinuedVersions?: FormatVersion[],
+	// skipCoverageValidation?: boolean,     flag to add later if we need to skip coverage validation
 ): void {
+	if (supportedVersions !== undefined) {
+		const familyVersions = new Set(family.getSupportedFormats());
+		const newVersions: FormatVersion[] = [];
+		for (const version of familyVersions) {
+			if (!supportedVersions.includes(version)) {
+				newVersions.push(version);
+			}
+		}
+		if (newVersions.length > 0 ) {
+			throw new Error
+			(`makeEncodingTestSuite was called with an explicit list of supported versions that is missing
+				 versions supported by the family: ${newVersions.join(", ")}`);
+		}
+	}
+
 	const supportedVersionsToTest = supportedVersions ?? family.getSupportedFormats();
 	for (const version of supportedVersionsToTest) {
 		describe(`version ${version}`, () => {
@@ -1119,34 +1134,32 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 			}
 		});
 	}
-	if (discontinuedVersions !== undefined) {
-		for (const version of discontinuedVersions) {
-			describe(`discontinued version ${version}`, () => {
-				const codec = family.resolve(version);
-				const jsonCodec =
-					codec.json.encodedSchema !== undefined
-						? withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic)
-						: codec.json;
-				it("throws when encoding", () => {
-					assert(encodingTestData.successes.length > 0);
-					const [name, data, context] = encodingTestData.successes[0];
-					assert.throws(
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						() => jsonCodec.encode(data, context!),
-						validateUsageError(/Cannot encode data to format/),
-					);
-				});
-				it("throws when decoding", () => {
-					assert(encodingTestData.successes.length > 0);
-					const [name, data, context] = encodingTestData.successes[0];
-					assert.throws(
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						() => jsonCodec.decode({ version }, context!),
-						validateUsageError(/Cannot decode data to format/),
-					);
-				});
+}
+
+export function makeDiscontinuedEncodingTestSuite(
+	family: ICodecFamily<unknown, unknown>,
+	discontinuedVersions: FormatVersion[],
+): void {
+	for (const version of discontinuedVersions) {
+		describe(`${version} (discontinued)`, () => {
+			const codec = family.resolve(version);
+			const jsonCodec =
+				codec.json.encodedSchema !== undefined
+					? withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic)
+					: codec.json;
+			it("throws when encoding", () => {
+				assert.throws(
+					() => jsonCodec.encode({}, {}),
+					validateUsageError(/Cannot encode data to format/),
+				);
 			});
-		}
+			it("throws when decoding", () => {
+				assert.throws(
+					() => jsonCodec.decode({ version }, {}),
+					validateUsageError(/Cannot decode data to format/),
+				);
+			});
+		});
 	}
 }
 
