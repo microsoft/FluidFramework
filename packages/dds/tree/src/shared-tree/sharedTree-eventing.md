@@ -57,7 +57,7 @@ Introduce root level wrapper events which behave like their node-level counterpa
 
 ### Potential Solution
 
-#### `rootNodeChanged` / `rootTreeChanged`
+#### Option A: `rootNodeChanged` / `rootTreeChanged` as wrapper events
 These APIs would mirror `nodeChanged` and `treeChanged`, but operate directly on the rootField (or view). They do not include schema changes (users should use the `schemaChanged` event for this instead), and automatically resubscribes to `nodeChanged` and `treeChanged` with the new root when the root node has been replaced
 
 ```ts
@@ -79,6 +79,25 @@ These APIs would eliminate some of the boilerplate from our current workflow and
 | Schema change                       | Yes         | No               | No               |
 
 ---
+
+### Option B: new `ParentObject` in `nodeChanged` / `treeChanged`
+A new `Tree.ParentObject` api would return a type `ParentObject` which is an intersection of the `TreeView` and `TreeNode`, so that we could pass this new type into our existing eventing apis and would unify our special cases for nodes without a parent node.
+
+```ts
+type ParentObject = TreeView | TreeNode
+
+parentObject(node: TreeNode): ParentObject {
+	if(Tree.parent(node) === undefined){
+		// returns view
+	}
+	return Tree.parent(node)
+}
+
+// Example for the rootNode
+const parentObject = Tree.parentObject(rootNode)
+
+Tree.on(parentObject, "nodeChanged", () => {})
+```
 
 ## 2. Diff Payload for nodeChanged 
 
@@ -290,12 +309,17 @@ Currently “treeChanged” only signals that something under a node changed, bu
 
 Provide a sparse tree with the changed nodes in the payload. We can also use the delta for this case. We would need to traverse through the delta while constructing the sparse tree and include only nodes with subtrees that have changed.
 
-**Open question**: which subtree-level queries are most useful for users?
+##### Open questions
+
+###### Which subtree-level queries are most useful for users?
 TODO: We should validate this with Nick before finalizing payload shape.
 - Given a node, how did this node change?
 - Given a path, did anything change at or under this path?
 - Explore / discover which paths changed anywhere in this subtree.
 - Given a node, which fields have any changes in their subtree?
+
+###### How do we represent move diffs involving multiple subtrees?
+Given that we have a subtree which goes through a bunch of edits, and then gets moved under a different subtree, do we represent the net diff as an insert into the new subtree (and just use the final state before it got moved)?
 
 `trackDirtyNodes` already maintains a map of nodes to the `DirtyTreeStatus`. A subtree diff type could leverage this into a map of node/path -> summary, where the summary describes how the node changed and optionally exposes richer diffs on demand.
 
@@ -393,35 +417,7 @@ type TreeChangedEvent = {
 
 ---
 
-## 4. Detached Tree Eventing
-
-### Problem
-
-Detached trees are currently not able to emit events. When editing for detached trees are enabled, we should ensure that eventing for detached trees reaches parity with our current live-tree eventing system. Note that detached trees do not have “root replacement” semantics. EventParent is only used to determine the event source, not to support root replacement logic for detached trees.
-
-### Potential Solution
-
-#### EventParent
-To unify handling of events for nodes that do not have a true parent (root node, detached nodes), we may also introduce an internal helper abstraction called EventParent. 
-
-```ts
-interface EventParent{
-	branch:TreeView | TreeBranch
-	node?: TreeNode
-	rootFieldKey?: FieldKey
-	detachedRootId?: DetachedNodeId
-}
-```
-
-This API would return some dummy parent object (EventParent) that has all the necessary components to track changes on its child node. If the node is parented under another node, we can simply use its parent node. 
-
-However, for nodes without a parent node (detached trees / root node), one potential solution could be to design some sort of object that contains different properties for the different scenarios. 
-
-For instance, although root nodes and detached nodes do not have a parent node, it is still technically parented by the view/branch. For these cases, we could have the object contain the view/branch (and maybe the detachedRootId/rootFieldKey) to identify what exactly we are trying to subscribe to. We can return a parent-like object for eventing purposes, to cover all different scenarios.
-
----
-
-## 5. Event Coalescing
+## 4. Event Coalescing
 
 ### Current Batching Mechanisms
 
@@ -481,9 +477,49 @@ Tree.on(node, "nodeChanged", () => {
 ## Final Thoughts
 
 The proposals in this document represent a more feature rich and unified eventing system, covering semantic completeness (detached trees), developer ease (structured diffs), and runtime efficiency (rAF coalescing). The following recommendations outline a practical roadmap for these proposals.
-1.	Start with root level events, as they may be an easy fix (as we are just creating wrappers for existing events), and will make our eventing APIs more consistent.
-2.	Then prioritize getEventParent. It may be beneficial to getting this done soon, as it unblocks future eventing feature work for detached trees.
+1.	Prioritize `Tree.parentObject`. It may be beneficial to getting this done soon, as it will be easy to implement, and will provide future work to be unblocked.
+2.	Then root level events, as either proposed solution (wrapper vs using new parentObject) would make our api usage more consistent.
 3.	Combine diff and JSON Patch Payloads for Node Changes. Although the demand for this feature may be to a limited number of customers (and simply passing in the raw delta may be the easiest solution), this provides users with better readability (normalized diffs) and interoperability (as JSON Patch is a standardized format). If this feature is time sensitive, we can also consider initially implementing the feature with the previous tree state, then upgrading it in the future.
 4.	Expand to subtree diff payloads (prefer sparse representation). Once the node layer diff format is finalized, the subtree layer format should be implemented next. The sparse tree format is recommended as the default, as it provides the richest context. TODO: We need to validate this with Nick before finalizing the payload.
 5.	Defer detached tree eventing until editing is supported. Unfortunately, this work will remain blocked until editing is possible for detached nodes.
 6.	Treat event coalescing as the lowest priority task. This feature provides optimization for UI heavy scenarios but introduces no new capabilities. This should likely stay in the backlog until all the higher priority features have landed.
+
+## Appendix
+
+### Limitations of `trackDirtyNodes`
+The current `trackDirtyNodes` function allows us to tracking which nodes were touched during an edit. However, there are several gaps that limit its ability to become a public facing api. Some of these limitations will be covered by the design choices proposed in this document.
+
+1. Incomplete edit semantics (`DirtyTreeStatus`)
+`DirtyTreeStatus` only distinguishes `"new" | "changed" | "moved"`, which does not cover several forms of edits supported by SharedTree, including:
+- attach/detach operations outside of arrays
+- moves in map fields
+- node structural replacement from schema changes
+- swap operations
+
+However, the diff formats proposed in this document (e.g. `SequenceFieldDiff`, `MapFieldDiff`, `ValueFieldDiff`, `SparseSubtree`) provide schema-agnostic, semantically complete edit types. `trackDirtyNodes` should therefore only be leveraged to check "which nodes were touched", and not anything else.
+
+2. Node replacement from schema changes
+Schema changes can cause new `TreeNode` instances to be created even when no semantic "edit" occurred in the tree. `trackDirtyNodes` cannot reliably differentiate between:
+- node replacement due to a structural schema upgrade
+- node replacement due to user edits
+- rehydration during snapshot load or rebase
+
+This makes it difficult to use `DirtyTreeStatus` as the basis for observable behavior.
+
+The proposed APIs address this by keeping schema changes explicitly separate (via `schemaChanged`) and by introducing root-level wrapper events (`rootNodeChanged`/`rootTreeChanged`) that simplify root replacement logic.
+
+3. Unsafe timing: mid-edit observability
+`trackDirtyNodes` fires callbacks during forest mutation. At this point:
+- edits may be partially applied
+- tree invariants are not yet restored
+
+Running user code during this phase may cause undefined paths and inconsistent reads. The proposals in this document addresses this doing the following:
+- subscription changes made during a callback do not affect the current batch
+- diffs represent the final and net state of the edits
+- New listeners registered from within an event callback will only see subsequent batched/transactions and will not receive diffs for edits that have already been applied.
+
+4. Exposure of internal "Forest" concepts
+The existing `trackDirtyNodes` documentation reference "forest", which are not part of the public API. The proposed APIs will therefore only operate with publicly exposed types:
+- UpPath
+- per-field diffs (new type)
+- new ParentObject abstraction type
