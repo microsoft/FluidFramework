@@ -139,6 +139,7 @@ jobs:
         displayName: Install npm 10
         retryCountOnTaskFailure: 4
         inputs:
+          targetType: 'inline'
           script: 'pnpm install --global npm@^10'
 
       # Download artifact
