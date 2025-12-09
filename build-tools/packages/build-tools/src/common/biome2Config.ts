@@ -33,11 +33,76 @@ async function loadRawBiome2Config(configPath: string): Promise<Biome2ConfigRaw>
 }
 
 /**
+ * Resolves a single extends value for Biome 2.x, handling the special "//" microsyntax.
+ * The "//" syntax means "find and extend the root config" by walking up the directory tree.
+ *
+ * @param configPath - The path to the config file that has the extends declaration
+ * @param extendsValue - The extends value to resolve (can be "//" or a relative path)
+ * @returns The absolute path to the config file being extended
+ */
+async function resolveBiome2ExtendsPath(
+	configPath: string,
+	extendsValue: string,
+): Promise<string> {
+	// Handle the special "//" microsyntax for Biome 2.x
+	if (extendsValue === "//") {
+		// Find the root config by walking up from the parent directory
+		const rootConfig = await findRootBiome2Config(path.dirname(configPath));
+		if (!rootConfig) {
+			throw new Error(
+				`Could not find root Biome config (with "root": true) when resolving "extends": "//" from ${configPath}`,
+			);
+		}
+		return rootConfig;
+	}
+
+	// For regular relative paths, resolve relative to the config's directory
+	return path.join(path.dirname(configPath), extendsValue);
+}
+
+/**
+ * Recursively resolves the extends chain for a Biome 2.x config file.
+ * Returns an array of config paths in the order they should be merged (base configs first).
+ * Handles the special "//" microsyntax that tells Biome to extend from the root config.
+ *
+ * @param configPath - The path to the config file
+ * @param includeConfigPath - Whether to include the config itself in the result (default: true)
+ * @returns Array of config paths in merge order
+ */
+async function resolveBiome2ExtendsChain(
+	configPath: string,
+	includeConfigPath = true,
+): Promise<string[]> {
+	const config = await loadRawBiome2Config(configPath);
+	let extendedConfigPaths: string[] = [];
+
+	if (config.extends) {
+		// Normalize extends to always be an array (Biome 2.x allows string or string[])
+		const extendsArray = Array.isArray(config.extends) ? config.extends : [config.extends];
+		const pathsNested = await Promise.all(
+			extendsArray.map(async (configToExtend) => {
+				// Resolve the extends path (handles "//" microsyntax)
+				const resolvedPath = await resolveBiome2ExtendsPath(configPath, configToExtend);
+				// Recursively resolve the chain for this extended config
+				return resolveBiome2ExtendsChain(resolvedPath, true);
+			}),
+		);
+		extendedConfigPaths = pathsNested.flat();
+	}
+
+	if (includeConfigPath) {
+		extendedConfigPaths.push(configPath);
+	}
+
+	return extendedConfigPaths;
+}
+
+/**
  * Returns an array of absolute paths to Biome 2.x config files. The paths are in the order in which they are merged by
  * Biome. That is, the last item in the array will be the absolute path to `configPath`.
  *
  * In Biome 2.x, configs are resolved by:
- * 1. Following explicit `extends` declarations
+ * 1. Following explicit `extends` declarations (including the "//" microsyntax for finding root configs)
  * 2. Walking up the directory tree to find parent configs until a config with `root: true` is found
  *
  * Both mechanisms are supported and combined.
@@ -49,11 +114,7 @@ export async function getAllBiome2ConfigPaths(configPath: string): Promise<strin
 	// First, handle explicit extends declarations
 	if (config.extends) {
 		// Get only the extended configs, not configPath itself (we'll add it at the end)
-		extendedConfigPaths = await resolveExtendsChainGeneric(
-			configPath,
-			loadRawBiome2Config,
-			false,
-		);
+		extendedConfigPaths = await resolveBiome2ExtendsChain(configPath, false);
 	}
 
 	// If this config doesn't have root: true and doesn't have explicit extends,
@@ -100,11 +161,8 @@ async function findParentBiome2Configs(startDir: string, stopAt?: string): Promi
 		if (configPath) {
 			const config = await loadRawBiome2Config(configPath);
 
-			// Recursively resolve any extends for this parent config using shared utility
-			const parentConfigPaths = await resolveExtendsChainGeneric(
-				configPath,
-				loadRawBiome2Config,
-			);
+			// Recursively resolve any extends for this parent config
+			const parentConfigPaths = await resolveBiome2ExtendsChain(configPath);
 
 			// Add to the list (we'll reverse at the end)
 			foundConfigs.push(...parentConfigPaths);
@@ -139,6 +197,31 @@ async function findBiome2ConfigInDirectory(dir: string): Promise<string | undefi
 			// File doesn't exist, continue to next name
 		}
 	}
+	return undefined;
+}
+
+/**
+ * Finds the root Biome config file by walking up the directory tree from the given starting directory.
+ * The root config is identified by having `"root": true` in its configuration.
+ *
+ * @param startDir - The directory to start searching from (typically the directory of the child config).
+ * @returns The absolute path to the root config file, or undefined if no root config is found.
+ */
+export async function findRootBiome2Config(startDir: string): Promise<string | undefined> {
+	let currentDir = startDir;
+	const fsRoot = path.parse(startDir).root;
+
+	while (currentDir !== fsRoot) {
+		const configPath = await findBiome2ConfigInDirectory(currentDir);
+		if (configPath) {
+			const config = await loadRawBiome2Config(configPath);
+			if (config.root === true) {
+				return configPath;
+			}
+		}
+		currentDir = path.dirname(currentDir);
+	}
+
 	return undefined;
 }
 

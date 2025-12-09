@@ -409,4 +409,62 @@ describe("Biome 2.x config loading", () => {
 		// git-tracked files in the test data. The above tests verify the pattern extraction
 		// and ordering logic. The filterFilesWithOrderedPatterns function is tested separately.
 	});
+
+	describe('extends: "//" microsyntax', () => {
+		// Test the special "//" syntax that tells Biome to extend from the root config
+		// According to the docs, this is equivalent to walking up to find root: true
+		// and implicitly sets root: false on the child config
+		// This test uses multiple levels of nesting (root -> packages -> nested -> child)
+		// to ensure the microsyntax can find the root config from deep nesting
+
+		const rootConfig = path.resolve(testDataPath, "biome2/microsyntax-test/rootconfig.jsonc");
+		const childConfig = path.resolve(
+			testDataPath,
+			"biome2/microsyntax-test/packages/nested/child/childconfig.jsonc",
+		);
+
+		it('resolves "//" to find the root config', async () => {
+			const config = await loadBiome2Config(childConfig);
+
+			// Child should inherit settings from root
+			assert.equal(
+				config.formatter!.indentStyle,
+				"tab",
+				"should inherit indentStyle from root",
+			);
+		});
+
+		it("child overrides root settings when using //", async () => {
+			const config = await loadBiome2Config(childConfig);
+
+			// Child overrides lineWidth to 80, root has 120
+			assert.equal(config.formatter!.lineWidth, 80, "child should override root's lineWidth");
+		});
+
+		it('getAllBiome2ConfigPaths includes root when using "//"', async () => {
+			const { getAllBiome2ConfigPaths } = await import("../common/biome2Config");
+			const allPaths = await getAllBiome2ConfigPaths(childConfig);
+
+			// Should have both root and child configs
+			assert(allPaths.includes(rootConfig), `should include root config: ${rootConfig}`);
+			assert(allPaths.includes(childConfig), `should include child config: ${childConfig}`);
+
+			// Root should come before child (merge order)
+			const rootIndex = allPaths.indexOf(rootConfig);
+			const childIndex = allPaths.indexOf(childConfig);
+			assert(rootIndex < childIndex, "root config should come before child in merge order");
+		});
+
+		it("Biome2ConfigReader works with // syntax", async () => {
+			let gitRepo: GitRepo;
+			const repoRoot = await getResolvedFluidRoot(true);
+			gitRepo = new GitRepo(repoRoot);
+
+			const config = await Biome2ConfigReader.create(childConfig, gitRepo);
+
+			// Should have merged config with both root and child settings
+			assert.equal(config.mergedConfig.formatter!.indentStyle, "tab");
+			assert.equal(config.mergedConfig.formatter!.lineWidth, 80);
+		});
+	});
 });
