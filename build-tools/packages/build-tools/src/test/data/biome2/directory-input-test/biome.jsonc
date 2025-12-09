@@ -2,9 +2,9 @@
 	"$schema": "../../../../../../node_modules/@biomejs/biome/configuration_schema.json",
 	"root": true,
 	"files": {
-		"includes": ["**", "!excluded-dir/**", "excluded-dir/reincluded/**"]
+		"includes": ["src/**"]
 	},
 	"formatter": {
-		"enabled": true
+		"lineWidth": 80
 	}
 }
