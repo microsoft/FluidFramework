@@ -14,7 +14,7 @@ import {
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/legacy";
 // eslint-disable-next-line import-x/no-internal-modules -- #26904: `sequence` internals used in examples
-import { reservedTileLabelsKey } from "@fluidframework/sequence/internal";
+import { reservedTileLabelsKey, type ISharedString } from "@fluidframework/sequence/internal";
 import { ReferenceType, SharedString } from "@fluidframework/sequence/legacy";
 
 // eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
@@ -49,8 +49,8 @@ export class SmdeDataObject extends EventEmitter implements IFluidLoadable {
 	private root: ISharedMap | undefined;
 	private _text: SharedString | undefined;
 
-	public get text(): SharedString {
-		assert(!!this._text, "SharedString property missing!");
+	public get text(): ISharedString {
+		assert(this._text !== undefined, "SharedString property missing!");
 		return this._text;
 	}
 	constructor(private readonly runtime: IFluidDataStoreRuntime) {
