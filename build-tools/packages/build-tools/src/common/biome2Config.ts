@@ -23,7 +23,7 @@ export type Biome2ConfigResolved = Opaque<Biome2ConfigRaw, "Biome2ConfigResolved
 
 /**
  * Loads a Biome 2.x configuration file _without_ following any 'extends' values. You probably want to use
- * {@link loadBiome2Configs} instead of this function.
+ * {@link loadBiome2Config} instead of this function.
  */
 async function loadRawBiome2Config(configPath: string): Promise<Biome2ConfigRaw> {
 	return loadRawBiomeConfigFile<Biome2ConfigRaw>(configPath);
@@ -143,32 +143,20 @@ export async function getAllBiome2ConfigPaths(configPath: string): Promise<strin
 
 /**
  * Walks up the directory tree from the given directory to find parent Biome config files.
- * Stops when a config with `root: true` is found, when the stopAt directory is reached,
- * or when the filesystem root is reached.
+ * Stops when a config with `root: true` is found or when the filesystem root is reached.
  * For each parent config found, recursively resolves any `extends` declarations.
  *
  * @param startDir - The directory containing the child config file. Parent discovery starts
  *                   from this directory's parent (i.e., startDir itself is not searched).
- * @param stopAt - Optional directory path to stop searching at. Typically the git repo root.
- *                 If not provided, the search continues until `root: true` is found or filesystem root is reached.
- *                 Note: This parameter is currently not passed from `getAllBiome2ConfigPaths()`, but the function
- *                 properly stops at `root: true` which is the standard Biome behavior.
  * @returns Array of config paths in order from root to nearest parent (not including the starting directory),
  *          with all extends chains resolved
  */
-async function findParentBiome2Configs(startDir: string, stopAt?: string): Promise<string[]> {
-	// Use find-up to locate parent configs, stopping at the specified directory
+async function findParentBiome2Configs(startDir: string): Promise<string[]> {
 	const foundConfigs: string[] = [];
 	let currentDir = path.dirname(startDir);
 	const fsRoot = path.parse(startDir).root;
-	const stopAtNormalized = stopAt ? path.normalize(stopAt) : undefined;
 
 	while (currentDir !== fsRoot) {
-		// Stop if we've reached the stopAt directory
-		if (stopAtNormalized && path.normalize(currentDir) === stopAtNormalized) {
-			break;
-		}
-
 		const configPath = await findBiome2ConfigInDirectory(currentDir);
 		if (configPath) {
 			const config = await loadRawBiome2Config(configPath);
@@ -262,6 +250,11 @@ export async function loadBiome2Config(configPath: string): Promise<Biome2Config
  * Loads and merges multiple Biome 2.x config files in the specified order.
  * Configs are merged sequentially, with later configs overriding earlier ones.
  * Array-type values are not merged, in accordance with how Biome applies configs.
+ *
+ * Note: This function is intentionally separate from the similar `loadBiomeConfigs` in biomeConfig.ts
+ * to maintain type safety between Biome 1.x and 2.x config types. The merging logic is identical,
+ * but the different type signatures (BiomeConfigRaw vs Biome2ConfigRaw) and opaque return types
+ * provide compile-time guarantees that prevent mixing 1.x and 2.x configs accidentally.
  *
  * @param configPaths - Array of absolute paths to config files, ordered from base to most specific.
  *                      Each config's values will override those from earlier configs.

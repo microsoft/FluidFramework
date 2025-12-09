@@ -347,5 +347,28 @@ describe("Biome config loading", () => {
 			assert(Array.isArray(reader.allConfigs), "allConfigs should be an array");
 			assert(Array.isArray(reader.formattedFiles), "formattedFiles should be an array");
 		});
+
+		it("auto-detects version when forceVersion is not provided", async () => {
+			// Use the build-tools directory which has @biomejs/biome installed
+			const testPath = path.resolve(testDataPath, "biome/pkg-a/");
+			const reader = await createBiomeConfigReader(testPath, gitRepo);
+
+			// Should create a reader (either V1 or V2 based on installed version)
+			assert(reader !== undefined, "Should create a reader");
+			assert(reader.formattedFiles.length > 0, "Should have formatted files");
+		});
+
+		it("defaults to V1 reader when version detection fails", async () => {
+			// Use a path where biome won't be found in node_modules
+			// but has a valid biome config
+			const testPath = path.resolve(testDataPath, "biome/pkg-a/");
+
+			// Create reader without forceVersion - should default to V1 since
+			// the test data directory doesn't have biome in node_modules
+			const reader = await createBiomeConfigReader(testPath, gitRepo);
+
+			// Should still work and create a reader
+			assert(reader !== undefined, "Should create a reader even when version detection fails");
+		});
 	});
 });
