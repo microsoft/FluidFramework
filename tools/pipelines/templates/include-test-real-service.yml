@@ -130,9 +130,9 @@ jobs:
 
       # Install
       - task: UseNode@1
-        displayName: Use Node 20.15.1
+        displayName: Use Node 20.19.0
         inputs:
-          version: 20.15.1
+          version: 20.19.0
 
       - template: /tools/pipelines/templates/include-install-pnpm.yml@self
         parameters:
