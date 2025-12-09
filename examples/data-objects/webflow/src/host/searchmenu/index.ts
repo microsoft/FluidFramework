@@ -21,20 +21,20 @@ export class SearchMenuView extends View<ISearchMenuProps, ISearchMenuProps> {
 	private readonly inputElement = document.createElement("input");
 	private readonly datalistElement = document.createElement("datalist");
 
-	public show() {
+	public show(): void {
 		this.updateCommands();
 		const root = this.root as HTMLElement;
 		root.style.display = "inline-block";
 		this.inputElement.focus();
 	}
 
-	public hide() {
+	public hide(): void {
 		const root = this.root as HTMLElement;
 		root.blur();
 		root.style.display = "none";
 	}
 
-	protected onAttach(props: Readonly<ISearchMenuProps>) {
+	protected onAttach(props: Readonly<ISearchMenuProps>): Element {
 		const root = document.createElement("div");
 		root.classList.add("searchMenu");
 
@@ -62,7 +62,7 @@ export class SearchMenuView extends View<ISearchMenuProps, ISearchMenuProps> {
 		// Do nothing.
 	}
 
-	private updateCommands() {
+	private updateCommands(): void {
 		Dom.removeAllChildren(this.datalistElement);
 		this.datalistElement.append(
 			...this.state.commands
@@ -76,13 +76,13 @@ export class SearchMenuView extends View<ISearchMenuProps, ISearchMenuProps> {
 		);
 	}
 
-	private dismiss(e: KeyboardEvent) {
+	private dismiss(e: KeyboardEvent): void {
 		e.preventDefault();
 		e.stopPropagation();
 		this.hide();
 	}
 
-	private findCommand(text: string) {
+	private findCommand(text: string): ICommand | undefined {
 		for (const command of this.state.commands) {
 			if (command.name === text) {
 				debug(`Search Menu: ${command.name}`);
@@ -94,14 +94,14 @@ export class SearchMenuView extends View<ISearchMenuProps, ISearchMenuProps> {
 		return undefined;
 	}
 
-	private complete(e: KeyboardEvent, commit: boolean) {
+	private complete(e: KeyboardEvent, commit: boolean): void {
 		const command = commit ? this.findCommand(this.inputElement.value) : undefined;
 
 		this.dismiss(e);
 		this.state.onComplete(command);
 	}
 
-	private readonly onKeyDown = (e: KeyboardEvent) => {
+	private readonly onKeyDown = (e: KeyboardEvent): void => {
 		switch (e.code) {
 			case KeyCode.enter:
 				this.complete(e, true);

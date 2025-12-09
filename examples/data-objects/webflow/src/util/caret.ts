@@ -36,7 +36,11 @@ function dispatchCaretEvent(
 	);
 }
 
-export function caretEnter(target: Element, direction: Direction, caretBounds: ICaretBounds) {
+export function caretEnter(
+	target: Element,
+	direction: Direction,
+	caretBounds: ICaretBounds,
+): boolean {
 	const focusable = target.querySelectorAll(":enabled, [tabindex]");
 	const focusTarget = (
 		getTabDirection(direction) > 0 ? focusable[0] : focusable[focusable.length - 1]
@@ -50,6 +54,10 @@ export function caretEnter(target: Element, direction: Direction, caretBounds: I
 	}
 }
 
-export function caretLeave(target: Element, direction: Direction, caretBounds: ICaretBounds) {
+export function caretLeave(
+	target: Element,
+	direction: Direction,
+	caretBounds: ICaretBounds,
+): boolean {
 	return dispatchCaretEvent(CaretEventType.leave, target, direction, caretBounds);
 }

@@ -4,7 +4,8 @@
  */
 
 import {
-	IFluidMountableViewEntryPoint,
+	type IFluidMountableView,
+	type IFluidMountableViewEntryPoint,
 	MountableView,
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
@@ -56,9 +57,8 @@ class CodeMirrorFactory extends RuntimeFactoryHelper {
 				const view = React.createElement(CodeMirrorReactView, {
 					text: codeMirror.text,
 					presenceManager: codeMirror.presenceManager,
-				}) as any;
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-				let getMountableDefaultView = async () => view;
+				}) as unknown as IFluidMountableView;
+				let getMountableDefaultView = async (): Promise<IFluidMountableView> => view;
 				if (MountableView.canMount(view)) {
 					getMountableDefaultView = async () => new MountableView(view);
 				}
