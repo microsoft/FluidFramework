@@ -30,14 +30,14 @@ export const enum TabDirection {
 	forward = 1,
 }
 
-export function getDeltaX(direction: Direction) {
+export function getDeltaX(direction: Direction): number {
 	return (direction << DirectionFlag.horizontalLsh) >> DirectionFlag.horizontalRsh;
 }
 
-export function getDeltaY(direction: Direction) {
+export function getDeltaY(direction: Direction): number {
 	return (direction << DirectionFlag.verticalLsh) >> DirectionFlag.verticalRsh;
 }
 
 export function getTabDirection(direction: Direction): TabDirection {
-	return getDeltaX(direction) || getDeltaY(direction);
+	return (getDeltaX(direction) || getDeltaY(direction)) as TabDirection;
 }

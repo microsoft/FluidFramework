@@ -25,7 +25,7 @@ export function syncCss(
 	element: HTMLElement,
 	{ classList, style }: ICssProps,
 	className?: string,
-) {
+): void {
 	const classes = concat(className, classList);
 
 	if (!areStringsEquivalent(classes, element.className)) {
@@ -36,7 +36,7 @@ export function syncCss(
 	}
 }
 
-export function sameCss(segment: ISegment, { classList, style }: ICssProps) {
+export function sameCss(segment: ISegment, { classList, style }: ICssProps): boolean {
 	const actual = getCss(segment);
 	return (
 		areStringsEquivalent(actual.classList, classList) &&
