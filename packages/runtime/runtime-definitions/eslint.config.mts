@@ -10,7 +10,9 @@ const config: Linter.Config[] = [
 	...recommended,
 	// Migrated from .eslintignore
 	{
-		ignores: ["test-d"],
+		ignores: [
+		  "test-d"
+		],
 	},
 ];
 

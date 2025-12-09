@@ -12,16 +12,18 @@ const config: Linter.Config[] = [
 	...sharedConfig,
 	{
 		rules: {
-			"@typescript-eslint/no-use-before-define": "off",
-			"@typescript-eslint/restrict-plus-operands": "off",
-			"@typescript-eslint/strict-boolean-expressions": "off",
-			"no-case-declarations": "off",
-			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		  "@typescript-eslint/no-use-before-define": "off",
+		  "@typescript-eslint/restrict-plus-operands": "off",
+		  "@typescript-eslint/strict-boolean-expressions": "off",
+		  "no-case-declarations": "off",
+		  "@fluid-internal/fluid/no-unchecked-record-access": "warn"
 		},
 	},
 	// Migrated from .eslintignore
 	{
-		ignores: ["*.spec.ts"],
+		ignores: [
+		  "*.spec.ts"
+		],
 	},
 ];
 

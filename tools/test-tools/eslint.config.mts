@@ -4,17 +4,17 @@
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
  */
 import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { recommended } from "../../common/build/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
-	...minimalDeprecated,
+	...recommended,
 	{
 		rules: {
+		  "@typescript-eslint/ban-ts-comment": "off",
 		  "@typescript-eslint/no-non-null-assertion": "off",
-		  "@typescript-eslint/no-use-before-define": "off",
-		  "@typescript-eslint/strict-boolean-expressions": "off",
-		  "import-x/no-nodejs-modules": "off",
-		  "no-inner-declarations": "off"
+		  "import/no-nodejs-modules": "off",
+		  "unicorn/no-process-exit": "off",
+		  "unicorn/prefer-node-protocol": "off"
 		},
 	},
 ];

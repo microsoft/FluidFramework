@@ -12,7 +12,7 @@ const config: Linter.Config[] = [
 	...sharedConfig,
 	{
 		rules: {
-			"@typescript-eslint/unbound-method": "off",
+		  "@typescript-eslint/unbound-method": "off"
 		},
 	},
 ];

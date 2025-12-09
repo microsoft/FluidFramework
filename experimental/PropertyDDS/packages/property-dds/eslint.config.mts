@@ -10,15 +10,18 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-			"@typescript-eslint/strict-boolean-expressions": "off",
-			"tsdoc/syntax": "off",
-			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
-			"depend/ban-dependencies": [
-				"error",
-				{
-					"allowed": ["axios", "lodash"],
-				},
-			],
+		  "@typescript-eslint/strict-boolean-expressions": "off",
+		  "tsdoc/syntax": "off",
+		  "@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		  "depend/ban-dependencies": [
+		    "error",
+		    {
+		      "allowed": [
+		        "axios",
+		        "lodash"
+		      ]
+		    }
+		  ]
 		},
 	},
 ];

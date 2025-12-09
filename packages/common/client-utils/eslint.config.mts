@@ -13,12 +13,7 @@ const config: Linter.Config[] = [
 		languageOptions: {
 			parserOptions: {
 				projectService: false,
-				project: [
-					"./tsconfig.json",
-					"./src/test/mocha/tsconfig.json",
-					"./src/test/jest/tsconfig.cjs.json",
-					"./src/test/types/tsconfig.json",
-				],
+				project: ["./tsconfig.json","./src/test/mocha/tsconfig.json","./src/test/jest/tsconfig.cjs.json","./src/test/types/tsconfig.json"],
 			},
 		},
 	},

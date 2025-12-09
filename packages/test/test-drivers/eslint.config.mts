@@ -10,8 +10,8 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-			"import-x/no-nodejs-modules": "off",
-			"@typescript-eslint/unbound-method": "off",
+		  "import-x/no-nodejs-modules": "off",
+		  "@typescript-eslint/unbound-method": "off"
 		},
 	},
 	{

@@ -10,12 +10,12 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-			"@typescript-eslint/no-non-null-assertion": "off",
-			"@typescript-eslint/no-use-before-define": "off",
-			"@typescript-eslint/strict-boolean-expressions": "off",
-			"@typescript-eslint/promise-function-async": "off",
-			"@typescript-eslint/no-misused-promises": "off",
-			"@typescript-eslint/unbound-method": "off",
+		  "@typescript-eslint/no-non-null-assertion": "off",
+		  "@typescript-eslint/no-use-before-define": "off",
+		  "@typescript-eslint/strict-boolean-expressions": "off",
+		  "@typescript-eslint/promise-function-async": "off",
+		  "@typescript-eslint/no-misused-promises": "off",
+		  "@typescript-eslint/unbound-method": "off"
 		},
 	},
 ];

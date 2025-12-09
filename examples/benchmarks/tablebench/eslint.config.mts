@@ -12,8 +12,8 @@ const config: Linter.Config[] = [
 	...sharedConfig,
 	{
 		rules: {
-			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
-			"@typescript-eslint/unbound-method": "off",
+		  "@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		  "@typescript-eslint/unbound-method": "off"
 		},
 	},
 ];

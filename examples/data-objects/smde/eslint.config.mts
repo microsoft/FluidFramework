@@ -12,17 +12,19 @@ const config: Linter.Config[] = [
 	...sharedConfig,
 	{
 		rules: {
-			"import-x/no-extraneous-dependencies": [
-				"error",
-				{
-					"devDependencies": true,
-				},
-			],
+		  "import-x/no-extraneous-dependencies": [
+		    "error",
+		    {
+		      "devDependencies": true
+		    }
+		  ]
 		},
 	},
 	// Migrated from .eslintignore
 	{
-		ignores: ["*.spec.ts"],
+		ignores: [
+		  "*.spec.ts"
+		],
 	},
 ];
 

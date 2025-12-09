@@ -10,7 +10,7 @@ const config: Linter.Config[] = [
 	...strict,
 	{
 		rules: {
-			"@typescript-eslint/strict-boolean-expressions": "off",
+		  "@typescript-eslint/strict-boolean-expressions": "off"
 		},
 	},
 ];

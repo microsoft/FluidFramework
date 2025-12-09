@@ -10,16 +10,16 @@ const config: Linter.Config[] = [
 	...strict,
 	{
 		rules: {
-			"unicorn/no-nested-ternary": "off",
-			"@typescript-eslint/no-namespace": "off",
+		  "unicorn/no-nested-ternary": "off",
+		  "@typescript-eslint/no-namespace": "off"
 		},
 	},
 	{
 		files: ["src/test/**"],
 		rules: {
-			"import-x/no-nodejs-modules": "off",
-			"unicorn/prefer-module": "off",
-			"@typescript-eslint/no-unused-expressions": "off",
+		  "import-x/no-nodejs-modules": "off",
+		  "unicorn/prefer-module": "off",
+		  "@typescript-eslint/no-unused-expressions": "off"
 		},
 	},
 ];

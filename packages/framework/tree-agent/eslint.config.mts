@@ -10,17 +10,17 @@ const config: Linter.Config[] = [
 	...strict,
 	{
 		rules: {
-			"import-x/no-internal-modules": [
-				"error",
-				{
-					"allow": [
-						"@fluidframework/*/alpha",
-						"@fluidframework/*/beta",
-						"@fluidframework/*/legacy",
-						"@fluidframework/*/internal",
-					],
-				},
-			],
+		  "import-x/no-internal-modules": [
+		    "error",
+		    {
+		      "allow": [
+		        "@fluidframework/*/alpha",
+		        "@fluidframework/*/beta",
+		        "@fluidframework/*/legacy",
+		        "@fluidframework/*/internal"
+		      ]
+		    }
+		  ]
 		},
 	},
 	{
@@ -32,18 +32,18 @@ const config: Linter.Config[] = [
 			},
 		},
 		rules: {
-			"import-x/no-internal-modules": [
-				"error",
-				{
-					"allow": [
-						"*/index.js",
-						"@fluidframework/*/alpha",
-						"@fluidframework/*/beta",
-						"@fluidframework/*/legacy",
-						"@fluidframework/*/internal",
-					],
-				},
-			],
+		  "import-x/no-internal-modules": [
+		    "error",
+		    {
+		      "allow": [
+		        "*/index.js",
+		        "@fluidframework/*/alpha",
+		        "@fluidframework/*/beta",
+		        "@fluidframework/*/legacy",
+		        "@fluidframework/*/internal"
+		      ]
+		    }
+		  ]
 		},
 	},
 ];

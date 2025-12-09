@@ -57,6 +57,8 @@ interface SharedConfigTarget {
 	alternativePaths?: string[];
 	outputPath: string;
 	legacyConfig: unknown;
+	/** The raw loaded module exports, including any named exports like lists */
+	rawModuleExports: unknown;
 }
 
 /**
@@ -104,10 +106,10 @@ async function findSharedConfigs(): Promise<SharedConfigTarget[]> {
 						["-e", `console.log(JSON.stringify(require('${escapedPath}')))`],
 						{ cwd: repoRoot, encoding: "utf8" },
 					);
-					const legacyConfig = JSON.parse(result);
+					const rawModuleExports = JSON.parse(result);
 
 					// Extract the lintConfig property if it exists (e.g., examples/.eslintrc.data.cjs)
-					const actualConfig = legacyConfig.lintConfig || legacyConfig;
+					const actualConfig = rawModuleExports.lintConfig || rawModuleExports;
 
 					// Check if there's a corresponding .eslintrc.cjs that re-exports this
 					const baseDir = path.dirname(fullPath);
@@ -133,6 +135,7 @@ async function findSharedConfigs(): Promise<SharedConfigTarget[]> {
 						alternativePaths: alternativePaths.length > 0 ? alternativePaths : undefined,
 						outputPath,
 						legacyConfig: actualConfig,
+						rawModuleExports,
 					});
 					console.log(`  Found shared config: ${path.relative(repoRoot, fullPath)}`);
 				} catch (e) {
@@ -337,6 +340,8 @@ function buildSharedConfigContent(
 	legacyConfig: unknown,
 	finalize: boolean,
 	typescript: boolean,
+	/** The raw loaded module exports, including any named exports like lists */
+	rawModuleExports?: unknown,
 ): string {
 	const config = legacyConfig as {
 		rules?: Record<string, unknown>;
@@ -355,8 +360,9 @@ function buildSharedConfigContent(
  */
 
 /**
- * Shared ESLint configuration for examples.
- * Extend this in your example's eslint.config.mts to avoid duplicating common rules.
+ * Shared ESLint configuration.
+ * Extend this in child package eslint.config.mts files to avoid duplicating common rules.
+ * Named exports (e.g., importInternalModulesAllowed) can be imported and extended by consumers.
  */
 
 ${typeImport}`
@@ -364,13 +370,34 @@ ${typeImport}`
 /**
  * GENERATED FILE - DO NOT EDIT DIRECTLY.
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts${typescript ? " --typescript" : ""}
- * 
- * Shared ESLint configuration for examples.
- * Extend this in your example's eslint.config.mts to avoid duplicating common rules.
+ *
+ * Shared ESLint configuration.
+ * Extend this in child package eslint.config.mts files to avoid duplicating common rules.
+ * Named exports (e.g., importInternalModulesAllowed) can be imported and extended by consumers.
  */
 ${typeImport}`;
 
 	let configContent = header;
+
+	// Check if there are named exports (arrays) that should be exported for reuse
+	// This preserves the pattern from .eslintrc.data.cjs where lists are exported
+	// so other packages can reference and extend them
+	const namedExports: Record<string, string[]> = {};
+	if (rawModuleExports && typeof rawModuleExports === "object") {
+		for (const [key, value] of Object.entries(rawModuleExports)) {
+			// Export arrays that aren't the lintConfig itself
+			if (key !== "lintConfig" && Array.isArray(value) && value.every((v) => typeof v === "string")) {
+				namedExports[key] = value;
+			}
+		}
+	}
+
+	// Generate named exports for reusable lists
+	for (const [name, value] of Object.entries(namedExports)) {
+		const arrayType = typescript ? `: string[]` : "";
+		configContent += `export const ${name}${arrayType} = ${JSON.stringify(value, null, "\t")};\n\n`;
+	}
+
 	configContent += `${jsdocType}const config${configType} = [\n`;
 
 	// Add rules
@@ -702,6 +729,7 @@ async function writeSharedConfigs(
 			shared.legacyConfig,
 			finalize,
 			typescript,
+			shared.rawModuleExports,
 		);
 		await fs.writeFile(shared.outputPath, content, "utf8");
 		console.log(`  Generated: ${path.relative(repoRoot, shared.outputPath)}`);

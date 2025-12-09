@@ -12,8 +12,8 @@ const config: Linter.Config[] = [
 	...sharedConfig,
 	{
 		rules: {
-			"@typescript-eslint/strict-boolean-expressions": "off",
-			"no-bitwise": "off",
+		  "@typescript-eslint/strict-boolean-expressions": "off",
+		  "no-bitwise": "off"
 		},
 	},
 ];

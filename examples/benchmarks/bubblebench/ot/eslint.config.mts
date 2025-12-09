@@ -12,13 +12,13 @@ const config: Linter.Config[] = [
 	...sharedConfig,
 	{
 		rules: {
-			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		  "@fluid-internal/fluid/no-unchecked-record-access": "warn"
 		},
 	},
 	{
 		files: ["**/*.jsx", "**/*.tsx"],
 		rules: {
-			"react/no-deprecated": "off",
+		  "react/no-deprecated": "off"
 		},
 	},
 ];

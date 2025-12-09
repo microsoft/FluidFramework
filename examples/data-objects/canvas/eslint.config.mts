@@ -12,13 +12,13 @@ const config: Linter.Config[] = [
 	...sharedConfig,
 	{
 		rules: {
-			"@typescript-eslint/strict-boolean-expressions": "off",
+		  "@typescript-eslint/strict-boolean-expressions": "off"
 		},
 	},
 	{
 		files: ["**/*.jsx", "**/*.tsx"],
 		rules: {
-			"react/no-deprecated": "off",
+		  "react/no-deprecated": "off"
 		},
 	},
 ];
