@@ -421,6 +421,11 @@ module.exports = {
 				"react-hooks",
 			],
 			extends: ["plugin:react/recommended", "plugin:react-hooks/recommended"],
+			rules: {
+				// TODO: This should be re-enabled once we are on eslint 9
+				// and the react plugins are upgraded to more recent versions
+				"react-hooks/rules-of-hooks": "warn",
+			},
 			settings: {
 				react: {
 					version: "detect",
