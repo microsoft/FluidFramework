@@ -33,7 +33,7 @@ import type { areSafelyAssignable, requireTrue } from "../../../util/index.js";
 
 describe("eraseSchemaDetails", () => {
 	describe("eraseSchemaDetails", () => {
-		it("minimal", () => {
+		it("example", () => {
 			const schema = new SchemaFactory("com.example");
 
 			interface SquareNode {
@@ -177,7 +177,7 @@ describe("eraseSchemaDetails", () => {
 		});
 	});
 	describe("eraseSchemaDetailsSubclassable", () => {
-		it("minimal", () => {
+		it("example", () => {
 			const schema = new SchemaFactory("com.example");
 
 			interface SquareInterface {

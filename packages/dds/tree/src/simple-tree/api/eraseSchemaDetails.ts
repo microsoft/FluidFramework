@@ -56,6 +56,8 @@ import type {
  * const Square = eraseSchemaDetails<Square, SquareSchema>()(SquareInternal);
  * type Square = SquareNode & TreeNode & WithType<"com.example.Demo">;
  * ```
+ * @privateRemarks
+ * See "example" test for an executable version of this example.
  * @alpha
  */
 export function eraseSchemaDetails<TNode, ExtraSchemaProperties = unknown>(): <
@@ -101,6 +103,8 @@ export function eraseSchemaDetails<TNode, ExtraSchemaProperties = unknown>(): <
  * const square = Square.create(10);
  * assert.equal(square.area, 100);
  * ```
+ * @privateRemarks
+ * See "example" test for an executable version of this example.
  * @alpha
  */
 export function eraseSchemaDetailsSubclassable<TNode, ExtraSchemaProperties = unknown>(): <
