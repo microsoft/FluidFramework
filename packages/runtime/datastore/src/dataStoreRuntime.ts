@@ -156,7 +156,7 @@ export interface ISharedObjectRegistry {
 }
 
 const defaultPolicies: IFluidDataStorePolicies = {
-	readonlyInStagingMode: true,
+	readonlyInStagingMode: false,
 };
 
 /**
