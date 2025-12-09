@@ -47,6 +47,8 @@
 			// Test json
 			"!**/build-tools/packages/build-tools/src/test/data/biome/empty.jsonc",
 			"!**/build-tools/packages/build-tools/src/test/data/spaces/**",
+			// Biome 1.x test data - these configs use Biome 1.x syntax that Biome 2.x can't parse
+			"!**/build-tools/packages/build-tools/src/test/data/biome/**",
 			"!**/experimental/dds/tree/src/test/documents/**",
 			"!**/packages/dds/map/src/test/mocha/snapshots/**/*.json",
 			"!**/packages/dds/matrix/src/test/results/**/*.json",
