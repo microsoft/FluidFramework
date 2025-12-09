@@ -36,10 +36,10 @@ export class SmdeDataObject extends EventEmitter implements IFluidLoadable {
 
 	private readonly innerHandle: IFluidHandle<this>;
 
-	public get handle(): IFluidHandle<this> {
+	public get handle(): IFluidHandle<SmdeDataObject> {
 		return this.innerHandle;
 	}
-	public get IFluidHandle(): IFluidHandle<this> {
+	public get IFluidHandle(): IFluidHandle<SmdeDataObject> {
 		return this.innerHandle;
 	}
 	public get IFluidLoadable(): IFluidLoadable {
