@@ -201,7 +201,7 @@ export class FlowDocument extends DataObject {
 		return marker.properties.handle.get();
 	}
 
-	public getSegmentAndOffset(position: number): { segment: ISegment; offset?: number } {
+	public getSegmentAndOffset(position: number): { segment: SharedStringSegment; offset?: number } {
 		// Special case for ReferencePosition to end of document.  (See comments on 'endOfTextSegment').
 		return position === this.length
 			? { segment: endOfTextSegment, offset: 0 }
@@ -363,11 +363,11 @@ export class FlowDocument extends DataObject {
 		this.insertParagraph(start, tag);
 	}
 
-	public getStart(marker: Marker): Marker {
+	public getStart(marker: Marker): ISegment | undefined {
 		return this.getOppositeMarker(marker, /* "end".length = */ 3, "begin");
 	}
 
-	public getEnd(marker: Marker): Marker {
+	public getEnd(marker: Marker): ISegment | undefined {
 		return this.getOppositeMarker(marker, /* "begin".length = */ 5, "end");
 	}
 
@@ -418,7 +418,7 @@ export class FlowDocument extends DataObject {
 		startPos: number,
 		markerLabel: string,
 		forwards: boolean,
-	): LocalReferencePosition | undefined {
+	): Marker {
 		return this.sharedString.searchForMarker(startPos, markerLabel, forwards);
 	}
 
@@ -488,7 +488,7 @@ export class FlowDocument extends DataObject {
 		marker: Marker,
 		oldPrefixLength: number,
 		newPrefix: string,
-	): Marker {
+	): ISegment | undefined {
 		return this.sharedString.getMarkerFromId(
 			`${newPrefix}${marker.getId().slice(oldPrefixLength)}`,
 		);

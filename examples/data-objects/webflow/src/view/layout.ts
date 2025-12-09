@@ -363,7 +363,7 @@ export class Layout extends EventEmitter {
 		return element;
 	}
 
-	public emitText(text: string): Text {
+	public emitText(text: string): ChildNode {
 		// Note: Removing and inserting a new text node has the side-effect of reseting the caret blink.
 		//       Because text nodes are always leaves, this is harmless.
 		let existing = this.next;
