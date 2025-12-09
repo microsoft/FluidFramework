@@ -238,7 +238,7 @@ import type { TypeOnly } from "@fluidframework/build-tools";
 			);
 
 			// Access the flag definition to verify it has the env property set
-			const flags = GenerateTypetestsCommand.flags;
+			const { flags } = GenerateTypetestsCommand;
 			assert.equal(flags.skipVersionOutput.env, "FLUB_TYPETEST_SKIP_VERSION_OUTPUT");
 
 			// Verify that when the env var is set to "1", the flag would be truthy
@@ -250,7 +250,7 @@ import type { TypeOnly } from "@fluidframework/build-tools";
 		it("uses false as default when environment variable is not set", () => {
 			restore = mockedEnv.default({}, { clear: false });
 
-			const flags = GenerateTypetestsCommand.flags;
+			const { flags } = GenerateTypetestsCommand;
 			assert.equal(flags.skipVersionOutput.default, false);
 		});
 	});
