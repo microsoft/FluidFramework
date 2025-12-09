@@ -1593,9 +1593,6 @@
         "no-const-assign": [
             "off"
         ],
-        "no-constant-binary-expression": [
-            "error"
-        ],
         "no-constant-condition": [
             "off"
         ],
@@ -1640,9 +1637,6 @@
         ],
         "no-empty-pattern": [
             "off"
-        ],
-        "no-empty-static-block": [
-            "error"
         ],
         "no-eval": [
             "off"
