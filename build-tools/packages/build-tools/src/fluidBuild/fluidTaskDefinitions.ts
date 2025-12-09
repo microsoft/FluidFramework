@@ -88,6 +88,33 @@ export interface TaskFileDependencies {
 	 * and set this to false.
 	 */
 	includeLockFiles?: boolean;
+
+	/**
+	 * Additional configuration files to track for known task handlers (e.g., eslint, tsc, api-extractor).
+	 * These files will be included in the task's incremental build tracking in addition to the files
+	 * the task handler automatically discovers (like .eslintrc for eslint tasks).
+	 *
+	 * This is useful for tracking shared configuration files from the repository root that affect the task.
+	 * File paths are relative to the package directory, but can use "../" to reference parent directories.
+	 *
+	 * Example: To track a root-level eslint config from a package:
+	 * ```json
+	 * {
+	 *   "fluidBuild": {
+	 *     "tasks": {
+	 *       "eslint": {
+	 *         "files": {
+	 *           "additionalConfigFiles": ["../../.eslintrc.cjs", "../../common/eslint-config.json"]
+	 *         }
+	 *       }
+	 *     }
+	 *   }
+	 * }
+	 * ```
+	 *
+	 * Supports "..." to extend from global configuration.
+	 */
+	additionalConfigFiles?: readonly string[];
 }
 
 export interface TaskConfig {
@@ -316,6 +343,15 @@ export function normalizeGlobalTaskDefinitions(
 					"files.outputGlobs",
 					true,
 				);
+				if (full.files.additionalConfigFiles !== undefined) {
+					detectInvalid(
+						full.files.additionalConfigFiles,
+						(value) => value === "...",
+						name,
+						"files.additionalConfigFiles",
+						true,
+					);
+				}
 			}
 			taskDefinitions[name] = full;
 		}
@@ -453,6 +489,12 @@ export function getTaskDefinitions(
 					full.files.outputGlobs,
 					currentFiles?.outputGlobs,
 				);
+				if (full.files.additionalConfigFiles !== undefined) {
+					full.files.additionalConfigFiles = expandDotDotDot(
+						full.files.additionalConfigFiles,
+						currentFiles?.additionalConfigFiles,
+					);
+				}
 			}
 			taskDefinitions[name] = full;
 		}

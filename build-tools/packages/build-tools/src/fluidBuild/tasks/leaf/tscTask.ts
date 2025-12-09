@@ -471,6 +471,26 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 		return true;
 	}
 
+	/**
+	 * Get all config files to track for this task, including both task-specific configs
+	 * and additional config files specified in the task definition.
+	 */
+	protected get configFileFullPaths(): string[] {
+		const taskSpecificConfigs = this.getTaskSpecificConfigFiles();
+		const additionalConfigs = this.node.getAdditionalConfigFiles(this.taskName ?? "");
+
+		if (!additionalConfigs || additionalConfigs.length === 0) {
+			return taskSpecificConfigs;
+		}
+
+		// Convert relative paths to absolute paths
+		const additionalFullPaths = additionalConfigs.map((relPath) =>
+			this.getPackageFileFullPath(relPath),
+		);
+
+		return [...taskSpecificConfigs, ...additionalFullPaths];
+	}
+
 	protected async getDoneFileContent() {
 		try {
 			const tsBuildInfoFiles: ITsBuildInfo[] = [];
@@ -513,6 +533,11 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 			return undefined;
 		}
 	}
-	protected abstract get configFileFullPaths(): string[];
+
+	/**
+	 * Get config files specific to this task type (e.g., .eslintrc for eslint, tsconfig.json for tsc).
+	 * Subclasses must implement this to return the config files the task handler naturally tracks.
+	 */
+	protected abstract getTaskSpecificConfigFiles(): string[];
 	protected abstract getToolVersion(): Promise<string>;
 }

@@ -235,4 +235,140 @@ describe("Task Definitions", () => {
 			assert.deepStrictEqual(taskDefinitions.myTask.files?.outputGlobs, ["build/**/*.js"]);
 		});
 	});
+
+	describe("Additional Config Files", () => {
+		it("extends additionalConfigFiles from global config when using '...'", () => {
+			const globalTaskDefinitionsOnDisk: TaskDefinitionsOnDisk = {
+				eslint: {
+					dependsOn: [],
+					files: {
+						inputGlobs: [],
+						outputGlobs: [],
+						additionalConfigFiles: ["../../.eslintrc.cjs", "../../eslint-common.json"],
+					},
+				},
+			};
+
+			const globalTaskDefinitions = normalizeGlobalTaskDefinitions(
+				globalTaskDefinitionsOnDisk,
+			);
+
+			const packageJson: PackageJson = {
+				name: "test-package",
+				version: "1.0.0",
+				scripts: {
+					eslint: "eslint src",
+				},
+				fluidBuild: {
+					tasks: {
+						eslint: {
+							dependsOn: [],
+							files: {
+								inputGlobs: [],
+								outputGlobs: [],
+								additionalConfigFiles: ["...", ".eslintrc.local.json"],
+							},
+						},
+					},
+				},
+			};
+
+			const taskDefinitions = getTaskDefinitions(packageJson, globalTaskDefinitions, {
+				isReleaseGroupRoot: false,
+			});
+
+			assert.deepStrictEqual(taskDefinitions.eslint.files?.additionalConfigFiles, [
+				".eslintrc.local.json",
+				"../../.eslintrc.cjs",
+				"../../eslint-common.json",
+			]);
+		});
+
+		it("works without global additionalConfigFiles", () => {
+			const globalTaskDefinitionsOnDisk: TaskDefinitionsOnDisk = {
+				eslint: {
+					dependsOn: [],
+				},
+			};
+
+			const globalTaskDefinitions = normalizeGlobalTaskDefinitions(
+				globalTaskDefinitionsOnDisk,
+			);
+
+			const packageJson: PackageJson = {
+				name: "test-package",
+				version: "1.0.0",
+				scripts: {
+					eslint: "eslint src",
+				},
+				fluidBuild: {
+					tasks: {
+						eslint: {
+							dependsOn: [],
+							files: {
+								inputGlobs: [],
+								outputGlobs: [],
+								additionalConfigFiles: ["...", "../../.eslintrc.cjs"],
+							},
+						},
+					},
+				},
+			};
+
+			const taskDefinitions = getTaskDefinitions(packageJson, globalTaskDefinitions, {
+				isReleaseGroupRoot: false,
+			});
+
+			// "..." expands to empty when there are no inherited values
+			assert.deepStrictEqual(taskDefinitions.eslint.files?.additionalConfigFiles, [
+				"../../.eslintrc.cjs",
+			]);
+		});
+
+		it("replaces additionalConfigFiles when '...' is not used", () => {
+			const globalTaskDefinitionsOnDisk: TaskDefinitionsOnDisk = {
+				eslint: {
+					dependsOn: [],
+					files: {
+						inputGlobs: [],
+						outputGlobs: [],
+						additionalConfigFiles: ["../../.eslintrc.cjs"],
+					},
+				},
+			};
+
+			const globalTaskDefinitions = normalizeGlobalTaskDefinitions(
+				globalTaskDefinitionsOnDisk,
+			);
+
+			const packageJson: PackageJson = {
+				name: "test-package",
+				version: "1.0.0",
+				scripts: {
+					eslint: "eslint src",
+				},
+				fluidBuild: {
+					tasks: {
+						eslint: {
+							dependsOn: [],
+							files: {
+								inputGlobs: [],
+								outputGlobs: [],
+								additionalConfigFiles: [".eslintrc.local.json"], // No "..." - replaces
+							},
+						},
+					},
+				},
+			};
+
+			const taskDefinitions = getTaskDefinitions(packageJson, globalTaskDefinitions, {
+				isReleaseGroupRoot: false,
+			});
+
+			// Without "...", the package-level definition completely replaces the global one
+			assert.deepStrictEqual(taskDefinitions.eslint.files?.additionalConfigFiles, [
+				".eslintrc.local.json",
+			]);
+		});
+	});
 });

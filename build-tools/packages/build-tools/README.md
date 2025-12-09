@@ -114,12 +114,6 @@ doesn't have to appear on every package and will be ignored if it is not found.
 The task definitions is an object with task names as keys, the task dependencies and config to define the action of the task.
 For more details, see the definition `TaskDefinitionsOnDisk` in [./src/common/fluidTaskDefinitions.ts](./src/common/fluidTaskDefinitions.ts)
 
-Task definitions support several properties:
-- `dependsOn`: Array of task dependencies (supports `"..."` to extend from global config)
-- `before`/`after`: Weak dependencies that only affect ordering
-- `script`: Whether this is a script task (default: true) or just a dependency target (false)
-- `files`: File dependencies for incremental builds (supports `"..."` to extend from global config) - see [File Dependencies](#file-dependencies)
-
 For example:
 
 ```js
@@ -165,47 +159,36 @@ For example:
 }
 ```
 
-#### File Dependencies
+#### Extending Task Handler Config Files
 
-For tasks that aren't automatically tracked by `fluid-build` (i.e., tasks that use unknown executables or custom scripts), you can
-explicitly specify which files a task depends on using the `files` property in task definitions. This enables incremental builds for
-custom tasks by tracking input and output files.
+For known task handlers like `eslint`, `tsc`, `api-extractor`, etc., `fluid-build` automatically tracks their configuration files (like `.eslintrc`, `tsconfig.json`, `api-extractor.json`). However, you may want to track additional configuration files that affect the task but aren't automatically discovered.
 
-The `files` property can be specified:
-- Globally in `fluidBuild.config.cjs` for all packages
-- Per-package in `package.json` under `fluidBuild.tasks`
+You can specify additional configuration files to track using the `additionalConfigFiles` property in the task's `files` configuration:
 
-Similar to task dependencies, you can use `"..."` to extend file dependencies from the global configuration instead of replacing them.
-
-Example in `fluidBuild.config.cjs`:
+Global configuration example (`fluidBuild.config.cjs`):
 
 ```js
 module.exports = {
    tasks: {
-      "custom-codegen": {
-         dependsOn: ["tsc"],
+      "eslint": {
+         dependsOn: ["..."],
          files: {
-            inputGlobs: ["src/**/*.template", "config.json"],
-            outputGlobs: ["generated/**/*.ts"],
-            gitignore: ["input"],           // Optional: apply gitignore to inputs (default: ["input"])
-            includeLockFiles: true          // Optional: include lock files as inputs (default: true)
+            additionalConfigFiles: ["../../.eslintrc.cjs", "../../common/eslint-config.json"]
          }
       }
    }
 }
 ```
 
-Example extending in `package.json`:
+Package-level extension example (`package.json`):
 
 ```jsonc
 {
    "fluidBuild": {
       "tasks": {
-         "custom-codegen": {
-            "dependsOn": ["..."],
+         "eslint": {
             "files": {
-               "inputGlobs": ["...", "extra-config.json"],  // Extends global inputGlobs
-               "outputGlobs": ["..."]                       // Inherits global outputGlobs
+               "additionalConfigFiles": ["...", ".eslintrc.local.json"]  // Extends global additionalConfigFiles
             }
          }
       }
@@ -213,7 +196,14 @@ Example extending in `package.json`:
 }
 ```
 
-For a complete example with multiple scenarios, see [File Dependency Extension Example](./docs/file-dependency-extension-example.md).
+In this example:
+- The global configuration specifies that all `eslint` tasks should track `../../.eslintrc.cjs` and `../../common/eslint-config.json` (relative to each package)
+- A specific package extends this list by adding `.eslintrc.local.json` using the `"..."` syntax
+- The task will rebuild if any of these files change, in addition to the `.eslintrc.*` file that eslint automatically discovers
+
+The `"..."` syntax works the same way as for task dependencies - it includes the inherited configuration from the global definition. Without `"..."`, the package-level configuration completely replaces the global configuration.
+
+For more examples and use cases, see [Additional Config Files Example](./docs/additional-config-files-example.md).
 
 When building release group, by default, it will trigger the task on all the packages within the release group. That also mean
 that scripts at the release group root are not considered.

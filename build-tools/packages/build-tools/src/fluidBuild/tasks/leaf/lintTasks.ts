@@ -7,7 +7,7 @@ import { getEsLintConfigFilePath, getInstalledPackageVersion } from "../taskUtil
 import { TscDependentTask } from "./tscTask";
 
 export class TsLintTask extends TscDependentTask {
-	protected get configFileFullPaths() {
+	protected getTaskSpecificConfigFiles() {
 		return [this.getPackageFileFullPath("tslint.json")];
 	}
 
@@ -18,7 +18,7 @@ export class TsLintTask extends TscDependentTask {
 
 export class EsLintTask extends TscDependentTask {
 	private _configFileFullPath: string | undefined;
-	protected get configFileFullPaths() {
+	protected getTaskSpecificConfigFiles() {
 		if (!this._configFileFullPath) {
 			this._configFileFullPath = getEsLintConfigFilePath(this.package.directory);
 			if (!this._configFileFullPath) {
