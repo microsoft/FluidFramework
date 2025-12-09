@@ -17,7 +17,6 @@ const config: Linter.Config[] = [
 					"allow": ["node:assert", "node:fs", "node:path"],
 				},
 			],
-			"unicorn/consistent-function-scoping": "off",
 		},
 	},
 ];

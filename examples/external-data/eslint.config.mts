@@ -5,7 +5,7 @@
  */
 import type { Linter } from "eslint";
 import { recommended } from "../../common/build/eslint-config-fluid/flat.mts";
-import sharedConfig from "../eslint.config.data.mts";
+import sharedConfig, { importInternalModulesAllowedForTest } from "../eslint.config.data.mts";
 
 const config: Linter.Config[] = [
 	...recommended,
@@ -15,13 +15,13 @@ const config: Linter.Config[] = [
 			"import-x/no-nodejs-modules": [
 				"error",
 				{
-					"allow": ["node:http"],
+					allow: ["node:http"],
 				},
 			],
 			"depend/ban-dependencies": [
 				"error",
 				{
-					"allowed": ["lodash.isequal"],
+					allowed: ["lodash.isequal"],
 				},
 			],
 		},
@@ -38,25 +38,19 @@ const config: Linter.Config[] = [
 			"import-x/no-extraneous-dependencies": [
 				"error",
 				{
-					"devDependencies": true,
+					devDependencies: true,
 				},
 			],
+			// Since the "tests" directory is adjacent to "src", and this package (intentionally) does not expose
+			// a single exports roll-up, reaching into "src" is required.
 			"import-x/no-internal-modules": [
 				"error",
 				{
-					"allow": [
-						"@fluidframework/*/{beta,alpha,legacy,legacy/alpha}",
-						"fluid-framework/{beta,alpha,legacy,legacy/alpha}",
-						"@fluid-experimental/**",
-						"@fluidframework/*/test-utils",
-						"@fluid-example/*/{beta,alpha}",
-						"*/index.js",
-						"@fluidframework/test-utils/internal",
-						"*/*.js",
-						"**/src/*/*.js",
-					],
+					allow: [...importInternalModulesAllowedForTest, "**/src/*/*.js"],
 				},
 			],
+			// Fine for tests to use node.js modules.
+			// Tests will ensure our webpack configuration is correctly set up to support any that we use.
 			"import-x/no-nodejs-modules": "off",
 		},
 	},

@@ -6,14 +6,6 @@
 import type { Linter } from "eslint";
 import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
 
-const config: Linter.Config[] = [
-	...recommended,
-	{
-		files: ["*.spec.ts", "src/test/**"],
-		rules: {
-			"unicorn/consistent-function-scoping": "off",
-		},
-	},
-];
+const config: Linter.Config[] = [...recommended];
 
 export default config;
