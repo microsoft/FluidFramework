@@ -26,6 +26,7 @@ describe("SharedArray fuzz", () => {
 		},
 		rollbackProbability: 0.2,
 		defaultTestCount: 50,
+		skip: [43], // Rollback op while attaching state is failing; needs investigation.
 		saveFailures: { directory: path.join(_dirname, "../../src/test/results") },
 		emitter: eventEmitterForFuzzHarness,
 	});

@@ -57,7 +57,7 @@ import { prepareForInsertion } from "../../prepareForInsertion.js";
 import { recordLikeDataToFlexContent } from "../common.js";
 import { MapNodeStoredSchema } from "../../../core/index.js";
 import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
-import type { SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
+import type { SchemaType, SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 
 /**
  * Create a proxy which implements the {@link TreeRecordNode} API.
@@ -350,7 +350,10 @@ export function recordSchema<
 			return lazyAllowedTypesIdentifiers.value;
 		}
 
-		public static get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
+		public static get simpleAllowedTypes(): ReadonlyMap<
+			string,
+			SimpleAllowedTypeAttributes<SchemaType.View>
+		> {
 			return lazySimpleAllowedTypes.value;
 		}
 

@@ -17,7 +17,11 @@ import {
 	type TreeNodeSchemaCorePrivate,
 } from "../../core/index.js";
 import type { FieldKey } from "../../../core/index.js";
-import type { SimpleObjectFieldSchema, SimpleObjectNodeSchema } from "../../simpleSchema.js";
+import type {
+	SchemaType,
+	SimpleObjectFieldSchema,
+	SimpleObjectNodeSchema,
+} from "../../simpleSchema.js";
 
 /**
  * A schema for {@link TreeObjectNode}s.
@@ -40,7 +44,7 @@ export interface ObjectNodeSchema<
 			never,
 			TCustomMetadata
 		>,
-		SimpleObjectNodeSchema<TCustomMetadata> {
+		SimpleObjectNodeSchema<SchemaType.View, TCustomMetadata> {
 	/**
 	 * From property keys to the associated schema.
 	 */

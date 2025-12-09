@@ -51,10 +51,7 @@ export async function dangerfile(): Promise<void> {
 		throw new Error("no env github api token provided");
 	}
 
-	const adoConnection = getAzureDevopsApi(
-		process.env.ADO_API_TOKEN,
-		adoConstants.orgUrl,
-	);
+	const adoConnection = getAzureDevopsApi(process.env.ADO_API_TOKEN, adoConstants.orgUrl);
 	const sizeComparator = new ADOSizeComparator(
 		adoConstants,
 		adoConnection,
@@ -68,10 +65,7 @@ export async function dangerfile(): Promise<void> {
 	// Post a message only if there was an error (result.comparison is undefined) or if
 	// there were actual changes to the bundle sizes.  In other cases, we don't post a
 	// message and danger will delete its previous message
-	if (
-		result.comparison === undefined ||
-		!bundlesContainNoChanges(result.comparison)
-	) {
+	if (result.comparison === undefined || !bundlesContainNoChanges(result.comparison)) {
 		// Check for bundle size regression
 		const sizeRegressionDetected =
 			result.comparison?.some((bundle: BundleComparison) => {
@@ -83,19 +77,14 @@ export async function dangerfile(): Promise<void> {
 						if (metricName === totalSizeMetricName) {
 							return false;
 						}
-						return (
-							compare.parsedSize - baseline.parsedSize >
-							sizeWarningThresholdBytes
-						);
+						return compare.parsedSize - baseline.parsedSize > sizeWarningThresholdBytes;
 					},
 				);
 			}) ?? false;
 
 		// Add warning message in case of bundle size regression
 		if (sizeRegressionDetected) {
-			warn(
-				"Bundle size regression detected -- please investigate before merging!",
-			);
+			warn("Bundle size regression detected -- please investigate before merging!");
 
 			try {
 				await danger.github.utils.createOrAddLabel({

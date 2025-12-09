@@ -3,10 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	AxiosRequestConfig,
-	AxiosRequestHeaders,
-	RawAxiosRequestHeaders,
-} from "axios";
+import type { AxiosRequestConfig, AxiosRequestHeaders, RawAxiosRequestHeaders } from "axios";
 
-export type { AxiosRequestConfig, AxiosRequestHeaders, RawAxiosRequestHeaders };
+export { AxiosRequestConfig, AxiosRequestHeaders, RawAxiosRequestHeaders };

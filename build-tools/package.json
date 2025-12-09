@@ -16,7 +16,7 @@
 		"build:docs": "fluid-build --task build:docs",
 		"build:fast": "fluid-build --worker",
 		"changelog": "conventional-changelog -p conventionalcommits -i CHANGELOG.md -s -r 2 --commit-path . -t build-tools_v",
-		"check:biome": "biome format .",
+		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"checks": "fluid-build --task checks",
 		"ci:build": "npm run build",
@@ -28,7 +28,7 @@
 		"clean:nyc": "rimraf --glob \"nyc/**\"",
 		"commit": "git-cz",
 		"format": "npm run format:biome",
-		"format:biome": "biome format --write .",
+		"format:biome": "biome check --write .",
 		"generate:packageList": "concurrently \"npm:generate:packageList:*\"",
 		"generate:packageList:internal-build": "flub list build-tools --no-private --feed internal-build --outFile feeds/internal-build.txt",
 		"generate:packageList:internal-dev": "flub list build-tools --no-private --feed internal-dev --outFile feeds/internal-dev.txt",
@@ -71,7 +71,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~2.3.8",
+		"@biomejs/biome": "~1.9.4",
 		"@commitlint/cli": "^20.1.0",
 		"@commitlint/config-conventional": "^20.0.0",
 		"@commitlint/cz-commitlint": "^20.1.0",
