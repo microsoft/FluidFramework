@@ -319,11 +319,13 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
  */
 export interface IFluidDataStorePolicies {
 	/**
-	 * When set to true, data stores will appear to be readonly while in staging mode.
+	 * When set to true, the data store will appear readonly while in staging mode.
 	 *
 	 * @remarks
-	 * This policy is useful for data stores that do not support staging mode, such as those using consensus DDS.
-	 * It ensures that the data store appears readonly during staging mode to discourage unsupported operations.
+	 * In staging mode, operations are held locally until committed, so consensus-based operations
+	 * (e.g., `ConsensusRegisterCollection`, `ConsensusQueue`, `TaskManager`) won't resolve their promises until
+	 * staging mode exits. Set this to `true` for data stores that depend on consensus acknowledgments
+	 * to prevent modifications that would leave the data store in an unresponsive state.
 	 */
 	readonly readonlyInStagingMode: boolean;
 }
