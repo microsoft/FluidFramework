@@ -11,51 +11,15 @@ import { strict as assert } from "node:assert/strict";
 import path from "node:path";
 import {
 	Biome2ConfigReader,
-	type Biome2ConfigResolved,
 	getBiome2FormattedFilesFromDirectory,
 	getOrderedPatternsFromBiome2Config,
-	getSettingValuesFromBiome2Config,
 	loadBiome2Config,
-	parseIncludes,
 } from "../common/biome2Config";
 import { GitRepo } from "../common/gitRepo";
 import { getResolvedFluidRoot } from "../fluidBuild/fluidUtils";
 import { testDataPath } from "./init";
 
 describe("Biome 2.x config loading", () => {
-	describe("parseIncludes", () => {
-		it("returns empty arrays for undefined input", () => {
-			const result = parseIncludes(undefined);
-			assert.deepEqual(result, { includePatterns: [], ignorePatterns: [] });
-		});
-
-		it("returns empty arrays for null input", () => {
-			const result = parseIncludes(null);
-			assert.deepEqual(result, { includePatterns: [], ignorePatterns: [] });
-		});
-
-		it("separates include and negation patterns", () => {
-			const includes = ["**", "src/**", "!node_modules/**", "!dist/**"];
-			const result = parseIncludes(includes);
-			assert.deepEqual(result.includePatterns, ["**", "src/**"]);
-			assert.deepEqual(result.ignorePatterns, ["node_modules/**", "dist/**"]);
-		});
-
-		it("handles all include patterns", () => {
-			const includes = ["src/**", "lib/**"];
-			const result = parseIncludes(includes);
-			assert.deepEqual(result.includePatterns, ["src/**", "lib/**"]);
-			assert.deepEqual(result.ignorePatterns, []);
-		});
-
-		it("handles all negation patterns", () => {
-			const includes = ["!node_modules/**", "!dist/**"];
-			const result = parseIncludes(includes);
-			assert.deepEqual(result.includePatterns, []);
-			assert.deepEqual(result.ignorePatterns, ["node_modules/**", "dist/**"]);
-		});
-	});
-
 	describe("Biome2ConfigReader class", () => {
 		const testDir = path.resolve(testDataPath, "biome2/pkg-a");
 		const testConfig = path.resolve(testDir, "config.jsonc");
@@ -111,41 +75,6 @@ describe("Biome 2.x config loading", () => {
 			// Check that files.includes is correctly loaded
 			assert(actual.files!.includes!.includes("pkg-a-include/**"));
 			assert(actual.files!.includes!.includes("!pkg-a-ignore/**"));
-		});
-	});
-
-	describe("getSettingValuesFromBiome2Config", () => {
-		const testFile = path.resolve(testDataPath, "biome2/pkg-a/config.jsonc");
-		let testConfig: Biome2ConfigResolved;
-
-		before(async () => {
-			testConfig = await loadBiome2Config(testFile);
-		});
-
-		it("parses formatter includes with negation patterns", async () => {
-			const { includePatterns, ignorePatterns } = getSettingValuesFromBiome2Config(
-				testConfig,
-				"formatter",
-			);
-			// Should have include patterns from files and formatter sections
-			assert(includePatterns.has("pkg-a-include/**"));
-			assert(includePatterns.has("include-formatter/**"));
-			// Should have ignore patterns from negated entries
-			assert(ignorePatterns.has("pkg-a-ignore/**"));
-			assert(ignorePatterns.has("ignore-formatter/**"));
-		});
-
-		it("parses linter includes with negation patterns", async () => {
-			const { includePatterns, ignorePatterns } = getSettingValuesFromBiome2Config(
-				testConfig,
-				"linter",
-			);
-			// Should have include patterns from files and linter sections
-			assert(includePatterns.has("pkg-a-include/**"));
-			assert(includePatterns.has("include-linter/**"));
-			// Should have ignore patterns from negated entries
-			assert(ignorePatterns.has("pkg-a-ignore/**"));
-			assert(ignorePatterns.has("ignore-linter/**"));
 		});
 	});
 
@@ -324,28 +253,6 @@ describe("Biome 2.x config loading", () => {
 			// VCS settings from base should be inherited
 			assert.equal(config.vcs!.enabled, true, "vcs.enabled from base");
 			assert.equal(config.vcs!.clientKind, "git", "vcs.clientKind from base");
-		});
-	});
-
-	describe("parseIncludes - pattern separation (deprecated approach)", () => {
-		// These tests document the parseIncludes function's behavior, which separates patterns by type.
-		// For correct re-inclusion handling, use getOrderedPatternsFromBiome2Config instead.
-
-		it("separates patterns by type (loses ordering)", () => {
-			const includes = ["!test/**", "test/special/**"];
-			const result = parseIncludes(includes);
-
-			// parseIncludes separates them into two arrays
-			assert.deepEqual(result.includePatterns, ["test/special/**"]);
-			assert.deepEqual(result.ignorePatterns, ["test/**"]);
-		});
-
-		it("handles mixed include and negation patterns", () => {
-			const includes = ["src/**", "!test/**", "test/unit/**"];
-			const result = parseIncludes(includes);
-
-			assert.deepEqual(result.includePatterns, ["src/**", "test/unit/**"]);
-			assert.deepEqual(result.ignorePatterns, ["test/**"]);
 		});
 	});
 

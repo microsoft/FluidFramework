@@ -14,10 +14,7 @@ import type { Opaque } from "type-fest";
 
 import { Biome2ConfigReader } from "./biome2Config";
 import type { Configuration as BiomeConfigRaw } from "./biomeConfigTypes";
-import {
-	getClosestBiomeConfigPath,
-	loadRawBiomeConfigFile,
-} from "./biomeConfigUtils";
+import { getClosestBiomeConfigPath, loadRawBiomeConfigFile } from "./biomeConfigUtils";
 import { type BiomeMajorVersion, detectBiomeVersion } from "./biomeVersion";
 import type { GitRepo } from "./gitRepo";
 
@@ -305,5 +302,5 @@ export async function createBiomeConfigReader(
 	}
 
 	// Default to Biome 1.x reader
-	return BiomeConfigReader.create(directoryOrConfigFile, gitRepo);
+	return BiomeConfigReaderV1.create(directoryOrConfigFile, gitRepo);
 }

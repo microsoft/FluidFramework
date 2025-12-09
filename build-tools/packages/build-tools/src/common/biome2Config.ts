@@ -270,40 +270,7 @@ async function mergeMultipleBiome2Configs(
 	return mergedConfig as Biome2ConfigResolved;
 }
 
-export type Biome2ConfigSection = "formatter" | "linter";
-
-/**
- * Parses a Biome 2.x 'includes' array and separates it into include patterns and ignore (negated) patterns.
- *
- * In Biome 2.x, the 'includes' field uses a unified syntax where:
- * - Regular patterns (e.g., "src/**") indicate files to include
- * - Negated patterns (prefixed with `!`, e.g., "!node_modules/**") indicate files to exclude
- *
- * @param includes - The includes array from a Biome 2.x configuration
- * @returns An object with separate arrays for include and ignore patterns (ignore patterns have the `!` prefix removed)
- */
-export function parseIncludes(includes: string[] | undefined | null): {
-	includePatterns: string[];
-	ignorePatterns: string[];
-} {
-	const includePatterns: string[] = [];
-	const ignorePatterns: string[] = [];
-
-	if (!includes) {
-		return { includePatterns, ignorePatterns };
-	}
-
-	for (const pattern of includes) {
-		if (pattern.startsWith("!")) {
-			// Remove the `!` prefix for the ignore pattern
-			ignorePatterns.push(pattern.slice(1));
-		} else {
-			includePatterns.push(pattern);
-		}
-	}
-
-	return { includePatterns, ignorePatterns };
-}
+type Biome2ConfigSection = "formatter" | "linter";
 
 /**
  * Given a Biome 2.x config object, returns the ordered patterns from 'includes' across the 'files'
@@ -339,44 +306,6 @@ export function getOrderedPatternsFromBiome2Config(
 	}
 
 	return patterns;
-}
-
-/**
- * Given a Biome 2.x config object, returns the combined settings for 'includes' across the 'files'
- * and the specified section ('formatter' or 'linter') in the config.
- *
- * This function parses the unified 'includes' field and returns separate include and ignore patterns.
- *
- * @deprecated Use {@link getOrderedPatternsFromBiome2Config} instead for correct re-inclusion pattern handling.
- *
- * @param config - A resolved/merged Biome 2.x configuration.
- * @param section - The config section to extract patterns from ('formatter' or 'linter').
- * @returns An object with Sets of include and ignore patterns (ignore patterns have the `!` prefix removed).
- */
-export function getSettingValuesFromBiome2Config(
-	config: Biome2ConfigResolved,
-	section: Biome2ConfigSection,
-): {
-	includePatterns: Set<string>;
-	ignorePatterns: Set<string>;
-} {
-	// Parse files.includes
-	const filesIncludes = parseIncludes(config.files?.includes);
-
-	// Parse section-specific includes
-	const sectionIncludes = parseIncludes(config?.[section]?.includes);
-
-	// Combine patterns from both sections
-	return {
-		includePatterns: new Set([
-			...filesIncludes.includePatterns,
-			...sectionIncludes.includePatterns,
-		]),
-		ignorePatterns: new Set([
-			...filesIncludes.ignorePatterns,
-			...sectionIncludes.ignorePatterns,
-		]),
-	};
 }
 
 /**
