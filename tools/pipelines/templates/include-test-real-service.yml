@@ -133,15 +133,13 @@ jobs:
         displayName: Use Node 20.15.1
         inputs:
           version: 20.15.1
-      - task: Npm@1
+      - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
+
+      - task: Bash@3
         displayName: Install npm 10
         retryCountOnTaskFailure: 4
         inputs:
-          command: 'custom'
-          customCommand: 'install --global npm@^10'
-          customRegistry: 'useNpmrc'
-
-      - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
+          script: 'pnpm install --global npm@^10'
 
       # Download artifact
       - task: DownloadPipelineArtifact@2
@@ -181,15 +179,17 @@ jobs:
             fi
 
       # Install test and logger package
-      - task: Npm@1
-        displayName: 'npm install'
-        retryCountOnTaskFailure: 4
+      # Use a Bash@3 task instead of Npm@1 so we can use pnpm, which will respect the .npmrc file configured globally earlier
+      - task: Bash@3
+        displayName: 'pnpm install'
+        # ADO feeds have latency on the order of minutes before packages are available downstream. See:
+        # https://learn.microsoft.com/en-us/azure/devops/artifacts/concepts/upstream-sources?view=azure-devops#upstream-sources-health-status
+        # This pipeline installs packages which were published very recently relative to its runtime, hence the rather high retry count here.
+        retryCountOnTaskFailure: 10
         inputs:
-          command: 'custom'
-          workingDir: ${{ parameters.testWorkspace }}
-          customCommand: 'install $(Initialize.testPackageTgz) @ff-internal/aria-logger'
-          customRegistry: 'useFeed'
-          customFeed: '$(ado-feeds-all-packages-feedName)'
+          targetType: 'inline'
+          workingDirectory: ${{ parameters.testWorkspace }}
+          script: 'pnpm install $(Initialize.testPackageTgz) @ff-internal/aria-logger'
 
       # Download Test Files & Install Extra Dependencies
       # These steps are intended to include extra dependencies that are not available as
@@ -222,14 +222,14 @@ jobs:
 
         - ${{ if ne(parameters.extraDependencies, 'null') }}:
           # Install extra dependencies for test files
-          - task: Npm@1
-            displayName: 'npm install - extra dependencies for test files'
+          # Use a Bash@3 task instead of Npm@1 so we can use pnpm, which will respect the .npmrc file configured globally earlier
+          - task: Bash@3
+            displayName: 'pnpm install - extra dependencies for test files'
             retryCountOnTaskFailure: 4
             inputs:
-              command: 'custom'
-              workingDir: ${{ parameters.testWorkspace }}
-              customCommand: 'install ${{ parameters.extraDependencies }}'
-              customRegistry: 'useNpmrc'
+              targetType: 'inline'
+              workingDirectory: ${{ parameters.testWorkspace }}
+              script: 'pnpm install ${{ parameters.extraDependencies }}'
 
       # run the test
       - task: Npm@1
