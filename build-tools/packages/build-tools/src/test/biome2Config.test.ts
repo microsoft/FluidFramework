@@ -537,7 +537,9 @@ describe("Biome 2.x config loading", () => {
 			);
 
 			// Both base configs should be before the main config
-			const baseFormatterIndex = allPaths.findIndex((p: string) => p.includes("base-formatter"));
+			const baseFormatterIndex = allPaths.findIndex((p: string) =>
+				p.includes("base-formatter"),
+			);
 			const baseLinterIndex = allPaths.findIndex((p: string) => p.includes("base-linter"));
 			const configIndex = allPaths.findIndex((p: string) => p.endsWith("config.jsonc"));
 
@@ -552,7 +554,9 @@ describe("Biome 2.x config loading", () => {
 			const { getAllBiome2ConfigPaths } = await import("../common/biome2Config");
 			const allPaths = await getAllBiome2ConfigPaths(testConfig);
 
-			const baseFormatterIndex = allPaths.findIndex((p: string) => p.includes("base-formatter"));
+			const baseFormatterIndex = allPaths.findIndex((p: string) =>
+				p.includes("base-formatter"),
+			);
 			const baseLinterIndex = allPaths.findIndex((p: string) => p.includes("base-linter"));
 
 			// base-formatter comes first, base-linter second (as declared in extends array)

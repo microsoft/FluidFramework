@@ -9,6 +9,7 @@
 
 import { strict as assert } from "node:assert/strict";
 import path from "node:path";
+import { Biome2ConfigReader } from "../common/biome2Config";
 import {
 	BiomeConfigReaderV1,
 	type BiomeConfigResolved,
@@ -17,7 +18,6 @@ import {
 	getSettingValuesFromBiomeConfig,
 	loadBiomeConfig,
 } from "../common/biomeConfig";
-import { Biome2ConfigReader } from "../common/biome2Config";
 import type { Configuration as BiomeConfigOnDisk } from "../common/biomeConfigTypes";
 import { GitRepo } from "../common/gitRepo";
 import { getResolvedFluidRoot } from "../fluidBuild/fluidUtils";
