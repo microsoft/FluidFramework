@@ -10,7 +10,7 @@ const config: Linter.Config[] = [
 	...strict,
 	{
 		rules: {
-		  "@fluid-internal/fluid/no-unchecked-record-access": "warn"
+			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 		},
 	},
 ];

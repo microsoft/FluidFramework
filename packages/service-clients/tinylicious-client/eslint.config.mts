@@ -11,7 +11,7 @@ const config: Linter.Config[] = [
 	{
 		files: ["src/test/*.spec.ts"],
 		rules: {
-		  "prefer-arrow-callback": "off"
+			"prefer-arrow-callback": "off",
 		},
 	},
 ];

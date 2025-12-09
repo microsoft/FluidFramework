@@ -10,21 +10,19 @@ const config: Linter.Config[] = [
 	...strict,
 	{
 		rules: {
-		  "@typescript-eslint/consistent-indexed-object-style": "off",
-		  "@typescript-eslint/unbound-method": "off"
+			"@typescript-eslint/consistent-indexed-object-style": "off",
+			"@typescript-eslint/unbound-method": "off",
 		},
 	},
 	{
-		files: ["*.spec.ts","src/test/**"],
+		files: ["*.spec.ts", "src/test/**"],
 		rules: {
-		  "import-x/no-nodejs-modules": [
-		    "error",
-		    {
-		      "allow": [
-		        "assert"
-		      ]
-		    }
-		  ]
+			"import-x/no-nodejs-modules": [
+				"error",
+				{
+					"allow": ["assert"],
+				},
+			],
 		},
 	},
 ];

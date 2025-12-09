@@ -10,19 +10,19 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-		  "@typescript-eslint/strict-boolean-expressions": "off"
+			"@typescript-eslint/strict-boolean-expressions": "off",
 		},
 	},
 	{
 		files: ["src/assertionShortCodesMap.ts"],
 		rules: {
-		  "@typescript-eslint/comma-dangle": "off"
+			"@typescript-eslint/comma-dangle": "off",
 		},
 	},
 	{
 		files: ["src/test/**"],
 		rules: {
-		  "import-x/no-nodejs-modules": "off"
+			"import-x/no-nodejs-modules": "off",
 		},
 	},
 ];

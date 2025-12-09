@@ -10,17 +10,15 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-		  "import-x/no-nodejs-modules": [
-		    "error"
-		  ],
-		  "@fluid-internal/fluid/no-unchecked-record-access": "warn",
-		  "@typescript-eslint/unbound-method": "off"
+			"import-x/no-nodejs-modules": ["error"],
+			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+			"@typescript-eslint/unbound-method": "off",
 		},
 	},
 	{
-		files: ["*.spec.ts","src/test/**"],
+		files: ["*.spec.ts", "src/test/**"],
 		rules: {
-		  "import-x/no-nodejs-modules": "off"
+			"import-x/no-nodejs-modules": "off",
 		},
 	},
 ];

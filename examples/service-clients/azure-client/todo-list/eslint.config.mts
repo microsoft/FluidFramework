@@ -12,7 +12,7 @@ const config: Linter.Config[] = [
 	...sharedConfig,
 	{
 		rules: {
-		  "import-x/no-extraneous-dependencies": "warn"
+			"import-x/no-extraneous-dependencies": "warn",
 		},
 	},
 ];

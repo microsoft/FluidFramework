@@ -10,9 +10,9 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-		  "@typescript-eslint/strict-boolean-expressions": "off",
-		  "import-x/no-deprecated": "off",
-		  "import-x/no-nodejs-modules": "off"
+			"@typescript-eslint/strict-boolean-expressions": "off",
+			"import-x/no-deprecated": "off",
+			"import-x/no-nodejs-modules": "off",
 		},
 	},
 ];

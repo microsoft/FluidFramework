@@ -10,15 +10,15 @@ const config: Linter.Config[] = [
 	...strict,
 	{
 		rules: {
-		  "unicorn/no-nested-ternary": "off",
-		  "@typescript-eslint/no-namespace": "off"
+			"unicorn/no-nested-ternary": "off",
+			"@typescript-eslint/no-namespace": "off",
 		},
 	},
 	{
-		files: ["*.spec.ts","*.test.ts","src/test/**"],
+		files: ["*.spec.ts", "*.test.ts", "src/test/**"],
 		rules: {
-		  "import-x/no-nodejs-modules": "off",
-		  "unicorn/prefer-module": "off"
+			"import-x/no-nodejs-modules": "off",
+			"unicorn/prefer-module": "off",
 		},
 	},
 	{

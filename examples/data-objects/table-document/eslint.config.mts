@@ -12,10 +12,10 @@ const config: Linter.Config[] = [
 	...sharedConfig,
 	{
 		rules: {
-		  "@typescript-eslint/prefer-nullish-coalescing": "off",
-		  "@typescript-eslint/strict-boolean-expressions": "off",
-		  "import-x/no-deprecated": "off",
-		  "@typescript-eslint/unbound-method": "off"
+			"@typescript-eslint/prefer-nullish-coalescing": "off",
+			"@typescript-eslint/strict-boolean-expressions": "off",
+			"import-x/no-deprecated": "off",
+			"@typescript-eslint/unbound-method": "off",
 		},
 	},
 ];

@@ -10,20 +10,18 @@ const config: Linter.Config[] = [
 	...recommended,
 	{
 		rules: {
-		  "@fluid-internal/fluid/no-unchecked-record-access": "warn"
+			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 		},
 	},
 	{
-		files: ["*.spec.ts","src/test/**"],
+		files: ["*.spec.ts", "src/test/**"],
 		rules: {
-		  "import-x/no-nodejs-modules": [
-		    "error",
-		    {
-		      "allow": [
-		        "node:assert"
-		      ]
-		    }
-		  ]
+			"import-x/no-nodejs-modules": [
+				"error",
+				{
+					"allow": ["node:assert"],
+				},
+			],
 		},
 	},
 ];

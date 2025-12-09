@@ -10,7 +10,7 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-		  "import-x/no-nodejs-modules": "off"
+			"import-x/no-nodejs-modules": "off",
 		},
 	},
 ];

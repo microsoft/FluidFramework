@@ -10,7 +10,7 @@ const config: Linter.Config[] = [
 	...strict,
 	{
 		rules: {
-		  "import-x/no-nodejs-modules": "off"
+			"import-x/no-nodejs-modules": "off",
 		},
 	},
 ];

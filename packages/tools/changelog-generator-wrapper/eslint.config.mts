@@ -10,29 +10,29 @@ const config: Linter.Config[] = [
 	...recommended,
 	{
 		rules: {
-		  "@typescript-eslint/no-require-imports": "off",
-		  "@typescript-eslint/no-var-requires": "off",
-		  "@typescript-eslint/explicit-function-return-type": "off",
-		  "unicorn/prefer-module": "off",
-		  "@typescript-eslint/consistent-type-imports": [
-		    "error",
-		    {
-		      "fixStyle": "inline-type-imports"
-		    }
-		  ],
-		  "@typescript-eslint/no-import-type-side-effects": "error"
+			"@typescript-eslint/no-require-imports": "off",
+			"@typescript-eslint/no-var-requires": "off",
+			"@typescript-eslint/explicit-function-return-type": "off",
+			"unicorn/prefer-module": "off",
+			"@typescript-eslint/consistent-type-imports": [
+				"error",
+				{
+					"fixStyle": "inline-type-imports",
+				},
+			],
+			"@typescript-eslint/no-import-type-side-effects": "error",
 		},
 	},
 	{
 		files: ["**/*.{ts,tsx}"],
 		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
 		rules: {
-		  "@typescript-eslint/consistent-type-exports": [
-		    "error",
-		    {
-		      "fixMixedExportsWithInlineTypeSpecifier": true
-		    }
-		  ]
+			"@typescript-eslint/consistent-type-exports": [
+				"error",
+				{
+					"fixMixedExportsWithInlineTypeSpecifier": true,
+				},
+			],
 		},
 	},
 ];

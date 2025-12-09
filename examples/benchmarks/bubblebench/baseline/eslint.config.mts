@@ -13,7 +13,7 @@ const config: Linter.Config[] = [
 	{
 		files: ["**/*.jsx", "**/*.tsx"],
 		rules: {
-		  "react/no-deprecated": "off"
+			"react/no-deprecated": "off",
 		},
 	},
 ];

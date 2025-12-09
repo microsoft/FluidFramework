@@ -386,7 +386,11 @@ ${typeImport}`;
 	if (rawModuleExports && typeof rawModuleExports === "object") {
 		for (const [key, value] of Object.entries(rawModuleExports)) {
 			// Export arrays that aren't the lintConfig itself
-			if (key !== "lintConfig" && Array.isArray(value) && value.every((v) => typeof v === "string")) {
+			if (
+				key !== "lintConfig" &&
+				Array.isArray(value) &&
+				value.every((v) => typeof v === "string")
+			) {
 				namedExports[key] = value;
 			}
 		}

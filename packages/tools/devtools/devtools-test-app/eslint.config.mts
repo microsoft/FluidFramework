@@ -10,23 +10,23 @@ const config: Linter.Config[] = [
 	...strict,
 	{
 		rules: {
-		  "@typescript-eslint/unbound-method": "off",
-		  "unicorn/consistent-function-scoping": "off",
-		  "unicorn/no-nested-ternary": "off",
-		  "import-x/no-extraneous-dependencies": "off"
+			"@typescript-eslint/unbound-method": "off",
+			"unicorn/consistent-function-scoping": "off",
+			"unicorn/no-nested-ternary": "off",
+			"import-x/no-extraneous-dependencies": "off",
 		},
 	},
 	{
 		files: ["**/*.jsx", "**/*.tsx"],
 		rules: {
-		  "react/no-deprecated": "off"
+			"react/no-deprecated": "off",
 		},
 	},
 	{
-		files: ["src/**/*.spec.ts","src/**/*.test.ts","src/**/test/**"],
+		files: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/test/**"],
 		rules: {
-		  "import-x/no-nodejs-modules": "off",
-		  "unicorn/prefer-module": "off"
+			"import-x/no-nodejs-modules": "off",
+			"unicorn/prefer-module": "off",
 		},
 	},
 	{
