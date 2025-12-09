@@ -169,23 +169,8 @@ module.exports = {
 			},
 		],
 
-		// #region ENABLED INTENTIONALLY
+		// ENABLED INTENTIONALLY
 		"@typescript-eslint/dot-notation": "error",
-
-		// In some cases, type inference can be wrong, and this can cause a "flip-flop" of type changes in our
-		// API documentation. For example, type inference might decide a function returns a concrete type
-		// instead of an interface. This has no runtime impact, but would cause compilation problems.
-		"@typescript-eslint/explicit-function-return-type": [
-			"error",
-			{
-				allowExpressions: true,
-				allowTypedFunctionExpressions: true,
-				allowHigherOrderFunctions: true,
-				allowDirectConstAssertionInArrowFunctions: true,
-				allowConciseArrowFunctionExpressionsStartingWithVoid: false,
-			},
-		],
-
 		"@typescript-eslint/no-non-null-assertion": "error",
 		"@typescript-eslint/no-unnecessary-type-assertion": "error",
 
@@ -235,14 +220,13 @@ module.exports = {
 		"unicorn/prefer-ternary": "error",
 		"unicorn/prefer-type-error": "error",
 
-		// #endregion
-
 		// #region DISABLED INTENTIONALLY
 
 		/**
 		 * Disabled because we don't require that all variable declarations be explicitly typed.
 		 */
 		"@rushstack/typedef-var": "off",
+		"@typescript-eslint/explicit-function-return-type": "off",
 		"@typescript-eslint/explicit-member-accessibility": "off",
 
 		"@typescript-eslint/member-ordering": "off",
