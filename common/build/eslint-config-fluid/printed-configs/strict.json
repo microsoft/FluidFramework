@@ -1407,6 +1407,9 @@
         "no-const-assign": [
             "off"
         ],
+        "no-constant-binary-expression": [
+            "error"
+        ],
         "no-constant-condition": [
             "error"
         ],
@@ -1449,6 +1452,9 @@
         "no-empty-pattern": [
             "error"
         ],
+        "no-empty-static-block": [
+            "error"
+        ],
         "no-eval": [
             "error"
         ],
@@ -1481,9 +1487,6 @@
         ],
         "no-import-assign": [
             "off"
-        ],
-        "no-inner-declarations": [
-            "error"
         ],
         "no-invalid-regexp": [
             "error"
@@ -1646,6 +1649,9 @@
             "off"
         ],
         "no-unused-labels": [
+            "error"
+        ],
+        "no-unused-private-class-members": [
             "error"
         ],
         "no-unused-vars": [
