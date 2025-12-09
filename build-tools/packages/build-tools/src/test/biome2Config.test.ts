@@ -199,60 +199,60 @@ describe("Biome 2.x config loading", () => {
 		});
 	});
 
-	describe("combined extends and find-up (root config extends, child uses find-up)", () => {
-		// This test verifies the case where:
-		// - baseconfig.jsonc is the base config with defaults
-		// - rootconfig.jsonc has root: true AND extends baseconfig.jsonc
-		// - childconfig.jsonc has root: false and no extends (uses find-up to find rootconfig)
-		// The child should inherit settings from both root (via find-up) AND base (via extends from root)
+	describe("nested config without extends (root: false but no extends)", () => {
+		// This test verifies that Biome 2.x does NOT automatically inherit from parent configs
+		// when a child config has root: false but no explicit extends.
+		//
+		// Observed Biome 2.3.8 behavior: Without `extends`, a nested config operates independently
+		// using only its own settings plus Biome's defaults - it does NOT merge with parent configs.
 		const childConfig = path.resolve(
 			testDataPath,
 			"biome2/nested-root/child/childconfig.jsonc",
 		);
 
-		it("child inherits settings from base config through root's extends chain", async () => {
+		it("child does NOT inherit settings from parent without explicit extends", async () => {
 			const config = await loadBiome2Config(childConfig);
 
-			// These settings come from baseconfig.jsonc, inherited through root's extends
+			// Child config has root: false but no extends, so it should NOT inherit from parent
+			// These values should be undefined (not inherited) or Biome's defaults
 			assert.equal(
-				config.files!.ignoreUnknown,
-				true,
-				"should inherit ignoreUnknown from base",
+				config.files?.ignoreUnknown,
+				undefined,
+				"should NOT inherit ignoreUnknown from parent - no extends",
 			);
 			assert.equal(
-				config.formatter!.indentStyle,
-				"tab",
-				"should inherit indentStyle from base",
+				config.formatter?.indentStyle,
+				undefined,
+				"should NOT inherit indentStyle from parent - no extends",
 			);
 			assert.equal(
-				config.formatter!.formatWithErrors,
-				true,
-				"should inherit formatWithErrors from base",
+				config.formatter?.formatWithErrors,
+				undefined,
+				"should NOT inherit formatWithErrors from parent - no extends",
 			);
 		});
 
-		it("child overrides settings from root config", async () => {
+		it("child uses only its own settings", async () => {
 			const config = await loadBiome2Config(childConfig);
 
-			// lineWidth is set to 100 in root, but child overrides to 80
-			assert.equal(config.formatter!.lineWidth, 80, "child should override root's lineWidth");
+			// lineWidth is set to 80 in child config
+			assert.equal(config.formatter!.lineWidth, 80, "child should use its own lineWidth");
+
+			// files.includes is set in child config
+			assert.deepEqual(
+				config.files!.includes,
+				["src/**"],
+				"child should use its own includes",
+			);
 		});
 
-		it("complete inheritance chain works correctly", async () => {
-			const config = await loadBiome2Config(childConfig);
+		it("getAllBiome2ConfigPaths returns only the child config (no parent discovery)", async () => {
+			const { getAllBiome2ConfigPaths } = await import("../common/biome2Config");
+			const allPaths = await getAllBiome2ConfigPaths(childConfig);
 
-			// From base: ignoreUnknown=true, indentStyle=tab, lineWidth=95 (overridden by root)
-			// From root (overrides base): lineWidth=100 (overridden by child)
-			// From child (overrides root): lineWidth=80
-
-			// Final expected values:
-			assert.equal(config.files!.ignoreUnknown, true, "from base via root");
-			assert.equal(config.formatter!.indentStyle, "tab", "from base via root");
-			assert.equal(config.formatter!.lineWidth, 80, "from child, overriding root and base");
-
-			// VCS settings from base should be inherited
-			assert.equal(config.vcs!.enabled, true, "vcs.enabled from base");
-			assert.equal(config.vcs!.clientKind, "git", "vcs.clientKind from base");
+			// Without extends, only the child config should be returned
+			assert.equal(allPaths.length, 1, "should only have the child config");
+			assert.equal(allPaths[0], childConfig, "should be the child config path");
 		});
 	});
 

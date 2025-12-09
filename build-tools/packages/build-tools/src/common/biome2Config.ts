@@ -110,73 +110,42 @@ async function resolveBiome2ExtendsChain(
 }
 
 /**
- * Returns an array of absolute paths to Biome 2.x config files. The paths are in the order in which they are merged by
- * Biome. That is, the last item in the array will be the absolute path to `configPath`.
+ * Returns an array of absolute paths to Biome 2.x config files that affect the given config.
+ * The paths are returned in merge order (base configs first, most specific last), with the last item being
+ * the absolute path to `configPath` itself.
  *
- * In Biome 2.x, configs are resolved by:
- * 1. Following explicit `extends` declarations (including the "//" microsyntax for finding root configs)
- * 2. Walking up the directory tree to find parent configs until a config with `root: true` is found
+ * @remarks
  *
- * Both mechanisms are supported and combined.
+ * **Observed Biome 2.x behavior (tested with Biome 2.3.8):**
+ *
+ * Config inheritance ONLY happens via explicit `extends` declarations. Without `extends`:
+ * - A nested config (even with `root: false`) operates independently
+ * - It uses only its own settings plus Biome's defaults
+ * - Parent configs in the directory tree are NOT automatically merged
+ *
+ * For example, given this structure:
+ * ```
+ * /project/biome.json        (root: true, indentStyle: "space")
+ * /project/child/biome.json  (root: false, lineWidth: 80)
+ * ```
+ *
+ * When formatting files in `/project/child/`, Biome uses the child config with:
+ * - `lineWidth: 80` (from child)
+ * - `indentStyle: "tab"` (Biome's DEFAULT, NOT inherited from parent)
+ *
+ * To inherit from the parent, the child must explicitly use `extends`:
+ * - `"extends": "//"` - extend from the root config (nearest ancestor with `root: true`)
+ * - `"extends": ["../biome.json"]` - extend from a specific path
+ *
+ * This function follows Biome's behavior: it only includes configs explicitly in the `extends` chain.
  */
 export async function getAllBiome2ConfigPaths(configPath: string): Promise<string[]> {
-	const config = await loadRawBiome2Config(configPath);
-	let extendedConfigPaths: string[] = [];
-
-	// First, handle explicit extends declarations
-	if (config.extends) {
-		// Get only the extended configs, not configPath itself (we'll add it at the end)
-		extendedConfigPaths = await resolveBiome2ExtendsChain(configPath, false);
-	}
-
-	// If this config doesn't have root: true and doesn't have explicit extends,
-	// walk up the directory tree to find parent configs
-	if (config.root !== true && !config.extends) {
-		const parentConfigs = await findParentBiome2Configs(path.dirname(configPath));
-		extendedConfigPaths = [...parentConfigs, ...extendedConfigPaths];
-	}
+	// Only follow explicit extends declarations - Biome does not automatically merge parent configs
+	const extendedConfigPaths = await resolveBiome2ExtendsChain(configPath, false);
 
 	// Add the current config as the last one to be applied when they're merged
 	extendedConfigPaths.push(configPath);
 	return extendedConfigPaths;
-}
-
-/**
- * Walks up the directory tree from the given directory to find parent Biome config files.
- * Stops when a config with `root: true` is found or when the filesystem root is reached.
- * For each parent config found, recursively resolves any `extends` declarations.
- *
- * @param startDir - The directory containing the child config file. Parent discovery starts
- *                   from this directory's parent (i.e., startDir itself is not searched).
- * @returns Array of config paths in order from root to nearest parent (not including the starting directory),
- *          with all extends chains resolved
- */
-async function findParentBiome2Configs(startDir: string): Promise<string[]> {
-	const foundConfigs: string[] = [];
-	let currentDir = path.dirname(startDir);
-	const fsRoot = path.parse(startDir).root;
-
-	while (currentDir !== fsRoot) {
-		const configPath = await findBiome2ConfigInDirectory(currentDir);
-		if (configPath) {
-			const config = await loadRawBiome2Config(configPath);
-
-			// Recursively resolve any extends for this parent config
-			const parentConfigPaths = await resolveBiome2ExtendsChain(configPath);
-
-			// Add to the list (we'll reverse at the end)
-			foundConfigs.push(...parentConfigPaths);
-
-			// If this config has root: true, stop walking up
-			if (config.root === true) {
-				break;
-			}
-		}
-		currentDir = path.dirname(currentDir);
-	}
-
-	// Reverse to get root-to-child order
-	return foundConfigs.reverse();
 }
 
 /**
@@ -226,18 +195,16 @@ export async function findRootBiome2Config(startDir: string): Promise<string | u
 }
 
 /**
- * Loads a Biome 2.x configuration file by following all `extends` declarations and parent config
- * discovery, then merging the results. Array-type values are not merged, in accordance with
- * how Biome applies configs.
+ * Loads a Biome 2.x configuration file by following all `extends` declarations and merging
+ * the results. Array-type values are not merged, in accordance with how Biome applies configs.
  *
  * @param configPath - Absolute path to a Biome 2.x configuration file.
  * @returns The fully resolved and merged configuration.
  *
  * @remarks
  *
- * The intent is to merge the configs in the same way that Biome itself does, but the implementation is based on the
- * Biome documentation, so there may be subtle differences unaccounted for. Where this implementation diverges from
- * Biome's behavior, this function should be considered incorrect.
+ * This function follows Biome's config resolution behavior: only configs explicitly referenced
+ * via `extends` are merged. Without `extends`, a config operates independently.
  *
  * Relevant Biome documentation: {@link https://biomejs.dev/guides/big-projects/}
  */
