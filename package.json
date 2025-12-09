@@ -173,7 +173,6 @@
 		"@fluidframework/eslint-config-fluid": "workspace:^",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@microsoft/api-extractor": "7.52.11",
-		"@monorepo-utils/workspaces-to-typescript-project-references": "^2.11.0",
 		"@vvago/vale": "^3.11.2",
 		"auto-changelog": "^2.4.0",
 		"c8": "^10.1.3",
