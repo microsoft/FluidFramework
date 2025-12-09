@@ -74,7 +74,7 @@ class GroceryList implements IGroceryList {
 		}
 	}
 
-	public readonly addItem = (name: string) => {
+	public readonly addItem = (name: string): void => {
 		// Use timestamp as a hack for a consistent sortable order.
 		this.map.set(`${Date.now()}-${uuid()}`, name);
 	};
@@ -85,11 +85,11 @@ class GroceryList implements IGroceryList {
 		);
 	};
 
-	public readonly removeItem = (id: string) => {
+	public readonly removeItem = (id: string): void => {
 		this.map.delete(id);
 	};
 
-	private readonly onMapValueChanged = (changed: IValueChanged) => {
+	private readonly onMapValueChanged = (changed: IValueChanged): void => {
 		const changedId = changed.key;
 		const newName = this.map.get(changedId);
 		if (newName === undefined) {
