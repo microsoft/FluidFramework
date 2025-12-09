@@ -39,5 +39,5 @@ export function getDeltaY(direction: Direction): TabDirection {
 }
 
 export function getTabDirection(direction: Direction): TabDirection {
-	return (getDeltaX(direction) || getDeltaY(direction));
+	return getDeltaX(direction) || getDeltaY(direction);
 }

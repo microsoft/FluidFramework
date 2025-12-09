@@ -67,7 +67,11 @@ export class SharedJson1 extends SharedOT<Doc, JSONOp> {
 		this.apply(removeOp(path, value));
 	}
 
-	public replace<T, U>(path: Path, oldValue: Serializable<T>, newValue: Serializable<U>): void {
+	public replace<T, U>(
+		path: Path,
+		oldValue: Serializable<T>,
+		newValue: Serializable<U>,
+	): void {
 		this.apply(replaceOp(path, oldValue as Doc, newValue as Doc));
 	}
 }
