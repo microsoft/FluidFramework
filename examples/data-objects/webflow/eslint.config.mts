@@ -5,54 +5,42 @@
  */
 import type { Linter } from "eslint";
 import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
-import sharedConfig from "../../eslint.config.data.mts";
+import sharedConfig, {
+	importInternalModulesAllowed,
+	importInternalModulesAllowedForTest,
+} from "../../eslint.config.data.mts";
 
 const config: Linter.Config[] = [
 	...minimalDeprecated,
 	...sharedConfig,
 	{
 		rules: {
-		  "@typescript-eslint/no-use-before-define": "off",
-		  "@typescript-eslint/prefer-nullish-coalescing": "off",
-		  "@typescript-eslint/strict-boolean-expressions": "off",
-		  "import-x/no-internal-modules": [
-		    "error",
-		    {
-		      "allow": [
-		        "@fluidframework/*/{beta,alpha,legacy,legacy/alpha}",
-		        "fluid-framework/{beta,alpha,legacy,legacy/alpha}",
-		        "@fluid-experimental/**",
-		        "@fluidframework/*/test-utils",
-		        "@fluid-example/*/{beta,alpha}",
-		        "*/index.js",
-		        "*/*.js"
-		      ]
-		    }
-		  ],
-		  "max-len": "off",
-		  "no-bitwise": "off",
-		  "no-case-declarations": "off",
-		  "@typescript-eslint/unbound-method": "off"
+			"@typescript-eslint/no-use-before-define": "off",
+			"@typescript-eslint/prefer-nullish-coalescing": "off", // requires strictNullChecks
+			"@typescript-eslint/strict-boolean-expressions": "off",
+			"import-x/no-internal-modules": [
+				"error",
+				{
+					// package hasn't converted to barrel files (which may not be a bad thing)
+					allow: [...importInternalModulesAllowed, "*/*.js"],
+				},
+			],
+			"max-len": "off",
+			"no-bitwise": "off",
+			"no-case-declarations": "off",
+			// Disabled because the rule is crashing on this package - AB#51780
+			"@typescript-eslint/unbound-method": "off",
 		},
 	},
 	{
-		files: ["*.spec.ts","src/test/**"],
+		files: ["*.spec.ts", "src/test/**"],
 		rules: {
-		  "import-x/no-internal-modules": [
-		    "error",
-		    {
-		      "allow": [
-		        "@fluidframework/*/{beta,alpha,legacy,legacy/alpha}",
-		        "fluid-framework/{beta,alpha,legacy,legacy/alpha}",
-		        "@fluid-experimental/**",
-		        "@fluidframework/*/test-utils",
-		        "@fluid-example/*/{beta,alpha}",
-		        "*/index.js",
-		        "@fluidframework/test-utils/internal",
-		        "*/*.js"
-		      ]
-		    }
-		  ]
+			"import-x/no-internal-modules": [
+				"error",
+				{
+					allow: importInternalModulesAllowedForTest,
+				},
+			],
 		},
 	},
 ];
