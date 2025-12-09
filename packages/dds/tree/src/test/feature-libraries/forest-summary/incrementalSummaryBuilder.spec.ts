@@ -19,10 +19,13 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/forest-summary/incrementalSummaryBuilder.js";
 import {
-	summaryContentBlobKeyV1,
-	summaryContentBlobKeyV3,
+	summaryContentBlobKey,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/forest-summary/summaryTypes.js";
+} from "../../../feature-libraries/forest-summary/summaryFormatV3.js";
+import {
+	summaryContentBlobKey as summaryContentBlobKeyV1ToV2,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/forest-summary/summaryFormatV1ToV2.js";
 import {
 	type EncodedFieldBatch,
 	type ChunkReferenceId,
@@ -184,7 +187,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			builder.completeSummary({
 				incrementalSummaryContext: undefined,
 				forestSummaryRootContent: mockForestSummaryRootContent,
-				forestSummaryRootContentKey: summaryContentBlobKeyV1,
+				forestSummaryRootContentKey: summaryContentBlobKeyV1ToV2,
 				builder: summaryTreeBuilder,
 			});
 			const summary = summaryTreeBuilder.getSummaryTree();
@@ -208,7 +211,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			builder.completeSummary({
 				incrementalSummaryContext,
 				forestSummaryRootContent: mockForestSummaryRootContent,
-				forestSummaryRootContentKey: summaryContentBlobKeyV3,
+				forestSummaryRootContentKey: summaryContentBlobKey,
 				builder: summaryTreeBuilder,
 			});
 			const summary = summaryTreeBuilder.getSummaryTree();
@@ -233,7 +236,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			builder.completeSummary({
 				incrementalSummaryContext: localIncrementalSummaryContext,
 				forestSummaryRootContent: mockForestSummaryRootContent,
-				forestSummaryRootContentKey: summaryContentBlobKeyV3,
+				forestSummaryRootContentKey: summaryContentBlobKey,
 				builder: summaryTreeBuilder,
 			});
 			assert.equal(builder.forestSummaryState, ForestSummaryTrackingState.ReadyToTrack);
@@ -248,7 +251,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 					builder.completeSummary({
 						incrementalSummaryContext: localIncrementalSummaryContext,
 						forestSummaryRootContent: mockForestSummaryRootContent,
-						forestSummaryRootContentKey: summaryContentBlobKeyV3,
+						forestSummaryRootContentKey: summaryContentBlobKey,
 						builder: new SummaryTreeBuilder(),
 					}),
 				validateAssertionError(/Not tracking/),
@@ -424,7 +427,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			builder.completeSummary({
 				incrementalSummaryContext,
 				forestSummaryRootContent: mockForestSummaryRootContent,
-				forestSummaryRootContentKey: summaryContentBlobKeyV3,
+				forestSummaryRootContentKey: summaryContentBlobKey,
 				builder: summaryTreeBuilder1,
 			});
 
@@ -462,7 +465,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			builder.completeSummary({
 				incrementalSummaryContext: incrementalSummaryContext1,
 				forestSummaryRootContent: mockForestSummaryRootContent,
-				forestSummaryRootContentKey: summaryContentBlobKeyV3,
+				forestSummaryRootContentKey: summaryContentBlobKey,
 				builder: summaryTreeBuilder1,
 			});
 
@@ -489,7 +492,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			builder.completeSummary({
 				incrementalSummaryContext: incrementalSummaryContext2,
 				forestSummaryRootContent: mockForestSummaryRootContent,
-				forestSummaryRootContentKey: summaryContentBlobKeyV3,
+				forestSummaryRootContentKey: summaryContentBlobKey,
 				builder: summaryTreeBuilder2,
 			});
 			const summary = summaryTreeBuilder2.getSummaryTree();
@@ -513,7 +516,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			builder.completeSummary({
 				incrementalSummaryContext,
 				forestSummaryRootContent: mockForestSummaryRootContent,
-				forestSummaryRootContentKey: summaryContentBlobKeyV3,
+				forestSummaryRootContentKey: summaryContentBlobKey,
 				builder: summaryTreeBuilder1,
 			});
 
@@ -529,7 +532,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			builder.completeSummary({
 				incrementalSummaryContext: incrementalSummaryContext2,
 				forestSummaryRootContent: mockForestSummaryRootContent,
-				forestSummaryRootContentKey: summaryContentBlobKeyV3,
+				forestSummaryRootContentKey: summaryContentBlobKey,
 				builder: summaryTreeBuilder2,
 			});
 
@@ -554,7 +557,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			builder.completeSummary({
 				incrementalSummaryContext: incrementalSummaryContext3,
 				forestSummaryRootContent: mockForestSummaryRootContent,
-				forestSummaryRootContentKey: summaryContentBlobKeyV3,
+				forestSummaryRootContentKey: summaryContentBlobKey,
 				builder: summaryTreeBuilder3,
 			});
 			const summary = summaryTreeBuilder3.getSummaryTree();

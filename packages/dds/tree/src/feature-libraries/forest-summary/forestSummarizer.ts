@@ -52,14 +52,16 @@ import {
 	ForestIncrementalSummaryBuilder,
 } from "./incrementalSummaryBuilder.js";
 import {
-	ForestSummaryFormatVersion,
-	forestSummaryKey,
 	minVersionToForestSummaryFormatVersion,
-	supportedForestSummaryFormatVersions,
 	getForestRootSummaryContentKey,
 } from "./summaryTypes.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
-import { ForestFormatVersion } from "./format.js";
+import { ForestFormatVersion } from "./formatCommon.js";
+import {
+	ForestSummaryFormatVersion,
+	forestSummaryKey,
+	supportedForestSummaryFormatVersions,
+} from "./summaryFormatCommon.js";
 
 /**
  * Provides methods for summarizing and loading a forest.

@@ -27,7 +27,7 @@ import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal"
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { SummaryElementStringifier } from "../../shared-tree-core/index.js";
-import { summaryContentBlobKeyV3 } from "./summaryTypes.js";
+import { summaryContentBlobKey } from "./summaryFormatV3.js";
 
 /**
  * State that tells whether a summary is currently being tracked.
@@ -295,7 +295,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 			// and the value is the snapshot tree for the chunk.
 			for (const [chunkReferenceId, chunkSnapshotTree] of Object.entries(snapshotTree.trees)) {
 				const chunkSubTreePath = `${parentTreeKey}${chunkReferenceId}`;
-				const chunkContentsPath = `${chunkSubTreePath}/${summaryContentBlobKeyV3}`;
+				const chunkContentsPath = `${chunkSubTreePath}/${summaryContentBlobKey}`;
 				if (!(await args.services.contains(chunkContentsPath))) {
 					throw new LoggingError(
 						`SharedTree: Cannot find contents for incremental chunk ${chunkContentsPath}`,
@@ -412,7 +412,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 				const chunkSummaryBuilder = new SummaryTreeBuilder();
 				this.trackedSummaryProperties.parentSummaryBuilder = chunkSummaryBuilder;
 				chunkSummaryBuilder.addBlob(
-					summaryContentBlobKeyV3,
+					summaryContentBlobKey,
 					this.trackedSummaryProperties.stringify(chunkEncoder(chunk)),
 				);
 

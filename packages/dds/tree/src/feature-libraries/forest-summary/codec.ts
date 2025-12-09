@@ -20,7 +20,12 @@ import {
 import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
 import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 
-import { ForestFormatVersion, validVersions, type Format, FormatGeneric } from "./format.js";
+import {
+	ForestFormatVersion,
+	validVersions,
+	type Format,
+	FormatCommon,
+} from "./formatCommon.js";
 import { brand } from "../../util/index.js";
 
 /**
@@ -51,7 +56,7 @@ export function makeForestSummarizerCodec(
 ): ForestCodec {
 	const inner = fieldBatchCodec;
 	const writeVersion = clientVersionToForestFormatVersion(options.minVersionForCollab);
-	const formatSchema = FormatGeneric(writeVersion);
+	const formatSchema = FormatCommon(writeVersion);
 	return makeVersionedValidatedCodec(options, validVersions, formatSchema, {
 		encode: (data: FieldSet, context: FieldBatchEncodingContext): Format => {
 			const keys: FieldKey[] = [];
