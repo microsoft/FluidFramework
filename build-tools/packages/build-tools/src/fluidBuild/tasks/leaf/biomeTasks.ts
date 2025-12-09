@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { type BiomeConfigReader, createBiomeConfigReader } from "../../../common/biomeConfig";
+import {
+	type BiomeConfigReader,
+	createBiomeConfigReader,
+} from "../../../common/biomeConfigUtils";
 import { LeafWithFileStatDoneFileTask } from "./leafTask";
 
 /**

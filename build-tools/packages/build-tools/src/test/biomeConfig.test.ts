@@ -13,12 +13,12 @@ import { Biome2ConfigReader } from "../common/biome2Config";
 import {
 	BiomeConfigReaderV1,
 	type BiomeConfigResolved,
-	createBiomeConfigReader,
 	getBiomeFormattedFilesFromDirectory,
 	getSettingValuesFromBiomeConfig,
 	loadBiomeConfig,
 } from "../common/biomeConfig";
 import type { Configuration as BiomeConfigOnDisk } from "../common/biomeConfigTypes";
+import { createBiomeConfigReader } from "../common/biomeConfigUtils";
 import { GitRepo } from "../common/gitRepo";
 import { getResolvedFluidRoot } from "../fluidBuild/fluidUtils";
 import { testDataPath } from "./init";

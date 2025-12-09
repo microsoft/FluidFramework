@@ -297,12 +297,11 @@ export async function getBiome2FormattedFilesFromDirectory(
 	directoryOrConfigFile: string,
 	gitRepo: GitRepo,
 ): Promise<string[]> {
-	/**
-	 * The repo root-relative path to the directory being used as the Biome working directory.
-	 */
 	let directory: string;
 	let configFile: string;
-	if ((await stat(directoryOrConfigFile)).isFile()) {
+	const pathStats = await stat(directoryOrConfigFile);
+
+	if (pathStats.isFile()) {
 		configFile = directoryOrConfigFile;
 		directory = path.relative(gitRepo.resolvedRoot, path.dirname(directoryOrConfigFile));
 	} else {
@@ -360,12 +359,14 @@ async function filterFilesWithOrderedPatterns(
 	const initialIncludes = prefixedPatterns.slice(0, firstExclusionIndex);
 	const restPatterns = prefixedPatterns.slice(firstExclusionIndex);
 
-	// Start with files matching initial includes (or all files if no initial includes)
+	// Start with files matching initial includes (or empty set if no initial includes)
+	// Per Biome docs: "When using a negated pattern, you should always specify ** first to match all files"
+	// If the first pattern is an exclusion with no prior includes, we start with an empty set.
 	let result: Set<string>;
 	if (initialIncludes.length > 0) {
 		result = new Set(multimatch(allFiles, initialIncludes));
 	} else {
-		result = new Set(allFiles);
+		result = new Set();
 	}
 
 	// Process remaining patterns in order
@@ -452,8 +453,17 @@ export class Biome2ConfigReader {
 		return this.allConfigs.at(-1)!;
 	}
 
+	/**
+	 * The directory containing the closest (most specific) config file.
+	 */
 	public readonly directory: string;
 
+	/**
+	 * @param configFile - Absolute path to the closest Biome config file
+	 * @param allConfigs - All config file paths, in order of application (base configs first)
+	 * @param mergedConfig - The fully resolved and merged configuration
+	 * @param formattedFiles - Absolute paths to files that would be formatted
+	 */
 	private constructor(
 		configFile: string,
 		public readonly allConfigs: string[],
@@ -464,17 +474,19 @@ export class Biome2ConfigReader {
 	}
 	/**
 	 * Create a Biome2ConfigReader instance rooted in the provided directory.
+	 *
+	 * @param directoryOrConfigFile - A path to a directory or a Biome config file
+	 * @param gitRepo - A GitRepo instance used to enumerate files
 	 */
 	public static async create(
 		directoryOrConfigFile: string,
 		gitRepo: GitRepo,
 	): Promise<Biome2ConfigReader> {
-		/**
-		 * The repo root-relative path to the directory being used as the Biome working directory.
-		 */
-		let directory: string;
 		let configFile: string;
-		if ((await stat(directoryOrConfigFile)).isFile()) {
+		let directory: string;
+
+		const pathStats = await stat(directoryOrConfigFile);
+		if (pathStats.isFile()) {
 			configFile = directoryOrConfigFile;
 			directory = path.relative(gitRepo.resolvedRoot, path.dirname(directoryOrConfigFile));
 		} else {
