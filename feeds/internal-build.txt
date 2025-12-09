@@ -6,6 +6,7 @@
 @fluidframework/devtools-core
 @fluidframework/devtools
 @fluidframework/test-utils
+@fluid-internal/test-service-load
 @fluid-internal/test-driver-definitions
 @fluid-internal/mocha-test-setup
 @fluidframework/tinylicious-client

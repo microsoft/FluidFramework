@@ -1,5 +1,4 @@
 @fluid-private/test-version-utils
-@fluid-internal/test-service-load
 @fluid-private/test-pairwise-generator
 @fluid-private/test-end-to-end-tests
 @fluid-private/test-drivers
