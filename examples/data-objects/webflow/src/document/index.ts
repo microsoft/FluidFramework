@@ -251,12 +251,12 @@ export class FlowDocument extends DataObject {
 	}
 
 	public insertText(position: number, text: string): void {
-		debug(`insertText(${position},"${text})")`);
+		debug(`insertText(${position},"${text}")`);
 		this.sharedString.insertText(position, text);
 	}
 
 	public replaceWithText(start: number, end: number, text: string): void {
-		debug(`replaceWithText(${start}, ${end}, "${text})")`);
+		debug(`replaceWithText(${start}, ${end}, "${text}")`);
 		this.sharedString.replaceText(start, end, text);
 	}
 
