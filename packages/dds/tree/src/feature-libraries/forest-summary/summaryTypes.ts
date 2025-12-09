@@ -12,7 +12,7 @@ import {
 import { FluidClientVersion } from "../../codec/index.js";
 import { ForestSummaryFormatVersion } from "./summaryFormatCommon.js";
 import { summaryContentBlobKey as summaryContentBlobKeyV1ToV2 } from "./summaryFormatV1ToV2.js";
-import { summaryContentBlobKey as summaryContentBlobKeyCurrent } from "./summaryFormatV3.js";
+import { summaryContentBlobKey as summaryContentBlobKeyV3 } from "./summaryFormatV3.js";
 
 /**
  * Returns the summary version to use as per the given minimum version for collab.
@@ -37,5 +37,5 @@ export function getForestRootSummaryContentKey(
 	return summaryFormatVersion === undefined ||
 		summaryFormatVersion < ForestSummaryFormatVersion.v3
 		? summaryContentBlobKeyV1ToV2
-		: summaryContentBlobKeyCurrent;
+		: summaryContentBlobKeyV3;
 }
