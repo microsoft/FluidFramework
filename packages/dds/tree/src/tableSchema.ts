@@ -30,7 +30,7 @@ import {
 	withBufferedTreeEvents,
 	type TreeRecordNode,
 	objectSchema,
-	eraseSubclassableSchemaDetails,
+	eraseSchemaDetailsSubclassable,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports -- This makes the API report slightly cleaner.
 	TreeNodeSchemaCore,
 } from "./simple-tree/index.js";
@@ -1121,7 +1121,6 @@ export namespace System_TableSchema {
 		(Table as any)[tableSchemaSymbol] = true;
 
 		// Named interfaces here do not compile.
-		// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 		type Statics = {
 			/**
 			 * Create a table with initial contents.
@@ -1149,7 +1148,7 @@ export namespace System_TableSchema {
 		// This numeric id doesn't seem to be stable over incremental builds, and thus causes diffs in the API extractor reports.
 		// This is avoided by doing this type conversion.
 		// The conversion is done via eraseSubclassableSchemaDetails to erase internal details.
-		const TableSchemaType = eraseSubclassableSchemaDetails<TableValueType, Statics>()(Table);
+		const TableSchemaType = eraseSchemaDetailsSubclassable<TableValueType, Statics>()(Table);
 
 		// Return the table schema
 		return TableSchemaType;

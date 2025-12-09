@@ -37,11 +37,11 @@ export {
 	type SchemaFactory_base,
 } from "./schemaFactory.js";
 export { SchemaFactoryBeta, type SchemaStaticsBeta } from "./schemaFactoryBeta.js";
+export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
 export {
-	SchemaFactoryAlpha,
 	eraseSchemaDetails,
-	eraseSubclassableSchemaDetails,
-} from "./schemaFactoryAlpha.js";
+	eraseSchemaDetailsSubclassable,
+} from "./eraseSchemaDetails.js";
 export type {
 	ValidateRecursiveSchema,
 	FixRecursiveArraySchema,
