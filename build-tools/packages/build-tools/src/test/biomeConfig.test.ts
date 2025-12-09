@@ -22,7 +22,7 @@ import { getResolvedFluidRoot } from "../fluidBuild/fluidUtils";
 import { testDataPath } from "./init";
 
 describe("Biome config loading", () => {
-	describe("BiomeConfigReader class", () => {
+	describe("BiomeConfigReaderV1 class", () => {
 		// These variables need to be initialized once for all the tests in this describe block. Defining them outside
 		// of the before block causes the tests to be skipped.
 		const testDir = path.resolve(testDataPath, "biome/pkg-b");

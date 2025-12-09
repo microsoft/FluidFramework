@@ -417,10 +417,10 @@ describe("Biome 2.x config loading", () => {
 		// This test uses multiple levels of nesting (root -> packages -> nested -> child)
 		// to ensure the microsyntax can find the root config from deep nesting
 
-		const rootConfig = path.resolve(testDataPath, "biome2/microsyntax-test/rootconfig.jsonc");
+		const rootConfig = path.resolve(testDataPath, "biome2/microsyntax-test/biome.jsonc");
 		const childConfig = path.resolve(
 			testDataPath,
-			"biome2/microsyntax-test/packages/nested/child/childconfig.jsonc",
+			"biome2/microsyntax-test/packages/nested/child/biome.jsonc",
 		);
 
 		it('resolves "//" to find the root config', async () => {
@@ -456,9 +456,8 @@ describe("Biome 2.x config loading", () => {
 		});
 
 		it("Biome2ConfigReader works with // syntax", async () => {
-			let gitRepo: GitRepo;
 			const repoRoot = await getResolvedFluidRoot(true);
-			gitRepo = new GitRepo(repoRoot);
+			const gitRepo = new GitRepo(repoRoot);
 
 			const config = await Biome2ConfigReader.create(childConfig, gitRepo);
 

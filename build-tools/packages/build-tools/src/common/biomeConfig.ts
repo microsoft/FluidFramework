@@ -6,6 +6,8 @@
 import { strict as assert } from "node:assert/strict";
 import { stat } from "node:fs/promises";
 import path from "node:path";
+import ignore from "ignore";
+import multimatch from "multimatch";
 import { merge } from "ts-deepmerge";
 // Opaque is deprecated in newer type-fest versions (replaced by Tagged); we pin type-fest 2.x for current CommonJS
 import type { Opaque } from "type-fest";
@@ -13,10 +15,8 @@ import type { Opaque } from "type-fest";
 import { Biome2ConfigReader } from "./biome2Config";
 import type { Configuration as BiomeConfigRaw } from "./biomeConfigTypes";
 import {
-	filterFilesWithPatterns,
 	getClosestBiomeConfigPath,
 	loadRawBiomeConfigFile,
-	resolveExtendsChainGeneric,
 } from "./biomeConfigUtils";
 import { type BiomeMajorVersion, detectBiomeVersion } from "./biomeVersion";
 import type { GitRepo } from "./gitRepo";
@@ -40,7 +40,21 @@ async function loadRawBiomeConfig(configPath: string): Promise<BiomeConfigRaw> {
  * Biome. That is, the last item in the array will be the absolute path to `configPath`.
  */
 export async function getAllBiomeConfigPaths(configPath: string): Promise<string[]> {
-	return resolveExtendsChainGeneric(configPath, loadRawBiomeConfig);
+	const config = await loadRawBiomeConfig(configPath);
+	let extendedConfigPaths: string[] = [];
+
+	if (config.extends) {
+		const pathsNested = await Promise.all(
+			config.extends.map((configToExtend) =>
+				getAllBiomeConfigPaths(path.join(path.dirname(configPath), configToExtend)),
+			),
+		);
+		extendedConfigPaths = pathsNested.flat();
+	}
+
+	// Add the current config as the last one to be applied when they're merged
+	extendedConfigPaths.push(configPath);
+	return extendedConfigPaths;
 }
 
 /**
@@ -141,23 +155,42 @@ export async function getBiomeFormattedFiles(
 	directory: string,
 	gitRepo: GitRepo,
 ): Promise<string[]> {
-	const includeEntries = getSettingValuesFromBiomeConfig(config, "formatter", "include");
-	const ignoreEntries = getSettingValuesFromBiomeConfig(config, "formatter", "ignore");
+	const [includeEntries, ignoreEntries] = await Promise.all([
+		getSettingValuesFromBiomeConfig(config, "formatter", "include"),
+		getSettingValuesFromBiomeConfig(config, "formatter", "ignore"),
+	]);
 
 	// From the Biome docs (https://biomejs.dev/guides/how-biome-works/#include-and-ignore-explained):
 	//
 	// "At the moment, Biome uses a glob library that treats all globs as having a **/ prefix.
 	// This means that src/**/*.js and **/src/**/*.js are treated as identical. They match both src/file.js and
 	// test/src/file.js. This is something we plan to fix in Biome v2.0.0."
-	const prefixGlob = (glob: string): string => `**/${glob}`;
+	const prefixedIncludes = [...includeEntries].map((glob) => `**/${glob}`);
+	const prefixedIgnores = [...ignoreEntries].map((glob) => `**/${glob}`);
 
-	return filterFilesWithPatterns(
-		includeEntries,
-		ignoreEntries,
-		directory,
-		gitRepo,
-		prefixGlob,
-	);
+	/**
+	 * All files that could possibly be formatted before Biome include and ignore entries are applied. Paths are relative
+	 * to the root of the repo.
+	 */
+	const gitLsFiles = new Set(await gitRepo.getFiles(directory));
+
+	/**
+	 * An array of repo-relative paths to files included via the 'include' settings in the Biome config.
+	 */
+	const includedPaths =
+		prefixedIncludes.length > 0
+			? // If there are includes, then we filter the possible files using the include globs
+				multimatch([...gitLsFiles], prefixedIncludes)
+			: // No Biome includes were provided, so we include everything git enumerated
+				[...gitLsFiles];
+
+	const ignoreObject = ignore().add(prefixedIgnores);
+	// Note that ignoreObject.filter expects the paths to be relative to the repo root.
+	const filtered = ignoreObject.filter(includedPaths);
+
+	// Convert repo root-relative paths to absolute paths
+	const repoRoot = gitRepo.resolvedRoot;
+	return filtered.map((filePath) => path.resolve(repoRoot, filePath));
 }
 
 /**
@@ -272,5 +305,5 @@ export async function createBiomeConfigReader(
 	}
 
 	// Default to Biome 1.x reader
-	return BiomeConfigReaderV1.create(directoryOrConfigFile, gitRepo);
+	return BiomeConfigReader.create(directoryOrConfigFile, gitRepo);
 }
