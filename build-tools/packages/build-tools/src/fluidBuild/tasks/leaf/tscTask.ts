@@ -467,6 +467,8 @@ export class TscTask extends LeafTask {
 
 // Base class for tasks that are dependent on a tsc compile
 export abstract class TscDependentTask extends LeafWithDoneFileTask {
+	private _configFileFullPaths: string[] | undefined;
+
 	protected get recheckLeafIsUpToDate() {
 		return true;
 	}
@@ -476,19 +478,23 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 	 * and additional config files specified in the task definition.
 	 */
 	protected get configFileFullPaths(): string[] {
-		const taskSpecificConfigs = this.getTaskSpecificConfigFiles();
-		const additionalConfigs = this.node.getAdditionalConfigFiles(this.taskName ?? "");
+		if (this._configFileFullPaths === undefined) {
+			const taskSpecificConfigs = this.getTaskSpecificConfigFiles();
+			const additionalConfigs = this.node.getAdditionalConfigFiles(this.taskName ?? "");
 
-		if (!additionalConfigs || additionalConfigs.length === 0) {
-			return taskSpecificConfigs;
+			if (!additionalConfigs || additionalConfigs.length === 0) {
+				this._configFileFullPaths = taskSpecificConfigs;
+			} else {
+				// Convert relative paths to absolute paths
+				const additionalFullPaths = additionalConfigs.map((relPath) =>
+					this.getPackageFileFullPath(relPath),
+				);
+
+				this._configFileFullPaths = [...taskSpecificConfigs, ...additionalFullPaths];
+			}
 		}
 
-		// Convert relative paths to absolute paths
-		const additionalFullPaths = additionalConfigs.map((relPath) =>
-			this.getPackageFileFullPath(relPath),
-		);
-
-		return [...taskSpecificConfigs, ...additionalFullPaths];
+		return this._configFileFullPaths;
 	}
 
 	protected async getDoneFileContent() {
