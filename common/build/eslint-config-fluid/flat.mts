@@ -259,7 +259,6 @@ minimalDeprecated.push(jsNoProject);
 // Disable type-required @typescript-eslint rules for pure JS files and .d.ts files.
 // These rules require TypeScript's type-checker, which isn't available for JavaScript files.
 // .d.ts files are declaration files and shouldn't be linted with type-aware rules.
-// .cts and .mts files often use separate tsconfig.cjs.json without full type checking enabled.
 const jsTypeAwareDisable = {
 	files: ["**/*.js", "**/*.cjs", "**/*.mjs", "**/*.d.ts"],
 	rules: {

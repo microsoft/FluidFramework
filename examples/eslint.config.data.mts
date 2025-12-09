@@ -2,19 +2,36 @@
 /**
  * GENERATED FILE - DO NOT EDIT DIRECTLY.
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
+ *
+ * Shared ESLint configuration.
+ * Extend this in child package eslint.config.mts files to avoid duplicating common rules.
+ * Named exports (e.g., importInternalModulesAllowed) can be imported and extended by consumers.
  */
 import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
-import sharedConfig from "../../eslint.config.data.mts";
+
+export const importInternalModulesAllowed: string[] = [
+	"@fluidframework/*/{beta,alpha,legacy,legacy/alpha}",
+	"fluid-framework/{beta,alpha,legacy,legacy/alpha}",
+	"@fluid-experimental/**",
+	"@fluidframework/*/test-utils",
+	"@fluid-example/*/{beta,alpha}",
+	"*/index.js",
+];
+
+export const importInternalModulesAllowedForTest: string[] = [
+	"@fluidframework/*/{beta,alpha,legacy,legacy/alpha}",
+	"fluid-framework/{beta,alpha,legacy,legacy/alpha}",
+	"@fluid-experimental/**",
+	"@fluidframework/*/test-utils",
+	"@fluid-example/*/{beta,alpha}",
+	"*/index.js",
+	"@fluidframework/test-utils/internal",
+	"*/*.js",
+];
 
 const config: Linter.Config[] = [
-	...minimalDeprecated,
-	...sharedConfig,
 	{
 		rules: {
-			"@typescript-eslint/no-use-before-define": "off",
-			"@typescript-eslint/prefer-nullish-coalescing": "off",
-			"@typescript-eslint/strict-boolean-expressions": "off",
 			"import-x/no-internal-modules": [
 				"error",
 				{
@@ -25,18 +42,13 @@ const config: Linter.Config[] = [
 						"@fluidframework/*/test-utils",
 						"@fluid-example/*/{beta,alpha}",
 						"*/index.js",
-						"*/*.js",
 					],
 				},
 			],
-			"max-len": "off",
-			"no-bitwise": "off",
-			"no-case-declarations": "off",
-			"@typescript-eslint/unbound-method": "off",
 		},
 	},
 	{
-		files: ["*.spec.ts", "src/test/**"],
+		files: ["*.spec.ts", "src/test/**", "tests/**"],
 		rules: {
 			"import-x/no-internal-modules": [
 				"error",
