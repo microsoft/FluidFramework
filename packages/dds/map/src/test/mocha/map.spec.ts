@@ -517,18 +517,25 @@ describe("Map", () => {
 
 					containerRuntimeFactory.processSomeMessages(2);
 
-					assert.equal(valuesChanged.length, 2);
+					// After remote clear, we emit clear + valueChanged for retained pending keys
+					assert.equal(valuesChanged.length, 3, "Should have 3 valueChanged events");
 					assert.equal(valuesChanged[0].key, "map1Key");
 					assert.equal(valuesChanged[0].previousValue, undefined);
 					assert.equal(valuesChanged[1].key, "map2key");
 					assert.equal(valuesChanged[1].previousValue, undefined);
+					assert.equal(valuesChanged[2].key, "map1Key", "Retained key after clear");
+					assert.equal(
+						valuesChanged[2].previousValue,
+						undefined,
+						"Previous value is undefined after clear",
+					);
 					assert.equal(clearCount, 1);
 					assert.equal(map1.size, 1);
 					assert.equal(map1.get("map1Key"), "value1");
 
 					containerRuntimeFactory.processSomeMessages(2);
 
-					assert.equal(valuesChanged.length, 2);
+					assert.equal(valuesChanged.length, 3);
 					assert.equal(clearCount, 2);
 					assert.equal(map1.size, 0);
 				});

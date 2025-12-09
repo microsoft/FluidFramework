@@ -699,6 +699,19 @@ export class MapKernel {
 					// is no optimistically-applied local pending clear that would supersede this remote clear.
 					if (!this.pendingData.some((entry) => entry.type === "clear")) {
 						this.eventEmitter.emit("clear", local, this.eventEmitter);
+
+						// Emit valueChanged events for keys that remain visible due to pending local operations.
+						// This makes the behavior more intuitive: after a clear event, consumers will receive
+						// explicit notifications about which keys are still present rather than discovering them
+						// only through reads. The previousValue is undefined since the sequenced data was cleared.
+						for (const [key] of this.internalIterator()) {
+							this.eventEmitter.emit(
+								"valueChanged",
+								{ key, previousValue: undefined },
+								local,
+								this.eventEmitter,
+							);
+						}
 					}
 				}
 			},
