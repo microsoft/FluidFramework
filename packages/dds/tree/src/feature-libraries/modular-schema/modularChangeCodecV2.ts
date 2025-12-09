@@ -42,10 +42,7 @@ import {
 	type FieldBatchCodec,
 	type TreeChunk,
 } from "../chunked-forest/index.js";
-import {
-	TreeCompressionStrategy,
-	type TreeCompressionStrategyPrivate,
-} from "../treeCompressionUtils.js";
+import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 import type {
 	FieldKindConfiguration,
 	FieldKindConfigurationEntry,
@@ -79,10 +76,7 @@ import type {
 	EncodedNodeChangeset,
 	EncodedRevisionInfo,
 } from "./modularChangeFormatV1.js";
-import {
-	type FieldChangeEncodingContext,
-	type FieldChangeHandler,
-} from "./fieldChangeHandler.js";
+import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
 import { genericFieldKind } from "./genericFieldKind.js";
 import type { TAnySchema } from "@sinclair/typebox";
 import {
@@ -116,7 +110,7 @@ export function makeModularChangeCodecV2(
 	>,
 	fieldsCodec: FieldBatchCodec,
 	codecOptions: ICodecOptions,
-	chunkCompressionStrategy: TreeCompressionStrategyPrivate = TreeCompressionStrategy.Compressed,
+	chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
 ): ModularChangeCodec {
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	const getMapEntry = ({ kind, formatVersion }: FieldKindConfigurationEntry) => {

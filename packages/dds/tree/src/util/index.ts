@@ -4,6 +4,12 @@
  */
 
 export {
+	validateIndex,
+	validateIndexRange,
+	validatePositiveIndex,
+	validateSafeInteger,
+} from "./arrayUtilities.js";
+export {
 	brand,
 	type Brand,
 	BrandedType,
@@ -150,3 +156,5 @@ export {
 export { type TupleBTree, newTupleBTree, mergeTupleBTrees } from "./bTreeUtils.js";
 
 export { cloneWithReplacements } from "./cloneWithReplacements.js";
+
+export { readAndParseSnapshotBlob } from "./readSnapshotBlob.js";

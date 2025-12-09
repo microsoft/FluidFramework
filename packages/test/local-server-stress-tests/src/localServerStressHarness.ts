@@ -691,7 +691,6 @@ function mixinSynchronization<TOperation extends BaseOperation>(
 const hasSelectedClientSpec = (op: unknown): op is SelectedClientSpec =>
 	(op as SelectedClientSpec).clientTag !== undefined;
 
-/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 /**
  * Mixes in the ability to select a client to perform an operation on.
  * Makes this available to existing generators and reducers in the passed-in model via {@link LocalServerStressState.client}
@@ -702,7 +701,6 @@ const hasSelectedClientSpec = (op: unknown): op is SelectedClientSpec =>
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
 function mixinClientSelection<TOperation extends BaseOperation>(
-	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 	model: LocalServerStressModel<TOperation>,
 	_: LocalServerStressOptions,
 ): LocalServerStressModel<TOperation> {
@@ -891,6 +889,8 @@ async function loadClient(
 
 async function synchronizeClients(connectedClients: Client[]) {
 	return timeoutPromise((resolve, reject) => {
+		let pendingTimeout: ReturnType<typeof setTimeout> | undefined;
+
 		const rejectHandler = (error?: IErrorBase | undefined) => {
 			const client = connectedClients.find((c) => c.container.closed || c.container.disposed);
 			if (client !== undefined) {
@@ -903,20 +903,44 @@ async function synchronizeClients(connectedClients: Client[]) {
 				off();
 			}
 		};
-		const resolveHandler = () => {
-			if (
-				connectedClients.every(
-					(c) =>
-						c.container.connectionState === ConnectionState.Connected &&
-						c.container.isDirty === false &&
-						c.container.deltaManager.lastSequenceNumber ===
-							connectedClients[0].container.deltaManager.lastSequenceNumber,
-				)
-			) {
-				resolve();
-				off();
-			}
+
+		const areClientsSynchronized = (): boolean => {
+			return connectedClients.every(
+				(c) =>
+					c.container.connectionState === ConnectionState.Connected &&
+					c.container.isDirty === false &&
+					c.container.deltaManager.lastSequenceNumber ===
+						connectedClients[0].container.deltaManager.lastSequenceNumber,
+			);
 		};
+
+		const resolveHandler = () => {
+			if (!areClientsSynchronized()) {
+				return;
+			}
+
+			// Clear any previously scheduled timeout to avoid scheduling multiple timeouts.
+			if (pendingTimeout !== undefined) {
+				clearTimeout(pendingTimeout);
+			}
+
+			// There are some cases where more ops are generated as a result of processing ops.
+			// For example, for ConsensusOrderedCollection, a `complete`/`release` op will be generated
+			// when processing an `acquire` op.
+			// If that type of op is the last op before a final sync, then we will miss it by waiting
+			// for the initial saved event. To ensure we process all ops we wait for one JS turn.
+			// This allows any ops generated during the processing of ops to be submitted and processed.
+			// TODO: AB#53704: Support async reducers in DDS Fuzz models to avoid this workaround.
+			pendingTimeout = setTimeout(() => {
+				// After one JS turn, check again if all clients are synchronized.
+				// If they are, we can resolve. Otherwise, we continue waiting for the listeners to check again.
+				if (areClientsSynchronized()) {
+					off();
+					resolve();
+				}
+			}, 0);
+		};
+
 		// if you hit timeout issues in the
 		// stress tests, this can help to diagnose
 		// if the error is in synchronization, as it
@@ -929,6 +953,9 @@ async function synchronizeClients(connectedClients: Client[]) {
 		// }, 1000);
 		const off = () => {
 			// clearInterval(timeout);
+			if (pendingTimeout !== undefined) {
+				clearTimeout(pendingTimeout);
+			}
 			for (const c of connectedClients) {
 				c.container.off("closed", rejectHandler);
 				c.container.off("disposed", rejectHandler);
@@ -937,6 +964,7 @@ async function synchronizeClients(connectedClients: Client[]) {
 				c.container.off("saved", resolveHandler);
 			}
 		};
+
 		for (const c of connectedClients) {
 			c.container.on("closed", rejectHandler);
 			c.container.on("disposed", rejectHandler);
@@ -944,6 +972,7 @@ async function synchronizeClients(connectedClients: Client[]) {
 			c.container.on("op", resolveHandler);
 			c.container.on("saved", resolveHandler);
 		}
+
 		resolveHandler();
 	});
 }

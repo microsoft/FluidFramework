@@ -156,12 +156,13 @@ describe("message codec", () => {
 		undefined,
 		MessageFormatVersion.v1,
 		MessageFormatVersion.v2,
+		MessageFormatVersion.v5,
 	]);
 
 	makeEncodingTestSuite(family, testCases, undefined, [
 		MessageFormatVersion.v3,
 		MessageFormatVersion.v4,
-		MessageFormatVersion.v5,
+		MessageFormatVersion.vSharedBranches,
 		MessageFormatVersion.vDetachedRoots,
 	]);
 
@@ -211,7 +212,7 @@ describe("message codec", () => {
 				revision,
 				originatorId,
 				changeset: {},
-				version: -1,
+				version: -1 as Message["version"],
 			} satisfies Message);
 			assert.throws(
 				() => codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor }),

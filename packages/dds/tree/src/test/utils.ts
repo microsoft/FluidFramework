@@ -160,9 +160,9 @@ import {
 	unhydratedFlexTreeFromInsertable,
 	type SimpleNodeSchema,
 	type TreeNodeSchema,
-	getStoredSchema,
 	restrictiveStoredSchemaGenerationOptions,
 	toInitialSchema,
+	toStoredSchema,
 } from "../simple-tree/index.js";
 import {
 	Breakable,
@@ -1556,8 +1556,10 @@ export class TestSchemaRepository extends TreeStoredSchemaRepository {
 	 * @returns true iff update was performed.
 	 */
 	public tryUpdateTreeSchema(schema: SimpleNodeSchema & TreeNodeSchema): boolean {
-		const storedSchema = getStoredSchema(schema, restrictiveStoredSchemaGenerationOptions);
 		const name: TreeNodeSchemaIdentifier = brand(schema.identifier);
+		const storedSchema =
+			toStoredSchema(schema, restrictiveStoredSchemaGenerationOptions).nodeSchema.get(name) ??
+			assert.fail();
 		const original = this.nodeSchema.get(name);
 		if (allowsTreeSuperset(this.policy, this, original, storedSchema)) {
 			this.nodeSchemaData.set(name, storedSchema);

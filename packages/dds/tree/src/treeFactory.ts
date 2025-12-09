@@ -29,7 +29,9 @@ import type { ITree } from "./simple-tree/index.js";
 import { Breakable, copyProperty } from "./util/index.js";
 import { FluidClientVersion } from "./codec/index.js";
 import {
+	editManagerFormatVersionSelectorForDetachedRootEditing,
 	editManagerFormatVersionSelectorForSharedBranches,
+	messageFormatVersionSelectorForDetachedRootEditing,
 	messageFormatVersionSelectorForSharedBranches,
 } from "./shared-tree-core/index.js";
 
@@ -149,6 +151,16 @@ export function configuredSharedTreeBetaLegacy(
 }
 
 /**
+ * {@link configuredSharedTreeBeta} but including the alpha {@link SharedTreeOptions}.
+ * @alpha
+ */
+export function configuredSharedTreeAlpha(
+	options: SharedTreeOptions,
+): SharedObjectKind<ITree> {
+	return configuredSharedTree(options);
+}
+
+/**
  * {@link configuredSharedTreeBetaLegacy} but including `@alpha` options.
  *
  * @example
@@ -193,21 +205,31 @@ export function configuredSharedTreeInternal(
 
 export function resolveOptions(options: SharedTreeOptions): SharedTreeOptionsInternal {
 	const internal: SharedTreeOptionsInternal = {
-		...resolveSharedBranchesOptions(options.enableSharedBranches),
+		...resolveFormatOptions(options),
 	};
-	copyProperty(options, "forest", internal);
-	copyProperty(options, "jsonValidator", internal);
-	copyProperty(options, "minVersionForCollab", internal);
-	copyProperty(options, "treeEncodeType", internal);
+	for (const optionName of Object.keys(options)) {
+		copyProperty(options, optionName, internal);
+	}
 	return internal;
 }
 
-function resolveSharedBranchesOptions(
-	enableSharedBranches: boolean | undefined,
-): SharedTreeOptionsInternal {
-	return enableSharedBranches === true ? sharedBranchesOptions : {};
+function resolveFormatOptions(options: SharedTreeOptions): SharedTreeOptionsInternal {
+	if (options.enableSharedBranches === true && options.enableDetachedRootEditing === true) {
+		throw new UsageError("enableDetachRootEditing cannot be used with enableSharedBranches.");
+	}
+	if (options.enableSharedBranches === true) {
+		return sharedBranchesOptions;
+	}
+	if (options.enableDetachedRootEditing === true) {
+		return detachRootEditingOptions;
+	}
+	return {};
 }
 const sharedBranchesOptions: SharedTreeOptionsInternal = {
 	messageFormatSelector: messageFormatVersionSelectorForSharedBranches,
 	editManagerFormatSelector: editManagerFormatVersionSelectorForSharedBranches,
+};
+const detachRootEditingOptions: SharedTreeOptionsInternal = {
+	messageFormatSelector: messageFormatVersionSelectorForDetachedRootEditing,
+	editManagerFormatSelector: editManagerFormatVersionSelectorForDetachedRootEditing,
 };

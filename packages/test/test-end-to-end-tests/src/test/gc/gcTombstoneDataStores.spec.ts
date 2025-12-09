@@ -37,7 +37,7 @@ import {
 import { responseToException } from "@fluidframework/runtime-utils/internal";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base/internal";
 import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils/internal";
-import { validateAssertionError2 as validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -263,6 +263,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			}
 			return response.value as ITestDataObject;
 		} catch (e) {
+			// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 			return Promise.reject(e);
 		}
 	}

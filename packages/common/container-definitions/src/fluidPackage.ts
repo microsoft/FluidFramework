@@ -72,7 +72,13 @@ export const isFluidPackage = (pkg: unknown): pkg is Readonly<IFluidPackage> =>
 	typeof (pkg as Partial<IFluidPackage>)?.fluid === "object";
 
 /**
- * Package manager configuration. Provides a key value mapping of config values
+ * A key-value mapping of config values.
+ *
+ * @remarks
+ * Can be used by consumers for things like providing additional configuration for their package manager.
+ *
+ * @see {@link IFluidCodeDetails.config}
+ *
  * @legacy @beta
  */
 export interface IFluidCodeDetailsConfig {
@@ -85,16 +91,20 @@ export interface IFluidCodeDetailsConfig {
  */
 export interface IFluidCodeDetails {
 	/**
-	 * The code package to be used on the Fluid document. This is either the package name which will be loaded
-	 * from a package manager. Or the expanded Fluid package.
+	 * The code package to be used on the Fluid document.
+	 * This is either the package name which will be loaded from a package manager, or the expanded Fluid package.
 	 */
 	readonly package: string | Readonly<IFluidPackage>;
 
 	/**
-	 * Configuration details. This includes links to the package manager and base CDNs.
+	 * Configuration details and additional information about the Fluid document.
 	 *
-	 * @remarks This is strictly consumer-defined data.
-	 * Its contents and semantics (including whether or not this data is present) are completely up to the consumer.
+	 * @remarks
+	 * This is mainly consumer-defined data (e.g. links to a package manager and base CDNs).
+	 * Its contents and semantics (including whether or not this data is present) are completely up to the consumer,
+	 * _except_ for keys starting with "FluidFramework." (e.g. "FluidFramework.CustomSetting1")
+	 * which are reserved by the framework and should not be used by consumers.
+	 * Outside of those reserved keys, Fluid does not interpret this data in any way.
 	 */
 	readonly config?: IFluidCodeDetailsConfig;
 }

@@ -6,7 +6,7 @@
 import { strict as assert } from 'assert';
 
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
-import { validateAssertionError2 as validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
+import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
 import {

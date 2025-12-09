@@ -15,10 +15,7 @@ import type {
 	RevisionTag,
 } from "../../core/index.js";
 import type { FieldBatchCodec } from "../chunked-forest/index.js";
-import {
-	TreeCompressionStrategy,
-	type TreeCompressionStrategyPrivate,
-} from "../treeCompressionUtils.js";
+import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 import type { FieldKindConfiguration } from "./fieldKindConfiguration.js";
 import type { ModularChangeset } from "./modularChangeTypes.js";
 import { makeModularChangeCodecV1 } from "./modularChangeCodecV1.js";
@@ -35,7 +32,7 @@ export function makeModularChangeCodecFamily(
 	>,
 	fieldsCodec: FieldBatchCodec,
 	codecOptions: ICodecOptions,
-	chunkCompressionStrategy: TreeCompressionStrategyPrivate = TreeCompressionStrategy.Compressed,
+	chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
 ): ICodecFamily<ModularChangeset, ChangeEncodingContext> {
 	return makeCodecFamily(
 		Array.from(fieldKindConfigurations.entries(), ([version, fieldKinds]) => [
@@ -65,7 +62,7 @@ function makeModularChangeCodec(
 	>,
 	fieldsCodec: FieldBatchCodec,
 	codecOptions: ICodecOptions,
-	chunkCompressionStrategy: TreeCompressionStrategyPrivate = TreeCompressionStrategy.Compressed,
+	chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
 ): IJsonCodec<
 	ModularChangeset,
 	JsonCompatibleReadOnly,

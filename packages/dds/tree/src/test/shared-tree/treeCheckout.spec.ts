@@ -10,7 +10,7 @@ import {
 	createMockLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import {
-	validateAssertionError2 as validateAssertionError,
+	validateAssertionError,
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
