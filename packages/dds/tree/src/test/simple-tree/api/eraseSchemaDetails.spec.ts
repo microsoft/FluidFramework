@@ -123,12 +123,15 @@ describe("eraseSchemaDetails", () => {
 			// This can't do `NodeFromSchema<typeof DemoPublic>` because TypeScript (but not intellisense) gives "Return type annotation circularly references itself".
 			type DemoPublic = Square & TreeNode & WithType<"com.example.Demo">;
 
+			// Check that the type branding using the identifier and `WithType` is working as expected.
 			type brand = Demo[typeof typeSchemaSymbol]["identifier"];
 			type brandPublic = DemoPublic[typeof typeSchemaSymbol]["identifier"];
 			allowUnused<requireAssignableTo<brand, "com.example.Demo">>();
 			allowUnused<requireAssignableTo<brandPublic, "com.example.Demo">>();
 			allowUnused<requireAssignableTo<Demo, DemoPublic>>();
 
+			// Check that DemoPublic's node type matches what we declared.
+			// Due to the cyclic dep we can't declare them only once, but we can assert they match.
 			allowUnused<
 				requireTrue<areSafelyAssignable<NodeFromSchema<typeof DemoPublic>, DemoPublic>>
 			>();
