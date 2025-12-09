@@ -2792,7 +2792,7 @@ describe("Editing", () => {
 							2,
 							configuredSharedTree({
 								jsonValidator: FormatValidatorBasic,
-								enableDetachRootEditing: true,
+								enableDetachedRootEditing: true,
 							}).getFactory(),
 						);
 						const viewA = provider.trees[0].viewWith(
@@ -2932,7 +2932,7 @@ describe("Editing", () => {
 					2,
 					configuredSharedTree({
 						jsonValidator: FormatValidatorBasic,
-						enableDetachRootEditing: true,
+						enableDetachedRootEditing: true,
 					}).getFactory(),
 				);
 				const config = new TreeViewConfiguration({
@@ -2983,7 +2983,7 @@ describe("Editing", () => {
 					2,
 					configuredSharedTree({
 						jsonValidator: FormatValidatorBasic,
-						enableDetachRootEditing: true,
+						enableDetachedRootEditing: true,
 					}).getFactory(),
 				);
 				const config = new TreeViewConfiguration({
@@ -3035,7 +3035,7 @@ describe("Editing", () => {
 					2,
 					configuredSharedTree({
 						jsonValidator: FormatValidatorBasic,
-						enableDetachRootEditing: true,
+						enableDetachedRootEditing: true,
 					}).getFactory(),
 				);
 				const config = new TreeViewConfiguration({

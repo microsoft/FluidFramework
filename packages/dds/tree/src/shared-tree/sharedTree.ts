@@ -688,7 +688,7 @@ export interface SharedTreeOptions
 	 * This feature is not yet complete and should not be used in production.
 	 * Defaults to false.
 	 */
-	readonly enableDetachRootEditing?: boolean;
+	readonly enableDetachedRootEditing?: boolean;
 	/**
 	 * Returns whether a node / field should be incrementally encoded.
 	 * @remarks
@@ -829,7 +829,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	editManagerFormatSelector: clientVersionToEditManagerFormatVersion,
 	messageFormatSelector: clientVersionToMessageFormatVersion,
 	enableSharedBranches: false,
-	enableDetachRootEditing: false,
+	enableDetachedRootEditing: false,
 };
 
 /**

@@ -214,13 +214,13 @@ export function resolveOptions(options: SharedTreeOptions): SharedTreeOptionsInt
 }
 
 function resolveFormatOptions(options: SharedTreeOptions): SharedTreeOptionsInternal {
-	if (options.enableSharedBranches === true && options.enableDetachRootEditing === true) {
+	if (options.enableSharedBranches === true && options.enableDetachedRootEditing === true) {
 		throw new UsageError("enableDetachRootEditing cannot be used with enableSharedBranches.");
 	}
 	if (options.enableSharedBranches === true) {
 		return sharedBranchesOptions;
 	}
-	if (options.enableDetachRootEditing === true) {
+	if (options.enableDetachedRootEditing === true) {
 		return detachRootEditingOptions;
 	}
 	return {};
