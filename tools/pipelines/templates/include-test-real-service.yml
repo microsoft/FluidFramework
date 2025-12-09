@@ -188,7 +188,8 @@ jobs:
           command: 'custom'
           workingDir: ${{ parameters.testWorkspace }}
           customCommand: 'install $(Initialize.testPackageTgz) @ff-internal/aria-logger'
-          # customRegistry: 'useNpmrc'
+          customRegistry: 'useFeed'
+          customFeed: '$(ado-feeds-ff-download-only)'
 
       # Download Test Files & Install Extra Dependencies
       # These steps are intended to include extra dependencies that are not available as
