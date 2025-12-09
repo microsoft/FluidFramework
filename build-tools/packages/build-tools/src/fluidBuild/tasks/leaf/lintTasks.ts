@@ -11,8 +11,10 @@ import { TscDependentTask } from "./tscTask";
 
 /**
  * Path to the shared eslint-config-fluid package relative to the repo root.
+ * Can be overridden with the FLUID_BUILD_ESLINT_CONFIG_PATH environment variable.
  */
-const sharedEslintConfigPath = "common/build/eslint-config-fluid";
+const sharedEslintConfigPath =
+	process.env.FLUID_BUILD_ESLINT_CONFIG_PATH ?? "common/build/eslint-config-fluid";
 
 export class TsLintTask extends TscDependentTask {
 	protected get configFileFullPaths() {
@@ -41,6 +43,10 @@ export class EsLintTask extends TscDependentTask {
 
 		// If the shared config directory doesn't exist, skip tracking
 		if (!existsSync(sharedDir)) {
+			console.warn(
+				`Warning: Shared ESLint config directory not found at ${sharedDir}. ` +
+					`ESLint cache invalidation may not work correctly if shared config changes.`,
+			);
 			this._sharedConfigFiles = [];
 			return this._sharedConfigFiles;
 		}
@@ -61,6 +67,11 @@ export class EsLintTask extends TscDependentTask {
 			const fullPath = path.join(sharedDir, file);
 			if (existsSync(fullPath)) {
 				files.push(fullPath);
+			} else {
+				console.warn(
+					`Warning: Expected shared ESLint config file not found: ${fullPath}. ` +
+						`ESLint cache invalidation may not work correctly.`,
+				);
 			}
 		}
 
