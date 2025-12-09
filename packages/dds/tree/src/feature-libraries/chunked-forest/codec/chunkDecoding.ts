@@ -249,7 +249,7 @@ export class IncrementalChunkDecoder implements ChunkDecoder {
 		const chunkDecoder = (batch: EncodedFieldBatch): TreeChunk => {
 			assert(
 				batch.version >= FieldBatchFormatVersion.v2,
-				"Unsupported FieldBatchFormatVersion for incremental chunks; must be v2 or higher",
+				0xc9f /* Unsupported FieldBatchFormatVersion for incremental chunks; must be v2 or higher */,
 			);
 			const context = new DecoderContext(
 				batch.identifiers,

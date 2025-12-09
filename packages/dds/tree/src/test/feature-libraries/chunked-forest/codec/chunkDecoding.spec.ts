@@ -564,11 +564,9 @@ describe("chunkDecoding", () => {
 
 			assert.throws(
 				() => decoder.decode([], stream),
-				(error: Error) =>
-					validateAssertionError(
-						error,
-						"incremental decoder not available for incremental field decoding",
-					),
+				validateAssertionError(
+					"incremental decoder not available for incremental field decoding",
+				),
 			);
 		});
 
@@ -590,7 +588,7 @@ describe("chunkDecoding", () => {
 
 			assert.throws(
 				() => decoder.decode([], stream),
-				(error: Error) => validateAssertionError(error, /Unsupported FieldBatchFormatVersion/),
+				validateAssertionError(/Unsupported FieldBatchFormatVersion/),
 			);
 		});
 	});

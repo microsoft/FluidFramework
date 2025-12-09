@@ -5,7 +5,7 @@
 
 import { strict as assert } from 'assert';
 
-import { validateAssertionError2 as validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
+import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
 import { Definition, TraitLabel } from '../Identifiers.js';

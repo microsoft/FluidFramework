@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/local-server-stress-tests",
-	"version": "2.73.0",
+	"version": "2.74.0",
 	"private": true,
 	"description": "Stress tests that can only run against the local server",
 	"homepage": "https://fluidframework.com",
@@ -61,7 +61,7 @@
 		"@fluid-private/test-dds-utils": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.60.0",
+		"@fluidframework/build-tools": "^0.61.0",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
@@ -79,6 +79,7 @@
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
+		"@fluidframework/ordered-collection": "workspace:~",
 		"@fluidframework/register-collection": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
@@ -115,7 +116,7 @@
 				"@fluidframework/tree#build:test",
 				"@fluidframework/task-manager#build:test",
 				"@fluidframework/legacy-dds#build:test",
-				"@fluidframework/task-manager#build:test",
+				"@fluidframework/ordered-collection#build:test",
 				"@fluidframework/counter#build:test",
 				"@fluidframework/register-collection#build:test"
 			]

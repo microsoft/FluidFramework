@@ -62,7 +62,7 @@ export class Editor {
 		return this.caret.selection;
 	}
 
-	public remove() {
+	public remove(): void {
 		this.root.contentEditable = "false";
 		this.root.removeEventListener("paste", this.onPaste);
 		this.root.removeEventListener("keydown", this.onKeyDown);
@@ -71,7 +71,7 @@ export class Editor {
 		this.layout.remove();
 	}
 
-	private delete(e: Event, direction: Direction) {
+	private delete(e: Event, direction: Direction): void {
 		this.consume(e);
 
 		const caret = this.caret;
@@ -92,7 +92,7 @@ export class Editor {
 		caret.collapseForward();
 	}
 
-	private unlinkChildren(node: Node | HTMLElement) {
+	private unlinkChildren(node: Node | HTMLElement): void {
 		while (node.lastChild) {
 			const child = node.lastChild;
 			node.removeChild(child);
@@ -153,7 +153,7 @@ export class Editor {
 		}
 	};
 
-	private insertText(e: KeyboardEvent, text = e.key) {
+	private insertText(e: KeyboardEvent, text = e.key): void {
 		const { start, end } = this.caret.selection;
 		if (start === end) {
 			this.doc.insertText(end, text);
@@ -163,7 +163,7 @@ export class Editor {
 		this.caret.collapseForward();
 	}
 
-	private consume(e: Event) {
+	private consume(e: Event): void {
 		e.preventDefault();
 		e.stopPropagation();
 	}

@@ -73,9 +73,8 @@ import {
 	toInitialSchema,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { Format } from "../../../feature-libraries/forest-summary/format.js";
+import type { FormatV1 } from "../../../feature-libraries/forest-summary/format.js";
 import type {
-	EncodedFieldBatch,
 	FieldBatchEncodingContext,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/index.js";
@@ -207,7 +206,7 @@ describe("End to end chunked encoding", () => {
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
 		function stringify(content: unknown) {
-			const insertedChunk = decode((content as Format).fields as EncodedFieldBatch, {
+			const insertedChunk = decode((content as FormatV1).fields, {
 				idCompressor,
 				originatorId: idCompressor.localSessionId,
 			});
@@ -241,7 +240,7 @@ describe("End to end chunked encoding", () => {
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
 		function stringify(content: unknown) {
-			const insertedChunk = decode((content as Format).fields as EncodedFieldBatch, {
+			const insertedChunk = decode((content as FormatV1).fields, {
 				idCompressor,
 				originatorId: idCompressor.localSessionId,
 			});

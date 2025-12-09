@@ -1,5 +1,47 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## Unreleased
+
+### ESLint 9 Flat Config Support
+
+This package now supports ESLint 9 flat config format via a new `flat.mjs` export. The flat config wraps existing configs using `FlatCompat` from `@eslint/eslintrc` for backward compatibility.
+
+Key features:
+
+- New `flat.mjs` module exports `recommended`, `strict`, and `minimalDeprecated` configs for ESLint 9
+- Automatic handling of type-aware parsing configuration for JavaScript files and test files
+- Generated `eslint.config.mjs` files for all packages in the repository
+- Script to regenerate flat configs: `pnpm tsx scripts/generate-flat-eslint-configs.ts`
+
+Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the legacy `.eslintrc.cjs` format remains supported for backward compatibility. Migration is optional and not required.
+
+### ESLint Rule Changes
+
+**react-hooks/rules-of-hooks**: Temporarily downgraded from `"error"` to `"warn"` until ESLint 9 migration completes and React plugins are upgraded to more recent versions.
+
+**New unicorn rules** (enabled as `"error"` by default):
+
+- `unicorn/consistent-empty-array-spread`
+- `unicorn/no-anonymous-default-export`
+- `unicorn/no-await-in-promise-methods`
+- `unicorn/no-invalid-fetch-options`
+- `unicorn/no-magic-array-flat-depth`
+- `unicorn/no-negation-in-equality-check`
+- `unicorn/no-single-promise-in-promise-methods`
+- `unicorn/no-unnecessary-polyfills`
+
+**Unicorn rules disabled** (consider enabling in future):
+
+- `unicorn/import-style`: Changed from `"error"` to `"off"`
+- `unicorn/consistent-destructuring`: Changed from `"error"` to `"off"`
+
+**Unicorn rules changed to warnings** (to surface occurrences without breaking builds):
+
+- `unicorn/prefer-at`: Changed from `"off"` to `"warn"`
+- `unicorn/prefer-string-raw`: New rule set to `"warn"`
+- `unicorn/prefer-string-replace-all`: Changed from `"off"` to `"warn"`
+- `unicorn/prefer-structured-clone`: New rule set to `"warn"`
+
 ## [9.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v9.0_0)
 
 ### eslint-plugin-eslint-comments replaced by @eslint-community/eslint-plugin-eslint-comments
