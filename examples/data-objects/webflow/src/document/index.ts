@@ -201,7 +201,10 @@ export class FlowDocument extends DataObject {
 		return marker.properties.handle.get();
 	}
 
-	public getSegmentAndOffset(position: number): { segment: SharedStringSegment; offset?: number } {
+	public getSegmentAndOffset(position: number): {
+		segment: SharedStringSegment;
+		offset?: number;
+	} {
 		// Special case for ReferencePosition to end of document.  (See comments on 'endOfTextSegment').
 		return position === this.length
 			? { segment: endOfTextSegment, offset: 0 }
@@ -414,11 +417,7 @@ export class FlowDocument extends DataObject {
 		this.sharedString.annotateRange(start, end, { attr });
 	}
 
-	public searchForMarker(
-		startPos: number,
-		markerLabel: string,
-		forwards: boolean,
-	): Marker {
+	public searchForMarker(startPos: number, markerLabel: string, forwards: boolean): Marker {
 		return this.sharedString.searchForMarker(startPos, markerLabel, forwards);
 	}
 
