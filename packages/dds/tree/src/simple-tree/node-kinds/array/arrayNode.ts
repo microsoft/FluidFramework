@@ -16,7 +16,7 @@ import { FieldKinds, isTreeValue } from "../../../feature-libraries/index.js";
 import {
 	CompatibilityLevel,
 	type WithType,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	typeNameSymbol,
 	NodeKind,
 	type TreeNode,
@@ -25,21 +25,18 @@ import {
 	typeSchemaSymbol,
 	getOrCreateNodeFromInnerNode,
 	getSimpleNodeSchemaFromInnerNode,
-	getOrCreateInnerNode,
+	getInnerNode,
 	type TreeNodeSchemaClass,
 	getKernel,
 	type UnhydratedFlexTreeNode,
 	UnhydratedSequenceField,
 	getOrCreateNodeFromInnerUnboxedNode,
 	normalizeAllowedTypes,
-	unannotateImplicitAllowedTypes,
 	type ImplicitAllowedTypes,
-	type ImplicitAnnotatedAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeSchemaMetadata,
 	type TreeLeafValue,
 	type TreeNodeFromImplicitAllowedTypes,
-	type UnannotateImplicitAllowedTypes,
 	TreeNodeValid,
 	type MostDerivedData,
 	type TreeNodeSchemaInitializedData,
@@ -48,8 +45,8 @@ import {
 	createTreeNodeSchemaPrivateData,
 	type FlexContent,
 	type TreeNodeSchemaPrivateData,
-	convertAllowedTypes,
 	withBufferedTreeEvents,
+	AnnotatedAllowedTypesInternal,
 } from "../../core/index.js";
 import {
 	type FactoryContent,
@@ -62,15 +59,20 @@ import {
 	getTreeNodeSchemaInitializedData,
 	getUnhydratedContext,
 } from "../../createContext.js";
-import type { System_Unsafe } from "../../api/index.js";
+import type { NodeSchemaOptionsAlpha, System_Unsafe } from "../../api/index.js";
 import type {
 	ArrayNodeCustomizableSchema,
 	ArrayNodePojoEmulationSchema,
 	ArrayNodeSchema,
 } from "./arrayNodeTypes.js";
-import { brand, type JsonCompatibleReadOnlyObject } from "../../../util/index.js";
+import {
+	brand,
+	validateIndex,
+	validateIndexRange,
+	type JsonCompatibleReadOnlyObject,
+} from "../../../util/index.js";
 import { nullSchema } from "../../leafNodeSchema.js";
-import { arrayNodeStoredSchema } from "../../toStoredSchema.js";
+import type { SchemaType, SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 
 /**
  * A covariant base type for {@link (TreeArrayNode:interface)}.
@@ -480,7 +482,7 @@ export class IterableTreeArrayContent<T> implements Iterable<T> {
  * Given a array node proxy, returns its underlying LazySequence field.
  */
 function getSequenceField(arrayNode: ReadonlyArrayNode): FlexTreeSequenceField {
-	return getOrCreateInnerNode(arrayNode).getBoxed(EmptyKey) as FlexTreeSequenceField;
+	return getInnerNode(arrayNode).getBoxed(EmptyKey) as FlexTreeSequenceField;
 }
 
 // For compatibility, we are initially implement 'readonly T[]' by applying the Array.prototype methods
@@ -576,6 +578,7 @@ const TreeNodeWithArrayFeatures = (() => {
  */
 /* eslint-disable @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-explicit-any */
 // prettier-ignore
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 declare abstract class NodeWithArrayFeatures<Input, T>
 	extends TreeNodeValid<Input>
 	implements Pick<readonly T[], (typeof arrayPrototypeKeys)[number]>
@@ -863,7 +866,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 	public static readonly kind = NodeKind.Array;
 
-	protected abstract get childSchema(): ImplicitAnnotatedAllowedTypes;
+	protected abstract get childSchema(): ImplicitAllowedTypes;
 	protected abstract get allowedTypes(): ReadonlySet<TreeNodeSchema>;
 
 	public abstract override get [typeSchemaSymbol](): TreeNodeSchemaClass<
@@ -889,7 +892,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		);
 
 		const kernel = getKernel(this);
-		const flexContext = kernel.getOrCreateInnerNode().context;
+		const flexContext = kernel.getInnerNode().context;
 		assert(
 			flexContext === kernel.context.flexContext,
 			0xc14 /* Expected flexContext to match */,
@@ -952,7 +955,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	}
 	public insertAt(index: number, ...value: Insertable<T>): void {
 		const field = getSequenceField(this);
-		validateIndex(index, field, "insertAt", true);
+		validateIndex(index, field, "TreeArrayNode.insertAt", true);
 		const content = this.#mapTreesFromFieldData(value);
 		field.editor.insert(index, content);
 	}
@@ -964,32 +967,30 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	}
 	public removeAt(index: number): void {
 		const field = getSequenceField(this);
-		validateIndex(index, field, "removeAt");
+		validateIndex(index, field, "TreeArrayNode.removeAt");
 		field.editor.remove(index, 1);
 	}
 	public removeRange(start?: number, end?: number): void {
 		const field = getSequenceField(this);
 		const { length } = field;
 		const removeStart = start ?? 0;
+		validateIndex(removeStart, field, "TreeArrayNode.removeRange", true);
+
 		const removeEnd = Math.min(length, end ?? length);
-		validatePositiveIndex(removeStart);
-		validatePositiveIndex(removeEnd);
-		if (removeEnd < removeStart) {
-			// This catches both the case where start is > array.length and when start is > end.
-			throw new UsageError('Too large of "start" value passed to TreeArrayNode.removeRange.');
-		}
+		validateIndexRange(removeStart, removeEnd, field, "TreeArrayNode.removeRange");
+
 		field.editor.remove(removeStart, removeEnd - removeStart);
 	}
 	public moveToStart(sourceIndex: number, source?: ReadonlyArrayNode): void {
 		const sourceArray = source ?? this;
 		const sourceField = getSequenceField(sourceArray);
-		validateIndex(sourceIndex, sourceField, "moveToStart");
+		validateIndex(sourceIndex, sourceField, "TreeArrayNode.moveToStart");
 		this.moveRangeToIndex(0, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToEnd(sourceIndex: number, source?: ReadonlyArrayNode): void {
 		const sourceArray = source ?? this;
 		const sourceField = getSequenceField(sourceArray);
-		validateIndex(sourceIndex, sourceField, "moveToEnd");
+		validateIndex(sourceIndex, sourceField, "TreeArrayNode.moveToEnd");
 		this.moveRangeToIndex(this.length, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToIndex(
@@ -1000,8 +1001,8 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		const sourceArray = source ?? this;
 		const sourceField = getSequenceField(sourceArray);
 		const destinationField = getSequenceField(this);
-		validateIndex(destinationGap, destinationField, "moveToIndex", true);
-		validateIndex(sourceIndex, sourceField, "moveToIndex");
+		validateIndex(destinationGap, destinationField, "TreeArrayNode.moveToIndex", true);
+		validateIndex(sourceIndex, sourceField, "TreeArrayNode.moveToIndex");
 		this.moveRangeToIndex(destinationGap, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveRangeToStart(
@@ -1013,7 +1014,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			sourceStart,
 			sourceEnd,
 			source ?? getSequenceField(this),
-			"moveRangeToStart",
+			"TreeArrayNode.moveRangeToStart",
 		);
 		this.moveRangeToIndex(0, sourceStart, sourceEnd, source);
 	}
@@ -1026,7 +1027,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			sourceStart,
 			sourceEnd,
 			source ?? getSequenceField(this),
-			"moveRangeToEnd",
+			"TreeArrayNode.moveRangeToEnd",
 		);
 		this.moveRangeToIndex(this.length, sourceStart, sourceEnd, source);
 	}
@@ -1045,8 +1046,13 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		).getFieldSchema(EmptyKey).types;
 		const sourceField = source !== undefined ? getSequenceField(source) : destinationField;
 
-		validateIndex(destinationGap, destinationField, "moveRangeToIndex", true);
-		validateIndexRange(sourceStart, sourceEnd, source ?? destinationField, "moveRangeToIndex");
+		validateIndex(destinationGap, destinationField, "TreeArrayNode.moveRangeToIndex", true);
+		validateIndexRange(
+			sourceStart,
+			sourceEnd,
+			source ?? destinationField,
+			"TreeArrayNode.moveRangeToIndex",
+		);
 
 		// TODO: determine support for move across different sequence types
 		if (sourceField !== destinationField) {
@@ -1147,7 +1153,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function arraySchema<
 	TName extends string,
-	const T extends ImplicitAnnotatedAllowedTypes,
+	const T extends ImplicitAllowedTypes,
 	const ImplicitlyConstructable extends boolean,
 	const TCustomMetadata = unknown,
 >(
@@ -1155,8 +1161,7 @@ export function arraySchema<
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
 	customizable: boolean,
-	metadata?: NodeSchemaMetadata<TCustomMetadata>,
-	persistedMetadata?: JsonCompatibleReadOnlyObject | undefined,
+	nodeOptions: NodeSchemaOptionsAlpha<TCustomMetadata>,
 ) {
 	type Output = ArrayNodeCustomizableSchema<
 		TName,
@@ -1167,18 +1172,20 @@ export function arraySchema<
 		ArrayNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
 		TreeNodeSchemaCorePrivate;
 
-	const unannotatedTypes = unannotateImplicitAllowedTypes(info);
-
-	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(unannotatedTypes));
+	const persistedMetadata = nodeOptions?.persistedMetadata;
+	const normalizedTypes = normalizeAllowedTypes(info);
 	const lazyAllowedTypesIdentifiers = new Lazy(
-		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
+		() => new Set(normalizedTypes.evaluate().map((type) => type.identifier)),
 	);
+	const lazySimpleAllowedTypes = new Lazy(() => {
+		return AnnotatedAllowedTypesInternal.evaluateSimpleAllowedTypes(normalizedTypes);
+	});
 
 	let privateData: TreeNodeSchemaPrivateData | undefined;
 
 	// This class returns a proxy from its constructor to handle numeric indexing.
 	// Alternatively it could extend a normal class which gets tons of numeric properties added.
-	class Schema extends CustomArrayNodeBase<UnannotateImplicitAllowedTypes<T>> {
+	class Schema extends CustomArrayNodeBase<T> {
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
@@ -1209,6 +1216,13 @@ export function arraySchema<
 
 		public static get allowedTypesIdentifiers(): ReadonlySet<string> {
 			return lazyAllowedTypesIdentifiers.value;
+		}
+
+		public static get simpleAllowedTypes(): ReadonlyMap<
+			string,
+			SimpleAllowedTypeAttributes<SchemaType.View>
+		> {
+			return lazySimpleAllowedTypes.value;
 		}
 
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
@@ -1255,13 +1269,14 @@ export function arraySchema<
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
-			return lazyChildTypes.value;
+			return normalizedTypes.evaluateSet();
 		}
-		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> =
+			nodeOptions.metadata ?? {};
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
 			persistedMetadata;
 
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		public get [typeNameSymbol](): TName {
 			return identifier;
 		}
@@ -1273,68 +1288,16 @@ export function arraySchema<
 			return info;
 		}
 		protected get allowedTypes(): ReadonlySet<TreeNodeSchema> {
-			return lazyChildTypes.value;
+			return normalizedTypes.evaluateSet();
 		}
 
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-			return (privateData ??= createTreeNodeSchemaPrivateData(this, [info], (storedOptions) =>
-				arrayNodeStoredSchema(convertAllowedTypes(info, storedOptions), persistedMetadata),
-			));
+			return (privateData ??= createTreeNodeSchemaPrivateData(this, [normalizedTypes]));
 		}
 	}
 
 	const output: Output = Schema;
 	return output;
-}
-
-function validateSafeInteger(index: number): void {
-	if (!Number.isSafeInteger(index)) {
-		throw new UsageError(`Expected a safe integer, got ${index}.`);
-	}
-}
-
-function validatePositiveIndex(index: number): void {
-	validateSafeInteger(index);
-	if (index < 0) {
-		throw new UsageError(`Expected non-negative index, got ${index}.`);
-	}
-}
-
-function validateIndex(
-	index: number,
-	array: { readonly length: number },
-	methodName: string,
-	allowOnePastEnd: boolean = false,
-): void {
-	validatePositiveIndex(index);
-	if (allowOnePastEnd) {
-		if (index > array.length) {
-			throw new UsageError(
-				`Index value passed to TreeArrayNode.${methodName} is out of bounds.`,
-			);
-		}
-	} else {
-		if (index >= array.length) {
-			throw new UsageError(
-				`Index value passed to TreeArrayNode.${methodName} is out of bounds.`,
-			);
-		}
-	}
-}
-
-function validateIndexRange(
-	startIndex: number,
-	endIndex: number,
-	array: { readonly length: number },
-	methodName: string,
-): void {
-	validateIndex(startIndex, array, methodName, true);
-	validateIndex(endIndex, array, methodName, true);
-	if (startIndex > endIndex || array.length < endIndex) {
-		throw new UsageError(
-			`Index value passed to TreeArrayNode.${methodName} is out of bounds.`,
-		);
-	}
 }
 
 /**
@@ -1367,13 +1330,14 @@ function arrayChildToFlexTree(
  */
 function arrayToFlexContent(data: FactoryContent, schema: ArrayNodeSchema): FlexContent {
 	if (!(typeof data === "object" && data !== null && Symbol.iterator in data)) {
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		throw new UsageError(`Input data is incompatible with Array schema: ${data}`);
 	}
 
-	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
+	const allowedChildTypes = normalizeAllowedTypes(schema.info);
 
 	const mappedData = Array.from(data, (child) =>
-		arrayChildToFlexTree(child, allowedChildTypes),
+		arrayChildToFlexTree(child, allowedChildTypes.evaluateSet()),
 	);
 
 	const context = getUnhydratedContext(schema).flexContext;

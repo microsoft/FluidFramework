@@ -4,7 +4,7 @@
  */
 
 /**
- * Shared list of permitted imports for configuring and override the `import/no-internal-modules` rule.
+ * Shared list of permitted imports for configuring and override the `import-x/no-internal-modules` rule.
  */
 const permittedImports = [
 	// Within Fluid Framework allow import of '/internal' from other FF packages.
@@ -69,14 +69,7 @@ module.exports = {
 		es2024: false,
 		node: true,
 	},
-	extends: [
-		"./base",
-		"plugin:eslint-comments/recommended",
-		"plugin:import/errors",
-		"plugin:import/warnings",
-		"plugin:import/typescript",
-		"prettier",
-	],
+	extends: ["./base", "prettier"],
 	globals: {
 		Atomics: "readonly",
 		SharedArrayBuffer: "readonly",
@@ -114,8 +107,17 @@ module.exports = {
 	ignorePatterns: [
 		// Don't lint generated packageVersion files.
 		"**/packageVersion.ts",
+		"**/layerGenerationState.ts",
+		// Don't lint generated test files
+		"**/*.generated.ts",
+		"**/*.generated.js",
 	],
 	rules: {
+		/**
+		 * Disable max-len as it conflicts with biome formatting.
+		 */
+		"max-len": "off",
+
 		/**
 		 * Restricts including release tags inside the member class / interface.
 		 *
@@ -160,7 +162,7 @@ module.exports = {
 		/**
 		 * Encourages minimal disabling of eslint rules, while still permitting whole-file exclusions.
 		 */
-		"eslint-comments/disable-enable-pair": [
+		"@eslint-community/eslint-comments/disable-enable-pair": [
 			"error",
 			{
 				allowWholeFile: true,
@@ -181,18 +183,7 @@ module.exports = {
 		],
 
 		"eqeqeq": ["error", "smart"],
-		"import/no-deprecated": "error",
-		"max-len": [
-			"error",
-			{
-				code: 120,
-				ignoreTrailingComments: true,
-				ignoreUrls: true,
-				ignoreStrings: true,
-				ignoreTemplateLiterals: true,
-				ignoreRegExpLiterals: true,
-			},
-		],
+		"import-x/no-deprecated": "error",
 		"no-multi-spaces": [
 			"error",
 			{
@@ -238,10 +229,6 @@ module.exports = {
 		"@typescript-eslint/explicit-function-return-type": "off",
 		"@typescript-eslint/explicit-member-accessibility": "off",
 
-		/**
-		 * Disabled because we will lean on the formatter (i.e. prettier) to enforce indentation policy.
-		 */
-		"@typescript-eslint/indent": "off",
 		"@typescript-eslint/member-ordering": "off",
 		"@typescript-eslint/no-explicit-any": "off",
 		"@typescript-eslint/no-unused-vars": "off",
@@ -294,22 +281,7 @@ module.exports = {
 
 		// #region FORMATTING RULES
 
-		// We use formatting tools like Biome or prettier to format code, so most formatting-related rules are superfluous
-		// and are disabled. Running fewer rules also improves lint performance.
-
-		// The rules below are also deprecated in more recent versions of eslint/plugins
-		"@typescript-eslint/brace-style": "off",
-		"@typescript-eslint/comma-spacing": "off",
-		"@typescript-eslint/func-call-spacing": "off",
-		"@typescript-eslint/keyword-spacing": "off",
-		"@typescript-eslint/member-delimiter-style": "off",
-		"@typescript-eslint/semi": "off",
-		"@typescript-eslint/space-before-function-paren": "off",
-		"@typescript-eslint/space-infix-ops": "off",
-		"@typescript-eslint/type-annotation-spacing": "off",
-
 		// The rules below are deprecated in our current version of eslint/plugins
-		"@typescript-eslint/object-curly-spacing": "off",
 		"array-bracket-spacing": "off",
 		"arrow-spacing": "off",
 		"block-spacing": "off",
@@ -411,13 +383,13 @@ module.exports = {
 		 * By default, libraries should not take dependencies on node libraries.
 		 * This rule can be disabled at the project level for libraries that are intended to be used only in node.
 		 */
-		"import/no-nodejs-modules": ["error"],
+		"import-x/no-nodejs-modules": ["error"],
 
 		/**
 		 * Allow Fluid Framework to import from its own internal packages.
-		 * https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-internal-modules.md
+		 * https://github.com/un-ts/eslint-plugin-import-x/blob/master/docs/rules/no-internal-modules.md
 		 */
-		"import/no-internal-modules": [
+		"import-x/no-internal-modules": [
 			"error",
 			{
 				allow: permittedImports,
@@ -449,6 +421,11 @@ module.exports = {
 				"react-hooks",
 			],
 			extends: ["plugin:react/recommended", "plugin:react-hooks/recommended"],
+			rules: {
+				// TODO: This should be re-enabled once we are on eslint 9
+				// and the react plugins are upgraded to more recent versions
+				"react-hooks/rules-of-hooks": "warn",
+			},
 			settings: {
 				react: {
 					version: "detect",
@@ -467,8 +444,8 @@ module.exports = {
 			rules: {
 				"@typescript-eslint/no-invalid-this": "off",
 				"@typescript-eslint/unbound-method": "off", // This rule has false positives in many of our test projects.
-				"import/no-nodejs-modules": "off", // Node libraries are OK for test files.
-				"import/no-deprecated": "off", // Deprecated APIs are OK to use in test files.
+				"import-x/no-nodejs-modules": "off", // Node libraries are OK for test files.
+				"import-x/no-deprecated": "off", // Deprecated APIs are OK to use in test files.
 
 				// Disabled for test files
 				"@typescript-eslint/consistent-type-exports": "off",
@@ -482,7 +459,7 @@ module.exports = {
 				],
 
 				// For test files only, additionally allow import of '/test*' and '/internal/test*' exports.
-				"import/no-internal-modules": [
+				"import-x/no-internal-modules": [
 					"error",
 					{
 						allow: ["@fluid*/*/test*", "@fluid*/*/internal/test*"].concat(
@@ -492,49 +469,12 @@ module.exports = {
 				],
 
 				// Test code may leverage dev dependencies
-				"import/no-extraneous-dependencies": ["error", { devDependencies: true }],
+				"import-x/no-extraneous-dependencies": ["error", { devDependencies: true }],
 			},
 		},
 	],
 	settings: {
-		"import/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
-		"import/parsers": {
-			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts"],
-		},
-		"import/resolver": {
-			/**
-			 * Note: the key order of import/resolver is relevant in the completely resolved eslint config (see ./printed-configs).
-			 * Resolvers are tried in key order, and the first one to successfully resolve the import wins. See:
-			 * https://github.com/import-js/eslint-plugin-import/blob/c0ac54b8a721c2b1c9048838acc4d6282f4fe7a7/utils/resolve.js#L196
-			 *
-			 * It's important that the typescript resolver is first, as the node resolver legitimately resolves some imports to modules
-			 * with stripped type information, which can cause silent negatives in lint rules. For example, import/no-deprecated fails
-			 * to lint against import and usage of deprecated types when the import is resolvable and resolved using the node resolver.
-			 */
-			typescript: {
-				extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
-				conditionNames: [
-					// This supports the test-only conditional export pattern used in merge-tree and id-compressor.
-					"allow-ff-test-exports",
-
-					// Default condition names below, see https://www.npmjs.com/package/eslint-import-resolver-typescript#conditionnames
-					"types",
-					"import",
-
-					// APF: https://angular.io/guide/angular-package-format
-					"esm2020",
-					"es2020",
-					"es2015",
-
-					"require",
-					"node",
-					"node-addons",
-					"browser",
-					"default",
-				],
-			},
-		},
-		"jsdoc": {
+		jsdoc: {
 			// The following are intended to keep js/jsx JSDoc comments in line with TSDoc syntax used in ts/tsx code.
 			tagNamePreference: {
 				arg: {

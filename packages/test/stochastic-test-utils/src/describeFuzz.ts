@@ -161,7 +161,7 @@ export const describeFuzz: DescribeFuzz = createFuzzDescribe();
  * The test creation callback receives an `isStress` parameter which it should use to support
  * this functionality as it deems fit.
  *
- * @privateRemarks - Reusing `createFuzzDescribe` here means tests will also receive a testCount parameter,
+ * @privateRemarks Reusing `createFuzzDescribe` here means tests will also receive a testCount parameter,
  * but since the typing doesn't include that information it shouldn't be used.
  *
  * @internal

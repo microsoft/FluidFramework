@@ -5,6 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type {
+	ReadonlySupportedGenerics,
+	ShallowReadonly,
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+
 import { assertIdenticalTypes, createInstanceOf } from "./testUtils.js";
 import type {
 	ClassWithPublicData,
@@ -155,12 +161,6 @@ import {
 	readonlyObjectWithFluidHandleOrRecursion,
 	erasedType,
 } from "./testValues.js";
-
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type {
-	ReadonlySupportedGenerics,
-	ShallowReadonly,
-} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 

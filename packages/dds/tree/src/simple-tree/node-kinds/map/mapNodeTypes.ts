@@ -10,11 +10,10 @@ import type {
 	TreeNodeSchema,
 	TreeNodeSchemaNonClass,
 	WithType,
-	ImplicitAnnotatedAllowedTypes,
-	UnannotateImplicitAllowedTypes,
+	ImplicitAllowedTypes,
 } from "../../core/index.js";
 
-import type { SimpleMapNodeSchema } from "../../simpleSchema.js";
+import type { SchemaType, SimpleMapNodeSchema } from "../../simpleSchema.js";
 
 /**
  * A schema for customizable {@link (TreeMapNode:interface)}s.
@@ -22,20 +21,20 @@ import type { SimpleMapNodeSchema } from "../../simpleSchema.js";
  */
 export interface MapNodeCustomizableSchema<
 	out TName extends string = string,
-	in out T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
+	in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	out ImplicitlyConstructable extends boolean = true,
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaClass<
 			TName,
 			NodeKind.Map,
-			TreeMapNode<UnannotateImplicitAllowedTypes<T>> & WithType<TName, NodeKind.Map, T>,
-			MapNodeInsertableData<UnannotateImplicitAllowedTypes<T>>,
+			TreeMapNode<T> & WithType<TName, NodeKind.Map, T>,
+			MapNodeInsertableData<T>,
 			ImplicitlyConstructable,
 			T,
 			undefined,
 			TCustomMetadata
 		>,
-		SimpleMapNodeSchema<TCustomMetadata> {}
+		SimpleMapNodeSchema<SchemaType.View, TCustomMetadata> {}
 
 /**
  * A schema for POJO emulation mode {@link (TreeMapNode:interface)}s.
@@ -43,20 +42,20 @@ export interface MapNodeCustomizableSchema<
  */
 export interface MapNodePojoEmulationSchema<
 	out TName extends string = string,
-	in out T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
+	in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	out ImplicitlyConstructable extends boolean = true,
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaNonClass<
 			TName,
 			NodeKind.Map,
-			TreeMapNode<UnannotateImplicitAllowedTypes<T>> & WithType<TName, NodeKind.Map, T>,
-			MapNodeInsertableData<UnannotateImplicitAllowedTypes<T>>,
+			TreeMapNode<T> & WithType<TName, NodeKind.Map, T>,
+			MapNodeInsertableData<T>,
 			ImplicitlyConstructable,
 			T,
 			undefined,
 			TCustomMetadata
 		>,
-		SimpleMapNodeSchema<TCustomMetadata> {}
+		SimpleMapNodeSchema<SchemaType.View, TCustomMetadata> {}
 
 /**
  * A schema for {@link (TreeMapNode:interface)}s.

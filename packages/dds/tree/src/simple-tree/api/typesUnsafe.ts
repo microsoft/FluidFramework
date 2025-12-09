@@ -29,9 +29,15 @@ import type {
 	TreeLeafValue,
 	FlexListToUnion,
 	LazyItem,
+	AnnotatedAllowedType,
+	AnnotatedAllowedTypes,
 } from "../core/index.js";
 import type { TreeArrayNode } from "../node-kinds/index.js";
-import type { SimpleArrayNodeSchema, SimpleMapNodeSchema } from "../simpleSchema.js";
+import type {
+	SchemaType,
+	SimpleArrayNodeSchema,
+	SimpleMapNodeSchema,
+} from "../simpleSchema.js";
 
 /*
  * TODO:
@@ -496,7 +502,7 @@ export interface ArrayNodeCustomizableSchemaUnsafe<
 			undefined,
 			TCustomMetadata
 		>,
-		SimpleArrayNodeSchema<TCustomMetadata> {}
+		SimpleArrayNodeSchema<SchemaType.View, TCustomMetadata> {}
 
 /**
  * {@link Unenforced} version of {@link MapNodeCustomizableSchema}s.
@@ -527,7 +533,7 @@ export interface MapNodeCustomizableSchemaUnsafe<
 			undefined,
 			TCustomMetadata
 		>,
-		SimpleMapNodeSchema<TCustomMetadata> {}
+		SimpleMapNodeSchema<SchemaType.View, TCustomMetadata> {}
 
 /**
  * {@link Unenforced} version of {@link TreeRecordNode}.
@@ -543,3 +549,82 @@ export interface TreeRecordNodeUnsafe<
 		[string, System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>]
 	>;
 }
+
+/**
+ * {@link Unenforced} utility to remove {@link AnnotatedAllowedTypeUnsafe} wrappers.
+ * @remarks
+ * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @sealed
+ * @beta
+ * @system
+ */
+export type UnannotateAllowedTypeUnsafe<
+	T extends Unenforced<
+		AnnotatedAllowedTypeUnsafe | LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>
+	>,
+> = T extends AnnotatedAllowedTypeUnsafe<infer X> ? X : T;
+
+/**
+ * {@link Unenforced} version of {@link AnnotatedAllowedType}.
+ * @remarks
+ * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @sealed @beta
+ */
+export interface AnnotatedAllowedTypeUnsafe<T = Unenforced<LazyItem<TreeNodeSchema>>>
+	extends AnnotatedAllowedType<T> {}
+
+/**
+ * {@link Unenforced} version of {@link AnnotatedAllowedTypes}.
+ * @remarks
+ * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @sealed @beta
+ */
+export interface AnnotatedAllowedTypesUnsafe
+	extends AnnotatedAllowedTypes<LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>> {}
+
+/**
+ * {@link Unenforced} version of {@link AllowedTypesFull}.
+ * @remarks
+ * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @sealed @alpha
+ */
+export type AllowedTypesFullUnsafe<
+	T extends readonly AnnotatedAllowedTypeUnsafe[] = readonly AnnotatedAllowedTypeUnsafe[],
+> = AnnotatedAllowedTypes<T> & UnannotateAllowedTypesListUnsafe<T>;
+
+/**
+ * {@link Unenforced} version of {@link AllowedTypesFullFromMixed}.
+ * @remarks
+ * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @sealed @beta
+ */
+export type AllowedTypesFullFromMixedUnsafe<
+	T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[],
+> = UnannotateAllowedTypesListUnsafe<T> &
+	AnnotatedAllowedTypes<AnnotateAllowedTypesListUnsafe<T>>;
+
+/**
+ * {@link Unenforced} version of {@link UnannotateAllowedTypesList}.
+ * @remarks
+ * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @sealed @beta
+ */
+export type UnannotateAllowedTypesListUnsafe<
+	T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[],
+> = {
+	readonly [I in keyof T]: T[I] extends { type: infer X } ? X : T[I];
+};
+
+/**
+ * {@link Unenforced} version of {@link AnnotateAllowedTypesList}.
+ * @remarks
+ * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @sealed @beta
+ */
+export type AnnotateAllowedTypesListUnsafe<
+	T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[],
+> = {
+	[I in keyof T]: T[I] extends AnnotatedAllowedTypeUnsafe
+		? T[I]
+		: AnnotatedAllowedTypeUnsafe<T[I]>;
+};

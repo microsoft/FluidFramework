@@ -1,5 +1,25 @@
 # @fluidframework/driver-web-cache
 
+## 2.73.0
+
+Dependency updates only.
+
+## 2.72.0
+
+Dependency updates only.
+
+## 2.71.0
+
+Dependency updates only.
+
+## 2.70.0
+
+Dependency updates only.
+
+## 2.63.0
+
+Dependency updates only.
+
 ## 2.62.0
 
 ### Minor Changes
@@ -9,7 +29,6 @@
   In an effort to decouple the driver web cache from the odsp driver a number of types have been moved from `@fluidframework/odsp-driver-definitions` to `@fluidframework/driver-definitions`. The moved types have been deprecated in `@fluidframework/odsp-driver-definitions`, and any usages should be moved to `@fluidframework/driver-definitions`.
 
   The moved types are:
-
   - `IEntry`
   - `IFileEntry`
   - `ICacheEntry`
@@ -146,7 +165,6 @@ Dependency updates only.
   TypeScript types and implementation code.
 
   This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-
   - `"moduleResolution": "Node16"` with `"module": "Node16"`
   - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 

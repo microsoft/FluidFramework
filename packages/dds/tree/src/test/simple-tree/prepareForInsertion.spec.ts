@@ -4,15 +4,15 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { hydrate } from "./utils.js";
 import {
-	convertField,
-	normalizeFieldSchema,
 	prepareForInsertionContextless,
 	restrictiveStoredSchemaGenerationOptions,
 	SchemaFactory,
 	stringSchema,
+	toStoredSchema,
 	TreeArrayNode,
 } from "../../simple-tree/index.js";
 import {
@@ -29,11 +29,7 @@ import {
 	type TreeNodeStoredSchema,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
-import {
-	checkoutWithContent,
-	fieldSchema as createFieldSchema,
-	validateUsageError,
-} from "../utils.js";
+import { checkoutWithContent, fieldSchema as createFieldSchema } from "../utils.js";
 import {
 	defaultSchemaPolicy,
 	FieldKinds,
@@ -49,14 +45,24 @@ import {
 const factory = new SchemaFactory("test");
 
 describe("prepareForInsertion", () => {
-	it("multiple top level objects", () => {
+	it("single objects in array", () => {
+		class Obj extends factory.object("Obj", {}) {}
+		class ParentArray extends factory.array("testA", Obj) {}
+		const a = new Obj({});
+		const root = hydrate(ParentArray, []);
+		root.insertAtStart(a);
+		// Check that the inserted and read nodes are the same object
+		assert.equal(a, root[0]);
+	});
+
+	it("multiple top level objects in array", () => {
 		class Obj extends factory.object("Obj", {}) {}
 		class ParentArray extends factory.array("testA", Obj) {}
 		const a = new Obj({});
 		const b = new Obj({});
 		const root = hydrate(ParentArray, []);
 		root.insertAtStart(TreeArrayNode.spread([a, b]));
-		// Check that the inserted and read proxies are the same object
+		// Check that the inserted and read nodes are the same object
 		assert.equal(a, root[0]);
 		assert.equal(b, root[1]);
 	});
@@ -223,10 +229,10 @@ describe("prepareForInsertion", () => {
 						content,
 						[myObjectSchema, schemaFactory.string],
 						...schemaValidationPolicy,
-						convertField(
-							normalizeFieldSchema([myObjectSchema, schemaFactory.string]),
+						toStoredSchema(
+							[myObjectSchema, schemaFactory.string],
 							restrictiveStoredSchemaGenerationOptions,
-						),
+						).rootFieldSchema,
 					);
 				});
 
@@ -238,10 +244,10 @@ describe("prepareForInsertion", () => {
 								content,
 								[myObjectSchema, schemaFactory.string],
 								...schemaValidationPolicy,
-								convertField(
-									normalizeFieldSchema([myObjectSchema, schemaFactory.string]),
+								toStoredSchema(
+									[myObjectSchema, schemaFactory.string],
 									restrictiveStoredSchemaGenerationOptions,
-								),
+								).rootFieldSchema,
 							),
 						outOfSchemaExpectedError,
 					);
@@ -252,15 +258,15 @@ describe("prepareForInsertion", () => {
 					// Note that despite the content containing keys not in the object schema, this test passes.
 					// This is by design: if an app author wants to preserve data that isn't in the schema (ex: to
 					// collaborate with other clients that have newer schema without erasing auxiliary data), they
-					// can use import/export tree APIs as noted in `SchemaFactoryObjectOptions`.
+					// can use import-x/export tree APIs as noted in `ObjectSchemaOptions.allowUnknownOptionalFields`.
 					prepareForInsertionContextless(
 						{ foo: "Hello world", notInSchemaKey: 5, anotherNotInSchemaKey: false },
 						[myObjectSchema, schemaFactory.string],
 						...schemaValidationPolicy,
-						convertField(
-							normalizeFieldSchema([myObjectSchema, schemaFactory.string]),
+						toStoredSchema(
+							[myObjectSchema, schemaFactory.string],
 							restrictiveStoredSchemaGenerationOptions,
-						),
+						).rootFieldSchema,
 					);
 				});
 			});
@@ -292,10 +298,10 @@ describe("prepareForInsertion", () => {
 						content,
 						[myMapSchema, schemaFactory.string],
 						...schemaValidationPolicy,
-						convertField(
-							normalizeFieldSchema([myMapSchema, schemaFactory.string]),
+						toStoredSchema(
+							[myMapSchema, schemaFactory.string],
 							restrictiveStoredSchemaGenerationOptions,
-						),
+						).rootFieldSchema,
 					);
 				});
 
@@ -307,10 +313,10 @@ describe("prepareForInsertion", () => {
 								content,
 								[myMapSchema, schemaFactory.string],
 								...schemaValidationPolicy,
-								convertField(
-									normalizeFieldSchema([myMapSchema, schemaFactory.string]),
+								toStoredSchema(
+									[myMapSchema, schemaFactory.string],
 									restrictiveStoredSchemaGenerationOptions,
-								),
+								).rootFieldSchema,
 							),
 						outOfSchemaExpectedError,
 					);
@@ -344,10 +350,10 @@ describe("prepareForInsertion", () => {
 						content,
 						[myArrayNodeSchema, schemaFactory.string],
 						...schemaValidationPolicy,
-						convertField(
-							normalizeFieldSchema([myArrayNodeSchema, schemaFactory.string]),
+						toStoredSchema(
+							[myArrayNodeSchema, schemaFactory.string],
 							restrictiveStoredSchemaGenerationOptions,
-						),
+						).rootFieldSchema,
 					);
 				});
 
@@ -359,10 +365,10 @@ describe("prepareForInsertion", () => {
 								content,
 								[myArrayNodeSchema, schemaFactory.string],
 								...schemaValidationPolicy,
-								convertField(
-									normalizeFieldSchema([myArrayNodeSchema, schemaFactory.string]),
+								toStoredSchema(
+									[myArrayNodeSchema, schemaFactory.string],
 									restrictiveStoredSchemaGenerationOptions,
-								),
+								).rootFieldSchema,
 							),
 						outOfSchemaExpectedError,
 					);

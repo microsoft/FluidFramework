@@ -283,6 +283,7 @@ export class ReplayDocumentDeltaConnection
 		throw new Error("ReplayDocumentDeltaConnection.submit() can't be called");
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	public async submitSignal(message: any) {}
 
 	private _disposed = false;

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/react",
-	"version": "2.63.0",
+	"version": "2.74.0",
 	"description": "Utilities for integrating content powered by the Fluid Framework into React applications",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -81,8 +81,8 @@
 		"check:format": "npm run check:biome",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
-		"eslint": "eslint --format stylish src",
-		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"eslint": "eslint --quiet --format stylish src",
+		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
@@ -132,10 +132,10 @@
 		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.58.3",
+		"@fluid-tools/build-cli": "^0.60.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.58.3",
-		"@fluidframework/eslint-config-fluid": "^6.0.0",
+		"@fluidframework/build-tools": "^0.60.0",
+		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
 		"@microsoft/api-extractor": "7.52.11",
 		"@testing-library/react": "^16.3.0",
@@ -146,8 +146,8 @@
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.55.0",
-		"eslint-config-prettier": "~9.0.0",
+		"eslint": "~8.57.1",
+		"eslint-config-prettier": "~10.1.8",
 		"global-jsdom": "^26.0.0",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
@@ -155,8 +155,6 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }

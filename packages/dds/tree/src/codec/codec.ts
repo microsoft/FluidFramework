@@ -10,6 +10,7 @@ import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 
 import type { ChangeEncodingContext } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 /**
  * Translates decoded data to encoded data.
@@ -151,7 +152,7 @@ export interface CodecWriteOptions extends ICodecOptions {
 	 * Note that versions older than this should not result in data corruption if they access the data:
 	 * the data's format should be versioned and if they can't handle the format they should error.
 	 */
-	readonly oldestCompatibleClient: FluidClientVersion;
+	readonly minVersionForCollab: MinimumVersionForCollab;
 }
 
 /**
@@ -163,7 +164,7 @@ export interface CodecWriteOptions extends ICodecOptions {
  * appropriate one, but depending on API layering this might be less ergonomic.
  * - Context for the object currently being encoded, which might enable more efficient encoding. When used in this fashion, the codec author
  * should be careful to include the context somewhere in the encoded data such that decoding can correctly round-trip.
- * For example, a composed set of codecs could implement a form of [dictionary coding](https://en.wikipedia.org/wiki/Dictionary_coder)
+ * For example, a composed set of codecs could implement a form of {@link https://en.wikipedia.org/wiki/Dictionary_coder | dictionary coding}
  * using a context map which was created by the top-level codec and passed to the inner codecs.
  * This pattern is used:
  * - To avoid repeatedly encoding session ids on commits (only recording it once at the top level)
@@ -226,14 +227,14 @@ export interface IMultiFormatCodec<
  * allows avoiding some duplicate work at encode/decode time, since the vast majority of document usage will not
  * involve mixed format versions.
  *
- * @privateRemarks - This interface currently assumes all codecs in a family require the same encode/decode context,
+ * @privateRemarks This interface currently assumes all codecs in a family require the same encode/decode context,
  * which isn't necessarily true.
  * This may need to be relaxed in the future.
  */
 export interface ICodecFamily<TDecoded, TContext = void> {
 	/**
 	 * @returns a codec that can be used to encode and decode data in the specified format.
-	 * @throws - if the format version is not supported by this family.
+	 * @throws if the format version is not supported by this family.
 	 * @remarks Implementations should typically emit telemetry (either indirectly by throwing a well-known error with
 	 * logged properties or directly using some logger) when a format version is requested that is not supported.
 	 * This ensures that applications can diagnose compatibility issues.
@@ -251,9 +252,11 @@ export interface ICodecFamily<TDecoded, TContext = void> {
 /**
  * A version stamp for encoded data.
  *
+ * Strings are used for formats that are not yet officially supported.
+ * When such formats become officially supported/stable, they will be switched to using a number.
  * Undefined is tolerated to enable the scenario where data was not initially versioned.
  */
-export type FormatVersion = number | undefined;
+export type FormatVersion = number | string | undefined;
 
 /**
  * A format version which is dependent on some parent format version.
@@ -286,7 +289,7 @@ export class MappedDependentFormatVersion<
 {
 	public constructor(private readonly map: ReadonlyMap<TParentVersion, TChildVersion>) {}
 	public lookup(parent: TParentVersion): TChildVersion {
-		return this.map.get(parent) ?? fail("Unknown parent version");
+		return this.map.get(parent) ?? fail(0xc73 /* Unknown parent version */);
 	}
 }
 
@@ -466,16 +469,6 @@ export function withSchemaValidation<
  * For example, document if there is an encoding efficiency improvement of oping into that version or newer.
  * Versions with no notable impact can be omitted.
  *
- * These use numeric values for easy threshold comparisons.
- * Without zero padding, version 2.10 is treated as 2.1, which is numerically less than 2.2.
- * Adding leading zeros to the minor version ensures correct comparisons.
- * For example, version 2.20.0 is encoded as 2.020, and version 2.2.0 is encoded as 2.002.
- * For example FF 2.20.0 is encoded as 2.020 and FF 2.2.0 is encoded as 2.002.
- *
- * Three digits was selected as that will likely be enough, while two digits could easily be too few.
- * If three digits ends up being too few, minor releases of 1000 and higher
- * could still be handled using something like 2.999_00001 without having to change the lower releases.
- *
  * This scheme assumes a single version will always be enough to communicate compatibility.
  * For this to work, compatibility has to be strictly increasing.
  * If this is violated (for example a subset of incompatible features from 3.x that are not in 3.0 are back ported to 2.x),
@@ -487,7 +480,7 @@ export function withSchemaValidation<
  * For example, if needed, would adding more leading zeros to the minor version break things.
  * @alpha
  */
-export enum FluidClientVersion {
+export const FluidClientVersion = {
 	/**
 	 * Fluid Framework Client 1.4 and newer.
 	 * @remarks
@@ -497,8 +490,10 @@ export enum FluidClientVersion {
 	 */
 	// v1_4 = 1.004,
 
-	/** Fluid Framework Client 2.0 and newer. */
-	v2_0 = 2.0,
+	/**
+	 * Fluid Framework Client 2.0 and newer.
+	 */
+	v2_0: "2.0.0",
 
 	/** Fluid Framework Client 2.1 and newer. */
 	// If we think we might want to start allowing opting into something that landed in 2.1 (without opting into something newer),
@@ -506,22 +501,45 @@ export enum FluidClientVersion {
 	// then update it to "2.001" once we actually have the opt in working.
 	// v2_1 = v2_0,
 
-	/** Fluid Framework Client 2.52 and newer. */
-	// New formats introduced in 2.52:
-	// - DetachedFieldIndex FormatV2
-	v2_52 = 2.052,
+	/**
+	 * Fluid Framework Client 2.43 and newer.
+	 * @remarks
+	 * New formats introduced in 2.43:
+	 * - SchemaFormatVersion.v2
+	 * - MessageFormatVersion.v4
+	 * - EditManagerFormatVersion.v4
+	 * - Sequence format version 3
+	 */
+	v2_43: "2.43.0",
 
 	/**
-	 * Enable unreleased and unfinished features.
+	 * Fluid Framework Client 2.52 and newer.
 	 * @remarks
-	 * Using this value can result in documents which can not be opened in future versions of the framework.
-	 * It can also result in data corruption by enabling unfinished features which may not handle all cases correctly.
-	 *
-	 * This can be used with specific APIs when the caller has knowledge of what specific features those APIs will be opted into with it.
-	 * This is useful for testing features before they are released, but should not be used in production code.
+	 * New formats introduced in 2.52:
+	 * - DetachedFieldIndexFormatVersion.v2
 	 */
-	EnableUnstableFeatures = Number.POSITIVE_INFINITY,
-}
+	v2_52: "2.52.0",
+
+	/**
+	 * Fluid Framework Client 2.73 and newer.
+	 * @remarks
+	 * New formats introduced in 2.73:
+	 * - FieldBatchFormatVersion v2
+	 */
+	v2_73: "2.73.0",
+
+	/**
+	 * Fluid Framework Client 2.74 and newer.
+	 * @remarks
+	 * New formats introduced in 2.74:
+	 * - SharedTreeSummaryFormatVersion v2
+	 * - DetachedFieldIndexSummaryFormatVersion v2
+	 * - SchemaSummaryFormatVersion v2
+	 * - EditManagerSummaryFormatVersion v2
+	 * - ForestSummaryFormatVersion v2
+	 */
+	v2_74: "2.74.0",
+} as const satisfies Record<string, MinimumVersionForCollab>;
 
 /**
  * An up to date version which includes all the important stable features.
@@ -532,7 +550,7 @@ export enum FluidClientVersion {
  * Update as needed.
  * TODO: Consider using packageVersion.ts to keep this current.
  */
-export const currentVersion: FluidClientVersion = FluidClientVersion.v2_0;
+export const currentVersion: MinimumVersionForCollab = FluidClientVersion.v2_0;
 
 export interface CodecTree {
 	readonly name: string;

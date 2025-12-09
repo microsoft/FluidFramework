@@ -29,8 +29,6 @@ import {
 	type TreeFieldFromImplicitField,
 	type TreeLeafValue,
 	type UnsafeUnknownSchema,
-	conciseFromCursor,
-	type ConciseTree,
 	applySchemaToParserOptions,
 	cursorFromVerbose,
 	verboseFromCursor,
@@ -46,16 +44,21 @@ import {
 	unhydratedFlexTreeFromInsertable,
 	getOrCreateNodeFromInnerNode,
 	getOrCreateNodeFromInnerUnboxedNode,
-	getOrCreateInnerNode,
+	getInnerNode,
 	NodeKind,
 	tryGetTreeNodeForField,
 	isObjectNodeSchema,
 	isTreeNode,
 	toInitialSchema,
-	convertField,
-	toUnhydratedSchema,
 	type TreeParsingOptions,
 	type NodeChangedData,
+	type ConciseTree,
+	importConcise,
+	exportConcise,
+	borrowCursorFromTreeNodeOrValue,
+	contentSchemaSymbol,
+	type TreeNodeSchema,
+	getUnhydratedContext,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import {
@@ -74,15 +77,16 @@ import {
 	TreeCompressionStrategy,
 	type FieldBatch,
 	type FieldBatchEncodingContext,
-	fluidVersionToFieldBatchCodecWriteVersion,
 	type LocalNodeIdentifier,
 	type FlexTreeSequenceField,
 	type FlexTreeNode,
 	type Observer,
 	withObservation,
 } from "../feature-libraries/index.js";
+import type { TreeBranchAlpha } from "../simple-tree/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
+import { isFluidHandle } from "@fluidframework/runtime-utils";
 
 const identifier: TreeIdentifierUtils = (node: TreeNode): string | undefined => {
 	const nodeIdentifier = getIdentifierFromNode(node, "uncompressed");
@@ -200,12 +204,12 @@ export interface TreeIdentifierUtils {
  * @remarks
  * Use via the {@link (TreeAlpha:variable)} singleton.
  *
- * The unhydrated node creation APIs in this interface do not support {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields | unknown optional fields}.
+ * The unhydrated node creation APIs in this interface do not support {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields}.
  * This is because unknown optional fields still must have a schema: its just that the schema may come from the document's stored schema.
  * Unhydrated nodes created via this interface are not associated with any document, so there is nowhere for them to get schema for unknown optional fields.
  * Note that {@link (TreeBeta:interface).clone} can create an unhydrated node with unknown optional fields, as it uses the source node's stored schema (if any).
  *
- * Export APIs in this interface include {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields | unknown optional fields}
+ * Export APIs in this interface include {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields}
  * if they are using {@link KeyEncodingOptions.allStoredKeys}.
  *
  * @privateRemarks
@@ -225,7 +229,7 @@ export interface TreeAlpha {
 	 * This does not fork a new branch, but rather retrieves the _existing_ branch for the node.
 	 * To create a new branch, use e.g. {@link TreeBranch.fork | `myBranch.fork()`}.
 	 */
-	branch(node: TreeNode): TreeBranch | undefined;
+	branch(node: TreeNode): TreeBranchAlpha | undefined;
 
 	/**
 	 * Construct tree content that is compatible with the field defined by the provided `schema`.
@@ -248,19 +252,7 @@ export interface TreeAlpha {
 	>;
 
 	/**
-	 * Less type safe version of {@link (TreeAlpha:interface).create}, suitable for importing data.
-	 * @remarks
-	 * Due to {@link ConciseTree} relying on type inference from the data, its use is somewhat limited.
-	 * This does not support {@link ConciseTree|ConciseTrees} with customized handle encodings or using persisted keys.
-	 * Use "compressed" or "verbose" formats for more flexibility.
-	 *
-	 * When using this function,
-	 * it is recommend to ensure your schema is unambiguous with {@link ITreeConfigurationOptions.preventAmbiguity}.
-	 * If the schema is ambiguous, consider using {@link (TreeAlpha:interface).create} and {@link Unhydrated} nodes where needed,
-	 * or using {@link (TreeAlpha:interface).(importVerbose:1)} and specify all types.
-	 *
-	 * Documented (and thus recoverable) error handling/reporting for this is not yet implemented,
-	 * but for now most invalid inputs will throw a recoverable error.
+	 * {@inheritDoc (TreeBeta:interface).importConcise}
 	 */
 	importConcise<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		schema: UnsafeUnknownSchema extends TSchema
@@ -274,13 +266,30 @@ export interface TreeAlpha {
 	>;
 
 	/**
+	 * {@inheritDoc (TreeBeta:interface).(exportConcise:1)}
+	 * @privateRemarks Note: this was retained on this interface because {@link (TreeAlpha:interface).importConcise} exists.
+	 * It should be removed if/when that is removed from this interface.
+	 */
+	exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
+
+	/**
+	 * {@inheritDoc (TreeBeta:interface).(exportConcise:2)}
+	 * @privateRemarks Note: this was retained on this interface because {@link (TreeAlpha:interface).importConcise} exists.
+	 * It should be removed if/when that is removed from this interface.
+	 */
+	exportConcise(
+		node: TreeNode | TreeLeafValue | undefined,
+		options?: TreeEncodingOptions,
+	): ConciseTree | undefined;
+
+	/**
 	 * Construct tree content compatible with a field defined by the provided `schema`.
 	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
 	 * @param data - The data used to construct the field content. See {@link (TreeAlpha:interface).(exportVerbose:1)}.
 	 * @remarks
 	 * This currently does not support input containing
-	 * {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields| unknown optional fields} but does support
-	 * {@link SchemaStaticsAlpha.staged | staged} allowed types.
+	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields| unknown optional fields} but does support
+	 * {@link SchemaStaticsBeta.staged | staged} allowed types.
 	 * Non-empty default values for fields are currently not supported (must be provided in the input).
 	 * The content will be validated against the schema and an error will be thrown if out of schema.
 	 */
@@ -291,24 +300,11 @@ export interface TreeAlpha {
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
 	/**
-	 * Copy a snapshot of the current version of a TreeNode into a {@link ConciseTree}.
-	 */
-	exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
-
-	/**
-	 * Copy a snapshot of the current version of a TreeNode into a {@link ConciseTree}, allowing undefined.
-	 */
-	exportConcise(
-		node: TreeNode | TreeLeafValue | undefined,
-		options?: TreeEncodingOptions,
-	): ConciseTree | undefined;
-
-	/**
 	 * Copy a snapshot of the current version of a TreeNode into a JSON compatible plain old JavaScript Object (except for {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles}).
 	 * Uses the {@link VerboseTree} format, with an explicit type on every node.
 	 *
 	 * @remarks
-	 * There are several cases this may be preferred to {@link (TreeAlpha:interface).(exportConcise:1)}:
+	 * There are several cases this may be preferred to {@link (TreeBeta:interface).(exportConcise:1)}:
 	 *
 	 * 1. When not using {@link ITreeConfigurationOptions.preventAmbiguity} (or when using `useStableFieldKeys`), `exportConcise` can produce ambiguous data (the type may be unclear on some nodes).
 	 * `exportVerbose` will always be unambiguous and thus lossless.
@@ -337,10 +333,7 @@ export interface TreeAlpha {
 	 */
 	exportCompressed(
 		tree: TreeNode | TreeLeafValue,
-		options: { idCompressor?: IIdCompressor } & Pick<
-			CodecWriteOptions,
-			"oldestCompatibleClient"
-		>,
+		options: { idCompressor?: IIdCompressor } & Pick<CodecWriteOptions, "minVersionForCollab">,
 	): JsonCompatible<IFluidHandle>;
 
 	/**
@@ -385,7 +378,7 @@ export interface TreeAlpha {
 	/**
 	 * Gets the child of the given node with the given property key if a child exists under that key.
 	 *
-	 * @remarks {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields | Unknown optional fields} of Object nodes will not be returned by this method.
+	 * @remarks {@link ObjectSchemaOptions.allowUnknownOptionalFields | Unknown optional fields} of Object nodes will not be returned by this method.
 	 *
 	 * @param node - The parent node whose child is being requested.
 	 * @param key - The property key under the node under which the child is being requested.
@@ -406,7 +399,7 @@ export interface TreeAlpha {
 	 *
 	 * Optional properties of Object nodes with no value are not included in the result.
 	 *
-	 * {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields | Unknown optional fields} of Object nodes are not included in the result.
+	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields | Unknown optional fields} of Object nodes are not included in the result.
 	 *
 	 * @param node - The node whose children are being requested.
 	 *
@@ -528,6 +521,35 @@ export interface TreeAlpha {
 		onInvalidation: () => void,
 		trackDuring: () => TResult,
 	): ObservationResults<TResult>;
+
+	/**
+	 * Ensures that the provided content will be interpreted as the given schema when inserting into the tree.
+	 * @returns `content`, for convenience.
+	 * @remarks
+	 * If applicable, this will tag the given content with a {@link contentSchemaSymbol | special property} that indicates its intended schema.
+	 * The `content` will be interpreted as the given `schema` when later inserted into the tree.
+	 *
+	 * This does not validate that the content actually conforms to the given schema (such validation will be done at insert time).
+	 * If the content is not compatible with the tagged schema, an error will be thrown when the content is inserted.
+	 *
+	 * This is particularly useful when the content's schema cannot be inferred from its structure alone because it is compatible with multiple schemas.
+	 * @example
+	 * ```typescript
+	 * const sf = new SchemaFactory("example");
+	 * class Dog extends sf.object("Dog", { name: sf.string() }) {}
+	 * class Cat extends sf.object("Cat", { name: sf.string() }) {}
+	 * class Root extends sf.object("Root", { pet: [Dog, Cat] }) {}
+	 * // ...
+	 * const pet = { name: "Max" };
+	 * view.root.pet = pet; // Error: ambiguous schema - is it a Dog or a Cat?
+	 * TreeAlpha.ensureSchema(Dog, pet); // Tags `pet` as a Dog.
+	 * view.root.pet = pet; // No error - it's a Dog.
+	 * ```
+	 */
+	tagContentSchema<TSchema extends TreeNodeSchema, TContent extends InsertableField<TSchema>>(
+		schema: TSchema,
+		content: TContent,
+	): TContent;
 }
 
 /**
@@ -732,7 +754,7 @@ export const TreeAlpha: TreeAlpha = {
 		return result;
 	},
 
-	branch(node: TreeNode): TreeBranch | undefined {
+	branch(node: TreeNode): TreeBranchAlpha | undefined {
 		const kernel = getKernel(node);
 		if (!kernel.isHydrated()) {
 			return undefined;
@@ -767,7 +789,7 @@ export const TreeAlpha: TreeAlpha = {
 		>;
 	},
 
-	importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+	importConcise<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		schema: UnsafeUnknownSchema extends TSchema
 			? ImplicitFieldSchema
 			: TSchema & ImplicitFieldSchema,
@@ -777,11 +799,10 @@ export const TreeAlpha: TreeAlpha = {
 			? TreeFieldFromImplicitField<TSchema>
 			: TreeNode | TreeLeafValue | undefined
 	> {
-		// `importConcise` does not need to support all the formats that `create` does.
-		// Perhaps it should error instead of hydrating nodes for example.
-		// For now however, it is a simple wrapper around `create`.
-		return this.create(schema, data as InsertableField<TSchema>);
+		return importConcise(schema, data);
 	},
+
+	exportConcise,
 
 	importVerbose<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
@@ -802,11 +823,9 @@ export const TreeAlpha: TreeAlpha = {
 		return createFromCursor(
 			schema,
 			cursor,
-			convertField(normalizeFieldSchema(schema), toUnhydratedSchema),
+			getUnhydratedContext(schema).flexContext.schema.rootFieldSchema,
 		);
 	},
-
-	exportConcise,
 
 	exportVerbose(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): VerboseTree {
 		if (isTreeValue(node)) {
@@ -821,14 +840,13 @@ export const TreeAlpha: TreeAlpha = {
 
 	exportCompressed(
 		node: TreeNode | TreeLeafValue,
-		options: { idCompressor?: IIdCompressor } & Pick<
-			CodecWriteOptions,
-			"oldestCompatibleClient"
-		>,
+		options: { idCompressor?: IIdCompressor } & Pick<CodecWriteOptions, "minVersionForCollab">,
 	): JsonCompatible<IFluidHandle> {
 		const schema = tryGetSchema(node) ?? fail(0xacf /* invalid input */);
-		const format = fluidVersionToFieldBatchCodecWriteVersion(options.oldestCompatibleClient);
-		const codec = makeFieldBatchCodec({ jsonValidator: FormatValidatorNoOp }, format);
+		const codec = makeFieldBatchCodec({
+			jsonValidator: FormatValidatorNoOp,
+			minVersionForCollab: options.minVersionForCollab,
+		});
 		const cursor = borrowFieldCursorFromTreeNodeOrValue(node);
 		const batch: FieldBatch = [cursor];
 		// If none provided, create a compressor which will not compress anything.
@@ -855,7 +873,7 @@ export const TreeAlpha: TreeAlpha = {
 		compressedData: JsonCompatible<IFluidHandle>,
 		options: {
 			idCompressor?: IIdCompressor;
-		} & ICodecOptions,
+		} & CodecWriteOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 		const config = new TreeViewConfigurationAlpha({ schema });
 		const content: ViewContent = {
@@ -890,7 +908,7 @@ export const TreeAlpha: TreeAlpha = {
 		node: TreeNode,
 		propertyKey: string | number,
 	): TreeNode | TreeLeafValue | undefined => {
-		const flexNode = getOrCreateInnerNode(node);
+		const flexNode = getInnerNode(node);
 		debugAssert(
 			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
 		);
@@ -960,7 +978,7 @@ export const TreeAlpha: TreeAlpha = {
 	},
 
 	children(node: TreeNode): [propertyKey: string | number, child: TreeNode | TreeLeafValue][] {
-		const flexNode = getOrCreateInnerNode(node);
+		const flexNode = getInnerNode(node);
 		debugAssert(
 			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
 		);
@@ -1018,47 +1036,22 @@ export const TreeAlpha: TreeAlpha = {
 		}
 		return result;
 	},
-};
 
-function exportConcise(
-	node: TreeNode | TreeLeafValue,
-	options?: TreeEncodingOptions,
-): ConciseTree;
-
-function exportConcise(
-	node: TreeNode | TreeLeafValue | undefined,
-	options?: TreeEncodingOptions,
-): ConciseTree | undefined;
-
-function exportConcise(
-	node: TreeNode | TreeLeafValue | undefined,
-	options?: TreeEncodingOptions,
-): ConciseTree | undefined {
-	if (!isTreeNode(node)) {
+	tagContentSchema<TSchema extends TreeNodeSchema, TNode extends InsertableField<TSchema>>(
+		schema: TSchema,
+		node: TNode,
+	): TNode {
+		if (typeof node === "object" && node !== null && !isFluidHandle(node)) {
+			Reflect.defineProperty(node, contentSchemaSymbol, {
+				configurable: false,
+				enumerable: false,
+				writable: true,
+				value: schema.identifier,
+			});
+		}
 		return node;
-	}
-	const config: TreeEncodingOptions = { ...options };
-
-	const kernel = getKernel(node);
-	const cursor = borrowCursorFromTreeNodeOrValue(node);
-	return conciseFromCursor(cursor, kernel.context, config);
-}
-
-/**
- * Borrow a cursor from a node.
- * @remarks
- * The cursor must be put back to its original location before the node is used again.
- */
-function borrowCursorFromTreeNodeOrValue(
-	node: TreeNode | TreeLeafValue,
-): ITreeCursorSynchronous {
-	if (isTreeValue(node)) {
-		return cursorFromVerbose(node, {});
-	}
-	const kernel = getKernel(node);
-	const cursor = kernel.getOrCreateInnerNode().borrowCursor();
-	return cursor;
-}
+	},
+};
 
 /**
  * Borrow a cursor from a field.

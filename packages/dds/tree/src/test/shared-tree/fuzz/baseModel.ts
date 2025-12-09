@@ -10,8 +10,8 @@ import { SharedTreeFuzzTestFactory, createOnCreate } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import { type EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
-import { FluidClientVersion } from "../../../codec/index.js";
 import { ForestTypeOptimized, ForestTypeReference } from "../../../shared-tree/index.js";
+import { pkgVersion } from "../../../packageVersion.js";
 
 export const runsPerBatch = 50;
 // TODO: Enable other types of ops.
@@ -41,7 +41,7 @@ export const baseTreeModel: DDSFuzzModel<
 > = {
 	workloadName: "SharedTree (Reference Forest)",
 	factory: new SharedTreeFuzzTestFactory(createOnCreate(undefined), undefined, {
-		oldestCompatibleClient: FluidClientVersion.EnableUnstableFeatures,
+		minVersionForCollab: pkgVersion,
 		forest: ForestTypeReference,
 	}),
 	generatorFactory,
@@ -56,7 +56,7 @@ export const optimizedForestTreeModel: DDSFuzzModel<
 > = {
 	workloadName: "SharedTree (Optimized Forest)",
 	factory: new SharedTreeFuzzTestFactory(createOnCreate(undefined), undefined, {
-		oldestCompatibleClient: FluidClientVersion.EnableUnstableFeatures,
+		minVersionForCollab: pkgVersion,
 		forest: ForestTypeOptimized,
 	}),
 	generatorFactory,

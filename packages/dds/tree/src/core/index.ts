@@ -83,6 +83,8 @@ export {
 	CursorMarker,
 	isCursor,
 	DetachedFieldIndex,
+	type ReadOnlyDetachedFieldIndex,
+	type DetachedFieldIndexCheckpoint,
 	type ForestRootId,
 	getDetachedFieldContainingPath,
 	aboveRootPlaceholder,
@@ -102,7 +104,7 @@ export {
 	cursorChunk,
 	tryGetChunk,
 	type ChunkedCursor,
-	type DetachedFieldIndexFormatVersion,
+	DetachedFieldIndexFormatVersion,
 	getCodecTreeForDetachedFieldIndexFormat,
 } from "./tree/index.js";
 
@@ -151,8 +153,7 @@ export {
 	type SchemaAndPolicy,
 	Multiplicity,
 	type SchemaPolicy,
-	SchemaVersion,
-	type SchemaFormatVersion,
+	SchemaFormatVersion,
 } from "./schema-stored/index.js";
 
 export {

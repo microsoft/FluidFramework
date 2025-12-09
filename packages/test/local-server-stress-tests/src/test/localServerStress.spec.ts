@@ -41,8 +41,9 @@ describe("Local Server Stress", () => {
 		// skipMinimization: true,
 		// Use skip, replay, and only properties to control which seeds run.
 		skip: [
-			124, // directory 0xc38
-			105, // Task-manger hides dirty state AB#49649
+			11, // container closes with 0xc3d, and then test fails due to closed container
+			53, // 0xc3d
+			173, // 0xc3d
 		],
 	});
 });

@@ -10,7 +10,10 @@
         "SharedArrayBuffer": "readonly"
     },
     "ignorePatterns": [
-        "**/packageVersion.ts"
+        "**/packageVersion.ts",
+        "**/layerGenerationState.ts",
+        "**/*.generated.ts",
+        "**/*.generated.js"
     ],
     "parserOptions": {
         "ecmaFeatures": {
@@ -21,8 +24,9 @@
         "sourceType": "module"
     },
     "plugins": [
-        "eslint-comments",
-        "import",
+        "@eslint-community/eslint-comments",
+        "import-x",
+        "depend",
         "@fluid-internal/fluid",
         "unused-imports",
         "promise",
@@ -40,6 +44,24 @@
         ],
         "@babel/semi": [
             "off"
+        ],
+        "@eslint-community/eslint-comments/disable-enable-pair": [
+            "error",
+            {
+                "allowWholeFile": true
+            }
+        ],
+        "@eslint-community/eslint-comments/no-aggregating-enable": [
+            "error"
+        ],
+        "@eslint-community/eslint-comments/no-duplicate-disable": [
+            "error"
+        ],
+        "@eslint-community/eslint-comments/no-unlimited-disable": [
+            "error"
+        ],
+        "@eslint-community/eslint-comments/no-unused-enable": [
+            "error"
         ],
         "@fluid-internal/fluid/no-file-path-links-in-jsdoc": [
             "error"
@@ -617,9 +639,6 @@
         "@typescript-eslint/ban-tslint-comment": [
             "error"
         ],
-        "@typescript-eslint/ban-types": [
-            "off"
-        ],
         "@typescript-eslint/block-spacing": [
             "off"
         ],
@@ -630,8 +649,7 @@
             "error"
         ],
         "@typescript-eslint/comma-dangle": [
-            "off",
-            "always-multiline"
+            "off"
         ],
         "@typescript-eslint/comma-spacing": [
             "off"
@@ -730,6 +748,9 @@
         "@typescript-eslint/no-array-constructor": [
             "error"
         ],
+        "@typescript-eslint/no-array-delete": [
+            "error"
+        ],
         "@typescript-eslint/no-base-to-string": [
             "error"
         ],
@@ -746,9 +767,6 @@
             "error"
         ],
         "@typescript-eslint/no-empty-function": [
-            "off"
-        ],
-        "@typescript-eslint/no-empty-interface": [
             "off"
         ],
         "@typescript-eslint/no-empty-object-type": [
@@ -789,9 +807,6 @@
         ],
         "@typescript-eslint/no-invalid-this": [
             "off"
-        ],
-        "@typescript-eslint/no-loss-of-precision": [
-            "error"
         ],
         "@typescript-eslint/no-magic-numbers": [
             "off"
@@ -857,9 +872,6 @@
         "@typescript-eslint/no-this-alias": [
             "error"
         ],
-        "@typescript-eslint/no-throw-literal": [
-            "error"
-        ],
         "@typescript-eslint/no-unnecessary-qualifier": [
             "error"
         ],
@@ -896,6 +908,9 @@
         "@typescript-eslint/no-unsafe-return": [
             "error"
         ],
+        "@typescript-eslint/no-unsafe-unary-minus": [
+            "error"
+        ],
         "@typescript-eslint/no-unused-expressions": [
             "error"
         ],
@@ -904,9 +919,6 @@
         ],
         "@typescript-eslint/no-use-before-define": [
             "off"
-        ],
-        "@typescript-eslint/no-var-requires": [
-            "error"
         ],
         "@typescript-eslint/no-wrapper-object-types": [
             "error"
@@ -917,7 +929,13 @@
         "@typescript-eslint/object-curly-spacing": [
             "off"
         ],
+        "@typescript-eslint/only-throw-error": [
+            "error"
+        ],
         "@typescript-eslint/prefer-as-const": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-find": [
             "error"
         ],
         "@typescript-eslint/prefer-for-of": [
@@ -938,7 +956,13 @@
         "@typescript-eslint/prefer-optional-chain": [
             "error"
         ],
+        "@typescript-eslint/prefer-promise-reject-errors": [
+            "error"
+        ],
         "@typescript-eslint/prefer-readonly": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-regexp-exec": [
             "error"
         ],
         "@typescript-eslint/prefer-string-starts-ends-with": [
@@ -948,12 +972,7 @@
             "error"
         ],
         "@typescript-eslint/quotes": [
-            0,
-            "double",
-            {
-                "allowTemplateLiterals": true,
-                "avoidEscape": true
-            }
+            0
         ],
         "@typescript-eslint/require-await": [
             "off"
@@ -968,19 +987,13 @@
             "error"
         ],
         "@typescript-eslint/semi": [
-            "off",
-            "always"
+            "off"
         ],
         "@typescript-eslint/space-before-blocks": [
             "off"
         ],
         "@typescript-eslint/space-before-function-paren": [
-            "off",
-            {
-                "anonymous": "never",
-                "asyncArrow": "always",
-                "named": "never"
-            }
+            "off"
         ],
         "@typescript-eslint/space-infix-ops": [
             "off"
@@ -1070,6 +1083,15 @@
         "default-case": [
             "error"
         ],
+        "depend/ban-dependencies": [
+            "error",
+            {
+                "allowed": [
+                    "axios",
+                    "fs-extra"
+                ]
+            }
+        ],
         "dot-location": [
             "off"
         ],
@@ -1082,24 +1104,6 @@
         "eqeqeq": [
             "error",
             "smart"
-        ],
-        "eslint-comments/disable-enable-pair": [
-            "error",
-            {
-                "allowWholeFile": true
-            }
-        ],
-        "eslint-comments/no-aggregating-enable": [
-            "error"
-        ],
-        "eslint-comments/no-duplicate-disable": [
-            "error"
-        ],
-        "eslint-comments/no-unlimited-disable": [
-            "error"
-        ],
-        "eslint-comments/no-unused-enable": [
-            "error"
         ],
         "flowtype/boolean-style": [
             "off"
@@ -1164,31 +1168,31 @@
         "implicit-arrow-linebreak": [
             "off"
         ],
-        "import/default": [
-            2
+        "import-x/default": [
+            "error"
         ],
-        "import/export": [
-            2
+        "import-x/export": [
+            "error"
         ],
-        "import/named": [
+        "import-x/named": [
             "off"
         ],
-        "import/namespace": [
-            2
-        ],
-        "import/no-default-export": [
+        "import-x/namespace": [
             "error"
         ],
-        "import/no-deprecated": [
+        "import-x/no-default-export": [
             "error"
         ],
-        "import/no-duplicates": [
-            1
-        ],
-        "import/no-extraneous-dependencies": [
+        "import-x/no-deprecated": [
             "error"
         ],
-        "import/no-internal-modules": [
+        "import-x/no-duplicates": [
+            "warn"
+        ],
+        "import-x/no-extraneous-dependencies": [
+            "error"
+        ],
+        "import-x/no-internal-modules": [
             "error",
             {
                 "allow": [
@@ -1203,38 +1207,44 @@
                 ]
             }
         ],
-        "import/no-named-as-default": [
-            1
+        "import-x/no-named-as-default": [
+            "warn"
         ],
-        "import/no-named-as-default-member": [
-            1
+        "import-x/no-named-as-default-member": [
+            "warn"
         ],
-        "import/no-nodejs-modules": [
+        "import-x/no-nodejs-modules": [
             "error"
         ],
-        "import/no-unassigned-import": [
+        "import-x/no-unassigned-import": [
             "error"
         ],
-        "import/no-unresolved": [
-            2,
-            {
-                "caseSensitive": true,
-                "caseSensitiveStrict": false
-            }
-        ],
-        "import/no-unused-modules": [
-            "error"
-        ],
-        "import/order": [
+        "import-x/no-unresolved": [
             "error",
             {
-                "newlines-between": "always",
-                "alphabetize": {
-                    "order": "asc",
-                    "caseInsensitive": false,
-                    "orderImportKind": "ignore"
-                },
+                "caseSensitive": true
+            }
+        ],
+        "import-x/no-unused-modules": [
+            "error"
+        ],
+        "import-x/order": [
+            "error",
+            {
+                "newlines-between": "ignore",
+                "groups": [
+                    [
+                        "builtin",
+                        "external",
+                        "internal",
+                        "parent",
+                        "sibling",
+                        "index"
+                    ]
+                ],
                 "distinctGroup": true,
+                "sortTypesGroup": false,
+                "named": false,
                 "warnOnUnassignedImports": false
             }
         ],
@@ -1339,14 +1349,11 @@
             "off"
         ],
         "max-len": [
-            "error",
+            "off",
             {
-                "code": 120,
-                "ignoreTrailingComments": true,
-                "ignoreUrls": true,
-                "ignoreStrings": true,
-                "ignoreTemplateLiterals": true,
-                "ignoreRegExpLiterals": true
+                "ignoreRegExpLiterals": false,
+                "ignoreStrings": false,
+                "code": 120
             }
         ],
         "max-lines": [
@@ -1383,7 +1390,7 @@
             "error"
         ],
         "no-class-assign": [
-            "error"
+            "off"
         ],
         "no-comma-dangle": [
             "off"
@@ -1488,7 +1495,7 @@
             "error"
         ],
         "no-loss-of-precision": [
-            "off"
+            "error"
         ],
         "no-magic-numbers": [
             "off"
@@ -1885,6 +1892,9 @@
             "error"
         ],
         "unicorn/consistent-destructuring": [
+            "off"
+        ],
+        "unicorn/consistent-empty-array-spread": [
             "error"
         ],
         "unicorn/consistent-function-scoping": [
@@ -1918,12 +1928,15 @@
             }
         ],
         "unicorn/import-style": [
-            "error"
+            "off"
         ],
         "unicorn/new-for-builtins": [
             "error"
         ],
         "unicorn/no-abusive-eslint-disable": [
+            "error"
+        ],
+        "unicorn/no-anonymous-default-export": [
             "error"
         ],
         "unicorn/no-array-callback-reference": [
@@ -1944,6 +1957,9 @@
         "unicorn/no-await-expression-member": [
             "error"
         ],
+        "unicorn/no-await-in-promise-methods": [
+            "error"
+        ],
         "unicorn/no-console-spaces": [
             "error"
         ],
@@ -1962,6 +1978,9 @@
         "unicorn/no-instanceof-array": [
             "error"
         ],
+        "unicorn/no-invalid-fetch-options": [
+            "error"
+        ],
         "unicorn/no-invalid-remove-event-listener": [
             "error"
         ],
@@ -1971,7 +1990,13 @@
         "unicorn/no-lonely-if": [
             "error"
         ],
+        "unicorn/no-magic-array-flat-depth": [
+            "error"
+        ],
         "unicorn/no-negated-condition": [
+            "error"
+        ],
+        "unicorn/no-negation-in-equality-check": [
             "error"
         ],
         "unicorn/no-nested-ternary": [
@@ -1992,6 +2017,9 @@
         "unicorn/no-process-exit": [
             "error"
         ],
+        "unicorn/no-single-promise-in-promise-methods": [
+            "error"
+        ],
         "unicorn/no-static-only-class": [
             "error"
         ],
@@ -2005,6 +2033,9 @@
             "error"
         ],
         "unicorn/no-unnecessary-await": [
+            "error"
+        ],
+        "unicorn/no-unnecessary-polyfills": [
             "error"
         ],
         "unicorn/no-unreadable-array-destructuring": [
@@ -2065,7 +2096,7 @@
             "error"
         ],
         "unicorn/prefer-at": [
-            "off"
+            "warn"
         ],
         "unicorn/prefer-blob-reading-methods": [
             "error"
@@ -2160,8 +2191,11 @@
         "unicorn/prefer-spread": [
             "error"
         ],
+        "unicorn/prefer-string-raw": [
+            "warn"
+        ],
         "unicorn/prefer-string-replace-all": [
-            "off"
+            "warn"
         ],
         "unicorn/prefer-string-slice": [
             "error"
@@ -2171,6 +2205,9 @@
         ],
         "unicorn/prefer-string-trim-start-end": [
             "error"
+        ],
+        "unicorn/prefer-structured-clone": [
+            "warn"
         ],
         "unicorn/prefer-switch": [
             "error"
@@ -2354,27 +2391,30 @@
         ]
     },
     "settings": {
-        "import/extensions": [
+        "import-x/extensions": [
             ".ts",
             ".tsx",
             ".d.ts",
             ".js",
             ".jsx",
-            ".jsx"
+            ".jsx",
+            ".cjs",
+            ".mjs"
         ],
-        "import/external-module-folders": [
+        "import-x/external-module-folders": [
             "node_modules",
             "node_modules/@types"
         ],
-        "import/parsers": {
+        "import-x/parsers": {
             "@typescript-eslint/parser": [
                 ".ts",
                 ".tsx",
                 ".d.ts",
-                ".tsx"
+                ".cts",
+                ".mts"
             ]
         },
-        "import/resolver": {
+        "import-x/resolver": {
             "typescript": {
                 "extensions": [
                     ".ts",
@@ -2395,16 +2435,6 @@
                     "node-addons",
                     "browser",
                     "default"
-                ]
-            },
-            "node": {
-                "extensions": [
-                    ".ts",
-                    ".cts",
-                    ".mts",
-                    ".tsx",
-                    ".js",
-                    ".jsx"
                 ]
             }
         },

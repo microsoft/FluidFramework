@@ -6,6 +6,9 @@
 /**
  * Base configuration from which all of our exported configs extends.
  */
+const {
+	configs: { recommended: eslintRecommended },
+} = require("@eslint/js");
 module.exports = {
 	env: {
 		browser: true,
@@ -15,13 +18,14 @@ module.exports = {
 	},
 	extends: [
 		"eslint:recommended",
-		"plugin:eslint-comments/recommended",
+		"plugin:@eslint-community/eslint-comments/recommended",
 		"plugin:@typescript-eslint/eslint-recommended",
 		"plugin:@typescript-eslint/recommended-type-checked",
 		"plugin:@typescript-eslint/stylistic-type-checked",
-		// import/recommended is the combination of import/errors and import/warnings
-		"plugin:import/recommended",
-		"plugin:import/typescript",
+		"plugin:depend/recommended",
+		// import-x/recommended is the combination of import-x/errors and import-x/warnings
+		"plugin:import-x/recommended",
+		"plugin:import-x/typescript",
 	],
 	globals: {
 		Atomics: "readonly",
@@ -36,15 +40,9 @@ module.exports = {
 		sourceType: "module",
 		project: "./tsconfig.json",
 	},
-	plugins: ["import", "unicorn"],
+	plugins: ["depend", "import-x", "unicorn"],
 	reportUnusedDisableDirectives: true,
 	rules: {
-		// These rules were deprecated, then removed in `@typescript-eslint/eslint-plugin` v8.
-		// They are replaced by a set of more specific rules, which have been enabled in the list below.
-		// These explicit disable will need to be removed when this package is updated to v8+ of the plugin.
-		"@typescript-eslint/ban-types": "off",
-		"@typescript-eslint/no-empty-interface": "off",
-
 		// Please keep entries alphabetized within a group
 
 		// #region Fluid Custom Rules
@@ -71,9 +69,6 @@ module.exports = {
 		"@typescript-eslint/adjacent-overload-signatures": "error",
 		"@typescript-eslint/array-type": "error",
 		"@typescript-eslint/await-thenable": "error",
-		"@typescript-eslint/brace-style": "off",
-		"@typescript-eslint/comma-dangle": ["error", "always-multiline"],
-		"@typescript-eslint/comma-spacing": "off",
 		"@typescript-eslint/consistent-type-assertions": [
 			"error",
 			{
@@ -84,14 +79,10 @@ module.exports = {
 		"@typescript-eslint/consistent-type-definitions": "error",
 		"@typescript-eslint/dot-notation": "error",
 		"@typescript-eslint/explicit-function-return-type": "off",
-		"@typescript-eslint/func-call-spacing": "off",
-		"@typescript-eslint/keyword-spacing": "off",
-		"@typescript-eslint/member-delimiter-style": "off",
 		"@typescript-eslint/no-dynamic-delete": "error",
 		"@typescript-eslint/no-empty-function": "off",
 		"@typescript-eslint/no-empty-object-type": "error",
 		"@typescript-eslint/no-explicit-any": "off",
-		"@typescript-eslint/no-extra-semi": "error",
 		"@typescript-eslint/no-extraneous-class": "error",
 		"@typescript-eslint/no-floating-promises": "error",
 		"@typescript-eslint/no-for-in-array": "error",
@@ -109,45 +100,24 @@ module.exports = {
 			},
 		],
 		"@typescript-eslint/no-this-alias": "error",
-		"@typescript-eslint/no-throw-literal": "error",
 		"@typescript-eslint/no-unused-expressions": "error",
 		"@typescript-eslint/no-unused-vars": "off",
 		"@typescript-eslint/no-unnecessary-qualifier": "error",
 		"@typescript-eslint/no-unnecessary-type-arguments": "error",
 		"@typescript-eslint/no-unnecessary-type-assertion": "error",
 		"@typescript-eslint/no-unsafe-function-type": "error",
-		"@typescript-eslint/no-var-requires": "error",
-		"@typescript-eslint/object-curly-spacing": "off",
+		"@typescript-eslint/only-throw-error": "error",
 		"@typescript-eslint/prefer-for-of": "error",
 		"@typescript-eslint/prefer-function-type": "error",
 		"@typescript-eslint/prefer-namespace-keyword": "error",
 		"@typescript-eslint/prefer-readonly": "error",
 		"@typescript-eslint/promise-function-async": "error",
-		"@typescript-eslint/quotes": [
-			"error",
-			"double",
-			{
-				allowTemplateLiterals: true,
-				avoidEscape: true,
-			},
-		],
 		"@typescript-eslint/require-await": "off",
 		"@typescript-eslint/restrict-plus-operands": "error",
 		"@typescript-eslint/restrict-template-expressions": "off",
 		"@typescript-eslint/return-await": "error",
-		"@typescript-eslint/semi": ["error", "always"],
-		"@typescript-eslint/space-infix-ops": "error",
-		"@typescript-eslint/space-before-function-paren": [
-			"error",
-			{
-				anonymous: "never",
-				asyncArrow: "always",
-				named: "never",
-			},
-		],
 		"@typescript-eslint/strict-boolean-expressions": "error",
 		"@typescript-eslint/triple-slash-reference": "error",
-		"@typescript-eslint/type-annotation-spacing": "error",
 		"@typescript-eslint/unbound-method": [
 			"error",
 			{
@@ -159,40 +129,47 @@ module.exports = {
 
 		// #endregion
 
-		// eslint-plugin-eslint-comments
-		"eslint-comments/disable-enable-pair": [
+		// @eslint-community/eslint-plugin-eslint-comments
+		"@eslint-community/eslint-comments/disable-enable-pair": [
 			"error",
 			{
 				allowWholeFile: true,
 			},
 		],
 
-		// #region eslint-plugin-import
+		// eslint-plugin-depend
+		"depend/ban-dependencies": [
+			"error",
+			{
+				allowed: [
+					// axios replacement with fetch is ongoing: https://github.com/microsoft/FluidFramework/pull/25592
+					"axios",
 
-		"import/no-default-export": "error",
-		"import/no-deprecated": "off",
-		"import/no-extraneous-dependencies": "error",
-		"import/no-internal-modules": "error",
-		"import/no-unassigned-import": "error",
-		"import/no-unresolved": [
+					// fs-extra is well-maintained and provides a useful readJson/writeJson API which is what we mainly use.
+					"fs-extra",
+				],
+			},
+		],
+
+		// #region eslint-plugin-import-x
+
+		"import-x/no-default-export": "error",
+		"import-x/no-deprecated": "off",
+		"import-x/no-extraneous-dependencies": "error",
+		"import-x/no-internal-modules": "error",
+		"import-x/no-unassigned-import": "error",
+		"import-x/no-unresolved": [
 			"error",
 			{
 				caseSensitive: true,
 			},
 		],
-		"import/no-unused-modules": "error",
-		"import/order": [
+		"import-x/no-unused-modules": "error",
+		"import-x/order": [
 			"error",
 			{
-				"newlines-between": "always",
-				"alphabetize": {
-					order: "asc",
-					// Sorting is case-sensitive by default, which is the same as Biome. To avoid
-					// another huge set of changes to order things case-insensitively, we'll just
-					// use the rule with this config for now. This decision should be considered
-					// pragmatic and not a statement of preference, and we should revisit this.
-					caseInsensitive: false,
-				},
+				"newlines-between": "ignore",
+				"groups": [["builtin", "external", "internal", "parent", "sibling", "index"]],
 			},
 		],
 
@@ -367,19 +344,45 @@ module.exports = {
 			// Rules only for type validation files
 			files: ["**/types/*validate*Previous*.ts"],
 			rules: {
-				"@typescript-eslint/comma-spacing": "off",
+				"import-x/order": "off",
 			},
 		},
 	],
 	settings: {
-		"import/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
-		"import/parsers": {
-			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts"],
+		"import-x/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
+		"import-x/parsers": {
+			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts", ".cts", ".mts"],
 		},
-		"import/resolver": {
-			// See remark in minimal-deprecated.js on the importance of import/resolver key order.
-			node: {
-				extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
+		"import-x/resolver": {
+			typescript: {
+				extensions: [
+					// `.mts`, `.cts`, `.d.mts`, `.d.cts`, `.mjs`, `.cjs` are not included because `.cjs` and `.mjs` must be used
+					// explicitly in imports
+					".ts",
+					".tsx",
+					".d.ts",
+					".js",
+					".jsx",
+				],
+				conditionNames: [
+					// This supports the test-only conditional export pattern used in merge-tree and id-compressor.
+					"allow-ff-test-exports",
+
+					// Default condition names below, see https://github.com/import-js/eslint-import-resolver-typescript#conditionnames
+					"types",
+					"import",
+
+					// APF: https://angular.io/guide/angular-package-format
+					"esm2020",
+					"es2020",
+					"es2015",
+
+					"require",
+					"node",
+					"node-addons",
+					"browser",
+					"default",
+				],
 			},
 		},
 	},

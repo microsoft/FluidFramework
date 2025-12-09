@@ -15,7 +15,7 @@ module.exports = {
 		// TODO: Reenable no-explicit-any once need with ValueDirectoryOrState is
 		// understood. If `any` is still needed disable is on a per line basis.
 		"@typescript-eslint/no-explicit-any": "off",
-		"import/no-internal-modules": [
+		"import-x/no-internal-modules": [
 			"error",
 			{
 				"allow": [
@@ -34,8 +34,11 @@ module.exports = {
 			rules: {
 				"@typescript-eslint/no-explicit-any": "error",
 
+				// TODO: There are several violations, mostly in test code. Set to warn to enable cleanup while unblocking lint upgrades.
+				"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+
 				// Test files are run in node only so additional node libraries can be used.
-				"import/no-nodejs-modules": ["error", { allow: ["node:assert"] }],
+				"import-x/no-nodejs-modules": ["error", { allow: ["node:assert"] }],
 			},
 		},
 	],

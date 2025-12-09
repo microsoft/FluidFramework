@@ -4,6 +4,7 @@
  */
 
 import { type Static, type TSchema, Type } from "@sinclair/typebox";
+import type { FieldBatchFormatVersion } from "./format.js";
 
 /**
  * Identifier OR Index of an identifier in the identifier list.
@@ -39,11 +40,14 @@ const EncodedFieldBatchBase = Type.Object(
 
 /**
  * Format for encoding a tree chunk.
- * @param version - format version. Must be changed if there is any change to the generic schema, or the `shape` schema.
+ * @param version - format version.
+ * Must be changed if the previously existing decode logic will not correctly handle the new encoding.
+ * If adding a new encoding version which does not use this format,
+ * this parameter should be retyped to be a union of the subset of FieldBatchFormatVersion values which this supports.
  * @param shape - schema for union of shape format, see {@link DiscriminatedUnionDispatcher}.
  */
 export const EncodedFieldBatchGeneric = <TShapeSchema extends TSchema>(
-	version: number,
+	version: FieldBatchFormatVersion,
 	shape: TShapeSchema,
 	// Return type is intentionally derived.
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -62,4 +66,5 @@ export const EncodedFieldBatchGeneric = <TShapeSchema extends TSchema>(
 export interface EncodedFieldBatchGeneric<TEncodedShape>
 	extends Static<typeof EncodedFieldBatchBase> {
 	shapes: TEncodedShape[];
+	version: FieldBatchFormatVersion;
 }

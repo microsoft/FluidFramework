@@ -12,13 +12,13 @@ import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
+	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type TestFluidObjectInternal,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
-import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
 
 import {
 	CommitKind,
@@ -30,11 +30,12 @@ import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	EmptyKey,
+	ValueSchema,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	ChunkedForest,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
 	flexTreeSlot,
@@ -44,7 +45,7 @@ import {
 } from "../../feature-libraries/index.js";
 import {
 	ObjectForest,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/object-forest/objectForest.js";
 import {
 	ForestTypeExpensiveDebug,
@@ -52,14 +53,12 @@ import {
 	ForestTypeReference,
 	getBranch,
 	type ITreePrivate,
-	SharedTreeFormatVersion,
 	Tree,
-	TreeAlpha,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
 import {
 	SchematizingSimpleTreeView,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/schematizingTreeView.js";
 import type { EditManager } from "../../shared-tree-core/index.js";
 import {
@@ -71,6 +70,10 @@ import {
 	SchemaFactoryAlpha,
 	type ITree,
 	toInitialSchema,
+	NodeKind,
+	type SimpleTreeSchema,
+	FieldKind,
+	type SimpleLeafNodeSchema,
 } from "../../simple-tree/index.js";
 import { brand } from "../../util/index.js";
 import {
@@ -83,7 +86,6 @@ import {
 	expectSchemaEqual,
 	validateTreeConsistency,
 	validateTreeContent,
-	validateUsageError,
 	StringArray,
 	NumberArray,
 	validateViewConsistency,
@@ -97,6 +99,7 @@ import {
 } from "../utils.js";
 import {
 	configuredSharedTree,
+	resolveOptions,
 	SharedTree as SharedTreeKind,
 	type ISharedTree,
 } from "../../treeFactory.js";
@@ -109,12 +112,12 @@ import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/inde
 import { AttachState } from "@fluidframework/container-definitions";
 import { JsonAsTree } from "../../jsonDomainSchema.js";
 import {
-	toSimpleTreeSchema,
-	// eslint-disable-next-line import/no-internal-modules
+	TreeBeta,
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/api/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContent } from "../feature-libraries/flex-tree/utils.js";
 import { FluidClientVersion } from "../../codec/index.js";
 import { asAlpha } from "../../api.js";
@@ -154,15 +157,6 @@ function treeTestFactory(): ISharedTree {
 }
 
 describe("SharedTree", () => {
-	let debugAssertsDefault: boolean;
-	beforeEach(() => {
-		debugAssertsDefault = configureDebugAsserts(true);
-	});
-
-	afterEach(() => {
-		configureDebugAsserts(debugAssertsDefault);
-	});
-
 	describe("viewWith", () => {
 		it("@Smoke initialize tree", () => {
 			const tree = treeTestFactory();
@@ -1650,7 +1644,7 @@ describe("SharedTree", () => {
 					2,
 					configuredSharedTree({
 						jsonValidator: FormatValidatorBasic,
-						formatVersion: SharedTreeFormatVersion.vSharedBranches,
+						enableSharedBranches: true,
 					}).getFactory(),
 				);
 
@@ -1703,8 +1697,8 @@ describe("SharedTree", () => {
 			});
 			provider.synchronizeMessages();
 
-			assert.deepEqual(TreeAlpha.exportConcise(viewA.root), { child: { id: "B" } });
-			assert.deepEqual(TreeAlpha.exportConcise(viewB.root), { child: { id: "B" } });
+			assert.deepEqual(TreeBeta.exportConcise(viewA.root), { child: { id: "B" } });
+			assert.deepEqual(TreeBeta.exportConcise(viewB.root), { child: { id: "B" } });
 
 			const restoreChildA = stack.undoStack[0] ?? assert.fail("Missing undo");
 
@@ -1713,14 +1707,14 @@ describe("SharedTree", () => {
 			viewB.root.child = new JsonAsTree.JsonObject({ id: "C" });
 			provider.synchronizeMessages();
 
-			assert.deepEqual(TreeAlpha.exportConcise(viewA.root), { child: { id: "C" } });
-			assert.deepEqual(TreeAlpha.exportConcise(viewB.root), { child: { id: "C" } });
+			assert.deepEqual(TreeBeta.exportConcise(viewA.root), { child: { id: "C" } });
+			assert.deepEqual(TreeBeta.exportConcise(viewB.root), { child: { id: "C" } });
 
 			// This revert should do nothing since its constraint on the undo has been violated.
 			restoreChildA.revert();
 
-			assert.deepEqual(TreeAlpha.exportConcise(viewA.root), { child: { id: "C" } });
-			assert.deepEqual(TreeAlpha.exportConcise(viewB.root), { child: { id: "C" } });
+			assert.deepEqual(TreeBeta.exportConcise(viewA.root), { child: { id: "C" } });
+			assert.deepEqual(TreeBeta.exportConcise(viewB.root), { child: { id: "C" } });
 
 			stack.unsubscribe();
 		});
@@ -2328,14 +2322,14 @@ describe("SharedTree", () => {
 		});
 	});
 
-	describe("Shared Tree format v5 enablement via `configuredSharedTree`", () => {
-		it("can create a SharedTree with format v5 enabled", async () => {
+	describe("Schema v2 format enablement via `configuredSharedTree`", () => {
+		it("can create a SharedTree with schema format v2 enabled", async () => {
 			// Create and initialize the runtime factory
 			const runtime = new MockSharedTreeRuntime();
 
-			// Enable Shared Tree format v5, which corresponds to schema format v2. Create a Shared Tree instance.
+			// Enable schema format v2
 			const tree = configuredSharedTree({
-				formatVersion: SharedTreeFormatVersion.v5,
+				minVersionForCollab: FluidClientVersion.v2_43,
 			}).create(runtime);
 			const schemaFactory = new SchemaFactoryAlpha("com.example");
 
@@ -2443,11 +2437,13 @@ describe("SharedTree", () => {
 	});
 
 	it("summarize with pre-attach removed nodes", () => {
-		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
+		const runtime = new MockFluidDataStoreRuntime({
+			idCompressor: createIdCompressor(),
+			minVersionForCollab: FluidClientVersion.v2_52,
+		});
 		const sharedObject = configuredSharedTree({
 			jsonValidator: FormatValidatorBasic,
 			forest: ForestTypeExpensiveDebug,
-			oldestCompatibleClient: FluidClientVersion.v2_52,
 		}) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
 		const tree = sharedObject.getFactory().create(runtime, "tree");
 		const runtimeFactory = new MockContainerRuntimeFactory();
@@ -2495,10 +2491,15 @@ describe("SharedTree", () => {
 	it("exportVerbose & exportSimpleSchema", () => {
 		const tree = treeTestFactory();
 		assert.deepEqual(tree.exportVerbose(), undefined);
-		assert.deepEqual(
-			tree.exportSimpleSchema(),
-			toSimpleTreeSchema(SchemaFactory.optional([]), true),
-		);
+		assert.deepEqual(tree.exportSimpleSchema(), {
+			definitions: new Map(),
+			root: {
+				kind: FieldKind.Optional,
+				simpleAllowedTypes: new Map(),
+				metadata: {},
+				persistedMetadata: undefined,
+			},
+		} satisfies SimpleTreeSchema);
 
 		const config = new TreeViewConfiguration({
 			schema: numberSchema,
@@ -2507,7 +2508,29 @@ describe("SharedTree", () => {
 		view.initialize(10);
 
 		assert.deepEqual(tree.exportVerbose(), 10);
-		assert.deepEqual(tree.exportSimpleSchema(), toSimpleTreeSchema(numberSchema, true));
+
+		const expected: SimpleTreeSchema = {
+			root: {
+				kind: FieldKind.Required,
+				simpleAllowedTypes: new Map([
+					["com.fluidframework.leaf.number", { isStaged: undefined }],
+				]),
+				metadata: {},
+				persistedMetadata: undefined,
+			},
+			definitions: new Map([
+				[
+					"com.fluidframework.leaf.number",
+					{
+						kind: NodeKind.Leaf,
+						leafKind: ValueSchema.Number,
+						metadata: {},
+						persistedMetadata: undefined,
+					} satisfies SimpleLeafNodeSchema,
+				],
+			]),
+		};
+		assert.deepEqual(tree.exportSimpleSchema(), expected);
 	});
 
 	it("supports multiple shared branches", () => {
@@ -2515,7 +2538,7 @@ describe("SharedTree", () => {
 			2,
 			configuredSharedTree({
 				jsonValidator: FormatValidatorBasic,
-				formatVersion: SharedTreeFormatVersion.vSharedBranches,
+				enableSharedBranches: true,
 			}).getFactory(),
 		);
 		const tree1 = provider.trees[0];
@@ -2559,12 +2582,11 @@ describe("SharedTree", () => {
 			"based on a commit outside the collab window",
 		] as const) {
 			it(subCase, async () => {
+				const internalOption = resolveOptions({ enableSharedBranches: true });
 				const provider = await TestTreeProvider.create(
 					1,
 					SummarizeType.onDemand,
-					new SharedTreeTestFactory(() => {}, undefined, {
-						formatVersion: SharedTreeFormatVersion.vSharedBranches,
-					}),
+					new SharedTreeTestFactory(() => {}, undefined, internalOption),
 				);
 				const tree1 = provider.trees[0];
 				const config = new TreeViewConfiguration({

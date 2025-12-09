@@ -15,8 +15,64 @@ export function adaptEnum<TScope extends string, const TEnum extends Record<stri
         }, Record<string, never>, true, Record<string, never>, undefined>; }[keyof TEnum]>;
 };
 
+// @beta @input
+export interface AllowedTypeMetadata {
+    readonly custom?: unknown;
+    readonly stagedSchemaUpgrade?: SchemaUpgrade;
+}
+
 // @public @system
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
+
+// @beta @sealed
+export type AllowedTypesFull<T extends readonly AnnotatedAllowedType[] = readonly AnnotatedAllowedType[]> = AnnotatedAllowedTypes<T> & UnannotateAllowedTypesList<T>;
+
+// @beta @sealed
+export type AllowedTypesFullEvaluated = AllowedTypesFull<readonly AnnotatedAllowedType<TreeNodeSchema>[]>;
+
+// @beta @sealed @system
+export type AllowedTypesFullFromMixed<T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]> = UnannotateAllowedTypesList<T> & AnnotatedAllowedTypes<AnnotateAllowedTypesList<T>>;
+
+// @beta @sealed @system
+export type AllowedTypesFullFromMixedUnsafe<T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]> = UnannotateAllowedTypesListUnsafe<T> & AnnotatedAllowedTypes<AnnotateAllowedTypesListUnsafe<T>>;
+
+// @beta @input
+export interface AllowedTypesMetadata {
+    readonly custom?: unknown;
+}
+
+// @beta @system
+export type AnnotateAllowedTypesList<T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]> = {
+    [I in keyof T]: T[I] extends AnnotatedAllowedType<unknown> ? T[I] : AnnotatedAllowedType<T[I]>;
+};
+
+// @beta @sealed @system
+export type AnnotateAllowedTypesListUnsafe<T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]> = {
+    [I in keyof T]: T[I] extends AnnotatedAllowedTypeUnsafe ? T[I] : AnnotatedAllowedTypeUnsafe<T[I]>;
+};
+
+// @beta @sealed
+export interface AnnotatedAllowedType<T = LazyItem<TreeNodeSchema>> {
+    readonly metadata: AllowedTypeMetadata;
+    readonly type: T;
+}
+
+// @beta @sealed
+export interface AnnotatedAllowedTypes<T = readonly AnnotatedAllowedType[]> extends ErasedBaseType<"tree.AnnotatedAllowedTypes"> {
+    evaluate(): AllowedTypesFullEvaluated;
+    evaluateIdentifiers(): ReadonlySet<string>;
+    evaluateSet(): ReadonlySet<TreeNodeSchema>;
+    readonly metadata: AllowedTypesMetadata;
+    readonly types: T;
+}
+
+// @beta @sealed @system
+export interface AnnotatedAllowedTypesUnsafe extends AnnotatedAllowedTypes<LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>> {
+}
+
+// @beta @sealed @system
+export interface AnnotatedAllowedTypeUnsafe<T = Unenforced<LazyItem<TreeNodeSchema>>> extends AnnotatedAllowedType<T> {
+}
 
 // @public @system
 type ApplyKind<T, Kind extends FieldKind> = {
@@ -29,6 +85,9 @@ type ApplyKind<T, Kind extends FieldKind> = {
 type ApplyKindInput<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> = [
 Kind
 ] extends [FieldKind.Required] ? T : [Kind] extends [FieldKind.Optional] ? T | undefined : [Kind] extends [FieldKind.Identifier] ? DefaultsAreOptional extends true ? T | undefined : T : never;
+
+// @beta
+export function asBeta<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewBeta<TSchema>;
 
 // @public
 export enum AttachState {
@@ -49,6 +108,11 @@ export interface CommitMetadata {
     readonly isLocal: boolean;
     readonly kind: CommitKind;
 }
+
+// @beta
+export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | ConciseTree<THandle>[] | {
+    [key: string]: ConciseTree<THandle>;
+};
 
 // @beta
 export function configuredSharedTreeBeta(options: SharedTreeOptionsBeta): SharedObjectKind<ITree>;
@@ -85,6 +149,9 @@ export interface ContainerSchema {
     readonly initialObjects: Record<string, SharedObjectKind>;
 }
 
+// @beta
+export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions): ViewableTree;
+
 // @public @sealed @system
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
 }
@@ -102,6 +169,12 @@ export function enumFromStrings<TScope extends string, const Members extends rea
             readonly value: Members[Index];
         }, Record<string, never>, true, Record<string, never>, undefined>; }[Members[number]] : never>;
 };
+
+// @beta @sealed @system
+export abstract class ErasedBaseType<out Name = unknown> {
+    protected constructor();
+    protected abstract brand(dummy: never): Name;
+}
 
 // @public @sealed
 export abstract class ErasedType<out Name = unknown> {
@@ -152,6 +225,9 @@ export interface FieldSchemaMetadata<TCustomMetadata = unknown> {
     readonly description?: string | undefined;
 }
 
+// @beta
+export type FixRecursiveArraySchema<T> = T extends TreeNodeSchema ? undefined : undefined;
+
 // @public @system
 type FlattenKeys<T> = [{
     [Property in keyof T]: T[Property];
@@ -170,6 +246,30 @@ export type FluidObject<T = unknown> = {
 
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
+
+// @beta
+export namespace FluidSerializableAsTree {
+    // @sealed
+    export class Array extends _APIExtractorWorkaroundArrayBase {
+    }
+    const Tree: readonly [() => typeof FluidSerializableObject, () => typeof Array, LeafSchema_2<"string", string>, LeafSchema_2<"number", number>, LeafSchema_2<"boolean", boolean>, LeafSchema_2<"null", null>, LeafSchema_2<"handle", IFluidHandle<unknown>>];
+    export type Data = JsonCompatible<IFluidHandle>;
+    const // @system
+    _APIExtractorWorkaroundObjectBase: TreeNodeSchemaClass_2<"com.fluidframework.serializable.object", NodeKind_2.Record, TreeRecordNodeUnsafe_2<readonly [() => typeof FluidSerializableObject, () => typeof Array, LeafSchema_2<"string", string>, LeafSchema_2<"number", number>, LeafSchema_2<"boolean", boolean>, LeafSchema_2<"null", null>, LeafSchema_2<"handle", IFluidHandle<unknown>>]> & WithType_2<"com.fluidframework.serializable.object", NodeKind_2.Record, unknown>, {
+    readonly [x: string]: string | number | IFluidHandle<unknown> | System_Unsafe_2.InsertableTypedNodeUnsafe<LeafSchema_2<"boolean", boolean>, LeafSchema_2<"boolean", boolean>> | FluidSerializableObject | Array | null;
+    }, false, readonly [() => typeof FluidSerializableObject, () => typeof Array, LeafSchema_2<"string", string>, LeafSchema_2<"number", number>, LeafSchema_2<"boolean", boolean>, LeafSchema_2<"null", null>, LeafSchema_2<"handle", IFluidHandle<unknown>>], undefined, unknown>;
+    // @sealed
+    export class FluidSerializableObject extends _APIExtractorWorkaroundObjectBase {
+    }
+    // @system
+    export type _RecursiveArrayWorkaroundJsonArray = FixRecursiveArraySchema<typeof Array>;
+    const // @system
+    _APIExtractorWorkaroundArrayBase: TreeNodeSchemaClass_2<"com.fluidframework.serializable.array", NodeKind_2.Array, System_Unsafe_2.TreeArrayNodeUnsafe<readonly [() => typeof FluidSerializableObject, () => typeof Array, LeafSchema_2<"string", string>, LeafSchema_2<"number", number>, LeafSchema_2<"boolean", boolean>, LeafSchema_2<"null", null>, LeafSchema_2<"handle", IFluidHandle<unknown>>]> & WithType_2<"com.fluidframework.serializable.array", NodeKind_2.Array, unknown>, {
+    [Symbol.iterator](): Iterator<string | number | IFluidHandle<unknown> | System_Unsafe_2.InsertableTypedNodeUnsafe<LeafSchema_2<"boolean", boolean>, LeafSchema_2<"boolean", boolean>> | FluidSerializableObject | Array | null, any, undefined>;
+    }, false, readonly [() => typeof FluidSerializableObject, () => typeof Array, LeafSchema_2<"string", string>, LeafSchema_2<"number", number>, LeafSchema_2<"boolean", boolean>, LeafSchema_2<"null", null>, LeafSchema_2<"handle", IFluidHandle<unknown>>], undefined>;
+    // (undocumented)
+    export type Tree = TreeNodeFromImplicitAllowedTypes<typeof Tree>;
+}
 
 // @beta @input
 export interface ForestOptions {
@@ -516,8 +616,10 @@ export type InsertableTreeFieldFromImplicitField<TSchemaInput extends ImplicitFi
 
 // @public @system
 export type InsertableTreeNodeFromAllowedTypes<TList extends AllowedTypes> = IsUnion<TList> extends true ? never : {
-    readonly [Property in keyof TList]: TList[Property] extends LazyItem<infer TSchema extends TreeNodeSchema> ? InsertableTypedNode<TSchema> : never;
-}[number];
+    readonly [Property in keyof TList]: [TList[Property]] extends [
+    LazyItem<infer TSchema extends TreeNodeSchema>
+    ] ? InsertableTypedNode<TSchema> : never;
+}[NumberKeys<TList>];
 
 // @public
 export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes> = [
@@ -837,6 +939,21 @@ export interface IValueChanged {
     readonly previousValue: any;
 }
 
+// @beta
+export type JsonCompatible<TExtra = never> = string | number | boolean | null | JsonCompatible<TExtra>[] | JsonCompatibleObject<TExtra> | TExtra;
+
+// @beta
+export type JsonCompatibleObject<TExtra = never> = {
+    [P in string]?: JsonCompatible<TExtra>;
+};
+
+// @beta @input
+export enum KeyEncodingOptions {
+    allStoredKeys = "allStoredKeys",
+    knownStoredKeys = "knownStoredKeys",
+    usePropertyKeys = "usePropertyKeys"
+}
+
 // @public
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
@@ -910,9 +1027,19 @@ export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
 }
 
 // @public @system
+export type NumberKeys<T, Transformed = {
+    readonly [Property in keyof T as number extends Property ? never : Property]: Property;
+}> = Transformed[`${number}` & keyof Transformed];
+
+// @public @system
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = RestrictiveStringRecord<ImplicitFieldSchema> extends T ? {} : {
     -readonly [Property in keyof T]: Property extends string ? TreeFieldFromImplicitField<T[Property]> : unknown;
 };
+
+// @beta @input
+export interface ObjectSchemaOptions<TCustomMetadata = unknown> extends NodeSchemaOptions<TCustomMetadata> {
+    readonly allowUnknownOptionalFields?: boolean;
+}
 
 // @public
 export type Off = () => void;
@@ -1020,12 +1147,23 @@ export const SchemaFactory_base: SchemaStatics & (new () => SchemaStatics);
 
 // @beta
 export class SchemaFactoryBeta<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactory<TScope, TName> {
+    object<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>, const TCustomMetadata = unknown>(name: Name, fields: T, options?: ObjectSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T, never, TCustomMetadata>;
+    // (undocumented)
+    objectRecursive<const Name extends TName, const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>, const TCustomMetadata = unknown>(name: Name, t: T, options?: ObjectSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>, false, T, never, TCustomMetadata>;
     record<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchemaNonClass<ScopedSchemaName<TScope, `Record<${string}>`>, NodeKind.Record, TreeRecordNode<T> & WithType<ScopedSchemaName<TScope, `Record<${string}>`>, NodeKind.Record>, RecordNodeInsertableData<T>, true, T, undefined>;
-    record<const Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Record, TreeRecordNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Record>, RecordNodeInsertableData<T>, true, T, undefined>;
+    record<const Name extends TName, const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Record, TreeRecordNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Record>, RecordNodeInsertableData<T>, true, T, undefined, TCustomMetadata>;
     recordRecursive<Name extends TName, const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Record, TreeRecordNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Record, unknown>, {
         readonly [x: string]: System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>;
     }, false, T, undefined, TCustomMetadata>;
     scopedFactory<const T extends TName, TNameInner extends number | string = string>(name: T): SchemaFactoryBeta<ScopedSchemaName<TScope, T>, TNameInner>;
+    static staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
+    staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
+    static stagedRecursive: <const T extends unknown>(t: T) => AnnotatedAllowedTypeUnsafe<UnannotateAllowedTypeUnsafe<T>>;
+    stagedRecursive: <const T extends unknown>(t: T) => AnnotatedAllowedTypeUnsafe<UnannotateAllowedTypeUnsafe<T>>;
+    static types: <const T extends readonly (LazyItem<TreeNodeSchema> | AnnotatedAllowedType<LazyItem<TreeNodeSchema>>)[]>(t: T, metadata?: AllowedTypesMetadata | undefined) => AllowedTypesFullFromMixed<T>;
+    types: <const T extends readonly (LazyItem<TreeNodeSchema> | AnnotatedAllowedType<LazyItem<TreeNodeSchema>>)[]>(t: T, metadata?: AllowedTypesMetadata | undefined) => AllowedTypesFullFromMixed<T>;
+    static typesRecursive: <const T extends readonly unknown[]>(t: T, metadata?: AllowedTypesMetadata | undefined) => AllowedTypesFullFromMixedUnsafe<T>;
+    typesRecursive: <const T extends readonly unknown[]>(t: T, metadata?: AllowedTypesMetadata | undefined) => AllowedTypesFullFromMixedUnsafe<T>;
 }
 
 // @public @sealed @system
@@ -1046,6 +1184,20 @@ export interface SchemaStatics {
     readonly required: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">) => FieldSchema<FieldKind.Required, T, TCustomMetadata>;
     readonly requiredRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">) => System_Unsafe.FieldSchemaUnsafe<FieldKind.Required, T, TCustomMetadata>;
     readonly string: LeafSchema<"string", string>;
+}
+
+// @beta @sealed @system
+export interface SchemaStaticsBeta {
+    readonly staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
+    stagedRecursive: <const T extends Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>>(t: T) => AnnotatedAllowedTypeUnsafe<UnannotateAllowedTypeUnsafe<T>>;
+    readonly types: <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>(t: T, metadata?: AllowedTypesMetadata) => AllowedTypesFullFromMixed<T>;
+    readonly typesRecursive: <const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]>(t: T, metadata?: AllowedTypesMetadata) => AllowedTypesFullFromMixedUnsafe<T>;
+}
+
+// @beta @sealed
+export class SchemaUpgrade {
+    // (undocumented)
+    protected _typeCheck: MakeNominal;
 }
 
 // @public @system
@@ -1293,11 +1445,22 @@ export const TreeArrayNode: {
 export interface TreeBeta {
     clone<const TSchema extends ImplicitFieldSchema>(node: TreeFieldFromImplicitField<TSchema>): TreeFieldFromImplicitField<TSchema>;
     create<const TSchema extends ImplicitFieldSchema>(schema: TSchema, data: InsertableTreeFieldFromImplicitField<TSchema>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+    exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
+    exportConcise(node: TreeNode | TreeLeafValue | undefined, options?: TreeEncodingOptions): ConciseTree | undefined;
+    importConcise<const TSchema extends ImplicitFieldSchema>(schema: TSchema, data: ConciseTree | undefined): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
     on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(node: TNode, eventName: K, listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>): () => void;
 }
 
 // @beta
 export const TreeBeta: TreeBeta;
+
+// @beta @sealed
+export interface TreeBranch extends IDisposable {
+    dispose(error?: Error): void;
+    fork(): TreeBranch;
+    merge(branch: TreeBranch, disposeMerged?: boolean): void;
+    rebaseOnto(branch: TreeBranch): void;
+}
 
 // @public @sealed
 export interface TreeChangeEvents {
@@ -1308,6 +1471,11 @@ export interface TreeChangeEvents {
 // @beta @sealed
 export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode> extends TreeChangeEvents {
     nodeChanged: (data: NodeChangedData<TNode> & (TNode extends WithType<string, NodeKind.Map | NodeKind.Object | NodeKind.Record> ? Required<Pick<NodeChangedData<TNode>, "changedProperties">> : unknown)) => void;
+}
+
+// @beta @input
+export interface TreeEncodingOptions<TKeyOptions = KeyEncodingOptions> {
+    readonly keys?: TKeyOptions;
 }
 
 // @public
@@ -1417,10 +1585,15 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
     upgradeSchema(): void;
 }
 
+// @beta @sealed
+export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, TreeBranch {
+    // (undocumented)
+    fork(): ReturnType<TreeBranch["fork"]> & TreeViewBeta<TSchema>;
+}
+
 // @public @sealed
 export class TreeViewConfiguration<const TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> implements Required<ITreeViewConfiguration<TSchema>> {
     constructor(props: ITreeViewConfiguration<TSchema>);
-    protected readonly definitionsInternal: ReadonlyMap<string, TreeNodeSchema>;
     readonly enableSchemaValidation: boolean;
     readonly preventAmbiguity: boolean;
     readonly schema: TSchema;
@@ -1440,6 +1613,21 @@ const typeNameSymbol: unique symbol;
 
 // @public @system
 export const typeSchemaSymbol: unique symbol;
+
+// @beta @system
+export type UnannotateAllowedTypesList<T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]> = {
+    [I in keyof T]: T[I] extends AnnotatedAllowedType<infer X> ? X : T[I];
+};
+
+// @beta @sealed @system
+export type UnannotateAllowedTypesListUnsafe<T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]> = {
+    readonly [I in keyof T]: T[I] extends {
+        type: infer X;
+    } ? X : T[I];
+};
+
+// @beta @sealed @system
+export type UnannotateAllowedTypeUnsafe<T extends Unenforced<AnnotatedAllowedTypeUnsafe | LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>>> = T extends AnnotatedAllowedTypeUnsafe<infer X> ? X : T;
 
 // @public
 export type Unenforced<_DesiredExtendsConstraint> = unknown;

@@ -107,8 +107,10 @@ export interface IDocumentSchemaInfo {
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for additional details on `minVersionForCollab`.
 	 *
 	 * @remarks
-	 * We use `SemanticVersion` instead of `MinimumVersionForCollab` since we may open future documents that with a
+	 * We use `SemanticVersion` instead of `MinimumVersionForCollab` since we may open future documents with a
 	 * minVersionForCollab version that `MinimumVersionForCollab` does not support.
+	 * Note that in such a case (where minVersionForCollab is not a valid `MinimumVersionForCollab`),
+	 * loading the document might not work since this version of the runtime may not support it.
 	 */
 	minVersionForCollab: SemanticVersion;
 }
@@ -740,7 +742,7 @@ export class DocumentsSchemaController {
 	 * @param contents - contents of the messages
 	 * @param local - whether op is local
 	 * @param sequenceNumber - sequence number of the op
-	 * @returns - true if schema was accepted, otherwise false (rejected due to failed CAS)
+	 * @returns true if schema was accepted, otherwise false (rejected due to failed CAS)
 	 */
 	public processDocumentSchemaMessages(
 		contents: IDocumentSchemaChangeMessageIncoming[],

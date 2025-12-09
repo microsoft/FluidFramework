@@ -1,0 +1,36 @@
+{
+  "version": 2,
+  "identifiers": [
+    "com.fluidframework.json.object"
+  ],
+  "shapes": [
+    {
+      "c": {
+        "extraFields": 1
+      }
+    },
+    {
+      "d": 0
+    }
+  ],
+  "data": [
+    [
+      0,
+      0,
+      false,
+      [
+        "a",
+        0,
+        0,
+        false,
+        [
+          "b",
+          0,
+          "Cursor Test Suite.Empty object",
+          false,
+          []
+        ]
+      ]
+    ]
+  ]
+}

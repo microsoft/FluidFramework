@@ -9,11 +9,11 @@ module.exports = {
 		"prettier",
 	],
 	rules: {
-		"import/no-nodejs-modules": "off",
+		"import-x/no-nodejs-modules": "off",
 		"promise/catch-or-return": ["error", { allowFinally: true }],
 
 		// TODO: remove usages of deprecated APIs and remove these overrides
-		"import/no-deprecated": "warn",
+		"import-x/no-deprecated": "warn",
 
 		// TODO: fix violations and remove these overrides
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",

@@ -14,18 +14,17 @@ import {
 	independentView,
 	SchemaFactory,
 	TreeViewConfiguration,
-	type ImplicitFieldSchema,
 } from "@fluidframework/tree/alpha";
 
-import { SharedTreeSemanticAgent } from "../agent.js";
-import type { EditFunction, EditResult, SharedTreeChatModel } from "../api.js";
+import { createContext, SharedTreeSemanticAgent } from "../agent.js";
+import type { EditResult, SharedTreeChatModel } from "../api.js";
 
 const sf = new SchemaFactory(undefined);
-const editFunctionName = "testEditTree";
+const editToolName = "EditTreeTool";
 
 describe("Semantic Agent", () => {
 	it("returns messages from queries", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Content");
 		const model: SharedTreeChatModel = {
 			async query(message) {
@@ -38,17 +37,14 @@ describe("Semantic Agent", () => {
 	});
 
 	it("can apply an edit from a query", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Content");
+		const code = `context.root = "Edited";`;
 		const model: SharedTreeChatModel = {
-			editFunctionName,
+			editToolName,
 			async query({ edit }) {
-				const result = await edit(
-					toEditTreeCode<typeof sf.string>((params) => {
-						params.root = "Edited";
-					}),
-				);
-				assert(result.type === "success", "Edit was not successful");
+				const result = await edit(code);
+				assert(result.type === "success", result.message);
 				return result.message;
 			},
 		};
@@ -60,26 +56,24 @@ describe("Semantic Agent", () => {
 	});
 
 	it("can apply multiple edits from a query", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Content");
 		let editCount = 0;
+		const firstEdit = `
+			context.root = "First Edit";
+		`;
+		const secondEdit = `
+			context.root = "Second Edit";
+		`;
 		const model: SharedTreeChatModel = {
-			editFunctionName,
+			editToolName,
 			async query({ edit }) {
 				editCount++;
 				if (editCount === 1) {
-					const result1 = await edit(
-						toEditTreeCode<typeof sf.string>((params) => {
-							params.root = "First Edit";
-						}),
-					);
-					assert(result1.type === "success", "First edit was not successful");
-					const result2 = await edit(
-						toEditTreeCode<typeof sf.string>((params) => {
-							params.root = "Second Edit";
-						}),
-					);
-					assert(result2.type === "success", "Second edit was not successful");
+					const result1 = await edit(firstEdit);
+					assert(result1.type === "success", result1.message);
+					const result2 = await edit(secondEdit);
+					assert(result2.type === "success", result2.message);
 					return result2.message;
 				}
 				return "No edits";
@@ -93,15 +87,11 @@ describe("Semantic Agent", () => {
 	});
 
 	it("does not allow editing if edit function name is not provided", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Content");
 		const model: SharedTreeChatModel = {
 			async query({ edit }) {
-				const result = await edit(
-					toEditTreeCode<typeof sf.string>((params) => {
-						params.root = "Edited";
-					}),
-				);
+				const result = await edit(`context.root = "Edited";`);
 				assert.equal(result.type, "disabledError", "Expected edit to be disabled");
 				return result.message;
 			},
@@ -112,93 +102,45 @@ describe("Semantic Agent", () => {
 		assert.equal(view.root, "Content", "Tree should not have changed");
 	});
 
-	it("runs validation on edit code", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
-		view.initialize("Orig");
-		let callCount = 0;
-		const model: SharedTreeChatModel = {
-			editFunctionName,
-			async query({ edit }) {
-				callCount++;
-				if (callCount === 1) {
-					const validLooking = toEditTreeCode<typeof sf.string>((params) => {
-						params.root = "New";
-					});
-					const result = await edit(validLooking);
-					assert.equal(result.type, "validationError");
-					return result.message;
-				}
-				return "Second ok";
-			},
-		};
-		const agent = new SharedTreeSemanticAgent(model, view, {
-			validator: () => false,
-		});
-		const response = await agent.query("First");
-		assert.ok(response.includes("did not pass validation"));
-		// Check that a subsequent query still works.
-		assert.equal(view.root, "Orig", "Tree should not have changed after failed validation");
-		assert.equal(await agent.query("Second"), "Second ok");
-	});
-
 	it("handles malformed edit code", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Content");
 		let callCount = 0;
 		const model: SharedTreeChatModel = {
-			editFunctionName,
+			editToolName,
 			async query({ edit }) {
 				callCount++;
 				if (callCount === 1) {
-					// Missing required edit function name.
-					const result1 = await edit("function notEdit(params) { /* noop */ }");
-					assert.equal(result1.type, "compileError");
+					const result1 = await edit("const ; x = 1, for else");
+					assert.equal(result1.type, "editingError", result1.message);
 					return result1.message;
-				}
-				if (callCount === 2) {
-					// Invalid JS syntax (missing closing brace).
-					const result2 = await edit(
-						`function ${editFunctionName}(params){ params.root = 'Changed'`,
-					);
-					assert.equal(result2.type, "compileError");
-					return result2.message;
 				}
 				return "Recovered";
 			},
 		};
 		const agent = new SharedTreeSemanticAgent(model, view);
 		const response1 = await agent.query("First");
-		assert.ok(response1.includes(editFunctionName));
-		const response2 = await agent.query("Second");
-		assert.ok(response2.includes("not valid"));
+		assert.ok(response1.includes("Unexpected token"));
 		// Check that a subsequent query still works.
 		assert.equal(await agent.query("Second"), "Recovered");
 	});
 
 	it("handles edit code that causes runtime errors", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Content");
 		let callCount = 0;
 		const model: SharedTreeChatModel = {
-			editFunctionName,
+			editToolName,
 			async query({ edit }) {
 				callCount++;
 				if (callCount === 1) {
-					const result = await edit(
-						toEditTreeCode<typeof sf.string>(() => {
-							throw new Error("boom");
-						}),
-					);
-					assert.equal(result.type, "runtimeError");
+					const result = await edit(`throw new Error("boom");`);
+					assert.equal(result.type, "editingError", result.message);
 					return result.message;
 				}
 				// On second query perform successful edit to prove recovery.
-				const result2 = await edit(
-					toEditTreeCode<typeof sf.string>((params) => {
-						params.root = "Recovered";
-					}),
-				);
-				assert.equal(result2.type, "success");
+				const result2 = await edit(`context.root = "Recovered";`);
+				assert.equal(result2.type, "success", result2.message);
 				return "Recovered";
 			},
 		};
@@ -212,41 +154,25 @@ describe("Semantic Agent", () => {
 	});
 
 	it("limits the number of sequential edits", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Initial");
 		let callCount = 0;
 		const model: SharedTreeChatModel = {
-			editFunctionName,
+			editToolName,
 			async query({ edit }) {
 				callCount++;
 				if (callCount === 1) {
-					const result1 = await edit(
-						toEditTreeCode<typeof sf.string>((params) => {
-							params.root = "One";
-						}),
-					);
-					assert.equal(result1.type, "success");
-					const result2 = await edit(
-						toEditTreeCode<typeof sf.string>((params) => {
-							params.root = "Two";
-						}),
-					);
-					assert.equal(result2.type, "success");
-					const result3 = await edit(
-						toEditTreeCode<typeof sf.string>((params) => {
-							params.root = "Three";
-						}),
-					);
-					assert.equal(result3.type, "tooManyEditsError");
+					const result1 = await edit(`context.root = "One";`);
+					assert.equal(result1.type, "success", result1.message);
+					const result2 = await edit(`context.root = "Two";`);
+					assert.equal(result2.type, "success", result2.message);
+					const result3 = await edit(`context.root = "Three";`);
+					assert.equal(result3.type, "tooManyEditsError", result3.message);
 					return result3.message;
 				}
 				// On second query should be able to edit again.
-				const result = await edit(
-					toEditTreeCode<typeof sf.string>((params) => {
-						params.root = "Recovered";
-					}),
-				);
-				assert.equal(result.type, "success");
+				const result = await edit(`context.root = "Recovered";`);
+				assert.equal(result.type, "success", result.message);
 				return "Recovered";
 			},
 		};
@@ -260,11 +186,11 @@ describe("Semantic Agent", () => {
 	});
 
 	it("does not allow editing after query completes", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Initial");
 		let stolenEditCallback: ((js: string) => Promise<EditResult>) | undefined;
 		const model: SharedTreeChatModel = {
-			editFunctionName,
+			editToolName,
 			async query({ edit }) {
 				stolenEditCallback = edit;
 				return "They'll never know!";
@@ -276,32 +202,41 @@ describe("Semantic Agent", () => {
 		const response = await agent.query("First");
 		assert.equal(response, "They'll never know!");
 		assert(stolenEditCallback !== undefined, "Expected to have stolen the edit callback");
-		const editResult = await stolenEditCallback(
-			`function ${editFunctionName}(params){ params.root = 'Edit too late'; }`,
-		);
-		assert.equal(editResult.type, "expiredError");
+		const editResult = await stolenEditCallback(`context.root = 'Edit too late';`);
+		assert.equal(editResult.type, "expiredError", editResult.message);
 		assert.ok(editResult.message.includes("already completed"));
 	});
 
-	it("does not change tree if a subsequent edit fails", async () => {
+	it("does not roll back if a failed edit is followed by a successful edit in the same query", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const model: SharedTreeChatModel = {
+			editToolName,
+			async query({ edit }) {
+				const result1 = await edit(`throw new Error("boom");`);
+				assert.equal(result1.type, "editingError", result1.message);
+				const result2 = await edit(`context.root = "Recovered";`);
+				assert.equal(result2.type, "success", result2.message);
+				return result2.message;
+			},
+		};
+		const agent = new SharedTreeSemanticAgent(model, view);
+		const response = await agent.query("First");
+		assert.match(response, /the new state of the tree is/i);
+		assert.equal(view.root, "Recovered");
+	});
+
+	it("rolls back if a successful edit is followed by a failed edit in the same query", async () => {
 		// First edit succeeds, but the second fails, so the tree should remain unchanged.
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Initial");
 		const model: SharedTreeChatModel = {
-			editFunctionName,
+			editToolName,
 			async query({ edit }) {
-				const result1 = await edit(
-					toEditTreeCode<typeof sf.string>((params) => {
-						params.root = "First";
-					}),
-				);
-				assert.equal(result1.type, "success");
-				const result2 = await edit(
-					toEditTreeCode<typeof sf.string>(() => {
-						throw new Error("boom");
-					}),
-				);
-				assert.equal(result2.type, "runtimeError");
+				const result1 = await edit(`context.root = "First";`);
+				assert.equal(result1.type, "success", result1.message);
+				const result2 = await edit(`throw new Error("boom");`);
+				assert.equal(result2.type, "editingError", result2.message);
 				return result2.message;
 			},
 		};
@@ -313,39 +248,12 @@ describe("Semantic Agent", () => {
 		assert.equal(view.root, "Initial", "Tree should not have changed");
 	});
 
-	it("passes constructors to edit code", async () => {
-		const sfLocal = new SchemaFactory("Test");
-		class Person extends sfLocal.object("Person", {
-			name: sfLocal.required(sfLocal.string),
-		}) {}
-		const view = independentView(new TreeViewConfiguration({ schema: Person }), {});
-		view.initialize(new Person({ name: "Alice" }));
-		const model: SharedTreeChatModel = {
-			editFunctionName,
-			async query({ edit }) {
-				const result = await edit(
-					toEditTreeCode<typeof Person>((params) => {
-						// @ts-expect-error dynamic constructor invocation for test stringification
-						params.root = params.create.Person({ name: "Bob" });
-					}),
-				);
-				assert.equal(result.type, "success");
-				assert.equal(typeof result.message, "string");
-				assert.ok(result.message.includes("Bob"));
-				return "Done";
-			},
-		};
-		const agent = new SharedTreeSemanticAgent(model, view);
-		assert.equal(await agent.query("Change"), "Done");
-		assert.equal((view.root as unknown as Person).name, "Bob");
-	});
-
 	it("supplies the system prompt as context", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("X");
 		const contexts: string[] = [];
 		const model: SharedTreeChatModel = {
-			editFunctionName,
+			editToolName,
 			appendContext(text: string) {
 				contexts.push(text);
 			},
@@ -359,13 +267,171 @@ describe("Semantic Agent", () => {
 		const first = contexts[0];
 		assert.notEqual(first, undefined, "Expected first context to be defined");
 		assert.ok(
-			(first as string).includes(editFunctionName),
-			"System prompt should reference edit function name",
+			(first as string).includes(editToolName),
+			"System prompt should reference edit tool name",
 		);
 	});
 
-	it("supplies addition context if the tree changes between queries", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+	it("can insert content multiple times", async () => {
+		class Color extends sf.object("Color", {
+			r: sf.number,
+			g: sf.number,
+			b: sf.number,
+		}) {}
+		class Gradient extends sf.object("Gradient", {
+			startColor: Color,
+			endColor: Color,
+		}) {}
+		const view = independentView(new TreeViewConfiguration({ schema: Gradient }));
+		view.initialize({ startColor: { r: 0, g: 0, b: 0 }, endColor: { r: 0, g: 0, b: 0 } });
+		const code = `const white = context.create.Color({ r: 255, g: 255, b: 255 });
+context.root = context.create.Gradient({ startColor: white, endColor: white });`;
+		const model: SharedTreeChatModel = {
+			editToolName,
+			async query({ edit }) {
+				const result = await edit(code);
+				assert(result.type === "success", result.message);
+				return result.message;
+			},
+		};
+		const agent = new SharedTreeSemanticAgent(model, view);
+		await agent.query("Query");
+		assert.equal(view.root.startColor.r, 255);
+	});
+
+	describe("context helpers", () => {
+		it("passes constructors to edit code", async () => {
+			const sfLocal = new SchemaFactory("Test");
+			class Person extends sfLocal.object("Person", {
+				name: sfLocal.required(sfLocal.string),
+			}) {}
+			const view = independentView(new TreeViewConfiguration({ schema: Person }));
+			view.initialize(new Person({ name: "Alice" }));
+			const model: SharedTreeChatModel = {
+				editToolName,
+				async query({ edit }) {
+					const result = await edit(`context.root = context.create.Person({ name: "Bob" });`);
+					assert.equal(result.type, "success", result.message);
+					return "Done";
+				},
+			};
+			const agent = new SharedTreeSemanticAgent(model, view);
+			assert.equal(await agent.query("Change"), "Done");
+			assert.equal(view.root.name, "Bob");
+		});
+
+		it("provides working type guards via context.is", async () => {
+			const sfLocal = new SchemaFactory("TestIs");
+			class Person extends sfLocal.object("Person", {
+				name: sfLocal.required(sfLocal.string),
+				age: sfLocal.required(sfLocal.number),
+			}) {}
+			const view = independentView(new TreeViewConfiguration({ schema: Person }));
+			view.initialize(new Person({ name: "Alice", age: 25 }));
+			const model: SharedTreeChatModel = {
+				editToolName,
+				async query({ edit }) {
+					const result = await edit(
+						`if (context.is.Person(context.root)) { context.root.age = 26; } else { throw new Error('Type guard failed'); }`,
+					);
+					assert.equal(result.type, "success", result.message);
+					return "OK";
+				},
+			};
+			const agent = new SharedTreeSemanticAgent(model, view);
+			assert.equal(await agent.query("Update Age"), "OK");
+			assert.equal(view.root.age, 26);
+		});
+
+		it("exposes parent helper returning the owning object", async () => {
+			const sfLocal = new SchemaFactory("TestParent");
+			class Child extends sfLocal.object("Child", {
+				value: sfLocal.required(sfLocal.string),
+			}) {}
+			class Parent extends sfLocal.object("Parent", { child: Child }) {}
+			const view = independentView(new TreeViewConfiguration({ schema: Parent }));
+			view.initialize(new Parent({ child: new Child({ value: "Initial" }) }));
+			const model: SharedTreeChatModel = {
+				editToolName,
+				async query({ edit }) {
+					const result = await edit(
+						`const p = context.parent(context.root.child); if (!p) { throw new Error('No parent'); } if (!context.is.Parent(p)) { throw new Error('Wrong parent type'); } p.child.value = 'ViaParent';`,
+					);
+					assert.equal(result.type, "success", result.message);
+					return "Done";
+				},
+			};
+			const agent = new SharedTreeSemanticAgent(model, view);
+			assert.equal(await agent.query("Parent Edit"), "Done");
+			assert.equal(view.root.child.value, "ViaParent");
+		});
+
+		it("exposes key helper returning property name for object child", async () => {
+			const sfLocal = new SchemaFactory("TestKey");
+			class Child extends sfLocal.object("Child", {
+				value: sfLocal.required(sfLocal.string),
+			}) {}
+			class Parent extends sfLocal.object("Parent", { child: Child }) {}
+			const view = independentView(new TreeViewConfiguration({ schema: Parent }));
+			view.initialize(new Parent({ child: new Child({ value: "Initial" }) }));
+			const model: SharedTreeChatModel = {
+				editToolName,
+				async query({ edit }) {
+					const result = await edit(
+						`const k = context.key(context.root.child); if (k !== 'child') { throw new Error('Unexpected key: ' + k); } context.root.child.value = 'KeyWorked';`,
+					);
+					assert.equal(result.type, "success", result.message);
+					return "Done";
+				},
+			};
+			const agent = new SharedTreeSemanticAgent(model, view);
+			assert.equal(await agent.query("Key Edit"), "Done");
+			assert.equal(view.root.child.value, "KeyWorked");
+		});
+
+		it("provides working isArray helper", async () => {
+			const sfLocal = new SchemaFactory("TestIsArray");
+			const NumberArray = sfLocal.array(sfLocal.number);
+			const view = independentView(new TreeViewConfiguration({ schema: NumberArray }));
+			view.initialize([1, 2, 3]);
+			const model: SharedTreeChatModel = {
+				editToolName,
+				async query({ edit }) {
+					const result = await edit(
+						`if (!context.isArray([]) ||!context.isArray(context.root)) { throw new Error('Expected array root'); } context.root.insertAt(0, 99);`,
+					);
+					assert.equal(result.type, "success", result.message);
+					return "ArrayOK";
+				},
+			};
+			const agent = new SharedTreeSemanticAgent(model, view);
+			assert.equal(await agent.query("Array Edit"), "ArrayOK");
+			assert.equal(view.root[0], 99);
+		});
+
+		it("provides working isMap helper", async () => {
+			const sfLocal = new SchemaFactory("TestIsMap");
+			class NumberMap extends sfLocal.map("NumberMap", sfLocal.number) {}
+			const view = independentView(new TreeViewConfiguration({ schema: NumberMap }));
+			view.initialize(new NumberMap(new Map([["x", 1]])));
+			const model: SharedTreeChatModel = {
+				editToolName,
+				async query({ edit }) {
+					const result = await edit(
+						`if (!context.isMap(new Map()) || !context.isMap(context.root)) { throw new Error('Expected map root'); } context.root.set('y', 2);`,
+					);
+					assert.equal(result.type, "success", result.message);
+					return "MapOK";
+				},
+			};
+			const agent = new SharedTreeSemanticAgent(model, view);
+			assert.equal(await agent.query("Map Edit"), "MapOK");
+			assert.equal(view.root.get("y"), 2);
+		});
+	});
+
+	it("supplies additional context if the tree changes between queries", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Initial");
 		const contexts: string[] = [];
 		const model: SharedTreeChatModel = {
@@ -395,44 +461,123 @@ describe("Semantic Agent", () => {
 		);
 		assert.ok(baseContextCount <= afterFirst);
 	});
-});
 
-/**
- * Helper which converts a JS callback into the string form expected by the agent.
- * The provided callback's parameter list and body are preserved (only the function name is rewritten).
- *
- * Notes:
- * - Supports standard function declarations and arrow functions with a block body.
- * - Intentionally malformed code snippets in tests (e.g. wrong name / syntax errors) remain inline raw strings to continue exercising error paths.
- */
-function toEditTreeCode<TSchema extends ImplicitFieldSchema>(
-	cb: EditFunction<TSchema>,
-): string {
-	const source = cb.toString();
-	let params: string | undefined;
-	let body: string | undefined;
+	it("can edit a subtree", async () => {
+		class Child extends sf.object("Child", {
+			value: sf.string,
+		}) {}
+		class Parent extends sf.object("Parent", {
+			child: Child,
+		}) {}
 
-	// Match `function (params) { ... }` or `function name(params) { ... }`
-	let match = source.match(/^function\s*[^()]*\(([^)]*)\)\s*{([\S\s]*)}$/);
-	if (match) {
-		params = match[1];
-		body = match[2]; // group excludes final closing brace due to regex
-	} else {
-		// Match arrow function with block body: (params) => { ... } or params => { ... }
-		match = source.match(/^\s*(?:\(([^)]*)\)|([^()=]+))\s*=>\s*{([\S\s]*)}$/);
-		if (match) {
-			params = (match[1] ?? match[2] ?? "").trim();
-			body = match[3];
-		}
-	}
+		const view = independentView(new TreeViewConfiguration({ schema: Parent }));
+		view.initialize(new Parent({ child: new Child({ value: "Initial" }) }));
+		let context = "";
+		const model: SharedTreeChatModel = {
+			editToolName: "EditTreeTool",
+			appendContext(text) {
+				context += `${text}\n\n`;
+			},
+			async query(message) {
+				assert.equal(message.text, "Query");
+				const result = await message.edit(
+					`context.root = context.create.Child?.({ value: "Changed" });`,
+				);
+				assert.equal(result.type, "success", result.message);
+				return "Done";
+			},
+		};
+		const agent = new SharedTreeSemanticAgent(model, view.root.child);
+		const response = await agent.query("Query");
+		assert.equal(response, "Done");
+		assert.equal(view.root.child.value, "Changed");
+		// Context should not know about types outside of the subtree
+		assert.ok(!context.includes("Parent"));
+	});
 
-	if (params === undefined || body === undefined) {
-		throw new Error(
-			"Unable to parse callback for toEditTreeCode; use a standard function or arrow with block body.",
+	it("runs custom editors", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const model: SharedTreeChatModel = {
+			editToolName,
+			async query({ edit }) {
+				const result = await edit("Code");
+				assert(result.type === "success", result.message);
+				return "Done";
+			},
+		};
+		const agent = new SharedTreeSemanticAgent(model, view, {
+			editor: async (tree, js) => {
+				const context = createContext(tree);
+				assert.equal(context.root, "Content");
+				assert.equal(js, "Code");
+				context.root = "Edited";
+			},
+		});
+		const response = await agent.query("Query");
+		assert.equal(response, "Done");
+		assert.equal(view.root, "Edited");
+	});
+
+	it("catches errors from custom editors", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const model: SharedTreeChatModel = {
+			editToolName,
+			async query({ edit }) {
+				const result = await edit("Code");
+				assert(result.type === "editingError", "Expected editingError from editor");
+				return "Done";
+			},
+		};
+		const agent = new SharedTreeSemanticAgent(model, view, {
+			editor: async () => {
+				throw new Error("Boom");
+			},
+		});
+		const response = await agent.query("Query");
+		assert.equal(response, "Done");
+	});
+
+	it("context provides helpers for editing", async () => {
+		const sfLocal = new SchemaFactory("ContextHelpers");
+		class Child extends sfLocal.object("Child", {
+			value: sfLocal.required(sfLocal.string),
+		}) {}
+		class NumberMap extends sfLocal.map("NumberMap", sfLocal.number) {}
+		class Parent extends sfLocal.object("Parent", {
+			child: Child,
+			values: NumberMap,
+		}) {}
+		const view = independentView(new TreeViewConfiguration({ schema: Parent }));
+		view.initialize(
+			new Parent({
+				child: new Child({ value: "Initial" }),
+				values: new NumberMap(new Map([["x", 1]])),
+			}),
 		);
-	}
-
-	// Ensure body does not contain a trailing closing brace (regex should have excluded it, but trim defensively).
-	body = body.replace(/}\s*$/, "").trim();
-	return `function ${editFunctionName}(${params}) { ${body} }`;
-}
+		const context = createContext(view);
+		assert.equal(context.root.child.value, "Initial");
+		const createParent = context.create.Parent;
+		assert.ok(createParent !== undefined, "Expected Parent constructor");
+		const createChild = context.create.Child;
+		assert.ok(createChild !== undefined, "Expected Child constructor");
+		const replacementRoot = createParent({
+			child: createChild({ value: "Created" }),
+			values: new NumberMap(new Map([["y", 2]])),
+		}) as Parent;
+		context.root = replacementRoot;
+		assert.equal(view.root.child.value, "Created");
+		const isParent = context.is.Parent;
+		assert.ok(isParent !== undefined, "Expected Parent type guard");
+		assert.ok(isParent(view.root));
+		assert.equal(context.isMap(view.root.values), true);
+		assert.equal(context.isMap(new Map()), true);
+		assert.equal(context.isMap({}), false);
+		const parent = context.parent(view.root.child);
+		assert.equal(parent, view.root);
+		assert.equal(context.parent(view.root), undefined);
+		const key = context.key(view.root.child);
+		assert.equal(key, "child");
+	});
+});

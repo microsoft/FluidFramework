@@ -8,7 +8,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { tryGetTreeNodeSchema } from "./treeNodeKernel.js";
 import { NodeKind, type TreeNodeSchemaClass } from "./treeNodeSchema.js";
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 import { type WithType, typeNameSymbol, type typeSchemaSymbol } from "./withType.js";
 import { markEager } from "./flexList.js";
 
@@ -29,7 +29,7 @@ import { markEager } from "./flexList.js";
  * 2. Explicit construction of {@link Unhydrated} nodes using either {@link TreeNodeSchemaClass} as a constructor or {@link TreeNodeSchemaNonClass|TreeNodeSchemaNonClass.create}.
  * Either way the {@link TreeNodeSchema} produced must be produced using a {@link SchemaFactory}.
  * There are also higher level APIs which wrap these, including {@link (TreeBeta:interface).create}, {@link (TreeBeta:interface).clone},
- * and import APIs like {@link (TreeAlpha:interface).importConcise}, {@link (TreeAlpha:interface).importVerbose}, and {@link (TreeAlpha:interface).importCompressed}.
+ * and import APIs like {@link (TreeBeta:interface).importConcise}, {@link (TreeAlpha:interface).importVerbose}, and {@link (TreeAlpha:interface).importCompressed}.
  *
  * 3. Implicit construction: Several APIs which logically require an unhydrated TreeNode also allow passing in a value which could be used to explicitly construct the node instead.
  * These APIs internally call the constructor with the provided value (typically behaving like {@link (TreeAlpha:interface).create}), so it's really just a special case of the above option.
@@ -80,7 +80,7 @@ export abstract class TreeNode implements WithType {
 	 * Subclasses provide more specific strings for this to get strong typing of otherwise type compatible nodes.
 	 * @deprecated Use {@link typeSchemaSymbol} instead.
 	 */
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	public abstract get [typeNameSymbol](): string;
 
 	/**
