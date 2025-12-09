@@ -15,6 +15,12 @@ Key features:
 
 Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the legacy `.eslintrc.cjs` format remains supported for backward compatibility. Migration is optional and not required.
 
+### Rule Promotions
+
+The following rules have been promoted from `recommended` to `minimal-deprecated`:
+
+- `@typescript-eslint/explicit-function-return-type`
+
 ## [9.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v9.0_0)
 
 ### eslint-plugin-eslint-comments replaced by @eslint-community/eslint-plugin-eslint-comments
