@@ -2008,7 +2008,10 @@
             2
         ],
         "unicorn/consistent-function-scoping": [
-            2
+            2,
+            {
+                "checkArrowFunctions": false
+            }
         ],
         "unicorn/custom-error-definition": [
             0
