@@ -94,7 +94,7 @@ describe("eraseSchemaDetails", () => {
 			type Square = SquareNode & TreeNode & WithType<"com.example.Demo">;
 		});
 
-		it("example use", () => {
+		it("misc usage", () => {
 			const schema = new SchemaFactory("com.example");
 
 			interface Square {
@@ -203,7 +203,7 @@ describe("eraseSchemaDetails", () => {
 			assert.equal(square.area, 100);
 		});
 
-		it("basic A", () => {
+		it("Erased Base", () => {
 			const schema = new SchemaFactory("com.example");
 
 			interface Square {
@@ -220,6 +220,8 @@ describe("eraseSchemaDetails", () => {
 				}
 			}
 
+			// In this usage pattern, details of the base class are erased, then this customized derived class can be exported.
+			// In this case this class can refer to the internal on inside its implementation as long as it does not leak the type into the API.
 			class DemoPublic extends eraseSchemaDetailsSubclassable<Square>()(Demo) {
 				// Since this is not implicitly constructable, adding extra constructor options here is relatively safe.
 				// Making the constructor protected also works.
@@ -267,7 +269,7 @@ describe("eraseSchemaDetails", () => {
 			}
 		});
 
-		it("basic B", () => {
+		it("Exporting subclassable schema", () => {
 			const schema = new SchemaFactory("com.example");
 
 			interface Square {
@@ -280,13 +282,16 @@ describe("eraseSchemaDetails", () => {
 
 				// Since we are type erasing the constructor, we need a static factory method to create instances.
 				// We could choose instead to include the constructor signature here.
-				createInner<TThis extends TreeNodeSchema>(
+				create<TThis extends TreeNodeSchema>(
 					this: TThis,
 					sideLength: number,
 				): TreeFieldFromImplicitField<TThis>;
 			}
 
-			class Demo extends schema.object("Demo", { hidden: schema.number }) implements Square {
+			class InternalSchema
+				extends schema.object("Demo", { hidden: schema.number })
+				implements Square
+			{
 				public static readonly kind2 = "square";
 				public setArea(area: number): void {
 					this.hidden = Math.sqrt(area);
@@ -295,71 +300,66 @@ describe("eraseSchemaDetails", () => {
 					return this.hidden * this.hidden;
 				}
 
-				public static createInner<TThis extends TreeNodeSchema>(
+				public static create<TThis extends TreeNodeSchema>(
 					this: TThis,
 					sideLength: number,
 				): TreeFieldFromImplicitField<TThis> {
 					return TreeBeta.importConcise(this, {
 						hidden: sideLength,
-					} satisfies InsertableTreeFieldFromImplicitField<typeof Demo>);
+					} satisfies InsertableTreeFieldFromImplicitField<typeof InternalSchema>);
 				}
 			}
 
-			const Erased = eraseSchemaDetailsSubclassable<Square, DemoSchema>()(Demo);
+			// In this usage pattern, this could be exported for the consumer to subclass.
+			// This pattern it typically used for cases which emit schema from factory functions, like we do with createTableSchema.
+			const ErasedExported = eraseSchemaDetailsSubclassable<Square, DemoSchema>()(
+				InternalSchema,
+			);
 
-			class DemoPublic extends Erased {
-				// Interestingly, its possible to make this protected, even though TreeNodeSchemaClass requires it to be accessible.
-				protected constructor(node: InternalTreeNode) {
-					super(node);
-				}
-
-				public static create(sideLength: number): DemoPublic {
-					const node: DemoPublic = TreeBeta.importConcise(DemoPublic, { hidden: sideLength });
-					return node;
-				}
-
-				public static create2(sideLength: number): DemoPublic {
-					const node: DemoPublic = DemoPublic.createInner(sideLength);
+			// The consumer can subclass it to add their own members.
+			class ConsumerSchema extends ErasedExported {
+				public static default(): ConsumerSchema {
+					const node: ConsumerSchema = TreeBeta.importConcise(ConsumerSchema, { hidden: 5 });
 					return node;
 				}
 			}
 
-			type brand = Demo[typeof typeSchemaSymbol]["identifier"];
-			type brandPublic = DemoPublic[typeof typeSchemaSymbol]["identifier"];
+			type brand = InternalSchema[typeof typeSchemaSymbol]["identifier"];
+			type brandPublic = ConsumerSchema[typeof typeSchemaSymbol]["identifier"];
 			allowUnused<requireAssignableTo<brand, "com.example.Demo">>();
 			allowUnused<requireAssignableTo<brandPublic, "com.example.Demo">>();
-			allowUnused<requireAssignableTo<Demo, DemoPublic>>();
+			allowUnused<requireAssignableTo<InternalSchema, ConsumerSchema>>();
 
-			const config = new TreeViewConfiguration({ schema: DemoPublic });
+			const config = new TreeViewConfiguration({ schema: ConsumerSchema });
 
 			const view = getView(config);
-			view.initialize(DemoPublic.create(5));
+			view.initialize(ConsumerSchema.create(5));
 			assert.equal(view.root.area(), 25);
 
 			// Constructor
 			{
-				// @ts-expect-error - Constructor still exists but is protected
-				const nodeB = new DemoPublic({ hidden: 10 } as unknown as InternalTreeNode);
+				// Constructor still exists but, but has insertable type erased.
+				const nodeB = new ConsumerSchema({ hidden: 10 } as unknown as InternalTreeNode);
 
 				allowUnused<
-					requireAssignableTo<ConstructorParameters<typeof Erased>, [InternalTreeNode]>
+					requireAssignableTo<ConstructorParameters<typeof ErasedExported>, [InternalTreeNode]>
 				>();
 			}
 
 			// createFromInsertable
 			{
 				// @ts-expect-error - createFromInsertable still exists but takes in `never`
-				const nodeB = DemoPublic.createFromInsertable({ hidden: 10 });
+				const nodeB = ConsumerSchema.createFromInsertable({ hidden: 10 });
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-				const nodeC = DemoPublic.createFromInsertable({ hidden: 10 } as never);
+				const nodeC = ConsumerSchema.createFromInsertable({ hidden: 10 } as never);
 				allowUnused<
-					requireAssignableTo<Parameters<typeof DemoPublic.createFromInsertable>, [never]>
+					requireAssignableTo<Parameters<typeof ConsumerSchema.createFromInsertable>, [never]>
 				>();
 			}
 
 			// Events
 			{
-				const node = DemoPublic.create(5);
+				const node = ConsumerSchema.create(5);
 				const log: string[] = [];
 				Tree.on(node, "treeChanged", () => {
 					log.push("changed");
@@ -367,6 +367,42 @@ describe("eraseSchemaDetails", () => {
 				assert.deepEqual(log, []);
 				node.setArea(10);
 				assert.deepEqual(log, ["changed"]);
+			}
+		});
+
+		it("private constructor", () => {
+			const schema = new SchemaFactory("com.example");
+
+			interface Square {
+				area(): number;
+			}
+
+			class Demo extends schema.object("Demo", { hidden: schema.number }) implements Square {
+				public area(): number {
+					return this.hidden * this.hidden;
+				}
+			}
+
+			class DemoPublic extends eraseSchemaDetailsSubclassable<Square>()(Demo) {
+				private constructor(node: InternalTreeNode) {
+					super(node);
+				}
+
+				public static create(sideLength: number): DemoPublic {
+					// We can create an instance of the derived type using the base type for type checking the insertable,
+					// but avoiding the constructor.
+					return TreeBeta.create(DemoPublic as TreeNodeSchema as typeof Demo, {
+						hidden: sideLength,
+					});
+				}
+			}
+
+			// Check the node works as a node in a few APIs
+			{
+				const node = DemoPublic.create(5);
+				Tree.on(node, "treeChanged", () => {});
+				assert.equal(Tree.is(node, DemoPublic), true);
+				const config = new TreeViewConfiguration({ schema: DemoPublic });
 			}
 		});
 	});
