@@ -124,7 +124,7 @@ describe("ForestSummarizerCodec", () => {
 				() =>
 					codec.decode(
 						{
-							version: 2 as ForestFormatVersion,
+							version: 3 as ForestFormatVersion,
 							fields: {
 								version: brand(FieldBatchFormatVersion.v1),
 								identifiers: [],
@@ -135,7 +135,7 @@ describe("ForestSummarizerCodec", () => {
 						},
 						context,
 					),
-				validateUsageError(/Unsupported version 2 encountered while decoding data/),
+				validateUsageError(/Unsupported version 3 encountered while decoding data/),
 			);
 		});
 
