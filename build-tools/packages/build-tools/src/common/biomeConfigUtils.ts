@@ -12,7 +12,9 @@ import * as JSON5 from "json5";
 
 import type { GitRepo } from "./gitRepo";
 
-// switch to regular import once building ESM
+// find-up is an ESM-only package and we're still building CJS, so this import form is required
+// so that TypeScript won't transpile it to require(). Once this package is switched to ESM, then
+// this can be a standard import.
 const findUp = import("find-up");
 
 /**
