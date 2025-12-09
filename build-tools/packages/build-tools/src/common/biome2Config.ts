@@ -64,12 +64,27 @@ async function resolveBiome2ExtendsPath(
  *
  * @param configPath - The path to the config file
  * @param includeConfigPath - Whether to include the config itself in the result (default: true)
+ * @param visitedPaths - Set of already visited paths to detect circular extends (internal use)
  * @returns Array of config paths in merge order
+ * @throws Error if a circular extends chain is detected
  */
 async function resolveBiome2ExtendsChain(
 	configPath: string,
 	includeConfigPath = true,
+	visitedPaths: Set<string> = new Set(),
 ): Promise<string[]> {
+	// Normalize the path for consistent comparison
+	const normalizedPath = path.resolve(configPath);
+
+	// Check for circular extends
+	if (visitedPaths.has(normalizedPath)) {
+		const chain = [...visitedPaths, normalizedPath].join(" -> ");
+		throw new Error(`Circular extends detected in Biome config chain: ${chain}`);
+	}
+
+	// Add current path to visited set
+	visitedPaths.add(normalizedPath);
+
 	const config = await loadRawBiome2Config(configPath);
 	let extendedConfigPaths: string[] = [];
 
@@ -80,8 +95,8 @@ async function resolveBiome2ExtendsChain(
 			extendsArray.map(async (configToExtend) => {
 				// Resolve the extends path (handles "//" microsyntax)
 				const resolvedPath = await resolveBiome2ExtendsPath(configPath, configToExtend);
-				// Recursively resolve the chain for this extended config
-				return resolveBiome2ExtendsChain(resolvedPath, true);
+				// Recursively resolve the chain for this extended config, passing the visited set
+				return resolveBiome2ExtendsChain(resolvedPath, true, new Set(visitedPaths));
 			}),
 		);
 		extendedConfigPaths = pathsNested.flat();

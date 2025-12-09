@@ -12,10 +12,12 @@ import path from "node:path";
 import {
 	BiomeConfigReaderV1,
 	type BiomeConfigResolved,
+	createBiomeConfigReader,
 	getBiomeFormattedFilesFromDirectory,
 	getSettingValuesFromBiomeConfig,
 	loadBiomeConfig,
 } from "../common/biomeConfig";
+import { Biome2ConfigReader } from "../common/biome2Config";
 import type { Configuration as BiomeConfigOnDisk } from "../common/biomeConfigTypes";
 import { GitRepo } from "../common/gitRepo";
 import { getResolvedFluidRoot } from "../fluidBuild/fluidUtils";
@@ -307,6 +309,43 @@ describe("Biome config loading", () => {
 					`expected 5 elements in the array, got ${formattedFiles.length}`,
 				);
 			});
+		});
+	});
+
+	describe("createBiomeConfigReader", () => {
+		let gitRepo: GitRepo;
+
+		before(async () => {
+			const repoRoot = await getResolvedFluidRoot(true);
+			gitRepo = new GitRepo(repoRoot);
+		});
+
+		it("creates BiomeConfigReaderV1 when forceVersion is 1", async () => {
+			const testPath = path.resolve(testDataPath, "biome/pkg-a/");
+			const reader = await createBiomeConfigReader(testPath, gitRepo, 1);
+
+			// Check that it's a V1 reader by checking it's not a Biome2ConfigReader
+			assert(!(reader instanceof Biome2ConfigReader), "Should be a V1 reader");
+			assert(reader.formattedFiles.length > 0, "Should have formatted files");
+		});
+
+		it("creates Biome2ConfigReader when forceVersion is 2", async () => {
+			const testConfig = path.resolve(testDataPath, "biome2/pkg-a/config.jsonc");
+			const reader = await createBiomeConfigReader(testConfig, gitRepo, 2);
+
+			assert(reader instanceof Biome2ConfigReader, "Should be a Biome2ConfigReader");
+			assert(reader.formattedFiles.length > 0, "Should have formatted files");
+		});
+
+		it("returns a reader with common interface properties", async () => {
+			const testPath = path.resolve(testDataPath, "biome/pkg-a/");
+			const reader = await createBiomeConfigReader(testPath, gitRepo, 1);
+
+			// Verify the common interface properties exist
+			assert(typeof reader.closestConfig === "string", "closestConfig should be a string");
+			assert(typeof reader.directory === "string", "directory should be a string");
+			assert(Array.isArray(reader.allConfigs), "allConfigs should be an array");
+			assert(Array.isArray(reader.formattedFiles), "formattedFiles should be an array");
 		});
 	});
 });

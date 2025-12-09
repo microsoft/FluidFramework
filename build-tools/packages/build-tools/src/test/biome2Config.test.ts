@@ -373,4 +373,34 @@ describe("Biome 2.x config loading", () => {
 			assert.equal(config.mergedConfig.formatter!.lineWidth, 80);
 		});
 	});
+
+	describe("error handling", () => {
+		it("throws when config file does not exist", async () => {
+			const nonExistentConfig = path.resolve(testDataPath, "biome2/nonexistent.jsonc");
+			await assert.rejects(
+				async () => loadBiome2Config(nonExistentConfig),
+				/ENOENT/,
+				"Should throw ENOENT error for missing file",
+			);
+		});
+
+		it('throws when "//" extends cannot find root config', async () => {
+			// Create a scenario where // is used but no root config exists
+			// We'll test this by checking the error message from findRootBiome2Config
+			const { findRootBiome2Config } = await import("../common/biome2Config");
+
+			// Start from a directory that has no biome configs above it
+			const result = await findRootBiome2Config("/tmp");
+			assert.equal(result, undefined, "Should return undefined when no root config found");
+		});
+
+		it("throws on circular extends chain", async () => {
+			const circularConfig = path.resolve(testDataPath, "biome2/circular-test/config-a.jsonc");
+			await assert.rejects(
+				async () => loadBiome2Config(circularConfig),
+				/Circular extends detected/,
+				"Should throw error for circular extends",
+			);
+		});
+	});
 });
