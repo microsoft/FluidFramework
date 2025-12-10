@@ -89,6 +89,7 @@
 		"copyfiles": "^2.4.1",
 		"css-loader": "^7.1.2",
 		"eslint": "~8.57.1",
+		"jiti": "^2.6.1",
 		"rimraf": "^4.4.0",
 		"style-loader": "^4.0.0",
 		"ts-loader": "^9.5.1",

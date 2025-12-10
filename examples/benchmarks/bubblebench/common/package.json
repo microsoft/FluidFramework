@@ -57,6 +57,7 @@
 		"@types/react": "^18.3.11",
 		"@types/react-dom": "^18.3.0",
 		"eslint": "~8.57.1",
+		"jiti": "^2.6.1",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
 	},

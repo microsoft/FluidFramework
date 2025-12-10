@@ -130,6 +130,9 @@ importers:
       eslint-config-prettier:
         specifier: ~10.1.8
         version: 10.1.8(eslint@8.57.1)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       pm2:
         specifier: ^5.4.2
         version: 5.4.3
@@ -188,6 +191,9 @@ importers:
       eslint-config-prettier:
         specifier: ~10.1.8
         version: 10.1.8(eslint@8.57.1)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -273,6 +279,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.8.2)
@@ -372,6 +381,9 @@ importers:
       fluid-framework:
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-framework
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mui:
         specifier: ^0.0.1
         version: 0.0.1
@@ -523,6 +535,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       prettier:
         specifier: ~3.6.2
         version: 3.6.2
@@ -653,6 +668,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -777,6 +795,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -952,6 +973,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -1097,6 +1121,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -1254,6 +1281,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -1378,6 +1408,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -1451,6 +1484,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -1587,6 +1623,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -1696,6 +1735,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -1781,6 +1823,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -1869,6 +1914,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -1981,6 +2029,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -2084,6 +2135,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -2190,6 +2244,9 @@ importers:
       fs-extra:
         specifier: ^9.1.0
         version: 9.1.0
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -2281,6 +2338,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -2420,6 +2480,9 @@ importers:
       jest-junit:
         specifier: ^16.0.0
         version: 16.0.0
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -2526,6 +2589,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       less:
         specifier: ~3.12.0
         version: 3.12.2
@@ -2641,6 +2707,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -2747,6 +2816,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -2838,6 +2910,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -2947,6 +3022,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -3032,6 +3110,9 @@ importers:
       html-loader:
         specifier: ^5.1.0
         version: 5.1.0(webpack@5.103.0)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       loader-utils:
         specifier: ^1.1.0
         version: 1.4.2
@@ -3108,6 +3189,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -3148,6 +3232,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -3260,6 +3347,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -3318,6 +3408,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -3349,6 +3442,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -3386,6 +3482,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -3423,6 +3522,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -3460,6 +3562,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -3587,6 +3692,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -3683,6 +3791,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -3804,6 +3915,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -3922,6 +4036,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -4052,6 +4169,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -4188,6 +4308,9 @@ importers:
       html-loader:
         specifier: ^5.1.0
         version: 5.1.0(webpack@5.103.0)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       jsdom:
         specifier: ^16.7.0
         version: 16.7.0
@@ -4396,6 +4519,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -4535,6 +4661,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -4698,6 +4827,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -4801,6 +4933,9 @@ importers:
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.103.0)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -4907,6 +5042,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -4992,6 +5130,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -5116,6 +5257,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -5162,6 +5306,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -5214,6 +5361,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -5332,6 +5482,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -5468,6 +5621,9 @@ importers:
       fs-extra:
         specifier: ^9.1.0
         version: 9.1.0
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -5586,6 +5742,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -5749,6 +5908,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -5927,6 +6089,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -6081,6 +6246,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -6211,6 +6379,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -6359,6 +6530,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -6483,6 +6657,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -6583,6 +6760,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -6680,6 +6860,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -6704,6 +6887,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
 
   experimental/PropertyDDS/packages/property-dds:
     dependencies:
@@ -6834,6 +7020,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -6907,6 +7096,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -7004,6 +7196,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -7095,6 +7290,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -7186,6 +7384,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -7334,6 +7535,9 @@ importers:
       eslint-config-prettier:
         specifier: ~10.1.8
         version: 10.1.8(eslint@8.57.1)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -7410,6 +7614,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -7474,6 +7681,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -7586,6 +7796,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -7656,6 +7869,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -7710,6 +7926,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -7782,6 +8001,9 @@ importers:
       eslint-config-prettier:
         specifier: ~10.1.8
         version: 10.1.8(eslint@8.57.1)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -7837,6 +8059,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -7925,6 +8150,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -8022,6 +8250,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -8110,6 +8341,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -8216,6 +8450,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -8331,6 +8568,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -8464,6 +8704,9 @@ importers:
       hotloop:
         specifier: ^1.2.0
         version: 1.2.0
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -8579,6 +8822,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -8682,6 +8928,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -8773,6 +9022,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -8870,6 +9122,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -8994,6 +9249,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -9112,6 +9370,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -9212,6 +9473,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -9318,6 +9582,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -9421,6 +9688,9 @@ importers:
       execa:
         specifier: ^5.1.1
         version: 5.1.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.8.2)
@@ -9581,6 +9851,9 @@ importers:
       eslint-config-prettier:
         specifier: ~10.1.8
         version: 10.1.8(eslint@8.57.1)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -9648,6 +9921,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -9724,6 +10000,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -9806,6 +10085,9 @@ importers:
       jest:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.86)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@18.19.86)(typescript@5.4.5))
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -9870,6 +10152,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -9976,6 +10261,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -10079,6 +10367,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -10137,6 +10428,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -10210,6 +10504,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -10283,6 +10580,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       nock:
         specifier: ^13.3.3
         version: 13.5.6
@@ -10389,6 +10689,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -10474,6 +10777,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -10556,6 +10862,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -10641,6 +10950,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -10732,6 +11044,9 @@ importers:
       eslint-config-prettier:
         specifier: ~10.1.8
         version: 10.1.8(eslint@8.57.1)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -10844,6 +11159,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -10956,6 +11274,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -11041,6 +11362,9 @@ importers:
       eslint-plugin-react-hooks:
         specifier: ~5.2.0
         version: 5.2.0(eslint@8.57.1)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -11126,6 +11450,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -11220,6 +11547,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -11299,6 +11629,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -11381,6 +11714,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -11493,6 +11829,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -11563,6 +11902,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -11663,6 +12005,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -11766,6 +12111,9 @@ importers:
       global-jsdom:
         specifier: ^26.0.0
         version: 26.0.0(jsdom@20.0.3)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -11851,6 +12199,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -11927,6 +12278,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -12033,6 +12387,9 @@ importers:
       eslint-config-prettier:
         specifier: ~10.1.8
         version: 10.1.8(eslint@8.57.1)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -12133,6 +12490,9 @@ importers:
       eslint-config-prettier:
         specifier: ~10.1.8
         version: 10.1.8(eslint@8.57.1)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -12209,6 +12569,9 @@ importers:
       eslint-config-prettier:
         specifier: ~10.1.8
         version: 10.1.8(eslint@8.57.1)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -12300,6 +12663,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -12418,6 +12784,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -12512,6 +12881,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -12573,6 +12945,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -12703,6 +13078,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -12770,6 +13148,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -12873,6 +13254,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -12940,6 +13324,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -13022,6 +13409,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -13089,6 +13479,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -13183,6 +13576,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -13301,6 +13697,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -13401,6 +13800,9 @@ importers:
       fluid-framework:
         specifier: workspace:~
         version: link:../../framework/fluid-framework
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -13546,6 +13948,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       nock:
         specifier: ^13.3.3
         version: 13.5.6
@@ -13652,6 +14057,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       nock:
         specifier: ^13.3.3
         version: 13.5.6
@@ -13752,6 +14160,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -13852,6 +14263,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -13975,6 +14389,9 @@ importers:
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -14129,6 +14546,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -14255,6 +14675,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -14325,6 +14748,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -14437,6 +14863,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.8.2)
@@ -14510,6 +14939,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -14565,6 +14997,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -14665,6 +15100,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -14873,6 +15311,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.8.2)
@@ -14937,6 +15378,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -15064,6 +15508,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -15206,6 +15653,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.8.2)
@@ -15366,6 +15816,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -15405,6 +15858,9 @@ importers:
       jest-environment-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.9.2)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -15439,6 +15895,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -15506,6 +15965,9 @@ importers:
       eslint-config-prettier:
         specifier: ~10.1.8
         version: 10.1.8(eslint@8.57.1)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -15684,6 +16146,9 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       jsdom:
         specifier: ^16.7.0
         version: 16.7.0
@@ -15844,6 +16309,9 @@ importers:
       eslint-plugin-chai-expect:
         specifier: ~3.0.0
         version: 3.0.0(eslint@8.57.1)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -16025,6 +16493,9 @@ importers:
       jest-junit:
         specifier: ^16.0.0
         version: 16.0.0
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -16206,6 +16677,9 @@ importers:
       jest-junit:
         specifier: ^16.0.0
         version: 16.0.0
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -16309,6 +16783,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -16400,6 +16877,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -16527,6 +17007,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -16612,6 +17095,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -16700,6 +17186,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -16794,6 +17283,9 @@ importers:
       eslint:
         specifier: ~8.57.1
         version: 8.57.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -16831,6 +17323,9 @@ importers:
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
 
 packages:
 
@@ -24268,6 +24763,10 @@ packages:
 
   jiti@1.21.6:
     resolution: {integrity: sha512-2yTgeWTWzMWkHu6Jp9NKgePDaYHbntiwvYuuJLbbN9vl7DC9DvXKOB2BC3ZZ92D3cvV/aflH0osDfwpHepQ53w==}
+    hasBin: true
+
+  jiti@2.6.1:
+    resolution: {integrity: sha512-ekilCSN1jwRvIbgeg/57YFh8qQDNbwDb9xT/qu2DAHbFFZUicIl4ygVaAvzveMhMVr3LnpSKTNnwt8PoOfmKhQ==}
     hasBin: true
 
   jju@1.4.0:
@@ -39307,6 +39806,8 @@ snapshots:
       - ts-node
 
   jiti@1.21.6: {}
+
+  jiti@2.6.1: {}
 
   jju@1.4.0: {}
 
