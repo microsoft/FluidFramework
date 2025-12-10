@@ -96,7 +96,7 @@
 		"path-browserify": "^1.0.1"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.17.1",
+		"@arethetypeswrong/cli": "^0.18.2",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/benchmark": "^0.51.0",

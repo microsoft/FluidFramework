@@ -140,7 +140,7 @@
 		"semver-ts": "^1.0.3"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.17.1",
+		"@arethetypeswrong/cli": "^0.18.2",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "^0.61.0",
@@ -162,7 +162,7 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^6.1.2",
 		"sinon": "^18.0.1",
-		"ts-node": "^10.9.1",
+		"ts-node": "^10.9.2",
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
