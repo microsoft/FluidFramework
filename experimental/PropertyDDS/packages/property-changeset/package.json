@@ -81,7 +81,7 @@
 	},
 	"dependencies": {
 		"@fluid-experimental/property-common": "workspace:~",
-		"ajv": "^8.12.0",
+		"ajv": "^8.17.1",
 		"ajv-keywords": "^5.1.0",
 		"async": "^3.2.2",
 		"lodash": "^4.17.21",

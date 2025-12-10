@@ -104,7 +104,7 @@
 		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
-		"easy-table": "^1.1.1",
+		"easy-table": "^1.2.0",
 		"env-cmd": "^10.1.0",
 		"eslint": "~8.57.1",
 		"eslint-config-prettier": "~10.1.8",
