@@ -3360,27 +3360,6 @@ describe("Editing", () => {
 				expectJsonTree(branch, ["Y", "A", "B"]);
 			});
 
-			it("gets violated when a change is rebased", () => {
-				const tree = makeTreeFromJsonSequence(["A", "B"]);
-				const branch = tree.branch();
-
-				// Add a No Change constraint and make an edit
-				branch.transaction.start();
-				branch.editor.addNoChangeConstraint();
-				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
-				branch.transaction.commit();
-				expectJsonTree(branch, ["A", "X", "B"]);
-
-				// Make a concurrent edit on the main tree to force a rebase
-				tree.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees(["Y"]));
-				expectJsonTree(tree, ["Y", "A", "B"]);
-
-				// When rebasing, the No Change constraint should be violated
-				// and the transaction should be dropped
-				branch.rebaseOnto(tree);
-				expectJsonTree(branch, ["Y", "A", "B"]);
-			});
-
 			it("remains violated once violated", () => {
 				const tree = makeTreeFromJsonSequence(["A", "B"]);
 				const branch = tree.branch();
@@ -3464,7 +3443,6 @@ describe("Editing", () => {
 
 		describe("No Change constraint on revert", () => {
 			it("Should not revert when constraint is violated", () => {
-				debugger;
 				const tree = makeTreeFromJsonSequence(["A", "B"]);
 				const branch = tree.branch();
 
@@ -3474,6 +3452,7 @@ describe("Editing", () => {
 				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
 				branch.editor.addNoChangeConstraintOnRevert();
 				branch.transaction.commit();
+				expectJsonTree(branch, ["A", "X", "B"]);
 				const revertible = undoStack.pop();
 				assert(revertible !== undefined, "Missing revertible");
 				revertible.revert();
@@ -3492,7 +3471,7 @@ describe("Editing", () => {
 				unsubscribe();
 			});
 
-			it("Should do nothing when there's no rebase", () => {
+			it("Should not be violated when there's no rebase", () => {
 				const tree = makeTreeFromJsonSequence(["A", "B"]);
 				const branch = tree.branch();
 

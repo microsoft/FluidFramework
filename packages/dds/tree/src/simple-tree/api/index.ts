@@ -150,6 +150,7 @@ export {
 export {
 	type TransactionConstraint,
 	type NodeInDocumentConstraint,
+	type NoChangeConstraint,
 	type RunTransactionParams,
 	type VoidTransactionCallbackStatus,
 	type TransactionCallbackStatus,

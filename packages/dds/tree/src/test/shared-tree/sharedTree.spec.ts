@@ -1719,6 +1719,79 @@ describe("SharedTree", () => {
 
 			stack.unsubscribe();
 		});
+
+		it("gets violated when a change is rebased", () => {
+			const provider = new TestTreeProviderLite(1);
+			const config = new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			const tree = provider.trees[0];
+			const view = asAlpha(tree.viewWith(config));
+			view.initialize(["A", "B"]);
+			const fork = view.fork();
+			assert.deepEqual([...view.root], [...fork.root]);
+
+			// Make a concurrent edit on the main tree, and add "X" on the fork with a constraint
+			view.runTransaction(() => {
+				view.root.insertAt(0, "Y");
+			});
+			fork.runTransaction(
+				() => {
+					fork.root.insertAt(1, "X");
+					return;
+				},
+				{
+					preconditions: [{ type: "noChange" }],
+				},
+			);
+			assert.deepEqual([...view.root], ["Y", "A", "B"]);
+			assert.deepEqual([...fork.root], ["A", "X", "B"]);
+
+			// rebase the fork, which should violate the constraint
+			fork.rebaseOnto(view);
+			assert.deepEqual([...view.root], ["Y", "A", "B"]);
+			assert.deepEqual([...fork.root], ["Y", "A", "B"]);
+		});
+
+		it("revert constraint gets violated when a change is rebased", () => {
+			const provider = new TestTreeProviderLite(1);
+			const config = new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+
+			const view = asAlpha(provider.trees[0].viewWith(config));
+			view.initialize(["A", "B"]);
+
+			const fork = view.fork();
+			const stackFork = createTestUndoRedoStacks(fork.events);
+			fork.runTransaction(() => {
+				fork.root.insertAt(1, "X");
+				return {
+					preconditionsOnRevert: [{ type: "noChange" }],
+				};
+			});
+			assert.deepEqual([...view.root], ["A", "B"]);
+			assert.deepEqual([...fork.root], ["A", "X", "B"]);
+
+			const revertible = stackFork.undoStack[0] ?? assert.fail("Missing undo");
+			revertible.revert();
+			// Revert should go through on the fork since the constraint shouldnt be violated yet
+			assert.deepEqual([...fork.root], ["A", "B"]);
+
+			// Make an edit on the main tree to force a rebase
+			view.runTransaction(() => {
+				view.root.insertAt(0, "Y");
+			});
+			assert.deepEqual([...view.root], ["Y", "A", "B"]);
+
+			// When rebasing, the No Change constraint should be violated
+			// and the revert transaction should be dropped
+			fork.rebaseOnto(view);
+			assert.deepEqual([...fork.root], ["Y", "A", "X", "B"]);
+			stackFork.unsubscribe();
+		});
 	});
 
 	describe("Events", () => {

@@ -237,7 +237,12 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"TypeAlias_TransactionConstraint": {
+				"backCompat": false,
+				"forwardCompat": true
+			}
+		},
 		"entrypoint": "public"
 	}
 }

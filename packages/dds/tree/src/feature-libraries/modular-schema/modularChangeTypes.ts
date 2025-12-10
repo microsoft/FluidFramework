@@ -132,10 +132,6 @@ export interface NodeChangeset extends HasFieldChanges {
 	nodeExistsConstraint?: NodeExistsConstraint;
 	/** Keeps track of whether node exists constraint will be violated when this change is reverted */
 	nodeExistsConstraintOnRevert?: NodeExistsConstraint;
-	/** Keeps track of whether no change constraint has been violated by this change */
-	noChangeConstraint?: NoChangeConstraint;
-	/** Keeps track of whether no change on revert constraint has been violated by this change */
-	noChangeConstraintOnRevert?: NoChangeConstraint;
 }
 
 export type NodeId = ChangeAtomId;

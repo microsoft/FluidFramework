@@ -24,8 +24,7 @@ export const EncodedChangeAtomId = Type.Union([
 	ChangesetLocalIdSchema,
 ]);
 export type EncodedChangeAtomId = Static<typeof EncodedChangeAtomId>;
-
-const EncodedFieldChange = Type.Object(
+export const EncodedFieldChange = Type.Object(
 	{
 		fieldKey: schemaFormatV1.FieldKeySchema,
 		fieldKind: schemaFormatV1.FieldKindIdentifierSchema,
@@ -44,7 +43,7 @@ export interface EncodedFieldChange extends Static<typeof EncodedFieldChange> {
 	change: JsonCompatibleReadOnly;
 }
 
-const EncodedFieldChangeMap = Type.Array(EncodedFieldChange);
+export const EncodedFieldChangeMap = Type.Array(EncodedFieldChange);
 
 /**
  * Format for encoding as json.
@@ -63,19 +62,10 @@ const EncodedNodeExistsConstraint = Type.Object(
 );
 type EncodedNodeExistsConstraint = Static<typeof EncodedNodeExistsConstraint>;
 
-const EncodedNoChangeConstraint = Type.Object(
-	{
-		violated: Type.Boolean(),
-	},
-	noAdditionalProps,
-);
-type EncodedNoChangeConstraint = Static<typeof EncodedNoChangeConstraint>;
-
 export const EncodedNodeChangeset = Type.Object(
 	{
 		fieldChanges: Type.Optional(EncodedFieldChangeMap),
 		nodeExistsConstraint: Type.Optional(EncodedNodeExistsConstraint),
-		noChangeConstraint: Type.Optional(EncodedNoChangeConstraint),
 	},
 	noAdditionalProps,
 );
@@ -134,7 +124,7 @@ export const EncodedBuilds = Type.Object(
 
 export type EncodedBuilds = Static<typeof EncodedBuilds>;
 
-export const EncodedModularChangeset = Type.Object(
+export const EncodedModularChangesetV1 = Type.Object(
 	{
 		maxId: Type.Optional(ChangesetLocalIdSchema),
 		changes: EncodedFieldChangeMap,
@@ -147,11 +137,8 @@ export const EncodedModularChangeset = Type.Object(
 		 * The number of constraints within this changeset that are violated.
 		 */
 		violations: Type.Optional(Type.Number({ minimum: 0, multipleOf: 1 })),
-
-		/** Global no change constraint that gets violated whenever the changeset is rebased */
-		noChangeConstraint: Type.Optional(EncodedNoChangeConstraint),
 	},
 	noAdditionalProps,
 );
 
-export type EncodedModularChangeset = Static<typeof EncodedModularChangeset>;
+export type EncodedModularChangesetV1 = Static<typeof EncodedModularChangesetV1>;

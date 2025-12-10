@@ -21,7 +21,7 @@ export const rollback = Symbol("SharedTree Transaction Rollback");
  * All clients will validate the constraints of a transaction when it is sequenced, so all clients will agree on whether the transaction succeeds or not.
  * @public
  */
-export type TransactionConstraint = NodeInDocumentConstraint; // TODO: Add more constraint types here
+export type TransactionConstraint = NodeInDocumentConstraint | NoChangeConstraint; // TODO: Add more constraint types here
 
 /**
  * A transaction {@link TransactionConstraint | constraint} which requires that the given node exists in the tree.
@@ -31,6 +31,14 @@ export type TransactionConstraint = NodeInDocumentConstraint; // TODO: Add more 
 export interface NodeInDocumentConstraint {
 	readonly type: "nodeInDocument";
 	readonly node: TreeNode;
+}
+
+/**
+ * A transaction {@link TransactionConstraint | constraint} which requires that no changes which require rebasing are made.
+ * @alpha
+ */
+export interface NoChangeConstraint {
+	readonly type: "noChange";
 }
 
 /**

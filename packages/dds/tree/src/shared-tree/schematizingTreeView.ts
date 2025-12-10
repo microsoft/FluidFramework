@@ -9,7 +9,7 @@ import type {
 	IEmitter,
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { anchorSlot, rootFieldKey } from "../core/index.js";
@@ -575,8 +575,17 @@ export function addConstraintsToTransaction(
 				}
 				break;
 			}
+			case "noChange": {
+				if (constraintsOnRevert) {
+					checkout.editor.addNoChangeConstraintOnRevert();
+				} else {
+					checkout.editor.addNoChangeConstraint();
+				}
+				break;
+			}
 			default:
-				unreachableCase(constraint.type);
+				fail(`Unsupported constraint type`);
+				break;
 		}
 	}
 }

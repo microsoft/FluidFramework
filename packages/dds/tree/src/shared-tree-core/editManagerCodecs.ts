@@ -154,6 +154,13 @@ export function makeEditManagerCodecs<TChangeset>(
 					makeSharedBranchesCodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
 			}
+			case EditManagerFormatVersion.vConstraints: {
+				const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
+				return [
+					version,
+					makeV1CodecWithVersion(changeCodec, revisionTagCodec, options, version),
+				];
+			}
 			default:
 				unreachableCase(version);
 		}

@@ -29,7 +29,7 @@ import {
 	type FieldKindConfigurationEntry,
 	makeModularChangeCodecFamily,
 	ModularChangeFamily,
-	type EncodedModularChangeset,
+	type EncodedModularChangesetV2,
 	type FieldChangeRebaser,
 	type FieldEditor,
 	type EditDescription,
@@ -186,7 +186,7 @@ const codecOptions: CodecWriteOptions = {
 };
 
 const codec = makeModularChangeCodecFamily(
-	new Map([[1, fieldKindConfiguration]]),
+	new Map([[5, fieldKindConfiguration]]),
 	testRevisionTagCodec,
 	makeFieldBatchCodec(codecOptions),
 	codecOptions,
@@ -1409,7 +1409,7 @@ describe("ModularChangeFamily", () => {
 		};
 		const encodingTestData: EncodingTestData<
 			ModularChangeset,
-			EncodedModularChangeset,
+			EncodedModularChangesetV2,
 			ChangeEncodingContext
 		> = {
 			successes: [

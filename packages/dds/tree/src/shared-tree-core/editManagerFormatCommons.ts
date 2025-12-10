@@ -161,6 +161,11 @@ export const EditManagerFormatVersion = {
 	 * Only used for testing shared branches.
 	 */
 	vSharedBranches: "shared-branches|v0.1",
+	/**
+	 * Not yet released.
+	 * Used for new constraints.
+	 */
+	vConstraints: "tableconstraints|v0.1",
 } as const;
 export type EditManagerFormatVersion = Brand<
 	(typeof EditManagerFormatVersion)[keyof typeof EditManagerFormatVersion],
@@ -171,6 +176,7 @@ export const supportedEditManagerFormatVersions: ReadonlySet<EditManagerFormatVe
 		EditManagerFormatVersion.v3,
 		EditManagerFormatVersion.v4,
 		EditManagerFormatVersion.vSharedBranches,
+		EditManagerFormatVersion.vConstraints,
 	] as EditManagerFormatVersion[]);
 export const editManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> = new Set(
 	Object.values(EditManagerFormatVersion) as EditManagerFormatVersion[],

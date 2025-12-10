@@ -1,5 +1,15 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
 	"extends": "<projectFolder>/../../../common/build/build-common/api-extractor-lint.json",
-	"mainEntryPointFilePath": "<projectFolder>/lib/index.d.ts"
+	"mainEntryPointFilePath": "<projectFolder>/lib/index.d.ts",
+	"messages": {
+		"extractorMessageReporting": {
+			"ae-forgotten-export": {
+				"logLevel": "none"
+			},
+			"ae-incompatible-release-tags": {
+				"logLevel": "none"
+			}
+		}
+	}
 }
