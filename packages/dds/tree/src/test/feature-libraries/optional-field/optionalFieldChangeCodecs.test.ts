@@ -67,38 +67,36 @@
 
 // const pin = inlineRevision(Change.pin(brand(4)), tag1);
 
-// export function testCodecs() {
-// 	describe("Codecs", () => {
-// 		const baseContext = {
-// 			originatorId: "session1" as SessionId,
-// 			revision: undefined,
-// 			idCompressor: testIdCompressor,
-// 		};
-// 		const context: FieldChangeEncodingContext = {
-// 			baseContext,
-// 			encodeNode: (nodeId) => TestNodeId.encode(nodeId, baseContext),
-// 			decodeNode: (nodeId) => TestNodeId.decode(nodeId, baseContext),
-// 		};
-
-// 		const encodingTestData: EncodingTestData<
-// 			OptionalChangeset,
-// 			unknown,
-// 			FieldChangeEncodingContext
-// 		> = {
-// 			successes: [
-// 				["set from empty", change1, context],
-// 				["set from non-empty", change2, context],
-// 				["child change", changeWithChildChange, context],
-// 				["field set with child change", change1WithChildChange, context], // Note: should only get sent over the wire when using transaction APIs.
-// 				["undone field change", change2Inverted, context],
-// 				["clear from empty", clearEmpty, context],
-// 				["pin", pin, context],
-// 			],
-// 		};
-
-// 		makeEncodingTestSuite(
-// 			makeOptionalFieldCodecFamily(testRevisionTagCodec),
-// 			encodingTestData,
-// 		);
-// 	});
-// }
+export function testCodecs() {
+	describe.skip("Codecs", () => {
+		// 		const baseContext = {
+		// 			originatorId: "session1" as SessionId,
+		// 			revision: undefined,
+		// 			idCompressor: testIdCompressor,
+		// 		};
+		// 		const context: FieldChangeEncodingContext = {
+		// 			baseContext,
+		// 			encodeNode: (nodeId) => TestNodeId.encode(nodeId, baseContext),
+		// 			decodeNode: (nodeId) => TestNodeId.decode(nodeId, baseContext),
+		// 		};
+		// 		const encodingTestData: EncodingTestData<
+		// 			OptionalChangeset,
+		// 			unknown,
+		// 			FieldChangeEncodingContext
+		// 		> = {
+		// 			successes: [
+		// 				["set from empty", change1, context],
+		// 				["set from non-empty", change2, context],
+		// 				["child change", changeWithChildChange, context],
+		// 				["field set with child change", change1WithChildChange, context], // Note: should only get sent over the wire when using transaction APIs.
+		// 				["undone field change", change2Inverted, context],
+		// 				["clear from empty", clearEmpty, context],
+		// 				["pin", pin, context],
+		// 			],
+		// 		};
+		// 		makeEncodingTestSuite(
+		// 			makeOptionalFieldCodecFamily(testRevisionTagCodec),
+		// 			encodingTestData,
+		// 		);
+	});
+}

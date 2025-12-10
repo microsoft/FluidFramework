@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 import { type RevisionTag, replaceAtomRevisions } from "../../core/index.js";
 
-import type { MoveMarkEffect } from "./helperTypes.js";
 import { MarkListFactory } from "./markListFactory.js";
 import {
 	type Changeset,
@@ -16,9 +15,7 @@ import {
 	type Mark,
 	type MarkEffect,
 	NoopMarkType,
-	type Rename,
 } from "./types.js";
-import { isDetach, isRename } from "./utils.js";
 import type { Mutable } from "../../util/index.js";
 
 export function replaceRevisions(
