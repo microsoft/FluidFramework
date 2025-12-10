@@ -915,7 +915,6 @@ export function makeOpGenerator(
 		};
 	}
 
-	// eslint-disable-next-line unicorn/consistent-function-scoping
 	function deliverAllOperationsGenerator(): DeliverAllOperations {
 		return {
 			type: "deliverAllOperations",
