@@ -5,7 +5,6 @@
 
 export { DiceRollerFactory } from "./diceRoller.js";
 export type {
-	EntryPoint,
 	IDiceRoller,
 	IDiceRollerEvents,
 } from "./interface.js";
