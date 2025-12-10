@@ -12,7 +12,7 @@ import {
 	qualifiedTitle,
 	TestType,
 } from "../Configuration";
-import type { BenchmarkResult } from "../ResultTypes";
+import type { BenchmarkResult, BenchmarkError } from "../ResultTypes";
 import { fail } from "../assert.js";
 import { Phase, runBenchmark } from "../runBenchmark";
 
@@ -99,8 +99,9 @@ export function supportParentProcess<
 				// of scope for now.
 				let inspectArgIndex: number = -1;
 				while (
-					(inspectArgIndex = childArgs.findIndex((x) => x.match(/^(--inspect|--debug).*/))) >=
-					0
+					(inspectArgIndex = childArgs.findIndex((x) =>
+						x.match(/^(--inspect|--debug).*/),
+					)) >= 0
 				) {
 					childArgs.splice(inspectArgIndex, 1);
 				}
