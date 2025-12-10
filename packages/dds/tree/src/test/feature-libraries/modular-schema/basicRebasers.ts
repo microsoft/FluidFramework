@@ -21,7 +21,7 @@ import {
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-import { brandConst, type Mutable } from "../../../util/index.js";
+import { brandConst } from "../../../util/index.js";
 import { makeValueCodec } from "../../codec/index.js";
 
 /**

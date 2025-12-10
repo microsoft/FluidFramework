@@ -55,7 +55,6 @@ import {
 import {
 	brand,
 	brandConst,
-	idAllocatorFromMaxId,
 	nestedMapFromFlatList,
 	newTupleBTree,
 	tryGetFromNestedMap,
@@ -75,14 +74,13 @@ import {
 import { type ValueChangeset, valueField } from "./basicRebasers.js";
 import { ajvValidator } from "../../codec/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
-import {
-	type NodeChangeset,
+import type {
+	NodeChangeset,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
 	intoDelta,
 	updateRefreshers,
-	relevantRemovedRoots as relevantDetachedTreesImplementation,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import type {

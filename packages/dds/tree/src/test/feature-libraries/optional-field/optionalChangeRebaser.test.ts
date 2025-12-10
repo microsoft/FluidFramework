@@ -12,9 +12,9 @@ import {
 	rootFieldKey,
 	tagChange,
 } from "../../../core/index.js";
-import {
-	type ModularChangeset,
-	type NodeId,
+import type {
+	ModularChangeset,
+	NodeId,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
@@ -36,21 +36,21 @@ import { chunkFromJsonTrees } from "../../utils.js";
 import { intoDelta, type DefaultChangeset } from "../../../feature-libraries/index.js";
 import type {
 	FieldEditDescription,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
 	optional,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	assertEqual,
 	normalizeDelta,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../modular-schema/modularChangesetUtil.js";
 import {
 	defaultFamily,
 	defaultFieldRebaser,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../default-field-kinds/defaultChangesetUtil.js";
 
 type RevisionTagMinter = () => RevisionTag;

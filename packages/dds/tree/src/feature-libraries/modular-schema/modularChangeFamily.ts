@@ -3002,7 +3002,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 			setInCrossFieldMap(this.table.entries, baseAttachId, countToProcess, {
 				nodeChange,
 				detachId: newDetachId,
-				cellRename: cellRename,
+				cellRename,
 			});
 
 			if (nodeChange !== undefined || newDetachId !== undefined) {

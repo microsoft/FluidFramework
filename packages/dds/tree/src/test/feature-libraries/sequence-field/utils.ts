@@ -31,7 +31,7 @@ import {
 	type InvertNodeManager,
 	type NodeId,
 	type RebaseRevisionMetadata,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/index.js";
@@ -61,7 +61,6 @@ import {
 import {
 	type IdAllocator,
 	type Mutable,
-	type RangeQueryEntry,
 	type RangeQueryResult,
 	brand,
 	fakeIdAllocator,
@@ -89,7 +88,7 @@ import type {
 	ComposeNodeManager,
 	DetachedNodeEntry,
 	RebaseNodeManager,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/crossFieldQueries.js";
 
 export function assertWrappedChangesetsEqual(

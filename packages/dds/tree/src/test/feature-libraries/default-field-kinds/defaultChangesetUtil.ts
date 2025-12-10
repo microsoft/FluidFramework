@@ -23,7 +23,7 @@ import {
 } from "../../../feature-libraries/index.js";
 import {
 	rebaseRevisionMetadataFromInfo,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { strict as assert } from "node:assert";
 import type { CodecWriteOptions } from "../../../index.js";
@@ -36,9 +36,9 @@ import {
 	empty,
 	isModularEmpty,
 	normalizeDelta,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../modular-schema/modularChangesetUtil.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
 import { brand } from "../../../util/index.js";
 import { currentVersion } from "../../../codec/index.js";
