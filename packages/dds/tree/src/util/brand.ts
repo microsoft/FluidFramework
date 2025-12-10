@@ -194,7 +194,7 @@ export function unbrand<const T extends BrandedType<unknown, unknown>>(
  * }
  * ```
  */
-export function strictEnum<const T extends Record<number, string | number>, const TBrand>(
+export function strictEnum<const T, const TBrand>(
 	name: TBrand,
 	entries: T,
 ): { readonly [Property in keyof T]: Brand<T[Property], TBrand> } {
