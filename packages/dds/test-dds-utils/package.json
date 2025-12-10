@@ -112,6 +112,7 @@
 		"cross-env": "^7.0.3",
 		"eslint": "~8.57.1",
 		"execa": "^5.1.1",
+		"jiti": "^2.6.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"

@@ -56,6 +56,7 @@
 		"@types/react-dom": "^18.3.0",
 		"eslint": "~8.57.1",
 		"fluid-framework": "workspace:~",
+		"jiti": "^2.6.1",
 		"mui": "^0.0.1",
 		"next": "^14.2.27",
 		"notistack": "^3.0.1",
