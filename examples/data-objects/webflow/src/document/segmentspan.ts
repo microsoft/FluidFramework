@@ -58,7 +58,7 @@ export class SegmentSpan {
 			startOffset: number,
 			endOffset: number,
 		) => boolean | undefined,
-	): void {
+	) {
 		let startOffset = this._startOffset;
 		let position = this.firstPosition;
 		const final = this.endPosition;
@@ -80,12 +80,7 @@ export class SegmentSpan {
 		}
 	}
 
-	public append(
-		position: number,
-		segment: ISegment,
-		startOffset: number,
-		endOffset: number,
-	): void {
+	public append(position: number, segment: ISegment, startOffset: number, endOffset: number) {
 		this._segments.push(segment);
 		this.lastPosition = position;
 		this._endOffset = endOffset;
@@ -106,7 +101,7 @@ export class SegmentSpan {
 	 * Given an offset from the beginning of the span, returns the segment that contains the offset
 	 * as well as the offset from the segment start.
 	 */
-	public spanOffsetToSegmentOffset(spanOffset: number): { segment: ISegment; offset: number } {
+	public spanOffsetToSegmentOffset(spanOffset: number) {
 		let currentSpanOffset = spanOffset;
 		let segment: ISegment;
 		let offset = NaN;

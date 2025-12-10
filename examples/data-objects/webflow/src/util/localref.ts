@@ -8,11 +8,7 @@ import { LocalReferencePosition } from "@fluidframework/sequence/legacy";
 import { debug } from "../document/debug.js";
 import { FlowDocument } from "../document/index.js";
 
-export function updateRef(
-	doc: FlowDocument,
-	ref: LocalReferencePosition,
-	position: number,
-): LocalReferencePosition {
+export function updateRef(doc: FlowDocument, ref: LocalReferencePosition, position: number) {
 	if (isNaN(position)) {
 		debug(`      ${position} (ignored)`);
 		return ref;
@@ -35,7 +31,7 @@ export function updateRef(
 	return doc.addLocalRef(position);
 }
 
-export function extractRef(doc: FlowDocument, ref: LocalReferencePosition): number {
+export function extractRef(doc: FlowDocument, ref: LocalReferencePosition) {
 	const position = doc.localRefToPosition(ref);
 	doc.removeLocalRef(ref);
 	return position;

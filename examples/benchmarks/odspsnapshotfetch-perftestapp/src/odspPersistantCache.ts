@@ -20,7 +20,7 @@ export class OdspSampleCache implements IPersistedCache {
 		return this.cache.get(getKeyForCacheEntry(entry));
 	}
 
-	async put(entry: ICacheEntry, value: any): Promise<void> {
+	async put(entry: ICacheEntry, value: any) {
 		this.cache.set(getKeyForCacheEntry(entry), value);
 	}
 

@@ -13,15 +13,12 @@ import {
 
 import { DeltaFactory, SharedDelta } from "./delta.js";
 
-const createLocalOT = (id: string): SharedDelta => {
+const createLocalOT = (id: string) => {
 	const factory = SharedDelta.getFactory();
 	return factory.create(new MockFluidDataStoreRuntime(), id);
 };
 
-function createConnectedOT(
-	id: string,
-	runtimeFactory: MockContainerRuntimeFactory,
-): SharedDelta {
+function createConnectedOT(id: string, runtimeFactory: MockContainerRuntimeFactory) {
 	// Create and connect a second SharedCell.
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
@@ -43,7 +40,7 @@ describe("SharedDelta", () => {
 			delta = createLocalOT("OT");
 		});
 
-		const expect = (expected: string): void => {
+		const expect = (expected: string) => {
 			assert.deepEqual(delta.text, expected);
 		};
 
@@ -118,7 +115,7 @@ describe("SharedDelta", () => {
 				expect();
 			});
 
-			const expect = (expected?: string): void => {
+			const expect = (expected?: string) => {
 				containerRuntimeFactory.processAllMessages();
 
 				const actual1 = doc1.text;

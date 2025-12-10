@@ -37,7 +37,7 @@ export class PaddingSegment extends BaseSegment {
 	public static is(segment: ISegment): segment is PaddingSegment {
 		return segment.type === PaddingSegment.typeString;
 	}
-	public static fromJSONObject(spec: any): PaddingSegment | undefined {
+	public static fromJSONObject(spec: any) {
 		if (spec && typeof spec === "object" && "pad" in spec) {
 			return new PaddingSegment(spec.pad, spec.props);
 		}
@@ -50,36 +50,36 @@ export class PaddingSegment extends BaseSegment {
 		this.cachedLength = size;
 	}
 
-	public toJSONObject(): { pad: number; props: PropertySet | undefined } {
+	public toJSONObject() {
 		return { pad: this.cachedLength, props: this.properties };
 	}
 
-	public clone(start = 0, end?: number): PaddingSegment {
+	public clone(start = 0, end?: number) {
 		const b = new PaddingSegment(this.cachedLength);
 		this.cloneInto(b);
 		return b;
 	}
 
-	public canAppend(segment: ISegment): boolean {
+	public canAppend(segment: ISegment) {
 		return PaddingSegment.is(segment);
 	}
 
-	public toString(): string {
+	public toString() {
 		return `[padding: ${this.cachedLength}]`;
 	}
 
-	public append(segment: ISegment): void {
+	public append(segment: ISegment) {
 		assert(PaddingSegment.is(segment), 0x5f7 /* can only append padding segment */);
 		super.append(segment);
 	}
 
 	// Returns true if entire run removed
-	public removeRange(start: number, end: number): boolean {
+	public removeRange(start: number, end: number) {
 		this.cachedLength -= end - start;
 		return this.cachedLength === 0;
 	}
 
-	protected createSplitSegmentAt(pos: number): PaddingSegment {
+	protected createSplitSegmentAt(pos: number) {
 		const leftLength = pos;
 		const rightLength = this.cachedLength - pos;
 
@@ -105,7 +105,7 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
 	public static is(segment: ISegment): segment is RunSegment {
 		return segment.type === RunSegment.typeString;
 	}
-	public static fromJSONObject(spec: any): RunSegment | undefined {
+	public static fromJSONObject(spec: any) {
 		if (spec && typeof spec === "object" && "items" in spec) {
 			return new RunSegment(spec.items, spec.props);
 		}
@@ -123,7 +123,7 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
 		this.tags = new Array(items.length).fill(undefined);
 	}
 
-	public clone(start = 0, end?: number): RunSegment {
+	public clone(start = 0, end?: number) {
 		const b = new RunSegment(this.items.slice(start, end));
 		if (this.tags) {
 			b.tags = this.tags.slice(start, end);
@@ -132,7 +132,7 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
 		return b;
 	}
 
-	public append(segment: ISegment): this {
+	public append(segment: ISegment) {
 		super.append(segment);
 
 		const asRun = segment as RunSegment;
@@ -147,21 +147,21 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
 
 	// TODO: retain removed items for undo
 	// returns true if entire run removed
-	public removeRange(start: number, end: number): boolean {
+	public removeRange(start: number, end: number) {
 		this.tags.splice(start, end - start);
 		return super.removeRange(start, end);
 	}
 
-	public getTag(pos: number): any {
+	public getTag(pos: number) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return this.tags[pos];
 	}
 
-	public setTag(pos: number, tag: unknown): void {
+	public setTag(pos: number, tag: any) {
 		this.tags[pos] = tag;
 	}
 
-	protected createSplitSegmentAt(pos: number): RunSegment | undefined {
+	protected createSplitSegmentAt(pos: number) {
 		if (pos > 0) {
 			const remainingItems = this.items.slice(pos);
 			this.items = this.items.slice(0, pos);
@@ -223,14 +223,14 @@ export const maxCellPosition = maxCol * maxRow;
  * Use {@link @fluidframework/matrix#SharedMatrix} instead.
  * @internal
  */
-export const rowColToPosition = (row: number, col: number): number => row * maxCols + col;
+export const rowColToPosition = (row: number, col: number) => row * maxCols + col;
 
 /**
  * @deprecated `positionToRowCol` is part of an abandoned prototype.
  * Use {@link @fluidframework/matrix#SharedMatrix} instead.
  * @internal
  */
-export function positionToRowCol(position: number): { row: number; col: number } {
+export function positionToRowCol(position: number) {
 	const row = Math.floor(position / maxCols);
 	const col = position - row * maxCols;
 	return { row, col };
@@ -249,16 +249,11 @@ export class SparseMatrixClass extends SharedSegmentSequence<MatrixSegment> {
 		super(document, id, attributes, SparseMatrixFactory.segmentFromSpec);
 	}
 
-	public get numRows(): number {
+	public get numRows() {
 		return positionToRowCol(this.getLength()).row;
 	}
 
-	public setItems(
-		row: number,
-		col: number,
-		values: SparseMatrixItem[],
-		props?: PropertySet,
-	): void {
+	public setItems(row: number, col: number, values: SparseMatrixItem[], props?: PropertySet) {
 		const start = rowColToPosition(row, col);
 		const end = start + values.length;
 		const segment = new RunSegment(values, props);
@@ -283,7 +278,7 @@ export class SparseMatrixClass extends SharedSegmentSequence<MatrixSegment> {
 		throw new Error(`Unrecognized Segment type`);
 	}
 
-	public getTag(row: number, col: number): any {
+	public getTag(row: number, col: number) {
 		const { segment, offset } = this.getSegment(row, col);
 		if (segment && RunSegment.is(segment)) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -292,7 +287,7 @@ export class SparseMatrixClass extends SharedSegmentSequence<MatrixSegment> {
 		return undefined;
 	}
 
-	public setTag(row: number, col: number, tag: any): void {
+	public setTag(row: number, col: number, tag: any) {
 		const { segment, offset } = this.getSegment(row, col);
 		if (segment && RunSegment.is(segment)) {
 			segment.setTag(offset ?? 0, tag);
@@ -301,7 +296,7 @@ export class SparseMatrixClass extends SharedSegmentSequence<MatrixSegment> {
 		}
 	}
 
-	public insertRows(row: number, numRows: number): void {
+	public insertRows(row: number, numRows: number) {
 		const pos = rowColToPosition(row, 0);
 		const size = maxCols * numRows;
 		const segment = new PaddingSegment(size);
@@ -309,33 +304,33 @@ export class SparseMatrixClass extends SharedSegmentSequence<MatrixSegment> {
 		this.client.insertSegmentLocal(pos, segment);
 	}
 
-	public removeRows(row: number, numRows: number): void {
+	public removeRows(row: number, numRows: number) {
 		const pos = rowColToPosition(row, 0);
 		const size = maxCols * numRows;
 		this.removeRange(pos, pos + size);
 	}
 
-	public insertCols(col: number, numCols: number): void {
+	public insertCols(col: number, numCols: number) {
 		this.moveAsPadding(maxCol - numCols, col, numCols);
 	}
 
-	public removeCols(col: number, numCols: number): void {
+	public removeCols(col: number, numCols: number) {
 		this.moveAsPadding(col, maxCol - numCols, numCols);
 	}
 
-	public annotatePosition(row: number, col: number, props: PropertySet): void {
+	public annotatePosition(row: number, col: number, props: PropertySet) {
 		const pos = rowColToPosition(row, col);
 		this.annotateRange(pos, pos + 1, props);
 	}
 
-	public getPositionProperties(row: number, col: number): PropertySet | undefined {
+	public getPositionProperties(row: number, col: number) {
 		const pos = rowColToPosition(row, col);
 		return this.getPropertiesAtPosition(pos);
 	}
 
 	// For each row, moves 'numCols' items starting from 'srcCol' and inserts 'numCols' padding
 	// at 'destCol'.  Used by insertCols and removeCols.
-	private moveAsPadding(srcCol: number, destCol: number, numCols: number): void {
+	private moveAsPadding(srcCol: number, destCol: number, numCols: number) {
 		const removeColStart = srcCol;
 		const removeColEnd = srcCol + numCols;
 
@@ -347,10 +342,7 @@ export class SparseMatrixClass extends SharedSegmentSequence<MatrixSegment> {
 		}
 	}
 
-	private getSegment(
-		row: number,
-		col: number,
-	): { segment: MatrixSegment | undefined; offset: number | undefined } {
+	private getSegment(row: number, col: number) {
 		const pos = rowColToPosition(row, col);
 		return this.getContainingSegment(pos);
 	}
@@ -384,11 +376,11 @@ export class SparseMatrixFactory implements IChannelFactory<SparseMatrix> {
 		throw new Error(`Unrecognized IJSONObject: '${JSON.stringify(spec)}'`);
 	}
 
-	public get type(): string {
+	public get type() {
 		return SparseMatrixFactory.Type;
 	}
 
-	public get attributes(): IChannelAttributes {
+	public get attributes() {
 		return SparseMatrixFactory.Attributes;
 	}
 

@@ -18,7 +18,7 @@ export function getAttrs(segment: ISegment): Readonly<IHTMLAttributes> {
 	return properties?.attr || emptyObject;
 }
 
-export function syncAttrs(element: HTMLElement, attrs: IHTMLAttributes): void {
+export function syncAttrs(element: HTMLElement, attrs: IHTMLAttributes) {
 	// Remove any attributes not in attrs
 	for (const name of element.getAttributeNames()) {
 		if (!(name in attrs)) {

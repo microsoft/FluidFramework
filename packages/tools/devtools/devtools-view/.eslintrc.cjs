@@ -39,14 +39,6 @@ module.exports = {
 				allow: ["@testing-library/jest-dom"],
 			},
 		],
-
-		// TODO: These rules should be re-enabled once we are on eslint 9
-		// and the react plugins are upgraded to more recent versions
-		"react-hooks/immutability": "warn",
-		"react-hooks/refs": "warn",
-		"react-hooks/rules-of-hooks": "warn",
-		"react-hooks/set-state-in-effect": "warn",
-		"react-hooks/static-components": "warn",
 	},
 	overrides: [
 		{

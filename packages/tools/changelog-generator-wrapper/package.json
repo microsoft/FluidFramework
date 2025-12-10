@@ -39,7 +39,6 @@
 		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.57.1",
-		"jiti": "^2.6.1",
 		"rimraf": "^4.4.0"
 	},
 	"typeValidation": {

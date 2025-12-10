@@ -16,10 +16,7 @@ import {
 import { SharedObjectSequenceFactory, type SharedObjectSequence } from "../sequenceFactory.js";
 import { SharedObjectSequenceClass } from "../sharedObjectSequence.js";
 
-function createConnectedSequence(
-	id: string,
-	runtimeFactory: MockContainerRuntimeFactory,
-): SharedObjectSequenceClass<unknown> {
+function createConnectedSequence(id: string, runtimeFactory: MockContainerRuntimeFactory) {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const sequence = new SharedObjectSequenceClass(
 		dataStoreRuntime,
@@ -36,7 +33,7 @@ function createConnectedSequence(
 	return sequence;
 }
 
-function createLocalSequence(id: string): SharedObjectSequence<unknown> {
+function createLocalSequence(id: string) {
 	const factory = new SharedObjectSequenceFactory();
 	return factory.create(new MockFluidDataStoreRuntime(), id) as SharedObjectSequence<unknown>;
 }
@@ -56,16 +53,16 @@ describe("SharedObjectSequence", () => {
 				this.sequence2 = createConnectedSequence("sequence2", this.containerRuntimeFactory);
 			}
 
-			public get sharedObject(): SharedObjectSequence<unknown> {
+			public get sharedObject() {
 				// Return the remote SharedObjectSequence because we want to verify its summary data.
 				return this.sequence2;
 			}
 
-			public get expectedOutboundRoutes(): string[] {
+			public get expectedOutboundRoutes() {
 				return this._expectedRoutes;
 			}
 
-			public async addOutboundRoutes(): Promise<void> {
+			public async addOutboundRoutes() {
 				const subSequence1 = createLocalSequence(`subSequence-${++this.subSequenceCount}`);
 				const subSequence2 = createLocalSequence(`subSequence-${++this.subSequenceCount}`);
 				this.sequence1.insert(this.sequence1.getLength(), [
@@ -79,7 +76,7 @@ describe("SharedObjectSequence", () => {
 				this.containerRuntimeFactory.processAllMessages();
 			}
 
-			public async deleteOutboundRoutes(): Promise<void> {
+			public async deleteOutboundRoutes() {
 				assert(this.sequence1.getLength() > 0, "Route must be added before deleting");
 				const lastElementIndex = this.sequence1.getLength() - 1;
 				// Get the handles that were last added.
@@ -107,7 +104,7 @@ describe("SharedObjectSequence", () => {
 				this.containerRuntimeFactory.processAllMessages();
 			}
 
-			public async addNestedHandles(): Promise<void> {
+			public async addNestedHandles() {
 				const subSequence1 = createLocalSequence(`subSequence-${++this.subSequenceCount}`);
 				const subSequence2 = createLocalSequence(`subSequence-${++this.subSequenceCount}`);
 				const containingObject = {

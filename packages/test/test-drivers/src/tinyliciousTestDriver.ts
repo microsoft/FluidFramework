@@ -27,7 +27,7 @@ import {
 export class TinyliciousTestDriver implements ITestDriver {
 	public readonly type = "tinylicious";
 	public readonly endpointName = "local";
-	public get version(): string {
+	public get version() {
 		return this.api.version;
 	}
 

@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type BiomeConfigReader,
-	createBiomeConfigReader,
-} from "../../../common/biomeConfigUtils";
+import { BiomeConfigReader } from "../../../common/biomeConfig";
 import { LeafWithFileStatDoneFileTask } from "./leafTask";
 
 /**
@@ -18,8 +15,6 @@ import { LeafWithFileStatDoneFileTask } from "./leafTask";
  *
  * Note that .gitignored paths are always excluded, regardless of the "vcs" setting in the Biome configuration.
  * Internally the task uses git itself to enumerate files, and files that aren't enumerated are not considered.
- *
- * This task automatically detects the installed Biome version and uses the appropriate config reader (V1 or V2).
  */
 export class BiomeTask extends LeafWithFileStatDoneFileTask {
 	/**
@@ -33,7 +28,7 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 
 	private async getBiomeConfigReader(): Promise<BiomeConfigReader> {
 		if (this._configReader === undefined) {
-			this._configReader = await createBiomeConfigReader(
+			this._configReader = await BiomeConfigReader.create(
 				this.node.pkg.directory,
 				this.context.gitRepo,
 			);

@@ -16,14 +16,14 @@ import { ICssProps, sameCss, syncCss } from "./css.js";
 import { debug } from "./debug.js";
 
 class HtmlFormatter extends RootFormatter<IFormatterState> {
-	public begin(layout: Layout): IFormatterState {
+	public begin(layout: Layout) {
 		// Note: Setting the whiteSpace style to "pre-wrap" has the side-effect of suppressing period insertion
 		//       on double space for MacOS.
 		(layout.cursor.parent as HTMLElement).style.whiteSpace = "pre-wrap";
 		return emptyObject;
 	}
 
-	public end(): void {}
+	public end() {}
 
 	public visit(layout: Layout, state: Readonly<IFormatterState>) {
 		const segment = layout.segment;
@@ -60,7 +60,7 @@ class HtmlFormatter extends RootFormatter<IFormatterState> {
 		}
 	}
 
-	public onChange(): void {}
+	public onChange() {}
 }
 
 interface ITagsState extends IFormatterState {
@@ -77,7 +77,7 @@ class TagsFormatter extends Formatter<ITagsState> {
 		layout: Layout,
 		init: Readonly<Partial<ITagsState>>,
 		prevState: Readonly<ITagsState>,
-	): ITagsState {
+	) {
 		const state: Partial<ITagsState> = prevState ? { ...prevState } : {};
 
 		const segment = layout.segment;
@@ -131,7 +131,7 @@ class TagsFormatter extends Formatter<ITagsState> {
 		}
 	}
 
-	public end(layout: Layout, state: Readonly<ITagsState>): void {
+	public end(layout: Layout, state: Readonly<ITagsState>) {
 		for (let i = state.popCount; i > 0; i--) {
 			layout.popNode();
 		}
@@ -147,11 +147,7 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
 		super();
 	}
 
-	public begin(
-		layout: Layout,
-		init: IParagraphState,
-		prevState: IParagraphState,
-	): IParagraphState {
+	public begin(layout: Layout, init: IParagraphState, prevState: IParagraphState) {
 		const state: Partial<IParagraphState> = prevState ? { ...prevState } : {};
 
 		const segment = layout.segment;
@@ -159,7 +155,7 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
 		state.root = layout.pushTag(tag);
 		syncCss(state.root, getCss(segment), undefined);
 
-		return state as IParagraphState;
+		return state;
 	}
 
 	public visit(layout: Layout, state: Readonly<IParagraphState>) {
@@ -190,7 +186,7 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
 		}
 	}
 
-	public end(layout: Layout, state: Readonly<IParagraphState>): void {
+	public end(layout: Layout, state: Readonly<IParagraphState>) {
 		layout.emitTag(TagName.br);
 		layout.popNode();
 	}
@@ -206,12 +202,12 @@ class TextFormatter extends Formatter<ITextState> {
 		layout: Layout,
 		init: Readonly<Partial<ITextState>>,
 		prevState: Readonly<ITextState>,
-	): ITextState {
+	) {
 		const state: Partial<ITextState> = prevState ? { ...prevState } : {};
 		state.root = layout.pushTag(TagName.span);
 		state.css = getCss(layout.segment);
 		syncCss(state.root, state.css, undefined);
-		return state as ITextState;
+		return state;
 	}
 
 	public visit(layout: Layout, state: Readonly<ITextState>) {
@@ -235,7 +231,7 @@ class TextFormatter extends Formatter<ITextState> {
 		}
 	}
 
-	public end(layout: Layout, state: Readonly<ITextState>): void {
+	public end(layout: Layout, state: Readonly<ITextState>) {
 		layout.popNode();
 	}
 }

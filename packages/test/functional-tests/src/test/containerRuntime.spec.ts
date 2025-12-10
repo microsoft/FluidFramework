@@ -156,7 +156,7 @@ describe("Container Runtime", () => {
 					),
 			);
 
-			const mockProvideEntryPoint = async (): Promise<{ myProp: string }> => ({
+			const mockProvideEntryPoint = async () => ({
 				myProp: "myValue",
 			});
 			containerRuntime = await loadContainerRuntime({

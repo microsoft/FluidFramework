@@ -82,7 +82,7 @@ export class StressDataObject extends DataObject {
 		},
 	});
 
-	get StressDataObject(): StressDataObject {
+	get StressDataObject() {
 		return this;
 	}
 
@@ -112,7 +112,7 @@ export class StressDataObject extends DataObject {
 		this.channelNameMap.set("root", this.root.attributes.type);
 	}
 
-	public async getChannels(): Promise<IChannel[]> {
+	public async getChannels() {
 		const channels: IChannel[] = [];
 		for (const [name] of this.channelNameMap.entries()) {
 			// similar to container objects, the entries in this map
@@ -139,11 +139,11 @@ export class StressDataObject extends DataObject {
 		)) as any as ISharedMap;
 	}
 
-	public get attached(): boolean {
+	public get attached() {
 		return this.runtime.attachState !== AttachState.Detached;
 	}
 
-	public async uploadBlob(tag: `blob-${number}`, contents: string): Promise<void> {
+	public async uploadBlob(tag: `blob-${number}`, contents: string) {
 		const handle = await this.runtime.uploadBlob(stringToBuffer(contents, "utf-8"));
 		this.defaultStressObject.registerLocallyCreatedObject({
 			type: "newBlob",
@@ -152,12 +152,12 @@ export class StressDataObject extends DataObject {
 		});
 	}
 
-	public createChannel(tag: `channel-${number}`, type: string): void {
+	public createChannel(tag: `channel-${number}`, type: string) {
 		this.runtime.createChannel(tag, type);
 		this.channelNameMap.set(tag, type);
 	}
 
-	public async createDataStore(tag: `datastore-${number}`, asChild: boolean): Promise<void> {
+	public async createDataStore(tag: `datastore-${number}`, asChild: boolean) {
 		const dataStore = await this.context.containerRuntime.createDataStore(
 			asChild
 				? [...this.context.packagePath, StressDataObject.factory.type]
@@ -174,7 +174,7 @@ export class StressDataObject extends DataObject {
 		});
 	}
 
-	public orderSequentially(act: () => void): void {
+	public orderSequentially(act: () => void) {
 		this.context.containerRuntime.orderSequentially(act);
 	}
 
@@ -195,7 +195,7 @@ export type ContainerObjects =
 export class DefaultStressDataObject extends StressDataObject {
 	public static readonly alias = "default";
 
-	public get DefaultStressDataObject(): this {
+	public get DefaultStressDataObject() {
 		return this;
 	}
 
@@ -289,7 +289,7 @@ export class DefaultStressDataObject extends StressDataObject {
 		)) as any as ISharedMap;
 	}
 
-	public registerLocallyCreatedObject(obj: ContainerObjects): void {
+	public registerLocallyCreatedObject(obj: ContainerObjects) {
 		if (obj.handle !== undefined) {
 			const handle = toFluidHandleInternal(obj.handle);
 			if (this.containerObjectMap.get(handle.absolutePath) === undefined) {
@@ -301,7 +301,7 @@ export class DefaultStressDataObject extends StressDataObject {
 
 	private stageControls: StageControlsAlpha | undefined;
 	private readonly containerRuntimeExp = asLegacyAlpha(this.context.containerRuntime);
-	public enterStagingMode(): void {
+	public enterStagingMode() {
 		assert(
 			this.containerRuntimeExp.enterStagingMode !== undefined,
 			"enterStagingMode must be defined",
@@ -317,7 +317,7 @@ export class DefaultStressDataObject extends StressDataObject {
 		return this.containerRuntimeExp.inStagingMode;
 	}
 
-	public exitStagingMode(commit: boolean): void {
+	public exitStagingMode(commit: boolean) {
 		assert(this.stageControls !== undefined, "must have staging mode controls");
 		if (commit) {
 			this.stageControls.commitChanges();

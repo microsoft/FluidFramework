@@ -1885,9 +1885,7 @@ describe("TableFactory unit tests", () => {
 			});
 
 			takeJsonSnapshot(
-				TreeAlpha.exportVerbose(table, {
-					keys: KeyEncodingOptions.allStoredKeys,
-				}) as unknown as JsonCompatibleReadOnly,
+				TreeAlpha.exportVerbose(table, {}) as unknown as JsonCompatibleReadOnly,
 			);
 		});
 

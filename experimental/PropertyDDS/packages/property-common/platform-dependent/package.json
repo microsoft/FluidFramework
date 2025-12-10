@@ -20,8 +20,7 @@
 		"format:biome": "biome check . --write"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.9.3",
-		"jiti": "^2.6.1"
+		"@biomejs/biome": "~1.9.3"
 	},
 	"typeValidation": {
 		"disabled": true

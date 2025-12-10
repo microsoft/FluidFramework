@@ -159,13 +159,13 @@ export class Layout extends EventEmitter {
 		debug("end: initial sync");
 	}
 
-	public remove(): void {
+	public remove() {
 		this.doc.removeListener("sequenceDelta", this.onChange);
 		this.doc.removeListener("maintenance", this.onChange);
 		Dom.removeAllChildren(this.root);
 	}
 
-	public sync(start = 0, end = this.doc.length): void {
+	public sync(start = 0, end = this.doc.length) {
 		let _start = start;
 		let _end = end;
 
@@ -293,7 +293,7 @@ export class Layout extends EventEmitter {
 	public pushFormat<TState extends IFormatterState>(
 		formatter: Readonly<Formatter<TState>>,
 		init: Readonly<Partial<TState>>,
-	): void {
+	) {
 		const depth = this.formatStack.length;
 
 		const segment = this.segment;
@@ -330,7 +330,7 @@ export class Layout extends EventEmitter {
 		this.formatStack.push(Object.freeze({ formatter, state: Object.freeze(state) }));
 	}
 
-	public popFormat(count = 1): void {
+	public popFormat(count = 1) {
 		let _count = count;
 		while (_count-- > 0) {
 			const { formatter, state } = this.formatStack.pop();
@@ -340,7 +340,7 @@ export class Layout extends EventEmitter {
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-	public pushTag<T extends {}>(tag: TagName, props?: T): HTMLElement {
+	public pushTag<T extends {}>(tag: TagName, props?: T) {
 		const element = this.elementForTag(tag);
 		if (props) {
 			Object.assign(element, props);
@@ -349,12 +349,12 @@ export class Layout extends EventEmitter {
 		return element;
 	}
 
-	public popTag(count = 1): void {
+	public popTag(count = 1) {
 		this.popNode(count);
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-	public emitTag<T extends {}>(tag: TagName, props?: T): HTMLElement {
+	public emitTag<T extends {}>(tag: TagName, props?: T) {
 		const element = this.elementForTag(tag);
 		if (props) {
 			Object.assign(element, props);
@@ -363,7 +363,7 @@ export class Layout extends EventEmitter {
 		return element;
 	}
 
-	public emitText(text: string): ChildNode {
+	public emitText(text: string) {
 		// Note: Removing and inserting a new text node has the side-effect of reseting the caret blink.
 		//       Because text nodes are always leaves, this is harmless.
 		let existing = this.next;
@@ -375,7 +375,7 @@ export class Layout extends EventEmitter {
 		return existing;
 	}
 
-	public pushNode(node: Node): void {
+	public pushNode(node: Node) {
 		debug("    pushNode(%o@%d)", node, this.position);
 
 		this.emitNode(node);
@@ -387,7 +387,7 @@ export class Layout extends EventEmitter {
 		}
 	}
 
-	public emitNode(node: Node): void {
+	public emitNode(node: Node) {
 		debug("    emitNode(%o@%d)", node, this.position);
 
 		const top = this._cursor;
@@ -405,7 +405,7 @@ export class Layout extends EventEmitter {
 		this.nodeToSegmentMap.set(node, this.segment);
 	}
 
-	public popNode(count = 1): void {
+	public popNode(count = 1) {
 		let _count = count;
 		while (_count-- > 0) {
 			const cursor = this._cursor;
@@ -419,15 +419,12 @@ export class Layout extends EventEmitter {
 		assert(this.root.contains(this.cursor.parent));
 	}
 
-	public nodeToSegment(node: Node): ISegment | undefined {
+	public nodeToSegment(node: Node): ISegment {
 		const seg = this.nodeToSegmentMap.get(node);
 		return seg && (!segmentIsRemoved(seg) ? seg : undefined);
 	}
 
-	public segmentAndOffsetToNodeAndOffset(
-		segment: ISegment,
-		offset: number,
-	): { node: Node | null; nodeOffset: number } {
+	public segmentAndOffsetToNodeAndOffset(segment: ISegment, offset: number) {
 		const checkpoint = this.segmentToCheckpoint.get(segment);
 		if (!checkpoint) {
 			return { node: null, nodeOffset: NaN };
@@ -456,10 +453,7 @@ export class Layout extends EventEmitter {
 		return { node: null, nodeOffset: NaN };
 	}
 
-	private segmentAndOffsetToNodeAndOffsetHelper(
-		cursor: ILayoutCursor,
-		offset: number,
-	): { node: Node; nodeOffset: number } {
+	private segmentAndOffsetToNodeAndOffsetHelper(cursor: ILayoutCursor, offset: number) {
 		let _offset = offset;
 		let { previous: node } = cursor;
 
@@ -495,7 +489,7 @@ export class Layout extends EventEmitter {
 		}
 	}
 
-	private elementForTag(tag: TagName): HTMLElement {
+	private elementForTag(tag: TagName) {
 		const existing = this.next;
 		// Reuse the existing element if possible, otherwise create a new one.  Note that
 		// 'layout.pushNode(..)' will clean up the old node if needed.
@@ -511,7 +505,7 @@ export class Layout extends EventEmitter {
 		segment: ISegment,
 		startOffset: number,
 		endOffset: number,
-	): void {
+	) {
 		assert.strictEqual(this.pending.size, 0);
 
 		this._position = position;
@@ -543,14 +537,14 @@ export class Layout extends EventEmitter {
 		assert.notStrictEqual(this.emitted, this.pending);
 	}
 
-	private removePending(): void {
+	private removePending() {
 		for (const node of this.pending) {
 			this.removeNode(node);
 		}
 		this.pending.clear();
 	}
 
-	private endSegment(lastInvalidated: number): boolean {
+	private endSegment(lastInvalidated: number) {
 		this.removePending();
 		const previous = this.segmentToCheckpoint.get(this.segment);
 
@@ -579,7 +573,7 @@ export class Layout extends EventEmitter {
 		return shouldContinue;
 	}
 
-	private restoreCheckpoint(checkpoint: LayoutCheckpoint): void {
+	private restoreCheckpoint(checkpoint: LayoutCheckpoint) {
 		const { formatStack, cursor } = checkpoint;
 		this.formatStack = formatStack.map((formatInfo) => ({ ...formatInfo }));
 		this._cursor = { ...cursor };
@@ -588,7 +582,7 @@ export class Layout extends EventEmitter {
 		assert(this.root.contains(cursor.parent));
 	}
 
-	private removeNode(node: Node): void {
+	private removeNode(node: Node) {
 		debug("        removed %o", node);
 		this.nodeToSegmentMap.delete(node);
 		if (node.parentNode) {
@@ -596,7 +590,7 @@ export class Layout extends EventEmitter {
 		}
 	}
 
-	private removeSegment(segment: ISegment): void {
+	private removeSegment(segment: ISegment) {
 		const emitted = this.segmentToEmitted.get(segment);
 		if (emitted) {
 			for (const node of emitted) {
@@ -634,14 +628,14 @@ export class Layout extends EventEmitter {
 		ref: ReferencePosition | undefined,
 		fn: (a: number, b: number) => number,
 		limit: number,
-	): number {
+	) {
 		return fn(
 			position === undefined ? limit : position,
 			ref === undefined ? limit : doc.localRefToPosition(ref),
 		);
 	}
 
-	private invalidate(start: number, end: number): void {
+	private invalidate(start: number, end: number) {
 		let _start = start;
 		let _end = end;
 		// Union the delta range with the current invalidated range (if any).
@@ -658,7 +652,7 @@ export class Layout extends EventEmitter {
 		});
 	}
 
-	private render(): void {
+	private render() {
 		const doc = this.doc;
 		const start = extractRef(doc, this.startInvalid);
 		this.startInvalid = undefined;

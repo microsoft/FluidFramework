@@ -14,15 +14,12 @@ import {
 
 import { Json1Factory, SharedJson1 } from "../index.js";
 
-const createLocalOT = (id: string): SharedJson1 => {
+const createLocalOT = (id: string) => {
 	const factory = SharedJson1.getFactory();
 	return factory.create(new MockFluidDataStoreRuntime(), id) as SharedJson1;
 };
 
-function createConnectedOT(
-	id: string,
-	runtimeFactory: MockContainerRuntimeFactory,
-): SharedJson1 {
+function createConnectedOT(id: string, runtimeFactory: MockContainerRuntimeFactory) {
 	// Create and connect a second SharedCell.
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
@@ -50,7 +47,7 @@ describe("SharedJson1", () => {
 			ot.replace([], null, {});
 		});
 
-		const expect = <T>(expected: Jsonable<T>): void => {
+		const expect = <T>(expected: Jsonable<T>) => {
 			assert.deepEqual(ot.get(), expected);
 		};
 
@@ -125,7 +122,7 @@ describe("SharedJson1", () => {
 				expect([]);
 			});
 
-			const expect = <T>(expected?: Jsonable<T>): void => {
+			const expect = <T>(expected?: Jsonable<T>) => {
 				containerRuntimeFactory.processAllMessages();
 
 				const actual1 = doc1.get();

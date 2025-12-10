@@ -33,14 +33,14 @@ export class Clicker extends DataObject<{ Events: IClickerEvents }> {
 	/**
 	 * Do setup work here
 	 */
-	protected async initializingFirstTime(): Promise<void> {
+	protected async initializingFirstTime() {
 		const counter = SharedCounter.create(this.runtime);
 		this.root.set(counterKey, counter.handle);
 		const taskManager = TaskManager.create(this.runtime);
 		this.root.set(taskManagerKey, taskManager.handle);
 	}
 
-	protected async hasInitialized(): Promise<void> {
+	protected async hasInitialized() {
 		const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
 		this._counter = await counterHandle?.get();
 		const taskManagerHandle = this.root.get<IFluidHandle<TaskManager>>(taskManagerKey);
@@ -52,15 +52,15 @@ export class Clicker extends DataObject<{ Events: IClickerEvents }> {
 		this.setupAgent();
 	}
 
-	public increment(): void {
+	public increment() {
 		this.counter.increment(1);
 	}
 
-	public get value(): number {
+	public get value() {
 		return this.counter.value;
 	}
 
-	private setupAgent(): void {
+	private setupAgent() {
 		// We want to make sure that at any given time there is one (and only one) client executing the console log
 		// task. Each client will enter the queue on startup.
 		// Additionally, we use subscribeToTask() instead of volunteerForTask() since we always want to stay
@@ -80,14 +80,14 @@ export class Clicker extends DataObject<{ Events: IClickerEvents }> {
 		});
 	}
 
-	private get counter(): SharedCounter {
+	private get counter() {
 		if (this._counter === undefined) {
 			throw new Error("SharedCounter not initialized");
 		}
 		return this._counter;
 	}
 
-	private get taskManager(): TaskManager {
+	private get taskManager() {
 		if (this._taskManager === undefined) {
 			throw new Error("TaskManager not initialized");
 		}
@@ -115,13 +115,13 @@ export class ClickerReactView extends React.Component<ClickerProps, ClickerState
 		};
 	}
 
-	componentDidMount(): void {
+	componentDidMount() {
 		this.props.clicker.on("incremented", () => {
 			this.setState({ value: this.props.clicker.value });
 		});
 	}
 
-	render(): JSX.Element {
+	render() {
 		return (
 			<div>
 				<span className="clicker-value-class" id={`clicker-value-${Date.now().toString()}`}>
@@ -148,9 +148,7 @@ export const ClickerInstantiationFactory = new DataObjectFactory({
 	sharedObjects: [SharedCounter.getFactory(), TaskManager.getFactory()],
 });
 
-const clickerViewCallback = (clicker: Clicker): JSX.Element => (
-	<ClickerReactView clicker={clicker} />
-);
+const clickerViewCallback = (clicker: Clicker) => <ClickerReactView clicker={clicker} />;
 
 export const fluidExport = new ContainerViewRuntimeFactory<Clicker>(
 	ClickerInstantiationFactory,

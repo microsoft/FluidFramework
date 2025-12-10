@@ -40,7 +40,7 @@ export const DiceRollerView: React.FC<IDiceRollerViewProps> = (
 	const [diceValue, setDiceValue] = React.useState(props.model.value);
 
 	React.useEffect(() => {
-		const onDiceRolled = (): void => {
+		const onDiceRolled = () => {
 			setDiceValue(props.model.value);
 		};
 		props.model.on("diceRolled", onDiceRolled);
@@ -78,11 +78,11 @@ export class DiceRoller extends DataObject implements IDiceRoller {
 	 *
 	 * This method is used to perform Fluid object setup, which can include setting an initial schema or initial values.
 	 */
-	protected async initializingFirstTime(): Promise<void> {
+	protected async initializingFirstTime() {
 		this.root.set(diceValueKey, 1);
 	}
 
-	protected async hasInitialized(): Promise<void> {
+	protected async hasInitialized() {
 		this.root.on("valueChanged", (changed: IValueChanged) => {
 			if (changed.key === diceValueKey) {
 				this.emit("diceRolled");
@@ -90,15 +90,12 @@ export class DiceRoller extends DataObject implements IDiceRoller {
 		});
 	}
 
-	public get value(): number {
-		const value = this.root.get<number>(diceValueKey);
-		if (value === undefined) {
-			throw new Error("Expected dice value");
-		}
-		return value;
+	public get value() {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		return this.root.get(diceValueKey);
 	}
 
-	public readonly roll = (): void => {
+	public readonly roll = () => {
 		const rollValue = Math.floor(Math.random() * 6) + 1;
 		this.root.set(diceValueKey, rollValue);
 	};

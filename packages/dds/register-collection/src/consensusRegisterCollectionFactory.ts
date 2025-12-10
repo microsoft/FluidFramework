@@ -30,11 +30,11 @@ export class ConsensusRegisterCollectionFactory
 		packageVersion: pkgVersion,
 	};
 
-	public get type(): string {
+	public get type() {
 		return ConsensusRegisterCollectionFactory.Type;
 	}
 
-	public get attributes(): IChannelAttributes {
+	public get attributes() {
 		return ConsensusRegisterCollectionFactory.Attributes;
 	}
 

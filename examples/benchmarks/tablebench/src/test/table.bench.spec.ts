@@ -114,7 +114,7 @@ describe("Table", () => {
 			 * The column-major "object of arrays" form removes the redundancy of repeating column names in each row.
 			 * This is used when measuring the baseline size of the table.
 			 */
-			function transposeTable(rows: typeof data): Record<string, unknown[]> {
+			function transposeTable(rows: typeof data) {
 				return data.reduce(
 					(cols, row) => {
 						Object.entries(row).forEach(([key, value]) => {

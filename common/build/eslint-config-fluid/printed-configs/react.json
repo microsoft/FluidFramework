@@ -1709,55 +1709,10 @@
         "radix": [
             "error"
         ],
-        "react-hooks/component-hook-factories": [
-            "error"
-        ],
-        "react-hooks/config": [
-            "error"
-        ],
-        "react-hooks/error-boundaries": [
-            "error"
-        ],
         "react-hooks/exhaustive-deps": [
             "warn"
         ],
-        "react-hooks/gating": [
-            "error"
-        ],
-        "react-hooks/globals": [
-            "error"
-        ],
-        "react-hooks/immutability": [
-            "warn"
-        ],
-        "react-hooks/incompatible-library": [
-            "warn"
-        ],
-        "react-hooks/preserve-manual-memoization": [
-            "error"
-        ],
-        "react-hooks/purity": [
-            "error"
-        ],
-        "react-hooks/refs": [
-            "warn"
-        ],
         "react-hooks/rules-of-hooks": [
-            "warn"
-        ],
-        "react-hooks/set-state-in-effect": [
-            "warn"
-        ],
-        "react-hooks/set-state-in-render": [
-            "error"
-        ],
-        "react-hooks/static-components": [
-            "warn"
-        ],
-        "react-hooks/unsupported-syntax": [
-            "warn"
-        ],
-        "react-hooks/use-memo": [
             "error"
         ],
         "react/display-name": [
@@ -1972,9 +1927,6 @@
             "error"
         ],
         "unicorn/consistent-destructuring": [
-            "off"
-        ],
-        "unicorn/consistent-empty-array-spread": [
             "error"
         ],
         "unicorn/consistent-function-scoping": [
@@ -2008,15 +1960,12 @@
             }
         ],
         "unicorn/import-style": [
-            "off"
+            "error"
         ],
         "unicorn/new-for-builtins": [
             "error"
         ],
         "unicorn/no-abusive-eslint-disable": [
-            "error"
-        ],
-        "unicorn/no-anonymous-default-export": [
             "error"
         ],
         "unicorn/no-array-callback-reference": [
@@ -2037,9 +1986,6 @@
         "unicorn/no-await-expression-member": [
             "error"
         ],
-        "unicorn/no-await-in-promise-methods": [
-            "error"
-        ],
         "unicorn/no-console-spaces": [
             "error"
         ],
@@ -2058,9 +2004,6 @@
         "unicorn/no-instanceof-array": [
             "error"
         ],
-        "unicorn/no-invalid-fetch-options": [
-            "error"
-        ],
         "unicorn/no-invalid-remove-event-listener": [
             "error"
         ],
@@ -2070,13 +2013,7 @@
         "unicorn/no-lonely-if": [
             "error"
         ],
-        "unicorn/no-magic-array-flat-depth": [
-            "error"
-        ],
         "unicorn/no-negated-condition": [
-            "error"
-        ],
-        "unicorn/no-negation-in-equality-check": [
             "error"
         ],
         "unicorn/no-nested-ternary": [
@@ -2097,9 +2034,6 @@
         "unicorn/no-process-exit": [
             "error"
         ],
-        "unicorn/no-single-promise-in-promise-methods": [
-            "error"
-        ],
         "unicorn/no-static-only-class": [
             "error"
         ],
@@ -2113,9 +2047,6 @@
             "error"
         ],
         "unicorn/no-unnecessary-await": [
-            "error"
-        ],
-        "unicorn/no-unnecessary-polyfills": [
             "error"
         ],
         "unicorn/no-unreadable-array-destructuring": [
@@ -2176,7 +2107,7 @@
             "error"
         ],
         "unicorn/prefer-at": [
-            "warn"
+            "off"
         ],
         "unicorn/prefer-blob-reading-methods": [
             "error"
@@ -2271,11 +2202,8 @@
         "unicorn/prefer-spread": [
             "error"
         ],
-        "unicorn/prefer-string-raw": [
-            "warn"
-        ],
         "unicorn/prefer-string-replace-all": [
-            "warn"
+            "off"
         ],
         "unicorn/prefer-string-slice": [
             "error"
@@ -2285,9 +2213,6 @@
         ],
         "unicorn/prefer-string-trim-start-end": [
             "error"
-        ],
-        "unicorn/prefer-structured-clone": [
-            "warn"
         ],
         "unicorn/prefer-switch": [
             "error"

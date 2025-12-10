@@ -42,7 +42,7 @@ class SmdeView {
 		}
 	}
 
-	private setupEditor(): void {
+	private setupEditor() {
 		const smde = new SimpleMDE({ element: this.textArea });
 		this.smde = smde;
 

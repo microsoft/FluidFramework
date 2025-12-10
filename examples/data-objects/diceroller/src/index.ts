@@ -10,7 +10,7 @@ import { DiceRoller, DiceRollerInstantiationFactory, DiceRollerView } from "./ma
 
 export { DiceRoller, DiceRollerInstantiationFactory } from "./main.js";
 
-const diceRollerViewCallback = (model: DiceRoller): JSX.Element =>
+const diceRollerViewCallback = (model: DiceRoller) =>
 	React.createElement(DiceRollerView, { model });
 
 /**

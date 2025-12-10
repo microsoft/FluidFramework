@@ -10,11 +10,11 @@ import { Table } from "./tree/index.js";
 export { generateTable };
 export { Table };
 
-export async function initApp(): Promise<void> {
+export async function initApp() {
 	const { view } = await initFluid();
 
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	document.getElementById("run")!.addEventListener("click", (): void => {
+	document.getElementById("run")!.addEventListener("click", () => {
 		performance.mark("start");
 
 		for (const row of view.root) {

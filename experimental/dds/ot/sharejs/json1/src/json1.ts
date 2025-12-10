@@ -30,7 +30,7 @@ export class SharedJson1 extends SharedOT<Doc, JSONOp> {
 		return runtime.createChannel(id, Json1Factory.Type) as SharedJson1;
 	}
 
-	public static getFactory(): Json1Factory {
+	public static getFactory() {
 		return new Json1Factory();
 	}
 
@@ -43,7 +43,7 @@ export class SharedJson1 extends SharedOT<Doc, JSONOp> {
 		return this.state;
 	}
 
-	public apply(op: JSONOp): void {
+	public apply(op: JSONOp) {
 		super.apply(op);
 	}
 
@@ -51,27 +51,23 @@ export class SharedJson1 extends SharedOT<Doc, JSONOp> {
 		return Json1OTType.transformNoConflict(input, transform, "left");
 	}
 
-	protected applyCore(state: Doc, op: JSONOp): Doc {
+	protected applyCore(state: Doc, op: JSONOp) {
 		return Json1OTType.apply(state, op) as Doc;
 	}
 
-	public insert<T>(path: Path, value: Serializable<T>): void {
+	public insert<T>(path: Path, value: Serializable<T>) {
 		this.apply(insertOp(path, value as Doc));
 	}
 
-	public move(from: Path, to: Path): void {
+	public move(from: Path, to: Path) {
 		this.apply(moveOp(from, to));
 	}
 
-	public remove(path: Path, value?: boolean): void {
+	public remove(path: Path, value?: boolean) {
 		this.apply(removeOp(path, value));
 	}
 
-	public replace<T, U>(
-		path: Path,
-		oldValue: Serializable<T>,
-		newValue: Serializable<U>,
-	): void {
+	public replace<T, U>(path: Path, oldValue: Serializable<T>, newValue: Serializable<U>) {
 		this.apply(replaceOp(path, oldValue as Doc, newValue as Doc));
 	}
 }

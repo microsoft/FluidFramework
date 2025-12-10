@@ -24,7 +24,7 @@ function repeatFactoryAsync<T, TState = void>(
 	factory: () => AsyncGenerator<T, TState>,
 ): AsyncGenerator<T, TState> {
 	let generator = factory();
-	return async (state: TState): Promise<typeof done | T> => {
+	return async (state: TState) => {
 		const next = await generator(state);
 		if (next !== done) {
 			return next;
@@ -36,16 +36,7 @@ function repeatFactoryAsync<T, TState = void>(
 
 const generateSubModelMap = (
 	...models: Omit<DDSFuzzModel<IChannelFactory, any>, "workloadName">[]
-): Map<
-	string,
-	{
-		factory: IChannelFactory;
-		generator: AsyncGenerator<any, DDSFuzzTestState<IChannelFactory>>;
-		reducer: DDSFuzzModel<IChannelFactory, any>["reducer"];
-		validateConsistency: DDSFuzzModel<IChannelFactory, any>["validateConsistency"];
-		minimizationTransforms?: DDSFuzzModel<IChannelFactory, any>["minimizationTransforms"];
-	}
-> => {
+) => {
 	const modelMap = new Map<
 		string,
 		{

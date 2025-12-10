@@ -55,7 +55,7 @@ describe("DDS Handle Encoding", () => {
 	 *
 	 * @returns The list of handles found in the given contents object
 	 */
-	function findAllHandles(contents: unknown): string[] {
+	function findAllHandles(contents: unknown) {
 		const handlesFound: string[] = [];
 		detectOutboundReferences("envelope", contents, (from, to) => {
 			handlesFound.push(to);
@@ -156,7 +156,7 @@ describe("DDS Handle Encoding", () => {
 		),
 		createTestCase(
 			LegacySharedTree.getFactory(),
-			(tree): void => {
+			(tree) => {
 				const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 
 				const handleNode: BuildNode = {

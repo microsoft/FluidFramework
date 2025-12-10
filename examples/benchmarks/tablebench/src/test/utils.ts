@@ -43,11 +43,11 @@ export function create<T>(factory: IChannelFactory<T>): {
 	return { channel, processAllMessages: () => runtimeFactory.processAllMessages() };
 }
 
-export function measureAttachmentSummary(channel: IChannel): number {
+export function measureAttachmentSummary(channel: IChannel) {
 	const { summary } = channel.getAttachSummary(/* fullTree: */ true);
 	return measureEncodedLength(JSON.stringify(summary));
 }
 
-export function measureEncodedLength(s: string): number {
+export function measureEncodedLength(s: string) {
 	return IsoBuffer.from(s).byteLength;
 }

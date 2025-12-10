@@ -27,7 +27,7 @@ import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal"
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { SummaryElementStringifier } from "../../shared-tree-core/index.js";
-import { summaryContentBlobKey } from "./summaryFormatV3.js";
+import { chunkContentsBlobKey, forestSummaryContentKey } from "./summaryTypes.js";
 
 /**
  * State that tells whether a summary is currently being tracked.
@@ -189,7 +189,7 @@ function validateReadyToTrackSummary(
  *
  * An example summary tree with incremental summary:
  *     Forest
- *     ├── contents
+ *     ├── ForestTree
  *     ├── 0
  *     |   ├── contents
  *     |   ├── 1
@@ -202,7 +202,7 @@ function validateReadyToTrackSummary(
  *     |   ├── ...
  *     ├── 5 - "/.../Forest/ForestTree/5"
  * - Forest is a summary tree node added by the shared tree and contains the following:
- *   - The inline portion of the top-level forest content is stored in a summary blob called "contents".
+ *   - The inline portion of the top-level forest content is stored in a summary blob called "ForestTree".
  *     It also contains the {@link ChunkReferenceId}s of the incremental chunks under it.
  *   - The summary for each incremental chunk under it is stored against its {@link ChunkReferenceId}.
  * - For each chunk, the structure of the summary tree is the same as the Forest. It contains the following:
@@ -210,6 +210,16 @@ function validateReadyToTrackSummary(
  *     It also contains the {@link ChunkReferenceId}s of the incremental chunks under it.
  *   - The summary for each incremental chunk under it is stored against its {@link ChunkReferenceId}.
  * - Chunks that do not change between summaries are summarized as handles in the summary tree.
+ * @remarks
+ * It may seem inconsistent that although the structure for the top-level forest tree is similar to that of
+ * an incremental chunk, its content is stored in a summary blob called "ForestTree" while the content for
+ * the incremental chunks are stored in a summary blob called "contents".
+ * This is to keep this summary backwards compatible with old format (before incremental summaries were added)
+ * where the entire forest content was in a summary blob called "ForestTree". So, if incremental summaries were
+ * disabled, the forest content will be fully backwards compatible.
+ * Note that this limits reusing the root node in a location other than root and a non-root node in the root.
+ * We could phase this out by switching to write the top-level contents under "contents" if we want to support
+ * the above. However, there is no plan to do that for now.
  *
  * TODO: AB#46752
  * Add strong types for the summary structure to document it better. It will help make it super clear what the actual
@@ -295,7 +305,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 			// and the value is the snapshot tree for the chunk.
 			for (const [chunkReferenceId, chunkSnapshotTree] of Object.entries(snapshotTree.trees)) {
 				const chunkSubTreePath = `${parentTreeKey}${chunkReferenceId}`;
-				const chunkContentsPath = `${chunkSubTreePath}/${summaryContentBlobKey}`;
+				const chunkContentsPath = `${chunkSubTreePath}/${chunkContentsBlobKey}`;
 				if (!(await args.services.contains(chunkContentsPath))) {
 					throw new LoggingError(
 						`SharedTree: Cannot find contents for incremental chunk ${chunkContentsPath}`,
@@ -412,7 +422,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 				const chunkSummaryBuilder = new SummaryTreeBuilder();
 				this.trackedSummaryProperties.parentSummaryBuilder = chunkSummaryBuilder;
 				chunkSummaryBuilder.addBlob(
-					summaryContentBlobKey,
+					chunkContentsBlobKey,
 					this.trackedSummaryProperties.stringify(chunkEncoder(chunk)),
 				);
 
@@ -444,33 +454,26 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	 * It clears any tracking state and deletes the tracking properties for summaries that are older than the
 	 * latest successful summary.
 	 * @param incrementalSummaryContext - The context for the incremental summary that contains the sequence numbers.
-	 * If this is undefined, the summary tree will only contain a summary blob for `forestSummaryRootContent`.
-	 * @param forestSummaryRootContent - The stringified ForestCodec output of top-level Forest content.
-	 * @param forestSummaryRootContentKey - The key to use for the blob containing `forestSummaryRootContent`.
+	 * If this is undefined, the summary tree will only contain a summary blob for `forestSummaryContent`.
+	 * @param forestSummaryContent - The stringified ForestCodec output of top-level Forest content.
 	 * @param builder - The summary tree builder to use to add the forest's contents. Note that if tracking an incremental
 	 * summary, this builder will be the same as the one tracked in `trackedSummaryProperties`.
 	 * @returns the Forest's summary tree.
 	 */
 	public completeSummary(args: {
 		incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined;
-		forestSummaryRootContent: string;
-		forestSummaryRootContentKey: string;
+		forestSummaryContent: string;
 		builder: SummaryTreeBuilder;
 	}): void {
-		const {
-			incrementalSummaryContext,
-			forestSummaryRootContent,
-			forestSummaryRootContentKey,
-			builder,
-		} = args;
+		const { incrementalSummaryContext, forestSummaryContent, builder } = args;
 		if (!this.enableIncrementalSummary || incrementalSummaryContext === undefined) {
-			builder.addBlob(forestSummaryRootContentKey, forestSummaryRootContent);
+			builder.addBlob(forestSummaryContentKey, forestSummaryContent);
 			return;
 		}
 
 		validateTrackingSummary(this.forestSummaryState, this.trackedSummaryProperties);
 
-		builder.addBlob(forestSummaryRootContentKey, forestSummaryRootContent);
+		builder.addBlob(forestSummaryContentKey, forestSummaryContent);
 
 		// Copy over the entries from the latest summary to the current summary.
 		// In the current summary, there can be fields that haven't changed since the latest summary and the chunks

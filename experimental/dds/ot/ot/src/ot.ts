@@ -67,7 +67,7 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 		this.global = this.local = initialValue;
 	}
 
-	protected apply(op: TOp): void {
+	protected apply(op: TOp) {
 		this.local = this.applyCore(this.state, op);
 
 		// If we are not attached, don't submit the op.
@@ -105,7 +105,7 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 		this.global = this.local = this.serializer.parse(rawContent) as TState;
 	}
 
-	protected onDisconnect(): void {}
+	protected onDisconnect() {}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
@@ -121,7 +121,7 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 		messageEnvelope: ISequencedMessageEnvelope,
 		messagesContent: IRuntimeMessagesContent,
 		local: boolean,
-	): void {
+	) {
 		// Discard any sequenced ops that are now below the minimum sequence number.
 		const minSeq = this.deltaManager.minimumSequenceNumber;
 		while (this.sequencedOps[0]?.seq < minSeq) {
@@ -171,7 +171,7 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 		}
 	}
 
-	protected get state(): TState {
+	protected get state() {
 		// If the locally cached state is dirty, reset it to the global state and reapply our
 		// pending ops to bring it up to date.
 		if (this.localDirty) {

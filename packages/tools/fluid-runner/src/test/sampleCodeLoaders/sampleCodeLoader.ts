@@ -7,7 +7,6 @@ import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct/internal";
 import type {
 	ICodeDetailsLoader,
 	IContainer,
-	IFluidCodeDetailsComparer,
 	IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions/internal";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
@@ -21,7 +20,7 @@ import type { IFluidFileConverter } from "../../codeLoaderBundle.js";
 // and Loop do in practice.
 // TODO:  Evaluate whether this naive comparison approach is appropriate for the scenario we are trying to test.
 export class SampleCodeLoader implements ICodeDetailsLoader {
-	public get IFluidCodeDetailsComparer(): IFluidCodeDetailsComparer {
+	public get IFluidCodeDetailsComparer() {
 		return this;
 	}
 	public async load(): Promise<IFluidModuleWithDetails> {
@@ -37,10 +36,10 @@ export class SampleCodeLoader implements ICodeDetailsLoader {
 			details: { package: "no-dynamic-package", config: {} },
 		};
 	}
-	public async satisfies(): Promise<boolean> {
+	public async satisfies() {
 		return true;
 	}
-	public async compare(): Promise<number> {
+	public async compare() {
 		return 0;
 	}
 }

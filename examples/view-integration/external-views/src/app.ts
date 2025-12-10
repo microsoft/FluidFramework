@@ -21,7 +21,8 @@ import { createElement } from "react";
 // eslint-disable-next-line import-x/no-internal-modules
 import { createRoot } from "react-dom/client";
 
-import { DiceRollerContainerRuntimeFactory, type IDiceRoller } from "./container/index.js";
+import { DiceRollerContainerRuntimeFactory, type EntryPoint } from "./container/index.js";
+import { renderCursorPresence } from "./cursor.js";
 import { DiceRollerView } from "./view.js";
 
 const service = getSpecifiedServiceFromWebpack();
@@ -67,7 +68,7 @@ if (location.hash.length === 0) {
 		id = container.resolvedUrl.id;
 	}
 } else {
-	id = location.hash.slice(1);
+	id = location.hash.substring(1);
 	container = await loadExistingContainer({
 		request: await createLoadExistingRequest(id),
 		urlResolver,
@@ -76,12 +77,15 @@ if (location.hash.length === 0) {
 	});
 }
 
-const diceRoller = (await container.getEntryPoint()) as IDiceRoller;
+const { diceRoller, presence } = (await container.getEntryPoint()) as EntryPoint;
 
 // Render view
-const appDiv = document.querySelector("#app") as HTMLDivElement;
+const appDiv = document.getElementById("app") as HTMLDivElement;
 const appRoot = createRoot(appDiv);
 appRoot.render(createElement(DiceRollerView, { diceRoller }));
+
+const cursorContentDiv = document.getElementById("cursor-position") as HTMLDivElement;
+renderCursorPresence(presence, cursorContentDiv);
 
 // Update url and tab title
 location.hash = id;

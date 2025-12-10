@@ -46,11 +46,6 @@ module.exports = {
 
 		// #region `unicorn` rule overrides
 
-		/**
-		 * TODO: Consider enabling in the future.
-		 */
-		"unicorn/import-style": "off",
-
 		// False positives on non-array `push` methods.
 		"unicorn/no-array-push-push": "off",
 
@@ -88,9 +83,9 @@ module.exports = {
 		"unicorn/prevent-abbreviations": "off",
 
 		/**
-		 * Enable in a future update; warning for now to surface occurrences without breaking builds.
+		 * Disabled because we don't yet target a ES version that includes .at().
 		 */
-		"unicorn/prefer-at": "warn",
+		"unicorn/prefer-at": "off",
 
 		/**
 		 * Disabled because we use EventEmitter everywhere today and changing it will be a bigger change outside of lint
@@ -99,19 +94,9 @@ module.exports = {
 		"unicorn/prefer-event-target": "off",
 
 		/**
-		 * TODO: Enable in a future update; warning for now to surface occurrences without breaking builds.
+		 * Disabled because we don't yet target a ES version that includes string.replaceAll.
 		 */
-		"unicorn/prefer-string-raw": "warn",
-
-		/**
-		 * TODO: Enable in a future update; warning for now to surface occurrences without breaking builds.
-		 */
-		"unicorn/prefer-string-replace-all": "warn",
-
-		/**
-		 * TODO: Enable in a future update; warning for now to surface occurrences without breaking builds.
-		 */
-		"unicorn/prefer-structured-clone": "warn",
+		"unicorn/prefer-string-replace-all": "off",
 
 		/**
 		 * Disabled because we will lean on the formatter (i.e. prettier) to enforce indentation policy.

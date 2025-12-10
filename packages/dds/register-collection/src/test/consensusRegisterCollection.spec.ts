@@ -23,10 +23,7 @@ import type { ConsensusRegisterCollection } from "../consensusRegisterCollection
 import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory.js";
 import { IConsensusRegisterCollection } from "../interfaces.js";
 
-function createConnectedCollection(
-	id: string,
-	runtimeFactory: MockContainerRuntimeFactory,
-): ConsensusRegisterCollection<unknown> {
+function createConnectedCollection(id: string, runtimeFactory: MockContainerRuntimeFactory) {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
@@ -38,26 +35,23 @@ function createConnectedCollection(
 	const collection = crcFactory.create(
 		dataStoreRuntime,
 		id,
-	) as ConsensusRegisterCollection<unknown>;
+	) as ConsensusRegisterCollection<any>;
 	collection.connect(services);
 	return collection;
 }
 
-function createLocalCollection(id: string): ConsensusRegisterCollection<unknown> {
+function createLocalCollection(id: string) {
 	const factory = new ConsensusRegisterCollectionFactory();
 	return factory.create(
 		new MockFluidDataStoreRuntime(),
 		id,
-	) as ConsensusRegisterCollection<unknown>;
+	) as ConsensusRegisterCollection<any>;
 }
 
 function createCollectionForReconnection(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactoryForReconnection,
-): {
-	collection: IConsensusRegisterCollection<unknown>;
-	containerRuntime: MockContainerRuntimeForReconnection;
-} {
+) {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
@@ -82,7 +76,7 @@ describe("ConsensusRegisterCollection", () => {
 			crc = createConnectedCollection(collectionId, containerRuntimeFactory);
 		});
 
-		async function writeAndProcessMsg(key: string, value: any): Promise<boolean> {
+		async function writeAndProcessMsg(key: string, value: any) {
 			const waitP = crc.write(key, value);
 			containerRuntimeFactory.processAllMessages();
 			return waitP;
@@ -139,7 +133,7 @@ describe("ConsensusRegisterCollection", () => {
 					versions: [{ sequenceNumber: 1, value: { type: "Shared", value: "sharedObjId" } }],
 				},
 			});
-			const buildTree = (serialized: string): ITree => ({
+			const buildTree = (serialized: string) => ({
 				entries: [new BlobTreeEntry(snapshotFileName, serialized)],
 			});
 
@@ -347,25 +341,29 @@ describe("ConsensusRegisterCollection", () => {
 				);
 			}
 
-			private async writeAndProcessMsg(key: string, value: unknown): Promise<boolean> {
+			private async writeAndProcessMsg(key: string, value: any) {
 				const waitP = this.collection1.write(key, value);
 				this.containerRuntimeFactory.processAllMessages();
 				return waitP;
 			}
-			public get sharedObject(): IConsensusRegisterCollection {
+
+			public get sharedObject() {
 				// Return the remote collection because we want to verify its summary data.
 				return this.collection2;
 			}
-			public get expectedOutboundRoutes(): string[] {
+
+			public get expectedOutboundRoutes() {
 				return this._expectedRoutes;
 			}
-			public async addOutboundRoutes(): Promise<void> {
+
+			public async addOutboundRoutes() {
 				const subCollectionId = `subCollection-${++this.subCollectionCount}`;
 				const subTestCollection = createLocalCollection(subCollectionId);
 				await this.writeAndProcessMsg(subCollectionId, subTestCollection.handle);
 				this._expectedRoutes.push(subTestCollection.handle.absolutePath);
 			}
-			public async deleteOutboundRoutes(): Promise<void> {
+
+			public async deleteOutboundRoutes() {
 				const subCollectionId = `subCollection-${this.subCollectionCount}`;
 				const deletedHandle = this.collection1.read(subCollectionId) as IFluidHandleInternal;
 				assert(deletedHandle !== undefined, "Route must be added before deleting");
@@ -377,7 +375,8 @@ describe("ConsensusRegisterCollection", () => {
 					(route) => route !== deletedHandle.absolutePath,
 				);
 			}
-			public async addNestedHandles(): Promise<void> {
+
+			public async addNestedHandles() {
 				const subCollectionId1 = `subCollection-${++this.subCollectionCount}`;
 				const subCollectionId2 = `subCollection-${++this.subCollectionCount}`;
 				const subTestCollection1 = createLocalCollection(subCollectionId1);

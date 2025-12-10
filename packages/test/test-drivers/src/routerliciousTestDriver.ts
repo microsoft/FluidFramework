@@ -28,14 +28,7 @@ interface IServiceEndpoint {
 	deltaStorageUrl: string;
 }
 
-interface IConfig {
-	serviceEndpoint: IServiceEndpoint;
-	tenantId: string;
-	tenantSecret: string;
-	driverPolicies?: IRouterliciousDriverPolicies;
-}
-
-const dockerConfig = (driverPolicies?: IRouterliciousDriverPolicies): IConfig => ({
+const dockerConfig = (driverPolicies?: IRouterliciousDriverPolicies) => ({
 	serviceEndpoint: {
 		deltaStreamUrl: "http://localhost:3002",
 		hostUrl: "http://localhost:3003",
@@ -53,7 +46,7 @@ function getConfig(
 	tenantId?: string,
 	tenantSecret?: string,
 	driverPolicies?: IRouterliciousDriverPolicies,
-): IConfig {
+) {
 	assert(tenantId !== undefined, "Missing tenantId");
 	assert(tenantSecret !== undefined, "Missing tenant secret");
 	if (discoveryEndpoint !== undefined) {
@@ -85,7 +78,7 @@ function getConfig(
 	};
 }
 
-function getLegacyConfigFromEnv(): IConfig {
+function getLegacyConfigFromEnv() {
 	const discoveryEndpoint = process.env.fluid__webpack__discoveryEndpoint;
 	const fluidHost = process.env.fluid__webpack__fluidHost;
 	const tenantSecret = process.env.fluid__webpack__tenantSecret;
@@ -93,7 +86,7 @@ function getLegacyConfigFromEnv(): IConfig {
 	return getConfig(discoveryEndpoint, fluidHost, tenantId, tenantSecret);
 }
 
-function getEndpointConfigFromEnv(r11sEndpointName: RouterliciousEndpoint): IConfig {
+function getEndpointConfigFromEnv(r11sEndpointName: RouterliciousEndpoint) {
 	const configStr = process.env[`fluid__test__driver__${r11sEndpointName}`];
 	if (r11sEndpointName === "docker") {
 		const dockerDriverPolicies =
@@ -115,7 +108,7 @@ function getEndpointConfigFromEnv(r11sEndpointName: RouterliciousEndpoint): ICon
 	);
 }
 
-function getConfigFromEnv(r11sEndpointName?: RouterliciousEndpoint): IConfig {
+function getConfigFromEnv(r11sEndpointName?: RouterliciousEndpoint) {
 	if (r11sEndpointName === undefined) {
 		const fluidHost = process.env.fluid__webpack__fluidHost;
 		if (fluidHost === undefined) {
@@ -151,7 +144,7 @@ export class RouterliciousTestDriver implements ITestDriver {
 	public static createFromEnv(
 		config?: { r11sEndpointName?: string },
 		api: RouterliciousDriverApiType = RouterliciousDriverApi,
-	): RouterliciousTestDriver {
+	) {
 		assertRouterliciousEndpoint(config?.r11sEndpointName);
 		const { serviceEndpoint, tenantId, tenantSecret, driverPolicies } = getConfigFromEnv(
 			config?.r11sEndpointName,
@@ -167,7 +160,7 @@ export class RouterliciousTestDriver implements ITestDriver {
 	}
 
 	public readonly type = "routerlicious";
-	public get version(): string {
+	public get version() {
 		return this.api.version;
 	}
 	private constructor(

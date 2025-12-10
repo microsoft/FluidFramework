@@ -22,18 +22,18 @@ export abstract class View<TInit extends TProps, TProps = {} | undefined>
 	private _root?: Element;
 	private listeners?: IListenerRegistration[];
 
-	public attach(parent: Element, init: Readonly<TInit>): void {
+	public attach(parent: Element, init: Readonly<TInit>) {
 		this._root = this.onAttach(init);
 		this.onUpdate(init);
 		console.assert(parent.hasChildNodes() === false);
 		parent.append(this._root);
 	}
 
-	public update(props: Readonly<TProps>): void {
+	public update(props: Readonly<TProps>) {
 		this.onUpdate(props);
 	}
 
-	public detach(): void {
+	public detach() {
 		const { root: root, listeners } = this;
 
 		const parent = root.parentNode;
@@ -53,7 +53,7 @@ export abstract class View<TInit extends TProps, TProps = {} | undefined>
 		this.listeners = undefined;
 	}
 
-	protected get root(): Element | undefined {
+	protected get root() {
 		return this._root;
 	}
 	protected abstract onAttach(init: Readonly<TInit>): Element;
@@ -64,7 +64,7 @@ export abstract class View<TInit extends TProps, TProps = {} | undefined>
 		target: EventTarget,
 		type: K | string,
 		listener: (ev: HTMLElementEventMap[K]) => any,
-	): void {
+	) {
 		const eventListener = listener as EventListener;
 		const registration: IListenerRegistration = { target, type, listener: eventListener };
 		const listeners = this.listeners;

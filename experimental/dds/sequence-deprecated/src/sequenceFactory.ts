@@ -59,7 +59,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
 	 * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
 	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
 	 */
-	public get type(): string {
+	public get type() {
 		return SharedObjectSequenceFactory.Type;
 	}
 
@@ -67,7 +67,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
 	 * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
 	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
 	 */
-	public get attributes(): IChannelAttributes {
+	public get attributes() {
 		return SharedObjectSequenceFactory.Attributes;
 	}
 
@@ -138,7 +138,7 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
 	 * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
 	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
 	 */
-	public get type(): string {
+	public get type() {
 		return SharedNumberSequenceFactory.Type;
 	}
 
@@ -146,7 +146,7 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
 	 * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
 	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
 	 */
-	public get attributes(): IChannelAttributes {
+	public get attributes() {
 		return SharedNumberSequenceFactory.Attributes;
 	}
 

@@ -40,7 +40,7 @@ module.exports = (env) => {
 				library: "[name]",
 				// https://github.com/webpack/webpack/issues/5767
 				// https://github.com/webpack/webpack/issues/7939
-				devtoolNamespace: "fluid-example/app-integration-external-views",
+				devtoolNamespace: "fluid-example/dice-roller",
 				libraryTarget: "umd",
 			},
 			plugins: [

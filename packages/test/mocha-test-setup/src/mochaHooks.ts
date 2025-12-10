@@ -31,7 +31,7 @@ const _global: any = global;
 class FluidTestRunLogger implements ITelemetryBufferedLogger {
 	private currentTestName: string | undefined;
 
-	send(event: ITelemetryBaseEvent): void {
+	send(event: ITelemetryBaseEvent) {
 		// TODO: Remove when issue #7061 is resolved.
 		// Don't log this event as we generate too much.
 		if (event.eventName === "fluid:telemetry:RouterliciousDriver:readBlob_end") {
@@ -50,7 +50,7 @@ class FluidTestRunLogger implements ITelemetryBufferedLogger {
 			testEnvProps: JSON.stringify(envLoggerProps),
 		});
 	}
-	async flush(): Promise<void> {
+	async flush() {
 		return this.parentLogger.flush();
 	}
 	constructor(private readonly parentLogger: ITelemetryBufferedLogger) {}
@@ -60,7 +60,7 @@ class FluidTestRunLogger implements ITelemetryBufferedLogger {
 	 * The test name will be included in all events logged through the logger until {@link clearCurrentTest} is called.
 	 * @param testName - The name of the test that is currently running.
 	 */
-	public setCurrentTest(testName: string): void {
+	public setCurrentTest(testName: string) {
 		this.currentTestName = testName;
 	}
 
@@ -69,13 +69,13 @@ class FluidTestRunLogger implements ITelemetryBufferedLogger {
 	 * Must be called after a given test has completed so that events logged outside the context of a test
 	 * don't include the name of the last test that ran.
 	 */
-	public clearCurrentTest(): void {
+	public clearCurrentTest() {
 		this.currentTestName = undefined;
 	}
 }
 const nullLogger: ITelemetryBufferedLogger = {
-	send: (): void => {},
-	flush: async (): Promise<void> => {},
+	send: () => {},
+	flush: async () => {},
 };
 
 // Keep references to the original console functions so we can restore them after each test.
