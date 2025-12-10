@@ -1404,9 +1404,6 @@
         "no-const-assign": [
             0
         ],
-        "no-constant-binary-expression": [
-            2
-        ],
         "no-constant-condition": [
             2,
             {
@@ -1465,9 +1462,6 @@
                 "allowObjectPatternsAsParameters": false
             }
         ],
-        "no-empty-static-block": [
-            2
-        ],
         "no-eval": [
             2,
             {
@@ -1511,6 +1505,13 @@
         ],
         "no-import-assign": [
             0
+        ],
+        "no-inner-declarations": [
+            2,
+            "functions",
+            {
+                "blockScopedFunctions": "allow"
+            }
         ],
         "no-invalid-regexp": [
             2,
@@ -1734,9 +1735,6 @@
             }
         ],
         "no-unused-labels": [
-            2
-        ],
-        "no-unused-private-class-members": [
             2
         ],
         "no-unused-vars": [
