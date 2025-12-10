@@ -700,17 +700,26 @@ export class MapKernel {
 					if (!this.pendingData.some((entry) => entry.type === "clear")) {
 						this.eventEmitter.emit("clear", local, this.eventEmitter);
 
-						// Emit valueChanged events for keys that remain visible due to pending local operations.
-						// This makes the behavior more intuitive: after a clear event, consumers will receive
-						// explicit notifications about which keys are still present rather than discovering them
-						// only through reads. The previousValue is undefined since the sequenced data was cleared.
-						for (const [key] of this.internalIterator()) {
-							this.eventEmitter.emit(
-								"valueChanged",
-								{ key, previousValue: undefined },
-								local,
-								this.eventEmitter,
+						// Emit delete-like valueChanged events for keys that did not have pending local operations
+						// and are now removed. This makes the behavior consistent with individual delete operations.
+						// Keys that remain visible due to pending local operations don't get events - consumers
+						// should re-read the map after a clear event to discover retained keys.
+						for (const [key, value] of this.sequencedData) {
+							// Check if this key has pending local operations that keep it visible
+							const hasPendingOps = this.pendingData.some(
+								(entry) =>
+									(entry.type === "delete" && entry.key === key) ||
+									(entry.type === "lifetime" && entry.key === key),
 							);
+							// Only emit for keys without pending operations (i.e., actually deleted)
+							if (!hasPendingOps) {
+								this.eventEmitter.emit(
+									"valueChanged",
+									{ key, previousValue: value.value },
+									local,
+									this.eventEmitter,
+								);
+							}
 						}
 					}
 				}
