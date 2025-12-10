@@ -11,7 +11,7 @@ import {
 } from "@fluid-internal/test-driver-definitions";
 import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
 import { FluidObject, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
-import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import { IFluidHandleContext, type IResponse } from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IFluidDataStoreRuntime,
@@ -105,15 +105,17 @@ export interface ITestDataObject extends IFluidLoadable {
 	_root: ISharedDirectory;
 }
 
-function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntimeApi>) {
+function createGetDataStoreFactoryFunction(
+	api: ReturnType<typeof getDataRuntimeApi>,
+): (containerOptions?: ITestContainerConfig) => IFluidDataStoreFactory {
 	class TestDataObject extends api.DataObject implements ITestDataObject {
-		public get _context() {
+		public get _context(): IFluidDataStoreContext {
 			return this.context;
 		}
-		public get _runtime() {
+		public get _runtime(): IFluidDataStoreRuntime {
 			return this.runtime;
 		}
-		public get _root() {
+		public get _root(): ISharedDirectory {
 			return this.root;
 		}
 	}
@@ -182,12 +184,13 @@ export async function getVersionedTestObjectProviderFromApis(
 		type?: TestDriverTypes;
 		config?: FluidTestDriverConfig;
 	},
-) {
+): Promise<TestObjectProvider> {
 	const type = driverConfig?.type ?? "local";
 
 	const driver = await createFluidTestDriver(type, driverConfig?.config, apis.driver);
 
 	const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(apis.dataRuntime);
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Returns anonymous class type
 	const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {
 		const dataStoreFactory = getDataStoreFactoryFn(containerOptions);
 		const runtimeCtor =
@@ -264,7 +267,10 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		apis.driverForLoading,
 	);
 
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+	const innerRequestHandler = async (
+		request: IRequest,
+		runtime: IContainerRuntimeBase,
+	): Promise<IResponse> =>
 		(
 			runtime as any as Required<FluidObject<IFluidHandleContext>>
 		).IFluidHandleContext.resolveHandle(request);
@@ -320,6 +326,7 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 			[innerRequestHandler],
 		);
 	};
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Returns anonymous class type
 	const loadContainerFactoryFn = (containerOptions?: ITestContainerConfig) => {
 		if (containerOptions?.forceUseCreateVersion === true) {
 			return createContainerFactoryFn(containerOptions);

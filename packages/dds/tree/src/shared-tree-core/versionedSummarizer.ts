@@ -67,6 +67,11 @@ export abstract class VersionedSummarizer<TVersion extends number> implements Su
 	protected abstract loadInternal(
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
+		/**
+		 * The format version of the summary being loaded, or undefined if this is pre-versioning format,
+		 * i.e., the summary has no version metadata.
+		 */
+		version: TVersion | undefined,
 	): Promise<void>;
 
 	public summarize(props: {
@@ -89,19 +94,20 @@ export abstract class VersionedSummarizer<TVersion extends number> implements Su
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
 	): Promise<void> {
+		let version: TVersion | undefined;
 		if (await services.contains(summarizablesMetadataKey)) {
 			const metadata = await readAndParseSnapshotBlob<SharedTreeSummarizableMetadata>(
 				summarizablesMetadataKey,
 				services,
 				(contents) => parse(contents),
 			);
-			const version = metadata.version as TVersion;
+			version = metadata.version as TVersion;
 			if (!this.supportedVersions.has(version)) {
 				throw new UsageError(`Cannot read version ${version} of shared tree summary.`);
 			}
 		} else if (!this.supportPreVersioningFormat) {
 			throw new UsageError(`Cannot read summary without versioning for shared tree summary.`);
 		}
-		await this.loadInternal(services, parse);
+		await this.loadInternal(services, parse, version);
 	}
 }
