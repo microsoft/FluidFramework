@@ -14,13 +14,13 @@ describe("Repo Root Token", () => {
 	const testRepoRoot = "/home/user/repo";
 
 	describe("replaceRepoRootToken", () => {
-		it("replaces <repoRoot> token with actual repo root path", () => {
-			const result = replaceRepoRootToken("<repoRoot>/.eslintrc.cjs", testRepoRoot);
+		it("replaces ${repoRoot} token with actual repo root path", () => {
+			const result = replaceRepoRootToken("${repoRoot}/.eslintrc.cjs", testRepoRoot);
 			assert.strictEqual(result, "/home/user/repo/.eslintrc.cjs");
 		});
 
-		it("handles multiple occurrences of <repoRoot> token", () => {
-			const result = replaceRepoRootToken("<repoRoot>/common/<repoRoot>/config", testRepoRoot);
+		it("handles multiple occurrences of ${repoRoot} token", () => {
+			const result = replaceRepoRootToken("${repoRoot}/common/${repoRoot}/config", testRepoRoot);
 			assert.strictEqual(result, "/home/user/repo/common//home/user/repo/config");
 		});
 
@@ -30,12 +30,12 @@ describe("Repo Root Token", () => {
 		});
 
 		it("handles paths with token in the middle", () => {
-			const result = replaceRepoRootToken("some/<repoRoot>/path", testRepoRoot);
+			const result = replaceRepoRootToken("some/${repoRoot}/path", testRepoRoot);
 			assert.strictEqual(result, "some//home/user/repo/path");
 		});
 
 		it("handles globs with token", () => {
-			const result = replaceRepoRootToken("<repoRoot>/common/**/*.ts", testRepoRoot);
+			const result = replaceRepoRootToken("${repoRoot}/common/**/*.ts", testRepoRoot);
 			assert.strictEqual(result, "/home/user/repo/common/**/*.ts");
 		});
 	});
@@ -43,7 +43,7 @@ describe("Repo Root Token", () => {
 	describe("replaceRepoRootTokens", () => {
 		it("replaces token in array of paths", () => {
 			const result = replaceRepoRootTokens(
-				["<repoRoot>/.eslintrc.cjs", "<repoRoot>/common/config.json"],
+				["${repoRoot}/.eslintrc.cjs", "${repoRoot}/common/config.json"],
 				testRepoRoot,
 			);
 			assert.deepStrictEqual(result, [
@@ -54,7 +54,7 @@ describe("Repo Root Token", () => {
 
 		it("handles mixed array with and without tokens", () => {
 			const result = replaceRepoRootTokens(
-				["<repoRoot>/.eslintrc.cjs", "../../local.json", "<repoRoot>/common/*.ts"],
+				["${repoRoot}/.eslintrc.cjs", "../../local.json", "${repoRoot}/common/*.ts"],
 				testRepoRoot,
 			);
 			assert.deepStrictEqual(result, [
@@ -71,7 +71,7 @@ describe("Repo Root Token", () => {
 
 		it("preserves order of paths", () => {
 			const result = replaceRepoRootTokens(
-				["path1", "<repoRoot>/path2", "path3", "<repoRoot>/path4"],
+				["path1", "${repoRoot}/path2", "path3", "${repoRoot}/path4"],
 				testRepoRoot,
 			);
 			assert.deepStrictEqual(result, [
@@ -85,7 +85,7 @@ describe("Repo Root Token", () => {
 
 	describe("REPO_ROOT_TOKEN constant", () => {
 		it("is defined correctly", () => {
-			assert.strictEqual(REPO_ROOT_TOKEN, "<repoRoot>");
+			assert.strictEqual(REPO_ROOT_TOKEN, "${repoRoot}");
 		});
 	});
 });

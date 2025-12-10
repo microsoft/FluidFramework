@@ -10,28 +10,29 @@ import type { TaskDefinitionsOnDisk, TaskFileDependencies } from "./fluidTaskDef
  * Token that can be used in file paths and globs to represent the repository root directory.
  * This allows configs to reference root-level files without hardcoding relative paths like "../../".
  *
- * Example: "<repoRoot>/.eslintrc.cjs" will resolve to the .eslintrc.cjs file at the repository root.
+ * Example: "${repoRoot}/.eslintrc.cjs" will resolve to the .eslintrc.cjs file at the repository root.
  */
-export const REPO_ROOT_TOKEN = "<repoRoot>";
+export const REPO_ROOT_TOKEN = "${repoRoot}";
 
 /**
- * Replace the <repoRoot> token in a path or glob with the actual repository root path.
+ * Replace the ${repoRoot} token in a path or glob with the actual repository root path.
  *
- * @param pathOrGlob - The path or glob that may contain the <repoRoot> token
+ * @param pathOrGlob - The path or glob that may contain the ${repoRoot} token
  * @param repoRoot - The absolute path to the repository root
- * @returns The path or glob with <repoRoot> replaced by the actual repository root path
+ * @returns The path or glob with ${repoRoot} replaced by the actual repository root path
  */
 export function replaceRepoRootToken(pathOrGlob: string, repoRoot: string): string {
 	// Use global regex to replace all occurrences of the token
-	return pathOrGlob.replace(new RegExp(REPO_ROOT_TOKEN, "g"), repoRoot);
+	// Need to escape the $ and {} characters for regex
+	return pathOrGlob.replace(/\$\{repoRoot\}/g, repoRoot);
 }
 
 /**
- * Replace the <repoRoot> token in an array of paths or globs.
+ * Replace the ${repoRoot} token in an array of paths or globs.
  *
- * @param pathsOrGlobs - Array of paths or globs that may contain the <repoRoot> token
+ * @param pathsOrGlobs - Array of paths or globs that may contain the ${repoRoot} token
  * @param repoRoot - The absolute path to the repository root
- * @returns Array with <repoRoot> replaced by the actual repository root path in each element
+ * @returns Array with ${repoRoot} replaced by the actual repository root path in each element
  */
 export function replaceRepoRootTokens(
 	pathsOrGlobs: readonly string[],

@@ -52,7 +52,7 @@ export interface TaskFileDependencies {
 	 * An array of globs that will be used to identify input files for the task. The globs are interpreted relative to the
 	 * package the task belongs to.
 	 *
-	 * You can use the special token `<repoRoot>` to reference files at the repository root without using relative paths.
+	 * You can use the special token `${repoRoot}` to reference files at the repository root without using relative paths.
 	 *
 	 * By default, inputGlobs **will not** match files ignored by git. This can be changed using the `gitignore` property
 	 * on the task. See the documentation for that property for details.
@@ -63,7 +63,7 @@ export interface TaskFileDependencies {
 	 * An array of globs that will be used to identify output files for the task. The globs are interpreted relative to
 	 * the package the task belongs to.
 	 *
-	 * You can use the special token `<repoRoot>` to reference files at the repository root without using relative paths.
+	 * You can use the special token `${repoRoot}` to reference files at the repository root without using relative paths.
 	 *
 	 * By default, outputGlobs **will** match files ignored by git, because build output is often gitignored. This can be
 	 *   changed using the `gitignore` property on the task. See the documentation for that property for details.
@@ -100,7 +100,7 @@ export interface TaskFileDependencies {
 	 *
 	 * This is useful for tracking shared configuration files from the repository root that affect the task.
 	 * File paths are relative to the package directory, but can use "../" to reference parent directories,
-	 * or use the special token "<repoRoot>" to reference files at the repository root.
+	 * or use the special token "${repoRoot}" to reference files at the repository root.
 	 *
 	 * Example: To track a root-level eslint config from a package:
 	 * ```json
@@ -109,7 +109,7 @@ export interface TaskFileDependencies {
 	 *     "tasks": {
 	 *       "eslint": {
 	 *         "files": {
-	 *           "additionalConfigFiles": ["<repoRoot>/.eslintrc.cjs", "<repoRoot>/common/eslint-config.json"]
+	 *           "additionalConfigFiles": ["${repoRoot}/.eslintrc.cjs", "${repoRoot}/common/eslint-config.json"]
 	 *         }
 	 *       }
 	 *     }
@@ -117,7 +117,7 @@ export interface TaskFileDependencies {
 	 * }
 	 * ```
 	 *
-	 * The "<repoRoot>" token will be replaced with the absolute path to the repository root,
+	 * The "${repoRoot}" token will be replaced with the absolute path to the repository root,
 	 * eliminating the need to use relative paths like "../../" which vary by package depth.
 	 *
 	 * Supports "..." to extend from global configuration.
