@@ -26,9 +26,9 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/forest-summary/codec.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { ForestFormatVersion } from "../../../feature-libraries/forest-summary/format.js";
+import { ForestFormatVersion } from "../../../feature-libraries/forest-summary/formatCommon.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { FormatV1 } from "../../../feature-libraries/forest-summary/format.js";
+import type { FormatV1 } from "../../../feature-libraries/forest-summary/formatV1.js";
 import {
 	FieldBatchFormatVersion,
 	TreeCompressionStrategy,
@@ -124,7 +124,7 @@ describe("ForestSummarizerCodec", () => {
 				() =>
 					codec.decode(
 						{
-							version: 2 as ForestFormatVersion,
+							version: 2.5 as ForestFormatVersion,
 							fields: {
 								version: brand(FieldBatchFormatVersion.v1),
 								identifiers: [],
@@ -135,7 +135,7 @@ describe("ForestSummarizerCodec", () => {
 						},
 						context,
 					),
-				validateUsageError(/Unsupported version 2 encountered while decoding data/),
+				validateUsageError(/Unsupported version 2.5 encountered while decoding data/),
 			);
 		});
 
@@ -146,7 +146,7 @@ describe("ForestSummarizerCodec", () => {
 						{
 							version: brand(ForestFormatVersion.v1),
 							fields: {
-								version: 3 as FieldBatchFormatVersion,
+								version: 2.5 as FieldBatchFormatVersion,
 								identifiers: [],
 								shapes: [],
 								data: [],

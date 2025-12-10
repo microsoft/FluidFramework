@@ -245,7 +245,10 @@ const genFullBackCompatConfig = (driverVersionsAboveV2Int1: number = 0): CompatC
  * It helps to filter out lower verions configs that the ones intended to be tested on a
  * particular suite.
  */
-export function isCompatVersionBelowMinVersion(minVersion: string, config: CompatConfig) {
+export function isCompatVersionBelowMinVersion(
+	minVersion: string,
+	config: CompatConfig,
+): boolean {
 	let lowerVersion: string | number = config.compatVersion;
 	// For cross-client there are 2 versions being tested. Get the lower one.
 	if (config.kind === CompatKind.CrossClient) {
@@ -506,7 +509,7 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
  *
  * @internal
  */
-export async function mochaGlobalSetup() {
+export async function mochaGlobalSetup(): Promise<void> {
 	const versions = new Set(configList.value.map((value) => value.compatVersion));
 	if (versions.size === 0) {
 		return;
