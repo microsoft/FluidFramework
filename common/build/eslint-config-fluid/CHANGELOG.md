@@ -5,6 +5,7 @@
 ### Removed Rushstack Dependencies
 
 The following packages have been removed from dependencies:
+
 - `@rushstack/eslint-patch`
 - `@rushstack/eslint-plugin-security`
 
