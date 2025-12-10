@@ -6688,7 +6688,7 @@ importers:
         specifier: workspace:~
         version: link:../property-common
       ajv:
-        specifier: ^8.12.0
+        specifier: ^8.17.1
         version: 8.17.1
       ajv-keywords:
         specifier: ^5.1.0
@@ -6779,7 +6779,7 @@ importers:
         specifier: npm:@types/events@^3.0.0
         version: '@types/events@3.0.3'
       ajv:
-        specifier: ^8.12.0
+        specifier: ^8.17.1
         version: 8.17.1
       async:
         specifier: ^3.2.2
@@ -7003,7 +7003,7 @@ importers:
         specifier: ^10.1.0
         version: 10.1.0
       easy-table:
-        specifier: ^1.1.1
+        specifier: ^1.2.0
         version: 1.2.0
       env-cmd:
         specifier: ^10.1.0
@@ -7036,7 +7036,7 @@ importers:
         specifier: workspace:~
         version: link:../property-common
       ajv:
-        specifier: ^8.12.0
+        specifier: ^8.17.1
         version: 8.17.1
       async:
         specifier: ^3.2.2
@@ -7515,7 +7515,7 @@ importers:
         specifier: ^10.1.0
         version: 10.1.0
       easy-table:
-        specifier: ^1.1.1
+        specifier: ^1.2.0
         version: 1.2.0
       env-cmd:
         specifier: ^10.1.0
