@@ -12,15 +12,18 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
  * @param initiatorType - type of the network call
  * @internal
  */
-export function getW3CData(url: string, initiatorType: string): {
-    dnsLookupTime: number | undefined;
-    w3cStartTime: number | undefined;
-    redirectTime: number | undefined;
-    tcpHandshakeTime: number | undefined;
-    secureConnectionTime: number | undefined;
-    responseNetworkTime: number | undefined;
-    fetchStartToResponseEndTime: number | undefined;
-    reqStartToResponseEndTime: number | undefined;
+export function getW3CData(
+	url: string,
+	initiatorType: string,
+): {
+	dnsLookupTime: number | undefined;
+	w3cStartTime: number | undefined;
+	redirectTime: number | undefined;
+	tcpHandshakeTime: number | undefined;
+	secureConnectionTime: number | undefined;
+	responseNetworkTime: number | undefined;
+	fetchStartToResponseEndTime: number | undefined;
+	reqStartToResponseEndTime: number | undefined;
 } {
 	// From: https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming
 	// fetchStart: immediately before the browser starts to fetch the resource.
