@@ -7,6 +7,7 @@ import type { IFluidLoadable, IDisposable, Listenable } from "@fluidframework/co
 
 import type {
 	CommitMetadata,
+	ChangeMetadata,
 	RevertibleAlphaFactory,
 	RevertibleFactory,
 } from "../../core/index.js";
@@ -35,6 +36,7 @@ import type {
 	VoidTransactionCallbackStatus,
 } from "./transactionTypes.js";
 import type { VerboseTree } from "./verboseTree.js";
+import type { JsonCompatibleReadOnly } from "../../util/index.js";
 
 /**
  * A tree from which a {@link TreeView} can be created.
@@ -282,6 +284,19 @@ export interface TreeBranchAlpha extends TreeBranch {
 		transaction: () => VoidTransactionCallbackStatus | void,
 		params?: RunTransactionParams,
 	): TransactionResult;
+
+	/**
+	 * Apply a serialized change to this branch.
+	 * @param change - the change to apply.
+	 * Changes are acquired via `getChange` in a branch's {@link TreeBranchEvents.changed | "changed"} event.
+	 * @remarks Changes may only be applied to a SharedTree with the same IdCompressor instance and branch state from which they were generated.
+	 * They may be created by one branch and applied to another, but only if both branches share the same history at the time of creation and application.
+	 *
+	 * @privateRemarks
+	 * TODO: This method will support applying changes from different IdCompressor instances as long as they have the same local session ID.
+	 * Update the tests and docs to match when that is done.
+	 */
+	applyChange(change: JsonCompatibleReadOnly): void;
 }
 
 /**
@@ -508,7 +523,7 @@ export interface TreeBranchEvents extends Omit<TreeViewEvents, "commitApplied"> 
 	 * @param getRevertible - a function that allows users to get a revertible for the change. If not provided,
 	 * this change is not revertible.
 	 */
-	changed(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
+	changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
 
 	/**
 	 * Fired when:
