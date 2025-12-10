@@ -8,13 +8,4 @@ module.exports = {
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
-	overrides: [
-		{
-			files: ["*.spec.ts", "src/test/**"],
-			rules: {
-				// TODO: fix violations and enable
-				"unicorn/consistent-function-scoping": "off",
-			},
-		},
-	],
 };

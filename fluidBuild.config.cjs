@@ -358,7 +358,6 @@ module.exports = {
 				"azure/packages/azure-local-service/src/index.ts",
 				"experimental/PropertyDDS/packages/property-query/test/get_config.js",
 				"scripts/generate-flat-eslint-configs.ts",
-				"scripts/generate-tsconfig-build.ts",
 				"server/routerlicious/packages/tinylicious/src/index.ts",
 
 				// minified DOMPurify is not a source file, so it doesn't need a header.

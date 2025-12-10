@@ -19,10 +19,6 @@ module.exports = {
 		"@typescript-eslint/unbound-method": "off",
 		"unicorn/consistent-function-scoping": "off",
 
-		// TODO: rename underscore-prefixed components (e.g., _DevtoolsView) to start with uppercase
-		// react-hooks 7.0 requires component names to start with uppercase letters
-		"react-hooks/rules-of-hooks": "warn",
-
 		// Disabled because they conflict with Prettier.
 		"unicorn/no-nested-ternary": "off",
 

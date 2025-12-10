@@ -16,13 +16,4 @@ module.exports = {
 		"prefer-arrow/prefer-arrow-functions": "off",
 		"unicorn/no-useless-spread": "off", // Off because it generates incorrect code in autofixes and cannot distinguish useful copies of arrays from useless ones
 	},
-	overrides: [
-		{
-			files: ["*.spec.ts", "src/test/**"],
-			rules: {
-				// TODO: fix violations and enable
-				"unicorn/consistent-function-scoping": "off",
-			},
-		},
-	],
 };

@@ -31,8 +31,6 @@ module.exports = {
 			rules: {
 				// Test files are run in node only so additional node libraries can be used.
 				"import-x/no-nodejs-modules": ["error", { allow: ["node:assert", "node:path"] }],
-				// TODO: fix violations and enable
-				"unicorn/consistent-function-scoping": "off",
 			},
 		},
 	],

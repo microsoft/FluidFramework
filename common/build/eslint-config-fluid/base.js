@@ -176,7 +176,6 @@ module.exports = {
 		// #region
 
 		// eslint-plugin-unicorn
-		"unicorn/consistent-function-scoping": ["error", { checkArrowFunctions: false }],
 		"unicorn/better-regex": "error",
 		"unicorn/filename-case": [
 			"error",
