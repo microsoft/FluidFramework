@@ -3,13 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable jsdoc/check-indentation */
-/* eslint-disable jsdoc/check-line-alignment */
-/* eslint-disable jsdoc/require-hyphen-before-param-description */
-/* eslint-disable @typescript-eslint/no-unsafe-function-type */
-/* eslint-disable @typescript-eslint/adjacent-overload-signatures */
-/* eslint-disable @rushstack/no-new-null */
-
 declare module "@fluid-experimental/property-properties" {
 	import { ChangeSet, SerializedChangeSet } from "@fluid-experimental/property-changeset";
 	namespace PROPERTY_TREE_NS {
@@ -156,7 +149,7 @@ declare module "@fluid-experimental/property-properties" {
 			UP: number; // A ../ that indicates one step above the current path
 		}
 
-		interface PropertyTemplateType {
+		type PropertyTemplateType = {
 			id?: string; // id of the property
 			name?: string; // Name of the property
 			typeid: string; // The type identifier
@@ -164,33 +157,33 @@ declare module "@fluid-experimental/property-properties" {
 			//   the property is an array, otherwise the length defaults to 1
 			context?: string; // The type of property this template represents
 			//   i.e. array, hash, etc.
-			properties?: object[]; // List of property templates that
+			properties?: Array<object>; // List of property templates that
 			//   are used to define children properties
-			constants?: object[]; // List of property templates that
+			constants?: Array<object>; // List of property templates that
 			//   are used to define constant properties and their values
-			inherits?: string[] | string; // List of property template typeids that this
+			inherits?: Array<string> | string; // List of property template typeids that this
 			//   PropertyTemplate inherits from
 			annotation?: { [key: string]: string };
-		}
-		interface ArrayProperty_ArrayProperty_in_params_TYPE {
+		};
+		type ArrayProperty_ArrayProperty_in_params_TYPE = {
 			length: number; // the length of the array, if applicable
-		}
-		interface BaseProperty_BaseProperty_in_params_TYPE {
+		};
+		type BaseProperty_BaseProperty_in_params_TYPE = {
 			id: string; // id of the property
 			typeid: string; // The type unique identifier
 			length: number; // The length of the property. Only valid if
 			//   the property is an array, otherwise the length defaults to 1
 			context: string; // The type of property this template represents
 			//   i.e. single, array, map, set.
-			properties: object[]; // List of property templates that
+			properties: Array<object>; // List of property templates that
 			//   are used to define children properties -- UNUSED PARAMETER ??
-			inherits: string[]; // List of property template typeids that this
+			inherits: Array<string>; // List of property template typeids that this
 			//   PropertyTemplate inherits from -- UNUSED PARAMETER ??
-		}
-		interface BinaryProperty_BinaryProperty_in_params_TYPE {
+		};
+		type BinaryProperty_BinaryProperty_in_params_TYPE = {
 			typeid: string; // Type Id (nothing for BinaryProperty)
-		}
-		interface ContainerProperty_ContainerProperty_in_params_TYPE {
+		};
+		type ContainerProperty_ContainerProperty_in_params_TYPE = {
 			dataObj: object; // optional argument containing an object
 			//                  that should be used as the backing store of this value
 			//                  property
@@ -198,25 +191,25 @@ declare module "@fluid-experimental/property-properties" {
 			//                  in_params.dataObj is passed. Must contain a valid member
 			//                  name of dataObj. This member will be used to set/get
 			//                  values of this value property
-		}
-		interface EnumArrayProperty_EnumArrayProperty_in_params_TYPE {
+		};
+		type EnumArrayProperty_EnumArrayProperty_in_params_TYPE = {
 			length: number; // the length of the array, if applicable
 			_enumDictionary: object; // the value<->enum dictonary needed to convert the values
-		}
-		interface NamedNodeProperty_NamedNodeProperty_in_params_TYPE {
+		};
+		type NamedNodeProperty_NamedNodeProperty_in_params_TYPE = {
 			id: string; // id of the property (null, if the GUID should be used for the ID)
 			typeid: string; // The type identifier
-		}
-		interface NamedProperty_NamedProperty_in_params_TYPE {
+		};
+		type NamedProperty_NamedProperty_in_params_TYPE = {
 			id: string; // id of the property (null, if the GUID should be used for the ID)
 			typeid: string; // The type identifier
-		}
-		interface RepositoryReferenceProperty_RepositoryReferenceProperty_in_params_TYPE {
+		};
+		type RepositoryReferenceProperty_RepositoryReferenceProperty_in_params_TYPE = {
 			id: string; // id of the property
 			name: string; // Name of the property
 			typeid: string; // The type identifier
-		}
-		interface ValueProperty_ValueProperty_in_params_TYPE {
+		};
+		type ValueProperty_ValueProperty_in_params_TYPE = {
 			dataObj: object; // optional argument containing an object
 			//                  that should be used as the backing store of this value
 			//                  property
@@ -224,44 +217,44 @@ declare module "@fluid-experimental/property-properties" {
 			//                  in_params.dataObj is passed. Must contain a valid member
 			//                  name of dataObj. This member will be used to set/get
 			//                  values of this value property
-		}
-		interface ScopeProperty_ScopeProperty_in_params_TYPE {
+		};
+		type ScopeProperty_ScopeProperty_in_params_TYPE = {
 			scope: string; // The scope to keep track of
-		}
-		interface Repository_Repository_in_params_TYPE {
+		};
+		type Repository_Repository_in_params_TYPE = {
 			name: string; // the name of this repository.
 			creatorId: string; // The oxygen user ID of the person who creates the repository
 			guid: string; // the guid of the repository
 			commitCacheSize: number; // the size of the cache for old commits
-		}
-		interface BranchNode_BranchNode_in_params_TYPE {
+		};
+		type BranchNode_BranchNode_in_params_TYPE = {
 			guid: string; // The guid of the branch
 			name: string; // The name of the branch. Will default to the guid.
-		}
-		interface PropertyFactory_create_in_options_TYPE {
+		};
+		type PropertyFactory_create_in_options_TYPE = {
 			workspace: Workspace; // A checked out workspace to check against. If supplied,
 			//  the function will check against the schemas that have been registered within the workspace
-		}
-		interface PropertyFactory_inheritsFrom_in_options_TYPE {
+		};
+		type PropertyFactory_inheritsFrom_in_options_TYPE = {
 			includeSelf?: boolean; // Also return true if in_templateTypeid === in_baseTypeid
 			workspace?: Workspace; // A checked out workspace to check against. If supplied,
 			//  the function will check against the schemas that have been registered within the workspace
-		}
-		interface PropertyFactory_getAllParentsForTemplate_in_options_TYPE {
+		};
+		type PropertyFactory_getAllParentsForTemplate_in_options_TYPE = {
 			includeBaseProperty?: boolean; // Include BaseProperty as parent.
 			//                                                   Everything implicitly inherits
 			//                                                   from BaseProperty, but it is not explicitly listed in the
 			//                                                   template, so it is only included if explicitly requested
 			workspace?: Workspace; // A checked out workspace to check against. If supplied,
 			//  the function will check against the schemas that have been registered within the workspace
-		}
+		};
 		type getBearerTokenFn = (...arg: any[]) => any; // TODO
-		interface PropertyFactory_initializeSchemaStore_in_options_TYPE {
+		type PropertyFactory_initializeSchemaStore_in_options_TYPE = {
 			getBearerToken: getBearerTokenFn; // Function that accepts a callback.
 			//     Function that should be called with an error or the OAuth2 bearer token representing the user.
 			url: string; // The root of the url used in the request to retrieve PropertySet schemas.
-		}
-		interface Workspace_initialize_in_options_TYPE {
+		};
+		type Workspace_initialize_in_options_TYPE = {
 			urn?: string; // The urn of the branch or commit to load
 			metadata?: {
 				// The branch metadata
@@ -271,80 +264,80 @@ declare module "@fluid-experimental/property-properties" {
 			local?: boolean; // Flag used work locally
 			paths?: string[]; // List of paths to checkout.
 			//  NOTE: the workspace will ONLY load the given paths and will only receive changes on these paths from the server.
-		}
-		interface Workspace_branch_in_options_TYPE {
+		};
+		type Workspace_branch_in_options_TYPE = {
 			metadata?: {
 				// The branch metadata
 				name?: string;
 			};
 			local?: boolean; // Flag used to create a local branch
-		}
-		interface Workspace_commit_in_options_TYPE {
+		};
+		type Workspace_commit_in_options_TYPE = {
 			headers?: object; // Objects to be appended as headers in the request
 			local?: boolean; // Flag used to create a local commit
 			metadata?: object; // Object containing the commit meta data
 			mergeInfo?: object; // The merge info (if commit is based on a merge operation)
 			allowEmptyChangeset?: boolean; // Allow the commit even if changeSet is empty
-		}
-		interface Workspace_rebase_in_options_TYPE {
+		};
+		type Workspace_rebase_in_options_TYPE = {
 			push?: boolean; // Flag used to indicate that any local commits that have been rebased
 			//                                      onto the new commit will not be pushed to the the server.
 			squash?: boolean; // Flag used to squash the commits during the rebase.
 			metadata?: object; // Metadata that can be attached to a squashed rebase.
-		}
-		interface Workspace_revertTo_in_options_TYPE {
+		};
+		type Workspace_revertTo_in_options_TYPE = {
 			/**
 			 * Only reverts the changes to properties and sub properties
 			 * of the passed in paths. Default is revert all.
 			 */
 			paths: string[];
-		}
-		interface Workspace_setRebaseCallback_in_options_TYPE {
+		};
+		type Workspace_setRebaseCallback_in_options_TYPE = {
 			notificationMode?: number; // Mode controlling the invocation of the rebase callback
 			//  (default = ALWAYS)
-		}
-		interface Workspace_checkout_in_options_TYPE {
+		};
+		type Workspace_checkout_in_options_TYPE = {
 			paths: string[]; // List of paths to checkout.
 			//  NOTE: the workspace will ONLY load the given paths and will only receive changes on these paths from the server.
-		}
-		interface Workspace_resolvePath_in_options_TYPE {
+		};
+		type Workspace_resolvePath_in_options_TYPE = {
 			referenceResolutionMode: REFERENCE_RESOLUTION_TYPE; // How should this function behave during reference resolution?
-		}
-		interface Workspace_get_in_options_TYPE {
+		};
+		type Workspace_get_in_options_TYPE = {
 			referenceResolutionMode: REFERENCE_RESOLUTION_TYPE; // How should this function behave during reference resolution?
-		}
-		interface ArrayProperty_get_in_options_TYPE {
+		};
+		type ArrayProperty_get_in_options_TYPE = {
 			referenceResolutionMode: REFERENCE_RESOLUTION_TYPE; // How should this function behave during reference resolution?
-		}
-		interface BaseProperty_serialize_in_options_TYPE {
+		};
+		type BaseProperty_serialize_in_options_TYPE = {
 			dirtyOnly?: boolean; // Only include dirty entries in the serialization
 			includeRootTypeid?: boolean; // Include the typeid of the root of the hierarchy
 			dirtinessType?: MODIFIED_STATE_FLAGS_TYPE; // The type of dirtiness to use when reporting dirty changes.
 			includeReferencedRepositories?: boolean; // If this is set to true, the serialize
 			//     function will descend into referenced repositories. WARNING: if there are loops in the references
 			//     this can result in an infinite loop
-		}
+		};
 		type Datastore = any; // TODO
 		type DataSource = any; // TODO
-		interface BinaryProperty_initialize_in_params_TYPE {
+		type BinaryProperty_initialize_in_params_TYPE = {
 			datastore: Datastore; // Datastore for storing data.
 			dataSource: DataSource; // DataSource to read or write to.
-		}
-		interface ContainerProperty_get_in_options_TYPE {
+		};
+		type ContainerProperty_get_in_options_TYPE = {
 			referenceResolutionMode: REFERENCE_RESOLUTION_TYPE; // How should this function behave during reference resolution?
-		}
-		interface ContainerProperty_getValue_in_options_TYPE {
+		};
+		type ContainerProperty_getValue_in_options_TYPE = {
 			referenceResolutionMode: REFERENCE_RESOLUTION_TYPE; // How should this function behave during reference resolution?
-		}
-		interface ContainerProperty_resolvePath_in_options_TYPE {
+		};
+		type ContainerProperty_resolvePath_in_options_TYPE = {
 			referenceResolutionMode: REFERENCE_RESOLUTION_TYPE; // How should this function behave during reference resolution?
-		}
-		interface ReferenceProperty_get_in_options_TYPE {
+		};
+		type ReferenceProperty_get_in_options_TYPE = {
 			referenceResolutionMode: REFERENCE_RESOLUTION_TYPE; // How should this function behave during reference resolution?
-		}
-		interface ReferenceProperty_resolvePath_in_options_TYPE {
+		};
+		type ReferenceProperty_resolvePath_in_options_TYPE = {
 			referenceResolutionMode: REFERENCE_RESOLUTION_TYPE; // How should this function behave during reference resolution?
-		}
+		};
 		type CoarsePermission = "read" | "write" | "delete";
 		type RepositoryPermission =
 			| "repository.read"
@@ -363,20 +356,20 @@ declare module "@fluid-experimental/property-properties" {
 			| BranchPermission
 			| PropertyPermission
 			| CoarsePermission;
-		interface Repository_getBranchNodes_in_options_TYPE {
+		type Repository_getBranchNodes_in_options_TYPE = {
 			array: boolean; // Flag used to control the return
 			//  type of the function. If set to true, the return value will be an Array
-		}
-		interface Repository__branch_in_branchMetaData_TYPE {
+		};
+		type Repository__branch_in_branchMetaData_TYPE = {
 			name: string; // The human readable name of the branch.
 			//  If not specified, it defaults to the guid.
 			guid: string; // The guid of the branch. If not specified, a guid will be generated
-		}
-		interface Repository__branch_in_options_TYPE {
+		};
+		type Repository__branch_in_options_TYPE = {
 			trackRemoteBranch: boolean; // Flag to track the remote branch.
 			//  NOTE: This results in a BranchNode (remote) to be created and linked to the new BranchNode (local)
-		}
-		interface Repository__rebase_in_options_TYPE {
+		};
+		type Repository__rebase_in_options_TYPE = {
 			rebaseCallback: Function; // A callback that is invoked to perform the rebase operation. It will be invoked separately for each commit that
 			//     is rebased, and then finally again for the pending changes if applicable. The function indicates via its
 			//     return value, whether the rebase was successful. If true is returned the rebase will continue, if false is
@@ -407,8 +400,8 @@ declare module "@fluid-experimental/property-properties" {
 			trackState: boolean; // Enable tracking of the normalized ChangeSet during the rebase operation. This can be disabled, since the
 			//     computation of the normalized ChangeSet incurs additional costs and should only be done when it is needed
 			//     by the rebase function.
-		}
-		interface RepositoryStore_createRemoteRepository_in_params_TYPE {
+		};
+		type RepositoryStore_createRemoteRepository_in_params_TYPE = {
 			changeSet: object; // The flattened change set to
 			//                                        be set as the root commit.
 
@@ -422,52 +415,52 @@ declare module "@fluid-experimental/property-properties" {
 				// The root commit object to add to the Repository
 				guid: string;
 			};
-		}
-		interface RepositoryStore_addCommitNode_in_params_TYPE {
+		};
+		type RepositoryStore_addCommitNode_in_params_TYPE = {
 			commit: object | undefined; // object describing a commit
-			commits: object[] | undefined; // Array of objects describing the individual commits
+			commits: Array<object> | undefined; // Array of objects describing the individual commits
 			//  within a batch. NOTE: If this parameter is not specified then "commit" param must be specified
 			changeSet: ChangeSet; // ChangeSet coupled with the commit object
 			branch: {
 				// The branch information
 				guid: string;
 			};
-		}
-		interface RepositoryStore_updateRepository_in_params_TYPE {
-			commits: object[]; // The list of commit objects
+		};
+		type RepositoryStore_updateRepository_in_params_TYPE = {
+			commits: Array<object>; // The list of commit objects
 			//                                           Includes the guid of the commit plus all metadata
 			branch: object; // The branch object parameter
 			//                                  Includes the guid of the branch plus all metadata
 			flatten: boolean; // flag used to indicate that the commit history is flattened
 			//                                    This flag is generally set to true when loading a branch that doesn't
 			//                                    exist locally. Defaults to false.
-		}
-		interface EnumArrayProperty_get_in_options_TYPE {
+		};
+		type EnumArrayProperty_get_in_options_TYPE = {
 			referenceResolutionMode: REFERENCE_RESOLUTION_TYPE; // How should this function behave during reference resolution?
-		}
-		interface ValueArrayProperty_get_in_options_TYPE {
+		};
+		type ValueArrayProperty_get_in_options_TYPE = {
 			referenceResolutionMode: REFERENCE_RESOLUTION_TYPE; // How should this function behave during reference resolution?
-		}
+		};
 
-		interface NamedProperty_share_permission_TYPE {
-			userIds: string[]; // The user ids which will get permissions assigned
-			groupIds?: string[]; // The user group ids which will get permissions assigned
-			serviceIds?: string[]; // The service ids which will get permissions assigned
+		type NamedProperty_share_permission_TYPE = {
+			userIds: Array<string>; // The user ids which will get permissions assigned
+			groupIds?: Array<string>; // The user group ids which will get permissions assigned
+			serviceIds?: Array<string>; // The service ids which will get permissions assigned
 			actions: PropertyPermission[]; // The actions to grant to the subject on the property
-		}
-		interface NamedProperty_share_options_TYPE {
+		};
+		type NamedProperty_share_options_TYPE = {
 			synchronous?: boolean; // whether the share sould be sent to the PropertyTree immediatly or on next sync
 			noInherit?: boolean; // Optional flag to set noInherit on the property
-		}
-		interface NamedProperty_unshare_permission_TYPE {
-			userIds: string[]; // The user ids which will get permissions assigned
-			groupIds?: string[]; // The user group ids which will get permissions assigned
-			serviceIds?: string[]; // The service ids which will get permissions assigned
+		};
+		type NamedProperty_unshare_permission_TYPE = {
+			userIds: Array<string>; // The user ids which will get permissions assigned
+			groupIds?: Array<string>; // The user group ids which will get permissions assigned
+			serviceIds?: Array<string>; // The service ids which will get permissions assigned
 			actions: PropertyPermission[]; // The actions to grant to the subject on the property
-		}
-		interface NamedProperty_unshare_options_TYPE {
+		};
+		type NamedProperty_unshare_options_TYPE = {
 			synchronous?: boolean; // whether the share sould be sent to the PropertyTree immediatly or on next sync
-		}
+		};
 		type BranchIdentifier = any; // TODO
 		type CommitOrBranchIdentifier = any; // TODO
 		type RootProperty = any; // TODO
@@ -475,13 +468,13 @@ declare module "@fluid-experimental/property-properties" {
 
 		/** TODO
 		 * apply a range's operation to the rebased changeset
-		 * @param in_segment - to be applied
-		 * @param io_changeset - target
-		 * @param in_currentIndexOffset - current offset
-		 * @param out_conflicts - A list of paths that resulted in conflicts together with the type of the conflict
-		 * @param in_basePath - Base path to get to the property processed by this function
-		 * @param in_isPrimitiveType - is it an array of primitive types
-		 * @param in_options - Optional additional parameters
+		 * @param in_segment to be applied
+		 * @param io_changeset target
+		 * @param in_currentIndexOffset current offset
+		 * @param out_conflicts A list of paths that resulted in conflicts together with the type of the conflict
+		 * @param in_basePath Base path to get to the property processed by this function
+		 * @param in_isPrimitiveType is it an array of primitive types
+		 * @param in_options Optional additional parameters
 		 */
 
 		class PropertyError {}
@@ -503,7 +496,7 @@ declare module "@fluid-experimental/property-properties" {
 			 * Recursively parses the given JSON Schema and returns the corresponding
 			 * array of PropertySets Templates.
 			 */
-			getPropertySetsTemplates(): object[];
+			getPropertySetsTemplates(): Array<object>;
 			/**
 			 * Returns the absolute document URI of the given definition.
 			 *
@@ -562,34 +555,34 @@ declare module "@fluid-experimental/property-properties" {
 			 * object's value field. To do this we simply keep a pointer to the object and
 			 * its associated data field that we are interested in. If no data field is
 			 * present this property will fail constructing.
-			 * @param in_params - the parameters
+			 * @param in_params the parameters
 			 */
 			constructor(in_params: ContainerProperty_ContainerProperty_in_params_TYPE);
 			/**
 			 * Returns the sub-property having the given name, or following the given paths, in this property.
-			 * @param in_ids - the ID or IDs of the property or an array of IDs
-			 * if an array is passed, the .get function will be performed on each id in sequence
-			 * for example .get(['position','x']) is equivalent to .get('position').get('x').
-			 * If .get resolves to a ReferenceProperty, it will, by default, return the property that the
-			 * ReferenceProperty refers to.
-			 * @param in_options - parameter object
+			 * @param in_ids the ID or IDs of the property or an array of IDs
+			 *       if an array is passed, the .get function will be performed on each id in sequence
+			 *       for example .get(['position','x']) is equivalent to .get('position').get('x').
+			 *       If .get resolves to a ReferenceProperty, it will, by default, return the property that the
+			 *       ReferenceProperty refers to.
+			 * @param in_options parameter object
 			 */
 			get<T = BaseProperty>(
-				in_ids?: string | number | (string | number)[],
+				in_ids?: string | number | Array<string | number>,
 				in_options?: ContainerProperty_get_in_options_TYPE,
 			): T | undefined;
 			/**
 			 * returns the value of a sub-property
 			 * This is a shortcut for .get(in_ids, in_options).getValue()
-			 * @param in_ids - the ID or IDs of the property or an array of IDs
-			 * if an array is passed, the .get function will be performed on each id in sequence
-			 * for example .getValue(['position','x']) is equivalent to .get('position').get('x').getValue().
-			 * If at any point .get resolves to a ReferenceProperty, it will, by default, return the property that the
-			 * ReferenceProperty refers to.
-			 * @param in_options - parameter object
+			 * @param in_ids the ID or IDs of the property or an array of IDs
+			 *       if an array is passed, the .get function will be performed on each id in sequence
+			 *       for example .getValue(['position','x']) is equivalent to .get('position').get('x').getValue().
+			 *       If at any point .get resolves to a ReferenceProperty, it will, by default, return the property that the
+			 *       ReferenceProperty refers to.
+			 * @param in_options parameter object
 			 */
 			getValue<T>(
-				in_ids?: string | number | (string | number)[],
+				in_ids?: string | number | Array<string | number>,
 				in_options?: ContainerProperty_getValue_in_options_TYPE,
 			): T;
 			/**
@@ -601,7 +594,7 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * Returns the name of all the sub-properties of this property.
 			 */
-			getIds(): string[];
+			getIds(): Array<string>;
 			/**
 			 * Returns an object with all the nested values contained in this property
 			 */
@@ -612,8 +605,8 @@ declare module "@fluid-experimental/property-properties" {
 			has(in_id: string): boolean;
 			/**
 			 * Expand a path returning the property or value at the end.
-			 * @param in_path - the path
-			 * @param in_options - parameter object
+			 * @param in_path the path
+			 * @param in_options parameter object
 			 */
 			resolvePath<T = BaseProperty>(
 				in_path: string,
@@ -632,7 +625,7 @@ declare module "@fluid-experimental/property-properties" {
 			 * }
 			 * </pre>
 			 */
-			setValues<T>(in_values: T[] | object): void;
+			setValues<T>(in_values: T[] | Object): void;
 			/**
 			 * Append a child property
 			 *
@@ -673,7 +666,7 @@ declare module "@fluid-experimental/property-properties" {
 			constructor();
 			/**
 			 * Removes the dirtiness flag from this property and recursively from all of its children
-			 * @param flags - The flags to clean, if none are supplied all will be removed
+			 * @param flags The flags to clean, if none are supplied all will be removed
 			 */
 			public cleanDirty(flags?: MODIFIED_STATE_FLAGS_ENUM): void;
 			/**
@@ -682,7 +675,7 @@ declare module "@fluid-experimental/property-properties" {
 			getValues<T>(): T;
 			/**
 			 * Checks whether a property or data exists at the given position.
-			 * @param in_position - index of the property
+			 * @param in_position index of the property
 			 */
 			has(in_position: string): boolean;
 		}
@@ -729,7 +722,7 @@ declare module "@fluid-experimental/property-properties" {
 			 * For arrays of Properties, this can be used to set nested values in properties found in the array.
 			 * For example: setValues({0: {position: {x: 2, y:3}}});
 			 */
-			setValues<T = any[]>(values: T): void;
+			setValues<T = Array<any>>(values: T): void;
 			/**
 			 * Deletes all values from an array
 			 */
@@ -738,8 +731,8 @@ declare module "@fluid-experimental/property-properties" {
 			 * Inserts the content of a given array into the array property
 			 * It will not overwrite the existing values but push them to the right instead.
 			 * E.g. [1, 2, 3] .insertRange(1, [9, 8]) => [1, 9, 8, 2, 3]
-			 * @param in_offset - target index
-			 * @param in_array - the array to be inserted
+			 * @param in_offset target index
+			 * @param in_array the array to be inserted
 			 * @throws if in_offset is smaller than zero, larger than the length of the array or not a number.
 			 * @throws if trying to insert a property that already has a parent.
 			 * @throws if tyring to modify a referenced property.
@@ -750,30 +743,30 @@ declare module "@fluid-experimental/property-properties" {
 			 *  and shifts remaining values to the left.
 			 * E.g. [1, 2, 3, 4, 5]  .removeRange(1, 3) => [1, 5]
 			 */
-			removeRange(): any[] | BaseProperty[];
+			removeRange(): Array<any> | Array<BaseProperty>;
 			/**
 			 * Sets the array properties elements to the content of the given array
 			 * All changed elements must already exist. This will overwrite existing elements.
 			 * E.g. [1, 2, 3, 4, 5]  .setRange(1, [7, 8]) => [1, 7, 8, 4, 5]
 			 */
-			setRange(in_offset: number, in_array: any[]): void;
+			setRange(in_offset: number, in_array: Array<any>): void;
 			/**
 			 * Returns the name of all the sub-properties of this property.
 			 * Numerical indexes from the array will be returned as strings.
 			 * E.g. ['0', '1', '2']
 			 */
-			getIds(): string[];
+			getIds(): Array<string>;
 			/**
 			 * Gets the array element at a given index
-			 * @param in_position - the target index
-			 * if an array is passed, elements in the array will be treated as part of a path.
-			 * The first item in an array should be a position in the array.
-			 * For example, .get([0,'position','x']) is the equivalent of .get(0).get('position').get('x')
-			 * If it encounters a ReferenceProperty, .get will, by default, resolve the property it refers to.
-			 * @param in_options - parameter object
+			 * @param in_position the target index
+			 *   if an array is passed, elements in the array will be treated as part of a path.
+			 *   The first item in an array should be a position in the array.
+			 *   For example, .get([0,'position','x']) is the equivalent of .get(0).get('position').get('x')
+			 *   If it encounters a ReferenceProperty, .get will, by default, resolve the property it refers to.
+			 * @param in_options parameter object
 			 */
 			get(
-				in_position: number | (string | number)[],
+				in_position: number | Array<string | number>,
 				in_options?: ValueArrayProperty_get_in_options_TYPE,
 			): any | BaseProperty | undefined;
 			getLength(): number;
@@ -786,30 +779,30 @@ declare module "@fluid-experimental/property-properties" {
 		class ArrayProperty extends ContainerProperty {
 			/**
 			 * Default constructor for ArrayProperty
-			 * @param in_params - the parameters
-			 * @param in_constructor - the constructor for the array data
-			 * @param in_primitiveType - Is this an array of primitive types?
-			 * @param in_scope - The scope in which the property typeid is defined
+			 * @param in_params the parameters
+			 * @param in_constructor the constructor for the array data
+			 * @param in_primitiveType Is this an array of primitive types?
+			 * @param in_scope The scope in which the property typeid is defined
 			 */
 			constructor(
 				in_params: ArrayProperty_ArrayProperty_in_params_TYPE,
 				in_constructor: object,
-				in_primitiveType: boolean,
+				in_primitiveType: Boolean,
 				in_scope: string | undefined,
 			);
 
 			public get length();
 			/**
 			 * Gets the array element at a given index
-			 * @param in_position - the target index
-			 * if an array is passed, elements in the array will be treated as part of a path.
-			 * The first item in an array should be a position in the array.
-			 * For example, .get([0,'position','x']) is the equivalent of .get(0).get('position').get('x')
-			 * If it encounters a ReferenceProperty, .get will, by default, resolve the property it refers to.
-			 * @param in_options - parameter object
+			 * @param in_position the target index
+			 *   if an array is passed, elements in the array will be treated as part of a path.
+			 *   The first item in an array should be a position in the array.
+			 *   For example, .get([0,'position','x']) is the equivalent of .get(0).get('position').get('x')
+			 *   If it encounters a ReferenceProperty, .get will, by default, resolve the property it refers to.
+			 * @param in_options parameter object
 			 */
 			get<T = BaseProperty>(
-				in_position: number | string | (string | number)[],
+				in_position: number | string | Array<string | number>,
 				in_options?: ArrayProperty_get_in_options_TYPE,
 			): T | undefined;
 			/**
@@ -820,12 +813,12 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * Add one or more values at the end of the array
 			 */
-			push(in_values: any[] | any): number;
+			push(in_values: Array<any> | any): number;
 			/**
 			 * Add a value at the front of the array or letters to the beginning of a string (for StringProperty)
 			 * It can also add multiple values to an array if you pass in an array of values.
 			 */
-			unshift(in_values: any[] | any): number;
+			unshift(in_values: Array<any> | any): number;
 			/**
 			 * Removes an element of the array (or a letter in a StringProperty) and shifts remaining elements to the left
 			 * E.g. [1, 2, 3]   .remove(1) => [1, 3]
@@ -853,8 +846,8 @@ declare module "@fluid-experimental/property-properties" {
 			 * Inserts the content of a given array into the array property
 			 * It will not overwrite the existing values but push them to the right instead.
 			 * E.g. [1, 2, 3] .insertRange(1, [9, 8]) => [1, 9, 8, 2, 3]
-			 * @param in_offset - target index
-			 * @param in_array - the array to be inserted
+			 * @param in_offset target index
+			 * @param in_array the array to be inserted
 			 * @throws if in_offset is smaller than zero, larger than the length of the array or not a number.
 			 * @throws if trying to insert a property that already has a parent.
 			 * @throws if tyring to modify a referenced property.
@@ -865,13 +858,13 @@ declare module "@fluid-experimental/property-properties" {
 			 *  and shifts remaining values to the left.
 			 * E.g. [1, 2, 3, 4, 5]  .removeRange(1, 3) => [1, 5]
 			 */
-			removeRange(in_offset: number, in_deleteCount: number): any[] | BaseProperty[];
+			removeRange(in_offset: number, in_deleteCount: number): Array<any> | Array<BaseProperty>;
 			/**
 			 * Sets the array properties elements to the content of the given array
 			 * All changed elements must already exist. This will overwrite existing elements.
 			 * E.g. [1, 2, 3, 4, 5]  .setRange(1, [7, 8]) => [1, 7, 8, 4, 5]
 			 */
-			setRange(in_offset: number, in_array: any[]): void;
+			setRange(in_offset: number, in_array: Array<any>): void;
 			/**
 			 * Returns an object with all the nested values contained in this property
 			 */
@@ -879,7 +872,7 @@ declare module "@fluid-experimental/property-properties" {
 			getLength(): number;
 			/**
 			 * Checks whether a property or data exists at the given position.
-			 * @param in_position - index of the property
+			 * @param in_position index of the property
 			 */
 			has(in_position: string): boolean;
 			/**
@@ -898,13 +891,13 @@ declare module "@fluid-experimental/property-properties" {
 			 * efficient and convenient. Additionally, we provide direct access
 			 * methods to the enums in the array, e.g. .getEnumString(3) directly
 			 * returns the enum string at position 3 of the array
-			 * @param in_params - the parameters
+			 * @param in_params the parameters
 			 */
 			constructor(in_params: EnumArrayProperty_EnumArrayProperty_in_params_TYPE);
 			/**
 			 * inserts the content of a given array into the array property
-			 * @param in_offset - target index
-			 * @param in_array - the array to be inserted
+			 * @param in_offset target index
+			 * @param in_array the array to be inserted
 			 * @throws if in_array is not an array
 			 * @throws if in_position is not a number
 			 * @throws if a value to be inserted is an instance of BaseProperty
@@ -923,7 +916,7 @@ declare module "@fluid-experimental/property-properties" {
 			 * sets the array properties elements to the content of the given array
 			 * all changed elements must already exist
 			 */
-			setRange(in_offset: number, in_array: string[]): void;
+			setRange(in_offset: number, in_array: Array<string>): void;
 			/**
 			 * get the array element at a given index
 			 */
@@ -931,15 +924,15 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * get an array of the enum strings starting at a given index
 			 */
-			getEnumStrings(in_offset: number, in_length: number): string[];
+			getEnumStrings(in_offset: number, in_length: number): Array<string>;
 			/**
 			 * let the user to query all valid entries of an enum
 			 */
 			getValidEnumList(): { [key: string]: { value: any; annotation: any } };
 			/**
 			 * Returns the full property type identifier for the ChangeSet including the enum and array type id
-			 * @param in_hideCollection - if true the collection type (if applicable) will be omitted
-			 * since that is not aplicable here, this param is ignored. Default to false
+			 * @param  in_hideCollection - if true the collection type (if applicable) will be omitted
+			 *                since that is not aplicable here, this param is ignored. Default to false
 			 * @return The typeid
 			 */
 			getFullTypeid(in_hideCollection: boolean): string;
@@ -980,24 +973,24 @@ declare module "@fluid-experimental/property-properties" {
 			 *  and shifts remaining values to the left.
 			 * E.g. [1, 2, 3, 4, 5]  .removeRange(1, 3) => [1, 5]
 			 */
-			removeRange(): any[] | BaseProperty[];
+			removeRange(): Array<any> | Array<BaseProperty>;
 			/**
 			 * Returns the name of all the sub-properties of this property.
 			 * Numerical indexes from the array will be returned as strings.
 			 * E.g. ['0', '1', '2']
 			 */
-			getIds(): string[];
+			getIds(): Array<string>;
 			/**
 			 * Gets the array element at a given index
-			 * @param in_position - the target index
-			 * if an array is passed, elements in the array will be treated as part of a path.
-			 * The first item in an array should be a position in the array.
-			 * For example, .get([0,'position','x']) is the equivalent of .get(0).get('position').get('x')
-			 * If it encounters a ReferenceProperty, .get will, by default, resolve the property it refers to.
-			 * @param in_options - parameter object
+			 * @param in_position the target index
+			 *   if an array is passed, elements in the array will be treated as part of a path.
+			 *   The first item in an array should be a position in the array.
+			 *   For example, .get([0,'position','x']) is the equivalent of .get(0).get('position').get('x')
+			 *   If it encounters a ReferenceProperty, .get will, by default, resolve the property it refers to.
+			 * @param in_options parameter object
 			 */
 			get(
-				in_position: number | (string | number)[],
+				in_position: number | Array<string | number>,
 				in_options?: EnumArrayProperty_get_in_options_TYPE,
 			): any | BaseProperty | undefined;
 			getLength(): number;
@@ -1022,14 +1015,14 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * Sets the range in the array to point to the given property objects or to be equal to the given paths
 			 */
-			setRange(in_offset: number, in_array: string[]): void;
+			setRange(in_offset: number, in_array: Array<string>): void;
 			/**
 			 * Insert a range which points to the given property objects into the array
 			 *
 			 * @param {number} in_offset - target start index
-			 * @param {Array<property-properties.BaseProperty|undefined|String>} in_array - contains the properties to be set or
-			 * the paths to those properties. If undefined is passed, the reference will be set to an empty string to
-			 * indicate an empty reference.
+			 * @param {Array<property-properties.BaseProperty|undefined|String>} in_array  - contains the properties to be set or
+			 *   the paths to those properties. If undefined is passed, the reference will be set to an empty string to
+			 *   indicate an empty reference.
 			 * @throws if in_offset is smaller than zero, larger than the length of the array or not a number
 			 * @throws if in_array is not an array
 			 * @throws if one of the items in in_array is defined, but is not a property or a string.
@@ -1042,7 +1035,7 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * Returns an object with all the nested values contained in this property
 			 */
-			getValues<T = string[]>(): T;
+			getValues<T = String[]>(): T;
 			/**
 			 * Removes the last element of the array
 			 */
@@ -1054,7 +1047,7 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * Removes a given number of elements from the array and shifts remaining values to the left.
 			 */
-			removeRange(): string[];
+			removeRange(): Array<string>;
 		}
 
 		class StringProperty extends ValueArrayProperty {
@@ -1083,7 +1076,7 @@ declare module "@fluid-experimental/property-properties" {
 			 * removes a given number of elements from the array property and shifts
 			 * remaining values to the left.
 			 */
-			removeRange(): any[] | BaseProperty[];
+			removeRange(): Array<any> | Array<BaseProperty>;
 			setValue(value: string): void;
 			setValues(): void;
 			/**
@@ -1108,8 +1101,8 @@ declare module "@fluid-experimental/property-properties" {
 			 * Will not overwrite existing values.
 			 * For StringProperty, insert and insertRange work the same, except that .insert
 			 * checks that in_value is a string and .insertRange will accept an array of strings.
-			 * @param in_position - target index
-			 * @param in_value - value to be inserted
+			 * @param in_position target index
+			 * @param in_value value to be inserted
 			 * @throws if in_position is smaller than zero, larger than the length of the string or not a number
 			 */
 			insertRange<T = string>(in_offset: number, in_array: T | T[]): void;
@@ -1128,7 +1121,7 @@ declare module "@fluid-experimental/property-properties" {
 			 * Numerical indexes from the array will be returned as strings.
 			 * E.g. ['0', '1', '2']
 			 */
-			getIds(): string[];
+			getIds(): Array<string>;
 			getLength(): number;
 
 			/**
@@ -1160,8 +1153,8 @@ declare module "@fluid-experimental/property-properties" {
 			 * Inserts the content of a given array into the array property
 			 * It will not overwrite the existing values but push them to the right instead.
 			 * E.g. [1, 2, 3] .insertRange(1, [9, 8]) => [1, 9, 8, 2, 3]
-			 * @param {number} in_offset - target index
-			 * @param {Array<*>} in_array - the array to be inserted
+			 * @param {number} in_offset target index
+			 * @param {Array<*>} in_array the array to be inserted
 			 * @throws if in_offset is smaller than zero, larger than the length of the array or not a number.
 			 * @throws if trying to insert a property that already has a parent.
 			 * @throws if tyring to modify a referenced property.
@@ -1172,7 +1165,7 @@ declare module "@fluid-experimental/property-properties" {
 			 * All changed elements must already exist. This will overwrite existing elements.
 			 * E.g. [1, 2, 3, 4, 5]  .setRange(1, [7, 8]) => [1, 7, 8, 4, 5]
 			 */
-			setRange(in_offset: number, in_array: number[]): void;
+			setRange(in_offset: number, in_array: Array<number>): void;
 		}
 
 		class Uint64ArrayProperty extends Integer64ArrayProperty {
@@ -1180,8 +1173,8 @@ declare module "@fluid-experimental/property-properties" {
 			 * Inserts the content of a given array into the array property
 			 * It will not overwrite the existing values but push them to the right instead.
 			 * E.g. [1, 2, 3] .insertRange(1, [9, 8]) => [1, 9, 8, 2, 3]
-			 * @param {number} in_offset - target index
-			 * @param {Array<*>} in_array - the array to be inserted
+			 * @param {number} in_offset target index
+			 * @param {Array<*>} in_array the array to be inserted
 			 * @throws if in_offset is smaller than zero, larger than the length of the array or not a number.
 			 * @throws if trying to insert a property that already has a parent.
 			 * @throws if tyring to modify a referenced property.
@@ -1192,7 +1185,7 @@ declare module "@fluid-experimental/property-properties" {
 			 * All changed elements must already exist. This will overwrite existing elements.
 			 * E.g. [1, 2, 3, 4, 5]  .setRange(1, [7, 8]) => [1, 7, 8, 4, 5]
 			 */
-			setRange(in_offset: number, in_array: number[]): void;
+			setRange(in_offset: number, in_array: Array<number>): void;
 		}
 
 		class StringArrayProperty extends ValueArrayProperty {}
@@ -1202,7 +1195,7 @@ declare module "@fluid-experimental/property-properties" {
 		class BinaryProperty extends NamedProperty {
 			/**
 			 * BinaryProperty encapsulates everything required for upload and download of binary objects.
-			 * @param in_params - Input parameter list.
+			 * @param in_params Input parameter list.
 			 */
 			constructor(in_params: BinaryProperty_BinaryProperty_in_params_TYPE);
 			/**
@@ -1240,7 +1233,7 @@ declare module "@fluid-experimental/property-properties" {
 			getParameters(): NodeProperty;
 			/**
 			 * Initializes the Binary Property with the required instance items.
-			 * @param in_params - List of parameters.
+			 * @param in_params List of parameters.
 			 */
 			initialize(in_params: BinaryProperty_initialize_in_params_TYPE): Promise<any>;
 			/**
@@ -1275,7 +1268,7 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * Returns the name of all the sub-properties of this property.
 			 */
-			getIds(): string[];
+			getIds(): Array<string>;
 			/**
 			 * Given an object that mirrors a PSet Template, assigns the properties to the values
 			 * found in that object.
@@ -1322,7 +1315,7 @@ declare module "@fluid-experimental/property-properties" {
 			 * function, but it returns the array of templates instead of registering them.
 			 * Throws an error if any conversion error occurs.
 			 */
-			convertToTemplates(): object[];
+			convertToTemplates(): Array<object>;
 			/**
 			 * Recursively parses the object of the specified type and registers the created
 			 * Property Sets Templates. It does the same work as the convertToTemplates()
@@ -1338,17 +1331,17 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * Get template based on typeid
 			 *
-			 * @param in_typeid - the type unique identifier
+			 * @param in_typeid the type unique identifier
 			 */
 			getTemplate(in_typeid: string): PropertyTemplate | undefined;
 			/**
 			 * Create an instance of the given property typeid if there is a template registered for it.
 			 * Otherwise, this method returns undefined.
-			 * @param in_typeid - The type unique identifier
-			 * @param in_context - The type of collection of values that the property contains.
-			 * Accepted values are "single" (default), "array", "map" and "set".
-			 * @param in_initialProperties - A set of initial values for the PropertySet being created
-			 * @param in_options - Additional options
+			 * @param in_typeid The type unique identifier
+			 * @param in_context The type of collection of values that the property contains.
+			 *                                 Accepted values are "single" (default), "array", "map" and "set".
+			 * @param in_initialProperties A set of initial values for the PropertySet being created
+			 * @param in_options Additional options
 			 */
 			create<T extends BaseProperty>(
 				in_typeid: string,
@@ -1362,9 +1355,9 @@ declare module "@fluid-experimental/property-properties" {
 			 * Note: By default, this also returns true if in_templateTypeid === in_baseTypeid, since in most use cases
 			 *       the user wants to check whether a given template has all members as another template and so this is
 			 *       true for the template itself
-			 * @param in_templateTypeid - Template for which we want to check, whether in_baseTypeid is a parent
-			 * @param in_baseTypeid - The base template to check for
-			 * @param in_options - Additional options
+			 * @param in_templateTypeid Template for which we want to check, whether in_baseTypeid is a parent
+			 * @param in_baseTypeid The base template to check for
+			 * @param in_options Additional options
 			 */
 			inheritsFrom(
 				in_templateTypeid: string,
@@ -1374,16 +1367,16 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * Returns all the typeids the template inherits from (including all possible paths through multiple inheritance).
 			 * The order of the elements in the array is unspecified.
-			 * @param in_typeid - typeid of the template
-			 * @param in_options - Additional options
+			 * @param in_typeid typeid of the template
+			 * @param in_options Additional options
 			 */
 			getAllParentsForTemplate(
 				in_typeid: string,
 				in_options?: PropertyFactory_getAllParentsForTemplate_in_options_TYPE,
-			): string[];
+			): Array<string>;
 			/**
 			 * Initializes the schema store.
-			 * @param in_options - the store settings.
+			 * @param in_options the store settings.
 			 */
 			initializeSchemaStore(
 				in_options: PropertyFactory_initializeSchemaStore_in_options_TYPE,
@@ -1396,7 +1389,7 @@ declare module "@fluid-experimental/property-properties" {
 			 * Determines whether the given property is an instance of the property type corresponding to the given native
 			 * property typeid and context.
 			 *
-			 * @param in_property - The property to test
+			 * @param in_property The property to test
 			 * @param in_primitiveTypeid - Native property typeid
 			 * @param in_context - Context of the property
 			 * @return True, if the property is an instance of the corresponding type
@@ -1423,16 +1416,16 @@ declare module "@fluid-experimental/property-properties" {
 			 * If an URN is provided in in_options.urn (either a branch URN or a commit URN),
 			 * this URN is checked out. Otherwise, a new repository is created and the
 			 * main branch is checked out.
-			 * @param in_options - Additional options
-			 * @param in_options.metadata.name - The human readable name of the branch.
-			 * If not specified, it defaults to the guid.
+			 * @param in_options Additional options
+			 * @param in_options.metadata.name The human readable name of the branch.
+			 *                                              If not specified, it defaults to the guid.
 			 */
 			initialize(in_options?: Workspace_initialize_in_options_TYPE): Promise<BranchNode>;
 			/**
 			 * Create and checkout a branch from the currently active commit
-			 * @param in_options - Additional options
-			 * @param in_options.metadata.name - The human readable name of the branch.
-			 * If not specified, it defaults to the guid.
+			 * @param in_options Additional options
+			 * @param in_options.metadata.name The human readable name of the branch.
+			 *   If not specified, it defaults to the guid.
 			 */
 			branch(in_options?: Workspace_branch_in_options_TYPE): Promise<BranchNode>;
 			/**
@@ -1441,7 +1434,7 @@ declare module "@fluid-experimental/property-properties" {
 			 * If the the PropertyTree is connected to the backend, the new commit will also be persisted and broadcasted.
 			 * If SYNC_MODE is set to SYNCHRONIZE, any conflict occurred will be resolved by automatically
 			 * rebasing the local branch and synchronizing with the remote repository.
-			 * @param in_options - Additional options
+			 * @param in_options Additional options
 			 */
 			commit(in_options?: Workspace_commit_in_options_TYPE): Promise<CommitNode>;
 			/**
@@ -1464,7 +1457,7 @@ declare module "@fluid-experimental/property-properties" {
 			 * the branch. You can still commit changes but they will not be commited to
 			 * the original branch.
 			 */
-			isDetachedHead(): boolean;
+			isDetachedHead(): Boolean;
 
 			/**
 			 * Get the Urn currently used by the workspace
@@ -1479,7 +1472,7 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * Returns whether there are changes that have not yet been committed.
 			 */
-			hasPendingChanges(): boolean;
+			hasPendingChanges(): Boolean;
 
 			/**
 			 * Returns the ChangeSet of all pending changes.
@@ -1490,18 +1483,18 @@ declare module "@fluid-experimental/property-properties" {
 			 * Will return false if the workspace has local commits not yet pushed to the remote
 			 * branch, or if the remote branches has commits not yet pulled to the workspace.
 			 */
-			isSynchronized(): boolean;
+			isSynchronized(): Boolean;
 			/**
 			 * Whether a workspace is destroyed
 			 */
-			isDestroyed(): boolean;
+			isDestroyed(): Boolean;
 			/**
 			 * Performs a rebase of a branch onto another branch.
 			 *
 			 * This will re-arrange the local commit history to be applied on top of the latest state of the branch.
 			 * For baseProperties this will be done automatically, for more complex transformations, the user can
 			 * supply a callback by using Workspace.setRebaseCallback
-			 * @param in_options - Rebase Options has the following members:
+			 * @param in_options Rebase Options has the following members:
 			 */
 			rebase(in_options?: Workspace_rebase_in_options_TYPE): Promise<boolean>;
 			/**
@@ -1511,8 +1504,8 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * Reverts the state of the workspace to that of a previous commit.
 			 * The changes are applied as pending changes.
-			 * @param in_commitUrn - The urn of the commit to revertTo
-			 * @param in_options - Additional options to pass in.
+			 * @param in_commitUrn The urn of the commit to revertTo
+			 * @param in_options Additional options to pass in.
 			 */
 			revertTo(
 				in_commitUrn: string,
@@ -1523,7 +1516,7 @@ declare module "@fluid-experimental/property-properties" {
 			 * Here you can set a global conflict handling strategy for each commit to be processed by the server.
 			 * see Workspace.SERVER_AUTO_REBASE_MODES for more info.
 			 * You can also set the notification callback to react to conflicts during a rebase.
-			 * @param in_modeopt - The server side conflict handling mode on each commit.
+			 * @param in_modeopt The server side conflict handling mode on each commit.
 			 */
 			setServerAutoRebaseMode(
 				in_modeopt?: SERVER_AUTO_REBASE_MODES_TYPE,
@@ -1531,16 +1524,16 @@ declare module "@fluid-experimental/property-properties" {
 			): void;
 			/**
 			 * Set the conflict handling callback to be invoked when a conflict occurs during a rebase operation.
-			 * @param in_callback - Callback invoked for every ChangeSet that is applied
-			 * It will be passed an Object with these members:
-			 * * {SerializedChangeSet}  transformedChangeSet - The ChangeSet that resulted from performing the
-			 * rebase operation on the base types. This
-			 * ChangeSet can be modified to adapt the changes
-			 * to the changes in the onto-branch.
-			 * * {SerializedChangeSet}  originalChangeSet    - The original ChangeSet before the rebase
-			 * * {SerializedChangeSet}  ontoBranchChangeSet  - The changes between the common parent commit and
-			 * the tip of the onto branch
-			 * * {SerializedChangeSet}  [currentState]       - The normalized ChangeSet for the whole Repository
+			 * @param in_callback Callback invoked for every ChangeSet that is applied
+			 *       It will be passed an Object with these members:
+			 *       * {SerializedChangeSet}  transformedChangeSet - The ChangeSet that resulted from performing the
+			 *                                                                     rebase operation on the base types. This
+			 *                                                                     ChangeSet can be modified to adapt the changes
+			 *                                                                     to the changes in the onto-branch.
+			 *       * {SerializedChangeSet}  originalChangeSet    - The original ChangeSet before the rebase
+			 *       * {SerializedChangeSet}  ontoBranchChangeSet  - The changes between the common parent commit and
+			 *                                                                     the tip of the onto branch
+			 *       * {SerializedChangeSet}  [currentState]       - The normalized ChangeSet for the whole Repository
 			 *                                                                     before the application of the
 			 *                                                                     transformedChangeSet. It will only be supplied
 			 *                                                                     when in_options.trackState===true, since
@@ -1574,7 +1567,7 @@ declare module "@fluid-experimental/property-properties" {
 			 * - PULL: Workspace automatically pulls remote changes without pushing it's changes back
 			 * - SYNCHRONIZE: Workspace updates and pushes automatically
 			 * Defaults to SYNCHRONIZE
-			 * @param syncMode - The sync mode to set.
+			 * @param syncMode The sync mode to set.
 			 */
 			setSynchronizeMode(syncMode: SYNC_MODE_TYPE): void;
 			/**
@@ -1588,8 +1581,8 @@ declare module "@fluid-experimental/property-properties" {
 			 * commit, you will no longer be notified of changes to the branch. You will be in detached head
 			 * state. If you commit new changes, a new branch will be created.
 			 * If a branch Urn is passed in, the workspace will checkout the latest commit on that branch.
-			 * @param in_commitOrBranchUrn - URN identifying the commit or branch to check out
-			 * @param in_options - List of additional options.
+			 * @param in_commitOrBranchUrn URN identifying the commit or branch to check out
+			 * @param in_options List of additional options.
 			 */
 			checkout(
 				in_commitOrBranchUrn: string,
@@ -1598,8 +1591,8 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * Expand a path to a given property within the PropertySet that the workspace has checked out and
 			 * return the value at the end.
-			 * @param in_path - Path to be resolved.
-			 * @param in_options - parameter object
+			 * @param in_path Path to be resolved.
+			 * @param in_options parameter object
 			 */
 			resolvePath<T = BaseProperty>(
 				in_path: string,
@@ -1635,19 +1628,19 @@ declare module "@fluid-experimental/property-properties" {
 			 * Returns the name of all the properties at the root of the PropertySet that
 			 * the workspace has checked out.
 			 */
-			getIds(): string[];
+			getIds(): Array<string>;
 			/**
 			 * Returns the property having the given id at the root of the PropertySet
 			 * that the workspace has checked out.
-			 * @param in_ids - the ID of the property or an array of IDs
-			 * if an array is passed, the .get function will be performed on each id in sequence
-			 * for example .get(['position','x']) is equivalent to .get('position').get('x').
-			 * If .get resolves to a ReferenceProperty, it will return the property that the ReferenceProperty
-			 * refers to.
-			 * @param in_options - parameter object
+			 * @param in_ids the ID of the property or an array of IDs
+			 *       if an array is passed, the .get function will be performed on each id in sequence
+			 *       for example .get(['position','x']) is equivalent to .get('position').get('x').
+			 *       If .get resolves to a ReferenceProperty, it will return the property that the ReferenceProperty
+			 *       refers to.
+			 * @param in_options parameter object
 			 */
 			get<T extends BaseProperty>(
-				in_ids: string | number | (string | number)[],
+				in_ids: string | number | Array<string | number>,
 				in_options?: Workspace_get_in_options_TYPE,
 			): T | undefined;
 			/**
@@ -1705,8 +1698,8 @@ declare module "@fluid-experimental/property-properties" {
 		class BranchNode {
 			/**
 			 * Node representing a branch in the commit graph
-			 * @param in_params - List of branch meta data
-			 * @param in_headNode - The head node of the branch
+			 * @param in_params List of branch meta data
+			 * @param in_headNode The head node of the branch
 			 */
 			constructor(in_params: BranchNode_BranchNode_in_params_TYPE, in_headNode: CommitNode);
 			/**
@@ -1765,17 +1758,17 @@ declare module "@fluid-experimental/property-properties" {
 			 * Returns the local commits that have been pushed to the server but haven't been confirmed yet.
 			 * If there is no remote branch, will return an empty array.
 			 */
-			getCommitsInFlight(): CommitNode[];
+			getCommitsInFlight(): Array<CommitNode>;
 			/**
 			 * Returns the remote commits that have not yet been pulled to the local repository.
 			 * If no remote branch exists, will return an empty array.
 			 */
-			getCommitsToPull(): CommitNode[];
+			getCommitsToPull(): Array<CommitNode>;
 			/**
 			 * Returns the local commits that have not yet been pushed to the remote branch.
 			 * If there is no remote branch, will return an empty array.
 			 */
-			getCommitsToPush(): CommitNode[];
+			getCommitsToPush(): Array<CommitNode>;
 		}
 
 		class CommitNode {
@@ -1825,11 +1818,11 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * Return all the parent nodes of the commit, starting with the primary parent.
 			 */
-			getParents(): (RootProperty | CommitNode)[];
+			getParents(): Array<RootProperty | CommitNode>;
 			/**
 			 * Return all the children nodes of the commit.
 			 */
-			getChildren(): CommitNode[];
+			getChildren(): Array<CommitNode>;
 			/**
 			 * Gets the GUID of this commit
 			 * A Guid is a unique identifier for a branch, commit or repository,
@@ -1844,7 +1837,7 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * Returns the GUIDs this commit had each time it was pushed to the server (valid only for local commits).
 			 */
-			getGuidsOnPush(): string[] | undefined;
+			getGuidsOnPush(): Array<string> | undefined;
 			/**
 			 * Comparison function between this commit node and another one to check
 			 * for equality.
@@ -1870,19 +1863,19 @@ declare module "@fluid-experimental/property-properties" {
 			 * Note: This function assumes that the given commit is direct parent (e.g. not in a branch of a merge commit,
 			 *       but a direct ancestor, as returned by getFirstParent).
 			 *
-			 * @param in_parentCommit - The node from which the path is computed.
-			 * If a function is provided, it is used
-			 * as predicate to determine whether the
-			 * node is the parent.
+			 * @param in_parentCommit  - The node from which the path is computed.
+			 *                           If a function is provided, it is used
+			 *                           as predicate to determine whether the
+			 *                           node is the parent.
 			 * @param in_includeParent - Should the  parent node itself be
-			 * included in the supplied path?
+			 *                           included in the supplied path?
 			 *
 			 * @return The nodes on the path from the supplied parent
 			 */
 			_getPathFromParentCommit(
 				in_parentCommit: CommitNode,
 				in_includeParent?: boolean,
-			): CommitNode[];
+			): Array<CommitNode>;
 		}
 
 		class MapProperty extends IndexedCollectionBaseProperty {
@@ -1892,8 +1885,8 @@ declare module "@fluid-experimental/property-properties" {
 			constructor();
 			/**
 			 * Returns the full property type identifier for the ChangeSet including the map type id
-			 * @param in_hideCollection - if true the collection type (if applicable) will be omitted
-			 * since that is not aplicable here, this param is ignored. Default to false
+			 * @param  in_hideCollection - if true the collection type (if applicable) will be omitted
+			 *                since that is not aplicable here, this param is ignored. Default to false
 			 * @return The typeid
 			 */
 			getFullTypeid(in_hideCollection: boolean): string;
@@ -1915,7 +1908,7 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * set all the values
 			 */
-			setValues<T>(in_values: object): void;
+			setValues<T>(in_values: Object): void;
 			/**
 			 * Sets the entry with the given key to the property passed in
 			 *
@@ -1924,7 +1917,7 @@ declare module "@fluid-experimental/property-properties" {
 			set(in_key: string, in_value: any): void;
 			/**
 			 * Checks whether an entry with the given name exists
-			 * @param in_id	- Name of the property
+			 * @param in_id	Name of the property
 			 */
 			has(in_id: string): boolean;
 			/**
@@ -1932,13 +1925,13 @@ declare module "@fluid-experimental/property-properties" {
 			 *
 			 * NOTE: This function creates a copy and thus is less efficient as getEntriesReadOnly.
 			 */
-			getAsArray(): (BaseProperty | any)[];
+			getAsArray(): Array<BaseProperty | any>;
 			/**
 			 * Returns all keys found in the map
 			 *
 			 * NOTE: This function creates a copy and thus is less efficient as getEntriesReadOnly.
 			 */
-			getIds(): string[];
+			getIds(): Array<string>;
 			/**
 			 * Deletes all values from the Map
 			 */
@@ -1982,7 +1975,7 @@ declare module "@fluid-experimental/property-properties" {
 			setValue(): void;
 			/**
 			 * Returns the string value stored in the map
-			 * @param in_key - the key of the reference
+			 * @param in_key the key of the reference
 			 * Returns: the path string
 			 */
 			getValue<T = string>(in_key: string): T;
@@ -2005,13 +1998,13 @@ declare module "@fluid-experimental/property-properties" {
 			 *
 			 * NOTE: This function creates a copy and thus is less efficient as getEntriesReadOnly.
 			 */
-			getAsArray(): (BaseProperty | any)[];
+			getAsArray(): Array<BaseProperty | any>;
 			/**
 			 * Returns all keys found in the map
 			 *
 			 * NOTE: This function creates a copy and thus is less efficient as getEntriesReadOnly.
 			 */
-			getIds(): string[];
+			getIds(): Array<string>;
 			/**
 			 * Deletes all values from the Map
 			 */
@@ -2045,7 +2038,7 @@ declare module "@fluid-experimental/property-properties" {
 			 * }
 			 * </pre>
 			 */
-			setValues<T>(in_values: object): void;
+			setValues<T>(in_values: Object): void;
 			/**
 			 * Removes the entry with the given key from the map
 			 */
@@ -2059,13 +2052,13 @@ declare module "@fluid-experimental/property-properties" {
 			 *
 			 * NOTE: This function creates a copy and thus is less efficient as getEntriesReadOnly.
 			 */
-			getAsArray(): (BaseProperty | any)[];
+			getAsArray(): Array<BaseProperty | any>;
 			/**
 			 * Returns all keys found in the map
 			 *
 			 * NOTE: This function creates a copy and thus is less efficient as getEntriesReadOnly.
 			 */
-			getIds(): string[];
+			getIds(): Array<string>;
 			/**
 			 * Deletes all values from the Map
 			 */
@@ -2091,8 +2084,8 @@ declare module "@fluid-experimental/property-properties" {
 			 *
 			 * Note: this will overwrite an already existing value
 			 *
-			 * @param in_key - The key under which the entry is stored
-			 * @param in_value - The value or property to store in the map
+			 * @param in_key The key under which the entry is stored
+			 * @param in_value The value or property to store in the map
 			 */
 			set(key: string, value: string | number): void;
 		}
@@ -2113,7 +2106,7 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * A NamedNodeProperty is a NodeProperty that has a GUID which unique identifies the property object.
 			 * This makes it possible to store it in a set collection.
-			 * @param in_params - List of parameters
+			 * @param in_params List of parameters
 			 */
 			constructor(in_params: NamedNodeProperty_NamedNodeProperty_in_params_TYPE);
 			/**
@@ -2161,11 +2154,11 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * Returns the name of all the static sub-properties of this property.
 			 */
-			getStaticIds(): string[];
+			getStaticIds(): Array<string>;
 			/**
 			 * Returns the name of all the dynamic sub-properties of this property.
 			 */
-			getDynamicIds(): string[];
+			getDynamicIds(): Array<string>;
 			/**
 			 * Indicate that all static members have been added to the property
 			 *
@@ -2175,7 +2168,7 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * Returns the name of all the sub-properties of this property.
 			 */
-			getIds(): string[];
+			getIds(): Array<string>;
 			/**
 			 * Cleans the cache of static children per typeid. Calling this should only be necessary if a template has been
 			 * reregistered.
@@ -2212,7 +2205,7 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * Returns the name of all the sub-properties of this property.
 			 */
-			getIds(): string[];
+			getIds(): Array<string>;
 			/**
 			 * Given an object that mirrors a PSet Template, assigns the properties to the values
 			 * found in that object.
@@ -2232,15 +2225,15 @@ declare module "@fluid-experimental/property-properties" {
 			 *
 			 * NOTE: This function creates a copy and thus is less efficient as getEntriesReadOnly.
 			 */
-			getAsArray(): NamedProperty[];
+			getAsArray(): Array<NamedProperty>;
 			/**
 			 * Delete all values from Set
 			 */
 			clear(): void;
 			/**
 			 * Returns the full property type identifier for the ChangeSet including the set type id
-			 * @param in_hideCollection - if true the collection type (if applicable) will be omitted
-			 * since that is not aplicable here, this param is ignored. Default to false
+			 * @param  in_hideCollection - if true the collection type (if applicable) will be omitted
+			 *                since that is not aplicable here, this param is ignored. Default to false
 			 * @return The typeid
 			 */
 			getFullTypeid(in_hideCollection: boolean): string;
@@ -2249,7 +2242,7 @@ declare module "@fluid-experimental/property-properties" {
 		class PropertyTemplate {
 			/**
 			 * Constructor for creating a PropertyTemplate based on the given parameters.
-			 * @param in_params - List of parameters
+			 * @param in_params List of parameters
 			 */
 			constructor(in_params: PropertyTemplateType);
 			/**
@@ -2276,13 +2269,13 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * Determines if the argument is a template structure
 			 */
-			public isTemplate(): boolean;
+			public isTemplate(): Boolean;
 			/**
 			 * Extracts typeids directly referred to in a template
 			 */
-			public extractDependencies(): any[];
+			public extractDependencies(): Array<any>;
 
-			public static extractDependencies(template: PropertyTemplateType): any[];
+			public static extractDependencies(template: PropertyTemplateType): Array<any>;
 
 			constants: any[];
 
@@ -2302,15 +2295,15 @@ declare module "@fluid-experimental/property-properties" {
 		class BaseProperty {
 			/**
 			 * Default constructor for BaseProperty
-			 * @param in_params - List of parameters
+			 * @param in_params List of parameters
 			 */
 			constructor(in_params: BaseProperty_BaseProperty_in_params_TYPE);
 			getTypeid(): string;
 			getContext(): string;
 			/**
 			 * Returns the full property type identifier for the ChangeSet including the enum type id
-			 * @param in_hideCollection - if true the collection type (if applicable) will be omitted
-			 * since that is not applicable here, this param is ignored. Default to false
+			 * @param  in_hideCollection  if true the collection type (if applicable) will be omitted
+			 *                since that is not applicable here, this param is ignored. Default to false
 			 * @return The typeid
 			 */
 			getFullTypeid(in_hideCollection?: boolean): string;
@@ -2373,16 +2366,16 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * Returns the path segment for a child
 			 * @param in_childNode - The child for which the path is returned
-			 * @return The path segment to resolve the child property under this property
+			 * @return  The path segment to resolve the child property under this property
 			 */
 			protected _getPathSegmentForChildNode(in_childNode: BaseProperty): string;
 			/**
 			 * Resolves a direct child node based on the given path segment
 			 *
-			 * @param in_segment - The path segment to resolve
-			 * @param in_segmentType - The type of segment in the tokenized path
+			 * @param in_segment  The path segment to resolve
+			 * @param  in_segmentType - The type of segment in the tokenized path
 			 *
-			 * @return The child property that has been resolved
+			 * @return  The child property that has been resolved
 			 * @protected
 			 */
 			protected _resolvePathSegment(
@@ -2436,7 +2429,7 @@ declare module "@fluid-experimental/property-properties" {
 			deserialize(in_serializedObj: SerializedChangeSet): SerializedChangeSet;
 			/**
 			 * Serialize the property
-			 * @param in_options - Options for the serialization
+			 * @param in_options Options for the serialization
 			 */
 			serialize(in_options?: BaseProperty_serialize_in_options_TYPE): object;
 			/**
@@ -2461,7 +2454,7 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * A NamedProperty has a URN which uniquely identifies the property object. This makes it possible to store it in a
 			 * set collection.
-			 * @param in_params - List of parameters
+			 * @param in_params List of parameters
 			 */
 			constructor(in_params: NamedProperty_NamedProperty_in_params_TYPE);
 			/**
@@ -2514,21 +2507,21 @@ declare module "@fluid-experimental/property-properties" {
 			getReferenceTargetTypeId(): string;
 			/**
 			 * Resolves the referenced property
-			 * @param in_ids - the ID of the property or an array of IDs
-			 * if an array is passed, the .get function will be performed on each id in sequence
-			 * for example .get(['position','x']) is equivalent to .get('position').get('x').
-			 * If .get resolves to a ReferenceProperty, it will return the property that the ReferenceProperty
-			 * refers to.
-			 * @param in_options - parameter object
+			 * @param in_ids the ID of the property or an array of IDs
+			 *       if an array is passed, the .get function will be performed on each id in sequence
+			 *       for example .get(['position','x']) is equivalent to .get('position').get('x').
+			 *       If .get resolves to a ReferenceProperty, it will return the property that the ReferenceProperty
+			 *       refers to.
+			 * @param in_options parameter object
 			 */
 			get<T extends BaseProperty>(
-				in_ids?: string | number | (string | number)[],
+				in_ids?: string | number | Array<string | number>,
 				in_options?: ReferenceProperty_get_in_options_TYPE,
 			): T | undefined;
 			/**
 			 * Expand a path returning the value or property at the end.
-			 * @param in_path - the path
-			 * @param in_options - parameter object
+			 * @param in_path the path
+			 * @param in_options parameter object
 			 */
 			resolvePath<T = BaseProperty>(
 				in_path: string,
@@ -2558,7 +2551,7 @@ declare module "@fluid-experimental/property-properties" {
 			 * Adding such a property will trigger loading the corresponding sub-tree into the view.
 			 *
 			 * // TODO: Should this inherit from a NamedProperty?
-			 * @param in_params - List of parameters
+			 * @param in_params List of parameters
 			 */
 			constructor(
 				in_params: RepositoryReferenceProperty_RepositoryReferenceProperty_in_params_TYPE,
@@ -2592,7 +2585,7 @@ declare module "@fluid-experimental/property-properties" {
 			/**
 			 * Checks whether the referenced properties are available
 			 */
-			areReferencesAvailable(): boolean;
+			areReferencesAvailable(): Boolean;
 			/**
 			 * Update the reference and set it to the given commit, branch and repository
 			 * TODO: Can we also provide automatic updates for the repository when this property is already in a repository?
@@ -2629,8 +2622,8 @@ declare module "@fluid-experimental/property-properties" {
 			setEnumByString(): void;
 			/**
 			 * Returns the full property type identifier for the ChangeSet including the enum type id
-			 * @param in_hideCollection - if true the collection type (if applicable) will be omitted
-			 * since that is not applicable here, this param is ignored. Default to false
+			 * @param  in_hideCollection - if true the collection type (if applicable) will be omitted
+			 *                since that is not applicable here, this param is ignored. Default to false
 			 * @return The typeid
 			 */
 			getFullTypeid(in_hideCollection: boolean): string;
@@ -2723,7 +2716,7 @@ declare module "@fluid-experimental/property-properties" {
 			 * object's value field. To do this we simply keep a pointer to the object and
 			 * its associated data field that we are interested in. If no data field is
 			 * present this property will fail constructing.
-			 * @param in_params - the parameters
+			 * @param in_params the parameters
 			 */
 			constructor(in_params: ValueProperty_ValueProperty_in_params_TYPE);
 			/**
@@ -2743,7 +2736,7 @@ declare module "@fluid-experimental/property-properties" {
 		class ScopeProperty {
 			/**
 			 * Dummy property used to return the scope to the underlying properties
-			 * @param in_params - BaseProperty parameters
+			 * @param in_params BaseProperty parameters
 			 */
 			constructor(in_params: ScopeProperty_ScopeProperty_in_params_TYPE);
 		}
