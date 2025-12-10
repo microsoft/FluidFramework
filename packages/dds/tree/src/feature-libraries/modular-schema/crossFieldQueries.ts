@@ -9,7 +9,7 @@ import type {
 	ChangesetLocalId,
 	RevisionTag,
 } from "../../core/index.js";
-import type { RangeQueryEntry, RangeQueryResult } from "../../util/index.js";
+import type { RangeQueryResult } from "../../util/index.js";
 
 import type { NodeId } from "./modularChangeTypes.js";
 

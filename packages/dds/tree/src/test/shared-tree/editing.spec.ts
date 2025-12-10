@@ -43,7 +43,6 @@ import { fieldJsonCursor } from "../json/index.js";
 import { TreeStatus } from "../../feature-libraries/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
-import { FluidClientVersion } from "../../codec/index.js";
 
 const rootField: NormalizedFieldUpPath = {
 	parent: undefined,

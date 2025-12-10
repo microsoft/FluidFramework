@@ -108,91 +108,80 @@
 // 	return { enricher, fork };
 // }
 
-// describe("SharedTreeChangeEnricher", () => {
-// 	it("applies tip changes to fork", () => {
-// 		const { enricher, fork } = setupEnricher();
-// 		assert.deepEqual(jsonTreeFromForest(enricher.borrowedForest), [content]);
-// 		assert.deepEqual(Array.from(enricher.borrowedRemovedRoots.entries()), []);
-
-// // // 		fork.applyTipChange(removeRoot, revision1);
-
-// 		assert.deepEqual(jsonTreeFromForest(fork.borrowedForest), []);
-// 		assert.equal(Array.from(fork.borrowedRemovedRoots.entries()).length, 1);
-
-// 		// The original enricher should not have been modified
-// 		assert.deepEqual(jsonTreeFromForest(enricher.borrowedForest), [content]);
-// 		assert.deepEqual(Array.from(enricher.borrowedRemovedRoots.entries()), []);
-// 	});
-
-// // 	it("updates enrichments", () => {
-// // 		const { fork } = setupEnricher();
-// // 		const tag = mintRevisionTag();
-// // 		const removeRoot2: SharedTreeChange = {
-// // 			changes: [
-// // 				{
-// // 					type: "data",
-// // 					innerChange: tagChangeInLine(
-// // 						dataChanges.at(0) ?? assert.fail("Expected change"),
-// // 						tag,
-// // 					).change,
-// // 				},
-// // 			],
-// // 		};
-// // 		fork.applyTipChange(removeRoot2, tag);
-
-// // 		const tagForRestore = mintRevisionTag();
-// // 		const restore = Change.atOnce(
-// // 			Change.reserve("self", { localId: brand(0), revision: tagForRestore }),
-// // 			Change.move({ localId: brand(0), revision: tag }, "self"),
-// // 		);
-// // 		const restoreRoot: SharedTreeChange = {
-// // 			changes: [
-// // 				{
-// // 					type: "data",
-// // 					innerChange: modularBuilder.buildChanges([
-// // 						{
-// // 							type: "field",
-// // 							field: { parent: undefined, field: rootFieldKey },
-// // 							fieldKind: optional.identifier,
-// // 							change: brand(restore),
-// // 							revision: tagForRestore,
-// // 						},
-// // 					]),
-// // 				},
-// // 			],
-// // 		};
-
-// // 		const enriched = fork.updateChangeEnrichments(restoreRoot);
-
-// // 		// Check that the original change was not modified
-// // 		assert.equal(restoreRoot.changes[0].type, "data");
-// // 		assert.equal(restoreRoot.changes[0].innerChange.refreshers, undefined);
-
-// // 		// Check that the enriched change now sports the adequate refresher
-// // 		assert.equal(enriched.changes[0].type, "data");
-// // 		assert.equal(enriched.changes[0].innerChange.refreshers?.size, 1);
-// // 		const refreshers: [RevisionTag | undefined, ChangesetLocalId, TreeChunk][] =
-// // 			enriched.changes[0].innerChange.refreshers
-// // 				.toArray()
-// // 				.map(([[revision, id], value]) => [revision, id, value]);
-
-// // 		assert.equal(refreshers[0][0], tag);
-// // 		assert.equal(refreshers[0][1], 0);
-// // 		const refreshedTree = mapCursorField(refreshers[0][2].cursor(), cursorToJsonObject);
-// // 		assert.deepEqual(refreshedTree, [content]);
-// // 	});
-
-// // 	it("can be disposed right after creation", () => {
-// // 		const { fork } = setupEnricher();
-// // 		fork[disposeSymbol]();
-// // 	});
-
-// // 	it("can be disposed after mutation", () => {
-// // 		const { fork } = setupEnricher();
-// // 		fork.applyTipChange(removeRoot, revision1);
-// // 		fork[disposeSymbol]();
-// // 	});
-// // });
+describe.skip("SharedTreeChangeEnricher", () => {
+	// 	it("applies tip changes to fork", () => {
+	// 		const { enricher, fork } = setupEnricher();
+	// 		assert.deepEqual(jsonTreeFromForest(enricher.borrowedForest), [content]);
+	// 		assert.deepEqual(Array.from(enricher.borrowedRemovedRoots.entries()), []);
+	// // // 		fork.applyTipChange(removeRoot, revision1);
+	// 		assert.deepEqual(jsonTreeFromForest(fork.borrowedForest), []);
+	// 		assert.equal(Array.from(fork.borrowedRemovedRoots.entries()).length, 1);
+	// 		// The original enricher should not have been modified
+	// 		assert.deepEqual(jsonTreeFromForest(enricher.borrowedForest), [content]);
+	// 		assert.deepEqual(Array.from(enricher.borrowedRemovedRoots.entries()), []);
+	// 	});
+	// // 	it("updates enrichments", () => {
+	// // 		const { fork } = setupEnricher();
+	// // 		const tag = mintRevisionTag();
+	// // 		const removeRoot2: SharedTreeChange = {
+	// // 			changes: [
+	// // 				{
+	// // 					type: "data",
+	// // 					innerChange: tagChangeInLine(
+	// // 						dataChanges.at(0) ?? assert.fail("Expected change"),
+	// // 						tag,
+	// // 					).change,
+	// // 				},
+	// // 			],
+	// // 		};
+	// // 		fork.applyTipChange(removeRoot2, tag);
+	// // 		const tagForRestore = mintRevisionTag();
+	// // 		const restore = Change.atOnce(
+	// // 			Change.reserve("self", { localId: brand(0), revision: tagForRestore }),
+	// // 			Change.move({ localId: brand(0), revision: tag }, "self"),
+	// // 		);
+	// // 		const restoreRoot: SharedTreeChange = {
+	// // 			changes: [
+	// // 				{
+	// // 					type: "data",
+	// // 					innerChange: modularBuilder.buildChanges([
+	// // 						{
+	// // 							type: "field",
+	// // 							field: { parent: undefined, field: rootFieldKey },
+	// // 							fieldKind: optional.identifier,
+	// // 							change: brand(restore),
+	// // 							revision: tagForRestore,
+	// // 						},
+	// // 					]),
+	// // 				},
+	// // 			],
+	// // 		};
+	// // 		const enriched = fork.updateChangeEnrichments(restoreRoot);
+	// // 		// Check that the original change was not modified
+	// // 		assert.equal(restoreRoot.changes[0].type, "data");
+	// // 		assert.equal(restoreRoot.changes[0].innerChange.refreshers, undefined);
+	// // 		// Check that the enriched change now sports the adequate refresher
+	// // 		assert.equal(enriched.changes[0].type, "data");
+	// // 		assert.equal(enriched.changes[0].innerChange.refreshers?.size, 1);
+	// // 		const refreshers: [RevisionTag | undefined, ChangesetLocalId, TreeChunk][] =
+	// // 			enriched.changes[0].innerChange.refreshers
+	// // 				.toArray()
+	// // 				.map(([[revision, id], value]) => [revision, id, value]);
+	// // 		assert.equal(refreshers[0][0], tag);
+	// // 		assert.equal(refreshers[0][1], 0);
+	// // 		const refreshedTree = mapCursorField(refreshers[0][2].cursor(), cursorToJsonObject);
+	// // 		assert.deepEqual(refreshedTree, [content]);
+	// // 	});
+	// // 	it("can be disposed right after creation", () => {
+	// // 		const { fork } = setupEnricher();
+	// // 		fork[disposeSymbol]();
+	// // 	});
+	// // 	it("can be disposed after mutation", () => {
+	// // 		const { fork } = setupEnricher();
+	// // 		fork.applyTipChange(removeRoot, revision1);
+	// // 		fork[disposeSymbol]();
+	// // 	});
+});
 
 // // function tagChangeInLine(
 // // 	change: ModularChangeset,
