@@ -54,7 +54,7 @@
 		"@mui/material": "^6.2.1",
 		"@types/react": "^18.3.11",
 		"@types/react-dom": "^18.3.0",
-		"eslint": "~9.39.1",
+		"eslint": "~8.57.1",
 		"fluid-framework": "workspace:~",
 		"jiti": "^2.6.1",
 		"mui": "^0.0.1",
