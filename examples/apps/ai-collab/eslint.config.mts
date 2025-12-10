@@ -5,7 +5,7 @@
  */
 import type { Linter } from "eslint";
 import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
-import sharedConfig from "../../eslint.config.data.mts";
+import sharedConfig, { importInternalModulesAllowed } from "../../eslint.config.data.mts";
 
 const config: Linter.Config[] = [
 	...recommended,
