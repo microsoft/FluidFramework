@@ -5,8 +5,8 @@ Check commands are used to verify repo state, apply policy, etc.
 
 * [`flub check buildVersion`](#flub-check-buildversion)
 * [`flub check changeset`](#flub-check-changeset)
+* [`flub check compatLayerGeneration`](#flub-check-compatlayergeneration)
 * [`flub check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP`](#flub-check-latestversions-version-package_or_release_group)
-* [`flub check layerCompatGeneration`](#flub-check-layercompatgeneration)
 * [`flub check layers`](#flub-check-layers)
 * [`flub check policy`](#flub-check-policy)
 * [`flub check prApproval`](#flub-check-prapproval)
@@ -96,40 +96,13 @@ EXAMPLES
 
 _See code: [src/commands/check/changeset.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/changeset.ts)_
 
-## `flub check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP`
-
-Determines if an input version matches a latest minor release version. Intended to be used in the Fluid Framework CI pipeline only.
-
-```
-USAGE
-  $ flub check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP [-v | --quiet]
-
-ARGUMENTS
-  VERSION                   The version to check. When running in CI, this value corresponds to the pipeline trigger
-                            branch.
-  PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
-
-LOGGING FLAGS
-  -v, --verbose  Enable verbose logging.
-      --quiet    Disable all logging.
-
-DESCRIPTION
-  Determines if an input version matches a latest minor release version. Intended to be used in the Fluid Framework CI
-  pipeline only.
-
-  This command is used in CI to determine if a pipeline was triggered by a release branch with the latest minor version
-  of a major version.
-```
-
-_See code: [src/commands/check/latestVersions.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/latestVersions.ts)_
-
-## `flub check layerCompatGeneration`
+## `flub check compatLayerGeneration`
 
 Checks if any packages need new layer generation metadata. The check is lenient - packages missing expected metadata or generated files are skipped.
 
 ```
 USAGE
-  $ flub check layerCompatGeneration [-v | --quiet] [--generationDir <value>] [--outFile <value>] [--minimumCompatWindowMonths
+  $ flub check compatLayerGeneration [-v | --quiet] [--generationDir <value>] [--outFile <value>] [--minimumCompatWindowMonths
     <value>] [--concurrency <value>] [--branch <value> [--changed | [--all | --dir <value>... | --packages | -g
     client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
     client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... | --skipScope
@@ -176,7 +149,34 @@ DESCRIPTION
   or generated files are skipped.
 ```
 
-_See code: [src/commands/check/layerCompatGeneration.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/layerCompatGeneration.ts)_
+_See code: [src/commands/check/compatLayerGeneration.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/compatLayerGeneration.ts)_
+
+## `flub check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP`
+
+Determines if an input version matches a latest minor release version. Intended to be used in the Fluid Framework CI pipeline only.
+
+```
+USAGE
+  $ flub check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP [-v | --quiet]
+
+ARGUMENTS
+  VERSION                   The version to check. When running in CI, this value corresponds to the pipeline trigger
+                            branch.
+  PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Determines if an input version matches a latest minor release version. Intended to be used in the Fluid Framework CI
+  pipeline only.
+
+  This command is used in CI to determine if a pipeline was triggered by a release branch with the latest minor version
+  of a major version.
+```
+
+_See code: [src/commands/check/latestVersions.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/latestVersions.ts)_
 
 ## `flub check layers`
 

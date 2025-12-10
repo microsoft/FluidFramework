@@ -4,32 +4,20 @@
  */
 
 import { strict as assert } from "node:assert";
-import type { IFluidCompatibilityMetadata, Logger } from "@fluidframework/build-tools";
+import type { IFluidCompatibilityMetadata } from "@fluidframework/build-tools";
 import { formatISO } from "date-fns";
 import { describe, it } from "mocha";
 
-import UpdateGenerationCommand from "../../../commands/generate/layerCompatGeneration.js";
 import {
 	DAYS_IN_MONTH_APPROXIMATION,
+	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
 	generateLayerFileContent,
 	isCurrentPackageVersionPatch,
 	maybeGetNewGeneration,
 } from "../../../library/layerCompatGeneration.js";
 
 describe("generate:compatLayerGeneration", () => {
-	const minimumCompatWindowMonths = UpdateGenerationCommand.flags.minimumCompatWindowMonths
-		.default as number;
-
-	// Mock logger that captures log calls for verification
-	const createMockLogger = (): Logger => {
-		return {
-			log: (): void => {},
-			info: (): void => {},
-			warning: (): void => {},
-			errorLog: (): void => {},
-			verbose: (): void => {},
-		};
-	};
+	const minimumCompatWindowMonths = DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS;
 
 	it("should correctly detect patch versions", () => {
 		assert.strictEqual(isCurrentPackageVersionPatch("1.2.3"), true);
@@ -52,7 +40,6 @@ describe("generate:compatLayerGeneration", () => {
 	});
 
 	it("should not change generation when package version has not changed", () => {
-		const mockLogger = createMockLogger();
 		const currentVersion = "2.0.0";
 		const mockMetadata: IFluidCompatibilityMetadata = {
 			generation: 5,
@@ -64,14 +51,12 @@ describe("generate:compatLayerGeneration", () => {
 			currentVersion,
 			mockMetadata,
 			minimumCompatWindowMonths,
-			mockLogger,
 		);
 
 		assert.strictEqual(result, undefined);
 	});
 
 	it("should not change generation when only patch version has changed", () => {
-		const mockLogger = createMockLogger();
 		const previousGeneration = 5;
 		const previousVersion = "2.0.0";
 		const currentVersion = "2.0.1"; // Only patch change
@@ -90,14 +75,12 @@ describe("generate:compatLayerGeneration", () => {
 			currentVersion,
 			mockMetadata,
 			minimumCompatWindowMonths,
-			mockLogger,
 		);
 
 		assert.strictEqual(result, undefined);
 	});
 
 	it("should update generation when time since last release is 1+ months with minor version change", () => {
-		const mockLogger = createMockLogger();
 		const previousGeneration = 5;
 		const monthsSincePreviousRelease = 1; // More than 1 month
 
@@ -116,14 +99,12 @@ describe("generate:compatLayerGeneration", () => {
 			"1.1.0", // Minor version change
 			mockMetadata,
 			minimumCompatWindowMonths,
-			mockLogger,
 		);
 
 		assert.strictEqual(result, previousGeneration + monthsSincePreviousRelease);
 	});
 
 	it("should update generation when time since last release is 1+ months with major version change", () => {
-		const mockLogger = createMockLogger();
 		const previousGeneration = 5;
 		const monthsSincePreviousRelease = 2; // 2 months
 
@@ -142,14 +123,12 @@ describe("generate:compatLayerGeneration", () => {
 			"2.0.0", // Major version change
 			mockMetadata,
 			minimumCompatWindowMonths,
-			mockLogger,
 		);
 
 		assert.strictEqual(result, previousGeneration + monthsSincePreviousRelease);
 	});
 
 	it("should not update generation when time since last release is < 1 month", () => {
-		const mockLogger = createMockLogger();
 		const previousGeneration = 5;
 		const daysSincePreviousRelease = 31; // Less than approx. 1 month
 
@@ -166,14 +145,12 @@ describe("generate:compatLayerGeneration", () => {
 			"1.1.0", // Minor version change but not enough time elapsed
 			mockMetadata,
 			minimumCompatWindowMonths,
-			mockLogger,
 		);
 
 		assert.strictEqual(result, undefined);
 	});
 
 	it("should cap generation increment to minimumCompatWindowMonths - 1", () => {
-		const mockLogger = createMockLogger();
 		const previousGeneration = 5;
 
 		// Create a date 12 months ago (way beyond threshold)
@@ -189,14 +166,12 @@ describe("generate:compatLayerGeneration", () => {
 			"2.0.0", // Major version change
 			mockMetadata,
 			minimumCompatWindowMonths,
-			mockLogger,
 		);
 
 		assert.strictEqual(result, previousGeneration + minimumCompatWindowMonths - 1);
 	});
 
 	it("should throw error for invalid date format", () => {
-		const mockLogger = createMockLogger();
 		// Test with invalid date format
 		const invalidMetadata: IFluidCompatibilityMetadata = {
 			generation: 5,
@@ -205,12 +180,11 @@ describe("generate:compatLayerGeneration", () => {
 		};
 
 		assert.throws(() => {
-			maybeGetNewGeneration("2.0.0", invalidMetadata, minimumCompatWindowMonths, mockLogger);
+			maybeGetNewGeneration("2.0.0", invalidMetadata, minimumCompatWindowMonths);
 		}, /not a valid date/);
 	});
 
 	it("should throw error for invalid package version format", () => {
-		const mockLogger = createMockLogger();
 		// Test with invalid package version format
 		const invalidMetadata: IFluidCompatibilityMetadata = {
 			generation: 5,
@@ -219,13 +193,11 @@ describe("generate:compatLayerGeneration", () => {
 		};
 
 		assert.throws(() => {
-			maybeGetNewGeneration("2.0.0", invalidMetadata, minimumCompatWindowMonths, mockLogger);
+			maybeGetNewGeneration("2.0.0", invalidMetadata, minimumCompatWindowMonths);
 		}, /Invalid Version/);
 	});
 
 	it("should fail when current date is older than previous release date", () => {
-		const mockLogger = createMockLogger();
-
 		// Test with a future date
 		const futureDate = new Date();
 		futureDate.setMonth(futureDate.getMonth() + 2);
@@ -242,7 +214,6 @@ describe("generate:compatLayerGeneration", () => {
 					"2.0.0", // Major version change
 					mockMetadata,
 					minimumCompatWindowMonths,
-					mockLogger,
 				),
 			/Current date is older that previous release date/,
 		);

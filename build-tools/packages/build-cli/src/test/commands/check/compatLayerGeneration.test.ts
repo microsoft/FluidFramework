@@ -4,30 +4,20 @@
  */
 
 import { strict as assert } from "node:assert";
-import type { IFluidCompatibilityMetadata, Logger } from "@fluidframework/build-tools";
+import type { IFluidCompatibilityMetadata } from "@fluidframework/build-tools";
 import { formatISO } from "date-fns";
 import { describe, it } from "mocha";
 
 import {
 	DAYS_IN_MONTH_APPROXIMATION,
+	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
 	generateLayerFileContent,
 	isCurrentPackageVersionPatch,
 	maybeGetNewGeneration,
 } from "../../../library/layerCompatGeneration.js";
 
 describe("check:layerCompatGeneration", () => {
-	const minimumCompatWindowMonths = 3;
-
-	// Mock logger that captures log calls for verification
-	const createMockLogger = (): Logger => {
-		return {
-			log: (): void => {},
-			info: (): void => {},
-			warning: (): void => {},
-			errorLog: (): void => {},
-			verbose: (): void => {},
-		};
-	};
+	const minimumCompatWindowMonths = DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS;
 
 	it("should correctly detect patch versions (which should be skipped)", () => {
 		assert.strictEqual(isCurrentPackageVersionPatch("1.2.3"), true);
@@ -36,7 +26,6 @@ describe("check:layerCompatGeneration", () => {
 	});
 
 	it("should detect when generation needs update based on minor version change and time", () => {
-		const mockLogger = createMockLogger();
 		const previousGeneration = 5;
 		const monthsSincePreviousRelease = 1;
 
@@ -56,14 +45,12 @@ describe("check:layerCompatGeneration", () => {
 			"1.1.0", // Minor version change
 			mockMetadata,
 			minimumCompatWindowMonths,
-			mockLogger,
 		);
 
 		assert.strictEqual(result, previousGeneration + monthsSincePreviousRelease);
 	});
 
 	it("should return undefined when no update is needed", () => {
-		const mockLogger = createMockLogger();
 		const currentVersion = "2.0.0";
 		const mockMetadata: IFluidCompatibilityMetadata = {
 			generation: 5,
@@ -75,7 +62,6 @@ describe("check:layerCompatGeneration", () => {
 			currentVersion,
 			mockMetadata,
 			minimumCompatWindowMonths,
-			mockLogger,
 		);
 
 		assert.strictEqual(result, undefined);
