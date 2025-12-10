@@ -45,10 +45,7 @@
 			"!**/*.hbs",
 
 			// Test json
-			"!**/build-tools/packages/build-tools/src/test/data/biome/empty.jsonc",
-			"!**/build-tools/packages/build-tools/src/test/data/spaces/**",
-			// Biome 1.x test data - these configs use Biome 1.x syntax that Biome 2.x can't parse
-			"!**/build-tools/packages/build-tools/src/test/data/biome/**",
+			"!**/build-tools/packages/build-tools/src/test/data/**",
 			"!**/experimental/dds/tree/src/test/documents/**",
 			"!**/packages/dds/map/src/test/mocha/snapshots/**/*.json",
 			"!**/packages/dds/matrix/src/test/results/**/*.json",
@@ -136,9 +133,7 @@
 		"includes": ["**", "!**/dist/**", "!**/lib/**"],
 		"formatWithErrors": true,
 		"indentStyle": "tab",
-		// Changed from 95 to 120 to minimize formatting churn when upgrading from Biome 1.9 to 2.x.
-		// See https://github.com/microsoft/FluidFramework/pull/25965 for discussion.
-		"lineWidth": 120,
+		"lineWidth": 95,
 		"lineEnding": "lf"
 	},
 	"javascript": {
