@@ -44,12 +44,10 @@ import type { MinimumVersionForCollab } from "@fluidframework/runtime-definition
 export function clientVersionToSchemaVersion(
 	clientVersion: MinimumVersionForCollab,
 ): SchemaFormatVersion {
-	return brand(
-		getConfigForMinVersionForCollab(clientVersion, {
-			[lowestMinVersionForCollab]: SchemaFormatVersion.v1,
-			[FluidClientVersion.v2_43]: SchemaFormatVersion.v2,
-		}),
-	);
+	return getConfigForMinVersionForCollab(clientVersion, {
+		[lowestMinVersionForCollab]: SchemaFormatVersion.v1,
+		[FluidClientVersion.v2_43]: SchemaFormatVersion.v2,
+	});
 }
 
 export function getCodecTreeForSchemaFormat(

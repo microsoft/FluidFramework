@@ -7,7 +7,6 @@ import { fail } from "@fluidframework/core-utils/internal";
 
 import { DiscriminatedUnionDispatcher } from "../../codec/index.js";
 import {
-	type Brand,
 	type JsonCompatibleReadOnlyObject,
 	type MakeNominal,
 	brandConst,
@@ -33,17 +32,13 @@ import type { Multiplicity } from "./multiplicity.js";
 /**
  * The format version for the schema.
  */
-export const SchemaFormatVersion = {
-	v1: 1,
+export const enum SchemaFormatVersion {
+	v1 = 1,
 	/**
 	 * Adds persisted metadata to the node schema and field schema.
 	 */
-	v2: 2,
-} as const;
-export type SchemaFormatVersion = Brand<
-	(typeof SchemaFormatVersion)[keyof typeof SchemaFormatVersion],
-	"SchemaFormatVersion"
->;
+	v2 = 2,
+}
 
 type FieldSchemaFormat = FieldSchemaFormatV1 | FieldSchemaFormatV2;
 
