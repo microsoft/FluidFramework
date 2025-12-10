@@ -910,9 +910,7 @@ describe("BasicRestWrapper", () => {
 			);
 
 			//act
-			await rw.get(requestUrl).then(
-				() => assert.ok(true),
-			);
+			await rw.get(requestUrl).then(() => assert.ok(true));
 
 			assert.notEqual(rw["defaultHeaders"].Authorization, `Basic ${expiredToken}`);
 			assert.strictEqual(rw["defaultHeaders"].Authorization, `Basic ${newToken}`);
