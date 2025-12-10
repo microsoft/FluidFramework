@@ -30,6 +30,7 @@ import type { SessionSpaceCompressedId } from "@fluidframework/id-compressor/int
 import { SharedMap } from "@fluidframework/map/internal";
 import {
 	asLegacyAlpha,
+	type IContainerRuntimeBase,
 	type StageControlsInternal,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -59,10 +60,10 @@ class DataObjectWithStagingMode extends DataObject {
 			: DataObjectWithStagingMode.instanceCount++;
 
 	private readonly containerRuntimeExp = asLegacyAlpha(this.context.containerRuntime);
-	get DataObjectWithStagingMode() {
+	get DataObjectWithStagingMode(): this {
 		return this;
 	}
-	get containerRuntime() {
+	get containerRuntime(): IContainerRuntimeBase {
 		return this.context.containerRuntime;
 	}
 
@@ -73,7 +74,7 @@ class DataObjectWithStagingMode extends DataObject {
 	}
 
 	/** Add to the root map including prefix in the key name, and a compressed ID in the value (for ID Compressor test coverage) */
-	public makeEdit(prefix: string) {
+	public makeEdit(prefix: string): void {
 		const compressedId = this.generateCompressedId();
 		this.root.set(`${prefix}-${this.instanceNumber}`, {
 			n: this.root.size,
@@ -104,7 +105,7 @@ class DataObjectWithStagingMode extends DataObject {
 	 */
 	public async enumerateDataWithHandlesResolved(): Promise<Record<string, unknown>> {
 		const state: Record<string, unknown> = {};
-		const loadStateInt = async (map) => {
+		const loadStateInt = async (map): Promise<void> => {
 			for (const key of map.keys()) {
 				const value = (state[key] = map.get(key));
 				if (isFluidHandle(value)) {
@@ -221,7 +222,10 @@ const waitForSave = async (clients: Client[] | Record<string, Client>): Promise<
 	).then((sequenceNumbers) => Math.max(...sequenceNumbers));
 
 /** Wait for all clients to process the given sequenceNumber */
-const catchUp = async (clients: Client[] | Record<string, Client>, sequenceNumber: number) => {
+const catchUp = async (
+	clients: Client[] | Record<string, Client>,
+	sequenceNumber: number,
+): Promise<void[]> => {
 	return Promise.all(
 		Object.entries(clients).map(
 			async ([key, { container }]) =>
@@ -272,7 +276,18 @@ const catchUp = async (clients: Client[] | Record<string, Client>, sequenceNumbe
 	);
 };
 
-const createClients = async (deltaConnectionServer: ILocalDeltaConnectionServer) => {
+const createClients = async (
+	deltaConnectionServer: ILocalDeltaConnectionServer,
+): Promise<{
+	original: {
+		container: IContainer;
+		dataObject: DataObjectWithStagingMode;
+	};
+	loaded: {
+		dataObject: DataObjectWithStagingMode;
+		container: IContainer;
+	};
+}> => {
 	const {
 		loaderProps: baseLoaderProps,
 		codeDetails,
