@@ -46,10 +46,10 @@ interface IAddItemViewProps {
 	readonly addItem: (name: string) => void;
 }
 
-const AddItemView: FC<IAddItemViewProps> = ({ addItem }: IAddItemViewProps) => {
+const AddItemView: FC<IAddItemViewProps> = ({ addItem }: IAddItemViewProps): JSX.Element => {
 	const nameRef = useRef<HTMLInputElement>(null);
 
-	const onAddItemButtonClick = () => {
+	const onAddItemButtonClick = (): void => {
 		if (nameRef.current === null) {
 			throw new Error("Couldn't get the new item info");
 		}
@@ -91,7 +91,7 @@ export const GroceryListView: FC<IGroceryListViewProps> = ({
 		groceryList.getItems(),
 	);
 	useEffect(() => {
-		const updateItems = () => {
+		const updateItems = (): void => {
 			// TODO: This blows away all the grocery items, making the granular add/delete events
 			// not so useful.  Is there a good way to make a more granular change?
 			setGroceryItems(groceryList.getItems());

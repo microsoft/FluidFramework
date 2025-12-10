@@ -26,7 +26,7 @@ export abstract class Formatter<TState extends IFormatterState> {
 
 	public abstract end(layout: Layout, state: Readonly<TState>);
 
-	public toString() {
+	public toString(): string {
 		return this.constructor.name;
 	}
 }
@@ -34,7 +34,7 @@ export abstract class Formatter<TState extends IFormatterState> {
 export abstract class RootFormatter<TState extends IFormatterState> extends Formatter<TState> {
 	public abstract onChange(layout: Layout, e: SequenceEvent);
 
-	public prepare(layout: Layout, start: number, end: number) {
+	public prepare(layout: Layout, start: number, end: number): { start: number; end: number } {
 		return { start, end };
 	}
 }
@@ -60,10 +60,10 @@ export class BootstrapFormatter<
 		throw new Error();
 	}
 
-	public onChange(layout: Layout, e: SequenceEvent) {
+	public onChange(layout: Layout, e: SequenceEvent): void {
 		this.formatter.onChange(layout, e);
 	}
-	public prepare(layout: Layout, start: number, end: number) {
+	public prepare(layout: Layout, start: number, end: number): { start: number; end: number } {
 		return this.formatter.prepare(layout, start, end);
 	}
 }
