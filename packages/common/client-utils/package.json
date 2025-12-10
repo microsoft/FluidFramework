@@ -97,7 +97,7 @@
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
-		"layerGeneration:gen": "flub generate layerCompatGeneration --dir . -v",
+		"layerGeneration:gen": "flub generate compatLayerGeneration --dir . -v",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha && npm run test:jest",
