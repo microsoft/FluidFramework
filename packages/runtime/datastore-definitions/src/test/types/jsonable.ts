@@ -9,7 +9,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-redundant-type-constituents */
-/* eslint-disable @typescript-eslint/no-restricted-imports */
 
 import type { Jsonable } from "../../index.js";
 

@@ -29,7 +29,6 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import { assertIsStableId, createIdCompressor } from "@fluidframework/id-compressor/internal";
-// eslint-disable-next-line import-x/no-internal-modules
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {

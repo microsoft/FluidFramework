@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-restricted-imports */
-
 import { strict as assert } from "node:assert";
 
 import {

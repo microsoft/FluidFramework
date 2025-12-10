@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-restricted-imports */
-
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type { IdCompressor } from "../idCompressor.js";

@@ -5,7 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-// eslint-disable-next-line import-x/no-internal-modules
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 
 import {
