@@ -46,6 +46,7 @@
 		"@fluidframework/build-tools": "^0.61.0",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"eslint": "~8.57.1",
+		"jiti": "^2.6.1",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
 	},

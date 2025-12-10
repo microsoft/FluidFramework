@@ -117,6 +117,7 @@
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.57.1",
+		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
 		"rimraf": "^4.4.0",
 		"sinon": "^18.0.1",
