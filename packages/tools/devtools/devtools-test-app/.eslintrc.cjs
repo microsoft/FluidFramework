@@ -26,6 +26,14 @@ module.exports = {
 		// TODO: AB#18875 - Re-enable react/no-deprecated once we replace uses of the deprecated ReactDOM.render()
 		// with the new React 18 createRoot().
 		"react/no-deprecated": "off",
+
+		// TODO: These rules should be re-enabled once we are on eslint 9
+		// and the react plugins are upgraded to more recent versions
+		"react-hooks/immutability": "warn",
+		"react-hooks/refs": "warn",
+		"react-hooks/rules-of-hooks": "warn",
+		"react-hooks/set-state-in-effect": "warn",
+		"react-hooks/static-components": "warn",
 	},
 	overrides: [
 		{
