@@ -270,7 +270,6 @@ async function findLegacyConfigs(
 										sharedFlatConfigImport = relPath.startsWith(".")
 											? relPath
 											: `./${relPath}`;
-										matchingSharedConfig = matchingShared;
 										// Detect which named exports are referenced in this config
 										sharedConfigNamedImports = detectSharedConfigImports(
 											content,
