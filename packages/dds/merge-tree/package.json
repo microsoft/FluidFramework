@@ -166,6 +166,7 @@
 		"cross-env": "^7.0.3",
 		"diff": "^3.5.0",
 		"eslint": "~8.57.1",
+		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^4.4.0",

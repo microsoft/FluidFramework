@@ -37,6 +37,7 @@
 		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"eslint": "~8.57.1",
 		"eslint-config-prettier": "~10.1.8",
+		"jiti": "^2.6.1",
 		"pm2": "^5.4.2",
 		"rimraf": "^4.4.0"
 	},

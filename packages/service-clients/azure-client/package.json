@@ -122,6 +122,7 @@
 		"eslint": "~8.57.1",
 		"eslint-config-prettier": "~10.1.8",
 		"fluid-framework": "workspace:~",
+		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
 		"rimraf": "^4.4.0",
 		"start-server-and-test": "^2.0.3",

@@ -109,6 +109,7 @@
 		"eslint-plugin-jest": "~27.4.2",
 		"eslint-plugin-react": "~7.33.2",
 		"eslint-plugin-react-hooks": "~5.2.0",
+		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
 		"rimraf": "^4.4.0",
 		"sinon": "^18.0.1",
