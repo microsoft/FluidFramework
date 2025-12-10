@@ -24,6 +24,7 @@
 	},
 	"dependencies": {
 		"@eslint-community/eslint-plugin-eslint-comments": "~4.5.0",
+		"@eslint/eslintrc": "^3.3.3",
 		"@eslint/js": "^8.57.1",
 		"@fluid-internal/eslint-plugin-fluid": "^0.4.1",
 		"@rushstack/eslint-patch": "~1.12.0",
