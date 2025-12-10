@@ -81,13 +81,13 @@ class ChildDataStoreFactory implements IFluidDataStoreFactory {
 	static readonly instance = new ChildDataStoreFactory();
 	private constructor() {}
 
-	get IFluidDataStoreFactory() {
+	get IFluidDataStoreFactory(): this {
 		return this;
 	}
 
 	public readonly type = "ChildDataStore";
 
-	async instantiateDataStore(context, existing) {
+	async instantiateDataStore(context, existing): Promise<FluidDataStoreRuntime> {
 		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
 			context,
 			sharedObjectRegistry,

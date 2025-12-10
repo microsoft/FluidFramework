@@ -192,7 +192,7 @@ const waitForSave = async (clients: Client[] | Record<string, Client>): Promise<
 						return;
 					}
 
-					const rejectHandler = (error?: IErrorBase | undefined) => {
+					const rejectHandler = (error?: IErrorBase | undefined): void => {
 						reject(
 							wrapError(
 								error,
@@ -203,17 +203,15 @@ const waitForSave = async (clients: Client[] | Record<string, Client>): Promise<
 						off();
 					};
 
-					const resolveHandler = () => {
+					const resolveHandler = (): void => {
 						resolve(container.deltaManager.lastSequenceNumber);
 						off();
 					};
-
-					const off = () => {
+					const off = (): void => {
 						container.off("closed", rejectHandler);
 						container.off("disposed", rejectHandler);
 						container.off("saved", resolveHandler);
 					};
-
 					container.on("saved", resolveHandler);
 					container.on("closed", rejectHandler);
 					container.on("disposed", rejectHandler);
@@ -244,7 +242,7 @@ const catchUp = async (
 						return;
 					}
 
-					const rejectHandler = (error?: IErrorBase | undefined) => {
+					const rejectHandler = (error?: IErrorBase | undefined): void => {
 						reject(
 							wrapError(
 								error,
@@ -254,20 +252,17 @@ const catchUp = async (
 						);
 						off();
 					};
-
-					const opHandler = (message) => {
+					const opHandler = (message): void => {
 						if (message.sequenceNumber >= sequenceNumber) {
 							resolve();
 							off();
 						}
 					};
-
-					const off = () => {
+					const off = (): void => {
 						container.off("op", opHandler);
 						container.off("closed", rejectHandler);
 						container.off("disposed", rejectHandler);
 					};
-
 					container.on("op", opHandler);
 					container.on("closed", rejectHandler);
 					container.on("disposed", rejectHandler);
