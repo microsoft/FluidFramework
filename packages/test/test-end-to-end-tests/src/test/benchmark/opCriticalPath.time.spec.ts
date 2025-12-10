@@ -59,7 +59,8 @@ describeCompat(
 
 		let testId = 0;
 
-		beforeEach("conditionalSkip", async function () {
+		beforeEach("check driver compatibility", function () {
+			provider = getTestObjectProvider();
 			if (provider.driver.type === "r11s" || provider.driver.type === "routerlicious") {
 				this.skip(); // This test is not reliable with FRS for some reason
 			}
