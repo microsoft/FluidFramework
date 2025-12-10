@@ -179,6 +179,7 @@ module.exports = {
 	 * `syncpack list-mismatches`, the output is grouped by label.
 	 */
 	versionGroups: [
+		// TODO: Remove this ignore once we have upgraded all packages to eslint 9
 		{
 			label: "eslint is ignored while upgrading to eslint v9",
 			dependencies: ["eslint"],
