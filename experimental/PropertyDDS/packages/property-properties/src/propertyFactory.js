@@ -4,6 +4,7 @@
  */
 
 // These imports are grouped manually to ensure that the imports are in the correct order.
+/* eslint-disable import-x/order */
 
 /**
  * @fileoverview Declaration of the PropertyFactory class.
@@ -112,6 +113,8 @@ const {
 } = require("./properties/valueMapProperty");
 
 const { LazyLoadedProperties } = require("./properties/lazyLoadedProperties");
+
+/* eslint-enable import-x/order */
 
 /**
  * Creates an instance of the TemplateValidator
@@ -900,15 +903,15 @@ class PropertyFactory {
 	 *
 	 * ```
 	 * <pre>
-	 * {
-	 * 'isValid': true or false,
-	 * 'typeid': 'The typeid of the object being parsed',
-	 * 'unresolvedTypes': [ 'An array', 'of strong typeids', 'that were found',
-	 * 'in the document', 'but not resolved from the local cache' ],
-	 * 'resolvedTypes': [ 'Array of', 'strong types resolved', 'during template parsing'],
-	 * 'errors': [ 'Array of', 'objects describing', 'syntax errors in the template' ]
-	 * ...
-	 * }
+	 *   {
+	 *     'isValid': true or false,
+	 *     'typeid': 'The typeid of the object being parsed',
+	 *     'unresolvedTypes': [ 'An array', 'of strong typeids', 'that were found',
+	 *       'in the document', 'but not resolved from the local cache' ],
+	 *     'resolvedTypes': [ 'Array of', 'strong types resolved', 'during template parsing'],
+	 *     'errors': [ 'Array of', 'objects describing', 'syntax errors in the template' ]
+	 *     ...
+	 *   }
 	 * </pre>
 	 * ```
 	 */
@@ -2209,6 +2212,7 @@ class PropertyFactory {
 	async initializeSchemaStore(in_options) {
 		// https://regex101.com/r/TlgGJp/2
 		var regexBaseUrl =
+			// eslint-disable-next-line unicorn/no-unsafe-regex
 			/^(https?:)?\/\/((.[-a-zA-Z0-9@:%_+~#=.]{2,256}){1,2}\.[a-z]{2,6}|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(:\d{1,5})?(\/[-a-zA-Z0-9@:%_+.~#?&/=]*)*$/;
 
 		if (
@@ -2265,16 +2269,16 @@ class PropertyFactory {
 	 *
 	 * ```json
 	 * {
-	 * errors: {
-	 * typeid1: errors,
-	 * ...
-	 * typeidn: errors
-	 * },
-	 * templates: {
-	 * typeid1: [], array of templates
-	 * ...
-	 * typeidn: []  array of templates
-	 * }
+	 *  errors: {
+	 *    typeid1: errors,
+	 *    ...
+	 *    typeidn: errors
+	 *  },
+	 *  templates: {
+	 *    typeid1: [], array of templates
+	 *    ...
+	 *    typeidn: []  array of templates
+	 *   }
 	 * }
 	 * ```
 	 */
