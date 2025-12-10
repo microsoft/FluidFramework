@@ -69,7 +69,7 @@ import {
 import {
 	summaryContentBlobKey as summaryContentBlobKeyV1ToV2,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/forest-summary/summaryFormatV1ToV2.js";
+} from "../../../feature-libraries/forest-summary/summaryFormatV1.js";
 import {
 	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
