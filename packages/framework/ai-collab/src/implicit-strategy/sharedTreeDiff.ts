@@ -317,7 +317,7 @@ export function sharedTreeDiff(
 			!(
 				areCompatibleObjects &&
 				(Number.isNaN(objValue)
-					? // eslint-disable-next-line prefer-template
+					? // eslint-disable-next-line prefer-template, @typescript-eslint/no-base-to-string
 						objValue + "" === newObjValue + ""
 					: // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 						// @ts-ignore

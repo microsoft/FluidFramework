@@ -128,9 +128,6 @@ class DataObjectWithStagingMode extends DataObject {
 const dataObjectFactory = new DataObjectFactory({
 	type: "TheDataObject",
 	ctor: DataObjectWithStagingMode,
-	policies: {
-		readonlyInStagingMode: false,
-	},
 });
 
 // a simple container runtime factory with a single datastore aliased as default.

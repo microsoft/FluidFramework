@@ -11,7 +11,9 @@
     },
     "ignorePatterns": [
         "**/packageVersion.ts",
-        "**/layerGenerationState.ts"
+        "**/layerGenerationState.ts",
+        "**/*.generated.ts",
+        "**/*.generated.js"
     ],
     "parserOptions": {
         "ecmaFeatures": {
@@ -24,12 +26,12 @@
     "plugins": [
         "@eslint-community/eslint-comments",
         "import-x",
+        "depend",
         "@fluid-internal/fluid",
         "unused-imports",
         "promise",
         "jsdoc",
         "@typescript-eslint",
-        "@rushstack/security",
         "@rushstack",
         "unicorn",
         "tsdoc"
@@ -64,7 +66,7 @@
             "error"
         ],
         "@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": [
-            "off"
+            "error"
         ],
         "@fluid-internal/fluid/no-markdown-links-in-jsdoc": [
             "error"
@@ -636,9 +638,6 @@
         "@typescript-eslint/ban-tslint-comment": [
             "error"
         ],
-        "@typescript-eslint/ban-types": [
-            "off"
-        ],
         "@typescript-eslint/block-spacing": [
             "off"
         ],
@@ -649,8 +648,7 @@
             "error"
         ],
         "@typescript-eslint/comma-dangle": [
-            "off",
-            "always-multiline"
+            "off"
         ],
         "@typescript-eslint/comma-spacing": [
             "off"
@@ -749,6 +747,9 @@
         "@typescript-eslint/no-array-constructor": [
             "error"
         ],
+        "@typescript-eslint/no-array-delete": [
+            "error"
+        ],
         "@typescript-eslint/no-base-to-string": [
             "error"
         ],
@@ -765,9 +766,6 @@
             "error"
         ],
         "@typescript-eslint/no-empty-function": [
-            "off"
-        ],
-        "@typescript-eslint/no-empty-interface": [
             "off"
         ],
         "@typescript-eslint/no-empty-object-type": [
@@ -808,9 +806,6 @@
         ],
         "@typescript-eslint/no-invalid-this": [
             "off"
-        ],
-        "@typescript-eslint/no-loss-of-precision": [
-            "error"
         ],
         "@typescript-eslint/no-magic-numbers": [
             "off"
@@ -876,9 +871,6 @@
         "@typescript-eslint/no-this-alias": [
             "error"
         ],
-        "@typescript-eslint/no-throw-literal": [
-            "error"
-        ],
         "@typescript-eslint/no-unnecessary-qualifier": [
             "error"
         ],
@@ -915,6 +907,9 @@
         "@typescript-eslint/no-unsafe-return": [
             "error"
         ],
+        "@typescript-eslint/no-unsafe-unary-minus": [
+            "error"
+        ],
         "@typescript-eslint/no-unused-expressions": [
             "error"
         ],
@@ -923,9 +918,6 @@
         ],
         "@typescript-eslint/no-use-before-define": [
             "off"
-        ],
-        "@typescript-eslint/no-var-requires": [
-            "error"
         ],
         "@typescript-eslint/no-wrapper-object-types": [
             "error"
@@ -936,7 +928,13 @@
         "@typescript-eslint/object-curly-spacing": [
             "off"
         ],
+        "@typescript-eslint/only-throw-error": [
+            "error"
+        ],
         "@typescript-eslint/prefer-as-const": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-find": [
             "error"
         ],
         "@typescript-eslint/prefer-for-of": [
@@ -957,7 +955,13 @@
         "@typescript-eslint/prefer-optional-chain": [
             "error"
         ],
+        "@typescript-eslint/prefer-promise-reject-errors": [
+            "error"
+        ],
         "@typescript-eslint/prefer-readonly": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-regexp-exec": [
             "error"
         ],
         "@typescript-eslint/prefer-string-starts-ends-with": [
@@ -967,12 +971,7 @@
             "error"
         ],
         "@typescript-eslint/quotes": [
-            0,
-            "double",
-            {
-                "allowTemplateLiterals": true,
-                "avoidEscape": true
-            }
+            0
         ],
         "@typescript-eslint/require-await": [
             "off"
@@ -987,19 +986,13 @@
             "error"
         ],
         "@typescript-eslint/semi": [
-            "off",
-            "always"
+            "off"
         ],
         "@typescript-eslint/space-before-blocks": [
             "off"
         ],
         "@typescript-eslint/space-before-function-paren": [
-            "off",
-            {
-                "anonymous": "never",
-                "asyncArrow": "always",
-                "named": "never"
-            }
+            "off"
         ],
         "@typescript-eslint/space-infix-ops": [
             "off"
@@ -1088,6 +1081,15 @@
         ],
         "default-case": [
             "error"
+        ],
+        "depend/ban-dependencies": [
+            "error",
+            {
+                "allowed": [
+                    "axios",
+                    "fs-extra"
+                ]
+            }
         ],
         "dot-location": [
             "off"
@@ -1346,14 +1348,11 @@
             "off"
         ],
         "max-len": [
-            "error",
+            "off",
             {
-                "code": 120,
-                "ignoreTrailingComments": true,
-                "ignoreUrls": true,
-                "ignoreStrings": true,
-                "ignoreTemplateLiterals": true,
-                "ignoreRegExpLiterals": true
+                "ignoreRegExpLiterals": false,
+                "ignoreStrings": false,
+                "code": 120
             }
         ],
         "max-lines": [
@@ -1390,7 +1389,7 @@
             "error"
         ],
         "no-class-assign": [
-            "error"
+            "off"
         ],
         "no-comma-dangle": [
             "off"
@@ -1495,7 +1494,7 @@
             "error"
         ],
         "no-loss-of-precision": [
-            "off"
+            "error"
         ],
         "no-magic-numbers": [
             "off"
@@ -1892,6 +1891,9 @@
             "error"
         ],
         "unicorn/consistent-destructuring": [
+            "off"
+        ],
+        "unicorn/consistent-empty-array-spread": [
             "error"
         ],
         "unicorn/consistent-function-scoping": [
@@ -1925,12 +1927,15 @@
             }
         ],
         "unicorn/import-style": [
-            "error"
+            "off"
         ],
         "unicorn/new-for-builtins": [
             "error"
         ],
         "unicorn/no-abusive-eslint-disable": [
+            "error"
+        ],
+        "unicorn/no-anonymous-default-export": [
             "error"
         ],
         "unicorn/no-array-callback-reference": [
@@ -1951,6 +1956,9 @@
         "unicorn/no-await-expression-member": [
             "error"
         ],
+        "unicorn/no-await-in-promise-methods": [
+            "error"
+        ],
         "unicorn/no-console-spaces": [
             "error"
         ],
@@ -1969,6 +1977,9 @@
         "unicorn/no-instanceof-array": [
             "error"
         ],
+        "unicorn/no-invalid-fetch-options": [
+            "error"
+        ],
         "unicorn/no-invalid-remove-event-listener": [
             "error"
         ],
@@ -1978,7 +1989,13 @@
         "unicorn/no-lonely-if": [
             "error"
         ],
+        "unicorn/no-magic-array-flat-depth": [
+            "error"
+        ],
         "unicorn/no-negated-condition": [
+            "error"
+        ],
+        "unicorn/no-negation-in-equality-check": [
             "error"
         ],
         "unicorn/no-nested-ternary": [
@@ -1999,6 +2016,9 @@
         "unicorn/no-process-exit": [
             "error"
         ],
+        "unicorn/no-single-promise-in-promise-methods": [
+            "error"
+        ],
         "unicorn/no-static-only-class": [
             "error"
         ],
@@ -2012,6 +2032,9 @@
             "error"
         ],
         "unicorn/no-unnecessary-await": [
+            "error"
+        ],
+        "unicorn/no-unnecessary-polyfills": [
             "error"
         ],
         "unicorn/no-unreadable-array-destructuring": [
@@ -2072,7 +2095,7 @@
             "error"
         ],
         "unicorn/prefer-at": [
-            "off"
+            "warn"
         ],
         "unicorn/prefer-blob-reading-methods": [
             "error"
@@ -2167,8 +2190,11 @@
         "unicorn/prefer-spread": [
             "error"
         ],
+        "unicorn/prefer-string-raw": [
+            "warn"
+        ],
         "unicorn/prefer-string-replace-all": [
-            "off"
+            "warn"
         ],
         "unicorn/prefer-string-slice": [
             "error"
@@ -2178,6 +2204,9 @@
         ],
         "unicorn/prefer-string-trim-start-end": [
             "error"
+        ],
+        "unicorn/prefer-structured-clone": [
+            "warn"
         ],
         "unicorn/prefer-switch": [
             "error"

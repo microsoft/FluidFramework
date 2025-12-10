@@ -72,7 +72,7 @@ import {
 	type JsonCompatibleReadOnlyObject,
 } from "../../../util/index.js";
 import { nullSchema } from "../../leafNodeSchema.js";
-import type { SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
+import type { SchemaType, SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 
 /**
  * A covariant base type for {@link (TreeArrayNode:interface)}.
@@ -578,6 +578,7 @@ const TreeNodeWithArrayFeatures = (() => {
  */
 /* eslint-disable @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-explicit-any */
 // prettier-ignore
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 declare abstract class NodeWithArrayFeatures<Input, T>
 	extends TreeNodeValid<Input>
 	implements Pick<readonly T[], (typeof arrayPrototypeKeys)[number]>
@@ -1217,7 +1218,10 @@ export function arraySchema<
 			return lazyAllowedTypesIdentifiers.value;
 		}
 
-		public static get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
+		public static get simpleAllowedTypes(): ReadonlyMap<
+			string,
+			SimpleAllowedTypeAttributes<SchemaType.View>
+		> {
 			return lazySimpleAllowedTypes.value;
 		}
 
@@ -1326,6 +1330,7 @@ function arrayChildToFlexTree(
  */
 function arrayToFlexContent(data: FactoryContent, schema: ArrayNodeSchema): FlexContent {
 	if (!(typeof data === "object" && data !== null && Symbol.iterator in data)) {
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		throw new UsageError(`Input data is incompatible with Array schema: ${data}`);
 	}
 
