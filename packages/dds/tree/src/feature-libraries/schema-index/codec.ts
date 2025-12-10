@@ -57,6 +57,8 @@ export function getCodecTreeForSchemaFormat(
  * Create a schema codec.
  * @param options - Specifies common codec options, including `minVersionForCollab` and which `validator` to use.
  * @param writeVersionOverride - The schema version to write. If not provided, the version will be derived from `minVersionForCollab`.
+ * TODO: Currently this parameter is provided when it probably should not be. Users of it should probably allow the automatic selection to occur and this parameter can be removed.
+ * Any case where an override is actually required can use `options` to do so.
  * @returns The composed codec.
  *
  * @privateRemarks We should consider using the Shared Tree format version instead as it may be more valuable for application authors than the schema version.
