@@ -1,5 +1,5 @@
 ---
-"@fluidframework/ai-collab": minor
+---
 "__section": deprecation
 ---
 ai-collab library has been removed
