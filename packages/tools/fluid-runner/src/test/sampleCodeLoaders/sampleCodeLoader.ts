@@ -20,7 +20,7 @@ import type { IFluidFileConverter } from "../../codeLoaderBundle.js";
 // static-loaded modules like this is doing with no-dynamic-package), but it's not a good representation of what ODSP
 // and Loop do in practice.
 // TODO:  Evaluate whether this naive comparison approach is appropriate for the scenario we are trying to test.
-	export class SampleCodeLoader implements ICodeDetailsLoader {
+export class SampleCodeLoader implements ICodeDetailsLoader {
 	public get IFluidCodeDetailsComparer(): IFluidCodeDetailsComparer {
 		return this;
 	}

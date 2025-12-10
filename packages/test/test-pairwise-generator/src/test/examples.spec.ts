@@ -9,7 +9,11 @@ import { OptionsMatrix, generatePairwiseOptions } from "../index.js";
 
 describe("generatePairwiseOptions.examples", () => {
 	it("Testing a function", () => {
-		const myFunction = (param1: boolean, param2: "string1" | "string2", param3?: number): void => {};
+		const myFunction = (
+			param1: boolean,
+			param2: "string1" | "string2",
+			param3?: number,
+		): void => {};
 
 		const options = generatePairwiseOptions<{
 			p1: boolean;
