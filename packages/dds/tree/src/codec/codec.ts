@@ -465,8 +465,14 @@ export function withSchemaValidation<
  * If the need arises, they might be added in the future.
  *
  * @privateRemarks
- * Entries in these enums should document the user facing impact of opting into a particular version.
- * For example, document if there is an encoding efficiency improvement of oping into that version or newer.
+ * The entries in these enums should document the following:
+ * - The user facing impact of opting into a particular version. This will help customers decide if they want to opt into
+ * a new version. For example, document if there is an encoding efficiency improvement of oping into that version or newer.
+ * - Any new data formats that are introduced in that version. This will help developers tell which data formats a given
+ * version will write. For example, document if a new summary or encoding format is added in a version.
+ * - Whether the above features or data formats introduced in a version are enabled by default or require the
+ * {@link minVersionForCollab} option to be set to that particular version.
+ *
  * Versions with no notable impact can be omitted.
  *
  * This scheme assumes a single version will always be enough to communicate compatibility.
@@ -505,10 +511,10 @@ export const FluidClientVersion = {
 	 * Fluid Framework Client 2.43 and newer.
 	 * @remarks
 	 * New formats introduced in 2.43:
-	 * - SchemaFormatVersion.v2
-	 * - MessageFormatVersion.v4
-	 * - EditManagerFormatVersion.v4
-	 * - Sequence format version 3
+	 * - SchemaFormatVersion.v2 - written when minVersionForCollab \>= 2.43
+	 * - MessageFormatVersion.v4 - written when minVersionForCollab \>= 2.43
+	 * - EditManagerFormatVersion.v4 - written when minVersionForCollab \>= 2.43
+	 * - sequence-field/formatV3 - written when minVersionForCollab \>= 2.43
 	 */
 	v2_43: "2.43.0",
 
@@ -516,7 +522,7 @@ export const FluidClientVersion = {
 	 * Fluid Framework Client 2.52 and newer.
 	 * @remarks
 	 * New formats introduced in 2.52:
-	 * - DetachedFieldIndexFormatVersion.v2
+	 * - DetachedFieldIndexFormatVersion.v2 - written when minVersionForCollab \>= 2.52
 	 */
 	v2_52: "2.52.0",
 
@@ -524,7 +530,7 @@ export const FluidClientVersion = {
 	 * Fluid Framework Client 2.73 and newer.
 	 * @remarks
 	 * New formats introduced in 2.73:
-	 * - FieldBatchFormatVersion v2
+	 * - FieldBatchFormatVersion.v2 - written when minVersionForCollab \>= 2.73
 	 */
 	v2_73: "2.73.0",
 
@@ -532,11 +538,13 @@ export const FluidClientVersion = {
 	 * Fluid Framework Client 2.74 and newer.
 	 * @remarks
 	 * New formats introduced in 2.74:
-	 * - SharedTreeSummaryFormatVersion v2
-	 * - DetachedFieldIndexSummaryFormatVersion v2
-	 * - SchemaSummaryFormatVersion v2
-	 * - EditManagerSummaryFormatVersion v2
-	 * - ForestSummaryFormatVersion v2
+	 * - SharedTreeSummaryFormatVersion.v2 - written by default
+	 * - DetachedFieldIndexSummaryFormatVersion.v2 - written by default
+	 * - SchemaSummaryFormatVersion.v2 - written by default
+	 * - EditManagerSummaryFormatVersion.v2 - written by default
+	 * - ForestSummaryFormatVersion.v2 - written by default
+	 * - ForestFormatVersion.v2 - written when minVersionForCollab \>= 2.74
+	 * - ForestSummaryFormatVersion.v3 - written when minVersionForCollab \>= 2.74
 	 */
 	v2_74: "2.74.0",
 } as const satisfies Record<string, MinimumVersionForCollab>;

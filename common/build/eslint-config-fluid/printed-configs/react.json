@@ -1709,11 +1709,56 @@
         "radix": [
             "error"
         ],
+        "react-hooks/component-hook-factories": [
+            "error"
+        ],
+        "react-hooks/config": [
+            "error"
+        ],
+        "react-hooks/error-boundaries": [
+            "error"
+        ],
         "react-hooks/exhaustive-deps": [
+            "warn"
+        ],
+        "react-hooks/gating": [
+            "error"
+        ],
+        "react-hooks/globals": [
+            "error"
+        ],
+        "react-hooks/immutability": [
+            "warn"
+        ],
+        "react-hooks/incompatible-library": [
+            "warn"
+        ],
+        "react-hooks/preserve-manual-memoization": [
+            "error"
+        ],
+        "react-hooks/purity": [
+            "error"
+        ],
+        "react-hooks/refs": [
             "warn"
         ],
         "react-hooks/rules-of-hooks": [
             "warn"
+        ],
+        "react-hooks/set-state-in-effect": [
+            "warn"
+        ],
+        "react-hooks/set-state-in-render": [
+            "error"
+        ],
+        "react-hooks/static-components": [
+            "warn"
+        ],
+        "react-hooks/unsupported-syntax": [
+            "warn"
+        ],
+        "react-hooks/use-memo": [
+            "error"
         ],
         "react/display-name": [
             2
