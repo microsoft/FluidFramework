@@ -38,7 +38,7 @@ importers:
         version: link:packages/tools/changelog-generator-wrapper
       '@fluid-tools/build-cli':
         specifier: ^0.61.0
-        version: 0.61.0(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.61.0(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)
       '@fluid-tools/markdown-magic':
         specifier: workspace:~
         version: link:tools/markdown-magic
@@ -70,8 +70,8 @@ importers:
         specifier: ^0.3.0
         version: 0.3.0(@changesets/cli@2.27.10)
       concurrently:
-        specifier: ^8.2.1
-        version: 8.2.2
+        specifier: ^9.2.1
+        version: 9.2.1
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -22205,6 +22205,11 @@ packages:
     engines: {node: ^14.13.0 || >=16.0.0}
     hasBin: true
 
+  concurrently@9.2.1:
+    resolution: {integrity: sha512-fsfrO0MxV64Znoy8/l1vVIjjHa29SZyyqPgQBwhiDcaW8wJc2W3XWVOGx4M3oJBnv/zdUZIIp1gDeS98GzP8Ng==}
+    engines: {node: '>=18'}
+    hasBin: true
+
   config-chain@1.1.13:
     resolution: {integrity: sha512-qj+f8APARXHrM0hraqXYb2/bOVSV4PvJQlNZ/DVj0QrmNM2q2euizkeuVckQ57J+W0mRH6Hvi+k50M4Jul2VRQ==}
 
@@ -27238,6 +27243,9 @@ packages:
   rxjs@7.8.1:
     resolution: {integrity: sha512-AA3TVj+0A2iuIoQkWEK/tqFjBq2j+6PO6Y0zJcvzLAFhEFIO3HL0vls9hWLncZbAAbK0mar7oZ4V079I/qPMxg==}
 
+  rxjs@7.8.2:
+    resolution: {integrity: sha512-dhKf903U/PQZY6boNNtAGdWbG85WAbjT/1xYoZIC7FAY0yWapOBQVsVrDl58W86//e1VpMNBtRV4MaXfdMySFA==}
+
   safe-array-concat@1.1.3:
     resolution: {integrity: sha512-AURm5f0jYEOydBj7VQlVvDrjeFgthDdEF5H1dP+6mNpoXOMo1quQqJ4wvJDyRZ9+pO3kGWoOdmV08cSv2aJV6Q==}
     engines: {node: '>=0.4'}
@@ -27445,6 +27453,10 @@ packages:
 
   shell-quote@1.8.2:
     resolution: {integrity: sha512-AzqKpGKjrj7EM6rKVQEPpB288oCfnrEIuyoT9cyF4nmGa7V8Zk6f7RRqYisX8X9m+Q7bd632aZW4ky7EhbQztA==}
+    engines: {node: '>= 0.4'}
+
+  shell-quote@1.8.3:
+    resolution: {integrity: sha512-ObmnIF4hXNg1BqhnHmgbDETF8dLPCggZWBjkQfhZpbszZnYur5DUljTcCHii5LC3J5E0yeO/1LIMyH+UvHQgyw==}
     engines: {node: '>= 0.4'}
 
   shimmer@1.2.1:
@@ -31185,6 +31197,82 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@fluid-tools/build-cli@0.61.0(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)':
+    dependencies:
+      '@andrewbranch/untar.js': 1.0.3
+      '@fluid-tools/build-infrastructure': 0.61.0(@types/node@18.19.86)
+      '@fluid-tools/version-tools': 0.61.0(@types/node@18.19.86)
+      '@fluidframework/build-tools': 0.61.0(@types/node@18.19.86)
+      '@fluidframework/bundle-size-tools': 0.61.0
+      '@inquirer/prompts': 8.0.2(@types/node@18.19.86)
+      '@microsoft/api-extractor': 7.55.1(@types/node@18.19.86)
+      '@oclif/core': 4.8.0
+      '@oclif/plugin-autocomplete': 3.2.39
+      '@oclif/plugin-commands': 4.1.38
+      '@oclif/plugin-help': 6.2.36
+      '@oclif/plugin-not-found': 3.2.73(@types/node@18.19.86)
+      '@octokit/core': 7.0.6
+      '@octokit/rest': 22.0.1
+      '@rushstack/node-core-library': 5.19.0(@types/node@18.19.86)
+      async: 3.2.6
+      azure-devops-node-api: 11.2.0
+      change-case: 5.4.4
+      cosmiconfig: 9.0.0(typescript@5.4.5)
+      danger: 13.0.5(encoding@0.1.13)
+      date-fns: 3.6.0
+      debug: 4.4.3(supports-color@8.1.1)
+      execa: 5.1.1
+      fflate: 0.8.2
+      fs-extra: 11.3.2
+      github-slugger: 2.0.0
+      globby: 11.1.0
+      gray-matter: 4.0.3
+      human-id: 4.1.3
+      issue-parser: 7.0.1
+      json5: 2.2.3
+      jssm: 5.104.2
+      jszip: 3.10.1
+      latest-version: 9.0.0
+      mdast: 3.0.0
+      mdast-util-heading-range: 4.0.0
+      mdast-util-to-string: 4.0.0
+      minimatch: 10.1.1
+      npm-check-updates: 16.14.20
+      oclif: 4.22.52(@types/node@18.19.86)
+      picocolors: 1.1.1
+      prettier: 3.2.5
+      prompts: 2.4.2
+      read-pkg-up: 7.0.1
+      remark: 15.0.1
+      remark-gfm: 4.0.1
+      remark-github: 12.0.0
+      remark-github-beta-blockquote-admonitions: 3.1.1
+      remark-toc: 9.0.0
+      replace-in-file: 7.2.0
+      resolve.exports: 2.0.3
+      semver: 7.7.3
+      simple-git: 3.30.0
+      sort-json: 2.0.1
+      sort-package-json: 1.57.0
+      strip-ansi: 7.1.2
+      table: 6.9.0
+      ts-morph: 22.0.0
+      unist-util-visit: 5.0.0
+      xml2js: 0.6.2
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@types/node'
+      - bluebird
+      - bufferutil
+      - encoding
+      - esbuild
+      - react-devtools-core
+      - supports-color
+      - typescript
+      - uglify-js
+      - utf-8-validate
+      - webpack-cli
+
   '@fluid-tools/build-cli@0.61.0(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)':
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
@@ -31478,6 +31566,20 @@ snapshots:
       - react-devtools-core
       - supports-color
       - utf-8-validate
+
+  '@fluidframework/bundle-size-tools@0.61.0':
+    dependencies:
+      azure-devops-node-api: 11.2.0
+      jszip: 3.10.1
+      msgpack-lite: 0.1.26
+      pako: 2.1.0
+      typescript: 5.4.5
+      webpack: 5.103.0
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
+      - webpack-cli
 
   '@fluidframework/bundle-size-tools@0.61.0(webpack-cli@5.1.4)':
     dependencies:
@@ -35441,7 +35543,7 @@ snapshots:
 
   '@vvago/vale@3.11.2':
     dependencies:
-      axios: 1.12.2(debug@4.4.3)
+      axios: 1.12.2
       rimraf: 5.0.10
       tar: 6.2.1
       unzipper: 0.10.14
@@ -35896,6 +35998,14 @@ snapshots:
   axios@0.30.2(debug@4.4.3):
     dependencies:
       follow-redirects: 1.15.9(debug@4.4.3)
+      form-data: 4.0.4
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+
+  axios@1.12.2:
+    dependencies:
+      follow-redirects: 1.15.9
       form-data: 4.0.4
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -36656,6 +36766,15 @@ snapshots:
       rxjs: 7.8.1
       shell-quote: 1.8.2
       spawn-command: 0.0.2
+      supports-color: 8.1.1
+      tree-kill: 1.2.2
+      yargs: 17.7.2
+
+  concurrently@9.2.1:
+    dependencies:
+      chalk: 4.1.2
+      rxjs: 7.8.2
+      shell-quote: 1.8.3
       supports-color: 8.1.1
       tree-kill: 1.2.2
       yargs: 17.7.2
@@ -38227,6 +38346,8 @@ snapshots:
   flatted@3.3.2: {}
 
   fn.name@1.1.0: {}
+
+  follow-redirects@1.15.9: {}
 
   follow-redirects@1.15.9(debug@4.3.7):
     optionalDependencies:
@@ -42929,6 +43050,10 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
+  rxjs@7.8.2:
+    dependencies:
+      tslib: 2.8.1
+
   safe-array-concat@1.1.3:
     dependencies:
       call-bind: 1.0.8
@@ -43159,6 +43284,8 @@ snapshots:
   shebang-regex@3.0.0: {}
 
   shell-quote@1.8.2: {}
+
+  shell-quote@1.8.3: {}
 
   shimmer@1.2.1: {}
 
@@ -43923,7 +44050,7 @@ snapshots:
       schema-utils: 4.3.3
       serialize-javascript: 6.0.2
       terser: 5.37.0
-      webpack: 5.103.0(webpack-cli@5.1.4)
+      webpack: 5.103.0
 
   terser@5.37.0:
     dependencies:
@@ -44970,6 +45097,38 @@ snapshots:
       wildcard: 2.0.1
 
   webpack-sources@3.3.3: {}
+
+  webpack@5.103.0:
+    dependencies:
+      '@types/eslint-scope': 3.7.7
+      '@types/estree': 1.0.8
+      '@types/json-schema': 7.0.15
+      '@webassemblyjs/ast': 1.14.1
+      '@webassemblyjs/wasm-edit': 1.14.1
+      '@webassemblyjs/wasm-parser': 1.14.1
+      acorn: 8.15.0
+      acorn-import-phases: 1.0.4(acorn@8.15.0)
+      browserslist: 4.28.1
+      chrome-trace-event: 1.0.4
+      enhanced-resolve: 5.18.3
+      es-module-lexer: 1.5.4
+      eslint-scope: 5.1.1
+      events: 3.3.0
+      glob-to-regexp: 0.4.1
+      graceful-fs: 4.2.11
+      json-parse-even-better-errors: 2.3.1
+      loader-runner: 4.3.1
+      mime-types: 2.1.35
+      neo-async: 2.6.2
+      schema-utils: 4.3.3
+      tapable: 2.3.0
+      terser-webpack-plugin: 5.3.15(webpack@5.103.0)
+      watchpack: 2.4.4
+      webpack-sources: 3.3.3
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
 
   webpack@5.103.0(webpack-cli@5.1.4):
     dependencies:
