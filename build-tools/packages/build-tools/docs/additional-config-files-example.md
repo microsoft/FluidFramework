@@ -23,7 +23,6 @@ module.exports = {
   version: 1,
   tasks: {
     "eslint": {
-      dependsOn: ["..."],  // Inherit default dependencies
       files: {
         // Use ${repoRoot} token to reference files at the repository root
         // This works for all packages regardless of directory depth

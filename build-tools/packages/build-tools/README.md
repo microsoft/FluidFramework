@@ -171,7 +171,6 @@ Global configuration example (`fluidBuild.config.cjs`):
 module.exports = {
    tasks: {
       "eslint": {
-         dependsOn: ["..."],
          files: {
             additionalConfigFiles: ["${repoRoot}/.eslintrc.cjs", "${repoRoot}/common/eslint-config.json"]
          }
