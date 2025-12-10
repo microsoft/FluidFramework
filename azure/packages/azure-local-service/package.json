@@ -39,7 +39,7 @@
 		"eslint-config-prettier": "~10.1.8",
 		"jiti": "^2.6.1",
 		"pm2": "^5.4.2",
-		"rimraf": "^4.4.0"
+		"rimraf": "^6.1.2"
 	},
 	"typeValidation": {
 		"disabled": true

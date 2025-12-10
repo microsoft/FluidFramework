@@ -87,7 +87,7 @@
 		"eslint": "~8.57.1",
 		"jiti": "^2.6.1",
 		"nock": "^13.3.3",
-		"rimraf": "^4.4.0",
+		"rimraf": "^6.1.2",
 		"typescript": "~5.4.5"
 	},
 	"fluidBuild": {

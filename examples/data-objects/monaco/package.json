@@ -59,7 +59,7 @@
 		"jiti": "^2.6.1",
 		"loader-utils": "^1.1.0",
 		"monaco-editor-webpack-plugin": "^6.0.0",
-		"rimraf": "^4.4.0",
+		"rimraf": "^6.1.2",
 		"sass": "^1.78.0",
 		"sass-loader": "^16.0.1",
 		"source-map-loader": "^5.0.0",

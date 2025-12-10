@@ -159,7 +159,7 @@
 		"eslint": "~8.57.1",
 		"jiti": "^2.6.1",
 		"mocha-multi-reporters": "^1.5.1",
-		"rimraf": "^4.4.0",
+		"rimraf": "^6.1.2",
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
