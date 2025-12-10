@@ -1728,7 +1728,7 @@
             "error"
         ],
         "react-hooks/immutability": [
-            "error"
+            "warn"
         ],
         "react-hooks/incompatible-library": [
             "warn"
@@ -1740,19 +1740,19 @@
             "error"
         ],
         "react-hooks/refs": [
-            "error"
+            "warn"
         ],
         "react-hooks/rules-of-hooks": [
             "warn"
         ],
         "react-hooks/set-state-in-effect": [
-            "error"
+            "warn"
         ],
         "react-hooks/set-state-in-render": [
             "error"
         ],
         "react-hooks/static-components": [
-            "error"
+            "off"
         ],
         "react-hooks/unsupported-syntax": [
             "warn"
