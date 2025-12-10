@@ -134,6 +134,15 @@ export interface BranchableTree extends ViewableTree {
     rebase(branch: TreeBranchFork): void;
 }
 
+// @alpha @sealed
+export type ChangeMetadata = CommitMetadata & ({
+    readonly isLocal: true;
+    getChange(): JsonCompatibleReadOnly;
+} | {
+    readonly isLocal: false;
+    readonly getChange?: undefined;
+});
+
 // @alpha
 export function checkCompatibility(viewWhichCreatedStoredSchema: TreeViewConfiguration, view: TreeViewConfiguration): Omit<SchemaCompatibilityStatus, "canInitialize">;
 
@@ -1487,6 +1496,7 @@ export interface TreeBranch extends IDisposable {
 
 // @alpha @sealed
 export interface TreeBranchAlpha extends TreeBranch {
+    applyChange(change: JsonCompatibleReadOnly): void;
     readonly events: Listenable_2<TreeBranchEvents>;
     // (undocumented)
     fork(): TreeBranchAlpha;
@@ -1497,7 +1507,7 @@ export interface TreeBranchAlpha extends TreeBranch {
 
 // @alpha @sealed
 export interface TreeBranchEvents extends Omit<TreeViewEvents, "commitApplied"> {
-    changed(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
+    changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
     commitApplied(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
 }
 
