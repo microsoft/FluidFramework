@@ -6,13 +6,12 @@
 import { strict as assert } from "node:assert";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { type ICodecFamily, type IJsonCodec, makeCodecFamily } from "../../../codec/index.js";
+import { FluidClientVersion, type IJsonCodec } from "../../../codec/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { ClientVersionDispatchingCodecBuilder } from "../../../codec/versioned/codec.js";
 import { pkgVersion } from "../../../packageVersion.js";
-import { gt } from "semver-ts";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 describe("versioned Codecs", () => {
 	describe("ClientVersionDispatchingCodecBuilder", () => {
@@ -33,16 +32,16 @@ describe("versioned Codecs", () => {
 			decode: (x) => (x as unknown as V2).value2,
 		};
 
-		const family: ICodecFamily<number> = makeCodecFamily([
-			[1, codecV1],
-			[2, codecV2],
-		]);
-		const builder = new ClientVersionDispatchingCodecBuilder(
-			family,
-			(minVersionForCollab: MinimumVersionForCollab) =>
-				// Arbitrary version selection logic for test purposes. Versions greater than 5.0.0 get v2 codec.
-				gt(minVersionForCollab, "5.0.0") ? 2 : 1,
-		);
+		const builder = new ClientVersionDispatchingCodecBuilder("Test", {
+			[lowestMinVersionForCollab]: {
+				formatVersion: 1,
+				codec: codecV1,
+			},
+			[FluidClientVersion.v2_43]: {
+				formatVersion: 2,
+				codec: () => codecV2,
+			},
+		});
 
 		it("round trip", () => {
 			const codec1 = builder.build({
@@ -50,8 +49,7 @@ describe("versioned Codecs", () => {
 				jsonValidator: FormatValidatorBasic,
 			});
 			const codec2 = builder.build({
-				// We have to cast to a `MinimumVersionForCollab` because "6.0.0" is not a valid value for that type.
-				minVersionForCollab: "6.0.0" as MinimumVersionForCollab,
+				minVersionForCollab: "2.55.0",
 				jsonValidator: FormatValidatorBasic,
 			});
 			const v1 = codec1.encode(42);

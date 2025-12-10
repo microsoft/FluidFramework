@@ -5,8 +5,13 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { SemanticVersion } from "@fluidframework/runtime-utils/internal";
+import {
+	getConfigForMinVersionForCollab,
+	type ConfigMapEntry,
+	type SemanticVersion,
+} from "@fluidframework/runtime-utils/internal";
 import { Type, type TSchema } from "@sinclair/typebox";
+import { gt } from "semver-ts";
 
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import {
@@ -16,6 +21,9 @@ import {
 	withSchemaValidation,
 	type FormatVersion,
 	type CodecWriteOptions,
+	type IMultiFormatCodec,
+	type CodecName,
+	makeCodecFamily,
 } from "../codec.js";
 
 import { Versioned } from "./format.js";
@@ -103,12 +111,12 @@ export function makeDiscontinuedCodecVersion<
 	const codec: IJsonCodec<TDecoded, TEncoded, TEncoded, TContext> = {
 		encode: (_: TDecoded): TEncoded => {
 			throw new UsageError(
-				`Cannot encode data to format ${discontinuedVersion}. The codec was discontinued in FF version ${discontinuedSince}.`,
+				`Cannot encode data to format ${discontinuedVersion}. The codec was discontinued in Fluid Framework client version ${discontinuedSince}.`,
 			);
 		},
 		decode: (data: TEncoded): TDecoded => {
 			throw new UsageError(
-				`Cannot decode data to format ${data.version}. The codec was discontinued in FF version ${discontinuedSince}.`,
+				`Cannot decode data to format ${data.version}. The codec was discontinued in Fluid Framework client version ${discontinuedSince}.`,
 			);
 		},
 	};
@@ -121,11 +129,11 @@ export function makeDiscontinuedCodecVersion<
  * @remarks
  * Each member of the codec family must write an explicit version number into the data it encodes (implementing {@link Versioned}).
  *
- * TODO: Users of this should migrate to {@link ClientVersionDispatchingCodecBuilder} so that the actual format version used can be encapsulated.
+ * @deprecated Users of this should migrate to {@link ClientVersionDispatchingCodecBuilder} so that the actual format version used can be encapsulated.
  */
 export function makeVersionDispatchingCodec<TDecoded, TContext>(
 	family: ICodecFamily<TDecoded, TContext>,
-	options: ICodecOptions & { writeVersion: number | string },
+	options: ICodecOptions & { writeVersion: FormatVersion },
 ): IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
 	const writeCodec = family.resolve(options.writeVersion).json;
 	const supportedVersions = new Set(family.getSupportedFormats());
@@ -140,30 +148,119 @@ export function makeVersionDispatchingCodec<TDecoded, TContext>(
 	});
 }
 
+export type CodecType<TDecoded, TContext> =
+	| IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>
+	| IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>;
+
+export interface CodecVersion<TDecoded, TContext, TFormatVersion extends FormatVersion> {
+	readonly formatVersion: TFormatVersion;
+	readonly codec:
+		| CodecType<TDecoded, TContext>
+		| ((options: CodecWriteOptions) => CodecType<TDecoded, TContext>);
+}
+
 /**
- * Creates a codec which dispatches to the appropriate member of a codec family based on the `minVersionForCollab` for encode and the
+ * Creates a codec which dispatches to the appropriate member of a codec family based on the `oldestCompatibleClient` for encode and the
  * version number in data it encounters for decode.
  * @privateRemarks
  * This is a two stage builder so the first stage can encapsulate all codec specific details and the second can bring in configuration.
  */
-export class ClientVersionDispatchingCodecBuilder<TDecoded, TContext> {
+export class ClientVersionDispatchingCodecBuilder<
+	Name extends CodecName,
+	TDecoded,
+	TContext,
+	TFormatVersion extends FormatVersion,
+> {
+	private readonly fromFormatVersion: ReadonlyMap<
+		FormatVersion,
+		CodecVersion<TDecoded, TContext, TFormatVersion>
+	>;
+
+	private readonly minVersionFromCodec: ReadonlyMap<
+		CodecVersion<TDecoded, TContext, TFormatVersion>,
+		MinimumVersionForCollab
+	>;
+
 	public constructor(
 		/**
-		 * The codec family to dispatch to.
+		 * See {@link CodecName}.
 		 */
-		private readonly family: ICodecFamily<TDecoded, TContext>,
+		public readonly name: Name,
 		/**
-		 * A function which maps a {@link MinimumVersionForCollab} to a version number for the codec family which is supported by that version.
-		 * This can (and typically does) pick the newest version of the codec which is known to be compatible with the client version so that
-		 * any improvements in newer versions of the codec can be used when allowed.
+		 * The registry of codecs which this builder can use to encode and decode data.
 		 */
-		private readonly versionMapping: (minVersionForCollab: MinimumVersionForCollab) => number,
-	) {}
+		public readonly registry: ConfigMapEntry<CodecVersion<TDecoded, TContext, TFormatVersion>>,
+	) {
+		const fromFormatVersion: Map<
+			FormatVersion,
+			CodecVersion<TDecoded, TContext, TFormatVersion>
+		> = new Map();
+		const minVersionFromCodec: Map<
+			CodecVersion<TDecoded, TContext, TFormatVersion>,
+			MinimumVersionForCollab
+		> = new Map();
+
+		for (const [minVersionForCollab, codec] of Object.entries(registry)) {
+			fromFormatVersion.set(codec.formatVersion, codec);
+			minVersionFromCodec.set(codec, minVersionForCollab as MinimumVersionForCollab);
+		}
+
+		this.registry = registry;
+		this.fromFormatVersion = fromFormatVersion;
+		this.minVersionFromCodec = minVersionFromCodec;
+	}
+
+	private getWriteVersion(options: CodecWriteOptions): FormatVersion {
+		if (options.writeVersionOverrides?.has(this.name) === true) {
+			const selectedFormatVersion = options.writeVersionOverrides.get(this.name);
+			const selected = this.fromFormatVersion.get(selectedFormatVersion);
+			if (selected === undefined) {
+				throw new UsageError(
+					`Codec "${this.name}" does not support requested format version ${selectedFormatVersion}. Supported versions are: ${Array.from(
+						this.fromFormatVersion.keys(),
+					).join(", ")}.`,
+				);
+			} else if (options.allowPossiblyIncompatibleWriteVersionOverrides !== true) {
+				const selectedMinVersionForCollab = this.minVersionFromCodec.get(selected);
+				if (selectedMinVersionForCollab === undefined) {
+					throw new UsageError(
+						`Codec "${this.name}" does not support requested format version ${selectedFormatVersion} because it does not specify an oldest compatible client. Use "allowPossiblyIncompatibleWriteVersionOverrides" to override this error.`,
+					);
+				} else if (gt(selectedMinVersionForCollab, options.minVersionForCollab)) {
+					throw new UsageError(
+						`Codec "${this.name}" does not support requested format version ${selectedFormatVersion} because it is only compatible back to client version ${selectedMinVersionForCollab} and the requested oldest compatible client was ${options.minVersionForCollab}. Use "allowPossiblyIncompatibleWriteVersionOverrides" to override this error.`,
+					);
+				}
+			}
+
+			return options.writeVersionOverrides.get(this.name);
+		}
+		return getConfigForMinVersionForCollab(options.minVersionForCollab, this.registry)
+			.formatVersion;
+	}
+
+	/**
+	 * Generate the codec family for this builder.
+	 * @remarks
+	 * This is used by {@link build}, and only exposed to enable inspection and testing of this codec.
+	 */
+	public getFamily(options: CodecWriteOptions): ICodecFamily<TDecoded, TContext> {
+		const family = makeCodecFamily(
+			Object.values(this.registry).map(
+				(codec: CodecVersion<TDecoded, TContext, TFormatVersion>) => {
+					const final = typeof codec.codec === "function" ? codec.codec(options) : codec.codec;
+					return [codec.formatVersion, final];
+				},
+			),
+		);
+		return family;
+	}
 
 	public build(
 		options: CodecWriteOptions,
 	): IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
-		const writeVersion = this.versionMapping(options.minVersionForCollab);
-		return makeVersionDispatchingCodec(this.family, { ...options, writeVersion });
+		const family = this.getFamily(options);
+		const writeVersion = this.getWriteVersion(options);
+		return makeVersionDispatchingCodec(family, { ...options, writeVersion });
 	}
 }

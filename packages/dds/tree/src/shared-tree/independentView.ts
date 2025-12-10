@@ -206,7 +206,7 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 			...options,
 			minVersionForCollab: FluidClientVersion.v2_0,
 		};
-		const schemaCodec = makeSchemaCodec(writeOptions, brand(SchemaFormatVersion.v1));
+		const schemaCodec = makeSchemaCodec(writeOptions, SchemaFormatVersion.v1);
 		const fieldBatchCodec = makeFieldBatchCodec(writeOptions);
 		const newSchema = schemaCodec.decode(options.content.schema as Format);
 

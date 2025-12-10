@@ -10,6 +10,7 @@ import {
 } from "@fluidframework/runtime-utils/internal";
 
 import {
+	ClientVersionDispatchingCodecBuilder,
 	type CodecTree,
 	type CodecWriteOptions,
 	FluidClientVersion,
@@ -17,7 +18,6 @@ import {
 	type ICodecOptions,
 	type IJsonCodec,
 	makeCodecFamily,
-	makeVersionDispatchingCodec,
 	makeVersionedValidatedCodec,
 } from "../../codec/index.js";
 import {
@@ -42,14 +42,9 @@ import type { MinimumVersionForCollab } from "@fluidframework/runtime-definition
  * @returns The SchemaFormatVersion that corresponds to the provided MinimumVersionForCollab.
  */
 export function clientVersionToSchemaVersion(
-	clientVersion: MinimumVersionForCollab,
+	minVersionForCollab: MinimumVersionForCollab,
 ): SchemaFormatVersion {
-	return brand(
-		getConfigForMinVersionForCollab(clientVersion, {
-			[lowestMinVersionForCollab]: SchemaFormatVersion.v1,
-			[FluidClientVersion.v2_43]: SchemaFormatVersion.v2,
-		}),
-	);
+	return getConfigForMinVersionForCollab(minVersionForCollab, builder.registry).formatVersion;
 }
 
 export function getCodecTreeForSchemaFormat(
@@ -70,12 +65,11 @@ export function makeSchemaCodec(
 	options: CodecWriteOptions,
 	writeVersionOverride?: SchemaFormatVersion,
 ): IJsonCodec<TreeStoredSchema> {
-	const family = makeSchemaCodecs(options);
-	return makeVersionDispatchingCodec(family, {
-		...options,
-		writeVersion:
-			writeVersionOverride ?? clientVersionToSchemaVersion(options.minVersionForCollab),
-	});
+	const overrides = new Map(options.writeVersionOverrides ?? []);
+	if (writeVersionOverride !== undefined) {
+		overrides.set(builder.name, writeVersionOverride);
+	}
+	return builder.build({ ...options, writeVersionOverrides: overrides });
 }
 
 /**
@@ -205,3 +199,14 @@ function makeSchemaCodecV2(options: ICodecOptions): IJsonCodec<TreeStoredSchema,
 		decode: (data: FormatV2) => decodeV2(data),
 	});
 }
+
+const builder = new ClientVersionDispatchingCodecBuilder("TreeStoredSchema", {
+	[lowestMinVersionForCollab]: {
+		formatVersion: SchemaFormatVersion.v1,
+		codec: makeSchemaCodecV1,
+	},
+	[FluidClientVersion.v2_43]: {
+		formatVersion: SchemaFormatVersion.v2,
+		codec: makeSchemaCodecV2,
+	},
+});

@@ -9,4 +9,6 @@ export {
 	makeVersionedValidatedCodec,
 	makeVersionDispatchingCodec,
 	makeDiscontinuedCodecVersion,
+	ClientVersionDispatchingCodecBuilder,
+	type CodecVersion,
 } from "./codec.js";

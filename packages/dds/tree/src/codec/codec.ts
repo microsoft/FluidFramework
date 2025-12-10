@@ -11,6 +11,7 @@ import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 import type { ChangeEncodingContext } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import { cleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
 
 /**
  * Translates decoded data to encoded data.
@@ -153,6 +154,18 @@ export interface CodecWriteOptions extends ICodecOptions {
 	 * the data's format should be versioned and if they can't handle the format they should error.
 	 */
 	readonly minVersionForCollab: MinimumVersionForCollab;
+
+	/**
+	 * Overrides the version of the codec to use for encoding.
+	 * @remarks
+	 * Without an override, the selected version will be based on {@link CodecWriteOptions.minVersionForCollab}.
+	 */
+	readonly writeVersionOverrides?: ReadonlyMap<CodecName, FormatVersion>;
+
+	/**
+	 * If true, suppress errors when `writeVersionOverrides` selects a version which may not be compatible with the {@link CodecWriteOptions.minVersionForCollab}.
+	 */
+	readonly allowPossiblyIncompatibleWriteVersionOverrides?: boolean;
 }
 
 /**
@@ -251,12 +264,21 @@ export interface ICodecFamily<TDecoded, TContext = void> {
 
 /**
  * A version stamp for encoded data.
- *
+ * @remarks
  * Strings are used for formats that are not yet officially supported.
  * When such formats become officially supported/stable, they will be switched to using a number.
  * Undefined is tolerated to enable the scenario where data was not initially versioned.
+ * @alpha
  */
 export type FormatVersion = number | string | undefined;
+
+/**
+ * A unique name given to this codec family.
+ * @remarks
+ * This is not persisted: it is only used to specify version overrides and in errors.
+ * @alpha
+ */
+export type CodecName = string;
 
 /**
  * A format version which is dependent on some parent format version.
@@ -545,12 +567,8 @@ export const FluidClientVersion = {
  * An up to date version which includes all the important stable features.
  * @remarks
  * Use for cases when data is not persisted and thus would only ever be read by the current version of the framework.
- *
- * @privateRemarks
- * Update as needed.
- * TODO: Consider using packageVersion.ts to keep this current.
  */
-export const currentVersion: MinimumVersionForCollab = FluidClientVersion.v2_0;
+export const currentVersion: MinimumVersionForCollab = cleanedPackageVersion;
 
 export interface CodecTree {
 	readonly name: string;
