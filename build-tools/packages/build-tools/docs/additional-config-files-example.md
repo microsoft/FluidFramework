@@ -155,11 +155,13 @@ This package will ONLY track `${repoRoot}/.eslintrc.special.json` (no "..." mean
 
 ## Supported Task Handlers
 
-The `additionalConfigFiles` feature works with any task handler that extends `TscDependentTask`:
+The `additionalConfigFiles` feature is currently implemented for task handlers that extend `TscDependentTask`, which have specialized config file tracking:
 - `EsLintTask` (eslint)
 - `TsLintTask` (tslint)
 - `ApiExtractorTask` (api-extractor)
 - `GenerateEntrypointsTask` (flub generate entrypoints)
+
+The underlying infrastructure (`LeafWithDoneFileTask` and `LeafWithFileStatDoneFileTask`) that tracks input/output files is available in most task types, so the feature could be extended to additional task handlers in the future if needed.
 
 ## Benefits
 
