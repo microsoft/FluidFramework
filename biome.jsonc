@@ -137,7 +137,7 @@
 		"formatWithErrors": true,
 		"indentStyle": "tab",
 		// Changed from 95 to 120 to minimize formatting churn when upgrading from Biome 1.9 to 2.x.
-		// See https://github.com/microsoft/FluidFramework/pull/XXXXX for discussion.
+		// See https://github.com/microsoft/FluidFramework/pull/25965 for discussion.
 		"lineWidth": 120,
 		"lineEnding": "lf"
 	},
