@@ -1752,7 +1752,7 @@
             "error"
         ],
         "react-hooks/static-components": [
-            "off"
+            "warn"
         ],
         "react-hooks/unsupported-syntax": [
             "warn"
