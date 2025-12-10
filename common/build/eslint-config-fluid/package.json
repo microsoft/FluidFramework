@@ -49,7 +49,7 @@
 		"@types/sort-json": "^2.0.3",
 		"concurrently": "^8.2.1",
 		"cross-env": "^7.0.3",
-		"eslint": "~9.39.1",
+		"eslint": "~8.57.1",
 		"jiti": "^2.6.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.6.2",

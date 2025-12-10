@@ -85,8 +85,8 @@ importers:
         specifier: ^7.0.3
         version: 7.0.3
       eslint:
-        specifier: ~9.39.1
-        version: 9.39.1(jiti@2.6.1)
+        specifier: ~8.57.1
+        version: 8.57.1
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
