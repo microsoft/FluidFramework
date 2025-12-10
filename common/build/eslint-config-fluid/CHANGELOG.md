@@ -20,6 +20,7 @@ Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the leg
 **React Hooks plugin upgraded**: Upgraded from `~5.2.0` to `~7.0.1`, enabling several new React Hooks linting rules.
 
 **New react-hooks rules enabled as `"error"`**:
+
 - `react-hooks/component-hook-factories`
 - `react-hooks/config`
 - `react-hooks/error-boundaries`
@@ -31,6 +32,7 @@ Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the leg
 - `react-hooks/use-memo`
 
 **React-hooks rules temporarily downgraded to `"warn"`** (until ESLint 9 migration completes):
+
 - `react-hooks/rules-of-hooks`: Changed from `"error"` to `"warn"`
 - `react-hooks/exhaustive-deps`: Changed from `"error"` to `"warn"`
 - `react-hooks/immutability`: New rule set to `"warn"`
