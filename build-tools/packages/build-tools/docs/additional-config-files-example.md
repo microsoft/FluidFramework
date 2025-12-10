@@ -8,12 +8,13 @@ You have a monorepo with:
 - A root-level `.eslintrc.cjs` that all packages inherit from
 - A shared `common/eslint-config.json` that multiple packages use
 - Package-specific `.eslintrc.json` files
+- Packages at various depths in the directory structure (e.g., `packages/foo`, `packages/bar/baz`, etc.)
 
-When you modify the root or shared config files, you want packages to automatically rebuild their `eslint` task to pick up the changes.
+When you modify the root or shared config files, you want packages to automatically rebuild their `eslint` task to pick up the changes, but you don't want to hardcode different relative paths like `../../` or `../../../` for each package depth.
 
 ## Solution
 
-Use `additionalConfigFiles` in the global task definition to track these shared configs:
+Use `additionalConfigFiles` with the `<repoRoot>` token in the global task definition to track shared configs:
 
 ### Global Configuration (`fluidBuild.config.cjs`)
 
@@ -24,16 +25,19 @@ module.exports = {
     "eslint": {
       dependsOn: ["..."],  // Inherit default dependencies
       files: {
-        // Track the root eslint config and shared config relative to each package
+        // Use <repoRoot> token to reference files at the repository root
+        // This works for all packages regardless of directory depth
         additionalConfigFiles: [
-          "../../.eslintrc.cjs",
-          "../../common/build/eslint-config.json"
+          "<repoRoot>/.eslintrc.cjs",
+          "<repoRoot>/common/build/eslint-config.json"
         ]
       }
     }
   }
 }
 ```
+
+The `<repoRoot>` token will be replaced with the absolute path to the repository root, so you don't need to use relative paths like `../../` that vary by package depth.
 
 ### Package-Level Extension (`package.json`)
 
@@ -61,9 +65,9 @@ If a specific package needs to track additional config files, it can extend the 
 ```
 
 This package will track:
-- `../../.eslintrc.cjs` (from global)
-- `../../common/build/eslint-config.json` (from global)
-- `.eslintrc.local.json` (added by package)
+- `<repoRoot>/.eslintrc.cjs` (from global, resolves to absolute path)
+- `<repoRoot>/common/build/eslint-config.json` (from global, resolves to absolute path)
+- `.eslintrc.local.json` (added by package, relative to package directory)
 - Plus the `.eslintrc.*` file that eslint task handler automatically discovers
 
 ### Package-Level Override
@@ -77,7 +81,7 @@ To completely replace the global configuration:
       "eslint": {
         "files": {
           "additionalConfigFiles": [
-            ".eslintrc.special.json"
+            "<repoRoot>/.eslintrc.special.json"
           ]
         }
       }
@@ -86,14 +90,17 @@ To completely replace the global configuration:
 }
 ```
 
-This package will ONLY track `.eslintrc.special.json` (no "..." means no inheritance).
+This package will ONLY track `<repoRoot>/.eslintrc.special.json` (no "..." means no inheritance).
 
 ## How It Works
 
 1. The `EsLintTask` handler automatically discovers and tracks the package's `.eslintrc.*` file
 2. The `additionalConfigFiles` property adds extra files to track
-3. When any tracked file changes, the task is marked as out-of-date and will re-run
-4. File paths are relative to the package directory (use `../` to go up to parent directories)
+3. The `<repoRoot>` token is replaced with the absolute path to the repository root before resolving the path
+4. When any tracked file changes, the task is marked as out-of-date and will re-run
+5. File paths can be:
+   - Relative to the package directory (e.g., `.eslintrc.local.json` or `../../config.json`)
+   - Using the `<repoRoot>` token (e.g., `<repoRoot>/.eslintrc.cjs`)
 
 ## Use Cases
 
@@ -104,7 +111,7 @@ This package will ONLY track `.eslintrc.special.json` (no "..." means no inherit
   "tasks": {
     "tsc": {
       "files": {
-        "additionalConfigFiles": ["../../tsconfig.base.json"]
+        "additionalConfigFiles": ["<repoRoot>/tsconfig.base.json"]
       }
     }
   }
@@ -119,8 +126,8 @@ This package will ONLY track `.eslintrc.special.json` (no "..." means no inherit
     "api-extractor:commonjs": {
       "files": {
         "additionalConfigFiles": [
-          "../../api-extractor-base.json",
-          "../../api-extractor-lint.json"
+          "<repoRoot>/api-extractor-base.json",
+          "<repoRoot>/api-extractor-lint.json"
         ]
       }
     }
@@ -136,11 +143,26 @@ This package will ONLY track `.eslintrc.special.json` (no "..." means no inherit
     "eslint": {
       "files": {
         "additionalConfigFiles": [
-          "../../.eslintrc.cjs",
-          "../../.eslintignore",
-          "../../common/eslint-rules/custom-rules.json"
+          "<repoRoot>/.eslintrc.cjs",
+          "<repoRoot>/.eslintignore",
+          "<repoRoot>/common/eslint-rules/custom-rules.json"
         ]
       }
+    }
+  }
+}
+```
+
+### Using <repoRoot> in Declarative Tasks
+
+The `<repoRoot>` token can also be used in `inputGlobs` and `outputGlobs` for declarative tasks:
+
+```javascript
+{
+  "declarativeTasks": {
+    "custom-tool": {
+      "inputGlobs": ["<repoRoot>/config/**/*.json", "src/**/*.ts"],
+      "outputGlobs": ["dist/**/*.js"]
     }
   }
 }

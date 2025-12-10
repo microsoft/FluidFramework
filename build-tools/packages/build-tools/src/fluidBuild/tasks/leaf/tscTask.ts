@@ -13,6 +13,7 @@ import type * as tsTypes from "typescript";
 import { type TscUtil, getTscUtils } from "../../tscUtils";
 import { getInstalledPackageVersion } from "../taskUtils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
+import { replaceRepoRootToken } from "../../fluidBuildConfig";
 
 interface ITsBuildInfo {
 	program: {
@@ -486,9 +487,12 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 				this._configFileFullPaths = taskSpecificConfigs;
 			} else {
 				// Convert relative paths to absolute paths
-				const additionalFullPaths = additionalConfigs.map((relPath) =>
-					this.getPackageFileFullPath(relPath),
-				);
+				// Replace <repoRoot> token with actual repository root path
+				const repoRoot = this.node.context.repoRoot;
+				const additionalFullPaths = additionalConfigs.map((relPath) => {
+					const pathWithRepoRoot = replaceRepoRootToken(relPath, repoRoot);
+					return this.getPackageFileFullPath(pathWithRepoRoot);
+				});
 
 				this._configFileFullPaths = [...taskSpecificConfigs, ...additionalFullPaths];
 			}

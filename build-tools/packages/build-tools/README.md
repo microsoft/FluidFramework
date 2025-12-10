@@ -163,7 +163,7 @@ For example:
 
 For known task handlers like `eslint`, `tsc`, `api-extractor`, etc., `fluid-build` automatically tracks their configuration files (like `.eslintrc`, `tsconfig.json`, `api-extractor.json`). However, you may want to track additional configuration files that affect the task but aren't automatically discovered.
 
-You can specify additional configuration files to track using the `additionalConfigFiles` property in the task's `files` configuration:
+You can specify additional configuration files to track using the `additionalConfigFiles` property in the task's `files` configuration. File paths can be relative to the package directory or use the special token `<repoRoot>` to reference files at the repository root.
 
 Global configuration example (`fluidBuild.config.cjs`):
 
@@ -173,7 +173,7 @@ module.exports = {
       "eslint": {
          dependsOn: ["..."],
          files: {
-            additionalConfigFiles: ["../../.eslintrc.cjs", "../../common/eslint-config.json"]
+            additionalConfigFiles: ["<repoRoot>/.eslintrc.cjs", "<repoRoot>/common/eslint-config.json"]
          }
       }
    }
@@ -197,11 +197,14 @@ Package-level extension example (`package.json`):
 ```
 
 In this example:
-- The global configuration specifies that all `eslint` tasks should track `../../.eslintrc.cjs` and `../../common/eslint-config.json` (relative to each package)
+- The global configuration uses `<repoRoot>` to reference files at the repository root, eliminating the need for relative paths like `../../`
+- The `<repoRoot>` token works the same for all packages regardless of their depth in the directory structure
 - A specific package extends this list by adding `.eslintrc.local.json` using the `"..."` syntax
 - The task will rebuild if any of these files change, in addition to the `.eslintrc.*` file that eslint automatically discovers
 
 The `"..."` syntax works the same way as for task dependencies - it includes the inherited configuration from the global definition. Without `"..."`, the package-level configuration completely replaces the global configuration.
+
+The `<repoRoot>` token can also be used in `inputGlobs` and `outputGlobs` for declarative tasks to reference files at the repository root.
 
 For more examples and use cases, see [Additional Config Files Example](./docs/additional-config-files-example.md).
 
