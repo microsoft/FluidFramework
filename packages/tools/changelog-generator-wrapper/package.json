@@ -28,7 +28,7 @@
 		"tsc": "echo \"No build required.\""
 	},
 	"dependencies": {
-		"@changesets/cli": "^2.27.8",
+		"@changesets/cli": "^2.29.8",
 		"@changesets/types": "^6.0.0",
 		"changesets-format-with-issue-links": "^0.3.0",
 		"typescript": "~5.4.5"
