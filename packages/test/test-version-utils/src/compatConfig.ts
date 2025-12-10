@@ -267,7 +267,7 @@ export function isCompatVersionBelowMinVersion(
  * ! If a summarizer's version is too old (using dual-commit summaries), ODSP will nack the summaries with "Upgrade to a newer version of the Fluid client packages to summarize".
  */
 export function isOdspCompatCompliant(config: CompatConfig): boolean {
-	const versionIsCompliant = (version: string | number | undefined) => {
+	const versionIsCompliant = (version: string | number | undefined): boolean => {
 		// ! Looking at current telemetry, the oldest hit that doesn't use dual-commit summaries was version "2.0.0-rc.5.0.7"
 		// ! Given this, version "2.0.0" is a fine cut off since we currently only test back to N-1
 		const odspMinVersion = "2.0.0";
