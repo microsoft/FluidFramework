@@ -1962,12 +1962,6 @@
         "unicorn/better-regex": [
             2
         ],
-        "unicorn/consistent-function-scoping": [
-            2,
-            {
-                "checkArrowFunctions": false
-            }
-        ],
         "unicorn/empty-brace-spaces": [
             0
         ],

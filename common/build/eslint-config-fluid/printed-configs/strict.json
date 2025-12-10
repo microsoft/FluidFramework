@@ -2047,10 +2047,7 @@
             2
         ],
         "unicorn/consistent-function-scoping": [
-            2,
-            {
-                "checkArrowFunctions": false
-            }
+            2
         ],
         "unicorn/custom-error-definition": [
             0
