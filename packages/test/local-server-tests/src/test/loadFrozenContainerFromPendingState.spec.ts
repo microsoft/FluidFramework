@@ -22,6 +22,7 @@ import {
 } from "@fluidframework/server-local-server";
 import {
 	timeoutPromise,
+	type ITestFluidObject,
 	type LocalCodeLoader,
 	type TestFluidObject,
 } from "@fluidframework/test-utils/internal";
@@ -41,7 +42,7 @@ const toComparableArray = (dir: ISharedMap): [string, unknown][] =>
 // initialize loader and create a container function
 const initialize = async (): Promise<{
 	container: ContainerAlpha;
-	ITestFluidObject: TestFluidObject;
+	ITestFluidObject: ITestFluidObject;
 	urlResolver: LocalResolver;
 	codeLoader: LocalCodeLoader;
 	documentServiceFactory: LocalDocumentServiceFactory;
