@@ -495,12 +495,23 @@ export class ChannelCollection
 			// If a non-local operation then go and create the object, otherwise mark it as officially attached.
 			if (this.alreadyProcessed(attachMessage.id)) {
 				// TODO: dataStoreId may require a different tag from PackageData #7488
+				const existingContext = this.contexts.get(attachMessage.id);
+				const existsInAliasMap = this.aliasMap.get(attachMessage.id) !== undefined;
+				// If it's in the alias map or the context is attaching/attached, it's considered attached
+				const isAttachingOrAttached =
+					existsInAliasMap ||
+					existingContext?.attachState === AttachState.Attaching ||
+					existingContext?.attachState === AttachState.Attached;
 				const error = new DataCorruptionError(
 					// pre-0.58 error message: duplicateDataStoreCreatedWithExistingId
-					"Duplicate DataStore created with existing id",
+					isAttachingOrAttached
+						? "Duplicate DataStore created with existing id for attaching/attached DataStore"
+						: "Duplicate DataStore created with existing id for not-yet-attached DataStore",
 					{
 						...extractSafePropertiesFromMessage(envelope),
 						...tagCodeArtifacts({ dataStoreId: attachMessage.id }),
+						existingAttachState: existingContext?.attachState,
+						existsInAliasMap,
 					},
 				);
 				throw error;
