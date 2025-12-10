@@ -112,7 +112,7 @@ export async function promiseRaceWithWinner<T>(
 ): Promise<{ index: number; value: T }> {
 	return new Promise((resolve, reject) => {
 		promises.forEach((p, index) => {
-			p.then((v) => resolve({ index, value: v })).catch(reject);
+			p.then((v): void => resolve({ index, value: v })).catch(reject);
 		});
 	});
 }

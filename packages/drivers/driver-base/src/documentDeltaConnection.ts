@@ -438,7 +438,7 @@ export class DocumentDeltaConnection
 		}
 	}
 
-	protected readonly disconnect = (err: IAnyDriverError) => {
+	protected readonly disconnect = (err: IAnyDriverError): void => {
 		// Can't check this.disposed here, as we get here on socket closure,
 		// so _disposed & socket.connected might be not in sync while processing
 		// "dispose" event.
@@ -474,11 +474,11 @@ export class DocumentDeltaConnection
 	 * Disconnect from the websocket.
 	 * @param reason - reason for disconnect
 	 */
-	protected disconnectCore(err: IAnyDriverError) {
+	protected disconnectCore(err: IAnyDriverError): void {
 		this.socket.disconnect();
 	}
 
-	protected async initialize(connectMessage: IConnect, timeout: number) {
+	protected async initialize(connectMessage: IConnect, timeout: number): Promise<void> {
 		this.socket.on("op", this.earlyOpHandler);
 		this.socket.on("signal", this.earlySignalHandler);
 		this.earlyOpHandlerAttached = true;
@@ -689,7 +689,7 @@ export class DocumentDeltaConnection
 		assert(!this.disposed, 0x246 /* "checking consistency of socket & _disposed flags" */);
 	}
 
-	private addPropsToError(errorToBeNormalized: unknown) {
+	private addPropsToError(errorToBeNormalized: unknown): IFluidErrorBase {
 		const normalizedError = normalizeError(errorToBeNormalized, {
 			props: {
 				details: JSON.stringify({
@@ -700,7 +700,12 @@ export class DocumentDeltaConnection
 		return normalizedError;
 	}
 
-	protected getConnectionDetailsProps() {
+	protected getConnectionDetailsProps(): {
+		disposed: boolean;
+		socketConnected: boolean | undefined;
+		clientId: string | undefined;
+		connectionId: string | undefined;
+	} {
 		return {
 			disposed: this._disposed,
 			socketConnected: this.socket?.connected,
@@ -709,11 +714,11 @@ export class DocumentDeltaConnection
 		};
 	}
 
-	protected earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
+	protected earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]): void => {
 		this.queuedMessages.push(...msgs);
 	};
 
-	protected earlySignalHandler = (msg: ISignalMessage | ISignalMessage[]) => {
+	protected earlySignalHandler = (msg: ISignalMessage | ISignalMessage[]): void => {
 		if (Array.isArray(msg)) {
 			this.queuedSignals.push(...msg);
 		} else {
