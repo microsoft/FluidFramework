@@ -365,7 +365,7 @@ export class EventAndErrorTrackingLogger
 	private readonly expectedEvents: { index: number; event: ITelemetryGenericEventExt }[] = [];
 	private readonly unexpectedErrors: ITelemetryBaseEvent[] = [];
 
-	public registerExpectedEvent(...orderedExpectedEvents: ITelemetryGenericEventExt[]) {
+	public registerExpectedEvent(...orderedExpectedEvents: ITelemetryGenericEventExt[]): void {
 		if (this.expectedEvents.length !== 0) {
 			// we don't have to error here. just no reason not to. given the events must be
 			// ordered it could be tricky to figure out problems around multiple registrations.
@@ -419,7 +419,10 @@ export class EventAndErrorTrackingLogger
 		this.baseLogger?.send(event);
 	}
 
-	public reportAndClearTrackedEvents() {
+	public reportAndClearTrackedEvents(): {
+		expectedNotFound: { index: number; event: ITelemetryGenericEventExt }[];
+		unexpectedErrors: ITelemetryBaseEvent[];
+	} {
 		const expectedNotFound = this.expectedEvents.splice(0, this.expectedEvents.length);
 		const unexpectedErrors = this.unexpectedErrors.splice(0, this.unexpectedErrors.length);
 		return {
@@ -543,7 +546,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 	public createLoader(
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
-	) {
+	): Loader {
 		const logger = createMultiSinkLogger({
 			loggers: [this.logger, loaderProps?.logger],
 		});
@@ -566,7 +569,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 	public async createContainer(
 		entryPoint: fluidEntryPoint,
 		loaderProps?: Partial<ILoaderProps>,
-	) {
+	): Promise<IContainer> {
 		if (this._documentCreated) {
 			throw new Error(
 				"Only one container/document can be created. To load the container/document use loadContainer",
