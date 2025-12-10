@@ -26,7 +26,7 @@ module.exports = {
 		"react-hooks/refs": "warn",
 		"react-hooks/rules-of-hooks": "warn",
 		"react-hooks/set-state-in-effect": "warn",
-		"react-hooks/static-components": "off",
+		"react-hooks/static-components": "warn",
 
 		"depend/ban-dependencies": [
 			"error",
