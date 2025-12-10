@@ -457,17 +457,19 @@ function detectSharedConfigImports(
 
 /**
  * Parse source code to find concat patterns and map them to rules.
- * Returns a map of rule names to the concat patterns found.
+ * Returns a map of rule names to ALL concat patterns found (can be multiple per rule).
  */
 function findConcatPatternsInSource(
 	legacyConfigSource: string,
 	namedImports: string[],
-): Map<string, { varName: string; additionalItems: string[] }> {
-	const patterns = new Map<string, { varName: string; additionalItems: string[] }>();
+): Map<string, Array<{ varName: string; additionalItems: string[]; sourceIndex: number }>> {
+	const patterns = new Map<
+		string,
+		Array<{ varName: string; additionalItems: string[]; sourceIndex: number }>
+	>();
 
 	for (const importName of namedImports) {
-		// Look for: "rule-name": ["error", { allow: importName.concat([...]) }]
-		// Or: "rule-name": ["error", { allow: importName }]
+		// Pattern 1: "rule-name": ["error", { allow: importName.concat([...]) }]
 		const concatPattern = new RegExp(
 			`"([^"]+)":\\s*\\[[^\\[]*\\{[^}]*allow:\\s*${importName}\\.concat\\(\\[([^\\]]*)\\]\\)`,
 			"gs",
@@ -477,6 +479,7 @@ function findConcatPatternsInSource(
 		while ((match = concatPattern.exec(legacyConfigSource)) !== null) {
 			const ruleName = match[1];
 			const concatContent = match[2];
+			const sourceIndex = match.index;
 
 			// Extract string literals
 			const additionalItems: string[] = [];
@@ -486,7 +489,33 @@ function findConcatPatternsInSource(
 				additionalItems.push(str);
 			}
 
-			patterns.set(ruleName, { varName: importName, additionalItems });
+			if (!patterns.has(ruleName)) {
+				patterns.set(ruleName, []);
+			}
+			patterns.get(ruleName)!.push({ varName: importName, additionalItems, sourceIndex });
+		}
+
+		// Pattern 2: "rule-name": ["error", { allow: importName }] (direct reference, no concat)
+		const directPattern = new RegExp(
+			`"([^"]+)":\\s*\\[[^\\[]*\\{[^}]*allow:\\s*${importName}\\s*[,}]`,
+			"gs",
+		);
+
+		while ((match = directPattern.exec(legacyConfigSource)) !== null) {
+			const ruleName = match[1];
+			const sourceIndex = match.index;
+
+			if (!patterns.has(ruleName)) {
+				patterns.set(ruleName, []);
+			}
+			// Check if we already have a pattern for this rule at this location (concat takes precedence)
+			const existing = patterns.get(ruleName)!;
+			const alreadyExists = existing.some((p) => Math.abs(p.sourceIndex - sourceIndex) < 100);
+			if (!alreadyExists) {
+				patterns
+					.get(ruleName)!
+					.push({ varName: importName, additionalItems: [], sourceIndex });
+			}
 		}
 	}
 
@@ -499,10 +528,16 @@ function findConcatPatternsInSource(
 function processRuleConfigForConcat(
 	ruleName: string,
 	ruleConfig: unknown,
-	concatPatterns: Map<string, { varName: string; additionalItems: string[] }>,
+	concatPatterns: Map<
+		string,
+		Array<{ varName: string; additionalItems: string[]; sourceIndex: number }>
+	>,
 ): unknown {
-	const pattern = concatPatterns.get(ruleName);
-	if (!pattern) return ruleConfig;
+	const patternList = concatPatterns.get(ruleName);
+	if (!patternList || patternList.length === 0) return ruleConfig;
+
+	// Use the first pattern and remove it (for cases where same rule appears multiple times)
+	const pattern = patternList.shift()!;
 
 	// If this rule has a concat pattern, process it
 	if (Array.isArray(ruleConfig) && ruleConfig.length >= 2) {
@@ -513,7 +548,7 @@ function processRuleConfigForConcat(
 				severity,
 				{
 					...options,
-					allow: ["__SPREAD__" + pattern.varName, ...pattern.additionalItems],
+					"allow": ["__SPREAD__" + pattern.varName, ...pattern.additionalItems],
 				},
 				...rest,
 			];
@@ -740,7 +775,10 @@ ${imports}
 	let configContent = header;
 
 	// Parse source code to find concat patterns
-	let concatPatterns = new Map<string, { varName: string; additionalItems: string[] }>();
+	let concatPatterns = new Map<
+		string,
+		Array<{ varName: string; additionalItems: string[]; sourceIndex: number }>
+	>();
 	if (legacyConfigSource && sharedConfigNamedImports && sharedConfigNamedImports.length > 0) {
 		concatPatterns = findConcatPatternsInSource(legacyConfigSource, sharedConfigNamedImports);
 
