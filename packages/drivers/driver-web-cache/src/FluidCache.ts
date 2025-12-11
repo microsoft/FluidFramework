@@ -173,7 +173,7 @@ export class FluidCache implements IPersistedCache {
 		});
 	}
 
-	private async openDb() {
+	private async openDb(): Promise<IDBPDatabase<FluidCacheDBSchema>> {
 		if (this.closeDbImmediately) {
 			return getFluidCacheIndexedDbInstance(this.logger);
 		}
@@ -213,7 +213,7 @@ export class FluidCache implements IPersistedCache {
 		return this.db;
 	}
 
-	private closeDb(db?: IDBPDatabase<FluidCacheDBSchema>) {
+	private closeDb(db?: IDBPDatabase<FluidCacheDBSchema>): void {
 		if (this.closeDbImmediately) {
 			db?.close();
 		}
@@ -264,7 +264,7 @@ export class FluidCache implements IPersistedCache {
 		return cachedItem?.cachedObject;
 	}
 
-	private async getItemFromCache(cacheEntry: ICacheEntry) {
+	private async getItemFromCache(cacheEntry: ICacheEntry): Promise<any> {
 		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
 		try {
 			const key = getKeyForCacheEntry(cacheEntry);
