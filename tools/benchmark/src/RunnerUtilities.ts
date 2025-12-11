@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import type { Stats } from "./ResultTypes";
+import type {
+	BenchmarkResult,
+	BenchmarkError,
+	BenchmarkData,
+	CustomData,
+	Stats,
+} from "./ResultTypes";
 import { assert } from "./assert.js";
-import type { BenchmarkResult, BenchmarkError, BenchmarkData, CustomData } from "./ResultTypes";
 import { timer } from "./timer";
 
 /**
