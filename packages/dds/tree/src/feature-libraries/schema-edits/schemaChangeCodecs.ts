@@ -15,7 +15,7 @@ import {
 	makeVersionDispatchingCodec,
 	withSchemaValidation,
 } from "../../codec/index.js";
-import { getCodecTreeForSchemaFormat, makeSchemaCodec } from "../schema-index/index.js";
+import { makeSchemaCodec, schemaCodecBuilder } from "../schema-index/index.js";
 
 import { EncodedSchemaChange } from "./schemaChangeFormat.js";
 import type { SchemaChange } from "./schemaChangeTypes.js";
@@ -48,7 +48,7 @@ export function getCodecTreeForSchemaChangeFormat(
 	return {
 		name: "SchemaChange",
 		version,
-		children: [getCodecTreeForSchemaFormat(clientVersion)],
+		children: [schemaCodecBuilder.getCodecTree(clientVersion)],
 	};
 }
 

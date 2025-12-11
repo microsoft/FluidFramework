@@ -8,7 +8,6 @@ import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/interna
 
 import {
 	ClientVersionDispatchingCodecBuilder,
-	type CodecTree,
 	type CodecWriteOptions,
 	FluidClientVersion,
 	type ICodecOptions,
@@ -29,13 +28,6 @@ import { brand } from "../../util/index.js";
 
 import { Format as FormatV1 } from "./formatV1.js";
 import { Format as FormatV2 } from "./formatV2.js";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
-
-export function getCodecTreeForSchemaFormat(
-	clientVersion: MinimumVersionForCollab,
-): CodecTree {
-	return schemaCodecBuilder.getCodecTree(clientVersion);
-}
 
 /**
  * Create a schema codec.

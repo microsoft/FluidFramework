@@ -30,7 +30,7 @@ export { buildForest } from "./object-forest/index.js";
 export {
 	SchemaSummarizer,
 	makeSchemaCodec,
-	getCodecTreeForSchemaFormat,
+	schemaCodecBuilder,
 } from "./schema-index/index.js";
 export {
 	stackTreeNodeCursor,

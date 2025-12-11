@@ -16,8 +16,7 @@ import {
 	RevisionTagCodec,
 } from "../../../core/index.js";
 import {
-	builder,
-	makeDetachedFieldIndexCodec,
+	detachedFieldIndexCodecBuilder,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../core/tree/detachedFieldIndexCodecs.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -265,7 +264,7 @@ describe("DetachedFieldIndex Codecs", () => {
 			unfinalizedIdCompressor,
 		)) {
 			describe(name, () => {
-				for (const codec of builder.registry.values()) {
+				for (const codec of detachedFieldIndexCodecBuilder.registry.values()) {
 					if (
 						validFor !== undefined &&
 						codec.formatVersion !== undefined &&
@@ -288,7 +287,11 @@ describe("DetachedFieldIndex Codecs", () => {
 		}
 	});
 	describe("loadData", () => {
-		const codec = makeDetachedFieldIndexCodec(testRevisionTagCodec, options, testIdCompressor);
+		const codec = detachedFieldIndexCodecBuilder.build({
+			...options,
+			revisionTagCodec: testRevisionTagCodec,
+			idCompressor: testIdCompressor,
+		});
 		for (const [version, cases] of validData) {
 			describe(`accepts correct version ${version} data`, () => {
 				for (const [name, data] of cases) {
@@ -316,7 +319,7 @@ describe("DetachedFieldIndex Codecs", () => {
 			unfinalizedIdCompressor,
 		)) {
 			describe(name, () => {
-				for (const format of builder.registry.values()) {
+				for (const format of detachedFieldIndexCodecBuilder.registry.values()) {
 					const version = format.formatVersion;
 					if (validFor !== undefined && version !== undefined && !validFor.has(version)) {
 						continue;
