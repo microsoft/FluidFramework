@@ -31,7 +31,7 @@ export class DeferredPromise<T> implements Promise<T> {
 	 * Fetches a node style callback that fulfills the promise when called.
 	 * @returns A node style callback that fulfills the promise when called.
 	 */
-	getCb() {
+	getCb(): (error: unknown, result: T) => void {
 		return (error, result) => {
 			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (error) {
@@ -54,10 +54,10 @@ export class DeferredPromise<T> implements Promise<T> {
 		return this.promise.then(onrejected);
 	}
 
-	public resolve(val: T) {
+	public resolve(val: T): void {
 		this._resolveSelf(val);
 	}
-	public reject(reason: any) {
+	public reject(reason: any): void {
 		this._rejectSelf(reason);
 	}
 }
