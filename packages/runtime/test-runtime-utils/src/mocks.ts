@@ -500,7 +500,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		content: any,
 		localOpMetadata: unknown,
 		clientSequenceNumber: number,
-	) {
+	): void {
 		const pendingMessage: IMockContainerRuntimePendingMessage = {
 			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 			content,
@@ -524,7 +524,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		return [local, localOpMetadata];
 	}
 
-	public async resolveHandle(handle: IFluidHandle) {
+	public async resolveHandle(handle: IFluidHandle): Promise<IResponse> {
 		return this.dataStoreRuntime.resolveHandle({
 			url: toFluidHandleInternal(handle).absolutePath,
 		});
@@ -566,7 +566,7 @@ export class MockContainerRuntimeFactory {
 		this.runtimeOptions = makeContainerRuntimeOptions(mockContainerRuntimeOptions);
 	}
 
-	public get outstandingMessageCount() {
+	public get outstandingMessageCount(): number {
 		return this.messages.length;
 	}
 
@@ -892,7 +892,7 @@ export class MockFluidDataStoreRuntime
 	}
 
 	private readonly: boolean = false;
-	public readonly isReadOnly = () => this.readonly;
+	public readonly isReadOnly = (): boolean => this.readonly;
 
 	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
 
@@ -965,7 +965,7 @@ export class MockFluidDataStoreRuntime
 
 	private _disposed = false;
 
-	public get disposed() {
+	public get disposed(): boolean {
 		return this._disposed;
 	}
 

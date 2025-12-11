@@ -55,10 +55,10 @@ export class ParallelRequests<T> {
 	private requests = 0;
 	private readonly knewTo: boolean;
 
-	private get working() {
+	private get working(): boolean {
 		return this.workingState === "working";
 	}
-	public get canceled() {
+	public get canceled(): boolean {
 		return this.workingState === "canceled";
 	}
 
@@ -396,7 +396,7 @@ const waitForOnline = async (): Promise<void> => {
 	// Only wait if we have a strong signal that we're offline - otherwise assume we're online.
 	if (globalThis.navigator?.onLine === false && globalThis.addEventListener !== undefined) {
 		return new Promise<void>((resolve) => {
-			const resolveAndRemoveListener = () => {
+			const resolveAndRemoveListener = (): void => {
 				resolve();
 				globalThis.removeEventListener("online", resolveAndRemoveListener);
 			};
