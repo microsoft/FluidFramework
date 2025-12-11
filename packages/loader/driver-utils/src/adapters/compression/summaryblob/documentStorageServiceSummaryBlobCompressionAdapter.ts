@@ -315,7 +315,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @param summary - The summary tree to traverse.
 	 * @returns The content of the tree attribute of the summary tree containing the metadata blob.
 	 */
-	private static getMetadataHolderTree(summary: ISummaryTree) {
+	private static getMetadataHolderTree(summary: ISummaryTree): ISummaryTree {
 		const metadataHolder = this.findMetadataHolderSummary(summary);
 		assert(metadataHolder !== undefined, 0x6f8 /* metadataHolder must be a non-null object */);
 		const metadataHolderTree = metadataHolder.tree;
