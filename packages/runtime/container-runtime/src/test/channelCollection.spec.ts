@@ -233,6 +233,7 @@ describe("Runtime", () => {
 		//* ONLY
 		//* ONLY
 		describe.only("processAttachMessages - Duplicate ID Detection", () => {
+			/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/strict-boolean-expressions, @typescript-eslint/consistent-type-assertions */
 			let channelCollection: ChannelCollection;
 			let mockLogger: MockLogger;
 			let parentContext: IFluidRootParentContextPrivate;
@@ -240,34 +241,38 @@ describe("Runtime", () => {
 			const createMockAttachMessage = (
 				id: string,
 				type: string = "TestDataStore",
-			): IAttachMessage => ({
-				id,
-				type,
-				snapshot: { id: "snapshot-id", entries: [], blobs: [] } as ITree,
-			});
-
+			): IAttachMessage => {
+				const message: IAttachMessage = {
+					id,
+					type,
+					snapshot: { id: "snapshot-id", entries: [], blobs: [] } as ITree,
+				};
+				return message;
+			};
 			const createMockMessageCollection = (
 				attachMessage: IAttachMessage,
 				local: boolean = false,
 				sequenceNumber: number = 1,
-			): IRuntimeMessageCollection => ({
-				envelope: {
-					type: ContainerMessageType.Attach,
-					contents: attachMessage,
-					sequenceNumber,
-					clientId: local ? "local-client" : "remote-client",
-					timestamp: Date.now(),
-				} as ISequencedDocumentMessage,
-				messagesContent: [
-					{
+			): IRuntimeMessageCollection => {
+				const messageCollection: IRuntimeMessageCollection = {
+					envelope: {
+						type: ContainerMessageType.Attach,
 						contents: attachMessage,
-						localOpMetadata: undefined,
-						clientSequenceNumber: 1,
-					},
-				],
-				local,
-			});
-
+						sequenceNumber,
+						clientId: local ? "local-client" : "remote-client",
+						timestamp: Date.now(),
+					} as ISequencedDocumentMessage,
+					messagesContent: [
+						{
+							contents: attachMessage,
+							localOpMetadata: undefined,
+							clientSequenceNumber: 1,
+						},
+					],
+					local,
+				};
+				return messageCollection;
+			};
 			beforeEach(() => {
 				mockLogger = new MockLogger();
 				const baseParentContext = createParentContext(mockLogger);
@@ -564,6 +569,7 @@ describe("Runtime", () => {
 					channelCollection.processMessages(messageCollection3);
 				}, "Should succeed for non-colliding ID");
 			});
+			/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/strict-boolean-expressions, @typescript-eslint/consistent-type-assertions */
 		});
 	});
 });

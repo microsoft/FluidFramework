@@ -494,6 +494,11 @@ export class ChannelCollection
 
 			// Check for collision with local (not yet live / known to other clients) DataStore
 			// This is not a DataCorruption case if we crash the container before it attaches (it's a DataProcessingError instead)
+			//
+			// POSSIBLE CAUSES:
+			// - Something with ID creation, e.g. a bug in shortID logic, or somehow an alias is used that matches a generated ID
+			// - An invalid operation by the driver or service where an existing container is returned to a new container attach call,
+			// resulting in duplicate accounting for objects that were supposed to be local-only.
 			if (this.contexts.getUnbound(attachMessage.id) !== undefined) {
 				const error = DataProcessingError.create(
 					"Local DataStore matches remote DataStore id",
@@ -504,8 +509,14 @@ export class ChannelCollection
 				throw error;
 			}
 
-			// Check for collision with already processed (attaching/attached or aliased) data store
-			// i.e. We have two attach messages sequenced for the same data store id - This is data corruption
+			// Check for collision with already processed (attaching/attached or aliased) DataStore
+			// This is presumed to indicate a corrupted op stream, where we'd expect all future sessions to fail here too.
+			//
+			// POSSIBLE CAUSES:
+			// - A bug in the service or driver that results in ops being duplicated
+			// - Similar to above, an existing container being returned to a new container attach call,
+			// where the DataStore in question was already bound locally before container attach.
+			// (Perhaps future sessions would not fail in this case, but it's hypothetical and hard to differentiate)
 			if (this.alreadyProcessed(attachMessage.id)) {
 				const error = new DataCorruptionError(
 					// pre-0.58 error message: duplicateDataStoreCreatedWithExistingId
