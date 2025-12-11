@@ -136,7 +136,7 @@ export function makeMessageCodecs<TChangeset>(
 			case unbrand(MessageFormatVersion.v1):
 			case unbrand(MessageFormatVersion.v2): {
 				const versionOrUndefined =
-					version === MessageFormatVersion.undefined ? undefined : version;
+					version === unbrand(MessageFormatVersion.undefined) ? undefined : version;
 				return [
 					versionOrUndefined,
 					makeDiscontinuedCodecVersion(options, versionOrUndefined, "2.73.0"),
