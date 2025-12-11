@@ -547,12 +547,12 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 	/**
 	 * Get additional config files to track for this task from the task definition.
 	 * These files will be included in the input files tracked by the done file.
-	 * 
+	 *
 	 * @returns the list of absolute paths to additional config files, or undefined if none are specified
 	 */
 	protected getAdditionalConfigFiles(): string[] | undefined {
 		const additionalConfigs = this.node.getAdditionalConfigFiles(this.taskName ?? "");
-		
+
 		if (!additionalConfigs || additionalConfigs.length === 0) {
 			return undefined;
 		}
@@ -639,12 +639,12 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 		try {
 			const srcFiles = await this.getInputFiles();
 			const additionalConfigFiles = this.getAdditionalConfigFiles();
-			
+
 			// Include additional config files in the input files
-			const allSrcFiles = additionalConfigFiles 
+			const allSrcFiles = additionalConfigFiles
 				? [...srcFiles, ...additionalConfigFiles]
 				: srcFiles;
-			
+
 			const dstFiles = await this.getOutputFiles();
 			const srcTimesP = Promise.all(
 				allSrcFiles
@@ -683,12 +683,12 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 		try {
 			const srcFiles = await this.getInputFiles();
 			const additionalConfigFiles = this.getAdditionalConfigFiles();
-			
+
 			// Include additional config files in the input files
-			const allSrcFiles = additionalConfigFiles 
+			const allSrcFiles = additionalConfigFiles
 				? [...srcFiles, ...additionalConfigFiles]
 				: srcFiles;
-			
+
 			const dstFiles = await this.getOutputFiles();
 			const srcHashesP = Promise.all(allSrcFiles.map(mapHash));
 			const dstHashesP = Promise.all(dstFiles.map(mapHash));

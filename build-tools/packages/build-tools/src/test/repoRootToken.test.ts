@@ -20,7 +20,10 @@ describe("Repo Root Token", () => {
 		});
 
 		it("handles multiple occurrences of ${repoRoot} token", () => {
-			const result = replaceRepoRootToken("${repoRoot}/common/${repoRoot}/config", testRepoRoot);
+			const result = replaceRepoRootToken(
+				"${repoRoot}/common/${repoRoot}/config",
+				testRepoRoot,
+			);
 			assert.strictEqual(result, "/home/user/repo/common//home/user/repo/config");
 		});
 

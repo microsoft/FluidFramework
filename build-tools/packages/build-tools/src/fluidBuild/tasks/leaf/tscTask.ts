@@ -482,7 +482,7 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 			const taskSpecificConfigs = this.getTaskSpecificConfigFiles();
 			const additionalConfigs = this.getAdditionalConfigFiles();
 
-			this._configFileFullPaths = additionalConfigs 
+			this._configFileFullPaths = additionalConfigs
 				? [...taskSpecificConfigs, ...additionalConfigs]
 				: taskSpecificConfigs;
 		}
