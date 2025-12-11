@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IFluidMountableViewEntryPoint } from "@fluid-example/example-utils";
 import type {
 	ICodeDetailsLoader,
 	IContainer,
@@ -22,22 +23,16 @@ import {
 } from "@fluidframework/local-driver/legacy";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
-import { createElement } from "react";
-import { createRoot } from "react-dom/client";
 import { v4 as uuid } from "uuid";
 
-import {
-	BlobCollectionContainerRuntimeFactory,
-	type IBlobCollection,
-} from "../src/container/index.js";
-import { BlobCollectionView, DebugView } from "../src/view.js";
+import { fluidExport } from "../src/container/index.js";
 
 const urlResolver = new LocalResolver();
 const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
 const codeLoader: ICodeDetailsLoader = {
 	load: async (details: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
 		return {
-			module: { fluidExport: new BlobCollectionContainerRuntimeFactory() },
+			module: { fluidExport },
 			details,
 		};
 	},
@@ -50,8 +45,8 @@ const codeLoader: ICodeDetailsLoader = {
 async function createOrLoadContainerAndRenderInElement(
 	element: HTMLDivElement,
 ): Promise<void> {
+	let id: string;
 	let container: IContainer;
-	let attach: (() => void) | undefined;
 
 	if (location.hash.length === 0) {
 		container = await createDetachedContainer({
@@ -60,49 +55,35 @@ async function createOrLoadContainerAndRenderInElement(
 			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader,
 		});
-		attach = () => {
-			const documentId = uuid();
-			container
-				.attach(createLocalResolverCreateNewRequest(documentId))
-				.then(() => {
-					if (container.resolvedUrl === undefined) {
-						throw new Error("Resolved Url unexpectedly missing!");
-					}
-					const id = container.resolvedUrl.id;
-					// Update url and tab title
-					location.hash = id;
-					document.title = id;
-				})
-				.catch(console.error);
-		};
+		const documentId = uuid();
+		await container.attach(createLocalResolverCreateNewRequest(documentId));
+		if (container.resolvedUrl === undefined) {
+			throw new Error("Resolved Url not available on attached container");
+		}
+		// Should be the same as the uuid we generated above.
+		id = container.resolvedUrl.id;
 	} else {
-		const id = location.hash.substring(1);
+		id = location.hash.slice(1);
 		container = await loadExistingContainer({
 			request: { url: `${window.location.origin}/${id}` },
 			urlResolver,
 			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader,
 		});
-		// Update url and tab title
-		location.hash = id;
-		document.title = id;
 	}
 
-	const blobCollection = (await container.getEntryPoint()) as IBlobCollection;
-	const render = (blobCollection: IBlobCollection) => {
-		const appElement = document.createElement("div");
-		const debugElement = document.createElement("div");
-		element.append(debugElement, appElement);
+	// This example uses an older style of view integration (container-views) which is no longer recommended.
+	// Prefer the external-views pattern instead (examples/view-integration/external-views).
+	const { getMountableDefaultView } =
+		(await container.getEntryPoint()) as IFluidMountableViewEntryPoint;
+	const mountableView = await getMountableDefaultView();
 
-		const debugRoot = createRoot(debugElement);
-		debugRoot.render(createElement(DebugView, { attach }));
+	// Render view
+	mountableView.mount(element);
 
-		const appRoot = createRoot(appElement);
-		appRoot.render(createElement(BlobCollectionView, { blobCollection }));
-	};
-
-	// Render it
-	render(blobCollection);
+	// Update url and tab title
+	location.hash = id;
+	document.title = id;
 }
 
 const leftElement = document.querySelector("#sbs-left") as HTMLDivElement;
