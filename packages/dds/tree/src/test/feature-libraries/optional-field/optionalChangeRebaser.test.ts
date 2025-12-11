@@ -64,7 +64,7 @@ import { TestNodeId } from "../../testNodeId.js";
 import { Change, assertTaggedEqual, verifyContextChain } from "./optionalFieldUtils.js";
 import { ChangesetWrapper } from "../../changesetWrapper.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { DefaultRevisionReplacer } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 
 type RevisionTagMinter = () => RevisionTag;

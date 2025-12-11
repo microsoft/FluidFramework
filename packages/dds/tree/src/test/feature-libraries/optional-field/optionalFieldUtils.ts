@@ -31,7 +31,7 @@ import type {
 } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
 import { type Mutable, brand } from "../../../util/index.js";
 import type { NodeId } from "../../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { DefaultRevisionReplacer } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 
 const dummyDetachId: ChangeAtomId = { localId: brand(0) };

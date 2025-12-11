@@ -11,7 +11,7 @@ import { mintRevisionTag } from "../../utils.js";
 import { type Mutable, brand } from "../../../util/index.js";
 import { assertChangesetsEqual } from "./utils.js";
 import { MarkMaker as Mark } from "./testEdits.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { DefaultRevisionReplacer } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 
 const tag0: RevisionTag = mintRevisionTag();
