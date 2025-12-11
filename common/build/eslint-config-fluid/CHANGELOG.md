@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Removed Rushstack Dependencies
+
+The following packages have been removed from dependencies:
+
+- `@rushstack/eslint-patch`
+- `@rushstack/eslint-plugin-security`
+
+The `@rushstack/eslint-plugin-security` plugin has been removed from all configurations. The `patch/modern-module-resolution.js` file has also been removed as it was only needed to support the `@rushstack/eslint-patch` dependency.
+
 ### ESLint 9 Flat Config Support
 
 This package now supports ESLint 9 flat config format via a new `flat.mjs` export. The flat config wraps existing configs using `FlatCompat` from `@eslint/eslintrc` for backward compatibility.

@@ -32,7 +32,6 @@
         "promise",
         "jsdoc",
         "@typescript-eslint",
-        "@rushstack/security",
         "@rushstack",
         "unicorn",
         "tsdoc"
