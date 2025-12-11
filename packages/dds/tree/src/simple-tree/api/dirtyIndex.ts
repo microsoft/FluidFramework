@@ -23,6 +23,10 @@ import type { ImplicitFieldSchema } from "../fieldSchema.js";
  * * "new": The node was added.
  * * "changed": A direct child was updated, added, removed, or moved (and the node is not "new").
  * * "moved": The node was moved between/within arrays (and the node is not "new" or "changed").
+ * @privateRemarks
+ * It is unclear how this will handle forward compatibility with other kinds of edits, like moves that are not limited to arrays (attach, detach, swap):
+ * this needs to be sorted out before this is stabilized.
+ * It is also unclear how this is supposed to handle schema changes (which can result in new TreeNode instance, but I think won't trigger "new" here).
  * @alpha
  */
 export type DirtyTreeStatus = "new" | "changed" | "moved";
@@ -51,6 +55,13 @@ export interface DirtyTreeMap {
  * console.log(`The root of the tree is ${dirty.get(view.root) ?? "unchanged"}`);
  * stopTracking();
  * ```
+ * @privateRemarks
+ * This provides an opportunity for user code ("set" on dirty) to run during forest changes, in the middle of processing an edit.
+ * We have generally avoided exposing such times to users and instead flush events after the edit has finished and user facing invariants are known to be restored.
+ * Before stabilizing, how this event relates to other events time/ordering wise should be clarified, and if any APIs have been provided to defer events, that mentioned as well.
+ * Maybe updates should be deferred?
+ *
+ * This is also documented in terms of "forest" which is not a concept in the public API, and thus needs to be redefined in terms of public concepts.
  * @alpha
  */
 export function trackDirtyNodes(

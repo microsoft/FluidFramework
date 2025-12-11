@@ -48,3 +48,38 @@ export interface IFullGitTree {
 	 */
 	parsedFullTreeBlobs: boolean;
 }
+
+export enum WriteSummaryTraceStage {
+	/**
+	 * Summary write operation started, no logic executed yet.
+	 */
+	WriteSummaryStarted = "WriteSummaryStarted",
+	/**
+	 * Retrieved document's Git Ref from storage (if it existed).
+	 * This is a no-op in some scenarios, like on initial summary.
+	 */
+	DocRefRetrieved = "DocRefRetrieved",
+	/**
+	 * Computed the Git tree entries for the summary tree to be written.
+	 * This includes performing any "low IO" logic if enabled.
+	 */
+	ComputedTreeEntries = "ComputedTreeEntries",
+	/**
+	 * Successfully wrote the summary tree to Git storage.
+	 * This includes writing any blobs and tree nodes to storage.
+	 */
+	WroteSummaryTree = "WroteSummaryTree",
+	/**
+	 * Created a new commit referencing the written summary tree.
+	 */
+	CreatedNewSummaryVersion = "CreatedNewSummaryVersion",
+	/**
+	 * Created or updated the document Git Ref to point to the new commit.
+	 */
+	CreatedOrUpdatedDocRef = "CreatedOrUpdatedDocRef",
+	/**
+	 * Converted the full Git tree into a Whole Flat Summary structure to be returned
+	 * to the caller.
+	 */
+	ConvertedToWholeFlatSummary = "ConvertedToWholeFlatSummary",
+}

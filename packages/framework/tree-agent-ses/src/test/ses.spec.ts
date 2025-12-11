@@ -37,7 +37,7 @@ describe.skip("SES edit executor", () => {
 	});
 
 	it("passes globals to the compartment", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Initial");
 		const editor = createSesEditExecutor({
 			lockdownOptions,
@@ -60,14 +60,14 @@ describe.skip("SES edit executor", () => {
 	});
 
 	it("returns a code error when SES blocks the generated code", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Initial");
 		const editor = createSesEditExecutor({ lockdownOptions });
 		const model: SharedTreeChatModel = {
 			editToolName: "EditTreeTool",
 			async query({ edit }) {
 				const editResult = await edit("Object.prototype.polluted = 'hacked!';");
-				assert.equal(editResult.type, "executionError", editResult.message);
+				assert.equal(editResult.type, "editingError", editResult.message);
 				return editResult.message;
 			},
 		};

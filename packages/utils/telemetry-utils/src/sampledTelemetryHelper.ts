@@ -111,7 +111,7 @@ export type MeasureReturnType<TMeasureReturn, TCustomMetrics> = TCustomMetrics e
 	? TMeasureReturn
 	: ICustomData<TCustomMetrics> &
 			(TMeasureReturn extends void
-				? { [K in "returnValue"]?: never }
+				? Partial<Record<"returnValue", never>>
 				: { returnValue: TMeasureReturn });
 
 /**

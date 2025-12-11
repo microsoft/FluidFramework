@@ -5,7 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	validateAssertionError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { currentVersion, type CodecWriteOptions } from "../../../codec/index.js";
 import { rootFieldKey } from "../../../core/index.js";
@@ -23,9 +26,9 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/forest-summary/codec.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { ForestFormatVersion } from "../../../feature-libraries/forest-summary/format.js";
+import { ForestFormatVersion } from "../../../feature-libraries/forest-summary/formatCommon.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { Format } from "../../../feature-libraries/forest-summary/format.js";
+import type { FormatV1 } from "../../../feature-libraries/forest-summary/formatV1.js";
 import {
 	FieldBatchFormatVersion,
 	TreeCompressionStrategy,
@@ -34,7 +37,7 @@ import {
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { EmptyObject } from "../../cursorTestSuite.js";
-import { testIdCompressor, validateUsageError } from "../../utils.js";
+import { testIdCompressor } from "../../utils.js";
 
 const codecOptions: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,
@@ -63,7 +66,7 @@ const malformedData: [string, unknown][] = [
 	],
 	["incorrect data type", ["incorrect data type"]],
 ];
-const validData: [string, FieldSet, Format | undefined][] = [
+const validData: [string, FieldSet, FormatV1 | undefined][] = [
 	[
 		"no entry",
 		new Map(),
@@ -121,13 +124,18 @@ describe("ForestSummarizerCodec", () => {
 				() =>
 					codec.decode(
 						{
-							version: 2 as ForestFormatVersion,
-							fields: { version: FieldBatchFormatVersion.v1 },
+							version: 2.5 as ForestFormatVersion,
+							fields: {
+								version: brand(FieldBatchFormatVersion.v1),
+								identifiers: [],
+								shapes: [],
+								data: [],
+							},
 							keys: [],
 						},
 						context,
 					),
-				validateUsageError(/Unsupported version 2 encountered while decoding data/),
+				validateUsageError(/Unsupported version 2.5 encountered while decoding data/),
 			);
 		});
 
@@ -137,12 +145,17 @@ describe("ForestSummarizerCodec", () => {
 					codec.decode(
 						{
 							version: brand(ForestFormatVersion.v1),
-							fields: { version: 3 as FieldBatchFormatVersion },
+							fields: {
+								version: 2.5 as FieldBatchFormatVersion,
+								identifiers: [],
+								shapes: [],
+								data: [],
+							},
 							keys: [],
 						},
 						context,
 					),
-				validateUsageError(/Unsupported version 3 encountered while decoding data/),
+				validateAssertionError("Encoded schema should validate"),
 			);
 		});
 
@@ -153,10 +166,10 @@ describe("ForestSummarizerCodec", () => {
 						{
 							version: brand<ForestFormatVersion>(ForestFormatVersion.v1),
 							keys: [],
-						} as unknown as Format,
+						} as unknown as FormatV1,
 						context,
 					),
-				(e: Error) => validateAssertionError(e, "Encoded schema should validate"),
+				validateAssertionError("Encoded schema should validate"),
 			);
 		});
 
@@ -169,10 +182,10 @@ describe("ForestSummarizerCodec", () => {
 							fields: { version: brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v1) },
 							keys: [],
 							wrong: 5,
-						} as unknown as Format,
+						} as unknown as FormatV1,
 						context,
 					),
-				(e: Error) => validateAssertionError(e, "Encoded schema should validate"),
+				validateAssertionError("Encoded schema should validate"),
 			);
 		});
 	});

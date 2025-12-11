@@ -27,7 +27,7 @@ export const loaderCoreCompatDetails = {
 	/**
 	 * The current generation of the Loader layer.
 	 */
-	generation: 2,
+	generation: 3,
 };
 
 /**

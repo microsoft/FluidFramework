@@ -7,7 +7,7 @@ const isElement = (node: Node): node is Element => node.nodeType === Node.ELEMEN
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class Dom {
-	public static removeAllChildren(parent: Node) {
+	public static removeAllChildren(parent: Node): void {
 		// External library uses `null`
 		// eslint-disable-next-line @rushstack/no-new-null
 		let firstChild: ChildNode | null;
@@ -20,7 +20,7 @@ export class Dom {
 	 * Inserts the given 'newChild' immediately after the given 'refChild'.  If 'refChild' is undefined,
 	 * inserts 'newChild' as the first child of 'parent'.
 	 */
-	public static insertAfter(parent: Node, newChild: Node, refChild: Node | null) {
+	public static insertAfter(parent: Node, newChild: Node, refChild: Node | null): void {
 		parent.insertBefore(newChild, refChild ? refChild.nextSibling : parent.firstChild);
 	}
 

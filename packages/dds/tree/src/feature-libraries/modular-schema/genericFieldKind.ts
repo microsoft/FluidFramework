@@ -169,9 +169,10 @@ function replaceRevisions(
 export const genericFieldKind: FlexFieldKind = new FlexFieldKind(
 	brandConst("ModularEditBuilder.Generic")<FieldKindIdentifier>(),
 	Multiplicity.Sequence,
-	genericChangeHandler,
-	(types, other) => false,
-	new Set(),
+	{
+		changeHandler: genericChangeHandler,
+		allowMonotonicUpgradeFrom: new Set(),
+	},
 );
 
 /**

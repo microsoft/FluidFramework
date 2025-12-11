@@ -4,7 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IEvent } from "@fluidframework/core-interfaces";
+import type { IEvent } from "@fluidframework/core-interfaces";
 import type {
 	Attendee,
 	LatestRaw,
@@ -48,7 +48,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		/**
 		 * A states workspace that the FocusTracker will use to share focus states with other session clients.
 		 */
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types -- empty object is the correct typing
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- empty object is the correct typing
 		readonly statesWorkspace: StatesWorkspace<{}>,
 	) {
 		super();

@@ -7,6 +7,7 @@ import {
 	normalizeAndEvaluateAnnotatedAllowedTypes,
 	type AnnotatedAllowedType,
 	type AllowedTypesFullEvaluated,
+	markSchemaMostDerived,
 } from "./allowedTypes.js";
 import { getTreeNodeSchemaPrivateData, type TreeNodeSchema } from "./treeNodeSchema.js";
 
@@ -24,6 +25,11 @@ export function walkNodeSchema(
 	}
 
 	visitedSet.add(schema);
+
+	// Ensure all reachable schema are marked as most derived.
+	// This ensures if multiple schema extending the same schema factory generated class are present (or have had instances of them constructed, or get instances of them constructed in the future),
+	// an error is reported.
+	markSchemaMostDerived(schema, false);
 
 	// Since walkNodeSchema is used in the implementation of TreeNodeSchemaPrivateData.idempotentInitialize,
 	// Avoid depending on it here to avoid circular dependencies for recursive schema.
