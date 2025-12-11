@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { describeCompat } from "@fluid-private/test-version-utils";
@@ -403,6 +403,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 											reject(new Error("No values found in consensus queue."));
 										}
 									})
+									// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 									.catch((error) => reject(error));
 							}),
 							{ errorMsg: "Timeout waiting for acquiring value from consensus queue." },

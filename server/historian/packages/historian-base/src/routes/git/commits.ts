@@ -3,26 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { ICommit, ICreateCommitParams } from "@fluidframework/gitresources";
-import {
+import type { ICommit, ICreateCommitParams } from "@fluidframework/gitresources";
+import { ScopeType } from "@fluidframework/protocol-definitions";
+import type {
 	IStorageNameRetriever,
 	IThrottler,
 	IRevokedTokenChecker,
 	IDocumentManager,
-	type IDenyList,
+	IDenyList,
 } from "@fluidframework/server-services-core";
+import { validateRequestParams } from "@fluidframework/server-services-shared";
 import {
 	denyListMiddleware,
-	IThrottleMiddlewareOptions,
+	type IThrottleMiddlewareOptions,
 	throttle,
 } from "@fluidframework/server-services-utils";
-import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
-import * as nconf from "nconf";
+import type * as nconf from "nconf";
 import winston from "winston";
-import { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
-import * as utils from "../utils";
+
+import type { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
 import { Constants } from "../../utils";
+import * as utils from "../utils";
 
 export function create(
 	config: nconf.Provider,
@@ -38,6 +40,8 @@ export function create(
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 ): Router {
 	const router: Router = Router();
+
+	const maxTokenLifetimeSec = config.get("maxTokenLifetimeSec");
 
 	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => req.params.tenantId,
@@ -89,7 +93,11 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/commits",
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(
+			revokedTokenChecker,
+			[ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+			maxTokenLifetimeSec,
+		),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const commitP = createCommit(
@@ -106,7 +114,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/commits/:sha",
 		validateRequestParams("tenantId", "sha"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker, [ScopeType.DocRead], maxTokenLifetimeSec),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);

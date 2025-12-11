@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IColor, InkCanvas } from "@fluid-experimental/ink";
+import { type IColor, InkCanvas } from "@fluid-experimental/ink";
 import React, { useEffect, useRef, useState } from "react";
 
-import { Canvas } from "./canvas.js";
-// eslint-disable-next-line import/no-unassigned-import
+import type { Canvas } from "./canvas.js";
+// eslint-disable-next-line import-x/no-unassigned-import
 import "./style.less";
 
 const colorPickerColors: IColor[] = [

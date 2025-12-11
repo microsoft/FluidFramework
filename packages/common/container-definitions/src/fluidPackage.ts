@@ -5,8 +5,7 @@
 
 /**
  * Specifies an environment on Fluid property of a IFluidPackage.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidPackageEnvironment {
 	/**
@@ -37,8 +36,7 @@ export interface IFluidPackageEnvironment {
  * While compatible with the npm package format it is not necessary that that package is an
  * npm package:
  * {@link https://stackoverflow.com/questions/10065564/add-custom-metadata-or-config-to-package-json-is-it-valid}
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidPackage {
 	/**
@@ -66,8 +64,7 @@ export interface IFluidPackage {
 /**
  * Check if the package.json defines a Fluid package
  * @param pkg - the package json data to check if it is a Fluid package.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const isFluidPackage = (pkg: unknown): pkg is Readonly<IFluidPackage> =>
 	typeof pkg === "object" &&
@@ -75,9 +72,14 @@ export const isFluidPackage = (pkg: unknown): pkg is Readonly<IFluidPackage> =>
 	typeof (pkg as Partial<IFluidPackage>)?.fluid === "object";
 
 /**
- * Package manager configuration. Provides a key value mapping of config values
- * @legacy
- * @alpha
+ * A key-value mapping of config values.
+ *
+ * @remarks
+ * Can be used by consumers for things like providing additional configuration for their package manager.
+ *
+ * @see {@link IFluidCodeDetails.config}
+ *
+ * @legacy @beta
  */
 export interface IFluidCodeDetailsConfig {
 	readonly [key: string]: string;
@@ -85,21 +87,24 @@ export interface IFluidCodeDetailsConfig {
 
 /**
  * Data structure used to describe the code to load on the Fluid document
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidCodeDetails {
 	/**
-	 * The code package to be used on the Fluid document. This is either the package name which will be loaded
-	 * from a package manager. Or the expanded Fluid package.
+	 * The code package to be used on the Fluid document.
+	 * This is either the package name which will be loaded from a package manager, or the expanded Fluid package.
 	 */
 	readonly package: string | Readonly<IFluidPackage>;
 
 	/**
-	 * Configuration details. This includes links to the package manager and base CDNs.
+	 * Configuration details and additional information about the Fluid document.
 	 *
-	 * @remarks This is strictly consumer-defined data.
-	 * Its contents and semantics (including whether or not this data is present) are completely up to the consumer.
+	 * @remarks
+	 * This is mainly consumer-defined data (e.g. links to a package manager and base CDNs).
+	 * Its contents and semantics (including whether or not this data is present) are completely up to the consumer,
+	 * _except_ for keys starting with "FluidFramework." (e.g. "FluidFramework.CustomSetting1")
+	 * which are reserved by the framework and should not be used by consumers.
+	 * Outside of those reserved keys, Fluid does not interpret this data in any way.
 	 */
 	readonly config?: IFluidCodeDetailsConfig;
 }
@@ -121,15 +126,13 @@ export const isFluidCodeDetails = (
 };
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const IFluidCodeDetailsComparer: keyof IProvideFluidCodeDetailsComparer =
 	"IFluidCodeDetailsComparer";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IProvideFluidCodeDetailsComparer {
 	readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
@@ -137,8 +140,7 @@ export interface IProvideFluidCodeDetailsComparer {
 
 /**
  * Provides capability to compare Fluid code details.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsComparer {
 	/**

@@ -1,5 +1,98 @@
 # @fluidframework/test-runtime-utils
 
+## 2.73.0
+
+Dependency updates only.
+
+## 2.72.0
+
+Dependency updates only.
+
+## 2.71.0
+
+Dependency updates only.
+
+## 2.70.0
+
+### Minor Changes
+
+- getSnapshotTree is now required in IChannelStorageService ([#25707](https://github.com/microsoft/FluidFramework/pull/25707)) [d1c4c0ab1d](https://github.com/microsoft/FluidFramework/commit/d1c4c0ab1d9f15af93f0a02c0dd0d13851655af8)
+
+  The `getSnapshotTree` property was added as optional to `IChannelStorageService` in version 2.51.0. It is now a required property.
+  See this [github issue](https://github.com/microsoft/FluidFramework/issues/25178) for more details.
+
+- Remove submitMessage from FluidDataStoreRuntime and MockFluidDataStoreRuntime ([#25755](https://github.com/microsoft/FluidFramework/pull/25755)) [88860f348b](https://github.com/microsoft/FluidFramework/commit/88860f348b0d67f94952d4e2ae227fa0b1f9f942)
+
+  As needed, access `submitMessage` via `IFluidDataStoreContext`/`IFluidParentContext`. See https://github.com/microsoft/FluidFramework/issues/24406 for details.
+
+## 2.63.0
+
+Dependency updates only.
+
+## 2.62.0
+
+Dependency updates only.
+
+## 2.61.0
+
+### Minor Changes
+
+- `minVersionForCollab` is now available on `IFluidDataStoreContext` ([#25130](https://github.com/microsoft/FluidFramework/pull/25130)) [2566772d24](https://github.com/microsoft/FluidFramework/commit/2566772d24a9bcffbb613c6b88517145c2d0ea32)
+
+  `minVersionForCollab` is now passed down from the `ContainerRuntime` to the Datastore layer where it is made available for
+  `SharedObject` construction.
+  DDSes may optionally consume this value and use it to determine which sets of feature flags should be enabled.
+
+  #### Public type changes
+  - **@fluidframework/datastore: `FluidDataStoreRuntime`** - Exposes `minVersionForCollab`.
+  - **@fluidframework/runtime-definitions: `IFluidDataStoreContext`** - Exposes optional member `minVersionForCollab`.
+    See `FluidDataStoreContext` for an example implementation.
+  - **@fluidframework/test-runtime-utils: `MockFluidDataStoreContext`, `MockFluidDataStoreRuntime`** - Exposes `minVersionForCollab`
+    either via a getter or as a readonly field.
+
+  Note that the new implementations are optional fields and in some cases accept `undefined`.
+  This is needed for layer compatibility, and in a future release these members will no longer be optional.
+
+- Deprecate submitMessage on FluidDataStoreRuntime and MockFluidDataStoreRuntime ([#25332](https://github.com/microsoft/FluidFramework/pull/25332)) [687378ab1c](https://github.com/microsoft/FluidFramework/commit/687378ab1c02fe8798a5c01153da5aa35ccdc5ae)
+
+  As needed, access `submitMessage` via `IFluidDataStoreContext`/`IFluidParentContext`. See https://github.com/microsoft/FluidFramework/issues/24406 for details.
+
+## 2.60.0
+
+Dependency updates only.
+
+## 2.53.0
+
+Dependency updates only.
+
+## 2.52.0
+
+Dependency updates only.
+
+## 2.51.0
+
+Dependency updates only.
+
+## 2.50.0
+
+### Minor Changes
+
+- IFluidHandleInternal.bind (deprecated) has been removed ([#24974](https://github.com/microsoft/FluidFramework/pull/24974)) [07e183795f](https://github.com/microsoft/FluidFramework/commit/07e183795fa8118fae717c118ab7a7945ac1ad57)
+
+  `IFluidHandleInternal.bind` was deprecated in 2.40 and has now been removed. See [release notes entry](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.40.0#user-content-ifluidhandleinternalbind-has-been-deprecated-24553) for more details.
+
+## 2.43.0
+
+Dependency updates only.
+
+## 2.42.0
+
+Dependency updates only.
+
+## 2.41.0
+
+Dependency updates only.
+
 ## 2.40.0
 
 ### Minor Changes
@@ -43,7 +136,6 @@ Dependency updates only.
 - The process and processDocumentSchemaOp functions have been removed ([#24018](https://github.com/microsoft/FluidFramework/pull/24018)) [bc35d543d5](https://github.com/microsoft/FluidFramework/commit/bc35d543d58c7e4bf28944b09d645cc26bf28a29)
 
   `process` has been replaced by `processMessages` from the following:
-
   - `FluidDataStoreRuntime`
   - `IDeltaHandler`
   - `IFluidDataStoreChannel`
@@ -79,7 +171,6 @@ Dependency updates only.
   parameter.
 
   These changes were originally announced in version 0.25.0. See the following issues for more details:
-
   - [#1537](https://github.com/microsoft/FluidFramework/issues/1537)
   - [#2931](https://github.com/microsoft/FluidFramework/pull/2931)
 
@@ -100,7 +191,6 @@ Dependency updates only.
 ### Minor Changes
 
 - "Remove `IFluidParentContext.ensureNoDataModelChanges` and its implementations ([#22842](https://github.com/microsoft/FluidFramework/pull/22842)) [3aff19a462](https://github.com/microsoft/FluidFramework/commit/3aff19a4622a242e906286c14dfcfa6523175132)
-
   - `IFluidParentContext.ensureNoDataModelChanges` has been removed. [prior deprecation commit](https://github.com/microsoft/FluidFramework/commit/c9d156264bdfa211a3075bdf29cde442ecea234c)
   - `MockFluidDataStoreContext.ensureNoDataModelChanges` has also been removed.
 
@@ -113,7 +203,6 @@ Dependency updates only.
   Similarly, `IDeltaManager.outbound` contained functionality that could break core runtime features such as generation of batches and chunking. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
 
   #### Alternatives
-
   - Alternatives to `IDeltaManager.inbound.on("op", ...)` are `IDeltaManager.on("op", ...)`
   - Alternatives to calling `IDeltaManager.inbound.pause`, `IDeltaManager.outbound.pause` for `IContainer` disconnect use `IContainer.disconnect`.
   - Alternatives to calling `IDeltaManager.inbound.resume`, `IDeltaManager.outbound.resume` for `IContainer` reconnect use `IContainer.connect`.
@@ -172,7 +261,6 @@ Dependency updates only.
   TypeScript types and implementation code.
 
   This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-
   - `"moduleResolution": "Node16"` with `"module": "Node16"`
   - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 
@@ -203,7 +291,6 @@ Dependency updates only.
 - Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
 
   The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
-
   - @fluidframework/gitresources
   - @fluidframework/server-kafka-orderer
   - @fluidframework/server-lambdas
@@ -251,7 +338,6 @@ Dependency updates only.
   limitation of serialization.
 
   Additional modifications:
-
   - `Jsonable`'s `TReplacement` parameter default has also been changed from `void` to `never`, which now disallows
     `void`.
   - Unrecognized primitive types like `symbol` are now filtered to `never` instead of `{}`.
@@ -291,7 +377,6 @@ Dependency updates only.
 - Dependencies on @fluidframework/protocol-definitions package updated to 3.0.0 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   This included the following changes from the protocol-definitions release:
-
   - Updating signal interfaces for some planned improvements. The intention is split the interface between signals
     submitted by clients to the server and the resulting signals sent from the server to clients.
     - A new optional type member is available on the ISignalMessage interface and a new ISentSignalMessage interface has
@@ -307,7 +392,6 @@ Dependency updates only.
 - Server upgrade: dependencies on Fluid server packages updated to 2.0.1 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   Dependencies on the following Fluid server package have been updated to version 2.0.1:
-
   - @fluidframework/gitresources: 2.0.1
   - @fluidframework/server-kafka-orderer: 2.0.1
   - @fluidframework/server-lambdas: 2.0.1
@@ -332,7 +416,6 @@ Dependency updates only.
 - test-utils: provideEntryPoint is required [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   The optional `provideEntryPoint` method has become required on a number of constructors. A value will need to be provided to the following classes:
-
   - `BaseContainerRuntimeFactory`
   - `RuntimeFactory`
   - `ContainerRuntime` (constructor and `loadRuntime`)
@@ -365,7 +448,6 @@ Dependency updates only.
 
   The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
   imported from the **@fluidframework/core-interfaces** package:
-
   - interface IDisposable
   - interface IErrorEvent
   - interface IErrorEvent
@@ -405,7 +487,6 @@ Dependency updates only.
 - Request APIs deprecated from many places [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
 
   The `request` API (associated with the `IFluidRouter` interface) has been deprecated on a number of classes and interfaces. The following are impacted:
-
   - `IRuntime` and `ContainerRuntime`
   - `IFluidDataStoreRuntime` and `FluidDataStoreRuntime`
   - `IFluidDataStoreChannel`

@@ -6,9 +6,9 @@
 
 import type { Opaque } from 'type-fest';
 import type { PackageJson as PackageJson_2 } from 'type-fest';
-import { SemVer } from 'semver';
+import type { SemVer } from 'semver';
 import type { SetRequired } from 'type-fest';
-import { SimpleGit } from 'simple-git';
+import type { SimpleGit } from 'simple-git';
 
 // @public
 export type AdditionalPackageProps = Record<string, string> | undefined;

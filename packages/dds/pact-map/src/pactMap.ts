@@ -10,12 +10,14 @@ import type {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	MessageType,
-	type ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type {
+	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
 	SharedObject,
@@ -287,8 +289,10 @@ export class PactMapClass<T = unknown>
 		sequenceNumber: number,
 	): void => {
 		const pending = this.values.get(key)?.pending;
-		// We don't resubmit accepts on reconnect so this should only run for expected accepts.
-		assert(pending !== undefined, 0x2f8 /* Unexpected accept op, nothing pending */);
+		if (pending === undefined) {
+			// If there is no pending value, we already accepted it, so we can ignore the accept op.
+			return;
+		}
 		assert(
 			pending.expectedSignoffs.includes(clientId),
 			0x2f9 /* Unexpected accept op, client not in expectedSignoffs */,
@@ -368,16 +372,12 @@ export class PactMapClass<T = unknown>
 	 */
 	protected reSubmitCore(content: unknown, localOpMetadata: unknown): void {
 		const pactMapOp = content as IPactMapOperation<T>;
-		// Filter out accept messages - if we're coming back from a disconnect, our acceptance is never required
-		// because we're implicitly removed from the list of expected accepts.
-		if (pactMapOp.type === "accept") {
-			return;
-		}
 
 		// Filter out set messages that have no chance of being accepted because there's another value pending
 		// or another value was accepted while we were disconnected.
 		const currentValue = this.values.get(pactMapOp.key);
 		if (
+			pactMapOp.type === "set" &&
 			currentValue !== undefined &&
 			(currentValue.pending !== undefined ||
 				pactMapOp.refSeq < currentValue.accepted?.sequenceNumber)
@@ -390,30 +390,43 @@ export class PactMapClass<T = unknown>
 	}
 
 	/**
-	 * Process a PactMap operation
-	 *
-	 * @param message - the message to prepare
-	 * @param local - whether the message was sent by the local client
-	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
-	 * For messages from a remote client, this will be undefined.
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */
-	protected processCore(
-		message: ISequencedDocumentMessage,
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent, local);
+		}
+	}
+
+	private processMessage(
+		messageEnvelope: ISequencedMessageEnvelope,
+		messageContent: IRuntimeMessagesContent,
 		local: boolean,
-		localOpMetadata: unknown,
 	): void {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-		if (message.type === MessageType.Operation) {
-			const op = message.contents as IPactMapOperation<T>;
+		if (messageEnvelope.type === MessageType.Operation) {
+			const op = messageContent.contents as IPactMapOperation<T>;
 
 			switch (op.type) {
 				case "set": {
-					this.incomingOp.emit("set", op.key, op.value, op.refSeq, message.sequenceNumber);
+					this.incomingOp.emit(
+						"set",
+						op.key,
+						op.value,
+						op.refSeq,
+						messageEnvelope.sequenceNumber,
+					);
 					break;
 				}
 
 				case "accept": {
-					this.incomingOp.emit("accept", op.key, message.clientId, message.sequenceNumber);
+					this.incomingOp.emit(
+						"accept",
+						op.key,
+						messageEnvelope.clientId,
+						messageEnvelope.sequenceNumber,
+					);
 					break;
 				}
 

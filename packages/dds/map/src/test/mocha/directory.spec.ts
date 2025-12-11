@@ -675,6 +675,51 @@ describe("Directory", () => {
 				assert.equal(nestedSubDir.get("deepKey1"), "deepValue1");
 				assert.equal(nestedSubDir.get("long2"), logWord2);
 			});
+
+			it("Should register subdirectory events on load", async () => {
+				directory.createSubDirectory("child");
+
+				const summarizeResult = directory.getAttachSummary();
+				const summaryTree = summarizeResult.summary;
+				assert.strictEqual(summaryTree.type, SummaryType.Tree, "summary should be a tree");
+
+				const storage = MockSharedObjectServices.createFromSummary(summarizeResult.summary);
+				const factory = SharedDirectory.getFactory();
+
+				const loadedDirectory = await factory.load(
+					dataStoreRuntime,
+					"test",
+					storage,
+					factory.attributes,
+				);
+				const subdir = loadedDirectory.getSubDirectory("child");
+				assert(subdir, "child subdirectory should exist");
+
+				let subDirectoryCreatedEventCounts = 0;
+				loadedDirectory.on("subDirectoryCreated", (path, _local, _target) => {
+					subDirectoryCreatedEventCounts++;
+					assert.equal(path, "child/grandchild", "created path should match");
+				});
+				let subDirectoryDeletedEventCounts = 0;
+				loadedDirectory.on("subDirectoryDeleted", (path, _local, _target) => {
+					subDirectoryDeletedEventCounts++;
+					assert.equal(path, "child/grandchild", "deleted path should match");
+				});
+
+				subdir.createSubDirectory("grandchild");
+				subdir.deleteSubDirectory("grandchild");
+
+				assert.equal(
+					subDirectoryCreatedEventCounts,
+					1,
+					"Sub directory created event should fire once for grandchild",
+				);
+				assert.equal(
+					subDirectoryDeletedEventCounts,
+					1,
+					"Sub directory deleted event should fire once for grandchild",
+				);
+			});
 		});
 
 		describe("Op processing", () => {
@@ -1001,6 +1046,39 @@ describe("Directory", () => {
 				assert.equal(directory2.getWorkingDirectory("bar")?.get("testKey3"), "testValue3");
 				assert.equal(directory2.get("testKey"), "testValue4");
 				assert.equal(directory2.get("testKey2"), undefined);
+			});
+
+			it(".forEach() should iterate over all keys in the directory", () => {
+				const values = [
+					["a", "b"],
+					["c", "d"],
+					["e", "f"],
+				];
+
+				for (const [key, value] of values) {
+					directory1.set(key, value);
+				}
+				containerRuntimeFactory.processAllMessages();
+
+				let i = 0;
+				// eslint-disable-next-line unicorn/no-array-for-each
+				directory1.forEach((value, key) => {
+					assert(i < values.length, "forEach() should not have iterated more than i times");
+					assert.equal(key, values[i][0], "key should match");
+					assert.equal(value, values[i][1], "value should match");
+					i++;
+				});
+				assert.equal(i, values.length, "forEach() should have iterated i times");
+
+				i = 0;
+				// eslint-disable-next-line unicorn/no-array-for-each
+				directory2.forEach((value, key) => {
+					assert(i < values.length, "forEach() should not have iterated more than i times");
+					assert.equal(key, values[i][0], "key should match");
+					assert.equal(value, values[i][1], "value should match");
+					i++;
+				});
+				assert.equal(i, values.length, "forEach() should have iterated i times");
 			});
 
 			it("Shouldn't clear value if there is pending set", () => {
@@ -1724,14 +1802,17 @@ describe("Directory", () => {
 				assert(fooSubDir);
 				const fooSubDirIterator = fooSubDir.entries();
 				const fooSubDirResult1 = fooSubDirIterator.next();
+				assert(fooSubDirResult1.value !== undefined, "Iterator result should have a value");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDirResult1.value[0], "testKey");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDirResult1.value[1], "testValue");
-				assert.equal(fooSubDirResult1.done, false);
 				const fooSubDirResult2 = fooSubDirIterator.next();
+				assert(fooSubDirResult2.value !== undefined, "Iterator result should have a value");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDirResult2.value[0], "testKey2");
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				assert.equal(fooSubDirResult2.value[1], "testValue2");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDirResult2.value[1], "testValue2");
 				assert.equal(fooSubDirResult2.done, false);
@@ -1754,12 +1835,17 @@ describe("Directory", () => {
 				assert(fooSubDir2);
 				const fooSubDir2Iterator = fooSubDir2.entries();
 				const fooSubDir2Result1 = fooSubDir2Iterator.next();
+				assert(fooSubDir2Result1.value !== undefined, "Iterator result should have a value");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDir2Result1.value[0], "testKey");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDir2Result1.value[1], "testValue");
-				assert.equal(fooSubDir2Result1.done, false);
 				const fooSubDir2Result2 = fooSubDir2Iterator.next();
+				assert(fooSubDir2Result2.value !== undefined, "Iterator result should have a value");
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				assert.equal(fooSubDir2Result2.value[0], "testKey2");
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				assert.equal(fooSubDir2Result2.value[1], "testValue2");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDir2Result2.value[0], "testKey2");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access

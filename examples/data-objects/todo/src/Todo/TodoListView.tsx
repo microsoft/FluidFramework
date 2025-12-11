@@ -4,16 +4,16 @@
  */
 
 import { CollaborativeInput } from "@fluid-example/example-utils";
+import { useTree } from "@fluidframework/react/alpha";
 import { SharedString, type ISharedString } from "@fluidframework/sequence/legacy";
 import React, { useEffect, useRef, useState } from "react";
 
-// eslint-disable-next-line import/no-unassigned-import
+// eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";
 
 import { TodoItemView } from "../TodoItem/index.js";
-import { useTree } from "../Utils/index.js";
 
-import { type TodoListDataObject } from "./index.js";
+import type { TodoListDataObject } from "./DataObject.js";
 
 export interface TodoListProps {
 	readonly todoModel: TodoListDataObject;

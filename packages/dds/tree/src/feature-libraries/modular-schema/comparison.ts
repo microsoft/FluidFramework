@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
+	Multiplicity,
 	ObjectNodeStoredSchema,
 	type TreeFieldStoredSchema,
 	type TreeNodeStoredSchema,
@@ -19,15 +20,10 @@ import {
 import { compareSets } from "../../util/index.js";
 
 import type { FullSchemaPolicy } from "./fieldKind.js";
-import { withEditor } from "./fieldKindWithEditor.js";
-import { isNeverTree } from "./isNeverTree.js";
-
-// TODO:
-// The comparisons in this file seem redundant with those in discrepancies.ts.
-// Rather than both existing, one of which just returns boolean and the other which returns additional details, a simple comparison which returns everything needed should be used.
+import { isNeverField, isNeverTree } from "./isNeverTree.js";
 
 /**
- * @returns true iff `superset` is a superset of `original`.
+ * Returns true iff `superset` is a superset of `original`.
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  *
@@ -69,12 +65,7 @@ export function allowsTreeSuperset(
 
 	if (original instanceof MapNodeStoredSchema) {
 		if (superset instanceof MapNodeStoredSchema) {
-			return allowsFieldSuperset(
-				policy,
-				originalData,
-				normalizeField(original.mapFields),
-				normalizeField(superset.mapFields),
-			);
+			return allowsFieldSuperset(policy, originalData, original.mapFields, superset.mapFields);
 		}
 		return false;
 	}
@@ -82,14 +73,7 @@ export function allowsTreeSuperset(
 	assert(original instanceof ObjectNodeStoredSchema, 0x895 /* unsupported node kind */);
 	if (superset instanceof MapNodeStoredSchema) {
 		for (const [_key, field] of original.objectNodeFields) {
-			if (
-				!allowsFieldSuperset(
-					policy,
-					originalData,
-					normalizeField(field),
-					normalizeField(superset.mapFields),
-				)
-			) {
+			if (!allowsFieldSuperset(policy, originalData, field, superset.mapFields)) {
 				return false;
 			}
 		}
@@ -106,13 +90,13 @@ export function allowsTreeSuperset(
 				originalData,
 				original.objectNodeFields.get(originalField) ??
 					fail(0xb17 /* missing expected field */),
-				normalizeField(undefined),
+				storedEmptyFieldSchema,
 			),
 		bExtra: (supersetField) =>
 			allowsFieldSuperset(
 				policy,
 				originalData,
-				normalizeField(undefined),
+				storedEmptyFieldSchema,
 				superset.objectNodeFields.get(supersetField) ??
 					fail(0xb18 /* missing expected field */),
 			),
@@ -127,7 +111,7 @@ export function allowsTreeSuperset(
 }
 
 /**
- * @returns true iff `superset` is a superset of `original`.
+ * Returns true iff `superset` is a superset of `original`.
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  */
@@ -139,23 +123,53 @@ export function allowsValueSuperset(
 }
 
 /**
- * @returns true iff `superset` is a superset of `original`.
+ * Returns true iff `superset` is a superset of `original`.
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
+ *
+ * @param monotonicOnly - If true, only allow changes of field kinds which are explicitly listed in {@link FieldKindOptions.allowMonotonicUpgradeFrom}.
+ * This prevents this function from considering two different schema as equivalent, preventing upgrades which would allow their inverse.
+ * This prevents infinite upgrade loops where two clients could keep upgrading between two schema.
+ *
+ * @remarks
+ * True if a client should be able to {@link TreeView.upgradeSchema} from a field schema using this field kind and `originalTypes` to `superset`.
+ *
+ * @privateRemarks
+ * See also {@link FieldKindOptions.allowMonotonicUpgradeFrom} for constraints on the implementation.
  */
 export function allowsFieldSuperset(
 	policy: FullSchemaPolicy,
 	originalData: TreeStoredSchema,
 	original: TreeFieldStoredSchema,
 	superset: TreeFieldStoredSchema,
+	monotonicOnly: boolean = true,
 ): boolean {
-	return withEditor(
-		policy.fieldKinds.get(original.kind) ?? fail(0xb1b /* missing kind */),
-	).allowsFieldSuperset(policy, originalData, original.types, superset);
+	if (!monotonicOnly) {
+		if (isNeverField(policy, originalData, original)) {
+			return true;
+		}
+	}
+
+	if (!allowsTreeSchemaIdentifierSuperset(original.types, superset.types)) {
+		return false;
+	}
+
+	if (original.kind === superset.kind) {
+		return true;
+	}
+
+	const supersetKind = policy.fieldKinds.get(superset.kind) ?? fail(0xb1b /* missing kind */);
+
+	if (monotonicOnly) {
+		return supersetKind.options.allowMonotonicUpgradeFrom.has(original.kind);
+	} else {
+		const originalKind = policy.fieldKinds.get(original.kind) ?? fail("missing kind");
+		return allowsMultiplicitySuperset(originalKind.multiplicity, supersetKind.multiplicity);
+	}
 }
 
 /**
- * @returns true iff `superset` is a superset of `original`.
+ * Returns true iff `superset` is a superset of `original`.
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  */
@@ -172,7 +186,7 @@ export function allowsTreeSchemaIdentifierSuperset(
 }
 
 /**
- * @returns true iff `superset` is a superset of `original`.
+ * Returns true iff `superset` is a superset of `original`.
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  *
@@ -186,7 +200,6 @@ export function allowsRepoSuperset(
 	superset: TreeStoredSchema,
 ): boolean {
 	{
-		// TODO: I think its ok to use the field from superset here, but I should confirm it is, and document why.
 		if (
 			!allowsFieldSuperset(
 				policy,
@@ -198,17 +211,42 @@ export function allowsRepoSuperset(
 			return false;
 		}
 	}
+	// Check if all schema in original are included in superset, and permit a superset of the node content.
+	// Note that any schema from `original.nodeSchema` can be used as the schema for a node at the root of a detached field,
+	// so we must check all of them, even if they are not reachable from the root field schema.
 	for (const [key, schema] of original.nodeSchema) {
-		// TODO: I think its ok to use the tree from superset here, but I should confirm it is, and document why.
 		if (!allowsTreeSuperset(policy, original, schema, superset.nodeSchema.get(key))) {
 			return false;
 		}
 	}
+	// Any schema in superset not in original are already known to be superset of original since they are "never" due to being missing.
+	// Therefore, we do not need to check them.
 	return true;
 }
 
-export function normalizeField(
-	schema: TreeFieldStoredSchema | undefined,
-): TreeFieldStoredSchema {
-	return schema ?? storedEmptyFieldSchema;
+/**
+ * Returns true iff `superset` is a superset of `original`.
+ *
+ * This does not require a strict (aka proper) superset: equivalent schema will return true.
+ */
+export function allowsMultiplicitySuperset(
+	original: Multiplicity,
+	superset: Multiplicity,
+): boolean {
+	if (original === superset) {
+		return true;
+	}
+
+	switch (superset) {
+		case Multiplicity.Forbidden:
+			return false;
+		case Multiplicity.Optional:
+			return original === Multiplicity.Single || original === Multiplicity.Forbidden;
+		case Multiplicity.Single:
+			return false;
+		case Multiplicity.Sequence:
+			return true;
+		default:
+			return unreachableCase(superset);
+	}
 }

@@ -4,14 +4,29 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import { SchemaFactory, TreeViewConfiguration } from "../../../simple-tree/index.js";
+import {
+	SchemaFactory,
+	TreeViewConfiguration,
+	unhydratedFlexTreeFromInsertable,
+} from "../../../simple-tree/index.js";
 import { SharedTree } from "../../../treeFactory.js";
-import { getView, validateUsageError } from "../../utils.js";
+import { getView } from "../../utils.js";
 import { Tree } from "../../../shared-tree/index.js";
+import {
+	createFieldSchema,
+	FieldKind,
+	getDefaultProvider,
+	type ConstantFieldProvider,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/fieldSchema.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { UnhydratedFlexTreeNode } from "../../../simple-tree/core/index.js";
+import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -42,30 +57,63 @@ describe("simple-tree tree", () => {
 		view.initialize({ stuff: ["a", "b"] });
 	});
 
-	// TODO: AB#9126:
-	// This attempts to test the two main cases for validation, initial trees and inserted content.
-	// Due to multiple issues, neither actually run the validation.
-	// TODO: come up with a way to ensure the validation actually gets run so this test would fail due to not validating things.
+	// This tests the two main cases for schema validation, initial trees and inserted content.
 	it("default identifier with schema validation", () => {
 		class HasId extends schema.object("hasID", { id: schema.identifier }) {}
 		const config = new TreeViewConfiguration({ schema: HasId, enableSchemaValidation: true });
 		const view = getView(config);
-		// TODO: Issues prevent this test from detecting the bug this would otherwise detect.
-		// This would error (due to schema validation being done before default is provided, see note on mapTreeFromNodeData),
-		// but this issue is not detected since we fail to validate the initial tree due to issue noted in isNodeInSchema ( AB#8197 )
-		// (validation is using incorrect schema, which is empty, which we special case to not validate to work around that breaking).
+		// Initialize case
 		view.initialize({});
 		const idFromInitialize = Tree.shortId(view.root);
 		assert(typeof idFromInitialize === "number");
 
-		// toMapTree skips schema validation when creating the unhydrated node since it does not have a context to opt in.
+		// unhydratedFlexTreeFromInsertable skips schema validation when creating the unhydrated node since it does not have a context to opt in.
 		const newNode = new HasId({});
 		// This should validate the inserted content (this test is attempting to check validation is done after defaults are provided).
-		// TODO: `isNodeInSchema` is not actually called on this code-path, so no validation is done.
 		view.root = newNode;
 		const idFromHydration = Tree.shortId(view.root);
 		assert(typeof idFromHydration === "number");
 		assert(idFromInitialize !== idFromHydration);
+	});
+
+	describe("invalid default", () => {
+		// Field providers are assumed to validate their content:
+		// These tests use internal APIs to construct an intentionally invalid one to slip out of schema data into the flex tree.
+		const numberProvider: ConstantFieldProvider = (): UnhydratedFlexTreeNode[] => [
+			// The schema listed here is intentionally incorrect,
+			// it should be a string given how this field is used below.
+			unhydratedFlexTreeFromInsertable(5, schema.number),
+		];
+
+		class InvalidDefault extends schema.object("hasID", {
+			id: createFieldSchema(FieldKind.Identifier, schema.string, {
+				defaultProvider: getDefaultProvider(numberProvider),
+			}),
+		}) {}
+
+		const config = new TreeViewConfiguration({
+			schema: InvalidDefault,
+			enableSchemaValidation: true,
+		});
+
+		it("invalid default - initialize", () => {
+			const view = getView(config);
+			assert.throws(() => view.initialize({}), validateUsageError(/Field_NodeTypeNotAllowed/));
+		});
+
+		it("invalid default - insert", () => {
+			const view = getView(config);
+			view.initialize({ id: "x" });
+
+			const newNode = new InvalidDefault({});
+			// This should validate the inserted content (this test is attempting to check validation is done after defaults are provided).
+			assert.throws(
+				() => {
+					view.root = newNode;
+				},
+				validateUsageError(/Field_NodeTypeNotAllowed/),
+			);
+		});
 	});
 
 	it("custom identifier copied from tree", () => {
@@ -117,7 +165,7 @@ describe("simple-tree tree", () => {
 		const view = getView(config);
 		view.initialize({ stuff: [] });
 		const _unused = view.root;
-		const context = view.getView().context;
+		const context = view.getFlexTreeContext();
 		const countBefore = context.withAnchors.size;
 		for (let index = 0; index < 10; index++) {
 			const _unused2 = view.root;
@@ -133,7 +181,7 @@ describe("simple-tree tree", () => {
 		view.initialize({ stuff: [] });
 		const child = view.root.stuff;
 		Tree.parent(child);
-		const context = view.getView().context;
+		const context = view.getFlexTreeContext();
 		const countBefore = context.withAnchors.size;
 		for (let index = 0; index < 10; index++) {
 			Tree.parent(child);
@@ -238,6 +286,55 @@ describe("simple-tree tree", () => {
 			const view = getView(config);
 			view.initialize(undefined);
 			assert.equal(view.root, "beefbeef-beef-4000-8000-000000000001");
+		});
+	});
+
+	describe("Serialized changes", () => {
+		it("can be applied to a different branch", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = viewA.fork();
+
+			let change: JsonCompatibleReadOnly | undefined;
+			viewB.events.on("changed", (metadata) => {
+				assert(metadata.isLocal);
+				change = metadata.getChange();
+			});
+
+			viewB.root = 4;
+			assert(change !== undefined);
+			viewA.applyChange(change);
+			assert.equal(viewA.root, 4);
+		});
+
+		it("fail to apply to a branch in another session", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = getView(config);
+			viewB.initialize(3);
+
+			let change: JsonCompatibleReadOnly | undefined;
+			viewA.events.on("changed", (metadata) => {
+				assert(metadata.isLocal);
+				change = metadata.getChange();
+			});
+			viewA.root = 4;
+
+			const c = change ?? assert.fail("change not captured");
+			assert.throws(() => {
+				viewB.applyChange(c);
+			}, /cannot apply change.*same sharedtree/i);
+		});
+
+		it("error if malformed", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			assert.throws(() => {
+				viewA.applyChange({ invalid: "bogus" });
+			}, /cannot apply change.*invalid.*format/i);
 		});
 	});
 });

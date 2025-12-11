@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IValueChanged } from "@fluidframework/map/legacy";
 import events_pkg from "events_pkg";
+import { Tree } from "fluid-framework";
+
+import type { Dice } from "./schema.js";
 
 export type DieValue = 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -28,16 +30,6 @@ export interface IDiceRollerController extends events_pkg.EventEmitter {
 	on(event: "diceRolled", listener: () => void): this;
 }
 
-// The data is stored in a key-value pair data object, so we'll use this key for storing the value.
-const diceValueKey = "diceValue";
-
-export interface DiceRollerControllerProps {
-	get: (key: string) => unknown;
-	set: (key: string, value: unknown) => void;
-	on(event: "valueChanged", listener: (args: IValueChanged) => void): this;
-	off(event: "valueChanged", listener: (args: IValueChanged) => void): this;
-}
-
 /**
  * The DiceRoller is our data object that implements the IDiceRoller interface.
  */
@@ -45,40 +37,19 @@ export class DiceRollerController
 	extends events_pkg.EventEmitter
 	implements IDiceRollerController
 {
-	/**
-	 * Initialize a new model for its first use with this controller.
-	 * The model must be initialized before trying to use it in a DiceRollerController instance.
-	 */
-	public static initializeModel(props: DiceRollerControllerProps): void {
-		props.set(diceValueKey, 1);
-	}
-
 	constructor(
-		private readonly props: DiceRollerControllerProps,
-		private readonly onSet: (value: DieValue) => void,
+		private readonly dice: Dice,
+		private readonly onChanged: (value: DieValue) => void,
 	) {
 		super();
-		const value = this.props.get(diceValueKey);
-		if (typeof value !== "number") {
-			throw new TypeError(
-				"Model is incorrect - did you call DiceRollerController.initializeModel() to set it up?",
-			);
-		}
-		this.props.on("valueChanged", (changed) => {
-			if (changed.key === diceValueKey) {
-				// When we see the dice value change, we'll emit the diceRolled event we specified in our interface.
-				this.emit("diceRolled");
-			}
+		Tree.on(this.dice, "nodeChanged", () => {
+			// When we see the dice value change, we'll emit the diceRolled event we specified in our interface.
+			this.emit("diceRolled");
 		});
 	}
 
 	public get value(): DieValue {
-		const value = this.props.get(diceValueKey);
-		if (typeof value !== "number") {
-			throw new TypeError(
-				"Model is incorrect - did you call DiceRollerController.initializeModel() to set it up?",
-			);
-		}
+		const value = this.dice.value;
 		if (value < 1 || value > 6) {
 			throw new RangeError("Model is incorrect - value is out of range");
 		}
@@ -87,9 +58,9 @@ export class DiceRollerController
 
 	public readonly roll = (): void => {
 		const rollValue = (Math.floor(Math.random() * 6) + 1) as DieValue;
-		this.props.set(diceValueKey, rollValue);
+		this.dice.value = rollValue;
 
 		// Also notify the caller of the local roll (local value setting).
-		this.onSet(rollValue);
+		this.onChanged(rollValue);
 	};
 }

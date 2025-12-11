@@ -5,36 +5,39 @@
 
 import { EventEmitter } from "events";
 import { inspect } from "util";
+
 import { toUtf8 } from "@fluidframework/common-utils";
+import { defaultHash, type IGitManager } from "@fluidframework/server-services-client";
 import {
-	ICheckpointService,
-	IClientManager,
-	IContext,
-	IClusterDrainingChecker,
-	IDeliState,
-	IDocument,
-	IDocumentRepository,
-	ILogger,
-	IPartitionLambda,
-	IPartitionLambdaConfig,
-	IPartitionLambdaFactory,
-	IProducer,
-	IServiceConfiguration,
-	ITenantManager,
+	type ICheckpointService,
+	type IClientManager,
+	type IContext,
+	type IClusterDrainingChecker,
+	type IDeliState,
+	type IDocument,
+	type IDocumentRepository,
+	type ILogger,
+	type IPartitionLambda,
+	type IPartitionLambdaConfig,
+	type IPartitionLambdaFactory,
+	type IProducer,
+	type IServiceConfiguration,
+	type ITenantManager,
 	LambdaCloseType,
-	MongoManager,
+	type MongoManager,
 	requestWithRetry,
 } from "@fluidframework/server-services-core";
-import { defaultHash, IGitManager } from "@fluidframework/server-services-client";
 import {
-	Lumber,
+	type Lumber,
 	LumberEventName,
 	Lumberjack,
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
+
 import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
-import { DeliLambda } from "./lambda";
+
 import { createDeliCheckpointManagerFromCollection } from "./checkpointManager";
+import { DeliLambda } from "./lambda";
 
 const getDefaultCheckpoint = (): IDeliState => {
 	return {

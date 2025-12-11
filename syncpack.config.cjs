@@ -119,6 +119,12 @@ module.exports = {
 			label: "Must use tilde dependency ranges",
 			dependencies: [
 				"@biomejs/biome",
+				"@eslint-community/*",
+				"@rushstack/eslint-*",
+				"@typescript-eslint/*",
+				"eslint-config-*",
+				"eslint-config-prettier",
+				"eslint-import-resolver-typescript",
 				"eslint-plugin-*",
 				"eslint-config-prettier",
 				"eslint",
@@ -147,6 +153,15 @@ module.exports = {
 			range: "",
 		},
 
+		// @fluid-example/import-testing typescript versions should use ~
+		{
+			label: "@fluid-example/import-testing typescript versions should use ~",
+			dependencies: ["typescript-*"],
+			dependencyTypes: ["dev"],
+			packages: ["@fluid-example/import-testing"],
+			range: "~",
+		},
+
 		// All deps should use caret ranges unless previously overridden
 		{
 			label: "Dependencies should use caret dependency ranges",
@@ -164,6 +179,13 @@ module.exports = {
 	 * `syncpack list-mismatches`, the output is grouped by label.
 	 */
 	versionGroups: [
+		// TODO: Remove this ignore once we have upgraded all packages to eslint 9
+		{
+			label: "eslint is ignored while upgrading to eslint v9",
+			dependencies: ["eslint"],
+			packages: ["**"],
+			isIgnored: true,
+		},
 		// Workaround for compatibility issues.
 		// Ideally this section would be empty (and removed).
 		// Items should be removed from here when possible.
@@ -193,7 +215,8 @@ module.exports = {
 				"@fluidframework/build-common",
 				"@fluidframework/build-tools",
 				"@fluidframework/common-utils",
-				"@fluidframework/eslint-config-fluid",
+				// Temporarily disabled while eslint-config-fluid is part of the client release group
+				// "@fluidframework/eslint-config-fluid",
 				"@fluidframework/protocol-definitions",
 				"@fluidframework/test-tools",
 			],

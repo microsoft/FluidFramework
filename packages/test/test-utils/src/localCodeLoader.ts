@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 
 import {
 	ICodeDetailsLoader,
@@ -21,7 +21,7 @@ import {
 	type IFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions/internal";
 
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "./containerRuntimeFactories.js";
 
 /**
@@ -102,7 +102,7 @@ export class LocalCodeLoader implements ICodeDetailsLoader {
 					fluidModule = {
 						fluidExport: {
 							...maybeExport,
-							// eslint-disable-next-line import/no-deprecated
+							// eslint-disable-next-line import-x/no-deprecated
 							IRuntimeFactory: new ContainerRuntimeFactoryWithDefaultDataStore({
 								defaultFactory,
 								registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],

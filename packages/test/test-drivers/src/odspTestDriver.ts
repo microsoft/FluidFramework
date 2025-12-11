@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import os from "os";
 
 import { ITestDriver, OdspEndpoint } from "@fluid-internal/test-driver-definitions";
@@ -11,6 +11,7 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import {
 	IDocumentServiceFactory,
 	IUrlResolver,
+	type IPersistedCache,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	IPublicClientConfig,
@@ -19,7 +20,6 @@ import {
 } from "@fluidframework/odsp-doclib-utils/internal";
 import type {
 	HostStoragePolicy,
-	IPersistedCache,
 	OdspResourceTokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
@@ -69,6 +69,14 @@ interface LoginTenants {
 }
 
 /**
+ * A simplified version of the credentials returned by the tenant pool containing only username and password values.
+ */
+export interface UserPassCredentials {
+	UserPrincipalName: string;
+	Password: string;
+}
+
+/**
  * @internal
  */
 export function assertOdspEndpoint(
@@ -96,25 +104,50 @@ export function getOdspCredentials(
 		odspEndpointName === "odsp"
 			? process.env.login__odsp__test__tenants
 			: process.env.login__odspdf__test__tenants;
-	if (loginTenants !== undefined) {
-		const tenants: LoginTenants = JSON.parse(loginTenants);
-		const tenantNames = Object.keys(tenants);
-		const tenant = tenantNames[tenantIndex % tenantNames.length];
-		if (tenant === undefined) {
-			throw new Error("tenant should not be undefined when getting odsp credentials");
-		}
-		const tenantInfo = tenants[tenant];
-		if (tenantInfo === undefined) {
-			throw new Error("tenantInfo should not be undefined when getting odsp credentials");
-		}
-		// Translate all the user from that user to the full user principle name by appending the tenant domain
-		const range = tenantInfo.range;
 
-		// Return the set of account to choose from a single tenant
-		for (let i = 0; i < range.count; i++) {
-			const username = `${range.prefix}${range.start + i}@${tenant}`;
-			if (requestedUserName === undefined || requestedUserName === username) {
-				creds.push({ username, password: range.password });
+	if (loginTenants !== undefined) {
+		/**
+		 * Parse login credentials using the new tenant format for e2e tests.
+		 * For the expected format of loginTenants, see {@link UserPassCredentials}
+		 */
+		if (loginTenants.includes("UserPrincipalName")) {
+			const output: UserPassCredentials[] = JSON.parse(loginTenants);
+			if (output?.[tenantIndex] === undefined) {
+				throw new Error("No resources found in the login tenants");
+			}
+
+			// Return the set of accounts to choose from a single tenant
+			for (const account of output) {
+				const username = account.UserPrincipalName;
+				const password = account.Password;
+				if (requestedUserName === undefined || requestedUserName === username) {
+					creds.push({ username, password });
+				}
+			}
+		} else {
+			/**
+			 * Parse login credentials using the tenant format for stress tests.
+			 * For the expected format of loginTenants, see {@link LoginTenants}
+			 */
+			const tenants: LoginTenants = JSON.parse(loginTenants);
+			const tenantNames = Object.keys(tenants);
+			const tenant = tenantNames[tenantIndex % tenantNames.length];
+			if (tenant === undefined) {
+				throw new Error("tenant should not be undefined when getting odsp credentials");
+			}
+			const tenantInfo = tenants[tenant];
+			if (tenantInfo === undefined) {
+				throw new Error("tenantInfo should not be undefined when getting odsp credentials");
+			}
+			// Translate all the user from that user to the full user principal name by appending the tenant domain
+			const range = tenantInfo.range;
+
+			// Return the set of account to choose from a single tenant
+			for (let i = 0; i < range.count; i++) {
+				const username = `${range.prefix}${range.start + i}@${tenant}`;
+				if (requestedUserName === undefined || requestedUserName === username) {
+					creds.push({ username, password: range.password });
+				}
 			}
 		}
 	} else {
@@ -194,7 +227,7 @@ export class OdspTestDriver implements ITestDriver {
 			odspEndpointName?: string;
 		},
 		api: OdspDriverApiType = OdspDriverApi,
-	) {
+	): Promise<OdspTestDriver> {
 		const tenantIndex = config?.tenantIndex ?? 0;
 		assertOdspEndpoint(config?.odspEndpointName);
 		const endpointName = config?.odspEndpointName ?? "odsp";
@@ -243,7 +276,7 @@ export class OdspTestDriver implements ITestDriver {
 		);
 	}
 
-	private static async getDriveId(siteUrl: string, tokenConfig: TokenConfig) {
+	private static async getDriveId(siteUrl: string, tokenConfig: TokenConfig): Promise<string> {
 		let driveIdP = this.driveIdPCache.get(siteUrl);
 		if (driveIdP) {
 			return driveIdP;
@@ -267,7 +300,7 @@ export class OdspTestDriver implements ITestDriver {
 		tenantName?: string,
 		userIndex?: number,
 		endpointName?: string,
-	) {
+	): Promise<OdspTestDriver> {
 		const tokenConfig: TokenConfig = {
 			...loginConfig,
 			...getMicrosoftConfiguration(),
@@ -296,7 +329,7 @@ export class OdspTestDriver implements ITestDriver {
 	private static async getStorageToken(
 		options: OdspResourceTokenFetchOptions & { useBrowserAuth?: boolean },
 		config: IOdspTestLoginInfo & IPublicClientConfig,
-	) {
+	): Promise<string> {
 		const host = new URL(options.siteUrl).host;
 
 		if (options.useBrowserAuth === true) {
@@ -331,7 +364,7 @@ export class OdspTestDriver implements ITestDriver {
 	}
 
 	public readonly type = "odsp";
-	public get version() {
+	public get version(): string {
 		return this.api.version;
 	}
 	private readonly testIdToUrl = new Map<string, string>();
@@ -377,7 +410,7 @@ export class OdspTestDriver implements ITestDriver {
 		return this.testIdToUrl.get(testId)!;
 	}
 
-	public setPersistedCache(cache: IPersistedCache) {
+	public setPersistedCache(cache: IPersistedCache): void {
 		this.cache = cache;
 	}
 
@@ -406,11 +439,11 @@ export class OdspTestDriver implements ITestDriver {
 		);
 	}
 
-	private async getStorageToken(options: OdspResourceTokenFetchOptions) {
+	private async getStorageToken(options: OdspResourceTokenFetchOptions): Promise<string> {
 		return OdspTestDriver.getStorageToken(options, this.config);
 	}
 
-	private async getPushToken(options: OdspResourceTokenFetchOptions) {
+	private async getPushToken(options: OdspResourceTokenFetchOptions): Promise<string> {
 		const tokens = await OdspTestDriver.odspTokenManager.getPushTokens(
 			new URL(options.siteUrl).host,
 			this.config,
@@ -421,7 +454,7 @@ export class OdspTestDriver implements ITestDriver {
 		return tokens.accessToken;
 	}
 
-	public getUrlFromItemId(itemId: string) {
+	public getUrlFromItemId(itemId: string): string {
 		return this.api.createOdspUrl({
 			siteUrl: this.config.siteUrl,
 			driveId: this.config.driveId,

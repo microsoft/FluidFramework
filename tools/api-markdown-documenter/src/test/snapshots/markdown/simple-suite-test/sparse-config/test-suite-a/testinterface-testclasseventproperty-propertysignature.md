@@ -2,14 +2,14 @@
 
 Test interface event property
 
-### Signature {#testclasseventproperty-signature}
+<h3 id="testclasseventproperty-signature">Signature</h3>
 
 ```typescript
 readonly testClassEventProperty: () => void;
 ```
 
-**Type:** () =&gt; void
+**Type**: () => void
 
-### Remarks {#testclasseventproperty-remarks}
+<h3 id="testclasseventproperty-remarks">Remarks</h3>
 
 Here are some remarks about the event property

@@ -5,20 +5,20 @@
 
 import { execFileSync } from "node:child_process";
 import path from "node:path";
-import { Package } from "@fluidframework/build-tools";
+import type { Package } from "@fluidframework/build-tools";
 import { PackageName } from "@rushstack/node-core-library";
 import readPkgUp from "read-pkg-up";
 import * as semver from "semver";
-import { SimpleGit, SimpleGitOptions, simpleGit } from "simple-git";
+import { type SimpleGit, type SimpleGitOptions, simpleGit } from "simple-git";
 import type { SetRequired } from "type-fest";
 
 import type { IReleaseGroup } from "@fluid-tools/build-infrastructure";
 import { getVersionsFromStrings } from "@fluid-tools/version-tools";
 import { parseISO } from "date-fns";
-import { CommandLogger } from "../logging.js";
-import { ReleaseGroup } from "../releaseGroups.js";
-// eslint-disable-next-line import/no-deprecated
-import { Context, type VersionDetails, isMonoRepoKind } from "./context.js";
+import type { CommandLogger } from "../logging.js";
+import type { ReleaseGroup } from "../releaseGroups.js";
+// eslint-disable-next-line import-x/no-deprecated
+import { type Context, type VersionDetails, isMonoRepoKind } from "./context.js";
 
 const newlineCrossPlatform = /\r?\n/;
 /**
@@ -367,7 +367,7 @@ export class Repository implements GitContext {
 	 * @returns An array of all all the tags for the release group or package.
 	 */
 	public async getTagsForReleaseGroup(releaseGroupOrPackage: string): Promise<string[]> {
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		const prefix = isMonoRepoKind(releaseGroupOrPackage)
 			? releaseGroupOrPackage.toLowerCase()
 			: PackageName.getUnscopedName(releaseGroupOrPackage);

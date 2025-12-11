@@ -18,11 +18,11 @@ import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server
 import { createDocument } from "./localCreateDocument.js";
 import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection.js";
 import { createLocalDocumentService } from "./localDocumentService.js";
+import { localDriverCompatDetailsForLoader } from "./localLayerCompatState.js";
 
 /**
  * Implementation of document service factory for local use.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 	// A map of clientId to LocalDocumentService.
@@ -37,6 +37,15 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 		private readonly policies?: IDocumentServicePolicies,
 		private readonly innerDocumentService?: IDocumentService,
 	) {}
+
+	/**
+	 * The compatibility details of the Local Driver layer that is exposed to the Loader layer
+	 * for validating Loader-Driver compatibility.
+	 * @remarks This is for internal use only.
+	 * The type of this should be ILayerCompatDetails. However, ILayerCompatDetails is internal and this class
+	 * is currently marked as legacy alpha. So, using unknown here.
+	 */
+	public readonly ILayerCompatDetails?: unknown = localDriverCompatDetailsForLoader;
 
 	public async createContainer(
 		createNewSummary: ISummaryTree | undefined,
@@ -97,7 +106,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 	 * @param clientId - The ID of the client to be disconnected.
 	 * @param disconnectReason - The reason of the disconnection.
 	 */
-	public disconnectClient(clientId: string, disconnectReason: string) {
+	public disconnectClient(clientId: string, disconnectReason: string): void {
 		const documentDeltaConnection = this.documentDeltaConnectionsMap.get(clientId);
 		if (documentDeltaConnection === undefined) {
 			throw new Error(`No client with the id: ${clientId}`);
@@ -112,7 +121,12 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 	 * @param type - Type of the Nack.
 	 * @param message - A message about the nack for debugging/logging/telemetry purposes.
 	 */
-	public nackClient(clientId: string, code?: number, type?: NackErrorType, message?: any) {
+	public nackClient(
+		clientId: string,
+		code?: number,
+		type?: NackErrorType,
+		message?: any,
+	): void {
 		const documentDeltaConnection = this.documentDeltaConnectionsMap.get(clientId);
 		if (documentDeltaConnection === undefined) {
 			throw new Error(`No client with the id: ${clientId}`);

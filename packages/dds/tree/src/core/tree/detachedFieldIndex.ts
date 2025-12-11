@@ -6,7 +6,12 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import { type ICodecOptions, type IJsonCodec, noopValidator } from "../../codec/index.js";
+import {
+	type CodecWriteOptions,
+	FluidClientVersion,
+	FormatValidatorNoOp,
+	type IJsonCodec,
+} from "../../codec/index.js";
 import {
 	type IdAllocator,
 	type JsonCompatibleReadOnly,
@@ -23,8 +28,6 @@ import type { RevisionTag, RevisionTagCodec } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type * as Delta from "./delta.js";
-import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec.js";
-import type { Format } from "./detachedFieldIndexFormat.js";
 import type {
 	DetachedField,
 	DetachedFieldSummaryData,
@@ -32,11 +35,46 @@ import type {
 	Major,
 	Minor,
 } from "./detachedFieldIndexTypes.js";
+import { makeDetachedFieldIndexCodec } from "./detachedFieldIndexCodecs.js";
+
+/**
+ * Readonly interface for {@link DetachedFieldIndex}.
+ */
+export interface ReadOnlyDetachedFieldIndex {
+	/**
+	 * Creates a deep clone of this `DetachedFieldIndex`.
+	 */
+	clone(): DetachedFieldIndex;
+
+	/**
+	 * Returns a field key for the given ID.
+	 * This does not save the field key on the index. To do so, call {@link createEntry}.
+	 */
+	toFieldKey(id: ForestRootId): FieldKey;
+
+	/**
+	 * Returns the `ForestRootId` associated with the given id.
+	 * Returns undefined if no such id is known to the index.
+	 */
+	tryGetEntry(id: Delta.DetachedNodeId): ForestRootId | undefined;
+
+	/**
+	 * Returns the `ForestRootId` associated with the given id.
+	 * Fails if no such id is known to the index.
+	 */
+	getEntry(id: Delta.DetachedNodeId): ForestRootId;
+}
+
+/**
+ * Restores the originating DetachedFieldIndex to the state it was in when the checkpoint was created.
+ * Can be invoked multiple times.
+ */
+export type DetachedFieldIndexCheckpoint = () => void;
 
 /**
  * The tree index records detached field IDs and associates them with a change atom ID.
  */
-export class DetachedFieldIndex {
+export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 	/**
 	 * A mapping from detached node ids to detached fields.
 	 */
@@ -54,8 +92,8 @@ export class DetachedFieldIndex {
 		Delta.DetachedNodeId
 	> = new Map();
 
-	private readonly codec: IJsonCodec<DetachedFieldSummaryData, Format>;
-	private readonly options: ICodecOptions;
+	private readonly codec: IJsonCodec<DetachedFieldSummaryData>;
+	private readonly options: CodecWriteOptions;
 
 	/**
 	 * The process for loading `DetachedFieldIndex` data from a summary is split into two steps:
@@ -76,10 +114,13 @@ export class DetachedFieldIndex {
 		private rootIdAllocator: IdAllocator<ForestRootId>,
 		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly idCompressor: IIdCompressor,
-		options?: ICodecOptions,
+		options?: CodecWriteOptions,
 	) {
-		this.options = options ?? { jsonValidator: noopValidator };
-		this.codec = makeDetachedNodeToFieldCodec(revisionTagCodec, this.options, idCompressor);
+		this.options = options ?? {
+			jsonValidator: FormatValidatorNoOp,
+			minVersionForCollab: FluidClientVersion.v2_0,
+		};
+		this.codec = makeDetachedFieldIndexCodec(revisionTagCodec, this.options, idCompressor);
 	}
 
 	public clone(): DetachedFieldIndex {
@@ -97,6 +138,25 @@ export class DetachedFieldIndex {
 			true,
 		);
 		return clone;
+	}
+
+	/**
+	 * Creates a restorable checkpoint of the current state of the DetachedFieldIndex.
+	 */
+	public createCheckpoint(): DetachedFieldIndexCheckpoint {
+		const clone = this.clone();
+		return () => {
+			this.purge();
+			populateNestedMap(clone.detachedNodeToField, this.detachedNodeToField, true);
+			populateNestedMap(
+				clone.latestRelevantRevisionToFields,
+				this.latestRelevantRevisionToFields,
+				true,
+			);
+			this.rootIdAllocator = idAllocatorFromMaxId(
+				clone.rootIdAllocator.getMaxId(),
+			) as IdAllocator<ForestRootId>;
+		};
 	}
 
 	public *entries(): Generator<{
@@ -194,26 +254,14 @@ export class DetachedFieldIndex {
 		}
 	}
 
-	/**
-	 * Returns a field key for the given ID.
-	 * This does not save the field key on the index. To do so, call {@link createEntry}.
-	 */
 	public toFieldKey(id: ForestRootId): FieldKey {
 		return brand(`${this.name}-${id}`);
 	}
 
-	/**
-	 * Returns the FieldKey associated with the given id.
-	 * Returns undefined if no such id is known to the index.
-	 */
 	public tryGetEntry(id: Delta.DetachedNodeId): ForestRootId | undefined {
 		return tryGetFromNestedMap(this.detachedNodeToField, id.major, id.minor)?.root;
 	}
 
-	/**
-	 * Returns the FieldKey associated with the given id.
-	 * Fails if no such id is known to the index.
-	 */
 	public getEntry(id: Delta.DetachedNodeId): ForestRootId {
 		const key = this.tryGetEntry(id);
 		assert(key !== undefined, 0x7aa /* Unknown removed node ID */);
@@ -286,7 +334,10 @@ export class DetachedFieldIndex {
 					root: brand<ForestRootId>(root + i),
 					latestRelevantRevision: revision,
 				});
-				setInNestedMap(this.latestRelevantRevisionToFields, revision, root, nodeId);
+				setInNestedMap(this.latestRelevantRevisionToFields, revision, root + i, {
+					major: nodeId.major,
+					minor: nodeId.minor + i,
+				});
 			}
 		}
 		return root;
@@ -328,7 +379,7 @@ export class DetachedFieldIndex {
 	 * Loads the tree index from the given string, this overrides any existing data.
 	 */
 	public loadData(data: JsonCompatibleReadOnly): void {
-		const detachedFieldIndex: DetachedFieldSummaryData = this.codec.decode(data as Format);
+		const detachedFieldIndex: DetachedFieldSummaryData = this.codec.decode(data);
 
 		this.rootIdAllocator = idAllocatorFromMaxId(
 			detachedFieldIndex.maxId,

@@ -3,29 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@fluidframework/server-services-core";
-import * as services from "@fluidframework/server-services-shared";
-import {
-	normalizePort,
-	IRedisClientConnectionManager,
-	RedisClientConnectionManager,
-} from "@fluidframework/server-services-utils";
-import { Provider } from "nconf";
-import { ExternalStorageManager } from "./externalStorageManager";
-import { GitrestRunner } from "./runner";
-import {
-	IFileSystemManagerFactories,
-	IRepositoryManagerFactory,
-	IsomorphicGitManagerFactory,
-	IStorageDirectoryConfig,
-	NodeFsManagerFactory,
-	RedisFsManagerFactory,
-} from "./utils";
-import { IGitrestResourcesCustomizations } from "./customizations";
 import {
 	setupAxiosInterceptorsForAbortSignals,
 	getGlobalAbortControllerContext,
 } from "@fluidframework/server-services-client";
+import type * as core from "@fluidframework/server-services-core";
+import * as services from "@fluidframework/server-services-shared";
+import {
+	normalizePort,
+	type IRedisClientConnectionManager,
+	RedisClientConnectionManager,
+} from "@fluidframework/server-services-utils";
+import type { Provider } from "nconf";
+
+import type { IGitrestResourcesCustomizations } from "./customizations";
+import { ExternalStorageManager } from "./externalStorageManager";
+import { GitrestRunner } from "./runner";
+import {
+	type IFileSystemManagerFactories,
+	type IRepositoryManagerFactory,
+	IsomorphicGitManagerFactory,
+	type IStorageDirectoryConfig,
+	NodeFsManagerFactory,
+	RedisFsManagerFactory,
+} from "./utils";
 
 export class GitrestResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
@@ -56,7 +57,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 		config: Provider,
 		customizations?: IGitrestResourcesCustomizations,
 	): Promise<GitrestResources> {
-		const port = normalizePort(process.env.PORT || "3000");
+		const port = normalizePort(process.env.PORT ?? "3000");
 
 		const fileSystemManagerFactories = this.getFileSystemManagerFactories(
 			config,

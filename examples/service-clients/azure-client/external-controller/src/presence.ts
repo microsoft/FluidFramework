@@ -4,11 +4,11 @@
  */
 
 import {
-	Presence,
+	type Presence,
 	StateFactory,
 	type StatesWorkspace,
 	type StatesWorkspaceSchema,
-} from "@fluidframework/presence/alpha";
+} from "@fluidframework/presence/beta";
 
 import type { DieValue } from "./controller.js";
 

@@ -4,11 +4,11 @@
  */
 
 import chalk from "chalk";
-import { Runner, Suite, Test, type Hook } from "mocha";
+import { Runner, type Suite, type Test, type Hook } from "mocha";
 
-import { isChildProcess, ReporterOptions } from "./Configuration";
+import { isChildProcess, type ReporterOptions } from "./Configuration";
 import { BenchmarkReporter } from "./Reporter";
-import { BenchmarkResult, type BenchmarkError } from "./ResultTypes";
+import type { BenchmarkResult, BenchmarkError } from "./ResultTypes";
 // TODO: this file should be moved in with the mocha specific stuff, but is left where it is for now to avoid breaking users of this reporter.
 // Since it's not moved yet, it needs this lint suppression to do this import:
 // eslint-disable-next-line import/no-internal-modules

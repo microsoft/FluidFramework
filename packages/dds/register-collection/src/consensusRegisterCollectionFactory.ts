@@ -17,8 +17,7 @@ import { pkgVersion } from "./packageVersion.js";
 
 /**
  * The factory that defines the consensus queue.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class ConsensusRegisterCollectionFactory
 	implements IChannelFactory<IConsensusRegisterCollection>
@@ -31,11 +30,11 @@ export class ConsensusRegisterCollectionFactory
 		packageVersion: pkgVersion,
 	};
 
-	public get type() {
+	public get type(): string {
 		return ConsensusRegisterCollectionFactory.Type;
 	}
 
-	public get attributes() {
+	public get attributes(): IChannelAttributes {
 		return ConsensusRegisterCollectionFactory.Attributes;
 	}
 
@@ -66,15 +65,13 @@ export class ConsensusRegisterCollectionFactory
 
 /**
  * {@inheritDoc IConsensusRegisterCollection}
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const ConsensusRegisterCollection = createSharedObjectKind(
 	ConsensusRegisterCollectionFactory,
 );
 /**
  * Compatibility alias for {@link IConsensusRegisterCollection}.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type ConsensusRegisterCollection<T> = IConsensusRegisterCollection<T>;

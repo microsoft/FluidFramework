@@ -3,17 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import assert from "node:assert";
-import { EOL as newline } from "node:os";
+import { strict as assert } from "node:assert";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import { Package } from "@fluidframework/build-tools";
+import type { Logger, Package } from "@fluidframework/build-tools";
 import { readJsonSync } from "fs-extra/esm";
 
 import registerDebug from "debug";
 const traceLayerCheck = registerDebug("layer-check");
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Always use LF since that's our repo standard.
+const newline = "\n";
 
 interface ILayerInfo {
 	deps?: string[];
@@ -252,7 +254,7 @@ class PackageNode extends BaseNode {
 	/**
 	 * Packages this package is directly dependent upon
 	 */
-	public get childDependencies(): Readonly<PackageNode[]> {
+	public get childDependencies(): readonly PackageNode[] {
 		return this._childDependencies;
 	}
 
@@ -295,6 +297,7 @@ export class LayerGraph {
 	 */
 	private readonly orderedLayers: LayerDependencyNode[] = [];
 	private dirMapping: { [key: string]: LayerNode } = {};
+	private readonly logger?: Logger;
 
 	private createPackageNode(name: string, layer: LayerNode): PackageNode {
 		if (this.packageNodeMap.get(name)) {
@@ -306,7 +309,13 @@ export class LayerGraph {
 		return packageNode;
 	}
 
-	private constructor(root: string, layerInfo: ILayerInfoFile, packages: Package[]) {
+	private constructor(
+		root: string,
+		layerInfo: ILayerInfoFile,
+		packages: Package[],
+		logger?: Logger,
+	) {
+		this.logger = logger;
 		this.initializeLayers(root, layerInfo);
 		this.initializePackages(packages);
 
@@ -374,6 +383,32 @@ export class LayerGraph {
 
 	private initializePackageMatching(packages: Package[]): void {
 		// Match the packages to the node if it is not explicitly specified
+
+		// Check for duplicate packages in the input array
+		const packageCounts = new Map<string, number>();
+		const packageLocations = new Map<string, string[]>();
+		for (const pkg of packages) {
+			packageCounts.set(pkg.name, (packageCounts.get(pkg.name) ?? 0) + 1);
+			if (!packageLocations.has(pkg.name)) {
+				packageLocations.set(pkg.name, []);
+			}
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- Code above guarantees the key exists
+			packageLocations.get(pkg.name)!.push(pkg.directory);
+		}
+		const duplicates = [...packageCounts.entries()].filter(([_, count]) => count > 1);
+		if (duplicates.length > 0 && this.logger) {
+			this.logger.verbose(
+				`Found ${duplicates.length} duplicate package(s) in workspace enumeration:`,
+			);
+			for (const [name, count] of duplicates) {
+				this.logger.verbose(`  ${name} appears ${count} times`);
+				const locations = packageLocations.get(name) ?? [];
+				for (const loc of locations) {
+					this.logger.verbose(`    - ${loc}`);
+				}
+			}
+		}
+
 		for (const pkg of packages) {
 			const packageNode = this.packageNodeMap.get(pkg.name);
 			if (packageNode) {
@@ -569,7 +604,6 @@ But some packages in layer A depend on packages in layer B, and likewise some in
 
 			this.padArraysToSameLength(packagesInCell, layersInCell, "&nbsp;");
 			lines.push(`| Packages | Layer Dependencies |`, `| --- | --- |`);
-			// eslint-disable-next-line unicorn/no-array-push-push
 			lines.push(
 				`| ${packagesInCell.join("</br>")} | ${layersInCell.join("</br>")} |${newline}`,
 			);
@@ -592,9 +626,14 @@ ${lines.join(newline)}
 		return packagesMdContents;
 	}
 
-	public static load(root: string, packages: Package[], info?: string): LayerGraph {
+	public static load(
+		root: string,
+		packages: Package[],
+		info?: string,
+		logger?: Logger,
+	): LayerGraph {
 		const layerInfoFile = info ?? path.join(__dirname, "..", "..", "data", "layerInfo.json");
 		const layerData = readJsonSync(layerInfoFile) as ILayerInfoFile;
-		return new LayerGraph(root, layerData, packages);
+		return new LayerGraph(root, layerData, packages, logger);
 	}
 }

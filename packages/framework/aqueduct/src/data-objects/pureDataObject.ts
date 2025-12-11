@@ -12,7 +12,7 @@ import type {
 } from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleInternal,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	IProvideFluidHandle,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -31,12 +31,11 @@ import type { DataObjectTypes, IDataObjectProps } from "./types.js";
  * you are creating another base data store class.
  *
  * @typeParam I - The optional input types used to strongly type the data object
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
 	extends TypedEventEmitter<I["Events"] & IEvent>
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	implements IFluidLoadable, IProvideFluidHandle
 {
 	/**

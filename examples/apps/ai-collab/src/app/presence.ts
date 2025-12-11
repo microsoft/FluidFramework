@@ -4,12 +4,12 @@
  */
 
 import {
-	Presence,
+	type Presence,
 	StateFactory,
 	type Attendee,
 	type StatesWorkspace,
 	type StatesWorkspaceSchema,
-} from "@fluidframework/presence/alpha";
+} from "@fluidframework/presence/beta";
 
 import { getProfilePhoto } from "@/infra/authHelper";
 

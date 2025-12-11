@@ -5,7 +5,7 @@
 
 "use client";
 
-import { getPresenceViaDataObject } from "@fluidframework/presence/alpha";
+import { getPresence } from "@fluidframework/presence/beta";
 import {
 	Box,
 	Button,
@@ -34,8 +34,8 @@ import { useFluidContainerNextJs } from "@/useFluidContainerNextjs";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 
 // Uncomment the import line that corresponds to the server you want to use
-// import { createContainer, loadContainer, postAttach, containerIdFromUrl } from "./spe"; // eslint-disable-line import/order
-import { createContainer, loadContainer, postAttach, containerIdFromUrl } from "./tinylicious"; // eslint-disable-line import/order
+// import { createContainer, loadContainer, postAttach, containerIdFromUrl } from "./spe"; // eslint-disable-line import-x/order
+import { createContainer, loadContainer, postAttach, containerIdFromUrl } from "./tinylicious"; // eslint-disable-line import-x/order
 
 export async function createAndInitializeContainer(): Promise<
 	IFluidContainer<typeof CONTAINER_SCHEMA>
@@ -47,7 +47,7 @@ export async function createAndInitializeContainer(): Promise<
 	return container;
 }
 
-// eslint-disable-next-line import/no-default-export -- NextJS uses default exports
+// eslint-disable-next-line import-x/no-default-export -- NextJS uses default exports
 export default function TasksListPage(): JSX.Element {
 	const [selectedTaskGroup, setSelectedTaskGroup] = useState<SharedTreeTaskGroup>();
 	const [treeView, setTreeView] = useState<TreeView<typeof SharedTreeAppState>>();
@@ -63,7 +63,7 @@ export default function TasksListPage(): JSX.Element {
 			const _treeView = fluidContainer.initialObjects.appState.viewWith(TREE_CONFIGURATION);
 			setTreeView(_treeView);
 
-			const presence = getPresenceViaDataObject(fluidContainer.initialObjects.presence);
+			const presence = getPresence(fluidContainer);
 			setPresenceManagerContext(new PresenceManager(presence));
 			return { sharedTree: _treeView };
 		},

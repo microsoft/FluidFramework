@@ -20,3 +20,13 @@ export declare const c: number;
 import * as InternalTypes from "./innerFile.js";
 // eslint-disable-next-line unicorn/prefer-export-from -- intentional; we are testing this case
 export { InternalTypes };
+
+/**
+ * @sealed
+ */
+export declare type Sealed = number;
+
+/**
+ * @input
+ */
+export declare type Input = number;

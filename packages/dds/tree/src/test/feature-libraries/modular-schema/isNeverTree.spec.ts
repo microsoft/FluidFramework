@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import {
-	type FieldKindIdentifier,
 	MapNodeStoredSchema,
 	type MutableTreeStoredSchema,
 	ObjectNodeStoredSchema,
@@ -17,35 +16,23 @@ import {
 	storedEmptyFieldSchema,
 } from "../../../core/index.js";
 import { FieldKinds, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
-/* eslint-disable-next-line import/no-internal-modules */
+/* eslint-disable-next-line import-x/no-internal-modules */
 import { allowsTreeSuperset } from "../../../feature-libraries/modular-schema/index.js";
 import {
 	isNeverField,
 	isNeverTree,
 	// Allow importing from this specific file which is being tested:
-	/* eslint-disable-next-line import/no-internal-modules */
+	/* eslint-disable-next-line import-x/no-internal-modules */
 } from "../../../feature-libraries/modular-schema/isNeverTree.js";
 import { brand } from "../../../util/index.js";
+import { fieldSchema } from "../../utils.js";
 
 /**
  * Empty readonly map.
  */
 const emptyMap: ReadonlyMap<never, never> = new Map<never, never>();
 
-/**
- * Helper for building {@link TreeFieldStoredSchema}.
- */
-function fieldSchema(
-	kind: { identifier: FieldKindIdentifier },
-	types: Iterable<TreeNodeSchemaIdentifier>,
-): TreeFieldStoredSchema {
-	return {
-		kind: kind.identifier,
-		types: new Set(types),
-	};
-}
-
-describe("Schema Comparison", () => {
+describe("isNeverTree", () => {
 	/**
 	 * TreeFieldStoredSchema which is impossible for any data to be in schema with.
 	 */

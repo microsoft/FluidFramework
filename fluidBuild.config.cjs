@@ -49,7 +49,7 @@ module.exports = {
 			script: false,
 		},
 		"compile": {
-			dependsOn: ["commonjs", "build:esnext", "api", "build:test", "build:copy"],
+			dependsOn: ["commonjs", "build:esnext", "build:test", "build:copy"],
 			script: false,
 		},
 		"commonjs": {
@@ -70,6 +70,7 @@ module.exports = {
 		},
 		"build:copy": [],
 		"build:genver": [],
+		"layerGeneration:gen": [],
 		"typetests:gen": [],
 		"ts2esm": [],
 		"tsc": tscDependsOn,
@@ -77,12 +78,11 @@ module.exports = {
 		// Generic build:test script should be replaced by :esm or :cjs specific versions.
 		// "tsc" would be nice to eliminate from here, but plenty of packages still focus
 		// on CommonJS.
-		"build:test": ["typetests:gen", "tsc", "api-extractor:commonjs", "api-extractor:esnext"],
-		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
-		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
+		"build:test": ["typetests:gen", "tsc"],
+		"build:test:cjs": ["typetests:gen", "tsc"],
+		"build:test:esm": ["typetests:gen", "build:esnext"],
 		"api": {
 			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
-			// dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
 		},
 		"api-extractor:commonjs": ["tsc"],
@@ -170,7 +170,7 @@ module.exports = {
 		},
 	},
 
-	multiCommandExecutables: ["oclif", "syncpack"],
+	multiCommandExecutables: ["oclif", "syncpack", "tsx"],
 	declarativeTasks: {
 		// fluid-build lowercases the executable name, so we need to use buildversion instead of buildVersion.
 		"flub check buildversion": {
@@ -203,6 +203,12 @@ module.exports = {
 				"{azure,examples,experimental,packages}/*/*/*/*/*.md",
 				"tools/markdown-magic/**/*.md",
 			],
+			gitignore: ["input", "output"],
+		},
+		// eslint-config-fluid specific declarative task to print configs
+		"tsx scripts/print-configs.ts printed-configs": {
+			inputGlobs: ["scripts/print-configs.ts", "src/**/*.ts", "src/**/*.tsx", "*.js"],
+			outputGlobs: ["printed-configs/*.json"],
 			gitignore: ["input", "output"],
 		},
 		"oclif manifest": {
@@ -289,7 +295,8 @@ module.exports = {
 		},
 
 		// Independent packages
-		"build": "common/build",
+		"build-common": "common/build/build-common",
+		"eslint-plugin-fluid": "common/build/eslint-plugin-fluid",
 		"common-utils": "common/lib/common-utils",
 		"protocol-def": "common/lib/protocol-definitions",
 
@@ -307,12 +314,6 @@ module.exports = {
 		// Entries here are COMPLETELY ignored by the policy checker. Instead of adding entries here, consider adding
 		// entries to the handlerExclusions list below to ignore a particular.
 		exclusions: [
-			// The paths below are for fluidframework.com layouts and code and are not subject to policy.
-			"docs/layouts/",
-			"docs/themes/thxvscode/assets/",
-			"docs/themes/thxvscode/layouts/",
-			"docs/themes/thxvscode/static/assets/",
-
 			// This file is a test file.
 			"tools/markdown-magic/test/package.json",
 
@@ -329,13 +330,25 @@ module.exports = {
 		// Exclusion per handler
 		handlerExclusions: {
 			"fluid-build-tasks-eslint": [
+				// This policy needs to be rethought in light of eslint 9. Disabling everywhere in the meantime.
+				".*",
+
+				// There are no built files, but a tsconfig.json is present to simplify the
+				// eslint config.
+				"azure/packages/azure-local-service/package.json",
 				// eslint doesn't really depend on build. Doing so just slows down a package build.
 				"^packages/test/snapshots/package.json",
 				"^packages/test/test-utils/package.json",
 				// TODO: AB#7630 uses lint only ts projects for coverage which don't have representative tsc scripts
 				"^packages/tools/fluid-runner/package.json",
+
+				// Server packages need to be cleaned up; excluding as a workaround
+				"^server/routerlicious/packages/.*/package.json",
 			],
-			"fluid-build-tasks-tsc": [],
+			"fluid-build-tasks-tsc": [
+				// Server packages need to be cleaned up; excluding as a workaround
+				"^server/routerlicious/packages/.*/package.json",
+			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
 				"tools/api-markdown-documenter/src/test/snapshots/.*",
@@ -346,48 +359,48 @@ module.exports = {
 				"experimental/PropertyDDS/packages/property-query/test/get_config.js",
 				"server/routerlicious/packages/tinylicious/src/index.ts",
 
-				// Type test files can be excluded since they're generated and known to have the correct header.
-				// This can be removed once the whole repo uses build-tools v0.35.0+.
-				/.*\/validate.*\.generated\.ts/,
+				// minified DOMPurify is not a source file, so it doesn't need a header.
+				"docs/static/dompurify/purify.min.js",
 			],
 			"no-js-file-extensions": [
 				// PropertyDDS uses .js files which should be renamed eventually.
 				"experimental/PropertyDDS/.*",
+				"azure/packages/azure-local-service/index.js",
+
+				// These oclif packages are still CJS vs. build-infrastructure which is ESM so is not excluded here.
 				"build-tools/packages/build-cli/bin/dev.js",
 				"build-tools/packages/build-cli/bin/run.js",
-				"build-tools/packages/build-cli/test/helpers/init.js",
 				"build-tools/packages/version-tools/bin/dev.js",
 				"build-tools/packages/version-tools/bin/run.js",
+
+				// Could be renamed, but there is tooling that uses this name and it's not worth it.
 				"common/build/build-common/gen_version.js",
+
+				// ESLint shared config and plugin
 				"common/build/eslint-config-fluid/.*",
+				"common/build/eslint-plugin-fluid/.*",
+
 				"common/lib/common-utils/jest-puppeteer.config.js",
 				"common/lib/common-utils/jest.config.js",
-				"common/build/eslint-plugin-fluid/.*",
-				"docs/api-markdown-documenter/.*",
-				"docs/api/fallback/index.js",
-				"docs/build-redirects.js",
-				"docs/download-apis.js",
-				"docs/local-api-rollup.js",
+
 				// Avoids MIME-type issues in the browser.
 				"docs/static/trusted-types-policy.js",
+				"docs/static/dompurify/purify.min.js",
 				"docs/static/js/add-code-copy-button.js",
 				"examples/data-objects/monaco/loaders/blobUrl.js",
 				"examples/data-objects/monaco/loaders/compile.js",
 				"examples/service-clients/odsp-client/shared-tree-demo/tailwind.config.js",
-				"packages/test/mocha-test-setup/mocharc-common.js",
 				"packages/test/test-service-load/scripts/usePrereleaseDeps.js",
-				"packages/tools/devtools/devtools-browser-extension/test-setup.js",
+
+				// Changelog generator wrapper is in js
 				"tools/changelog-generator-wrapper/src/getDependencyReleaseLine.js",
 				"tools/changelog-generator-wrapper/src/getReleaseLine.js",
 				"tools/changelog-generator-wrapper/src/index.js",
+
 				"tools/getkeys/index.js",
 			],
-			"npm-package-metadata-and-sorting": [
-				// The root package.json is not checked temporarily due to AB#8640
-				"^package.json",
-			],
 			"npm-package-json-prettier": [
-				// This rule is temporarily disabled for all projects while we update the repo to use different formatting
+				// This rule is disabled for the whole repo because we no longer use prettier in the majority of packages.
 				".*",
 			],
 			"npm-package-json-scripts-args": [
@@ -412,7 +425,6 @@ module.exports = {
 			"npm-package-json-test-scripts": [
 				"common/build/eslint-config-fluid/package.json",
 				"packages/test/mocha-test-setup/package.json",
-				"examples/apps/attributable-map/package.json",
 			],
 			"npm-package-json-test-scripts-split": [
 				"server/",
@@ -423,10 +435,6 @@ module.exports = {
 				"packages/tools/devtools/devtools-view/package.json",
 			],
 			"npm-package-exports-apis-linted": [
-				// Rollout suppressions - enable only after tools are updated to support policy
-				// as new build-tools will have the concurrently fluid-build support it uses.
-				"^common/",
-
 				// Packages that violate the API linting rules
 				// ae-missing-release-tags, ae-incompatible-release-tags
 				"^examples/data-objects/table-document/",
@@ -437,19 +445,9 @@ module.exports = {
 				"^experimental/PropertyDDS/",
 				"^tools/api-markdown-documenter/",
 			],
-			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
 			"npm-package-exports-field": [
-				// We deliberately improperly import from deep in the package tree while we migrate everything into other
-				// packages. This is temporary and can be fixed once the build-tools/build-cli pigration is complete.
-				"^azure/",
-				"^build-tools/packages/build-tools/package.json",
-				"^build-tools/packages/build-infrastructure/package.json",
-				"^common/",
-				"^examples/",
-				"^experimental/",
-				"^packages/",
-				"^server/",
-				"^tools/",
+				// This policy is no longer correct or applicable to our packages, so all files are excluded.
+				".*",
 			],
 			"npm-package-json-clean-script": [
 				"server/gitrest/package.json",
@@ -482,6 +480,9 @@ module.exports = {
 				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
 			],
 			"npm-private-packages": [
+				// TODO: Temporarily disabled for this package while it's a part of the client release group.
+				"^common/build/eslint-config-fluid/",
+
 				// test packages
 				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
 			],

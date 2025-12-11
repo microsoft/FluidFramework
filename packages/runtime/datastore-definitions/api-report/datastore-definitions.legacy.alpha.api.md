@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha @legacy
+// @beta @legacy
 export interface IChannel extends IFluidLoadable {
     // (undocumented)
     readonly attributes: IChannelAttributes;
@@ -16,14 +16,14 @@ export interface IChannel extends IFluidLoadable {
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): Promise<ISummaryTreeWithStats>;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IChannelAttributes {
     readonly packageVersion?: string;
     readonly snapshotFormatVersion: string;
     readonly type: string;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IChannelFactory<out TChannel = unknown> {
     readonly attributes: IChannelAttributes;
     create(runtime: IFluidDataStoreRuntime, id: string): TChannel & IChannel;
@@ -31,7 +31,7 @@ export interface IChannelFactory<out TChannel = unknown> {
     readonly type: string;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IChannelServices {
     // (undocumented)
     deltaConnection: IDeltaConnection;
@@ -39,14 +39,15 @@ export interface IChannelServices {
     objectStorage: IChannelStorageService;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IChannelStorageService {
     contains(path: string): Promise<boolean>;
+    getSnapshotTree(): ISnapshotTree | undefined;
     list(path: string): Promise<string[]>;
     readBlob(path: string): Promise<ArrayBufferLike>;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IDeltaConnection {
     attach(handler: IDeltaHandler): void;
     // (undocumented)
@@ -55,7 +56,7 @@ export interface IDeltaConnection {
     submit(messageContent: any, localOpMetadata: unknown): void;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IDeltaHandler {
     applyStashedOp(message: any): void;
     processMessages: (messageCollection: IRuntimeMessageCollection) => void;
@@ -64,11 +65,12 @@ export interface IDeltaHandler {
     setConnectionState(connected: boolean): void;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export type IDeltaManagerErased = ErasedType<"@fluidframework/container-definitions.IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>">;
 
-// @alpha @sealed @legacy
+// @beta @sealed @legacy
 export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRuntimeEvents>, IDisposable {
+    readonly activeLocalOperationActivity?: "applyStashed" | "rollback" | undefined;
     addChannel(channel: IChannel): void;
     readonly attachState: AttachState;
     bindChannel(channel: IChannel): void;
@@ -104,7 +106,15 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     waitAttached(): Promise<void>;
 }
 
-// @alpha @legacy
+// @alpha @sealed @legacy (undocumented)
+export interface IFluidDataStoreRuntimeAlpha extends IFluidDataStoreRuntime {
+    // (undocumented)
+    readonly inStagingMode: boolean;
+    // (undocumented)
+    readonly isDirty: boolean;
+}
+
+// @beta @legacy
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
     // (undocumented)
     (event: "disconnected", listener: () => void): any;
@@ -124,27 +134,21 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
     (event: "readonly", listener: (isReadOnly: boolean) => void): any;
 }
 
-// @alpha @sealed @deprecated @legacy (undocumented)
-export interface IFluidDataStoreRuntimeExperimental extends IFluidDataStoreRuntime {
-    // (undocumented)
-    readonly inStagingMode?: boolean;
-}
-
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface Internal_InterfaceOfJsonableTypesWith<T> {
     // (undocumented)
     [index: string | number]: JsonableTypeWith<T>;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export type Jsonable<T, TReplaced = never> = boolean extends (T extends never ? true : false) ? JsonableTypeWith<TReplaced> : unknown extends T ? JsonableTypeWith<TReplaced> : T extends undefined | null | boolean | number | string | TReplaced ? T : Extract<T, Function> extends never ? T extends object ? T extends (infer U)[] ? Jsonable<U, TReplaced>[] : {
     [K in keyof T]: Extract<K, symbol> extends never ? Jsonable<T[K], TReplaced> : never;
 } : never : never;
 
-// @alpha @legacy
+// @beta @legacy
 export type JsonableTypeWith<T> = undefined | null | boolean | number | string | T | Internal_InterfaceOfJsonableTypesWith<T> | ArrayLike<JsonableTypeWith<T>>;
 
-// @alpha @legacy
+// @beta @legacy
 export type Serializable<T> = Jsonable<T, IFluidHandle>;
 
 ```

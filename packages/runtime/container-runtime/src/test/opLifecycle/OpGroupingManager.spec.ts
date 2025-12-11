@@ -11,10 +11,12 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 import { ContainerMessageType } from "../../index.js";
 import {
-	OutboundBatchMessage,
+	type OutboundBatchMessage,
 	OpGroupingManager,
 	isGroupedBatch,
 	type OutboundBatch,
+	type EmptyGroupedBatch,
+	type LocalEmptyBatchPlaceholder,
 } from "../../opLifecycle/index.js";
 
 describe("OpGroupingManager", () => {
@@ -39,7 +41,7 @@ describe("OpGroupingManager", () => {
 		let metadata: { flag?: boolean; batchId?: string } | undefined = opHasMetadata
 			? { flag: true }
 			: undefined;
-		metadata = batchId ? { ...metadata, batchId } : metadata;
+		metadata = batchId === undefined ? metadata : { ...metadata, batchId };
 		return {
 			metadata,
 			type: ContainerMessageType.FluidDataStoreOp,
@@ -102,12 +104,17 @@ describe("OpGroupingManager", () => {
 		});
 
 		it("create empty batch", () => {
+			const emptyGroupedBatch: EmptyGroupedBatch = {
+				type: "groupedBatch",
+				contents: [],
+			};
 			const batchId = "batchId";
-			const expectedPlaceholderMessage: OutboundBatchMessage = {
+			const expectedOutboundMessage: OutboundBatchMessage = {
 				contents: '{"type":"groupedBatch","contents":[]}',
 				metadata: { batchId },
 				localOpMetadata: { emptyBatch: true },
 				referenceSequenceNumber: 0,
+				runtimeOp: undefined,
 			};
 
 			const result = new OpGroupingManager(
@@ -117,10 +124,14 @@ describe("OpGroupingManager", () => {
 				mockLogger,
 			).createEmptyGroupedBatch(batchId, 0);
 
-			assert.deepStrictEqual(result.outboundBatch.messages, [expectedPlaceholderMessage]);
+			assert.deepStrictEqual(result.outboundBatch.messages, [expectedOutboundMessage]);
 
-			// contents not included on the returned placeholder message
-			delete expectedPlaceholderMessage.contents;
+			const expectedPlaceholderMessage: LocalEmptyBatchPlaceholder = {
+				runtimeOp: emptyGroupedBatch,
+				metadata: { batchId },
+				localOpMetadata: { emptyBatch: true },
+				referenceSequenceNumber: 0,
+			};
 			assert.deepStrictEqual(result.placeholderMessage, expectedPlaceholderMessage);
 		});
 
@@ -130,17 +141,14 @@ describe("OpGroupingManager", () => {
 				contentSizeInBytes: 0,
 				referenceSequenceNumber: 0,
 			};
-			assert.throws(
-				() => {
-					new OpGroupingManager(
-						{
-							groupedBatchingEnabled: true,
-						},
-						mockLogger,
-					).groupBatch(emptyBatch);
-				},
-				(e: Error) => validateAssertionError(e, "Unexpected attempt to group an empty batch"),
-			);
+			assert.throws(() => {
+				new OpGroupingManager(
+					{
+						groupedBatchingEnabled: true,
+					},
+					mockLogger,
+				).groupBatch(emptyBatch);
+			}, validateAssertionError("Unexpected attempt to group an empty batch"));
 		});
 
 		it("singleton batch is returned as-is", () => {

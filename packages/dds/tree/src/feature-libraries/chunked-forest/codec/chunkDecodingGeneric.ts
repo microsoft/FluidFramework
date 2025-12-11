@@ -17,17 +17,22 @@ import {
 } from "./chunkCodecUtilities.js";
 import type { IdDecodingContext } from "./chunkDecoding.js";
 import type { EncodedFieldBatchGeneric, IdentifierOrIndex } from "./formatGeneric.js";
+import type { IncrementalDecoder } from "./codecs.js";
 
 /**
  * General purpose shape based tree decoder which gets its support for specific shapes from the caller.
  */
-export function decode<TEncodedShape extends object, TCache>(
-	decoderLibrary: DiscriminatedUnionDispatcher<TEncodedShape, [cache: TCache], ChunkDecoder>,
-	cache: TCache,
+export function decode<TEncodedShape extends object, TContext>(
+	decoderLibrary: DiscriminatedUnionDispatcher<
+		TEncodedShape,
+		[context: TContext],
+		ChunkDecoder
+	>,
+	context: TContext,
 	batch: EncodedFieldBatchGeneric<TEncodedShape>,
 	rootDecoder: ChunkDecoder,
 ): TreeChunk[] {
-	const decoders = batch.shapes.map((shape) => decoderLibrary.dispatch(shape, cache));
+	const decoders = batch.shapes.map((shape) => decoderLibrary.dispatch(shape, context));
 	const chunks: TreeChunk[] = [];
 	for (const field of batch.data) {
 		const stream = { data: field, offset: 0 };
@@ -46,13 +51,19 @@ export function decode<TEncodedShape extends object, TCache>(
  * Shared data for use in constructing decoders.
  */
 export class DecoderContext<TEncodedShape = unknown> {
-	/**
-	 * @param identifiers - identifier substitution table (use to replace numeric identifier indexes with the actual identifiers from this table).
-	 */
 	public constructor(
+		/**
+		 * Identifier substitution table (use to replace numeric identifier indexes with the actual identifiers from this table).
+		 */
 		public readonly identifiers: readonly string[],
 		public readonly shapes: readonly TEncodedShape[],
 		public readonly idDecodingContext: IdDecodingContext,
+		/**
+		 * To be used to decode incremental chunks, if any.
+		 * @remarks
+		 * See {@link IncrementalDecoder} for more information.
+		 */
+		public readonly incrementalDecoder: IncrementalDecoder | undefined,
 	) {}
 
 	public identifier<T extends string & BrandedType<string, string>>(
@@ -70,12 +81,12 @@ export class DecoderContext<TEncodedShape = unknown> {
  */
 export function readStreamIdentifier<T extends string & BrandedType<string, string>>(
 	stream: StreamCursor,
-	cache: DecoderContext,
+	context: DecoderContext,
 ): T {
 	const content = readStream(stream);
 	assert(
 		typeof content === "number" || typeof content === "string",
 		0x73b /* content to be a number or string */,
 	);
-	return cache.identifier(content);
+	return context.identifier(content);
 }

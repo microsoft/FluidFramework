@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-deprecated
-import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
-import { IDocumentStorage, MongoManager } from "@fluidframework/server-services-core";
+// eslint-disable-next-line import-x/no-deprecated
+import type { TypedEventEmitter } from "@fluidframework/common-utils";
+import type { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
+import type { IDocumentStorage, MongoManager } from "@fluidframework/server-services-core";
 import { RestLessServer } from "@fluidframework/server-services-shared";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
@@ -15,8 +15,9 @@ import cors from "cors";
 import express, { Router } from "express";
 import safeStringify from "json-stringify-safe";
 import morgan from "morgan";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 import * as winston from "winston";
+
 import { create as createRoutes } from "./routes";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
@@ -33,7 +34,7 @@ export function create(
 	config: Provider,
 	storage: IDocumentStorage,
 	mongoManager: MongoManager,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	collaborationSessionEventEmitter: TypedEventEmitter<ICollaborationSessionEvents> | undefined,
 ) {
 	// Maximum REST request size

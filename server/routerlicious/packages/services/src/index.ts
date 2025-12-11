@@ -10,22 +10,34 @@ export { createMessageReceiver } from "./messageReceiver";
 export { createMessageSender } from "./messageSender";
 export { createMetricClient } from "./metricClient";
 export { DeltaManager } from "./deltaManager";
-export { MongoCollection, MongoDb, MongoDbFactory, ConnectionNotAvailableMode } from "./mongodb";
+export {
+	Throttler as LegacyThrottler,
+	ThrottlerHelper as LegacyThrottlerHelper,
+} from "./legacy-throttling";
+export {
+	MongoCollection,
+	MongoDb,
+	MongoDbFactory,
+	type ConnectionNotAvailableMode,
+} from "./mongodb";
 export { NodeAllowList, NodeCodeLoader } from "./nodeCodeLoader";
 export { RedisCache } from "./redis";
 export { ClientManager } from "./redisClientManager";
 export {
 	RedisCollaborationSessionManager,
-	IRedisCollaborationSessionManagerOptions,
+	type IRedisCollaborationSessionManagerOptions,
 } from "./redisSessionManager";
-export { RedisThrottleAndUsageStorageManager } from "./redisThrottleAndUsageStorageManager";
 export { SecretManager } from "./secretManager";
 export { CollaborationSessionTracker } from "./sessionTracker";
 export { SocketIoRedisPublisher, SocketIoRedisTopic } from "./socketIoRedisPublisher";
 export { StorageNameRetriever } from "./storageNameRetriever";
 export { Tenant, TenantManager } from "./tenant";
-export { Throttler } from "./throttler";
-export { ThrottlerHelper } from "./throttlerHelper";
+export { Throttler, ThrottlerHelper } from "./legacy-throttling";
+export {
+	DistributedTokenBucketThrottler,
+	IDistributedTokenBucketThrottlerConfig,
+} from "./throttling";
+export { RedisThrottleAndUsageStorageManager } from "./redisThrottleAndUsageStorageManager";
 export {
 	BasicWebServerFactory,
 	NodeClusterWebServerFactory,
@@ -37,19 +49,20 @@ export {
 	handleResponse,
 	HttpServer,
 	IsEphemeralContainer,
-	INodeClusterConfig,
-	IHttpServerConfig,
-	ISocketIoRedisConnection,
-	ISocketIoRedisOptions,
-	ISocketIoRedisSubscriptionConnection,
+	type INodeClusterConfig,
+	type IHttpServerConfig,
+	type ISocketIoRedisConnection,
+	type ISocketIoRedisOptions,
+	type ISocketIoRedisSubscriptionConnection,
 	RedisSocketIoAdapter,
-	RequestListener,
+	type RequestListener,
 	RestLessServer,
 	run,
 	runService,
 	SocketIoNodeClusterWebServerFactory,
 	SocketIoWebServerFactory,
 	validateRequestParams,
+	validatePrivateLink,
 	WebServer,
 	WholeSummaryReadGitManager,
 	WholeSummaryWriteGitManager,

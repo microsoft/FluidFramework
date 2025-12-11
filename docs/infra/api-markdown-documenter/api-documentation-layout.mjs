@@ -6,37 +6,87 @@
 //@ts-check
 /** @typedef {import("@fluid-tools/api-markdown-documenter").ApiItem} ApiItem */
 /** @typedef {import("@fluid-tools/api-markdown-documenter").ApiItemTransformationConfiguration} ApiItemTransformationConfiguration */
-/** @typedef {import("@fluid-tools/api-markdown-documenter").DocumentationNode} DocumentationNode */
+/** @typedef {import("@fluid-tools/api-markdown-documenter").Section} Section */
+/** @typedef {import("mdast").BlockContent} BlockContent */
+/** @typedef {import("mdast").Paragraph} Paragraph */
 
 import {
 	ApiItemKind,
 	ApiItemUtilities,
-	CodeSpanNode,
-	HeadingNode,
 	LayoutUtilities,
-	LineBreakNode,
-	LinkNode,
-	PlainTextNode,
 	ReleaseTag,
-	SectionNode,
-	SpanNode,
-	transformTsdocNode,
+	transformTsdoc,
 } from "@fluid-tools/api-markdown-documenter";
 
-import { AdmonitionNode } from "./admonition-node.mjs";
+import { createAdmonition } from "./admonition.mjs";
 
 const customExamplesSectionTitle = "Usage";
 const customThrowsSectionTitle = "Error Handling";
 
-const supportDocsLinkSpan = new SpanNode([
-	new PlainTextNode("For more information about our API support guarantees, see "),
-	LinkNode.createFromPlainText(
-		"here",
-		// Is there a URL that would be relative to the current site? (For development use)
-		"https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels",
-	),
-	new PlainTextNode("."),
-]);
+/**
+ * A paragraph containing a link to the Fluid Framework API support documentation.
+ * @type Paragraph
+ */
+const supportDocsLinkParagraph = {
+	type: "paragraph",
+	children: [
+		{ type: "text", value: "For more information about our API support guarantees, see " },
+		{
+			type: "link",
+			children: [{ type: "text", value: "here" }],
+			// Is there a URL that would be relative to the current site? (For development use)
+			url: "https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels",
+		},
+		{ type: "text", value: "." },
+	],
+};
+
+/**
+ * A special use notice for the "@system" tag.
+ */
+const systemNotice = createAdmonition(
+	[supportDocsLinkParagraph],
+	/* admonitionKind: */ "warning",
+	/* title: */ "This API is reserved for internal system use and should not be imported directly. It may change at any time without notice.",
+);
+
+/**
+ * A special use notice for the "@sealed" tag.
+ */
+const sealedNotice = createAdmonition(
+	[
+		{
+			type: "paragraph",
+			children: [
+				{
+					type: "text",
+					value: 'This type is "sealed," meaning that code outside of the library defining it should not implement or extend it. Future versions of this type may add members or make typing of readonly members more specific.',
+				},
+			],
+		},
+	],
+	/* admonitionKind: */ "info",
+	/* title: */ "Sealed",
+);
+
+/**
+ * A special use notice for the "@input" tag.
+ */
+const inputNotice = createAdmonition(
+	[
+		{
+			type: "paragraph",
+			children: [
+				{
+					type: "text",
+					value: 'This type is "input," meaning that code outside of the library defining it should not read from it. Future versions of this type may add optional members or make typing of members more general.',
+				},
+			],
+		},
+	],
+	/* admonitionKind: */ "info",
+	/* title: */ "Input",
+);
 
 /**
  * Creates a special support notice for the provided API item, if one is appropriate.
@@ -65,21 +115,21 @@ function createSupportNotice(apiItem, isImportable) {
 	 * @param {string} importSubpath - Subpath beneath the item's package through which the item can be imported.
 	 * @param {string} admonitionTitle - Title to display for the admonition.
 	 */
-	function createAdmonition(importSubpath, admonitionTitle) {
-		/** @type {DocumentationNode[]} */
+	function createImportAdmonition(importSubpath, admonitionTitle) {
+		/** @type {BlockContent[]} */
 		const admonitionChildren = [];
 		if (isImportable) {
-			admonitionChildren.push(
-				new SpanNode([
-					new PlainTextNode("To use, import via "),
-					CodeSpanNode.createFromPlainText(`${packageName}/${importSubpath}`),
-					new PlainTextNode("."),
-				]),
-				LineBreakNode.Singleton,
-			);
+			admonitionChildren.push({
+				type: "paragraph",
+				children: [
+					{ type: "text", value: "To use, import via " },
+					{ type: "inlineCode", value: `${packageName}/${importSubpath}` },
+					{ type: "text", value: "." },
+				],
+			});
 		}
-		admonitionChildren.push(supportDocsLinkSpan);
-		return new AdmonitionNode(
+		admonitionChildren.push(supportDocsLinkParagraph);
+		return createAdmonition(
 			admonitionChildren,
 			/* admonitionKind: */ "warning",
 			admonitionTitle,
@@ -87,7 +137,7 @@ function createSupportNotice(apiItem, isImportable) {
 	}
 
 	if (ApiItemUtilities.ancestryHasModifierTag(apiItem, "@legacy")) {
-		return createAdmonition(
+		return createImportAdmonition(
 			"legacy",
 			"This API is provided for existing users, but is not recommended for new users.",
 		);
@@ -96,14 +146,14 @@ function createSupportNotice(apiItem, isImportable) {
 	const releaseLevel = ApiItemUtilities.getEffectiveReleaseLevel(apiItem);
 
 	if (releaseLevel === ReleaseTag.Alpha) {
-		return createAdmonition(
+		return createImportAdmonition(
 			"alpha",
 			"This API is provided as an alpha preview and may change without notice.",
 		);
 	}
 
 	if (releaseLevel === ReleaseTag.Beta) {
-		return createAdmonition(
+		return createImportAdmonition(
 			"beta",
 			"This API is provided as a beta preview and may change without notice.",
 		);
@@ -115,17 +165,21 @@ function createSupportNotice(apiItem, isImportable) {
 /**
  * Creates a special use notice for the provided API item, if one is appropriate.
  *
- * If the item is tagged as "@system", displays an internal notice with use notes.
+ * If the item is tagged as with `tag`, displays an notice.
  *
- * @param {ApiItem} apiItem - The API item for which the system notice is being created.
+ * @param {ApiItem} apiItem - The API item for which the notice might be created.
+ * @param {`@${string}`} tag - The tag to check for.
+ * @param {boolean} includeContainingAncestry - Whether or not to include the `apiItem`'s containing ancestry when checking for the tag.
+ * E.g. whether or not a class member should inherit the tag from its containing class. Or a class inherit from its containing package/namespace.
+ * @param {BlockContent} notice - The notice to display if the tag is present.
  */
-function createSystemNotice(apiItem) {
-	if (ApiItemUtilities.ancestryHasModifierTag(apiItem, "@system")) {
-		return new AdmonitionNode(
-			[supportDocsLinkSpan],
-			/* admonitionKind: */ "warning",
-			"This API is reserved for internal system use and should not be imported directly. It may change at any time without notice.",
-		);
+function createTagNotice(apiItem, tag, includeContainingAncestry, notice) {
+	if (includeContainingAncestry && ApiItemUtilities.ancestryHasModifierTag(apiItem, tag)) {
+		return notice;
+	}
+
+	if (!includeContainingAncestry && ApiItemUtilities.hasModifierTag(apiItem, tag)) {
+		return notice;
 	}
 
 	return undefined;
@@ -157,7 +211,7 @@ function createSystemNotice(apiItem) {
  * 1. See (if any)
  *
  * @param {ApiItem} apiItem - The API item being rendered.
- * @param {SectionNode[] | undefined} itemSpecificContent - API item-specific details to be included in the default layout.
+ * @param {Section[] | undefined} itemSpecificContent - API item-specific details to be included in the default layout.
  * @param {ApiItemTransformationConfiguration} config - Transformation configuration.
  *
  * @returns An array of sections describing the layout. See {@link @fluid-tools/api-markdown-documenter#ApiItemTransformationConfiguration.createDefaultLayout}.
@@ -180,85 +234,68 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
 
 	const sections = [];
 
-	// Render summary comment (if any)
-	const summary = LayoutUtilities.createSummaryParagraph(apiItem, config);
-	if (summary !== undefined) {
-		sections.push(new SectionNode([summary]));
-	}
-
-	// Render system notice (if any) that supersedes deprecation and import notices
-	const systemNotice = createSystemNotice(apiItem);
-	if (systemNotice !== undefined) {
-		sections.push(new SectionNode([systemNotice]));
-	} else {
-		// Render deprecation notice (if any)
-		const deprecationNotice = createDeprecationNoticeSection(apiItem, config);
-		if (deprecationNotice !== undefined) {
-			sections.push(new SectionNode([deprecationNotice]));
+	/**
+	 * Adds node (if not undefined) to `sections`, wrapping in a `SectionNode` if not already a `SectionNode`.
+	 * @param {Section | BlockContent | undefined} node - The node to add to `sections`.
+	 * @returns true if the node was added, false otherwise.
+	 */
+	function addSection(node) {
+		if (node !== undefined) {
+			sections.push(node.type === "section" ? node : { type: "section", children: [node] });
+			return true;
 		}
-
-		// Render the appropriate API notice (with import instructions), if applicable.
-		const importNotice = createSupportNotice(apiItem, isImportable);
-		if (importNotice !== undefined) {
-			sections.push(new SectionNode([importNotice]));
-		}
+		return false;
 	}
 
-	// Render signature (if any)
-	const signature = LayoutUtilities.createSignatureSection(apiItem, config);
-	if (signature !== undefined) {
-		sections.push(signature);
+	// Add summary comment (if any)
+	addSection(LayoutUtilities.createSummarySection(apiItem, config));
+
+	// Add system notice (if any) that supersedes deprecation and import notices
+	if (!addSection(createTagNotice(apiItem, "@system", true, systemNotice))) {
+		// If no system notice:
+
+		// Add deprecation notice (if any)
+		addSection(createDeprecationNoticeSection(apiItem, config));
+
+		// Add the appropriate API notice (with import instructions), if applicable.
+		addSection(createSupportNotice(apiItem, isImportable));
 	}
 
-	// Render @remarks content (if any)
-	const renderedRemarks = LayoutUtilities.createRemarksSection(apiItem, config);
-	if (renderedRemarks !== undefined) {
-		sections.push(renderedRemarks);
-	}
+	// Add the API notice for `sealed` if present.
+	addSection(createTagNotice(apiItem, "@sealed", false, sealedNotice));
 
-	// Render examples (if any)
-	const renderedExamples = LayoutUtilities.createExamplesSection(
-		apiItem,
-		config,
-		customExamplesSectionTitle,
-	);
-	if (renderedExamples !== undefined) {
-		sections.push(renderedExamples);
-	}
+	// Add the API notice for `input` if present.
+	addSection(createTagNotice(apiItem, "@input", false, inputNotice));
 
-	// Render provided contents
-	if (itemSpecificContent !== undefined) {
-		// Flatten contents into this section
-		sections.push(...itemSpecificContent);
-	}
+	// Add signature (if any)
+	addSection(LayoutUtilities.createSignatureSection(apiItem, config));
 
-	// Render @throws content (if any)
-	const renderedThrows = LayoutUtilities.createThrowsSection(
-		apiItem,
-		config,
-		customThrowsSectionTitle,
-	);
-	if (renderedThrows !== undefined) {
-		sections.push(renderedThrows);
-	}
+	// Add @remarks content (if any)
+	addSection(LayoutUtilities.createRemarksSection(apiItem, config));
 
-	// Render @see content (if any)
-	const renderedSeeAlso = LayoutUtilities.createSeeAlsoSection(apiItem, config);
-	if (renderedSeeAlso !== undefined) {
-		sections.push(renderedSeeAlso);
-	}
+	// Add examples (if any)
+	addSection(LayoutUtilities.createExamplesSection(apiItem, config, customExamplesSectionTitle));
+
+	// Add provided contents
+	// Flatten contents into this section
+	sections.push(...(itemSpecificContent ?? []));
+
+	// Add @throws content (if any)
+	addSection(LayoutUtilities.createThrowsSection(apiItem, config, customThrowsSectionTitle));
+
+	// Add @see content (if any)
+	addSection(LayoutUtilities.createSeeAlsoSection(apiItem, config));
 
 	// Add heading to top of section only if this is being rendered to a parent item.
 	// Document items have their headings handled specially.
 	return isDocumentItem
 		? sections
 		: [
-				new SectionNode(
-					sections,
-					HeadingNode.createFromPlainTextHeading(
-						ApiItemUtilities.getHeadingForApiItem(apiItem, config),
-					),
-				),
+				{
+					type: "section",
+					children: sections,
+					heading: ApiItemUtilities.getHeadingForApiItem(apiItem, config),
+				},
 			];
 }
 
@@ -279,14 +316,14 @@ function createDeprecationNoticeSection(apiItem, config) {
 		return undefined;
 	}
 
-	const transformedDeprecatedBlock = transformTsdocNode(deprecatedBlock, apiItem, config);
-	if (transformedDeprecatedBlock === undefined) {
+	const transformedDeprecatedBlockContents = transformTsdoc(deprecatedBlock, apiItem, config);
+	if (transformedDeprecatedBlockContents === undefined) {
 		throw new Error("Failed to transform deprecated block.");
 	}
 
-	return new AdmonitionNode(
-		[transformedDeprecatedBlock],
-		"Warning",
+	return createAdmonition(
+		transformedDeprecatedBlockContents,
+		"warning",
 		"This API is deprecated and will be removed in a future release.",
 	);
 }

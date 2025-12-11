@@ -30,6 +30,7 @@ export {
 	AttendeeStatus,
 	type Presence,
 	type PresenceEvents,
+	type PresenceWithNotifications,
 } from "./presence.js";
 
 export type {
@@ -37,34 +38,43 @@ export type {
 	BroadcastControlSettings,
 } from "./broadcastControls.js";
 
-export { getPresence } from "./experimentalAccess.js";
-
 export {
-	getPresenceViaDataObject,
-	type ExperimentalPresenceDO,
-	ExperimentalPresenceManager,
-} from "./datastorePresenceManagerFactory.js";
+	getPresence,
+	getPresenceAlpha,
+	getPresenceFromDataStoreContext,
+} from "./getPresence.js";
 
 export type {
-	latestMap,
+	LatestMap,
 	LatestMapArguments,
-	LatestMapRaw,
+	LatestMapArgumentsRaw,
 	LatestMapClientData,
-	LatestMapRawEvents,
+	LatestMapEvents,
+	LatestMapFactory,
 	LatestMapItemRemovedClientData,
 	LatestMapItemUpdatedClientData,
+	LatestMapRaw,
+	LatestMapRawEvents,
 	StateMap,
 } from "./latestMapValueManager.js";
 export type {
-	latest,
+	Latest,
 	LatestArguments,
+	LatestArgumentsRaw,
+	LatestEvents,
+	LatestFactory,
 	LatestRaw,
 	LatestRawEvents,
 } from "./latestValueManager.js";
 export type {
+	Accessor,
 	LatestClientData,
 	LatestData,
 	LatestMetadata,
+	ProxiedValueAccessor,
+	RawValueAccessor,
+	StateSchemaValidator,
+	ValueAccessor,
 } from "./latestValueTypes.js";
 
 export {

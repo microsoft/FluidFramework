@@ -1,17 +1,17 @@
 # testInterfaceProperty
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestInterface](/test-suite-a/testinterface-interface/) &gt; [testInterfaceProperty](/test-suite-a/testinterface-interface/testinterfaceproperty-propertysignature)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestInterface](/test-suite-a/testinterface-interface/) > [testInterfaceProperty](/test-suite-a/testinterface-interface/testinterfaceproperty-propertysignature)
 
 Test interface property
 
-## Signature {#testinterfaceproperty-signature}
+<h2 id="testinterfaceproperty-signature">Signature</h2>
 
 ```typescript
 testInterfaceProperty: number;
 ```
 
-**Type:** number
+**Type**: number
 
-## Remarks {#testinterfaceproperty-remarks}
+<h2 id="testinterfaceproperty-remarks">Remarks</h2>
 
 Here are some remarks about the property

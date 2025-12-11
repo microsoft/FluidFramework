@@ -21,7 +21,7 @@ import {
 } from "../../flags.js";
 import {
 	BaseCommand,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	MonoRepoKind,
 	generateBumpDepsBranchName,
 	generateBumpDepsCommitMessage,
@@ -29,9 +29,9 @@ import {
 	isDependencyUpdateType,
 	npmCheckUpdates,
 } from "../../library/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { npmCheckUpdatesHomegrown } from "../../library/package.js";
-import { ReleaseGroup } from "../../releaseGroups.js";
+import type { ReleaseGroup } from "../../releaseGroups.js";
 
 /**
  * Update the dependency version of a specified package or release group. That is, if one or more packages in the repo
@@ -140,7 +140,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		const gitRepo = await context.getGitRepository();
 		const branchName = await gitRepo.getCurrentBranchName();
 
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		if (args.package_or_release_group === MonoRepoKind.Server && branchName !== "next") {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const { confirmed } = await prompts({

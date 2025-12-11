@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { UnassignedSequenceNumber } from "./constants.js";
+import {
+	SquashClient,
+	UnassignedSequenceNumber,
+	UniversalSequenceNumber,
+} from "./constants.js";
 
 /**
  * A stamp that identifies provenance of an operation performed on the MergeTree.
@@ -17,7 +21,7 @@ import { UnassignedSequenceNumber } from "./constants.js";
  * from alternative perspectives: a remote client will have seen all of its own previous operations as well as
  * those at or below the op's reference sequence number.
  *
- * @remarks - As the `readonly` identifies suggest, these stamps should be treated as immutable.
+ * @remarks As the `readonly` identifies suggest, these stamps should be treated as immutable.
  * New operations applied to a merge-tree should create new stamps rather than modify existing ones (e.g. when
  * a change's ack happens).
  * @internal
@@ -120,6 +124,10 @@ export function equal(a: OperationStamp, b: OperationStamp): boolean {
 
 export function isLocal(a: OperationStamp): boolean {
 	return a.seq === UnassignedSequenceNumber;
+}
+
+export function isSquashedOp(a: OperationStamp): boolean {
+	return a.clientId === SquashClient && a.seq === UniversalSequenceNumber;
 }
 
 export function isAcked(a: OperationStamp): boolean {

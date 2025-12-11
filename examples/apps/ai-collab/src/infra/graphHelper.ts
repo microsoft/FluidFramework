@@ -11,12 +11,16 @@
 
 "use client";
 
-import { PublicClientApplication, InteractionType, AccountInfo } from "@azure/msal-browser";
+import {
+	type PublicClientApplication,
+	InteractionType,
+	type AccountInfo,
+} from "@azure/msal-browser";
 import { Client } from "@microsoft/microsoft-graph-client";
 import {
 	AuthCodeMSALBrowserAuthenticationProvider,
-	AuthCodeMSALBrowserAuthenticationProviderOptions,
-	// eslint-disable-next-line import/no-internal-modules -- Not exported in the public API; docs use this pattern.
+	type AuthCodeMSALBrowserAuthenticationProviderOptions,
+	// eslint-disable-next-line import-x/no-internal-modules -- Not exported in the public API; docs use this pattern.
 } from "@microsoft/microsoft-graph-client/authProviders/authCodeMsalBrowser";
 import type { Site } from "@microsoft/microsoft-graph-types";
 

@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IThrottleAndUsageStorageManager,
 	IThrottlingMetrics,
 	IUsageData,
 } from "@fluidframework/server-services-core";
 import {
-	executeRedisMultiWithHmsetExpire,
-	executeRedisMultiWithHmsetExpireAndLpush,
-	IRedisParameters,
-	IRedisClientConnectionManager,
-} from "@fluidframework/server-services-utils";
-import {
 	BaseTelemetryProperties,
 	CommonProperties,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
+import {
+	executeRedisMultiWithHmsetExpire,
+	executeRedisMultiWithHmsetExpireAndLpush,
+	type IRedisParameters,
+	type IRedisClientConnectionManager,
+} from "@fluidframework/server-services-utils";
 
 /**
  * Manages storage of throttling metrics and usage data in redis.
@@ -32,11 +32,11 @@ export class RedisThrottleAndUsageStorageManager implements IThrottleAndUsageSto
 		private readonly redisClientConnectionManager: IRedisClientConnectionManager,
 		parameters?: IRedisParameters,
 	) {
-		if (parameters?.expireAfterSeconds) {
+		if (parameters?.expireAfterSeconds !== undefined) {
 			this.expireAfterSeconds = parameters.expireAfterSeconds;
 		}
 
-		if (parameters?.prefix) {
+		if (parameters?.prefix !== undefined) {
 			this.prefix = parameters.prefix;
 		}
 
@@ -114,7 +114,7 @@ export class RedisThrottleAndUsageStorageManager implements IThrottleAndUsageSto
 
 	public async getUsageData(id: string): Promise<IUsageData | undefined> {
 		const usageDataString = await this.redisClientConnectionManager.getRedisClient().rpop(id);
-		if (usageDataString) {
+		if (usageDataString !== null) {
 			return JSON.parse(usageDataString) as IUsageData;
 		}
 		return undefined;

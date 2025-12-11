@@ -16,6 +16,9 @@ module.exports = {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
+		// TODO: Enable and fix violations
+		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+
 		// Catch unused variables in at lint time instead of compile time
 		"@typescript-eslint/no-unused-vars": "error",
 
@@ -23,15 +26,15 @@ module.exports = {
 		"object-shorthand": "off",
 
 		// This package is exclusively used in a Node.js context
-		"import/no-nodejs-modules": "off",
+		"import-x/no-nodejs-modules": "off",
 
 		// oclif uses default exports for commands
-		"import/no-default-export": "off",
+		"import-x/no-default-export": "off",
 
 		// Set to warn because we're not ready to enforce this rule for much of build-cli yet. It is enabled for new code.
-		"import/no-deprecated": "warn",
+		"import-x/no-deprecated": "warn",
 
-		"import/no-internal-modules": [
+		"import-x/no-internal-modules": [
 			"error",
 			{
 				allow: [
@@ -46,11 +49,10 @@ module.exports = {
 
 					// These are all excluded because they're "submodules" used for organization.
 					// AB#8118 tracks removing the barrel files and importing directly from the submodules.
-					"**/library/index.js",
-					"**/library/githubRest.js",
-					"**/handlers/index.js",
-					"**/machines/index.js",
-					"**/repoPolicyCheck/index.js",
+					"**/library/**",
+					"**/handlers/**",
+					"**/machines/**",
+					"**/repoPolicyCheck/**",
 					"**/azureDevops/**",
 					"**/codeCoverage/**",
 					"azure-devops-node-api/**",
@@ -105,7 +107,7 @@ module.exports = {
 			files: ["*.spec.ts", "src/test/**"],
 			rules: {
 				// Test files can import from anywhere
-				"import/no-internal-modules": "off",
+				"import-x/no-internal-modules": "off",
 			},
 		},
 		{
@@ -113,7 +115,7 @@ module.exports = {
 			files: ["src/**/vnext/**"],
 			rules: {
 				// Set to error since code using build-infrastructure APIs should not need to use any deprecated APIs.
-				"import/no-deprecated": "error",
+				"import-x/no-deprecated": "error",
 			},
 		},
 	],

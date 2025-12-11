@@ -6,98 +6,212 @@
 import { strict as assert, fail } from "node:assert";
 
 import {
-	cursorFromInsertable,
-	getStoredSchema,
+	numberSchema,
 	SchemaFactoryAlpha,
-	schemaStatics,
-	toStoredSchema,
+	toInitialSchema,
 } from "../../../simple-tree/index.js";
 
 import {
 	customFromCursor,
 	customFromCursorStored,
+	KeyEncodingOptions,
 	replaceHandles,
 	tryStoredSchemaAsArray,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/customTree.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 import { singleJsonCursor } from "../../json/index.js";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
+import { fieldCursorFromInsertable } from "../../utils.js";
+import {
+	EmptyKey,
+	LeafNodeStoredSchema,
+	ObjectNodeStoredSchema,
+	ValueSchema,
+	type TreeFieldStoredSchema,
+} from "../../../core/index.js";
+import { brand } from "../../../util/index.js";
+import { FieldKinds } from "../../../feature-libraries/index.js";
 
 const schemaFactory = new SchemaFactoryAlpha("Test");
 
 describe("simple-tree customTree", () => {
-	const handle = new MockHandle(1);
 	describe("customFromCursor", () => {
 		it("leaf", () => {
-			const schema = getUnhydratedContext(JsonAsTree.Tree).schema;
-			const leaf_options = { useStoredKeys: true };
+			const context = getUnhydratedContext(JsonAsTree.Tree);
+			const leaf_options = { keys: KeyEncodingOptions.allStoredKeys };
 			assert.equal(
-				customFromCursor(singleJsonCursor(null), leaf_options, schema, () => fail()),
+				customFromCursor(
+					singleJsonCursor(null),
+					leaf_options,
+					context.flexContext.schema.nodeSchema,
+					context.schema,
+					() => fail(),
+				),
 				null,
 			);
 			assert.equal(
-				customFromCursor(singleJsonCursor(5), leaf_options, schema, () => fail()),
+				customFromCursor(
+					singleJsonCursor(5),
+					leaf_options,
+					context.flexContext.schema.nodeSchema,
+					context.schema,
+					() => fail(),
+				),
 				5,
 			);
 		});
 
-		it("useStoredKeys", () => {
+		describe("keys", () => {
 			class A extends schemaFactory.object("A", {
 				a: schemaFactory.number,
 				b: schemaFactory.required(schemaFactory.number, { key: "stored" }),
 			}) {}
 
-			const schema = getUnhydratedContext(A).schema;
-			assert.deepEqual(
-				customFromCursor(
-					cursorFromInsertable(A, { a: 1, b: 2 }),
-					{
-						useStoredKeys: true,
-					},
-					schema,
-					(cursor) => ({ child: cursor.value }),
-				),
-				{ a: { child: 1 }, stored: { child: 2 } },
-			);
+			/**
+			 * Same as A, but with A field missing and allowUnknownOptionalFields
+			 */
+			class UnknownOptionalFieldA extends schemaFactory.objectAlpha(
+				"A",
+				{
+					b: schemaFactory.required(schemaFactory.number, { key: "stored" }),
+				},
+				{ allowUnknownOptionalFields: true },
+			) {}
 
-			assert.deepEqual(
-				customFromCursor(
-					cursorFromInsertable(A, { a: 1, b: 2 }),
-					{
-						useStoredKeys: false,
-					},
-					schema,
-					(cursor) => ({ child: cursor.value }),
-				),
-				{ a: { child: 1 }, b: { child: 2 } },
-			);
+			const contextA = getUnhydratedContext(A);
+			const contextUnknownOptionalFieldA = getUnhydratedContext(UnknownOptionalFieldA);
+			const contentCursor = fieldCursorFromInsertable(A, { a: 1, b: 2 });
+			contentCursor.enterNode(0);
+
+			it("allStoredKeys", () => {
+				assert.deepEqual(
+					customFromCursor(
+						contentCursor,
+						{
+							keys: KeyEncodingOptions.allStoredKeys,
+						},
+						contextA.flexContext.schema.nodeSchema,
+						contextA.schema,
+						(cursor) => ({ child: cursor.value }),
+					),
+					{ a: { child: 1 }, stored: { child: 2 } },
+				);
+				assert.deepEqual(
+					customFromCursor(
+						contentCursor,
+						{
+							keys: KeyEncodingOptions.allStoredKeys,
+						},
+						contextUnknownOptionalFieldA.flexContext.schema.nodeSchema,
+						contextUnknownOptionalFieldA.schema,
+						(cursor) => ({ child: cursor.value }),
+					),
+					{ a: { child: 1 }, stored: { child: 2 } },
+				);
+			});
+			it("usePropertyKeys", () => {
+				assert.deepEqual(
+					customFromCursor(
+						contentCursor,
+						{
+							keys: KeyEncodingOptions.usePropertyKeys,
+						},
+						contextA.flexContext.schema.nodeSchema,
+						contextA.schema,
+						(cursor) => ({ child: cursor.value }),
+					),
+					{ a: { child: 1 }, b: { child: 2 } },
+				);
+				assert.deepEqual(
+					customFromCursor(
+						contentCursor,
+						{
+							keys: KeyEncodingOptions.usePropertyKeys,
+						},
+						contextUnknownOptionalFieldA.flexContext.schema.nodeSchema,
+						contextUnknownOptionalFieldA.schema,
+						(cursor) => ({ child: cursor.value }),
+					),
+					{ b: { child: 2 } },
+				);
+			});
+			it("knownStoredKeys", () => {
+				assert.deepEqual(
+					customFromCursor(
+						contentCursor,
+						{
+							keys: KeyEncodingOptions.knownStoredKeys,
+						},
+						contextA.flexContext.schema.nodeSchema,
+						contextA.schema,
+						(cursor) => ({ child: cursor.value }),
+					),
+					{ a: { child: 1 }, stored: { child: 2 } },
+				);
+				assert.deepEqual(
+					customFromCursor(
+						contentCursor,
+						{
+							keys: KeyEncodingOptions.knownStoredKeys,
+						},
+						contextUnknownOptionalFieldA.flexContext.schema.nodeSchema,
+						contextUnknownOptionalFieldA.schema,
+						(cursor) => ({ child: cursor.value }),
+					),
+					{ stored: { child: 2 } },
+				);
+			});
 		});
 	});
 
 	it("tryStoredSchemaAsArray", () => {
-		const arraySchema = schemaFactory.arrayAlpha("A", schemaFactory.number);
-		const arrayCase = tryStoredSchemaAsArray(getStoredSchema(arraySchema));
+		const numberSequence: TreeFieldStoredSchema = {
+			kind: FieldKinds.sequence.identifier,
+			types: new Set([brand(numberSchema.identifier)]),
+			persistedMetadata: {},
+		};
+		const arrayCase = tryStoredSchemaAsArray(
+			new ObjectNodeStoredSchema(new Map([[EmptyKey, numberSequence]])),
+		);
 		assert.deepEqual(arrayCase, new Set([schemaFactory.number.identifier]));
 
-		const objectSchema = schemaFactory.objectAlpha("x", {});
-		const objectCase = tryStoredSchemaAsArray(getStoredSchema(objectSchema));
-		assert.deepEqual(objectCase, undefined);
+		const namedCase = tryStoredSchemaAsArray(
+			new ObjectNodeStoredSchema(new Map([[brand("x"), numberSequence]])),
+		);
+		assert.deepEqual(namedCase, undefined);
+		const optionalCase = tryStoredSchemaAsArray(
+			new ObjectNodeStoredSchema(
+				new Map([[EmptyKey, { ...numberSequence, kind: FieldKinds.optional.identifier }]]),
+			),
+		);
+		assert.deepEqual(optionalCase, undefined);
 
-		const objectSchemaEmptyKey = schemaFactory.objectAlpha("x", {
-			[""]: schemaFactory.number,
-		});
-		const objectEmptyKeyCase = tryStoredSchemaAsArray(getStoredSchema(objectSchemaEmptyKey));
-		assert.deepEqual(objectEmptyKeyCase, undefined);
+		const requiredCase = tryStoredSchemaAsArray(
+			new ObjectNodeStoredSchema(
+				new Map([
+					[
+						EmptyKey,
+						{
+							...numberSequence,
+							kind: FieldKinds.required.identifier,
+						},
+					],
+				]),
+			),
+		);
+		assert.deepEqual(requiredCase, undefined);
 
-		const nonObjectCase = tryStoredSchemaAsArray(getStoredSchema(schemaStatics.number));
+		const nonObjectCase = tryStoredSchemaAsArray(
+			new LeafNodeStoredSchema(ValueSchema.Boolean),
+		);
 		assert.deepEqual(nonObjectCase, undefined);
 	});
 
 	it("customFromCursorStored", () => {
-		const schema = toStoredSchema(JsonAsTree.Tree).nodeSchema;
+		const schema = toInitialSchema(JsonAsTree.Tree).nodeSchema;
 		assert.equal(
 			customFromCursorStored(singleJsonCursor(null), schema, () => fail()),
 			null,

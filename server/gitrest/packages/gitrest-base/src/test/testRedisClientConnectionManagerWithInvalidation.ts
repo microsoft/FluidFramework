@@ -3,30 +3,30 @@
  * Licensed under the MIT License.
  */
 
+import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import type * as Redis from "ioredis";
 import RedisMock from "ioredis-mock";
-import * as Redis from "ioredis";
-import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 
 // TODO: Implement this in Routerlicious
 export class TestRedisClientConnectionManagerWithInvalidation
 	implements IRedisClientConnectionManager
 {
-	private readonly options: Redis.RedisOptions;
+	private readonly options: Redis.RedisOptions | undefined;
 	private mockRedisClient: Redis.Redis;
 
-	constructor(options?) {
+	constructor(options?: Redis.RedisOptions) {
 		this.options = options;
-		this.createRedisClient();
+		this.mockRedisClient = this.createRedisClient();
 	}
 
-	private createRedisClient() {
-		this.mockRedisClient = this.options ? new RedisMock(this.options) : new RedisMock();
+	private createRedisClient(): Redis.Redis {
+		return this.options ? new RedisMock(this.options) : new RedisMock();
 	}
 
 	public invalidateRedisClient(recreateClient: boolean = true) {
 		this.mockRedisClient.disconnect();
 		if (recreateClient) {
-			this.createRedisClient();
+			this.mockRedisClient = this.createRedisClient();
 		}
 	}
 

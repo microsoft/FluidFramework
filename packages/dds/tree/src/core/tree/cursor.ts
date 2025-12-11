@@ -312,8 +312,6 @@ export interface PathRootPrefix {
 	indexOffset?: number;
 }
 
-/**
- */
 export const enum CursorLocationType {
 	/**
 	 * Can iterate through nodes in a field.

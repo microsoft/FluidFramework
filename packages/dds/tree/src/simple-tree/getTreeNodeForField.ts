@@ -19,7 +19,9 @@ import { type TreeNode, getOrCreateNodeFromInnerNode } from "./core/index.js";
 /**
  * Retrieve the associated {@link TreeNode} for the given field's content.
  */
-export function getTreeNodeForField(field: FlexTreeField): TreeNode | TreeValue | undefined {
+export function tryGetTreeNodeForField(
+	field: FlexTreeField,
+): TreeNode | TreeValue | undefined {
 	function tryToUnboxLeaves(
 		flexField: FlexTreeOptionalField | FlexTreeRequiredField,
 	): TreeNode | TreeValue | undefined {
@@ -38,7 +40,7 @@ export function getTreeNodeForField(field: FlexTreeField): TreeNode | TreeValue 
 			return tryToUnboxLeaves(typedField);
 		}
 		case FieldKinds.identifier.identifier: {
-			// Identifier fields are just value fields that hold strings
+			// Identifier fields are just required fields that hold strings
 			return (field as FlexTreeRequiredField).content as string;
 		}
 

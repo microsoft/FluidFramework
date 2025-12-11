@@ -20,6 +20,7 @@ import {
 	type ImplicitFieldSchema,
 	type IterableTreeArrayContent,
 	SchemaFactory,
+	ArrayNodeSchema,
 } from "@fluidframework/tree/internal";
 import { closest } from "fastest-levenshtein";
 
@@ -138,9 +139,10 @@ export function applyAgentEdit(
 			const schemaIdentifier = getSchemaIdentifier(treeEdit.content);
 
 			// We assume that the parentNode for inserts edits are guaranteed to be an arrayNode.
-			const allowedTypes = [
-				...normalizeAllowedTypes(parentNodeSchema.info as ImplicitAllowedTypes),
-			];
+			if (!(parentNodeSchema instanceof ArrayNodeSchema)) {
+				throw new UsageError("the parent node must be an arrayNode");
+			}
+			const allowedTypes = normalizeAllowedTypes(parentNodeSchema.info).evaluate();
 
 			for (const allowedType of allowedTypes.values()) {
 				if (allowedType.identifier === schemaIdentifier && typeof allowedType === "function") {
@@ -237,8 +239,8 @@ export function applyAgentEdit(
 					}
 					// If the LLM attempts to use the wrong type for a field, we generate a useful error message that can be used as part of the feedback loop.
 					const isInvalidTypeError =
-						error.message.match(
-							/The provided data is incompatible with all of the types allowed by the schema./,
+						/The provided data is incompatible with all of the types allowed by the schema./.exec(
+							error.message,
 						) !== null;
 					if (isInvalidTypeError === true) {
 						const errorMessage = createInvalidModifyFeedbackMsg(
@@ -327,12 +329,12 @@ export function applyAgentEdit(
 					throw new UsageError("the source node must be within an arrayNode");
 				}
 				const destinationArraySchema = Tree.schema(destinationArrayNode);
-				const allowedTypes = [
-					...normalizeAllowedTypes(destinationArraySchema.info as ImplicitAllowedTypes),
-				];
+				if (destinationArraySchema instanceof ArrayNodeSchema === false) {
+					throw new UsageError("the destination node must be within an arrayNode");
+				}
 				const nodeToMove = sourceArrayNode.at(sourceIndex);
 				assert(nodeToMove !== undefined, 0xa77 /* node to move must exist */);
-				if (isNodeAllowedType(nodeToMove as TreeNode, allowedTypes)) {
+				if (Tree.is(nodeToMove as TreeNode, destinationArraySchema.info)) {
 					destinationArrayNode.moveRangeToIndex(
 						destinationIndex,
 						sourceIndex,
@@ -355,7 +357,7 @@ export function applyAgentEdit(
 				for (let i = sourceStartIndex; i < sourceEndIndex; i++) {
 					const nodeToMove = array.at(i);
 					assert(nodeToMove !== undefined, 0xa78 /* node to move must exist */);
-					if (!isNodeAllowedType(nodeToMove as TreeNode, allowedTypes)) {
+					if (!Tree.is(nodeToMove as TreeNode, allowedTypes)) {
 						throw new UsageError("Illegal node type in destination array");
 					}
 				}
@@ -407,19 +409,11 @@ function createInvalidModifyFeedbackMsg(
 	} else if (errorType === "INVALID_TYPE") {
 		const allowedTypeIdentifiers = getAllowedTypeIdentifiers(modifyEdit.field);
 		// TODO: If the invalid modification is a new object, it won't be clear what part of the object is invalid for the given type. If we could give some more detailed guidance on what was wrong with the object it would be ideal.
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		messageSuffix = ` You cannot set the node's field \`${modifyEdit.field}\` to the value \`${modifyEdit.modification}\` with type \`${typeof modifyEdit.modification}\` because this type is incompatible with all of the types allowed by the field's schema. The set of allowed types are \`[${allowedTypeIdentifiers.map((id) => `'${id}'`).join(", ")}]\`.`;
 	}
 
 	return messagePrefix + messageSuffix;
-}
-
-function isNodeAllowedType(node: TreeNode, allowedTypes: TreeNodeSchema[]): boolean {
-	for (const allowedType of allowedTypes) {
-		if (Tree.is(node, allowedType)) {
-			return true;
-		}
-	}
-	return false;
 }
 
 function isPrimitive(content: unknown): boolean {
@@ -667,8 +661,7 @@ function createModifyDiff(treeEdit: Modify, idGenerator: IdGenerator): ModifyDif
 				{
 					shortId: undefined,
 					parentField: treeEdit.field,
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					schemaIdentifier: getSchemaIdentifier(treeEdit.modification)!,
+					schemaIdentifier: getSchemaIdentifier(treeEdit.modification),
 				},
 			]),
 			newValue: treeEdit.modification,

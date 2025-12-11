@@ -4,21 +4,22 @@
  */
 
 import * as services from "@fluidframework/server-services";
-import * as core from "@fluidframework/server-services-core";
-import * as utils from "@fluidframework/server-services-utils";
-import { Provider } from "nconf";
-import winston from "winston";
-import { DenyList, RedisClientConnectionManager } from "@fluidframework/server-services-utils";
-import * as historianServices from "./services";
-import { normalizePort, Constants } from "./utils";
-import { HistorianRunner } from "./runner";
-import { IHistorianResourcesCustomizations } from "./customizations";
-import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
-import type { IDenyList } from "@fluidframework/server-services-core";
 import {
 	setupAxiosInterceptorsForAbortSignals,
 	getGlobalAbortControllerContext,
 } from "@fluidframework/server-services-client";
+import type * as core from "@fluidframework/server-services-core";
+import type { IDenyList } from "@fluidframework/server-services-core";
+import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
+import * as utils from "@fluidframework/server-services-utils";
+import { DenyList, RedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import type { Provider } from "nconf";
+import winston from "winston";
+
+import type { IHistorianResourcesCustomizations } from "./customizations";
+import { HistorianRunner } from "./runner";
+import * as historianServices from "./services";
+import { normalizePort, Constants } from "./utils";
 
 export class HistorianResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
@@ -95,6 +96,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		// Create services
 		const riddlerEndpoint = config.get("riddler");
 		const alfredEndpoint = config.get("alfred");
+		const maxTokenLifetimeSec = config.get("maxTokenLifetimeSec");
 
 		const redisClientConnectionManagerForInvalidTokenCache =
 			customizations?.redisClientConnectionManagerForInvalidTokenCache
@@ -119,6 +121,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		const riddler = new historianServices.RiddlerService(
 			riddlerEndpoint,
 			tenantCache,
+			maxTokenLifetimeSec,
 			redisCacheForInvalidToken,
 		);
 

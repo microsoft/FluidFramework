@@ -3,17 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { ReleaseVersion, VersionBumpType, detectBumpType } from "@fluid-tools/version-tools";
-import { MonoRepo, Package } from "@fluidframework/build-tools";
+import {
+	type ReleaseVersion,
+	type VersionBumpType,
+	detectBumpType,
+} from "@fluid-tools/version-tools";
+import { type MonoRepo, Package } from "@fluidframework/build-tools";
 import { Args } from "@oclif/core";
 import semver from "semver";
 import { sortPackageJson as sortJson } from "sort-package-json";
 
 import { findPackageOrReleaseGroup } from "../../args.js";
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 import { MonoRepoKind, sortVersions } from "../../library/index.js";
-import { ReleaseGroup, ReleasePackage } from "../../releaseGroups.js";
-import { ReleaseReportBaseCommand, ReleaseSelectionMode } from "./report.js";
+import type { ReleaseGroup, ReleasePackage } from "../../releaseGroups.js";
+import { ReleaseReportBaseCommand, type ReleaseSelectionMode } from "./report.js";
 
 const tagRefPrefix = "refs/tags/";
 
@@ -154,7 +158,7 @@ const getReleaseTitle = (
 	version: semver.SemVer,
 	releaseType: VersionBumpType,
 ): string => {
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	const name = releaseGroup === MonoRepoKind.Client ? "Fluid Framework" : releaseGroup;
 	// e.g. Fluid Framework v2.0.0-internal.4.1.0 (minor)
 	return `${name} v${version.version} (${releaseType})`;

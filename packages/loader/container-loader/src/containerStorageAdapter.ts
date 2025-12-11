@@ -3,12 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
-import { IDisposable } from "@fluidframework/core-interfaces";
+import { bufferToString } from "@fluid-internal/client-utils";
+import type {
+	ISnapshotTreeWithBlobContents,
+	IContainerStorageService,
+} from "@fluidframework/container-definitions/internal";
+import type { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	FetchSource,
 	IDocumentService,
 	IDocumentStorageService,
@@ -21,14 +24,14 @@ import {
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { isInstanceOfISnapshot, UsageError } from "@fluidframework/driver-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { MemoryDetachedBlobStorage } from "./memoryBlobStorage.js";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService.js";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService.js";
 import type {
 	ISerializedStateManagerDocumentStorageService,
-	ISnapshotInfo,
+	SerializedSnapshotInfo,
 } from "./serializedStateManager.js";
 import { convertSnapshotInfoToSnapshot } from "./utils.js";
 
@@ -47,7 +50,7 @@ export interface ISerializableBlobContents {
 export class ContainerStorageAdapter
 	implements
 		ISerializedStateManagerDocumentStorageService,
-		IDocumentStorageService,
+		IContainerStorageService,
 		IDisposable
 {
 	private _storageService: IDocumentStorageService & Partial<IDisposable>;
@@ -69,6 +72,11 @@ export class ContainerStorageAdapter
 	}
 
 	/**
+	 * ArrayBufferLikes  containing blobs from a snapshot
+	 */
+	private readonly blobContents: { [id: string]: ArrayBufferLike } = {};
+
+	/**
 	 * An adapter that ensures we're using detachedBlobStorage up until we connect to a real service, and then
 	 * after connecting to a real service augments it with retry and combined summary tree enforcement.
 	 * @param detachedBlobStorage - The detached blob storage to use up until we connect to a real service
@@ -81,11 +89,9 @@ export class ContainerStorageAdapter
 	public constructor(
 		detachedBlobStorage: MemoryDetachedBlobStorage | undefined,
 		private readonly logger: ITelemetryLoggerExt,
-		/**
-		 * ArrayBufferLikes or utf8 encoded strings, containing blobs from a snapshot
-		 */
-		private readonly blobContents: { [id: string]: ArrayBufferLike | string } = {},
-		private loadingGroupIdSnapshotsFromPendingState: Record<string, ISnapshotInfo> | undefined,
+		private loadingGroupIdSnapshotsFromPendingState:
+			| Record<string, SerializedSnapshotInfo>
+			| undefined,
 		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
 		private readonly enableSummarizeProtocolTree: boolean | undefined,
 	) {
@@ -138,9 +144,9 @@ export class ContainerStorageAdapter
 		);
 	}
 
-	public loadSnapshotFromSnapshotBlobs(snapshotBlobs: ISerializableBlobContents): void {
-		for (const [id, value] of Object.entries(snapshotBlobs)) {
-			this.blobContents[id] = value;
+	public cacheSnapshotBlobs(snapshotBlobs: Map<string, ArrayBuffer>): void {
+		for (const [id, value] of snapshotBlobs.entries()) {
+			this.blobContents[id] ??= value;
 		}
 	}
 
@@ -157,6 +163,10 @@ export class ContainerStorageAdapter
 			// No-op
 		}
 		return undefined;
+	}
+
+	public get maximumCacheDurationMs(): IDocumentStorageServicePolicies["maximumCacheDurationMs"] {
+		return this.policies?.maximumCacheDurationMs;
 	}
 
 	public async getSnapshotTree(
@@ -177,10 +187,7 @@ export class ContainerStorageAdapter
 			const localSnapshot =
 				this.loadingGroupIdSnapshotsFromPendingState[snapshotFetchOptions.loadingGroupIds[0]];
 			assert(localSnapshot !== undefined, 0x970 /* Local snapshot must be present */);
-			snapshot = convertSnapshotInfoToSnapshot(
-				localSnapshot,
-				localSnapshot.snapshotSequenceNumber,
-			);
+			snapshot = convertSnapshotInfoToSnapshot(localSnapshot);
 		} else {
 			if (this._storageService.getSnapshot === undefined) {
 				throw new UsageError(
@@ -214,10 +221,6 @@ export class ContainerStorageAdapter
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
 		const maybeBlob = this.blobContents[id];
 		if (maybeBlob !== undefined) {
-			if (typeof maybeBlob === "string") {
-				const blob = stringToBuffer(maybeBlob, "utf8");
-				return blob;
-			}
 			return maybeBlob;
 		}
 		return this._storageService.readBlob(id);
@@ -239,10 +242,6 @@ export class ContainerStorageAdapter
 		context: ISummaryContext,
 	): Promise<string> {
 		return this._storageService.uploadSummaryWithContext(summary, context);
-	}
-
-	public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
-		return this._storageService.downloadSummary(handle);
 	}
 
 	public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {

@@ -4,12 +4,12 @@
  */
 
 import {
-	IClient,
-	INack,
-	ISignalClient,
-	ISignalMessage,
+	type IClient,
+	type INack,
+	type ISignalClient,
+	type ISignalMessage,
 	MessageType,
-	NackErrorType,
+	type NackErrorType,
 } from "@fluidframework/protocol-definitions";
 
 // TODO: documentation

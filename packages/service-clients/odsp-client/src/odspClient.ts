@@ -14,30 +14,20 @@ import {
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import type {
-	FluidObject,
 	IConfigProviderBase,
 	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
-import type {
-	ContainerAttachProps,
-	ContainerSchema,
-	IFluidContainer,
-} from "@fluidframework/fluid-static";
-import type { IRootDataObject } from "@fluidframework/fluid-static/internal";
+import type { ContainerAttachProps, ContainerSchema } from "@fluidframework/fluid-static";
 import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
-	createServiceAudience,
 } from "@fluidframework/fluid-static/internal";
 import {
 	OdspDocumentServiceFactory,
 	OdspDriverUrlResolver,
-	// The comment will be removed up when the deprecated code is removed in AB#31049
-	// eslint-disable-next-line import/no-deprecated
 	createOdspCreateContainerRequest,
 	createOdspUrl,
 	isOdspResolvedUrl,
@@ -46,14 +36,15 @@ import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import type { TokenResponse } from "./interfaces.js";
 import type {
+	TokenResponse,
 	OdspClientProps,
 	OdspConnectionConfig,
 	OdspContainerAttachProps,
-	OdspContainerServices,
+	OdspContainerServices as IOdspContainerServices,
+	IOdspFluidContainer,
 } from "./interfaces.js";
-import { createOdspAudienceMember } from "./odspAudience.js";
+import { OdspContainerServices } from "./odspContainerServices.js";
 import type { IOdspTokenProvider } from "./token.js";
 
 async function getStorageToken(
@@ -122,8 +113,8 @@ export class OdspClient {
 	public async createContainer<T extends ContainerSchema>(
 		containerSchema: T,
 	): Promise<{
-		container: IFluidContainer<T>;
-		services: OdspContainerServices;
+		container: IOdspFluidContainer<T>;
+		services: IOdspContainerServices;
 	}> {
 		const loaderProps = this.getLoaderProps(containerSchema);
 
@@ -135,19 +126,22 @@ export class OdspClient {
 			},
 		});
 
-		const fluidContainer = await this.createFluidContainer(container, this.connectionConfig);
+		const fluidContainer = await this.createFluidContainer<T>(
+			container,
+			this.connectionConfig,
+		);
 
 		const services = await this.getContainerServices(container);
 
-		return { container: fluidContainer as IFluidContainer<T>, services };
+		return { container: fluidContainer, services };
 	}
 
 	public async getContainer<T extends ContainerSchema>(
 		id: string,
 		containerSchema: T,
 	): Promise<{
-		container: IFluidContainer<T>;
-		services: OdspContainerServices;
+		container: IOdspFluidContainer<T>;
+		services: IOdspContainerServices;
 	}> {
 		const loaderProps = this.getLoaderProps(containerSchema);
 		const url = createOdspUrl({
@@ -158,12 +152,11 @@ export class OdspClient {
 		});
 		const container = await loadExistingContainer({ ...loaderProps, request: { url } });
 
-		const fluidContainer = createFluidContainer({
+		const fluidContainer = await createFluidContainer<T>({
 			container,
-			rootDataObject: await this.getContainerEntryPoint(container),
 		});
 		const services = await this.getContainerServices(container);
-		return { container: fluidContainer as IFluidContainer<T>, services };
+		return { container: fluidContainer, services };
 	}
 
 	private getLoaderProps(schema: ContainerSchema): ILoaderProps {
@@ -199,20 +192,16 @@ export class OdspClient {
 		};
 	}
 
-	private async createFluidContainer(
+	private async createFluidContainer<T extends ContainerSchema>(
 		container: IContainer,
 		connection: OdspConnectionConfig,
-	): Promise<IFluidContainer> {
-		const rootDataObject = await this.getContainerEntryPoint(container);
-
+	): Promise<IOdspFluidContainer<T>> {
 		/**
 		 * See {@link FluidContainer.attach}
 		 */
 		const attach = async (
 			odspProps?: ContainerAttachProps<OdspContainerAttachProps>,
 		): Promise<string> => {
-			// The comment will be removed up when the deprecated code is removed in AB#31049
-			// eslint-disable-next-line import/no-deprecated
 			const createNewRequest: IRequest = createOdspCreateContainerRequest(
 				connection.siteUrl,
 				connection.driveId,
@@ -237,26 +226,12 @@ export class OdspClient {
 			 */
 			return resolvedUrl.itemId;
 		};
-		const fluidContainer = createFluidContainer({ container, rootDataObject });
+		const fluidContainer = await createFluidContainer<T>({ container });
 		fluidContainer.attach = attach;
 		return fluidContainer;
 	}
 
-	private async getContainerServices(container: IContainer): Promise<OdspContainerServices> {
-		return {
-			audience: createServiceAudience({
-				container,
-				createServiceMember: createOdspAudienceMember,
-			}),
-		};
-	}
-
-	private async getContainerEntryPoint(container: IContainer): Promise<IRootDataObject> {
-		const rootDataObject: FluidObject<IRootDataObject> = await container.getEntryPoint();
-		assert(
-			rootDataObject.IRootDataObject !== undefined,
-			0x878 /* entryPoint must be of type IRootDataObject */,
-		);
-		return rootDataObject.IRootDataObject;
+	private async getContainerServices(container: IContainer): Promise<IOdspContainerServices> {
+		return new OdspContainerServices(container);
 	}
 }

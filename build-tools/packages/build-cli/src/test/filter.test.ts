@@ -6,12 +6,13 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Package, getResolvedFluidRoot } from "@fluidframework/build-tools";
-import chai, { expect } from "chai";
+import { expect } from "chai";
+import * as chai from "chai";
 import assertArrays from "chai-arrays";
 import {
 	AllPackagesSelectionCriteria,
-	PackageFilterOptions,
-	PackageSelectionCriteria,
+	type PackageFilterOptions,
+	type PackageSelectionCriteria,
 	filterPackages,
 	selectAndFilterPackages,
 	selectPackagesFromContext,
@@ -182,7 +183,8 @@ describe("selectAndFilterPackages", () => {
 		const names = selected.map((p) => p.name);
 		expect(names).to.be.containingAllOf([
 			"@fluidframework/build-common",
-			"@fluidframework/eslint-config-fluid",
+			// TODO: Re-enable once eslint-config-fluid is no longer in the client release group
+			// "@fluidframework/eslint-config-fluid",
 			"@fluid-internal/eslint-plugin-fluid",
 			"@fluidframework/protocol-definitions",
 			"@fluid-tools/api-markdown-documenter",

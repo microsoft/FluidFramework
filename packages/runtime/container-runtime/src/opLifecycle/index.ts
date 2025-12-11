@@ -4,14 +4,15 @@
  */
 
 export {
-	BatchId,
+	addBatchMetadata,
+	type BatchId,
 	BatchManager,
-	BatchSequenceNumbers,
+	type BatchSequenceNumbers,
 	getEffectiveBatchId,
 	generateBatchId,
-	IBatchManagerOptions,
+	type IBatchManagerOptions,
 } from "./batchManager.js";
-export {
+export type {
 	LocalBatch,
 	LocalBatchMessage,
 	LocalEmptyBatchPlaceholder,
@@ -27,7 +28,7 @@ export {
 	ensureContentsDeserialized,
 } from "./opSerialization.js";
 export {
-	BatchResubmitInfo,
+	type BatchResubmitInfo,
 	estimateSocketSize,
 	localBatchToOutboundBatch,
 	Outbox,
@@ -37,13 +38,14 @@ export { OpCompressor } from "./opCompressor.js";
 export { OpDecompressor } from "./opDecompressor.js";
 export { OpSplitter, splitOp, isChunkedMessage } from "./opSplitter.js";
 export {
-	InboundMessageResult,
-	BatchStartInfo,
+	type InboundMessageResult,
+	type BatchStartInfo,
 	RemoteMessageProcessor,
 	unpackRuntimeMessage,
 } from "./remoteMessageProcessor.js";
 export {
+	type EmptyGroupedBatch,
 	OpGroupingManager,
-	OpGroupingManagerConfig,
+	type OpGroupingManagerConfig,
 	isGroupedBatch,
 } from "./opGroupingManager.js";

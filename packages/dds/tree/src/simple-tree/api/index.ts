@@ -4,7 +4,6 @@
  */
 
 export type {
-	TreeSchema,
 	ITreeViewConfiguration,
 	ITreeConfigurationOptions,
 } from "./configuration.js";
@@ -19,19 +18,30 @@ export type {
 	TreeViewEvents,
 	SchemaCompatibilityStatus,
 	TreeViewAlpha,
+	TreeViewBeta,
 	TreeBranch,
+	TreeBranchAlpha,
 	TreeBranchEvents,
 	ITreeAlpha,
 } from "./tree.js";
 export { asTreeViewAlpha } from "./tree.js";
+export { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
 export {
 	SchemaFactory,
+	scoped,
 	type ScopedSchemaName,
-	type SchemaFactoryObjectOptions,
-	type SchemaStatics,
-	schemaStatics,
+	type ObjectSchemaOptionsAlpha,
+	type ObjectSchemaOptions,
+	type NodeSchemaOptions,
+	type NodeSchemaOptionsAlpha,
+	type SchemaFactory_base,
 } from "./schemaFactory.js";
+export { SchemaFactoryBeta, type SchemaStaticsBeta } from "./schemaFactoryBeta.js";
 export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
+export {
+	eraseSchemaDetails,
+	eraseSchemaDetailsSubclassable,
+} from "./eraseSchemaDetails.js";
 export type {
 	ValidateRecursiveSchema,
 	FixRecursiveArraySchema,
@@ -45,19 +55,19 @@ export {
 	singletonSchema,
 } from "./schemaCreationUtilities.js";
 export {
+	getIdentifierFromNode,
+	getPropertyKeyFromStoredKey,
+	getStoredKey,
 	treeNodeApi,
 	type TreeNodeApi,
 	tryGetSchema,
-	getStoredKey,
-	getPropertyKeyFromStoredKey,
-	getIdentifierFromNode,
 } from "./treeNodeApi.js";
+export { createFromCursor } from "./create.js";
 export {
-	createFromInsertable,
-	cursorFromInsertable,
-	createFromCursor,
-	createFromMapTree,
-} from "./create.js";
+	type DirtyTreeStatus,
+	trackDirtyNodes,
+	type DirtyTreeMap,
+} from "./dirtyIndex.js";
 export {
 	type JsonSchemaId,
 	type JsonSchemaType,
@@ -72,6 +82,8 @@ export {
 	type JsonTreeSchema,
 	type JsonFieldSchema,
 	type JsonLeafSchemaType,
+	type JsonRecordNodeSchema,
+	type JsonStringKeyPatternProperties,
 } from "./jsonSchema.js";
 export type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
 export { getJsonSchema } from "./getJsonSchema.js";
@@ -83,6 +95,14 @@ export type {
 	ArrayNodeCustomizableSchemaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
+	TreeRecordNodeUnsafe,
+	UnannotateAllowedTypeUnsafe,
+	AnnotatedAllowedTypeUnsafe,
+	AnnotatedAllowedTypesUnsafe,
+	AllowedTypesFullUnsafe,
+	AllowedTypesFullFromMixedUnsafe,
+	UnannotateAllowedTypesListUnsafe,
+	AnnotateAllowedTypesListUnsafe,
 } from "./typesUnsafe.js";
 
 export {
@@ -102,6 +122,8 @@ export {
 	tryStoredSchemaAsArray,
 	replaceHandles,
 	type HandleConverter,
+	KeyEncodingOptions,
+	type TreeParsingOptions,
 } from "./customTree.js";
 
 export {
@@ -110,7 +132,14 @@ export {
 	replaceConciseTreeHandles,
 } from "./conciseTree.js";
 
-export { TreeBeta, type NodeChangedData, type TreeChangeEventsBeta } from "./treeBeta.js";
+export {
+	borrowCursorFromTreeNodeOrValue,
+	exportConcise,
+	importConcise,
+	type NodeChangedData,
+	TreeBeta,
+	type TreeChangeEventsBeta,
+} from "./treeBeta.js";
 export { createSimpleTreeIndex, type SimpleTreeIndex } from "./simpleTreeIndex.js";
 export {
 	createIdentifierIndex,
@@ -136,5 +165,17 @@ export {
 } from "./transactionTypes.js";
 
 export { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
-export { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 export type { TreeChangeEvents } from "./treeChangeEvents.js";
+export {
+	incrementalEncodingPolicyForAllowedTypes,
+	incrementalSummaryHint,
+} from "./incrementalAllowedTypes.js";
+export {
+	encodeSchemaCompatibilitySnapshot,
+	decodeSchemaCompatibilitySnapshot,
+} from "./simpleSchemaCodec.js";
+export {
+	exportCompatibilitySchemaSnapshot,
+	importCompatibilitySchemaSnapshot,
+	checkCompatibility,
+} from "./snapshotCompatibilityChecker.js";

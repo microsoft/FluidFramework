@@ -7,15 +7,15 @@
 
 import { strict as assert } from "node:assert";
 
-import { IRandom, describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { type IRandom, describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
-import { SegmentGroup } from "../mergeTreeNodes.js";
-import { IMergeTreeOp } from "../ops.js";
+import type { SegmentGroup } from "../mergeTreeNodes.js";
+import type { IMergeTreeOp } from "../ops.js";
 
 import {
-	IConfigRange,
-	IMergeTreeOperationRunnerConfig,
+	type IConfigRange,
+	type IMergeTreeOperationRunnerConfig,
 	annotateRange,
 	applyMessages,
 	doOverRange,
@@ -25,7 +25,7 @@ import {
 	runMergeTreeOperationRunner,
 } from "./mergeTreeOperationRunner.js";
 import { TestClient } from "./testClient.js";
-import { TestClientLogger } from "./testClientLogger.js";
+import type { TestClientLogger } from "./testClientLogger.js";
 
 function applyMessagesWithReconnect(
 	startingSeq: number,
@@ -59,7 +59,7 @@ function applyMessagesWithReconnect(
 	for (const [clientId, messageData] of reconnectClientMsgs.entries()) {
 		const client = clients.find(({ longClientId }) => longClientId === clientId)!;
 		for (const [op, segmentGroup] of messageData) {
-			const newMsg = client.makeOpMessage(client.regeneratePendingOp(op, segmentGroup));
+			const newMsg = client.makeOpMessage(client.regeneratePendingOp(op, segmentGroup, false));
 			newMsg.minimumSequenceNumber = minSeq;
 			// apply message doesn't use the segment group, so just pass undefined
 			reconnectMsgs.push([newMsg, undefined as never]);

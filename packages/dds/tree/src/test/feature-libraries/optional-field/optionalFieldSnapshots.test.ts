@@ -11,7 +11,7 @@ import { type ChangesetLocalId, RevisionTagCodec } from "../../../core/index.js"
 import {
 	type OptionalChangeset,
 	makeOptionalFieldCodecFamily,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
 import { brand } from "../../../util/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";

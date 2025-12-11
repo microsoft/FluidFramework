@@ -51,7 +51,7 @@ interface TestScenario {
 	/**
 	 * Whether running the scenario produces a snapshot which matches the saved one.
 	 * This is used to test back-compat of snapshots, i.e. ensuring current code can load older documents.
-	 * @remarks - It may be valuable to confirm clients can collaborate on such documents
+	 * @remarks It may be valuable to confirm clients can collaborate on such documents
 	 * after loading them.
 	 */
 	writeCompatible?: boolean;
@@ -64,7 +64,7 @@ function generateTestScenarios(): TestScenario[] {
 	const factory = SharedDirectory.getFactory();
 
 	/**
-	 * @remarks - This test suite isn't set up to be easily augmented when map's document format changes.
+	 * @remarks This test suite isn't set up to be easily augmented when map's document format changes.
 	 * `writeCompatible` may want to be changed to enable storing all snapshots over time for a given scenario.
 	 * See e.g. SharedString tests.
 	 */
@@ -126,7 +126,7 @@ function generateTestScenarios(): TestScenario[] {
 
 describe("SharedDirectory Snapshot Tests", () => {
 	// Set up the directory path for reading/writing snapshots and generate tests
-	assert(_dirname.match(/(dist|lib)[/\\]test[/\\]mocha$/));
+	assert(/(dist|lib)[/\\]test[/\\]mocha$/.exec(_dirname));
 	const testScenarios = generateTestScenarios();
 	const { takeSnapshot, readSnapshot } = createSnapshotSuite(
 		path.resolve(_dirname, `../../../src/test/mocha/snapshots/`),

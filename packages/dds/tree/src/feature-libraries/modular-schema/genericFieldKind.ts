@@ -6,7 +6,12 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
-import { type DeltaDetachedNodeId, type DeltaMark, Multiplicity } from "../../core/index.js";
+import {
+	type DeltaDetachedNodeId,
+	type DeltaMark,
+	type FieldKindIdentifier,
+	Multiplicity,
+} from "../../core/index.js";
 
 import type {
 	FieldChangeDelta,
@@ -19,10 +24,11 @@ import type {
 	RevisionReplacer,
 	ToDelta,
 } from "./fieldChangeHandler.js";
-import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";
 import { newGenericChangeset, type GenericChangeset } from "./genericFieldKindTypes.js";
 import type { NodeId } from "./modularChangeTypes.js";
+import { FlexFieldKind } from "./fieldKind.js";
+import { brandConst } from "../../util/index.js";
 
 /**
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
@@ -34,6 +40,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 		rebase: rebaseGenericChange,
 		prune: pruneGenericChange,
 		replaceRevisions,
+		mute: (change: GenericChangeset): GenericChangeset => change,
 	},
 	codecsFactory: makeGenericChangeCodec,
 	editor: {
@@ -157,12 +164,13 @@ function replaceRevisions(
 /**
  * {@link FieldKind} used to represent changes to elements of a field in a field-kind-agnostic format.
  */
-export const genericFieldKind: FieldKindWithEditor = new FieldKindWithEditor(
-	"ModularEditBuilder.Generic",
+export const genericFieldKind: FlexFieldKind = new FlexFieldKind(
+	brandConst("ModularEditBuilder.Generic")<FieldKindIdentifier>(),
 	Multiplicity.Sequence,
-	genericChangeHandler,
-	(types, other) => false,
-	new Set(),
+	{
+		changeHandler: genericChangeHandler,
+		allowMonotonicUpgradeFrom: new Set(),
+	},
 );
 
 /**

@@ -12,11 +12,13 @@ import {
 
 import type { LocalContainerRuntimeMessage } from "../messageTypes.js";
 
+import type { EmptyGroupedBatch } from "./opGroupingManager.js";
+
 /**
  * Takes an incoming runtime message (outer type "op"), JSON.parses the message's contents in place,
  * if needed (old Loader does this for us).
  * Only to be used for runtime messages. The contents here would be the virtualized payload for a batch of ops.
- * @remarks - Serialization during submit happens via {@link serializeOp}
+ * @remarks Serialization during submit happens via {@link serializeOp}
  * @param mutableMessage - op message received
  */
 export function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMessage): void {
@@ -29,12 +31,15 @@ export function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMes
 
 /**
  * Before submitting an op to the Outbox, its contents must be serialized using this function.
- * @remarks - The deserialization on process happens via the function {@link ensureContentsDeserialized}.
+ * @remarks The deserialization on process happens via the function {@link ensureContentsDeserialized}.
  *
  * @param toSerialize - op message to serialize. Also supports an array of ops.
  */
 export function serializeOp(
-	toSerialize: LocalContainerRuntimeMessage | LocalContainerRuntimeMessage[],
+	toSerialize:
+		| EmptyGroupedBatch
+		| LocalContainerRuntimeMessage
+		| LocalContainerRuntimeMessage[],
 ): string {
 	return JSON.stringify(
 		toSerialize,

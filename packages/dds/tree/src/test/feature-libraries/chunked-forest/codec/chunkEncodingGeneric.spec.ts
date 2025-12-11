@@ -11,14 +11,16 @@ import { unionOptions } from "../../../../codec/index.js";
 import type {
 	Counter,
 	DeduplicationTable,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
 import {
 	IdentifierToken,
 	Shape,
-	handleShapesAndIdentifiers,
-	// eslint-disable-next-line import/no-internal-modules
+	updateShapesAndIdentifiersEncoding,
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
+import { FieldBatchFormatVersion } from "../../../../feature-libraries/index.js";
+import { brand } from "../../../../util/index.js";
 
 export const Constant = Type.Literal(0);
 
@@ -32,7 +34,7 @@ const EncodedChunkShape = Type.Object(
 	unionOptions,
 );
 
-const version = 1.0;
+const fieldBatchVersion = brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v1);
 
 type Constant = Static<typeof Constant>;
 type StringShape = Static<typeof StringShape>;
@@ -41,9 +43,9 @@ type EncodedChunkShape = Static<typeof EncodedChunkShape>;
 class TestShape extends Shape<EncodedChunkShape> {
 	public constructor(
 		public readonly data: string,
-		public readonly count: (
+		public readonly countReferencedShapesAndIdentifiers: (
 			identifiers: Counter<string>,
-			shapes: (shape: Shape<EncodedChunkShape>) => void,
+			shapeDiscovered: (shape: Shape<EncodedChunkShape>) => void,
 		) => void = () => {},
 	) {
 		super();
@@ -62,9 +64,9 @@ class TestConstantShape extends Shape<EncodedChunkShape> {
 		super();
 	}
 
-	public count(
+	public countReferencedShapesAndIdentifiers(
 		identifiers: Counter<string>,
-		shapes: (shape: Shape<EncodedChunkShape>) => void,
+		shapeDiscovered: (shape: Shape<EncodedChunkShape>) => void,
 	): void {}
 
 	public encodeShape(
@@ -78,10 +80,10 @@ class TestConstantShape extends Shape<EncodedChunkShape> {
 const testConstantShape = new TestConstantShape();
 
 describe("chunkEncodingGeneric", () => {
-	describe("handleShapesAndIdentifiers", () => {
+	describe("updateShapesAndIdentifiersEncoding", () => {
 		it("Empty", () => {
-			assert.deepEqual(handleShapesAndIdentifiers(version, []), {
-				version,
+			assert.deepEqual(updateShapesAndIdentifiersEncoding(fieldBatchVersion, []), {
+				version: fieldBatchVersion,
 				identifiers: [],
 				shapes: [],
 				data: [],
@@ -89,32 +91,40 @@ describe("chunkEncodingGeneric", () => {
 		});
 		it("data", () => {
 			const input = [["x", 1, [1, 2], { a: 1, b: 2 }]];
-			assert.deepEqual(handleShapesAndIdentifiers(version, input), {
-				version,
+			assert.deepEqual(updateShapesAndIdentifiersEncoding(fieldBatchVersion, input), {
+				version: fieldBatchVersion,
 				identifiers: [],
 				shapes: [],
 				data: input,
 			});
 		});
 		it("identifier: inline", () => {
-			assert.deepEqual(handleShapesAndIdentifiers(version, [[new IdentifierToken("x")]]), {
-				version,
-				identifiers: [],
-				shapes: [],
-				data: [["x"]],
-			});
+			assert.deepEqual(
+				updateShapesAndIdentifiersEncoding(fieldBatchVersion, [[new IdentifierToken("x")]]),
+				{
+					version: fieldBatchVersion,
+					identifiers: [],
+					shapes: [],
+					data: [["x"]],
+				},
+			);
 		});
 		it("identifier: deduplicated", () => {
 			assert.deepEqual(
-				handleShapesAndIdentifiers(version, [
+				updateShapesAndIdentifiersEncoding(fieldBatchVersion, [
 					[new IdentifierToken("long string"), new IdentifierToken("long string")],
 				]),
-				{ version, identifiers: ["long string"], shapes: [], data: [[0, 0]] },
+				{
+					version: fieldBatchVersion,
+					identifiers: ["long string"],
+					shapes: [],
+					data: [[0, 0]],
+				},
 			);
 		});
 		it("identifier: mixed", () => {
 			assert.deepEqual(
-				handleShapesAndIdentifiers(version, [
+				updateShapesAndIdentifiersEncoding(fieldBatchVersion, [
 					[
 						new IdentifierToken("long string"),
 						5,
@@ -124,7 +134,7 @@ describe("chunkEncodingGeneric", () => {
 					],
 				]),
 				{
-					version,
+					version: fieldBatchVersion,
 					identifiers: ["long string"],
 					shapes: [],
 					data: [[0, 5, "test string", 0, "used once"]],
@@ -132,23 +142,26 @@ describe("chunkEncodingGeneric", () => {
 			);
 		});
 		it("shape: minimal", () => {
-			assert.deepEqual(handleShapesAndIdentifiers(version, [[new TestShape("shape data")]]), {
-				version,
-				identifiers: [],
-				shapes: [{ b: "shape data" }],
-				data: [[0]],
-			});
+			assert.deepEqual(
+				updateShapesAndIdentifiersEncoding(fieldBatchVersion, [[new TestShape("shape data")]]),
+				{
+					version: fieldBatchVersion,
+					identifiers: [],
+					shapes: [{ b: "shape data" }],
+					data: [[0]],
+				},
+			);
 		});
 		it("shape: counted", () => {
 			const shape1 = new TestShape("1");
 			const shape2 = new TestShape("2");
 			const shape3 = new TestShape("3");
 			assert.deepEqual(
-				handleShapesAndIdentifiers(version, [
+				updateShapesAndIdentifiersEncoding(fieldBatchVersion, [
 					[shape1, shape3, shape3, shape2, shape3, shape2],
 				]),
 				{
-					version,
+					version: fieldBatchVersion,
 					identifiers: [],
 					// Ensure shapes are sorted by most frequent first
 					shapes: [{ b: "3" }, { b: "2" }, { b: "1" }],
@@ -168,21 +181,29 @@ describe("chunkEncodingGeneric", () => {
 				countShape(shape2);
 				countShape(shape3); // cycle
 			});
-			assert.deepEqual(handleShapesAndIdentifiers(version, [[shape3, shape3]]), {
-				version,
-				identifiers: ["deduplicated-id"],
-				// Ensure shapes are sorted by most frequent first
-				shapes: [{ b: "3" }, { b: "2" }, { b: "1" }],
-				data: [[0, 0]],
-			});
+			assert.deepEqual(
+				updateShapesAndIdentifiersEncoding(fieldBatchVersion, [[shape3, shape3]]),
+				{
+					version: fieldBatchVersion,
+					identifiers: ["deduplicated-id"],
+					// Ensure shapes are sorted by most frequent first
+					shapes: [{ b: "3" }, { b: "2" }, { b: "1" }],
+					data: [[0, 0]],
+				},
+			);
 		});
 
 		it("nested arrays", () => {
 			assert.deepEqual(
-				handleShapesAndIdentifiers(version, [
+				updateShapesAndIdentifiersEncoding(fieldBatchVersion, [
 					[[[new IdentifierToken("long string"), new IdentifierToken("long string")]]],
 				]),
-				{ version, identifiers: ["long string"], shapes: [], data: [[[[0, 0]]]] },
+				{
+					version: fieldBatchVersion,
+					identifiers: ["long string"],
+					shapes: [],
+					data: [[[[0, 0]]]],
+				},
 			);
 		});
 	});

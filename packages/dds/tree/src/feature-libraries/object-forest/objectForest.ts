@@ -49,15 +49,11 @@ import {
 	type Breakable,
 	type WithBreakable,
 } from "../../util/index.js";
-import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/index.js";
+import { chunkField, defaultChunkPolicy } from "../chunked-forest/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import { type CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
-import {
-	defaultSchemaPolicy,
-	FieldKinds,
-	inSchemaOrThrow,
-	isFieldInSchema,
-} from "../default-schema/index.js";
+import { defaultSchemaPolicy, FieldKinds } from "../default-schema/index.js";
+import { isFieldInSchema, throwOutOfSchema } from "../schemaChecker.js";
 
 /** A `MapTree` with mutable fields */
 interface MutableMapTree extends MapTree {
@@ -128,8 +124,8 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 		return new ObjectForest(this.breaker, schema, anchors, this.additionalAsserts, this.roots);
 	}
 
-	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk {
-		return chunkFieldSingle(cursor, { idCompressor: undefined, policy: defaultChunkPolicy });
+	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk[] {
+		return chunkField(cursor, { idCompressor: undefined, policy: defaultChunkPolicy });
 	}
 
 	public forgetAnchor(anchor: Anchor): void {
@@ -154,12 +150,19 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 								// Some detached fields may have multiple nodes, so we must treat them as sequences:
 								kind: FieldKinds.sequence.identifier,
 								types: new Set(documentRoot.map((node) => node.type)),
+
+								// Metadata is not used for schema checks
+								persistedMetadata: undefined,
 							};
-				const maybeError = isFieldInSchema(documentRoot, fieldSchema, {
-					schema,
-					policy: defaultSchemaPolicy,
-				});
-				inSchemaOrThrow(maybeError);
+				isFieldInSchema(
+					documentRoot,
+					fieldSchema,
+					{
+						schema,
+						policy: defaultSchemaPolicy,
+					},
+					throwOutOfSchema,
+				);
 			}
 		}
 	}

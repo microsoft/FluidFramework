@@ -145,9 +145,10 @@ describe("Fuzz - revert", () => {
 		createDDSFuzzSuite(model, {
 			defaultTestCount: runsPerBatch,
 			numberOfClients: 3,
+			rollbackProbability: 0,
 			detachedStartOptions: {
 				numOpsBeforeAttach: 0,
-				rehydrateDisabled: true,
+				// AB#43127: fully allowing rehydrate after attach is currently not supported in tests (but should be in prod) due to limitations in the test mocks.
 				attachingBeforeRehydrateDisable: true,
 			},
 			emitter,
@@ -200,9 +201,10 @@ describe("Fuzz - revert", () => {
 		createDDSFuzzSuite(model, {
 			defaultTestCount: runsPerBatch,
 			numberOfClients: 3,
+			rollbackProbability: 0,
 			detachedStartOptions: {
 				numOpsBeforeAttach: 0,
-				rehydrateDisabled: true,
+				// AB#43127: fully allowing rehydrate after attach is currently not supported in tests (but should be in prod) due to limitations in the test mocks.
 				attachingBeforeRehydrateDisable: true,
 			},
 			emitter,

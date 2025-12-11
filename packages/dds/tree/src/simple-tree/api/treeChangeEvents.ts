@@ -26,7 +26,10 @@
  */
 export interface TreeChangeEvents {
 	/**
-	 * Emitted by a node after a batch of changes has been applied to the tree, if any of the changes affected the node.
+	 * Emitted by a node if any changes affected the node.
+	 *
+	 * This event is emitted after all the changes in a batch have been applied to the whole tree.
+	 * This means that a handler for this event will be able to read the updated state of the tree.
 	 *
 	 * - Object nodes define a change as being when the value of one of its properties changes (i.e., the property's value is set, including when set to `undefined`).
 	 *
@@ -65,8 +68,10 @@ export interface TreeChangeEvents {
 	nodeChanged(unstable?: unknown): void;
 
 	/**
-	 * Emitted by a node after a batch of changes has been applied to the tree, when something changed anywhere in the
-	 * subtree rooted at it.
+	 * Emitted by a node if something changed anywhere in the subtree rooted at it.
+	 *
+	 * This event is emitted after all the changes in a batch have been applied to the whole tree.
+	 * This means that a handler for this event will be able to read the updated state of the tree.
 	 *
 	 * @remarks
 	 * This event is not emitted when the node itself is moved to a different location in the tree or removed from the tree.

@@ -5,8 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
-import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
-import {
+import type { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
+import type {
 	IAuthorizationError,
 	IGenericNetworkError,
 } from "@fluidframework/driver-definitions/internal";
@@ -15,10 +15,13 @@ import {
 	createOdspNetworkError,
 	throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils/internal";
-import { OdspError, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
-import { IFluidErrorBase } from "@fluidframework/telemetry-utils/internal";
+import {
+	type OdspError,
+	OdspErrorTypes,
+} from "@fluidframework/odsp-driver-definitions/internal";
+import type { IFluidErrorBase } from "@fluidframework/telemetry-utils/internal";
 
-import { IOdspSocketError } from "../contracts.js";
+import type { IOdspSocketError } from "../contracts.js";
 import { errorObjectFromSocketError } from "../odspError.js";
 import { fetchAndParseAsJSONHelper, getWithRetryForTokenRefresh } from "../odspUtils.js";
 import { pkgVersion } from "../packageVersion.js";

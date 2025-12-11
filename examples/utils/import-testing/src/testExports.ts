@@ -49,10 +49,10 @@ import {
 	// // eslint-disable-next-line unused-imports/no-unused-imports
 	// InternalTypes,
 } from "@fluidframework/tree";
-import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
+import { eraseSchemaDetails, SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 import type { FixRecursiveArraySchema, ObjectNodeSchema } from "@fluidframework/tree/alpha";
-// eslint-disable-next-line import/no-internal-modules
-import type { requireAssignableTo } from "@fluidframework/tree/internal";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { requireAssignableTo, TreeNode, WithType } from "@fluidframework/tree/internal";
 
 // Due to limitation of the TypeScript compiler, errors like the following can be produced when exporting types from another package:
 // error TS2742: The inferred type of 'Inventory' cannot be named without a reference to '../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
@@ -104,6 +104,14 @@ export class RecursiveMap extends schema.mapRecursive("RM", [() => RecursiveMap]
 	type _check = ValidateRecursiveSchema<typeof RecursiveMap>;
 }
 
+export class RecursiveRecord extends schemaAlpha.recordRecursive("RR", [
+	SchemaFactory.number,
+	() => RecursiveRecord,
+]) {}
+{
+	type _check = ValidateRecursiveSchema<typeof RecursiveRecord>;
+}
+
 /**
  * Workaround to avoid
  * `error TS2310: Type 'RecursiveArray' recursively references itself as a base type.` in the d.ts file.
@@ -117,7 +125,7 @@ export class RecursiveArray extends schema.arrayRecursive("RA", [() => Recursive
 /**
  * This is an anti-pattern: not creating a named class for schema that are part of the recursive path causes generated .d.ts files to get type `any`.
  * This happens (without errors!) even if NoImplicitAny is enabled.
- * See the [TypeScript Issue](https://github.com/microsoft/TypeScript/issues/55832) for more details.
+ * See the {@link https://github.com/microsoft/TypeScript/issues/55832 | TypeScript Issue} for more details.
  */
 export const BadArraySelf = schema.arrayRecursive("BadArraySelf", [() => BadArraySelf]);
 {
@@ -146,3 +154,30 @@ export class Foo extends schema.objectRecursive("Foo", {
 {
 	type _check = ValidateRecursiveSchema<typeof Foo>;
 }
+
+// Schema Type erasure demo
+class PrivateSchema extends schema.object("Private", {}) {}
+class SquareInternal
+	extends schema.object("Demo", { hidden: schema.number, extra: PrivateSchema })
+	implements SquareNode
+{
+	public get area(): number {
+		return this.hidden * this.hidden;
+	}
+
+	public static create(sideLength: number): SquareInternal {
+		return new SquareInternal({ hidden: sideLength, extra: new PrivateSchema({}) });
+	}
+}
+
+export interface SquareNode {
+	readonly area: number;
+}
+
+export interface SquareSchema {
+	create(sideLength: number): Square;
+}
+
+// Does not leak SquareInternal or PrivateSchema types into API.
+export const Square = eraseSchemaDetails<Square, SquareSchema>()(SquareInternal);
+export type Square = SquareNode & TreeNode & WithType<"com.example.Demo">;

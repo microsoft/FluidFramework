@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
-import { Response } from "express";
-import nconf from "nconf";
+import * as path from "node:path";
+
+import type { Response } from "express";
+import type nconf from "nconf";
 
 /**
  * Helper function to handle a promise that should be returned to the user

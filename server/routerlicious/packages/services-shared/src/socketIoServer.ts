@@ -4,24 +4,32 @@
  */
 
 import { EventEmitter } from "events";
-import * as http from "http";
-import * as core from "@fluidframework/server-services-core";
+import type * as http from "http";
+import { performance } from "perf_hooks";
+
+import type * as core from "@fluidframework/server-services-core";
 import {
 	BaseTelemetryProperties,
 	Lumberjack,
 	LumberEventName,
 } from "@fluidframework/server-services-telemetry";
-import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
-import { Namespace, Server, Socket, RemoteSocket, type DisconnectReason } from "socket.io";
+import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { createAdapter as createRedisAdapter } from "@socket.io/redis-adapter";
-import type { Adapter } from "socket.io-adapter";
 import type { Cluster, Redis } from "ioredis";
+import {
+	type Namespace,
+	Server,
+	type Socket,
+	type RemoteSocket,
+	type DisconnectReason,
+} from "socket.io";
+import type { Adapter } from "socket.io-adapter";
+
 import * as redisSocketIoAdapter from "./redisSocketIoAdapter";
 import {
 	SocketIORedisConnection,
 	SocketIoRedisSubscriptionConnection,
 } from "./socketIoRedisConnection";
-import { performance } from "perf_hooks";
 
 class SocketIoSocket implements core.IWebSocket {
 	private readonly eventListeners: { event: string; listener: () => void }[] = [];
@@ -33,6 +41,10 @@ class SocketIoSocket implements core.IWebSocket {
 	}
 
 	constructor(private readonly socket: Socket) {}
+
+	public get handshake(): any {
+		return this.socket.handshake;
+	}
 
 	public on(event: string, listener: (...args: any[]) => void) {
 		if (!this.isDisposed) {
@@ -124,7 +136,9 @@ export interface ISocketIoServerConfig {
 	 */
 	pingPongLatencyTrackingAggregationThreshold: number;
 	/**
-	 * Whether to enable Socket.io [perMessageDeflate](https://socket.io/docs/v4/server-options/#permessagedeflate) option.
+	 * Whether to enable the Socket.io
+	 * {@link https://socket.io/docs/v4/server-options/#permessagedeflate|perMessageDeflate}
+	 * option.
 	 * Default is `true`.
 	 */
 	perMessageDeflate: boolean;
@@ -144,7 +158,8 @@ class SocketIoServer implements core.IWebSocketServer {
 			/**
 			 * Fluid Socket.io connection URL looks like:
 			 * "<hostname>/socket.io/?documentId=[documentId]&tenantId=[tenantId]&EIO=[3/4]&transport=[websocket/polling]"
-			 * [socket.handshake.query](https://socket.io/docs/v4/server-socket-instance/#sockethandshake) contains parsed query params.
+			 * {@link https://socket.io/docs/v4/server-socket-instance/#sockethandshake|socket.handshake.query} contains
+			 * parsed query params.
 			 * The following properties are used for **telemetry purposes only.**
 			 * These should **not** be used to identify the tenant and document associated with the socket connection
 			 * for real logic and access purposes without validating against the JWT access token.

@@ -3,14 +3,108 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import {
+	DataObject,
+	DataObjectFactory,
+	TreeDataObject,
+	TreeDataObjectFactory,
+} from "@fluidframework/aqueduct/internal";
 import { SharedCell } from "@fluidframework/cell/internal";
 import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { type ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
-import { SharedTree } from "@fluidframework/tree/internal";
+import { SharedTree, type TreeView } from "@fluidframework/tree/internal";
+import { v4 as uuid } from "uuid";
+
+import { TodoList, TodoItem } from "./Schema.js";
+
+/**
+ * Props used when creating a new todo item.
+ */
+interface TodoItemProps {
+	/**
+	 * The initial text to populate the todo item's title with.
+	 * This value will be inserted into the shared string at index 0.
+	 */
+	readonly startingText: string;
+}
+
+/**
+ * Object so we can test {@link TreeDataObject} inside {@link AppData}.
+ */
+export class AppDataTree extends TreeDataObject {
+	public static readonly Name = "@devtools-example/test-app-tree-data-object";
+
+	private readonly config = new TreeViewConfiguration({ schema: TodoList });
+	private static readonly factory = new TreeDataObjectFactory({
+		type: AppDataTree.Name,
+		ctor: AppDataTree,
+		sharedObjects: [SharedString.getFactory(), SharedTree.getFactory()],
+	});
+
+	public static getFactory(): TreeDataObjectFactory<TreeDataObject> {
+		return AppDataTree.factory;
+	}
+
+	#treeView: TreeView<typeof TodoList> | undefined;
+
+	/**
+	 * The schema-aware view of the tree.
+	 */
+	public get treeView(): TreeView<typeof TodoList> {
+		if (this.#treeView === undefined) {
+			throw new Error("treeView has not been initialized.");
+		}
+		return this.#treeView;
+	}
+
+	protected override async initializingFirstTime(): Promise<void> {
+		this.#treeView = this.tree.viewWith(this.config);
+		if (!this.treeView.compatibility.canInitialize) {
+			throw new Error("Incompatible schema");
+		}
+
+		const title = SharedString.create(this.runtime);
+		title.insertText(0, "Title");
+		this.treeView.initialize(new TodoList({ title: title.handle, items: [] }));
+	}
+
+	protected override async initializingFromExisting(): Promise<void> {
+		this.#treeView = this.tree.viewWith(this.config);
+		if (!this.treeView.compatibility.canView) {
+			throw new Error("Incompatible schema");
+		}
+	}
+
+	/**
+	 * Adds a new todo item to the list.
+	 *
+	 * @privateRemarks
+	 * This method was placed in the data object (instead of the TodoList schema class),
+	 * as we needed access to the runtime to create the `SharedString`.
+	 */
+	public async addTodoItem(props?: TodoItemProps): Promise<void> {
+		const title = SharedString.create(this.runtime);
+		const newItemText = props?.startingText ?? "New Item";
+		title.insertText(0, newItemText);
+		const description = SharedString.create(this.runtime);
+
+		const todoItem = new TodoItem({
+			title: title.handle,
+			description: description.handle,
+			completed: false,
+		});
+
+		// TODO: We should consider creating a separate field for date, so that we do not need to
+		// concatenate it to the id.
+		// Generate an ID that we can sort on later, and store the todo item.
+		const id = `${Date.now()}-${uuid()}`;
+
+		this.treeView.root.items.set(id, todoItem);
+	}
+}
 
 /**
  * Additional Data Object added to the {@link AppData}.
@@ -93,12 +187,18 @@ export class AppData extends DataObject {
 	 */
 	private readonly dataObjectKey = "shared-data-object";
 
+	/**
+	 * Key in the app's `rootMap` under which the {@link AppDataTree} object is stored.
+	 */
+	private readonly treeDataObjectKey = "tree-data-object";
+
 	// previous app's `rootMap`
 	private readonly _initialObjects: Record<string, IFluidLoadable> = {};
 	private _sharedTree: ITree | undefined;
 	private _text: SharedString | undefined;
 	private _counter: SharedCounter | undefined;
 	private _emojiMatrix: SharedMatrix | undefined;
+	private _treeDataObject: AppDataTree | undefined;
 
 	public get text(): SharedString {
 		if (this._text === undefined) {
@@ -128,6 +228,13 @@ export class AppData extends DataObject {
 		return this._sharedTree;
 	}
 
+	public get treeDataObject(): AppDataTree {
+		if (this._treeDataObject === undefined) {
+			throw new Error("The TreeDataObject was not initialized correctly");
+		}
+		return this._treeDataObject;
+	}
+
 	public getRootObject(): Record<string, IFluidLoadable> {
 		return this._initialObjects;
 	}
@@ -144,7 +251,10 @@ export class AppData extends DataObject {
 			SharedCell.getFactory(),
 			SharedTree.getFactory(),
 		],
-		registryEntries: new Map([AppDataTwo.getFactory().registryEntry]),
+		registryEntries: new Map([
+			AppDataTwo.getFactory().registryEntry,
+			AppDataTree.getFactory().registryEntry,
+		]),
 	});
 
 	public static getFactory(): DataObjectFactory<AppData> {
@@ -155,7 +265,7 @@ export class AppData extends DataObject {
 		// Create the shared objects and store their handles in the root SharedDirectory
 		const text = SharedString.create(this.runtime, this.sharedTextKey);
 		const counter = SharedCounter.create(this.runtime, this.sharedCounterKey);
-		const sharedTree = SharedTree.create(this.runtime);
+		const sharedTree = SharedTree.create(this.runtime, this.sharedTreeKey);
 
 		const emojiMatrix = SharedMatrix.create(this.runtime, this.emojiMatrixKey);
 		const matrixDimension = 2; // Height and Width
@@ -170,12 +280,14 @@ export class AppData extends DataObject {
 		this.populateSharedTree(sharedTree);
 
 		const appDataTwo = await AppDataTwo.getFactory().createChildInstance(this.context);
+		const appDataTree = await AppDataTree.getFactory().createChildInstance(this.context);
 
 		this.root.set(this.sharedTextKey, text.handle);
 		this.root.set(this.sharedCounterKey, counter.handle);
 		this.root.set(this.emojiMatrixKey, emojiMatrix.handle);
 		this.root.set(this.sharedTreeKey, sharedTree.handle);
 		this.root.set(this.dataObjectKey, appDataTwo.handle);
+		this.root.set(this.treeDataObjectKey, appDataTree.handle);
 
 		// Also set a couple of primitives for testing the debug view
 		this.root.set("numeric-value", 42);
@@ -200,6 +312,9 @@ export class AppData extends DataObject {
 			?.get();
 		this._emojiMatrix = await this.root
 			.get<IFluidHandle<SharedMatrix>>(this.emojiMatrixKey)
+			?.get();
+		this._treeDataObject = await this.root
+			.get<IFluidHandle<AppDataTree>>(this.treeDataObjectKey)
 			?.get();
 		const sharedTree = await this.root.get<IFluidHandle<ITree>>(this.sharedTreeKey)?.get();
 		if (sharedTree === undefined) {

@@ -20,9 +20,7 @@ export function createTrackedServer(
 	port: number,
 	requestListener: http.RequestListener,
 ): ITrackedHttpServer {
-	// eslint-disable-next-line jsdoc/require-jsdoc
 	const server = http.createServer(requestListener).listen(port);
-	// eslint-disable-next-line jsdoc/require-jsdoc
 	const sockets = new Set<Socket>();
 
 	server.on("connection", (socket) => {
@@ -35,7 +33,6 @@ export function createTrackedServer(
 		sockets,
 		fullyClose(): void {
 			server.close();
-			// eslint-disable-next-line jsdoc/require-jsdoc
 			for (const socket of sockets) {
 				socket.destroy();
 			}
@@ -62,9 +59,7 @@ export const serverListenAndHandle = async <T>(
 ): OnceListenerResult<T> =>
 	// eslint-disable-next-line promise/param-names
 	new Promise((outerResolve, outerReject) => {
-		// eslint-disable-next-line promise/param-names, jsdoc/require-jsdoc
 		const innerP = new Promise<T>((innerResolve, innerReject) => {
-			// eslint-disable-next-line jsdoc/require-jsdoc
 			const httpServer = createTrackedServer(port, (req, res) => {
 				// ignore favicon
 				if (req.url === "/favicon.ico") {
@@ -76,6 +71,7 @@ export const serverListenAndHandle = async <T>(
 					.finally(() => httpServer.fullyClose())
 					.then(
 						(result) => innerResolve(result),
+						// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 						(error) => innerReject(error),
 					);
 			});
@@ -90,6 +86,7 @@ export const endResponse = async (response: http.ServerResponse): Promise<void> 
 		try {
 			response.end(resolve);
 		} catch (error) {
+			// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 			reject(error);
 		}
 	});

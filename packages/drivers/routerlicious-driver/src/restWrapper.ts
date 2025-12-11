@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64, performanceNow } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
@@ -39,7 +39,7 @@ import { ITokenProvider, ITokenResponse } from "./tokens.js";
 type AuthorizationHeaderGetter = (token: ITokenResponse) => string;
 export type TokenFetcher = (refresh?: boolean) => Promise<ITokenResponse>;
 
-const buildRequestUrl = (requestConfig: AxiosRequestConfig) =>
+const buildRequestUrl = (requestConfig: AxiosRequestConfig): string =>
 	requestConfig.baseURL !== undefined
 		? `${requestConfig.baseURL ?? ""}${requestConfig.url ?? ""}`
 		: (requestConfig.url ?? "");
@@ -76,7 +76,7 @@ export function createR11sResponseFromContent<T>(content: T): IR11sResponse<T> {
 	};
 }
 
-function headersToMap(headers: Headers) {
+function headersToMap(headers: Headers): Map<string, string> {
 	const newHeaders = new Map<string, string>();
 	for (const [key, value] of headers.entries()) {
 		newHeaders.set(key, value);
@@ -87,7 +87,7 @@ function headersToMap(headers: Headers) {
 export function getPropsToLogFromResponse(headers: {
 	// eslint-disable-next-line @rushstack/no-new-null
 	get: (id: string) => string | undefined | null;
-}) {
+}): ITelemetryBaseProperties {
 	interface LoggingHeader {
 		headerName: string;
 		logName: string;
@@ -131,6 +131,7 @@ class RouterliciousRestWrapper extends RestWrapper {
 		private readonly getAuthorizationHeader: AuthorizationHeaderGetter,
 		private readonly useRestLess: boolean,
 		baseurl?: string,
+		// eslint-disable-next-line @typescript-eslint/prefer-readonly -- false positive, modified in getToken()
 		private tokenP?: Promise<ITokenResponse>,
 		defaultQueryString: QueryStringType = {},
 	) {
@@ -314,7 +315,7 @@ class RouterliciousRestWrapper extends RestWrapper {
 		return token;
 	}
 
-	public setToken(token: ITokenResponse) {
+	public setToken(token: ITokenResponse): void {
 		this.token = token;
 	}
 }
@@ -351,9 +352,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 		baseurl?: string,
 		initialTokenP?: Promise<ITokenResponse>,
 	): RouterliciousStorageRestWrapper {
-		const defaultQueryString = {
-			token: `${fromUtf8ToBase64(tenantId)}`,
-		};
+		const defaultQueryString = {};
 
 		const getAuthorizationHeader: AuthorizationHeaderGetter = (
 			token: ITokenResponse,

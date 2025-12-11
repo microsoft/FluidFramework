@@ -5,7 +5,7 @@
 
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { BasicRestWrapper } from "@fluidframework/server-services-client";
-import {
+import type {
 	IDocumentManager,
 	IDocument,
 	ITenantManager,
@@ -17,8 +17,9 @@ import {
 	getLumberBaseProperties,
 	getGlobalTelemetryContext,
 } from "@fluidframework/server-services-telemetry";
-import { getRefreshTokenIfNeededCallback } from "./tenant";
 import { logHttpMetrics } from "@fluidframework/server-services-utils";
+
+import { getRefreshTokenIfNeededCallback } from "./tenant";
 
 /**
  * Manager to fetch document from Alfred using the internal URL.

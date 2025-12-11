@@ -126,6 +126,8 @@ stages:
             workingDirectory: $(Build.SourcesDirectory)/docs
             script: |
               set -eu -o pipefail
+              # Ensure it's easy to tell which workspace this is running in by inspecting the logs
+              pwd
               pnpm i --frozen-lockfile
 
         - task: Npm@1
@@ -136,6 +138,15 @@ stages:
             customCommand: 'run build'
           env:
             INSTRUMENTATION_KEY: $(INSTRUMENTATION_KEY)
+            TYPESENSE_API_KEY: $(TYPESENSE_API_KEY)
+            TYPESENSE_HOST: $(TYPESENSE_HOST)
+
+        - task: Bash@3
+          displayName: 'Check inline script hashes correctness'
+          inputs:
+            targetType: 'filePath'
+            workingDirectory: $(Build.SourcesDirectory)/docs
+            filePath: '$(Build.SourcesDirectory)/docs/validateHashes.sh'
 
         # Run the tests
         - task: Npm@1
@@ -252,6 +263,8 @@ stages:
             workingDirectory: $(Build.SourcesDirectory)/docs
             script: |
               set -eu -o pipefail
+              # Ensure it's easy to tell which workspace this is running in by inspecting the logs
+              pwd
               pnpm i --frozen-lockfile
 
         - task: Npm@1

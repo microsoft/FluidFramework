@@ -13,7 +13,7 @@ import {
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/legacy";
-// eslint-disable-next-line import/no-internal-modules -- #26987: `local-driver` internal LocalSessionStorageDbFactory used in examples
+// eslint-disable-next-line import-x/no-internal-modules -- #26987: `local-driver` internal LocalSessionStorageDbFactory used in examples
 import { LocalSessionStorageDbFactory } from "@fluidframework/local-driver/internal";
 import {
 	LocalDocumentServiceFactory,
@@ -47,7 +47,9 @@ const codeLoader: ICodeDetailsLoader = {
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-async function createContainerAndRenderInElement(element: HTMLDivElement): Promise<void> {
+async function createOrLoadContainerAndRenderInElement(
+	element: HTMLDivElement,
+): Promise<void> {
 	let container: IContainer;
 	let attach: (() => void) | undefined;
 
@@ -103,16 +105,16 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 	render(blobCollection);
 }
 
-const leftElement = document.getElementById("sbs-left") as HTMLDivElement;
+const leftElement = document.querySelector("#sbs-left") as HTMLDivElement;
 if (leftElement === null) {
 	throw new Error("sbs-left does not exist");
 }
-await createContainerAndRenderInElement(leftElement);
-const rightElement = document.getElementById("sbs-right") as HTMLDivElement;
+await createOrLoadContainerAndRenderInElement(leftElement);
+const rightElement = document.querySelector("#sbs-right") as HTMLDivElement;
 if (rightElement === null) {
 	throw new Error("sbs-right does not exist");
 }
-await createContainerAndRenderInElement(rightElement);
+await createOrLoadContainerAndRenderInElement(rightElement);
 
 // Setting "fluidStarted" is just for our test automation
 // eslint-disable-next-line @typescript-eslint/dot-notation

@@ -5,9 +5,9 @@
 
 import { existsSync, mkdirSync, writeFileSync } from "fs";
 import { dirname, resolve } from "path";
-import { Compilation, Compiler, WebpackError } from "webpack";
+import { type Compilation, type Compiler, WebpackError } from "webpack";
 
-import { BundleBuddyConfig } from "./BundleBuddyTypes";
+import type { BundleBuddyConfig } from "./BundleBuddyTypes";
 
 export interface BundleBuddyPluginConfig {
 	outputFileName: string;
@@ -42,7 +42,7 @@ export class BundleBuddyConfigWebpackPlugin {
 				);
 
 				compilation.chunks.forEach((chunk) => {
-					if (chunk.name !== undefined) {
+					if (chunk.name !== undefined && chunk.name !== null) {
 						if (chunkNamesLeftToValidate.has(chunk.name)) {
 							chunkNamesLeftToValidate.delete(chunk.name);
 						}

@@ -38,6 +38,7 @@ import {
 	newChangeAtomIdRangeMap,
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeRename,
+	mapTaggedChange,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -69,7 +70,6 @@ import {
 	type RebaseRevisionMetadata,
 	type RevisionReplacer,
 } from "./fieldChangeHandler.js";
-import { type FieldKindWithEditor, withEditor } from "./fieldKindWithEditor.js";
 import { convertGenericChange, genericFieldKind } from "./genericFieldKind.js";
 import type { GenericChangeset } from "./genericFieldKindTypes.js";
 import {
@@ -86,6 +86,7 @@ import {
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
+import type { FlexFieldKind } from "./fieldKind.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -98,10 +99,10 @@ export class ModularChangeFamily
 {
 	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
 
-	public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>;
+	public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>;
 
 	public constructor(
-		fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+		fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 		public readonly codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
 	) {
 		this.fieldKinds = fieldKinds;
@@ -213,24 +214,16 @@ export class ModularChangeFamily
 	}
 
 	private composeAllFields(
-		change1: ModularChangeset,
-		change2: ModularChangeset,
+		potentiallyConflictedChange1: ModularChangeset,
+		potentiallyConflictedChange2: ModularChangeset,
 		revInfos: RevisionInfo[],
 		idState: IdAllocationState,
 	): ModularChangesetContent {
-		if (hasConflicts(change1) && hasConflicts(change2)) {
-			return {
-				fieldChanges: new Map(),
-				nodeChanges: newTupleBTree(),
-				nodeToParent: newTupleBTree(),
-				nodeAliases: newTupleBTree(),
-				crossFieldKeys: newCrossFieldKeyTable(),
-			};
-		} else if (hasConflicts(change1)) {
-			return change2;
-		} else if (hasConflicts(change2)) {
-			return change1;
-		}
+		// Our current cell ordering scheme in sequences depends on being able to rebase over a change with conflicts.
+		// This means that compose must preserve declarations (e.g., new cells) made by conflicted changes (so that we can rebase over the composition).
+		// TODO: remove once AB#46104 is completed
+		const change1 = this.getEffectiveChange(potentiallyConflictedChange1);
+		const change2 = this.getEffectiveChange(potentiallyConflictedChange2);
 
 		const genId: IdAllocator = idAllocatorFromState(idState);
 		const revisionMetadata: RevisionMetadataSource = revisionMetadataSourceFromInfo(revInfos);
@@ -511,7 +504,7 @@ export class ModularChangeFamily
 		}
 
 		for (const [field, fieldChange2] of change2) {
-			if (change1 === undefined || !change1.has(field)) {
+			if (!change1?.has(field)) {
 				composedFields.set(field, fieldChange2);
 			}
 		}
@@ -857,12 +850,17 @@ export class ModularChangeFamily
 
 	public rebase(
 		taggedChange: TaggedChange<ModularChangeset>,
-		over: TaggedChange<ModularChangeset>,
+		potentiallyConflictedOver: TaggedChange<ModularChangeset>,
 		revisionMetadata: RevisionMetadataSource,
 	): ModularChangeset {
-		if (hasConflicts(over.change)) {
-			return taggedChange.change;
-		}
+		// Our current cell ordering scheme in sequences depends on being able to rebase over a change with conflicts.
+		// This means that we must rebase over a muted version of the conflicted changeset.
+		// That is, a version that includes its declarations (e.g., new cells) but not its changes.
+		// TODO: remove once AB#46104 is completed
+		const over = mapTaggedChange(
+			potentiallyConflictedOver,
+			this.getEffectiveChange(potentiallyConflictedOver.change),
+		);
 
 		const change = taggedChange.change;
 		const maxId = Math.max(change.maxId ?? -1, over.change.maxId ?? -1);
@@ -1694,6 +1692,50 @@ export class ModularChangeFamily
 
 		return numChildren;
 	}
+
+	private getEffectiveChange(change: ModularChangeset): ModularChangeset {
+		if (hasConflicts(change)) {
+			return this.muteChange(change);
+		}
+		return change;
+	}
+
+	/**
+	 * Returns a copy of the given changeset with the same declarations (e.g., new cells) but no actual changes.
+	 */
+	private muteChange(change: ModularChangeset): ModularChangeset {
+		const muted: Mutable<ModularChangeset> = {
+			...change,
+			crossFieldKeys: newCrossFieldKeyTable(),
+			fieldChanges: this.muteFieldChanges(change.fieldChanges),
+			nodeChanges: brand(change.nodeChanges.mapValues((v) => this.muteNodeChange(v))),
+		};
+		return muted;
+	}
+
+	private muteNodeChange(change: NodeChangeset): NodeChangeset {
+		if (change.fieldChanges === undefined) {
+			return change;
+		}
+		return {
+			...change,
+			fieldChanges: this.muteFieldChanges(change.fieldChanges),
+		};
+	}
+
+	private muteFieldChanges(change: FieldChangeMap): FieldChangeMap {
+		return new Map(
+			Array.from(change.entries(), ([key, value]) => [key, this.muteFieldChange(value)]),
+		);
+	}
+
+	private muteFieldChange(change: FieldChange): FieldChange {
+		const handler = getChangeHandler(this.fieldKinds, change.fieldKind);
+		return {
+			fieldKind: change.fieldKind,
+			change: brand(handler.rebaser.mute(change.change)),
+		};
+	}
 }
 
 function replaceCrossFieldKeyTableRevisions(
@@ -1837,7 +1879,7 @@ function invertBuilds(
  */
 export function* relevantRemovedRoots(
 	change: ModularChangeset,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): Iterable<DeltaDetachedNodeId> {
 	yield* relevantRemovedRootsFromFields(change.fieldChanges, change.nodeChanges, fieldKinds);
 }
@@ -1845,7 +1887,7 @@ export function* relevantRemovedRoots(
 function* relevantRemovedRootsFromFields(
 	change: FieldChangeMap,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): Iterable<DeltaDetachedNodeId> {
 	for (const [_, fieldChange] of change) {
 		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
@@ -1951,7 +1993,7 @@ export function updateRefreshers(
  */
 export function intoDelta(
 	taggedChange: TaggedChange<ModularChangeset>,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): DeltaRoot {
 	const change = taggedChange.change;
 	const rootDelta: Mutable<DeltaRoot> = {};
@@ -2020,7 +2062,7 @@ function copyDetachedNodes(
 function intoDeltaImpl(
 	change: FieldChangeMap,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	global: DeltaDetachedNodeChanges[],
 	rename: DeltaDetachedNodeRename[],
 ): Map<FieldKey, DeltaFieldChanges> {
@@ -2050,7 +2092,7 @@ function intoDeltaImpl(
 function deltaFromNodeChange(
 	change: NodeChangeset,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	global: DeltaDetachedNodeChanges[],
 	rename: DeltaDetachedNodeRename[],
 ): DeltaFieldMap {
@@ -2071,7 +2113,7 @@ function deltaFromNodeChange(
  * For example, when rebasing change B from a local branch [A, B, C] over a branch [X, Y], the `baseRevisions` must include
  * revisions [A⁻¹ X, Y, A] if rebasing over the composition of all those changes, or
  * revision [A⁻¹] for the first rebase, then [X], etc. if rebasing over edits individually.
- * @returns - RebaseRevisionMetadata to be passed to `FieldChangeRebaser.rebase`*
+ * @returns RebaseRevisionMetadata to be passed to `FieldChangeRebaser.rebase`*
  */
 export function rebaseRevisionMetadataFromInfo(
 	revInfos: readonly RevisionInfo[],
@@ -2102,19 +2144,19 @@ function isEmptyNodeChangeset(change: NodeChangeset): boolean {
 }
 
 export function getFieldKind(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	kind: FieldKindIdentifier,
-): FieldKindWithEditor {
+): FlexFieldKind {
 	if (kind === genericFieldKind.identifier) {
 		return genericFieldKind;
 	}
 	const fieldKind = fieldKinds.get(kind);
 	assert(fieldKind !== undefined, 0x3ad /* Unknown field kind */);
-	return withEditor(fieldKind);
+	return fieldKind;
 }
 
 export function getChangeHandler(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	kind: FieldKindIdentifier,
 ): FieldChangeHandler<unknown> {
 	return getFieldKind(fieldKinds, kind).changeHandler;
@@ -2256,8 +2298,6 @@ function newCrossFieldTable<T>(): CrossFieldTable<T> {
 	};
 }
 
-/**
- */
 interface ConstraintState {
 	violationCount: number;
 }
@@ -2599,7 +2639,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 
 	public constructor(
 		family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>,
-		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
 	) {
 		super(family, changeReceiver);
@@ -2884,8 +2924,6 @@ function buildModularChangesetFromNode(props: {
 	});
 }
 
-/**
- */
 export interface FieldEditDescription {
 	type: "field";
 	field: FieldUpPath;
@@ -2894,16 +2932,12 @@ export interface FieldEditDescription {
 	revision: RevisionTag;
 }
 
-/**
- */
 export interface GlobalEditDescription {
 	type: "global";
 	revision: RevisionTag;
 	builds?: ChangeAtomIdBTree<TreeChunk>;
 }
 
-/**
- */
 export type EditDescription = FieldEditDescription | GlobalEditDescription;
 
 function getRevInfoFromTaggedChanges(changes: TaggedChange<ModularChangeset>[]): {

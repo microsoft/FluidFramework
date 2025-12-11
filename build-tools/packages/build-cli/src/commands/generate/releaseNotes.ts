@@ -14,7 +14,7 @@ import remarkGithub, { defaultBuildUrl } from "remark-github";
 import admonitions from "remark-github-beta-blockquote-admonitions";
 import remarkToc from "remark-toc";
 
-import { type ReleaseNotesSection } from "../../config.js";
+import type { ReleaseNotesSection } from "../../config.js";
 import { releaseGroupFlag } from "../../flags.js";
 import {
 	BaseCommand,
@@ -25,9 +25,9 @@ import {
 	groupBySection,
 	loadChangesets,
 } from "../../library/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { addHeadingLinks, stripSoftBreaks } from "../../library/markdown.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { RELEASE_NOTES_TOC_LINK_TEXT } from "../../library/releaseNotes.js";
 
 /**

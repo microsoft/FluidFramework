@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
-import { IBlob, ICreateBlobParams, ICreateBlobResponse } from "@fluidframework/gitresources";
-// eslint-disable-next-line import/no-deprecated
+import fs from "node:fs";
+
 import { Uint8ArrayToString } from "@fluidframework/common-utils";
+import type { IBlob, ICreateBlobParams, ICreateBlobResponse } from "@fluidframework/gitresources";
+// eslint-disable-next-line import-x/no-deprecated
 import { Router } from "express";
 import * as git from "isomorphic-git";
-import nconf from "nconf";
+import type nconf from "nconf";
+
 import * as utils from "../utils";
 
 export async function createBlob(
@@ -50,7 +52,7 @@ export async function getBlob(
 		url: "",
 		sha,
 		size: buffer.length,
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		content: Uint8ArrayToString(buffer, "base64"),
 		encoding: "base64",
 	};

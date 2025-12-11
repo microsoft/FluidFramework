@@ -8,32 +8,32 @@ import { strict as assert } from "node:assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
-import {
+import type {
 	FluidObject,
 	Tagged,
 	TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
-import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { LazyPromise } from "@fluidframework/core-utils/internal";
+import type { LocalFluidDataStoreRuntimeMessage } from "@fluidframework/datastore/internal";
 import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore/internal";
-import { ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
-import {
-	IDocumentStorageService,
-	IBlob,
-	ISnapshotTree,
-} from "@fluidframework/driver-definitions/internal";
-import {
+import { type ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
+import type { IBlob, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type {
 	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
-	CreateSummarizerNodeSource,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
 	SummarizeInternalFn,
+	IContainerRuntimeBase,
+	IRuntimeStorageService,
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	CreateSummarizerNodeSource,
 	channelsTreeName,
-	type IContainerRuntimeBase,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -64,9 +64,9 @@ import {
 } from "../dataStoreContext.js";
 import { StorageServiceWithAttachBlobs } from "../storageServiceWithAttachBlobs.js";
 import {
-	IRootSummarizerNodeWithGC,
-	ReadFluidDataStoreAttributes,
-	WriteFluidDataStoreAttributes,
+	type IRootSummarizerNodeWithGC,
+	type ReadFluidDataStoreAttributes,
+	type WriteFluidDataStoreAttributes,
 	createRootSummarizerNodeWithGC,
 	dataStoreAttributesBlobName,
 	summarizerClientType,
@@ -84,7 +84,7 @@ describe("Data Store Context Tests", () => {
 
 	describe("LocalFluidDataStoreContext", () => {
 		let localDataStoreContext: LocalFluidDataStoreContext;
-		const storage = {} as unknown as IDocumentStorageService;
+		const storage = {} as unknown as IRuntimeStorageService;
 		const scope = {} as unknown as FluidObject;
 		const makeLocallyVisibleFn = () => {};
 		let parentContext: IFluidParentContextPrivate;
@@ -111,9 +111,7 @@ describe("Data Store Context Tests", () => {
 						snapshotTree: undefined,
 					});
 
-				assert.throws(codeBlock, (e: Error) =>
-					validateAssertionError(e, "Data store ID contains slash"),
-				);
+				assert.throws(codeBlock, validateAssertionError("Data store ID contains slash"));
 			});
 
 			it("Errors thrown during realize are wrapped as DataProcessingError", async () => {
@@ -382,11 +380,14 @@ describe("Data Store Context Tests", () => {
 				});
 				await localDataStoreContext.realize();
 
-				localDataStoreContext.submitMessage(
-					DataStoreMessageType.ChannelOp,
-					"summarizer message",
-					{},
-				);
+				const message = {
+					type: DataStoreMessageType.ChannelOp,
+					content: {
+						address: "address",
+						contents: "summarizer message",
+					},
+				} satisfies LocalFluidDataStoreRuntimeMessage;
+				localDataStoreContext.submitMessage(message.type, message.content, {});
 
 				const expectedEvents = [
 					{
@@ -423,11 +424,14 @@ describe("Data Store Context Tests", () => {
 
 				let eventCount = 0;
 				for (let i = 0; i < 15; i++) {
-					localDataStoreContext.submitMessage(
-						DataStoreMessageType.ChannelOp,
-						`summarizer message ${i}`,
-						{},
-					);
+					const message = {
+						type: DataStoreMessageType.ChannelOp,
+						content: {
+							address: "address",
+							contents: `summarizer message ${i}`,
+						},
+					} satisfies LocalFluidDataStoreRuntimeMessage;
+					localDataStoreContext.submitMessage(message.type, message.content, {});
 				}
 				for (const event of mockLogger.events) {
 					if (
@@ -521,7 +525,7 @@ describe("Data Store Context Tests", () => {
 	describe("RemoteDataStoreContext", () => {
 		let remoteDataStoreContext: RemoteFluidDataStoreContext;
 		let dataStoreAttributes: ReadFluidDataStoreAttributes;
-		const storage: Partial<IDocumentStorageService> = {};
+		const storage: Partial<IRuntimeStorageService> = {};
 		const scope = {} as unknown as FluidObject;
 		let summarizerNode: IRootSummarizerNodeWithGC;
 		let parentContext: IFluidParentContextPrivate;
@@ -613,7 +617,7 @@ describe("Data Store Context Tests", () => {
 						snapshot: snapshotTree,
 						parentContext,
 						storage: new StorageServiceWithAttachBlobs(
-							storage as IDocumentStorageService,
+							storage as IRuntimeStorageService,
 							attachBlobs,
 						),
 						scope,
@@ -657,15 +661,13 @@ describe("Data Store Context Tests", () => {
 						id: invalidId,
 						pkg: ["TestDataStore1"],
 						parentContext,
-						storage: storage as IDocumentStorageService,
+						storage: storage as IRuntimeStorageService,
 						scope,
 						createSummarizerNodeFn,
 						snapshot: undefined,
 					});
 
-				assert.throws(codeBlock, (e: Error) =>
-					validateAssertionError(e, "Data store ID contains slash"),
-				);
+				assert.throws(codeBlock, validateAssertionError("Data store ID contains slash"));
 			});
 			describe("writing with isolated channels enabled", () =>
 				testGenerateAttributes({
@@ -737,7 +739,7 @@ describe("Data Store Context Tests", () => {
 					snapshot: snapshotTree,
 					parentContext,
 					storage: new StorageServiceWithAttachBlobs(
-						storage as IDocumentStorageService,
+						storage as IRuntimeStorageService,
 						attachBlobs,
 					),
 					scope,
@@ -782,7 +784,7 @@ describe("Data Store Context Tests", () => {
 					snapshot: snapshotTree,
 					parentContext,
 					storage: new StorageServiceWithAttachBlobs(
-						storage as IDocumentStorageService,
+						storage as IRuntimeStorageService,
 						attachBlobs,
 					),
 					scope,
@@ -831,7 +833,7 @@ describe("Data Store Context Tests", () => {
 					snapshot: snapshotTree,
 					parentContext,
 					storage: new StorageServiceWithAttachBlobs(
-						storage as IDocumentStorageService,
+						storage as IRuntimeStorageService,
 						attachBlobs,
 					),
 					scope,
@@ -885,7 +887,7 @@ describe("Data Store Context Tests", () => {
 					snapshot: snapshotTree,
 					parentContext,
 					storage: new StorageServiceWithAttachBlobs(
-						storage as IDocumentStorageService,
+						storage as IRuntimeStorageService,
 						attachBlobs,
 					),
 					scope,
@@ -960,7 +962,7 @@ describe("Data Store Context Tests", () => {
 					snapshot: snapshotTree,
 					parentContext,
 					storage: new StorageServiceWithAttachBlobs(
-						storage as IDocumentStorageService,
+						storage as IRuntimeStorageService,
 						attachBlobs,
 					),
 					scope,
@@ -980,7 +982,7 @@ describe("Data Store Context Tests", () => {
 
 	describe("LocalDetachedFluidDataStoreContext", () => {
 		let localDataStoreContext: LocalDetachedFluidDataStoreContext;
-		const storage = {} as unknown as IDocumentStorageService;
+		const storage = {} as unknown as IRuntimeStorageService;
 		const scope = {} as unknown as FluidObject;
 		let factory: IFluidDataStoreFactory;
 		const makeLocallyVisibleFn = () => {};
@@ -1064,9 +1066,7 @@ describe("Data Store Context Tests", () => {
 						channelToDataStoreFn,
 					});
 
-				assert.throws(codeBlock, (e: Error) =>
-					validateAssertionError(e, "Data store ID contains slash"),
-				);
+				assert.throws(codeBlock, validateAssertionError("Data store ID contains slash"));
 			});
 
 			describe("should error on attach if data store cannot be constructed/initialized", () => {

@@ -46,6 +46,14 @@ module.exports = {
 
 		// #region `unicorn` rule overrides
 
+		// TODO: Enable this rule and fix violations once eslint9 upgrade is done
+		"unicorn/consistent-function-scoping": "warn",
+
+		/**
+		 * TODO: Consider enabling in the future.
+		 */
+		"unicorn/import-style": "off",
+
 		// False positives on non-array `push` methods.
 		"unicorn/no-array-push-push": "off",
 
@@ -83,9 +91,9 @@ module.exports = {
 		"unicorn/prevent-abbreviations": "off",
 
 		/**
-		 * Disabled because we don't yet target a ES version that includes .at().
+		 * Enable in a future update; warning for now to surface occurrences without breaking builds.
 		 */
-		"unicorn/prefer-at": "off",
+		"unicorn/prefer-at": "warn",
 
 		/**
 		 * Disabled because we use EventEmitter everywhere today and changing it will be a bigger change outside of lint
@@ -94,9 +102,19 @@ module.exports = {
 		"unicorn/prefer-event-target": "off",
 
 		/**
-		 * Disabled because we don't yet target a ES version that includes string.replaceAll.
+		 * TODO: Enable in a future update; warning for now to surface occurrences without breaking builds.
 		 */
-		"unicorn/prefer-string-replace-all": "off",
+		"unicorn/prefer-string-raw": "warn",
+
+		/**
+		 * TODO: Enable in a future update; warning for now to surface occurrences without breaking builds.
+		 */
+		"unicorn/prefer-string-replace-all": "warn",
+
+		/**
+		 * TODO: Enable in a future update; warning for now to surface occurrences without breaking builds.
+		 */
+		"unicorn/prefer-structured-clone": "warn",
 
 		/**
 		 * Disabled because we will lean on the formatter (i.e. prettier) to enforce indentation policy.
@@ -189,6 +207,38 @@ module.exports = {
 		 * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-description>
 		 */
 		"jsdoc/require-description": ["error", { checkConstructors: false }],
+
+		/**
+		 * Requires that type-only exports be done using `export type`. Being explicit allows the TypeScript
+		 * `isolatedModules` flag to be used, and isolated modules are needed to adopt modern build tools like swc.
+		 *
+		 * @see {@link https://typescript-eslint.io/rules/consistent-type-exports/}
+		 */
+		"@typescript-eslint/consistent-type-exports": [
+			"error",
+			{
+				// Makes it easier to tell, at a glance, the impact of a change to individual exports.
+				fixMixedExportsWithInlineTypeSpecifier: true,
+			},
+		],
+
+		/**
+		 * Requires that type-only imports be done using `import type`. Being explicit allows the TypeScript
+		 * `isolatedModules` flag to be used, and isolated modules are needed to adopt modern build tools like swc.
+		 *
+		 * @see {@link https://typescript-eslint.io/rules/consistent-type-imports/}
+		 */
+		"@typescript-eslint/consistent-type-imports": [
+			"error",
+			{ fixStyle: "separate-type-imports" },
+		],
+
+		/**
+		 * Ensures that type-only import statements do not result in runtime side-effects.
+		 *
+		 * @see {@link https://typescript-eslint.io/rules/no-import-type-side-effects/}
+		 */
+		"@typescript-eslint/no-import-type-side-effects": "error",
 
 		// #endregion
 	},

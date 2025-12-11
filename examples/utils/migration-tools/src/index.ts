@@ -11,24 +11,24 @@
 
 export {
 	CompositeEntryPoint,
-	IEntryPointPiece,
+	type IEntryPointPiece,
 	loadCompositeRuntime,
 } from "./compositeRuntime/index.js";
-export {
+export type {
 	IAcceptedMigrationDetails,
 	MigrationState,
 } from "./migrationTool/index.js";
 export {
-	CreateDetachedContainerCallback,
-	ExportDataCallback,
-	IMigrator,
-	IMigratorEntryPoint,
-	IMigratorEvents,
-	ImportDataCallback,
-	LoadSourceContainerCallback,
+	type CreateDetachedContainerCallback,
+	type ExportDataCallback,
+	type IMigrator,
+	type IMigratorEntryPoint,
+	type IMigratorEvents,
+	type ImportDataCallback,
+	type LoadSourceContainerCallback,
 	makeCreateDetachedContainerCallback,
 	makeSeparateContainerMigrationCallback,
 	makeMigratorEntryPointPiece,
-	MigrationCallback,
-	SeparateContainerMigrationResult,
+	type MigrationCallback,
+	type SeparateContainerMigrationResult,
 } from "./migrator/index.js";

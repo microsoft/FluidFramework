@@ -22,12 +22,12 @@ import {
 	type RegisterId,
 	RegisterMap,
 	optionalChangeRebaser,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
 import type {
 	ChildChange,
 	Replace,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
 import { type Mutable, brand } from "../../../util/index.js";
 import type { NodeId } from "../../../feature-libraries/index.js";

@@ -5,7 +5,7 @@
 
 import * as fs from "fs";
 
-import { IFluidFileConverter } from "./codeLoaderBundle.js";
+import type { IFluidFileConverter } from "./codeLoaderBundle.js";
 
 /**
  * Is the given snapshot in JSON format
@@ -94,6 +94,7 @@ export async function timeoutPromise<T = void>(
 			},
 			(reason) => {
 				clearTimeout(timer);
+				// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 				reject(reason);
 			},
 		);

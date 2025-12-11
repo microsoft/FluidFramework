@@ -10,14 +10,14 @@ import {
 	type SimpleTreeSchema,
 	type TreeNode,
 } from "@fluidframework/tree/internal";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { zodResponseFormat } from "openai/helpers/zod";
 import type {
 	ChatCompletionCreateParams,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "openai/resources/index.mjs";
 import { v4 as uuidv4 } from "uuid";
-import { z } from "zod";
+import { z, type ZodTypeAny } from "zod";
 
 import type {
 	DebugEventLogHandler,
@@ -487,7 +487,7 @@ async function* generateEdits(
 async function getStructuredOutputFromLlm<T>(
 	prompt: string,
 	openAi: OpenAiClientOptions,
-	structuredOutputSchema: Zod.ZodTypeAny,
+	structuredOutputSchema: ZodTypeAny,
 	description?: string,
 	tokensUsed?: TokenUsage,
 	debugOptions?: {

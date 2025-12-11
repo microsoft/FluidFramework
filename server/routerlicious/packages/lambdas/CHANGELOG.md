@@ -1,5 +1,37 @@
 # @fluidframework/server-lambdas
 
+## 6.0.0
+
+### Major Changes
+
+-   Cleanup underlying orderer connection when last socket disconnects from a session ([#21528](https://github.com/microsoft/FluidFramework/pull/21528)) [3c6bfc3d42](https://github.com/microsoft/FluidFramework/commit/3c6bfc3d429285b568bdfae417accfcaa5e0e190)
+
+    When a websocket disconnect occurs in the Nexus lambda, the underlying Orderer (Kafka or Local) connection will be closed and removed if it was the last connection open for a given tenantId/documentId. Various classes and types were updated to enable connection cleanup: added IOrdererManager.removeOrderer, changed KafkaOrdererFactory.delete to return a Promise due to internal orderer connection close, added removeOrderer to OrdererManager and LocalOrdererManager.
+
+-   Orderer Connection "error" listener disposed on disconnect ([#21948](https://github.com/microsoft/FluidFramework/pull/21948)) [e924f4ec3a](https://github.com/microsoft/FluidFramework/commit/e924f4ec3a9f7d16b17da7551d9fc92a5a54372d)
+
+    The Nexus lambda's per-socket-orderer-connection error listener is now removed when the socket connection ends.
+
+-   Added pause and resume methods for lambdas ([#22730](https://github.com/microsoft/FluidFramework/pull/22730)) [256bf0899c](https://github.com/microsoft/FluidFramework/commit/256bf0899c041914da3236b3a1c9d8ecc85d3b34)
+
+    Added pause and resume methods for context, documentContext, partition, partitionManager, kakfaRunner, rdKafkaConsumer, and lambda. They are used to pause/resume the incoming messages during various circuitBreaker states.
+
+-   Optional session tracking added to Nexus Lambda ([#22381](https://github.com/microsoft/FluidFramework/pull/22381)) [9a932a638b](https://github.com/microsoft/FluidFramework/commit/9a932a638b701ad36fed8fd1b273e63bcb335878)
+
+    An optional `ICollaborationSessionTracker` param was added to `configureWebSocketServices` in the Nexus Lambda. When provided, this tracker is used to output telemetry when a collaboration session for a document/container ends. The telemetry includes helpful information such as session duration, max concurrent clients, whether there were any writer clients involved, etc.
+
+-   Added a new event - `dispose` - which is triggered when `.dispose()` is called ([#23212](https://github.com/microsoft/FluidFramework/pull/23212)) [807f880dfe](https://github.com/microsoft/FluidFramework/commit/807f880dfebe0e0716f9de178bda6b6529e473ba)
+
+    This event is triggered when disposing factory resources. It can be used to trigger other graceful shutdown methods.
+
+-   User input validation added in Nexus Lambda connect_document handler ([#22381](https://github.com/microsoft/FluidFramework/pull/22381)) [9a932a638b](https://github.com/microsoft/FluidFramework/commit/9a932a638b701ad36fed8fd1b273e63bcb335878)
+
+    Nexus Lambda was making a lot of unsafe assumptions about the user's input for the connect_document message handler. To simplify type checking within Nexus and make accessing input properties safer, Nexus lambda now specifically emits a 400 error when the connect_document message input is malformed.
+
+-   Types altered to account for undefined and null values ([#23054](https://github.com/microsoft/FluidFramework/pull/23054)) [09b7299e1c](https://github.com/microsoft/FluidFramework/commit/09b7299e1cbf1d800d4bea2bef6b7d0bc657ddb6)
+
+    Many types updated to reflect implementations that can return null or undefined, but did not call that out in type definitions. Internal functionality only changed to handle existing null/undefined cases that are now known at compiletime.
+
 ## 5.0.0
 
 ### Minor Changes

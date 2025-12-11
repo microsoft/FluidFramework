@@ -19,6 +19,7 @@ import {
 	type TreeNavigationResult,
 	inCursorNode,
 	iterateCursorField,
+	mapCursorField,
 	rootFieldKey,
 } from "../../core/index.js";
 import { disposeSymbol, getOrCreate } from "../../util/index.js";
@@ -37,19 +38,22 @@ import type { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
 	type FlexTreeField,
-	type FlexTreeNode,
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 	type FlexTreeSequenceField,
 	type FlexTreeTypedField,
 	type FlexTreeUnknownUnboxed,
+	type FlexibleFieldContent,
+	type FlexibleNodeContent,
+	type HydratedFlexTreeNode,
 	TreeStatus,
 	flexTreeMarker,
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
 import { LazyEntity } from "./lazyEntity.js";
-import { type LazyTreeNode, makeTree } from "./lazyNode.js";
+import { type LazyTreeNode, getOrCreateHydratedFlexTreeNode } from "./lazyNode.js";
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
+import { combineChunks } from "../chunked-forest/index.js";
 
 /**
  * Reuse fields.
@@ -159,14 +163,14 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 		return this.schema === kind.identifier;
 	}
 
-	public get parent(): FlexTreeNode | undefined {
+	public get parent(): HydratedFlexTreeNode | undefined {
 		if (this.anchor.parent === undefined) {
 			return undefined;
 		}
 
 		const cursor = this.cursor;
 		cursor.exitField();
-		const output = makeTree(this.context, cursor);
+		const output = getOrCreateHydratedFlexTreeNode(this.context, cursor);
 		cursor.enterField(this.key);
 		return output;
 	}
@@ -193,27 +197,27 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 		);
 	}
 
-	public boxedAt(index: number): FlexTreeNode | undefined {
+	public boxedAt(index: number): HydratedFlexTreeNode | undefined {
 		const finalIndex = indexForAt(index, this.length);
 
 		if (finalIndex === undefined) {
 			return undefined;
 		}
 
-		return inCursorNode(this.cursor, finalIndex, (cursor) => makeTree(this.context, cursor));
+		return inCursorNode(this.cursor, finalIndex, (cursor) =>
+			getOrCreateHydratedFlexTreeNode(this.context, cursor),
+		);
 	}
 
 	public map<U>(callbackfn: (value: FlexTreeUnknownUnboxed, index: number) => U): U[] {
-		return Array.from(this, callbackfn);
+		return mapCursorField(this.cursor, (cursor) =>
+			callbackfn(unboxedFlexNode(this.context, cursor, this.anchor), cursor.fieldIndex),
+		);
 	}
 
-	public boxedIterator(): IterableIterator<FlexTreeNode> {
-		return iterateCursorField(this.cursor, (cursor) => makeTree(this.context, cursor));
-	}
-
-	public [Symbol.iterator](): IterableIterator<FlexTreeUnknownUnboxed> {
+	public [Symbol.iterator](): IterableIterator<HydratedFlexTreeNode> {
 		return iterateCursorField(this.cursor, (cursor) =>
-			unboxedFlexNode(this.context, cursor, this.anchor),
+			getOrCreateHydratedFlexTreeNode(this.context, cursor),
 		);
 	}
 
@@ -244,7 +248,8 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 	protected getEditor(): IDefaultEditBuilder<ITreeCursorSynchronous> {
 		return new MappedEditBuilder(
 			this.context.checkout.editor,
-			(cursor: ITreeCursorSynchronous) => this.context.checkout.forest.chunkField(cursor),
+			(cursor: ITreeCursorSynchronous) =>
+				combineChunks(this.context.checkout.forest.chunkField(cursor)),
 		);
 	}
 }
@@ -263,7 +268,7 @@ export class LazySequence extends LazyField implements FlexTreeSequenceField {
 		return this.map((x) => x);
 	}
 
-	public editor: SequenceFieldEditBuilder<ExclusiveMapTree[]> = {
+	public editor: SequenceFieldEditBuilder<FlexibleFieldContent> = {
 		insert: (index, newContent) => {
 			this.sequenceEditor().insert(index, cursorForMapTreeField(newContent));
 		},
@@ -279,7 +284,7 @@ export class LazySequence extends LazyField implements FlexTreeSequenceField {
 }
 
 export class LazyValueField extends LazyField implements FlexTreeRequiredField {
-	public editor: ValueFieldEditBuilder<ExclusiveMapTree> = {
+	public editor: ValueFieldEditBuilder<FlexibleNodeContent> = {
 		set: (newContent) => {
 			this.valueFieldEditor().set(cursorForMapTreeField([newContent]));
 		},
@@ -351,7 +356,7 @@ export function unboxedFlexNode(
 	}
 
 	// Try accessing cached child node via anchors.
-	// This avoids O(depth) related costs from makeTree in the cached case.
+	// This avoids O(depth) related costs from getOrCreateHydratedFlexTreeNode in the cached case.
 	const anchor = fieldAnchor.parent;
 	let child: AnchorNode | undefined;
 	if (anchor !== undefined) {
@@ -373,5 +378,5 @@ export function unboxedFlexNode(
 		}
 	}
 
-	return makeTree(context, cursor);
+	return getOrCreateHydratedFlexTreeNode(context, cursor);
 }

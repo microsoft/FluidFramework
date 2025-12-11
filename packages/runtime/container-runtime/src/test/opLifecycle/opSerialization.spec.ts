@@ -9,7 +9,10 @@ import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitio
 import { encodeHandleForSerialization } from "@fluidframework/runtime-utils/internal";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
-import { ContainerMessageType, LocalContainerRuntimeMessage } from "../../messageTypes.js";
+import {
+	ContainerMessageType,
+	type LocalContainerRuntimeMessage,
+} from "../../messageTypes.js";
 import { ensureContentsDeserialized, serializeOp } from "../../opLifecycle/index.js";
 
 describe("opSerialization", () => {
@@ -64,7 +67,10 @@ describe("opSerialization", () => {
 
 			const op: LocalContainerRuntimeMessage = {
 				type: ContainerMessageType.FluidDataStoreOp,
-				contents: { address: "123", contents: { hereIsAHandle: mockHandle } },
+				contents: {
+					address: "123",
+					contents: { type: "op", content: { address: "test", contents: mockHandle } },
+				},
 			};
 
 			const serialized = serializeOp(op);
@@ -86,7 +92,11 @@ describe("opSerialization", () => {
 				contents: {
 					address: "123",
 					contents: {
-						alreadyEncodedHandle: encodeHandleForSerialization(new MockHandle({})),
+						type: "op",
+						content: {
+							address: "test",
+							contents: encodeHandleForSerialization(new MockHandle({})),
+						},
 					},
 				},
 			};

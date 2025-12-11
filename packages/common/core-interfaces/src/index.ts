@@ -3,10 +3,21 @@
  * Licensed under the MIT License.
  */
 
+export type { BrandedType } from "./brandedType.js";
+
 export type { IDisposable } from "./disposable.js";
 
-export type { IErrorBase, IGenericError, IUsageError, IThrottlingWarning } from "./error.js";
-export { FluidErrorTypes } from "./error.js";
+export type {
+	IErrorBase,
+	IGenericError,
+	IUsageError,
+	IThrottlingWarning,
+	ILayerIncompatibilityError,
+} from "./error.js";
+export {
+	FluidErrorTypes,
+	FluidErrorTypesAlpha,
+} from "./error.js";
 
 export type {
 	ExtendEventProvider,
@@ -52,8 +63,9 @@ export type {
 export { LogLevel } from "./logger.js";
 export type { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./provider.js";
 export type { ConfigTypes, IConfigProviderBase } from "./config.js";
-export type { ISignalEnvelope } from "./messages.js";
-export type { ErasedType } from "./erasedType.js";
+export type { ISignalEnvelope, TypedMessage } from "./messages.js";
+export type { ErasedType, ErasedBaseType, InstanceTypeRelaxed } from "./erasedType.js";
+export { ErasedTypeImplementation } from "./erasedType.js";
 
 export type {
 	HasListeners,

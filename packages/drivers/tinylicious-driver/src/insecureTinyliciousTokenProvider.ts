@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITokenClaims, ScopeType } from "@fluidframework/driver-definitions/internal";
-import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
+import { type ITokenClaims, ScopeType } from "@fluidframework/driver-definitions/internal";
+import type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
 
@@ -53,7 +53,7 @@ export class InsecureTinyliciousTokenProvider implements ITokenProvider {
 		ver: string = "1.0",
 	): string {
 		const userId = uuid();
-		const match = userId.match(/^([\da-f]{8})-([\da-f]{4})/);
+		const match = /^([\da-f]{8})-([\da-f]{4})/.exec(userId);
 		const userName = match === null ? userId : match[0]; // Just use the first two segments of the (fake) userId as a fake name.
 
 		// Current time in seconds

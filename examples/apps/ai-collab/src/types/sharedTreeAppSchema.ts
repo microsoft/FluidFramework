@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ExperimentalPresenceManager } from "@fluidframework/presence/alpha";
 import { Tree, type TreeNode, TreeViewConfiguration } from "@fluidframework/tree";
 import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 import { SharedTree } from "fluid-framework";
@@ -202,11 +201,6 @@ export const INITIAL_APP_STATE = {
 export const CONTAINER_SCHEMA = {
 	initialObjects: {
 		appState: SharedTree,
-		/**
-		 * A Presence Manager object temporarily needs to be placed within container schema
-		 * https://github.com/microsoft/FluidFramework/blob/main/packages/framework/presence/README.md#onboarding
-		 * */
-		presence: ExperimentalPresenceManager,
 	},
 };
 

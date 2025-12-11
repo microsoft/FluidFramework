@@ -4,7 +4,8 @@
  */
 
 import { EventEmitter } from "events";
-import { IPublisher, ITopic } from "@fluidframework/server-services-core";
+
+import type { IPublisher, ITopic } from "@fluidframework/server-services-core";
 
 /**
  * @internal

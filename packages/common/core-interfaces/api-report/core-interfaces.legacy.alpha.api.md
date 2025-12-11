@@ -7,6 +7,12 @@
 // @public
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
+// @beta @sealed @system
+export abstract class ErasedBaseType<out Name = unknown> {
+    protected constructor();
+    protected abstract brand(dummy: never): Name;
+}
+
 // @public @sealed
 export abstract class ErasedType<out Name = unknown> {
     static [Symbol.hasInstance](value: never): value is never;
@@ -16,7 +22,7 @@ export abstract class ErasedType<out Name = unknown> {
 // @public
 export type ExtendEventProvider<TBaseEvent extends IEvent, TBase extends IEventProvider<TBaseEvent>, TEvent extends TBaseEvent> = Omit<Omit<Omit<TBase, "on">, "once">, "off"> & IEventProvider<TBaseEvent> & IEventProvider<TEvent>;
 
-// @alpha @legacy
+// @beta @legacy
 export const FluidErrorTypes: {
     readonly genericError: "genericError";
     readonly throttlingError: "throttlingError";
@@ -25,8 +31,21 @@ export const FluidErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export type FluidErrorTypes = (typeof FluidErrorTypes)[keyof typeof FluidErrorTypes];
+
+// @alpha @legacy
+export const FluidErrorTypesAlpha: {
+    readonly layerIncompatibilityError: "layerIncompatibilityError";
+    readonly genericError: "genericError";
+    readonly throttlingError: "throttlingError";
+    readonly dataCorruptionError: "dataCorruptionError";
+    readonly dataProcessingError: "dataProcessingError";
+    readonly usageError: "usageError";
+};
+
+// @alpha @legacy (undocumented)
+export type FluidErrorTypesAlpha = (typeof FluidErrorTypesAlpha)[keyof typeof FluidErrorTypesAlpha];
 
 // @public
 export const fluidHandleSymbol: unique symbol;
@@ -249,10 +268,10 @@ export interface IFluidHandle<out T = unknown> {
     readonly isAttached: boolean;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export const IFluidHandleContext: keyof IProvideFluidHandleContext;
 
-// @alpha @legacy
+// @beta @legacy
 export interface IFluidHandleContext extends IProvideFluidHandleContext {
     readonly absolutePath: string;
     attachGraph(): void;
@@ -266,20 +285,18 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
 export interface IFluidHandleErased<T> extends ErasedType<readonly ["IFluidHandle", T]> {
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IFluidHandleEvents {
     payloadShared: () => void;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IFluidHandleInternal<out T = unknown> extends IFluidHandle<T>, IProvideFluidHandle {
     readonly absolutePath: string;
     attachGraph(): void;
-    // @deprecated
-    bind(handle: IFluidHandleInternal): void;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IFluidHandlePayloadPending<T> extends IFluidHandle<T> {
     readonly events: Listenable<IFluidHandleEvents>;
     readonly payloadState: PayloadState;
@@ -294,28 +311,40 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
 }
 
 // @alpha @legacy
+export interface ILayerIncompatibilityError extends IErrorBase {
+    readonly actualDifferenceInMonths: number;
+    readonly compatibilityRequirementsInMonths: number;
+    readonly details: string;
+    readonly errorType: typeof FluidErrorTypesAlpha.layerIncompatibilityError;
+    readonly incompatibleLayer: string;
+    readonly incompatibleLayerVersion: string;
+    readonly layer: string;
+    readonly layerVersion: string;
+}
+
+// @beta @legacy
 export interface ILocalFluidHandle<T> extends IFluidHandlePayloadPending<T> {
     readonly events: Listenable<IFluidHandleEvents & ILocalFluidHandleEvents>;
     readonly payloadShareError: unknown;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ILocalFluidHandleEvents extends IFluidHandleEvents {
     payloadShareFailed: (error: unknown) => void;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ILoggingError extends Error {
     getTelemetryProperties(): ITelemetryBaseProperties;
 }
 
-// @alpha @deprecated @legacy (undocumented)
+// @beta @deprecated @legacy (undocumented)
 export interface IProvideFluidHandle {
     // @deprecated (undocumented)
     readonly [IFluidHandle]: IFluidHandleInternal;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IProvideFluidHandleContext {
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
@@ -379,7 +408,7 @@ export interface ITelemetryBaseProperties {
     [index: string]: TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType>;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IThrottlingWarning extends IErrorBase {
     readonly errorType: typeof FluidErrorTypes.throttlingError;
     // (undocumented)
@@ -410,7 +439,7 @@ export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 // @public
 export type Off = () => void;
 
-// @alpha @legacy
+// @beta @legacy
 export type PayloadState = "pending" | "shared";
 
 // @public
@@ -431,6 +460,12 @@ export type TelemetryBaseEventPropertyType = string | number | boolean | undefin
 
 // @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
+
+// @beta @legacy
+export interface TypedMessage {
+    content: unknown;
+    type: string;
+}
 
 // (No @packageDocumentation comment for this package)
 

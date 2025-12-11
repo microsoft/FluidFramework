@@ -4,13 +4,19 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { SchemaFactory } from "../../../simple-tree/index.js";
+import {
+	SchemaFactory,
+	SchemaFactoryAlpha,
+	TreeViewConfiguration,
+	TreeViewConfigurationAlpha,
+} from "../../../simple-tree/index.js";
 import type {
 	ValidateRecursiveSchema,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/schemaFactoryRecursive.js";
-import { validateUsageError } from "../../utils.js";
+import { getView } from "../../utils.js";
 
 const sf = new SchemaFactory("integration");
 
@@ -47,7 +53,7 @@ describe("simple-tree API integration tests", () => {
 				() => {
 					array.insertAtEnd(obj);
 				},
-				validateUsageError(/already in a tree/),
+				validateUsageError(/more than one place/),
 			);
 		});
 
@@ -59,6 +65,67 @@ describe("simple-tree API integration tests", () => {
 				},
 				validateUsageError(/more than one place/),
 			);
+		});
+	});
+
+	describe("staged schema", () => {
+		it("errors assigning staged nodes before upgrade, shallow in object", () => {
+			const schemaFactoryAlpha = new SchemaFactoryAlpha("shared tree tests");
+			class StagedSchema extends schemaFactoryAlpha.objectAlpha("TestObject", {
+				foo: SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
+			}) {}
+
+			const view = getView(new TreeViewConfiguration({ schema: StagedSchema }));
+			view.initialize({ foo: 5 });
+
+			assert.throws(() => {
+				view.root.foo = "x";
+			});
+		});
+
+		it("errors assigning staged nodes before upgrade, in root", () => {
+			const config = new TreeViewConfigurationAlpha({
+				schema: SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
+			});
+			const view = getView(config);
+			view.initialize(5);
+
+			assert.throws(() => {
+				view.root = "x";
+			});
+
+			const view2 = getView(config);
+			assert.throws(() => {
+				view2.initialize("x");
+			});
+		});
+
+		it("errors assigning staged nodes before upgrade, deep", () => {
+			const schemaFactoryAlpha = new SchemaFactoryAlpha("shared tree tests");
+			class StagedSchema extends schemaFactoryAlpha.objectAlpha("TestObject", {
+				foo: SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
+			}) {}
+
+			const view = getView(new TreeViewConfiguration({ schema: StagedSchema }));
+			view.initialize({ foo: 5 });
+
+			assert.throws(() => {
+				view.root = { foo: "x" };
+			});
+
+			const newNode = new StagedSchema({ foo: "x" });
+			assert.throws(() => {
+				view.root = newNode;
+			});
 		});
 	});
 });

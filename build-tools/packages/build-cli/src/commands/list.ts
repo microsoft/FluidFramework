@@ -17,9 +17,9 @@ import {
 	feeds,
 	isFeed,
 	packagePublishesToFeed,
-	// eslint-disable-next-line import/no-internal-modules -- the policy-related stuff will eventually be moved into this package
+	// eslint-disable-next-line import-x/no-internal-modules -- the policy-related stuff will eventually be moved into this package
 } from "../library/repoPolicyCheck/npmPackages.js";
-import { PnpmListEntry, pnpmList } from "../pnpm.js";
+import { type PnpmListEntry, pnpmList } from "../pnpm.js";
 
 interface ListItem extends PnpmListEntry {
 	tarball?: string;

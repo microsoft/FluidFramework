@@ -4,17 +4,22 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import * as resources from "@fluidframework/gitresources";
+import type * as resources from "@fluidframework/gitresources";
 import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
+
 import { debug } from "./debug";
-import {
+import type {
 	ICreateRefParamsExternal,
 	IPatchRefParamsExternal,
 	IGitManager,
 	IHistorian,
 } from "./storage";
-import { IWholeFlatSummary, IWholeSummaryPayload, IWriteSummaryResponse } from "./storageContracts";
+import type {
+	IWholeFlatSummary,
+	IWholeSummaryPayload,
+	IWriteSummaryResponse,
+} from "./storageContracts";
 
 /**
  * @internal

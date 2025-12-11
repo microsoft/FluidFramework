@@ -8,7 +8,7 @@ import type {
 	ISummarizerEvents,
 	SummarizerStopReason,
 } from "@fluidframework/container-runtime-definitions/internal";
-import {
+import type {
 	IDisposable,
 	IEvent,
 	IEventProvider,
@@ -17,15 +17,15 @@ import {
 import { assert } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	PerformanceEvent,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { IThrottler } from "../throttler.js";
+import type { IThrottler } from "../throttler.js";
 
 import type { ISummarizerClientElection } from "./summarizerClientElection.js";
-import {
+import type {
 	IEnqueueSummarizeOptions,
 	IOnDemandSummarizeOptions,
 	ISummarizer,

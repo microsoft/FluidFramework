@@ -18,13 +18,19 @@ resources:
       - release/*
       - main
       - next
+  repositories:
+  - repository: ff_pipeline_host
+    type: git
+    name: ff_pipeline_host
+
 
 variables:
 - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
 # This is a test pipeline, not a build one, so we don't need to run CodeQL tasks
-- name: DisableCodeQL
+# Note that using this variable only works for non-1ES-template pipelines.
+- name: Codeql.SkipTaskAutoInjection
   value: true
 
 parameters:

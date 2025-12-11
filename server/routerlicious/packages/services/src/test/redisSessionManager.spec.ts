@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { TestRedisClientConnectionManager } from "@fluidframework/server-test-utils";
 import { RedisCollaborationSessionManager } from "../redisSessionManager";
@@ -33,11 +33,14 @@ describe("RedisCollaborationSessionManager", () => {
 			documentId: "test-doc-id",
 			tenantId: "test-tenant-id",
 			firstClientJoinTime: Date.now(),
+			latestClientJoinTime: Date.now(),
 			lastClientLeaveTime: undefined,
 			telemetryProperties: {
 				hadWriteClient: true,
 				totalClientsJoined: 2,
 				maxConcurrentClients: 1,
+				sessionOpCount: 5,
+				sessionSignalCount: 10,
 			},
 		};
 
@@ -58,11 +61,14 @@ describe("RedisCollaborationSessionManager", () => {
 			documentId: "test-doc-id",
 			tenantId: "test-tenant-id",
 			firstClientJoinTime: Date.now(),
+			latestClientJoinTime: Date.now(),
 			lastClientLeaveTime: undefined,
 			telemetryProperties: {
 				hadWriteClient: false,
 				totalClientsJoined: 2,
 				maxConcurrentClients: 1,
+				sessionOpCount: 5,
+				sessionSignalCount: 10,
 			},
 		};
 
@@ -73,6 +79,8 @@ describe("RedisCollaborationSessionManager", () => {
 				hadWriteClient: true,
 				totalClientsJoined: 3,
 				maxConcurrentClients: 2,
+				sessionOpCount: 15,
+				sessionSignalCount: 20,
 			},
 		};
 		await sessionManager.addOrUpdateSession(updatedSession);
@@ -103,22 +111,28 @@ describe("RedisCollaborationSessionManager", () => {
 			documentId: "test-doc-id-1",
 			tenantId: "test-tenant-id",
 			firstClientJoinTime: Date.now(),
+			latestClientJoinTime: Date.now(),
 			lastClientLeaveTime: undefined,
 			telemetryProperties: {
 				hadWriteClient: true,
 				totalClientsJoined: 10,
 				maxConcurrentClients: 5,
+				sessionOpCount: 100,
+				sessionSignalCount: 200,
 			},
 		};
 		const session2: ICollaborationSession = {
 			documentId: "test-doc-id-2",
 			tenantId: "test-tenant-id",
 			firstClientJoinTime: Date.now(),
+			latestClientJoinTime: Date.now(),
 			lastClientLeaveTime: undefined,
 			telemetryProperties: {
 				hadWriteClient: false,
 				totalClientsJoined: 2,
 				maxConcurrentClients: 1,
+				sessionOpCount: 5,
+				sessionSignalCount: 10,
 			},
 		};
 		await sessionManager.addOrUpdateSession(session1);
@@ -153,11 +167,14 @@ describe("RedisCollaborationSessionManager", () => {
 				documentId: `test-doc-id-${i}`,
 				tenantId: `test-tenant-id-${i % 3}`,
 				firstClientJoinTime: Date.now() - 100 * i,
+				latestClientJoinTime: Date.now() - 50 * i,
 				lastClientLeaveTime: i % 4 === 0 ? Date.now() : undefined,
 				telemetryProperties: {
 					hadWriteClient: i % 2 === 0,
 					totalClientsJoined: 2,
 					maxConcurrentClients: 1,
+					sessionOpCount: i * 10,
+					sessionSignalCount: i * 20,
 				},
 			};
 			sessions.push(session);
@@ -174,5 +191,74 @@ describe("RedisCollaborationSessionManager", () => {
 			assert(retrievedSession, "Session not found");
 			assert.deepStrictEqual(retrievedSession, session);
 		}
+	});
+
+	it("Gets all sessions within limit", async () => {
+		const sessionManager = new RedisCollaborationSessionManager(
+			testRedisClientConnectionManager,
+		);
+		const sessionsToCreate = 5;
+		const sessions: ICollaborationSession[] = [];
+		const writeSessionPs: Promise<void>[] = [];
+		// Create sessions with enough variety to verify that all sessions are retrieved correctly
+		for (let i = 0; i < sessionsToCreate; i++) {
+			const session: ICollaborationSession = {
+				documentId: `test-doc-id-${i}`,
+				tenantId: `test-tenant-id`,
+				firstClientJoinTime: Date.now() - 100 * i,
+				latestClientJoinTime: Date.now() - 50 * i,
+				lastClientLeaveTime: i % 4 === 0 ? Date.now() : undefined,
+				telemetryProperties: {
+					hadWriteClient: i % 2 === 0,
+					totalClientsJoined: 2,
+					maxConcurrentClients: 1,
+					sessionOpCount: i * 10,
+					sessionSignalCount: i * 20,
+				},
+			};
+			sessions.push(session);
+			writeSessionPs.push(sessionManager.addOrUpdateSession(session));
+		}
+		await Promise.all(writeSessionPs);
+
+		const limit = 3;
+		const retrievedSessions = await sessionManager.getAllSessions(limit);
+		assert.strictEqual(retrievedSessions.length, limit);
+	});
+
+	it("iterates over all sessions within limit", async () => {
+		const sessionManager = new RedisCollaborationSessionManager(
+			testRedisClientConnectionManager,
+		);
+		const sessionsToCreate = 5;
+		const sessions: ICollaborationSession[] = [];
+		const writeSessionPs: Promise<void>[] = [];
+		// Create sessions with enough variety to verify that all sessions are retrieved correctly
+		for (let i = 0; i < sessionsToCreate; i++) {
+			const session: ICollaborationSession = {
+				documentId: `test-doc-id-${i}`,
+				tenantId: `test-tenant-id`,
+				firstClientJoinTime: Date.now() - 100 * i,
+				latestClientJoinTime: Date.now() - 50 * i,
+				lastClientLeaveTime: i % 4 === 0 ? Date.now() : undefined,
+				telemetryProperties: {
+					hadWriteClient: i % 2 === 0,
+					totalClientsJoined: 2,
+					maxConcurrentClients: 1,
+					sessionOpCount: i * 10,
+					sessionSignalCount: i * 20,
+				},
+			};
+			sessions.push(session);
+			writeSessionPs.push(sessionManager.addOrUpdateSession(session));
+		}
+		await Promise.all(writeSessionPs);
+
+		const limit = 3;
+		const iteratedSessions: ICollaborationSession[] = [];
+		await sessionManager.iterateAllSessions(async (session) => {
+			iteratedSessions.push(session);
+		}, limit);
+		assert.strictEqual(iteratedSessions.length, limit);
 	});
 });

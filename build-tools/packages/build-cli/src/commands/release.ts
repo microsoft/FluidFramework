@@ -5,12 +5,12 @@
 
 import { strict as assert } from "node:assert";
 import {
-	VersionBumpType,
+	type VersionBumpType,
 	bumpVersionScheme,
 	detectVersionScheme,
 } from "@fluid-tools/version-tools";
 import { rawlist } from "@inquirer/prompts";
-import { Config } from "@oclif/core";
+import type { Config } from "@oclif/core";
 import chalk from "picocolors";
 
 import { findPackageOrReleaseGroup } from "../args.js";
@@ -23,11 +23,11 @@ import {
 } from "../flags.js";
 import {
 	FluidReleaseStateHandler,
-	FluidReleaseStateHandlerData,
-	StateHandler,
+	type FluidReleaseStateHandlerData,
+	type StateHandler,
 } from "../handlers/index.js";
 import { PromptWriter } from "../instructionalPromptWriter.js";
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 import { MonoRepoKind, getDefaultBumpTypeForBranch } from "../library/index.js";
 import { FluidReleaseMachine } from "../machines/index.js";
 import { getRunPolicyCheckDefault } from "../repoConfig.js";
@@ -101,7 +101,7 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 
 		// eslint-disable-next-line no-warning-comments
 		// TODO: can be removed once server team owns server releases
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		if (flags.releaseGroup === MonoRepoKind.Server && bumpType === "minor") {
 			this.error(`Server release are always a ${chalk.bold("MAJOR")} release`);
 		}

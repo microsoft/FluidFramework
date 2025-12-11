@@ -4,11 +4,11 @@
  */
 
 // import * as services from "@fluidframework/server-services";
-import * as core from "@fluidframework/server-services-core";
-// eslint-disable-next-line import/no-deprecated
-import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
-import { Provider } from "nconf";
+// eslint-disable-next-line import-x/no-deprecated
+import type { TypedEventEmitter } from "@fluidframework/common-utils";
+import type { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
+import type * as core from "@fluidframework/server-services-core";
+import type { Provider } from "nconf";
 
 export class TinyliciousResources implements core.IResources {
 	constructor(
@@ -19,7 +19,7 @@ export class TinyliciousResources implements core.IResources {
 		public mongoManager: core.MongoManager,
 		public port: any,
 		public webServerFactory: core.IWebServerFactory,
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		public collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	) {}
 

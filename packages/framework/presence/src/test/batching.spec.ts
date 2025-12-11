@@ -3,24 +3,32 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { describe, it, after, afterEach, before, beforeEach } from "mocha";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
-import type { NotificationsWorkspace } from "../index.js";
+import type { NotificationsWorkspace, PresenceWithNotifications } from "../index.js";
 import { Notifications, StateFactory } from "../index.js";
-import type { createPresenceManager } from "../presenceManager.js";
+import { toOpaqueJson } from "../internalUtils.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
-import { assertFinalExpectations, prepareConnectedPresence } from "./testUtils.js";
+import {
+	assertFinalExpectations,
+	connectionId2,
+	prepareConnectedPresence,
+	attendeeId2,
+} from "./testUtils.js";
 
 describe("Presence", () => {
 	describe("batching", () => {
 		let runtime: MockEphemeralRuntime;
 		let logger: EventAndErrorTrackingLogger;
-		const initialTime = 1000;
+		const initialTime = 500;
+		const testStartTime = 1010;
 		let clock: SinonFakeTimers;
-		let presence: ReturnType<typeof createPresenceManager>;
+		let presence: PresenceWithNotifications;
 
 		before(async () => {
 			clock = useFakeTimers();
@@ -30,12 +38,22 @@ describe("Presence", () => {
 			logger = new EventAndErrorTrackingLogger();
 			runtime = new MockEphemeralRuntime(logger);
 
-			// Note that while the initialTime is set to 1000, the prepareConnectedPresence call advances
-			// it to 1010 so all tests start at that time.
 			clock.setSystemTime(initialTime);
 
 			// Set up the presence connection.
-			presence = prepareConnectedPresence(runtime, "attendeeId-2", "client2", clock, logger);
+			presence = prepareConnectedPresence(
+				runtime,
+				attendeeId2,
+				connectionId2,
+				clock,
+				logger,
+			).presence;
+
+			// Note that while the initialTime was set to 500, the prepareConnectedPresence call advances
+			// it. Set a consistent start time for all tests.
+			const deltaToStart = testStartTime - clock.now;
+			assert(deltaToStart >= 0);
+			clock.tick(deltaToStart);
 		});
 
 		afterEach(() => {
@@ -53,27 +71,29 @@ describe("Presence", () => {
 			it("sends signal immediately when allowable latency is 0", async () => {
 				runtime.signalsExpected.push(
 					[
-						"Pres:DatastoreUpdate",
 						{
-							"sendTimestamp": 1010,
-							"avgLatency": 10,
-							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										"client2": {
-											"rev": 0,
-											"timestamp": 1000,
-											"value": "attendeeId-2",
+							type: "Pres:DatastoreUpdate",
+							content: {
+								"sendTimestamp": 1010,
+								"avgLatency": 10,
+								"data": {
+									"system:presence": {
+										"clientToSessionId": {
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
-								},
-								"s:name:testStateWorkspace": {
-									"count": {
-										"attendeeId-2": {
-											"rev": 0,
-											"timestamp": 1010,
-											"value": {
-												"num": 0,
+									"s:name:testStateWorkspace": {
+										"count": {
+											[attendeeId2]: {
+												"rev": 0,
+												"timestamp": 1010,
+												"value": toOpaqueJson({
+													"num": 0,
+												}),
 											},
 										},
 									},
@@ -82,27 +102,29 @@ describe("Presence", () => {
 						},
 					],
 					[
-						"Pres:DatastoreUpdate",
 						{
-							"sendTimestamp": 1020,
-							"avgLatency": 10,
-							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										"client2": {
-											"rev": 0,
-											"timestamp": 1000,
-											"value": "attendeeId-2",
+							type: "Pres:DatastoreUpdate",
+							content: {
+								"sendTimestamp": 1020,
+								"avgLatency": 10,
+								"data": {
+									"system:presence": {
+										"clientToSessionId": {
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
-								},
-								"s:name:testStateWorkspace": {
-									"count": {
-										"attendeeId-2": {
-											"rev": 1,
-											"timestamp": 1020,
-											"value": {
-												"num": 42,
+									"s:name:testStateWorkspace": {
+										"count": {
+											[attendeeId2]: {
+												"rev": 1,
+												"timestamp": 1020,
+												"value": toOpaqueJson({
+													"num": 42,
+												}),
 											},
 										},
 									},
@@ -111,27 +133,29 @@ describe("Presence", () => {
 						},
 					],
 					[
-						"Pres:DatastoreUpdate",
 						{
-							"sendTimestamp": 1020,
-							"avgLatency": 10,
-							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										"client2": {
-											"rev": 0,
-											"timestamp": 1000,
-											"value": "attendeeId-2",
+							type: "Pres:DatastoreUpdate",
+							content: {
+								"sendTimestamp": 1020,
+								"avgLatency": 10,
+								"data": {
+									"system:presence": {
+										"clientToSessionId": {
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
-								},
-								"s:name:testStateWorkspace": {
-									"count": {
-										"attendeeId-2": {
-											"rev": 2,
-											"timestamp": 1020,
-											"value": {
-												"num": 84,
+									"s:name:testStateWorkspace": {
+										"count": {
+											[attendeeId2]: {
+												"rev": 2,
+												"timestamp": 1020,
+												"value": toOpaqueJson({
+													"num": 84,
+												}),
 											},
 										},
 									},
@@ -163,29 +187,31 @@ describe("Presence", () => {
 				assertFinalExpectations(runtime, logger);
 			});
 
-			it("sets timer for default allowableUpdateLatency", async () => {
+			it("sets timer for default allowableUpdateLatencyMs", async () => {
 				runtime.signalsExpected.push([
-					"Pres:DatastoreUpdate",
 					{
-						"sendTimestamp": 1070,
-						"avgLatency": 10,
-						"data": {
-							"system:presence": {
-								"clientToSessionId": {
-									"client2": {
-										"rev": 0,
-										"timestamp": 1000,
-										"value": "attendeeId-2",
+						type: "Pres:DatastoreUpdate",
+						content: {
+							"sendTimestamp": 1070,
+							"avgLatency": 10,
+							"data": {
+								"system:presence": {
+									"clientToSessionId": {
+										[connectionId2]: {
+											"rev": 0,
+											"timestamp": initialTime,
+											"value": attendeeId2,
+										},
 									},
 								},
-							},
-							"s:name:testStateWorkspace": {
-								"count": {
-									"attendeeId-2": {
-										"rev": 0,
-										"timestamp": 1010,
-										"value": {
-											"num": 0,
+								"s:name:testStateWorkspace": {
+									"count": {
+										[attendeeId2]: {
+											"rev": 0,
+											"timestamp": 1010,
+											"value": toOpaqueJson({
+												"num": 0,
+											}),
 										},
 									},
 								},
@@ -208,30 +234,32 @@ describe("Presence", () => {
 				clock.tick(100); // Time is now 1110
 			});
 
-			it("batches signals sent within default allowableUpdateLatency", async () => {
+			it("batches signals sent within default allowableUpdateLatencyMs", async () => {
 				runtime.signalsExpected.push(
 					[
-						"Pres:DatastoreUpdate",
 						{
-							"sendTimestamp": 1070,
-							"avgLatency": 10,
-							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										"client2": {
-											"rev": 0,
-											"timestamp": 1000,
-											"value": "attendeeId-2",
+							type: "Pres:DatastoreUpdate",
+							content: {
+								"sendTimestamp": 1070,
+								"avgLatency": 10,
+								"data": {
+									"system:presence": {
+										"clientToSessionId": {
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
-								},
-								"s:name:testStateWorkspace": {
-									"count": {
-										"attendeeId-2": {
-											"rev": 3,
-											"timestamp": 1060,
-											"value": {
-												"num": 22,
+									"s:name:testStateWorkspace": {
+										"count": {
+											[attendeeId2]: {
+												"rev": 3,
+												"timestamp": 1060,
+												"value": toOpaqueJson({
+													"num": 22,
+												}),
 											},
 										},
 									},
@@ -240,27 +268,29 @@ describe("Presence", () => {
 						},
 					],
 					[
-						"Pres:DatastoreUpdate",
 						{
-							"sendTimestamp": 1150,
-							"avgLatency": 10,
-							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										"client2": {
-											"rev": 0,
-											"timestamp": 1000,
-											"value": "attendeeId-2",
+							type: "Pres:DatastoreUpdate",
+							content: {
+								"sendTimestamp": 1150,
+								"avgLatency": 10,
+								"data": {
+									"system:presence": {
+										"clientToSessionId": {
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
-								},
-								"s:name:testStateWorkspace": {
-									"count": {
-										"attendeeId-2": {
-											"rev": 6,
-											"timestamp": 1140,
-											"value": {
-												"num": 90,
+									"s:name:testStateWorkspace": {
+										"count": {
+											[attendeeId2]: {
+												"rev": 6,
+												"timestamp": 1140,
+												"value": toOpaqueJson({
+													"num": 90,
+												}),
 											},
 										},
 									},
@@ -312,30 +342,32 @@ describe("Presence", () => {
 				clock.tick(30); // Time is now 1180
 			});
 
-			it("batches signals sent within a specified allowableUpdateLatency", async () => {
+			it("batches signals sent within a specified allowableUpdateLatencyMs", async () => {
 				runtime.signalsExpected.push(
 					[
-						"Pres:DatastoreUpdate",
 						{
-							"sendTimestamp": 1110,
-							"avgLatency": 10,
-							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										"client2": {
-											"rev": 0,
-											"timestamp": 1000,
-											"value": "attendeeId-2",
+							type: "Pres:DatastoreUpdate",
+							content: {
+								"sendTimestamp": 1110,
+								"avgLatency": 10,
+								"data": {
+									"system:presence": {
+										"clientToSessionId": {
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
-								},
-								"s:name:testStateWorkspace": {
-									"count": {
-										"attendeeId-2": {
-											"rev": 2,
-											"timestamp": 1100,
-											"value": {
-												"num": 34,
+									"s:name:testStateWorkspace": {
+										"count": {
+											[attendeeId2]: {
+												"rev": 2,
+												"timestamp": 1100,
+												"value": toOpaqueJson({
+													"num": 34,
+												}),
 											},
 										},
 									},
@@ -344,27 +376,29 @@ describe("Presence", () => {
 						},
 					],
 					[
-						"Pres:DatastoreUpdate",
 						{
-							"sendTimestamp": 1240,
-							"avgLatency": 10,
-							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										"client2": {
-											"rev": 0,
-											"timestamp": 1000,
-											"value": "attendeeId-2",
+							type: "Pres:DatastoreUpdate",
+							content: {
+								"sendTimestamp": 1240,
+								"avgLatency": 10,
+								"data": {
+									"system:presence": {
+										"clientToSessionId": {
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
-								},
-								"s:name:testStateWorkspace": {
-									"count": {
-										"attendeeId-2": {
-											"rev": 5,
-											"timestamp": 1220,
-											"value": {
-												"num": 90,
+									"s:name:testStateWorkspace": {
+										"count": {
+											[attendeeId2]: {
+												"rev": 5,
+												"timestamp": 1220,
+												"value": toOpaqueJson({
+													"num": 90,
+												}),
 											},
 										},
 									},
@@ -417,36 +451,38 @@ describe("Presence", () => {
 			it("queued signal is sent immediately with immediate update message", async () => {
 				runtime.signalsExpected.push(
 					[
-						"Pres:DatastoreUpdate",
 						{
-							"sendTimestamp": 1010,
-							"avgLatency": 10,
-							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										"client2": {
-											"rev": 0,
-											"timestamp": 1000,
-											"value": "attendeeId-2",
-										},
-									},
-								},
-								"s:name:testStateWorkspace": {
-									"count": {
-										"attendeeId-2": {
-											"rev": 0,
-											"timestamp": 1010,
-											"value": {
-												"num": 0,
+							type: "Pres:DatastoreUpdate",
+							content: {
+								"sendTimestamp": 1010,
+								"avgLatency": 10,
+								"data": {
+									"system:presence": {
+										"clientToSessionId": {
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
 											},
 										},
 									},
-									"immediateUpdate": {
-										"attendeeId-2": {
-											"rev": 0,
-											"timestamp": 1010,
-											"value": {
-												"num": 0,
+									"s:name:testStateWorkspace": {
+										"count": {
+											[attendeeId2]: {
+												"rev": 0,
+												"timestamp": 1010,
+												"value": toOpaqueJson({
+													"num": 0,
+												}),
+											},
+										},
+										"immediateUpdate": {
+											[attendeeId2]: {
+												"rev": 0,
+												"timestamp": 1010,
+												"value": toOpaqueJson({
+													"num": 0,
+												}),
 											},
 										},
 									},
@@ -455,36 +491,38 @@ describe("Presence", () => {
 						},
 					],
 					[
-						"Pres:DatastoreUpdate",
 						{
-							"sendTimestamp": 1110,
-							"avgLatency": 10,
-							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										"client2": {
-											"rev": 0,
-											"timestamp": 1000,
-											"value": "attendeeId-2",
-										},
-									},
-								},
-								"s:name:testStateWorkspace": {
-									"count": {
-										"attendeeId-2": {
-											"rev": 2,
-											"timestamp": 1100,
-											"value": {
-												"num": 34,
+							type: "Pres:DatastoreUpdate",
+							content: {
+								"sendTimestamp": 1110,
+								"avgLatency": 10,
+								"data": {
+									"system:presence": {
+										"clientToSessionId": {
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
 											},
 										},
 									},
-									"immediateUpdate": {
-										"attendeeId-2": {
-											"rev": 1,
-											"timestamp": 1110,
-											"value": {
-												"num": 56,
+									"s:name:testStateWorkspace": {
+										"count": {
+											[attendeeId2]: {
+												"rev": 2,
+												"timestamp": 1100,
+												"value": toOpaqueJson({
+													"num": 34,
+												}),
+											},
+										},
+										"immediateUpdate": {
+											[attendeeId2]: {
+												"rev": 1,
+												"timestamp": 1110,
+												"value": toOpaqueJson({
+													"num": 56,
+												}),
 											},
 										},
 									},
@@ -527,36 +565,38 @@ describe("Presence", () => {
 			it("batches signals with different allowed latencies", async () => {
 				runtime.signalsExpected.push(
 					[
-						"Pres:DatastoreUpdate",
 						{
-							"sendTimestamp": 1060,
-							"avgLatency": 10,
-							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										"client2": {
-											"rev": 0,
-											"timestamp": 1000,
-											"value": "attendeeId-2",
-										},
-									},
-								},
-								"s:name:testStateWorkspace": {
-									"count": {
-										"attendeeId-2": {
-											"rev": 2,
-											"timestamp": 1050,
-											"value": {
-												"num": 34,
+							type: "Pres:DatastoreUpdate",
+							content: {
+								"sendTimestamp": 1060,
+								"avgLatency": 10,
+								"data": {
+									"system:presence": {
+										"clientToSessionId": {
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
 											},
 										},
 									},
-									"note": {
-										"attendeeId-2": {
-											"rev": 1,
-											"timestamp": 1020,
-											"value": {
-												"message": "will be queued",
+									"s:name:testStateWorkspace": {
+										"count": {
+											[attendeeId2]: {
+												"rev": 2,
+												"timestamp": 1050,
+												"value": toOpaqueJson({
+													"num": 34,
+												}),
+											},
+										},
+										"note": {
+											[attendeeId2]: {
+												"rev": 1,
+												"timestamp": 1020,
+												"value": toOpaqueJson({
+													"message": "will be queued",
+												}),
 											},
 										},
 									},
@@ -565,22 +605,28 @@ describe("Presence", () => {
 						},
 					],
 					[
-						"Pres:DatastoreUpdate",
 						{
-							"sendTimestamp": 1110,
-							"avgLatency": 10,
-							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										"client2": { "rev": 0, "timestamp": 1000, "value": "attendeeId-2" },
+							type: "Pres:DatastoreUpdate",
+							content: {
+								"sendTimestamp": 1110,
+								"avgLatency": 10,
+								"data": {
+									"system:presence": {
+										"clientToSessionId": {
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
+										},
 									},
-								},
-								"s:name:testStateWorkspace": {
-									"note": {
-										"attendeeId-2": {
-											"rev": 2,
-											"timestamp": 1060,
-											"value": { "message": "final message" },
+									"s:name:testStateWorkspace": {
+										"note": {
+											[attendeeId2]: {
+												"rev": 2,
+												"timestamp": 1060,
+												"value": toOpaqueJson({ "message": "final message" }),
+											},
 										},
 									},
 								},
@@ -627,38 +673,40 @@ describe("Presence", () => {
 
 			it("batches signals from multiple workspaces", async () => {
 				runtime.signalsExpected.push([
-					"Pres:DatastoreUpdate",
 					{
-						"sendTimestamp": 1070,
-						"avgLatency": 10,
-						"data": {
-							"system:presence": {
-								"clientToSessionId": {
-									"client2": {
-										"rev": 0,
-										"timestamp": 1000,
-										"value": "attendeeId-2",
-									},
-								},
-							},
-							"s:name:testStateWorkspace": {
-								"count": {
-									"attendeeId-2": {
-										"rev": 2,
-										"timestamp": 1050,
-										"value": {
-											"num": 34,
+						type: "Pres:DatastoreUpdate",
+						content: {
+							"sendTimestamp": 1070,
+							"avgLatency": 10,
+							"data": {
+								"system:presence": {
+									"clientToSessionId": {
+										[connectionId2]: {
+											"rev": 0,
+											"timestamp": initialTime,
+											"value": attendeeId2,
 										},
 									},
 								},
-							},
-							"s:name:testStateWorkspace2": {
-								"note": {
-									"attendeeId-2": {
-										"rev": 2,
-										"timestamp": 1060,
-										"value": {
-											"message": "final message",
+								"s:name:testStateWorkspace": {
+									"count": {
+										[attendeeId2]: {
+											"rev": 2,
+											"timestamp": 1050,
+											"value": toOpaqueJson({
+												"num": 34,
+											}),
+										},
+									},
+								},
+								"s:name:testStateWorkspace2": {
+									"note": {
+										[attendeeId2]: {
+											"rev": 2,
+											"timestamp": 1060,
+											"value": toOpaqueJson({
+												"message": "final message",
+											}),
 										},
 									},
 								},
@@ -708,23 +756,29 @@ describe("Presence", () => {
 			it("notification signals are sent immediately", async () => {
 				runtime.signalsExpected.push(
 					[
-						"Pres:DatastoreUpdate",
 						{
-							"sendTimestamp": 1050,
-							"avgLatency": 10,
-							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										"client2": { "rev": 0, "timestamp": 1000, "value": "attendeeId-2" },
+							type: "Pres:DatastoreUpdate",
+							content: {
+								"sendTimestamp": 1050,
+								"avgLatency": 10,
+								"data": {
+									"system:presence": {
+										"clientToSessionId": {
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
+										},
 									},
-								},
-								"n:name:testNotificationWorkspace": {
-									"testEvents": {
-										"attendeeId-2": {
-											"rev": 0,
-											"timestamp": 0,
-											"value": { "name": "newId", "args": [77] },
-											"ignoreUnmonitored": true,
+									"n:name:testNotificationWorkspace": {
+										"testEvents": {
+											[attendeeId2]: {
+												"rev": 0,
+												"timestamp": 0,
+												"value": toOpaqueJson({ "name": "newId", "args": [77] }),
+												"ignoreUnmonitored": true,
+											},
 										},
 									},
 								},
@@ -732,23 +786,29 @@ describe("Presence", () => {
 						},
 					],
 					[
-						"Pres:DatastoreUpdate",
 						{
-							"sendTimestamp": 1060,
-							"avgLatency": 10,
-							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										"client2": { "rev": 0, "timestamp": 1000, "value": "attendeeId-2" },
+							type: "Pres:DatastoreUpdate",
+							content: {
+								"sendTimestamp": 1060,
+								"avgLatency": 10,
+								"data": {
+									"system:presence": {
+										"clientToSessionId": {
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
+										},
 									},
-								},
-								"n:name:testNotificationWorkspace": {
-									"testEvents": {
-										"attendeeId-2": {
-											"rev": 0,
-											"timestamp": 0,
-											"value": { "name": "newId", "args": [88] },
-											"ignoreUnmonitored": true,
+									"n:name:testNotificationWorkspace": {
+										"testEvents": {
+											[attendeeId2]: {
+												"rev": 0,
+												"timestamp": 0,
+												"value": toOpaqueJson({ "name": "newId", "args": [88] }),
+												"ignoreUnmonitored": true,
+											},
 										},
 									},
 								},
@@ -758,7 +818,7 @@ describe("Presence", () => {
 				);
 
 				// Configure a notifications workspace
-				// eslint-disable-next-line @typescript-eslint/ban-types
+				// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 				const notificationsWorkspace: NotificationsWorkspace<{}> =
 					presence.notifications.getWorkspace("name:testNotificationWorkspace", {});
 
@@ -792,41 +852,43 @@ describe("Presence", () => {
 			it("notification signals cause queued messages to be sent immediately", async () => {
 				runtime.signalsExpected.push(
 					[
-						"Pres:DatastoreUpdate",
 						{
-							"sendTimestamp": 1060,
-							"avgLatency": 10,
-							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										"client2": {
-											"rev": 0,
-											"timestamp": 1000,
-											"value": "attendeeId-2",
-										},
-									},
-								},
-								"s:name:testStateWorkspace": {
-									"count": {
-										"attendeeId-2": {
-											"rev": 3,
-											"timestamp": 1040,
-											"value": {
-												"num": 56,
+							type: "Pres:DatastoreUpdate",
+							content: {
+								"sendTimestamp": 1060,
+								"avgLatency": 10,
+								"data": {
+									"system:presence": {
+										"clientToSessionId": {
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
 											},
 										},
 									},
-								},
-								"n:name:testNotificationWorkspace": {
-									"testEvents": {
-										"attendeeId-2": {
-											"rev": 0,
-											"timestamp": 0,
-											"value": {
-												"name": "newId",
-												"args": [99],
+									"s:name:testStateWorkspace": {
+										"count": {
+											[attendeeId2]: {
+												"rev": 3,
+												"timestamp": 1040,
+												"value": toOpaqueJson({
+													"num": 56,
+												}),
 											},
-											"ignoreUnmonitored": true,
+										},
+									},
+									"n:name:testNotificationWorkspace": {
+										"testEvents": {
+											[attendeeId2]: {
+												"rev": 0,
+												"timestamp": 0,
+												"value": toOpaqueJson({
+													"name": "newId",
+													"args": [99],
+												}),
+												"ignoreUnmonitored": true,
+											},
 										},
 									},
 								},
@@ -834,30 +896,32 @@ describe("Presence", () => {
 						},
 					],
 					[
-						"Pres:DatastoreUpdate",
 						{
-							"sendTimestamp": 1090,
-							"avgLatency": 10,
-							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										"client2": {
-											"rev": 0,
-											"timestamp": 1000,
-											"value": "attendeeId-2",
+							type: "Pres:DatastoreUpdate",
+							content: {
+								"sendTimestamp": 1090,
+								"avgLatency": 10,
+								"data": {
+									"system:presence": {
+										"clientToSessionId": {
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
-								},
-								"n:name:testNotificationWorkspace": {
-									"testEvents": {
-										"attendeeId-2": {
-											"rev": 0,
-											"timestamp": 0,
-											"value": {
-												"name": "newId",
-												"args": [111],
+									"n:name:testNotificationWorkspace": {
+										"testEvents": {
+											[attendeeId2]: {
+												"rev": 0,
+												"timestamp": 0,
+												"value": toOpaqueJson({
+													"name": "newId",
+													"args": [111],
+												}),
+												"ignoreUnmonitored": true,
 											},
-											"ignoreUnmonitored": true,
 										},
 									},
 								},
@@ -874,7 +938,7 @@ describe("Presence", () => {
 					}),
 				}); // will be queued, deadline is 1110
 
-				// eslint-disable-next-line @typescript-eslint/ban-types
+				// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 				const notificationsWorkspace: NotificationsWorkspace<{}> =
 					presence.notifications.getWorkspace("name:testNotificationWorkspace", {});
 

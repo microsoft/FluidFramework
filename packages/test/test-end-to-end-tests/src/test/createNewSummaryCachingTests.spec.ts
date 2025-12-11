@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -122,6 +122,7 @@ describeCompat("Cache CreateNewSummary", "NoCompat", (getTestObjectProvider, api
 		assert.strictEqual(
 			fetchEvent.method,
 			"cache",
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			`second client fetched snapshot with ${fetchEvent.method} method instead of from cache`,
 		);
 	});
@@ -180,6 +181,7 @@ describeCompat("Cache CreateNewSummary", "NoCompat", (getTestObjectProvider, api
 		assert.strictEqual(
 			fetchEvent.method,
 			"cache",
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			`second client fetched snapshot with ${fetchEvent.method} method instead of from cache`,
 		);
 	});

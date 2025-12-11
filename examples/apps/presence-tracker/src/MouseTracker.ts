@@ -10,8 +10,8 @@ import type {
 	Attendee,
 	LatestRaw,
 	StatesWorkspace,
-} from "@fluidframework/presence/alpha";
-import { AttendeeStatus, StateFactory } from "@fluidframework/presence/alpha";
+} from "@fluidframework/presence/beta";
+import { AttendeeStatus, StateFactory } from "@fluidframework/presence/beta";
 
 /**
  * IMousePosition is the data that individual session clients share via presence.
@@ -49,7 +49,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 		/**
 		 * A states workspace that the MouseTracker will use to share mouse positions with other session clients.
 		 */
-		// eslint-disable-next-line @typescript-eslint/ban-types -- empty object is the correct typing
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- empty object is the correct typing
 		readonly statesWorkspace: StatesWorkspace<{}>,
 	) {
 		super();

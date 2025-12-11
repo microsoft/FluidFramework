@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { Command, Flags } from "@oclif/core";
-import { Machine } from "jssm";
+import { type Command, Flags } from "@oclif/core";
+import type { Machine } from "jssm";
 import chalk from "picocolors";
 
 import { testModeFlag } from "./flags.js";
-import { StateHandler } from "./handlers/index.js";
+import type { StateHandler } from "./handlers/index.js";
 import { BaseCommand } from "./library/index.js";
 
 /**

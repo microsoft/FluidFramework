@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PackageJson } from "../common/npmPackage";
+import type { PackageJson } from "../common/npmPackage";
 import { isConcurrentlyCommand, parseConcurrentlyCommand } from "./parseCommands";
 
 /**
@@ -45,6 +45,50 @@ type TaskDependency =
 	| "...";
 
 export type TaskDependencies = readonly TaskDependency[];
+
+export type GitIgnoreSetting = ("input" | "output")[];
+export interface TaskFileDependencies {
+	/**
+	 * An array of globs that will be used to identify input files for the task. The globs are interpreted relative to the
+	 * package the task belongs to.
+	 *
+	 * By default, inputGlobs **will not** match files ignored by git. This can be changed using the `gitignore` property
+	 * on the task. See the documentation for that property for details.
+	 */
+	inputGlobs: readonly string[];
+
+	/**
+	 * An array of globs that will be used to identify output files for the task. The globs are interpreted relative to
+	 * the package the task belongs to.
+	 *
+	 * By default, outputGlobs **will** match files ignored by git, because build output is often gitignored. This can be
+	 *   changed using the `gitignore` property on the task. See the documentation for that property for details.
+	 */
+	outputGlobs: readonly string[];
+
+	/**
+	 * Configures how gitignore rules are applied. "input" applies gitignore rules to the input, "output" applies them to
+	 * the output, and including both values will apply the gitignore rules to both the input and output globs.
+	 *
+	 * The default value, `["input"]` applies gitignore rules to the input, but not the output. This is the right behavior
+	 * for many tasks since most tasks use source-controlled files as input but generate gitignored build output. However,
+	 * it can be adjusted on a per-task basis depending on the needs of the task.
+	 *
+	 * @defaultValue `["input"]`
+	 */
+	gitignore?: GitIgnoreSetting;
+
+	/**
+	 * Specify whether the task will depend on the package/workspace lock file, this task will be rebuilt if the lock file
+	 * is changed. Provides an economical but broad way to ensure rebuild when tools or package dependencies changes.
+	 *
+	 * Default is true, and it is equivalent to putting the lock file in the `inputGlobs`.
+	 *
+	 * For fine-grained control, use `inputGlobs` and `outputGlobs` to specify the dependencies in `node_modules`
+	 * and set this to false.
+	 */
+	includeLockFiles?: boolean;
+}
 
 export interface TaskConfig {
 	/**
@@ -93,6 +137,14 @@ export interface TaskConfig {
 	 * It can be used as an alias to a group of tasks.
 	 */
 	readonly script: boolean;
+
+	/**
+	 * For leaf tasks (i.e. tasks that have a single executable command).
+	 * Specify the input/output files the task depends on for incremental check.
+	 * Can used for unknown executable isn't a known tool (i.e. non-incremental), or to override behavior of known tools.
+	 * Error if this is specified for a non-leaf task (e.g. npm run, concurrently, multiple command with '&&').
+	 */
+	readonly files: TaskFileDependencies | undefined;
 }
 
 /**
@@ -125,7 +177,14 @@ const makeClonedOrEmptyArray = <T>(value: readonly T[] | undefined): T[] =>
  */
 function getFullTaskConfig(config: TaskConfigOnDisk): MutableTaskConfig {
 	if (isTaskDependencies(config)) {
-		return { dependsOn: [...config], script: true, before: [], children: [], after: [] };
+		return {
+			dependsOn: [...config],
+			script: true,
+			before: [],
+			children: [],
+			after: [],
+			files: undefined,
+		};
 	} else {
 		return {
 			dependsOn: makeClonedOrEmptyArray(config.dependsOn),
@@ -133,6 +192,7 @@ function getFullTaskConfig(config: TaskConfigOnDisk): MutableTaskConfig {
 			before: makeClonedOrEmptyArray(config.before),
 			children: [],
 			after: makeClonedOrEmptyArray(config.after),
+			files: structuredClone(config.files),
 		};
 	}
 }
@@ -173,6 +233,7 @@ const defaultTaskDefinition = {
 	children: [],
 	after: ["^*"], // TODO: include "*" so the user configured task will run first, but we need to make sure it doesn't cause circular dependency first
 	isDefault: true, // only propagate to unnamed sub tasks if it is a group task
+	files: undefined,
 } as const satisfies TaskDefinition;
 const defaultCleanTaskDefinition = {
 	dependsOn: [],
@@ -180,6 +241,7 @@ const defaultCleanTaskDefinition = {
 	before: ["*"], // clean are ran before all the tasks, add a week dependency.
 	children: [],
 	after: [],
+	files: undefined,
 } as const satisfies TaskDefinition;
 
 const detectInvalid = (
@@ -213,6 +275,9 @@ export function normalizeGlobalTaskDefinitions(
 						`Non-script global task definition '${name}' cannot have 'before' or 'after'`,
 					);
 				}
+				if (full.files !== undefined) {
+					throw new Error(`Non-script global task definition '${name}' cannot have 'files'`);
+				}
 			}
 			detectInvalid(
 				full.dependsOn,
@@ -235,13 +300,30 @@ export function normalizeGlobalTaskDefinitions(
 				"after",
 				true,
 			);
+			if (full.files !== undefined) {
+				// "..." not allowed because the global config inherits from nothing.
+				detectInvalid(
+					full.files.inputGlobs,
+					(value) => value === "...",
+					name,
+					"files.inputGlobs",
+					true,
+				);
+				detectInvalid(
+					full.files.outputGlobs,
+					(value) => value === "...",
+					name,
+					"files.outputGlobs",
+					true,
+				);
+			}
 			taskDefinitions[name] = full;
 		}
 	}
 	return taskDefinitions;
 }
 
-function expandDotDotDot(config: readonly string[], inherited: readonly string[]) {
+function expandDotDotDot(config: readonly string[], inherited?: readonly string[]) {
 	const expanded = config.filter((value) => value !== "...");
 	if (inherited !== undefined && expanded.length !== config.length) {
 		return expanded.concat(inherited);
@@ -327,6 +409,7 @@ export function getTaskDefinitions(
 			// `children` are not inherited from the global task definitions (which should always be empty anyway)
 			children: [],
 			after: globalTaskDefinition.after.filter(globalAllowExpansionsStar),
+			files: globalTaskDefinition.files,
 		};
 	}
 
@@ -340,13 +423,17 @@ export function getTaskDefinitions(
 				if (script === undefined) {
 					throw new Error(`Script not found for task definition '${name}'`);
 				} else if (script.startsWith("fluid-build ")) {
-					throw new Error(`Script task should not invoke 'fluid-build' in '${name}'`);
+					throw new Error(
+						`Script task should not invoke 'fluid-build' in '${name}'. Did you forget to set 'script: false' in the task definition?`,
+					);
 				}
 			} else {
 				if (full.before.length !== 0 || full.after.length !== 0) {
 					throw new Error(
 						`Non-script task definition '${name}' cannot have 'before' or 'after'`,
 					);
+				} else if (full.files !== undefined) {
+					throw new Error(`Non-script task definition '${name}' cannot have 'files'`);
 				}
 			}
 
@@ -354,6 +441,19 @@ export function getTaskDefinitions(
 			full.dependsOn = expandDotDotDot(full.dependsOn, currentTaskConfig?.dependsOn);
 			full.before = expandDotDotDot(full.before, currentTaskConfig?.before);
 			full.after = expandDotDotDot(full.after, currentTaskConfig?.after);
+			const currentFiles = currentTaskConfig?.files;
+			if (full.files === undefined) {
+				full.files = currentTaskConfig?.files;
+			} else {
+				full.files.inputGlobs = expandDotDotDot(
+					full.files.inputGlobs,
+					currentFiles?.inputGlobs,
+				);
+				full.files.outputGlobs = expandDotDotDot(
+					full.files.outputGlobs,
+					currentFiles?.outputGlobs,
+				);
+			}
 			taskDefinitions[name] = full;
 		}
 	}
@@ -397,6 +497,7 @@ export function getTaskDefinitions(
 					children: directlyCalledScripts,
 					after: [],
 					script: true,
+					files: undefined,
 				};
 			} else {
 				// Confirm `children` is not specified in the manual task specifications

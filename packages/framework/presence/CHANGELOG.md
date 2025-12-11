@@ -1,5 +1,97 @@
 # @fluid-experimental/presence
 
+## 2.73.0
+
+Dependency updates only.
+
+## 2.72.0
+
+Dependency updates only.
+
+## 2.71.0
+
+Dependency updates only.
+
+## 2.70.0
+
+### Minor Changes
+
+- Improved join scalability ([#25371](https://github.com/microsoft/FluidFramework/pull/25371)) [98dadd30ae](https://github.com/microsoft/FluidFramework/commit/98dadd30aebbf202c9fad268013d27719129c774)
+
+  Protocol for attendees joining has been updated to more efficiently accommodate a larger number of attendees, including when few-to-none have write access.
+
+## 2.63.0
+
+Dependency updates only.
+
+## 2.62.0
+
+Dependency updates only.
+
+## 2.61.0
+
+Dependency updates only.
+
+## 2.60.0
+
+Dependency updates only.
+
+## 2.53.0
+
+### Minor Changes
+
+- StateFactory.latestMap now accepts a validator parameter ([#25172](https://github.com/microsoft/FluidFramework/pull/25172)) [cac39eb33d0](https://github.com/microsoft/FluidFramework/commit/cac39eb33d0c5371c9fce34ce45a299e5f51d194)
+
+  The StateFactory.latestMap API now accepts a `validator` argument.
+  The `validator` is a function that will be called at runtime to verify that the data is valid.
+  This is especially useful when changing the schema of presence data.
+
+  See [the presence documentation](https://fluidframework.com/docs/build/presence) for more details.
+
+## 2.52.0
+
+Dependency updates only.
+
+## 2.51.0
+
+Dependency updates only.
+
+## 2.50.0
+
+### Minor Changes
+
+- StateFactory.latest now accepts a validator parameter ([#24958](https://github.com/microsoft/FluidFramework/pull/24958)) [839ce9af20](https://github.com/microsoft/FluidFramework/commit/839ce9af203dd3ade2d7234865057092ec12d608)
+
+  The StateFactory.latest API now accepts a `validator` argument. The `validator` is a function
+  that will be called at runtime to verify that the data is valid. This is especially useful when changing the schema of
+  presence data.
+
+  See [the presence documentation](https://fluidframework.com/docs/build/presence) for more details.
+
+## 2.43.0
+
+Dependency updates only.
+
+## 2.42.0
+
+Dependency updates only.
+
+## 2.41.0
+
+### Minor Changes
+
+- Presence APIs promoted to beta [cc10c102f1](https://github.com/microsoft/FluidFramework/commit/cc10c102f150ca09d7a8b409852a7a0c14f8c2f1)
+
+  [Presence APIs](https://fluidframework.com/docs/build/presence) are now beta and can be imported via `@fluidframework/presence/beta`.
+
+  Note: `Notifications` are only supported via `/alpha` imports. To access notifications-only workspace support, cast `Presence` to `PresenceWithNotifications`.
+
+- "getPresence(container: IFluidContainer): Presence" now supported ([#24399](https://github.com/microsoft/FluidFramework/pull/24399)) [5c6824a48d](https://github.com/microsoft/FluidFramework/commit/5c6824a48da7dad6cb5911e6b1af02dfaf6382e1)
+
+  You can now use the `getPresence` function to directly acquire `Presence`. In previous releases, you were required to
+  use `ExperimentalPresenceManager` in container schema and calling `getPresenceViaDataObject`, but that is no longer
+  required. Both `ExperimentalPresenceManager` and `getPresenceViaDataObject` are now deprecated.
+
 ## 2.40.0
 
 Dependency updates only.
@@ -9,7 +101,6 @@ Dependency updates only.
 ### Minor Changes
 
 - Latest and LatestMap support more types ([#24417](https://github.com/microsoft/FluidFramework/pull/24417)) [619af0b05e2](https://github.com/microsoft/FluidFramework/commit/619af0b05e23c469feb754e93351b7edca1a74a4)
-
   - `Latest` (`StateFactory.latest`) permits `null` so that nullable types may be used.
   - `LatestMap` (`StateFactory.latestMap`) permits `boolean`, `number`, `string`, and `null`.
 
@@ -130,7 +221,6 @@ Dependency updates only.
 
   The [presence value managers](https://fluidframework.com/docs/build/presence#value-managers) now raise events for local
   value changes. The new events are as follows:
-
   - LatestValueManager
     - `localUpdated` raised when `local` is assigned
   - LatestMapValueManager
@@ -224,7 +314,6 @@ Dependency updates only.
   #### Package scope advanced from `@fluid-experimental` ([#23073](https://github.com/microsoft/FluidFramework/pull/23073))
 
   To update existing:
-
   - package.json: replace `@fluid-experimental/presence` with `@fluidframework/presence`
   - code imports: replace `@fluid-experimental/presence` with `@fluidframework/presence/alpha`
 

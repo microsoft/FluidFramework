@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-const { importInternalModulesAllowed } = require("../../.eslintrc.data.cjs");
-
 module.exports = {
 	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/recommended"),
+		require.resolve("@fluidframework/eslint-config-fluid"),
 		"prettier",
 		"../../.eslintrc.cjs",
 	],
@@ -15,7 +13,7 @@ module.exports = {
 		project: ["./tsconfig.json"],
 	},
 	rules: {
-		"import/no-internal-modules": [
+		"import-x/no-internal-modules": [
 			"error",
 			{
 				allow: [
@@ -39,7 +37,7 @@ module.exports = {
 		],
 		// This is an example/test app; all its dependencies are dev dependencies so as not to pollute the lockfile
 		// with prod dependencies that aren't actually shipped. So don't complain when importing from dev dependencies.
-		"import/no-extraneous-dependencies": ["error", { devDependencies: true }],
+		"import-x/no-extraneous-dependencies": ["error", { devDependencies: true }],
 	},
 	overrides: [
 		{
@@ -47,7 +45,10 @@ module.exports = {
 			files: ["src/actions/task.ts"],
 			rules: {
 				// This file runs on server side
-				"import/no-nodejs-modules": ["error", { allow: ["node:fs", "node:path", "node:url"] }],
+				"import-x/no-nodejs-modules": [
+					"error",
+					{ allow: ["node:fs", "node:path", "node:url"] },
+				],
 			},
 		},
 	],

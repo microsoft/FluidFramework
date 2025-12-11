@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, type ITestDataObject } from "@fluid-private/test-version-utils";
-import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import { asLegacyAlpha } from "@fluidframework/container-loader/internal";
 import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
 	type ITestObjectProvider,
@@ -29,23 +29,20 @@ describeCompat(
 					},
 				},
 			},
-			loaderProps: {
-				configProvider: configProvider({
-					"Fluid.Container.enableOfflineLoad": true,
-				}),
-			},
 		};
 
 		let provider: ITestObjectProvider;
 
-		beforeEach("setup", async () => {
+		beforeEach("setup", async function () {
 			provider = getTestObjectProvider();
+			// This test can be run against routerlicious once bug #55321 is fixed
+			if (provider.driver.type === "routerlicious") {
+				this.skip();
+			}
 		});
 
 		it("Can create loadingGroupId", async () => {
-			const container = (await provider.makeTestContainer(
-				testContainerConfig,
-			)) as IContainerExperimental;
+			const container = asLegacyAlpha(await provider.makeTestContainer(testContainerConfig));
 			const mainObject = (await container.getEntryPoint()) as ITestDataObject;
 			mainObject._root.set("1", "1");
 			mainObject._root.set("2", "2");
@@ -59,14 +56,13 @@ describeCompat(
 			mainObject._root.set("4", "4");
 
 			// Generate pending state
-			const pendingState = await container.closeAndGetPendingLocalState?.();
+			const pendingState = await container.getPendingLocalState();
+			container.close();
 
 			// Load from the pending state
-			const container2 = (await provider.loadTestContainer(
-				testContainerConfig,
-				undefined,
-				pendingState,
-			)) as IContainerExperimental;
+			const container2 = asLegacyAlpha(
+				await provider.loadTestContainer(testContainerConfig, undefined, pendingState),
+			);
 
 			// Container2 to have the same initial sequence number as container as they loaded from the same base snapshot
 			assert(

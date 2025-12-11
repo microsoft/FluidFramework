@@ -4,8 +4,9 @@
  */
 
 import { serializeError } from "serialize-error";
+
 import { Lumber } from "./lumber";
-import { LumberEventName } from "./lumberEventNames";
+import type { LumberEventName } from "./lumberEventNames";
 
 // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
 const isBrowser = typeof window !== "undefined" && typeof window.document !== "undefined";
@@ -106,6 +107,10 @@ export enum CommonProperties {
 	serviceSummarySuccess = "serviceSummarySuccess",
 	maxOpsSinceLastSummary = "maxOpsSinceLastSummary",
 	lastSummarySequenceNumber = "lastSummarySequenceNumber",
+
+	// Session-level operation and signal counts
+	sessionOpCount = "sessionOpCount",
+	sessionSignalCount = "sessionSignalCount",
 
 	// Logtail properties
 	minLogtailSequenceNumber = "minLogtailSequenceNumber",

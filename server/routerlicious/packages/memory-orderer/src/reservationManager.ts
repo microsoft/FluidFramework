@@ -4,9 +4,11 @@
  */
 
 import { EventEmitter } from "events";
-import { ICollection, MongoManager } from "@fluidframework/server-services-core";
-import { IConcreteNode, IReservationManager } from "./interfaces";
-import { NodeManager } from "./nodeManager";
+
+import type { ICollection, MongoManager } from "@fluidframework/server-services-core";
+
+import type { IConcreteNode, IReservationManager } from "./interfaces";
+import type { NodeManager } from "./nodeManager";
 
 /**
  * Reservation for the given id within the system. The reservation is considered held for as long as the node

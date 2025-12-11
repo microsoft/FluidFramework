@@ -21,6 +21,7 @@ export type {
 	NonNullJsonObjectWith,
 	ReadonlyJsonTypeWith,
 } from "./jsonType.js";
+export type { OpaqueJsonDeserialized, OpaqueJsonSerializable } from "./opaqueJson.js";
 export type { ShallowReadonly } from "./shallowReadonly.js";
 
 export type {

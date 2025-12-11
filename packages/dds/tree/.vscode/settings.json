@@ -1,9 +1,9 @@
 {
 	// File path is already set in .mocharc.cjs, so this should not be required,
 	// but something seems to be overriding that path, and this is needed to make it work.
-	// Also for unknown (but likely related reasons) this cannot be just "dist/test" which is used in the config.
+	// Also for unknown (but likely related reasons) this cannot be just "lib/test" which is used in the config.
 	// This is not limited to "spec.js" so that benchmarks are included (which will be run in correctness mode).
-	"mochaExplorer.files": ["dist/test/**/*.*js"],
+	"mochaExplorer.files": ["lib/test/**/*.*js"],
 	// "pruneFiles" is disabled because it causesd "source-map-support/register" to give `Unknown file extension ".ts"` errors.
 	// "mochaExplorer.pruneFiles": true,
 	"mochaExplorer.require": [
@@ -16,18 +16,36 @@
 	// mocha test config isn't sufficient; it also needs to be enabled here.
 	"mochaExplorer.nodeArgv": ["--conditions", "allow-ff-test-exports"],
 	"cSpell.words": [
+		"branchable",
+		"chunker",
+		"clonable",
 		"contravariance",
 		"contravariantly",
 		"covariantly",
 		"deprioritized",
-		"enablable",
 		"endregion",
 		"fluidframework",
 		"insertable",
+		"jsonable",
+		"parameterizing",
+		"Poset",
+		"rebaser",
+		"reconnections",
 		"reentrantly",
+		"revertibles",
+		"rushstack",
+		"Stringifier",
+		"subclassable",
+		"summarizable",
+		"summarizables",
+		"typebox",
 		"typeparam",
 		"unannotate",
+		"unbrand",
+		"undoable",
 		"unhydrated",
+		"unioned",
+		"unparented",
 	],
 
 	// Enable biome as default formatter, and disable rules that disagree with it

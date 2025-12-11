@@ -5,14 +5,16 @@
 
 import { strict as assert } from "assert";
 import { EventEmitter } from "events";
+
 import { Deferred } from "@fluidframework/common-utils";
-import {
+import type {
 	IContext,
 	IQueuedMessage,
 	ILogger,
 	IContextErrorData,
 } from "@fluidframework/server-services-core";
 import { Lumberjack, TestEngine1 } from "@fluidframework/server-services-telemetry";
+
 import { DebugLogger } from "./logger";
 
 interface IWaitOffset {

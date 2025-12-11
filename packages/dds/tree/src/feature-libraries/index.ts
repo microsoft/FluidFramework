@@ -9,12 +9,22 @@ export {
 } from "./editableTreeBinder.js";
 export { allowsValue, assertAllowedValue, isTreeValue } from "./valueUtilities.js";
 
-export { ForestSummarizer } from "./forest-summary/index.js";
+export {
+	ForestSummarizer,
+	getCodecTreeForForestFormat,
+	ForestFormatVersion,
+} from "./forest-summary/index.js";
 export {
 	cursorForMapTreeField,
 	cursorForMapTreeNode,
 	mapTreeFromCursor,
 	mapTreeFieldFromCursor,
+	type MinimalMapTreeNodeView,
+	mapTreeFieldsWithField,
+	mapTreeWithField,
+	type MapTreeFieldViewGeneric,
+	type MapTreeNodeViewGeneric,
+	type MinimalFieldMap,
 } from "./mapTreeCursor.js";
 export { buildForest } from "./object-forest/index.js";
 export {
@@ -22,6 +32,8 @@ export {
 	encodeTreeSchema,
 	makeSchemaCodec,
 	makeSchemaCodecs,
+	getCodecTreeForSchemaFormat,
+	clientVersionToSchemaVersion,
 } from "./schema-index/index.js";
 export {
 	stackTreeNodeCursor,
@@ -69,7 +81,6 @@ export {
 	genericFieldKind,
 	type HasFieldChanges,
 	type NodeExistsConstraint,
-	FieldKindWithEditor,
 	ModularChangeFamily,
 	type RelevantRemovedRootsFromChild,
 	EncodedModularChangeset,
@@ -78,22 +89,7 @@ export {
 	type FieldChangeEncodingContext,
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
-	getAllowedContentDiscrepancies,
-	isRepoSuperset,
-	type AllowedTypeDiscrepancy,
-	type FieldKindDiscrepancy,
-	type ValueSchemaDiscrepancy,
-	type FieldDiscrepancy,
-	type NodeDiscrepancy,
-	type NodeKindDiscrepancy,
-	type NodeFieldsDiscrepancy,
 	isNeverTree,
-	type LinearExtension,
-	type Realizer,
-	fieldRealizer,
-	PosetComparisonResult,
-	comparePosetElements,
-	posetLte,
 } from "./modular-schema/index.js";
 
 export { mapRootChanges } from "./deltaUtils.js";
@@ -101,15 +97,21 @@ export { mapRootChanges } from "./deltaUtils.js";
 export {
 	type TreeChunk,
 	chunkTree,
+	chunkField,
 	chunkFieldSingle,
 	buildChunkedForest,
 	defaultChunkPolicy,
 	type FieldBatch,
 	type FieldBatchCodec,
+	FieldBatchFormatVersion,
+	getCodecTreeForFieldBatchFormat,
 	makeTreeChunker,
 	makeFieldBatchCodec,
-	fluidVersionToFieldBatchCodecWriteVersion,
 	type FieldBatchEncodingContext,
+	emptyChunk,
+	combineChunks,
+	type IncrementalEncodingPolicy,
+	defaultIncrementalEncodingPolicy,
 } from "./chunked-forest/index.js";
 
 export {
@@ -142,17 +144,21 @@ export {
 	fieldKindConfigurations,
 	intoDelta,
 	relevantRemovedRoots,
+	getCodecTreeForModularChangeFormat,
+	type ModularChangeFormatVersion,
+} from "./default-schema/index.js";
+
+export {
 	SchemaValidationError,
 	isNodeInSchema,
 	isFieldInSchema,
-	inSchemaOrThrow,
-} from "./default-schema/index.js";
+	throwOutOfSchema,
+} from "./schemaChecker.js";
 
 export {
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 	type FlexTreeSequenceField,
-	Skip,
 	type FlexTreeContext,
 	type FlexTreeHydratedContext,
 	type FlexTreeTypedField,
@@ -174,6 +180,14 @@ export {
 	treeStatusFromAnchorCache,
 	indexForAt,
 	FlexTreeEntityKind,
+	type FlexibleNodeContent,
+	type FlexibleFieldContent,
+	type FlexTreeHydratedContextMinimal,
+	type HydratedFlexTreeNode,
+	getOrCreateHydratedFlexTreeNode,
+	currentObserver,
+	withObservation,
+	type Observer,
 } from "./flex-tree/index.js";
 
 export { TreeCompressionStrategy } from "./treeCompressionUtils.js";
@@ -186,6 +200,7 @@ export {
 	type SchemaChange,
 	makeSchemaChangeCodecs,
 	EncodedSchemaChange,
+	getCodecTreeForSchemaChangeFormat,
 } from "./schema-edits/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";
@@ -198,5 +213,3 @@ export {
 	type TreeIndexKey,
 	type TreeIndexNodes,
 } from "./indexing/index.js";
-
-export { initializeForest } from "./initializeForest.js";

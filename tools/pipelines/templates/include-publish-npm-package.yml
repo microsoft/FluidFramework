@@ -126,7 +126,12 @@ stages:
       and(
         in(dependencies.publish_npm_public.result, 'Succeeded', 'Skipped'),
         in(dependencies.publish_npm_internal_test.result, 'Succeeded', 'Skipped'),
-        in(dependencies.publish_npm_internal_build.result, 'Succeeded', 'Skipped')
+        in(dependencies.publish_npm_internal_build.result, 'Succeeded', 'Skipped'),
+        or(
+          eq(dependencies.publish_npm_public.result, 'Succeeded'),
+          eq(dependencies.publish_npm_internal_test.result, 'Succeeded'),
+          eq(dependencies.publish_npm_internal_build.result, 'Succeeded')
+        )
       )
     # Note dev feed packages do not get manifests as we don't intend them to be consumed publicly, so no need for that to be a dependency here.
     variables:

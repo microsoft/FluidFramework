@@ -7,17 +7,21 @@ import { strict as assert } from "node:assert";
 import { type TUnsafe, Type } from "@sinclair/typebox";
 
 import { makeCodecFamily } from "../../../codec/index.js";
-import { makeDetachedNodeId, Multiplicity } from "../../../core/index.js";
+import {
+	makeDetachedNodeId,
+	Multiplicity,
+	type FieldKindIdentifier,
+} from "../../../core/index.js";
 import {
 	type FieldChangeDelta,
 	type FieldChangeEncodingContext,
 	type FieldChangeHandler,
 	type FieldChangeRebaser,
-	FieldKindWithEditor,
+	FlexFieldKind,
 	referenceFreeFieldChangeRebaser,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-import type { Mutable } from "../../../util/index.js";
+import { brandConst, type Mutable } from "../../../util/index.js";
 import { makeValueCodec } from "../../codec/index.js";
 
 /**
@@ -29,6 +33,7 @@ import { makeValueCodec } from "../../codec/index.js";
 export function lastWriteWinsRebaser<TChange>(data: {
 	noop: TChange;
 	invert: (changes: TChange) => TChange;
+	mute: (changes: TChange) => TChange;
 }): FieldChangeRebaser<TChange> {
 	const compose = (_change1: TChange, change2: TChange) => change2;
 	const rebase = (change: TChange, _over: TChange) => change;
@@ -70,6 +75,9 @@ export function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>> {
 		invert: (changes: ReplaceOp<T>) => {
 			return changes === 0 ? 0 : { old: changes.new, new: changes.old };
 		},
+		mute: (_change: ReplaceOp<T>) => {
+			return 0;
+		},
 	});
 }
 
@@ -102,10 +110,8 @@ export const valueHandler = {
 	getCrossFieldKeys: (_change) => [],
 } satisfies FieldChangeHandler<ValueChangeset>;
 
-export const valueField = new FieldKindWithEditor(
-	"Value",
+export const valueField = new FlexFieldKind(
+	brandConst("Value")<FieldKindIdentifier>(),
 	Multiplicity.Single,
-	valueHandler,
-	(a, b) => false,
-	new Set(),
+	{ changeHandler: valueHandler, allowMonotonicUpgradeFrom: new Set() },
 );

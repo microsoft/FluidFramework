@@ -11,10 +11,17 @@ export type {
 	OpAttributionKey,
 } from "./attribution.js";
 export type {
+	ContainerExtensionId,
+	ContainerExtensionProvider,
+	ContainerExtensionExpectations,
+	ExtensionCompatibilityDetails,
+	UnknownExtensionInstantiation,
+} from "./containerExtensionProvider.js";
+export type {
 	AliasResult,
 	CreateChildSummarizerNodeFn,
+	FluidDataStoreContextInternal,
 	IContainerRuntimeBase,
-	IContainerRuntimeBaseExperimental,
 	IContainerRuntimeBaseEvents,
 	IDataStore,
 	IFluidDataStoreChannel,
@@ -23,8 +30,7 @@ export type {
 	IFluidParentContext,
 	IFluidDataStoreContextDetached,
 	IPendingMessagesState,
-	StageControlsExperimental,
-	CommitStagedChangesOptionsExperimental,
+	PackagePath,
 } from "./dataStoreContext.js";
 export { FlushMode, FlushModeExperimental, VisibilityState } from "./dataStoreContext.js";
 export type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
@@ -49,6 +55,7 @@ export {
 	gcTreeKey,
 } from "./garbageCollectionDefinitions.js";
 export type {
+	FluidDataStoreMessage,
 	IAttachMessage,
 	IEnvelope,
 	IInboundSignalMessage,
@@ -56,6 +63,7 @@ export type {
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
+	IRuntimeStorageService,
 } from "./protocol.js";
 export {
 	encodeHandlesInContainerRuntime,
@@ -82,3 +90,13 @@ export {
 	CreateSummarizerNodeSource,
 	totalBlobSizePropertyName,
 } from "./summary.js";
+export type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
+
+export {
+	type ContainerRuntimeBaseAlpha,
+	type StageControlsAlpha,
+	type CommitStagedChangesOptionsInternal,
+	type IContainerRuntimeBaseInternal,
+	type StageControlsInternal,
+	asLegacyAlpha,
+} from "./stagingMode.js";

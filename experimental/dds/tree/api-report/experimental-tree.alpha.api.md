@@ -668,7 +668,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     get logViewer(): LogViewer;
     mergeEditsFrom(other: SharedTree, edits: Iterable<Edit<InternalizedChange>>, stableIdRemapper?: (id: StableNodeId) => StableNodeId): EditId[];
     protected onDisconnect(): void;
-    protected processCore(message: unknown, local: boolean): void;
+    protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void;
     protected registerCore(): void;
     // (undocumented)
     protected reSubmitCore(op: unknown, localOpMetadata?: StashedLocalOpMetadata): void;
@@ -686,7 +686,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 // @alpha
 export type SharedTreeArgs<WF extends WriteFormat = WriteFormat> = [writeFormat: WF, options?: SharedTreeOptions<WF>];
 
-// @alpha @legacy
+// @beta @legacy
 export const SharedTreeAttributes: IChannelAttributes;
 
 // @alpha
@@ -712,7 +712,7 @@ export class SharedTreeFactory implements IChannelFactory {
     get type(): string;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export const SharedTreeFactoryType = "SharedTree";
 
 // @alpha

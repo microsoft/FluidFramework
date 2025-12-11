@@ -15,12 +15,12 @@ import {
 	type ApiVariable,
 } from "@microsoft/api-extractor-model";
 
-import type { SectionNode } from "../../documentation-domain/index.js";
+import type { Section } from "../../mdast/index.js";
 import type { ApiModuleLike } from "../../utilities/index.js";
 import { getApiItemKind, getScopedMemberNameForDiagnostics } from "../../utilities/index.js";
-import { filterItems } from "../ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
+import { filterItems } from "../utilities/index.js";
 
 /**
  * Default documentation transform for module-like API items (packages, namespaces).
@@ -62,9 +62,9 @@ import { createChildDetailsSection, createMemberTables } from "../helpers/index.
 export function transformApiModuleLike(
 	apiItem: ApiModuleLike,
 	config: ApiItemTransformationConfiguration,
-	generateChildContent: (apiItem: ApiItem) => SectionNode[],
-): SectionNode[] {
-	const children: SectionNode[] = [];
+	generateChildContent: (apiItem: ApiItem) => Section[],
+): Section[] {
+	const children: Section[] = [];
 
 	const filteredChildren = filterItems(apiItem.members, config);
 	if (filteredChildren.length > 0) {
@@ -170,37 +170,37 @@ export function transformApiModuleLike(
 		const detailsSections = createChildDetailsSection(
 			[
 				{
-					heading: { title: "Interface Details" },
+					heading: { type: "sectionHeading", title: "Interface Details" },
 					itemKind: ApiItemKind.Interface,
 					items: interfaces,
 				},
 				{
-					heading: { title: "Class Details" },
+					heading: { type: "sectionHeading", title: "Class Details" },
 					itemKind: ApiItemKind.Class,
 					items: classes,
 				},
 				{
-					heading: { title: "Enumeration Details" },
+					heading: { type: "sectionHeading", title: "Enumeration Details" },
 					itemKind: ApiItemKind.Enum,
 					items: enums,
 				},
 				{
-					heading: { title: "Type Details" },
+					heading: { type: "sectionHeading", title: "Type Details" },
 					itemKind: ApiItemKind.TypeAlias,
 					items: types,
 				},
 				{
-					heading: { title: "Function Details" },
+					heading: { type: "sectionHeading", title: "Function Details" },
 					itemKind: ApiItemKind.Function,
 					items: functions,
 				},
 				{
-					heading: { title: "Variable Details" },
+					heading: { type: "sectionHeading", title: "Variable Details" },
 					itemKind: ApiItemKind.Variable,
 					items: variables,
 				},
 				{
-					heading: { title: "Namespace Details" },
+					heading: { type: "sectionHeading", title: "Namespace Details" },
 					itemKind: ApiItemKind.Namespace,
 					items: namespaces,
 				},

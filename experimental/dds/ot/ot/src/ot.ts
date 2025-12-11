@@ -10,8 +10,12 @@ import {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import {
+	ISummaryTreeWithStats,
+	type IRuntimeMessageCollection,
+	type IRuntimeMessagesContent,
+	type ISequencedMessageEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	IFluidSerializer,
 	SharedObject,
@@ -63,7 +67,7 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 		this.global = this.local = initialValue;
 	}
 
-	protected apply(op: TOp) {
+	protected apply(op: TOp): void {
 		this.local = this.applyCore(this.state, op);
 
 		// If we are not attached, don't submit the op.
@@ -101,19 +105,33 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 		this.global = this.local = this.serializer.parse(rawContent) as TState;
 	}
 
-	protected onDisconnect() {}
+	protected onDisconnect(): void {}
 
-	protected processCore(message: ISequencedDocumentMessage, local: boolean) {
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
+	 */
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent, local);
+		}
+	}
+
+	private processMessage(
+		messageEnvelope: ISequencedMessageEnvelope,
+		messagesContent: IRuntimeMessagesContent,
+		local: boolean,
+	): void {
 		// Discard any sequenced ops that are now below the minimum sequence number.
 		const minSeq = this.deltaManager.minimumSequenceNumber;
 		while (this.sequencedOps[0]?.seq < minSeq) {
 			this.sequencedOps.shift();
 		}
 
-		let remoteOp = message.contents;
-		const messageSeq = message.sequenceNumber;
-		const remoteRefSeq = message.referenceSequenceNumber;
-		const remoteClient = message.clientId;
+		let remoteOp = messagesContent.contents;
+		const messageSeq = messageEnvelope.sequenceNumber;
+		const remoteRefSeq = messageEnvelope.referenceSequenceNumber;
+		const remoteClient = messageEnvelope.clientId;
 
 		// Adjust the incoming sequenced op to account for prior sequenced ops that the
 		// sender hadn't yet seen at the time they sent the op.
@@ -153,7 +171,7 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 		}
 	}
 
-	protected get state() {
+	protected get state(): TState {
 		// If the locally cached state is dirty, reset it to the global state and reapply our
 		// pending ops to bring it up to date.
 		if (this.localDirty) {

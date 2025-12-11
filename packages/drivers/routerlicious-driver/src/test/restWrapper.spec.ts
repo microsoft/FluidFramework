@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 
 import { RateLimiter } from "@fluidframework/driver-utils/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
@@ -32,10 +32,10 @@ describe("RouterliciousDriverRestWrapper", () => {
 	// Set up mock throttling
 	let throttleDurationInMs: number;
 	let throttledAt: number;
-	const throttle = () => {
+	const throttle = (): void => {
 		throttledAt = Date.now();
 	};
-	function replyWithThrottling() {
+	function replyWithThrottling(): [number, string | { retryAfter: number }] {
 		const retryAfterSeconds = (throttleDurationInMs - Date.now() - throttledAt) / 1000;
 		const throttled = retryAfterSeconds > 0;
 		if (throttled) {

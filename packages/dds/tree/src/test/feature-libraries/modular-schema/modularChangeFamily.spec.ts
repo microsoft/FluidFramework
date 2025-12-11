@@ -7,14 +7,18 @@ import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
 
-import { type ICodecOptions, type IJsonCodec, makeCodecFamily } from "../../../codec/index.js";
+import {
+	type CodecWriteOptions,
+	currentVersion,
+	type IJsonCodec,
+	makeCodecFamily,
+} from "../../../codec/index.js";
 import {
 	type FieldChangeHandler,
 	genericFieldKind,
 	type ModularChangeset,
-	FieldKindWithEditor,
+	FlexFieldKind,
 	type RelevantRemovedRootsFromChild,
-	chunkTree,
 	defaultChunkPolicy,
 	type TreeChunk,
 	cursorForJsonableTreeField,
@@ -41,7 +45,6 @@ import {
 	type FieldKey,
 	type UpPath,
 	revisionMetadataSourceFromInfo,
-	type ITreeCursorSynchronous,
 	type DeltaFieldChanges,
 	type DeltaRoot,
 	type DeltaDetachedNodeId,
@@ -54,6 +57,7 @@ import {
 import {
 	type Mutable,
 	brand,
+	brandConst,
 	idAllocatorFromMaxId,
 	nestedMapFromFlatList,
 	newTupleBTree,
@@ -69,11 +73,12 @@ import {
 	testChangeReceiver,
 	testIdCompressor,
 	testRevisionTagCodec,
+	treeChunkFromCursor,
 } from "../../utils.js";
 
 import { type ValueChangeset, valueField } from "./basicRebasers.js";
 import { ajvValidator } from "../../codec/index.js";
-import { fieldJsonCursor, singleJsonCursor } from "../../json/index.js";
+import { fieldJsonCursor } from "../../json/index.js";
 import {
 	newCrossFieldKeyTable,
 	type ChangeAtomIdBTree,
@@ -81,20 +86,20 @@ import {
 	type FieldChangeMap,
 	type FieldId,
 	type NodeChangeset,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
 	getFieldKind,
 	intoDelta,
 	updateRefreshers,
 	relevantRemovedRoots as relevantDetachedTreesImplementation,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import type {
 	EncodedNodeChangeset,
 	FieldChangeDelta,
 	FieldChangeEncodingContext,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import { deepFreeze as deepFreezeBase } from "@fluidframework/test-runtime-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
@@ -107,6 +112,7 @@ const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
 			? undefined
 			: composeChild(change1, change2),
 	invert: (change) => change,
+	mute: (change: SingleNodeChangeset) => change,
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base),
 	prune: (change, pruneChild) => (change === undefined ? undefined : pruneChild(change)),
 	replaceRevisions: (change, replacer) =>
@@ -155,12 +161,10 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	getCrossFieldKeys: (_change) => [],
 };
 
-const singleNodeField = new FieldKindWithEditor(
-	"SingleNode",
+const singleNodeField = new FlexFieldKind(
+	brandConst("SingleNode")<FieldKindIdentifier>(),
 	Multiplicity.Single,
-	singleNodeHandler,
-	(a, b) => false,
-	new Set(),
+	{ changeHandler: singleNodeHandler, allowMonotonicUpgradeFrom: new Set() },
 );
 
 export const fieldKindConfiguration: FieldKindConfiguration = new Map<
@@ -171,18 +175,19 @@ export const fieldKindConfiguration: FieldKindConfiguration = new Map<
 	[valueField.identifier, { kind: valueField, formatVersion: 1 }],
 ]);
 
-const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
+const fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> = new Map(
 	[singleNodeField, valueField].map((field) => [field.identifier, field]),
 );
 
-const codecOptions: ICodecOptions = {
+const codecOptions: CodecWriteOptions = {
 	jsonValidator: ajvValidator,
+	minVersionForCollab: currentVersion,
 };
 
 const codec = makeModularChangeCodecFamily(
 	new Map([[1, fieldKindConfiguration]]),
 	testRevisionTagCodec,
-	makeFieldBatchCodec(codecOptions, 1),
+	makeFieldBatchCodec(codecOptions),
 	codecOptions,
 );
 const family = new ModularChangeFamily(fieldKinds, codec);
@@ -443,10 +448,7 @@ const rootChangeWithoutNodeFieldChanges: ModularChangeset = family.compose([
 
 const objectNode = chunkFromJsonTrees([{}]);
 const node1Chunk = chunkFromJsonTrees([1]);
-const nodesChunk = chunkFieldSingle(fieldJsonCursor([{}, {}]), {
-	policy: defaultChunkPolicy,
-	idCompressor: testIdCompressor,
-});
+const nodesChunk = treeChunkFromCursor(fieldJsonCursor([{}, {}]));
 
 describe("ModularChangeFamily", () => {
 	describe("compose", () => {
@@ -483,7 +485,7 @@ describe("ModularChangeFamily", () => {
 				builds: newTupleBTree([
 					[
 						[undefined as RevisionTag | undefined, brand(0)],
-						treeChunkFromCursor(singleJsonCursor(2)),
+						treeChunkFromCursor(fieldJsonCursor([2])),
 					],
 				]),
 			};
@@ -1167,13 +1169,10 @@ describe("ModularChangeFamily", () => {
 				];
 			},
 		} as unknown as FieldChangeHandler<HasRemovedRootsRefs, FieldEditor<HasRemovedRootsRefs>>;
-		const hasRemovedRootsRefsField = new FieldKindWithEditor(
-			fieldKind,
-			Multiplicity.Single,
-			handler,
-			() => false,
-			new Set(),
-		);
+		const hasRemovedRootsRefsField = new FlexFieldKind(fieldKind, Multiplicity.Single, {
+			changeHandler: handler,
+			allowMonotonicUpgradeFrom: new Set(),
+		});
 		const mockFieldKinds = new Map([[fieldKind, hasRemovedRootsRefsField]]);
 
 		function relevantRemovedRoots(input: ModularChangeset): DeltaDetachedNodeId[] {
@@ -1256,9 +1255,9 @@ describe("ModularChangeFamily", () => {
 		const bMajor = mintRevisionTag();
 		const b1 = { major: bMajor, minor: 1 };
 
-		const node2 = singleJsonCursor(2);
+		const node2 = fieldJsonCursor([2]);
 		const node2Chunk = treeChunkFromCursor(node2);
-		const node3 = singleJsonCursor(3);
+		const node3 = fieldJsonCursor([3]);
 		const node3Chunk = treeChunkFromCursor(node3);
 
 		const nodesArray: [DeltaDetachedNodeId, TreeChunk][] = [
@@ -1493,10 +1492,6 @@ describe("ModularChangeFamily", () => {
 		assertEqual(changes, [expectedChange.change]);
 	});
 });
-
-function treeChunkFromCursor(cursor: ITreeCursorSynchronous): TreeChunk {
-	return chunkTree(cursor, { policy: defaultChunkPolicy, idCompressor: testIdCompressor });
-}
 
 function deepCloneChunkedTree(chunk: TreeChunk): TreeChunk {
 	const jsonable = jsonableTreeFromFieldCursor(chunk.cursor());

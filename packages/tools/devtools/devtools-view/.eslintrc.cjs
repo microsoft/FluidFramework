@@ -33,12 +33,20 @@ module.exports = {
 		"no-restricted-imports": ["error", "@fluentui/react"],
 
 		// Allow unassigned imports for testing-library/jest-dom
-		"import/no-unassigned-import": [
+		"import-x/no-unassigned-import": [
 			"error",
 			{
 				allow: ["@testing-library/jest-dom"],
 			},
 		],
+
+		// TODO: These rules should be re-enabled once we are on eslint 9
+		// and the react plugins are upgraded to more recent versions
+		"react-hooks/immutability": "warn",
+		"react-hooks/refs": "warn",
+		"react-hooks/rules-of-hooks": "warn",
+		"react-hooks/set-state-in-effect": "warn",
+		"react-hooks/static-components": "warn",
 	},
 	overrides: [
 		{
@@ -47,9 +55,9 @@ module.exports = {
 			plugins: ["jest"],
 			extends: ["plugin:jest/recommended"],
 			rules: {
-				"import/no-nodejs-modules": "off",
+				"import-x/no-nodejs-modules": "off",
 				"unicorn/prefer-module": "off",
-				"import/no-internal-modules": "off",
+				"import-x/no-internal-modules": "off",
 			},
 		},
 		{
@@ -57,11 +65,11 @@ module.exports = {
 			files: ["src/test/screenshot/**"],
 			rules: {
 				// Default exports are used by "Storybook" modules to describe test scenarios
-				"import/no-default-export": "off",
+				"import-x/no-default-export": "off",
 
 				// Fine for tests
-				"import/no-nodejs-modules": "off",
-				"import/no-extraneous-dependencies": "off",
+				"import-x/no-nodejs-modules": "off",
+				"import-x/no-extraneous-dependencies": "off",
 			},
 		},
 	],

@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as os from "os";
 import cluster from "cluster";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
+import * as os from "os";
+
+import type { TypedEventEmitter } from "@fluidframework/common-utils";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
+import type { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import {
 	LocalNodeFactory,
 	LocalOrderManager,
@@ -16,20 +17,22 @@ import {
 } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
+import type { IReadinessCheck } from "@fluidframework/server-services-core";
+import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as utils from "@fluidframework/server-services-utils";
+import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import * as bytes from "bytes";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 import * as winston from "winston";
 import * as ws from "ws";
-import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
+
+import { Constants, configureThrottler } from "../utils";
+
+import type { INexusResourcesCustomizations } from "./customizations";
+import { OrdererManager, type IOrdererManagerOptions } from "./ordererManager";
 import { NexusRunner } from "./runner";
 import { StorageNameAllocator } from "./services";
-import { INexusResourcesCustomizations } from "./customizations";
-import { OrdererManager, type IOrdererManagerOptions } from "./ordererManager";
-import { IReadinessCheck } from "@fluidframework/server-services-core";
-import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
-import { Constants } from "../utils";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
 	private readonly webSocketServer: ws.Server;
@@ -363,31 +366,13 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 				redisParamsForThrottling,
 			);
 
-		const configureThrottler = (
-			throttleConfig: Partial<utils.IThrottleConfig>,
-		): core.IThrottler => {
-			const throttlerHelper = new services.ThrottlerHelper(
-				redisThrottleAndUsageStorageManager,
-				throttleConfig.maxPerMs,
-				throttleConfig.maxBurst,
-				throttleConfig.minCooldownIntervalInMs,
-			);
-			return new services.Throttler(
-				throttlerHelper,
-				throttleConfig.minThrottleIntervalInMs,
-				winston,
-				throttleConfig.maxInMemoryCacheSize,
-				throttleConfig.maxInMemoryCacheAgeInMs,
-				throttleConfig.enableEnhancedTelemetry,
-			);
-		};
-
 		// Socket Connection Throttler
 		const socketConnectionThrottleConfigPerTenant = utils.getThrottleConfig(
 			config.get("nexus:throttling:socketConnectionsPerTenant"),
 		);
 		const socketConnectTenantThrottler = configureThrottler(
 			socketConnectionThrottleConfigPerTenant,
+			redisThrottleAndUsageStorageManager,
 		);
 
 		const socketConnectionThrottleConfigPerCluster = utils.getThrottleConfig(
@@ -395,19 +380,26 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		);
 		const socketConnectClusterThrottler = configureThrottler(
 			socketConnectionThrottleConfigPerCluster,
+			redisThrottleAndUsageStorageManager,
 		);
 
 		// Socket SubmitOp Throttler
 		const submitOpThrottleConfig = utils.getThrottleConfig(
 			config.get("nexus:throttling:submitOps"),
 		);
-		const socketSubmitOpThrottler = configureThrottler(submitOpThrottleConfig);
+		const socketSubmitOpThrottler = configureThrottler(
+			submitOpThrottleConfig,
+			redisThrottleAndUsageStorageManager,
+		);
 
 		// Socket SubmitSignal Throttler
 		const submitSignalThrottleConfig = utils.getThrottleConfig(
 			config.get("nexus:throttling:submitSignals"),
 		);
-		const socketSubmitSignalThrottler = configureThrottler(submitSignalThrottleConfig);
+		const socketSubmitSignalThrottler = configureThrottler(
+			submitSignalThrottleConfig,
+			redisThrottleAndUsageStorageManager,
+		);
 		const documentRepository =
 			customizations?.documentRepository ??
 			new core.MongoDocumentRepository(documentsCollection);

@@ -6,12 +6,12 @@
 import fs from "fs";
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { IClient } from "@fluidframework/driver-definitions";
+import type { IClient } from "@fluidframework/driver-definitions";
 import {
-	IDocumentService,
+	type IDocumentService,
 	MessageType,
 	ScopeType,
-	ISequencedDocumentMessage,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 
 import { printMessageStats } from "./fluidAnalyzeMessages.js";
@@ -116,7 +116,7 @@ async function* loadAllSequencedMessages(
 		const { responseMessage } = props;
 		const [_, seq] =
 			typeof responseMessage === "string"
-				? (responseMessage.match(/GenesisSequenceNumber '(\d+)'/) ?? [])
+				? (/GenesisSequenceNumber '(\d+)'/.exec(responseMessage) ?? [])
 				: [];
 		if (seq !== undefined) {
 			lastSeq = parseInt(seq, 10);

@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IClient, IDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IServiceConfiguration } from "./configuration";
-import { IWebSocket } from "./http";
+import type { IClient, IDocumentMessage } from "@fluidframework/protocol-definitions";
+
+import type { IServiceConfiguration } from "./configuration";
+import type { IWebSocket } from "./http";
 
 /**
  * Identifier for an ordering node in the system

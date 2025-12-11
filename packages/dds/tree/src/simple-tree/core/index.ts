@@ -10,12 +10,18 @@ export {
 	tryGetTreeNodeSchema,
 	type InnerNode,
 	tryDisposeTreeNode,
-	unhydratedFlexTreeNodeToTreeNode,
-	getOrCreateInnerNode,
+	getInnerNode,
 	treeNodeFromAnchor,
 	getSimpleNodeSchemaFromInnerNode,
+	SimpleContextSlot,
+	withBufferedTreeEvents,
 } from "./treeNodeKernel.js";
-export { type WithType, typeNameSymbol, typeSchemaSymbol } from "./withType.js";
+export {
+	type WithType,
+	typeNameSymbol,
+	typeSchemaSymbol,
+	contentSchemaSymbol,
+} from "./withType.js";
 export {
 	type Unhydrated,
 	type InternalTreeNode,
@@ -26,19 +32,91 @@ export {
 	inPrototypeChain,
 } from "./treeNode.js";
 export {
-	type TreeNodeSchema,
 	NodeKind,
-	type TreeNodeSchemaClass,
-	type TreeNodeSchemaNonClass,
-	type TreeNodeSchemaCore,
-	type TreeNodeSchemaBoth,
+	isTreeNodeSchemaClass,
+	privateDataSymbol,
+	getTreeNodeSchemaPrivateData,
+	CompatibilityLevel,
 } from "./treeNodeSchema.js";
-export { walkAllowedTypes, type SchemaVisitor } from "./walkSchema.js";
-export { Context, HydratedContext, SimpleContextSlot } from "./context.js";
-export { getOrCreateNodeFromInnerNode } from "./getOrCreateNode.js";
+export type {
+	TreeNodeSchema,
+	TreeNodeSchemaClass,
+	TreeNodeSchemaNonClass,
+	TreeNodeSchemaCore,
+	TreeNodeSchemaBoth,
+	NodeSchemaMetadata,
+	TreeLeafValue,
+	InsertableTypedNode,
+	NodeBuilderData,
+	NodeFromSchema,
+	TreeNodeSchemaCorePrivate,
+	TreeNodeSchemaPrivateData,
+	TreeNodeSchemaInitializedData,
+	FlexContent,
+} from "./treeNodeSchema.js";
 export {
+	isAnnotatedAllowedTypes,
+	isAnnotatedAllowedType,
+	normalizeAllowedTypes,
+	normalizeAndEvaluateAnnotatedAllowedTypes,
+	normalizeToAnnotatedAllowedType,
+	markSchemaMostDerived,
+	evaluateLazySchema,
+	createSchemaUpgrade,
+	AnnotatedAllowedTypesInternal,
+	normalizeAllowedTypesInternal,
+	SchemaUpgrade,
+} from "./allowedTypes.js";
+export type {
+	AnnotatedAllowedType,
+	AllowedTypesFullEvaluated,
+	ImplicitAllowedTypes,
+	AllowedTypesMetadata,
+	AllowedTypes,
+	TreeNodeFromImplicitAllowedTypes,
+	InsertableTreeNodeFromImplicitAllowedTypes,
+	InsertableTreeNodeFromAllowedTypes,
+	Input,
+	UnannotateAllowedTypesList,
+	AllowedTypeMetadata,
+	AnnotatedAllowedTypes,
+	AnnotateAllowedTypesList,
+	AllowedTypesFullInternal,
+	AllowedTypesFull,
+	AllowedTypesFullFromMixed,
+	NumberKeys,
+} from "./allowedTypes.js";
+export { walkAllowedTypes, walkNodeSchema, type SchemaVisitor } from "./walkSchema.js";
+export { Context, HydratedContext } from "./context.js";
+export {
+	getOrCreateNodeFromInnerNode,
+	getOrCreateNodeFromInnerUnboxedNode,
+} from "./getOrCreateNode.js";
+export {
+	UnhydratedFlexTreeField,
 	UnhydratedFlexTreeNode,
-	UnhydratedTreeSequenceField,
-	tryUnhydratedFlexTreeNode,
+	UnhydratedSequenceField,
 	UnhydratedContext,
+	createField,
 } from "./unhydratedFlexTree.js";
+export type {
+	LazyItem,
+	FlexList,
+	FlexListToUnion,
+	ExtractItemType,
+} from "./flexList.js";
+export { isLazy } from "./flexList.js";
+export {
+	TreeNodeValid,
+	type MostDerivedData,
+	createTreeNodeSchemaPrivateData,
+	isClassBasedSchema,
+} from "./treeNodeValid.js";
+export type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
+export {
+	type StoredSchemaGenerationOptions,
+	type StoredFromViewSchemaGenerationOptions,
+	ExpectStored,
+	type SimpleSchemaTransformationOptions,
+	Unchanged,
+} from "./toStored.js";

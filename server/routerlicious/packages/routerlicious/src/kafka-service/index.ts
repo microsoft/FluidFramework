@@ -4,6 +4,7 @@
  */
 
 import * as path from "path";
+
 import { OrderingResourcesFactory } from "@fluidframework/server-routerlicious-base";
 
 import { execute } from "./command";

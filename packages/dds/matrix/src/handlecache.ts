@@ -6,10 +6,10 @@
 /* eslint-disable no-bitwise */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { IVectorConsumer } from "@tiny-calc/nano";
+import type { IVectorConsumer } from "@tiny-calc/nano";
 
-import { Handle, isHandleValid } from "./handletable.js";
-import { PermutationSegment, PermutationVector } from "./permutationvector.js";
+import { type Handle, isHandleValid } from "./handletable.js";
+import type { PermutationSegment, PermutationVector } from "./permutationvector.js";
 import { ensureRange } from "./range.js";
 
 /**
@@ -82,10 +82,10 @@ export class HandleCache implements IVectorConsumer<Handle> {
 		const { vector } = this;
 
 		for (let pos = start; pos < end; pos++) {
-			const { segment, offset } = vector.getContainingSegment(pos);
-			const asPerm = segment as PermutationSegment;
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			handles.push(asPerm.start + offset!);
+			const { segment, offset } = vector.getContainingSegment(pos)!;
+			const asPerm = segment as PermutationSegment;
+			handles.push(asPerm.start + offset);
 		}
 	}
 

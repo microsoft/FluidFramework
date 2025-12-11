@@ -4,10 +4,11 @@
  */
 
 import * as fs from "fs";
+import * as path from "path";
 
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 
-import { IFileLogger } from "./fileLogger.js";
+import type { IFileLogger } from "./fileLogger.js";
 
 /**
  * @internal
@@ -44,6 +45,8 @@ export abstract class BaseFileLogger implements IFileLogger {
 	protected async flush(): Promise<void> {
 		if (this.events.length > 0) {
 			const contentToWrite = this.events.map((it) => JSON.stringify(it)).join(",");
+			const dirName = path.dirname(this.filePath);
+			fs.mkdirSync(dirName, { recursive: true });
 			if (this.hasWrittenToFile) {
 				fs.appendFileSync(this.filePath, `,${contentToWrite}`);
 			} else {

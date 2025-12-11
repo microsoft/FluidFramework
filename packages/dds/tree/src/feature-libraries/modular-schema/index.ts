@@ -8,6 +8,7 @@ export {
 	allowsTreeSchemaIdentifierSuperset,
 	allowsFieldSuperset,
 	allowsTreeSuperset,
+	allowsMultiplicitySuperset,
 } from "./comparison.js";
 export { isNeverField, isNeverTree } from "./isNeverTree.js";
 export {
@@ -26,7 +27,6 @@ export {
 	EncodedNodeChangeset,
 } from "./modularChangeFormat.js";
 export { FlexFieldKind, type FullSchemaPolicy } from "./fieldKind.js";
-export { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 export {
 	type FieldChangeHandler,
 	type FieldChangeDelta,
@@ -72,26 +72,10 @@ export {
 	intoDelta,
 	relevantRemovedRoots,
 	updateRefreshers,
+	DefaultRevisionReplacer,
 } from "./modularChangeFamily.js";
 export { makeModularChangeCodecFamily } from "./modularChangeCodecs.js";
 export type {
 	FieldKindConfiguration,
 	FieldKindConfigurationEntry,
 } from "./fieldKindConfiguration.js";
-export {
-	getAllowedContentDiscrepancies,
-	isRepoSuperset,
-	type AllowedTypeDiscrepancy,
-	type FieldKindDiscrepancy,
-	type ValueSchemaDiscrepancy,
-	type FieldDiscrepancy,
-	type NodeDiscrepancy,
-	type NodeKindDiscrepancy,
-	type NodeFieldsDiscrepancy,
-	type LinearExtension,
-	type Realizer,
-	fieldRealizer,
-	PosetComparisonResult,
-	comparePosetElements,
-	posetLte,
-} from "./discrepancies.js";

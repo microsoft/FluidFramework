@@ -4,7 +4,7 @@
  */
 
 import { Deferred } from "@fluidframework/common-utils";
-import {
+import type {
 	IThrottler,
 	IWebServer,
 	IWebServerFactory,
@@ -13,13 +13,14 @@ import {
 	IStorageNameRetriever,
 	IDocumentManager,
 	IReadinessCheck,
-	type IDenyList,
+	IDenyList,
 } from "@fluidframework/server-services-core";
-import { Provider } from "nconf";
-import * as winston from "winston";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "./services";
+import type { Provider } from "nconf";
+import * as winston from "winston";
+
 import * as app from "./app";
+import type { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "./services";
 
 export class HistorianRunner implements IRunner {
 	private server: IWebServer | undefined;
