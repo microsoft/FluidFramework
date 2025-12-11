@@ -1075,7 +1075,8 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 			// This should populate the identifier using the view's compressor.
 			view.root = node;
 
-			// If working correctly, the identifier is allocated from the view snapshot compressor and should be deterministic.
+			// If working correctly, the identifier is allocated from the view snapshot compressor and should be deterministic,
+			// and based off of snapshotSessionId.
 			// If it is instead allocated early without using the view, it will be a random v4 uuid and fail this check.
 			// Due to some other source of id allocation (like revision tags) there may be a small number of other ids allocated resulting in the last digit not being 1.
 			// Those should be deterministic, but might be impacted by some changes elsewhere.
