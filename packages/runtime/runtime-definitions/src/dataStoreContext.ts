@@ -694,7 +694,8 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	): ReturnType<Exclude<T["createDataStore"], undefined>>;
 
 	/**
-	 * Minimum version of the FF runtime that is required to collaborate on new documents.
+	 * Minimum version of the Fluid Framework runtime that is required to collaborate on new documents.
+	 * @remarks
 	 * Consumed by {@link @fluidframework/datastore#FluidDataStoreRuntime}.
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
 	 */
