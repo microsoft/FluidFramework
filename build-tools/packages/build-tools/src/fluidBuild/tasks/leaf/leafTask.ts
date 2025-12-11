@@ -545,6 +545,28 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 	 */
 
 	/**
+	 * Get additional config files to track for this task from the task definition.
+	 * These files will be included in the input files tracked by the done file.
+	 * 
+	 * @returns the list of absolute paths to additional config files, or undefined if none are specified
+	 */
+	protected getAdditionalConfigFiles(): string[] | undefined {
+		const additionalConfigs = this.node.getAdditionalConfigFiles(this.taskName ?? "");
+		
+		if (!additionalConfigs || additionalConfigs.length === 0) {
+			return undefined;
+		}
+
+		// Convert relative paths to absolute paths
+		// Replace ${repoRoot} token with actual repository root path
+		const repoRoot = this.node.context.repoRoot;
+		return additionalConfigs.map((relPath) => {
+			const pathWithRepoRoot = replaceRepoRootToken(relPath, repoRoot);
+			return this.getPackageFileFullPath(pathWithRepoRoot);
+		});
+	}
+
+	/**
 	 * The content to be written in the "done file".
 	 * @remarks
 	 * This file must have different content if the work needed to be done by this task changes.
@@ -596,28 +618,6 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 	 * @returns the list of absolute paths to files that this task generates.
 	 */
 	protected abstract getOutputFiles(): Promise<string[]>;
-
-	/**
-	 * Get additional config files to track for this task from the task definition.
-	 * These files will be included in the input files tracked by the done file.
-	 * 
-	 * @returns the list of absolute paths to additional config files, or undefined if none are specified
-	 */
-	protected getAdditionalConfigFiles(): string[] | undefined {
-		const additionalConfigs = this.node.getAdditionalConfigFiles(this.taskName ?? "");
-		
-		if (!additionalConfigs || additionalConfigs.length === 0) {
-			return undefined;
-		}
-
-		// Convert relative paths to absolute paths
-		// Replace ${repoRoot} token with actual repository root path
-		const repoRoot = this.node.context.repoRoot;
-		return additionalConfigs.map((relPath) => {
-			const pathWithRepoRoot = replaceRepoRootToken(relPath, repoRoot);
-			return this.getPackageFileFullPath(pathWithRepoRoot);
-		});
-	}
 
 	/**
 	 * If this returns true, then the donefile will use the hash of the file contents instead of the last modified time

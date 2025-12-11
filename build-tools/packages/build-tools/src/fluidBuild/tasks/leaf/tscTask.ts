@@ -13,7 +13,6 @@ import type * as tsTypes from "typescript";
 import { type TscUtil, getTscUtils } from "../../tscUtils";
 import { getInstalledPackageVersion } from "../taskUtils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
-import { replaceRepoRootToken } from "../../fluidBuildConfig";
 
 interface ITsBuildInfo {
 	program: {
@@ -481,21 +480,11 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 	protected get configFileFullPaths(): string[] {
 		if (this._configFileFullPaths === undefined) {
 			const taskSpecificConfigs = this.getTaskSpecificConfigFiles();
-			const additionalConfigs = this.node.getAdditionalConfigFiles(this.taskName ?? "");
+			const additionalConfigs = this.getAdditionalConfigFiles();
 
-			if (!additionalConfigs || additionalConfigs.length === 0) {
-				this._configFileFullPaths = taskSpecificConfigs;
-			} else {
-				// Convert relative paths to absolute paths
-				// Replace <repoRoot> token with actual repository root path
-				const repoRoot = this.node.context.repoRoot;
-				const additionalFullPaths = additionalConfigs.map((relPath) => {
-					const pathWithRepoRoot = replaceRepoRootToken(relPath, repoRoot);
-					return this.getPackageFileFullPath(pathWithRepoRoot);
-				});
-
-				this._configFileFullPaths = [...taskSpecificConfigs, ...additionalFullPaths];
-			}
+			this._configFileFullPaths = additionalConfigs 
+				? [...taskSpecificConfigs, ...additionalConfigs]
+				: taskSpecificConfigs;
 		}
 
 		return this._configFileFullPaths;
