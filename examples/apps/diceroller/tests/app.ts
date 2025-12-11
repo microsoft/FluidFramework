@@ -42,7 +42,9 @@ const codeLoader: ICodeDetailsLoader = {
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-async function createContainerAndRenderInElement(element: HTMLDivElement): Promise<void> {
+async function createOrLoadContainerAndRenderInElement(
+	element: HTMLDivElement,
+): Promise<void> {
 	let id: string;
 	let container: IContainer;
 
@@ -84,16 +86,16 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 	document.title = id;
 }
 
-const leftElement = document.getElementById("sbs-left") as HTMLDivElement;
+const leftElement = document.querySelector("#sbs-left") as HTMLDivElement;
 if (leftElement === null) {
 	throw new Error("sbs-left does not exist");
 }
-await createContainerAndRenderInElement(leftElement);
-const rightElement = document.getElementById("sbs-right") as HTMLDivElement;
+await createOrLoadContainerAndRenderInElement(leftElement);
+const rightElement = document.querySelector("#sbs-right") as HTMLDivElement;
 if (rightElement === null) {
 	throw new Error("sbs-right does not exist");
 }
-await createContainerAndRenderInElement(rightElement);
+await createOrLoadContainerAndRenderInElement(rightElement);
 
 // Setting "fluidStarted" is just for our test automation
 // eslint-disable-next-line @typescript-eslint/dot-notation
