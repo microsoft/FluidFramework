@@ -24,6 +24,10 @@ export class TsLintTask extends TscDependentTask {
 	protected async getToolVersion() {
 		return getInstalledPackageVersion("tslint", this.node.pkg.directory);
 	}
+
+	protected override getTaskSpecificOutputFiles(): Promise<string[] | undefined> {
+		return Promise.resolve([]);
+	}
 }
 
 export class EsLintTask extends TscDependentTask {
@@ -101,5 +105,9 @@ export class EsLintTask extends TscDependentTask {
 
 	protected async getToolVersion() {
 		return getInstalledPackageVersion("eslint", this.node.pkg.directory);
+	}
+
+	protected override getTaskSpecificOutputFiles(): Promise<string[] | undefined> {
+		return Promise.resolve([]);
 	}
 }
