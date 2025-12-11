@@ -196,7 +196,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	}): asserts result is { status: EditStatus.Applied; failure: undefined };
 	private validateChangesApplied(
 		result: EditingResult | { status: EditStatus; failure: TransactionInternal.Failure | undefined }
-	) {
+	): void {
 		if (result.status === EditStatus.Applied) {
 			return;
 		}

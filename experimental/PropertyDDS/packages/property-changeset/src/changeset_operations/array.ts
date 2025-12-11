@@ -163,7 +163,7 @@ const getRangeForCurrentStateOperation = function (
 	io_operation: GenericOperation,
 	in_aOffset: number,
 	io_resultingRange: OperationRange,
-) {
+): void {
 	if (!io_operation) {
 		return;
 	}
@@ -206,7 +206,7 @@ const getRangeForCurrentStateOperation = function (
 	}
 };
 
-const getOpLength = (op: arrayRemoveList) => (isNumber(op[1]) ? op[1] : op[1].length);
+const getOpLength = (op: arrayRemoveList): number => (isNumber(op[1]) ? op[1] : op[1].length);
 
 /**
  * Computes the impact range for a given operation of the applied change set
@@ -220,7 +220,7 @@ const getRangeForAppliedOperation = function (
 	io_resultingRange: OperationRangeDescription,
 	in_flag?: ArrayChangeSetRangeType,
 	in_options?: ApplyChangeSetOptions,
-) {
+): void {
 	if (!in_operation || in_operation.type === ArrayChangeSetIterator.types.NOP) {
 		io_resultingRange.begin = undefined;
 		io_resultingRange.end = undefined;
@@ -294,7 +294,7 @@ const _splitArrayParameter = function (
 	in_secondResult: arrayModifyList | arrayRemoveList,
 	in_data: arrayModifyList | arrayRemoveList,
 	in_start: number,
-) {
+): void {
 	let firstTmp: any;
 	if (isString(in_data[1])) {
 		firstTmp = in_data[1].substr(0, in_start);
@@ -343,7 +343,7 @@ const _splitOperation = function (
 	in_targetOperation: NoneNOPOperation,
 	lengthUsedInResultSegment: number,
 	in_updateOffset: boolean,
-) {
+): void {
 	_splitArrayParameter(
 		in_targetOperation.operation,
 		in_targetRange.op.operation,
@@ -369,7 +369,7 @@ const _splitOperation = function (
 const _copyOperation = function (
 	in_sourceOperation: NoneNOPOperation,
 	in_targetOperation: NoneNOPOperation,
-) {
+): void {
 	if (in_sourceOperation.type === ArrayChangeSetIterator.types.REMOVE) {
 		in_targetOperation.operation[1] = in_sourceOperation.operation[1];
 	} else {
@@ -400,7 +400,7 @@ const splitOverlapping = function (
 	io_resultingSegment: OperationRangeInsert | OperationRangeRemove,
 	in_rebasing: boolean,
 	in_options?: ApplyChangeSetOptions,
-) {
+): void {
 	if (io_rangeA.removeInsertOperation) {
 		io_resultingSegment.removeInsertOperationA = io_rangeA.removeInsertOperation;
 	} else {
@@ -926,7 +926,7 @@ const pushOp = function (
 	in_options?: ApplyChangeSetOptions,
 	in_lastIteratorARemove?: RemoveOpInfo,
 	in_segment?: SegmentType,
-) {
+): void {
 	let writeTargetIndex;
 	if (ArrayChangeSetIterator.types.NOP !== in_op.type) {
 		writeTargetIndex = in_op.operation[0] - in_indexOffset;
@@ -1019,7 +1019,10 @@ const pushOp = function (
  * @param in_isPrimitiveType - Is it an array of primitive types
  * ATTENTION: We overwrite opB to save garbage (instead of creating a result OP)
  */
-const handleCombinations = function (in_segment: SegmentType, in_isPrimitiveType: boolean) {
+const handleCombinations = function (
+	in_segment: SegmentType,
+	in_isPrimitiveType: boolean,
+): void {
 	const opA = in_segment.opA;
 	const opB = in_segment.opB;
 	switch (opA.type) {
@@ -1222,7 +1225,7 @@ const handleRebaseCombinations = function (
 	in_basePath: string,
 	in_isPrimitiveType: string,
 	in_options: ApplyChangeSetOptions,
-) {
+): void {
 	const opA = in_segment.opA;
 	const opB = in_segment.opB;
 	if (opB.type === ArrayChangeSetIterator.types.INSERT) {
@@ -1246,7 +1249,10 @@ const handleRebaseCombinations = function (
 		}
 	}
 
-	const handleInsert = (insertOp: Omit<InsertOperation, "type">, baseOp: InsertOperation) => {
+	const handleInsert = (
+		insertOp: Omit<InsertOperation, "type">,
+		baseOp: InsertOperation,
+	): void => {
 		// conflicting inserts - report conflict, insert both
 		delete insertOp._absoluteBegin;
 		delete baseOp.offset;
@@ -1435,7 +1441,7 @@ const applySegment = function (
 	lastIteratorARemove: RemoveOpInfo,
 	in_isPrimitiveType: boolean,
 	in_options?: ApplyChangeSetOptions,
-) {
+): void {
 	if (!in_segment) {
 		throw Error("applySegment: in_segment is undefined!");
 	}
@@ -1488,7 +1494,7 @@ const applyRebaseSegment = function (
 	in_basePath: string,
 	in_isPrimitiveType: boolean,
 	in_options?: ApplyChangeSetOptions,
-) {
+): void {
 	if (!in_segment) {
 		throw Error("applySegment: in_segment is undefined!");
 	}
@@ -1533,7 +1539,7 @@ export namespace ChangeSetArrayFunctions {
 		in_appliedPropertyChanges: SerializedChangeSet,
 		in_typeid: string,
 		in_options?: ApplyChangeSetOptions,
-	) {
+	): void {
 		ConsoleUtils.assert(in_typeid, "_performApplyAfterOnPropertyArray: typeid missing");
 		ConsoleUtils.assert(!isString(io_basePropertyChanges), io_basePropertyChanges);
 		ConsoleUtils.assert(!isString(in_appliedPropertyChanges), in_appliedPropertyChanges);
@@ -1564,7 +1570,7 @@ export namespace ChangeSetArrayFunctions {
 		const segment: OperationRangeRemove | OperationRangeInsert = {};
 		let skipIteratorBOperation;
 
-		const advanceIteratorB = () => {
+		const advanceIteratorB = (): void => {
 			if (
 				(opB as any).removeInsertOperation &&
 				segment.op !== undefined &&
@@ -1740,7 +1746,7 @@ export namespace ChangeSetArrayFunctions {
 		out_conflicts: ConflictInfo[],
 		in_typeid: string,
 		in_options?: ApplyChangeSetOptions,
-	) {
+	): void {
 		const isPrimitiveTypeid = isPrimitiveType(in_typeid);
 
 		// Iterator to process the changes in the ChangeSet in the correct order
@@ -1918,7 +1924,7 @@ export namespace ChangeSetArrayFunctions {
 		in_basePath: string,
 		out_conflicts: ConflictInfo[],
 		in_options?: ApplyChangeSetOptions,
-	) {
+	): void {
 		if (
 			isString(io_rebasePropertyChangeSetParent[in_key]) ||
 			(io_rebasePropertyChangeSetParent[in_key] &&
