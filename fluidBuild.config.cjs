@@ -16,9 +16,6 @@ const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
  * See https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-tools/src/common/fluidTaskDefinitions.ts
  * for details on the task and dependency definition format.
  *
- * You can specify additional config files to track for known task handlers (e.g., eslint, tsc, api-extractor) using
- * the `files.additionalConfigFiles` property in task definitions. Individual packages can extend these using "...".
- *
  * @type {import("@fluidframework/build-tools").IFluidBuildConfig & import("@fluid-tools/build-cli").FlubConfig}
  */
 module.exports = {
