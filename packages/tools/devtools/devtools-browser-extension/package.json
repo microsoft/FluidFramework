@@ -119,7 +119,7 @@
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"dotenv-webpack": "^7.0.3",
-		"eslint": "~8.57.1",
+		"eslint": "~9.39.1",
 		"eslint-config-prettier": "~10.1.8",
 		"eslint-plugin-chai-expect": "~3.0.0",
 		"expect-puppeteer": "^9.0.2",

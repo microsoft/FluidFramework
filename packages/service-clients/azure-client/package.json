@@ -119,7 +119,7 @@
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.57.1",
+		"eslint": "~9.39.1",
 		"eslint-config-prettier": "~10.1.8",
 		"fluid-framework": "workspace:~",
 		"jiti": "^2.6.1",
