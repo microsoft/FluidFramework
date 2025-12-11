@@ -133,6 +133,19 @@ class SharedObjectFromKernel<
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
 
+		// This cast is needed since IFluidDataStoreRuntime does not have all the members that its implementation does.
+		// It's a follow-up to a pattern where the property (`minVersionForCollab`) existed on
+		// IFluidDataStoreRuntimeInternalConfig as optional, which allows us to avoid breaking changes to
+		// IFluidDataStoreRuntime by hiding internal members in a separate interface,
+		// but comes at the cost of less compile-time enforcement. Adding an assert now that the period where we needed
+		// to keep `FluidDataStoreRuntime.minVersionForCollab` as optional to maintain back-compat has passed.
+		const minVersionForCollab: MinimumVersionForCollab = (runtime as FluidDataStoreRuntime)
+			.minVersionForCollab;
+		assert(
+			minVersionForCollab !== undefined,
+			"minVersionForCollab must be defined",
+		);
+
 		this.#kernelArgs = {
 			sharedObject: this,
 			serializer: this.serializer,
@@ -143,13 +156,7 @@ class SharedObjectFromKernel<
 			idCompressor: runtime.idCompressor,
 			lastSequenceNumber: () => this.deltaManager.lastSequenceNumber,
 			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
-
-			// This cast is needed since IFluidDataStoreRuntime does not have all the members that its implementation does.
-			// It's the follow-up to a pattern where the property (`minVersionForCollab`) existed on
-			// IFluidDataStoreRuntimeInternalConfig as optional, which allows us to avoid breaking changes to
-			// IFluidDataStoreRuntime by hiding internal members in a separate interface,
-			// but comes at the cost of less compile-time enforcement.
-			minVersionForCollab: (runtime as FluidDataStoreRuntime).minVersionForCollab,
+			minVersionForCollab,
 		};
 	}
 
