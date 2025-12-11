@@ -12,7 +12,7 @@ import {
 	type FormatV1,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/schema-index/index.js";
-import { brand, type JsonCompatible } from "../../util/index.js";
+import type { JsonCompatible } from "../../util/index.js";
 import type { SchemaUpgrade } from "../core/index.js";
 import { normalizeFieldSchema, type ImplicitFieldSchema } from "../fieldSchema.js";
 import { toStoredSchema } from "../toStoredSchema.js";
@@ -102,7 +102,7 @@ export function comparePersistedSchema(
 	// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not the version passed to `makeSchemaCodec`.
 	const schemaCodec = makeSchemaCodec(
 		{ ...options, minVersionForCollab: FluidClientVersion.v2_0 },
-		brand(SchemaFormatVersion.v1),
+		SchemaFormatVersion.v1,
 	);
 	const stored = schemaCodec.decode(persisted as FormatV1);
 	const config = new TreeViewConfigurationAlpha({

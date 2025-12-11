@@ -9,6 +9,7 @@ export {
 	CommitKind,
 	RevertibleStatus,
 	type CommitMetadata,
+	type ChangeMetadata,
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
@@ -291,6 +292,8 @@ export {
 	checkCompatibility,
 	incrementalSummaryHint,
 	incrementalEncodingPolicyForAllowedTypes,
+	eraseSchemaDetails,
+	eraseSchemaDetailsSubclassable,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
