@@ -27,7 +27,7 @@ export class DataStoreContexts
 {
 	/**
 	 * Set of IDs for contexts that are unbound (not yet made locally visible).
-	 * These contexts exist locally but haven't been bound via makeDataStoreLocallyVisible yet.
+	 * These contexts exist locally but aren't known to other clients (even in an attached container).
 	 */
 	private readonly notBoundContexts = new Set<string>();
 
@@ -39,7 +39,7 @@ export class DataStoreContexts
 	/**
 	 * List of pending context waiting either to be bound or to arrive from another client.
 	 * This covers the case where a local context has been created but not yet bound,
-	 * or the case where a client knows a store will exist and is waiting on its creation,
+	 * or the case where a client knows a store will exist (e.g. by alias) and is waiting on its creation,
 	 * so that a caller may await the deferred's promise until such a time as the context is fully ready.
 	 * This is a superset of _contexts, since contexts remain here once the Deferred resolves.
 	 */

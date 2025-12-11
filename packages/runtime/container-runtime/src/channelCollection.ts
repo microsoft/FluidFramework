@@ -499,11 +499,11 @@ export class ChannelCollection
 					"Local DataStore matches remote DataStore id",
 					"DataStoreAttach",
 					envelope,
-					// TODO: dataStoreId may require a different tag from PackageData #7488
 					{ ...tagCodeArtifacts({ dataStoreId: attachMessage.id }) },
 				);
 				throw error;
 			}
+
 			// Check for collision with already processed (attaching/attached or aliased) data store
 			// i.e. We have two attach messages sequenced for the same data store id - This is data corruption
 			if (this.alreadyProcessed(attachMessage.id)) {
@@ -512,7 +512,6 @@ export class ChannelCollection
 					"Duplicate DataStore created with existing id",
 					{
 						...extractSafePropertiesFromMessage(envelope),
-						// TODO: dataStoreId may require a different tag from PackageData #7488
 						...tagCodeArtifacts({ dataStoreId: attachMessage.id }),
 					},
 				);
