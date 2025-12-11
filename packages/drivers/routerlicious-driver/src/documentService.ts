@@ -62,7 +62,7 @@ export class DocumentService
 
 	private _policies: IDocumentServicePolicies | undefined;
 
-	public get resolvedUrl() {
+	public get resolvedUrl(): IResolvedUrl {
 		return this._resolvedUrl;
 	}
 
@@ -96,7 +96,7 @@ export class DocumentService
 		return this._policies;
 	}
 
-	public dispose() {}
+	public dispose(): void {}
 
 	/**
 	 * Connects to a storage endpoint for snapshot service.
@@ -200,7 +200,7 @@ export class DocumentService
 	 * @returns returns the document delta stream service for routerlicious driver.
 	 */
 	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
-		const connect = async (refreshToken?: boolean) => {
+		const connect = async (refreshToken?: boolean): Promise<IDocumentDeltaConnection> => {
 			let ordererToken = await this.ordererRestWrapper.getToken();
 			await this.refreshSessionInfoIfNeeded();
 
