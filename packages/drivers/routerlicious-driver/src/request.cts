@@ -32,11 +32,3 @@ export type RequestHeaders = Record<string, string | number | boolean>;
  * Raw request headers type allowing undefined values.
  */
 export type RawRequestHeaders = Record<string, string | number | boolean | undefined>;
-
-// Legacy type aliases for backwards compatibility
-/** @deprecated Use RequestConfig instead */
-export type AxiosRequestConfig = RequestConfig;
-/** @deprecated Use RequestHeaders instead */
-export type AxiosRequestHeaders = RequestHeaders;
-/** @deprecated Use RawRequestHeaders instead */
-export type RawAxiosRequestHeaders = RawRequestHeaders;

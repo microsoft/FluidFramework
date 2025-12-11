@@ -169,7 +169,9 @@ class RouterliciousRestWrapper extends RestWrapper {
 			headers: await this.generateHeaders(requestConfig.headers),
 		};
 
-		const translatedConfig = this.useRestLess
+		// RestLessClient.translate() returns AxiosRequestConfig (from server-services-client),
+		// which is structurally compatible with our RequestConfig type.
+		const translatedConfig: RequestConfig = this.useRestLess
 			? (this.restLess.translate(config) as RequestConfig)
 			: config;
 		const fetchRequestConfig = buildRequestInitConfig(translatedConfig);

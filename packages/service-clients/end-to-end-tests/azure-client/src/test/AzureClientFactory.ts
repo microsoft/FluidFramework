@@ -29,6 +29,11 @@ import {
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { v4 as uuid } from "uuid";
 
+/**
+ * Response type for container creation requests.
+ * - Azure Fluid Relay (AFR) returns `{ id: string }` object
+ * - Local Tinylicious returns the container ID as a plain string
+ */
 interface FetchResponse {
 	status: number;
 	data: { id?: string } | string;
