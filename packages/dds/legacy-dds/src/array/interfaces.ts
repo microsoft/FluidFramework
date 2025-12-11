@@ -110,6 +110,14 @@ export interface SharedArrayEntry<T extends SerializableTypeForSharedArray>
 	 * being if there is a remote delete, we will have to respect that
 	 */
 	isLocalPendingMove: number;
+
+	/**
+	 * Optional flag indicating that this entry has been rolled back
+	 *
+	 * Used to prevent undo/redo operations that have already been rolled back.
+	 *
+	 */
+	isRollback?: boolean;
 }
 
 /**

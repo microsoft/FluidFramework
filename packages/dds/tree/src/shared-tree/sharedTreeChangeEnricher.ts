@@ -9,6 +9,8 @@ import {
 	type DeltaDetachedNodeId,
 	type DetachedFieldIndex,
 	type IEditableForest,
+	type IForestSubscription,
+	type ReadOnlyDetachedFieldIndex,
 	type RevisionTag,
 	type TreeStoredSchemaRepository,
 	tagChange,
@@ -35,24 +37,25 @@ export class SharedTreeReadonlyChangeEnricher
 	implements ChangeEnricherReadonlyCheckout<SharedTreeChange>
 {
 	/**
-	 * @param forest - The state based on which to enrich changes.
-	 * Exclusively owned by the constructed instance.
+	 * @param borrowedForest - The state based on which to enrich changes.
+	 * Not owned by the constructed instance.
 	 * @param schema - The schema that corresponds to the forest.
-	 * @param removedRoots - The set of removed roots based on which to enrich changes.
-	 * Exclusively owned by the constructed instance.
+	 * @param borrowedRemovedRoots - The set of removed roots based on which to enrich changes.
+	 * Not owned by the constructed instance.
+	 * @param idCompressor - The id compressor to use when chunking trees.
 	 */
 	public constructor(
-		protected readonly forest: IEditableForest,
+		protected readonly borrowedForest: IForestSubscription,
 		private readonly schema: TreeStoredSchemaRepository,
-		protected readonly removedRoots: DetachedFieldIndex,
+		protected readonly borrowedRemovedRoots: ReadOnlyDetachedFieldIndex,
 		private readonly idCompressor?: IIdCompressor,
 	) {}
 
 	public fork(): ChangeEnricherMutableCheckout<SharedTreeChange> {
 		return new SharedTreeMutableChangeEnricher(
-			this.forest.clone(this.schema, new AnchorSet()),
+			this.borrowedForest.clone(this.schema, new AnchorSet()),
 			this.schema,
-			this.removedRoots.clone(),
+			this.borrowedRemovedRoots.clone(),
 		);
 	}
 
@@ -66,10 +69,10 @@ export class SharedTreeReadonlyChangeEnricher
 	}
 
 	private readonly getDetachedRoot = (id: DeltaDetachedNodeId): TreeChunk | undefined => {
-		const root = this.removedRoots.tryGetEntry(id);
+		const root = this.borrowedRemovedRoots.tryGetEntry(id);
 		if (root !== undefined) {
-			const cursor = this.forest.getCursorAboveDetachedFields();
-			const parentField = this.removedRoots.toFieldKey(root);
+			const cursor = this.borrowedForest.getCursorAboveDetachedFields();
+			const parentField = this.borrowedRemovedRoots.toFieldKey(root);
 			cursor.enterField(parentField);
 			cursor.enterNode(0);
 			return chunkTree(cursor, {
@@ -85,6 +88,23 @@ export class SharedTreeMutableChangeEnricher
 	extends SharedTreeReadonlyChangeEnricher
 	implements ChangeEnricherMutableCheckout<SharedTreeChange>
 {
+	/**
+	 * @param forest - The state based on which to enrich changes.
+	 * Owned by the constructed instance.
+	 * @param schema - The schema that corresponds to the forest.
+	 * @param removedRoots - The set of removed roots based on which to enrich changes.
+	 * Owned by the constructed instance.
+	 * @param idCompressor - The id compressor to use when chunking trees.
+	 */
+	public constructor(
+		private readonly forest: IEditableForest,
+		schema: TreeStoredSchemaRepository,
+		private readonly removedRoots: DetachedFieldIndex,
+		idCompressor?: IIdCompressor,
+	) {
+		super(forest, schema, removedRoots, idCompressor);
+	}
+
 	public applyTipChange(change: SharedTreeChange, revision?: RevisionTag): void {
 		for (const dataOrSchemaChange of change.changes) {
 			const type = dataOrSchemaChange.type;

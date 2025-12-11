@@ -5,17 +5,27 @@
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import {
+	getConfigForMinVersionForCollab,
+	lowestMinVersionForCollab,
+} from "@fluidframework/runtime-utils/internal";
 
 import {
 	type CodecTree,
 	type CodecWriteOptions,
+	FluidClientVersion,
 	type IJsonCodec,
 	makeVersionedValidatedCodec,
 } from "../../codec/index.js";
 import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
 import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 
-import { Format, ForestFormatVersion } from "./format.js";
+import {
+	ForestFormatVersion,
+	validVersions,
+	type Format,
+	FormatCommon,
+} from "./formatCommon.js";
 import { brand } from "../../util/index.js";
 
 /**
@@ -29,11 +39,15 @@ export type ForestCodec = IJsonCodec<FieldSet, Format, Format, FieldBatchEncodin
  * @param clientVersion - The MinimumVersionForCollab to convert.
  * @returns The ForestFormatVersion that corresponds to the provided MinimumVersionForCollab.
  */
-function clientVersionToForestSummaryVersion(
+export function clientVersionToForestFormatVersion(
 	clientVersion: MinimumVersionForCollab,
 ): ForestFormatVersion {
-	// Currently, forest summary codec only writes in version 1.
-	return brand(ForestFormatVersion.v1);
+	return brand(
+		getConfigForMinVersionForCollab(clientVersion, {
+			[lowestMinVersionForCollab]: ForestFormatVersion.v1,
+			[FluidClientVersion.v2_74]: ForestFormatVersion.v2,
+		}),
+	);
 }
 
 export function makeForestSummarizerCodec(
@@ -41,11 +55,9 @@ export function makeForestSummarizerCodec(
 	fieldBatchCodec: FieldBatchCodec,
 ): ForestCodec {
 	const inner = fieldBatchCodec;
-	// TODO: AB#41865
-	// This needs to be updated to support multiple versions.
-	// The second version will be used to enable incremental summarization.
-	const writeVersion = clientVersionToForestSummaryVersion(options.minVersionForCollab);
-	return makeVersionedValidatedCodec(options, new Set([ForestFormatVersion.v1]), Format, {
+	const writeVersion = clientVersionToForestFormatVersion(options.minVersionForCollab);
+	const formatSchema = FormatCommon(writeVersion);
+	return makeVersionedValidatedCodec(options, validVersions, formatSchema, {
 		encode: (data: FieldSet, context: FieldBatchEncodingContext): Format => {
 			const keys: FieldKey[] = [];
 			const fields: ITreeCursorSynchronous[] = [];
@@ -70,5 +82,5 @@ export function makeForestSummarizerCodec(
 export function getCodecTreeForForestFormat(
 	clientVersion: MinimumVersionForCollab,
 ): CodecTree {
-	return { name: "Forest", version: clientVersionToForestSummaryVersion(clientVersion) };
+	return { name: "Forest", version: clientVersionToForestFormatVersion(clientVersion) };
 }

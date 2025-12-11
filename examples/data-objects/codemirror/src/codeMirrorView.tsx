@@ -73,7 +73,7 @@ class CodeMirrorView {
 		}
 	}
 
-	private setupEditor() {
+	private setupEditor(): void {
 		this.codeMirror = CodeMirror.fromTextArea(
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			this.textArea!,

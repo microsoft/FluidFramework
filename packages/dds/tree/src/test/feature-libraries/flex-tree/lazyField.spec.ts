@@ -53,9 +53,9 @@ import {
 	numberSchema,
 	SchemaFactory,
 	stringSchema,
-	getStoredSchema,
 	toInitialSchema,
 	restrictiveStoredSchemaGenerationOptions,
+	toStoredSchema,
 } from "../../../simple-tree/index.js";
 import { singleJsonCursor } from "../../json/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
@@ -448,13 +448,8 @@ describe("LazyField", () => {
 			persistedMetadata: undefined,
 		};
 		const schema: TreeStoredSchema = {
+			...toStoredSchema(numberSchema, restrictiveStoredSchemaGenerationOptions),
 			rootFieldSchema: rootSchema,
-			nodeSchema: new Map([
-				[
-					brand(numberSchema.identifier),
-					getStoredSchema(numberSchema, restrictiveStoredSchemaGenerationOptions),
-				],
-			]),
 		};
 
 		/**
