@@ -3,18 +3,22 @@
  * Licensed under the MIT License.
  */
 
-const fluidRoute = require("@fluid-example/webpack-fluid-loader");
+const {
+	createExampleDriverServiceWebpackPlugin,
+	createOdspMiddlewares,
+} = require("@fluid-example/example-webpack-integration");
 const path = require("path");
-const webpack = require("webpack");
 const { merge } = require("webpack-merge");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
+const webpack = require("webpack");
 
 module.exports = (env) => {
-	const isProduction = env?.production;
+	const { production, service } = env;
 
 	return merge(
 		{
 			entry: {
-				main: "./src/index.ts",
+				app: "./src/app.ts",
 			},
 			resolve: {
 				extensionAlias: {
@@ -36,23 +40,27 @@ module.exports = (env) => {
 				library: "[name]",
 				// https://github.com/webpack/webpack/issues/5767
 				// https://github.com/webpack/webpack/issues/7939
-				devtoolNamespace: "fluid-example/dice-roller",
+				devtoolNamespace: "fluid-example/diceroller",
 				libraryTarget: "umd",
 			},
 			plugins: [
 				new webpack.ProvidePlugin({
 					process: "process/browser.js",
 				}),
+				new HtmlWebpackPlugin({
+					template: "./src/index.html",
+				}),
+				createExampleDriverServiceWebpackPlugin(service),
 			],
-			// This impacts which files are watched by the dev server (and likely by webpack if watch is true).
-			// This should be configurable under devServer.static.watch
-			// (see https://github.com/webpack/webpack-dev-server/blob/master/migration-v4.md) but that does not seem to work.
-			// The CLI options for disabling watching don't seem to work either, so this may be a symptom of using webpack4 with the newer webpack-cli and webpack-dev-server.
-			watchOptions: {
-				ignored: "**/node_modules/**",
+			devServer: {
+				setupMiddlewares: (middlewares) => {
+					if (service === "odsp") {
+						middlewares.push(...createOdspMiddlewares());
+					}
+					return middlewares;
+				},
 			},
 		},
-		isProduction ? require("./webpack.prod.cjs") : require("./webpack.dev.cjs"),
-		fluidRoute.devServerConfig(__dirname, env),
+		production ? require("./webpack.prod.cjs") : require("./webpack.dev.cjs"),
 	);
 };
