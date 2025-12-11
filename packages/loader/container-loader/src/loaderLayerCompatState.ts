@@ -4,9 +4,9 @@
  */
 
 import {
+	generation,
 	type ILayerCompatDetails,
 	type ILayerCompatSupportRequirements,
-	generation,
 } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
