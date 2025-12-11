@@ -492,28 +492,27 @@ export class ChannelCollection
 				continue;
 			}
 
-			// If a non-local operation then go and create the object, otherwise mark it as officially attached.
-			// Check for collision with unbound (not-yet-attached) data store first
+			// Check for collision with local (not yet live / known to other clients) DataStore
+			// This is not a DataCorruption case if we crash the container before it attaches (it's a DataProcessingError instead)
 			if (this.contexts.getUnbound(attachMessage.id) !== undefined) {
-				// TODO: dataStoreId may require a different tag from PackageData #7488
-				const error = new DataCorruptionError(
-					// pre-0.58 error message: duplicateDataStoreCreatedWithExistingId
-					"Duplicate DataStore created with existing id for not-yet-attached DataStore",
-					{
-						...extractSafePropertiesFromMessage(envelope),
-						...tagCodeArtifacts({ dataStoreId: attachMessage.id }),
-					},
+				const error = DataProcessingError.create(
+					"Local DataStore matches remote DataStore id",
+					"DataStoreAttach",
+					envelope,
+					// TODO: dataStoreId may require a different tag from PackageData #7488
+					{ ...tagCodeArtifacts({ dataStoreId: attachMessage.id }) },
 				);
 				throw error;
 			}
 			// Check for collision with already processed (attaching/attached or aliased) data store
+			// i.e. We have two attach messages sequenced for the same data store id - This is data corruption
 			if (this.alreadyProcessed(attachMessage.id)) {
-				// TODO: dataStoreId may require a different tag from PackageData #7488
 				const error = new DataCorruptionError(
 					// pre-0.58 error message: duplicateDataStoreCreatedWithExistingId
-					"Duplicate DataStore created with existing id for attaching/attached DataStore",
+					"Duplicate DataStore created with existing id",
 					{
 						...extractSafePropertiesFromMessage(envelope),
+						// TODO: dataStoreId may require a different tag from PackageData #7488
 						...tagCodeArtifacts({ dataStoreId: attachMessage.id }),
 					},
 				);

@@ -125,7 +125,17 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 	public static create(
 		errorMessage: string,
 		dataProcessingCodepath: string,
-		sequencedMessage?: ISequencedDocumentMessage,
+		messageLike?: Partial<
+			Pick<
+				ISequencedDocumentMessage,
+				| "clientId"
+				| "sequenceNumber"
+				| "clientSequenceNumber"
+				| "referenceSequenceNumber"
+				| "minimumSequenceNumber"
+				| "timestamp"
+			>
+		>,
 		props: ITelemetryPropertiesExt = {},
 		stackTraceLimit?: number,
 	): IFluidErrorBase {
@@ -139,7 +149,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 			const dataProcessingError = DataProcessingError.wrapIfUnrecognized(
 				errorMessage,
 				dataProcessingCodepath,
-				sequencedMessage,
+				messageLike,
 			);
 			dataProcessingError.addTelemetryProperties(props);
 
