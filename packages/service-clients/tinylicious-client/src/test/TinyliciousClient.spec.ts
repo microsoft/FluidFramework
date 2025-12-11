@@ -44,6 +44,7 @@ const waitForDataCorruption = async (container: IFluidContainer): Promise<void> 
 			if (error?.errorType === ContainerErrorTypes.dataCorruptionError) {
 				resolve();
 			} else {
+				// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 				reject(error);
 			}
 		}),
