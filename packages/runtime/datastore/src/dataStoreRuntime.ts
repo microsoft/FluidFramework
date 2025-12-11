@@ -308,9 +308,11 @@ export class FluidDataStoreRuntime
 	private readonly submitMessagesWithoutEncodingHandles: boolean;
 
 	/**
-	 * Minimum version of the Fluid Framework runtime that is required to collaborate on new documents. DDSes may read this value to
-	 * determine which feature flags should be enabled. This property is consumed by `SharedObjectFactory` (which are
-	 * implementations of {@link @fluidframework/datastore-definitions#IChannelFactory}).
+	 * Minimum version of the Fluid Framework runtime that is required to collaborate on new documents.
+	 * @remarks
+	 * DDSes may read this value to determine which feature flags should be enabled.
+	 * This property is consumed by `SharedObjectFactory` (which are implementations of
+	 * {@link @fluidframework/datastore-definitions#IChannelFactory}).
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
 	 */
 	public readonly minVersionForCollab: MinimumVersionForCollab;
