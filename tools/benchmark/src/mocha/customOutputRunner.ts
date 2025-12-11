@@ -7,9 +7,9 @@ import type { Test } from "mocha";
 
 import type { BenchmarkDescription, MochaExclusiveOptions, Titled } from "../Configuration";
 import type { CustomData } from "../ResultTypes";
-import { prettyNumber } from "../RunnerUtilities";
+import { prettyNumber, captureResults } from "../RunnerUtilities";
 
-import { emitResultsMocha, captureResults } from "./runnerUtilities";
+import { emitResultsMocha } from "./runnerUtilities";
 
 /**
  * Options to configure a benchmark that reports custom measurements.
