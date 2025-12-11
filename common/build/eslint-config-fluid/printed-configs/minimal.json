@@ -34,7 +34,6 @@
         "promise",
         "jsdoc",
         "@typescript-eslint",
-        "@rushstack/security",
         "@rushstack"
     ],
     "reportUnusedDisableDirectives": true,
