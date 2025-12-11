@@ -178,6 +178,7 @@ function initializePendingOpCount(): { value: number } {
 /**
  * Base data store class
  * @legacy @beta
+ * @sealed
  */
 export class FluidDataStoreRuntime
 	extends TypedEventEmitter<IFluidDataStoreRuntimeEvents>
