@@ -141,10 +141,7 @@ class SharedObjectFromKernel<
 		// to keep `FluidDataStoreRuntime.minVersionForCollab` as optional to maintain back-compat has passed.
 		const minVersionForCollab: MinimumVersionForCollab = (runtime as FluidDataStoreRuntime)
 			.minVersionForCollab;
-		assert(
-			minVersionForCollab !== undefined,
-			"minVersionForCollab must be defined",
-		);
+		assert(minVersionForCollab !== undefined, "minVersionForCollab must be defined");
 
 		this.#kernelArgs = {
 			sharedObject: this,
