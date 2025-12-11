@@ -12,7 +12,7 @@ export enum DataStoreMessageType {
     ChannelOp = "op"
 }
 
-// @beta @sealed @legacy
+// @beta @legacy
 export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>, policies?: Partial<IFluidDataStorePolicies>);
     // (undocumented)
