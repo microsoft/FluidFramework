@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	Breakable,
@@ -11,9 +12,8 @@ import {
 	throwIfBroken,
 	breakingMethod,
 	breakingClass,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../util/breakable.js";
-import { validateUsageError } from "../utils.js";
 
 describe("Breakable", () => {
 	const breakError = new Error("BreakFoo");
@@ -69,6 +69,16 @@ Error: BreakFoo`;
 
 		assert.throws(() => foo.read(1), validateUsageError(message));
 		assert.throws(() => foo.canBreak(1), validateUsageError(message));
+
+		// Check ".cause" is set
+		assert.throws(
+			() => foo.canBreak(1),
+			(error: Error) => {
+				// TODO: remove cast when targeting ES2022 lib or later.
+				assert.equal((error as { cause?: unknown }).cause, breakError);
+				return true;
+			},
+		);
 	});
 
 	it("reentrant", () => {

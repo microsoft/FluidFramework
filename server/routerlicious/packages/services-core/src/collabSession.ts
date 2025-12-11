@@ -48,6 +48,14 @@ export interface ICollaborationSessionTelemetryProperties {
 	 * The maximum number of clients that have been connected to the session at the same time.
 	 */
 	maxConcurrentClients: number;
+	/**
+	 * Total number of operations emitted by all clients in this session.
+	 */
+	sessionOpCount?: number;
+	/**
+	 * Total number of signals emitted by all clients in this session.
+	 */
+	sessionSignalCount?: number;
 }
 
 /**
@@ -129,7 +137,7 @@ export interface ICollaborationSessionManager {
 	/**
 	 * Get a list of all active sessions.
 	 */
-	getAllSessions(): Promise<ICollaborationSession[]>;
+	getAllSessions(limit?: number): Promise<ICollaborationSession[]>;
 	/**
 	 * Iterate over all active sessions, calling the provided callback for each session.
 	 *
@@ -140,8 +148,12 @@ export interface ICollaborationSessionManager {
 	 * The callback should be designed to handle each session independently and not rely on the order of processing.
 	 *
 	 * @param callback - Function to call for each session.
+	 * @param limit - Optional maximum number of sessions to process in this call. If not provided, all sessions will be processed.
 	 */
-	iterateAllSessions<T>(callback: (session: ICollaborationSession) => Promise<T>): Promise<T[]>;
+	iterateAllSessions<T>(
+		callback: (session: ICollaborationSession) => Promise<T>,
+		limit?: number,
+	): Promise<T[]>;
 }
 
 /**
@@ -183,11 +195,16 @@ export interface ICollaborationSessionTracker {
 	 * @param client - Information about the unique client leaving/ending the session.
 	 * @param sessionInfo - Information to identify the document session being joined/started.
 	 * @param otherConnectedClients - Optional list of other clients currently connected to the document session.
+	 * @param clientMetrics - Optional client-specific metrics to add to session totals.
 	 */
 	endClientSession(
 		client: Omit<ICollaborationSessionClient, "joinedTime">,
 		sessionId: Pick<ICollaborationSession, "tenantId" | "documentId">,
 		knownConnectedClients?: ISignalClient[],
+		clientMetrics?: {
+			opCount?: number;
+			signalCount?: number;
+		},
 	): Promise<void>;
 	/**
 	 * Remove all currently tracked sessions that are no longer active and should have expired based on the session timeout.
@@ -195,6 +212,8 @@ export interface ICollaborationSessionTracker {
 	 * @remarks
 	 * This should be called periodically to ensure that sessions are not kept active indefinitely due to the service with the original
 	 * timer shutting down or other errors related to session clean up.
+	 *
+	 * @param limit - Optional maximum number of sessions to prune in this call. If not provided, all inactive sessions will be pruned.
 	 */
-	pruneInactiveSessions(): Promise<void>;
+	pruneInactiveSessions(limit?: number): Promise<void>;
 }

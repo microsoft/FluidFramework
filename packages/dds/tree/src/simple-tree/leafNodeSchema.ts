@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
-import { LeafNodeStoredSchema, type TreeValue, ValueSchema } from "../core/index.js";
+import { type TreeValue, ValueSchema } from "../core/index.js";
 import {
 	type FlexTreeNode,
 	isFlexTreeNode,
@@ -63,8 +63,7 @@ export class LeafNodeSchema<Name extends string, const T extends ValueSchema>
 					allowedTypes: ReadonlySet<TreeNodeSchema>,
 				): FlexContent => leafToFlexContent(data, this, allowedTypes),
 			})),
-		childAnnotatedAllowedTypes: [],
-		toStored: () => new LeafNodeStoredSchema(this.leafKind),
+		childAllowedTypes: [],
 	};
 	#initializedData: TreeNodeSchemaInitializedData | undefined;
 

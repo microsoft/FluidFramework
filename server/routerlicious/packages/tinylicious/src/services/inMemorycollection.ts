@@ -47,7 +47,7 @@ export class Collection<T> implements ICollection<T> {
 		if (!value) {
 			throw new Error("Not found");
 		}
-		// eslint-disable-next-line import/namespace
+		// eslint-disable-next-line import-x/namespace
 		_.extend(value, set);
 	}
 
@@ -57,13 +57,13 @@ export class Collection<T> implements ICollection<T> {
 			this.collection.push(set);
 		}
 
-		// eslint-disable-next-line import/namespace
+		// eslint-disable-next-line import-x/namespace
 		_.extend(value, set);
 	}
 
 	public async insertOne(value: any): Promise<any> {
 		if (this.findOneInternal(value) !== null) {
-			return Promise.resolve("existing object");
+			return "existing object";
 		}
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -80,9 +80,9 @@ export class Collection<T> implements ICollection<T> {
 	}
 
 	public async insertMany(values: any[], ordered: boolean): Promise<void> {
-		values.forEach((value) => {
+		for (const value of values) {
 			this.collection.push(value);
-		});
+		}
 	}
 
 	private removeOneInternal(value: any): void {
@@ -101,9 +101,9 @@ export class Collection<T> implements ICollection<T> {
 
 	public async deleteMany(filter: any): Promise<any> {
 		const values = this.findInternal(filter);
-		values.forEach((value) => {
+		for (const value of values) {
 			this.removeOneInternal(value);
-		});
+		}
 		return values;
 	}
 
@@ -131,18 +131,18 @@ export class Collection<T> implements ICollection<T> {
 		function getValueByKey(propertyBag, key: string) {
 			const keys = key.split(".");
 			let value = propertyBag;
-			keys.forEach((splitKey) => {
+			for (const splitKey of keys) {
 				value = value[splitKey];
-			});
+			}
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return value;
 		}
 
 		const queryKeys = Object.keys(query);
 		let filteredCollection = this.collection;
-		queryKeys.forEach((key) => {
+		for (const key of queryKeys) {
 			if (!query[key]) {
-				return;
+				continue;
 			}
 			if (query[key].$gt > 0 || query[key].$lt > 0) {
 				if (query[key].$gt > 0) {
@@ -160,7 +160,7 @@ export class Collection<T> implements ICollection<T> {
 					(value) => getValueByKey(value, key) === query[key],
 				);
 			}
-		});
+		}
 
 		if (sort && Object.keys(sort).length === 1) {
 			// eslint-disable-next-line no-inner-declarations

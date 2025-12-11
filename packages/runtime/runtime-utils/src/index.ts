@@ -9,6 +9,7 @@ export {
 	createResponseError,
 	exceptionToResponse,
 	responseToException,
+	asLegacyAlpha,
 } from "./dataStoreHelpers.js";
 export {
 	compareFluidHandles,
@@ -19,6 +20,7 @@ export {
 	isFluidHandlePayloadPending,
 	isLocalFluidHandle,
 	isSerializedHandle,
+	lookupTemporaryBlobStorageId,
 	toFluidHandleErased,
 	toFluidHandleInternal,
 } from "./handles.js";
@@ -62,12 +64,16 @@ export {
 export {
 	configValueToMinVersionForCollab,
 	defaultMinVersionForCollab,
-	getValidationForRuntimeOptions,
+	validateConfigMapOverrides,
+	getConfigForMinVersionForCollab,
 	getConfigsForMinVersionForCollab,
 	isValidMinVersionForCollab,
+	validateMinimumVersionForCollab,
+	lowestMinVersionForCollab,
 } from "./compatibilityBase.js";
 export type {
 	ConfigMap,
+	ConfigMapEntry,
 	ConfigValidationMap,
 	MinimumMinorSemanticVersion,
 	SemanticVersion,

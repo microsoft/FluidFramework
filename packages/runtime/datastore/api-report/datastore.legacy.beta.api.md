@@ -17,6 +17,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>, policies?: Partial<IFluidDataStorePolicies>);
     // (undocumented)
     get absolutePath(): string;
+    // (undocumented)
+    get activeLocalOperationActivity(): "applyStashed" | "rollback" | undefined;
     addChannel(channel: IChannel): void;
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
@@ -68,6 +70,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get logger(): ITelemetryLoggerExt;
     makeVisibleAndAttachGraph(): void;
+    readonly minVersionForCollab?: MinimumVersionForCollab | undefined;
     notifyReadOnlyState(readonly: boolean): void;
     // (undocumented)
     get objectsRoutingContext(): this;
@@ -92,8 +95,6 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
-    // (undocumented)
-    submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
     submitSignal(type: string, content: unknown, targetClientId?: string): void;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
     updateUsedRoutes(usedRoutes: string[]): void;

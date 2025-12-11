@@ -4,14 +4,13 @@
  */
 
 import type { FieldKindIdentifier } from "../../core/index.js";
-
-import type { FieldKindWithEditor } from "./fieldKindWithEditor.js";
+import type { FlexFieldKind } from "./fieldKind.js";
 
 /**
  * Configuration for a single field kind.
  */
 export interface FieldKindConfigurationEntry {
-	readonly kind: FieldKindWithEditor;
+	readonly kind: FlexFieldKind;
 	/**
 	 * The format to be used for encoding changesets for this field kind.
 	 */

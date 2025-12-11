@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ICacheEntry } from "@fluidframework/odsp-driver-definitions/internal";
+import { type ICacheEntry } from "@fluidframework/driver-definitions/internal";
+import { getKeyForCacheEntry } from "@fluidframework/driver-utils/internal";
 import { openDB } from "idb";
 
 import { FluidCache } from "../FluidCache.js";
@@ -11,10 +12,9 @@ import {
 	FluidDriverCacheDBName,
 	FluidDriverObjectStoreName,
 	getFluidCacheIndexedDbInstance,
-	getKeyForCacheEntry,
 } from "../FluidCacheIndexedDb.js";
 
-// eslint-disable-next-line import/no-unassigned-import, @typescript-eslint/no-require-imports, import/no-internal-modules
+// eslint-disable-next-line import-x/no-unassigned-import, @typescript-eslint/no-require-imports, import-x/no-internal-modules
 require("fake-indexeddb/auto");
 
 const mockPartitionKey = "FAKEPARTITIONKEY";
@@ -23,17 +23,17 @@ class DateMock {
 	// The current time being used by the mock
 	public static mockTimeMs: number = 0;
 
-	public static now() {
+	public static now(): number {
 		return DateMock.mockTimeMs;
 	}
 
-	public getTime() {
+	public getTime(): number {
 		return DateMock.mockTimeMs;
 	}
 }
 
 // Sets up a mock date time for the current test. Returns a function that should be called to reset the environment
-function setupDateMock(startMockTime: number) {
+function setupDateMock(startMockTime: number): () => void {
 	const realDate = window.Date;
 	DateMock.mockTimeMs = startMockTime;
 	(window.Date as any) = DateMock;
@@ -64,7 +64,7 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 		maxCacheItemAge?: number;
 
 		partitionKey?: string | null;
-	}) {
+	}): FluidCache {
 		return new FluidCache({
 			partitionKey: config?.partitionKey ?? mockPartitionKey,
 			maxCacheItemAge: config?.maxCacheItemAge ?? 3 * 24 * 60 * 60 * 1000,
@@ -74,7 +74,7 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 	describe(`Fluid Cache tests: immediateClose: ${immediateClose}`, () => {
 		beforeEach(() => {
 			// Reset the indexed db before each test so that it starts off in an empty state
-			// eslint-disable-next-line import/no-internal-modules, @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+			// eslint-disable-next-line import-x/no-internal-modules, @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 			const FDBFactory = require("fake-indexeddb/lib/FDBFactory");
 			(window.indexedDB as any) = new FDBFactory();
 		});

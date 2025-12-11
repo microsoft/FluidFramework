@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { fork, type ChildProcess } from "node:child_process";
+import { fork } from "node:child_process";
+import type { ChildProcess as AnyChildProcess } from "node:child_process";
 
 import { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { AttendeeId } from "@fluidframework/presence/beta";
@@ -16,6 +17,8 @@ import type {
 	LatestMapValueUpdatedEvent,
 	LatestValueGetResponseEvent,
 	LatestMapValueGetResponseEvent,
+	MessageToChild,
+	EventEntry,
 } from "./messageTypes.js";
 
 /**
@@ -39,6 +42,10 @@ export const testConsole = {
 	error: console.error,
 };
 
+interface ChildProcess extends AnyChildProcess {
+	send(message: MessageToChild): boolean;
+}
+
 /**
  * Fork child processes to simulate multiple Fluid clients.
  *
@@ -51,6 +58,7 @@ export const testConsole = {
  * @returns A collection of child processes and a promise that rejects on the first child error.
  */
 export async function forkChildProcesses(
+	testLabel: string,
 	numProcesses: number,
 	cleanUpAccumulator: (() => void)[],
 ): Promise<{
@@ -64,7 +72,8 @@ export async function forkChildProcesses(
 	const childReadyPromises: Promise<void>[] = [];
 	const childErrorPromises: Promise<never>[] = [];
 	for (let i = 0; i < numProcesses; i++) {
-		const child = fork("./lib/test/multiprocess/childClient.js", [
+		const child = fork("./lib/test/multiprocess/childClient.tool.js", [
+			testLabel,
 			`child ${i}` /* identifier passed to child process */,
 			childLoggingVerbosity /* console logging verbosity */,
 		]);
@@ -85,8 +94,11 @@ export async function forkChildProcesses(
 		});
 		childReadyPromises.push(readyPromise);
 		const errorPromise = new Promise<never>((_resolve, reject) => {
-			child.on("error", (error) => {
+			child.once("error", (error) => {
 				reject(new Error(`Child${i} process errored: ${error.message}`));
+			});
+			child.once("exit", (code, signal) => {
+				reject(new Error(`Child${i} process exited: code ${code}, signal ${signal}`));
 			});
 		});
 		childErrorPromises.push(errorPromise);
@@ -99,6 +111,42 @@ export async function forkChildProcesses(
 }
 
 /**
+ * Instructs all listed child processes to send debug reports and then the
+ * collection is output sorted by timestamp. Report content is up to the child
+ * processes, but typically includes messages sent and some telemetry events.
+ */
+export async function executeDebugReports(
+	childrenRequestedToReport: ChildProcess[],
+): Promise<void> {
+	const debugReportPromises: Promise<EventEntry[]>[] = [];
+	for (const child of childrenRequestedToReport) {
+		const debugReportPromise = new Promise<EventEntry[]>((resolve) => {
+			const handler = (msg: MessageFromChild): void => {
+				if (msg.event === "debugReportComplete") {
+					resolve(msg.log ?? []);
+					child.off("message", handler);
+				}
+			};
+			child.on("message", handler);
+		});
+		debugReportPromises.push(debugReportPromise);
+		child.send({ command: "debugReport", sendEventLog: true, reportAttendees: true });
+	}
+
+	const logs = await Promise.all(debugReportPromises);
+	const combinedLogs = logs.flat().sort((a, b) => a.timestamp - b.timestamp);
+	for (const entry of combinedLogs) {
+		testConsole.log(
+			`[${new Date(entry.timestamp).toISOString()}] [${entry.agentId}] [${entry.eventCategory}] ${entry.eventName}${
+				entry.details
+					? ` - ${typeof entry.details === "string" ? entry.details : JSON.stringify(entry.details)}`
+					: ""
+			}`,
+		);
+	}
+}
+
+/**
  * Creates a {@link ConnectCommand} for a test user with a deterministic id and name.
  *
  * @param id - Suffix used to construct stable test user identity.
@@ -106,6 +154,7 @@ export async function forkChildProcesses(
 function composeConnectMessage(
 	id: string | number,
 	scopes: ScopeType[] = [ScopeType.DocRead],
+	connectTimeoutMs: number,
 ): ConnectCommand {
 	return {
 		command: "connect",
@@ -114,8 +163,50 @@ function composeConnectMessage(
 			name: `test-user-name-${id}`,
 		},
 		scopes,
-		createScopes: [ScopeType.DocWrite],
+		createScopes: [ScopeType.DocWrite, ScopeType.DocRead],
+		connectTimeoutMs,
 	};
+}
+
+/**
+ * Listens for a "connected" response from a child process
+ * allowing/handling subset of other expected messages.
+ */
+function listenForConnectedResponse({
+	child,
+	childId,
+	onConnected,
+	reject,
+}: {
+	child: ChildProcess;
+	childId: number | string;
+	/**
+	 * Will be called up to once when a "connected" message is received.
+	 */
+	onConnected: (msg: Extract<MessageFromChild, { event: "connected" }>) => void;
+	/**
+	 * Callback to reject for unexpected messages or child errors.
+	 */
+	reject: (reason?: unknown) => void;
+}): void {
+	const listener = (msg: MessageFromChild): void => {
+		if (msg.event === "connected") {
+			child.off("message", listener);
+			onConnected(msg);
+		} else if (msg.event === "error") {
+			child.off("message", listener);
+			reject(new Error(`Child ${childId} process error: ${msg.error}`));
+		} else if (msg.event !== "ack") {
+			child.off("message", listener);
+			// This is not strictly required, but is current expectation.
+			reject(
+				new Error(
+					`Unexpected message from child ${childId} while connecting: ${JSON.stringify(msg)}`,
+				),
+			);
+		}
+	};
+	child.on("message", listener);
 }
 
 interface CreatorAttendeeIdAndAttendeePromises {
@@ -140,25 +231,36 @@ export async function connectChildProcesses(
 	const containerReadyPromise = new Promise<{
 		containerCreatorAttendeeId: AttendeeId;
 		containerId: string;
-	}>((resolve, reject) => {
-		firstChild.once("message", (msg: MessageFromChild) => {
-			if (msg.event === "connected" && msg.containerId) {
-				resolve({
-					containerCreatorAttendeeId: msg.attendeeId,
-					containerId: msg.containerId,
-				});
-			} else {
-				reject(new Error(`Non-connected message from child0: ${JSON.stringify(msg)}`));
-			}
-		});
-	});
+	}>((resolve, reject) =>
+		listenForConnectedResponse({
+			child: firstChild,
+			childId: 0,
+			onConnected: (msg) => {
+				if (msg.containerId) {
+					resolve({
+						containerCreatorAttendeeId: msg.attendeeId,
+						containerId: msg.containerId,
+					});
+				} else {
+					reject(
+						new Error(
+							`Child 0 (creator) connected without containerId: ${JSON.stringify(msg)}`,
+						),
+					);
+				}
+			},
+			reject,
+		}),
+	);
 	{
 		// Note that DocWrite is used to have this attendee be the "leader".
 		// DocRead would also be valid as DocWrite is specified for attach when there
 		// is no document id (container id).
-		const connectContainerCreator = composeConnectMessage(0, [
-			writeClients > 0 ? ScopeType.DocWrite : ScopeType.DocRead,
-		]);
+		const connectContainerCreator = composeConnectMessage(
+			0,
+			writeClients > 0 ? [ScopeType.DocWrite, ScopeType.DocRead] : [ScopeType.DocRead],
+			/* connectTimeoutMs */ readyTimeoutMs,
+		);
 		firstChild.send(connectContainerCreator);
 	}
 	const { containerCreatorAttendeeId, containerId } = await timeoutAwait(
@@ -167,7 +269,10 @@ export async function connectChildProcesses(
 			durationMs: readyTimeoutMs,
 			errorMsg: "did not receive 'connected' from child process",
 		},
-	);
+	).catch(async (error) => {
+		await executeDebugReports([firstChild]);
+		throw error;
+	});
 
 	const attendeeIdPromises: Promise<AttendeeId>[] = [];
 	for (const [index, child] of childProcesses.entries()) {
@@ -175,20 +280,23 @@ export async function connectChildProcesses(
 			attendeeIdPromises.push(Promise.resolve(containerCreatorAttendeeId));
 			continue;
 		}
-		const message = composeConnectMessage(index, [
-			index < writeClients ? ScopeType.DocWrite : ScopeType.DocRead,
-		]);
+		const message = composeConnectMessage(
+			index,
+			index < writeClients ? [ScopeType.DocWrite, ScopeType.DocRead] : [ScopeType.DocRead],
+			/* connectTimeoutMs */ readyTimeoutMs,
+		);
 		message.containerId = containerId;
 		attendeeIdPromises.push(
-			new Promise<AttendeeId>((resolve, reject) => {
-				child.once("message", (msg: MessageFromChild) => {
-					if (msg.event === "connected") {
+			new Promise<AttendeeId>((resolve, reject) =>
+				listenForConnectedResponse({
+					child,
+					childId: index,
+					onConnected: (msg) => {
 						resolve(msg.attendeeId);
-					} else if (msg.event === "error") {
-						reject(new Error(`Child process error: ${msg.error}`));
-					}
-				});
-			}),
+					},
+					reject,
+				}),
+			),
 		);
 		child.send(message);
 	}
@@ -234,6 +342,7 @@ export async function connectAndListenForAttendees(
 					if (msg.event === "attendeeConnected") {
 						attendeesJoinedEvents++;
 						if (attendeesJoinedEvents >= attendeeCountRequired) {
+							child.off("message", listenForAttendees);
 							resolve();
 						}
 					}
@@ -248,6 +357,10 @@ export async function connectAndListenForAttendees(
 		readyTimeoutMs: childConnectTimeoutMs,
 	});
 
+	// These actions are not awaited. They are here to provide additional logging.
+	// It is up to the caller to await attendeeIdPromises if desired. This can mean
+	// An "error" message is output, but the caller does not care about attendee
+	// ids and proceeds.
 	Promise.all(connectResult.attendeeIdPromises)
 		.then(() => console.log("All attendees connected."))
 		.catch((error) => {
@@ -321,7 +434,7 @@ export async function connectAndWaitForAttendees(
 export async function registerWorkspaceOnChildren(
 	children: ChildProcess[],
 	workspaceId: string,
-	options: { latest?: boolean; latestMap?: boolean; timeoutMs: number },
+	options: { latest?: true; latestMap?: true; timeoutMs: number },
 ): Promise<void> {
 	const { latest, latestMap, timeoutMs } = options;
 	const promises = children.map(async (child, index) => {

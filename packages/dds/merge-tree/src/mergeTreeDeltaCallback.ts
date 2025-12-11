@@ -6,7 +6,7 @@
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import type { ISegment } from "./mergeTreeNodes.js";
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 import type { IMergeTreeGroupMsg, IMergeTreeOp, MergeTreeDeltaType } from "./ops.js";
 import type { PropertySet } from "./properties.js";
 
@@ -100,7 +100,7 @@ export interface IMergeTreeSegmentDelta {
 	/**
 	 * A property set containing changes to properties on this segment.
 	 *
-	 * @remarks - Deleting a property is represented using `null` as the value.
+	 * @remarks Deleting a property is represented using `null` as the value.
 	 * @example
 	 *
 	 * An annotation change which deleted the property "foo" and set "bar" to 5 would be represented as:
@@ -117,13 +117,13 @@ export interface IMergeTreeDeltaOpArgs {
 	 * The group op which contains the operation
 	 * if there operation is part of a group op.
 	 */
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	readonly groupOp?: IMergeTreeGroupMsg;
 
 	/**
 	 * The {@link IMergeTreeOp} corresponding to the delta.
 	 *
-	 * @remarks - This is useful for determining the type of change (see {@link (MergeTreeDeltaType:type)}).
+	 * @remarks This is useful for determining the type of change (see {@link (MergeTreeDeltaType:type)}).
 	 */
 	readonly op: IMergeTreeOp;
 
@@ -151,7 +151,7 @@ export type MergeTreeDeltaCallback = (
 /**
  * @legacy @beta
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
 export interface IMergeTreeMaintenanceCallbackArgs
 	extends IMergeTreeDeltaCallbackArgs<MergeTreeMaintenanceType> {}
 

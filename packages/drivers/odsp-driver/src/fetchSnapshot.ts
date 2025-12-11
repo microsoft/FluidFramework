@@ -29,6 +29,7 @@ import {
 	isFluidError,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
+
 import { v4 as uuid } from "uuid";
 
 import {
@@ -294,6 +295,7 @@ async function fetchLatestSnapshotCore(
 		const internalFarmType = checkForKnownServerFarmType(odspResolvedUrl.siteUrl);
 		const isRedemptionNonDurable: boolean =
 			odspResolvedUrl.shareLinkInfo?.isRedemptionNonDurable === true;
+		const fileVersion = odspResolvedUrl.fileVersion ?? undefined;
 
 		const perfEvent = {
 			eventName,
@@ -547,6 +549,7 @@ async function fetchLatestSnapshotCore(
 				useLegacyFlowWithoutGroups:
 					useLegacyFlowWithoutGroupsForSnapshotFetch(loadingGroupIds),
 				userOps: snapshot.ops?.filter((op) => isRuntimeMessage(op)).length ?? 0,
+				fileVersion,
 				// Measures time to make fetch call. Should be similar to
 				// fetchStartToResponseEndTime - receiveContentTime, i.e. it looks like it's time till first byte /
 				// end of response headers

@@ -4,16 +4,16 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentServiceFactory,
+	type IPersistedCache,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	LocalDocumentServiceFactory,
 	LocalSessionStorageDbFactory,
 } from "@fluidframework/local-driver/internal";
 import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver/internal";
-import {
-	HostStoragePolicy,
-	IPersistedCache,
-} from "@fluidframework/odsp-driver-definitions/internal";
+import { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
@@ -31,7 +31,7 @@ export function getDocumentServiceFactory(
 	odspHostStoragePolicy?: HostStoragePolicy,
 ): IDocumentServiceFactory {
 	const userId = uuid();
-	const match = userId.match(/^([\da-f]{8})-([\da-f]{4})/);
+	const match = /^([\da-f]{8})-([\da-f]{4})/.exec(userId);
 	const userName = match !== null ? match[0] : userId; // Just use the first two segments of the (fake) userId as a fake name.
 
 	const getUser = (): IDevServerUser => ({

@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { Type } from "@sinclair/typebox";
 
 import { type IJsonCodec, withSchemaValidation } from "../../codec/index.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 describe("Codec APIs", () => {
@@ -17,19 +17,19 @@ describe("Codec APIs", () => {
 			encode: (x) => x,
 			decode: (x) => x,
 		};
-		const codec = withSchemaValidation(Type.Number(), idCodec, typeboxValidator);
+		const codec = withSchemaValidation(Type.Number(), idCodec, FormatValidatorBasic);
 		describe("rejects invalid data", () => {
 			it("on encode", () => {
 				assert.throws(
 					() => codec.encode("bad data" as unknown as number),
-					(error: Error) => validateAssertionError(error, /Encoded schema should validate/),
+					validateAssertionError(/Encoded schema should validate/),
 				);
 			});
 
 			it("on decode", () => {
 				assert.throws(
 					() => codec.decode("bad data" as unknown as number),
-					(error: Error) => validateAssertionError(error, /Encoded schema should validate/),
+					validateAssertionError(/Encoded schema should validate/),
 				);
 			});
 		});

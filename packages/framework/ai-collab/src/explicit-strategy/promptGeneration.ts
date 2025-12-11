@@ -18,7 +18,7 @@ import {
 	type TreeNode,
 	KeyEncodingOptions,
 } from "@fluidframework/tree/internal";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { createZodJsonValidator } from "typechat/zod";
 
 import { objectIdKey, type TreeEdit } from "./agentEditTypes.js";
@@ -308,7 +308,7 @@ function getDef(defs: Record<string, JsonNodeSchema>, ref: string): JsonNodeSche
  * TBD
  */
 export function getFriendlySchemaName(schemaName: string): string {
-	const matches = schemaName.match(/[^.]+$/);
+	const matches = /[^.]+$/.exec(schemaName);
 	if (matches === null) {
 		// empty scope
 		return schemaName;

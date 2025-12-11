@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
 
@@ -12,12 +13,12 @@ import type {
 	GraphCommit,
 	ChangeEncodingContext,
 } from "../../core/index.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
-// eslint-disable-next-line import/no-internal-modules
+import { FormatValidatorBasic } from "../../external-utilities/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { makeMessageCodec, makeMessageCodecs } from "../../shared-tree-core/messageCodecs.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { Message } from "../../shared-tree-core/messageFormat.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
+import type { Message } from "../../shared-tree-core/messageFormatV1ToV4.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import type { DecodedMessage } from "../../shared-tree-core/messageTypes.js";
 import { TestChange } from "../testChange.js";
 import {
@@ -26,8 +27,9 @@ import {
 	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
-	validateUsageError,
 } from "../utils.js";
+import { currentVersion, DependentFormatVersion } from "../../codec/index.js";
+import { MessageFormatVersion } from "../../shared-tree-core/index.js";
 
 const commit1 = {
 	revision: mintRevisionTag(),
@@ -66,16 +68,20 @@ const testCases: EncodingTestData<
 		[
 			"Message with commit 1",
 			{
+				type: "commit",
 				sessionId: testIdCompressor.localSessionId,
 				commit: commit1,
+				branchId: "main",
 			},
 			dummyContext,
 		],
 		[
 			"Message with commit 2",
 			{
+				type: "commit",
 				sessionId: testIdCompressor.localSessionId,
 				commit: commit2,
+				branchId: "main",
 			},
 			dummyContext,
 		],
@@ -86,38 +92,48 @@ const testCases: EncodingTestData<
 			[
 				"Missing sessionId",
 				{
+					type: "commit",
 					commit: commit1,
+					branchId: "main",
 				},
 				dummyContext,
 			],
 			[
 				"Missing commit",
 				{
+					type: "commit",
 					sessionId: "session1",
+					branchId: "main",
 				},
 				dummyContext,
 			],
 			[
 				"Message with invalid sessionId",
 				{
+					type: "commit",
 					sessionId: 1,
 					commit: commit1,
+					branchId: "main",
 				},
 				dummyContext,
 			],
 			[
 				"Message with commit without revision",
 				{
+					type: "commit",
 					sessionId: "session1",
 					commit: commitWithoutRevision,
+					branchId: "main",
 				},
 				dummyContext,
 			],
 			[
 				"Message with invalid commit",
 				{
+					type: "commit",
 					sessionId: "session1",
 					commit: commitInvalid,
+					branchId: "main",
 				},
 				dummyContext,
 			],
@@ -126,90 +142,60 @@ const testCases: EncodingTestData<
 };
 
 describe("message codec", () => {
-	const family = makeMessageCodecs(TestChange.codecs, testRevisionTagCodec, {
-		jsonValidator: typeboxValidator,
-	});
+	const family = makeMessageCodecs(
+		TestChange.codecs,
+		DependentFormatVersion.fromUnique(1),
+		testRevisionTagCodec,
+		{
+			jsonValidator: FormatValidatorBasic,
+		},
+	);
 
-	makeEncodingTestSuite(family, testCases);
+	makeEncodingTestSuite(
+		family,
+		testCases,
+		undefined,
+		[MessageFormatVersion.v3, MessageFormatVersion.v4, MessageFormatVersion.vSharedBranches],
+		[undefined, MessageFormatVersion.v1, MessageFormatVersion.v2, MessageFormatVersion.v5],
+	);
 
 	describe("dispatching codec", () => {
-		const version = 1;
 		const codec = makeMessageCodec(
 			TestChange.codecs,
+			DependentFormatVersion.fromUnique(1),
 			testRevisionTagCodec,
 			{
-				jsonValidator: typeboxValidator,
+				jsonValidator: FormatValidatorBasic,
+				minVersionForCollab: currentVersion,
 			},
-			version,
 		);
 
 		const sessionId: SessionId = "sessionId" as SessionId;
 		it("Drops parent commit fields on encode", () => {
 			const revision = testIdCompressor.generateCompressedId();
 			const message: DecodedMessage<TestChange> = {
+				type: "commit",
 				sessionId,
 				commit: {
 					revision,
 					change: TestChange.mint([], 1),
 					parent: "Extra field that should be dropped" as unknown as GraphCommit<TestChange>,
 				},
+				branchId: "main",
 			};
 
 			const actual = codec.decode(codec.encode(message, { idCompressor: testIdCompressor }), {
 				idCompressor: testIdCompressor,
 			});
 			assert.deepEqual(actual, {
+				type: "commit",
+				branchId: "main",
 				sessionId,
 				commit: {
 					revision,
 					change: TestChange.mint([], 1),
 				},
 			});
-		});
-
-		it("accepts unversioned messages as version 1", () => {
-			const revision = 1 as EncodedRevisionTag;
-			const originatorId = createSessionId();
-			const encoded = JSON.stringify({
-				revision,
-				originatorId,
-				changeset: {},
-			} satisfies Message);
-			const actual = codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor });
-			assert.deepEqual(actual, {
-				commit: {
-					revision: testRevisionTagCodec.decode(revision, {
-						originatorId,
-						revision: undefined,
-						idCompressor: testIdCompressor,
-					}),
-					change: {},
-				},
-				sessionId: originatorId,
-			} satisfies DecodedMessage<unknown>);
-		});
-
-		it("accepts version 1 messages as version 1", () => {
-			const revision = 1 as EncodedRevisionTag;
-			const originatorId = createSessionId();
-			const encoded = JSON.stringify({
-				revision,
-				originatorId,
-				changeset: {},
-				version: 1,
-			} satisfies Message);
-			const actual = codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor });
-			assert.deepEqual(actual, {
-				commit: {
-					revision: testRevisionTagCodec.decode(revision, {
-						originatorId,
-						revision: undefined,
-						idCompressor: testIdCompressor,
-					}),
-					change: {},
-				},
-				sessionId: originatorId,
-			} satisfies DecodedMessage<unknown>);
 		});
 
 		it("rejects messages with invalid versions", () => {

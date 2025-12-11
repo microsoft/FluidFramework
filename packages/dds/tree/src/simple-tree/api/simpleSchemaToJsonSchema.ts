@@ -28,7 +28,7 @@ import type {
 	SimpleRecordNodeSchema,
 } from "../simpleSchema.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
-import type { TreeSchema } from "./configuration.js";
+import type { TreeSchema } from "../treeSchema.js";
 import type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
 import {
 	ArrayNodeSchema,
@@ -107,7 +107,10 @@ function convertNodeSchema(
 
 function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSchema {
 	const allowedTypes: JsonSchemaRef[] = [];
-	schema.allowedTypesIdentifiers.forEach((type) => {
+	const allowedTypesIdentifiers: ReadonlySet<string> = new Set(
+		schema.simpleAllowedTypes.keys(),
+	);
+	allowedTypesIdentifiers.forEach((type) => {
 		allowedTypes.push(createSchemaRef(type));
 	});
 
@@ -206,7 +209,10 @@ function convertRecordLikeNodeSchema(
 	schema: SimpleRecordNodeSchema | SimpleMapNodeSchema,
 ): JsonMapNodeSchema | JsonRecordNodeSchema {
 	const allowedTypes: JsonSchemaRef[] = [];
-	schema.allowedTypesIdentifiers.forEach((type) => {
+	const allowedTypesIdentifiers: ReadonlySet<string> = new Set(
+		schema.simpleAllowedTypes.keys(),
+	);
+	allowedTypesIdentifiers.forEach((type) => {
 		allowedTypes.push(createSchemaRef(type));
 	});
 

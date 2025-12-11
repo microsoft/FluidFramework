@@ -8,26 +8,25 @@ import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
 	type IContainerRuntimeOptionsInternal,
-	type LoadContainerRuntimeParams,
-	type MinimumVersionForCollab,
 } from "@fluidframework/container-runtime/internal";
 import {
 	IContainerRuntime,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	IContainerRuntimeWithResolveHandle_Deprecated,
 } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	RuntimeRequestHandler,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler/internal";
 import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import { RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
 
@@ -69,6 +68,7 @@ interface backCompat_ContainerRuntime {
  */
 export const createTestContainerRuntimeFactory = (
 	containerRuntimeCtor: typeof ContainerRuntime,
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Returning anonymous class type
 ) => {
 	return class extends RuntimeFactoryHelper {
 		constructor(
@@ -85,7 +85,7 @@ export const createTestContainerRuntimeFactory = (
 				},
 			},
 			public minVersionForCollab: MinimumVersionForCollab | undefined = undefined,
-			// eslint-disable-next-line import/no-deprecated
+			// eslint-disable-next-line import-x/no-deprecated
 			public requestHandlers: RuntimeRequestHandler[] = [],
 		) {
 			super();
@@ -135,7 +135,7 @@ export const createTestContainerRuntimeFactory = (
 						["default", Promise.resolve(this.dataStoreFactory)],
 						[this.type, Promise.resolve(this.dataStoreFactory)],
 					],
-					// eslint-disable-next-line import/no-deprecated
+					// eslint-disable-next-line import-x/no-deprecated
 					buildRuntimeRequestHandler(
 						backCompat_DefaultRouteRequestHandler("default"),
 						...this.requestHandlers,
@@ -145,18 +145,21 @@ export const createTestContainerRuntimeFactory = (
 					existing,
 				);
 			}
-			const provideEntryPoint = async (runtime: IContainerRuntime) => {
+			const provideEntryPoint = async (runtime: IContainerRuntime): Promise<FluidObject> => {
 				const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
 				if (entryPoint === undefined) {
 					throw new Error("default dataStore must exist");
 				}
 				return entryPoint.get();
 			};
-			const getDefaultObject = async (request: IRequest, runtime: IContainerRuntime) => {
+			const getDefaultObject = async (
+				request: IRequest,
+				runtime: IContainerRuntime,
+			): Promise<IResponse | undefined> => {
 				const parser = RequestParser.create(request);
 				if (parser.pathParts.length === 0) {
 					// This cast is safe as loadContainerRuntime is called below
-					// eslint-disable-next-line import/no-deprecated
+					// eslint-disable-next-line import-x/no-deprecated
 					return (runtime as IContainerRuntimeWithResolveHandle_Deprecated).resolveHandle({
 						url: `/default${parser.query}`,
 						headers: request.headers,
@@ -164,20 +167,24 @@ export const createTestContainerRuntimeFactory = (
 				}
 				return undefined; // continue search
 			};
+
+			// This usage of `containerRuntimeCtor.loadRuntime`, an `@internal` API, called on past versions of this package,
+			// adds an extra constraint that makes changing that API more difficult than it otherwise would be.
+			// Actual customers / apps should not be dependent on stability of this API, but this code is, at least for now.
 			return containerRuntimeCtor.loadRuntime({
 				context,
 				registryEntries: [
 					["default", Promise.resolve(this.dataStoreFactory)],
 					[this.type, Promise.resolve(this.dataStoreFactory)],
 				],
-				// eslint-disable-next-line import/no-deprecated
+				// eslint-disable-next-line import-x/no-deprecated
 				requestHandler: buildRuntimeRequestHandler(getDefaultObject, ...this.requestHandlers),
 				provideEntryPoint,
 				runtimeOptions: this.runtimeOptions,
 				containerScope: context.scope,
 				existing,
 				minVersionForCollab: this.minVersionForCollab,
-			} satisfies LoadContainerRuntimeParams);
+			});
 		}
 	};
 };

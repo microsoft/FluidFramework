@@ -8,32 +8,38 @@ import { strict as assert } from "node:assert";
 // Allow importing from this specific file which is being tested:
 
 import {
-	SchemaVersion,
+	SchemaFormatVersion,
 	type FieldKindIdentifier,
 	type TreeStoredSchema,
 } from "../../../core/index.js";
-import { typeboxValidator } from "../../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	allowsRepoSuperset,
 	defaultSchemaPolicy,
 	makeSchemaCodec,
 } from "../../../feature-libraries/index.js";
-/* eslint-disable-next-line import/no-internal-modules */
+/* eslint-disable-next-line import-x/no-internal-modules */
 import { Format as FormatV1 } from "../../../feature-libraries/schema-index/formatV1.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { Format as FormatV2 } from "../../../feature-libraries/schema-index/formatV2.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { type EncodingTestData, makeEncodingTestSuite } from "../../utils.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { toInitialSchema } from "../../../simple-tree/toStoredSchema.js";
 import { SchemaFactory } from "../../../simple-tree/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { makeSchemaCodecs } from "../../../feature-libraries/schema-index/index.js";
+import { currentVersion, type CodecWriteOptions } from "../../../codec/index.js";
 
-const schemaCodecs = makeSchemaCodecs({ jsonValidator: typeboxValidator });
-const codecV1 = makeSchemaCodec({ jsonValidator: typeboxValidator }, SchemaVersion.v1);
-const codecV2 = makeSchemaCodec({ jsonValidator: typeboxValidator }, SchemaVersion.v2);
+const codecOptions: CodecWriteOptions = {
+	jsonValidator: FormatValidatorBasic,
+	minVersionForCollab: currentVersion,
+};
+
+const schemaCodecs = makeSchemaCodecs(codecOptions);
+const codecV1 = makeSchemaCodec(codecOptions, SchemaFormatVersion.v1);
+const codecV2 = makeSchemaCodec(codecOptions, SchemaFormatVersion.v2);
 
 const schema2 = toInitialSchema(SchemaFactory.optional(JsonAsTree.Primitive));
 
@@ -61,7 +67,7 @@ describe("SchemaIndex", () => {
 		// TODO: should test way more cases, and check results are correct.
 		const cases = [
 			{
-				version: 1 as const,
+				version: SchemaFormatVersion.v1,
 				nodes: {},
 				root: { kind: "x" as FieldKindIdentifier, types: [] },
 			} satisfies FormatV1,
@@ -75,7 +81,7 @@ describe("SchemaIndex", () => {
 		// TODO: should test way more cases, and check results are correct.
 		const cases = [
 			{
-				version: 2 as const,
+				version: SchemaFormatVersion.v2,
 				nodes: {},
 				root: {
 					kind: "x" as FieldKindIdentifier,

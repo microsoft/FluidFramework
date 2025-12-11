@@ -9,6 +9,7 @@ export {
 	debugAssert,
 	configureDebugAsserts,
 	nonProductionConditionalsIncluded,
+	emulateProductionBuild,
 	onAssertionFailure,
 } from "./assert.js";
 export { compareArrays } from "./compare.js";
@@ -32,3 +33,4 @@ export { PromiseTimer, setLongTimeout, Timer } from "./timer.js";
 export { unreachableCase } from "./unreachable.js";
 export { isObject, isPromiseLike } from "./typesGuards.js";
 export { oob } from "./oob.js";
+export { transformMapValues } from "./map.js";

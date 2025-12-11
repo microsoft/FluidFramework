@@ -12,6 +12,7 @@ export {
 	type GraphCommit,
 	CommitKind,
 	type CommitMetadata,
+	type ChangeMetadata,
 	type RevisionTag,
 	RevisionTagSchema,
 	type EncodedRevisionTag,
@@ -56,4 +57,5 @@ export {
 	type RebaseStatsWithDuration,
 	replaceChange,
 	isAncestor,
+	diffHistories,
 } from "./utils.js";

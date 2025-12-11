@@ -4,11 +4,21 @@
  */
 
 export {
+	validateIndex,
+	validateIndexRange,
+	validatePositiveIndex,
+	validateSafeInteger,
+} from "./arrayUtilities.js";
+export {
 	brand,
 	type Brand,
 	BrandedType,
 	type NameFromBranded,
 	type ValueFromBranded,
+	brandConst,
+	type Values,
+	strictEnum,
+	unbrand,
 } from "./brand.js";
 export { brandedNumberType, brandedStringType } from "./typeboxBrand.js";
 export {
@@ -78,7 +88,7 @@ export {
 	assertNonNegativeSafeInteger,
 	objectToMap,
 	invertMap,
-	oneFromSet,
+	oneFromIterable,
 	type Named,
 	compareNamed,
 	disposeSymbol,
@@ -146,3 +156,5 @@ export {
 export { type TupleBTree, newTupleBTree, mergeTupleBTrees } from "./bTreeUtils.js";
 
 export { cloneWithReplacements } from "./cloneWithReplacements.js";
+
+export { readAndParseSnapshotBlob } from "./readSnapshotBlob.js";

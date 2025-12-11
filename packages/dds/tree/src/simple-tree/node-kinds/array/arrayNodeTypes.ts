@@ -10,12 +10,11 @@ import type {
 	TreeNodeSchema,
 	TreeNodeSchemaNonClass,
 	WithType,
-	ImplicitAnnotatedAllowedTypes,
+	ImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
-	UnannotateImplicitAllowedTypes,
 } from "../../core/index.js";
 
-import type { SimpleArrayNodeSchema } from "../../simpleSchema.js";
+import type { SchemaType, SimpleArrayNodeSchema } from "../../simpleSchema.js";
 
 /**
  * A schema for customizable {@link (TreeArrayNode:interface)}s.
@@ -23,20 +22,20 @@ import type { SimpleArrayNodeSchema } from "../../simpleSchema.js";
  */
 export interface ArrayNodeCustomizableSchema<
 	out TName extends string = string,
-	in out T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
+	in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	out ImplicitlyConstructable extends boolean = true,
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaClass<
 			TName,
 			NodeKind.Array,
-			TreeArrayNode<UnannotateImplicitAllowedTypes<T>> & WithType<TName, NodeKind.Array, T>,
-			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<UnannotateImplicitAllowedTypes<T>>>,
+			TreeArrayNode<T> & WithType<TName, NodeKind.Array, T>,
+			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 			ImplicitlyConstructable,
 			T,
 			undefined,
 			TCustomMetadata
 		>,
-		SimpleArrayNodeSchema<TCustomMetadata> {}
+		SimpleArrayNodeSchema<SchemaType.View, TCustomMetadata> {}
 
 /**
  * A schema for POJO emulation mode {@link (TreeArrayNode:interface)}s.
@@ -44,20 +43,20 @@ export interface ArrayNodeCustomizableSchema<
  */
 export interface ArrayNodePojoEmulationSchema<
 	out TName extends string = string,
-	in out T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
+	in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	out ImplicitlyConstructable extends boolean = true,
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaNonClass<
 			TName,
 			NodeKind.Array,
-			TreeArrayNode<UnannotateImplicitAllowedTypes<T>> & WithType<TName, NodeKind.Array, T>,
-			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<UnannotateImplicitAllowedTypes<T>>>,
+			TreeArrayNode<T> & WithType<TName, NodeKind.Array, T>,
+			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 			ImplicitlyConstructable,
 			T,
 			undefined,
 			TCustomMetadata
 		>,
-		SimpleArrayNodeSchema<TCustomMetadata> {}
+		SimpleArrayNodeSchema<SchemaType.View, TCustomMetadata> {}
 
 /**
  * A schema for {@link (TreeArrayNode:interface)}s.

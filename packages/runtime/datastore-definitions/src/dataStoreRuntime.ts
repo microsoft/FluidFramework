@@ -17,7 +17,10 @@ import type { IFluidHandleContext } from "@fluidframework/core-interfaces/intern
 import type { IQuorumClients } from "@fluidframework/driver-definitions";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
+import type {
+	IInboundSignalMessage,
+	MinimumVersionForCollab,
+} from "@fluidframework/runtime-definitions/internal";
 
 import type { IChannel } from "./channel.js";
 
@@ -171,17 +174,31 @@ export interface IFluidDataStoreRuntime
 	 * with it.
 	 */
 	readonly entryPoint: IFluidHandle<FluidObject>;
+
+	/**
+	 * Indicates the current local operation activity being performed by the data store runtime.
+	 *
+	 * @remarks
+	 * This property allows consumers to know when the runtime itself is actively making changes to data store DDSes.
+	 * When this property is not `undefined`, consumers should expect to see state modifications initiated by the runtime
+	 * rather than by the consumer directly:
+	 * - `"applyStashed"` - The runtime is applying previously stashed operations during reconnection or container load.
+	 * Stashed operations are local changes that were submitted but not yet acknowledged when a container was closed,
+	 * and are being reapplied to restore the expected local state.
+	 * - `"rollback"` - The runtime is rolling back (reverting) local operations that the user has chosen not to submit.
+	 * This occurs when operations are being discarded, such as when exiting staging mode without committing changes.
+	 * - `undefined` - No local operation activity is currently in progress.
+	 */
+	readonly activeLocalOperationActivity?: "applyStashed" | "rollback" | undefined;
 }
 
 /**
- * @experimental
- * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
- * @legacy @beta
+ * @legacy @alpha
  * @sealed
  */
-export interface IFluidDataStoreRuntimeExperimental extends IFluidDataStoreRuntime {
-	readonly inStagingMode?: boolean;
-	readonly isDirty?: boolean;
+export interface IFluidDataStoreRuntimeAlpha extends IFluidDataStoreRuntime {
+	readonly inStagingMode: boolean;
+	readonly isDirty: boolean;
 }
 
 /**
@@ -192,4 +209,12 @@ export interface IFluidDataStoreRuntimeExperimental extends IFluidDataStoreRunti
  */
 export interface IFluidDataStoreRuntimeInternalConfig {
 	readonly submitMessagesWithoutEncodingHandles?: boolean;
+
+	/**
+	 * Minimum version of the FF runtime that is required to collaborate on new documents. DDSes may read this value to
+	 * determine which feature flags should be enabled. This property is consumed by SharedObjectFactory (which are
+	 * implementations of {@link @fluidframework/datastore-definitions#IChannelFactory}).
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
+	 */
+	readonly minVersionForCollab?: MinimumVersionForCollab | undefined;
 }

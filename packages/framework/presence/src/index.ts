@@ -38,13 +38,11 @@ export type {
 	BroadcastControlSettings,
 } from "./broadcastControls.js";
 
-export { getPresence, getPresenceAlpha } from "./getPresence.js";
-
 export {
-	getPresenceViaDataObject,
-	type ExperimentalPresenceDO,
-	ExperimentalPresenceManager,
-} from "./datastorePresenceManagerFactory.js";
+	getPresence,
+	getPresenceAlpha,
+	getPresenceFromDataStoreContext,
+} from "./getPresence.js";
 
 export type {
 	LatestMap,

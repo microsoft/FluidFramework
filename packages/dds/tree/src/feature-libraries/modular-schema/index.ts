@@ -8,6 +8,7 @@ export {
 	allowsTreeSchemaIdentifierSuperset,
 	allowsFieldSuperset,
 	allowsTreeSuperset,
+	allowsMultiplicitySuperset,
 } from "./comparison.js";
 export { isNeverField, isNeverTree } from "./isNeverTree.js";
 export {
@@ -26,7 +27,6 @@ export {
 	EncodedNodeChangeset,
 } from "./modularChangeFormat.js";
 export { FlexFieldKind, type FullSchemaPolicy } from "./fieldKind.js";
-export { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 export {
 	type FieldChangeHandler,
 	type FieldChangeDelta,

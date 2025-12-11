@@ -262,12 +262,11 @@ function assertEquivalentMaps<TKeys, TValues>(
 }
 
 describe("library/packageExports", () => {
-	describe("queryResolutionPathsFromPackageExports", () => {
-		[
-			["commonjs (dist path)", "dist", "require"] as const,
-			["esm (lib path)", "lib", "import"] as const,
-			// eslint-disable-next-line unicorn/no-array-for-each
-		].forEach(([desc, path, condition]) =>
+	describe("queryTypesResolutionPathsFromPackageExports", () => {
+		for (const [desc, path, condition] of [
+			["commonjs (dist path)", "dist", "require"],
+			["esm (lib path)", "lib", "import"],
+		] as const) {
 			describe(`using ${desc}`, () => {
 				const logger = new MockLogger();
 				beforeEach(() => {
@@ -343,7 +342,7 @@ describe("library/packageExports", () => {
 						commonNode10CompatExportResults,
 					);
 				});
-			}),
-		);
+			});
+		}
 	});
 });

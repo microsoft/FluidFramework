@@ -12,6 +12,7 @@ import {
 	ScopeType,
 } from "@fluidframework/driver-definitions/internal";
 import { createGenericNetworkError } from "@fluidframework/driver-utils/internal";
+
 import { v4 as uuid } from "uuid";
 
 import type { IOdspSocketError } from "../../contracts.js";

@@ -3,13 +3,17 @@
  * Licensed under the MIT License.
  */
 
+const {
+	createExampleDriverServiceWebpackPlugin,
+	createOdspMiddlewares,
+} = require("@fluid-example/example-webpack-integration");
 const path = require("path");
 const { merge } = require("webpack-merge");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const webpack = require("webpack");
 
 module.exports = (env) => {
-	const isProduction = env?.production;
+	const { production, service } = env;
 
 	return merge(
 		{
@@ -36,7 +40,7 @@ module.exports = (env) => {
 				library: "[name]",
 				// https://github.com/webpack/webpack/issues/5767
 				// https://github.com/webpack/webpack/issues/7939
-				devtoolNamespace: "fluid-example/dice-roller",
+				devtoolNamespace: "fluid-example/app-integration-external-views",
 				libraryTarget: "umd",
 			},
 			plugins: [
@@ -46,8 +50,17 @@ module.exports = (env) => {
 				new HtmlWebpackPlugin({
 					template: "./src/index.html",
 				}),
+				createExampleDriverServiceWebpackPlugin(service),
 			],
+			devServer: {
+				setupMiddlewares: (middlewares) => {
+					if (service === "odsp") {
+						middlewares.push(...createOdspMiddlewares());
+					}
+					return middlewares;
+				},
+			},
 		},
-		isProduction ? require("./webpack.prod.cjs") : require("./webpack.dev.cjs"),
+		production ? require("./webpack.prod.cjs") : require("./webpack.dev.cjs"),
 	);
 };

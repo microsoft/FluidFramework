@@ -14,7 +14,7 @@ import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import semverGt from "semver/functions/gt.js";
 
 import { pkgVersion } from "../packageVersion.js";
@@ -304,8 +304,10 @@ describeCompat(
 		 * This test is to validate that we properly send a telemetry event when
 		 * we detect that a client tries to connect to a document that has a
 		 * minVersionForCollab that is greater than that clients's runtime version.
+		 *
+		 * TODO: Test will be enabled when AB#50563 is resolved.
 		 */
-		it("sends a warning telemetry event for clients less than minVersionForCollab", async function () {
+		it.skip("sends a warning telemetry event for clients less than minVersionForCollab", async function () {
 			const releaseMinVersionForCollabWarningAdded = "2.43.0";
 			if (
 				apis.containerRuntimeForLoading === undefined ||

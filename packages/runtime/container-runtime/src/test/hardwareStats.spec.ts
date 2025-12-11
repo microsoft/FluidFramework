@@ -15,6 +15,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { ContainerRuntime, getDeviceSpec } from "../containerRuntime.js";
+import { FluidDataStoreRegistry } from "../dataStoreRegistry.js";
 
 function setNavigator(
 	// eslint-disable-next-line @rushstack/no-new-null -- testing behavior with global
@@ -39,9 +40,9 @@ describe("Hardware Stats", () => {
 		mockLogger.events.filter((event) => event.eventName === "DeviceSpec");
 
 	const loadContainer = async () =>
-		ContainerRuntime.loadRuntime({
+		ContainerRuntime.loadRuntime2({
 			context: mockContext as IContainerContext,
-			registryEntries: [],
+			registry: new FluidDataStoreRegistry([]),
 			runtimeOptions: {
 				summaryOptions: {
 					summaryConfigOverrides: { state: "disabled" },

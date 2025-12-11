@@ -19,7 +19,7 @@ export const r11sDriverCompatDetailsForLoader: ILayerCompatDetails = {
 	/**
 	 * The current generation of the Routerlicious Driver layer.
 	 */
-	generation: 1,
+	generation: 2,
 	/**
 	 * The features supported by the Routerlicious Driver layer across the Driver / Loader boundary.
 	 */

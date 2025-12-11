@@ -8,6 +8,7 @@ export {
 	SharedTreeBranch,
 	type SharedTreeBranchChange,
 	type SharedTreeBranchEvents,
+	type BranchId,
 } from "./branch.js";
 
 export {
@@ -21,13 +22,19 @@ export {
 } from "./transaction.js";
 
 export {
-	type ExplicitCoreCodecVersions,
 	SharedTreeCore,
+	type ClonableSchemaAndPolicy,
+	type SharedTreeCoreOptionsInternal,
+} from "./sharedTreeCore.js";
+export {
+	SharedTreeSummaryFormatVersion,
+	type SharedTreeSummarizableMetadata,
 	type Summarizable,
 	type SummaryElementParser,
 	type SummaryElementStringifier,
-	type ClonableSchemaAndPolicy,
-} from "./sharedTreeCore.js";
+	summarizablesMetadataKey,
+} from "./summaryTypes.js";
+export { VersionedSummarizer } from "./versionedSummarizer.js";
 
 export type { ResubmitMachine } from "./resubmitMachine.js";
 export { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
@@ -38,12 +45,23 @@ export {
 	NoOpChangeEnricher,
 } from "./changeEnricher.js";
 
-export { makeEditManagerCodec } from "./editManagerCodecs.js";
+export {
+	makeEditManagerCodec,
+	getCodecTreeForEditManagerFormatWithChange,
+	type EditManagerCodecOptions,
+	clientVersionToEditManagerFormatVersion,
+	editManagerFormatVersionSelectorForSharedBranches,
+} from "./editManagerCodecs.js";
+export {
+	EditManagerFormatVersion,
+	supportedEditManagerFormatVersions,
+} from "./editManagerFormatCommons.js";
 export { EditManagerSummarizer } from "./editManagerSummarizer.js";
 export {
 	EditManager,
 	minimumPossibleSequenceNumber,
 	type SummaryData,
+	type SharedBranchSummaryData,
 } from "./editManager.js";
 export type {
 	Commit,
@@ -51,4 +69,18 @@ export type {
 	SequencedCommit,
 	SummarySessionBranch,
 	EncodedCommit,
-} from "./editManagerFormat.js";
+} from "./editManagerFormatCommons.js";
+
+export type { DecodedMessage } from "./messageTypes.js";
+export {
+	getCodecTreeForMessageFormatWithChange,
+	clientVersionToMessageFormatVersion,
+	messageFormatVersionSelectorForSharedBranches,
+	makeMessageCodec,
+	type MessageEncodingContext,
+} from "./messageCodecs.js";
+export {
+	MessageFormatVersion,
+	messageFormatVersions,
+	supportedMessageFormatVersions,
+} from "./messageFormat.js";

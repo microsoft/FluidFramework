@@ -40,13 +40,13 @@ class DiceRoller implements IDiceRoller {
 		});
 	}
 
-	public get value() {
-		const value = this.map.get(diceValueKey);
+	public get value(): number {
+		const value: unknown = this.map.get(diceValueKey);
 		assert(typeof value === "number", "Bad dice value");
 		return value;
 	}
 
-	public readonly roll = () => {
+	public readonly roll = (): void => {
 		const rollValue = Math.floor(Math.random() * 6) + 1;
 		this.map.set(diceValueKey, rollValue);
 	};
@@ -71,7 +71,9 @@ export class DiceRollerFactory implements IFluidDataStoreFactory {
 		context: IFluidDataStoreContext,
 		existing: boolean,
 	): Promise<IFluidDataStoreChannel> {
-		const provideEntryPoint = async (entryPointRuntime: IFluidDataStoreRuntime) => {
+		const provideEntryPoint = async (
+			entryPointRuntime: IFluidDataStoreRuntime,
+		): Promise<IDiceRoller> => {
 			const map = (await entryPointRuntime.getChannel(mapId)) as ISharedMap;
 			return new DiceRoller(map);
 		};

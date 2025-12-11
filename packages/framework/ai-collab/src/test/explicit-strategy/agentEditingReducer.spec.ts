@@ -5,10 +5,13 @@
 
 import { strict as assert, fail } from "node:assert";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-// eslint-disable-next-line import/no-internal-modules
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockFluidDataStoreRuntime,
+	validateUsageError,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "@fluidframework/test-runtime-utils/internal";
 import {
 	getSimpleSchema,
 	SchemaFactory,
@@ -19,7 +22,7 @@ import {
 	type SimpleTreeSchema,
 	type TreeNode,
 	type ITree,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/tree/internal";
 
 import type {
@@ -37,11 +40,11 @@ import {
 	applyAgentEdit,
 	getRangeInfo,
 	getSchemaIdentifier,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../explicit-strategy/agentEditReducer.js";
 import {
 	typeField,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../explicit-strategy/agentEditTypes.js";
 import type {
 	Insert,
@@ -50,12 +53,10 @@ import type {
 	Range,
 	Remove,
 	TreeEdit,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../explicit-strategy/agentEditTypes.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { IdGenerator } from "../../explicit-strategy/idGenerator.js";
-
-import { validateUsageError } from "./utils.js";
 
 const sf = new SchemaFactory("agentSchema");
 
@@ -1646,8 +1647,7 @@ describe("Diff Creation", () => {
 				nodePath: [
 					{
 						shortId: undefined,
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						schemaIdentifier: getSchemaIdentifier(modifyEdit.modification)!,
+						schemaIdentifier: getSchemaIdentifier(modifyEdit.modification),
 						parentField: "nestedStr",
 					},
 					{
