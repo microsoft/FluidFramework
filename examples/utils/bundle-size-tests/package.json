@@ -66,7 +66,7 @@
 		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
 		"puppeteer": "^23.6.0",
-		"rimraf": "^4.4.0",
+		"rimraf": "^6.1.2",
 		"source-map-explorer": "^2.5.3",
 		"source-map-loader": "^5.0.0",
 		"string-replace-loader": "^3.1.0",
