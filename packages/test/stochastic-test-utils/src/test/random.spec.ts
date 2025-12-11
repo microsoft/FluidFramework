@@ -46,7 +46,7 @@ describe("Random", () => {
 	describe("distribution", () => {
 		const nextU53: number[] = [];
 
-		const mockU53 = () => {
+		const mockU53 = (): number => {
 			const next = nextU53.pop();
 
 			assert.notEqual(
@@ -59,7 +59,7 @@ describe("Random", () => {
 			return next!;
 		};
 
-		const generateInteger = (alpha: number, min: number, max: number) => {
+		const generateInteger = (alpha: number, min: number, max: number): number => {
 			assert(0 <= alpha && alpha <= 1, `α must be in range [0..1], but got α=${alpha}.`);
 
 			const actualMin = Math.min(min, max);
@@ -84,7 +84,11 @@ describe("Random", () => {
 			return result;
 		};
 
-		function assert_chi2<T>(generator: () => T, weights: [T, number][], numSamples = 10000) {
+		function assert_chi2<T>(
+			generator: () => T,
+			weights: [T, number][],
+			numSamples = 10000,
+		): void {
 			assert(weights.length > 0);
 
 			const counts = new Counter<T>();
@@ -103,7 +107,7 @@ describe("Random", () => {
 			);
 		}
 
-		function assert_chi2_uniform<T>(generator: () => T, choices: T[]) {
+		function assert_chi2_uniform<T>(generator: () => T, choices: T[]): void {
 			assert_chi2(
 				generator,
 				choices.map((choice) => [choice, 1 / choices.length]),
@@ -115,7 +119,7 @@ describe("Random", () => {
 			min: number,
 			max: number,
 			numSamples?: number,
-		) {
+		): void {
 			const range = max - min + 1;
 
 			assert_chi2(
@@ -177,7 +181,7 @@ describe("Random", () => {
 		});
 
 		describe("integer", () => {
-			const testLimits = (min: number, max: number) => {
+			const testLimits = (min: number, max: number): void => {
 				const trueMin = Math.min(min, max);
 				it(`[${min}..${max}] @ α=0 -> ${trueMin}`, () => {
 					const actual = generateInteger(/* alpha: */ 0, min, max);
@@ -288,7 +292,7 @@ describe("Random", () => {
 		});
 
 		describe("uuid4", () => {
-			const validate = (uuid: string) => {
+			const validate = (uuid: string): void => {
 				const bytes = parseUuid(uuid);
 
 				const version = bytes[6] >>> 4;
@@ -533,7 +537,8 @@ describe("Random", () => {
 		describe("normal", () => {
 			describe("produces normal distribution", () => {
 				it("with μ = 0, σ = 1 (default)", () => {
-					const clamp = (min, value, max) => Math.min(Math.max(value, min), max);
+					const clamp = (min: number, value: number, max: number): number =>
+						Math.min(Math.max(value, min), max);
 
 					for (const seeds of testSeeds) {
 						const random = makeRandom(...seeds);
@@ -554,7 +559,8 @@ describe("Random", () => {
 				});
 
 				it("with μ = -0.5, σ = 1.5", () => {
-					const clamp = (min, value, max) => Math.min(Math.max(value, min), max);
+					const clamp = (min: number, value: number, max: number): number =>
+						Math.min(Math.max(value, min), max);
 
 					for (const seeds of testSeeds) {
 						const random = makeRandom(...seeds);

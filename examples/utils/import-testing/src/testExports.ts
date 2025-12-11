@@ -49,10 +49,10 @@ import {
 	// // eslint-disable-next-line unused-imports/no-unused-imports
 	// InternalTypes,
 } from "@fluidframework/tree";
-import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
+import { eraseSchemaDetails, SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 import type { FixRecursiveArraySchema, ObjectNodeSchema } from "@fluidframework/tree/alpha";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { requireAssignableTo } from "@fluidframework/tree/internal";
+import type { requireAssignableTo, TreeNode, WithType } from "@fluidframework/tree/internal";
 
 // Due to limitation of the TypeScript compiler, errors like the following can be produced when exporting types from another package:
 // error TS2742: The inferred type of 'Inventory' cannot be named without a reference to '../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
@@ -154,3 +154,30 @@ export class Foo extends schema.objectRecursive("Foo", {
 {
 	type _check = ValidateRecursiveSchema<typeof Foo>;
 }
+
+// Schema Type erasure demo
+class PrivateSchema extends schema.object("Private", {}) {}
+class SquareInternal
+	extends schema.object("Demo", { hidden: schema.number, extra: PrivateSchema })
+	implements SquareNode
+{
+	public get area(): number {
+		return this.hidden * this.hidden;
+	}
+
+	public static create(sideLength: number): SquareInternal {
+		return new SquareInternal({ hidden: sideLength, extra: new PrivateSchema({}) });
+	}
+}
+
+export interface SquareNode {
+	readonly area: number;
+}
+
+export interface SquareSchema {
+	create(sideLength: number): Square;
+}
+
+// Does not leak SquareInternal or PrivateSchema types into API.
+export const Square = eraseSchemaDetails<Square, SquareSchema>()(SquareInternal);
+export type Square = SquareNode & TreeNode & WithType<"com.example.Demo">;

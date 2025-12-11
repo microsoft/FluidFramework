@@ -8,16 +8,21 @@ import {
 	type Brand,
 	brand,
 	brandConst,
+	strictEnum,
+	unbrand,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import-x/no-internal-modules */
 } from "../../util/brand.js";
 import type {
+	requireAssignableTo,
 	areSafelyAssignable,
 	isAssignableTo,
 	requireFalse,
 	requireTrue,
+	Values,
 } from "../../util/index.js";
 import { allowUnused } from "../../simple-tree/index.js";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 // These tests currently just cover the type checking, so its all compile time.
 
@@ -61,4 +66,71 @@ type _check1 = requireFalse<isAssignableTo<E4, E5>> | requireFalse<isAssignableT
 
 	// @ts-expect-error incompatible constant value
 	const invalidConstant = brandConst("x")<T1>();
+}
+
+// strictEnum
+{
+	const TestA = strictEnum("TestA", {
+		a: 1,
+		b: 2,
+	});
+	type TestA = Values<typeof TestA>;
+
+	const TestB = strictEnum("TestB", {
+		a: 1,
+		b: 2,
+	});
+	type TestB = Values<typeof TestB>;
+
+	const TestC = strictEnum("TestC", {
+		a: 1,
+		x: "x",
+	});
+	type TestC = Values<typeof TestC>;
+
+	allowUnused<requireAssignableTo<TestA, number>>();
+	allowUnused<requireFalse<isAssignableTo<TestA, TestB>>>();
+	allowUnused<requireFalse<isAssignableTo<typeof TestA.a, typeof TestB.a>>>();
+	allowUnused<requireFalse<isAssignableTo<1, typeof TestB.a>>>();
+	allowUnused<requireAssignableTo<typeof TestA.a, 1>>();
+
+	// Switch using the actual constants works fine
+	// eslint-disable-next-line no-inner-declarations
+	function switchLiterals(x: TestA) {
+		switch (x) {
+			case 1:
+				return "a";
+			case 2:
+				return "b";
+			default:
+				unreachableCase(x);
+		}
+	}
+
+	// Switch using the enum members does not narrow without unbrand
+	// eslint-disable-next-line no-inner-declarations
+	function switchConstants(x: TestA) {
+		switch (x) {
+			case TestA.a:
+				return "a";
+			case TestA.b:
+				return "b";
+			default:
+				// @ts-expect-error - should be unreachable, but narrowing fails without using `unbrand`
+				unreachableCase(x);
+		}
+	}
+
+	// Switch using the enum members does narrow with unbrand
+	// eslint-disable-next-line no-inner-declarations
+	function switchUnbrand(x: TestA) {
+		switch (x) {
+			case unbrand(TestA.a):
+				return "a";
+			case unbrand(TestA.b):
+				return "b";
+			default:
+				unreachableCase(x);
+		}
+	}
 }

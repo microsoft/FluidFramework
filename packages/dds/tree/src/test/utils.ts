@@ -664,7 +664,7 @@ const schemaCodec = makeSchemaCodec(
 		jsonValidator: FormatValidatorBasic,
 		minVersionForCollab: currentVersion,
 	},
-	brand(SchemaFormatVersion.v2),
+	SchemaFormatVersion.v2,
 );
 
 export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]): void {

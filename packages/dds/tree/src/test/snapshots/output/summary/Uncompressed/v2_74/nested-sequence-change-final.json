@@ -234,14 +234,14 @@
                   ".metadata": {
                     "type": "blob",
                     "content": {
-                      "version": 2
+                      "version": 3
                     },
                     "encoding": "utf-8"
                   }
                 },
                 {
                   "type": "blob",
-                  "ForestTree": {
+                  "contents": {
                     "type": "blob",
                     "content": {
                       "keys": [
@@ -299,7 +299,7 @@
                           ]
                         ]
                       },
-                      "version": 1
+                      "version": 2
                     },
                     "encoding": "utf-8"
                   }

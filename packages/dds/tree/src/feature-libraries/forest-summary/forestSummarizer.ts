@@ -42,19 +42,26 @@ import {
 	type IncrementalEncodingPolicy,
 } from "../chunked-forest/index.js";
 
-import { type ForestCodec, makeForestSummarizerCodec } from "./codec.js";
+import {
+	clientVersionToForestFormatVersion,
+	type ForestCodec,
+	makeForestSummarizerCodec,
+} from "./codec.js";
 import {
 	ForestIncrementalSummaryBehavior,
 	ForestIncrementalSummaryBuilder,
 } from "./incrementalSummaryBuilder.js";
 import {
-	forestSummaryContentKey,
-	forestSummaryKey,
 	minVersionToForestSummaryFormatVersion,
-	supportedForestSummaryFormatVersions,
-	type ForestSummaryFormatVersion,
+	getForestRootSummaryContentKey,
 } from "./summaryTypes.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
+import { ForestFormatVersion } from "./formatCommon.js";
+import {
+	ForestSummaryFormatVersion,
+	forestSummaryKey,
+	supportedForestSummaryFormatVersions,
+} from "./summaryFormatCommon.js";
 
 /**
  * Provides methods for summarizing and loading a forest.
@@ -66,6 +73,7 @@ export class ForestSummarizer
 	private readonly codec: ForestCodec;
 
 	private readonly incrementalSummaryBuilder: ForestIncrementalSummaryBuilder;
+	private readonly forestRootSummaryContentKey: string;
 
 	/**
 	 * @param encoderContext - The schema if provided here must be mutated by the caller to keep it up to date.
@@ -87,11 +95,25 @@ export class ForestSummarizer
 			true /* supportPreVersioningFormat */,
 		);
 
-		// TODO: this should take in CodecWriteOptions, and use it to pick the write version.
 		this.codec = makeForestSummarizerCodec(options, fieldBatchCodec);
+
+		const forestFormatWriteVersion = clientVersionToForestFormatVersion(
+			options.minVersionForCollab,
+		);
+		const summaryFormatWriteVersion = minVersionToForestSummaryFormatVersion(
+			options.minVersionForCollab,
+		);
+		this.forestRootSummaryContentKey = getForestRootSummaryContentKey(
+			summaryFormatWriteVersion,
+		);
+
+		// Incremental summary is supported from ForestFormatVersion.v2 and ForestSummaryFormatVersion.v3 onwards.
+		const enableIncrementalSummary =
+			forestFormatWriteVersion >= ForestFormatVersion.v2 &&
+			summaryFormatWriteVersion >= ForestSummaryFormatVersion.v3 &&
+			encoderContext.encodeType === TreeCompressionStrategy.CompressedIncremental;
 		this.incrementalSummaryBuilder = new ForestIncrementalSummaryBuilder(
-			encoderContext.encodeType ===
-				TreeCompressionStrategy.CompressedIncremental /* enableIncrementalSummary */,
+			enableIncrementalSummary,
 			(cursor: ITreeCursorSynchronous) => this.forest.chunkField(cursor),
 			shouldEncodeIncrementally,
 			initialSequenceNumber,
@@ -153,7 +175,8 @@ export class ForestSummarizer
 
 		this.incrementalSummaryBuilder.completeSummary({
 			incrementalSummaryContext,
-			forestSummaryContent: stringify(encoded),
+			forestSummaryRootContent: stringify(encoded),
+			forestSummaryRootContentKey: this.forestRootSummaryContentKey,
 			builder,
 		});
 	}
@@ -161,15 +184,17 @@ export class ForestSummarizer
 	protected async loadInternal(
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
+		version: ForestSummaryFormatVersion | undefined,
 	): Promise<void> {
-		// The contents of the top-level forest must be present under a summary blob named `forestSummaryContentKey`.
+		// Get the key of the summary blob where the top-level forest content is stored based on the summary format version.
 		// If the summary was generated as `ForestIncrementalSummaryBehavior.SingleBlob`, this blob will contain all
 		// of forest's contents.
 		// If the summary was generated as `ForestIncrementalSummaryBehavior.Incremental`, this blob will contain only
 		// the top-level forest node's contents.
 		// The contents of the incremental chunks will be in separate tree nodes and will be read later during decoding.
+		const forestSummaryRootContentKey = getForestRootSummaryContentKey(version);
 		assert(
-			await services.contains(forestSummaryContentKey),
+			await services.contains(forestSummaryRootContentKey),
 			0xc21 /* Forest summary content missing in snapshot */,
 		);
 
@@ -184,7 +209,7 @@ export class ForestSummarizer
 		// TODO: this code is parsing data without an optional validator, this should be defined in a typebox schema as part of the
 		// forest summary format.
 		const fields = this.codec.decode(
-			await readAndParseSnapshotBlob(forestSummaryContentKey, services, parse),
+			await readAndParseSnapshotBlob(forestSummaryRootContentKey, services, parse),
 			{
 				...this.encoderContext,
 				incrementalEncoderDecoder: this.incrementalSummaryBuilder,

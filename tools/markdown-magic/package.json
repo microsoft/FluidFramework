@@ -33,7 +33,8 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
-		"@fluidframework/build-common": "^2.0.3"
+		"@fluidframework/build-common": "^2.0.3",
+		"jiti": "^2.6.1"
 	},
 	"dependencyComments": [
 		"chalk is left at version 4 (not 5) to keep CommonJS support."
