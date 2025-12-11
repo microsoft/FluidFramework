@@ -330,6 +330,9 @@ module.exports = {
 		// Exclusion per handler
 		handlerExclusions: {
 			"fluid-build-tasks-eslint": [
+				// This policy needs to be rethought in light of eslint 9. Disabling everywhere in the meantime.
+				".*",
+
 				// There are no built files, but a tsconfig.json is present to simplify the
 				// eslint config.
 				"azure/packages/azure-local-service/package.json",

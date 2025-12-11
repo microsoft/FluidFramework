@@ -86,8 +86,6 @@ module.exports = {
 	plugins: [
 		// Plugin documentation: https://www.npmjs.com/package/@rushstack/eslint-plugin
 		"@rushstack/eslint-plugin",
-		// Plugin documentation: https://www.npmjs.com/package/@rushstack/eslint-plugin-security
-		"@rushstack/eslint-plugin-security",
 		// Plugin documentation: https://www.npmjs.com/package/@typescript-eslint/eslint-plugin
 		"@typescript-eslint/eslint-plugin",
 		// Plugin documentation: https://www.npmjs.com/package/eslint-plugin-jsdoc
@@ -422,9 +420,13 @@ module.exports = {
 			],
 			extends: ["plugin:react/recommended", "plugin:react-hooks/recommended"],
 			rules: {
-				// TODO: This should be re-enabled once we are on eslint 9
+				// TODO: These rules should be re-enabled once we are on eslint 9
 				// and the react plugins are upgraded to more recent versions
+				"react-hooks/immutability": "warn",
+				"react-hooks/refs": "warn",
 				"react-hooks/rules-of-hooks": "warn",
+				"react-hooks/set-state-in-effect": "warn",
+				"react-hooks/static-components": "warn",
 			},
 			settings: {
 				react: {

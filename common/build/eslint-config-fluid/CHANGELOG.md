@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Removed Rushstack Dependencies
+
+The following packages have been removed from dependencies:
+
+- `@rushstack/eslint-patch`
+- `@rushstack/eslint-plugin-security`
+
+The `@rushstack/eslint-plugin-security` plugin has been removed from all configurations. The `patch/modern-module-resolution.js` file has also been removed as it was only needed to support the `@rushstack/eslint-patch` dependency.
+
 ### ESLint 9 Flat Config Support
 
 This package now supports ESLint 9 flat config format via a new `flat.mjs` export. The flat config wraps existing configs using `FlatCompat` from `@eslint/eslintrc` for backward compatibility.
@@ -17,7 +26,30 @@ Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the leg
 
 ### ESLint Rule Changes
 
-**react-hooks/rules-of-hooks**: Temporarily downgraded from `"error"` to `"warn"` until ESLint 9 migration completes and React plugins are upgraded to more recent versions.
+**React Hooks plugin upgraded**: Upgraded from `~5.2.0` to `~7.0.1`, enabling several new React Hooks linting rules.
+
+**New react-hooks rules enabled as `"error"`**:
+
+- `react-hooks/component-hook-factories`
+- `react-hooks/config`
+- `react-hooks/error-boundaries`
+- `react-hooks/gating`
+- `react-hooks/globals`
+- `react-hooks/preserve-manual-memoization`
+- `react-hooks/purity`
+- `react-hooks/set-state-in-render`
+- `react-hooks/use-memo`
+
+**React-hooks rules temporarily downgraded to `"warn"`** (until ESLint 9 migration completes):
+
+- `react-hooks/rules-of-hooks`: Changed from `"error"` to `"warn"`
+- `react-hooks/exhaustive-deps`: Changed from `"error"` to `"warn"`
+- `react-hooks/immutability`: New rule set to `"warn"`
+- `react-hooks/incompatible-library`: New rule set to `"warn"`
+- `react-hooks/refs`: New rule set to `"warn"`
+- `react-hooks/set-state-in-effect`: New rule set to `"warn"`
+- `react-hooks/static-components`: New rule set to `"warn"`
+- `react-hooks/unsupported-syntax`: New rule set to `"warn"`
 
 **New unicorn rules** (enabled as `"error"` by default):
 

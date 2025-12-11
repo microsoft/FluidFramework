@@ -166,6 +166,7 @@
 		"eslint": "~8.57.1",
 		"eslint-config-prettier": "~10.1.8",
 		"eslint-plugin-chai-expect": "~3.0.0",
+		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^4.4.0",

@@ -39,13 +39,13 @@ const sharedObjectRegistry = new Map<string, IChannelFactory>([[mapFactory.type,
  * This is the child datastore that will be created synchronously
  */
 class ChildDataStore {
-	public static create(runtime: IFluidDataStoreRuntime) {
+	public static create(runtime: IFluidDataStoreRuntime): ChildDataStore {
 		const root = SharedMap.create(runtime, "root");
 		root.bindToContext();
 		return new ChildDataStore(runtime, root);
 	}
 
-	public static async load(runtime: IFluidDataStoreRuntime) {
+	public static async load(runtime: IFluidDataStoreRuntime): Promise<ChildDataStore> {
 		const root = (await runtime.getChannel("root")) as unknown as ISharedMap;
 		return new ChildDataStore(runtime, root);
 	}
@@ -55,11 +55,11 @@ class ChildDataStore {
 		private readonly sharedMap: SharedMap,
 	) {}
 
-	get ChildDataStore() {
+	get ChildDataStore(): ChildDataStore {
 		return this;
 	}
 
-	public setProperty(key: string, value: string | number) {
+	public setProperty(key: string, value: string | number): void {
 		this.sharedMap.set(key, value);
 	}
 
@@ -67,7 +67,7 @@ class ChildDataStore {
 		return this.sharedMap.get(key);
 	}
 
-	get handle() {
+	get handle(): IFluidHandle<FluidObject> {
 		return this.runtime.entryPoint;
 	}
 }
@@ -81,13 +81,13 @@ class ChildDataStoreFactory implements IFluidDataStoreFactory {
 	static readonly instance = new ChildDataStoreFactory();
 	private constructor() {}
 
-	get IFluidDataStoreFactory() {
+	get IFluidDataStoreFactory(): this {
 		return this;
 	}
 
 	public readonly type = "ChildDataStore";
 
-	async instantiateDataStore(context, existing) {
+	async instantiateDataStore(context, existing): Promise<FluidDataStoreRuntime> {
 		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
 			context,
 			sharedObjectRegistry,
@@ -120,7 +120,7 @@ class ChildDataStoreFactory implements IFluidDataStoreFactory {
  * in response to synchronous user input, like a key press.
  */
 class ParentDataObject extends DataObject {
-	get ParentDataObject() {
+	get ParentDataObject(): ParentDataObject {
 		return this;
 	}
 	protected override async initializingFirstTime(): Promise<void> {

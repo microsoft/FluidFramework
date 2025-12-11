@@ -89,7 +89,7 @@ export function computeChiSquared<T>(
 	return chiSquared;
 }
 
-export function parseUuid(uuid: string) {
+export function parseUuid(uuid: string): number[] {
 	// See: https://datatracker.ietf.org/doc/html/rfc4122
 	const time_low_4b = parseInt(uuid.slice(0, 8), 16);
 	const time_mid_2b = parseInt(uuid.slice(9, 13), 16);
@@ -98,7 +98,7 @@ export function parseUuid(uuid: string) {
 	const clock_seq_low_1b = parseInt(uuid.slice(21, 23), 16);
 	const node_6b = parseInt(uuid.slice(24, 36), 16);
 
-	const selectByte = (uint32: number, index: number) => (uint32 << (index * 8)) >>> 24;
+	const selectByte = (uint32: number, index: number): number => (uint32 << (index * 8)) >>> 24;
 
 	const bytes = [
 		/* 0: */ selectByte(time_low_4b, 0),

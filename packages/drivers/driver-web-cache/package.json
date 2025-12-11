@@ -112,6 +112,7 @@
 		"eslint": "~8.57.1",
 		"fake-indexeddb": "3.1.4",
 		"jest": "^29.6.2",
+		"jiti": "^2.6.1",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
 	},

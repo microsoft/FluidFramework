@@ -105,6 +105,7 @@
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.57.1",
 		"eslint-config-prettier": "~10.1.8",
+		"jiti": "^2.6.1",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
 	},

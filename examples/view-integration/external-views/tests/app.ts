@@ -28,7 +28,6 @@ import { v4 as uuid } from "uuid";
 
 import {
 	DiceRollerContainerRuntimeFactory,
-	type EntryPoint,
 	type IDiceRoller,
 } from "../src/container/index.js";
 import { DiceRollerView } from "../src/view.js";
@@ -48,7 +47,9 @@ const codeLoader: ICodeDetailsLoader = {
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-async function createContainerAndRenderInElement(element: HTMLDivElement): Promise<void> {
+async function createOrLoadContainerAndRenderInElement(
+	element: HTMLDivElement,
+): Promise<void> {
 	let id: string;
 	let container: IContainer;
 
@@ -67,7 +68,7 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 		// Should be the same as the uuid we generated above.
 		id = container.resolvedUrl.id;
 	} else {
-		id = location.hash.substring(1);
+		id = location.hash.slice(1);
 		container = await loadExistingContainer({
 			request: { url: `${window.location.origin}/${id}` },
 			urlResolver,
@@ -76,7 +77,7 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 		});
 	}
 
-	const { diceRoller } = (await container.getEntryPoint()) as EntryPoint;
+	const diceRoller = (await container.getEntryPoint()) as IDiceRoller;
 	const render = (diceRoller: IDiceRoller) => {
 		const appRoot = createRoot(element);
 		appRoot.render(createElement(DiceRollerView, { diceRoller }));
@@ -89,16 +90,16 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 	render(diceRoller);
 }
 
-const leftElement = document.getElementById("sbs-left") as HTMLDivElement;
+const leftElement = document.querySelector("#sbs-left") as HTMLDivElement;
 if (leftElement === null) {
 	throw new Error("sbs-left does not exist");
 }
-await createContainerAndRenderInElement(leftElement);
-const rightElement = document.getElementById("sbs-right") as HTMLDivElement;
+await createOrLoadContainerAndRenderInElement(leftElement);
+const rightElement = document.querySelector("#sbs-right") as HTMLDivElement;
 if (rightElement === null) {
 	throw new Error("sbs-right does not exist");
 }
-await createContainerAndRenderInElement(rightElement);
+await createOrLoadContainerAndRenderInElement(rightElement);
 
 // Setting "fluidStarted" is just for our test automation
 // eslint-disable-next-line @typescript-eslint/dot-notation
