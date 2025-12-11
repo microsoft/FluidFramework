@@ -258,7 +258,7 @@ async function loadPackages(
 	packageEntries: PackageToInstall[],
 	version: string,
 	modulePath: string,
-) {
+): Promise<any> {
 	const loadedPackages = {};
 	for (const pkgEntry of packageEntries) {
 		loadedPackages[pkgEntry.pkgName] = await loadIfCompatible(pkgEntry, version, modulePath);

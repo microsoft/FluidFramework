@@ -34,7 +34,7 @@ function applyPairToPartial<T extends Record<string, any>>(
 	keyCount: number,
 	partials: PartialWithKeyCount<T>[],
 	pair: { iKey: keyof T; jKey: keyof T; iVal: any; jVal: any },
-) {
+): void {
 	const matchingPartials: PartialWithKeyCount<T>[] = [];
 	for (const partial of partials) {
 		// the pair exists, so nothing to do

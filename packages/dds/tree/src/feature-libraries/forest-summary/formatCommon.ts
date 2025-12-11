@@ -6,7 +6,7 @@
 import { type Static, Type } from "@sinclair/typebox";
 
 import { schemaFormatV1 } from "../../core/index.js";
-import { brand, type Brand } from "../../util/index.js";
+import type { Brand } from "../../util/index.js";
 import { EncodedFieldBatch } from "../chunked-forest/index.js";
 
 /**
@@ -14,13 +14,17 @@ import { EncodedFieldBatch } from "../chunked-forest/index.js";
  */
 export const ForestFormatVersion = {
 	v1: 1,
+	/** This format supports incremental encoding */
+	v2: 2,
 } as const;
 export type ForestFormatVersion = Brand<
 	(typeof ForestFormatVersion)[keyof typeof ForestFormatVersion],
 	"ForestFormatVersion"
 >;
 
-const FormatGeneric = (
+export const validVersions = new Set([...Object.values(ForestFormatVersion)]);
+
+export const FormatCommon = (
 	version: ForestFormatVersion,
 	// Return type is intentionally derived.
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -33,6 +37,4 @@ const FormatGeneric = (
 		},
 		{ additionalProperties: false },
 	);
-
-export const FormatV1 = FormatGeneric(brand<ForestFormatVersion>(ForestFormatVersion.v1));
-export type FormatV1 = Static<typeof FormatV1>;
+export type Format = Static<ReturnType<typeof FormatCommon>>;

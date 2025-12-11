@@ -73,7 +73,7 @@ import {
 	toInitialSchema,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { FormatV1 } from "../../../feature-libraries/forest-summary/format.js";
+import type { FormatV1 } from "../../../feature-libraries/forest-summary/formatV1.js";
 import type {
 	FieldBatchEncodingContext,
 	// eslint-disable-next-line import-x/no-internal-modules

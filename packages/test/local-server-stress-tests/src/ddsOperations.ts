@@ -4,9 +4,17 @@
  */
 
 import { type AsyncGenerator, type AsyncReducer } from "@fluid-private/stochastic-test-utils";
-import { DDSFuzzTestState, Client as DDSClient } from "@fluid-private/test-dds-utils";
+import {
+	DDSFuzzTestState,
+	Client as DDSClient,
+	type DDSFuzzModel,
+} from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions/internal";
-import { fluidHandleSymbol, type IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	fluidHandleSymbol,
+	type IFluidHandle,
+	type IFluidHandleErased,
+} from "@fluidframework/core-interfaces/internal";
 import { assert, isObject } from "@fluidframework/core-utils/internal";
 import type {
 	IChannel,
@@ -17,6 +25,7 @@ import { timeoutAwait } from "@fluidframework/test-utils/internal";
 
 import { ddsModelMap } from "./ddsModels.js";
 import { LocalServerStressState, Client } from "./localServerStressHarness.js";
+import type { ContainerObjects } from "./stressDataObject.js";
 import { makeUnreachableCodePathProxy } from "./utils.js";
 
 export interface DDSModelOp {
@@ -59,7 +68,13 @@ export const covertLocalServerStateToDdsState = async (
 
 	const random = {
 		...state.random,
-		handle: () => {
+		handle: (): {
+			tag: string;
+			absolutePath: string;
+			[fluidHandleSymbol]: IFluidHandleErased<unknown>;
+			get(): Promise<unknown>;
+			isAttached: boolean;
+		} => {
 			/**
 			 * here we do some funky stuff with handles so we can serialize them like json for output, but not bind them,
 			 * as they may not be attached. look at the reduce code to see how we deserialized these fake handles into real
@@ -70,10 +85,10 @@ export const covertLocalServerStateToDdsState = async (
 			return {
 				tag,
 				absolutePath: realHandle.absolutePath,
-				get [fluidHandleSymbol]() {
+				get [fluidHandleSymbol](): IFluidHandleErased<unknown> {
 					return realHandle[fluidHandleSymbol];
 				},
-				async get() {
+				async get(): Promise<unknown> {
 					return realHandle.get();
 				},
 				get isAttached() {
@@ -128,7 +143,24 @@ export const DDSModelOpReducer: AsyncReducer<DDSModelOp, LocalServerStressState>
 	baseModel.reducer(await covertLocalServerStateToDdsState(state), subOp);
 };
 
-export const loadAllHandles = async (state: LocalServerStressState) => {
+export const loadAllHandles = async (
+	state: LocalServerStressState,
+): Promise<{
+	baseModel: {
+		factory: IChannelFactory;
+		generator: AsyncGenerator<any, DDSFuzzTestState<IChannelFactory>>;
+		reducer: DDSFuzzModel<IChannelFactory, any>["reducer"];
+		validateConsistency: DDSFuzzModel<IChannelFactory, any>["validateConsistency"];
+		minimizationTransforms?: DDSFuzzModel<IChannelFactory, any>["minimizationTransforms"];
+	};
+	taggedHandles: (
+		| Readonly<ContainerObjects>
+		| {
+				tag: string;
+				handle: IFluidHandle;
+		  }
+	)[];
+}> => {
 	const baseModel = ddsModelMap.get(state.channel.attributes.type);
 	assert(baseModel !== undefined, "must have base model");
 	const channels = await state.datastore.getChannels();
@@ -161,8 +193,11 @@ export const convertToRealHandles = (
 	});
 };
 
-export const validateConsistencyOfAllDDS = async (clientA: Client, clientB: Client) => {
-	const buildChannelMap = async (client: Client) => {
+export const validateConsistencyOfAllDDS = async (
+	clientA: Client,
+	clientB: Client,
+): Promise<void> => {
+	const buildChannelMap = async (client: Client): Promise<Map<string, IChannel>> => {
 		/**
 		 * here we build a map of all the channels in the container based on their absolute path,
 		 * once we have this we can match channels in different container (clientA and clientB),

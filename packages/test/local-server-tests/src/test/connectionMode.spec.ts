@@ -9,6 +9,7 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { type ILoaderProps } from "@fluidframework/container-loader/internal";
+import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
@@ -53,13 +54,13 @@ describe("Logging Last Connection Mode ", () => {
 
 	const logger = new MockLogger();
 
-	const getConnectedEvents = () =>
+	const getConnectedEvents = (): ITelemetryBaseEvent[] =>
 		logger.events.filter(
 			(event) =>
 				event.eventName === "fluid:telemetry:Container:ConnectionStateChange_Connected",
 		);
 
-	const getDisconnectedEvents = () =>
+	const getDisconnectedEvents = (): ITelemetryBaseEvent[] =>
 		logger.events.filter(
 			(event) =>
 				event.eventName === "fluid:telemetry:Container:ConnectionStateChange_Disconnected",
