@@ -41,6 +41,7 @@ export {
 	parseToken,
 } from "./historian";
 export type { IAlfredTenant, ISession } from "./interfaces";
+export { performance } from "./performance";
 export { promiseTimeout } from "./promiseTimeout";
 export { RestLessClient, RestLessFieldNames } from "./restLessClient";
 export {
