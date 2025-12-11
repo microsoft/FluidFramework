@@ -1011,7 +1011,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 		});
 
 		// This checks that DefaultProvider is used correctly.
-		// Currently this mainly matters for identifiers, but this test validates that is works generally.
+		// Currently this mainly matters for identifiers, but this test validates that it works generally.
 		it("Uses default provider global and context", () => {
 			const schemaFactory = new SchemaFactory("test");
 
@@ -1054,7 +1054,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 		});
 
 		// This checks that identifiers are populated lazily from the view ensuring they can be compressed.
-		// This ensure the public facing part of this is working end to end.
+		// This ensures the public facing part of this is working end to end.
 		it("Populates identifier field lazily with the view's compressor when inserting", () => {
 			const schemaFactory = new SchemaFactory("test");
 			class Schema extends schemaFactory.object("object", {
@@ -1076,7 +1076,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 			view.root = node;
 
 			// If working correctly, the identifier is allocated from the view snapshot compressor and should be deterministic.
-			// If instead allocated early without using the view, it will be a random v4 uuid and fail this check.
+			// If it is instead allocated early without using the view, it will be a random v4 uuid and fail this check.
 			// Due to some other source of id allocation (like revision tags) there may be a small number of other ids allocated resulting in the last digit not being 1.
 			// Those should be deterministic, but might be impacted by some changes elsewhere.
 			// Since this test only cares that the id came from the view's compressor, we just check for the known prefix.
