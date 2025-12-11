@@ -32,7 +32,7 @@ describe("versioned Codecs", () => {
 			decode: (x) => (x as unknown as V2).value2,
 		};
 
-		const builder = new ClientVersionDispatchingCodecBuilder("Test", {
+		const builder = ClientVersionDispatchingCodecBuilder.build("Test", {
 			[lowestMinVersionForCollab]: {
 				formatVersion: 1,
 				codec: codecV1,
@@ -63,7 +63,7 @@ describe("versioned Codecs", () => {
 
 			assert.throws(
 				() => codec1.decode({ version: 3, value2: 42 }),
-				validateUsageError(`Unsupported version 3 encountered while decoding data. Supported versions for this data are: 1, 2.
+				validateUsageError(`Unsupported version 3 encountered while decoding Test data. Supported versions for this data are: 1, 2.
 The client which encoded this data likely specified an "minVersionForCollab" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`),
 			);
 		});

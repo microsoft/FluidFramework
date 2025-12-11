@@ -3,21 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
-	getConfigForMinVersionForCollab,
-	lowestMinVersionForCollab,
-} from "@fluidframework/runtime-utils/internal";
+import { fail } from "@fluidframework/core-utils/internal";
+import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 import {
 	ClientVersionDispatchingCodecBuilder,
 	type CodecTree,
 	type CodecWriteOptions,
 	FluidClientVersion,
-	type ICodecFamily,
 	type ICodecOptions,
 	type IJsonCodec,
-	makeCodecFamily,
 	makeVersionedValidatedCodec,
 } from "../../codec/index.js";
 import {
@@ -30,27 +25,16 @@ import {
 	encodeFieldSchemaV2,
 	storedSchemaDecodeDispatcher,
 } from "../../core/index.js";
-import { brand, unbrand, type JsonCompatible } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 
 import { Format as FormatV1 } from "./formatV1.js";
 import { Format as FormatV2 } from "./formatV2.js";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
-/**
- * Convert a MinimumVersionForCollab to a SchemaFormatVersion.
- * @param clientVersion - The MinimumVersionForCollab to convert.
- * @returns The SchemaFormatVersion that corresponds to the provided MinimumVersionForCollab.
- */
-export function clientVersionToSchemaVersion(
-	minVersionForCollab: MinimumVersionForCollab,
-): SchemaFormatVersion {
-	return getConfigForMinVersionForCollab(minVersionForCollab, builder.registry).formatVersion;
-}
-
 export function getCodecTreeForSchemaFormat(
 	clientVersion: MinimumVersionForCollab,
 ): CodecTree {
-	return { name: "Schema", version: clientVersionToSchemaVersion(clientVersion) };
+	return schemaCodecBuilder.getCodecTree(clientVersion);
 }
 
 /**
@@ -69,41 +53,9 @@ export function makeSchemaCodec(
 ): IJsonCodec<TreeStoredSchema> {
 	const overrides = new Map(options.writeVersionOverrides ?? []);
 	if (writeVersionOverride !== undefined) {
-		overrides.set(builder.name, writeVersionOverride);
+		overrides.set(schemaCodecBuilder.name, writeVersionOverride);
 	}
-	return builder.build({ ...options, writeVersionOverrides: overrides });
-}
-
-/**
- * Create a family of schema codecs.
- * @param options - Specifies common codec options, including which `validator` to use.
- * @returns The composed codec family.
- */
-export function makeSchemaCodecs(options: ICodecOptions): ICodecFamily<TreeStoredSchema> {
-	return makeCodecFamily([
-		[SchemaFormatVersion.v1, makeSchemaCodecV1(options)],
-		[SchemaFormatVersion.v2, makeSchemaCodecV2(options)],
-	]);
-}
-
-/**
- * Encode an in-memory TreeStoredSchema into the specified format version.
- * @param repo - The in-memory schema.
- * @param version - The schema write version.
- * @returns The encoded schema.
- */
-export function encodeRepo(
-	repo: TreeStoredSchema,
-	version: SchemaFormatVersion,
-): JsonCompatible {
-	switch (version) {
-		case unbrand(SchemaFormatVersion.v1):
-			return encodeRepoV1(repo) as JsonCompatible;
-		case unbrand(SchemaFormatVersion.v2):
-			return encodeRepoV2(repo) as JsonCompatible;
-		default:
-			unreachableCase(version);
-	}
+	return schemaCodecBuilder.build({ ...options, writeVersionOverrides: overrides });
 }
 
 function encodeRepoV1(repo: TreeStoredSchema): FormatV1 {
@@ -202,7 +154,7 @@ function makeSchemaCodecV2(options: ICodecOptions): IJsonCodec<TreeStoredSchema,
 	});
 }
 
-const builder = new ClientVersionDispatchingCodecBuilder("TreeStoredSchema", {
+export const schemaCodecBuilder = ClientVersionDispatchingCodecBuilder.build("Schema", {
 	[lowestMinVersionForCollab]: {
 		formatVersion: SchemaFormatVersion.v1,
 		codec: makeSchemaCodecV1,

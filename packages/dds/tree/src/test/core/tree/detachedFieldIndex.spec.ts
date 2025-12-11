@@ -16,8 +16,8 @@ import {
 	RevisionTagCodec,
 } from "../../../core/index.js";
 import {
+	builder,
 	makeDetachedFieldIndexCodec,
-	makeDetachedFieldIndexCodecFamily,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../core/tree/detachedFieldIndexCodecs.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -265,19 +265,22 @@ describe("DetachedFieldIndex Codecs", () => {
 			unfinalizedIdCompressor,
 		)) {
 			describe(name, () => {
-				const family = makeDetachedFieldIndexCodecFamily(
-					new RevisionTagCodec(idCompressor),
-					options,
-					idCompressor,
-				);
-				for (const version of family.getSupportedFormats()) {
-					if (validFor !== undefined && version !== undefined && !validFor.has(version)) {
+				for (const codec of builder.registry.values()) {
+					if (
+						validFor !== undefined &&
+						codec.formatVersion !== undefined &&
+						!validFor.has(codec.formatVersion)
+					) {
 						continue;
 					}
-					it(`version ${version}`, () => {
-						const codec = family.resolve(version);
-						const encoded = codec.json.encode(data);
-						const decoded = codec.json.decode(encoded);
+					it(`version ${codec.formatVersion}`, () => {
+						const inner = codec.codec({
+							...options,
+							revisionTagCodec: new RevisionTagCodec(idCompressor),
+							idCompressor,
+						});
+						const encoded = inner.json.encode(data);
+						const decoded = inner.json.decode(encoded);
 						assert.deepEqual(decoded, data);
 					});
 				}
@@ -313,19 +316,19 @@ describe("DetachedFieldIndex Codecs", () => {
 			unfinalizedIdCompressor,
 		)) {
 			describe(name, () => {
-				const family = makeDetachedFieldIndexCodecFamily(
-					new RevisionTagCodec(idCompressor),
-					options,
-					idCompressor,
-				);
-				for (const version of family.getSupportedFormats()) {
+				for (const format of builder.registry.values()) {
+					const version = format.formatVersion;
 					if (validFor !== undefined && version !== undefined && !validFor.has(version)) {
 						continue;
 					}
 					const dir = path.join("detached-field-index", name);
 					useSnapshotDirectory(dir);
 					it(`version ${version}`, () => {
-						const codec = family.resolve(version);
+						const codec = format.codec({
+							...options,
+							revisionTagCodec: new RevisionTagCodec(idCompressor),
+							idCompressor,
+						});
 						const encoded = codec.json.encode(data);
 						takeJsonSnapshot(encoded);
 					});

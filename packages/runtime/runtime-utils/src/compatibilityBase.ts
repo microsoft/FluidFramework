@@ -143,12 +143,29 @@ export function getConfigForMinVersionForCollab<T>(
 	minVersionForCollab: MinimumVersionForCollab,
 	config: ConfigMapEntry<T>,
 ): T {
-	const entries: [string, unknown][] = Object.entries(config); // Assigning this to a typed variable to convert the "any" into unknown.
+	return getConfigForMinVersionForCollabIterable(
+		minVersionForCollab,
+		Object.entries(config) as [MinimumMinorSemanticVersion, T][],
+	);
+}
+
+/**
+ * Returns a default configuration given minVersionForCollab and {@link ConfigMapEntry}.
+ *
+ * @internal
+ */
+export function getConfigForMinVersionForCollabIterable<T>(
+	minVersionForCollab: MinimumVersionForCollab,
+	entries: Iterable<readonly [MinimumMinorSemanticVersion | MinimumVersionForCollab, T]>, // [[typeof lowestMinVersionForCollab, T], ...[MinimumVersionForCollab, T][]],
+): T {
 	// Validate and strongly type the versions from the configMap.
-	const versions: [MinimumVersionForCollab, unknown][] = entries.map(([version, value]) => {
-		validateMinimumVersionForCollab(version);
-		return [version, value];
-	});
+	const versions: [MinimumVersionForCollab, unknown][] = Array.from(
+		entries,
+		([version, value]) => {
+			validateMinimumVersionForCollab(version);
+			return [version, value];
+		},
+	);
 	// Sort the versions in descending order to find the largest compatible entry.
 	// TODO: Enforcing a sorted order might be a good idea. For now tolerates any order.
 	versions.sort((a, b) => compare(b[0], a[0]));
