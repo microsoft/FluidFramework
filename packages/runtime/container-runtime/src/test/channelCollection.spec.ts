@@ -5,14 +5,42 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { AttachState } from "@fluidframework/container-definitions";
+import type { FluidObject } from "@fluidframework/core-interfaces";
+import type {
+	ISnapshotTree,
+	ISequencedDocumentMessage,
+	ITree,
+} from "@fluidframework/driver-definitions/internal";
+import type {
+	IAttachMessage,
+	IRuntimeMessageCollection,
+	IRuntimeStorageService,
+} from "@fluidframework/runtime-definitions/internal";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
+import {
+	DataCorruptionError,
+	DataProcessingError,
+	MockLogger,
+} from "@fluidframework/telemetry-utils/internal";
 
-import { detectOutboundReferences, getSummaryForDatastores } from "../channelCollection.js";
+import {
+	ChannelCollection,
+	detectOutboundReferences,
+	getSummaryForDatastores,
+	type IFluidRootParentContextPrivate,
+} from "../channelCollection.js";
+import { LocalFluidDataStoreContext } from "../dataStoreContext.js";
+import { ContainerMessageType } from "../messageTypes.js";
 import { type IContainerRuntimeMetadata, nonDataStorePaths } from "../summary/index.js";
 
+import {
+	createParentContext,
+	createSummarizerNodeAndGetCreateFn,
+} from "./dataStoreCreationHelper.js";
+
 describe("Runtime", () => {
-	describe("Container Runtime", () => {
+	describe("ChannelCollection", () => {
 		describe("getSummaryForDatastores", () => {
 			const enabledMetadata: IContainerRuntimeMetadata = {
 				summaryFormatVersion: 1,
@@ -197,6 +225,344 @@ describe("Runtime", () => {
 				detectOutboundReferences("foo", null, () => {
 					assert.fail("Should not be called");
 				});
+			});
+		});
+
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		describe.only("processAttachMessages - Duplicate ID Detection", () => {
+			let channelCollection: ChannelCollection;
+			let mockLogger: MockLogger;
+			let parentContext: IFluidRootParentContextPrivate;
+
+			const createMockAttachMessage = (
+				id: string,
+				type: string = "TestDataStore",
+			): IAttachMessage => ({
+				id,
+				type,
+				snapshot: { id: "snapshot-id", entries: [], blobs: [] } as ITree,
+			});
+
+			const createMockMessageCollection = (
+				attachMessage: IAttachMessage,
+				local: boolean = false,
+				sequenceNumber: number = 1,
+			): IRuntimeMessageCollection => ({
+				envelope: {
+					type: ContainerMessageType.Attach,
+					contents: attachMessage,
+					sequenceNumber,
+					clientId: local ? "local-client" : "remote-client",
+					timestamp: Date.now(),
+				} as ISequencedDocumentMessage,
+				messagesContent: [
+					{
+						contents: attachMessage,
+						localOpMetadata: undefined,
+						clientSequenceNumber: 1,
+					},
+				],
+				local,
+			});
+
+			beforeEach(() => {
+				mockLogger = new MockLogger();
+				const baseParentContext = createParentContext(mockLogger);
+
+				// Create a proper IFluidRootParentContextPrivate with root-level submitMessage/submitSignal
+				parentContext = {
+					...baseParentContext,
+					attachState: AttachState.Attached,
+					submitMessage: (_containerRuntimeMessage: unknown, _localOpMetadata: unknown) => {},
+					submitSignal: (_envelope: unknown, _targetClientId?: string) => {},
+					addedGCOutboundRoute: () => {},
+					makeLocallyVisible: () => {},
+					getExtension: () => undefined,
+					getCreateChildSummarizerNodeFn: (id: string) => {
+						const fn = createSummarizerNodeAndGetCreateFn(id).createSummarizerNodeFn;
+						return fn;
+					},
+				} as unknown as IFluidRootParentContextPrivate;
+
+				channelCollection = new ChannelCollection(
+					undefined, // baseSnapshot
+					parentContext,
+					mockLogger,
+					() => {}, // gcNodeUpdated
+					() => false, // isDataStoreDeleted
+					new Map(), // aliasMap
+				);
+			});
+
+			it("should throw DataProcessingError for duplicate ID with unbound (not-yet-attached) DataStore", () => {
+				const dataStoreId = "test-datastore-1";
+
+				// Create an unbound local context (not yet made visible)
+				const { createSummarizerNodeFn } = createSummarizerNodeAndGetCreateFn(dataStoreId);
+				const wrappedContext = (channelCollection as any).wrapContextForInnerChannel(
+					dataStoreId,
+				);
+				const localContext = new LocalFluidDataStoreContext({
+					id: dataStoreId,
+					pkg: ["TestPackage"],
+					parentContext: wrappedContext,
+					storage: {} as unknown as IRuntimeStorageService,
+					scope: {} as unknown as FluidObject,
+					createSummarizerNodeFn,
+					makeLocallyVisibleFn: () => {},
+					snapshotTree: undefined,
+				});
+
+				// Add the context as unbound (not yet made visible)
+				(channelCollection as any).contexts.addUnbound(localContext);
+
+				// Try to process a remote attach message with the same ID
+				const attachMessage = createMockAttachMessage(dataStoreId);
+				const messageCollection = createMockMessageCollection(attachMessage, false);
+
+				// Should throw DataProcessingError
+				assert.throws(
+					() => {
+						channelCollection.processMessages(messageCollection);
+					},
+					(error: Error) => {
+						assert(error instanceof DataProcessingError, "Expected DataProcessingError");
+						assert(
+							error.message.includes("Local DataStore matches remote DataStore id"),
+							`Expected error message about local DataStore match, got: ${error.message}`,
+						);
+						return true;
+					},
+					"Should throw DataProcessingError for unbound context collision",
+				);
+			});
+
+			it("should throw DataCorruptionError for duplicate ID with bound/attached DataStore", () => {
+				const dataStoreId = "test-datastore-2";
+
+				// Create a bound/attached context
+				const { createSummarizerNodeFn } = createSummarizerNodeAndGetCreateFn(dataStoreId);
+				const wrappedContext = (channelCollection as any).wrapContextForInnerChannel(
+					dataStoreId,
+				);
+				const localContext = new LocalFluidDataStoreContext({
+					id: dataStoreId,
+					pkg: ["TestPackage"],
+					parentContext: wrappedContext,
+					storage: {} as unknown as IRuntimeStorageService,
+					scope: {} as unknown as FluidObject,
+					createSummarizerNodeFn,
+					makeLocallyVisibleFn: () => {},
+					snapshotTree: undefined,
+				});
+
+				// Set the context to Attached state and add it as bound
+				localContext.setAttachState(AttachState.Attaching);
+				localContext.setAttachState(AttachState.Attached);
+				(channelCollection as any).contexts.addBoundOrRemoted(localContext);
+
+				// Try to process a remote attach message with the same ID
+				const attachMessage = createMockAttachMessage(dataStoreId);
+				const messageCollection = createMockMessageCollection(attachMessage, false);
+
+				// Should throw DataCorruptionError
+				assert.throws(
+					() => {
+						channelCollection.processMessages(messageCollection);
+					},
+					(error: Error) => {
+						assert(error instanceof DataCorruptionError, "Expected DataCorruptionError");
+						assert(
+							error.message.includes("Duplicate DataStore created with existing id"),
+							`Expected error message about duplicate DataStore, got: ${error.message}`,
+						);
+						return true;
+					},
+					"Should throw DataCorruptionError for bound context collision",
+				);
+			});
+
+			it("should throw DataCorruptionError for duplicate ID with aliased DataStore", () => {
+				const dataStoreId = "test-datastore-3";
+				const alias = "my-alias";
+
+				// Create a datastore and alias it
+				const { createSummarizerNodeFn } = createSummarizerNodeAndGetCreateFn(dataStoreId);
+				const wrappedContext = (channelCollection as any).wrapContextForInnerChannel(
+					dataStoreId,
+				);
+				const localContext = new LocalFluidDataStoreContext({
+					id: dataStoreId,
+					pkg: ["TestPackage"],
+					parentContext: wrappedContext,
+					storage: {} as unknown as IRuntimeStorageService,
+					scope: {} as unknown as FluidObject,
+					createSummarizerNodeFn,
+					makeLocallyVisibleFn: () => {},
+					snapshotTree: undefined,
+				});
+
+				localContext.setAttachState(AttachState.Attaching);
+				localContext.setAttachState(AttachState.Attached);
+				(channelCollection as any).contexts.addBoundOrRemoted(localContext);
+
+				// Add alias mapping
+				(channelCollection as any).aliasMap.set(alias, dataStoreId);
+
+				// Try to attach with the alias
+				const attachMessage = createMockAttachMessage(alias);
+				const messageCollection = createMockMessageCollection(attachMessage, false);
+
+				// Should throw DataCorruptionError
+				assert.throws(
+					() => {
+						channelCollection.processMessages(messageCollection);
+					},
+					(error: Error) => {
+						assert(error instanceof DataCorruptionError, "Expected DataCorruptionError");
+						assert(
+							error.message.includes("Duplicate DataStore created with existing id"),
+							`Expected error message about duplicate DataStore, got: ${error.message}`,
+						);
+						return true;
+					},
+					"Should throw DataCorruptionError for aliased context collision",
+				);
+			});
+
+			it("should not throw for local attach messages (early exit)", () => {
+				const dataStoreId = "test-datastore-4";
+
+				// Create an unbound local context
+				const { createSummarizerNodeFn } = createSummarizerNodeAndGetCreateFn(dataStoreId);
+				const wrappedContext = (channelCollection as any).wrapContextForInnerChannel(
+					dataStoreId,
+				);
+				const localContext = new LocalFluidDataStoreContext({
+					id: dataStoreId,
+					pkg: ["TestPackage"],
+					parentContext: wrappedContext,
+					storage: {} as unknown as IRuntimeStorageService,
+					scope: {} as unknown as FluidObject,
+					createSummarizerNodeFn,
+					makeLocallyVisibleFn: () => {},
+					snapshotTree: undefined,
+				});
+
+				// Add the context as unbound, then transition to Attaching state
+				// (this simulates what happens when makeDataStoreLocallyVisible is called)
+				(channelCollection as any).contexts.addUnbound(localContext);
+				localContext.setAttachState(AttachState.Attaching);
+				(channelCollection as any).contexts.bind(dataStoreId);
+
+				// Process a LOCAL attach message with the same ID (should exit early)
+				const attachMessage = createMockAttachMessage(dataStoreId);
+				const messageCollection = createMockMessageCollection(attachMessage, true);
+
+				// Mark it as pending attach to simulate local attach
+				(channelCollection as any).pendingAttach.set(dataStoreId, attachMessage);
+
+				// Should not throw - local messages exit early
+				assert.doesNotThrow(() => {
+					channelCollection.processMessages(messageCollection);
+				}, "Local attach messages should not trigger duplicate detection");
+
+				// Verify the context transitioned to Attached state (was in Attaching, now Attached)
+				const attachedContext = (channelCollection as any).contexts.get(dataStoreId);
+				assert(
+					attachedContext !== undefined,
+					"Context should be in bound/attached collection",
+				);
+				assert.strictEqual(
+					attachedContext.attachState,
+					AttachState.Attached,
+					"Context should be in Attached state",
+				);
+				// Verify pendingAttach was cleaned up
+				assert(
+					!(channelCollection as any).pendingAttach.has(dataStoreId),
+					"Pending attach should be removed",
+				);
+			});
+			it("should successfully process remote attach with no collision", () => {
+				const dataStoreId = "test-datastore-5";
+
+				// No existing context with this ID
+				const attachMessage = createMockAttachMessage(dataStoreId);
+				const messageCollection = createMockMessageCollection(attachMessage, false);
+
+				// Should not throw
+				assert.doesNotThrow(() => {
+					channelCollection.processMessages(messageCollection);
+				}, "Should successfully process attach message with unique ID");
+
+				// Verify the context was added
+				const context = (channelCollection as any).contexts.get(dataStoreId);
+				assert(context !== undefined, "Context should be added to bound/remoted collection");
+			});
+
+			it("should handle multiple unbound contexts with different IDs correctly", () => {
+				const dataStoreId1 = "test-datastore-6";
+				const dataStoreId2 = "test-datastore-7";
+
+				// Create two unbound contexts with different IDs
+				const { createSummarizerNodeFn: createFn1 } =
+					createSummarizerNodeAndGetCreateFn(dataStoreId1);
+				const wrappedContext1 = (channelCollection as any).wrapContextForInnerChannel(
+					dataStoreId1,
+				);
+				const localContext1 = new LocalFluidDataStoreContext({
+					id: dataStoreId1,
+					pkg: ["TestPackage"],
+					parentContext: wrappedContext1,
+					storage: {} as unknown as IRuntimeStorageService,
+					scope: {} as unknown as FluidObject,
+					createSummarizerNodeFn: createFn1,
+					makeLocallyVisibleFn: () => {},
+					snapshotTree: undefined,
+				});
+
+				const { createSummarizerNodeFn: createFn2 } =
+					createSummarizerNodeAndGetCreateFn(dataStoreId2);
+				const wrappedContext2 = (channelCollection as any).wrapContextForInnerChannel(
+					dataStoreId2,
+				);
+				const localContext2 = new LocalFluidDataStoreContext({
+					id: dataStoreId2,
+					pkg: ["TestPackage"],
+					parentContext: wrappedContext2,
+					storage: {} as unknown as IRuntimeStorageService,
+					scope: {} as unknown as FluidObject,
+					createSummarizerNodeFn: createFn2,
+					makeLocallyVisibleFn: () => {},
+					snapshotTree: undefined,
+				});
+
+				(channelCollection as any).contexts.addUnbound(localContext1);
+				(channelCollection as any).contexts.addUnbound(localContext2);
+
+				// Process remote attach for dataStoreId1 - should throw
+				const attachMessage1 = createMockAttachMessage(dataStoreId1);
+				const messageCollection1 = createMockMessageCollection(attachMessage1, false);
+
+				assert.throws(
+					() => {
+						channelCollection.processMessages(messageCollection1);
+					},
+					DataProcessingError,
+					"Should throw for first ID collision",
+				);
+
+				// Process remote attach for a different ID - should succeed
+				const attachMessage3 = createMockAttachMessage("test-datastore-8");
+				const messageCollection3 = createMockMessageCollection(attachMessage3, false);
+
+				assert.doesNotThrow(() => {
+					channelCollection.processMessages(messageCollection3);
+				}, "Should succeed for non-colliding ID");
 			});
 		});
 	});
