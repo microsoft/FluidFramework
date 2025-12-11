@@ -3944,10 +3944,9 @@ export class ContainerRuntime
 			runGC = this.garbageCollector.shouldRunGC,
 			runSweep,
 			fullGC,
-			telemetryContext: providedTelemetryContext,
+			telemetryContext = new TelemetryContext(),
 		} = options;
 
-		const telemetryContext = providedTelemetryContext ?? new TelemetryContext();
 		// Add the options that are used to generate this summary to the telemetry context.
 		telemetryContext.setMultiple("fluid_Summarize", "Options", {
 			fullTree,
@@ -4188,8 +4187,8 @@ export class ContainerRuntime
 			finalAttempt = false,
 			summaryLogger,
 			latestSummaryRefSeqNum,
+			telemetryContext = new TelemetryContext(),
 		} = options;
-		const telemetryContext = options.telemetryContext ?? new TelemetryContext();
 		// The summary number for this summary. This will be updated during the summary process, so get it now and
 		// use it for all events logged during this summary.
 		const summaryNumber = this.nextSummaryNumber;
