@@ -133,7 +133,7 @@ export class ChangeSet {
 	 *
 	 * @param in_isNormalized - is this a normalized ChangeSet?
 	 */
-	setIsNormalized(in_isNormalized: boolean) {
+	setIsNormalized(in_isNormalized: boolean): void {
 		this._isNormalized = in_isNormalized;
 	}
 
@@ -165,7 +165,7 @@ export class ChangeSet {
 	 * @param in_changeSet - The changeset to apply
 	 * @param in_options - Optional additional parameters
 	 */
-	applyChangeSet(in_changeSet: SerializedChangeSet, in_options?: ApplyChangeSetOptions) {
+	applyChangeSet(in_changeSet: SerializedChangeSet, in_options?: ApplyChangeSetOptions): void {
 		let changes = in_changeSet;
 		if (in_changeSet instanceof ChangeSet) {
 			changes = in_changeSet.getSerializedChangeSet();
@@ -202,7 +202,7 @@ export class ChangeSet {
 		in_appliedPropertyChanges: SerializedChangeSet,
 		in_removeEmpty: boolean,
 		in_options?: ApplyChangeSetOptions,
-	) {
+	): void {
 		// Apply dynamic property operations
 		if (
 			in_appliedPropertyChanges.insert ||
@@ -267,7 +267,7 @@ export class ChangeSet {
 		io_baseChanges: SerializedChangeSet,
 		in_baseKey: string,
 		in_appliedValue: SerializedChangeSet,
-	) {
+	): void {
 		const newValue =
 			in_appliedValue && in_appliedValue.hasOwnProperty("value")
 				? in_appliedValue.value
@@ -761,7 +761,7 @@ export class ChangeSet {
 	 * or updates the former state of a reversible changeset
 	 * @param in_context - The traversal context.
 	 */
-	private _recursivelyBuildReversibleChangeSet(in_context: Utils.TraversalContext) {
+	private _recursivelyBuildReversibleChangeSet(in_context: Utils.TraversalContext): void {
 		const opType = in_context.getOperationType();
 		if (opType === "modify") {
 			const type = in_context.getTypeid();
@@ -972,7 +972,7 @@ export class ChangeSet {
 	 * in a later release.
 	 * @param in_oldSerializedState - The old state.
 	 */
-	public _toReversibleChangeSet(in_oldSerializedState: SerializedChangeSet) {
+	public _toReversibleChangeSet(in_oldSerializedState: SerializedChangeSet): void {
 		ConsoleUtils.assert(
 			in_oldSerializedState !== undefined,
 			`${MSG.ASSERTION_FAILED}Missing function parameter "in_oldSerializedState" of "_toReversibleChangeSet".`,
@@ -1007,8 +1007,8 @@ export class ChangeSet {
 	 * in a later release.
 	 * @param in_withoutRoot - Bypass a fix where the root of a changeset is cleaned
 	 */
-	public _stripReversibleChangeSet(in_withoutRoot: boolean) {
-		const callback = function (in_context) {
+	public _stripReversibleChangeSet(in_withoutRoot: boolean): void {
+		const callback = function (in_context): void {
 			const opType = in_context.getOperationType();
 			if (opType === "remove" || opType === "modify") {
 				const type = in_context.getTypeid();
@@ -1157,7 +1157,7 @@ export class ChangeSet {
 	 * recursive helper function for ChangeSet.prototype._toInverseChangeSet
 	 * @param in_context - The traversal context.
 	 */
-	private _recursivelyInvertReversibleChangeset(in_context: Utils.TraversalContext) {
+	private _recursivelyInvertReversibleChangeset(in_context: Utils.TraversalContext): void {
 		in_context.setUserData(in_context.getUserData() || {});
 
 		// Figure out if we have already visited this path by verifying that the full path
@@ -1327,7 +1327,7 @@ export class ChangeSet {
 	 * and it's set to private for now. It will be converted to a public API function
 	 * in a later release
 	 */
-	public toInverseChangeSet() {
+	public toInverseChangeSet(): void {
 		if (this._changes.value !== undefined && this._changes.oldValue !== undefined) {
 			const tmp = this._changes.value;
 			this._changes.value = this._changes.oldValue;
