@@ -65,7 +65,7 @@ export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(
 			throw new Error("createWeightedGenerator must have some positive weight");
 		}
 		const { random } = state;
-		const sample = () => {
+		const sample = (): number => {
 			const weightSelected = random.real(0, totalWeight);
 
 			let opIndex = 0;
@@ -323,7 +323,7 @@ export function createWeightedAsyncGenerator<T, TState extends BaseFuzzTestState
 	// we could pre-filter the acceptance conditions rather than rejection sample the outcome.
 	return async (state) => {
 		const { random } = state;
-		const sample = () => {
+		const sample = (): number => {
 			const weightSelected = random.real(0, totalWeight);
 
 			let opIndex = 0;

@@ -175,6 +175,7 @@ export {
 	type GraphCommit,
 	CommitKind,
 	type CommitMetadata,
+	type ChangeMetadata,
 	type RevisionTag,
 	RevisionTagSchema,
 	RevisionTagCodec,
