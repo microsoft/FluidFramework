@@ -32,7 +32,6 @@
         "promise",
         "jsdoc",
         "@typescript-eslint",
-        "@rushstack/security",
         "@rushstack",
         "unicorn",
         "tsdoc"
@@ -2174,6 +2173,9 @@
             "error"
         ],
         "unicorn/consistent-destructuring": [
+            "off"
+        ],
+        "unicorn/consistent-empty-array-spread": [
             "error"
         ],
         "unicorn/consistent-function-scoping": [
@@ -2207,12 +2209,15 @@
             }
         ],
         "unicorn/import-style": [
-            "error"
+            "off"
         ],
         "unicorn/new-for-builtins": [
             "off"
         ],
         "unicorn/no-abusive-eslint-disable": [
+            "error"
+        ],
+        "unicorn/no-anonymous-default-export": [
             "error"
         ],
         "unicorn/no-array-callback-reference": [
@@ -2233,6 +2238,9 @@
         "unicorn/no-await-expression-member": [
             "error"
         ],
+        "unicorn/no-await-in-promise-methods": [
+            "error"
+        ],
         "unicorn/no-console-spaces": [
             "error"
         ],
@@ -2251,6 +2259,9 @@
         "unicorn/no-instanceof-array": [
             "off"
         ],
+        "unicorn/no-invalid-fetch-options": [
+            "error"
+        ],
         "unicorn/no-invalid-remove-event-listener": [
             "error"
         ],
@@ -2260,7 +2271,13 @@
         "unicorn/no-lonely-if": [
             "error"
         ],
+        "unicorn/no-magic-array-flat-depth": [
+            "error"
+        ],
         "unicorn/no-negated-condition": [
+            "error"
+        ],
+        "unicorn/no-negation-in-equality-check": [
             "error"
         ],
         "unicorn/no-nested-ternary": [
@@ -2281,6 +2298,9 @@
         "unicorn/no-process-exit": [
             "error"
         ],
+        "unicorn/no-single-promise-in-promise-methods": [
+            "error"
+        ],
         "unicorn/no-static-only-class": [
             "off"
         ],
@@ -2294,6 +2314,9 @@
             "off"
         ],
         "unicorn/no-unnecessary-await": [
+            "error"
+        ],
+        "unicorn/no-unnecessary-polyfills": [
             "error"
         ],
         "unicorn/no-unreadable-array-destructuring": [
@@ -2354,7 +2377,7 @@
             "error"
         ],
         "unicorn/prefer-at": [
-            "off"
+            "warn"
         ],
         "unicorn/prefer-blob-reading-methods": [
             "error"
@@ -2449,8 +2472,11 @@
         "unicorn/prefer-spread": [
             "error"
         ],
+        "unicorn/prefer-string-raw": [
+            "warn"
+        ],
         "unicorn/prefer-string-replace-all": [
-            "off"
+            "warn"
         ],
         "unicorn/prefer-string-slice": [
             "error"
@@ -2460,6 +2486,9 @@
         ],
         "unicorn/prefer-string-trim-start-end": [
             "error"
+        ],
+        "unicorn/prefer-structured-clone": [
+            "warn"
         ],
         "unicorn/prefer-switch": [
             "error"

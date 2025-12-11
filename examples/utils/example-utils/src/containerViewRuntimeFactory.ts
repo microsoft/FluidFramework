@@ -39,8 +39,8 @@ export async function getDataStoreEntryPoint<T>(
  * @internal
  */
 export interface IFluidMountableViewEntryPoint {
-	getDefaultDataObject(): Promise<FluidObject>;
-	getMountableDefaultView(path?: string): Promise<IFluidMountableView>;
+	getDefaultDataObject: () => Promise<FluidObject>;
+	getMountableDefaultView: (path?: string) => Promise<IFluidMountableView>;
 }
 
 /**

@@ -25,7 +25,7 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
 		from: number,
 		to: number,
 		documentServiceFactory: IDocumentServiceFactory,
-	) {
+	): ReplayDocumentServiceFactory {
 		return new ReplayDocumentServiceFactory(
 			documentServiceFactory,
 			new ReplayControllerStatic(from, to),

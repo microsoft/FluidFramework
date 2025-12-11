@@ -3,8 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import { existsSync } from "node:fs";
+import path from "node:path";
+
 import { getEsLintConfigFilePath, getInstalledPackageVersion } from "../taskUtils";
 import { TscDependentTask } from "./tscTask";
+
+/**
+ * Path to the shared eslint-config-fluid package relative to the repo root.
+ * Can be overridden with the FLUID_BUILD_ESLINT_CONFIG_PATH environment variable.
+ */
+const sharedEslintConfigPath =
+	process.env.FLUID_BUILD_ESLINT_CONFIG_PATH ?? "common/build/eslint-config-fluid";
 
 export class TsLintTask extends TscDependentTask {
 	protected getTaskSpecificConfigFiles() {
@@ -25,7 +35,9 @@ export class EsLintTask extends TscDependentTask {
 				throw new Error(`Unable to find config file for eslint ${this.command}`);
 			}
 		}
-		return [this._configFileFullPath];
+
+		// Include local config file and shared eslint-config-fluid files
+		return [this._configFileFullPath, ...this.getSharedConfigFiles()];
 	}
 
 	protected get useWorker() {

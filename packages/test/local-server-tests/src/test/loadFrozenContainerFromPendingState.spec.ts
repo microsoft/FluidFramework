@@ -10,14 +10,28 @@ import {
 	asLegacyAlpha,
 	createDetachedContainer,
 	loadFrozenContainerFromPendingState,
+	type ContainerAlpha,
+	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces/internal";
 import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { timeoutPromise, type TestFluidObject } from "@fluidframework/test-utils/internal";
+import {
+	LocalDeltaConnectionServer,
+	type ILocalDeltaConnectionServer,
+} from "@fluidframework/server-local-server";
+import {
+	timeoutPromise,
+	type ITestFluidObject,
+	type LocalCodeLoader,
+	type TestFluidObject,
+} from "@fluidframework/test-utils/internal";
 
 import { createLoader } from "../utils.js";
+import type {
+	LocalDocumentServiceFactory,
+	LocalResolver,
+} from "@fluidframework/local-driver/internal";
 
 const toComparableArray = (dir: ISharedMap): [string, unknown][] =>
 	[...dir.entries()].map(([key, value]) => [
@@ -26,7 +40,15 @@ const toComparableArray = (dir: ISharedMap): [string, unknown][] =>
 	]);
 
 // initialize loader and create a container function
-const initialize = async () => {
+const initialize = async (): Promise<{
+	container: ContainerAlpha;
+	ITestFluidObject: ITestFluidObject;
+	urlResolver: LocalResolver;
+	codeLoader: LocalCodeLoader;
+	documentServiceFactory: LocalDocumentServiceFactory;
+	deltaConnectionServer: ILocalDeltaConnectionServer;
+	loaderProps: ILoaderProps;
+}> => {
 	const deltaConnectionServer = LocalDeltaConnectionServer.create();
 
 	const { urlResolver, codeDetails, codeLoader, loaderProps, documentServiceFactory } =

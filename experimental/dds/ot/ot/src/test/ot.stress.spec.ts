@@ -23,14 +23,14 @@ describe("SharedOT", () => {
 		let runtimes: MockContainerRuntimeForReconnection[] = [];
 		let trace: string[]; // Repro steps to be printed if a failure is encountered.
 
-		const extract = (doc: SharedDelta) => {
+		const extract = (doc: SharedDelta): string => {
 			return doc.text;
 		};
 
 		/**
 		 * Drains the queue of pending ops for each client and vets that all docs converged on the same state.
 		 */
-		const expect = async () => {
+		const expect = async (): Promise<void> => {
 			// Reconnect any disconnected clients before processing pending ops.
 			{
 				for (let i = 0; i < runtimes.length; i++) {
@@ -76,7 +76,7 @@ describe("SharedOT", () => {
 			syncProbability: number,
 			disconnectProbability: number,
 			seed: number,
-		) {
+		): Promise<void> {
 			try {
 				docs = [];
 				runtimes = [];
@@ -108,11 +108,10 @@ describe("SharedOT", () => {
 
 				// Returns a pseudorandom 32b integer in the range [0 .. max).
 				// eslint-disable-next-line no-bitwise
-				const int32 = (max = 0x7fffffff) => (float64() * max) | 0;
+				const int32 = (max = 0x7fffffff): number => (float64() * max) | 0;
+				const randomText = (): string => `${float64().toString(36).substr(0, int32(12))}`;
 
-				const randomText = () => `${float64().toString(36).substr(0, int32(12))}`;
-
-				const insert = (docIndex: number, position: number, text: string) => {
+				const insert = (docIndex: number, position: number, text: string): void => {
 					trace?.push(
 						`doc${
 							docIndex + 1
@@ -121,7 +120,7 @@ describe("SharedOT", () => {
 					docs[docIndex].insert(position, text);
 				};
 
-				const del = (docIndex: number, start: number, end: number) => {
+				const del = (docIndex: number, start: number, end: number): void => {
 					trace?.push(`doc${docIndex + 1}.delete(/* start: */ ${start}, /* end: */ ${end});`);
 					docs[docIndex].delete(start, end);
 				};
