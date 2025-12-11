@@ -9,8 +9,10 @@ import { DiscriminatedUnionDispatcher } from "../../codec/index.js";
 import {
 	type JsonCompatibleReadOnlyObject,
 	type MakeNominal,
+	type Values,
 	brandConst,
 	invertMap,
+	strictEnum,
 } from "../../util/index.js";
 
 import {
@@ -32,13 +34,14 @@ import type { Multiplicity } from "./multiplicity.js";
 /**
  * The format version for the schema.
  */
-export enum SchemaFormatVersion {
-	v1 = 1,
+export const SchemaFormatVersion = strictEnum("SchemaFormatVersion", {
+	v1: 1,
 	/**
 	 * Adds persisted metadata to the node schema and field schema.
 	 */
-	v2 = 2,
-}
+	v2: 2,
+});
+export type SchemaFormatVersion = Values<typeof SchemaFormatVersion>;
 
 type FieldSchemaFormat = FieldSchemaFormatV1 | FieldSchemaFormatV2;
 

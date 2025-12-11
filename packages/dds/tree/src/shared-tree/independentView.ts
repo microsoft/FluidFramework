@@ -48,7 +48,6 @@ import {
 	type JsonCompatible,
 	Breakable,
 	oneFromIterable,
-	brand,
 } from "../util/index.js";
 import {
 	buildConfiguredForest,

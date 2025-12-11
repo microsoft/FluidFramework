@@ -67,7 +67,7 @@ describe("SchemaIndex", () => {
 		// TODO: should test way more cases, and check results are correct.
 		const cases = [
 			{
-				version: 1 as const,
+				version: SchemaFormatVersion.v1,
 				nodes: {},
 				root: { kind: "x" as FieldKindIdentifier, types: [] },
 			} satisfies FormatV1,
@@ -81,7 +81,7 @@ describe("SchemaIndex", () => {
 		// TODO: should test way more cases, and check results are correct.
 		const cases = [
 			{
-				version: 2 as const,
+				version: SchemaFormatVersion.v2,
 				nodes: {},
 				root: {
 					kind: "x" as FieldKindIdentifier,
