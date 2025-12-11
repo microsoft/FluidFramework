@@ -15,6 +15,7 @@ import {
 import type { BenchmarkResult } from "../ResultTypes";
 import { fail } from "../assert.js";
 import { Phase, runBenchmark } from "../runBenchmark";
+
 import { emitResultsMocha } from "./runnerUtilities";
 
 /**
