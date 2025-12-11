@@ -16,7 +16,7 @@ import {
 	maybeGetNewGeneration,
 } from "../../../library/layerCompatGeneration.js";
 
-describe("check:layerCompatGeneration", () => {
+describe("check:compatLayerGeneration", () => {
 	const minimumCompatWindowMonths = DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS;
 
 	it("should correctly detect patch versions (which should be skipped)", () => {

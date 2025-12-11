@@ -127,7 +127,7 @@ export function maybeGetNewGeneration(
 	const today = new Date();
 	const timeDiff = today.getTime() - previousReleaseDate.getTime();
 	if (timeDiff < 0) {
-		throw new Error("Current date is older that previous release date");
+		throw new Error("Current date is older than previous release date");
 	}
 	const daysBetweenReleases = Math.round(timeDiff / (1000 * 60 * 60 * 24));
 	const monthsBetweenReleases = Math.floor(daysBetweenReleases / DAYS_IN_MONTH_APPROXIMATION);

@@ -271,8 +271,8 @@ export const CheckLayerCompatGeneration: CheckFunction = async (
 		// Build fix command with release group option if applicable
 		const fixCommand =
 			releaseGroupOrPackage instanceof MonoRepo
-				? `pnpm flub generate layerCompatGeneration -g ${releaseGroupOrPackage.kind}`
-				: "pnpm flub generate layerCompatGeneration";
+				? `pnpm flub generate compatLayerGeneration -g ${releaseGroupOrPackage.kind}`
+				: "pnpm flub generate compatLayerGeneration";
 
 		return {
 			message: `Some packages need layer generation updates:\n${packagesNeedingUpdate

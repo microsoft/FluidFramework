@@ -70,12 +70,12 @@ export default class CheckLayerCompatGenerationCommand extends PackageCommand<
 			this.error(
 				`Some packages need layer generation updates:\n${this.packagesNeedingUpdate
 					.map(({ pkg, reason }) => `  - ${pkg.name}: ${reason}`)
-					.join("\n")}\n\nRun 'flub generate layerCompatGeneration' to update them.`,
+					.join("\n")}\n\nRun 'flub generate compatLayerGeneration' to update them.`,
+			);
+		} else {
+			this.log(
+				`Layer generation check passed for ${this.filteredPackages?.length ?? 0} packages.`,
 			);
 		}
-
-		this.log(
-			`Layer generation check passed for ${this.filteredPackages?.length ?? 0} packages.`,
-		);
 	}
 }

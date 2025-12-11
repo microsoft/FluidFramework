@@ -215,7 +215,7 @@ describe("generate:compatLayerGeneration", () => {
 					mockMetadata,
 					minimumCompatWindowMonths,
 				),
-			/Current date is older that previous release date/,
+			/Current date is older than previous release date/,
 		);
 	});
 });
