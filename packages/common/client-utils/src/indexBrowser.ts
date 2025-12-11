@@ -36,3 +36,4 @@ export {
 	type IProvideLayerCompatDetails,
 	type ILayerCompatSupportRequirements,
 } from "./layerCompat.js";
+export { generation } from "./layerGenerationState.js";
