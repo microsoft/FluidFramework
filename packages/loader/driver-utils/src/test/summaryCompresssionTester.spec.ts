@@ -135,7 +135,7 @@ class InternalTestStorage implements IDocumentStorageService {
 	}
 	async readBlob(id: string): Promise<ArrayBufferLike> {
 		return id === misotestid
-			? new TextEncoder().encode(abcContent)
+			? (new TextEncoder().encode(abcContent) as unknown as ArrayBufferLike)
 			: getHeaderContent(this._uploadedSummary!);
 	}
 	async uploadSummaryWithContext(
@@ -623,7 +623,7 @@ function checkCompressionConfig(
 	);
 }
 
-function getHeaderContent(summary: ISummaryTree): ISummaryBlob {
+function getHeaderContent(summary: ISummaryTree): any {
 	return getHeader(summary)["content"];
 }
 
