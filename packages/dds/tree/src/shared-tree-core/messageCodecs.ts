@@ -82,6 +82,15 @@ export function messageFormatVersionSelectorForSharedBranches(
 	return brand(MessageFormatVersion.vSharedBranches);
 }
 
+/**
+ * Returns the version that should be used for testing table constraints.
+ */
+export function messageFormatVersionSelectorForConstraints(
+	clientVersion: MinimumVersionForCollab,
+): MessageFormatVersion {
+	return brand(MessageFormatVersion.vAlphaConstraints);
+}
+
 export function makeMessageCodec<TChangeset>(
 	changeCodecs: ICodecFamily<TChangeset, ChangeEncodingContext>,
 	dependentChangeFormatVersion: DependentFormatVersion<MessageFormatVersion>,
@@ -161,6 +170,15 @@ export function makeMessageCodecs<TChangeset>(
 				return [
 					version,
 					makeSharedBranchesCodecWithVersion(changeCodec, revisionTagCodec, options, version),
+				];
+			}
+			case MessageFormatVersion.vAlphaConstraints: {
+				const changeCodec = changeCodecs.resolve(
+					dependentChangeFormatVersion.lookup(version),
+				).json;
+				return [
+					version,
+					makeV1ToV4CodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
 			}
 			default:

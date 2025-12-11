@@ -31,6 +31,8 @@ import { FluidClientVersion } from "./codec/index.js";
 import {
 	editManagerFormatVersionSelectorForSharedBranches,
 	messageFormatVersionSelectorForSharedBranches,
+	messageFormatVersionSelectorForConstraints,
+	editManagerFormatVersionSelectorForConstraints,
 } from "./shared-tree-core/index.js";
 
 /**
@@ -203,7 +205,7 @@ export function configuredSharedTreeInternal(
 
 export function resolveOptions(options: SharedTreeOptions): SharedTreeOptionsInternal {
 	const internal: SharedTreeOptionsInternal = {
-		...resolveSharedBranchesOptions(options.enableSharedBranches),
+		...resolveFormatOptions(options),
 	};
 	for (const optionName of Object.keys(options)) {
 		copyProperty(options, optionName, internal);
@@ -211,12 +213,31 @@ export function resolveOptions(options: SharedTreeOptions): SharedTreeOptionsInt
 	return internal;
 }
 
-function resolveSharedBranchesOptions(
-	enableSharedBranches: boolean | undefined,
-): SharedTreeOptionsInternal {
-	return enableSharedBranches === true ? sharedBranchesOptions : {};
+function resolveFormatOptions(options: SharedTreeOptions): SharedTreeOptionsInternal {
+	const enableSharedBranches = options.enableSharedBranches ?? false;
+	const enableAlphaConstraints = options.enableAlphaConstraints ?? false;
+	if (enableSharedBranches && enableAlphaConstraints) {
+		throw new UsageError(
+			"Cannot enable both shared branches and alpha constraints at the same time.",
+		);
+	}
+
+	if (enableSharedBranches) {
+		return sharedBranchesOptions;
+	}
+	if (enableAlphaConstraints) {
+		return alphaConstraintOptions;
+	}
+
+	return {};
 }
+
 const sharedBranchesOptions: SharedTreeOptionsInternal = {
 	messageFormatSelector: messageFormatVersionSelectorForSharedBranches,
 	editManagerFormatSelector: editManagerFormatVersionSelectorForSharedBranches,
+};
+
+const alphaConstraintOptions: SharedTreeOptionsInternal = {
+	messageFormatSelector: messageFormatVersionSelectorForConstraints,
+	editManagerFormatSelector: editManagerFormatVersionSelectorForConstraints,
 };

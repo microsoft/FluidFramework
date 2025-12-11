@@ -73,6 +73,15 @@ export function editManagerFormatVersionSelectorForSharedBranches(
 	return brand(EditManagerFormatVersion.vSharedBranches);
 }
 
+/**
+ * Returns the version that should be used for testing alpha constraints.
+ */
+export function editManagerFormatVersionSelectorForConstraints(
+	clientVersion: MinimumVersionForCollab,
+): EditManagerFormatVersion {
+	return brand(EditManagerFormatVersion.vAlphaConstraints);
+}
+
 export interface EditManagerCodecOptions {
 	readonly editManagerFormatSelector?: (
 		minVersionForCollab: MinimumVersionForCollab,
@@ -154,7 +163,7 @@ export function makeEditManagerCodecs<TChangeset>(
 					makeSharedBranchesCodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
 			}
-			case EditManagerFormatVersion.vConstraints: {
+			case EditManagerFormatVersion.vAlphaConstraints: {
 				const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
 				return [
 					version,

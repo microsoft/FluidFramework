@@ -52,6 +52,11 @@ export const MessageFormatVersion = {
 	 * Only used for testing shared branches.
 	 */
 	vSharedBranches: "shared-branches|v0.1",
+	/**
+	 * Not yet released.
+	 * Only used for version alpha constraints.
+	 */
+	vAlphaConstraints: "alphaconstraints|v0.1",
 } as const;
 export type MessageFormatVersion = Brand<
 	(typeof MessageFormatVersion)[keyof typeof MessageFormatVersion],
@@ -61,6 +66,7 @@ export const supportedMessageFormatVersions: ReadonlySet<MessageFormatVersion> =
 	MessageFormatVersion.v3,
 	MessageFormatVersion.v4,
 	MessageFormatVersion.vSharedBranches,
+	MessageFormatVersion.vAlphaConstraints,
 ] as MessageFormatVersion[]);
 export const messageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set(
 	Object.values(MessageFormatVersion) as MessageFormatVersion[],

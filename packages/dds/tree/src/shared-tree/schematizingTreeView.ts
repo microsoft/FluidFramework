@@ -9,7 +9,7 @@ import type {
 	IEmitter,
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { anchorSlot, rootFieldKey } from "../core/index.js";
@@ -557,7 +557,8 @@ export function addConstraintsToTransaction(
 	constraints: readonly TransactionConstraint[] = [],
 ): void {
 	for (const constraint of constraints) {
-		switch (constraint.type) {
+		const constraintType = constraint.type;
+		switch (constraintType) {
 			case "nodeInDocument": {
 				const node = getInnerNode(constraint.node);
 				const nodeStatus = getKernel(constraint.node).getStatus();
@@ -584,8 +585,7 @@ export function addConstraintsToTransaction(
 				break;
 			}
 			default:
-				fail(`Unsupported constraint type`);
-				break;
+				unreachableCase(constraintType);
 		}
 	}
 }
