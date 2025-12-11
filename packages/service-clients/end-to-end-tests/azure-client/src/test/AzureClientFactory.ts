@@ -191,7 +191,7 @@ export function createAzureClientLegacy(
  * currently these are mainly fetched from ephemeralSummaryTrees.ts
  * @param userID - ID for the user creating the container
  * @param userName - Name for the user creating the container
- * @returns - A FetchResponse containing the container ID(response.data.id)
+ * @returns A FetchResponse containing the container ID(response.data.id)
  */
 export async function createContainerFromPayload(
 	requestPayload: object,

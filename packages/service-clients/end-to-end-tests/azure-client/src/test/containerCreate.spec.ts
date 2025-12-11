@@ -25,6 +25,7 @@ import { SharedMap } from "@fluidframework/map/legacy";
 import { SharedMap as SharedMapLegacy } from "@fluidframework/map-legacy";
 import { MockLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
+import { SharedTree } from "@fluidframework/tree/legacy";
 import type { SinonSandbox } from "sinon";
 import { createSandbox } from "sinon";
 
