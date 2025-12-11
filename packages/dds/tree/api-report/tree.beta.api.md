@@ -659,7 +659,7 @@ export namespace System_Unsafe {
 }
 
 // @public
-export type TransactionConstraint = NodeInDocumentConstraint | NoChangeConstraint;
+export type TransactionConstraint = NodeInDocumentConstraint;
 
 // @public @sealed @system
 export interface Tree extends TreeNodeApi {

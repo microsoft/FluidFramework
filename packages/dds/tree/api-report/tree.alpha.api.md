@@ -908,7 +908,7 @@ export interface RunTransaction {
 
 // @alpha @input
 export interface RunTransactionParams {
-    readonly preconditions?: readonly TransactionConstraint[];
+    readonly preconditions?: readonly TransactionConstraintAlpha[];
 }
 
 // @public @sealed
@@ -1352,11 +1352,14 @@ export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = ({
     rollback: true;
     value: TFailureValue;
 }) & {
-    preconditionsOnRevert?: readonly TransactionConstraint[];
+    preconditionsOnRevert?: readonly TransactionConstraintAlpha[];
 };
 
 // @public
-export type TransactionConstraint = NodeInDocumentConstraint | NoChangeConstraint;
+export type TransactionConstraint = NodeInDocumentConstraint;
+
+// @alpha
+export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstraint;
 
 // @alpha
 export type TransactionResult = Omit<TransactionResultSuccess<unknown>, "value"> | Omit<TransactionResultFailed<unknown>, "value">;

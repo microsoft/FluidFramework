@@ -159,6 +159,7 @@ export {
 	type SchemaStatics,
 	type ITreeAlpha,
 	type TransactionConstraint,
+	type TransactionConstraintAlpha,
 	type NodeInDocumentConstraint,
 	type NoChangeConstraint,
 	type RunTransactionParams,

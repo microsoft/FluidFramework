@@ -50,7 +50,7 @@ import {
 	type TransactionResult,
 	type TransactionResultExt,
 	type RunTransactionParams,
-	type TransactionConstraint,
+	type TransactionConstraintAlpha,
 	HydratedContext,
 	SimpleContextSlot,
 	areImplicitFieldSchemaEqual,
@@ -291,7 +291,7 @@ export class SchematizingSimpleTreeView<
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
 		const addConstraints = (
 			constraintsOnRevert: boolean,
-			constraints: readonly TransactionConstraint[] = [],
+			constraints: readonly TransactionConstraintAlpha[] = [],
 		): void => {
 			addConstraintsToTransaction(this.checkout, constraintsOnRevert, constraints);
 		};
@@ -554,7 +554,7 @@ export function getCheckout(context: TreeBranch): TreeCheckout {
 export function addConstraintsToTransaction(
 	checkout: ITreeCheckout,
 	constraintsOnRevert: boolean,
-	constraints: readonly TransactionConstraint[] = [],
+	constraints: readonly TransactionConstraintAlpha[] = [],
 ): void {
 	for (const constraint of constraints) {
 		const constraintType = constraint.type;
