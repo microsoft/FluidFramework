@@ -151,15 +151,17 @@ describe("message codec", () => {
 			jsonValidator: FormatValidatorBasic,
 		},
 	);
-	makeDiscontinuedEncodingTestSuite(family,
-		[undefined, MessageFormatVersion.v1, MessageFormatVersion.v2, MessageFormatVersion.v5]
-	)
-	makeEncodingTestSuite(
-		family,
-		testCases,
+	makeEncodingTestSuite(family, testCases, undefined, [
+		MessageFormatVersion.v3,
+		MessageFormatVersion.v4,
+		MessageFormatVersion.vSharedBranches,
+	]);
+	makeDiscontinuedEncodingTestSuite(family, [
 		undefined,
-		[MessageFormatVersion.v3, MessageFormatVersion.v4, MessageFormatVersion.vSharedBranches],
-	);
+		MessageFormatVersion.v1,
+		MessageFormatVersion.v2,
+		MessageFormatVersion.v5,
+	]);
 
 	describe("dispatching codec", () => {
 		const codec = makeMessageCodec(

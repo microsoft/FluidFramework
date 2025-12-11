@@ -18,8 +18,8 @@ import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import {
 	type EncodingTestData,
-	makeEncodingTestSuite,
 	makeDiscontinuedEncodingTestSuite,
+	makeEncodingTestSuite,
 	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
@@ -210,22 +210,20 @@ export function testCodec() {
 				jsonValidator: FormatValidatorBasic,
 			},
 		);
-		makeDiscontinuedEncodingTestSuite(family,
-			[EditManagerFormatVersion.v1, EditManagerFormatVersion.v2, EditManagerFormatVersion.v5]
-		);
-
 		// Versions 1 through 4 do not encode the summary originator ID.
-		makeEncodingTestSuite(
-			family,
-			testCases,
-			assertEquivalentSummaryDataIgnoreOriginator,
-			[EditManagerFormatVersion.v3, EditManagerFormatVersion.v4]
-		);
+		makeEncodingTestSuite(family, testCases, assertEquivalentSummaryDataIgnoreOriginator, [
+			EditManagerFormatVersion.v3,
+			EditManagerFormatVersion.v4,
+		]);
+		makeDiscontinuedEncodingTestSuite(family, [
+			EditManagerFormatVersion.v1,
+			EditManagerFormatVersion.v2,
+			EditManagerFormatVersion.v5,
+		]);
 
 		makeEncodingTestSuite(family, testCases, undefined, [
 			EditManagerFormatVersion.vSharedBranches,
 		]);
-
 		// TODO: testing EditManagerSummarizer class itself, specifically for attachment and normal summaries.
 		// TODO: format compatibility tests to detect breaking of existing documents.
 	});

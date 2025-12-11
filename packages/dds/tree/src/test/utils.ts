@@ -1032,10 +1032,48 @@ export interface EncodingTestData<TDecoded, TEncoded, TContext = void> {
 const assertDeepEqual = (a: unknown, b: unknown): void => assert.deepEqual(a, b);
 
 /**
+ * Tracks tested versions and registers an after hook to validate that all supported
+ * versions in the codec family have corresponding tests.
+ */
+const testedVersionsByFamily = new WeakMap<
+	ICodecFamily<unknown, unknown>,
+	Set<FormatVersion>
+>();
+const validateRegistered = new WeakSet<ICodecFamily<unknown, unknown>>();
+
+function registerValidationHook<TDecoded, TContext>(
+	family: ICodecFamily<TDecoded, TContext>,
+	versions: Iterable<FormatVersion>,
+): void {
+	const tested = testedVersionsByFamily.get(family) ?? new Set<FormatVersion>();
+	if (tested.size === 0) {
+		testedVersionsByFamily.set(family, tested);
+	}
+	for (const version of versions) {
+		tested.add(version);
+	}
+	if (!validateRegistered.has(family)) {
+		validateRegistered.add(family);
+		after("validate all versions tested", () => {
+			const supportedVersions = Array.from(family.getSupportedFormats());
+			const missingVersions = supportedVersions.filter((version) => !tested.has(version));
+			if (missingVersions.length > 0) {
+				throw new Error(`Missing codec versions in test: ${missingVersions.join(", ")}`);
+			}
+		});
+	}
+}
+
+/**
  * Constructs a basic suite of round-trip tests for all versions of a codec family.
  * This helper should generally be wrapped in a `describe` block.
  *
  * Encoded data for JSON codecs within `family` will be validated using `FormatValidatorBasic`.
+ *
+ * @remarks
+ * This function tests actively supported codec versions. For discontinued versions,
+ * use `makeDiscontinuedEncodingTestSuite` separately. Both functions register validation
+ * hooks that ensure all supported versions from `family.getSupportedFormats()` are tested.
  *
  * @privateRemarks It is generally not valid to compare the decoded formats with assert.deepEqual,
  * but since these round trip tests start with the decoded format (not the encoded format),
@@ -1054,24 +1092,10 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 	encodingTestData: EncodingTestData<TDecoded, TEncoded, TContext>,
 	assertEquivalent: (a: TDecoded, b: TDecoded) => void = assertDeepEqual,
 	supportedVersions?: FormatVersion[],
-	// skipCoverageValidation?: boolean,     flag to add later if we need to skip coverage validation
 ): void {
-	if (supportedVersions !== undefined) {
-		const familyVersions = new Set(family.getSupportedFormats());
-		const newVersions: FormatVersion[] = [];
-		for (const version of familyVersions) {
-			if (!supportedVersions.includes(version)) {
-				newVersions.push(version);
-			}
-		}
-		if (newVersions.length > 0 ) {
-			throw new Error
-			(`makeEncodingTestSuite was called with an explicit list of supported versions that is missing
-				 versions supported by the family: ${newVersions.join(", ")}`);
-		}
-	}
-
 	const supportedVersionsToTest = supportedVersions ?? family.getSupportedFormats();
+	registerValidationHook(family, supportedVersionsToTest);
+
 	for (const version of supportedVersionsToTest) {
 		describe(`version ${version}`, () => {
 			const codec = family.resolve(version);
@@ -1140,6 +1164,8 @@ export function makeDiscontinuedEncodingTestSuite(
 	family: ICodecFamily<unknown, unknown>,
 	discontinuedVersions: FormatVersion[],
 ): void {
+	registerValidationHook(family, discontinuedVersions);
+
 	for (const version of discontinuedVersions) {
 		describe(`${version} (discontinued)`, () => {
 			const codec = family.resolve(version);
