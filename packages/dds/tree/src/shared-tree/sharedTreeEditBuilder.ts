@@ -5,7 +5,6 @@
 
 import type {
 	ChangeFamilyEditor,
-	ChangesetLocalId,
 	RevisionTag,
 	TaggedChange,
 	TreeStoredSchema,
@@ -55,17 +54,12 @@ export class SharedTreeEditBuilder
 		modularChangeFamily: ModularChangeFamily,
 		mintRevisionTag: () => RevisionTag,
 		private readonly changeReceiver: (change: TaggedChange<SharedTreeChange>) => void,
-		priorMaxId: ChangesetLocalId,
 	) {
-		super(
-			modularChangeFamily,
-			mintRevisionTag,
-			(taggedChange) =>
-				changeReceiver({
-					...taggedChange,
-					change: { changes: [{ type: "data", innerChange: taggedChange.change }] },
-				}),
-			priorMaxId,
+		super(modularChangeFamily, mintRevisionTag, (taggedChange) =>
+			changeReceiver({
+				...taggedChange,
+				change: { changes: [{ type: "data", innerChange: taggedChange.change }] },
+			}),
 		);
 
 		this.schema = {

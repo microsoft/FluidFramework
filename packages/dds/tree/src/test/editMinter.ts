@@ -11,7 +11,6 @@ import type {
 	DefaultEditBuilder,
 } from "../feature-libraries/index.js";
 import { mintRevisionTag } from "./utils.js";
-import { brand } from "../util/index.js";
 
 export type Editor = (builder: DefaultEditBuilder) => void;
 
@@ -20,14 +19,10 @@ export function makeEditMinter(
 	editor: Editor,
 ): () => DefaultChangeset {
 	let builtChangeset: DefaultChangeset | undefined;
-	const innerEditor = family.buildEditor(
-		mintRevisionTag,
-		(taggedChange) => {
-			assert(builtChangeset === undefined);
-			builtChangeset = taggedChange.change;
-		},
-		brand(-1),
-	);
+	const innerEditor = family.buildEditor(mintRevisionTag, (taggedChange) => {
+		assert(builtChangeset === undefined);
+		builtChangeset = taggedChange.change;
+	});
 	return (): DefaultChangeset => {
 		assert(builtChangeset === undefined);
 		editor(innerEditor);

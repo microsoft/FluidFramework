@@ -36,9 +36,8 @@ export function makeMitigatedChangeFamily<TEditor extends ChangeFamilyEditor, TC
 		buildEditor: (
 			mintRevisionTag: () => RevisionTag,
 			changeReceiver: (change: TaggedChange<TChange>) => void,
-			priorMaxId: ChangesetLocalId,
 		): TEditor => {
-			return unmitigatedChangeFamily.buildEditor(mintRevisionTag, changeReceiver, priorMaxId);
+			return unmitigatedChangeFamily.buildEditor(mintRevisionTag, changeReceiver);
 		},
 		rebaser: makeMitigatedRebaser(unmitigatedChangeFamily.rebaser, fallbackChange, onError),
 		codecs: unmitigatedChangeFamily.codecs,

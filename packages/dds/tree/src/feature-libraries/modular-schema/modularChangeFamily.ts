@@ -1628,9 +1628,8 @@ export class ModularChangeFamily
 	public buildEditor(
 		_mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
-		priorMaxId?: ChangesetLocalId,
 	): ModularEditBuilder {
-		return new ModularEditBuilder(this, this.fieldKinds, changeReceiver, priorMaxId);
+		return new ModularEditBuilder(this, this.fieldKinds, changeReceiver);
 	}
 
 	private createEmptyFieldChange(fieldKind: FieldKindIdentifier): FieldChange {
@@ -2643,10 +2642,9 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>,
 		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
-		priorMaxId?: ChangesetLocalId,
 	) {
 		super(family, changeReceiver);
-		this.idAllocator = idAllocatorFromMaxId(priorMaxId);
+		this.idAllocator = idAllocatorFromMaxId();
 	}
 
 	public override enterTransaction(): void {

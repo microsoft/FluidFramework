@@ -22,9 +22,8 @@ import {
 	rebaseBranch,
 	tagRollbackInverse,
 	type RebaseStatsWithDuration,
-	type ChangesetLocalId,
 } from "../core/index.js";
-import { hasSome, defineLazyCachedProperty, brand } from "../util/index.js";
+import { hasSome, defineLazyCachedProperty } from "../util/index.js";
 import type {
 	OpSpaceCompressedId,
 	SessionSpaceCompressedId,
@@ -129,12 +128,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		private readonly telemetryEventBatcher?: TelemetryEventBatcher<
 			keyof RebaseStatsWithDuration
 		>,
-		priorMaxId?: ChangesetLocalId,
 	) {
-		this.editor = this.changeFamily.buildEditor(
-			mintRevisionTag,
-			(change) => this.apply(change),
-			priorMaxId ?? brand(-1),
+		this.editor = this.changeFamily.buildEditor(mintRevisionTag, (change) =>
+			this.apply(change),
 		);
 		this.unsubscribeBranchTrimmer = branchTrimmer?.on("ancestryTrimmed", (commit) => {
 			this.#events.emit("ancestryTrimmed", commit);

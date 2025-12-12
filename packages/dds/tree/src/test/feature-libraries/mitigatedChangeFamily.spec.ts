@@ -11,7 +11,6 @@ import type {
 	TaggedChange,
 	ChangeEncodingContext,
 	RevisionTag,
-	ChangesetLocalId,
 } from "../../core/index.js";
 import { makeMitigatedChangeFamily } from "../../feature-libraries/index.js";
 import type { ICodecFamily } from "../../codec/index.js";
@@ -30,11 +29,9 @@ const throwingFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 	buildEditor: (
 		mintRevisionTagArg: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<string>) => void,
-		priorMaxId: ChangesetLocalId,
 	): ChangeFamilyEditor => {
 		assert.equal(mintRevisionTagArg, mintRevisionTag);
 		assert.equal(changeReceiver, arg1);
-		assert.equal(priorMaxId, arg2);
 		throw new Error("buildEditor");
 	},
 	rebaser: {
@@ -62,11 +59,9 @@ const returningFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 	buildEditor: (
 		mintRevisionTagArg: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<string>) => void,
-		priorMaxId: ChangesetLocalId,
 	): ChangeFamilyEditor => {
 		assert.equal(mintRevisionTagArg, mintRevisionTag);
 		assert.equal(changeReceiver, arg1);
-		assert.equal(priorMaxId, arg2);
 		return "buildEditor" as unknown as ChangeFamilyEditor;
 	},
 	rebaser: {
@@ -103,8 +98,8 @@ const returningRebaser = returningFamily.rebaser;
 describe("makeMitigatedChangeFamily", () => {
 	it("does not interfere so long as nothing is thrown", () => {
 		assert.equal(
-			mitigatedReturningFamily.buildEditor(mintRevisionTag, arg1, arg2),
-			returningFamily.buildEditor(mintRevisionTag, arg1, arg2),
+			mitigatedReturningFamily.buildEditor(mintRevisionTag, arg1),
+			returningFamily.buildEditor(mintRevisionTag, arg1),
 		);
 		assert.equal(
 			mitigatedReturningRebaser.rebase(arg1, arg2, arg3),
@@ -137,7 +132,7 @@ describe("makeMitigatedChangeFamily", () => {
 	it("does not catch errors from buildEditor", () => {
 		errorLog.length = 0;
 		assert.throws(
-			() => mitigatedThrowingFamily.buildEditor(mintRevisionTag, arg1, arg2),
+			() => mitigatedThrowingFamily.buildEditor(mintRevisionTag, arg1),
 			new Error("buildEditor"),
 		);
 		assert.deepEqual(errorLog, []);
