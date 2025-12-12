@@ -8,11 +8,11 @@ import chalk from "picocolors";
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args.js";
 import { BaseCommand } from "../../library/index.js";
 import {
+	CheckCompatLayerGeneration,
 	CheckDependenciesInstalled,
 	type CheckFunction,
 	CheckHasNoPrereleaseDependencies,
 	CheckHasRemoteBranchUpToDate,
-	CheckCompatLayerGeneration,
 	CheckNoLocalChanges,
 	CheckNoPolicyViolations,
 	CheckNoUntaggedAsserts,

@@ -27,7 +27,7 @@ import {
 	DEFAULT_GENERATION_DIR,
 	DEFAULT_GENERATION_FILE_NAME,
 	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
-	checkPackageCompatLayerGeneration,
+	checkPackagesCompatLayerGeneration,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../library/layerCompatGeneration.js";
 import type { CommandLogger } from "../logging.js";
@@ -945,29 +945,17 @@ export const checkCompatLayerGeneration: StateHandlerFunction = async (
 			[context.fullPackageMap.get(releaseGroup)!];
 
 	// Check all packages using the validation logic
-	const packagesNeedingUpdate: { name: string; reason: string }[] = [];
-	
-	for (const pkg of packagesToCheck) {
-		// eslint-disable-next-line no-await-in-loop -- Need to check files sequentially
-		const result = await checkPackageCompatLayerGeneration(
-			pkg,
-			DEFAULT_GENERATION_DIR,
-			DEFAULT_GENERATION_FILE_NAME,
-			DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
-		);
-
-		if (result.needsUpdate) {
-			packagesNeedingUpdate.push({
-				name: pkg.name,
-				reason: result.reason,
-			});
-		}
-	}
+	const { packagesNeedingUpdate } = await checkPackagesCompatLayerGeneration(
+		packagesToCheck,
+		DEFAULT_GENERATION_DIR,
+		DEFAULT_GENERATION_FILE_NAME,
+		DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
+	);
 
 	if (packagesNeedingUpdate.length > 0) {
 		log.logHr();
 		log.errorLog(
-			`Layer generation needs to be updated. Please create a PR for the changes and merge before retrying.\n${packagesNeedingUpdate.map(({ name, reason }) => `  - ${name}: ${reason}`).join("\n")}`,
+			`Layer generation needs to be updated. Please create a PR for the changes and merge before retrying.\n${packagesNeedingUpdate.map(({ pkg, reason }) => `  - ${pkg.name}: ${reason}`).join("\n")}`,
 		);
 		BaseStateHandler.signalFailure(machine, state);
 		return false;

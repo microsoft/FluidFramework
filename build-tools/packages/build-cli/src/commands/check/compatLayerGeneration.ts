@@ -67,12 +67,12 @@ export default class CheckCompatLayerGenerationCommand extends PackageCommand<
 		await super.run();
 
 		if (this.packagesNeedingUpdate.length > 0) {
-			this.error(
+			this.errorLog(
 				`Some packages need layer generation updates:\n${this.packagesNeedingUpdate
 					.map(({ pkg, reason }) => `  - ${pkg.name}: ${reason}`)
 					.join("\n")}\n\nRun 'flub generate compatLayerGeneration' to update them.`,
 			);
-			// this.error() throws, so the code below is unreachable when there are errors
+			this.exit(1);
 		}
 
 		this.log(

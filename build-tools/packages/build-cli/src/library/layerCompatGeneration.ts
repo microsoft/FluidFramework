@@ -266,3 +266,84 @@ export async function checkPackageCompatLayerGeneration(
 	log?.verbose(`Layer generation metadata is up to date.`);
 	return { needsUpdate: false };
 }
+
+/**
+ * Result of checking multiple packages' layer compatibility generation status.
+ */
+export interface MultiPackageLayerCompatCheckResult {
+	/**
+	 * Packages that need updates with their reasons.
+	 */
+	packagesNeedingUpdate: {
+		/**
+		 * The package that needs an update.
+		 */
+		pkg: {
+			name: string;
+			version: string;
+			packageJson: { fluidCompatMetadata?: IFluidCompatibilityMetadata };
+			directory: string;
+		};
+		/**
+		 * Reason why the package needs an update.
+		 */
+		reason: string;
+	}[];
+}
+
+/**
+ * Checks if multiple packages need compat layer generation metadata updates.
+ *
+ * This is a lenient check - packages without metadata or generation files are considered
+ * as not needing updates (they are skipped). This implements an opt-in model where packages
+ * must have `fluidCompatMetadata` in their package.json to be checked.
+ *
+ * @param packages - The packages to check
+ * @param generationDir - Directory where the generation file is located
+ * @param generationFileName - Name of the generation file
+ * @param minimumCompatWindowMonths - Minimum compatibility window in months
+ * @param log - Optional logger for verbose output
+ * @returns Result containing packages that need updates and their reasons
+ */
+export async function checkPackagesCompatLayerGeneration(
+	packages: Iterable<{
+		name: string;
+		version: string;
+		packageJson: { fluidCompatMetadata?: IFluidCompatibilityMetadata };
+		directory: string;
+	}>,
+	generationDir: string,
+	generationFileName: string,
+	minimumCompatWindowMonths: number,
+	log?: Logger,
+): Promise<MultiPackageLayerCompatCheckResult> {
+	const packagesNeedingUpdate: {
+		pkg: {
+			name: string;
+			version: string;
+			packageJson: { fluidCompatMetadata?: IFluidCompatibilityMetadata };
+			directory: string;
+		};
+		reason: string;
+	}[] = [];
+
+	for (const pkg of packages) {
+		// eslint-disable-next-line no-await-in-loop -- Need to check files sequentially
+		const result = await checkPackageCompatLayerGeneration(
+			pkg,
+			generationDir,
+			generationFileName,
+			minimumCompatWindowMonths,
+			log,
+		);
+
+		if (result.needsUpdate) {
+			packagesNeedingUpdate.push({
+				pkg,
+				reason: result.reason,
+			});
+		}
+	}
+
+	return { packagesNeedingUpdate };
+}
