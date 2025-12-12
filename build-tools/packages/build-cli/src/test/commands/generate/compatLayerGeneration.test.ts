@@ -61,7 +61,7 @@ describe("generate:compatLayerGeneration", () => {
 
 		const result = maybeGetNewGeneration(
 			currentVersion,
-			mockMetadata,
+			{ fluidCompatMetadata: mockMetadata },
 			minimumCompatWindowMonths,
 			mockLogger,
 		);
@@ -87,7 +87,7 @@ describe("generate:compatLayerGeneration", () => {
 
 		const result = maybeGetNewGeneration(
 			currentVersion,
-			mockMetadata,
+			{ fluidCompatMetadata: mockMetadata },
 			minimumCompatWindowMonths,
 			mockLogger,
 		);
@@ -111,7 +111,7 @@ describe("generate:compatLayerGeneration", () => {
 		};
 		const result = maybeGetNewGeneration(
 			"1.1.0", // Minor version change
-			mockMetadata,
+			{ fluidCompatMetadata: mockMetadata },
 			minimumCompatWindowMonths,
 			mockLogger,
 		);
@@ -135,7 +135,7 @@ describe("generate:compatLayerGeneration", () => {
 		};
 		const result = maybeGetNewGeneration(
 			"2.0.0", // Major version change
-			mockMetadata,
+			{ fluidCompatMetadata: mockMetadata },
 			minimumCompatWindowMonths,
 			mockLogger,
 		);
@@ -159,7 +159,7 @@ describe("generate:compatLayerGeneration", () => {
 		};
 		const result = maybeGetNewGeneration(
 			"1.1.0", // Minor version change but not enough time elapsed
-			mockMetadata,
+			{ fluidCompatMetadata: mockMetadata },
 			minimumCompatWindowMonths,
 			mockLogger,
 		);
@@ -182,7 +182,7 @@ describe("generate:compatLayerGeneration", () => {
 		};
 		const result = maybeGetNewGeneration(
 			"2.0.0", // Major version change
-			mockMetadata,
+			{ fluidCompatMetadata: mockMetadata },
 			minimumCompatWindowMonths,
 			mockLogger,
 		);
@@ -200,7 +200,12 @@ describe("generate:compatLayerGeneration", () => {
 		};
 
 		assert.throws(() => {
-			maybeGetNewGeneration("2.0.0", invalidMetadata, minimumCompatWindowMonths, mockLogger);
+			maybeGetNewGeneration(
+				"2.0.0",
+				{ fluidCompatMetadata: invalidMetadata },
+				minimumCompatWindowMonths,
+				mockLogger,
+			);
 		}, /not a valid date/);
 	});
 
@@ -214,7 +219,12 @@ describe("generate:compatLayerGeneration", () => {
 		};
 
 		assert.throws(() => {
-			maybeGetNewGeneration("2.0.0", invalidMetadata, minimumCompatWindowMonths, mockLogger);
+			maybeGetNewGeneration(
+				"2.0.0",
+				{ fluidCompatMetadata: invalidMetadata },
+				minimumCompatWindowMonths,
+				mockLogger,
+			);
 		}, /Invalid Version/);
 	});
 
@@ -235,7 +245,7 @@ describe("generate:compatLayerGeneration", () => {
 			() =>
 				maybeGetNewGeneration(
 					"2.0.0", // Major version change
-					mockMetadata,
+					{ fluidCompatMetadata: mockMetadata },
 					minimumCompatWindowMonths,
 					mockLogger,
 				),
