@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { cleanedPackageVersion as runtimeUtilsCleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
 import type { ErasedType } from "@fluidframework/core-interfaces/internal";
 import { IsoBuffer, bufferToString } from "@fluid-internal/client-utils";
 import { assert, fail } from "@fluidframework/core-utils/internal";
@@ -550,15 +551,22 @@ export const FluidClientVersion = {
 } as const satisfies Record<string, MinimumVersionForCollab>;
 
 /**
- * An up to date version which includes all the important stable features.
+ * An up to date version which includes all stable features.
  * @remarks
- * Use for cases when data is not persisted and thus would only ever be read by the current version of the framework.
+ * Use for cases when data is not persisted and thus would only ever be read by the the same version of the code which read this value.
+ *
+ * The pkgVersion from this package (tree) can not be used here as it is not guaranteed to be a valid MinimumVersionForCollab
+ * and would also unexpectedly disable features in prereleases and on CI if it didn't fail validation.
+ * See {@link @fluidframework/runtime-utils/internal#cleanedPackageVersion} for more details on why cleanedPackageVersion is preferred over pkgVersion.
  *
  * @privateRemarks
- * Update as needed.
- * TODO: Consider using packageVersion.ts to keep this current.
+ * It is safe to use CleanedPackageVersion from runtime-utils here since features are enabled in minor versions,
+ * and this package (tree) depends on runtime-utils with a `~` semver range
+ * ensuring that the version of runtime-utils this was imported from will match the version of this (tree) package at least up to the minor version.
+ * Reusing this from runtime-utils avoids duplicating the cleanup logic here as well as the cost or recomputing it.
+ * If in the future for some reason this becomes not okay, runtime-utils could instead export a function that performs that cleanup logic which could be reused here.
  */
-export const currentVersion: MinimumVersionForCollab = FluidClientVersion.v2_0;
+export const currentVersion: MinimumVersionForCollab = runtimeUtilsCleanedPackageVersion;
 
 export interface CodecTree {
 	readonly name: string;
