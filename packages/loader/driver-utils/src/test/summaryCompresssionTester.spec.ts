@@ -135,7 +135,7 @@ class InternalTestStorage implements IDocumentStorageService {
 	}
 	async readBlob(id: string): Promise<ArrayBufferLike> {
 		return id === misotestid
-			? (new TextEncoder().encode(abcContent) as unknown as ArrayBufferLike)
+			? new TextEncoder().encode(abcContent)
 			: getHeaderContent(this._uploadedSummary!);
 	}
 	async uploadSummaryWithContext(
