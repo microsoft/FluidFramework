@@ -128,11 +128,11 @@ export async function performFuzzActionsAsync<
 		typeof reducerOrMap === "function"
 			? reducerOrMap
 			: combineReducersAsync<TOperation, TState>(reducerOrMap);
-	const applyOperation = async (op: RealOperation<TOperation>) =>
+	const applyOperation = async (op: RealOperation<TOperation>): Promise<TState> =>
 		(await reducer(state, op)) ?? state;
 
 	const runGenerator = async (): Promise<RealOperation<TOperation> | typeof done> => {
-		const seed =
+		const seed: number | undefined =
 			forceGlobalSeed === true
 				? undefined
 				: initialState.random.integer(0, Number.MAX_SAFE_INTEGER);
@@ -194,7 +194,7 @@ export async function performFuzzActionsAsync<
  *
  * @internal
  */
-export async function saveOpsToFile(filepath: string, operations: unknown[]) {
+export async function saveOpsToFile(filepath: string, operations: unknown[]): Promise<void> {
 	await fs.mkdir(path.dirname(filepath), { recursive: true });
 	await fs.writeFile(filepath, JSON.stringify(operations, undefined, 4));
 }
@@ -315,7 +315,7 @@ export function performFuzzActions<
  *
  * @internal
  */
-function saveOpsToFileSync(filepath: string, operations: { type: string | number }[]) {
+function saveOpsToFileSync(filepath: string, operations: { type: string | number }[]): void {
 	mkdirSync(path.dirname(filepath), { recursive: true });
 	writeFileSync(filepath, JSON.stringify(operations, undefined, 4));
 }

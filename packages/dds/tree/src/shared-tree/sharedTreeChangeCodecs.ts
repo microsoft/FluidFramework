@@ -86,8 +86,8 @@ export const dependenciesForChangeFormat: Map<
 	SharedTreeChangeFormatVersion,
 	ChangeFormatDependencies
 > = new Map([
-	[brand(3), { modularChange: brand(3), schemaChange: brand(SchemaFormatVersion.v1) }],
-	[brand(4), { modularChange: brand(4), schemaChange: brand(SchemaFormatVersion.v1) }],
+	[brand(3), { modularChange: brand(3), schemaChange: SchemaFormatVersion.v1 }],
+	[brand(4), { modularChange: brand(4), schemaChange: SchemaFormatVersion.v1 }],
 ]);
 
 export function getCodecTreeForChangeFormat(

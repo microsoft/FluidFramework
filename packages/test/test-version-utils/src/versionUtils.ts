@@ -28,7 +28,7 @@ import { InstalledPackage, type PackageToInstall } from "./testApi.js";
 // Assuming this file is in `lib`, so go to `..\node_modules\.legacy` as the install location
 const baseModulePath = fileURLToPath(new URL("../node_modules/.legacy", import.meta.url));
 const installedJsonPath = path.join(baseModulePath, "installed.json");
-const getModulePath = (version: string) => path.join(baseModulePath, version);
+const getModulePath = (version: string): string => path.join(baseModulePath, version);
 
 const resolutionCache = new Map<string, string>();
 
@@ -41,12 +41,12 @@ interface InstalledJson {
 }
 
 let cachedInstalledJson: InstalledJson | undefined;
-function writeAndUpdateInstalledJson(data: InstalledJson) {
+function writeAndUpdateInstalledJson(data: InstalledJson): void {
 	cachedInstalledJson = data;
 	writeFileSync(installedJsonPath, JSON.stringify(data, undefined, 2), { encoding: "utf8" });
 }
 
-async function ensureInstalledJson() {
+async function ensureInstalledJson(): Promise<void> {
 	if (existsSync(installedJsonPath)) {
 		return;
 	}
@@ -92,9 +92,9 @@ async function getInstalledJson(): Promise<InstalledJson> {
 	return cachedInstalledJson ?? (await readInstalledJsonLazy);
 }
 
-const isInstalled = async (version: string) =>
+const isInstalled = async (version: string): Promise<boolean> =>
 	(await getInstalledJson()).installed.includes(version);
-async function addInstalled(version: string) {
+async function addInstalled(version: string): Promise<void> {
 	await ensureInstalledJsonLazy;
 	const release = await lock(installedJsonPath, { retries: { forever: true } });
 	try {
@@ -108,7 +108,7 @@ async function addInstalled(version: string) {
 	}
 }
 
-async function removeInstalled(version: string) {
+async function removeInstalled(version: string): Promise<void> {
 	await ensureInstalledJsonLazy;
 	const release = await lock(installedJsonPath, { retries: { forever: true } });
 	try {
@@ -128,7 +128,7 @@ const npmCmd =
 /**
  * @internal
  */
-export function resolveVersion(requested: string, installed: boolean) {
+export function resolveVersion(requested: string, installed: boolean): string {
 	const cachedVersion = resolutionCache.get(requested);
 	if (cachedVersion) {
 		return cachedVersion;
@@ -197,7 +197,7 @@ export function resolveVersion(requested: string, installed: boolean) {
 	}
 }
 
-async function ensureModulePath(version: string, modulePath: string) {
+async function ensureModulePath(version: string, modulePath: string): Promise<void> {
 	const release = await lock(baseModulePath, { retries: { forever: true } });
 	try {
 		console.log(`Installing version ${version} at ${modulePath}`);
@@ -334,7 +334,7 @@ export async function ensureInstalled(
 /**
  * @internal
  */
-export function checkInstalled(requested: string) {
+export function checkInstalled(requested: string): { version: string; modulePath: string } {
 	const version = resolveVersion(requested, true);
 	const modulePath = getModulePath(version);
 	if (existsSync(modulePath)) {

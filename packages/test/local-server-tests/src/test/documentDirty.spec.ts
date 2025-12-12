@@ -196,7 +196,7 @@ describe("Document Dirty", () => {
 			when: string,
 			expectedDirty: boolean,
 			expectedCleanCount: number,
-		) {
+		): void {
 			assert.equal(
 				containerRuntime.isDirty,
 				expectedDirty,
@@ -612,7 +612,7 @@ describe("Document Dirty", () => {
 			when: string,
 			expectedDirty: boolean,
 			expectedCleanCount: number,
-		) {
+		): void {
 			assert.equal(
 				containerRuntime.isDirty,
 				expectedDirty,
