@@ -38,6 +38,8 @@ import { Format as FormatV2 } from "./formatV2.js";
  * @returns The composed codec.
  *
  * @privateRemarks We should consider using the Shared Tree format version instead as it may be more valuable for application authors than the schema version.
+ *
+ * TODO: replace use of this with schemaCodecBuilder.build(...).
  */
 export function makeSchemaCodec(
 	options: CodecWriteOptions,
