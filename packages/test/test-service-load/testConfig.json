@@ -239,6 +239,33 @@
 				}
 			},
 			"opsSendType": "allClientsConcurrentReadWrite"
+		},
+		"mixedVersion": {
+			"opRatePerMin": 30,
+			"progressIntervalMs": 10000,
+			"numClients": 4,
+			"totalSendCount": 100,
+			"readWriteCycleMs": 15000,
+			"faultInjectionMs": {
+				"min": 10000,
+				"max": 60000
+			},
+			"mixedVersions": {
+				"enabled": true,
+				"previousVersionRatio": 0.5
+			},
+			"optionOverrides": {
+				"odsp": {
+					"configurations": {
+						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
+					}
+				},
+				"tinylicious": {
+					"configurations": {
+						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
+					}
+				}
+			}
 		}
 	}
 }
