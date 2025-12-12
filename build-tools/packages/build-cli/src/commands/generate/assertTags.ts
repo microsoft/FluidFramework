@@ -21,7 +21,7 @@ import {
 	type StringLiteral,
 	SyntaxKind,
 } from "ts-morph";
-import { mjsLoader } from "../../library/cosmiconfigLoader.js";
+import { mjsLoader } from "../../library/configLoader.js";
 
 /**
  * Used by `TagAssertsCommand`.

@@ -9,7 +9,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { cosmiconfig } from "cosmiconfig";
 import { afterEach, describe, it } from "mocha";
-import { mjsLoader } from "../../../library/cosmiconfigLoader.js";
+import { mjsLoader } from "../../../library/configLoader.js";
 
 describe("generate:assertTags", () => {
 	describe("cosmiconfig .mjs loader", () => {
@@ -65,15 +65,7 @@ fail: 0,
 			const result = await config.search(testDir);
 
 			assert(result !== null, "Config should be found");
-			assert(result.config !== undefined, "Config should have content");
-			assert(
-				typeof result.config === "object" && result.config !== null,
-				"Config should be an object",
-			);
-			assert(
-				"assertionFunctions" in result.config,
-				"Config should have assertionFunctions property",
-			);
+			assert("assertionFunctions" in result.config, "Config should have expected structure");
 		});
 
 		it("loads .mjs config with empty assertionFunctions", async () => {
