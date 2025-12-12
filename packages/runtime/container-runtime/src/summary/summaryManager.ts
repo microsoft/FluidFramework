@@ -465,6 +465,7 @@ export class SummaryManager
 			"summarizerStop",
 			"summarizerStart",
 			"summarizerStartupFailed",
+			"summarizeTimeout",
 		]) {
 			const listener = (...args: unknown[]): void => {
 				this.emit(event, ...args);

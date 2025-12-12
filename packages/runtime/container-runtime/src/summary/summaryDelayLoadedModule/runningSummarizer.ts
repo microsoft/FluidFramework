@@ -180,7 +180,9 @@ export class RunningSummarizer
 	private readonly runtimeListener: (
 		op: ISequencedDocumentMessage,
 		runtimeMessage?: boolean,
-	) => void;
+	) => void = (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => {
+		this.handleOp(op, runtimeMessage === true);
+	};
 
 	/**
 	 * The maximum number of summary attempts to do when submit summary fails.
@@ -295,12 +297,6 @@ export class RunningSummarizer
 			this.mc.logger,
 		);
 
-		// Listen to runtime for ops
-		this.runtimeListener = (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => {
-			this.handleOp(op, runtimeMessage === true);
-		};
-		this.runtime.on("op", this.runtimeListener);
-
 		// The max attempts for submit failures can be overridden via a feature flag. This allows us to
 		// tweak this as per telemetry data until we arrive at a stable number.
 		// If its set to a number higher than `defaultMaxAttemptsForSubmitFailures`, it will be ignored.
@@ -312,6 +308,8 @@ export class RunningSummarizer
 			overrideMaxAttempts < defaultMaxAttemptsForSubmitFailures
 				? overrideMaxAttempts
 				: defaultMaxAttemptsForSubmitFailures;
+
+		this.setupForwardedEvents();
 	}
 
 	private async handleSummaryAck(ack: IAckedSummary): Promise<void> {
@@ -397,7 +395,7 @@ export class RunningSummarizer
 	}
 
 	public dispose(): void {
-		this.runtime.off("op", this.runtimeListener);
+		this.cleanupForwardedEvents();
 		this.summaryWatcher.dispose();
 		this.heuristicRunner?.dispose();
 		this.heuristicRunner = undefined;
@@ -406,6 +404,31 @@ export class RunningSummarizer
 		this.disposeEnqueuedSummary();
 		this._disposed = true;
 		this.stopping = true;
+	}
+
+	private readonly forwardedEvents = new Map<string, () => void>();
+
+	private setupForwardedEvents(): void {
+		this.runtime.on("op", this.runtimeListener);
+
+		for (const event of ["summarizeTimeout"]) {
+			const listener = (...args: unknown[]): void => {
+				this.emit(event, ...args);
+			};
+			// TODO: better typing here
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+			this.generator.on(event as any, listener);
+			this.forwardedEvents.set(event, listener);
+		}
+	}
+
+	private cleanupForwardedEvents(): void {
+		this.runtime.off("op", this.runtimeListener);
+
+		for (const [event, listener] of this.forwardedEvents.entries()) {
+			this.generator.off(event, listener);
+		}
+		this.forwardedEvents.clear();
 	}
 
 	/**

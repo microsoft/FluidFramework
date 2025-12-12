@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { ISummarizerEvents } from "@fluidframework/container-runtime-definitions/internal";
 import { assert, type IPromiseTimer, Timer } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes, MessageType } from "@fluidframework/driver-definitions/internal";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils/internal";
@@ -41,7 +43,7 @@ const maxSummarizeTimeoutCount = 5; // Double and resend 5 times
 /**
  * This class generates and tracks a summary attempt.
  */
-export class SummaryGenerator {
+export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 	private readonly summarizeTimer: Timer;
 	private activeTelemetryContext?: TelemetryContext;
 	constructor(
@@ -57,6 +59,7 @@ export class SummaryGenerator {
 		private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
 		private readonly logger: ITelemetryLoggerExt,
 	) {
+		super();
 		this.summarizeTimer = new Timer(maxSummarizeTimeoutTime, () =>
 			this.summarizeTimerHandler(maxSummarizeTimeoutTime, 1),
 		);
@@ -428,6 +431,12 @@ export class SummaryGenerator {
 			timeoutTime: time,
 			timeoutCount: count,
 			currentSummarizeStep: this.activeTelemetryContext?.currentSummarizeStep,
+		});
+		this.emit("summarizeTimeout", {
+			timeoutCount: count,
+			currentSummarizeStep: this.activeTelemetryContext?.currentSummarizeStep,
+			numUnsummarizedRuntimeOps: this.heuristicData.numRuntimeOps,
+			numUnsummarizedNonRuntimeOps: this.heuristicData.numNonRuntimeOps,
 		});
 		if (count < maxSummarizeTimeoutCount) {
 			// Double and start a new timer
