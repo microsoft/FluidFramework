@@ -197,7 +197,7 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 			} else {
 				const innerConfig = packageConfig.config as AssertTaggingPackageConfig;
 				// Do some really minimal validation of the configuration.
-				// TODO: replace this with robust validation, like a strongly typed utility wrapping cosmiconfig and typebox.
+				// TODO: replace this with robust validation, like a strongly typed utility wrapping lilconfig and typebox.
 				assert(
 					typeof innerConfig.assertionFunctions === "object",
 					`Assert tagging config in ${packageConfig.filepath} is not valid.`,
