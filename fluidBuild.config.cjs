@@ -599,7 +599,7 @@ module.exports = {
 	},
 
 	assertTagging: {
-		enabledPaths: [/^common\/lib\/common-utils/i, /^experimental/i, /^packages/i],
+		enabledPaths: [/^common\/lib\/common-utils/i, /^experimental/i, /^packages\/(?!test)/i],
 	},
 
 	// `flub bump` config. These settings influence `flub bump` behavior for a release group. These settings can be
