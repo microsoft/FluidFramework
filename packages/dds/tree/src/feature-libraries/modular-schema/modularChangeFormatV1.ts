@@ -24,6 +24,7 @@ export const EncodedChangeAtomId = Type.Union([
 	ChangesetLocalIdSchema,
 ]);
 export type EncodedChangeAtomId = Static<typeof EncodedChangeAtomId>;
+
 export const EncodedFieldChange = Type.Object(
 	{
 		fieldKey: schemaFormatV1.FieldKeySchema,

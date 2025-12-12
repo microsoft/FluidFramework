@@ -24,7 +24,7 @@ export const rollback = Symbol("SharedTree Transaction Rollback");
 export type TransactionConstraint = NodeInDocumentConstraint; // TODO: Add more constraint types here
 
 /**
- * Type for in-progress constraints not yet released
+ * Type for alpha version {@link TransactionConstraint | constraint}s
  * @alpha
  */
 export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstraint; // TODO: Add more constraint types here
@@ -40,7 +40,7 @@ export interface NodeInDocumentConstraint {
 }
 
 /**
- * A transaction {@link TransactionConstraint | constraint} which requires that no changes which require rebasing are made.
+ * A transaction {@link TransactionConstraintAlpha | constraint} which requires that no changes which require rebasing are made.
  * @alpha
  */
 export interface NoChangeConstraint {
