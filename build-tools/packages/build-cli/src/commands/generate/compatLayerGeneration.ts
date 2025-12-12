@@ -42,8 +42,9 @@ export default class UpdateGenerationLayerCommand extends PackageCommand<
 			default: `layerGenerationState.ts`,
 		}),
 		minimumCompatWindowMonths: Flags.integer({
-			description: `The minimum compatibility window in months that is supported across all Fluid layers. Must be greater than 0`,
+			description: `The minimum compatibility window in months that is supported across all Fluid layers. Must be at least 1`,
 			default: 3,
+			min: 1,
 		}),
 		...PackageCommand.flags,
 	} as const;
