@@ -38,6 +38,7 @@ import {
 	createParentContext,
 	createSummarizerNodeAndGetCreateFn,
 } from "./dataStoreCreationHelper.js";
+import type { DataStoreContexts } from "../dataStoreContexts.js";
 
 describe("Runtime", () => {
 	describe("ChannelCollection", () => {
@@ -228,12 +229,8 @@ describe("Runtime", () => {
 			});
 		});
 
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		describe.only("processAttachMessages - Duplicate ID Detection", () => {
-			/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */
+		describe("processAttachMessages - Duplicate ID Detection", () => {
+			/* eslint-disable @typescript-eslint/consistent-type-assertions */
 			let channelCollection: ChannelCollection;
 			let mockLogger: MockLogger;
 			let parentContext: IFluidRootParentContextPrivate;
@@ -347,7 +344,9 @@ describe("Runtime", () => {
 
 					// Simulate localContext.makeLocallyVisible()
 					localContext.setAttachState(AttachState.Attaching);
-					(channelCollection as any).contexts.bind(dataStoreId);
+					(
+						channelCollection as unknown as { readonly contexts: DataStoreContexts }
+					).contexts.bind(dataStoreId);
 
 					// If we're testing Attaching state, we're already there.
 					// If testing Attached, simulate receiving the attach op and transitioning to that state.
@@ -388,10 +387,14 @@ describe("Runtime", () => {
 
 				localContext.setAttachState(AttachState.Attaching);
 				localContext.setAttachState(AttachState.Attached);
-				(channelCollection as any).contexts.bind(dataStoreId);
+				(
+					channelCollection as unknown as { readonly contexts: DataStoreContexts }
+				).contexts.bind(dataStoreId);
 
 				// Simulate aliasing (which is usually mediated by ops)
-				(channelCollection as any).aliasMap.set(alias, dataStoreId);
+				(
+					channelCollection as unknown as { readonly aliasMap: Map<string, string> }
+				).aliasMap.set(alias, dataStoreId);
 
 				// Simulate an incoming attach message with the same alias
 				const attachMessage = createMockAttachMessage(alias);
@@ -413,7 +416,7 @@ describe("Runtime", () => {
 					"Should throw DataCorruptionError for aliased context collision",
 				);
 			});
-			/* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */
+			/* eslint-enable @typescript-eslint/consistent-type-assertions */
 		});
 	});
 });
