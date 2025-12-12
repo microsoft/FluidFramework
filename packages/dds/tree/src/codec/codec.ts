@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { cleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
 import type { ErasedType } from "@fluidframework/core-interfaces/internal";
 import { IsoBuffer, bufferToString } from "@fluid-internal/client-utils";
 import { assert, fail } from "@fluidframework/core-utils/internal";
@@ -553,12 +554,8 @@ export const FluidClientVersion = {
  * An up to date version which includes all the important stable features.
  * @remarks
  * Use for cases when data is not persisted and thus would only ever be read by the current version of the framework.
- *
- * @privateRemarks
- * Update as needed.
- * TODO: Consider using packageVersion.ts to keep this current.
  */
-export const currentVersion: MinimumVersionForCollab = FluidClientVersion.v2_0;
+export const currentVersion: MinimumVersionForCollab = cleanedPackageVersion;
 
 export interface CodecTree {
 	readonly name: string;
