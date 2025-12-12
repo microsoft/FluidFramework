@@ -9,6 +9,8 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import type { DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidObject, IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
+import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { type ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 interface TestDataObjectTypes {
@@ -39,11 +41,11 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 
 	// A Test Data Object that exposes some basic functionality.
 	class TestDataObject extends DataObject<TestDataObjectTypes> {
-		public get _context(): typeof this.context {
+		public get _context(): IFluidDataStoreContext {
 			return this.context;
 		}
 
-		public get _root(): typeof this.root {
+		public get _root(): ISharedDirectory {
 			return this.root;
 		}
 
