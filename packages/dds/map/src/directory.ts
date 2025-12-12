@@ -2146,7 +2146,13 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			this._sequencedSubdirectories.set(op.subdirName, subDir);
 
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
-			if (!this.pendingSubDirectoryData.some((entry) => entry.subdirName === op.subdirName)) {
+			// Check both: pending operation on this subdirectory AND whether the child directory is visible
+			// in the optimistic view (parent or ancestor could have pending delete making this invisible).
+			if (
+				!this.pendingSubDirectoryData.some((entry) => entry.subdirName === op.subdirName) &&
+				!this.disposed &&
+				this.directory.getWorkingDirectory(subDir.absolutePath) !== undefined
+			) {
 				this.emit("subDirectoryCreated", op.subdirName, local, this);
 			}
 		}
@@ -2229,11 +2235,17 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
 		} else {
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
+			// Check both: pending delete on this subdirectory AND whether this parent directory is visible
+			// (parent could have pending delete making this entire subtree invisible).
 			const pendingEntryIndex = this.pendingSubDirectoryData.findIndex(
 				(entry) => entry.subdirName === op.subdirName && entry.type === "deleteSubDirectory",
 			);
 			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
-			if (pendingEntry === undefined) {
+			if (
+				pendingEntry === undefined &&
+				!this.disposed &&
+				this.directory.getWorkingDirectory(this.absolutePath) !== undefined
+			) {
 				this.emit("subDirectoryDeleted", op.subdirName, local, this);
 			}
 		}
@@ -2619,14 +2631,22 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 	private registerEventsOnSubDirectory(subDirectory: SubDirectory, subDirName: string): void {
 		subDirectory.on("subDirectoryCreated", (relativePath: string, local: boolean) => {
-			// Don't forward events if this directory has been disposed or no longer exists
-			if (!this.disposed) {
+			// Don't forward events if this directory has been disposed or is invisible in the optimistic view
+			// (e.g., this directory or an ancestor has a pending delete).
+			// Check the full path to the child directory being created.
+			const childPath = posix.join(this.absolutePath, subDirName, relativePath);
+			if (!this.disposed && this.directory.getWorkingDirectory(childPath) !== undefined) {
 				this.emit("subDirectoryCreated", posix.join(subDirName, relativePath), local, this);
 			}
 		});
 		subDirectory.on("subDirectoryDeleted", (relativePath: string, local: boolean) => {
-			// Don't forward events if this directory has been disposed or no longer exists
-			if (!this.disposed) {
+			// Don't forward events if this directory has been disposed or is invisible in the optimistic view
+			// (e.g., this directory or an ancestor has a pending delete).
+			// For deletes, check if this parent directory is visible (child is being deleted so can't check it).
+			if (
+				!this.disposed &&
+				this.directory.getWorkingDirectory(this.absolutePath) !== undefined
+			) {
 				this.emit("subDirectoryDeleted", posix.join(subDirName, relativePath), local, this);
 			}
 		});

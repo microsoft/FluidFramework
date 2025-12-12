@@ -161,7 +161,6 @@ export class SharedDirectoryOracle {
 		const path = change.path ?? "/";
 
 		const fuzzDir = this.sharedDir.getWorkingDirectory(path);
-		// if (!fuzzDir) return;
 		assert(fuzzDir !== undefined, `Directory at path "${path}" should exist in sharedDir`);
 
 		const absPath = path.startsWith("/") ? path : `/${path}`;
@@ -215,9 +214,7 @@ export class SharedDirectoryOracle {
 		);
 
 		const newSubDir = this.sharedDir.getWorkingDirectory(path);
-		if (!newSubDir) {
-			return;
-		}
+		assert(newSubDir !== undefined, `Directory at path "${path}" should exist in sharedDir`);
 
 		const subdirPath = path.startsWith("/") ? path : `/${path}`;
 		this.createDirNode(this.modelFromValueChanged, subdirPath);
