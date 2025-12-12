@@ -44,7 +44,8 @@ export abstract class VersionedSummarizer<TVersion extends number> implements Su
 	) {
 		assert(
 			this.supportedVersions.has(this.writeVersion),
-			`Write version ${this.writeVersion} must be supported.`,
+			"Unsupported write version requested.",
+			() => `Write version ${this.writeVersion} requested but not supported with key ${key}.`,
 		);
 	}
 
