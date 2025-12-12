@@ -330,6 +330,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 	}
 
 	public getCodecTree(clientVersion: MinimumVersionForCollab): CodecTree {
+		// TODO: add support for children codecs.
 		const selected = getConfigForMinVersionForCollabIterable(clientVersion, this.registry);
 		return {
 			name: this.name,
