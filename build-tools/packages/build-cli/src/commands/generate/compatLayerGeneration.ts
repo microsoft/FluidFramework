@@ -174,6 +174,8 @@ export function maybeGetNewGeneration(
 		return undefined;
 	}
 
+	// If the fluidCompatMetadata is an empty object, this indicates opt-in with no prior data.
+	// Return initial generation of 1.
 	if (Object.keys(packageJson.fluidCompatMetadata).length === 0) {
 		return 1;
 	}
