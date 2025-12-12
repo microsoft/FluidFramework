@@ -12,7 +12,7 @@ import {
 	type CheckFunction,
 	CheckHasNoPrereleaseDependencies,
 	CheckHasRemoteBranchUpToDate,
-	CheckLayerCompatGeneration,
+	CheckCompatLayerGeneration,
 	CheckNoLocalChanges,
 	CheckNoPolicyViolations,
 	CheckNoUntaggedAsserts,
@@ -33,7 +33,7 @@ const allChecks: ReadonlyMap<string, CheckFunction> = new Map([
 	["Has no pre-release Fluid dependencies", CheckHasNoPrereleaseDependencies],
 	["No repo policy violations", CheckNoPolicyViolations],
 	["No untagged asserts", CheckNoUntaggedAsserts],
-	["Layer compatibility generation is up to date", CheckLayerCompatGeneration],
+	["Compatibility layer generation is up to date", CheckCompatLayerGeneration],
 ]);
 
 /**

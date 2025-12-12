@@ -11,7 +11,7 @@ import {
 	DEFAULT_GENERATION_DIR,
 	DEFAULT_GENERATION_FILE_NAME,
 	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
-	checkPackageLayerGeneration,
+	checkPackageCompatLayerGeneration,
 } from "./layerCompatGeneration.js";
 import { getPreReleaseDependencies } from "./package.js";
 
@@ -236,10 +236,10 @@ export const CheckNoUntaggedAsserts: CheckFunction = async (
 };
 
 /**
- * Checks that packages with layer compatibility metadata have up-to-date generation files.
+ * Checks that packages with compat layer metadata have up-to-date generation files.
  * This check is lenient - packages without metadata or generation files are skipped.
  */
-export const CheckLayerCompatGeneration: CheckFunction = async (
+export const CheckCompatLayerGeneration: CheckFunction = async (
 	_context: Context,
 	releaseGroupOrPackage: MonoRepo | Package,
 ): Promise<CheckResult> => {
@@ -252,14 +252,14 @@ export const CheckLayerCompatGeneration: CheckFunction = async (
 
 	for (const pkg of packagesToCheck) {
 		// eslint-disable-next-line no-await-in-loop -- Need to check files sequentially
-		const result = await checkPackageLayerGeneration(
+		const result = await checkPackageCompatLayerGeneration(
 			pkg,
 			DEFAULT_GENERATION_DIR,
 			DEFAULT_GENERATION_FILE_NAME,
 			DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
 		);
 
-		if (result.needsUpdate && result.reason !== undefined) {
+		if (result.needsUpdate) {
 			packagesNeedingUpdate.push({
 				pkg,
 				reason: result.reason,

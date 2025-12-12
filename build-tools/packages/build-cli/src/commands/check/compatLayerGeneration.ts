@@ -11,15 +11,15 @@ import {
 	DEFAULT_GENERATION_DIR,
 	DEFAULT_GENERATION_FILE_NAME,
 	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
-	checkPackageLayerGeneration,
+	checkPackageCompatLayerGeneration,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../library/layerCompatGeneration.js";
 
-export default class CheckLayerCompatGenerationCommand extends PackageCommand<
-	typeof CheckLayerCompatGenerationCommand
+export default class CheckCompatLayerGenerationCommand extends PackageCommand<
+	typeof CheckCompatLayerGenerationCommand
 > {
 	static readonly description =
-		"Checks if any packages need new layer generation metadata. The check is lenient - packages missing expected metadata or generated files are skipped.";
+		"Checks if any packages need new compat layer generation metadata. The check is lenient - packages missing expected metadata or generated files are skipped.";
 
 	static readonly flags = {
 		generationDir: Flags.directory({
@@ -46,7 +46,7 @@ export default class CheckLayerCompatGenerationCommand extends PackageCommand<
 	protected async processPackage(pkg: Package): Promise<void> {
 		const { generationDir, outFile, minimumCompatWindowMonths } = this.flags;
 
-		const result = await checkPackageLayerGeneration(
+		const result = await checkPackageCompatLayerGeneration(
 			pkg,
 			generationDir,
 			outFile,
@@ -54,7 +54,7 @@ export default class CheckLayerCompatGenerationCommand extends PackageCommand<
 			this.logger,
 		);
 
-		if (result.needsUpdate && result.reason !== undefined) {
+		if (result.needsUpdate) {
 			this.packagesNeedingUpdate.push({
 				pkg,
 				reason: result.reason,

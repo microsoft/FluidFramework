@@ -149,25 +149,36 @@ export function maybeGetNewGeneration(
 }
 
 /**
- * Result of checking a package's layer compatibility generation status.
+ * Result of checking a package's compat layer generation status.
  */
-export interface LayerCompatCheckResult {
-	/**
-	 * True if the package needs updates to its layer generation metadata or files.
-	 */
-	needsUpdate: boolean;
-
-	/**
-	 * Reason why the package needs an update, if applicable.
-	 */
-	reason?: string;
-}
+export type LayerCompatCheckResult =
+	| {
+			/**
+			 * Package does not need updates.
+			 */
+			needsUpdate: false;
+	  }
+	| {
+			/**
+			 * Package needs updates to its layer generation metadata or files.
+			 */
+			needsUpdate: true;
+			/**
+			 * Reason why the package needs an update.
+			 */
+			reason: string;
+	  };
 
 /**
- * Checks if a package needs layer generation metadata updates.
+ * Checks if a package needs compat layer generation metadata updates.
  *
  * This is a lenient check - packages without metadata or generation files are considered
- * as not needing updates (they are skipped).
+ * as not needing updates (they are skipped). This implements an opt-in model where packages
+ * must have `fluidCompatMetadata` in their package.json to be checked.
+ *
+ * Note: This check always uses the provided parameters (or defaults). Individual packages
+ * may use different parameters when running the generate command directly, which could
+ * cause false positives/negatives. This is an accepted limitation for the common case.
  *
  * @param pkg - The package to check
  * @param generationDir - Directory where the generation file is located
@@ -176,7 +187,7 @@ export interface LayerCompatCheckResult {
  * @param log - Optional logger for verbose output
  * @returns Result indicating if the package needs updates and why
  */
-export async function checkPackageLayerGeneration(
+export async function checkPackageCompatLayerGeneration(
 	pkg: {
 		version: string;
 		packageJson: { fluidCompatMetadata?: IFluidCompatibilityMetadata };

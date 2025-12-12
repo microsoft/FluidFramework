@@ -98,7 +98,7 @@ _See code: [src/commands/check/changeset.ts](https://github.com/microsoft/FluidF
 
 ## `flub check compatLayerGeneration`
 
-Checks if any packages need new layer generation metadata. The check is lenient - packages missing expected metadata or generated files are skipped.
+Checks if any packages need new compat layer generation metadata. The check is lenient - packages missing expected metadata or generated files are skipped.
 
 ```
 USAGE
@@ -145,8 +145,8 @@ PACKAGE FILTER FLAGS
                           excluded. Cannot be used with --scope.
 
 DESCRIPTION
-  Checks if any packages need new layer generation metadata. The check is lenient - packages missing expected metadata
-  or generated files are skipped.
+  Checks if any packages need new compat layer generation metadata. The check is lenient - packages missing expected
+  metadata or generated files are skipped.
 ```
 
 _See code: [src/commands/check/compatLayerGeneration.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/compatLayerGeneration.ts)_
