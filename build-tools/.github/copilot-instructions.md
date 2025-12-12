@@ -121,7 +121,7 @@ cd packages/build-cli && pnpm test:mocha
 
 ### Modifying build tasks
 
-Task definitions are in the root `fluidBuild.config.cjs` (repo-wide) and can be augmented per-package in `package.json` under `fluidBuild.tasks`.
+Task definitions are in the repository root (`../fluidBuild.config.cjs`) and can be augmented per-package in `package.json` under `fluidBuild.tasks`.
 
 ### Policy checks
 
