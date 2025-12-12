@@ -1045,8 +1045,9 @@ function registerValidationHook<TDecoded, TContext>(
 	family: ICodecFamily<TDecoded, TContext>,
 	versions: Iterable<FormatVersion>,
 ): void {
-	const tested = testedVersionsByFamily.get(family) ?? new Set<FormatVersion>();
-	if (tested.size === 0) {
+	let tested = testedVersionsByFamily.get(family);
+	if (tested === undefined) {
+		tested = new Set<FormatVersion>();
 		testedVersionsByFamily.set(family, tested);
 	}
 	for (const version of versions) {
@@ -1065,7 +1066,7 @@ function registerValidationHook<TDecoded, TContext>(
 }
 
 /**
- * Constructs a basic suite of round-trip tests for all versions of a codec family.
+ * Constructs a basic suite of round-trip tests for supported versions of a codec family.
  * This helper should generally be wrapped in a `describe` block.
  *
  * Encoded data for JSON codecs within `family` will be validated using `FormatValidatorBasic`.
@@ -1160,6 +1161,15 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 	}
 }
 
+/**
+ * Creates test suites for discontinued codec versions that verify they properly reject encode/decode operations.
+ *
+ * @param family - The codec family containing the discontinued versions
+ * @param discontinuedVersions - Array of format versions that are no longer supported
+ *
+ * Use this alongside `makeEncodingTestSuite` for codec families that have deprecated older versions.
+ * This ensures discontinued versions are tracked in validation but don't require full round-trip tests.
+ */
 export function makeDiscontinuedEncodingTestSuite(
 	family: ICodecFamily<unknown, unknown>,
 	discontinuedVersions: FormatVersion[],
