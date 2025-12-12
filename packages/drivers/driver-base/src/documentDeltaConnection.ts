@@ -101,7 +101,7 @@ export class DocumentDeltaConnection
 		return !!this._details;
 	}
 
-	public get disposed() {
+	public get disposed(): boolean {
 		assert(
 			this._disposed || this.socket.connected,
 			0x244 /* "Socket is closed, but connection is not!" */,
@@ -185,7 +185,7 @@ export class DocumentDeltaConnection
 					// Empty callback for tracking purposes in this class
 					this.trackedListeners.set("pong", () => {});
 
-					const sendPingLoop = () => {
+					const sendPingLoop = (): void => {
 						const start = Date.now();
 
 						this.socket.volatile?.emit("ping", () => {
@@ -267,7 +267,7 @@ export class DocumentDeltaConnection
 		return this.details.serviceConfiguration;
 	}
 
-	private checkNotDisposed() {
+	private checkNotDisposed(): void {
 		assert(!this.disposed, 0x20c /* "connection disposed" */);
 	}
 
@@ -391,7 +391,7 @@ export class DocumentDeltaConnection
 	/**
 	 * Disconnect from the websocket and close the websocket too.
 	 */
-	private closeSocket(error: IAnyDriverError) {
+	private closeSocket(error: IAnyDriverError): void {
 		if (this._disposed) {
 			// This would be rare situation due to complexity around socket emitting events.
 			return;
@@ -399,7 +399,7 @@ export class DocumentDeltaConnection
 		this.closeSocketCore(error);
 	}
 
-	protected closeSocketCore(error: IAnyDriverError) {
+	protected closeSocketCore(error: IAnyDriverError): void {
 		this.disconnect(error);
 	}
 
@@ -411,7 +411,7 @@ export class DocumentDeltaConnection
 	 * @param error - An optional error object. If provided, the connection will be closed with the specified error,
 	 * indicating an error-triggered disconnect. If not provided, the connection will be closed cleanly.
 	 */
-	public dispose(error?: Error) {
+	public dispose(error?: Error): void {
 		this.logger.sendTelemetryEvent({
 			eventName: "ClientClosingDeltaConnection",
 			driverVersion,
@@ -438,7 +438,7 @@ export class DocumentDeltaConnection
 		}
 	}
 
-	protected readonly disconnect = (err: IAnyDriverError) => {
+	protected readonly disconnect = (err: IAnyDriverError): void => {
 		// Can't check this.disposed here, as we get here on socket closure,
 		// so _disposed & socket.connected might be not in sync while processing
 		// "dispose" event.
@@ -474,11 +474,11 @@ export class DocumentDeltaConnection
 	 * Disconnect from the websocket.
 	 * @param reason - reason for disconnect
 	 */
-	protected disconnectCore(err: IAnyDriverError) {
+	protected disconnectCore(err: IAnyDriverError): void {
 		this.socket.disconnect();
 	}
 
-	protected async initialize(connectMessage: IConnect, timeout: number) {
+	protected async initialize(connectMessage: IConnect, timeout: number): Promise<void> {
 		this.socket.on("op", this.earlyOpHandler);
 		this.socket.on("signal", this.earlySignalHandler);
 		this.earlyOpHandlerAttached = true;
@@ -497,7 +497,7 @@ export class DocumentDeltaConnection
 			getMaxInternalSocketReconnectionAttempts() + 1;
 
 		this._details = await new Promise<IConnected>((resolve, reject) => {
-			const failAndCloseSocket = (err: IAnyDriverError) => {
+			const failAndCloseSocket = (err: IAnyDriverError): void => {
 				try {
 					this.closeSocket(err);
 				} catch (failError) {
@@ -508,7 +508,7 @@ export class DocumentDeltaConnection
 				reject(err);
 			};
 
-			const failConnection = (err: IAnyDriverError) => {
+			const failConnection = (err: IAnyDriverError): void => {
 				try {
 					this.disconnect(err);
 				} catch (failError) {
@@ -689,7 +689,7 @@ export class DocumentDeltaConnection
 		assert(!this.disposed, 0x246 /* "checking consistency of socket & _disposed flags" */);
 	}
 
-	private addPropsToError(errorToBeNormalized: unknown) {
+	private addPropsToError(errorToBeNormalized: unknown): IFluidErrorBase {
 		const normalizedError = normalizeError(errorToBeNormalized, {
 			props: {
 				details: JSON.stringify({
@@ -700,7 +700,12 @@ export class DocumentDeltaConnection
 		return normalizedError;
 	}
 
-	protected getConnectionDetailsProps() {
+	protected getConnectionDetailsProps(): {
+		disposed: boolean;
+		socketConnected: boolean | undefined;
+		clientId: string | undefined;
+		connectionId: string | undefined;
+	} {
 		return {
 			disposed: this._disposed,
 			socketConnected: this.socket?.connected,
@@ -709,11 +714,11 @@ export class DocumentDeltaConnection
 		};
 	}
 
-	protected earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
+	protected earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]): void => {
 		this.queuedMessages.push(...msgs);
 	};
 
-	protected earlySignalHandler = (msg: ISignalMessage | ISignalMessage[]) => {
+	protected earlySignalHandler = (msg: ISignalMessage | ISignalMessage[]): void => {
 		if (Array.isArray(msg)) {
 			this.queuedSignals.push(...msg);
 		} else {
@@ -721,16 +726,16 @@ export class DocumentDeltaConnection
 		}
 	};
 
-	private removeEarlyOpHandler() {
+	private removeEarlyOpHandler(): void {
 		this.socket.removeListener("op", this.earlyOpHandler);
 		this.earlyOpHandlerAttached = false;
 	}
 
-	private removeEarlySignalHandler() {
+	private removeEarlySignalHandler(): void {
 		this.socket.removeListener("signal", this.earlySignalHandler);
 	}
 
-	private addConnectionListener(event: string, listener: (...args: any[]) => void) {
+	private addConnectionListener(event: string, listener: (...args: any[]) => void): void {
 		assert(
 			!DocumentDeltaConnection.eventsAlwaysForwarded.includes(event),
 			0x247 /* "Use addTrackedListener instead" */,
@@ -744,13 +749,13 @@ export class DocumentDeltaConnection
 		this.connectionListeners.set(event, listener);
 	}
 
-	protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
+	protected addTrackedListener(event: string, listener: (...args: any[]) => void): void {
 		this.socket.on(event, listener);
 		assert(!this.trackedListeners.has(event), 0x20e /* "double tracked listener" */);
 		this.trackedListeners.set(event, listener);
 	}
 
-	private removeTrackedListeners() {
+	private removeTrackedListeners(): void {
 		for (const [event, listener] of this.trackedListeners.entries()) {
 			this.socket.off(event, listener);
 		}
@@ -763,7 +768,7 @@ export class DocumentDeltaConnection
 		this.trackedListeners.clear();
 	}
 
-	private removeConnectionListeners() {
+	private removeConnectionListeners(): void {
 		if (this.socketConnectionTimeout !== undefined) {
 			clearTimeout(this.socketConnectionTimeout);
 		}

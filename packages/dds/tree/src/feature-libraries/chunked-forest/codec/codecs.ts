@@ -28,6 +28,7 @@ import {
 	brandedNumberType,
 	type Brand,
 	type JsonCompatibleReadOnly,
+	unbrand,
 } from "../../../util/index.js";
 import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
 
@@ -158,12 +159,12 @@ export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec
 		| typeof schemaCompressedEncodeV2;
 	let encodedFieldBatchType: typeof EncodedFieldBatchV1 | typeof EncodedFieldBatchV2;
 	switch (writeVersion) {
-		case FieldBatchFormatVersion.v1:
+		case unbrand(FieldBatchFormatVersion.v1):
 			uncompressedEncodeFn = uncompressedEncodeV1;
 			schemaCompressedEncodeFn = schemaCompressedEncodeV1;
 			encodedFieldBatchType = EncodedFieldBatchV1;
 			break;
-		case FieldBatchFormatVersion.v2:
+		case unbrand(FieldBatchFormatVersion.v2):
 			uncompressedEncodeFn = uncompressedEncodeV2;
 			schemaCompressedEncodeFn = schemaCompressedEncodeV2;
 			encodedFieldBatchType = EncodedFieldBatchV2;

@@ -160,7 +160,11 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		throw new Error("Method not implemented.");
 	}
 
-	public addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number) {
+	public addedGCOutboundRoute(
+		fromPath: string,
+		toPath: string,
+		messageTimestampMs?: number,
+	): void {
 		throw new Error("Method not implemented.");
 	}
 }

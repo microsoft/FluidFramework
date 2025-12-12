@@ -330,6 +330,9 @@ module.exports = {
 		// Exclusion per handler
 		handlerExclusions: {
 			"fluid-build-tasks-eslint": [
+				// This policy needs to be rethought in light of eslint 9. Disabling everywhere in the meantime.
+				".*",
+
 				// There are no built files, but a tsconfig.json is present to simplify the
 				// eslint config.
 				"azure/packages/azure-local-service/package.json",
@@ -596,7 +599,8 @@ module.exports = {
 	},
 
 	assertTagging: {
-		enabledPaths: [/^common\/lib\/common-utils/i, /^experimental/i, /^packages/i],
+		// TODO: AB#55437: excluding packages under packages/test should not be required: there is a config file at packages/test/assertTagging.config.mjs which used to accomplish this but it stopped working.
+		enabledPaths: [/^common\/lib\/common-utils/i, /^experimental/i, /^packages\/(?!test\/)/i],
 	},
 
 	// `flub bump` config. These settings influence `flub bump` behavior for a release group. These settings can be
