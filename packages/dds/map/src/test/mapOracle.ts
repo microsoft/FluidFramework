@@ -42,13 +42,8 @@ export class SharedMapOracle {
 	};
 
 	private readonly onClear = (local: boolean): void => {
-		this.oracle.clear();
-		// For remote clear, re-read the map to discover any keys that remain visible due to pending local operations.
-		// For local clear, the map is empty, so no need to re-read.
-		if (!local) {
-			for (const [k, v] of this.fuzzMap.entries()) {
-				this.oracle.set(k, v);
-			}
+		if (local) {
+			this.oracle.clear();
 		}
 	};
 

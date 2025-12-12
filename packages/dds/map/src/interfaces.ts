@@ -358,12 +358,7 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
 	/**
 	 * Emitted when the map is cleared.
 	 *
-	 * @remarks
-	 * After a remote clear event, consumers should re-read the map to discover any keys that remain
-	 * visible due to pending local operations. Following the clear event, `valueChanged` events will
-	 * be emitted for keys that were removed, but no events are emitted for keys that remain visible.
-	 *
-	 * Listener parameters:
+	 * @remarks Listener parameters:
 	 *
 	 * - `local` - Whether the clear originated from this client.
 	 *
