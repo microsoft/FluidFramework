@@ -70,8 +70,8 @@ export {
 	isValidMinVersionForCollab,
 	validateMinimumVersionForCollab,
 	lowestMinVersionForCollab,
-	cleanedPackageVersion,
 	getConfigForMinVersionForCollabIterable,
+	cleanedPackageVersion,
 } from "./compatibilityBase.js";
 export type {
 	ConfigMap,

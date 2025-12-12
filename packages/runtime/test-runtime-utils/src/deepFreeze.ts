@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const frozenMethod = () => {
+const frozenMethod = (): never => {
 	throw new Error("Object is frozen");
 };
 
