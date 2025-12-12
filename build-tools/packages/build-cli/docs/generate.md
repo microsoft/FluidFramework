@@ -240,7 +240,7 @@ FLAGS
   --concurrency=<value>                [default: 25] The number of tasks to execute concurrently.
   --generationDir=<value>              [default: ./src] The directory where the generation file is located.
   --minimumCompatWindowMonths=<value>  [default: 3] The minimum compatibility window in months that is supported across
-                                       all Fluid layers. Must be greater than 0
+                                       all Fluid layers. Must be at least 1
   --outFile=<value>                    [default: layerGenerationState.ts] Output the results to this file.
 
 PACKAGE SELECTION FLAGS
