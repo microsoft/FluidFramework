@@ -33,7 +33,7 @@ describe("canonicalizeChangesets", () => {
 		execSync("git init", { cwd: testDir, stdio: "ignore" });
 		execSync('git config user.name "Test User"', { cwd: testDir, stdio: "ignore" });
 		execSync('git config user.email "test@example.com"', { cwd: testDir, stdio: "ignore" });
-		
+
 		// Create an initial commit so git log doesn't fail
 		const readmePath = path.join(changesetDir, "README.md");
 		await writeFile(readmePath, "# Changesets\n");
