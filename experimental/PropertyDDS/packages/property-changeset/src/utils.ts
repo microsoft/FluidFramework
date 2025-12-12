@@ -62,7 +62,7 @@ export namespace Utils {
 		/**
 		 * An optional object that is passed to all invocations of the callback via the
 		 */
-		userData?: { [key: string]: any };
+		userData?: { [key: string]: unknown };
 		/**
 		 * The operation that has been applied to the root of the ChangeSet (either 'insert' or 'modify')
 		 */
@@ -85,13 +85,13 @@ export namespace Utils {
 		in_preCallback: (
 			context: TraversalContext,
 			next: (err?: Error | null | undefined | string, result?: unknown) => void,
-		) => any,
+		) => void,
 		in_postCallback: (
 			context: TraversalContext,
 			next: (err?: Error | null | undefined | string, result?: unknown) => void,
-		) => any,
+		) => void,
 		in_context: TraversalContext,
-		in_levelCallback: (param?: any) => any,
+		in_levelCallback: (param?: unknown) => void,
 	): void {
 		let pathSeparator;
 		let currentPath;
@@ -170,7 +170,7 @@ export namespace Utils {
 						in_arrayLocalIndex: number,
 						in_arrayOperationOffset: number,
 						in_arrayIteratorOffset: number,
-						in_callback: (param: any) => any,
+						in_callback: (param: unknown) => void,
 					): void {
 						series(
 							[
@@ -286,7 +286,7 @@ export namespace Utils {
 													in_context._operationType = "insert";
 													operation = arrayIterator.opDescription.operation;
 													eachOfSeries(
-														operation[1] as any,
+														operation[1],
 														function (item: any, i: number, n5) {
 															// The typeid is stored inline for arrays
 															const typeid = item.typeid;
@@ -616,7 +616,7 @@ export namespace Utils {
 		in_context: TraversalContext,
 		in_changeSet: SerializedChangeSet,
 		in_isLeaf: boolean = false,
-	): any {
+	): Record<string, unknown> {
 		const nestedChangeSet = {};
 		if (
 			in_context.getPropertyContainerType() === "NodeProperty" ||
@@ -684,8 +684,8 @@ export namespace Utils {
 	 * @param in_context - The traversal context for the currently processed property
 	 */
 	const _traverseChangeSetRecursively = function (
-		in_preCallback: (context: TraversalContext) => any | undefined,
-		in_postCallback: (context: TraversalContext) => any | undefined,
+		in_preCallback: (context: TraversalContext) => void,
+		in_postCallback: (context: TraversalContext) => void,
 		in_context: TraversalContext,
 	): void {
 		const pathSeparator = in_context.getFullPath() !== "" ? PROPERTY_PATH_DELIMITER : "";
@@ -825,7 +825,7 @@ export namespace Utils {
 						in_context._operationType = "insert";
 						for (i = 0; i < arrayIterator.opDescription.operation[1].length; ++i) {
 							// The typeid is stored inline for arrays
-							typeid = (arrayIterator.opDescription.operation[1][i] as any).typeid;
+							typeid = arrayIterator.opDescription.operation[1][i].typeid;
 							ConsoleUtils.assert(typeid, MSG.NON_PRIMITIVE_ARRAY_NO_TYPEID);
 							processChange(
 								arrayIterator.opDescription.operation[0] + i,
@@ -866,7 +866,7 @@ export namespace Utils {
 						in_context._operationType = "modify";
 						for (i = 0; i < arrayIterator.opDescription.operation[1].length; ++i) {
 							// The typeid is stored inline for arrays
-							typeid = (arrayIterator.opDescription.operation[1][i] as any).typeid;
+							typeid = arrayIterator.opDescription.operation[1][i].typeid;
 							ConsoleUtils.assert(typeid, MSG.NON_PRIMITIVE_ARRAY_NO_TYPEID);
 							processChange(
 								arrayIterator.opDescription.operation[0] + i,
@@ -1244,7 +1244,7 @@ export namespace Utils {
 		 *
 		 * @param in_userData - The user data
 		 */
-		setUserData(in_userData: any): void {
+		setUserData(in_userData: unknown): void {
 			this._userData = in_userData;
 		}
 
@@ -1513,7 +1513,7 @@ export namespace Utils {
 	 */
 	export function enumerateSchemas(
 		in_changeSet: SerializedChangeSet,
-		in_callback: (arg0: { key: string; value: any }, arg1: ErrorCallback<Error>) => void,
+		in_callback: (arg0: { key: string; value: unknown }, arg1: ErrorCallback<Error>) => void,
 		in_finalizer: ErrorCallback<Error>,
 	): string[] {
 		const result = [];
@@ -1836,16 +1836,16 @@ export namespace Utils {
 	 * @internal
 	 */
 	export function getChangesToTokenizedPaths(
-		in_paths: Map<string, Map<string, any>> | { [key: string]: any },
-		in_changeSet: any,
+		in_paths: Map<string, Map<string, unknown>> | { [key: string]: unknown },
+		in_changeSet: unknown,
 		in_callback: {
 			(
 				context: TraversalContext,
-				nestedObj: any,
+				nestedObj: unknown,
 				tokenizedPath: string[],
 				contractedPathSegment: boolean,
 			): void;
-			(arg0: TraversalContext, arg1: any, arg2: any[], arg3: boolean): void;
+			(arg0: TraversalContext, arg1: unknown, arg2: unknown[], arg3: boolean): void;
 		},
 		in_options: {
 			escapeLeadingDoubleUnderscore?: boolean;
@@ -1876,7 +1876,7 @@ export namespace Utils {
 			);
 		};
 
-		let _convertLevelToMap = function (obj: any): Map<string, any> {
+		let _convertLevelToMap = function (obj: unknown): Map<string, unknown> {
 			const thisLevel = new Map();
 			Object.entries(obj).forEach(([k, v]) => {
 				if (_isUserData(k)) {
@@ -1889,7 +1889,7 @@ export namespace Utils {
 			return thisLevel;
 		};
 
-		let _convertMapToLevel = function (map: Map<string, any>): { [key: string]: any } {
+		let _convertMapToLevel = function (map: Map<string, unknown>): { [key: string]: unknown } {
 			const thisLevel = {};
 			for (const [k, v] of map) {
 				if (_isUserData(k)) {
@@ -1902,8 +1902,8 @@ export namespace Utils {
 		};
 
 		const _toCallbackParam = (
-			pathLevels: Map<string, any>,
-		): Map<string, any> | { [key: string]: any } => {
+			pathLevels: Map<string, unknown>,
+		): Map<string, unknown> | { [key: string]: unknown } => {
 			return legacyPaths
 				? // If a user provided objects as paths, they would expect objects in their callbacks as well.
 					// So, we transform the parameter to an object, which is not very performant but is backwards compatible.
@@ -2098,7 +2098,7 @@ export namespace Utils {
 				context: TraversalContext,
 				nestedObj: { size: number },
 				tokenizedPath: string[],
-				contractedPathSegment: any,
+				contractedPathSegment: unknown,
 			) {
 				if (context.getFullPath() === "") {
 					// skip the root
