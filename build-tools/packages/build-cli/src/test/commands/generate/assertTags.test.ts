@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { lilconfig } from "lilconfig";
@@ -19,28 +19,23 @@ describe("generate:assertTags", () => {
 		/**
 		 * Creates a temporary test directory with an .mjs config file
 		 */
-		function createTestFixture(configContent: string): string {
-			const testDir = path.join(
-				tmpdir(),
-				`assertTagging-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-			);
-			mkdirSync(testDir, { recursive: true });
+		async function createTestFixture(configContent: string): Promise<string> {
+			const testDir = await mkdtemp(path.join(tmpdir(), "assertTagging-test-"));
 			testDirs.push(testDir);
 
 			const configPath = path.join(testDir, `${configName}.config.mjs`);
-			writeFileSync(configPath, configContent, "utf8");
+			await writeFile(configPath, configContent, "utf8");
 
 			return testDir;
 		}
 
-		afterEach(() => {
+		afterEach(async () => {
 			// Clean up test directories
-			for (const dir of testDirs) {
-				if (existsSync(dir)) {
-					rmSync(dir, { recursive: true, force: true });
-				}
-			}
+			const dirsToClean = testDirs;
 			testDirs = [];
+			await Promise.all(
+				dirsToClean.map(async (dir) => rm(dir, { recursive: true, force: true })),
+			);
 		});
 
 		it("loads .mjs config files", async () => {
@@ -52,7 +47,7 @@ fail: 0,
 },
 };
 `;
-			const testDir = createTestFixture(configContent);
+			const testDir = await createTestFixture(configContent);
 
 			const config = lilconfig(configName, {
 				searchPlaces,
@@ -70,7 +65,7 @@ export default {
 assertionFunctions: {},
 };
 `;
-			const testDir = createTestFixture(configContent);
+			const testDir = await createTestFixture(configContent);
 
 			const config = lilconfig(configName, {
 				searchPlaces,
@@ -93,8 +88,7 @@ assertionFunctions: {},
 		});
 
 		it("returns null when no config file exists", async () => {
-			const testDir = path.join(tmpdir(), `assertTagging-no-config-${Date.now()}`);
-			mkdirSync(testDir, { recursive: true });
+			const testDir = await mkdtemp(path.join(tmpdir(), "assertTagging-no-config-"));
 			testDirs.push(testDir);
 
 			const config = lilconfig(configName, {
@@ -118,7 +112,7 @@ assert: 1,
 },
 };
 `;
-			const testDir = createTestFixture(configContent);
+			const testDir = await createTestFixture(configContent);
 
 			// lilconfig natively supports .mjs files
 			const config = lilconfig(configName, {
