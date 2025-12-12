@@ -4,44 +4,63 @@
  */
 
 import { strict as assert } from "node:assert";
-import { existsSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { cosmiconfig } from "cosmiconfig";
-import { describe, it } from "mocha";
-
-/**
- * Loader for .mjs (ESM) config files.
- * Required for cosmiconfig v9+ which removed default .mjs support.
- * This duplicates the loader from assertTags.ts to test it works correctly.
- */
-async function mjsLoader(filepath: string): Promise<unknown> {
-	const module = await import(filepath);
-	return module.default;
-}
+import { afterEach, describe, it } from "mocha";
+import { mjsLoader } from "../../../library/cosmiconfigLoader.js";
 
 describe("generate:assertTags", () => {
 	describe("cosmiconfig .mjs loader", () => {
 		const configName = "assertTagging";
 		const searchPlaces = [`${configName}.config.mjs`];
+		let testDirs: string[] = [];
+
+		/**
+		 * Creates a temporary test directory with an .mjs config file
+		 */
+		function createTestFixture(configContent: string): string {
+			const testDir = path.join(
+				tmpdir(),
+				`assertTagging-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+			);
+			mkdirSync(testDir, { recursive: true });
+			testDirs.push(testDir);
+
+			const configPath = path.join(testDir, `${configName}.config.mjs`);
+			writeFileSync(configPath, configContent, "utf8");
+
+			return testDir;
+		}
+
+		afterEach(() => {
+			// Clean up test directories
+			for (const dir of testDirs) {
+				if (existsSync(dir)) {
+					rmSync(dir, { recursive: true, force: true });
+				}
+			}
+			testDirs = [];
+		});
 
 		it("loads .mjs config files with custom loader", async () => {
+			const configContent = `
+export default {
+assertionFunctions: {
+assert: 1,
+fail: 0,
+},
+};
+`;
+			const testDir = createTestFixture(configContent);
+
 			const config = cosmiconfig(configName, {
 				searchPlaces,
 				loaders: {
 					".mjs": mjsLoader,
 				},
 			});
-
-			// Test with packages/test directory which has an assertTagging.config.mjs
-			// Navigate up from build-tools/packages/build-cli to root
-			const repoRoot = path.resolve(process.cwd(), "../../..");
-			const testDir = path.join(repoRoot, "packages/test");
-
-			// Skip test if the directory doesn't exist (e.g., in isolated test environment)
-			if (!existsSync(testDir)) {
-				console.log(`Skipping test: ${testDir} does not exist`);
-				return;
-			}
 
 			const result = await config.search(testDir);
 
@@ -58,37 +77,41 @@ describe("generate:assertTags", () => {
 		});
 
 		it("loads .mjs config with empty assertionFunctions", async () => {
+			const configContent = `
+export default {
+assertionFunctions: {},
+};
+`;
+			const testDir = createTestFixture(configContent);
+
 			const config = cosmiconfig(configName, {
 				searchPlaces,
 				loaders: {
 					".mjs": mjsLoader,
 				},
 			});
-
-			const repoRoot = path.resolve(process.cwd(), "../../..");
-			const testDir = path.join(repoRoot, "packages/test");
-
-			if (!existsSync(testDir)) {
-				console.log(`Skipping test: ${testDir} does not exist`);
-				return;
-			}
 
 			const result = await config.search(testDir);
 
 			assert(result !== null);
-			const configContent = result.config as { assertionFunctions: Record<string, number> };
+			const configContentParsed = result.config as {
+				assertionFunctions: Record<string, number>;
+			};
 			assert(
-				typeof configContent.assertionFunctions === "object",
+				typeof configContentParsed.assertionFunctions === "object",
 				"assertionFunctions should be an object",
 			);
-			// packages/test/assertTagging.config.mjs has empty assertionFunctions
 			assert(
-				Object.keys(configContent.assertionFunctions).length === 0,
-				"packages/test should have empty assertionFunctions (disables tagging)",
+				Object.keys(configContentParsed.assertionFunctions).length === 0,
+				"assertionFunctions should be empty (disables tagging)",
 			);
 		});
 
 		it("returns null when no config file exists", async () => {
+			const testDir = path.join(tmpdir(), `assertTagging-no-config-${Date.now()}`);
+			mkdirSync(testDir, { recursive: true });
+			testDirs.push(testDir);
+
 			const config = cosmiconfig(configName, {
 				searchPlaces,
 				loaders: {
@@ -96,11 +119,7 @@ describe("generate:assertTags", () => {
 				},
 			});
 
-			// Use a directory that shouldn't have the config
-			const repoRoot = path.resolve(process.cwd(), "../../..");
-			const nonExistentDir = path.join(repoRoot, "build-tools/packages/build-cli/src");
-
-			const result = await config.search(nonExistentDir);
+			const result = await config.search(testDir);
 
 			// Should return null when no config is found
 			assert(
@@ -110,7 +129,15 @@ describe("generate:assertTags", () => {
 		});
 
 		it("verifies the loader is necessary for .mjs files", async () => {
-			// This test documents why the loader is needed
+			const configContent = `
+export default {
+assertionFunctions: {
+assert: 1,
+},
+};
+`;
+			const testDir = createTestFixture(configContent);
+
 			// With the loader, .mjs files can be loaded
 			const configWithLoader = cosmiconfig(configName, {
 				searchPlaces,
@@ -118,14 +145,6 @@ describe("generate:assertTags", () => {
 					".mjs": mjsLoader,
 				},
 			});
-
-			const repoRoot = path.resolve(process.cwd(), "../../..");
-			const testDir = path.join(repoRoot, "packages/test");
-
-			if (!existsSync(testDir)) {
-				console.log(`Skipping test: ${testDir} does not exist`);
-				return;
-			}
 
 			const resultWithLoader = await configWithLoader.search(testDir);
 

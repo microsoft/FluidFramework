@@ -21,6 +21,7 @@ import {
 	type StringLiteral,
 	SyntaxKind,
 } from "ts-morph";
+import { mjsLoader } from "../../library/cosmiconfigLoader.js";
 
 /**
  * Used by `TagAssertsCommand`.
@@ -67,15 +68,6 @@ interface PackageData {
 
 const configName = "assertTagging";
 const searchPlaces = [`${configName}.config.mjs`];
-
-/**
- * Loader for .mjs (ESM) config files.
- * Required for cosmiconfig v9+ which removed default .mjs support.
- */
-async function mjsLoader(filepath: string): Promise<unknown> {
-	const module = await import(filepath);
-	return module.default;
-}
 
 export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> {
 	static readonly summary =
