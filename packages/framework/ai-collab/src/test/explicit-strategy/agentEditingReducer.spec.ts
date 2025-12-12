@@ -7,8 +7,11 @@ import { strict as assert, fail } from "node:assert";
 
 // eslint-disable-next-line import-x/no-internal-modules
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-// eslint-disable-next-line import-x/no-internal-modules
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockFluidDataStoreRuntime,
+	validateUsageError,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "@fluidframework/test-runtime-utils/internal";
 import {
 	getSimpleSchema,
 	SchemaFactory,
@@ -54,8 +57,6 @@ import type {
 } from "../../explicit-strategy/agentEditTypes.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { IdGenerator } from "../../explicit-strategy/idGenerator.js";
-
-import { validateUsageError } from "./utils.js";
 
 const sf = new SchemaFactory("agentSchema");
 

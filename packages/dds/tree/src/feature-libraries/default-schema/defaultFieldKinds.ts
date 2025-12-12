@@ -18,22 +18,25 @@ import {
 	type FieldEditor,
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
-	FieldKindWithEditor,
-	type FlexFieldKind,
+	FlexFieldKind,
+	type FullSchemaPolicy,
 	type ToDelta,
-	allowsTreeSchemaIdentifierSuperset,
 	referenceFreeFieldChangeRebaser,
 } from "../modular-schema/index.js";
 import {
 	type OptionalChangeset,
+	type OptionalFieldEditor,
 	optionalChangeHandler,
 	optionalFieldEditor,
 } from "../optional-field/index.js";
-import { sequenceFieldChangeHandler } from "../sequence-field/index.js";
+import {
+	sequenceFieldChangeHandler,
+	type SequenceFieldEditor,
+} from "../sequence-field/index.js";
 
 import { noChangeCodecFamily } from "./noChangeCodecs.js";
 import type { CodecTree } from "../../codec/index.js";
-import { brand, type Brand } from "../../util/index.js";
+import { brand, brandConst, type Brand } from "../../util/index.js";
 
 /**
  * ChangeHandler that only handles no-op / identity changes.
@@ -55,7 +58,15 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	getCrossFieldKeys: () => [],
 };
 
-export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
+/**
+ * {@link FieldEditor} for required fields (always contain exactly 1 child).
+ * @remarks
+ * This shares code with optional fields, since they are the same edit wise except setting to empty is not allowed,
+ * and the content is always assumed to not be empty.
+ * This means the actual edits implemented for optional fields are sufficient to support required fields
+ * which is why this is defined and implemented in terms of optional fields.
+ */
+export interface RequiredFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**
 	 * Creates a change which replaces the current value of the field with `newValue`.
 	 * @param ids - The ids for the fill and detach fields.
@@ -63,21 +74,24 @@ export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
 	set(ids: { fill: ChangeAtomId; detach: ChangeAtomId }): OptionalChangeset;
 }
 
-const optionalIdentifier = "Optional";
+const optionalIdentifier = brandConst("Optional")<FieldKindIdentifier>();
+const requiredIdentifier = brandConst("Value")<FieldKindIdentifier>();
+const sequenceIdentifier = brandConst("Sequence")<FieldKindIdentifier>();
+const identifierFieldIdentifier = brandConst("Identifier")<FieldKindIdentifier>();
+
 /**
  * 0 or 1 items.
  */
-export const optional = new FieldKindWithEditor(
-	optionalIdentifier,
-	Multiplicity.Optional,
-	optionalChangeHandler,
-	(types, other) =>
-		(other.kind === sequence.identifier || other.kind === optionalIdentifier) &&
-		allowsTreeSchemaIdentifierSuperset(types, other.types),
-	new Set([]),
-);
+export const optional = new FlexFieldKind(optionalIdentifier, Multiplicity.Optional, {
+	changeHandler: optionalChangeHandler,
+	allowMonotonicUpgradeFrom: new Set([
+		identifierFieldIdentifier,
+		requiredIdentifier,
+		forbiddenFieldKindIdentifier,
+	]),
+});
 
-export const valueFieldEditor: ValueFieldEditor = {
+export const requiredFieldEditor: RequiredFieldEditor = {
 	...optionalFieldEditor,
 	set: (ids: {
 		fill: ChangeAtomId;
@@ -85,90 +99,47 @@ export const valueFieldEditor: ValueFieldEditor = {
 	}): OptionalChangeset => optionalFieldEditor.set(false, ids),
 };
 
-export const valueChangeHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> = {
-	...optional.changeHandler,
-	editor: valueFieldEditor,
+export const requiredFieldChangeHandler: FieldChangeHandler<
+	OptionalChangeset,
+	RequiredFieldEditor
+> = {
+	...optionalChangeHandler,
+	editor: requiredFieldEditor,
 };
-
-const requiredIdentifier = "Value";
 
 /**
  * Exactly one item.
  */
-export const required = new FieldKindWithEditor(
-	requiredIdentifier,
-	Multiplicity.Single,
-	valueChangeHandler,
-	(types, other) =>
-		// By omitting Identifier here,
-		// this is making a policy choice that a schema upgrade cannot be done from required to identifier.
-		// Since an identifier can be upgraded into a required field,
-		// preventing the inverse helps ensure that schema upgrades are monotonic.
-		// Which direction is allowed is a subjective policy choice.
-		(other.kind === sequence.identifier ||
-			other.kind === requiredIdentifier ||
-			other.kind === optional.identifier ||
-			other.kind === nodeKey.identifier) &&
-		allowsTreeSchemaIdentifierSuperset(types, other.types),
-	new Set(),
-);
-
-const sequenceIdentifier = "Sequence";
+export const required = new FlexFieldKind(requiredIdentifier, Multiplicity.Single, {
+	changeHandler: requiredFieldChangeHandler,
+	allowMonotonicUpgradeFrom: new Set([identifierFieldIdentifier]),
+});
 
 /**
  * 0 or more items.
  */
-export const sequence = new FieldKindWithEditor(
-	sequenceIdentifier,
-	Multiplicity.Sequence,
-	sequenceFieldChangeHandler,
-	(types, other) =>
-		other.kind === sequenceIdentifier &&
-		allowsTreeSchemaIdentifierSuperset(types, other.types),
-	// TODO: add normalizer/importers for handling ops from other kinds.
-	new Set([]),
-);
-
-const nodeKeyIdentifier = "NodeKey";
-
-/**
- * Exactly one identifier.
- *
- * TODO: this is almost the same as identifier, but apparently unused.
- * Confirm if this is truly unused since before the document format was stabilized, and remove if possible.
- * @deprecated Superseded by {@link identifier}.
- */
-export const nodeKey = new FieldKindWithEditor(
-	nodeKeyIdentifier,
-	Multiplicity.Single,
-	noChangeHandler,
-	(types, other) =>
-		(other.kind === sequence.identifier ||
-			other.kind === requiredIdentifier ||
-			other.kind === optional.identifier ||
-			other.kind === nodeKeyIdentifier) &&
-		allowsTreeSchemaIdentifierSuperset(types, other.types),
-	new Set(),
-);
-
-const identifierFieldIdentifier = "Identifier";
+export const sequence = new FlexFieldKind(sequenceIdentifier, Multiplicity.Sequence, {
+	changeHandler: sequenceFieldChangeHandler,
+	allowMonotonicUpgradeFrom: new Set([
+		required.identifier,
+		optional.identifier,
+		identifierFieldIdentifier,
+		forbiddenFieldKindIdentifier,
+	]),
+});
 
 /**
  * Exactly one identifier.
  */
-export const identifier = new FieldKindWithEditor(
-	identifierFieldIdentifier,
-	Multiplicity.Single,
-	noChangeHandler,
-	(types, other) =>
-		// Allows upgrading from identifier to required: which way this upgrade is allowed to go is a subjective policy choice.
-		(other.kind === sequence.identifier ||
-			other.kind === requiredIdentifier ||
-			other.kind === optional.identifier ||
-			other.kind === identifierFieldIdentifier) &&
-		allowsTreeSchemaIdentifierSuperset(types, other.types),
-	new Set(),
-);
+export const identifier = new FlexFieldKind(identifierFieldIdentifier, Multiplicity.Single, {
+	changeHandler: noChangeHandler,
+	// By omitting required here,
+	// this is making a policy choice that a schema upgrade cannot be done from required to identifier.
+	// Since an identifier can be upgraded into a required field,
+	// preventing the inverse helps ensure that schema upgrades are monotonic.
+	// Which direction is allowed is a subjective policy choice.
+	allowMonotonicUpgradeFrom: new Set([]),
+});
 
 /**
  * Exactly 0 items.
@@ -198,13 +169,13 @@ export const identifier = new FieldKindWithEditor(
  *
  * See {@link emptyField} for a constant, reusable field using Forbidden.
  */
-export const forbidden = new FieldKindWithEditor(
+export const forbidden = new FlexFieldKind(
 	forbiddenFieldKindIdentifier,
 	Multiplicity.Forbidden,
-	noChangeHandler,
-	// All multiplicities other than Value support empty.
-	(types, other) => fieldKinds.get(other.kind)?.multiplicity !== Multiplicity.Single,
-	new Set(),
+	{
+		changeHandler: noChangeHandler,
+		allowMonotonicUpgradeFrom: new Set(),
+	},
 );
 
 export const fieldKindConfigurations: ReadonlyMap<
@@ -212,31 +183,8 @@ export const fieldKindConfigurations: ReadonlyMap<
 	FieldKindConfiguration
 > = new Map([
 	[
-		brand(1),
-		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
-			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
-			[required.identifier, { kind: required, formatVersion: 1 }],
-			[optional.identifier, { kind: optional, formatVersion: 1 }],
-			[sequence.identifier, { kind: sequence, formatVersion: 1 }],
-			[forbidden.identifier, { kind: forbidden, formatVersion: 1 }],
-			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
-		]),
-	],
-	[
-		brand(2),
-		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
-			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
-			[required.identifier, { kind: required, formatVersion: 2 }],
-			[optional.identifier, { kind: optional, formatVersion: 2 }],
-			[sequence.identifier, { kind: sequence, formatVersion: 1 }],
-			[forbidden.identifier, { kind: forbidden, formatVersion: 1 }],
-			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
-		]),
-	],
-	[
 		brand(3),
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
-			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
 			[required.identifier, { kind: required, formatVersion: 2 }],
 			[optional.identifier, { kind: optional, formatVersion: 2 }],
 			[sequence.identifier, { kind: sequence, formatVersion: 2 }],
@@ -247,7 +195,6 @@ export const fieldKindConfigurations: ReadonlyMap<
 	[
 		brand(4),
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
-			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
 			[required.identifier, { kind: required, formatVersion: 2 }],
 			[optional.identifier, { kind: optional, formatVersion: 2 }],
 			[sequence.identifier, { kind: sequence, formatVersion: 3 }],
@@ -257,7 +204,7 @@ export const fieldKindConfigurations: ReadonlyMap<
 	],
 ]);
 
-export type ModularChangeFormatVersion = Brand<1 | 2 | 3 | 4, "ModularChangeFormatVersion">;
+export type ModularChangeFormatVersion = Brand<3 | 4, "ModularChangeFormatVersion">;
 export function getCodecTreeForModularChangeFormat(
 	version: ModularChangeFormatVersion,
 ): CodecTree {
@@ -283,8 +230,8 @@ export function getCodecTreeForModularChangeFormat(
  * Before making a SharedTree format change which impacts which set of field kinds are allowed,
  * code which uses this should be audited for compatibility considerations.
  */
-export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
-	[required, optional, sequence, nodeKey, identifier, forbidden].map((s) => [s.identifier, s]),
+export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> = new Map(
+	[required, optional, sequence, identifier, forbidden].map((s) => [s.identifier, s]),
 );
 
 // Create named Aliases for nicer intellisense.
@@ -292,12 +239,32 @@ export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> =
 // TODO: Find a way to make docs like {@inheritDoc required} work in vscode.
 // TODO: ensure thy work in generated docs.
 // TODO: add these comments to the rest of the cases below.
-export interface Required extends FlexFieldKind<"Value", Multiplicity.Single> {}
-export interface Optional extends FlexFieldKind<"Optional", Multiplicity.Optional> {}
-export interface Sequence extends FlexFieldKind<"Sequence", Multiplicity.Sequence> {}
-export interface Identifier extends FlexFieldKind<"Identifier", Multiplicity.Single> {}
+export interface Required
+	extends FlexFieldKind<RequiredFieldEditor, typeof requiredIdentifier, Multiplicity.Single> {}
+export interface Optional
+	extends FlexFieldKind<
+		OptionalFieldEditor,
+		typeof optionalIdentifier,
+		Multiplicity.Optional
+	> {}
+export interface Sequence
+	extends FlexFieldKind<
+		SequenceFieldEditor,
+		typeof sequenceIdentifier,
+		Multiplicity.Sequence
+	> {}
+export interface Identifier
+	extends FlexFieldKind<
+		FieldEditor<0>,
+		typeof identifierFieldIdentifier,
+		Multiplicity.Single
+	> {}
 export interface Forbidden
-	extends FlexFieldKind<typeof forbiddenFieldKindIdentifier, Multiplicity.Forbidden> {}
+	extends FlexFieldKind<
+		FieldEditor<0>,
+		typeof forbiddenFieldKindIdentifier,
+		Multiplicity.Forbidden
+	> {}
 
 /**
  * Default FieldKinds with their editor types erased.
@@ -310,3 +277,10 @@ export const FieldKinds: {
 	readonly identifier: Identifier;
 	readonly forbidden: Forbidden;
 } = { required, optional, sequence, identifier, forbidden };
+
+/**
+ * FullSchemaPolicy with the default field kinds.
+ */
+export const defaultSchemaPolicy: FullSchemaPolicy = {
+	fieldKinds,
+};

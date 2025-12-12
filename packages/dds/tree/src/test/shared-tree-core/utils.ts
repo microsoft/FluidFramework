@@ -47,9 +47,9 @@ import {
 	type ChangeEnricherMutableCheckout,
 	NoOpChangeEnricher,
 	type EditManagerFormatVersion,
-	editManagerFormatVersions,
+	supportedEditManagerFormatVersions,
 	type MessageFormatVersion,
-	messageFormatVersions,
+	supportedMessageFormatVersions,
 } from "../../shared-tree-core/index.js";
 import { testIdCompressor } from "../utils.js";
 import { strict as assert, fail } from "node:assert";
@@ -86,7 +86,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/sharedTree.js";
 
-const codecOptions: CodecWriteOptions = {
+export const testCodecOptions: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,
 	minVersionForCollab: currentVersion,
 };
@@ -97,11 +97,13 @@ class MockSharedObjectHandle extends MockHandle<ISharedObject> implements IShare
 	}
 }
 
-export function createTree<TIndexes extends readonly Summarizable[]>(
-	indexes: TIndexes,
-	resubmitMachine?: ResubmitMachine<DefaultChangeset>,
-	enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
-): SharedTreeCore<DefaultEditBuilder, DefaultChangeset> {
+export function createTree<TIndexes extends readonly Summarizable[]>(options: {
+	indexes: TIndexes;
+	resubmitMachine?: ResubmitMachine<DefaultChangeset>;
+	enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>;
+	codecOptions?: CodecWriteOptions;
+}): SharedTreeCore<DefaultEditBuilder, DefaultChangeset> {
+	const { indexes, resubmitMachine, enricher, codecOptions } = options;
 	// This could use TestSharedTreeCore then return its kernel instead of using these mocks, but that would depend on far more code than needed (including other mocks).
 
 	// Summarizer requires ISharedObjectHandle. Specifically it looks for `bind` method.
@@ -128,6 +130,7 @@ export function createTree<TIndexes extends readonly Summarizable[]>(
 		TreeCompressionStrategy.Uncompressed,
 		createIdCompressor(),
 		new TreeStoredSchemaRepository(),
+		codecOptions ?? testCodecOptions,
 		resubmitMachine,
 		enricher,
 	)[0];
@@ -157,7 +160,9 @@ export function createTreeSharedObject<TIndexes extends readonly Summarizable[]>
 export function makeTestDefaultChangeFamily(options?: {
 	idCompressor?: IIdCompressor;
 	chunkCompressionStrategy?: TreeCompressionStrategy;
+	codecOptions?: CodecWriteOptions;
 }) {
+	const codecOptions = options?.codecOptions ?? testCodecOptions;
 	return new DefaultChangeFamily(
 		makeModularChangeCodecFamily(
 			fieldKindConfigurations,
@@ -177,7 +182,7 @@ const modularChangeFormatVersionForEditManager: DependentFormatVersion<
 	EditManagerFormatVersion,
 	ModularChangeFormatVersion
 > = DependentFormatVersion.fromPairs(
-	Array.from(editManagerFormatVersions, (e) => [
+	Array.from(supportedEditManagerFormatVersions, (e) => [
 		e,
 		dependenciesForChangeFormat.get(changeFormatVersionForEditManager.lookup(e))
 			?.modularChange ?? fail("Unknown change format"),
@@ -192,7 +197,7 @@ const modularChangeFormatVersionForMessage: DependentFormatVersion<
 	MessageFormatVersion,
 	ModularChangeFormatVersion
 > = DependentFormatVersion.fromPairs(
-	Array.from(messageFormatVersions, (m) => [
+	Array.from(supportedMessageFormatVersions, (m) => [
 		m,
 		dependenciesForChangeFormat.get(changeFormatVersionForMessage.lookup(m))?.modularChange ??
 			fail("Unknown change format"),
@@ -208,6 +213,7 @@ function createTreeInner(
 	chunkCompressionStrategy: TreeCompressionStrategy,
 	idCompressor: IIdCompressor,
 	schema: TreeStoredSchemaRepository,
+	codecOptions: CodecWriteOptions = testCodecOptions,
 	resubmitMachine?: ResubmitMachine<DefaultChangeset>,
 	enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
 	editor?: () => DefaultEditBuilder,
@@ -287,6 +293,7 @@ export class TestSharedTreeCore extends SharedObject {
 			chunkCompressionStrategy,
 			runtime.idCompressor,
 			schema,
+			testCodecOptions,
 			resubmitMachine,
 			enricher,
 			() => this.transaction.activeBranchEditor,

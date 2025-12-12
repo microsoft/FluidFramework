@@ -4,6 +4,10 @@
  */
 
 import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	getConfigForMinVersionForCollab,
+	lowestMinVersionForCollab,
+} from "@fluidframework/runtime-utils/internal";
 
 import {
 	type CodecTree,
@@ -26,7 +30,7 @@ import {
 	encodeFieldSchemaV2,
 	storedSchemaDecodeDispatcher,
 } from "../../core/index.js";
-import { brand, type JsonCompatible } from "../../util/index.js";
+import { brand, unbrand, type JsonCompatible } from "../../util/index.js";
 
 import { Format as FormatV1 } from "./formatV1.js";
 import { Format as FormatV2 } from "./formatV2.js";
@@ -40,9 +44,10 @@ import type { MinimumVersionForCollab } from "@fluidframework/runtime-definition
 export function clientVersionToSchemaVersion(
 	clientVersion: MinimumVersionForCollab,
 ): SchemaFormatVersion {
-	return clientVersion < FluidClientVersion.v2_43
-		? brand(SchemaFormatVersion.v1)
-		: brand(SchemaFormatVersion.v2);
+	return getConfigForMinVersionForCollab(clientVersion, {
+		[lowestMinVersionForCollab]: SchemaFormatVersion.v1,
+		[FluidClientVersion.v2_43]: SchemaFormatVersion.v2,
+	});
 }
 
 export function getCodecTreeForSchemaFormat(
@@ -94,9 +99,9 @@ export function encodeRepo(
 	version: SchemaFormatVersion,
 ): JsonCompatible {
 	switch (version) {
-		case SchemaFormatVersion.v1:
+		case unbrand(SchemaFormatVersion.v1):
 			return encodeRepoV1(repo) as JsonCompatible;
-		case SchemaFormatVersion.v2:
+		case unbrand(SchemaFormatVersion.v2):
 			return encodeRepoV2(repo) as JsonCompatible;
 		default:
 			unreachableCase(version);

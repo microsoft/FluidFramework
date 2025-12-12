@@ -14,6 +14,7 @@ export {
 	fieldKindConfigurations,
 	getCodecTreeForModularChangeFormat,
 	type ModularChangeFormatVersion,
+	defaultSchemaPolicy,
 } from "./defaultFieldKinds.js";
 
 export {
@@ -27,14 +28,5 @@ export {
 	intoDelta,
 	relevantRemovedRoots,
 } from "./defaultEditBuilder.js";
-
-export {
-	SchemaValidationError,
-	isNodeInSchema,
-	isFieldInSchema,
-	throwOutOfSchema,
-} from "./schemaChecker.js";
-
-export { defaultSchemaPolicy } from "./defaultSchema.js";
 
 export { MappedEditBuilder } from "./mappedEditBuilder.js";

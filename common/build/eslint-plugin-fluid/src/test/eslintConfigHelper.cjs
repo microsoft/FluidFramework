@@ -30,7 +30,7 @@ function createESLintConfig(config) {
 
 	const parser = "@typescript-eslint/parser";
 	const parserOptions = customParserOptions || {
-		project: path.join(__dirname, "example/tsconfig.json"),
+		project: path.join(__dirname, "test-cases/tsconfig.json"),
 	};
 	const pluginName = "@fluid-internal/fluid";
 
@@ -82,9 +82,10 @@ function createESLintConfig(config) {
  * @returns {ESLint} Configured ESLint instance
  */
 function createESLintInstance(rulesOrConfig) {
-	const config = typeof rulesOrConfig === 'object' && rulesOrConfig.rules
-		? rulesOrConfig
-		: { rules: rulesOrConfig };
+	const config =
+		typeof rulesOrConfig === "object" && rulesOrConfig.rules
+			? rulesOrConfig
+			: { rules: rulesOrConfig };
 
 	const eslintOptions = createESLintConfig({
 		rules: config.rules,
