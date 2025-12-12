@@ -68,6 +68,15 @@ interface PackageData {
 const configName = "assertTagging";
 const searchPlaces = [`${configName}.config.mjs`];
 
+/**
+ * Loader for .mjs (ESM) config files.
+ * Required for cosmiconfig v9+ which removed default .mjs support.
+ */
+async function mjsLoader(filepath: string): Promise<unknown> {
+	const module = await import(filepath);
+	return module.default;
+}
+
 export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> {
 	static readonly summary =
 		"Tags asserts by replacing their message with a unique numerical value.";
@@ -183,7 +192,12 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 		};
 
 		const dataMap = new Map<PackageWithKind, PackageData>();
-		const config = cosmiconfig(configName, { searchPlaces });
+		const config = cosmiconfig(configName, {
+			searchPlaces,
+			loaders: {
+				".mjs": mjsLoader,
+			},
+		});
 
 		for (const pkg of packages) {
 			// Package configuration:
