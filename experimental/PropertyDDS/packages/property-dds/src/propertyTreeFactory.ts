@@ -30,11 +30,11 @@ export class PropertyTreeFactory implements IChannelFactory<SharedPropertyTree> 
 		packageVersion: "0.1",
 	};
 
-	public get type() {
+	public get type(): string {
 		return PropertyTreeFactory.Type;
 	}
 
-	public get attributes() {
+	public get attributes(): IChannelAttributes {
 		return PropertyTreeFactory.Attributes;
 	}
 
