@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer } from "@fluid-internal/client-utils";
+import { type Buffer, IsoBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	ISummaryBlob,
@@ -90,7 +90,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	private static writeAlgorithmToBlob(
 		blob: ArrayBufferLike,
 		algorithm: number,
-	): ArrayBufferLike {
+	): ArrayBufferLike | Buffer {
 		if (algorithm === SummaryCompressionAlgorithm.None) {
 			const firstByte = IsoBuffer.from(blob)[0];
 			// eslint-disable-next-line no-bitwise
@@ -114,7 +114,9 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @param blob - The blob to remove the prefix from.
 	 * @returns The blob without the prefix.
 	 */
-	private static removePrefixFromBlobIfPresent(blob: ArrayBufferLike): ArrayBufferLike {
+	private static removePrefixFromBlobIfPresent(
+		blob: ArrayBufferLike,
+	): ArrayBufferLike | Buffer {
 		const blobView = new Uint8Array(blob);
 		return this.hasPrefix(blob) ? IsoBuffer.from(blobView.subarray(1)) : blob;
 	}
@@ -315,7 +317,9 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @param summary - The summary tree to traverse.
 	 * @returns The content of the tree attribute of the summary tree containing the metadata blob.
 	 */
-	private static getMetadataHolderTree(summary: ISummaryTree) {
+	private static getMetadataHolderTree(summary: ISummaryTree): {
+		[path: string]: SummaryObject;
+	} {
 		const metadataHolder = this.findMetadataHolderSummary(summary);
 		assert(metadataHolder !== undefined, 0x6f8 /* metadataHolder must be a non-null object */);
 		const metadataHolderTree = metadataHolder.tree;
