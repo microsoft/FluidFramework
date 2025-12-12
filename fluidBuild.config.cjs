@@ -599,6 +599,7 @@ module.exports = {
 	},
 
 	assertTagging: {
+		// TODO: excluding packages under packages/test should not be required: there is a config file at packages/test/assertTagging.config.mjs which used to accomplish this but it stopped working.
 		enabledPaths: [/^common\/lib\/common-utils/i, /^experimental/i, /^packages\/(?!test)/i],
 	},
 
