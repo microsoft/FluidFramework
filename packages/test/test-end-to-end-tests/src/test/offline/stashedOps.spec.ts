@@ -1583,10 +1583,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	);
 
 	it("blob upload before loading", async function () {
-		// TODO: AB#19035: Blob upload from an offline state does not currently work before establishing a connection on ODSP due to epoch not provided.
-		if (provider.driver.type === "odsp") {
-			this.skip();
-		}
 		const container = await loadContainerOffline(testContainerConfig, provider, { url });
 		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
@@ -1599,6 +1595,52 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const handle = await timeoutAwait(handleP, {
 			errorMsg: "Timeout on waiting for handleP",
 		});
+		map.set("blob handle", handle);
+
+		const container2 = await timeoutAwait(provider.loadTestContainer(testContainerConfig), {
+			errorMsg: "Timeout on waiting for container2 load",
+		});
+		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
+
+		await timeoutAwait(provider.ensureSynchronized(), {
+			errorMsg: "Timeout on waiting for ensureSynchronized after creating container2",
+		});
+
+		const handleGet2: any = await timeoutAwait(map2.get("blob handle").get(), {
+			errorMsg: "Timeout on waiting for handleGet2",
+		});
+		assert.strictEqual(bufferToString(handleGet2, "utf8"), "blob contents");
+	});
+
+	it("blob upload and attach before loading", async function () {
+		const container = await loadContainerOffline(testContainerConfig, provider, { url });
+		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
+		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
+
+		const handle = await dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
+		map.set("blob handle", handle);
+		container.connect();
+		await timeoutAwait(waitForContainerConnection(container.container), {
+			errorMsg: "Timeout on waiting for container connection",
+		});
+		const handleGet1: any = await timeoutAwait(map.get("blob handle").get(), {
+			errorMsg: "Timeout on waiting for handleGet1",
+		});
+		assert.strictEqual(bufferToString(handleGet1, "utf8"), "blob contents");
+		const container2 = await timeoutAwait(provider.loadTestContainer(testContainerConfig), {
+			errorMsg: "Timeout on waiting for container2 load",
+		});
+		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
+
+		await timeoutAwait(provider.ensureSynchronized(), {
+			errorMsg: "Timeout on waiting for ensureSynchronized after creating container2",
+		});
+		const handleGet2: any = await timeoutAwait(map2.get("blob handle").get(), {
+			errorMsg: "Timeout on waiting for handleGet2",
+		});
+		assert.strictEqual(bufferToString(handleGet2, "utf8"), "blob contents");
 	});
 
 	it("offline blob upload", async function () {
