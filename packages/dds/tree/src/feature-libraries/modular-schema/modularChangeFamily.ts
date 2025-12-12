@@ -54,7 +54,6 @@ import {
 	type TupleBTree,
 	RangeMap,
 	balancedReduce,
-	brandConst,
 } from "../../util/index.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 
@@ -69,7 +68,6 @@ import {
 	type FieldChangeHandler,
 	NodeAttachState,
 	type RebaseRevisionMetadata,
-	type RevisionReplacer,
 } from "./fieldChangeHandler.js";
 import { convertGenericChange, genericFieldKind } from "./genericFieldKind.js";
 import type { GenericChangeset } from "./genericFieldKindTypes.js";
@@ -88,6 +86,7 @@ import {
 	type NodeId,
 } from "./modularChangeTypes.js";
 import type { FlexFieldKind } from "./fieldKind.js";
+import { DefaultRevisionReplacer, type RevisionReplacer } from "./revisionReplacer.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -1748,13 +1747,13 @@ function replaceCrossFieldKeyTableRevisions(
 	const updated: CrossFieldKeyTable = newCrossFieldKeyTable();
 	for (const entry of table.entries()) {
 		const key = entry.start;
-		const updatedKey: CrossFieldKey = replacer.replaceAtomId(key);
+		const updatedKey: CrossFieldKey = replacer.getUpdatedAtomId(key);
 
 		const field = entry.value;
 		const normalizedFieldId = normalizeFieldId(field, nodeAliases);
 		const updatedNodeId =
 			normalizedFieldId.nodeId !== undefined
-				? replacer.replaceAtomId(normalizedFieldId.nodeId)
+				? replacer.getUpdatedAtomId(normalizedFieldId.nodeId)
 				: undefined;
 
 		const updatedValue: FieldId = {
@@ -1775,7 +1774,7 @@ function replaceIdMapRevisions<T>(
 ): ChangeAtomIdBTree<T> {
 	const updated: ChangeAtomIdBTree<T> = newTupleBTree();
 	for (const [[revision, localId], value] of map.entries()) {
-		const newAtom = replacer.replaceAtomId({ revision, localId });
+		const newAtom = replacer.getUpdatedAtomId({ revision, localId });
 		updated.set([newAtom.revision, newAtom.localId], valueMapper(value));
 	}
 
@@ -3055,7 +3054,7 @@ function replaceFieldIdRevision(fieldId: FieldId, replacer: RevisionReplacer): F
 
 	return {
 		...fieldId,
-		nodeId: replacer.replaceAtomId(fieldId.nodeId),
+		nodeId: replacer.getUpdatedAtomId(fieldId.nodeId),
 	};
 }
 
@@ -3127,58 +3126,4 @@ function setInChangeAtomIdMap<T>(map: ChangeAtomIdBTree<T>, id: ChangeAtomId, va
 
 function areEqualFieldIds(a: FieldId, b: FieldId): boolean {
 	return areEqualChangeAtomIdOpts(a.nodeId, b.nodeId) && a.field === b.field;
-}
-
-export interface ReplaceRevisionIdInfo {
-	idAllocator: IdAllocator;
-	newRevisionMap: ChangeAtomIdBTree<ChangesetLocalId>;
-}
-
-export class DefaultRevisionReplacer implements RevisionReplacer {
-	private readonly newRevisionMap: ChangeAtomIdBTree<ChangesetLocalId>;
-	private readonly localIds: Set<ChangesetLocalId> = new Set();
-	private maxSeen: ChangesetLocalId = brandConst(-1)();
-
-	public constructor(
-		public readonly newRevision: RevisionTag | undefined,
-		private readonly oldRevisions: Set<RevisionTag | undefined>,
-	) {
-		// Map to keep track of the replaced (revision tag, old id) to the new id.
-		this.newRevisionMap = newTupleBTree();
-	}
-
-	public isOldRevision(revision: RevisionTag | undefined): boolean {
-		return this.oldRevisions.has(revision);
-	}
-	public replaceAtomId<T extends ChangeAtomId>(id: T): T {
-		if (this.isOldRevision(id.revision)) {
-			const updated: Mutable<T> = { ...id, revision: this.newRevision };
-			if (updated.revision === undefined) {
-				delete updated.revision;
-			}
-			const prior: ChangesetLocalId | undefined = this.newRevisionMap.get([
-				id.revision,
-				id.localId,
-			]);
-			if (prior !== undefined) {
-				updated.localId = prior;
-			} else {
-				let localId: ChangesetLocalId;
-				if (this.localIds.has(id.localId)) {
-					this.maxSeen = brand(this.maxSeen + 1);
-					localId = this.maxSeen;
-				} else {
-					// This change atom ID uses a local ID that has not yet been used in the new revision.
-					// We reuse it as is to minimize the number of IDs that need to be updated.
-					localId = id.localId;
-					this.maxSeen = brand(Math.max(this.maxSeen, localId));
-					this.localIds.add(id.localId);
-				}
-				this.newRevisionMap.set([id.revision, id.localId], localId);
-				updated.localId = localId;
-			}
-			return updated;
-		}
-		return id;
-	}
 }

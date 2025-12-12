@@ -39,7 +39,6 @@ export {
 	referenceFreeFieldChangeRebaser,
 	type RebaseRevisionMetadata,
 	type RelevantRemovedRootsFromChild,
-	type RevisionReplacer,
 	type ToDelta,
 	NodeAttachState,
 	type FieldChangeEncodingContext,
@@ -72,10 +71,10 @@ export {
 	intoDelta,
 	relevantRemovedRoots,
 	updateRefreshers,
-	DefaultRevisionReplacer,
 } from "./modularChangeFamily.js";
 export { makeModularChangeCodecFamily } from "./modularChangeCodecs.js";
 export type {
 	FieldKindConfiguration,
 	FieldKindConfigurationEntry,
 } from "./fieldKindConfiguration.js";
+export { type RevisionReplacer, DefaultRevisionReplacer } from "./revisionReplacer.js";

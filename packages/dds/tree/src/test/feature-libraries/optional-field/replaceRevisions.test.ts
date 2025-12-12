@@ -12,8 +12,10 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
 import { Change, assertEqual } from "./optionalFieldUtils.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { DefaultRevisionReplacer } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import {
+	DefaultRevisionReplacer,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/index.js";
 
 const tag0: RevisionTag = mintRevisionTag();
 const tag1: RevisionTag = mintRevisionTag();

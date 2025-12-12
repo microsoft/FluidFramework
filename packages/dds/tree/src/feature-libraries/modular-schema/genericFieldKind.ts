@@ -21,7 +21,6 @@ import type {
 	NodeChangePruner,
 	NodeChangeRebaser,
 	RelevantRemovedRootsFromChild,
-	RevisionReplacer,
 	ToDelta,
 } from "./fieldChangeHandler.js";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";
@@ -29,6 +28,7 @@ import { newGenericChangeset, type GenericChangeset } from "./genericFieldKindTy
 import type { NodeId } from "./modularChangeTypes.js";
 import { FlexFieldKind } from "./fieldKind.js";
 import { brandConst } from "../../util/index.js";
+import type { RevisionReplacer } from "./revisionReplacer.js";
 
 /**
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
@@ -158,7 +158,7 @@ function replaceRevisions(
 	changeset: GenericChangeset,
 	replacer: RevisionReplacer,
 ): GenericChangeset {
-	return changeset.mapValues((node) => replacer.replaceAtomId(node));
+	return changeset.mapValues((node) => replacer.getUpdatedAtomId(node));
 }
 
 /**

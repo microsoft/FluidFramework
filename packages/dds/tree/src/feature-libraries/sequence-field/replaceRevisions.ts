@@ -42,11 +42,11 @@ export function replaceRevisions(changeset: Changeset, replacer: RevisionReplace
 function updateMark(mark: Mark, replacer: RevisionReplacer): Mark {
 	const updatedMark = { ...updateEffect(mark, replacer) };
 	if (mark.cellId !== undefined) {
-		updatedMark.cellId = replacer.replaceAtomId(mark.cellId);
+		updatedMark.cellId = replacer.getUpdatedAtomId(mark.cellId);
 	}
 
 	if (mark.changes !== undefined) {
-		updatedMark.changes = replacer.replaceAtomId(mark.changes);
+		updatedMark.changes = replacer.getUpdatedAtomId(mark.changes);
 	}
 
 	return updatedMark;
@@ -88,7 +88,7 @@ function updateIdOverride<TEffect extends Detach | Rename>(
 	replacer: RevisionReplacer,
 ): TEffect {
 	if (effect.idOverride !== undefined) {
-		const idOverride = replacer.replaceAtomId(effect.idOverride);
+		const idOverride = replacer.getUpdatedAtomId(effect.idOverride);
 		return { ...effect, idOverride };
 	} else {
 		return effect;
@@ -103,7 +103,7 @@ function updateMoveEffect<TEffect extends HasMoveFields>(
 		? updateRevisionAndId(
 				{
 					...effect,
-					finalEndpoint: replacer.replaceAtomId(effect.finalEndpoint),
+					finalEndpoint: replacer.getUpdatedAtomId(effect.finalEndpoint),
 				},
 				replacer,
 			)
@@ -117,7 +117,7 @@ function updateRevisionAndId<T extends HasRevisionTag & HasMoveId>(
 	if (!replacer.isOldRevision(input.revision)) {
 		return input;
 	}
-	const newAtom = replacer.replaceAtomId(makeChangeAtomId(input.id, input.revision));
+	const newAtom = replacer.getUpdatedAtomId(makeChangeAtomId(input.id, input.revision));
 	return withRevisionAndId(input, newAtom.revision, newAtom.localId);
 }
 

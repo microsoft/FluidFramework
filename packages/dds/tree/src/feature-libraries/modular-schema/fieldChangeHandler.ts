@@ -5,7 +5,6 @@
 
 import type { ICodecFamily, IJsonCodec } from "../../codec/index.js";
 import type {
-	ChangeAtomId,
 	ChangeEncodingContext,
 	DeltaDetachedNodeChanges,
 	DeltaDetachedNodeId,
@@ -21,6 +20,7 @@ import type { IdAllocator, Invariant } from "../../util/index.js";
 import type { CrossFieldManager } from "./crossFieldQueries.js";
 import type { EncodedNodeChangeset } from "./modularChangeFormat.js";
 import type { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
+import type { RevisionReplacer } from "./revisionReplacer.js";
 
 export type NestedChangesIndices = [
 	NodeId,
@@ -172,12 +172,6 @@ export interface FieldChangeRebaser<TChangeset> {
 	 * This is a kludge. TODO: remove once AB#46104 is completed.
 	 */
 	mute(change: TChangeset): TChangeset;
-}
-
-export interface RevisionReplacer {
-	readonly newRevision: RevisionTag | undefined;
-	isOldRevision(revision: RevisionTag | undefined): boolean;
-	replaceAtomId<T extends ChangeAtomId>(id: T): T;
 }
 
 /**

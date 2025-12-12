@@ -441,13 +441,13 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		for (const [id, childChange] of change.childChanges) {
 			childChanges.push([
 				replaceRegisterRevisions(id, replacer),
-				replacer.replaceAtomId(childChange),
+				replacer.getUpdatedAtomId(childChange),
 			]);
 		}
 
 		const moves: Move[] = [];
 		for (const [src, dst] of change.moves) {
-			moves.push([replacer.replaceAtomId(src), replacer.replaceAtomId(dst)]);
+			moves.push([replacer.getUpdatedAtomId(src), replacer.getUpdatedAtomId(dst)]);
 		}
 
 		const updated: Mutable<OptionalChangeset> = { childChanges, moves };
@@ -473,7 +473,7 @@ function replaceReplaceRevisions(
 
 	const updated: Mutable<Replace> = {
 		...replace,
-		dst: replacer.replaceAtomId(replace.dst),
+		dst: replacer.getUpdatedAtomId(replace.dst),
 	};
 
 	if (replace.src !== undefined) {
@@ -487,7 +487,7 @@ function replaceRegisterRevisions(
 	register: RegisterId,
 	replacer: RevisionReplacer,
 ): RegisterId {
-	return register === "self" ? register : replacer.replaceAtomId(register);
+	return register === "self" ? register : replacer.getUpdatedAtomId(register);
 }
 
 function getComposedReplaceDst(

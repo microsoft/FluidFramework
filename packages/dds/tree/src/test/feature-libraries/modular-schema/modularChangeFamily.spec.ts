@@ -116,7 +116,7 @@ const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base),
 	prune: (change, pruneChild) => (change === undefined ? undefined : pruneChild(change)),
 	replaceRevisions: (change, replacer) =>
-		change !== undefined ? replacer.replaceAtomId(change) : undefined,
+		change !== undefined ? replacer.getUpdatedAtomId(change) : undefined,
 };
 
 const singleNodeEditor: FieldEditor<SingleNodeChangeset> = {
