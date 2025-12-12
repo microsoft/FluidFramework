@@ -41,7 +41,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 	 */
 	public async find(query: any, sort: any): Promise<any[]> {
 		// split the keys and get the corresponding value
-		function getValueByKey(propertyBag, key: string) {
+		function getValueByKey(propertyBag, key: string): any {
 			const keys = key.split(".");
 			let value = propertyBag;
 			keys.forEach((splitKey) => {
@@ -78,7 +78,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 
 		if (sort && Object.keys(sort).length === 1) {
 			// eslint-disable-next-line no-inner-declarations
-			function compare(a, b) {
+			function compare(a, b): number {
 				// Non null asserting here because of the length check above
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const sortKey = Object.keys(sort)[0]!;
@@ -238,7 +238,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 	 *
 	 * @param values - data to insert to the database
 	 */
-	private insertInternal(...values: any[]) {
+	private insertInternal(...values: any[]): void {
 		for (const value of values) {
 			if (value) {
 				if (!value._id) {

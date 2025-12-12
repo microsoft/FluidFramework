@@ -54,7 +54,7 @@ DESCRIPTION
   Generate a changelog for packages based on changesets. Note that this process deletes the changeset files!
 
 ALIASES
-  $ flub vnext generate changelogs
+  $ flub generate changelog
 
 EXAMPLES
   Generate changelogs for the client release group.

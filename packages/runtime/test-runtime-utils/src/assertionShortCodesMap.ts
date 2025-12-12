@@ -1433,7 +1433,6 @@ export const shortCodeMap = {
 	"0xa7b": "Collision of object id property.",
 	"0xa7c": "Ref not found.",
 	"0xa7d": "Expected at least two types",
-	"0xa7e": "Expected at least two types",
 	"0xa7f": "Delta manager does not have inbound/outbound queues.",
 	"0xa80": "Invalid delta manager",
 	"0xa83": "Expected commit(s) for a non no-op rebase",
@@ -1624,7 +1623,6 @@ export const shortCodeMap = {
 	"0xb5d": "Expected last remove to be unacked",
 	"0xb5e": "Expected prior remove to be acked",
 	"0xb5f": "Expected same length for client ids and seqs",
-	"0xb60": "Invalid schema",
 	"0xb61": "Invalid old reference",
 	"0xb62": "Invalid new segment on rebase",
 	"0xb63": "Resubmitting obliterate op without obliterate info in segment group",
@@ -1841,7 +1839,6 @@ export const shortCodeMap = {
 	"0xc62": "Cannot encode branch base without originatorId",
 	"0xc63": "Cannot decode branch id without originatorId",
 	"0xc64": "Cannot decode branch base without originatorId",
-	"0xc65": "Cannot encode V5 summary without originator",
 	"0xc66": "Shared branches must have an id",
 	"0xc67": "Duplicate shared branch id",
 	"0xc68": "Only commit messages are supported",
@@ -1902,5 +1899,13 @@ export const shortCodeMap = {
 	"0xca0": "Unsupported FieldBatchFormatVersion for incremental encoding; must be v2 or higher",
 	"0xca1": "Unsupported FieldBatchFormatVersion for incremental encoding; must be v2 or higher",
 	"0xca2": "localOpActivity must be undefined when entering rollback",
-	"0xca3": "localOpActivity must be undefined when entering applyStashedOp"
+	"0xca3": "localOpActivity must be undefined when entering applyStashedOp",
+	"0xca4": "Expected applied commit to be parented",
+	"0xca5": "Cannot encode vSharedBranches summary without originator",
+	"0xca6": "Unsupported write version requested.",
+	"0xca7": "getUnhydratedContext should not be reentrant",
+	"0xca8": "missing schema",
+	"0xca9": "missing schema",
+	"0xcaa": "Reachable schema missing from input TreeSchema",
+	"0xcab": "missing kind"
 };

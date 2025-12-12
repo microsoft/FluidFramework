@@ -309,6 +309,7 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 					? versionForCreating
 					: versionForLoading;
 
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Returns anonymous class type
 	const createContainerFactoryFn = (containerOptions?: ITestContainerConfig) => {
 		const dataStoreFactory = getDataStoreFactoryFn(containerOptions);
 		const factoryCtor = createTestContainerRuntimeFactory(

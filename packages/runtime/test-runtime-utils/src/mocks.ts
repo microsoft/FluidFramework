@@ -106,16 +106,16 @@ export class MockDeltaConnection implements IDeltaConnection {
 		this.dirtyFn();
 	}
 
-	public setConnectionState(connected: boolean) {
+	public setConnectionState(connected: boolean): void {
 		this._connected = connected;
 		this.handler?.setConnectionState(connected);
 	}
 
-	public processMessages(messageCollection: IRuntimeMessageCollection) {
+	public processMessages(messageCollection: IRuntimeMessageCollection): void {
 		this.handler?.processMessages?.(messageCollection);
 	}
 
-	public reSubmit(content: any, localOpMetadata: unknown, squash?: boolean) {
+	public reSubmit(content: any, localOpMetadata: unknown, squash?: boolean): void {
 		this.handler?.reSubmit(content, localOpMetadata, squash);
 	}
 
@@ -249,7 +249,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		return deltaConnection;
 	}
 
-	public finalizeIdRange(range: IdCreationRange) {
+	public finalizeIdRange(range: IdCreationRange): void {
 		assert(
 			this.dataStoreRuntime.idCompressor !== undefined,
 			"Shouldn't try to finalize IdRanges without an IdCompressor",
@@ -260,7 +260,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	// This enables manual control over flush mode, allowing operations like rollback to be executed in a controlled environment.
 	#manualFlushCalls: number = 0;
 
-	public async runWithManualFlush(act: () => void | Promise<void>) {
+	public async runWithManualFlush(act: () => void | Promise<void>): Promise<void> {
 		this.#manualFlushCalls++;
 		try {
 			await act();
@@ -333,7 +333,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	}
 
 	public dirty(): void {}
-	public get isDirty() {
+	public get isDirty(): boolean {
 		return this.pendingMessages.length > 0;
 	}
 
@@ -341,7 +341,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	 * If flush mode is set to FlushMode.TurnBased, it will send all messages queued since the last time
 	 * this method (or `flushSomeMessages`) was called. Otherwise, calling the method does nothing.
 	 */
-	public flush() {
+	public flush(): void {
 		this.flushSomeMessages(this.outbox.length);
 	}
 
@@ -393,7 +393,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	 *
 	 * The method requires `runtimeOptions.enableGroupedBatching` to be enabled.
 	 */
-	public rebase() {
+	public rebase(): void {
 		if (this.runtimeOptions.flushMode !== FlushMode.TurnBased) {
 			return;
 		}
@@ -461,7 +461,10 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		return undefined;
 	}
 
-	private submitInternal(message: IInternalMockRuntimeMessage, clientSequenceNumber: number) {
+	private submitInternal(
+		message: IInternalMockRuntimeMessage,
+		clientSequenceNumber: number,
+	): void {
 		// Here, we should instead push to the DeltaManager. And the DeltaManager will push things into the factory's messages
 		this.deltaManager.outbound.push([
 			{
@@ -475,7 +478,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		this.addPendingMessage(message.content, message.localOpMetadata, clientSequenceNumber);
 	}
 
-	public process(message: ISequencedDocumentMessage) {
+	public process(message: ISequencedDocumentMessage): void {
 		this.deltaManager.process(message);
 		const [local, localOpMetadata] = this.processInternal(message);
 
@@ -497,7 +500,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		content: any,
 		localOpMetadata: unknown,
 		clientSequenceNumber: number,
-	) {
+	): void {
 		const pendingMessage: IMockContainerRuntimePendingMessage = {
 			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 			content,
@@ -521,7 +524,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		return [local, localOpMetadata];
 	}
 
-	public async resolveHandle(handle: IFluidHandle) {
+	public async resolveHandle(handle: IFluidHandle): Promise<IResponse> {
 		return this.dataStoreRuntime.resolveHandle({
 			url: toFluidHandleInternal(handle).absolutePath,
 		});
@@ -563,7 +566,7 @@ export class MockContainerRuntimeFactory {
 		this.runtimeOptions = makeContainerRuntimeOptions(mockContainerRuntimeOptions);
 	}
 
-	public get outstandingMessageCount() {
+	public get outstandingMessageCount(): number {
 		return this.messages.length;
 	}
 
@@ -601,11 +604,11 @@ export class MockContainerRuntimeFactory {
 		return containerRuntime;
 	}
 
-	public removeContainerRuntime(containerRuntime: MockContainerRuntime) {
+	public removeContainerRuntime(containerRuntime: MockContainerRuntime): void {
 		this.runtimes.delete(containerRuntime);
 	}
 
-	public pushMessage(msg: Partial<ISequencedDocumentMessage>) {
+	public pushMessage(msg: Partial<ISequencedDocumentMessage>): void {
 		deepFreeze(msg);
 		if (
 			msg.clientId &&
@@ -618,7 +621,7 @@ export class MockContainerRuntimeFactory {
 	}
 
 	protected lastProcessedMessage: ISequencedDocumentMessage | undefined;
-	protected getFirstMessageToProcess() {
+	protected getFirstMessageToProcess(): ISequencedDocumentMessage {
 		assert(this.messages.length > 0, "The message queue should not be empty");
 
 		// Explicitly JSON clone the value to match the behavior of going thru the wire.
@@ -640,7 +643,7 @@ export class MockContainerRuntimeFactory {
 		return message;
 	}
 
-	private processFirstMessage() {
+	private processFirstMessage(): void {
 		const message = this.getFirstMessageToProcess();
 		for (const runtime of this.runtimes) {
 			runtime.process(message);
@@ -650,7 +653,7 @@ export class MockContainerRuntimeFactory {
 	/**
 	 * Process one of the queued messages.  Throws if no messages are queued.
 	 */
-	public processOneMessage() {
+	public processOneMessage(): void {
 		if (this.messages.length === 0) {
 			throw new Error("Tried to process a message that did not exist");
 		}
@@ -663,7 +666,7 @@ export class MockContainerRuntimeFactory {
 	 * Process a given number of queued messages.  Throws if there are fewer messages queued than requested.
 	 * @param count - the number of messages to process
 	 */
-	public processSomeMessages(count: number) {
+	public processSomeMessages(count: number): void {
 		if (count > this.messages.length) {
 			throw new Error("Tried to process more messages than exist");
 		}
@@ -678,7 +681,7 @@ export class MockContainerRuntimeFactory {
 	/**
 	 * Process all remaining messages in the queue.
 	 */
-	public processAllMessages() {
+	public processAllMessages(): void {
 		this.lastProcessedMessage = undefined;
 		while (this.messages.length > 0) {
 			this.processFirstMessage();
@@ -697,12 +700,12 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 		this.members = new Map((members as [string, ISequencedClient][]) ?? []);
 	}
 
-	addMember(id: string, client: Partial<ISequencedClient>) {
+	addMember(id: string, client: Partial<ISequencedClient>): void {
 		this.members.set(id, client as ISequencedClient);
 		this.eventEmitter.emit("addMember", id, client);
 	}
 
-	removeMember(id: string) {
+	removeMember(id: string): void {
 		if (this.members.delete(id)) {
 			this.eventEmitter.emit("removeMember", id);
 		}
@@ -889,7 +892,7 @@ export class MockFluidDataStoreRuntime
 	}
 
 	private readonly: boolean = false;
-	public readonly isReadOnly = () => this.readonly;
+	public readonly isReadOnly = (): boolean => this.readonly;
 
 	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
 
@@ -933,15 +936,15 @@ export class MockFluidDataStoreRuntime
 
 	public createDeltaConnection(): MockDeltaConnection {
 		const deltaConnection = new MockDeltaConnection(
-			(messageContent: any, localOpMetadata: unknown) =>
+			(messageContent: any, localOpMetadata: unknown): number =>
 				this.submitMessageInternal(messageContent, localOpMetadata),
-			() => this.setChannelDirty(),
+			(): void => this.setChannelDirty(),
 		);
 		this.deltaConnections.push(deltaConnection);
 		return deltaConnection;
 	}
 
-	public get absolutePath() {
+	public get absolutePath(): string {
 		return `/${this.id}`;
 	}
 
@@ -962,7 +965,7 @@ export class MockFluidDataStoreRuntime
 
 	private _disposed = false;
 
-	public get disposed() {
+	public get disposed(): boolean {
 		return this._disposed;
 	}
 
@@ -1028,7 +1031,7 @@ export class MockFluidDataStoreRuntime
 		return this.audience;
 	}
 
-	public save(message: string) {
+	public save(message: string): void {
 		return;
 	}
 
@@ -1062,7 +1065,7 @@ export class MockFluidDataStoreRuntime
 
 	public submitSignal: IFluidDataStoreRuntime["submitSignal"] = () => null;
 
-	public processMessages(messageCollection: IRuntimeMessageCollection) {
+	public processMessages(messageCollection: IRuntimeMessageCollection): void {
 		if (this.disposed) {
 			return;
 		}
@@ -1071,7 +1074,7 @@ export class MockFluidDataStoreRuntime
 		});
 	}
 
-	public processSignal(message: any, local: boolean) {
+	public processSignal(message: any, local: boolean): void {
 		return;
 	}
 
@@ -1079,7 +1082,7 @@ export class MockFluidDataStoreRuntime
 		return;
 	}
 
-	public setConnectionState(connected: boolean, clientId?: string) {
+	public setConnectionState(connected: boolean, clientId?: string): void {
 		if (connected && clientId !== undefined) {
 			this.clientId = clientId;
 		}
@@ -1127,7 +1130,7 @@ export class MockFluidDataStoreRuntime
 		};
 	}
 
-	public updateUsedRoutes(usedRoutes: string[]) {}
+	public updateUsedRoutes(usedRoutes: string[]): void {}
 
 	public getAttachSnapshot(): ITreeEntry[] {
 		return [];
@@ -1188,13 +1191,13 @@ export class MockFluidDataStoreRuntime
 		return null as any as IResponse;
 	}
 
-	public reSubmit(content: any, localOpMetadata: unknown, squash?: boolean) {
+	public reSubmit(content: any, localOpMetadata: unknown, squash?: boolean): void {
 		this.deltaConnections.forEach((dc) => {
 			dc.reSubmit(content, localOpMetadata, squash);
 		});
 	}
 
-	public async applyStashedOp(content: any) {
+	public async applyStashedOp(content: any): Promise<unknown> {
 		return this.deltaConnections.map((dc) => dc.applyStashedOp(content))[0];
 	}
 
@@ -1212,7 +1215,7 @@ export class MockFluidDataStoreRuntime
 export class MockEmptyDeltaConnection implements IDeltaConnection {
 	public connected = false;
 
-	public attach(handler) {}
+	public attach(handler): void {}
 
 	public submit(messageContent: any): number {
 		assert(false, "Throw submit error on mock empty delta connection");
@@ -1263,7 +1266,7 @@ export class MockObjectStorageService implements IChannelStorageService {
  * @legacy @beta
  */
 export class MockSharedObjectServices implements IChannelServices {
-	public static createFromSummary(summaryTree: ISummaryTree) {
+	public static createFromSummary(summaryTree: ISummaryTree): MockSharedObjectServices {
 		const contents: { [key: string]: string } = {};
 		setContentsFromSummaryTree(summaryTree, "", contents);
 		return new MockSharedObjectServices(contents);
