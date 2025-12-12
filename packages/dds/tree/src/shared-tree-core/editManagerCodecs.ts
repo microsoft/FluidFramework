@@ -163,7 +163,7 @@ export function makeEditManagerCodecs<TChangeset>(
 					makeSharedBranchesCodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
 			}
-			case EditManagerFormatVersion.vAlphaConstraints: {
+			case unbrand(EditManagerFormatVersion.vAlphaConstraints): {
 				const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
 				return [
 					version,

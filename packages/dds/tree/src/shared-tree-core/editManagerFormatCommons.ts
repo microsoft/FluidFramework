@@ -174,7 +174,7 @@ export const supportedEditManagerFormatVersions: ReadonlySet<EditManagerFormatVe
 		EditManagerFormatVersion.v4,
 		EditManagerFormatVersion.vSharedBranches,
 		EditManagerFormatVersion.vAlphaConstraints,
-	] as EditManagerFormatVersion[]);
+	]);
 export const editManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> = new Set(
 	Object.values(EditManagerFormatVersion),
 );

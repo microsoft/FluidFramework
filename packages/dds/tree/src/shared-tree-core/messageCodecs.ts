@@ -172,7 +172,7 @@ export function makeMessageCodecs<TChangeset>(
 					makeSharedBranchesCodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
 			}
-			case MessageFormatVersion.vAlphaConstraints: {
+			case unbrand(MessageFormatVersion.vAlphaConstraints): {
 				const changeCodec = changeCodecs.resolve(
 					dependentChangeFormatVersion.lookup(version),
 				).json;
