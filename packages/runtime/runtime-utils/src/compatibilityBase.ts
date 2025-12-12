@@ -150,8 +150,14 @@ export function getConfigForMinVersionForCollab<T>(
 }
 
 /**
- * Returns a default configuration given minVersionForCollab and {@link ConfigMapEntry}.
+ * Returns a default configuration given minVersionForCollab and the contents of a {@link ConfigMapEntry} in an Iterable.
+ * @remarks
+ * See also {@link getConfigForMinVersionForCollab} for consuming a ConfigMapEntry directly.
  *
+ * `ConfigMapEntry` is a nice type safe format for developers to directly author this data,
+ * but it is messy and less type safe to work with it in this format programmatically.
+ * Thus this function exists to help meet the needs of programmatic use cases,
+ * like cases which transform a ConfigMapEntry before selecting a value from it.
  * @internal
  */
 export function getConfigForMinVersionForCollabIterable<T>(
