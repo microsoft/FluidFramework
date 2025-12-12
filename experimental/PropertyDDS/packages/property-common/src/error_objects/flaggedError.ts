@@ -9,7 +9,7 @@
  * @param flag - A flag to be checked
  * @returns True if the flag is set in passed flags, false otherwise.
  */
-const _isFlagSet = (flags: number, flag: number) => {
+const _isFlagSet = (flags: number, flag: number): boolean => {
 	// eslint-disable-next-line no-bitwise
 	return (flags & flag) === flag;
 };
