@@ -149,11 +149,11 @@ export class BuildPackage {
 	/**
 	 * Get additional config files specified in the task definition for incremental tracking.
 	 * @param taskName - The task name to get additional config files for
-	 * @returns Array of additional config file paths relative to the package directory, or undefined if none specified
+	 * @returns Array of additional config file paths relative to the package directory
 	 */
-	public getAdditionalConfigFiles(taskName: string): readonly string[] | undefined {
+	public getAdditionalConfigFiles(taskName: string): readonly string[] {
 		const config = this.getTaskDefinition(taskName);
-		return config?.files?.additionalConfigFiles;
+		return config?.files?.additionalConfigFiles ?? [];
 	}
 
 	private createTask(taskName: string, pendingInitDep: Task[]) {
