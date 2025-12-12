@@ -7,12 +7,11 @@ import { strict as assert } from "node:assert";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { cosmiconfig } from "cosmiconfig";
+import { lilconfig } from "lilconfig";
 import { afterEach, describe, it } from "mocha";
-import { mjsLoader } from "../../../library/configLoader.js";
 
 describe("generate:assertTags", () => {
-	describe("cosmiconfig .mjs loader", () => {
+	describe("lilconfig .mjs loader", () => {
 		const configName = "assertTagging";
 		const searchPlaces = [`${configName}.config.mjs`];
 		let testDirs: string[] = [];
@@ -44,7 +43,7 @@ describe("generate:assertTags", () => {
 			testDirs = [];
 		});
 
-		it("loads .mjs config files with custom loader", async () => {
+		it("loads .mjs config files", async () => {
 			const configContent = `
 export default {
 assertionFunctions: {
@@ -55,11 +54,8 @@ fail: 0,
 `;
 			const testDir = createTestFixture(configContent);
 
-			const config = cosmiconfig(configName, {
+			const config = lilconfig(configName, {
 				searchPlaces,
-				loaders: {
-					".mjs": mjsLoader,
-				},
 			});
 
 			const result = await config.search(testDir);
@@ -76,11 +72,8 @@ assertionFunctions: {},
 `;
 			const testDir = createTestFixture(configContent);
 
-			const config = cosmiconfig(configName, {
+			const config = lilconfig(configName, {
 				searchPlaces,
-				loaders: {
-					".mjs": mjsLoader,
-				},
 			});
 
 			const result = await config.search(testDir);
@@ -104,11 +97,8 @@ assertionFunctions: {},
 			mkdirSync(testDir, { recursive: true });
 			testDirs.push(testDir);
 
-			const config = cosmiconfig(configName, {
+			const config = lilconfig(configName, {
 				searchPlaces,
-				loaders: {
-					".mjs": mjsLoader,
-				},
 			});
 
 			const result = await config.search(testDir);
@@ -120,7 +110,7 @@ assertionFunctions: {},
 			);
 		});
 
-		it("verifies the loader is necessary for .mjs files", async () => {
+		it("loads .mjs files with native ESM support", async () => {
 			const configContent = `
 export default {
 assertionFunctions: {
@@ -130,22 +120,16 @@ assert: 1,
 `;
 			const testDir = createTestFixture(configContent);
 
-			// With the loader, .mjs files can be loaded
-			const configWithLoader = cosmiconfig(configName, {
+			// lilconfig natively supports .mjs files
+			const config = lilconfig(configName, {
 				searchPlaces,
-				loaders: {
-					".mjs": mjsLoader,
-				},
 			});
 
-			const resultWithLoader = await configWithLoader.search(testDir);
+			const result = await config.search(testDir);
 
-			// The main assertion: WITH the loader, config MUST be found
-			assert(
-				resultWithLoader !== null,
-				"With custom loader, .mjs config files should be loaded",
-			);
-			assert(resultWithLoader.filepath.endsWith(".mjs"), "Loaded file should be a .mjs file");
+			// lilconfig should load .mjs files natively
+			assert(result !== null, "lilconfig should load .mjs config files natively");
+			assert(result.filepath.endsWith(".mjs"), "Loaded file should be a .mjs file");
 		});
 	});
 });
