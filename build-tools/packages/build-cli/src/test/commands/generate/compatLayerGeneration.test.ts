@@ -14,7 +14,7 @@ import {
 	generateLayerFileContent,
 	isCurrentPackageVersionPatch,
 	maybeGetNewGeneration,
-} from "../../../library/layerCompatGeneration.js";
+} from "../../../library/compatLayerGeneration.js";
 
 describe("generate:compatLayerGeneration", () => {
 	const minimumCompatWindowMonths = DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS;

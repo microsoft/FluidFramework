@@ -14,6 +14,13 @@ import { bumpVersionScheme } from "@fluid-tools/version-tools";
 import { FluidRepo } from "@fluidframework/build-tools";
 
 import {
+	DEFAULT_GENERATION_DIR,
+	DEFAULT_GENERATION_FILE_NAME,
+	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
+	checkPackagesCompatLayerGeneration,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../library/compatLayerGeneration.js";
+import {
 	generateBumpDepsBranchName,
 	generateBumpDepsCommitMessage,
 	generateBumpVersionBranchName,
@@ -23,13 +30,6 @@ import {
 	getReleaseSourceForReleaseGroup,
 	isReleased,
 } from "../library/index.js";
-import {
-	DEFAULT_GENERATION_DIR,
-	DEFAULT_GENERATION_FILE_NAME,
-	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
-	checkPackagesCompatLayerGeneration,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../library/layerCompatGeneration.js";
 import type { CommandLogger } from "../logging.js";
 import type { MachineState } from "../machines/index.js";
 import { type ReleaseSource, isReleaseGroup } from "../releaseGroups.js";

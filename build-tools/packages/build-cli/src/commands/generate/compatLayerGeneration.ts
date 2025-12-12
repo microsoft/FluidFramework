@@ -23,7 +23,7 @@ import {
 	isCurrentPackageVersionPatch,
 	maybeGetNewGeneration,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../library/layerCompatGeneration.js";
+} from "../../library/compatLayerGeneration.js";
 
 /**
  * Command to update the generation value of Fluid's compatibility layers.

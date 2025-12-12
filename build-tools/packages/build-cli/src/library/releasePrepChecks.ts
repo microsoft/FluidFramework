@@ -6,13 +6,13 @@
 import { MonoRepo, type Package } from "@fluidframework/build-tools";
 import execa from "execa";
 import { ResetMode } from "simple-git";
-import type { Context } from "./context.js";
 import {
 	DEFAULT_GENERATION_DIR,
 	DEFAULT_GENERATION_FILE_NAME,
 	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
 	checkPackageCompatLayerGeneration,
-} from "./layerCompatGeneration.js";
+} from "./compatLayerGeneration.js";
+import type { Context } from "./context.js";
 import { getPreReleaseDependencies } from "./package.js";
 
 /**
@@ -275,7 +275,7 @@ export const CheckCompatLayerGeneration: CheckFunction = async (
 				: "pnpm flub generate compatLayerGeneration";
 
 		return {
-			message: `Some packages need layer generation updates:\n${packagesNeedingUpdate
+			message: `Some packages need compat layer generation updates:\n${packagesNeedingUpdate
 				.map(({ pkg, reason }) => `  - ${pkg.name}: ${reason}`)
 				.join("\n")}`,
 			fixCommand,

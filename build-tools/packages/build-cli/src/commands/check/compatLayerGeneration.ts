@@ -13,7 +13,7 @@ import {
 	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
 	checkPackageCompatLayerGeneration,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../library/layerCompatGeneration.js";
+} from "../../library/compatLayerGeneration.js";
 
 export default class CheckCompatLayerGenerationCommand extends PackageCommand<
 	typeof CheckCompatLayerGenerationCommand
@@ -68,7 +68,7 @@ export default class CheckCompatLayerGenerationCommand extends PackageCommand<
 
 		if (this.packagesNeedingUpdate.length > 0) {
 			this.errorLog(
-				`Some packages need layer generation updates:\n${this.packagesNeedingUpdate
+				`Some packages need compat layer generation updates:\n${this.packagesNeedingUpdate
 					.map(({ pkg, reason }) => `  - ${pkg.name}: ${reason}`)
 					.join("\n")}\n\nRun 'flub generate compatLayerGeneration' to update them.`,
 			);
@@ -76,7 +76,7 @@ export default class CheckCompatLayerGenerationCommand extends PackageCommand<
 		}
 
 		this.log(
-			`Layer generation check passed for ${this.filteredPackages?.length ?? 0} packages.`,
+			`Compat layer generation check passed for ${this.filteredPackages?.length ?? 0} packages.`,
 		);
 	}
 }
