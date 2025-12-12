@@ -1514,7 +1514,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			// Only emit if we actually deleted something.
 			if (
 				!this.disposed &&
-				this.directory.getWorkingDirectory(this.absolutePath) !== undefined &&
 				previousOptimisticLocalValue !== undefined &&
 				successfullyRemoved
 			) {
@@ -1550,11 +1549,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// Only emit if we locally believe we deleted something.  Otherwise we still send the op
 		// (permitting speculative deletion even if we don't see anything locally) but don't emit
 		// a valueChanged since we in fact did not locally observe a value change.
-		if (
-			!this.disposed &&
-			this.directory.getWorkingDirectory(this.absolutePath) !== undefined &&
-			previousOptimisticLocalValue !== undefined
-		) {
+		if (!this.disposed && previousOptimisticLocalValue !== undefined) {
 			const event: IDirectoryValueChanged = {
 				key,
 				path: this.absolutePath,
@@ -1917,11 +1912,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			// Only emit for remote ops, we would have already emitted for local ops. Only emit if there
 			// is no optimistically-applied local pending clear that would supersede this remote clear.
 			// Don't emit events if this directory has been disposed or no longer exists
-			if (
-				!this.pendingStorageData.some((entry) => entry.type === "clear") &&
-				!this.disposed &&
-				this.directory.getWorkingDirectory(this.absolutePath) !== undefined
-			) {
+			if (!this.pendingStorageData.some((entry) => entry.type === "clear") && !this.disposed) {
 				this.directory.emit("clear", local, this.directory);
 				this.directory.emit("clearInternal", this.absolutePath, local, this.directory);
 			}
@@ -1989,7 +1980,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 			if (
 				!this.disposed &&
-				this.directory.getWorkingDirectory(this.absolutePath) !== undefined &&
 				!this.pendingStorageData.some(
 					(entry) => entry.type === "clear" || entry.key === op.key,
 				)
@@ -2056,7 +2046,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 			if (
 				!this.disposed &&
-				this.directory.getWorkingDirectory(this.absolutePath) !== undefined &&
 				!this.pendingStorageData.some((entry) => entry.type === "clear" || entry.key === key)
 			) {
 				const event: IDirectoryValueChanged = { key, path: this.absolutePath, previousValue };
@@ -2617,19 +2606,13 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	private registerEventsOnSubDirectory(subDirectory: SubDirectory, subDirName: string): void {
 		subDirectory.on("subDirectoryCreated", (relativePath: string, local: boolean) => {
 			// Don't forward events if this directory has been disposed or no longer exists
-			if (
-				!this.disposed &&
-				this.directory.getWorkingDirectory(this.absolutePath) !== undefined
-			) {
+			if (!this.disposed) {
 				this.emit("subDirectoryCreated", posix.join(subDirName, relativePath), local, this);
 			}
 		});
 		subDirectory.on("subDirectoryDeleted", (relativePath: string, local: boolean) => {
 			// Don't forward events if this directory has been disposed or no longer exists
-			if (
-				!this.disposed &&
-				this.directory.getWorkingDirectory(this.absolutePath) !== undefined
-			) {
+			if (!this.disposed) {
 				this.emit("subDirectoryDeleted", posix.join(subDirName, relativePath), local, this);
 			}
 		});
