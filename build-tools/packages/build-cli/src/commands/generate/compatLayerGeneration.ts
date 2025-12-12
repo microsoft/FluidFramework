@@ -32,7 +32,7 @@ export default class UpdateGenerationLayerCommand extends PackageCommand<
 	typeof UpdateGenerationLayerCommand
 > {
 	static readonly description =
-		"Updates the generation and release date for layer compatibility.";
+		"Updates the generation and release date for layer compatibility. Only processes packages that have fluidCompatMetadata in their package.json (opt-in model).";
 
 	static readonly flags = {
 		generationDir: Flags.directory({
@@ -64,25 +64,27 @@ export default class UpdateGenerationLayerCommand extends PackageCommand<
 			return;
 		}
 
-		// Default to generation 1 if no existing file.
-		let newGeneration: number | undefined = 1;
+		// Check if package has opted in via metadata
 		const { fluidCompatMetadata } = pkg.packageJson;
-		if (fluidCompatMetadata !== undefined) {
-			this.verbose(
-				`Layer compatibility metadata from package.json: Generation: ${fluidCompatMetadata.generation}, ` +
-					`Release Date: ${fluidCompatMetadata.releaseDate}, Package Version: ${fluidCompatMetadata.releasePkgVersion}`,
-			);
-			newGeneration = maybeGetNewGeneration(
-				currentPkgVersion,
-				fluidCompatMetadata,
-				minimumCompatWindowMonths,
-				this.logger,
-			);
-			if (newGeneration === undefined) {
-				// No update needed; early exit.
-				this.verbose(`No generation update needed; skipping.`);
-				return;
-			}
+		if (fluidCompatMetadata === undefined) {
+			this.verbose(`No fluidCompatMetadata found in package.json; skipping (opt-in required).`);
+			return;
+		}
+
+		this.verbose(
+			`Layer compatibility metadata from package.json: Generation: ${fluidCompatMetadata.generation}, ` +
+				`Release Date: ${fluidCompatMetadata.releaseDate}, Package Version: ${fluidCompatMetadata.releasePkgVersion}`,
+		);
+		const newGeneration = maybeGetNewGeneration(
+			currentPkgVersion,
+			fluidCompatMetadata,
+			minimumCompatWindowMonths,
+			this.logger,
+		);
+		if (newGeneration === undefined) {
+			// No update needed; early exit.
+			this.verbose(`No generation update needed; skipping.`);
+			return;
 		}
 
 		const currentReleaseDate = formatISO(new Date(), { representation: "date" });
