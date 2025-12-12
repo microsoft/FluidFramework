@@ -12,7 +12,6 @@ import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 import type { ChangeEncodingContext } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
-import { cleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
 
 /**
  * Translates decoded data to encoded data.
