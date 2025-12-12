@@ -61,7 +61,6 @@ describe("Fuzz - Top-Level", () => {
 				attachingBeforeRehydrateDisable: true,
 			},
 			reconnectProbability: 0.1,
-			replay: 0,
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 			skip: [
 				...[30], //  0x92a
