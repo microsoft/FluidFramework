@@ -7,6 +7,8 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
+import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -19,11 +21,11 @@ import { pkgVersion } from "../packageVersion.js";
 
 describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, apis) => {
 	class TestDataObject extends apis.dataRuntime.DataObject {
-		public get _root(): typeof this.root {
+		public get _root(): ISharedDirectory {
 			return this.root;
 		}
 
-		public get _context(): typeof this.context {
+		public get _context(): IFluidDataStoreContext {
 			return this.context;
 		}
 	}
