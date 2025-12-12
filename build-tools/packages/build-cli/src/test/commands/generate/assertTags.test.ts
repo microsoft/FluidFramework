@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { cosmiconfig } from "cosmiconfig";
@@ -21,11 +21,7 @@ describe("generate:assertTags", () => {
 		 * Creates a temporary test directory with an .mjs config file
 		 */
 		function createTestFixture(configContent: string): string {
-			const testDir = path.join(
-				tmpdir(),
-				`assertTagging-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-			);
-			mkdirSync(testDir, { recursive: true });
+			const testDir = mkdtempSync(path.join(tmpdir(), "assertTagging-test-"));
 			testDirs.push(testDir);
 
 			const configPath = path.join(testDir, `${configName}.config.mjs`);
@@ -86,22 +82,11 @@ assertionFunctions: {},
 			const result = await config.search(testDir);
 
 			assert(result !== null);
-			const configContentParsed = result.config as {
-				assertionFunctions: Record<string, number>;
-			};
-			assert(
-				typeof configContentParsed.assertionFunctions === "object",
-				"assertionFunctions should be an object",
-			);
-			assert(
-				Object.keys(configContentParsed.assertionFunctions).length === 0,
-				"assertionFunctions should be empty (disables tagging)",
-			);
+			assert(Object.keys(result.config.assertionFunctions).length === 0);
 		});
 
 		it("returns null when no config file exists", async () => {
-			const testDir = path.join(tmpdir(), `assertTagging-no-config-${Date.now()}`);
-			mkdirSync(testDir, { recursive: true });
+			const testDir = mkdtempSync(path.join(tmpdir(), "assertTagging-no-config-"));
 			testDirs.push(testDir);
 
 			const config = cosmiconfig(configName, {
@@ -113,11 +98,7 @@ assertionFunctions: {},
 
 			const result = await config.search(testDir);
 
-			// Should return null when no config is found
-			assert(
-				result === null || result === undefined,
-				"Should return null when no config exists",
-			);
+			assert(result === null || result === undefined);
 		});
 
 		it("verifies the loader is necessary for .mjs files", async () => {
