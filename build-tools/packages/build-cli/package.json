@@ -34,7 +34,7 @@
 	"scripts": {
 		"build": "fluid-build --task build",
 		"build:compile": "fluid-build --task compile",
-		"build:copy": "copyfiles -u 1 \"src/**/*.fsl\" lib",
+		"build:copy": "copyfiles -u 1 \"src/**/*.fsl\" \"src/test/**/fixtures/**/*\" lib",
 		"build:diagrams": "jssm-viz -i \"./src/machines/*.fsl\"",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc",

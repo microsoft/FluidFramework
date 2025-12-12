@@ -4,27 +4,31 @@
  */
 
 import { strict as assert } from "node:assert";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { lilconfig } from "lilconfig";
 import { afterEach, describe, it } from "mocha";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const fixturesDir = path.join(__dirname, "fixtures");
+
 describe("generate:assertTags", () => {
-	describe("lilconfig .mjs loader", () => {
+	describe("lilconfig config loading", () => {
 		const configName = "assertTagging";
-		const searchPlaces = [`${configName}.config.mjs`];
 		let testDirs: string[] = [];
 
 		/**
-		 * Creates a temporary test directory with an .mjs config file
+		 * Creates a temporary test directory and copies a fixture config file into it
 		 */
-		async function createTestFixture(configContent: string): Promise<string> {
+		async function createTestFixture(fixtureFileName: string): Promise<string> {
 			const testDir = await mkdtemp(path.join(tmpdir(), "assertTagging-test-"));
 			testDirs.push(testDir);
 
-			const configPath = path.join(testDir, `${configName}.config.mjs`);
-			await writeFile(configPath, configContent, "utf8");
+			const sourceFile = path.join(fixturesDir, fixtureFileName);
+			const targetFile = path.join(testDir, fixtureFileName);
+			await copyFile(sourceFile, targetFile);
 
 			return testDir;
 		}
@@ -39,36 +43,46 @@ describe("generate:assertTags", () => {
 		});
 
 		it("loads .mjs config files", async () => {
-			const configContent = `
-export default {
-assertionFunctions: {
-assert: 1,
-fail: 0,
-},
-};
-`;
-			const testDir = await createTestFixture(configContent);
+			const testDir = await createTestFixture("assertTagging.config.mjs");
 
 			const config = lilconfig(configName, {
-				searchPlaces,
+				searchPlaces: [`${configName}.config.mjs`],
 			});
 
 			const result = await config.search(testDir);
 
 			assert(result !== null, "Config should be found");
 			assert("assertionFunctions" in result.config, "Config should have expected structure");
+			const configData = result.config as {
+				assertionFunctions: Record<string, number>;
+			};
+			assert.strictEqual(configData.assertionFunctions.assert, 1);
+			assert.strictEqual(configData.assertionFunctions.fail, 0);
+		});
+
+		it("loads .cjs config files", async () => {
+			const testDir = await createTestFixture("assertTagging.config.cjs");
+
+			const config = lilconfig(configName, {
+				searchPlaces: [`${configName}.config.cjs`],
+			});
+
+			const result = await config.search(testDir);
+
+			assert(result !== null, "Config should be found");
+			assert("assertionFunctions" in result.config, "Config should have expected structure");
+			const configData = result.config as {
+				assertionFunctions: Record<string, number>;
+			};
+			assert.strictEqual(configData.assertionFunctions.assert, 1);
+			assert.strictEqual(configData.assertionFunctions.fail, 0);
 		});
 
 		it("loads .mjs config with empty assertionFunctions", async () => {
-			const configContent = `
-export default {
-assertionFunctions: {},
-};
-`;
-			const testDir = await createTestFixture(configContent);
+			const testDir = await createTestFixture("assertTagging-empty.config.mjs");
 
 			const config = lilconfig(configName, {
-				searchPlaces,
+				searchPlaces: [`${configName}-empty.config.mjs`],
 			});
 
 			const result = await config.search(testDir);
@@ -92,7 +106,7 @@ assertionFunctions: {},
 			testDirs.push(testDir);
 
 			const config = lilconfig(configName, {
-				searchPlaces,
+				searchPlaces: [`${configName}.config.mjs`],
 			});
 
 			const result = await config.search(testDir);
@@ -104,26 +118,28 @@ assertionFunctions: {},
 			);
 		});
 
-		it("loads .mjs files with native ESM support", async () => {
-			const configContent = `
-export default {
-assertionFunctions: {
-assert: 1,
-},
-};
-`;
-			const testDir = await createTestFixture(configContent);
+		it("prefers .cjs over .mjs when both exist", async () => {
+			const testDir = await mkdtemp(path.join(tmpdir(), "assertTagging-test-"));
+			testDirs.push(testDir);
 
-			// lilconfig natively supports .mjs files
+			// Copy both config files
+			await copyFile(
+				path.join(fixturesDir, "assertTagging.config.cjs"),
+				path.join(testDir, "assertTagging.config.cjs"),
+			);
+			await copyFile(
+				path.join(fixturesDir, "assertTagging.config.mjs"),
+				path.join(testDir, "assertTagging.config.mjs"),
+			);
+
 			const config = lilconfig(configName, {
-				searchPlaces,
+				searchPlaces: [`${configName}.config.cjs`, `${configName}.config.mjs`],
 			});
 
 			const result = await config.search(testDir);
 
-			// lilconfig should load .mjs files natively
-			assert(result !== null, "lilconfig should load .mjs config files natively");
-			assert(result.filepath.endsWith(".mjs"), "Loaded file should be a .mjs file");
+			assert(result !== null, "Config should be found");
+			assert(result.filepath.endsWith(".cjs"), "Should load .cjs file when listed first");
 		});
 	});
 });
