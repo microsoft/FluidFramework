@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { Brand } from "../util/index.js";
+import { strictEnum, type Values } from "../util/index.js";
 
 /**
  * The format version for the message.
  */
-export const MessageFormatVersion = {
+export const MessageFormatVersion = strictEnum("MessageFormatVersion", {
 	/**
 	 * NOTE: this is written as `undefined` rather than `0` in the wire format.
 	 * Introduced and retired prior to 2.0.
@@ -44,7 +44,7 @@ export const MessageFormatVersion = {
 	 * This version number was used internally for testing shared branches.
 	 * This format was never made stable.
 	 * This version number is kept here solely to avoid reusing the number: it is not supported for either reading or writing.
-	 * @deprecated - use {@link MessageFormatVersion.vSharedBranches} for testing shared branches.
+	 * @deprecated Use {@link MessageFormatVersion.vSharedBranches} for testing shared branches.
 	 */
 	v5: 5,
 	/**
@@ -57,17 +57,14 @@ export const MessageFormatVersion = {
 	 * Only used for version alpha constraints.
 	 */
 	vAlphaConstraints: "alphaconstraints|v0.1",
-} as const;
-export type MessageFormatVersion = Brand<
-	(typeof MessageFormatVersion)[keyof typeof MessageFormatVersion],
-	"MessageFormatVersion"
->;
+});
+export type MessageFormatVersion = Values<typeof MessageFormatVersion>;
 export const supportedMessageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set([
 	MessageFormatVersion.v3,
 	MessageFormatVersion.v4,
 	MessageFormatVersion.vSharedBranches,
 	MessageFormatVersion.vAlphaConstraints,
-] as MessageFormatVersion[]);
+]);
 export const messageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set(
-	Object.values(MessageFormatVersion) as MessageFormatVersion[],
+	Object.values(MessageFormatVersion),
 );

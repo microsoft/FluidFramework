@@ -1913,11 +1913,13 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			}
 
 			// For pending set operations, emit valueChanged events
+			// Include 'path' so listeners can identify which subdirectory the change occurred in
 			for (const { key, previousValue } of pendingSets) {
 				this.directory.emit(
 					"valueChanged",
 					{
 						key,
+						path: this.absolutePath,
 						previousValue,
 					},
 					local,

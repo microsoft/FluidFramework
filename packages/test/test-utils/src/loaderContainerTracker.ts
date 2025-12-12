@@ -61,7 +61,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 * Add a loader to start to track any container created from them
 	 * @param loader - loader to start tracking any container created.
 	 */
-	public add<LoaderType extends IHostLoader>(loader: LoaderType) {
+	public add<LoaderType extends IHostLoader>(loader: LoaderType): void {
 		// TODO: Expose Loader API to able to intercept container creation (See issue #5114)
 		const patch = <T, C extends IContainer>(fn: (...args) => Promise<C>) => {
 			const boundFn = fn.bind(loader);
@@ -85,7 +85,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 *
 	 * @param container - container to add
 	 */
-	public addContainer(container: IContainer) {
+	public addContainer(container: IContainer): void {
 		// don't add container that is already tracked
 		if (this.containers.has(container)) {
 			return;
@@ -144,7 +144,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 * @param container - the container to track
 	 * @param record - the record to update the trailing op information
 	 */
-	private trackTrailingNoOps(container: IContainer, record: ContainerRecord) {
+	private trackTrailingNoOps(container: IContainer, record: ContainerRecord): void {
 		const deltaManagerFull = toIDeltaManagerFull(container.deltaManager);
 		deltaManagerFull.outbound.on("op", (messages) => {
 			for (const msg of messages) {
@@ -184,7 +184,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 		});
 	}
 
-	private trackLastProposal(container: IContainer) {
+	private trackLastProposal(container: IContainer): void {
 		container.on("codeDetailsProposed", (value, proposal) => {
 			if (proposal.sequenceNumber > this.lastProposalSeqNum) {
 				this.lastProposalSeqNum = proposal.sequenceNumber;
@@ -195,7 +195,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	/**
 	 * Reset the tracker, closing all containers and stop tracking them.
 	 */
-	public reset() {
+	public reset(): void {
 		this.lastProposalSeqNum = 0;
 		for (const container of this.containers.keys()) {
 			container.close();
@@ -305,7 +305,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 *
 	 * @param containersToApply - the set of containers to check
 	 */
-	private getPendingClients(containersToApply: IContainer[]) {
+	private getPendingClients(containersToApply: IContainer[]): [IContainer, Set<string>][] {
 		// All the clientId we track should be a superset of the quorum, otherwise, we are missing
 		// leave messages
 		const openedDocuments = Array.from(this.containers.keys()).filter((c) => !c.closed);
@@ -338,7 +338,9 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 *
 	 * @param containersToApply - the set of containers to check
 	 */
-	private needSequenceNumberSynchronize(containersToApply: NonEmptyArray<IContainer>) {
+	private needSequenceNumberSynchronize(
+		containersToApply: NonEmptyArray<IContainer>,
+	): { reason: string; message: string } | undefined {
 		// If there is a pending proposal, wait for it to be accepted
 		const minSeqNum = containersToApply[0].deltaManager.minimumSequenceNumber;
 		if (minSeqNum < this.lastProposalSeqNum) {
@@ -405,7 +407,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 		return undefined;
 	}
 
-	private containerIndexStrings(containers: IContainer[]) {
+	private containerIndexStrings(containers: IContainer[]): number[] {
 		return containers.map(
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			(c) => this.containers.get(c)!.index,
@@ -420,18 +422,20 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 *
 	 * @param containersToApply - the set of containers to wait for any inbound ops for
 	 */
-	private async waitForPendingClients(pendingClients: [IContainer, Set<string>][]) {
+	private async waitForPendingClients(
+		pendingClients: [IContainer, Set<string>][],
+	): Promise<void[]> {
 		const unconnectedClients = Array.from(this.containers.keys()).filter(
 			(c) => !c.closed && c.connectionState !== ConnectionState.Connected,
 		);
 		return Promise.all(
 			pendingClients.map(async ([container, pendingClientId]) => {
 				return new Promise<void>((resolve) => {
-					const cleanup = () => {
+					const cleanup = (): void => {
 						unconnectedClients.forEach((c) => c.off("connected", handler));
 						container.getQuorum().off("removeMember", handler);
 					};
-					const handler = (clientId: string) => {
+					const handler = (clientId: string): void => {
 						pendingClientId.delete(clientId);
 						if (pendingClientId.size === 0) {
 							cleanup();
@@ -458,9 +462,9 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 * Utility to wait for any inbound ops from a set of containers
 	 * @param containersToApply - the set of containers to wait for any inbound ops for
 	 */
-	private async waitForAnyInboundOps(containersToApply: IContainer[]) {
+	private async waitForAnyInboundOps(containersToApply: IContainer[]): Promise<void> {
 		return new Promise<void>((resolve) => {
-			const handler = () => {
+			const handler = (): void => {
 				containersToApply.map((c) => {
 					toIDeltaManagerFull(c.deltaManager).inbound.off("push", handler);
 				});
@@ -475,7 +479,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	/**
 	 * Resume all queue activities on all paused tracked containers and return them
 	 */
-	public resumeProcessing(...containers: IContainer[]) {
+	public resumeProcessing(...containers: IContainer[]): IContainer[] {
 		const resumed: IContainer[] = [];
 		const containersToApply = this.getContainers(containers);
 		for (const container of containersToApply) {
@@ -505,7 +509,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 * avoid missing join messages or change the sequence of event when switching from read to
 	 * write mode.
 	 */
-	public async pauseProcessing(...containers: IContainer[]) {
+	public async pauseProcessing(...containers: IContainer[]): Promise<void> {
 		const waitP: Promise<void>[] = [];
 		const containersToApply = this.getContainers(containers);
 		for (const container of containersToApply) {
@@ -529,7 +533,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 * @param container - the container to pause
 	 * @param record - the record for the container
 	 */
-	private async pauseContainer(container: IContainer, record: ContainerRecord) {
+	private async pauseContainer(container: IContainer, record: ContainerRecord): Promise<void> {
 		debugWait(`${record.index}: pausing container`);
 		const deltaManagerFull = toIDeltaManagerFull(container.deltaManager);
 		assert(!deltaManagerFull.outbound.paused, "Container should not be paused yet");
@@ -593,7 +597,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 *
 	 * Pausing will switch the container to write mode. See `pauseProcessing`
 	 */
-	public async processIncoming(...containers: IContainer[]) {
+	public async processIncoming(...containers: IContainer[]): Promise<void> {
 		return this.processQueue(
 			containers,
 			(container) => toIDeltaManagerFull(container.deltaManager).inbound,
@@ -607,7 +611,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 *
 	 * Pausing will switch the container to write mode. See `pauseProcessing`
 	 */
-	public async processOutgoing(...containers: IContainer[]) {
+	public async processOutgoing(...containers: IContainer[]): Promise<void> {
 		return this.processQueue(
 			containers,
 			(container) => toIDeltaManagerFull(container.deltaManager).outbound,
@@ -620,7 +624,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	private async processQueue<U>(
 		containers: IContainer[],
 		getQueue: (container: IContainer) => IDeltaQueue<U>,
-	) {
+	): Promise<void> {
 		await this.pauseProcessing(...containers);
 		const resumed: IDeltaQueue<U>[] = [];
 
@@ -672,15 +676,18 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 * @param container - the container to setup
 	 * @param inflightTracker - a map to track the clientSequenceNumber per container it expect to get ops back
 	 */
-	private setupInOutTracker(container: IContainer, inflightTracker: Map<IContainer, number>) {
-		const outHandler = (messages: IDocumentMessage[]) => {
+	private setupInOutTracker(
+		container: IContainer,
+		inflightTracker: Map<IContainer, number>,
+	): () => void {
+		const outHandler = (messages: IDocumentMessage[]): void => {
 			for (const message of messages) {
 				if (!canBeCoalescedByService(message)) {
 					inflightTracker.set(container, message.clientSequenceNumber);
 				}
 			}
 		};
-		const inHandler = (message: ISequencedDocumentMessage) => {
+		const inHandler = (message: ISequencedDocumentMessage): void => {
 			if (
 				!canBeCoalescedByService(message) &&
 				message.clientId === container.clientId &&
@@ -694,7 +701,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 		deltaManagerFull.outbound.on("op", outHandler);
 		deltaManagerFull.inbound.on("push", inHandler);
 
-		return () => {
+		return (): void => {
 			deltaManagerFull.outbound.off("op", outHandler);
 			deltaManagerFull.inbound.off("push", inHandler);
 		};
@@ -703,9 +710,9 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	/**
 	 * Setup debug traces for connection and ops
 	 */
-	private setupTrace(container: IContainer, index: number) {
+	private setupTrace(container: IContainer, index: number): void {
 		if (debugOp.enabled) {
-			const getContentsString = (type: string, msgContents: any) => {
+			const getContentsString = (type: string, msgContents: any): string => {
 				try {
 					if (type !== MessageType.Operation) {
 						if (typeof msgContents === "string") {
@@ -779,7 +786,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 * @param containers - The container to filter to.  If the array is empty, it means don't filter and return
 	 * all open containers.
 	 */
-	private getContainers(containers: IContainer[]) {
+	private getContainers(containers: IContainer[]): IContainer[] {
 		const containersToApply =
 			containers.length === 0 ? Array.from(this.containers.keys()) : containers;
 		return containersToApply.filter((container) => !container.closed);

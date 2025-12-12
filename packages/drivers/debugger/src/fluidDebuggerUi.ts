@@ -171,7 +171,7 @@ export class DebuggerUI {
 		return new DebuggerUI(controller, debuggerWindow);
 	}
 
-	private static formatDate(date: number) {
+	private static formatDate(date: number): string {
 		// Alternative - without timezone
 		// new Date().toLocaleString('default', { timeZone: 'UTC'}));
 		// new Date().toLocaleString('default', { year: 'numeric', month: 'short',
@@ -250,7 +250,7 @@ export class DebuggerUI {
 		controller.connectToUi(this);
 	}
 
-	private attachDownloadOpsListener(element: HTMLElement, anonymize: HTMLInputElement) {
+	private attachDownloadOpsListener(element: HTMLElement, anonymize: HTMLInputElement): void {
 		element.addEventListener("click", () => {
 			this.controller
 				.onDownloadOpsButtonClick(anonymize.checked)
@@ -263,7 +263,7 @@ export class DebuggerUI {
 		});
 	}
 
-	public addVersions(versions: IVersion[]) {
+	public addVersions(versions: IVersion[]): void {
 		if (this.selector) {
 			this.versions = versions;
 			for (const version of versions) {
@@ -277,7 +277,7 @@ export class DebuggerUI {
 		}
 	}
 
-	public updateVersion(index: number, version: IVersion, seqNumber: number) {
+	public updateVersion(index: number, version: IVersion, seqNumber: number): void {
 		if (this.selector) {
 			const option = this.selector[index] as HTMLOptionElement;
 			option.text = `${option.text},  seq = ${seqNumber}`;
@@ -285,7 +285,7 @@ export class DebuggerUI {
 		}
 	}
 
-	public versionSelected(seqNumber: number, version: IVersion | string) {
+	public versionSelected(seqNumber: number, version: IVersion | string): void {
 		const text =
 			typeof version === "string"
 				? `Playing ${version} file`
@@ -319,12 +319,12 @@ export class DebuggerUI {
 		this.attachDownloadOpsListener(opDownloadButton, anonymizeCheckbox);
 	}
 
-	public disableNextOpButton(disable: boolean) {
+	public disableNextOpButton(disable: boolean): void {
 		assert(!!this.buttonOps, 0x088 /* "Missing button ops button!" */);
 		this.buttonOps.disabled = disable;
 	}
 
-	public updateNextOpText(ops: ISequencedDocumentMessage[]) {
+	public updateNextOpText(ops: ISequencedDocumentMessage[]): void {
 		if (ops.length === 0) {
 			this.text1!.textContent = "";
 			this.text2!.textContent = "";
@@ -340,7 +340,7 @@ export class DebuggerUI {
 		}
 	}
 
-	public updateVersionText(versionCount: number) {
+	public updateVersionText(versionCount: number): void {
 		if (!this.wasVersionSelected) {
 			const text =
 				versionCount === 0 ? "" : `Fetching information about ${versionCount} snapshots...`;
@@ -348,7 +348,7 @@ export class DebuggerUI {
 		}
 	}
 
-	public updateLastOpText(lastKnownOp: number, stillLoading: boolean) {
+	public updateLastOpText(lastKnownOp: number, stillLoading: boolean): void {
 		const text = stillLoading
 			? `Last op (still loading): ${lastKnownOp}`
 			: `Document's last op seq#: ${lastKnownOp}`;

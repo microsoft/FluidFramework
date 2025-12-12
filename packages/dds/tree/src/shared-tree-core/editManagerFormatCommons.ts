@@ -12,7 +12,7 @@ import {
 	RevisionTagSchema,
 	SessionIdSchema,
 } from "../core/index.js";
-import { type Brand, brandedNumberType } from "../util/index.js";
+import { type Brand, brandedNumberType, strictEnum, type Values } from "../util/index.js";
 import type { EncodedBranchId } from "./branch.js";
 
 /**
@@ -123,7 +123,7 @@ export const EncodedSharedBranch = <ChangeSchema extends TSchema>(tChange: Chang
 /**
  * The format version for the EditManager.
  */
-export const EditManagerFormatVersion = {
+export const EditManagerFormatVersion = strictEnum("editManager.FormatVersion", {
 	/**
 	 * Introduced and retired prior to 2.0.
 	 * Reading and writing capability removed in 2.73.0.
@@ -153,7 +153,7 @@ export const EditManagerFormatVersion = {
 	 * This version number was used internally for testing shared branches.
 	 * This format was never made stable.
 	 * This version number is kept here solely to avoid reusing the number: it is not supported for either reading or writing.
-	 * @deprecated - use {@link EditManagerFormatVersion.vSharedBranches} for testing shared branches.
+	 * @deprecated Use {@link EditManagerFormatVersion.vSharedBranches} for testing shared branches.
 	 */
 	v5: 5,
 	/**
@@ -166,11 +166,8 @@ export const EditManagerFormatVersion = {
 	 * Used for new constraints.
 	 */
 	vAlphaConstraints: "alphaconstraints|v0.1",
-} as const;
-export type EditManagerFormatVersion = Brand<
-	(typeof EditManagerFormatVersion)[keyof typeof EditManagerFormatVersion],
-	"EditManagerFormatVersion"
->;
+});
+export type EditManagerFormatVersion = Values<typeof EditManagerFormatVersion>;
 export const supportedEditManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> =
 	new Set([
 		EditManagerFormatVersion.v3,
@@ -179,6 +176,6 @@ export const supportedEditManagerFormatVersions: ReadonlySet<EditManagerFormatVe
 		EditManagerFormatVersion.vAlphaConstraints,
 	] as EditManagerFormatVersion[]);
 export const editManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> = new Set(
-	Object.values(EditManagerFormatVersion) as EditManagerFormatVersion[],
+	Object.values(EditManagerFormatVersion),
 );
 /* eslint-enable @typescript-eslint/explicit-function-return-type */

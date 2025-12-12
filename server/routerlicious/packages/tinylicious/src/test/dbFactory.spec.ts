@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import * as fs from "fs";
-import * as os from "os";
-import * as path from "path";
+import { strict as assert } from "node:assert";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 
 import type { ICollection, IDb } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";

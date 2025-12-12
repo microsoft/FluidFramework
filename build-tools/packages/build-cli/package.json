@@ -39,7 +39,7 @@
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc",
 		"build:manifest": "oclif manifest",
-		"build:readme": "oclif readme --version 0.0.0 --multi --no-aliases",
+		"build:readme": "oclif readme --version 0.0.0 --multi",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",

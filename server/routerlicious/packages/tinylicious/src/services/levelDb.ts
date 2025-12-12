@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
+import { EventEmitter } from "node:events";
 
 import type { ICollection, IDb, IDbFactory } from "@fluidframework/server-services-core";
 import { Level } from "level";
@@ -43,31 +43,37 @@ export class LevelDb extends EventEmitter implements IDb {
 	// (similar to createIndex() call in mongodb)
 	private getProperty(name: string): ICollectionProperty {
 		switch (name) {
-			case "deltas":
+			case "deltas": {
 				return {
 					indexes: ["tenantId", "documentId", "operation.sequenceNumber"],
 					limit: MaxFetchSize,
 				};
-			case "documents":
+			}
+			case "documents": {
 				return {
 					indexes: ["tenantId", "documentId"],
 				};
-			case "nodes":
+			}
+			case "nodes": {
 				return {
 					indexes: ["_id"],
 				};
-			case "scribeDeltas":
+			}
+			case "scribeDeltas": {
 				return {
 					indexes: ["tenantId", "documentId", "operation.sequenceNumber"],
 					limit: MaxFetchSize,
 				};
-			case "content":
+			}
+			case "content": {
 				return {
 					indexes: ["tenantId", "documentId", "sequenceNumber"],
 					limit: MaxFetchSize,
 				};
-			default:
+			}
+			default: {
 				throw new Error(`Collection ${name} not implemented.`);
+			}
 		}
 	}
 }

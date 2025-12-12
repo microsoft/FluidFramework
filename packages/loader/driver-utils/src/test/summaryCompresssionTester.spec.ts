@@ -35,6 +35,7 @@ import {
 	ICreateBlobResponse,
 	ISnapshotTree,
 	IVersion,
+	type SummaryObject,
 } from "@fluidframework/driver-definitions/internal";
 
 import {
@@ -61,7 +62,7 @@ function cloneSummary(): ISummaryTree {
  * The content is stored in the header of the summary.
  * @param contentSize - The size of the content to be generated.
  */
-function generateSummaryWithContent(contentSize: number) {
+function generateSummaryWithContent(contentSize: number): ISummaryTree {
 	const summary = cloneSummary();
 	const header = (
 		(
@@ -83,7 +84,10 @@ function generateSummaryWithContent(contentSize: number) {
 	return summary;
 }
 
-function generateSummaryWithBinaryContent(startsWith: number, contentSize: number) {
+function generateSummaryWithBinaryContent(
+	startsWith: number,
+	contentSize: number,
+): ISummaryTree {
 	const summary = cloneSummary();
 	const header = (
 		(
@@ -443,7 +447,10 @@ describe("Summary Compression Test", () => {
 		await testEncDecBinaryLoop(contentSize, config);
 	});
 });
-async function testNoPrefix(contentSize: number, config: ICompressionStorageConfig) {
+async function testNoPrefix(
+	contentSize: number,
+	config: ICompressionStorageConfig,
+): Promise<void> {
 	for (let i = 0; i < 256; i++) {
 		if (i >= 0xb0 && i <= 0xbf) {
 			continue;
@@ -469,7 +476,7 @@ async function testPrefix(
 	from: number = 0,
 	to: number = 256,
 	prefix: number = prefixForLZ4,
-) {
+): Promise<void> {
 	for (let i = from; i < to; i++) {
 		const firstOriginalByte = i;
 		const uploadedContent: ArrayBufferLike = await uploadSummaryWithBinaryContent(
@@ -486,7 +493,7 @@ async function uploadSummaryWithBinaryContent(
 	firstOriginalByte: number,
 	contentSize: number,
 	config: ICompressionStorageConfig,
-) {
+): Promise<ArrayBufferLike> {
 	const storage = (await buildCompressionStorage(config)) as DocumentStorageServiceProxy;
 	const summary = generateSummaryWithBinaryContent(firstOriginalByte, contentSize);
 	await storage.uploadSummaryWithContext(summary, {
@@ -529,7 +536,7 @@ async function checkUploadDownloadSummary(
 	return downloadedSummary;
 }
 
-async function checkEncDec(config: ICompressionStorageConfig) {
+async function checkEncDec(config: ICompressionStorageConfig): Promise<void> {
 	const summary = generateSummaryWithContent(1000);
 	await checkEncDecConfigurable(summary, config);
 }
@@ -538,7 +545,7 @@ async function checkEncDecBinary(
 	config: ICompressionStorageConfig,
 	startsWith: number,
 	contentSize: number,
-) {
+): Promise<void> {
 	const summary = generateSummaryWithBinaryContent(startsWith, contentSize);
 	await checkEncDecConfigurable(summary, config, startsWith);
 }
@@ -548,7 +555,7 @@ async function testEncDecBinaryLoop(
 	config: ICompressionStorageConfig,
 	from: number = 0,
 	to: number = 256,
-) {
+): Promise<void> {
 	for (let i = from; i < to; i++) {
 		const firstOriginalByte = i;
 		await checkEncDecBinary(config, firstOriginalByte, contentSize);
@@ -573,7 +580,7 @@ async function checkEncDecConfigurable(
 	summary: ISummaryTree,
 	config: ICompressionStorageConfig,
 	startsWith = -1,
-) {
+): Promise<void> {
 	const storage = (await buildCompressionStorage(config)) as DocumentStorageServiceProxy;
 	const originHeaderHolder: ISummaryTree = getHeaderHolder(summary);
 	const originBlob = (originHeaderHolder.tree.header as ISummaryBlob).content;
@@ -603,7 +610,7 @@ function checkCompressionConfig(
 	storage: IDocumentStorageService,
 	expectedMinSizeToCompress: number,
 	expectedAlgorithm: SummaryCompressionAlgorithm,
-) {
+): void {
 	const config = (storage as any)._config;
 	assert(config !== undefined, "The storage has no compression");
 	assert(
@@ -616,15 +623,15 @@ function checkCompressionConfig(
 	);
 }
 
-function getHeaderContent(summary: ISummaryTree) {
+function getHeaderContent(summary: ISummaryTree): any {
 	return getHeader(summary)["content"];
 }
 
-function getHeader(summary: ISummaryTree) {
+function getHeader(summary: ISummaryTree): SummaryObject {
 	return getHeaderHolder(summary).tree.header;
 }
 
-function getHeaderHolder(summary: ISummaryTree) {
+function getHeaderHolder(summary: ISummaryTree): ISummaryTree {
 	return (
 		((summary.tree[".channels"] as ISummaryTree).tree.rootDOId as ISummaryTree).tree[
 			".channels"

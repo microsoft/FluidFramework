@@ -64,7 +64,7 @@ class ConcurrencyLimiter {
 
 	constructor(private limit: number) {}
 
-	async addWork(worker: () => Promise<void>) {
+	async addWork(worker: () => Promise<void>): Promise<void> {
 		this.limit--;
 		if (this.limit < 0) {
 			assert(this.deferred === undefined);
@@ -85,7 +85,7 @@ class ConcurrencyLimiter {
 		this.promises.push(p);
 	}
 
-	async waitAll() {
+	async waitAll(): Promise<void[]> {
 		return Promise.all(this.promises);
 	}
 }
@@ -105,7 +105,7 @@ class ConcurrencyLimiter {
  * 4. `baseSnapshot`: This folder is present for snapshots from newer documents that use detached container flow. It
  * contains the base snapshot to load the container with.
  */
-export async function processOneNode(args: IWorkerArgs) {
+export async function processOneNode(args: IWorkerArgs): Promise<void> {
 	const replayArgs = new ReplayArgs();
 
 	replayArgs.verbose = false;
@@ -126,7 +126,7 @@ export async function processOneNode(args: IWorkerArgs) {
 
 	// Worker threads does not listen to unhandled promise rejections. So set a listener and
 	// throw error so that worker thread could pass the message to parent thread.
-	const listener = (error) => {
+	const listener = (error): void => {
 		process.removeListener("unhandledRejection", listener);
 		console.error(`unhandledRejection\n ${JSON.stringify(args)}\n ${error}`);
 		throw error;
@@ -147,7 +147,7 @@ export async function processOneNode(args: IWorkerArgs) {
 	}
 }
 
-export async function processContent(mode: Mode, concurrently = true) {
+export async function processContent(mode: Mode, concurrently = true): Promise<void[]> {
 	const limiter = new ConcurrencyLimiter(numberOfThreads);
 
 	for (const node of fs.readdirSync(fileLocation, { withFileTypes: true })) {
@@ -221,7 +221,7 @@ async function processNodeForValidate(
 	data: IWorkerArgs,
 	concurrently: boolean,
 	limiter: ConcurrencyLimiter,
-) {
+): Promise<void> {
 	// The snapshots in older format are in "srcSnapshots" folder.
 	const srcSnapshotsDir = `${data.folder}/${srcSnapshots}`;
 	if (!fs.existsSync(srcSnapshotsDir)) {
@@ -251,7 +251,7 @@ async function processNodeForUpdatingSnapshots(
 	data: IWorkerArgs,
 	concurrently: boolean,
 	limiter: ConcurrencyLimiter,
-) {
+): Promise<void> {
 	const currentSnapshotsDir = `${data.folder}/${currentSnapshots}`;
 	assert(
 		fs.existsSync(currentSnapshotsDir),
@@ -300,7 +300,7 @@ async function processNodeForNewSnapshots(
 	data: IWorkerArgs,
 	concurrently: boolean,
 	limiter: ConcurrencyLimiter,
-) {
+): Promise<void> {
 	const currentSnapshotsDir = `${data.folder}/${currentSnapshots}`;
 	// If current snapshots dir already exists, these are existing snapshots. We should skip because we don't want to
 	// update them.
@@ -335,7 +335,7 @@ async function processNodeForNewSnapshots(
  * 3. Validates that the snapshot matches with the corresponding snapshot in current version.
  * 4. Loads a document with snapshot in current version. Repeats steps 2 and 3.
  */
-async function processNodeForBackCompat(data: IWorkerArgs) {
+async function processNodeForBackCompat(data: IWorkerArgs): Promise<void> {
 	const messagesFile = `${data.folder}/messages.json`;
 	if (!fs.existsSync(messagesFile)) {
 		throw new Error(`messages.json doesn't exist in ${data.folder}`);
@@ -384,7 +384,7 @@ async function processNode(
 	workerData: IWorkerArgs,
 	concurrently: boolean,
 	limiter: ConcurrencyLimiter,
-) {
+): Promise<void> {
 	// "worker_threads" does not resolve without --experimental-worker flag on command line
 	let threads: typeof import("worker_threads");
 	try {
@@ -442,7 +442,7 @@ async function processNode(
  * failed snapshots to "FailedSnapshots" directory for debugging purposes. Clean those snapshots to remove extra
  * clutter.
  */
-function cleanFailedSnapshots(dir: string) {
+function cleanFailedSnapshots(dir: string): void {
 	const currentSnapshotsDir = `${dir}/${currentSnapshots}`;
 	if (!fs.existsSync(currentSnapshotsDir)) {
 		return;

@@ -86,8 +86,6 @@ module.exports = {
 	plugins: [
 		// Plugin documentation: https://www.npmjs.com/package/@rushstack/eslint-plugin
 		"@rushstack/eslint-plugin",
-		// Plugin documentation: https://www.npmjs.com/package/@rushstack/eslint-plugin-security
-		"@rushstack/eslint-plugin-security",
 		// Plugin documentation: https://www.npmjs.com/package/@typescript-eslint/eslint-plugin
 		"@typescript-eslint/eslint-plugin",
 		// Plugin documentation: https://www.npmjs.com/package/eslint-plugin-jsdoc
@@ -108,8 +106,16 @@ module.exports = {
 		// Don't lint generated packageVersion files.
 		"**/packageVersion.ts",
 		"**/layerGenerationState.ts",
+		// Don't lint generated test files
+		"**/*.generated.ts",
+		"**/*.generated.js",
 	],
 	rules: {
+		/**
+		 * Disable max-len as it conflicts with biome formatting.
+		 */
+		"max-len": "off",
+
 		/**
 		 * Restricts including release tags inside the member class / interface.
 		 *
@@ -176,17 +182,6 @@ module.exports = {
 
 		"eqeqeq": ["error", "smart"],
 		"import-x/no-deprecated": "error",
-		"max-len": [
-			"error",
-			{
-				code: 120,
-				ignoreTrailingComments: true,
-				ignoreUrls: true,
-				ignoreStrings: true,
-				ignoreTemplateLiterals: true,
-				ignoreRegExpLiterals: true,
-			},
-		],
 		"no-multi-spaces": [
 			"error",
 			{
@@ -424,6 +419,15 @@ module.exports = {
 				"react-hooks",
 			],
 			extends: ["plugin:react/recommended", "plugin:react-hooks/recommended"],
+			rules: {
+				// TODO: These rules should be re-enabled once we are on eslint 9
+				// and the react plugins are upgraded to more recent versions
+				"react-hooks/immutability": "warn",
+				"react-hooks/refs": "warn",
+				"react-hooks/rules-of-hooks": "warn",
+				"react-hooks/set-state-in-effect": "warn",
+				"react-hooks/static-components": "warn",
+			},
 			settings: {
 				react: {
 					version: "detect",
