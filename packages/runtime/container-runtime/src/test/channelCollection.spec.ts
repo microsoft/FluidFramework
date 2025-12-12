@@ -345,12 +345,15 @@ describe("Runtime", () => {
 					]) as LocalFluidDataStoreContext;
 					const dataStoreId = localContext.id;
 
-					// Transition the context to desired state. (always have to go through Attaching state even if target is Attached)
+					// Simulate localContext.makeLocallyVisible()
 					localContext.setAttachState(AttachState.Attaching);
+					(channelCollection as any).contexts.bind(dataStoreId);
+
+					// If we're testing Attaching state, we're already there.
+					// If testing Attached, simulate receiving the attach op and transitioning to that state.
 					if (state === AttachState.Attached) {
 						localContext.setAttachState(AttachState.Attached);
 					}
-					(channelCollection as any).contexts.bind(dataStoreId);
 
 					// Try to process a remote attach message with the same ID
 					const attachMessage = createMockAttachMessage(dataStoreId);
