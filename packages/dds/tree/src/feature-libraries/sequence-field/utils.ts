@@ -208,9 +208,9 @@ export function compareCellPositionsUsingTombstones(
 		// If both changesets know of both cells, but we've been asked to compare different cells,
 		// Then either the changesets they originate from do not represent the same context,
 		// or the ordering of their cells in inconsistent.
-		// The only exception to this is when we're composing anonymous changesets in a transaction.
+		// The only exception to this is when we're composing changesets in a transaction.
 		assert(
-			oldMarkCell.revision === undefined && newMarkCell.revision === undefined,
+			oldMarkCell.revision === newMarkCell.revision,
 			0x8a0 /* Inconsistent cell ordering */,
 		);
 		// We are composing anonymous changesets in a transaction. The new changeset is creating a cell in a gap

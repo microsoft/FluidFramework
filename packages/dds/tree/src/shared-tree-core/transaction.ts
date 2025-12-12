@@ -5,13 +5,14 @@
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { IDisposable, Listenable } from "@fluidframework/core-interfaces";
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	findAncestor,
 	type ChangeFamilyEditor,
 	type GraphCommit,
+	type RevisionTag,
 	type TaggedChange,
 } from "../core/index.js";
 import { getOrCreate } from "../util/index.js";
@@ -187,6 +188,7 @@ export class SquashingTransactionStack<
 > extends TransactionStack {
 	public readonly branch: SharedTreeBranch<TEditor, TChange>;
 	#transactionBranch?: SharedTreeBranch<TEditor, TChange>;
+	private transactionRevision?: RevisionTag;
 
 	/**
 	 * An editor for whichever branch is currently the {@link SquashingTransactionStack.activeBranch | active branch}.
@@ -249,7 +251,8 @@ export class SquashingTransactionStack<
 	 */
 	public constructor(
 		branch: SharedTreeBranch<TEditor, TChange>,
-		squash: (commits: GraphCommit<TChange>[]) => TaggedChange<TChange>,
+		mintRevisionTag: () => RevisionTag,
+		squash: (commits: GraphCommit<TChange>[], revision: RevisionTag) => TaggedChange<TChange>,
 		onPush?: OnPush,
 	) {
 		super(() => {
@@ -257,7 +260,15 @@ export class SquashingTransactionStack<
 			// TODO:#8603: This may need to be computed differently if we allow rebasing during a transaction.
 			const startHead = this.activeBranch.getHead();
 			const onPop = onPush?.();
-			const transactionBranch = this.#transactionBranch ?? this.branch.fork();
+			this.transactionRevision ??= mintRevisionTag();
+			const transactionBranch =
+				this.#transactionBranch ??
+				this.branch.fork(
+					startHead,
+					() =>
+						this.transactionRevision ??
+						fail("Unable to apply change to transaction branch after transaction is closed"),
+				);
 			this.setTransactionBranch(transactionBranch);
 			transactionBranch.editor.enterTransaction();
 			return (result) => {
@@ -267,33 +278,42 @@ export class SquashingTransactionStack<
 					case TransactionResult.Abort:
 						// When a transaction is aborted, roll back all the transaction's changes on the current branch
 						this.#transactionBranch.removeAfter(startHead);
+						this.onTransactionClose();
 						break;
 					case TransactionResult.Commit:
 						// If this was the outermost transaction closing...
-						if (!this.isInProgress()) {
-							if (this.#transactionBranch.getHead() !== startHead) {
-								// ...squash all the new commits on the transaction branch into a new commit on the original branch
-								const removedCommits: GraphCommit<TChange>[] = [];
-								findAncestor(
-									[this.#transactionBranch.getHead(), removedCommits],
-									(c) => c === startHead,
-								);
-								branch.apply(squash(removedCommits));
-							}
+						if (!this.isInProgress() && this.#transactionBranch.getHead() !== startHead) {
+							// ...squash all the new commits on the transaction branch into a new commit on the original branch
+							const removedCommits: GraphCommit<TChange>[] = [];
+							findAncestor(
+								[this.#transactionBranch.getHead(), removedCommits],
+								(c) => c === startHead,
+							);
+							this.#transactionBranch.removeAfter(startHead);
+							const revision =
+								this.transactionRevision ?? fail("Expected transaction revision");
+							this.onTransactionClose();
+							branch.apply(squash(removedCommits, revision));
+						} else {
+							this.onTransactionClose();
 						}
 						break;
 					default:
 						unreachableCase(result);
-				}
-				if (!this.isInProgress()) {
-					this.#transactionBranch.dispose();
-					this.setTransactionBranch(undefined);
 				}
 				onPop?.(result);
 			};
 		});
 
 		this.branch = branch;
+	}
+
+	private onTransactionClose(): void {
+		if (!this.isInProgress()) {
+			this.#transactionBranch?.dispose();
+			this.setTransactionBranch(undefined);
+			this.transactionRevision = undefined;
+		}
 	}
 
 	/** Updates the transaction branch (and therefore the active branch) and rebinds the branch events. */

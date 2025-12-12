@@ -11,6 +11,7 @@ import {
 	type ChangeEncodingContext,
 	type ChangeFamily,
 	type ChangeRebaser,
+	type ChangesetLocalId,
 	type DeltaDetachedNodeId,
 	type RevisionMetadataSource,
 	type RevisionTag,
@@ -81,11 +82,13 @@ export class SharedTreeChangeFamily
 	public buildEditor(
 		mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<SharedTreeChange>) => void,
+		priorMaxId: ChangesetLocalId,
 	): SharedTreeEditBuilder {
 		return new SharedTreeEditBuilder(
 			this.modularChangeFamily,
 			mintRevisionTag,
 			changeReceiver,
+			priorMaxId,
 		);
 	}
 

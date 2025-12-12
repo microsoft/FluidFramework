@@ -169,10 +169,14 @@ describe("SquashingTransactionStacks", () => {
 	it("squash transactions", () => {
 		const branch = createBranch();
 		let squashCount = 0;
-		const transaction = new SquashingTransactionStack(branch, (commits) => {
-			squashCount += 1;
-			return squash(commits);
-		});
+		const transaction = new SquashingTransactionStack(
+			branch,
+			mintRevisionTag,
+			(commits, revision) => {
+				squashCount += 1;
+				return squash(commits, revision);
+			},
+		);
 		assert.equal(transaction.activeBranch, branch);
 		transaction.start();
 		assert.notEqual(transaction.activeBranch, branch);
@@ -191,7 +195,7 @@ describe("SquashingTransactionStacks", () => {
 
 	it("transfer events between active branches", () => {
 		const branch = createBranch();
-		const transaction = new SquashingTransactionStack(branch, squash);
+		const transaction = new SquashingTransactionStack(branch, mintRevisionTag, squash);
 
 		let originalEventCount = 0;
 		transaction.branch.events.on("afterChange", () => {
@@ -223,7 +227,7 @@ describe("SquashingTransactionStacks", () => {
 
 	it("delegate edits to the active branch", () => {
 		const branch = createBranch();
-		const transaction = new SquashingTransactionStack(branch, squash);
+		const transaction = new SquashingTransactionStack(branch, mintRevisionTag, squash);
 		const editor = transaction.activeBranchEditor; // We'll hold on to this editor across the transaction
 		assert.equal(edits(branch), 0);
 		assert.equal(transaction.activeBranch, branch);
@@ -271,8 +275,11 @@ describe("SquashingTransactionStacks", () => {
 		editor.valueField({ parent: undefined, field: rootFieldKey }).set(content);
 	}
 
-	function squash(commits: GraphCommit<DefaultChangeset>[]): TaggedChange<DefaultChangeset> {
-		return tagChange(defaultChangeFamily.rebaser.compose(commits), mintRevisionTag());
+	function squash(
+		commits: GraphCommit<DefaultChangeset>[],
+		revision: RevisionTag,
+	): TaggedChange<DefaultChangeset> {
+		return tagChange(defaultChangeFamily.rebaser.compose(commits), revision);
 	}
 
 	/** The number of commits on the given branch, not including the initial commit */

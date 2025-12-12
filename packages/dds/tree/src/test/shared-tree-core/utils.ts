@@ -301,15 +301,9 @@ export class TestSharedTreeCore extends SharedObject {
 
 		this.transaction = new SquashingTransactionStack(
 			this.getLocalBranch(),
-			(commits: GraphCommit<DefaultChangeset>[]) => {
-				const revision = this.kernel.mintRevisionTag();
-				return tagChange(
-					this.changeFamily.rebaser.changeRevision(
-						this.changeFamily.rebaser.compose(commits),
-						revision,
-					),
-					revision,
-				);
+			this.kernel.mintRevisionTag,
+			(commits: GraphCommit<DefaultChangeset>[], revision: RevisionTag) => {
+				return tagChange(this.changeFamily.rebaser.compose(commits), revision);
 			},
 		);
 

@@ -1626,9 +1626,11 @@ export class ModularChangeFamily
 	}
 
 	public buildEditor(
+		_mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
+		priorMaxId?: ChangesetLocalId,
 	): ModularEditBuilder {
-		return new ModularEditBuilder(this, this.fieldKinds, changeReceiver);
+		return new ModularEditBuilder(this, this.fieldKinds, changeReceiver, priorMaxId);
 	}
 
 	private createEmptyFieldChange(fieldKind: FieldKindIdentifier): FieldChange {
@@ -2641,9 +2643,10 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>,
 		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
+		priorMaxId?: ChangesetLocalId,
 	) {
 		super(family, changeReceiver);
-		this.idAllocator = idAllocatorFromMaxId();
+		this.idAllocator = idAllocatorFromMaxId(priorMaxId);
 	}
 
 	public override enterTransaction(): void {
@@ -2946,16 +2949,21 @@ function getRevInfoFromTaggedChanges(changes: TaggedChange<ModularChangeset>[]):
 } {
 	let maxId = -1;
 	const revInfos: RevisionInfo[] = [];
+	const revisions = new Set<RevisionTag>();
 	for (const taggedChange of changes) {
 		const change = taggedChange.change;
 		maxId = Math.max(change.maxId ?? -1, maxId);
-		revInfos.push(...revisionInfoFromTaggedChange(taggedChange));
+		const infosToAdd = revisionInfoFromTaggedChange(taggedChange);
+		for (const info of infosToAdd) {
+			if (!revisions.has(info.revision)) {
+				revisions.add(info.revision);
+				revInfos.push(info);
+			}
+		}
 	}
 
-	const revisions = new Set<RevisionTag>();
 	const rolledBackRevisions: RevisionTag[] = [];
 	for (const info of revInfos) {
-		revisions.add(info.revision);
 		if (info.rollbackOf !== undefined) {
 			rolledBackRevisions.push(info.rollbackOf);
 		}

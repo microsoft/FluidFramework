@@ -22,8 +22,9 @@ import {
 	rebaseBranch,
 	tagRollbackInverse,
 	type RebaseStatsWithDuration,
+	type ChangesetLocalId,
 } from "../core/index.js";
-import { hasSome, defineLazyCachedProperty } from "../util/index.js";
+import { hasSome, defineLazyCachedProperty, brand } from "../util/index.js";
 import type {
 	OpSpaceCompressedId,
 	SessionSpaceCompressedId,
@@ -128,9 +129,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		private readonly telemetryEventBatcher?: TelemetryEventBatcher<
 			keyof RebaseStatsWithDuration
 		>,
+		priorMaxId?: ChangesetLocalId,
 	) {
-		this.editor = this.changeFamily.buildEditor(mintRevisionTag, (change) =>
-			this.apply(change),
+		this.editor = this.changeFamily.buildEditor(
+			mintRevisionTag,
+			(change) => this.apply(change),
+			priorMaxId ?? brand(-1),
 		);
 		this.unsubscribeBranchTrimmer = branchTrimmer?.on("ancestryTrimmed", (commit) => {
 			this.#events.emit("ancestryTrimmed", commit);
@@ -186,15 +190,19 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	/**
 	 * Spawn a new branch that is based off of the current state of this branch.
 	 * @param commit - The commit to base the new branch off of. Defaults to the head of this branch.
+	 * @param mintRevisionTag - A function to mint revision tags for the new branch. Defaults to the current branch's mintRevisionTag.
 	 * @remarks Changes made to the new branch will not be applied to this branch until the new branch is {@link SharedTreeBranch.merge | merged} back in.
 	 * Forks created during a transaction will be disposed when the transaction ends.
 	 */
-	public fork(commit: GraphCommit<TChange> = this.head): SharedTreeBranch<TEditor, TChange> {
+	public fork(
+		commit: GraphCommit<TChange> = this.head,
+		mintRevisionTag: () => RevisionTag = this.mintRevisionTag,
+	): SharedTreeBranch<TEditor, TChange> {
 		this.assertNotDisposed();
 		const fork = new SharedTreeBranch(
 			commit,
 			this.changeFamily,
-			this.mintRevisionTag,
+			mintRevisionTag,
 			this.branchTrimmer,
 		);
 		this.#events.emit("fork", fork);

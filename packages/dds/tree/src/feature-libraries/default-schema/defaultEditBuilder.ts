@@ -13,6 +13,7 @@ import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	type ChangeRebaser,
+	type ChangesetLocalId,
 	type DeltaDetachedNodeId,
 	type DeltaRoot,
 	type FieldUpPath,
@@ -73,8 +74,9 @@ export class DefaultChangeFamily
 	public buildEditor(
 		mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<DefaultChangeset>) => void,
+		priorMaxId?: ChangesetLocalId,
 	): DefaultEditBuilder {
-		return new DefaultEditBuilder(this, mintRevisionTag, changeReceiver);
+		return new DefaultEditBuilder(this, mintRevisionTag, changeReceiver, priorMaxId);
 	}
 }
 
@@ -184,8 +186,14 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		family: ChangeFamily<ChangeFamilyEditor, DefaultChangeset>,
 		private readonly mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<DefaultChangeset>) => void,
+		priorMaxId?: ChangesetLocalId,
 	) {
-		this.modularBuilder = new ModularEditBuilder(family, fieldKinds, changeReceiver);
+		this.modularBuilder = new ModularEditBuilder(
+			family,
+			fieldKinds,
+			changeReceiver,
+			priorMaxId,
+		);
 	}
 
 	public enterTransaction(): void {

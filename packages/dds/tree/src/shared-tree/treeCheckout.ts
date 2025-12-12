@@ -451,15 +451,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	): SquashingTransactionStack<SharedTreeEditBuilder, SharedTreeChange> {
 		return new SquashingTransactionStack(
 			branch,
-			(commits) => {
-				const revision = this.mintRevisionTag();
-				for (const transactionStep of commits) {
-					this._removedRoots.updateMajor(transactionStep.revision, revision);
-				}
-
+			this.mintRevisionTag,
+			(commits, revision) => {
 				const squashedChange = this.changeFamily.rebaser.compose(commits);
-				const change = this.changeFamily.rebaser.changeRevision(squashedChange, revision);
-				return tagChange(change, revision);
+				return tagChange(squashedChange, revision);
 			},
 			() => {
 				const disposeForks = this.disposeForksAfterTransaction
@@ -473,10 +468,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 							restoreRemovedRoots();
 							break;
 						case TransactionResult.Commit:
-							if (!this.transaction.isInProgress()) {
-								// The changes in a transaction squash commit have already applied to the checkout and are known to be valid, so we can validate the squash commit automatically.
-								this.validateCommit(this.#transaction.branch.getHead());
-							}
+							// if (!this.transaction.isInProgress()) {
+							// 	// The changes in a transaction squash commit have already applied to the checkout and are known to be valid, so we can validate the squash commit automatically.
+							// 	this.validateCommit(this.#transaction.branch.getHead());
+							// }
 							break;
 						default:
 							unreachableCase(result);
