@@ -8,7 +8,7 @@ import { existsSync } from "node:fs";
 import { realpath } from "node:fs/promises";
 import * as path from "node:path";
 import { getPackages } from "@manypkg/get-packages";
-import { cosmiconfigSync } from "cosmiconfig";
+import { lilconfigSync } from "lilconfig";
 import registerDebug from "debug";
 import { readJson } from "fs-extra";
 
@@ -135,11 +135,11 @@ export async function getResolvedFluidRoot(buildRoot = false) {
 const configName = "fluidBuild";
 
 /**
- * A cosmiconfig explorer to find the fluidBuild config. First looks for JavaScript config files and falls back to the
- * `fluidBuild` property in package.json. We create a single explorer here because cosmiconfig internally caches configs
+ * A lilconfig explorer to find the fluidBuild config. First looks for JavaScript config files and falls back to the
+ * `fluidBuild` property in package.json. We create a single explorer here because lilconfig internally caches configs
  * for performance. The cache is per-explorer, so re-using the same explorer is a minor perf improvement.
  */
-const configExplorer = cosmiconfigSync(configName, {
+const configExplorer = lilconfigSync(configName, {
 	searchPlaces: [`${configName}.config.cjs`, `${configName}.config.js`, "package.json"],
 	packageProp: [configName],
 });

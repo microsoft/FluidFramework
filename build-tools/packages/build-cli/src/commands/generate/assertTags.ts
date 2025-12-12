@@ -11,7 +11,7 @@ import type { PackageKind, PackageWithKind } from "../../filter.js";
 
 import { strict as assert } from "node:assert";
 import { Flags } from "@oclif/core";
-import { cosmiconfig } from "cosmiconfig";
+import { lilconfig } from "lilconfig";
 import {
 	type NoSubstitutionTemplateLiteral,
 	type Node,
@@ -183,7 +183,7 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 		};
 
 		const dataMap = new Map<PackageWithKind, PackageData>();
-		const config = cosmiconfig(configName, { searchPlaces });
+		const config = lilconfig(configName, { searchPlaces });
 
 		for (const pkg of packages) {
 			// Package configuration:
