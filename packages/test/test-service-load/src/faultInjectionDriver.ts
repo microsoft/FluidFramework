@@ -8,7 +8,9 @@ import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfac
 import { assert } from "@fluidframework/core-utils/internal";
 import { IClient, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
+	type ConnectionMode,
 	DriverErrorTypes,
+	type IClientConfiguration,
 	type ICreateBlobResponse,
 	type IDocumentDeltaConnection,
 	type IDocumentDeltaConnectionEvents,
@@ -19,11 +21,17 @@ import {
 	type IDocumentServiceFactory,
 	type IDocumentServicePolicies,
 	type IDocumentStorageService,
+	type IDocumentStorageServicePolicies,
 	type INack,
 	type IResolvedUrl,
+	type ISequencedDocumentMessage,
+	type ISignalClient,
+	type ISignalMessage,
 	type ISnapshot,
 	type ISnapshotFetchOptions,
 	type ISnapshotTree,
+	type IStream,
+	type ITokenClaims,
 	type IVersion,
 	NackErrorType,
 } from "@fluidframework/driver-definitions/internal";
@@ -222,11 +230,11 @@ export class FaultInjectionDocumentDeltaConnection
 		return this.internal.clientId;
 	}
 
-	public get claims(): IDocumentDeltaConnection["claims"] {
+	public get claims(): ITokenClaims {
 		return this.internal.claims;
 	}
 
-	public get mode(): IDocumentDeltaConnection["mode"] {
+	public get mode(): ConnectionMode {
 		return this.internal.mode;
 	}
 	public get existing(): boolean {
@@ -238,17 +246,17 @@ export class FaultInjectionDocumentDeltaConnection
 	public get version(): string {
 		return this.internal.version;
 	}
-	public get initialMessages(): IDocumentDeltaConnection["initialMessages"] {
+	public get initialMessages(): ISequencedDocumentMessage[] {
 		return this.internal.initialMessages;
 	}
 
-	public get initialSignals(): IDocumentDeltaConnection["initialSignals"] {
+	public get initialSignals(): ISignalMessage[] {
 		return this.internal.initialSignals;
 	}
-	public get initialClients(): IDocumentDeltaConnection["initialClients"] {
+	public get initialClients(): ISignalClient[] {
 		return this.internal.initialClients;
 	}
-	public get serviceConfiguration(): IDocumentDeltaConnection["serviceConfiguration"] {
+	public get serviceConfiguration(): IClientConfiguration {
 		return this.internal.serviceConfiguration;
 	}
 	public get checkpointSequenceNumber(): number | undefined {
@@ -351,7 +359,7 @@ export class FaultInjectionDocumentDeltaStorageService
 		abortSignal?: AbortSignal,
 		cachedOnly?: boolean,
 		fetchReason?: string,
-	): ReturnType<IDocumentDeltaStorageService["fetchMessages"]> {
+	): IStream<ISequencedDocumentMessage[]> {
 		if (!this.online) {
 			throwOfflineError();
 		}
@@ -378,7 +386,7 @@ export class FaultInjectionDocumentStorageService implements IDocumentStorageSer
 		}
 	}
 
-	public get policies(): IDocumentStorageService["policies"] {
+	public get policies(): IDocumentStorageServicePolicies | undefined {
 		return this.internal.policies;
 	}
 
