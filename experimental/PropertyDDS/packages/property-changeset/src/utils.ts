@@ -54,11 +54,11 @@ export namespace Utils {
 		/**
 		 * The(pre-order) callback function that is invoked for each property
 		 */
-		preCallback?: (context: TraversalContext) => any;
+		preCallback?: (context: TraversalContext) => void;
 		/**
 		 * The (post-order) callback function that is invoked for each property
 		 */
-		postCallback?: (context: TraversalContext) => any;
+		postCallback?: (context: TraversalContext) => void;
 		/**
 		 * An optional object that is passed to all invocations of the callback via the
 		 */
@@ -109,7 +109,7 @@ export namespace Utils {
 
 		series(
 			[
-				function (next: NextFn) {
+				function (next: NextFn): void {
 					if (in_preCallback !== undefined) {
 						in_preCallback(in_context, next);
 					} else {
@@ -153,7 +153,7 @@ export namespace Utils {
 					}
 				},
 
-				function (next: NextFn) {
+				function (next: NextFn): void {
 					const currentTypeIdContext = in_context._splitTypeId.context;
 
 					in_context._parentNestedChangeSet = nestedChangeSet;
@@ -171,10 +171,10 @@ export namespace Utils {
 						in_arrayOperationOffset: number,
 						in_arrayIteratorOffset: number,
 						in_callback: (param: any) => any,
-					) {
+					): void {
 						series(
 							[
-								function (n2) {
+								function (n2): void {
 									try {
 										// Update the path
 										in_context._lastSegment = in_segment;
@@ -258,7 +258,7 @@ export namespace Utils {
 
 					series(
 						[
-							function (n3) {
+							function (n3): void {
 								// If this property is a collection, we set the correct type, otherwise we assume it is a NodeProperty
 								const propertyContainerType =
 									splitTypeId.context === "map" ||
