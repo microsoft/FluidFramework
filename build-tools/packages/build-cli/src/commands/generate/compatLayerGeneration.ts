@@ -166,7 +166,7 @@ export const generation = ${generation};
  */
 export function maybeGetNewGeneration(
 	currentPkgVersion: string,
-	packageJson: { fluidCompatMetadata?: IFluidCompatibilityMetadata | {} },
+	packageJson: { fluidCompatMetadata?: IFluidCompatibilityMetadata | object },
 	minimumCompatWindowMonths: number,
 	log: Logger,
 ): number | undefined {

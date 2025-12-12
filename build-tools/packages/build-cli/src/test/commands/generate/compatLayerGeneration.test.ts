@@ -228,6 +228,87 @@ describe("generate:compatLayerGeneration", () => {
 		}, /Invalid Version/);
 	});
 
+	it("should return undefined when fluidCompatMetadata is not present in package.json", () => {
+		const mockLogger = createMockLogger();
+		const packageJson = {}; // No fluidCompatMetadata property
+
+		const result = maybeGetNewGeneration(
+			"2.0.0",
+			packageJson,
+			minimumCompatWindowMonths,
+			mockLogger,
+		);
+
+		assert.strictEqual(result, undefined);
+	});
+
+	it("should return generation 1 when fluidCompatMetadata is an empty object (opt-in)", () => {
+		const mockLogger = createMockLogger();
+		const packageJson = {
+			fluidCompatMetadata: {}, // Empty object indicates opt-in
+		};
+
+		const result = maybeGetNewGeneration(
+			"2.0.0",
+			packageJson,
+			minimumCompatWindowMonths,
+			mockLogger,
+		);
+
+		assert.strictEqual(result, 1);
+	});
+
+	it("should return generation 1 for opt-in regardless of package version", () => {
+		const mockLogger = createMockLogger();
+		const packageJson = {
+			fluidCompatMetadata: {}, // Empty object indicates opt-in
+		};
+
+		// Test with patch version
+		let result = maybeGetNewGeneration(
+			"1.0.1",
+			packageJson,
+			minimumCompatWindowMonths,
+			mockLogger,
+		);
+		assert.strictEqual(result, 1);
+
+		// Test with minor version
+		result = maybeGetNewGeneration(
+			"1.1.0",
+			packageJson,
+			minimumCompatWindowMonths,
+			mockLogger,
+		);
+		assert.strictEqual(result, 1);
+
+		// Test with major version
+		result = maybeGetNewGeneration(
+			"2.0.0",
+			packageJson,
+			minimumCompatWindowMonths,
+			mockLogger,
+		);
+		assert.strictEqual(result, 1);
+	});
+
+	it("should return generation 1 for opt-in with any minimumCompatWindowMonths value", () => {
+		const mockLogger = createMockLogger();
+		const packageJson = {
+			fluidCompatMetadata: {}, // Empty object indicates opt-in
+		};
+
+		// Test with different minimumCompatWindowMonths values
+		let result = maybeGetNewGeneration("2.0.0", packageJson, 1, mockLogger);
+		assert.strictEqual(result, 1);
+
+		result = maybeGetNewGeneration("2.0.0", packageJson, 6, mockLogger);
+		assert.strictEqual(result, 1);
+
+		result = maybeGetNewGeneration("2.0.0", packageJson, 12, mockLogger);
+		assert.strictEqual(result, 1);
+	});
+
 	it("should fail when current date is older than previous release date", () => {
 		const mockLogger = createMockLogger();
 
