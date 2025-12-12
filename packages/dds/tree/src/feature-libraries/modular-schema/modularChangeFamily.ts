@@ -54,6 +54,7 @@ import {
 	type TupleBTree,
 	RangeMap,
 	balancedReduce,
+	brandConst,
 } from "../../util/index.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 
@@ -3134,16 +3135,14 @@ export interface ReplaceRevisionIdInfo {
 }
 
 export class DefaultRevisionReplacer implements RevisionReplacer {
-	private readonly idAllocator: IdAllocator;
 	private readonly newRevisionMap: ChangeAtomIdBTree<ChangesetLocalId>;
+	private readonly localIds: Set<ChangesetLocalId> = new Set();
+	private maxSeen: ChangesetLocalId = brandConst(-1)();
 
 	public constructor(
 		public readonly newRevision: RevisionTag | undefined,
 		private readonly oldRevisions: Set<RevisionTag | undefined>,
 	) {
-		// Create idAllocator for new revision ids.
-		this.idAllocator = idAllocatorFromMaxId();
-
 		// Map to keep track of the replaced (revision tag, old id) to the new id.
 		this.newRevisionMap = newTupleBTree();
 	}
@@ -3164,7 +3163,17 @@ export class DefaultRevisionReplacer implements RevisionReplacer {
 			if (prior !== undefined) {
 				updated.localId = prior;
 			} else {
-				const localId: ChangesetLocalId = brand(this.idAllocator.allocate());
+				let localId: ChangesetLocalId;
+				if (this.localIds.has(id.localId)) {
+					this.maxSeen = brand(this.maxSeen + 1);
+					localId = this.maxSeen;
+				} else {
+					// This change atom ID uses a local ID that has not yet been used in the new revision.
+					// We reuse it as is to minimize the number of IDs that need to be updated.
+					localId = id.localId;
+					this.maxSeen = brand(Math.max(this.maxSeen, localId));
+					this.localIds.add(id.localId);
+				}
 				this.newRevisionMap.set([id.revision, id.localId], localId);
 				updated.localId = localId;
 			}
