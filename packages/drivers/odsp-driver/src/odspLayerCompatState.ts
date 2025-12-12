@@ -19,7 +19,7 @@ export const odspDriverCompatDetailsForLoader: ILayerCompatDetails = {
 	/**
 	 * The current generation of the ODSP Driver layer.
 	 */
-	generation: 2,
+	generation: 3,
 	/**
 	 * The features supported by the ODSP Driver layer across the Driver / Loader boundary.
 	 */
