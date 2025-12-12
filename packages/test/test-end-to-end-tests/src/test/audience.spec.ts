@@ -19,11 +19,11 @@ import { pkgVersion } from "../packageVersion.js";
 
 describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, apis) => {
 	class TestDataObject extends apis.dataRuntime.DataObject {
-		public get _root() {
+		public get _root(): typeof this.root {
 			return this.root;
 		}
 
-		public get _context() {
+		public get _context(): typeof this.context {
 			return this.context;
 		}
 	}
@@ -42,11 +42,15 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 		provider.loadTestContainer(testContainerConfig);
 
 	/** Function to wait for a client with the given clientId to be added to the audience of the given container. */
-	async function waitForClientAdd(container: IContainer, clientId: string, errorMsg: string) {
+	async function waitForClientAdd(
+		container: IContainer,
+		clientId: string,
+		errorMsg: string,
+	): Promise<void> {
 		if (container.audience.getMember(clientId) === undefined) {
 			return timeoutPromise(
 				(resolve) => {
-					const listener = (newClientId: string) => {
+					const listener = (newClientId: string): void => {
 						if (newClientId === clientId) {
 							container.audience.off("addMember", listener);
 							resolve();
@@ -68,7 +72,7 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 		container: IContainer,
 		clientId: string,
 		errorMsg: string,
-	) {
+	): Promise<void> {
 		if (container.audience.getMember(clientId) !== undefined) {
 			return timeoutPromise(
 				(resolve) => {

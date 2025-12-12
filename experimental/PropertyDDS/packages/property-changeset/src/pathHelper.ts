@@ -71,7 +71,7 @@ export namespace PathHelper {
 			path_start = 1;
 		} else if (in_path.substr(0, 3) === "../") {
 			// Handle relative paths by extracting the number steps above
-			var extractLevel = function (current_path) {
+			var extractLevel = function (current_path): void {
 				if (current_path.substr(0, 3) === "../") {
 					if (out_types) {
 						out_types.push(TOKEN_TYPES.RAISE_LEVEL_TOKEN);
@@ -144,7 +144,7 @@ export namespace PathHelper {
 		let atStartToken = false;
 		let allowSegmentStart = true;
 
-		const storeNextToken = function (tokenType) {
+		const storeNextToken = function (tokenType): void {
 			// Make sure, this is not an empty token (E.g. a .. or a [] )
 			if (!tokenStarted) {
 				if (!atStartToken) {
@@ -405,7 +405,7 @@ export namespace PathHelper {
 	 * @param in_path - The path to check
 	 * @internal
 	 */
-	export const checkValidRepositoryAbsolutePath = function (in_path: string) {
+	export const checkValidRepositoryAbsolutePath = function (in_path: string): void {
 		if (
 			in_path !== "" && // either an empty reference
 			!in_path.startsWith("/")

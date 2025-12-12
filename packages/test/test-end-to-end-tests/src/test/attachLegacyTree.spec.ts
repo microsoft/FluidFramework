@@ -20,13 +20,13 @@ describeCompat("Can attach Legacy Shared Tree", "NoCompat", (getTestObjectProvid
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 
 	class TestDataObject extends DataObject {
-		public get _context() {
+		public get _context(): typeof this.context {
 			return this.context;
 		}
-		public get _runtime() {
+		public get _runtime(): typeof this.runtime {
 			return this.runtime;
 		}
-		public get _root() {
+		public get _root(): typeof this.root {
 			return this.root;
 		}
 	}

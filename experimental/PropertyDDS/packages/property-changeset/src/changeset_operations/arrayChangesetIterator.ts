@@ -293,7 +293,7 @@ export class ArrayChangeSetIterator {
 		return this._atEnd;
 	}
 
-	private _copyModifies(in_modifies: string[]) {
+	private _copyModifies(in_modifies: string[]): any[][] | undefined {
 		if (!in_modifies || in_modifies.length === 0) {
 			return undefined;
 		}

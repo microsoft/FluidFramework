@@ -39,11 +39,11 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 
 	// A Test Data Object that exposes some basic functionality.
 	class TestDataObject extends DataObject<TestDataObjectTypes> {
-		public get _context() {
+		public get _context(): typeof this.context {
 			return this.context;
 		}
 
-		public get _root() {
+		public get _root(): typeof this.root {
 			return this.root;
 		}
 
@@ -72,7 +72,7 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 			super(props);
 		}
 
-		protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+		protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 			const props = { a: "b" };
 			const [, dataStore] = await this.defaultFactory.createInstanceWithDataStore(
 				runtime,
@@ -96,7 +96,7 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 
 	let provider: ITestObjectProvider;
 
-	beforeEach(async () => {
+	beforeEach(async (): Promise<void> => {
 		provider = getTestObjectProvider();
 	});
 
@@ -116,7 +116,7 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 		runtime: IContainerRuntime,
 		props: TestDataObjectProps,
 		alias: string,
-	) => {
+	): Promise<TestDataObject> => {
 		const [object, datastore] = await factory.createInstanceWithDataStore(runtime, props);
 		const result = await datastore.trySetAlias(alias);
 		if (result !== "Success") {

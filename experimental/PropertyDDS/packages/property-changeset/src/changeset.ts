@@ -306,7 +306,7 @@ export class ChangeSet {
 		in_typeid: string,
 		in_removeEmpty: boolean,
 		in_options?: ApplyChangeSetOptions,
-	) {
+	): void {
 		const splitTypeid = extractContext(in_typeid);
 
 		if (splitTypeid.context === "set" || splitTypeid.context === "map") {

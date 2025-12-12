@@ -188,7 +188,7 @@ export abstract class BaseProperty {
 	 *
 	 * @param in_property - The parent property
 	 */
-	protected _setParent(in_property: BaseProperty) {
+	protected _setParent(in_property: BaseProperty): void {
 		this._parent = in_property;
 
 		// If the property is dirty but not its parent, dirty the parent. In cases like named properties
@@ -266,7 +266,7 @@ export abstract class BaseProperty {
 	 * checks whether the property is dynamic (only properties inherting from NodeProperty are)
 	 * @returns True if it is a dynamic property.
 	 */
-	isDynamic() {
+	isDynamic(): boolean {
 		return false;
 	}
 
@@ -285,7 +285,7 @@ export abstract class BaseProperty {
 		in_callingChild: BaseProperty = undefined,
 		in_flags: MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS.DIRTY |
 			MODIFIED_STATE_FLAGS.PENDING_CHANGE,
-	) {
+	): void {
 		if (in_flags === undefined) {
 			in_flags = MODIFIED_STATE_FLAGS.DIRTY | MODIFIED_STATE_FLAGS.PENDING_CHANGE;
 		}
@@ -314,7 +314,7 @@ export abstract class BaseProperty {
 	 * Sets the dirty flags for this property
 	 * @param in_flags - The dirty flags
 	 */
-	_setDirtyFlags(in_flags: MODIFIED_STATE_FLAGS) {
+	_setDirtyFlags(in_flags: MODIFIED_STATE_FLAGS): void {
 		this._dirty = in_flags;
 	}
 
@@ -332,7 +332,7 @@ export abstract class BaseProperty {
 	 */
 	// TODO: Cleaner way to make the property tree aware of the DDS hosting it.
 	// Currently, this._tree is set in SharedPropertyTree constructor.
-	_reportDirtinessToView() {
+	_reportDirtinessToView(): void {
 		let currentNode: BaseProperty = this;
 
 		while (currentNode._parent) {
@@ -356,7 +356,7 @@ export abstract class BaseProperty {
 	 * consider while applying the ChangeSet.
 	 * @throws if in_changeSet is invalid.
 	 */
-	applyChangeSet(in_changeSet: SerializedChangeSet) {
+	applyChangeSet(in_changeSet: SerializedChangeSet): void {
 		this._checkIsNotReadOnly(false);
 
 		// We just forward the call to the internal function
@@ -380,7 +380,7 @@ export abstract class BaseProperty {
 		in_changeSet: SerializedChangeSet,
 		in_reportToView = true,
 		in_filteringOptions = undefined,
-	) {
+	): void {
 		var typeids = _.keys(in_changeSet);
 		for (const typeid of typeids) {
 			if (ChangeSet.isReservedKeyword(typeid)) {
@@ -417,7 +417,7 @@ export abstract class BaseProperty {
 	_reapplyDirtyFlags(
 		in_pendingChangeSet: SerializedChangeSet,
 		in_dirtyChangeSet: SerializedChangeSet,
-	) {
+	): void {
 		this._checkIsNotReadOnly(false);
 		// Here we must walk both changesets in parallel. Sometimes there will be only an entry in one
 		// changeset, sometimes only one in the other changeset, sometimes one in both.
@@ -454,7 +454,7 @@ export abstract class BaseProperty {
 	 * If none are supplied all will be removed.
 	 * @private
 	 */
-	_cleanDirty(in_flags) {
+	_cleanDirty(in_flags): void {
 		this._setDirtyFlags(
 			in_flags === undefined ? MODIFIED_STATE_FLAGS.CLEAN : this._getDirtyFlags() & ~in_flags,
 		);
@@ -465,7 +465,7 @@ export abstract class BaseProperty {
 	 *
 	 * @param in_flags - The flags to clean. If none are supplied all will be removed.
 	 */
-	cleanDirty(in_flags: MODIFIED_STATE_FLAGS) {
+	cleanDirty(in_flags: MODIFIED_STATE_FLAGS): void {
 		var dirtyChildren = this._getDirtyChildren(in_flags);
 		for (const dirtyChild of dirtyChildren) {
 			const child = this.get(dirtyChild, {
@@ -536,7 +536,7 @@ export abstract class BaseProperty {
 	 * @param {property-properties.CheckoutView~CheckedOutRepositoryInfo} value - The checkedOut repository info.
 	 * @protected
 	 */
-	_setCheckoutView(value) {
+	_setCheckoutView(value): void {
 		this._checkoutView = value;
 	}
 
@@ -544,7 +544,7 @@ export abstract class BaseProperty {
 	 * Returns the checkoutView
 	 * @return {property-properties.CheckoutView} - the checkout view
 	 */
-	_getCheckoutView() {
+	_getCheckoutView(): any {
 		let checkedOutRepositoryInfo = this._getCheckedOutRepositoryInfo();
 		return checkedOutRepositoryInfo ? checkedOutRepositoryInfo.getCheckoutView() : undefined;
 	}
@@ -554,7 +554,7 @@ export abstract class BaseProperty {
 	 * @return {property-properties.CheckoutView~CheckedOutRepositoryInfo} The checkedOut repository info.
 	 * @protected
 	 */
-	_getCheckedOutRepositoryInfo() {
+	_getCheckedOutRepositoryInfo(): any {
 		if (!this._parent) {
 			return this._checkedOutRepositoryInfo;
 		} else {
@@ -566,7 +566,7 @@ export abstract class BaseProperty {
 	 * Returns the Workspace
 	 * @returns The workspace containing the property.
 	 */
-	getWorkspace() {
+	getWorkspace(): any {
 		const root = this.getRoot();
 		return root ? root._tree : undefined;
 	}
@@ -590,7 +590,10 @@ export abstract class BaseProperty {
 	 *
 	 * @return {property-properties.BaseProperty|undefined} The child property that has been resolved
 	 */
-	protected _resolvePathSegment(in_segment: string, in_segmentType: PathHelper.TOKEN_TYPES) {
+	protected _resolvePathSegment(
+		in_segment: string,
+		in_segmentType: PathHelper.TOKEN_TYPES,
+	): BaseProperty | undefined {
 		// Base Properties only support paths separated via dots
 		if (in_segmentType !== PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN) {
 			throw new Error(MSG.INVALID_PATH_TOKEN + in_segment);
@@ -609,7 +612,7 @@ export abstract class BaseProperty {
 	 * @return {string} the new id
 	 * @private
 	 */
-	_setId(in_id) {
+	_setId(in_id): string {
 		if (!_.isString(in_id) && !_.isNumber(in_id)) {
 			throw new TypeError(MSG.ID_STRING_OR_NUMBER + in_id);
 		}
@@ -654,7 +657,7 @@ export abstract class BaseProperty {
 	 * Returns true if the property is a primitive type
 	 * @return {boolean} true if the property is a primitive type
 	 */
-	isPrimitiveType() {
+	isPrimitiveType(): boolean {
 		return TypeIdHelper.isPrimitiveType(this._typeid);
 	}
 
@@ -679,7 +682,7 @@ export abstract class BaseProperty {
 	 * If printFct is not a function, it will default to console.log
 	 * @param {function} [printFct=console.log] - Function to call for printing each property
 	 */
-	prettyPrint(printFct) {
+	prettyPrint(printFct): void {
 		if (typeof printFct !== "function") {
 			printFct = console.log;
 		}
@@ -728,7 +731,7 @@ export abstract class BaseProperty {
 	 * @param {string} externalId - Name of the current property at the upper level. Used for arrays.
 	 * @param {function} printFct - Function to call for printing each property
 	 */
-	_prettyPrint(indent, externalId, printFct) {
+	_prettyPrint(indent, externalId, printFct): void {
 		var context = "";
 		switch (this._context) {
 			case "map":
@@ -750,7 +753,7 @@ export abstract class BaseProperty {
 	 * @param {string} indent - Leading spaces to create the tree representation
 	 * @param {function} printFct - Function to call for printing each property
 	 */
-	_prettyPrintChildren(indent, printFct) {
+	_prettyPrintChildren(indent, printFct): void {
 		indent += "  ";
 		var ids = this.getIds();
 		for (var i = 0; i < ids.length; i++) {
@@ -769,8 +772,8 @@ export abstract class BaseProperty {
 	 * will return an empty array if trying to get the path from a child repo to a parent repo.
 	 * @private
 	 */
-	_getPathsThroughRepoRef(in_fromProperty) {
-		var paths = [];
+	_getPathsThroughRepoRef(in_fromProperty): string[] {
+		const paths: string[] = [];
 		var that = this;
 		var referenceProps = [];
 		// get all reference properties in the referenceProps array
@@ -825,7 +828,7 @@ export abstract class BaseProperty {
 	 * @return {string} The path between the given in_fromProperty and this property.
 	 * @private
 	 */
-	_getIndirectPath(in_fromProperty) {
+	_getIndirectPath(in_fromProperty): string {
 		var path = [];
 		var that = this;
 		var foundPath = undefined;
@@ -853,7 +856,7 @@ export abstract class BaseProperty {
 	 * @return {string} The path between the given in_fromProperty and this property.
 	 * @private
 	 */
-	_getDirectPath(in_fromProperty) {
+	_getDirectPath(in_fromProperty): string {
 		var path = [];
 		var foundAncestor = undefined;
 		if (in_fromProperty === this) {
@@ -895,7 +898,7 @@ export abstract class BaseProperty {
 	 * @return {Array<string>} The paths between the given in_fromProperty and this property.
 	 * @private
 	 */
-	_getAllRelativePaths(in_fromProperty) {
+	_getAllRelativePaths(in_fromProperty): string[] {
 		if (this.getRoot() !== in_fromProperty.getRoot()) {
 			// if this and in_fromProperty have different roots, go through a repo ref
 			// this is the case where we might have more than one path
@@ -957,7 +960,7 @@ export abstract class BaseProperty {
 	 *
 	 * @return {string} The path from the root
 	 */
-	getAbsolutePath() {
+	getAbsolutePath(): string {
 		var that = this;
 		var referenceProps = [];
 		// get all reference properties pointing to the root the repository containing 'this'
@@ -1020,7 +1023,7 @@ export abstract class BaseProperty {
 	 * @return {string|undefined} Returns BaseProperty.BREAK_TRAVERSAL, if the traversal didn't reach the root,
 	 * otherwise `undefined`.
 	 */
-	traverseUp(in_callback) {
+	traverseUp(in_callback): typeof BREAK_TRAVERSAL | undefined {
 		ConsoleUtils.assert(_.isFunction(in_callback), MSG.CALLBACK_NOT_FCT);
 		if (this._parent) {
 			var result = in_callback(this._parent);
@@ -1147,7 +1150,7 @@ export abstract class BaseProperty {
 	 * @throws if in_options is defined but is not an object.
 	 * @returns The serialized representation of this property
 	 */
-	serialize(in_options: ISerializeOptions) {
+	serialize(in_options: ISerializeOptions): object {
 		var opts = {
 			dirtyOnly: false,
 			includeRootTypeid: false,
@@ -1175,13 +1178,13 @@ export abstract class BaseProperty {
 	 * This function is invoked by the PropertyFactory once all static members have been added to the template
 	 * @protected
 	 */
-	_signalAllStaticMembersHaveBeenAdded() {}
+	_signalAllStaticMembersHaveBeenAdded(): void {}
 
 	/**
 	 * Tests whether this property may be modified
 	 * @param {checkConstant} in_checkConstant - Check if is readonly constant property
 	 */
-	_checkIsNotReadOnly(in_checkConstant) {
+	_checkIsNotReadOnly(in_checkConstant): void {
 		if (this._isConstant && in_checkConstant) {
 			throw new Error(MSG.MODIFICATION_OF_CONSTANT_PROPERTY);
 		}
@@ -1199,7 +1202,7 @@ export abstract class BaseProperty {
 	/**
 	 * Set a property and its children as constants (readonly properties)
 	 */
-	_setAsConstant() {
+	_setAsConstant(): void {
 		this._isConstant = true;
 
 		if (this instanceof Property.AbstractStaticCollectionProperty) {
@@ -1210,14 +1213,14 @@ export abstract class BaseProperty {
 		}
 	}
 
-	traverseDown(arg0: (prop: any) => void) {
+	traverseDown(arg0: (prop: any) => void): void {
 		throw new Error("Method not implemented.");
 	}
 
 	/**
 	 * Unsets a property and its children as constants
 	 */
-	_unsetAsConstant() {
+	_unsetAsConstant(): void {
 		// Deleting this property will make the object
 		// fall back to the entry in the prototype (false)
 		delete this._isConstant;
@@ -1239,7 +1242,7 @@ export abstract class BaseProperty {
 	 * and trigger a modified event there. When batching updates, this can be prevented via this flag.
 	 * @private
 	 */
-	_setDirtyTree(in_reportToView = true) {
+	_setDirtyTree(in_reportToView = true): void {
 		this._traverse(function (node) {
 			// Set all nodes to dirty, but prevent recursive updates up to the repository for the individual changes
 			node._setDirty(false);
@@ -1257,7 +1260,7 @@ export abstract class BaseProperty {
 	 * @param in_targetParent - The parent property
 	 * @throws if the property can not be inserted
 	 */
-	_validateInsertIn(in_targetParent: BaseProperty) {
+	_validateInsertIn(in_targetParent: BaseProperty): void {
 		// A root?
 		if (this._getCheckedOutRepositoryInfo() !== undefined) {
 			throw new Error(MSG.INSERTED_ROOT_ENTRY);

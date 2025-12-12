@@ -195,7 +195,11 @@ export class SharedPropertyTree extends SharedObject {
 	 * @param id - optional name of the shared map
 	 * @returns newly create shared map (but not attached yet)
 	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string, queryString?: string): SharedPropertyTree {
+	public static create(
+		runtime: IFluidDataStoreRuntime,
+		id?: string,
+		queryString?: string,
+	): SharedPropertyTree {
 		return runtime.createChannel(id, PropertyTreeFactory.Type) as SharedPropertyTree;
 	}
 
@@ -531,7 +535,7 @@ export class SharedPropertyTree extends SharedObject {
 	 * @param summary - The local summary (snapshot)representation.
 	 * @returns The serialized summary representation.
 	 */
-	private encodeSummary(summary: ISnapshotSummary) {
+	private encodeSummary(summary: ISnapshotSummary): IsoBuffer {
 		return this.propertyTreeConfig.encDec.summaryEncoder.encode(summary);
 	}
 
