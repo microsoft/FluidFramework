@@ -34,7 +34,7 @@ export const detachedFieldIndexCodecBuilder = ClientVersionDispatchingCodecBuild
 					buildData.idCompressor,
 				),
 		},
-		[FluidClientVersion.v2_43]: {
+		[FluidClientVersion.v2_52]: {
 			formatVersion: DetachedFieldIndexFormatVersion.v2 as DetachedFieldIndexFormatVersion,
 			codec: (buildData: BuildData) =>
 				makeDetachedNodeToFieldCodecV2(
