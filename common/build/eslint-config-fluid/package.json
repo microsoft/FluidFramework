@@ -19,11 +19,12 @@
 		"format": "npm run prettier:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"print-configs": "cross-env ESLINT_USE_FLAT_CONFIG=false tsx scripts/print-configs.ts printed-configs",
+		"print-configs": "cross-env ESLINT_USE_FLAT_CONFIG=true tsx scripts/print-configs.ts printed-configs",
 		"test": "echo TODO: add tests"
 	},
 	"dependencies": {
 		"@eslint-community/eslint-plugin-eslint-comments": "~4.5.0",
+		"@eslint/eslintrc": "^3.3.3",
 		"@eslint/js": "^8.57.1",
 		"@fluid-internal/eslint-plugin-fluid": "^0.4.1",
 		"@rushstack/eslint-plugin": "~0.22.1",
@@ -47,7 +48,7 @@
 		"@types/sort-json": "^2.0.3",
 		"concurrently": "^8.2.1",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.57.1",
+		"eslint": "~9.39.1",
 		"jiti": "^2.6.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.6.2",
