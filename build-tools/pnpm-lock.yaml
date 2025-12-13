@@ -166,9 +166,6 @@ importers:
       github-slugger:
         specifier: ^2.0.0
         version: 2.0.0
-      globby:
-        specifier: ^11.1.0
-        version: 11.1.0
       gray-matter:
         specifier: ^4.0.3
         version: 4.0.3
@@ -199,9 +196,6 @@ importers:
       mdast-util-to-string:
         specifier: ^4.0.0
         version: 4.0.0
-      minimatch:
-        specifier: ^10.1.1
-        version: 10.1.1
       npm-check-updates:
         specifier: ^16.14.20
         version: 16.14.20
@@ -211,6 +205,9 @@ importers:
       picocolors:
         specifier: ^1.1.1
         version: 1.1.1
+      picomatch:
+        specifier: ^4.0.3
+        version: 4.0.3
       prettier:
         specifier: ~3.2.5
         version: 3.2.5
@@ -259,6 +256,9 @@ importers:
       table:
         specifier: ^6.9.0
         version: 6.9.0
+      tinyglobby:
+        specifier: ^0.2.15
+        version: 0.2.15
       ts-morph:
         specifier: ^22.0.0
         version: 22.0.0
@@ -308,6 +308,9 @@ importers:
       '@types/node':
         specifier: ^22.19.1
         version: 22.19.1
+      '@types/picomatch':
+        specifier: ^4.0.2
+        version: 4.0.2
       '@types/prettier':
         specifier: ^2.7.3
         version: 2.7.3
@@ -404,9 +407,9 @@ importers:
       fs-extra:
         specifier: ^11.3.2
         version: 11.3.2
-      globby:
-        specifier: ^11.1.0
-        version: 11.1.0
+      ignore:
+        specifier: ^7.0.5
+        version: 7.0.5
       micromatch:
         specifier: ^4.0.8
         version: 4.0.8
@@ -428,6 +431,9 @@ importers:
       sort-package-json:
         specifier: 1.57.0
         version: 1.57.0
+      tinyglobby:
+        specifier: ^0.2.15
+        version: 0.2.15
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -543,12 +549,6 @@ importers:
       fs-extra:
         specifier: ^11.3.2
         version: 11.3.2
-      glob:
-        specifier: ^7.2.3
-        version: 7.2.3
-      globby:
-        specifier: ^11.1.0
-        version: 11.1.0
       ignore:
         specifier: ^7.0.5
         version: 7.0.5
@@ -579,6 +579,9 @@ importers:
       sort-package-json:
         specifier: 1.57.0
         version: 1.57.0
+      tinyglobby:
+        specifier: ^0.2.15
+        version: 0.2.15
       ts-deepmerge:
         specifier: ^7.0.3
         version: 7.0.3
@@ -607,9 +610,6 @@ importers:
       '@types/fs-extra':
         specifier: ^11.0.4
         version: 11.0.4
-      '@types/glob':
-        specifier: ^7.2.0
-        version: 7.2.0
       '@types/lodash.isequal':
         specifier: ^4.5.8
         version: 4.5.8
@@ -2051,6 +2051,9 @@ packages:
 
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
+
+  '@types/picomatch@4.0.2':
+    resolution: {integrity: sha512-qHHxQ+P9PysNEGbALT8f8YOSHW0KJu6l2xU8DYY0fu/EmGxXdVnuTLvFUvBgPJMSqXq29SYHveejeAha+4AYgA==}
 
   '@types/prettier@2.7.3':
     resolution: {integrity: sha512-+68kP9yzs4LMp7VNh8gdzMSPZFL44MLGqiHWvttYJe+6qnuVr4Ek9wSBQoveqY/r+LwjCcU29kNVkidwim+kYA==}
@@ -8818,6 +8821,8 @@ snapshots:
       undici-types: 6.21.0
 
   '@types/normalize-package-data@2.4.4': {}
+
+  '@types/picomatch@4.0.2': {}
 
   '@types/prettier@2.7.3': {}
 

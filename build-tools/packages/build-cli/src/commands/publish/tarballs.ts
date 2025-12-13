@@ -10,8 +10,8 @@ import type { Logger, PackageJson } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import execa from "execa";
 import { Gunzip } from "fflate";
-import globby from "globby";
 import latestVersion from "latest-version";
+import { glob } from "tinyglobby";
 import { BaseCommand, getTarballName, readLines } from "../../library/index.js";
 
 interface TarballMetadata {
@@ -97,7 +97,7 @@ export default class PublishTarballCommand extends BaseCommand<typeof PublishTar
 			lines.filter((line) => line !== undefined && line !== ""),
 		);
 
-		const tarballs = await globby(["*.tgz"], { cwd: dir, absolute: true });
+		const tarballs = await glob(["*.tgz"], { cwd: dir, absolute: true });
 		const tarballMetadata = new Map<string, TarballMetadata>();
 
 		const mapPromises: Promise<void>[] = [];

@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-import globby from "globby";
+import ignore from "ignore";
+import { globSync } from "tinyglobby";
 
 import type {
 	// eslint-disable-next-line import-x/no-deprecated -- back-compat code
@@ -99,23 +100,98 @@ function loadWorkspacesFromLegacyConfigEntry(
 		];
 	}
 
-	const packageJsonPaths = globby
-		.sync(["**/package.json"], {
-			cwd: path.dirname(packagePath),
-			gitignore: true,
-			onlyFiles: true,
-			absolute: true,
-			// BACK-COMPAT HACK - only search two levels below entries for package.jsons. This avoids finding some test
-			// files and treating them as packages. This is only needed when loading old configs.
-			deep: 2,
-		})
-		.map(
-			// Make the paths relative to the repo root
-			(filePath) => path.relative(buildProject.root, filePath),
-		);
+	const cwd = path.dirname(packagePath);
+	const allFiles = globSync(["**/package.json"], {
+		cwd,
+		onlyFiles: true,
+		absolute: true,
+		// BACK-COMPAT HACK - only search two levels below entries for package.jsons. This avoids finding some test
+		// files and treating them as packages. This is only needed when loading old configs.
+		deep: 2,
+	});
+
+	// Apply gitignore filtering
+	const packageJsonPaths = filterByGitignoreSync(allFiles, cwd).map(
+		// Make the paths relative to the repo root
+		(filePath) => path.relative(buildProject.root, filePath),
+	);
 	const workspaces = packageJsonPaths.flatMap((pkgPath) => {
 		const dir = path.dirname(pkgPath);
 		return loadWorkspacesFromLegacyConfigEntry(dir, buildProject);
 	});
 	return workspaces;
+}
+
+/**
+ * Converts a path to use forward slashes (POSIX style).
+ */
+function toPosixPath(s: string): string {
+	return s.replace(/\\/g, "/");
+}
+
+/**
+ * Filters an array of absolute file paths using gitignore rules synchronously.
+ */
+function filterByGitignoreSync(files: string[], cwd: string): string[] {
+	const ig = ignore();
+
+	// Find and read .gitignore files in the cwd and parent directories
+	const gitignorePatterns = readGitignorePatternsSync(cwd);
+	if (gitignorePatterns.length > 0) {
+		ig.add(gitignorePatterns);
+	}
+
+	// Convert absolute paths to relative paths for filtering, then convert back
+	return files.filter((file) => {
+		const relativePath = path.relative(cwd, file);
+		// Only filter files that are within the cwd
+		if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+			return true;
+		}
+		return !ig.ignores(toPosixPath(relativePath));
+	});
+}
+
+/**
+ * Cache for gitignore patterns per directory path.
+ * This avoids re-reading .gitignore files for the same directory.
+ */
+const gitignorePatternsCache = new Map<string, string[]>();
+
+/**
+ * Reads gitignore patterns from .gitignore files in the given directory and its parents synchronously.
+ * Results are cached per directory path to avoid repeated filesystem reads.
+ */
+function readGitignorePatternsSync(dir: string): string[] {
+	// Check cache first
+	const cached = gitignorePatternsCache.get(dir);
+	if (cached !== undefined) {
+		return cached;
+	}
+
+	const patterns: string[] = [];
+	let currentDir = dir;
+
+	// Walk up the directory tree to find .gitignore files
+	while (currentDir !== path.dirname(currentDir)) {
+		const gitignorePath = path.join(currentDir, ".gitignore");
+		if (existsSync(gitignorePath)) {
+			try {
+				const content = readFileSync(gitignorePath, "utf8");
+				// Parse gitignore content - each non-empty, non-comment line is a pattern
+				const filePatterns = content
+					.split("\n")
+					.map((line) => line.trim())
+					.filter((line) => line && !line.startsWith("#"));
+				patterns.push(...filePatterns);
+			} catch {
+				// Ignore errors reading .gitignore files
+			}
+		}
+		currentDir = path.dirname(currentDir);
+	}
+
+	// Cache the result
+	gitignorePatternsCache.set(dir, patterns);
+	return patterns;
 }
