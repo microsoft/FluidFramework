@@ -19,7 +19,7 @@
 			"**/.next", // NextJS
 
 			// Webpack output
-			"**/webpack/*",
+			"**/webpack/**",
 
 			// test collateral
 			"**/_package.json",
