@@ -71,7 +71,7 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 				const initContainer = await initLoader.createDetachedContainer(
 					provider.defaultCodeDetails,
 				);
-				const attachContainer = async () => {
+				const attachContainer = async (): Promise<void> => {
 					const attachP = initContainer.attach(
 						provider.driver.createCreateNewRequest(provider.documentId),
 					);
@@ -89,7 +89,7 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 
 				const ds = await initDataObject.context.containerRuntime.createDataStore("default");
 				const newDataObj = await getDataStoreEntryPointBackCompat<ITestFluidObject>(ds);
-				const attachDatastore = async () => {
+				const attachDatastore = async (): Promise<void> => {
 					initDataObject.root.set("ds", newDataObj.handle);
 					while (
 						testConfig.datastoreSaveAfterAttach &&
@@ -111,7 +111,7 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 				}
 
 				const newString = SharedString.create(newDataObj.runtime);
-				const attachDds = async () => {
+				const attachDds = async (): Promise<void> => {
 					newDataObj.root.set(ddsKey, newString.handle);
 					while (
 						testConfig.ddsSaveAfterAttach &&
@@ -197,7 +197,7 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 	}
 });
 
-function convertSharedPointToPos(i: number) {
+function convertSharedPointToPos(i: number): number {
 	return i - sharedPoints[0];
 }
 
@@ -208,7 +208,7 @@ async function waitChar(sharedString: SharedString, pos: number): Promise<string
 			if (text.length > pos) {
 				resolve(text[pos]);
 			} else {
-				const waitFunc = (event: SequenceDeltaEvent) => {
+				const waitFunc = (event: SequenceDeltaEvent): void => {
 					const range = event.ranges.find((value) => value.position === pos);
 					if (range) {
 						sharedString.off("sequenceDelta", waitFunc);
@@ -229,7 +229,7 @@ async function waitKey<T>(map: ISharedMap, key: string): Promise<T> {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				resolve(map.get<T>(key)!);
 			} else {
-				const waitFunc = (changed: IValueChanged) => {
+				const waitFunc = (changed: IValueChanged): void => {
 					if (changed.key === key) {
 						map.off("valueChanged", waitFunc);
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion

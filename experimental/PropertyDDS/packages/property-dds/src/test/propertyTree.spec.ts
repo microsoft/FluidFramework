@@ -21,7 +21,10 @@ import {
 	loadExistingContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import {
+	ContainerRuntime,
+	type ISummarizer,
+} from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import {
@@ -67,7 +70,7 @@ describe("PropertyDDS summarizer", () => {
 	let objProvider: ITestObjectProvider;
 	const propertyDdsId = "PropertyTree";
 	const USERS = "users";
-	const getClient = async (withSummarizer = false, load = false) => {
+	const getClient = async (withSummarizer = false, load = false): Promise<withSummarizer> => {
 		const container = await (load
 			? objProvider.loadTestContainer()
 			: objProvider.makeTestContainer());
@@ -87,11 +90,16 @@ describe("PropertyDDS summarizer", () => {
 		return res;
 	};
 
-	const getSummarizer = async (container) => {
+	const getSummarizer = async (
+		container,
+	): Promise<{
+		container: IContainer;
+		summarizer: ISummarizer;
+	}> => {
 		return createSummarizer(objProvider, container);
 	};
 
-	const createUserNode = (name: string) => {
+	const createUserNode = (name: string): void => {
 		const node = PropertyFactory.create<NodeProperty>("NodeProperty");
 		node.insert("name", PropertyFactory.create("String", undefined, name));
 	};
@@ -254,10 +262,13 @@ describe("PropertyDDS summarizer", () => {
 		expect(Object.keys(summarizerClient.unrebasedRemoteChanges).length).to.equal(2);
 	});
 
-	async function synchronizeMSN(container2: IContainer, container1: IContainer) {
+	async function synchronizeMSN(
+		container2: IContainer,
+		container1: IContainer,
+	): Promise<void> {
 		const expectedSequenceNumber = container2.deltaManager.lastSequenceNumber;
 		await new Promise((resolve) => {
-			const waitForMSN = () => {
+			const waitForMSN = (): void => {
 				if (
 					container1.deltaManager.minimumSequenceNumber >= expectedSequenceNumber &&
 					container2.deltaManager.minimumSequenceNumber >= expectedSequenceNumber
@@ -326,7 +337,7 @@ function executePerPropertyTreeType(
 	documentId: string,
 	documentLoadUrl: string,
 	propertyDdsId: string,
-) {
+): void {
 	let deltaConnectionServer: ILocalDeltaConnectionServer;
 	let urlResolver: LocalResolver;
 	let opProcessingController: LoaderContainerTracker;

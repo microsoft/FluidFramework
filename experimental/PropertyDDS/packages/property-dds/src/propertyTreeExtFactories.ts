@@ -29,8 +29,8 @@ import { DeflatedPropertyTree, LZ4PropertyTree } from "./propertyTreeExt.js";
  * @internal
  */
 export abstract class CompressedPropertyTreeFactory implements IChannelFactory {
-	public abstract get attributes();
-	public abstract get type();
+	public abstract get attributes(): IChannelAttributes;
+	public abstract get type(): string;
 	public abstract getEncodeFce();
 	public abstract getDecodeFce();
 	private createCompressionMethods(encodeFn, decodeFn): ISharedPropertyTreeEncDec {
@@ -153,11 +153,11 @@ export class DeflatedPropertyTreeFactory extends CompressedPropertyTreeFactory {
 		return super.create(document, id, requestUrl);
 	}
 
-	public get type() {
+	public get type(): string {
 		return DeflatedPropertyTreeFactory.Type;
 	}
 
-	public get attributes() {
+	public get attributes(): IChannelAttributes {
 		return DeflatedPropertyTreeFactory.Attributes;
 	}
 
@@ -208,11 +208,11 @@ export class LZ4PropertyTreeFactory extends CompressedPropertyTreeFactory {
 		return super.create(document, id, requestUrl);
 	}
 
-	public get type() {
+	public get type(): string {
 		return LZ4PropertyTreeFactory.Type;
 	}
 
-	public get attributes() {
+	public get attributes(): IChannelAttributes {
 		return LZ4PropertyTreeFactory.Attributes;
 	}
 

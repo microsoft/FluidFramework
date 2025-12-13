@@ -77,7 +77,7 @@ export namespace ChangeSetIndexedCollectionFunctions {
 		in_appliedPropertyChanges: SerializedChangeSet,
 		in_typeid: string,
 		in_options: ApplyChangeSetOptions,
-	) {
+	): void {
 		const isPrimitiveTypeid = TypeIdHelper.isPrimitiveType(in_typeid);
 
 		// Handle remove entry operations
@@ -460,7 +460,7 @@ export namespace ChangeSetIndexedCollectionFunctions {
 		in_useSquareBracketsInPath: boolean,
 		out_conflicts: ConflictInfo[],
 		in_options: ApplyChangeSetOptions,
-	) {
+	): void {
 		const isPrimitiveTypeid = TypeIdHelper.isPrimitiveType(in_typeid);
 
 		const changesByKeys = {};
@@ -472,7 +472,7 @@ export namespace ChangeSetIndexedCollectionFunctions {
 			in_changeIdentifier: string,
 			in_changePrefix: string,
 			in_typeidChange?: string,
-		) {
+		): void {
 			// Collection didn't exist in this ChangeSet
 			if (in_collection === undefined) {
 				return;
@@ -509,7 +509,7 @@ export namespace ChangeSetIndexedCollectionFunctions {
 			in_collection,
 			in_changeIdentifier,
 			in_changePrefix,
-		) {
+		): void {
 			if (in_collection === undefined) {
 				return;
 			}
@@ -846,7 +846,7 @@ export namespace ChangeSetIndexedCollectionFunctions {
 	export const _cleanIndexedCollectionChangeSet = function (
 		in_propertyChanges: SerializedChangeSet,
 		in_containsTypeids: boolean,
-	) {
+	): void {
 		const changes = in_propertyChanges;
 		// Clean inserts
 

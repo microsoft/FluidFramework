@@ -53,7 +53,7 @@ export class DeterministicRandomGenerator {
 	 *
 	 * @returns The random number.
 	 */
-	random(in_max = 1.0) {
+	random(in_max = 1.0): number {
 		const randomInteger = this.irandom();
 		return (randomInteger / 4294967296) * in_max;
 	}

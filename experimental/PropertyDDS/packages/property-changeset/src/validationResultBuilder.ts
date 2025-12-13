@@ -44,7 +44,7 @@ export class ValidationResultBuilder {
 	 * Add a validation error.
 	 * @param {Error} in_error - An Error instance.
 	 */
-	public get result() {
+	public get result(): SchemaValidationResult {
 		return this._result;
 	}
 
@@ -52,7 +52,7 @@ export class ValidationResultBuilder {
 	 * Add a validation error.
 	 * @param in_error - An Error instance.
 	 */
-	public addError(in_error: Error) {
+	public addError(in_error: Error): void {
 		this._result.isValid = false;
 		// remove empty error messages before logging.
 		if (in_error.message) {
@@ -64,7 +64,7 @@ export class ValidationResultBuilder {
 	 * Add a validation warning.
 	 * @param in_msg - A warning description.
 	 */
-	public addWarning(in_msg: string) {
+	public addWarning(in_msg: string): void {
 		this._result.warnings.push(in_msg);
 	}
 

@@ -36,14 +36,14 @@ export class Integer64 {
 	/**
 	 * @returns The higher 32 bit integer part
 	 */
-	getValueHigh() {
+	getValueHigh(): number {
 		return this.high;
 	}
 
 	/**
 	 * @returns The lower 32 bit integer part
 	 */
-	getValueLow() {
+	getValueLow(): number {
 		return this.low;
 	}
 
@@ -134,16 +134,16 @@ function _stringToInt64(in_signed: boolean, in_string: string, in_radix = 10): n
  * @internal
  */
 export class Int64 extends Integer64 {
-	static fromString = function (in_string: string, radix = 10) {
+	static fromString = function (in_string: string, radix = 10): Int64 {
 		const [low, high] = _stringToInt64(true, in_string, radix);
 		return new Int64(low, high);
 	};
 
-	clone() {
+	clone(): Int64 {
 		return new Int64(this.low, this.high);
 	}
 
-	toString(radix = 10) {
+	toString(radix = 10): string {
 		return this._int64toString(true, radix);
 	}
 }
@@ -153,16 +153,16 @@ export class Int64 extends Integer64 {
  * @internal
  */
 export class Uint64 extends Integer64 {
-	static fromString(in_string: string, in_radix = 10) {
+	static fromString(in_string: string, in_radix = 10): Uint64 {
 		const [low, high] = _stringToInt64.call(this, false, in_string, in_radix);
 		return new Uint64(low, high);
 	}
 
-	clone() {
+	clone(): Uint64 {
 		return new Uint64(this.low, this.high);
 	}
 
-	toString(radix) {
+	toString(radix): string {
 		return this._int64toString(false, radix);
 	}
 }

@@ -41,7 +41,7 @@ export class HTTPError extends Error {
 		return FlaggedError.prototype.isTransient.call(this);
 	}
 
-	private _generateMessage(title, statusCode, statusMessage, method, url) {
+	private _generateMessage(title, statusCode, statusMessage, method, url): string {
 		const titleStr = title === undefined ? "" : String(title);
 		const statusCodeStr = statusCode === undefined ? "" : String(statusCode);
 		const statusMessageStr = statusMessage === undefined ? "" : String(statusMessage);

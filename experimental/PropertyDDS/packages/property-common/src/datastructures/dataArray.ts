@@ -59,7 +59,7 @@ class BaseDataArray {
 	 * @param in_idxEnd - the end index
 	 * @returns the array of values in the range
 	 */
-	getValueRange(in_idxStart: number, in_idxEnd: number) {
+	getValueRange(in_idxStart: number, in_idxEnd: number): any {
 		if (
 			in_idxStart >= this.size ||
 			in_idxEnd > this.size ||
@@ -84,7 +84,7 @@ class BaseDataArray {
 	 * Deserialize data from a serialized representation
 	 * @param in_serialized - the serialized representation
 	 */
-	deserialize(in_serialized) {
+	deserialize(in_serialized): void {
 		const values = in_serialized;
 		const length = in_serialized.length;
 		if (length !== this.size) {
@@ -102,7 +102,7 @@ class BaseDataArray {
 	 * @param in_idx - the index
 	 * @param in_value - the value we want to set at index
 	 */
-	setValue(in_idx: number, in_value) {
+	setValue(in_idx: number, in_value): void {
 		if (in_idx < this._buffer.length) {
 			this._buffer[in_idx] = in_value;
 		} else {
@@ -117,7 +117,7 @@ class BaseDataArray {
 	 * @param in_deleteCount - number of removed elements
 	 * @returns a copy of the input array without the selected range
 	 */
-	private _removeElementsFromArray(in_arr, in_offset: number, in_deleteCount: number) {
+	private _removeElementsFromArray(in_arr, in_offset: number, in_deleteCount: number): any {
 		// TODO: this function can be optimized
 		const newSize = this.size - in_deleteCount;
 		const splicedArray = new in_arr.constructor(newSize);
@@ -131,7 +131,7 @@ class BaseDataArray {
 	 * @param in_offset - start of the range
 	 * @param in_deleteCount - number of elements to be removed
 	 */
-	removeRange(in_offset: number, in_deleteCount: number) {
+	removeRange(in_offset: number, in_deleteCount: number): void {
 		if (in_offset + in_deleteCount < (this._buffer.length as number) + 1) {
 			this._buffer = this._removeElementsFromArray(this._buffer, in_offset, in_deleteCount);
 			this.size = this.size - in_deleteCount;
@@ -147,7 +147,7 @@ class BaseDataArray {
 	 * @param in_addedArray - the array with the elements that will be added
 	 * @returns the combined array
 	 */
-	private _insert(in_arr, in_offset: number, in_addedArray) {
+	private _insert(in_arr, in_offset: number, in_addedArray): any {
 		// TODO: this function can be optimized
 		const newSize = this.size + (in_addedArray.length as number);
 		const insertedArray = new in_arr.constructor(newSize);
@@ -165,7 +165,7 @@ class BaseDataArray {
 	 * @param in_offset - the target index
 	 * @param in_array - the array to be inserted
 	 */
-	insertRange(in_offset: number, in_array) {
+	insertRange(in_offset: number, in_array): void {
 		this._buffer = this._insert(this._buffer, in_offset, in_array);
 		this.size = this.size + (in_array.length as number);
 	}
@@ -175,7 +175,7 @@ class BaseDataArray {
 	 * @param in_offset - An optional offset in this array to begin start setting this arrays values to in_array values.
 	 * @param in_array - The input array.
 	 */
-	set(in_offset: number, in_array) {
+	set(in_offset: number, in_array): void {
 		if (
 			in_array instanceof ArrayBuffer ||
 			in_array instanceof Array ||
@@ -193,7 +193,7 @@ class BaseDataArray {
 	 * Insert a value at the end of the array, creates a new element at the end and sets the value.
 	 * @param in_value - The new value.
 	 */
-	push(in_value) {
+	push(in_value): void {
 		// Adjust the buffer if necessary
 		const bufferLength = this._buffer.length;
 		if (this.size > bufferLength - 1) {
@@ -208,7 +208,7 @@ class BaseDataArray {
 	 * Get direct access to the data (for performance reasons) this should be uses read only.
 	 * @returns The (read only) raw data.
 	 */
-	getBuffer() {
+	getBuffer(): any {
 		return this._buffer;
 	}
 
@@ -216,7 +216,7 @@ class BaseDataArray {
 	 * Get the constructor of the underlying `TypedArray`.
 	 * @returns The constructor for the data buffer.
 	 */
-	getBufferCtor() {
+	getBufferCtor(): any {
 		return this.bufferConstructor;
 	}
 
@@ -224,7 +224,7 @@ class BaseDataArray {
 	 * Apply a given function to all elements of the array.
 	 * @param in_fn - The function that will be applied to every element.
 	 */
-	iterate(in_fn) {
+	iterate(in_fn): void {
 		const l = this.size;
 		for (let i = 0; i < l; i++) {
 			in_fn(this._buffer[i]);
@@ -238,7 +238,7 @@ class BaseDataArray {
 	 * @param in_newSize - The target size.
 	 * @returns The buffer with the new size.
 	 */
-	private resizeBuffer(in_bufferCtor, in_buffer, in_newSize: number) {
+	private resizeBuffer(in_bufferCtor, in_buffer, in_newSize: number): any {
 		// target buffer with the desired new size
 		// The 'eslint-...' is used to disable the rule that requires
 		// constructors to start with a capitalized letter.
@@ -266,21 +266,21 @@ class BaseDataArray {
 	 * @param size - The target size
 	 * @returns The DataArray itself
 	 */
-	resize(size: number) {
+	resize(size: number): this {
 		// this can be costly!!!
 		this._alloc(size);
 		this.size = size;
 		return this;
 	}
 
-	copy() {
+	copy(): any {
 		// and this!
 		const newBuffer = new this.bufferConstructor(this.size); // buffer with the desired new size
 		newBuffer.set(this._buffer);
 		return newBuffer;
 	}
 
-	get length() {
+	get length(): number {
 		return this.size;
 	}
 }
@@ -381,7 +381,7 @@ class UniversalDataArray extends BaseDataArray {
 	 * @param values - The values we need to write.
 	 * @param offset - The starting index in target array.
 	 */
-	private arraySet(array, values, offset = 0) {
+	private arraySet(array, values, offset = 0): void {
 		let index = 0;
 		values.forEach(function (value) {
 			array[index + offset] = value;
@@ -394,7 +394,7 @@ class UniversalDataArray extends BaseDataArray {
 	 * @param in_offset - The target index.
 	 * @param in_array - The array to be inserted.
 	 */
-	insertRange(in_offset: number, in_array: any[]) {
+	insertRange(in_offset: number, in_array: any[]): void {
 		this._buffer.splice.call(this._buffer, ...[in_offset, 0].concat(in_array));
 		this.size = this.size + in_array.length;
 	}
@@ -404,7 +404,7 @@ class UniversalDataArray extends BaseDataArray {
 	 * @param in_offset - The start of the range.
 	 * @param in_deleteCount - The number of elements to be removed.
 	 */
-	removeRange(in_offset: number, in_deleteCount: number) {
+	removeRange(in_offset: number, in_deleteCount: number): void {
 		if (in_offset + in_deleteCount < (this._buffer.length as number) + 1) {
 			this._buffer.splice(in_offset, in_deleteCount);
 			this.size -= in_deleteCount;
@@ -419,7 +419,7 @@ class UniversalDataArray extends BaseDataArray {
 	 * setting this arrays values to in_array values.
 	 * @param in_array - The input array.
 	 */
-	set(in_offset: number, in_array) {
+	set(in_offset: number, in_array): void {
 		if (
 			in_array instanceof ArrayBuffer ||
 			in_array instanceof Array ||
@@ -439,7 +439,7 @@ class UniversalDataArray extends BaseDataArray {
 	 * @param in_idxEnd - the end index - this offset is exclusive
 	 * @returns the array of values in the range
 	 */
-	getValueRange(in_idxStart: number, in_idxEnd: number) {
+	getValueRange(in_idxStart: number, in_idxEnd: number): any[] {
 		if (
 			in_idxStart >= this.size ||
 			in_idxEnd > this.size ||
@@ -457,7 +457,7 @@ class UniversalDataArray extends BaseDataArray {
 	 * @param in_newSize - target size
 	 * @returns an Array of the new size
 	 */
-	private resizeBufferArray(in_buffer, in_newSize) {
+	private resizeBufferArray(in_buffer, in_newSize): any[] {
 		// target buffer with the desired new size
 		const newBuffer = new Array(in_newSize);
 		const oldSize = in_buffer.length;
@@ -494,7 +494,7 @@ class StringDataArray extends BaseDataArray {
 	 * @param in_offset - the target index
 	 * @param in_string - the string to be inserted
 	 */
-	insertRange(in_offset: number, in_string: string) {
+	insertRange(in_offset: number, in_string: string): void {
 		this._buffer = `${this._buffer.substr(0, in_offset)}${in_string}${this._buffer.substr(
 			in_offset,
 		)}`;
@@ -506,7 +506,7 @@ class StringDataArray extends BaseDataArray {
 	 * @param in_offset - start of the range
 	 * @param in_deleteCount - number of elements to be removed
 	 */
-	removeRange(in_offset: number, in_deleteCount: number) {
+	removeRange(in_offset: number, in_deleteCount: number): void {
 		if (in_offset + in_deleteCount < (this._buffer.length as number) + 1) {
 			this._buffer = `${this._buffer.substr(0, in_offset)}${this._buffer.substr(
 				in_offset + in_deleteCount,
@@ -522,7 +522,7 @@ class StringDataArray extends BaseDataArray {
 	 * @param in_offset - The offset in this array to begin start setting this arrays values to in_string values.
 	 * @param in_string - The input string.
 	 */
-	set(in_offset: number, in_string: string) {
+	set(in_offset: number, in_string: string): void {
 		this._buffer = `${this._buffer.substr(0, in_offset)}${in_string}${this._buffer.substr(
 			in_offset + in_string.length,
 		)}`;
@@ -546,7 +546,7 @@ class StringDataArray extends BaseDataArray {
 		return this._buffer.slice(in_idxStart, in_idxEnd);
 	}
 
-	get length() {
+	get length(): number {
 		return this._buffer.length;
 	}
 }
@@ -569,7 +569,7 @@ class BoolDataArray extends UniversalDataArray {
 	 * @param values - the values we need to write
 	 * @param offset - starting index in target array
 	 */
-	private arraySetBool(array, values, offset = 0) {
+	private arraySetBool(array, values, offset = 0): void {
 		let index = 0;
 		values.forEach(function (value) {
 			array[index + offset] = !!(value as boolean);
@@ -582,7 +582,7 @@ class BoolDataArray extends UniversalDataArray {
 	 * @param in_offset - the target index
 	 * @param in_array - the array to be inserted
 	 */
-	insertRange(in_offset: number, in_array: any[]) {
+	insertRange(in_offset: number, in_array: any[]): void {
 		const toBeAdded: any[] = in_array.map((val) => !!(val as boolean));
 		this._buffer.splice.call(this._buffer, ...[in_offset, 0].concat(toBeAdded));
 		this.size = this.size + in_array.length;
@@ -593,7 +593,7 @@ class BoolDataArray extends UniversalDataArray {
 	 * @param in_offset - An optional offset in this array to begin start setting this arrays values to in_array values.
 	 * @param in_array - The input array.
 	 */
-	set(in_offset: number, in_array) {
+	set(in_offset: number, in_array): void {
 		if (
 			in_array instanceof ArrayBuffer ||
 			in_array instanceof Array ||

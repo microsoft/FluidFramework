@@ -49,7 +49,7 @@ async function runAndValidateBatch(
 	proxyDsf: IDocumentServiceFactory,
 	timeout: number,
 	runtimeOptions?: IContainerRuntimeOptionsInternal,
-) {
+): Promise<void> {
 	let containerUrl: string | undefined;
 	{
 		const loader = provider.createLoader([

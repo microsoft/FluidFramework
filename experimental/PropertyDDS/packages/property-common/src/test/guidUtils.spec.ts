@@ -24,16 +24,16 @@ const {
 	isGUID,
 } = GuidUtils;
 
-const testGuid = function (re, base64) {
+const testGuid = function (re, base64): void {
 	describe("generateGuid", function () {
-		it("should return a GUID", function (done) {
+		it("should return a GUID", function (done): void {
 			expect(re.test(generateGUID(base64))).to.equal(true);
 			done();
 		});
 	});
 };
 
-const testInitialization = function (firstGuid, base64) {
+const testInitialization = function (firstGuid, base64): void {
 	describe("initializeGUIDGenerator", function () {
 		// WARNING: All the tests below depend on the first it() results.
 		let guid1;
@@ -93,9 +93,9 @@ const testInitialization = function (firstGuid, base64) {
 	});
 };
 
-const testCorrectness = function (goodGuid, badGuid) {
+const testCorrectness = function (goodGuid, badGuid): void {
 	describe("isGUID", function () {
-		it("should check if a GUID is valid", function (done) {
+		it("should check if a GUID is valid", function (done): void {
 			expect(isGUID(goodGuid)).to.equal(true);
 			expect(isGUID(badGuid)).to.equal(false);
 			done();
@@ -103,9 +103,9 @@ const testCorrectness = function (goodGuid, badGuid) {
 	});
 };
 
-const testConversion = function (guid, guidArray, base64) {
+const testConversion = function (guid, guidArray, base64): void {
 	describe("guidToUint32x4", function () {
-		it("should check that converting a guid to Uint32x4 is correct", function (done) {
+		it("should check that converting a guid to Uint32x4 is correct", function (done): void {
 			let myGuidArray: any = guidToUint32x4(guid);
 			console.log(myGuidArray);
 			myGuidArray = Array.prototype.slice.call(myGuidArray);
@@ -140,21 +140,21 @@ const testConversion = function (guid, guidArray, base64) {
 	});
 };
 
-const testCombine = function (guid1, guid2, expectedGuid, base64) {
+const testCombine = function (guid1, guid2, expectedGuid, base64): void {
 	describe("combineGuids", function () {
-		it("should check that combining two guids will result in an expected guid", function () {
+		it("should check that combining two guids will result in an expected guid", function (): void {
 			expect(combineGuids(guid1, guid2, base64)).to.equal(expectedGuid);
 		});
 
-		it("should not result in the expected guid if the order of combined guids are reversed", function () {
+		it("should not result in the expected guid if the order of combined guids are reversed", function (): void {
 			expect(combineGuids(guid2, guid1, base64)).to.not.equal(expectedGuid);
 		});
 	});
 };
 
-const test16fromAndTo64 = function (base64, base16) {
+const test16fromAndTo64 = function (base64, base16): void {
 	describe("base64Tobase16 and base16ToBase64", function () {
-		it("should check that converting a base64 to a GUID is correct", function (done) {
+		it("should check that converting a base64 to a GUID is correct", function (done): void {
 			expect(base16ToBase64(base64Tobase16(base64))).to.equal(base64);
 			expect(base64Tobase16(base16ToBase64(base16))).to.equal(base16);
 			expect(base16ToBase64(base16)).to.equal(base64);
