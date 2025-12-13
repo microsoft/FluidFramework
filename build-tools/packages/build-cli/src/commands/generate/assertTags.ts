@@ -21,6 +21,7 @@ import {
 	type StringLiteral,
 	SyntaxKind,
 } from "ts-morph";
+import { mjsLoader } from "../../library/configLoader.js";
 
 /**
  * Used by `TagAssertsCommand`.
@@ -183,7 +184,12 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 		};
 
 		const dataMap = new Map<PackageWithKind, PackageData>();
-		const config = cosmiconfig(configName, { searchPlaces });
+		const config = cosmiconfig(configName, {
+			searchPlaces,
+			loaders: {
+				".mjs": mjsLoader,
+			},
+		});
 
 		for (const pkg of packages) {
 			// Package configuration:
