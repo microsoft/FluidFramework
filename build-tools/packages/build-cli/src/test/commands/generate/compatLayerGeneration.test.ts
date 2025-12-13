@@ -61,7 +61,7 @@ describe("generate:compatLayerGeneration", () => {
 
 		const result = maybeGetNewGeneration(
 			currentVersion,
-			mockMetadata,
+			{ fluidCompatMetadata: mockMetadata },
 			minimumCompatWindowMonths,
 			mockLogger,
 		);
@@ -87,7 +87,7 @@ describe("generate:compatLayerGeneration", () => {
 
 		const result = maybeGetNewGeneration(
 			currentVersion,
-			mockMetadata,
+			{ fluidCompatMetadata: mockMetadata },
 			minimumCompatWindowMonths,
 			mockLogger,
 		);
@@ -111,7 +111,7 @@ describe("generate:compatLayerGeneration", () => {
 		};
 		const result = maybeGetNewGeneration(
 			"1.1.0", // Minor version change
-			mockMetadata,
+			{ fluidCompatMetadata: mockMetadata },
 			minimumCompatWindowMonths,
 			mockLogger,
 		);
@@ -135,7 +135,7 @@ describe("generate:compatLayerGeneration", () => {
 		};
 		const result = maybeGetNewGeneration(
 			"2.0.0", // Major version change
-			mockMetadata,
+			{ fluidCompatMetadata: mockMetadata },
 			minimumCompatWindowMonths,
 			mockLogger,
 		);
@@ -159,7 +159,7 @@ describe("generate:compatLayerGeneration", () => {
 		};
 		const result = maybeGetNewGeneration(
 			"1.1.0", // Minor version change but not enough time elapsed
-			mockMetadata,
+			{ fluidCompatMetadata: mockMetadata },
 			minimumCompatWindowMonths,
 			mockLogger,
 		);
@@ -182,7 +182,7 @@ describe("generate:compatLayerGeneration", () => {
 		};
 		const result = maybeGetNewGeneration(
 			"2.0.0", // Major version change
-			mockMetadata,
+			{ fluidCompatMetadata: mockMetadata },
 			minimumCompatWindowMonths,
 			mockLogger,
 		);
@@ -200,7 +200,12 @@ describe("generate:compatLayerGeneration", () => {
 		};
 
 		assert.throws(() => {
-			maybeGetNewGeneration("2.0.0", invalidMetadata, minimumCompatWindowMonths, mockLogger);
+			maybeGetNewGeneration(
+				"2.0.0",
+				{ fluidCompatMetadata: invalidMetadata },
+				minimumCompatWindowMonths,
+				mockLogger,
+			);
 		}, /not a valid date/);
 	});
 
@@ -214,8 +219,94 @@ describe("generate:compatLayerGeneration", () => {
 		};
 
 		assert.throws(() => {
-			maybeGetNewGeneration("2.0.0", invalidMetadata, minimumCompatWindowMonths, mockLogger);
+			maybeGetNewGeneration(
+				"2.0.0",
+				{ fluidCompatMetadata: invalidMetadata },
+				minimumCompatWindowMonths,
+				mockLogger,
+			);
 		}, /Invalid Version/);
+	});
+
+	it("should return undefined when fluidCompatMetadata is not present in package.json", () => {
+		const mockLogger = createMockLogger();
+		const packageJson = {}; // No fluidCompatMetadata property
+
+		const result = maybeGetNewGeneration(
+			"2.0.0",
+			packageJson,
+			minimumCompatWindowMonths,
+			mockLogger,
+		);
+
+		assert.strictEqual(result, undefined);
+	});
+
+	it("should return generation 1 when fluidCompatMetadata is an empty object (opt-in)", () => {
+		const mockLogger = createMockLogger();
+		const packageJson = {
+			fluidCompatMetadata: {}, // Empty object indicates opt-in
+		};
+
+		const result = maybeGetNewGeneration(
+			"2.0.0",
+			packageJson,
+			minimumCompatWindowMonths,
+			mockLogger,
+		);
+
+		assert.strictEqual(result, 1);
+	});
+
+	it("should return generation 1 for opt-in regardless of package version", () => {
+		const mockLogger = createMockLogger();
+		const packageJson = {
+			fluidCompatMetadata: {}, // Empty object indicates opt-in
+		};
+
+		// Test with patch version
+		let result = maybeGetNewGeneration(
+			"1.0.1",
+			packageJson,
+			minimumCompatWindowMonths,
+			mockLogger,
+		);
+		assert.strictEqual(result, 1);
+
+		// Test with minor version
+		result = maybeGetNewGeneration(
+			"1.1.0",
+			packageJson,
+			minimumCompatWindowMonths,
+			mockLogger,
+		);
+		assert.strictEqual(result, 1);
+
+		// Test with major version
+		result = maybeGetNewGeneration(
+			"2.0.0",
+			packageJson,
+			minimumCompatWindowMonths,
+			mockLogger,
+		);
+		assert.strictEqual(result, 1);
+	});
+
+	it("should return generation 1 for opt-in with any minimumCompatWindowMonths value", () => {
+		const mockLogger = createMockLogger();
+		const packageJson = {
+			fluidCompatMetadata: {}, // Empty object indicates opt-in
+		};
+
+		// Test with different minimumCompatWindowMonths values
+		let result = maybeGetNewGeneration("2.0.0", packageJson, 1, mockLogger);
+		assert.strictEqual(result, 1);
+
+		result = maybeGetNewGeneration("2.0.0", packageJson, 6, mockLogger);
+		assert.strictEqual(result, 1);
+
+		result = maybeGetNewGeneration("2.0.0", packageJson, 12, mockLogger);
+		assert.strictEqual(result, 1);
 	});
 
 	it("should fail when current date is older than previous release date", () => {
@@ -235,7 +326,7 @@ describe("generate:compatLayerGeneration", () => {
 			() =>
 				maybeGetNewGeneration(
 					"2.0.0", // Major version change
-					mockMetadata,
+					{ fluidCompatMetadata: mockMetadata },
 					minimumCompatWindowMonths,
 					mockLogger,
 				),

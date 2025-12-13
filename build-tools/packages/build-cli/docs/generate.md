@@ -226,7 +226,7 @@ _See code: [src/commands/generate/changeset.ts](https://github.com/microsoft/Flu
 
 ## `flub generate compatLayerGeneration`
 
-Updates the generation and release date for layer compatibility.
+Updates the generation of a package for layer compatibility. To opt in a package, add an empty "fluidCompatMetadata" object to its package.json.
 
 ```
 USAGE
@@ -240,7 +240,7 @@ FLAGS
   --concurrency=<value>                [default: 25] The number of tasks to execute concurrently.
   --generationDir=<value>              [default: ./src] The directory where the generation file is located.
   --minimumCompatWindowMonths=<value>  [default: 3] The minimum compatibility window in months that is supported across
-                                       all Fluid layers.
+                                       all Fluid layers. Must be at least 1
   --outFile=<value>                    [default: layerGenerationState.ts] Output the results to this file.
 
 PACKAGE SELECTION FLAGS
@@ -273,7 +273,8 @@ PACKAGE FILTER FLAGS
                           excluded. Cannot be used with --scope.
 
 DESCRIPTION
-  Updates the generation and release date for layer compatibility.
+  Updates the generation of a package for layer compatibility. To opt in a package, add an empty "fluidCompatMetadata"
+  object to its package.json.
 ```
 
 _See code: [src/commands/generate/compatLayerGeneration.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/compatLayerGeneration.ts)_
