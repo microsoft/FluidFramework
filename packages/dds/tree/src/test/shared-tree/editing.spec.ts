@@ -3287,14 +3287,17 @@ describe("Editing", () => {
 
 			tree.editor
 				.optionalField({ parent: rootNode, field: brand("new") })
-				.set(chunkFromJsonTrees(["new"]), true);
+				.set(chunkFromJsonTrees([{ child: "new" }]), true);
 
 			cursor = tree.forest.allocateCursor();
 			tree.forest.moveCursorToPath(
 				{ parent: rootNode, parentField: brand("new"), parentIndex: 0 },
 				cursor,
 			);
-			const anchorToNew = cursor.buildAnchor();
+			const anchorToNewParent = cursor.buildAnchor();
+			cursor.enterField(brand("child"));
+			cursor.enterNode(0);
+			const anchorToNewChild = cursor.buildAnchor();
 			cursor.free();
 			tree.transaction.commit();
 
@@ -3307,7 +3310,16 @@ describe("Editing", () => {
 			cursor.free();
 			cursor = tree.forest.allocateCursor();
 			assert.equal(
-				tree.forest.tryMoveCursorToNode(anchorToNew, cursor),
+				tree.forest.tryMoveCursorToNode(anchorToNewParent, cursor),
+				TreeNavigationResult.Ok,
+			);
+			cursor.enterField(brand("child"));
+			cursor.enterNode(0);
+			assert.equal(cursor.value, "new");
+			cursor.free();
+			cursor = tree.forest.allocateCursor();
+			assert.equal(
+				tree.forest.tryMoveCursorToNode(anchorToNewChild, cursor),
 				TreeNavigationResult.Ok,
 			);
 			assert.equal(cursor.value, "new");
