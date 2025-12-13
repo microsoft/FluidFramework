@@ -274,7 +274,7 @@ export class SummaryManager
 
 				const summarizer = await this.createSummarizerFn();
 				this.summarizer = summarizer;
-				this.setupForwardedEvents();
+				this.setupForwardedEvents(summarizer);
 
 				// Re-validate that it need to be running. Due to asynchrony, it may be not the case anymore
 				// If we can't run the LastSummary, simply return as to avoid paying the cost of launching
@@ -456,31 +456,32 @@ export class SummaryManager
 		this._disposed = true;
 	}
 
-	private readonly forwardedEvents = new Map<string, () => void>();
+	private readonly forwardedEventsCleanup: (() => void)[] = [];
 
-	private setupForwardedEvents(): void {
+	private setupForwardedEvents(summarizer: ISummarizer): void {
 		for (const event of [
 			"summarize",
 			"summarizeAllAttemptsFailed",
 			"summarizerStop",
 			"summarizerStart",
 			"summarizerStartupFailed",
-		]) {
+			"summarizeTimeout",
+		] as const) {
 			const listener = (...args: unknown[]): void => {
 				this.emit(event, ...args);
 			};
 			// TODO: better typing here
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-			this.summarizer?.on(event as any, listener);
-			this.forwardedEvents.set(event, listener);
+			summarizer.on(event as any, listener);
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+			this.forwardedEventsCleanup.push(() => summarizer.off(event as any, listener));
 		}
 	}
 
 	private cleanupForwardedEvents(): void {
-		for (const [event, listener] of this.forwardedEvents.entries()) {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-			this.summarizer?.off(event as any, listener);
+		for (const cleanup of this.forwardedEventsCleanup) {
+			cleanup();
 		}
-		this.forwardedEvents.clear();
+		this.forwardedEventsCleanup.length = 0;
 	}
 }
