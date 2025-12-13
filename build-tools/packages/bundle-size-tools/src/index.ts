@@ -67,5 +67,6 @@ export {
 	getChunkParsedSize,
 	getLastCommitHashFromPR,
 	getPriorCommit,
+	UnzippedContents,
 	unzipStream,
 } from "./utilities";
