@@ -263,12 +263,18 @@ export class SquashingTransactionStack<
 			this.transactionRevision ??= mintRevisionTag();
 			const transactionBranch =
 				this.#transactionBranch ??
-				this.branch.fork(
-					startHead,
-					() =>
+				this.branch.fork(startHead, {
+					mintEditTag: () =>
 						this.transactionRevision ??
 						fail("Unable to apply change to transaction branch after transaction is closed"),
-				);
+					mintCommitTag: (changeTag: RevisionTag) => {
+						assert(
+							changeTag === this.transactionRevision,
+							"Unexpected change tag during transaction",
+						);
+						return mintRevisionTag();
+					},
+				});
 			this.setTransactionBranch(transactionBranch);
 			transactionBranch.editor.enterTransaction();
 			return (result) => {
