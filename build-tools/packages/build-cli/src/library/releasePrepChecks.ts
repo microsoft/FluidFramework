@@ -6,6 +6,12 @@
 import { MonoRepo, type Package } from "@fluidframework/build-tools";
 import execa from "execa";
 import { ResetMode } from "simple-git";
+import {
+	DEFAULT_GENERATION_DIR,
+	DEFAULT_GENERATION_FILE_NAME,
+	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
+	checkPackageCompatLayerGeneration,
+} from "./compatLayerGeneration.js";
 import type { Context } from "./context.js";
 import { getPreReleaseDependencies } from "./package.js";
 
@@ -225,6 +231,54 @@ export const CheckNoUntaggedAsserts: CheckFunction = async (
 		return {
 			message: "Found some untagged asserts. These should be tagged before release.",
 			fixCommand: "pnpm run policy-check:asserts",
+		};
+	}
+};
+
+/**
+ * Checks that packages with compat layer metadata have up-to-date generation files.
+ * This check is lenient - packages without metadata or generation files are skipped.
+ */
+export const CheckCompatLayerGeneration: CheckFunction = async (
+	_context: Context,
+	releaseGroupOrPackage: MonoRepo | Package,
+): Promise<CheckResult> => {
+	const packagesToCheck =
+		releaseGroupOrPackage instanceof MonoRepo
+			? releaseGroupOrPackage.packages
+			: [releaseGroupOrPackage];
+
+	const packagesNeedingUpdate: { pkg: Package; reason: string }[] = [];
+
+	for (const pkg of packagesToCheck) {
+		// eslint-disable-next-line no-await-in-loop -- Need to check files sequentially
+		const result = await checkPackageCompatLayerGeneration(
+			pkg,
+			DEFAULT_GENERATION_DIR,
+			DEFAULT_GENERATION_FILE_NAME,
+			DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
+		);
+
+		if (result.needsUpdate) {
+			packagesNeedingUpdate.push({
+				pkg,
+				reason: result.reason,
+			});
+		}
+	}
+
+	if (packagesNeedingUpdate.length > 0) {
+		// Build fix command with release group option if applicable
+		const fixCommand =
+			releaseGroupOrPackage instanceof MonoRepo
+				? `pnpm flub generate compatLayerGeneration -g ${releaseGroupOrPackage.kind}`
+				: "pnpm flub generate compatLayerGeneration";
+
+		return {
+			message: `Some packages need compat layer generation updates:\n${packagesNeedingUpdate
+				.map(({ pkg, reason }) => `  - ${pkg.name}: ${reason}`)
+				.join("\n")}`,
+			fixCommand,
 		};
 	}
 };
