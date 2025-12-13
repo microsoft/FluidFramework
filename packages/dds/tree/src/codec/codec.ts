@@ -395,9 +395,13 @@ function isJsonCodec<TDecoded, TContext>(
  * Constructs a {@link IMultiFormatCodec} from a `IJsonCodec` using a generic binary encoding that simply writes
  * the json representation of the object to a buffer.
  */
-export function withDefaultBinaryEncoding<TDecoded, TContext>(
-	jsonCodec: IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
-): IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
+export function withDefaultBinaryEncoding<
+	TDecoded,
+	TContext,
+	TEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly,
+>(
+	jsonCodec: IJsonCodec<TDecoded, TEncoded, JsonCompatibleReadOnly, TContext>,
+): IMultiFormatCodec<TDecoded, TEncoded, JsonCompatibleReadOnly, TContext> {
 	return {
 		json: jsonCodec,
 		binary: new DefaultBinaryCodec(jsonCodec),
@@ -408,11 +412,15 @@ export function withDefaultBinaryEncoding<TDecoded, TContext>(
  * Ensures that the provided single or multi-format codec has a binary encoding.
  * Adapts the json encoding using {@link withDefaultBinaryEncoding} if necessary.
  */
-export function ensureBinaryEncoding<TDecoded, TContext>(
+export function ensureBinaryEncoding<
+	TDecoded,
+	TContext,
+	TEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly,
+>(
 	codec:
-		| IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>
-		| IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
-): IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
+		| IMultiFormatCodec<TDecoded, TEncoded, JsonCompatibleReadOnly, TContext>
+		| IJsonCodec<TDecoded, TEncoded, JsonCompatibleReadOnly, TContext>,
+): IMultiFormatCodec<TDecoded, TEncoded, JsonCompatibleReadOnly, TContext> {
 	return isJsonCodec(codec) ? withDefaultBinaryEncoding(codec) : codec;
 }
 

@@ -278,8 +278,8 @@ describe("DetachedFieldIndex Codecs", () => {
 							revisionTagCodec: new RevisionTagCodec(idCompressor),
 							idCompressor,
 						});
-						const encoded = inner.json.encode(data);
-						const decoded = inner.json.decode(encoded);
+						const encoded = inner.encode(data);
+						const decoded = inner.decode(encoded);
 						assert.deepEqual(decoded, data);
 					});
 				}
@@ -332,7 +332,7 @@ describe("DetachedFieldIndex Codecs", () => {
 							revisionTagCodec: new RevisionTagCodec(idCompressor),
 							idCompressor,
 						});
-						const encoded = codec.json.encode(data);
+						const encoded = codec.encode(data);
 						takeJsonSnapshot(encoded);
 					});
 				}

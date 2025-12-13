@@ -6,10 +6,14 @@
 import { strict as assert } from "node:assert";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { FluidClientVersion, type IJsonCodec } from "../../../codec/index.js";
+import { FluidClientVersion, Versioned } from "../../../codec/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { ClientVersionDispatchingCodecBuilder } from "../../../codec/versioned/codec.js";
+
+import {
+	ClientVersionDispatchingCodecBuilder,
+	type CodecAndSchema,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../codec/versioned/codec.js";
 import { pkgVersion } from "../../../packageVersion.js";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
@@ -23,13 +27,15 @@ describe("versioned Codecs", () => {
 			version: 2;
 			value2: number;
 		}
-		const codecV1: IJsonCodec<number> = {
+		const codecV1: CodecAndSchema<number> = {
 			encode: (x) => ({ version: 1, value1: x }),
 			decode: (x) => (x as unknown as V1).value1,
+			schema: Versioned,
 		};
-		const codecV2: IJsonCodec<number> = {
+		const codecV2: CodecAndSchema<number> = {
 			encode: (x) => ({ version: 2, value2: x }),
 			decode: (x) => (x as unknown as V2).value2,
+			schema: Versioned,
 		};
 
 		const builder = ClientVersionDispatchingCodecBuilder.build("Test", {

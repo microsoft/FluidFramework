@@ -156,10 +156,20 @@ export function makeVersionDispatchingCodec<TDecoded, TContext>(
 	});
 }
 
-export type CodecType<TDecoded, TContext> =
-	| IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>
-	| IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>;
+/**
+ * A friendly format for codec authors use to define their codec and schema for use in {@link CodecVersion}.
+ * @remarks
+ * The codec should not perform its own schema validation.
+ * The schema validation gets added when normalizing to {@link NormalizedCodecVersion}.
+ */
+export type CodecAndSchema<TDecoded, TContext = void> = { readonly schema: TSchema } & (
+	| IMultiFormatCodec<TDecoded, VersionedJson, JsonCompatibleReadOnly, TContext>
+	| IJsonCodec<TDecoded, VersionedJson, JsonCompatibleReadOnly, TContext>
+);
 
+/**
+ * A codec alongside its format version and schema.
+ */
 export interface CodecVersionBase<
 	T = unknown,
 	TFormatVersion extends FormatVersion = FormatVersion,
@@ -168,16 +178,26 @@ export interface CodecVersionBase<
 	readonly codec: T;
 }
 
+/**
+ * A particular version of a codec and when to use it.
+ * @privateRemarks
+ * This allows lazy building of the codec with options.
+ * This optional can likely be removed as the codec handling is made simpler and more consistent.
+ * Removing support for this laziness would be nice help prevent unexpected coupling and alteration to codec behavior,
+ * helping ensure that tests and production code behave the same.
+ */
 export interface CodecVersion<
 	TDecoded,
 	TContext,
 	TFormatVersion extends FormatVersion,
 	TBuildOptions extends CodecWriteOptions,
 > extends CodecVersionBase<
-		| CodecType<TDecoded, TContext>
-		| ((options: TBuildOptions) => CodecType<TDecoded, TContext>),
+		| CodecAndSchema<TDecoded, TContext>
+		| ((options: TBuildOptions) => CodecAndSchema<TDecoded, TContext>),
 		TFormatVersion
 	> {}
+
+type VersionedJson = JsonCompatibleReadOnly & Versioned;
 
 export interface NormalizedCodecVersion<
 	TDecoded,
@@ -187,7 +207,7 @@ export interface NormalizedCodecVersion<
 > extends CodecVersionBase<
 		(
 			options: TBuildOptions,
-		) => IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
+		) => IJsonCodec<TDecoded, VersionedJson, JsonCompatibleReadOnly, TContext>,
 		TFormatVersion
 	> {}
 
@@ -196,10 +216,15 @@ export interface EvaluatedCodecVersion<
 	TContext,
 	TFormatVersion extends FormatVersion,
 > extends CodecVersionBase<
-		IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
+		IJsonCodec<TDecoded, VersionedJson, JsonCompatibleReadOnly, TContext>,
 		TFormatVersion
 	> {}
 
+/**
+ * Normalize the codec to a single format.
+ * @remarks
+ * Bakes in schema validation, so output no longer exposes the schema.
+ */
 function normalizeCodecVersion<
 	TDecoded,
 	TContext,
@@ -208,15 +233,22 @@ function normalizeCodecVersion<
 >(
 	codecVersion: CodecVersion<TDecoded, TContext, TFormatVersion, TBuildOptions>,
 ): NormalizedCodecVersion<TDecoded, TContext, TFormatVersion, TBuildOptions> {
-	const codecBuilder: (options: TBuildOptions) => CodecType<TDecoded, TContext> =
+	const codecBuilder: (options: TBuildOptions) => CodecAndSchema<TDecoded, TContext> =
 		typeof codecVersion.codec === "function"
 			? codecVersion.codec
-			: () => codecVersion.codec as CodecType<TDecoded, TContext>;
+			: () => codecVersion.codec as CodecAndSchema<TDecoded, TContext>;
 	const codec = (
 		options: TBuildOptions,
-	): IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> => {
+	): IJsonCodec<TDecoded, VersionedJson, JsonCompatibleReadOnly, TContext> => {
 		const built = codecBuilder(options);
-		return ensureBinaryEncoding(built);
+		// We currently don't expose or use binary formats, but someday we might.
+		const multiFormat = ensureBinaryEncoding<TDecoded, TContext, VersionedJson>(built);
+		return makeVersionedValidatedCodec(
+			options,
+			new Set([codecVersion.formatVersion]),
+			built.schema,
+			multiFormat.json,
+		);
 	};
 
 	return {
@@ -226,7 +258,7 @@ function normalizeCodecVersion<
 }
 
 /**
- * Creates a codec which dispatches to the appropriate member of a codec family based on the `oldestCompatibleClient` for encode and the
+ * Creates a codec which dispatches to the appropriate member of a codec family based on the `minVersionForCollab` for encode and the
  * version number in data it encounters for decode.
  * @privateRemarks
  * This is a two stage builder so the first stage can encapsulate all codec specific details and the second can bring in configuration.
@@ -312,7 +344,7 @@ export class ClientVersionDispatchingCodecBuilder<
 		>(applied.map(([_version, codec]) => [codec.formatVersion, codec]));
 		return {
 			encode: (data: TDecoded, context: TContext): JsonCompatibleReadOnly => {
-				return writeVersion.codec.json.encode(data, context);
+				return writeVersion.codec.encode(data, context);
 			},
 			decode: (data: JsonCompatibleReadOnly, context: TContext): TDecoded => {
 				const versioned = data as Partial<Versioned>;
@@ -323,8 +355,7 @@ export class ClientVersionDispatchingCodecBuilder<
 The client which encoded this data likely specified an "minVersionForCollab" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
 					);
 				}
-				const result = codec.codec.json.decode(data, context);
-				return result;
+				return codec.codec.decode(data, context);
 			},
 		};
 	}
@@ -345,27 +376,36 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 	 * making it easier to create builders without needing to explicitly specify all type parameters.
 	 * This gets better type inference than the constructor.
 	 */
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public static build<
 		Name extends CodecName,
-		TDecoded2,
-		TContext2,
-		TFormatVersion2 extends FormatVersion,
-		TBuildOptions2 extends CodecWriteOptions,
-		TEntry extends CodecVersion<TDecoded2, TContext2, TFormatVersion2, TBuildOptions2>,
-	>(
-		name: Name,
-		inputRegistry: ConfigMapEntry<TEntry> &
-			ConfigMapEntry<{
-				[key in keyof TEntry]: key extends keyof CodecVersionBase ? TEntry[key] : never;
-			}>,
-	): ClientVersionDispatchingCodecBuilder<
-		Name,
-		TDecoded2,
-		TContext2,
-		TFormatVersion2,
-		TBuildOptions2
-	> {
-		return new ClientVersionDispatchingCodecBuilder(name, inputRegistry);
+		Entry extends CodecVersion<unknown, unknown, FormatVersion, never>,
+	>(name: Name, inputRegistry: ConfigMapEntry<Entry>) {
+		type TDecoded2 = Entry extends CodecVersion<infer D, unknown, FormatVersion, never>
+			? D
+			: never;
+		type TContext2 = Entry extends CodecVersion<unknown, infer C, FormatVersion, never>
+			? C
+			: never;
+		type TFormatVersion2 = Entry extends CodecVersion<unknown, unknown, infer F, never>
+			? F
+			: never;
+		type TBuildOptions2 = Entry extends CodecVersion<unknown, unknown, FormatVersion, infer B>
+			? B
+			: never;
+		const builder = new ClientVersionDispatchingCodecBuilder(
+			name,
+			inputRegistry as ConfigMapEntry<unknown> as ConfigMapEntry<
+				CodecVersion<
+					TDecoded2,
+					// If it does not matter what context is provided, undefined is fine, so allow it to be omitted.
+					TContext2 extends unknown ? void : TContext2,
+					TFormatVersion2,
+					TBuildOptions2
+				>
+			>,
+		);
+		return builder;
 	}
 }
 

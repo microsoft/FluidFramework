@@ -26,22 +26,14 @@ export const detachedFieldIndexCodecBuilder = ClientVersionDispatchingCodecBuild
 	"DetachedFieldIndex",
 	{
 		[lowestMinVersionForCollab]: {
-			formatVersion: DetachedFieldIndexFormatVersion.v1 as DetachedFieldIndexFormatVersion,
+			formatVersion: DetachedFieldIndexFormatVersion.v1,
 			codec: (buildData: BuildData) =>
-				makeDetachedNodeToFieldCodecV1(
-					buildData.revisionTagCodec,
-					buildData,
-					buildData.idCompressor,
-				),
+				makeDetachedNodeToFieldCodecV1(buildData.revisionTagCodec, buildData.idCompressor),
 		},
 		[FluidClientVersion.v2_52]: {
-			formatVersion: DetachedFieldIndexFormatVersion.v2 as DetachedFieldIndexFormatVersion,
+			formatVersion: DetachedFieldIndexFormatVersion.v2,
 			codec: (buildData: BuildData) =>
-				makeDetachedNodeToFieldCodecV2(
-					buildData.revisionTagCodec,
-					buildData,
-					buildData.idCompressor,
-				),
+				makeDetachedNodeToFieldCodecV2(buildData.revisionTagCodec, buildData.idCompressor),
 		},
 	},
 );

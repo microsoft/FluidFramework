@@ -53,7 +53,7 @@ describe("schemaSummarizer", () => {
 					jsonValidator: FormatValidatorBasic,
 					minVersionForCollab,
 				});
-				const result: JsonCompatibleReadOnly = codec.json.encode(schema);
+				const result: JsonCompatibleReadOnly = codec.encode(schema);
 				return result;
 			};
 

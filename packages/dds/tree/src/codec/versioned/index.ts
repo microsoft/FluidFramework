@@ -10,4 +10,5 @@ export {
 	makeDiscontinuedCodecVersion,
 	ClientVersionDispatchingCodecBuilder,
 	type CodecVersion,
+	type CodecAndSchema,
 } from "./codec.js";

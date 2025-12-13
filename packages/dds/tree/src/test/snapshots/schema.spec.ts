@@ -18,7 +18,7 @@ describe("schema snapshots", () => {
 			it(`${name} - schema v${schemaFormat.formatVersion}`, () => {
 				const encoded = schemaFormat
 					.codec({ jsonValidator: FormatValidatorBasic, minVersionForCollab })
-					.json.encode(schemaData);
+					.encode(schemaData);
 				takeJsonSnapshot(encoded);
 			});
 		}

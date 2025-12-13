@@ -10,9 +10,7 @@ import {
 	ClientVersionDispatchingCodecBuilder,
 	type CodecWriteOptions,
 	FluidClientVersion,
-	type ICodecOptions,
 	type IJsonCodec,
-	makeVersionedValidatedCodec,
 } from "../../codec/index.js";
 import {
 	SchemaFormatVersion,
@@ -126,35 +124,22 @@ function decodeV2(f: FormatV2): TreeStoredSchema {
 
 /**
  * Creates a codec which performs synchronous monolithic encoding of schema content.
- * @param options - Specifies common codec options, including which `validator` to use.
- * @returns The codec.
  */
-function makeSchemaCodecV1(options: ICodecOptions): IJsonCodec<TreeStoredSchema, FormatV1> {
-	return makeVersionedValidatedCodec(options, new Set([SchemaFormatVersion.v1]), FormatV1, {
-		encode: (data: TreeStoredSchema) => encodeRepoV1(data),
-		decode: (data: FormatV1) => decodeV1(data),
-	});
-}
-
-/**
- * Creates a codec which performs synchronous monolithic encoding of schema content.
- * @param options - Specifies common codec options, including which `validator` to use.
- * @returns The codec.
- */
-function makeSchemaCodecV2(options: ICodecOptions): IJsonCodec<TreeStoredSchema, FormatV2> {
-	return makeVersionedValidatedCodec(options, new Set([SchemaFormatVersion.v2]), FormatV2, {
-		encode: (data: TreeStoredSchema) => encodeRepoV2(data),
-		decode: (data: FormatV2) => decodeV2(data),
-	});
-}
-
 export const schemaCodecBuilder = ClientVersionDispatchingCodecBuilder.build("Schema", {
 	[lowestMinVersionForCollab]: {
 		formatVersion: SchemaFormatVersion.v1,
-		codec: makeSchemaCodecV1,
+		codec: {
+			encode: (data: TreeStoredSchema) => encodeRepoV1(data),
+			decode: (data: FormatV1) => decodeV1(data),
+			schema: FormatV1,
+		},
 	},
 	[FluidClientVersion.v2_43]: {
 		formatVersion: SchemaFormatVersion.v2,
-		codec: makeSchemaCodecV2,
+		codec: {
+			encode: (data: TreeStoredSchema) => encodeRepoV2(data),
+			decode: (data: FormatV2) => decodeV2(data),
+			schema: FormatV2,
+		},
 	},
 });
