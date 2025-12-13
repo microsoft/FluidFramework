@@ -23,6 +23,7 @@ import type { DecodedMessage } from "../../shared-tree-core/messageTypes.js";
 import { TestChange } from "../testChange.js";
 import {
 	type EncodingTestData,
+	makeDiscontinuedEncodingTestSuite,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	testIdCompressor,
@@ -150,14 +151,17 @@ describe("message codec", () => {
 			jsonValidator: FormatValidatorBasic,
 		},
 	);
-
-	makeEncodingTestSuite(
-		family,
-		testCases,
+	makeEncodingTestSuite(family, testCases, undefined, [
+		MessageFormatVersion.v3,
+		MessageFormatVersion.v4,
+		MessageFormatVersion.vSharedBranches,
+	]);
+	makeDiscontinuedEncodingTestSuite(family, [
 		undefined,
-		[MessageFormatVersion.v3, MessageFormatVersion.v4, MessageFormatVersion.vSharedBranches],
-		[undefined, MessageFormatVersion.v1, MessageFormatVersion.v2, MessageFormatVersion.v5],
-	);
+		MessageFormatVersion.v1,
+		MessageFormatVersion.v2,
+		MessageFormatVersion.v5,
+	]);
 
 	describe("dispatching codec", () => {
 		const codec = makeMessageCodec(
