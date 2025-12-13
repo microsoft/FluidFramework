@@ -17,7 +17,6 @@ import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal"
 import type { IJsonCodec } from "../../codec/index.js";
 import {
 	type MutableTreeStoredSchema,
-	type SchemaFormatVersion,
 	type TreeStoredSchema,
 	schemaDataIsEmpty,
 } from "../../core/index.js";
@@ -27,10 +26,7 @@ import {
 	type SummaryElementParser,
 	type SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
-import type { JsonCompatible } from "../../util/index.js";
 import type { CollabWindow } from "../incrementalSummarizationUtils.js";
-
-import { encodeRepo } from "./codec.js";
 
 export const schemaStringKey = "SchemaString";
 
@@ -140,17 +136,4 @@ export class SchemaSummarizer
 		this.schema.apply(decoded);
 		this.schemaIndexLastChangedSeq = 0;
 	}
-}
-
-/**
- * Dumps schema into a deterministic JSON compatible semi-human readable format.
- *
- * @remarks
- * This can be used to help inspect schema for debugging, and to save a snapshot of schema to help detect and review changes to an applications schema.
- */
-export function encodeTreeSchema(
-	schema: TreeStoredSchema,
-	writeVersion: SchemaFormatVersion,
-): JsonCompatible {
-	return encodeRepo(schema, writeVersion);
 }

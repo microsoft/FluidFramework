@@ -15,7 +15,7 @@ import {
 	makeVersionDispatchingCodec,
 	withSchemaValidation,
 } from "../../codec/index.js";
-import { getCodecTreeForSchemaFormat, makeSchemaCodec } from "../schema-index/index.js";
+import { makeSchemaCodec, schemaCodecBuilder } from "../schema-index/index.js";
 
 import { EncodedSchemaChange } from "./schemaChangeFormat.js";
 import type { SchemaChange } from "./schemaChangeTypes.js";
@@ -31,7 +31,13 @@ export function makeSchemaChangeCodecs(
 ): ICodecFamily<SchemaChange> {
 	return makeCodecFamily([
 		[SchemaFormatVersion.v1, makeSchemaChangeCodecV1(options, SchemaFormatVersion.v1)],
-		[SchemaFormatVersion.v2, makeSchemaChangeCodecV1(options, SchemaFormatVersion.v2)],
+		[
+			SchemaFormatVersion.v2,
+			makeSchemaChangeCodecV1(
+				{ ...options, allowPossiblyIncompatibleWriteVersionOverrides: true },
+				SchemaFormatVersion.v2,
+			),
+		],
 	]);
 }
 
@@ -42,7 +48,7 @@ export function getCodecTreeForSchemaChangeFormat(
 	return {
 		name: "SchemaChange",
 		version,
-		children: [getCodecTreeForSchemaFormat(clientVersion)],
+		children: [schemaCodecBuilder.getCodecTree(clientVersion)],
 	};
 }
 

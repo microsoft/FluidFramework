@@ -28,16 +28,24 @@ import { type EncodingTestData, makeEncodingTestSuite } from "../../utils.js";
 import { toInitialSchema } from "../../../simple-tree/toStoredSchema.js";
 import { SchemaFactory } from "../../../simple-tree/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
+import {
+	currentVersion,
+	makeCodecFamily,
+	type CodecWriteOptions,
+} from "../../../codec/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { makeSchemaCodecs } from "../../../feature-libraries/schema-index/index.js";
-import { currentVersion, type CodecWriteOptions } from "../../../codec/index.js";
+import { schemaCodecBuilder } from "../../../feature-libraries/schema-index/codec.js";
 
 const codecOptions: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,
 	minVersionForCollab: currentVersion,
 };
 
-const schemaCodecs = makeSchemaCodecs(codecOptions);
+const schemaCodecs = makeCodecFamily(
+	schemaCodecBuilder.applyOptions(codecOptions).map(([_version, codec]) => {
+		return [codec.formatVersion, codec.codec] as const;
+	}),
+);
 const codecV1 = makeSchemaCodec(codecOptions, SchemaFormatVersion.v1);
 const codecV2 = makeSchemaCodec(codecOptions, SchemaFormatVersion.v2);
 

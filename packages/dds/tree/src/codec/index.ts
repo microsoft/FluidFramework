@@ -28,6 +28,7 @@ export {
 	type CodecTree,
 	jsonableCodecTree,
 	extractJsonValidator,
+	type CodecName,
 } from "./codec.js";
 export {
 	DiscriminatedUnionDispatcher,
@@ -36,8 +37,10 @@ export {
 } from "./discriminatedUnions.js";
 export {
 	Versioned,
-	makeVersionedCodec,
 	makeVersionedValidatedCodec,
 	makeVersionDispatchingCodec,
 	makeDiscontinuedCodecVersion,
+	ClientVersionDispatchingCodecBuilder,
+	type CodecVersion,
+	type CodecAndSchema,
 } from "./versioned/index.js";

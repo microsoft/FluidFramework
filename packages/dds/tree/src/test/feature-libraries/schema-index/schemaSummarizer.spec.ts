@@ -17,9 +17,9 @@ import {
 	SchemaFormatVersion,
 	storedEmptyFieldSchema,
 	TreeStoredSchemaRepository,
+	type TreeStoredSchema,
 } from "../../../core/index.js";
 import {
-	encodeTreeSchema,
 	SchemaSummarizer,
 	SchemaSummaryFormatVersion,
 	schemaStringKey,
@@ -30,7 +30,6 @@ import type { Format as SchemaFormatV1 } from "../../../feature-libraries/schema
 import { toInitialSchema } from "../../../simple-tree/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
-import { supportedSchemaFormats } from "./codecUtil.js";
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { CollabWindow } from "../../../feature-libraries/incrementalSummarizationUtils.js";
@@ -40,24 +39,34 @@ import {
 	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
 } from "../../../shared-tree-core/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { schemaCodecBuilder } from "../../../feature-libraries/schema-index/codec.js";
+import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 
 describe("schemaSummarizer", () => {
 	describe("encodeTreeSchema", () => {
 		useSnapshotDirectory("encodeTreeSchema");
-		for (const schemaFormat of supportedSchemaFormats) {
-			it(`empty - schema v${schemaFormat}`, () => {
-				const encoded = encodeTreeSchema(
-					{
-						rootFieldSchema: storedEmptyFieldSchema,
-						nodeSchema: new Map(),
-					},
-					schemaFormat,
-				);
+
+		for (const [minVersionForCollab, schemaFormat] of schemaCodecBuilder.registry) {
+			const encode = (schema: TreeStoredSchema): JsonCompatibleReadOnly => {
+				const codec = schemaFormat.codec({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab,
+				});
+				const result: JsonCompatibleReadOnly = codec.encode(schema);
+				return result;
+			};
+
+			it(`empty - schema v${schemaFormat.formatVersion}`, () => {
+				const encoded = encode({
+					rootFieldSchema: storedEmptyFieldSchema,
+					nodeSchema: new Map(),
+				});
 				takeJsonSnapshot(encoded);
 			});
 
-			it(`simple encoded schema - schema v${schemaFormat}`, () => {
-				const encoded = encodeTreeSchema(toInitialSchema(JsonAsTree.Tree), schemaFormat);
+			it(`simple encoded schema - schema v${schemaFormat.formatVersion}`, () => {
+				const encoded = encode(toInitialSchema(JsonAsTree.Tree));
 				takeJsonSnapshot(encoded);
 			});
 		}

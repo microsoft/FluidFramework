@@ -154,6 +154,18 @@ export interface CodecWriteOptions extends ICodecOptions {
 	 * the data's format should be versioned and if they can't handle the format they should error.
 	 */
 	readonly minVersionForCollab: MinimumVersionForCollab;
+
+	/**
+	 * Overrides the version of the codec to use for encoding.
+	 * @remarks
+	 * Without an override, the selected version will be based on {@link CodecWriteOptions.minVersionForCollab}.
+	 */
+	readonly writeVersionOverrides?: ReadonlyMap<CodecName, FormatVersion>;
+
+	/**
+	 * If true, suppress errors when `writeVersionOverrides` selects a version which may not be compatible with the {@link CodecWriteOptions.minVersionForCollab}.
+	 */
+	readonly allowPossiblyIncompatibleWriteVersionOverrides?: boolean;
 }
 
 /**
@@ -252,12 +264,21 @@ export interface ICodecFamily<TDecoded, TContext = void> {
 
 /**
  * A version stamp for encoded data.
- *
+ * @remarks
  * Strings are used for formats that are not yet officially supported.
  * When such formats become officially supported/stable, they will be switched to using a number.
  * Undefined is tolerated to enable the scenario where data was not initially versioned.
+ * @alpha
  */
 export type FormatVersion = number | string | undefined;
+
+/**
+ * A unique name given to this codec family.
+ * @remarks
+ * This is not persisted: it is only used to specify version overrides and in errors.
+ * @alpha
+ */
+export type CodecName = string;
 
 /**
  * A format version which is dependent on some parent format version.
@@ -374,9 +395,13 @@ function isJsonCodec<TDecoded, TContext>(
  * Constructs a {@link IMultiFormatCodec} from a `IJsonCodec` using a generic binary encoding that simply writes
  * the json representation of the object to a buffer.
  */
-export function withDefaultBinaryEncoding<TDecoded, TContext>(
-	jsonCodec: IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
-): IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
+export function withDefaultBinaryEncoding<
+	TDecoded,
+	TContext,
+	TEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly,
+>(
+	jsonCodec: IJsonCodec<TDecoded, TEncoded, JsonCompatibleReadOnly, TContext>,
+): IMultiFormatCodec<TDecoded, TEncoded, JsonCompatibleReadOnly, TContext> {
 	return {
 		json: jsonCodec,
 		binary: new DefaultBinaryCodec(jsonCodec),
@@ -387,11 +412,15 @@ export function withDefaultBinaryEncoding<TDecoded, TContext>(
  * Ensures that the provided single or multi-format codec has a binary encoding.
  * Adapts the json encoding using {@link withDefaultBinaryEncoding} if necessary.
  */
-export function ensureBinaryEncoding<TDecoded, TContext>(
+export function ensureBinaryEncoding<
+	TDecoded,
+	TContext,
+	TEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly,
+>(
 	codec:
-		| IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>
-		| IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
-): IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
+		| IMultiFormatCodec<TDecoded, TEncoded, JsonCompatibleReadOnly, TContext>
+		| IJsonCodec<TDecoded, TEncoded, JsonCompatibleReadOnly, TContext>,
+): IMultiFormatCodec<TDecoded, TEncoded, JsonCompatibleReadOnly, TContext> {
 	return isJsonCodec(codec) ? withDefaultBinaryEncoding(codec) : codec;
 }
 
