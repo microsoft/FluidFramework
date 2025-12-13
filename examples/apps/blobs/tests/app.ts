@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import {
+	createExampleDriver,
+	getSpecifiedServiceFromWebpack,
+} from "@fluid-example/example-driver";
 import type {
 	ICodeDetailsLoader,
 	IContainer,
@@ -13,14 +17,6 @@ import {
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/legacy";
-// eslint-disable-next-line import-x/no-internal-modules -- #26987: `local-driver` internal LocalSessionStorageDbFactory used in examples
-import { LocalSessionStorageDbFactory } from "@fluidframework/local-driver/internal";
-import {
-	LocalDocumentServiceFactory,
-	LocalResolver,
-	createLocalResolverCreateNewRequest,
-} from "@fluidframework/local-driver/legacy";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
 import { createElement } from "react";
 import { createRoot } from "react-dom/client";
@@ -32,8 +28,13 @@ import {
 } from "../src/container/index.js";
 import { BlobCollectionView, DebugView } from "../src/view.js";
 
-const urlResolver = new LocalResolver();
-const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
+const service = getSpecifiedServiceFromWebpack();
+const {
+	urlResolver,
+	documentServiceFactory,
+	createCreateNewRequest,
+	createLoadExistingRequest,
+} = await createExampleDriver(service);
 const codeLoader: ICodeDetailsLoader = {
 	load: async (details: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
 		return {
@@ -57,13 +58,13 @@ async function createOrLoadContainerAndRenderInElement(
 		container = await createDetachedContainer({
 			codeDetails: { package: "1.0" },
 			urlResolver,
-			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
+			documentServiceFactory,
 			codeLoader,
 		});
 		attach = () => {
 			const documentId = uuid();
 			container
-				.attach(createLocalResolverCreateNewRequest(documentId))
+				.attach(createCreateNewRequest(documentId))
 				.then(() => {
 					if (container.resolvedUrl === undefined) {
 						throw new Error("Resolved Url unexpectedly missing!");
@@ -78,9 +79,9 @@ async function createOrLoadContainerAndRenderInElement(
 	} else {
 		const id = location.hash.substring(1);
 		container = await loadExistingContainer({
-			request: { url: `${window.location.origin}/${id}` },
+			request: await createLoadExistingRequest(id),
 			urlResolver,
-			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
+			documentServiceFactory,
 			codeLoader,
 		});
 		// Update url and tab title
