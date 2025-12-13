@@ -97,7 +97,7 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 			...summarizeOptions
 		} = submitSummaryOptions;
 
-		telemetryContext.currentSummarizeStep = "submitSummary";
+		telemetryContext.setCurrentSummarizeStep("submitSummary");
 		const submitOptions = { ...submitSummaryOptions, telemetryContext };
 		this.activeTelemetryContext = telemetryContext;
 
@@ -162,12 +162,12 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 		// Wait to generate and send summary
 		this.summarizeTimer.start();
 		try {
-			telemetryContext.currentSummarizeStep = "generateSummary";
+			telemetryContext.setCurrentSummarizeStep("generateSummary");
 			// Need to save refSeqNum before we record new attempt (happens as part of submitSummaryCallback)
 			const lastAttemptRefSeqNum = this.heuristicData.lastAttempt.refSequenceNumber;
 
 			summaryData = await this.submitSummaryCallback(submitOptions);
-			telemetryContext.currentSummarizeStep = "submitSummaryOp";
+			telemetryContext.setCurrentSummarizeStep("submitSummaryOp");
 
 			// Cumulatively add telemetry properties based on how far generateSummary went.
 			const referenceSequenceNumber = summaryData.referenceSequenceNumber;
@@ -205,7 +205,7 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 			 * exceed the number of ops since last summary + number of data store whose reference state changed.
 			 */
 			if (submitSummaryOptions.fullTree !== true) {
-				telemetryContext.currentSummarizeStep = "watchSummary";
+				telemetryContext.setCurrentSummarizeStep("watchSummary");
 				const { summarizedDataStoreCount, gcStateUpdatedDataStoreCount = 0 } =
 					summaryData.summaryStats;
 				if (
@@ -244,7 +244,7 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 			this.summarizeTimer.clear();
 		}
 
-		telemetryContext.currentSummarizeStep = "waitForSummaryAck";
+		telemetryContext.setCurrentSummarizeStep("waitForSummaryAck");
 
 		try {
 			const pendingTimeoutP = this.pendingAckTimer.start();
@@ -319,7 +319,7 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 				...summarizeTelemetryProps,
 			};
 			if (ackNackOp.type === MessageType.SummaryAck) {
-				telemetryContext.currentSummarizeStep = "ackReceived";
+				telemetryContext.setCurrentSummarizeStep("ackReceived");
 				this.heuristicData.markLastAttemptAsSuccessful();
 				this.successfulSummaryCallback();
 				summarizeEvent.end({
@@ -344,7 +344,7 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 			} else {
 				// Check for retryDelay in summaryNack response.
 				assert(ackNackOp.type === MessageType.SummaryNack, 0x274 /* "type check" */);
-				telemetryContext.currentSummarizeStep = "nackReceived";
+				telemetryContext.setCurrentSummarizeStep("nackReceived");
 				const summaryNack = ackNackOp.contents;
 				const errorMessage = summaryNack?.message;
 				const retryAfterSeconds = summaryNack?.retryAfter;
@@ -430,11 +430,11 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 			eventName: "SummarizeTimeout",
 			timeoutTime: time,
 			timeoutCount: count,
-			currentSummarizeStep: this.activeTelemetryContext?.currentSummarizeStep,
+			currentSummarizeStep: this.activeTelemetryContext?.getCurrentSummarizeStep(),
 		});
 		this.emit("summarizeTimeout", {
 			timeoutCount: count,
-			currentSummarizeStep: this.activeTelemetryContext?.currentSummarizeStep,
+			currentSummarizeStep: this.activeTelemetryContext?.getCurrentSummarizeStep(),
 			numUnsummarizedRuntimeOps: this.heuristicData.numRuntimeOps,
 			numUnsummarizedNonRuntimeOps: this.heuristicData.numNonRuntimeOps,
 		});

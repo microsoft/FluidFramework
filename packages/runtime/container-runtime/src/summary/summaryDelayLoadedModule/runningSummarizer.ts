@@ -177,13 +177,6 @@ export class RunningSummarizer
 	private totalSuccessfulAttempts = 0;
 	private initialized = false;
 
-	private readonly runtimeListener: (
-		op: ISequencedDocumentMessage,
-		runtimeMessage?: boolean,
-	) => void = (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => {
-		this.handleOp(op, runtimeMessage === true);
-	};
-
 	/**
 	 * The maximum number of summary attempts to do when submit summary fails.
 	 */
@@ -309,7 +302,7 @@ export class RunningSummarizer
 				? overrideMaxAttempts
 				: defaultMaxAttemptsForSubmitFailures;
 
-		this.setupForwardedEvents();
+		this.setupEventListeners();
 	}
 
 	private async handleSummaryAck(ack: IAckedSummary): Promise<void> {
@@ -395,7 +388,7 @@ export class RunningSummarizer
 	}
 
 	public dispose(): void {
-		this.cleanupForwardedEvents();
+		this.cleanupEventListeners();
 		this.summaryWatcher.dispose();
 		this.heuristicRunner?.dispose();
 		this.heuristicRunner = undefined;
@@ -406,29 +399,31 @@ export class RunningSummarizer
 		this.stopping = true;
 	}
 
-	private readonly forwardedEvents = new Map<string, () => void>();
+	private readonly eventsCleanup: (() => void)[] = [];
 
-	private setupForwardedEvents(): void {
-		this.runtime.on("op", this.runtimeListener);
+	private setupEventListeners(): void {
+		const runtimeListener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void =
+			(op: ISequencedDocumentMessage, runtimeMessage?: boolean) => {
+				this.handleOp(op, runtimeMessage === true);
+			};
+		this.runtime.on("op", runtimeListener);
+		this.eventsCleanup.push(() => this.runtime.off("op", runtimeListener));
 
-		for (const event of ["summarizeTimeout"]) {
+		// Forward events
+		for (const event of ["summarizeTimeout"] as const) {
 			const listener = (...args: unknown[]): void => {
 				this.emit(event, ...args);
 			};
-			// TODO: better typing here
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-			this.generator.on(event as any, listener);
-			this.forwardedEvents.set(event, listener);
+			this.generator.on(event, listener);
+			this.eventsCleanup.push(() => this.generator.off(event, listener));
 		}
 	}
 
-	private cleanupForwardedEvents(): void {
-		this.runtime.off("op", this.runtimeListener);
-
-		for (const [event, listener] of this.forwardedEvents.entries()) {
-			this.generator.off(event, listener);
+	private cleanupEventListeners(): void {
+		for (const cleanup of this.eventsCleanup) {
+			cleanup();
 		}
-		this.forwardedEvents.clear();
+		this.eventsCleanup.length = 0;
 	}
 
 	/**

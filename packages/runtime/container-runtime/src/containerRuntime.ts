@@ -2337,8 +2337,8 @@ export class ContainerRuntime
 				"summarizerStart",
 				"summarizerStartupFailed",
 				"summarizeTimeout",
-			]) {
-				this.summaryManager?.on(eventName, (...args: unknown[]) => {
+			] as const) {
+				this.summaryManager.on(eventName, (...args: unknown[]) => {
 					this.emit(eventName, ...args);
 				});
 			}

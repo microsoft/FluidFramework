@@ -22,11 +22,11 @@ import type {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import type { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
+import type { TelemetryContext } from "@fluidframework/runtime-utils/internal";
 import type {
 	ITelemetryLoggerExt,
 	ITelemetryLoggerPropertyBag,
 } from "@fluidframework/telemetry-utils/internal";
-import type { TelemetryContext } from "@fluidframework/runtime-utils/internal";
 
 import type { SummarizeReason } from "./summarizerUtils.js";
 import type {

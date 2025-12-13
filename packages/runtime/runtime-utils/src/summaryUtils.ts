@@ -545,11 +545,11 @@ export class TelemetryContext implements ITelemetryContext, ITelemetryContextExt
 		return JSON.stringify(jsonObject);
 	}
 
-	public get currentSummarizeStep(): TelemetryEventPropertyTypeExt {
+	public getCurrentSummarizeStep(): TelemetryEventPropertyTypeExt {
 		return this.get(currentSummarizeStepPrefix, currentSummarizeStepPropertyName);
 	}
 
-	public set currentSummarizeStep(value: TelemetryEventPropertyTypeExt) {
+	public setCurrentSummarizeStep(value: TelemetryEventPropertyTypeExt): void {
 		this.set(currentSummarizeStepPrefix, currentSummarizeStepPropertyName, value);
 	}
 }
