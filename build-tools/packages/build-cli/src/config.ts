@@ -10,7 +10,7 @@ import {
 	type VersionBumpType,
 } from "@fluid-tools/version-tools";
 import { MonoRepo } from "@fluidframework/build-tools";
-import { cosmiconfigSync } from "cosmiconfig";
+import { lilconfigSync } from "lilconfig";
 import type { Context } from "./library/index.js";
 import type { ReleaseGroup } from "./releaseGroups.js";
 
@@ -330,11 +330,11 @@ export interface ScriptRequirement {
 const configName = "flub";
 
 /**
- * A cosmiconfig explorer to find the fluidBuild config. First looks for javascript config files and falls back to the
- * fluidBuild property in package.json. We create a single explorer here because cosmiconfig internally caches configs
+ * A lilconfig explorer to find the fluidBuild config. First looks for javascript config files and falls back to the
+ * fluidBuild property in package.json. We create a single explorer here because lilconfig internally caches configs
  * for performance. The cache is per-explorer, so re-using the same explorer is a minor perf improvement.
  */
-const configExplorer = cosmiconfigSync(configName, {
+const configExplorer = lilconfigSync(configName, {
 	searchPlaces: [
 		// `${configName}.ts`,
 		`${configName}.config.cjs`,
