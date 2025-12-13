@@ -345,36 +345,27 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 	 * making it easier to create builders without needing to explicitly specify all type parameters.
 	 * This gets better type inference than the constructor.
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public static build<
 		Name extends CodecName,
-		Entry extends CodecVersion<unknown, unknown, FormatVersion, never>,
-	>(name: Name, inputRegistry: ConfigMapEntry<Entry>) {
-		type TDecoded2 = Entry extends CodecVersion<infer D, unknown, FormatVersion, never>
-			? D
-			: never;
-		type TContext2 = Entry extends CodecVersion<unknown, infer C, FormatVersion, never>
-			? C
-			: never;
-		type TFormatVersion2 = Entry extends CodecVersion<unknown, unknown, infer F, never>
-			? F
-			: never;
-		type TBuildOptions2 = Entry extends CodecVersion<unknown, unknown, FormatVersion, infer B>
-			? B
-			: never;
-		const builder = new ClientVersionDispatchingCodecBuilder<
-			Name,
-			TDecoded2,
-			TContext2,
-			TFormatVersion2,
-			TBuildOptions2
-		>(
-			name,
-			inputRegistry as ConfigMapEntry<unknown> as ConfigMapEntry<
-				CodecVersion<TDecoded2, TContext2, TFormatVersion2, TBuildOptions2>
-			>,
-		);
-		return builder;
+		TDecoded2,
+		TContext2,
+		TFormatVersion2 extends FormatVersion,
+		TBuildOptions2 extends CodecWriteOptions,
+		TEntry extends CodecVersion<TDecoded2, TContext2, TFormatVersion2, TBuildOptions2>,
+	>(
+		name: Name,
+		inputRegistry: ConfigMapEntry<TEntry> &
+			ConfigMapEntry<{
+				[key in keyof TEntry]: key extends keyof CodecVersionBase ? TEntry[key] : never;
+			}>,
+	): ClientVersionDispatchingCodecBuilder<
+		Name,
+		TDecoded2,
+		TContext2,
+		TFormatVersion2,
+		TBuildOptions2
+	> {
+		return new ClientVersionDispatchingCodecBuilder(name, inputRegistry);
 	}
 }
 
