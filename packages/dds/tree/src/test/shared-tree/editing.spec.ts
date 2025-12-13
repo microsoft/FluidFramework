@@ -3286,19 +3286,31 @@ describe("Editing", () => {
 			cursor.free();
 
 			tree.editor
-				.optionalField({ parent: rootNode, field: brand("new") })
-				.set(chunkFromJsonTrees([{ child: "new" }]), true);
+				.sequenceField({ parent: rootNode, field: brand("new") })
+				.insert(
+					0,
+					chunkFromJsonTrees([{ child: "new1" }, { child: "new2" }, { child: "new3" }]),
+				);
 
 			cursor = tree.forest.allocateCursor();
 			tree.forest.moveCursorToPath(
 				{ parent: rootNode, parentField: brand("new"), parentIndex: 0 },
 				cursor,
 			);
-			const anchorToNewParent = cursor.buildAnchor();
+			const anchorToNewParent1 = cursor.buildAnchor();
 			cursor.enterField(brand("child"));
 			cursor.enterNode(0);
-			const anchorToNewChild = cursor.buildAnchor();
+			const anchorToNewChild1 = cursor.buildAnchor();
 			cursor.free();
+
+			cursor = tree.forest.allocateCursor();
+			tree.forest.moveCursorToPath(
+				{ parent: rootNode, parentField: brand("new"), parentIndex: 2 },
+				cursor,
+			);
+			const anchorToNewParent3 = cursor.buildAnchor();
+			cursor.free();
+
 			tree.transaction.commit();
 
 			cursor = tree.forest.allocateCursor();
@@ -3310,19 +3322,27 @@ describe("Editing", () => {
 			cursor.free();
 			cursor = tree.forest.allocateCursor();
 			assert.equal(
-				tree.forest.tryMoveCursorToNode(anchorToNewParent, cursor),
+				tree.forest.tryMoveCursorToNode(anchorToNewParent1, cursor),
 				TreeNavigationResult.Ok,
 			);
 			cursor.enterField(brand("child"));
 			cursor.enterNode(0);
-			assert.equal(cursor.value, "new");
+			assert.equal(cursor.value, "new1");
+			cursor = tree.forest.allocateCursor();
+			assert.equal(
+				tree.forest.tryMoveCursorToNode(anchorToNewParent3, cursor),
+				TreeNavigationResult.Ok,
+			);
+			cursor.enterField(brand("child"));
+			cursor.enterNode(0);
+			assert.equal(cursor.value, "new3");
 			cursor.free();
 			cursor = tree.forest.allocateCursor();
 			assert.equal(
-				tree.forest.tryMoveCursorToNode(anchorToNewChild, cursor),
+				tree.forest.tryMoveCursorToNode(anchorToNewChild1, cursor),
 				TreeNavigationResult.Ok,
 			);
-			assert.equal(cursor.value, "new");
+			assert.equal(cursor.value, "new1");
 			cursor.free();
 		});
 	});
