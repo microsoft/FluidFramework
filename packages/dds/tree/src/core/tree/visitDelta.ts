@@ -112,7 +112,7 @@ export function visitDelta(
 			const offsetId = offsetDetachId(id, i);
 			const root = detachedFieldIndex.getEntry(offsetId);
 			const field = detachedFieldIndex.toFieldKey(root);
-			visitor.destroy(field, 1);
+			visitor.destroy(field, 1, offsetId);
 			detachedFieldIndex.deleteEntry(offsetId);
 		}
 	}
@@ -243,14 +243,18 @@ export interface DeltaVisitor {
 	 * @param destination - The key for a new detached field.
 	 * A field with this key must not already exist.
 	 */
-	create(content: readonly ITreeCursorSynchronous[], destination: FieldKey): void;
+	create(
+		content: readonly ITreeCursorSynchronous[],
+		destination: FieldKey,
+		id?: Delta.DetachedNodeId,
+	): void;
 	/**
 	 * Recursively destroys the given detached field and all of the nodes within it.
 	 * @param detachedField - The key for the detached field to destroy.
 	 * @param count - The number of nodes being destroyed.
 	 * Expected to match the number of nodes in the detached field being destroyed.
 	 */
-	destroy(detachedField: FieldKey, count: number): void;
+	destroy(detachedField: FieldKey, count: number, id?: Delta.DetachedNodeId): void;
 	/**
 	 * Transfers all the nodes from a detached field to the current field.
 	 * @param source - The detached field to transfer the nodes from.
@@ -437,7 +441,7 @@ function buildTrees(
 		assert(root === undefined, 0x929 /* Unable to build tree that already exists */);
 		root = detachedFieldIndex.createEntry(offsettedId, latestRevision);
 		const field = detachedFieldIndex.toFieldKey(root);
-		visitor.create([tree], field);
+		visitor.create([tree], field, offsettedId);
 	}
 }
 

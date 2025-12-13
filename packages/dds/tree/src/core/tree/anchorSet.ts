@@ -13,12 +13,17 @@ import {
 	type Brand,
 	type BrandedKey,
 	type BrandedMapSubset,
+	type NestedMap,
 	type Opaque,
 	ReferenceCountedBase,
 	brand,
 	brandedSlot,
+	deleteFromNestedMap,
 	getOrAddEmptyToMap,
 	getOrCreate,
+	hasSome,
+	setInNestedMap,
+	tryGetFromNestedMap,
 } from "../../util/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
@@ -316,6 +321,13 @@ export class AnchorSet implements AnchorLocator {
 	// For now use this more encapsulated approach with maps.
 	private readonly anchorToPath: Map<Anchor, PathNode> = new Map();
 
+	private readonly destroyedNodes: NestedMap<
+		Delta.DetachedNodeId["major"],
+		Delta.DetachedNodeId["minor"],
+		PathNode
+	> = new Map();
+	private readonly destroyedNodeIds: Map<PathNode, Delta.DetachedNodeId> = new Map();
+
 	private activeVisitor?: DeltaVisitor;
 
 	public constructor() {
@@ -378,6 +390,11 @@ export class AnchorSet implements AnchorLocator {
 			assert(path !== undefined, 0x351 /* cannot forget unknown Anchor */);
 			path.removeRef();
 			this.anchorToPath.delete(anchor);
+			const id = this.destroyedNodeIds.get(path);
+			if (id !== undefined) {
+				this.destroyedNodeIds.delete(path);
+				deleteFromNestedMap(this.destroyedNodes, id.major, id.minor);
+			}
 		}
 	}
 
@@ -498,6 +515,18 @@ export class AnchorSet implements AnchorLocator {
 			assert(node.status === Status.Alive, 0x408 /* PathNode must be alive */);
 			node.status = Status.Dangling;
 			node.events.emit("afterDestroy", node);
+			for (const children of node.children.values()) {
+				stack.push(...children);
+			}
+		}
+	}
+
+	private deepRestore(nodes: readonly PathNode[]): void {
+		const stack = [...nodes];
+		while (stack.length > 0) {
+			const node = stack.pop()!;
+			assert(node.status === Status.Dangling, "PathNode must be dangling");
+			node.status = Status.Alive;
 			for (const children of node.children.values()) {
 				stack.push(...children);
 			}
@@ -665,9 +694,42 @@ export class AnchorSet implements AnchorLocator {
 		}
 	}
 
-	private removeChildren(path: UpPath, count: number): void {
+	private removeChildren(path: UpPath, count: number, id?: Delta.DetachedNodeId): void {
 		const nodes = this.decoupleNodes(path, count);
+		if (id !== undefined) {
+			for (const node of nodes) {
+				const nodeId = offsetDetachId(id, node.parentIndex - path.parentIndex);
+				setInNestedMap(this.destroyedNodes, nodeId.major, nodeId.minor, node);
+				this.destroyedNodeIds.set(node, nodeId);
+			}
+		}
 		this.deepDelete(nodes);
+	}
+
+	private restoreChildren(
+		destination: FieldKey,
+		id: Delta.DetachedNodeId,
+		count: number,
+	): void {
+		const restored: PathNode[] = [];
+		for (let offset = 0; offset < count; offset++) {
+			const nodeId = offsetDetachId(id, offset);
+			const node = tryGetFromNestedMap(this.destroyedNodes, nodeId.major, nodeId.minor);
+			if (node !== undefined) {
+				deleteFromNestedMap(this.destroyedNodes, nodeId.major, nodeId.minor);
+				this.destroyedNodeIds.delete(node);
+				node.parentIndex = offset;
+				restored.push(node);
+			}
+		}
+		if (hasSome(restored)) {
+			this.deepRestore(restored);
+			this.coupleNodes(
+				{ parent: undefined, parentField: destination, parentIndex: 0 },
+				count,
+				{ startParentIndex: 0, nodes: restored },
+			);
+		}
 	}
 
 	/**
@@ -886,7 +948,7 @@ export class AnchorSet implements AnchorLocator {
 				this.attachEdit(newContentSource, range.end - range.start, range.start);
 				this.notifyChildrenChanged();
 			},
-			destroy(detachedField: FieldKey, count: number): void {
+			destroy(detachedField: FieldKey, count: number, id?: Delta.DetachedNodeId): void {
 				this.anchorSet.removeChildren(
 					{
 						parent: undefined,
@@ -894,11 +956,17 @@ export class AnchorSet implements AnchorLocator {
 						parentIndex: 0,
 					},
 					count,
+					id,
 				);
 			},
-			create(content: ITreeCursorSynchronous[], destination: FieldKey): void {
-				// Nothing to do since content can only be created in a new detached field,
-				// which cannot contain any anchors.
+			create(
+				content: ITreeCursorSynchronous[],
+				destination: FieldKey,
+				id?: Delta.DetachedNodeId,
+			): void {
+				if (id !== undefined) {
+					this.anchorSet.restoreChildren(destination, id, content.length);
+				}
 			},
 			enterNode(index: number): void {
 				assert(this.parentField !== undefined, 0x3ab /* Must be in a field to enter node */);

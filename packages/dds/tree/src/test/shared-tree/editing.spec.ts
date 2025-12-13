@@ -3272,6 +3272,47 @@ describe("Editing", () => {
 			assert.equal(cursor.value, 2);
 			cursor.free();
 		});
+
+		it("anchors to content created during a transaction survive the completion of the transaction", () => {
+			const tree = makeTreeFromJson({ prior: "prior" });
+
+			tree.transaction.start();
+			let cursor = tree.forest.allocateCursor();
+			tree.forest.moveCursorToPath(
+				{ parent: rootNode, parentField: brand("prior"), parentIndex: 0 },
+				cursor,
+			);
+			const anchorToPrior = cursor.buildAnchor();
+			cursor.free();
+
+			tree.editor
+				.optionalField({ parent: rootNode, field: brand("new") })
+				.set(chunkFromJsonTrees(["new"]), true);
+
+			cursor = tree.forest.allocateCursor();
+			tree.forest.moveCursorToPath(
+				{ parent: rootNode, parentField: brand("new"), parentIndex: 0 },
+				cursor,
+			);
+			const anchorToNew = cursor.buildAnchor();
+			cursor.free();
+			tree.transaction.commit();
+
+			cursor = tree.forest.allocateCursor();
+			assert.equal(
+				tree.forest.tryMoveCursorToNode(anchorToPrior, cursor),
+				TreeNavigationResult.Ok,
+			);
+			assert.equal(cursor.value, "prior");
+			cursor.free();
+			cursor = tree.forest.allocateCursor();
+			assert.equal(
+				tree.forest.tryMoveCursorToNode(anchorToNew, cursor),
+				TreeNavigationResult.Ok,
+			);
+			assert.equal(cursor.value, "new");
+			cursor.free();
+		});
 	});
 
 	describe("Can abort transactions", () => {
