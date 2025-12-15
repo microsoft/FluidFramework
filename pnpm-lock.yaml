@@ -6755,8 +6755,8 @@ importers:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.8.2)
       nock:
-        specifier: ^13.3.3
-        version: 13.5.6
+        specifier: ^14.0.10
+        version: 14.0.10
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -6855,8 +6855,8 @@ importers:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.8.2)
       nock:
-        specifier: ^13.3.3
-        version: 13.5.6
+        specifier: ^14.0.10
+        version: 14.0.10
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -7091,8 +7091,8 @@ importers:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.8.2)
       nock:
-        specifier: ^13.3.3
-        version: 13.5.6
+        specifier: ^14.0.10
+        version: 14.0.10
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -10550,9 +10550,6 @@ importers:
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.130)
-      '@types/nock':
-        specifier: ^9.3.0
-        version: 9.3.1
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.130
@@ -10569,8 +10566,8 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       nock:
-        specifier: ^13.3.3
-        version: 13.5.6
+        specifier: ^14.0.10
+        version: 14.0.10
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -10647,9 +10644,6 @@ importers:
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
-      '@types/nock':
-        specifier: ^9.3.0
-        version: 9.3.1
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.130
@@ -10684,8 +10678,8 @@ importers:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.8.2)
       nock:
-        specifier: ^13.3.3
-        version: 13.5.6
+        specifier: ^14.0.10
+        version: 14.0.10
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -13918,9 +13912,6 @@ importers:
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
-      '@types/nock':
-        specifier: ^9.3.0
-        version: 9.3.1
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.130
@@ -13937,8 +13928,8 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       nock:
-        specifier: ^13.3.3
-        version: 13.5.6
+        specifier: ^14.0.10
+        version: 14.0.10
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -14027,9 +14018,6 @@ importers:
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
-      '@types/nock':
-        specifier: ^9.3.0
-        version: 9.3.1
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.130
@@ -14046,8 +14034,8 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       nock:
-        specifier: ^13.3.3
-        version: 13.5.6
+        specifier: ^14.0.10
+        version: 14.0.10
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -15284,9 +15272,6 @@ importers:
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
-      '@types/nock':
-        specifier: ^9.3.0
-        version: 9.3.1
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.130
@@ -15303,8 +15288,8 @@ importers:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.8.2)
       nock:
-        specifier: ^13.3.3
-        version: 13.5.6
+        specifier: ^14.0.10
+        version: 14.0.10
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -15777,9 +15762,6 @@ importers:
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
-      '@types/nock':
-        specifier: ^9.3.0
-        version: 9.3.1
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.130
@@ -15811,8 +15793,8 @@ importers:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.8.2)
       nock:
-        specifier: ^13.3.3
-        version: 13.5.6
+        specifier: ^14.0.10
+        version: 14.0.10
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -19630,6 +19612,10 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@mswjs/interceptors@0.39.8':
+    resolution: {integrity: sha512-2+BzZbjRO7Ct61k8fMNHEtoKjeWI9pIlHFTqBwZ5icHpqszIgEZbjb1MW5Z0+bITTCTl3gk4PDBxs9tA/csXvA==}
+    engines: {node: '>=18'}
+
   '@mui/base@5.0.0-beta.58':
     resolution: {integrity: sha512-P0E7ZrxOuyYqBvVv9w8k7wm+Xzx/KRu+BGgFcR2htTsGCpJNQJCSUXNUZ50MUmSU9hzqhwbQWNXhV1MBTl6F7A==}
     engines: {node: '>=14.0.0'}
@@ -20001,6 +19987,15 @@ packages:
 
   '@octokit/types@16.0.0':
     resolution: {integrity: sha512-sKq+9r1Mm4efXW1FCk7hFSeJo4QKreL/tTbR0rz/qx/r1Oa2VV83LTA/H/MuCOX7uCIJmQVRKBcbmWoySjAnSg==}
+
+  '@open-draft/deferred-promise@2.2.0':
+    resolution: {integrity: sha512-CecwLWx3rhxVQF6V4bAgPS5t+So2sTbPgAzafKkVizyi7tlwpcFpdFqq+wqF2OwNBmqFuu6tOyouTuxgpMfzmA==}
+
+  '@open-draft/logger@0.3.0':
+    resolution: {integrity: sha512-X2g45fzhxH238HKO4xbSr7+wBS8Fvw6ixhTDuvLd5mqh6bJJCFAPwU9mPDxbcrRtfxv4u5IHCEH77BmxvXmmxQ==}
+
+  '@open-draft/until@2.1.0':
+    resolution: {integrity: sha512-U69T3ItWHvLwGg5eJ0n3I62nWuE6ilHlmz7zM0npLBRvPRd7e6NYmg54vvRtP5mZG7kZqZCFVdsTWo7BPtBujg==}
 
   '@parcel/watcher-android-arm64@2.5.0':
     resolution: {integrity: sha512-qlX4eS28bUcQCdribHkg/herLe+0A9RyYC+mm2PXpncit8z5b3nSqGVzMNR3CmtAOgRutiZ02eIJJgP/b1iEFQ==}
@@ -20630,9 +20625,6 @@ packages:
 
   '@types/nconf@0.10.7':
     resolution: {integrity: sha512-ltJgbQX0XgjkeDrz0anTCXLBLatppWYFCxp88ILEwybfAuyNWr0Qb+ceFFqZ0VDR8fguEjr0hH37ZF+AF4gsxw==}
-
-  '@types/nock@9.3.1':
-    resolution: {integrity: sha512-eOVHXS5RnWOjTVhu3deCM/ruy9E6JCgeix2g7wpFiekQh3AaEAK1cz43tZDukKmtSmQnwvSySq7ubijCA32I7Q==}
 
   '@types/node-fetch@2.6.12':
     resolution: {integrity: sha512-8nneRWKCg3rMtF69nLQJnOYUcbafYeFSjqkw3jCRLsqkWFlHaoQrr5mXmofFGOx3DKn7UfmBMyov8ySvLRVldA==}
@@ -24306,6 +24298,9 @@ packages:
     resolution: {integrity: sha512-E+zBKpQ2t6MEo1VsonYmluk9NxGrbzpeeLC2xIViuO2EjU2xsXsBPwTr3Ykv9l08UYEVEdWeRZNouaZqF6RN0w==}
     engines: {node: '>= 0.4'}
 
+  is-node-process@1.2.0:
+    resolution: {integrity: sha512-Vg4o6/fqPxIjtxgUH5QLJhwZ7gW5diGCVlXpuUfELC62CuxM1iHcRe51f2W1FDy04Ai4KJkagKjx3XaqyfRKXw==}
+
   is-npm@6.0.0:
     resolution: {integrity: sha512-JEjxbSmtPSt1c8XTkVrlujcXdKV1/tvuQ7GwKcAlyiVLeYFQ2VHat8xfrDJsIkhCdF/tZ7CiIR3sy141c6+gPQ==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
@@ -25743,9 +25738,9 @@ packages:
   no-case@3.0.4:
     resolution: {integrity: sha512-fgAN3jGAh+RoxUGZHTSOLJIqUc2wmoBwGR4tbpNAKmmovFoWq0OdRkb0VkldReO2a2iBT/OEulG9XSUc10r3zg==}
 
-  nock@13.5.6:
-    resolution: {integrity: sha512-o2zOYiCpzRqSzPj0Zt/dQ/DqZeYoaQ7TUonc/xUPjCGl9WeHpNbxgVvOquXYAaJzI0M9BXV3HTzG0p8IUAbBTQ==}
-    engines: {node: '>= 10.13'}
+  nock@14.0.10:
+    resolution: {integrity: sha512-Q7HjkpyPeLa0ZVZC5qpxBt5EyLczFJ91MEewQiIi9taWuA0KB/MDJlUWtON+7dGouVdADTQsf9RA7TZk6D8VMw==}
+    engines: {node: '>=18.20.0 <20 || >=20.12.1'}
 
   node-abi@3.71.0:
     resolution: {integrity: sha512-SZ40vRiy/+wRTf21hxkkEjPJZpARzUMVcJoQse2EF8qkUWbbO2z7vd5oA/H6bVH6SZQ5STGcu0KRDS7biNRfxw==}
@@ -26047,6 +26042,9 @@ packages:
 
   outdent@0.5.0:
     resolution: {integrity: sha512-/jHxFIzoMXdqPzTaCpFzAAWhpkSjZPF4Vsn6jAfNpmbH/ymsmd7Qc6VE9BGn0L6YMj6uwpQLxCECpus4ukKS9Q==}
+
+  outvariant@1.4.3:
+    resolution: {integrity: sha512-+Sl2UErvtsoajRDKCE5/dBz4DIvHXQQnAxtQTF04OJxY0+DyZXSo5P5Bb7XYWOh81syohlYL24hbDwxedPUJCA==}
 
   override-require@1.1.1:
     resolution: {integrity: sha512-eoJ9YWxFcXbrn2U8FKT6RV+/Kj7fiGAB1VvHzbYKt8xM5ZuKZgCGvnHzDxmreEjcBH28ejg5MiOH4iyY1mQnkg==}
@@ -27598,6 +27596,9 @@ packages:
 
   streamx@2.21.0:
     resolution: {integrity: sha512-Qz6MsDZXJ6ur9u+b+4xCG18TluU7PGlRfXVAAjNiGsFrBUt/ioyLkxbFaKJygoPs+/kW4VyBj0bSj89Qu0IGyg==}
+
+  strict-event-emitter@0.5.1:
+    resolution: {integrity: sha512-vMgjE/GGEPEFnhFub6pa4FmJBRBVOLpIII2hvCZ8Kzb7K0hlHo7mQv6xYrBvCL2LtAIBwFUK8wvuJgTVSQ5MFQ==}
 
   string-argv@0.3.2:
     resolution: {integrity: sha512-aqD2Q0144Z+/RqG52NeHEkZauTAUWJO8c6yTftGJKO3Tja5tUgIfmIl6kExvhtxSDP7fXB6DvzkfMpCd/F3G+Q==}
@@ -33987,6 +33988,15 @@ snapshots:
   '@msgpackr-extract/msgpackr-extract-win32-x64@3.0.3':
     optional: true
 
+  '@mswjs/interceptors@0.39.8':
+    dependencies:
+      '@open-draft/deferred-promise': 2.2.0
+      '@open-draft/logger': 0.3.0
+      '@open-draft/until': 2.1.0
+      is-node-process: 1.2.0
+      outvariant: 1.4.3
+      strict-event-emitter: 0.5.1
+
   '@mui/base@5.0.0-beta.58(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@babel/runtime': 7.28.4
@@ -34426,6 +34436,15 @@ snapshots:
   '@octokit/types@16.0.0':
     dependencies:
       '@octokit/openapi-types': 27.0.0
+
+  '@open-draft/deferred-promise@2.2.0': {}
+
+  '@open-draft/logger@0.3.0':
+    dependencies:
+      is-node-process: 1.2.0
+      outvariant: 1.4.3
+
+  '@open-draft/until@2.1.0': {}
 
   '@parcel/watcher-android-arm64@2.5.0':
     optional: true
@@ -35244,10 +35263,6 @@ snapshots:
       '@types/node': 18.19.130
 
   '@types/nconf@0.10.7': {}
-
-  '@types/nock@9.3.1':
-    dependencies:
-      '@types/node': 18.19.130
 
   '@types/node-fetch@2.6.12':
     dependencies:
@@ -39470,6 +39485,8 @@ snapshots:
       call-bind: 1.0.8
       define-properties: 1.2.1
 
+  is-node-process@1.2.0: {}
+
   is-npm@6.0.0: {}
 
   is-number-object@1.1.1:
@@ -41565,13 +41582,11 @@ snapshots:
       lower-case: 2.0.2
       tslib: 2.8.1
 
-  nock@13.5.6:
+  nock@14.0.10:
     dependencies:
-      debug: 4.4.3(supports-color@8.1.1)
+      '@mswjs/interceptors': 0.39.8
       json-stringify-safe: 5.0.1
       propagate: 2.0.1
-    transitivePeerDependencies:
-      - supports-color
 
   node-abi@3.71.0:
     dependencies:
@@ -42009,6 +42024,8 @@ snapshots:
       unicount: 1.1.0
 
   outdent@0.5.0: {}
+
+  outvariant@1.4.3: {}
 
   override-require@1.1.1: {}
 
@@ -43907,6 +43924,8 @@ snapshots:
       text-decoder: 1.2.2
     optionalDependencies:
       bare-events: 2.5.4
+
+  strict-event-emitter@0.5.1: {}
 
   string-argv@0.3.2: {}
 
