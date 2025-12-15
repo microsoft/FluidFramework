@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { globals } from "../jest.config.cjs";
 import puppeteer, { Browser, Page } from "puppeteer";
+import { globals } from "../jest.config.cjs";
 import type { IDiceRoller } from "../src/container/index.js";
 
 describe("app-integration-external-views", () => {
 	let browser: Browser;
 	let page: Page;
+
 	beforeEach(async () => {
 		browser = await puppeteer.launch();
 		page = await browser.newPage();
