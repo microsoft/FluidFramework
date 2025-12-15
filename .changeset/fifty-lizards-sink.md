@@ -1,5 +1,4 @@
 ---
----
 "__section": deprecation
 ---
 ai-collab library has been removed
