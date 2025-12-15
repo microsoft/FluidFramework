@@ -306,28 +306,6 @@ export class TestSharedTreeCore extends SharedObject {
 				return tagChange(this.changeFamily.rebaser.compose(commits), revision);
 			},
 		);
-
-		const commitEnricher = this.kernel.getCommitEnricher("main");
-		this.transaction.events.on("started", () => {
-			if (this.isAttached()) {
-				commitEnricher.startTransaction();
-			}
-		});
-		this.transaction.events.on("aborting", () => {
-			if (this.isAttached()) {
-				commitEnricher.abortTransaction();
-			}
-		});
-		this.transaction.events.on("committing", () => {
-			if (this.isAttached()) {
-				commitEnricher.commitTransaction();
-			}
-		});
-		this.transaction.activeBranchEvents.on("afterChange", (event) => {
-			if (event.type === "append" && this.isAttached() && this.transaction.isInProgress()) {
-				commitEnricher.addTransactionCommits(event.newCommits);
-			}
-		});
 	}
 
 	protected summarizeCore(
