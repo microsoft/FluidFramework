@@ -334,9 +334,6 @@ importers:
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/datastore-definitions
-      '@fluidframework/local-driver':
-        specifier: workspace:~
-        version: link:../../../packages/drivers/local-driver
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../../packages/dds/map
@@ -346,9 +343,6 @@ importers:
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
-      '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -452,9 +446,6 @@ importers:
       webpack-dev-server:
         specifier: ~4.15.2
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.103.0)
-      webpack-merge:
-        specifier: ^6.0.1
-        version: 6.0.1
 
   examples/apps/collaborative-textarea:
     dependencies:
@@ -914,15 +905,9 @@ importers:
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../../packages/loader/container-loader
-      '@fluidframework/local-driver':
-        specifier: workspace:~
-        version: link:../../../packages/drivers/local-driver
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../../packages/dds/map
-      '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -1014,9 +999,6 @@ importers:
       webpack-dev-server:
         specifier: ~4.15.2
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.103.0)
-      webpack-merge:
-        specifier: ^6.0.1
-        version: 6.0.1
 
   examples/apps/presence-tracker:
     dependencies:
@@ -6350,9 +6332,6 @@ importers:
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/datastore-definitions
-      '@fluidframework/local-driver':
-        specifier: workspace:~
-        version: link:../../../packages/drivers/local-driver
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../../packages/dds/map
@@ -6362,9 +6341,6 @@ importers:
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
-      '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -6465,9 +6441,6 @@ importers:
       webpack-dev-server:
         specifier: ~4.15.2
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.103.0)
-      webpack-merge:
-        specifier: ^6.0.1
-        version: 6.0.1
 
   examples/view-integration/view-framework-sampler:
     dependencies:
