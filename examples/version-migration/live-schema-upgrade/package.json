@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/app-integration-live-schema-upgrade",
-	"version": "2.74.0",
+	"version": "2.80.0",
 	"private": true,
 	"description": "Example application that demonstrates how to add a data object to a live container.",
 	"homepage": "https://fluidframework.com",
@@ -78,16 +78,6 @@
 		"webpack-cli": "^5.1.4",
 		"webpack-dev-server": "~4.15.2",
 		"webpack-merge": "^6.0.1"
-	},
-	"fluid": {
-		"browser": {
-			"umd": {
-				"files": [
-					"main.bundle.js"
-				],
-				"library": "main"
-			}
-		}
 	},
 	"typeValidation": {
 		"disabled": true
