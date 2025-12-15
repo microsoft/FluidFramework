@@ -267,7 +267,10 @@ describeCompat("GC data store sweep tests", "NoCompat", function (getTestObjectP
 
 	let clock: SinonFakeTimers;
 	before(() => {
-		clock = useFakeTimers({ shouldAdvanceTime: true, toFake: ["setTimeout", "setInterval", "Date"] });
+		clock = useFakeTimers({
+			shouldAdvanceTime: true,
+			toFake: ["setTimeout", "setInterval", "Date"],
+		});
 	});
 
 	beforeEach("setup", async function () {
