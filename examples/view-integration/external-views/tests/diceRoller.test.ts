@@ -4,22 +4,40 @@
  */
 
 import { globals } from "../jest.config.cjs";
+import puppeteer, { Browser, Page } from "puppeteer";
+import type { IDiceRoller } from "../src/container/index.js";
 
-describe("diceRoller", () => {
-	beforeAll(async () => {
-		// Wait for the page to load first before running any tests
-		// so this time isn't attributed to the first test
-		await page.goto(globals.PATH, { waitUntil: "load", timeout: 0 });
-		await page.waitForFunction(() => window["fluidStarted"]);
-	}, 45000);
-
+describe("app-integration-external-views", () => {
+	let browser: Browser;
+	let page: Page;
 	beforeEach(async () => {
-		await page.goto(globals.PATH, { waitUntil: "load" });
-		await page.waitForFunction(() => window["fluidStarted"]);
+		browser = await puppeteer.launch();
+		page = await browser.newPage();
+		await page.goto(globals.PATH);
 	});
 
 	it("loads and there's a button with Roll", async () => {
 		// Validate there is a button that can be clicked
 		await expect(page).toClick("button", { text: "Roll" });
+	});
+
+	it("raises an event in other connected containers", async () => {
+		const diceValueP = page.evaluate(async () => {
+			// Load an additional container, and use it to watch for an expected roll
+			const container = await globalThis.loadAdditionalContainer();
+			const diceRoller = (await container.getEntryPoint()) as IDiceRoller;
+			return new Promise<number>((resolve) => {
+				diceRoller.events.on("diceRolled", () => resolve(diceRoller.value));
+			});
+		});
+		// Click the button, triggering a roll from the main container
+		await expect(page).toClick("button", { text: "Roll" });
+		const diceValue = await diceValueP;
+		expect(diceValue).toBeGreaterThanOrEqual(1);
+		expect(diceValue).toBeLessThanOrEqual(6);
+	});
+
+	afterEach(async () => {
+		await browser.close();
 	});
 });
