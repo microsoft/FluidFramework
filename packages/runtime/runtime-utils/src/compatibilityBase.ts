@@ -225,6 +225,7 @@ const parsedPackageVersion = parse(pkgVersion) ?? fail("Invalid package version"
  * Since this is used by validateMinimumVersionForCollab, the type case to MinimumVersionForCollab can not use it directly.
  * Thus this is just `as` cast here, and a test confirms it is valid according to validateMinimumVersionForCollab.
  *
+ * @internal
  */
 export const cleanedPackageVersion =
 	`${parsedPackageVersion.major}.${parsedPackageVersion.minor}.${parsedPackageVersion.patch}` as MinimumVersionForCollab;

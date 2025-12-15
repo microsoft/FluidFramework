@@ -45,7 +45,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 	public async readBlob(blobId: string): Promise<ArrayBufferLike> {
 		return this.cachedRead(blobId);
 	}
-	public stopPrefetch() {
+	public stopPrefetch(): void {
 		this.prefetchEnabled = false;
 		this.prefetchCache.clear();
 	}
@@ -71,7 +71,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 		return this.internalStorageService.readBlob(blobId);
 	}
 
-	private prefetchTree(tree: ISnapshotTree) {
+	private prefetchTree(tree: ISnapshotTree): void {
 		const secondary: string[] = [];
 		this.prefetchTreeCore(tree, secondary);
 
@@ -81,7 +81,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 		}
 	}
 
-	private prefetchTreeCore(tree: ISnapshotTree, secondary: string[]) {
+	private prefetchTreeCore(tree: ISnapshotTree, secondary: string[]): void {
 		for (const [blobKey, blob] of Object.entries(tree.blobs)) {
 			if (blobKey.startsWith(".") || blobKey === "header" || blobKey.startsWith("quorum")) {
 				if (blob !== null) {
