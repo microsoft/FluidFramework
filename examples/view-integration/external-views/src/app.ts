@@ -79,7 +79,8 @@ if (location.hash.length === 0) {
 const diceRoller = (await container.getEntryPoint()) as IDiceRoller;
 
 // Render view
-const appDiv = document.querySelector("#app") as HTMLDivElement;
+const appDiv = document.createElement("div");
+document.body.appendChild(appDiv);
 const appRoot = createRoot(appDiv);
 appRoot.render(createElement(DiceRollerView, { diceRoller }));
 
