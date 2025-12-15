@@ -117,16 +117,6 @@
 		"webpack-cli": "^5.1.4",
 		"webpack-dev-server": "~4.15.2"
 	},
-	"fluid": {
-		"browser": {
-			"umd": {
-				"files": [
-					"main.bundle.js"
-				],
-				"library": "main"
-			}
-		}
-	},
 	"typeValidation": {
 		"disabled": true
 	}
