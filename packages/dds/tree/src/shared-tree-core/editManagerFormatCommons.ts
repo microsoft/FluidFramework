@@ -12,7 +12,7 @@ import {
 	RevisionTagSchema,
 	SessionIdSchema,
 } from "../core/index.js";
-import { type Brand, brandedNumberType } from "../util/index.js";
+import { type Brand, brandedNumberType, strictEnum, type Values } from "../util/index.js";
 import type { EncodedBranchId } from "./branch.js";
 
 /**
@@ -123,7 +123,7 @@ export const EncodedSharedBranch = <ChangeSchema extends TSchema>(tChange: Chang
 /**
  * The format version for the EditManager.
  */
-export const EditManagerFormatVersion = {
+export const EditManagerFormatVersion = strictEnum("editManager.FormatVersion", {
 	/**
 	 * Introduced and retired prior to 2.0.
 	 * Reading and writing capability removed in 2.73.0.
@@ -136,34 +136,40 @@ export const EditManagerFormatVersion = {
 	v2: 2,
 	/**
 	 * Introduced prior to 2.0 and used beyond.
-	 * Reading capability is currently maintained for backwards compatibility, but it could be removed in the future.
-	 * Writing capability needs to be maintained.
+	 * Reading capability must be maintained for backwards compatibility.
+	 * Writing capability needs to be maintained so long as {@link lowestMinVersionForCollab} is less than 2.2.0.
 	 */
 	v3: 3,
 	/**
-	 * Was inadvertently released in 2.43.0 (through usages of configuredSharedTree) and remains available.
+	 * Introduced in 2.2.0.
+	 * Was inadvertently made usable for writing in 2.43.0 (through configuredSharedTree) and remains available.
 	 * Reading capability must be maintained for backwards compatibility.
-	 * Writing capability needs to be maintained.
-	 * @privateRemarks TODO: stop writing this version.
+	 * Writing capability could be dropped in favor of {@link EditManagerFormatVersion.v3},
+	 * but doing so would make the pattern of writable versions more complex and gain little
+	 * because most of the logic for this format is shared with {@link EditManagerFormatVersion.v3}.
 	 */
 	v4: 4,
+	/**
+	 * This version number was used internally for testing shared branches.
+	 * This format was never made stable.
+	 * This version number is kept here solely to avoid reusing the number: it is not supported for either reading or writing.
+	 * @deprecated Use {@link EditManagerFormatVersion.vSharedBranches} for testing shared branches.
+	 */
+	v5: 5,
 	/**
 	 * Not yet released.
 	 * Only used for testing shared branches.
 	 */
-	v5: 5,
-} as const;
-export type EditManagerFormatVersion = Brand<
-	(typeof EditManagerFormatVersion)[keyof typeof EditManagerFormatVersion],
-	"EditManagerFormatVersion"
->;
+	vSharedBranches: "shared-branches|v0.1",
+});
+export type EditManagerFormatVersion = Values<typeof EditManagerFormatVersion>;
 export const supportedEditManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> =
 	new Set([
 		EditManagerFormatVersion.v3,
 		EditManagerFormatVersion.v4,
-		EditManagerFormatVersion.v5,
-	] as EditManagerFormatVersion[]);
+		EditManagerFormatVersion.vSharedBranches,
+	]);
 export const editManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> = new Set(
-	Object.values(EditManagerFormatVersion) as EditManagerFormatVersion[],
+	Object.values(EditManagerFormatVersion),
 );
 /* eslint-enable @typescript-eslint/explicit-function-return-type */

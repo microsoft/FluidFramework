@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { cleanedPackageVersion as runtimeUtilsCleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
 import type { ErasedType } from "@fluidframework/core-interfaces/internal";
 import { IsoBuffer, bufferToString } from "@fluid-internal/client-utils";
 import { assert, fail } from "@fluidframework/core-utils/internal";
@@ -252,9 +253,11 @@ export interface ICodecFamily<TDecoded, TContext = void> {
 /**
  * A version stamp for encoded data.
  *
+ * Strings are used for formats that are not yet officially supported.
+ * When such formats become officially supported/stable, they will be switched to using a number.
  * Undefined is tolerated to enable the scenario where data was not initially versioned.
  */
-export type FormatVersion = number | undefined;
+export type FormatVersion = number | string | undefined;
 
 /**
  * A format version which is dependent on some parent format version.
@@ -463,8 +466,14 @@ export function withSchemaValidation<
  * If the need arises, they might be added in the future.
  *
  * @privateRemarks
- * Entries in these enums should document the user facing impact of opting into a particular version.
- * For example, document if there is an encoding efficiency improvement of oping into that version or newer.
+ * The entries in these enums should document the following:
+ * - The user facing impact of opting into a particular version. This will help customers decide if they want to opt into
+ * a new version. For example, document if there is an encoding efficiency improvement of oping into that version or newer.
+ * - Any new data formats that are introduced in that version. This will help developers tell which data formats a given
+ * version will write. For example, document if a new summary or encoding format is added in a version.
+ * - Whether the above features or data formats introduced in a version are enabled by default or require the
+ * {@link minVersionForCollab} option to be set to that particular version.
+ *
  * Versions with no notable impact can be omitted.
  *
  * This scheme assumes a single version will always be enough to communicate compatibility.
@@ -503,10 +512,10 @@ export const FluidClientVersion = {
 	 * Fluid Framework Client 2.43 and newer.
 	 * @remarks
 	 * New formats introduced in 2.43:
-	 * - SchemaFormatVersion.v2
-	 * - MessageFormatVersion.v4
-	 * - EditManagerFormatVersion.v4
-	 * - Sequence format version 3
+	 * - SchemaFormatVersion.v2 - written when minVersionForCollab \>= 2.43
+	 * - MessageFormatVersion.v4 - written when minVersionForCollab \>= 2.43
+	 * - EditManagerFormatVersion.v4 - written when minVersionForCollab \>= 2.43
+	 * - sequence-field/formatV3 - written when minVersionForCollab \>= 2.43
 	 */
 	v2_43: "2.43.0",
 
@@ -514,7 +523,7 @@ export const FluidClientVersion = {
 	 * Fluid Framework Client 2.52 and newer.
 	 * @remarks
 	 * New formats introduced in 2.52:
-	 * - DetachedFieldIndexFormatVersion.v2
+	 * - DetachedFieldIndexFormatVersion.v2 - written when minVersionForCollab \>= 2.52
 	 */
 	v2_52: "2.52.0",
 
@@ -522,21 +531,42 @@ export const FluidClientVersion = {
 	 * Fluid Framework Client 2.73 and newer.
 	 * @remarks
 	 * New formats introduced in 2.73:
-	 * - FieldBatchFormatVersion v2
+	 * - FieldBatchFormatVersion.v2 - written when minVersionForCollab \>= 2.73
 	 */
 	v2_73: "2.73.0",
+
+	/**
+	 * Fluid Framework Client 2.74 and newer.
+	 * @remarks
+	 * New formats introduced in 2.74:
+	 * - SharedTreeSummaryFormatVersion.v2 - written by default
+	 * - DetachedFieldIndexSummaryFormatVersion.v2 - written by default
+	 * - SchemaSummaryFormatVersion.v2 - written by default
+	 * - EditManagerSummaryFormatVersion.v2 - written by default
+	 * - ForestSummaryFormatVersion.v2 - written by default
+	 * - ForestFormatVersion.v2 - written when minVersionForCollab \>= 2.74
+	 * - ForestSummaryFormatVersion.v3 - written when minVersionForCollab \>= 2.74
+	 */
+	v2_74: "2.74.0",
 } as const satisfies Record<string, MinimumVersionForCollab>;
 
 /**
- * An up to date version which includes all the important stable features.
+ * An up to date version which includes all stable features.
  * @remarks
- * Use for cases when data is not persisted and thus would only ever be read by the current version of the framework.
+ * Use for cases when data is not persisted and thus would only ever be read by the the same version of the code which read this value.
+ *
+ * The pkgVersion from this package (tree) can not be used here as it is not guaranteed to be a valid MinimumVersionForCollab
+ * and would also unexpectedly disable features in prereleases and on CI if it didn't fail validation.
+ * See {@link @fluidframework/runtime-utils/internal#cleanedPackageVersion} for more details on why cleanedPackageVersion is preferred over pkgVersion.
  *
  * @privateRemarks
- * Update as needed.
- * TODO: Consider using packageVersion.ts to keep this current.
+ * It is safe to use CleanedPackageVersion from runtime-utils here since features are enabled in minor versions,
+ * and this package (tree) depends on runtime-utils with a `~` semver range
+ * ensuring that the version of runtime-utils this was imported from will match the version of this (tree) package at least up to the minor version.
+ * Reusing this from runtime-utils avoids duplicating the cleanup logic here as well as the cost or recomputing it.
+ * If in the future for some reason this becomes not okay, runtime-utils could instead export a function that performs that cleanup logic which could be reused here.
  */
-export const currentVersion: MinimumVersionForCollab = FluidClientVersion.v2_0;
+export const currentVersion: MinimumVersionForCollab = runtimeUtilsCleanedPackageVersion;
 
 export interface CodecTree {
 	readonly name: string;

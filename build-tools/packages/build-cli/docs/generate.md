@@ -8,8 +8,8 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
 * [`flub generate changelog`](#flub-generate-changelog)
 * [`flub generate changeset`](#flub-generate-changeset)
+* [`flub generate compatLayerGeneration`](#flub-generate-compatlayergeneration)
 * [`flub generate entrypoints`](#flub-generate-entrypoints)
-* [`flub generate layerCompatGeneration`](#flub-generate-layercompatgeneration)
 * [`flub generate node10Entrypoints`](#flub-generate-node10entrypoints)
 * [`flub generate packlist`](#flub-generate-packlist)
 * [`flub generate releaseNotes`](#flub-generate-releasenotes)
@@ -140,34 +140,32 @@ _See code: [src/commands/generate/bundleStats.ts](https://github.com/microsoft/F
 
 ## `flub generate changelog`
 
-Generate a changelog for packages based on changesets.
+Generate a changelog for packages based on changesets. Note that this process deletes the changeset files!
 
 ```
 USAGE
-  $ flub generate changelog -g client|server|azure|build-tools|gitrest|historian [-v | --quiet] [--version <value>]
-    [--install]
+  $ flub generate changelog -g <value> [-v | --quiet] [--version <value>]
 
 FLAGS
-  -g, --releaseGroup=<option>  (required) Name of a release group.
-                               <options: client|server|azure|build-tools|gitrest|historian>
-      --[no-]install           Update lockfiles by running 'npm install' automatically.
-      --version=<value>        The version for which to generate the changelog. If this is not provided, the version of
-                               the package according to package.json will be used.
+  -g, --releaseGroup=<value>  (required) The name of a release group.
+      --version=<value>       The version for which to generate the changelog. If this is not provided, the version of
+                              the package according to package.json will be used.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
       --quiet    Disable all logging.
 
 DESCRIPTION
-  Generate a changelog for packages based on changesets.
+  Generate a changelog for packages based on changesets. Note that this process deletes the changeset files!
+
+ALIASES
+  $ flub generate changelog
 
 EXAMPLES
   Generate changelogs for the client release group.
 
     $ flub generate changelog --releaseGroup client
 ```
-
-_See code: [src/commands/generate/changelog.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/changelog.ts)_
 
 ## `flub generate changeset`
 
@@ -226,56 +224,13 @@ EXAMPLES
 
 _See code: [src/commands/generate/changeset.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/changeset.ts)_
 
-## `flub generate entrypoints`
-
-Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.) as found in package.json "exports"
-
-```
-USAGE
-  $ flub generate entrypoints [-v | --quiet] [--mainEntrypoint <value>] [--outDir <value>] [--outFilePrefix <value>]
-    [--outFileAlpha <value>] [--outFileBeta <value>] [--outFilePublic <value>] [--outFileLegacyAlpha <value>]
-    [--outFileLegacyBeta <value>] [--outFileLegacyPublic <value>] [--outFileSuffix <value>] [--node10TypeCompat]
-
-FLAGS
-  --mainEntrypoint=<value>       [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
-  --node10TypeCompat             Optional generation of Node10 resolution compatible type entrypoints matching others.
-  --outDir=<value>               [default: ./lib] Directory to emit entrypoint declaration files.
-  --outFileAlpha=<value>         [default: alpha] Base file name for alpha entrypoint declaration files. To opt out of
-                                 generating this entrypoint, set to `none`.
-  --outFileBeta=<value>          [default: beta] Base file name for beta entrypoint declaration files. To opt out of
-                                 generating this entrypoint, set to `none`.
-  --outFileLegacyAlpha=<value>   Base file name for legacyAlpha entrypoint declaration files. To opt into generating
-                                 this entrypoint, set to a value other than `none`.
-  --outFileLegacyBeta=<value>    Base file name for legacyBeta entrypoint declaration files. To opt into generating this
-                                 entrypoint, set to a value other than `none`.
-  --outFileLegacyPublic=<value>  Base file name for legacyPublic entrypoint declaration files. To opt into generating
-                                 this entrypoint, set to a value other than `none`.
-  --outFilePrefix=<value>        File name prefix for emitting entrypoint declaration files. Pattern of
-                                 '{@unscopedPackageName}' within value will be replaced with the unscoped name of this
-                                 package.
-  --outFilePublic=<value>        [default: public] Base file name for public entrypoint declaration files. To opt out of
-                                 generating this entrypoint, set to `none`.
-  --outFileSuffix=<value>        [default: .d.ts] File name suffix including extension for emitting entrypoint
-                                 declaration files.
-
-LOGGING FLAGS
-  -v, --verbose  Enable verbose logging.
-      --quiet    Disable all logging.
-
-DESCRIPTION
-  Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.) as found in package.json
-  "exports"
-```
-
-_See code: [src/commands/generate/entrypoints.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/entrypoints.ts)_
-
-## `flub generate layerCompatGeneration`
+## `flub generate compatLayerGeneration`
 
 Updates the generation and release date for layer compatibility.
 
 ```
 USAGE
-  $ flub generate layerCompatGeneration [-v | --quiet] [--generationDir <value>] [--outFile <value>] [--minimumCompatWindowMonths
+  $ flub generate compatLayerGeneration [-v | --quiet] [--generationDir <value>] [--outFile <value>] [--minimumCompatWindowMonths
     <value>] [--concurrency <value>] [--branch <value> [--changed | [--all | --dir <value>... | --packages | -g
     client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
     client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... | --skipScope
@@ -321,7 +276,50 @@ DESCRIPTION
   Updates the generation and release date for layer compatibility.
 ```
 
-_See code: [src/commands/generate/layerCompatGeneration.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/layerCompatGeneration.ts)_
+_See code: [src/commands/generate/compatLayerGeneration.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/compatLayerGeneration.ts)_
+
+## `flub generate entrypoints`
+
+Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.) as found in package.json "exports"
+
+```
+USAGE
+  $ flub generate entrypoints [-v | --quiet] [--mainEntrypoint <value>] [--outDir <value>] [--outFilePrefix <value>]
+    [--outFileAlpha <value>] [--outFileBeta <value>] [--outFilePublic <value>] [--outFileLegacyAlpha <value>]
+    [--outFileLegacyBeta <value>] [--outFileLegacyPublic <value>] [--outFileSuffix <value>] [--node10TypeCompat]
+
+FLAGS
+  --mainEntrypoint=<value>       [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
+  --node10TypeCompat             Optional generation of Node10 resolution compatible type entrypoints matching others.
+  --outDir=<value>               [default: ./lib] Directory to emit entrypoint declaration files.
+  --outFileAlpha=<value>         [default: alpha] Base file name for alpha entrypoint declaration files. To opt out of
+                                 generating this entrypoint, set to `none`.
+  --outFileBeta=<value>          [default: beta] Base file name for beta entrypoint declaration files. To opt out of
+                                 generating this entrypoint, set to `none`.
+  --outFileLegacyAlpha=<value>   Base file name for legacyAlpha entrypoint declaration files. To opt into generating
+                                 this entrypoint, set to a value other than `none`.
+  --outFileLegacyBeta=<value>    Base file name for legacyBeta entrypoint declaration files. To opt into generating this
+                                 entrypoint, set to a value other than `none`.
+  --outFileLegacyPublic=<value>  Base file name for legacyPublic entrypoint declaration files. To opt into generating
+                                 this entrypoint, set to a value other than `none`.
+  --outFilePrefix=<value>        File name prefix for emitting entrypoint declaration files. Pattern of
+                                 '{@unscopedPackageName}' within value will be replaced with the unscoped name of this
+                                 package.
+  --outFilePublic=<value>        [default: public] Base file name for public entrypoint declaration files. To opt out of
+                                 generating this entrypoint, set to `none`.
+  --outFileSuffix=<value>        [default: .d.ts] File name suffix including extension for emitting entrypoint
+                                 declaration files.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.) as found in package.json
+  "exports"
+```
+
+_See code: [src/commands/generate/entrypoints.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/entrypoints.ts)_
 
 ## `flub generate node10Entrypoints`
 
@@ -443,10 +441,11 @@ Generates type tests for a package or group of packages.
 ```
 USAGE
   $ flub generate typetests [-v | --quiet] [--entrypoint public|alpha|beta|internal|legacyPublic|legacyBeta|legacyAlpha]
-    [--outDir <value>] [--outFile <value>] [--publicFallback] [--concurrency <value>] [--branch <value> [--changed |
-    [--all | --dir <value>... | --packages | -g client|server|azure|build-tools|gitrest|historian|all... |
-    --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... |
-    --skipScope <value>...]
+    [--outDir <value>] [--outFile <value>] [--publicFallback] [--skipVersionOutput] [--concurrency <value>] [--branch
+    <value> [--changed | [--all | --dir <value>... | --packages | -g
+    client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... | --skipScope
+    <value>...]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
@@ -458,6 +457,9 @@ FLAGS
                          tests. The pattern '{@unscopedPackageName}' within the value will be replaced with the unscoped
                          name of this package in PascalCase.
   --publicFallback       Use the public entrypoint as a fallback if the requested entrypoint is not found.
+  --skipVersionOutput    [env: FLUB_TYPETEST_SKIP_VERSION_OUTPUT] Skip updating version information in generated type
+                         test files. When set, preserves existing version information instead of updating to current
+                         package versions.
 
 PACKAGE SELECTION FLAGS
   -g, --releaseGroup=<option>...      Run on all child packages within the specified release groups. This does not

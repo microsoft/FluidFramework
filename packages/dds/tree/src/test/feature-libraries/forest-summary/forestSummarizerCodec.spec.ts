@@ -10,7 +10,11 @@ import {
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { currentVersion, type CodecWriteOptions } from "../../../codec/index.js";
+import {
+	currentVersion,
+	FluidClientVersion,
+	type CodecWriteOptions,
+} from "../../../codec/index.js";
 import { rootFieldKey } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
@@ -26,9 +30,9 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/forest-summary/codec.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { ForestFormatVersion } from "../../../feature-libraries/forest-summary/format.js";
+import { ForestFormatVersion } from "../../../feature-libraries/forest-summary/formatCommon.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { Format } from "../../../feature-libraries/forest-summary/format.js";
+import type { FormatV1 } from "../../../feature-libraries/forest-summary/formatV1.js";
 import {
 	FieldBatchFormatVersion,
 	TreeCompressionStrategy,
@@ -39,18 +43,26 @@ import { brand } from "../../../util/index.js";
 import { EmptyObject } from "../../cursorTestSuite.js";
 import { testIdCompressor } from "../../utils.js";
 
-const codecOptions: CodecWriteOptions = {
+const codecOptionsOld: CodecWriteOptions = {
+	jsonValidator: FormatValidatorBasic,
+	minVersionForCollab: FluidClientVersion.v2_0,
+};
+
+const codecOptionsCurrent: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,
 	minVersionForCollab: currentVersion,
 };
-const fieldBatchCodec = makeFieldBatchCodec(codecOptions);
+
+const fieldBatchCodecOld = makeFieldBatchCodec(codecOptionsOld);
+const fieldBatchCodecCurrent = makeFieldBatchCodec(codecOptionsCurrent);
 const context = {
 	encodeType: TreeCompressionStrategy.Uncompressed,
 	originatorId: testIdCompressor.localSessionId,
 	idCompressor: testIdCompressor,
 };
 
-const codec = makeForestSummarizerCodec(codecOptions, fieldBatchCodec);
+const codecOld = makeForestSummarizerCodec(codecOptionsOld, fieldBatchCodecOld);
+const codecCurrent = makeForestSummarizerCodec(codecOptionsCurrent, fieldBatchCodecCurrent);
 
 const testFieldChunks: TreeChunk[] = chunkField(
 	cursorForJsonableTreeField([{ type: brand(EmptyObject.identifier) }]),
@@ -66,14 +78,14 @@ const malformedData: [string, unknown][] = [
 	],
 	["incorrect data type", ["incorrect data type"]],
 ];
-const validData: [string, FieldSet, Format | undefined][] = [
+const validDataOld: [string, FieldSet, FormatV1 | undefined][] = [
 	[
 		"no entry",
 		new Map(),
 		{
 			version: brand(ForestFormatVersion.v1),
 			keys: [],
-			fields: fieldBatchCodec.encode([], context),
+			fields: fieldBatchCodecOld.encode([], context),
 		},
 	],
 	[
@@ -82,7 +94,36 @@ const validData: [string, FieldSet, Format | undefined][] = [
 		{
 			version: brand(ForestFormatVersion.v1),
 			keys: [rootFieldKey],
-			fields: fieldBatchCodec.encode([testFieldChunk.cursor()], context),
+			fields: fieldBatchCodecOld.encode([testFieldChunk.cursor()], context),
+		},
+	],
+	[
+		"multiple entries",
+		new Map([
+			[rootFieldKey, testFieldChunk.cursor()],
+			[brand("X"), testFieldChunk.cursor()],
+		]),
+		undefined,
+	],
+];
+
+const validDataCurrent: [string, FieldSet, FormatV1 | undefined][] = [
+	[
+		"no entry",
+		new Map(),
+		{
+			version: brand(ForestFormatVersion.v2),
+			keys: [],
+			fields: fieldBatchCodecCurrent.encode([], context),
+		},
+	],
+	[
+		"single entry",
+		new Map([[rootFieldKey, testFieldChunk.cursor()]]),
+		{
+			version: brand(ForestFormatVersion.v2),
+			keys: [rootFieldKey],
+			fields: fieldBatchCodecCurrent.encode([testFieldChunk.cursor()], context),
 		},
 	],
 	[
@@ -96,15 +137,29 @@ const validData: [string, FieldSet, Format | undefined][] = [
 ];
 
 describe("ForestSummarizerCodec", () => {
-	describe("encodes and decodes valid data.", () => {
-		for (const [name, data, expected] of validData) {
+	describe("encodes and decodes valid old data.", () => {
+		for (const [name, data, expected] of validDataOld) {
 			it(name, () => {
-				const encodedData = codec.encode(data, context);
+				const encodedData = codecOld.encode(data, context);
 				if (expected !== undefined) {
 					assert.deepEqual(encodedData, expected);
 				}
 
-				const decodedData = codec.decode(encodedData, context);
+				const decodedData = codecOld.decode(encodedData, context);
+				assert.deepEqual(decodedData, data);
+			});
+		}
+	});
+
+	describe("encodes and decodes valid current data.", () => {
+		for (const [name, data, expected] of validDataCurrent) {
+			it(name, () => {
+				const encodedData = codecCurrent.encode(data, context);
+				if (expected !== undefined) {
+					assert.deepEqual(encodedData, expected);
+				}
+
+				const decodedData = codecCurrent.decode(encodedData, context);
 				assert.deepEqual(decodedData, data);
 			});
 		}
@@ -113,7 +168,7 @@ describe("ForestSummarizerCodec", () => {
 	describe("throws on receiving malformed data during encode.", () => {
 		for (const [name, data] of malformedData) {
 			it(name, () => {
-				assert.throws(() => codec.encode(data as FieldSet, context), "malformed data");
+				assert.throws(() => codecCurrent.encode(data as FieldSet, context), "malformed data");
 			});
 		}
 	});
@@ -122,41 +177,51 @@ describe("ForestSummarizerCodec", () => {
 		it("invalid version", () => {
 			assert.throws(
 				() =>
-					codec.decode(
+					codecCurrent.decode(
 						{
-							version: 2 as ForestFormatVersion,
-							fields: { version: FieldBatchFormatVersion.v1 },
+							version: 2.5 as ForestFormatVersion,
+							fields: {
+								version: brand(FieldBatchFormatVersion.v1),
+								identifiers: [],
+								shapes: [],
+								data: [],
+							},
 							keys: [],
 						},
 						context,
 					),
-				validateUsageError(/Unsupported version 2 encountered while decoding data/),
+				validateUsageError(/Unsupported version 2.5 encountered while decoding data/),
 			);
 		});
 
 		it("invalid nested version", () => {
 			assert.throws(
 				() =>
-					codec.decode(
+					codecCurrent.decode(
 						{
 							version: brand(ForestFormatVersion.v1),
-							fields: { version: 3 as FieldBatchFormatVersion },
+							fields: {
+								version: 2.5 as FieldBatchFormatVersion,
+								identifiers: [],
+								shapes: [],
+								data: [],
+							},
 							keys: [],
 						},
 						context,
 					),
-				validateUsageError(/Unsupported version 3 encountered while decoding data/),
+				validateAssertionError("Encoded schema should validate"),
 			);
 		});
 
 		it("missing fields", () => {
 			assert.throws(
 				() =>
-					codec.decode(
+					codecCurrent.decode(
 						{
 							version: brand<ForestFormatVersion>(ForestFormatVersion.v1),
 							keys: [],
-						} as unknown as Format,
+						} as unknown as FormatV1,
 						context,
 					),
 				validateAssertionError("Encoded schema should validate"),
@@ -166,13 +231,13 @@ describe("ForestSummarizerCodec", () => {
 		it("extra field", () => {
 			assert.throws(
 				() =>
-					codec.decode(
+					codecCurrent.decode(
 						{
 							version: brand<ForestFormatVersion>(ForestFormatVersion.v1),
 							fields: { version: brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v1) },
 							keys: [],
 							wrong: 5,
-						} as unknown as Format,
+						} as unknown as FormatV1,
 						context,
 					),
 				validateAssertionError("Encoded schema should validate"),

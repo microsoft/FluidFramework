@@ -110,15 +110,15 @@ export const eventEmitterForFuzzHarness = new TypedEventEmitter<DDSFuzzHarnessEv
 type TrackableSharedArray = ISharedArray<SerializableTypeForSharedArray> & {
 	// This is used to track the entry IDs for insert and move operations.
 	insertIds: Map<string, unknown>;
+	deleteIds: Map<string, unknown>;
 	moveIds: Map<string, string>;
-	toggleIds: Map<string, unknown>;
 };
 
 eventEmitterForFuzzHarness.on("clientCreate", (client) => {
 	const channel = client.channel as TrackableSharedArray;
 	channel.insertIds = new Map<string, unknown>();
+	channel.deleteIds = new Map<string, unknown>();
 	channel.moveIds = new Map<string, string>();
-	channel.toggleIds = new Map<string, unknown>();
 
 	// Register listener to track insert entry IDs
 	channel.on("valueChanged", (op, _isLocal, _target) => {
@@ -126,10 +126,12 @@ eventEmitterForFuzzHarness.on("clientCreate", (client) => {
 			case OperationType.insertEntry: {
 				const entryId = op.entryId;
 				channel.insertIds.set(entryId, op.value);
+				channel.deleteIds.delete(entryId);
 				break;
 			}
 			case OperationType.deleteEntry: {
 				const entryId = op.entryId;
+				channel.deleteIds.set(entryId, channel.insertIds.get(entryId));
 				channel.insertIds.delete(entryId);
 				channel.moveIds.delete(entryId);
 				break;
@@ -144,12 +146,12 @@ eventEmitterForFuzzHarness.on("clientCreate", (client) => {
 			}
 			case OperationType.toggle: {
 				if (channel.insertIds.has(op.entryId)) {
-					channel.toggleIds.set(op.entryId, channel.insertIds.get(op.entryId));
+					channel.deleteIds.set(op.entryId, channel.insertIds.get(op.entryId));
 					channel.insertIds.delete(op.entryId);
 					channel.moveIds.delete(op.entryId);
 				} else {
-					channel.insertIds.set(op.entryId, channel.toggleIds.get(op.entryId));
-					channel.toggleIds.delete(op.entryId);
+					channel.insertIds.set(op.entryId, channel.deleteIds.get(op.entryId));
+					channel.deleteIds.delete(op.entryId);
 				}
 				break;
 			}
@@ -267,7 +269,7 @@ export function makeSharedArrayOperationGenerator(weights: {
 		client,
 	}: DDSFuzzTestState<SharedArrayFactory<string>>): SharedArrayToggle => {
 		const sharedArray = client.channel as TrackableSharedArray;
-		const entryIds = [...sharedArray.insertIds.keys()];
+		const entryIds = [...sharedArray.insertIds.keys(), ...sharedArray.deleteIds.keys()];
 		if (entryIds.length === 0) {
 			throw new Error("No entryIds found for toggle operation");
 		}
@@ -278,7 +280,7 @@ export function makeSharedArrayOperationGenerator(weights: {
 		return {
 			type: "toggle",
 			entryId,
-			DEBUG_value: sharedArray.insertIds.get(entryId),
+			DEBUG_value: sharedArray.insertIds.get(entryId) ?? sharedArray.deleteIds.get(entryId),
 		};
 	};
 
@@ -305,14 +307,6 @@ export function makeSharedArrayOperationGenerator(weights: {
 		};
 	};
 
-	const lengthSatisfies =
-		(
-			criteria: (length: number) => boolean,
-		): AcceptanceCondition<
-			DDSFuzzTestState<SharedArrayFactory<SerializableTypeForSharedArray>>
-		> =>
-		({ client }) =>
-			criteria(client.channel.get().length);
 	const moveLengthSatisfies =
 		(
 			criteria: (length: number) => boolean,
@@ -329,19 +323,30 @@ export function makeSharedArrayOperationGenerator(weights: {
 		> =>
 		({ client }) =>
 			criteria((client.channel as TrackableSharedArray).insertIds?.size ?? 0);
-	const hasNonzeroLength = lengthSatisfies((length) => length > 0);
+	const toggleLengthSatisfies =
+		(
+			criteria: (length: number) => boolean,
+		): AcceptanceCondition<
+			DDSFuzzTestState<SharedArrayFactory<SerializableTypeForSharedArray>>
+		> =>
+		({ client }) => {
+			const trackable = client.channel as TrackableSharedArray;
+			const totalSize = (trackable.insertIds?.size ?? 0) + (trackable.deleteIds?.size ?? 0);
+			return criteria(totalSize);
+		};
 	const hasEnoughMoveLength = moveLengthSatisfies((length) => length > 2);
 	const hasEnoughInsertLength = insertLengthSatisfies((length) => length > 0);
+	const hasEnoughToggleLength = toggleLengthSatisfies((length) => length > 0);
 
 	const syncGenerator = createWeightedGenerator<
 		SharedArrayOperation<string>,
 		DDSFuzzTestState<SharedArrayFactory<string>>
 	>([
 		[insertOp, weights.insert],
-		[deleteOp, weights.delete, hasNonzeroLength],
-		[moveOp, weights.move, hasNonzeroLength],
-		[insertBulkAfterOp, weights.insertBulkAfter, hasNonzeroLength],
-		[toggleOp, weights.toggle, hasEnoughInsertLength],
+		[deleteOp, weights.delete, hasEnoughInsertLength],
+		[moveOp, weights.move, hasEnoughInsertLength],
+		[insertBulkAfterOp, weights.insertBulkAfter, hasEnoughInsertLength],
+		[toggleOp, weights.toggle, hasEnoughToggleLength],
 		[toggleMoveOp, weights.toggleMove, hasEnoughMoveLength],
 	]);
 

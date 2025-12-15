@@ -83,7 +83,7 @@ class ChunkedOpProcessor {
 		readonly debug: boolean,
 	) {}
 
-	debugMsg(msg: any) {
+	debugMsg(msg: any): void {
 		if (this.debug) {
 			console.error(msg);
 		}
@@ -259,7 +259,7 @@ export class Sanitizer {
 		this.chunkProcessor = new ChunkedOpProcessor(this.objectMatchesSchema, debug);
 	}
 
-	debugMsg(msg: any) {
+	debugMsg(msg: any): void {
 		if (this.debug) {
 			console.error(msg);
 		}
@@ -386,7 +386,7 @@ export class Sanitizer {
 		return input;
 	}
 
-	fixJoin(message: any) {
+	fixJoin(message: any): void {
 		if (!this.objectMatchesSchema(message.contents, joinContentsSchema)) {
 			message.contents = this.replaceAny(message.contents);
 		}
@@ -408,7 +408,7 @@ export class Sanitizer {
 		}
 	}
 
-	fixPropose(message: any) {
+	fixPropose(message: any): void {
 		if (!this.objectMatchesSchema(message.contents, proposeContentsSchema)) {
 			message.contents = this.replaceAny(message.contents);
 		} else {
@@ -438,7 +438,7 @@ export class Sanitizer {
 		}
 	}
 
-	fixAttachEntries(entries: any[]) {
+	fixAttachEntries(entries: any[]): void {
 		entries.forEach((element) => {
 			// Tree type
 			if (element.value.entries) {
@@ -489,7 +489,7 @@ export class Sanitizer {
 	 * under a "contents" key, whereas attach messages from within an op message have it
 	 * under a "content" key
 	 */
-	fixAttach(message: any) {
+	fixAttach(message: any): void {
 		// Handle case where contents is stringified json
 		if (typeof message.contents === "string") {
 			try {
@@ -505,7 +505,7 @@ export class Sanitizer {
 		}
 	}
 
-	fixDeltaOp(deltaOp: any) {
+	fixDeltaOp(deltaOp: any): void {
 		deltaOp.seg =
 			typeof deltaOp.seg === "string"
 				? this.replaceText(deltaOp.seg)
@@ -519,7 +519,7 @@ export class Sanitizer {
 	 * @param contents - The contents object for an op message.  If it was a string in the
 	 * message, it must have been converted to an object first
 	 */
-	fixOpContentsObject(contents: any) {
+	fixOpContentsObject(contents: any): void {
 		// do replacement
 		if (!this.objectMatchesSchema(contents, opContentsSchema)) {
 			this.replaceAny(contents);
@@ -602,7 +602,7 @@ export class Sanitizer {
 		}
 	}
 
-	fixOp(message: any) {
+	fixOp(message: any): void {
 		// handle case where contents is stringified json
 		let msgContents;
 		if (typeof message.contents === "string") {
@@ -665,7 +665,7 @@ export class Sanitizer {
 	 * @param message - The top-level chunkedOp message or a top-level op message
 	 * with a chunkedOp inside its contents
 	 */
-	fixChunkedOp(message: any) {
+	fixChunkedOp(message: any): void {
 		this.chunkProcessor.addMessage(message);
 		if (!this.chunkProcessor.hasAllMessages()) {
 			return;

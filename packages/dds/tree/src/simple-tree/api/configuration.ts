@@ -3,31 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import {
-	assert,
-	debugAssert,
-	fail,
-	oob,
-	unreachableCase,
-} from "@fluidframework/core-utils/internal";
+import { assert, fail, oob, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	type FieldSchemaAlpha,
-	type ImplicitFieldSchema,
-	FieldKind,
-	normalizeFieldSchema,
-} from "../fieldSchema.js";
+import { type FieldSchemaAlpha, type ImplicitFieldSchema, FieldKind } from "../fieldSchema.js";
 import {
 	type AllowedTypesFullEvaluated,
 	NodeKind,
 	type TreeNodeSchema,
-	markSchemaMostDerived,
 } from "../core/index.js";
 import {
-	permissiveStoredSchemaGenerationOptions,
-	restrictiveStoredSchemaGenerationOptions,
-	toStoredSchema,
+	toInitialSchema,
+	toUnhydratedSchema,
+	transformSimpleSchema,
 } from "../toStoredSchema.js";
 import {
 	isArrayNodeSchema,
@@ -42,7 +30,8 @@ import {
 import { getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
-import type { SimpleNodeSchema, SimpleTreeSchema } from "../simpleSchema.js";
+import type { SchemaType, SimpleNodeSchema } from "../simpleSchema.js";
+import { createTreeSchema, type TreeSchema } from "../treeSchema.js";
 
 /**
  * Options when constructing a tree view.
@@ -188,11 +177,6 @@ export class TreeViewConfiguration<
 	public readonly preventAmbiguity!: boolean;
 
 	/**
-	 * {@link TreeSchema.definitions} but with public types.
-	 */
-	protected readonly definitionsInternal!: ReadonlyMap<string, TreeNodeSchema>;
-
-	/**
 	 * Construct a new {@link TreeViewConfiguration}.
 	 *
 	 * @param props - Property bag of configuration options.
@@ -225,23 +209,10 @@ export class TreeViewConfiguration<
 		// Ambiguity errors are lower priority to report than invalid schema errors, so collect these in an array and report them all at once.
 		const ambiguityErrors: string[] = [];
 
-		// Eagerly perform this conversion to surface errors sooner.
-		// Includes detection of duplicate schema identifiers.
-		toStoredSchema(config.schema, restrictiveStoredSchemaGenerationOptions);
-		toStoredSchema(config.schema, permissiveStoredSchemaGenerationOptions);
-
-		const definitions = new Map<string, SimpleNodeSchema & TreeNodeSchema>();
-
+		// Validate the schema and collect ambiguity errors.
+		// This does a lot of validation (throwing usage errors as a side effect) in addition to just collecting ambiguity errors.
+		// ambiguityErrors are considered a lower priority, so only thrown if no other errors are found.
 		walkFieldSchema(config.schema, {
-			node: (schema) => {
-				// Ensure all reachable schema are marked as most derived.
-				// This ensures if multiple schema extending the same schema factory generated class are present (or have had instances of them constructed, or get instances of them constructed in the future),
-				// an error is reported.
-				markSchemaMostDerived(schema, true);
-
-				debugAssert(() => !definitions.has(schema.identifier));
-				definitions.set(schema.identifier, schema as SimpleNodeSchema & TreeNodeSchema);
-			},
 			allowedTypes({ types }: AllowedTypesFullEvaluated): void {
 				checkUnion(
 					types.map((t) => t.type),
@@ -250,8 +221,6 @@ export class TreeViewConfiguration<
 				);
 			},
 		});
-
-		this.definitionsInternal = definitions;
 
 		if (ambiguityErrors.length !== 0) {
 			// Duplicate errors are common since when two types conflict, both orders error:
@@ -273,38 +242,22 @@ export class TreeViewConfigurationAlpha<
 	extends TreeViewConfiguration<TSchema>
 	implements TreeSchema
 {
-	/**
-	 * {@inheritDoc TreeSchema.root}
-	 */
 	public readonly root: FieldSchemaAlpha;
-
-	/**
-	 * {@inheritDoc TreeSchema.definitions}
-	 */
-	public get definitions(): ReadonlyMap<string, SimpleNodeSchema & TreeNodeSchema> {
-		return this.definitionsInternal as ReadonlyMap<string, SimpleNodeSchema & TreeNodeSchema>;
-	}
+	public readonly definitions: ReadonlyMap<
+		string,
+		SimpleNodeSchema<SchemaType.View> & TreeNodeSchema
+	>;
 
 	public constructor(props: ITreeViewConfiguration<TSchema>) {
 		super(props);
-		this.root = normalizeFieldSchema(props.schema);
+		const treeSchema = createTreeSchema(this.schema);
+		this.root = treeSchema.root;
+		this.definitions = treeSchema.definitions;
+
+		// Eagerly perform these conversions to surface errors sooner.
+		toInitialSchema(this.root);
+		transformSimpleSchema(treeSchema, toUnhydratedSchema);
 	}
-}
-
-/**
- * {@link TreeViewConfigurationAlpha}
- * @sealed @alpha
- */
-export interface TreeSchema extends SimpleTreeSchema {
-	/**
-	 * {@inheritDoc SimpleTreeSchema.root}
-	 */
-	readonly root: FieldSchemaAlpha;
-
-	/**
-	 * {@inheritDoc SimpleTreeSchema.definitions}
-	 */
-	readonly definitions: ReadonlyMap<string, SimpleNodeSchema & TreeNodeSchema>;
 }
 
 /**
