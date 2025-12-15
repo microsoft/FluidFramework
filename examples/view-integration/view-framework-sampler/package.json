@@ -78,16 +78,6 @@
 		"webpack-dev-server": "~4.15.2",
 		"webpack-merge": "^6.0.1"
 	},
-	"fluid": {
-		"browser": {
-			"umd": {
-				"files": [
-					"main.bundle.js"
-				],
-				"library": "main"
-			}
-		}
-	},
 	"typeValidation": {
 		"disabled": true
 	}
