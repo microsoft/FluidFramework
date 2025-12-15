@@ -113,7 +113,7 @@ describe("generate:assertTags", () => {
 
 			// Should return null when no config is found
 			assert(
-				result === null || result === undefined,
+				result === null,
 				"Should return null when no config exists",
 			);
 		});
