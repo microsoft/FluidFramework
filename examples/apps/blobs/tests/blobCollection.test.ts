@@ -30,7 +30,7 @@ describe("blobs", () => {
 		// we'll try to load the additional container before the attach completes.
 		await page.waitForFunction(() => window.location.hash.length > 0);
 		const blobsCountP = page.evaluate(async () => {
-			// Load an additional container, and use it to watch for an expected roll
+			// Load an additional container, and use it to watch for an expected blob addition
 			const container = await globalThis.loadAdditionalContainer();
 			const blobCollection = (await container.getEntryPoint()) as IBlobCollection;
 			return new Promise<number>((resolve) => {
