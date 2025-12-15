@@ -16,19 +16,17 @@ const config: Linter.Config[] = [
 	{
 		rules: {
 			"@typescript-eslint/no-use-before-define": "off",
-			"@typescript-eslint/prefer-nullish-coalescing": "off", // requires strictNullChecks
+			"@typescript-eslint/prefer-nullish-coalescing": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
 			"import-x/no-internal-modules": [
 				"error",
 				{
-					// package hasn't converted to barrel files (which may not be a bad thing)
-					allow: [...importInternalModulesAllowed, "*/*.js"],
+					"allow": [...importInternalModulesAllowed, "*/*.js"],
 				},
 			],
 			"max-len": "off",
 			"no-bitwise": "off",
 			"no-case-declarations": "off",
-			// Disabled because the rule is crashing on this package - AB#51780
 			"@typescript-eslint/unbound-method": "off",
 		},
 	},
@@ -38,7 +36,7 @@ const config: Linter.Config[] = [
 			"import-x/no-internal-modules": [
 				"error",
 				{
-					allow: importInternalModulesAllowedForTest,
+					"allow": [...importInternalModulesAllowedForTest],
 				},
 			],
 		},
